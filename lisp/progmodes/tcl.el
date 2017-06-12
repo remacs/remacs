@@ -1524,7 +1524,7 @@ The first line is assumed to look like \"#!.../program ...\"."
 (defun tcl-quote (string)
   "Quote STRING according to Tcl rules."
   (mapconcat (lambda (char)
-	       (if (memq char '(?[ ?] ?{ ?} ?\\ ?\" ?$ ?\s ?\;))
+	       (if (memq char '(?\[ ?\] ?{ ?} ?\\ ?\" ?$ ?\s ?\;))
 		   (concat "\\" (char-to-string char))
 		 (char-to-string char)))
 	     string ""))

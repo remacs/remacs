@@ -1634,6 +1634,18 @@ names)."))
   :type 'c-extra-types-widget
   :group 'c)
 
+(defcustom c-asymmetry-fontification-flag t
+  "Whether to fontify certain ambiguous constructs by white space asymmetry.
+
+In the fontification engine, it is sometimes impossible to determine
+whether a construct is a declaration or an expression.  This happens
+particularly in C++, due to ambiguities in the language.  When such a
+construct is like \"foo * bar\" or \"foo &bar\", and this variable is non-nil
+(the default), the construct will be fontified as a declaration if there is
+white space either before or after the operator, but not both."
+  :type 'boolean
+  :group 'c)
+
 (defvar c-noise-macro-with-parens-name-re "\\<\\>")
 (defvar c-noise-macro-name-re "\\<\\>")
 

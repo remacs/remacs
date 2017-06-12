@@ -352,6 +352,7 @@ doprnt (char *buffer, ptrdiff_t bufsize, const char *format,
 
 	    case 'S':
 	      string[-1] = 's';
+	      FALLTHROUGH;
 	    case 's':
 	      if (fmtcpy[1] != 's')
 		minlen = atoi (&fmtcpy[1]);

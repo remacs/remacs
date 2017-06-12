@@ -30,15 +30,18 @@
   '(("application/ms-tnef" t "tnef" "-f" "-" "-C")
     ("application/zip" nil "unzip" "-j" "-x" "%f" "-d")
     ("application/x-gtar-compressed" nil "tar" "xzf" "-" "-C")
+    ("application/x-tar-gz" nil "tar" "xzf" "-" "-C")
     ("application/x-tar" nil "tar" "xf" "-" "-C")))
 
 (defun mm-archive-decoders () mm-archive-decoders)
 
 (defun mm-dissect-archive (handle)
-  (let ((decoder (cddr (assoc (car (mm-handle-type handle))
-			      mm-archive-decoders)))
-	(dir (make-temp-file
-	      (expand-file-name "emm." mm-tmp-directory) 'dir)))
+  (let* ((type (car (mm-handle-type handle)))
+	 (decoder (cddr (assoc type mm-archive-decoders)))
+	 dir)
+    (unless decoder
+      (error "No decoder found for %s" type))
+    (setq dir (make-temp-file (expand-file-name "emm." mm-tmp-directory) 'dir))
     (set-file-modes dir #o700)
     (unwind-protect
 	(progn

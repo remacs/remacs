@@ -633,10 +633,9 @@ buffer if the variable `delete-trailing-lines' is non-nil."
         (with-syntax-table (make-syntax-table (syntax-table))
           ;; Don't delete formfeeds, even if they are considered whitespace.
           (modify-syntax-entry ?\f "_")
-          ;; Treating \n as non-whitespace makes things easier.
-          (modify-syntax-entry ?\n "_")
-          (while (re-search-forward "\\s-+$" end-marker t)
-            (let ((b (match-beginning 0)) (e (match-end 0)))
+          (while (re-search-forward "\\s-$" end-marker t)
+            (skip-syntax-backward "-" (line-beginning-position))
+            (let ((b (point)) (e (match-end 0)))
               (when (region-modifiable-p b e)
                 (delete-region b e)))))
         (if end
@@ -834,7 +833,7 @@ Leave one space or none, according to the context."
   (interactive "*")
   (save-excursion
     (delete-horizontal-space)
-    (if (or (looking-at "^\\|\\s)")
+    (if (or (looking-at "^\\|$\\|\\s)")
 	    (save-excursion (forward-char -1)
 			    (looking-at "$\\|\\s(\\|\\s'")))
 	nil
@@ -1105,7 +1104,7 @@ it is usually a mistake for a Lisp function to use any subroutine
 that uses or sets the mark."
   (declare (interactive-only t))
   (interactive)
-  (push-mark (point))
+  (push-mark)
   (push-mark (point-max) nil t)
   ;; This is really `point-min' in most cases, but if we're in the
   ;; minibuffer, this is at the end of the prompt.
@@ -1451,22 +1450,29 @@ If nil, don't change the value of `debug-on-error'."
   :type 'boolean
   :version "21.1")
 
+(defcustom eval-expression-print-maximum-character 127
+  "The largest integer that will be displayed as a character.
+This affects printing by `eval-expression' (via
+`eval-expression-print-format')."
+  :group 'lisp
+  :type 'integer
+  :version "26.1")
+
 (defun eval-expression-print-format (value)
   "If VALUE in an integer, return a specially formatted string.
 This string will typically look like \" (#o1, #x1, ?\\C-a)\".
 If VALUE is not an integer, nil is returned.
-This function is used by functions like `prin1' that display the
-result of expression evaluation."
-  (if (and (integerp value)
-	   (or (eq standard-output t)
-	       (zerop (prefix-numeric-value current-prefix-arg))))
-      (let ((char-string
-	     (if (and (characterp value)
-		      (char-displayable-p value))
-		 (prin1-char value))))
-        (if char-string
-            (format " (#o%o, #x%x, %s)" value value char-string)
-          (format " (#o%o, #x%x)" value value)))))
+This function is used by commands like `eval-expression' that
+display the result of expression evaluation."
+  (when (integerp value)
+    (let ((char-string
+           (and (characterp value)
+                (<= value eval-expression-print-maximum-character)
+                (char-displayable-p value)
+                (prin1-char value))))
+      (if char-string
+          (format " (#o%o, #x%x, %s)" value value char-string)
+        (format " (#o%o, #x%x)" value value)))))
 
 (defvar eval-expression-minibuffer-setup-hook nil
   "Hook run by `eval-expression' when entering the minibuffer.")
@@ -1485,22 +1491,42 @@ result of expression evaluation."
                             read-expression-map t
                             'read-expression-history))))
 
+(defun eval-expression-get-print-arguments (prefix-argument)
+  "Get arguments for commands that print an expression result.
+Returns a list (INSERT-VALUE NO-TRUNCATE CHAR-PRINT-LIMIT)
+based on PREFIX-ARG.  This function determines the interpretation
+of the prefix argument for `eval-expression' and
+`eval-last-sexp'."
+  (let ((num (prefix-numeric-value prefix-argument)))
+    (list (not (memq prefix-argument '(- nil)))
+          (= num 0)
+          (cond ((not (memq prefix-argument '(0 -1 - nil))) nil)
+                ((= num -1) most-positive-fixnum)
+                (t eval-expression-print-maximum-character)))))
+
 ;; We define this, rather than making `eval' interactive,
 ;; for the sake of completion of names like eval-region, eval-buffer.
-(defun eval-expression (exp &optional insert-value)
+(defun eval-expression (exp &optional insert-value no-truncate char-print-limit)
   "Evaluate EXP and print value in the echo area.
-When called interactively, read an Emacs Lisp expression and evaluate it.
-Value is also consed on to front of the variable `values'.
-If the resulting value is an integer, it will be printed in
-several additional formats (octal, hexadecimal, and character).
-Optional argument INSERT-VALUE non-nil (interactively, with
-prefix argument) means insert the result into the current buffer
-instead of printing it in the echo area.
+When called interactively, read an Emacs Lisp expression and
+evaluate it.  Value is also consed on to front of the variable
+`values'.  Optional argument INSERT-VALUE non-nil (interactively,
+with a non `-' prefix argument) means insert the result into the
+current buffer instead of printing it in the echo area.
 
-Normally, this function truncates long output according to the value
-of the variables `eval-expression-print-length' and
-`eval-expression-print-level'.  With a prefix argument of zero,
-however, there is no such truncation.
+Normally, this function truncates long output according to the
+value of the variables `eval-expression-print-length' and
+`eval-expression-print-level'.  When NO-TRUNCATE is
+non-nil (interactively, with a prefix argument of zero), however,
+there is no such truncation.
+
+If the resulting value is an integer, and CHAR-PRINT-LIMIT is
+non-nil (interactively, unless given a positive prefix argument)
+it will be printed in several additional formats (octal,
+hexadecimal, and character).  The character format is only used
+if the value is below CHAR-PRINT-LIMIT (interactively, if the
+prefix argument is -1 or the value is below
+`eval-expression-print-maximum-character').
 
 Runs the hook `eval-expression-minibuffer-setup-hook' on entering the
 minibuffer.
@@ -1508,8 +1534,8 @@ minibuffer.
 If `eval-expression-debug-on-error' is non-nil, which is the default,
 this command arranges for all errors to enter the debugger."
   (interactive
-   (list (read--expression "Eval: ")
-	 current-prefix-arg))
+   (cons (read--expression "Eval: ")
+         (eval-expression-get-print-arguments current-prefix-arg)))
 
   (if (null eval-expression-debug-on-error)
       (push (eval exp lexical-binding) values)
@@ -1524,23 +1550,16 @@ this command arranges for all errors to enter the debugger."
       (unless (eq old-value new-value)
 	(setq debug-on-error new-value))))
 
-  (let ((print-length (and (not (zerop (prefix-numeric-value insert-value)))
-			   eval-expression-print-length))
-	(print-level (and (not (zerop (prefix-numeric-value insert-value)))
-			  eval-expression-print-level))
+  (let ((print-length (unless no-truncate eval-expression-print-length))
+        (print-level  (unless no-truncate eval-expression-print-level))
+        (eval-expression-print-maximum-character char-print-limit)
         (deactivate-mark))
-    (if insert-value
-	(with-no-warnings
-	 (let ((standard-output (current-buffer)))
-	   (prog1
-	       (prin1 (car values))
-	     (when (zerop (prefix-numeric-value insert-value))
-	       (let ((str (eval-expression-print-format (car values))))
-		 (if str (princ str)))))))
+    (let ((out (if insert-value (current-buffer) t)))
       (prog1
-          (prin1 (car values) t)
-        (let ((str (eval-expression-print-format (car values))))
-          (if str (princ str t)))))))
+          (prin1 (car values) out)
+        (let ((str (and char-print-limit
+                        (eval-expression-print-format (car values)))))
+          (when str (princ str out)))))))
 
 (defun edit-and-eval-command (prompt command)
   "Prompting with PROMPT, let user edit COMMAND and eval result.
@@ -4861,7 +4880,7 @@ See also the command `yank-pop' (\\[yank-pop])."
   ;; If we don't get all the way thru, make last-command indicate that
   ;; for the following command.
   (setq this-command t)
-  (push-mark (point))
+  (push-mark)
   (insert-for-yank (current-kill (cond
 				  ((listp arg) 0)
 				  ((eq arg '-) -2)
@@ -5148,6 +5167,21 @@ If ARG is zero, move to the beginning of the current line."
 		       (point-max)))
       (goto-char (next-overlay-change (point))))
     (end-of-line)))
+
+(defun kill-current-buffer ()
+  "Kill the current buffer.
+When called in the minibuffer, get out of the minibuffer
+using `abort-recursive-edit'.
+
+This is like `kill-this-buffer', but it doesn't have to be invoked
+via the menu bar, and pays no attention to the menu-bar's frame."
+  (interactive)
+  (let ((frame (selected-frame)))
+    (if (and (frame-live-p frame)
+             (not (window-minibuffer-p (frame-selected-window frame))))
+        (kill-buffer (current-buffer))
+      (abort-recursive-edit))))
+
 
 (defun insert-buffer (buffer)
   "Insert after point the contents of BUFFER.
@@ -6385,7 +6419,13 @@ If NOERROR, don't signal an error if we can't move that many lines."
 	       (point))))
 
 	;; Move to the desired column.
-	(line-move-to-column (truncate column))
+        (if (and line-move-visual
+                 (not (or truncate-lines truncate-partial-width-windows)))
+            ;; Under line-move-visual, goal-column should be
+            ;; interpreted in units of the frame's canonical character
+            ;; width, which is exactly what vertical-motion does.
+            (vertical-motion (cons column 0))
+          (line-move-to-column (truncate column)))
 
 	;; Corner case: suppose we start out in a field boundary in
 	;; the middle of a continued line.  When we get to
@@ -7893,7 +7933,7 @@ With a prefix argument, set VARIABLE to VALUE buffer-locally."
     (define-key map [?\t] 'next-completion)
     (define-key map [backtab] 'previous-completion)
     (define-key map "q" 'quit-window)
-    (define-key map "z" 'kill-this-buffer)
+    (define-key map "z" 'kill-current-buffer)
     map)
   "Local map for completion list buffers.")
 

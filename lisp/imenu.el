@@ -499,7 +499,12 @@ An item looks like (NAME . POSITION)."
   (string-lessp (car item1) (car item2)))
 
 (defun imenu--sort-by-position (item1 item2)
-  (< (cdr item1) (cdr item2)))
+  "Comparison function to sort items depending on their position.
+Return non-nil if and only if ITEM1's position is lower than ITEM2's
+position."
+  (if (listp (cdr item1))
+      (< (cadr item1) (cadr item2))
+    (< (cdr item1) (cdr item2))))
 
 (defun imenu--relative-position (&optional reverse)
   "Support function to calculate relative position in buffer.

@@ -279,17 +279,26 @@ expression @var{separators} (@pxref{Regular Expressions}).  Each match
 for @var{separators} defines a splitting point; the substrings between
 splitting points are made into a list, which is returned.
 
+If @var{separators} is @code{nil} (or omitted), the default is the
+value of @code{split-string-default-separators} and the function
+behaves as if @var{omit-nulls} were @code{t}.
+
 If @var{omit-nulls} is @code{nil} (or omitted), the result contains
 null strings whenever there are two consecutive matches for
 @var{separators}, or a match is adjacent to the beginning or end of
 @var{string}.  If @var{omit-nulls} is @code{t}, these null strings are
 omitted from the result.
 
-If @var{separators} is @code{nil} (or omitted), the default is the
-value of @code{split-string-default-separators}.
+If the optional argument @var{trim} is non-@code{nil}, it should be a
+regular expression to match text to trim from the beginning and end of
+each substring.  If trimming makes the substring empty, it is treated
+as null.
 
-As a special case, when @var{separators} is @code{nil} (or omitted),
-null strings are always omitted from the result.  Thus:
+If you need to split a string into a list of individual command-line
+arguments suitable for @code{call-process} or @code{start-process},
+see @ref{Shell Arguments, split-string-and-unquote}.
+
+Examples:
 
 @example
 (split-string "  two words ")
@@ -305,8 +314,6 @@ useful.  If you need such a result, use an explicit value for
               split-string-default-separators)
      @result{} ("" "two" "words" "")
 @end example
-
-More examples:
 
 @example
 (split-string "Soup is good food" "o")
@@ -354,15 +361,6 @@ practice:
 (split-string "ooo" "\\|o+" t)
      @result{} ("o" "o" "o")
 @end example
-
-If the optional argument @var{trim} is non-@code{nil}, it should be a
-regular expression to match text to trim from the beginning and end of
-each substring.  If trimming makes the substring empty, it is treated
-as null.
-
-If you need to split a string into a list of individual command-line
-arguments suitable for @code{call-process} or @code{start-process},
-see @ref{Shell Arguments, split-string-and-unquote}.
 @end defun
 
 @defvar split-string-default-separators
@@ -901,17 +899,18 @@ Functions}).  Thus, strings are enclosed in @samp{"} characters, and
 @item %o
 @cindex integer to octal
 Replace the specification with the base-eight representation of an
-integer.
+unsigned integer.
 
 @item %d
-Replace the specification with the base-ten representation of an
+Replace the specification with the base-ten representation of a signed
 integer.
 
 @item %x
 @itemx %X
 @cindex integer to hexadecimal
 Replace the specification with the base-sixteen representation of an
-integer.  @samp{%x} uses lower case and @samp{%X} uses upper case.
+unsigned integer.  @samp{%x} uses lower case and @samp{%X} uses upper
+case.
 
 @item %c
 Replace the specification with the character which is the value given.
@@ -926,8 +925,12 @@ floating-point number.
 
 @item %g
 Replace the specification with notation for a floating-point number,
-using either exponential notation or decimal-point notation, whichever
-is shorter.
+using either exponential notation or decimal-point notation.  The
+exponential notation is used if the exponent would be less than -4 or
+greater than or equal to the precision (default: 6).  By default,
+trailing zeros are removed from the fractional portion of the result
+and a decimal-point character appears only if it is followed by a
+digit.
 
 @item %%
 Replace the specification with a single @samp{%}.  This format
@@ -1008,9 +1011,11 @@ both flags are used, @samp{+} takes precedence.
   The flag @samp{#} specifies an alternate form which depends on
 the format in use.  For @samp{%o}, it ensures that the result begins
 with a @samp{0}.  For @samp{%x} and @samp{%X}, it prefixes the result
-with @samp{0x} or @samp{0X}.  For @samp{%e}, @samp{%f}, and @samp{%g},
-the @samp{#} flag means include a decimal point even if the precision
-is zero.
+with @samp{0x} or @samp{0X}.  For @samp{%e} and @samp{%f}, the
+@samp{#} flag means include a decimal point even if the precision is
+zero.  For @samp{%g}, it always includes a decimal point, and also
+forces any trailing zeros after the decimal point to be left in place
+where they would otherwise be removed.
 
   The flag @samp{0} ensures that the padding consists of @samp{0}
 characters instead of spaces.  This flag is ignored for non-numerical
@@ -1041,10 +1046,14 @@ ignored.
   All the specification characters allow an optional @dfn{precision}
 before the character (after the width, if present).  The precision is
 a decimal-point @samp{.} followed by a digit-string.  For the
-floating-point specifications (@samp{%e}, @samp{%f}, @samp{%g}), the
-precision specifies how many decimal places to show; if zero, the
-decimal-point itself is also omitted.  For @samp{%s} and @samp{%S},
-the precision truncates the string to the given width, so @samp{%.3s}
+floating-point specifications (@samp{%e} and @samp{%f}), the
+precision specifies how many digits following the decimal point to
+show; if zero, the decimal-point itself is also omitted.  For
+@samp{%g}, the precision specifies how many significant digits to show
+(significant digits are the first digit before the decimal point and
+all the digits after it).  If the precision of %g is zero or
+unspecified, it is treated as 1.  For @samp{%s} and @samp{%S}, the
+precision truncates the string to the given width, so @samp{%.3s}
 shows only the first three characters of the representation for
 @var{object}.  For other specification characters, the effect of
 precision is what the local library functions of the @code{printf}
@@ -1165,6 +1174,33 @@ When the argument to @code{upcase-initials} is a character,
 @end group
 @end example
 @end defun
+
+  Note that case conversion is not a one-to-one mapping of codepoints
+and length of the result may differ from length of the argument.
+Furthermore, because passing a character forces return type to be
+a character, functions are unable to perform proper substitution and
+result may differ compared to treating a one-character string.  For
+example:
+
+@example
+@group
+(upcase "ﬁ")  ; note: single character, ligature "fi"
+     @result{} "FI"
+@end group
+@group
+(upcase ?ﬁ)
+     @result{} 64257  ; i.e. ?ﬁ
+@end group
+@end example
+
+  To avoid this, a character must first be converted into a string,
+using @code{string} function, before being passed to one of the casing
+functions.  Of course, no assumptions on the length of the result may
+be made.
+
+  Mapping for such special cases are taken from
+@code{special-uppercase}, @code{special-lowercase} and
+@code{special-titlecase} @xref{Character Properties}.
 
   @xref{Text Comparison}, for functions that compare strings; some of
 them ignore case differences, or can optionally ignore case differences.

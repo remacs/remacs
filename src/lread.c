@@ -593,7 +593,7 @@ read_filtered_event (bool no_switch_frame, bool ascii_required,
   /* Compute timeout.  */
   if (NUMBERP (seconds))
     {
-      double duration = extract_float (seconds);
+      double duration = XFLOATINT (seconds);
       struct timespec wait_time = dtotimespec (duration);
       end_time = timespec_add (current_timespec (), wait_time);
     }
@@ -940,11 +940,28 @@ load_error_handler (Lisp_Object data)
 static void
 load_warn_old_style_backquotes (Lisp_Object file)
 {
-  if (!NILP (Vold_style_backquotes))
+  if (!NILP (Vlread_old_style_backquotes))
     {
       AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
       CALLN (Fmessage, format, file);
     }
+}
+
+static void
+load_warn_unescaped_character_literals (Lisp_Object file)
+{
+  if (NILP (Vlread_unescaped_character_literals)) return;
+  CHECK_CONS (Vlread_unescaped_character_literals);
+  Lisp_Object format =
+    build_string ("Loading `%s': unescaped character literals %s detected!");
+  Lisp_Object separator = build_string (", ");
+  Lisp_Object inner_format = build_string ("`?%c'");
+  CALLN (Fmessage,
+         format, file,
+         Fmapconcat (list3 (Qlambda, list1 (Qchar),
+                            list3 (Qformat, inner_format, Qchar)),
+                     Fsort (Vlread_unescaped_character_literals, Qlss),
+                     separator));
 }
 
 DEFUN ("get-load-suffixes", Fget_load_suffixes, Sget_load_suffixes, 0, 0, 0,
@@ -1191,8 +1208,13 @@ Return t if the file exists and loads successfully.  */)
   version = -1;
 
   /* Check for the presence of old-style quotes and warn about them.  */
-  specbind (Qold_style_backquotes, Qnil);
+  specbind (Qlread_old_style_backquotes, Qnil);
   record_unwind_protect (load_warn_old_style_backquotes, file);
+
+  /* Check for the presence of unescaped character literals and warn
+     about them. */
+  specbind (Qlread_unescaped_character_literals, Qnil);
+  record_unwind_protect (load_warn_unescaped_character_literals, file);
 
   int is_elc;
   if ((is_elc = suffix_p (found, ".elc")) != 0
@@ -1857,7 +1879,7 @@ readevalloop (Lisp_Object readcharfun,
       /* On the first cycle, we can easily test here
 	 whether we are reading the whole buffer.  */
       if (b && first_sexp)
-	whole_buffer = (PT == BEG && ZV == Z);
+	whole_buffer = (BUF_PT (b) == BUF_BEG (b) && BUF_ZV (b) == BUF_Z (b));
 
       instream = stream;
     read_next:
@@ -1980,6 +2002,7 @@ This function preserves the position of point.  */)
   record_unwind_protect (save_excursion_restore, save_excursion_save ());
   BUF_TEMP_SET_PT (XBUFFER (buf), BUF_BEGV (XBUFFER (buf)));
   specbind (Qlexical_binding, lisp_file_lexically_bound_p (buf) ? Qt : Qnil);
+  BUF_TEMP_SET_PT (XBUFFER (buf), BUF_BEGV (XBUFFER (buf)));
   readevalloop (buf, 0, filename,
 		!NILP (printflag), unibyte, Qnil, Qnil, Qnil);
   unbind_to (count, Qnil);
@@ -2278,6 +2301,7 @@ read_escape (Lisp_Object readcharfun, bool stringp)
       c = READCHAR;
       if (c != '-')
 	error ("Invalid escape character syntax");
+      FALLTHROUGH;
     case '^':
       c = READCHAR;
       if (c == '\\')
@@ -2368,6 +2392,7 @@ read_escape (Lisp_Object readcharfun, bool stringp)
     case 'U':
       /* Post-Unicode-2.0: Up to eight hex chars.  */
       unicode_hex_count = 8;
+      FALLTHROUGH;
     case 'u':
 
       /* A Unicode escape.  We only permit them in strings and characters,
@@ -2595,8 +2620,18 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	      int param_count = 0;
 
 	      if (!EQ (head, Qhash_table))
-		error ("Invalid extended read marker at head of #s list "
-		       "(only hash-table allowed)");
+		{
+		  ptrdiff_t size = XINT (Flength (tmp));
+		  Lisp_Object record = Fmake_record (CAR_SAFE (tmp),
+						     make_number (size - 1),
+						     Qnil);
+		  for (int i = 1; i < size; i++)
+		    {
+		      tmp = Fcdr (tmp);
+		      ASET (record, i, Fcar (tmp));
+		    }
+		  return record;
+		}
 
 	      tmp = CDR_SAFE (tmp);
 
@@ -2999,7 +3034,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	   "(\`" anyway).  */
 	if (!new_backquote_flag && first_in_list && next_char == ' ')
 	  {
-	    Vold_style_backquotes = Qt;
+	    Vlread_old_style_backquotes = Qt;
 	    goto default_label;
 	  }
 	else
@@ -3053,7 +3088,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	  }
 	else
 	  {
-	    Vold_style_backquotes = Qt;
+	    Vlread_old_style_backquotes = Qt;
 	    goto default_label;
 	  }
       }
@@ -3073,6 +3108,16 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	   as there are well-established escape sequences for these.  */
 	if (c == ' ' || c == '\t')
 	  return make_number (c);
+
+	if (c == '(' || c == ')' || c == '[' || c == ']'
+            || c == '"' || c == ';')
+	  {
+            CHECK_LIST (Vlread_unescaped_character_literals);
+            Lisp_Object char_obj = make_natnum (c);
+            if (NILP (Fmemq (char_obj, Vlread_unescaped_character_literals)))
+              Vlread_unescaped_character_literals =
+                Fcons (char_obj, Vlread_unescaped_character_literals);
+	  }
 
 	if (c == '\\')
 	  c = read_escape (readcharfun, 0);
@@ -3227,11 +3272,11 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	    *pch = c;
 	    return Qnil;
 	  }
-
-	/* Otherwise, we fall through!  Note that the atom-reading loop
-	   below will now loop at least once, assuring that we will not
-	   try to UNREAD two characters in a row.  */
       }
+      /* The atom-reading loop below will now loop at least once,
+	 assuring that we will not try to UNREAD two characters in a
+	 row.  */
+      FALLTHROUGH;
     default:
     default_label:
       if (c <= 040) goto retry;
@@ -3382,8 +3427,9 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	if (BOOL_VECTOR_P (subtree))
 	  return subtree;		/* No sub-objects anyway.  */
 	else if (CHAR_TABLE_P (subtree) || SUB_CHAR_TABLE_P (subtree)
-		 || COMPILEDP (subtree) || HASH_TABLE_P (subtree))
-	  length = ASIZE (subtree) & PSEUDOVECTOR_SIZE_MASK;
+		 || COMPILEDP (subtree) || HASH_TABLE_P (subtree)
+		 || RECORDP (subtree))
+	  length = PVSIZE (subtree);
 	else if (VECTORP (subtree))
 	  length = ASIZE (subtree);
 	else
@@ -4791,10 +4837,23 @@ variables, this must be set in the first line of a file.  */);
 	       doc: /* List of buffers being read from by calls to `eval-buffer' and `eval-region'.  */);
   Veval_buffer_list = Qnil;
 
-  DEFVAR_LISP ("old-style-backquotes", Vold_style_backquotes,
-	       doc: /* Set to non-nil when `read' encounters an old-style backquote.  */);
-  Vold_style_backquotes = Qnil;
-  DEFSYM (Qold_style_backquotes, "old-style-backquotes");
+  DEFVAR_LISP ("lread--old-style-backquotes", Vlread_old_style_backquotes,
+	       doc: /* Set to non-nil when `read' encounters an old-style backquote.
+For internal use only.  */);
+  Vlread_old_style_backquotes = Qnil;
+  DEFSYM (Qlread_old_style_backquotes, "lread--old-style-backquotes");
+
+  DEFVAR_LISP ("lread--unescaped-character-literals",
+               Vlread_unescaped_character_literals,
+               doc: /* List of deprecated unescaped character literals encountered by `read'.
+For internal use only.  */);
+  Vlread_unescaped_character_literals = Qnil;
+  DEFSYM (Qlread_unescaped_character_literals,
+          "lread--unescaped-character-literals");
+
+  DEFSYM (Qlss, "<");
+  DEFSYM (Qchar, "char");
+  DEFSYM (Qformat, "format");
 
   DEFVAR_BOOL ("load-prefer-newer", load_prefer_newer,
                doc: /* Non-nil means `load' prefers the newest version of a file.

@@ -1689,7 +1689,7 @@ If point is on a group name, this function operates on that group."
 		    ;; generate a call to the column function.
 		    (ibuffer-aif (assq sym ibuffer-inline-columns)
 			(nth 1 it)
-		      `(,sym buffer mark)))
+		      `(or (,sym buffer mark) "")))
 		   ;; You're not expected to understand this.  Hell, I
 		   ;; don't even understand it, and I wrote it five
 		   ;; minutes ago.

@@ -585,7 +585,7 @@ Return a new ordered plist list containing only property names from PROPERTIES."
    nil
    (mapcar
     (lambda (property)
-      (when (plist-member criteria property)
+      (when (and (plist-member criteria property) (plist-get criteria property))
         (list property (plist-get criteria property))))
     properties)))
 
@@ -606,12 +606,10 @@ using this connection, see `connection-local-criteria-alist'."
 
 ;;;###autoload
 (defun connection-local-set-profiles (criteria &rest profiles)
-  "Add PROFILES for remote servers.
-CRITERIA is either a regular expression identifying a remote
-server, or a function with one argument IDENTIFICATION, which
-returns non-nil when a remote server shall apply PROFILE's
-variables.  If CRITERIA is nil, it always applies.
-PROFILES are the names of a connection profile (a symbol).
+  "Add PROFILES for CRITERIA.
+CRITERIA is a plist identifying a connection and the application
+using this connection, see `connection-local-criteria-alist'.
+PROFILES are the names of connection profiles (a symbol).
 
 When a connection to a remote server is opened and CRITERIA
 matches to that server, the connection-local variables from
@@ -678,7 +676,7 @@ will not be changed."
 ;;;###autoload
 (defmacro with-connection-local-profiles (profiles &rest body)
   "Apply connection-local variables according to PROFILES in current buffer.
-Execute BODY, and unwind connection local variables."
+Execute BODY, and unwind connection-local variables."
   (declare (indent 1) (debug t))
   `(let ((enable-connection-local-variables t)
          (old-buffer-local-variables (buffer-local-variables))

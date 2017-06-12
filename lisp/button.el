@@ -194,6 +194,8 @@ changes to a supertype are not reflected in its subtypes)."
 	((button--area-button-p button)
 	 (get-text-property (cdr button)
 			    prop (button--area-button-string button)))
+	((markerp button)
+	 (get-text-property button prop (marker-buffer button)))
 	(t ; Must be a text-property button.
 	 (get-text-property button prop))))
 
@@ -493,7 +495,7 @@ Returns the button found."
 	    (unless (button-get button 'skip)
 	      (setq n (1- n)))))))
     (if (null button)
-	(error (if wrap "No buttons!" "No more buttons"))
+	(user-error (if wrap "No buttons!" "No more buttons"))
       (let ((msg (and display-message (button-get button 'help-echo))))
 	(when msg
 	  (message "%s" msg)))

@@ -96,39 +96,6 @@ enum define_coding_undecided_arg_index
 extern Lisp_Object Vcoding_system_hash_table;
 
 
-/* Enumeration of coding system type.  */
-
-enum coding_system_type
-  {
-    coding_type_charset,
-    coding_type_utf_8,
-    coding_type_utf_16,
-    coding_type_iso_2022,
-    coding_type_emacs_mule,
-    coding_type_sjis,
-    coding_type_ccl,
-    coding_type_raw_text,
-    coding_type_undecided,
-    coding_type_max
-  };
-
-
-/* Enumeration of end-of-line format type.  */
-
-enum end_of_line_type
-  {
-    eol_lf,		/* Line-feed only, same as Emacs' internal
-			   format.  */
-    eol_crlf,		/* Sequence of carriage-return and
-			   line-feed.  */
-    eol_cr,		/* Carriage-return only.  */
-    eol_any,		/* Accept any of above.  Produce line-feed
-			   only.  */
-    eol_undecided,	/* This value is used to denote that the
-			   eol-type is not yet undecided.  */
-    eol_type_max
-  };
-
 /* Enumeration of index to an attribute vector of a coding system.  */
 
 enum coding_attr_index
@@ -697,6 +664,7 @@ struct coding_system
 
 /* Extern declarations.  */
 extern Lisp_Object code_conversion_save (bool, bool);
+extern bool encode_coding_utf_8 (struct coding_system *);
 extern void setup_coding_system (Lisp_Object, struct coding_system *);
 extern Lisp_Object coding_charset_list (struct coding_system *);
 extern Lisp_Object coding_system_charset_list (Lisp_Object);

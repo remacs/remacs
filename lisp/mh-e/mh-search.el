@@ -1416,7 +1416,7 @@ being the list of messages originally from that folder."
     (when cur-msg (mh-goto-msg cur-msg t t))
     (set-buffer-modified-p old-buffer-modified-flag)))
 
-(mh-require 'which-func nil t)
+(eval-and-compile (mh-require 'which-func nil t))
 
 ;; Shush compiler.
 (defvar which-func-mode)                ; < Emacs 22, XEmacs
@@ -1517,8 +1517,8 @@ construct the base name."
     (setq string (mh-replace-string "-lbrace" " "))
     (setq string (mh-replace-string "-rbrace" " "))
     (setq string (mh-replace-string "-search" " "))
-    (subst-char-in-region (point-min) (point-max) ?( ?  t)
-    (subst-char-in-region (point-min) (point-max) ?) ?  t)
+    (subst-char-in-region (point-min) (point-max) ?\( ?  t)
+    (subst-char-in-region (point-min) (point-max) ?\) ?  t)
     (subst-char-in-region (point-min) (point-max) ?- ?  t)
     (goto-char (point-min))
     (while (and (not (eobp)) (memq (char-after) '(?  ?\t ?\n ?\r ?_)))

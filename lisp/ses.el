@@ -1,4 +1,3 @@
-
 ;;; ses.el -- Simple Emacs Spreadsheet  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
@@ -2216,7 +2215,8 @@ Based on the current set of columns and `window-hscroll' position."
 		      (s (completing-read
 			  "Jump to cell: "
 			  (and ses--named-cell-hashmap
-			       (progn (maphash (lambda (key val) (push (symbol-name key) names))
+			       (progn (maphash (lambda (key _val)
+                                                 (push (symbol-name key) names))
 					       ses--named-cell-hashmap)
 				      names)))))
 		 (if
@@ -2273,15 +2273,20 @@ print area if NONARROW is nil."
 ;; (defvar maxrow)
 ;; (defvar maxcol)
 
-(defun ses-recalculate-cell ()
+(defun ses-recalculate-cell (&optional curcell)
   "Recalculate and reprint the current cell or range.
+
+If CURCELL is non nil use it as current cell or range
+without any check, otherwise function (ses-check-curcell 'range)
+is called.
 
 For an individual cell, shows the error if the formula or printer
 signals one, or otherwise shows the cell's complete value.  For a range, the
 cells are recalculated in \"natural\" order, so cells that other cells refer
 to are recalculated first."
   (interactive "*")
-  (ses-check-curcell 'range)
+  (if curcell (setq ses--curcell curcell)
+    (ses-check-curcell 'range))
   (ses-begin-change)
   (ses-initialize-Dijkstra-attempt)
   (let (sig cur-rowcol)
@@ -2334,7 +2339,7 @@ to are recalculated first."
   (let ((startcell    (ses--cell-at-pos (point)))
 	(ses--curcell (cons 'A1 (ses-cell-symbol (1- ses--numrows)
 						 (1- ses--numcols)))))
-    (ses-recalculate-cell)
+    (ses-recalculate-cell ses--curcell)
     (ses-jump-safe startcell)))
 
 (defun ses-truncate-cell ()
@@ -3023,7 +3028,7 @@ as symbols."
 		(eq (get-text-property (point) 'keymap) 'ses-mode-print-map)))
       (apply yank-fun arg args) ; Normal non-SES yank.
     (ses-check-curcell 'end)
-    (push-mark (point))
+    (push-mark)
     (let ((text (current-kill (cond
 			       ((listp arg)  0)
 			       ((eq arg '-)  -1)
@@ -3290,7 +3295,7 @@ The top row is row 1.  Selecting row 0 displays the default header row."
   (interactive)
   (ses-check-curcell 'range)
   (let ((row (car (ses-sym-rowcol (or (car-safe ses--curcell) ses--curcell)))))
-    (push-mark (point))
+    (push-mark)
     (ses-goto-print (1+ row) 0)
     (push-mark (point) nil t)
     (ses-goto-print row 0)))
@@ -3301,7 +3306,7 @@ The top row is row 1.  Selecting row 0 displays the default header row."
   (ses-check-curcell 'range)
   (let ((col (cdr (ses-sym-rowcol (or (car-safe ses--curcell) ses--curcell))))
 	(row 0))
-    (push-mark (point))
+    (push-mark)
     (ses-goto-print (1- ses--numrows) col)
     (forward-char 1)
     (push-mark (point) nil t)
@@ -3569,7 +3574,7 @@ the current definition is proposed as default value, and the
 function is redefined."
   (interactive
    (let (name def already-defined-names)
-     (maphash (lambda (key val) (push (symbol-name key) already-defined-names))
+     (maphash (lambda (key _val) (push (symbol-name key) already-defined-names))
               ses--local-printer-hashmap)
      (setq name (completing-read    "Enter printer name: " already-defined-names))
      (when (string= name "")

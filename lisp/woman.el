@@ -1159,7 +1159,7 @@ The major browsing mode used is essentially the standard Man mode.
 Choose the filename for the man page using completion, based on the
 topic selected from the directories specified in `woman-manpath' and
 `woman-path'.  The directory expansions and topics are cached for
-speed, but a non-nil interactive argument forces the caches to be
+speed.  With a prefix argument, force the caches to be
 updated (e.g. to re-interpret the current directory).
 
 Used non-interactively, arguments are optional: if given then TOPIC
@@ -4420,7 +4420,7 @@ Needs doing properly!"
       ;; A field is contained between a pair of field delimiter
       ;; characters and consists of sub-strings separated by padding
       ;; indicator characters:
-      (setq delim (string delim ?[ ?^ delim ?] ?* delim))
+      (setq delim (string delim ?\[ ?^ delim ?\] ?* delim))
       (save-excursion
 	(while (re-search-forward delim end t)
 	  (goto-char (match-beginning 0))

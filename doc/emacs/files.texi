@@ -1040,12 +1040,23 @@ useful if it contains the deleted text.  To reenable auto-saving after
 this happens, save the buffer with @kbd{C-x C-s}, or use @kbd{C-u 1 M-x
 auto-save-mode}.
 
-@vindex auto-save-visited-file-name
+@vindex auto-save-visited-mode
   If you want auto-saving to be done in the visited file rather than
-in a separate auto-save file, set the variable
-@code{auto-save-visited-file-name} to a non-@code{nil} value.  In this
-mode, there is no real difference between auto-saving and explicit
-saving.
+in a separate auto-save file, enable the global minor mode
+@code{auto-save-visited-mode}.  In this mode, auto-saving is identical
+to explicit saving.  Note that this mode is orthogonal to the
+@code{auto-save} mode described above; you can enable both at the same
+time.  However, if @code{auto-save} mode is active in some buffer and
+the obsolete @code{auto-save-visited-file-name} variable is set to a
+non-@code{nil} value, that buffer won't be affected by
+@code{auto-save-visited-mode}.
+
+  You can use the variable @code{auto-save-visited-interval} to
+customize the interval between auto-save operations in
+@code{auto-save-visited-mode}; by default it's five seconds.
+@code{auto-save-interval} and @code{auto-save-timeout} have no effect
+on @code{auto-save-visited-mode}.  @xref{Auto Save Control}, for
+details on these variables.
 
 @vindex delete-auto-save-files
   A buffer's auto-save file is deleted when you save the buffer in its
@@ -1088,6 +1099,12 @@ Auto-saving during idle periods accomplishes two things: first, it
 makes sure all your work is saved if you go away from the terminal for
 a while; second, it may avoid some auto-saving while you are actually
 typing.
+
+@vindex auto-save-visited-interval
+  When @code{auto-save-visited-mode} is enabled, Emacs will auto-save
+file-visiting buffers after five seconds of idle time.  You can
+customize the variable @code{auto-save-visited-interval} to change the
+idle time interval.
 
   Emacs also does auto-saving whenever it gets a fatal error.  This
 includes killing the Emacs job with a shell command such as @samp{kill
@@ -1776,9 +1793,7 @@ syntax:
 
 @example
 @group
-/@var{host}:@var{filename}
-/@var{user}@@@var{host}:@var{filename}
-/@var{user}@@@var{host}#@var{port}:@var{filename}
+/@var{method}:@var{host}:@var{filename}
 /@var{method}:@var{user}@@@var{host}:@var{filename}
 /@var{method}:@var{user}@@@var{host}#@var{port}:@var{filename}
 @end group
@@ -1787,11 +1802,11 @@ syntax:
 @noindent
 To carry out this request, Emacs uses a remote-login program such as
 @command{ftp}, @command{ssh}, @command{rlogin}, or @command{telnet}.
-You can always specify in the file name which method to use---for
+You must always specify in the file name which method to use---for
 example, @file{/ftp:@var{user}@@@var{host}:@var{filename}} uses FTP,
 whereas @file{/ssh:@var{user}@@@var{host}:@var{filename}} uses
-@command{ssh}.  When you don't specify a method in the file name,
-Emacs chooses the method as follows:
+@command{ssh}.  When you specify the pseudo method @var{-} in the file
+name, Emacs chooses the method as follows:
 
 @enumerate
 @item
@@ -1883,7 +1898,7 @@ can refer to that file in Emacs as @samp{/:/foo:/bar}.
 
   If you want to quote only special characters in the local part of a
 remote file name, you can quote just the local part.
-@samp{/baz:/:/foo:/bar} refers to the file @file{bar} of directory
+@samp{/ssh:baz:/:/foo:/bar} refers to the file @file{bar} of directory
 @file{/foo:} on the host @file{baz}.
 
   @samp{/:} can also prevent @samp{~} from being treated as a special

@@ -1252,3 +1252,60 @@ commands
   end
   continue
 end
+
+
+# Put the Python code at the end of .gdbinit so that if GDB does not
+# support Python, GDB will do all the above initializations before
+# reporting an error.
+
+python
+
+# Omit pretty-printing in older (pre-7.3) GDBs that lack it.
+if hasattr(gdb, 'printing'):
+
+  class Emacs_Pretty_Printers (gdb.printing.RegexpCollectionPrettyPrinter):
+    """A collection of pretty-printers.  This is like GDB's
+       RegexpCollectionPrettyPrinter except when printing Lisp_Object."""
+    def __call__ (self, val):
+      """Look up the pretty-printer for the provided value."""
+      type = val.type.unqualified ()
+      typename = type.tag or type.name
+      basic_type = gdb.types.get_basic_type (type)
+      basic_typename = basic_type.tag or basic_type.name
+      for printer in self.subprinters:
+        if (printer.enabled
+            and ((printer.regexp == '^Lisp_Object$'
+                  and typename == 'Lisp_Object')
+                 or (basic_typename
+                     and printer.compiled_re.search (basic_typename)))):
+          return printer.gen_printer (val)
+      return None
+
+  class Lisp_Object_Printer:
+    "A printer for Lisp_Object values."
+    def __init__ (self, val):
+      self.val = val
+
+    def to_string (self):
+      "Yield a string that can be fed back into GDB."
+      val = self.val
+      basic_type = gdb.types.get_basic_type (val.type)
+      if (basic_type.code == gdb.TYPE_CODE_STRUCT
+          and gdb.types.has_field (basic_type, "i")):
+        val = val["i"]
+      # Yield "XIL(N)", where N is a C integer.  This helps humans
+      # distinguish Lisp_Object values from ordinary integers even
+      # when Lisp_Object is an integer.  Perhaps some day the
+      # pretty-printing could be fancier.
+      if not val:
+        return "XIL(0)" # Easier to read than "XIL(0x0)".
+      return "XIL(0x%x)" % int(val)
+
+  def build_pretty_printer ():
+    pp = Emacs_Pretty_Printers ("Emacs")
+    pp.add_printer ('Lisp_Object', '^Lisp_Object$', Lisp_Object_Printer)
+    return pp
+
+  gdb.printing.register_pretty_printer (gdb.current_objfile (),
+                                        build_pretty_printer (), True)
+end

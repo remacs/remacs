@@ -191,23 +191,21 @@ This variable has an effect only when the value of
 This regexp will be surrounded with \\\\( ... \\\\) when actually used.
 
 Set this variable to \"\\\\sw\" if you want ordinary words or
-\"\\\\sw\\\\|\\\\s_\" if you want symbols (including characters whose
-syntax is \"symbol\" as well as those whose syntax is \"word\".
+\"\\\\sw\\\\|\\\\s_\" if you want symbols (including characters
+whose syntax is \"symbol\" as well as those whose syntax is
+\"word\").  The abbreviation is from point to the start of the
+previous sequence of characters matching this variable.
 
-The value nil has a special meaning: the abbreviation is from point to
-previous word-start, but the search is for symbols.
+The default value of nil is equivalent to \"\\\\sw\\\\|\\\\s_\".
 
-For instance, if you are programming in Lisp, `yes-or-no-p' is a symbol,
-while `yes', `or', `no' and `p' are considered words.  If this
-variable is nil, then expanding `yes-or-no-' looks for a symbol
-starting with or containing `no-'.  If you set this variable to
-\"\\\\sw\\\\|\\\\s_\", that expansion looks for a symbol starting with
-`yes-or-no-'.  Finally, if you set this variable to \"\\\\sw\", then
-expanding `yes-or-no-' signals an error because `-' is not part of a word;
-but expanding `yes-or-no' looks for a word starting with `no'.
-
-The recommended value is nil, which will make dabbrev default to
-using \"\\\\sw\\\\|\\\\s_\"."
+For instance, suppose the current buffer is in `c-mode'.  If this
+variable is nil or \"\\\\sw\\\\|\\\\s_\", then expanding
+`debug_print_in_' looks for a symbol starting with
+`debug_print_in_'.  If you set this variable to \"\\\\sw\", that
+expansion looks for a word prefixed with `in_' (e.g., it would
+match `in_range', but not `in_close_range').  If expanding
+`debug_print_in' it would look for a word starting with
+`in' (e.g. `integer')."
   :type '(choice (const nil)
 		 regexp)
   :group 'dabbrev)

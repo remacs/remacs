@@ -157,12 +157,12 @@ it's header arguments."
 (defun org-babel-prep-session:C (session params)
   "This function does nothing as C is a compiled language with no
 support for sessions"
-  (error "C is a compiled languages -- no support for sessions"))
+  (error "C is a compiled language -- no support for sessions"))
 
 (defun org-babel-load-session:C (session body params)
   "This function does nothing as C is a compiled language with no
 support for sessions"
-  (error "C is a compiled languages -- no support for sessions"))
+  (error "C is a compiled language -- no support for sessions"))
 
 ;; helper functions
 

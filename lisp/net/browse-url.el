@@ -45,7 +45,7 @@
 ;; browse-url-generic                 arbitrary
 ;; browse-url-default-windows-browser MS-Windows browser
 ;; browse-url-default-macosx-browser  macOS browser
-;; browse-url-xdg-open                Free Desktop xdg-open on Gnome, KDE, Xfce4, LXDE
+;; browse-url-xdg-open                freedesktop.org xdg-open
 ;; browse-url-kde                     KDE konqueror (kfm)
 ;; browse-url-elinks                  Elinks      Don't know (tried with 0.12.GIT)
 
@@ -878,7 +878,7 @@ The optional NEW-WINDOW argument is not used."
 	   (error "Browsing URLs is not supported on this system")))
 	((eq system-type 'cygwin)
 	 (call-process "cygstart" nil nil nil url))
-	(t (w32-shell-execute "open" url))))
+	(t (w32-shell-execute "open" (url-unhex-string url)))))
 
 (defun browse-url-default-macosx-browser (url &optional _new-window)
   "Invoke the macOS system's default Web browser.
@@ -944,36 +944,14 @@ instead of `browse-url-new-window-flag'."
 
 (defun browse-url-can-use-xdg-open ()
   "Return non-nil if the \"xdg-open\" program can be used.
-xdg-open is a desktop utility that calls your preferred web browser.
-This requires you to be running either Gnome, KDE, Xfce4 or LXDE."
-  (and (getenv "DISPLAY")
-       (executable-find "xdg-open")
-       ;; xdg-open may call gnome-open and that does not wait for its child
-       ;; to finish.  This child may then be killed when the parent dies.
-       ;; Use nohup to work around.  See bug#7166, bug#8917, bug#9779 and
-       ;; http://lists.gnu.org/archive/html/emacs-devel/2009-07/msg00279.html
-       (executable-find "nohup")
-       (or (getenv "GNOME_DESKTOP_SESSION_ID")
-	   ;; GNOME_DESKTOP_SESSION_ID is deprecated, check on Dbus also.
-	   (condition-case nil
-	       (eq 0 (call-process
-		      "dbus-send" nil nil nil
-				  "--dest=org.gnome.SessionManager"
-				  "--print-reply"
-				  "/org/gnome/SessionManager"
-				  "org.gnome.SessionManager.CanShutdown"))
-	     (error nil))
-	   (equal (getenv "KDE_FULL_SESSION") "true")
-	   (condition-case nil
-	       (eq 0 (call-process
-		      "/bin/sh" nil nil nil
-		      "-c"
-		      ;; FIXME use string-match rather than grep.
-		      "xprop -root _DT_SAVE_MODE|grep xfce4"))
-	     (error nil))
-	   (member (getenv "DESKTOP_SESSION") '("LXDE" "Lubuntu"))
-	   (equal (getenv "XDG_CURRENT_DESKTOP") "LXDE"))))
-
+xdg-open is a desktop utility that calls your preferred web browser."
+  ;; The exact set of situations where xdg-open works is complicated,
+  ;; and it would be a pain to duplicate xdg-open's situation-specific
+  ;; code here, as the code is a moving target.  So assume that
+  ;; xdg-open will work if there is a graphical display; this should
+  ;; be good enough for platforms Emacs is likely to be running on.
+  (and (or (getenv "DISPLAY") (getenv "WAYLAND_DISPLAY"))
+       (executable-find "xdg-open")))
 
 ;;;###autoload
 (defun browse-url-xdg-open (url &optional ignored)

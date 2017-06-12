@@ -22,7 +22,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(eval-when-compile (require 'cl))
 
 (ert-deftest fns-tests-reverse ()
   (should-error (reverse))

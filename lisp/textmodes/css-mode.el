@@ -33,6 +33,8 @@
 ;;; Code:
 
 (require 'eww)
+(require 'cl-lib)
+(require 'color)
 (require 'seq)
 (require 'sgml-mode)
 (require 'smie)
@@ -43,11 +45,13 @@
   :group 'languages)
 
 (defconst css-pseudo-class-ids
-  '("active" "checked" "disabled" "empty" "enabled" "first"
-    "first-child" "first-of-type" "focus" "hover" "indeterminate" "lang"
-    "last-child" "last-of-type" "left" "link" "not" "nth-child"
-    "nth-last-child" "nth-last-of-type" "nth-of-type" "only-child"
-    "only-of-type" "right" "root" "target" "visited")
+  '("active" "checked" "default" "disabled" "empty" "enabled" "first"
+    "first-child" "first-of-type" "focus" "focus-within" "hover"
+    "in-range" "indeterminate" "invalid" "lang" "last-child"
+    "last-of-type" "left" "link" "not" "nth-child" "nth-last-child"
+    "nth-last-of-type" "nth-of-type" "only-child" "only-of-type"
+    "optional" "out-of-range" "read-only" "read-write" "required"
+    "right" "root" "scope" "target" "valid" "visited")
   "Identifiers for pseudo-classes.")
 
 (defconst css-pseudo-element-ids
@@ -121,7 +125,10 @@
      "table-column" "table-cell" "table-caption" "none"
      ;; CSS Flexible Box Layout Module Level 1
      ;; (https://www.w3.org/TR/css3-flexbox/#valdef-display-flex)
-     "flex" "inline-flex")
+     "flex" "inline-flex"
+     ;; CSS Grid Layout Module Level 1
+     ;; (https://www.w3.org/TR/css-grid-1/#grid-containers)
+     "grid" "inline-grid" "subgrid")
     ("elevation" angle "below" "level" "above" "higher" "lower")
     ("empty-cells" "show" "hide")
     ("float" "left" "right" "none")
@@ -269,6 +276,29 @@
     ;; (http://www.w3.org/TR/css3-color/#property)
     ("color" color)
     ("opacity" alphavalue)
+
+    ;; CSS Grid Layout Module Level 1
+    ;; (https://www.w3.org/TR/css-grid-1/#property-index)
+    ("grid" grid-template grid-template-rows "auto-flow" "dense"
+     grid-auto-columns grid-auto-rows grid-template-columns)
+    ("grid-area" grid-line)
+    ("grid-auto-columns" track-size)
+    ("grid-auto-flow" "row" "column" "dense")
+    ("grid-auto-rows" track-size)
+    ("grid-column" grid-line)
+    ("grid-column-end" grid-line)
+    ("grid-column-gap" length-percentage)
+    ("grid-column-start" grid-line)
+    ("grid-gap" grid-row-gap grid-column-gap)
+    ("grid-row" grid-line)
+    ("grid-row-end" grid-line)
+    ("grid-row-gap" length-percentage)
+    ("grid-row-start" grid-line)
+    ("grid-template" "none" grid-template-rows grid-template-columns
+     line-names string track-size line-names explicit-track-list)
+    ("grid-template-areas" "none" string)
+    ("grid-template-columns" "none" track-list auto-track-list)
+    ("grid-template-rows" "none" track-list auto-track-list)
 
     ;; CSS Flexible Box Layout Module Level 1
     ;; (http://www.w3.org/TR/css-flexbox-1/#property-index)
@@ -440,7 +470,11 @@
     ("filter" "none" filter-function-list)
     ("flood-color" color)
     ("flood-opacity" number percentage)
-    ("lighting-color" color))
+    ("lighting-color" color)
+
+    ;; Pointer Events
+    ;; (https://www.w3.org/TR/pointerevents/#the-touch-action-css-property)
+    ("touch-action" "auto" "none" "pan-x" "pan-y" "manipulation"))
   "Identifiers for properties and their possible values.
 The CAR of each entry is the name of a property, while the CDR is
 a list of possible values for that property.  String values in
@@ -455,14 +489,165 @@ further value candidates, since that list would be infinite.")
   (mapcar #'car css-property-alist)
   "Identifiers for properties.")
 
+(defconst css--color-map
+  '(("black" . "#000000")
+    ("silver" . "#c0c0c0")
+    ("gray" . "#808080")
+    ("white" . "#ffffff")
+    ("maroon" . "#800000")
+    ("red" . "#ff0000")
+    ("purple" . "#800080")
+    ("fuchsia" . "#ff00ff")
+    ("green" . "#008000")
+    ("lime" . "#00ff00")
+    ("olive" . "#808000")
+    ("yellow" . "#ffff00")
+    ("navy" . "#000080")
+    ("blue" . "#0000ff")
+    ("teal" . "#008080")
+    ("aqua" . "#00ffff")
+    ("orange" . "#ffa500")
+    ("aliceblue" . "#f0f8ff")
+    ("antiquewhite" . "#faebd7")
+    ("aquamarine" . "#7fffd4")
+    ("azure" . "#f0ffff")
+    ("beige" . "#f5f5dc")
+    ("bisque" . "#ffe4c4")
+    ("blanchedalmond" . "#ffebcd")
+    ("blueviolet" . "#8a2be2")
+    ("brown" . "#a52a2a")
+    ("burlywood" . "#deb887")
+    ("cadetblue" . "#5f9ea0")
+    ("chartreuse" . "#7fff00")
+    ("chocolate" . "#d2691e")
+    ("coral" . "#ff7f50")
+    ("cornflowerblue" . "#6495ed")
+    ("cornsilk" . "#fff8dc")
+    ("crimson" . "#dc143c")
+    ("darkblue" . "#00008b")
+    ("darkcyan" . "#008b8b")
+    ("darkgoldenrod" . "#b8860b")
+    ("darkgray" . "#a9a9a9")
+    ("darkgreen" . "#006400")
+    ("darkgrey" . "#a9a9a9")
+    ("darkkhaki" . "#bdb76b")
+    ("darkmagenta" . "#8b008b")
+    ("darkolivegreen" . "#556b2f")
+    ("darkorange" . "#ff8c00")
+    ("darkorchid" . "#9932cc")
+    ("darkred" . "#8b0000")
+    ("darksalmon" . "#e9967a")
+    ("darkseagreen" . "#8fbc8f")
+    ("darkslateblue" . "#483d8b")
+    ("darkslategray" . "#2f4f4f")
+    ("darkslategrey" . "#2f4f4f")
+    ("darkturquoise" . "#00ced1")
+    ("darkviolet" . "#9400d3")
+    ("deeppink" . "#ff1493")
+    ("deepskyblue" . "#00bfff")
+    ("dimgray" . "#696969")
+    ("dimgrey" . "#696969")
+    ("dodgerblue" . "#1e90ff")
+    ("firebrick" . "#b22222")
+    ("floralwhite" . "#fffaf0")
+    ("forestgreen" . "#228b22")
+    ("gainsboro" . "#dcdcdc")
+    ("ghostwhite" . "#f8f8ff")
+    ("gold" . "#ffd700")
+    ("goldenrod" . "#daa520")
+    ("greenyellow" . "#adff2f")
+    ("grey" . "#808080")
+    ("honeydew" . "#f0fff0")
+    ("hotpink" . "#ff69b4")
+    ("indianred" . "#cd5c5c")
+    ("indigo" . "#4b0082")
+    ("ivory" . "#fffff0")
+    ("khaki" . "#f0e68c")
+    ("lavender" . "#e6e6fa")
+    ("lavenderblush" . "#fff0f5")
+    ("lawngreen" . "#7cfc00")
+    ("lemonchiffon" . "#fffacd")
+    ("lightblue" . "#add8e6")
+    ("lightcoral" . "#f08080")
+    ("lightcyan" . "#e0ffff")
+    ("lightgoldenrodyellow" . "#fafad2")
+    ("lightgray" . "#d3d3d3")
+    ("lightgreen" . "#90ee90")
+    ("lightgrey" . "#d3d3d3")
+    ("lightpink" . "#ffb6c1")
+    ("lightsalmon" . "#ffa07a")
+    ("lightseagreen" . "#20b2aa")
+    ("lightskyblue" . "#87cefa")
+    ("lightslategray" . "#778899")
+    ("lightslategrey" . "#778899")
+    ("lightsteelblue" . "#b0c4de")
+    ("lightyellow" . "#ffffe0")
+    ("limegreen" . "#32cd32")
+    ("linen" . "#faf0e6")
+    ("mediumaquamarine" . "#66cdaa")
+    ("mediumblue" . "#0000cd")
+    ("mediumorchid" . "#ba55d3")
+    ("mediumpurple" . "#9370db")
+    ("mediumseagreen" . "#3cb371")
+    ("mediumslateblue" . "#7b68ee")
+    ("mediumspringgreen" . "#00fa9a")
+    ("mediumturquoise" . "#48d1cc")
+    ("mediumvioletred" . "#c71585")
+    ("midnightblue" . "#191970")
+    ("mintcream" . "#f5fffa")
+    ("mistyrose" . "#ffe4e1")
+    ("moccasin" . "#ffe4b5")
+    ("navajowhite" . "#ffdead")
+    ("oldlace" . "#fdf5e6")
+    ("olivedrab" . "#6b8e23")
+    ("orangered" . "#ff4500")
+    ("orchid" . "#da70d6")
+    ("palegoldenrod" . "#eee8aa")
+    ("palegreen" . "#98fb98")
+    ("paleturquoise" . "#afeeee")
+    ("palevioletred" . "#db7093")
+    ("papayawhip" . "#ffefd5")
+    ("peachpuff" . "#ffdab9")
+    ("peru" . "#cd853f")
+    ("pink" . "#ffc0cb")
+    ("plum" . "#dda0dd")
+    ("powderblue" . "#b0e0e6")
+    ("rosybrown" . "#bc8f8f")
+    ("royalblue" . "#4169e1")
+    ("saddlebrown" . "#8b4513")
+    ("salmon" . "#fa8072")
+    ("sandybrown" . "#f4a460")
+    ("seagreen" . "#2e8b57")
+    ("seashell" . "#fff5ee")
+    ("sienna" . "#a0522d")
+    ("skyblue" . "#87ceeb")
+    ("slateblue" . "#6a5acd")
+    ("slategray" . "#708090")
+    ("slategrey" . "#708090")
+    ("snow" . "#fffafa")
+    ("springgreen" . "#00ff7f")
+    ("steelblue" . "#4682b4")
+    ("tan" . "#d2b48c")
+    ("thistle" . "#d8bfd8")
+    ("tomato" . "#ff6347")
+    ("turquoise" . "#40e0d0")
+    ("violet" . "#ee82ee")
+    ("wheat" . "#f5deb3")
+    ("whitesmoke" . "#f5f5f5")
+    ("yellowgreen" . "#9acd32")
+    ("rebeccapurple" . "#663399"))
+  "Map CSS named colors to their hex RGB value.")
+
 (defconst css-value-class-alist
-  '((absolute-size
+  `((absolute-size
      "xx-small" "x-small" "small" "medium" "large" "x-large"
      "xx-large")
     (alphavalue number)
     (angle "calc()")
     (animateable-feature "scroll-position" "contents" custom-ident)
     (attachment "scroll" "fixed" "local")
+    (auto-repeat "repeat()")
+    (auto-track-list line-names fixed-size fixed-repeat auto-repeat)
     (bg-image image "none")
     (bg-layer bg-image position repeat-style attachment box)
     (bg-size length percentage "auto" "cover" "contain")
@@ -478,6 +663,7 @@ further value candidates, since that list would be infinite.")
     (east-asian-variant-values
      "jis78" "jis83" "jis90" "jis04" "simplified" "traditional")
     (east-asian-width-values "full-width" "proportional-width")
+    (explicit-track-list line-names track-size)
     (family-name "Courier" "Helvetica" "Times")
     (feature-tag-value string integer "on" "off")
     (filter-function
@@ -487,6 +673,9 @@ further value candidates, since that list would be infinite.")
     (filter-function-list filter-function uri)
     (final-bg-layer
      bg-image position repeat-style attachment box color)
+    (fixed-breadth length-percentage)
+    (fixed-repeat "repeat()")
+    (fixed-size fixed-breadth "minmax()")
     (font-variant-css21 "normal" "small-caps")
     (frequency "calc()")
     (generic-family
@@ -495,49 +684,24 @@ further value candidates, since that list would be infinite.")
     (gradient
      linear-gradient radial-gradient repeating-linear-gradient
      repeating-radial-gradient)
+    (grid-line "auto" custom-ident integer "span")
     (historical-lig-values
      "historical-ligatures" "no-historical-ligatures")
     (image uri image-list element-reference gradient)
     (image-list "image()")
+    (inflexible-breadth length-percentage "min-content" "max-content"
+                        "auto")
     (integer "calc()")
     (length "calc()" number)
     (line-height "normal" number length percentage)
+    (line-names custom-ident)
     (line-style
      "none" "hidden" "dotted" "dashed" "solid" "double" "groove"
      "ridge" "inset" "outset")
     (line-width length "thin" "medium" "thick")
     (linear-gradient "linear-gradient()")
     (margin-width "auto" length percentage)
-    (named-color
-     "aliceblue" "antiquewhite" "aqua" "aquamarine" "azure" "beige"
-     "bisque" "black" "blanchedalmond" "blue" "blueviolet" "brown"
-     "burlywood" "cadetblue" "chartreuse" "chocolate" "coral"
-     "cornflowerblue" "cornsilk" "crimson" "cyan" "darkblue"
-     "darkcyan" "darkgoldenrod" "darkgray" "darkgreen" "darkkhaki"
-     "darkmagenta" "darkolivegreen" "darkorange" "darkorchid"
-     "darkred" "darksalmon" "darkseagreen" "darkslateblue"
-     "darkslategray" "darkturquoise" "darkviolet" "deeppink"
-     "deepskyblue" "dimgray" "dodgerblue" "firebrick" "floralwhite"
-     "forestgreen" "fuchsia" "gainsboro" "ghostwhite" "gold"
-     "goldenrod" "gray" "green" "greenyellow" "honeydew" "hotpink"
-     "indianred" "indigo" "ivory" "khaki" "lavender" "lavenderblush"
-     "lawngreen" "lemonchiffon" "lightblue" "lightcoral" "lightcyan"
-     "lightgoldenrodyellow" "lightgray" "lightgreen" "lightpink"
-     "lightsalmon" "lightseagreen" "lightskyblue" "lightslategray"
-     "lightsteelblue" "lightyellow" "lime" "limegreen" "linen"
-     "magenta" "maroon" "mediumaquamarine" "mediumblue" "mediumorchid"
-     "mediumpurple" "mediumseagreen" "mediumslateblue"
-     "mediumspringgreen" "mediumturquoise" "mediumvioletred"
-     "midnightblue" "mintcream" "mistyrose" "moccasin" "navajowhite"
-     "navy" "oldlace" "olive" "olivedrab" "orange" "orangered"
-     "orchid" "palegoldenrod" "palegreen" "paleturquoise"
-     "palevioletred" "papayawhip" "peachpuff" "peru" "pink" "plum"
-     "powderblue" "purple" "rebeccapurple" "red" "rosybrown"
-     "royalblue" "saddlebrown" "salmon" "sandybrown" "seagreen"
-     "seashell" "sienna" "silver" "skyblue" "slateblue" "slategray"
-     "snow" "springgreen" "steelblue" "tan" "teal" "thistle" "tomato"
-     "turquoise" "violet" "wheat" "white" "whitesmoke" "yellow"
-     "yellowgreen")
+    (named-color . ,(mapcar #'car css--color-map))
     (number "calc()")
     (numeric-figure-values "lining-nums" "oldstyle-nums")
     (numeric-fraction-values "diagonal-fractions" "stacked-fractions")
@@ -570,6 +734,11 @@ further value candidates, since that list would be infinite.")
     (specific-voice identifier)
     (target-name string)
     (time "calc()")
+    (track-breadth length-percentage flex "min-content" "max-content"
+                   "auto")
+    (track-list line-names track-size track-repeat)
+    (track-repeat "repeat()")
+    (track-size track-breadth "minmax()" "fit-content()")
     (transform-list
      "matrix()" "translate()" "translateX()" "translateY()" "scale()"
      "scaleX()" "scaleY()" "rotate()" "skew()" "skewX()" "skewY()"
@@ -588,8 +757,8 @@ other entries in this list, not to properties.
 
 The following classes have been left out above because they
 cannot be completed sensibly: `custom-ident',
-`element-reference', `id', `identifier', `percentage', and
-`string'.")
+`element-reference', `flex', `id', `identifier',
+`length-percentage', `percentage', and `string'.")
 
 (defcustom css-electric-keys '(?\} ?\;) ;; '()
   "Self inserting keys which should trigger re-indentation."
@@ -616,11 +785,23 @@ cannot be completed sensibly: `custom-ident',
     (modify-syntax-entry ?\[ "(]" st)
     (modify-syntax-entry ?\] ")[" st)
     ;; Special chars that sometimes come at the beginning of words.
-    (modify-syntax-entry ?@ "'" st)
-    ;; (modify-syntax-entry ?: "'" st)
-    (modify-syntax-entry ?# "'" st)
+    ;; We'll treat them as symbol constituents.
+    (modify-syntax-entry ?@ "_" st)
+    (modify-syntax-entry ?# "_" st)
+    (modify-syntax-entry ?. "_" st)
     ;; Distinction between words and symbols.
     (modify-syntax-entry ?- "_" st)
+
+    (modify-syntax-entry ?! "." st)
+    (modify-syntax-entry ?$ "." st)
+    (modify-syntax-entry ?% "." st)
+    (modify-syntax-entry ?& "." st)
+    (modify-syntax-entry ?+ "." st)
+    (modify-syntax-entry ?, "." st)
+    (modify-syntax-entry ?< "." st)
+    (modify-syntax-entry ?> "." st)
+    (modify-syntax-entry ?= "." st)
+    (modify-syntax-entry ?? "." st)
     st))
 
 (defvar css-mode-map
@@ -686,7 +867,7 @@ cannot be completed sensibly: `custom-ident',
        (if (not sassy)
            ;; We don't allow / as first char, so as not to
            ;; take a comment as the beginning of a selector.
-           "[^@/:{}() \t\n][^:{}()]+"
+           "[^@/:{}() \t\n][^:{}()]*"
          ;; Same as for non-sassy except we do want to allow { and }
          ;; chars in selectors in the case of #{$foo}
          ;; variable interpolation!
@@ -734,6 +915,217 @@ cannot be completed sensibly: `custom-ident',
 
 (defvar css-font-lock-defaults
   '(css-font-lock-keywords nil t))
+
+(defconst css--number-regexp
+  "\\(\\(?:[0-9]*\\.[0-9]+\\(?:[eE][0-9]+\\)?\\)\\|[0-9]+\\)"
+  "A regular expression matching a CSS number.")
+
+(defconst css--percent-regexp "\\([0-9]+\\)%"
+  "A regular expression matching a CSS percentage.")
+
+(defconst css--number-or-percent-regexp
+  (concat "\\(?:" css--percent-regexp "\\)\\|\\(?:" css--number-regexp "\\)")
+  "A regular expression matching a CSS number or a CSS percentage.")
+
+(defconst css--angle-regexp
+  (concat css--number-regexp
+	  (regexp-opt '("deg" "grad" "rad" "turn") t)
+	  "?")
+  "A regular expression matching a CSS angle.")
+
+(defun css--color-skip-blanks ()
+  "Skip blanks and comments."
+  (while (forward-comment 1)))
+
+(cl-defun css--rgb-color ()
+  "Parse a CSS rgb() or rgba() color.
+Point should be just after the open paren.
+Returns a hex RGB color, or nil if the color could not be recognized.
+This recognizes CSS-color-4 extensions."
+  (let ((result '())
+	(iter 0))
+    (while (< iter 4)
+      (css--color-skip-blanks)
+      (unless (looking-at css--number-or-percent-regexp)
+	(cl-return-from css--rgb-color nil))
+      (let* ((is-percent (match-beginning 1))
+	     (str (match-string (if is-percent 1 2)))
+	     (number (string-to-number str)))
+	(when is-percent
+	  (setq number (* 255 (/ number 100.0))))
+        ;; Don't push the alpha.
+        (when (< iter 3)
+          (push (min (max 0 (truncate number)) 255) result))
+	(goto-char (match-end 0))
+	(css--color-skip-blanks)
+	(cl-incf iter)
+	;; Accept a superset of the CSS syntax since I'm feeling lazy.
+	(when (and (= (skip-chars-forward ",/") 0)
+		   (= iter 3))
+	  ;; The alpha is optional.
+	  (cl-incf iter))
+	(css--color-skip-blanks)))
+    (when (looking-at ")")
+      (forward-char)
+      (apply #'format "#%02x%02x%02x" (nreverse result)))))
+
+(cl-defun css--hsl-color ()
+  "Parse a CSS hsl() or hsla() color.
+Point should be just after the open paren.
+Returns a hex RGB color, or nil if the color could not be recognized.
+This recognizes CSS-color-4 extensions."
+  (let ((result '()))
+    ;; First parse the hue.
+    (css--color-skip-blanks)
+    (unless (looking-at css--angle-regexp)
+      (cl-return-from css--hsl-color nil))
+    (let ((hue (string-to-number (match-string 1)))
+	  (unit (match-string 2)))
+      (goto-char (match-end 0))
+      ;; Note that here "turn" is just passed through.
+      (cond
+       ((or (not unit) (equal unit "deg"))
+	;; Degrees.
+	(setq hue (/ hue 360.0)))
+       ((equal unit "grad")
+	(setq hue (/ hue 400.0)))
+       ((equal unit "rad")
+	(setq hue (/ hue (* 2 float-pi)))))
+      (push (mod hue 1.0) result))
+    (dotimes (_ 2)
+      (skip-chars-forward ",")
+      (css--color-skip-blanks)
+      (unless (looking-at css--percent-regexp)
+        (cl-return-from css--hsl-color nil))
+      (let ((number (string-to-number (match-string 1))))
+        (setq number (/ number 100.0))
+        (push (min (max number 0.0) 1.0) result)
+        (goto-char (match-end 0))
+        (css--color-skip-blanks)))
+    (css--color-skip-blanks)
+    ;; Accept a superset of the CSS syntax since I'm feeling lazy.
+    (when (> (skip-chars-forward ",/") 0)
+      (css--color-skip-blanks)
+      (unless (looking-at css--number-or-percent-regexp)
+        (cl-return-from css--hsl-color nil))
+      (goto-char (match-end 0))
+      (css--color-skip-blanks))
+    (when (looking-at ")")
+      (forward-char)
+      (apply #'color-rgb-to-hex
+	     (nconc (apply #'color-hsl-to-rgb (nreverse result)) '(2))))))
+
+(defconst css--colors-regexp
+  (concat
+   ;; Named colors.
+   (regexp-opt (mapcar #'car css--color-map) 'symbols)
+   "\\|"
+   ;; Short hex.  css-color-4 adds alpha.
+   "\\(#[0-9a-fA-F]\\{3,4\\}\\b\\)"
+   "\\|"
+   ;; Long hex.  css-color-4 adds alpha.
+   "\\(#\\(?:[0-9a-fA-F][0-9a-fA-F]\\)\\{3,4\\}\\b\\)"
+   "\\|"
+   ;; RGB.
+   "\\(\\_<rgba?(\\)"
+   "\\|"
+   ;; HSL.
+   "\\(\\_<hsla?(\\)")
+  "A regular expression that matches the start of a CSS color.")
+
+(defun css--hex-color (str)
+  "Convert a CSS hex color to an Emacs hex color.
+STR is the incoming CSS hex color.
+This function simply drops any transparency."
+  ;; Either #RGB or #RRGGBB, drop the "A" or "AA".
+  (if (> (length str) 4)
+      (substring str 0 7)
+    (substring str 0 4)))
+
+(defun css--named-color (start-point str)
+  "Check whether STR, seen at point, is CSS named color.
+Returns STR if it is a valid color.  Special care is taken
+to exclude some SCSS constructs."
+  (when-let ((color (assoc str css--color-map)))
+    (save-excursion
+      (goto-char start-point)
+      (forward-comment (- (point)))
+      (skip-chars-backward "@[:alpha:]")
+      (unless (looking-at-p "@\\(mixin\\|include\\)")
+        (cdr color)))))
+
+(defun css--compute-color (start-point match)
+  "Return the CSS color at point.
+Point should be just after the start of a CSS color, as recognized
+by `css--colors-regexp'.  START-POINT is the start of the color,
+and MATCH is the string matched by the regexp.
+
+This function will either return the color, as a hex RGB string;
+or `nil' if no color could be recognized.  When this function
+returns, point will be at the end of the recognized color."
+  (cond
+   ((eq (aref match 0) ?#)
+    (css--hex-color match))
+   ((member match '("rgb(" "rgba("))
+    (css--rgb-color))
+   ((member match '("hsl(" "hsla("))
+    (css--hsl-color))
+   ;; Evaluate to the color if the name is found.
+   ((css--named-color start-point match))))
+
+(defun css--contrasty-color (name)
+  "Return a color that contrasts with NAME.
+NAME is of any form accepted by `color-distance'.
+The returned color will be usable by Emacs and will contrast
+with NAME; in particular so that if NAME is used as a background
+color, the returned color can be used as the foreground and still
+be readable."
+  ;; See bug#25525 for a discussion of this.
+  (if (> (color-distance name "black") 292485)
+      "black" "white"))
+
+(defcustom css-fontify-colors t
+  "Whether CSS colors should be fontified using the color as the background.
+When non-`nil', a text representing CSS color will be fontified
+such that its background is the color itself.  E.g., #ff0000 will
+be fontified with a red background."
+  :version "26.1"
+  :group 'css
+  :type 'boolean
+  :safe 'booleanp)
+
+(defun css--fontify-region (start end &optional loudly)
+  "Fontify a CSS buffer between START and END.
+START and END are buffer positions."
+  (let ((extended-region (font-lock-default-fontify-region start end loudly)))
+    (when css-fontify-colors
+      (when (and (consp extended-region)
+		 (eq (car extended-region) 'jit-lock-bounds))
+	(setq start (cadr extended-region))
+	(setq end (cddr extended-region)))
+      (save-excursion
+	(let ((case-fold-search t))
+	  (goto-char start)
+	  (while (re-search-forward css--colors-regexp end t)
+	    ;; Skip comments and strings.
+	    (unless (nth 8 (syntax-ppss))
+	      (let* ((start (match-beginning 0))
+                     (color (css--compute-color start (match-string 0))))
+		(when color
+		  (with-silent-modifications
+		    ;; Use the color as the background, to make it more
+		    ;; clear.  Use a contrasting color as the foreground,
+		    ;; to make it readable.  Finally, have a small box
+		    ;; using the existing foreground color, to make sure
+		    ;; it stands out a bit from any other text; in
+		    ;; particular this is nice when the color matches the
+		    ;; buffer's background color.
+		    (add-text-properties
+		     start (point)
+		     (list 'face (list :background color
+				       :foreground (css--contrasty-color color)
+				       :box '(:line-width -1))))))))))))
+    extended-region))
 
 (defcustom css-indent-offset 4
   "Basic size of one indentation step."
@@ -958,7 +1350,8 @@ a list of completions."
 (defun css-completion-at-point ()
   "Complete current symbol at point.
 Currently supports completion of CSS properties, property values,
-pseudo-elements, pseudo-classes, at-rules, and bang-rules."
+pseudo-elements, pseudo-classes, at-rules, bang-rules, and HTML
+tags, classes and IDs."
   (or (css--complete-bang-rule)
       (css--complete-property-value)
       (css--complete-pseudo-element-or-class)
@@ -985,7 +1378,22 @@ pseudo-elements, pseudo-classes, at-rules, and bang-rules."
 
 ;;;###autoload
 (define-derived-mode css-mode prog-mode "CSS"
-  "Major mode to edit Cascading Style Sheets."
+  "Major mode to edit Cascading Style Sheets (CSS).
+\\<css-mode-map>
+This mode provides syntax highlighting, indentation, completion,
+and documentation lookup for CSS.
+
+Use `\\[complete-symbol]' to complete CSS properties, property values,
+pseudo-elements, pseudo-classes, at-rules, bang-rules, and HTML
+tags, classes and IDs.  Completion candidates for HTML class
+names and IDs are found by looking through open HTML mode
+buffers.
+
+Use `\\[info-lookup-symbol]' to look up documentation of CSS properties, at-rules,
+pseudo-classes, and pseudo-elements on the Mozilla Developer
+Network (MDN).
+
+\\{css-mode-map}"
   (setq-local font-lock-defaults css-font-lock-defaults)
   (setq-local comment-start "/*")
   (setq-local comment-start-skip "/\\*+[ \t]*")
@@ -1001,6 +1409,7 @@ pseudo-elements, pseudo-classes, at-rules, and bang-rules."
               :backward-token #'css-smie--backward-token)
   (setq-local electric-indent-chars
               (append css-electric-keys electric-indent-chars))
+  (setq-local font-lock-fontify-region-function #'css--fontify-region)
   (add-hook 'completion-at-point-functions
             #'css-completion-at-point nil 'local))
 
@@ -1113,7 +1522,8 @@ pseudo-elements, pseudo-classes, at-rules, and bang-rules."
     (modify-syntax-entry ?/ ". 124" st)
     (modify-syntax-entry ?\n ">" st)
     ;; Variable names are prefixed by $.
-    (modify-syntax-entry ?$ "'" st)
+    (modify-syntax-entry ?$ "_" st)
+    (modify-syntax-entry ?% "_" st)
     st))
 
 (defun scss-font-lock-keywords ()

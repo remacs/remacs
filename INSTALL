@@ -258,12 +258,23 @@ inconvenient for Emacs when running as daemon or running via a remote
 ssh connection.  In order to completely prevent the use of D-Bus, configure
 Emacs with the options '--without-dbus --without-gconf --without-gsettings'.
 
+To read email via a network protocol like IMAP or POP, you can
+configure Emacs with the option '--with-mailutils', so that it always
+uses the GNU Mailutils 'movemail' program to retrieve mail.  Otherwise
+the Emacs build procedure builds and installs an auxiliary 'movemail'
+program, a limited and insecure substitute that Emacs can use when
+Mailutils is not installed; when this happens, there are several
+configure options such as --without-pop that provide fine-grained
+control over Emacs 'movemail' construction.
+
 The Emacs mail reader RMAIL is configured to be able to read mail from
 a POP3 server by default.  Versions of the POP protocol older than
-POP3 are not supported.  For Kerberos-authenticated POP add
-'--with-kerberos', for Hesiod support add '--with-hesiod'.  While POP3
-is always enabled, whether Emacs actually uses POP is controlled by
-individual users--see the Rmail chapter of the Emacs manual.
+POP3 are not supported.  While POP3 support is typically enabled,
+whether Emacs actually uses POP3 is controlled by individual users;
+see the Rmail chapter of the Emacs manual.  Unless you configure
+--with-mailutils, it is a good idea to configure --without-pop so that
+users are less likely to inadvertently read email via insecure
+channels.
 
 For image support you may have to download, build, and install the
 appropriate image support libraries for image types other than XBM and
@@ -537,7 +548,8 @@ information on this.
 Emacs info files.
 
 8) If your system uses lock files to interlock access to mailer inbox files,
-then you might need to make the movemail program setuid or setgid
+and if you did not configure --with-mailutils, then you might need to
+make the Emacs-specific 'movemail' program setuid or setgid in order
 to enable it to write the lock files.  We believe this is safe.
 
 9) You are done!  You can remove executables and object files from

@@ -1767,7 +1767,7 @@ Function used by the command @kbd{#c<move>} to spell.
 @item viper-glob-function
 The value of this variable is the function symbol used to expand wildcard
 symbols. This is platform-dependent. The default tries to set this variable
-to work with most shells, MS Windows, OS/2, etc. However, if it
+to work with most shells, MS Windows, etc.  However, if it
 doesn't work the way you expect, you should write your own.
 Use @code{viper-glob-unix-files} and @code{viper-glob-mswindows-files} in
 @file{viper-util.el} as examples.

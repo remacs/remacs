@@ -447,9 +447,9 @@ struct x_display_info
   /* Atoms dealing with EWMH (i.e. _NET_...) */
   Atom Xatom_net_wm_state, Xatom_net_wm_state_fullscreen,
     Xatom_net_wm_state_maximized_horz, Xatom_net_wm_state_maximized_vert,
-    Xatom_net_wm_state_sticky, Xatom_net_wm_state_hidden,
-    Xatom_net_frame_extents,
-    Xatom_net_current_desktop, Xatom_net_workarea;
+    Xatom_net_wm_state_sticky, Xatom_net_wm_state_above, Xatom_net_wm_state_below,
+    Xatom_net_wm_state_hidden, Xatom_net_wm_state_skip_taskbar,
+    Xatom_net_frame_extents, Xatom_net_current_desktop, Xatom_net_workarea;
 
   /* XSettings atoms and windows.  */
   Atom Xatom_xsettings_sel, Xatom_xsettings_prop, Xatom_xsettings_mgr;
@@ -1168,6 +1168,8 @@ x_mutable_colormap (Visual *visual)
 }
 
 extern void x_set_sticky (struct frame *, Lisp_Object, Lisp_Object);
+extern void x_set_skip_taskbar (struct frame *, Lisp_Object, Lisp_Object);
+extern void x_set_z_group (struct frame *, Lisp_Object, Lisp_Object);
 extern bool x_wm_supports (struct frame *, Atom);
 extern void x_wait_for_event (struct frame *, int);
 extern void x_clear_under_internal_border (struct frame *f);

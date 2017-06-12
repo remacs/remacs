@@ -362,7 +362,8 @@ This variable is buffer-local."
    " +\\)"
    "\\(?:" (regexp-opt password-word-equivalents) "\\|Response\\)"
    "\\(?:\\(?:, try\\)? *again\\| (empty for no passphrase)\\| (again)\\)?"
-   "\\(?: for .+\\)?[:：៖]\\s *\\'")
+   ;; "[[:alpha:]]" used to be "for", which fails to match non-English.
+   "\\(?: [[:alpha:]]+ .+\\)?[:：៖]\\s *\\'")
   "Regexp matching prompts for passwords in the inferior process.
 This is used by `comint-watch-for-password-prompt'."
   :version "26.1"
@@ -387,8 +388,7 @@ See also `completion-at-point'.
 
 This is a good thing to set in mode hooks.")
 
-(defvar comint-input-filter
-  (function (lambda (str) (not (string-match "\\`\\s *\\'" str))))
+(defvar comint-input-filter #'comint-nonblank-p
   "Predicate for filtering additions to input history.
 Takes one argument, the input.  If non-nil, the input may be saved on the input
 history list.  Default is to save anything that isn't all whitespace.")
@@ -856,6 +856,10 @@ series of processes in the same Comint buffer.  The hook
     (if changed
 	(set-process-coding-system proc decoding encoding))
     proc))
+
+(defun comint-nonblank-p (str)
+  "Return non-nil if STR contains non-whitespace syntax."
+  (not (string-match "\\`\\s *\\'" str)))
 
 (defun comint-insert-input (event)
   "In a Comint buffer, set the current input to the previous input at point.

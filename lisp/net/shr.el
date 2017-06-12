@@ -30,10 +30,10 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (eval-when-compile (require 'url))      ;For url-filename's setf handler.
 (require 'browse-url)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 (require 'dom)
 (require 'seq)
 (require 'svg)
@@ -933,17 +933,19 @@ If EXTERNAL, browse the URL using `shr-external-browser'."
 	(let ((data (shr-parse-image-data)))
 	  (with-current-buffer buffer
 	    (save-excursion
-	      (let ((alt (buffer-substring start end))
-		    (properties (text-properties-at start))
-		    (inhibit-read-only t))
-		(delete-region start end)
-		(goto-char start)
-		(funcall shr-put-image-function data alt flags)
-		(while properties
-		  (let ((type (pop properties))
-			(value (pop properties)))
-		    (unless (memq type '(display image-size))
-		      (put-text-property start (point) type value))))))))))
+	      (save-restriction
+		(widen)
+		(let ((alt (buffer-substring start end))
+		      (properties (text-properties-at start))
+		      (inhibit-read-only t))
+		  (delete-region start end)
+		  (goto-char start)
+		  (funcall shr-put-image-function data alt flags)
+		  (while properties
+		    (let ((type (pop properties))
+			  (value (pop properties)))
+		      (unless (memq type '(display image-size))
+			(put-text-property start (point) type value)))))))))))
     (kill-buffer image-buffer)))
 
 (defun shr-image-from-data (data)
@@ -1788,14 +1790,14 @@ The preference is a float determined from `shr-prefer-media-type'."
 	 (elems (or (dom-attr dom 'shr-suggested-widths)
 		    (shr-make-table dom suggested-widths nil
 				    'shr-suggested-widths)))
-	 (sketch (loop for line in elems
-		       collect (mapcar #'car line)))
-	 (natural (loop for line in elems
-			collect (mapcar #'cdr line)))
+	 (sketch (cl-loop for line in elems
+		          collect (mapcar #'car line)))
+	 (natural (cl-loop for line in elems
+			   collect (mapcar #'cdr line)))
 	 (sketch-widths (shr-table-widths sketch natural suggested-widths)))
     ;; This probably won't work very well.
-    (when (> (+ (loop for width across sketch-widths
-		      summing (1+ width))
+    (when (> (+ (cl-loop for width across sketch-widths
+		         summing (1+ width))
 		shr-indentation shr-table-separator-pixel-width)
 	     (frame-width))
       (setq truncate-lines t))
@@ -2228,6 +2230,9 @@ flags that control whether to collect or render objects."
     (if (get-buffer-window)
 	(car (window-text-pixel-size nil (point-min) (point-max)))
       (save-window-excursion
+        ;; Avoid errors if the selected window is a dedicated one,
+        ;; and they just want to insert a document into it.
+        (set-window-dedicated-p nil nil)
 	(set-window-buffer nil (current-buffer))
 	(car (window-text-pixel-size nil (point-min) (point-max)))))))
 
@@ -2271,6 +2276,9 @@ flags that control whether to collect or render objects."
 	    (shr-indentation 0))
 	(shr-descend dom))
       (save-window-excursion
+        ;; Avoid errors if the selected window is a dedicated one,
+        ;; and they just want to insert a document into it.
+        (set-window-dedicated-p nil nil)
 	(set-window-buffer nil (current-buffer))
 	(unless fill
 	  (setq natural-width
@@ -2307,13 +2315,14 @@ flags that control whether to collect or render objects."
 (defun shr-dom-max-natural-width (dom max)
   (if (eq (dom-tag dom) 'table)
       (max max (or
-		(loop for line in (dom-attr dom 'shr-suggested-widths)
-		      maximize (+
-				shr-table-separator-length
-				(loop for elem in line
-				      summing
-				      (+ (cdr elem)
-					 (* 2 shr-table-separator-length)))))
+		(cl-loop
+                 for line in (dom-attr dom 'shr-suggested-widths)
+		 maximize (+
+			   shr-table-separator-length
+			   (cl-loop for elem in line
+				    summing
+				    (+ (cdr elem)
+				       (* 2 shr-table-separator-length)))))
 		0))
     (dolist (child (dom-children dom))
       (unless (stringp child)

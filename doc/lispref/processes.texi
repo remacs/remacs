@@ -299,8 +299,11 @@ system, much like text written into a file.  @xref{Coding Systems}.
 @defun call-process program &optional infile destination display &rest args
 This function calls @var{program} and waits for it to finish.
 
-The current working directory of the subprocess is
-@code{default-directory}.
+The current working directory of the subprocess is set to the current
+buffer's value of @code{default-directory} if that is local (as
+determined by @code{unhandled-file-name-directory}), or "~" otherwise.
+If you want to run a process in a remote directory use
+@code{process-file}.
 
 The standard input for the new process comes from file @var{infile} if
 @var{infile} is not @code{nil}, and from the null device otherwise.
@@ -678,6 +681,12 @@ created with @code{make-pipe-process}, described below.
 
 The original argument list, modified with the actual connection
 information, is available via the @code{process-contact} function.
+
+The current working directory of the subprocess is set to the current
+buffer's value of @code{default-directory} if that is local (as
+determined by `unhandled-file-name-directory'), or "~" otherwise.  If
+you want to run a process in a remote directory use
+@code{start-file-process}.
 @end defun
 
 @defun make-pipe-process &rest args
@@ -3333,90 +3342,34 @@ dotted notation.
 @node Bindat Examples
 @subsection Examples of Byte Unpacking and Packing
 @c FIXME?  This seems a very long example for something that is not used
-@c very often.  As of 24.1, gdb-mi.el is the only user of bindat.el in Emacs.
+@c very often.  As of 25.2, gdb-mi.el is the only user of bindat.el in Emacs.
 @c Maybe one or both of these examples should just be moved to the
 @c commentary of bindat.el.
 
-  Here is a complete example of byte unpacking and packing:
+  Here are two complete examples that use bindat.el.
+The first shows simple byte packing:
 
 @lisp
 (require 'bindat)
 
-(defvar fcookie-index-spec
-  '((:version  u32)
-    (:count    u32)
-    (:longest  u32)
-    (:shortest u32)
-    (:flags    u32)
-    (:delim    u8)
-    (:ignored  fill 3)
-    (:offset   repeat (:count) (:foo u32)))
-  "Description of a fortune cookie index file's contents.")
+(defun rfc868-payload ()
+  (bindat-pack
+   '((now-hi u16)
+     (now-lo u16))
+   ;; Emacs uses Unix epoch, while RFC868 epoch
+   ;; is 1900-01-01 00:00:00, which is 2208988800
+   ;; (or #x83aa7e80) seconds more.
+   (let ((now (time-add nil '(#x83aa #x7e80))))
+     `((now-hi . ,(car now))
+       (now-lo . ,(cadr now))))))
 
-(defun fcookie (cookies &optional index)
-  "Display a random fortune cookie from file COOKIES.
-Optional second arg INDEX specifies the associated index
-filename, by default \"COOKIES.dat\".  Display cookie text
-in buffer \"*Fortune Cookie: BASENAME*\", where BASENAME
-is COOKIES without the directory part."
-  (interactive "fCookies file: ")
-  (let* ((info (with-temp-buffer
-                 (insert-file-contents-literally
-                  (or index (concat cookies ".dat")))
-                 (bindat-unpack fcookie-index-spec
-                                (buffer-string))))
-         (sel (random (bindat-get-field info :count)))
-         (beg (cdar (bindat-get-field info :offset sel)))
-         (end (or (cdar (bindat-get-field info
-                                          :offset (1+ sel)))
-                  (nth 7 (file-attributes cookies)))))
-    (switch-to-buffer
-     (get-buffer-create
-      (format "*Fortune Cookie: %s*"
-              (file-name-nondirectory cookies))))
-    (erase-buffer)
-    (insert-file-contents-literally
-     cookies nil beg (- end 3))))
-
-(defun fcookie-create-index (cookies &optional index delim)
-  "Scan file COOKIES, and write out its index file.
-Optional arg INDEX specifies the index filename, which by
-default is \"COOKIES.dat\".  Optional arg DELIM specifies the
-unibyte character that, when found on a line of its own in
-COOKIES, indicates the border between entries."
-  (interactive "fCookies file: ")
-  (setq delim (or delim ?%))
-  (let ((delim-line (format "\n%c\n" delim))
-        (count 0)
-        (max 0)
-        min p q len offsets)
-    (unless (= 3 (string-bytes delim-line))
-      (error "Delimiter cannot be represented in one byte"))
-    (with-temp-buffer
-      (insert-file-contents-literally cookies)
-      (while (and (setq p (point))
-                  (search-forward delim-line (point-max) t)
-                  (setq len (- (point) 3 p)))
-        (setq count (1+ count)
-              max (max max len)
-              min (min (or min max) len)
-              offsets (cons (1- p) offsets))))
-    (with-temp-buffer
-      (set-buffer-multibyte nil)
-      (insert
-       (bindat-pack
-        fcookie-index-spec
-        `((:version . 2)
-          (:count . ,count)
-          (:longest . ,max)
-          (:shortest . ,min)
-          (:flags . 0)
-          (:delim . ,delim)
-          (:offset . ,(mapcar (lambda (o)
-                                (list (cons :foo o)))
-                              (nreverse offsets))))))
-      (let ((coding-system-for-write 'raw-text-unix))
-        (write-file (or index (concat cookies ".dat")))))))
+(let ((s (rfc868-payload)))
+  (list (multibyte-string-p s)
+        (mapconcat (lambda (byte)
+                     (format "%02x" byte))
+                   s " ")
+        (current-time-string)))
+     @result{} (nil "dc 6d 17 01" "Fri Mar 10 13:13:53 2017")
 @end lisp
 
 The following is an example of defining and unpacking a complex

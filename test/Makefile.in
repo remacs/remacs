@@ -33,6 +33,7 @@ SHELL = @SHELL@
 srcdir = @srcdir@
 VPATH = $(srcdir)
 
+FIND_DELETE = @FIND_DELETE@
 MKDIR_P = @MKDIR_P@
 
 SEPCHAR = @SEPCHAR@
@@ -62,7 +63,8 @@ TEST_LOCALE = C
 
 # The actual Emacs command run in the targets below.
 # Prevent any setting of EMACSLOADPATH in user environment causing problems.
-emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) EMACS_TEST_DIRECTORY=$(srcdir) \
+emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) \
+ EMACS_TEST_DIRECTORY=$(abspath $(srcdir)) \
  $(GDB) "$(EMACS)" $(EMACSOPT)
 
 .PHONY: all check
@@ -123,14 +125,21 @@ endif
 	$(emacs) -l ert -l $$loadfile \
 	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
-ELFILES = $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
-		-path "*resources" -prune -o -name "*el" -print)
-## .elc files may be in a different directory for out of source builds
-ELCFILES = $(patsubst %.el,%.elc, \
-		$(patsubst $(srcdir)%,.%,$(ELFILES)))
-LOGFILES = $(patsubst %.elc,%.log,${ELCFILES})
-LOGSAVEFILES  = $(patsubst %.elc,%.log~,${ELCFILES})
-TESTS = $(subst ${srcdir}/,,$(LOGFILES:.log=))
+ifeq (@HAVE_MODULES@, yes)
+maybe_exclude_module_tests :=
+else
+maybe_exclude_module_tests := -name emacs-module-tests.el -prune -o
+endif
+
+ELFILES := $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
+		-path "${srcdir}/data" -prune -o \
+		-name "*resources" -prune -o \
+		${maybe_exclude_module_tests} \
+		-name "*.el" -print)
+## .log files may be in a different directory for out of source builds
+LOGFILES := $(patsubst %.el,%.log, \
+		$(patsubst $(srcdir)/%,%,$(ELFILES)))
+TESTS := $(LOGFILES:.log=)
 
 ## If we have to interrupt a hanging test, preserve the log so we can
 ## see what the problem was.
@@ -138,18 +147,36 @@ TESTS = $(subst ${srcdir}/,,$(LOGFILES:.log=))
 
 .PHONY: ${TESTS}
 
-## The short aliases that always re-run the tests, with no logging.
-## Define an alias both with and without the directory name for ease
-## of use.
 define test_template
-$(1):
-	@test ! -f ./$(1).log || mv ./$(1).log ./$(1).log~
-	@${MAKE} ./$(1).log WRITE_LOG=
+  ## A test FOO-tests depends on the source file with the similar
+  ## name, unless FOO itself contains the string '-tests/'.
+  ## The similar name is FOO.c if FOO begins with 'src/', FOO.el
+  ## otherwise.  Although this heuristic does not identify all the
+  ## dependencies, it is better than nothing.
+  ifeq (,$(patsubst %-tests,,$(1))$(findstring -tests/,$(1)))
+    $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1))$(if \
+					$(patsubst src/%,,$(1)),.el,.c)
+  endif
 
-$(notdir $(1)): $(1)
+  ## Short aliases that always re-run the tests, with no logging.
+  ## Define both with and without the directory name for ease of use.
+  .PHONY: $(1) $(notdir $(1))
+  $(1):
+	@test ! -f $(1).log || mv $(1).log $(1).log~
+	@$(MAKE) $(1).log WRITE_LOG=
+  $(notdir $(1)): $(1)
 endef
 
 $(foreach test,${TESTS},$(eval $(call test_template,${test})))
+
+ifeq (@HAVE_MODULES@, yes)
+test_module_dir := $(srcdir)/data/emacs-module
+test_module_name := mod-test@MODULES_SUFFIX@
+test_module := $(test_module_dir)/$(test_module_name)
+$(srcdir)/src/emacs-module-tests.log: $(test_module)
+$(test_module): $(srcdir)/../src/emacs-module.[ch]
+	$(MAKE) -C $(test_module_dir) $(test_module_name) SO=@MODULES_SUFFIX@
+endif
 
 ## Check that there is no 'automated' subdirectory, which would
 ## indicate an incomplete merge from an older version of Emacs where
@@ -158,11 +185,6 @@ $(foreach test,${TESTS},$(eval $(call test_template,${test})))
 check-no-automated-subdir:
 	test ! -d $(srcdir)/automated
 
-## Include dependencies between test files and the files they test.
-## We could do this without the file and eval directly, but then we
-## would have to run Emacs for every make invocation, and it might not
-## be available during clean.
--include make-test-deps.mk
 ## Rerun all default tests.
 check: mostlyclean check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_ACTUAL}"
@@ -174,9 +196,7 @@ check-expensive: mostlyclean check-no-automated-subdir
 
 ## Re-run all tests which are outdated. A test is outdated if its
 ## logfile is out-of-date with either the test file, or the source
-## files that the tests depend on. The source file dependencies are
-## determined by a heuristic and does not identify the full dependency
-## graph. See make-test-deps.emacs-lisp for details.
+## files that the tests depend on.  See test_template.
 .PHONY: check-maybe
 check-maybe: check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_ACTUAL}"
@@ -184,7 +204,7 @@ check-maybe: check-no-automated-subdir
 ## Run the tests.
 .PHONY: check-doit
 check-doit: ${LOGFILES}
-	$(emacs) -l ert -f ert-summarize-tests-batch-and-exit $^
+	@$(emacs) -l ert -f ert-summarize-tests-batch-and-exit $^
 
 .PHONY: mostlyclean clean bootstrap-clean distclean maintainer-clean
 
@@ -193,21 +213,12 @@ mostlyclean:
 	rm -f *.tmp
 
 clean:
-	-rm -f ${LOGFILES} ${LOGSAVEFILES}
-	-rm make-test-deps.mk
+	find . '(' -name '*.log' -o -name '*.log~' ')' $(FIND_DELETE)
 
 bootstrap-clean: clean
-	-rm -f ${ELCFILES}
+	find $(srcdir) -name '*.elc' $(FIND_DELETE)
 
 distclean: clean
 	rm -f Makefile
 
 maintainer-clean: distclean bootstrap-clean
-
-make-test-deps.mk: $(ELFILES) make-test-deps.emacs-lisp
-	$(EMACS) --batch -l $(srcdir)/make-test-deps.emacs-lisp \
-	--eval "(make-test-deps \"$(srcdir)\")" \
-	2> $@.tmp
-	# Hack to elide any CANNOT_DUMP=yes chatter.
-	sed '/\.log: /!d' $@.tmp >$@
-	rm -f $@.tmp

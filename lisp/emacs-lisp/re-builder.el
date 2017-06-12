@@ -488,10 +488,10 @@ If the optional PAUSE is non-nil then pause at the end in any case."
 Optional argument SYNTAX must be specified if called non-interactively."
   (interactive
    (list (intern
-	  (completing-read "Select syntax: "
-			   (mapcar (lambda (el) (cons (symbol-name el) 1))
-				   '(read string sregex rx))
-			   nil t (symbol-name reb-re-syntax)))))
+	  (completing-read
+	   (format "Select syntax (default %s): " reb-re-syntax)
+	   '(read string sregex rx)
+	   nil t nil nil (symbol-name reb-re-syntax)))))
 
   (if (memq syntax '(read string sregex rx))
       (let ((buffer (get-buffer reb-buffer)))

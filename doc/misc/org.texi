@@ -15090,7 +15090,7 @@ A directory on a remote machine can be specified using tramp file syntax, in
 which case the code will be evaluated on the remote machine.  An example is
 
 @example
-#+BEGIN_SRC R :file plot.png :dir /dand@@yakuba.princeton.edu:
+#+BEGIN_SRC R :file plot.png :dir /scp:dand@@yakuba.princeton.edu:
 plot(1:10, main=system("hostname", intern=TRUE))
 #+END_SRC
 @end example
@@ -15327,14 +15327,9 @@ inheritance}).}.
    |sed '1d' \
  #+END_SRC
 
- ** sort by the percent full
+ ** output mount point of fullest disk
  #+BEGIN_SRC sh
-   |awk '@{print $5 " " $6@}'|sort -n |tail -1 \
- #+END_SRC
-
- ** extract the mount point
- #+BEGIN_SRC sh
-   |awk '@{print $2@}'
+   |awk '@{if (u < +$5) @{u = +$5; m = $6@}@} END @{print m@}'
  #+END_SRC
 @end example
 

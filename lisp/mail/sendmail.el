@@ -555,8 +555,9 @@ This also saves the value of `send-mail-function' via Customize."
 	    (goto-char (point-min))
 	    (display-buffer (current-buffer))
 	    (let ((completion-ignore-case t))
-	      (completing-read "Send mail via: "
-			       options nil 'require-match)))))
+              (completing-read
+               (format "Send mail via (default %s): " (caar options))
+               options nil 'require-match nil nil (car options))))))
     (customize-save-variable 'send-mail-function
 			     (cdr (assoc-string choice options t)))))
 
@@ -1676,7 +1677,7 @@ and don't delete any header fields."
 	      ;; Call yank function, and set the mark if it doesn't.
 	      (apply (car original) (cdr original))
 	      (if (eq omark (mark t))
-		  (push-mark (point))))
+		  (push-mark)))
 	  ;; If the original message is in another window in the same
 	  ;; frame, delete that window to save space.
 	  (delete-windows-on original t)

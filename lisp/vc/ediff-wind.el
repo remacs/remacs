@@ -115,6 +115,8 @@ provided functions are written."
 (ediff-defvar-local ediff-window-B nil "")
 ;; Official window for buffer C
 (ediff-defvar-local ediff-window-C nil "")
+;; Official window for buffer Ancestor
+(ediff-defvar-local ediff-window-Ancestor nil "")
 ;; Ediff's window configuration.
 ;; Used to minimize the need to rearrange windows.
 (ediff-defvar-local ediff-window-config-saved "" "")
@@ -126,7 +128,8 @@ provided functions are written."
     (B . ediff-window-B)
     (?B . ediff-window-B)
     (C . ediff-window-C)
-    (?C . ediff-window-C)))
+    (?C . ediff-window-C)
+    (Ancestor . ediff-window-Ancestor)))
 
 
 (defcustom ediff-split-window-function 'split-window-vertically
@@ -363,9 +366,13 @@ into icons, regardless of the window manager."
   ;; skip dedicated and unsplittable frames
   (ediff-destroy-control-frame control-buffer)
   (let ((window-min-height 1)
+	(with-Ancestor-p (ediff-with-current-buffer control-buffer
+                           ediff-merge-with-ancestor-job))
 	split-window-function
 	merge-window-share merge-window-lines
-	wind-A wind-B wind-C)
+	(buf-Ancestor (ediff-with-current-buffer control-buffer
+                        ediff-ancestor-buffer))
+	wind-A wind-B wind-C wind-Ancestor)
     (ediff-with-current-buffer control-buffer
       (setq merge-window-share ediff-merge-window-share
 	    ;; this lets us have local versions of ediff-split-window-function
@@ -394,6 +401,14 @@ into icons, regardless of the window manager."
     (setq wind-C (selected-window))
     (switch-to-buffer buf-C)
 
+    (when (and ediff-show-ancestor with-Ancestor-p)
+      (select-window wind-C)
+      (funcall split-window-function)
+      (when (eq (selected-window) wind-C)
+        (other-window 1))
+      (switch-to-buffer buf-Ancestor)
+      (setq wind-Ancestor (selected-window)))
+
     (select-window wind-A)
     (funcall split-window-function)
 
@@ -405,7 +420,8 @@ into icons, regardless of the window manager."
     (ediff-with-current-buffer control-buffer
       (setq ediff-window-A wind-A
 	    ediff-window-B wind-B
-	    ediff-window-C wind-C))
+	    ediff-window-C wind-C
+            ediff-window-Ancestor wind-Ancestor))
 
     (ediff-select-lowest-window)
     (ediff-setup-control-buffer control-buffer)
@@ -516,9 +532,13 @@ into icons, regardless of the window manager."
 	 (wind-A (ediff-get-visible-buffer-window buf-A))
 	 (wind-B (ediff-get-visible-buffer-window buf-B))
 	 (wind-C (ediff-get-visible-buffer-window buf-C))
+	 (buf-Ancestor (ediff-with-current-buffer control-buf
+                         ediff-ancestor-buffer))
+	 (wind-Ancestor (ediff-get-visible-buffer-window buf-Ancestor))
 	 (frame-A (if wind-A (window-frame wind-A)))
 	 (frame-B (if wind-B (window-frame wind-B)))
 	 (frame-C (if wind-C (window-frame wind-C)))
+	 (frame-Ancestor (if wind-Ancestor (window-frame wind-Ancestor)))
 	 ;; on wide display, do things in one frame
 	 (force-one-frame
 	  (ediff-with-current-buffer control-buf ediff-wide-display-p))
@@ -549,14 +569,17 @@ into icons, regardless of the window manager."
 	 (merge-window-share (ediff-with-current-buffer control-buf
 			       ediff-merge-window-share))
 	 merge-window-lines
-	 designated-minibuffer-frame
+	 designated-minibuffer-frame ; ediff-merge-with-ancestor-job
+     (with-Ancestor-p (ediff-with-current-buffer control-buf
+                        ediff-merge-with-ancestor-job))
+     (done-Ancestor (not with-Ancestor-p))
 	 done-A done-B done-C)
 
     ;; buf-A on its own
     (if (and (window-live-p wind-A)
 	     (null use-same-frame) ; implies wind-A is suitable
 	     (null use-same-frame-for-AB))
-	(progn ; bug A on its own
+	(progn ; buf A on its own
 	  ;; buffer buf-A is seen in live wind-A
 	  (select-window wind-A)
 	  (delete-other-windows)
@@ -585,6 +608,19 @@ into icons, regardless of the window manager."
 	  (setq wind-C (selected-window))
 	  (setq done-C t)))
 
+    ;; buf-Ancestor on its own
+    (if (and ediff-show-ancestor
+             with-Ancestor-p
+             (window-live-p wind-Ancestor)
+             (ediff-window-ok-for-display wind-Ancestor)
+             (null use-same-frame)) ; buf Ancestor on its own
+        (progn
+          ;; buffer buf-Ancestor is seen in live wind-Ancestor
+          (select-window wind-Ancestor)
+          (delete-other-windows)
+          (setq wind-Ancestor (selected-window))
+          (setq done-Ancestor t)))
+
     (if (and use-same-frame-for-AB  ; implies wind A and B are suitable
 	     (window-live-p wind-A))
 	(progn
@@ -606,6 +642,7 @@ into icons, regardless of the window manager."
 	(let ((window-min-height 1))
 	  (if (and (eq frame-A frame-B)
 		   (eq frame-B frame-C)
+		   (eq frame-C frame-Ancestor)
 		   (frame-live-p frame-A))
 	      (select-frame frame-A)
 	    ;; avoid dedicated and non-splittable windows
@@ -623,6 +660,14 @@ into icons, regardless of the window manager."
 	  (setq wind-C (selected-window))
 	  (switch-to-buffer buf-C)
 
+      (when (and ediff-show-ancestor with-Ancestor-p)
+        (select-window wind-C)
+        (funcall split-window-function)
+        (if (eq (selected-window) wind-C)
+            (other-window 1))
+        (switch-to-buffer buf-Ancestor)
+        (setq wind-Ancestor (selected-window)))
+
 	  (select-window wind-A)
 
 	  (funcall split-window-function)
@@ -633,8 +678,8 @@ into icons, regardless of the window manager."
 
 	  (setq done-A t
 		done-B t
-		done-C t)
-	  ))
+		done-C t
+        done-Ancestor t)))
 
     (or done-A  ; Buf A to be set in its own frame,
 	      ;;; or it was set before because use-same-frame = 1
@@ -668,17 +713,28 @@ into icons, regardless of the window manager."
 	  (setq wind-C (selected-window))
 	  ))
 
+    (or done-Ancestor  ; Buf Ancestor to be set in its own frame,
+        (not ediff-show-ancestor)
+	      ;;; or it was set before because use-same-frame = 1
+        (progn
+          ;; Buf-Ancestor was not set up yet as it wasn't visible
+          ;; and use-same-frame = nil
+          (select-window orig-wind)
+          (delete-other-windows)
+          (switch-to-buffer buf-Ancestor)
+          (setq wind-Ancestor (selected-window))))
+
     (ediff-with-current-buffer control-buf
       (setq ediff-window-A wind-A
 	    ediff-window-B wind-B
-	    ediff-window-C wind-C)
+	    ediff-window-C wind-C
+            ediff-window-Ancestor wind-Ancestor)
       (setq frame-A (window-frame ediff-window-A)
 	    designated-minibuffer-frame
 	    (window-frame (minibuffer-window frame-A))))
 
     (ediff-setup-control-frame control-buf designated-minibuffer-frame)
     ))
-
 
 ;; Window setup for all comparison jobs, including 3way comparisons
 (defun ediff-setup-windows-multiframe-compare (buf-A buf-B buf-C control-buf)
@@ -1128,7 +1184,7 @@ The frame to be resized is kept in `ediff-wide-display-frame'.
 This function modifies only the left margin and the width of the display.
 It assumes that it is called from within the control buffer."
   (if (not (fboundp 'ediff-display-pixel-width))
-      (error "Can't determine display width"))
+      (user-error "Can't determine display width"))
   (let* ((frame-A (window-frame ediff-window-A))
 	 (frame-A-params (frame-parameters frame-A))
 	 (cw (ediff-frame-char-width frame-A))
@@ -1295,7 +1351,9 @@ It assumes that it is called from within the control buffer."
 	 (let ((ctl-wind ediff-control-window)
 	       (A-wind ediff-window-A)
 	       (B-wind ediff-window-B)
-	       (C-wind ediff-window-C))
+	       (C-wind ediff-window-C)
+               (ancestor-job ediff-merge-with-ancestor-job)
+               (Ancestor-wind ediff-window-Ancestor))
 
 	   (and
 	    (ediff-window-visible-p A-wind)
@@ -1303,13 +1361,19 @@ It assumes that it is called from within the control buffer."
 	    ;; if buffer C is defined then take it into account
 	    (or (not ediff-3way-job)
 		(ediff-window-visible-p C-wind))
+            (or (not ancestor-job)
+                (not ediff-show-ancestor)
+                (ediff-window-visible-p Ancestor-wind))
 	    (eq (window-buffer A-wind) ediff-buffer-A)
 	    (eq (window-buffer B-wind) ediff-buffer-B)
 	    (or (not ediff-3way-job)
 		(eq (window-buffer C-wind) ediff-buffer-C))
+            (or (not ancestor-job)
+                (not ediff-show-ancestor)
+                (eq (window-buffer Ancestor-wind) ediff-ancestor-buffer))
 	    (string= ediff-window-config-saved
-		     (format "%S%S%S%S%S%S%S"
-			     ctl-wind A-wind B-wind C-wind
+		     (format "%S%S%S%S%S%S%S%S"
+			     ctl-wind A-wind B-wind C-wind Ancestor-wind
 			     ediff-split-window-function
 			     (ediff-multiframe-setup-p)
 			     ediff-wide-display-p)))))))

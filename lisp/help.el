@@ -1419,7 +1419,7 @@ ARGLIST can also be t or a string of the form \"(FUN ARG1 ARG2 ...)\"."
 
 (defun help-function-arglist (def &optional preserve-names)
   "Return a formal argument list for the function DEF.
-IF PRESERVE-NAMES is non-nil, return a formal arglist that uses
+If PRESERVE-NAMES is non-nil, return a formal arglist that uses
 the same names as used in the original source code, when possible."
   ;; Handle symbols aliased to other symbols.
   (if (and (symbolp def) (fboundp def)) (setq def (indirect-function def)))
@@ -1430,7 +1430,7 @@ the same names as used in the original source code, when possible."
    ((eq (car-safe def) 'lambda) (nth 1 def))
    ((eq (car-safe def) 'closure) (nth 2 def))
    ((or (and (byte-code-function-p def) (integerp (aref def 0)))
-        (subrp def))
+        (subrp def) (module-function-p def))
     (or (when preserve-names
           (let* ((doc (condition-case nil (documentation def) (error nil)))
                  (docargs (if doc (car (help-split-fundoc doc nil))))
@@ -1446,25 +1446,18 @@ the same names as used in the original source code, when possible."
                                (not (string-match "\\." name)))))
                 (setq valid nil)))
             (when valid arglist)))
-        (let* ((args-desc (if (not (subrp def))
-                              (aref def 0)
-                            (let ((a (subr-arity def)))
-                              (logior (car a)
-                                      (if (numberp (cdr a))
-                                          (lsh (cdr a) 8)
-                                        (lsh 1 7))))))
-               (max (lsh args-desc -8))
-               (min (logand args-desc 127))
-               (rest (logand args-desc 128))
+        (let* ((arity (func-arity def))
+               (max (cdr arity))
+               (min (car arity))
                (arglist ()))
           (dotimes (i min)
             (push (intern (concat "arg" (number-to-string (1+ i)))) arglist))
-          (when (> max min)
+          (when (and (integerp max) (> max min))
             (push '&optional arglist)
             (dotimes (i (- max min))
               (push (intern (concat "arg" (number-to-string (+ 1 i min))))
                     arglist)))
-          (unless (zerop rest) (push '&rest arglist) (push 'rest arglist))
+          (unless (integerp max) (push '&rest arglist) (push 'rest arglist))
           (nreverse arglist))))
    ((and (autoloadp def) (not (eq (nth 4 def) 'keymap)))
     "[Arg list not available until function definition is loaded.]")

@@ -2349,10 +2349,13 @@ If you set `term-file-prefix' to nil, this function does nothing."
 
 (defface variable-pitch
   '((((type w32))
-     ;; This is a kludgy workaround for an issue discussed in
+     ;; This is a workaround for an issue discussed in
      ;; http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00746.html.
-     :font "-outline-Arial-normal-normal-normal-sans-*-*-*-*-p-*-iso8859-1")
-    (t :family "Sans Serif"))
+     ;; We need (a) the splash screen not to pick up bold-italics variant of
+     ;; the font, and (b) still be able to request bold/italic/larger size
+     ;; variants in the likes of EWW.
+     :family "Arial" :foundry "outline")
+  (t :family "Sans Serif"))
   "The basic variable-pitch face."
   :group 'basic-faces)
 
@@ -2624,6 +2627,13 @@ not want to accentuate the last pixel line/column, set this to
 the same as `window-divider' face."
   :version "24.4"
   :group 'window-divider
+  :group 'basic-faces)
+
+(defface internal-border
+    '((t nil))
+  "Basic face for the internal border."
+  :version "26.1"
+  :group 'frames
   :group 'basic-faces)
 
 (defface minibuffer-prompt

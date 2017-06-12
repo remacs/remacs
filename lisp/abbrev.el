@@ -720,9 +720,10 @@ then ABBREV is looked up in that table only."
           (setq start abbrev-start-location)
           (setq abbrev-start-location nil)
           ;; Remove the hyphen inserted by `abbrev-prefix-mark'.
-          (if (and (< start (point-max))
-                   (eq (char-after start) ?-))
-              (delete-region start (1+ start)))
+          (when (and (< start (point-max))
+                     (eq (char-after start) ?-))
+            (delete-region start (1+ start))
+            (setq pos (1- pos)))
           (skip-syntax-backward " ")
           (setq end (point))
           (when (> end start)

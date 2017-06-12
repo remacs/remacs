@@ -1,4 +1,4 @@
-;;; tramp-gvfs.el --- Tramp access functions for GVFS daemon
+;;; tramp-gvfs.el --- Tramp access functions for GVFS daemon  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
@@ -39,7 +39,7 @@
 ;; All actions to mount a remote location, and to retrieve mount
 ;; information, are performed by D-Bus messages.  File operations
 ;; themselves are performed via the mounted filesystem in ~/.gvfs.
-;; Consequently, GNU Emacs 23.1 with enabled D-Bus bindings is a
+;; Consequently, GNU Emacs with enabled D-Bus bindings is a
 ;; precondition.
 
 ;; The GVFS D-Bus interface is said to be unstable.  There were even
@@ -106,7 +106,6 @@
 
 ;; Pacify byte-compiler.
 (eval-when-compile
-  (require 'cl)
   (require 'custom))
 
 ;;;###tramp-autoload
@@ -159,7 +158,6 @@
 (defconst tramp-gvfs-service-daemon "org.gtk.vfs.Daemon"
   "The well known name of the GVFS daemon.")
 
-;; D-Bus integration is available since Emacs 23 on some system types.
 ;; We don't call `dbus-ping', because this would load dbus.el.
 (defconst tramp-gvfs-enabled
   (ignore-errors
@@ -452,6 +450,7 @@ Every entry is a list (NAME ADDRESS).")
 
 
 ;; New handlers should be added here.
+;;;###tramp-autoload
 (defconst tramp-gvfs-file-name-handler-alist
   '((access-file . ignore)
     (add-name-to-file . tramp-gvfs-handle-copy-file)
@@ -548,12 +547,10 @@ pass to the OPERATION."
 	(save-match-data (apply (cdr fn) args))
       (tramp-run-real-handler operation args))))
 
-;; This might be moved to tramp.el.  It shall be the first file name
-;; handler.
 ;;;###tramp-autoload
 (when (featurep 'dbusbind)
-  (add-to-list 'tramp-foreign-file-name-handler-alist
-	       (cons 'tramp-gvfs-file-name-p 'tramp-gvfs-file-name-handler)))
+  (tramp-register-foreign-file-name-handler
+   'tramp-gvfs-file-name-p 'tramp-gvfs-file-name-handler))
 
 
 ;; D-Bus helper function.
@@ -620,7 +617,8 @@ is no information where to trace the message.")
     (tramp-message tramp-gvfs-dbus-event-vector 10 "%S" event)
     (tramp-error tramp-gvfs-dbus-event-vector 'file-error "%s" (cadr err))))
 
-;; `dbus-event-error-hooks' has been renamed to `dbus-event-error-functions'.
+;; `dbus-event-error-hooks' has been renamed to
+;; `dbus-event-error-functions' in Emacs 24.3.
 (add-hook
  (if (boundp 'dbus-event-error-functions)
      'dbus-event-error-functions 'dbus-event-error-hooks)
@@ -667,19 +665,10 @@ file names."
 		(and t2 (not (tramp-gvfs-file-name-p newname))))
 
 	    ;; We cannot copy or rename directly.
-	    ;; PRESERVE-EXTENDED-ATTRIBUTES has been introduced with
-	    ;; Emacs 24.1 (as PRESERVE-SELINUX-CONTEXT), and renamed
-	    ;; in Emacs 24.3.
 	    (let ((tmpfile (tramp-compat-make-temp-file filename)))
-	      (cond
-	       (preserve-extended-attributes
-		(funcall
-		 file-operation
-		 filename tmpfile t keep-date preserve-uid-gid
-		 preserve-extended-attributes))
-	       (t
-		(funcall
-		 file-operation filename tmpfile t keep-date preserve-uid-gid)))
+	      (funcall
+	       file-operation filename tmpfile t keep-date preserve-uid-gid
+	       preserve-extended-attributes)
 	      (rename-file tmpfile newname ok-if-already-exists))
 
 	  ;; Direct action.
@@ -730,25 +719,16 @@ file names."
   "Like `copy-file' for Tramp files."
   (setq filename (expand-file-name filename))
   (setq newname (expand-file-name newname))
-  (cond
-   ;; At least one file a Tramp file?
-   ((or (tramp-tramp-file-p filename)
-	(tramp-tramp-file-p newname))
-    (tramp-gvfs-do-copy-or-rename-file
-     'copy filename newname ok-if-already-exists keep-date
-     preserve-uid-gid preserve-extended-attributes))
-   ;; Compat section.  PRESERVE-EXTENDED-ATTRIBUTES has been
-   ;; introduced with Emacs 24.1 (as PRESERVE-SELINUX-CONTEXT), and
-   ;; renamed in Emacs 24.3.
-   (preserve-extended-attributes
+  ;; At least one file a Tramp file?
+  (if (or (tramp-tramp-file-p filename)
+	  (tramp-tramp-file-p newname))
+      (tramp-gvfs-do-copy-or-rename-file
+       'copy filename newname ok-if-already-exists keep-date
+       preserve-uid-gid preserve-extended-attributes)
     (tramp-run-real-handler
      'copy-file
      (list filename newname ok-if-already-exists keep-date
-	   preserve-uid-gid preserve-extended-attributes)))
-   (t
-    (tramp-run-real-handler
-     'copy-file
-     (list filename newname ok-if-already-exists keep-date preserve-uid-gid)))))
+	   preserve-uid-gid preserve-extended-attributes))))
 
 (defun tramp-gvfs-handle-delete-directory (directory &optional recursive trash)
   "Like `delete-directory' for Tramp files."
@@ -757,8 +737,8 @@ file names."
 	(mapc (lambda (file)
 		(if (eq t (tramp-compat-file-attribute-type
 			   (file-attributes file)))
-		    (tramp-compat-delete-directory file recursive trash)
-		  (tramp-compat-delete-file file trash)))
+		    (delete-directory file recursive trash)
+		  (delete-file file trash)))
 	      (directory-files
 	       directory 'full directory-files-no-dot-files-regexp))
       (when (directory-files directory nil directory-files-no-dot-files-regexp)
@@ -807,7 +787,10 @@ file names."
       ;; If there is a default location, expand tilde.
       (when (string-match "\\`\\(~\\)\\(/\\|\\'\\)" localname)
 	(save-match-data
-	  (tramp-gvfs-maybe-open-connection (vector method user host "/" hop)))
+	  (tramp-gvfs-maybe-open-connection
+	   (make-tramp-file-name
+	    :method method :user user :domain domain
+	    :host host :port port :localname "/" :hop hop)))
 	(setq localname
 	      (replace-match
 	       (tramp-get-connection-property v "default-location" "~")
@@ -831,7 +814,7 @@ file names."
       ;; No tilde characters in file name, do normal
       ;; `expand-file-name' (this does "/./" and "/../").
       (tramp-make-tramp-file-name
-       method user host
+       method user domain host port
        (tramp-run-real-handler
 	'expand-file-name (list localname))))))
 
@@ -1083,12 +1066,13 @@ file names."
 	(tramp-set-connection-property p "vector" v)
 	(process-put p 'events events)
 	(process-put p 'watch-name localname)
+	(process-put p 'adjust-window-size-function 'ignore)
 	(set-process-query-on-exit-flag p nil)
 	(set-process-filter p 'tramp-gvfs-monitor-file-process-filter)
 	;; There might be an error if the monitor is not supported.
 	;; Give the filter a chance to read the output.
 	(tramp-accept-process-output p 1)
-	(unless (tramp-compat-process-live-p p)
+	(unless (process-live-p p)
 	  (tramp-error
 	   v 'file-notify-error "Monitoring not supported for `%s'" file-name))
 	p))))
@@ -1248,7 +1232,7 @@ file-notify events."
 		    (concat (match-string 2 user) ";" (match-string 1 user))))
 	    (url-parse-make-urlobj
 	     method (and user (url-hexify-string user)) nil
-	     (tramp-file-name-real-host v) (tramp-file-name-port v)
+	     (tramp-file-name-host v) (tramp-file-name-port v)
 	     (and localname (url-hexify-string localname)) nil nil t))
 	(url-parse-make-urlobj
 	 "file" nil nil nil nil
@@ -1328,12 +1312,12 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	       t ;; password handled.
 	       nil ;; no abort of D-Bus.
 	       password
-	       (tramp-file-name-real-user l)
+	       (tramp-file-name-user l)
 	       domain
 	       nil ;; not anonymous.
 	       0) ;; no password save.
 	    ;; No password provided.
-	    (list nil t "" (tramp-file-name-real-user l) domain nil 0)))
+	    (list nil t "" (tramp-file-name-user l) domain nil 0)))
 
       ;; When QUIT is raised, we shall return this information to D-Bus.
       (quit (list nil t "" "" "" nil 0)))))
@@ -1384,9 +1368,9 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
       ;; elements.
       (while (stringp (car elt)) (setq elt (cdr elt)))
       (let* ((fuse-mountpoint (tramp-gvfs-dbus-byte-array-to-string (cadr elt)))
-	     (mount-spec (caddr elt))
+	     (mount-spec (cl-caddr elt))
 	     (default-location (tramp-gvfs-dbus-byte-array-to-string
-				(cadddr elt)))
+				(cl-cadddr elt)))
 	     (method (tramp-gvfs-dbus-byte-array-to-string
 		      (cadr (assoc "type" (cadr mount-spec)))))
 	     (user (tramp-gvfs-dbus-byte-array-to-string
@@ -1419,7 +1403,7 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	(unless (zerop (length port))
 	  (setq host (concat host tramp-prefix-port-format port)))
 	(with-parsed-tramp-file-name
-	    (tramp-make-tramp-file-name method user host "") nil
+	    (tramp-make-tramp-file-name method user domain host port "") nil
 	  (tramp-message
 	   v 6 "%s %s"
 	   signal-name (tramp-gvfs-stringify-dbus-message mount-info))
@@ -1470,9 +1454,9 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
        (while (stringp (car elt)) (setq elt (cdr elt)))
        (let* ((fuse-mountpoint (tramp-gvfs-dbus-byte-array-to-string
 				(cadr elt)))
-	      (mount-spec (caddr elt))
+	      (mount-spec (cl-caddr elt))
 	      (default-location (tramp-gvfs-dbus-byte-array-to-string
-				 (cadddr elt)))
+				 (cl-cadddr elt)))
 	      (method (tramp-gvfs-dbus-byte-array-to-string
 		       (cadr (assoc "type" (cadr mount-spec)))))
 	      (user (tramp-gvfs-dbus-byte-array-to-string
@@ -1532,9 +1516,9 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
 (defun tramp-gvfs-mount-spec (vec)
   "Return a mount-spec for \"org.gtk.vfs.MountTracker.mountLocation\"."
   (let* ((method (tramp-file-name-method vec))
-	 (user (tramp-file-name-real-user vec))
+	 (user (tramp-file-name-user vec))
 	 (domain (tramp-file-name-domain vec))
-	 (host (tramp-file-name-real-host vec))
+	 (host (tramp-file-name-host vec))
 	 (port (tramp-file-name-port vec))
 	 (localname (tramp-file-name-unquote-localname vec))
 	 (share (when (string-match "^/?\\([^/]+\\)" localname)
@@ -1590,7 +1574,9 @@ ID-FORMAT valid values are `string' and `integer'."
   (with-tramp-connection-property vec (format "uid-%s" id-format)
     (let ((method (tramp-file-name-method vec))
 	  (user (tramp-file-name-user vec))
+	  (domain (tramp-file-name-domain vec))
 	  (host (tramp-file-name-host vec))
+	  (port (tramp-file-name-port vec))
 	  (localname
 	   (tramp-get-connection-property vec "default-location" nil)))
       (cond
@@ -1598,7 +1584,8 @@ ID-FORMAT valid values are `string' and `integer'."
        (localname
 	(tramp-compat-file-attribute-user-id
 	 (file-attributes
-	  (tramp-make-tramp-file-name method user host localname) id-format)))
+	  (tramp-make-tramp-file-name method user domain host port localname)
+	  id-format)))
        ((equal id-format 'integer) tramp-unknown-id-integer)
        ((equal id-format 'string) tramp-unknown-id-string)))))
 
@@ -1608,14 +1595,17 @@ ID-FORMAT valid values are `string' and `integer'."
   (with-tramp-connection-property vec (format "gid-%s" id-format)
     (let ((method (tramp-file-name-method vec))
 	  (user (tramp-file-name-user vec))
+	  (domain (tramp-file-name-domain vec))
 	  (host (tramp-file-name-host vec))
+	  (port (tramp-file-name-port vec))
 	  (localname
 	   (tramp-get-connection-property vec "default-location" nil)))
       (cond
        (localname
 	(tramp-compat-file-attribute-group-id
 	 (file-attributes
-	  (tramp-make-tramp-file-name method user host localname) id-format)))
+	  (tramp-make-tramp-file-name method user domain host port localname)
+	  id-format)))
        ((equal id-format 'integer) tramp-unknown-id-integer)
        ((equal id-format 'string) tramp-unknown-id-string)))))
 
@@ -1626,8 +1616,6 @@ ID-FORMAT valid values are `string' and `integer'."
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
 connection if a previous connection has died for some reason."
-  (tramp-check-proper-method-and-host vec)
-
   ;; We set the file name, in case there are incoming D-Bus signals or
   ;; D-Bus errors.
   (setq tramp-gvfs-dbus-event-vector vec)
@@ -1645,11 +1633,13 @@ connection if a previous connection has died for some reason."
   (unless (tramp-gvfs-connection-mounted-p vec)
     (let* ((method (tramp-file-name-method vec))
 	   (user (tramp-file-name-user vec))
+	   (domain (tramp-file-name-domain vec))
 	   (host (tramp-file-name-host vec))
+	   (port (tramp-file-name-port vec))
 	   (localname (tramp-file-name-unquote-localname vec))
 	   (object-path
 	    (tramp-gvfs-object-path
-	     (tramp-make-tramp-file-name method user host ""))))
+	     (tramp-make-tramp-file-name method user domain host port ""))))
 
       (when (and (string-equal method "afp")
 		 (string-equal localname "/"))
@@ -1876,12 +1866,9 @@ This uses \"avahi-browse\" in case D-Bus is not enabled in Avahi."
       (lambda (x)
 	(let* ((list (split-string x ";"))
 	       (host (nth 6 list))
-	       (port (nth 8 list))
 	       (text (tramp-compat-funcall
 		      'split-string (nth 9 list) "\" \"" 'omit "\""))
 	       user)
-;	  (when (and port (not (string-equal port "0")))
-;	    (setq host (format "%s%s%s" host tramp-prefix-port-regexp port)))
 	  ;; A user is marked in a TXT field like "u=guest".
 	  (while text
 	    (when (string-match "u=\\(.+\\)$" (car text))

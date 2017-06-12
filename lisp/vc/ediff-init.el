@@ -385,8 +385,8 @@ It needs to be killed when we quit the session.")
 
 (defsubst ediff-barf-if-not-control-buffer (&optional meta-buf-p)
   (or (ediff-in-control-buffer-p meta-buf-p)
-      (error "%S: This command runs in Ediff Control Buffer only!"
-	     this-command)))
+      (user-error "%S: This command runs in Ediff Control Buffer only!"
+		  this-command)))
 
 (defgroup ediff-highlighting nil
   "Highlighting of difference regions in Ediff."
@@ -758,7 +758,7 @@ TYPE-OF-EMACS is either `emacs' or `xemacs'."
 		       (funcall op emacs-minor-version minor)
 		     t)))
 	     (t
-	      (error "%S: Invalid op in ediff-check-version" op)))))
+	      (user-error "%S: Invalid op in ediff-check-version" op)))))
 
 (defun ediff-color-display-p ()
   (condition-case nil
@@ -942,13 +942,17 @@ this variable represents.")
 
 (defface ediff-current-diff-Ancestor
   (if (featurep 'emacs)
-      '((((class color) (min-colors 88))
-	 (:background "VioletRed"))
-	(((class color) (min-colors 16))
-	 (:foreground "Black" :background "VioletRed"))
-	(((class color))
-	 (:foreground "black" :background "magenta3"))
-	(t (:inverse-video t)))
+      '((((class color) (min-colors 88) (background light))
+         :background "#cfdeee")
+        (((class color) (min-colors 88) (background dark))
+         :background "#004151")
+        (((class color) (min-colors 16) (background light))
+         :background "#cfdeee")
+        (((class color) (min-colors 16) (background dark))
+         :background "#004151")
+        (((class color))
+         (:foreground "black" :background "magenta3"))
+        (t (:inverse-video t)))
     '((((type tty))    (:foreground "black" :background "magenta3"))
       (((class color)) (:foreground "Black" :background "VioletRed"))
       (t (:inverse-video t))))
@@ -1052,13 +1056,17 @@ this variable represents.")
 
 (defface ediff-fine-diff-Ancestor
   (if (featurep 'emacs)
-      '((((class color) (min-colors 88))
-	 (:background "Green"))
-	(((class color) (min-colors 16))
-	 (:foreground "Black" :background "Green"))
-	(((class color))
-	 (:foreground "red3" :background "green"))
-	(t		     (:underline t :stipple "gray3")))
+      '((((class color) (min-colors 88) (background light))
+         :background "#00c5c0")
+        (((class color) (min-colors 88) (background dark))
+         :background "#009591")
+        (((class color) (min-colors 16) (background light))
+         :background "#00c5c0")
+        (((class color) (min-colors 16) (background dark))
+         :background "#009591")
+        (((class color))
+         (:foreground "red3" :background "green"))
+        (t		     (:underline t :stipple "gray3")))
     '((((type tty))    (:foreground "red3" :background "green"))
       (((class color)) (:foreground "Black" :background "Green"))
       (t	     	     (:underline t :stipple "gray3"))))
@@ -1354,6 +1362,16 @@ This property can be toggled interactively."
 
 ;; if nil, this silences some messages
 (defvar ediff-verbose-p t)
+
+(defcustom ediff-show-ancestor t
+"If non-nil, show ancestor buffer in 3way merges and refine it."
+  :type 'boolean
+  :group 'ediff-merge
+  :version "26.1")
+
+;; Store orig value of `ediff-show-ancestor'  when changed in
+;; `ediff-toggle-show-ancestor' and restore it on exit.
+(ediff-defvar-local ediff--show-ancestor-orig nil "")
 
 (defcustom ediff-autostore-merges  'group-jobs-only
   "Save the results of merge jobs automatically.

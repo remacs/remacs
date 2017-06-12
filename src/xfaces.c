@@ -4462,6 +4462,10 @@ lookup_basic_face (struct frame *f, int face_id)
     case CURSOR_FACE_ID:		name = Qcursor;			break;
     case MOUSE_FACE_ID:			name = Qmouse;			break;
     case MENU_FACE_ID:			name = Qmenu;			break;
+    case WINDOW_DIVIDER_FACE_ID:	name = Qwindow_divider;		break;
+    case WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID:	name = Qwindow_divider_first_pixel;	break;
+    case WINDOW_DIVIDER_LAST_PIXEL_FACE_ID:	name = Qwindow_divider_last_pixel;	break;
+    case INTERNAL_BORDER_FACE_ID:	name = Qinternal_border; 	break;
 
     default:
       emacs_abort (); /* the caller is supposed to pass us a basic face id */
@@ -5156,6 +5160,7 @@ realize_basic_faces (struct frame *f)
 			  WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID);
       realize_named_face (f, Qwindow_divider_last_pixel,
 			  WINDOW_DIVIDER_LAST_PIXEL_FACE_ID);
+      realize_named_face (f, Qinternal_border, INTERNAL_BORDER_FACE_ID);
 
       /* Reflect changes in the `menu' face in menu bars.  */
       if (FRAME_FACE_CACHE (f)->menu_face_changed_p)
@@ -5826,7 +5831,10 @@ compute_char_face (struct frame *f, int ch, Lisp_Object prop)
    LIMIT is a position not to scan beyond.  That is to limit the time
    this function can take.
 
-   If MOUSE, use the character's mouse-face, not its face.
+   If MOUSE, use the character's mouse-face, not its face, and only
+   consider the highest-priority source of mouse-face at POS,
+   i.e. don't merge different mouse-face values if more than one
+   source specifies it.
 
    BASE_FACE_ID, if non-negative, specifies a base face id to use
    instead of DEFAULT_FACE_ID.
@@ -5906,19 +5914,47 @@ face_at_buffer_position (struct window *w, ptrdiff_t pos,
 
   /* Now merge the overlay data.  */
   noverlays = sort_overlays (overlay_vec, noverlays, w);
-  for (i = 0; i < noverlays; i++)
+  /* For mouse-face, we need only the single highest-priority face
+     from the overlays, if any.  */
+  if (mouse)
     {
-      Lisp_Object oend;
-      ptrdiff_t oendpos;
+      for (prop = Qnil, i = noverlays - 1; i >= 0 && NILP (prop); --i)
+	{
+	  Lisp_Object oend;
+	  ptrdiff_t oendpos;
 
-      prop = Foverlay_get (overlay_vec[i], propname);
-      if (!NILP (prop))
-	merge_face_ref (f, prop, attrs, true, 0);
+	  prop = Foverlay_get (overlay_vec[i], propname);
+	  if (!NILP (prop))
+	    {
+	      /* Overlays always take priority over text properties,
+		 so discard the mouse-face text property, if any, and
+		 use the overlay property instead.  */
+	      memcpy (attrs, default_face->lface, sizeof attrs);
+	      merge_face_ref (f, prop, attrs, true, 0);
+	    }
 
-      oend = OVERLAY_END (overlay_vec[i]);
-      oendpos = OVERLAY_POSITION (oend);
-      if (oendpos < endpos)
-	endpos = oendpos;
+	  oend = OVERLAY_END (overlay_vec[i]);
+	  oendpos = OVERLAY_POSITION (oend);
+	  if (oendpos < endpos)
+	    endpos = oendpos;
+	}
+    }
+  else
+    {
+      for (i = 0; i < noverlays; i++)
+	{
+	  Lisp_Object oend;
+	  ptrdiff_t oendpos;
+
+	  prop = Foverlay_get (overlay_vec[i], propname);
+	  if (!NILP (prop))
+	    merge_face_ref (f, prop, attrs, true, 0);
+
+	  oend = OVERLAY_END (overlay_vec[i]);
+	  oendpos = OVERLAY_POSITION (oend);
+	  if (oendpos < endpos)
+	    endpos = oendpos;
+	}
     }
 
   *endptr = endpos;
@@ -6346,11 +6382,12 @@ syms_of_xfaces (void)
   DEFSYM (Qmouse, "mouse");
   DEFSYM (Qmode_line_inactive, "mode-line-inactive");
   DEFSYM (Qvertical_border, "vertical-border");
-
-  /* TTY color-related functions (defined in tty-colors.el).  */
   DEFSYM (Qwindow_divider, "window-divider");
   DEFSYM (Qwindow_divider_first_pixel, "window-divider-first-pixel");
   DEFSYM (Qwindow_divider_last_pixel, "window-divider-last-pixel");
+  DEFSYM (Qinternal_border, "internal-border");
+
+  /* TTY color-related functions (defined in tty-colors.el).  */
   DEFSYM (Qtty_color_desc, "tty-color-desc");
   DEFSYM (Qtty_color_standard_values, "tty-color-standard-values");
   DEFSYM (Qtty_color_by_index, "tty-color-by-index");

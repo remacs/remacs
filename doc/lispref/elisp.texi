@@ -180,6 +180,7 @@ To view this manual in other formats, click
 * Sequences Arrays Vectors::  Lists, strings and vectors are called sequences.
                                 Certain functions act on any kind of sequence.
                                 The description of vectors is here as well.
+* Records::                 Compound objects with programmer-defined types.
 * Hash Tables::             Very fast lookup-tables.
 * Symbols::                 Symbols represent names, uniquely.
 
@@ -314,6 +315,8 @@ Programming Types
                           expression, more fundamental but less pretty.
 * Primitive Function Type::     A function written in C, callable from Lisp.
 * Byte-Code Type::      A function written in Lisp, then compiled.
+* Record Type::         Compound objects with programmer-defined types.
+* Type Descriptors::    Objects holding information about types.
 * Autoload Type::       A type used for automatically loading seldom-used
                           functions.
 * Finalizer Type::      Runs code when no longer reachable.
@@ -417,6 +420,11 @@ Sequences, Arrays, and Vectors
 * Char-Tables::             How to work with char-tables.
 * Bool-Vectors::            How to work with bool-vectors.
 * Rings::                   Managing a fixed-size ring of objects.
+
+Records
+
+* Record Functions::        Functions for records.
+* Backward Compatibility::  Compatibility for cl-defstruct.
 
 Hash Tables
 
@@ -1054,6 +1062,7 @@ Windows
 * Vertical Scrolling::      Moving the contents up and down on the window.
 * Horizontal Scrolling::    Moving the contents sideways on the window.
 * Coordinates and Windows:: Converting coordinates to windows.
+* Mouse Window Auto-selection:: Automatically selecting windows with the mouse.
 * Window Configurations::   Saving and restoring the state of the screen.
 * Window Parameters::       Associating additional information with windows.
 * Window Hooks::            Hooks for scrolling, window size changes,
@@ -1081,16 +1090,16 @@ Frames
 * Minibuffers and Frames::  How a frame finds the minibuffer to use.
 * Input Focus::             Specifying the selected frame.
 * Visibility of Frames::    Frames may be visible or invisible, or icons.
-* Raising and Lowering::    Raising a frame makes it hide other windows;
-                              lowering it makes the others hide it.
+* Raising and Lowering::    Raising, Lowering and Restacking Frames.
 * Frame Configurations::    Saving the state of all frames.
+* Child Frames::            Making a frame the child of another.
 * Mouse Tracking::          Getting events that say when the mouse moves.
 * Mouse Position::          Asking where the mouse is, or moving it.
 * Pop-Up Menus::            Displaying a menu for the user to select from.
 * Dialog Boxes::            Displaying a box to ask yes or no.
 * Pointer Shape::           Specifying the shape of the mouse pointer.
 * Window System Selections::Transferring text to and from other X clients.
-* Drag and Drop::               Internals of Drag-and-Drop implementation.
+* Drag and Drop::           Internals of Drag-and-Drop implementation.
 * Color Names::             Getting the definitions of color names.
 * Text Terminal Colors::    Defining colors for text terminals.
 * Resources::               Getting resource values from the server.
@@ -1100,7 +1109,8 @@ Frame Geometry
 
 * Frame Layout::            Basic layout of frames.
 * Frame Font::              The default font of a frame and how to set it.
-* Size and Position::       Changing the size and position of a frame.
+* Frame Position::          The position of a frame on its display.
+* Frame Size::              Specifying and retrieving a frame's size.
 * Implied Frame Resizing::  Implied resizing of frames and how to prevent it.
 
 Frame Parameters
@@ -1118,6 +1128,8 @@ Window Frame Parameters
 * Layout Parameters::       Size of parts of the frame, and
                               enabling or disabling some parts.
 * Buffer Parameters::       Which buffers have been or should be shown.
+* Frame Interaction Parameters::  Parameters for interacting with other
+                              frames.
 * Management Parameters::   Communicating with the window manager.
 * Cursor Parameters::       Controlling the cursor appearance.
 * Font and Color Parameters:: Fonts and colors for the frame text.
@@ -1594,6 +1606,7 @@ Object Internals
 
 @include lists.texi
 @include sequences.texi
+@include records.texi
 @include hash.texi
 @include symbols.texi
 @include eval.texi

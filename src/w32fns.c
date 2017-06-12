@@ -256,6 +256,10 @@ static unsigned int sound_type = 0xFFFFFFFF;
 # define WTS_SESSION_LOCK      0x7
 #endif
 
+#ifndef WS_EX_NOACTIVATE
+#define WS_EX_NOACTIVATE 0x08000000L
+#endif
+
 /* Keyboard hook state data.  */
 static struct
 {
@@ -367,17 +371,20 @@ void x_set_title (struct frame *, Lisp_Object, Lisp_Object);
 void
 x_real_positions (struct frame *f, int *xptr, int *yptr)
 {
-  POINT pt;
   RECT rect;
 
   /* Get the bounds of the WM window.  */
   GetWindowRect (FRAME_W32_WINDOW (f), &rect);
 
-  pt.x = 0;
-  pt.y = 0;
+  if (FRAME_PARENT_FRAME (f))
+    {
+      /* For a child window we have to get its coordinates wrt its
+	 parent.  */
+      HWND parent_hwnd = FRAME_W32_WINDOW (FRAME_PARENT_FRAME (f));
 
-  /* Convert (0, 0) in the client area to screen co-ordinates.  */
-  ClientToScreen (FRAME_W32_WINDOW (f), &pt);
+      if (parent_hwnd)
+	MapWindowPoints (HWND_DESKTOP, parent_hwnd, (LPPOINT) &rect, 2);
+    }
 
   *xptr = rect.left;
   *yptr = rect.top;
@@ -1627,7 +1634,13 @@ x_set_icon_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 #endif
 }
 
-static void
+/**
+ * x_clear_under_internal_border:
+ *
+ * Clear area of frame F's internal border.  If the internal border face
+ * of F has been specified (is not null), fill the area with that face.
+ */
+void
 x_clear_under_internal_border (struct frame *f)
 {
   int border = FRAME_INTERNAL_BORDER_WIDTH (f);
@@ -1638,18 +1651,38 @@ x_clear_under_internal_border (struct frame *f)
       HDC hdc = get_frame_dc (f);
       int width = FRAME_PIXEL_WIDTH (f);
       int height = FRAME_PIXEL_HEIGHT (f);
+      struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
 
       block_input ();
-      w32_clear_area (f, hdc, 0, FRAME_TOP_MARGIN_HEIGHT (f), width, border);
-      w32_clear_area (f, hdc, 0, 0, border, height);
-      w32_clear_area (f, hdc, width - border, 0, border, height);
-      w32_clear_area (f, hdc, 0, height - border, width, border);
+      if (face)
+	{
+	  /* Fill border with internal border face.  */
+	  unsigned long color = face->background;
+
+	  w32_fill_area (f, hdc, color, 0, FRAME_TOP_MARGIN_HEIGHT (f), width, border);
+	  w32_fill_area (f, hdc, color, 0, 0, border, height);
+	  w32_fill_area (f, hdc, color, width - border, 0, border, height);
+	  w32_fill_area (f, hdc, color, 0, height - border, width, border);
+	}
+      else
+	{
+	  w32_clear_area (f, hdc, 0, FRAME_TOP_MARGIN_HEIGHT (f), width, border);
+	  w32_clear_area (f, hdc, 0, 0, border, height);
+	  w32_clear_area (f, hdc, width - border, 0, border, height);
+	  w32_clear_area (f, hdc, 0, height - border, width, border);
+	}
       release_frame_dc (f, hdc);
       unblock_input ();
     }
 }
 
 
+/**
+ * x_set_internal_border_width:
+ *
+ * Set width of frame F's internal border to ARG pixels.  ARG < 0 is
+ * treated like ARG = 0.
+ */
 void
 x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
@@ -1673,44 +1706,59 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
 }
 
 
+/**
+ * x_set_menu_bar_lines:
+ *
+ * Set number of lines of frame F's menu bar to VALUE.  An integer
+ * greater zero specifies 1 line and turns the menu bar on if it was off
+ * before.  Any other value specifies 0 lines and turns the menu bar off
+ * if it was on before.
+ */
 void
 x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 {
-  int nlines;
-
   /* Right now, menu bars don't work properly in minibuf-only frames;
      most of the commands try to apply themselves to the minibuffer
-     frame itself, and get an error because you can't switch buffers
-     in or split the minibuffer window.  */
-  if (FRAME_MINIBUF_ONLY_P (f))
-    return;
-
-  if (INTEGERP (value))
-    nlines = XINT (value);
-  else
-    nlines = 0;
-
-  FRAME_MENU_BAR_LINES (f) = 0;
-  FRAME_MENU_BAR_HEIGHT (f) = 0;
-  if (nlines)
-    FRAME_EXTERNAL_MENU_BAR (f) = 1;
-  else
+     frame itself, and get an error because you can't switch buffers in
+     or split the minibuffer window.  Child frames don't like menu bars
+     either.  */
+  if (!FRAME_MINIBUF_ONLY_P (f) && !FRAME_PARENT_FRAME (f))
     {
-      if (FRAME_EXTERNAL_MENU_BAR (f) == 1)
-	free_frame_menubar (f);
-      FRAME_EXTERNAL_MENU_BAR (f) = 0;
+      boolean old = FRAME_EXTERNAL_MENU_BAR (f);
+      boolean new = (INTEGERP (value) && XINT (value) > 0) ? true : false;
 
-      /* Adjust the frame size so that the client (text) dimensions
-	 remain the same.  This depends on FRAME_EXTERNAL_MENU_BAR being
-	 set correctly.  Note that we resize twice: The first time upon
-	 a request from the window manager who wants to keep the height
-	 of the outer rectangle (including decorations) unchanged, and a
-	 second time because we want to keep the height of the inner
-	 rectangle (without the decorations unchanged).  */
-      adjust_frame_size (f, -1, -1, 2, true, Qmenu_bar_lines);
+      FRAME_MENU_BAR_LINES (f) = 0;
+      FRAME_MENU_BAR_HEIGHT (f) = 0;
 
-      /* Not sure whether this is needed.  */
-      x_clear_under_internal_border (f);
+      if (old != new)
+	{
+	  FRAME_EXTERNAL_MENU_BAR (f) = new;
+
+	  if (!old)
+	    /* Make menu bar when there was none.  Emacs 25 waited until
+	       the next redisplay for this to take effect.  */
+	    set_frame_menubar (f, false, true);
+	  else
+	    {
+	      /* Remove menu bar.  */
+	      free_frame_menubar (f);
+
+	      /* Adjust the frame size so that the client (text) dimensions
+		 remain the same.  Note that we resize twice: The first time
+		 upon a request from the window manager who wants to keep
+		 the height of the outer rectangle (including decorations)
+		 unchanged, and a second time because we want to keep the
+		 height of the inner rectangle (without the decorations
+		 unchanged).  */
+	      adjust_frame_size (f, -1, -1, 2, false, Qmenu_bar_lines);
+	    }
+
+	  if (FRAME_W32_WINDOW (f))
+	    x_clear_under_internal_border (f);
+
+	  /* Don't store anything but 1 or 0 in the parameter.  */
+	  store_frame_param (f, Qmenu_bar_lines, make_number (new ? 1 : 0));
+	}
     }
 }
 
@@ -1793,7 +1841,7 @@ x_change_tool_bar_height (struct frame *f, int height)
      here.  */
   adjust_frame_glyphs (f);
   SET_FRAME_GARBAGED (f);
-  if (FRAME_X_WINDOW (f))
+  if (FRAME_W32_WINDOW (f))
     x_clear_under_internal_border (f);
 }
 
@@ -1955,6 +2003,233 @@ x_set_scroll_bar_default_height (struct frame *f)
   FRAME_CONFIG_SCROLL_BAR_LINES (f)
     = (FRAME_CONFIG_SCROLL_BAR_HEIGHT (f) + unit - 1) / unit;
 }
+
+/**
+ * x_set_undecorated:
+ *
+ * Set frame F's `undecorated' parameter.  If non-nil, F's window-system
+ * window is drawn without decorations, title, minimize/maximize boxes
+ * and external borders.  This usually means that the window cannot be
+ * dragged, resized, iconified, maximized or deleted with the mouse.  If
+ * nil, draw the frame with all the elements listed above unless these
+ * have been suspended via window manager settings.
+ *
+ * Some window managers may not honor this parameter.
+ */
+static void
+x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  HWND hwnd = FRAME_W32_WINDOW (f);
+  DWORD dwStyle = GetWindowLong (hwnd, GWL_STYLE);
+  Lisp_Object border_width = Fcdr (Fassq (Qborder_width, f->param_alist));
+
+  block_input ();
+  if (!NILP (new_value) && !FRAME_UNDECORATED (f))
+    {
+      dwStyle = ((dwStyle & ~WS_THICKFRAME & ~WS_CAPTION)
+		 | ((NUMBERP (border_width) && (XINT (border_width) > 0))
+		    ? WS_BORDER : false));
+      SetWindowLong (hwnd, GWL_STYLE, dwStyle);
+      SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0,
+		    SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE
+		    | SWP_FRAMECHANGED);
+      FRAME_UNDECORATED (f) = true;
+    }
+  else if (NILP (new_value) && FRAME_UNDECORATED (f))
+    {
+      SetWindowLong (hwnd, GWL_STYLE, dwStyle | WS_THICKFRAME | WS_CAPTION
+		     | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU);
+      SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0,
+		    SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE
+		    | SWP_FRAMECHANGED);
+      FRAME_UNDECORATED (f) = false;
+    }
+  unblock_input ();
+}
+
+/**
+ * x_set_parent_frame:
+ *
+ * Set frame F's `parent-frame' parameter.  If non-nil, make F a child
+ * frame of the frame specified by that parameter.  Technically, this
+ * makes F's window-system window a child window of the parent frame's
+ * window-system window.  If nil, make F's window-system window a
+ * top-level window--a child of its display's root window.
+ *
+ * A child frame is clipped at the native edges of its parent frame.
+ * Its `left' and `top' parameters specify positions relative to the
+ * top-left corner of its parent frame's native rectangle.  Usually,
+ * moving a parent frame moves all its child frames too, keeping their
+ * position relative to the parent unaltered.  When a parent frame is
+ * iconified or made invisible, its child frames are made invisible.
+ * When a parent frame is deleted, its child frames are deleted too.
+ *
+ * A visible child frame always appears on top of its parent frame thus
+ * obscuring parts of it.  When a frame has more than one child frame,
+ * their stacking order is specified just as that of non-child frames
+ * relative to their display.
+ *
+ * Whether a child frame has a menu or tool bar may be window-system or
+ * window manager dependent.  It's advisable to disable both via the
+ * frame parameter settings.
+ *
+ * Some window managers may not honor this parameter.
+ */
+static void
+x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  struct frame *p = NULL;
+
+  if (!NILP (new_value)
+      && (!FRAMEP (new_value)
+	  || !FRAME_LIVE_P (p = XFRAME (new_value))
+	  || !FRAME_W32_P (p)))
+    {
+      store_frame_param (f, Qparent_frame, old_value);
+      error ("Invalid specification of `parent-frame'");
+    }
+
+  if (p != FRAME_PARENT_FRAME (f))
+    {
+      HWND hwnd = FRAME_W32_WINDOW (f);
+      HWND hwnd_parent = p ? FRAME_W32_WINDOW (p) : NULL;
+      HWND hwnd_value;
+
+      block_input ();
+      hwnd_value = SetParent (hwnd, hwnd_parent);
+      unblock_input ();
+
+      if (hwnd_value)
+	fset_parent_frame (f, new_value);
+      else
+	{
+	  store_frame_param (f, Qparent_frame, old_value);
+	  error ("Reparenting frame failed");
+	}
+    }
+}
+
+/**
+ * x_set_skip_taskbar:
+ *
+ * Set frame F's `skip-taskbar' parameter.  If non-nil, this should
+ * remove F's icon from the taskbar associated with the display of F's
+ * window-system window and inhibit switching to F's window via
+ * <Alt>-<TAB>.  On Windows iconifying F will "roll in" its window at
+ * the bottom of the desktop.  If nil, lift these restrictions.
+ *
+ * Some window managers may not honor this parameter.
+ */
+static void
+x_set_skip_taskbar (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  if (!EQ (new_value, old_value))
+    {
+      HWND hwnd = FRAME_W32_WINDOW (f);
+      DWORD exStyle = GetWindowLong (hwnd, GWL_EXSTYLE);
+
+      block_input ();
+      /* Temporarily hide the window while changing its WS_EX_NOACTIVATE
+	 setting.  */
+      ShowWindow (hwnd, SW_HIDE);
+      if (!NILP (new_value))
+	SetWindowLong (hwnd, GWL_EXSTYLE, exStyle | WS_EX_NOACTIVATE);
+      else
+	SetWindowLong (hwnd, GWL_EXSTYLE, exStyle & ~WS_EX_NOACTIVATE);
+      ShowWindow (hwnd, SW_SHOWNOACTIVATE);
+      unblock_input ();
+
+      FRAME_SKIP_TASKBAR (f) = !NILP (new_value);
+    }
+}
+
+/**
+ * x_set_no_focus_on_map:
+ *
+ * Set frame F's `no-focus-on-map' parameter which, if non-nil, means
+ * that F's window-system window does not want to receive input focus
+ * when it is mapped.  (A frame's window is mapped when the frame is
+ * displayed for the first time and when the frame changes its state
+ * from `iconified' or `invisible' to `visible'.)
+ *
+ * Some window managers may not honor this parameter.
+ */
+static void
+x_set_no_focus_on_map (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  if (!EQ (new_value, old_value))
+    FRAME_NO_FOCUS_ON_MAP (f) = !NILP (new_value);
+}
+
+/**
+ * x_set_no_accept_focus:
+ *
+ * Set frame F's `no-accept-focus' parameter which, if non-nil, hints
+ * that F's window-system window does not want to receive input focus
+ * via mouse clicks or by moving the mouse into it.
+ *
+ * If non-nil, this may have the unwanted side-effect that a user cannot
+ * scroll a non-selected frame with the mouse.
+ *
+ * Some window managers may not honor this parameter.
+ */
+static void
+x_set_no_accept_focus (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  if (!EQ (new_value, old_value))
+    FRAME_NO_ACCEPT_FOCUS (f) = !NILP (new_value);
+}
+
+/**
+ * x_set_z_group:
+ *
+ * Set frame F's `z-group' parameter.  If `above', F's window-system
+ * window is displayed above all windows that do not have the `above'
+ * property set.  If nil, F's window is shown below all windows that
+ * have the `above' property set and above all windows that have the
+ * `below' property set.  If `below', F's window is displayed below all
+ * windows that do not have the `below' property set.
+ *
+ * Some window managers may not honor this parameter.  The value `below'
+ * is not supported on Windows.
+ */
+static void
+x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  HWND hwnd = FRAME_W32_WINDOW (f);
+
+  if (NILP (new_value))
+    {
+      block_input ();
+      SetWindowPos (hwnd, HWND_NOTOPMOST, 0, 0, 0, 0,
+		    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
+		    | SWP_NOOWNERZORDER);
+      unblock_input ();
+      FRAME_Z_GROUP (f) = z_group_none;
+    }
+  else if (EQ (new_value, Qabove))
+    {
+      block_input ();
+      SetWindowPos (hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+		    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
+		    | SWP_NOOWNERZORDER);
+      unblock_input ();
+      FRAME_Z_GROUP (f) = z_group_above;
+    }
+  else if (EQ (new_value, Qabove_suspended))
+    {
+      block_input ();
+      SetWindowPos (hwnd, HWND_NOTOPMOST, 0, 0, 0, 0,
+		    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
+		    | SWP_NOOWNERZORDER);
+      unblock_input ();
+      FRAME_Z_GROUP (f) = z_group_above_suspended;
+    }
+  else if (EQ (new_value, Qbelow))
+    error ("Value `below' for z-group is not supported on Windows");
+  else
+    error ("Invalid z-group specification");
+}
 
 /* Subroutines for creating a frame.  */
 
@@ -2013,7 +2288,12 @@ w32_init_class (HINSTANCE hinst)
 static HWND
 w32_createvscrollbar (struct frame *f, struct scroll_bar * bar)
 {
-  return CreateWindow ("SCROLLBAR", "", SBS_VERT | WS_CHILD | WS_VISIBLE,
+  return CreateWindow ("SCROLLBAR", "",
+		       /* Clip siblings so we don't draw over child
+			  frames.  Apparently this is not always
+			  sufficient so we also try to make bar windows
+			  bottommost.  */
+		       SBS_VERT | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
 		       /* Position and size of scroll bar.  */
 		       bar->left, bar->top, bar->width, bar->height,
 		       FRAME_W32_WINDOW (f), NULL, hinst, NULL);
@@ -2022,7 +2302,12 @@ w32_createvscrollbar (struct frame *f, struct scroll_bar * bar)
 static HWND
 w32_createhscrollbar (struct frame *f, struct scroll_bar * bar)
 {
-  return CreateWindow ("SCROLLBAR", "", SBS_HORZ | WS_CHILD | WS_VISIBLE,
+  return CreateWindow ("SCROLLBAR", "",
+		       /* Clip siblings so we don't draw over child
+			  frames.  Apparently this is not always
+			  sufficient so we also try to make bar windows
+			  bottommost.  */
+		       SBS_HORZ | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
 		       /* Position and size of scroll bar.  */
 		       bar->left, bar->top, bar->width, bar->height,
 		       FRAME_W32_WINDOW (f), NULL, hinst, NULL);
@@ -2031,20 +2316,52 @@ w32_createhscrollbar (struct frame *f, struct scroll_bar * bar)
 static void
 w32_createwindow (struct frame *f, int *coords)
 {
-  HWND hwnd;
+  HWND hwnd = NULL, parent_hwnd = NULL;
   RECT rect;
-  int top;
-  int left;
+  int top, left;
+  Lisp_Object border_width = Fcdr (Fassq (Qborder_width, f->param_alist));
+
+  if (FRAME_PARENT_FRAME (f) && FRAME_W32_P (FRAME_PARENT_FRAME (f)))
+    {
+      parent_hwnd = FRAME_W32_WINDOW (FRAME_PARENT_FRAME (f));
+      f->output_data.w32->dwStyle = WS_CHILD | WS_CLIPSIBLINGS;
+
+      if (FRAME_UNDECORATED (f))
+	{
+	  /* If we want a thin border, specify it here.  */
+	  if (NUMBERP (border_width) && (XINT (border_width) > 0))
+	    f->output_data.w32->dwStyle |= WS_BORDER;
+	}
+      else
+	/* To decorate a child frame, list all needed elements.  */
+	f->output_data.w32->dwStyle |= (WS_THICKFRAME | WS_CAPTION
+					| WS_MAXIMIZEBOX | WS_MINIMIZEBOX
+					| WS_SYSMENU);
+    }
+  else if (FRAME_UNDECORATED (f))
+    {
+      /* All attempts to start with ~WS_OVERLAPPEDWINDOW or overlapped
+	 with all other style elements negated failed here.  */
+      f->output_data.w32->dwStyle = WS_POPUP;
+
+      /* If we want a thin border, specify it here.  */
+      if (NUMBERP (border_width) && (XINT (border_width) > 0))
+	f->output_data.w32->dwStyle |= WS_BORDER;
+    }
+  else
+    f->output_data.w32->dwStyle = WS_OVERLAPPEDWINDOW;
+
+  /* Always clip children.  */
+  f->output_data.w32->dwStyle |= WS_CLIPCHILDREN;
 
   rect.left = rect.top = 0;
   rect.right = FRAME_PIXEL_WIDTH (f);
   rect.bottom = FRAME_PIXEL_HEIGHT (f);
 
   AdjustWindowRect (&rect, f->output_data.w32->dwStyle,
-		    FRAME_EXTERNAL_MENU_BAR (f));
+		    FRAME_EXTERNAL_MENU_BAR (f) && !parent_hwnd);
 
   /* Do first time app init */
-
   w32_init_class (hinst);
 
   if (f->size_hint_flags & USPosition || f->size_hint_flags & PPosition)
@@ -2059,18 +2376,16 @@ w32_createwindow (struct frame *f, int *coords)
     }
 
   FRAME_W32_WINDOW (f) = hwnd
-    = CreateWindow (EMACS_CLASS,
-		    f->namebuf,
-		    f->output_data.w32->dwStyle | WS_CLIPCHILDREN,
-		    left, top,
-		    rect.right - rect.left, rect.bottom - rect.top,
-		    NULL,
-		    NULL,
-		    hinst,
-		    NULL);
+    = CreateWindow (EMACS_CLASS, f->namebuf, f->output_data.w32->dwStyle,
+		    left, top, rect.right - rect.left, rect.bottom - rect.top,
+		    parent_hwnd, NULL, hinst, NULL);
 
   if (hwnd)
     {
+      if (FRAME_SKIP_TASKBAR (f))
+	SetWindowLong (hwnd, GWL_EXSTYLE,
+		       GetWindowLong (hwnd, GWL_EXSTYLE) | WS_EX_NOACTIVATE);
+
       SetWindowLong (hwnd, WND_FONTWIDTH_INDEX, FRAME_COLUMN_WIDTH (f));
       SetWindowLong (hwnd, WND_LINEHEIGHT_INDEX, FRAME_LINE_HEIGHT (f));
       SetWindowLong (hwnd, WND_BORDER_INDEX, FRAME_INTERNAL_BORDER_WIDTH (f));
@@ -2086,6 +2401,12 @@ w32_createwindow (struct frame *f, int *coords)
 
       /* Update frame positions. */
       GetWindowRect (hwnd, &rect);
+
+      if (parent_hwnd)
+	/* For a child window we have to get its coordinates wrt its
+	   parent.  */
+	MapWindowPoints (HWND_DESKTOP, parent_hwnd, (LPPOINT) &rect, 2);
+
       f->left_pos = rect.left;
       f->top_pos = rect.top;
     }
@@ -4381,6 +4702,22 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	  }
       }
 
+      if (f && (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN
+		|| msg == WM_MBUTTONDOWN ||msg == WM_XBUTTONDOWN)
+	  && !FRAME_NO_ACCEPT_FOCUS (f))
+	/* When clicking into a child frame or when clicking into a
+	   parent frame with the child frame selected and
+	   `no-accept-focus' is not set, select the clicked frame.  */
+	{
+	  struct frame *p = FRAME_PARENT_FRAME (XFRAME (selected_frame));
+
+	  if (FRAME_PARENT_FRAME (f) || f == p)
+	    {
+	      SetFocus (hwnd);
+	      SetWindowPos (hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	    }
+	}
+
       wmsg.dwModifiers = w32_get_modifiers ();
       my_post_msg (&wmsg, hwnd, msg, wParam, lParam);
       signal_user_input ();
@@ -4486,6 +4823,10 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       if (w32_pass_multimedia_buttons_to_system)
 	goto dflt;
       /* Otherwise, pass to lisp, the same way we do with mousehwheel.  */
+
+      /* FIXME!!!  This is never reached so what's the purpose?  If the
+	 non-zero return remark below is right we're doing it wrong all
+	 the time.  */
     case WM_MOUSEHWHEEL:
       wmsg.dwModifiers = w32_get_modifiers ();
       my_post_msg (&wmsg, hwnd, msg, wParam, lParam);
@@ -4712,19 +5053,34 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
       return 0;
 
-#if 0
+    case WM_MOUSEACTIVATE:
+      /* WM_MOUSEACTIVATE is the only way on Windows to implement the
+	 `no-accept-focus' frame parameter.  This means that one can't
+	 use the mouse to scroll a window on a non-selected frame.  */
+
       /* Still not right - can't distinguish between clicks in the
 	 client area of the frame from clicks forwarded from the scroll
 	 bars - may have to hook WM_NCHITTEST to remember the mouse
-	 position and then check if it is in the client area ourselves.  */
-    case WM_MOUSEACTIVATE:
+	 position and then check if it is in the client area
+	 ourselves.  */
+
       /* Discard the mouse click that activates a frame, allowing the
 	 user to click anywhere without changing point (or worse!).
 	 Don't eat mouse clicks on scrollbars though!!  */
-      if (LOWORD (lParam) == HTCLIENT )
-	return MA_ACTIVATEANDEAT;
+
+      if ((f = x_window_to_frame (dpyinfo, hwnd))
+	  && FRAME_NO_ACCEPT_FOCUS (f)
+	  /* Ignore child frames, they don't accept focus anyway.  */
+	  && !FRAME_PARENT_FRAME (f))
+	{
+	  Lisp_Object frame;
+
+	  XSETFRAME (frame, f);
+	  if (!EQ (selected_frame, frame))
+	    /* Don't discard the message, GTK doesn't either.  */
+	    return MA_NOACTIVATE; /* ANDEAT; */
+	}
       goto dflt;
-#endif
 
     case WM_MOUSELEAVE:
       /* No longer tracking mouse.  */
@@ -4902,6 +5258,10 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	if (foreground_thread)
 	  AttachThreadInput (GetCurrentThreadId (),
 			     foreground_thread, FALSE);
+
+	/* SetFocus to give/remove focus to/from a child window.  */
+	if (msg == WM_EMACS_SETFOREGROUND)
+	  SetFocus ((HWND) wParam);
 
 	return retval;
       }
@@ -5134,7 +5494,8 @@ w32_window (struct frame *f, long window_prompting, bool minibuffer_only)
 
   unblock_input ();
 
-  if (!minibuffer_only && FRAME_EXTERNAL_MENU_BAR (f))
+  if (!minibuffer_only && FRAME_EXTERNAL_MENU_BAR (f)
+      && !FRAME_PARENT_FRAME (f))
     initialize_frame_menubar (f);
 
   if (FRAME_W32_WINDOW (f) == 0)
@@ -5322,7 +5683,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object display;
   struct w32_display_info *dpyinfo = NULL;
-  Lisp_Object parent;
+  Lisp_Object parent, parent_frame;
   struct kboard *kb;
   int x_width = 0, x_height = 0;
 
@@ -5359,10 +5720,11 @@ This function is an internal primitive--use `make-frame' instead.  */)
     Vx_resource_name = name;
 
   /* See if parent window is specified.  */
-  parent = x_get_arg (dpyinfo, parameters, Qparent_id, NULL, NULL, RES_TYPE_NUMBER);
+  parent = x_get_arg (dpyinfo, parameters, Qparent_id, NULL, NULL,
+		      RES_TYPE_NUMBER);
   if (EQ (parent, Qunbound))
     parent = Qnil;
-  if (! NILP (parent))
+  else if (!NILP (parent))
     CHECK_NUMBER (parent);
 
   /* make_frame_without_minibuffer can run Lisp code and garbage collect.  */
@@ -5384,6 +5746,31 @@ This function is an internal primitive--use `make-frame' instead.  */)
     f = make_frame (true);
 
   XSETFRAME (frame, f);
+
+  parent_frame = x_get_arg (dpyinfo, parameters, Qparent_frame, NULL, NULL,
+			    RES_TYPE_SYMBOL);
+  /* Apply `parent-frame' parameter only when no `parent-id' was
+     specified.  */
+  if (!NILP (parent_frame)
+      && (!NILP (parent)
+	  || !FRAMEP (parent_frame)
+	  || !FRAME_LIVE_P (XFRAME (parent_frame))
+	  || !FRAME_W32_P (XFRAME (parent_frame))))
+    parent_frame = Qnil;
+
+  fset_parent_frame (f, parent_frame);
+  store_frame_param (f, Qparent_frame, parent_frame);
+
+  tem = x_get_arg (dpyinfo, parameters, Qundecorated, NULL, NULL,
+		   RES_TYPE_BOOLEAN);
+  FRAME_UNDECORATED (f) = !NILP (tem) && !EQ (tem, Qunbound);
+  store_frame_param (f, Qundecorated, FRAME_UNDECORATED (f) ? Qt : Qnil);
+
+  tem = x_get_arg (dpyinfo, parameters, Qskip_taskbar, NULL, NULL,
+		   RES_TYPE_BOOLEAN);
+  FRAME_SKIP_TASKBAR (f) = !NILP (tem) && !EQ (tem, Qunbound);
+  store_frame_param (f, Qskip_taskbar,
+		     (NILP (tem) || EQ (tem, Qunbound)) ? Qnil : Qt);
 
   /* By default, make scrollbars the system standard width and height. */
   FRAME_CONFIG_SCROLL_BAR_WIDTH (f) = GetSystemMetrics (SM_CXVSCROLL);
@@ -5412,7 +5799,9 @@ This function is an internal primitive--use `make-frame' instead.  */)
   dpyinfo_refcount = dpyinfo->reference_count;
 #endif /* GLYPH_DEBUG */
 
-  /* Specify the parent under which to make this window.  */
+  /* Specify the parent under which to make this window - this seems to
+     have no effect on Windows because parent_desc is explicitly reset
+     below.  */
   if (!NILP (parent))
     {
       /* Cast to UINT_PTR shuts up compiler warnings about cast to
@@ -5496,23 +5885,42 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "leftFringe", "LeftFringe", RES_TYPE_NUMBER);
   x_default_parameter (f, parameters, Qright_fringe, Qnil,
 		       "rightFringe", "RightFringe", RES_TYPE_NUMBER);
-  /* Process alpha here (Bug#16619).  */
-  x_default_parameter (f, parameters, Qalpha, Qnil,
-		       "alpha", "Alpha", RES_TYPE_NUMBER);
+  x_default_parameter (f, parameters, Qno_focus_on_map, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
+  x_default_parameter (f, parameters, Qno_accept_focus, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
+
+  /* Process alpha here (Bug#16619).  On XP this fails with child
+     frames.  For `no-focus-on-map' frames delay processing of alpha
+     until the frame becomes visible.  */
+  if (!FRAME_NO_FOCUS_ON_MAP (f))
+    x_default_parameter (f, parameters, Qalpha, Qnil,
+			 "alpha", "Alpha", RES_TYPE_NUMBER);
 
   /* Init faces first since we need the frame's column width/line
      height in various occasions.  */
   init_frame_faces (f);
 
-  /* The following call of change_frame_size is needed since otherwise
+  /* We have to call adjust_frame_size here since otherwise
      x_set_tool_bar_lines will already work with the character sizes
-     installed by init_frame_faces while the frame's pixel size is
-     still calculated from a character size of 1 and we subsequently
-     hit the (height >= 0) assertion in window_box_height.
+     installed by init_frame_faces while the frame's pixel size is still
+     calculated from a character size of 1 and we subsequently hit the
+     (height >= 0) assertion in window_box_height.
 
      The non-pixelwise code apparently worked around this because it
      had one frame line vs one toolbar line which left us with a zero
-     root window height which was obviously wrong as well ...  */
+     root window height which was obviously wrong as well ...
+
+     Also process `min-width' and `min-height' parameters right here
+     because `frame-windows-min-size' needs them.  */
+  tem = x_get_arg (dpyinfo, parameters, Qmin_width, NULL, NULL,
+		   RES_TYPE_NUMBER);
+  if (NUMBERP (tem))
+    store_frame_param (f, Qmin_width, tem);
+  tem = x_get_arg (dpyinfo, parameters, Qmin_height, NULL, NULL,
+		   RES_TYPE_NUMBER);
+  if (NUMBERP (tem))
+    store_frame_param (f, Qmin_height, tem);
   adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
 		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, true,
 		     Qx_create_frame_1);
@@ -5520,10 +5928,17 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* The X resources controlling the menu-bar and tool-bar are
      processed specially at startup, and reflected in the mode
      variables; ignore them here.  */
-  x_default_parameter (f, parameters, Qmenu_bar_lines,
-		       NILP (Vmenu_bar_mode)
-		       ? make_number (0) : make_number (1),
-		       NULL, NULL, RES_TYPE_NUMBER);
+  if (NILP (parent_frame))
+    {
+      x_default_parameter (f, parameters, Qmenu_bar_lines,
+			   NILP (Vmenu_bar_mode)
+			   ? make_number (0) : make_number (1),
+			   NULL, NULL, RES_TYPE_NUMBER);
+    }
+  else
+    /* No menu bar for child frames.  */
+    store_frame_param (f, Qmenu_bar_lines, make_number (0));
+
   x_default_parameter (f, parameters, Qtool_bar_lines,
 		       NILP (Vtool_bar_mode)
 		       ? make_number (0) : make_number (1),
@@ -5534,9 +5949,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_parameter (f, parameters, Qtitle, Qnil,
 		       "title", "Title", RES_TYPE_STRING);
 
-  f->output_data.w32->dwStyle = WS_OVERLAPPEDWINDOW;
   f->output_data.w32->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
-
   f->output_data.w32->text_cursor = w32_load_cursor (IDC_IBEAM);
   f->output_data.w32->nontext_cursor = w32_load_cursor (IDC_ARROW);
   f->output_data.w32->modeline_cursor = w32_load_cursor (IDC_ARROW);
@@ -5601,28 +6014,35 @@ This function is an internal primitive--use `make-frame' instead.  */)
      adjust_frame_size call.  */
   x_default_parameter (f, parameters, Qfullscreen, Qnil,
 		       "fullscreen", "Fullscreen", RES_TYPE_SYMBOL);
+  x_default_parameter (f, parameters, Qz_group, Qnil,
+		       NULL, NULL, RES_TYPE_SYMBOL);
 
   /* Make the window appear on the frame and enable display, unless
      the caller says not to.  However, with explicit parent, Emacs
      cannot control visibility, so don't try.  */
-  if (! f->output_data.w32->explicit_parent)
+  if (!f->output_data.w32->explicit_parent)
     {
-      Lisp_Object visibility;
-
-      visibility = x_get_arg (dpyinfo, parameters, Qvisibility, 0, 0, RES_TYPE_SYMBOL);
-      if (EQ (visibility, Qunbound))
-	visibility = Qt;
+      Lisp_Object visibility
+	= x_get_arg (dpyinfo, parameters, Qvisibility, 0, 0, RES_TYPE_SYMBOL);
 
       if (EQ (visibility, Qicon))
 	x_iconify_frame (f);
-      else if (! NILP (visibility))
-	x_make_frame_visible (f);
       else
 	{
-	  /* Must have been Qnil.  */
-	  ;
+	  if (EQ (visibility, Qunbound))
+	    visibility = Qt;
+
+	  if (!NILP (visibility))
+	    x_make_frame_visible (f);
 	}
+
+      store_frame_param (f, Qvisibility, visibility);
     }
+
+  /* For `no-focus-on-map' frames set alpha here.  */
+  if (FRAME_NO_FOCUS_ON_MAP (f))
+    x_default_parameter (f, parameters, Qalpha, Qnil,
+			 "alpha", "Alpha", RES_TYPE_NUMBER);
 
   /* Initialize `default-minibuffer-frame' in case this is the first
      frame on this terminal.  */
@@ -6572,8 +6992,6 @@ x_create_tip_frame (struct w32_display_info *dpyinfo, Lisp_Object parms)
   dpyinfo_refcount = dpyinfo->reference_count;
 #endif /* GLYPH_DEBUG */
   FRAME_KBOARD (f) = kb;
-  f->output_data.w32->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
-  f->output_data.w32->explicit_parent = false;
 
   /* Set the name; the functions to which we pass f expect the name to
      be set.  */
@@ -6639,6 +7057,7 @@ x_create_tip_frame (struct w32_display_info *dpyinfo, Lisp_Object parms)
 
   f->output_data.w32->dwStyle = WS_BORDER | WS_POPUP | WS_DISABLED;
   f->output_data.w32->parent_desc = FRAME_DISPLAY_INFO (f)->root_window;
+  f->output_data.w32->explicit_parent = false;
 
   x_figure_window_size (f, parms, true, &x_width, &x_height);
 
@@ -6740,7 +7159,7 @@ compute_tip_xy (struct frame *f,
 		int width, int height, int *root_x, int *root_y)
 {
   Lisp_Object left, top, right, bottom;
-  int min_x, min_y, max_x, max_y;
+  int min_x = 0, min_y, max_x = 0, max_y;
 
   /* User-specified position?  */
   left = Fcdr (Fassq (Qleft, parms));
@@ -7282,6 +7701,23 @@ file_dialog_callback (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   return 0;
 }
 
+void
+w32_dialog_in_progress (Lisp_Object in_progress)
+{
+  Lisp_Object frames, frame;
+
+  /* Don't let frames in `above' z-group obscure popups.  */
+  FOR_EACH_FRAME (frames, frame)
+    {
+      struct frame *f = XFRAME (frame);
+
+      if (!NILP (in_progress) && FRAME_Z_GROUP_ABOVE (f))
+	x_set_z_group (f, Qabove_suspended, Qabove);
+      else if (NILP (in_progress) && FRAME_Z_GROUP_ABOVE_SUSPENDED (f))
+	x_set_z_group (f, Qabove, Qabove_suspended);
+    }
+}
+
 DEFUN ("x-file-dialog", Fx_file_dialog, Sx_file_dialog, 2, 5, 0,
        doc: /* Read file name, prompting with PROMPT in directory DIR.
 Use a file selection dialog.  Select DEFAULT-FILENAME in the dialog's file
@@ -7341,7 +7777,7 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
   OPENFILENAMEA * file_details_a = &new_file_details_a.details;
   int use_unicode = w32_unicode_filenames;
   wchar_t *prompt_w;
-  char *prompt_a;
+  char *prompt_a UNINIT;
   int len;
   char fname_ret[MAX_UTF8_PATH];
 #endif /* NTGUI_UNICODE */
@@ -7513,8 +7949,12 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 
     {
       int count = SPECPDL_INDEX ();
+
+      w32_dialog_in_progress (Qt);
+
       /* Prevent redisplay.  */
       specbind (Qinhibit_redisplay, Qt);
+      record_unwind_protect (w32_dialog_in_progress, Qnil);
       block_input ();
       if (use_unicode)
 	{
@@ -8065,8 +8505,8 @@ w32_parse_and_hook_hot_key (Lisp_Object key, int hook)
 {
   /* Copied from Fdefine_key and store_in_keymap.  */
   register Lisp_Object c;
-  int vk_code;
-  int lisp_modifiers;
+  int vk_code = 0;
+  int lisp_modifiers = 0;
   int w32_modifiers;
   Lisp_Object res = Qnil;
   char* vkname;
@@ -8556,6 +8996,136 @@ menu bar or tool bar of FRAME.  */)
       else
 	return list4 (make_number (left), make_number (top),
 		      make_number (right), make_number (bottom));
+    }
+}
+
+/**
+ * w32_frame_list_z_order:
+ *
+ * Recursively add list of all frames on the display specified via
+ * DPYINFO and whose window-system window's parent is specified by
+ * WINDOW to FRAMES and return FRAMES.
+ */
+static Lisp_Object
+w32_frame_list_z_order (struct w32_display_info *dpyinfo, HWND window)
+{
+  Lisp_Object frame, frames = Qnil;
+
+  while (window)
+    {
+      struct frame *f = x_window_to_frame (dpyinfo, window);
+
+      if (f)
+	{
+	  XSETFRAME (frame, f);
+	  frames = Fcons (frame, frames);
+	}
+
+      block_input ();
+      window = GetNextWindow (window, GW_HWNDNEXT);
+      unblock_input ();
+    }
+
+  return Fnreverse (frames);
+}
+
+DEFUN ("w32-frame-list-z-order", Fw32_frame_list_z_order,
+       Sw32_frame_list_z_order, 0, 1, 0,
+       doc: /* Return list of Emacs' frames, in Z (stacking) order.
+The optional argument DISPLAY specifies which display to ask about.
+DISPLAY should be either a frame or a display name (a string).  If
+omitted or nil, that stands for the selected frame's display.
+
+As a special case, if DISPLAY is non-nil and specifies a live frame,
+return the child frames of that frame in Z (stacking) order.
+
+Frames are listed from topmost (first) to bottommost (last).  */)
+  (Lisp_Object display)
+{
+  struct w32_display_info *dpyinfo = check_x_display_info (display);
+  HWND window;
+
+  block_input ();
+  if (FRAMEP (display) && FRAME_LIVE_P (XFRAME (display)))
+    window = GetWindow (FRAME_W32_WINDOW (XFRAME (display)), GW_CHILD);
+  else
+    window = GetTopWindow (NULL);
+  unblock_input ();
+
+  return w32_frame_list_z_order (dpyinfo, window);
+}
+
+/**
+ * w32_frame_restack:
+ *
+ * Restack frame F1 below frame F2, above if ABOVE_FLAG is non-nil.  In
+ * practice this is a two-step action: The first step removes F1's
+ * window-system window from the display.  The second step reinserts
+ * F1's window below (above if ABOVE_FLAG is true) that of F2.
+ */
+static void
+w32_frame_restack (struct frame *f1, struct frame *f2, bool above_flag)
+{
+  HWND hwnd1 = FRAME_W32_WINDOW (f1);
+  HWND hwnd2 = FRAME_W32_WINDOW (f2);
+
+  block_input ();
+  if (above_flag)
+    /* Put F1 above F2 in the z-order.  */
+    {
+      if (GetNextWindow (hwnd1, GW_HWNDNEXT) != hwnd2)
+	{
+	  /* Make sure F1 is below F2 first because we must not
+	     change the relative position of F2 wrt any other
+	     window but F1.  */
+	  if (GetNextWindow (hwnd2, GW_HWNDNEXT) != hwnd1)
+	    SetWindowPos (hwnd1, hwnd2, 0, 0, 0, 0,
+			  SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+			  | SWP_FRAMECHANGED);
+	  /* Now put F1 above F2.  */
+	  SetWindowPos (hwnd2, hwnd1, 0, 0, 0, 0,
+			SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+			| SWP_FRAMECHANGED);
+	}
+    }
+  else if (GetNextWindow (hwnd2, GW_HWNDNEXT) != hwnd1)
+    /* Put F1 below F2 in the z-order.  */
+    SetWindowPos (hwnd1, hwnd2, 0, 0, 0, 0,
+		  SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE
+		  | SWP_FRAMECHANGED);
+  unblock_input ();
+}
+
+DEFUN ("w32-frame-restack", Fw32_frame_restack, Sw32_frame_restack, 2, 3, 0,
+       doc: /* Restack FRAME1 below FRAME2.
+This means that if both frames are visible and the display areas of
+these frames overlap, FRAME2 (partially) obscures FRAME1.  If optional
+third argument ABOVE is non-nil, restack FRAME1 above FRAME2.  This
+means that if both frames are visible and the display areas of these
+frames overlap, FRAME1 (partially) obscures FRAME2.
+
+This may be thought of as an atomic action performed in two steps: The
+first step removes FRAME1's window-system window from the display.  The
+second step reinserts FRAME1's window below (above if ABOVE is true)
+that of FRAME2.  Hence the position of FRAME2 in its display's Z
+\(stacking) order relative to all other frames excluding FRAME1 remains
+unaltered.
+
+Some window managers may refuse to restack windows.  */)
+     (Lisp_Object frame1, Lisp_Object frame2, Lisp_Object above)
+{
+  struct frame *f1 = decode_live_frame (frame1);
+  struct frame *f2 = decode_live_frame (frame2);
+
+  if (FRAME_W32_P (f1) && FRAME_W32_P (f2))
+    {
+      w32_frame_restack (f1, f2, !NILP (above));
+      return Qt;
+    }
+  else
+    {
+      error ("Cannot restack frames");
+      return Qnil;
     }
 }
 
@@ -9753,6 +10323,13 @@ frame_parm_handler w32_frame_parm_handlers[] =
   0, /* x_set_sticky */
   0, /* x_set_tool_bar_position */
   0, /* x_set_inhibit_double_buffering */
+  x_set_undecorated,
+  x_set_parent_frame,
+  x_set_skip_taskbar,
+  x_set_no_focus_on_map,
+  x_set_no_accept_focus,
+  x_set_z_group,
+  0, /* x_set_override_redirect */
 };
 
 void
@@ -10132,6 +10709,8 @@ tip frame.  */);
   defsubr (&Sx_display_list);
   defsubr (&Sw32_frame_geometry);
   defsubr (&Sw32_frame_edges);
+  defsubr (&Sw32_frame_list_z_order);
+  defsubr (&Sw32_frame_restack);
   defsubr (&Sw32_mouse_absolute_pixel_position);
   defsubr (&Sw32_set_mouse_absolute_pixel_position);
   defsubr (&Sx_synchronize);

@@ -1922,10 +1922,7 @@ or as help on variables `cperl-tips', `cperl-problems',
   (perldb (read-from-minibuffer "Run perldb (like this): "
 				(if (consp gud-perldb-history)
 				    (car gud-perldb-history)
-				  (concat "perl " ;;(file-name-nondirectory
-					  ;; I have problems
-					  ;; in OS/2
-					  ;; otherwise
+				  (concat "perl "
 					  (buffer-file-name)))
 				nil nil
 				'(gud-perldb-history . 1))))
@@ -2176,8 +2173,8 @@ See `cperl-electric-parens'."
 	  (insert (make-string
 		   (prefix-numeric-value arg)
 		   (cdr (assoc last-command-event '((?{ .?})
-						   (?[ . ?])
-						   (?( . ?))
+						   (?\[ . ?\])
+						   (?\( . ?\))
 						   (?< . ?>))))))
 	  (forward-char (- (prefix-numeric-value arg))))
       (self-insert-command (prefix-numeric-value arg)))))
@@ -6644,7 +6641,6 @@ Customized by setting variables `cperl-shrink-wrap-info-frame',
 		       (if not-loner
 			   (/ (* (- frheight 3) cperl-max-help-size) 100)
 			 (setq char-height (frame-char-height))
-			 ;; Non-functioning under OS/2:
 			 (if (eq char-height 1) (setq char-height 18))
 			 ;; Title, menubar, + 2 for slack
 			 (- (/ (display-pixel-height) char-height) 4)))
@@ -7010,7 +7006,7 @@ Does not move point."
 	(setq pos (point))
 	(goto-char 1)
 	(setq rel file)
-	;; On case-preserving filesystems (EMX on OS/2) case might be encoded in properties
+	;; On case-preserving filesystems case might be encoded in properties
 	(set-text-properties 0 (length rel) nil rel)
 	(and (equal topdir (substring rel 0 (length topdir)))
 	     (setq rel (substring file (length topdir))))
@@ -7103,7 +7099,7 @@ Use as
 		    (t
 		     (goto-char 1)
 		     (setq rel file)
-		     ;; On case-preserving filesystems (EMX on OS/2) case might be encoded in properties
+		     ;; On case-preserving filesystems case might be encoded in properties
 		     (set-text-properties 0 (length rel) nil rel)
 		     (and (equal topdir (substring rel 0 (length topdir)))
 			  (setq rel (substring file (length topdir))))

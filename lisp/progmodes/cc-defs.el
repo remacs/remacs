@@ -94,7 +94,7 @@
 
 ;;; Variables also used at compile time.
 
-(defconst c-version "5.32.99"
+(defconst c-version "5.33"
   "CC Mode version number.")
 
 (defconst c-version-sym (intern c-version))
@@ -1914,14 +1914,18 @@ non-nil, a caret is prepended to invert the set."
 	(set-buffer-modified-p nil))
       (kill-buffer buf))
 
-    ;; See if `parse-partial-sexp' returns the eighth element.
-    (if (c-safe (>= (length (save-excursion
-			      (parse-partial-sexp (point) (point))))
-		    10))
-	(setq list (cons 'pps-extended-state list))
-      (error (concat
-	      "CC Mode is incompatible with this version of Emacs - "
-	      "`parse-partial-sexp' has to return at least 10 elements.")))
+    ;; Check how many elements `parse-partial-sexp' returns.
+    (let ((ppss-size (or (c-safe (length
+				  (save-excursion
+				    (parse-partial-sexp (point) (point)))))
+			 0)))
+      (cond
+       ((>= ppss-size 11) (setq list (cons 'pps-extended-state list)))
+       ((>= ppss-size 10))
+       (t (error
+	   (concat
+	    "CC Mode is incompatible with this version of Emacs - "
+	    "`parse-partial-sexp' has to return at least 10 elements.")))))
 
     ;;(message "c-emacs-features: %S" list)
     list)
@@ -1944,10 +1948,9 @@ might be present:
 		    (i.e. the syntax class `!').
 `gen-string-delim'  Generic string delimiters work
 		    (i.e. the syntax class `|').
-`pps-extended-state' `parse-partial-sexp' returns a list with at least 10
-		    elements, i.e. it contains the position of the start of
-		    the last comment or string.  It's always set - CC Mode
-                    no longer works in emacsen without this feature.
+`pps-extended-state' `parse-partial-sexp' returns a list with at least 11
+		    elements, i.e. it indicates having stopped after the
+		    first character of a potential two-char construct.
 `posix-char-classes' The regexp engine understands POSIX character classes.
 `col-0-paren'       It's possible to turn off the ad-hoc rule that a paren
 		    in column zero is the start of a defun.

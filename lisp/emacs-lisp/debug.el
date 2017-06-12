@@ -727,6 +727,9 @@ Complete list of commands:
 \\{debugger-mode-map}"
   (setq truncate-lines t)
   (set-syntax-table emacs-lisp-mode-syntax-table)
+  (add-hook 'kill-buffer-hook
+            (lambda () (if (> (recursion-depth) 0) (top-level)))
+            nil t)
   (use-local-map debugger-mode-map))
 
 (defcustom debugger-record-buffer "*Debugger-record*"

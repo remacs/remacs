@@ -206,7 +206,7 @@ mac_screen_font_get_advance_width_for_glyph (ScreenFontRef font, CGGlyph glyph)
 
 #if !USE_CT_GLYPH_INFO
 static CGGlyph
-mac_font_get_glyph_for_cid (CTFontRef font, CTCharacterCollection collection,
+mac_font_get_glyph_for_cid (CTFontRef font, NSCharacterCollection collection,
                             CGFontIndex cid)
 {
   CGGlyph result = kCGFontIndexInvalid;
@@ -284,7 +284,6 @@ mac_screen_font_get_metrics (ScreenFontRef font, CGFloat *ascent,
 
   [textStorage setFont:nsFont];
   [textContainer setLineFragmentPadding:0];
-  [layoutManager setUsesScreenFonts:YES];
 
   [layoutManager addTextContainer:textContainer];
   [textContainer release];
@@ -318,8 +317,7 @@ mac_screen_font_get_metrics (ScreenFontRef font, CGFloat *ascent,
 
 static CFIndex
 mac_font_shape_1 (NSFont *font, NSString *string,
-                  struct mac_glyph_layout *glyph_layouts, CFIndex glyph_len,
-                  BOOL screen_font_p)
+                  struct mac_glyph_layout *glyph_layouts, CFIndex glyph_len)
 {
   NSUInteger i;
   CFIndex result = 0;
@@ -339,7 +337,6 @@ mac_font_shape_1 (NSFont *font, NSString *string,
                                           initWithString:@" "] autorelease])];
   [textStorage setFont:font];
   [textContainer setLineFragmentPadding:0];
-  [layoutManager setUsesScreenFonts:screen_font_p];
 
   [layoutManager addTextContainer:textContainer];
   [textContainer release];
@@ -413,8 +410,9 @@ mac_font_shape_1 (NSFont *font, NSString *string,
       /* For now we assume the direction is not changed within the
          string.  */
       [layoutManager getGlyphsInRange:(NSMakeRange (glyphIndex, 1))
-                               glyphs:NULL characterIndexes:NULL
-                    glyphInscriptions:NULL elasticBits:NULL
+                               glyphs:NULL
+                           properties:NULL
+                     characterIndexes:NULL
                            bidiLevels:&bidiLevel];
       if (bidiLevel & 1)
         permutation = xmalloc (sizeof (NSUInteger) * used);
@@ -587,7 +585,7 @@ mac_screen_font_shape (ScreenFontRef font, CFStringRef string,
 {
   return mac_font_shape_1 ([(NSFont *)font printerFont],
                            (NSString *) string,
-                           glyph_layouts, glyph_len, YES);
+                           glyph_layouts, glyph_len);
 }
 
 static CGColorRef
@@ -1321,8 +1319,8 @@ struct macfont_cache
     /* Character collection specifying the destination of the mapping
        provided by `table' above.  If `table' is obtained from the UVS
        subtable in the font cmap table, then the value of this member
-       should be kCTCharacterCollectionIdentityMapping.  */
-    CTCharacterCollection collection;
+       should be NSIdentityMappingCharacterCollection.  */
+    NSCharacterCollection collection;
   } uvs;
 };
 
@@ -1333,8 +1331,8 @@ static CFCharacterSetRef macfont_get_cf_charset (struct font *);
 static CFCharacterSetRef macfont_get_cf_charset_for_name (CFStringRef);
 static CGGlyph macfont_get_glyph_for_character (struct font *, UTF32Char);
 static CGGlyph macfont_get_glyph_for_cid (struct font *font,
-                                          CTCharacterCollection, CGFontIndex);
-static CFDataRef macfont_get_uvs_table (struct font *, CTCharacterCollection *);
+                                          NSCharacterCollection, CGFontIndex);
+static CFDataRef macfont_get_uvs_table (struct font *, NSCharacterCollection *);
 
 static struct macfont_cache *
 macfont_lookup_cache (CFStringRef key)
@@ -1582,7 +1580,7 @@ macfont_get_glyph_for_character (struct font *font, UTF32Char c)
 }
 
 static CGGlyph
-macfont_get_glyph_for_cid (struct font *font, CTCharacterCollection collection,
+macfont_get_glyph_for_cid (struct font *font, NSCharacterCollection collection,
                            CGFontIndex cid)
 {
   struct macfont_info *macfont_info = (struct macfont_info *) font;
@@ -1593,7 +1591,7 @@ macfont_get_glyph_for_cid (struct font *font, CTCharacterCollection collection,
 }
 
 static CFDataRef
-macfont_get_uvs_table (struct font *font, CTCharacterCollection *collection)
+macfont_get_uvs_table (struct font *font, NSCharacterCollection *collection)
 {
   struct macfont_info *macfont_info = (struct macfont_info *) font;
   CTFontRef macfont = macfont_info->macfont;
@@ -1603,12 +1601,12 @@ macfont_get_uvs_table (struct font *font, CTCharacterCollection *collection)
   if (cache->uvs.table == NULL)
     {
       CFDataRef uvs_table = mac_font_copy_uvs_table (macfont);
-      CTCharacterCollection uvs_collection =
-        kCTCharacterCollectionIdentityMapping;
+      NSCharacterCollection uvs_collection =
+        NSIdentityMappingCharacterCollection;
 
       if (uvs_table == NULL
           && mac_font_get_glyph_for_cid (macfont,
-                                         kCTCharacterCollectionAdobeJapan1,
+                                         NSAdobeJapan1CharacterCollection,
                                          6480) != kCGFontIndexInvalid)
         {
           /* If the glyph for U+4E55 is accessible via its CID 6480,
@@ -1625,7 +1623,7 @@ macfont_get_uvs_table (struct font *font, CTCharacterCollection *collection)
           if (mac_uvs_table_adobe_japan1)
             {
               uvs_table = CFRetain (mac_uvs_table_adobe_japan1);
-              uvs_collection = kCTCharacterCollectionAdobeJapan1;
+              uvs_collection = NSAdobeJapan1CharacterCollection;
             }
         }
       if (uvs_table == NULL)
@@ -2538,8 +2536,7 @@ macfont_open (struct frame * f, Lisp_Object entity, int pixel_size)
   int size;
   CTFontRef macfont;
   CTFontSymbolicTraits sym_traits;
-  char name[256];
-  int len, i, total_width;
+  int i, total_width;
   CGGlyph glyph;
   CGFloat ascent, descent, leading;
 
@@ -3348,7 +3345,7 @@ static int
 macfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
 {
   CFDataRef uvs_table;
-  CTCharacterCollection uvs_collection;
+  NSCharacterCollection uvs_collection;
   int i, n = 0;
 
   block_input ();
@@ -3368,7 +3365,7 @@ macfont_variation_glyphs (struct font *font, int c, unsigned variations[256])
         {
           CGGlyph glyph = glyphs[i];
 
-          if (uvs_collection != kCTCharacterCollectionIdentityMapping
+          if (uvs_collection != NSIdentityMappingCharacterCollection
               && glyph != kCGFontIndexInvalid)
             glyph = macfont_get_glyph_for_cid (font, uvs_collection, glyph);
           if (glyph == kCGFontIndexInvalid)

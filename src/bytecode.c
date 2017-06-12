@@ -1000,18 +1000,14 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Beqlsign):
 	  {
 	    Lisp_Object v2 = POP, v1 = TOP;
-	    CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v1);
-	    CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v2);
-	    bool equal;
 	    if (FLOATP (v1) || FLOATP (v2))
-	      {
-		double f1 = FLOATP (v1) ? XFLOAT_DATA (v1) : XINT (v1);
-		double f2 = FLOATP (v2) ? XFLOAT_DATA (v2) : XINT (v2);
-		equal = f1 == f2;
-	      }
+	      TOP = arithcompare (v1, v2, ARITH_EQUAL);
 	    else
-	      equal = XINT (v1) == XINT (v2);
-	    TOP = equal ? Qt : Qnil;
+	      {
+		CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v1);
+		CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v2);
+		TOP = EQ (v1, v2) ? Qt : Qnil;
+	      }
 	    NEXT;
 	  }
 

@@ -102,9 +102,10 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cl-lib)
   (require 'vc)
   (require 'vc-dir))
+
+(require 'cl-lib)
 
 (declare-function vc-compilation-mode "vc-dispatcher" (backend))
 
@@ -826,7 +827,7 @@ if we don't understand a construct, we signal
      prefix)))
 
 (defun vc-hg--slurp-hgignore-1 (hgignore prefix)
-  (let ((default-syntax 'vc-hg--hgignore-add-glob))
+  (let ((default-syntax 'vc-hg--hgignore-add-pcre))
     (with-temp-buffer
       (let ((attr (file-attributes hgignore)))
         (when attr (insert-file-contents hgignore))
@@ -987,8 +988,7 @@ hg binary."
          repo
          dirstate
          dirstate-attr
-         repo-relative-filename
-         ascii-fname)
+         repo-relative-filename)
     (if (or
          ;; Explicit user disable
          (not vc-hg-parse-hg-data-structures)
@@ -1013,18 +1013,12 @@ hg binary."
          (progn
            (setf repo-relative-filename
                  (file-relative-name truename repo))
-           (setf ascii-fname
-                 (string-as-unibyte
-                  (let (last-coding-system-used)
-                    (encode-coding-string
-                     repo-relative-filename
-                     'us-ascii t))))
            ;; We only try dealing with ASCII filenames
-           (not (equal ascii-fname repo-relative-filename))))
+           (string-match-p "[^[:ascii:]]" repo-relative-filename)))
         'unsupported
       (let* ((dirstate-entry
               (vc-hg--cached-dirstate-search
-               dirstate dirstate-attr ascii-fname))
+               dirstate dirstate-attr repo-relative-filename))
              (state (car dirstate-entry))
              (stat (file-attributes
                     (concat repo repo-relative-filename))))
@@ -1308,6 +1302,8 @@ REV is the revision to check out into WORKFILE."
 
 (autoload 'vc-do-async-command "vc-dispatcher")
 (autoload 'log-view-get-marked "log-view")
+(defvar compilation-directory)
+(defvar compilation-arguments)  ; defined in compile.el
 
 (defun vc-hg--pushpull (command prompt &optional obsolete)
   "Run COMMAND (a string; either push or pull) on the current Hg branch.
@@ -1350,7 +1346,15 @@ commands, which only operated on marked files."
             (vc-compilation-mode 'hg)
             (setq-local compile-command
                         (concat hg-program " " command " "
-                                (if args (mapconcat 'identity args " ") "")))))
+                                (if args (mapconcat 'identity args " ") "")))
+            (setq-local compilation-directory root)
+            ;; Either set `compilation-buffer-name-function' locally to nil
+            ;; or use `compilation-arguments' to set `name-function'.
+            ;; See `compilation-buffer-name'.
+            (setq-local compilation-arguments
+                        (list compile-command nil
+                              (lambda (_name-of-mode) buffer)
+                              nil))))
 	(vc-set-async-update buffer)))))
 
 (defun vc-hg-pull (prompt)

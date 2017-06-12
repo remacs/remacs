@@ -621,7 +621,7 @@ whose value is a range-list."
 (defun xsdre-parse-escape ()
   (let ((ch (car xsdre-current-regexp)))
     (xsdre-advance)
-    (cond ((memq ch '(?\\ ?| ?. ?- ?^ ?* ?+ ?( ?) ?{ ?} ?[ ?])) ch)
+    (cond ((memq ch '(?\\ ?| ?. ?- ?^ ?* ?+ ?\( ?\) ?{ ?} ?\[ ?\])) ch)
 	  ((eq ch ?r) ?\r)
 	  ((eq ch ?n) ?\n)
 	  ((eq ch ?t) ?\t)

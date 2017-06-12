@@ -1974,6 +1974,12 @@ line, if present, in the return value.  If it is @code{t}, include the
 height of both, if present, in the return value.
 @end defun
 
+@defun line-pixel-height
+This function returns the height in pixels of the line at point in the
+selected window.  The value includes the line spacing of the line
+(@pxref{Line Height}).
+@end defun
+
 
 @node Line Height
 @section Line Height
@@ -3792,6 +3798,10 @@ fringe, and likewise @var{right} for the right fringe.  A value of
 @code{nil} for either one stands for the default width.  If
 @var{outside-margins} is non-@code{nil}, that specifies that fringes
 should appear outside of the display margins.
+
+The values specified here may be later overridden by invoking
+@code{set-window-buffer} (@pxref{Buffers and Windows}) on @var{window}
+with its @var{keep-margins} argument @code{nil} or omitted.
 @end defun
 
 @defun window-fringes &optional window
@@ -4194,7 +4204,8 @@ using the following function:
 
 @defun set-window-scroll-bars window &optional width vertical-type height horizontal-type
 This function sets the width and/or height and the types of scroll bars
-for window @var{window}.
+for window @var{window}.  If @var{window} is @code{nil}, the selected
+window is used.
 
 @var{width} specifies the width of the vertical scroll bar in pixels
 (@code{nil} means use the width specified for the frame).
@@ -4209,7 +4220,9 @@ vertical scroll bar.
 The possible values are @code{bottom}, @code{t}, which means to use the
 frame's default, and @code{nil} for no horizontal scroll bar.
 
-If @var{window} is @code{nil}, the selected window is used.
+The values specified here may be later overridden by invoking
+@code{set-window-buffer} (@pxref{Buffers and Windows}) on @var{window}
+with its @var{keep-margins} argument @code{nil} or omitted.
 @end defun
 
 The following four functions take as argument a live window which
@@ -4666,16 +4679,21 @@ a form.  Emacs evaluates it to get the new height, with the symbol
 
 @item (raise @var{factor})
 This kind of display specification raises or lowers the text
-it applies to, relative to the baseline of the line.
+it applies to, relative to the baseline of the line.  It is mainly
+meant to support display of subscripts and superscripts.
 
-@var{factor} must be a number, which is interpreted as a multiple of the
-height of the affected text.  If it is positive, that means to display
-the characters raised.  If it is negative, that means to display them
-lower down.
+The @var{factor} must be a number, which is interpreted as a multiple
+of the height of the affected text.  If it is positive, that means to
+display the characters raised.  If it is negative, that means to
+display them lower down.
 
-If the text also has a @code{height} display specification, that does
-not affect the amount of raising or lowering, which is based on the
-faces used for the text.
+Note that if the text also has a @code{height} display specification,
+which was specified before (i.e.@: to the left of) @code{raise}, the
+latter will affect the amount of raising or lowering in pixels,
+because that is based on the height of the text being raised.
+Therefore, if you want to display a sub- or superscript that is
+smaller than the normal text height, consider specifying @code{raise}
+before @code{height}.
 @end table
 
 @c We put all the '@code{(when ...)}' on one line to encourage
@@ -4748,6 +4766,10 @@ Thus, you can make changes take effect by calling
 This function specifies the margin widths for window @var{window}, in
 character cell units.  The argument @var{left} controls the left
 margin, and @var{right} controls the right margin (default @code{0}).
+
+The values specified here may be later overridden by invoking
+@code{set-window-buffer} (@pxref{Buffers and Windows}) on @var{window}
+with its @var{keep-margins} argument @code{nil} or omitted.
 @end defun
 
 @defun window-margins &optional window
@@ -7183,20 +7205,22 @@ changing the value of the variable @code{x-gtk-use-system-tooltips} to
 @code{nil}.  The rest of this subsection describes how to control
 non-GTK+ tooltips, which are presented by Emacs itself.
 
-Since tooltips are special frames, they have their frame parameters
-(@pxref{Frame Parameters}).  Unlike other frames, the frame parameters
-for tooltips are stored in a special variable.
+@cindex tooltip frames
+Tooltips are displayed in special frames called tooltip frames, which
+have their own frame parameters (@pxref{Frame Parameters}).  Unlike
+other frames, the default parameters for tooltip frames are stored in a
+special variable.
 
 @defvar tooltip-frame-parameters
-This customizable option holds the frame parameters used for
-displaying tooltips.  Any font and color parameters are ignored, and
-the corresponding attributes of the @code{tooltip} face are used
-instead.  If @code{left} or @code{top} parameters are included, they
-are used as absolute frame-relative coordinates where the tooltip
-should be shown.  (Mouse-relative position of the tooltip can be
-customized using the variables described in @ref{Tooltips,,, emacs,
-The GNU Emacs Manual}.)  Note that the @code{left} and @code{top}
-parameters, if present, override the values of mouse-relative offsets.
+This customizable option holds the default frame parameters used for
+displaying tooltips.  Any font and color parameters are ignored, and the
+corresponding attributes of the @code{tooltip} face are used instead.
+If @code{left} or @code{top} parameters are included, they are used as
+absolute frame-relative coordinates where the tooltip should be shown.
+(Mouse-relative position of the tooltip can be customized using the
+variables described in @ref{Tooltips,,, emacs, The GNU Emacs Manual}.)
+Note that the @code{left} and @code{top} parameters, if present,
+override the values of mouse-relative offsets.
 @end defvar
 
 @vindex tooltip@r{ face}

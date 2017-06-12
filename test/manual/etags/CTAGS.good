@@ -340,6 +340,13 @@ CHARTAB_SIZE_BITS_1	c-src/emacs/src/lisp.h	1568
 CHARTAB_SIZE_BITS_2	c-src/emacs/src/lisp.h	1569
 CHARTAB_SIZE_BITS_3	c-src/emacs/src/lisp.h	1570
 CHAR_ALT	c-src/emacs/src/lisp.h	2445
+CHAR_BIT	c-src/emacs/src/lisp.h	2957
+CHAR_BIT	c-src/emacs/src/lisp.h	2959
+CHAR_BIT	c-src/emacs/src/lisp.h	2964
+CHAR_BIT	c-src/emacs/src/lisp.h	2969
+CHAR_BIT	c-src/emacs/src/lisp.h	2974
+CHAR_BIT	c-src/emacs/src/lisp.h	2978
+CHAR_BIT	c-src/emacs/src/lisp.h	2983
 CHAR_CLASS_MAX_LENGTH	c-src/emacs/src/regex.h	593
 CHAR_CLASS_MAX_LENGTH	c-src/emacs/src/regex.h	597
 CHAR_CLASS_MAX_LENGTH	c-src/emacs/src/regex.h	605
@@ -532,23 +539,10 @@ EMACS_UINT	c-src/emacs/src/lisp.h	104
 ENTRY	c-src/sysdep.h	/^#define	ENTRY(name)							      \\$/
 ENUM_BF	c-src/emacs/src/lisp.h	/^#define ENUM_BF(TYPE) unsigned int$/
 ENUM_BF	c-src/emacs/src/lisp.h	/^#define ENUM_BF(TYPE) enum TYPE$/
-ENUM_BF	c-src/emacs/src/lisp.h	/^  ENUM_BF (symbol_redirect) redirect : 3;$/
-ENUM_BF	c-src/emacs/src/lisp.h	/^  ENUM_BF (Lisp_Misc_Type) type : 16;		\/* = Lisp_M/
-ENUM_BF	c-src/emacs/src/lisp.h	/^  ENUM_BF (Lisp_Misc_Type) type : 16;		\/* = Lisp_M/
-ENUM_BF	c-src/emacs/src/lisp.h	/^    ENUM_BF (Lisp_Misc_Type) type : 16;	\/* = Lisp_/
-ENUM_BF	c-src/emacs/src/lisp.h	/^    ENUM_BF (Lisp_Misc_Type) type : 16;	\/* = Lisp_/
-ENUM_BF	c-src/emacs/src/lisp.h	/^    ENUM_BF (Lisp_Misc_Type) type : 16;	\/* = Lisp_/
-ENUM_BF	c-src/emacs/src/lisp.h	/^    ENUM_BF (specbind_tag) kind : CHAR_BIT;$/
-ENUM_BF	c-src/emacs/src/lisp.h	/^      ENUM_BF (specbind_tag) kind : CHAR_BIT;$/
-ENUM_BF	c-src/emacs/src/lisp.h	/^      ENUM_BF (specbind_tag) kind : CHAR_BIT;$/
-ENUM_BF	c-src/emacs/src/lisp.h	/^      ENUM_BF (specbind_tag) kind : CHAR_BIT;$/
-ENUM_BF	c-src/emacs/src/lisp.h	/^      ENUM_BF (specbind_tag) kind : CHAR_BIT;$/
-ENUM_BF	c-src/emacs/src/lisp.h	/^      ENUM_BF (specbind_tag) kind : CHAR_BIT;$/
-ENUM_BF	c-src/emacs/src/lisp.h	/^      ENUM_BF (specbind_tag) kind : CHAR_BIT;$/
 EQ	c-src/emacs/src/lisp.h	/^# define EQ(x, y) lisp_h_EQ (x, y)$/
 EQUAL	y-src/cccp.c	12
 ERLSRC	make-src/Makefile	/^ERLSRC=gs_dialog.erl lines.erl lists.erl$/
-ERROR	y-src/parse.y	303
+ERROR	y-src/parse.y	304
 ERROR	y-src/cccp.c	9
 ETAGS	make-src/Makefile	/^ETAGS: FRC etags ${infiles}$/
 ETAGS%	make-src/Makefile	/^ETAGS%: FRC etags% ${infiles}$/
@@ -1288,6 +1282,8 @@ SAVE_OBJECT	c-src/emacs/src/lisp.h	2051
 SAVE_POINTER	c-src/emacs/src/lisp.h	2050
 SAVE_SLOT_BITS	c-src/emacs/src/lisp.h	2055
 SAVE_TYPE_BITS	c-src/emacs/src/lisp.h	2062
+SAVE_TYPE_BITS	c-src/emacs/src/lisp.h	2114
+SAVE_TYPE_BITS	c-src/emacs/src/lisp.h	2123
 SAVE_TYPE_FUNCPTR_PTR_OBJ	c-src/emacs/src/lisp.h	2076
 SAVE_TYPE_INT_INT	c-src/emacs/src/lisp.h	2066
 SAVE_TYPE_INT_INT_INT	c-src/emacs/src/lisp.h	2067
@@ -1323,6 +1319,7 @@ SINGLE_LETTER_MOD	c-src/emacs/src/keyboard.c	/^#define SINGLE_LETTER_MOD(BIT)			
 SINGLE_LETTER_MOD	c-src/emacs/src/keyboard.c	6763
 SIZEFORMAT	objc-src/PackInsp.m	57
 SPECPDL_BACKTRACE	c-src/emacs/src/lisp.h	2948
+SPECPDL_INDEX	c-src/emacs/src/lisp.h	/^SPECPDL_INDEX (void)$/
 SPECPDL_LET	c-src/emacs/src/lisp.h	2949
 SPECPDL_LET_DEFAULT	c-src/emacs/src/lisp.h	2952
 SPECPDL_LET_LOCAL	c-src/emacs/src/lisp.h	2951
@@ -1701,8 +1698,8 @@ YYSTD	/usr/share/bison/bison.simple	/^# define YYSTD(x) std::x$/
 YYSTD	/usr/share/bison/bison.simple	/^# define YYSTD(x) x$/
 YYSTD	/usr/share/bison/bison.simple	/^# define YYSTD(x) std::x$/
 YYSTD	/usr/share/bison/bison.simple	/^# define YYSTD(x) x$/
-YYSTYPE	y-src/parse.y	71
 YYSTYPE	y-src/parse.y	72
+YYSTYPE	y-src/parse.y	73
 YYTERROR	/usr/share/bison/bison.simple	177
 YYTERROR	/usr/share/bison/bison.simple	178
 YY_DECL_NON_LSP_VARIABLES	/usr/share/bison/bison.simple	374
@@ -2516,10 +2513,14 @@ appendix_toc	perl-src/htlmify-cystic	16
 apply_modifiers	c-src/emacs/src/keyboard.c	/^apply_modifiers (int modifiers, Lisp_Object base)$/
 apply_modifiers_uncached	c-src/emacs/src/keyboard.c	/^apply_modifiers_uncached (int modifiers, char *bas/
 aref_addr	c-src/emacs/src/lisp.h	/^aref_addr (Lisp_Object array, ptrdiff_t idx)$/
+arg	c-src/emacs/src/lisp.h	2961
+arg	c-src/emacs/src/lisp.h	2966
+arg	c-src/emacs/src/lisp.h	2971
 arg	c-src/h.h	13
 arg_type	c-src/etags.c	250
 arglist	y-src/cccp.y	41
 argno	y-src/cccp.y	45
+args	c-src/emacs/src/lisp.h	2986
 args	c-src/h.h	30
 argsindent	tex-src/texinfo.tex	/^\\newskip\\defargsindent \\defargsindent=50pt$/
 argsindent	tex-src/texinfo.tex	/^\\dimen1=\\hsize \\advance \\dimen1 by -\\defargsindent/
@@ -2615,9 +2616,11 @@ bool_vector_words	c-src/emacs/src/lisp.h	/^bool_vector_words (EMACS_INT size)$/
 boolvar	c-src/emacs/src/lisp.h	2287
 bracelev	c-src/etags.c	2520
 bsp_DevId	c-src/h.h	25
+bt	c-src/emacs/src/lisp.h	2988
 btowc	c-src/emacs/src/regex.h	/^# define btowc(c) c$/
 buffer	c-src/etags.c	238
 buffer	c-src/emacs/src/regex.h	341
+buffer	c-src/emacs/src/lisp.h	2000
 buffer	c-src/h.h	119
 build	prol-src/natded.prolog	/^build([],Left,Left).$/
 build_pure_c_string	c-src/emacs/src/lisp.h	/^build_pure_c_string (const char *str)$/
@@ -2631,6 +2634,7 @@ button_down_time	c-src/emacs/src/keyboard.c	5218
 byte_stack	c-src/emacs/src/lisp.h	3049
 bytecode_dest	c-src/emacs/src/lisp.h	3037
 bytecode_top	c-src/emacs/src/lisp.h	3036
+bytepos	c-src/emacs/src/lisp.h	2016
 bytes_free	c-src/emacs/src/gmalloc.c	314
 bytes_total	c-src/emacs/src/gmalloc.c	310
 bytes_used	c-src/emacs/src/gmalloc.c	312
@@ -2656,12 +2660,14 @@ cat	prol-src/natded.prolog	/^cat(A, Alpha@Beta, Ass3, Qs3, tree(fe,A:Alpha@Beta/
 cat_atoms	prol-src/natded.prolog	/^cat_atoms(A1,A2,A3):-$/
 cccccccccc	c-src/h.h	115
 cdr	c-src/emacs/src/lisp.h	1159
-cell	y-src/parse.y	278
+cell	y-src/parse.y	279
 cgrep	html-src/software.html	/^cgrep$/
 chain	c-src/emacs/src/lisp.h	1162
+chain	c-src/emacs/src/lisp.h	2206
 chain	c-src/emacs/src/lisp.h	2396
 char_bits	c-src/emacs/src/lisp.h	2443
 char_table_specials	c-src/emacs/src/lisp.h	1692
+charpos	c-src/emacs/src/lisp.h	2011
 charset_unibyte	c-src/emacs/src/regex.h	410
 chartonmstr	pas-src/common.pas	/^function chartonmstr; (*($/
 checkQuotation	php-src/lce_functions.php	/^      function checkQuotation($str)$/
@@ -2713,6 +2719,7 @@ conalgorithm	html-src/algrthms.html	/^Convolutionally$/
 concat	c-src/etags.c	/^concat (const char *s1, const char *s2, const char/
 concatenatenamestrings	pas-src/common.pas	/^function concatenatenamestrings; (*($/
 consider_token	c-src/etags.c	/^consider_token (char *str, int len, int c, int *c_/
+constant	c-src/emacs/src/lisp.h	668
 constant	c-src/h.h	29
 constant	y-src/cccp.y	112
 constant_args	c-src/h.h	27
@@ -2754,7 +2761,9 @@ data	c-src/emacs/src/lisp.h	2129
 data	c-src/emacs/src/lisp.h	2395
 ddefineseen	c-src/etags.c	2462
 debian-bug	html-src/software.html	/^debian-bug.el$/
+debug_on_exit	c-src/emacs/src/lisp.h	2984
 decimalKey	objcpp-src/SimpleCalc.M	/^- decimalKey:sender$/
+declared_special	c-src/emacs/src/lisp.h	676
 decode_timer	c-src/emacs/src/keyboard.c	/^decode_timer (Lisp_Object timer, struct timespec */
 def	c-src/h.h	35
 def	c-src/h.h	38
@@ -2852,6 +2861,7 @@ egetenv	c-src/emacs/src/lisp.h	/^egetenv (const char *var)$/
 emacs_abort	c-src/emacs/src/lisp.h	/^extern _Noreturn void emacs_abort (void) NO_INLINE/
 end	c-src/emacs/src/regex.h	432
 end	c-src/emacs/src/keyboard.c	8753
+end	c-src/emacs/src/lisp.h	2039
 endtoken	c-src/etags.c	/^#define	endtoken(c)	(_etk[CHAR (c)]) \/* c ends tok/
 enter_critical_section	c-src/h.h	116
 entry	perl-src/htlmify-cystic	218
@@ -2902,12 +2912,12 @@ exit	c-src/exit.c	/^DEFUN(exit, (status), int status)$/
 exit	c-src/exit.strange_suffix	/^DEFUN(exit, (status), int status)$/
 exit-recursive-edit	c-src/emacs/src/keyboard.c	/^DEFUN ("exit-recursive-edit", Fexit_recursive_edit/
 exit_critical_to_previous	c-src/h.h	117
-exp	y-src/parse.y	94
+exp	y-src/parse.y	95
 exp	y-src/atest.y	2
 exp	y-src/cccp.y	156
 exp	y-src/cccp.y	185
 exp1	y-src/cccp.y	148
-exp_list	y-src/parse.y	262
+exp_list	y-src/parse.y	263
 expand-abbrev	c-src/abbrev.c	/^DEFUN ("expand-abbrev", Fexpand_abbrev, Sexpand_ab/
 expandmng	prol-src/natded.prolog	/^expandmng(var(V),var(V)).$/
 expandmng_tree	prol-src/natded.prolog	/^expandmng_tree(tree(Rule,Syn:Sem,Trees),$/
@@ -3003,7 +3013,7 @@ flag2str	pyt-src/server.py	/^def flag2str(value, string):$/
 flistseen	c-src/etags.c	2415
 fn	c-src/exit.c	/^    void EXFUN((*fn[1]), (NOARGS));$/
 fn	c-src/exit.strange_suffix	/^    void EXFUN((*fn[1]), (NOARGS));$/
-fnin	y-src/parse.y	67
+fnin	y-src/parse.y	68
 focus_set	pyt-src/server.py	/^    def focus_set(self):$/
 follow_key	c-src/emacs/src/keyboard.c	/^follow_key (Lisp_Object keymap, Lisp_Object key)$/
 fonts	tex-src/texinfo.tex	/^\\obeyspaces \\obeylines \\ninett \\indexfonts \\rawbac/
@@ -3053,6 +3063,10 @@ free_var	prol-src/natded.prolog	/^free_var(var(V),var(V)).$/
 freehook	c-src/emacs/src/gmalloc.c	/^freehook (void *ptr)$/
 fresh_vars	prol-src/natded.prolog	/^fresh_vars(var(V),var(V)).$/
 fstartlist	c-src/etags.c	2413
+func	c-src/emacs/src/lisp.h	/^      void (*func) (Lisp_Object);$/
+func	c-src/emacs/src/lisp.h	/^      void (*func) (void *);$/
+func	c-src/emacs/src/lisp.h	/^      void (*func) (int);$/
+func	c-src/emacs/src/lisp.h	/^      void (*func) (void);$/
 func1	c.c	/^int func1$/
 func2	c.c	/^int func2 (a,b$/
 func_key_syms	c-src/emacs/src/keyboard.c	4626
@@ -3063,6 +3077,7 @@ function	c-src/etags.c	194
 function	c-src/emacs/src/lisp.h	694
 function	c-src/emacs/src/lisp.h	1685
 function	c-src/emacs/src/lisp.h	2197
+function	c-src/emacs/src/lisp.h	2985
 functionp	c-src/emacs/src/lisp.h	/^functionp (Lisp_Object object)$/
 fval	forth-src/test-forth.fth	/^fconst fvalue fval$/
 fvar	forth-src/test-forth.fth	/^fvariable fvar$/
@@ -3078,6 +3093,11 @@ gather	pyt-src/server.py	/^    def gather(self):$/
 gather	pyt-src/server.py	/^    def gather(self):$/
 gc_aset	c-src/emacs/src/lisp.h	/^gc_aset (Lisp_Object array, ptrdiff_t idx, Lisp_Ob/
 gcmarkbit	c-src/emacs/src/lisp.h	656
+gcmarkbit	c-src/emacs/src/lisp.h	1974
+gcmarkbit	c-src/emacs/src/lisp.h	1981
+gcmarkbit	c-src/emacs/src/lisp.h	2035
+gcmarkbit	c-src/emacs/src/lisp.h	2113
+gcmarkbit	c-src/emacs/src/lisp.h	2204
 gcpro	c-src/emacs/src/lisp.h	3042
 gcpro	c-src/emacs/src/lisp.h	3132
 gen_help_event	c-src/emacs/src/keyboard.c	/^gen_help_event (Lisp_Object help, Lisp_Object fram/
@@ -3202,12 +3222,13 @@ input_pending	c-src/emacs/src/keyboard.c	239
 input_polling_used	c-src/emacs/src/keyboard.c	/^input_polling_used (void)$/
 input_was_pending	c-src/emacs/src/keyboard.c	287
 insert-abbrev-table-description	c-src/abbrev.c	/^DEFUN ("insert-abbrev-table-description", Finsert_/
+insertion_type	c-src/emacs/src/lisp.h	1989
 insertname	pas-src/common.pas	/^function insertname;(*($/
 instance_method	ruby-src/test.rb	/^        def instance_method$/
 instance_method_equals=	ruby-src/test.rb	/^        def instance_method_equals=$/
 instance_method_exclamation!	ruby-src/test.rb	/^        def instance_method_exclamation!$/
 instance_method_question?	ruby-src/test.rb	/^        def instance_method_question?$/
-instr	y-src/parse.y	80
+instr	y-src/parse.y	81
 instruct	c-src/etags.c	2527
 intNumber	go-src/test1.go	13
 integer	c-src/emacs/src/lisp.h	2127
@@ -3221,6 +3242,7 @@ interface_locate	c-src/c.c	/^interface_locate(void)$/
 intern	c-src/emacs/src/lisp.h	/^intern (const char *str)$/
 intern_c_string	c-src/emacs/src/lisp.h	/^intern_c_string (const char *str)$/
 internal_last_event_frame	c-src/emacs/src/keyboard.c	228
+interned	c-src/emacs/src/lisp.h	672
 interpreters	c-src/etags.c	197
 interrupt_input	c-src/emacs/src/keyboard.c	328
 interrupt_input_blocked	c-src/emacs/src/keyboard.c	76
@@ -3330,6 +3352,7 @@ len	c-src/etags.c	237
 length	c-src/etags.c	2495
 length	y-src/cccp.y	44
 length	y-src/cccp.y	113
+let	c-src/emacs/src/lisp.h	2981
 letter	tex-src/texinfo.tex	/^\\chapmacro {#1}{Appendix \\appendixletter}%$/
 letter	tex-src/texinfo.tex	/^  {#1}{Appendix \\appendixletter}{\\noexpand\\folio}}/
 letter	tex-src/texinfo.tex	/^\\gdef\\thissection{#1}\\secheading {#1}{\\appendixlet/
@@ -3346,7 +3369,7 @@ licenze	html-src/softwarelibero.html	/^Licenze d'uso di un programma$/
 limit	cp-src/Range.h	/^  double limit (void) const { return rng_limit; }$/
 line	c-src/etags.c	2493
 line	perl-src/htlmify-cystic	37
-line	y-src/parse.y	86
+line	y-src/parse.y	87
 lineCount	php-src/lce_functions.php	/^      function lineCount($entry)$/
 linebuffer	c-src/etags.c	239
 linebuffer_init	c-src/etags.c	/^linebuffer_init (linebuffer *lbp)$/
@@ -3534,6 +3557,7 @@ name	c-src/etags.c	218
 name	c-src/etags.c	261
 name	c-src/etags.c	2271
 name	c-src/emacs/src/keyboard.c	7241
+name	c-src/emacs/src/lisp.h	682
 name	c-src/emacs/src/lisp.h	1808
 name	c-src/emacs/src/lisp.h	3144
 name	perl-src/htlmify-cystic	357
@@ -3558,6 +3582,8 @@ name	y-src/cccp.y	113
 name	y-src/cccp.y	113
 named	c-src/etags.c	2505
 namestringequal	pas-src/common.pas	/^function namestringequal;(*(var Name1,Name2 : Name/
+nargs	c-src/emacs/src/lisp.h	2987
+need_adjustment	c-src/emacs/src/lisp.h	1986
 neighbors	cp-src/clheir.hpp	59
 nelem	cp-src/Range.h	/^  int nelem (void) const { return rng_nelem; }$/
 nestlev	c-src/etags.c	2525
@@ -3576,6 +3602,8 @@ next	c-src/emacs/src/keyboard.c	861
 next	c-src/emacs/src/keyboard.c	7246
 next	c-src/emacs/src/lisp.h	700
 next	c-src/emacs/src/lisp.h	1848
+next	c-src/emacs/src/lisp.h	2009
+next	c-src/emacs/src/lisp.h	2037
 next	c-src/emacs/src/lisp.h	2192
 next	c-src/emacs/src/lisp.h	3028
 next	c-src/emacs/src/lisp.h	3134
@@ -3651,8 +3679,8 @@ object	c-src/emacs/src/lisp.h	2128
 object_registry	cp-src/clheir.cpp	10
 objtag	c-src/etags.c	2453
 objvar	c-src/emacs/src/lisp.h	2297
-obstack_chunk_alloc	y-src/parse.y	46
-obstack_chunk_free	y-src/parse.y	47
+obstack_chunk_alloc	y-src/parse.y	47
+obstack_chunk_free	y-src/parse.y	48
 ocatseen	c-src/etags.c	2477
 octave_MDiagArray2_h	cp-src/MDiagArray2.h	29
 octave_Range_h	cp-src/Range.h	24
@@ -3665,6 +3693,7 @@ oimplementation	c-src/etags.c	2474
 oinbody	c-src/etags.c	2478
 ok	objc-src/PackInsp.m	/^-ok:sender$/
 ok_to_echo_at_next_pause	c-src/emacs/src/keyboard.c	159
+old_value	c-src/emacs/src/lisp.h	2980
 omethodcolon	c-src/etags.c	2481
 omethodparm	c-src/etags.c	2482
 omethodsign	c-src/etags.c	2479
@@ -3752,14 +3781,14 @@ parse	prol-src/natded.prolog	/^parse(Ws,Cat):-$/
 parseFromVars	php-src/lce_functions.php	/^      function parseFromVars($prefix)$/
 parse_c_expression	y-src/cccp.y	/^parse_c_expression (string)$/
 parse_cgi	prol-src/natded.prolog	/^parse_cgi(TokenList,KeyVals):-$/
-parse_error	y-src/parse.y	81
+parse_error	y-src/parse.y	82
 parse_escape	y-src/cccp.y	/^parse_escape (string_ptr)$/
-parse_hash	y-src/parse.y	63
+parse_hash	y-src/parse.y	64
 parse_menu_item	c-src/emacs/src/keyboard.c	/^parse_menu_item (Lisp_Object item, int inmenubar)$/
 parse_modifiers	c-src/emacs/src/keyboard.c	/^parse_modifiers (Lisp_Object symbol)$/
 parse_modifiers_uncached	c-src/emacs/src/keyboard.c	/^parse_modifiers_uncached (Lisp_Object symbol, ptrd/
 parse_number	y-src/cccp.y	/^parse_number (olen)$/
-parse_return	y-src/parse.y	73
+parse_return	y-src/parse.y	74
 parse_return_error	y-src/cccp.y	70
 parse_solitary_modifier	c-src/emacs/src/keyboard.c	/^parse_solitary_modifier (Lisp_Object symbol)$/
 parse_tool_bar_item	c-src/emacs/src/keyboard.c	/^parse_tool_bar_item (Lisp_Object key, Lisp_Object /
@@ -3772,10 +3801,12 @@ pending_signals	c-src/emacs/src/keyboard.c	80
 pfatal	c-src/etags.c	/^pfatal (const char *s1)$/
 pfdset	c-src/h.h	57
 pfnote	c-src/etags.c	/^pfnote (char *name, bool is_func, char *linestart,/
+pinned	c-src/emacs/src/lisp.h	679
 plain_C_entries	c-src/etags.c	/^plain_C_entries (FILE *inf)$/
 plain_C_suffixes	c-src/etags.c	643
 plainc	c-src/etags.c	2934
 plist	c-src/emacs/src/lisp.h	697
+plist	c-src/emacs/src/lisp.h	2040
 plus	cp-src/functions.cpp	/^void Date::plus ( int days , int month , int year /
 plus	go-src/test1.go	5
 plusvalseq	prol-src/natded.prolog	/^plusvalseq([]) --> [].$/
@@ -3866,8 +3897,8 @@ qux=	ruby-src/test1.ru	/^      def qux=(tee)$/
 r0	c-src/sysdep.h	54
 r1	c-src/sysdep.h	55
 r_alloc	c-src/emacs/src/lisp.h	/^extern void *r_alloc (void **, size_t) ATTRIBUTE_A/
-range_exp	y-src/parse.y	268
-range_exp_list	y-src/parse.y	272
+range_exp	y-src/parse.y	269
+range_exp_list	y-src/parse.y	273
 raw_keybuf	c-src/emacs/src/keyboard.c	116
 raw_keybuf_count	c-src/emacs/src/keyboard.c	117
 rbtp	c.c	240
@@ -3922,6 +3953,7 @@ recursion-depth	c-src/emacs/src/keyboard.c	/^DEFUN ("recursion-depth", Frecursio
 recursive-edit	c-src/emacs/src/keyboard.c	/^DEFUN ("recursive-edit", Frecursive_edit, Srecursi/
 recursive_edit_1	c-src/emacs/src/keyboard.c	/^recursive_edit_1 (void)$/
 recursive_edit_unwind	c-src/emacs/src/keyboard.c	/^recursive_edit_unwind (Lisp_Object buffer)$/
+redirect	c-src/emacs/src/lisp.h	663
 reduce	prol-src/natded.prolog	/^reduce((X^M)@N,L):-     % beta reduction$/
 reduce_subterm	prol-src/natded.prolog	/^reduce_subterm(M,M2):-$/
 refreshPort	pyt-src/server.py	/^    def refreshPort(self):$/
@@ -4088,6 +4120,10 @@ snone	c-src/etags.c	2443
 some_mouse_moved	c-src/emacs/src/keyboard.c	/^some_mouse_moved (void)$/
 space	tex-src/texinfo.tex	/^    {#2\\labelspace #1}\\dotfill\\doshortpageno{#3}}%/
 space	tex-src/texinfo.tex	/^  \\dosubsubsecentry{#2.#3.#4.#5\\labelspace#1}{#6}}/
+spacer	c-src/emacs/src/lisp.h	1975
+spacer	c-src/emacs/src/lisp.h	1982
+spacer	c-src/emacs/src/lisp.h	2036
+spacer	c-src/emacs/src/lisp.h	2205
 specbind_tag	c-src/emacs/src/lisp.h	2943
 specbinding	c-src/emacs/src/lisp.h	2955
 specialsymbol	prol-src/natded.prolog	/^specialsymbol(C1,C2,S):-$/
@@ -4118,6 +4154,7 @@ stagseen	c-src/etags.c	2446
 standalone	make-src/Makefile	/^standalone:$/
 start	c-src/emacs/src/regex.h	431
 start	c-src/emacs/src/keyboard.c	8753
+start	c-src/emacs/src/lisp.h	2038
 start	php-src/lce_functions.php	/^      function start($line, $class)$/
 start	y-src/cccp.y	143
 start_polling	c-src/emacs/src/keyboard.c	/^start_polling (void)$/
@@ -4162,6 +4199,7 @@ swallow_events	c-src/emacs/src/keyboard.c	/^swallow_events (bool do_display)$/
 switch_line_buffers	c-src/etags.c	/^#define switch_line_buffers() (curndx = 1 - curndx/
 sxhash_combine	c-src/emacs/src/lisp.h	/^sxhash_combine (EMACS_UINT x, EMACS_UINT y)$/
 sym_type	c-src/etags.c	2204
+symbol	c-src/emacs/src/lisp.h	2980
 symbol_interned	c-src/emacs/src/lisp.h	639
 symbol_name	c-src/emacs/src/lisp.h	1687
 symbol_redirect	c-src/emacs/src/lisp.h	646
@@ -4339,6 +4377,11 @@ ttypeseen	c-src/etags.c	2430
 typdef	c-src/etags.c	2434
 type	c-src/etags.c	2271
 type	c-src/emacs/src/gmalloc.c	145
+type	c-src/emacs/src/lisp.h	1973
+type	c-src/emacs/src/lisp.h	1980
+type	c-src/emacs/src/lisp.h	2034
+type	c-src/emacs/src/lisp.h	2112
+type	c-src/emacs/src/lisp.h	2203
 type	c-src/emacs/src/lisp.h	2276
 type	c-src/emacs/src/lisp.h	2286
 type	c-src/emacs/src/lisp.h	2296
@@ -4372,6 +4415,10 @@ unchar	c-src/h.h	99
 unexpand-abbrev	c-src/abbrev.c	/^DEFUN ("unexpand-abbrev", Funexpand_abbrev, Sunexp/
 unread_switch_frame	c-src/emacs/src/keyboard.c	204
 unsignedp	y-src/cccp.y	112
+unwind	c-src/emacs/src/lisp.h	2962
+unwind_int	c-src/emacs/src/lisp.h	2972
+unwind_ptr	c-src/emacs/src/lisp.h	2967
+unwind_void	c-src/emacs/src/lisp.h	2976
 uprintmax_t	c-src/emacs/src/lisp.h	149
 uprintmax_t	c-src/emacs/src/lisp.h	154
 usage	perl-src/yagrip.pl	/^sub usage {$/
@@ -4423,6 +4470,7 @@ web ftp publish	make-src/Makefile	/^web ftp publish:$/
 what	c-src/etags.c	252
 wheel_syms	c-src/emacs/src/keyboard.c	4628
 where	c-src/emacs/src/lisp.h	2348
+where	c-src/emacs/src/lisp.h	2980
 where	cp-src/clheir.hpp	77
 where_in_registry	cp-src/clheir.hpp	15
 windowWillClose	objcpp-src/SimpleCalc.M	/^- windowWillClose:sender$/

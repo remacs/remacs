@@ -231,34 +231,84 @@ Should be consistent with the Git config value i18n.logOutputEncoding."
     (?U 'edited)     ;; FIXME
     (?T 'edited)))   ;; FIXME
 
+(defvar vc-git--program-version nil)
+
+(defun vc-git--program-version ()
+  (or vc-git--program-version
+      (let ((version-string
+             (vc-git--run-command-string nil "version")))
+        (setq vc-git--program-version
+              (if (and version-string
+                       (string-match "git version \\([0-9.]+\\)$"
+                                     version-string))
+                  (match-string 1 version-string)
+                "0")))))
+
+(defun vc-git--git-status-to-vc-state (code-list)
+  "Convert CODE-LIST to a VC status.
+
+Each element of CODE-LIST comes from the first two characters of
+a line returned by 'git status --porcelain' and should be passed
+in the order given by 'git status'."
+  ;; It is necessary to allow CODE-LIST to be a list because sometimes git
+  ;; status returns multiple lines, e.g. for a file that is removed from
+  ;; the index but is present in the HEAD and working tree.
+  (pcase code-list
+    ('nil 'up-to-date)
+    (`(,code)
+     (pcase code
+       ("!!" 'ignored)
+       ("??" 'unregistered)
+       ;; I have only seen this with a file that is only present in the
+       ;; index.  Let us call this `removed'.
+       ("AD" 'removed)
+       (_ (cond
+           ((string-match-p "^[ RD]+$" code) 'removed)
+           ((string-match-p "^[ M]+$" code) 'edited)
+           ((string-match-p "^[ A]+$" code) 'added)
+           ((string-match-p "^[ U]+$" code) 'conflict)
+           (t 'edited)))))
+    ;;  I know of two cases when git state returns more than one element,
+    ;;  in both cases returning '("D " "??")':
+    ;;  1. When a file is removed from the index but present in the
+    ;;     HEAD and working tree.
+    ;;  2. When a file A is renamed to B in the index and then back to A
+    ;;     in the working tree.
+    ;;  In both of these instances, `unregistered' is a reasonable response.
+    (`("D " "??") 'unregistered)
+    ;;  In other cases, let us return `edited'.
+    (_ 'edited)))
+
 (defun vc-git-state (file)
   "Git-specific version of `vc-state'."
-  ;; FIXME: This can't set 'ignored or 'conflict yet
-  ;; The 'ignored state could be detected with `git ls-files -i -o
-  ;; --exclude-standard` It also can't set 'needs-update or
-  ;; 'needs-merge. The rough equivalent would be that upstream branch
-  ;; for current branch is in fast-forward state i.e. current branch
-  ;; is direct ancestor of corresponding upstream branch, and the file
-  ;; was modified upstream.  But we can't check that without a network
-  ;; operation.
-  ;; This assumes that status is known to be not `unregistered' because
-  ;; we've been successfully dispatched here from `vc-state', that
-  ;; means `vc-git-registered' returned t earlier once.  Bug#11757
-  (let ((diff (vc-git--run-command-string
-               file "diff-index" "-p" "--raw" "-z" "HEAD" "--")))
-    (if (and diff
-             (string-match ":[0-7]\\{6\\} [0-7]\\{6\\} [0-9a-f]\\{40\\} [0-9a-f]\\{40\\} \\([ADMUT]\\)\0[^\0]+\0\\(.*\n.\\)?"
-                           diff))
-        (let ((diff-letter (match-string 1 diff)))
-          (if (not (match-beginning 2))
-              ;; Empty diff: file contents is the same as the HEAD
-              ;; revision, but timestamps are different (eg, file
-              ;; was "touch"ed).  Update timestamp in index:
-              (prog1 'up-to-date
-                (vc-git--call nil "add" "--refresh" "--"
-                              (file-relative-name file)))
-            (vc-git--state-code diff-letter)))
-      (if (vc-git--empty-db-p) 'added 'up-to-date))))
+  ;; It can't set `needs-update' or `needs-merge'. The rough
+  ;; equivalent would be that upstream branch for current branch is in
+  ;; fast-forward state i.e. current branch is direct ancestor of
+  ;; corresponding upstream branch, and the file was modified
+  ;; upstream.  We'd need to check against the upstream tracking
+  ;; branch for that (an extra process call or two).
+  (let* ((args
+          `("status" "--porcelain" "-z"
+            ;; Just to be explicit, it's the default anyway.
+            "--untracked-files"
+            ,@(when (version<= "1.7.6.3" (vc-git--program-version))
+                '("--ignored"))
+            "--"))
+        (status (apply #'vc-git--run-command-string file args)))
+    ;; Alternatively, the `ignored' state could be detected with 'git
+    ;; ls-files -i -o --exclude-standard', but that's an extra process
+    ;; call, and the `ignored' state is rarely needed.
+    (if (null status)
+        ;; If status is nil, there was an error calling git, likely because
+        ;; the file is not in a git repo.
+        'unregistered
+      ;; If this code is adapted to parse 'git status' for a directory,
+      ;; note that a renamed file takes up two null values and needs to be
+      ;; treated slightly more carefully.
+      (vc-git--git-status-to-vc-state
+       (mapcar (lambda (s)
+                 (substring s 0 2))
+               (split-string status "\0" t))))))
 
 (defun vc-git-working-revision (_file)
   "Git-specific version of `vc-working-revision'."
@@ -838,7 +888,15 @@ If PROMPT is non-nil, prompt for the Git command to run."
         (vc-compilation-mode 'git)
         (setq-local compile-command
                     (concat git-program " " command " "
-                            (if args (mapconcat 'identity args " ") "")))))
+                            (if args (mapconcat 'identity args " ") "")))
+        (setq-local compilation-directory root)
+        ;; Either set `compilation-buffer-name-function' locally to nil
+        ;; or use `compilation-arguments' to set `name-function'.
+        ;; See `compilation-buffer-name'.
+        (setq-local compilation-arguments
+                    (list compile-command nil
+                          (lambda (_name-of-mode) buffer)
+                          nil))))
     (vc-set-async-update buffer)))
 
 (defun vc-git-pull (prompt)
@@ -1274,9 +1332,8 @@ This requires git 1.8.4 or later, for the \"-L\" option of \"git log\"."
 
 (defun vc-git-next-revision (file rev)
   "Git-specific version of `vc-next-revision'."
-  (let* ((default-directory (file-name-directory
-			     (expand-file-name file)))
-         (file (file-name-nondirectory file))
+  (let* ((default-directory (vc-git-root file))
+         (file (file-relative-name file))
          (current-rev
           (with-temp-buffer
             (and

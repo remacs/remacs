@@ -45,9 +45,9 @@ available.
 
 The definition of triviality is a little vague, but a rule of thumb is
 that any file with less than 15 lines of actual content is trivial. If
-a file is auto-generated from another one in the repository, then it
-does not really matter about adding a copyright statement to the
-generated file.
+a file is auto-generated (eg ldefs-boot.el) from another one in the
+repository, then it does not really matter about adding a copyright
+statement to the generated file.
 
 Legal advice says that we could, if we wished, put a license notice
 even in trivial files, because copyright law in general looks at the
@@ -531,19 +531,12 @@ of writing) GPL >= 2. rms says may as well leave the licenses of these
 alone (may import them from Gnulib again). These are:
 
     Gnulib:
-    build-aux/compile
     build-aux/config.guess
     build-aux/config.sub
-    build-aux/depcomp
-    build-aux/missing
     build-aux/move-if-change
-    build-aux/snippet/_Noreturn.h
-    build-aux/snippet/arg-nonnull.h
-    build-aux/snippet/c++defs.h
-    build-aux/snippet/warn-on-use.h
     doc/man/texinfo.tex
     lib/*.[ch]
-    lib/gnulib.mk
+    lib/gnulib.mk.in
     src/gmalloc.c
     src/termcap.c
     src/tparam.c

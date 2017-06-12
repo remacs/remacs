@@ -1094,10 +1094,10 @@ in the list must have an affix file where Hunspell affix files are kept."
 
 (defun ispell-find-hunspell-dictionaries ()
   "Look for installed Hunspell dictionaries.
-Will initialize `ispell-hunspell-dictionary-alist' and
-`ispell-hunspell-dictionary-alist' after values found
-and remove `ispell-dicts-name2locale-equivs-alist'
-entries if a specific dictionary was found."
+Will initialize `ispell-hunspell-dictionary-alist' according
+to dictionaries found, and will remove aliases from the list
+in `ispell-dicts-name2locale-equivs-alist' if an explicit
+dictionary from that list was found."
   (let ((hunspell-found-dicts
 	 (split-string
 	  (with-temp-buffer
@@ -1110,18 +1110,27 @@ entries if a specific dictionary was found."
 	  "[\n\r]+"
 	  t))
 	hunspell-default-dict
-	hunspell-default-dict-entry)
+	hunspell-default-dict-entry
+	hunspell-multi-dict)
     (dolist (dict hunspell-found-dicts)
       (let* ((full-name (file-name-nondirectory dict))
 	     (basename  (file-name-sans-extension full-name))
 	     (affix-file (concat dict ".aff")))
 	(if (string-match "\\.aff$" dict)
 	    ;; Found default dictionary
-	    (if hunspell-default-dict
-		(error "ispell-fhd: Default dict already defined as %s.  Not using %s.\n"
-		       hunspell-default-dict dict)
-	      (setq affix-file dict)
-	      (setq hunspell-default-dict (list basename affix-file)))
+	    (progn
+	      (if hunspell-default-dict
+		  (setq hunspell-multi-dict
+			(concat (or hunspell-multi-dict
+				    (car hunspell-default-dict))
+				"," basename))
+		(setq affix-file dict)
+		;; FIXME: The cdr of the list we cons below is never
+		;; used.  Why do we need a list?
+		(setq hunspell-default-dict (list basename affix-file)))
+	      (ispell-print-if-debug
+	       "++ ispell-fhd: default dict-entry:%s name:%s basename:%s\n"
+	       dict full-name basename))
 	  (if (and (not (assoc basename ispell-hunspell-dict-paths-alist))
 		   (file-exists-p affix-file))
 	      ;; Entry has an associated .aff file and no previous value.
@@ -1161,7 +1170,8 @@ entries if a specific dictionary was found."
 	      (cl-pushnew (list dict-equiv-key affix-file)
                           ispell-hunspell-dict-paths-alist :test #'equal)))))
     ;; Parse and set values for default dictionary.
-    (setq hunspell-default-dict (car hunspell-default-dict))
+    (setq hunspell-default-dict (or hunspell-multi-dict
+				    (car hunspell-default-dict)))
     (setq hunspell-default-dict-entry
 	  (ispell-parse-hunspell-affix-file hunspell-default-dict))
     ;; Create an alist of found dicts with only names, except for default dict.
@@ -2004,7 +2014,7 @@ which is in `ispell-local-dictionary-alist' or `ispell-dictionary-alist'."
 	(if ispell-check-only
 	    ;; return dummy word when just flagging misspellings
 	    (list "" (point) (point))
-	  (error "No word found to check!"))
+	  (user-error "No word found to check!"))
       (setq start (copy-marker (match-beginning 0))
 	    end (point-marker)
 	    word (buffer-substring-no-properties start end))
@@ -4127,9 +4137,6 @@ Both should not be used to define a buffer-local dictionary."
 			  (newline)
 			  (insert comment-end)))))
 	      (insert (concat " " word))))))))
-
-;;FIXME: Use `user-error' instead!
-(add-to-list 'debug-ignored-errors "^No word found to check!$")
 
 (provide 'ispell)
 

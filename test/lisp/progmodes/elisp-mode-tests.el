@@ -114,6 +114,72 @@
       (should (member "backup-buffer" comps))
       (should-not (member "backup-inhibited" comps)))))
 
+;;; eval-last-sexp
+
+(ert-deftest eval-last-sexp-print-format-sym ()
+  (with-temp-buffer
+    (let ((current-prefix-arg '(4)))
+      (erase-buffer) (insert "t")
+      (call-interactively #'eval-last-sexp)
+      (should (equal (buffer-string) "tt")))))
+
+(ert-deftest eval-last-sexp-print-format-sym-echo ()
+  ;; We can only check the echo area when running interactive.
+  (skip-unless (not noninteractive))
+  (with-temp-buffer
+    (let ((current-prefix-arg nil))
+      (erase-buffer) (insert "t") (message nil)
+      (call-interactively #'eval-last-sexp)
+      (should (equal (current-message) "t")))))
+
+(ert-deftest eval-last-sexp-print-format-small-int ()
+  (with-temp-buffer
+    (let ((current-prefix-arg '(4)))
+      (erase-buffer) (insert "?A")
+      (call-interactively #'eval-last-sexp)
+      (should (equal (buffer-string) "?A65")))
+    (let ((current-prefix-arg 0))
+      (erase-buffer) (insert "?A")
+      (call-interactively #'eval-last-sexp)
+      (should (equal (buffer-string) "?A65 (#o101, #x41, ?A)")))))
+
+(ert-deftest eval-last-sexp-print-format-small-int-echo ()
+  (skip-unless (not noninteractive))
+  (with-temp-buffer
+    (let ((current-prefix-arg nil))
+      (erase-buffer) (insert "?A") (message nil)
+      (call-interactively #'eval-last-sexp)
+      (should (equal (current-message) "65 (#o101, #x41, ?A)")))))
+
+(ert-deftest eval-last-sexp-print-format-large-int ()
+  (with-temp-buffer
+    (let ((eval-expression-print-maximum-character ?A))
+      (let ((current-prefix-arg '(4)))
+        (erase-buffer) (insert "?B")
+        (call-interactively #'eval-last-sexp)
+        (should (equal (buffer-string) "?B66")))
+      (let ((current-prefix-arg 0))
+        (erase-buffer) (insert "?B")
+        (call-interactively #'eval-last-sexp)
+        (should (equal (buffer-string) "?B66 (#o102, #x42)")))
+      (let ((current-prefix-arg -1))
+        (erase-buffer) (insert "?B")
+        (call-interactively #'eval-last-sexp)
+        (should (equal (buffer-string) "?B66 (#o102, #x42, ?B)"))))))
+
+(ert-deftest eval-last-sexp-print-format-large-int-echo ()
+  (skip-unless (not noninteractive))
+  (with-temp-buffer
+    (let ((eval-expression-print-maximum-character ?A))
+      (let ((current-prefix-arg nil))
+        (erase-buffer) (insert "?B") (message nil)
+        (call-interactively #'eval-last-sexp)
+        (should (equal (current-message) "66 (#o102, #x42)")))
+      (let ((current-prefix-arg '-))
+        (erase-buffer) (insert "?B") (message nil)
+        (call-interactively #'eval-last-sexp)
+        (should (equal (current-message) "66 (#o102, #x42, ?B)"))))))
+
 ;;; xref
 
 (defun xref-elisp-test-descr-to-target (xref)

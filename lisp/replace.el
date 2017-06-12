@@ -405,8 +405,8 @@ replace backward.
 
 Fourth and fifth arg START and END specify the region to operate on.
 
-In TO-STRING, `\\&' or `\\0' stands for whatever matched the whole of
-REGEXP, and `\\=\\N' (where N is a digit) stands for whatever matched
+In TO-STRING, `\\&' stands for whatever matched the whole of REGEXP,
+and `\\=\\N' (where N is a digit) stands for whatever matched
 the Nth `\\(...\\)' (1-based) in REGEXP.  The `\\(...\\)' groups are
 counted from 1.
 `\\?' lets you edit the replacement text in the minibuffer
@@ -464,8 +464,8 @@ reference `replace-count' to get the number of replacements already made.
 If the result of TO-EXPR is not a string, it is converted to one using
 `prin1-to-string' with the NOESCAPE argument (which see).
 
-For convenience, when entering TO-EXPR interactively, you can use `\\&' or
-`\\0' to stand for whatever matched the whole of REGEXP, and `\\N' (where
+For convenience, when entering TO-EXPR interactively, you can use `\\&'
+to stand for whatever matched the whole of REGEXP, and `\\N' (where
 N is a digit) to stand for whatever matched the Nth `\\(...\\)' (1-based)
 in REGEXP.
 
@@ -652,9 +652,9 @@ replace backward.
 
 Fourth and fifth arg START and END specify the region to operate on.
 
-In TO-STRING, `\\&' or `\\0' stands for whatever matched the whole of
-REGEXP, and `\\=\\N' (where N is a digit) stands for
-whatever matched the Nth `\\(...\\)' (1-based) in REGEXP.
+In TO-STRING, `\\&' stands for whatever matched the whole of REGEXP,
+and `\\=\\N' (where N is a digit) stands for whatever matched
+the Nth `\\(...\\)' (1-based) in REGEXP.
 `\\?' lets you edit the replacement text in the minibuffer
 at the given position for each replacement.
 
@@ -663,7 +663,8 @@ followed by a Lisp expression used as part of the replacement
 text.  Inside of that expression, `\\&' is a string denoting the
 whole match, `\\N' a partial match, `\\#&' and `\\#N' the respective
 numeric values from `string-to-number', and `\\#' itself for
-`replace-count', the number of replacements occurred so far.
+`replace-count', the number of replacements occurred so far, starting
+from zero.
 
 If your Lisp expression is an identifier and the next letter in
 the replacement string would be interpreted as part of it, you
@@ -848,7 +849,6 @@ called interactively by passing a non-nil INTERACTIVE argument.
 This function starts looking for the next match from the end of
 the previous match.  Hence, it ignores matches that overlap
 a previously found match."
-
   (interactive
    (progn
      (barf-if-buffer-read-only)
@@ -923,7 +923,6 @@ a non-nil INTERACTIVE argument.
 If a match is split across lines, all the lines it lies in are deleted.
 They are deleted _before_ looking for the next match.  Hence, a match
 starting on the same line at which another match ended is ignored."
-
   (interactive
    (progn
      (barf-if-buffer-read-only)
@@ -971,7 +970,6 @@ end of (the accessible portion of) the buffer.
 This function starts looking for the next match from the end of
 the previous match.  Hence, it ignores matches that overlap
 a previously found match."
-
   (interactive
    (keep-lines-read-args "How many matches for regexp"))
   (save-excursion

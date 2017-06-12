@@ -281,5 +281,39 @@ indirectly `mapbacktrace'."
   (should (equal (string-match-p "\\`[[:blank:]]\\'" "\u3000") 0))
   (should-not (string-match-p "\\`[[:blank:]]\\'" "\N{LINE SEPARATOR}")))
 
+(ert-deftest subr-tests--dolist--wrong-number-of-args ()
+  "Test that `dolist' doesn't accept wrong types or length of SPEC,
+cf. Bug#25477."
+  (should-error (eval '(dolist (a)))
+                :type 'wrong-number-of-arguments)
+  (should-error (eval '(dolist (a () 'result 'invalid)) t)
+                :type 'wrong-number-of-arguments)
+  (should-error (eval '(dolist "foo") t)
+                :type 'wrong-type-argument))
+
+(require 'cl-generic)
+(cl-defgeneric subr-tests--generic (x))
+(cl-defmethod subr-tests--generic ((x string))
+  (message "%s is a string" x))
+(cl-defmethod subr-tests--generic ((x integer))
+  (message "%s is a number" x))
+(cl-defgeneric subr-tests--generic-without-methods (x y))
+(defvar subr-tests--this-file (or load-file-name buffer-file-name))
+
+(ert-deftest subr-tests--method-files--finds-methods ()
+  "`method-files' returns a list of files and methods for a generic function."
+  (let ((retval (method-files 'subr-tests--generic)))
+    (should (equal (length retval) 2))
+    (mapc (lambda (x)
+            (should (equal (car x) subr-tests--this-file))
+            (should (equal (cadr x) 'subr-tests--generic)))
+          retval)
+    (should-not (equal (nth 0 retval) (nth 1 retval)))))
+
+(ert-deftest subr-tests--method-files--nonexistent-methods ()
+  "`method-files' returns nil if asked to find a method which doesn't exist."
+  (should-not (method-files 'subr-tests--undefined-generic))
+  (should-not (method-files 'subr-tests--generic-without-methods)))
+
 (provide 'subr-tests)
 ;;; subr-tests.el ends here

@@ -59,8 +59,11 @@
 ;; This is because PATH_DUMPLOADSEARCH is just "../lisp".
 (if (or (equal (member "bootstrap" command-line-args) '("bootstrap"))
 	;; FIXME this is irritatingly fragile.
-	(equal (nth 4 command-line-args) "unidata-gen.el")
-	(equal (nth 7 command-line-args) "unidata-gen-files")
+	(and (stringp (nth 4 command-line-args))
+	     (string-match "^unidata-gen\\(\\.elc?\\)?$"
+			   (nth 4 command-line-args)))
+	(member (nth 7 command-line-args) '("unidata-gen-file"
+					    "unidata-gen-charprop"))
 	(if (fboundp 'dump-emacs)
 	    (string-match "src/bootstrap-emacs" (nth 0 command-line-args))
 	  t))
@@ -85,8 +88,9 @@
 (message "Using load-path %s" load-path)
 
 ;; This is a poor man's `last', since we haven't loaded subr.el yet.
-(if (or (equal (member "bootstrap" command-line-args) '("bootstrap"))
-	(equal (member "dump" command-line-args) '("dump")))
+(if (and (fboundp 'dump-emacs)
+         (or (equal (member "bootstrap" command-line-args) '("bootstrap"))
+             (equal (member "dump" command-line-args) '("dump"))))
     (progn
       ;; To reduce the size of dumped Emacs, we avoid making huge char-tables.
       (setq inhibit-load-charset-map t)
@@ -143,21 +147,19 @@
 (load "button")
 
 ;; We don't want to store loaddefs.el in the repository because it is
-;; a generated file; but it is required in order to compile the lisp
-;; files.  When bootstrapping, we cannot generate loaddefs.el until an
-;; emacs binary has been built.  We therefore support the build with
-;; two files, ldefs-boot-manual.el and ldefs-boot-auto.el, which
-;; contain the autoloads that are actually called during bootstrap.
-;; These do not need to be updated as often as the real loaddefs.el
-;; would.  Bootstrap should always work with ldefs-boot-manual.el.
-;; Therefore, Whenever a new autoload cookie gets added that is
-;; necessary during bootstrapping, ldefs-boot-auto.el should be
-;; updated using the "generate-ldefs-boot" make target.
-;; autogen/update_autogen can be used to periodically update
-;; ldefs-boot.
+;; a generated file; but it is required in order to compile the lisp files.
+;; When bootstrapping, we cannot generate loaddefs.el until an
+;; emacs binary has been built.  We therefore compromise and keep
+;; ldefs-boot.el in the repository.  This does not need to be updated
+;; as often as the real loaddefs.el would.  Bootstrap should always
+;; work with ldefs-boot.el.  Therefore, whenever a new autoload cookie
+;; gets added that is necessary during bootstrapping, ldefs-boot.el
+;; should be updated by overwriting it with an up-to-date copy of
+;; loaddefs.el that is not corrupted by local changes.
+;; admin/update_autogen can be used to update ldefs-boot.el periodically.
 (condition-case nil (load "loaddefs.el")
   ;; In case loaddefs hasn't been generated yet.
-  (file-error (load "ldefs-boot-manual.el")))
+  (file-error (load "ldefs-boot.el")))
 
 (let ((new (make-hash-table :test 'equal)))
   ;; Now that loaddefs has populated definition-prefixes, purify its contents.
@@ -182,7 +184,8 @@
 (load "case-table")
 ;; This file doesn't exist when building a development version of Emacs
 ;; from the repository.  It is generated just after temacs is built.
-(if (load "international/charprop.el" t)
+(load "international/charprop.el" t)
+(if (featurep 'charprop)
     (setq redisplay--inhibit-bidi nil))
 (load "international/characters")
 (load "composite")
@@ -300,7 +303,7 @@
       ;; Don't load ucs-normalize.el unless uni-*.el files were
       ;; already produced, because it needs uni-*.el files that might
       ;; not be built early enough during bootstrap.
-      (when (load-history-filename-element "charprop\\.el")
+      (when (featurep 'charprop)
         (load "international/mule-util")
         (load "international/ucs-normalize")
         (load "term/ns-win"))))
@@ -347,12 +350,14 @@ lost after dumping")))
 ;; in non-ASCII directories is to manipulate unibyte strings in the
 ;; current locale's encoding.
 (if (and (member (car (last command-line-args)) '("dump" "bootstrap"))
+         (fboundp 'dump-emacs)
 	 (multibyte-string-p default-directory))
     (error "default-directory must be unibyte when dumping Emacs!"))
 
 ;; Determine which build number to use
 ;; based on the executables that now exist.
 (if (and (equal (last command-line-args) '("dump"))
+         (fboundp 'dump-emacs)
 	 (not (eq system-type 'ms-dos)))
     (let* ((base (concat "remacs-" emacs-version "."))
 	   (exelen (if (eq system-type 'windows-nt) -4))
@@ -370,7 +375,8 @@ lost after dumping")))
 
 
 (message "Finding pointers to doc strings...")
-(if (equal (last command-line-args) '("dump"))
+(if (and (fboundp 'dump-emacs)
+         (equal (last command-line-args) '("dump")))
     (Snarf-documentation "DOC")
   (condition-case nil
       (Snarf-documentation "DOC")
@@ -429,12 +435,6 @@ lost after dumping")))
     (message "Pure-hashed: %d strings, %d vectors, %d conses, %d bytecodes, %d others"
              strings vectors conses bytecodes others)))
 
-;; Prevent build-time PATH getting stored in the binary.
-;; Mainly cosmetic, but helpful for Guix.  (Bug#20330)
-;; Do this here, rather than earlier, so that the above code
-;; can invoke Git commands and the like.
-(setq exec-path nil)
-
 ;; Avoid error if user loads some more libraries now and make sure the
 ;; hash-consing hash table is GC'd.
 (setq purify-flag nil)
@@ -445,8 +445,14 @@ lost after dumping")))
 ;; Make sure we will attempt bidi reordering henceforth.
 (setq redisplay--inhibit-bidi nil)
 
-(if (member (car (last command-line-args)) '("dump" "bootstrap"))
+(if (and (fboundp 'dump-emacs)
+         (member (car (last command-line-args)) '("dump" "bootstrap")))
     (progn
+      ;; Prevent build-time PATH getting stored in the binary.
+      ;; Mainly cosmetic, but helpful for Guix.  (Bug#20330)
+      ;; Do this here, rather than earlier, so that the above code
+      ;; can invoke Git commands and the like.
+      (setq exec-path nil)
       (message "Dumping under the name emacs")
       (condition-case ()
 	  (delete-file "remacs")
