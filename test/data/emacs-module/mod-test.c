@@ -264,7 +264,13 @@ bind_function (emacs_env *env, const char *name, emacs_value Sfun)
 int
 emacs_module_init (struct emacs_runtime *ert)
 {
+  if (ert->size < sizeof *ert)
+    return 1;
+
   emacs_env *env = ert->get_environment (ert);
+
+  if (env->size <= sizeof *env)
+    return 2;
 
 #define DEFUN(lsym, csym, amin, amax, doc, data) \
   bind_function (env, lsym, \
