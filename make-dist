@@ -552,7 +552,7 @@ done
 if [ "$with_tests" = "yes" ]; then
   echo "Making links to 'test' and its subdirectories"
   for f in `find test -type f ! -name '*.log' ! -name a.out \
-	      ! -path test/Makefile
+	      ! -path test/Makefile ! -path test/data/emacs-module/Makefile
   `; do
     ln $f $tempdir/$f
   done
