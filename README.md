@@ -307,14 +307,16 @@ defun!("numberp", // the name of our primitive function inside elisp
 (fn OBJECT)");
 ```
 
-Finally, we need to delete the old C definition and call `defsubr`
-inside `rust_init_syms`:
+Finally, we need to delete the old C definition and put the
+symbol name in the `define_functions` macro inside `rust_init_syms`:
 
 ``` rust
 pub extern "C" fn rust_init_syms() {
-    unsafe {
+    define_functions! {
         // ...
-        defsubr(&*yourmodule::Snumberp);
+        yourmodule = {
+            Snumberp
+        }
     }
 }
 ```

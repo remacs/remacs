@@ -3,26 +3,6 @@ use std::ptr;
 use lisp::{LispObject, CHECK_TYPE};
 use remacs_sys::{EmacsDouble, Lisp_Object, Qnumberp, Qfloatp};
 
-pub fn init_float_syms() {
-    unsafe {
-        ::defsubr(&*Sisnan);
-        ::defsubr(&*Sacos);
-        ::defsubr(&*Sasin);
-        ::defsubr(&*Satan);
-        ::defsubr(&*Scos);
-        ::defsubr(&*Ssin);
-        ::defsubr(&*Stan);
-        ::defsubr(&*Slog);
-
-        ::defsubr(&*Ssqrt);
-        ::defsubr(&*Sexp);
-        ::defsubr(&*Sffloor);
-        ::defsubr(&*Sfceiling);
-        ::defsubr(&*Sftruncate);
-        ::defsubr(&*Sfloat);
-    }
-}
-
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
 /// TODO eventually, this can hopefully go away when we have a better approach for error handling
 #[no_mangle]

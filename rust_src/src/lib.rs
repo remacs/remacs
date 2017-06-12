@@ -78,44 +78,85 @@ extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
 }
 
+/// Define Emacs Lisp native functions.
+///
+/// TODO: Remove `S` prefix of symbols (requires *nightly*).
+/// TODO: Declare modules instead of importing it manually
+macro_rules! define_functions {
+    ($($module_name:ident = { $($native_symbol:ident),+ }),+) => {
+        unsafe {
+        $($(
+            $crate::defsubr(&*$module_name::$native_symbol);
+        )+)+
+        }
+    }
+}
+
+
 #[no_mangle]
 pub extern "C" fn rust_init_syms() {
-    unsafe {
-        defsubr(&*lists::Satom);
-        defsubr(&*lists::Slistp);
-        defsubr(&*lists::Snlistp);
-        defsubr(&*math::Smod);
-        defsubr(&*math::Splus);
-        defsubr(&*math::Sminus);
-        defsubr(&*math::Stimes);
-        defsubr(&*math::Squo);
-        defsubr(&*math::Slogand);
-        defsubr(&*math::Slogior);
-        defsubr(&*math::Slogxor);
-        defsubr(&*math::Smax);
-        defsubr(&*math::Smin);
-        defsubr(&*math::Sabs);
-        defsubr(&*numbers::Sintegerp);
-        defsubr(&*numbers::Sinteger_or_marker_p);
-        defsubr(&*numbers::Sfloatp);
-        defsubr(&*numbers::Snatnump);
-        defsubr(&*numbers::Snumber_or_marker_p);
-        defsubr(&*numbers::Snumberp);
-        defsubr(&*symbols::Ssymbolp);
-        defsubr(&*lists::Sconsp);
-        defsubr(&*lists::Ssetcar);
-        defsubr(&*lists::Ssetcdr);
-        defsubr(&*lists::Scar);
-        defsubr(&*lists::Scdr);
-        defsubr(&*strings::Sstringp);
-        defsubr(&*strings::Seq);
-        defsubr(&*strings::Sbase64_encode_string);
-        defsubr(&*strings::Sbase64_decode_string);
-        defsubr(&*strings::Sstring_bytes);
-        defsubr(&*strings::Snull);
-        defsubr(&*character::Smax_char);
-        defsubr(&*character::Scharacterp);
-
-        floatfns::init_float_syms();
+    define_functions! {
+        lists = {
+            Satom,
+            Slistp,
+            Snlistp,
+            Sconsp,
+            Ssetcar,
+            Ssetcdr,
+            Scar,
+            Scdr
+        },
+        math = {
+            Smod,
+            Splus,
+            Sminus,
+            Stimes,
+            Squo,
+            Slogand,
+            Slogior,
+            Slogxor,
+            Smax,
+            Smin,
+            Sabs
+        },
+        numbers = {
+            Sintegerp,
+            Sinteger_or_marker_p,
+            Sfloatp,
+            Snatnump,
+            Snumber_or_marker_p,
+            Snumberp
+        },
+        symbols = {
+            Ssymbolp
+        },
+        strings = {
+            Sstringp,
+            Sstring_bytes,
+            Seq,
+            Sbase64_encode_string,
+            Sbase64_decode_string,
+            Snull
+        },
+        character = {
+            Smax_char,
+            Scharacterp
+        },
+        floatfns = {
+            Sisnan,
+            Sacos,
+            Sasin,
+            Satan,
+            Scos,
+            Ssin,
+            Stan,
+            Slog,
+            Ssqrt,
+            Sexp,
+            Sffloor,
+            Sfceiling,
+            Sftruncate,
+            Sfloat
+        }
     }
 }
