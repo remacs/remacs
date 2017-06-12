@@ -439,9 +439,12 @@ pass to the OPERATION."
 	    (if (not (file-directory-p newname))
 		(make-directory newname parents))
 
+	    ;; Set variables for computing the prompt for reading password.
 	    (setq tramp-current-method method
 		  tramp-current-user user
-		  tramp-current-host host)
+		  tramp-current-domain domain
+		  tramp-current-host host
+		  tramp-current-port port)
 
 	    (let* ((share (tramp-smb-get-share v))
 		   (localname (file-name-as-directory
@@ -729,10 +732,12 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (with-parsed-tramp-file-name filename nil
     (with-tramp-file-property v localname "file-acl"
       (when (executable-find tramp-smb-acl-program)
-
+	;; Set variables for computing the prompt for reading password.
 	(setq tramp-current-method method
 	      tramp-current-user user
-	      tramp-current-host host)
+	      tramp-current-domain domain
+	      tramp-current-host host
+	      tramp-current-port port)
 
 	(let* ((share     (tramp-smb-get-share v))
 	       (localname (replace-regexp-in-string
@@ -1320,9 +1325,12 @@ target of the symlink differ."
   (ignore-errors
     (with-parsed-tramp-file-name filename nil
       (when (and (stringp acl-string) (executable-find tramp-smb-acl-program))
+	;; Set variables for computing the prompt for reading password.
 	(setq tramp-current-method method
 	      tramp-current-user user
-	      tramp-current-host host)
+	      tramp-current-domain domain
+	      tramp-current-host host
+	      tramp-current-port port)
 	(tramp-set-file-property v localname "file-acl" 'undef)
 
 	(let* ((share     (tramp-smb-get-share v))
@@ -1876,7 +1884,9 @@ If ARGUMENT is non-nil, use it as argument for
 	      ;; Set variables for computing the prompt for reading password.
 	      (setq tramp-current-method tramp-smb-method
 		    tramp-current-user user
-		    tramp-current-host host)
+		    tramp-current-domain domain
+		    tramp-current-host host
+		    tramp-current-port port)
 
 	      (condition-case err
 		  (let (tramp-message-show-message)

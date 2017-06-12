@@ -3550,13 +3550,13 @@ The terminal type can be configured with `tramp-terminal-type'."
 PROC and VEC indicate the remote connection to be used.  POS, if
 set, is the starting point of the region to be deleted in the
 connection buffer."
-  ;; Enable `auth-source'.  We must use tramp-current-* variables in
+  ;; Enable `auth-source'.  We must use `tramp-current-*' variables in
   ;; case we have several hops.
   (tramp-set-connection-property
-   (tramp-dissect-file-name
-    (tramp-make-tramp-file-name
-     tramp-current-method tramp-current-user tramp-current-domain
-     tramp-current-host tramp-current-port ""))
+   (make-tramp-file-name
+    :method tramp-current-method :user tramp-current-user
+    :domain tramp-current-domain :host tramp-current-host
+    :port tramp-current-port)
    "first-password-request" t)
   (save-restriction
     (with-tramp-progress-reporter
@@ -4233,8 +4233,19 @@ Invokes `password-read' if available, `read-passwd' else."
 			    (auth-source-search
 			     :max 1
 			     (and tramp-current-user :user)
-			     tramp-current-user
-			     :host tramp-current-host
+			     (if tramp-current-domain
+				 (format
+				  "%s%s%s"
+				  tramp-current-user tramp-prefix-domain-format
+				  tramp-current-domain)
+			       tramp-current-user)
+			     :host
+			     (if tramp-current-port
+				 (format
+				  "%s%s%s"
+				  tramp-current-host tramp-prefix-port-format
+				  tramp-current-port)
+			       tramp-current-host)
 			     :port tramp-current-method
 			     :require
 			     (cons
@@ -4260,8 +4271,10 @@ Invokes `password-read' if available, `read-passwd' else."
   (let ((method (tramp-file-name-method vec))
 	(user (tramp-file-name-user vec))
 	(domain (tramp-file-name-domain vec))
+	(user-domain (tramp-file-name-user-domain vec))
 	(host (tramp-file-name-host vec))
 	(port (tramp-file-name-port vec))
+	(host-port (tramp-file-name-host-port vec))
 	(hop (tramp-file-name-hop vec)))
     (when hop
       ;; Clear also the passwords of the hops.
@@ -4273,7 +4286,8 @@ Invokes `password-read' if available, `read-passwd' else."
 	  (concat tramp-postfix-hop-regexp "$")
 	  (tramp-postfix-host-format) hop)))))
     (auth-source-forget
-     `(:max 1 ,(and user :user) ,user :host ,host :port ,method))
+     `(:max 1 ,(and user-domain :user) ,user-domain
+       :host ,host-port :port ,method))
     (password-cache-remove
      (tramp-make-tramp-file-name method user domain host port ""))))
 

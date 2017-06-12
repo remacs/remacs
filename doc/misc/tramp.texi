@@ -1503,9 +1503,15 @@ machine melancholia port scp login daniel password geheim
 
 The port can take any @value{tramp} method (@pxref{Inline methods},
 @pxref{External methods}).  Omitting port values matches all
-@value{tramp} methods.
+@value{tramp} methods.  Domain and ports, as used in @value{tramp}
+file name syntax, must be appended to the machine and login items:
 
-Setting @code{auth-source-debug} to @code{t} to debug messages.
+@example
+machine melancholia#4711 port davs login daniel%DOMAIN password geheim
+@end example
+
+@vindex auth-source-debug
+Set @code{auth-source-debug} to @code{t} to debug messages.
 
 
 @anchor{Caching passwords}

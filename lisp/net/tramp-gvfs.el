@@ -1299,9 +1299,12 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	  (unless (tramp-get-connection-property l "first-password-request" nil)
 	    (tramp-clear-passwd l))
 
+	  ;; Set variables for computing the prompt for reading password.
 	  (setq tramp-current-method l-method
 		tramp-current-user user
+		tramp-current-domain l-domain
 		tramp-current-host l-host
+		tramp-current-port l-port
 		password (tramp-read-passwd
 			  (tramp-get-connection-process l) pw-prompt))
 
