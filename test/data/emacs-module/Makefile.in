@@ -55,4 +55,5 @@ all: mod-test$(SO)
 .PHONY: clean
 
 clean:
-	rm -f *.o *${SO}
+	rm -f *.o *.so *.dll
+
