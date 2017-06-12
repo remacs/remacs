@@ -1187,7 +1187,7 @@ module_abort (const char *format, ...)
   vfprintf (stderr, format, args);
   va_end (args);
   putc ('\n', stderr);
-  fflush (stderr);
+  fflush (NULL);
   emacs_abort ();
 }
 
