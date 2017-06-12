@@ -25,7 +25,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdnoreturn.h>
 
 #include "lisp.h"
 #include "dynlib.h"
@@ -114,15 +113,19 @@ static enum emacs_funcall_exit module_non_local_exit_check (emacs_env *);
 static void module_assert_thread (void);
 static void module_assert_runtime (struct emacs_runtime *);
 static void module_assert_env (emacs_env *);
-static noreturn void module_abort (const char *format, ...) ATTRIBUTE_FORMAT_PRINTF(1, 2);
-static emacs_env *initialize_environment (emacs_env *, struct emacs_env_private *);
+static _Noreturn void module_abort (const char *format, ...)
+  ATTRIBUTE_FORMAT_PRINTF(1, 2);
+static emacs_env *initialize_environment (emacs_env *,
+					  struct emacs_env_private *);
 static void finalize_environment (emacs_env *);
 static void finalize_environment_unwind (void *);
 static void finalize_runtime_unwind (void *);
 static void module_handle_signal (emacs_env *, Lisp_Object);
 static void module_handle_throw (emacs_env *, Lisp_Object);
-static void module_non_local_exit_signal_1 (emacs_env *, Lisp_Object, Lisp_Object);
-static void module_non_local_exit_throw_1 (emacs_env *, Lisp_Object, Lisp_Object);
+static void module_non_local_exit_signal_1 (emacs_env *,
+					    Lisp_Object, Lisp_Object);
+static void module_non_local_exit_throw_1 (emacs_env *,
+					   Lisp_Object, Lisp_Object);
 static void module_out_of_memory (emacs_env *);
 static void module_reset_handlerlist (struct handler *const *);
 
@@ -345,7 +348,7 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
           ++count;
           prev = globals;
         }
-      module_abort ("Global value was not found in list of %" pD "d globals",
+      module_abort ("Global value was not found in list of %"pD"d globals",
                     count);
     }
 }
@@ -827,7 +830,7 @@ module_assert_runtime (struct emacs_runtime *ert)
         return;
       ++count;
     }
-  module_abort ("Runtime pointer not found in list of %" pD "d runtimes",
+  module_abort ("Runtime pointer not found in list of %"pD"d runtimes",
 		count);
 }
 
@@ -844,7 +847,7 @@ module_assert_env (emacs_env *env)
         return;
       ++count;
     }
-  module_abort ("Environment pointer not found in list of %" pD "d environments",
+  module_abort ("Environment pointer not found in list of %"pD"d environments",
                 count);
 }
 
@@ -963,7 +966,8 @@ value_to_lisp (emacs_value v)
             }
           ++num_environments;
         }
-      module_abort ("Emacs value not found in %" pD "d values of %" pD "d environments",
+      module_abort (("Emacs value not found in %"pD"d values "
+		     "of %"pD"d environments"),
                     num_values, num_environments);
     }
 
@@ -1178,7 +1182,7 @@ init_module_assertions (bool enable)
     }
 }
 
-static noreturn void
+static _Noreturn void
 ATTRIBUTE_FORMAT_PRINTF(1, 2)
 module_abort (const char *format, ...)
 {
