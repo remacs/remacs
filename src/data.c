@@ -228,8 +228,6 @@ for example, (type-of 1) returns `integer'.  */)
 	  return Qmarker;
 	case Lisp_Misc_Overlay:
 	  return Qoverlay;
-	case Lisp_Misc_Float:
-          return Qfloat;
         case Lisp_Misc_Finalizer:
           return Qfinalizer;
 #ifdef HAVE_MODULES

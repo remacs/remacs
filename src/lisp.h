@@ -466,9 +466,6 @@ enum Lisp_Misc_Type
 #ifdef HAVE_MODULES
     Lisp_Misc_User_Ptr,
 #endif
-    /* Currently floats are not a misc type,
-       but let's define this in case we want to change that.  */
-    Lisp_Misc_Float,
     /* This is not a type code.  It is for range checking.  */
     Lisp_Misc_Limit
   };
