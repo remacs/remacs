@@ -46,7 +46,13 @@ all: mod-test$(SO)
 %$(SO): %.o
 	$(CC) -shared $(LDFLAGS) -o $@ $<
 
-%.o: %.c
+%.o: %.c $(top_srcdir)/src/emacs-module.h
 	$(CC) $(CPPFLAGS) $(ALL_CFLAGS) -c -o $@ $<
 
-%.o: $(srcdir)/emacs-module.[ch]
+## Stop .o files being deleted.
+.SECONDARY:
+
+.PHONY: clean
+
+clean:
+	rm -f *.o *${SO}
