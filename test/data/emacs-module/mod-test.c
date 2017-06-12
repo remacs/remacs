@@ -269,7 +269,7 @@ emacs_module_init (struct emacs_runtime *ert)
 
   emacs_env *env = ert->get_environment (ert);
 
-  if (env->size <= sizeof *env)
+  if (env->size < sizeof *env)
     return 2;
 
 #define DEFUN(lsym, csym, amin, amax, doc, data) \
