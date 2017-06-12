@@ -25,6 +25,9 @@ top_srcdir = @top_srcdir@
 VPATH = $(srcdir)
 CC = @CC@
 CFLAGS = @CFLAGS@
+PROFILING_CFLAGS = @PROFILING_CFLAGS@
+WARN_CFLAGS = @WARN_CFLAGS@
+WERROR_CFLAGS = @WERROR_CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 SO = @MODULES_SUFFIX@
 
@@ -35,12 +38,15 @@ else
 FPIC_CFLAGS = -fPIC
 endif
 
+ALL_CFLAGS = -I$(top_srcdir)/src $(FPIC_CFLAGS) $(PROFILING_CFLAGS) \
+  $(WARN_CFLAGS) $(WERROR_CFLAGS) $(CFLAGS)
+
 all: mod-test$(SO)
 
 %$(SO): %.o
 	$(CC) -shared $(LDFLAGS) -o $@ $<
 
 %.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(FPIC_CFLAGS) -I$(top_srcdir)/src -c -o $@ $<
+	$(CC) $(CPPFLAGS) $(ALL_CFLAGS) -c -o $@ $<
 
 %.o: $(srcdir)/emacs-module.[ch]
