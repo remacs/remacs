@@ -545,8 +545,6 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
   ptrdiff_t raw_size = SBYTES (lisp_str_utf8);
   ptrdiff_t required_buf_size = raw_size + 1;
 
-  eassert (length != NULL);
-
   if (buffer == NULL)
     {
       *length = required_buf_size;
