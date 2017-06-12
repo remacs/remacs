@@ -349,6 +349,16 @@ module_non_local_exit_throw (emacs_env *env, emacs_value tag, emacs_value value)
 				   value_to_lisp (value));
 }
 
+static struct Lisp_Module_Function *
+allocate_module_function (void)
+{
+  return ALLOCATE_PSEUDOVECTOR (struct Lisp_Module_Function,
+                                min_arity, PVEC_MODULE_FUNCTION);
+}
+
+#define XSET_MODULE_FUNCTION(var, ptr) \
+  XSETPSEUDOVECTOR (var, ptr, PVEC_MODULE_FUNCTION)
+
 /* A module function is a pseudovector of subtype
    PVEC_MODULE_FUNCTION; see lisp.h for the definition.  */
 

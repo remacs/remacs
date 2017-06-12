@@ -3925,16 +3925,6 @@ struct Lisp_Module_Function
   void *data;
 };
 
-INLINE struct Lisp_Module_Function *
-allocate_module_function (void)
-{
-  return ALLOCATE_PSEUDOVECTOR (struct Lisp_Module_Function,
-                                /* Name of the first field to be
-                                   ignored by GC.  */
-                                min_arity,
-                                PVEC_MODULE_FUNCTION);
-}
-
 INLINE bool
 MODULE_FUNCTIONP (Lisp_Object o)
 {
@@ -3947,9 +3937,6 @@ XMODULE_FUNCTION (Lisp_Object o)
   eassert (MODULE_FUNCTIONP (o));
   return XUNTAG (o, Lisp_Vectorlike);
 }
-
-#define XSET_MODULE_FUNCTION(var, ptr)                  \
-  (XSETPSEUDOVECTOR (var, ptr, PVEC_MODULE_FUNCTION))
 
 #ifdef HAVE_MODULES
 /* Defined in alloc.c.  */
