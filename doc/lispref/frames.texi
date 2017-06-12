@@ -1602,6 +1602,10 @@ managers might not support smooth transition between the various
 full-screen or maximization states.  Customizing the variable
 @code{x-frame-normalize-before-maximize} can help to overcome that.
 
+Full-screen on macOS hides both the tool-bar and the menu-bar, however
+both will be displayed if the mouse pointer is moved to the top of the
+screen.
+
 @vindex fullscreen-restore, a frame parameter
 @item fullscreen-restore
 This parameter specifies the desired fullscreen state of the frame
