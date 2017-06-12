@@ -187,25 +187,29 @@ changes."
   (skip-unless (file-executable-p mod-test-emacs))
   ;; This doesn’t yet cause undefined behavior.
   (should (eq (mod-test-invalid-store) 123))
-  (with-temp-buffer
-    ;; FIXME this dumps a core file if the user has them enabled,
-    ;; which seems unfriendly.
-    (should (string-match-p
-             "Abort" ; eg "Aborted" or "Abort trap: 6"
-             (call-process mod-test-emacs nil t nil
-                           "-batch" "-Q" "-module-assertions" "-eval"
-                           (prin1-to-string
-                            `(progn
-                               (require 'mod-test ,mod-test-file)
-                               ;; Storing and reloading a local value
-                               ;; causes undefined behavior, which should be
-                               ;; detected by the module assertions.
-                               (mod-test-invalid-store)
-                               (mod-test-invalid-load))))))
-    ;; FIXME a failure here gives an uninformative error.
-    (re-search-backward (rx bos "Emacs module assertion: "
-                            "Emacs value not found in "
-                            (+ digit) " values of "
-                            (+ digit) " environments" ?\n eos))))
+  ;; To contain any core dumps.
+  (let ((tempdir (make-temp-file "emacs-module-test" t)))
+    (unwind-protect
+        (with-temp-buffer
+          (should (string-match-p
+                   "Abort" ; eg "Aborted" or "Abort trap: 6"
+                   (let ((default-directory tempdir))
+                     (call-process mod-test-emacs nil t nil
+                                   "-batch" "-Q" "-module-assertions" "-eval"
+                                   (prin1-to-string
+                                    `(progn
+                                       (require 'mod-test ,mod-test-file)
+                                       ;; Storing and reloading a local
+                                       ;; value causes undefined behavior,
+                                       ;; which should be detected by the
+                                       ;; module assertions.
+                                       (mod-test-invalid-store)
+                                       (mod-test-invalid-load)))))))
+          ;; FIXME a failure here gives an uninformative error.
+          (re-search-backward (rx bos "Emacs module assertion: "
+                                  "Emacs value not found in "
+                                  (+ digit) " values of "
+                                  (+ digit) " environments" ?\n eos)))
+      (delete-directory tempdir t))))
 
 ;;; emacs-module-tests.el ends here
