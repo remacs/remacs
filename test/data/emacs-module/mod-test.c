@@ -265,12 +265,22 @@ int
 emacs_module_init (struct emacs_runtime *ert)
 {
   if (ert->size < sizeof *ert)
-    return 1;
+    {
+      fprintf (stderr, "Runtime size of runtime structure (%td bytes) "
+               "smaller than compile-time size (%zu bytes)",
+               ert->size, sizeof *ert);
+      return 1;
+    }
 
   emacs_env *env = ert->get_environment (ert);
 
   if (env->size < sizeof *env)
-    return 2;
+    {
+      fprintf (stderr, "Runtime size of environment structure (%td bytes) "
+               "smaller than compile-time size (%zu bytes)",
+               env->size, sizeof *env);
+      return 2;
+    }
 
 #define DEFUN(lsym, csym, amin, amax, doc, data) \
   bind_function (env, lsym, \
