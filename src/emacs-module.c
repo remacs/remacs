@@ -345,7 +345,7 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
           ++count;
           prev = globals;
         }
-      module_abort ("Global value was not found in list of %td globals",
+      module_abort ("Global value was not found in list of %" pD "d globals",
                     count);
     }
 }
@@ -827,7 +827,8 @@ module_assert_runtime (struct emacs_runtime *ert)
         return;
       ++count;
     }
-  module_abort ("Runtime pointer not found in list of %td runtimes", count);
+  module_abort ("Runtime pointer not found in list of %" pD "d runtimes",
+		count);
 }
 
 static void
@@ -843,7 +844,7 @@ module_assert_env (emacs_env *env)
         return;
       ++count;
     }
-  module_abort ("Environment pointer not found in list of %td environments",
+  module_abort ("Environment pointer not found in list of %" pD "d environments",
                 count);
 }
 
@@ -962,7 +963,7 @@ value_to_lisp (emacs_value v)
             }
           ++num_environments;
         }
-      module_abort ("Emacs value not found in %td values of %td environments",
+      module_abort ("Emacs value not found in %" pD "d values of %" pD "d environments",
                     num_values, num_environments);
     }
 
