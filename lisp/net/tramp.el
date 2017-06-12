@@ -2880,6 +2880,7 @@ User is always nil."
           (with-tramp-connection-property v "case-insensitive"
 	    (ignore-errors
 	      (with-tramp-progress-reporter v 5 "Checking case-insensitive"
+                (tramp-backtrace v)
 		;; The idea is to compare a file with lower case
 		;; letters with the same file with upper case letters.
 		(let ((candidate
