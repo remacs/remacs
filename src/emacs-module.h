@@ -35,9 +35,12 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # define EMACS_NOEXCEPT
 #endif
 
-#if defined __has_attribute && __has_attribute(__nonnull__)
+#ifdef __has_attribute
+#if __has_attribute(__nonnull__)
 # define EMACS_ATTRIBUTE_NONNULL(...) __attribute__((__nonnull__(__VA_ARGS__)))
-#else
+#endif
+#endif
+#ifndef EMACS_ATTRIBUTE_NONNULL
 # define EMACS_ATTRIBUTE_NONNULL(...)
 #endif
 
