@@ -1,3 +1,5 @@
+### @configure_input@
+
 # Test GNU Emacs modules.
 
 # Copyright 2015-2017 Free Software Foundation, Inc.
@@ -17,25 +19,28 @@
 # You should have received a copy of the GNU General Public License
 # along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
-ROOT = ../../..
+SHELL = @SHELL@
 
-CC      = gcc
-LD      = gcc
-LDFLAGS =
+top_srcdir = @top_srcdir@
+VPATH = $(srcdir)
+CC = @CC@
+CFLAGS = @CFLAGS@
+CPPFLAGS = @CPPFLAGS@
+SO = @MODULES_SUFFIX@
 
-# On MS-Windows, say "make SO=.dll" to build the module
-SO      = .so
 # -fPIC is a no-op on Windows, but causes a compiler warning
 ifeq ($(SO),.dll)
-CFLAGS  = -std=c11 -ggdb3 -Wall
+FPIC_CFLAGS =
 else
-CFLAGS  = -std=c11 -ggdb3 -Wall -fPIC
+FPIC_CFLAGS = -fPIC
 endif
 
 all: mod-test$(SO)
 
 %$(SO): %.o
-	$(LD) -shared $(LDFLAGS) -o $@ $<
+	$(CC) -shared $(LDFLAGS) -o $@ $<
 
 %.o: %.c
-	$(CC) $(CFLAGS) -I$(ROOT)/src -c $<
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(FPIC_CFLAGS) -I$(top_srcdir)/src -c -o $@ $<
+
+%.o: $(srcdir)/emacs-module.[ch]

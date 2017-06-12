@@ -34,7 +34,6 @@ InfoPlist.strings
 Makefile
 makefile
 !etc/refcards/Makefile
-!test/data/emacs-module/Makefile
 !test/lisp/progmodes/flymake-resources/Makefile
 !test/manual/etags/Makefile
 !test/manual/etags/make-src/Makefile
