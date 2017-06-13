@@ -1543,9 +1543,8 @@ be non-negative integers."
 		  (tramp-shell-quote-argument localname))))))
 
       ;; We handle also the local part, because there doesn't exist
-      ;; `set-file-uid-gid'.  On W32 "chown" might not work.  We add a
-      ;; timeout for this.
-      (with-timeout (5 nil)
+      ;; `set-file-uid-gid'.  On W32 "chown" does not work.
+      (unless (memq system-type '(ms-dos windows-nt))
 	(let ((uid (or (and (natnump uid) uid) (tramp-get-local-uid 'integer)))
 	      (gid (or (and (natnump gid) gid) (tramp-get-local-gid 'integer))))
 	  (tramp-call-process
@@ -4426,7 +4425,8 @@ Goes through the list `tramp-inline-compress-commands'."
 		 (if (memq system-type '(windows-nt))
 		     "echo %s | \"%s\" | \"%s\""
 		   "echo %s | %s | %s")
-		 magic compress decompress) nil nil))
+		 magic compress decompress)
+		nil nil))
 	    (throw 'next nil))
 	  (tramp-message
 	   vec 5
