@@ -1507,7 +1507,7 @@ The port can take any @value{tramp} method (@pxref{Inline methods},
 file name syntax, must be appended to the machine and login items:
 
 @example
-machine melancholia#4711 port davs login daniel%DOMAIN password geheim
+machine melancholia#4711 port davs login daniel%BIZARRE password geheim
 @end example
 
 @vindex auth-source-debug
@@ -2276,7 +2276,7 @@ in @file{.emacs}.
 @xref{Completion Options, , , emacs}.
 @end ifinfo
 
-For example, type @kbd{C-x C-f @value{prefix}s @key{TAB}},
+For example, type @kbd{C-x C-f @value{prefixwithspace} s @key{TAB}},
 @value{tramp} completion choices show up as
 
 @example
@@ -3160,10 +3160,22 @@ then set them with a hook as follows:
 @item
 Why is @file{~/.sh_history} file on the remote host growing?
 
-Due to @command{ksh} saving tilde expansions triggered by
-@value{tramp}, the history file is probably growing rapidly.  To fix,
-turn off saving history by putting this shell code in the
-@file{.kshrc} file:
+Due to the remote shell saving tilde expansions triggered by
+@value{tramp}, the history file is probably growing rapidly.
+@value{tramp} can suppress this behaviour with the user option
+@code{tramp-histfile-override}.  When set to @code{t}, environment
+variable @env{HISTFILE} is unset, and environment variables
+@env{HISTFILESIZE} @env{HISTSIZE} are set to 0.
+
+Alternatively, @code{tramp-histfile-override} could be a string.
+Environment variable @env{HISTFILE} is set to this file name then.  Be
+careful when setting to @file{/dev/null}; this might result in
+undesired results when using @command{bash} as remote shell.
+
+Another approach is to disable @value{tramp}'s handling of the
+@env{HISTFILE} at all by setting @code{tramp-histfile-override} to
+@code{nil}.  In this case, saving history could be turned off by
+putting this shell code in the @file{.bashrc} or @file{.kshrc} file:
 
 @example
 @group

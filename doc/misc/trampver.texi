@@ -27,6 +27,7 @@
 
 @ifset unified
 @set prefix             /
+@set prefixwithspace    /
 @set prefixhop
 @set postfix            :
 @set postfixhop         :
@@ -36,6 +37,7 @@
 
 @ifset separate
 @set prefix             /[
+@set prefixwithspace    / [
 @set prefixhop          [
 @set postfix            ]
 @set postfixhop         /
