@@ -80,7 +80,7 @@ EMACS_EXTRAOPT=
 # Command line flags for Emacs.
 # Apparently MSYS bash would convert "-L :" to "-L ;" anyway,
 # but we might as well be explicit.
-EMACSOPT = -batch --no-site-file --no-site-lisp -module-assertions -L "$(SEPCHAR)$(srcdir)" $(EMACS_EXTRAOPT)
+EMACSOPT = -batch --no-site-file --no-site-lisp -L "$(SEPCHAR)$(srcdir)" $(EMACS_EXTRAOPT)
 
 # Prevent any settings in the user environment causing problems.
 unexport EMACSDATA EMACSDOC EMACSPATH GREP_OPTIONS
