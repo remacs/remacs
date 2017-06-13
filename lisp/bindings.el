@@ -366,7 +366,7 @@ zero, otherwise they start from one."
   :version "26.1")
 
 (defcustom mode-line-percent-position '(-3 "%p")
-  "Specification of \"percentage offset\" of window through buffer
+  "Specification of \"percentage offset\" of window through buffer.
 This option specifies both the field width and the type of offset
 displayed in `mode-line-position', a component of the default
 `mode-line-format'."
