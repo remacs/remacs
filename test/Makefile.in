@@ -35,12 +35,24 @@ VPATH = $(srcdir)
 
 FIND_DELETE = @FIND_DELETE@
 MKDIR_P = @MKDIR_P@
+CC = @CC@
+CFLAGS = @CFLAGS@
+PROFILING_CFLAGS = @PROFILING_CFLAGS@
+WARN_CFLAGS = @WARN_CFLAGS@
+WERROR_CFLAGS = @WERROR_CFLAGS@
+CPPFLAGS = @CPPFLAGS@
+SO = @MODULES_SUFFIX@
 
 SEPCHAR = @SEPCHAR@
 
 
 # 'make' verbosity.
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+
+AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
+am__v_CCLD_0 = @echo "  CCLD    " $@;
+am__v_CCLD_1 =
 
 AM_V_ELC = $(am__v_ELC_@AM_V@)
 am__v_ELC_ = $(am__v_ELC_@AM_DEFAULT_V@)
@@ -90,6 +102,8 @@ TEST_LOAD_EL ?= yes
 emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) \
  EMACS_TEST_DIRECTORY=$(abspath $(srcdir)) \
  $(GDB) "$(EMACS)" $(EMACSOPT)
+
+test_module_dir := $(srcdir)/data/emacs-module
 
 .PHONY: all check
 
@@ -151,7 +165,7 @@ TESTS := $(LOGFILES:.log=)
 .PRECIOUS: %.log
 
 ## Stop make deleting these as intermediate files.
-.SECONDARY: ${ELFILES:.el=.elc}
+.SECONDARY: ${ELFILES:.el=.elc} $(test_module_dir)/*.o
 
 .PHONY: ${TESTS}
 
@@ -178,12 +192,22 @@ endef
 $(foreach test,${TESTS},$(eval $(call test_template,${test})))
 
 ifeq (@HAVE_MODULES@, yes)
-test_module_dir := $(srcdir)/data/emacs-module
+# -fPIC is a no-op on Windows, but causes a compiler warning
+ifeq ($(SO),.dll)
+FPIC_CFLAGS =
+else
+FPIC_CFLAGS = -fPIC
+endif
+
+MODULE_CFLAGS = -I$(srcdir)/../src $(FPIC_CFLAGS) $(PROFILING_CFLAGS) \
+  $(WARN_CFLAGS) $(WERROR_CFLAGS) $(CFLAGS)
+
 test_module_name := mod-test@MODULES_SUFFIX@
 test_module := $(test_module_dir)/$(test_module_name)
 $(srcdir)/src/emacs-module-tests.log: $(test_module)
-$(test_module): $(srcdir)/../src/emacs-module.[ch] $(test_module_dir)/mod-test.c
-	$(MAKE) -C $(test_module_dir) $(test_module_name)
+$(test_module): $(test_module_dir)/mod-test.c $(srcdir)/../src/emacs-module.h
+	$(AM_V_CCLD)$(CC) -shared $(CPPFLAGS) $(MODULE_CFLAGS) $(LDFLAGS) \
+	  -o $@ $<
 endif
 
 ## Check that there is no 'automated' subdirectory, which would
@@ -222,6 +246,8 @@ mostlyclean:
 
 clean:
 	find . '(' -name '*.log' -o -name '*.log~' ')' $(FIND_DELETE)
+	rm -f $(test_module_dir)/*.o $(test_module_dir)/*.so \
+	  $(test_module_dir)/*.dll
 
 bootstrap-clean: clean
 	find $(srcdir) -name '*.elc' $(FIND_DELETE)

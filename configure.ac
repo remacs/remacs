@@ -5448,10 +5448,10 @@ dnl test/ is not present in release tarfiles.
 opt_makefile=test/Makefile
 
 if test -f "$srcdir/$opt_makefile.in"; then
-  SUBDIR_MAKEFILES="$SUBDIR_MAKEFILES $opt_makefile test/data/emacs-module/Makefile"
+  SUBDIR_MAKEFILES="$SUBDIR_MAKEFILES $opt_makefile"
   dnl Again, it's best not to use a variable.  Though you can add
   dnl ", [], [opt_makefile='$opt_makefile']" and it should work.
-  AC_CONFIG_FILES([test/Makefile test/data/emacs-module/Makefile])
+  AC_CONFIG_FILES([test/Makefile])
 fi
 
 
