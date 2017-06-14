@@ -17,11 +17,10 @@ use marker::{LispMarker, marker_position};
 use multibyte::{LispStringRef, MAX_CHAR};
 use vectors::LispVectorlikeRef;
 
-use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE,
-                 EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
-                 Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp, circular_list,
-                 internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp, Qwholenump, Qvectorp,
-                 SYMBOL_NAME};
+use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE, EMACS_FLOAT_SIZE,
+                 USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp, Qnumber_or_marker_p, Qt,
+                 make_float, Qlistp, Qintegerp, Qconsp, circular_list, internal_equal, Fcons,
+                 CHECK_IMPURE, Qnumberp, Qfloatp, Qwholenump, Qvectorp, SYMBOL_NAME, PseudovecType};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -393,6 +392,90 @@ impl LispObject {
     }
 }
 
+impl LispObject {
+    pub fn is_thread(self) -> bool {
+        match self.as_vectorlike() {
+            Some(vl) => vl.is_pseudovector(PseudovecType::PVEC_THREAD),
+            None => false,
+        }
+    }
+}
+
+impl LispObject {
+    pub fn is_mutex(self) -> bool {
+        match self.as_vectorlike() {
+            Some(vl) => vl.is_pseudovector(PseudovecType::PVEC_MUTEX),
+            None => false,
+        }
+    }
+}
+
+impl LispObject {
+    pub fn is_condition_variable(self) -> bool {
+        match self.as_vectorlike() {
+            Some(vl) => vl.is_pseudovector(PseudovecType::PVEC_CONDVAR),
+            None => false,
+        }
+    }
+}
+
+impl LispObject {
+    pub fn is_byte_code_function(self) -> bool {
+        match self.as_vectorlike() {
+            Some(vl) => vl.is_pseudovector(PseudovecType::PVEC_COMPILED),
+            None => false,
+        }
+    }
+}
+
+impl LispObject {
+    pub fn is_subr(self) -> bool {
+        match self.as_vectorlike() {
+            Some(vl) => vl.is_pseudovector(PseudovecType::PVEC_SUBR),
+            None => false,
+        }
+    }
+}
+
+impl LispObject {
+    pub fn is_buffer(self) -> bool {
+        match self.as_vectorlike() {
+            Some(vl) => vl.is_pseudovector(PseudovecType::PVEC_BUFFER),
+            None => false,
+        }
+    }
+}
+
+impl LispObject {
+    pub fn is_char_table(self) -> bool {
+        match self.as_vectorlike() {
+            Some(vl) => vl.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE),
+            None => false,
+        }
+    }
+}
+
+impl LispObject {
+    pub fn is_bool_vector(self) -> bool {
+        match self.as_vectorlike() {
+            Some(vl) => vl.is_pseudovector(PseudovecType::PVEC_BOOL_VECTOR),
+            None => false,
+        }
+    }
+}
+
+impl LispObject {
+    pub fn is_array(self) -> bool {
+        self.is_vector() || self.is_string() || self.is_char_table() || self.is_bool_vector()
+    }
+}
+
+impl LispObject {
+    pub fn is_sequence(self) -> bool {
+        self.is_cons() || self.is_nil() || self.is_array()
+    }
+}
+
 // Cons support (LispType == 6 | 3)
 
 /// From FOR_EACH_TAIL_INTERNAL in lisp.h
@@ -651,17 +734,15 @@ impl LispObject {
     /// If the LispObject is a number (of any kind), get a floating point value for it
     #[allow(dead_code)]
     pub fn any_to_float(self) -> Option<EmacsDouble> {
-        self.as_float()
-            .or_else(|| self.as_fixnum().map(|i| i as EmacsDouble))
+        self.as_float().or_else(|| self.as_fixnum().map(|i| i as EmacsDouble))
     }
 
     pub fn any_to_float_or_error(self) -> EmacsDouble {
-        self.as_float()
-            .unwrap_or_else(|| {
-                self.as_fixnum()
-                    .unwrap_or_else(|| unsafe { wrong_type_argument(Qnumberp, self.to_raw()) }) as
+        self.as_float().unwrap_or_else(|| {
+                                           self.as_fixnum()
+                .unwrap_or_else(|| unsafe { wrong_type_argument(Qnumberp, self.to_raw()) }) as
                 EmacsDouble
-            })
+                                       })
     }
 }
 
@@ -708,24 +789,21 @@ impl LispObject {
 
     #[inline]
     pub fn is_marker(self) -> bool {
-        self.as_misc()
-            .map_or(false, |m| m.ty == LispMiscType::Marker)
+        self.as_misc().map_or(false, |m| m.ty == LispMiscType::Marker)
     }
 
     #[inline]
     pub fn as_marker(self) -> Option<*mut LispMarker> {
-        self.as_misc()
-            .and_then(|m| if m.ty == LispMiscType::Marker {
-                          unsafe { Some(mem::transmute(m)) }
-                      } else {
-                          None
-                      })
+        self.as_misc().and_then(|m| if m.ty == LispMiscType::Marker {
+                                    unsafe { Some(mem::transmute(m)) }
+                                } else {
+                                    None
+                                })
     }
 
     /// Nonzero iff X is a character.
     pub fn is_character(self) -> bool {
-        self.as_fixnum()
-            .map_or(false, |i| 0 <= i && i <= MAX_CHAR as EmacsInt)
+        self.as_fixnum().map_or(false, |i| 0 <= i && i <= MAX_CHAR as EmacsInt)
     }
 
     // The three Emacs Lisp comparison functions.
