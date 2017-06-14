@@ -80,7 +80,6 @@ pub struct vectorlike_header {
     pub size: libc::ptrdiff_t,
 }
 
-// XXX: this can also be char on some archs
 pub type bits_word = libc::size_t;
 
 /// Representation of an Emacs Lisp function symbol.

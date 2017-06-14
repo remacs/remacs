@@ -197,20 +197,19 @@ fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
     if seq.is_cons() {
         sort_list(seq, predicate)
     } else if let Some(vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {
-        vec.as_mut_slice()
-            .sort_by(|&a, &b| {
-                // XXX: since the `sort' predicate is a two-outcome comparison
-                // Less/!Less, and slice::sort_by() uses Greater/!Greater
-                // (which is not guaranteed anyway), this requires two calls
-                // instead of one in some cases.
-                if !inorder(predicate, a, b) {
-                    Ordering::Greater
-                } else if !inorder(predicate, b, a) {
-                    Ordering::Less
-                } else {
-                    Ordering::Equal
-                }
-            });
+        vec.as_mut_slice().sort_by(|&a, &b| {
+            // XXX: since the `sort' predicate is a two-outcome comparison
+            // Less/!Less, and slice::sort_by() uses Greater/!Greater
+            // (which is not guaranteed anyway), this requires two calls
+            // instead of one in some cases.
+            if !inorder(predicate, a, b) {
+                Ordering::Greater
+            } else if !inorder(predicate, b, a) {
+                Ordering::Less
+            } else {
+                Ordering::Equal
+            }
+        });
         seq
     } else if seq.is_nil() {
         seq

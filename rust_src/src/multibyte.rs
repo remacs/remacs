@@ -108,12 +108,10 @@ fn string_overflow() -> ! {
 #[no_mangle]
 pub fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdiff_t) -> ptrdiff_t {
     let slice = unsafe { slice::from_raw_parts(ptr, len as usize) };
-    slice
-        .iter()
-        .fold(0, |total, &byte| {
-            let n = if byte < 0x80 { 1 } else { 2 };
-            total.checked_add(n).unwrap_or_else(|| string_overflow())
-        })
+    slice.iter().fold(0, |total, &byte| {
+        let n = if byte < 0x80 { 1 } else { 2 };
+        total.checked_add(n).unwrap_or_else(|| string_overflow())
+    })
 }
 
 /// Same as the BYTE8_TO_CHAR macro.

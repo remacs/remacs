@@ -70,15 +70,19 @@ simple_float_op!("tan", tan, "Return the tangent of ARG.");
 simple_float_op!("exp", exp, "Return the exponential base e of ARG.");
 simple_float_op!("sqrt", sqrt, "Return the square root of ARG.");
 
-simple_float_op!("fceiling",
-                 ceil,
-                 "Return the smallest integer no less than ARG, as a float.
-(Round toward +inf.)");
+simple_float_op!(
+    "fceiling",
+    ceil,
+    "Return the smallest integer no less than ARG, as a float.
+(Round toward +inf.)"
+);
 
-simple_float_op!("ffloor",
-                 floor,
-                 "Return the largest integer no greater than ARG, as a float.
-(Round towards -inf.)");
+simple_float_op!(
+    "ffloor",
+    floor,
+    "Return the largest integer no greater than ARG, as a float.
+(Round towards -inf.)"
+);
 
 /// Return non nil if argument X is a NaN.
 /// (fn X)
