@@ -56,25 +56,25 @@ fn main() {
     write!(&mut file,
            "pub const EMACS_INT_MAX: EmacsInt = {};\n",
            integer_max_constant(integer_type_item.2))
-            .expect("Write error!");
+        .expect("Write error!");
 
     write!(&mut file,
            "pub const EMACS_INT_SIZE: EmacsInt = {};\n",
            integer_type_item.2)
-            .expect("Write error!");
+        .expect("Write error!");
 
     write!(&mut file, "pub type EmacsDouble = {};\n", float_type_item.0).expect("Write error!");
     write!(&mut file,
            "pub const EMACS_FLOAT_SIZE: EmacsInt = {};\n",
            max(float_type_item.1, actual_ptr_size))
-            .expect("Write error!");
+        .expect("Write error!");
 
     let bits = 8; // bits in a byte.
     let gc_type_bits = 3;
     write!(&mut file,
            "pub const GCTYPEBITS: EmacsInt = {};\n",
            gc_type_bits)
-            .expect("Write error!");
+        .expect("Write error!");
 
     let uint_max_len = integer_type_item.2 * bits;
     let int_max_len = uint_max_len - 1;
@@ -83,6 +83,6 @@ fn main() {
     write!(&mut file,
            "pub const USE_LSB_TAG: bool = {};\n",
            if use_lsb_tag { "true" } else { "false" })
-            .expect("Write error!");
+        .expect("Write error!");
 
 }
