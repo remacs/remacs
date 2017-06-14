@@ -75,6 +75,7 @@
 
 (setq password-cache-expiry nil
       tramp-verbose 0
+      tramp-cache-read-persistent-data t ;; For auth-sources.
       tramp-copy-size-limit nil
       tramp-message-show-message nil
       tramp-persistency-file-name nil)

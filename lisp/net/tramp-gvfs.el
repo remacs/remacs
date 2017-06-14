@@ -1669,10 +1669,10 @@ connection if a previous connection has died for some reason."
 	    (format "Opening connection for %s@%s using %s" user host method))
 
 	;; Enable `auth-source'.
-	(tramp-set-connection-property vec "first-password-request" t)
+	(tramp-set-connection-property
+	 vec "first-password-request" tramp-cache-read-persistent-data)
 
-	;; There will be a callback of "askPassword" when a password is
-	;; needed.
+	;; There will be a callback of "askPassword" when a password is needed.
 	(dbus-register-method
 	 :session dbus-service-emacs object-path
 	 tramp-gvfs-interface-mountoperation "askPassword"
@@ -1693,7 +1693,7 @@ connection if a previous connection has died for some reason."
 	 'tramp-gvfs-handler-askquestion)
 
 	;; The call must be asynchronously, because of the "askPassword"
-	;; or "askQuestion"callbacks.
+	;; or "askQuestion" callbacks.
 	(if (string-match "(so)$" tramp-gvfs-mountlocation-signature)
 	    (with-tramp-dbus-call-method vec nil
 	      :session tramp-gvfs-service-daemon tramp-gvfs-path-mounttracker
