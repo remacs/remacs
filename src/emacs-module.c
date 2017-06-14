@@ -127,7 +127,7 @@ static void module_non_local_exit_signal_1 (emacs_env *,
 static void module_non_local_exit_throw_1 (emacs_env *,
 					   Lisp_Object, Lisp_Object);
 static void module_out_of_memory (emacs_env *);
-static void module_reset_handlerlist (struct handler *const *);
+static void module_reset_handlerlist (struct handler **);
 
 /* We used to return NULL when emacs_value was a different type from
    Lisp_Object, but nowadays we just use Qnil instead.  Although they
@@ -191,7 +191,6 @@ static struct emacs_env_private global_env_private;
       module_out_of_memory (env);					\
       return retval;							\
     }									\
-  verify (__has_attribute (cleanup));                                   \
   struct handler *c __attribute__ ((cleanup (module_reset_handlerlist))) \
     = c0;								\
   if (sys_setjmp (c->jmp))						\
@@ -1144,7 +1143,7 @@ mark_modules (void)
    function to be called automatically.  PHANDLERLIST points to a word
    containing the handler list, for sanity checking.  */
 static void
-module_reset_handlerlist (struct handler *const *phandlerlist)
+module_reset_handlerlist (struct handler **phandlerlist)
 {
   eassert (handlerlist == *phandlerlist);
   handlerlist = handlerlist->next;

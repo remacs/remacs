@@ -322,8 +322,9 @@ typical 32-bit host, Emacs integers have 62 bits instead of 30.
 
 Use --with-cairo to compile Emacs with Cairo drawing.
 
-Use --with-modules to build Emacs with support for loading dynamic
-modules.
+Use --with-modules to build Emacs with support for dynamic modules.
+This needs a C compiler that supports '__attribute__ ((cleanup (...)))',
+as in GCC 3.4 and later.
 
 Use --enable-gcc-warnings to enable compile-time checks that warn
 about possibly-questionable C code.  This is intended for developers

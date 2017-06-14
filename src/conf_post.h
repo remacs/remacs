@@ -61,7 +61,6 @@ typedef bool bool_bf;
 #ifndef __has_attribute
 # define __has_attribute(a) __has_attribute_##a
 # define __has_attribute_alloc_size GNUC_PREREQ (4, 3, 0)
-# define __has_attribute_cleanup GNUC_PREREQ (3, 4, 0)
 # define __has_attribute_externally_visible GNUC_PREREQ (4, 1, 0)
 # define __has_attribute_no_address_safety_analysis false
 # define __has_attribute_no_sanitize_address GNUC_PREREQ (4, 8, 0)
