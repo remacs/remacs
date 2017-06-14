@@ -3049,8 +3049,11 @@ OPERATION-NAME and PARAMETERS are as described in `soap-invoke'."
           (url-request-extra-headers
            (list
             (cons "SOAPAction"
-                  (concat "\"" (soap-bound-operation-soap-action
-                                operation) "\""))
+                  (concat "\"" (encode-coding-string
+                                (soap-bound-operation-soap-action
+                                 operation)
+                                'utf-8)
+                          "\""))
             (cons "Content-Type"
                   "text/xml; charset=utf-8"))))
       (if callback
