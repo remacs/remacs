@@ -97,11 +97,17 @@ TEST_LOCALE = C
 # this by default since it gives nicer stacktraces.
 TEST_LOAD_EL ?= yes
 
+ifeq (@HAVE_MODULES@, yes)
+MODULES_EMACSOPT := --module-assertions
+else
+MODULES_EMACSOPT :=
+endif
+
 # The actual Emacs command run in the targets below.
 # Prevent any setting of EMACSLOADPATH in user environment causing problems.
 emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) \
  EMACS_TEST_DIRECTORY=$(abspath $(srcdir)) \
- $(GDB) "$(EMACS)" $(EMACSOPT)
+ $(GDB) "$(EMACS)" $(MODULES_EMACSOPT) $(EMACSOPT)
 
 test_module_dir := $(srcdir)/data/emacs-module
 
