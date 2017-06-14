@@ -219,73 +219,73 @@ fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
 }
 
 /// Return t if OBJECT is a thread.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn threadp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_thread())
 }
 
 /// Return t if OBJECT is a mutex.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn mutexp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_mutex())
 }
 
 /// Return t if OBJECT is a condition variable.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn condition_variable_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_condition_variable())
 }
 
 /// Return t if OBJECT is a byte-compiled function object.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn byte_code_function_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_byte_code_function())
 }
 
 /// Return t if OBJECT is a built-in function.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn subrp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_subr())
 }
 
 /// Return t if OBJECT is an editor buffer.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn bufferp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_buffer())
 }
 
 /// Return t if OBJECT is an array (string or vector).
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn arrayp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_array())
 }
 
 /// Return t if OBJECT is a sequence (list or array).
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn sequencep(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_sequence())
 }
 
 /// Return t if OBJECT is a bool-vector.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn bool_vector_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_bool_vector())
 }
 
 /// Return t if OBJECT is a char-table.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn char_table_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_char_table())
 }
 
 /// Return t if OBJECT is a char-table or vector.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn vector_or_char_table_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_vector() || object.is_char_table())
 }
 
 /// Return t if OBJECT is a vector.
-#[lisp_fn(min = "1")]
+#[lisp_fn]
 pub fn vectorp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_vector())
 }
