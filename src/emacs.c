@@ -223,8 +223,12 @@ Initialization options:\n\
 --fg-daemon[=NAME]          start a (named) server in the foreground\n\
 --debug-init                enable Emacs Lisp debugger for init file\n\
 --display, -d DISPLAY       use X server DISPLAY\n\
+",
+#ifdef HAVE_MODULES
+    "\
 --module-assertions         assert behavior of dynamic modules\n\
 ",
+#endif
     "\
 --no-build-details          do not add build details such as time stamps\n\
 --no-desktop                do not load a saved desktop\n\
@@ -1733,7 +1737,9 @@ static const struct standard_args standard_args[] =
   { "-nl", "--no-loadup", 70, 0 },
   { "-nsl", "--no-site-lisp", 65, 0 },
   { "-no-build-details", "--no-build-details", 63, 0 },
+#ifdef HAVE_MODULES
   { "-module-assertions", "--module-assertions", 62, 0 },
+#endif
   /* -d must come last before the options handled in startup.el.  */
   { "-d", "--display", 60, 1 },
   { "-display", 0, 60, 1 },
