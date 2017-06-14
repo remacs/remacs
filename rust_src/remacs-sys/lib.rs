@@ -719,6 +719,7 @@ extern "C" {
     pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
     pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
 
+    pub fn XMISCTYPE(a: Lisp_Object) -> Lisp_Object;
     pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
     pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);
     pub fn internal_equal(o1: Lisp_Object,

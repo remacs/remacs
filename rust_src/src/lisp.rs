@@ -970,9 +970,19 @@ impl LispObject {
                 LispType::Lisp_Symbol => Qsymbol,
                 LispType::Lisp_String => Qstring,
                 LispType::Lisp_Cons => Qcons,
+                // TODO: figure out how to make a LispObject from LispMisctype
                 // LispType::Lisp_Misc => {
-                //     match self.XMISCTYPE
-                // },
+                //     match LispObject::from_raw(unsafe { XMISCTYPE(self.to_raw()) }) {
+                //         LispMiscType::Marker => Qmarker,
+                //         LispMiscType::Overlay => Qoverlay,
+                //         // from lisp.h
+                //         // Currently floats are not a misc type,
+                //         // but let's define this in case we want to change that.
+                //         // LispMiscType::Float => Qfloat,
+                //         LispMiscType::Finalizer => Qfinalizer,
+                //         _ => panic!(),
+                //     }
+                // }
                 LispType::Lisp_Vectorlike => {
                     if self.is_configuration() {
                         Qwindow_configuration
