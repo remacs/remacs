@@ -6672,7 +6672,7 @@ not have a face in `gnus-article-boring-faces'."
   (interactive "P")
   (gnus-article-check-buffer)
   (let ((nosaves
-	 '("q" "Q"  "c" "r" "\C-c\C-f" "m"  "a" "f"
+	 '("q" "Q"  "c" "r" "\C-c\C-f" "m"  "a" "f" "WDD" "WDW"
 	   "Zc" "ZC" "ZE" "ZQ" "ZZ" "Zn" "ZR" "ZG" "ZN" "ZP"
 	   "=" "^" "\M-^" "|"))
 	(nosave-but-article
