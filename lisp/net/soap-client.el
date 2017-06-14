@@ -5,7 +5,7 @@
 ;; Author: Alexandru Harsanyi <AlexHarsanyi@gmail.com>
 ;; Author: Thomas Fitzsimmons <fitzsim@fitzsim.org>
 ;; Created: December, 2009
-;; Version: 3.1.2
+;; Version: 3.1.3
 ;; Keywords: soap, web-services, comm, hypermedia
 ;; Package: soap-client
 ;; Homepage: https://github.com/alex-hhh/emacs-soap-client
@@ -205,7 +205,7 @@ different namespace aliases for the same element."
                  local-name-1)))))
 
 (defun soap-name-p (name)
-  "Return true if NAME is a valid name for XMLSchema types.
+  "Return t if NAME is a valid name for XMLSchema types.
 A valid name is either a string or a cons of (NAMESPACE . NAME)."
   (or (stringp name)
       (and (consp name)
