@@ -158,6 +158,20 @@ more Emacs-y.
     On macOS, you'll need libxml2 (via `xcode-select --install`) and
     gnutls (via `brew install gnutls`).
 
+#### Dockerized development environment
+
+If you don't want to bother with the above setup you can use the provided docker environment.  Make sure you have [docker](https://www.docker.com/) 1.12+ and [docker-compose](https://github.com/docker/compose) 1.8+ available.
+
+To spin up the environment run
+
+``` shell
+docker-compose up -d
+```
+
+First time you run this command docker will build the image.  After that any subsequent startups will happen in less than a second.
+
+The working directory with remacs will be mount under the same path in the container so editing the files on your host machine will automatically be reflected inside the container.   To build remacs use the steps from [Building Remacs](#building-remacs) prefixed with `docker-compose exec remacs`, this will ensure the commands are executed inside the container.
+
 ### Building Remacs
 
 ```
