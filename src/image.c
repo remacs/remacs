@@ -2041,10 +2041,20 @@ x_create_x_image_and_pixmap (struct frame *f, int width, int height, int depth,
       (*ximg)->info.bmiColors[0].rgbGreen = 0;
       (*ximg)->info.bmiColors[0].rgbRed = 0;
       (*ximg)->info.bmiColors[0].rgbReserved = 0;
+      /* bmiColors is a variable-length array declared by w32api
+	 headers as bmiColors[1], which triggers a warning under
+	 -Warray-bounds; shut that up.  */
+#     if GNUC_PREREQ (4, 4, 0)
+#      pragma GCC push_options
+#      pragma GCC diagnostic ignored "-Warray-bounds"
+#     endif
       (*ximg)->info.bmiColors[1].rgbBlue = 255;
       (*ximg)->info.bmiColors[1].rgbGreen = 255;
       (*ximg)->info.bmiColors[1].rgbRed = 255;
       (*ximg)->info.bmiColors[1].rgbReserved = 0;
+#     if GNUC_PREREQ (4, 4, 0)
+#      pragma GCC pop_options
+#     endif
     }
 
   hdc = get_frame_dc (f);
