@@ -405,6 +405,10 @@ display of raw bytes from octal to hex.
 ** You can now provide explicit field numbers in format specifiers.
 For example, '(format "%2$s %1$s" "X" "Y")' produces "Y X".
 
++++
+** 'comment-indent-function' values may now return a cons to specify a
+range of indentation.
+
 
 * Editing Changes in Emacs 26.1
 
