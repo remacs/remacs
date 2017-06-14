@@ -218,19 +218,19 @@ INLINE_HEADER_BEGIN
   do									\
     {									\
       if (BUF_UNCHANGED_MODIFIED (buf) == BUF_MODIFF (buf)		\
-	  && (BUF_OVERLAY_UNCHANGED_MODIFIED (buf)			\
-	      == BUF_OVERLAY_MODIFF (buf)))				\
-	{								\
-	  BUF_BEG_UNCHANGED (buf) = (start) - BUF_BEG (buf);		\
-	  BUF_END_UNCHANGED (buf) = BUF_Z (buf) - (end);		\
-	}								\
+          && (BUF_OVERLAY_UNCHANGED_MODIFIED (buf)			\
+              == BUF_OVERLAY_MODIFF (buf)))				\
+        {								\
+          BUF_BEG_UNCHANGED (buf) = (start) - BUF_BEG (buf);		\
+          BUF_END_UNCHANGED (buf) = BUF_Z (buf) - (end);		\
+        }								\
       else								\
-	{								\
-	  if (BUF_Z (buf) - (end) < BUF_END_UNCHANGED (buf))		\
-	    BUF_END_UNCHANGED (buf) = BUF_Z (buf) - (end);		\
-	  if ((start) - BUF_BEG (buf) < BUF_BEG_UNCHANGED (buf))	\
-	    BUF_BEG_UNCHANGED (buf) = (start) - BUF_BEG (buf);		\
-	}								\
+        {								\
+          if (BUF_Z (buf) - (end) < BUF_END_UNCHANGED (buf))		\
+            BUF_END_UNCHANGED (buf) = BUF_Z (buf) - (end);		\
+          if ((start) - BUF_BEG (buf) < BUF_BEG_UNCHANGED (buf))	\
+            BUF_BEG_UNCHANGED (buf) = (start) - BUF_BEG (buf);		\
+        }								\
     }									\
   while (false)
 
@@ -251,7 +251,7 @@ extern void set_point (ptrdiff_t);
 extern void temp_set_point (struct buffer *, ptrdiff_t);
 extern void set_point_both (ptrdiff_t, ptrdiff_t);
 extern void temp_set_point_both (struct buffer *,
-				 ptrdiff_t, ptrdiff_t);
+                                 ptrdiff_t, ptrdiff_t);
 extern void set_point_from_marker (Lisp_Object);
 extern void enlarge_buffer_text (struct buffer *, ptrdiff_t);
 
@@ -296,17 +296,17 @@ extern void enlarge_buffer_text (struct buffer *, ptrdiff_t);
     {									\
       Lisp_Object __pos = (pos);					\
       if (NUMBERP (__pos))						\
-	{								\
-	  charpos = __pos;						\
-	  bytepos = buf_charpos_to_bytepos (current_buffer, __pos);	\
-	}								\
+        {								\
+          charpos = __pos;						\
+          bytepos = buf_charpos_to_bytepos (current_buffer, __pos);	\
+        }								\
       else if (MARKERP (__pos))						\
-	{								\
-	  charpos = marker_position (__pos);				\
-	  bytepos = marker_byte_position (__pos);			\
-	}								\
+        {								\
+          charpos = marker_position (__pos);				\
+          bytepos = marker_byte_position (__pos);			\
+        }								\
       else								\
-	wrong_type_argument (Qinteger_or_marker_p, __pos);		\
+        wrong_type_argument (Qinteger_or_marker_p, __pos);		\
     }									\
   while (false)
 
@@ -359,9 +359,9 @@ extern void enlarge_buffer_text (struct buffer *, ptrdiff_t);
 /* Return character at byte position POS.  See the caveat WARNING for
    FETCH_MULTIBYTE_CHAR below.  */
 
-#define FETCH_CHAR(pos)				      	\
+#define FETCH_CHAR(pos)                                 \
   (!NILP (BVAR (current_buffer, enable_multibyte_characters))	\
-   ? FETCH_MULTIBYTE_CHAR ((pos))		      	\
+   ? FETCH_MULTIBYTE_CHAR ((pos))                       \
    : FETCH_BYTE ((pos)))
 
 /* Return the byte at byte position N.  */
@@ -407,7 +407,7 @@ extern void enlarge_buffer_text (struct buffer *, ptrdiff_t);
 
 /* Return the character at byte position POS in buffer BUF.   */
 
-#define BUF_FETCH_CHAR(buf, pos)	      	\
+#define BUF_FETCH_CHAR(buf, pos)                \
   (!NILP (buf->enable_multibyte_characters)	\
    ? BUF_FETCH_MULTIBYTE_CHAR ((buf), (pos))    \
    : BUF_FETCH_BYTE ((buf), (pos)))
@@ -436,20 +436,20 @@ struct buffer_text
     ptrdiff_t z_byte;		/* Byte pos of end of buffer.  */
     ptrdiff_t gap_size;		/* Size of buffer's gap.  */
     EMACS_INT modiff;		/* This counts buffer-modification events
-				   for this buffer.  It is incremented for
-				   each such event, and never otherwise
-				   changed.  */
+                                   for this buffer.  It is incremented for
+                                   each such event, and never otherwise
+                                   changed.  */
     EMACS_INT chars_modiff;	/* This is modified with character change
-				   events for this buffer.  It is set to
-				   modiff for each such event, and never
-				   otherwise changed.  */
+                                   events for this buffer.  It is set to
+                                   modiff for each such event, and never
+                                   otherwise changed.  */
     EMACS_INT save_modiff;	/* Previous value of modiff, as of last
-				   time buffer visited or saved a file.  */
+                                   time buffer visited or saved a file.  */
 
     EMACS_INT overlay_modiff;	/* Counts modifications to overlays.  */
 
     EMACS_INT compact;		/* Set to modiff each time when compact_buffer
-				   is called for this buffer.  */
+                                   is called for this buffer.  */
 
     /* Minimum value of GPT - BEG since last redisplay that finished.  */
     ptrdiff_t beg_unchanged;
@@ -1040,13 +1040,13 @@ bset_width_table (struct buffer *b, Lisp_Object val)
   do {							\
     if (BUFFER_LIVE_P (b))				\
       {							\
-	if (b->base_buffer)				\
-	  {						\
-	    eassert (b->indirections == -1);		\
-	    eassert (b->base_buffer->indirections > 0);	\
-	  }						\
-	else						\
-	  eassert (b->indirections >= 0);		\
+        if (b->base_buffer)				\
+          {						\
+            eassert (b->indirections == -1);		\
+            eassert (b->base_buffer->indirections > 0);	\
+          }						\
+        else						\
+          eassert (b->indirections >= 0);		\
       }							\
   } while (false)
 
@@ -1095,7 +1095,7 @@ extern void reset_buffer (struct buffer *);
 extern void compact_buffer (struct buffer *);
 extern void evaporate_overlays (ptrdiff_t);
 extern ptrdiff_t overlays_at (EMACS_INT, bool, Lisp_Object **,
-			      ptrdiff_t *, ptrdiff_t *, ptrdiff_t *, bool);
+                              ptrdiff_t *, ptrdiff_t *, ptrdiff_t *, bool);
 extern ptrdiff_t sort_overlays (Lisp_Object *, ptrdiff_t, struct window *);
 extern void recenter_overlay_lists (struct buffer *, ptrdiff_t);
 extern ptrdiff_t overlay_strings (ptrdiff_t, struct window *, unsigned char **);
@@ -1152,13 +1152,13 @@ record_unwind_current_buffer (void)
     ptrdiff_t maxlen = 40;						\
     SAFE_NALLOCA (overlays, 1, maxlen);					\
     (noverlays) = overlays_at (posn, false, &(overlays), &maxlen,	\
-			       nextp, NULL, chrq);			\
+                               nextp, NULL, chrq);			\
     if ((noverlays) > maxlen)						\
       {									\
-	maxlen = noverlays;						\
-	SAFE_NALLOCA (overlays, 1, maxlen);				\
-	(noverlays) = overlays_at (posn, false, &(overlays), &maxlen,	\
-				   nextp, NULL, chrq);			\
+        maxlen = noverlays;						\
+        SAFE_NALLOCA (overlays, 1, maxlen);				\
+        (noverlays) = overlays_at (posn, false, &(overlays), &maxlen,	\
+                                   nextp, NULL, chrq);			\
       }									\
   } while (false)
 
@@ -1253,7 +1253,7 @@ buffer_window_count (struct buffer *b)
 
 
 /***********************************************************************
-			Buffer-local Variables
+                        Buffer-local Variables
  ***********************************************************************/
 
 /* Number of per-buffer variables used.  */
@@ -1298,7 +1298,7 @@ extern int last_per_buffer_idx;
 #define SET_PER_BUFFER_VALUE_P(B, IDX, VAL)	\
      do {						\
        if ((IDX) < 0 || (IDX) >= last_per_buffer_idx)	\
-	 emacs_abort ();				\
+         emacs_abort ();				\
        (B)->local_flags[IDX] = (VAL);			\
      } while (false)
 
