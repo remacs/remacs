@@ -170,6 +170,10 @@ static struct emacs_env_private global_env_private;
 		   internal_handler_##handlertype,			       \
 		   internal_cleanup_##handlertype)
 
+#if !__has_attribute (cleanup)
+ #error "__attribute__ ((cleanup)) not supported by this compiler; try GCC"
+#endif
+
 /* It is very important that pushing the handler doesn't itself raise
    a signal.  Install the cleanup only after the handler has been
    pushed.  Use __attribute__ ((cleanup)) to avoid
