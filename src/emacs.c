@@ -832,7 +832,7 @@ main (int argc, char **argv)
      (https://www.cygwin.com/ml/cygwin/2015-07/msg00096.html).  */
   struct rlimit rlim;
   if (getrlimit (RLIMIT_STACK, &rlim) == 0
-      && 0 <= rlim.rlim_cur && rlim.rlim_cur <= LONG_MAX)
+      && rlim.rlim_cur <= LONG_MAX)
     {
       rlim_t lim = rlim.rlim_cur;
 
@@ -866,7 +866,7 @@ main (int argc, char **argv)
 	     right thing anyway.  */
 	  long pagesize = getpagesize ();
 	  newlim += pagesize - 1;
-	  if (0 <= rlim.rlim_max && rlim.rlim_max < newlim)
+	  if (rlim.rlim_max < newlim)
 	    newlim = rlim.rlim_max;
 	  newlim -= newlim % pagesize;
 
