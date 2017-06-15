@@ -1394,13 +1394,14 @@ In the absence of INDEX, just call `eldoc-docstring-format-sym-doc'."
   ;; FIXME: This should probably work on the list representation of `args'
   ;; rather than its string representation.
   ;; FIXME: This function is much too long, we need to split it up!
-  (let ((start          nil)
-	(end            0)
-	(argument-face  'eldoc-highlight-function-argument)
-        (args-lst (mapcar (lambda (x)
-                            (replace-regexp-in-string
-                             "\\`[(]\\|[)]\\'" "" x))
-                          (split-string args))))
+  (let* ((start          nil)
+         (end            0)
+         (argument-face  'eldoc-highlight-function-argument)
+         (args-lst (mapcar (lambda (x)
+                             (replace-regexp-in-string
+                              "\\`[(]\\|[)]\\'" "" x))
+                           (split-string args)))
+         (args-lst-ak (cdr (member "&key" args-lst))))
     ;; Find the current argument in the argument string.  We need to
     ;; handle `&rest' and informal `...' properly.
     ;;
@@ -1412,12 +1413,12 @@ In the absence of INDEX, just call `eldoc-docstring-format-sym-doc'."
     ;; When `&key' is used finding position based on `index'
     ;; would be wrong, so find the arg at point and determine
     ;; position in ARGS based on this current arg.
-    (when (string-match "&key" args)
+    (when (and args-lst-ak
+               (>= index (- (length args-lst) (length args-lst-ak))))
       (let* (case-fold-search
              key-have-value
              (sym-name (symbol-name sym))
-             (cur-w (current-word))
-             (args-lst-ak (cdr (member "&key" args-lst)))
+             (cur-w (current-word t))
              (limit (save-excursion
                       (when (re-search-backward sym-name nil t)
                         (match-end 0))))
@@ -1425,7 +1426,7 @@ In the absence of INDEX, just call `eldoc-docstring-format-sym-doc'."
                         (substring cur-w 1)
                       (save-excursion
                         (let (split)
-                          (when (re-search-backward ":\\([^()\n]*\\)" limit t)
+                          (when (re-search-backward ":\\([^ ()\n]*\\)" limit t)
                             (setq split (split-string (match-string 1) " " t))
                             (prog1 (car split)
                               (when (cdr split)
@@ -1437,7 +1438,7 @@ In the absence of INDEX, just call `eldoc-docstring-format-sym-doc'."
                                  args-lst-ak
                                  (not (member (upcase cur-a) args-lst-ak))
                                  (upcase (car (last args-lst-ak))))))
-        (unless (string= cur-w sym-name)
+        (unless (or (null cur-w) (string= cur-w sym-name))
           ;; The last keyword have already a value
           ;; i.e :foo a b and cursor is at b.
           ;; If signature have also `&rest'
