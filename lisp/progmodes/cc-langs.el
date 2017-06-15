@@ -1449,6 +1449,7 @@ comment style.  Other stuff like the syntax table must also be set up
 properly."
   t    "/*"
   awk  nil)
+(c-lang-defvar c-block-comment-starter (c-lang-const c-block-comment-starter))
 
 (c-lang-defconst c-block-comment-ender
   "String that ends block comments, or nil if such don't exist.
@@ -1458,6 +1459,7 @@ comment style.  Other stuff like the syntax table must also be set up
 properly."
   t    "*/"
   awk  nil)
+(c-lang-defvar c-block-comment-ender (c-lang-const c-block-comment-ender))
 
 (c-lang-defconst c-block-comment-ender-regexp
   ;; Regexp which matches the end of a block comment (if such exists in the
@@ -1515,27 +1517,30 @@ properly."
 (c-lang-defvar c-doc-comment-start-regexp
   (c-lang-const c-doc-comment-start-regexp))
 
+(c-lang-defconst c-block-comment-is-default
+  "Non-nil when the default comment style is block comment."
+  ;; Note to maintainers of derived modes: You are responsible for ensuring
+  ;; the pertinent `c-block-comment-{starter,ender}' or
+  ;; `c-line-comment-{starter,ender}' are non-nil.
+  t nil
+  c t)
+(c-lang-defvar c-block-comment-is-default
+  (c-lang-const c-block-comment-is-default))
+
 (c-lang-defconst comment-start
   "String that starts comments inserted with M-; etc.
 `comment-start' is initialized from this."
-  ;; Default: Prefer line comments to block comments, and pad with a space.
-  t (concat (or (c-lang-const c-line-comment-starter)
-		(c-lang-const c-block-comment-starter))
-	    " ")
-  ;; In C we still default to the block comment style since line
-  ;; comments aren't entirely portable.
-  c "/* ")
+  t (concat
+     (if (c-lang-const c-block-comment-is-default)
+	 (c-lang-const c-block-comment-starter)
+       (c-lang-const c-line-comment-starter))
+     " "))
 (c-lang-setvar comment-start (c-lang-const comment-start))
 
 (c-lang-defconst comment-end
   "String that ends comments inserted with M-; etc.
 `comment-end' is initialized from this."
-  ;; Default: Use block comment style if comment-start uses block
-  ;; comments, and pad with a space in that case.
-  t (if (string-match (concat "\\`\\("
-			      (c-lang-const c-block-comment-start-regexp)
-			      "\\)")
-		      (c-lang-const comment-start))
+  t (if (c-lang-const c-block-comment-is-default)
 	(concat " " (c-lang-const c-block-comment-ender))
       ""))
 (c-lang-setvar comment-end (c-lang-const comment-end))

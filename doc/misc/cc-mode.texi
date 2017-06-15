@@ -812,6 +812,10 @@ often (in seconds) progress messages are to be displayed.
 @cindex comments (insertion of)
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+When the commands in this section add comment delimiters, they use
+either line comments or block comments depending on the setting of the
+comment style (@pxref{Minor Modes}).
+
 @table @asis
 @item @kbd{C-c C-c} (@code{comment-region})
 @kindex C-c C-c
@@ -1133,6 +1137,9 @@ line break.
 find useful while writing new code or editing old code:
 
 @table @asis
+@item comment style
+This specifies whether comment commands (such as @kbd{M-;}) insert
+block comments or line comments.
 @item electric mode
 When this is enabled, certain visible characters cause reformatting as
 they are typed.  This is normally helpful, but can be a nuisance when
@@ -1168,20 +1175,32 @@ and @ref{Indentation Engine Basics}.
 You can toggle each of these minor modes on and off, and you can
 configure @ccmode{} so that it starts up with your favorite
 combination of them (@pxref{Sample Init File}).  By default, when
-you initialize a buffer, electric mode and syntactic-indentation mode
-are enabled but the other three modes are disabled.
+you initialize a buffer, the comment style is set to the default for
+the major mode, electric mode and syntactic-indentation mode are
+enabled, but the other three modes are disabled.
 
-@ccmode{} displays the current state of the first four of these minor
-modes on the modeline by appending letters to the major mode's name,
-one letter for each enabled minor mode: @samp{l} for electric mode,
-@samp{a} for auto-newline mode, @samp{h} for hungry delete mode, and
-@samp{w} for subword mode.  If all these modes were enabled, you'd see
-@samp{C/lahw}@footnote{The @samp{C} would be replaced with the name of
-the language in question for the other languages @ccmode{} supports.}.
+@ccmode{} displays the current state of the first five of these minor
+modes on the mode line by appending characters to the major mode's
+name: @samp{/} or @samp{*} to indicate the comment style (respectively
+line or block), and one letter for each of the other minor modes which
+is enabled - @samp{l} for electric mode, @samp{a} for auto-newline
+mode, @samp{h} for hungry delete mode, and @samp{w} for subword mode.
+If the comment style was block and all the other modes were enabled,
+you'd see @samp{C/*lahw}@footnote{The @samp{C} would be replaced with
+the name of the language in question for the other languages @ccmode{}
+supports.}.
 
 Here are the commands to toggle these modes:
 
 @table @asis
+@item @kbd{C-c C-k} (@code{c-toggle-comment-style})
+@kindex C-c C-k
+@findex c-toggle-comment-style
+@findex toggle-comment-style (c-)
+Toggle the comment style between line style and block style.  In modes
+(such as AWK Mode) which only have one of these styles, this function
+does nothing.
+
 @item @kbd{C-c C-l} (@code{c-toggle-electric-state})
 @kindex C-c C-l
 @findex c-toggle-electric-state
@@ -1218,10 +1237,12 @@ Toggle syntactic-indentation mode.
 @end table
 
 Common to all the toggle functions above is that if they are called
-programmatically, they take an optional numerical argument.  A
-positive value will turn on the minor mode (or both of them in the
-case of @code{c-toggle-auto-hungry-state}) and a negative value will
-turn it (or them) off.
+programmatically, they take an optional numerical argument.  For
+@code{c-toggle-comment style}, a positive value will select block
+comments, a negative value will select line comments.  For the other
+functions, a positive value will turn on the minor mode (or both of
+them in the case of @code{c-toggle-auto-hungry-state}) and a negative
+value will turn it (or them) off.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -7230,6 +7251,22 @@ too, add this to your @code{c-initialization-hook}:
 @end example
 
 @xref{Getting Started}.  This was a very common question.
+
+@item
+@emph{How do I get block comments in my C++ files?}
+
+Interactively, change the comment style with @kbd{C-c C-k}.
+@xref{Minor Modes}.
+
+To configure this setting, say, for files within the gdb project, you
+could amend your C++ Mode hook like this:
+
+@example
+(defun my-c++-mode-hook ()
+  (if (string-match "/gdb/" (buffer-file-name))
+      (c-toggle-comment-style 1)))
+(add-hook 'c++-mode-hook 'my-c++-mode-hook)
+@end example
 
 @item
 @emph{How do I stop my C++ lambda expressions being indented way over

@@ -252,7 +252,8 @@ With universal argument, inserts the analysis as a comment on that line."
 
 ;; Minor mode functions.
 (defun c-update-modeline ()
-  (let ((fmt (format "/%s%s%s%s"
+  (let ((fmt (format "/%s%s%s%s%s"
+		     (if c-block-comment-flag "*" "/")
 		     (if c-electric-flag "l" "")
 		     (if (and c-electric-flag c-auto-newline)
 			 "a" "")
@@ -270,9 +271,6 @@ With universal argument, inserts the analysis as a comment on that line."
 	(bare-mode-name (if (string-match "\\(^[^/]*\\)/" mode-name)
 			    (match-string 1 mode-name)
 			  mode-name)))
-;;     (setq c-submode-indicators
-;; 	  (if (> (length fmt) 1)
-;; 	      fmt))
     (setq mode-name
 	  (if (> (length fmt) 1)
 	      (concat bare-mode-name fmt)
@@ -360,6 +358,37 @@ left out."
   (c-update-modeline)
   (when (fboundp 'electric-indent-local-mode) ; Emacs 24.4 or later.
     (electric-indent-local-mode (if c-electric-flag 1 0)))
+  (c-keep-region-active))
+
+;; `c-block-comment-flag' gets initialized to the current mode's default in
+;; c-basic-common-init.
+(defvar c-block-comment-flag nil)
+(make-variable-buffer-local 'c-block-comment-flag)
+
+(defun c-toggle-comment-style (&optional arg)
+  "Toggle the comment style between block and line comments.
+Optional numeric ARG, if supplied, switches to block comment
+style when positive, to line comment style when negative, and
+just toggles it when zero or left out.
+
+This action does nothing when the mode only has one comment style."
+  (interactive "P")
+  (setq c-block-comment-flag
+	(cond
+	 ((and c-line-comment-starter c-block-comment-starter)
+	  (c-calculate-state arg c-block-comment-flag))
+	 (c-line-comment-starter nil)
+	 (t t)))
+  (setq comment-start
+	(concat (if c-block-comment-flag
+		    c-block-comment-starter
+		  c-line-comment-starter)
+		" "))
+  (setq comment-end
+	(if c-block-comment-flag
+	    (concat " " c-block-comment-ender)
+	  ""))
+  (c-update-modeline)
   (c-keep-region-active))
 
 

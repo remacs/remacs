@@ -398,7 +398,7 @@ control).  See \"cc-mode.el\" for more info."
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
   ;; (define-key c-mode-base-map "\C-c\C-y"  'c-toggle-hungry-state)  Commented out by ACM, 2005-11-22.
   (define-key c-mode-base-map "\C-c\C-w" 'c-subword-mode)
-  )
+  (define-key c-mode-base-map "\C-c\C-k" 'c-toggle-comment-style))
 
 ;; We don't require the outline package, but we configure it a bit anyway.
 (cc-bytecomp-defvar outline-level)
@@ -547,7 +547,7 @@ that requires a literal mode spec at compile time."
 	(setq yank-handled-properties (remq yank-cat-handler
 					    yank-handled-properties)))))
 
-  ;; For the benefit of adaptive file, which otherwise mis-fills.
+  ;; For the benefit of adaptive fill, which otherwise mis-fills.
   (setq fill-paragraph-handle-comment nil)
 
   ;; Install `c-fill-paragraph' on `fill-paragraph-function' so that a
@@ -623,6 +623,8 @@ that requires a literal mode spec at compile time."
 
   ;; setup the comment indent variable in a Emacs version portable way
   (set (make-local-variable 'comment-indent-function) 'c-comment-indent)
+  ;; What sort of comments are default for M-;?
+  (setq c-block-comment-flag c-block-comment-is-default)
 
   ;; In Emacs 24.4 onwards, prevent Emacs's built in electric indentation from
   ;; messing up CC Mode's, and set `c-electric-flag' if `electric-indent-mode'
@@ -1621,10 +1623,10 @@ This function is called from `c-common-init', once per mode initialization."
 
 (defvar c-mode-map
   (let ((map (c-make-inherited-keymap)))
-    ;; Add bindings which are only useful for C.
-    (define-key map "\C-c\C-e"  'c-macro-expand)
     map)
   "Keymap used in c-mode buffers.")
+;; Add bindings which are only useful for C.
+(define-key c-mode-map "\C-c\C-e"  'c-macro-expand)
 
 
 (easy-menu-define c-c-menu c-mode-map "C Mode Commands"
@@ -1737,13 +1739,13 @@ the code is C or C++ and based on that chooses whether to enable
 
 (defvar c++-mode-map
   (let ((map (c-make-inherited-keymap)))
-    ;; Add bindings which are only useful for C++.
-    (define-key map "\C-c\C-e" 'c-macro-expand)
-    (define-key map "\C-c:"    'c-scope-operator)
-    (define-key map "<"        'c-electric-lt-gt)
-    (define-key map ">"        'c-electric-lt-gt)
     map)
   "Keymap used in c++-mode buffers.")
+;; Add bindings which are only useful for C++.
+(define-key c++-mode-map "\C-c\C-e" 'c-macro-expand)
+(define-key c++-mode-map "\C-c:"    'c-scope-operator)
+(define-key c++-mode-map "<"        'c-electric-lt-gt)
+(define-key c++-mode-map ">"        'c-electric-lt-gt)
 
 (easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
 		  (cons "C++" (c-lang-const c-mode-menu c++)))
@@ -1789,10 +1791,10 @@ Key bindings:
 
 (defvar objc-mode-map
   (let ((map (c-make-inherited-keymap)))
-    ;; Add bindings which are only useful for Objective-C.
-    (define-key map "\C-c\C-e" 'c-macro-expand)
     map)
   "Keymap used in objc-mode buffers.")
+;; Add bindings which are only useful for Objective-C.
+(define-key objc-mode-map "\C-c\C-e" 'c-macro-expand)
 
 (easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
 		  (cons "ObjC" (c-lang-const c-mode-menu objc)))
@@ -1842,9 +1844,9 @@ Key bindings:
 
 (defvar java-mode-map
   (let ((map (c-make-inherited-keymap)))
-    ;; Add bindings which are only useful for Java.
     map)
   "Keymap used in java-mode buffers.")
+;; Add bindings which are only useful for Java.
 
 ;; Regexp trying to describe the beginning of a Java top-level
 ;; definition.  This is not used by CC Mode, nor is it maintained
@@ -1895,9 +1897,9 @@ Key bindings:
 
 (defvar idl-mode-map
   (let ((map (c-make-inherited-keymap)))
-    ;; Add bindings which are only useful for IDL.
     map)
   "Keymap used in idl-mode buffers.")
+;; Add bindings which are only useful for IDL.
 
 (easy-menu-define c-idl-menu idl-mode-map "IDL Mode Commands"
 		  (cons "IDL" (c-lang-const c-mode-menu idl)))
@@ -1942,10 +1944,10 @@ Key bindings:
 
 (defvar pike-mode-map
   (let ((map (c-make-inherited-keymap)))
-    ;; Additional bindings.
-    (define-key map "\C-c\C-e" 'c-macro-expand)
     map)
   "Keymap used in pike-mode buffers.")
+;; Additional bindings.
+(define-key pike-mode-map "\C-c\C-e" 'c-macro-expand)
 
 (easy-menu-define c-pike-menu pike-mode-map "Pike Mode Commands"
 		  (cons "Pike" (c-lang-const c-mode-menu pike)))
@@ -1994,19 +1996,19 @@ Key bindings:
 
 (defvar awk-mode-map
   (let ((map (c-make-inherited-keymap)))
-    ;; Add bindings which are only useful for awk.
-    (define-key map "#" 'self-insert-command);Overrides electric parent binding.
-    (define-key map "/" 'self-insert-command);Overrides electric parent binding.
-    (define-key map "*" 'self-insert-command);Overrides electric parent binding.
-    (define-key map "\C-c\C-n" 'undefined) ; #if doesn't exist in awk.
-    (define-key map "\C-c\C-p" 'undefined)
-    (define-key map "\C-c\C-u" 'undefined)
-    (define-key map "\M-a" 'c-beginning-of-statement) ; 2003/10/7
-    (define-key map "\M-e" 'c-end-of-statement)       ; 2003/10/7
-    (define-key map "\C-\M-a" 'c-awk-beginning-of-defun)
-    (define-key map "\C-\M-e" 'c-awk-end-of-defun)
     map)
   "Keymap used in awk-mode buffers.")
+;; Add bindings which are only useful for awk.
+(define-key awk-mode-map "#" 'self-insert-command);Overrides electric parent binding.
+(define-key awk-mode-map "/" 'self-insert-command);Overrides electric parent binding.
+(define-key awk-mode-map "*" 'self-insert-command);Overrides electric parent binding.
+(define-key awk-mode-map "\C-c\C-n" 'undefined) ; #if doesn't exist in awk.
+(define-key awk-mode-map "\C-c\C-p" 'undefined)
+(define-key awk-mode-map "\C-c\C-u" 'undefined)
+(define-key awk-mode-map "\M-a" 'c-beginning-of-statement) ; 2003/10/7
+(define-key awk-mode-map "\M-e" 'c-end-of-statement)       ; 2003/10/7
+(define-key awk-mode-map "\C-\M-a" 'c-awk-beginning-of-defun)
+(define-key awk-mode-map "\C-\M-e" 'c-awk-end-of-defun)
 
 (easy-menu-define c-awk-menu awk-mode-map "AWK Mode Commands"
 		  (cons "AWK" (c-lang-const c-mode-menu awk)))
