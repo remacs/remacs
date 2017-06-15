@@ -120,4 +120,13 @@ position to retrieve THING.")
         (should (equal (list-at-point)
                        (cdr str-res)))))))
 
+(ert-deftest thing-at-point-url-in-comment ()
+  (with-temp-buffer
+    (c-mode)
+    (insert "/* (http://foo/bar)\n(http://foo/bar(baz)) */\n")
+    (goto-char 6)
+    (should (equal (thing-at-point 'url) "http://foo/bar"))
+    (goto-char 23)
+    (should (equal (thing-at-point 'url) "http://foo/bar(baz)"))))
+
 ;;; thingatpt.el ends here
