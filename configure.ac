@@ -2501,19 +2501,31 @@ if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}"
     ## 6.8.2 makes Emacs crash; see Bug#13867.
     IMAGEMAGICK_MODULE="Wand >= 6.3.5 Wand != 6.8.2"
     EMACS_CHECK_MODULES([IMAGEMAGICK], [$IMAGEMAGICK_MODULE])
-    AC_SUBST(IMAGEMAGICK_CFLAGS)
-    AC_SUBST(IMAGEMAGICK_LIBS)
 
     if test $HAVE_IMAGEMAGICK = yes; then
-      AC_DEFINE(HAVE_IMAGEMAGICK, 1, [Define to 1 if using imagemagick.])
       OLD_CFLAGS=$CFLAGS
       OLD_LIBS=$LIBS
       CFLAGS="$CFLAGS $IMAGEMAGICK_CFLAGS"
       LIBS="$IMAGEMAGICK_LIBS $LIBS"
-      AC_CHECK_FUNCS(MagickExportImagePixels MagickMergeImageLayers MagickAutoOrientImage)
+      AC_CHECK_FUNCS([MagickRelinquishMemory MagickExportImagePixels \
+		      MagickMergeImageLayers MagickAutoOrientImage])
       CFLAGS=$OLD_CFLAGS
       LIBS=$OLD_LIBS
+      # Check that ImageMagick links.  It does not link on Fedora 25
+      # with './configure CC=clang', as pkg-config outputs flags like
+      # -lomp that work for GCC but not Clang.
+      if test "$ac_cv_func_MagickRelinquishMemory" != yes; then
+	HAVE_IMAGEMAGICK=no
+      fi
     fi
+    if test $HAVE_IMAGEMAGICK = yes; then
+      AC_DEFINE([HAVE_IMAGEMAGICK], 1, [Define to 1 if using ImageMagick.])
+    else
+      IMAGEMAGICK_CFLAGS=
+      IMAGEMAGICK_LIBS=
+    fi
+    AC_SUBST([IMAGEMAGICK_CFLAGS])
+    AC_SUBST([IMAGEMAGICK_LIBS])
   fi
 fi
 
