@@ -106,7 +106,7 @@ to run the `url-history-setup-save-timer' function manually."
 
 (defun url-history-update-url (url time)
   (setq url-history-changed-since-last-save t)
-  (puthash (if (vectorp url) (url-recreate-url url) url) time
+  (puthash (if (url-p url) (url-recreate-url url) url) time
            url-history-hash-table))
 
 (autoload 'url-make-private-file "url-util")
