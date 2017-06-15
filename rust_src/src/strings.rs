@@ -39,11 +39,13 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
     let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
     unsafe {
         let encoded = buffer.as_mut_ptr();
-        let encodedLength = base64_encode_1(string.sdata_ptr(),
-                                            encoded,
-                                            length,
-                                            no_line_break.is_nil(),
-                                            string.is_multibyte());
+        let encodedLength = base64_encode_1(
+            string.sdata_ptr(),
+            encoded,
+            length,
+            no_line_break.is_nil(),
+            string.is_multibyte(),
+        );
 
         if encodedLength > allength {
             panic!("base64 encoded length is larger then allocated buffer");
@@ -110,13 +112,16 @@ fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
     let mut s1 = s1.as_string_or_error();
     let mut s2 = s2.as_string_or_error();
 
-    LispObject::from_bool(s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes() &&
-                          unsafe {
-                              libc::memcmp(s1.data_ptr() as *mut libc::c_void,
-                                           s2.data_ptr() as *mut libc::c_void,
-                                           s1.len_bytes() as usize) ==
-                              0
-                          })
+    LispObject::from_bool(
+        s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes() &&
+            unsafe {
+                libc::memcmp(
+                    s1.data_ptr() as *mut libc::c_void,
+                    s2.data_ptr() as *mut libc::c_void,
+                    s1.len_bytes() as usize,
+                ) == 0
+            },
+    )
 }
 
 /// Return a multibyte string with the same individual bytes as STRING.

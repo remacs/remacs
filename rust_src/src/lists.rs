@@ -263,8 +263,9 @@ fn delq(elt: LispObject, mut list: LispObject) -> LispObject {
 
 
 fn internal_plist_get<F, I>(mut iter: I, prop: LispObject, cmp: F) -> LispObject
-    where I: Iterator<Item = LispCons>,
-          F: Fn(LispObject, LispObject) -> bool
+where
+    I: Iterator<Item = LispCons>,
+    F: Fn(LispObject, LispObject) -> bool,
 {
     let mut prop_item = true;
     for tail in &mut iter {
@@ -325,7 +326,8 @@ fn plist_member(plist: LispObject, prop: LispObject) -> LispObject {
 }
 
 fn internal_plist_put<F>(plist: LispObject, prop: LispObject, val: LispObject, cmp: F) -> LispObject
-    where F: Fn(LispObject, LispObject) -> bool
+where
+    F: Fn(LispObject, LispObject) -> bool,
 {
     let mut prop_item = true;
     let mut last_cons = None;
@@ -393,9 +395,9 @@ fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispOb
 /// usage: (list &rest OBJECTS)
 #[lisp_fn]
 fn list(args: &mut [LispObject]) -> LispObject {
-    args.iter()
-        .rev()
-        .fold(Qnil, |list, &arg| LispObject::cons(arg, list))
+    args.iter().rev().fold(Qnil, |list, &arg| {
+        LispObject::cons(arg, list)
+    })
 }
 
 /// Return a newly created list of length LENGTH, with each element being INIT.

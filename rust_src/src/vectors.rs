@@ -90,7 +90,7 @@ impl LispVectorlikeRef {
     #[inline]
     pub fn is_pseudovector(&self, tp: PseudovecType) -> bool {
         self.header.size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK) ==
-        (PSEUDOVECTOR_FLAG | ((tp as isize) << PSEUDOVECTOR_AREA_BITS))
+            (PSEUDOVECTOR_FLAG | ((tp as isize) << PSEUDOVECTOR_AREA_BITS))
     }
 
     #[inline]
@@ -121,22 +121,28 @@ impl LispVectorRef {
     #[inline]
     pub fn as_slice(&self) -> &[LispObject] {
         unsafe {
-            slice::from_raw_parts(mem::transmute::<_, *const LispObject>(&self.contents),
-                                  self.len())
+            slice::from_raw_parts(
+                mem::transmute::<_, *const LispObject>(&self.contents),
+                self.len(),
+            )
         }
     }
 
     #[inline]
     pub fn as_mut_slice(&self) -> &mut [LispObject] {
         unsafe {
-            slice::from_raw_parts_mut(mem::transmute::<_, *mut LispObject>(&self.contents),
-                                      self.len())
+            slice::from_raw_parts_mut(
+                mem::transmute::<_, *mut LispObject>(&self.contents),
+                self.len(),
+            )
         }
     }
 
     #[inline]
     pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
-        ptr::read(mem::transmute::<_, *const LispObject>(&self.contents).offset(idx))
+        ptr::read(
+            mem::transmute::<_, *const LispObject>(&self.contents).offset(idx),
+        )
     }
 
     #[inline]

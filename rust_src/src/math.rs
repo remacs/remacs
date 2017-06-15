@@ -59,12 +59,13 @@ enum ArithOp {
 }
 
 extern "C" {
-    fn float_arith_driver(accum: f64,
-                          argnum: ptrdiff_t,
-                          code: ArithOp,
-                          nargs: ptrdiff_t,
-                          args: *const Lisp_Object)
-                          -> Lisp_Object;
+    fn float_arith_driver(
+        accum: f64,
+        argnum: ptrdiff_t,
+        code: ArithOp,
+        nargs: ptrdiff_t,
+        args: *const Lisp_Object,
+    ) -> Lisp_Object;
 }
 
 /// Given an array of LispObject, reduce over them according to the
@@ -96,11 +97,13 @@ fn arith_driver(code: ArithOp, args: &mut [LispObject]) -> LispObject {
         if coerced_val.is_float() {
             let mut args: Vec<Lisp_Object> = args_clone.iter().map(|v| v.to_raw()).collect();
             let ret = unsafe {
-                float_arith_driver(ok_accum as f64,
-                                   ok_args,
-                                   code,
-                                   args.len() as ptrdiff_t,
-                                   args.as_mut_ptr())
+                float_arith_driver(
+                    ok_accum as f64,
+                    ok_args,
+                    code,
+                    args.len() as ptrdiff_t,
+                    args.as_mut_ptr(),
+                )
             };
 
             return LispObject::from_raw(ret);
@@ -217,11 +220,13 @@ fn quo(args: &mut [LispObject]) -> LispObject {
             let mut args: Vec<::remacs_sys::Lisp_Object> =
                 args.iter().map(|arg| arg.to_raw()).collect();
             let ret = unsafe {
-                float_arith_driver(0.0,
-                                   0,
-                                   ArithOp::Div,
-                                   args.len() as ptrdiff_t,
-                                   args.as_mut_ptr())
+                float_arith_driver(
+                    0.0,
+                    0,
+                    ArithOp::Div,
+                    args.len() as ptrdiff_t,
+                    args.as_mut_ptr(),
+                )
             };
             return LispObject::from_raw(ret);
         }

@@ -178,18 +178,20 @@ impl LispBufferRef {
     #[inline]
     pub fn gap_end_addr(&self) -> *mut c_uchar {
         unsafe {
-            (*self.text)
-                .beg
-                .offset((*self.text).gpt_byte + (*self.text).gap_size - BEG_BYTE)
+            (*self.text).beg.offset(
+                (*self.text).gpt_byte + (*self.text).gap_size -
+                    BEG_BYTE,
+            )
         }
     }
 
     #[inline]
     pub fn z_addr(&self) -> *mut c_uchar {
         unsafe {
-            (*self.text)
-                .beg
-                .offset((*self.text).gap_size + (*self.text).z_byte - BEG_BYTE)
+            (*self.text).beg.offset(
+                (*self.text).gap_size + (*self.text).z_byte -
+                    BEG_BYTE,
+            )
         }
     }
 
