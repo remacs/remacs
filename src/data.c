@@ -36,7 +36,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "remacs-lib.h"
 
 static void swap_in_symval_forwarding (struct Lisp_Symbol *,
-                                       struct Lisp_Buffer_Local_Value *);
+				       struct Lisp_Buffer_Local_Value *);
 
 static bool
 BOOLFWDP (union Lisp_Fwd *a)
@@ -136,7 +136,7 @@ wrong_length_argument (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
     xsignal2 (Qwrong_length_argument, size1, size2);
   else
     xsignal3 (Qwrong_length_argument, size1, size2,
-              make_number (bool_vector_size (a3)));
+	      make_number (bool_vector_size (a3)));
 }
 
 _Noreturn void
@@ -202,56 +202,56 @@ for example, (type-of 1) returns `integer'.  */)
 
     case Lisp_Misc:
       switch (XMISCTYPE (object))
-        {
-        case Lisp_Misc_Marker:
-          return Qmarker;
-        case Lisp_Misc_Overlay:
-          return Qoverlay;
-        case Lisp_Misc_Float:
-          return Qfloat;
-        case Lisp_Misc_Finalizer:
-          return Qfinalizer;
+	{
+	case Lisp_Misc_Marker:
+	  return Qmarker;
+	case Lisp_Misc_Overlay:
+	  return Qoverlay;
+	case Lisp_Misc_Float:
+	  return Qfloat;
+	case Lisp_Misc_Finalizer:
+	  return Qfinalizer;
 #ifdef HAVE_MODULES
-        case Lisp_Misc_User_Ptr:
-          return Quser_ptr;
+	case Lisp_Misc_User_Ptr:
+	  return Quser_ptr;
 #endif
-        default:
-          emacs_abort ();
-        }
+	default:
+	  emacs_abort ();
+	}
 
     case Lisp_Vectorlike:
       if (WINDOW_CONFIGURATIONP (object))
-        return Qwindow_configuration;
+	return Qwindow_configuration;
       if (PROCESSP (object))
-        return Qprocess;
+	return Qprocess;
       if (WINDOWP (object))
-        return Qwindow;
+	return Qwindow;
       if (SUBRP (object))
-        return Qsubr;
+	return Qsubr;
       if (COMPILEDP (object))
-        return Qcompiled_function;
+	return Qcompiled_function;
       if (BUFFERP (object))
-        return Qbuffer;
+	return Qbuffer;
       if (CHAR_TABLE_P (object))
-        return Qchar_table;
+	return Qchar_table;
       if (BOOL_VECTOR_P (object))
-        return Qbool_vector;
+	return Qbool_vector;
       if (FRAMEP (object))
-        return Qframe;
+	return Qframe;
       if (HASH_TABLE_P (object))
-        return Qhash_table;
+	return Qhash_table;
       if (FONT_SPEC_P (object))
-        return Qfont_spec;
+	return Qfont_spec;
       if (FONT_ENTITY_P (object))
-        return Qfont_entity;
+	return Qfont_entity;
       if (FONT_OBJECT_P (object))
-        return Qfont_object;
+	return Qfont_object;
       if (THREADP (object))
-        return Qthread;
+	return Qthread;
       if (MUTEXP (object))
-        return Qmutex;
+	return Qmutex;
       if (CONDVARP (object))
-        return Qcondition_variable;
+	return Qcondition_variable;
       return Qvector;
 
     case Lisp_Float:
@@ -320,21 +320,21 @@ global value outside of any lexical scope.  */)
     case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
     case SYMBOL_LOCALIZED:
       {
-        struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-        if (blv->fwd)
-          /* In set_internal, we un-forward vars when their value is
-             set to Qunbound.  */
-          return Qt;
-        else
-          {
-            swap_in_symval_forwarding (sym, blv);
-            valcontents = blv_value (blv);
-          }
-        break;
+	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
+	if (blv->fwd)
+	  /* In set_internal, we un-forward vars when their value is
+	     set to Qunbound.  */
+	  return Qt;
+	else
+	  {
+	    swap_in_symval_forwarding (sym, blv);
+	    valcontents = blv_value (blv);
+	  }
+	break;
       }
     case SYMBOL_FORWARDED:
       /* In set_internal, we un-forward vars when their value is
-         set to Qunbound.  */
+	 set to Qunbound.  */
       return Qt;
     default: emacs_abort ();
     }
@@ -458,12 +458,12 @@ The return value is undefined.  */)
     bool autoload = AUTOLOADP (definition);
     if (NILP (Vpurify_flag) || !autoload)
       { /* Only add autoload entries after dumping, because the ones before are
-           not useful and else we get loads of them from the loaddefs.el.  */
+	   not useful and else we get loads of them from the loaddefs.el.  */
 
-        if (AUTOLOADP (XSYMBOL (symbol)->function))
-          /* Remember that the function was already an autoload.  */
-          LOADHIST_ATTACH (Fcons (Qt, symbol));
-        LOADHIST_ATTACH (Fcons (autoload ? Qautoload : Qdefun, symbol));
+	if (AUTOLOADP (XSYMBOL (symbol)->function))
+	  /* Remember that the function was already an autoload.  */
+	  LOADHIST_ATTACH (Fcons (Qt, symbol));
+	LOADHIST_ATTACH (Fcons (autoload ? Qautoload : Qdefun, symbol));
       }
   }
 
@@ -505,9 +505,9 @@ function with `&rest' args, or `unevalled' for a special form.  */)
   minargs = XSUBR (subr)->min_args;
   maxargs = XSUBR (subr)->max_args;
   return Fcons (make_number (minargs),
-                maxargs == MANY ?        Qmany
-                : maxargs == UNEVALLED ? Qunevalled
-                :                        make_number (maxargs));
+		maxargs == MANY ?        Qmany
+		: maxargs == UNEVALLED ? Qunevalled
+		:                        make_number (maxargs));
 }
 
 DEFUN ("subr-name", Fsubr_name, Ssubr_name, 1, 1, 0,
@@ -539,23 +539,23 @@ Value, if non-nil, is a list (interactive SPEC).  */)
     {
       Lisp_Object tmp = Fget (fun, Qinteractive_form);
       if (!NILP (tmp))
-        return tmp;
+	return tmp;
       else
-        fun = Fsymbol_function (fun);
+	fun = Fsymbol_function (fun);
     }
 
   if (SUBRP (fun))
     {
       const char *spec = XSUBR (fun)->intspec;
       if (spec)
-        return list2 (Qinteractive,
-                      (*spec != '(') ? build_string (spec) :
-                      Fcar (Fread_from_string (build_string (spec), Qnil, Qnil)));
+	return list2 (Qinteractive,
+		      (*spec != '(') ? build_string (spec) :
+		      Fcar (Fread_from_string (build_string (spec), Qnil, Qnil)));
     }
   else if (COMPILEDP (fun))
     {
       if ((ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK) > COMPILED_INTERACTIVE)
-        return list2 (Qinteractive, AREF (fun, COMPILED_INTERACTIVE));
+	return list2 (Qinteractive, AREF (fun, COMPILED_INTERACTIVE));
     }
   else if (AUTOLOADP (fun))
     return Finteractive_form (Fautoload_do_load (fun, cmd, Qnil));
@@ -563,16 +563,16 @@ Value, if non-nil, is a list (interactive SPEC).  */)
     {
       Lisp_Object funcar = XCAR (fun);
       if (EQ (funcar, Qclosure))
-        return Fassq (Qinteractive, Fcdr (Fcdr (XCDR (fun))));
+	return Fassq (Qinteractive, Fcdr (Fcdr (XCDR (fun))));
       else if (EQ (funcar, Qlambda))
-        return Fassq (Qinteractive, Fcdr (XCDR (fun)));
+	return Fassq (Qinteractive, Fcdr (XCDR (fun)));
     }
   return Qnil;
 }
 
 
 /***********************************************************************
-                Getting and Setting Values of Symbols
+		Getting and Setting Values of Symbols
  ***********************************************************************/
 
 /* Return the symbol holding SYMBOL's value.  Signal
@@ -590,17 +590,17 @@ indirect_variable (struct Lisp_Symbol *symbol)
     {
       hare = SYMBOL_ALIAS (hare);
       if (hare->redirect != SYMBOL_VARALIAS)
-        break;
+	break;
 
       hare = SYMBOL_ALIAS (hare);
       tortoise = SYMBOL_ALIAS (tortoise);
 
       if (hare == tortoise)
-        {
-          Lisp_Object tem;
-          XSETSYMBOL (tem, symbol);
-          xsignal1 (Qcyclic_variable_indirection, tem);
-        }
+	{
+	  Lisp_Object tem;
+	  XSETSYMBOL (tem, symbol);
+	  xsignal1 (Qcyclic_variable_indirection, tem);
+	}
     }
 
   return hare;
@@ -649,22 +649,22 @@ do_symval_forwarding (register union Lisp_Fwd *valcontents)
 
     case Lisp_Fwd_Buffer_Obj:
       return per_buffer_value (current_buffer,
-                               XBUFFER_OBJFWD (valcontents)->offset);
+			       XBUFFER_OBJFWD (valcontents)->offset);
 
     case Lisp_Fwd_Kboard_Obj:
       /* We used to simply use current_kboard here, but from Lisp
-         code, its value is often unexpected.  It seems nicer to
-         allow constructions like this to work as intuitively expected:
+	 code, its value is often unexpected.  It seems nicer to
+	 allow constructions like this to work as intuitively expected:
 
-         (with-selected-frame frame
-         (define-key local-function-map "\eOP" [f1]))
+	 (with-selected-frame frame
+	 (define-key local-function-map "\eOP" [f1]))
 
-         On the other hand, this affects the semantics of
-         last-command and real-last-command, and people may rely on
-         that.  I took a quick look at the Lisp codebase, and I
-         don't think anything will break.  --lorentey  */
+	 On the other hand, this affects the semantics of
+	 last-command and real-last-command, and people may rely on
+	 that.  I took a quick look at the Lisp codebase, and I
+	 don't think anything will break.  --lorentey  */
       return *(Lisp_Object *)(XKBOARD_OBJFWD (valcontents)->offset
-                              + (char *)FRAME_KBOARD (SELECTED_FRAME ()));
+			      + (char *)FRAME_KBOARD (SELECTED_FRAME ()));
     default: emacs_abort ();
     }
 }
@@ -691,7 +691,7 @@ wrong_choice (Lisp_Object choice, Lisp_Object wrong)
     {
       args[i++] = SYMBOL_NAME (XCAR (obj));
       args[i++] = (NILP (XCDR (obj)) ? should_be_specified
-                   : NILP (XCDR (XCDR (obj))) ? or : comma);
+		   : NILP (XCDR (XCDR (obj))) ? or : comma);
     }
 
   obj = Fconcat (i, args);
@@ -708,9 +708,9 @@ wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
   AUTO_STRING (value_should_be_from, "Value should be from ");
   AUTO_STRING (to, " to ");
   xsignal2 (Qerror,
-            CALLN (Fconcat, value_should_be_from, Fnumber_to_string (min),
-                   to, Fnumber_to_string (max)),
-            wrong);
+	    CALLN (Fconcat, value_should_be_from, Fnumber_to_string (min),
+		   to, Fnumber_to_string (max)),
+	    wrong);
 }
 
 /* Store NEWVAL into SYMBOL, where VALCONTENTS is found in the value cell
@@ -739,74 +739,74 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
       *XOBJFWD (valcontents)->objvar = newval;
 
       /* If this variable is a default for something stored
-         in the buffer itself, such as default-fill-column,
-         find the buffers that don't have local values for it
-         and update them.  */
+	 in the buffer itself, such as default-fill-column,
+	 find the buffers that don't have local values for it
+	 and update them.  */
       if (XOBJFWD (valcontents)->objvar > (Lisp_Object *) &buffer_defaults
-          && XOBJFWD (valcontents)->objvar < (Lisp_Object *) (&buffer_defaults + 1))
-        {
-          int offset = ((char *) XOBJFWD (valcontents)->objvar
-                        - (char *) &buffer_defaults);
-          int idx = PER_BUFFER_IDX (offset);
+	  && XOBJFWD (valcontents)->objvar < (Lisp_Object *) (&buffer_defaults + 1))
+	{
+	  int offset = ((char *) XOBJFWD (valcontents)->objvar
+			- (char *) &buffer_defaults);
+	  int idx = PER_BUFFER_IDX (offset);
 
-          Lisp_Object tail, buf;
+	  Lisp_Object tail, buf;
 
-          if (idx <= 0)
-            break;
+	  if (idx <= 0)
+	    break;
 
-          FOR_EACH_LIVE_BUFFER (tail, buf)
-            {
-              struct buffer *b = XBUFFER (buf);
+	  FOR_EACH_LIVE_BUFFER (tail, buf)
+	    {
+	      struct buffer *b = XBUFFER (buf);
 
-              if (! PER_BUFFER_VALUE_P (b, idx))
-                set_per_buffer_value (b, offset, newval);
-            }
-        }
+	      if (! PER_BUFFER_VALUE_P (b, idx))
+		set_per_buffer_value (b, offset, newval);
+	    }
+	}
       break;
 
     case Lisp_Fwd_Buffer_Obj:
       {
-        int offset = XBUFFER_OBJFWD (valcontents)->offset;
-        Lisp_Object predicate = XBUFFER_OBJFWD (valcontents)->predicate;
+	int offset = XBUFFER_OBJFWD (valcontents)->offset;
+	Lisp_Object predicate = XBUFFER_OBJFWD (valcontents)->predicate;
 
-        if (!NILP (newval))
-          {
-            if (SYMBOLP (predicate))
-              {
-                Lisp_Object prop;
+	if (!NILP (newval))
+	  {
+	    if (SYMBOLP (predicate))
+	      {
+		Lisp_Object prop;
 
-                if ((prop = Fget (predicate, Qchoice), !NILP (prop)))
-                  {
-                    if (NILP (Fmemq (newval, prop)))
-                      wrong_choice (prop, newval);
-                  }
-                else if ((prop = Fget (predicate, Qrange), !NILP (prop)))
-                  {
-                    Lisp_Object min = XCAR (prop), max = XCDR (prop);
+		if ((prop = Fget (predicate, Qchoice), !NILP (prop)))
+		  {
+		    if (NILP (Fmemq (newval, prop)))
+		      wrong_choice (prop, newval);
+		  }
+		else if ((prop = Fget (predicate, Qrange), !NILP (prop)))
+		  {
+		    Lisp_Object min = XCAR (prop), max = XCDR (prop);
 
-                    if (!NUMBERP (newval)
-                        || !NILP (arithcompare (newval, min, ARITH_LESS))
-                        || !NILP (arithcompare (newval, max, ARITH_GRTR)))
-                      wrong_range (min, max, newval);
-                  }
-                else if (FUNCTIONP (predicate))
-                  {
-                    if (NILP (call1 (predicate, newval)))
-                      wrong_type_argument (predicate, newval);
-                  }
-              }
-          }
-        if (buf == NULL)
-          buf = current_buffer;
-        set_per_buffer_value (buf, offset, newval);
+		    if (!NUMBERP (newval)
+			|| !NILP (arithcompare (newval, min, ARITH_LESS))
+			|| !NILP (arithcompare (newval, max, ARITH_GRTR)))
+		      wrong_range (min, max, newval);
+		  }
+		else if (FUNCTIONP (predicate))
+		  {
+		    if (NILP (call1 (predicate, newval)))
+		      wrong_type_argument (predicate, newval);
+		  }
+	      }
+	  }
+	if (buf == NULL)
+	  buf = current_buffer;
+	set_per_buffer_value (buf, offset, newval);
       }
       break;
 
     case Lisp_Fwd_Kboard_Obj:
       {
-        char *base = (char *) FRAME_KBOARD (SELECTED_FRAME ());
-        char *p = base + XKBOARD_OBJFWD (valcontents)->offset;
-        *(Lisp_Object *) p = newval;
+	char *base = (char *) FRAME_KBOARD (SELECTED_FRAME ());
+	char *p = base + XKBOARD_OBJFWD (valcontents)->offset;
+	*(Lisp_Object *) p = newval;
       }
       break;
 
@@ -862,21 +862,21 @@ swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_
       /* Unload the previously loaded binding.  */
       tem1 = blv->valcell;
       if (blv->fwd)
-        set_blv_value (blv, do_symval_forwarding (blv->fwd));
+	set_blv_value (blv, do_symval_forwarding (blv->fwd));
       /* Choose the new binding.  */
       {
-        Lisp_Object var;
-        XSETSYMBOL (var, symbol);
-        tem1 = assq_no_quit (var, BVAR (current_buffer, local_var_alist));
-        set_blv_where (blv, Fcurrent_buffer ());
+	Lisp_Object var;
+	XSETSYMBOL (var, symbol);
+	tem1 = assq_no_quit (var, BVAR (current_buffer, local_var_alist));
+	set_blv_where (blv, Fcurrent_buffer ());
       }
       if (!(blv->found = !NILP (tem1)))
-        tem1 = blv->defcell;
+	tem1 = blv->defcell;
 
       /* Load the new binding.  */
       set_blv_valcell (blv, tem1);
       if (blv->fwd)
-        store_symval_forwarding (blv->fwd, blv_value (blv), NULL);
+	store_symval_forwarding (blv->fwd, blv_value (blv), NULL);
     }
 }
 
@@ -901,9 +901,9 @@ find_symbol_value (Lisp_Object symbol)
     case SYMBOL_PLAINVAL: return SYMBOL_VAL (sym);
     case SYMBOL_LOCALIZED:
       {
-        struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-        swap_in_symval_forwarding (sym, blv);
-        return blv->fwd ? do_symval_forwarding (blv->fwd) : blv_value (blv);
+	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
+	swap_in_symval_forwarding (sym, blv);
+	return blv->fwd ? do_symval_forwarding (blv->fwd) : blv_value (blv);
       }
       /* FALLTHROUGH */
     case SYMBOL_FORWARDED:
@@ -946,7 +946,7 @@ DEFUN ("set", Fset, Sset, 2, 2, 0,
 
 void
 set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
-              enum Set_Internal_Bind bindflag)
+	      enum Set_Internal_Bind bindflag)
 {
   bool voide = EQ (newval, Qunbound);
   struct Lisp_Symbol *sym;
@@ -962,23 +962,23 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
     {
     case SYMBOL_NOWRITE:
       if (NILP (Fkeywordp (symbol))
-          || !EQ (newval, Fsymbol_value (symbol)))
-        xsignal1 (Qsetting_constant, symbol);
+	  || !EQ (newval, Fsymbol_value (symbol)))
+	xsignal1 (Qsetting_constant, symbol);
       else
-        /* Allow setting keywords to their own value.  */
-        return;
+	/* Allow setting keywords to their own value.  */
+	return;
 
     case SYMBOL_TRAPPED_WRITE:
       /* Setting due to thread-switching doesn't count.  */
       if (bindflag != SET_INTERNAL_THREAD_SWITCH)
-        notify_variable_watchers (symbol, voide? Qnil : newval,
-                                  (bindflag == SET_INTERNAL_BIND? Qlet :
-                                   bindflag == SET_INTERNAL_UNBIND? Qunlet :
-                                   voide? Qmakunbound : Qset),
-                                  where);
+	notify_variable_watchers (symbol, voide? Qnil : newval,
+				  (bindflag == SET_INTERNAL_BIND? Qlet :
+				   bindflag == SET_INTERNAL_UNBIND? Qunlet :
+				   voide? Qmakunbound : Qset),
+				  where);
       /* FALLTHROUGH!  */
     case SYMBOL_UNTRAPPED_WRITE:
-        break;
+	break;
 
     default: emacs_abort ();
     }
@@ -990,106 +990,106 @@ set_internal (Lisp_Object symbol, Lisp_Object newval, Lisp_Object where,
     case SYMBOL_PLAINVAL: SET_SYMBOL_VAL (sym , newval); return;
     case SYMBOL_LOCALIZED:
       {
-        struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-        if (NILP (where))
-          XSETBUFFER (where, current_buffer);
+	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
+	if (NILP (where))
+	  XSETBUFFER (where, current_buffer);
 
-        /* If the current buffer is not the buffer whose binding is
-           loaded, or if it's a Lisp_Buffer_Local_Value and
-           the default binding is loaded, the loaded binding may be the
-           wrong one.  */
-        if (!EQ (blv->where, where)
-            /* Also unload a global binding (if the var is local_if_set).  */
-            || (EQ (blv->valcell, blv->defcell)))
-          {
-            /* The currently loaded binding is not necessarily valid.
-               We need to unload it, and choose a new binding.  */
+	/* If the current buffer is not the buffer whose binding is
+	   loaded, or if it's a Lisp_Buffer_Local_Value and
+	   the default binding is loaded, the loaded binding may be the
+	   wrong one.  */
+	if (!EQ (blv->where, where)
+	    /* Also unload a global binding (if the var is local_if_set).  */
+	    || (EQ (blv->valcell, blv->defcell)))
+	  {
+	    /* The currently loaded binding is not necessarily valid.
+	       We need to unload it, and choose a new binding.  */
 
-            /* Write out `realvalue' to the old loaded binding.  */
-            if (blv->fwd)
-              set_blv_value (blv, do_symval_forwarding (blv->fwd));
+	    /* Write out `realvalue' to the old loaded binding.  */
+	    if (blv->fwd)
+	      set_blv_value (blv, do_symval_forwarding (blv->fwd));
 
-            /* Find the new binding.  */
-            XSETSYMBOL (symbol, sym); /* May have changed via aliasing.  */
-            tem1 = assq_no_quit (symbol,
-                                 BVAR (XBUFFER (where), local_var_alist));
-            set_blv_where (blv, where);
-            blv->found = 1;
+	    /* Find the new binding.  */
+	    XSETSYMBOL (symbol, sym); /* May have changed via aliasing.  */
+	    tem1 = assq_no_quit (symbol,
+				 BVAR (XBUFFER (where), local_var_alist));
+	    set_blv_where (blv, where);
+	    blv->found = 1;
 
-            if (NILP (tem1))
-              {
-                /* This buffer still sees the default value.  */
+	    if (NILP (tem1))
+	      {
+		/* This buffer still sees the default value.  */
 
-                /* If the variable is a Lisp_Some_Buffer_Local_Value,
-                   or if this is `let' rather than `set',
-                   make CURRENT-ALIST-ELEMENT point to itself,
-                   indicating that we're seeing the default value.
-                   Likewise if the variable has been let-bound
-                   in the current buffer.  */
-                if (bindflag || !blv->local_if_set
-                    || let_shadows_buffer_binding_p (sym))
-                  {
-                    blv->found = 0;
-                    tem1 = blv->defcell;
-                  }
-                /* If it's a local_if_set, being set not bound,
-                   and we're not within a let that was made for this buffer,
-                   create a new buffer-local binding for the variable.
-                   That means, give this buffer a new assoc for a local value
-                   and load that binding.  */
-                else
-                  {
-                    tem1 = Fcons (symbol, XCDR (blv->defcell));
-                    bset_local_var_alist
-                      (XBUFFER (where),
-                       Fcons (tem1, BVAR (XBUFFER (where), local_var_alist)));
-                  }
-              }
+		/* If the variable is a Lisp_Some_Buffer_Local_Value,
+		   or if this is `let' rather than `set',
+		   make CURRENT-ALIST-ELEMENT point to itself,
+		   indicating that we're seeing the default value.
+		   Likewise if the variable has been let-bound
+		   in the current buffer.  */
+		if (bindflag || !blv->local_if_set
+		    || let_shadows_buffer_binding_p (sym))
+		  {
+		    blv->found = 0;
+		    tem1 = blv->defcell;
+		  }
+		/* If it's a local_if_set, being set not bound,
+		   and we're not within a let that was made for this buffer,
+		   create a new buffer-local binding for the variable.
+		   That means, give this buffer a new assoc for a local value
+		   and load that binding.  */
+		else
+		  {
+		    tem1 = Fcons (symbol, XCDR (blv->defcell));
+		    bset_local_var_alist
+		      (XBUFFER (where),
+		       Fcons (tem1, BVAR (XBUFFER (where), local_var_alist)));
+		  }
+	      }
 
-            /* Record which binding is now loaded.  */
-            set_blv_valcell (blv, tem1);
-          }
+	    /* Record which binding is now loaded.  */
+	    set_blv_valcell (blv, tem1);
+	  }
 
-        /* Store the new value in the cons cell.  */
-        set_blv_value (blv, newval);
+	/* Store the new value in the cons cell.  */
+	set_blv_value (blv, newval);
 
-        if (blv->fwd)
-          {
-            if (voide)
-              /* If storing void (making the symbol void), forward only through
-                 buffer-local indicator, not through Lisp_Objfwd, etc.  */
-              blv->fwd = NULL;
-            else
-              store_symval_forwarding (blv->fwd, newval,
-                                       BUFFERP (where)
-                                       ? XBUFFER (where) : current_buffer);
-          }
-        break;
+	if (blv->fwd)
+	  {
+	    if (voide)
+	      /* If storing void (making the symbol void), forward only through
+		 buffer-local indicator, not through Lisp_Objfwd, etc.  */
+	      blv->fwd = NULL;
+	    else
+	      store_symval_forwarding (blv->fwd, newval,
+				       BUFFERP (where)
+				       ? XBUFFER (where) : current_buffer);
+	  }
+	break;
       }
     case SYMBOL_FORWARDED:
       {
-        struct buffer *buf
-          = BUFFERP (where) ? XBUFFER (where) : current_buffer;
-        union Lisp_Fwd *innercontents = SYMBOL_FWD (sym);
-        if (BUFFER_OBJFWDP (innercontents))
-          {
-            int offset = XBUFFER_OBJFWD (innercontents)->offset;
-            int idx = PER_BUFFER_IDX (offset);
-            if (idx > 0
-                && bindflag == SET_INTERNAL_SET
-                && !let_shadows_buffer_binding_p (sym))
-              SET_PER_BUFFER_VALUE_P (buf, idx, 1);
-          }
+	struct buffer *buf
+	  = BUFFERP (where) ? XBUFFER (where) : current_buffer;
+	union Lisp_Fwd *innercontents = SYMBOL_FWD (sym);
+	if (BUFFER_OBJFWDP (innercontents))
+	  {
+	    int offset = XBUFFER_OBJFWD (innercontents)->offset;
+	    int idx = PER_BUFFER_IDX (offset);
+	    if (idx > 0
+		&& bindflag == SET_INTERNAL_SET
+		&& !let_shadows_buffer_binding_p (sym))
+	      SET_PER_BUFFER_VALUE_P (buf, idx, 1);
+	  }
 
-        if (voide)
-          { /* If storing void (making the symbol void), forward only through
-               buffer-local indicator, not through Lisp_Objfwd, etc.  */
-            sym->redirect = SYMBOL_PLAINVAL;
-            SET_SYMBOL_VAL (sym, newval);
-          }
-        else
-          store_symval_forwarding (/* sym, */ innercontents, newval, buf);
-        break;
+	if (voide)
+	  { /* If storing void (making the symbol void), forward only through
+	       buffer-local indicator, not through Lisp_Objfwd, etc.  */
+	    sym->redirect = SYMBOL_PLAINVAL;
+	    SET_SYMBOL_VAL (sym, newval);
+	  }
+	else
+	  store_symval_forwarding (/* sym, */ innercontents, newval, buf);
+	break;
       }
     default: emacs_abort ();
     }
@@ -1177,9 +1177,9 @@ DEFUN ("get-variable-watchers", Fget_variable_watchers, Sget_variable_watchers,
 
 void
 notify_variable_watchers (Lisp_Object symbol,
-                          Lisp_Object newval,
-                          Lisp_Object operation,
-                          Lisp_Object where)
+			  Lisp_Object newval,
+			  Lisp_Object operation,
+			  Lisp_Object where)
 {
   symbol = Findirect_variable (symbol);
 
@@ -1205,12 +1205,12 @@ notify_variable_watchers (Lisp_Object symbol,
       Lisp_Object watcher = XCAR (watchers);
       /* Call subr directly to avoid gc.  */
       if (SUBRP (watcher))
-        {
-          Lisp_Object args[] = { symbol, newval, operation, where };
-          funcall_subr (XSUBR (watcher), ARRAYELTS (args), args);
-        }
+	{
+	  Lisp_Object args[] = { symbol, newval, operation, where };
+	  funcall_subr (XSUBR (watcher), ARRAYELTS (args), args);
+	}
       else
-        CALLN (Ffuncall, watcher, symbol, newval, operation, where);
+	CALLN (Ffuncall, watcher, symbol, newval, operation, where);
     }
 
   unbind_to (count, Qnil);
@@ -1237,31 +1237,31 @@ default_value (Lisp_Object symbol)
     case SYMBOL_PLAINVAL: return SYMBOL_VAL (sym);
     case SYMBOL_LOCALIZED:
       {
-        /* If var is set up for a buffer that lacks a local value for it,
-           the current value is nominally the default value.
-           But the `realvalue' slot may be more up to date, since
-           ordinary setq stores just that slot.  So use that.  */
-        struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-        if (blv->fwd && EQ (blv->valcell, blv->defcell))
-          return do_symval_forwarding (blv->fwd);
-        else
-          return XCDR (blv->defcell);
+	/* If var is set up for a buffer that lacks a local value for it,
+	   the current value is nominally the default value.
+	   But the `realvalue' slot may be more up to date, since
+	   ordinary setq stores just that slot.  So use that.  */
+	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
+	if (blv->fwd && EQ (blv->valcell, blv->defcell))
+	  return do_symval_forwarding (blv->fwd);
+	else
+	  return XCDR (blv->defcell);
       }
     case SYMBOL_FORWARDED:
       {
-        union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
+	union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
 
-        /* For a built-in buffer-local variable, get the default value
-           rather than letting do_symval_forwarding get the current value.  */
-        if (BUFFER_OBJFWDP (valcontents))
-          {
-            int offset = XBUFFER_OBJFWD (valcontents)->offset;
-            if (PER_BUFFER_IDX (offset) != 0)
-              return per_buffer_default (offset);
-          }
+	/* For a built-in buffer-local variable, get the default value
+	   rather than letting do_symval_forwarding get the current value.  */
+	if (BUFFER_OBJFWDP (valcontents))
+	  {
+	    int offset = XBUFFER_OBJFWD (valcontents)->offset;
+	    if (PER_BUFFER_IDX (offset) != 0)
+	      return per_buffer_default (offset);
+	  }
 
-        /* For other variables, get the current value.  */
-        return do_symval_forwarding (valcontents);
+	/* For other variables, get the current value.  */
+	return do_symval_forwarding (valcontents);
       }
     default: emacs_abort ();
     }
@@ -1295,7 +1295,7 @@ local bindings in certain buffers.  */)
 
 void
 set_default_internal (Lisp_Object symbol, Lisp_Object value,
-                      enum Set_Internal_Bind bindflag)
+		      enum Set_Internal_Bind bindflag)
 {
   struct Lisp_Symbol *sym;
 
@@ -1305,21 +1305,21 @@ set_default_internal (Lisp_Object symbol, Lisp_Object value,
     {
     case SYMBOL_NOWRITE:
       if (NILP (Fkeywordp (symbol))
-          || !EQ (value, Fsymbol_value (symbol)))
-        xsignal1 (Qsetting_constant, symbol);
+	  || !EQ (value, Fsymbol_value (symbol)))
+	xsignal1 (Qsetting_constant, symbol);
       else
-        /* Allow setting keywords to their own value.  */
-        return;
+	/* Allow setting keywords to their own value.  */
+	return;
 
     case SYMBOL_TRAPPED_WRITE:
       /* Don't notify here if we're going to call Fset anyway.  */
       if (sym->redirect != SYMBOL_PLAINVAL
-          /* Setting due to thread switching doesn't count.  */
-          && bindflag != SET_INTERNAL_THREAD_SWITCH)
-        notify_variable_watchers (symbol, value, Qset_default, Qnil);
+	  /* Setting due to thread switching doesn't count.  */
+	  && bindflag != SET_INTERNAL_THREAD_SWITCH)
+	notify_variable_watchers (symbol, value, Qset_default, Qnil);
       /* FALLTHROUGH!  */
     case SYMBOL_UNTRAPPED_WRITE:
-        break;
+	break;
 
     default: emacs_abort ();
     }
@@ -1331,44 +1331,44 @@ set_default_internal (Lisp_Object symbol, Lisp_Object value,
     case SYMBOL_PLAINVAL: set_internal (symbol, value, Qnil, bindflag); return;
     case SYMBOL_LOCALIZED:
       {
-        struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
+	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
 
-        /* Store new value into the DEFAULT-VALUE slot.  */
-        XSETCDR (blv->defcell, value);
+	/* Store new value into the DEFAULT-VALUE slot.  */
+	XSETCDR (blv->defcell, value);
 
-        /* If the default binding is now loaded, set the REALVALUE slot too.  */
-        if (blv->fwd && EQ (blv->defcell, blv->valcell))
-          store_symval_forwarding (blv->fwd, value, NULL);
-        return;
+	/* If the default binding is now loaded, set the REALVALUE slot too.  */
+	if (blv->fwd && EQ (blv->defcell, blv->valcell))
+	  store_symval_forwarding (blv->fwd, value, NULL);
+	return;
       }
     case SYMBOL_FORWARDED:
       {
-        union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
+	union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
 
-        /* Handle variables like case-fold-search that have special slots
-           in the buffer.
-           Make them work apparently like Lisp_Buffer_Local_Value variables.  */
-        if (BUFFER_OBJFWDP (valcontents))
-          {
-            int offset = XBUFFER_OBJFWD (valcontents)->offset;
-            int idx = PER_BUFFER_IDX (offset);
+	/* Handle variables like case-fold-search that have special slots
+	   in the buffer.
+	   Make them work apparently like Lisp_Buffer_Local_Value variables.  */
+	if (BUFFER_OBJFWDP (valcontents))
+	  {
+	    int offset = XBUFFER_OBJFWD (valcontents)->offset;
+	    int idx = PER_BUFFER_IDX (offset);
 
-            set_per_buffer_default (offset, value);
+	    set_per_buffer_default (offset, value);
 
-            /* If this variable is not always local in all buffers,
-               set it in the buffers that don't nominally have a local value.  */
-            if (idx > 0)
-              {
-                struct buffer *b;
+	    /* If this variable is not always local in all buffers,
+	       set it in the buffers that don't nominally have a local value.  */
+	    if (idx > 0)
+	      {
+		struct buffer *b;
 
-                FOR_EACH_BUFFER (b)
-                  if (!PER_BUFFER_VALUE_P (b, idx))
-                    set_per_buffer_value (b, offset, value);
-              }
-          }
-        else
-          set_internal (symbol, value, Qnil, bindflag);
-        return;
+		FOR_EACH_BUFFER (b)
+		  if (!PER_BUFFER_VALUE_P (b, idx))
+		    set_per_buffer_value (b, offset, value);
+	      }
+	  }
+	else
+	  set_internal (symbol, value, Qnil, bindflag);
+	return;
       }
     default: emacs_abort ();
     }
@@ -1424,7 +1424,7 @@ union Lisp_Val_Fwd
 
 static struct Lisp_Buffer_Local_Value *
 make_blv (struct Lisp_Symbol *sym, bool forwarded,
-          union Lisp_Val_Fwd valcontents)
+	  union Lisp_Val_Fwd valcontents)
 {
   struct Lisp_Buffer_Local_Value *blv = xmalloc (sizeof *blv);
   Lisp_Object symbol;
@@ -1432,8 +1432,8 @@ make_blv (struct Lisp_Symbol *sym, bool forwarded,
 
  XSETSYMBOL (symbol, sym);
  tem = Fcons (symbol, (forwarded
-                       ? do_symval_forwarding (valcontents.fwd)
-                       : valcontents.value));
+		       ? do_symval_forwarding (valcontents.fwd)
+		       : valcontents.value));
 
   /* Buffer_Local_Values cannot have as realval a buffer-local
      or keyboard-local forwarding.  */
@@ -1483,7 +1483,7 @@ The function `default-value' gets the default value and `set-default' sets it.  
     case SYMBOL_PLAINVAL:
       forwarded = 0; valcontents.value = SYMBOL_VAL (sym);
       if (EQ (valcontents.value, Qunbound))
-        valcontents.value = Qnil;
+	valcontents.value = Qnil;
       break;
     case SYMBOL_LOCALIZED:
       blv = SYMBOL_BLV (sym);
@@ -1491,10 +1491,10 @@ The function `default-value' gets the default value and `set-default' sets it.  
     case SYMBOL_FORWARDED:
       forwarded = 1; valcontents.fwd = SYMBOL_FWD (sym);
       if (KBOARD_OBJFWDP (valcontents.fwd))
-        error ("Symbol %s may not be buffer-local",
-               SDATA (SYMBOL_NAME (variable)));
+	error ("Symbol %s may not be buffer-local",
+	       SDATA (SYMBOL_NAME (variable)));
       else if (BUFFER_OBJFWDP (valcontents.fwd))
-        return variable;
+	return variable;
       break;
     default: emacs_abort ();
     }
@@ -1556,22 +1556,22 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
     case SYMBOL_FORWARDED:
       forwarded = 1; valcontents.fwd = SYMBOL_FWD (sym);
       if (KBOARD_OBJFWDP (valcontents.fwd))
-        error ("Symbol %s may not be buffer-local",
-               SDATA (SYMBOL_NAME (variable)));
+	error ("Symbol %s may not be buffer-local",
+	       SDATA (SYMBOL_NAME (variable)));
       break;
     default: emacs_abort ();
     }
 
   if (sym->trapped_write == SYMBOL_NOWRITE)
     error ("Symbol %s may not be buffer-local",
-           SDATA (SYMBOL_NAME (variable)));
+	   SDATA (SYMBOL_NAME (variable)));
 
   if (blv ? blv->local_if_set
       : (forwarded && BUFFER_OBJFWDP (valcontents.fwd)))
     {
       tem = Fboundp (variable);
       /* Make sure the symbol has a local value in this particular buffer,
-         by setting it to the same value it already has.  */
+	 by setting it to the same value it already has.  */
       Fset (variable, (EQ (tem, Qt) ? Fsymbol_value (variable) : Qunbound));
       return variable;
     }
@@ -1588,26 +1588,26 @@ Instead, use `add-hook' and specify t for the LOCAL argument.  */)
   if (NILP (tem))
     {
       if (let_shadows_buffer_binding_p (sym))
-        {
-          AUTO_STRING (format,
-                       "Making %s buffer-local while locally let-bound!");
-          CALLN (Fmessage, format, SYMBOL_NAME (variable));
-        }
+	{
+	  AUTO_STRING (format,
+		       "Making %s buffer-local while locally let-bound!");
+	  CALLN (Fmessage, format, SYMBOL_NAME (variable));
+	}
 
       /* Swap out any local binding for some other buffer, and make
-         sure the current value is permanently recorded, if it's the
-         default value.  */
+	 sure the current value is permanently recorded, if it's the
+	 default value.  */
       find_symbol_value (variable);
 
       bset_local_var_alist
-        (current_buffer,
-         Fcons (Fcons (variable, XCDR (blv->defcell)),
-                BVAR (current_buffer, local_var_alist)));
+	(current_buffer,
+	 Fcons (Fcons (variable, XCDR (blv->defcell)),
+		BVAR (current_buffer, local_var_alist)));
 
       /* Make sure symbol does not think it is set up for this buffer;
-         force it to look once again for this buffer's value.  */
+	 force it to look once again for this buffer's value.  */
       if (current_buffer == XBUFFER (blv->where))
-        set_blv_where (blv, Qnil);
+	set_blv_where (blv, Qnil);
       set_blv_found (blv, 0);
     }
 
@@ -1641,20 +1641,20 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
     case SYMBOL_PLAINVAL: return variable;
     case SYMBOL_FORWARDED:
       {
-        union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
-        if (BUFFER_OBJFWDP (valcontents))
-          {
-            int offset = XBUFFER_OBJFWD (valcontents)->offset;
-            int idx = PER_BUFFER_IDX (offset);
+	union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
+	if (BUFFER_OBJFWDP (valcontents))
+	  {
+	    int offset = XBUFFER_OBJFWD (valcontents)->offset;
+	    int idx = PER_BUFFER_IDX (offset);
 
-            if (idx > 0)
-              {
-                SET_PER_BUFFER_VALUE_P (current_buffer, idx, 0);
-                set_per_buffer_value (current_buffer, offset,
-                                      per_buffer_default (offset));
-              }
-          }
-        return variable;
+	    if (idx > 0)
+	      {
+		SET_PER_BUFFER_VALUE_P (current_buffer, idx, 0);
+		set_per_buffer_value (current_buffer, offset,
+				      per_buffer_default (offset));
+	      }
+	  }
+	return variable;
       }
     case SYMBOL_LOCALIZED:
       blv = SYMBOL_BLV (sym);
@@ -1680,9 +1680,9 @@ From now on the default value will apply in this buffer.  Return VARIABLE.  */)
     Lisp_Object buf; XSETBUFFER (buf, current_buffer);
     if (EQ (buf, blv->where))
       {
-        set_blv_where (blv, Qnil);
-        blv->found = 0;
-        find_symbol_value (variable);
+	set_blv_where (blv, Qnil);
+	blv->found = 0;
+	find_symbol_value (variable);
       }
   }
 
@@ -1710,33 +1710,33 @@ BUFFER defaults to the current buffer.  */)
     case SYMBOL_PLAINVAL: return Qnil;
     case SYMBOL_LOCALIZED:
       {
-        Lisp_Object tail, elt, tmp;
-        struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-        XSETBUFFER (tmp, buf);
-        XSETSYMBOL (variable, sym); /* Update in case of aliasing.  */
+	Lisp_Object tail, elt, tmp;
+	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
+	XSETBUFFER (tmp, buf);
+	XSETSYMBOL (variable, sym); /* Update in case of aliasing.  */
 
-        if (EQ (blv->where, tmp)) /* The binding is already loaded.  */
-          return blv_found (blv) ? Qt : Qnil;
-        else
-          for (tail = BVAR (buf, local_var_alist); CONSP (tail); tail = XCDR (tail))
-            {
-              elt = XCAR (tail);
-              if (EQ (variable, XCAR (elt)))
-                return Qt;
-            }
-        return Qnil;
+	if (EQ (blv->where, tmp)) /* The binding is already loaded.  */
+	  return blv_found (blv) ? Qt : Qnil;
+	else
+	  for (tail = BVAR (buf, local_var_alist); CONSP (tail); tail = XCDR (tail))
+	    {
+	      elt = XCAR (tail);
+	      if (EQ (variable, XCAR (elt)))
+		return Qt;
+	    }
+	return Qnil;
       }
     case SYMBOL_FORWARDED:
       {
-        union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
-        if (BUFFER_OBJFWDP (valcontents))
-          {
-            int offset = XBUFFER_OBJFWD (valcontents)->offset;
-            int idx = PER_BUFFER_IDX (offset);
-            if (idx == -1 || PER_BUFFER_VALUE_P (buf, idx))
-              return Qt;
-          }
-        return Qnil;
+	union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
+	if (BUFFER_OBJFWDP (valcontents))
+	  {
+	    int offset = XBUFFER_OBJFWD (valcontents)->offset;
+	    int idx = PER_BUFFER_IDX (offset);
+	    if (idx == -1 || PER_BUFFER_VALUE_P (buf, idx))
+	      return Qt;
+	  }
+	return Qnil;
       }
     default: emacs_abort ();
     }
@@ -1764,11 +1764,11 @@ value in BUFFER, or if VARIABLE is automatically buffer-local (see
     case SYMBOL_PLAINVAL: return Qnil;
     case SYMBOL_LOCALIZED:
       {
-        struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-        if (blv->local_if_set)
-          return Qt;
-        XSETSYMBOL (variable, sym); /* Update in case of aliasing.  */
-        return Flocal_variable_p (variable, buffer);
+	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
+	if (blv->local_if_set)
+	  return Qt;
+	XSETSYMBOL (variable, sym); /* Update in case of aliasing.  */
+	return Flocal_variable_p (variable, buffer);
       }
     case SYMBOL_FORWARDED:
       /* All BUFFER_OBJFWD slots become local if they are set.  */
@@ -1799,23 +1799,23 @@ If the current binding is global (the default), the value is nil.  */)
     case SYMBOL_PLAINVAL: return Qnil;
     case SYMBOL_FORWARDED:
       {
-        union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
-        if (KBOARD_OBJFWDP (valcontents))
-          return Fframe_terminal (selected_frame);
-        else if (!BUFFER_OBJFWDP (valcontents))
-          return Qnil;
+	union Lisp_Fwd *valcontents = SYMBOL_FWD (sym);
+	if (KBOARD_OBJFWDP (valcontents))
+	  return Fframe_terminal (selected_frame);
+	else if (!BUFFER_OBJFWDP (valcontents))
+	  return Qnil;
       }
       /* FALLTHROUGH */
     case SYMBOL_LOCALIZED:
       /* For a local variable, record both the symbol and which
-         buffer's or frame's value we are saving.  */
+	 buffer's or frame's value we are saving.  */
       if (!NILP (Flocal_variable_p (variable, Qnil)))
-        return Fcurrent_buffer ();
+	return Fcurrent_buffer ();
       else if (sym->redirect == SYMBOL_LOCALIZED
-               && blv_found (SYMBOL_BLV (sym)))
-        return SYMBOL_BLV (sym)->where;
+	       && blv_found (SYMBOL_BLV (sym)))
+	return SYMBOL_BLV (sym)->where;
       else
-        return Qnil;
+	return Qnil;
     default: emacs_abort ();
     }
 }
@@ -1881,16 +1881,16 @@ indirect_function (register Lisp_Object object)
   for (;;)
     {
       if (!SYMBOLP (hare) || NILP (hare))
-        break;
+	break;
       hare = XSYMBOL (hare)->function;
       if (!SYMBOLP (hare) || NILP (hare))
-        break;
+	break;
       hare = XSYMBOL (hare)->function;
 
       tortoise = XSYMBOL (tortoise)->function;
 
       if (EQ (hare, tortoise))
-        xsignal1 (Qcyclic_function_indirection, object);
+	xsignal1 (Qcyclic_function_indirection, object);
     }
 
   return hare;
@@ -1935,9 +1935,9 @@ or a byte-code object.  IDX starts at 0.  */)
       ptrdiff_t idxval_byte;
 
       if (idxval < 0 || idxval >= SCHARS (array))
-        args_out_of_range (array, idx);
+	args_out_of_range (array, idx);
       if (! STRING_MULTIBYTE (array))
-        return make_number ((unsigned char) SREF (array, idxval));
+	return make_number ((unsigned char) SREF (array, idxval));
       idxval_byte = string_char_to_byte (array, idxval);
 
       c = STRING_CHAR (SDATA (array) + idxval_byte);
@@ -1946,7 +1946,7 @@ or a byte-code object.  IDX starts at 0.  */)
   else if (BOOL_VECTOR_P (array))
     {
       if (idxval < 0 || idxval >= bool_vector_size (array))
-        args_out_of_range (array, idx);
+	args_out_of_range (array, idx);
       return bool_vector_ref (array, idxval);
     }
   else if (CHAR_TABLE_P (array))
@@ -1958,14 +1958,14 @@ or a byte-code object.  IDX starts at 0.  */)
     {
       ptrdiff_t size = 0;
       if (VECTORP (array))
-        size = ASIZE (array);
+	size = ASIZE (array);
       else if (COMPILEDP (array))
-        size = ASIZE (array) & PSEUDOVECTOR_SIZE_MASK;
+	size = ASIZE (array) & PSEUDOVECTOR_SIZE_MASK;
       else
-        wrong_type_argument (Qarrayp, array);
+	wrong_type_argument (Qarrayp, array);
 
       if (idxval < 0 || idxval >= size)
-        args_out_of_range (array, idx);
+	args_out_of_range (array, idx);
       return AREF (array, idxval);
     }
 }
@@ -1986,13 +1986,13 @@ bool-vector.  IDX starts at 0.  */)
     {
       CHECK_IMPURE (array, XVECTOR (array));
       if (idxval < 0 || idxval >= ASIZE (array))
-        args_out_of_range (array, idx);
+	args_out_of_range (array, idx);
       ASET (array, idxval, newelt);
     }
   else if (BOOL_VECTOR_P (array))
     {
       if (idxval < 0 || idxval >= bool_vector_size (array))
-        args_out_of_range (array, idx);
+	args_out_of_range (array, idx);
       bool_vector_set (array, idxval, !NILP (newelt));
     }
   else if (CHAR_TABLE_P (array))
@@ -2006,57 +2006,57 @@ bool-vector.  IDX starts at 0.  */)
 
       CHECK_IMPURE (array, XSTRING (array));
       if (idxval < 0 || idxval >= SCHARS (array))
-        args_out_of_range (array, idx);
+	args_out_of_range (array, idx);
       CHECK_CHARACTER (newelt);
       c = XFASTINT (newelt);
 
       if (STRING_MULTIBYTE (array))
-        {
-          ptrdiff_t idxval_byte, nbytes;
-          int prev_bytes, new_bytes;
-          unsigned char workbuf[MAX_MULTIBYTE_LENGTH], *p0 = workbuf, *p1;
+	{
+	  ptrdiff_t idxval_byte, nbytes;
+	  int prev_bytes, new_bytes;
+	  unsigned char workbuf[MAX_MULTIBYTE_LENGTH], *p0 = workbuf, *p1;
 
-          nbytes = SBYTES (array);
-          idxval_byte = string_char_to_byte (array, idxval);
-          p1 = SDATA (array) + idxval_byte;
-          prev_bytes = BYTES_BY_CHAR_HEAD (*p1);
-          new_bytes = CHAR_STRING (c, p0);
-          if (prev_bytes != new_bytes)
-            {
-              /* We must relocate the string data.  */
-              ptrdiff_t nchars = SCHARS (array);
-              USE_SAFE_ALLOCA;
-              unsigned char *str = SAFE_ALLOCA (nbytes);
+	  nbytes = SBYTES (array);
+	  idxval_byte = string_char_to_byte (array, idxval);
+	  p1 = SDATA (array) + idxval_byte;
+	  prev_bytes = BYTES_BY_CHAR_HEAD (*p1);
+	  new_bytes = CHAR_STRING (c, p0);
+	  if (prev_bytes != new_bytes)
+	    {
+	      /* We must relocate the string data.  */
+	      ptrdiff_t nchars = SCHARS (array);
+	      USE_SAFE_ALLOCA;
+	      unsigned char *str = SAFE_ALLOCA (nbytes);
 
-              memcpy (str, SDATA (array), nbytes);
-              allocate_string_data (XSTRING (array), nchars,
-                                    nbytes + new_bytes - prev_bytes);
-              memcpy (SDATA (array), str, idxval_byte);
-              p1 = SDATA (array) + idxval_byte;
-              memcpy (p1 + new_bytes, str + idxval_byte + prev_bytes,
-                      nbytes - (idxval_byte + prev_bytes));
-              SAFE_FREE ();
-              clear_string_char_byte_cache ();
-            }
-          while (new_bytes--)
-            *p1++ = *p0++;
-        }
+	      memcpy (str, SDATA (array), nbytes);
+	      allocate_string_data (XSTRING (array), nchars,
+				    nbytes + new_bytes - prev_bytes);
+	      memcpy (SDATA (array), str, idxval_byte);
+	      p1 = SDATA (array) + idxval_byte;
+	      memcpy (p1 + new_bytes, str + idxval_byte + prev_bytes,
+		      nbytes - (idxval_byte + prev_bytes));
+	      SAFE_FREE ();
+	      clear_string_char_byte_cache ();
+	    }
+	  while (new_bytes--)
+	    *p1++ = *p0++;
+	}
       else
-        {
-          if (! SINGLE_BYTE_CHAR_P (c))
-            {
-              ptrdiff_t i;
+	{
+	  if (! SINGLE_BYTE_CHAR_P (c))
+	    {
+	      ptrdiff_t i;
 
-              for (i = SBYTES (array) - 1; i >= 0; i--)
-                if (SREF (array, i) >= 0x80)
-                  args_out_of_range (array, newelt);
-              /* ARRAY is an ASCII string.  Convert it to a multibyte
-                 string, and try `aset' again.  */
-              STRING_SET_MULTIBYTE (array);
-              return Faset (array, idx, newelt);
-            }
-          SSET (array, idxval, c);
-        }
+	      for (i = SBYTES (array) - 1; i >= 0; i--)
+		if (SREF (array, i) >= 0x80)
+		  args_out_of_range (array, newelt);
+	      /* ARRAY is an ASCII string.  Convert it to a multibyte
+		 string, and try `aset' again.  */
+	      STRING_SET_MULTIBYTE (array);
+	      return Faset (array, idx, newelt);
+	    }
+	  SSET (array, idxval, c);
+	}
     }
 
   return newelt;
@@ -2084,32 +2084,32 @@ arithcompare (Lisp_Object num1, Lisp_Object num2, enum Arith_Comparison comparis
     {
     case ARITH_EQUAL:
       if (floatp ? f1 == f2 : XINT (num1) == XINT (num2))
-        return Qt;
+	return Qt;
       return Qnil;
 
     case ARITH_NOTEQUAL:
       if (floatp ? f1 != f2 : XINT (num1) != XINT (num2))
-        return Qt;
+	return Qt;
       return Qnil;
 
     case ARITH_LESS:
       if (floatp ? f1 < f2 : XINT (num1) < XINT (num2))
-        return Qt;
+	return Qt;
       return Qnil;
 
     case ARITH_LESS_OR_EQUAL:
       if (floatp ? f1 <= f2 : XINT (num1) <= XINT (num2))
-        return Qt;
+	return Qt;
       return Qnil;
 
     case ARITH_GRTR:
       if (floatp ? f1 > f2 : XINT (num1) > XINT (num2))
-        return Qt;
+	return Qt;
       return Qnil;
 
     case ARITH_GRTR_OR_EQUAL:
       if (floatp ? f1 >= f2 : XINT (num1) >= XINT (num2))
-        return Qt;
+	return Qt;
       return Qnil;
 
     default:
@@ -2119,13 +2119,13 @@ arithcompare (Lisp_Object num1, Lisp_Object num2, enum Arith_Comparison comparis
 
 static Lisp_Object
 arithcompare_driver (ptrdiff_t nargs, Lisp_Object *args,
-                     enum Arith_Comparison comparison)
+		     enum Arith_Comparison comparison)
 {
   ptrdiff_t argnum;
   for (argnum = 1; argnum < nargs; ++argnum)
     {
       if (EQ (Qnil, arithcompare (args[argnum - 1], args[argnum], comparison)))
-        return Qnil;
+	return Qnil;
     }
   return Qt;
 }
@@ -2186,10 +2186,10 @@ DEFUN ("/=", Fneq, Sneq, 2, 2, 0,
        && FIXNUM_OVERFLOW_P ((i) >> 16))			    \
     ? Fcons (make_number ((i) >> 16), make_number ((i) & 0xffff))   \
     : ! (FIXNUM_OVERFLOW_P ((extremum) >> 16 >> 24)		    \
-         && FIXNUM_OVERFLOW_P ((i) >> 16 >> 24))		    \
+	 && FIXNUM_OVERFLOW_P ((i) >> 16 >> 24))		    \
     ? Fcons (make_number ((i) >> 16 >> 24),			    \
-             Fcons (make_number ((i) >> 16 & 0xffffff),		    \
-                    make_number ((i) & 0xffff)))		    \
+	     Fcons (make_number ((i) >> 16 & 0xffffff),		    \
+		    make_number ((i) & 0xffff)))		    \
     : make_float (i)))
 
 Lisp_Object
@@ -2221,35 +2221,35 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
     {
       double d = XFLOAT_DATA (c);
       if (0 <= d
-          && d < (max == UINTMAX_MAX ? (double) UINTMAX_MAX + 1 : max + 1))
-        {
-          val = d;
-          valid = 1;
-        }
+	  && d < (max == UINTMAX_MAX ? (double) UINTMAX_MAX + 1 : max + 1))
+	{
+	  val = d;
+	  valid = 1;
+	}
     }
   else if (CONSP (c) && NATNUMP (XCAR (c)))
     {
       uintmax_t top = XFASTINT (XCAR (c));
       Lisp_Object rest = XCDR (c);
       if (top <= UINTMAX_MAX >> 24 >> 16
-          && CONSP (rest)
-          && NATNUMP (XCAR (rest)) && XFASTINT (XCAR (rest)) < 1 << 24
-          && NATNUMP (XCDR (rest)) && XFASTINT (XCDR (rest)) < 1 << 16)
-        {
-          uintmax_t mid = XFASTINT (XCAR (rest));
-          val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
-          valid = 1;
-        }
+	  && CONSP (rest)
+	  && NATNUMP (XCAR (rest)) && XFASTINT (XCAR (rest)) < 1 << 24
+	  && NATNUMP (XCDR (rest)) && XFASTINT (XCDR (rest)) < 1 << 16)
+	{
+	  uintmax_t mid = XFASTINT (XCAR (rest));
+	  val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
+	  valid = 1;
+	}
       else if (top <= UINTMAX_MAX >> 16)
-        {
-          if (CONSP (rest))
-            rest = XCAR (rest);
-          if (NATNUMP (rest) && XFASTINT (rest) < 1 << 16)
-            {
-              val = top << 16 | XFASTINT (rest);
-              valid = 1;
-            }
-        }
+	{
+	  if (CONSP (rest))
+	    rest = XCAR (rest);
+	  if (NATNUMP (rest) && XFASTINT (rest) < 1 << 16)
+	    {
+	      val = top << 16 | XFASTINT (rest);
+	      valid = 1;
+	    }
+	}
     }
 
   if (! (valid && val <= max))
@@ -2274,35 +2274,35 @@ cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
     {
       double d = XFLOAT_DATA (c);
       if (min <= d
-          && d < (max == INTMAX_MAX ? (double) INTMAX_MAX + 1 : max + 1))
-        {
-          val = d;
-          valid = 1;
-        }
+	  && d < (max == INTMAX_MAX ? (double) INTMAX_MAX + 1 : max + 1))
+	{
+	  val = d;
+	  valid = 1;
+	}
     }
   else if (CONSP (c) && INTEGERP (XCAR (c)))
     {
       intmax_t top = XINT (XCAR (c));
       Lisp_Object rest = XCDR (c);
       if (INTMAX_MIN >> 24 >> 16 <= top && top <= INTMAX_MAX >> 24 >> 16
-          && CONSP (rest)
-          && NATNUMP (XCAR (rest)) && XFASTINT (XCAR (rest)) < 1 << 24
-          && NATNUMP (XCDR (rest)) && XFASTINT (XCDR (rest)) < 1 << 16)
-        {
-          intmax_t mid = XFASTINT (XCAR (rest));
-          val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
-          valid = 1;
-        }
+	  && CONSP (rest)
+	  && NATNUMP (XCAR (rest)) && XFASTINT (XCAR (rest)) < 1 << 24
+	  && NATNUMP (XCDR (rest)) && XFASTINT (XCDR (rest)) < 1 << 16)
+	{
+	  intmax_t mid = XFASTINT (XCAR (rest));
+	  val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
+	  valid = 1;
+	}
       else if (INTMAX_MIN >> 16 <= top && top <= INTMAX_MAX >> 16)
-        {
-          if (CONSP (rest))
-            rest = XCAR (rest);
-          if (NATNUMP (rest) && XFASTINT (rest) < 1 << 16)
-            {
-              val = top << 16 | XFASTINT (rest);
-              valid = 1;
-            }
-        }
+	{
+	  if (CONSP (rest))
+	    rest = XCAR (rest);
+	  if (NATNUMP (rest) && XFASTINT (rest) < 1 << 16)
+	    {
+	      val = top << 16 | XFASTINT (rest);
+	      valid = 1;
+	    }
+	}
     }
 
   if (! (valid && min <= val && val <= max))
@@ -2351,7 +2351,7 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
     {
       CHECK_NUMBER (base);
       if (! (2 <= XINT (base) && XINT (base) <= 16))
-        xsignal1 (Qargs_out_of_range, base);
+	xsignal1 (Qargs_out_of_range, base);
       b = XINT (base);
     }
 
@@ -2377,14 +2377,14 @@ enum arithop
   };
 
 Lisp_Object float_arith_driver (double, ptrdiff_t, enum arithop,
-                                       ptrdiff_t, Lisp_Object *);
+				       ptrdiff_t, Lisp_Object *);
 
 #undef isnan
 #define isnan(x) ((x) != (x))
 
 Lisp_Object
 float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
-                    ptrdiff_t nargs, Lisp_Object *args)
+		    ptrdiff_t nargs, Lisp_Object *args)
 {
   register Lisp_Object val;
   double next;
@@ -2395,48 +2395,48 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
       CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
 
       if (FLOATP (val))
-        {
-          next = XFLOAT_DATA (val);
-        }
+	{
+	  next = XFLOAT_DATA (val);
+	}
       else
-        {
-          args[argnum] = val;    /* runs into a compiler bug. */
-          next = XINT (args[argnum]);
-        }
+	{
+	  args[argnum] = val;    /* runs into a compiler bug. */
+	  next = XINT (args[argnum]);
+	}
       switch (code)
-        {
-        case Aadd:
-          accum += next;
-          break;
-        case Asub:
-          accum = argnum ? accum - next : nargs == 1 ? - next : next;
-          break;
-        case Amult:
-          accum *= next;
-          break;
-        case Adiv:
-          if (! (argnum || nargs == 1))
-            accum = next;
-          else
-            {
-              if (! IEEE_FLOATING_POINT && next == 0)
-                xsignal0 (Qarith_error);
-              accum /= next;
-            }
-          break;
-        case Alogand:
-        case Alogior:
-        case Alogxor:
-          wrong_type_argument (Qinteger_or_marker_p, val);
-        case Amax:
-          if (!argnum || isnan (next) || next > accum)
-            accum = next;
-          break;
-        case Amin:
-          if (!argnum || isnan (next) || next < accum)
-            accum = next;
-          break;
-        }
+	{
+	case Aadd:
+	  accum += next;
+	  break;
+	case Asub:
+	  accum = argnum ? accum - next : nargs == 1 ? - next : next;
+	  break;
+	case Amult:
+	  accum *= next;
+	  break;
+	case Adiv:
+	  if (! (argnum || nargs == 1))
+	    accum = next;
+	  else
+	    {
+	      if (! IEEE_FLOATING_POINT && next == 0)
+		xsignal0 (Qarith_error);
+	      accum /= next;
+	    }
+	  break;
+	case Alogand:
+	case Alogior:
+	case Alogxor:
+	  wrong_type_argument (Qinteger_or_marker_p, val);
+	case Amax:
+	  if (!argnum || isnan (next) || next > accum)
+	    accum = next;
+	  break;
+	case Amin:
+	  if (!argnum || isnan (next) || next < accum)
+	    accum = next;
+	  break;
+	}
     }
 
   return make_float (accum);
@@ -2475,7 +2475,7 @@ ash_lsh_impl (register Lisp_Object value, Lisp_Object count, bool lsh)
     XSETINT (val, lsh ? 0 : XINT (value) < 0 ? -1 : 0);
   else
     XSETINT (val, lsh ? XUINT (value) >> -XINT (count) : \
-                        XINT (value) >> -XINT (count));
+			XINT (value) >> -XINT (count));
   return val;
 }
 
@@ -2558,16 +2558,16 @@ bool_vector_spare_mask (EMACS_INT nr_bits)
 }
 
 enum bool_vector_op { bool_vector_exclusive_or,
-                      bool_vector_union,
-                      bool_vector_intersection,
-                      bool_vector_set_difference,
-                      bool_vector_subsetp };
+		      bool_vector_union,
+		      bool_vector_intersection,
+		      bool_vector_set_difference,
+		      bool_vector_subsetp };
 
 static Lisp_Object
 bool_vector_binop_driver (Lisp_Object a,
-                          Lisp_Object b,
-                          Lisp_Object dest,
-                          enum bool_vector_op op)
+			  Lisp_Object b,
+			  Lisp_Object dest,
+			  enum bool_vector_op op)
 {
   EMACS_INT nr_bits;
   bits_word *adata, *bdata, *destdata;
@@ -2595,40 +2595,40 @@ bool_vector_binop_driver (Lisp_Object a,
       CHECK_BOOL_VECTOR (dest);
       destdata = bool_vector_data (dest);
       if (bool_vector_size (dest) != nr_bits)
-        wrong_length_argument (a, b, dest);
+	wrong_length_argument (a, b, dest);
 
       switch (op)
-        {
-        case bool_vector_exclusive_or:
-          for (; i < nr_words; i++)
-            if (destdata[i] != (adata[i] ^ bdata[i]))
-              goto set_dest;
-          break;
+	{
+	case bool_vector_exclusive_or:
+	  for (; i < nr_words; i++)
+	    if (destdata[i] != (adata[i] ^ bdata[i]))
+	      goto set_dest;
+	  break;
 
-        case bool_vector_subsetp:
-          for (; i < nr_words; i++)
-            if (adata[i] &~ bdata[i])
-              return Qnil;
-          return Qt;
+	case bool_vector_subsetp:
+	  for (; i < nr_words; i++)
+	    if (adata[i] &~ bdata[i])
+	      return Qnil;
+	  return Qt;
 
-        case bool_vector_union:
-          for (; i < nr_words; i++)
-            if (destdata[i] != (adata[i] | bdata[i]))
-              goto set_dest;
-          break;
+	case bool_vector_union:
+	  for (; i < nr_words; i++)
+	    if (destdata[i] != (adata[i] | bdata[i]))
+	      goto set_dest;
+	  break;
 
-        case bool_vector_intersection:
-          for (; i < nr_words; i++)
-            if (destdata[i] != (adata[i] & bdata[i]))
-              goto set_dest;
-          break;
+	case bool_vector_intersection:
+	  for (; i < nr_words; i++)
+	    if (destdata[i] != (adata[i] & bdata[i]))
+	      goto set_dest;
+	  break;
 
-        case bool_vector_set_difference:
-          for (; i < nr_words; i++)
-            if (destdata[i] != (adata[i] &~ bdata[i]))
-              goto set_dest;
-          break;
-        }
+	case bool_vector_set_difference:
+	  for (; i < nr_words; i++)
+	    if (destdata[i] != (adata[i] &~ bdata[i]))
+	      goto set_dest;
+	  break;
+	}
 
       return Qnil;
     }
@@ -2638,22 +2638,22 @@ bool_vector_binop_driver (Lisp_Object a,
     {
     case bool_vector_exclusive_or:
       for (; i < nr_words; i++)
-        destdata[i] = adata[i] ^ bdata[i];
+	destdata[i] = adata[i] ^ bdata[i];
       break;
 
     case bool_vector_union:
       for (; i < nr_words; i++)
-        destdata[i] = adata[i] | bdata[i];
+	destdata[i] = adata[i] | bdata[i];
       break;
 
     case bool_vector_intersection:
       for (; i < nr_words; i++)
-        destdata[i] = adata[i] & bdata[i];
+	destdata[i] = adata[i] & bdata[i];
       break;
 
     case bool_vector_set_difference:
       for (; i < nr_words; i++)
-        destdata[i] = adata[i] &~ bdata[i];
+	destdata[i] = adata[i] &~ bdata[i];
       break;
 
     default:
@@ -2680,9 +2680,9 @@ bits_word_to_host_endian (bits_word val)
     bits_word r = 0;
     for (i = 0; i < sizeof val; i++)
       {
-        r = ((r << 1 << (CHAR_BIT - 1))
-             | (val & ((1u << 1 << (CHAR_BIT - 1)) - 1)));
-        val = val >> 1 >> (CHAR_BIT - 1);
+	r = ((r << 1 << (CHAR_BIT - 1))
+	     | (val & ((1u << 1 << (CHAR_BIT - 1)) - 1)));
+	val = val >> 1 >> (CHAR_BIT - 1);
       }
     return r;
   }
@@ -2763,7 +2763,7 @@ Return the destination vector.  */)
     {
       CHECK_BOOL_VECTOR (b);
       if (bool_vector_size (b) != nr_bits)
-        wrong_length_argument (a, b, Qnil);
+	wrong_length_argument (a, b, Qnil);
     }
 
   bdata = bool_vector_data (b);
@@ -2854,7 +2854,7 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
       count = rust_count_trailing_zero_bits (mword);
       pos++;
       if (count + offset < BITS_PER_BITS_WORD)
-        return make_number (count);
+	return make_number (count);
     }
 
   /* Scan whole words until we either reach the end of the vector or
@@ -2868,7 +2868,7 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
   if (pos < nr_words)
     {
       /* If we stopped because of a mismatch, see how many bits match
-         in the current mword.  */
+	 in the current mword.  */
       mword = bits_word_to_host_endian (adata[pos]);
       mword ^= twiddle;
       count += rust_count_trailing_zero_bits (mword);
@@ -2876,8 +2876,8 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
   else if (nr_bits % BITS_PER_BITS_WORD != 0)
     {
       /* If we hit the end, we might have overshot our count.  Reduce
-         the total by the number of spare bits at the end of the
-         vector.  */
+	 the total by the number of spare bits at the end of the
+	 vector.  */
       count -= BITS_PER_BITS_WORD - nr_bits % BITS_PER_BITS_WORD;
     }
 
@@ -2965,9 +2965,9 @@ syms_of_data (void)
      right.  */
 
   Fput (Qerror, Qerror_conditions,
-        error_tail);
+	error_tail);
   Fput (Qerror, Qerror_message,
-        build_pure_c_string ("error"));
+	build_pure_c_string ("error"));
 
 #define PUT_ERROR(sym, tail, msg)			\
   Fput (sym, Qerror_conditions, pure_cons (sym, tail)); \
@@ -2980,22 +2980,22 @@ syms_of_data (void)
   PUT_ERROR (Qwrong_type_argument, error_tail, "Wrong type argument");
   PUT_ERROR (Qargs_out_of_range, error_tail, "Args out of range");
   PUT_ERROR (Qvoid_function, error_tail,
-             "Symbol's function definition is void");
+	     "Symbol's function definition is void");
   PUT_ERROR (Qcyclic_function_indirection, error_tail,
-             "Symbol's chain of function indirections contains a loop");
+	     "Symbol's chain of function indirections contains a loop");
   PUT_ERROR (Qcyclic_variable_indirection, error_tail,
-             "Symbol's chain of variable indirections contains a loop");
+	     "Symbol's chain of variable indirections contains a loop");
   DEFSYM (Qcircular_list, "circular-list");
   PUT_ERROR (Qcircular_list, error_tail, "List contains a loop");
   PUT_ERROR (Qvoid_variable, error_tail, "Symbol's value as variable is void");
   PUT_ERROR (Qsetting_constant, error_tail,
-             "Attempt to set a constant symbol");
+	     "Attempt to set a constant symbol");
   PUT_ERROR (Qtrapping_constant, error_tail,
-             "Attempt to trap writes to a constant symbol");
+	     "Attempt to trap writes to a constant symbol");
   PUT_ERROR (Qinvalid_read_syntax, error_tail, "Invalid read syntax");
   PUT_ERROR (Qinvalid_function, error_tail, "Invalid function");
   PUT_ERROR (Qwrong_number_of_arguments, error_tail,
-             "Wrong number of arguments");
+	     "Wrong number of arguments");
   PUT_ERROR (Qno_catch, error_tail, "No catch for tag");
   PUT_ERROR (Qend_of_file, error_tail, "End of file during parsing");
 
@@ -3007,7 +3007,7 @@ syms_of_data (void)
   PUT_ERROR (Qend_of_buffer, error_tail, "End of buffer");
   PUT_ERROR (Qbuffer_read_only, error_tail, "Buffer is read-only");
   PUT_ERROR (Qtext_read_only, pure_cons (Qbuffer_read_only, error_tail),
-             "Text is read-only");
+	     "Text is read-only");
 
   DEFSYM (Qrange_error, "range-error");
   DEFSYM (Qdomain_error, "domain-error");
@@ -3020,12 +3020,12 @@ syms_of_data (void)
   PUT_ERROR (Qrange_error, arith_tail, "Arithmetic range error");
 
   PUT_ERROR (Qsingularity_error, Fcons (Qdomain_error, arith_tail),
-             "Arithmetic singularity error");
+	     "Arithmetic singularity error");
 
   PUT_ERROR (Qoverflow_error, Fcons (Qdomain_error, arith_tail),
-             "Arithmetic overflow error");
+	     "Arithmetic overflow error");
   PUT_ERROR (Qunderflow_error, Fcons (Qdomain_error, arith_tail),
-             "Arithmetic underflow error");
+	     "Arithmetic underflow error");
 
   /* Types that type-of returns.  */
   DEFSYM (Qinteger, "integer");
@@ -3129,12 +3129,12 @@ syms_of_data (void)
   set_symbol_function (Qwholenump, XSYMBOL (Qnatnump)->function);
 
   DEFVAR_LISP ("most-positive-fixnum", Vmost_positive_fixnum,
-               doc: /* The largest value that is representable in a Lisp integer.  */);
+	       doc: /* The largest value that is representable in a Lisp integer.  */);
   Vmost_positive_fixnum = make_number (MOST_POSITIVE_FIXNUM);
   make_symbol_constant (intern_c_string ("most-positive-fixnum"));
 
   DEFVAR_LISP ("most-negative-fixnum", Vmost_negative_fixnum,
-               doc: /* The smallest value that is representable in a Lisp integer.  */);
+	       doc: /* The smallest value that is representable in a Lisp integer.  */);
   Vmost_negative_fixnum = make_number (MOST_NEGATIVE_FIXNUM);
   make_symbol_constant (intern_c_string ("most-negative-fixnum"));
 
