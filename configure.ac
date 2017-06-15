@@ -891,6 +891,7 @@ AC_CACHE_CHECK([whether the compiler is clang], [emacs_cv_clang],
      [emacs_cv_clang=yes],
      [emacs_cv_clang=no])])
 
+WERROR_CFLAGS=
 # When compiling with GCC, prefer -isystem to -I when including system
 # include files, to avoid generating useless diagnostics for the files.
 AS_IF([test $gl_gcc_warnings = no],
@@ -900,7 +901,6 @@ AS_IF([test $gl_gcc_warnings = no],
    [
      # Turn off some warnings if supported.
      gl_WARN_ADD([-Wno-switch])
-     gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
      gl_WARN_ADD([-Wno-pointer-sign])
      gl_WARN_ADD([-Wno-string-plus-int])
      gl_WARN_ADD([-Wno-unknown-attributes])
@@ -918,8 +918,7 @@ AS_IF([test $gl_gcc_warnings = no],
        ;;
   esac
   AS_IF([test $gl_gcc_warnings = yes],
-    [gl_WARN_ADD([-Werror], [WERROR_CFLAGS])])
-  AC_SUBST([WERROR_CFLAGS])
+    [WERROR_CFLAGS=-Werror])
 
   nw="$nw -Wduplicated-branches"    # Too many false alarms
   nw="$nw -Wformat-overflow=2"      # False alarms due to GCC bug 80776
@@ -961,7 +960,7 @@ AS_IF([test $gl_gcc_warnings = no],
   nw="$nw -Wtype-limits"
   nw="$nw -Wunused-parameter"
 
-  if test $emacs_cv_clang = yes; then
+  if test "$emacs_cv_clang" = yes; then
     nw="$nw -Wcast-align"
     nw="$nw -Wdouble-promotion"
     nw="$nw -Wmissing-braces"
@@ -984,11 +983,9 @@ AS_IF([test $gl_gcc_warnings = no],
   gl_WARN_ADD([-Wno-unused-parameter]) # Too many warnings for now
   gl_WARN_ADD([-Wno-format-nonliteral])
 
-  # More things that clang is unduly picky about.
-  if test $emacs_cv_clang = yes; then
+  # clang is unduly picky about braces.
+  if test "$emacs_cv_clang" = yes; then
     gl_WARN_ADD([-Wno-missing-braces])
-    gl_WARN_ADD([-Wno-tautological-compare])
-    gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
   fi
 
   # This causes too much noise in the MinGW build
@@ -1006,15 +1003,22 @@ AS_IF([test $gl_gcc_warnings = no],
    # define _FORTIFY_SOURCE 2
    #endif
   ])
-
-  # We use a slightly smaller set of warning options for lib/.
-  # Remove the following and save the result in GNULIB_WARN_CFLAGS.
-  nw=
-  nw="$nw -Wunused-macros"
-
-  gl_MANYWARN_COMPLEMENT([GNULIB_WARN_CFLAGS], [$WARN_CFLAGS], [$nw])
-  AC_SUBST([GNULIB_WARN_CFLAGS])
  ])
+
+# clang is unduly picky about these regardless of whether
+# --enable-gcc-warnings is specified.
+if test "$emacs_cv_clang" = yes; then
+  gl_WARN_ADD([-Wno-tautological-compare])
+  gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
+fi
+
+# Use a slightly smaller set of warning options for lib/.
+nw=
+nw="$nw -Wunused-macros"
+gl_MANYWARN_COMPLEMENT([GNULIB_WARN_CFLAGS], [$WARN_CFLAGS], [$nw])
+
+AC_SUBST([WERROR_CFLAGS])
+AC_SUBST([GNULIB_WARN_CFLAGS])
 
 edit_cflags="
   s,///*,/,g
@@ -1033,7 +1037,7 @@ AC_ARG_ENABLE(link-time-optimization,
 		 recommended for typical use.])],
 if test "${enableval}" != "no"; then
    ac_lto_supported=no
-   if test $emacs_cv_clang = yes; then
+   if test "$emacs_cv_clang" = yes; then
       AC_MSG_CHECKING([whether link-time optimization is supported by clang])
       GOLD_PLUGIN=`$CC -print-file-name=LLVMgold.so 2>/dev/null`
       if test -x "$GOLD_PLUGIN"; then
@@ -1062,7 +1066,7 @@ if test "${enableval}" != "no"; then
    AC_MSG_RESULT([$ac_lto_supported])
    if test "$ac_lto_supported" = "yes"; then
       CFLAGS="$CFLAGS $LTO"
-      if test x$emacs_cv_clang = xyes; then
+      if test "$emacs_cv_clang" = yes; then
 	 AC_MSG_WARN([Please read INSTALL before using link-time optimization with clang])
 	 # WARNING: 'ar --plugin ...' doesn't work without
 	 # command, so plugin name is appended to ARFLAGS.
