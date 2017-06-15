@@ -97,6 +97,7 @@ being the result.")
      (cons
       t (ignore-errors
 	  (and
+           (not (eq system-type 'darwin))
 	   (file-remote-p tramp-test-temporary-file-directory)
 	   (file-directory-p tramp-test-temporary-file-directory)
 	   (file-writable-p tramp-test-temporary-file-directory))))))

@@ -359,9 +359,9 @@ extern void enlarge_buffer_text (struct buffer *, ptrdiff_t);
 /* Return character at byte position POS.  See the caveat WARNING for
    FETCH_MULTIBYTE_CHAR below.  */
 
-#define FETCH_CHAR(pos)				      	\
+#define FETCH_CHAR(pos)					\
   (!NILP (BVAR (current_buffer, enable_multibyte_characters))	\
-   ? FETCH_MULTIBYTE_CHAR ((pos))		      	\
+   ? FETCH_MULTIBYTE_CHAR ((pos))			\
    : FETCH_BYTE ((pos)))
 
 /* Return the byte at byte position N.  */
@@ -407,7 +407,7 @@ extern void enlarge_buffer_text (struct buffer *, ptrdiff_t);
 
 /* Return the character at byte position POS in buffer BUF.   */
 
-#define BUF_FETCH_CHAR(buf, pos)	      	\
+#define BUF_FETCH_CHAR(buf, pos)		\
   (!NILP (buf->enable_multibyte_characters)	\
    ? BUF_FETCH_MULTIBYTE_CHAR ((buf), (pos))    \
    : BUF_FETCH_BYTE ((buf), (pos)))

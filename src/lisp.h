@@ -108,7 +108,7 @@ enum { EMACS_INT_WIDTH = LLONG_WIDTH };
    of bool vectors.  This should not vary across implementations.  */
 enum {  BOOL_VECTOR_BITS_PER_CHAR =
 #define BOOL_VECTOR_BITS_PER_CHAR 8
-        BOOL_VECTOR_BITS_PER_CHAR
+	BOOL_VECTOR_BITS_PER_CHAR
 };
 
 /* An unsigned integer type representing a fixed-length bit sequence,
@@ -185,7 +185,7 @@ extern _Noreturn void die (const char *, const char *, int);
 extern bool suppress_checking EXTERNALLY_VISIBLE;
 
 # define eassert(cond)						\
-   (suppress_checking || (cond) 				\
+   (suppress_checking || (cond)					\
     ? (void) 0							\
     : die (# cond, __FILE__, __LINE__))
 # define eassume(cond)						\
@@ -758,9 +758,9 @@ struct vectorlike_header
     /* The only field contains various pieces of information:
        - The MSB (ARRAY_MARK_FLAG) holds the gcmarkbit.
        - The next bit (PSEUDOVECTOR_FLAG) indicates whether this is a plain
-         vector (0) or a pseudovector (1).
+	 vector (0) or a pseudovector (1).
        - If PSEUDOVECTOR_FLAG is 0, the rest holds the size (number
-         of slots) of the vector.
+	 of slots) of the vector.
        - If PSEUDOVECTOR_FLAG is 1, the rest is subdivided into three fields:
 	 - a) pseudovector subtype held in PVEC_TYPE_MASK field;
 	 - b) number of Lisp_Objects slots at the beginning of the object
@@ -1215,13 +1215,37 @@ CDR_SAFE (Lisp_Object c)
   return CONSP (c) ? XCDR (c) : Qnil;
 }
 
+/* Defined in Rust. */
 Lisp_Object Fsetcar(Lisp_Object, Lisp_Object);
 Lisp_Object Fsetcdr(Lisp_Object, Lisp_Object);
 Lisp_Object Fcar(Lisp_Object);
 Lisp_Object Fcdr(Lisp_Object);
+Lisp_Object Fcar_safe(Lisp_Object);
+Lisp_Object Fcdr_safe(Lisp_Object);
 Lisp_Object Flistp(Lisp_Object);
 Lisp_Object Fatom(Lisp_Object);
-
+Lisp_Object Fnthcdr(Lisp_Object, Lisp_Object);
+Lisp_Object Fnth(Lisp_Object, Lisp_Object);
+Lisp_Object Fmemq(Lisp_Object, Lisp_Object);
+Lisp_Object Fmember(Lisp_Object, Lisp_Object);
+Lisp_Object Fassq(Lisp_Object, Lisp_Object);
+Lisp_Object Fassoc(Lisp_Object, Lisp_Object);
+Lisp_Object Frassq(Lisp_Object, Lisp_Object);
+Lisp_Object Frassoc(Lisp_Object, Lisp_Object);
+Lisp_Object Fdelq(Lisp_Object, Lisp_Object);
+Lisp_Object Fplist_get(Lisp_Object, Lisp_Object);
+Lisp_Object Fplist_member(Lisp_Object, Lisp_Object);
+Lisp_Object Fplist_put(Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object Flist(ptrdiff_t, Lisp_Object *);
+Lisp_Object Fmake_list(Lisp_Object, Lisp_Object);
+Lisp_Object Flength(Lisp_Object);
+Lisp_Object Fequal(Lisp_Object, Lisp_Object);
+Lisp_Object Fequal_including_properties(Lisp_Object, Lisp_Object);
+Lisp_Object Fsymbolp(Lisp_Object);
+Lisp_Object Fstring_equal(Lisp_Object, Lisp_Object);
+Lisp_Object Fstring_as_multibyte(Lisp_Object);
+Lisp_Object Fstring_to_multibyte(Lisp_Object);
+Lisp_Object Fsort(Lisp_Object, Lisp_Object);
 /* In a string or vector, the sign bit of the `size' is the gc mark bit.  */
 
 struct GCALIGNED Lisp_String
@@ -1236,6 +1260,12 @@ INLINE bool
 STRINGP (Lisp_Object x)
 {
   return XTYPE (x) == Lisp_String;
+}
+
+INLINE void
+CHECK_STRING (Lisp_Object x)
+{
+  CHECK_TYPE (STRINGP (x), Qstringp, x);
 }
 
 INLINE struct Lisp_String *
@@ -2721,9 +2751,6 @@ INLINE void
   lisp_h_CHECK_NUMBER (x);
 }
 
-/* exported from rust code (lisp.rs) */
-void CHECK_STRING (Lisp_Object x);
-
 INLINE void
 CHECK_STRING_CAR (Lisp_Object x)
 {
@@ -3245,7 +3272,7 @@ enum Arith_Comparison {
   ARITH_GRTR_OR_EQUAL
 };
 extern Lisp_Object arithcompare (Lisp_Object num1, Lisp_Object num2,
-                                 enum Arith_Comparison comparison);
+				 enum Arith_Comparison comparison);
 
 /* Convert the integer I to an Emacs representation, either the integer
    itself, or a cons of two or three integers, or if all else fails a float.
@@ -3280,9 +3307,9 @@ enum Set_Internal_Bind {
   SET_INTERNAL_THREAD_SWITCH
 };
 extern void set_internal (Lisp_Object, Lisp_Object, Lisp_Object,
-                          enum Set_Internal_Bind);
+			  enum Set_Internal_Bind);
 extern void set_default_internal (Lisp_Object, Lisp_Object,
-                                  enum Set_Internal_Bind bindflag);
+				  enum Set_Internal_Bind bindflag);
 
 extern void syms_of_data (void);
 extern void swap_in_global_binding (struct Lisp_Symbol *);
@@ -3293,7 +3320,7 @@ extern void keys_of_cmds (void);
 
 /* Defined in coding.c.  */
 extern Lisp_Object detect_coding_system (const unsigned char *, ptrdiff_t,
-                                         ptrdiff_t, bool, bool, Lisp_Object);
+					 ptrdiff_t, bool, bool, Lisp_Object);
 extern void init_coding (void);
 extern void init_coding_once (void);
 extern void syms_of_coding (void);
@@ -3662,11 +3689,11 @@ extern void r_alloc_inhibit_buffer_relocation (int);
 /* Defined in chartab.c.  */
 extern Lisp_Object copy_char_table (Lisp_Object);
 extern Lisp_Object char_table_ref_and_range (Lisp_Object, int,
-                                             int *, int *);
+					     int *, int *);
 extern void char_table_set_range (Lisp_Object, int, int, Lisp_Object);
 extern void map_char_table (void (*) (Lisp_Object, Lisp_Object,
-                            Lisp_Object),
-                            Lisp_Object, Lisp_Object, Lisp_Object);
+			    Lisp_Object),
+			    Lisp_Object, Lisp_Object, Lisp_Object);
 extern void map_char_table_for_charset (void (*c_function) (Lisp_Object, Lisp_Object),
 					Lisp_Object, Lisp_Object,
 					Lisp_Object, struct charset *,
@@ -3682,7 +3709,7 @@ extern int print_level;
 extern void print_error_message (Lisp_Object, Lisp_Object, const char *,
 				 Lisp_Object);
 extern Lisp_Object internal_with_output_to_temp_buffer
-        (const char *, Lisp_Object (*) (Lisp_Object), Lisp_Object);
+	(const char *, Lisp_Object (*) (Lisp_Object), Lisp_Object);
 #define FLOAT_TO_STRING_BUFSIZE 350
 extern int float_to_string (char *, double);
 extern void init_print_once (void);
@@ -3714,10 +3741,10 @@ LOADHIST_ATTACH (Lisp_Object x)
     Vcurrent_load_list = Fcons (x, Vcurrent_load_list);
 }
 extern int openp (Lisp_Object, Lisp_Object, Lisp_Object,
-                  Lisp_Object *, Lisp_Object, bool);
+		  Lisp_Object *, Lisp_Object, bool);
 extern Lisp_Object string_to_number (char const *, int, bool);
 extern void map_obarray (Lisp_Object, void (*) (Lisp_Object, Lisp_Object),
-                         Lisp_Object);
+			 Lisp_Object);
 extern void dir_warning (const char *, Lisp_Object);
 extern void init_obarray (void);
 extern void init_lread (void);
@@ -3851,7 +3878,7 @@ extern void adjust_overlays_for_insert (ptrdiff_t, ptrdiff_t);
 extern void adjust_overlays_for_delete (ptrdiff_t, ptrdiff_t);
 extern void fix_start_end_in_overlays (ptrdiff_t, ptrdiff_t);
 extern void report_overlay_modification (Lisp_Object, Lisp_Object, bool,
-                                         Lisp_Object, Lisp_Object, Lisp_Object);
+					 Lisp_Object, Lisp_Object, Lisp_Object);
 extern bool overlay_touches_p (ptrdiff_t);
 extern Lisp_Object other_buffer_safely (Lisp_Object);
 extern Lisp_Object get_truename_buffer (Lisp_Object);
@@ -3871,7 +3898,7 @@ extern void unchain_marker (struct Lisp_Marker *marker);
 extern Lisp_Object set_marker_restricted (Lisp_Object, Lisp_Object, Lisp_Object);
 extern Lisp_Object set_marker_both (Lisp_Object, Lisp_Object, ptrdiff_t, ptrdiff_t);
 extern Lisp_Object set_marker_restricted_both (Lisp_Object, Lisp_Object,
-                                               ptrdiff_t, ptrdiff_t);
+					       ptrdiff_t, ptrdiff_t);
 extern Lisp_Object build_marker (struct buffer *, ptrdiff_t, ptrdiff_t);
 extern void syms_of_marker (void);
 
@@ -3899,7 +3926,7 @@ extern Lisp_Object make_temp_name (Lisp_Object, bool);
 extern void shrink_regexp_cache (void);
 extern void restore_search_regs (void);
 extern void update_search_regs (ptrdiff_t oldstart,
-                                ptrdiff_t oldend, ptrdiff_t newend);
+				ptrdiff_t oldend, ptrdiff_t newend);
 extern void record_unwind_save_match_data (void);
 struct re_registers;
 extern struct re_pattern_buffer *compile_pattern (Lisp_Object,
@@ -3923,7 +3950,7 @@ fast_string_match_ignore_case (Lisp_Object regexp, Lisp_Object string)
 extern ptrdiff_t fast_c_string_match_ignore_case (Lisp_Object, const char *,
 						  ptrdiff_t);
 extern ptrdiff_t fast_looking_at (Lisp_Object, ptrdiff_t, ptrdiff_t,
-                                  ptrdiff_t, ptrdiff_t, Lisp_Object);
+				  ptrdiff_t, ptrdiff_t, Lisp_Object);
 extern ptrdiff_t find_newline (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t,
 			       ptrdiff_t, ptrdiff_t *, ptrdiff_t *, bool);
 extern ptrdiff_t scan_newline (ptrdiff_t, ptrdiff_t, ptrdiff_t, ptrdiff_t,
@@ -4128,7 +4155,7 @@ extern void record_first_change (void);
 extern void record_change (ptrdiff_t, ptrdiff_t);
 extern void record_property_change (ptrdiff_t, ptrdiff_t,
 				    Lisp_Object, Lisp_Object,
-                                    Lisp_Object);
+				    Lisp_Object);
 extern void syms_of_undo (void);
 
 /* Defined in textprop.c.  */
@@ -4200,8 +4227,8 @@ extern void syms_of_ccl (void);
 /* Defined in dired.c.  */
 extern void syms_of_dired (void);
 extern Lisp_Object directory_files_internal (Lisp_Object, Lisp_Object,
-                                             Lisp_Object, Lisp_Object,
-                                             bool, Lisp_Object);
+					     Lisp_Object, Lisp_Object,
+					     bool, Lisp_Object);
 
 /* Defined in term.c.  */
 extern int *char_ins_del_vector;

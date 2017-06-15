@@ -2848,41 +2848,6 @@ listn (enum constype type, ptrdiff_t count, Lisp_Object arg, ...)
   return val;
 }
 
-DEFUN ("list", Flist, Slist, 0, MANY, 0,
-       doc: /* Return a newly created list with specified arguments as elements.
-Any number of arguments, even zero arguments, are allowed.
-usage: (list &rest OBJECTS)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  register Lisp_Object val;
-  val = Qnil;
-
-  while (nargs > 0)
-    {
-      nargs--;
-      val = Fcons (args[nargs], val);
-    }
-  return val;
-}
-
-
-DEFUN ("make-list", Fmake_list, Smake_list, 2, 2, 0,
-       doc: /* Return a newly created list of length LENGTH, with each element being INIT.  */)
-  (Lisp_Object length, Lisp_Object init)
-{
-  Lisp_Object val = Qnil;
-  CHECK_NATNUM (length);
-
-  for (EMACS_INT size = XFASTINT (length); 0 < size; size--)
-    {
-      val = Fcons (init, val);
-      rarely_quit (size);
-    }
-
-  return val;
-}
-
-
 
 /***********************************************************************
 			   Vector Allocation
@@ -7455,11 +7420,9 @@ The time is in seconds as a floating point value.  */);
               doc: /* Accumulated number of garbage collections done.  */);
 
   defsubr (&Scons);
-  defsubr (&Slist);
   defsubr (&Svector);
   defsubr (&Sbool_vector);
   defsubr (&Smake_byte_code);
-  defsubr (&Smake_list);
   defsubr (&Smake_vector);
   defsubr (&Smake_string);
   defsubr (&Smake_bool_vector);

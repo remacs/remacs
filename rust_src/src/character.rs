@@ -1,39 +1,29 @@
-use std::ptr;
-use lisp::{self, LispObject};
-use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, CHARACTERBITS};
+//! Operations on characters.
 
-/// Maximum character code
-pub const MAX_CHAR: EmacsInt = (1 << CHARACTERBITS as EmacsInt) - 1;
+use lisp::LispObject;
+use multibyte::MAX_CHAR;
+use remacs_macros::lisp_fn;
+use remacs_sys::EmacsInt;
 
 /// Return the character of the maximum code.
-#[lisp_fn(name = "max-char")]
+/// (fn)
+#[lisp_fn]
 fn max_char() -> LispObject {
-    lisp::make_number(MAX_CHAR)
+    LispObject::from_fixnum(MAX_CHAR as EmacsInt)
 }
 
-/// Nonzero iff X is a character.
-pub fn CHARACTERP(x: LispObject) -> bool {
-    lisp::NATNUMP(x) && lisp::XFASTINT(x) <= MAX_CHAR
-}
-
+/// Return non-nil if OBJECT is a character.
+/// In Emacs Lisp, characters are represented by character codes, which
+/// are non-negative integers.  The function `max-char' returns the
+/// maximum character code.
+/// (fn OBJECT)
+#[lisp_fn(min = "1")]
 fn characterp(object: LispObject, _ignore: LispObject) -> LispObject {
-    if CHARACTERP(object) {
-        LispObject::constant_t()
-    } else {
-        LispObject::constant_nil()
-    }
+    LispObject::from_bool(object.is_character())
 }
 
-defun!("characterp",
-       Fcharacterp(x, y),
-       Scharacterp,
-       characterp,
-       1,
-       2,
-       ptr::null(),
-       "Return non-nil if OBJECT is a character.
-In Emacs Lisp, characters are represented by character codes, which
-are non-negative integers.  The function `max-char' returns the
-maximum character code.
-usage: (characterp OBJECT)");
+/// Return t if OBJECT is a character or a string.
+#[lisp_fn(min = "1")]
+fn character_or_string_p(object: LispObject) -> LispObject {
+    LispObject::from_bool(object.is_character() || object.is_string())
+}
