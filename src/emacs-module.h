@@ -20,11 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef EMACS_MODULE_H
 #define EMACS_MODULE_H
 
-#if ! (defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L) \
-  && ! (defined __cplusplus && __cplusplus >= 199711L)
-# error "This file requires at least C99 or C++98"
-#endif
-
 #include <stdint.h>
 #include <stddef.h>
 
