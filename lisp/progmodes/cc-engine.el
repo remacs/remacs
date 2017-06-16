@@ -8100,7 +8100,7 @@ comment at the start of cc-engine.el for more info."
 			  (and
 			   (setq found
 				 (c-syntactic-re-search-forward
-				  "[;:,]\\|\\s)\\|\\'\\|\\(=\\|\\s(\\)"
+				  "[;:,]\\|\\s)\\|\\(=\\|\\s(\\)"
 				  limit t t))
 			   (eq (char-before) ?:)
 			   (if (looking-at c-:-op-cont-regexp)
@@ -8118,8 +8118,8 @@ comment at the start of cc-engine.el for more info."
 		    (eq (char-before) ?\[)
 		    (c-go-up-list-forward))
 	     (setq brackets-after-id t))
-	   (backward-char)
-	   found))
+	   (when found (backward-char))
+	   t))
 	(list id-start id-end brackets-after-id (match-beginning 1) decorated)
 
       (goto-char here)
