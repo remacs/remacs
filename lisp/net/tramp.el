@@ -2075,7 +2075,7 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 		      ;; are already loaded.  This results in
 		      ;; recursive loading.  Therefore, we load the
 		      ;; Tramp packages locally.
-		      (when (and (listp sf) (eq (car sf) 'autoload))
+		      (when (autoloadp sf)
 			(let ((default-directory
 				(tramp-compat-temporary-file-directory)))
 			  (load (cadr sf) 'noerror 'nomessage)))
@@ -2209,6 +2209,31 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 
 ;;;###autoload
 (tramp-register-autoload-file-name-handlers)
+
+(defun tramp-use-absolute-autoload-file-names ()
+  "Change Tramp autoload objects to use absolute file names.
+This avoids problems during autoload, when `load-path' contains
+remote file names."
+  ;; We expect all other Tramp files in the same directory as tramp.el.
+  (let* ((dir (expand-file-name (file-name-directory (locate-library "tramp"))))
+	 (files-regexp
+	  (format
+	   "^%s$"
+	   (regexp-opt
+	    (mapcar
+	     'file-name-sans-extension
+	     (directory-files dir nil "^tramp.+\\.elc?$"))
+	    'paren))))
+    (mapatoms
+     (lambda (atom)
+       (when (and (functionp atom)
+		  (autoloadp (symbol-function atom))
+		  (string-match files-regexp (cadr (symbol-function atom))))
+	 (ignore-errors
+	   (setf (cadr (symbol-function atom))
+		 (expand-file-name (cadr (symbol-function atom)) dir))))))))
+
+(eval-after-load 'tramp (tramp-use-absolute-autoload-file-names))
 
 (defun tramp-register-file-name-handlers ()
   "Add Tramp file name handlers to `file-name-handler-alist'."
