@@ -1970,7 +1970,7 @@ use \"coding: 'raw-text\" instead."
 	  (goto-char tail-start)
 	  (re-search-forward "[\r\n]\^L" tail-end t)
 	  (if (re-search-forward
-	       "[\r\n]\\([^[\r\n]*\\)[ \t]*Local Variables:[ \t]*\\([^\r\n]*\\)[\r\n]"
+	       "[\r\n]\\([^\r\n]*\\)[ \t]*Local Variables:[ \t]*\\([^\r\n]*\\)[\r\n]"
 	       tail-end t)
 	      ;; The prefix is what comes before "local variables:" in its
 	      ;; line.  The suffix is what comes after "local variables:"
