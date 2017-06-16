@@ -251,6 +251,11 @@ With universal argument, inserts the analysis as a comment on that line."
 
 
 ;; Minor mode functions.
+;; `c-block-comment-flag' gets initialized to the current mode's default in
+;; c-basic-common-init.
+(defvar c-block-comment-flag nil)
+(make-variable-buffer-local 'c-block-comment-flag)
+
 (defun c-update-modeline ()
   (let ((fmt (format "/%s%s%s%s%s"
 		     (if c-block-comment-flag "*" "/")
@@ -359,11 +364,6 @@ left out."
   (when (fboundp 'electric-indent-local-mode) ; Emacs 24.4 or later.
     (electric-indent-local-mode (if c-electric-flag 1 0)))
   (c-keep-region-active))
-
-;; `c-block-comment-flag' gets initialized to the current mode's default in
-;; c-basic-common-init.
-(defvar c-block-comment-flag nil)
-(make-variable-buffer-local 'c-block-comment-flag)
 
 (defun c-toggle-comment-style (&optional arg)
   "Toggle the comment style between block and line comments.
