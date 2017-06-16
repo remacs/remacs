@@ -384,6 +384,7 @@ struct glyph
       glyph standing for newline at end of line    0
       empty space after the end of the line       -1
       overlay arrow on a TTY                      -1
+      glyph displaying line number                -1
       glyph at EOB that ends in a newline         -1
       left truncation glyphs:                     -1
       right truncation/continuation glyphs        next buffer position
@@ -2571,7 +2572,12 @@ struct it
      Do NOT use !BUFFERP (it.object) as a test whether we are
      iterating over a string; use STRINGP (it.string) instead.
 
-     Position is the current iterator position in object.  */
+     Position is the current iterator position in object.
+
+     The 'position's CHARPOS is copied to glyph->charpos of the glyph
+     produced by PRODUCE_GLYPHS, so any artificial value documented
+     under 'struct glyph's 'charpos' member can also be found in the
+     'position' member here.  */
   Lisp_Object object;
   struct text_pos position;
 
@@ -2654,6 +2660,16 @@ struct it
      Only set there, not in display_line, and only when the X
      coordinate is past first_visible_x.  */
   int hpos;
+
+  /* Current line number, zero-based.  */
+  ptrdiff_t lnum;
+
+  /* The byte position corresponding to lnum.  */
+  ptrdiff_t lnum_bytepos;
+
+  /* The width in columns needed for display of the line numbers, or
+     zero if not computed.  */
+  int lnum_width;
 
   /* Left fringe bitmap number (enum fringe_bitmap_type).  */
   unsigned left_user_fringe_bitmap : FRINGE_ID_BITS;
