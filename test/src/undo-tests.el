@@ -444,5 +444,27 @@ Demonstrates bug 16818."
       (ert-run-tests-interactively "^undo-")
     (ert-run-tests-batch "^undo-")))
 
+(ert-deftest undo-test-skip-invalidated-markers ()
+  "Test marker adjustment when the marker points nowhere.
+Demonstrates bug 25599."
+  (with-temp-buffer
+    (buffer-enable-undo)
+    (insert ";; aaaaaaaaa
+;; bbbbbbbb")
+    (let ((overlay-modified
+           (lambda (ov after-p _beg _end &optional length)
+             (unless after-p
+               (when (overlay-buffer ov)
+                 (delete-overlay ov))))))
+      (save-excursion
+        (goto-char (point-min))
+        (let ((ov (make-overlay (line-beginning-position 2)
+                                (line-end-position 2))))
+          (overlay-put ov 'insert-in-front-hooks
+                       (list overlay-modified)))))
+    (kill-region (point-min) (line-beginning-position 2))
+    (undo-boundary)
+    (undo)))
+
 (provide 'undo-tests)
 ;;; undo-tests.el ends here
