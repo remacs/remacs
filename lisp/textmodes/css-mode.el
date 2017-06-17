@@ -1289,10 +1289,11 @@ the string PROPERTY."
   (let ((property
          (save-excursion
            (re-search-backward ":[^/]" (line-beginning-position) t)
-           (let ((property-end (point)))
-             (skip-chars-backward "-[:alnum:]")
-             (let ((property (buffer-substring (point) property-end)))
-               (car (member property css-property-ids)))))))
+           (when (eq (char-after) ?:)
+             (let ((property-end (point)))
+               (skip-chars-backward "-[:alnum:]")
+               (let ((prop (buffer-substring (point) property-end)))
+                 (car (member prop css-property-ids))))))))
     (when property
       (let ((end (point)))
         (save-excursion
