@@ -768,6 +768,9 @@ funcall_module (Lisp_Object function, ptrdiff_t nargs, Lisp_Object *arglist)
   USE_SAFE_ALLOCA;
   ATTRIBUTE_MAY_ALIAS emacs_value *args;
   if (plain_values && ! module_assertions)
+    /* FIXME: The cast below is incorrect because the argument array
+       is not declared as const, so module functions can modify it.
+       Either declare it as const, or remove this branch.  */
     args = (emacs_value *) arglist;
   else
     {
