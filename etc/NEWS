@@ -462,10 +462,11 @@ Negative prefix arg flips the direction of selection.  Also,
 defun are selected unless they are separated from the defun by a blank
 line.
 
-** New command 'replace-buffer-contents'.  This command replaces the
-contents of the accessible portion of the current buffer with the
-contents of the accessible portion of a different buffer while keeping
-point, mark, markers, and text properties as intact as possible.
+** New command 'replace-buffer-contents'.
+This command replaces the contents of the accessible portion of the
+current buffer with the contents of the accessible portion of a
+different buffer while keeping point, mark, markers, and text
+properties as intact as possible.
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.1

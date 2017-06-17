@@ -3140,7 +3140,9 @@ static bool buffer_chars_equal (struct context *, OFFSET, OFFSET);
 
 DEFUN ("replace-buffer-contents", Freplace_buffer_contents,
        Sreplace_buffer_contents, 1, 1, "bSource buffer: ",
-       doc: /* Replace accessible portion of the current buffer with accessible portion of SOURCE.
+       doc: /* Replace accessible portion of current buffer with that of SOURCE.
+SOURCE can be a buffer or a string that names a buffer.
+Interactively, prompt for SOURCE.
 As far as possible the replacement is non-destructive, i.e. existing
 buffer contents, markers, properties, and overlays in the current
 buffer stay intact.  */)
