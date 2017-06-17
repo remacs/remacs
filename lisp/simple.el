@@ -2589,8 +2589,12 @@ Return what remains of the list."
                (goto-char pos))
              ;; Adjust the valid marker adjustments
              (dolist (adj valid-marker-adjustments)
-               (set-marker (car adj)
-                           (- (car adj) (cdr adj))))))
+               ;; Insert might have invalidated some of the markers
+               ;; via modification hooks.  Update only the currently
+               ;; valid ones (bug#25599).
+               (if (marker-buffer (car adj))
+                   (set-marker (car adj)
+                               (- (car adj) (cdr adj)))))))
           ;; (MARKER . OFFSET) means a marker MARKER was adjusted by OFFSET.
           (`(,(and marker (pred markerp)) . ,(and offset (pred integerp)))
            (warn "Encountered %S entry in undo list with no matching (TEXT . POS) entry"
