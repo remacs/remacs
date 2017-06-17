@@ -10,10 +10,11 @@ use libc::{O_CLOEXEC, O_EXCL, O_RDWR, O_CREAT, open};
 
 #[cfg(windows)]
 extern "C" {
-    fn sys_open(filename: *const libc::c_char,
-                flags: libc::c_int,
-                mode: libc::c_int)
-                -> libc::c_int;
+    fn sys_open(
+        filename: *const libc::c_char,
+        flags: libc::c_int,
+        mode: libc::c_int,
+    ) -> libc::c_int;
 }
 
 use libc::{EEXIST, EINVAL};
@@ -90,9 +91,11 @@ fn generate_temporary_filename(name: &mut String) {
 #[cfg(unix)]
 fn open_temporary_file(name: &CString, flags: libc::c_int) -> io::Result<libc::c_int> {
     unsafe {
-        match open(name.as_ptr(),
-                   O_CLOEXEC | O_EXCL | O_RDWR | O_CREAT | flags,
-                   0o600) {
+        match open(
+            name.as_ptr(),
+            O_CLOEXEC | O_EXCL | O_RDWR | O_CREAT | flags,
+            0o600,
+        ) {
             -1 => Err(io::Error::last_os_error()),
             fd => Ok(fd),
         }
@@ -141,8 +144,10 @@ fn test_generate_temporary_filename() {
     let mut name = String::from(".emacs-XXXXXX");
     let name_copy = name.clone();
     generate_temporary_filename(&mut name);
-    assert!(name != name_copy,
-            "Temporary filename should always mutate the name string");
+    assert!(
+        name != name_copy,
+        "Temporary filename should always mutate the name string"
+    );
 }
 
 #[test]

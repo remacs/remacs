@@ -31,8 +31,8 @@ pub const CHAR_HYPER: char_bits = 0x1000000;
 pub const CHAR_SHIFT: char_bits = 0x2000000;
 pub const CHAR_CTL: char_bits = 0x4000000;
 pub const CHAR_META: char_bits = 0x8000000;
-pub const CHAR_MODIFIER_MASK: char_bits =
-    CHAR_ALT | CHAR_SUPER | CHAR_HYPER | CHAR_SHIFT | CHAR_CTL | CHAR_META;
+pub const CHAR_MODIFIER_MASK: char_bits = CHAR_ALT | CHAR_SUPER | CHAR_HYPER | CHAR_SHIFT |
+    CHAR_CTL | CHAR_META;
 pub const CHARACTERBITS: char_bits = 22;
 
 pub const PSEUDOVECTOR_FLAG: libc::ptrdiff_t = std::isize::MAX - std::isize::MAX / 2;
@@ -40,7 +40,7 @@ pub const PSEUDOVECTOR_SIZE_BITS: libc::ptrdiff_t = 12;
 pub const PSEUDOVECTOR_SIZE_MASK: libc::ptrdiff_t = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
 pub const PSEUDOVECTOR_REST_BITS: libc::ptrdiff_t = 12;
 pub const PSEUDOVECTOR_REST_MASK: libc::ptrdiff_t = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
-                                                     PSEUDOVECTOR_SIZE_BITS);
+                                                         PSEUDOVECTOR_SIZE_BITS);
 pub const PSEUDOVECTOR_AREA_BITS: libc::ptrdiff_t = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
 pub const PVEC_TYPE_MASK: libc::ptrdiff_t = 0x3f << PSEUDOVECTOR_AREA_BITS;
 
@@ -694,12 +694,13 @@ extern "C" {
 
     pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
     pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);
-    pub fn internal_equal(o1: Lisp_Object,
-                          o2: Lisp_Object,
-                          depth: libc::c_int,
-                          props: bool,
-                          ht: Lisp_Object)
-                          -> bool;
+    pub fn internal_equal(
+        o1: Lisp_Object,
+        o2: Lisp_Object,
+        depth: libc::c_int,
+        props: bool,
+        ht: Lisp_Object,
+    ) -> bool;
     pub fn call2(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object) -> Lisp_Object;
 
     // These signal an error, therefore are marked as non-returning.
@@ -713,16 +714,18 @@ extern "C" {
 
     pub fn emacs_abort() -> !;
 
-    pub fn base64_encode_1(from: *const libc::c_char,
-                           to: *mut libc::c_char,
-                           length: libc::ptrdiff_t,
-                           line_break: bool,
-                           multibyte: bool)
-                           -> libc::ptrdiff_t;
-    pub fn base64_decode_1(from: *const libc::c_char,
-                           to: *mut libc::c_char,
-                           length: libc::ptrdiff_t,
-                           multibyte: bool,
-                           nchars_return: *mut libc::ptrdiff_t)
-                           -> libc::ptrdiff_t;
+    pub fn base64_encode_1(
+        from: *const libc::c_char,
+        to: *mut libc::c_char,
+        length: libc::ptrdiff_t,
+        line_break: bool,
+        multibyte: bool,
+    ) -> libc::ptrdiff_t;
+    pub fn base64_decode_1(
+        from: *const libc::c_char,
+        to: *mut libc::c_char,
+        length: libc::ptrdiff_t,
+        multibyte: bool,
+        nchars_return: *mut libc::ptrdiff_t,
+    ) -> libc::ptrdiff_t;
 }

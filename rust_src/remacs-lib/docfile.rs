@@ -20,9 +20,11 @@ type AddGlobalFn = fn(c_int, *const c_char, c_int, *const c_char) -> *const ();
 
 
 #[no_mangle]
-pub extern "C" fn scan_rust_file(filename: *const c_char,
-                                 generate_globals: c_int,
-                                 add_global: AddGlobalFn) {
+pub extern "C" fn scan_rust_file(
+    filename: *const c_char,
+    generate_globals: c_int,
+    add_global: AddGlobalFn,
+) {
     let filename = unsafe { CStr::from_ptr(filename) }.to_str().unwrap();
     let fp = BufReader::new(File::open(&*filename).unwrap());
 
@@ -83,8 +85,10 @@ pub extern "C" fn scan_rust_file(filename: *const c_char,
                 // Parse key-value pairs
                 for arg in attr.split_terminator(',') {
                     let mut name_val = arg.split("=");
-                    attr_props.insert(name_val.next().unwrap().trim(),
-                                      name_val.next().unwrap().trim().trim_matches('"'));
+                    attr_props.insert(
+                        name_val.next().unwrap().trim(),
+                        name_val.next().unwrap().trim().trim_matches('"'),
+                    );
                 }
             }
 
@@ -99,9 +103,10 @@ pub extern "C" fn scan_rust_file(filename: *const c_char,
             let splitters = [':', ','];
             let args = sig.split_terminator(&splitters[..]).collect::<Vec<_>>();
 
-            let lisp_name = attr_props
-                .get("name")
-                .map_or_else(|| name.replace("_", "-"), |&name| name.into());
+            let lisp_name = attr_props.get("name").map_or_else(
+                || name.replace("_", "-"),
+                |&name| name.into(),
+            );
             let c_name = format!("F{}", attr_props.get("c_name").unwrap_or(&name));
 
             let nargs = args.len() / 2;
@@ -137,11 +142,13 @@ pub extern "C" fn scan_rust_file(filename: *const c_char,
                     docstring_usage.push(')');
                 }
                 // Print contents for docfile to stdout
-                print!("\x1f{}{}\n{}\n{}",
-                       "F",
-                       lisp_name,
-                       docstring,
-                       docstring_usage);
+                print!(
+                    "\x1f{}{}\n{}\n{}",
+                    "F",
+                    lisp_name,
+                    docstring,
+                    docstring_usage
+                );
             }
         }
     }

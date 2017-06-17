@@ -108,12 +108,10 @@ fn string_overflow() -> ! {
 #[no_mangle]
 pub fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdiff_t) -> ptrdiff_t {
     let slice = unsafe { slice::from_raw_parts(ptr, len as usize) };
-    slice
-        .iter()
-        .fold(0, |total, &byte| {
-            let n = if byte < 0x80 { 1 } else { 2 };
-            total.checked_add(n).unwrap_or_else(|| string_overflow())
-        })
+    slice.iter().fold(0, |total, &byte| {
+        let n = if byte < 0x80 { 1 } else { 2 };
+        total.checked_add(n).unwrap_or_else(|| string_overflow())
+    })
 }
 
 /// Same as the BYTE8_TO_CHAR macro.
@@ -218,8 +216,10 @@ pub fn char_string(mut cp: c_uint, to: *mut c_uchar) -> c_int {
         cp = char_resolve_modifier_mask(cp as EmacsInt) as Codepoint;
         cp &= !CHAR_MODIFIER_MASK;
     }
-    write_codepoint(unsafe { slice::from_raw_parts_mut(to, MAX_MULTIBYTE_LENGTH) },
-                    cp) as c_int
+    write_codepoint(
+        unsafe { slice::from_raw_parts_mut(to, MAX_MULTIBYTE_LENGTH) },
+        cp,
+    ) as c_int
 }
 
 /// Convert unibyte text at STR of BYTES bytes to a multibyte text
@@ -248,9 +248,11 @@ pub fn str_to_multibyte(ptr: *mut c_uchar, len: ptrdiff_t, bytes: ptrdiff_t) -> 
     let offset = (len - bytes) as usize;
     let slice = &mut slice[start..];
     unsafe {
-        ptr::copy(slice.as_mut_ptr(),
-                  slice[offset..].as_mut_ptr(),
-                  bytes as usize - start);
+        ptr::copy(
+            slice.as_mut_ptr(),
+            slice[offset..].as_mut_ptr(),
+            bytes as usize - start,
+        );
     }
     let mut to = 0;
     for from in offset..slice.len() {
@@ -304,18 +306,24 @@ fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
             (cp, 2)
         }
     } else if head & 0x10 == 0 {
-        (((head & 0x0F) << 12) | ((slice[1] as Codepoint & 0x3F) << 6) |
-         (slice[2] as Codepoint & 0x3F),
-         3)
+        (
+            ((head & 0x0F) << 12) | ((slice[1] as Codepoint & 0x3F) << 6) |
+                (slice[2] as Codepoint & 0x3F),
+            3,
+        )
     } else if head & 0x08 == 0 {
-        (((head & 0x07) << 18) | ((slice[1] as Codepoint & 0x3F) << 12) |
-         ((slice[2] as Codepoint & 0x3F) << 6) | (slice[3] as Codepoint & 0x3F),
-         4)
+        (
+            ((head & 0x07) << 18) | ((slice[1] as Codepoint & 0x3F) << 12) |
+                ((slice[2] as Codepoint & 0x3F) << 6) | (slice[3] as Codepoint & 0x3F),
+            4,
+        )
     } else {
         // the relevant bytes of "head" are always zero
-        (((slice[1] as Codepoint & 0x3F) << 18) | ((slice[2] as Codepoint & 0x3F) << 12) |
-         ((slice[3] as Codepoint & 0x3F) << 6) | (slice[4] as Codepoint & 0x3F),
-         5)
+        (
+            ((slice[1] as Codepoint & 0x3F) << 18) | ((slice[2] as Codepoint & 0x3F) << 12) |
+                ((slice[3] as Codepoint & 0x3F) << 6) | (slice[4] as Codepoint & 0x3F),
+            5,
+        )
     }
 }
 
@@ -358,10 +366,12 @@ pub fn multibyte_chars_in_text(ptr: *const c_uchar, nbytes: ptrdiff_t) -> ptrdif
 /// characters not constructing a valid multibyte sequence are
 /// represented by 2-byte in a multibyte text.
 #[no_mangle]
-pub fn parse_str_as_multibyte(ptr: *const c_uchar,
-                              len: ptrdiff_t,
-                              nchars: *mut ptrdiff_t,
-                              nbytes: *mut ptrdiff_t) {
+pub fn parse_str_as_multibyte(
+    ptr: *const c_uchar,
+    len: ptrdiff_t,
+    nchars: *mut ptrdiff_t,
+    nbytes: *mut ptrdiff_t,
+) {
     let slice = unsafe { slice::from_raw_parts(ptr, len as usize) };
     let len = slice.len();
     let mut chars = 0;
@@ -400,11 +410,12 @@ pub fn parse_str_as_multibyte(ptr: *const c_uchar,
 /// area and that is enough.  Return the number of bytes of the
 /// resulting text.
 #[no_mangle]
-pub fn str_as_multibyte(ptr: *mut c_uchar,
-                        len: ptrdiff_t,
-                        mut nbytes: ptrdiff_t,
-                        nchars: *mut ptrdiff_t)
-                        -> ptrdiff_t {
+pub fn str_as_multibyte(
+    ptr: *mut c_uchar,
+    len: ptrdiff_t,
+    mut nbytes: ptrdiff_t,
+    nchars: *mut ptrdiff_t,
+) -> ptrdiff_t {
     // slice covers the whole work area to be able to write back
     let slice = unsafe { slice::from_raw_parts_mut(ptr, len as usize) };
     // first, search ASCII-only prefix that we can skip processing
@@ -429,9 +440,11 @@ pub fn str_as_multibyte(ptr: *mut c_uchar,
         let offset = (len - nbytes) as usize;
         let slice = &mut slice[start..];
         unsafe {
-            ptr::copy(slice.as_mut_ptr(),
-                      slice[offset..].as_mut_ptr(),
-                      nbytes as usize - start);
+            ptr::copy(
+                slice.as_mut_ptr(),
+                slice[offset..].as_mut_ptr(),
+                nbytes as usize - start,
+            );
         }
         let mut to = 0;
         let mut from = 0;

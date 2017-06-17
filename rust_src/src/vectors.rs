@@ -90,7 +90,7 @@ impl LispVectorlikeRef {
     #[inline]
     pub fn is_pseudovector(&self, tp: PseudovecType) -> bool {
         self.header.size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK) ==
-        (PSEUDOVECTOR_FLAG | ((tp as isize) << PSEUDOVECTOR_AREA_BITS))
+            (PSEUDOVECTOR_FLAG | ((tp as isize) << PSEUDOVECTOR_AREA_BITS))
     }
 
     #[inline]
@@ -121,22 +121,28 @@ impl LispVectorRef {
     #[inline]
     pub fn as_slice(&self) -> &[LispObject] {
         unsafe {
-            slice::from_raw_parts(mem::transmute::<_, *const LispObject>(&self.contents),
-                                  self.len())
+            slice::from_raw_parts(
+                mem::transmute::<_, *const LispObject>(&self.contents),
+                self.len(),
+            )
         }
     }
 
     #[inline]
     pub fn as_mut_slice(&self) -> &mut [LispObject] {
         unsafe {
-            slice::from_raw_parts_mut(mem::transmute::<_, *mut LispObject>(&self.contents),
-                                      self.len())
+            slice::from_raw_parts_mut(
+                mem::transmute::<_, *mut LispObject>(&self.contents),
+                self.len(),
+            )
         }
     }
 
     #[inline]
     pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
-        ptr::read(mem::transmute::<_, *const LispObject>(&self.contents).offset(idx))
+        ptr::read(
+            mem::transmute::<_, *const LispObject>(&self.contents).offset(idx),
+        )
     }
 
     #[inline]
@@ -195,20 +201,19 @@ fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
     if seq.is_cons() {
         sort_list(seq, predicate)
     } else if let Some(vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {
-        vec.as_mut_slice()
-            .sort_by(|&a, &b| {
-                // XXX: since the `sort' predicate is a two-outcome comparison
-                // Less/!Less, and slice::sort_by() uses Greater/!Greater
-                // (which is not guaranteed anyway), this requires two calls
-                // instead of one in some cases.
-                if !inorder(predicate, a, b) {
-                    Ordering::Greater
-                } else if !inorder(predicate, b, a) {
-                    Ordering::Less
-                } else {
-                    Ordering::Equal
-                }
-            });
+        vec.as_mut_slice().sort_by(|&a, &b| {
+            // XXX: since the `sort' predicate is a two-outcome comparison
+            // Less/!Less, and slice::sort_by() uses Greater/!Greater
+            // (which is not guaranteed anyway), this requires two calls
+            // instead of one in some cases.
+            if !inorder(predicate, a, b) {
+                Ordering::Greater
+            } else if !inorder(predicate, b, a) {
+                Ordering::Less
+            } else {
+                Ordering::Equal
+            }
+        });
         seq
     } else if seq.is_nil() {
         seq

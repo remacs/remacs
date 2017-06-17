@@ -320,7 +320,7 @@ impl LispObject {
     pub fn is_fixnum(self) -> bool {
         let ty = self.get_type();
         (ty as u8 & ((LispType::Lisp_Int0 as u8) | !(LispType::Lisp_Int1 as u8))) ==
-        LispType::Lisp_Int0 as u8
+            LispType::Lisp_Int0 as u8
     }
 
     #[inline]
@@ -377,7 +377,9 @@ impl LispObject {
     #[allow(dead_code)]
     pub fn as_vectorlike(self) -> Option<LispVectorlikeRef> {
         if self.is_vectorlike() {
-            Some(LispVectorlikeRef::new(unsafe { mem::transmute(self.get_untaggedptr()) }))
+            Some(LispVectorlikeRef::new(
+                unsafe { mem::transmute(self.get_untaggedptr()) },
+            ))
         } else {
             None
         }
@@ -651,17 +653,17 @@ impl LispObject {
     /// If the LispObject is a number (of any kind), get a floating point value for it
     #[allow(dead_code)]
     pub fn any_to_float(self) -> Option<EmacsDouble> {
-        self.as_float()
-            .or_else(|| self.as_fixnum().map(|i| i as EmacsDouble))
+        self.as_float().or_else(
+            || self.as_fixnum().map(|i| i as EmacsDouble),
+        )
     }
 
     pub fn any_to_float_or_error(self) -> EmacsDouble {
-        self.as_float()
-            .unwrap_or_else(|| {
-                self.as_fixnum()
-                    .unwrap_or_else(|| unsafe { wrong_type_argument(Qnumberp, self.to_raw()) }) as
-                EmacsDouble
-            })
+        self.as_float().unwrap_or_else(|| {
+            self.as_fixnum().unwrap_or_else(|| unsafe {
+                wrong_type_argument(Qnumberp, self.to_raw())
+            }) as EmacsDouble
+        })
     }
 }
 
@@ -677,7 +679,9 @@ impl LispObject {
     #[allow(dead_code)]
     pub fn as_string(self) -> Option<LispStringRef> {
         if self.is_string() {
-            Some(LispStringRef::new(unsafe { mem::transmute(self.get_untaggedptr()) }))
+            Some(LispStringRef::new(
+                unsafe { mem::transmute(self.get_untaggedptr()) },
+            ))
         } else {
             None
         }
@@ -708,24 +712,29 @@ impl LispObject {
 
     #[inline]
     pub fn is_marker(self) -> bool {
-        self.as_misc()
-            .map_or(false, |m| m.ty == LispMiscType::Marker)
+        self.as_misc().map_or(
+            false,
+            |m| m.ty == LispMiscType::Marker,
+        )
     }
 
     #[inline]
     pub fn as_marker(self) -> Option<*mut LispMarker> {
-        self.as_misc()
-            .and_then(|m| if m.ty == LispMiscType::Marker {
-                          unsafe { Some(mem::transmute(m)) }
-                      } else {
-                          None
-                      })
+        self.as_misc().and_then(
+            |m| if m.ty == LispMiscType::Marker {
+                unsafe { Some(mem::transmute(m)) }
+            } else {
+                None
+            },
+        )
     }
 
     /// Nonzero iff X is a character.
     pub fn is_character(self) -> bool {
-        self.as_fixnum()
-            .map_or(false, |i| 0 <= i && i <= MAX_CHAR as EmacsInt)
+        self.as_fixnum().map_or(
+            false,
+            |i| 0 <= i && i <= MAX_CHAR as EmacsInt,
+        )
     }
 
     // The three Emacs Lisp comparison functions.
@@ -766,10 +775,12 @@ impl Debug for LispObject {
         let ty = self.get_type();
         let self_ptr = &self as *const _ as usize;
         if ty as u8 >= 8 {
-            write!(f,
-                   "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
-                   self_ptr,
-                   self.to_raw())?;
+            write!(
+                f,
+                "#<INVALID-OBJECT @ {:#X}: VAL({:#X})>",
+                self_ptr,
+                self.to_raw()
+            )?;
             return Ok(());
         }
         if self == &Qnil {
@@ -805,10 +816,12 @@ impl Debug for LispObject {
                     }
                     write!(f, "]")?;
                 } else {
-                    write!(f,
-                           "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
-                           self_ptr,
-                           self.to_raw())?;
+                    write!(
+                        f,
+                        "#<VECTOR-LIKE @ {:#X}: VAL({:#X})>",
+                        self_ptr,
+                        self.to_raw()
+                    )?;
                 }
             }
             LispType::Lisp_Int0 |
