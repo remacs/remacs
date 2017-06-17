@@ -1,24 +1,30 @@
-use std::ptr;
+//! Functions doing math on numbers.
+
 use libc::ptrdiff_t;
 
 use floatfns;
-use lisp;
-use lisp::{LispObject, XINT, make_number, CHECK_TYPE, LispType};
+use lisp::{LispObject, check_number_coerce_marker};
 use eval::xsignal0;
-use remacs_sys::{EmacsInt, Lisp_Object, Qarith_error, Qnumberp};
+use remacs_sys::{EmacsInt, Lisp_Object, Qarith_error, Qnumberp, wrong_type_argument};
 use remacs_macros::lisp_fn;
 
+/// Return X modulo Y.
+/// The result falls between zero (inclusive) and Y (exclusive).
+/// Both X and Y must be numbers or markers.
+/// (fn X Y)
+#[lisp_fn(name = "mod", c_name = "mod")]
 fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
-    let x = lisp::check_number_coerce_marker(x);
-    let y = lisp::check_number_coerce_marker(y);
+    let x = check_number_coerce_marker(x);
+    let y = check_number_coerce_marker(y);
 
-    if lisp::FLOATP(x) || lisp::FLOATP(y) {
+    if x.is_float() || y.is_float() {
         let ret = floatfns::fmod_float(x.to_raw(), y.to_raw());
         return LispObject::from_raw(ret);
     }
 
-    let mut i1 = XINT(x);
-    let i2 = XINT(y);
+    // TODO: too much checking here
+    let mut i1 = x.as_fixnum().unwrap();
+    let i2 = y.as_fixnum().unwrap();
 
     if i2 == 0 {
         unsafe {
@@ -33,24 +39,8 @@ fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
         i1 += i2
     }
 
-    make_number(i1)
+    LispObject::from_fixnum(i1)
 }
-
-// TODO: There's some magic somewhere in core Emacs that means
-// `(fn X Y)` is added to the docstring automatically. We
-// should do something similar.
-defun!("mod",
-       Fmod(x, y),
-       Smod,
-       lisp_mod,
-       2,
-       2,
-       ptr::null(),
-       "Return X modulo Y.
-The result falls between zero (inclusive) and Y (exclusive).
-Both X and Y must be numbers or markers.
-
-(fn X Y)");
 
 #[repr(C)]
 enum ArithOp {
@@ -69,12 +59,13 @@ enum ArithOp {
 }
 
 extern "C" {
-    fn float_arith_driver(accum: f64,
-                          argnum: ptrdiff_t,
-                          code: ArithOp,
-                          nargs: ptrdiff_t,
-                          args: *const Lisp_Object)
-                          -> Lisp_Object;
+    fn float_arith_driver(
+        accum: f64,
+        argnum: ptrdiff_t,
+        code: ArithOp,
+        nargs: ptrdiff_t,
+        args: *const Lisp_Object,
+    ) -> Lisp_Object;
 }
 
 /// Given an array of LispObject, reduce over them according to the
@@ -101,23 +92,26 @@ fn arith_driver(code: ArithOp, args: &mut [LispObject]) -> LispObject {
             ok_accum = accum;
         }
 
-        let coerced_val = lisp::check_number_coerce_marker(*val);
+        let coerced_val = check_number_coerce_marker(*val);
 
-        if lisp::FLOATP(coerced_val) {
+        if coerced_val.is_float() {
             let mut args: Vec<Lisp_Object> = args_clone.iter().map(|v| v.to_raw()).collect();
             let ret = unsafe {
-                float_arith_driver(ok_accum as f64,
-                                   ok_args,
-                                   code,
-                                   args.len() as ptrdiff_t,
-                                   args.as_mut_ptr())
+                float_arith_driver(
+                    ok_accum as f64,
+                    ok_args,
+                    code,
+                    args.len() as ptrdiff_t,
+                    args.as_mut_ptr(),
+                )
             };
 
             return LispObject::from_raw(ret);
         }
 
         *val = coerced_val;
-        let next = lisp::XINT(*val);
+        // TODO: too much checking here
+        let next = (*val).as_fixnum().unwrap();
 
         match code {
             ArithOp::Add => {
@@ -187,27 +181,27 @@ fn arith_driver(code: ArithOp, args: &mut [LispObject]) -> LispObject {
         }
     }
 
-    make_number(accum)
+    LispObject::from_fixnum_truncated(accum)
 }
 
-/// Return sum of any number of arguments, which are numbers or markers
-/// (fn &rest NUMBERS-OR-MARKERS)")]
+/// Return sum of any number of arguments, which are numbers or markers.
+/// usage: (fn &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "+")]
 fn plus(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Add, args)
 }
 
 /// Negate number or subtract numbers or markers and return the result.
-/// With one arg, negates it. With more than one arg, subtracts all but
-/// the first from the first")]
-/// (fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)
+/// With one arg, negates it.  With more than one arg,
+/// subtracts all but the first from the first.
+/// usage: (fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "-")]
 fn minus(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Sub, args)
 }
 
 /// Return product of any number of arguments, which are numbers or markers.
-/// (fn &optional NUMBER-OR-MARKERS)
+/// usage: (fn &rest NUMBER-OR-MARKERS)
 #[lisp_fn(name = "*")]
 fn times(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Mult, args)
@@ -216,21 +210,23 @@ fn times(args: &mut [LispObject]) -> LispObject {
 /// Divide number by divisors and return the result.
 /// With two or more arguments, return first argument divided by the rest.
 /// With one argument, return 1 divided by te argument.
-/// The arguments must be numbers or markers
-/// (fn NUMBER &rest DIVISORS)
+/// The arguments must be numbers or markers.
+/// usage: (fn NUMBER &rest DIVISORS)
 #[lisp_fn(name = "/", min = "1")]
 fn quo(args: &mut [LispObject]) -> LispObject {
     for argnum in 2..args.len() {
         let arg = args[argnum];
-        if lisp::FLOATP(arg) {
+        if arg.is_float() {
             let mut args: Vec<::remacs_sys::Lisp_Object> =
                 args.iter().map(|arg| arg.to_raw()).collect();
             let ret = unsafe {
-                float_arith_driver(0.0,
-                                   0,
-                                   ArithOp::Div,
-                                   args.len() as ptrdiff_t,
-                                   args.as_mut_ptr())
+                float_arith_driver(
+                    0.0,
+                    0,
+                    ArithOp::Div,
+                    args.len() as ptrdiff_t,
+                    args.as_mut_ptr(),
+                )
             };
             return LispObject::from_raw(ret);
         }
@@ -240,53 +236,58 @@ fn quo(args: &mut [LispObject]) -> LispObject {
 
 /// Return bitwise-and of all the arguments.
 /// Arguments may be integers, or markers, converted to integers.
-#[lisp_fn(name = "logand")]
+/// usage: (fn &rest INTS-OR-MARKERS)
+#[lisp_fn]
 fn logand(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logand, args)
 }
 
 /// Return bitwise-or of all the arguments.
 /// Arguments may be integers, or markers converted to integers.
-/// (fn &rest INTS-OR-MARKERS)
-#[lisp_fn(name = "logior")]
+/// usage: (fn &rest INTS-OR-MARKERS)
+#[lisp_fn]
 fn logior(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logior, args)
 }
 
 /// Return bitwise-exclusive-or of all the arguments.
 /// Arguments may be integers, or markers converted to integers.
-/// (fn &rest INTS-OR-MARKERS)
-#[lisp_fn(name = "logxor")]
+/// usage: (fn &rest INTS-OR-MARKERS)
+#[lisp_fn]
 fn logxor(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logxor, args)
 }
 
 /// Return largest of all the arguments (which must be numbers or markers).
 /// The value is always a number; markers are converted to numbers.
-/// (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
-#[lisp_fn(name = "max", min = "1")]
+/// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
+#[lisp_fn(min = "1")]
 fn max(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Max, args)
 }
 
 /// Return smallest of all the arguments (which must be numbers or markers).
 /// The value is always a number; markers are converted to numbers.
-/// fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS
-#[lisp_fn(name = "min", min = "1")]
+/// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
+#[lisp_fn(min = "1")]
 fn min(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Min, args)
 }
 
-/// Return the absolute value of ARG
-/// (fn ARG)
-#[lisp_fn(name = "abs", min = "1")]
-fn abs(obj: LispObject) -> LispObject {
-    CHECK_TYPE(obj.is_number(),
-               LispObject::from_raw(unsafe { Qnumberp }),
-               obj); // does not return on failure
+/// Return the absolute value of ARG.
+#[lisp_fn]
+fn abs(arg: LispObject) -> LispObject {
+    if !arg.is_number() {
+        unsafe {
+            wrong_type_argument(Qnumberp, arg.to_raw());
+        }
+    }
 
-    match obj.get_type() {
-        LispType::Lisp_Float => LispObject::from_float(obj.to_float().unwrap().abs()),
-        _ => make_number(obj.to_fixnum().unwrap().abs() as EmacsInt),
+    match arg.as_float() {
+        Some(f) => LispObject::from_float(f.abs()),
+        _ => {
+            let n = arg.as_fixnum().unwrap();
+            LispObject::from_fixnum(n.abs())
+        }
     }
 }

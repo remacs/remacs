@@ -126,7 +126,7 @@ srcdir=@srcdir@
 VPATH=@srcdir@
 
 # Path to rust source files, relative to srcdir
-rust_srcdir=$(srcdir)/rust_src
+rust_srcdir=$(top_srcdir)/rust_src
 
 # The top-level source directory, also set by configure.
 top_srcdir=@top_srcdir@
@@ -183,7 +183,8 @@ SCRIPTS= rcs2log $(UPDATE_MANIFEST)
 EXE_FILES = ${INSTALLABLES} ${UTILITIES} ${DONT_INSTALL}
 
 # Rust files to be linked as part of the executables
-RUST_LIB = ../rust_src/remacs-lib/target/$(CARGO_BUILD_DIR)/libremacs_lib.a @RUST_DEPS@
+RUST_ARCHIVE = ../rust_src/remacs-lib/target/$(CARGO_BUILD_DIR)/libremacs_lib.a
+RUST_LIB = $(RUST_ARCHIVE) @RUST_DEPS@
 
 # Specify additional -D flags for movemail. Options:
 # -DMAIL_USE_FLOCK or -DMAIL_USE_LOCKF (use flock or lockf for file locking).
@@ -252,7 +253,7 @@ all: ${EXE_FILES} ${SCRIPTS}
 .PHONY: all need-blessmail maybe-blessmail
 
 LOADLIBES = ../lib/libgnu.a $(LIBS_SYSTEM) $(RUST_LIB) 
-$(EXE_FILES): ../lib/libgnu.a $(RUST_LIB)
+$(EXE_FILES): ../lib/libgnu.a $(RUST_ARCHIVE)
 
 ## Only used if we need blessmail, but no harm in always defining.
 ## This makes the actual blessmail executable.
@@ -374,7 +375,7 @@ TAGS: etags${EXEEXT} ${tagsfiles}
 	$(MAKE) -C ../lib all
 
 cargo_manifest=../rust_src/remacs-lib/Cargo.toml
-$(RUST_LIB):
+$(RUST_ARCHIVE): $(rust_srcdir)/remacs-lib/**
 	RUSTFLAGS=$(RUSTFLAGS) \
 	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path=$(cargo_manifest)
 
@@ -408,7 +409,7 @@ profile${EXEEXT}: ${srcdir}/profile.c $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< \
 	  $(NTLIB) $(LOADLIBES) $(LIB_CLOCK_GETTIME) -o $@
 
-make-docfile${EXEEXT}: ${srcdir}/make-docfile.c $(NTLIB) $(config_h)
+make-docfile${EXEEXT}: ${srcdir}/make-docfile.c $(NTLIB) $(config_h) $(RUST_ARCHIVE)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< $(NTLIB) $(LOADLIBES) -o $@
 
 movemail${EXEEXT}: ${srcdir}/movemail.c pop.o $(NTLIB) $(config_h)

@@ -42,7 +42,7 @@ MKDIR_P = @MKDIR_P@
 # LIBS = @LIBS@
 LIBOBJS = @LIBOBJS@
 
-rust_srcdir=$(srcdir)/rust_src
+rust_srcdir=$(top_srcdir)/rust_src
 lispsource = $(top_srcdir)/lisp
 lib = ../lib
 libsrc = ../lib-src
@@ -569,11 +569,11 @@ endif
 ## for the first time, this prevents any variation between configurations
 ## in the contents of the DOC file.
 ##
-$(etc)/DOC: lisp.mk $(libsrc)/make-docfile$(EXEEXT) $(obj) $(lisp)
+$(etc)/DOC: lisp.mk $(libsrc)/make-docfile$(EXEEXT) $(obj) $(lisp) $(rust_srcdir)/src/**
 	$(AM_V_GEN)$(MKDIR_P) $(etc)
 	-$(AM_V_at)rm -f $(etc)/DOC
 	$(AM_V_at)$(libsrc)/make-docfile -d $(srcdir) \
-	  $(SOME_MACHINE_OBJECTS) $(obj) > $(etc)/DOC
+	  $(SOME_MACHINE_OBJECTS) $(obj) $(rust_srcdir)/src/*.rs > $(etc)/DOC
 	$(AM_V_at)$(libsrc)/make-docfile -a $(etc)/DOC -d $(lispsource) \
 	  $(shortlisp)
 
@@ -587,7 +587,7 @@ buildobj.h: Makefile
 	done >$@.tmp
 	$(AM_V_at)mv $@.tmp $@
 
-GLOBAL_SOURCES = $(base_obj:.o=.c) $(NS_OBJC_OBJ:.o=.m)
+GLOBAL_SOURCES = $(base_obj:.o=.c) $(NS_OBJC_OBJ:.o=.m) $(rust_srcdir)/src/*.rs
 
 AM_V_GLOBALS = $(am__v_GLOBALS_@AM_V@)
 am__v_GLOBALS_ = $(am__v_GLOBALS_@AM_DEFAULT_V@)
@@ -595,7 +595,7 @@ am__v_GLOBALS_0 = @echo "  GEN     " globals.h;
 am__v_GLOBALS_1 =
 
 gl-stamp: $(libsrc)/make-docfile$(EXEEXT) $(GLOBAL_SOURCES)
-	$(AM_V_GLOBALS)$(libsrc)/make-docfile -d $(srcdir) -g $(obj) > globals.tmp
+	$(AM_V_GLOBALS)$(libsrc)/make-docfile -d $(srcdir) -g $(obj) $(rust_srcdir)/src/*.rs > globals.tmp
 	$(AM_V_at)$(top_srcdir)/build-aux/move-if-change globals.tmp globals.h
 	$(AM_V_at)echo timestamp > $@
 

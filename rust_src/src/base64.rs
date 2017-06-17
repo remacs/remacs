@@ -14,12 +14,13 @@ use self::rustc_serialize::base64::{FromBase64, ToBase64, STANDARD};
 // the C API.
 #[no_mangle]
 #[allow(unused_variables)]
-pub extern "C" fn base64_encode_1(from: *const libc::c_char,
-                                  to: *mut libc::c_char,
-                                  length: libc::ptrdiff_t,
-                                  line_break: bool,
-                                  multibyte: bool)
-                                  -> libc::ptrdiff_t {
+pub extern "C" fn base64_encode_1(
+    from: *const libc::c_char,
+    to: *mut libc::c_char,
+    length: libc::ptrdiff_t,
+    line_break: bool,
+    multibyte: bool,
+) -> libc::ptrdiff_t {
     let bytes = unsafe { slice::from_raw_parts(from as *const u8, length as usize) };
     let coded = bytes.to_base64(STANDARD);
     let size = coded.len() as libc::ptrdiff_t;
@@ -56,10 +57,11 @@ pub extern "C" fn base64_encode_1(from: *const libc::c_char,
 }
 
 fn decode(encoded: &CStr) -> Result<Vec<u8>, String> {
-    encoded
-        .to_str()
-        .map_err(|err| err.to_string())
-        .and_then(|encoded| encoded.from_base64().map_err(|err| err.to_string()))
+    encoded.to_str().map_err(|err| err.to_string()).and_then(
+        |encoded| {
+            encoded.from_base64().map_err(|err| err.to_string())
+        },
+    )
 }
 
 ///  Base64-decode the data at FROM of LENGTH bytes into TO.  If
@@ -70,12 +72,13 @@ fn decode(encoded: &CStr) -> Result<Vec<u8>, String> {
 // for us. It still needs to be there to conform to the C API.
 #[no_mangle]
 #[allow(unused_variables)]
-pub extern "C" fn base64_decode_1(from: *const libc::c_char,
-                                  to: *mut libc::c_char,
-                                  length: libc::ptrdiff_t,
-                                  multibyte: bool,
-                                  nchars_return: *mut libc::ptrdiff_t)
-                                  -> libc::ptrdiff_t {
+pub extern "C" fn base64_decode_1(
+    from: *const libc::c_char,
+    to: *mut libc::c_char,
+    length: libc::ptrdiff_t,
+    multibyte: bool,
+    nchars_return: *mut libc::ptrdiff_t,
+) -> libc::ptrdiff_t {
     let encoded = unsafe { CStr::from_ptr(from) };
 
     match decode(encoded) {
@@ -112,11 +115,13 @@ fn test_base64_encode_1() {
     let uncoded: *const libc::c_char = input.as_ptr();
     let mut encoded = [0; 17];
 
-    let length = base64_encode_1(uncoded,
-                                 encoded.as_mut_ptr(),
-                                 input.as_bytes().len() as libc::ptrdiff_t,
-                                 false,
-                                 false);
+    let length = base64_encode_1(
+        uncoded,
+        encoded.as_mut_ptr(),
+        input.as_bytes().len() as libc::ptrdiff_t,
+        false,
+        false,
+    );
 
     assert!(length != -1);
     let answer = unsafe { CStr::from_ptr(encoded.as_ptr()).to_str().unwrap() };
@@ -135,11 +140,13 @@ fn test_base64_decode_1() {
     let mut n: isize = 0;
     let nchars: *mut isize = &mut n;
 
-    let length = base64_decode_1(encoded,
-                                 decoded.as_mut_ptr(),
-                                 input.as_bytes().len() as libc::ptrdiff_t,
-                                 true,
-                                 nchars);
+    let length = base64_decode_1(
+        encoded,
+        decoded.as_mut_ptr(),
+        input.as_bytes().len() as libc::ptrdiff_t,
+        true,
+        nchars,
+    );
     assert!(length != -1);
 
     let answer = unsafe { CStr::from_ptr(decoded.as_ptr()).to_str().unwrap() };

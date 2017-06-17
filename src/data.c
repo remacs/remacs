@@ -352,15 +352,6 @@ DEFUN ("bufferp", Fbufferp, Sbufferp, 1, 1, 0,
   return Qnil;
 }
 
-DEFUN ("markerp", Fmarkerp, Smarkerp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a marker (editor pointer).  */)
-  (Lisp_Object object)
-{
-  if (MARKERP (object))
-    return Qt;
-  return Qnil;
-}
-
 #ifdef HAVE_MODULES
 DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
        doc: /* Return t if OBJECT is a module user pointer.  */)
@@ -427,22 +418,6 @@ DEFUN ("condition-variable-p", Fcondition_variable_p, Scondition_variable_p,
   if (CONDVARP (object))
     return Qt;
   return Qnil;
-}
-
-/* Extract and set components of lists.  */
-
-DEFUN ("car-safe", Fcar_safe, Scar_safe, 1, 1, 0,
-       doc: /* Return the car of OBJECT if it is a cons cell, or else nil.  */)
-  (Lisp_Object object)
-{
-  return CAR_SAFE (object);
-}
-
-DEFUN ("cdr-safe", Fcdr_safe, Scdr_safe, 1, 1, 0,
-       doc: /* Return the cdr of OBJECT if it is a cons cell, or else nil.  */)
-  (Lisp_Object object)
-{
-  return CDR_SAFE (object);
 }
 
 
@@ -3220,15 +3195,12 @@ syms_of_data (void)
   defsubr (&Sarrayp);
   defsubr (&Ssequencep);
   defsubr (&Sbufferp);
-  defsubr (&Smarkerp);
   defsubr (&Ssubrp);
   defsubr (&Sbyte_code_function_p);
   defsubr (&Schar_or_string_p);
   defsubr (&Sthreadp);
   defsubr (&Smutexp);
   defsubr (&Scondition_variable_p);
-  defsubr (&Scar_safe);
-  defsubr (&Scdr_safe);
   defsubr (&Ssymbol_function);
   defsubr (&Sindirect_function);
   defsubr (&Ssymbol_plist);
