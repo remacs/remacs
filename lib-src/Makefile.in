@@ -253,7 +253,7 @@ all: ${EXE_FILES} ${SCRIPTS}
 .PHONY: all need-blessmail maybe-blessmail
 
 LOADLIBES = ../lib/libgnu.a $(LIBS_SYSTEM) $(RUST_LIB) 
-$(EXE_FILES): ../lib/libgnu.a $(RUST_LIB)
+$(EXE_FILES): ../lib/libgnu.a $(RUST_ARCHIVE)
 
 ## Only used if we need blessmail, but no harm in always defining.
 ## This makes the actual blessmail executable.
@@ -409,7 +409,7 @@ profile${EXEEXT}: ${srcdir}/profile.c $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< \
 	  $(NTLIB) $(LOADLIBES) $(LIB_CLOCK_GETTIME) -o $@
 
-make-docfile${EXEEXT}: ${srcdir}/make-docfile.c $(NTLIB) $(config_h) $(RUST_LIB)
+make-docfile${EXEEXT}: ${srcdir}/make-docfile.c $(NTLIB) $(config_h) $(RUST_ARCHIVE)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< $(NTLIB) $(LOADLIBES) -o $@
 
 movemail${EXEEXT}: ${srcdir}/movemail.c pop.o $(NTLIB) $(config_h)
