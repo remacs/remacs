@@ -144,10 +144,9 @@ else
 testloadfile = $*
 endif
 
-## Ignore any test errors so we can continue to test other files.
 %.log: %.elc
 	$(AM_V_at)${MKDIR_P} $(dir $@)
-	-$(AM_V_GEN)HOME=/nonexistent $(emacs) -l ert -l $(testloadfile) \
+	$(AM_V_GEN)HOME=/nonexistent $(emacs) -l ert -l $(testloadfile) \
 	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
 ifeq (@HAVE_MODULES@, yes)
@@ -240,8 +239,11 @@ check-maybe: check-no-automated-subdir
 
 ## Run the tests.
 .PHONY: check-doit
-check-doit: ${LOGFILES}
-	@$(emacs) -l ert -f ert-summarize-tests-batch-and-exit $^
+## We can't put LOGFILES as prerequisites, because that would stop the
+## summarizing step from running when there is an error.
+check-doit:
+	-@${MAKE} -k  ${LOGFILES}
+	@$(emacs) -l ert -f ert-summarize-tests-batch-and-exit ${LOGFILES}
 
 .PHONY: mostlyclean clean bootstrap-clean distclean maintainer-clean
 
