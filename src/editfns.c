@@ -3217,7 +3217,6 @@ buffer stay intact.  */)
   ptrdiff_t count = SPECPDL_INDEX ();
   record_unwind_protect (save_excursion_restore, save_excursion_save ());
 
-  SET_PT_BOTH (BEGV, BEGV_BYTE);
   ptrdiff_t i = size_a;
   ptrdiff_t j = size_b;
   /* Walk backwards through the lists of changes.  This was also
