@@ -726,7 +726,9 @@ This is done after all necessary filtering has been done."
 		  (setq obeg (+ obeg nchars)))
 	      (if (<= (point) oend)
 		  (setq oend (+ oend nchars)))
-	      (insert-before-markers string)
+              ;; Let the ansi-color overlay hooks run.
+              (let ((inhibit-modification-hooks nil))
+                (insert-before-markers string))
 	      (if (= (window-start) (point))
 		  (set-window-start (selected-window)
 				    (- (point) nchars)))

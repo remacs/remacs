@@ -481,6 +481,7 @@ Emacs requires OBJECT to be a buffer."
     ;; property to make sure it works.
     (let ((overlay (make-overlay from to object)))
       (overlay-put overlay 'modification-hooks '(ansi-color-freeze-overlay))
+      (overlay-put overlay 'insert-behind-hooks '(ansi-color-freeze-overlay))
       overlay)))
 
 (defun ansi-color-freeze-overlay (overlay is-after begin end &optional len)
