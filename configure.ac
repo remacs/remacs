@@ -3518,6 +3518,12 @@ AC_SUBST(LIBMODULES)
 AC_SUBST(HAVE_MODULES)
 AC_SUBST(MODULES_SUFFIX)
 
+AC_CONFIG_FILES([src/emacs-module.h])
+AC_SUBST_FILE([module_env_snippet_25])
+AC_SUBST_FILE([module_env_snippet_26])
+module_env_snippet_25="$srcdir/src/module-env-25.h"
+module_env_snippet_26="$srcdir/src/module-env-26.h"
+
 ### Use -lpng if available, unless '--with-png=no'.
 HAVE_PNG=no
 LIBPNG=
