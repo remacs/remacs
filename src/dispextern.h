@@ -2671,6 +2671,9 @@ struct it
      zero if not computed.  */
   int lnum_width;
 
+  /* The line number of point's line, or zero if not computed yet.  */
+  ptrdiff_t pt_lnum;
+
   /* Left fringe bitmap number (enum fringe_bitmap_type).  */
   unsigned left_user_fringe_bitmap : FRINGE_ID_BITS;
 

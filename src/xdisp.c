@@ -833,6 +833,7 @@ static bool cursor_row_fully_visible_p (struct window *, bool, bool);
 static bool update_menu_bar (struct frame *, bool, bool);
 static bool try_window_reusing_current_matrix (struct window *);
 static int try_window_id (struct window *);
+static void maybe_produce_line_number (struct it *, bool);
 static bool display_line (struct it *, int);
 static int display_mode_lines (struct window *);
 static int display_mode_line (struct window *, enum face_id, Lisp_Object);
@@ -8652,9 +8653,16 @@ move_it_in_display_line_to (struct it *it,
        || (it->method == GET_FROM_DISPLAY_VECTOR		\
 	   && it->dpvec + it->current.dpvec_index + 1 >= it->dpend)))
 
-  /* If there's a line-/wrap-prefix, handle it.  */
-  if (it->hpos == 0 && it->method == GET_FROM_BUFFER)
-    handle_line_prefix (it);
+  if (it->hpos == 0)
+    {
+      /* If line numbers are being displayed, produce a line number.  */
+      if (!NILP (Vdisplay_line_numbers)
+	  && it->current_x == it->first_visible_x)
+	maybe_produce_line_number (it, true);
+      /* If there's a line-/wrap-prefix, handle it.  */
+      if (it->method == GET_FROM_BUFFER)
+	handle_line_prefix (it);
+    }
 
   if (IT_CHARPOS (*it) < CHARPOS (this_line_min_pos))
     SET_TEXT_POS (this_line_min_pos, IT_CHARPOS (*it), IT_BYTEPOS (*it));
@@ -14787,15 +14795,12 @@ set_cursor_from_row (struct window *w, struct glyph_row *row,
 	  while (glyph > end + 1
 		 && NILP (glyph->object)
 		 && glyph->charpos < 0)
-	    {
-	      --glyph;
-	      x -= glyph->pixel_width;
-	    }
+	    --glyph;
 	  if (NILP (glyph->object) && glyph->charpos < 0)
 	    --glyph;
 	  /* By default, in reversed rows we put the cursor on the
 	     rightmost (first in the reading order) glyph.  */
-	  for (g = end + 1; g < glyph; g++)
+	  for (x = 0, g = end + 1; g < glyph; g++)
 	    x += g->pixel_width;
 	  while (end < glyph
 		 && NILP ((end + 1)->object)
@@ -15932,6 +15937,9 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp,
       && !windows_or_buffers_changed
       && !f->cursor_type_changed
       && NILP (Vshow_trailing_whitespace)
+      /* When display-line-numbers is in relative mode, moving point
+	 requires to redraw the entire window.  */
+      && !EQ (Vdisplay_line_numbers, Qrelative)
       /* This code is not used for mini-buffer for the sake of the case
 	 of redisplaying to replace an echo area message; since in
 	 that case the mini-buffer contents per se are usually
@@ -18433,6 +18441,10 @@ try_window_id (struct window *w)
   if (!NILP (BVAR (XBUFFER (w->contents), extra_line_spacing)))
     GIVE_UP (23);
 
+  /* Give up if display-line-numbers is in relative mode.  */
+  if (EQ (Vdisplay_line_numbers, Qrelative))
+    GIVE_UP (24);
+
   /* Make sure beg_unchanged and end_unchanged are up to date.  Do it
      only if buffer has really changed.  The reason is that the gap is
      initially at Z for freshly visited files.  The code below would
@@ -20679,8 +20691,13 @@ find_row_edges (struct it *it, struct glyph_row *row,
     row->maxpos = it->current.pos;
 }
 
+/* Produce the line-number glyphs for the current glyph_row.  If
+   IT->glyph_row is non-NULL, populate the row with the produced
+   glyphs.  FORCE non-zero means produce the glyphs even if the line
+   number didn't change since the last time this function was called;
+   this is used by move_it_in_display_line_to.  */
 static void
-maybe_produce_line_number (struct it *it)
+maybe_produce_line_number (struct it *it, bool force)
 {
   ptrdiff_t last_line = it->lnum;
   ptrdiff_t start_from, bytepos;
@@ -20709,9 +20726,12 @@ maybe_produce_line_number (struct it *it)
   eassert (this_line > 0 || (this_line == 0 && start_from == BEGV_BYTE));
   eassert (bytepos == IT_BYTEPOS (*it));
 
-  /* If this is a new logical line, produce the glyphs for the line
-     number.  */
-  if (this_line != last_line || !last_line || it->continuation_lines_width > 0)
+  /* Produce the glyphs for the line number if needed.  */
+  if (force
+      || !last_line
+      || this_line != last_line
+      || it->continuation_lines_width > 0
+      || (EQ (Vdisplay_line_numbers, Qrelative) && PT != it->w->last_point))
     {
       if (this_line != last_line || !last_line)
 	{
@@ -20723,19 +20743,51 @@ maybe_produce_line_number (struct it *it)
       struct it tem_it;
       char lnum_buf[INT_STRLEN_BOUND (ptrdiff_t) + 1];
       bool beyond_zv = IT_BYTEPOS (*it) >= ZV_BYTE ? true : false;
+      ptrdiff_t lnum_offset = -1; /* to produce 1-based line numbers */
+      /* Compute point's line number if needed.  */
+      if (EQ (Vdisplay_line_numbers, Qrelative) && !it->pt_lnum)
+	{
+	  ptrdiff_t ignored;
+	  if (PT_BYTE > it->lnum_bytepos)
+	    it->pt_lnum =
+	      this_line + display_count_lines (it->lnum_bytepos, PT_BYTE, PT,
+					       &ignored);
+	  else
+	    it->pt_lnum = display_count_lines (BEGV_BYTE, PT_BYTE, PT,
+					       &ignored);
+	}
       /* Compute the required width if needed.  */
       if (!it->lnum_width)
 	{
-	  /* Max line number to be displayed cannot be more than the
-	     one corresponding to the last row of the desired
-	     matrix.  */
-	  ptrdiff_t max_lnum =
-	    this_line + it->w->desired_matrix->nrows - 1 - it->vpos;
-	  it->lnum_width = log10 (max_lnum) + 1;
+	  if (NATNUMP (Vdisplay_line_width))
+	    it->lnum_width = XFASTINT (Vdisplay_line_width);
+	  else
+	    {
+	      /* Max line number to be displayed cannot be more than
+		 the one corresponding to the last row of the desired
+		 matrix.  */
+	      ptrdiff_t max_lnum;
+
+	      if (EQ (Vdisplay_line_numbers, Qrelative))
+		/* We subtract one more because the current line is
+		   always zero under relative line-number display.  */
+		max_lnum = it->w->desired_matrix->nrows - 2;
+	      else
+		max_lnum =
+		  this_line + it->w->desired_matrix->nrows - 1 - it->vpos;
+	      it->lnum_width = log10 (max_lnum) + 1;
+	    }
 	  eassert (it->lnum_width > 0);
 	}
-      pint2str (lnum_buf, it->lnum_width, this_line + 1);
-      /* Append a blank.  */
+      if (EQ (Vdisplay_line_numbers, Qrelative))
+	lnum_offset = it->pt_lnum;
+
+      /* In L2R rows we need to append the blank separator, in R2L
+	 rows we need to prepend it.  But this function is usually
+	 called when no display elements were produced from the
+	 following line, so the paragraph direction might be unknown.
+	 Therefore we cheat and add 2 blanks, one on either side.  */
+      pint2str (lnum_buf, it->lnum_width + 1, eabs (this_line - lnum_offset));
       strcat (lnum_buf, " ");
 
       /* Setup for producing the glyphs.  */
@@ -20745,12 +20797,12 @@ maybe_produce_line_number (struct it *it)
       scratch_glyph_row.reversed_p = false;
       scratch_glyph_row.used[TEXT_AREA] = 0;
       SET_TEXT_POS (tem_it.position, 0, 0);
+      tem_it.face_id = merge_faces (it->f, Qline_number, 0, DEFAULT_FACE_ID);
       tem_it.bidi_it.type = WEAK_EN;
       /* According to UAX#9, EN goes up 2 levels in L2R paragraph and
-	 1 level in R2L paragraphs.  Emulate that.  */
+	 1 level in R2L paragraphs.  Emulate that, assuming we are in
+	 an L2R paragraph.  */
       tem_it.bidi_it.resolved_level = 2;
-      if (it->glyph_row && it->glyph_row->reversed_p)
-	tem_it.bidi_it.resolved_level = 1;
 
       /* Produce glyphs for the line number in a scratch glyph_row.  */
       int n_glyphs_before;
@@ -20784,13 +20836,17 @@ maybe_produce_line_number (struct it *it)
       struct glyph *p = it->glyph_row ? it->glyph_row->glyphs[TEXT_AREA] : NULL;
       short *u = it->glyph_row ? &it->glyph_row->used[TEXT_AREA] : NULL;
 
-      while (g < e)
+      for ( ; g < e; g++)
 	{
 	  it->current_x += g->pixel_width;
-	  it->hpos++;
+	  /* The following is important when this function is called
+	     from move_it_in_display_line_to: HPOS is incremented only
+	     when we are in the visible portion of the glyph row.  */
+	  if (it->current_x > it->first_visible_x)
+	    it->hpos++;
 	  if (p)
 	    {
-	      *p++ = *g++;
+	      *p++ = *g;
 	      (*u)++;
 	    }
 	}
@@ -20922,13 +20978,13 @@ display_line (struct it *it, int cursor_vpos)
 
       /* Produce line number, if needed.  */
       if (!NILP (Vdisplay_line_numbers))
-	maybe_produce_line_number (it);
+	maybe_produce_line_number (it, false);
     }
   else if (it->area == TEXT_AREA)
     {
       /* Line numbers should precede the line-prefix or wrap-prefix.  */
       if (!NILP (Vdisplay_line_numbers))
-	maybe_produce_line_number (it);
+	maybe_produce_line_number (it, false);
 
       /* We only do this when not calling move_it_in_display_line_to
 	 above, because that function calls itself handle_line_prefix.  */
@@ -21090,7 +21146,7 @@ display_line (struct it *it, int cursor_vpos)
 	    {
 	      /* Line numbers should precede the line-prefix or wrap-prefix.  */
 	      if (!NILP (Vdisplay_line_numbers))
-		maybe_produce_line_number (it);
+		maybe_produce_line_number (it, false);
 
 	      pending_handle_line_prefix = false;
 	      handle_line_prefix (it);
@@ -31778,6 +31834,9 @@ They are still logged to the *Messages* buffer.  */);
   /* Name of the face used to highlight trailing whitespace.  */
   DEFSYM (Qtrailing_whitespace, "trailing-whitespace");
 
+  /* Name of the face used to display line numbers.  */
+  DEFSYM (Qline_number, "line-number");
+
   /* Name and number of the face used to highlight escape glyphs.  */
   DEFSYM (Qescape_glyph, "escape-glyph");
 
@@ -32297,6 +32356,15 @@ after each newline that comes from buffer text.  */);
   Vdisplay_line_numbers = Qnil;
   DEFSYM (Qdisplay_line_numbers, "display-line-numbers");
   Fmake_variable_buffer_local (Qdisplay_line_numbers);
+  DEFSYM (Qrelative, "relative");
+
+  DEFVAR_LISP ("display-line-width", Vdisplay_line_width,
+    doc: /* Minimum width of space reserved for line number display.
+A positive number means reserve that many columns for line numbers,
+even if the actual number needs less space.
+The default value of nil means compute the space dynamically.
+Any other value is treated as nil.  */);
+  Vdisplay_line_width = Qnil;
 
   DEFVAR_BOOL ("inhibit-eval-during-redisplay", inhibit_eval_during_redisplay,
     doc: /* Non-nil means don't eval Lisp during redisplay.  */);

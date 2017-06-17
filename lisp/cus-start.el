@@ -584,6 +584,22 @@ since it could result in memory overflow and make Emacs crash."
 		       (const :tag "Grow only" :value grow-only))
 	      "25.1")
 	     (display-raw-bytes-as-hex display boolean "26.1")
+             (display-line-numbers display
+                                   (choice
+                                    (const :tag "Off (nil)" :value nil)
+                                    (const :tag "Absolute line numbers"
+                                           :value t)
+                                    (const :tag "Relative line numbers"
+                                           :value relative))
+                                   "26.1")
+             (display-line-width display
+                                 (choice
+                                  (const :tag "Dynamically computed"
+                                         :value nil)
+                                  (integer :menu-tag "Fixed number of columns"
+                                           :value 2
+                                           :format "%v"))
+                                 "26.1")
 	     ;; xfaces.c
 	     (scalable-fonts-allowed display boolean "22.1")
 	     ;; xfns.c

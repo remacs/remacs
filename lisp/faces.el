@@ -2465,6 +2465,14 @@ If you set `term-file-prefix' to nil, this function does nothing."
   :version "21.1"
   :group 'basic-faces)
 
+;; Definition stolen from linum.el.
+(defface line-number
+  '((t :inherit (shadow default)))
+  "Face for displaying line numbers.
+This face is used when `display-line-numbers' is non-nil."
+  :version "26.1"
+  :group 'basic-faces)
+
 (defface escape-glyph
   '((((background dark)) :foreground "cyan")
     ;; See the comment in minibuffer-prompt for
