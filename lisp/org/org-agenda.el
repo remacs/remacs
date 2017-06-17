@@ -2252,7 +2252,7 @@ The following commands are available:
 (org-defkey org-agenda-mode-map "!" 'org-agenda-toggle-deadlines)
 (org-defkey org-agenda-mode-map "G" 'org-agenda-toggle-time-grid)
 (org-defkey org-agenda-mode-map "r" 'org-agenda-redo)
-(org-defkey org-agenda-mode-map "g" (lambda () (interactive) (org-agenda-redo t)))
+(org-defkey org-agenda-mode-map "g" 'org-agenda-redo-all)
 (org-defkey org-agenda-mode-map "e" 'org-agenda-set-effort)
 (org-defkey org-agenda-mode-map "\C-c\C-xe" 'org-agenda-set-effort)
 (org-defkey org-agenda-mode-map "\C-c\C-x\C-e"
@@ -7309,6 +7309,17 @@ in the agenda."
     (and cols (org-called-interactively-p 'any) (org-agenda-columns))
     (org-goto-line line)
     (recenter window-line)))
+
+(defun org-agenda-redo-all (&optional exhaustive)
+  "Rebuild all agenda views in the current buffer.
+With a prefix argument, do so in all agenda buffers."
+  (interactive "P")
+  (if exhaustive
+      (dolist (buffer (buffer-list))
+        (with-current-buffer buffer
+          (when (derived-mode-p 'org-agenda-mode)
+            (org-agenda-redo t))))
+    (org-agenda-redo t)))
 
 (defvar org-global-tags-completion-table nil)
 (defvar org-agenda-filter-form nil)
