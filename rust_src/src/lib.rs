@@ -19,6 +19,7 @@ extern crate libc;
 extern crate rand;
 extern crate sha1;
 extern crate sha2;
+extern crate base64 as base64_crate;
 
 mod lisp;
 mod lists;
