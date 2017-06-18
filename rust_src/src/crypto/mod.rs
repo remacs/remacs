@@ -1,5 +1,3 @@
-extern crate libc;
-
 use sha1;
 use sha2::{Sha224, Digest, Sha256, Sha384, Sha512};
 use std::{ptr, slice};

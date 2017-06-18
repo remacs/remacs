@@ -1,23 +1,18 @@
-extern crate libc;
-extern crate rand;
-extern crate errno;
+use rand;
+use errno;
 
 use std::ffi::{CStr, CString};
 use std::io;
+
+use libc::{self, c_int, c_char, EEXIST, EINVAL};
 
 #[cfg(unix)]
 use libc::{O_CLOEXEC, O_EXCL, O_RDWR, O_CREAT, open};
 
 #[cfg(windows)]
 extern "C" {
-    fn sys_open(
-        filename: *const libc::c_char,
-        flags: libc::c_int,
-        mode: libc::c_int,
-    ) -> libc::c_int;
+    fn sys_open(filename: *const c_char, flags: c_int, mode: c_int) -> c_int;
 }
-
-use libc::{EEXIST, EINVAL};
 
 #[cfg(test)]
 use std::env;
@@ -27,7 +22,7 @@ use self::rand::Rng;
 const NUM_RETRIES: usize = 50;
 
 #[no_mangle]
-pub extern "C" fn rust_make_temp(template: *mut libc::c_char, flags: libc::c_int) -> libc::c_int {
+pub extern "C" fn rust_make_temp(template: *mut c_char, flags: c_int) -> c_int {
     let save_errno = errno::errno();
     let template_string = unsafe { CStr::from_ptr(template).to_string_lossy().into_owned() };
 
@@ -89,7 +84,7 @@ fn generate_temporary_filename(name: &mut String) {
 }
 
 #[cfg(unix)]
-fn open_temporary_file(name: &CString, flags: libc::c_int) -> io::Result<libc::c_int> {
+fn open_temporary_file(name: &CString, flags: c_int) -> io::Result<c_int> {
     unsafe {
         match open(
             name.as_ptr(),
@@ -103,7 +98,7 @@ fn open_temporary_file(name: &CString, flags: libc::c_int) -> io::Result<libc::c
 }
 
 #[cfg(windows)]
-fn open_temporary_file(name: &CString, flags: libc::c_int) -> io::Result<libc::c_int> {
+fn open_temporary_file(name: &CString, flags: c_int) -> io::Result<c_int> {
     let _O_CREAT = 0x0100;
     let _O_EXCL = 0x0400;
     let _O_RDWR = 0x0002;

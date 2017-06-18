@@ -1,7 +1,8 @@
-extern crate libc;
-
 use std::ptr;
+use libc::ptrdiff_t;
+
 use lisp::{LispObject, LispMiscType};
+use buffers::Lisp_Buffer;
 use remacs_sys::error;
 use remacs_macros::lisp_fn;
 
@@ -13,14 +14,14 @@ pub struct LispMarker {
     // insertion_type flag.
     padding: u16,
     // TODO: define a proper buffer struct.
-    buffer: *const libc::c_void,
+    buffer: *const Lisp_Buffer,
     next: *const LispMarker,
-    charpos: libc::ptrdiff_t,
-    bytepos: libc::ptrdiff_t,
+    charpos: ptrdiff_t,
+    bytepos: ptrdiff_t,
 }
 
 /// Return the char position of marker MARKER, as a C integer.
-pub fn marker_position(m_ptr: *const LispMarker) -> libc::ptrdiff_t {
+pub fn marker_position(m_ptr: *const LispMarker) -> ptrdiff_t {
     let m = unsafe { ptr::read(m_ptr) };
 
     let buf = m.buffer;

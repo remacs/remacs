@@ -5,6 +5,8 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 
 extern crate libc;
+extern crate rand;
+extern crate errno;
 
 mod files;
 mod math;
