@@ -636,7 +636,9 @@ the last key hit are used.
 If KEY is a menu item or a tool-bar button that is disabled, this command
 temporarily enables it to allow getting help on disabled items and buttons."
   (interactive
-   (pcase-let ((`(,key ,_up-event) (help-read-key-sequence)))
+   ;; Ignore mouse movement events because it's too easy to miss the
+   ;; message while moving the mouse.
+   (pcase-let ((`(,key ,_up-event) (help-read-key-sequence 'no-mouse-movement)))
      `(,key ,current-prefix-arg 1)))
   (princ (car (help--analyze-key key untranslated))
          (if insert (current-buffer) standard-output)))
@@ -704,11 +706,13 @@ function `key-binding'."
                (throw 'found x))))
           nil)))))
 
-(defun help-read-key-sequence ()
+(defun help-read-key-sequence (&optional no-mouse-movement)
   "Reads a key sequence from the user.
 Returns a list of the form (KEY UP-EVENT), where KEY is the key
 sequence, and UP-EVENT is the up-event that was discarded by
-reading KEY, or nil."
+reading KEY, or nil.
+If NO-MOUSE-MOVEMENT is non-nil, ignore key sequences starting
+with `mouse-movement' events."
   (let ((enable-disabled-menus-and-buttons t)
         (cursor-in-echo-area t)
         saved-yank-menu)
@@ -724,9 +728,11 @@ reading KEY, or nil."
 Describe the following key, mouse click, or menu item: "))
                 ((and (pred vectorp) (let `(,key0 . ,_) (aref key 0))
                       (guard (symbolp key0)) (let keyname (symbol-name key0)))
-                 (and (string-match "\\(mouse\\|down\\|click\\|drag\\)"
-                                    keyname)
-                      (not (sit-for (/ double-click-time 1000.0) t))))))
+                 (if no-mouse-movement
+                     (string-match "mouse-movement" keyname)
+                   (and (string-match "\\(mouse\\|down\\|click\\|drag\\)"
+                                      keyname)
+                        (not (sit-for (/ double-click-time 1000.0) t)))))))
           (list
            key
            ;; If KEY is a down-event, read and include the

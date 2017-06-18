@@ -373,6 +373,9 @@ use the local Emacs to edit remote files via Tramp.  See the node
 "emacsclient Options" in the user manual for the details.
 
 +++
+** 'describe-key-briefly' now ignores mouse movement events.
+
++++
 ** The new variable 'eval-expression-print-maximum-character' prevents
 large integers from being displayed as characters.
 
