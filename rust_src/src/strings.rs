@@ -172,14 +172,13 @@ fn string_to_multibyte(string: LispObject) -> LispObject {
 }
 
 /// Return a unibyte string with the same individual chars as STRING.
-/// -If STRING is unibyte, the result is STRING itself.
-/// -Otherwise it is a newly created string, with no text properties,
-/// -where each `eight-bit' character is converted to the corresponding byte.
-/// -If STRING contains a non-ASCII, non-`eight-bit' character,
-/// -an error is signaled.
+/// If STRING is unibyte, the result is STRING itself.
+/// Otherwise it is a newly created string, with no text properties,
+/// where each `eight-bit' character is converted to the corresponding byte.
+/// If STRING contains a non-ASCII, non-`eight-bit' character,
+/// an error is signaled.
 #[lisp_fn]
 fn string_to_unibyte(string: LispObject) -> LispObject {
-    let mut string_mut = string;
     let lispstr = string.as_string_or_error();
     if lispstr.is_multibyte() {
         let size = lispstr.len_bytes();
@@ -190,15 +189,15 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
         unsafe {
             if converted_size < size {
                 error(
-                    "Can't convert %dth character to unibyte\0".as_ptr(),
+                    "Can't convert %ldth character to unibyte\0".as_ptr(),
                     converted_size,
                 );
             }
 
             let raw_ptr = make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size);
-            string_mut = LispObject::from_raw(raw_ptr);
-        };
+            LispObject::from_raw(raw_ptr)
+        }
+    } else {
+        string
     }
-
-    string_mut
 }
