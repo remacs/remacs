@@ -565,7 +565,7 @@ Has a preference for looking backward when not directly on a symbol."
 	      (skip-chars-forward url-get-url-filename-chars))
 	  (setq start (point)))
 	(setq url (buffer-substring-no-properties start (point))))
-      (if (and url (string-match "^(.*)\\.?$" url))
+      (if (and url (string-match "^(\\(.*\\))\\.?$" url))
 	  (setq url (match-string 1 url)))
       (if (and url (string-match "^URL:" url))
 	  (setq url (substring url 4 nil)))
