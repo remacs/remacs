@@ -87,6 +87,14 @@ impl LispStringRef {
         self.data as *mut c_char
     }
 
+    pub fn const_data_ptr(&self) -> *const c_uchar {
+        self.data as *const c_uchar
+    }
+
+    pub fn const_sdata_ptr(&self) -> *const c_char {
+        self.data as *const c_char
+    }
+
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
         unsafe { slice::from_raw_parts(self.data as *const u8, self.len_bytes() as usize) }

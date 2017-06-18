@@ -979,33 +979,6 @@ If STRING is multibyte and contains a character of charset
   return string;
 }
 
-DEFUN ("string-to-unibyte", Fstring_to_unibyte, Sstring_to_unibyte,
-       1, 1, 0,
-       doc: /* Return a unibyte string with the same individual chars as STRING.
-If STRING is unibyte, the result is STRING itself.
-Otherwise it is a newly created string, with no text properties,
-where each `eight-bit' character is converted to the corresponding byte.
-If STRING contains a non-ASCII, non-`eight-bit' character,
-an error is signaled.  */)
-  (Lisp_Object string)
-{
-  CHECK_STRING (string);
-
-  if (STRING_MULTIBYTE (string))
-    {
-      ptrdiff_t chars = SCHARS (string);
-      unsigned char *str = xmalloc (chars);
-      ptrdiff_t converted = str_to_unibyte (SDATA (string), str, chars);
-
-      if (converted < chars)
-	error ("Can't convert the %"pD"dth character to unibyte", converted);
-      string = make_unibyte_string ((char *) str, chars);
-      xfree (str);
-    }
-  return string;
-}
-
-
 DEFUN ("copy-alist", Fcopy_alist, Scopy_alist, 1, 1, 0,
        doc: /* Return a copy of ALIST.
 This is an alist which represents the same mapping from objects to objects,
@@ -4047,7 +4020,6 @@ this variable.  */);
   defsubr (&Sstring_make_multibyte);
   defsubr (&Sstring_make_unibyte);
   defsubr (&Sstring_as_unibyte);
-  defsubr (&Sstring_to_unibyte);
   defsubr (&Scopy_alist);
   defsubr (&Ssubstring);
   defsubr (&Ssubstring_no_properties);

@@ -79,6 +79,7 @@ pub use symbols::Fsymbolp;
 pub use strings::Fstring_equal;
 pub use strings::Fstring_as_multibyte;
 pub use strings::Fstring_to_multibyte;
+pub use strings::Fstring_to_unibyte;
 pub use vectors::Flength;
 pub use vectors::Fsort;
 pub use lists::merge;
@@ -171,6 +172,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sstring_equal);
         defsubr(&*strings::Sstring_as_multibyte);
         defsubr(&*strings::Sstring_to_multibyte);
+        defsubr(&*strings::Sstring_to_unibyte);
         defsubr(&*character::Smax_char);
         defsubr(&*character::Scharacterp);
         defsubr(&*vectors::Slength);
