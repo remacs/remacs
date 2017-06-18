@@ -7,7 +7,8 @@ use libc;
 use lisp::LispObject;
 use multibyte;
 use remacs_sys::{SYMBOL_NAME, EmacsInt, error, base64_encode_1, base64_decode_1, make_string,
-                 make_uninit_multibyte_string, string_to_multibyte as c_string_to_multibyte};
+                 make_uninit_multibyte_string, string_to_multibyte as c_string_to_multibyte,
+                 make_unibyte_string};
 use remacs_macros::lisp_fn;
 
 pub static MIME_LINE_LENGTH: isize = 76;
@@ -168,4 +169,36 @@ fn string_as_multibyte(string: LispObject) -> LispObject {
 fn string_to_multibyte(string: LispObject) -> LispObject {
     let _ = string.as_string_or_error();
     unsafe { LispObject::from_raw(c_string_to_multibyte(string.to_raw())) }
+}
+
+/// Return a unibyte string with the same individual chars as STRING.
+/// -If STRING is unibyte, the result is STRING itself.
+/// -Otherwise it is a newly created string, with no text properties,
+/// -where each `eight-bit' character is converted to the corresponding byte.
+/// -If STRING contains a non-ASCII, non-`eight-bit' character,
+/// -an error is signaled.
+#[lisp_fn]
+fn string_to_unibyte(string: LispObject) -> LispObject {
+    let mut string_mut = string;
+    let lispstr = string.as_string_or_error();
+    if lispstr.is_multibyte() {
+        let size = lispstr.len_bytes();
+        let mut buffer: Vec<libc::c_uchar> = Vec::with_capacity(size as usize);
+        let converted_size =
+            multibyte::str_to_unibyte(lispstr.const_data_ptr(), buffer.as_mut_ptr(), size);
+
+        unsafe {
+            if converted_size < size {
+                error(
+                    "Can't convert %dth character to unibyte\0".as_ptr(),
+                    converted_size,
+                );
+            }
+
+            let raw_ptr = make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size);
+            string_mut = LispObject::from_raw(raw_ptr);
+        };
+    }
+
+    string_mut
 }
