@@ -121,6 +121,7 @@ BODY should be a list of Lisp expressions.
 (defmacro setq-local (var val)
   "Set variable VAR to value VAL in current buffer."
   ;; Can't use backquote here, it's too early in the bootstrap.
+  (declare (debug (symbolp form)))
   (list 'set (list 'make-local-variable (list 'quote var)) val))
 
 (defmacro defvar-local (var val &optional docstring)
