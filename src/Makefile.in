@@ -639,13 +639,13 @@ mostlyclean:
 	rm -f globals.h gl-stamp
 	rm -f *.res *.tmp
 clean: mostlyclean
-	rm -f emacs-*.*.*$(EXEEXT) emacs$(EXEEXT) $(DEPDIR)/*
+	rm -f emacs-*.*.*[0-9]$(EXEEXT) emacs$(EXEEXT) $(DEPDIR)/*
 
 ## bootstrap-clean is used to clean up just before a bootstrap.
 ## It should remove all files generated during a compilation/bootstrap,
 ## but not things like config.status or TAGS.
 bootstrap-clean: clean
-	rm -f epaths.h config.h config.stamp
+	rm -f emacs-module.h epaths.h config.h config.stamp
 	if test -f ./.gdbinit; then \
 	  mv ./.gdbinit ./.gdbinit.save; \
 	  if test -f "$(srcdir)/.gdbinit"; then rm -f ./.gdbinit.save; \
