@@ -1,10 +1,8 @@
 #![allow(non_upper_case_globals)]
 #![macro_use]
 
-/// This module contains Rust definitions whose C equivalents live in
-/// lisp.h.
-
-extern crate libc;
+//! This module contains Rust definitions whose C equivalents live in
+//! lisp.h.
 
 #[cfg(test)]
 use std::cmp::max;
@@ -12,6 +10,7 @@ use std::mem;
 use std::slice;
 use std::ops::Deref;
 use std::fmt::{Debug, Formatter, Error};
+use libc::{c_void, intptr_t};
 
 use marker::{LispMarker, marker_position};
 use multibyte::{LispStringRef, MAX_CHAR};
@@ -144,8 +143,8 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn get_untaggedptr(self) -> *mut libc::c_void {
-        (self.to_raw() & VALMASK) as libc::intptr_t as *mut libc::c_void
+    pub fn get_untaggedptr(self) -> *mut c_void {
+        (self.to_raw() & VALMASK) as intptr_t as *mut c_void
     }
 }
 
@@ -581,7 +580,7 @@ impl LispCons {
     /// Check that "self" is an impure (i.e. not readonly) cons cell.
     pub fn check_impure(self) {
         unsafe {
-            CHECK_IMPURE(self.0.to_raw(), self._extract() as *const libc::c_void);
+            CHECK_IMPURE(self.0.to_raw(), self._extract() as *const c_void);
         }
     }
 }

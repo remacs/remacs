@@ -2,7 +2,7 @@
 
 use std::ptr;
 
-use libc;
+use libc::{self, c_char, c_void, ptrdiff_t};
 
 use lisp::LispObject;
 use multibyte;
@@ -29,12 +29,12 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
     // We will need 33 1/3% more space, plus a newline every 76 characters(MIME_LINE_LENGTH)
     // and then round up
     let length = string.len_bytes();
-    let mut allength: libc::ptrdiff_t = length + length / 3 + 1;
+    let mut allength: ptrdiff_t = length + length / 3 + 1;
     allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
     // This function uses SAFE_ALLOCA in the c layer, however I cannot find an equivalent
     // for rust. Instead, we will use a Vec to store the temporary char buffer.
-    let mut buffer: Vec<libc::c_char> = Vec::with_capacity(allength as usize);
+    let mut buffer: Vec<c_char> = Vec::with_capacity(allength as usize);
     unsafe {
         let encoded = buffer.as_mut_ptr();
         let encodedLength = base64_encode_1(
@@ -63,7 +63,7 @@ fn base64_decode_string(string: LispObject) -> LispObject {
     let mut string = string.as_string_or_error();
 
     let length = string.len_bytes();
-    let mut buffer: Vec<libc::c_char> = Vec::with_capacity(length as usize);
+    let mut buffer: Vec<c_char> = Vec::with_capacity(length as usize);
     let mut decoded_string: LispObject = LispObject::constant_nil();
 
     unsafe {
@@ -111,8 +111,8 @@ fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
         s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes() &&
             unsafe {
                 libc::memcmp(
-                    s1.data_ptr() as *mut libc::c_void,
-                    s2.data_ptr() as *mut libc::c_void,
+                    s1.data_ptr() as *mut c_void,
+                    s2.data_ptr() as *mut c_void,
                     s1.len_bytes() as usize,
                 ) == 0
             },
