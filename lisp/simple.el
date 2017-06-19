@@ -1270,25 +1270,18 @@ and the greater of them is not at the start of a line."
 		done)))
 	(- (buffer-size) (forward-line (buffer-size)))))))
 
-(defun line-number-at-pos (&optional pos absolute-p)
-  "Return buffer line number at position POS.
+(defun line-number-at-pos (&optional pos)
+  "Return (narrowed) buffer line number at position POS.
 If POS is nil, use current buffer location.
-
-If ABSOLUTE-P is nil, the default, counting starts
-at (point-min), so the value refers to the contents of the
-accessible portion of the (potentially narrowed) buffer.  If
-ABSOLUTE-P is non-nil, ignore any narrowing and return the
-absolute line number."
-  (save-restriction
-    (when absolute-p
-      (widen))
-    (let ((opoint (or pos (point))) start)
-      (save-excursion
-        (goto-char (point-min))
-        (setq start (point))
-        (goto-char opoint)
-        (forward-line 0)
-        (1+ (count-lines start (point)))))))
+Counting starts at (point-min), so the value refers
+to the contents of the accessible portion of the buffer."
+  (let ((opoint (or pos (point))) start)
+    (save-excursion
+      (goto-char (point-min))
+      (setq start (point))
+      (goto-char opoint)
+      (forward-line 0)
+      (1+ (count-lines start (point))))))
 
 (defun what-cursor-position (&optional detail)
   "Print info on cursor position (on screen and within buffer).
