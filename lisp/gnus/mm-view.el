@@ -488,7 +488,8 @@ If MODE is not set, try to find mode automatically."
 		(funcall mode))
 	    (let ((auto-mode-alist
 		   (delq (rassq 'doc-view-mode-maybe auto-mode-alist)
-			 (copy-sequence auto-mode-alist))))
+			 (copy-sequence auto-mode-alist)))
+		  (local-enable-local-variables nil))
 	      (set-auto-mode)))
 	  ;; The mode function might have already turned on font-lock.
 	  ;; Do not fontify if the guess mode is fundamental.
