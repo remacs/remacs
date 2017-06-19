@@ -286,17 +286,6 @@ DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
   return Qnil;
 }
 
-DEFUN ("multibyte-string-p", Fmultibyte_string_p, Smultibyte_string_p,
-       1, 1, 0,
-       doc: /* Return t if OBJECT is a multibyte string.
-Return nil if OBJECT is either a unibyte string, or not a string.  */)
-  (Lisp_Object object)
-{
-  if (STRINGP (object) && STRING_MULTIBYTE (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("char-table-p", Fchar_table_p, Schar_table_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a char-table.  */)
   (Lisp_Object object)
@@ -3187,7 +3176,6 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
-  defsubr (&Smultibyte_string_p);
   defsubr (&Svectorp);
   defsubr (&Schar_table_p);
   defsubr (&Svector_or_char_table_p);
