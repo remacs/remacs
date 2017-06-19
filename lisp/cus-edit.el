@@ -2518,7 +2518,10 @@ try matching its doc string against `custom-guess-doc-alist'."
 		  (copy-sequence type)
 		(list type))))
     (when options
-      (widget-put tmp :options options))
+      ;; This used to use widget-put, but with strict plists that
+      ;; fails when type is an even-length list, eg (repeat character).
+      ;; Passing our result through widget-convert makes it a valid widget.
+      (setcdr tmp (append (list :options options) (cdr tmp))))
     tmp))
 
 (defun custom-variable-value-create (widget)
