@@ -755,6 +755,9 @@ header's value.
 where the GnuPG home directory (used for signature verification) is
 located and whether GnuPG's option "--homedir" is used or not.
 
+---
+*** Deleting a package no longer respects 'delete-by-moving-to-trash'.
+
 ** Tramp
 
 +++
