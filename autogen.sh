@@ -45,8 +45,10 @@ autoconf_min=`sed -n 's/^ *AC_PREREQ(\([0-9\.]*\)).*/\1/p' configure.ac`
 ## Also note that we do not handle micro versions.
 get_version ()
 {
-    ## Remove eg "./autogen.sh: line 50: autoconf: command not found".
-    $1 --version 2>&1 | sed -e '/not found/d' -e 's/.* //' -n -e '1 s/\([0-9][0-9\.]*\).*/\1/p'
+    vers=`$1 --version 2> /dev/null`
+    [ x"$vers" = x ] && return 1
+
+    echo "$vers" | sed -n -e '1 s/.* \([0-9][0-9\.]*\).*/\1/p'
 }
 
 ## $1 = version string, eg "2.59"
@@ -82,9 +84,15 @@ check_version ()
         printf '%s' "(using $uprog0=$uprog) "
     fi
 
+    found=`command -v $uprog 2> /dev/null`
+    [ x"$found" = x ] && return 1
+
     have_version=`get_version $uprog`
 
-    [ x"$have_version" = x ] && return 1
+    ## We should really check the return status of get_version.
+    ## Non-zero means a broken executable, otherwise we failed to
+    ## parse the version string.
+    [ x"$have_version" = x ] && return 4
 
     have_maj=`major_version $have_version`
     need_maj=`major_version $2`
@@ -158,6 +166,7 @@ if $do_autoconf; then
           0) stat="ok" ;;
           1) stat="missing" ;;
           2) stat="too old" ;;
+          4) stat="broken?" ;;
           *) stat="unable to check" ;;
       esac
 
