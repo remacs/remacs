@@ -764,7 +764,6 @@ cannot be completed sensibly: `custom-ident',
   "Self inserting keys which should trigger re-indentation."
   :version "22.2"
   :type '(repeat character)
-  :options '((?\} ?\;))
   :group 'css)
 
 (defvar css-mode-syntax-table
