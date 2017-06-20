@@ -206,7 +206,5 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
 /// Return nil if OBJECT is either a unibyte string, or not a string.
 #[lisp_fn]
 fn multibyte_string_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(
-        object.is_string() && object.as_string_or_error().is_multibyte(),
-    )
+    LispObject::from_bool(object.as_string().map_or(false, |s| s.is_multibyte()))
 }
