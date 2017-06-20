@@ -277,15 +277,6 @@ interned in the initial obarray.  */)
   return Qnil;
 }
 
-DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a vector.  */)
-  (Lisp_Object object)
-{
-  if (VECTORP (object))
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("multibyte-string-p", Fmultibyte_string_p, Smultibyte_string_p,
        1, 1, 0,
        doc: /* Return t if OBJECT is a multibyte string.
@@ -3188,7 +3179,6 @@ syms_of_data (void)
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
   defsubr (&Smultibyte_string_p);
-  defsubr (&Svectorp);
   defsubr (&Schar_table_p);
   defsubr (&Svector_or_char_table_p);
   defsubr (&Sbool_vector_p);
