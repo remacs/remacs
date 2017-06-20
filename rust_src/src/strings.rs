@@ -201,3 +201,10 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
         string
     }
 }
+
+/// Return t if OBJECT is a multibyte string.
+/// Return nil if OBJECT is either a unibyte string, or not a string.
+#[lisp_fn]
+fn multibyte_string_p(object: LispObject) -> LispObject {
+    LispObject::from_bool(object.as_string().map_or(false, |s| s.is_multibyte()))
+}
