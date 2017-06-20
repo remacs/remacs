@@ -403,7 +403,7 @@ Medium tasks:
 - [ ] Teach `describe-function` to find functions defined in Rust.
 - [ ] Expand our Travis configuration to run 'make check', so we know
   remacs passes Emacs' internal test suite.
-- [ ] Expand our Travis configuration to ensure that Rust code has been
+- [x] Expand our Travis configuration to ensure that Rust code has been
   formatted with rustfmt
 - [ ] Set up bors/homu.
 - [ ] Set up a badge tracking pub struct/function coverage using

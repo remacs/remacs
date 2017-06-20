@@ -35,14 +35,17 @@ pub fn parse(item: &syn::Item) -> Result<Function> {
                 return Err("lisp functions can only use \"Rust\" ABI");
             }
 
-            let args = decl.inputs.iter().map(get_fn_arg_ident).collect::<Result<_>>()?;
+            let args = decl.inputs
+                .iter()
+                .map(get_fn_arg_ident)
+                .collect::<Result<_>>()?;
 
             Ok(Function {
                 name: item.ident.clone(),
                 fntype: parse_function_type(&decl)?,
                 args: args,
             })
-        },
+        }
         _ => Err("`lisp_fn` attribute can only be used on functions"),
     }
 }
@@ -68,7 +71,7 @@ fn is_rust_abi(abi: &Option<syn::Abi>) -> bool {
                 syn::Abi::Named(_) => false,
                 syn::Abi::Rust => true,
             }
-        },
+        }
         None => true,
     }
 }
@@ -77,12 +80,10 @@ fn get_fn_arg_ident(fn_arg: &syn::FnArg) -> Result<syn::Ident> {
     match *fn_arg {
         syn::FnArg::Captured(ref pat, _) => {
             match *pat {
-                syn::Pat::Ident(_, ref ident, _) => {
-                    Ok(ident.clone())
-                },
+                syn::Pat::Ident(_, ref ident, _) => Ok(ident.clone()),
                 _ => Err("invalid function argument"),
             }
-        },
+        }
         _ => Err("invalid function argument"),
     }
 }
@@ -94,18 +95,18 @@ fn parse_function_type(fndecl: &syn::FnDecl) -> Result<LispFnType> {
             syn::FnArg::Captured(_, ref ty) |
             syn::FnArg::Ignored(ref ty) => {
                 match parse_arg_type(ty) {
-                    ArgType::LispObject => {},
+                    ArgType::LispObject => {}
                     ArgType::LispObjectSlice => {
                         if fndecl.inputs.len() != 1 {
                             return Err("`LispObject` and `[LispObject]` cannot be mixed");
                         }
                         return Ok(LispFnType::Many);
-                    },
+                    }
                     ArgType::Other => {
                         return Err("lisp functions should only have `LispObject` args");
-                    },
+                    }
                 }
-            },
+            }
             _ => return Err("lisp functions cannot have `self` arguments"),
         }
     }
@@ -130,7 +131,7 @@ fn parse_arg_type(fn_arg: &syn::Ty) -> ArgType {
                     ArgType::Other
                 }
             }
-        },
+        }
         syn::Ty::Rptr(ref lifetime, ref mut_ty) => {
             if lifetime.is_some() {
                 ArgType::Other
@@ -151,23 +152,22 @@ fn parse_arg_type(fn_arg: &syn::Ty) -> ArgType {
                                                 ArgType::Other
                                             }
                                         }
-                                    },
+                                    }
                                     _ => ArgType::Other,
                                 }
                             }
                             _ => ArgType::Other,
                         }
-                    },
+                    }
                 }
             }
-        },
+        }
         _ => ArgType::Other,
     }
 }
 
 fn is_lisp_object(path: &syn::Path) -> bool {
     let str_path = format!("{}", quote!(#path));
-    str_path == "LispObject" ||
-        str_path == "lisp :: LispObject" ||
+    str_path == "LispObject" || str_path == "lisp :: LispObject" ||
         str_path == ":: lisp :: LispObject"
 }
