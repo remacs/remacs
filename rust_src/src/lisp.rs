@@ -485,6 +485,12 @@ impl LispObject {
         })
     }
 
+    pub fn is_font(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_psuedovector(PseudovecType::PVEC_FONT)
+        })
+    }
+
     pub fn is_font_spec(self) -> bool {
         // return FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_SPEC_MAX;
         unimplemented!()
