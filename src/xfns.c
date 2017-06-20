@@ -2875,7 +2875,7 @@ x_window (struct frame *f, long window_prompting)
   XtSetArg (al[ac], XtNdepth, FRAME_DISPLAY_INFO (f)->n_planes); ac++;
   XtSetArg (al[ac], XtNcolormap, FRAME_X_COLORMAP (f)); ac++;
   XtSetArg (al[ac], XtNborderWidth, 0); ac++;
-  frame_widget = XtCreateWidget (f->namebuf, emacsFrameClass, pane_widget,
+  frame_widget = XtCreateWidget (f->namebuf, emacsFrameClass (), pane_widget,
 				 al, ac);
 
   f->output_data.x->edit_widget = frame_widget;
