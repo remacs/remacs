@@ -591,13 +591,14 @@ settings being applied, but still respect file-local ones.")
 ;; ignore.  So AFAICS the only reason this variable exists is for a
 ;; minor convenience feature for handling of an obsolete Rmail file format.
 (defvar local-enable-local-variables t
-  "Like `enable-local-variables' but meant for buffer-local bindings.
+  "Like `enable-local-variables', except for major mode in a -*- line.
 The meaningful values are nil and non-nil.  The default is non-nil.
-If a major mode sets this to nil, buffer-locally, then any local
-variables list in a file visited in that mode will be ignored.
+It should be set in a buffer-local fashion.
 
-This variable does not affect the use of major modes specified
-in a -*- line.")
+Setting this to nil has the same effect as setting `enable-local-variables'
+to nil, except that it does not ignore any mode: setting in a -*- line.
+Unless this difference matters to you, you should set `enable-local-variables'
+instead of this variable.")
 
 (defcustom enable-local-eval 'maybe
   "Control processing of the \"variable\" `eval' in a file's local variables.
