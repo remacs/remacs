@@ -475,12 +475,12 @@ If MODE is not set, try to find mode automatically."
       (require 'font-lock)
       ;; I find font-lock a bit too verbose.
       (let ((font-lock-verbose nil)
-	    (font-lock-support-mode nil))
+	    (font-lock-support-mode nil)
+	    (enable-local-variables nil))
 	;; Disable support modes, e.g., jit-lock, lazy-lock, etc.
 	;; Note: XEmacs people use `font-lock-mode-hook' to run those modes.
 	(set (make-local-variable 'font-lock-mode-hook) nil)
         (setq buffer-file-name (mm-handle-filename handle))
-        (set (make-local-variable 'enable-local-variables) nil)
 	(with-demoted-errors
 	  (if mode
 	      (save-window-excursion
@@ -488,8 +488,7 @@ If MODE is not set, try to find mode automatically."
 		(funcall mode))
 	    (let ((auto-mode-alist
 		   (delq (rassq 'doc-view-mode-maybe auto-mode-alist)
-			 (copy-sequence auto-mode-alist)))
-		  (local-enable-local-variables nil))
+			 (copy-sequence auto-mode-alist))))
 	      (set-auto-mode)))
 	  ;; The mode function might have already turned on font-lock.
 	  ;; Do not fontify if the guess mode is fundamental.
