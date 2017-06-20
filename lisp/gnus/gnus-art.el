@@ -3455,9 +3455,14 @@ possible values."
 	      (when (looking-at "[^:]+:[\t ]*")
 		(setq bface (get-text-property (match-beginning 0) 'face)
 		      eface (get-text-property (match-end 0) 'face)))
-	      (delete-region pos (or (text-property-any pos (point-max)
-							'gnus-date-type nil)
-				     (point-max))))
+	      ;; Note: a feature like `gnus-treat-unfold-headers' breaks
+	      ;; the continuity of text props of a multi-line Date header,
+	      ;; that a user-defined date format might create, by adding
+	      ;; spaces.  So, don't rely on gnus-date-type or original-date
+	      ;; text prop in case of searching the header boundary.
+	      (delete-region pos (progn
+				   (gnus-article-forward-header)
+				   (point))))
 	    (unless date ;; the 1st time
 	      (goto-char (point-min))
 	      (while (re-search-forward "^Date:[\t ]*" nil t)
