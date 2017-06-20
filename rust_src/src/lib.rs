@@ -82,6 +82,7 @@ pub use strings::Fstring_to_multibyte;
 pub use strings::Fstring_to_unibyte;
 pub use vectors::Flength;
 pub use vectors::Fsort;
+pub use vectors::Fvectorp;
 pub use lists::merge;
 
 // Cryptographic functions used in the C codebase.
@@ -177,6 +178,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*character::Scharacterp);
         defsubr(&*vectors::Slength);
         defsubr(&*vectors::Ssort);
+        defsubr(&*vectors::Svectorp);
         defsubr(&*crypto::Sbuffer_hash);
 
         floatfns::init_float_syms();

@@ -221,3 +221,9 @@ fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
         unsafe { wrong_type_argument(Qsequencep, seq.to_raw()) }
     }
 }
+
+/// Return t if OBJECT is a vector.
+#[lisp_fn]
+fn vectorp(object: LispObject) -> LispObject {
+    LispObject::from_bool(object.is_vector())
+}
