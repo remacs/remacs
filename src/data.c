@@ -3067,18 +3067,6 @@ syms_of_data (void)
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
   defsubr (&Smultibyte_string_p);
-  defsubr (&Schar_table_p);
-  defsubr (&Svector_or_char_table_p);
-  defsubr (&Sbool_vector_p);
-  defsubr (&Sarrayp);
-  defsubr (&Ssequencep);
-  defsubr (&Sbufferp);
-  defsubr (&Ssubrp);
-  defsubr (&Sbyte_code_function_p);
-  defsubr (&Schar_or_string_p);
-  defsubr (&Sthreadp);
-  defsubr (&Smutexp);
-  defsubr (&Scondition_variable_p);
   defsubr (&Ssymbol_function);
   defsubr (&Sindirect_function);
   defsubr (&Ssymbol_plist);
