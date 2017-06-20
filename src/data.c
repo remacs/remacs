@@ -277,17 +277,6 @@ interned in the initial obarray.  */)
   return Qnil;
 }
 
-DEFUN ("multibyte-string-p", Fmultibyte_string_p, Smultibyte_string_p,
-       1, 1, 0,
-       doc: /* Return t if OBJECT is a multibyte string.
-Return nil if OBJECT is either a unibyte string, or not a string.  */)
-  (Lisp_Object object)
-{
-  if (STRINGP (object) && STRING_MULTIBYTE (object))
-    return Qt;
-  return Qnil;
-}
-
 #ifdef HAVE_MODULES
 DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
        doc: /* Return t if OBJECT is a module user pointer.  */)
@@ -3066,7 +3055,6 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
-  defsubr (&Smultibyte_string_p);
   defsubr (&Ssymbol_function);
   defsubr (&Sindirect_function);
   defsubr (&Ssymbol_plist);
