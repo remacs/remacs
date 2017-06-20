@@ -23,6 +23,6 @@ fn characterp(object: LispObject, _ignore: LispObject) -> LispObject {
 
 /// Return t if OBJECT is a character or a string.
 #[lisp_fn]
-fn character_or_string_p(object: LispObject) -> LispObject {
+fn char_or_string_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_character() || object.is_string())
 }

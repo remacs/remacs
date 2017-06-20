@@ -175,7 +175,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sstring_to_unibyte);
         defsubr(&*character::Smax_char);
         defsubr(&*character::Scharacterp);
-        defsubr(&*character::Scharacter_or_string_p);
+        defsubr(&*character::Schar_or_string_p);
         defsubr(&*vectors::Sarrayp);
         defsubr(&*vectors::Sbool_vector_p);
         defsubr(&*vectors::Sbufferp);
