@@ -286,6 +286,15 @@ DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
   return Qnil;
 }
 
+DEFUN ("vectorp", Fvectorp, Svectorp, 1, 1, 0,
+       doc: /* Return t if OBJECT is a vector.  */)
+  (Lisp_Object object)
+{
+  if (VECTORP (object))
+    return Qt;
+  return Qnil;
+}
+
 DEFUN ("multibyte-string-p", Fmultibyte_string_p, Smultibyte_string_p,
        1, 1, 0,
        doc: /* Return t if OBJECT is a multibyte string.
@@ -293,6 +302,61 @@ Return nil if OBJECT is either a unibyte string, or not a string.  */)
   (Lisp_Object object)
 {
   if (STRINGP (object) && STRING_MULTIBYTE (object))
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("char-table-p", Fchar_table_p, Schar_table_p, 1, 1, 0,
+       doc: /* Return t if OBJECT is a char-table.  */)
+  (Lisp_Object object)
+{
+  if (CHAR_TABLE_P (object))
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("vector-or-char-table-p", Fvector_or_char_table_p,
+       Svector_or_char_table_p, 1, 1, 0,
+       doc: /* Return t if OBJECT is a char-table or vector.  */)
+  (Lisp_Object object)
+{
+  if (VECTORP (object) || CHAR_TABLE_P (object))
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("bool-vector-p", Fbool_vector_p, Sbool_vector_p, 1, 1, 0,
+       doc: /* Return t if OBJECT is a bool-vector.  */)
+  (Lisp_Object object)
+{
+  if (BOOL_VECTOR_P (object))
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("arrayp", Farrayp, Sarrayp, 1, 1, 0,
+       doc: /* Return t if OBJECT is an array (string or vector).  */)
+  (Lisp_Object object)
+{
+  if (ARRAYP (object))
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("sequencep", Fsequencep, Ssequencep, 1, 1, 0,
+       doc: /* Return t if OBJECT is a sequence (list or array).  */)
+  (register Lisp_Object object)
+{
+  if (CONSP (object) || NILP (object) || ARRAYP (object))
+    return Qt;
+  return Qnil;
+}
+
+DEFUN ("bufferp", Fbufferp, Sbufferp, 1, 1, 0,
+       doc: /* Return t if OBJECT is an editor buffer.  */)
+  (Lisp_Object object)
+{
+  if (BUFFERP (object))
     return Qt;
   return Qnil;
 }
