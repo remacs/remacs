@@ -50,12 +50,6 @@
 ;;
 ;; The umask command changes the default file permissions for newly
 ;; created files.  It uses the same syntax as bash.
-;;
-;;;_* `version'
-;;
-;; This command reports the version number for Eshell and all its
-;; dependent module, including the date when those modules were last
-;; modified.
 
 ;;; Code:
 
