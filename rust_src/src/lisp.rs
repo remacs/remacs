@@ -20,10 +20,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
                  Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp, circular_list,
                  internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp, Qwholenump, Qvectorp,
-                 SYMBOL_NAME, PseudovecType, Qinteger, Qsymbol, Qstring, Qcons, Qfloat,
-                 Qwindow_configuration, Qprocess, Qwindow, Qcompiled_function, Qbuffer, Qframe,
-                 Qvector, Qchar_table, Qbool_vector, Qhash_table, Qthread, Qmutex,
-                 Qcondition_variable, Qsubr, Qfont_spec, Qfont_entity, Qfont_object};
+                 SYMBOL_NAME, PseudovecType};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -487,23 +484,8 @@ impl LispObject {
 
     pub fn is_font(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_psuedovector(PseudovecType::PVEC_FONT)
+            v.is_pseudovector(PseudovecType::PVEC_FONT)
         })
-    }
-
-    pub fn is_font_spec(self) -> bool {
-        // return FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_SPEC_MAX;
-        unimplemented!()
-    }
-
-    pub fn is_font_entity(self) -> bool {
-        // return FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_ENTITY_MAX;
-        unimplemented!()
-    }
-
-    pub fn is_font_object(self) -> bool {
-        // return FONTP (x) && (ASIZE (x) & PSEUDOVECTOR_SIZE_MASK) == FONT_OBJECT_MAX;
-        unimplemented!()
     }
 }
 
@@ -968,73 +950,6 @@ pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
                 }
             }
             x
-        }
-    }
-}
-
-impl LispObject {
-    pub fn type_of(self) -> LispObject {
-        unsafe {
-            let tp: CLisp_Object = match self.get_type() {
-                LispType::Lisp_Int0 => Qinteger,
-                LispType::Lisp_Int1 => Qinteger,
-                LispType::Lisp_Symbol => Qsymbol,
-                LispType::Lisp_String => Qstring,
-                LispType::Lisp_Cons => Qcons,
-                // TODO: figure out how to make a LispObject from LispMisctype
-                // LispType::Lisp_Misc => {
-                //     match LispObject::from_raw(unsafe { XMISCTYPE(self.to_raw()) }) {
-                //         LispMiscType::Marker => Qmarker,
-                //         LispMiscType::Overlay => Qoverlay,
-                //         // from lisp.h
-                //         // Currently floats are not a misc type,
-                //         // but let's define this in case we want to change that.
-                //         // LispMiscType::Float => Qfloat,
-                //         LispMiscType::Finalizer => Qfinalizer,
-                //         _ => panic!(),
-                //     }
-                // }
-                LispType::Lisp_Vectorlike => {
-                    if self.is_configuration() {
-                        Qwindow_configuration
-                    } else if self.is_process() {
-                        Qprocess
-                    } else if self.is_window() {
-                        Qwindow
-                    } else if self.is_subr() {
-                        Qsubr
-                    } else if self.is_byte_code_function() {
-                        Qcompiled_function
-                    } else if self.is_buffer() {
-                        Qbuffer
-                    } else if self.is_char_table() {
-                        Qchar_table
-                    } else if self.is_bool_vector() {
-                        Qbool_vector
-                    } else if self.is_frame() {
-                        Qframe
-                    } else if self.is_hash_table() {
-                        Qhash_table
-                    } else if self.is_font_spec() {
-                        Qfont_spec
-                    } else if self.is_font_entity() {
-                        Qfont_entity
-                    } else if self.is_font_object() {
-                        Qfont_object
-                    } else if self.is_thread() {
-                        Qthread
-                    } else if self.is_mutex() {
-                        Qmutex
-                    } else if self.is_condition_variable() {
-                        Qcondition_variable
-                    } else {
-                        Qvector
-                    }
-                }
-                LispType::Lisp_Float => Qfloat,
-                _ => panic!(),
-            };
-            LispObject::from_raw(tp)
         }
     }
 }
