@@ -6077,16 +6077,18 @@ specifies the list of buffers to kill, asking for approval for each one."
 	   (kill-buffer-ask buffer)))
     (setq list (cdr list))))
 
-(defun kill-matching-buffers (regexp &optional internal-too)
+(defun kill-matching-buffers (regexp &optional internal-too no-ask)
   "Kill buffers whose name matches the specified REGEXP.
-The optional second argument indicates whether to kill internal buffers too."
+Ignores buffers whose name starts with a space, unless optional
+prefix argument INTERNAL-TOO is non-nil.  Asks before killing
+each buffer, unless NO-ASK is non-nil."
   (interactive "sKill buffers matching this regular expression: \nP")
   (dolist (buffer (buffer-list))
     (let ((name (buffer-name buffer)))
       (when (and name (not (string-equal name ""))
                  (or internal-too (/= (aref name 0) ?\s))
                  (string-match regexp name))
-        (kill-buffer-ask buffer)))))
+        (funcall (if no-ask 'kill-buffer 'kill-buffer-ask) buffer)))))
 
 
 (defun rename-auto-save-file ()
