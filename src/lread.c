@@ -4730,11 +4730,12 @@ The remaining ENTRIES in the alist element describe the functions and
 variables defined in that file, the features provided, and the
 features required.  Each entry has the form `(provide . FEATURE)',
 `(require . FEATURE)', `(defun . FUNCTION)', `(autoload . SYMBOL)',
-`(defface . SYMBOL)', or `(t . SYMBOL)'.  Entries like `(t . SYMBOL)'
-may precede a `(defun . FUNCTION)' entry, and means that SYMBOL was an
-autoload before this file redefined it as a function.  In addition,
-entries may also be single symbols, which means that SYMBOL was
-defined by `defvar' or `defconst'.
+`(defface . SYMBOL)', `(define-type . SYMBOL)',
+`(cl-defmethod METHOD SPECIALIZERS)', or `(t . SYMBOL)'.
+Entries like `(t . SYMBOL)' may precede a `(defun . FUNCTION)' entry,
+and means that SYMBOL was an autoload before this file redefined it
+as a function.  In addition, entries may also be single symbols,
+which means that symbol was defined by `defvar' or `defconst'.
 
 During preloading, the file name recorded is relative to the main Lisp
 directory.  These file names are converted to absolute at startup.  */);
