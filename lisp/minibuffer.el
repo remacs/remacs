@@ -3006,7 +3006,7 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
 	(let ((poss ()))
 	  (dolist (c compl)
 	    (when (string-match-p regex c) (push c poss)))
-	  poss)))))
+	  (nreverse poss))))))
 
 (defun completion-pcm--hilit-commonality (pattern completions)
   (when completions
@@ -3258,7 +3258,7 @@ the same set of elements."
                       "\\)\\'")))
       (dolist (f all)
         (unless (string-match-p re f) (push f try)))
-      (or try all))))
+      (or (nreverse try) all))))
 
 
 (defun completion-pcm--merge-try (pattern all prefix suffix)
