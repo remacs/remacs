@@ -177,8 +177,21 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sstring_to_unibyte);
         defsubr(&*character::Smax_char);
         defsubr(&*character::Scharacterp);
-        defsubr(&*vectors::Slength);
+        defsubr(&*character::Schar_or_string_p);
+        defsubr(&*vectors::Sarrayp);
+        defsubr(&*vectors::Sbool_vector_p);
+        defsubr(&*vectors::Sbufferp);
+        defsubr(&*vectors::Sbyte_code_function_p);
+        defsubr(&*vectors::Schar_table_p);
+        defsubr(&*vectors::Scondition_variable_p);
+        defsubr(&*vectors::Smutexp);
+        defsubr(&*vectors::Ssequencep);
         defsubr(&*vectors::Ssort);
+        defsubr(&*vectors::Ssubrp);
+        defsubr(&*vectors::Sthreadp);
+        defsubr(&*vectors::Svector_or_char_table_p);
+        defsubr(&*vectors::Svectorp);
+        defsubr(&*vectors::Slength);
         defsubr(&*crypto::Sbuffer_hash);
 
         floatfns::init_float_syms();

@@ -20,7 +20,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
                  Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp, circular_list,
                  internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp, Qwholenump, Qvectorp,
-                 SYMBOL_NAME};
+                 SYMBOL_NAME, PseudovecType};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -391,6 +391,101 @@ impl LispObject {
         } else {
             unsafe { wrong_type_argument(Qvectorp, self.to_raw()) }
         }
+    }
+}
+
+impl LispObject {
+    pub fn is_thread(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_THREAD)
+        })
+    }
+
+    pub fn is_mutex(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_MUTEX)
+        })
+    }
+
+    pub fn is_condition_variable(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_CONDVAR)
+        })
+    }
+
+    pub fn is_byte_code_function(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_COMPILED)
+        })
+    }
+
+    pub fn is_subr(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_SUBR)
+        })
+    }
+
+    pub fn is_buffer(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_BUFFER)
+        })
+    }
+
+    pub fn is_char_table(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE)
+        })
+    }
+
+    pub fn is_bool_vector(self) -> bool {
+        self.as_vectorlike().map_or(
+            false,
+            |v| v.is_pseudovector(PseudovecType::PVEC_BOOL_VECTOR),
+        )
+    }
+
+    pub fn is_array(self) -> bool {
+        self.is_vector() || self.is_string() || self.is_char_table() || self.is_bool_vector()
+    }
+
+    pub fn is_sequence(self) -> bool {
+        self.is_cons() || self.is_nil() || self.is_array()
+    }
+
+    pub fn is_window_configuration(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION)
+        })
+    }
+
+    pub fn is_process(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_PROCESS)
+        })
+    }
+
+    pub fn is_window(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_WINDOW)
+        })
+    }
+
+    pub fn is_frame(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_FRAME)
+        })
+    }
+
+    pub fn is_hash_table(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_HASH_TABLE)
+        })
+    }
+
+    pub fn is_font(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_FONT)
+        })
     }
 }
 
