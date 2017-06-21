@@ -3430,13 +3430,20 @@ possible values."
 	  (progn
 	    (goto-char date-position)
 	    (setq date (get-text-property (point) 'original-date))
+	    (beginning-of-line)
 	    (when (looking-at "[^:]+:[\t ]*")
 	      (setq bface (get-text-property (match-beginning 0) 'face)
 		    eface (get-text-property (match-end 0) 'face)))
-	    (delete-region (point)
-			   (progn
-			     (gnus-article-forward-header)
-			     (point)))
+	    (goto-char date-position)
+	    (delete-region
+	     (or (and (bolp) date-position)
+		 ;; There might be space(s) added for line unfolding.
+		 (and (get-text-property date-position 'gnus-date-type)
+		      (< (skip-chars-backward "\t ") 0)
+		      (text-property-any (point) date-position
+					 'gnus-date-type nil))
+		 date-position)
+	     (progn (gnus-article-forward-header) (point)))
 	    (article-transform-date date type bface eface))
 	(save-restriction
 	  (widen)
@@ -3459,7 +3466,7 @@ possible values."
 	      ;; the continuity of text props of a multi-line Date header,
 	      ;; that a user-defined date format might create, by adding
 	      ;; spaces.  So, don't rely on gnus-date-type or original-date
-	      ;; text prop in case of searching the header boundary.
+	      ;; text prop in case of searching for the header boundary.
 	      (delete-region pos (progn
 				   (gnus-article-forward-header)
 				   (point))))
@@ -3482,32 +3489,48 @@ possible values."
 	    (widen)))))))
 
 (defun article-transform-date (date type bface eface)
-  (dolist (this-type (cond
-		      ((null type)
-		       (list 'ut))
-		      ((atom type)
-		       (list type))
-		      (t
-		       type)))
-    (goto-char
-     (prog1
-	 (point)
-       (add-text-properties
-	(point)
-	(progn
-	  (insert (article-make-date-line date (or this-type 'ut)) "\n")
-	  (point))
-	(list 'original-date date 'gnus-date-type this-type))))
-    ;; Do highlighting.
-    (when (looking-at
-	   "\\([^:]+:\\)[\t ]*\\(\\(?:[^\t\n ]+[\t ]+\\)*[^\t\n ]+\\)?")
-      (put-text-property (match-beginning 1) (match-end 1) 'face bface)
+  (let (begin date-line)
+    (dolist (this-type (cond ((null type)
+			      (list 'ut))
+			     ((atom type)
+			      (list type))
+			     (t
+			      type)))
+      (setq begin (point)
+	    date-line (article-make-date-line date (or this-type 'ut)))
+      (if (and (eq this-type 'user-defined) (bolp)
+	       ;; Test if this is not a continuation.
+	       (not (get-text-property
+		     (prog2 (end-of-line 0) (point) (goto-char begin))
+		     'gnus-date-type)))
+	  (progn
+	    (string-match "\\`\\([^\t\n :]+:\\)?[\t ]*" date-line)
+	    (if (match-beginning 1)
+		(insert date-line "\n")
+	      ;; This user-defined date seems to intend to be a continuation
+	      ;; line of a multi-line Date header like this:
+	      ;;   Date: Thu, Jan  1 00:00:00 1970 +0000
+	      ;;    (47 years, 5 months, 20 days ago)
+	      (insert "Date: " (substring date-line (match-end 0)) "\n")))
+	(insert date-line "\n"))
+      (add-text-properties begin (point) (list 'original-date date
+					       'gnus-date-type this-type))
+      (goto-char begin)
+      ;; Do highlighting.
+      (beginning-of-line)
+      (looking-at
+       "\\([^\n:]+:\\)?[\t ]*\\(\\(?:[^\t\n ]+[\t ]+\\)*[^\t\n ]+\\)?")
+      (when (and bface (match-beginning 1))
+	(put-text-property (match-beginning 1) (match-end 1) 'face bface))
       (when (match-beginning 2)
-	(put-text-property (match-beginning 2) (match-end 2) 'face eface))
-      (while (and (zerop (forward-line 1))
-		  (looking-at "[\t ]+\\(\\(?:[^\t\n ]+[\t ]+\\)*[^\t\n ]+\\)?"))
-	(when (match-beginning 1)
-	  (put-text-property (match-beginning 1) (match-end 1) 'face eface))))))
+	(when eface
+	  (put-text-property (match-beginning 2) (match-end 2) 'face eface))
+	(while (and (zerop (forward-line 1))
+		    (looking-at
+		     "[\t ]+\\(\\(?:[^\t\n ]+[\t ]+\\)*[^\t\n ]+\\)?"))
+	  (when (and eface (match-beginning 1))
+	    (put-text-property (match-beginning 1) (match-end 1)
+			       'face eface)))))))
 
 (defun article-make-date-line (date type)
   "Return a DATE line of TYPE."
@@ -3740,7 +3763,7 @@ is to run."
   "Convert the current article date to the user-defined format.
 This format is defined by the `gnus-article-time-format' variable."
   (interactive (list t))
-  (article-date-ut 'user highlight))
+  (article-date-ut 'user-defined highlight))
 
 (defun article-date-iso8601 (&optional highlight)
   "Convert the current article date to ISO8601."
