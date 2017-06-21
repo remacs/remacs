@@ -33,15 +33,17 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                 let arg = quote! { ::lisp::LispObject::from_raw(#ident), };
                 rargs.append(arg);
             }
-        },
+        }
         function::LispFnType::Many => {
-            let args = quote! {
+            let args =
+                quote! {
                 nargs: ::libc::ptrdiff_t,
                 args: *mut ::remacs_sys::Lisp_Object,
             };
             cargs.append(args);
 
-            let b = quote! {
+            let b =
+                quote! {
                 let args = unsafe {
                     ::std::slice::from_raw_parts_mut::<::remacs_sys::Lisp_Object>(
                         args, nargs as usize)
@@ -65,7 +67,8 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     };
     let symbol_name = CByteLiteral(&lisp_fn_args.name);
 
-    let tokens = quote! {
+    let tokens =
+        quote! {
         #[no_mangle]
         pub extern "C" fn #fname(#cargs) -> ::remacs_sys::Lisp_Object {
             #body

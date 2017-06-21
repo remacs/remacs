@@ -74,8 +74,8 @@ named!(key_value -> (syn::Ident, syn::StrLit),
 
 #[test]
 fn parse_args_str() {
-    let args = parse_arguments(r#"(name = "foo", min = "0")"#)
-        .expect("cannot parse lisp_fn attributes");
+    let args =
+        parse_arguments(r#"(name = "foo", min = "0")"#).expect("cannot parse lisp_fn attributes");
 
     // name = "foo"
     assert_eq!(format!("{}", args[0].0), "name");
