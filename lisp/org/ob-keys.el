@@ -1,4 +1,4 @@
-;;; ob-keys.el --- key bindings for org-babel
+;;; ob-keys.el --- Key Bindings for Babel            -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
@@ -23,8 +23,8 @@
 
 ;;; Commentary:
 
-;; Add org-babel keybindings to the org-mode keymap for exposing
-;; org-babel functions.  These will all share a common prefix.  See
+;; Add Org Babel keybindings to the Org mode keymap for exposing
+;; Org Babel functions.  These will all share a common prefix.  See
 ;; the value of `org-babel-key-bindings' for a list of interactive
 ;; functions and their associated keys.
 
@@ -89,6 +89,7 @@ functions which are assigned key bindings, and see
     ("h" . org-babel-describe-bindings)
     ("\C-x" . org-babel-do-key-sequence-in-edit-buffer)
     ("x" . org-babel-do-key-sequence-in-edit-buffer)
+    ("k" . org-babel-remove-result-one-or-many)
     ("\C-\M-h" . org-babel-mark-block))
   "Alist of key bindings and interactive Babel functions.
 This list associates interactive Babel functions

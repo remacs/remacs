@@ -1,4 +1,4 @@
-;;; ob-plantuml.el --- org-babel functions for plantuml evaluation
+;;; ob-plantuml.el --- Babel Functions for Plantuml  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
@@ -49,21 +49,36 @@
 (defun org-babel-execute:plantuml (body params)
   "Execute a block of plantuml code with org-babel.
 This function is called by `org-babel-execute-src-block'."
-  (let* ((result-params (split-string (or (cdr (assoc :results params)) "")))
-	 (out-file (or (cdr (assoc :file params))
+  (let* ((out-file (or (cdr (assq :file params))
 		       (error "PlantUML requires a \":file\" header argument")))
-	 (cmdline (cdr (assoc :cmdline params)))
+	 (cmdline (cdr (assq :cmdline params)))
 	 (in-file (org-babel-temp-file "plantuml-"))
-	 (java (or (cdr (assoc :java params)) ""))
+	 (java (or (cdr (assq :java params)) ""))
 	 (cmd (if (string= "" org-plantuml-jar-path)
 		  (error "`org-plantuml-jar-path' is not set")
 		(concat "java " java " -jar "
 			(shell-quote-argument
 			 (expand-file-name org-plantuml-jar-path))
+			(if (string= (file-name-extension out-file) "png")
+			    " -tpng" "")
 			(if (string= (file-name-extension out-file) "svg")
 			    " -tsvg" "")
 			(if (string= (file-name-extension out-file) "eps")
 			    " -teps" "")
+			(if (string= (file-name-extension out-file) "pdf")
+			    " -tpdf" "")
+			(if (string= (file-name-extension out-file) "vdx")
+			    " -tvdx" "")
+			(if (string= (file-name-extension out-file) "xmi")
+			    " -txmi" "")
+			(if (string= (file-name-extension out-file) "scxml")
+			    " -tscxml" "")
+			(if (string= (file-name-extension out-file) "html")
+			    " -thtml" "")
+			(if (string= (file-name-extension out-file) "txt")
+			    " -ttxt" "")
+			(if (string= (file-name-extension out-file) "utxt")
+			    " -utxt" "")
 			" -p " cmdline " < "
 			(org-babel-process-file-name in-file)
 			" > "
@@ -74,7 +89,7 @@ This function is called by `org-babel-execute-src-block'."
     (message "%s" cmd) (org-babel-eval cmd "")
     nil)) ;; signal that output has already been written to file
 
-(defun org-babel-prep-session:plantuml (session params)
+(defun org-babel-prep-session:plantuml (_session _params)
   "Return an error because plantuml does not support sessions."
   (error "Plantuml does not support sessions"))
 

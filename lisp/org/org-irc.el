@@ -1,4 +1,4 @@
-;;; org-irc.el --- Store links to IRC sessions
+;;; org-irc.el --- Store Links to IRC Sessions -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
 ;;
@@ -22,8 +22,8 @@
 
 ;;; Commentary:
 
-;; This file implements links to an IRC session from within Org-mode.
-;; Org-mode loads this module by default - if this is not what you want,
+;; This file implements links to an IRC session from within Org mode.
+;; Org mode loads this module by default - if this is not what you want,
 ;; configure the variable `org-modules'.
 ;;
 ;; Please customize the variable `org-modules' to select
@@ -59,8 +59,6 @@
 (declare-function erc-server-buffer "erc" ())
 (declare-function erc-get-server-nickname-list "erc" ())
 (declare-function erc-cmd-JOIN "erc" (channel &optional key))
-(declare-function org-pop-to-buffer-same-window
-		  "org-compat" (&optional buffer-or-name norecord label))
 
 (defvar org-irc-client 'erc
   "The IRC client to act on.")
@@ -73,9 +71,7 @@
 
 ;; Generic functions/config (extend these for other clients)
 
-(add-to-list 'org-store-link-functions 'org-irc-store-link)
-
-(org-add-link-type "irc" 'org-irc-visit nil)
+(org-link-set-parameters "irc" :follow #'org-irc-visit :store #'org-irc-store-link)
 
 (defun org-irc-visit (link)
   "Parse LINK and dispatch to the correct function based on the client found."
@@ -114,11 +110,9 @@ chars that the value AFTER with `...'"
 			    (cons "[ \t]*$" "")
 			    (cons (concat "^\\(.\\{" after
 					  "\\}\\).*") "\\1..."))))
-    (mapc (lambda (x)
-	    (when (string-match (car x) string)
-	      (setq string (replace-match (cdr x) nil nil string))))
-	  replace-map)
-    string))
+    (dolist (x replace-map string)
+      (when (string-match (car x) string)
+	(setq string (replace-match (cdr x) nil nil string))))))
 
 ;; ERC specific functions
 
@@ -233,7 +227,7 @@ default."
 				      (throw 'found x))))))
 		(if chan-buf
 		    (progn
-		      (org-pop-to-buffer-same-window chan-buf)
+		      (pop-to-buffer-same-window chan-buf)
 		      ;; if we got a nick, and they're in the chan,
 		      ;; then start a chat with them
 		      (let ((nick (pop link)))
@@ -244,9 +238,9 @@ default."
 				(insert (concat nick ": ")))
 			    (error "%s not found in %s" nick chan-name)))))
 		  (progn
-		    (org-pop-to-buffer-same-window server-buffer)
+		    (pop-to-buffer-same-window server-buffer)
 		    (erc-cmd-JOIN chan-name))))
-	    (org-pop-to-buffer-same-window server-buffer)))
+	    (pop-to-buffer-same-window server-buffer)))
       ;; no server match, make new connection
       (erc-select :server server :port port))))
 
