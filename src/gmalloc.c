@@ -77,11 +77,6 @@ extern void *(*__morecore) (ptrdiff_t);
 #ifdef HYBRID_MALLOC
 # include "sheap.h"
 # define DUMPED bss_sbrk_did_unexec
-static bool
-ALLOCATED_BEFORE_DUMPING (char *p)
-{
-  return bss_sbrk_buffer <= p && p < bss_sbrk_buffer + STATIC_HEAP_SIZE;
-}
 #endif
 
 #ifdef	__cplusplus
@@ -133,8 +128,13 @@ typedef union
     /* Heap information for a busy block.  */
     struct
       {
-	/* Zero for a large (multiblock) object, or positive giving the
-	   logarithm to the base two of the fragment size.  */
+	/* Zero for a block that is not one of ours (typically,
+	   allocated by system malloc), positive for the log base 2 of
+	   the fragment size of a fragmented block, -1 for the first
+	   block of a multiblock object, and unspecified for later
+	   blocks of that object.  Type-0 blocks can be present
+	   because the system malloc can be invoked by library
+	   functions in an undumped Emacs.  */
 	int type;
 	union
 	  {
@@ -166,7 +166,7 @@ extern char *_heapbase;
 extern malloc_info *_heapinfo;
 
 /* Address to block number and vice versa.  */
-#define BLOCK(A)	(((char *) (A) - _heapbase) / BLOCKSIZE + 1)
+#define BLOCK(A)	((size_t) ((char *) (A) - _heapbase) / BLOCKSIZE + 1)
 #define ADDRESS(B)	((void *) (((B) - 1) * BLOCKSIZE + _heapbase))
 
 /* Current search index for the heap table.  */
@@ -491,7 +491,7 @@ register_heapinfo (void)
   ++_chunks_used;
 
   /* Describe the heapinfo block itself in the heapinfo.  */
-  _heapinfo[block].busy.type = 0;
+  _heapinfo[block].busy.type = -1;
   _heapinfo[block].busy.info.size = blocks;
   /* Leave back-pointers for malloc_find_address.  */
   while (--blocks > 0)
@@ -608,7 +608,7 @@ morecore_nolock (size_t size)
   PROTECT_MALLOC_STATE (0);
 
   /* Check if we need to grow the info table.  */
-  if ((size_t) BLOCK ((char *) result + size) > heapsize)
+  if (heapsize < BLOCK ((char *) result + size))
     {
       /* Calculate the new _heapinfo table size.  We do not account for the
 	 added blocks in the table itself, as we hope to place them in
@@ -617,7 +617,7 @@ morecore_nolock (size_t size)
       newsize = heapsize;
       do
 	newsize *= 2;
-      while ((size_t) BLOCK ((char *) result + size) > newsize);
+      while (newsize < BLOCK ((char *) result + size));
 
       /* We must not reuse existing core for the new info table when called
 	 from realloc in the case of growing a large block, because the
@@ -665,8 +665,7 @@ morecore_nolock (size_t size)
 
  	  /* Is it big enough to record status for its own space?
  	     If so, we win.  */
- 	  if ((size_t) BLOCK ((char *) newinfo
-			      + newsize * sizeof (malloc_info))
+	  if (BLOCK ((char *) newinfo + newsize * sizeof (malloc_info))
  	      < newsize)
  	    break;
 
@@ -883,7 +882,7 @@ _malloc_internal_nolock (size_t size)
 	  --_chunks_free;
 	}
 
-      _heapinfo[block].busy.type = 0;
+      _heapinfo[block].busy.type = -1;
       _heapinfo[block].busy.info.size = blocks;
       ++_chunks_used;
       _bytes_used += blocks * BLOCKSIZE;
@@ -1026,7 +1025,7 @@ _free_internal_nolock (void *ptr)
   type = _heapinfo[block].busy.type;
   switch (type)
     {
-    case 0:
+    case -1:
       /* Get as many statistics as early as we can.  */
       --_chunks_used;
       _bytes_used -= _heapinfo[block].busy.info.size * BLOCKSIZE;
@@ -1187,7 +1186,7 @@ _free_internal_nolock (void *ptr)
 	  prev->prev->next = next;
 	  if (next != NULL)
 	    next->prev = prev->prev;
-	  _heapinfo[block].busy.type = 0;
+	  _heapinfo[block].busy.type = -1;
 	  _heapinfo[block].busy.info.size = 1;
 
 	  /* Keep the statistics accurate.  */
@@ -1326,7 +1325,7 @@ _realloc_internal_nolock (void *ptr, size_t size)
   type = _heapinfo[block].busy.type;
   switch (type)
     {
-    case 0:
+    case -1:
       /* Maybe reallocate a large block to a small fragment.  */
       if (size <= BLOCKSIZE / 2)
 	{
@@ -1346,7 +1345,7 @@ _realloc_internal_nolock (void *ptr, size_t size)
 	{
 	  /* The new size is smaller; return
 	     excess memory to the free list. */
-	  _heapinfo[block + blocks].busy.type = 0;
+	  _heapinfo[block + blocks].busy.type = -1;
 	  _heapinfo[block + blocks].busy.info.size
 	    = _heapinfo[block].busy.info.size - blocks;
 	  _heapinfo[block].busy.info.size = blocks;
@@ -1721,6 +1720,20 @@ extern void *aligned_alloc (size_t alignment, size_t size);
 extern int posix_memalign (void **memptr, size_t alignment, size_t size);
 #endif
 
+/* Assuming PTR was allocated via the hybrid malloc, return true if
+   PTR was allocated via gmalloc, not the system malloc.  Also, return
+   true if _heaplimit is zero; this can happen temporarily when
+   gmalloc calls itself for internal use, and in that case PTR is
+   already known to be allocated via gmalloc.  */
+
+static bool
+allocated_via_gmalloc (void *ptr)
+{
+  size_t block = BLOCK (ptr);
+  size_t blockmax = _heaplimit - 1;
+  return block <= blockmax && _heapinfo[block].busy.type != 0;
+}
+
 /* See the comments near the beginning of this file for explanations
    of the following functions. */
 
@@ -1743,13 +1756,10 @@ hybrid_calloc (size_t nmemb, size_t size)
 void
 hybrid_free (void *ptr)
 {
-  if (!DUMPED)
+  if (allocated_via_gmalloc (ptr))
     gfree (ptr);
-  else if (!ALLOCATED_BEFORE_DUMPING (ptr))
+  else
     free (ptr);
-  /* Otherwise the dumped emacs is trying to free something allocated
-     before dumping; do nothing.  */
-  return;
 }
 
 #if defined HAVE_ALIGNED_ALLOC || defined HAVE_POSIX_MEMALIGN
@@ -1775,19 +1785,20 @@ hybrid_realloc (void *ptr, size_t size)
   int type;
   size_t block, oldsize;
 
+  if (!ptr)
+    return hybrid_malloc (size);
+  if (!allocated_via_gmalloc (ptr))
+    return realloc (ptr, size);
   if (!DUMPED)
     return grealloc (ptr, size);
-  if (!ALLOCATED_BEFORE_DUMPING (ptr))
-    return realloc (ptr, size);
 
   /* The dumped emacs is trying to realloc storage allocated before
-   dumping.  We just malloc new space and copy the data.  */
-  if (size == 0 || ptr == NULL)
-    return malloc (size);
-  block = ((char *) ptr - _heapbase) / BLOCKSIZE + 1;
+     dumping via gmalloc.  Allocate new space and copy the data.  Do
+     not bother with gfree (ptr), as that would just waste time.  */
+  block = BLOCK (ptr);
   type = _heapinfo[block].busy.type;
   oldsize =
-    type == 0 ? _heapinfo[block].busy.info.size * BLOCKSIZE
+    type < 0 ? _heapinfo[block].busy.info.size * BLOCKSIZE
     : (size_t) 1 << type;
   result = malloc (size);
   if (result)
