@@ -144,8 +144,7 @@ typedef union
 		size_t first; /* First free fragment of the block.  */
 	      } frag;
 	    /* For a large object, in its first block, this has the number
-	       of blocks in the object.  In the other blocks, this has a
-	       negative number which says how far back the first block is.  */
+	       of blocks in the object.  */
 	    ptrdiff_t size;
 	  } info;
       } busy;
@@ -493,9 +492,6 @@ register_heapinfo (void)
   /* Describe the heapinfo block itself in the heapinfo.  */
   _heapinfo[block].busy.type = -1;
   _heapinfo[block].busy.info.size = blocks;
-  /* Leave back-pointers for malloc_find_address.  */
-  while (--blocks > 0)
-    _heapinfo[block + blocks].busy.info.size = -blocks;
 }
 
 #ifdef USE_PTHREAD
@@ -887,12 +883,6 @@ _malloc_internal_nolock (size_t size)
       ++_chunks_used;
       _bytes_used += blocks * BLOCKSIZE;
       _bytes_free -= blocks * BLOCKSIZE;
-
-      /* Mark all the blocks of the object just allocated except for the
-	 first with a negative number so you can find the first block by
-	 adding that adjustment.  */
-      while (--blocks > 0)
-	_heapinfo[block + blocks].busy.info.size = -blocks;
     }
 
   PROTECT_MALLOC_STATE (1);
