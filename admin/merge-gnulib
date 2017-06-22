@@ -40,7 +40,7 @@ GNULIB_MODULES='
   sig2str socklen stat-time std-gnu11 stdalign stddef stdio
   stpcpy strftime strtoimax symlink sys_stat
   sys_time time time_r time_rz timegm timer-time timespec-add timespec-sub
-  update-copyright utimens
+  update-copyright unlocked-io utimens
   vla warnings
 '
 

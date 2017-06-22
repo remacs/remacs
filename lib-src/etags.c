@@ -123,6 +123,7 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 #include <errno.h>
 #include <fcntl.h>
 #include <binary-io.h>
+#include <unlocked-io.h>
 #include <c-ctype.h>
 #include <c-strcase.h>
 

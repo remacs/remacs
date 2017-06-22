@@ -20,7 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <errno.h>
-#include <stdio.h>
 
 #include <binary-io.h>
 
@@ -31,6 +30,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "frame.h"
 #include "window.h"
 #include "keymap.h"
+#include "sysstdio.h"
 #include "systty.h"
 
 /* List of buffers for use as minibuffers.
@@ -209,15 +209,15 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
       suppress_echo_on_tty (STDIN_FILENO);
     }
 
-  fwrite (SDATA (prompt), 1, SBYTES (prompt), stdout);
-  fflush (stdout);
+  fwrite_unlocked (SDATA (prompt), 1, SBYTES (prompt), stdout);
+  fflush_unlocked (stdout);
 
   val = Qnil;
   size = 100;
   len = 0;
   line = xmalloc (size);
 
-  while ((c = getchar ()) != '\n' && c != '\r')
+  while ((c = getchar_unlocked ()) != '\n' && c != '\r')
     {
       if (c == EOF)
 	{

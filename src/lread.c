@@ -72,10 +72,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #define file_tell ftell
 #endif
 
-#ifndef HAVE_GETC_UNLOCKED
-#define getc_unlocked getc
-#endif
-
 /* The objects or placeholders read with the #n=object form.
 
    A hash table maps a number to either a placeholder (while the
@@ -474,16 +470,15 @@ readbyte_from_file (int c, Lisp_Object readcharfun)
     }
 
   block_input ();
-  c = getc_unlocked (instream);
 
   /* Interrupted reads have been observed while reading over the network.  */
-  while (c == EOF && ferror (instream) && errno == EINTR)
+  while ((c = getc_unlocked (instream)) == EOF && errno == EINTR
+	 && ferror_unlocked (instream))
     {
       unblock_input ();
       maybe_quit ();
       block_input ();
-      clearerr (instream);
-      c = getc_unlocked (instream);
+      clearerr_unlocked (instream);
     }
 
   unblock_input ();

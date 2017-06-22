@@ -29,7 +29,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
@@ -40,6 +39,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "charset.h"
 #include "coding.h"
 #include "buffer.h"
+#include "sysstdio.h"
 
 /*** GENERAL NOTES on CODED CHARACTER SETS (CHARSETS) ***
 
@@ -198,10 +198,6 @@ static struct
 
 #define GET_TEMP_CHARSET_WORK_DECODER(CODE)	\
   (temp_charset_work->table.decoder[(CODE)])
-
-#ifndef HAVE_GETC_UNLOCKED
-#define getc_unlocked getc
-#endif
 
 
 /* Set to 1 to warn that a charset map is loaded and thus a buffer

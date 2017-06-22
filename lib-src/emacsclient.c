@@ -73,7 +73,6 @@ char *w32_getenv (const char *);
 
 #include <stdarg.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
@@ -83,6 +82,8 @@ char *w32_getenv (const char *);
 #include <sys/stat.h>
 #include <signal.h>
 #include <errno.h>
+
+#include <unlocked-io.h>
 
 #ifndef VERSION
 #define VERSION "unspecified"

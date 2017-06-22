@@ -5643,14 +5643,12 @@ A non-nil CURRENT-ONLY argument means save only current buffer.  */)
 	  {
 	    block_input ();
 	    if (!NILP (BVAR (b, filename)))
-	      {
-		fwrite (SDATA (BVAR (b, filename)), 1,
-			SBYTES (BVAR (b, filename)), stream);
-	      }
-	    putc ('\n', stream);
-	    fwrite (SDATA (BVAR (b, auto_save_file_name)), 1,
-		    SBYTES (BVAR (b, auto_save_file_name)), stream);
-	    putc ('\n', stream);
+	      fwrite_unlocked (SDATA (BVAR (b, filename)), 1,
+			       SBYTES (BVAR (b, filename)), stream);
+	    putc_unlocked ('\n', stream);
+	    fwrite_unlocked (SDATA (BVAR (b, auto_save_file_name)), 1,
+			     SBYTES (BVAR (b, auto_save_file_name)), stream);
+	    putc_unlocked ('\n', stream);
 	    unblock_input ();
 	  }
 
@@ -5841,7 +5839,7 @@ effect except for flushing STREAM's data.  */)
 
   binmode = NILP (mode) ? O_TEXT : O_BINARY;
   if (fp != stdin)
-    fflush (fp);
+    fflush_unlocked (fp);
 
   return (set_binary_mode (fileno (fp), binmode) == O_BINARY) ? Qt : Qnil;
 }
