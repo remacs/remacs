@@ -2337,7 +2337,8 @@ to are recalculated first."
   "Recalculate and reprint all cells."
   (interactive "*")
   (let ((startcell    (ses--cell-at-pos (point)))
-	(ses--curcell (cons 'A1 (ses-cell-symbol (1- ses--numrows)
+	(ses--curcell (cons (ses-cell-symbol 0 0)
+                            (ses-cell-symbol (1- ses--numrows)
 						 (1- ses--numcols)))))
     (ses-recalculate-cell ses--curcell)
     (ses-jump-safe startcell)))
