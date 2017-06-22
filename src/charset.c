@@ -198,6 +198,10 @@ static struct
 
 #define GET_TEMP_CHARSET_WORK_DECODER(CODE)	\
   (temp_charset_work->table.decoder[(CODE)])
+
+#ifndef HAVE_GETC_UNLOCKED
+#define getc_unlocked getc
+#endif
 
 
 /* Set to 1 to warn that a charset map is loaded and thus a buffer
@@ -416,15 +420,15 @@ read_hex (FILE *fp, bool *eof, bool *overflow)
   int c;
   unsigned n;
 
-  while ((c = getc (fp)) != EOF)
+  while ((c = getc_unlocked (fp)) != EOF)
     {
       if (c == '#')
 	{
-	  while ((c = getc (fp)) != EOF && c != '\n');
+	  while ((c = getc_unlocked (fp)) != EOF && c != '\n');
 	}
       else if (c == '0')
 	{
-	  if ((c = getc (fp)) == EOF || c == 'x')
+	  if ((c = getc_unlocked (fp)) == EOF || c == 'x')
 	    break;
 	}
     }
@@ -434,7 +438,7 @@ read_hex (FILE *fp, bool *eof, bool *overflow)
       return 0;
     }
   n = 0;
-  while (c_isxdigit (c = getc (fp)))
+  while (c_isxdigit (c = getc_unlocked (fp)))
     {
       if (INT_LEFT_SHIFT_OVERFLOW (n, 4))
 	*overflow = 1;
@@ -508,7 +512,7 @@ load_charset_map_from_file (struct charset *charset, Lisp_Object mapfile,
       from = read_hex (fp, &eof, &overflow);
       if (eof)
 	break;
-      if (getc (fp) == '-')
+      if (getc_unlocked (fp) == '-')
 	to = read_hex (fp, &eof, &overflow);
       else
 	to = from;
