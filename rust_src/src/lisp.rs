@@ -433,9 +433,7 @@ impl LispObject {
     }
 
     pub fn as_buffer(self) -> Option<LispBufferRef> {
-        self.as_vectorlike().map_or(None, |v| {
-            v.as_buffer()
-        })
+        self.as_vectorlike().map_or(None, |v| v.as_buffer())
     }
 
     pub fn is_char_table(self) -> bool {
