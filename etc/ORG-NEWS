@@ -63,31 +63,31 @@ using previous syntax:
   (interactive)
   (when (eq major-mode 'org-mode)
     (let ((case-fold-search t)
-          (back-end-re (regexp-opt
-                        '("HTML" "ASCII" "LATEX" "ODT" "MARKDOWN" "MD" "ORG"
-                          "MAN" "BEAMER" "TEXINFO" "GROFF" "KOMA-LETTER")
-                        t)))
+	  (back-end-re (regexp-opt
+			'("HTML" "ASCII" "LATEX" "ODT" "MARKDOWN" "MD" "ORG"
+			  "MAN" "BEAMER" "TEXINFO" "GROFF" "KOMA-LETTER")
+			t)))
       (org-with-wide-buffer
        (goto-char (point-min))
        (let ((block-re (concat "^[ \t]*#\\+BEGIN_" back-end-re)))
-         (save-excursion
-           (while (re-search-forward block-re nil t)
-             (let ((element (save-match-data (org-element-at-point))))
-               (when (eq (org-element-type element) 'special-block)
-                 (save-excursion
-                   (goto-char (org-element-property :end element))
-                   (save-match-data (search-backward "_"))
-                   (forward-char)
-                   (insert "EXPORT")
-                   (delete-region (point) (line-end-position)))
-                 (replace-match "EXPORT \\1" nil nil nil 1))))))
+	 (save-excursion
+	   (while (re-search-forward block-re nil t)
+	     (let ((element (save-match-data (org-element-at-point))))
+	       (when (eq (org-element-type element) 'special-block)
+		 (save-excursion
+		   (goto-char (org-element-property :end element))
+		   (save-match-data (search-backward "_"))
+		   (forward-char)
+		   (insert "EXPORT")
+		   (delete-region (point) (line-end-position)))
+		 (replace-match "EXPORT \\1" nil nil nil 1))))))
        (let ((include-re
-              (format "^[ \t]*#\\+INCLUDE: .*?%s[ \t]*$" back-end-re)))
-         (while (re-search-forward include-re nil t)
-           (let ((element (save-match-data (org-element-at-point))))
-             (when (and (eq (org-element-type element) 'keyword)
-                        (string= (org-element-property :key element) "INCLUDE"))
-               (replace-match "EXPORT \\1" nil nil nil 1)))))))))
+	      (format "^[ \t]*#\\+INCLUDE: .*?%s[ \t]*$" back-end-re)))
+	 (while (re-search-forward include-re nil t)
+	   (let ((element (save-match-data (org-element-at-point))))
+	     (when (and (eq (org-element-type element) 'keyword)
+			(string= (org-element-property :key element) "INCLUDE"))
+	       (replace-match "EXPORT \\1" nil nil nil 1)))))))))
 #+END_SRC
 
 Moreover, ~:export-block~ keyword used in ~org-export-define-backend~ and
@@ -711,27 +711,27 @@ Ignore non Org buffers."
     (org-with-wide-buffer
      (goto-char (point-min))
      (let ((case-fold-search t)
-           (inline-re (and (featurep 'org-inlinetask)
-                           (concat (org-inlinetask-outline-regexp)
-                                   "END[ \t]*$"))))
+	   (inline-re (and (featurep 'org-inlinetask)
+			   (concat (org-inlinetask-outline-regexp)
+				   "END[ \t]*$"))))
        (org-map-entries
-        (lambda ()
-          (unless (and inline-re (org-looking-at-p inline-re))
-            (save-excursion
-              (let ((end (save-excursion (outline-next-heading) (point))))
-                (forward-line)
-                (when (org-looking-at-p org-planning-line-re) (forward-line))
-                (when (and (< (point) end)
-                           (not (org-looking-at-p org-property-drawer-re))
-                           (save-excursion
-                             (and (re-search-forward org-property-drawer-re end t)
-                                  (eq (org-element-type
-                                       (save-match-data (org-element-at-point)))
-                                      'drawer))))
-                  (insert (delete-and-extract-region
-                           (match-beginning 0)
-                           (min (1+ (match-end 0)) end)))
-                  (unless (bolp) (insert "\n"))))))))))))
+	(lambda ()
+	  (unless (and inline-re (org-looking-at-p inline-re))
+	    (save-excursion
+	      (let ((end (save-excursion (outline-next-heading) (point))))
+		(forward-line)
+		(when (org-looking-at-p org-planning-line-re) (forward-line))
+		(when (and (< (point) end)
+			   (not (org-looking-at-p org-property-drawer-re))
+			   (save-excursion
+			     (and (re-search-forward org-property-drawer-re end t)
+				  (eq (org-element-type
+				       (save-match-data (org-element-at-point)))
+				      'drawer))))
+		  (insert (delete-and-extract-region
+			   (match-beginning 0)
+			   (min (1+ (match-end 0)) end)))
+		  (unless (bolp) (insert "\n"))))))))))))
 #+END_SRC
 
 *** Using "COMMENT" is now equivalent to commenting with "#"
@@ -1917,8 +1917,8 @@ the "@" key to =calendar-goto-today=, use this:
 
   ;; Bind "@" to `calendar-goto-today':
   (define-key org-read-date-minibuffer-local-map
-              (kbd "@")
-              (lambda () (interactive) (org-eval-in-calendar '(calendar-goto-today))))
+	      (kbd "@")
+	      (lambda () (interactive) (org-eval-in-calendar '(calendar-goto-today))))
 #+END_SRC
 
 **** In Org's calendar, =!= displays diary entries of the date at point
@@ -2198,14 +2198,14 @@ See [[http://orgmode.org/org.html#Lookup-functions][the manual]] for details.
 
 These new startup keywords are now available:
 
-| Startup keyword                | Option                                    |
-|--------------------------------+-------------------------------------------|
+| Startup keyword                  | Option                                      |
+|----------------------------------+---------------------------------------------|
 | =#+STARTUP: logdrawer=           | =(setq org-log-into-drawer t)=              |
 | =#+STARTUP: nologdrawer=         | =(setq org-log-into-drawer nil)=            |
-|--------------------------------+-------------------------------------------|
+|----------------------------------+---------------------------------------------|
 | =#+STARTUP: logstatesreversed=   | =(setq org-log-states-order-reversed t)=    |
 | =#+STARTUP: nologstatesreversed= | =(setq org-log-states-order-reversed nil)=  |
-|--------------------------------+-------------------------------------------|
+|----------------------------------+---------------------------------------------|
 | =#+STARTUP: latexpreview=        | =(setq org-startup-with-latex-preview t)=   |
 | =#+STARTUP: nolatexpreview=      | =(setq org-startup-with-latex-preview nil)= |
 
@@ -2416,8 +2416,8 @@ See http://orgmode.org/elpa/
 
 ** Overview of the new keybindings
 
-   | Keybinding    | Speedy | Command                     |
-   |---------------+--------+-----------------------------|
+   | Keybinding      | Speedy | Command                     |
+   |-----------------+--------+-----------------------------|
    | =C-c C-x C-z=   |        | [[doc::org-clock-resolve][org-clock-resolve]]           |
    | =C-c C-x C-q=   |        | [[doc::org-clock-cancel][org-clock-cancel]]            |
    | =C-c C-x C-x=   |        | [[doc::org-clock-in-last][org-clock-in-last]]           |
@@ -2425,12 +2425,12 @@ See http://orgmode.org/elpa/
    | =*=             |        | [[doc::org-agenda-bulk-mark-all][org-agenda-bulk-mark-all]]    |
    | =C-c C-M-l=     |        | [[doc::org-insert-all-links][org-insert-all-links]]        |
    | =C-c C-x C-M-v= |        | [[doc::org-redisplay-inline-images][org-redisplay-inline-images]] |
-   | =C-c C-x E=     | =E=      | [[doc::org-inc-effort][org-inc-effort]]              |
-   |               | =#=      | [[doc::org-toggle-comment][org-toggle-comment]]          |
-   |               | =:=      | [[doc::org-columns][org-columns]]                 |
-   |               | =W=      | Set =APPT_WARNTIME=           |
+   | =C-c C-x E=     | =E=    | [[doc::org-inc-effort][org-inc-effort]]              |
+   |                 | =#=    | [[doc::org-toggle-comment][org-toggle-comment]]          |
+   |                 | =:=    | [[doc::org-columns][org-columns]]                 |
+   |                 | =W=    | Set =APPT_WARNTIME=          |
    | =k=             |        | [[doc::org-agenda-capture][org-agenda-capture]]          |
-   | C-c ,         | ,      | [[doc::org-priority][org-priority]]                |
+   | C-c ,           | ,      | [[doc::org-priority][org-priority]]                |
 
 ** New package and Babel language
 
@@ -2539,7 +2539,7 @@ See http://orgmode.org/elpa/
 
      #+BEGIN_SRC emacs-lisp
   (setq org-agenda-custom-commands-contexts
-        '(("p" (in-file . "\\.txt"))))
+	'(("p" (in-file . "\\.txt"))))
 #+END_SRC
 
      then the =p= agenda command will only be available from buffers
@@ -2849,7 +2849,7 @@ See http://orgmode.org/elpa/
 
      #+BEGIN_SRC emacs-lisp
   (setq org-capture-templates-contexts
-        '(("c" (in-mode . "message-mode"))))
+	'(("c" (in-mode . "message-mode"))))
 #+END_SRC
 
      then the =c= capture template will only be available from
@@ -3085,7 +3085,7 @@ that Calc formulas can operate on them.
 
     #+begin_src emacs-lisp
    (setq org-export-latex-default-packages-alist nil
-         org-export-latex-packages-alist nil)
+	 org-export-latex-packages-alist nil)
     #+end_src
 
     /Continue to read here if you want to go along with the modified
@@ -3099,16 +3099,16 @@ that Calc formulas can operate on them.
     The two new variables are:
 
     1. =org-export-latex-default-packages-alist= :: This is the
-         variable where Org-mode itself puts the packages it needs.
-         Normally you should not change this variable.  The only
-         reason to change it anyway is when one of these packages
-         causes a conflict with another package you want to use.  Then
-         you can remove that packages and hope that you are not using
-         Org-mode functionality that needs it.
+	 variable where Org-mode itself puts the packages it needs.
+	 Normally you should not change this variable.  The only
+	 reason to change it anyway is when one of these packages
+	 causes a conflict with another package you want to use.  Then
+	 you can remove that packages and hope that you are not using
+	 Org-mode functionality that needs it.
 
     2. =org-export-latex-packages-alist= :: This is the variable where
-         you can put the packages that you'd like to use across all
-         classes.
+	 you can put the packages that you'd like to use across all
+	 classes.
 
     The sequence how these customizations will show up in the LaTeX
     document are:
@@ -3310,17 +3310,17 @@ that Calc formulas can operate on them.
      The key new functions are
 
      - org-bibtex-check :: queries the user to flesh out all required
-          (and with prefix argument optional) bibtex fields available
-          for the specific reference =type= of the current headline.
+	  (and with prefix argument optional) bibtex fields available
+	  for the specific reference =type= of the current headline.
 
      - org-bibtex-create :: Create a new entry at the given level,
-          using org-bibtex-check to flesh out the relevant fields.
+	  using org-bibtex-check to flesh out the relevant fields.
 
      - org-bibtex-yank :: Yank a bibtex entry on the kill ring as a
-          formatted Org-mode headline into the current buffer
+	  formatted Org-mode headline into the current buffer
 
      - org-bibtex-export-to-kill-ring :: Export the current headline
-          to the kill ring as a formatted bibtex entry.
+	  to the kill ring as a formatted bibtex entry.
 
 **** org-gnus.el now allows link creation from messages
 
@@ -3573,32 +3573,32 @@ that Calc formulas can operate on them.
      Nicolas Goaziou extended and improved the way Org handles lists.
 
      1. Indentation of text determines again end of items in
-        lists. So, some text less indented than the previous item
-        doesn't close the whole list anymore, only all items more
-        indented than it.
+	lists. So, some text less indented than the previous item
+	doesn't close the whole list anymore, only all items more
+	indented than it.
 
      2. Alphabetical bullets are implemented, through the use of the
-        variable `org-alphabetical-lists'. This also adds alphabetical
-        counters like [@c] or [@W].
+	variable `org-alphabetical-lists'. This also adds alphabetical
+	counters like [@c] or [@W].
 
      3. Lists can now safely contain drawers, inline tasks, or various
-        blocks, themselves containing lists. Two variables are
-        controlling this: `org-list-forbidden-blocks', and
-        `org-list-export-context'.
+	blocks, themselves containing lists. Two variables are
+	controlling this: `org-list-forbidden-blocks', and
+	`org-list-export-context'.
 
      4. Improve `newline-and-indent' (C-j): used in an item, it will
-        keep text from moving at column 0. This allows to split text
-        and make paragraphs and still not break the list.
+	keep text from moving at column 0. This allows to split text
+	and make paragraphs and still not break the list.
 
      5. Improve `org-toggle-item' (C-c -): used on a region with
-        standard text, it will change the region into one item. With a
-        prefix argument, it will fallback to the previous behavior and
-        make every line in region an item. It permits to easily
-        integrate paragraphs inside a list.
+	standard text, it will change the region into one item. With a
+	prefix argument, it will fallback to the previous behavior and
+	make every line in region an item. It permits to easily
+	integrate paragraphs inside a list.
 
      6. `fill-paragraph' (M-q) now understands lists. It can freely be
-        used inside items, or on text just after a list, even with no
-        blank line around, without breaking list structure.
+	used inside items, or on text just after a list, even with no
+	blank line around, without breaking list structure.
 
      Thanks a lot to Nicolas for all this!
 
