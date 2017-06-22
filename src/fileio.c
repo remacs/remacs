@@ -3306,11 +3306,7 @@ otherwise, if FILE2 does not exist, the answer is t.  */)
 	  ? Qt : Qnil);
 }
 
-#ifndef READ_BUF_SIZE
-#define READ_BUF_SIZE (64 << 10)
-#endif
-/* Some buffer offsets are stored in 'int' variables.  */
-verify (READ_BUF_SIZE <= INT_MAX);
+enum { READ_BUF_SIZE = MAX_ALLOCA };
 
 /* This function is called after Lisp functions to decide a coding
    system are called, or when they cause an error.  Before they are
