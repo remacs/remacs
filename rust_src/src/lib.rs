@@ -41,6 +41,9 @@ use remacs_sys::Lisp_Subr;
 pub use base64::base64_encode_1;
 pub use base64::base64_decode_1;
 
+// Used in buffer.c
+pub use buffers::Fbuffer_live_p;
+
 // These need to be exported as bytecode.c depends upon them.
 pub use math::Fplus;
 pub use math::Fminus;
@@ -115,6 +118,7 @@ extern "C" {
 pub extern "C" fn rust_init_syms() {
     unsafe {
         defsubr(&*buffers::Soverlayp);
+        defsubr(&*buffers::Sbuffer_live_p);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
         defsubr(&*lists::Snlistp);
