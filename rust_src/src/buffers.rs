@@ -7,6 +7,8 @@ use vectors::Lisp_Vectorlike_Header;
 
 use remacs_sys::EmacsInt;
 
+use remacs_macros::lisp_fn;
+
 pub const BEG_BYTE: ptrdiff_t = 1;
 
 /// Represents an Emacs buffer. For documentation see struct buffer in
@@ -199,4 +201,11 @@ impl LispBufferRef {
     pub fn z_byte(&self) -> ptrdiff_t {
         unsafe { (*self.text).z_byte }
     }
+}
+
+
+/// Return t if OBJECT is an overlay.
+#[lisp_fn]
+pub fn overlayp(object: LispObject) -> LispObject {
+    LispObject::from_bool(object.is_overlay())
 }

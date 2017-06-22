@@ -831,6 +831,14 @@ impl LispObject {
         )
     }
 
+    #[inline]
+    pub fn is_overlay(self) -> bool {
+        self.as_misc().map_or(
+            false,
+            |m| m.ty == LispMiscType::Overlay,
+        )
+    }
+
     // The three Emacs Lisp comparison functions.
 
     #[inline]

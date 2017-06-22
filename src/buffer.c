@@ -3796,13 +3796,6 @@ fix_overlays_before (struct buffer *bp, ptrdiff_t prev, ptrdiff_t pos)
 	break;
     }
 }
-
-DEFUN ("overlayp", Foverlayp, Soverlayp, 1, 1, 0,
-       doc: /* Return t if OBJECT is an overlay.  */)
-  (Lisp_Object object)
-{
-  return (OVERLAYP (object) ? Qt : Qnil);
-}
 
 DEFUN ("make-overlay", Fmake_overlay, Smake_overlay, 2, 5, 0,
        doc: /* Create a new overlay with range BEG to END in BUFFER and return it.
@@ -6186,7 +6179,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Sset_buffer_multibyte);
   defsubr (&Skill_all_local_variables);
 
-  defsubr (&Soverlayp);
   defsubr (&Smake_overlay);
   defsubr (&Sdelete_overlay);
   defsubr (&Sdelete_all_overlays);

@@ -114,6 +114,7 @@ extern "C" {
 #[no_mangle]
 pub extern "C" fn rust_init_syms() {
     unsafe {
+        defsubr(&*buffers::Soverlayp);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
         defsubr(&*lists::Snlistp);
