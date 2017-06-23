@@ -22,11 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <inttypes.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <binary-io.h>
+#include <unlocked-io.h>
 
 static char *progname;
 

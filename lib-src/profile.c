@@ -34,11 +34,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <inttypes.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <intprops.h>
 #include <systime.h>
+#include <unlocked-io.h>
 
 static struct timespec TV1;
 static int watch_not_started = 1; /* flag */

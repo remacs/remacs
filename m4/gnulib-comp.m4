@@ -158,6 +158,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module timespec-sub:
   # Code from module u64:
   # Code from module unistd:
+  # Code from module unlocked-io:
   # Code from module update-copyright:
   # Code from module utimens:
   # Code from module vararrays:
@@ -399,6 +400,7 @@ AC_DEFUN([gl_INIT],
   gl_TIMER_TIME
   gl_TIMESPEC
   gl_UNISTD_H
+  gl_FUNC_GLIBC_UNLOCKED_IO
   gl_UTIMENS
   AC_C_VARARRAYS
   gl_gnulib_enabled_260941c0e5dc67ec9e87d1fb321c300b=false
@@ -940,6 +942,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/u64.h
   lib/unistd.c
   lib/unistd.in.h
+  lib/unlocked-io.h
   lib/utimens.c
   lib/utimens.h
   lib/verify.h
@@ -1044,6 +1047,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/timespec.m4
   m4/tm_gmtoff.m4
   m4/unistd_h.m4
+  m4/unlocked-io.m4
   m4/utimens.m4
   m4/utimes.m4
   m4/vararrays.m4

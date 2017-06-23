@@ -1408,7 +1408,7 @@ reset_sys_modes (struct tty_display_info *tty_out)
 {
   if (noninteractive)
     {
-      fflush (stdout);
+      fflush_unlocked (stdout);
       return;
     }
   if (!tty_out->term_initted)
@@ -1428,17 +1428,14 @@ reset_sys_modes (struct tty_display_info *tty_out)
     }
   else
     {			/* have to do it the hard way */
-      int i;
       tty_turn_off_insert (tty_out);
 
-      for (i = cursorX (tty_out); i < FrameCols (tty_out) - 1; i++)
-        {
-          fputc (' ', tty_out->output);
-        }
+      for (int i = cursorX (tty_out); i < FrameCols (tty_out) - 1; i++)
+	fputc_unlocked (' ', tty_out->output);
     }
 
   cmgoto (tty_out, FrameRows (tty_out) - 1, 0);
-  fflush (tty_out->output);
+  fflush_unlocked (tty_out->output);
 
   if (tty_out->terminal->reset_terminal_modes_hook)
     tty_out->terminal->reset_terminal_modes_hook (tty_out->terminal);
@@ -3079,7 +3076,7 @@ procfs_ttyname (int rdev)
       char minor[25];	/* 2 32-bit numbers + dash */
       char *endp;
 
-      for (; !feof (fdev) && !ferror (fdev); name[0] = 0)
+      for (; !feof_unlocked (fdev) && !ferror_unlocked (fdev); name[0] = 0)
 	{
 	  if (fscanf (fdev, "%*s %s %u %s %*s\n", name, &major, minor) >= 3
 	      && major == MAJOR (rdev))
@@ -3129,7 +3126,7 @@ procfs_get_total_memory (void)
 	    break;
 
 	  case 0:
-	    while ((c = getc (fmem)) != EOF && c != '\n')
+	    while ((c = getc_unlocked (fmem)) != EOF && c != '\n')
 	      continue;
 	    done = c == EOF;
 	    break;

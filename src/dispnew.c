@@ -3126,9 +3126,9 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
       if (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
         {
           if (FRAME_TTY (f)->termscript)
-            fflush (FRAME_TTY (f)->termscript);
+	    fflush_unlocked (FRAME_TTY (f)->termscript);
 	  if (FRAME_TERMCAP_P (f))
-	    fflush (FRAME_TTY (f)->output);
+	    fflush_unlocked (FRAME_TTY (f)->output);
         }
 
       /* Check window matrices for lost pointers.  */
@@ -3181,8 +3181,8 @@ update_frame_with_menu (struct frame *f, int row, int col)
   update_end (f);
 
   if (FRAME_TTY (f)->termscript)
-    fflush (FRAME_TTY (f)->termscript);
-  fflush (FRAME_TTY (f)->output);
+    fflush_unlocked (FRAME_TTY (f)->termscript);
+  fflush_unlocked (FRAME_TTY (f)->output);
   /* Check window matrices for lost pointers.  */
 #if GLYPH_DEBUG
 #if 0
@@ -4531,7 +4531,7 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p,
 		  ptrdiff_t outq = __fpending (display_output);
 		  if (outq > 900
 		      || (outq > 20 && ((i - 1) % preempt_count == 0)))
-		    fflush (display_output);
+		    fflush_unlocked (display_output);
 		}
 	    }
 
@@ -5615,13 +5615,13 @@ when TERMINAL is nil.  */)
 
       if (tty->termscript)
 	{
-	  fwrite (SDATA (string), 1, SBYTES (string), tty->termscript);
-	  fflush (tty->termscript);
+	  fwrite_unlocked (SDATA (string), 1, SBYTES (string), tty->termscript);
+	  fflush_unlocked (tty->termscript);
 	}
       out = tty->output;
     }
-  fwrite (SDATA (string), 1, SBYTES (string), out);
-  fflush (out);
+  fwrite_unlocked (SDATA (string), 1, SBYTES (string), out);
+  fflush_unlocked (out);
   unblock_input ();
   return Qnil;
 }
@@ -5636,7 +5636,7 @@ terminate any keyboard macro currently executing.  */)
   if (!NILP (arg))
     {
       if (noninteractive)
-	putchar (07);
+	putchar_unlocked (07);
       else
 	ring_bell (XFRAME (selected_frame));
     }
@@ -5650,7 +5650,7 @@ void
 bitch_at_user (void)
 {
   if (noninteractive)
-    putchar (07);
+    putchar_unlocked (07);
   else if (!INTERACTIVE)  /* Stop executing a keyboard macro.  */
     {
       const char *msg

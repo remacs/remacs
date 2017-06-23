@@ -512,6 +512,7 @@ size, and full-buffer size."
                                        (* (frame-char-width) 2)
                                      0))))
 	(shr-insert text)
+	(shr-fill-lines (point-min) (point-max))
 	(buffer-string)))))
 
 (define-inline shr-char-breakable-p (char)
