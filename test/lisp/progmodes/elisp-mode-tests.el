@@ -550,11 +550,12 @@ to (xref-elisp-test-descr-to-target xref)."
   (elisp--xref-find-definitions (eval '(defun stephe-leake-defun ())))
   nil)
 
+;; buffer-live-p has been ported to rust :)
 (xref-elisp-deftest find-defs-defun-c
-  (elisp--xref-find-definitions 'buffer-live-p)
+  (elisp--xref-find-definitions 'buffer-list)
   (list
-   (xref-make "(defun buffer-live-p)"
-	      (xref-make-elisp-location 'buffer-live-p nil "src/buffer.c"))))
+   (xref-make "(defun buffer-list)"
+	      (xref-make-elisp-location 'buffer-list nil "src/buffer.c"))))
 
 ;; FIXME: deftype
 
