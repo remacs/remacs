@@ -20788,7 +20788,8 @@ maybe_produce_line_number (struct it *it)
   scratch_glyph_row.reversed_p = false;
   scratch_glyph_row.used[TEXT_AREA] = 0;
   SET_TEXT_POS (tem_it.position, 0, 0);
-  tem_it.face_id = merge_faces (it->f, Qline_number, 0, DEFAULT_FACE_ID);
+  tem_it.avoid_cursor_p = true;
+  tem_it.bidi_p = true;
   tem_it.bidi_it.type = WEAK_EN;
   /* According to UAX#9, EN goes up 2 levels in L2R paragraph and
      1 level in R2L paragraphs.  Emulate that, assuming we are in
@@ -20797,10 +20798,16 @@ maybe_produce_line_number (struct it *it)
 
   /* Produce glyphs for the line number in a scratch glyph_row.  */
   int n_glyphs_before;
+  int lnum_face_id = merge_faces (it->f, Qline_number, 0, DEFAULT_FACE_ID);
   for (const char *p = lnum_buf; *p; p++)
     {
-      /* For continuation lines and lines after ZV, instead of a
-	 line number, produce a blank prefix of the same width.  */
+      /* For continuation lines and lines after ZV, instead of a line
+	 number, produce a blank prefix of the same width.  Use the
+	 default face for the blank field beyond ZV.  */
+      if (beyond_zv)
+	tem_it.face_id = it->base_face_id;
+      else
+	tem_it.face_id = lnum_face_id;
       if (beyond_zv || it->continuation_lines_width > 0)
 	tem_it.c = tem_it.char_to_display = ' ';
       else
@@ -21064,6 +21071,7 @@ display_line (struct it *it, int cursor_vpos)
 	 buffer reached.  */
       if (!get_next_display_element (it))
 	{
+	  bool row_has_glyphs = false;
 	  /* Maybe add a space at the end of this line that is used to
 	     display the cursor there under X.  Set the charpos of the
 	     first glyph of blank lines not corresponding to any text
@@ -21073,10 +21081,13 @@ display_line (struct it *it, int cursor_vpos)
 	  else if ((append_space_for_newline (it, true)
 		    && row->used[TEXT_AREA] == 1)
 		   || row->used[TEXT_AREA] == 0
-		   || row_text_area_empty (row))
+		   || (row_has_glyphs = row_text_area_empty (row)))
 	    {
 	      row->glyphs[TEXT_AREA]->charpos = -1;
-	      row->displays_text_p = false;
+	      /* Don't reset the displays_text_p flag if we are
+		 displaying line numbers or line-prefix.  */
+	      if (!row_has_glyphs)
+		row->displays_text_p = false;
 
 	      if (!NILP (BVAR (XBUFFER (it->w->contents), indicate_empty_lines))
 		  && (!MINI_WINDOW_P (it->w)
