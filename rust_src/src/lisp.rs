@@ -15,6 +15,7 @@ use libc::{c_void, intptr_t};
 use marker::{LispMarker, marker_position};
 use multibyte::{LispStringRef, MAX_CHAR};
 use vectors::LispVectorlikeRef;
+use buffers::LispBufferRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE,
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
@@ -431,6 +432,10 @@ impl LispObject {
         })
     }
 
+    pub fn as_buffer(self) -> Option<LispBufferRef> {
+        self.as_vectorlike().map_or(None, |v| v.as_buffer())
+    }
+
     pub fn is_char_table(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE)
@@ -828,6 +833,14 @@ impl LispObject {
         self.as_fixnum().map_or(
             false,
             |i| 0 <= i && i <= MAX_CHAR as EmacsInt,
+        )
+    }
+
+    #[inline]
+    pub fn is_overlay(self) -> bool {
+        self.as_misc().map_or(
+            false,
+            |m| m.ty == LispMiscType::Overlay,
         )
     }
 

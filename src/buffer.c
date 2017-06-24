@@ -366,15 +366,6 @@ nsberror (Lisp_Object spec)
   error ("Invalid buffer argument");
 }
 
-DEFUN ("buffer-live-p", Fbuffer_live_p, Sbuffer_live_p, 1, 1, 0,
-       doc: /* Return non-nil if OBJECT is a buffer which has not been killed.
-Value is nil if OBJECT is not a buffer or if it has been killed.  */)
-  (Lisp_Object object)
-{
-  return ((BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object)))
-	  ? Qt : Qnil);
-}
-
 DEFUN ("buffer-list", Fbuffer_list, Sbuffer_list, 0, 1, 0,
        doc: /* Return a list of all existing live buffers.
 If the optional arg FRAME is a frame, we return the buffer list in the
@@ -3796,13 +3787,6 @@ fix_overlays_before (struct buffer *bp, ptrdiff_t prev, ptrdiff_t pos)
 	break;
     }
 }
-
-DEFUN ("overlayp", Foverlayp, Soverlayp, 1, 1, 0,
-       doc: /* Return t if OBJECT is an overlay.  */)
-  (Lisp_Object object)
-{
-  return (OVERLAYP (object) ? Qt : Qnil);
-}
 
 DEFUN ("make-overlay", Fmake_overlay, Smake_overlay, 2, 5, 0,
        doc: /* Create a new overlay with range BEG to END in BUFFER and return it.
@@ -6155,7 +6139,6 @@ Functions running this hook are, `get-buffer-create',
   Vbuffer_list_update_hook = Qnil;
   DEFSYM (Qbuffer_list_update_hook, "buffer-list-update-hook");
 
-  defsubr (&Sbuffer_live_p);
   defsubr (&Sbuffer_list);
   defsubr (&Sget_buffer);
   defsubr (&Sget_file_buffer);
@@ -6186,7 +6169,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Sset_buffer_multibyte);
   defsubr (&Skill_all_local_variables);
 
-  defsubr (&Soverlayp);
   defsubr (&Smake_overlay);
   defsubr (&Sdelete_overlay);
   defsubr (&Sdelete_all_overlays);
