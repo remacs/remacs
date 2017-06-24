@@ -383,25 +383,28 @@ doesn't usurp the display margin for the line numbers.  Customize the
 buffer-local variable 'display-line-numbers' to activate this optional
 display.  If set to t, Emacs will display the number of each line
 before the line.  If set to 'relative', Emacs will display the line
-number relative to the line showing point.  The default is nil, which
-doesn't display the line numbers.
+number relative to the line showing point, with that line's number
+displayed as absolute.  The default is nil, which doesn't display the
+line numbers.
 
 The new face 'line-number' is used to display the line numbers.  The
 new face 'line-number-current-line' can be customized to display the
 current line's number differently from all the other line numbers; by
 default these two faces are identical.
 
-You can also customize the new variable 'display-line-number-width'
-to specify a fixed minimal with of the area allocated to line-number
+You can also customize the new variable 'display-line-number-width' to
+specify a fixed minimal with of the area allocated to line-number
 display.  The default is nil, meaning that Emacs will dynamically
-calculate the area width, enlarging it as needed.  Setting it to a
-non-negative integer specifies that as the minimal width; selecting a
-value that is large enough to display all line numbers in a buffer
-will keep the line-number display area of constant width.
+calculate the area width, enlarging or shrinking it as needed.
+Setting it to a non-negative integer specifies that as the minimal
+width; selecting a value that is large enough to display all line
+numbers in a buffer will then keep the line-number display area of
+constant width at all times, if that is desired.
 
 Lisp programs can disable line-number display for a particular screen
 line by putting the 'display-line-numbers-disable' text property or
-overlay property on the first character of that screen line.
+overlay property on the first character of that screen line.  This is
+intended for add-on packages that need a finer control of the display.
 
 Linum mode and all similar packages are henceforth becoming obsolete.
 Users and developers are encouraged to switch to this new feature
