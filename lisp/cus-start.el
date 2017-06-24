@@ -592,7 +592,7 @@ since it could result in memory overflow and make Emacs crash."
                                     (const :tag "Relative line numbers"
                                            :value relative))
                                    "26.1")
-             (display-line-width display
+             (display-line-number-width display
                                  (choice
                                   (const :tag "Dynamically computed"
                                          :value nil)

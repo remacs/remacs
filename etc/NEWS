@@ -386,8 +386,10 @@ before the line.  If set to 'relative', Emacs will display the line
 number relative to the line showing point.  The default is nil, which
 doesn't display the line numbers.
 
-You can also customize the new variable 'display-lines-width' to
-specify a fixed minimal with of the area allocated to line-number
+The new face 'line-number' is used to display the line numbers.
+
+You can also customize the new variable 'display-line-number-width'
+to specify a fixed minimal with of the area allocated to line-number
 display.  The default is nil, meaning that Emacs will dynamically
 calculate the area width, enlarging it as needed.  Setting it to a
 non-negative integer specifies that as the minimal width; selecting a

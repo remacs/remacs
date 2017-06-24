@@ -20754,8 +20754,8 @@ maybe_produce_line_number (struct it *it)
   /* Compute the required width if needed.  */
   if (!it->lnum_width)
     {
-      if (NATNUMP (Vdisplay_line_width))
-	it->lnum_width = XFASTINT (Vdisplay_line_width);
+      if (NATNUMP (Vdisplay_line_number_width))
+	it->lnum_width = XFASTINT (Vdisplay_line_number_width);
       else
 	{
 	  /* Max line number to be displayed cannot be more than
@@ -32408,13 +32408,13 @@ after each newline that comes from buffer text.  */);
   Fmake_variable_buffer_local (Qdisplay_line_numbers);
   DEFSYM (Qrelative, "relative");
 
-  DEFVAR_LISP ("display-line-width", Vdisplay_line_width,
+  DEFVAR_LISP ("display-line-number-width", Vdisplay_line_number_width,
     doc: /* Minimum width of space reserved for line number display.
 A positive number means reserve that many columns for line numbers,
 even if the actual number needs less space.
 The default value of nil means compute the space dynamically.
 Any other value is treated as nil.  */);
-  Vdisplay_line_width = Qnil;
+  Vdisplay_line_number_width = Qnil;
 
   DEFVAR_BOOL ("inhibit-eval-during-redisplay", inhibit_eval_during_redisplay,
     doc: /* Non-nil means don't eval Lisp during redisplay.  */);
