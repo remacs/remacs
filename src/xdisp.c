@@ -21002,13 +21002,23 @@ display_line (struct it *it, int cursor_vpos)
       min_bpos = BYTEPOS (this_line_min_pos);
 
       /* Produce line number, if needed.  */
-      if (!NILP (Vdisplay_line_numbers))
+      if (!NILP (Vdisplay_line_numbers)
+#ifdef HAVE_WINDOW_SYSTEM
+	  && !(FRAMEP (tip_frame)
+	       && EQ (WINDOW_FRAME (it->w), tip_frame))
+#endif
+	  && (!MINI_WINDOW_P (it->w)))
 	maybe_produce_line_number (it);
     }
   else if (it->area == TEXT_AREA)
     {
       /* Line numbers should precede the line-prefix or wrap-prefix.  */
-      if (!NILP (Vdisplay_line_numbers))
+      if (!NILP (Vdisplay_line_numbers)
+#ifdef HAVE_WINDOW_SYSTEM
+	  && !(FRAMEP (tip_frame)
+	       && EQ (WINDOW_FRAME (it->w), tip_frame))
+#endif
+	  && (!MINI_WINDOW_P (it->w)))
 	maybe_produce_line_number (it);
 
       /* We only do this when not calling move_it_in_display_line_to
@@ -21091,8 +21101,7 @@ display_line (struct it *it, int cursor_vpos)
 		row->displays_text_p = false;
 
 	      if (!NILP (BVAR (XBUFFER (it->w->contents), indicate_empty_lines))
-		  && (!MINI_WINDOW_P (it->w)
-		      || (minibuf_level && EQ (it->window, minibuf_window))))
+		  && (!MINI_WINDOW_P (it->w)))
 		row->indicate_empty_line_p = true;
 	    }
 
@@ -21175,7 +21184,13 @@ display_line (struct it *it, int cursor_vpos)
 	  if (it->area == TEXT_AREA && pending_handle_line_prefix)
 	    {
 	      /* Line numbers should precede the line-prefix or wrap-prefix.  */
-	      if (!NILP (Vdisplay_line_numbers))
+	      if (!NILP (Vdisplay_line_numbers)
+#ifdef HAVE_WINDOW_SYSTEM
+		  && !(FRAMEP (tip_frame)
+		       && EQ (WINDOW_FRAME (it->w), tip_frame))
+#endif
+		  && (!MINI_WINDOW_P (it->w)
+		      || (minibuf_level && EQ (it->window, minibuf_window))))
 		maybe_produce_line_number (it);
 
 	      pending_handle_line_prefix = false;
