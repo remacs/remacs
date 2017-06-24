@@ -20770,6 +20770,7 @@ maybe_produce_line_number (struct it *it)
 	  else
 	    max_lnum =
 	      this_line + it->w->desired_matrix->nrows - 1 - it->vpos;
+	  max_lnum = max (1, max_lnum);
 	  it->lnum_width = log10 (max_lnum) + 1;
 	}
       eassert (it->lnum_width > 0);
