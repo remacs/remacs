@@ -386,7 +386,10 @@ before the line.  If set to 'relative', Emacs will display the line
 number relative to the line showing point.  The default is nil, which
 doesn't display the line numbers.
 
-The new face 'line-number' is used to display the line numbers.
+The new face 'line-number' is used to display the line numbers.  The
+new face 'line-number-current-line' can be customized to display the
+current line's number differently from all the other line numbers; by
+default these two faces are identical.
 
 You can also customize the new variable 'display-line-number-width'
 to specify a fixed minimal with of the area allocated to line-number
@@ -395,6 +398,10 @@ calculate the area width, enlarging it as needed.  Setting it to a
 non-negative integer specifies that as the minimal width; selecting a
 value that is large enough to display all line numbers in a buffer
 will keep the line-number display area of constant width.
+
+Lisp programs can disable line-number display for a particular screen
+line by putting the 'display-line-numbers-disable' text property or
+overlay property on the first character of that screen line.
 
 Linum mode and all similar packages are henceforth becoming obsolete.
 Users and developers are encouraged to switch to this new feature

@@ -20887,6 +20887,32 @@ maybe_produce_line_number (struct it *it)
   bidi_unshelve_cache (itdata, false);
 }
 
+/* Return true if this glyph row needs a line number to be produced
+   for it.  */
+static bool
+should_produce_line_number (struct it *it)
+{
+  if (NILP (Vdisplay_line_numbers))
+    return false;
+
+  /* Don't display line numbers in minibuffer windows.  */
+  if (MINI_WINDOW_P (it->w))
+    return false;
+
+#ifdef HAVE_WINDOW_SYSTEM
+  /* Don't display line number in tooltip frames.  */
+  if (FRAMEP (tip_frame) && EQ (WINDOW_FRAME (it->w), tip_frame))
+    return false;
+#endif
+
+  /* If the character at current position has a non-nil special
+     property, disable line numbers for this row.  */
+  Lisp_Object val = Fget_char_property (make_number (IT_CHARPOS (*it)),
+					Qdisplay_line_numbers_disable,
+					it->window);
+  return NILP (val) ? true : false;
+}
+
 /* Return true if ROW has no glyphs except those inserted by the
    display engine.  This is needed for indicate-empty-lines and
    similar features when the glyph row starts with glyphs which didn't
@@ -20984,6 +21010,8 @@ display_line (struct it *it, int cursor_vpos)
       (window_hscroll_limited (it->w, it->f) - it->w->min_hscroll)
       * FRAME_COLUMN_WIDTH (it->f);
 
+  bool line_number_needed = should_produce_line_number (it);
+
   /* Move over display elements that are not visible because we are
      hscrolled.  This may stop at an x-position < first_visible_x
      if the first glyph is partially visible or if we hit a line end.  */
@@ -21021,23 +21049,13 @@ display_line (struct it *it, int cursor_vpos)
       min_bpos = BYTEPOS (this_line_min_pos);
 
       /* Produce line number, if needed.  */
-      if (!NILP (Vdisplay_line_numbers)
-#ifdef HAVE_WINDOW_SYSTEM
-	  && !(FRAMEP (tip_frame)
-	       && EQ (WINDOW_FRAME (it->w), tip_frame))
-#endif
-	  && (!MINI_WINDOW_P (it->w)))
+      if (line_number_needed)
 	maybe_produce_line_number (it);
     }
   else if (it->area == TEXT_AREA)
     {
       /* Line numbers should precede the line-prefix or wrap-prefix.  */
-      if (!NILP (Vdisplay_line_numbers)
-#ifdef HAVE_WINDOW_SYSTEM
-	  && !(FRAMEP (tip_frame)
-	       && EQ (WINDOW_FRAME (it->w), tip_frame))
-#endif
-	  && (!MINI_WINDOW_P (it->w)))
+      if (line_number_needed)
 	maybe_produce_line_number (it);
 
       /* We only do this when not calling move_it_in_display_line_to
@@ -21203,13 +21221,7 @@ display_line (struct it *it, int cursor_vpos)
 	  if (it->area == TEXT_AREA && pending_handle_line_prefix)
 	    {
 	      /* Line numbers should precede the line-prefix or wrap-prefix.  */
-	      if (!NILP (Vdisplay_line_numbers)
-#ifdef HAVE_WINDOW_SYSTEM
-		  && !(FRAMEP (tip_frame)
-		       && EQ (WINDOW_FRAME (it->w), tip_frame))
-#endif
-		  && (!MINI_WINDOW_P (it->w)
-		      || (minibuf_level && EQ (it->window, minibuf_window))))
+	      if (line_number_needed)
 		maybe_produce_line_number (it);
 
 	      pending_handle_line_prefix = false;
@@ -31905,6 +31917,8 @@ They are still logged to the *Messages* buffer.  */);
   /* Names of the faces used to display line numbers.  */
   DEFSYM (Qline_number, "line-number");
   DEFSYM (Qline_number_current_line, "line-number-current-line");
+  /* Name of a text property which disables line-number display.  */
+  DEFSYM (Qdisplay_line_numbers_disable, "display-line-numbers-disable");
 
   /* Name and number of the face used to highlight escape glyphs.  */
   DEFSYM (Qescape_glyph, "escape-glyph");
