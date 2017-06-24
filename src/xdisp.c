@@ -20849,19 +20849,16 @@ maybe_produce_line_number (struct it *it)
 	}
     }
 
-  /* Update IT->glyph_row's metrics.  */
+  /* Update IT's metrics due to glyphs produced for line numbers.  */
   if (it->glyph_row)
     {
       struct glyph_row *row = it->glyph_row;
 
-      row->ascent = max (row->ascent, tem_it.max_ascent);
-      row->height = max (row->height,
-			 tem_it.max_ascent + tem_it.max_descent);
-      row->phys_ascent = max (row->phys_ascent, tem_it.max_phys_ascent);
-      row->phys_height = max (row->phys_height,
-			      tem_it.max_phys_ascent + tem_it.max_phys_descent);
-      row->extra_line_spacing = max (row->extra_line_spacing,
-				     tem_it.max_extra_line_spacing);
+      it->max_ascent = max (row->ascent, tem_it.max_ascent);
+      it->max_descent = max (row->height - row->ascent, tem_it.max_descent);
+      it->max_phys_ascent = max (row->phys_ascent, tem_it.max_phys_ascent);
+      it->max_phys_descent = max (row->phys_height - row->phys_ascent,
+				  tem_it.max_phys_descent);
     }
 
   bidi_unshelve_cache (itdata, false);
