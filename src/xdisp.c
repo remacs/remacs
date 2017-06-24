@@ -13070,27 +13070,34 @@ hscroll_window_tree (Lisp_Object window)
 	  bool row_r2l_p = cursor_row->reversed_p;
 	  bool hscl = hscrolling_current_line_p (w);
 	  int x_offset = 0;
-	  struct glyph *g;
-	  if (!row_r2l_p)
+	  /* When line numbers are displayed, we need to account for
+	     the horizontal space they consume.  */
+	  if (!NILP (Vdisplay_line_numbers))
 	    {
-	      for (g = cursor_row->glyphs[TEXT_AREA];
-		   g < cursor_row->glyphs[TEXT_AREA] + cursor_row->used[TEXT_AREA];
-		   g++)
+	      struct glyph *g;
+	      if (!row_r2l_p)
 		{
-		  if (!(NILP (g->object) && g->charpos < 0))
-		    break;
-		  x_offset += g->pixel_width;
+		  for (g = cursor_row->glyphs[TEXT_AREA];
+		       g < cursor_row->glyphs[TEXT_AREA]
+			 + cursor_row->used[TEXT_AREA];
+		       g++)
+		    {
+		      if (!(NILP (g->object) && g->charpos < 0))
+			break;
+		      x_offset += g->pixel_width;
+		    }
 		}
-	    }
-	  else
-	    {
-	      for (g = cursor_row->glyphs[TEXT_AREA] + cursor_row->used[TEXT_AREA];
-		   g > cursor_row->glyphs[TEXT_AREA];
-		   g--)
+	      else
 		{
-		  if (!(NILP ((g - 1)->object) && (g - 1)->charpos < 0))
-		    break;
-		  x_offset += (g - 1)->pixel_width;
+		  for (g = cursor_row->glyphs[TEXT_AREA]
+			 + cursor_row->used[TEXT_AREA];
+		       g > cursor_row->glyphs[TEXT_AREA];
+		       g--)
+		    {
+		      if (!(NILP ((g - 1)->object) && (g - 1)->charpos < 0))
+			break;
+		      x_offset += (g - 1)->pixel_width;
+		    }
 		}
 	    }
 
