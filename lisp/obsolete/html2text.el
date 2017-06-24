@@ -3,6 +3,7 @@
 ;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
 ;; Author: Joakim Hove <hove@phys.ntnu.no>
+;; Obsolete-since: 26.1
 
 ;; This file is part of GNU Emacs.
 
@@ -28,6 +29,8 @@
 ;; "re-htmlized".
 ;;
 ;; The main function is `html2text'.
+
+;; This package was obsoleted by shr.el.
 
 ;;; Code:
 

@@ -471,6 +471,8 @@ properties as intact as possible.
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
+*** html2text is now marked obsolete.
+
 *** smerge-refine-regions can refine regions in separate buffers
 
 *** Info menu and index completion uses substring completion by default.
