@@ -20763,13 +20763,7 @@ maybe_produce_line_number (struct it *it)
 	     matrix.  */
 	  ptrdiff_t max_lnum;
 
-	  if (EQ (Vdisplay_line_numbers, Qrelative))
-	    /* We subtract one more because the current line is
-	       always zero under relative line-number display.  */
-	    max_lnum = it->w->desired_matrix->nrows - 2;
-	  else
-	    max_lnum =
-	      this_line + it->w->desired_matrix->nrows - 1 - it->vpos;
+	  max_lnum = this_line + it->w->desired_matrix->nrows - 1 - it->vpos;
 	  max_lnum = max (1, max_lnum);
 	  it->lnum_width = log10 (max_lnum) + 1;
 	}
@@ -20778,12 +20772,18 @@ maybe_produce_line_number (struct it *it)
   if (EQ (Vdisplay_line_numbers, Qrelative))
     lnum_offset = it->pt_lnum;
 
+  /* Under 'relative', display the absolute line number for the
+     current line, as displaying zero gives zero useful information.  */
+  ptrdiff_t lnum_to_display = eabs (this_line - lnum_offset);
+  if (EQ (Vdisplay_line_numbers, Qrelative)
+      && lnum_to_display == 0)
+    lnum_to_display = it->pt_lnum + 1;
   /* In L2R rows we need to append the blank separator, in R2L
      rows we need to prepend it.  But this function is usually
      called when no display elements were produced from the
      following line, so the paragraph direction might be unknown.
      Therefore we cheat and add 2 blanks, one on either side.  */
-  pint2str (lnum_buf, it->lnum_width + 1, eabs (this_line - lnum_offset));
+  pint2str (lnum_buf, it->lnum_width + 1, lnum_to_display);
   strcat (lnum_buf, " ");
 
   /* Setup for producing the glyphs.  */
