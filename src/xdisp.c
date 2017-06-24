@@ -834,6 +834,7 @@ static bool update_menu_bar (struct frame *, bool, bool);
 static bool try_window_reusing_current_matrix (struct window *);
 static int try_window_id (struct window *);
 static void maybe_produce_line_number (struct it *);
+static bool should_produce_line_number (struct it *);
 static bool display_line (struct it *, int);
 static int display_mode_lines (struct window *);
 static int display_mode_line (struct window *, enum face_id, Lisp_Object);
@@ -8656,7 +8657,7 @@ move_it_in_display_line_to (struct it *it,
   if (it->hpos == 0)
     {
       /* If line numbers are being displayed, produce a line number.  */
-      if (!NILP (Vdisplay_line_numbers)
+      if (should_produce_line_number (it)
 	  && it->current_x == it->first_visible_x)
 	maybe_produce_line_number (it);
       /* If there's a line-/wrap-prefix, handle it.  */
@@ -13068,6 +13069,30 @@ hscroll_window_tree (Lisp_Object window)
 	    }
 	  bool row_r2l_p = cursor_row->reversed_p;
 	  bool hscl = hscrolling_current_line_p (w);
+	  int x_offset = 0;
+	  struct glyph *g;
+	  if (!row_r2l_p)
+	    {
+	      for (g = cursor_row->glyphs[TEXT_AREA];
+		   g < cursor_row->glyphs[TEXT_AREA] + cursor_row->used[TEXT_AREA];
+		   g++)
+		{
+		  if (!(NILP (g->object) && g->charpos < 0))
+		    break;
+		  x_offset += g->pixel_width;
+		}
+	    }
+	  else
+	    {
+	      for (g = cursor_row->glyphs[TEXT_AREA] + cursor_row->used[TEXT_AREA];
+		   g > cursor_row->glyphs[TEXT_AREA];
+		   g--)
+		{
+		  if (!(NILP ((g - 1)->object) && (g - 1)->charpos < 0))
+		    break;
+		  x_offset += (g - 1)->pixel_width;
+		}
+	    }
 
 	  text_area_width = window_box_width (w, TEXT_AREA);
 
@@ -13100,7 +13125,7 @@ hscroll_window_tree (Lisp_Object window)
 		 inside the left margin and the window is already
 		 hscrolled.  */
 	      && ((!row_r2l_p
-		   && ((w->hscroll && w->cursor.x <= h_margin)
+		   && ((w->hscroll && w->cursor.x <= h_margin + x_offset)
 		       || (cursor_row->enabled_p
 			   && cursor_row->truncated_on_right_p
 			   && (w->cursor.x >= text_area_width - h_margin))))
@@ -13118,7 +13143,8 @@ hscroll_window_tree (Lisp_Object window)
 			   && cursor_row->truncated_on_right_p
 			   && w->cursor.x <= h_margin)
 			  || (w->hscroll
-			      && (w->cursor.x >= text_area_width - h_margin))))
+			      && (w->cursor.x >= (text_area_width - h_margin
+						  - x_offset)))))
 		  /* This last condition is needed when moving
 		     vertically from an hscrolled line to a short line
 		     that doesn't need to be hscrolled.  If we omit
@@ -27898,7 +27924,7 @@ x_produce_glyphs (struct it *it)
 	      /* Adjust for line numbers.  Kludge alert: the "2" below
 		 is because we add 2 blanks to the actual line number.  */
 	      if (!NILP (Vdisplay_line_numbers))
-		x -= (it->lnum_width + 2) * font->space_width;
+		x -= (it->lnum_width + 2 - it->w->hscroll) * font->space_width;
 	      int next_tab_x = ((1 + x + tab_width - 1) / tab_width) * tab_width;
 
 	      /* If the distance from the current position to the next tab
