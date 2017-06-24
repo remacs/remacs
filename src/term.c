@@ -1584,6 +1584,10 @@ produce_glyphs (struct it *it)
     {
       int absolute_x = (it->current_x
 			+ it->continuation_lines_width);
+      /* Adjust for line numbers.  Kludge alert: the "2" below is
+	 because we add 2 blanks to the actual line number.  */
+      if (!NILP (Vdisplay_line_numbers))
+	absolute_x -= it->lnum_width + 2;
       int next_tab_x
 	= (((1 + absolute_x + it->tab_width - 1)
 	    / it->tab_width)

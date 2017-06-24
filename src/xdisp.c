@@ -27865,6 +27865,10 @@ x_produce_glyphs (struct it *it)
 	    {
 	      int tab_width = it->tab_width * font->space_width;
 	      int x = it->current_x + it->continuation_lines_width;
+	      /* Adjust for line numbers.  Kludge alert: the "2" below
+		 is because we add 2 blanks to the actual line number.  */
+	      if (!NILP (Vdisplay_line_numbers))
+		x -= (it->lnum_width + 2) * font->space_width;
 	      int next_tab_x = ((1 + x + tab_width - 1) / tab_width) * tab_width;
 
 	      /* If the distance from the current position to the next tab
