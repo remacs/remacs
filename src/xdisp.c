@@ -15940,6 +15940,13 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp,
       /* When display-line-numbers is in relative mode, moving point
 	 requires to redraw the entire window.  */
       && !EQ (Vdisplay_line_numbers, Qrelative)
+      /* When the current line number should be displayed in a
+	 distinct face, moving point cannot be handled in optimized
+	 way as below.  */
+      && !(!NILP (Vdisplay_line_numbers)
+	   && NILP (Finternal_lisp_face_equal_p (Qline_number,
+						 Qline_number_current_line,
+						 w->frame)))
       /* This code is not used for mini-buffer for the sake of the case
 	 of redisplaying to replace an echo area message; since in
 	 that case the mini-buffer contents per se are usually
@@ -18445,8 +18452,13 @@ try_window_id (struct window *w)
   if (!NILP (BVAR (XBUFFER (w->contents), extra_line_spacing)))
     GIVE_UP (23);
 
-  /* Give up if display-line-numbers is in relative mode.  */
-  if (EQ (Vdisplay_line_numbers, Qrelative))
+  /* Give up if display-line-numbers is in relative mode, or when the
+     current line's number needs to be displayed in a distinct face.  */
+  if (EQ (Vdisplay_line_numbers, Qrelative)
+      || (!NILP (Vdisplay_line_numbers)
+	  && NILP (Finternal_lisp_face_equal_p (Qline_number,
+						Qline_number_current_line,
+						w->frame))))
     GIVE_UP (24);
 
   /* Make sure beg_unchanged and end_unchanged are up to date.  Do it
@@ -20739,8 +20751,13 @@ maybe_produce_line_number (struct it *it)
   char lnum_buf[INT_STRLEN_BOUND (ptrdiff_t) + 1];
   bool beyond_zv = IT_BYTEPOS (*it) >= ZV_BYTE ? true : false;
   ptrdiff_t lnum_offset = -1; /* to produce 1-based line numbers */
+  int lnum_face_id = merge_faces (it->f, Qline_number, 0, DEFAULT_FACE_ID);
+  int current_lnum_face_id
+    = merge_faces (it->f, Qline_number_current_line, 0, DEFAULT_FACE_ID);
   /* Compute point's line number if needed.  */
-  if (EQ (Vdisplay_line_numbers, Qrelative) && !it->pt_lnum)
+  if ((EQ (Vdisplay_line_numbers, Qrelative)
+       || lnum_face_id != current_lnum_face_id)
+      && !it->pt_lnum)
     {
       ptrdiff_t ignored;
       if (PT_BYTE > it->lnum_bytepos)
@@ -20803,7 +20820,6 @@ maybe_produce_line_number (struct it *it)
 
   /* Produce glyphs for the line number in a scratch glyph_row.  */
   int n_glyphs_before;
-  int lnum_face_id = merge_faces (it->f, Qline_number, 0, DEFAULT_FACE_ID);
   for (const char *p = lnum_buf; *p; p++)
     {
       /* For continuation lines and lines after ZV, instead of a line
@@ -20811,6 +20827,8 @@ maybe_produce_line_number (struct it *it)
 	 default face for the blank field beyond ZV.  */
       if (beyond_zv)
 	tem_it.face_id = it->base_face_id;
+      else if (lnum_face_id != current_lnum_face_id && this_line == it->pt_lnum)
+	tem_it.face_id = current_lnum_face_id;
       else
 	tem_it.face_id = lnum_face_id;
       if (beyond_zv || it->continuation_lines_width > 0)
@@ -31884,8 +31902,9 @@ They are still logged to the *Messages* buffer.  */);
   /* Name of the face used to highlight trailing whitespace.  */
   DEFSYM (Qtrailing_whitespace, "trailing-whitespace");
 
-  /* Name of the face used to display line numbers.  */
+  /* Names of the faces used to display line numbers.  */
   DEFSYM (Qline_number, "line-number");
+  DEFSYM (Qline_number_current_line, "line-number-current-line");
 
   /* Name and number of the face used to highlight escape glyphs.  */
   DEFSYM (Qescape_glyph, "escape-glyph");

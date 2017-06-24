@@ -2473,6 +2473,13 @@ This face is used when `display-line-numbers' is non-nil."
   :version "26.1"
   :group 'basic-faces)
 
+(defface line-number-current-line
+  '((t :inherit line-number))
+  "Face for displaying the current line number.
+This face is used when `display-line-numbers' is non-nil."
+  :version "26.1"
+  :group 'basic-faces)
+
 (defface escape-glyph
   '((((background dark)) :foreground "cyan")
     ;; See the comment in minibuffer-prompt for
