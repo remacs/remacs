@@ -219,10 +219,9 @@ fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
     while i1 < end {
         // Unwraps should be fine here, due to our manual tracking of
         // valid length
-        let (codept1, i1_bytes) = lispstr1.next().unwrap();
+        let (codept1, _) = lispstr1.next().unwrap();
         let (codept2, _) = lispstr2.next().unwrap();
-
-        i1 += i1_bytes as isize;
+        i1 += 1;
         
         if codept1 != codept2 {
             if codept1 < codept2 {
