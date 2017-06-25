@@ -20749,10 +20749,15 @@ maybe_produce_line_number (struct it *it)
   ptrdiff_t last_line = it->lnum;
   ptrdiff_t start_from, bytepos;
   ptrdiff_t this_line;
+  bool first_time = false;
 
   /* FIXME: Maybe reuse the data in it->w->base_line_number.  */
   if (!last_line)
-    start_from = BEGV;
+    {
+      start_from = BEGV;
+      if (!it->lnum_bytepos)
+	first_time = true;
+    }
   else
     start_from = it->lnum_bytepos;
 
@@ -20772,13 +20777,14 @@ maybe_produce_line_number (struct it *it)
   eassert (this_line > 0 || (this_line == 0 && start_from == BEGV_BYTE));
   eassert (bytepos == IT_BYTEPOS (*it));
 
-  /* Produce the glyphs for the line number.  */
+  /* Record the line number information.  */
   if (this_line != last_line || !last_line)
     {
       it->lnum = this_line;
       it->lnum_bytepos = IT_BYTEPOS (*it);
     }
 
+  /* Produce the glyphs for the line number.  */
   void *itdata = bidi_shelve_cache ();
   struct it tem_it;
   char lnum_buf[INT_STRLEN_BOUND (ptrdiff_t) + 1];
@@ -20864,7 +20870,10 @@ maybe_produce_line_number (struct it *it)
 	tem_it.face_id = current_lnum_face_id;
       else
 	tem_it.face_id = lnum_face_id;
-      if (beyond_zv || it->continuation_lines_width > 0)
+      if (beyond_zv
+	  /* Don't display the same line number more than once.  */
+	  || it->continuation_lines_width > 0
+	  || (this_line == last_line && !first_time))
 	tem_it.c = tem_it.char_to_display = ' ';
       else
 	tem_it.c = tem_it.char_to_display = *p;
