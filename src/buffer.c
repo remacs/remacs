@@ -3054,6 +3054,33 @@ mouse_face_overlay_overlaps (Lisp_Object overlay)
   return i < n;
 }
 
+/* Return the value of the 'display-line-numbers-disable' property at
+   EOB, if there's an overlay at ZV with a non-nil value of that property.  */
+Lisp_Object
+disable_line_numbers_overlay_at_eob (void)
+{
+  ptrdiff_t n, i, size;
+  Lisp_Object *v, tem = Qnil;
+  Lisp_Object vbuf[10];
+  USE_SAFE_ALLOCA;
+
+  size = ARRAYELTS (vbuf);
+  v = vbuf;
+  n = overlays_in (ZV, ZV, 0, &v, &size, NULL, NULL);
+  if (n > size)
+    {
+      SAFE_NALLOCA (v, 1, n);
+      overlays_in (ZV, ZV, 0, &v, &n, NULL, NULL);
+    }
+
+  for (i = 0; i < n; ++i)
+    if ((tem = Foverlay_get (v[i], Qdisplay_line_numbers_disable),
+	 !NILP (tem)))
+      break;
+
+  SAFE_FREE ();
+  return tem;
+}
 
 
 /* Fast function to just test if we're at an overlay boundary.  */

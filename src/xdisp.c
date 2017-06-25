@@ -20948,10 +20948,15 @@ should_produce_line_number (struct it *it)
 #endif
 
   /* If the character at current position has a non-nil special
-     property, disable line numbers for this row.  */
-  Lisp_Object val = Fget_char_property (make_number (IT_CHARPOS (*it)),
-					Qdisplay_line_numbers_disable,
-					it->window);
+     property, disable line numbers for this row.  For ZV, we need to
+     use a special algorithm that only supports empty overlays at that
+     point, because get-char-property always returns nil for ZV.  */
+  Lisp_Object val = Qnil;
+  if (IT_CHARPOS (*it) >= ZV)
+    val = disable_line_numbers_overlay_at_eob ();
+  else
+    val = Fget_char_property (make_number (IT_CHARPOS (*it)),
+			      Qdisplay_line_numbers_disable, it->window);
   return NILP (val) ? true : false;
 }
 
