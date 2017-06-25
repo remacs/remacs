@@ -1047,7 +1047,7 @@ callback data (if any)."
 (defun epg--status-TRUST_MARGINAL (context _string)
   (let ((signature (car (epg-context-result-for context 'verify))))
     (if (and signature
-	     (eq (epg-signature-status signature) 'marginal))
+	     (eq (epg-signature-status signature) 'good))
 	(setf (epg-signature-validity signature) 'marginal))))
 
 (defun epg--status-TRUST_FULLY (context _string)
