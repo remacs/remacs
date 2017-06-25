@@ -777,7 +777,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				    (c-backward-syntactic-ws)
 				    (setq id-end (point))
 				    (< (skip-chars-backward
-					,(c-lang-const c-symbol-chars)) 0))
+					,(c-lang-const c-symbol-chars))
+				       0))
 				  (not (get-text-property (point) 'face)))
 			(c-put-font-lock-face (point) id-end
 					      c-reference-face-name)
@@ -1013,13 +1014,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (c-fontify-types-and-refs
-      ((pos (point)) next-pos id-start id-end
+      ((pos (point)) next-pos id-start
        decl-res
-       paren-depth
        id-face got-type got-init
        c-last-identifier-range
-       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start))
-       brackets-after-id)
+       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start)))
 
     ;; The following `while' fontifies a single declarator id each time round.
     ;; It loops only when LIST is non-nil.
@@ -1036,7 +1035,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				   (forward-char)
 				   (c-forward-syntactic-ws)
 				   (looking-at "[*&]")))
-			     (not (car (cddr decl-res))) ; brackets-after-id
+			     (not (car (cddr decl-res)))
 			     (or (not (c-major-mode-is 'c++-mode))
 				 (save-excursion
 				   (let (c-last-identifier-range)
@@ -2502,7 +2501,7 @@ need for `c++-font-lock-extra-types'.")
      limit
      "[-+]"
      nil
-     (lambda (match-pos inside-macro &optional top-level)
+     (lambda (_match-pos _inside-macro &optional _top-level)
        (forward-char)
        (c-font-lock-objc-method))))
   nil)
