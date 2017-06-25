@@ -44,19 +44,12 @@
     (load "cc-bytecomp" nil t)))
 
 (eval-and-compile
-  (defvar c--mapcan-status
-    (cond ((and (fboundp 'mapcan)
-		(subrp (symbol-function 'mapcan)))
-	   ;; XEmacs
-	   'mapcan)
-	  ((locate-file "cl-lib.elc" load-path)
-	   ;; Emacs >= 24.3
-	   'cl-mapcan)
-	  (t
-	   ;; Emacs <= 24.2
-	   nil))))
+  (defvar c--cl-library
+    (if (locate-library "cl-lib")
+	'cl-lib
+      'cl)))
 
-(cc-external-require (if (eq c--mapcan-status 'cl-mapcan) 'cl-lib 'cl))
+(cc-external-require c--cl-library)
 ; was (cc-external-require 'cl).  ACM 2005/11/29.
 ; Changed from (eval-when-compile (require 'cl)) back to
 ; cc-external-require, 2015-08-12.
@@ -182,9 +175,12 @@ This variant works around bugs in `eval-when-compile' in various
   ;; The motivation for this macro is to avoid the irritating message
   ;; "function `mapcan' from cl package called at runtime" produced by Emacs.
   (cond
-   ((eq c--mapcan-status 'mapcan)
+   ((and (fboundp 'mapcan)
+	 (subrp (symbol-function 'mapcan)))
+    ;; XEmacs and Emacs >= 26.
     `(mapcan ,fun ,liszt))
-   ((eq c--mapcan-status 'cl-mapcan)
+   ((eq c--cl-library 'cl-lib)
+    ;; Emacs >= 24.3, < 26.
     `(cl-mapcan ,fun ,liszt))
    (t
     ;; Emacs <= 24.2.  It would be nice to be able to distinguish between
@@ -193,13 +189,13 @@ This variant works around bugs in `eval-when-compile' in various
 
 (defmacro c--set-difference (liszt1 liszt2 &rest other-args)
   ;; Macro to smooth out the renaming of `set-difference' in Emacs 24.3.
-  (if (eq c--mapcan-status 'cl-mapcan)
+  (if (eq c--cl-library 'cl-lib)
       `(cl-set-difference ,liszt1 ,liszt2 ,@other-args)
     `(set-difference ,liszt1 ,liszt2 ,@other-args)))
 
 (defmacro c--intersection (liszt1 liszt2 &rest other-args)
   ;; Macro to smooth out the renaming of `intersection' in Emacs 24.3.
-  (if (eq c--mapcan-status 'cl-mapcan)
+  (if (eq c--cl-library 'cl-lib)
       `(cl-intersection ,liszt1 ,liszt2 ,@other-args)
     `(intersection ,liszt1 ,liszt2 ,@other-args)))
 
@@ -212,7 +208,7 @@ This variant works around bugs in `eval-when-compile' in various
 
   (defmacro c--delete-duplicates (cl-seq &rest cl-keys)
     ;; Macro to smooth out the renaming of `delete-duplicates' in Emacs 24.3.
-    (if (eq c--mapcan-status 'cl-mapcan)
+    (if (eq c--cl-library 'cl-lib)
 	`(cl-delete-duplicates ,cl-seq ,@cl-keys)
       `(delete-duplicates ,cl-seq ,@cl-keys))))
 

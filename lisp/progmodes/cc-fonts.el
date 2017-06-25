@@ -1375,7 +1375,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; it finds any.  That's necessary so that we later will
 	  ;; stop inside them to fontify types there.
 	  (c-parse-and-markup-<>-arglists t)
-	  lbrace ; position of some {.
 	  ;; The font-lock package in Emacs is known to clobber
 	  ;; `parse-sexp-lookup-properties' (when it exists).
 	  (parse-sexp-lookup-properties

@@ -1915,7 +1915,7 @@ with a brace block."
     (save-restriction
       (let ((start (point))
 	    (paren-state (c-parse-state))
-	    lim pos end-pos encl-decl-block where)
+	    lim pos end-pos where)
 	;; Narrow enclosing brace blocks out, as required by the values of
 	;; `c-defun-tactic', `near', and the position of point.
 	(when (eq c-defun-tactic 'go-outward)
