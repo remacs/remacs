@@ -43,7 +43,7 @@ use remacs_sys::{CHAR_MODIFIER_MASK, CHAR_SHIFT, CHAR_CTL, emacs_abort, CHARACTE
 pub type LispStringRef = ExternalPtr<Lisp_String>;
 
 // cannot use `char`, it takes values out of its range
-type Codepoint = u32;
+pub type Codepoint = u32;
 
 /// Maximum character code
 pub const MAX_CHAR: Codepoint = (1 << CHARACTERBITS) - 1;
@@ -103,6 +103,22 @@ impl LispStringRef {
     #[inline]
     pub fn as_mut_slice(&self) -> &mut [u8] {
         unsafe { slice::from_raw_parts_mut(self.data as *mut u8, self.len_bytes() as usize) }
+    }
+}
+
+// Substitue for FETCH_STRING_CHAR_ADVANCE
+impl Iterator for LispStringRef {
+    type Item = (Codepoint, u32);
+
+    // @TODO need to implement proper next function
+    fn next(&mut self) -> Option<(Codepoint, u32)> {
+        if self.is_multibyte() {
+
+        } else {
+
+        }
+        
+        Some((0x00 as Codepoint, 0))
     }
 }
 

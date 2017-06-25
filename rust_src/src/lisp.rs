@@ -154,6 +154,10 @@ impl LispObject {
     pub fn is_symbol(self) -> bool {
         self.get_type() == LispType::Lisp_Symbol
     }
+
+    pub fn symbol_name(&self) -> LispObject {
+        unsafe { LispObject::from_raw(SYMBOL_NAME(self.to_raw())) }
+    }
 }
 
 // Misc support (LispType == Lisp_Misc == 1)
