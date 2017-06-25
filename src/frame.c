@@ -378,7 +378,7 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
  * keep_ratio:
  *
  * Preserve ratios of frame F which usually happens after its parent
- * frame got resized.  OLD_WIDTH, OLD_HEIGHT specifies the old native
+ * frame P got resized.  OLD_WIDTH, OLD_HEIGHT specifies the old native
  * size of F's parent, NEW_WIDTH and NEW_HEIGHT its new size.
  *
  * Adjust F's width if F's 'keep_ratio' parameter is non-nil and, if
@@ -403,8 +403,8 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
  * different resolutions.
  */
 static void
-keep_ratio (struct frame *f, int old_width, int old_height,
-		    int new_width, int new_height)
+keep_ratio (struct frame *f, struct frame *p, int old_width, int old_height,
+	    int new_width, int new_height)
 {
   Lisp_Object keep_ratio = get_frame_param (f, Qkeep_ratio);
 
@@ -423,20 +423,17 @@ keep_ratio (struct frame *f, int old_width, int old_height,
 	    {
 	      pos_x = (int)(f->left_pos * width_factor + 0.5);
 
-	      if (CONSP (keep_ratio) &&
-		  (NILP (Fcar (keep_ratio)) || EQ (Fcar (keep_ratio), Qheight_only)))
+	      if (CONSP (keep_ratio)
+		  && (NILP (Fcar (keep_ratio))
+		      || EQ (Fcar (keep_ratio), Qheight_only))
+		  && p->pixel_width - f->pixel_width < pos_x)
 		{
-		  struct frame *p = FRAME_PARENT_FRAME (f);
+		  int p_f_width = p->pixel_width - f->pixel_width;
 
-		  if (pos_x + f->pixel_width > p->pixel_width)
-		    {
-		      int p_f_width = p->pixel_width - f->pixel_width;
-
-		      if (p_f_width <= 0)
-			pos_x = 0;
-		      else
-			pos_x = (int)(p_f_width * width_factor * 0.5 + 0.5);
-		    }
+		  if (p_f_width <= 0)
+		    pos_x = 0;
+		  else
+		    pos_x = (int)(p_f_width * width_factor * 0.5 + 0.5);
 		}
 
 	      f->left_pos = pos_x;
@@ -448,25 +445,22 @@ keep_ratio (struct frame *f, int old_width, int old_height,
 	    {
 	      pos_y = (int)(f->top_pos * height_factor + 0.5);
 
-	      if (CONSP (keep_ratio) &&
-		  (NILP (Fcar (keep_ratio)) || EQ (Fcar (keep_ratio), Qwidth_only)))
+	      if (CONSP (keep_ratio)
+		  && (NILP (Fcar (keep_ratio))
+		      || EQ (Fcar (keep_ratio), Qwidth_only))
+		  && p->pixel_height - f->pixel_height < pos_y)
 		/* When positional adjustment was requested and the
 		   width of F should remain unaltered, try to constrain
 		   F to its parent.  This means that when the parent
 		   frame is enlarged later the child's original position
 		   won't get restored.  */
 		{
-		  struct frame *p = FRAME_PARENT_FRAME (f);
+		  int p_f_height = p->pixel_height - f->pixel_height;
 
-		  if (pos_y + f->pixel_height > p->pixel_height)
-		    {
-		      int p_f_height = p->pixel_height - f->pixel_height;
-
-		      if (p_f_height <= 0)
-			pos_y = 0;
-		      else
-			pos_y = (int)(p_f_height * height_factor * 0.5 + 0.5);
-		    }
+		  if (p_f_height <= 0)
+		    pos_y = 0;
+		  else
+		    pos_y = (int)(p_f_height * height_factor * 0.5 + 0.5);
 		}
 
 	      f->top_pos = pos_y;
@@ -777,8 +771,8 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
 
     FOR_EACH_FRAME (frames, frame1)
       if (FRAME_PARENT_FRAME (XFRAME (frame1)) == f)
-	keep_ratio (XFRAME (frame1), old_pixel_width, old_pixel_height,
-			 new_pixel_width, new_pixel_height);
+	keep_ratio (XFRAME (frame1), f, old_pixel_width, old_pixel_height,
+		    new_pixel_width, new_pixel_height);
   }
 #endif
 }
