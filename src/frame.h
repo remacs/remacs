@@ -52,6 +52,19 @@ enum z_group
   z_group_below,
   z_group_above_suspended,
 };
+
+enum internal_border_part
+  {
+   INTERNAL_BORDER_NONE,
+   INTERNAL_BORDER_LEFT_EDGE,
+   INTERNAL_BORDER_TOP_LEFT_CORNER,
+   INTERNAL_BORDER_TOP_EDGE,
+   INTERNAL_BORDER_TOP_RIGHT_CORNER,
+   INTERNAL_BORDER_RIGHT_EDGE,
+   INTERNAL_BORDER_BOTTOM_RIGHT_CORNER,
+   INTERNAL_BORDER_BOTTOM_EDGE,
+   INTERNAL_BORDER_BOTTOM_LEFT_CORNER,
+  };
 #endif /* HAVE_WINDOW_SYSTEM */
 
 /* The structure representing a frame.  */
@@ -354,7 +367,11 @@ struct frame
 
   /* The z-group this frame's window belongs to. */
   ENUM_BF (z_group) z_group : 2;
-#endif /* HAVE_WINDOW_SYSTEM and not HAVE_NS */
+
+  /* Non-zero if display of truncation and continuation glyphs outside
+     the fringes is suppressed.  */
+  bool_bf no_special_glyphs : 1;
+#endif /* HAVE_WINDOW_SYSTEM */
 
   /* Whether new_height and new_width shall be interpreted
      in pixels.  */
@@ -928,6 +945,7 @@ default_pixels_per_inch_y (void)
 #define FRAME_SKIP_TASKBAR(f) ((f)->skip_taskbar)
 #define FRAME_NO_FOCUS_ON_MAP(f) ((f)->no_focus_on_map)
 #define FRAME_NO_ACCEPT_FOCUS(f) ((f)->no_accept_focus)
+#define FRAME_NO_SPECIAL_GLYPHS(f) ((f)->no_special_glyphs)
 #define FRAME_Z_GROUP(f) ((f)->z_group)
 #define FRAME_Z_GROUP_NONE(f) ((f)->z_group == z_group_none)
 #define FRAME_Z_GROUP_ABOVE(f) ((f)->z_group == z_group_above)
@@ -941,6 +959,7 @@ default_pixels_per_inch_y (void)
 #define FRAME_SKIP_TASKBAR(f) ((void) f, 0)
 #define FRAME_NO_FOCUS_ON_MAP(f) ((void) f, 0)
 #define FRAME_NO_ACCEPT_FOCUS(f) ((void) f, 0)
+#define FRAME_NO_SPECIAL_GLYPHS(f) ((void) f, 0)
 #define FRAME_Z_GROUP(f) ((void) f, z_group_none)
 #define FRAME_Z_GROUP_NONE(f) ((void) f, true)
 #define FRAME_Z_GROUP_ABOVE(f) ((void) f, false)
@@ -1288,19 +1307,20 @@ FRAME_TOTAL_FRINGE_WIDTH (struct frame *f)
   return FRAME_LEFT_FRINGE_WIDTH (f) + FRAME_RIGHT_FRINGE_WIDTH (f);
 }
 
-/* Pixel-width of internal border lines */
+/* Pixel-width of internal border lines.  */
 INLINE int
 FRAME_INTERNAL_BORDER_WIDTH (struct frame *f)
 {
   return frame_dimension (f->internal_border_width);
 }
 
-/* Pixel-size of window divider lines */
+/* Pixel-size of window divider lines.  */
 INLINE int
 FRAME_RIGHT_DIVIDER_WIDTH (struct frame *f)
 {
   return frame_dimension (f->right_divider_width);
 }
+
 INLINE int
 FRAME_BOTTOM_DIVIDER_WIDTH (struct frame *f)
 {
@@ -1498,6 +1518,7 @@ extern void x_set_scroll_bar_height (struct frame *, Lisp_Object, Lisp_Object);
 extern long x_figure_window_size (struct frame *, Lisp_Object, bool, int *, int *);
 
 extern void x_set_alpha (struct frame *, Lisp_Object, Lisp_Object);
+extern void x_set_no_special_glyphs (struct frame *, Lisp_Object, Lisp_Object);
 
 extern void validate_x_resource_name (void);
 
@@ -1521,6 +1542,7 @@ extern void x_real_positions (struct frame *, int *, int *);
 extern void free_frame_menubar (struct frame *);
 extern void x_free_frame_resources (struct frame *);
 extern bool frame_ancestor_p (struct frame *af, struct frame *df);
+extern enum internal_border_part frame_internal_border_part (struct frame *f, int x, int y);
 
 #if defined HAVE_X_WINDOWS
 extern void x_wm_set_icon_position (struct frame *, int, int);

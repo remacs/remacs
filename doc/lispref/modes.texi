@@ -1737,7 +1737,9 @@ holds a @dfn{mode line construct}: a template that controls what is
 displayed on the buffer's mode line.  The value of
 @code{header-line-format} specifies the buffer's header line in the same
 way.  All windows for the same buffer use the same
-@code{mode-line-format} and @code{header-line-format}.
+@code{mode-line-format} and @code{header-line-format} unless a
+@code{mode-line-format} or @code{header-line-format} parameter has been
+specified for that window (@pxref{Window Parameters}).
 
   For efficiency, Emacs does not continuously recompute each window's
 mode line and header line.  It does so when circumstances appear to call

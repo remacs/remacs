@@ -119,7 +119,8 @@ the value of `tooltip-y-offset' is ignored."
 (defcustom tooltip-frame-parameters
   '((name . "tooltip")
     (internal-border-width . 2)
-    (border-width . 1))
+    (border-width . 1)
+    (no-special-glyphs . t))
   "Frame parameters used for tooltips.
 
 If `left' or `top' parameters are included, they specify the absolute
@@ -130,7 +131,8 @@ of the `tooltip' face are used instead."
   :type '(repeat (cons :format "%v"
 		       (symbol :tag "Parameter")
 		       (sexp :tag "Value")))
-  :group 'tooltip)
+  :group 'tooltip
+  :version "26.1")
 
 (defface tooltip
   '((((class color))

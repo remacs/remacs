@@ -874,6 +874,30 @@ read_minibuf_unwind (void)
   if (minibuf_level == 0)
     resize_mini_window (XWINDOW (window), 0);
 
+  /* Deal with frames that should be removed when exiting the
+     minibuffer.  */
+  {
+    Lisp_Object frames, frame1, val;
+    struct frame *f1;
+
+    FOR_EACH_FRAME (frames, frame1)
+      {
+	f1 = XFRAME (frame1);
+
+	if ((FRAME_PARENT_FRAME (f1)
+	     || !NILP (get_frame_param (f1, Qdelete_before)))
+	    && !NILP (val = (get_frame_param (f1, Qminibuffer_exit))))
+	  {
+	    if (EQ (val, Qiconify_frame))
+	      Ficonify_frame (frame1);
+	    else if (EQ (val, Qdelete_frame))
+	      Fdelete_frame (frame1, Qnil);
+	    else
+	      Fmake_frame_invisible (frame1, Qnil);
+	  }
+      }
+  }
+
   /* In case the previous minibuffer displayed in this miniwindow is
      dead, we may keep displaying this buffer (tho it's inactive), so reset it,
      to make sure we don't leave around bindings and stuff which only
@@ -1930,6 +1954,8 @@ syms_of_minibuf (void)
   DEFSYM (Qactivate_input_method, "activate-input-method");
   DEFSYM (Qcase_fold_search, "case-fold-search");
   DEFSYM (Qmetadata, "metadata");
+  /* A frame parameter.  */
+  DEFSYM (Qminibuffer_exit, "minibuffer-exit");
 
   DEFVAR_LISP ("read-expression-history", Vread_expression_history,
 	       doc: /* A history list for arguments that are Lisp expressions to evaluate.

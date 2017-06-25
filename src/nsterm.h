@@ -957,6 +957,14 @@ struct ns_output
   Cursor hourglass_cursor;
   Cursor horizontal_drag_cursor;
   Cursor vertical_drag_cursor;
+  Cursor left_edge_cursor;
+  Cursor top_left_corner_cursor;
+  Cursor top_edge_cursor;
+  Cursor top_right_corner_cursor;
+  Cursor right_edge_cursor;
+  Cursor bottom_right_corner_cursor;
+  Cursor bottom_edge_cursor;
+  Cursor bottom_left_corner_cursor;
 
   /* NS-specific */
   Cursor current_pointer;

@@ -1205,7 +1205,7 @@ run.
 frame's outer border.
 
 +++
-*** New frame parameters
+*** New frame parameters and changed semantics for older ones
 
 +++
 **** 'z-group' positions a frame above or below all others.
@@ -1250,10 +1250,32 @@ focus via the mouse.
 frame.
 
 +++
-*** The 'width' and 'height' frame parameters allow to specify pixel
-values now.
+**** 'width' and 'height' allow to specify pixel values and ratios now.
 
 +++
+**** 'left' and 'top' allow to specify ratios now.
+
++++
+**** 'keep-ratio' preserves size and position of child frames when their
+parent frame is resized.
+
++++
+**** 'no-special-glyphs' suppresses display of truncation and
+continuation glyphs in a frame.
+
++++
+**** 'auto-hide-function' and 'minibuffer-exit' handle auto hiding of
+frames and exiting from minibuffer individually.
+
++++
+**** 'fit-frame-to-buffer-margins' and 'fit-frame-to-buffer-sizes'
+handle fitting a frame to its buffer individually.
+
++++
+**** 'drag-internal-border', 'drag-with-header-line',
+'drag-with-mode-line', 'snap-width', 'top-visible' and 'bottom-visible'
+allow to drag and resize frames with the mouse.
+
 *** The new function 'frame-list-z-order' returns a list of all frames
 in Z (stacking) order.
 
@@ -1312,6 +1334,10 @@ a new window when opening man pages when there's already one, use
 its window gets deleted by 'delete-other-windows'.
 
 +++
+*** New window parameters 'mode-line-format' and 'header-line-format'
+allow to override the buffer-local formats for this window.
+
++++
 *** New command 'window-swap-states' swaps the states of two live
 windows.
 
@@ -1319,6 +1345,15 @@ windows.
 *** New functions 'window-pixel-width-before-size-change' and
 'window-pixel-height-before-size-change' support detecting which
 window changed size when 'window-size-change-functions' are run.
+
++++
+*** The new function 'window-lines-pixel-dimensions' returns the pixel
+dimensions of a window's text lines.
+
++++
+*** The new function 'window-largest-empty-rectangle' returns the
+dimensions of the largest rectangular area not occupying any text in a
+window's body.
 
 +++
 *** The semantics of 'mouse-autoselect-window' has changed slightly.
@@ -1366,7 +1401,7 @@ This is in contrast to the default action on POSIX Systems, where it
 causes the receiving process to terminate with a core dump if no
 debugger has been attached to it.
 
-** `set-mouse-position' and `set-mouse-absolute-pixel-position' work
+** 'set-mouse-position' and 'set-mouse-absolute-pixel-position' work
 on macOS.
 
 

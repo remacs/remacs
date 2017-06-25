@@ -921,7 +921,7 @@ window_text_bottom_y (struct window *w)
 
   height -= WINDOW_BOTTOM_DIVIDER_WIDTH (w);
 
-  if (WINDOW_WANTS_MODELINE_P (w))
+  if (window_wants_mode_line (w))
     height -= CURRENT_MODE_LINE_HEIGHT (w);
 
   height -= WINDOW_SCROLL_BAR_AREA_HEIGHT (w);
@@ -978,7 +978,7 @@ window_box_height (struct window *w)
      the appropriate glyph row has its `mode_line_p' flag set,
      and if it doesn't, uses estimate_mode_line_height instead.  */
 
-  if (WINDOW_WANTS_MODELINE_P (w))
+  if (window_wants_mode_line (w))
     {
       struct glyph_row *ml_row
 	= (w->current_matrix && w->current_matrix->rows
@@ -990,7 +990,7 @@ window_box_height (struct window *w)
 	height -= estimate_mode_line_height (f, CURRENT_MODE_LINE_FACE_ID (w));
     }
 
-  if (WINDOW_WANTS_HEADER_LINE_P (w))
+  if (window_wants_header_line (w))
     {
       struct glyph_row *hl_row
 	= (w->current_matrix && w->current_matrix->rows
@@ -1102,7 +1102,7 @@ window_box (struct window *w, enum glyph_row_area area, int *box_x,
   if (box_y)
     {
       *box_y = WINDOW_TOP_EDGE_Y (w);
-      if (WINDOW_WANTS_HEADER_LINE_P (w))
+      if (window_wants_header_line (w))
 	*box_y += CURRENT_HEADER_LINE_HEIGHT (w);
     }
 }
@@ -1322,15 +1322,29 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
     return visible_p;
 
   /* Compute exact mode line heights.  */
-  if (WINDOW_WANTS_MODELINE_P (w))
-    w->mode_line_height
-      = display_mode_line (w, CURRENT_MODE_LINE_FACE_ID (w),
-			   BVAR (current_buffer, mode_line_format));
+  if (window_wants_mode_line (w))
+    {
+      Lisp_Object window_mode_line_format
+	= window_parameter (w, Qmode_line_format);
 
-  if (WINDOW_WANTS_HEADER_LINE_P (w))
-    w->header_line_height
-      = display_mode_line (w, HEADER_LINE_FACE_ID,
-			   BVAR (current_buffer, header_line_format));
+      w->mode_line_height
+	= display_mode_line (w, CURRENT_MODE_LINE_FACE_ID (w),
+			     NILP (window_mode_line_format)
+			     ? BVAR (current_buffer, mode_line_format)
+			     : window_mode_line_format);
+    }
+
+  if (window_wants_header_line (w))
+    {
+      Lisp_Object window_header_line_format
+	= window_parameter (w, Qheader_line_format);
+
+      w->header_line_height
+	= display_mode_line (w, HEADER_LINE_FACE_ID,
+			     NILP (window_header_line_format)
+			     ? BVAR (current_buffer, header_line_format)
+			     : window_header_line_format);
+    }
 
   start_display (&it, w, top);
   move_it_to (&it, charpos, -1, it.last_visible_y - 1, -1,
@@ -2842,13 +2856,12 @@ init_iterator (struct it *it, struct window *w,
 
   /* Get dimensions of truncation and continuation glyphs.  These are
      displayed as fringe bitmaps under X, but we need them for such
-     frames when the fringes are turned off.  But leave the dimensions
-     zero for tooltip frames, as these glyphs look ugly there and also
-     sabotage calculations of tooltip dimensions in x-show-tip.  */
+     frames when the fringes are turned off.  The no_special_glyphs slot
+     of the iterator's frame, when set, suppresses their display - by
+     default for tooltip frames and when set via the 'no-special-glyphs'
+     frame parameter.  */
 #ifdef HAVE_WINDOW_SYSTEM
-  if (!(FRAME_WINDOW_P (it->f)
-	&& FRAMEP (tip_frame)
-	&& it->f == XFRAME (tip_frame)))
+  if (!(FRAME_WINDOW_P (it->f) && it->f->no_special_glyphs))
 #endif
     {
       if (it->line_wrap == TRUNCATE)
@@ -2920,7 +2933,7 @@ init_iterator (struct it *it, struct window *w,
 	    it->last_visible_x -= it->continuation_pixel_width;
 	}
 
-      it->header_line_p = WINDOW_WANTS_HEADER_LINE_P (w);
+      it->header_line_p = window_wants_header_line (w);
       it->current_y = WINDOW_HEADER_LINE_HEIGHT (w) + w->vscroll;
     }
 
@@ -3019,7 +3032,7 @@ void
 start_display (struct it *it, struct window *w, struct text_pos pos)
 {
   struct glyph_row *row;
-  bool first_vpos = WINDOW_WANTS_HEADER_LINE_P (w);
+  bool first_vpos = window_wants_header_line (w);
 
   row = w->desired_matrix->rows + first_vpos;
   init_iterator (it, w, CHARPOS (pos), BYTEPOS (pos), row, DEFAULT_FACE_ID);
@@ -15799,7 +15812,7 @@ compute_window_start_on_continuation_line (struct window *w)
 
       /* Find the start of the continued line.  This should be fast
 	 because find_newline is fast (newline cache).  */
-      row = w->desired_matrix->rows + WINDOW_WANTS_HEADER_LINE_P (w);
+      row = w->desired_matrix->rows + window_wants_header_line (w);
       init_iterator (&it, w, CHARPOS (start_pos), BYTEPOS (start_pos),
 		     row, DEFAULT_FACE_ID);
       reseat_at_previous_visible_line_start (&it);
@@ -15949,7 +15962,7 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp,
       this_scroll_margin = window_scroll_margin (w, MARGIN_IN_PIXELS);
 
       top_scroll_margin = this_scroll_margin;
-      if (WINDOW_WANTS_HEADER_LINE_P (w))
+      if (window_wants_header_line (w))
 	top_scroll_margin += CURRENT_HEADER_LINE_HEIGHT (w);
 
       /* Start with the row the cursor was displayed during the last
@@ -16732,7 +16745,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	     margin, even though this part handles windows that didn't
 	     scroll at all.  */
           int pixel_margin = margin * frame_line_height;
-	  bool header_line = WINDOW_WANTS_HEADER_LINE_P (w);
+	  bool header_line = window_wants_header_line (w);
 
 	  /* Note: We add an extra FRAME_LINE_HEIGHT, because the loop
 	     below, which finds the row to move point to, advances by
@@ -17299,15 +17312,15 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
        || (w->column_number_displayed != -1
 	   && (w->column_number_displayed != current_column ())))
       /* This means that the window has a mode line.  */
-      && (WINDOW_WANTS_MODELINE_P (w)
-	  || WINDOW_WANTS_HEADER_LINE_P (w)))
+      && (window_wants_mode_line (w)
+	  || window_wants_header_line (w)))
     {
 
       display_mode_lines (w);
 
       /* If mode line height has changed, arrange for a thorough
 	 immediate redisplay using the correct mode line height.  */
-      if (WINDOW_WANTS_MODELINE_P (w)
+      if (window_wants_mode_line (w)
 	  && CURRENT_MODE_LINE_HEIGHT (w) != DESIRED_MODE_LINE_HEIGHT (w))
 	{
 	  f->fonts_changed = true;
@@ -17318,7 +17331,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 
       /* If header line height has changed, arrange for a thorough
 	 immediate redisplay using the correct header line height.  */
-      if (WINDOW_WANTS_HEADER_LINE_P (w)
+      if (window_wants_header_line (w)
 	  && CURRENT_HEADER_LINE_HEIGHT (w) != DESIRED_HEADER_LINE_HEIGHT (w))
 	{
 	  f->fonts_changed = true;
@@ -17583,7 +17596,7 @@ try_window_reusing_current_matrix (struct window *w)
     return false;
 
   /* If top-line visibility has changed, give up.  */
-  if (WINDOW_WANTS_HEADER_LINE_P (w)
+  if (window_wants_header_line (w)
       != MATRIX_HEADER_LINE_ROW (w->current_matrix)->mode_line_p)
     return false;
 
@@ -18818,7 +18831,7 @@ try_window_id (struct window *w)
 	    = MATRIX_ROW_VPOS (first_unchanged_at_end_row, w->current_matrix);
 	  int from = WINDOW_TOP_EDGE_LINE (w) + from_vpos;
 	  int end = (WINDOW_TOP_EDGE_LINE (w)
-		     + WINDOW_WANTS_HEADER_LINE_P (w)
+		     + window_wants_header_line (w)
 		     + window_internal_height (w));
 
 #if defined (HAVE_GPM) || defined (MSDOS)
@@ -18996,7 +19009,7 @@ try_window_id (struct window *w)
     {
       /* Displayed to end of window, but no line containing text was
 	 displayed.  Lines were deleted at the end of the window.  */
-      bool first_vpos = WINDOW_WANTS_HEADER_LINE_P (w);
+      bool first_vpos = window_wants_header_line (w);
       int vpos = w->window_end_vpos;
       struct glyph_row *current_row = current_matrix->rows + vpos;
       struct glyph_row *desired_row = desired_matrix->rows + vpos;
@@ -20696,7 +20709,7 @@ display_line (struct it *it, int cursor_vpos)
   ptrdiff_t min_pos = ZV + 1, max_pos = 0;
   ptrdiff_t min_bpos UNINIT, max_bpos UNINIT;
   bool pending_handle_line_prefix = false;
-  int header_line = WINDOW_WANTS_HEADER_LINE_P (it->w);
+  int header_line = window_wants_header_line (it->w);
   bool hscroll_this_line = (cursor_vpos >= 0
 			    && it->vpos == cursor_vpos - header_line
 			    && hscrolling_current_line_p (it->w));
@@ -22649,20 +22662,30 @@ display_mode_lines (struct window *w)
   line_number_displayed = false;
   w->column_number_displayed = -1;
 
-  if (WINDOW_WANTS_MODELINE_P (w))
+  if (window_wants_mode_line (w))
     {
+      Lisp_Object window_mode_line_format
+	= window_parameter (w, Qmode_line_format);
+
       struct window *sel_w = XWINDOW (old_selected_window);
 
       /* Select mode line face based on the real selected window.  */
       display_mode_line (w, CURRENT_MODE_LINE_FACE_ID_3 (sel_w, sel_w, w),
-			 BVAR (current_buffer, mode_line_format));
+			 NILP (window_mode_line_format)
+			 ? BVAR (current_buffer, mode_line_format)
+			 : window_mode_line_format);
       ++n;
     }
 
-  if (WINDOW_WANTS_HEADER_LINE_P (w))
+  if (window_wants_header_line (w))
     {
+      Lisp_Object window_header_line_format
+	= window_parameter (w, Qheader_line_format);
+
       display_mode_line (w, HEADER_LINE_FACE_ID,
-			 BVAR (current_buffer, header_line_format));
+			 NILP (window_header_line_format)
+			 ? BVAR (current_buffer, header_line_format)
+			 : window_header_line_format);
       ++n;
     }
 
@@ -30442,12 +30465,66 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	  && part != ON_HEADER_LINE))
     clear_mouse_face (hlinfo);
 
+  /* Reset help_echo_string. It will get recomputed below.  */
+  help_echo_string = Qnil;
+
+#ifdef HAVE_WINDOW_SYSTEM
+  /* If the cursor is on the internal border of FRAME and FRAME's
+     internal border is draggable, provide some visual feedback.  */
+  if (FRAME_INTERNAL_BORDER_WIDTH (f) > 0
+      && !NILP (get_frame_param (f, Qdrag_internal_border)))
+    {
+      enum internal_border_part part = frame_internal_border_part (f, x, y);
+
+      switch (part)
+	{
+	case INTERNAL_BORDER_NONE:
+	  if (cursor != FRAME_X_OUTPUT (f)->nontext_cursor)
+	    /* Reset cursor.  */
+	    cursor = FRAME_X_OUTPUT (f)->nontext_cursor;
+	  break;
+	case INTERNAL_BORDER_LEFT_EDGE:
+	  cursor = FRAME_X_OUTPUT (f)->left_edge_cursor;
+	  break;
+	case INTERNAL_BORDER_TOP_LEFT_CORNER:
+	  cursor = FRAME_X_OUTPUT (f)->top_left_corner_cursor;
+	  break;
+	case INTERNAL_BORDER_TOP_EDGE:
+	  cursor = FRAME_X_OUTPUT (f)->top_edge_cursor;
+	  break;
+	case INTERNAL_BORDER_TOP_RIGHT_CORNER:
+	  cursor = FRAME_X_OUTPUT (f)->top_right_corner_cursor;
+	  break;
+	case INTERNAL_BORDER_RIGHT_EDGE:
+	  cursor = FRAME_X_OUTPUT (f)->right_edge_cursor;
+	  break;
+	case INTERNAL_BORDER_BOTTOM_RIGHT_CORNER:
+	  cursor = FRAME_X_OUTPUT (f)->bottom_right_corner_cursor;
+	  break;
+	case INTERNAL_BORDER_BOTTOM_EDGE:
+	  cursor = FRAME_X_OUTPUT (f)->bottom_edge_cursor;
+	  break;
+	case INTERNAL_BORDER_BOTTOM_LEFT_CORNER:
+	  cursor = FRAME_X_OUTPUT (f)->bottom_left_corner_cursor;
+	  break;
+	default:
+	  /* This should not happen.  */
+	  if (cursor != FRAME_X_OUTPUT (f)->nontext_cursor)
+	    cursor = FRAME_X_OUTPUT (f)->nontext_cursor;
+	}
+
+      if (cursor != FRAME_X_OUTPUT (f)->nontext_cursor)
+	{
+	  /* Do we really want a help echo here?  */
+	  help_echo_string = build_string ("drag-mouse-1: resize frame");
+	  goto set_cursor;
+	}
+    }
+#endif /* HAVE_WINDOW_SYSTEM */
+
   /* Not on a window -> return.  */
   if (!WINDOWP (window))
     return;
-
-  /* Reset help_echo_string. It will get recomputed below.  */
-  help_echo_string = Qnil;
 
   /* Convert to window-relative pixel coordinates.  */
   w = XWINDOW (window);
@@ -30486,11 +30563,13 @@ note_mouse_highlight (struct frame *f, int x, int y)
     {
       cursor = FRAME_X_OUTPUT (f)->horizontal_drag_cursor;
       help_echo_string = build_string ("drag-mouse-1: resize");
+      goto set_cursor;
     }
   else if (part == ON_RIGHT_DIVIDER)
     {
       cursor = FRAME_X_OUTPUT (f)->horizontal_drag_cursor;
       help_echo_string = build_string ("drag-mouse-1: resize");
+      goto set_cursor;
     }
   else if (part == ON_BOTTOM_DIVIDER)
     if (! WINDOW_BOTTOMMOST_P (w)
@@ -30499,6 +30578,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
       {
 	cursor = FRAME_X_OUTPUT (f)->vertical_drag_cursor;
 	help_echo_string = build_string ("drag-mouse-1: resize");
+	goto set_cursor;
       }
     else
       cursor = FRAME_X_OUTPUT (f)->nontext_cursor;
@@ -31193,8 +31273,15 @@ x_draw_right_divider (struct window *w)
       int x0 = WINDOW_RIGHT_EDGE_X (w) - WINDOW_RIGHT_DIVIDER_WIDTH (w);
       int x1 = WINDOW_RIGHT_EDGE_X (w);
       int y0 = WINDOW_TOP_EDGE_Y (w);
-      /* The bottom divider prevails.  */
-      int y1 = WINDOW_BOTTOM_EDGE_Y (w) - WINDOW_BOTTOM_DIVIDER_WIDTH (w);
+      int y1 = WINDOW_BOTTOM_EDGE_Y (w);
+
+      /* If W is horizontally combined and has a right sibling, don't
+	 draw over any bottom divider.  */
+      if (WINDOW_BOTTOM_DIVIDER_WIDTH (w)
+	  && !NILP (w->parent)
+	  && WINDOW_HORIZONTAL_COMBINATION_P (XWINDOW (w->parent))
+	  && !NILP (w->next))
+	y1 -= WINDOW_BOTTOM_DIVIDER_WIDTH (w);
 
       FRAME_RIF (f)->draw_window_divider (w, x0, x1, y0, y1);
     }
@@ -31213,8 +31300,22 @@ x_draw_bottom_divider (struct window *w)
       int x1 = WINDOW_RIGHT_EDGE_X (w);
       int y0 = WINDOW_BOTTOM_EDGE_Y (w) - WINDOW_BOTTOM_DIVIDER_WIDTH (w);
       int y1 = WINDOW_BOTTOM_EDGE_Y (w);
+      struct window *p = !NILP (w->parent) ? XWINDOW (w->parent) : false;
 
-      FRAME_RIF (f)->draw_window_divider (w, x0, x1, y0, y1);
+      /* If W is vertically combined and has a sibling below, don't draw
+	 over any right divider.  */
+      if (WINDOW_RIGHT_DIVIDER_WIDTH (w)
+	  && p
+	  && ((WINDOW_VERTICAL_COMBINATION_P (p)
+	       && !NILP (w->next))
+	      || (WINDOW_HORIZONTAL_COMBINATION_P (p)
+		  && NILP (w->next)
+		  && !NILP (p->parent)
+		  && WINDOW_VERTICAL_COMBINATION_P (XWINDOW (p->parent))
+		  && !NILP (XWINDOW (p->parent)->next))))
+	x1 -= WINDOW_RIGHT_DIVIDER_WIDTH (w);
+
+	FRAME_RIF (f)->draw_window_divider (w, x0, x1, y0, y1);
     }
 }
 
@@ -31329,7 +31430,7 @@ expose_window (struct window *w, XRectangle *fr)
 	}
 
       /* Display the mode line if there is one.  */
-      if (WINDOW_WANTS_MODELINE_P (w)
+      if (window_wants_mode_line (w)
 	  && (row = MATRIX_MODE_LINE_ROW (w->current_matrix),
 	      row->enabled_p)
 	  && row->y < r_bottom)

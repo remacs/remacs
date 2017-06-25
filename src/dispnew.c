@@ -377,7 +377,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
     {
       window_box (w, ANY_AREA, 0, 0, &window_width, &window_height);
 
-      header_line_p = WINDOW_WANTS_HEADER_LINE_P (w);
+      header_line_p = window_wants_header_line (w);
       header_line_changed_p = header_line_p != matrix->header_line_p;
     }
   matrix->header_line_p = header_line_p;
@@ -446,7 +446,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 
 	  if (w == NULL
 	      || (row == matrix->rows + dim.height - 1
-		  && WINDOW_WANTS_MODELINE_P (w))
+		  && window_wants_mode_line (w))
 	      || (row == matrix->rows && matrix->header_line_p))
 	    {
 	      row->glyphs[TEXT_AREA]
@@ -491,7 +491,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 
 	      /* The mode line, if displayed, never has marginal areas.  */
 	      if ((row == matrix->rows + dim.height - 1
-		   && !(w && WINDOW_WANTS_MODELINE_P (w)))
+		   && !(w && window_wants_mode_line (w)))
 		  || (row == matrix->rows && matrix->header_line_p))
 		{
 		  row->glyphs[TEXT_AREA]
@@ -570,7 +570,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	     the mode line, if any, since otherwise it will remain
 	     disabled in the current matrix, and expose events won't
 	     redraw it.  */
-	  if (WINDOW_WANTS_MODELINE_P (w))
+	  if (window_wants_mode_line (w))
 	    w->update_mode_line = 1;
 	}
       else if (matrix == w->desired_matrix)
@@ -5188,7 +5188,7 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
      start position, i.e. it excludes the header-line row, but
      MATRIX_ROW includes the header-line row.  Adjust for a possible
      header-line row.  */
-  it_vpos = it.vpos + WINDOW_WANTS_HEADER_LINE_P (w);
+  it_vpos = it.vpos + window_wants_header_line (w);
   if (it_vpos < w->current_matrix->nrows
       && (row = MATRIX_ROW (w->current_matrix, it_vpos),
 	  row->enabled_p))

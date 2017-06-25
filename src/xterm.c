@@ -11757,6 +11757,22 @@ x_free_frame_resources (struct frame *f)
 	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->horizontal_drag_cursor);
       if (f->output_data.x->vertical_drag_cursor != 0)
 	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->vertical_drag_cursor);
+      if (f->output_data.x->left_edge_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->left_edge_cursor);
+      if (f->output_data.x->top_left_corner_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->top_left_corner_cursor);
+      if (f->output_data.x->top_edge_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->top_edge_cursor);
+      if (f->output_data.x->top_right_corner_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->top_right_corner_cursor);
+      if (f->output_data.x->right_edge_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->right_edge_cursor);
+      if (f->output_data.x->bottom_right_corner_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->bottom_right_corner_cursor);
+      if (f->output_data.x->bottom_edge_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->bottom_edge_cursor);
+      if (f->output_data.x->bottom_left_corner_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->bottom_left_corner_cursor);
 
       XFlush (FRAME_X_DISPLAY (f));
     }
