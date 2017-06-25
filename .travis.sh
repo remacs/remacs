@@ -24,8 +24,7 @@ cd "$DIR/rust_src/remacs-lib"
 cargo fmt -- --write-mode=diff
 
 cd "$DIR/rust_src/remacs-macros"
-# TODO: not yet - cargo fmt seems to enter an infinite loop here.
-# cargo fmt -- --write-mode=diff
+cargo fmt -- --write-mode=diff lib.rs
 
 cd "$DIR/rust_src/alloc_unexecmacosx"
 cargo fmt -- --write-mode=diff

@@ -681,6 +681,33 @@ extern "C" {
     pub static Qvectorp: Lisp_Object;
     pub static Qsequencep: Lisp_Object;
 
+    pub static Qinteger: Lisp_Object;
+    pub static Qsymbol: Lisp_Object;
+    pub static Qstring: Lisp_Object;
+    pub static Qcons: Lisp_Object;
+    pub static Qmarker: Lisp_Object;
+    pub static Qoverlay: Lisp_Object;
+    pub static Qfinalizer: Lisp_Object;
+    pub static Quser_ptr: Lisp_Object;
+    pub static Qfloat: Lisp_Object;
+    pub static Qwindow_configuration: Lisp_Object;
+    pub static Qprocess: Lisp_Object;
+    pub static Qwindow: Lisp_Object;
+    pub static Qcompiled_function: Lisp_Object;
+    pub static Qbuffer: Lisp_Object;
+    pub static Qframe: Lisp_Object;
+    pub static Qvector: Lisp_Object;
+    pub static Qchar_table: Lisp_Object;
+    pub static Qbool_vector: Lisp_Object;
+    pub static Qhash_table: Lisp_Object;
+    pub static Qthread: Lisp_Object;
+    pub static Qmutex: Lisp_Object;
+    pub static Qcondition_variable: Lisp_Object;
+    pub static Qsubr: Lisp_Object;
+    pub static Qfont_spec: Lisp_Object;
+    pub static Qfont_entity: Lisp_Object;
+    pub static Qfont_object: Lisp_Object;
+
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fget_buffer(buffer_or_name: Lisp_Object) -> Lisp_Object;
