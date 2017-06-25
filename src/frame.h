@@ -841,7 +841,7 @@ default_pixels_per_inch_y (void)
 #ifdef USE_GTK
 #define FRAME_TOOL_BAR_POSITION(f) (f)->tool_bar_position
 #else
-#define FRAME_TOOL_BAR_POSITION(f) ((void) f, Qtop)
+#define FRAME_TOOL_BAR_POSITION(f) ((void) (f), Qtop)
 #endif
 
 /* Number of lines of frame F used for the tool-bar.  */
@@ -925,16 +925,17 @@ default_pixels_per_inch_y (void)
   ((f)->vertical_scroll_bar_type == vertical_scroll_bar_right)
 #else /* not HAVE_WINDOW_SYSTEM */
 /* If there is no window system, there are no scroll bars.  */
-#define FRAME_VERTICAL_SCROLL_BAR_TYPE(f) ((void) f, vertical_scroll_bar_none)
-#define FRAME_HAS_VERTICAL_SCROLL_BARS(f) ((void) f, 0)
-#define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_LEFT(f) ((void) f, 0)
-#define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_RIGHT(f) ((void) f, 0)
+#define FRAME_VERTICAL_SCROLL_BAR_TYPE(f) \
+  ((void) (f), vertical_scroll_bar_none)
+#define FRAME_HAS_VERTICAL_SCROLL_BARS(f) ((void) (f), 0)
+#define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_LEFT(f) ((void) (f), 0)
+#define FRAME_HAS_VERTICAL_SCROLL_BARS_ON_RIGHT(f) ((void) (f), 0)
 #endif /* HAVE_WINDOW_SYSTEM */
 
 #if defined (HAVE_WINDOW_SYSTEM)
 #define FRAME_UNDECORATED(f) ((f)->undecorated)
 #ifdef HAVE_NTGUI
-#define FRAME_OVERRIDE_REDIRECT(f) ((void) f, 0)
+#define FRAME_OVERRIDE_REDIRECT(f) ((void) (f), 0)
 #else
 #define FRAME_OVERRIDE_REDIRECT(f) ((f)->override_redirect)
 #endif
@@ -953,17 +954,17 @@ default_pixels_per_inch_y (void)
   ((f)->z_group == z_group_above_suspended)
 #define FRAME_Z_GROUP_BELOW(f) ((f)->z_group == z_group_below)
 #else /* not HAVE_WINDOW_SYSTEM */
-#define FRAME_UNDECORATED(f) ((void) f, 0)
-#define FRAME_OVERRIDE_REDIRECT(f) ((void) f, 0)
-#define FRAME_PARENT_FRAME(f) ((void) f, NULL)
-#define FRAME_SKIP_TASKBAR(f) ((void) f, 0)
-#define FRAME_NO_FOCUS_ON_MAP(f) ((void) f, 0)
-#define FRAME_NO_ACCEPT_FOCUS(f) ((void) f, 0)
-#define FRAME_NO_SPECIAL_GLYPHS(f) ((void) f, 0)
-#define FRAME_Z_GROUP(f) ((void) f, z_group_none)
-#define FRAME_Z_GROUP_NONE(f) ((void) f, true)
-#define FRAME_Z_GROUP_ABOVE(f) ((void) f, false)
-#define FRAME_Z_GROUP_BELOW(f) ((void) f, false)
+#define FRAME_UNDECORATED(f) ((void) (f), 0)
+#define FRAME_OVERRIDE_REDIRECT(f) ((void) (f), 0)
+#define FRAME_PARENT_FRAME(f) ((void) (f), NULL)
+#define FRAME_SKIP_TASKBAR(f) ((void) (f), 0)
+#define FRAME_NO_FOCUS_ON_MAP(f) ((void) (f), 0)
+#define FRAME_NO_ACCEPT_FOCUS(f) ((void) (f), 0)
+#define FRAME_NO_SPECIAL_GLYPHS(f) ((void) (f), 0)
+#define FRAME_Z_GROUP(f) ((void) (f), z_group_none)
+#define FRAME_Z_GROUP_NONE(f) ((void) (f), true)
+#define FRAME_Z_GROUP_ABOVE(f) ((void) (f), false)
+#define FRAME_Z_GROUP_BELOW(f) ((void) (f), false)
 #endif /* HAVE_WINDOW_SYSTEM */
 
 /* Whether horizontal scroll bars are currently enabled for frame F.  */
@@ -971,7 +972,7 @@ default_pixels_per_inch_y (void)
 #define FRAME_HAS_HORIZONTAL_SCROLL_BARS(f) \
   ((f)->horizontal_scroll_bars)
 #else
-#define FRAME_HAS_HORIZONTAL_SCROLL_BARS(f) ((void) f, 0)
+#define FRAME_HAS_HORIZONTAL_SCROLL_BARS(f) ((void) (f), 0)
 #endif
 
 /* Width that a scroll bar in frame F should have, if there is one.
