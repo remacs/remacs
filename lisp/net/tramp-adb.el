@@ -72,7 +72,7 @@ It is used for TCP/IP devices."
 (defconst tramp-adb-ls-toolbox-regexp
   (concat
    "^[[:space:]]*\\([-[:alpha:]]+\\)" 	; \1 permissions
-   "\\(?:[[:space:]][[:digit:]]+\\)?"	; links (Android 7/ToolBox)
+   "\\(?:[[:space:]]+[[:digit:]]+\\)?"	; links (Android 7/toybox)
    "[[:space:]]*\\([^[:space:]]+\\)"	; \2 username
    "[[:space:]]+\\([^[:space:]]+\\)"	; \3 group
    "[[:space:]]+\\([[:digit:]]+\\)"	; \4 size
@@ -411,15 +411,17 @@ pass to the OPERATION."
 			    (tramp-adb-get-ls-command v)
 			    (tramp-shell-quote-argument localname)))
 	     ;; We insert also filename/. and filename/.., because "ls" doesn't.
-	     (narrow-to-region (point) (point))
-	     (tramp-adb-send-command
-	      v (format "%s -d -a -l %s %s"
-			(tramp-adb-get-ls-command v)
-			(tramp-shell-quote-argument
-			 (concat (file-name-as-directory localname) "."))
-			(tramp-shell-quote-argument
-			 (concat (file-name-as-directory localname) ".."))))
-	     (widen))
+	     ;; Looks like it does include them in toybox, since Android 6.
+	     (unless (re-search-backward "\\.$" nil t)
+	       (narrow-to-region (point-max) (point-max))
+	       (tramp-adb-send-command
+		v (format "%s -d -a -l %s %s"
+			  (tramp-adb-get-ls-command v)
+			  (tramp-shell-quote-argument
+			   (concat (file-name-as-directory localname) "."))
+			  (tramp-shell-quote-argument
+			   (concat (file-name-as-directory localname) ".."))))
+	       (widen)))
 	   (tramp-adb-sh-fix-ls-output)
 	   (let ((result (tramp-do-parse-file-attributes-with-ls
 			  v (or id-format 'integer))))
@@ -443,11 +445,12 @@ pass to the OPERATION."
   (with-tramp-connection-property vec "ls"
     (tramp-message vec 5 "Finding a suitable `ls' command")
     (cond
-     ;; Can't disable coloring explicitly for toybox ls command
-     ((tramp-adb-send-command-and-check vec "toybox") "ls")
+     ;; Can't disable coloring explicitly for toybox ls command.  We
+     ;; must force "ls" to print just one column.
+     ((tramp-adb-send-command-and-check vec "toybox") "env COLUMNS=1 ls")
      ;; On CyanogenMod based system BusyBox is used and "ls" output
-     ;; coloring is enabled by default.  So we try to disable it
-     ;; when possible.
+     ;; coloring is enabled by default.  So we try to disable it when
+     ;; possible.
      ((tramp-adb-send-command-and-check vec "ls --color=never -al /dev/null")
       "ls --color=never")
      (t "ls"))))
@@ -569,13 +572,17 @@ Emacs dired can't find files."
 		(file-name-as-directory f)
 	      f))
 	  (with-current-buffer (tramp-get-buffer v)
-	    (append
-	     '("." "..")
-	     (delq
-	      nil
-	      (mapcar
-	       (lambda (l) (and (not (string-match  "^[[:space:]]*$" l)) l))
-	       (split-string (buffer-string) "\n")))))))))))
+	    (delete-dups
+	     (append
+	      ;; In older Android versions, "." and ".." are not
+	      ;; included.  In newer versions (toybox, since Android
+	      ;; 6) they are.  We fix this by `delete-dups'.
+	      '("." "..")
+	      (delq
+	       nil
+	       (mapcar
+		(lambda (l) (and (not (string-match  "^[[:space:]]*$" l)) l))
+		(split-string (buffer-string) "\n"))))))))))))
 
 (defun tramp-adb-handle-file-local-copy (filename)
   "Like `file-local-copy' for Tramp files."
