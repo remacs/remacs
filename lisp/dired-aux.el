@@ -707,29 +707,28 @@ can be produced by `dired-get-marked-files', for example."
   (let* ((on-each (not (string-match-p dired-star-subst-regexp command)))
 	 (no-subst (not (string-match-p dired-quark-subst-regexp command)))
 	 (star (string-match-p "\\*" command))
-	 (qmark (string-match-p "\\?" command)))
-    ;; Get confirmation for wildcards that may have been meant
-    ;; to control substitution of a file name or the file name list.
-    (if (cond ((not (or on-each no-subst))
-	       (error "You can not combine `*' and `?' substitution marks"))
-	      ((and star on-each)
-	       (y-or-n-p (format-message
-			  "Confirm--do you mean to use `*' as a wildcard? ")))
-	      ((and qmark no-subst)
-	       (y-or-n-p (format-message
-			  "Confirm--do you mean to use `?' as a wildcard? ")))
-	      (t))
-	(if on-each
-	    (dired-bunch-files
-	     (- 10000 (length command))
-	     (lambda (&rest files)
-	       (dired-run-shell-command
-		(dired-shell-stuff-it command files t arg)))
-	     nil
-	     file-list)
-	  ;; execute the shell command
-	  (dired-run-shell-command
-	   (dired-shell-stuff-it command file-list nil arg))))))
+	 (qmark (string-match-p "\\?" command))
+         ;; Get confirmation for wildcards that may have been meant
+         ;; to control substitution of a file name or the file name list.
+         (ok (cond ((not (or on-each no-subst))
+	            (error "You can not combine `*' and `?' substitution marks"))
+	           ((and star on-each)
+	            (y-or-n-p (format-message
+			       "Confirm--do you mean to use `*' as a wildcard? ")))
+	           ((and qmark no-subst)
+	            (y-or-n-p (format-message
+			       "Confirm--do you mean to use `?' as a wildcard? ")))
+	           (t))))
+    (when ok
+      (if on-each
+	  (dired-bunch-files (- 10000 (length command))
+	                     (lambda (&rest files)
+	                       (dired-run-shell-command
+                                (dired-shell-stuff-it command files t arg)))
+	                     nil file-list)
+	;; execute the shell command
+	(dired-run-shell-command
+	 (dired-shell-stuff-it command file-list nil arg))))))
 
 ;; Might use {,} for bash or csh:
 (defvar dired-mark-prefix ""
