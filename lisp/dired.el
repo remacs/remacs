@@ -335,9 +335,8 @@ The directory name must be absolute, but need not be fully expanded.")
 (defvar dired-re-dir (concat dired-re-maybe-mark dired-re-inode-size "d[^:]"))
 (defvar dired-re-sym (concat dired-re-maybe-mark dired-re-inode-size "l[^:]"))
 (defvar dired-re-exe;; match ls permission string of an executable file
-  (mapconcat (function
-	      (lambda (x)
-		(concat dired-re-maybe-mark dired-re-inode-size x)))
+  (mapconcat (lambda (x)
+		(concat dired-re-maybe-mark dired-re-inode-size x))
 	     '("-[-r][-w][xs][-r][-w].[-r][-w]."
 	       "-[-r][-w].[-r][-w][xs][-r][-w]."
 	       "-[-r][-w].[-r][-w].[-r][-w][xst]")
@@ -607,9 +606,9 @@ marked file, return (t FILENAME) instead of (FILENAME)."
 		 (progn	;; no save-excursion, want to move point.
 		   (dired-repeat-over-lines
 		    ,arg
-		    (function (lambda ()
-				(if ,show-progress (sit-for 0))
-				(setq results (cons ,body results)))))
+		    (lambda ()
+		      (if ,show-progress (sit-for 0))
+		      (setq results (cons ,body results))))
 		   (if (< ,arg 0)
 		       (nreverse results)
 		     results))
@@ -3293,7 +3292,7 @@ this subdir."
     (let ((inhibit-read-only t))
       (dired-repeat-over-lines
        (prefix-numeric-value arg)
-       (function (lambda () (delete-char 1) (insert dired-marker-char))))))))
+       (lambda () (delete-char 1) (insert dired-marker-char)))))))
 
 (defun dired-unmark (arg &optional interactive)
   "Unmark the file at point in the Dired buffer.
@@ -3928,7 +3927,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
    (cdr
      (nreverse
        (mapcar
-         (function (lambda (f) (desktop-file-name (car f) dirname)))
+        (lambda (f) (desktop-file-name (car f) dirname))
          dired-subdir-alist)))))
 
 (defun dired-restore-desktop-buffer (_file-name

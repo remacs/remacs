@@ -1838,10 +1838,9 @@ Optional arg HOW-TO determines how to treat the target.
        (if into-dir			; target is a directory
 	   ;; This function uses fluid variable target when called
 	   ;; inside dired-create-files:
-	   (function
-	    (lambda (from)
-	      (expand-file-name (file-name-nondirectory from) target)))
-	 (function (lambda (_from) target)))
+	   (lambda (from)
+	     (expand-file-name (file-name-nondirectory from) target))
+	 (lambda (_from) target))
        marker-char))))
 
 ;; Read arguments for a marked-files command that wants a file name,
@@ -2062,37 +2061,35 @@ Type SPC or `y' to %s one match, DEL or `n' to skip to next,
 	 (regexp-name-constructor
 	  ;; Function to construct new filename using REGEXP and NEWNAME:
 	  (if whole-name		; easy (but rare) case
-	      (function
-	       (lambda (from)
-		 (let ((to (dired-string-replace-match regexp from newname))
-		       ;; must bind help-form directly around call to
-		       ;; dired-query
-		       (help-form rename-regexp-help-form))
-		   (if to
-		       (and (dired-query 'rename-regexp-query
-					 operation-prompt
-					 from
-					 to)
-			    to)
-		     (dired-log "%s: %s did not match regexp %s\n"
-				operation from regexp)))))
-	    ;; not whole-name, replace non-directory part only
-	    (function
-	     (lambda (from)
-	       (let* ((new (dired-string-replace-match
-			    regexp (file-name-nondirectory from) newname))
-		      (to (and new	; nil means there was no match
-			       (expand-file-name new
-						 (file-name-directory from))))
+	      (lambda (from)
+		(let ((to (dired-string-replace-match regexp from newname))
+		      ;; must bind help-form directly around call to
+		      ;; dired-query
 		      (help-form rename-regexp-help-form))
-		 (if to
-		     (and (dired-query 'rename-regexp-query
-				       operation-prompt
-				       (dired-make-relative from)
-				       (dired-make-relative to))
-			  to)
-		   (dired-log "%s: %s did not match regexp %s\n"
-			      operation (file-name-nondirectory from) regexp)))))))
+		  (if to
+		      (and (dired-query 'rename-regexp-query
+					operation-prompt
+					from
+					to)
+			   to)
+		    (dired-log "%s: %s did not match regexp %s\n"
+			       operation from regexp))))
+	    ;; not whole-name, replace non-directory part only
+	    (lambda (from)
+	      (let* ((new (dired-string-replace-match
+			   regexp (file-name-nondirectory from) newname))
+		     (to (and new	; nil means there was no match
+			      (expand-file-name new
+						(file-name-directory from))))
+		     (help-form rename-regexp-help-form))
+		(if to
+		    (and (dired-query 'rename-regexp-query
+				      operation-prompt
+				      (dired-make-relative from)
+				      (dired-make-relative to))
+			 to)
+		  (dired-log "%s: %s did not match regexp %s\n"
+			     operation (file-name-nondirectory from) regexp))))))
 	 rename-regexp-query)
     (dired-create-files
      file-creator operation fn-list regexp-name-constructor marker-char)))
@@ -2174,21 +2171,20 @@ See function `dired-do-rename-regexp' for more info."
      file-creator
      operation
      (dired-get-marked-files nil arg)
-     (function
-      (lambda (from)
-	(let ((to (concat (file-name-directory from)
-			  (funcall basename-constructor
-				   (file-name-nondirectory from)))))
-	  (and (let ((help-form (format-message "\
+     (lambda (from)
+       (let ((to (concat (file-name-directory from)
+			 (funcall basename-constructor
+				  (file-name-nondirectory from)))))
+	 (and (let ((help-form (format-message "\
 Type SPC or `y' to %s one file, DEL or `n' to skip to next,
 `!' to %s all remaining matches with no more questions."
-						(downcase operation)
-						(downcase operation))))
-		 (dired-query 'rename-non-directory-query
-			      (concat operation " `%s' to `%s'")
-			      (dired-make-relative from)
-			      (dired-make-relative to)))
-	       to))))
+					       (downcase operation)
+					       (downcase operation))))
+		(dired-query 'rename-non-directory-query
+			     (concat operation " `%s' to `%s'")
+			     (dired-make-relative from)
+			     (dired-make-relative to)))
+	      to)))
      dired-keep-marker-rename)))
 
 (defun dired-rename-non-directory (basename-constructor operation arg)
@@ -2316,12 +2312,11 @@ This function takes some pains to conform to `ls -lR' output."
     (when real-switches
       (let (case-fold-search)
 	(mapcar
-	 (function
-	  (lambda (x)
-	    (or (eq (null (string-match-p x real-switches))
-		    (null (string-match-p x dired-actual-switches)))
-		(error
-		 "Can't have dirs with and without -%s switches together" x))))
+	 (lambda (x)
+	   (or (eq (null (string-match-p x real-switches))
+		   (null (string-match-p x dired-actual-switches)))
+	       (error
+		"Can't have dirs with and without -%s switches together" x)))
 	 ;; all switches that make a difference to dired-get-filename:
 	 '("F" "b"))))))
 
@@ -2334,9 +2329,9 @@ This function takes some pains to conform to `ls -lR' output."
   ;; Keep the alist sorted on buffer position.
   (setq dired-subdir-alist
 	(sort dired-subdir-alist
-	      (function (lambda (elt1 elt2)
-			  (> (dired-get-subdir-min elt1)
-			     (dired-get-subdir-min elt2)))))))
+	      (lambda (elt1 elt2)
+		(> (dired-get-subdir-min elt1)
+		   (dired-get-subdir-min elt2))))))
 
 (defun dired-kill-tree (dirname &optional remember-marks kill-root)
   "Kill all proper subdirs of DIRNAME, excluding DIRNAME itself.
