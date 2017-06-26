@@ -20925,6 +20925,13 @@ maybe_produce_line_number (struct it *it)
       it->max_phys_descent = max (row->phys_height - row->phys_ascent,
 				  tem_it.max_phys_descent);
     }
+  else
+    {
+      it->max_ascent = max (it->max_ascent, tem_it.max_ascent);
+      it->max_descent = max (it->max_descent, tem_it.max_descent);
+      it->max_phys_ascent = max (it->max_phys_ascent, tem_it.max_phys_ascent);
+      it->max_phys_descent = max (it->max_phys_descent, tem_it.max_phys_descent);
+    }
 
   bidi_unshelve_cache (itdata, false);
 }
