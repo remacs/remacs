@@ -15973,6 +15973,7 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp,
       /* When display-line-numbers is in relative mode, moving point
 	 requires to redraw the entire window.  */
       && !EQ (Vdisplay_line_numbers, Qrelative)
+      && !EQ (Vdisplay_line_numbers, Qvisual)
       /* When the current line number should be displayed in a
 	 distinct face, moving point cannot be handled in optimized
 	 way as below.  */
@@ -16841,7 +16842,8 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	  safe__call1 (true, Vpre_redisplay_function, Fcons (window, Qnil));
 
 	  if (w->redisplay || XBUFFER (w->contents)->text->redisplay
-	      || (EQ (Vdisplay_line_numbers, Qrelative)
+	      || ((EQ (Vdisplay_line_numbers, Qrelative)
+		   || EQ (Vdisplay_line_numbers, Qvisual))
 		  && row != MATRIX_FIRST_TEXT_ROW (w->desired_matrix)))
 	    {
 	      /* Either pre-redisplay-function made changes (e.g. move
@@ -18488,6 +18490,7 @@ try_window_id (struct window *w)
   /* Give up if display-line-numbers is in relative mode, or when the
      current line's number needs to be displayed in a distinct face.  */
   if (EQ (Vdisplay_line_numbers, Qrelative)
+      || EQ (Vdisplay_line_numbers, Qvisual)
       || (!NILP (Vdisplay_line_numbers)
 	  && NILP (Finternal_lisp_face_equal_p (Qline_number,
 						Qline_number_current_line,
@@ -20740,6 +20743,35 @@ find_row_edges (struct it *it, struct glyph_row *row,
     row->maxpos = it->current.pos;
 }
 
+/* Count the number of screen lines in window W between character
+   position CHARPOS and the line showing that window's point.  */
+static ptrdiff_t
+display_count_lines_visually (struct window *w, struct text_pos pos)
+{
+  struct it tem_it;
+  ptrdiff_t to;
+  struct text_pos from;
+  ptrdiff_t count = SPECPDL_INDEX ();
+
+  if (CHARPOS (pos) <= PT)
+    {
+      from = pos;
+      to = PT;
+    }
+  else
+    {
+      SET_TEXT_POS (from, PT, PT_BYTE);
+      to = CHARPOS (pos);
+    }
+  start_display (&tem_it, w, from);
+  /* Need to disable visual mode temporarily, since otherwise the call
+     to move_it_to will cause infionite recursion.  */
+  specbind (Qdisplay_line_numbers, Qrelative);
+  move_it_to (&tem_it, to, -1, -1, -1, MOVE_TO_POS);
+  unbind_to (count, Qnil);
+  return CHARPOS (pos) <= PT ? -tem_it.vpos : tem_it.vpos;
+}
+
 /* Produce the line-number glyphs for the current glyph_row.  If
    IT->glyph_row is non-NULL, populate the row with the produced
    glyphs.  */
@@ -20750,42 +20782,47 @@ maybe_produce_line_number (struct it *it)
   ptrdiff_t start_from, bytepos;
   ptrdiff_t this_line;
   bool first_time = false;
+  void *itdata = bidi_shelve_cache ();
 
-  /* FIXME: Maybe reuse the data in it->w->base_line_number.  */
-  if (!last_line)
-    {
-      start_from = BEGV;
-      if (!it->lnum_bytepos)
-	first_time = true;
-    }
+  if (EQ (Vdisplay_line_numbers, Qvisual))
+    this_line = display_count_lines_visually (it->w, it->current.pos);
   else
-    start_from = it->lnum_bytepos;
-
-  /* Paranoia: what if someone changes the narrowing since the last
-     time display_line was called?  Shouldn't really happen, but who
-     knows what some crazy Lisp invoked by :eval could do?  */
-  if (!(BEGV_BYTE <= start_from && start_from < ZV_BYTE))
     {
-      last_line = 0;
-      start_from = BEGV_BYTE;
-    }
+      if (!last_line)
+	{
+	  /* FIXME: Maybe reuse the data in it->w->base_line_number.  */
+	  start_from = BEGV;
+	  if (!it->lnum_bytepos)
+	    first_time = true;
+	}
+      else
+	start_from = it->lnum_bytepos;
 
-  this_line =
-    last_line + display_count_lines (start_from,
-				     IT_BYTEPOS (*it), IT_CHARPOS (*it),
-				     &bytepos);
-  eassert (this_line > 0 || (this_line == 0 && start_from == BEGV_BYTE));
-  eassert (bytepos == IT_BYTEPOS (*it));
+      /* Paranoia: what if someone changes the narrowing since the
+	 last time display_line was called?  Shouldn't really happen,
+	 but who knows what some crazy Lisp invoked by :eval could do?  */
+      if (!(BEGV_BYTE <= start_from && start_from < ZV_BYTE))
+	{
+	  last_line = 0;
+	  start_from = BEGV_BYTE;
+	}
 
-  /* Record the line number information.  */
-  if (this_line != last_line || !last_line)
-    {
-      it->lnum = this_line;
-      it->lnum_bytepos = IT_BYTEPOS (*it);
+      this_line =
+	last_line + display_count_lines (start_from,
+					 IT_BYTEPOS (*it), IT_CHARPOS (*it),
+					 &bytepos);
+      eassert (this_line > 0 || (this_line == 0 && start_from == BEGV_BYTE));
+      eassert (bytepos == IT_BYTEPOS (*it));
+
+      /* Record the line number information.  */
+      if (this_line != last_line || !last_line)
+	{
+	  it->lnum = this_line;
+	  it->lnum_bytepos = IT_BYTEPOS (*it);
+	}
     }
 
   /* Produce the glyphs for the line number.  */
-  void *itdata = bidi_shelve_cache ();
   struct it tem_it;
   char lnum_buf[INT_STRLEN_BOUND (ptrdiff_t) + 1];
   bool beyond_zv = IT_BYTEPOS (*it) >= ZV_BYTE ? true : false;
@@ -20795,11 +20832,12 @@ maybe_produce_line_number (struct it *it)
     = merge_faces (it->f, Qline_number_current_line, 0, DEFAULT_FACE_ID);
   /* Compute point's line number if needed.  */
   if ((EQ (Vdisplay_line_numbers, Qrelative)
+       || EQ (Vdisplay_line_numbers, Qvisual)
        || lnum_face_id != current_lnum_face_id)
       && !it->pt_lnum)
     {
       ptrdiff_t ignored;
-      if (PT_BYTE > it->lnum_bytepos)
+      if (PT_BYTE > it->lnum_bytepos && !EQ (Vdisplay_line_numbers, Qvisual))
 	it->pt_lnum =
 	  this_line + display_count_lines (it->lnum_bytepos, PT_BYTE, PT,
 					   &ignored);
@@ -20819,7 +20857,10 @@ maybe_produce_line_number (struct it *it)
 	     matrix.  */
 	  ptrdiff_t max_lnum;
 
-	  max_lnum = this_line + it->w->desired_matrix->nrows - 1 - it->vpos;
+	  if (EQ (Vdisplay_line_numbers, Qvisual))
+	    max_lnum = it->pt_lnum + it->w->desired_matrix->nrows - 1;
+	  else
+	    max_lnum = this_line + it->w->desired_matrix->nrows - 1 - it->vpos;
 	  max_lnum = max (1, max_lnum);
 	  it->lnum_width = log10 (max_lnum) + 1;
 	}
@@ -20827,11 +20868,14 @@ maybe_produce_line_number (struct it *it)
     }
   if (EQ (Vdisplay_line_numbers, Qrelative))
     lnum_offset = it->pt_lnum;
+  else if (EQ (Vdisplay_line_numbers, Qvisual))
+    lnum_offset = 0;
 
   /* Under 'relative', display the absolute line number for the
      current line, as displaying zero gives zero useful information.  */
   ptrdiff_t lnum_to_display = eabs (this_line - lnum_offset);
-  if (EQ (Vdisplay_line_numbers, Qrelative)
+  if ((EQ (Vdisplay_line_numbers, Qrelative)
+       || EQ (Vdisplay_line_numbers, Qvisual))
       && lnum_to_display == 0)
     lnum_to_display = it->pt_lnum + 1;
   /* In L2R rows we need to append the blank separator, in R2L
@@ -20872,8 +20916,9 @@ maybe_produce_line_number (struct it *it)
 	tem_it.face_id = lnum_face_id;
       if (beyond_zv
 	  /* Don't display the same line number more than once.  */
-	  || it->continuation_lines_width > 0
-	  || (this_line == last_line && !first_time))
+	  && (!EQ (Vdisplay_line_numbers, Qvisual)
+	      && (it->continuation_lines_width > 0
+		  || (this_line == last_line && !first_time))))
 	tem_it.c = tem_it.char_to_display = ' ';
       else
 	tem_it.c = tem_it.char_to_display = *p;
@@ -32494,6 +32539,7 @@ after each newline that comes from buffer text.  */);
   DEFSYM (Qdisplay_line_numbers, "display-line-numbers");
   Fmake_variable_buffer_local (Qdisplay_line_numbers);
   DEFSYM (Qrelative, "relative");
+  DEFSYM (Qvisual, "visual");
 
   DEFVAR_LISP ("display-line-number-width", Vdisplay_line_number_width,
     doc: /* Minimum width of space reserved for line number display.
@@ -32502,6 +32548,8 @@ even if the actual number needs less space.
 The default value of nil means compute the space dynamically.
 Any other value is treated as nil.  */);
   Vdisplay_line_number_width = Qnil;
+  DEFSYM (Qdisplay_line_number_width, "display-line-number-width");
+  Fmake_variable_buffer_local (Qdisplay_line_number_width);
 
   DEFVAR_BOOL ("inhibit-eval-during-redisplay", inhibit_eval_during_redisplay,
     doc: /* Non-nil means don't eval Lisp during redisplay.  */);

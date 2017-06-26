@@ -590,7 +590,9 @@ since it could result in memory overflow and make Emacs crash."
                                     (const :tag "Absolute line numbers"
                                            :value t)
                                     (const :tag "Relative line numbers"
-                                           :value relative))
+                                           :value relative)
+                                    (const :tag "Visually relative line numbers"
+                                           :value visual))
                                    "26.1")
              (display-line-number-width display
                                  (choice
