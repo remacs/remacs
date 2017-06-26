@@ -216,25 +216,18 @@ fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
     let lispstr1 = get_string_or_symbol(string1);
     let lispstr2 = get_string_or_symbol(string2);
 
-    let end = cmp::min(lispstr1.len_bytes(), lispstr2.len_bytes());
-    let mut i1 = 0;
-    let mut str1iter = lispstr1.iter();
-    let mut str2iter = lispstr2.iter();
-    while i1 < end {
-        // Unwraps should be fine here, due to our manual tracking of
-        // valid length
-        let (codept1, _) = str1iter.next().unwrap();
-        let (codept2, _) = str2iter.next().unwrap();
-        i1 += 1;
-        
+    let mut count = 0;
+    let zip = lispstr1.iter().zip(lispstr2.iter());
+    for ((codept1, _), (codept2, _)) in zip {
+        count += 1;
         if codept1 != codept2 {
             return LispObject::from_bool(codept1 < codept2);
         }
     }
 
-    LispObject::from_bool(i1 < lispstr2.len_bytes())
+    LispObject::from_bool(count < lispstr2.len_chars())
 }
-    
+
 /// Return t if OBJECT is a multibyte string.
 /// Return nil if OBJECT is either a unibyte string, or not a string.
 #[lisp_fn]
