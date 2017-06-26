@@ -202,6 +202,7 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
     }
 }
 
+// @TODO need to rework this function to use new as_symbol_or_error API
 fn get_string_or_symbol(mut string: LispObject) -> multibyte::LispStringRef {
     if string.is_symbol() {
         string = string.symbol_name()
@@ -210,33 +211,28 @@ fn get_string_or_symbol(mut string: LispObject) -> multibyte::LispStringRef {
     string.as_string_or_error()
 }
 
+#[lisp_fn]
 fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
-    let mut lispstr1 = get_string_or_symbol(string1);
-    let mut lispstr2 = get_string_or_symbol(string2);
+    let lispstr1 = get_string_or_symbol(string1);
+    let lispstr2 = get_string_or_symbol(string2);
 
     let end = cmp::min(lispstr1.len_bytes(), lispstr2.len_bytes());
     let mut i1 = 0;
+    let mut str1iter = lispstr1.iter();
+    let mut str2iter = lispstr2.iter();
     while i1 < end {
         // Unwraps should be fine here, due to our manual tracking of
         // valid length
-        let (codept1, _) = lispstr1.next().unwrap();
-        let (codept2, _) = lispstr2.next().unwrap();
+        let (codept1, _) = str1iter.next().unwrap();
+        let (codept2, _) = str2iter.next().unwrap();
         i1 += 1;
         
         if codept1 != codept2 {
-            if codept1 < codept2 {
-                return LispObject::constant_t();
-            } else {
-                return LispObject::constant_nil();
-            }
+            return LispObject::from_bool(codept1 < codept2);
         }
     }
 
-    if i1 < lispstr2.len_bytes() {
-        return LispObject::constant_t();
-    } else {
-        return LispObject::constant_nil();
-    }
+    LispObject::from_bool(i1 < lispstr2.len_bytes())
 }
     
 /// Return t if OBJECT is a multibyte string.

@@ -84,6 +84,7 @@ pub use strings::Fstring_as_multibyte;
 pub use strings::Fstring_to_multibyte;
 pub use strings::Fstring_to_unibyte;
 pub use strings::Fmultibyte_string_p;
+pub use strings::Fstring_lessp;
 pub use vectors::Flength;
 pub use vectors::Fsort;
 pub use lists::merge;
@@ -180,6 +181,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*strings::Sstring_as_multibyte);
         defsubr(&*strings::Sstring_to_multibyte);
         defsubr(&*strings::Sstring_to_unibyte);
+        defsubr(&*strings::Sstring_lessp);
         defsubr(&*character::Smax_char);
         defsubr(&*character::Scharacterp);
         defsubr(&*character::Schar_or_string_p);

@@ -106,19 +106,41 @@ impl LispStringRef {
     }
 }
 
+pub struct LispStringRefIterator<'a> {
+    string_ref: &'a LispStringRef,
+    cur: usize
+}
+
 // Substitue for FETCH_STRING_CHAR_ADVANCE
-impl Iterator for LispStringRef {
-    type Item = (Codepoint, u32);
+impl<'a> Iterator for LispStringRefIterator<'a> {
+    type Item = (Codepoint, usize);
 
-    // @TODO need to implement proper next function
-    fn next(&mut self) -> Option<(Codepoint, u32)> {
-        if self.is_multibyte() {
-
+    fn next(&mut self) -> Option<(Codepoint, usize)> {
+        if self.cur < self.string_ref.len_bytes() as usize {
+            let mut codepoint: Codepoint = 0x00;
+            let ref_slice = self.string_ref.as_slice();
+            if self.string_ref.is_multibyte() {
+                let (cp, advance) = multibyte_char_at(&ref_slice[self.cur..]);
+                codepoint = cp;
+                self.cur += advance;
+            } else {
+                codepoint = ref_slice[self.cur] as u32;
+                self.cur += 1;
+            }
+            
+            Some((codepoint, self.cur))
         } else {
-
+            None
         }
-        
-        Some((0x00 as Codepoint, 0))
+    }
+}
+
+impl LispStringRef {
+    pub fn iter(&self) -> LispStringRefIterator {
+        LispStringRefIterator {
+            string_ref: self,
+            cur: 0
+        }
     }
 }
 
