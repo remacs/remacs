@@ -1994,8 +1994,8 @@ Keybindings:
   ;; Ignore dired-hide-details-* value of invisible text property by default.
   (when (eq buffer-invisibility-spec t)
     (setq buffer-invisibility-spec (list t)))
-  (setq-local revert-buffer-function (function dired-revert))
-  (setq-local buffer-stale-function (function dired-buffer-stale-p))
+  (setq-local revert-buffer-function #'dired-revert)
+  (setq-local buffer-stale-function #'dired-buffer-stale-p)
   (setq-local page-delimiter "\n\n")
   (setq-local dired-directory (or dirname default-directory))
   ;; list-buffers uses this to display the dir being edited in this buffer.
@@ -2468,7 +2468,7 @@ You can then feed the file name(s) to other commands with \\[yank]."
   (interactive "P")
   (let ((string
          (or (dired-get-subdir)
-             (mapconcat (function identity)
+             (mapconcat #'identity
                         (if arg
                             (cond ((zerop (prefix-numeric-value arg))
                                    (dired-get-marked-files))
@@ -2970,12 +2970,12 @@ non-empty directories is allowed."
   ;; lines still to be changed, so the (point) values in L stay valid.
   ;; Also, for subdirs in natural order, a subdir's files are deleted
   ;; before the subdir itself - the other way around would not work.
-  (let* ((files (mapcar (function car) l))
+  (let* ((files (mapcar #'car l))
 	 (count (length l))
 	 (succ 0)
 	 (trashing (and trash delete-by-moving-to-trash)))
     ;; canonicalize file list for pop up
-    (setq files (nreverse (mapcar (function dired-make-relative) files)))
+    (setq files (nreverse (mapcar #'dired-make-relative files)))
     (if (dired-mark-pop-up
 	 " *Deletions*" 'delete files dired-deletion-confirmer
 	 (format "%s %s "
@@ -2998,7 +2998,7 @@ non-empty directories is allowed."
 		      (progress-reporter-update progress-reporter succ)
 		      (dired-fun-in-all-buffers
 		       (file-name-directory fn) (file-name-nondirectory fn)
-		       (function dired-delete-entry) fn))
+		       #'dired-delete-entry fn))
 		  (error ;; catch errors from failed deletions
 		   (dired-log "%s\n" err)
 		   (setq failures (cons (car (car l)) failures)))))
