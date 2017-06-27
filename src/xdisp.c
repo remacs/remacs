@@ -7768,9 +7768,8 @@ next_element_from_display_vector (struct it *it)
 
   /* KFS: This code used to check ip->dpvec[0] instead of the current element.
      That seemed totally bogus - so I changed it...  */
-  gc = it->dpvec[it->current.dpvec_index];
-
-  if (GLYPH_CODE_P (gc))
+  if (it->dpend - it->dpvec > 0	/* empty dpvec[] is invalid */
+      && (gc = it->dpvec[it->current.dpvec_index], GLYPH_CODE_P (gc)))
     {
       struct face *this_face, *prev_face, *next_face;
 
