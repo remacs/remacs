@@ -1,6 +1,6 @@
 //! Functions operating on strings.
 
-use std::{ptr, cmp};
+use std::ptr;
 
 use libc::{self, c_char, c_void, ptrdiff_t};
 
@@ -216,16 +216,14 @@ fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
     let lispstr1 = get_string_or_symbol(string1);
     let lispstr2 = get_string_or_symbol(string2);
 
-    let mut count = 0;
     let zip = lispstr1.iter().zip(lispstr2.iter());
     for ((codept1, _), (codept2, _)) in zip {
-        count += 1;
         if codept1 != codept2 {
             return LispObject::from_bool(codept1 < codept2);
         }
     }
 
-    LispObject::from_bool(count < lispstr2.len_chars())
+    LispObject::from_bool(lispstr1.len_chars() < lispstr2.len_chars())
 }
 
 /// Return t if OBJECT is a multibyte string.

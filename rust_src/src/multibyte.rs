@@ -118,17 +118,18 @@ impl<'a> Iterator for LispStringRefIterator<'a> {
     fn next(&mut self) -> Option<(Codepoint, usize)> {
         if self.cur < self.string_ref.len_bytes() as usize {
             let codepoint: Codepoint;
+            let point = self.cur;
             let ref_slice = self.string_ref.as_slice();
             if self.string_ref.is_multibyte() {
                 let (cp, advance) = multibyte_char_at(&ref_slice[self.cur..]);
                 codepoint = cp;
                 self.cur += advance;
             } else {
-                codepoint = ref_slice[self.cur] as u32;
+                codepoint = ref_slice[self.cur] as Codepoint;
                 self.cur += 1;
             }
             
-            Some((codepoint, self.cur))
+            Some((codepoint, point))
         } else {
             None
         }
