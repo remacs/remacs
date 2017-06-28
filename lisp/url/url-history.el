@@ -1,4 +1,4 @@
-;;; url-history.el --- Global history tracking for URL package
+;;; url-history.el --- Global history tracking for URL package  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1996-1999, 2004-2017 Free Software Foundation, Inc.
 
@@ -157,6 +157,7 @@ user for what type to save as."
   (gethash url url-history-hash-table nil))
 
 (defun url-completion-function (string predicate function)
+  (declare (obsolete url-history-hash-table "26.1"))
   ;; Completion function to complete urls from the history.
   ;; This is obsolete since we can now pass the hash-table directly as a
   ;; completion table.
@@ -164,7 +165,7 @@ user for what type to save as."
   (cond
    ((eq function nil)
     (let ((list nil))
-      (maphash (lambda (key val) (push key list))
+      (maphash (lambda (key _) (push key list))
                url-history-hash-table)
       ;; Not sure why we bother reversing the list.  --Stef
       (try-completion string (nreverse list) predicate)))
@@ -172,7 +173,7 @@ user for what type to save as."
     (let ((stub (concat "\\`" (regexp-quote string)))
 	  (retval nil))
       (maphash
-       (lambda (url time)
+       (lambda (url _)
          (if (string-match stub url) (push url retval)))
        url-history-hash-table)
       retval))
