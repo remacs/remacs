@@ -742,6 +742,11 @@ this; e.g., whether to rename the pre-existing output buffer, or to
 use a different buffer for the new command.  Consult the variable's
 documentation for more possibilities.
 
+@vindex async-shell-command-display-buffer
+  If you want the output buffer for asynchronous shell commands to be
+displayed only when the command generates output, set
+@code{async-shell-command-display-buffer} to @code{nil}.
+
 @kindex M-|
 @findex shell-command-on-region
   @kbd{M-|} (@code{shell-command-on-region}) is like @kbd{M-!}, but

@@ -206,6 +206,11 @@ the behavior of 'shell-command', 'shell-command-on-region' and
 'async-shell-command' is as usual.
 
 +++
+** The new user option 'async-shell-command-display-buffer' controls
+whether the output buffer of an asynchronous command is shown
+immediately, or only when there is output.
+
++++
 ** The new user option 'mouse-select-region-move-to-beginning'
 controls the position of point when double-clicking mouse-1 on the end
 of a parenthetical grouping or string-delimiter: the default value nil
