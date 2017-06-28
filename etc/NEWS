@@ -129,6 +129,22 @@ given file is on a case-insensitive filesystem.
 of curved quotes for 'electric-quote-mode', allowing user to choose
 the types of quotes to be used.
 
+** The new user option 'electric-quote-context-sensitive' makes
+'electric-quote-mode' context sensitive.  If it is non-nil, you can
+type an ASCII apostrophe to insert an opening or closing quote,
+depending on context.  Emacs will replace the apostrophe by an opening
+quote character at the beginning of the buffer, the beginning of a
+line, after a whitespace character, and after an opening parenthesis;
+and it will replace the apostrophe by a closing quote character in all
+other cases.
+
+** The new variable 'electric-quote-code-faces' controls when to
+disable electric quoting in text modes.  Major modes can add faces to
+this list; Emacs will temporarily disable 'electric-quote-mode'
+whenever point is before a character having such a face.  This is
+intended for major modes that derive from 'text-mode' but allow inline
+code segments, such as 'markdown-mode'.
+
 +++
 ** The new user variable 'dired-omit-case-fold' allows the user to
 customize the case-sensitivity of dired-omit-mode.  It defaults to

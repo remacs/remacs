@@ -443,11 +443,24 @@ quote, left double quote, and right double quote, respectively."
   :version "25.1"
   :type 'boolean :safe 'booleanp :group 'electricity)
 
+(defcustom electric-quote-context-sensitive nil
+  "Non-nil means to replace \\=' with an electric quote depending on context.
+If `electric-quote-context-sensitive' is non-nil, Emacs replaces
+\\=' and \\='\\=' with an opening quote after a line break,
+whitespace, opening parenthesis, or quote and leaves \\=` alone."
+  :version "26.1"
+  :type 'boolean :safe #'booleanp :group 'electricity)
+
+(defvar electric-quote-code-faces ()
+  "List of faces to treat as inline code in `text-mode'.")
+
 (defun electric-quote-post-self-insert-function ()
   "Function that `electric-quote-mode' adds to `post-self-insert-hook'.
 This requotes when a quoting key is typed."
   (when (and electric-quote-mode
-             (memq last-command-event '(?\' ?\`)))
+             (or (eq last-command-event ?\')
+                 (and (not electric-quote-context-sensitive)
+                      (eq last-command-event ?\`))))
     (let ((start
            (if (and comment-start comment-use-syntax)
                (when (or electric-quote-comment electric-quote-string)
@@ -462,30 +475,45 @@ This requotes when a quoting key is typed."
                                          (syntax-ppss (1- (point)))))))))
              (and electric-quote-paragraph
                   (derived-mode-p 'text-mode)
+                  ;; FIXME: There should be a ‘cl-disjoint’ function.
+                  (null (cl-intersection (face-at-point nil 'multiple)
+                                         electric-quote-code-faces
+                                         :test #'eq))
+                  ;; FIXME: Why is the next form there?  It’s never
+                  ;; nil.
                   (or (eq last-command-event ?\`)
                       (save-excursion (backward-paragraph) (point)))))))
       (pcase electric-quote-chars
         (`(,q< ,q> ,q<< ,q>>)
          (when start
            (save-excursion
-             (if (eq last-command-event ?\`)
-                 (cond ((search-backward (string q< ?`) (- (point) 2) t)
-                        (replace-match (string q<<))
-                        (when (and electric-pair-mode
-                                   (eq (cdr-safe
-                                        (assq q< electric-pair-text-pairs))
-                                       (char-after)))
-                          (delete-char 1))
-                        (setq last-command-event q<<))
-                       ((search-backward "`" (1- (point)) t)
-                        (replace-match (string q<))
-                        (setq last-command-event q<)))
-               (cond ((search-backward (string q> ?') (- (point) 2) t)
-                      (replace-match (string q>>))
-                      (setq last-command-event q>>))
-                     ((search-backward "'" (1- (point)) t)
-                      (replace-match (string q>))
-                      (setq last-command-event q>)))))))))))
+             (let ((backtick ?\`))
+               (if (or (eq last-command-event ?\`)
+                       (and electric-quote-context-sensitive
+                            (save-excursion
+                              (backward-char)
+                              (or (bobp) (bolp)
+                                  (memq (char-before) (list q< q<<))
+                                  (memq (char-syntax (char-before))
+                                        '(?\s ?\())))
+                            (setq backtick ?\')))
+                   (cond ((search-backward (string q< backtick) (- (point) 2) t)
+                          (replace-match (string q<<))
+                          (when (and electric-pair-mode
+                                     (eq (cdr-safe
+                                          (assq q< electric-pair-text-pairs))
+                                         (char-after)))
+                            (delete-char 1))
+                          (setq last-command-event q<<))
+                         ((search-backward (string backtick) (1- (point)) t)
+                          (replace-match (string q<))
+                          (setq last-command-event q<)))
+                 (cond ((search-backward (string q> ?') (- (point) 2) t)
+                        (replace-match (string q>>))
+                        (setq last-command-event q>>))
+                       ((search-backward "'" (1- (point)) t)
+                        (replace-match (string q>))
+                        (setq last-command-event q>))))))))))))
 
 (put 'electric-quote-post-self-insert-function 'priority 10)
 
