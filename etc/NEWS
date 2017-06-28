@@ -320,6 +320,11 @@ questions, with a handy way to display help texts.
 all call stack frames in a Lisp backtrace buffer as lists.  Both
 debug.el and edebug.el have been updated to heed to this variable.
 
+---
+** Values in call stack frames are now displayed using 'cl-prin1'.
+The old behaviour of using 'prin1' can be restored by customizing the
+new option 'debugger-print-function'.
+
 +++
 ** The new variable 'x-ctrl-keysym' has been added to the existing
 roster of X keysyms.  It can be used in combination with another

@@ -49,6 +49,12 @@ the middle is discarded, and just the beginning and end are displayed."
   :group 'debugger
   :version "21.1")
 
+(defcustom debugger-print-function #'cl-prin1
+  "Function used to print values in the debugger backtraces."
+  :type 'function
+  :options '(cl-prin1 prin1)
+  :version "26.1")
+
 (defcustom debugger-bury-or-kill 'bury
   "What to do with the debugger buffer when exiting `debug'.
 The value affects the behavior of operations on any window
@@ -265,10 +271,13 @@ first will be printed into the backtrace buffer."
       debugger-value)))
 
 
+(defvar cl-print-compiled-button)
+
 (defun debugger-insert-backtrace (frames do-xrefs)
   "Format and insert the backtrace FRAMES at point.
 Make functions into cross-reference buttons if DO-XREFS is non-nil."
   (let ((standard-output (current-buffer))
+        (cl-print-compiled-button t)
         (eval-buffers eval-buffer-list))
     (require 'help-mode)     ; Define `help-function-def' button type.
     (pcase-dolist (`(,evald ,fun ,args ,flags) frames)
@@ -278,10 +287,10 @@ Make functions into cross-reference buttons if DO-XREFS is non-nil."
             (fun-pt (point)))
         (cond
          ((and evald (not debugger-stack-frame-as-list))
-          (prin1 fun)
-          (if args (prin1 args) (princ "()")))
+          (funcall debugger-print-function fun)
+          (if args (funcall debugger-print-function args) (princ "()")))
          (t
-          (prin1 (cons fun args))
+          (funcall debugger-print-function (cons fun args))
           (cl-incf fun-pt)))
         (when fun-file
           (make-text-button fun-pt (+ fun-pt (length (symbol-name fun)))
@@ -327,7 +336,7 @@ That buffer should be current already."
        (insert "--returning value: ")
        (setq pos (point))
        (setq debugger-value (nth 1 args))
-       (prin1 debugger-value (current-buffer))
+       (funcall debugger-print-function debugger-value (current-buffer))
        (setf (cl-getf (nth 3 (car frames)) :debug-on-exit) nil)
        (insert ?\n))
       ;; Watchpoint triggered.
@@ -352,7 +361,7 @@ That buffer should be current already."
       (`error
        (insert "--Lisp error: ")
        (setq pos (point))
-       (prin1 (nth 1 args) (current-buffer))
+       (funcall debugger-print-function (nth 1 args) (current-buffer))
        (insert ?\n))
       ;; debug-on-call, when the next thing is an eval.
       (`t
@@ -362,9 +371,10 @@ That buffer should be current already."
       (_
        (insert ": ")
        (setq pos (point))
-       (prin1 (if (eq (car args) 'nil)
-                  (cdr args) args)
-              (current-buffer))
+       (funcall debugger-print-function
+                (if (eq (car args) 'nil)
+                    (cdr args) args)
+                (current-buffer))
        (insert ?\n)))
     (debugger-insert-backtrace frames t)
     ;; Place point on "stack frame 0" (bug#15101).
