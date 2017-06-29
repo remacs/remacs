@@ -20916,7 +20916,7 @@ maybe_produce_line_number (struct it *it)
 	tem_it.face_id = lnum_face_id;
       if (beyond_zv
 	  /* Don't display the same line number more than once.  */
-	  && (!EQ (Vdisplay_line_numbers, Qvisual)
+	  || (!EQ (Vdisplay_line_numbers, Qvisual)
 	      && (it->continuation_lines_width > 0
 		  || (this_line == last_line && !first_time))))
 	tem_it.c = tem_it.char_to_display = ' ';
@@ -27996,19 +27996,22 @@ x_produce_glyphs (struct it *it)
 	    {
 	      int tab_width = it->tab_width * font->space_width;
 	      int x = it->current_x + it->continuation_lines_width;
+	      int x0 = x;
 	      /* Adjust for line numbers.  Kludge alert: the "2" below
 		 is because we add 2 blanks to the actual line number.  */
 	      if (!NILP (Vdisplay_line_numbers))
-		x -= (it->lnum_width + 2 - it->w->hscroll) * font->space_width;
+		x -= (it->lnum_width + 2) * font->space_width;
 	      int next_tab_x = ((1 + x + tab_width - 1) / tab_width) * tab_width;
+	      if (!NILP (Vdisplay_line_numbers))
+		next_tab_x += (it->lnum_width + 2) * font->space_width;
 
 	      /* If the distance from the current position to the next tab
 		 stop is less than a space character width, use the
 		 tab stop after that.  */
-	      if (next_tab_x - x < font->space_width)
+	      if (next_tab_x - x0 < font->space_width)
 		next_tab_x += tab_width;
 
-	      it->pixel_width = next_tab_x - x;
+	      it->pixel_width = next_tab_x - x0;
 	      it->nglyphs = 1;
 	      if (FONT_TOO_HIGH (font))
 		{
