@@ -1,5 +1,14 @@
 use remacs_macros::lisp_fn;
-use lisp::LispObject;
+use lisp::{LispObject, ExternalPtr};
+use remacs_sys::Lisp_Symbol;
+
+pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
+
+impl LispSymbolRef {
+    pub fn symbol_name(&self) -> LispObject {
+        LispObject::from_bool(false) // @TODO
+    }
+}
 
 /// Return t if OBJECT is a symbol.
 #[lisp_fn]

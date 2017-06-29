@@ -14,11 +14,12 @@ use libc::{c_void, intptr_t};
 
 use marker::{LispMarker, marker_position};
 use multibyte::{LispStringRef, MAX_CHAR};
+use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE,
-                 EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
+                 EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp, Qsymbolp,
                  Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp, circular_list,
                  internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp, Qwholenump, Qvectorp,
                  SYMBOL_NAME, PseudovecType};
@@ -150,14 +151,28 @@ impl LispObject {
 }
 
 // Symbol support (LispType == Lisp_Symbol == 0)
-
 impl LispObject {
+    #[inline]
     pub fn is_symbol(self) -> bool {
         self.get_type() == LispType::Lisp_Symbol
     }
 
-    pub fn symbol_name(&self) -> LispObject {
-        unsafe { LispObject::from_raw(SYMBOL_NAME(self.to_raw())) }
+    #[inline]
+    pub fn as_symbol(&self) -> Option<LispSymbolRef> {
+        if self.is_symbol() {
+            Some(LispSymbolRef::new(unsafe { mem::transmute(self.get_untaggedptr()) }))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_symbol_or_error(&self) -> LispSymbolRef {
+        if self.is_symbol() {
+            LispSymbolRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+        } else {
+            unsafe { wrong_type_argument(Qsymbolp, self.to_raw()) }
+        }
     }
 }
 

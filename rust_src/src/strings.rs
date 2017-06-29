@@ -202,10 +202,9 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
     }
 }
 
-// @TODO need to rework this function to use new as_symbol_or_error API
 fn get_string_or_symbol(mut string: LispObject) -> multibyte::LispStringRef {
     if string.is_symbol() {
-        string = string.symbol_name()
+        string = string.as_symbol_or_error().symbol_name()
     }
 
     string.as_string_or_error()

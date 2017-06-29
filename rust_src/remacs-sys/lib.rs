@@ -665,6 +665,11 @@ pub struct Lisp_String {
     pub data: *mut libc::c_char,
 }
 
+// @TODO
+#[repr(C)]
+pub struct Lisp_Symbol {
+}
+
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static Qt: Lisp_Object;
@@ -675,6 +680,7 @@ extern "C" {
     pub static Qintegerp: Lisp_Object;
     pub static Qfloatp: Lisp_Object;
     pub static Qstringp: Lisp_Object;
+    pub static Qsymbolp: Lisp_Object;
     pub static Qlistp: Lisp_Object;
     pub static Qmarkerp: Lisp_Object;
     pub static Qwholenump: Lisp_Object;
