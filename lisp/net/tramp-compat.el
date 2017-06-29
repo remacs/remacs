@@ -252,7 +252,8 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 (eval-after-load 'tramp
   '(unless
        (memq tramp-syntax (tramp-compat-funcall (quote tramp-syntax-values)))
-     (tramp-change-syntax (tramp-compat-tramp-syntax))))
+     (tramp-compat-funcall
+      (quote tramp-change-syntax) (tramp-compat-tramp-syntax))))
 
 (provide 'tramp-compat)
 

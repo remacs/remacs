@@ -53,6 +53,8 @@
 (defvar tramp-copy-size-limit)
 (defvar tramp-persistency-file-name)
 (defvar tramp-remote-process-environment)
+;; Suppress nasty messages.
+(fset 'shell-command-sentinel 'ignore)
 
 ;; There is no default value on w32 systems, which could work out of the box.
 (defconst tramp-test-temporary-file-directory
@@ -126,29 +128,52 @@ If QUOTED is non-nil, the local part of the file is quoted."
     (make-temp-name "tramp-test")
     (if local temporary-file-directory tramp-test-temporary-file-directory))))
 
+;; Don't print messages in nested `tramp--instrument-test-case' calls.
+(defvar tramp--instrument-test-case-p nil
+  "Whether `tramp--instrument-test-case' run.
+This shall used dynamically bound only.")
+
 (defmacro tramp--instrument-test-case (verbose &rest body)
   "Run BODY with `tramp-verbose' equal VERBOSE.
 Print the the content of the Tramp debug buffer, if BODY does not
 eval properly in `should' or `should-not'.  `should-error' is not
 handled properly.  BODY shall not contain a timeout."
   (declare (indent 1) (debug (natnump body)))
-  `(let ((tramp-verbose ,verbose)
+  `(let ((tramp-verbose (max (or ,verbose 0) (or tramp-verbose 0)))
+	 (tramp-message-show-message t)
 	 (tramp-debug-on-error t)
 	 (debug-ignored-errors
-	  (cons "^make-symbolic-link not supported$" debug-ignored-errors)))
+	  (cons "^make-symbolic-link not supported$" debug-ignored-errors))
+	 inhibit-message)
      (unwind-protect
-	 (progn ,@body)
-       (when (> tramp-verbose 3)
+	 (let ((tramp--instrument-test-case-p t)) ,@body)
+       ;; Unwind forms.
+       (when (and (null tramp--instrument-test-case-p) (> tramp-verbose 3))
 	 (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
 	   (with-current-buffer (tramp-get-connection-buffer v)
 	     (message "%s" (buffer-string)))
 	   (with-current-buffer (tramp-get-debug-buffer v)
 	     (message "%s" (buffer-string))))))))
 
+(defsubst tramp--test-message (fmt-string &rest arguments)
+  "Emit a message into ERT *Messages*."
+  (tramp--instrument-test-case 0
+    (apply
+     'tramp-message
+     (tramp-dissect-file-name tramp-test-temporary-file-directory) 0
+     fmt-string arguments)))
+
+(defsubst tramp--test-backtrace ()
+  "Dump a backtrace into ERT *Messages*."
+  (tramp--instrument-test-case 10
+    (tramp-backtrace
+     (tramp-dissect-file-name tramp-test-temporary-file-directory))))
+
 (ert-deftest tramp-test00-availability ()
   "Test availability of Tramp functions."
   :expected-result (if (tramp--test-enabled) :passed :failed)
-  (message "Remote directory: `%s'" tramp-test-temporary-file-directory)
+  (tramp--test-message
+   "Remote directory: `%s'" tramp-test-temporary-file-directory)
   (should (ignore-errors
 	    (and
 	     (file-remote-p tramp-test-temporary-file-directory)
@@ -2759,6 +2784,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted))
 	  (default-directory tramp-test-temporary-file-directory)
+	  ;; Suppress nasty messages.
+	  (inhibit-message t)
 	  kill-buffer-query-functions)
       (unwind-protect
 	  (with-temp-buffer
@@ -2787,7 +2814,6 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (async-shell-command
 	     (format "ls %s" (file-name-nondirectory tmp-name))
 	     (current-buffer))
-	    (set-process-sentinel (get-buffer-process (current-buffer)) nil)
 	    ;; Read output.
 	    (with-timeout (10 (ert-fail "`async-shell-command' timed out"))
 	      (while (< (- (point-max) (point-min))
@@ -2816,7 +2842,6 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (write-region "foo" nil tmp-name)
 	    (should (file-exists-p tmp-name))
 	    (async-shell-command "read line; ls $line" (current-buffer))
-	    (set-process-sentinel (get-buffer-process (current-buffer)) nil)
 	    (process-send-string
 	     (get-buffer-process (current-buffer))
 	     (format "%s\n" (file-name-nondirectory tmp-name)))
@@ -2847,8 +2872,6 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   "Like `shell-command-to-string', but for asynchronous processes."
   (with-temp-buffer
     (async-shell-command command (current-buffer))
-    ;; Suppress nasty messages.
-    (set-process-sentinel (get-buffer-process (current-buffer)) nil)
     (with-timeout (10)
       (while (get-buffer-process (current-buffer))
 	(accept-process-output (get-buffer-process (current-buffer)) 0.1)))
@@ -3046,11 +3069,13 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		;; We must force a reconnect, in order to activate $BZR_HOME.
 		(tramp-cleanup-connection
 		 (tramp-dissect-file-name tramp-test-temporary-file-directory)
-		 nil 'keep-password)
+		 'keep-debug 'keep-password)
 		'(Bzr))
-	       (t nil)))))
+	       (t nil))))
+	   ;; Suppress nasty messages.
+	   (inhibit-message t))
       (skip-unless vc-handled-backends)
-      (message "%s" vc-handled-backends)
+      (unless quoted (tramp--test-message "%s" vc-handled-backends))
 
       (unwind-protect
 	  (progn
@@ -3656,90 +3681,114 @@ Use the `ls' command."
   "Check parallel asynchronous requests.
 Such requests could arrive from timers, process filters and
 process sentinels.  They shall not disturb each other."
-  ;; Mark as failed until bug has been fixed.
-  :expected-result :failed
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 
-  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
-    ;; Keep instrumentation verbosity 0 until Tramp bug is fixed.
-    ;; This has the side effect, that this test fails instead to
-    ;; abort.  Good for hydra.
-    (tramp--instrument-test-case 0
-    (let* ((tmp-name (tramp--test-make-temp-name nil quoted))
-	   (default-directory tmp-name)
-	   (remote-file-name-inhibit-cache t)
-	   timer buffers kill-buffer-query-functions)
+  (let* ((tmp-name (tramp--test-make-temp-name))
+	 (default-directory tmp-name)
+	 ;; Do not cache Tramp properties.
+	 (remote-file-name-inhibit-cache t)
+	 (process-file-side-effects t)
+	 ;; Suppress nasty messages.
+	 (inhibit-message t)
+	 (number-proc 10)
+	 (timer-repeat 1)
+	 ;; We must distinguish due to performance reasons.
+	 (timer-operation
+	  (cond
+	   ((string-equal "mock" (file-remote-p tmp-name 'method))
+	    'vc-registered)
+	   (t 'file-attributes)))
+	 timer buffers kill-buffer-query-functions)
 
-      (unwind-protect
-	  (progn
-	    (make-directory tmp-name)
+    (unwind-protect
+	(progn
+	  (make-directory tmp-name)
 
-	    ;; Setup a timer in order to raise an ordinary command
-	    ;; again and again.  `vc-registered' is well suited,
-	    ;; because there are many checks.
-	    (setq
-	     timer
-	     (run-at-time
-	      0 1
-	      (lambda ()
-		(when buffers
-		  (vc-registered
-		   (buffer-name (nth (random (length buffers)) buffers)))))))
+	  ;; Setup a timer in order to raise an ordinary command again
+	  ;; and again.  `vc-registered' is well suited, because there
+	  ;; are many checks.
+	  (setq
+	   timer
+	   (run-at-time
+	    0 timer-repeat
+	    (lambda ()
+	      (when buffers
+		(let ((file
+		       (buffer-name (nth (random (length buffers)) buffers))))
+		  (funcall timer-operation file))))))
 
-	    ;; Create temporary buffers.  The number of buffers
-	    ;; corresponds to the number of processes; it could be
-	    ;; increased in order to make pressure on Tramp.
-	    (dotimes (_i 5)
-	      (add-to-list 'buffers (generate-new-buffer "*temp*")))
+	  ;; Create temporary buffers.  The number of buffers
+	  ;; corresponds to the number of processes; it could be
+	  ;; increased in order to make pressure on Tramp.
+	  (dotimes (_i number-proc)
+	    (add-to-list 'buffers (generate-new-buffer "foo")))
 
-	    ;; Open asynchronous processes.  Set process sentinel.
-	    (dolist (buf buffers)
-	      (async-shell-command "read line; touch $line; echo $line" buf)
+	  ;; Open asynchronous processes.  Set process sentinel.
+	  (dolist (buf buffers)
+	    (let ((proc
+		   (start-file-process-shell-command
+		    (buffer-name buf) buf
+		    (concat
+		     "(read line && echo $line >$line);"
+		     "(read line && cat $line);"
+		     "(read line && rm $line)")))
+		  (file (expand-file-name (buffer-name buf))))
+	      ;; Remember the file name.  Add counter.
+	      (process-put proc 'foo file)
+	      (process-put proc 'bar 0)
+	      ;; Add process filter.
+	      (set-process-filter
+	       proc
+	       (lambda (proc string)
+		 (with-current-buffer (process-buffer proc)
+		   (insert string))
+		 (unless (zerop (length string))
+		   (should (file-attributes (process-get proc 'foo))))))
+	      ;; Add process sentinel.
 	      (set-process-sentinel
-	       (get-buffer-process buf)
+	       proc
 	       (lambda (proc _state)
-		 (delete-file (buffer-name (process-buffer proc))))))
+		 (should-not (file-attributes (process-get proc 'foo)))))))
 
-	    ;; Send a string.  Use a random order of the buffers.  Mix
-	    ;; with regular operation.
-	    (let ((buffers (copy-sequence buffers))
-		  buf)
-	      (while buffers
-		(setq buf (nth (random (length buffers)) buffers))
-		(process-send-string
-		 (get-buffer-process buf) (format "'%s'\n" buf))
-		(file-attributes (buffer-name buf))
-		(setq buffers (delq buf buffers))))
+	  ;; Send a string.  Use a random order of the buffers.  Mix
+	  ;; with regular operation.
+	  (let ((buffers (copy-sequence buffers)))
+	    (while buffers
+	      (let* ((buf (nth (random (length buffers)) buffers))
+		     (proc (get-buffer-process buf))
+		     (file (process-get proc 'foo))
+		     (count (process-get proc 'bar)))
+		;; Regular operation.
+		(if (= count 0)
+		    (should-not (file-attributes file))
+		  (should (file-attributes file)))
+		;; Send string to process.
+		(process-send-string proc (format "%s\n" (buffer-name buf)))
+		(accept-process-output proc 0.1 nil 0)
+		;; Regular operation.
+		(if (= count 2)
+		    (should-not (file-attributes file))
+		  (should (file-attributes file)))
+		(process-put proc 'bar (1+ count))
+		(unless (process-live-p proc)
+		  (setq buffers (delq buf buffers))))))
 
-	    ;; Wait until the whole output has been read.
-	    (with-timeout ((* 10 (length buffers))
-			   (ert-fail "`async-shell-command' timed out"))
-	      (let ((buffers (copy-sequence buffers))
-		    buf)
-		(while buffers
-		  (setq buf (nth (random (length buffers)) buffers))
-		  (if (ignore-errors
-			(memq (process-status (get-buffer-process buf))
-			      '(run open)))
-		      (accept-process-output (get-buffer-process buf) 0.1)
-		    (setq buffers (delq buf buffers))))))
+	  ;; Checks.  All process output shall exists in the
+	  ;; respective buffers.  All created files shall be deleted.
+	  (dolist (buf buffers)
+	    (with-current-buffer buf
+	      (should (string-equal (format "%s\n" buf) (buffer-string)))))
+	  (should-not
+	   (directory-files tmp-name nil directory-files-no-dot-files-regexp)))
 
-	    ;; Check.
-	    (dolist (buf buffers)
-	      (with-current-buffer buf
-		(should
-		 (string-equal (format "'%s'\n" buf) (buffer-string)))))
-	    (should-not
-	     (directory-files
-	      tmp-name nil directory-files-no-dot-files-regexp)))
-
-	;; Cleanup.
-	(ignore-errors (cancel-timer timer))
-	(ignore-errors (delete-directory tmp-name 'recursive))
-	(dolist (buf buffers)
-	  (ignore-errors (kill-buffer buf))))))))
+      ;; Cleanup.
+      (dolist (buf buffers)
+	(ignore-errors (delete-process (get-buffer-process buf)))
+	(ignore-errors (kill-buffer buf)))
+      (ignore-errors (cancel-timer timer))
+      (ignore-errors (delete-directory tmp-name 'recursive)))))
 
 (ert-deftest tramp-test37-recursive-load ()
   "Check that Tramp does not fail due to recursive load."
@@ -3836,8 +3885,8 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
 ;; * Fix Bug#27009.  Set expected error of
 ;;   `tramp-test29-environment-variables-and-port-numbers'.
-;; * Fix Bug#16928.  Set expected error of `tramp-test36-asynchronous-requests'.
-;; * Fix `tramp-test38-unload' (Not all symbols are unbound).  Set
+;; * Fix Bug#16928 in `tramp-test36-asynchronous-requests'.
+;; * Fix `tramp-test39-unload' (Not all symbols are unbound).  Set
 ;;   expected error.
 
 (defun tramp-test-all (&optional interactive)

@@ -3500,21 +3500,10 @@ the result will be a local, non-Tramp, file name."
 (defun tramp-sh-file-name-handler (operation &rest args)
   "Invoke remote-shell Tramp file name handler.
 Fall back to normal file name handler if no Tramp handler exists."
-  (when (and tramp-locked (not tramp-locker))
-    (setq tramp-locked nil)
-    (tramp-error
-     (car-safe tramp-current-connection) 'file-error
-     "Forbidden reentrant call of Tramp"))
-  (let ((tl tramp-locked))
-    (setq tramp-locked t)
-    (unwind-protect
-	(let ((tramp-locker t))
-	  (save-match-data
-	    (let ((fn (assoc operation tramp-sh-file-name-handler-alist)))
-	      (if fn
-		  (apply (cdr fn) args)
-		(tramp-run-real-handler operation args)))))
-      (setq tramp-locked tl))))
+  (let ((fn (assoc operation tramp-sh-file-name-handler-alist)))
+    (if fn
+	(save-match-data (apply (cdr fn) args))
+      (tramp-run-real-handler operation args))))
 
 ;; This must be the last entry, because `identity' always matches.
 ;;;###tramp-autoload
