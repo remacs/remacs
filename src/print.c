@@ -1870,21 +1870,36 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		}
 	      else
 		{
+                  bool still_need_nonhex = false;
 		  /* If we just had a hex escape, and this character
 		     could be taken as part of it,
 		     output `\ ' to prevent that.  */
-		  if (need_nonhex && c_isxdigit (c))
-		    print_c_string ("\\ ", printcharfun);
-
-		  if (c == '\n' && print_escape_newlines
-		      ? (c = 'n', true)
-		      : c == '\f' && print_escape_newlines
-		      ? (c = 'f', true)
-		      : c == '\"' || c == '\\')
-		    printchar ('\\', printcharfun);
-
-		  printchar (c, printcharfun);
-		  need_nonhex = false;
+                  if (c_isxdigit (c))
+                    {
+                      if (need_nonhex)
+                        print_c_string ("\\ ", printcharfun);
+                      printchar (c, printcharfun);
+                    }
+                  else if (c == '\n' && print_escape_newlines
+                           ? (c = 'n', true)
+                           : c == '\f' && print_escape_newlines
+                           ? (c = 'f', true)
+                           : c == '\0' && print_escape_control_characters
+                           ? (c = '0', still_need_nonhex = true)
+                           : c == '\"' || c == '\\')
+                    {
+                      printchar ('\\', printcharfun);
+                      printchar (c, printcharfun);
+                    }
+                  else if (print_escape_control_characters && c_iscntrl (c))
+                    {
+                      char outbuf[1 + 3 + 1];
+                      int len = sprintf (outbuf, "\\%03o", c + 0u);
+                      strout (outbuf, len, len, printcharfun);
+                    }
+                  else
+                    printchar (c, printcharfun);
+		  need_nonhex = still_need_nonhex;
 		}
 	    }
 	  printchar ('\"', printcharfun);
@@ -2329,6 +2344,11 @@ A value of nil means no limit.  See also `eval-expression-print-level'.  */);
 Also print formfeeds as `\\f'.  */);
   print_escape_newlines = 0;
 
+  DEFVAR_BOOL ("print-escape-control-characters", print_escape_control_characters,
+	       doc: /* Non-nil means print control characters in strings as `\\OOO'.
+\(OOO is the octal representation of the character code.)*/);
+  print_escape_control_characters = 0;
+
   DEFVAR_BOOL ("print-escape-nonascii", print_escape_nonascii,
 	       doc: /* Non-nil means print unibyte non-ASCII chars in strings as \\OOO.
 \(OOO is the octal representation of the character code.)
@@ -2418,6 +2438,7 @@ priorities.  */);
   DEFSYM (Qprint_escape_newlines, "print-escape-newlines");
   DEFSYM (Qprint_escape_multibyte, "print-escape-multibyte");
   DEFSYM (Qprint_escape_nonascii, "print-escape-nonascii");
+  DEFSYM (Qprint_escape_control_characters, "print-escape-control-characters");
 
   print_prune_charset_plist = Qnil;
   staticpro (&print_prune_charset_plist);

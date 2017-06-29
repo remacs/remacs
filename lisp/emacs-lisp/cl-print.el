@@ -105,10 +105,11 @@ into a button whose action shows the function's disassembly.")
     (if args
         (prin1 args stream)
       (princ "()" stream)))
-  (let ((doc (documentation object 'raw)))
-    (when doc
-      (princ " " stream)
-      (prin1 doc stream)))
+  (pcase (help-split-fundoc (documentation object 'raw) object)
+    ;; Drop args which `help-function-arglist' already printed.
+    (`(,_usage . ,(and doc (guard (stringp doc))))
+     (princ " " stream)
+     (prin1 doc stream)))
   (let ((inter (interactive-form object)))
     (when inter
       (princ " " stream)

@@ -4514,7 +4514,8 @@ EVALD, FUNC, ARGS, FLAGS are as in `mapbacktrace'."
 (defun backtrace ()
   "Print a trace of Lisp function calls currently active.
 Output stream used is value of `standard-output'."
-  (let ((print-level (or print-level 8)))
+  (let ((print-level (or print-level 8))
+        (print-escape-control-characters t))
     (mapbacktrace #'backtrace--print-frame 'backtrace)))
 
 (defun backtrace-frames (&optional base)
