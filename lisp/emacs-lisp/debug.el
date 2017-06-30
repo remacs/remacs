@@ -817,9 +817,13 @@ To specify a nil argument interactively, exit with an empty minibuffer."
                               'type 'help-function
                               'help-args (list fun))
             (terpri))
-          (terpri)
-          (princ "Note: if you have redefined a function, then it may no longer\n")
-          (princ "be set to debug on entry, even if it is in the list."))))))
+          ;; Now that debug--function-list uses advice-member-p, its
+          ;; output should be reliable (except for bugs and the exceptional
+          ;; case where some other advice ends up overriding ours).
+          ;;(terpri)
+          ;;(princ "Note: if you have redefined a function, then it may no longer\n")
+          ;;(princ "be set to debug on entry, even if it is in the list.")
+          )))))
 
 (defun debug--implement-debug-watch (symbol newval op where)
   "Conditionally call the debugger.
