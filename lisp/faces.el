@@ -2469,14 +2469,26 @@ If you set `term-file-prefix' to nil, this function does nothing."
 (defface line-number
   '((t :inherit (shadow default)))
   "Face for displaying line numbers.
-This face is used when `display-line-numbers' is non-nil."
+This face is used when `display-line-numbers' is non-nil.
+
+If you customize the font of this face, make sure it is a
+monospaced font, otherwise line numbers will not line up,
+and text lines might move horizontally as you move through
+the buffer."
   :version "26.1"
   :group 'basic-faces)
 
 (defface line-number-current-line
   '((t :inherit line-number))
   "Face for displaying the current line number.
-This face is used when `display-line-numbers' is non-nil."
+This face is used when `display-line-numbers' is non-nil.
+
+If you customize the font of this face, make sure it is a
+monospaced font, otherwise line numbers will not line up,
+and text lines might move horizontally as you move through
+the buffer.  Similarly, making this face's font different
+from that of the `line-number' face could produce such
+unwanted effects."
   :version "26.1"
   :group 'basic-faces)
 
