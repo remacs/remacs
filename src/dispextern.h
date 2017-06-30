@@ -2667,9 +2667,10 @@ struct it
   /* The byte position corresponding to lnum.  */
   ptrdiff_t lnum_bytepos;
 
-  /* The width in columns needed for display of the line numbers, or
-     zero if not computed.  */
+  /* The width, in columns and in pixels, needed for display of the
+     line numbers, or zero if not computed.  */
   int lnum_width;
+  int lnum_pixel_width;
 
   /* The line number of point's line, or zero if not computed yet.  */
   ptrdiff_t pt_lnum;
