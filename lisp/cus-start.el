@@ -602,7 +602,7 @@ since it could result in memory overflow and make Emacs crash."
                                            :value 2
                                            :format "%v"))
                                  "26.1")
-             (display-line-numbers-current-absolute
+             (display-line-numbers-current-absolute display
                                  (choice
                                   (const :tag "Display actual number of current line"
                                          :value t)

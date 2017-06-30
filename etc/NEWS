@@ -377,6 +377,7 @@ display of raw bytes from octal to hex.
 ** You can now provide explicit field numbers in format specifiers.
 For example, '(format "%2$s %1$s" "X" "Y")' produces "Y X".
 
++++
 ** Emacs now supports optional display of line numbers in the buffer.
 This is similar to what linum-mode provides, but much faster and
 doesn't usurp the display margin for the line numbers.  Customize the
@@ -410,7 +411,7 @@ specify a fixed minimal with of the area allocated to line-number
 display.  The default is nil, meaning that Emacs will dynamically
 calculate the area width, enlarging or shrinking it as needed.
 Setting it to a non-negative integer specifies that as the minimal
-width; selecting a value that is large enough to display all line
+width; selecting a value  that is large enough to display all line
 numbers in a buffer will then keep the line-number display area of
 constant width at all times, if that is desired.
 

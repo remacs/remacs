@@ -32567,7 +32567,12 @@ To add a prefix to continuation lines, use `wrap-prefix'.  */);
 By default, line numbers are displayed before each non-continuation
 line that displays buffer text, i.e. after each newline that came
 from buffer text.  However, if the value is `visual', every screen
-line will have a number.  */);
+line will have a number.
+
+Lisp programs can disable display of a line number of a particular
+screen line by putting the `display-line-numbers-disable' text
+property or overlay property on the first visible character of
+that line.  */);
   Vdisplay_line_numbers = Qnil;
   DEFSYM (Qdisplay_line_numbers, "display-line-numbers");
   Fmake_variable_buffer_local (Qdisplay_line_numbers);
