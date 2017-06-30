@@ -20749,33 +20749,44 @@ find_row_edges (struct it *it, struct glyph_row *row,
     row->maxpos = it->current.pos;
 }
 
-/* Count the number of screen lines in window W between character
-   position CHARPOS and the line showing that window's point.  */
+/* Count the number of screen lines in window IT->w between character
+   position IT_CHARPOS(*IT) and the line showing that window's point.  */
 static ptrdiff_t
-display_count_lines_visually (struct window *w, struct text_pos pos)
+display_count_lines_visually (struct it *it)
 {
   struct it tem_it;
   ptrdiff_t to;
   struct text_pos from;
-  ptrdiff_t count = SPECPDL_INDEX ();
 
-  if (CHARPOS (pos) <= PT)
-    {
-      from = pos;
-      to = PT;
-    }
+  /* If we already calculated a relative line number, use that.  This
+     trick relies on the fact that visual lines (a.k.a. "glyph rows")
+     are laid out sequentially, one by one, for each sequence of calls
+     to display_line or other similar function that follows a call to
+     init_iterator.  */
+  if (it->lnum_bytepos > 0)
+    return it->lnum + 1;
   else
     {
-      SET_TEXT_POS (from, PT, PT_BYTE);
-      to = CHARPOS (pos);
+      ptrdiff_t count = SPECPDL_INDEX ();
+
+      if (IT_CHARPOS (*it) <= PT)
+	{
+	  from = it->current.pos;
+	  to = PT;
+	}
+      else
+	{
+	  SET_TEXT_POS (from, PT, PT_BYTE);
+	  to = IT_CHARPOS (*it);
+	}
+      start_display (&tem_it, it->w, from);
+      /* Need to disable visual mode temporarily, since otherwise the
+	 call to move_it_to will cause infinite recursion.  */
+      specbind (Qdisplay_line_numbers, Qrelative);
+      move_it_to (&tem_it, to, -1, -1, -1, MOVE_TO_POS);
+      unbind_to (count, Qnil);
+      return IT_CHARPOS (*it) <= PT ? -tem_it.vpos : tem_it.vpos;
     }
-  start_display (&tem_it, w, from);
-  /* Need to disable visual mode temporarily, since otherwise the call
-     to move_it_to will cause infionite recursion.  */
-  specbind (Qdisplay_line_numbers, Qrelative);
-  move_it_to (&tem_it, to, -1, -1, -1, MOVE_TO_POS);
-  unbind_to (count, Qnil);
-  return CHARPOS (pos) <= PT ? -tem_it.vpos : tem_it.vpos;
 }
 
 /* Produce the line-number glyphs for the current glyph_row.  If
@@ -20791,7 +20802,7 @@ maybe_produce_line_number (struct it *it)
   void *itdata = bidi_shelve_cache ();
 
   if (EQ (Vdisplay_line_numbers, Qvisual))
-    this_line = display_count_lines_visually (it->w, it->current.pos);
+    this_line = display_count_lines_visually (it);
   else
     {
       if (!last_line)
@@ -20819,13 +20830,13 @@ maybe_produce_line_number (struct it *it)
 					 &bytepos);
       eassert (this_line > 0 || (this_line == 0 && start_from == BEGV_BYTE));
       eassert (bytepos == IT_BYTEPOS (*it));
+    }
 
-      /* Record the line number information.  */
-      if (this_line != last_line || !last_line)
-	{
-	  it->lnum = this_line;
-	  it->lnum_bytepos = IT_BYTEPOS (*it);
-	}
+  /* Record the line number information.  */
+  if (this_line != last_line || !it->lnum_bytepos)
+    {
+      it->lnum = this_line;
+      it->lnum_bytepos = IT_BYTEPOS (*it);
     }
 
   /* Produce the glyphs for the line number.  */
