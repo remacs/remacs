@@ -20867,26 +20867,23 @@ maybe_produce_line_number (struct it *it)
     {
       if (NATNUMP (Vdisplay_line_number_width))
 	it->lnum_width = XFASTINT (Vdisplay_line_number_width);
-      else
-	{
-	  /* Max line number to be displayed cannot be more than
-	     the one corresponding to the last row of the desired
-	     matrix.  */
-	  ptrdiff_t max_lnum;
 
-	  if (NILP (Vdisplay_line_numbers_current_absolute)
-	      && (EQ (Vdisplay_line_numbers, Qrelative)
-		  || EQ (Vdisplay_line_numbers, Qvisual)))
-	    /* We subtract one more because the current line is always
-	       zero in this mode.  */
-	    max_lnum = it->w->desired_matrix->nrows - 2;
-	  else if (EQ (Vdisplay_line_numbers, Qvisual))
-	    max_lnum = it->pt_lnum + it->w->desired_matrix->nrows - 1;
-	  else
-	    max_lnum = this_line + it->w->desired_matrix->nrows - 1 - it->vpos;
-	  max_lnum = max (1, max_lnum);
-	  it->lnum_width = log10 (max_lnum) + 1;
-	}
+      /* Max line number to be displayed cannot be more than the one
+	 corresponding to the last row of the desired matrix.  */
+      ptrdiff_t max_lnum;
+
+      if (NILP (Vdisplay_line_numbers_current_absolute)
+	  && (EQ (Vdisplay_line_numbers, Qrelative)
+	      || EQ (Vdisplay_line_numbers, Qvisual)))
+	/* We subtract one more because the current line is always
+	   zero in this mode.  */
+	max_lnum = it->w->desired_matrix->nrows - 2;
+      else if (EQ (Vdisplay_line_numbers, Qvisual))
+	max_lnum = it->pt_lnum + it->w->desired_matrix->nrows - 1;
+      else
+	max_lnum = this_line + it->w->desired_matrix->nrows - 1 - it->vpos;
+      max_lnum = max (1, max_lnum);
+      it->lnum_width = max (it->lnum_width, log10 (max_lnum) + 1);
       eassert (it->lnum_width > 0);
     }
   if (EQ (Vdisplay_line_numbers, Qrelative))
