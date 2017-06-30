@@ -1584,14 +1584,16 @@ produce_glyphs (struct it *it)
     {
       int absolute_x = (it->current_x
 			+ it->continuation_lines_width);
-      /* Adjust for line numbers.  Kludge alert: the "2" below is
-	 because we add 2 blanks to the actual line number.  */
+      int x0 = absolute_x;
+      /* Adjust for line numbers.  */
       if (!NILP (Vdisplay_line_numbers))
-	absolute_x -= it->lnum_width + 2 - it->w->hscroll;
+	absolute_x -= it->lnum_pixel_width;
       int next_tab_x
 	= (((1 + absolute_x + it->tab_width - 1)
 	    / it->tab_width)
 	   * it->tab_width);
+      if (!NILP (Vdisplay_line_numbers))
+	next_tab_x += it->lnum_pixel_width;
       int nspaces;
 
       /* If part of the TAB has been displayed on the previous line
@@ -1599,7 +1601,7 @@ produce_glyphs (struct it *it)
 	 been incremented already by the part that fitted on the
 	 continued line.  So, we will get the right number of spaces
 	 here.  */
-      nspaces = next_tab_x - absolute_x;
+      nspaces = next_tab_x - x0;
 
       if (it->glyph_row)
 	{

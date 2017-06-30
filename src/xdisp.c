@@ -13100,6 +13100,12 @@ hscroll_window_tree (Lisp_Object window)
 		    }
 		}
 	    }
+	  if (cursor_row->truncated_on_left_p)
+	    {
+	      /* On TTY frames, don't count the left truncation glyph.  */
+	      struct frame *f = XFRAME (WINDOW_FRAME (w));
+	      x_offset -= (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f));
+	    }
 
 	  text_area_width = window_box_width (w, TEXT_AREA);
 
@@ -28004,7 +28010,8 @@ x_produce_glyphs (struct it *it)
 		x -= it->lnum_pixel_width;
 	      int next_tab_x = ((1 + x + tab_width - 1) / tab_width) * tab_width;
 	      if (!NILP (Vdisplay_line_numbers))
-		next_tab_x += it->lnum_pixel_width;
+		next_tab_x += (it->lnum_pixel_width
+			       - it->w->hscroll * font->space_width);
 
 	      /* If the distance from the current position to the next tab
 		 stop is less than a space character width, use the
