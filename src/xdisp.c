@@ -20874,7 +20874,13 @@ maybe_produce_line_number (struct it *it)
 	     matrix.  */
 	  ptrdiff_t max_lnum;
 
-	  if (EQ (Vdisplay_line_numbers, Qvisual))
+	  if (NILP (Vdisplay_line_numbers_current_absolute)
+	      && (EQ (Vdisplay_line_numbers, Qrelative)
+		  || EQ (Vdisplay_line_numbers, Qvisual)))
+	    /* We subtract one more because the current line is always
+	       zero in this mode.  */
+	    max_lnum = it->w->desired_matrix->nrows - 2;
+	  else if (EQ (Vdisplay_line_numbers, Qvisual))
 	    max_lnum = it->pt_lnum + it->w->desired_matrix->nrows - 1;
 	  else
 	    max_lnum = this_line + it->w->desired_matrix->nrows - 1 - it->vpos;
@@ -20889,11 +20895,12 @@ maybe_produce_line_number (struct it *it)
     lnum_offset = 0;
 
   /* Under 'relative', display the absolute line number for the
-     current line, as displaying zero gives zero useful information.  */
+     current line, unless the user requests otherwise.  */
   ptrdiff_t lnum_to_display = eabs (this_line - lnum_offset);
   if ((EQ (Vdisplay_line_numbers, Qrelative)
        || EQ (Vdisplay_line_numbers, Qvisual))
-      && lnum_to_display == 0)
+      && lnum_to_display == 0
+      && !NILP (Vdisplay_line_numbers_current_absolute))
     lnum_to_display = it->pt_lnum + 1;
   /* In L2R rows we need to append the blank separator, in R2L
      rows we need to prepend it.  But this function is usually
@@ -32557,8 +32564,10 @@ To add a prefix to continuation lines, use `wrap-prefix'.  */);
 
   DEFVAR_LISP ("display-line-numbers", Vdisplay_line_numbers,
     doc: /* Non-nil means display line numbers.
-Line numbers are displayed before each non-continuation line, i.e.
-after each newline that comes from buffer text.  */);
+By default, line numbers are displayed before each non-continuation
+line that displays buffer text, i.e. after each newline that came
+from buffer text.  However, if the value is `visual', every screen
+line will have a number.  */);
   Vdisplay_line_numbers = Qnil;
   DEFSYM (Qdisplay_line_numbers, "display-line-numbers");
   Fmake_variable_buffer_local (Qdisplay_line_numbers);
@@ -32574,6 +32583,13 @@ Any other value is treated as nil.  */);
   Vdisplay_line_number_width = Qnil;
   DEFSYM (Qdisplay_line_number_width, "display-line-number-width");
   Fmake_variable_buffer_local (Qdisplay_line_number_width);
+
+  DEFVAR_LISP ("display-line-numbers-current-absolute",
+	       Vdisplay_line_numbers_current_absolute,
+    doc: /* Non-nil means display absolute number of current line.
+This variable has effect only when `display-line-numbers' is
+either `relative' or `visual'.  */);
+  Vdisplay_line_numbers_current_absolute = Qt;
 
   DEFVAR_BOOL ("inhibit-eval-during-redisplay", inhibit_eval_during_redisplay,
     doc: /* Non-nil means don't eval Lisp during redisplay.  */);

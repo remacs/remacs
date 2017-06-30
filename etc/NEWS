@@ -384,8 +384,18 @@ buffer-local variable 'display-line-numbers' to activate this optional
 display.  If set to t, Emacs will display the number of each line
 before the line.  If set to 'relative', Emacs will display the line
 number relative to the line showing point, with that line's number
-displayed as absolute.  The default is nil, which doesn't display the
-line numbers.
+displayed as absolute.  If set to 'visual', Emacs will display a
+relative number for every screen line, i.e. it will count screen lines
+rather than buffer lines.  The default is nil, which doesn't display
+the line numbers.
+
+In 'relative' and 'visual' modes, the variable
+'display-line-numbers-current-absolute' controls what number is
+displayed for the line showing point.  By default, this variable's
+value is t, which means display the absolute line number for the line
+showing point.  Customizing this variable to a nil value will cause
+Emacs to show zero instead, which preserves horizontal space of the
+window in large buffers.
 
 Line numbers are not displayed at all in minibuffer windows and in
 tooltips, as they are not useful there.
