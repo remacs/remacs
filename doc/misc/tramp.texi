@@ -1896,12 +1896,16 @@ where @samp{192.168.0.1} is the remote host IP address
 @value{tramp} uses the @option{adb} method to access Android devices.
 Android devices provide a restricted shell access through an USB
 connection.  The local host must have the @command{adb} program
-installed.
+installed.  Usually, it is sufficient to open the file
+@file{@trampfn{adb,,/}}.  Then you can navigate in the filesystem via
+@code{dired}.
 
-Applications such as @code{SSHDroid} that run @command{sshd} process
-on the Android device can accept any @option{ssh}-based methods
-provided these settings are adjusted:
+Alternatively, applications such as @code{SSHDroid} that run
+@command{sshd} process on the Android device can accept any
+@option{ssh}-based methods provided these settings are adjusted:
 
+@itemize
+@item
 @command{sh} must be specified for remote shell since Android devices
 do not provide @command{/bin/sh}.  @command{sh} will then invoke
 whatever shell is installed on the device with this setting:
@@ -1917,6 +1921,7 @@ whatever shell is installed on the device with this setting:
 where @samp{192.168.0.26} is the Android device's IP address.
 (@pxref{Predefined connection information}).
 
+@item
 @value{tramp} requires preserving @env{PATH} environment variable from
 user settings.  Android devices prefer @file{/system/xbin} path over
 @file{/system/bin}.  Both of these are set as follows:
@@ -1928,7 +1933,7 @@ user settings.  Android devices prefer @file{/system/xbin} path over
 @end group
 @end lisp
 
-@noindent
+@item
 When the Android device is not @samp{rooted}, specify a writable
 directory for temporary files:
 
@@ -1936,7 +1941,7 @@ directory for temporary files:
 (add-to-list 'tramp-remote-process-environment "TMPDIR=$HOME")
 @end lisp
 
-@noindent
+@item
 Open a remote connection with the command @kbd{C-x C-f
 @trampfn{ssh,192.168.0.26#2222,}}, where @command{sshd} is listening
 on port @samp{2222}.
@@ -1967,6 +1972,7 @@ the previous example, fix the connection properties as follows:
 @noindent
 Open a remote connection with a more concise command @kbd{C-x C-f
 @trampfn{ssh,android,}}.
+@end itemize
 
 
 @node Auto-save and Backup

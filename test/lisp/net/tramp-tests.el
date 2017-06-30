@@ -72,6 +72,10 @@
       (add-to-list
        'tramp-default-host-alist
        `("\\`mock\\'" nil ,(system-name)))
+      ;; Emacs' Makefile sets $HOME to a nonexistent value.  Needed in
+      ;; batch mode only, therefore.
+      (unless (and (null noninteractive) (file-directory-p "~/"))
+        (setenv "HOME" temporary-file-directory))
       (format "/mock::%s" temporary-file-directory)))
   "Temporary directory for Tramp tests.")
 
