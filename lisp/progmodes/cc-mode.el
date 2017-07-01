@@ -1083,101 +1083,215 @@ Note that the style variables are always made local to the buffer."
 	    (forward-line))	      ; no infinite loop with, e.g., "#//"
 	  )))))
 
-(defun c-before-after-change-digit-quote (beg end &optional old-len)
-  ;; This function either removes or applies the punctuation value ('(1)) of
-  ;; the `syntax-table' text property on single quote marks which are
-  ;; separator characters in long integer literals, e.g. "4'294'967'295".  It
-  ;; applies to both decimal/octal and hex literals.  (FIXME (2016-06-10): it
-  ;; should also apply to binary literals.)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Parsing of quotes.
+;;
+;; Valid digit separators in numbers will get the syntax-table "punctuation"
+;; property, '(1), and also the text property `c-digit-separator' value t.
+;;
+;; Invalid other quotes (i.e. those not validly bounding a single character,
+;; or escaped character) will get the syntax-table "punctuation" property,
+;; '(1), too.
+;;
+;; Note that, for convenience, these properties are applied even inside
+;; comments and strings.
+
+(defconst c-maybe-quoted-number-head
+  (concat
+   "\\(0\\("
+       "\\([Xx]\\([0-9a-fA-F]\\('[0-9a-fA-F]\\|[0-9a-fA-F]\\)*'?\\)?\\)"
+       "\\|"
+       "\\([Bb]\\([01]\\('[01]\\|[01]\\)*'?\\)?\\)"
+       "\\|"
+       "\\('[0-7]\\|[0-7]\\)*'?"
+       "\\)"
+   "\\|"
+       "[1-9]\\('[0-9]\\|[0-9]\\)*'?"
+   "\\)")
+  "Regexp matching the head of a numeric literal, including with digit separators.")
+
+(defun c-quoted-number-head-before-point ()
+  ;; Return non-nil when the head of a possibly quoted number is found
+  ;; immediately before point.  The value returned in this case is the buffer
+  ;; position of the start of the head.
+  (when c-has-quoted-numbers
+    (save-excursion
+      (let ((here (point))
+	    )
+	(skip-chars-backward "0-9a-fA-F'")
+	(if (and (memq (char-before) '(?x ?X))
+		 (eq (char-before (1- (point))) ?0))
+	    (backward-char 2))
+	(while (and (search-forward-regexp c-maybe-quoted-number-head here t)
+		    (< (match-end 0) here)))
+	(and (eq (match-end 0) here) (match-beginning 0))))))
+
+(defconst c-maybe-quoted-number-tail
+  (concat
+   "\\("
+       "\\([xX']?[0-9a-fA-F]\\('[0-9a-fA-F]\\|[0-9a-fA-F]\\)*\\)"
+   "\\|"
+       "\\([bB']?[01]\\('[01]\\|[01]\\)*\\)"
+   "\\|"
+       "\\('?[0-9]\\('[0-9]\\|[0-9]\\)*\\)"
+   "\\)")
+  "Regexp matching the tail of a numeric literal, including with digit separators.
+Note that this is a strict tail, so won't match, e.g. \"0x....\".")
+
+(defun c-quoted-number-tail-after-point ()
+  ;; Return non-nil when a proper tail of a possibly quoted number is found
+  ;; immediately after point.  The value returned in this case is the buffer
+  ;; position of the end of the tail.
+  (when c-has-quoted-numbers
+    (and (looking-at c-maybe-quoted-number-tail)
+	 (match-end 0))))
+
+(defconst c-maybe-quoted-number
+  (concat
+   "\\(0\\("
+       "\\([Xx][0-9a-fA-F]\\('[0-9a-fA-F]\\|[0-9a-fA-F]\\)*\\)"
+       "\\|"
+       "\\([Bb][01]\\('[01]\\|[01]\\)*\\)"
+       "\\|"
+       "\\('[0-7]\\|[0-7]\\)*"
+       "\\)"
+   "\\|"
+       "[1-9]\\('[0-9]\\|[0-9]\\)*"
+   "\\)")
+  "Regexp matching a numeric literal, including with digit separators.")
+
+(defun c-quoted-number-straddling-point ()
+  ;; Return non-nil if a definitely quoted number starts before point and ends
+  ;; after point.  In this case the number is bounded by (match-beginning 0)
+  ;; and (match-end 0).
+  (when c-has-quoted-numbers
+    (save-excursion
+      (let ((here (point))
+	    (bound (progn (skip-chars-forward "0-9a-fA-F'") (point))))
+	(goto-char here)
+	(when (< (skip-chars-backward "0-9a-fA-F'") 0)
+	  (if (and (memq (char-before) '(?x ?X))
+		   (eq (char-before (1- (point))) ?0))
+	      (backward-char 2))
+	  (while (and (search-forward-regexp c-maybe-quoted-number bound t)
+		      (<= (match-end 0) here)))
+	  (and (< (match-beginning 0) here)
+	       (> (match-end 0) here)
+	       (save-match-data
+		 (goto-char (match-beginning 0))
+		 (save-excursion (search-forward "'" (match-end 0) t)))))))))
+
+(defun c-parse-quotes-before-change (beg end)
+  ;; This function analyzes 's near the region (c-new-BEG c-new-END), amending
+  ;; those two variables as needed to include 's into that region when they
+  ;; might be syntactically relevant to the change in progress.
   ;;
-  ;; In both uses of the function, the `syntax-table' properties are
-  ;; removed/applied only on quote marks which appear to be digit separators.
+  ;; Having amended that region, the function removes pertinent text
+  ;; properties (syntax-table properties with value '(1) and c-digit-separator
+  ;; props with value t) from 's in it.  This operation is performed even
+  ;; within strings and comments.
   ;;
-  ;; Point is undefined on both entry and exit to this function, and the
-  ;; return value has no significance.  The function is called solely as a
-  ;; before-change function (see `c-get-state-before-change-functions') and as
-  ;; an after change function (see `c-before-font-lock-functions', with the
-  ;; parameters BEG, END, and (optionally) OLD-LEN being given the standard
-  ;; values for before/after-change functions.
-  (c-save-buffer-state ((num-begin c-new-BEG) digit-re try-end)
-    (goto-char c-new-END)
-    (when (looking-at "\\(x\\)?[0-9a-fA-F']+")
-      (setq c-new-END (match-end 0)))
+  ;; This function is called exclusively as a before-change function via the
+  ;; variable `c-get-state-before-change-functions'.
+  (c-save-buffer-state (p-limit limits found)
+    ;; Special consideraton for deleting \ from '\''.
+    (if (and (> end beg)
+	     (eq (char-before end) ?\\)
+	     (<= c-new-END end))
+	(setq c-new-END (min (1+ end) (point-max))))
+
+    ;; Do we have a ' (or something like ',',',',',') within range of
+    ;; c-new-BEG?
     (goto-char c-new-BEG)
-    (when (looking-at "\\(x?\\)[0-9a-fA-F']")
-      (if (re-search-backward "\\(0x\\)?[0-9a-fA-F]*\\=" nil t)
-	  (setq c-new-BEG (point))))
+    (setq p-limit (max (- (point) 2) (point-min)))
+    (while (and (skip-chars-backward "^\\\\'" p-limit)
+		(> (point) p-limit))
+      (when (eq (char-before) ?\\)
+	(setq p-limit (max (1- p-limit) (point-min))))
+      (backward-char)
+      (setq c-new-BEG (point)))
+    (beginning-of-line)
+    (while (and
+	    (setq found (search-forward-regexp "\\('\\([^'\\]\\|\\\\.\\)\\)*'"
+					       c-new-BEG 'limit))
+	    (< (point) (1- c-new-BEG))))
+    (if found
+	(setq c-new-BEG
+	      (if (and (eq (point) (1- c-new-BEG))
+		       (eq (char-after) ?')) ; "''" before c-new-BEG.
+		  (1- c-new-BEG)
+		(match-beginning 0))))
 
-    (while
-	(re-search-forward "[0-9a-fA-F]'[0-9a-fA-F]" c-new-END t)
-      (setq try-end (1- (point)))
-      (re-search-backward "[^0-9a-fA-F']" num-begin t)
-      (setq digit-re
-	    (cond
-	     ((and (not (bobp)) (eq (char-before) ?0) (memq (char-after) '(?x ?X)))
-	      "[0-9a-fA-F]")
-	     ((and (eq (char-after (1+ (point))) ?0)
-		   (memq (char-after (+ 2 (point))) '(?b ?B)))
-	      "[01]")
-	     ((memq (char-after (1+ (point))) '(?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9))
-	      "[0-9]")
-	     (t nil)))
-      (when digit-re
-	(cond ((eq (char-after) ?x) (forward-char))
-	      ((looking-at ".?0[Bb]") (goto-char (match-end 0)))
-	      ((looking-at digit-re))
-	      (t (forward-char)))
-	(when (not (c-in-literal))
-	  (let ((num-end	     ; End of valid sequence of digits/quotes.
-		 (save-excursion
-		   (re-search-forward
-		    (concat "\\=\\(" digit-re "+'\\)*" digit-re "+") nil t)
-		   (point))))
-	    (setq try-end		; End of sequence of digits/quotes
+    ;; Check for a number with quote separators straddling c-new-BEG
+    (when c-has-quoted-numbers
+      (goto-char c-new-BEG)
+      (when ;; (c-quoted-number-straddling-point)
+	  (c-quoted-number-head-before-point)
+	(setq c-new-BEG (match-beginning 0))))
+
+    ;; Do we have a ' (or something like ',',',',...,',') within range of
+    ;; c-new-END?
+    (goto-char c-new-END)
+    (setq p-limit (min (+ (point) 2) (point-max)))
+    (while (and (skip-chars-forward "^\\\\'" p-limit)
+		(< (point) p-limit))
+      (when (eq (char-after) ?\\)
+	(setq p-limit (min (1+ p-limit) (point-max))))
+      (forward-char)
+      (setq c-new-END (point)))
+    (if (looking-at "[^']?\\('\\([^'\\]\\|\\\\.\\)\\)*'")
+	(setq c-new-END (match-end 0)))
+
+    ;; Check for a number with quote separators straddling c-new-END.
+    (when c-has-quoted-numbers
+      (goto-char c-new-END)
+      (when ;; (c-quoted-number-straddling-point)
+	  (c-quoted-number-tail-after-point)
+	(setq c-new-END (match-end 0))))
+
+    ;; Remove the '(1) syntax-table property from all "'"s within (c-new-BEG
+    ;; c-new-END).
+    (c-clear-char-property-with-value-on-char
+     c-new-BEG c-new-END
+     'syntax-table '(1)
+     ?')
+    ;; Remove the c-digit-separator text property from the same "'"s.
+    (when c-has-quoted-numbers
+      (c-clear-char-property-with-value-on-char
+       c-new-BEG c-new-END
+       'c-digit-separator t
+       ?'))))
+
+(defun c-parse-quotes-after-change (beg end old-len)
+  ;; This function applies syntax-table properties (value '(1)) and
+  ;; c-digit-separator properties as needed to 's within the range (c-new-BEG
+  ;; c-new-END).  This operation is performed even within strings and
+  ;; comments.
+  ;;
+  ;; This function is called exclusively as an after-change function via the
+  ;; variable `c-before-font-lock-functions'.
+  (c-save-buffer-state (p-limit limits num-beg num-end clear-from-BEG-to)
+    ;; Apply the needed syntax-table and c-digit-separator text properties to
+    ;; quotes.
+    (goto-char c-new-BEG)
+    (while (and (< (point) c-new-END)
+		(search-forward "'" c-new-END 'limit))
+      (cond ((and (eq (char-before (1- (point))) ?\\)
+		  ;; Check we've got an odd number of \s, here.
 		  (save-excursion
-		    (re-search-forward
-		     (concat "\\=\\(" digit-re "\\|'\\)+") nil t)
-		    (point)))
-	    (while (re-search-forward
-		    (concat digit-re "\\('\\)" digit-re) num-end t)
-	      (if old-len	    ; i.e. are we in an after-change function?
-		  (c-put-char-property (match-beginning 1) 'syntax-table '(1))
-		(c-clear-char-property (match-beginning 1) 'syntax-table))
-	      (backward-char)))))
-      (goto-char try-end)
-      (setq num-begin (point)))))
-
-;; The following doesn't seem needed at the moment (2016-08-15).
-;; (defun c-before-after-change-extend-region-for-lambda-capture
-;;     (_beg _end &optional _old-len)
-;;   ;; In C++ Mode, extend the region (c-new-BEG c-new-END) to cover any lambda
-;;   ;; function capture lists we happen to be inside.  This function is expected
-;;   ;; to be called both as a before-change and after change function.
-;;   ;;
-;;   ;; Note that these things _might_ be nested, with a capture list looking
-;;   ;; like:
-;;   ;;
-;;   ;;     [ ...., &foo = [..](){...}(..), ... ]
-;;   ;;
-;;   ;; .  What a wonderful language is C++.  ;-)
-;;   (c-save-buffer-state (paren-state pos)
-;;     (goto-char c-new-BEG)
-;;     (setq paren-state (c-parse-state))
-;;     (while (setq pos (c-pull-open-brace paren-state))
-;;       (goto-char pos)
-;;       (when (c-looking-at-c++-lambda-capture-list)
-;; 	(setq c-new-BEG (min c-new-BEG pos))
-;; 	(if (c-go-list-forward)
-;; 	    (setq c-new-END (max c-new-END (point))))))
-
-;;     (goto-char c-new-END)
-;;     (setq paren-state (c-parse-state))
-;;     (while (setq pos (c-pull-open-brace paren-state))
-;;       (goto-char pos)
-;;       (when (c-looking-at-c++-lambda-capture-list)
-;; 	(setq c-new-BEG (min c-new-BEG pos))
-;; 	(if (c-go-list-forward)
-;; 	    (setq c-new-END (max c-new-END (point))))))))
+		    (backward-char)
+		    (eq (logand (skip-chars-backward "\\\\") 1) 1)))) ; not a real '.
+	    ((c-quoted-number-straddling-point)
+	     (setq num-beg (match-beginning 0)
+		   num-end (match-end 0))
+	     (c-put-char-properties-on-char num-beg num-end
+					    'syntax-table '(1) ?')
+	     (c-put-char-properties-on-char num-beg num-end
+					    'c-digit-separator t ?')
+	     (goto-char num-end))
+	    ((looking-at "\\([^\\']\\|\\\\.\\)'") ; balanced quoted expression.
+	     (goto-char (match-end 0)))
+	    (t (c-put-char-property (1- (point)) 'syntax-table '(1)))))))
 
 (defun c-before-change (beg end)
   ;; Function to be put on `before-change-functions'.  Primarily, this calls
