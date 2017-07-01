@@ -839,8 +839,15 @@ initialization files.
 ---
 ** 'auto-revert-use-notify' is set back to t in 'global-auto-revert-mode'.
 
+** JS mode
+
 ---
-** JS mode now sets 'comment-multi-line' to t.
+*** JS mode now sets 'comment-multi-line' to t.
+
+---
+*** New variable 'js-indent-align-list-continuation', when set to nil,
+will not align continuations of bracketed lists, but will indent them
+by the fixed width 'js-indent-level'.
 
 ** CSS mode
 
