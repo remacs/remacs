@@ -20783,7 +20783,14 @@ display_count_lines_visually (struct it *it)
       /* Need to disable visual mode temporarily, since otherwise the
 	 call to move_it_to will cause infinite recursion.  */
       specbind (Qdisplay_line_numbers, Qrelative);
-      move_it_to (&tem_it, to, -1, -1, -1, MOVE_TO_POS);
+      /* Some redisplay optimizations could invoke us very far from
+	 PT, which will make the caller painfully slow.  There should
+	 be no need to go too far beyond the window's bottom, as any
+	 such optimization will fail to show point anyway.  */
+      move_it_to (&tem_it, to, -1,
+		  tem_it.last_visible_y
+		  + (SCROLL_LIMIT + 10) * FRAME_LINE_HEIGHT (tem_it.f),
+		  -1, MOVE_TO_POS | MOVE_TO_Y);
       unbind_to (count, Qnil);
       return IT_CHARPOS (*it) <= PT ? -tem_it.vpos : tem_it.vpos;
     }
