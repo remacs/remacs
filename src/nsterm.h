@@ -1233,8 +1233,11 @@ extern void x_set_no_accept_focus (struct frame *f, Lisp_Object new_value,
 extern void x_set_z_group (struct frame *f, Lisp_Object new_value,
                            Lisp_Object old_value);
 extern int ns_select (int nfds, fd_set *readfds, fd_set *writefds,
-		      fd_set *exceptfds, struct timespec const *timeout,
-		      sigset_t const *sigmask);
+		      fd_set *exceptfds, struct timespec *timeout,
+		      sigset_t *sigmask);
+#ifdef HAVE_PTHREAD
+extern void ns_run_loop_break (void);
+#endif
 extern unsigned long ns_get_rgb_color (struct frame *f,
                                        float r, float g, float b, float a);
 

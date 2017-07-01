@@ -4068,7 +4068,7 @@ ns_send_appdefined (int value)
       app->nextappdefined = value;
       [app performSelectorOnMainThread:@selector (sendFromMainThread:)
                             withObject:nil
-                         waitUntilDone:YES];
+                         waitUntilDone:NO];
       return;
     }
 
@@ -4293,8 +4293,8 @@ ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
 
 int
 ns_select (int nfds, fd_set *readfds, fd_set *writefds,
-	   fd_set *exceptfds, struct timespec const *timeout,
-	   sigset_t const *sigmask)
+	   fd_set *exceptfds, struct timespec *timeout,
+	   sigset_t *sigmask)
 /* --------------------------------------------------------------------------
      Replacement for select, checking for events
    -------------------------------------------------------------------------- */
@@ -4327,7 +4327,13 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
   if (NSApp == nil
       || ![NSThread isMainThread]
       || (timeout && timeout->tv_sec == 0 && timeout->tv_nsec == 0))
-    return pselect (nfds, readfds, writefds, exceptfds, timeout, sigmask);
+    return thread_select(pselect, nfds, readfds, writefds,
+                         exceptfds, timeout, sigmask);
+  else
+    {
+      struct timespec t = {0, 0};
+      thread_select(pselect, 0, NULL, NULL, NULL, &t, sigmask);
+    }
 
   [outerpool release];
   outerpool = [[NSAutoreleasePool alloc] init];
@@ -4430,6 +4436,18 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
   return result;
 }
 
+#ifdef HAVE_PTHREAD
+void
+ns_run_loop_break ()
+/* Break out of the NS run loop in ns_select or ns_read_socket. */
+{
+  NSTRACE_WHEN (NSTRACE_GROUP_EVENTS, "ns_run_loop_break");
+
+  /* If we don't have a GUI, don't send the event. */
+  if (NSApp != NULL)
+    ns_send_appdefined(-1);
+}
+#endif
 
 
 /* ==========================================================================
