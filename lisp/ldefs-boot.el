@@ -4952,7 +4952,7 @@ call other entry points instead, such as `cl-prin1'.
 
 \(fn OBJECT)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "cl-print" '("cl-print-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "cl-print" '("cl-print-" "help-byte-code")))
 
 ;;;***
 
@@ -16541,18 +16541,6 @@ The optional LABEL is used to label the buffer created.
 (defalias 'holiday-list 'list-holidays)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "holidays" '("holiday-" "calendar-")))
-
-;;;***
-
-;;;### (autoloads nil "html2text" "net/html2text.el" (0 0 0 0))
-;;; Generated autoloads from net/html2text.el
-
-(autoload 'html2text "html2text" "\
-Convert HTML to plain text in the current buffer.
-
-\(fn)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "html2text" '("html2text-")))
 
 ;;;***
 
@@ -30399,7 +30387,7 @@ then `snmpv2-mode-hook'.
 
 ;;;### (autoloads nil "soap-client" "net/soap-client.el" (0 0 0 0))
 ;;; Generated autoloads from net/soap-client.el
-(push (purecopy '(soap-client 3 1 2)) package--builtin-versions)
+(push (purecopy '(soap-client 3 1 3)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "soap-client" '("soap-")))
 
@@ -34165,7 +34153,7 @@ Reenable Ange-FTP, when Tramp is unloaded.
 
 ;;;### (autoloads nil "trampver" "net/trampver.el" (0 0 0 0))
 ;;; Generated autoloads from net/trampver.el
-(push (purecopy '(tramp 2 3 2 -1)) package--builtin-versions)
+(push (purecopy '(tramp 2 3 2)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "trampver" '("tramp-")))
 
