@@ -80,7 +80,7 @@ enum emacs_funcall_exit
   emacs_funcall_exit_signal = 1,
 
   /* Function has exit using `throw'.  */
-  emacs_funcall_exit_throw = 2,
+  emacs_funcall_exit_throw = 2
 };
 
 struct emacs_env_25
