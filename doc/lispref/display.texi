@@ -7362,7 +7362,11 @@ follows the Unicode Bidirectional Algorithm (a.k.a.@: @acronym{UBA}),
 which is described in Annex #9 of the Unicode standard
 (@url{http://www.unicode.org/reports/tr9/}).  Emacs provides a ``Full
 Bidirectionality'' class implementation of the @acronym{UBA},
-consistent with the requirements of the Unicode Standard v8.0.
+consistent with the requirements of the Unicode Standard v9.0.  Note,
+however, that the way Emacs displays continuation lines when text
+direction is opposite to the base paragraph direction deviates from
+the UBA, which requires to perform line wrapping before reordering
+text for display.
 
 @defvar bidi-display-reordering
 If the value of this buffer-local variable is non-@code{nil} (the
