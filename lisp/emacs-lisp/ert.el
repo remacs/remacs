@@ -1468,7 +1468,7 @@ this exits Emacs, with status as per `ert-run-tests-batch-and-exit'."
     (with-temp-buffer
       (while (setq logfile (pop command-line-args-left))
         (erase-buffer)
-        (insert-file-contents logfile)
+        (when (file-readable-p logfile) (insert-file-contents logfile))
         (if (not (re-search-forward "^Running \\([0-9]+\\) tests" nil t))
             (push logfile notests)
           (setq ntests (+ ntests (string-to-number (match-string 1))))
