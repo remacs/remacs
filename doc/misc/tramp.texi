@@ -72,21 +72,21 @@ local and the remote host, whereas @value{tramp} uses a combination of
 @command{ssh}/@command{scp}.
 
 You can find the latest version of this document on the web at
-@uref{http://www.gnu.org/software/tramp/}.
+@uref{https://www.gnu.org/software/tramp/}.
 
 @ifhtml
 The latest release of @value{tramp} is available for
-@uref{ftp://ftp.gnu.org/gnu/tramp/, download}, or you may see
+@uref{https://ftp.gnu.org/gnu/tramp/, download}, or you may see
 @ref{Obtaining Tramp} for more details, including the Git server
 details.
 
-@value{tramp} also has a @uref{http://savannah.gnu.org/projects/tramp/,
+@value{tramp} also has a @uref{https://savannah.gnu.org/projects/tramp/,
 Savannah Project Page}.
 @end ifhtml
 
 There is a mailing list for @value{tramp}, available at
 @email{tramp-devel@@gnu.org}, and archived at
-@uref{http://lists.gnu.org/archive/html/tramp-devel/, the
+@uref{https://lists.gnu.org/archive/html/tramp-devel/, the
 @value{tramp} Mail Archive}.
 
 @page
@@ -321,7 +321,7 @@ behind the scenes when you open a file with @value{tramp}.
 @value{tramp} is included as part of Emacs (since Emacs version 22.1).
 
 @value{tramp} is also freely packaged for download on the Internet at
-@uref{ftp://ftp.gnu.org/gnu/tramp/}.
+@uref{https://ftp.gnu.org/gnu/tramp/}.
 
 @value{tramp} development versions are available on Git servers.
 Development versions contain new and incomplete features.
@@ -331,7 +331,7 @@ page at the following URL and then clicking on the Git link in the
 navigation bar at the top.
 
 @noindent
-@uref{http://savannah.gnu.org/projects/tramp/}
+@uref{https://savannah.gnu.org/projects/tramp/}
 
 @noindent
 Another way is to follow the terminal session below:
@@ -349,7 +349,7 @@ From behind a firewall:
 @example
 @group
 ] @strong{git config --global http.proxy http://user:pwd@@proxy.server.com:8080}
-] @strong{git clone http://git.savannah.gnu.org/r/tramp.git}
+] @strong{git clone https://git.savannah.gnu.org/r/tramp.git}
 @end group
 @end example
 
@@ -917,7 +917,7 @@ numbers are not applicable to Android devices connected through USB@.
 @cindex dbus
 
 GVFS is the virtual file system for the Gnome Desktop,
-@uref{http://en.wikipedia.org/wiki/GVFS}.  Remote files on GVFS are
+@uref{https://en.wikipedia.org/wiki/GVFS}.  Remote files on GVFS are
 mounted locally through FUSE and @value{tramp} uses this locally
 mounted directory internally.
 
@@ -2089,7 +2089,7 @@ Pseudo-terminal will not be allocated because stdin is not a terminal.
 
 Some older versions of Cygwin's @command{ssh} work with the
 @option{sshx} access method.  Consult Cygwin's FAQ at
-@uref{http://cygwin.com/faq/} for details.
+@uref{https://cygwin.com/faq/} for details.
 
 @cindex Cygwin and fakecygpty
 @cindex fakecygpty and Cygwin
@@ -2803,7 +2803,7 @@ this address go to all the subscribers.  This is @emph{not} the
 address to send subscription requests to.
 
 To subscribe to the mailing list, visit:
-@uref{http://lists.gnu.org/mailman/listinfo/tramp-devel/, the
+@uref{https://lists.gnu.org/mailman/listinfo/tramp-devel/, the
 @value{tramp} Mail Subscription Page}.
 
 @ifset installchapter
@@ -2855,13 +2855,13 @@ Where is the latest @value{tramp}?
 @value{tramp} is available at the GNU URL:
 
 @noindent
-@uref{ftp://ftp.gnu.org/gnu/tramp/}
+@uref{https://ftp.gnu.org/gnu/tramp/}
 
 @noindent
 @value{tramp}'s GNU project page is located here:
 
 @noindent
-@uref{http://savannah.gnu.org/projects/tramp/}
+@uref{https://savannah.gnu.org/projects/tramp/}
 
 
 @item
