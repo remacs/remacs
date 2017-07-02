@@ -776,8 +776,6 @@ If ANY-SYMBOL is non-nil, don't insist the symbol be bound."
 			    version package))))))
     output))
 
-(defvar cl-print-compiled-button)
-
 ;;;###autoload
 (defun describe-variable (variable &optional buffer frame)
   "Display the full documentation of VARIABLE (a symbol).
@@ -858,8 +856,7 @@ it is displayed along with the global value."
 		      (print-rep
 		       (let ((rep
 			      (let ((print-quoted t)
-                                    (print-circle t)
-                                    (cl-print-compiled-button t))
+                                    (print-circle t))
 				(cl-prin1-to-string val))))
 			 (if (and (symbolp val) (not (booleanp val)))
 			     (format-message "`%s'" rep)

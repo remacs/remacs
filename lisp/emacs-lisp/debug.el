@@ -271,13 +271,10 @@ first will be printed into the backtrace buffer."
       debugger-value)))
 
 
-(defvar cl-print-compiled-button)
-
 (defun debugger-insert-backtrace (frames do-xrefs)
   "Format and insert the backtrace FRAMES at point.
 Make functions into cross-reference buttons if DO-XREFS is non-nil."
   (let ((standard-output (current-buffer))
-        (cl-print-compiled-button t)
         (eval-buffers eval-buffer-list))
     (require 'help-mode)     ; Define `help-function-def' button type.
     (pcase-dolist (`(,evald ,fun ,args ,flags) frames)

@@ -90,7 +90,7 @@ call other entry points instead, such as `cl-prin1'."
 - `disassemble' to print the disassembly of the code.
 - nil to skip printing any details about the code.")
 
-(defvar cl-print-compiled-button nil
+(defvar cl-print-compiled-button t
   "Control how to print byte-compiled functions into buffers.
 When the stream is a buffer, make the bytecode part of the output
 into a button whose action shows the function's disassembly.")
