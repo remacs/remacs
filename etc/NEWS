@@ -483,6 +483,10 @@ properties as intact as possible.
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
+** Dired
+You can now use '`?`' in 'dired-do-shell-command'; as ' ? ', it gets replaced
+by the current file name.
+
 *** html2text is now marked obsolete.
 
 *** smerge-refine-regions can refine regions in separate buffers

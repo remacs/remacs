@@ -51,6 +51,33 @@ into this list; they also should call `dired-log' to log the errors.")
 
 (defconst dired-star-subst-regexp "\\(^\\|[ \t]\\)\\*\\([ \t]\\|$\\)")
 (defconst dired-quark-subst-regexp "\\(^\\|[ \t]\\)\\?\\([ \t]\\|$\\)")
+(make-obsolete-variable 'dired-star-subst-regexp nil "26.1")
+(make-obsolete-variable 'dired-quark-subst-regexp nil "26.1")
+
+(defun dired-isolated-string-re (string)
+  "Return a regexp to match STRING isolated.
+Isolated means that STRING is surrounded by spaces or at the beginning/end
+of a string followed/prefixed with an space.
+The regexp capture the preceding blank, STRING and the following blank as
+the groups 1, 2 and 3 respectively."
+  (format "\\(\\`\\|[ \t]\\)\\(%s\\)\\([ \t]\\|\\'\\)" string))
+
+(defun dired--star-or-qmark-p (string match &optional keep)
+  "Return non-nil if STRING contains isolated MATCH or `\\=`?\\=`'.
+MATCH should be the strings \"?\", `\\=`?\\=`', \"*\" or nil.  The latter
+means STRING contains either \"?\" or `\\=`?\\=`' or \"*\".
+If optional arg KEEP is non-nil, then preserve the match data.  Otherwise,
+this function changes it and saves MATCH as the second match group.
+
+Isolated means that MATCH is surrounded by spaces or at the beginning/end
+of STRING followed/prefixed with an space.  A match to `\\=`?\\=`',
+isolated or not, is also valid."
+  (let ((regexps (list (dired-isolated-string-re (if match (regexp-quote match) "[*?]")))))
+    (when (or (null match) (equal match "?"))
+      (setq regexps (append (list "\\(\\)\\(`\\?`\\)\\(\\)") regexps)))
+    (cl-some (lambda (x)
+               (funcall (if keep #'string-match-p #'string-match) x string))
+             regexps)))
 
 ;;;###autoload
 (defun dired-diff (file &optional switches)
@@ -658,13 +685,13 @@ If there is a `*' in COMMAND, surrounded by whitespace, this runs
 COMMAND just once with the entire file list substituted there.
 
 If there is no `*', but there is a `?' in COMMAND, surrounded by
-whitespace, this runs COMMAND on each file individually with the
-file name substituted for `?'.
+whitespace, or a `\\=`?\\=`' this runs COMMAND on each file
+individually with the file name substituted for `?' or `\\=`?\\=`'.
 
 Otherwise, this runs COMMAND on each file individually with the
 file name added at the end of COMMAND (separated by a space).
 
-`*' and `?' when not surrounded by whitespace have no special
+`*' and `?' when not surrounded by whitespace nor `\\=`' have no special
 significance for `dired-do-shell-command', and are passed through
 normally to the shell, but you must confirm first.
 
@@ -704,8 +731,8 @@ can be produced by `dired-get-marked-files', for example."
       (dired-read-shell-command "! on %s: " current-prefix-arg files)
       current-prefix-arg
       files)))
-  (let* ((on-each (not (string-match-p dired-star-subst-regexp command)))
-	 (no-subst (not (string-match-p dired-quark-subst-regexp command)))
+  (let* ((on-each (not (dired--star-or-qmark-p command "*" 'keep)))
+	 (no-subst (not (dired--star-or-qmark-p command "?" 'keep)))
 	 (star (string-match-p "\\*" command))
 	 (qmark (string-match-p "\\?" command))
          ;; Get confirmation for wildcards that may have been meant
@@ -768,12 +795,10 @@ can be produced by `dired-get-marked-files', for example."
                       ";"
                     "&"))
 	 (stuff-it
-	  (if (or (string-match-p dired-star-subst-regexp command)
-		  (string-match-p dired-quark-subst-regexp command))
+	  (if (dired--star-or-qmark-p command nil 'keep)
 	      (lambda (x)
 		(let ((retval (concat cmd-prefix command)))
-		  (while (string-match
-			  "\\(^\\|[ \t]\\)\\([*?]\\)\\([ \t]\\|$\\)" retval)
+		  (while (dired--star-or-qmark-p retval nil)
 		    (setq retval (replace-match x t t retval 2)))
 		  retval))
 	    (lambda (x) (concat cmd-prefix command dired-mark-separator x)))))
