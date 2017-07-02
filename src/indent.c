@@ -2068,9 +2068,26 @@ whether or not it is currently displayed in some window.  */)
 	  start_x = window_column_x (w, window, start_col, cur_col);
 	}
 
-      itdata = bidi_shelve_cache ();
+      /* When displaying line numbers, we need to prime IT's
+	 lnum_width with the value calculated at window's start, since
+	 that's what normal window redisplay does.  Otherwise C-n/C-p
+	 will sometimes err by one column.  */
+      int lnum_width = 0;
+      if (!NILP (Vdisplay_line_numbers)
+	  && !EQ (Vdisplay_line_numbers, Qvisual))
+	{
+	  struct text_pos wstart;
+	  SET_TEXT_POS_FROM_MARKER (wstart, w->start);
+	  itdata = bidi_shelve_cache ();
+	  start_display (&it, w, wstart);
+	  move_it_by_lines (&it, 1);
+	  lnum_width = it.lnum_width;
+	  bidi_unshelve_cache (itdata, 0);
+	}
       SET_TEXT_POS (pt, PT, PT_BYTE);
+      itdata = bidi_shelve_cache ();
       start_display (&it, w, pt);
+      it.lnum_width = lnum_width;
       first_x = it.first_visible_x;
       it_start = IT_CHARPOS (it);
 
