@@ -482,11 +482,7 @@ This requotes when a quoting key is typed."
                           (eq beg (nth 8 (save-excursion
                                            (syntax-ppss (1- (point)))))))))
                (and electric-quote-paragraph
-                    (derived-mode-p 'text-mode)
-                    ;; FIXME: Why is the next form there?  It’s never
-                    ;; nil.
-                    (or (eq last-command-event ?\`)
-                        (save-excursion (backward-paragraph) (point))))))
+                    (derived-mode-p 'text-mode))))
     (pcase electric-quote-chars
       (`(,q< ,q> ,q<< ,q>>)
        (save-excursion
