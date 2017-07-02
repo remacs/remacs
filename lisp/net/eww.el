@@ -312,11 +312,19 @@ word(s) will be searched for via `eww-search-prefix'."
 	       (expand-file-name file))))
 
 ;;;###autoload
-(defun eww-search-words (&optional beg end)
+(defun eww-search-words ()
   "Search the web for the text between BEG and END.
-See the `eww-search-prefix' variable for the search engine used."
-  (interactive "r")
-  (eww (buffer-substring beg end)))
+If region is active (and not whitespace), search the web for
+the text between BEG and END.  Else, prompt the user for a search
+string.  See the `eww-search-prefix' variable for the search
+engine used."
+  (interactive)
+  (if (use-region-p)
+      (let ((region-string (buffer-substring (region-beginning) (region-end))))
+        (if (not (string-match-p "\\`[ \n\t\r\v\f]*\\'" region-string))
+            (eww region-string)
+          (call-interactively 'eww)))
+    (call-interactively 'eww)))
 
 (defun eww-open-in-new-buffer ()
   "Fetch link at point in a new EWW buffer."
