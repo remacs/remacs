@@ -1113,18 +1113,22 @@ Note that the style variables are always made local to the buffer."
 (defun c-quoted-number-head-before-point ()
   ;; Return non-nil when the head of a possibly quoted number is found
   ;; immediately before point.  The value returned in this case is the buffer
-  ;; position of the start of the head.
+  ;; position of the start of the head.  That position is also in
+  ;; (match-beginning 0).
   (when c-has-quoted-numbers
     (save-excursion
       (let ((here (point))
-	    )
+	    found)
 	(skip-chars-backward "0-9a-fA-F'")
 	(if (and (memq (char-before) '(?x ?X))
 		 (eq (char-before (1- (point))) ?0))
 	    (backward-char 2))
-	(while (and (search-forward-regexp c-maybe-quoted-number-head here t)
-		    (< (match-end 0) here)))
-	(and (eq (match-end 0) here) (match-beginning 0))))))
+	(while
+	    (and
+	     (setq found
+		   (search-forward-regexp c-maybe-quoted-number-head here t))
+	     (< found here)))
+	(and (eq found here) (match-beginning 0))))))
 
 (defconst c-maybe-quoted-number-tail
   (concat
@@ -1141,7 +1145,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 (defun c-quoted-number-tail-after-point ()
   ;; Return non-nil when a proper tail of a possibly quoted number is found
   ;; immediately after point.  The value returned in this case is the buffer
-  ;; position of the end of the tail.
+  ;; position of the end of the tail.  That position is also in (match-end 0).
   (when c-has-quoted-numbers
     (and (looking-at c-maybe-quoted-number-tail)
 	 (match-end 0))))
