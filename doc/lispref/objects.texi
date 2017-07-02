@@ -283,11 +283,11 @@ character @kbd{a}.
 ?Q @result{} 81     ?q @result{} 113
 @end example
 
-  You can use the same syntax for punctuation characters, but it is
-often a good idea to add a @samp{\} so that the Emacs commands for
-editing Lisp code don't get confused.  For example, @samp{?\(} is the
-way to write the open-paren character.  If the character is @samp{\},
-you @emph{must} use a second @samp{\} to quote it: @samp{?\\}.
+  You can use the same syntax for punctuation characters.  However, if
+the punctuation character has a special syntactic meaning in Lisp, you
+must quote it with a @samp{\}.  For example, @samp{?\(} is the way to
+write the open-paren character.  Likewise, if the character is
+@samp{\}, you must use a second @samp{\} to quote it: @samp{?\\}.
 
 @cindex whitespace
 @cindex bell character
@@ -336,18 +336,19 @@ escape character; this has nothing to do with the
 character @key{ESC}.  @samp{\s} is meant for use in character
 constants; in string constants, just write the space.
 
-  A backslash is allowed, and harmless, preceding any character without
-a special escape meaning; thus, @samp{?\+} is equivalent to @samp{?+}.
-There is no reason to add a backslash before most characters.  However,
-you should add a backslash before any of the characters
-@samp{()\|;'`"#.,} to avoid confusing the Emacs commands for editing
-Lisp code.  You can also add a backslash before whitespace characters such as
-space, tab, newline and formfeed.  However, it is cleaner to use one of
-the easily readable escape sequences, such as @samp{\t} or @samp{\s},
-instead of an actual whitespace character such as a tab or a space.
-(If you do write backslash followed by a space, you should write
-an extra space after the character constant to separate it from the
-following text.)
+  A backslash is allowed, and harmless, preceding any character
+without a special escape meaning; thus, @samp{?\+} is equivalent to
+@samp{?+}.  There is no reason to add a backslash before most
+characters.  However, you must add a backslash before any of the
+characters @samp{()[]\;"}, and you should add a backslash before any
+of the characters @samp{|'`#.,} to avoid confusing the Emacs commands
+for editing Lisp code.  You can also add a backslash before whitespace
+characters such as space, tab, newline and formfeed.  However, it is
+cleaner to use one of the easily readable escape sequences, such as
+@samp{\t} or @samp{\s}, instead of an actual whitespace character such
+as a tab or a space.  (If you do write backslash followed by a space,
+you should write an extra space after the character constant to
+separate it from the following text.)
 
 @node General Escape Syntax
 @subsubsection General Escape Syntax
