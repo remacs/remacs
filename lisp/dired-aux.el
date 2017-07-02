@@ -731,18 +731,27 @@ can be produced by `dired-get-marked-files', for example."
       (dired-read-shell-command "! on %s: " current-prefix-arg files)
       current-prefix-arg
       files)))
+  (cl-flet ((need-confirm-p
+             (cmd str)
+             (let ((res cmd)
+                   (regexp (regexp-quote str)))
+               ;; Drop all ? and * surrounded by spaces and `?`.
+               (while (and (string-match regexp res)
+                           (dired--star-or-qmark-p res str))
+                 (setq res (replace-match "" t t res 0)))
+               (string-match regexp res))))
   (let* ((on-each (not (dired--star-or-qmark-p command "*" 'keep)))
 	 (no-subst (not (dired--star-or-qmark-p command "?" 'keep)))
-	 (star (string-match-p "\\*" command))
-	 (qmark (string-match-p "\\?" command))
+	 (star (string-match "\\*" command))
+	 (qmark (string-match "\\?" command))
          ;; Get confirmation for wildcards that may have been meant
          ;; to control substitution of a file name or the file name list.
          (ok (cond ((not (or on-each no-subst))
 	            (error "You can not combine `*' and `?' substitution marks"))
-	           ((and star on-each)
+	           ((need-confirm-p command "*")
 	            (y-or-n-p (format-message
 			       "Confirm--do you mean to use `*' as a wildcard? ")))
-	           ((and qmark no-subst)
+	           ((need-confirm-p command "?")
 	            (y-or-n-p (format-message
 			       "Confirm--do you mean to use `?' as a wildcard? ")))
 	           (t))))
@@ -755,7 +764,7 @@ can be produced by `dired-get-marked-files', for example."
 	                     nil file-list)
 	;; execute the shell command
 	(dired-run-shell-command
-	 (dired-shell-stuff-it command file-list nil arg))))))
+	 (dired-shell-stuff-it command file-list nil arg)))))))
 
 ;; Might use {,} for bash or csh:
 (defvar dired-mark-prefix ""
