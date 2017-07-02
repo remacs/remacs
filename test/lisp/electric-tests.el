@@ -694,6 +694,8 @@ baz\"\""
   :bindings '((electric-quote-context-sensitive . t))
   :test-in-comments nil :test-in-strings nil)
 
+;; Simulate ‘markdown-mode’: it sets both ‘comment-start’ and
+;; ‘comment-use-syntax’, but derives from ‘text-mode’.
 (define-electric-pair-test electric-quote-markdown-in-text
   "" "'" :expected-string "’" :expected-point 2
   :modes '(text-mode)
@@ -703,6 +705,7 @@ baz\"\""
                           (lambda ()
                             (save-excursion (search-backward "`" nil t)))
                           nil :local))
+  :bindings '((comment-start . "<!--") (comment-use-syntax . t))
   :test-in-comments nil :test-in-strings nil)
 
 (define-electric-pair-test electric-quote-markdown-in-code
@@ -714,6 +717,7 @@ baz\"\""
                           (lambda ()
                             (save-excursion (search-backward "`" nil t)))
                           nil :local))
+  :bindings '((comment-start . "<!--") (comment-use-syntax . t))
   :test-in-comments nil :test-in-strings nil)
 
 (provide 'electric-tests)
