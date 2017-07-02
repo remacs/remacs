@@ -3700,7 +3700,11 @@ process sentinels.  They shall not disturb each other."
 	 ;; Suppress nasty messages.
 	 (inhibit-message t)
 	 (number-proc 10)
-	 (timer-repeat 1)
+	 ;; On hydra, timings are bad.
+	 (timer-repeat
+          (cond
+           ((getenv "NIX_STORE") 10
+            (t 1))))
 	 ;; We must distinguish due to performance reasons.
 	 (timer-operation
 	  (cond
@@ -3725,10 +3729,13 @@ process sentinels.  They shall not disturb each other."
 		(let ((default-directory tmp-name)
                       (file
 		       (buffer-name (nth (random (length buffers)) buffers))))
-                  (tramp--test-message "Start timer %s %s" timer-operation file)
+                  (tramp--test-message
+                   "Start timer %s %s %s"
+                   timer-operation file (current-time-string))
 		  (funcall timer-operation file)
                   (tramp--test-message
-                   "Stop timer %s %s" timer-operation file))))))
+                   "Stop timer %s %s %s"
+                   timer-operation file (current-time-string)))))))
 
 	  ;; Create temporary buffers.  The number of buffers
 	  ;; corresponds to the number of processes; it could be
