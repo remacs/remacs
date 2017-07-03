@@ -53,6 +53,13 @@
 	 (tramp-remote-shell         "/bin/sh")
 	 (tramp-remote-shell-args    ("-c"))
 	 (tramp-connection-timeout   10)))
+      (add-to-list
+       'tramp-default-host-alist
+       `("\\`mock\\'" nil ,(system-name)))
+      ;; Emacs' Makefile sets $HOME to a nonexistent value.  Needed in
+      ;; batch mode only, therefore.
+      (unless (and (null noninteractive) (file-directory-p "~/"))
+        (setenv "HOME" temporary-file-directory))
       (format "/mock::%s" temporary-file-directory)))
   "Temporary directory for Tramp tests.")
 
@@ -1313,8 +1320,8 @@ the file watch."
     ;; Cleanup.
     (file-notify--test-cleanup)))
 
-(file-notify--deftest-remote file-notify-test09-watched-file-in-watched-dir
-  "Check `file-notify-test09-watched-file-in-watched-dir' for remote files.")
+;(file-notify--deftest-remote file-notify-test09-watched-file-in-watched-dir
+;  "Check `file-notify-test09-watched-file-in-watched-dir' for remote files.")
 
 (ert-deftest file-notify-test10-sufficient-resources ()
   "Check that file notification does not use too many resources."
