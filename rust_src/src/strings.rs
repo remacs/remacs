@@ -202,18 +202,10 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
     }
 }
 
-fn get_string_or_symbol(mut string: LispObject) -> multibyte::LispStringRef {
-    if string.is_symbol() {
-        string = string.as_symbol_or_error().symbol_name()
-    }
-
-    string.as_string_or_error()
-}
-
 #[lisp_fn]
 fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
-    let lispstr1 = get_string_or_symbol(string1);
-    let lispstr2 = get_string_or_symbol(string2);
+    let lispstr1 = LispObject::as_string_or_symbol(string1);
+    let lispstr2 = LispObject::as_string_or_symbol(string2);
 
     let zip = lispstr1.iter().zip(lispstr2.iter());
     for ((codept1, _), (codept2, _)) in zip {

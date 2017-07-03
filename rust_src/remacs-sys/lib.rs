@@ -665,9 +665,28 @@ pub struct Lisp_String {
     pub data: *mut libc::c_char,
 }
 
-// @TODO
+#[repr(C)]
+pub union SymbolUnion {
+    pub value: Lisp_Object,
+    pub alias: *mut Lisp_Symbol,
+    pub blv: *mut libc::c_void, // @TODO implement Lisp_Buffer_Local_Value
+    pub fwd: *mut libc::c_void, // @TODO implement Lisp_Fwd
+}
+
+/// This struct has 4 bytes of padding, representing the bitfield that 
+/// lives at the top of a Lisp_Symbol. The first 10 bits of this field are
+/// used
+
+// @TODO check the value of name post and pre transmutation, it seems that name is surviving but
+// may not be the correct value
 #[repr(C)]
 pub struct Lisp_Symbol {
+    pub symbol_bitfield: u32,
+    pub name: Lisp_Object,
+    pub val: SymbolUnion,
+    pub function: Lisp_Object,
+    pub plist: Lisp_Object,
+    pub next: *mut Lisp_Symbol,
 }
 
 extern "C" {

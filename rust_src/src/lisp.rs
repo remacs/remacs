@@ -174,6 +174,14 @@ impl LispObject {
             unsafe { wrong_type_argument(Qsymbolp, self.to_raw()) }
         }
     }
+
+    #[inline]
+    pub fn as_string_or_symbol(string: LispObject) -> LispStringRef {
+        match string.as_symbol() {
+            Some(sym) => sym.symbol_name().as_string().expect("Expected a symbol name?"),
+            None => string.as_string_or_error()
+        }
+    }
 }
 
 // Misc support (LispType == Lisp_Misc == 1)

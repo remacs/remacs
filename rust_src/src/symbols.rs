@@ -6,7 +6,7 @@ pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
 impl LispSymbolRef {
     pub fn symbol_name(&self) -> LispObject {
-        LispObject::from_bool(false) // @TODO
+        LispObject::from_raw(self.name)
     }
 }
 
