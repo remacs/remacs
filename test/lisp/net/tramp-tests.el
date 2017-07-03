@@ -3689,130 +3689,120 @@ process sentinels.  They shall not disturb each other."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 
-  ;; This test times out on hydra.
+  ;; This test could be blocked on hydra.
   (with-timeout
       (300 (ert-fail "`tramp-test36-asynchronous-requests' timed out"))
-  (let* ((tmp-name (tramp--test-make-temp-name))
-	 (default-directory tmp-name)
-	 ;; Do not cache Tramp properties.
-	 (remote-file-name-inhibit-cache t)
-	 (process-file-side-effects t)
-	 ;; Suppress nasty messages.
-	 (inhibit-message t)
-	 (number-proc 10)
-	 ;; On hydra, timings are bad.
-	 (timer-repeat
-          (cond
-           ((getenv "NIX_STORE") 10)
-           (t 1)))
-	 ;; We must distinguish due to performance reasons.
-	 (timer-operation
-	  (cond
-	   ((string-equal "mock" (file-remote-p tmp-name 'method))
-	    'vc-registered)
-	   (t 'file-attributes)))
-	 timer buffers kill-buffer-query-functions)
+    (let* ((tmp-name (tramp--test-make-temp-name))
+           (default-directory tmp-name)
+           ;; Do not cache Tramp properties.
+           (remote-file-name-inhibit-cache t)
+           (process-file-side-effects t)
+           ;; Suppress nasty messages.
+           (inhibit-message t)
+           (number-proc 10)
+           ;; On hydra, timings are bad.
+           (timer-repeat
+            (cond
+             ((getenv "NIX_STORE") 10)
+             (t 1)))
+           ;; We must distinguish due to performance reasons.
+           (timer-operation
+            (cond
+             ((string-equal "mock" (file-remote-p tmp-name 'method))
+              'vc-registered)
+             (t 'file-attributes)))
+           timer buffers kill-buffer-query-functions)
 
-    (unwind-protect
-	(progn
-	  (make-directory tmp-name)
+      (unwind-protect
+          (progn
+            (make-directory tmp-name)
 
-	  ;; Setup a timer in order to raise an ordinary command again
-	  ;; and again.  `vc-registered' is well suited, because there
-	  ;; are many checks.
-	  (setq
-	   timer
-	   (run-at-time
-	    0 timer-repeat
-	    (lambda ()
-	      (when buffers
-		(let ((default-directory tmp-name)
-                      (file
-		       (buffer-name (nth (random (length buffers)) buffers))))
-                  (tramp--test-message
-                   "Start timer %s %s %s"
-                   timer-operation file (current-time-string))
-		  (funcall timer-operation file)
-                  (tramp--test-message
-                   "Stop timer %s %s %s"
-                   timer-operation file (current-time-string)))))))
+            ;; Setup a timer in order to raise an ordinary command
+            ;; again and again.  `vc-registered' is well suited,
+            ;; because there are many checks.
+            (setq
+             timer
+             (run-at-time
+              0 timer-repeat
+              (lambda ()
+                (when buffers
+                  (let ((default-directory tmp-name)
+                        (file
+                         (buffer-name (nth (random (length buffers)) buffers))))
+                    (funcall timer-operation file))))))
 
-	  ;; Create temporary buffers.  The number of buffers
-	  ;; corresponds to the number of processes; it could be
-	  ;; increased in order to make pressure on Tramp.
-	  (dotimes (_i number-proc)
-	    (add-to-list 'buffers (generate-new-buffer "foo")))
+            ;; Create temporary buffers.  The number of buffers
+            ;; corresponds to the number of processes; it could be
+            ;; increased in order to make pressure on Tramp.
+            (dotimes (_i number-proc)
+              (add-to-list 'buffers (generate-new-buffer "foo")))
 
-	  ;; Open asynchronous processes.  Set process sentinel.
-	  (dolist (buf buffers)
-            (tramp--test-message "Start process %s" buf)
-	    (let ((proc
-		   (start-file-process-shell-command
-		    (buffer-name buf) buf
-		    (concat
-		     "(read line && echo $line >$line);"
-		     "(read line && cat $line);"
-		     "(read line && rm $line)")))
-		  (file (expand-file-name (buffer-name buf))))
-	      ;; Remember the file name.  Add counter.
-	      (process-put proc 'foo file)
-	      (process-put proc 'bar 0)
-	      ;; Add process filter.
-	      (set-process-filter
-	       proc
-	       (lambda (proc string)
-                 (tramp--test-message "Process filter %s" proc)
-		 (with-current-buffer (process-buffer proc)
-		   (insert string))
-		 (unless (zerop (length string))
-		   (should (file-attributes (process-get proc 'foo))))))
-	      ;; Add process sentinel.
-	      (set-process-sentinel
-	       proc
-	       (lambda (proc _state)
-                 (tramp--test-message "Process sentinel %s" proc)
-		 (should-not (file-attributes (process-get proc 'foo)))))))
+            ;; Open asynchronous processes.  Set process filter and sentinel.
+            (dolist (buf buffers)
+              (let ((proc
+                     (start-file-process-shell-command
+                      (buffer-name buf) buf
+                      (concat
+                       "(read line && echo $line >$line);"
+                       "(read line && cat $line);"
+                       "(read line && rm $line)")))
+                    (file (expand-file-name (buffer-name buf))))
+                ;; Remember the file name.  Add counter.
+                (process-put proc 'foo file)
+                (process-put proc 'bar 0)
+                ;; Add process filter.
+                (set-process-filter
+                 proc
+                 (lambda (proc string)
+                   (with-current-buffer (process-buffer proc)
+                     (insert string))
+                   (unless (zerop (length string))
+                     (should (file-attributes (process-get proc 'foo))))))
+                ;; Add process sentinel.
+                (set-process-sentinel
+                 proc
+                 (lambda (proc _state)
+                   (should-not (file-attributes (process-get proc 'foo)))))))
 
-	  ;; Send a string.  Use a random order of the buffers.  Mix
-	  ;; with regular operation.
-	  (let ((buffers (copy-sequence buffers)))
-	    (while buffers
-	      (let* ((buf (nth (random (length buffers)) buffers))
-		     (proc (get-buffer-process buf))
-		     (file (process-get proc 'foo))
-		     (count (process-get proc 'bar)))
-		;; Regular operation.
-		(if (= count 0)
-		    (should-not (file-attributes file))
-		  (should (file-attributes file)))
-		;; Send string to process.
-                (tramp--test-message "Send string %s" proc)
-		(process-send-string proc (format "%s\n" (buffer-name buf)))
-		(accept-process-output proc 0.1 nil 0)
-		;; Regular operation.
-		(if (= count 2)
-		    (should-not (file-attributes file))
-		  (should (file-attributes file)))
-		(process-put proc 'bar (1+ count))
-		(unless (process-live-p proc)
-                  (tramp--test-message "Buffer delete %s" buf)
-		  (setq buffers (delq buf buffers))))))
+            ;; Send a string.  Use a random order of the buffers.  Mix
+            ;; with regular operation.
+            (let ((buffers (copy-sequence buffers)))
+              (while buffers
+                (let* ((buf (nth (random (length buffers)) buffers))
+                       (proc (get-buffer-process buf))
+                       (file (process-get proc 'foo))
+                       (count (process-get proc 'bar)))
+                  ;; Regular operation.
+                  (if (= count 0)
+                      (should-not (file-attributes file))
+                    (should (file-attributes file)))
+                  ;; Send string to process.
+                  (process-send-string proc (format "%s\n" (buffer-name buf)))
+                  (accept-process-output proc 0.1 nil 0)
+                  ;; Regular operation.
+                  (if (= count 2)
+                      (should-not (file-attributes file))
+                    (should (file-attributes file)))
+                  (process-put proc 'bar (1+ count))
+                  (unless (process-live-p proc)
+                    (setq buffers (delq buf buffers))))))
 
-	  ;; Checks.  All process output shall exists in the
-	  ;; respective buffers.  All created files shall be deleted.
-          (tramp--test-message "Checks %s" buffers)
-	  (dolist (buf buffers)
-	    (with-current-buffer buf
-	      (should (string-equal (format "%s\n" buf) (buffer-string)))))
-	  (should-not
-	   (directory-files tmp-name nil directory-files-no-dot-files-regexp)))
+            ;; Checks.  All process output shall exists in the
+            ;; respective buffers.  All created files shall be
+            ;; deleted.
+            (dolist (buf buffers)
+              (with-current-buffer buf
+                (should (string-equal (format "%s\n" buf) (buffer-string)))))
+            (should-not
+             (directory-files
+              tmp-name nil directory-files-no-dot-files-regexp)))
 
-      ;; Cleanup.
-      (dolist (buf buffers)
-	(ignore-errors (delete-process (get-buffer-process buf)))
-	(ignore-errors (kill-buffer buf)))
-      (ignore-errors (cancel-timer timer))
-      (ignore-errors (delete-directory tmp-name 'recursive))))))
+        ;; Cleanup.
+        (dolist (buf buffers)
+          (ignore-errors (delete-process (get-buffer-process buf)))
+          (ignore-errors (kill-buffer buf)))
+        (ignore-errors (cancel-timer timer))
+        (ignore-errors (delete-directory tmp-name 'recursive))))))
 
 (ert-deftest tramp-test37-recursive-load ()
   "Check that Tramp does not fail due to recursive load."
