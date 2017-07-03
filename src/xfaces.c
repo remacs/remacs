@@ -6232,7 +6232,7 @@ where R,G,B are numbers between 0 and 255 and name is an arbitrary string.  */)
       int red, green, blue;
       int num;
 
-      while (fgets (buf, sizeof (buf), fp) != NULL) {
+      while (fgets_unlocked (buf, sizeof (buf), fp) != NULL) {
 	if (sscanf (buf, "%d %d %d %n", &red, &green, &blue, &num) == 3)
 	  {
 #ifdef HAVE_NTGUI

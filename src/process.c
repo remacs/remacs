@@ -5371,14 +5371,13 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  nfds = xg_select (max_desc + 1,
 			    &Available, (check_write ? &Writeok : 0),
 			    NULL, &timeout, NULL);
+#elif defined HAVE_NS
+          /* And NS builds call thread_select in ns_select. */
+          nfds = ns_select (max_desc + 1,
+			    &Available, (check_write ? &Writeok : 0),
+			    NULL, &timeout, NULL);
 #else  /* !HAVE_GLIB */
-	  nfds = thread_select (
-# ifdef HAVE_NS
-				ns_select
-# else
-				pselect
-# endif
-				, max_desc + 1,
+	  nfds = thread_select (pselect, max_desc + 1,
 				&Available,
 				(check_write ? &Writeok : 0),
 				NULL, &timeout, NULL);

@@ -575,6 +575,8 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
   MODULE_FUNCTION_BEGIN (module_nil);
   if (! (0 <= length && length <= STRING_BYTES_BOUND))
     xsignal0 (Qoverflow_error);
+  /* FIXME: AUTO_STRING_WITH_LEN requires STR to be null-terminated,
+     but we shouldn’t require that.  */
   AUTO_STRING_WITH_LEN (lstr, str, length);
   return lisp_to_value (env,
                         code_convert_string_norecord (lstr, Qutf_8, false));
@@ -599,7 +601,6 @@ module_get_user_ptr (emacs_env *env, emacs_value uptr)
 static void
 module_set_user_ptr (emacs_env *env, emacs_value uptr, void *ptr)
 {
-  /* FIXME: This function should return bool because it can fail.  */
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object lisp = value_to_lisp (uptr);
   CHECK_USER_PTR (lisp);
@@ -619,7 +620,6 @@ static void
 module_set_user_finalizer (emacs_env *env, emacs_value uptr,
 			   emacs_finalizer_function fin)
 {
-  /* FIXME: This function should return bool because it can fail.  */
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object lisp = value_to_lisp (uptr);
   CHECK_USER_PTR (lisp);
@@ -638,7 +638,6 @@ check_vec_index (Lisp_Object lvec, ptrdiff_t i)
 static void
 module_vec_set (emacs_env *env, emacs_value vec, ptrdiff_t i, emacs_value val)
 {
-  /* FIXME: This function should return bool because it can fail.  */
   MODULE_FUNCTION_BEGIN ();
   Lisp_Object lvec = value_to_lisp (vec);
   check_vec_index (lvec, i);
@@ -657,7 +656,6 @@ module_vec_get (emacs_env *env, emacs_value vec, ptrdiff_t i)
 static ptrdiff_t
 module_vec_size (emacs_env *env, emacs_value vec)
 {
-  /* FIXME: Return a sentinel value (e.g., -1) on error.  */
   MODULE_FUNCTION_BEGIN (0);
   Lisp_Object lvec = value_to_lisp (vec);
   CHECK_VECTOR (lvec);

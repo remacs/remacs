@@ -129,6 +129,22 @@ given file is on a case-insensitive filesystem.
 of curved quotes for 'electric-quote-mode', allowing user to choose
 the types of quotes to be used.
 
+** The new user option 'electric-quote-context-sensitive' makes
+'electric-quote-mode' context sensitive.  If it is non-nil, you can
+type an ASCII apostrophe to insert an opening or closing quote,
+depending on context.  Emacs will replace the apostrophe by an opening
+quote character at the beginning of the buffer, the beginning of a
+line, after a whitespace character, and after an opening parenthesis;
+and it will replace the apostrophe by a closing quote character in all
+other cases.
+
+** The new variable 'electric-quote-code-faces' controls when to
+disable electric quoting in text modes.  Major modes can add faces to
+this list; Emacs will temporarily disable 'electric-quote-mode'
+whenever point is before a character having such a face.  This is
+intended for major modes that derive from 'text-mode' but allow inline
+code segments, such as 'markdown-mode'.
+
 +++
 ** The new user variable 'dired-omit-case-fold' allows the user to
 customize the case-sensitivity of dired-omit-mode.  It defaults to
@@ -320,6 +336,15 @@ questions, with a handy way to display help texts.
 all call stack frames in a Lisp backtrace buffer as lists.  Both
 debug.el and edebug.el have been updated to heed to this variable.
 
+---
+** Values in call stack frames are now displayed using 'cl-prin1'.
+The old behaviour of using 'prin1' can be restored by customizing the
+new option 'debugger-print-function'.
+
++++
+** NUL bytes in strings copied to the system clipboard are now
+replaced with "\0".
+
 +++
 ** The new variable 'x-ctrl-keysym' has been added to the existing
 roster of X keysyms.  It can be used in combination with another
@@ -362,6 +387,9 @@ emacsclient.  With appropriate setup, one can now set the EDITOR
 environment variable on a remote machine to emacsclient, and
 use the local Emacs to edit remote files via Tramp.  See the node
 "emacsclient Options" in the user manual for the details.
+
++++
+** 'describe-key-briefly' now ignores mouse movement events.
 
 +++
 ** The new variable 'eval-expression-print-maximum-character' prevents
@@ -470,6 +498,12 @@ properties as intact as possible.
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
+
+** Dired
+You can now use '`?`' in 'dired-do-shell-command'; as ' ? ', it gets replaced
+by the current file name.
+
+*** html2text is now marked obsolete.
 
 *** smerge-refine-regions can refine regions in separate buffers
 
@@ -641,6 +675,13 @@ customize the 'shr-use-colors' variable.
 replaced by the real images asynchronously, which will also now
 respect width/height HTML specs (unless they specify widths/heights
 bigger than the current window).
+
+---
+*** The 'w' command on links is now 'shr-maybe-probe-and-copy-url'.
+'shr-copy-url' now only copies the url at point; users who wish to
+avoid accidentally accessing remote links may rebind 'w' and 'u' in
+'eww-link-keymap' to it.
+
 
 ** Ido
 
@@ -1203,7 +1244,7 @@ run.
 frame's outer border.
 
 +++
-*** New frame parameters
+*** New frame parameters and changed semantics for older ones
 
 +++
 **** 'z-group' positions a frame above or below all others.
@@ -1248,10 +1289,32 @@ focus via the mouse.
 frame.
 
 +++
-*** The 'width' and 'height' frame parameters allow to specify pixel
-values now.
+**** 'width' and 'height' allow to specify pixel values and ratios now.
 
 +++
+**** 'left' and 'top' allow to specify ratios now.
+
++++
+**** 'keep-ratio' preserves size and position of child frames when their
+parent frame is resized.
+
++++
+**** 'no-special-glyphs' suppresses display of truncation and
+continuation glyphs in a frame.
+
++++
+**** 'auto-hide-function' and 'minibuffer-exit' handle auto hiding of
+frames and exiting from minibuffer individually.
+
++++
+**** 'fit-frame-to-buffer-margins' and 'fit-frame-to-buffer-sizes'
+handle fitting a frame to its buffer individually.
+
++++
+**** 'drag-internal-border', 'drag-with-header-line',
+'drag-with-mode-line', 'snap-width', 'top-visible' and 'bottom-visible'
+allow to drag and resize frames with the mouse.
+
 *** The new function 'frame-list-z-order' returns a list of all frames
 in Z (stacking) order.
 
@@ -1310,6 +1373,10 @@ a new window when opening man pages when there's already one, use
 its window gets deleted by 'delete-other-windows'.
 
 +++
+*** New window parameters 'mode-line-format' and 'header-line-format'
+allow to override the buffer-local formats for this window.
+
++++
 *** New command 'window-swap-states' swaps the states of two live
 windows.
 
@@ -1319,9 +1386,23 @@ windows.
 window changed size when 'window-size-change-functions' are run.
 
 +++
+*** The new function 'window-lines-pixel-dimensions' returns the pixel
+dimensions of a window's text lines.
+
++++
+*** The new function 'window-largest-empty-rectangle' returns the
+dimensions of the largest rectangular area not occupying any text in a
+window's body.
+
++++
 *** The semantics of 'mouse-autoselect-window' has changed slightly.
 For details see the section "Mouse Window Auto-selection" in the Elisp
 manual.
+
+---
+** 'tcl-auto-fill-mode' is now declared obsolete.  It's functionality
+can be replicated simply by setting 'comment-auto-fill-only-comments'.
+
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
 
@@ -1364,7 +1445,7 @@ This is in contrast to the default action on POSIX Systems, where it
 causes the receiving process to terminate with a core dump if no
 debugger has been attached to it.
 
-** `set-mouse-position' and `set-mouse-absolute-pixel-position' work
+** 'set-mouse-position' and 'set-mouse-absolute-pixel-position' work
 on macOS.
 
 

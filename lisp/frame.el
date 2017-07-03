@@ -1110,6 +1110,38 @@ differing font heights."
 If FRAME is omitted, describe the currently selected frame."
   (cdr (assq 'width (frame-parameters frame))))
 
+(defalias 'frame-border-width 'frame-internal-border-width)
+(defalias 'frame-pixel-width 'frame-native-width)
+(defalias 'frame-pixel-height 'frame-native-height)
+
+(defun frame-inner-width (&optional frame)
+  "Return inner width of FRAME in pixels.
+FRAME defaults to the selected frame."
+  (setq frame (window-normalize-frame frame))
+  (- (frame-native-width frame)
+     (* 2 (frame-internal-border-width frame))))
+
+(defun frame-inner-height (&optional frame)
+  "Return inner height of FRAME in pixels.
+FRAME defaults to the selected frame."
+  (setq frame (window-normalize-frame frame))
+  (- (frame-native-height frame)
+     (* 2 (frame-internal-border-width frame))))
+
+(defun frame-outer-width (&optional frame)
+  "Return outer width of FRAME in pixels.
+FRAME defaults to the selected frame."
+  (setq frame (window-normalize-frame frame))
+  (let ((edges (frame-edges frame 'outer-edges)))
+    (- (nth 2 edges) (nth 0 edges))))
+
+(defun frame-outer-height (&optional frame)
+  "Return outer height of FRAME in pixels.
+FRAME defaults to the selected frame."
+  (setq frame (window-normalize-frame frame))
+  (let ((edges (frame-edges frame 'outer-edges)))
+    (- (nth 3 edges) (nth 1 edges))))
+
 (declare-function x-list-fonts "xfaces.c"
                   (pattern &optional face frame maximum width))
 

@@ -2053,6 +2053,33 @@ ARGS are the arguments OPERATION has been called with."
   `(let ((debug-on-error tramp-debug-on-error))
      (condition-case-unless-debug ,var ,bodyform ,@handlers)))
 
+;; In Emacs, there is some concurrency due to timers.  If a timer
+;; interrupts Tramp and wishes to use the same connection buffer as
+;; the "main" Emacs, then garbage might occur in the connection
+;; buffer.  Therefore, we need to make sure that a timer does not use
+;; the same connection buffer as the "main" Emacs.  We implement a
+;; cheap global lock, instead of locking each connection buffer
+;; separately.  The global lock is based on two variables,
+;; `tramp-locked' and `tramp-locker'.  `tramp-locked' is set to true
+;; (with setq) to indicate a lock.  But Tramp also calls itself during
+;; processing of a single file operation, so we need to allow
+;; recursive calls.  That's where the `tramp-locker' variable comes in
+;; -- it is let-bound to t during the execution of the current
+;; handler.  So if `tramp-locked' is t and `tramp-locker' is also t,
+;; then we should just proceed because we have been called
+;; recursively.  But if `tramp-locker' is nil, then we are a timer
+;; interrupting the "main" Emacs, and then we signal an error.
+
+(defvar tramp-locked nil
+  "If non-nil, then Tramp is currently busy.
+Together with `tramp-locker', this implements a locking mechanism
+preventing reentrant calls of Tramp.")
+
+(defvar tramp-locker nil
+  "If non-nil, then a caller has locked Tramp.
+Together with `tramp-locked', this implements a locking mechanism
+preventing reentrant calls of Tramp.")
+
 ;; Main function.
 (defun tramp-file-name-handler (operation &rest args)
   "Invoke Tramp file name handler.
@@ -2090,7 +2117,20 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 		      (setq result
 			    (catch 'non-essential
 			      (catch 'suppress
-				(apply foreign operation args))))
+				(when (and tramp-locked (not tramp-locker))
+				  (setq tramp-locked nil)
+				  (tramp-error
+				   (car-safe tramp-current-connection)
+				   'file-error
+				   "Forbidden reentrant call of Tramp"))
+				(let ((tl tramp-locked))
+				  (setq tramp-locked t)
+				  (unwind-protect
+				      (let ((tramp-locker t))
+					(apply foreign operation args))
+				    ;; Give timers a chance.
+				    (unless (setq tramp-locked tl)
+				      (sit-for 0.001 'nodisp)))))))
 		      (cond
 		       ((eq result 'non-essential)
 			(tramp-message
@@ -2144,33 +2184,6 @@ Falls back to normal file name handler if no Tramp file name handler exists."
       ;; When `tramp-mode' is not enabled, or the file name is quoted,
       ;; we don't do anything.
       (tramp-run-real-handler operation args))))
-
-;; In Emacs, there is some concurrency due to timers.  If a timer
-;; interrupts Tramp and wishes to use the same connection buffer as
-;; the "main" Emacs, then garbage might occur in the connection
-;; buffer.  Therefore, we need to make sure that a timer does not use
-;; the same connection buffer as the "main" Emacs.  We implement a
-;; cheap global lock, instead of locking each connection buffer
-;; separately.  The global lock is based on two variables,
-;; `tramp-locked' and `tramp-locker'.  `tramp-locked' is set to true
-;; (with setq) to indicate a lock.  But Tramp also calls itself during
-;; processing of a single file operation, so we need to allow
-;; recursive calls.  That's where the `tramp-locker' variable comes in
-;; -- it is let-bound to t during the execution of the current
-;; handler.  So if `tramp-locked' is t and `tramp-locker' is also t,
-;; then we should just proceed because we have been called
-;; recursively.  But if `tramp-locker' is nil, then we are a timer
-;; interrupting the "main" Emacs, and then we signal an error.
-
-(defvar tramp-locked nil
-  "If non-nil, then Tramp is currently busy.
-Together with `tramp-locker', this implements a locking mechanism
-preventing reentrant calls of Tramp.")
-
-(defvar tramp-locker nil
-  "If non-nil, then a caller has locked Tramp.
-Together with `tramp-locked', this implements a locking mechanism
-preventing reentrant calls of Tramp.")
 
 ;;;###autoload
 (defun tramp-completion-file-name-handler (operation &rest args)
@@ -3631,31 +3644,17 @@ connection buffer."
   "Like `accept-process-output' for Tramp processes.
 This is needed in order to hide `last-coding-system-used', which is set
 for process communication also."
-  ;; FIXME: There are problems, when an asynchronous process runs in
-  ;; parallel, and also timers are active.  See
-  ;; <http://lists.gnu.org/archive/html/tramp-devel/2017-01/msg00010.html>.
-  (when (and timer-event-last
-	     (string-prefix-p "*tramp/" (process-name proc))
-	     (let (result)
-	       (maphash
-		(lambda (key _value)
-		  (and (processp key)
-		       (not (string-prefix-p "*tramp/" (process-name key)))
-		       (process-live-p key)
-		       (setq result t)))
-		tramp-cache-data)
-	       result))
-    (sit-for 0.01 'nodisp))
   (with-current-buffer (process-buffer proc)
     (let (buffer-read-only last-coding-system-used)
-      ;; Under Windows XP, accept-process-output doesn't return
+      ;; Under Windows XP, `accept-process-output' doesn't return
       ;; sometimes.  So we add an additional timeout.  JUST-THIS-ONE
-      ;; is set due to Bug#12145.
+      ;; is set due to Bug#12145.  It is an integer, in order to avoid
+      ;; running timers as well.
       (tramp-message
        proc 10 "%s %s %s\n%s"
        proc (process-status proc)
        (with-timeout (timeout)
-	 (accept-process-output proc timeout nil t))
+	 (accept-process-output proc timeout nil 0))
        (buffer-string)))))
 
 (defun tramp-check-for-regexp (proc regexp)

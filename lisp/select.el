@@ -475,6 +475,9 @@ two markers or an overlay.  Otherwise, it is nil."
 	   (t
 	    (error "Unknown selection type: %S" type)))))
 
+      ;; Most programs are unable to handle NUL bytes in strings.
+      (setq str (replace-regexp-in-string "\0" "\\0" str t t))
+
       (setq next-selection-coding-system nil)
       (cons type str))))
 

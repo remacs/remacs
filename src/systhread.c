@@ -20,6 +20,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <setjmp.h>
 #include "lisp.h"
 
+#ifdef HAVE_NS
+#include "nsterm.h"
+#endif
+
 #ifndef THREADS_ENABLED
 
 void
@@ -130,6 +134,13 @@ void
 sys_cond_broadcast (sys_cond_t *cond)
 {
   pthread_cond_broadcast (cond);
+#ifdef HAVE_NS
+  /* Send an app defined event to break out of the NS run loop.
+     It seems that if ns_select is running the NS run loop, this
+     broadcast has no effect until the loop is done, breaking a couple
+     of tests in thread-tests.el. */
+  ns_run_loop_break ();
+#endif
 }
 
 void

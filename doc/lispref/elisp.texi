@@ -1130,6 +1130,8 @@ Window Frame Parameters
 * Buffer Parameters::       Which buffers have been or should be shown.
 * Frame Interaction Parameters::  Parameters for interacting with other
                               frames.
+* Mouse Dragging Parameters::  Parameters for resizing and moving
+                              frames with the mouse.
 * Management Parameters::   Communicating with the window manager.
 * Cursor Parameters::       Controlling the cursor appearance.
 * Font and Color Parameters:: Fonts and colors for the frame text.

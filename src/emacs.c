@@ -23,7 +23,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <sys/file.h>
@@ -33,6 +32,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define MAIN_PROGRAM
 #include "lisp.h"
+#include "sysstdio.h"
 
 #ifdef WINDOWSNT
 #include <fcntl.h>
@@ -885,7 +885,7 @@ main (int argc, char **argv)
     }
 #endif /* HAVE_SETRLIMIT and RLIMIT_STACK and not CYGWIN */
 
-  clearerr (stdin);
+  clearerr_unlocked (stdin);
 
   emacs_backtrace (-1);
 
@@ -983,7 +983,7 @@ main (int argc, char **argv)
       int i;
       printf ("Usage: %s [OPTION-OR-FILENAME]...\n", argv[0]);
       for (i = 0; i < ARRAYELTS (usage_message); i++)
-	fputs (usage_message[i], stdout);
+	fputs_unlocked (usage_message[i], stdout);
       exit (0);
     }
 
@@ -2197,7 +2197,7 @@ You must run Emacs in batch mode in order to dump it.  */)
   }
 #endif
 
-  fflush (stdout);
+  fflush_unlocked (stdout);
   /* Tell malloc where start of impure now is.  */
   /* Also arrange for warnings when nearly out of space.  */
 #if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC

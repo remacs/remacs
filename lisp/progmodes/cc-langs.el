@@ -130,7 +130,7 @@
 
 
 ;; This file is not always loaded.  See note above.
-(cc-external-require (if (eq c--mapcan-status 'cl-mapcan) 'cl-lib 'cl))
+(cc-external-require (if (eq c--cl-library 'cl-lib) 'cl-lib 'cl))
 
 
 ;;; Setup for the `c-lang-defvar' system.
@@ -474,18 +474,19 @@ so that all identifiers are recognized as words.")
   ;; The value here may be a list of functions or a single function.
   t nil
   c++ '(c-extend-region-for-CPP
-;	c-before-after-change-extend-region-for-lambda-capture ; doesn't seem needed.
 	c-before-change-check-raw-strings
 	c-before-change-check-<>-operators
 	c-depropertize-CPP
-	c-before-after-change-digit-quote
 	c-invalidate-macro-cache
-	c-truncate-bs-cache)
+	c-truncate-bs-cache
+	c-parse-quotes-before-change)
   (c objc) '(c-extend-region-for-CPP
 	     c-depropertize-CPP
 	     c-invalidate-macro-cache
-	     c-truncate-bs-cache)
-  ;; java 'c-before-change-check-<>-operators
+	     c-truncate-bs-cache
+	     c-parse-quotes-before-change)
+  java 'c-parse-quotes-before-change
+       ;; 'c-before-change-check-<>-operators
   awk 'c-awk-record-region-clear-NL)
 (c-lang-defvar c-get-state-before-change-functions
 	       (let ((fs (c-lang-const c-get-state-before-change-functions)))
@@ -515,18 +516,19 @@ parameters \(point-min) and \(point-max).")
   t '(c-depropertize-new-text
       c-change-expand-fl-region)
   (c objc) '(c-depropertize-new-text
+	     c-parse-quotes-after-change
 	     c-extend-font-lock-region-for-macros
 	     c-neutralize-syntax-in-and-mark-CPP
 	     c-change-expand-fl-region)
   c++ '(c-depropertize-new-text
+	c-parse-quotes-after-change
 	c-extend-font-lock-region-for-macros
-;	c-before-after-change-extend-region-for-lambda-capture ; doesn't seem needed.
-	c-before-after-change-digit-quote
 	c-after-change-re-mark-raw-strings
 	c-neutralize-syntax-in-and-mark-CPP
 	c-restore-<>-properties
 	c-change-expand-fl-region)
   java '(c-depropertize-new-text
+	 c-parse-quotes-after-change
 	 c-restore-<>-properties
 	 c-change-expand-fl-region)
   awk '(c-depropertize-new-text
@@ -608,6 +610,12 @@ EOL terminated statements."
   t nil
   (c c++ objc) t)
 (c-lang-defvar c-has-bitfields (c-lang-const c-has-bitfields))
+
+(c-lang-defconst c-has-quoted-numbers
+  "Whether the language has numbers quoted like 4'294'967'295."
+  t nil
+  c++ t)
+(c-lang-defvar c-has-quoted-numbers (c-lang-const c-has-quoted-numbers))
 
 (c-lang-defconst c-modified-constant
   "Regexp that matches a “modified” constant literal such as \"L\\='a\\='\",

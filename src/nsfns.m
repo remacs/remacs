@@ -984,6 +984,7 @@ frame_parm_handler ns_frame_parm_handlers[] =
   x_set_no_accept_focus,
   x_set_z_group, /* x_set_z_group */
   0, /* x_set_override_redirect */
+  x_set_no_special_glyphs,
 };
 
 
@@ -1256,6 +1257,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "leftFringe", "LeftFringe", RES_TYPE_NUMBER);
   x_default_parameter (f, parms, Qright_fringe, Qnil,
 		       "rightFringe", "RightFringe", RES_TYPE_NUMBER);
+  x_default_parameter (f, parms, Qno_special_glyphs, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
 
   init_frame_faces (f);
 
@@ -1325,6 +1328,15 @@ This function is an internal primitive--use `make-frame' instead.  */)
   f->output_data.ns->hourglass_cursor = [NSCursor disappearingItemCursor];
   f->output_data.ns->horizontal_drag_cursor = [NSCursor resizeLeftRightCursor];
   f->output_data.ns->vertical_drag_cursor = [NSCursor resizeUpDownCursor];
+  f->output_data.ns->left_edge_cursor = [NSCursor resizeLeftRightCursor];
+  f->output_data.ns->top_left_corner_cursor = [NSCursor arrowCursor];
+  f->output_data.ns->top_edge_cursor = [NSCursor resizeUpDownCursor];
+  f->output_data.ns->top_right_corner_cursor = [NSCursor arrowCursor];
+  f->output_data.ns->right_edge_cursor = [NSCursor resizeLeftRightCursor];
+  f->output_data.ns->bottom_right_corner_cursor = [NSCursor arrowCursor];
+  f->output_data.ns->bottom_edge_cursor = [NSCursor resizeUpDownCursor];
+  f->output_data.ns->bottom_left_corner_cursor = [NSCursor arrowCursor];
+
   FRAME_DISPLAY_INFO (f)->vertical_scroll_bar_cursor
      = [NSCursor arrowCursor];
   FRAME_DISPLAY_INFO (f)->horizontal_scroll_bar_cursor

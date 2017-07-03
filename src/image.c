@@ -20,7 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <fcntl.h>
-#include <stdio.h>
 #include <unistd.h>
 
 /* Include this before including <setjmp.h> to work around bugs with
@@ -41,6 +40,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "dispextern.h"
 #include "blockinput.h"
+#include "sysstdio.h"
 #include "systime.h"
 #include <epaths.h>
 #include "coding.h"
@@ -2361,7 +2361,7 @@ slurp_file (int fd, ptrdiff_t *size)
 	     This can happen if the file grows as we read it.  */
 	  ptrdiff_t buflen = st.st_size;
 	  buf = xmalloc (buflen + 1);
-	  if (fread (buf, 1, buflen + 1, fp) == buflen)
+	  if (fread_unlocked (buf, 1, buflen + 1, fp) == buflen)
 	    *size = buflen;
 	  else
 	    {
@@ -5890,7 +5890,7 @@ png_read_from_file (png_structp png_ptr, png_bytep data, png_size_t length)
 {
   FILE *fp = png_get_io_ptr (png_ptr);
 
-  if (fread (data, 1, length, fp) < length)
+  if (fread_unlocked (data, 1, length, fp) < length)
     png_error (png_ptr, "Read error");
 }
 
@@ -5959,7 +5959,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 	}
 
       /* Check PNG signature.  */
-      if (fread (sig, 1, sizeof sig, fp) != sizeof sig
+      if (fread_unlocked (sig, 1, sizeof sig, fp) != sizeof sig
 	  || png_sig_cmp (sig, 0, sizeof sig))
 	{
 	  fclose (fp);
@@ -6598,7 +6598,8 @@ our_stdio_fill_input_buffer (j_decompress_ptr cinfo)
     {
       ptrdiff_t bytes;
 
-      bytes = fread (src->buffer, 1, JPEG_STDIO_BUFFER_SIZE, src->file);
+      bytes = fread_unlocked (src->buffer, 1, JPEG_STDIO_BUFFER_SIZE,
+			      src->file);
       if (bytes > 0)
         src->mgr.bytes_in_buffer = bytes;
       else

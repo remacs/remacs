@@ -593,5 +593,121 @@ baz\"\""
   :bindings '((electric-quote-string . t))
   :test-in-comments nil :test-in-strings nil)
 
+(define-electric-pair-test electric-quote-opening-single
+  "" "`" :expected-string "‘" :expected-point 2
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-closing-single
+  "" "'" :expected-string "’" :expected-point 2
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-opening-double
+  "‘" "-`" :expected-string "“" :expected-point 2
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-closing-double
+  "’" "-'" :expected-string "”" :expected-point 2
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-backtick
+  "" "`" :expected-string "`" :expected-point 2
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-bob-single
+  "" "'" :expected-string "‘" :expected-point 2
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-bob-double
+  "‘" "-'" :expected-string "“" :expected-point 2
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-bol-single
+  "a\n" "--'" :expected-string "a\n‘" :expected-point 4
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-bol-double
+  "a\n‘" "---'" :expected-string "a\n“" :expected-point 4
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-after-space-single
+  " " "-'" :expected-string " ‘" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-after-space-double
+  " ‘" "--'" :expected-string " “" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-after-letter-single
+  "a" "-'" :expected-string "a’" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-after-letter-double
+  "a’" "--'" :expected-string "a”" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-after-paren-single
+  "(" "-'" :expected-string "(‘" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-context-sensitive-after-paren-double
+  "(‘" "--'" :expected-string "(“" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-markdown-in-text
+  "" "'" :expected-string "’" :expected-point 2
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-code-faces font-lock-constant-face))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-markdown-in-code
+  #("`a`" 1 2 (face font-lock-constant-face)) "-'"
+  :expected-string "`'a`" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-code-faces font-lock-constant-face))
+  :test-in-comments nil :test-in-strings nil)
+
 (provide 'electric-tests)
 ;;; electric-tests.el ends here

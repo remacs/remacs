@@ -670,48 +670,12 @@ and is displayed in front of the value of MESSAGE-FORM."
 (cl-defstruct (ert-test-aborted-with-non-local-exit
                (:include ert-test-result)))
 
-
-(defun ert--record-backtrace ()
-  "Record the current backtrace (as a list) and return it."
-  ;; Since the backtrace is stored in the result object, result
-  ;; objects must only be printed with appropriate limits
-  ;; (`print-level' and `print-length') in place.  For interactive
-  ;; use, the cost of ensuring this possibly outweighs the advantage
-  ;; of storing the backtrace for
-  ;; `ert-results-pop-to-backtrace-for-test-at-point' given that we
-  ;; already have `ert-results-rerun-test-debugging-errors-at-point'.
-  ;; For batch use, however, printing the backtrace may be useful.
-  (cl-loop
-   ;; 6 is the number of frames our own debugger adds (when
-   ;; compiled; more when interpreted).  FIXME: Need to describe a
-   ;; procedure for determining this constant.
-   for i from 6
-   for frame = (backtrace-frame i)
-   while frame
-   collect frame))
-
-(defun ert--print-backtrace (backtrace)
+(defun ert--print-backtrace (backtrace do-xrefs)
   "Format the backtrace BACKTRACE to the current buffer."
-  ;; This is essentially a reimplementation of Fbacktrace
-  ;; (src/eval.c), but for a saved backtrace, not the current one.
   (let ((print-escape-newlines t)
         (print-level 8)
         (print-length 50))
-    (dolist (frame backtrace)
-      (pcase-exhaustive frame
-        (`(nil ,special-operator . ,arg-forms)
-         ;; Special operator.
-         (insert
-          (format "  %S\n" (cons special-operator arg-forms))))
-        (`(t ,fn . ,args)
-         ;; Function call.
-         (insert (format "  %S(" fn))
-         (cl-loop for firstp = t then nil
-                  for arg in args do
-                  (unless firstp
-                    (insert " "))
-                  (insert (format "%S" arg)))
-         (insert ")\n"))))))
+    (debugger-insert-backtrace backtrace do-xrefs)))
 
 ;; A container for the state of the execution of a single test and
 ;; environment data needed during its execution.
@@ -750,7 +714,19 @@ run.  ARGS are the arguments to `debugger'."
                       ((quit) 'quit)
 		      ((ert-test-skipped) 'skipped)
                       (otherwise 'failed)))
-              (backtrace (ert--record-backtrace))
+              ;; We store the backtrace in the result object for
+              ;; `ert-results-pop-to-backtrace-for-test-at-point'.
+              ;; This means we have to limit `print-level' and
+              ;; `print-length' when printing result objects.  That
+              ;; might not be worth while when we can also use
+              ;; `ert-results-rerun-test-debugging-errors-at-point',
+              ;; (i.e., when running interactively) but having the
+              ;; backtrace ready for printing is important for batch
+              ;; use.
+              ;;
+              ;; Grab the frames starting from `signal', frames below
+              ;; that are all from the debugger.
+              (backtrace (backtrace-frames 'signal))
               (infos (reverse ert--infos)))
          (setf (ert--test-execution-info-result info)
                (cl-ecase type
@@ -1409,8 +1385,9 @@ Returns the stats object."
               (ert-test-result-with-condition
                (message "Test %S backtrace:" (ert-test-name test))
                (with-temp-buffer
-                 (ert--print-backtrace (ert-test-result-with-condition-backtrace
-                                        result))
+                 (ert--print-backtrace
+                  (ert-test-result-with-condition-backtrace result)
+                  nil)
                  (goto-char (point-min))
                  (while (not (eobp))
                    (let ((start (point))
@@ -1491,7 +1468,7 @@ this exits Emacs, with status as per `ert-run-tests-batch-and-exit'."
     (with-temp-buffer
       (while (setq logfile (pop command-line-args-left))
         (erase-buffer)
-        (insert-file-contents logfile)
+        (when (file-readable-p logfile) (insert-file-contents logfile))
         (if (not (re-search-forward "^Running \\([0-9]+\\) tests" nil t))
             (push logfile notests)
           (setq ntests (+ ntests (string-to-number (match-string 1))))
@@ -1828,12 +1805,23 @@ EWOC and STATS are arguments for `ert--results-update-stats-display'."
 
 BEGIN and END specify a region in the current buffer."
   (save-excursion
-    (save-restriction
-      (narrow-to-region begin end)
-      ;; Inhibit optimization in `debugger-make-xrefs' that would
-      ;; sometimes insert unrelated backtrace info into our buffer.
-      (let ((debugger-previous-backtrace nil))
-        (debugger-make-xrefs)))))
+    (goto-char begin)
+    (while (progn
+             (goto-char (+ (point) 2))
+             (skip-syntax-forward "^w_")
+             (< (point) end))
+      (let* ((beg (point))
+             (end (progn (skip-syntax-forward "w_") (point)))
+             (sym (intern-soft (buffer-substring-no-properties
+                                beg end)))
+             (file (and sym (symbol-file sym 'defun))))
+        (when file
+          (goto-char beg)
+          ;; help-xref-button needs to operate on something matched
+          ;; by a regexp, so set that up for it.
+          (re-search-forward "\\(\\sw\\|\\s_\\)+")
+          (help-xref-button 0 'help-function-def sym file)))
+      (forward-line 1))))
 
 (defun ert--string-first-line (s)
   "Return the first line of S, or S if it contains no newlines.
@@ -2420,8 +2408,7 @@ To be used in the ERT results buffer."
            ;; Use unibyte because `debugger-setup-buffer' also does so.
            (set-buffer-multibyte nil)
            (setq truncate-lines t)
-           (ert--print-backtrace backtrace)
-           (debugger-make-xrefs)
+           (ert--print-backtrace backtrace t)
            (goto-char (point-min))
            (insert (substitute-command-keys "Backtrace for test `"))
            (ert-insert-test-name-button (ert-test-name test))

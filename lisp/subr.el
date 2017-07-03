@@ -121,6 +121,7 @@ BODY should be a list of Lisp expressions.
 (defmacro setq-local (var val)
   "Set variable VAR to value VAL in current buffer."
   ;; Can't use backquote here, it's too early in the bootstrap.
+  (declare (debug (symbolp form)))
   (list 'set (list 'make-local-variable (list 'quote var)) val))
 
 (defmacro defvar-local (var val &optional docstring)
@@ -4513,7 +4514,8 @@ EVALD, FUNC, ARGS, FLAGS are as in `mapbacktrace'."
 (defun backtrace ()
   "Print a trace of Lisp function calls currently active.
 Output stream used is value of `standard-output'."
-  (let ((print-level (or print-level 8)))
+  (let ((print-level (or print-level 8))
+        (print-escape-control-characters t))
     (mapbacktrace #'backtrace--print-frame 'backtrace)))
 
 (defun backtrace-frames (&optional base)

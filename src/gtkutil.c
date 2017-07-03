@@ -1503,6 +1503,7 @@ xg_set_undecorated (struct frame *f, Lisp_Object undecorated)
 void
 xg_frame_restack (struct frame *f1, struct frame *f2, bool above_flag)
 {
+#if GTK_CHECK_VERSION (2, 18, 0)
   block_input ();
   if (FRAME_GTK_OUTER_WIDGET (f1) && FRAME_GTK_OUTER_WIDGET (f2))
     {
@@ -1517,6 +1518,7 @@ xg_frame_restack (struct frame *f1, struct frame *f2, bool above_flag)
       x_sync (f1);
     }
   unblock_input ();
+#endif
 }
 
 

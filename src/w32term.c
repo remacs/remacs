@@ -5086,6 +5086,51 @@ w32_read_socket (struct terminal *terminal,
 	  }
 
 	case WM_WINDOWPOSCHANGED:
+	  f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
+
+	  if (f)
+	    {
+	      RECT rect;
+	      int /* rows, columns, */ width, height, text_width, text_height;
+
+	      if (GetClientRect (msg.msg.hwnd, &rect)
+		  /* GetClientRect evidently returns (0, 0, 0, 0) if
+		     called on a minimized frame.  Such "dimensions"
+		     aren't useful anyway.  */
+		  && !(rect.bottom == 0
+		       && rect.top == 0
+		       && rect.left == 0
+		       && rect.right == 0))
+		{
+		  height = rect.bottom - rect.top;
+		  width = rect.right - rect.left;
+		  text_width = FRAME_PIXEL_TO_TEXT_WIDTH (f, width);
+		  text_height = FRAME_PIXEL_TO_TEXT_HEIGHT (f, height);
+		  /* rows = FRAME_PIXEL_HEIGHT_TO_TEXT_LINES (f, height); */
+		  /* columns = FRAME_PIXEL_WIDTH_TO_TEXT_COLS (f, width); */
+
+		  /* TODO: Clip size to the screen dimensions.  */
+
+		  /* Even if the number of character rows and columns
+		     has not changed, the font size may have changed,
+		     so we need to check the pixel dimensions as well.  */
+
+		  if (width != FRAME_PIXEL_WIDTH (f)
+		      || height != FRAME_PIXEL_HEIGHT (f)
+		      || text_width != FRAME_TEXT_WIDTH (f)
+		      || text_height != FRAME_TEXT_HEIGHT (f))
+		    {
+		      change_frame_size (f, text_width, text_height, 0, 1, 0, 1);
+		      SET_FRAME_GARBAGED (f);
+		      cancel_mouse_face (f);
+		      f->win_gravity = NorthWestGravity;
+		    }
+		}
+	    }
+
+	  check_visibility = 1;
+	  break;
+
 	case WM_ACTIVATE:
 	case WM_ACTIVATEAPP:
 	  f = x_window_to_frame (dpyinfo, msg.msg.hwnd);
@@ -6052,7 +6097,7 @@ x_calc_absolute_position (struct frame *f)
   int display_top = 0;
   struct frame *p = FRAME_PARENT_FRAME (f);
 
-  if (flags & (XNegative | YNegative))
+  if (!p && flags & (XNegative | YNegative))
     {
       Lisp_Object list;
 
@@ -6078,20 +6123,26 @@ x_calc_absolute_position (struct frame *f)
     }
 
   /* Treat negative positions as relative to the rightmost bottommost
-     position that fits on the screen.  */
+     position that fits on the screen or parent frame.
+
+     I see no need for subtracting 1 from the border widths - is there
+     any on the remaining platforms?  Here these subtractions did put
+     the last pixel line/column of a frame off-display when, for
+     example, a (set-frame-parameter nil 'left '(- 0)) specification was
+     used - martin 20017-05-05. */
   if (flags & XNegative)
     {
       if (p)
 	f->left_pos = (FRAME_PIXEL_WIDTH (p)
 		       - FRAME_PIXEL_WIDTH (f)
 		       + f->left_pos
-		       - (left_right_borders_width - 1));
+		       - left_right_borders_width);
       else
 	f->left_pos = (x_display_pixel_width (FRAME_DISPLAY_INFO (f))
 		       + display_left
 		       - FRAME_PIXEL_WIDTH (f)
 		       + f->left_pos
-		       - (left_right_borders_width - 1));
+		       - left_right_borders_width);
     }
 
   if (flags & YNegative)
@@ -6100,13 +6151,13 @@ x_calc_absolute_position (struct frame *f)
 	f->top_pos = (FRAME_PIXEL_HEIGHT (p)
 		      - FRAME_PIXEL_HEIGHT (f)
 		      + f->top_pos
-		      - (top_bottom_borders_height - 1));
+		      - top_bottom_borders_height);
       else
 	f->top_pos = (x_display_pixel_height (FRAME_DISPLAY_INFO (f))
 		      + display_top
 		      - FRAME_PIXEL_HEIGHT (f)
 		      + f->top_pos
-		      - (top_bottom_borders_height - 1));
+		      - top_bottom_borders_height);
     }
 
   /* The left_pos and top_pos are now relative to the top and left

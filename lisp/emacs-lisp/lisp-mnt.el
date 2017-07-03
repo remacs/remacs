@@ -326,12 +326,13 @@ Return argument is of the form (\"HOLDER\" \"YEAR1\" ... \"YEARN\")"
 	  (start (point))
 	  (end (line-end-position)))
       ;; Cope with multi-line copyright `lines'.  Assume the second
-      ;; line is indented (with the same commenting style).
+      ;; line is indented at least as much as the original, with the
+      ;; same commenting style.
       (save-excursion
 	(beginning-of-line 2)
-	(let ((str (concat (match-string-no-properties 1) "[ \t]+")))
+	(let ((str (match-string-no-properties 1)))
 	  (beginning-of-line)
-	  (while (looking-at str)
+	  (while (and (looking-at str) (not (looking-at lm-copyright-prefix)))
 	    (setq end (line-end-position))
 	    (beginning-of-line 2))))
       ;; Make a single line and parse that.

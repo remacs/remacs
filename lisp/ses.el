@@ -437,7 +437,7 @@ is nil if SYM is not a symbol that names a cell."
   (declare (debug t))
   `(let ((rc (and (symbolp ,sym) (get ,sym 'ses-cell))))
      (if (eq rc :ses-named)
-	 (gethash ,sym ses--named-cell-hashmap)
+	 (and ses--named-cell-hashmap (gethash ,sym ses--named-cell-hashmap))
        rc)))
 
 (defun ses-cell-p (cell)
@@ -868,27 +868,39 @@ means Emacs will crash if FORMULA contains a circular list."
 	  (oldref (ses-formula-references old))
 	  (newref (ses-formula-references formula))
 	  (inhibit-quit t)
+          not-a-cell-ref-list
 	  x xrow xcol)
       (cl-pushnew sym ses--deferred-recalc)
       ;;Delete old references from this cell.  Skip the ones that are also
       ;;in the new list.
       (dolist (ref oldref)
 	(unless (memq ref newref)
-	  (setq x    (ses-sym-rowcol ref)
-		xrow (car x)
-		xcol (cdr x))
-	  (ses-set-cell xrow xcol 'references
-			(delq sym (ses-cell-references xrow xcol)))))
+          ;; because we do not cancel edit when the user provides a
+          ;; false reference in it, then we need to check that ref
+          ;; points to a cell that is within the spreadsheet.
+	  (setq x    (ses-sym-rowcol ref))
+          (and x
+               (< (setq xrow (car x)) ses--numrows)
+               (< (setq xcol (cdr x)) ses--numcols)
+               (ses-set-cell xrow xcol 'references
+                            (delq sym (ses-cell-references xrow xcol))))))
       ;;Add new ones.  Skip ones left over from old list
       (dolist (ref newref)
-	(setq x    (ses-sym-rowcol ref)
-	      xrow (car x)
-	      xcol (cdr x)
-	      x    (ses-cell-references xrow xcol))
-	(or (memq sym x)
-	    (ses-set-cell xrow xcol 'references (cons sym x))))
+	(setq x    (ses-sym-rowcol ref))
+        ;;Do not trust the user, the reference may be outside the spreadsheet
+        (if (and
+             x
+             (<  (setq xrow (car x)) ses--numrows)
+             (<  (setq xcol (cdr x)) ses--numcols))
+          (progn
+            (setq x (ses-cell-references xrow xcol))
+            (or (memq sym x)
+                (ses-set-cell xrow xcol 'references (cons sym x))))
+          (cl-pushnew ref not-a-cell-ref-list)))
       (ses-formula-record formula)
-      (ses-set-cell row col 'formula formula))))
+      (ses-set-cell row col 'formula formula)
+      (and not-a-cell-ref-list
+           (error "Found in formula cells not in spreadsheet: %S" not-a-cell-ref-list)))))
 
 
 (defun ses-repair-cell-reference-all ()
@@ -1529,7 +1541,13 @@ by (ROWINCR,COLINCR)."
 	  ;;Relocate this variable, unless it is a named cell
           (if (eq (get sym 'ses-cell) :ses-named)
               sym
-            (ses-create-cell-symbol row col))
+            ;; otherwise, we create the relocated cell symbol because
+            ;; ses-cell-symbol gives the old symbols, however since
+            ;; renamed cell are not relocated we keep the relocated
+            ;; cell old symbol in this case.
+            (if (eq  (get (setq sym (ses-cell-symbol row col)) 'ses-cell) :ses-named)
+                sym
+              (ses-create-cell-symbol row col)))
 	;;Delete reference to a deleted cell
 	nil))))
 
@@ -2337,7 +2355,8 @@ to are recalculated first."
   "Recalculate and reprint all cells."
   (interactive "*")
   (let ((startcell    (ses--cell-at-pos (point)))
-	(ses--curcell (cons 'A1 (ses-cell-symbol (1- ses--numrows)
+	(ses--curcell (cons (ses-cell-symbol 0 0)
+                            (ses-cell-symbol (1- ses--numrows)
 						 (1- ses--numcols)))))
     (ses-recalculate-cell ses--curcell)
     (ses-jump-safe startcell)))

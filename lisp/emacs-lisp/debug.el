@@ -49,6 +49,12 @@ the middle is discarded, and just the beginning and end are displayed."
   :group 'debugger
   :version "21.1")
 
+(defcustom debugger-print-function #'cl-prin1
+  "Function used to print values in the debugger backtraces."
+  :type 'function
+  :options '(cl-prin1 prin1)
+  :version "26.1")
+
 (defcustom debugger-bury-or-kill 'bury
   "What to do with the debugger buffer when exiting `debug'.
 The value affects the behavior of operations on any window
@@ -264,6 +270,40 @@ first will be printed into the backtrace buffer."
       (setq debug-on-next-call debugger-step-after-exit)
       debugger-value)))
 
+
+(defun debugger-insert-backtrace (frames do-xrefs)
+  "Format and insert the backtrace FRAMES at point.
+Make functions into cross-reference buttons if DO-XREFS is non-nil."
+  (let ((standard-output (current-buffer))
+        (eval-buffers eval-buffer-list))
+    (require 'help-mode)     ; Define `help-function-def' button type.
+    (pcase-dolist (`(,evald ,fun ,args ,flags) frames)
+      (insert (if (plist-get flags :debug-on-exit)
+                  "* " "  "))
+      (let ((fun-file (and do-xrefs (symbol-file fun 'defun)))
+            (fun-pt (point)))
+        (cond
+         ((and evald (not debugger-stack-frame-as-list))
+          (funcall debugger-print-function fun)
+          (if args (funcall debugger-print-function args) (princ "()")))
+         (t
+          (funcall debugger-print-function (cons fun args))
+          (cl-incf fun-pt)))
+        (when fun-file
+          (make-text-button fun-pt (+ fun-pt (length (symbol-name fun)))
+                            :type 'help-function-def
+                            'help-args (list fun fun-file))))
+      ;; After any frame that uses eval-buffer, insert a line that
+      ;; states the buffer position it's reading at.
+      (when (and eval-buffers (memq fun '(eval-buffer eval-region)))
+        (insert (format "  ; Reading at buffer position %d"
+                        ;; This will get the wrong result if there are
+                        ;; two nested eval-region calls for the same
+                        ;; buffer.  That's not a very useful case.
+                        (with-current-buffer (pop eval-buffers)
+                          (point)))))
+      (insert "\n"))))
+
 (defun debugger-setup-buffer (args)
   "Initialize the `*Backtrace*' buffer for entry to the debugger.
 That buffer should be current already."
@@ -271,27 +311,20 @@ That buffer should be current already."
   (erase-buffer)
   (set-buffer-multibyte t)		;Why was it nil ?  -stef
   (setq buffer-undo-list t)
-  (let ((standard-output (current-buffer))
-	(print-escape-newlines t)
-	(print-level 8)
-        (print-length 50))
-    ;; FIXME the debugger could pass a custom callback to mapbacktrace
-    ;; instead of manipulating printed results.
-    (mapbacktrace #'backtrace--print-frame 'debug))
-  (goto-char (point-min))
-  (delete-region (point)
-		 (progn
-                   (forward-line (if (eq (car args) 'debug)
-                                     ;; Remove debug--implement-debug-on-entry
-                                     ;; and the advice's `apply' frame.
-				     3
-				   1))
-		   (point)))
   (insert "Debugger entered")
-  ;; lambda is for debug-on-call when a function call is next.
-  ;; debug is for debug-on-entry function called.
-  (let ((pos (point)))
+  (let ((frames (nthcdr
+                 ;; Remove debug--implement-debug-on-entry and the
+                 ;; advice's `apply' frame.
+                 (if (eq (car args) 'debug) 3 1)
+                 (backtrace-frames 'debug)))
+        (print-escape-newlines t)
+        (print-escape-control-characters t)
+        (print-level 8)
+        (print-length 50)
+        (pos (point)))
     (pcase (car args)
+      ;; lambda is for debug-on-call when a function call is next.
+      ;; debug is for debug-on-entry function called.
       ((or `lambda `debug)
        (insert "--entering a function:\n")
        (setq pos (1- (point))))
@@ -300,11 +333,9 @@ That buffer should be current already."
        (insert "--returning value: ")
        (setq pos (point))
        (setq debugger-value (nth 1 args))
-       (prin1 debugger-value (current-buffer))
-       (insert ?\n)
-       (delete-char 1)
-       (insert ? )
-       (beginning-of-line))
+       (funcall debugger-print-function debugger-value (current-buffer))
+       (setf (cl-getf (nth 3 (car frames)) :debug-on-exit) nil)
+       (insert ?\n))
       ;; Watchpoint triggered.
       ((and `watchpoint (let `(,symbol ,newval . ,details) (cdr args)))
        (insert
@@ -327,7 +358,7 @@ That buffer should be current already."
       (`error
        (insert "--Lisp error: ")
        (setq pos (point))
-       (prin1 (nth 1 args) (current-buffer))
+       (funcall debugger-print-function (nth 1 args) (current-buffer))
        (insert ?\n))
       ;; debug-on-call, when the next thing is an eval.
       (`t
@@ -337,98 +368,15 @@ That buffer should be current already."
       (_
        (insert ": ")
        (setq pos (point))
-       (prin1 (if (eq (car args) 'nil)
-                  (cdr args) args)
-              (current-buffer))
+       (funcall debugger-print-function
+                (if (eq (car args) 'nil)
+                    (cdr args) args)
+                (current-buffer))
        (insert ?\n)))
+    (debugger-insert-backtrace frames t)
     ;; Place point on "stack frame 0" (bug#15101).
-    (goto-char pos))
-  ;; After any frame that uses eval-buffer,
-  ;; insert a line that states the buffer position it's reading at.
-  (save-excursion
-    (let ((tem eval-buffer-list))
-      (while (and tem
-		  (re-search-forward "^  eval-\\(buffer\\|region\\)(" nil t))
-	(end-of-line)
-	(insert (format "  ; Reading at buffer position %d"
-			;; This will get the wrong result
-			;; if there are two nested eval-region calls
-			;; for the same buffer.  That's not a very useful case.
-			(with-current-buffer (car tem)
-			  (point))))
-	(pop tem))))
-  (debugger-make-xrefs))
+    (goto-char pos)))
 
-(defun debugger-make-xrefs (&optional buffer)
-  "Attach cross-references to function names in the `*Backtrace*' buffer."
-  (interactive "b")
-  (with-current-buffer (or buffer (current-buffer))
-    (save-excursion
-      (setq buffer (current-buffer))
-      (let ((inhibit-read-only t)
-	    (old-end (point-min)) (new-end (point-min)))
-	;; If we saved an old backtrace, find the common part
-	;; between the new and the old.
-	;; Compare line by line, starting from the end,
-	;; because that's the part that is likely to be unchanged.
-	(if debugger-previous-backtrace
-	    (let (old-start new-start (all-match t))
-	      (goto-char (point-max))
-	      (with-temp-buffer
-		(insert debugger-previous-backtrace)
-		(while (and all-match (not (bobp)))
-		  (setq old-end (point))
-		  (forward-line -1)
-		  (setq old-start (point))
-		  (with-current-buffer buffer
-		    (setq new-end (point))
-		    (forward-line -1)
-		    (setq new-start (point)))
-		  (if (not (zerop
-			    (let ((case-fold-search nil))
-			      (compare-buffer-substrings
-			       (current-buffer) old-start old-end
-			       buffer new-start new-end))))
-		      (setq all-match nil))))
-	      ;; Now new-end is the position of the start of the
-	      ;; unchanged part in the current buffer, and old-end is
-	      ;; the position of that same text in the saved old
-	      ;; backtrace.  But we must subtract (point-min) since strings are
-	      ;; indexed in origin 0.
-
-	      ;; Replace the unchanged part of the backtrace
-	      ;; with the text from debugger-previous-backtrace,
-	      ;; since that already has the proper xrefs.
-	      ;; With this optimization, we only need to scan
-	      ;; the changed part of the backtrace.
-	      (delete-region new-end (point-max))
-	      (goto-char (point-max))
-	      (insert (substring debugger-previous-backtrace
-				 (- old-end (point-min))))
-	      ;; Make the unchanged part of the backtrace inaccessible
-	      ;; so it won't be scanned.
-	      (narrow-to-region (point-min) new-end)))
-
-	;; Scan the new part of the backtrace, inserting xrefs.
-	(goto-char (point-min))
-	(while (progn
-		 (goto-char (+ (point) 2))
-		 (skip-syntax-forward "^w_")
-		 (not (eobp)))
-	  (let* ((beg (point))
-		 (end (progn (skip-syntax-forward "w_") (point)))
-		 (sym (intern-soft (buffer-substring-no-properties
-				    beg end)))
-		 (file (and sym (symbol-file sym 'defun))))
-	    (when file
-	      (goto-char beg)
-	      ;; help-xref-button needs to operate on something matched
-	      ;; by a regexp, so set that up for it.
-	      (re-search-forward "\\(\\sw\\|\\s_\\)+")
-	      (help-xref-button 0 'help-function-def sym file)))
-	  (forward-line 1))
-	(widen))
-      (setq debugger-previous-backtrace (buffer-string)))))
 
 (defun debugger-step-through ()
   "Proceed, stepping through subexpressions of this expression.
@@ -866,9 +814,13 @@ To specify a nil argument interactively, exit with an empty minibuffer."
                               'type 'help-function
                               'help-args (list fun))
             (terpri))
-          (terpri)
-          (princ "Note: if you have redefined a function, then it may no longer\n")
-          (princ "be set to debug on entry, even if it is in the list."))))))
+          ;; Now that debug--function-list uses advice-member-p, its
+          ;; output should be reliable (except for bugs and the exceptional
+          ;; case where some other advice ends up overriding ours).
+          ;;(terpri)
+          ;;(princ "Note: if you have redefined a function, then it may no longer\n")
+          ;;(princ "be set to debug on entry, even if it is in the list.")
+          )))))
 
 (defun debug--implement-debug-watch (symbol newval op where)
   "Conditionally call the debugger.

@@ -702,6 +702,36 @@ stuff.  Used on level 1 and higher."
 	     t)
 	   (c-put-font-lock-face start (1+ start) 'font-lock-warning-face)))))
 
+(defun c-font-lock-invalid-single-quotes (limit)
+  ;; This function will be called from font-lock for a region bounded by POINT
+  ;; and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; Fontification".
+  ;;
+  ;; This function fontifies invalid single quotes with
+  ;; `font-lock-warning-face'.  These are the single quotes which
+  ;; o - aren't inside a literal;
+  ;; o - are marked with a syntax-table text property value '(1); and
+  ;; o - are NOT marked with a non-null c-digit-separator property.
+  (let ((limits (c-literal-limits))
+	state beg end)
+    (if limits
+	(goto-char (cdr limits)))	; Even for being in a ' '
+    (while (< (point) limit)
+      (setq beg (point))
+      (setq state (parse-partial-sexp (point) limit nil nil nil 'syntax-table))
+      (setq end (point))
+      (goto-char beg)
+      (while (progn (skip-chars-forward "^'" end)
+		    (< (point) end))
+	(if (and (equal (c-get-char-property (point) 'syntax-table) '(1))
+		 (not (c-get-char-property (point) 'c-digit-separator)))
+	    (c-put-font-lock-face (point) (1+ (point)) font-lock-warning-face))
+	(forward-char))
+      (parse-partial-sexp end limit nil nil state 'syntax-table)))
+    nil)
+
 (c-lang-defconst c-basic-matchers-before
   "Font lock matchers for basic keywords, labels, references and various
 other easily recognizable things that should be fontified before generic
@@ -722,6 +752,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	;; `c-skip-comments-and-strings' work correctly.
 	(concat ".\\(" c-string-limit-regexp "\\)")
 	'((c-font-lock-invalid-string)))
+
+      ;; Invalid single quotes.
+      c-font-lock-invalid-single-quotes
 
       ;; Fontify C++ raw strings.
       ,@(when (c-major-mode-is 'c++-mode)
@@ -777,7 +810,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				    (c-backward-syntactic-ws)
 				    (setq id-end (point))
 				    (< (skip-chars-backward
-					,(c-lang-const c-symbol-chars)) 0))
+					,(c-lang-const c-symbol-chars))
+				       0))
 				  (not (get-text-property (point) 'face)))
 			(c-put-font-lock-face (point) id-end
 					      c-reference-face-name)
@@ -1013,13 +1047,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (c-fontify-types-and-refs
-      ((pos (point)) next-pos id-start id-end
+      ((pos (point)) next-pos id-start
        decl-res
-       paren-depth
        id-face got-type got-init
        c-last-identifier-range
-       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start))
-       brackets-after-id)
+       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start)))
 
     ;; The following `while' fontifies a single declarator id each time round.
     ;; It loops only when LIST is non-nil.
@@ -1036,7 +1068,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				   (forward-char)
 				   (c-forward-syntactic-ws)
 				   (looking-at "[*&]")))
-			     (not (car (cddr decl-res))) ; brackets-after-id
+			     (not (car (cddr decl-res)))
 			     (or (not (c-major-mode-is 'c++-mode))
 				 (save-excursion
 				   (let (c-last-identifier-range)
@@ -1375,7 +1407,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; it finds any.  That's necessary so that we later will
 	  ;; stop inside them to fontify types there.
 	  (c-parse-and-markup-<>-arglists t)
-	  lbrace ; position of some {.
 	  ;; The font-lock package in Emacs is known to clobber
 	  ;; `parse-sexp-lookup-properties' (when it exists).
 	  (parse-sexp-lookup-properties
@@ -2503,7 +2534,7 @@ need for `c++-font-lock-extra-types'.")
      limit
      "[-+]"
      nil
-     (lambda (match-pos inside-macro &optional top-level)
+     (lambda (_match-pos _inside-macro &optional _top-level)
        (forward-char)
        (c-font-lock-objc-method))))
   nil)

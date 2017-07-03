@@ -90,7 +90,7 @@ call other entry points instead, such as `cl-prin1'."
 - `disassemble' to print the disassembly of the code.
 - nil to skip printing any details about the code.")
 
-(defvar cl-print-compiled-button nil
+(defvar cl-print-compiled-button t
   "Control how to print byte-compiled functions into buffers.
 When the stream is a buffer, make the bytecode part of the output
 into a button whose action shows the function's disassembly.")
@@ -105,10 +105,11 @@ into a button whose action shows the function's disassembly.")
     (if args
         (prin1 args stream)
       (princ "()" stream)))
-  (let ((doc (documentation object 'raw)))
-    (when doc
-      (princ " " stream)
-      (prin1 doc stream)))
+  (pcase (help-split-fundoc (documentation object 'raw) object)
+    ;; Drop args which `help-function-arglist' already printed.
+    (`(,_usage . ,(and doc (guard (stringp doc))))
+     (princ " " stream)
+     (prin1 doc stream)))
   (let ((inter (interactive-form object)))
     (when inter
       (princ " " stream)

@@ -4809,7 +4809,6 @@ comment at the start of cc-engine.el for more info."
 
   (c-self-bind-state-cache
    (let ((start (point))
-	 state-2
 	 ;; A list of syntactically relevant positions in descending
 	 ;; order.  It's used to avoid scanning repeatedly over
 	 ;; potentially large regions with `parse-partial-sexp' to verify
@@ -7809,8 +7808,7 @@ comment at the start of cc-engine.el for more info."
   ;; looking (in C++) like this "FQN::of::base::Class".  Move to the start of
   ;; this construct and return t.  If the parsing fails, return nil, leaving
   ;; point unchanged.
-  (let ((here (point))
-	end)
+  (let (end)
     (if (not (c-on-identifier))
 	nil
       (c-simple-skip-symbol-backward)

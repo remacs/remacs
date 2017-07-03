@@ -1120,6 +1120,14 @@ enum mouse_cursor {
   mouse_cursor_hand,
   mouse_cursor_horizontal_drag,
   mouse_cursor_vertical_drag,
+  mouse_cursor_left_edge,
+  mouse_cursor_top_left_corner,
+  mouse_cursor_top_edge,
+  mouse_cursor_top_right_corner,
+  mouse_cursor_right_edge,
+  mouse_cursor_bottom_right_corner,
+  mouse_cursor_bottom_edge,
+  mouse_cursor_bottom_left_corner,
   mouse_cursor_max
 };
 
@@ -1139,13 +1147,21 @@ struct mouse_cursor_types {
 
 /* This array must stay in sync with enum mouse_cursor above!  */
 static const struct mouse_cursor_types mouse_cursor_types[] = {
-  { "text",      &Vx_pointer_shape,                XC_xterm             },
-  { "nontext",   &Vx_nontext_pointer_shape,        XC_left_ptr          },
-  { "hourglass", &Vx_hourglass_pointer_shape,      XC_watch             },
-  { "modeline",  &Vx_mode_pointer_shape,           XC_xterm             },
-  { NULL,        &Vx_sensitive_text_pointer_shape, XC_hand2             },
-  { NULL,        &Vx_window_horizontal_drag_shape, XC_sb_h_double_arrow },
-  { NULL,        &Vx_window_vertical_drag_shape,   XC_sb_v_double_arrow },
+  { "text",      &Vx_pointer_shape,                    XC_xterm               },
+  { "nontext",   &Vx_nontext_pointer_shape,            XC_left_ptr            },
+  { "hourglass", &Vx_hourglass_pointer_shape,          XC_watch               },
+  { "modeline",  &Vx_mode_pointer_shape,               XC_xterm               },
+  { NULL,        &Vx_sensitive_text_pointer_shape,     XC_hand2               },
+  { NULL,        &Vx_window_horizontal_drag_shape,     XC_sb_h_double_arrow   },
+  { NULL,        &Vx_window_vertical_drag_shape,       XC_sb_v_double_arrow   },
+  { NULL,        &Vx_window_left_edge_shape,           XC_left_side           },
+  { NULL,        &Vx_window_top_left_corner_shape,     XC_top_left_corner     },
+  { NULL,        &Vx_window_top_edge_shape,            XC_top_side            },
+  { NULL,        &Vx_window_top_right_corner_shape,    XC_top_right_corner    },
+  { NULL,        &Vx_window_right_edge_shape,          XC_right_side          },
+  { NULL,        &Vx_window_bottom_right_corner_shape, XC_bottom_right_corner },
+  { NULL,        &Vx_window_bottom_edge_shape,         XC_bottom_side         },
+  { NULL,        &Vx_window_bottom_left_corner_shape,  XC_bottom_left_corner  },
 };
 
 struct mouse_cursor_data {
@@ -1296,6 +1312,14 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   INSTALL_CURSOR (hand_cursor, hand);
   INSTALL_CURSOR (horizontal_drag_cursor, horizontal_drag);
   INSTALL_CURSOR (vertical_drag_cursor, vertical_drag);
+  INSTALL_CURSOR (left_edge_cursor, left_edge);
+  INSTALL_CURSOR (top_left_corner_cursor, top_left_corner);
+  INSTALL_CURSOR (top_edge_cursor, top_edge);
+  INSTALL_CURSOR (top_right_corner_cursor, top_right_corner);
+  INSTALL_CURSOR (right_edge_cursor, right_edge);
+  INSTALL_CURSOR (bottom_right_corner_cursor, bottom_right_corner);
+  INSTALL_CURSOR (bottom_edge_cursor, bottom_edge);
+  INSTALL_CURSOR (bottom_left_corner_cursor, bottom_left_corner);
 
 #undef INSTALL_CURSOR
 
@@ -3814,6 +3838,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "leftFringe", "LeftFringe", RES_TYPE_NUMBER);
   x_default_parameter (f, parms, Qright_fringe, Qnil,
 		       "rightFringe", "RightFringe", RES_TYPE_NUMBER);
+  x_default_parameter (f, parms, Qno_special_glyphs, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
 
   x_default_scroll_bar_color_parameter (f, parms, Qscroll_bar_foreground,
 					"scrollBarForeground",
@@ -5286,7 +5312,7 @@ Frames are listed from topmost (first) to bottommost (last).  */)
 static void
 x_frame_restack (struct frame *f1, struct frame *f2, bool above_flag)
 {
-#ifdef USE_GTK
+#if defined (USE_GTK) && GTK_CHECK_VERSION (2, 18, 0)
   block_input ();
   xg_frame_restack (f1, f2, above_flag);
   unblock_input ();
@@ -6196,6 +6222,8 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
 		       "cursorColor", "Foreground", RES_TYPE_STRING);
   x_default_parameter (f, parms, Qborder_color, build_string ("black"),
 		       "borderColor", "BorderColor", RES_TYPE_STRING);
+  x_default_parameter (f, parms, Qno_special_glyphs, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
 
   /* Init faces before x_default_parameter is called for the
      scroll-bar-width parameter because otherwise we end up in
@@ -7486,6 +7514,7 @@ frame_parm_handler x_frame_parm_handlers[] =
   x_set_no_accept_focus,
   x_set_z_group,
   x_set_override_redirect,
+  x_set_no_special_glyphs,
 };
 
 void
@@ -7563,6 +7592,62 @@ or when you set the mouse color.  */);
 This variable takes effect when you create a new frame
 or when you set the mouse color.  */);
   Vx_window_vertical_drag_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-left-edge-cursor",
+	       Vx_window_left_edge_shape,
+  doc: /* Pointer shape indicating a left x-window edge can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_left_edge_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-top-left-corner-cursor",
+	       Vx_window_top_left_corner_shape,
+  doc: /* Pointer shape indicating a top left x-window corner can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_top_left_corner_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-top-edge-cursor",
+	       Vx_window_top_edge_shape,
+  doc: /* Pointer shape indicating a top x-window edge can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_top_edge_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-top-right-corner-cursor",
+	       Vx_window_top_right_corner_shape,
+  doc: /* Pointer shape indicating a top right x-window corner can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_top_right_corner_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-right-edge-cursor",
+	       Vx_window_right_edge_shape,
+  doc: /* Pointer shape indicating a right x-window edge can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_right_edge_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-bottom-right-corner-cursor",
+	       Vx_window_bottom_right_corner_shape,
+  doc: /* Pointer shape indicating a bottom right x-window corner can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_bottom_right_corner_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-bottom-edge-cursor",
+	       Vx_window_bottom_edge_shape,
+  doc: /* Pointer shape indicating a bottom x-window edge can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_bottom_edge_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-bottom-left-corner-cursor",
+	       Vx_window_bottom_left_corner_shape,
+  doc: /* Pointer shape indicating a bottom left x-window corner can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_bottom_left_corner_shape = Qnil;
 
   DEFVAR_LISP ("x-cursor-fore-pixel", Vx_cursor_fore_pixel,
     doc: /* A string indicating the foreground color of the cursor box.  */);

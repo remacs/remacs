@@ -875,25 +875,31 @@ treat it specially.
 
 @item
 Otherwise, if the command string contains @samp{?} surrounded by
-whitespace, Emacs runs the shell command once @emph{for each file},
-substituting the current file name for @samp{?} each time.  You can
-use @samp{?} more than once in the command; the same file name
-replaces each occurrence.
+whitespace or @samp{`?`}, Emacs runs the shell command once
+@emph{for each file}, substituting the current file name for @samp{?}
+and @samp{`?`} each time.  You can use both @samp{?} or @samp{`?`} more
+than once in the command; the same file name replaces each occurrence.
+If you mix them with @samp{*} the command signals an error.
 
 @item
-If the command string contains neither @samp{*} nor @samp{?}, Emacs
-runs the shell command once for each file, adding the file name at the
+If the command string contains neither @samp{*} nor @samp{?} nor @samp{`?`},
+Emacs runs the shell command once for each file, adding the file name at the
 end.  For example, @kbd{! uudecode @key{RET}} runs @code{uudecode} on
 each file.
 @end itemize
 
-  To iterate over the file names in a more complicated fashion, use an
-explicit shell loop.  For example, here is how to uuencode each file,
-making the output file name by appending @samp{.uu} to the input file
-name:
+  To iterate over the file names in a more complicated fashion, you might
+prefer to use an explicit shell loop.  For example, here is how to uuencode
+each file, making the output file name by appending @samp{.uu} to the input
+file name:
 
 @example
 for file in * ; do uuencode "$file" "$file" >"$file".uu; done
+@end example
+
+The same example with @samp{`?`} notation:
+@example
+uuencode ? ? > `?`.uu
 @end example
 
   The @kbd{!} and @kbd{&} commands do not attempt to update the Dired

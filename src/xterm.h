@@ -637,6 +637,14 @@ struct x_output
   Cursor horizontal_drag_cursor;
   Cursor vertical_drag_cursor;
   Cursor current_cursor;
+  Cursor left_edge_cursor;
+  Cursor top_left_corner_cursor;
+  Cursor top_edge_cursor;
+  Cursor top_right_corner_cursor;
+  Cursor right_edge_cursor;
+  Cursor bottom_right_corner_cursor;
+  Cursor bottom_edge_cursor;
+  Cursor bottom_left_corner_cursor;
 
   /* Window whose cursor is hourglass_cursor.  This window is temporarily
      mapped to display an hourglass cursor.  */
