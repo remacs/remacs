@@ -22,7 +22,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(eval-when-compile (require 'cl))
 
 (ert-deftest data-tests-= ()
   (should-error (=))
@@ -141,9 +140,9 @@
       43))))
 
 (defun mock-bool-vector-count-consecutive (a b i)
-  (loop for i from i below (length a)
-        while (eq (aref a i) b)
-        sum 1))
+  (cl-loop for i from i below (length a)
+           while (eq (aref a i) b)
+           sum 1))
 
 (defun test-bool-vector-bv-from-hex-string (desc)
   (let (bv nchars nibbles)
@@ -157,7 +156,7 @@
       (dolist (n (nreverse nibbles))
         (dotimes (_ 4)
           (aset bv i (> (logand 1 n) 0))
-          (incf i)
+          (cl-incf i)
           (setf n (lsh n -1)))))
     bv))
 
@@ -182,9 +181,9 @@ hexadecimal digits describing the bool vector.  We exhaustively
 test all counts at all possible positions in the vector by
 comparing the subr with a much slower lisp implementation."
   (let ((bv (test-bool-vector-bv-from-hex-string desc)))
-    (loop
+    (cl-loop
      for lf in '(nil t)
-     do (loop
+     do (cl-loop
          for pos from 0 upto (length bv)
          for cnt = (mock-bool-vector-count-consecutive bv lf pos)
          for rcnt = (bool-vector-count-consecutive bv lf pos)
@@ -217,36 +216,36 @@ comparing the subr with a much slower lisp implementation."
 (defun test-bool-vector-apply-mock-op (mock a b c)
   "Compute (slowly) the correct result of a bool-vector set operation."
   (let (changed nv)
-    (assert (eql (length b) (length c)))
+    (cl-assert (eql (length b) (length c)))
     (if a (setf nv a)
       (setf a (make-bool-vector (length b) nil))
       (setf changed t))
 
-    (loop for i below (length b)
-          for mockr = (funcall mock
-                               (if (aref b i) 1 0)
-                               (if (aref c i) 1 0))
-          for r = (not (= 0 mockr))
-          do (progn
-               (unless (eq (aref a i) r)
-                 (setf changed t))
-               (setf (aref a i) r)))
+    (cl-loop for i below (length b)
+             for mockr = (funcall mock
+                                  (if (aref b i) 1 0)
+                                  (if (aref c i) 1 0))
+             for r = (not (= 0 mockr))
+             do (progn
+                  (unless (eq (aref a i) r)
+                    (setf changed t))
+                  (setf (aref a i) r)))
     (if changed a)))
 
 (defun test-bool-vector-binop (mock real)
   "Test a binary set operation."
-  (loop for s1 in bool-vector-test-vectors
-        for bv1 = (test-bool-vector-bv-from-hex-string s1)
-        for vecs2 = (cl-remove-if-not
-                     (lambda (x) (eql (length x) (length s1)))
-                     bool-vector-test-vectors)
-        do (loop for s2 in vecs2
-                 for bv2 = (test-bool-vector-bv-from-hex-string s2)
-                 for mock-result = (test-bool-vector-apply-mock-op
-                                    mock nil bv1 bv2)
-                 for real-result = (funcall real bv1 bv2)
-                 do (progn
-                      (should (equal mock-result real-result))))))
+  (cl-loop for s1 in bool-vector-test-vectors
+           for bv1 = (test-bool-vector-bv-from-hex-string s1)
+           for vecs2 = (cl-remove-if-not
+                        (lambda (x) (eql (length x) (length s1)))
+                        bool-vector-test-vectors)
+           do (cl-loop for s2 in vecs2
+                       for bv2 = (test-bool-vector-bv-from-hex-string s2)
+                       for mock-result = (test-bool-vector-apply-mock-op
+                                          mock nil bv1 bv2)
+                       for real-result = (funcall real bv1 bv2)
+                       do (progn
+                            (should (equal mock-result real-result))))))
 
 (ert-deftest bool-vector-intersection-op ()
   (test-bool-vector-binop
@@ -300,8 +299,7 @@ comparing the subr with a much slower lisp implementation."
 
 (ert-deftest binding-test-manual ()
   "A test case from the elisp manual."
-  (save-excursion
-    (set-buffer binding-test-buffer-A)
+  (with-current-buffer binding-test-buffer-A
     (let ((binding-test-some-local 'something-else))
       (should (eq binding-test-some-local 'something-else))
       (set-buffer binding-test-buffer-B)
@@ -312,8 +310,7 @@ comparing the subr with a much slower lisp implementation."
 
 (ert-deftest binding-test-setq-default ()
   "Test that a setq-default has no effect when there is a local binding."
-  (save-excursion
-    (set-buffer binding-test-buffer-B)
+  (with-current-buffer binding-test-buffer-B
     ;; This variable is not local in this buffer.
     (let ((binding-test-some-local 'something-else))
       (setq-default binding-test-some-local 'new-default))
@@ -321,8 +318,7 @@ comparing the subr with a much slower lisp implementation."
 
 (ert-deftest binding-test-makunbound ()
   "Tests of makunbound, from the manual."
-  (save-excursion
-    (set-buffer binding-test-buffer-B)
+  (with-current-buffer binding-test-buffer-B
     (should (boundp 'binding-test-some-local))
     (let ((binding-test-some-local 'outer))
       (let ((binding-test-some-local 'inner))
@@ -342,19 +338,19 @@ comparing the subr with a much slower lisp implementation."
 
 (ert-deftest binding-test-set-constant-t ()
   "Test setting the constant t"
-  (should-error (setq t 'bob) :type 'setting-constant))
+  (with-no-warnings (should-error (setq t 'bob) :type 'setting-constant)))
 
 (ert-deftest binding-test-set-constant-nil ()
   "Test setting the constant nil"
-  (should-error (setq nil 'bob) :type 'setting-constant))
+  (with-no-warnings (should-error (setq nil 'bob) :type 'setting-constant)))
 
 (ert-deftest binding-test-set-constant-keyword ()
   "Test setting a keyword constant"
-  (should-error (setq :keyword 'bob) :type 'setting-constant))
+  (with-no-warnings (should-error (setq :keyword 'bob) :type 'setting-constant)))
 
 (ert-deftest binding-test-set-constant-nil ()
   "Test setting a keyword to itself"
-  (should (setq :keyword :keyword)))
+  (with-no-warnings (should (setq :keyword :keyword))))
 
 ;; More tests to write -
 ;; kill-local-variable
@@ -406,12 +402,14 @@ comparing the subr with a much slower lisp implementation."
                                       (should (null watch-data))))
       ;; Watch var0, then alias it.
       (add-variable-watcher 'data-tests-var0 collect-watch-data)
+      (defvar data-tests-var0-alias)
       (defvaralias 'data-tests-var0-alias 'data-tests-var0)
       (setq data-tests-var0 1)
       (should-have-watch-data '(data-tests-var0 1 set nil))
       (setq data-tests-var0-alias 2)
       (should-have-watch-data '(data-tests-var0 2 set nil))
       ;; Alias var1, then watch var1-alias.
+      (defvar data-tests-var1-alias)
       (defvaralias 'data-tests-var1-alias 'data-tests-var1)
       (add-variable-watcher 'data-tests-var1-alias collect-watch-data)
       (setq data-tests-var1 1)
@@ -419,6 +417,7 @@ comparing the subr with a much slower lisp implementation."
       (setq data-tests-var1-alias 2)
       (should-have-watch-data '(data-tests-var1 2 set nil))
       ;; Alias var2, then watch it.
+      (defvar data-tests-var2-alias)
       (defvaralias 'data-tests-var2-alias 'data-tests-var2)
       (add-variable-watcher 'data-tests-var2 collect-watch-data)
       (setq data-tests-var2 1)
@@ -437,7 +436,8 @@ comparing the subr with a much slower lisp implementation."
       (should (null watch-data)))))
 
 (ert-deftest data-tests-local-variable-watchers ()
-  (defvar-local data-tests-lvar 0)
+  (with-no-warnings
+    (defvar-local data-tests-lvar 0))
   (let* ((buf1 (current-buffer))
          (buf2 nil)
          (watch-data nil)

@@ -1106,7 +1106,7 @@ struct glyph_row *matrix_row (struct glyph_matrix *, int);
 #define MATRIX_BOTTOM_TEXT_ROW(MATRIX, W)		\
      ((MATRIX)->rows					\
       + (MATRIX)->nrows					\
-      - (WINDOW_WANTS_MODELINE_P ((W)) ? 1 : 0))
+      - (window_wants_mode_line ((W)) ? 1 : 0))
 
 /* Non-zero if the face of the last glyph in ROW's text area has
    to be drawn to the end of the text area.  */
@@ -1469,40 +1469,6 @@ struct glyph_string
 #define DESIRED_HEADER_LINE_HEIGHT(W) \
      MATRIX_HEADER_LINE_HEIGHT ((W)->desired_matrix)
 
-/* PXW: The height checks below serve to show at least one text line
-   instead of a mode- and/or header line when a window gets very small.
-   But (1) the check fails when the mode- or header-line is taller than
-   the associated frame's line height and (2) we don't care much about
-   text visibility anyway when shrinking a frame containing a toolbar.
-
-   So maybe these checks should be removed and any clipping left to the
-   window manager.  */
-
-/* Value is true if window W wants a mode line and is large enough
-   to accommodate it.  */
-#define WINDOW_WANTS_MODELINE_P(W)					\
-  (BUFFERP ((W)->contents)						\
-   ? (!MINI_WINDOW_P (W)						\
-      && !(W)->pseudo_window_p						\
-      && FRAME_WANTS_MODELINE_P (XFRAME (WINDOW_FRAME (W)))		\
-      && !NILP (BVAR (XBUFFER ((W)->contents), mode_line_format))	\
-      && WINDOW_PIXEL_HEIGHT (W) > WINDOW_FRAME_LINE_HEIGHT (W))	\
-   : false)
-
-/* Value is true if window W wants a header line and is large enough
-   to accommodate it.  */
-#define WINDOW_WANTS_HEADER_LINE_P(W)					\
-     (BUFFERP ((W)->contents)						\
-      ? (!MINI_WINDOW_P (W)						\
-	 && !(W)->pseudo_window_p					\
-	 && FRAME_WANTS_MODELINE_P (XFRAME (WINDOW_FRAME (W)))		\
-	 && !NILP (BVAR (XBUFFER ((W)->contents), header_line_format))	\
-	 && (WINDOW_PIXEL_HEIGHT (W)					\
-	     > (WINDOW_WANTS_MODELINE_P (W)				\
-		? (2 * WINDOW_FRAME_LINE_HEIGHT (W))			\
-		: WINDOW_FRAME_LINE_HEIGHT (W))))			\
-      : false)
-
 /* Return proper value to be used as baseline offset of font that has
    ASCENT and DESCENT to draw characters by the font at the vertical
    center of the line of frame F.
@@ -1784,6 +1750,7 @@ enum face_id
   WINDOW_DIVIDER_FACE_ID,
   WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID,
   WINDOW_DIVIDER_LAST_PIXEL_FACE_ID,
+  INTERNAL_BORDER_FACE_ID,
   BASIC_FACE_ID_SENTINEL
 };
 

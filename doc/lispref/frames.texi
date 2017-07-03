@@ -77,6 +77,13 @@ displayed on that terminal; the list of possible values is the same as
 for @code{framep} above.
 @end defun
 
+@cindex top-level frame
+On a graphical terminal we distinguish two types of frames: A normal
+@dfn{top-level frame} is a frame whose window-system window is a child
+of the window-system's root window for that terminal.  A child frame is
+a frame whose window-system window is the child of the window-system
+window of another Emacs frame.  @xref{Child Frames}.
+
 @menu
 * Creating Frames::             Creating additional frames.
 * Multiple Terminals::          Displaying on several different devices.
@@ -89,9 +96,9 @@ for @code{framep} above.
 * Minibuffers and Frames::      How a frame finds the minibuffer to use.
 * Input Focus::                 Specifying the selected frame.
 * Visibility of Frames::        Frames may be visible or invisible, or icons.
-* Raising and Lowering::        Raising a frame makes it hide other windows;
-                                  lowering it makes the others hide it.
+* Raising and Lowering::        Raising, Lowering and Restacking Frames.
 * Frame Configurations::        Saving the state of all frames.
+* Child Frames::                Making a frame the child of another.
 * Mouse Tracking::              Getting events that say when the mouse moves.
 * Mouse Position::              Asking where the mouse is, or moving it.
 * Pop-Up Menus::                Displaying a menu for the user to select from.
@@ -436,7 +443,8 @@ has to specify a live frame (@pxref{Deleting Frames}).  If omitted or
 @menu
 * Frame Layout::            Basic layout of frames.
 * Frame Font::              The default font of a frame and how to set it.
-* Size and Position::       Changing the size and position of a frame.
+* Frame Position::          The position of a frame on its display.
+* Frame Size::              Specifying and retrieving a frame's size.
 * Implied Frame Resizing::  Implied resizing of frames and how to prevent it.
 @end menu
 
@@ -446,14 +454,16 @@ has to specify a live frame (@pxref{Deleting Frames}).  If omitted or
 @cindex frame layout
 @cindex layout of frame
 
-The drawing below sketches the layout of a frame on a graphical
-terminal:
+A visible frame occupies a rectangular area on its terminal's display.
+This area may contain a number of nested rectangles, each serving a
+different purpose.  The drawing below sketches the layout of a frame on
+a graphical terminal:
 @smallexample
 @group
 
         <------------ Outer Frame Width ----------->
-        ___________________________________________
-     ^(0)  ___________ External Border __________   |
+        ____________________________________________
+     ^(0)  ________ External/Outer Border _______   |
      | |  |_____________ Title Bar ______________|  |
      | | (1)_____________ Menu Bar ______________|  | ^
      | | (2)_____________ Tool Bar ______________|  | ^
@@ -468,14 +478,14 @@ Height |  | | Height                           | |  | Height
      | |  | |   |                              | |  | |
      | |  | |___v______________________________| |  | |
      | |  |___________ Internal Border __________|  | v
-     v |______________ External Border _____________|
+     v |___________ External/Outer Border __________|
            <-------- Native Frame Width -------->
 
 @end group
 @end smallexample
 
 In practice not all of the areas shown in the drawing will or may be
-present.  The meaning of these areas is:
+present.  The meaning of these areas is described below.
 
 @table @samp
 @item Outer Frame
@@ -483,50 +493,103 @@ present.  The meaning of these areas is:
 @cindex outer edges
 @cindex outer width
 @cindex outer height
+@cindex outer size
 The @dfn{outer frame} is a rectangle comprising all areas shown in the
 drawing.  The edges of that rectangle are called the @dfn{outer edges}
-of the frame.  The @dfn{outer width} and @dfn{outer height} of the frame
-specify the size of that rectangle.
+of the frame.  Together, the @dfn{outer width} and @dfn{outer height} of
+the frame specify the @dfn{outer size} of that rectangle.
+
+Knowing the outer size of a frame is useful for fitting a frame into the
+working area of its display (@pxref{Multiple Terminals}) or for placing
+two frames adjacent to each other on the screen.  Usually, the outer
+size of a frame is available only after the frame has been mapped (made
+visible, @pxref{Visibility of Frames}) at least once.  For the initial
+frame or a frame that has not been created yet, the outer size can be
+only estimated or must be calculated from the window-system's or window
+manager's defaults.  One workaround is to obtain the differences of the
+outer and native (see below) sizes of a mapped frame and use them for
+calculating the outer size of the new frame.
 
 @cindex outer position
-The upper left corner of the outer frame (indicated by @samp{(0)} in the
-drawing above) is the @dfn{outer position} or the frame.  It is
-specified by and settable via the @code{left} and @code{top} frame
-parameters (@pxref{Position Parameters}) as well as the functions
-@code{frame-position} and @code{set-frame-position} (@pxref{Size and
-Position}).
+The position of the upper left corner of the outer frame (indicated by
+@samp{(0)} in the drawing above) is the @dfn{outer position} of the
+frame.  The outer position of a graphical frame is also referred to as
+``the position'' of the frame because it usually remains unchanged on
+its display whenever the frame is resized or its layout is changed.
+
+The outer position is specified by and can be set via the @code{left}
+and @code{top} frame parameters (@pxref{Position Parameters}).  For a
+normal, top-level frame these parameters usually represent its absolute
+position (see below) with respect to its display's origin.  For a child
+frame (@pxref{Child Frames}) these parameters represent its position
+relative to the native position (see below) of its parent frame.  For
+frames on text terminals the values of these parameters are meaningless
+and always zero.
 
 @item External Border
 @cindex external border
 The @dfn{external border} is part of the decorations supplied by the
-window manager.  It's typically used for resizing the frame with the
-mouse.  The external border is normally not shown on ``fullboth'' and
-maximized frames (@pxref{Size Parameters}) and doesn't exist for text
-terminal frames.
+window manager.  It is typically used for resizing the frame with the
+mouse and is therefore not shown on ``fullboth'' and maximized frames
+(@pxref{Size Parameters}).  Its width is determined by the window
+manager and cannot be changed by Emacs' functions.
 
-   The external border should not be confused with the @dfn{outer
-border} specified by the @code{border-width} frame parameter
-(@pxref{Layout Parameters}).  Since the outer border is usually ignored
-on most platforms it is not covered here.
+External borders don't exist on text terminal frames.  For graphical
+frames, their display can be suppressed by setting the
+@code{override-redirect} or @code{undecorated} frame parameter
+(@pxref{Management Parameters}).
+
+@item Outer Border
+@cindex outer border
+The @dfn{outer border} is a separate border whose width can be specified
+with the @code{border-width} frame parameter (@pxref{Layout
+Parameters}).  In practice, either the external or the outer border of a
+frame are displayed but never both at the same time.  Usually, the outer
+border is shown only for special frames that are not (fully) controlled
+by the window manager like tooltip frames (@pxref{Tooltips}), child
+frames (@pxref{Child Frames}) and @code{undecorated} or
+@code{override-redirect} frames (@pxref{Management Parameters}).
+
+Outer borders are never shown on text terminal frames and on frames
+generated by GTK+ routines.  On MS-Windows, the outer border is emulated
+with the help of a one pixel wide external border.  Non-toolkit builds
+on X allow to change the color of the outer border by setting the
+@code{border-color} frame parameter (@pxref{Layout Parameters}).
 
 @item Title Bar
 @cindex title bar
-The @dfn{title bar} is also part of the window manager's decorations and
-typically displays the title of the frame (@pxref{Frame Titles}) as well
-as buttons for minimizing, maximizing and deleting the frame.  The title
-bar is usually not displayed on fullboth (@pxref{Size Parameters})
-or tooltip frames.  Title bars don't exist for text terminal frames.
+@cindex caption bar
+The @dfn{title bar}, a.k.a.@ @dfn{caption bar}, is also part of the
+window manager's decorations and typically displays the title of the
+frame (@pxref{Frame Titles}) as well as buttons for minimizing,
+maximizing and deleting the frame.  It can be also used for dragging
+the frame with the mouse.  The title bar is usually not displayed for
+fullboth (@pxref{Size Parameters}), tooltip (@pxref{Tooltips}) and
+child frames (@pxref{Child Frames}) and doesn't exist for terminal
+frames.  Display of the title bar can be suppressed by setting the
+@code{override-redirect} or the @code{undecorated} frame parameters
+(@pxref{Management Parameters}).
 
 @item Menu Bar
 @cindex internal menu bar
 @cindex external menu bar
 The menu bar (@pxref{Menu Bar}) can be either internal (drawn by Emacs
-itself) or external (drawn by a toolkit).  Most builds (GTK+, Lucid,
-Motif and Windows) rely on an external menu bar.  NS also uses an
+itself) or external (drawn by the toolkit).  Most builds (GTK+, Lucid,
+Motif and MS-Windows) rely on an external menu bar.  NS also uses an
 external menu bar which, however, is not part of the outer frame.
 Non-toolkit builds can provide an internal menu bar.  On text terminal
 frames, the menu bar is part of the frame's root window (@pxref{Windows
-and Frames}).
+and Frames}).  As a rule, menu bars are never shown on child frames
+(@pxref{Child Frames}).  Display of the menu bar can be suppressed by
+setting the @code{menu-bar-lines} parameter (@pxref{Layout Parameters})
+to zero.
+
+Whether the menu bar is wrapped or truncated whenever its width
+becomes too large to fit on its frame depends on the toolkit .
+Usually, only Motif and MS-Windows builds can wrap the menu bar.  When
+they (un-)wrap the menu bar, they try to keep the outer height of the
+frame unchanged, so the native height of the frame (see below) will
+change instead.
 
 @item Tool Bar
 @cindex internal tool bar
@@ -536,59 +599,91 @@ internal (drawn by Emacs itself) or external (drawn by a toolkit).  The
 GTK+ and NS builds have the tool bar drawn by the toolkit.  The
 remaining builds use internal tool bars.  With GTK+ the tool bar can be
 located on either side of the frame, immediately outside the internal
-border, see below.
+border, see below.  Tool bars are usually not shown for child frames
+(@pxref{Child Frames}).  Display of the tool bar can be suppressed by
+setting the @code{tool-bar-lines} parameter (@pxref{Layout
+Parameters}) to zero.
+
+If the variable @code{auto-resize-tool-bars} is non-@code{nil}, Emacs
+wraps the internal tool bar when its width becomes too large for its
+frame.  If and when Emacs (un-)wraps the internal tool bar, it by
+default keeps the outer height of the frame unchanged, so the native
+height of the frame (see below) will change instead.  Emacs built with
+GTK+, on the other hand, never wraps the tool bar but may
+automatically increase the outer width of a frame in order to
+accommodate an overlong tool bar.
 
 @item Native Frame
 @cindex native frame
 @cindex native edges
 @cindex native width
 @cindex native height
-@cindex display area
+@cindex native size
 The @dfn{native frame} is a rectangle located entirely within the outer
-frame.  It excludes the areas occupied by the external border, the title
-bar and any external menu or external tool bar.  The area enclosed by
-the native frame is sometimes also referred to as the @dfn{display area}
-of the frame.  The edges of the native frame are called the @dfn{native
-edges} of the frame.  The @dfn{native width} and @dfn{native height} of
-the frame specify the size of the rectangle.
+frame.  It excludes the areas occupied by an external or outer border,
+the title bar and any external menu or tool bar.  The edges of the
+native frame are called the @dfn{native edges} of the frame.  Together,
+the @dfn{native width} and @dfn{native height} of a frame specify the
+@dfn{native size} of the frame.
+
+The native size of a frame is the size Emacs passes to the window-system
+or window manager when creating or resizing the frame from within Emacs.
+It is also the size Emacs receives from the window-system or window
+manager whenever these resize the frame's window-system window, for
+example, after maximizing the frame by clicking on the corresponding
+button in the title bar or when dragging its external border with the
+mouse.
 
 @cindex native position
-The top left corner of the native frame specifies the @dfn{native
-position} of the frame.  (1)--(3) in the drawing above indicate that
-position for the various builds:
+The position of the top left corner of the native frame specifies the
+@dfn{native position} of the frame.  (1)--(3) in the drawing above
+indicate that position for the various builds:
 
 @itemize @w{}
 @item (1) non-toolkit and terminal frames
 
-@item (2) Lucid, Motif and Windows frames
+@item (2) Lucid, Motif and MS-Windows frames
 
 @item (3) GTK+ and NS frames
 @end itemize
 
-Accordingly, the native height of a frame includes the height of the
-tool bar but not that of the menu bar (Lucid, Motif, Windows) or those
-of the menu bar and the tool bar (non-toolkit and text terminal frames).
+Accordingly, the native height of a frame may include the height of the
+tool bar but not that of the menu bar (Lucid, Motif, MS-Windows) or
+those of the menu bar and the tool bar (non-toolkit and text terminal
+frames).
 
-The native position of a frame is the reference position of functions
+The native position of a frame is the reference position for functions
 that set or return the current position of the mouse (@pxref{Mouse
 Position}) and for functions dealing with the position of windows like
 @code{window-edges}, @code{window-at} or @code{coordinates-in-window-p}
-(@pxref{Coordinates and Windows}).
+(@pxref{Coordinates and Windows}).  It also specifies the (0, 0) origin
+for locating and positioning child frames within this frame
+(@pxref{Child Frames}).
+
+Note also that the native position of a frame usually remains unaltered
+on its display when removing or adding the window manager decorations by
+changing the frame's @code{override-redirect} or @code{undecorated}
+parameter (@pxref{Management Parameters}).
 
 @item Internal Border
-The internal border (@pxref{Layout Parameters}) is a border drawn by
-Emacs around the inner frame (see below).
+The internal border is a border drawn by Emacs around the inner frame
+(see below).  Its width is specified by the @code{internal-border-width}
+frame parameter (@pxref{Layout Parameters}).  Its color is specified by
+the background of the @code{internal-border} face.
 
 @item Inner Frame
 @cindex inner frame
 @cindex inner edges
 @cindex inner width
 @cindex inner height
+@cindex inner size
+@cindex display area
 The @dfn{inner frame} is the rectangle reserved for the frame's windows.
 It's enclosed by the internal border which, however, is not part of the
 inner frame.  Its edges are called the @dfn{inner edges} of the frame.
-The @dfn{inner width} and @dfn{inner height} specify the size of the
-rectangle.
+The @dfn{inner width} and @dfn{inner height} specify the @dfn{inner
+size} of the rectangle.  The inner frame is sometimes also referred to
+as the @dfn{display area} of the frame.
 
 @cindex minibuffer-less frame
 @cindex minibuffer-only frame
@@ -603,22 +698,39 @@ configurations.
 
 @item Text Area
 @cindex text area
-The @dfn{text area} of a frame is a somewhat fictitious area located
-entirely within the native frame.  It can be obtained by removing from
-the native frame any internal borders, one vertical and one horizontal
-scroll bar, and one left and one right fringe as specified for this
-frame, see @ref{Layout Parameters}.
+The @dfn{text area} of a frame is a somewhat fictitious area that can be
+embedded in the native frame.  Its position is unspecified.  Its width
+can be obtained by removing from that of the native width the widths of
+the internal border, one vertical scroll bar, and one left and one right
+fringe if they are specified for this frame, see @ref{Layout
+Parameters}.  Its height can be obtained by removing from that of the
+native height the widths of the internal border and the heights of the
+frame's internal menu and tool bars and one horizontal scroll bar if
+specified for this frame.
 @end table
 
 @cindex absolute position
-The @dfn{absolute position} of a frame or its edges is usually given in
-terms of pixels counted from an origin at position (0, 0) of the frame's
-display.  Note that with multiple monitors the origin does not
-necessarily coincide with the top left corner of the entire usable
-display area.  Hence the absolute outer position of a frame or the
-absolute positions of the edges of the outer, native or inner frame can
-be negative in such an environment even when that frame is completely
-visible.
+@cindex absolute frame position
+@cindex absolute edges
+@cindex absolute frame edges
+@cindex display origin
+@cindex origin of display
+The @dfn{absolute position} of a frame is given as a pair (X, Y) of
+horizontal and vertical pixel offsets relative to an origin (0, 0) of
+the frame's display.  Correspondingly, the @dfn{absolute edges} of a
+frame are given as pixel offsets from that origin.
+
+  Note that with multiple monitors, the origin of the display does not
+necessarily coincide with the top-left corner of the entire usable
+display area of the terminal.  Hence the absolute position of a frame
+can be negative in such an environment even when that frame is
+completely visible.
+
+  By convention, vertical offsets increase ``downwards''.  This means
+that the height of a frame is obtained by subtracting the offset of its
+top edge from that of its bottom edge.  Horizontal offsets increase
+``rightwards'', as expected, so a frame's width is calculated by
+subtracting the offset of its left edge from that of its right edge.
 
   For a frame on a graphical terminal the following function returns the
 sizes of the areas described above:
@@ -626,13 +738,16 @@ sizes of the areas described above:
 @defun frame-geometry &optional frame
 This function returns geometric attributes of @var{frame}.  The return
 value is an association list of the attributes listed below.  All
-coordinate, height and width values are integers counting pixels.
+coordinate, height and width values are integers counting pixels.  Note
+that if @var{frame} has not been mapped yet, (@pxref{Visibility of
+Frames}) some of the return values may only represent approximations of
+the actual values---those that can be seen after the frame has been
+mapped.
 
 @table @code
 @item outer-position
-A cons of the absolute X- and Y-coordinates of the outer position of
-@var{frame}, relative to the origin at position (0, 0) of @var{frame}'s
-display.
+A cons representing the absolute position of the outer @var{frame},
+relative to the origin at position (0, 0) of @var{frame}'s display.
 
 @item outer-size
 A cons of the outer width and height of @var{frame}.
@@ -642,6 +757,10 @@ A cons of the horizontal and vertical width of @var{frame}'s external
 borders as supplied by the window manager.  If the window manager
 doesn't supply these values, Emacs will try to guess them from the
 coordinates of the outer and inner frame.
+
+@item outer-border-width
+The width of the outer border of @var{frame}.  The value is meaningful
+for non-GTK+ X builds only.
 
 @item title-bar-size
 A cons of the width and height of the title bar of @var{frame} as
@@ -677,24 +796,28 @@ The following function can be used to retrieve the edges of the outer,
 native and inner frame.
 
 @defun frame-edges &optional frame type
-This function returns the edges of the outer, native or inner frame of
-@var{frame}.  @var{frame} must be a live frame and defaults to the
-selected one.  The list returned has the form (@var{left} @var{top}
-@var{right} @var{bottom}) where all values are in pixels relative to the
-position (0, 0) of @var{frame}'s display.  For terminal frames
-@var{left} and @var{top} are both zero.
+This function returns the absolute edges of the outer, native or inner
+frame of @var{frame}.  @var{frame} must be a live frame and defaults to
+the selected one.  The returned list has the form @w{@code{(@var{left}
+@var{top} @var{right} @var{bottom})}} where all values are in pixels
+relative to the origin of @var{frame}'s display.  For terminal frames
+the values returned for @var{left} and @var{top} are always zero.
 
 Optional argument @var{type} specifies the type of the edges to return:
-@var{type} @code{outer-edges} means to return the outer edges of
-@var{frame}, @code{native-edges} (or @code{nil}) means to return its
-native edges and @code{inner-edges} means to return its inner edges.
+@code{outer-edges} means to return the outer edges of @var{frame},
+@code{native-edges} (or @code{nil}) means to return its native edges and
+@code{inner-edges} means to return its inner edges.
 
-Notice that the pixels at the positions @var{bottom} and @var{right}
-lie immediately outside the corresponding frame.  This means that if you
-have, for example, two side-by-side frames positioned such that the
-right outer edge of the frame on the left equals the left outer edge of
-the frame on the right, the pixels representing that edge are part
-of the frame on the right.
+By convention, the pixels of the display at the values returned for
+@var{left} and @var{top} are considered to be inside (part of)
+@var{frame}.  Hence, if @var{left} and @var{top} are both zero, the
+pixel at the display's origin is part of @var{frame}.  The pixels at
+@var{bottom} and @var{right}, on the other hand, are considered to lie
+immediately outside @var{frame}.  This means that if you have, for
+example, two side-by-side frames positioned such that the right outer
+edge of the frame on the left equals the left outer edge of the frame on
+the right, the pixels at that edge show a part of the frame on the
+right.
 @end defun
 
 
@@ -751,63 +874,107 @@ and all future graphical frames.
 @end deffn
 
 
-@node Size and Position
-@subsection Size and Position
-@cindex frame size
+@node Frame Position
+@subsection Frame Position
 @cindex frame position
 @cindex position of frame
 
-You can read or change the position of a frame using the frame
-parameters @code{left} and @code{top} (@pxref{Position Parameters}) and
-its size using the @code{height} and @code{width} parameters
-(@pxref{Size Parameters}).  Here are some special features for working
-with sizes and positions.  For all of these functions the argument
-@var{frame} must denote a live frame and defaults to the selected frame.
+On graphical systems, the position of a normal top-level frame is
+specified as the absolute position of its outer frame (@pxref{Frame
+Geometry}).  The position of a child frame (@pxref{Child Frames}) is
+specified via pixel offsets of its outer edges relative to the native
+position of its parent frame.
+
+  You can access or change the position of a frame using the frame
+parameters @code{left} and @code{top} (@pxref{Position Parameters}).
+Here are two additional functions for working with the positions of an
+existing, visible frame.  For both functions, the argument @var{frame}
+must denote a live frame and defaults to the selected frame.
 
 @defun frame-position &optional frame
-This function returns the outer position (@pxref{Frame Layout}) of
-@var{frame} in pixels.  The value is a cons giving the coordinates of
-the top left corner of the outer frame of @var{frame} relative to an
-origin at the position (0, 0) of the frame's display.  On a text
-terminal frame both values are zero.
+For a normal, non-child frame this function returns a cons of the pixel
+coordinates of its outer position (@pxref{Frame Layout}) with respect to
+the origin @code{(0, 0)} of its display.  For a child frame
+(@pxref{Child Frames}) this function returns the pixel coordinates of
+its outer position with respect to an origin @code{(0, 0)} at the native
+position of @var{frame}'s parent.
+
+Negative values never indicate an offset from the right or bottom
+edge of @var{frame}'s display or parent frame.  Rather, they mean that
+@var{frame}'s outer position is on the left and/or above the origin of
+its display or the native position of its parent frame.  This usually
+means that @var{frame} is only partially visible (or completely
+invisible).  However, on systems where the display's origin does not
+coincide with its top-left corner, the frame may be visible on a
+secondary monitor.
+
+On a text terminal frame both values are zero.
 @end defun
 
 @defun set-frame-position frame x y
-This function sets the outer frame position of @var{frame} to @var{x}
-and @var{y}.  The latter arguments specify pixels and normally count
-from an origin at the position (0, 0) of @var{frame}'s display.
+This function sets the outer frame position of @var{frame} to (@var{x},
+@var{y}).  The latter arguments specify pixels and normally count from
+the origin at the position (0, 0) of @var{frame}'s display.  For child
+frames, they count from the native position of @var{frame}'s parent
+frame.
 
-A negative parameter value positions the right edge of the outer frame
-by @var{-x} pixels left from the right edge of the screen or the bottom
-edge by @var{-y} pixels up from the bottom edge of the screen.
+Negative parameter values position the right edge of the outer frame by
+@var{-x} pixels left from the right edge of the screen (or the parent
+frame's native rectangle) and the bottom edge by @var{-y} pixels up from
+the bottom edge of the screen (or the parent frame's native rectangle).
+
+Note that negative values do not permit to align the right or bottom
+edge of @var{frame} exactly at the right or bottom edge of its display
+or parent frame.  Neither do they allow to specify a position that does
+not lie within the edges of the display or parent frame.  The frame
+parameters @code{left} and @code{top} (@pxref{Position Parameters})
+allow to do that, but may still fail to provide good results for the
+initial or a new frame.
 
 This function has no effect on text terminal frames.
 @end defun
 
-@defun frame-pixel-height &optional frame
-@defunx frame-pixel-width &optional frame
-   These functions return the inner height and width (the height and
-width of the display area, see @ref{Frame Layout}) of @var{frame} in
-pixels.  For a text terminal, the results are in characters rather than
-pixels.
-@end defun
+@defvar move-frame-functions
+@cindex frame position changes, a hook
+This hook specifies the functions that are run when an Emacs frame is moved
+(assigned a new position) by the window-system or window manager.  The
+functions are run with one argument, the frame that moved.  For a child
+frame (@pxref{Child Frames}), the functions are run only when the
+position of the frame changes in relation to that of its parent frame.
+@end defvar
 
-@defun frame-text-height &optional frame
-@defunx frame-text-width &optional frame
-These functions return the height and width of the text area of
-@var{frame} (@pxref{Frame Layout}), measured in pixels.  For a text
-terminal, the results are in characters rather than pixels.
 
-The value returned by @code{frame-text-height} differs from that
-returned by @code{frame-pixel-height} by not including the heights of
-any internal tool bar or menu bar, the height of one horizontal scroll
-bar and the widths of the internal border.
+@node Frame Size
+@subsection Frame Size
+@cindex frame size
+@cindex text width of a frame
+@cindex text height of a frame
+@cindex text size of a frame
+The canonical way to specify the @dfn{size of a frame} from within Emacs
+is by specifying its @dfn{text size}---a tuple of the width and height
+of the frame's text area (@pxref{Frame Layout}).  It can be measured
+either in pixels or in terms of the frame's canonical character size
+(@pxref{Frame Font}).
 
-The value returned by @code{frame-text-width} differs from that returned
-by @code{frame-pixel-width} by not including the width of one vertical
-scroll bar, the widths of one left and one right fringe and the widths
-of the internal border.
-@end defun
+  For frames with an internal menu or tool bar, the frame's native
+height cannot be told exactly before the frame has been actually drawn.
+This means that in general you cannot use the native size to specify the
+initial size of a frame.  As soon as you know the native size of a
+visible frame, you can calculate its outer size (@pxref{Frame Layout})
+by adding in the remaining components from the return value of
+@code{frame-geometry}.  For invisible frames or for frames that have
+yet to be created, however, the outer size can only be estimated.  This
+also means that calculating an exact initial position of a frame
+specified via offsets from the right or bottom edge of the screen
+(@pxref{Frame Position}) is impossible.
+
+  The text size of any frame can be set and retrieved with the help of
+the @code{height} and @code{width} frame parameters (@pxref{Size
+Parameters}).  The text size of the initial frame can be also set with
+the help of an X-style geometry specification.  @xref{Emacs Invocation,,
+Command Line Arguments for Emacs Invocation, emacs, The GNU Emacs
+Manual}.  Below we list some functions to access and set the size of an
+existing, visible frame, by default the selected one.
 
 @defun frame-height &optional frame
 @defunx frame-width &optional frame
@@ -823,12 +990,50 @@ rounded down to the number of characters of the default font that fully
 fit into the text area.
 @end defun
 
+The functions following next return the pixel widths and heights of the
+native, outer and inner frame and the text area (@pxref{Frame Layout})
+of a given frame.  For a text terminal, the results are in characters
+rather than pixels.
+
+@defun frame-outer-width &optional frame
+@defunx frame-outer-height &optional frame
+These functions return the outer width and height of @var{frame} in
+pixels.
+@end defun
+
+@defun frame-native-height &optional frame
+@defunx frame-native-width &optional frame
+These functions return the native width and height of @var{frame} in
+pixels.
+@end defun
+
+@defun frame-inner-width &optional frame
+@defunx frame-inner-height &optional frame
+These functions return the inner width and height of @var{frame} in
+pixels.
+@end defun
+
+@defun frame-text-width &optional frame
+@defunx frame-text-height &optional frame
+These functions return the width and height of the text area of
+@var{frame} in pixels.
+@end defun
+
+On window systems that support it, Emacs tries by default to make the
+text size of a frame measured in pixels a multiple of the frame's
+character size.  This, however, usually means that a frame can be
+resized only in character size increments when dragging its external
+borders.  It also may break attempts to truly maximize the frame or
+making it ``fullheight'' or ``fullwidth'' (@pxref{Size Parameters})
+leaving some empty space below and/or on the right of the frame.  The
+following option may help in that case.
+
 @defopt frame-resize-pixelwise
-If this option is @code{nil}, a frame's size is usually rounded to a
-multiple of the current values of that frame's @code{frame-char-height}
-and @code{frame-char-width} whenever the frame is resized.  If this is
-non-@code{nil}, no rounding occurs, hence frame sizes can
-increase/decrease by one pixel.
+If this option is @code{nil} (the default), a frame's text pixel size is
+usually rounded to a multiple of the current values of that frame's
+@code{frame-char-height} and @code{frame-char-width} whenever the frame
+is resized.  If this is non-@code{nil}, no rounding occurs, hence frame
+sizes can increase/decrease by one pixel.
 
 Setting this variable usually causes the next resize operation to pass
 the corresponding size hints to the window manager.  This means that
@@ -855,7 +1060,7 @@ terms of the canonical height and width of a character on @var{frame}
 The optional argument @var{pixelwise} non-@code{nil} means to measure
 the new width and height in units of pixels instead.  Note that if
 @code{frame-resize-pixelwise} is @code{nil}, some toolkits may refuse to
-fully honor the request if it does not increase/decrease the frame size
+truly honor the request if it does not increase/decrease the frame size
 to a multiple of its character size.
 @end defun
 
@@ -876,9 +1081,9 @@ text terminals.
 
 The optional fourth argument @var{pixelwise} non-@code{nil} means that
 @var{frame} should be @var{height} pixels high.  Note that if
-@code{frame-resize-pixelwise} is @code{nil}, some toolkits may refuse to
-fully honor the request if it does not increase/decrease the frame
-height to a multiple of its character height.
+@code{frame-resize-pixelwise} is @code{nil}, some window managers may
+refuse to truly honor the request if it does not increase/decrease the
+frame height to a multiple of its character height.
 @end defun
 
 @defun set-frame-width frame width &optional pretend pixelwise
@@ -888,9 +1093,9 @@ in characters.  The argument @var{pretend} has the same meaning as in
 
 The optional fourth argument @var{pixelwise} non-@code{nil} means that
 @var{frame} should be @var{width} pixels wide.  Note that if
-@code{frame-resize-pixelwise} is @code{nil}, some toolkits may refuse to
-fully honor the request if it does not increase/decrease the frame width
-to a multiple of its character width.
+@code{frame-resize-pixelwise} is @code{nil}, some window managers may
+refuse to fully honor the request if it does not increase/decrease the
+frame width to a multiple of its character width.
 @end defun
 
 None of these three functions will make a frame smaller than needed to
@@ -899,7 +1104,25 @@ margins, dividers, mode and header lines.  This contrasts with requests
 by the window manager triggered, for example, by dragging the external
 border of a frame with the mouse.  Such requests are always honored by
 clipping, if necessary, portions that cannot be displayed at the right,
-bottom corner of the frame.
+bottom corner of the frame.  The parameters @code{min-width} and
+@code{min-height} (@pxref{Size Parameters}) can be used to obtain a
+similar behavior when changing the frame size from within Emacs.
+
+@cindex tracking frame size changes
+  The abnormal hook @code{window-size-change-functions} (@pxref{Window
+Hooks}) tracks all changes of the inner size of a frame including those
+induced by request of the window-system or window manager.  To rule out
+false positives that might occur when changing only the sizes of a
+frame's windows without actually changing the size of the inner frame,
+use the following function.
+
+@defun frame-size-changed-p &optional frame
+This function returns non-@code{nil} when the inner width or height of
+@var{frame} has changed since @code{window-size-change-functions} was
+run the last time for @var{frame}.  It always returns @code{nil}
+immediately after running @code{window-size-change-functions} for
+@var{frame}.
+@end defun
 
 
 @node Implied Frame Resizing
@@ -916,7 +1139,7 @@ size change.  Note that wrapping a menu or tool bar usually does not
 resize the frame's outer size, hence this will alter the number of
 displayed lines.
 
-   Occasionally, such @dfn{implied frame resizing} may be unwanted, for
+  Occasionally, such @dfn{implied frame resizing} may be unwanted, for
 example, when the frame is maximized or made full-screen (where it's
 turned off by default).  In other cases you can disable implied resizing
 with the following option:
@@ -928,7 +1151,7 @@ implicitly resize the frame's display area in order to preserve the
 number of columns or lines the frame displays.  If this option is
 non-@code{nil}, no implied resizing is done.
 
-The value of this option can be also be a list of frame parameters.  In
+The value of this option can be also a list of frame parameters.  In
 that case, implied resizing is inhibited when changing a parameter that
 appears in this list.  The frame parameters currently handled by this
 option are: @code{font}, @code{font-backend},
@@ -946,7 +1169,7 @@ unchanged if this option is either @code{t} or a list containing
 @code{vertical-scroll-bars}.
 
 The default value is @code{'(tool-bar-lines)} for Lucid, Motif and
-Windows (which means that adding/removing a tool bar there does not
+MS-Windows (which means that adding/removing a tool bar there does not
 change the outer frame height), @code{nil} on all other window systems
 including GTK+ (which means that changing any of the parameters listed
 above may change the size of the outer frame), and @code{t} otherwise
@@ -1135,6 +1358,10 @@ text terminals.
 * Layout Parameters::           Size of parts of the frame, and
                                   enabling or disabling some parts.
 * Buffer Parameters::           Which buffers have been or should be shown.
+* Frame Interaction Parameters::  Parameters for interacting with other
+                                  frames.
+* Mouse Dragging Parameters::   Parameters for resizing and moving
+                                  frames with the mouse.
 * Management Parameters::       Communicating with the window manager.
 * Cursor Parameters::           Controlling the cursor appearance.
 * Font and Color Parameters::   Fonts and colors for the frame text.
@@ -1180,64 +1407,108 @@ If you specify the frame name explicitly when you create the frame, the
 name is also used (instead of the name of the Emacs executable) when
 looking up X resources for the frame.
 
+@vindex explicit-name, a frame parameter
 @item explicit-name
 If the frame name was specified explicitly when the frame was created,
 this parameter will be that name.  If the frame wasn't explicitly
 named, this parameter will be @code{nil}.
 @end table
 
+
 @node Position Parameters
 @subsubsection Position Parameters
 @cindex window position on display
 @cindex frame position
 
-  Position parameters' values are measured in pixels.  (Note that none
-of these parameters exist on TTY frames.)
+Parameters describing the X- and Y-offsets of a frame are always
+measured in pixels.  For a normal, non-child frame they specify the
+frame's outer position (@pxref{Frame Geometry}) relative to its
+display's origin.  For a child frame (@pxref{Child Frames}) they specify
+the frame's outer position relative to the native position of the
+frame's parent frame.  (Note that none of these parameters is meaningful
+on TTY frames.)
 
 @table @code
 @vindex left, a frame parameter
 @item left
-The position, in pixels, of the left (or right) edge of the frame with
-respect to the left (or right) edge of the screen.  The value may be:
+The position, in pixels, of the left outer edge of the frame with
+respect to the left edge of the frame's display or parent frame.  It can
+be specified in one of the following ways.
 
 @table @asis
 @item an integer
-A positive integer relates the left edge of the frame to the left edge
-of the screen.  A negative integer relates the right frame edge to the
-right screen edge.
+A positive integer always relates the left edge of the frame to the left
+edge of its display or parent frame.  A negative integer relates the
+right frame edge to the right edge of the display or parent frame.
 
 @item @code{(+ @var{pos})}
 This specifies the position of the left frame edge relative to the left
-screen edge.  The integer @var{pos} may be positive or negative; a
-negative value specifies a position outside the screen or on a monitor
-other than the primary one (for multi-monitor displays).
+edge of its display or parent frame.  The integer @var{pos} may be
+positive or negative; a negative value specifies a position outside the
+screen or parent frame or on a monitor other than the primary one (for
+multi-monitor displays).
 
 @item @code{(- @var{pos})}
-This specifies the position of the right frame edge relative to the right
-screen edge.  The integer @var{pos} may be positive or negative; a
-negative value specifies a position outside the screen or on a monitor
-other than the primary one (for multi-monitor displays).
+This specifies the position of the right frame edge relative to the
+right edge of the display or parent frame.  The integer @var{pos} may be
+positive or negative; a negative value specifies a position outside the
+screen or parent frame or on a monitor other than the primary one (for
+multi-monitor displays).
+
+@cindex left position ratio
+@cindex top position ratio
+@item a floating-point value
+A floating-point value in the range 0.0 to 1.0 specifies the left edge's
+offset via the @dfn{left position ratio} of the frame---the ratio of the
+left edge of its outer frame to the width of the frame's workarea
+(@pxref{Multiple Terminals}) or its parent's native frame (@pxref{Child
+Frames}) minus the width of the outer frame.  Thus, a left position
+ratio of 0.0 flushes a frame to the left, a ratio of 0.5 centers it and
+a ratio of 1.0 flushes it to the right of its display or parent frame.
+Similarly, the @dfn{top position ratio} of a frame is the ratio of the
+frame's top position to the height of its workarea or parent frame minus
+the height of the frame.
+
+Emacs will try to keep the position ratios of a child frame unaltered if
+that frame has a non-@code{nil} @code{keep-ratio} parameter
+(@pxref{Frame Interaction Parameters}) and its parent frame is resized.
+
+Since the outer size of a frame (@pxref{Frame Geometry}) is usually
+unavailable before a frame has been made visible, it is generally not
+advisable to use floating-point values when creating decorated frames.
+Floating-point values are more suited for ensuring that an (undecorated)
+child frame is positioned nicely within the area of its parent frame.
 @end table
 
 Some window managers ignore program-specified positions.  If you want to
 be sure the position you specify is not ignored, specify a
-non-@code{nil} value for the @code{user-position} parameter as well.
-
-If the window manager refuses to align a frame at the left or top screen
-edge, combining position notation and @code{user-position} as in
+non-@code{nil} value for the @code{user-position} parameter as in the
+following example:
 
 @example
 (modify-frame-parameters
   nil '((user-position . t) (left . (+ -4))))
 @end example
 
-may help to override that.
+In general, it is not a good idea to position a frame relative to the
+right or bottom edge of its display.  Positioning the initial or a new
+frame is either not accurate (because the size of the outer frame is not
+yet fully known before the frame has been made visible) or will cause
+additional flicker (if the frame has to be repositioned after becoming
+visible).
+
+  Note also, that positions specified relative to the right/bottom edge
+of a display, workarea or parent frame as well as floating-point offsets
+are stored internally as integer offsets relative to the left/top edge
+of the display, workarea or parent frame edge.  They are also returned
+as such by functions like @code{frame-parameters} and restored as such
+by the desktop saving routines.
 
 @vindex top, a frame parameter
 @item top
 The screen position of the top (or bottom) edge, in pixels, with respect
-to the top (or bottom) edge of the screen.  It works just like
-@code{left}, except vertically instead of horizontally.
+to the top (or bottom) edge of the display or parent frame.  It works
+just like @code{left}, except vertically instead of horizontally.
 
 @vindex icon-left, a frame parameter
 @item icon-left
@@ -1273,6 +1544,22 @@ When you call @code{make-frame}, you should specify a non-@code{nil}
 value for this parameter if the values of the @code{left} and @code{top}
 parameters represent the user's stated preference; otherwise, use
 @code{nil}.
+
+@vindex z-group, a frame parameter
+@item z-group
+This parameter specifies a relative position of the frame's
+window-system window in the stacking (Z-) order of the frame's display.
+
+If this is @code{above}, the frame's window-system window is displayed
+above all other window-system windows that do not have the @code{above}
+property set.  If this is nil, the frame's window is displayed below all
+windows that have the @code{above} property set and above all windows
+that have the @code{below} property set.  If this is @code{below}, the
+frame's window is displayed below all windows that do not have the
+@code{below} property set.
+
+To position the frame above or below a specific other frame use the
+function @code{frame-restack} (@pxref{Raising and Lowering}).
 @end table
 
 
@@ -1280,20 +1567,61 @@ parameters represent the user's stated preference; otherwise, use
 @subsubsection Size Parameters
 @cindex window size on display
 
-  Frame parameters specify frame sizes in character units.  On
-graphical displays, the @code{default} face determines the actual
-pixel sizes of these character units (@pxref{Face Attributes}).
+Frame parameters usually specify frame sizes in character units.  On
+graphical displays, the @code{default} face determines the actual pixel
+sizes of these character units (@pxref{Face Attributes}).
 
 @table @code
-@vindex height, a frame parameter
-@item height
-The height of the frame's text area (@pxref{Frame Geometry}), in
-characters.
-
 @vindex width, a frame parameter
 @item width
-The width of the frame's text area (@pxref{Frame Geometry}), in
-characters.
+This parameter specifies the width of the frame.  It can be specified as
+in the following ways:
+
+@table @asis
+@item an integer
+A positive integer specifies the width of the frame's text area
+(@pxref{Frame Geometry}) in characters.
+
+@item a cons cell
+If this is a cons cell with the symbol @code{text-pixels} in its
+@sc{car}, the @sc{cdr} of that cell specifies the width of the frame's
+text area in pixels.
+
+@cindex frame width ratio
+@cindex frame height ratio
+@item a floating-point value
+A floating-point number between 0.0 and 1.0 can be used to specify the
+width of a frame via its @dfn{width ratio}---the ratio of its outer
+width (@pxref{Frame Geometry}) to the width of the frame's workarea
+(@pxref{Multiple Terminals}) or its parent frame's (@pxref{Child
+Frames}) native frame.  Thus, a value of 0.5 makes the frame occupy half
+of the width of its workarea or parent frame, a value of 1.0 the full
+width.  Similarly, the @dfn{height ratio} of a frame is the ratio of its
+outer height to the height of its workarea or its parent's native frame.
+
+Emacs will try to keep the width and height ratio of a child frame
+unaltered if that frame has a non-@code{nil} @code{keep-ratio} parameter
+(@pxref{Frame Interaction Parameters}) and its parent frame is resized.
+
+Since the outer size of a frame is usually unavailable before a frame
+has been made visible, it is generally not advisable to use
+floating-point values when creating decorated frames.  Floating-point
+values are more suited to ensure that a child frame always fits within
+the area of its parent frame as, for example, when customizing
+@code{display-buffer-alist} (@pxref{Choosing Window}) via
+@code{display-buffer-in-child-frame}.
+@end table
+
+Regardless of how this parameter was specified, functions reporting the
+value of this parameter like @code{frame-parameters} always report the
+width of the frame's text area in characters as an integer rounded, if
+necessary, to a multiple of the frame's default character width.  That
+value is also used by the desktop saving routines.
+
+@vindex height, a frame parameter
+@item height
+This parameter specifies the height of the frame.  It works just like
+@code{width}, except vertically instead of horizontally.
 
 @vindex user-size, a frame parameter
 @item user-size
@@ -1301,6 +1629,28 @@ This does for the size parameters @code{height} and @code{width} what
 the @code{user-position} parameter (@pxref{Position Parameters,
 user-position}) does for the position parameters @code{top} and
 @code{left}.
+
+@vindex min-width, a frame parameter
+@item min-width
+This parameter specifies the minimum native width (@pxref{Frame
+Geometry}) of the frame, in characters.  Normally, the functions that
+establish a frame's initial width or resize a frame horizontally make
+sure that all the frame's windows, vertical scroll bars, fringes,
+margins and vertical dividers can be displayed.  This parameter, if
+non-@code{nil} allows to make a frame narrower than that with the
+consequence that any components that do not fit will be clipped by the
+window manager.
+
+@vindex min-height, a frame parameter
+@item min-height
+This parameter specifies the minimum native height (@pxref{Frame
+Geometry}) of the frame, in characters.  Normally, the functions that
+establish a frame's initial size or resize a frame make sure that all
+the frame's windows, horizontal scroll bars and dividers, mode and
+header lines, the echo area and the internal menu and tool bar can be
+displayed.  This parameter, if non-@code{nil} allows to make a frame
+smaller than that with the consequence that any components that do not
+fit will be clipped by the window manager.
 
 @cindex fullboth frames
 @cindex fullheight frames
@@ -1327,11 +1677,15 @@ of maximized and full-height frames and the widths of maximized and
 full-width frames often differ by a few pixels.
 
 With some window managers you may have to customize the variable
-@code{frame-resize-pixelwise} (@pxref{Size and Position}) in order to
-make a frame truly appear maximized or full-screen.  Moreover,
-some window managers might not support smooth transition between the
-various full-screen or maximization states.  Customizing the variable
+@code{frame-resize-pixelwise} (@pxref{Frame Size}) in order to make a
+frame truly appear maximized or full-screen.  Moreover, some window
+managers might not support smooth transition between the various
+full-screen or maximization states.  Customizing the variable
 @code{x-frame-normalize-before-maximize} can help to overcome that.
+
+Full-screen on macOS hides both the tool-bar and the menu-bar, however
+both will be displayed if the mouse pointer is moved to the top of the
+screen.
 
 @vindex fullscreen-restore, a frame parameter
 @item fullscreen-restore
@@ -1350,6 +1704,20 @@ file as, for example
 
 This will give a new frame full height after typing in it @key{F11} for
 the first time.
+
+@vindex fit-frame-to-buffer-margins, a frame parameter
+@item fit-frame-to-buffer-margins
+This parameter allows to override the value of the option
+@code{fit-frame-to-buffer-margins} when fitting this frame to the buffer
+of its root window with @code{fit-frame-to-buffer} (@pxref{Resizing
+Windows}).
+
+@vindex fit-frame-to-buffer-sizes, a frame parameter
+@item fit-frame-to-buffer-sizes
+This parameter allows to override the value of the option
+@code{fit-frame-to-buffer-sizes} when fitting this frame to the buffer
+of its root window with @code{fit-frame-to-buffer} (@pxref{Resizing
+Windows}).
 @end table
 
 
@@ -1364,17 +1732,18 @@ frame, or control their sizes.
 @table @code
 @vindex border-width, a frame parameter
 @item border-width
-The width in pixels of the frame's border.
+The width in pixels of the frame's outer border (@pxref{Frame Geometry}).
 
 @vindex internal-border-width, a frame parameter
 @item internal-border-width
-The distance in pixels between text (or fringe) and the frame's border.
+The width in pixels of the frame's internal border (@pxref{Frame
+Geometry}).
 
 @vindex vertical-scroll-bars, a frame parameter
 @item vertical-scroll-bars
-Whether the frame has scroll bars for vertical scrolling, and which side
-of the frame they should be on.  The possible values are @code{left},
-@code{right}, and @code{nil} for no scroll bars.
+Whether the frame has scroll bars (@pxref{Scroll Bars}) for vertical
+scrolling, and which side of the frame they should be on.  The possible
+values are @code{left}, @code{right}, and @code{nil} for no scroll bars.
 
 @vindex horizontal-scroll-bars, a frame parameter
 @item horizontal-scroll-bars
@@ -1418,27 +1787,42 @@ to not draw bottom dividers.
 
 @vindex menu-bar-lines frame parameter
 @item menu-bar-lines
-The number of lines to allocate at the top of the frame for a menu
-bar.  The default is 1 if Menu Bar mode is enabled, and 0 otherwise.
-@xref{Menu Bars,,,emacs, The GNU Emacs Manual}.
+The number of lines to allocate at the top of the frame for a menu bar
+(@pxref{Menu Bar}).  The default is one if Menu Bar mode is enabled and
+zero otherwise.  @xref{Menu Bars,,,emacs, The GNU Emacs Manual}.  For an
+external menu bar (@pxref{Frame Layout}), this value remains unchanged
+even when the menu bar wraps to two or more lines.  In that case, the
+@code{menu-bar-size} value returned by @code{frame-geometry}
+(@pxref{Frame Geometry}) allows to derive whether the menu bar actually
+occupies one or more lines.
 
 @vindex tool-bar-lines frame parameter
 @item tool-bar-lines
-The number of lines to use for the tool bar.  The default is 1 if Tool
-Bar mode is enabled, and 0 otherwise.  @xref{Tool Bars,,,emacs, The
-GNU Emacs Manual}.
+The number of lines to use for the tool bar (@pxref{Tool Bar}).  The
+default is one if Tool Bar mode is enabled and zero otherwise.
+@xref{Tool Bars,,,emacs, The GNU Emacs Manual}.  This value may change
+whenever the tool bar wraps (@pxref{Frame Layout}).
 
 @vindex tool-bar-position frame parameter
 @item tool-bar-position
-The position of the tool bar.  Currently only for the GTK tool bar.
-Value can be one of @code{top}, @code{bottom} @code{left}, @code{right}.
-The default is  @code{top}.
+The position of the tool bar when Emacs was built with GTK+.  Its value
+can be one of @code{top}, @code{bottom} @code{left}, @code{right}.  The
+default is @code{top}.
 
 @vindex line-spacing, a frame parameter
 @item line-spacing
 Additional space to leave below each text line, in pixels (a positive
 integer).  @xref{Line Height}, for more information.
+
+@vindex no-special-glyphs, a frame parameter
+@item no-special-glyphs
+If this is non-@code{nil}, it suppresses the display of any truncation
+and continuation glyphs (@pxref{Truncation}) for all buffers displayed
+by this frame.  This is useful to eliminate such glyphs when fitting a
+frame to its buffer via @code{fit-frame-to-buffer} (@pxref{Resizing
+Windows}).
 @end table
+
 
 @node Buffer Parameters
 @subsubsection Buffer Parameters
@@ -1478,13 +1862,149 @@ most-recently-selected first.
 If non-@code{nil}, this frame's window is never split automatically.
 @end table
 
+@node Frame Interaction Parameters
+@subsubsection Frame Interaction Parameters
+@cindex frame interaction parameters
+@cindex interaction parameters between frames
+
+These parameters supply forms of interactions between different frames.
+
+@table @code
+@vindex parent-frame, a frame parameter
+@item parent-frame
+If non-@code{nil}, this means that this frame is a child frame
+(@pxref{Child Frames}), and this parameter specifies its parent frame.
+If nil, this means that this frame is a normal, top-level frame.
+
+@vindex delete-before, a frame parameter
+@item delete-before
+If non-@code{nil}, this parameter specifies another frame whose deletion
+will automatically trigger the deletion of this frame.  @xref{Deleting
+Frames}.
+
+@vindex mouse-wheel-frame, a frame parameter
+@item mouse-wheel-frame
+If non-@code{nil}, this parameter specifies the frame whose windows will
+be scrolled whenever the mouse wheel is scrolled with the mouse pointer
+hovering over this frame, see @ref{Mouse Commands,,, emacs, The GNU
+Emacs Manual}.
+
+@vindex no-other-frame, a frame parameter
+@item no-other-frame
+If this is non-@code{nil}, then this frame is not eligible as candidate
+for the functions @code{next-frame}, @code{previous-frame}
+(@pxref{Finding All Frames}) and @code{other-frame}, see @ref{Frame
+Commands,,, emacs, The GNU Emacs Manual}.
+
+@vindex auto-hide-function, a frame parameter
+@item auto-hide-function
+When this parameter specifies a function, that function will be called
+instead of the function specified by the variable
+@code{frame-auto-hide-function} when quitting the frame's only window
+(@pxref{Quitting Windows}) and there are other frames left.
+
+@vindex minibuffer-exit, a frame parameter
+@item minibuffer-exit
+When this parameter is non-@code{nil}, Emacs will by default make this
+frame invisible whenever the minibuffer (@pxref{Minibuffers}) is exited.
+Alternatively, it can specify the functions @code{iconify-frame} and
+@code{delete-frame}.  This parameter is useful to make a child frame
+disappear automatically (similar to how Emacs deals with a window) when
+exiting the minibuffer.
+
+@vindex keep-ratio, a frame parameter
+@item keep-ratio
+This parameter is currently meaningful for child frames (@pxref{Child
+Frames}) only.  If it is non-@code{nil}, then Emacs will try to keep the
+frame's size (width and height) ratios (@pxref{Size Parameters}) as well
+as its left and right position ratios (@pxref{Position Parameters})
+unaltered whenever its parent frame is resized.
+
+If the value of this parameter is @code{nil}, the frame's position and
+size remain unaltered when the parent frame is resized, so the position
+and size ratios may change.  If the value of this parameter is @code{t},
+Emacs will try to preserve the frame's size and position ratios, hence
+the frame's size and position relative to its parent frame may change.
+
+More individual control is possible by using a cons cell: In that case
+the frame's width ratio is preserved if the @sc{car} of the cell is
+either @code{t} or @code{width-only}.  The height ratio is preserved if
+the @sc{car} of the cell is either @code{t} or @code{height-only}.  The
+left position ratio is preserved if the @sc{cdr} of the cell is either
+@code{t} or @code{left-only}.  The top position ratio is preserved if
+the @sc{cdr} of the cell is either @code{t} or @code{top-only}.
+@end table
+
+
+@node Mouse Dragging Parameters
+@subsubsection Mouse Dragging Parameters
+@cindex mouse dragging parameters
+@cindex parameters for resizing frames with the mouse
+@cindex parameters for moving frames with the mouse
+
+The parameters described below provide support for resizing a frame by
+dragging its internal borders with the mouse.  They also allow moving a
+frame with the mouse by dragging the header line of its topmost or the
+mode line of its bottommost window.
+
+These parameters are mostly useful for child frames (@pxref{Child
+Frames}) that come without window manager decorations.  If necessary,
+they can be used for undecorated top-level frames as well.
+
+@table @code
+@vindex drag-internal-border, a frame parameter
+@item drag-internal-border
+If non-@code{nil}, the frame can be resized by dragging its internal
+borders, if present, with the mouse.
+
+@vindex drag-with-header-line, a frame parameter
+@item drag-with-header-line
+If non-@code{nil}, the frame can be moved with the mouse by dragging the
+header line of its topmost window.
+
+@vindex drag-with-mode-line, a frame parameter
+@item drag-with-mode-line
+If non-@code{nil}, the frame can be moved with the mouse by dragging the
+mode line of its bottommost window.  Note that such a frame is not
+allowed to have its own minibuffer window.
+
+@vindex snap-width, a frame parameter
+@item snap-width
+A frame that is moved with the mouse will ``snap'' at the border(s) of
+the display or its parent frame whenever it is dragged as near to such
+an edge as the number of pixels specified by this parameter.
+
+@vindex top-visible, a frame parameter
+@item top-visible
+If this parameter is a number, the top edge of the frame never appears
+above the top edge of its display or parent frame.  Moreover, as many
+pixels of the frame as specified by that number will remain visible when
+the frame is moved against any of the remaining edges of its display or
+parent frame.  Setting this parameter is useful to guard against
+dragging a child frame with a non-@code{nil}
+@code{drag-with-header-line} parameter completely out of the area
+of its parent frame.
+
+@vindex bottom-visible, a frame parameter
+@item bottom-visible
+If this parameter is a number, the bottom edge of the frame never
+appears below the bottom edge of its display or parent frame.  Moreover,
+as many pixels of the frame as specified by that number will remain
+visible when the frame is moved against any of the remaining edges of
+its display or parent frame.  Setting this parameter is useful to guard
+against dragging a child frame with a non-@code{nil}
+@code{drag-with-mode-line} parameter completely out of the area of
+its parent frame.
+@end table
+
+
 @node Management Parameters
 @subsubsection Window Management Parameters
 @cindex window manager interaction, and frame parameters
 
-  The following frame parameters control various aspects of the
-frame's interaction with the window manager.  They have no effect on
-text terminals.
+  The following frame parameters control various aspects of the frame's
+interaction with the window manager or window system.  They have no
+effect on text terminals.
 
 @table @code
 @vindex visibility, a frame parameter
@@ -1541,10 +2061,60 @@ with virtual desktops.
 
 @vindex inhibit-double-buffering, a frame parameter
 @item inhibit-double-buffering
-If non-@code{nil}, the frame is drawn to the screen without double buffering.
-Emacs normally attempts to use double buffering, where available, to
-reduce flicker.  Set this property if you experience display bugs or
-pine for that retro, flicker-y feeling.
+If non-@code{nil}, the frame is drawn to the screen without double
+buffering.  Emacs normally attempts to use double buffering, where
+available, to reduce flicker.  Set this property if you experience
+display bugs or pine for that retro, flicker-y feeling.
+
+@vindex skip-taskbar, a frame parameter
+@item skip-taskbar
+If non-@code{nil}, this tells the window manager to remove the frame's
+icon from the taskbar associated with the frame's display and inhibit
+switching to the frame's window via the combination @kbd{Alt-@key{TAB}}.
+On MS-Windows, iconifying such a frame will "roll in" its window-system
+window at the bottom of the desktop.  Some window managers may not honor
+this parameter.
+
+@vindex no-focus-on-map, a frame parameter
+@item no-focus-on-map
+If non-@code{nil}, this means that the frame does not want to receive
+input focus when it is mapped (@pxref{Visibility of Frames}).  Some
+window managers may not honor this parameter.
+
+@vindex no-accept-focus, a frame parameter
+@item no-accept-focus
+If non-@code{nil}, this means that the frame does not want to receive
+input focus via explicit mouse clicks or when moving the mouse into it
+either via @code{focus-follows-mouse} (@pxref{Input Focus}) or
+@code{mouse-autoselect-window} (@pxref{Mouse Window Auto-selection}).
+This may have the unwanted side-effect that a user cannot scroll a
+non-selected frame with the mouse.  Some window managers may not honor
+this parameter.
+
+@vindex undecorated, a frame parameter
+@item undecorated
+If non-@code{nil}, this frame's window-system window is drawn without
+decorations, like the title, minimize/maximize boxes and external
+borders.  This usually means that the window cannot be dragged, resized,
+iconified, maximized or deleted with the mouse.  If nil, the frame's
+window is usually drawn with all the elements listed above unless their
+display has been suspended via window manager settings.
+
+Under X, Emacs uses the Motif window manager hints to turn off
+decorations.  Some window managers may not honor these hints.
+
+NS builds consider the tool bar to be a decoration, and therefore hide
+it on an undecorated frame.
+
+@vindex override-redirect, a frame parameter
+@item override-redirect
+@cindex override redirect frames
+If non-@code{nil}, this means that this is an @dfn{override redirect}
+frame---a frame not handled by window managers under X.  Override
+redirect frames have no window manager decorations, can be positioned
+and resized only via Emacs' positioning and resizing functions and are
+usually drawn on top of all other frames.  Setting this parameter has
+no effect on MS-Windows.
 
 @ignore
 @vindex parent-id, a frame parameter
@@ -1556,6 +2126,7 @@ application's window.  (It is not certain this will be implemented; try
 it and see if it works.)
 @end ignore
 @end table
+
 
 @node Cursor Parameters
 @subsubsection Cursor Parameters
@@ -1715,6 +2286,9 @@ The @code{alpha} frame parameter can also be a cons cell
 @code{(@var{active} . @var{inactive})}, where @var{active} is the
 opacity of the frame when it is selected, and @var{inactive} is the
 opacity when it is not selected.
+
+Some window systems do not support the @code{alpha} parameter for child
+frames (@pxref{Child Frames}).
 @end table
 
 The following frame parameters are semi-obsolete in that they are
@@ -1878,7 +2452,7 @@ frame is redisplayed.
 This variable specifies how to compute a name for a frame when you have
 not explicitly specified one.  The variable's value is actually a mode
 line construct, just like @code{mode-line-format}, except that the
-@samp{%c} and @samp{%l} constructs are ignored.  @xref{Mode Line
+@samp{%c}, @samp{%C}, and @samp{%l} constructs are ignored.  @xref{Mode Line
 Data}.
 @end defvar
 
@@ -1904,21 +2478,28 @@ while processing @code{frame-title-format} or
 @section Deleting Frames
 @cindex deleting frames
 
-  A @dfn{live frame} is one that has not been deleted.  When a frame
-is deleted, it is removed from its terminal display, although it may
-continue to exist as a Lisp object until there are no more references
-to it.
+A @dfn{live frame} is one that has not been deleted.  When a frame is
+deleted, it is removed from its terminal display, although it may
+continue to exist as a Lisp object until there are no more references to
+it.
 
 @deffn Command delete-frame &optional frame force
 @vindex delete-frame-functions
 This function deletes the frame @var{frame}.  The argument @var{frame}
 must specify a live frame (see below) and defaults to the selected
-frame.  Unless @var{frame} specifies a tooltip, this function first runs
-the hook @code{delete-frame-functions} (each function getting one
-argument, @var{frame}).
+frame.
 
-A frame cannot be deleted as long as its minibuffer serves as surrogate
-minibuffer for another frame (@pxref{Minibuffers and Frames}).
+It first deletes any child frame of @var{frame} (@pxref{Child Frames})
+and any frame whose @code{delete-before} frame parameter (@pxref{Frame
+Interaction Parameters}) specifies @var{frame}.  All such deletions are
+performed recursively; so this step makes sure that no other frames with
+@var{frame} as their ancestor will exist.  Then, unless @var{frame}
+specifies a tooltip, this function runs the hook
+@code{delete-frame-functions} (each function getting one argument,
+@var{frame}) before actually killing the frame.
+
+Note that a frame cannot be deleted as long as its minibuffer serves as
+surrogate minibuffer for another frame (@pxref{Minibuffers and Frames}).
 Normally, you cannot delete a frame if all other frames are invisible,
 but if @var{force} is non-@code{nil}, then you are allowed to do so.
 @end deffn
@@ -1942,7 +2523,12 @@ minibuffer frame is left untouched.  The argument @var{frame} must
 specify a live frame and defaults to the selected frame.  Internally,
 this command works by calling @code{delete-frame} with @var{force}
 @code{nil} for all frames that shall be deleted.
+
+This function does not delete any of @var{frame}'s child frames
+(@pxref{Child Frames}).  If @var{frame} is a child frame, it deletes
+@var{frame}'s siblings only.
 @end deffn
+
 
 @node Finding All Frames
 @section Finding All Frames
@@ -1962,12 +2548,29 @@ This function returns a list of just the currently visible frames.
 visible, even though only the selected one is actually displayed.
 @end defun
 
+@defun frame-list-z-order &optional display
+This function returns a list of Emacs' frames, in Z (stacking) order
+(@pxref{Raising and Lowering}).  The optional argument @var{display}
+specifies which display to poll.  @var{display} should be either a frame
+or a display name (a string).  If omitted or @code{nil}, that stands for
+the selected frame's display.  It returns @code{nil} if @var{display}
+contains no Emacs frame.
+
+Frames are listed from topmost (first) to bottommost (last).  As a
+special case, if @var{display} is non-@code{nil} and specifies a live
+frame, it returns the child frames of that frame in Z (stacking) order.
+
+This function is not meaningful on text terminals.
+@end defun
+
 @defun next-frame &optional frame minibuf
 This function lets you cycle conveniently through all the frames on a
 specific terminal from an arbitrary starting point.  It returns the
 frame following @var{frame}, in the list of all live frames, on
 @var{frame}'s terminal.  The argument @var{frame} must specify a live
-frame and defaults to the selected frame.
+frame and defaults to the selected frame.  It never returns a frame
+whose @code{no-other-frame} parameter (@pxref{Frame Interaction
+Parameters}) is non-@code{nil}.
 
 The second argument, @var{minibuf}, says which frames to consider:
 
@@ -1998,8 +2601,8 @@ Window Ordering}.
 @section Minibuffers and Frames
 
 Normally, each frame has its own minibuffer window at the bottom, which
-is used whenever that frame is selected.  If the frame has a minibuffer,
-you can get it with @code{minibuffer-window} (@pxref{Minibuffer Windows}).
+is used whenever that frame is selected.  You can get that window with
+the function @code{minibuffer-window} (@pxref{Minibuffer Windows}).
 
 @cindex frame without a minibuffer
 @cindex surrogate minibuffer frame
@@ -2009,9 +2612,10 @@ will serve as @dfn{surrogate minibuffer frame} for this frame and cannot
 be deleted via @code{delete-frame} (@pxref{Deleting Frames}) as long as
 this frame is live.
 
-When you create the frame, you can explicitly specify the minibuffer
-window to use (in some other frame).  If you don't, then the minibuffer
-is found in the frame which is the value of the variable
+When you create the frame, you can explicitly specify its minibuffer
+window (in some other frame) with the @code{minibuffer} frame parameter
+(@pxref{Buffer Parameters}).  If you don't, then the minibuffer is found
+in the frame which is the value of the variable
 @code{default-minibuffer-frame}.  Its value should be a frame that does
 have a minibuffer.
 
@@ -2026,13 +2630,14 @@ the current terminal and cannot be buffer-local.  @xref{Multiple
 Terminals}.
 @end defvar
 
+
 @node Input Focus
 @section Input Focus
 @cindex input focus
-@c @cindex selected frame    Duplicates selected-frame, same for selected-window.
+@cindex selected frame
 
-At any time, one frame in Emacs is the @dfn{selected frame}.  The selected
-window always resides on the selected frame.
+At any time, one frame in Emacs is the @dfn{selected frame}.  The
+selected window always resides on the selected frame.
 
 When Emacs displays its frames on several terminals (@pxref{Multiple
 Terminals}), each terminal has its own selected frame.  But only one
@@ -2077,6 +2682,26 @@ same meaning as for @code{select-frame} (see below).  The return value
 of this function is not significant.
 @end defun
 
+Ideally, the function described next should focus a frame without also
+raising it above other frames.  Unfortunately, many window-systems or
+window managers may refuse to comply.
+
+@defun x-focus-frame &optional frame noactivate
+This function gives @var{frame} the focus of the X server without
+necessarily raising it.  @var{frame} @code{nil} means use the selected
+frame.  Under X, the optional argument @var{noactivate}, if
+non-@code{nil}, means to avoid making @var{frame}'s window-system window
+the ``active'' window which should insist a bit more on avoiding to
+raise @var{frame} above other frames.
+
+On MS-Windows the @var{noactivate} argument has no effect.  However, if
+@var{frame} is a child frame (@pxref{Child Frames}), this function
+usually focuses @var{frame} without raising it above other child
+frames.
+
+If there is no window system support, this function does nothing.
+@end defun
+
 @deffn Command select-frame frame &optional norecord
 This function selects frame @var{frame}, temporarily disregarding the
 focus of the X server if any.  The selection of @var{frame} lasts until
@@ -2091,7 +2716,7 @@ becomes the selected terminal.  This function then calls
 @code{select-window} as a subroutine, passing the window selected
 within @var{frame} as its first argument and @var{norecord} as its
 second argument (hence, if @var{norecord} is non-@code{nil}, this
-avoids changing the order of recently selected windows nor the buffer
+avoids changing the order of recently selected windows and the buffer
 list).  @xref{Selecting Windows}.
 
 This function returns @var{frame}, or @code{nil} if @var{frame} has
@@ -2147,19 +2772,63 @@ change it.
 @end defun
 
 @defvar focus-in-hook
-This is a normal hook run when an Emacs frame gains input focus.
+This is a normal hook run when an Emacs frame gains input focus.  The
+frame gaining focus is selected when this hook is run.
 @end defvar
 
 @defvar focus-out-hook
-This is a normal hook run when an Emacs frame loses input focus.
+This is a normal hook run when an Emacs frame has lost input focus and
+no other Emacs frame has gained input focus instead.
 @end defvar
 
 @defopt focus-follows-mouse
-This option is how you inform Emacs whether the window manager transfers
-focus when the user moves the mouse.  Non-@code{nil} says that it does.
-When this is so, the command @code{other-frame} moves the mouse to a
-position consistent with the new selected frame.
+This option informs Emacs whether and how the window manager transfers
+focus when you move the mouse pointer into a frame.  It can have three
+meaningful values:
+
+@table @asis
+@item @code{nil}
+The default value @code{nil} should be used when your window manager
+follows a ``click-to-focus'' policy where you have to click the mouse
+inside of a frame in order for that frame to gain focus.
+
+@item @code{t}
+The value @code{t} should be used when your window manager has the focus
+automatically follow the position of the mouse pointer but a frame that
+gains focus is not raised automatically and may even remain occluded by
+other window-system windows.
+
+@item @code{auto-raise}
+The value @code{auto-raise} should be used when your window manager has
+the focus automatically follow the position of the mouse pointer and a
+frame that gains focus is raised automatically.
+@end table
+
+If this option is non-@code{nil}, Emacs moves the mouse pointer to the
+frame selected by @code{select-frame-set-input-focus}.  That function is
+used by a number of commands like, for example, @code{other-frame} and
+@code{pop-to-buffer}.
+
+The distinction between the values @code{t} and @code{auto-raise} is not
+needed for ``normal'' frames because the window manager usually takes
+care of raising them.  It is useful to automatically raise child frames
+via @code{mouse-autoselect-window} (@pxref{Mouse Window
+Auto-selection}).
+
+Note that this option does not distinguish ``sloppy'' focus (where the
+frame that previously had focus retains focus as long as the mouse
+pointer does not move into another window manager window) from
+``strict'' focus (where a frame immediately loses focus when it's left
+by the mouse pointer).  Neither does it recognize whether your window
+manager supports delayed focusing or auto-raising where you can
+explicitly specify the time until a new frame gets focus or is
+auto-raised.
+
+You can supply a ``focus follows mouse'' policy for individual Emacs
+windows by customizing the variable @code{mouse-autoselect-window}
+(@pxref{Mouse Window Auto-selection}).
 @end defopt
+
 
 @node Visibility of Frames
 @section Visibility of Frames
@@ -2169,16 +2838,26 @@ position consistent with the new selected frame.
 @cindex minimized frame
 @cindex frame visibility
 
-A frame on a graphical display may be @dfn{visible}, @dfn{invisible},
-or @dfn{iconified}.  If it is visible, its contents are displayed in
-the usual manner.  If it is iconified, its contents are not displayed,
-but there is a little icon somewhere to bring the frame back into view
-(some window managers refer to this state as @dfn{minimized} rather
-than @dfn{iconified}, but from Emacs' point of view they are the same
-thing).  If a frame is invisible, it is not displayed at all.
+A frame on a graphical display may be @dfn{visible}, @dfn{invisible}, or
+@dfn{iconified}.  If it is visible, its contents are displayed in the
+usual manner.  If it is iconified, its contents are not displayed, but
+there is a little icon somewhere to bring the frame back into view (some
+window managers refer to this state as @dfn{minimized} rather than
+@dfn{iconified}, but from Emacs' point of view they are the same thing).
+If a frame is invisible, it is not displayed at all.
+
+@cindex mapped frame
+@cindex unmapped frame
+  The concept of visibility is strongly related to that of (un-)mapped
+frames.  A frame (or, more precisely, its window-system window) is and
+becomes @dfn{mapped} when it is displayed for the first time and
+whenever it changes its state of visibility from @code{iconified} or
+@code{invisible} to @code{visible}.  Conversely, a frame is and becomes
+@dfn{unmapped} whenever it changes its status from @code{visible} to
+@code{iconified} or @code{invisible}.
 
   Visibility is meaningless on text terminals, since only the selected
-one is actually displayed in any case.
+frame is actually displayed in any case.
 
 @defun frame-visible-p frame
 This function returns the visibility status of frame @var{frame}.  The
@@ -2192,22 +2871,28 @@ purposes of this function, even though only one frame is displayed.
 
 @deffn Command iconify-frame &optional frame
 This function iconifies frame @var{frame}.  If you omit @var{frame}, it
-iconifies the selected frame.
+iconifies the selected frame.  This usually makes all child frames of
+@var{frame} (and their descendants) invisible (@pxref{Child Frames}).
 @end deffn
 
 @deffn Command make-frame-visible &optional frame
-This function makes frame @var{frame} visible.  If you omit
-@var{frame}, it makes the selected frame visible.  This does not raise
-the frame, but you can do that with @code{raise-frame} if you wish
-(@pxref{Raising and Lowering}).
+This function makes frame @var{frame} visible.  If you omit @var{frame},
+it makes the selected frame visible.  This does not raise the frame, but
+you can do that with @code{raise-frame} if you wish (@pxref{Raising and
+Lowering}).
+
+Making a frame visible usually makes all its child frames (and their
+descendants) visible as well (@pxref{Child Frames}).
 @end deffn
 
 @deffn Command make-frame-invisible &optional frame force
 This function makes frame @var{frame} invisible.  If you omit
-@var{frame}, it makes the selected frame invisible.
+@var{frame}, it makes the selected frame invisible.  Usually, this makes
+all child frames of @var{frame} (and their descendants) invisible too
+(@pxref{Child Frames}).
 
 Unless @var{force} is non-@code{nil}, this function refuses to make
-@var{frame} invisible if all other frames are invisible..
+@var{frame} invisible if all other frames are invisible.
 @end deffn
 
   The visibility status of a frame is also available as a frame
@@ -2223,26 +2908,79 @@ being rendered with double buffering.  @var{frame} defaults to the
 selected frame.
 @end defun
 
+
 @node Raising and Lowering
-@section Raising and Lowering Frames
+@section Raising, Lowering and Restacking Frames
 
 @cindex raising a frame
 @cindex lowering a frame
-  Most window systems use a desktop metaphor.  Part of this metaphor
-is the idea that system-level windows (e.g., Emacs frames) are
-stacked in a notional third dimension perpendicular to the screen
-surface.  Where two overlap, the one higher up covers the one
-underneath.  You can @dfn{raise} or @dfn{lower} a frame using the
-functions @code{raise-frame} and @code{lower-frame}.
+@cindex restacking a frame
+@cindex frame stacking order
+@cindex frame Z-order
+@cindex Z-order
+  Most window systems use a desktop metaphor.  Part of this metaphor is
+the idea that system-level windows (representing, e.g., Emacs frames)
+are stacked in a notional third dimension perpendicular to the screen
+surface.  The order induced by stacking is total and usually referred to
+as stacking (or Z-) order.  Where the areas of two windows overlap, the
+one higher up in that order will (partially) cover the one underneath.
+
+  You can @dfn{raise} a frame to the top of that order or @dfn{lower} a
+frame to its bottom by using the functions @code{raise-frame} and
+@code{lower-frame}.  You can @dfn{restack} a frame directly above or
+below another frame using the function @code{frame-restack}.
+
+  Note that all functions described below will respect the adherence of
+frames (and all other window-system windows) to their respective z-group
+(@pxref{Position Parameters}).  For example, you usually cannot lower a
+frame below that of the desktop window and you cannot raise a frame
+whose @code{z-group} parameter is @code{nil} above the window-system's
+taskbar or tooltip window.
 
 @deffn Command raise-frame &optional frame
-This function raises frame @var{frame} (default, the selected frame).
-If @var{frame} is invisible or iconified, this makes it visible.
+This function raises frame @var{frame} (default, the selected frame)
+above all other frames belonging to the same or a lower z-group as
+@var{frame}.  If @var{frame} is invisible or iconified, this makes it
+visible.  If @var{frame} is a child frame (@pxref{Child Frames}), this
+raises @var{frame} above all other child frames of its parent.
 @end deffn
 
 @deffn Command lower-frame &optional frame
-This function lowers frame @var{frame} (default, the selected frame).
+This function lowers frame @var{frame} (default, the selected frame)
+below all other frames belonging to the same or a higher z-group as
+@var{frame}.  If @var{frame} is a child frame (@pxref{Child Frames}),
+this lowers @var{frame} below all other child frames of its parent.
 @end deffn
+
+@defun frame-restack frame1 frame2 &optional above
+This function restacks @var{frame1} below @var{frame2}.  This implies
+that if both frames are visible and their display areas overlap,
+@var{frame2} will (partially) obscure @var{frame1}.  If the optional
+third argument @var{above} is non-@code{nil}, this function restacks
+@var{frame1} above @var{frame2}.  This means that if both frames are
+visible and their display areas overlap, @var{frame1} will (partially)
+obscure @var{frame2}.
+
+Technically, this function may be thought of as an atomic action
+performed in two steps: The first step removes @var{frame1}'s
+window-system window from the display.  The second step reinserts
+@var{frame1}'s window into the display below (above if @var{above} is
+true) that of @var{frame2}.  Hence the position of @var{frame2} in its
+display's Z (stacking) order relative to all other frames excluding
+@var{frame1} remains unaltered.
+
+Some window managers may refuse to restack windows.
+@end defun
+
+Note that the effect of restacking will only hold as long as neither of
+the involved frames is iconified or made invisible.  You can use the
+@code{z-group} (@pxref{Position Parameters}) frame parameter to add a
+frame to a group of frames permanently shown above or below other
+frames.  As long as a frame belongs to one of these groups, restacking
+it will only affect its relative stacking position within that group.
+The effect of restacking frames belonging to different z-groups is
+undefined.  You can list frames in their current stacking order with the
+function @code{frame-list-z-order} (@pxref{Finding All Frames}).
 
 @defopt minibuffer-auto-raise
 If this is non-@code{nil}, activation of the minibuffer raises the frame
@@ -2264,6 +3002,7 @@ should be a terminal object, a frame (meaning that frame's terminal),
 or @code{nil} (meaning the selected frame's terminal).  If it does not
 refer to a text terminal, the return value is @code{nil}.
 @end defun
+
 
 @node Frame Configurations
 @section Frame Configurations
@@ -2287,6 +3026,215 @@ Ordinarily, this function deletes all existing frames not listed in
 @var{configuration}.  But if @var{nodelete} is non-@code{nil}, the
 unwanted frames are iconified instead.
 @end defun
+
+
+@node Child Frames
+@section Child Frames
+@cindex child frames
+@cindex parent frames
+
+Child frames are objects halfway between windows (@pxref{Windows}) and
+``normal'' frames.  Like windows, they are attached to an owning frame.
+Unlike windows, they may overlap each other---changing the size or
+position of one child frame does not change the size or position of any
+of its sibling child frames.
+
+  By design, operations to make or modify child frames are implemented
+with the help of frame parameters (@pxref{Frame Parameters}) without any
+specialized functions or customizable variables.  Note that child frames
+are meaningful on graphical terminals only.
+
+  To create a new child frame or to convert a normal frame into a child
+frame, set that frame's @code{parent-frame} parameter (@pxref{Frame
+Interaction Parameters}) to that of an already existing frame.  The
+frame specified by that parameter will then be the frame's parent frame
+as long as the parameter is not changed or reset.  Technically, this
+makes the child frame's window-system window a child window of the
+parent frame's window-system window.
+
+@cindex top-level frame
+@cindex reparent frame
+@cindex nest frame
+  The @code{parent-frame} parameter can be changed at any time.  Setting
+it to another frame @dfn{reparents} the child frame.  Setting it to
+another child frame makes the frame a @dfn{nested} child frame.  Setting
+it to @code{nil} restores the frame's status as a @dfn{top-level
+frame}---a frame whose window-system window is a child of its display's
+root window.
+
+  Since child frames can be arbitrarily nested, a frame can be both a
+child and a parent frame.  Also, the relative roles of child and parent
+frame may be reversed at any time (though it's usually a good idea to
+keep the size of a child frame sufficiently smaller than that of its
+parent).  An error will be signaled for the attempt to make a frame an
+ancestor of itself.
+
+   Most window-systems clip a child frame at the native edges
+(@pxref{Frame Geometry}) of its parent frame---everything outside these
+edges is usually invisible.  A child frame's @code{left} and @code{top}
+parameters specify a position relative to the top-left corner of its
+parent's native frame.  When the parent frame is resized, this position
+remains conceptually unaltered.
+
+  NS builds do not clip child frames at the parent frame's edges,
+allowing them to be positioned so they do not obscure the parent frame
+while still being visible themselves.
+
+  Usually, moving a parent frame moves along all its child frames and
+their descendants as well, keeping their relative positions unaltered.
+Note that the hook @code{move-frame-functions} (@pxref{Frame Position})
+is run for a child frame only when the position of the child frame
+relative to its parent frame changes.  It is not run for a child frame
+when the position of the parent frame changes.
+
+  When a parent frame is resized, its child frames conceptually retain
+their previous sizes and their positions relative to the left upper
+corner of the parent.  This means that a child frame may become
+(partially) invisible when its parent frame shrinks.  The parameter
+@code{keep-ratio} (@pxref{Frame Interaction Parameters}) can be used to
+resize and reposition a child frame proportionally whenever its parent
+frame is resized.  This may avoid obscuring parts of a frame when its
+parent frame is shrunk.
+
+  A visible child frame always appears on top of its parent frame thus
+obscuring parts of it, except on NS builds where it may be positioned
+beneath the parent.  This is comparable to the window-system window of a
+top-level frame which also always appears on top of its parent
+window---the desktop's root window.  When a parent frame is iconified or
+made invisible (@pxref{Visibility of Frames}), its child frames are made
+invisible.  When a parent frame is deiconified or made visible, its
+child frames are made visible.  When a parent frame is about to be
+deleted (@pxref{Deleting Frames}), its child frames are recursively
+deleted before it.
+
+  Whether a child frame can have a menu or tool bar is window-system or
+window manager dependent.  Most window-systems explicitly disallow menus
+bars for child frames.  It seems advisable to disable both, menu and
+tool bars, via the frame's initial parameters settings.
+
+  Usually, child frames do not exhibit window manager decorations like a
+title bar or external borders (@pxref{Frame Geometry}).  When the child
+frame does not show a menu or tool bar, any other of the frame's borders
+(@pxref{Layout Parameters}) can be used instead of the external borders.
+
+  In particular, under X (but not when building with GTK+), the frame's
+outer border can be used.  On MS-Windows, specifying a non-zero outer
+border width will show a one-pixel wide external border.  Under all
+window-systems, the internal border can be used.  In either case, it's
+advisable to disable a child frame's window manager decorations with the
+@code{undecorated} frame parameter (@pxref{Management Parameters}).
+
+  To resize or move an undecorated child frame with the mouse, special
+frame parameters (@pxref{Mouse Dragging Parameters}) have to be used.
+The internal border of a child frame, if present, can be used to resize
+the frame with the mouse, provided that frame has a non-@code{nil}
+@code{drag-internal-border} parameter.  If set, the @code{snap-width}
+parameter indicates the number of pixels where the frame @dfn{snaps} at
+the respective edge or corner of its parent frame.
+
+  There are two ways to drag an entire child frame with the mouse: The
+@code{drag-with-mode-line} parameter, if non-@code{nil}, allows to drag
+a frame without minibuffer window (@pxref{Minibuffer Windows}) via the
+mode line area of its bottommost window.  The
+@code{drag-with-header-line} parameter, if non-@code{nil}, allows to
+drag the frame via the header line area of its topmost window.
+
+  In order to give a child frame a draggable header or mode line, the
+window parameters @code{mode-line-format} and @code{header-line-format}
+are handy (@pxref{Window Parameters}).  These allow to remove an
+unwanted mode line (when @code{drag-with-header-line} is chosen) and to
+remove mouse-sensitive areas which might interfere with frame dragging.
+
+  To avoid that dragging moves a frame completely out of its parent's
+native frame, something which might happen when the mouse cursor
+overshoots and makes the frame difficult to retrieve once the mouse
+button has been released, it is advisable to set the frame's
+@code{top-visible} or @code{bottom-visible} parameter correspondingly.
+
+  The @code{top-visible} parameter specifies the number of pixels at the
+top of the frame that always remain visible within the parent's native
+frame during dragging and should be set when specifying a non-@code{nil}
+@code{drag-with-header-line} parameter.  The @code{bottom-visible}
+parameter specifies the number of pixels at the bottom of the frame that
+always remain visible within the parent's native frame during dragging
+and should be preferred when specifying a non-@code{nil}
+@code{drag-with-mode-line} parameter.
+
+  When a child frame is used for displaying a buffer via
+@code{display-buffer-in-child-frame} (@pxref{Display Action Functions}),
+the frame's @code{auto-hide-function} parameter (@pxref{Frame
+Interaction Parameters}) can be set to a function, in order to
+appropriately deal with the frame when the window displaying the buffer
+shall be quit.
+
+  When a child frame is used during minibuffer interaction, for example,
+to display completions in a separate window, the @code{minibuffer-exit}
+parameter (@pxref{Frame Interaction Parameters}) is useful in order to
+deal with the frame when the minibuffer is exited.
+
+  The behavior of child frames deviates from that of top-level frames in
+a number of other ways as well.  Here we sketch a few of them:
+
+@itemize @bullet
+@item
+The semantics of maximizing and iconifying child frames is highly
+window-system dependent.  As a rule, applications should never invoke
+these operations for child frames.
+
+@item
+Raising, lowering and restacking child frames (@pxref{Raising and
+Lowering}) or changing the @code{z-group} (@pxref{Position Parameters})
+of a child frame changes only the stacking order of child frames with
+the same parent.
+
+@item
+Many window-systems are not able to change the opacity (@pxref{Font and
+Color Parameters}) of child frames.
+
+@item
+Transferring focus from a child frame to an ancestor that is not its
+parent by clicking with the mouse in a visible part of that ancestor's
+window may fail with some window-systems.  You may have to click into
+the direct parent's window-system window first.
+
+@item
+Window managers might not bother to extend their focus follows mouse
+policy to child frames.  Customizing @code{mouse-autoselect-window} can
+help in this regard (@pxref{Mouse Window Auto-selection}).
+
+@item
+Dropping (@pxref{Drag and Drop}) on child frames is not guaranteed to
+work on all window-systems.  Some will drop the object on the parent
+frame or on some ancestor instead.
+@end itemize
+
+  The following two functions can be useful when working with child and
+parent frames:
+
+@defun frame-parent &optional frame
+This function returns the parent frame of @var{frame}.  The parent frame
+of @var{frame} is the Emacs frame whose window-system window is the
+parent window of @var{frame}'s window-system window.  If such a frame
+exists, @var{frame} is considered a child frame of that frame.
+
+This function returns @code{nil} if @var{frame} has no parent frame.
+@end defun
+
+@defun frame-ancestor-p &optional ancestor descendant
+This functions returns non-@code{nil} if @var{ancestor} is an ancestor
+of @var{descendant}.  @var{ancestor} is an ancestor of @var{descendant}
+when it is either @var{descendant}'s parent frame or it is an ancestor
+of @var{descendant}'s parent frame.  Both, @var{ancestor} and
+@var{descendant} must specify live frames and default to the selected
+frame.
+@end defun
+
+Note also the function @code{window-largest-empty-rectangle}
+(@pxref{Coordinates and Windows}) which can be used to inscribe a child
+frame in the largest empty area of an existing window.  This can be
+useful to avoid that a child frame obscures any text shown in that
+window.
+
 
 @node Mouse Tracking
 @section Mouse Tracking
@@ -3202,10 +4150,4 @@ ever be developed and distributed noncommercially.
 @defvar x-no-window-manager
 This variable's value is @code{t} if no X window manager is in use.
 @end defvar
-@end ignore
-
-@ignore
-@item
-The functions @code{x-pixel-width} and @code{x-pixel-height} return the
-width and height of an X Window frame, measured in pixels.
 @end ignore

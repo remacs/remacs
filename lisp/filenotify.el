@@ -28,7 +28,7 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 
 (defconst file-notify--library
   (cond
@@ -188,8 +188,8 @@ EVENT is the cadr of the event in `file-notify-handle-event'
                  ((memq action '(attrib link)) 'attribute-changed)
                  ((memq action '(create added)) 'created)
                  ((memq action '(modify modified write)) 'changed)
-                 ((memq action
-                        '(delete delete-self move-self removed)) 'deleted)
+                 ((memq action '(delete delete-self move-self removed))
+		  'deleted)
                  ;; Make the event pending.
                  ((memq action '(moved-from renamed-from))
                   (setq file-notify--pending-event

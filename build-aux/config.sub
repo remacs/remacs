@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
-timestamp='2017-03-21'
+timestamp='2017-04-02'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -263,7 +263,7 @@ case $basic_machine in
 	| fido | fr30 | frv | ft32 \
 	| h8300 | h8500 | hppa | hppa1.[01] | hppa2.0 | hppa2.0[nw] | hppa64 \
 	| hexagon \
-	| i370 | i860 | i960 | ia64 \
+	| i370 | i860 | i960 | ia16 | ia64 \
 	| ip2k | iq2000 \
 	| k1om \
 	| le32 | le64 \
@@ -389,7 +389,7 @@ case $basic_machine in
 	| h8300-* | h8500-* \
 	| hppa-* | hppa1.[01]-* | hppa2.0-* | hppa2.0[nw]-* | hppa64-* \
 	| hexagon-* \
-	| i*86-* | i860-* | i960-* | ia64-* \
+	| i*86-* | i860-* | i960-* | ia16-* | ia64-* \
 	| ip2k-* | iq2000-* \
 	| k1om-* \
 	| le32-* | le64-* \

@@ -69,7 +69,6 @@
 (require 'cl-lib)
 (require 'eieio)
 (require 'ring)
-(require 'pcase)
 (require 'project)
 
 (eval-when-compile
@@ -921,17 +920,29 @@ IGNORES is a list of glob patterns."
   (let* ((grep-find-template (replace-regexp-in-string "<C>" "<C> -E"
                                                        grep-find-template t t))
          (grep-highlight-matches nil)
+         ;; TODO: Sanitize the regexp to remove Emacs-specific terms,
+         ;; so that Grep can search for the "relaxed" version.  Can we
+         ;; do that reliably enough, without creating false negatives?
          (command (xref--rgrep-command (xref--regexp-to-extended regexp)
                                        files
                                        (expand-file-name dir)
                                        ignores))
          (buf (get-buffer-create " *xref-grep*"))
          (grep-re (caar grep-regexp-alist))
+         status
          hits)
     (with-current-buffer buf
       (erase-buffer)
-      (call-process-shell-command command nil t)
+      (setq status
+            (call-process-shell-command command nil t))
       (goto-char (point-min))
+      ;; Can't use the exit status: Grep exits with 1 to mean "no
+      ;; matches found".  Find exits with 1 if any of the invocations
+      ;; exit with non-zero. "No matches" and "Grep program not found"
+      ;; are all the same to it.
+      (when (and (/= (point-min) (point-max))
+                 (not (looking-at grep-re)))
+        (user-error "Search failed with status %d: %s" status (buffer-string)))
       (while (re-search-forward grep-re nil t)
         (push (list (string-to-number (match-string 2))
                     (match-string 1)
@@ -1001,6 +1012,17 @@ directory, used as the root of the ignore globs."
                (match-string 1 str)))))
    str t t))
 
+(defun xref--regexp-syntax-dependent-p (str)
+  "Return non-nil when STR depends on the buffer's syntax.
+Such as the current syntax table and the applied syntax properties."
+  (let ((case-fold-search nil))
+    (string-match-p (rx
+                     (or string-start (not (in ?\\)))
+                     (0+ (= 2 ?\\))
+                     ?\\
+                     (in ?b ?B ?< ?> ?w ?W ?_ ?s ?S))
+                    str)))
+
 (defvar xref--last-visiting-buffer nil)
 (defvar xref--temp-buffer-file-name nil)
 
@@ -1014,7 +1036,8 @@ directory, used as the root of the ignore globs."
 
 (defun xref--collect-matches (hit regexp tmp-buffer)
   (pcase-let* ((`(,line ,file ,text) hit)
-               (buf (xref--find-buffer-visiting file)))
+               (buf (xref--find-buffer-visiting file))
+               (syntax-needed (xref--regexp-syntax-dependent-p regexp)))
     (if buf
         (with-current-buffer buf
           (save-excursion
@@ -1022,12 +1045,14 @@ directory, used as the root of the ignore globs."
             (forward-line (1- line))
             (xref--collect-matches-1 regexp file line
                                      (line-beginning-position)
-                                     (line-end-position))))
+                                     (line-end-position)
+                                     syntax-needed)))
       ;; Using the temporary buffer is both a performance and a buffer
       ;; management optimization.
       (with-current-buffer tmp-buffer
         (erase-buffer)
-        (unless (equal file xref--temp-buffer-file-name)
+        (when (and syntax-needed
+                   (not (equal file xref--temp-buffer-file-name)))
           (insert-file-contents file nil 0 200)
           ;; Can't (setq-local delay-mode-hooks t) because of
           ;; bug#23272, but the performance penalty seems minimal.
@@ -1043,11 +1068,13 @@ directory, used as the root of the ignore globs."
         (goto-char (point-min))
         (xref--collect-matches-1 regexp file line
                                  (point)
-                                 (point-max))))))
+                                 (point-max)
+                                 syntax-needed)))))
 
-(defun xref--collect-matches-1 (regexp file line line-beg line-end)
+(defun xref--collect-matches-1 (regexp file line line-beg line-end syntax-needed)
   (let (matches)
-    (syntax-propertize line-end)
+    (when syntax-needed
+      (syntax-propertize line-end))
     ;; FIXME: This results in several lines with the same
     ;; summary. Solve with composite pattern?
     (while (and

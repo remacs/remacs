@@ -554,10 +554,11 @@ xg_check_special_colors (struct frame *f,
     else
       gtk_style_context_get_background_color (gsty, state, &col);
 
-    sprintf (buf, "rgb:%04x/%04x/%04x",
-             (unsigned) (col.red * 65535),
-             (unsigned) (col.green * 65535),
-             (unsigned) (col.blue * 65535));
+    unsigned short
+      r = col.red * 65535,
+      g = col.green * 65535,
+      b = col.blue * 65535;
+    sprintf (buf, "rgb:%04x/%04x/%04x", r, g, b);
     success_p = x_parse_color (f, buf, color) != 0;
 #else
     GtkStyle *gsty = gtk_widget_get_style (FRAME_GTK_WIDGET (f));
@@ -835,30 +836,6 @@ xg_set_geometry (struct frame *f)
     }
 }
 
-/* Clear under internal border if any.  As we use a mix of Gtk+ and X calls
-   and use a GtkFixed widget, this doesn't happen automatically.  */
-
-void
-xg_clear_under_internal_border (struct frame *f)
-{
-  if (FRAME_INTERNAL_BORDER_WIDTH (f) > 0)
-    {
-      x_clear_area (f, 0, 0,
-		    FRAME_PIXEL_WIDTH (f), FRAME_INTERNAL_BORDER_WIDTH (f));
-
-      x_clear_area (f, 0, 0,
-		    FRAME_INTERNAL_BORDER_WIDTH (f), FRAME_PIXEL_HEIGHT (f));
-
-      x_clear_area (f, 0,
-		    FRAME_PIXEL_HEIGHT (f) - FRAME_INTERNAL_BORDER_WIDTH (f),
-		    FRAME_PIXEL_WIDTH (f), FRAME_INTERNAL_BORDER_WIDTH (f));
-
-      x_clear_area (f,
-		    FRAME_PIXEL_WIDTH (f) - FRAME_INTERNAL_BORDER_WIDTH (f),
-		    0, FRAME_INTERNAL_BORDER_WIDTH (f), FRAME_PIXEL_HEIGHT (f));
-    }
-}
-
 static int
 xg_get_gdk_scale (void)
 {
@@ -905,7 +882,7 @@ xg_frame_resized (struct frame *f, int pixelwidth, int pixelheight)
       || pixelwidth != FRAME_PIXEL_WIDTH (f)
       || pixelheight != FRAME_PIXEL_HEIGHT (f))
     {
-      xg_clear_under_internal_border (f);
+      x_clear_under_internal_border (f);
       change_frame_size (f, width, height, 0, 1, 0, 1);
       SET_FRAME_GARBAGED (f);
       cancel_mouse_face (f);
@@ -933,7 +910,7 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
 		       &gwidth, &gheight);
 
   /* Do this before resize, as we don't know yet if we will be resized.  */
-  xg_clear_under_internal_border (f);
+  x_clear_under_internal_border (f);
 
   if (FRAME_VISIBLE_P (f))
     {
@@ -1200,7 +1177,14 @@ xg_create_frame_widgets (struct frame *f)
   else if (! NILP (f->name))
     title = SSDATA (ENCODE_UTF_8 (f->name));
 
-  if (title) gtk_window_set_title (GTK_WINDOW (wtop), title);
+  if (title)
+    gtk_window_set_title (GTK_WINDOW (wtop), title);
+
+  if (FRAME_UNDECORATED (f))
+    {
+      gtk_window_set_decorated (GTK_WINDOW (wtop), FALSE);
+      store_frame_param (f, Qundecorated, Qt);
+    }
 
   FRAME_GTK_OUTER_WIDGET (f) = wtop;
   FRAME_GTK_WIDGET (f) = wfixed;
@@ -1274,6 +1258,14 @@ xg_create_frame_widgets (struct frame *f)
   gtk_widget_set_can_focus (wfixed, TRUE);
   gtk_window_set_resizable (GTK_WINDOW (wtop), TRUE);
 #endif
+
+  if (FRAME_OVERRIDE_REDIRECT (f))
+    {
+      GdkWindow *gwin = gtk_widget_get_window (wtop);
+
+      if (gwin)
+	gdk_window_set_override_redirect (gwin, TRUE);
+    }
 
 #ifdef USE_GTK_TOOLTIP
   /* Steal a tool tip window we can move ourselves.  */
@@ -1356,7 +1348,9 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   /* Don't set size hints during initialization; that apparently leads
      to a race condition.  See the thread at
      http://lists.gnu.org/archive/html/emacs-devel/2008-10/msg00033.html  */
-  if (NILP (Vafter_init_time) || !FRAME_GTK_OUTER_WIDGET (f))
+  if (NILP (Vafter_init_time)
+      || !FRAME_GTK_OUTER_WIDGET (f)
+      || FRAME_PARENT_FRAME (f))
     return;
 
   XSETFRAME (frame, f);
@@ -1489,6 +1483,102 @@ xg_set_background_color (struct frame *f, unsigned long bg)
     }
 }
 
+/* Change the frame's decoration (title bar + resize borders).  This
+   might not work with all window managers.  */
+void
+xg_set_undecorated (struct frame *f, Lisp_Object undecorated)
+{
+  if (FRAME_GTK_WIDGET (f))
+    {
+      block_input ();
+      gtk_window_set_decorated (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+				NILP (undecorated) ? TRUE : FALSE);
+      unblock_input ();
+    }
+}
+
+
+/* Restack F1 below F2, above if ABOVE_FLAG is true.  This might not
+   work with all window managers.  */
+void
+xg_frame_restack (struct frame *f1, struct frame *f2, bool above_flag)
+{
+#if GTK_CHECK_VERSION (2, 18, 0)
+  block_input ();
+  if (FRAME_GTK_OUTER_WIDGET (f1) && FRAME_GTK_OUTER_WIDGET (f2))
+    {
+      GdkWindow *gwin1 = gtk_widget_get_window (FRAME_GTK_OUTER_WIDGET (f1));
+      GdkWindow *gwin2 = gtk_widget_get_window (FRAME_GTK_OUTER_WIDGET (f2));
+      Lisp_Object frame1, frame2;
+
+      XSETFRAME (frame1, f1);
+      XSETFRAME (frame2, f2);
+
+      gdk_window_restack (gwin1, gwin2, above_flag);
+      x_sync (f1);
+    }
+  unblock_input ();
+#endif
+}
+
+
+/* Don't show frame in taskbar, don't ALT-TAB to it.  */
+void
+xg_set_skip_taskbar (struct frame *f, Lisp_Object skip_taskbar)
+{
+  block_input ();
+  if (FRAME_GTK_WIDGET (f))
+    gdk_window_set_skip_taskbar_hint
+      (gtk_widget_get_window (FRAME_GTK_OUTER_WIDGET (f)),
+       NILP (skip_taskbar) ? FALSE : TRUE);
+  unblock_input ();
+}
+
+
+/* Don't give frame focus.  */
+void
+xg_set_no_focus_on_map (struct frame *f, Lisp_Object no_focus_on_map)
+{
+  block_input ();
+  if (FRAME_GTK_WIDGET (f))
+    {
+      GtkWindow *gwin = GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f));
+      gboolean g_no_focus_on_map = NILP (no_focus_on_map) ? TRUE : FALSE;
+
+      gtk_window_set_focus_on_map (gwin, g_no_focus_on_map);
+    }
+  unblock_input ();
+}
+
+
+void
+xg_set_no_accept_focus (struct frame *f, Lisp_Object no_accept_focus)
+{
+  block_input ();
+  if (FRAME_GTK_WIDGET (f))
+    {
+      GtkWindow *gwin = GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f));
+      gboolean g_no_accept_focus = NILP (no_accept_focus) ? TRUE : FALSE;
+
+      gtk_window_set_accept_focus (gwin, g_no_accept_focus);
+    }
+  unblock_input ();
+}
+
+void
+xg_set_override_redirect (struct frame *f, Lisp_Object override_redirect)
+{
+  block_input ();
+
+  if (FRAME_GTK_OUTER_WIDGET (f))
+    {
+      GdkWindow *gwin = gtk_widget_get_window (FRAME_GTK_OUTER_WIDGET (f));
+
+      gdk_window_set_override_redirect (gwin, NILP (override_redirect) ? FALSE : TRUE);
+    }
+
+  unblock_input ();
+}
 
 /* Set the frame icon to ICON_PIXMAP/MASK.  This must be done with GTK
    functions so GTK does not overwrite the icon.  */
@@ -3787,7 +3877,8 @@ xg_update_scrollbar_pos (struct frame *f,
       /* Move and resize to new values.  */
       gtk_fixed_move (GTK_FIXED (wfixed), wparent, left, top);
       gtk_widget_style_get (wscroll, "min-slider-length", &msl, NULL);
-      if (msl > height)
+      bool hidden = height < msl;
+      if (hidden)
         {
           /* No room.  Hide scroll bar as some themes output a warning if
              the height is less than the min size.  */
@@ -3806,6 +3897,15 @@ xg_update_scrollbar_pos (struct frame *f,
 	  oldx -= (scale - 1) * oldw;
           x_clear_area (f, oldx, oldy, oldw, oldh);
         }
+
+      if (!hidden)
+	{
+	  GtkWidget *scrollbar = xg_get_widget_from_map (scrollbar_id);
+	  GtkWidget *webox = gtk_widget_get_parent (scrollbar);
+
+	  /* Don't obscure any child frames.  */
+	  XLowerWindow (FRAME_X_DISPLAY (f), GTK_WIDGET_TO_X_WIN (webox));
+	}
 
       /* GTK does not redraw until the main loop is entered again, but
          if there are no X events pending we will not enter it.  So we sync
@@ -3871,6 +3971,15 @@ xg_update_horizontal_scrollbar_pos (struct frame *f,
       /* GTK does not redraw until the main loop is entered again, but
          if there are no X events pending we will not enter it.  So we sync
          here to get some events.  */
+
+      {
+	GtkWidget *scrollbar =
+	  xg_get_widget_from_map (scrollbar_id);
+	GtkWidget *webox = gtk_widget_get_parent (scrollbar);
+
+	/* Don't obscure any child frames.  */
+	XLowerWindow (FRAME_X_DISPLAY (f), GTK_WIDGET_TO_X_WIN (webox));
+      }
 
       x_sync (f);
       SET_FRAME_GARBAGED (f);
@@ -4230,7 +4339,7 @@ xg_tool_bar_callback (GtkWidget *w, gpointer client_data)
 
   /* Return focus to the frame after we have clicked on a detached
      tool bar button. */
-  x_focus_frame (f);
+  x_focus_frame (f, false);
 }
 
 static GtkWidget *

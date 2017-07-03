@@ -108,7 +108,7 @@ emacsFrameTranslations [] = "\
 
 static EmacsFrameClassRec emacsFrameClassRec = {
     { /* core fields */
-    /* superclass		*/	&widgetClassRec,
+    /* superclass		*/	0, /* filled in by emacsFrameClass */
     /* class_name		*/	(char *) "EmacsFrame",
     /* widget_size		*/	sizeof (EmacsFrameRec),
     /* class_initialize		*/	0,
@@ -146,7 +146,16 @@ static EmacsFrameClassRec emacsFrameClassRec = {
     }
 };
 
-WidgetClass emacsFrameClass = (WidgetClass) &emacsFrameClassRec;
+WidgetClass
+emacsFrameClass (void)
+{
+  /* Set the superclass here rather than relying on static
+     initialization, to work around an unexelf.c bug on x86 platforms
+     that use the GNU Gold linker (Bug#27248).  */
+  emacsFrameClassRec.core_class.superclass = &widgetClassRec;
+
+  return (WidgetClass) &emacsFrameClassRec;
+}
 
 static void
 get_default_char_pixel_size (EmacsFrame ew, int *pixel_width, int *pixel_height)

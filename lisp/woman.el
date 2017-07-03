@@ -4420,7 +4420,7 @@ Needs doing properly!"
       ;; A field is contained between a pair of field delimiter
       ;; characters and consists of sub-strings separated by padding
       ;; indicator characters:
-      (setq delim (string delim ?[ ?^ delim ?] ?* delim))
+      (setq delim (string delim ?\[ ?^ delim ?\] ?* delim))
       (save-excursion
 	(while (re-search-forward delim end t)
 	  (goto-char (match-beginning 0))

@@ -217,6 +217,28 @@ result in an endless loop.
 If you need Emacs to be able to recover from closing displays, compile
 it with the Lucid toolkit instead of GTK.
 
+** Emacs compiled with GTK crashes at startup due to X protocol error.
+
+This is known to happen on elementary OS GNU/Linux systems.
+
+The error message is:
+
+  X protocol error: BadMatch (invalid parameter attributes) on protocol request 140
+  When compiled with GTK, Emacs cannot recover from X disconnects.
+  This is a GTK bug: https://bugzilla.gnome.org/show_bug.cgi?id=85715
+  For details, see etc/PROBLEMS.
+  Fatal error 6: Aborted
+
+followed by a C backtrace.  (Sometimes the offending protocol request
+number is 139.)
+
+The relevant bug report is here:
+
+  https://bugs.launchpad.net/elementaryos/+bug/1355274
+
+A workaround is to set XLIB_SKIP_ARGB_VISUALS=1 in the environment
+before starting Emacs, or run Emacs as root.
+
 ** Emacs crashes when you try to view a file with complex characters.
 
 For example, the etc/HELLO file (as shown by C-h h).
@@ -468,6 +490,17 @@ problem by adding this to your .cshrc file:
         unset edit
         stty -icrnl -onlcr -echo susp ^Z
     endif
+
+*** In Shell buffers using ksh, resizing a window inserts random characters.
+
+The characters come from the PS2 prompt, but they are not followed by
+a newline, which messes up the next command you type.  This strange
+effect is caused by Emacs 25 and later telling the shell that its
+screen size changed.
+
+To work around the problem, customize the option
+'window-adjust-process-window-size-function' to "Do not adjust process
+window sizes" (Lisp value 'ignore').
 
 *** In Inferior Python mode, input is echoed and native completion doesn't work.
 <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=25753>
@@ -2434,6 +2467,10 @@ middle button press.  In such cases, setting the wheel press to
 "scroll" sometimes works if you press the button twice.  Trying a
 generic mouse driver might help.
 
+One particular situation where this happens is when you have
+"Microsoft Intellipoint" installed, which runs the program
+ipoint.exe.  The fix is reportedly to uninstall this software.
+
 ** Scrolling the mouse wheel on MS-Windows always scrolls the top window.
 
 This is another common problem with mouse drivers.  Instead of
@@ -2478,17 +2515,6 @@ If this does not work, please inform bug-gnu-emacs@gnu.org.  Then
 please call support for your X-server and see if you can get a fix.
 If you do, please send it to bug-gnu-emacs@gnu.org so we can list it here.
 
-
-* Runtime problems specific to Mac OS X
-
-** On Mac OS X, file-name-case-insensitive-p may be unreliable
-
-The implementation of that function on Mac OS X uses pathconf with the
-_PC_CASE_SENSITIVE flag.  There have been reports that this use of
-pathconf does not work reliably.  If you have a problem, please
-recompile Emacs with -D DARWIN_OS_CASE_SENSITIVE_FIXME=1 or
--D DARWIN_OS_CASE_SENSITIVE_FIXME=2, and file a bug report saying
-whether this fixed your problem.
 
 * Build-time problems
 

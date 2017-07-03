@@ -3,7 +3,7 @@
 ;; Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
 ;; Author: Gerd Moellmann <gerd@gnu.org>
-;; Maintainer: Kim F. Storm <storm@cua.dk>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: maint
 ;; Package: emacs
 
@@ -26,9 +26,6 @@
 
 ;; Use M-x authors RET to create an *Authors* buffer that can used as
 ;; or merged with Emacs's AUTHORS file.
-
-;; FIXME: This needs to modernized in the light of current practice,
-;; which generates a single top-level ChangeLog file from commit logs.
 
 ;;; Code:
 
@@ -81,6 +78,7 @@ files.")
     ("François Pinard" "Francois Pinard")
     ("Francesco Potortì" "Francesco Potorti" "Francesco Potorti`")
     ("Frederic Pierresteguy" "Fred Pierresteguy")
+    (nil "^FSF")
     ("Gerd Möllmann" "Gerd Moellmann")
     ("Hallvard B. Furuseth" "Hallvard B Furuseth" "Hallvard Furuseth")
     ("Hrvoje Nikšić" "Hrvoje Niksic")
@@ -141,6 +139,7 @@ files.")
     ("Peter J. Weisberg" "PJ Weisberg")
     ("Peter S. Galbraith" "Peter S Galbraith" "Peter Galbraith")
     ("Peter Runestig" "Peter 'luna' Runestig")
+    ("Philipp Stephani" "Philipp .*phst@google")
     ("Piotr Zieliński" "Piotr Zielinski")
     ("Przemysław Wojnowski" "Przemyslaw Wojnowski")
     ("Rainer Schöpf" "Rainer Schoepf")
@@ -154,6 +153,7 @@ files.")
     ("Roland B. Roberts" "Roland B Roberts" "Roland Roberts")
     ("Ron Schnell" "Ronnie Schnell")
     ("Rui-Tao Dong" "Rui-Tao Dong ~{6-HpLN~}")
+    ("Ryan Thompson" "Ryan .*rct@thompsonclan")
     ("Sacha Chua" "Sandra Jean Chua")
     ("Sam Steingold" "Sam Shteingold")
     ("Satyaki Das" "Indexed search by Satyaki Das")
@@ -170,6 +170,7 @@ files.")
     ("Takaaki Ota" "Tak Ota")
     ("Takahashi Naoto" "Naoto Takahashi")
     ("Teodor Zlatanov" "Ted Zlatanov")
+    (nil "The PCL-CVS Trust")
     ("Thomas Dye" "Tom Dye")
     ("Thomas Horsley" "Tom Horsley")	; FIXME ?
     ("Thomas Wurgler" "Tom Wurgler")
@@ -209,7 +210,7 @@ If REALNAME is nil, ignore that author.")
     "David O'Toole"
     "Devon Sean McCullough"
     "Dominique de Waleffe"
-    "Edward O'Connor"
+    "Theresa O'Connor"
     "Exal de Jesus Garcia Carrillo"
     "George McNinch"
     "Greg McGary"
@@ -261,7 +262,13 @@ If REALNAME is nil, ignore that author.")
     "\\.\\(bzr\\|cvs\\|git\\)ignore$"		; obsolete or uninteresting
     "\\.arch-inventory$"
     "ChangeLog\\(\\.[0-9]+\\)?\\'"
-    "automated/data/"		   ; not interesting
+    "\\(automated\\|test\\)/data/"	; not interesting
+    "cedet/tests/"
+    "test/etags/"
+    "\\`\\(indent\\|automated\\)\\'" "indent/" "mod-test/"
+    "-resources/"
+    "unidata/.*\\.txt\\'"
+    "BidiCharacterTest.txt"
     ;; TODO lib/? Matches other things?
     "build-aux/" "m4/" "Emacs.xcodeproj" "mapfiles" "\\.map\\'"
     "preferences\\.\\(nib\\|gorm\\)"
@@ -273,7 +280,8 @@ Changes to files matching one of the regexps in this list are not listed.")
 
 (defconst authors-no-scan-regexps
   '("etc/nxml/"
-    "automated/data/")
+    "test/data/"
+    "test/.*-resources/")
   "Lists of regexps matching files not to scan for authorship.")
 
 (defconst authors-ignored-files
@@ -315,6 +323,7 @@ Changes to files matching one of the regexps in this list are not listed.")
     "*.el"
     ;; Autogen:
     "cus-load.el" "finder-inf.el" "ldefs-boot.el" "loaddefs-boot.el"
+    "lisp/ldefs-boot-manual.el" "lisp/ldefs-boot-auto.el"
     "compile" "config.guess" "config.sub" "depcomp"
     "autogen/compile" "autogen/config.guess" "autogen/config.in"
     "autogen/config.sub" "autogen/depcomp" "autogen/install-sh"
@@ -384,10 +393,12 @@ Changes to files matching one of the regexps in this list are not listed.")
     ;; Not in gnulib anymore
     "lib/qset-acl.c" "lib/qcopy-acl.c" "lib/file-has-acl.c"
     ;; files from old MS Windows build procedures
+    "nt/gnulib-modules-to-delete.cfg"
     "makefile.w32-in"
     "admin/unidata/makefile.w32-in"
     "unidata/makefile.w32-in"
     "lib/makefile.w32-in"
+    "lib-src/makefile.w32-in"
     "leim/makefile.w32-in"
     "lisp/makefile.w32-in"
     "src/makefile.w32-in"
@@ -401,12 +412,13 @@ Changes to files matching one of the regexps in this list are not listed.")
     "src/paths.h"
     "envadd.bat"
     "multi-install-info.bat"
-    "INSTALL.OLD"
+    "INSTALL.OLD" "nt/INSTALL.OLD"
     "nt/src/paths.h"
     "nmake.defs"
     "gmake.defs"
     "zipdist.bat"
     "nt/makefile.w32-in"
+    "nt/subdirs.el"
     "config.nt"
     "nextstep/WISHLIST"
     )
@@ -652,9 +664,11 @@ Changes to files in this list are not listed.")
     "configure" "config.h"
     "is_exec.c" "sigaction.c"
     ;; nt/
-    "ebuild.bat" "install.bat" "fast-install.bat"
+    "config.nt" "gmake.defs" "gnulib.mk" "nmake.defs"
+    "ebuild.bat" "envadd.bat" "fast-install.bat" "install.bat"
+    "multi-install-info.bat" "zipdist.bat"
     "debug.bat.in" "emacs.bat.in" "addsection.c"
-    "inc/sys/dir.h" "inc/gettext.h"
+    "inc/sys/dir.h" "inc/gettext.h" "nt/inc/socket.h"
     "time.h"
     ".gdbinit-union"
     "alloca.s"
@@ -693,6 +707,7 @@ Changes to files in this list are not listed.")
     "images/gnus/reverse-smile.xpm"
     "notes/commits" "notes/changelogs"
     "revdiff"				; admin/
+    "admin/ldefs-clean.el"
     "vcdiff" "rcs-checkin" "tindex.pl"
     "mainmake" "sed1.inp" "sed2.inp" "sed3.inp" ; msdos/
     "mac-fix-env.m"
@@ -733,7 +748,10 @@ Changes to files in this list are not listed.")
     "dns-mode.el" "run-at-time.el" "gnus-encrypt.el" "sha1-el.el"
     "gnus-gl.el" "gnus.sum.el" "proto-stream.el" "color.el" "color-lab.el"
     "eww.el" "shr-color.el" "shr.el" "earcon.el" "gnus-audio.el" "encrypt.el"
-    "format-spec.el" "gnus-move.el"
+    "format-spec.el" "gnus-move.el" "gnus-sync.el"
+    "auth-source.el" "ecomplete.el" "gravatar.el" "mailcap.el" "plstore.el"
+    "pop3.el" "qp.el" "registry.el" "rfc2231.el" "rtree.el"
+    "sieve.el" "sieve-mode.el"
     ;; doc
     "getopt.c" "texindex.c" "news.texi" "vc.texi" "vc2-xtra.texi"
     "back.texi" "vol1.texi" "vol2.texi" "elisp-covers.texi" "two.el"
@@ -747,7 +765,11 @@ Changes to files in this list are not listed.")
     ;; lib/
     "lib/stdio.c" "lib/gl_openssl.h" "lib/sigprocmask.c"
     "lib/pthread_sigprocmask.c" "lib/ldtoastr.c" "lib/dummy.c"
-    "lib/ignore-value.h"
+    "lib/ignore-value.h" "lib/Makefile.am"
+    "lib/pathmax.h" "lib/stat.c" "lib/strtoul.c" "lib/strtoull.c"
+    "lib/strtoumax.c" "lib/unsetenv.c"
+    "lib/getopt_cdefs.in.h" "lib/getopt_core.h" "lib/getopt_ext.h"
+    "lib/getopt_pfx_core.h" "lib/getopt_pfx_ext.h"
     ;; lib-src/
     "cvtmail.c" "digest-doc.c" "emacsserver.c" "emacstool.c" "env.c"
     "etags-vmslib.c" "fakemail.c" "getdate.c" "getopt.h" "getopt1.c"
@@ -763,11 +785,22 @@ Changes to files in this list are not listed.")
     "emacsclient.c" "etags.c" "hexl.c" "make-docfile.c" "movemail.c"
     "test-distrib.c" "testfile"
     "tpu-edt.doc"			; see below
+    "iso-swed.el"
+    "lisp/obsolete/vc-mcvs.el"
     "obsolete/vc-mcvs.el"
     "nnwarchive.el"
     "nnultimate.el"
     "nnslashdot.el"
+    "keyswap.el"
+    "mouse-sel.el"
+    "nxml-glyph.el"
+    "tramp-gw.el"
     "webmail.el"
+    "biditest.el"
+    "redisplay-testsuite.el"
+    "cedet-utests.el" "ede-tests.el" "semantic-ia-utest.el"
+    "semantic-tests.el" "semantic-utest-c.el" "semantic-utest.el"
+    "srecode-tests.el" "make-test-deps.emacs-lisp"
     )
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
@@ -879,11 +912,16 @@ in the repository.")
     ;; From lisp/ to etc/nxml.
     ("nxml/test.invalid.xml" . "test-invalid.xml")
     ("nxml/test.valid.xml" . "test-valid.xml")
+    ("automated/Makefile.in" . "test/Makefile.in")
+    ("rmailmm.el" . "test/rmailmm.el")
     ;; The one in lisp is eshell/eshell.el.
-    ("eshell.el" . "automated/eshell.el")
-    ("eshell/esh-test.el" . "automated/eshell.el")
-    ("automated/cl-lib.el" . "automated/cl-lib-tests.el")
-    ("automated/package-x-test.el" . "automated/package-test.el")
+    ("eshell.el" . "eshell-tests.el")
+    ("automated/eshell.el" . "eshell-tests.el")
+    ("eshell/esh-test.el" . "eshell-tests.el")
+    ("automated/cl-lib.el" . "cl-lib-tests.el")
+    ("automated/cl-lib-tests.el" . "cl-lib-tests.el")
+    ("automated/package-x-test.el" . "package-tests.el")
+    ("automated/package-test.el" . "package-tests.el")
     ("indent/js-indent-first-initialiser-t.js" . "indent/js-indent-init-t.js")
     ("indent/js-indent-first-initialiser-dynamic.js" .
      "indent/js-indent-init-dynamic.js")
@@ -930,7 +968,20 @@ in the repository.")
     ("GNU.JOKES" . "JOKES")
     ("CHARACTERS" . "TODO")
     ("lisp/character-fold.el" . "lisp/char-fold.el")
-    ("test/automated/character-fold-tests.el" . "test/automated/char-fold-tests.el")
+    ("test/automated/character-fold-tests.el" . "char-fold-tests.el")
+    ("test/automated/char-fold-tests.el" . "char-fold-tests.el")
+    ("test/lisp/character-fold-tests.el" . "char-fold-tests.el")
+    ("test/manual/cycle-tests.el" . "fns-tests.el")
+    ("test/manual/cyclic-tests.el" . "fns-tests.el")
+    ("test/lisp/dns-mode-tests.el" . "dns-mode-tests.el")
+    ("test/lisp/legacy/core-elisp-tests.el" . "lisp-tests.el")
+    ("test/lisp/legacy/decoder-test.el" . "coding-tests.el")
+    ("test/lisp/legacy/files-tests.el" . "files-tests.el")
+    ("test/lisp/legacy/font-parse-tests.el" . "font-tests.el")
+    ("test/lisp/legacy/lexbind-tests.el" . "bytecomp-test.el")
+    ("test/lisp/legacy/occur-tests.el" . "replace-tests.el")
+    ("test/lisp/legacy/syntax-tests.el" . "syntax-tests.el")
+    ("test/file-organisation.org" . "file-organization.org")
     ("images/gnus/mail_send.xpm" . "mail-send.xpm") ; still in images/gnus
     ("schema/xhtml-basic-form.rnc" . "xhtml-bform.rnc" )
     ("schema/xhtml-basic-table.rnc" . "xhtml-btable.rnc")
@@ -950,6 +1001,7 @@ in the repository.")
     ("icons/emacs21.ico" . "emacs21.ico")
     ("ja-dic" . "leim/ja-dic")
     ("quail" . "leim/quail")
+    ("admin/notes/triage" . "bug-triage")
     ;; Moved from autogen/ to admin/.
     ("autogen/update_autogen" . "update_autogen")
     ;; Moved from etc/ to admin/.
@@ -1040,9 +1092,13 @@ ediff\\|emerge\\|log-edit\\|log-view\\|pcvs\\|smerge-mode\\|vc\\)\\.el\\'"
     ;; From test/ to test/automated/.
     ("comint-testsuite.el" "automated/\\&")
     ("\\`\\(bytecomp\\|font-parse\\|icalendar\\|occur\\|newsticker\\)\
--testsuite\\.el" "automated/\\1-tests.el")
+-testsuite\\.el" "\\1-tests.el")
     ("automated/flymake/warnpred/\\(Makefile\\|test\\.\\(?:c\\|pl\\)\\)\\'"
      "automated/data/flymake/\\1")
+    ;; More complicated than this, but we only use the basename of the RHS.
+    ("automated/\\([^/]*-test[^/]*\\.el\\)\\'" "\\1")
+    ;; Maybe not the exact new name, but disambiguates from lisp/.
+    ("automated/\\([^/]*\\)\\.el\\'" "\\1-tests.el")
     ;; NB lax rules should come last.
     ("^m/m-\\(.*\\.h\\)$" "m/\\1" t)
     ("^m-\\(.*\\.h\\)$" "\\1" t)
@@ -1076,6 +1132,7 @@ Additionally, for these logs we apply the `lax' elements of
 
 (defvar authors-checked-files-alist)
 (defvar authors-invalid-file-names)
+(defvar authors-ignored-names)
 
 ;; This has become rather yucky. :(
 (defun authors-disambiguate-file-name (fullname)
@@ -1218,7 +1275,7 @@ author and what he did in hash table TABLE.  See the description of
 	  (nconc entry (list (cons action 1))))))))
 
 
-(defun authors-canonical-author-name (author)
+(defun authors-canonical-author-name (author file pos)
   "Return a canonicalized form of AUTHOR, an author name.
 If AUTHOR has an entry in `authors-aliases', use that.  Remove
 email addresses.  Capitalize words in the author's name, unless
@@ -1240,7 +1297,11 @@ it is found in `authors-fixed-case'."
     (setq author (replace-regexp-in-string "\\`[ \t]+" "" author))
     (setq author (replace-regexp-in-string "[ \t]+$" "" author))
     (setq author (replace-regexp-in-string "[ \t]+" " " author))
+    ;; NB this ignores the first name only case.
     (unless (string-match "[-, \t]" author)
+      (push (format-message "%s:%d: ignored `%s'"
+			    file (1+ (count-lines (point-min) pos)) author)
+	    authors-ignored-names)
       (setq author ""))
     (or (car (member author authors-fixed-case))
 	(capitalize author))))
@@ -1282,7 +1343,7 @@ with the file and the number of each action:
 Suggested\\|Trivial\\|Version\\|Originally\\|From:\\|Patch[ \t]+[Bb]y\\)")))
 		   (push (authors-canonical-author-name
 			  (buffer-substring-no-properties
-			   (point) (line-end-position))) authors)
+			   (point) (line-end-position)) log-file pos) authors)
 		   (forward-line 1)))
 		((looking-at "^[ \t]+\\*")
 		 (let ((line (buffer-substring-no-properties
@@ -1315,7 +1376,7 @@ TABLE is a hash table to add author information to."
 	 (enable-local-variables :safe)	; for find-file, hence let*
 	 (enable-local-eval nil)
 	 (buffer (find-file-noselect file)))
-    (setq file (authors-disambiguate-file-name (expand-file-name file)))
+    (setq file (expand-file-name file))
     (with-current-buffer buffer
       (save-restriction
 	(widen)
@@ -1332,7 +1393,8 @@ TABLE is a hash table to add author information to."
 	      (skip-chars-forward "-0-9 \t")
 	      (push (authors-canonical-author-name
 		     (buffer-substring-no-properties
-		      (point) (line-end-position))) authors)
+		      (point) (line-end-position))
+		     file (line-beginning-position)) authors)
 	      ;; tips.texi says the continuation line should begin
 	      ;; with a tab, but often spaces are used.
 	      (setq continue
@@ -1343,7 +1405,9 @@ TABLE is a hash table to add author information to."
 	    (and (> (length authors) 1)
 		 (setq action :cowrote))
 	    (mapc (lambda (author)
-		    (authors-add author file action table))
+		    (authors-add
+		     author
+		     (authors-disambiguate-file-name file) action table))
 		  authors)))))
     (unless existing-buffer
       (kill-buffer buffer))))
@@ -1434,7 +1498,8 @@ and a buffer *Authors Errors* containing references to unknown files."
 	(table (make-hash-table :test 'equal))
 	(buffer-name "*Authors*")
 	authors-checked-files-alist
-	authors-invalid-file-names)
+	authors-invalid-file-names
+	authors-ignored-names)
     (authors-add-fixed-entries table)
     (dolist (log logs)
       (when (string-match "ChangeLog\\(.[0-9]+\\)?$" log)
@@ -1498,14 +1563,20 @@ list of their contributions.\n")
 	    (symbol-name authors-coding-system) "\nEnd:\n")
     (message "Generating buffer %s... done" buffer-name)
     (unless noninteractive
-      (when authors-invalid-file-names
+      (when (or authors-invalid-file-names authors-ignored-names)
 	(with-current-buffer (get-buffer-create "*Authors Errors*")
 	  (setq buffer-read-only nil)
 	  (erase-buffer)
 	  (set-buffer-file-coding-system authors-coding-system)
-	  (insert "Unrecognized file entries found:\n\n")
-	  (mapc (lambda (f) (if (not (string-match "^[A-Za-z]+$" f)) (insert f "\n")))
-		(sort authors-invalid-file-names 'string-lessp))
+	  (when authors-invalid-file-names
+	    (insert "Unrecognized file entries found:\n\n")
+	    (mapc (lambda (f) (if (not (string-match "^[A-Za-z]+$" f)) (insert f "\n")))
+		  (sort authors-invalid-file-names 'string-lessp)))
+	  (when authors-ignored-names
+	    (insert "\n\nThese authors were ignored:\n\n"
+		    (mapconcat
+		     'identity
+		     (sort authors-ignored-names 'string-lessp) "\n")))
 	  (goto-char (point-min))
 	  (compilation-mode)
 	  (message "Errors were found.  See buffer %s" (buffer-name))))

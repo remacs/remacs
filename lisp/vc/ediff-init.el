@@ -385,8 +385,8 @@ It needs to be killed when we quit the session.")
 
 (defsubst ediff-barf-if-not-control-buffer (&optional meta-buf-p)
   (or (ediff-in-control-buffer-p meta-buf-p)
-      (error "%S: This command runs in Ediff Control Buffer only!"
-	     this-command)))
+      (user-error "%S: This command runs in Ediff Control Buffer only!"
+		  this-command)))
 
 (defgroup ediff-highlighting nil
   "Highlighting of difference regions in Ediff."
@@ -758,7 +758,7 @@ TYPE-OF-EMACS is either `emacs' or `xemacs'."
 		       (funcall op emacs-minor-version minor)
 		     t)))
 	     (t
-	      (error "%S: Invalid op in ediff-check-version" op)))))
+	      (user-error "%S: Invalid op in ediff-check-version" op)))))
 
 (defun ediff-color-display-p ()
   (condition-case nil

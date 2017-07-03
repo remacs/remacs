@@ -197,6 +197,31 @@ Evaluate BODY for each created sequence.
     (should (seq-every-p #'identity seq))
     (should (seq-every-p #'test-sequences-evenp seq))))
 
+(ert-deftest test-seq-set-equal-p ()
+  (with-test-sequences (seq1 '(1 2 3))
+    (should (seq-set-equal-p seq1 seq1))
+    (should (seq-set-equal-p seq1 seq1 #'eq))
+
+    (with-test-sequences (seq2 '(3 2 1))
+      (should (seq-set-equal-p seq1 seq2))
+      (should (seq-set-equal-p seq2 seq1))
+      (should (seq-set-equal-p seq1 seq2 #'eq))
+      (should (seq-set-equal-p seq2 seq1 #'eq)))
+
+    (with-test-sequences (seq2 '(3 1))
+      (should-not (seq-set-equal-p seq1 seq2))
+      (should-not (seq-set-equal-p seq2 seq1))))
+
+  (should (seq-set-equal-p '("a" "b" "c")
+                           '("c" "b" "a")))
+  (should-not (seq-set-equal-p '("a" "b" "c")
+                               '("c" "b" "a") #'eq))
+  (should-not (seq-set-equal-p '(("a" 1) ("b" 1) ("c" 1))
+                               '(("c" 2) ("b" 2) ("a" 2))))
+  (should (seq-set-equal-p '(("a" 1) ("b" 1) ("c" 1))
+                           '(("c" 2) ("b" 2) ("a" 2))
+                           (lambda (i1 i2) (equal (car i1) (car i2))))))
+
 (ert-deftest test-seq-empty-p ()
   (with-test-sequences (seq '(0))
     (should-not (seq-empty-p seq)))

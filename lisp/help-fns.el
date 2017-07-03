@@ -473,7 +473,8 @@ suitable file is found, return nil."
         (let ((fill-begin (point))
               (high-usage (car high))
               (high-doc (cdr high)))
-          (unless (get function 'reader-construct)
+          (unless (and (symbolp function)
+                       (get function 'reader-construct))
             (insert high-usage "\n"))
           (fill-region fill-begin (point))
           high-doc)))))
@@ -559,8 +560,9 @@ FILE is the file where FUNCTION was probably defined."
             (setq short rel))))
     short))
 
-;;;###autoload
-(defun describe-function-1 (function)
+(defun help-fns--analyse-function (function)
+  "Return information about FUNCTION.
+Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
   (let* ((advised (and (symbolp function)
 		       (featurep 'nadvice)
 		       (advice--p (advice--symbol-function function))))
@@ -593,27 +595,30 @@ FILE is the file where FUNCTION was probably defined."
                          (setq f (symbol-function f)))
                        f))
 		    ((subrp def) (intern (subr-name def)))
-		    (t def)))
-	 (sig-key (if (subrp def)
-                      (indirect-function real-def)
-                    real-def))
-	 (file-name (find-lisp-object-file-name function (if aliased 'defun
-                                                           def)))
-         (pt1 (with-current-buffer (help-buffer) (point)))
-	 (beg (if (and (or (byte-code-function-p def)
-			   (keymapp def)
-			   (memq (car-safe def) '(macro lambda closure)))
-		       (stringp file-name)
-		       (help-fns--autoloaded-p function file-name))
-		  (if (commandp def)
-		      "an interactive autoloaded "
-		    "an autoloaded ")
-		(if (commandp def) "an interactive " "a "))))
+                    (t def))))
+    (list real-function def aliased real-def)))
+
+(defun help-fns-function-description-header (function)
+  "Print a line describing FUNCTION to `standard-output'."
+  (pcase-let* ((`(,_real-function ,def ,aliased ,real-def)
+                (help-fns--analyse-function function))
+               (file-name (find-lisp-object-file-name function (if aliased 'defun
+                                                                 def)))
+               (beg (if (and (or (byte-code-function-p def)
+                                 (keymapp def)
+                                 (memq (car-safe def) '(macro lambda closure)))
+                             (stringp file-name)
+                             (help-fns--autoloaded-p function file-name))
+                        (if (commandp def)
+                            "an interactive autoloaded "
+                          "an autoloaded ")
+                      (if (commandp def) "an interactive " "a "))))
 
     ;; Print what kind of function-like object FUNCTION is.
     (princ (cond ((or (stringp def) (vectorp def))
 		  "a keyboard macro")
-		 ((get function 'reader-construct)
+		 ((and (symbolp function)
+                       (get function 'reader-construct))
                   "a reader construct")
 		 ;; Aliases are Lisp functions, so we need to check
 		 ;; aliases before functions.
@@ -674,34 +679,42 @@ FILE is the file where FUNCTION was probably defined."
 	    (re-search-backward (substitute-command-keys "`\\([^`']+\\)'")
                                 nil t)
 	    (help-xref-button 1 'help-function-def function file-name))))
-      (princ ".")
-      (with-current-buffer (help-buffer)
-	(fill-region-as-paragraph (save-excursion (goto-char pt1) (forward-line 0) (point))
-				  (point)))
-      (terpri)(terpri)
+      (princ "."))))
 
-      (let ((doc-raw (documentation function t))
-            (key-bindings-buffer (current-buffer)))
+;;;###autoload
+(defun describe-function-1 (function)
+  (let ((pt1 (with-current-buffer (help-buffer) (point))))
+    (help-fns-function-description-header function)
+    (with-current-buffer (help-buffer)
+      (fill-region-as-paragraph (save-excursion (goto-char pt1) (forward-line 0) (point))
+                                (point))))
+  (terpri)(terpri)
 
-	;; If the function is autoloaded, and its docstring has
-	;; key substitution constructs, load the library.
-	(and (autoloadp real-def) doc-raw
-	     help-enable-auto-load
-	     (string-match "\\([^\\]=\\|[^=]\\|\\`\\)\\\\[[{<]" doc-raw)
-	     (autoload-do-load real-def))
+  (pcase-let ((`(,real-function ,def ,_aliased ,real-def)
+               (help-fns--analyse-function function))
+              (doc-raw (documentation function t))
+              (key-bindings-buffer (current-buffer)))
 
-        (help-fns--key-bindings function)
-        (with-current-buffer standard-output
-          (let ((doc (help-fns--signature function doc-raw sig-key
-                                          real-function key-bindings-buffer)))
-            (run-hook-with-args 'help-fns-describe-function-functions function)
-            (insert "\n"
-                    (or doc "Not documented."))
-            ;; Avoid asking the user annoying questions if she decides
-            ;; to save the help buffer, when her locale's codeset
-            ;; isn't UTF-8.
-            (unless (memq text-quoting-style '(straight grave))
-              (set-buffer-file-coding-system 'utf-8))))))))
+    ;; If the function is autoloaded, and its docstring has
+    ;; key substitution constructs, load the library.
+    (and (autoloadp real-def) doc-raw
+         help-enable-auto-load
+         (string-match "\\([^\\]=\\|[^=]\\|\\`\\)\\\\[[{<]" doc-raw)
+         (autoload-do-load real-def))
+
+    (help-fns--key-bindings function)
+    (with-current-buffer standard-output
+      (let ((doc (help-fns--signature
+                  function doc-raw
+                  (if (subrp def) (indirect-function real-def) real-def)
+                  real-function key-bindings-buffer)))
+        (run-hook-with-args 'help-fns-describe-function-functions function)
+        (insert "\n" (or doc "Not documented.")))
+      ;; Avoid asking the user annoying questions if she decides
+      ;; to save the help buffer, when her locale's codeset
+      ;; isn't UTF-8.
+      (unless (memq text-quoting-style '(straight grave))
+        (set-buffer-file-coding-system 'utf-8)))))
 
 ;; Add defaults to `help-fns-describe-function-functions'.
 (add-hook 'help-fns-describe-function-functions #'help-fns--obsolete)
@@ -1096,8 +1109,8 @@ frame to show the information about SYMBOL; they default to the
 current buffer and the selected frame, respectively."
   (interactive
    (let* ((v-or-f (symbol-at-point))
-          (found (cl-some (lambda (x) (funcall (nth 1 x) v-or-f))
-                          describe-symbol-backends))
+          (found (if v-or-f (cl-some (lambda (x) (funcall (nth 1 x) v-or-f))
+                                     describe-symbol-backends)))
           (v-or-f (if found v-or-f (function-called-at-point)))
           (found (or found v-or-f))
           (enable-recursive-minibuffers t)

@@ -152,7 +152,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 
 @implementation EmacsImage
 
-+ allocInitFromFile: (Lisp_Object)file
++ (instancetype)allocInitFromFile: (Lisp_Object)file
 {
   NSImageRep *imgRep;
   Lisp_Object found;
@@ -197,7 +197,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 
 /* Create image from monochrome bitmap. If both FG and BG are 0
    (black), set the background to white and make it transparent. */
-- initFromXBM: (unsigned char *)bits width: (int)w height: (int)h
+- (instancetype)initFromXBM: (unsigned char *)bits width: (int)w height: (int)h
            fg: (unsigned long)fg bg: (unsigned long)bg
 {
   unsigned char *planes[5];
@@ -269,7 +269,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 }
 
 /* Set color for a bitmap image.  */
-- setXBMColor: (NSColor *)color
+- (instancetype)setXBMColor: (NSColor *)color
 {
   NSSize s = [self size];
   unsigned char *planes[5];
@@ -302,14 +302,14 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
           planes[1][i] = gg;
           planes[2][i] = bb;
         }
-    xbm_fg = ((rr << 16) & 0xff) + ((gg << 8) & 0xff) + (bb & 0xff);
+    xbm_fg = ((rr << 16) & 0xff0000) + ((gg << 8) & 0xff00) + (bb & 0xff);
   }
 
   return self;
 }
 
 
-- initForXPMWithDepth: (int)depth width: (int)width height: (int)height
+- (instancetype)initForXPMWithDepth: (int)depth width: (int)width height: (int)height
 {
   NSSize s = {width, height};
   int i;
@@ -386,7 +386,7 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 
 - (void) setPixelAtX: (int)x Y: (int)y toRed: (unsigned char)r
                green: (unsigned char)g blue: (unsigned char)b
-               alpha:(unsigned char)a;
+               alpha:(unsigned char)a
 {
   if (bmRep == nil)
     return;

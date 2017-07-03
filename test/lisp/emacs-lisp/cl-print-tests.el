@@ -34,7 +34,25 @@
     (let ((print-circle t))
       (should (equal (cl-prin1-to-string `((x . ,x) (y . ,x)))
                      "((x . #1=#s(cl-print--test :a 1 :b 2)) (y . #1#))")))
-    (should (string-match "\\`#f(compiled-function (x) .*\n\n.*)\\'"
+    (should (string-match "\\`#f(compiled-function (x) \"[^\"]+\" [^\)]*)\\'"
                           (cl-prin1-to-string (symbol-function #'caar))))))
+
+(ert-deftest cl-print-tests-2 ()
+  (let ((x (record 'foo 1 2 3)))
+    (should (equal
+             x
+             (car (read-from-string (with-output-to-string (prin1 x))))))
+    (let ((print-circle t))
+      (should (string-match
+               "\\`(#1=#s(foo 1 2 3) #1#)\\'"
+               (cl-prin1-to-string (list x x)))))))
+
+(ert-deftest cl-print-circle ()
+  (let ((x '(#1=(a . #1#) #1#)))
+    (let ((print-circle nil))
+      (should (string-match "\\`((a . #[0-9]) (a . #[0-9]))\\'"
+                            (cl-prin1-to-string x))))
+    (let ((print-circle t))
+      (should (equal "(#1=(a . #1#) #1#)" (cl-prin1-to-string x))))))
 
 ;;; cl-print-tests.el ends here.

@@ -3,7 +3,7 @@
 ;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
 
 ;; Author: KOSEKI Yoshinori <kose@meadowy.org>
-;; Maintainer: KOSEKI Yoshinori <kose@meadowy.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: multimedia
 
 ;; This file is part of GNU Emacs.

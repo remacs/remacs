@@ -569,7 +569,7 @@ current_lock_owner (lock_info_type *owner, char *lfname)
       if (! (boot[0] == '\200' && boot[1] == '\242'))
 	return -1;
       boot += 2;
-      /* Fall through.  */
+      FALLTHROUGH;
     case ':':
       if (! c_isdigit (boot[0]))
 	return -1;

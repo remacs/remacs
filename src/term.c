@@ -22,7 +22,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/file.h>
 #include <sys/time.h>
@@ -45,6 +44,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "blockinput.h"
 #include "syssignal.h"
+#include "sysstdio.h"
 #ifdef MSDOS
 #include "msdos.h"
 static int been_here = -1;
@@ -146,7 +146,7 @@ tty_ring_bell (struct frame *f)
       OUTPUT (tty, (tty->TS_visible_bell && visible_bell
                     ? tty->TS_visible_bell
                     : tty->TS_bell));
-      fflush (tty->output);
+      fflush_unlocked (tty->output);
     }
 }
 
@@ -167,9 +167,10 @@ tty_send_additional_strings (struct terminal *terminal, Lisp_Object sym)
       Lisp_Object string = XCAR (extra_codes);
       if (STRINGP (string))
         {
-          fwrite (SDATA (string), 1, SBYTES (string), tty->output);
+	  fwrite_unlocked (SDATA (string), 1, SBYTES (string), tty->output);
           if (tty->termscript)
-            fwrite (SDATA (string), 1, SBYTES (string), tty->termscript);
+	    fwrite_unlocked (SDATA (string), 1, SBYTES (string),
+			     tty->termscript);
         }
     }
 }
@@ -197,7 +198,7 @@ tty_set_terminal_modes (struct terminal *terminal)
       OUTPUT_IF (tty, tty->TS_keypad_mode);
       losecursor (tty);
       tty_send_additional_strings (terminal, Qtty_mode_set_strings);
-      fflush (tty->output);
+      fflush_unlocked (tty->output);
     }
 }
 
@@ -220,7 +221,7 @@ tty_reset_terminal_modes (struct terminal *terminal)
       /* Output raw CR so kernel can track the cursor hpos.  */
       current_tty = tty;
       cmputc ('\r');
-      fflush (tty->output);
+      fflush_unlocked (tty->output);
     }
 }
 
@@ -235,7 +236,7 @@ tty_update_end (struct frame *f)
     tty_show_cursor (tty);
   tty_turn_off_insert (tty);
   tty_background_highlight (tty);
-  fflush (tty->output);
+  fflush_unlocked (tty->output);
 }
 
 /* The implementation of set_terminal_window for termcap frames. */
@@ -497,8 +498,8 @@ tty_clear_end_of_line (struct frame *f, int first_unused_hpos)
       for (i = curX (tty); i < first_unused_hpos; i++)
 	{
 	  if (tty->termscript)
-	    fputc (' ', tty->termscript);
-	  fputc (' ', tty->output);
+	    fputc_unlocked (' ', tty->termscript);
+	  fputc_unlocked (' ', tty->output);
 	}
       cmplus (tty, first_unused_hpos - curX (tty));
     }
@@ -771,11 +772,11 @@ tty_write_glyphs (struct frame *f, struct glyph *string, int len)
       if (coding->produced > 0)
 	{
 	  block_input ();
-	  fwrite (conversion_buffer, 1, coding->produced, tty->output);
-	  if (ferror (tty->output))
-	    clearerr (tty->output);
+	  fwrite_unlocked (conversion_buffer, 1, coding->produced, tty->output);
+	  clearerr_unlocked (tty->output);
 	  if (tty->termscript)
-	    fwrite (conversion_buffer, 1, coding->produced, tty->termscript);
+	    fwrite_unlocked (conversion_buffer, 1, coding->produced,
+			     tty->termscript);
 	  unblock_input ();
 	}
       string += n;
@@ -832,11 +833,11 @@ tty_write_glyphs_with_face (register struct frame *f, register struct glyph *str
   if (coding->produced > 0)
     {
       block_input ();
-      fwrite (conversion_buffer, 1, coding->produced, tty->output);
-      if (ferror (tty->output))
-	clearerr (tty->output);
+      fwrite_unlocked (conversion_buffer, 1, coding->produced, tty->output);
+      clearerr_unlocked (tty->output);
       if (tty->termscript)
-	fwrite (conversion_buffer, 1, coding->produced, tty->termscript);
+	fwrite_unlocked (conversion_buffer, 1, coding->produced,
+			 tty->termscript);
       unblock_input ();
     }
 
@@ -918,11 +919,11 @@ tty_insert_glyphs (struct frame *f, struct glyph *start, int len)
       if (coding->produced > 0)
 	{
 	  block_input ();
-	  fwrite (conversion_buffer, 1, coding->produced, tty->output);
-	  if (ferror (tty->output))
-	    clearerr (tty->output);
+	  fwrite_unlocked (conversion_buffer, 1, coding->produced, tty->output);
+	  clearerr_unlocked (tty->output);
 	  if (tty->termscript)
-	    fwrite (conversion_buffer, 1, coding->produced, tty->termscript);
+	    fwrite_unlocked (conversion_buffer, 1, coding->produced,
+			     tty->termscript);
 	  unblock_input ();
 	}
 
@@ -3327,7 +3328,7 @@ tty_menu_activate (tty_menu *menu, int *pane, int *selidx,
 	 which calls tty_show_cursor.  Re-hide it, so it doesn't show
 	 through the menus.  */
       tty_hide_cursor (tty);
-      fflush (tty->output);
+      fflush_unlocked (tty->output);
     }
 
   sf->mouse_moved = 0;
@@ -3335,7 +3336,7 @@ tty_menu_activate (tty_menu *menu, int *pane, int *selidx,
   while (statecount--)
     free_saved_screen (state[statecount].screen_behind);
   tty_show_cursor (tty);	/* Turn cursor back on.  */
-  fflush (tty->output);
+  fflush_unlocked (tty->output);
 
 /* Clean up any mouse events that are waiting inside Emacs event queue.
      These events are likely to be generated before the menu was even

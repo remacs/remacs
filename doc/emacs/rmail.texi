@@ -329,7 +329,7 @@ adding or removing this attribute.  @xref{Rmail Attributes}.
 
   When you receive mail locally, the operating system places incoming
 mail for you in a file that we call your @dfn{inbox}.  When you start
-up Rmail, it runs a C program called @code{movemail} to copy the new
+up Rmail, it runs a C program called @command{movemail} to copy the new
 messages from your local inbox into your primary Rmail file, which
 also contains other messages saved from previous Rmail sessions.  It
 is in this file that you actually read the mail with Rmail.  This
@@ -397,7 +397,7 @@ check your mail via POP while traveling, so that your mail will remain
 on the server and you can save it later on your workstation.
 
   In some cases, Rmail copies the new mail from the inbox file
-indirectly.  First it runs the @code{movemail} program to move the mail
+indirectly.  First it runs the @command{movemail} program to move the mail
 from the inbox to an intermediate file called
 @file{.newmail-@var{inboxname}}, in the same directory as the Rmail
 file.  Then Rmail merges the new mail from that file, saves the Rmail
@@ -1373,13 +1373,13 @@ rot13-other-window}.  This displays the current buffer in another window
 which applies the code when displaying the text.
 
 @node Movemail
-@section @code{movemail} program
-@cindex @code{movemail} program
+@section @command{movemail} program
+@cindex @command{movemail} program
 
-  Rmail uses the @code{movemail} program to move mail from your inbox to
+  Rmail uses the @command{movemail} program to move mail from your inbox to
 your Rmail file (@pxref{Rmail Inbox}).  When loaded for the first time,
-Rmail attempts to locate the @code{movemail} program and determine its
-version.  There are two versions of the @code{movemail} program: the
+Rmail attempts to locate the @command{movemail} program and determine its
+version.  There are two versions of the @command{movemail} program: the
 GNU Mailutils version (@pxref{movemail,,,mailutils,GNU mailutils}),
 and an Emacs-specific version that is built and installed unless Emacs
 was configured using the @option{--with-mailutils} option.
@@ -1388,7 +1388,7 @@ command line syntax and the same basic subset of options.  However, the
 Mailutils version offers additional features.
 
   The Emacs version of @command{movemail} can retrieve mail from the
-usual Unix mailbox formats.  Although it can also use the POP3
+usual Unix mailbox formats.  @strong{Warning}: Although it can also use the POP3
 protocol, this is not recommended because it does not support POP3 via
 encrypted TLS channels.
 
@@ -1436,51 +1436,57 @@ Optional port number, if not the default for that protocol.
 @item mbox
 Usual Unix mailbox format.  In this case, @var{user}, @var{pass} and
 @var{port} are not used, and @var{host-or-file-name} denotes the file
-name of the mailbox file, e.g., @code{mbox://var/spool/mail/smith}.
+name of the mailbox file, e.g., @code{mbox:///var/spool/mail/smith}.
 
 @item mh
 A local mailbox in the @acronym{MH} format.  @var{user}, @var{pass}
 and @var{port} are not used.  @var{host-or-file-name} denotes the name
-of @acronym{MH} folder, e.g., @code{mh://Mail/inbox}.
+of @acronym{MH} folder, e.g., @code{mh:///Mail/inbox}.
 
 @item maildir
 A local mailbox in the @acronym{maildir} format.  @var{user},
 @var{pass} and @var{port} are not used, and @var{host-or-file-name}
 denotes the name of @code{maildir} mailbox, e.g.,
-@code{maildir://mail/inbox}.
+@code{maildir:///mail/inbox}.
 
 @item file
 Any local mailbox format.  Its actual format is detected automatically
-by @code{movemail}.
+by @command{movemail}.
 
 @item pop
+@itemx pops
 A remote mailbox to be accessed via POP3 protocol.  @var{user}
 specifies the remote user name to use, @var{pass} may be used to
 specify the user password, @var{host-or-file-name} is the name or IP
 address of the remote mail server to connect to, and @var{port} is the
 port number; e.g., @code{pop://smith:guessme@@remote.server.net:995}.
+If the server supports it, @command{movemail} tries to use an
+encrypted connection---use the @samp{pops} form to require one.
 
 @item imap
+@itemx imaps
 A remote mailbox to be accessed via IMAP4 protocol.  @var{user}
 specifies the remote user name to use, @var{pass} may be used to
 specify the user password, @var{host-or-file-name} is the name or IP
 address of the remote mail server to connect to, and @var{port} is the
 port number; e.g., @code{imap://smith:guessme@@remote.server.net:993}.
+If the server supports it, @command{movemail} tries to use an
+encrypted connection---use the @samp{imaps} form to require one.
 @end table
 
   Alternatively, you can specify the file name of the mailbox to use.
 This is equivalent to specifying the @samp{file} protocol:
 
 @smallexample
-/var/spool/mail/@var{user} @equiv{} file://var/spool/mail/@var{user}
+/var/spool/mail/@var{user} @equiv{} file:///var/spool/mail/@var{user}
 @end smallexample
 
 @vindex rmail-movemail-program
 @vindex rmail-movemail-search-path
   The variable @code{rmail-movemail-program} controls which version of
-@code{movemail} to use.  If that is a string, it specifies the
-absolute file name of the @code{movemail} executable.  If it is
-@code{nil}, Rmail searches for @code{movemail} in the directories
+@command{movemail} to use.  If that is a string, it specifies the
+absolute file name of the @command{movemail} executable.  If it is
+@code{nil}, Rmail searches for @command{movemail} in the directories
 listed in @code{rmail-movemail-search-path}, then in @code{exec-path}
 (@pxref{Shell}), then in @code{exec-directory}.
 
@@ -1491,10 +1497,11 @@ listed in @code{rmail-movemail-search-path}, then in @code{exec-path}
   Some sites use a method called POP for accessing users' inbox data
 instead of storing the data in inbox files.  The Mailutils
 @command{movemail} by default supports POP with TLS encryption.
-Although the @command{Emacs movemail} supports unencrypted POP, this
-is not recommended due to the lack of encryption.  Both versions of
-@command{movemail} work only with POP3, not with older versions of
-POP.
+@strong{Warning:} Although the @command{Emacs movemail} supports POP,
+its use for this is not recommended since it does not support encrypted
+connections---the Mailutils version does.
+Both versions of @command{movemail} work only with POP3, not with
+older versions of POP.
 
 @cindex @env{MAILHOST} environment variable
 @cindex POP mailboxes
@@ -1510,6 +1517,8 @@ Additionally, you may specify the password in the mailbox @acronym{URL}:
 case, @var{password} takes preference over the one set by
 @code{rmail-remote-password} (see below).  This is especially useful
 if you have several remote mailboxes with different passwords.
+If using Mailutils @command{movemail}, you may wish to use
+@samp{pops} in place of @samp{pop}.
 
   For backward compatibility, Rmail also supports an alternative way of
 specifying remote POP mailboxes.  Specifying an inbox name in the form
@@ -1520,10 +1529,11 @@ the machine on which to look for the POP server.
 
 @cindex IMAP mailboxes
   Another method for accessing remote mailboxes is IMAP@.  This method is
-supported only by the Mailutils @code{movemail}.  To specify an IMAP
+supported only by the Mailutils @command{movemail}.  To specify an IMAP
 mailbox in the inbox list, use the following mailbox @acronym{URL}:
 @samp{imap://@var{username}[:@var{password}]@@@var{hostname}:@var{port}}.  The
-@var{password} part is optional, as described above.
+@var{password} part is optional, as described above.  You may wish to
+use @samp{imaps} in place of @samp{imap}.
 
 @vindex rmail-remote-password
 @vindex rmail-remote-password-required
@@ -1545,13 +1555,13 @@ Otherwise, Rmail will ask you for the password to use.
 @end enumerate
 
 @vindex rmail-movemail-flags
-  If you need to pass additional command-line flags to @code{movemail},
+  If you need to pass additional command-line flags to @command{movemail},
 set the variable @code{rmail-movemail-flags} a list of the flags you
 wish to use.  Do not use this variable to pass the @samp{-p} flag to
 preserve your inbox contents; use @code{rmail-preserve-inbox} instead.
 
 @cindex Kerberos POP authentication
-  The @code{movemail} program installed at your site may support
+  The @command{movemail} program installed at your site may support
 Kerberos authentication.  If it is supported, it is used by default
 whenever you attempt to retrieve POP mail when
 @code{rmail-remote-password} and @code{rmail-remote-password-required}
@@ -1560,24 +1570,24 @@ are unset.
 @cindex reverse order in POP inboxes
   Some POP servers store messages in reverse order.  If your server does
 this, and you would rather read your mail in the order in which it was
-received, you can tell @code{movemail} to reverse the order of
+received, you can tell @command{movemail} to reverse the order of
 downloaded messages by adding the @samp{-r} flag to
 @code{rmail-movemail-flags}.
 
 @cindex TLS encryption (Rmail)
-  Mailutils @code{movemail} supports TLS encryption.  If you wish to
+  Mailutils @command{movemail} supports TLS encryption.  If you wish to
 use it, add the @samp{--tls} flag to @code{rmail-movemail-flags}.
 
 @node Other Mailbox Formats
 @section Retrieving Mail from Local Mailboxes in Various Formats
 
   If your incoming mail is stored on a local machine in a format other
-than Unix mailbox, you will need the Mailutils @code{movemail} to
+than Unix mailbox, you will need the Mailutils @command{movemail} to
 retrieve it.  @xref{Movemail}, for the detailed description of
-@code{movemail} versions.  For example, to access mail from a inbox in
+@command{movemail} versions.  For example, to access mail from a inbox in
 @code{maildir} format located in @file{/var/spool/mail/in}, you would
 include the following in the Rmail inbox list:
 
 @smallexample
-maildir://var/spool/mail/in
+maildir:///var/spool/mail/in
 @end smallexample

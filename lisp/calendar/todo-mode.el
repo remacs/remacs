@@ -820,14 +820,10 @@ buries it and restores state as needed."
 	       (message "There is no todo file for this archive")))
 	   ;; When todo-check-file runs in todo-show, it kills the
 	   ;; buffer if the archive file was deleted externally.
-	   (when (buffer-live-p buf) (bury-buffer buf)))
+	   (when (buffer-live-p buf) (kill-buffer buf)))
 	  ((eq major-mode 'todo-mode)
 	   (todo-save)
-	   ;; If we just quit archive mode, just burying the buffer
-	   ;; in todo-mode would return to archive.
-	   (set-window-buffer (selected-window)
-			      (set-buffer (other-buffer)))
-	   (bury-buffer buf)))))
+	   (bury-buffer)))))
 
 ;; -----------------------------------------------------------------------------
 ;;; Navigation between and within categories
@@ -6587,17 +6583,19 @@ Added to `window-configuration-change-hook' in Todo mode."
     (visual-line-mode)
     (setq wrap-prefix (make-string todo-indent-to-here 32))))
 
+(defun todo-hl-line-range ()
+  "Make `todo-toggle-item-highlighting' highlight entire item."
+  (save-excursion
+    (when (todo-item-end)
+      (cons (todo-item-start)
+            (todo-item-end)))))
+
 (defun todo-modes-set-2 ()
   "Make some settings that apply to multiple Todo modes."
   (add-to-invisibility-spec 'todo)
   (setq buffer-read-only t)
   (setq-local desktop-save-buffer 'todo-desktop-save-buffer)
-  (when (boundp 'hl-line-range-function)
-    (setq-local hl-line-range-function
-		(lambda() (save-excursion
-			    (when (todo-item-end)
-			      (cons (todo-item-start)
-				    (todo-item-end))))))))
+  (setq-local hl-line-range-function 'todo-hl-line-range))
 
 (defun todo-modes-set-3 ()
   "Make some settings that apply to multiple Todo modes."

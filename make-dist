@@ -297,6 +297,21 @@ if [ $check = yes ]; then
       make --question info || error=yes
   fi
 
+  ## Is this a release?
+  case $version in
+      [1-9][0-9].[0-9])
+          if [ -e ChangeLog ]; then
+              if ! grep -q "Version $version released" ChangeLog; then
+                  echo "No release notice in ChangeLog"
+                  error=yes
+              fi
+          else
+              echo "A release must have a ChangeLog"
+              error=yes
+          fi
+      ;;
+  esac
+
   if [ $error = yes ]; then
       echo "Failed checks" >&2
       exit 1
@@ -345,9 +360,15 @@ mkdir ${tempdir}
 
 if [ "$changelog" = yes ]; then
   if test -e .git; then
-    echo "Making top-level ChangeLog"
-    make ChangeLog CHANGELOG=${tempdir}/ChangeLog || \
-      { x=$?; echo "make ChangeLog FAILED (try --no-changelog?)" >&2; exit $x; }
+    ## When making a release or pretest the ChangeLog should already
+    ## have been created and edited as needed.  Don't ignore it.
+    if test -e ChangeLog; then
+      echo "Using existing top-level ChangeLog"
+    else
+      echo "Making top-level ChangeLog"
+      make ChangeLog CHANGELOG=${tempdir}/ChangeLog || \
+        { x=$?; echo "make ChangeLog FAILED (try --no-changelog?)" >&2; exit $x; }
+    fi
   else
     echo "No repository, so omitting top-level ChangeLog"
   fi
@@ -361,7 +382,7 @@ echo "Making links to top-level files"
 ln INSTALL README BUGS ${tempdir}
 ln ChangeLog.*[0-9] Makefile.in autogen.sh configure configure.ac ${tempdir}
 ln config.bat make-dist .dir-locals.el ${tempdir}
-ln aclocal.m4 CONTRIBUTE ${tempdir}
+ln aclocal.m4 CONTRIBUTE ChangeLog ${tempdir}
 
 echo "Creating subdirectories"
 for subdir in site-lisp \
@@ -371,7 +392,7 @@ for subdir in site-lisp \
 	      nt nt/inc nt/inc/sys nt/inc/arpa nt/inc/netinet nt/icons \
 	      `find etc lisp admin test -type d` \
 	      doc doc/emacs doc/misc doc/man doc/lispref doc/lispintro \
-	      info m4 modules modules/mod-test msdos \
+	      info m4 modules msdos \
 	      nextstep nextstep/templates \
 	      nextstep/Cocoa nextstep/Cocoa/Emacs.base \
 	      nextstep/Cocoa/Emacs.base/Contents \
@@ -383,7 +404,7 @@ do
 
   if [ "$with_tests" != "yes" ]; then
     case $subdir in
-        test*|*/mod-test*) continue ;;
+        test*) continue ;;
     esac
   fi
 
@@ -462,14 +483,6 @@ echo "Making links to 'm4'"
 echo "Making links to 'modules'"
 (cd modules
  ln *.py ../${tempdir}/modules
- if [ "$with_tests" = "yes" ]; then
-   for f in `find mod-test -type f`; do
-       case $f in
-           *.log|*.o|*.so) continue ;;
-       esac
-       ln $f ../$tempdir/modules/$f
-   done
- fi
 )
 
 echo "Making links to 'nt'"
@@ -539,8 +552,11 @@ done
 if [ "$with_tests" = "yes" ]; then
   echo "Making links to 'test' and its subdirectories"
   for f in `find test -type f ! -name '*.log' ! -name a.out \
-	      ! -path test/Makefile
+	      ! -name '*.so' ! -name '*.dll' ! -name '*.o'
   `; do
+    case $f in
+        */Makefile) [ -f $f.in ] && continue ;;
+    esac
     ln $f $tempdir/$f
   done
 fi

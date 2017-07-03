@@ -353,8 +353,6 @@ information):
     Quotes all \"#\" characters that don't correspond to actual
     Tcl comments.  (Useful when editing code not originally created
     with this mode).
-  `tcl-auto-fill-mode'
-    Auto-filling of Tcl comments.
 
 Add functions to the hook with `add-hook':
 
@@ -1413,6 +1411,9 @@ Prefix argument means switch to the Tcl buffer afterwards."
 
 (defun tcl-auto-fill-mode (&optional arg)
   "Like `auto-fill-mode', but sets `comment-auto-fill-only-comments'."
+  (declare
+   (obsolete
+    "Use `auto-fill-mode' with `comment-auto-fill-only-comments'." "26.1"))
   (interactive "P")
   (auto-fill-mode arg)
   (if auto-fill-function
@@ -1524,7 +1525,7 @@ The first line is assumed to look like \"#!.../program ...\"."
 (defun tcl-quote (string)
   "Quote STRING according to Tcl rules."
   (mapconcat (lambda (char)
-	       (if (memq char '(?[ ?] ?{ ?} ?\\ ?\" ?$ ?\s ?\;))
+	       (if (memq char '(?\[ ?\] ?{ ?} ?\\ ?\" ?$ ?\s ?\;))
 		   (concat "\\" (char-to-string char))
 		 (char-to-string char)))
 	     string ""))

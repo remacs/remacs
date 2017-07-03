@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
 ;; Author: Olaf Sylvester <Olaf.Sylvester@netsurf.de>
-;; Maintainer: Olaf Sylvester <Olaf.Sylvester@netsurf.de>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
 
 ;; This file is part of GNU Emacs.

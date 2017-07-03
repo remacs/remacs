@@ -489,7 +489,7 @@ ifeq (${ns_self_contained},no)
 	-chmod 755 "$(DESTDIR)${bindir}/$(EMACSFULL)"
 ifndef NO_BIN_LINK
 	rm -f "$(DESTDIR)${bindir}/$(EMACS)"
-	cd "$(DESTDIR)${bindir}" && $(LN_S_FILEONLY) $(EMACSFULL) $(EMACS)
+	cd "$(DESTDIR)${bindir}" && $(LN_S_FILEONLY) "$(EMACSFULL)" "$(EMACS)"
 endif
 else
 	subdir=${ns_appresdir}/site-lisp && ${write_subdir}
@@ -694,9 +694,8 @@ EMACS_ICON=emacs
 install-etc:
 	umask 022; ${MKDIR_P} "$(DESTDIR)${desktopdir}"
 	tmp=etc/emacs.tmpdesktop; rm -f $${tmp}; \
-	emacs_name=`echo emacs | sed '$(TRANSFORM)'`; \
-	sed -e "/^Exec=emacs/ s/emacs/$${emacs_name}/" \
-	  -e "/^Icon=emacs/ s/emacs/$${emacs_name}/" \
+	sed -e "/^Exec=emacs/ s/emacs/${EMACS_NAME}/" \
+	  -e "/^Icon=emacs/ s/emacs/${EMACS_NAME}/" \
 	  ${srcdir}/etc/emacs.desktop > $${tmp}; \
 	${INSTALL_DATA} $${tmp} "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"; \
 	rm -f $${tmp}
@@ -708,12 +707,10 @@ install-etc:
 	rm -f $${tmp}
 	umask 022; $(MKDIR_P) "$(DESTDIR)$(systemdunitdir)"
 	tmp=etc/emacs.tmpservice; rm -f $${tmp}; \
-	emacs_name=`echo emacs | sed '$(TRANSFORM)'`; \
-	exe_name=$${emacs_name}${EXEEXT}; \
 	client_name=`echo emacsclient | sed '$(TRANSFORM)'`${EXEEXT}; \
 	sed -e '/^##/d' \
-	  -e "/^Documentation/ s/emacs(1)/$${emacs_name}(1)/" \
-	  -e "/^ExecStart/ s|emacs|${bindir}/$${exe_name}|" \
+	  -e "/^Documentation/ s/emacs(1)/${EMACS_NAME}(1)/" \
+	  -e "/^ExecStart/ s|emacs|${bindir}/${EMACS}|" \
 	  -e "/^ExecStop/ s|emacsclient|${bindir}/$${client_name}|" \
 	  ${srcdir}/etc/emacs.service > $${tmp}; \
 	$(INSTALL_DATA) $${tmp} "$(DESTDIR)$(systemdunitdir)/${EMACS_NAME}.service"; \
@@ -775,10 +772,10 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	   for page in *.1; do \
 	     rm -f "$(DESTDIR)${man1dir}"/`echo "$${page}" | sed -e 's/\.1$$//' -e '$(TRANSFORM)'`.1$$ext; done; \
 	 fi)
-	(cd "$(DESTDIR)${bindir}" && rm -f $(EMACSFULL) $(EMACS) || true)
+	rm -f "$(DESTDIR)${bindir}/$(EMACS)" "$(DESTDIR)${bindir}/$(EMACSFULL)"
 	(if cd "$(DESTDIR)${icondir}"; then \
-	   rm -f hicolor/*x*/apps/${EMACS_NAME}.png \
-	     hicolor/scalable/apps/${EMACS_NAME}.svg \
+	   rm -f hicolor/*x*/apps/"${EMACS_NAME}.png" \
+	     "hicolor/scalable/apps/${EMACS_NAME}.svg" \
 	     hicolor/scalable/mimetypes/`echo emacs-document | sed '$(TRANSFORM)'`.svg; \
 	fi)
 	-rm -f "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"

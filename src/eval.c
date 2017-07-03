@@ -1225,18 +1225,17 @@ usage: (condition-case VAR BODYFORM &rest HANDLERS)  */)
    rather than passed in a list.  Used by Fbyte_code.  */
 
 Lisp_Object
-internal_lisp_condition_case (volatile Lisp_Object var, Lisp_Object bodyform,
+internal_lisp_condition_case (Lisp_Object var, Lisp_Object bodyform,
 			      Lisp_Object handlers)
 {
-  Lisp_Object val;
   struct handler *oldhandlerlist = handlerlist;
-  int clausenb = 0;
+  ptrdiff_t clausenb = 0;
 
   CHECK_SYMBOL (var);
 
-  for (val = handlers; CONSP (val); val = XCDR (val))
+  for (Lisp_Object tail = handlers; CONSP (tail); tail = XCDR (tail))
     {
-      Lisp_Object tem = XCAR (val);
+      Lisp_Object tem = XCAR (tail);
       clausenb++;
       if (! (NILP (tem)
 	     || (CONSP (tem)
@@ -1246,55 +1245,58 @@ internal_lisp_condition_case (volatile Lisp_Object var, Lisp_Object bodyform,
 	       SDATA (Fprin1_to_string (tem, Qt)));
     }
 
-  { /* The first clause is the one that should be checked first, so it should
-       be added to handlerlist last.  So we build in `clauses' a table that
-       contains `handlers' but in reverse order.  SAFE_ALLOCA won't work
-       here due to the setjmp, so impose a MAX_ALLOCA limit.  */
-    if (MAX_ALLOCA / word_size < clausenb)
-      memory_full (SIZE_MAX);
-    Lisp_Object *clauses = alloca (clausenb * sizeof *clauses);
-    Lisp_Object *volatile clauses_volatile = clauses;
-    int i = clausenb;
-    for (val = handlers; CONSP (val); val = XCDR (val))
-      clauses[--i] = XCAR (val);
-    for (i = 0; i < clausenb; i++)
-      {
-	Lisp_Object clause = clauses[i];
-	Lisp_Object condition = CONSP (clause) ? XCAR (clause) : Qnil;
-	if (!CONSP (condition))
-	  condition = Fcons (condition, Qnil);
-	struct handler *c = push_handler (condition, CONDITION_CASE);
-	if (sys_setjmp (c->jmp))
-	  {
-	    ptrdiff_t count = SPECPDL_INDEX ();
-	    Lisp_Object val = handlerlist->val;
-	    Lisp_Object *chosen_clause = clauses_volatile;
-	    for (c = handlerlist->next; c != oldhandlerlist; c = c->next)
-	      chosen_clause++;
-	    handlerlist = oldhandlerlist;
-	    if (!NILP (var))
-	      {
-		if (!NILP (Vinternal_interpreter_environment))
-		  specbind (Qinternal_interpreter_environment,
-			    Fcons (Fcons (var, val),
-				   Vinternal_interpreter_environment));
-		else
-		  specbind (var, val);
-	      }
-	    val = Fprogn (XCDR (*chosen_clause));
-	    /* Note that this just undoes the binding of var; whoever
-	       longjumped to us unwound the stack to c.pdlcount before
-	       throwing.  */
-	    if (!NILP (var))
-	      unbind_to (count, Qnil);
-	    return val;
-	  }
-      }
-  }
+  /* The first clause is the one that should be checked first, so it
+     should be added to handlerlist last.  So build in CLAUSES a table
+     that contains HANDLERS but in reverse order.  CLAUSES is pointer
+     to volatile to avoid issues with setjmp and local storage.
+     SAFE_ALLOCA won't work here due to the setjmp, so impose a
+     MAX_ALLOCA limit.  */
+  if (MAX_ALLOCA / word_size < clausenb)
+    memory_full (SIZE_MAX);
+  Lisp_Object volatile *clauses = alloca (clausenb * sizeof *clauses);
+  clauses += clausenb;
+  for (Lisp_Object tail = handlers; CONSP (tail); tail = XCDR (tail))
+    *--clauses = XCAR (tail);
+  for (ptrdiff_t i = 0; i < clausenb; i++)
+    {
+      Lisp_Object clause = clauses[i];
+      Lisp_Object condition = CONSP (clause) ? XCAR (clause) : Qnil;
+      if (!CONSP (condition))
+	condition = list1 (condition);
+      struct handler *c = push_handler (condition, CONDITION_CASE);
+      if (sys_setjmp (c->jmp))
+	{
+	  Lisp_Object val = handlerlist->val;
+	  Lisp_Object volatile *chosen_clause = clauses;
+	  for (struct handler *h = handlerlist->next; h != oldhandlerlist;
+	       h = h->next)
+	    chosen_clause++;
+	  Lisp_Object handler_body = XCDR (*chosen_clause);
+	  handlerlist = oldhandlerlist;
 
-  val = eval_sub (bodyform);
+	  if (NILP (var))
+	    return Fprogn (handler_body);
+
+	  Lisp_Object handler_var = var;
+	  if (!NILP (Vinternal_interpreter_environment))
+	    {
+	      val = Fcons (Fcons (var, val),
+			   Vinternal_interpreter_environment);
+	      handler_var = Qinternal_interpreter_environment;
+	    }
+
+	  /* Bind HANDLER_VAR to VAL while evaluating HANDLER_BODY.
+	     The unbind_to undoes just this binding; whoever longjumped
+	     to us unwound the stack to C->pdlcount before throwing.  */
+	  ptrdiff_t count = SPECPDL_INDEX ();
+	  specbind (handler_var, val);
+	  return unbind_to (count, Fprogn (handler_body));
+	}
+    }
+
+  Lisp_Object result = eval_sub (bodyform);
   handlerlist = oldhandlerlist;
-  return val;
+  return result;
 }
 
 /* Call the function BFUN with no arguments, catching errors within it
@@ -1472,7 +1474,10 @@ process_quit_flag (void)
    If quit-flag is set to `kill-emacs' the SIGINT handler has received
    a request to exit Emacs when it is safe to do.
 
-   When not quitting, process any pending signals.  */
+   When not quitting, process any pending signals.
+
+   If you change this function, also adapt module_should_quit in
+   emacs-module.c.  */
 
 void
 maybe_quit (void)
@@ -1881,8 +1886,7 @@ then strings and vectors are not accepted.  */)
      have an element whose index is COMPILED_INTERACTIVE, which is
      where the interactive spec is stored.  */
   else if (COMPILEDP (fun))
-    return ((ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK) > COMPILED_INTERACTIVE
-	    ? Qt : if_prop);
+    return (PVSIZE (fun) > COMPILED_INTERACTIVE ? Qt : if_prop);
 
   /* Strings and vectors are keyboard macros.  */
   if (STRINGP (fun) || VECTORP (fun))
@@ -2260,7 +2264,7 @@ eval_sub (Lisp_Object form)
 	    }
 	}
     }
-  else if (COMPILEDP (fun))
+  else if (COMPILEDP (fun) || MODULE_FUNCTIONP (fun))
     return apply_lambda (fun, original_args, count);
   else
     {
@@ -2686,7 +2690,7 @@ FUNCTIONP (Lisp_Object object)
 
   if (SUBRP (object))
     return XSUBR (object)->max_args != UNEVALLED;
-  else if (COMPILEDP (object))
+  else if (COMPILEDP (object) || MODULE_FUNCTIONP (object))
     return true;
   else if (CONSP (object))
     {
@@ -2741,7 +2745,7 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
 
   if (SUBRP (fun))
     val = funcall_subr (XSUBR (fun), numargs, args + 1);
-  else if (COMPILEDP (fun))
+  else if (COMPILEDP (fun) || MODULE_FUNCTIONP (fun))
     val = funcall_lambda (fun, numargs, args + 1);
   else
     {
@@ -2891,7 +2895,8 @@ apply_lambda (Lisp_Object fun, Lisp_Object args, ptrdiff_t count)
 
 /* Apply a Lisp function FUN to the NARGS evaluated arguments in ARG_VECTOR
    and return the result of evaluation.
-   FUN must be either a lambda-expression or a compiled-code object.  */
+   FUN must be either a lambda-expression, a compiled-code object,
+   or a module function.  */
 
 static Lisp_Object
 funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
@@ -2922,7 +2927,7 @@ funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
     }
   else if (COMPILEDP (fun))
     {
-      ptrdiff_t size = ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK;
+      ptrdiff_t size = PVSIZE (fun);
       if (size <= COMPILED_STACK_DEPTH)
 	xsignal1 (Qinvalid_function, fun);
       syms_left = AREF (fun, COMPILED_ARGLIST);
@@ -2948,6 +2953,10 @@ funcall_lambda (Lisp_Object fun, ptrdiff_t nargs,
 	}
       lexenv = Qnil;
     }
+#ifdef HAVE_MODULES
+  else if (MODULE_FUNCTIONP (fun))
+    return funcall_module (fun, nargs, arg_vector);
+#endif
   else
     emacs_abort ();
 
@@ -3059,6 +3068,10 @@ function with `&rest' args, or `unevalled' for a special form.  */)
     result = Fsubr_arity (function);
   else if (COMPILEDP (function))
     result = lambda_arity (function);
+#ifdef HAVE_MODULES
+  else if (MODULE_FUNCTIONP (function))
+    result = module_function_arity (XMODULE_FUNCTION (function));
+#endif
   else
     {
       if (NILP (function))
@@ -3103,7 +3116,7 @@ lambda_arity (Lisp_Object fun)
     }
   else if (COMPILEDP (fun))
     {
-      ptrdiff_t size = ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK;
+      ptrdiff_t size = PVSIZE (fun);
       if (size <= COMPILED_STACK_DEPTH)
 	xsignal1 (Qinvalid_function, fun);
       syms_left = AREF (fun, COMPILED_ARGLIST);
@@ -3148,7 +3161,7 @@ DEFUN ("fetch-bytecode", Ffetch_bytecode, Sfetch_bytecode,
 
   if (COMPILEDP (object))
     {
-      ptrdiff_t size = ASIZE (object) & PSEUDOVECTOR_SIZE_MASK;
+      ptrdiff_t size = PVSIZE (object);
       if (size <= COMPILED_STACK_DEPTH)
 	xsignal1 (Qinvalid_function, object);
       if (CONSP (AREF (object, COMPILED_BYTECODE)))
@@ -3211,7 +3224,7 @@ do_specbind (struct Lisp_Symbol *sym, union specbinding *bind,
           set_default_internal (specpdl_symbol (bind), value, bindflag);
 	  return;
 	}
-      /* FALLTHROUGH */
+      FALLTHROUGH;
     case SYMBOL_LOCALIZED:
       set_internal (specpdl_symbol (bind), value, Qnil, bindflag);
       break;
@@ -3389,12 +3402,10 @@ do_one_unbind (union specbinding *this_binding, bool unwinding,
                             Qnil, bindflag);
 	    break;
 	  }
-	else
-	  { /* FALLTHROUGH!!
-	       NOTE: we only ever come here if make_local_foo was used for
-	       the first time on this var within this let.  */
-	  }
       }
+      /* Come here only if make_local_foo was used for the first time
+	 on this var within this let.  */
+      FALLTHROUGH;
     case SPECPDL_LET_DEFAULT:
       set_default_internal (specpdl_symbol (this_binding),
                             specpdl_old_value (this_binding),
@@ -3602,8 +3613,12 @@ returns nil.  */)
 
   while (backtrace_p (pdl))
     {
+      ptrdiff_t i = pdl - specpdl;
       backtrace_frame_apply (function, pdl);
-      pdl = backtrace_next (pdl);
+      /* Beware! PDL is no longer valid here because FUNCTION might
+         have caused grow_specpdl to reallocate pdlvec.  We must use
+         the saved index, cf. Bug#27258.  */
+      pdl = backtrace_next (&specpdl[i]);
     }
 
   return Qnil;
@@ -3675,12 +3690,10 @@ backtrace_eval_unrewind (int distance)
 		SET_SYMBOL_VAL (XSYMBOL (sym), old_value);
 		break;
 	      }
-	    else
-	      { /* FALLTHROUGH!!
-		   NOTE: we only ever come here if make_local_foo was used for
-		   the first time on this var within this let.  */
-	      }
 	  }
+	  /* Come here only if make_local_foo was used for the first
+	     time on this var within this let.  */
+	  FALLTHROUGH;
 	case SPECPDL_LET_DEFAULT:
 	  {
 	    Lisp_Object sym = specpdl_symbol (tmp);
@@ -3836,7 +3849,7 @@ mark_specpdl (union specbinding *first, union specbinding *ptr)
 	case SPECPDL_LET_DEFAULT:
 	case SPECPDL_LET_LOCAL:
 	  mark_object (specpdl_where (pdl));
-	  /* Fall through.  */
+	  FALLTHROUGH;
 	case SPECPDL_LET:
 	  mark_object (specpdl_symbol (pdl));
 	  mark_object (specpdl_old_value (pdl));

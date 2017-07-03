@@ -1,3 +1,206 @@
+2017-04-20  Nicolas Petton  <nicolas@petton.fr>
+
+	* Version 25.2 released.
+
+2017-04-18  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix a typo in indexing the user manual
+
+	* doc/emacs/cmdargs.texi (General Variables): Fix a horrible typo.
+
+2017-04-12  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/menu-bar.el (kill-this-buffer): Doc fix.  (Bug#26466)
+
+2017-04-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Document 'line-pixel-height'
+
+	* doc/lispref/display.texi (Size of Displayed Text): Document
+	line-pixel-height.  Suggested by Tak Kunihiro
+	<tkk@misasa.okayama-u.ac.jp>.  (Bug#26379)
+
+2017-04-07  Hong Xu  <hong@topbug.net>
+
+	* src/search.c (Fre_search_forward, Fre_search_backward): Improve doc (Bug#25193).
+
+2017-04-07  Noam Postavsky  <npostavs@gmail.com>
+
+	Mention that processes start in default-directory (Bug#18515)
+
+	* doc/lispref/processes.texi (Synchronous Processes):
+	(Asynchronous Processes):
+	* lisp/subr.el (start-process):
+	* src/callproc.c (call-process): Mention that the subprocess starts in
+	`default-directory' when local, suggest `start-file-process' and
+	`process-file' otherwise.
+
+2017-04-07  Noam Postavsky  <npostavs@gmail.com>
+
+	* src/xdisp.c (vmessage, message): Clarify commentary.
+
+2017-04-02  Glenn Morris  <rgm@gnu.org>
+
+	Belated fixes for admin.el's M-x make-manuals-dist
+
+	* admin/admin.el (make-manuals-dist-output-variables): Additions.
+	(make-manuals-dist--1): Also copy docstyle.texi.
+
+2017-03-31  Tino Calancha  <tino.calancha@gmail.com>
+
+	default-directory: Remark that it must be a directory name
+
+	* src/buffer.c (default-directory): Update docstring (Bug#26272).
+
+2017-03-31  Tino Calancha  <tino.calancha@gmail.com>
+
+	Delete confuse statement in manual
+
+	* doc/misc/cl.texi (For Clauses): Delete confuse statement
+	and its example (Bug#23550).
+
+2017-03-31  Noam Postavsky  <npostavs@gmail.com>
+
+	Improve packaging documentation
+
+	* doc/lispref/package.texi (Packaging Basics):
+	* doc/lispref/tips.texi (Library Headers): Clarify some header
+	formats, relation between file headers and package
+	attributes (Bug#13281).
+
+2017-03-27  Eric Abrahamsen  <eric@ericabrahamsen.net>
+
+	Expand manual section on quitting windows
+
+	* doc/lispref/windows.texi (Quitting Windows): Provide more
+	  information about the elements of the quit-restore window parameter,
+	  and how they affect the behavior of quit-restore-window.
+
+2017-03-26  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix docstring of dabbrev-abbrev-char-regexp
+
+	* lisp/dabbrev.el (dabbrev-abbrev-char-regexp): Using a value of nil
+	is equivalent to "\\sw\\|\\s_", and has no special behavior.  If the
+	previous character doesn't match, we search backwards for one that
+	does, not throw an error.  Replace Lisp example with C based one to
+	make it clear that "symbol" means a sequence of word and symbol
+	constituent characters, not a Lisp symbol (Bug#358).
+
+2017-03-26  Johan Claesson  <johanclaesson@bredband.net>  (tiny change)
+
+	* doc/misc/cl.texi (Iteration Clauses): Clarify example (Bug#19515).
+
+2017-03-25  Eli Zaretskii  <eliz@gnu.org>
+
+	;* doc/misc/info.texi (Choose menu subtopic): Improve indexing.  (Bug#26236)
+
+2017-03-21  Noam Postavsky  <npostavs@gmail.com>
+
+	Narrow scope of modification hook renabling in org-src fontification
+
+	Modification hooks should be enabled while modifying text in the
+	org-src temp buffer, but in 2017-01-29 "Call modification hooks in
+	org-src fontify buffers" the hooks were enabled also for modifications
+	to the original org buffer.  This causes fontification errors when
+	combined with certain packages, as reported in
+	http://lists.gnu.org/archive/html/emacs-orgmode/2017-03/msg00420.html.
+
+	* lisp/org/org-src.el (org-src-font-lock-fontify-block): Reduce scope
+	of inhibit-modification-hooks let-binding.
+
+2017-03-17  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve documentation of interactive "r".
+
+	* doc/lispref/commands.texi (Interactive Codes): Mention that mark
+	must be set for "r" to work.
+
+2017-03-17  Thien-Thi Nguyen  <ttn@gnu.org>
+
+	Fix bug: Range-check integer ‘alpha’ frame parm value
+
+	Typo introduced 2013-04-01, "Prefer < to >
+	in range checks such as 0 <= i && i < N".
+
+	* src/frame.c (x_set_alpha): Use ‘ialpha’, not ‘alpha’.
+
+2017-03-17  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* etc/PROBLEMS: Say that HP-UX cc doesn't work.
+
+2017-03-14  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix duplicate wording in Emacs manual
+
+	* doc/emacs/programs.texi (Which Function): Delete duplicate
+	wording.  (Bug#26098)
+
+2017-03-14  Hong Xu  <hong@topbug.net>
+
+	* lisp/paren.el (show-paren--default, show-paren-function): Add docstring.
+
+2017-03-13  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix wording in Emacs manual
+
+	* doc/emacs/text.texi (Paragraphs): Fix a garbled sentence.
+	(Bug#26086)
+
+2017-03-11  Eli Zaretskii  <eliz@gnu.org>
+
+	Document how to customize input methods
+
+	* doc/emacs/mule.texi (Input Methods): Document how to customize
+	input methods.
+
+2017-03-11  Eli Zaretskii  <eliz@gnu.org>
+
+	* lisp/net/eww.el (eww-reload): Doc fix.  (Bug#25981)
+
+2017-03-06  Noam Postavsky  <npostavs@gmail.com>
+
+	Fix warning message about native completion (Bug#25984)
+
+	* lisp/progmodes/python.el (python-shell-completion-native-turn-on-maybe):
+	The relevant variable is `python-shell-completion-native-enable'.
+
+2017-03-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Clarify documentation of 'raise' and 'height' display specs
+
+	* doc/lispref/display.texi (Other Display Specs): Clarify the
+	effect of 'height' display spec on the following 'raise'.
+	(Bug#25824)
+
+2017-03-04  Eli Zaretskii  <eliz@gnu.org>
+
+	Mention problems with GPaste in PROBLEMS
+
+	* etc/PROBLEMS (GPaste): Mention the problem in yanking caused by
+	GPaste, and its solution.  (Bug#25902)
+
+2017-02-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix doc strings in info.el
+
+	* lisp/info.el (Info-selection-hook, Info-mode-hook)
+	(Info-edit-mode-hook): Doc fixes.  (Bug#25794)
+
+2017-02-25  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix doc string of 'posn-at-point'
+
+	* src/keyboard.c (Fposn_at_point): Clarify the doc string.
+	(Bug#25796)
+
+2017-02-24  Tino Calancha  <tino.calancha@gmail.com>
+
+	Documentation fix in elisp reference manual
+
+	* doc/lispref/macros.texi (Defining Macros): Drop redundant mention
+	on 'declare' forms (Bug#25846).
+
 2017-02-18  Noam Postavsky  <npostavs@gmail.com>
 
 	* lisp/woman.el (woman): Fix docstring prefix arg description.
@@ -4437,7 +4640,7 @@
 	Fill the doc string of font-lock-keywords
 
 	* lisp/font-lock.el (font-lock-keywords): Fill the lines and
-	reorganise some explanations (bug#21427).
+	reorganize some explanations (bug#21427).
 
 	(cherry picked from commit c05716d3a26ea7518b89eacfccaf70c9d0731df7)
 
@@ -5779,10 +5982,6 @@
 	* lisp/progmodes/cc-engine.el (c-record-parse-state-state): Terminate stale
 	markers.
 
-2016-03-30  Alan Mackenzie  <acm@muc.de>
-
-	Merge branch 'emacs-25' of /home/acm/emacs/emacs.git/emacs-25 into emacs-25
-
 2016-03-29  Xue Fuqiao  <xfq.free@gmail.com>
 
 	* doc/lispref/text.texi (Columns): Remove a nonexistent reference.
@@ -7075,10 +7274,6 @@
 
 	* doc/emacs/maintaining.texi (Identifier Search)
 	(Looking Up Identifiers): Remove the word "valid" (bug#22692).
-
-2016-02-28  Michael Albinus  <michael.albinus@gmx.de>
-
-	Merge branch 'emacs-25' of git.sv.gnu.org:/srv/git/emacs into emacs-25
 
 2016-02-28  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -8537,10 +8732,6 @@
 	that we get case-insensitive completion.
 	(erc-completion-at-point): Remove.
 
-2016-02-05  Eli Zaretskii  <eliz@gnu.org>
-
-	Merge branch 'emacs-25' of git.savannah.gnu.org:/srv/git/emacs into emacs-25
-
 2016-02-05  Michael Albinus  <michael.albinus@gmx.de>
 
 	* test/automated/file-notify-tests.el (file-notify-test06-many-events):
@@ -9956,15 +10147,7 @@
 	alternative, such as "This allow you to do something", "This allows
 	something to be done" or "This allows the doing of something".
 
-2016-01-24  l3thal  <kwhite@gnu.org>
-
-	Merge branch 'emacs-25' of git.sv.gnu.org:/srv/git/emacs into emacs-25
-
 2016-01-24  Kelvin White  <kwhite@gnu.org>
-
-	Add NEWS entry for asynchronous reconnect in ERC
-
-2016-01-24  l3thal  <kwhite@gnu.org>
 
 	Add NEWS entry for asynchronous reconnect in ERC
 
@@ -10862,10 +11045,6 @@
 
 2016-01-15  Phillip Lord  <phillip.lord@russet.org.uk>
 
-	Merge branch 'emacs-25' of git.sv.gnu.org:/srv/git/emacs into emacs-25
-
-2016-01-15  Phillip Lord  <phillip.lord@russet.org.uk>
-
 	Enable test selector from command line
 
 	* test/automated/Makefile.in: Change variable manipulation to avoid
@@ -11701,10 +11880,6 @@
 	to allow modification by before-change functions.
 	(c-after-change): Amend c-new-END here, rather than initializing it and
 	c-new-BEG.
-
-2016-01-04  Michael Albinus  <michael.albinus@gmx.de>
-
-	Merge branch 'emacs-25' of git.sv.gnu.org:/srv/git/emacs into emacs-25
 
 2016-01-04  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -13376,7 +13551,7 @@
 	to window primitives (e.g. window-start) with a GROUP argument by calls to
 	new functions (e.g. window-group-start).
 
-	* lisp/ispell.el (ispell-command-loop): Replace call to
+	* lisp/textmodes/ispell.el (ispell-command-loop): Replace call to
 	pos-visible-in-window-p with pos-visible-in-window-group-p.
 
 	* lisp/window.el (window-group-start, window-group-end)
@@ -13390,10 +13565,6 @@
 2015-12-14  Vitorio Miguel  <vdrbandeiras@gmail.com>  (tiny change)
 
 	* etc/tutorials/TUTORIAL.pt_BR: Fix a typo.  (Bug#22165)
-
-2015-12-13  Eli Zaretskii  <eliz@gnu.org>
-
-	Merge branch 'emacs-25' of git.savannah.gnu.org:/srv/git/emacs into emacs-25
 
 2015-12-13  Tassilo Horn  <tsdh@gnu.org>
 
@@ -13999,18 +14170,12 @@
 	(ifconfig-program-options): Check the actual program in use.
 	(arp-program): Check sbin directories.
 
-2015-12-04  (tiny change) Arash Esbati  <esbati@gmx.de>  (tiny change)
+2015-12-04  Arash Esbati  <esbati@gmx.de>  (tiny change)
 
 	Fix wrong-type-argument integer-or-marker-p nil error
 
 	* lisp/textmodes/reftex-auc.el (reftex-what-index-tag):
 	Fix (wrong-type-argument integer-or-marker-p nil) error (bug#22077).
-
-2015-12-04  Alan Mackenzie  <acm@muc.de>
-
-	Merge branch 'scratch/follow' of /home/acm/emacs/emacs.git/emacs-25 into scratch/follow
-
-	Merge necessitated by a rebase operation.
 
 2015-12-04  Alan Mackenzie  <acm@muc.de>
 
@@ -14809,10 +14974,6 @@
 	(isearch-new-regexp-function): Define variable.
 	(isearch-new-word): Define as an obsolete alias. (Bug#22018)
 
-2015-11-27  Eli Zaretskii  <eliz@gnu.org>
-
-	Merge branch 'emacs-25' of git.savannah.gnu.org:/srv/git/emacs into emacs-25
-
 2015-11-27  Lee Bochicchio  <lboc.home@gmail.com>
 
 	* test/automated/abbrev-tests.el: Define more tests
@@ -14895,10 +15056,6 @@
 	* src/insdel.c (prepare_to_modify_buffer_1): Mention in commentary
 	that this function runs Lisp.  Suggested by Richard Stallman
 	<rms@gnu.org>.
-
-2015-11-26  Phillip Lord  <phillip.lord@russet.org.uk>
-
-	Merge branch 'emacs-25' of git.sv.gnu.org:/srv/git/emacs into emacs-25
 
 2015-11-26  Phillip Lord  <phillip.lord@russet.org.uk>
 
@@ -15159,10 +15316,6 @@
 
 2015-11-24  Alan Mackenzie  <acm@muc.de>
 
-	Merge branch 'emacs-25' of git.sv.gnu.org:/srv/git/emacs into emacs-25
-
-2015-11-24  Alan Mackenzie  <acm@muc.de>
-
 	Squashed commit of the following:
 
 	commit e1ecf76585bef2eb87995f7a7f92cc12003a6f70
@@ -15336,10 +15489,6 @@
 	make_multibyte_string.
 	(module_copy_string_contents): Encode before reading the byte
 	size.  Return false if and only if an error occurred.
-
-2015-11-23  Eli Zaretskii  <eliz@gnu.org>
-
-	Merge branch 'emacs-25' of git.savannah.gnu.org:/srv/git/emacs into emacs-25
 
 2015-11-23  Shakthi Kannan  <shakthimaan@gmail.com>
 
@@ -16518,10 +16667,6 @@
 
 2015-11-14  Dmitry Gutov  <dgutov@yandex.ru>
 
-	Merge branch 'master' into emacs-25
-
-2015-11-14  Dmitry Gutov  <dgutov@yandex.ru>
-
 	Use generic dispatch for xref backends
 
 	* lisp/progmodes/xref.el (xref-backend-functions):
@@ -16611,15 +16756,9 @@
 	(xref-query-replace): Ditto.  And check that the search results
 	are up-to-date.
 
-2015-11-13  John Wiegley  <johnw@newartisans.com>
+2015-11-13  Kelvin White  <kwhite@gnu.org>
 
-	Merge remote-tracking branch 'origin/master' into emacs-25
-
-2015-11-13  l3thal  <kwhite@gnu.org>
-
-	Merge branch 'erc-async-reconnect' into emacs-25
-
-	Reconnect asynchronously.
+	Reconnect asynchronously in erc.
 
 2015-11-13  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -16639,10 +16778,6 @@
 	reallocating buffers; this simplifies the code.  Do not trust
 	mflt_run to leave the output areas unchanged on failure, as
 	this isn’t part of its interface spec.
-
-2015-11-13  Eli Zaretskii  <eliz@gnu.org>
-
-	Merge branch 'emacs-25' of git.savannah.gnu.org:/srv/git/emacs into emacs-25
 
 2015-11-13  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -17433,7 +17568,7 @@
 
 2015-11-09  Michael Sperber  <mike@xemacs.org>
 
-	* lisp/gnus-sum.el (gnus-summary-backend-map): Bind B-backspace to
+	* lisp/gnus/gnus-sum.el (gnus-summary-backend-map): Bind B-backspace to
 	`gnus-summary-delete-article` in a way that also works on XEmacs.
 
 2015-11-08  Simen Heggestøyl  <simenheg@gmail.com>
@@ -23725,7 +23860,7 @@
 	* lisp/thingatpt.el (thing-at-point): Only call 'length' on
 	sequences.  (Bug#21391)
 
-2015-09-05  Philip  <pipcet@gmail.com>  (tiny change)
+2015-09-05  Pip Cet  <pipcet@gmail.com>  (tiny change)
 
 	Fix segfaults due to using a stale face ID
 	* src/xdisp.c (forget_escape_and_glyphless_faces): New function.
@@ -26836,14 +26971,14 @@
 
 2015-08-07  Phillip Lord  <phillip.lord@newcastle.ac.uk>
 
-	Improve error signalling for seq-subseq
+	Improve error signaling for seq-subseq
 	* lisp/emacs-lisp/seq.el (seq-subseq): The existing behavior is to error
 	when indexes are too large, but to silently ignore numbers which
 	are too negative for lists.  String and vector handling errors in
 	both cases.  This has been regularized.  Error signaling behavior
 	has been explicitly added to the doc string.
 
-	* lisp/cl-extra.el (cl-subseq): Defers to (seq-subseq) and is
+	* lisp/emacs-lisp/cl-extra.el (cl-subseq): Defers to (seq-subseq) and is
 	therefore also impacted by this change.  Update the doc string
 	to reflect this.
 
@@ -28704,7 +28839,7 @@
 
 2015-06-29  Wolfgang Jenkner  <wjenkner@inode.at>
 
-	* lisp/calc-store.el (calc-insert-permanent-variable): Heed case.
+	* lisp/calc/calc-store.el (calc-insert-permanent-variable): Heed case.
 	Otherwise `s p' of f and F will stomp on each other's value.
 	(Bug#20916)
 
@@ -31586,7 +31721,7 @@
 	* lisp/emacs-lisp/package.el (package-menu-execute):
 	Remove reference to remove-dups.
 
-2015-05-21  kwhite  <kwhite@gnu.org>
+2015-05-21  Kelvin White  <kwhite@gnu.org>
 
 	* lisp/erc/erc.el: Hide network/channel messages.
 	(erc-network-hide-list, erc-channel-hide-list): New lists to define
@@ -31985,13 +32120,7 @@
 	* lisp/eshell/esh-arg.el (eshell-parse-special-reference): Parse
 	'#<buffer-name>'.
 
-2015-05-17  Jan D  <jan.h.d@swipnet.se>
-
-	Merge branch 'master' into cairo
-
 2015-04-26  Jan D  <jan.h.d@swipnet.se>
-
-	Merge branch 'master' into cairo
 
 	Add PBM support for cairo
 	* src/image.c (xcolor_to_argb32): New function.
@@ -32058,10 +32187,6 @@
 	Tool tips for menus did not show any text.
 	* src/xterm.c (x_update_begin): Don't create any surface for non-visible
 	tip frames, the geometry may be wrong.
-
-	Merge branch 'master' into cairo, fixes tooltips not shown.
-
-	Merge branch 'master' into cairo
 
 	Add CAIRO_CFLAGS to lwlib/Makefile.in
 	* Makefile.in (CAIRO_CFLAGS): Add.
@@ -35641,7 +35766,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit ec4226d81074751c105264a3a3383c48d0a05e41 (inclusive).
+commit 3a34412caae002accd0fc7a7fc0b718c2f34159b (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:

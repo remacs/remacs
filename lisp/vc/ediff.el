@@ -289,9 +289,9 @@ deleted."
 	 (file-magic (ediff-filename-magic-p file))
 	 (temp-file-name-prefix (file-name-nondirectory file)))
     (cond ((not (file-readable-p file))
-	   (error "File `%s' does not exist or is not readable" file))
+	   (user-error "File `%s' does not exist or is not readable" file))
 	  ((file-directory-p file)
-	   (error "File `%s' is a directory" file)))
+	   (user-error "File `%s' is a directory" file)))
 
     ;; some of the commands, below, require full file name
     (setq file (expand-file-name file))
@@ -481,13 +481,13 @@ If this file is a backup, `ediff' it with its original."
     (unwind-protect
 	(progn
 	  (if (not (ediff-buffer-live-p buf-A))
-	      (error "Buffer %S doesn't exist" buf-A))
+	      (user-error "Buffer %S doesn't exist" buf-A))
 	  (if (not (ediff-buffer-live-p buf-B))
-	      (error "Buffer %S doesn't exist" buf-B))
+	      (user-error "Buffer %S doesn't exist" buf-B))
 	  (let ((ediff-job-name job-name))
 	    (if (and ediff-3way-comparison-job
 		     (not buf-C-is-alive))
-		(error "Buffer %S doesn't exist" buf-C)))
+		(user-error "Buffer %S doesn't exist" buf-C)))
 	  (if (stringp buf-A-file-name)
 	      (setq buf-A-file-name (file-name-nondirectory buf-A-file-name)))
 	  (if (stringp buf-B-file-name)
@@ -784,13 +784,13 @@ names.  Only the files that are under revision control are taken into account."
       (setq dir3 (if (file-directory-p dir3) dir3 (file-name-directory dir3))))
 
   (cond ((string= dir1 dir2)
-	 (error "Directories A and B are the same: %s" dir1))
+	 (user-error "Directories A and B are the same: %s" dir1))
 	((and (eq jobname 'ediff-directories3)
 	      (string= dir1 dir3))
-	 (error "Directories A and C are the same: %s" dir1))
+	 (user-error "Directories A and C are the same: %s" dir1))
 	((and (eq jobname 'ediff-directories3)
 	      (string= dir2 dir3))
-	 (error "Directories B and C are the same: %s" dir1)))
+	 (user-error "Directories B and C are the same: %s" dir1)))
 
   (if merge-autostore-dir
       (or (stringp merge-autostore-dir)
@@ -816,15 +816,15 @@ names.  Only the files that are under revision control are taken into account."
 	(cond ((and (stringp dir1) (string= merge-autostore-dir dir1))
 	       (or (y-or-n-p
 		    "Directory for saving merged files = Directory A.  Sure? ")
-		   (error "Directory merge aborted")))
+		   (user-error "Directory merge aborted")))
 	      ((and (stringp dir2) (string= merge-autostore-dir dir2))
 	       (or (y-or-n-p
 		    "Directory for saving merged files = Directory B.  Sure? ")
-		   (error "Directory merge aborted")))
+		   (user-error "Directory merge aborted")))
 	      ((and (stringp dir3) (string= merge-autostore-dir dir3))
 	       (or (y-or-n-p
 		    "Directory for saving merged files = Ancestor Directory.  Sure? ")
-		   (error "Directory merge aborted")))))
+		   (user-error "Directory merge aborted")))))
 
     (setq dir-diff-struct (ediff-intersect-directories
 			   jobname
@@ -877,7 +877,7 @@ names.  Only the files that are under revision control are taken into account."
 	     (string= merge-autostore-dir dir1))
 	(or (y-or-n-p
 	     "Directory for saving merged file = directory A.  Sure? ")
-	    (error "Merge of directory revisions aborted")))
+	    (user-error "Merge of directory revisions aborted")))
 
     (setq file-list
 	  (ediff-get-directory-files-under-revision
@@ -978,9 +978,9 @@ lines.  For large regions, use `ediff-regions-linewise'."
 			  (ediff-other-buffer bf))
 			t))))
   (if (not (ediff-buffer-live-p buffer-A))
-      (error "Buffer %S doesn't exist" buffer-A))
+      (user-error "Buffer %S doesn't exist" buffer-A))
   (if (not (ediff-buffer-live-p buffer-B))
-      (error "Buffer %S doesn't exist" buffer-B))
+      (user-error "Buffer %S doesn't exist" buffer-B))
 
 
   (let ((buffer-A
@@ -1019,9 +1019,9 @@ lines.  For small regions, use `ediff-regions-wordwise'."
 			  (ediff-other-buffer bf))
 			t))))
   (if (not (ediff-buffer-live-p buffer-A))
-      (error "Buffer %S doesn't exist" buffer-A))
+      (user-error "Buffer %S doesn't exist" buffer-A))
   (if (not (ediff-buffer-live-p buffer-B))
-      (error "Buffer %S doesn't exist" buffer-B))
+      (user-error "Buffer %S doesn't exist" buffer-B))
 
   (let ((buffer-A
          (ediff-clone-buffer-for-region-comparison buffer-A "-Region.A-"))
@@ -1467,7 +1467,7 @@ Uses `vc.el' or `rcs.el' depending on `ediff-version-control-package'."
 	    (message "") ; kill the message from `locate-library'
 	    (require ediff-version-control-package))
 	(or silent
-	    (error "Version control package %S.el not found.  Use vc.el instead"
+	    (user-error "Version control package %S.el not found.  Use vc.el instead"
 		   ediff-version-control-package)))))
 
 
@@ -1511,56 +1511,6 @@ With optional NODE, goes to that node."
 		 (progn
 		   (select-window ctl-window)
 		   (set-window-buffer ctl-window ctl-buf)))))))
-
-
-(dolist (mess '("^Errors in diff output. Diff output is in "
-                "^Hmm... I don't see an Ediff command around here...$"
-                "^Undocumented command! Type `G' in Ediff Control Panel to drop a note to the Ediff maintainer$"
-                ": This command runs in Ediff Control Buffer only!$"
-                ": Invalid op in ediff-check-version$"
-                "^ediff-shrink-window-C can be used only for merging jobs$"
-                "^Lost difference info on these directories$"
-                "^This command is inapplicable in the present context$"
-                "^This session group has no parent$"
-                "^Can't hide active session, $"
-                "^Ediff: something wrong--no multiple diffs buffer$"
-                "^Can't make context diff for Session $"
-                "^The patch buffer wasn't found$"
-                "^Aborted$"
-                "^This Ediff session is not part of a session group$"
-                "^No active Ediff sessions or corrupted session registry$"
-                "^No session info in this line$"
-                "^`.*' is not an ordinary file$"
-                "^Patch appears to have failed$"
-                "^Recomputation of differences cancelled$"
-                "^No fine differences in this mode$"
-                "^Lost connection to ancestor buffer...sorry$"
-                "^Not merging with ancestor$"
-                "^Don't know how to toggle read-only in buffer "
-                "Emacs is not running as a window application$"
-                "^This command makes sense only when merging with an ancestor$"
-                "^At end of the difference list$"
-                "^At beginning of the difference list$"
-                "^Nothing saved for diff .* in buffer "
-                "^Buffer is out of sync for file "
-                "^Buffer out of sync for file "
-                "^Output from `diff' not found$"
-                "^You forgot to specify a region in buffer "
-                "^All right. Make up your mind and come back...$"
-                "^Current buffer is not visiting any file$"
-                "^Failed to retrieve revision: $"
-                "^Can't determine display width.$"
-                "^File `.*' does not exist or is not readable$"
-                "^File `.*' is a directory$"
-                "^Buffer .* doesn't exist$"
-                "^Directories . and . are the same: "
-                "^Directory merge aborted$"
-                "^Merge of directory revisions aborted$"
-                "^Buffer .* doesn't exist$"
-                "^There is no file to merge$"
-                "^Version control package .*.el not found. Use vc.el instead$"))
-  (add-to-list 'debug-ignored-errors mess))
-
 
 
 ;;; Command line interface

@@ -349,10 +349,8 @@ the cursor is not pointing to a message."
            (string-to-number (buffer-substring (match-beginning 1)
                                                (match-end 1))))
           (error-if-no-message
-           (error "Cursor not pointing to message"))
+           (user-error "Cursor not pointing to message"))
           (t nil))))
-
-(add-to-list 'debug-ignored-errors "^Cursor not pointing to message$")
 
 
 

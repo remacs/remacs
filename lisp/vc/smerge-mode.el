@@ -911,7 +911,7 @@ Point is moved to the end of the conflict."
 
 ;;; Refined change highlighting
 
-(defvar smerge-refine-forward-function 'smerge-refine-forward
+(defvar smerge-refine-forward-function #'smerge--refine-forward
   "Function used to determine an \"atomic\" element.
 You can set it to `forward-char' to get char-level granularity.
 Its behavior has mainly two restrictions:
@@ -941,7 +941,7 @@ It has the following disadvantages:
 - may in degenerate cases take a 1KB input region and turn it into a 1MB
   file to pass to diff.")
 
-(defun smerge-refine-forward (n)
+(defun smerge--refine-forward (n)
   (let ((case-fold-search nil)
         (re "[[:upper:]]?[[:lower:]]+\\|[[:upper:]]+\\|[[:digit:]]+\\|.\\|\n"))
     (when (and smerge-refine-ignore-whitespace
@@ -954,7 +954,7 @@ It has the following disadvantages:
       (unless (looking-at re) (error "Smerge refine internal error"))
       (goto-char (match-end 0)))))
 
-(defun smerge-refine-chopup-region (beg end file &optional preproc)
+(defun smerge--refine-chopup-region (beg end file &optional preproc)
   "Chopup the region into small elements, one per line.
 Save the result into FILE.
 If non-nil, PREPROC is called with no argument in a buffer that contains
@@ -966,44 +966,45 @@ chars to try and eliminate some spurious differences."
   ;; there aren't any, so the resulting "change" didn't make much sense.
   ;; You can still get this behavior by setting
   ;; `smerge-refine-forward-function' to `forward-char'.
-  (let ((buf (current-buffer)))
-    (with-temp-buffer
-      (insert-buffer-substring buf beg end)
-      (when preproc (goto-char (point-min)) (funcall preproc))
-      (when smerge-refine-ignore-whitespace
-        ;; It doesn't make much of a difference for diff-fine-highlight
-        ;; because we still have the _/+/</>/! prefix anyway.  Can still be
-        ;; useful in other circumstances.
-        (subst-char-in-region (point-min) (point-max) ?\n ?\s))
-      (goto-char (point-min))
-      (while (not (eobp))
-        (funcall smerge-refine-forward-function 1)
-        (let ((s (if (prog2 (forward-char -1) (bolp) (forward-char 1))
-                     nil
-                   (buffer-substring (line-beginning-position) (point)))))
-          ;; We add \n after each char except after \n, so we get
-          ;; one line per text char, where each line contains
-          ;; just one char, except for \n chars which are
-          ;; represented by the empty line.
-          (unless (eq (char-before) ?\n) (insert ?\n))
-          ;; HACK ALERT!!
-          (if smerge-refine-weight-hack
-              (dotimes (_i (1- (length s))) (insert s "\n")))))
-      (unless (bolp) (error "Smerge refine internal error"))
-      (let ((coding-system-for-write 'emacs-mule))
-        (write-region (point-min) (point-max) file nil 'nomessage)))))
+  (with-temp-buffer
+    (insert-buffer-substring (marker-buffer beg) beg end)
+    (when preproc (goto-char (point-min)) (funcall preproc))
+    (when smerge-refine-ignore-whitespace
+      ;; It doesn't make much of a difference for diff-fine-highlight
+      ;; because we still have the _/+/</>/! prefix anyway.  Can still be
+      ;; useful in other circumstances.
+      (subst-char-in-region (point-min) (point-max) ?\n ?\s))
+    (goto-char (point-min))
+    (while (not (eobp))
+      (funcall smerge-refine-forward-function 1)
+      (let ((s (if (prog2 (forward-char -1) (bolp) (forward-char 1))
+                   nil
+                 (buffer-substring (line-beginning-position) (point)))))
+        ;; We add \n after each char except after \n, so we get
+        ;; one line per text char, where each line contains
+        ;; just one char, except for \n chars which are
+        ;; represented by the empty line.
+        (unless (eq (char-before) ?\n) (insert ?\n))
+        ;; HACK ALERT!!
+        (if smerge-refine-weight-hack
+            (dotimes (_i (1- (length s))) (insert s "\n")))))
+    (unless (bolp) (error "Smerge refine internal error"))
+    (let ((coding-system-for-write 'emacs-internal))
+      (write-region (point-min) (point-max) file nil 'nomessage))))
 
-(defun smerge-refine-highlight-change (buf beg match-num1 match-num2 props)
-  (with-current-buffer buf
+(defun smerge--refine-highlight-change (beg match-num1 match-num2 props)
+  ;; TODO: Add a property pointing to the corresponding text in the
+  ;; other region.
+  (with-current-buffer (marker-buffer beg)
     (goto-char beg)
     (let* ((startline (- (string-to-number match-num1) 1))
            (beg (progn (funcall (if smerge-refine-weight-hack
-                                    'forward-char
+                                    #'forward-char
                                   smerge-refine-forward-function)
                                 startline)
                        (point)))
            (end (progn (funcall (if smerge-refine-weight-hack
-                                    'forward-char
+                                    #'forward-char
                                   smerge-refine-forward-function)
                           (if match-num2
                               (- (string-to-number match-num2)
@@ -1023,7 +1024,8 @@ chars to try and eliminate some spurious differences."
           (dolist (x props) (overlay-put ol (car x) (cdr x)))
           ol)))))
 
-(defun smerge-refine-subst (beg1 end1 beg2 end2 props-c &optional preproc props-r props-a)
+;;;###autoload
+(defun smerge-refine-regions (beg1 end1 beg2 end2 props-c &optional preproc props-r props-a)
   "Show fine differences in the two regions BEG1..END1 and BEG2..END2.
 PROPS-C is an alist of properties to put (via overlays) on the changes.
 PROPS-R is an alist of properties to put on removed characters.
@@ -1037,19 +1039,20 @@ PROPS-A on added characters, and PROPS-R on removed characters.
 If non-nil, PREPROC is called with no argument in a buffer that contains
 a copy of a region, just before preparing it to for `diff'.  It can be
 used to replace chars to try and eliminate some spurious differences."
-  (let* ((buf (current-buffer))
-         (pos (point))
+  (let* ((pos (point))
          deactivate-mark         ; The code does not modify any visible buffer.
          (file1 (make-temp-file "diff1"))
          (file2 (make-temp-file "diff2")))
+    (unless (markerp beg1) (setq beg1 (copy-marker beg1)))
+    (unless (markerp beg2) (setq beg2 (copy-marker beg2)))
     ;; Chop up regions into smaller elements and save into files.
-    (smerge-refine-chopup-region beg1 end1 file1 preproc)
-    (smerge-refine-chopup-region beg2 end2 file2 preproc)
+    (smerge--refine-chopup-region beg1 end1 file1 preproc)
+    (smerge--refine-chopup-region beg2 end2 file2 preproc)
 
     ;; Call diff on those files.
     (unwind-protect
         (with-temp-buffer
-          (let ((coding-system-for-read 'emacs-mule))
+          (let ((coding-system-for-read 'emacs-internal))
             (call-process diff-command nil t nil
                           (if (and smerge-refine-ignore-whitespace
                                    (not smerge-refine-weight-hack))
@@ -1077,16 +1080,16 @@ used to replace chars to try and eliminate some spurious differences."
                     (m5 (match-string 5)))
                 (when (memq op '(?d ?c))
                   (setq last1
-                        (smerge-refine-highlight-change
-			 buf beg1 m1 m2
+                        (smerge--refine-highlight-change
+			 beg1 m1 m2
 			 ;; Try to use props-c only for changed chars,
 			 ;; fallback to props-r for changed/removed chars,
 			 ;; but if props-r is nil then fallback to props-c.
 			 (or (and (eq op '?c) props-c) props-r props-c))))
                 (when (memq op '(?a ?c))
                   (setq last2
-                        (smerge-refine-highlight-change
-			 buf beg2 m4 m5
+                        (smerge--refine-highlight-change
+			 beg2 m4 m5
 			 ;; Same logic as for removed chars above.
 			 (or (and (eq op '?c) props-c) props-a props-c)))))
               (forward-line 1)                            ;Skip hunk header.
@@ -1110,6 +1113,8 @@ used to replace chars to try and eliminate some spurious differences."
       (goto-char pos)
       (delete-file file1)
       (delete-file file2))))
+(define-obsolete-function-alias 'smerge-refine-subst
+  #'smerge-refine-regions "26.1")
 
 (defun smerge-refine (&optional part)
   "Highlight the words of the conflict that are different.

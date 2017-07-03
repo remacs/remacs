@@ -619,6 +619,29 @@ Corresponds to the Unicode @code{Simple_Titlecase_Mapping} property.
 character of a word needs to be capitalized.  The value of this
 property is a single character.  For unassigned codepoints, the value
 is @code{nil}, which means the character itself.
+
+@item special-uppercase
+Corresponds to Unicode language- and context-independent special upper-casing
+rules.  The value of this property is a string (which may be empty).  For
+example mapping for @code{U+00DF} (@sc{latin small letter sharp s}) is
+@code{"SS"}.  For characters with no special mapping, the value is @code{nil}
+which means @code{uppercase} property needs to be consulted instead.
+
+@item special-lowercase
+Corresponds to Unicode language- and context-independent special lower-casing
+rules.  The value of this property is a string (which may be empty).  For
+example mapping for @code{U+0130} (@sc{latin capital letter i with dot above})
+the value is @code{"i\u0307"} (i.e. 2-character string consisting of @sc{latin
+small letter i} followed by @sc{combining dot above}).  For characters with no
+special mapping, the value is @code{nil} which means @code{lowercase} property
+needs to be consulted instead.
+
+@item special-titlecase
+Corresponds to Unicode unconditional special title-casing rules.  The value of
+this property is a string (which may be empty).  For example mapping for
+@code{U+FB01} (@sc{latin small ligature fi}) the value is @code{"Fi"}.  For
+characters with no special mapping, the value is @code{nil} which means
+@code{titlecase} property needs to be consulted instead.
 @end table
 
 @defun get-char-code-property char propname

@@ -140,7 +140,7 @@
 (require 'dired)
 (require 'image-mode)
 (require 'jka-compr)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 
 ;;;; Customization Options
 

@@ -203,9 +203,10 @@ string}, which describes exactly what the command does.
 describes the command corresponding to @var{key}.
 
   @kbd{C-h c}, @kbd{C-h k} and @kbd{C-h K} work for any sort of key
-sequences, including function keys, menus, and mouse events.  For
-instance, after @kbd{C-h k} you can select a menu item from the menu
-bar, to view the documentation string of the command it runs.
+sequences, including function keys, menus, and mouse events (except
+that @kbd{C-h c} ignores mouse movement events).  For instance, after
+@kbd{C-h k} you can select a menu item from the menu bar, to view the
+documentation string of the command it runs.
 
 @kindex C-h w
 @findex where-is

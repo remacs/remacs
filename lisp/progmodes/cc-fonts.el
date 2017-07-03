@@ -702,6 +702,36 @@ stuff.  Used on level 1 and higher."
 	     t)
 	   (c-put-font-lock-face start (1+ start) 'font-lock-warning-face)))))
 
+(defun c-font-lock-invalid-single-quotes (limit)
+  ;; This function will be called from font-lock for a region bounded by POINT
+  ;; and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; Fontification".
+  ;;
+  ;; This function fontifies invalid single quotes with
+  ;; `font-lock-warning-face'.  These are the single quotes which
+  ;; o - aren't inside a literal;
+  ;; o - are marked with a syntax-table text property value '(1); and
+  ;; o - are NOT marked with a non-null c-digit-separator property.
+  (let ((limits (c-literal-limits))
+	state beg end)
+    (if limits
+	(goto-char (cdr limits)))	; Even for being in a ' '
+    (while (< (point) limit)
+      (setq beg (point))
+      (setq state (parse-partial-sexp (point) limit nil nil nil 'syntax-table))
+      (setq end (point))
+      (goto-char beg)
+      (while (progn (skip-chars-forward "^'" end)
+		    (< (point) end))
+	(if (and (equal (c-get-char-property (point) 'syntax-table) '(1))
+		 (not (c-get-char-property (point) 'c-digit-separator)))
+	    (c-put-font-lock-face (point) (1+ (point)) font-lock-warning-face))
+	(forward-char))
+      (parse-partial-sexp end limit nil nil state 'syntax-table)))
+    nil)
+
 (c-lang-defconst c-basic-matchers-before
   "Font lock matchers for basic keywords, labels, references and various
 other easily recognizable things that should be fontified before generic
@@ -722,6 +752,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	;; `c-skip-comments-and-strings' work correctly.
 	(concat ".\\(" c-string-limit-regexp "\\)")
 	'((c-font-lock-invalid-string)))
+
+      ;; Invalid single quotes.
+      c-font-lock-invalid-single-quotes
 
       ;; Fontify C++ raw strings.
       ,@(when (c-major-mode-is 'c++-mode)
@@ -777,7 +810,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				    (c-backward-syntactic-ws)
 				    (setq id-end (point))
 				    (< (skip-chars-backward
-					,(c-lang-const c-symbol-chars)) 0))
+					,(c-lang-const c-symbol-chars))
+				       0))
 				  (not (get-text-property (point) 'face)))
 			(c-put-font-lock-face (point) id-end
 					      c-reference-face-name)
@@ -900,7 +934,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
     (when (memq prop '(c-decl-id-start c-decl-type-start))
       (c-forward-syntactic-ws limit)
       (c-font-lock-declarators limit t (eq prop 'c-decl-type-start)
-			       (c-bs-at-toplevel-p (point)))))
+			       (not (c-bs-at-toplevel-p (point))))))
 
   (setq c-font-lock-context ;; (c-guess-font-lock-context)
 	(save-excursion
@@ -1013,13 +1047,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (c-fontify-types-and-refs
-      ((pos (point)) next-pos id-start id-end
+      ((pos (point)) next-pos id-start
        decl-res
-       paren-depth
        id-face got-type got-init
        c-last-identifier-range
-       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start))
-       brackets-after-id)
+       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start)))
 
     ;; The following `while' fontifies a single declarator id each time round.
     ;; It loops only when LIST is non-nil.
@@ -1036,7 +1068,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				   (forward-char)
 				   (c-forward-syntactic-ws)
 				   (looking-at "[*&]")))
-			     (not (car (cddr decl-res))) ; brackets-after-id
+			     (not (car (cddr decl-res)))
 			     (or (not (c-major-mode-is 'c++-mode))
 				 (save-excursion
 				   (let (c-last-identifier-range)
@@ -1214,6 +1246,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (and (zerop (c-backward-token-2 2))
 		       (looking-at c-arithmetic-op-regexp))))
 	   (cons nil nil))
+	  ;; In a C++ member initialization list.
+	  ((and (eq (char-before match-pos) ?,)
+	  	(c-major-mode-is 'c++-mode)
+	  	(save-excursion (c-back-over-member-initializers)))
+	   (c-put-char-property (1- match-pos) 'c-type 'c-not-decl)
+	   (cons 'not-decl nil))
 	  ;; At start of a declaration inside a declaration paren.
 	  ((save-excursion
 	     (and (memq (char-before match-pos) '(?\( ?\,))
@@ -1234,6 +1272,85 @@ casts and declarations are fontified.  Used on level 2 and higher."
 					      c-decl-type-start))))))))))
 	   (cons 'decl nil))
 	  (t (cons 'arglist t)))))
+
+(defun c-font-lock-single-decl (limit decl-or-cast match-pos context toplev)
+  ;; Try to fontify a single declaration, together with all its declarators.
+  ;; Return nil if we're successful, non-nil if we fail.  POINT should be
+  ;; positioned at the start of the putative declaration before calling.
+  ;; POINT is left undefined by this function.
+  ;;
+  ;; LIMIT sets a maximum position we'll fontify out to.
+  ;; DECL-OR-CAST has the form of a result from `c-forward-decl-or-cast-1',
+  ;;   and must indicate a declaration (i.e. not be nil or 'cast).
+  ;; MATCH-POS is the position after the last symbol before the decl.
+  ;; CONTEXT is the context of the current decl., as determined by
+  ;;   c-get-fontification-context.
+  ;; TOPLEV is non-nil if the decl. is at the top level (i.e. outside any
+  ;;   braces, or directly inside a class, namespace, etc.)
+
+  ;; Do we have an expression as the second or third clause of
+  ;; a "for" paren expression?
+  (if (save-excursion
+	(and
+	 (car (cddr decl-or-cast))	; maybe-expression flag.
+	 (c-go-up-list-backward)
+	 (eq (char-after) ?\()
+	 (progn (c-backward-syntactic-ws)
+		(c-simple-skip-symbol-backward))
+	 (looking-at c-paren-stmt-key)
+	 (progn (goto-char match-pos)
+		(while (and (eq (char-before) ?\))
+			    (c-go-list-backward))
+		  (c-backward-syntactic-ws))
+		(eq (char-before) ?\;))))
+      ;; We've got an expression in "for" parens.  Remove the
+      ;; "type" that would spuriously get fontified.
+      (let ((elt (and (consp c-record-type-identifiers)
+		      (assq (cadr (cddr decl-or-cast))
+			    c-record-type-identifiers))))
+	(when elt
+	  (setq c-record-type-identifiers
+		(c-delq-from-dotted-list
+		 elt c-record-type-identifiers)))
+	t)
+    ;; Back up to the type to fontify the declarator(s).
+    (goto-char (car decl-or-cast))
+
+    (let ((decl-list
+	   (if (not (memq context '(nil top)))
+	       ;; Should normally not fontify a list of
+	       ;; declarators inside an arglist, but the first
+	       ;; argument in the ';' separated list of a "for"
+	       ;; statement is an exception.
+	       (when (eq (char-before match-pos) ?\()
+		 (save-excursion
+		   (goto-char (1- match-pos))
+		   (c-backward-syntactic-ws)
+		   (and (c-simple-skip-symbol-backward)
+			(looking-at c-paren-stmt-key))))
+	     t)))
+
+      ;; Fix the `c-decl-id-start' or `c-decl-type-start' property
+      ;; before the first declarator if it's a list.
+      ;; `c-font-lock-declarators' handles the rest.
+      (when decl-list
+	(save-excursion
+	  (c-backward-syntactic-ws)
+	  (unless (bobp)
+	    (c-put-char-property (1- (point)) 'c-type
+				 (if (cadr decl-or-cast)
+				     'c-decl-type-start
+				   'c-decl-id-start)))))
+
+      (c-font-lock-declarators
+       (min limit (point-max)) decl-list
+       (cadr decl-or-cast) (not toplev)))
+
+    ;; A declaration has been successfully identified, so do all the
+    ;; fontification of types and refs that've been recorded.
+    (c-fontify-recorded-types-and-refs)
+    nil))
+
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations, casts and labels from the point to LIMIT.
@@ -1290,7 +1407,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; it finds any.  That's necessary so that we later will
 	  ;; stop inside them to fontify types there.
 	  (c-parse-and-markup-<>-arglists t)
-	  lbrace ; position of some {.
 	  ;; The font-lock package in Emacs is known to clobber
 	  ;; `parse-sexp-lookup-properties' (when it exists).
 	  (parse-sexp-lookup-properties
@@ -1436,70 +1552,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		      (setq max-type-decl-end-before-token (point)))
 		  (when (> (point) max-type-decl-end)
 		    (setq max-type-decl-end (point))))
-
-		;; Do we have an expression as the second or third clause of
-		;; a "for" paren expression?
-		(if (save-excursion
-		      (and
-		       (car (cddr decl-or-cast)) ; maybe-expression flag.
-		       (goto-char start-pos)
-		       (c-go-up-list-backward)
-		       (eq (char-after) ?\()
-		       (progn (c-backward-syntactic-ws)
-			      (c-simple-skip-symbol-backward))
-		       (looking-at c-paren-stmt-key)
-		       (progn (goto-char match-pos)
-			      (while (and (eq (char-before) ?\))
-					  (c-go-list-backward))
-				(c-backward-syntactic-ws))
-			      (eq (char-before) ?\;))))
-		    ;; We've got an expression in "for" parens.  Remove the
-		    ;; "type" that would spuriously get fontified.
-		    (let ((elt (and (consp c-record-type-identifiers)
-				    (assq (cadr (cddr decl-or-cast))
-					  c-record-type-identifiers))))
-		      (when elt
-			(setq c-record-type-identifiers
-			      (c-delq-from-dotted-list
-			       elt c-record-type-identifiers)))
-		      t)
-		  ;; Back up to the type to fontify the declarator(s).
-		  (goto-char (car decl-or-cast))
-
-		  (let ((decl-list
-			 (if (not (memq context '(nil top)))
-			     ;; Should normally not fontify a list of
-			     ;; declarators inside an arglist, but the first
-			     ;; argument in the ';' separated list of a "for"
-			     ;; statement is an exception.
-			     (when (eq (char-before match-pos) ?\()
-			       (save-excursion
-				 (goto-char (1- match-pos))
-				 (c-backward-syntactic-ws)
-				 (and (c-simple-skip-symbol-backward)
-				      (looking-at c-paren-stmt-key))))
-			   t)))
-
-		    ;; Fix the `c-decl-id-start' or `c-decl-type-start' property
-		    ;; before the first declarator if it's a list.
-		    ;; `c-font-lock-declarators' handles the rest.
-		    (when decl-list
-		      (save-excursion
-			(c-backward-syntactic-ws)
-			(unless (bobp)
-			  (c-put-char-property (1- (point)) 'c-type
-					       (if (cadr decl-or-cast)
-						   'c-decl-type-start
-						 'c-decl-id-start)))))
-
-		    (c-font-lock-declarators
-		     (min limit (point-max)) decl-list
-		     (cadr decl-or-cast) (not toplev)))
-
-		  ;; A declaration has been successfully identified, so do all the
-		  ;; fontification of types and refs that've been recorded.
-		  (c-fontify-recorded-types-and-refs)
-		  nil))
+		(goto-char start-pos)
+		(c-font-lock-single-decl limit decl-or-cast match-pos
+					 context toplev))
 
 	       (t t))))
 
@@ -1584,8 +1639,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
   ;; fontification".
   (let ((decl-search-lim (c-determine-limit 1000))
-	paren-state bod-res is-typedef encl-pos
-	(here (point))
+	paren-state encl-pos token-end context decl-or-cast
+	start-pos top-level c-restricted-<>-arglists
 	c-recognize-knr-p)		; Strictly speaking, bogus, but it
 					; speeds up lisp.h tremendously.
     (save-excursion
@@ -1599,22 +1654,27 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  (c-syntactic-skip-backward "^;{}" decl-search-lim t))
 	(when (or (bobp)
 		  (memq (char-before) '(?\; ?{ ?})))
+	  (setq token-end (point))
 	  (c-forward-syntactic-ws)
 	  ;; We're now putatively at the declaration.
+	  (setq start-pos (point))
 	  (setq paren-state (c-parse-state))
 	  ;; At top level or inside a "{"?
 	  (if (or (not (setq encl-pos
 			     (c-most-enclosing-brace paren-state)))
 		  (eq (char-after encl-pos) ?\{))
 	      (progn
-		(when (looking-at c-typedef-key) ; "typedef"
-		  (setq is-typedef t)
-		  (goto-char (match-end 0))
-		  (c-forward-syntactic-ws))
-		;; At a real declaration?
-		(if (memq (c-forward-type t) '(t known found decltype))
-		    (c-font-lock-declarators
-		     limit t is-typedef (not (c-bs-at-toplevel-p here)))))))))
+		(setq top-level (c-at-toplevel-p))
+		(let ((got-context (c-get-fontification-context
+				    token-end nil top-level)))
+		  (setq context (car got-context)
+			c-restricted-<>-arglists (cdr got-context)))
+		(setq decl-or-cast
+		      (c-forward-decl-or-cast-1 token-end context nil))
+		(when (consp decl-or-cast)
+		  (goto-char start-pos)
+		  (c-font-lock-single-decl limit decl-or-cast token-end
+					   context top-level)))))))
     nil))
 
 (defun c-font-lock-enclosing-decls (limit)
@@ -2474,7 +2534,7 @@ need for `c++-font-lock-extra-types'.")
      limit
      "[-+]"
      nil
-     (lambda (match-pos inside-macro &optional top-level)
+     (lambda (_match-pos _inside-macro &optional _top-level)
        (forward-char)
        (c-font-lock-objc-method))))
   nil)

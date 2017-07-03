@@ -1594,6 +1594,7 @@ If FRAME is nil, the current FRAME is used."
 (defun face-spec-choose (spec &optional frame no-match-retval)
   "Return the proper attributes for FRAME, out of SPEC.
 
+Value is a plist of face attributes in the form of attribute-value pairs.
 If no match is found or SPEC is nil, return nil, unless NO-MATCH-RETVAL
 is given, in which case return its value instead."
   (unless frame
@@ -1666,7 +1667,7 @@ is given, in which case return its value instead."
            face--attributes-unspecified)))
 
 (defun face-spec-set (face spec &optional spec-type)
-  "Set the face spec SPEC for FACE.
+  "Set the FACE's spec SPEC, define FACE, and recalculate its attributes.
 See `defface' for the format of SPEC.
 
 The appearance of each face is controlled by its specs (set via
@@ -1677,10 +1678,11 @@ This function also defines FACE as a valid face name if it is not
 already one, and (re)calculates its attributes on existing
 frames.
 
-The argument SPEC-TYPE determines which spec to set:
-  nil or `face-override-spec' means the override spec (which is
-    usually what you want if calling this function outside of
-    Custom code);
+The optional argument SPEC-TYPE determines which spec to set:
+  nil, omitted or `face-override-spec' means the override spec,
+    which overrides all the other types of spec mentioned below
+    (this is usually what you want if calling this function
+    outside of Custom code);
   `customized-face' or `saved-face' means the customized spec or
     the saved custom spec;
   `face-defface-spec' means the default spec
@@ -1688,7 +1690,7 @@ The argument SPEC-TYPE determines which spec to set:
   `reset' means to ignore SPEC, but clear the `customized-face'
     and `face-override-spec' specs;
 Any other value means not to set any spec, but to run the
-function for its other effects."
+function for defining FACE and recalculating its attributes."
   (if (get face 'face-alias)
       (setq face (get face 'face-alias)))
   ;; Save SPEC to the relevant symbol property.
@@ -1734,32 +1736,34 @@ The following sources are applied in this order:
   ;; `theme-face' records.
   (let ((theme-faces (get face 'theme-face))
 	(no-match-found 0)
-	spec theme-face-applied)
+	face-attrs theme-face-applied)
     (if theme-faces
 	(dolist (elt (reverse theme-faces))
-	  (setq spec (face-spec-choose (cadr elt) frame no-match-found))
-	  (unless (eq spec no-match-found)
-	    (face-spec-set-2 face frame spec)
+	  (setq face-attrs (face-spec-choose (cadr elt) frame no-match-found))
+	  (unless (eq face-attrs no-match-found)
+	    (face-spec-set-2 face frame face-attrs)
 	    (setq theme-face-applied t))))
     ;; If there was a spec applicable to FRAME, that overrides the
     ;; defface spec entirely (rather than inheriting from it).  If
     ;; there was no spec applicable to FRAME, apply the defface spec
     ;; as well as any applicable X resources.
     (unless theme-face-applied
-      (setq spec (face-spec-choose (face-default-spec face) frame))
-      (face-spec-set-2 face frame spec)
+      (setq face-attrs (face-spec-choose (face-default-spec face) frame))
+      (face-spec-set-2 face frame face-attrs)
       (make-face-x-resource-internal face frame))
-    (setq spec (face-spec-choose (get face 'face-override-spec) frame))
-    (face-spec-set-2 face frame spec)))
+    (setq face-attrs (face-spec-choose (get face 'face-override-spec) frame))
+    (face-spec-set-2 face frame face-attrs)))
 
-(defun face-spec-set-2 (face frame spec)
-  "Set the face attributes of FACE on FRAME according to SPEC."
+(defun face-spec-set-2 (face frame face-attrs)
+  "Set the face attributes of FACE on FRAME according to FACE-ATTRS.
+FACE-ATTRS is a plist of face attributes in the form of attribute-value
+pairs."
   (let (attrs)
-    (while spec
-      (when (assq (car spec) face-x-resources)
-	(push (car spec) attrs)
-	(push (cadr spec) attrs))
-      (setq spec (cddr spec)))
+    (while face-attrs
+      (when (assq (car face-attrs) face-x-resources)
+	(push (car face-attrs) attrs)
+	(push (cadr face-attrs) attrs))
+      (setq face-attrs (cddr face-attrs)))
     (apply 'set-face-attribute face frame (nreverse attrs))))
 
 (defun face-attr-match-p (face attrs &optional frame)
@@ -2627,6 +2631,13 @@ not want to accentuate the last pixel line/column, set this to
 the same as `window-divider' face."
   :version "24.4"
   :group 'window-divider
+  :group 'basic-faces)
+
+(defface internal-border
+    '((t nil))
+  "Basic face for the internal border."
+  :version "26.1"
+  :group 'frames
   :group 'basic-faces)
 
 (defface minibuffer-prompt

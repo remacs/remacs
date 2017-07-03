@@ -1976,18 +1976,6 @@ This clause iterates @var{var} over all the cons cells of @var{list}.
         @result{} ((1 2 3 4) (2 3 4) (3 4) (4))
 @end example
 
-With @code{by}, there is no real reason that the @code{on} expression
-must be a list.  For example:
-
-@example
-(cl-loop for x on first-animal by 'next-animal collect x)
-@end example
-
-@noindent
-where @code{(next-animal x)} takes an ``animal'' @var{x} and returns
-the next in the (assumed) sequence of animals, or @code{nil} if
-@var{x} was the last animal in the sequence.
-
 @item for @var{var} in-ref @var{list} by @var{function}
 This is like a regular @code{in} clause, but @var{var} becomes
 a @code{setf}-able ``reference'' onto the elements of the list
@@ -2252,8 +2240,8 @@ were non-@code{nil}, the loop returns @code{t}:
 
 @example
 (if (cl-loop for size in size-list always (> size 10))
-    (some-big-sizes)
-  (no-big-sizes))
+    (only-big-sizes)
+  (some-small-sizes))
 @end example
 
 @item never @var{condition}
@@ -4012,10 +4000,7 @@ Given a @code{person}, @code{(copy-person @var{p})} makes a new
 object of the same type whose slots are @code{eq} to those of @var{p}.
 
 Given any Lisp object @var{x}, @code{(person-p @var{x})} returns
-true if @var{x} looks like a @code{person}, and false otherwise.  (Again,
-in Common Lisp this predicate would be exact; in Emacs Lisp the
-best it can do is verify that @var{x} is a vector of the correct
-length that starts with the correct tag symbol.)
+true if @var{x} is a @code{person}, and false otherwise.
 
 Accessors like @code{person-name} normally check their arguments
 (effectively using @code{person-p}) and signal an error if the
@@ -4221,16 +4206,16 @@ allow for such a feature, so this package simply ignores
 @code{:print-function}.
 
 @item :type
-The argument should be one of the symbols @code{vector} or @code{list}.
-This tells which underlying Lisp data type should be used to implement
-the new structure type.  Vectors are used by default, but
-@code{(:type list)} will cause structure objects to be stored as
-lists instead.
+The argument should be one of the symbols @code{vector} or
+@code{list}.  This tells which underlying Lisp data type should be
+used to implement the new structure type.  Records are used by
+default, but @code{(:type vector)} will cause structure objects to be
+stored as vectors and @code{(:type list)} lists instead.
 
-The vector representation for structure objects has the advantage
-that all structure slots can be accessed quickly, although creating
-vectors is a bit slower in Emacs Lisp.  Lists are easier to create,
-but take a relatively long time accessing the later slots.
+The record and vector representations for structure objects have the
+advantage that all structure slots can be accessed quickly, although
+creating them are a bit slower in Emacs Lisp.  Lists are easier to
+create, but take a relatively long time accessing the later slots.
 
 @item :named
 This option, which takes no arguments, causes a characteristic ``tag''
@@ -4239,21 +4224,24 @@ symbol to be stored at the front of the structure object.  Using
 structure type stored as plain vectors or lists with no identifying
 features.
 
-The default, if you don't specify @code{:type} explicitly, is to
-use named vectors.  Therefore, @code{:named} is only useful in
-conjunction with @code{:type}.
+The default, if you don't specify @code{:type} explicitly, is to use
+records, which are always tagged.  Therefore, @code{:named} is only
+useful in conjunction with @code{:type}.
 
 @example
 (cl-defstruct (person1) name age sex)
 (cl-defstruct (person2 (:type list) :named) name age sex)
 (cl-defstruct (person3 (:type list)) name age sex)
+(cl-defstruct (person4 (:type vector)) name age sex)
 
 (setq p1 (make-person1))
-     @result{} [cl-struct-person1 nil nil nil]
+     @result{} #s(person1 nil nil nil)
 (setq p2 (make-person2))
      @result{} (person2 nil nil nil)
 (setq p3 (make-person3))
      @result{} (nil nil nil)
+(setq p4 (make-person4))
+     @result{} [nil nil nil]
 
 (person1-p p1)
      @result{} t
@@ -4293,9 +4281,9 @@ introspection functions.
 
 @defun cl-struct-sequence-type struct-type
 This function returns the underlying data structure for
-@code{struct-type}, which is a symbol.  It returns @code{vector} or
-@code{list}, or @code{nil} if @code{struct-type} is not actually a
-structure.
+@code{struct-type}, which is a symbol.  It returns @code{record},
+@code{vector} or @code{list}, or @code{nil} if @code{struct-type} is
+not actually a structure.
 @end defun
 
 @defun cl-struct-slot-info struct-type
@@ -4562,9 +4550,8 @@ set down in Steele's book.
 
 The variable @code{cl--gensym-counter} starts out with zero.
 
-The @code{cl-defstruct} facility is compatible, except that structures
-are of type @code{:type vector :named} by default rather than some
-special, distinct type.  Also, the @code{:type} slot option is ignored.
+The @code{cl-defstruct} facility is compatible, except that the
+@code{:type} slot option is ignored.
 
 The second argument of @code{cl-check-type} is treated differently.
 
@@ -4713,9 +4700,9 @@ Lisp.  Rational numbers and complex numbers are not present,
 nor are large integers (all integers are ``fixnums'').  All
 arrays are one-dimensional.  There are no readtables or pathnames;
 streams are a set of existing data types rather than a new data
-type of their own.  Hash tables, random-states, structures, and
-packages (obarrays) are built from Lisp vectors or lists rather
-than being distinct types.
+type of their own.  Hash tables, random-states, and packages
+(obarrays) are built from Lisp vectors or lists rather than being
+distinct types.
 
 @item
 The Common Lisp Object System (CLOS) is not implemented,

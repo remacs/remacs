@@ -1048,13 +1048,13 @@ possibilities can be narrowed to specific indentation points."
            (max line-indentation base-indent)))
         (`(,(or :after-block-start
                 :after-backslash-first-line
+                :after-backslash-assignment-continuation
                 :inside-paren-newline-start) . ,start)
          ;; Add one indentation level.
          (goto-char start)
          (+ (current-indentation) python-indent-offset))
         (`(,(or :inside-paren
                 :after-backslash-block-continuation
-                :after-backslash-assignment-continuation
                 :after-backslash-dotted-continuation) . ,start)
          ;; Use the column given by the context.
          (goto-char start)
@@ -2731,7 +2731,8 @@ variable.
        '(ansi-color-process-output
          python-shell-comint-watch-for-first-prompt-output-filter
          python-pdbtrack-comint-output-filter-function
-         python-comint-postoutput-scroll-to-bottom))
+         python-comint-postoutput-scroll-to-bottom
+         comint-watch-for-password-prompt))
   (set (make-local-variable 'compilation-error-regexp-alist)
        python-shell-compilation-regexp-alist)
   (add-hook 'completion-at-point-functions

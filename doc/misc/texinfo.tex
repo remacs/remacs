@@ -3,11 +3,11 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2017-03-07.20}
+\def\texinfoversion{2017-06-04.19}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-% 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016
+% 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017
 % Free Software Foundation, Inc.
 %
 % This texinfo.tex file is free software: you can redistribute it and/or
@@ -5493,17 +5493,15 @@ end
       \let\indexlbrace\{   % Likewise, set these sequences for braces
       \let\indexrbrace\}   % used in the sort key.
       \begindoublecolumns
-      \let\entrywidowpenalty=\indexwidowpenalty
+      \let\dotheinsertentrybox\dotheinsertentryboxwithpenalty
       %
       % Read input from the index file line by line.
       \loopdo
-        \ifeof1
-          \let\firsttoken\relax
-        \else
+        \ifeof1 \else
           \read 1 to \nextline
-          \edef\act{\gdef\noexpand\firsttoken{\getfirsttoken\nextline}}%
-          \act
         \fi
+        %
+        \indexinputprocessing
         \thisline
         %
         \ifeof1\else
@@ -5515,12 +5513,20 @@ end
   \fi
   \closein 1
 \endgroup}
+\def\loopdo#1\repeat{\def\body{#1}\loopdoxxx}
+\def\loopdoxxx{\let\next=\relax\body\let\next=\loopdoxxx\fi\next}
 
+\def\indexinputprocessing{%
+  \ifeof1
+    \let\firsttoken\relax
+  \else
+    \edef\act{\gdef\noexpand\firsttoken{\getfirsttoken\nextline}}%
+    \act
+  \fi
+}
 \def\getfirsttoken#1{\expandafter\getfirsttokenx#1\endfirsttoken}
 \long\def\getfirsttokenx#1#2\endfirsttoken{\noexpand#1}
 
-\def\loopdo#1\repeat{\def\body{#1}\loopdoxxx}
-\def\loopdoxxx{\let\next=\relax\body\let\next=\loopdoxxx\fi\next}
 
 % These macros are used by the sorted index file itself.
 % Change them to control the appearance of the index.
@@ -5597,7 +5603,7 @@ end
     % For pdfTeX and XeTeX.
     % The redefinition of \domark stops marks being added in \pdflink to 
     % preserve coloured links across page boundaries.  Otherwise the marks
-    % would get in the way of \lastbox in \insertindexentrybox.
+    % would get in the way of \lastbox in \insertentrybox.
     \let\domark\relax
     %
     % Start a new paragraph if necessary, so our assignments below can't
@@ -5658,9 +5664,9 @@ end
     \fi
     \egroup % end \boxA
     \ifdim\wd\boxB = 0pt
-      \global\setbox\entryindexbox=\vbox{\unhbox\boxA}%
+      \global\setbox\entrybox=\vbox{\unhbox\boxA}%
     \else
-    \global\setbox\entryindexbox=\vbox\bgroup
+    \global\setbox\entrybox=\vbox\bgroup
       % We want the text of the entries to be aligned to the left, and the
       % page numbers to be aligned to the right.
       %
@@ -5722,18 +5728,19 @@ end
     \egroup % The \vbox
     \fi
   \endgroup
-  % delay text of entry until after penalty
-  \bgroup\aftergroup\insertindexentrybox
-  \entrywidowpenalty
+  \dotheinsertentrybox
 }}
 
 \newskip\thinshrinkable
 \skip\thinshrinkable=.15em minus .15em
 
-\newbox\entryindexbox
-\def\insertindexentrybox{%
-  \ourunvbox\entryindexbox
+\newbox\entrybox
+\def\insertentrybox{%
+  \ourunvbox\entrybox
 }
+
+% default definition
+\let\dotheinsertentrybox\insertentrybox
 
 % Use \lastbox to take apart vbox box by box, and add each sub-box
 % to the current vertical list.
@@ -5757,21 +5764,18 @@ end
 \newbox\delayedbox
 \newbox\interbox
 
-% Default is no penalty
-\let\entrywidowpenalty\egroup
-
 % Used from \printindex.  \firsttoken should be the first token
 % after the \entry.  If it's not another \entry, we are at the last
 % line of a group of index entries, so insert a penalty to discourage
 % widowed index entries.
-\long\def\indexwidowpenalty{%
-  \def\isentry{\entry}%
+\def\dotheinsertentryboxwithpenalty{%
   \ifx\firsttoken\isentry
   \else
     \penalty 9000
   \fi
-  \egroup % now comes the box added with \aftergroup
+  \insertentrybox
 }
+\def\isentry{\entry}%
 
 % Like plain.tex's \dotfill, except uses up at least 1 em.
 % The filll stretch here overpowers both the fil and fill stretch to push
@@ -9118,7 +9122,13 @@ end
     \xdef\safexrefname{#1}%
   }%
   %
-  \expandafter\gdef\csname XR\safexrefname\endcsname{#2}% remember this xref
+  \bgroup
+    \expandafter\gdef\csname XR\safexrefname\endcsname{#2}%
+  \egroup
+  % We put the \gdef inside a group to avoid the definitions building up on 
+  % TeX's save stack, which can cause it to run out of space for aux files with 
+  % thousands of lines.  \gdef doesn't use the save stack, but \csname does
+  % when it defines an unknown control sequence as \relax. 
   %
   % Was that xref control sequence that we just defined for a float?
   \expandafter\iffloat\csname XR\safexrefname\endcsname
@@ -11312,7 +11322,6 @@ directory should work if nowhere else does.}
   %
   \lispnarrowing = 0.3in
   \tolerance = 700
-  \hfuzz = 1pt
   \contentsrightmargin = 0pt
   \defbodyindent = .5cm
 }}
@@ -11330,7 +11339,6 @@ directory should work if nowhere else does.}
   %
   \lispnarrowing = 0.25in
   \tolerance = 700
-  \hfuzz = 1pt
   \contentsrightmargin = 0pt
   \defbodyindent = .4cm
 }}
@@ -11356,7 +11364,6 @@ directory should work if nowhere else does.}
                     {297mm}{210mm}%
   %
   \tolerance = 700
-  \hfuzz = 1pt
   \contentsrightmargin = 0pt
   \defbodyindent = 5mm
 }}
@@ -11375,7 +11382,6 @@ directory should work if nowhere else does.}
   %
   \lispnarrowing = 0.2in
   \tolerance = 800
-  \hfuzz = 1.2pt
   \contentsrightmargin = 0pt
   \defbodyindent = 2mm
   \tableindent = 12mm
@@ -11430,6 +11436,9 @@ directory should work if nowhere else does.}
 % Set default to letter.
 %
 \letterpaper
+
+% Default value of \hfuzz, for suppressing warnings about overfull hboxes.
+\hfuzz = 1pt
 
 
 \message{and turning on texinfo input format.}
@@ -11596,6 +11605,9 @@ directory should work if nowhere else does.}
   @def ^^M{@let^^M@secondlinenl}%
   % Definition for a newline in the main Texinfo file.
   @gdef @secondlinenl{@fixbackslash}%
+  % In case the first line has a whole-line command on it
+  @let@originalparsearg@parsearg
+  @def@parsearg{@fixbackslash@originalparsearg}
 }}
 
 {@catcode`@^=7 @catcode`@^^M=13%
@@ -11616,6 +11628,7 @@ directory should work if nowhere else does.}
   @catcode13=5 % regular end of line
   @enableemergencynewline
   @let@c=@texinfoc
+  @let@parsearg@originalparsearg
   % Also turn back on active characters that might appear in the input
   % file name, in case not using a pre-dumped format.
   @catcode`+=@active

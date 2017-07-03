@@ -300,8 +300,11 @@ system, much like text written into a file.  @xref{Coding Systems}.
 @defun call-process program &optional infile destination display &rest args
 This function calls @var{program} and waits for it to finish.
 
-The current working directory of the subprocess is
-@code{default-directory}.
+The current working directory of the subprocess is set to the current
+buffer's value of @code{default-directory} if that is local (as
+determined by @code{unhandled-file-name-directory}), or "~" otherwise.
+If you want to run a process in a remote directory use
+@code{process-file}.
 
 The standard input for the new process comes from file @var{infile} if
 @var{infile} is not @code{nil}, and from the null device otherwise.
@@ -683,6 +686,12 @@ created with @code{make-pipe-process}, described below.
 
 The original argument list, modified with the actual connection
 information, is available via the @code{process-contact} function.
+
+The current working directory of the subprocess is set to the current
+buffer's value of @code{default-directory} if that is local (as
+determined by `unhandled-file-name-directory'), or "~" otherwise.  If
+you want to run a process in a remote directory use
+@code{start-file-process}.
 @end defun
 
 @defun make-pipe-process &rest args

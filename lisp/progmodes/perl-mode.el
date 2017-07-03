@@ -1104,9 +1104,9 @@ With argument, repeat that many times; negative args move backward."
 (defun perl-mark-function ()
   "Put mark at end of Perl function, point at beginning."
   (interactive)
-  (push-mark (point))
+  (push-mark)
   (perl-end-of-function)
-  (push-mark (point))
+  (push-mark)
   (perl-beginning-of-function)
   (backward-paragraph))
 

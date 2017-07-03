@@ -105,10 +105,10 @@ Summary:
   (declare (doc-string 3) (obsolete cl-defmethod "25.1")
            (debug
             (&define                    ; this means we are defining something
-             [&or name ("setf" :name setf name)]
+             [&or name ("setf" name :name setf)]
              ;; ^^ This is the methods symbol
              [ &optional symbolp ]                ; this is key :before etc
-             list                                 ; arguments
+             cl-generic-method-args               ; arguments
              [ &optional stringp ]                ; documentation string
              def-body                             ; part to be debugged
              )))
@@ -145,7 +145,7 @@ Summary:
   ;; interleaved list comes before the class's non-interleaved list.
   51 #'cl--generic-struct-tag
   (lambda (tag &rest _)
-    (and (symbolp tag) (boundp tag) (setq tag (symbol-value tag))
+    (and (symbolp tag) (setq tag (cl--find-class tag))
          (eieio--class-p tag)
          (let ((superclasses (eieio--class-precedence-list tag))
                (specializers ()))

@@ -28,6 +28,10 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'pcase)
+  (require 'easy-mmode)) ; For `define-minor-mode'.
+
 (defvar font-lock-keywords)
 
 (defgroup backup nil
@@ -393,6 +397,46 @@ ignored."
   :initialize 'custom-initialize-delay
   :version "21.1")
 
+(defvar auto-save--timer nil "Timer for `auto-save-visited-mode'.")
+
+(defcustom auto-save-visited-interval 5
+  "Interval in seconds for `auto-save-visited-mode'.
+If `auto-save-visited-mode' is enabled, Emacs will save all
+buffers visiting a file to the visited file after it has been
+idle for `auto-save-visited-interval' seconds."
+  :group 'auto-save
+  :type 'number
+  :version "26.1"
+  :set (lambda (symbol value)
+         (set-default symbol value)
+         (when auto-save--timer
+           (timer-set-idle-time auto-save--timer value :repeat))))
+
+(define-minor-mode auto-save-visited-mode
+  "Toggle automatic saving to file-visiting buffers on or off.
+With a prefix argument ARG, enable regular saving of all buffers
+visiting a file if ARG is positive, and disable it otherwise.
+Unlike `auto-save-mode', this mode will auto-save buffer contents
+to the visited files directly and will also run all save-related
+hooks.  See Info node `Saving' for details of the save process.
+
+If called from Lisp, enable the mode if ARG is omitted or nil,
+and toggle it if ARG is `toggle'."
+  :group 'auto-save
+  :global t
+  (when auto-save--timer (cancel-timer auto-save--timer))
+  (setq auto-save--timer
+        (when auto-save-visited-mode
+          (run-with-idle-timer
+           auto-save-visited-interval :repeat
+           #'save-some-buffers :no-prompt
+           (lambda ()
+             (not (and buffer-auto-save-file-name
+                       auto-save-visited-file-name)))))))
+
+(make-obsolete-variable 'auto-save-visited-file-name 'auto-save-visited-mode
+                        "Emacs 26.1")
+
 (defcustom save-abbrevs t
   "Non-nil means save word abbrevs too when files are saved.
 If `silently', don't ask the user before saving."
@@ -547,13 +591,14 @@ settings being applied, but still respect file-local ones.")
 ;; ignore.  So AFAICS the only reason this variable exists is for a
 ;; minor convenience feature for handling of an obsolete Rmail file format.
 (defvar local-enable-local-variables t
-  "Like `enable-local-variables' but meant for buffer-local bindings.
+  "Like `enable-local-variables', except for major mode in a -*- line.
 The meaningful values are nil and non-nil.  The default is non-nil.
-If a major mode sets this to nil, buffer-locally, then any local
-variables list in a file visited in that mode will be ignored.
+It should be set in a buffer-local fashion.
 
-This variable does not affect the use of major modes specified
-in a -*- line.")
+Setting this to nil has the same effect as setting `enable-local-variables'
+to nil, except that it does not ignore any mode: setting in a -*- line.
+Unless this difference matters to you, you should set `enable-local-variables'
+instead of this variable.")
 
 (defcustom enable-local-eval 'maybe
   "Control processing of the \"variable\" `eval' in a file's local variables.
@@ -2429,7 +2474,7 @@ since only a single case-insensitive search through the alist is made."
    (lambda (elt)
      (cons (purecopy (car elt)) (cdr elt)))
    `(;; do this first, so that .html.pl is Polish html, not Perl
-     ("\\.[sx]?html?\\(\\.[a-zA-Z_]+\\)?\\'" . html-mode)
+     ("\\.[sx]?html?\\(\\.[a-zA-Z_]+\\)?\\'" . mhtml-mode)
      ("\\.svgz?\\'" . image-mode)
      ("\\.svgz?\\'" . xml-mode)
      ("\\.x[bp]m\\'" . image-mode)
@@ -2791,8 +2836,8 @@ If FUNCTION is nil, then it is not called.  (That is a way of saying
 		comment-re "*"
 		"\\(?:!DOCTYPE[ \t\r\n]+[^>]*>[ \t\r\n]*<[ \t\r\n]*" comment-re "*\\)?"
 		"[Hh][Tt][Mm][Ll]"))
-     . html-mode)
-    ("<!DOCTYPE[ \t\r\n]+[Hh][Tt][Mm][Ll]" . html-mode)
+     . mhtml-mode)
+    ("<!DOCTYPE[ \t\r\n]+[Hh][Tt][Mm][Ll]" . mhtml-mode)
     ;; These two must come after html, because they are more general:
     ("<\\?xml " . xml-mode)
     (,(let* ((incomment-re "\\(?:[^-]\\|-[^-]\\)")
@@ -5433,7 +5478,7 @@ RECURSIVE if DIRECTORY is nonempty."
   (let ((handler (find-file-name-handler directory 'delete-directory)))
     (cond
      (handler
-      (funcall handler 'delete-directory directory recursive))
+      (funcall handler 'delete-directory directory recursive trash))
      ((and delete-by-moving-to-trash trash)
       ;; Only move non-empty dir to trash if recursive deletion was
       ;; requested.  This mimics the non-`delete-by-moving-to-trash'
@@ -6032,16 +6077,18 @@ specifies the list of buffers to kill, asking for approval for each one."
 	   (kill-buffer-ask buffer)))
     (setq list (cdr list))))
 
-(defun kill-matching-buffers (regexp &optional internal-too)
+(defun kill-matching-buffers (regexp &optional internal-too no-ask)
   "Kill buffers whose name matches the specified REGEXP.
-The optional second argument indicates whether to kill internal buffers too."
+Ignores buffers whose name starts with a space, unless optional
+prefix argument INTERNAL-TOO is non-nil.  Asks before killing
+each buffer, unless NO-ASK is non-nil."
   (interactive "sKill buffers matching this regular expression: \nP")
   (dolist (buffer (buffer-list))
     (let ((name (buffer-name buffer)))
       (when (and name (not (string-equal name ""))
                  (or internal-too (/= (aref name 0) ?\s))
                  (string-match regexp name))
-        (kill-buffer-ask buffer)))))
+        (funcall (if no-ask 'kill-buffer 'kill-buffer-ask) buffer)))))
 
 
 (defun rename-auto-save-file ()
@@ -6915,7 +6962,15 @@ only these files will be asked to be saved."
 (defun file-name-non-special (operation &rest arguments)
   (let ((file-name-handler-alist nil)
 	(default-directory
-	  (if (eq operation 'insert-directory)
+          ;; Some operations respect file name handlers in
+          ;; `default-directory'.  Because core function like
+          ;; `call-process' don't care about file name handlers in
+          ;; `default-directory', we here have to resolve the
+          ;; directory into a local one.  For `process-file',
+          ;; `start-file-process', and `shell-command', this fixes
+          ;; Bug#25949.
+	  (if (memq operation '(insert-directory process-file start-file-process
+                                                 shell-command))
 	      (directory-file-name
 	       (expand-file-name
 		(unhandled-file-name-directory default-directory)))
@@ -6979,8 +7034,18 @@ only these files will be asked to be saved."
            (when (and visit buffer-file-name)
              (setq buffer-file-name (concat "/:" buffer-file-name))))))
       (`unquote-then-quote
-       (let ((buffer-file-name (substring buffer-file-name 2)))
-         (apply operation arguments)))
+       ;; We can't use `cl-letf' with `(buffer-local-value)' here
+       ;; because it wouldn't work during bootstrapping.
+       (let ((buffer (current-buffer)))
+         ;; `unquote-then-quote' is only used for the
+         ;; `verify-visited-file-modtime' action, which takes a buffer
+         ;; as only optional argument.
+         (with-current-buffer (or (car arguments) buffer)
+           (let ((buffer-file-name (substring buffer-file-name 2)))
+             ;; Make sure to hide the temporary buffer change from the
+             ;; underlying operation.
+             (with-current-buffer buffer
+               (apply operation arguments))))))
       (_
        (apply operation arguments)))))
 

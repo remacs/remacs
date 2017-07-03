@@ -281,7 +281,7 @@ With a prefix argument, returns window C to its normal size.
 Used only for merging jobs."
   (interactive "P")
   (if (not ediff-merge-job)
-      (error "ediff-shrink-window-C can be used only for merging jobs"))
+      (user-error "ediff-shrink-window-C can be used only for merging jobs"))
   (cond ((eq arg '-) (setq arg -1))
 	((not (numberp arg)) (setq arg nil)))
   (cond ((null arg)

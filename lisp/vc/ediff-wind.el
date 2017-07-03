@@ -1184,7 +1184,7 @@ The frame to be resized is kept in `ediff-wide-display-frame'.
 This function modifies only the left margin and the width of the display.
 It assumes that it is called from within the control buffer."
   (if (not (fboundp 'ediff-display-pixel-width))
-      (error "Can't determine display width"))
+      (user-error "Can't determine display width"))
   (let* ((frame-A (window-frame ediff-window-A))
 	 (frame-A-params (frame-parameters frame-A))
 	 (cw (ediff-frame-char-width frame-A))

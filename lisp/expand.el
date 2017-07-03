@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995-1996, 2001-2017 Free Software Foundation, Inc.
 
 ;; Author: Frederic Lepied <Frederic.Lepied@sugix.frmug.org>
-;; Maintainer: Frederic Lepied <Frederic.Lepied@sugix.frmug.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: abbrev
 
 ;; This file is part of GNU Emacs.

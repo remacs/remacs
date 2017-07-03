@@ -57,7 +57,9 @@ typedef bool bool_bf;
 #endif
 
 /* Simulate __has_attribute on compilers that lack it.  It is used only
-   on arguments like alloc_size that are handled in this simulation.  */
+   on arguments like alloc_size that are handled in this simulation.
+   __has_attribute should be used only in #if expressions, as Oracle
+   Studio 12.5's __has_attribute does not work in plain code.  */
 #ifndef __has_attribute
 # define __has_attribute(a) __has_attribute_##a
 # define __has_attribute_alloc_size GNUC_PREREQ (4, 3, 0)
@@ -94,17 +96,11 @@ typedef bool bool_bf;
 #endif
 
 #ifdef DARWIN_OS
-#ifdef emacs
+#if defined emacs && !defined CANNOT_DUMP
 #define malloc unexec_malloc
 #define realloc unexec_realloc
 #define free unexec_free
 #endif
-/* The following solves the problem that Emacs hangs when evaluating
-   (make-comint "test0" "/nodir/nofile" nil "") when /nodir/nofile
-   does not exist.  Also, setsid is not allowed in the vfork child's
-   context as of Darwin 9/Mac OS X 10.5.  */
-#undef HAVE_WORKING_VFORK
-#define vfork fork
 #endif  /* DARWIN_OS */
 
 /* If HYBRID_MALLOC is defined (e.g., on Cygwin), emacs will use
@@ -250,6 +246,12 @@ extern int emacs_setenv_TZ (char const *);
 # define ATTRIBUTE_FORMAT(spec) /* empty */
 #endif
 
+#if GNUC_PREREQ (7, 0, 0)
+# define FALLTHROUGH __attribute__ ((__fallthrough__))
+#else
+# define FALLTHROUGH ((void) 0)
+#endif
+
 #if GNUC_PREREQ (4, 4, 0) && defined __GLIBC_MINOR__
 # define PRINTF_ARCHETYPE __gnu_printf__
 #elif GNUC_PREREQ (4, 4, 0) && defined __MINGW32__
@@ -262,6 +264,20 @@ extern int emacs_setenv_TZ (char const *);
 
 #define ATTRIBUTE_CONST _GL_ATTRIBUTE_CONST
 #define ATTRIBUTE_UNUSED _GL_UNUSED
+
+#if GNUC_PREREQ (3, 3, 0) && !defined __ICC
+# define ATTRIBUTE_MAY_ALIAS __attribute__ ((__may_alias__))
+#else
+# define ATTRIBUTE_MAY_ALIAS
+#endif
+
+/* Declare NAME to be a pointer to an object of type TYPE, initialized
+   to the address ADDR, which may be of a different type.  Accesses
+   via NAME may alias with other accesses with the traditional
+   behavior, even if options like gcc -fstrict-aliasing are used.  */
+
+#define DECLARE_POINTER_ALIAS(name, type, addr) \
+  type ATTRIBUTE_MAY_ALIAS *name = (type *) (addr)
 
 #if 3 <= __GNUC__
 # define ATTRIBUTE_MALLOC __attribute__ ((__malloc__))
@@ -300,6 +316,12 @@ extern int emacs_setenv_TZ (char const *);
     __attribute__ ((no_address_safety_analysis)) ADDRESS_SANITIZER_WORKAROUND
 #else
 # define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#endif
+
+/* gcc -fsanitize=address does not work with vfork in Fedora 25 x86-64.
+   For now, assume that this problem occurs on all platforms.  */
+#if ADDRESS_SANITIZER && !defined vfork
+# define vfork fork
 #endif
 
 /* Some versions of GNU/Linux define noinline in their headers.  */

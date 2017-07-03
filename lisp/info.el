@@ -1869,7 +1869,7 @@ a node in FILENAME.  \"(FILENAME)\" is a short format to go to
 the Top node in FILENAME."
   (let* ((completion-ignore-case t)
 	 (Info-read-node-completion-table (Info-build-node-completions))
-	 (nodename (completing-read prompt 'Info-read-node-name-1 nil t)))
+	 (nodename (completing-read prompt #'Info-read-node-name-1 nil t)))
     (if (equal nodename "")
 	(Info-read-node-name prompt)
       nodename)))
@@ -1998,20 +1998,20 @@ If DIRECTION is `backward', search in the reverse direction."
                   Info-isearch-initial-node
                   bound
                   (and found (> found opoint-min) (< found opoint-max)))
-	(user-error "Search failed: `%s' (end of node)" regexp))
+	(signal 'user-search-failed (list regexp "(end of node)")))
 
       ;; If no subfiles, give error now.
       (unless (or found Info-current-subfile)
         (if isearch-mode
-            (user-error "Search failed: `%s' (end of manual)" regexp)
+            (signal 'user-search-failed (list regexp "end of manual"))
           (let ((search-spaces-regexp Info-search-whitespace-regexp))
             (unless (if backward
                         (re-search-backward regexp nil t)
                       (re-search-forward regexp nil t))
-              (user-error "Search failed: `%s'" regexp)))))
+              (signal 'user-search-failed (list regexp))))))
 
       (if (and bound (not found))
-          (user-error "Search failed: `%s'" regexp))
+          (signal 'user-search-failed (list regexp)))
 
       (unless (or found bound)
 	(unwind-protect
@@ -2055,8 +2055,8 @@ If DIRECTION is `backward', search in the reverse direction."
 		    (setq list nil)))
 	      (if found
 		  (message "")
-                (user-error "Search failed: `%s'%s"
-                            regexp (if isearch-mode " (end of manual)" ""))))
+                (signal 'user-search-failed
+                        `(,regexp ,@(if isearch-mode '("end of manual"))))))
 	  (if (not found)
 	      (progn (Info-read-subfile osubfile)
 		     (goto-char opoint)
@@ -2583,7 +2583,8 @@ new buffer."
 					 "Follow reference named: ")
 				       completions nil t)))
 	   (list (if (equal input "")
-		     default input) current-prefix-arg))
+		     default input)
+                 current-prefix-arg))
        (user-error "No cross-references in this node"))))
 
   (unless footnotename
@@ -2703,6 +2704,7 @@ Because of ambiguities, this should be concatenated with something like
           (user-error "No menu in this node"))
         (cond
          ((eq (car-safe action) 'boundaries) nil)
+         ((eq action 'metadata) `(metadata (category . info-menu)))
          ((eq action 'lambda)
           (re-search-forward
            (concat "\n\\* +" (regexp-quote string) ":") nil t))
@@ -2783,15 +2785,7 @@ new buffer."
 						   default)
 					 "Menu item: ")
 				       #'Info-complete-menu-item nil t nil nil
-                                       default)))
-	 ;; we rely on the fact that completing-read accepts an input
-	 ;; of "" even when the require-match argument is true and ""
-	 ;; is not a valid possibility
-	 (if (string= item "")
-	     (if default
-		 (setq item default)
-	       ;; ask again
-	       (setq item nil))))
+                                       default))))
        (list item current-prefix-arg))))
   ;; there is a problem here in that if several menu items have the same
   ;; name you can only go to the node of the first with this command.
@@ -3308,7 +3302,7 @@ Give an empty topic name to go to the Index node itself."
       (unwind-protect
 	  (with-current-buffer Info-complete-menu-buffer
 	    (Info-goto-index)
-	    (completing-read "Index topic: " 'Info-complete-menu-item))
+	    (completing-read "Index topic: " #'Info-complete-menu-item))
 	(kill-buffer Info-complete-menu-buffer)))))
   (if (equal Info-current-file "dir")
       (error "The Info directory node has no index; use m to select a manual"))
@@ -3482,7 +3476,7 @@ search results."
       (unwind-protect
 	  (with-current-buffer Info-complete-menu-buffer
 	    (Info-goto-index)
-	    (completing-read "Index topic: " 'Info-complete-menu-item))
+	    (completing-read "Index topic: " #'Info-complete-menu-item))
 	(kill-buffer Info-complete-menu-buffer)))))
   (if (equal topic "")
       (Info-find-node Info-current-file "*Index*")

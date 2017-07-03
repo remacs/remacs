@@ -1974,6 +1974,77 @@ line, if present, in the return value.  If it is @code{t}, include the
 height of both, if present, in the return value.
 @end defun
 
+@code{window-text-pixel-size} treats the text displayed in a window as a
+whole and does not care about the size of individual lines.  The
+following function does.
+
+@defun window-lines-pixel-dimensions &optional window first last body inverse
+This function calculates the pixel dimensions of each line displayed in
+the specified @var{window}.  It does so by walking @var{window}'s
+current glyph matrix---a matrix storing the glyph (@pxref{Glyphs}) of
+each buffer character currently displayed in @var{window}.  If
+successful, it returns a list of cons pairs representing the x- and
+y-coordinates of the lower right corner of the last character of each
+line.  Coordinates are measured in pixels from an origin (0, 0) at the
+top-left corner of @var{window}.  @var{window} must be a live window and
+defaults to the selected one.
+
+If the optional argument @var{first} is an integer, it denotes the index
+(starting with 0) of the first line of @var{window}'s glyph matrix to be
+returned.  Note that if @var{window} has a header line, the line with
+index 0 is that header line.  If @var{first} is nil, the first line to
+be considered is determined by the value of the optional argument
+@var{body}: If @var{body} is non-@code{nil}, this means to start with
+the first line of @var{window}'s body, skipping any header line, if
+present.  Otherwise, this function will start with the first line of
+@var{window}'s glyph matrix, possibly the header line.
+
+If the optional argument @var{last} is an integer, it denotes the index
+of the last line of @var{window}'s glyph matrix that shall be returned.
+If @var{last} is nil, the last line to be considered is determined by
+the value of @var{body}: If @var{body} is non-@code{nil}, this means to
+use the last line of @var{window}'s body, omitting @var{window}'s mode
+line, if present.  Otherwise, this means to use the last line of
+@var{window} which may be the mode line.
+
+The optional argument @var{inverse}, if @code{nil}, means that the
+y-pixel value returned for any line specifies the distance in pixels
+from the left edge (body edge if @var{body} is non-@code{nil}) of
+@var{window} to the right edge of the last glyph of that line.
+@var{inverse} non-@code{nil} means that the y-pixel value returned for
+any line specifies the distance in pixels from the right edge of the
+last glyph of that line to the right edge (body edge if @var{body} is
+non-@code{nil}) of @var{window}.  This is useful for determining the
+amount of slack space at the end of each line.
+
+The optional argument @var{left}, if non-@code{nil} means to return the
+x- and y-coordinates of the lower left corner of the leftmost character
+on each line.  This is the value that should be used for windows that
+mostly display text from right to left.
+
+If @var{left} is non-@code{nil} and @var{inverse} is @code{nil}, this
+means that the y-pixel value returned for any line specifies the
+distance in pixels from the left edge of the last (leftmost) glyph of
+that line to the right edge (body edge if @var{body} is non-@code{nil})
+of @var{window}.  If @var{left} and @var{inverse} are both
+non-@code{nil}, the y-pixel value returned for any line specifies the
+distance in pixels from the left edge (body edge if @var{body} is
+non-@code{nil}) of @var{window} to the left edge of the last (leftmost)
+glyph of that line.
+
+This function returns @code{nil} if the current glyph matrix of
+@var{window} is not up-to-date which usually happens when Emacs is busy,
+for example, when processing a command.  The value should be retrievable
+though when this function is run from an idle timer with a delay of zero
+seconds.
+@end defun
+
+@defun line-pixel-height
+This function returns the height in pixels of the line at point in the
+selected window.  The value includes the line spacing of the line
+(@pxref{Line Height}).
+@end defun
+
 
 @node Line Height
 @section Line Height
@@ -2276,8 +2347,8 @@ Draw a box with lines of width 1, in color @var{color}.
 This way you can explicitly specify all aspects of the box.  The value
 @var{width} specifies the width of the lines to draw; it defaults to
 1.  A negative width @var{-n} means to draw a line of width @var{n}
-that occupies the space of the underlying text, thus avoiding any
-increase in the character height or width.
+whose top and bottom parts occupy the space of the underlying text,
+thus avoiding any increase in the character height.
 
 The value @var{color} specifies the color to draw with.  The default is
 the foreground color of the face for simple boxes, and the background
@@ -2525,16 +2596,20 @@ This function also defines @var{face} as a valid face name if it is
 not already one, and (re)calculates its attributes on existing frames.
 
 @cindex override spec @r{(for a face)}
-The argument @var{spec-type} determines which spec to set.  If it is
-@code{nil} or @code{face-override-spec}, this function sets the
-@dfn{override spec}, which overrides over all other face specs on
-@var{face}.  If it is @code{customized-face} or @code{saved-face},
-this function sets the customized spec or the saved custom spec.  If
-it is @code{face-defface-spec}, this function sets the default face
-spec (the same one set by @code{defface}).  If it is @code{reset},
-this function clears out all customization specs and override specs
-from @var{face} (in this case, the value of @var{spec} is ignored).
-Any other value of @var{spec-type} is reserved for internal use.
+The optional argument @var{spec-type} determines which spec to set.
+If it is omitted or @code{nil} or @code{face-override-spec}, this
+function sets the @dfn{override spec}, which overrides face specs on
+@var{face} of all the other types mentioned below.  This is useful
+when calling this function outside of Custom code.  If @var{spec-type}
+is @code{customized-face} or @code{saved-face}, this function sets the
+customized spec or the saved custom spec, respectively.  If it is
+@code{face-defface-spec}, this function sets the default face spec
+(the same one set by @code{defface}).  If it is @code{reset}, this
+function clears out all customization specs and override specs from
+@var{face} (in this case, the value of @var{spec} is ignored).  The
+effect of any other value of @var{spec-type} on the face specs is
+reserved for internal use, but the function will still define
+@var{face} itself and recalculate its attributes, as described above.
 @end defun
 
 @node Attribute Functions
@@ -3792,6 +3867,10 @@ fringe, and likewise @var{right} for the right fringe.  A value of
 @code{nil} for either one stands for the default width.  If
 @var{outside-margins} is non-@code{nil}, that specifies that fringes
 should appear outside of the display margins.
+
+The values specified here may be later overridden by invoking
+@code{set-window-buffer} (@pxref{Buffers and Windows}) on @var{window}
+with its @var{keep-margins} argument @code{nil} or omitted.
 @end defun
 
 @defun window-fringes &optional window
@@ -4194,7 +4273,8 @@ using the following function:
 
 @defun set-window-scroll-bars window &optional width vertical-type height horizontal-type
 This function sets the width and/or height and the types of scroll bars
-for window @var{window}.
+for window @var{window}.  If @var{window} is @code{nil}, the selected
+window is used.
 
 @var{width} specifies the width of the vertical scroll bar in pixels
 (@code{nil} means use the width specified for the frame).
@@ -4209,7 +4289,9 @@ vertical scroll bar.
 The possible values are @code{bottom}, @code{t}, which means to use the
 frame's default, and @code{nil} for no horizontal scroll bar.
 
-If @var{window} is @code{nil}, the selected window is used.
+The values specified here may be later overridden by invoking
+@code{set-window-buffer} (@pxref{Buffers and Windows}) on @var{window}
+with its @var{keep-margins} argument @code{nil} or omitted.
 @end defun
 
 The following four functions take as argument a live window which
@@ -4753,6 +4835,10 @@ Thus, you can make changes take effect by calling
 This function specifies the margin widths for window @var{window}, in
 character cell units.  The argument @var{left} controls the left
 margin, and @var{right} controls the right margin (default @code{0}).
+
+The values specified here may be later overridden by invoking
+@code{set-window-buffer} (@pxref{Buffers and Windows}) on @var{window}
+with its @var{keep-margins} argument @code{nil} or omitted.
 @end defun
 
 @defun window-margins &optional window
@@ -7190,20 +7276,22 @@ changing the value of the variable @code{x-gtk-use-system-tooltips} to
 @code{nil}.  The rest of this subsection describes how to control
 non-GTK+ tooltips, which are presented by Emacs itself.
 
-Since tooltips are special frames, they have their frame parameters
-(@pxref{Frame Parameters}).  Unlike other frames, the frame parameters
-for tooltips are stored in a special variable.
+@cindex tooltip frames
+Tooltips are displayed in special frames called tooltip frames, which
+have their own frame parameters (@pxref{Frame Parameters}).  Unlike
+other frames, the default parameters for tooltip frames are stored in a
+special variable.
 
 @defvar tooltip-frame-parameters
-This customizable option holds the frame parameters used for
-displaying tooltips.  Any font and color parameters are ignored, and
-the corresponding attributes of the @code{tooltip} face are used
-instead.  If @code{left} or @code{top} parameters are included, they
-are used as absolute frame-relative coordinates where the tooltip
-should be shown.  (Mouse-relative position of the tooltip can be
-customized using the variables described in @ref{Tooltips,,, emacs,
-The GNU Emacs Manual}.)  Note that the @code{left} and @code{top}
-parameters, if present, override the values of mouse-relative offsets.
+This customizable option holds the default frame parameters used for
+displaying tooltips.  Any font and color parameters are ignored, and the
+corresponding attributes of the @code{tooltip} face are used instead.
+If @code{left} or @code{top} parameters are included, they are used as
+absolute frame-relative coordinates where the tooltip should be shown.
+(Mouse-relative position of the tooltip can be customized using the
+variables described in @ref{Tooltips,,, emacs, The GNU Emacs Manual}.)
+Note that the @code{left} and @code{top} parameters, if present,
+override the values of mouse-relative offsets.
 @end defvar
 
 @vindex tooltip@r{ face}
@@ -7274,7 +7362,11 @@ follows the Unicode Bidirectional Algorithm (a.k.a.@: @acronym{UBA}),
 which is described in Annex #9 of the Unicode standard
 (@url{http://www.unicode.org/reports/tr9/}).  Emacs provides a ``Full
 Bidirectionality'' class implementation of the @acronym{UBA},
-consistent with the requirements of the Unicode Standard v8.0.
+consistent with the requirements of the Unicode Standard v9.0.  Note,
+however, that the way Emacs displays continuation lines when text
+direction is opposite to the base paragraph direction deviates from
+the UBA, which requires to perform line wrapping before reordering
+text for display.
 
 @defvar bidi-display-reordering
 If the value of this buffer-local variable is non-@code{nil} (the

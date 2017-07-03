@@ -45,8 +45,8 @@ autoconf_min=`sed -n 's/^ *AC_PREREQ(\([0-9\.]*\)).*/\1/p' configure.ac`
 ## Also note that we do not handle micro versions.
 get_version ()
 {
-    ## Remove eg "./autogen.sh: line 50: autoconf: command not found".
-    $1 --version 2>&1 | sed -e '/not found/d' -e 's/.* //' -n -e '1 s/\([0-9][0-9\.]*\).*/\1/p'
+    vers=`($1 --version) 2> /dev/null` && expr "$vers" : '[^
+]* \([0-9][0-9.]*\).*'
 }
 
 ## $1 = version string, eg "2.59"
@@ -72,15 +72,18 @@ minor_version ()
 check_version ()
 {
     ## Respect, e.g., $AUTOCONF if it is set, like autoreconf does.
-    uprog=`echo $1 | sed -e 's/-/_/g' -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+    uprog0=`echo $1 | sed -e 's/-/_/g' -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
 
-    eval uprog=\$${uprog}
+    eval uprog=\$${uprog0}
 
-    [ x"$uprog" = x ] && uprog=$1
+    if [ x"$uprog" = x ]; then
+        uprog=$1
+    else
+        printf '%s' "(using $uprog0=$uprog) "
+    fi
 
-    have_version=`get_version $uprog`
-
-    [ x"$have_version" = x ] && return 1
+    command -v $uprog > /dev/null || return 1
+    have_version=`get_version $uprog` || return 4
 
     have_maj=`major_version $have_version`
     need_maj=`major_version $2`
@@ -154,6 +157,7 @@ if $do_autoconf; then
           0) stat="ok" ;;
           1) stat="missing" ;;
           2) stat="too old" ;;
+          4) stat="broken?" ;;
           *) stat="unable to check" ;;
       esac
 

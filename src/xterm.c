@@ -569,7 +569,7 @@ x_cr_export_frames (Lisp_Object frames, cairo_surface_type_t surface_type)
   int width, height;
   void (*surface_set_size_func) (cairo_surface_t *, double, double) = NULL;
   Lisp_Object acc = Qnil;
-  int count = SPECPDL_INDEX ();
+  ptrdiff_t count = SPECPDL_INDEX ();
 
   specbind (Qredisplay_dont_pause, Qt);
   redisplay_preserve_echo_area (31);
@@ -945,11 +945,14 @@ x_set_frame_alpha (struct frame *f)
      Do this unconditionally as this function is called on reparent when
      alpha has not changed on the frame.  */
 
-  parent = x_find_topmost_parent (f);
-  if (parent != None)
-    XChangeProperty (dpy, parent, dpyinfo->Xatom_net_wm_window_opacity,
-                     XA_CARDINAL, 32, PropModeReplace,
-                     (unsigned char *) &opac, 1);
+  if (!FRAME_PARENT_FRAME (f))
+    {
+      parent = x_find_topmost_parent (f);
+      if (parent != None)
+	XChangeProperty (dpy, parent, dpyinfo->Xatom_net_wm_window_opacity,
+			 XA_CARDINAL, 32, PropModeReplace,
+			 (unsigned char *) &opac, 1);
+    }
 
   /* return unless necessary */
   {
@@ -1292,8 +1295,12 @@ XTbuffer_flipping_unblocked_hook (struct frame *f)
     show_back_buffer (f);
 }
 
-/* Clear under internal border if any (GTK has its own version). */
-#ifndef USE_GTK
+/**
+ * x_clear_under_internal_border:
+ *
+ * Clear area of frame F's internal border.  If the internal border face
+ * of F has been specified (is not null), fill the area with that face.
+ */
 void
 x_clear_under_internal_border (struct frame *f)
 {
@@ -1302,17 +1309,39 @@ x_clear_under_internal_border (struct frame *f)
       int border = FRAME_INTERNAL_BORDER_WIDTH (f);
       int width = FRAME_PIXEL_WIDTH (f);
       int height = FRAME_PIXEL_HEIGHT (f);
+#ifdef USE_GTK
+      int margin = 0;
+#else
       int margin = FRAME_TOP_MARGIN_HEIGHT (f);
+#endif
+      struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
 
       block_input ();
-      x_clear_area (f, 0, 0, border, height);
-      x_clear_area (f, 0, margin, width, border);
-      x_clear_area (f, width - border, 0, border, height);
-      x_clear_area (f, 0, height - border, width, border);
+
+      if (face)
+	{
+	  unsigned long color = face->background;
+	  Display *display = FRAME_X_DISPLAY (f);
+	  GC gc = f->output_data.x->normal_gc;
+
+	  XSetForeground (display, gc, color);
+	  x_fill_rectangle (f, gc, 0, margin, width, border);
+	  x_fill_rectangle (f, gc, 0, 0, border, height);
+	  x_fill_rectangle (f, gc, width - border, 0, border, height);
+	  x_fill_rectangle (f, gc, 0, height - border, width, border);
+	  XSetForeground (display, gc, FRAME_FOREGROUND_PIXEL (f));
+	}
+      else
+	{
+	  x_clear_area (f, 0, 0, border, height);
+	  x_clear_area (f, 0, margin, width, border);
+	  x_clear_area (f, width - border, 0, border, height);
+	  x_clear_area (f, 0, height - border, width, border);
+	}
+
       unblock_input ();
     }
 }
-#endif
 
 /* Draw truncation mark bitmaps, continuation mark bitmaps, overlay
    arrow bitmaps, or clear the fringes if no bitmaps are required
@@ -1348,10 +1377,25 @@ x_after_update_window_line (struct window *w, struct glyph_row *desired_row)
 	    height > 0))
       {
 	int y = WINDOW_TO_FRAME_PIXEL_Y (w, max (0, desired_row->y));
+	struct face *face = FACE_FROM_ID_OR_NULL (f, INTERNAL_BORDER_FACE_ID);
 
 	block_input ();
-	x_clear_area (f, 0, y, width, height);
-	x_clear_area (f, FRAME_PIXEL_WIDTH (f) - width, y, width, height);
+	if (face)
+	  {
+	    unsigned long color = face->background;
+	    Display *display = FRAME_X_DISPLAY (f);
+
+	    XSetForeground (display, f->output_data.x->normal_gc, color);
+	    x_fill_rectangle (f, f->output_data.x->normal_gc,
+			      0, y, width, height);
+	    x_fill_rectangle (f, f->output_data.x->normal_gc,
+			      FRAME_PIXEL_WIDTH (f) - width, y, width, height);
+	  }
+	else
+	  {
+	    x_clear_area (f, 0, y, width, height);
+	    x_clear_area (f, FRAME_PIXEL_WIDTH (f) - width, y, width, height);
+	  }
 	unblock_input ();
       }
   }
@@ -1961,9 +2005,9 @@ x_draw_glyphless_glyph_string_foreground (struct glyph_string *s)
 	}
       else if (glyph->u.glyphless.method == GLYPHLESS_DISPLAY_HEX_CODE)
 	{
-	  sprintf (buf, "%0*X",
-		   glyph->u.glyphless.ch < 0x10000 ? 4 : 6,
-		   glyph->u.glyphless.ch + 0u);
+	  unsigned int ch = glyph->u.glyphless.ch;
+	  eassume (ch <= MAX_CHAR);
+	  sprintf (buf, "%0*X", ch < 0x10000 ? 4 : 6, ch);
 	  str = buf;
 	}
 
@@ -3846,11 +3890,11 @@ x_clear_area (struct frame *f, int x, int y, int width, int height)
   cairo_fill (cr);
   x_end_cr_clip (f);
 #else
-    if (FRAME_X_DOUBLE_BUFFERED_P (f))
-      XFillRectangle (FRAME_X_DISPLAY (f),
-                      FRAME_X_DRAWABLE (f),
-                      f->output_data.x->reverse_gc,
-                      x, y, width, height);
+  if (FRAME_X_DOUBLE_BUFFERED_P (f))
+    XFillRectangle (FRAME_X_DISPLAY (f),
+		    FRAME_X_DRAWABLE (f),
+		    f->output_data.x->reverse_gc,
+		    x, y, width, height);
   else
     x_clear_area1 (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
                    x, y, width, height, False);
@@ -4964,6 +5008,9 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 	 containing the pointer.  */
       {
 	Window win, child;
+#ifdef USE_GTK
+	Window first_win = 0;
+#endif
 	int win_x, win_y;
 	int parent_x = 0, parent_y = 0;
 
@@ -5010,19 +5057,36 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 				       &child);
 
 		if (child == None || child == win)
-		  break;
+		  {
+#ifdef USE_GTK
+		    /* On GTK we have not inspected WIN yet.  If it has
+		       a frame and that frame has a parent, use it.  */
+		    struct frame *f = x_window_to_frame (dpyinfo, win);
+
+		    if (f && FRAME_PARENT_FRAME (f))
+		      first_win = win;
+#endif
+		    break;
+		  }
 #ifdef USE_GTK
 		/* We don't wan't to know the innermost window.  We
 		   want the edit window.  For non-Gtk+ the innermost
 		   window is the edit window.  For Gtk+ it might not
 		   be.  It might be the tool bar for example.  */
 		if (x_window_to_frame (dpyinfo, win))
-		  break;
+		  /* But don't hurry.  We might find a child frame
+		     beneath.  */
+		  first_win = win;
 #endif
 		win = child;
 		parent_x = win_x;
 		parent_y = win_y;
 	      }
+
+#ifdef USE_GTK
+	    if (first_win)
+	      win = first_win;
+#endif
 
 	    /* Now we know that:
 	       win is the innermost window containing the pointer
@@ -5284,20 +5348,22 @@ xt_horizontal_action_hook (Widget widget, XtPointer client_data, String action_n
       x_send_scroll_bar_event (window_being_scrolled,
 			       scroll_bar_end_scroll, 0, 0, true);
       w = XWINDOW (window_being_scrolled);
-      bar = XSCROLL_BAR (w->horizontal_scroll_bar);
-
-      if (bar->dragging != -1)
+      if (!NILP (w->horizontal_scroll_bar))
 	{
-	  bar->dragging = -1;
-	  /* The thumb size is incorrect while dragging: fix it.  */
-	  set_horizontal_scroll_bar (w);
-	}
-      window_being_scrolled = Qnil;
+	  bar = XSCROLL_BAR (w->horizontal_scroll_bar);
+	  if (bar->dragging != -1)
+	    {
+	      bar->dragging = -1;
+	      /* The thumb size is incorrect while dragging: fix it.  */
+	      set_horizontal_scroll_bar (w);
+	    }
+	  window_being_scrolled = Qnil;
 #if defined (USE_LUCID)
-      bar->last_seen_part = scroll_bar_nowhere;
+	  bar->last_seen_part = scroll_bar_nowhere;
 #endif
-      /* Xt timeouts no longer needed.  */
-      toolkit_scroll_bar_interaction = false;
+	  /* Xt timeouts no longer needed.  */
+	  toolkit_scroll_bar_interaction = false;
+	}
     }
 }
 #endif /* not USE_GTK */
@@ -6496,10 +6562,14 @@ x_scroll_bar_create (struct window *w, int top, int left,
     Widget scroll_bar = SCROLL_BAR_X_WIDGET (FRAME_X_DISPLAY (f), bar);
     XtConfigureWidget (scroll_bar, left, top, width, max (height, 1), 0);
     XtMapWidget (scroll_bar);
+    /* Don't obscure any child frames.  */
+    XLowerWindow (FRAME_X_DISPLAY (f), bar->x_window);
 #endif /* not USE_GTK */
     }
 #else /* not USE_TOOLKIT_SCROLL_BARS */
-  XMapRaised (FRAME_X_DISPLAY (f), bar->x_window);
+  XMapWindow (FRAME_X_DISPLAY (f), bar->x_window);
+  /* Don't obscure any child frames.  */
+  XLowerWindow (FRAME_X_DISPLAY (f), bar->x_window);
 #endif /* not USE_TOOLKIT_SCROLL_BARS */
 
   unblock_input ();
@@ -7067,10 +7137,10 @@ x_scroll_bar_expose (struct scroll_bar *bar, const XEvent *event)
 		  /* x, y, width, height */
 		  0, 0, bar->width - 1, bar->height - 1);
 
-   /* Restore the foreground color of the GC if we changed it above.  */
-   if (f->output_data.x->scroll_bar_foreground_pixel != -1)
-     XSetForeground (FRAME_X_DISPLAY (f), gc,
-		     FRAME_FOREGROUND_PIXEL (f));
+  /* Restore the foreground color of the GC if we changed it above.  */
+  if (f->output_data.x->scroll_bar_foreground_pixel != -1)
+    XSetForeground (FRAME_X_DISPLAY (f), gc,
+		    FRAME_FOREGROUND_PIXEL (f));
 
    unblock_input ();
 
@@ -7839,8 +7909,21 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       f = x_top_window_to_frame (dpyinfo, event->xreparent.window);
       if (f)
         {
-          f->output_data.x->parent_desc = event->xreparent.parent;
-          x_real_positions (f, &f->left_pos, &f->top_pos);
+	  /* Maybe we shouldn't set this for child frames ??  */
+	  f->output_data.x->parent_desc = event->xreparent.parent;
+	  if (!FRAME_PARENT_FRAME (f))
+	    x_real_positions (f, &f->left_pos, &f->top_pos);
+	  else
+	    {
+	      Window root;
+	      unsigned int dummy_uint;
+
+	      block_input ();
+	      XGetGeometry (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+			    &root, &f->left_pos, &f->top_pos,
+			    &dummy_uint, &dummy_uint, &dummy_uint, &dummy_uint);
+	      unblock_input ();
+	    }
 
           /* Perhaps reparented due to a WM restart.  Reset this.  */
           FRAME_DISPLAY_INFO (f)->wm_type = X_WMTYPE_UNKNOWN;
@@ -7880,6 +7963,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                 event->xexpose.x, event->xexpose.y,
                 event->xexpose.width, event->xexpose.height,
                 0);
+	      x_clear_under_internal_border (f);
 #endif
             }
 
@@ -7895,6 +7979,9 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #endif
               expose_frame (f, event->xexpose.x, event->xexpose.y,
 			    event->xexpose.width, event->xexpose.height);
+#ifdef USE_GTK
+	      x_clear_under_internal_border (f);
+#endif
             }
 
           if (!FRAME_GARBAGED_P (f))
@@ -7943,7 +8030,10 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                         event->xgraphicsexpose.y,
                         event->xgraphicsexpose.width,
                         event->xgraphicsexpose.height);
-          show_back_buffer (f);
+#ifdef USE_GTK
+	  x_clear_under_internal_border (f);
+#endif
+	  show_back_buffer (f);
         }
 #ifdef USE_X_TOOLKIT
       else
@@ -8000,7 +8090,26 @@ handle_one_xevent (struct x_display_info *dpyinfo,
           /* Check if fullscreen was specified before we where mapped the
              first time, i.e. from the command line.  */
           if (!f->output_data.x->has_been_visible)
-            x_check_fullscreen (f);
+	    {
+
+	      x_check_fullscreen (f);
+#ifndef USE_GTK
+	      /* For systems that cannot synthesize `skip_taskbar' for
+		 unmapped windows do the following.  */
+	      if (FRAME_SKIP_TASKBAR (f))
+		x_set_skip_taskbar (f, Qt, Qnil);
+#endif /* Not USE_GTK */
+	    }
+
+	  if (!iconified)
+	    {
+	      /* The `z-group' is reset every time a frame becomes
+		 invisible.  Handle this here.  */
+	      if (FRAME_Z_GROUP (f) == z_group_above)
+		x_set_z_group (f, Qabove, Qnil);
+	      else if (FRAME_Z_GROUP (f) == z_group_below)
+		x_set_z_group (f, Qbelow, Qnil);
+	    }
 
           SET_FRAME_VISIBLE (f, 1);
           SET_FRAME_ICONIFIED (f, false);
@@ -8444,34 +8553,46 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #endif
         if (f)
           {
-
-            /* Generate SELECT_WINDOW_EVENTs when needed.
-               Don't let popup menus influence things (bug#1261).  */
-            if (!NILP (Vmouse_autoselect_window) && !popup_activated ())
+	    /* Maybe generate a SELECT_WINDOW_EVENT for
+	       `mouse-autoselect-window' but don't let popup menus
+	       interfere with this (Bug#1261).  */
+            if (!NILP (Vmouse_autoselect_window)
+		&& !popup_activated ()
+		/* Don't switch if we're currently in the minibuffer.
+		   This tries to work around problems where the
+		   minibuffer gets unselected unexpectedly, and where
+		   you then have to move your mouse all the way down to
+		   the minibuffer to select it.  */
+		&& !MINI_WINDOW_P (XWINDOW (selected_window))
+		/* With `focus-follows-mouse' non-nil create an event
+		   also when the target window is on another frame.  */
+		&& (f == XFRAME (selected_frame)
+		    || !NILP (focus_follows_mouse)))
 	      {
 		static Lisp_Object last_mouse_window;
 		Lisp_Object window = window_from_coordinates
 		  (f, event->xmotion.x, event->xmotion.y, 0, false);
 
-		/* Window will be selected only when it is not selected now and
-		   last mouse movement event was not in it.  Minibuffer window
-		   will be selected only when it is active.  */
+		/* A window will be autoselected only when it is not
+		   selected now and the last mouse movement event was
+		   not in it.  The remainder of the code is a bit vague
+		   wrt what a "window" is.  For immediate autoselection,
+		   the window is usually the entire window but for GTK
+		   where the scroll bars don't count.  For delayed
+		   autoselection the window is usually the window's text
+		   area including the margins.  */
 		if (WINDOWP (window)
 		    && !EQ (window, last_mouse_window)
-		    && !EQ (window, selected_window)
-		    /* For click-to-focus window managers
-		       create event iff we don't leave the
-		       selected frame.  */
-		    && (focus_follows_mouse
-			|| (EQ (XWINDOW (window)->frame,
-				XWINDOW (selected_window)->frame))))
+		    && !EQ (window, selected_window))
 		  {
 		    inev.ie.kind = SELECT_WINDOW_EVENT;
 		    inev.ie.frame_or_window = window;
 		  }
+
 		/* Remember the last window where we saw the mouse.  */
 		last_mouse_window = window;
 	      }
+
             if (!note_mouse_movement (f, &event->xmotion))
 	      help_echo_string = previous_help_echo_string;
           }
@@ -8614,7 +8735,34 @@ handle_one_xevent (struct x_display_info *dpyinfo,
           if (FRAME_GTK_OUTER_WIDGET (f)
               && gtk_widget_get_mapped (FRAME_GTK_OUTER_WIDGET (f)))
 #endif
-	    x_real_positions (f, &f->left_pos, &f->top_pos);
+	    {
+	      int old_left = f->left_pos;
+	      int old_top = f->top_pos;
+	      Lisp_Object frame = Qnil;
+
+	      XSETFRAME (frame, f);
+
+	      if (!FRAME_PARENT_FRAME (f))
+		x_real_positions (f, &f->left_pos, &f->top_pos);
+	      else
+		{
+		  Window root;
+		  unsigned int dummy_uint;
+
+		  block_input ();
+		  XGetGeometry (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+				&root, &f->left_pos, &f->top_pos,
+				&dummy_uint, &dummy_uint, &dummy_uint, &dummy_uint);
+		  unblock_input ();
+		}
+
+	      if (old_left != f->left_pos || old_top != f->top_pos)
+		{
+		  inev.ie.kind = MOVE_FRAME_EVENT;
+		  XSETFRAME (inev.ie.frame_or_window, f);
+		}
+	    }
+
 
 #ifdef HAVE_X_I18N
           if (FRAME_XIC (f) && (FRAME_XIC_STYLE (f) & XIMStatusArea))
@@ -8635,8 +8783,35 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 	dpyinfo->last_mouse_glyph_frame = NULL;
 	x_display_set_last_user_time (dpyinfo, event->xbutton.time);
 
-        f = (x_mouse_grabbed (dpyinfo) ? dpyinfo->last_mouse_frame
-	     : x_window_to_frame (dpyinfo, event->xbutton.window));
+	if (x_mouse_grabbed (dpyinfo))
+	  f = dpyinfo->last_mouse_frame;
+	else
+	  {
+	    f = x_window_to_frame (dpyinfo, event->xbutton.window);
+
+	    if (f && event->xbutton.type == ButtonPress
+		&& !popup_activated ()
+		&& !x_window_to_scroll_bar (event->xbutton.display,
+					    event->xbutton.window, 2)
+		&& !FRAME_NO_ACCEPT_FOCUS (f))
+	      {
+		/* When clicking into a child frame or when clicking
+		   into a parent frame with the child frame selected and
+		   `no-accept-focus' is not set, select the clicked
+		   frame.  */
+		struct frame *hf = dpyinfo->x_highlight_frame;
+
+		if (FRAME_PARENT_FRAME (f) || (hf && frame_ancestor_p (f, hf)))
+		  {
+		    block_input ();
+		    XSetInputFocus (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+				    RevertToParent, CurrentTime);
+		    if (FRAME_PARENT_FRAME (f))
+		      XRaiseWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f));
+		    unblock_input ();
+		  }
+	      }
+	  }
 
 #ifdef USE_GTK
         if (f && xg_event_is_for_scrollbar (f, event))
@@ -8774,7 +8949,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
         {
         case MappingModifier:
           x_find_modifier_meanings (dpyinfo);
-          /* This is meant to fall through.  */
+	  FALLTHROUGH;
         case MappingKeyboard:
           XRefreshKeyboardMapping ((XMappingEvent *) &event->xmapping);
         }
@@ -9992,6 +10167,7 @@ static void
 x_calc_absolute_position (struct frame *f)
 {
   int flags = f->size_hint_flags;
+  struct frame *p = FRAME_PARENT_FRAME (f);
 
   /* We have nothing to do if the current position
      is already for the top-left corner.  */
@@ -10000,32 +10176,72 @@ x_calc_absolute_position (struct frame *f)
 
   /* Treat negative positions as relative to the leftmost bottommost
      position that fits on the screen.  */
-  if (flags & XNegative)
-    f->left_pos = x_display_pixel_width (FRAME_DISPLAY_INFO (f))
-      - FRAME_PIXEL_WIDTH (f) + f->left_pos;
+  if ((flags & XNegative) && (f->left_pos <= 0))
+    {
+      int width = FRAME_PIXEL_WIDTH (f);
 
-  {
-    int height = FRAME_PIXEL_HEIGHT (f);
+      /* A frame that has been visible at least once should have outer
+	 edges.  */
+      if (f->output_data.x->has_been_visible && !p)
+	{
+	  Lisp_Object frame;
+	  Lisp_Object edges = Qnil;
+
+	  XSETFRAME (frame, f);
+	  edges = Fx_frame_edges (frame, Qouter_edges);
+	  if (!NILP (edges))
+	    width = (XINT (Fnth (make_number (2), edges))
+		     - XINT (Fnth (make_number (0), edges)));
+	}
+
+      if (p)
+	f->left_pos = (FRAME_PIXEL_WIDTH (p) - width - 2 * f->border_width
+		       + f->left_pos);
+      else
+	f->left_pos = (x_display_pixel_width (FRAME_DISPLAY_INFO (f))
+		       - width + f->left_pos);
+
+    }
+
+  if ((flags & YNegative) && (f->top_pos <= 0))
+    {
+      int height = FRAME_PIXEL_HEIGHT (f);
 
 #if defined USE_X_TOOLKIT && defined USE_MOTIF
-    /* Something is fishy here.  When using Motif, starting Emacs with
-       `-g -0-0', the frame appears too low by a few pixels.
+      /* Something is fishy here.  When using Motif, starting Emacs with
+	 `-g -0-0', the frame appears too low by a few pixels.
 
-       This seems to be so because initially, while Emacs is starting,
-       the column widget's height and the frame's pixel height are
-       different.  The column widget's height is the right one.  In
-       later invocations, when Emacs is up, the frame's pixel height
-       is right, though.
+	 This seems to be so because initially, while Emacs is starting,
+	 the column widget's height and the frame's pixel height are
+	 different.  The column widget's height is the right one.  In
+	 later invocations, when Emacs is up, the frame's pixel height
+	 is right, though.
 
-       It's not obvious where the initial small difference comes from.
-       2000-12-01, gerd.  */
+	 It's not obvious where the initial small difference comes from.
+	 2000-12-01, gerd.  */
 
-    XtVaGetValues (f->output_data.x->column_widget, XtNheight, &height, NULL);
+      XtVaGetValues (f->output_data.x->column_widget, XtNheight, &height, NULL);
 #endif
 
-    if (flags & YNegative)
-      f->top_pos = x_display_pixel_height (FRAME_DISPLAY_INFO (f))
-	- height + f->top_pos;
+      if (f->output_data.x->has_been_visible && !p)
+	{
+	  Lisp_Object frame;
+	  Lisp_Object edges = Qnil;
+
+	  XSETFRAME (frame, f);
+	  if (NILP (edges))
+	    edges = Fx_frame_edges (frame, Qouter_edges);
+	  if (!NILP (edges))
+	    height = (XINT (Fnth (make_number (3), edges))
+		      - XINT (Fnth (make_number (1), edges)));
+	}
+
+      if (p)
+	f->top_pos = (FRAME_PIXEL_HEIGHT (p) - height - 2 * f->border_width
+		       + f->top_pos);
+      else
+	f->top_pos = (x_display_pixel_height (FRAME_DISPLAY_INFO (f))
+		      - height + f->top_pos);
   }
 
   /* The left_pos and top_pos
@@ -10088,8 +10304,13 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
       modified_top += FRAME_X_OUTPUT (f)->move_offset_top;
     }
 
+#ifdef USE_GTK
+  gtk_window_move (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
+		   modified_left, modified_top);
+#else
   XMoveWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
-               modified_left, modified_top);
+	       modified_left, modified_top);
+#endif
 
   x_sync_with_move (f, f->left_pos, f->top_pos,
                     FRAME_DISPLAY_INFO (f)->wm_type == X_WMTYPE_UNKNOWN);
@@ -10105,6 +10326,7 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
      need to compute the top/left offset adjustment for this frame.  */
 
   if (change_gravity != 0
+      && !FRAME_PARENT_FRAME (f)
       && (FRAME_DISPLAY_INFO (f)->wm_type == X_WMTYPE_UNKNOWN
 	  || (FRAME_DISPLAY_INFO (f)->wm_type == X_WMTYPE_A
 	      && (FRAME_X_OUTPUT (f)->move_offset_left == 0
@@ -10234,6 +10456,92 @@ x_set_sticky (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
   set_wm_state (frame, !NILP (new_value),
                 dpyinfo->Xatom_net_wm_state_sticky, None);
 }
+
+/**
+ * x_set_skip_taskbar:
+ *
+ * Set frame F's `skip-taskbar' parameter.  If non-nil, this should
+ * remove F's icon from the taskbar associated with the display of F's
+ * window-system window and inhibit switching to F's window via
+ * <Alt>-<TAB>.  If nil, lift these restrictions.
+ *
+ * Some window managers may not honor this parameter.
+ */
+void
+x_set_skip_taskbar (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  if (!EQ (new_value, old_value))
+    {
+#ifdef USE_GTK
+      xg_set_skip_taskbar (f, new_value);
+#else
+      Lisp_Object frame;
+      struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
+
+      XSETFRAME (frame, f);
+      set_wm_state (frame, !NILP (new_value),
+		    dpyinfo->Xatom_net_wm_state_skip_taskbar, None);
+#endif /* USE_GTK */
+      FRAME_SKIP_TASKBAR (f) = !NILP (new_value);
+    }
+}
+
+/**
+ * x_set_z_group:
+ *
+ * Set frame F's `z-group' parameter.  If `above', F's window-system
+ * window is displayed above all windows that do not have the `above'
+ * property set.  If nil, F's window is shown below all windows that
+ * have the `above' property set and above all windows that have the
+ * `below' property set.  If `below', F's window is displayed below all
+ * windows that do not have the `below' property set.
+ *
+ * Some window managers may not honor this parameter.
+ */
+void
+x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  /* We don't care about old_value.  The window manager might have
+     reset the value without telling us.  */
+  Lisp_Object frame;
+  struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
+
+  XSETFRAME (frame, f);
+
+  if (NILP (new_value))
+    {
+      set_wm_state (frame, false,
+		    dpyinfo->Xatom_net_wm_state_above, None);
+      set_wm_state (frame, false,
+		    dpyinfo->Xatom_net_wm_state_below, None);
+      FRAME_Z_GROUP (f) = z_group_none;
+    }
+  else if (EQ (new_value, Qabove))
+    {
+      set_wm_state (frame, true,
+		    dpyinfo->Xatom_net_wm_state_above, None);
+      set_wm_state (frame, false,
+		    dpyinfo->Xatom_net_wm_state_below, None);
+      FRAME_Z_GROUP (f) = z_group_above;
+    }
+  else if (EQ (new_value, Qbelow))
+    {
+      set_wm_state (frame, false,
+		    dpyinfo->Xatom_net_wm_state_above, None);
+      set_wm_state (frame, true,
+		    dpyinfo->Xatom_net_wm_state_below, None);
+      FRAME_Z_GROUP (f) = z_group_below;
+    }
+  else if (EQ (new_value, Qabove_suspended))
+    {
+      set_wm_state (frame, false,
+		    dpyinfo->Xatom_net_wm_state_above, None);
+      FRAME_Z_GROUP (f) = z_group_above_suspended;
+    }
+  else
+    error ("Invalid z-group specification");
+}
+
 
 /* Return the current _NET_WM_STATE.
    SIZE_STATE is set to one of the FULLSCREEN_* values.
@@ -10738,7 +11046,8 @@ x_set_window_size_1 (struct frame *f, bool change_gravity,
   int old_height = FRAME_PIXEL_HEIGHT (f);
   Lisp_Object fullscreen = get_frame_param (f, Qfullscreen);
 
-  if (change_gravity) f->win_gravity = NorthWestGravity;
+  if (change_gravity)
+    f->win_gravity = NorthWestGravity;
   x_wm_set_size_hint (f, 0, false);
 
   /* When the frame is fullheight and we only want to change the width
@@ -11027,6 +11336,26 @@ xembed_send_message (struct frame *f, Time t, enum xembed_message msg,
 void
 x_make_frame_visible (struct frame *f)
 {
+  if (FRAME_PARENT_FRAME (f))
+    {
+      if (!FRAME_VISIBLE_P (f))
+	{
+	  block_input ();
+#ifdef USE_GTK
+	  gtk_widget_show_all (FRAME_GTK_OUTER_WIDGET (f));
+	  XMoveWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+		       f->left_pos, f->top_pos);
+#else
+	  XMapRaised (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f));
+#endif
+	  unblock_input ();
+
+	  SET_FRAME_VISIBLE (f, true);
+	  SET_FRAME_ICONIFIED (f, false);
+	}
+      return;
+    }
+
   block_input ();
 
   x_set_bitmap_icon (f);
@@ -11095,9 +11424,10 @@ x_make_frame_visible (struct frame *f)
        because the window manager may choose the position
        and we don't want to override it.  */
 
-    if (! FRAME_VISIBLE_P (f)
-	&& ! FRAME_ICONIFIED_P (f)
-	&& ! FRAME_X_EMBEDDED_P (f)
+    if (!FRAME_VISIBLE_P (f)
+	&& !FRAME_ICONIFIED_P (f)
+	&& !FRAME_X_EMBEDDED_P (f)
+	&& !FRAME_PARENT_FRAME (f)
 	&& f->win_gravity == NorthWestGravity
 	&& previously_visible)
       {
@@ -11160,15 +11490,15 @@ x_make_frame_invisible (struct frame *f)
     xembed_set_info (f, 0);
   else
 #endif
-  {
 
-  if (! XWithdrawWindow (FRAME_X_DISPLAY (f), window,
-			 DefaultScreen (FRAME_X_DISPLAY (f))))
-    {
-      unblock_input ();
-      error ("Can't notify window manager of window withdrawal");
-    }
-  }
+    if (! XWithdrawWindow (FRAME_X_DISPLAY (f), window,
+			   DefaultScreen (FRAME_X_DISPLAY (f))))
+      {
+	unblock_input ();
+	error ("Can't notify window manager of window withdrawal");
+      }
+
+  x_sync (f);
 
   /* We can't distinguish this from iconification
      just by the event that we get from the server.
@@ -11177,8 +11507,6 @@ x_make_frame_invisible (struct frame *f)
      and synchronize with the server to make sure we agree.  */
   SET_FRAME_VISIBLE (f, 0);
   SET_FRAME_ICONIFIED (f, false);
-
-  x_sync (f);
 
   unblock_input ();
 }
@@ -11429,6 +11757,22 @@ x_free_frame_resources (struct frame *f)
 	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->horizontal_drag_cursor);
       if (f->output_data.x->vertical_drag_cursor != 0)
 	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->vertical_drag_cursor);
+      if (f->output_data.x->left_edge_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->left_edge_cursor);
+      if (f->output_data.x->top_left_corner_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->top_left_corner_cursor);
+      if (f->output_data.x->top_edge_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->top_edge_cursor);
+      if (f->output_data.x->top_right_corner_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->top_right_corner_cursor);
+      if (f->output_data.x->right_edge_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->right_edge_cursor);
+      if (f->output_data.x->bottom_right_corner_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->bottom_right_corner_cursor);
+      if (f->output_data.x->bottom_edge_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->bottom_edge_cursor);
+      if (f->output_data.x->bottom_left_corner_cursor != 0)
+	XFreeCursor (FRAME_X_DISPLAY (f), f->output_data.x->bottom_left_corner_cursor);
 
       XFlush (FRAME_X_DISPLAY (f));
     }
@@ -12335,6 +12679,9 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
       ATOM_REFS_INIT ("SM_CLIENT_ID", Xatom_SM_CLIENT_ID)
       ATOM_REFS_INIT ("_XSETTINGS_SETTINGS", Xatom_xsettings_prop)
       ATOM_REFS_INIT ("MANAGER", Xatom_xsettings_mgr)
+      ATOM_REFS_INIT ("_NET_WM_STATE_SKIP_TASKBAR", Xatom_net_wm_state_skip_taskbar)
+      ATOM_REFS_INIT ("_NET_WM_STATE_ABOVE", Xatom_net_wm_state_above)
+      ATOM_REFS_INIT ("_NET_WM_STATE_BELOW", Xatom_net_wm_state_below)
     };
 
     int i;
@@ -12923,8 +13270,8 @@ transition between the various maximization states.  */);
 
   DEFVAR_BOOL ("x-gtk-use-window-move", x_gtk_use_window_move,
     doc: /* Non-nil means rely on gtk_window_move to set frame positions.
-If this variable is t, the GTK build uses the function gtk_window_move
-to set or store frame positions and disables some time consuming frame
-position adjustments.  */);
-  x_gtk_use_window_move = false;
+If this variable is t (the default), the GTK build uses the function
+gtk_window_move to set or store frame positions and disables some time
+consuming frame position adjustments.  */);
+  x_gtk_use_window_move = true;
 }

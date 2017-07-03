@@ -368,8 +368,8 @@ init_baud_rate (int fd)
    Use waitpid-style OPTIONS when waiting.
    If INTERRUPTIBLE, this function is interruptible by a signal.
 
-   Return CHILD if successful, 0 if no status is available;
-   the latter is possible only when options & NOHANG.  */
+   Return CHILD if successful, 0 if no status is available, and a
+   negative value (setting errno) if waitpid is buggy.  */
 static pid_t
 get_child_status (pid_t child, int *status, int options, bool interruptible)
 {
@@ -392,13 +392,14 @@ get_child_status (pid_t child, int *status, int options, bool interruptible)
       pid = waitpid (child, status, options);
       if (0 <= pid)
 	break;
-
-      /* Check that CHILD is a child process that has not been reaped,
-	 and that STATUS and OPTIONS are valid.  Otherwise abort,
-	 as continuing after this internal error could cause Emacs to
-	 become confused and kill innocent-victim processes.  */
       if (errno != EINTR)
-	emacs_abort ();
+	{
+	  /* Most likely, waitpid is buggy and the operating system
+	     lost track of the child somehow.  Return -1 and let the
+	     caller try to figure things out.  Possibly the bug could
+	     cause Emacs to kill the wrong process.  Oh well.  */
+	  return pid;
+	}
     }
 
   /* If successful and status is requested, tell wait_reading_process_output
@@ -413,11 +414,13 @@ get_child_status (pid_t child, int *status, int options, bool interruptible)
    CHILD must be a child process that has not been reaped.
    If STATUS is non-null, store the waitpid-style exit status into *STATUS
    and tell wait_reading_process_output that it needs to look around.
-   If INTERRUPTIBLE, this function is interruptible by a signal.  */
-void
+   If INTERRUPTIBLE, this function is interruptible by a signal.
+   Return true if successful, false (setting errno) if CHILD cannot be
+   waited for because waitpid is buggy.  */
+bool
 wait_for_termination (pid_t child, int *status, bool interruptible)
 {
-  get_child_status (child, status, 0, interruptible);
+  return 0 <= get_child_status (child, status, 0, interruptible);
 }
 
 /* Report whether the subprocess with process id CHILD has changed status.
@@ -1405,7 +1408,7 @@ reset_sys_modes (struct tty_display_info *tty_out)
 {
   if (noninteractive)
     {
-      fflush (stdout);
+      fflush_unlocked (stdout);
       return;
     }
   if (!tty_out->term_initted)
@@ -1425,17 +1428,14 @@ reset_sys_modes (struct tty_display_info *tty_out)
     }
   else
     {			/* have to do it the hard way */
-      int i;
       tty_turn_off_insert (tty_out);
 
-      for (i = cursorX (tty_out); i < FrameCols (tty_out) - 1; i++)
-        {
-          fputc (' ', tty_out->output);
-        }
+      for (int i = cursorX (tty_out); i < FrameCols (tty_out) - 1; i++)
+	fputc_unlocked (' ', tty_out->output);
     }
 
   cmgoto (tty_out, FrameRows (tty_out) - 1, 0);
-  fflush (tty_out->output);
+  fflush_unlocked (tty_out->output);
 
   if (tty_out->terminal->reset_terminal_modes_hook)
     tty_out->terminal->reset_terminal_modes_hook (tty_out->terminal);
@@ -3076,7 +3076,7 @@ procfs_ttyname (int rdev)
       char minor[25];	/* 2 32-bit numbers + dash */
       char *endp;
 
-      for (; !feof (fdev) && !ferror (fdev); name[0] = 0)
+      for (; !feof_unlocked (fdev) && !ferror_unlocked (fdev); name[0] = 0)
 	{
 	  if (fscanf (fdev, "%*s %s %u %s %*s\n", name, &major, minor) >= 3
 	      && major == MAJOR (rdev))
@@ -3126,7 +3126,7 @@ procfs_get_total_memory (void)
 	    break;
 
 	  case 0:
-	    while ((c = getc (fmem)) != EOF && c != '\n')
+	    while ((c = getc_unlocked (fmem)) != EOF && c != '\n')
 	      continue;
 	    done = c == EOF;
 	    break;
@@ -3707,14 +3707,9 @@ Lisp_Object
 system_process_attributes (Lisp_Object pid)
 {
   int proc_id;
-  int pagesize = getpagesize ();
-  unsigned long npages;
-  int fscale;
   struct passwd *pw;
   struct group  *gr;
   char *ttyname;
-  size_t len;
-  char args[MAXPATHLEN];
   struct timeval starttime;
   struct timespec t, now;
   struct rusage *rusage;

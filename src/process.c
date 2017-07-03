@@ -2049,7 +2049,21 @@ create_process (Lisp_Object process, char **new_argv, Lisp_Object current_dir)
   int volatile forkerr_volatile = forkerr;
   struct Lisp_Process *p_volatile = p;
 
+#ifdef DARWIN_OS
+  /* Darwin doesn't let us run setsid after a vfork, so use fork when
+     necessary.  Also, reset SIGCHLD handling after a vfork, as
+     apparently macOS can mistakenly deliver SIGCHLD to the child.  */
+  if (pty_flag)
+    pid = fork ();
+  else
+    {
+      pid = vfork ();
+      if (pid == 0)
+	signal (SIGCHLD, SIG_DFL);
+    }
+#else
   pid = vfork ();
+#endif
 
   current_dir = current_dir_volatile;
   lisp_pty_name = lisp_pty_name_volatile;
@@ -2467,7 +2481,7 @@ conv_sockaddr_to_lisp (struct sockaddr *sa, ptrdiff_t len)
     {
     case AF_INET:
       {
-	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+	DECLARE_POINTER_ALIAS (sin, struct sockaddr_in, sa);
 	len = sizeof (sin->sin_addr) + 1;
 	address = Fmake_vector (make_number (len), Qnil);
 	p = XVECTOR (address);
@@ -2478,8 +2492,8 @@ conv_sockaddr_to_lisp (struct sockaddr *sa, ptrdiff_t len)
 #ifdef AF_INET6
     case AF_INET6:
       {
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) sa;
-	uint16_t *ip6 = (uint16_t *) &sin6->sin6_addr;
+	DECLARE_POINTER_ALIAS (sin6, struct sockaddr_in6, sa);
+	DECLARE_POINTER_ALIAS (ip6, uint16_t, &sin6->sin6_addr);
 	len = sizeof (sin6->sin6_addr) / 2 + 1;
 	address = Fmake_vector (make_number (len), Qnil);
 	p = XVECTOR (address);
@@ -2492,7 +2506,7 @@ conv_sockaddr_to_lisp (struct sockaddr *sa, ptrdiff_t len)
 #ifdef HAVE_LOCAL_SOCKETS
     case AF_LOCAL:
       {
-	struct sockaddr_un *sockun = (struct sockaddr_un *) sa;
+	DECLARE_POINTER_ALIAS (sockun, struct sockaddr_un, sa);
         ptrdiff_t name_length = len - offsetof (struct sockaddr_un, sun_path);
         /* If the first byte is NUL, the name is a Linux abstract
            socket name, and the name can contain embedded NULs.  If
@@ -2603,7 +2617,7 @@ conv_lisp_to_sockaddr (int family, Lisp_Object address, struct sockaddr *sa, int
       p = XVECTOR (address);
       if (family == AF_INET)
 	{
-	  struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+	  DECLARE_POINTER_ALIAS (sin, struct sockaddr_in, sa);
 	  len = sizeof (sin->sin_addr) + 1;
 	  hostport = XINT (p->contents[--len]);
 	  sin->sin_port = htons (hostport);
@@ -2613,8 +2627,8 @@ conv_lisp_to_sockaddr (int family, Lisp_Object address, struct sockaddr *sa, int
 #ifdef AF_INET6
       else if (family == AF_INET6)
 	{
-	  struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) sa;
-	  uint16_t *ip6 = (uint16_t *)&sin6->sin6_addr;
+	  DECLARE_POINTER_ALIAS (sin6, struct sockaddr_in6, sa);
+	  DECLARE_POINTER_ALIAS (ip6, uint16_t, &sin6->sin6_addr);
 	  len = sizeof (sin6->sin6_addr) / 2 + 1;
 	  hostport = XINT (p->contents[--len]);
 	  sin6->sin6_port = htons (hostport);
@@ -2636,7 +2650,7 @@ conv_lisp_to_sockaddr (int family, Lisp_Object address, struct sockaddr *sa, int
 #ifdef HAVE_LOCAL_SOCKETS
       if (family == AF_LOCAL)
 	{
-	  struct sockaddr_un *sockun = (struct sockaddr_un *) sa;
+	  DECLARE_POINTER_ALIAS (sockun, struct sockaddr_un, sa);
 	  cp = SDATA (address);
 	  for (i = 0; i < sizeof (sockun->sun_path) && *cp; i++)
 	    sockun->sun_path[i] = *cp++;
@@ -3409,18 +3423,33 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 	    report_file_error ("Cannot bind server socket", Qnil);
 
 #ifdef HAVE_GETSOCKNAME
-	  if (p->port == 0)
+	  if (p->port == 0
+#ifdef HAVE_LOCAL_SOCKETS
+	      && family != AF_LOCAL
+#endif
+	      )
 	    {
 	      struct sockaddr_in sa1;
 	      socklen_t len1 = sizeof (sa1);
-	      if (getsockname (s, (struct sockaddr *)&sa1, &len1) == 0)
+#ifdef AF_INET6
+	      /* The code below assumes the port is at the same offset
+		 and of the same width in both IPv4 and IPv6
+		 structures, but the standards don't guarantee that,
+		 so verify it here.  */
+	      struct sockaddr_in6 sa6;
+	      verify ((offsetof (struct sockaddr_in, sin_port)
+		       == offsetof (struct sockaddr_in6, sin6_port))
+		      && sizeof (sa1.sin_port) == sizeof (sa6.sin6_port));
+#endif
+	      DECLARE_POINTER_ALIAS (psa1, struct sockaddr, &sa1);
+	      if (getsockname (s, psa1, &len1) == 0)
 		{
-		  Lisp_Object service;
-		  service = make_number (ntohs (sa1.sin_port));
+		  Lisp_Object service = make_number (ntohs (sa1.sin_port));
 		  contact = Fplist_put (contact, QCservice, service);
 		  /* Save the port number so that we can stash it in
 		     the process object later.  */
-		  ((struct sockaddr_in *)sa)->sin_port = sa1.sin_port;
+		  DECLARE_POINTER_ALIAS (psa, struct sockaddr_in, sa);
+		  psa->sin_port = sa1.sin_port;
 		}
 	    }
 #endif
@@ -3526,11 +3555,12 @@ connect_network_socket (Lisp_Object proc, Lisp_Object addrinfos,
 #ifdef HAVE_GETSOCKNAME
       if (!p->is_server)
 	{
-	  struct sockaddr_in sa1;
+	  struct sockaddr_storage sa1;
 	  socklen_t len1 = sizeof (sa1);
-	  if (getsockname (s, (struct sockaddr *)&sa1, &len1) == 0)
+	  DECLARE_POINTER_ALIAS (psa1, struct sockaddr, &sa1);
+	  if (getsockname (s, psa1, &len1) == 0)
 	    contact = Fplist_put (contact, QClocal,
-				  conv_sockaddr_to_lisp ((struct sockaddr *)&sa1, len1));
+				  conv_sockaddr_to_lisp (psa1, len1));
 	}
 #endif
     }
@@ -4379,7 +4409,7 @@ network_interface_info (Lisp_Object ifname)
 
       for (it = ifap; it != NULL; it = it->ifa_next)
         {
-          struct sockaddr_dl *sdl = (struct sockaddr_dl *) it->ifa_addr;
+	  DECLARE_POINTER_ALIAS (sdl, struct sockaddr_dl, it->ifa_addr);
           unsigned char linkaddr[6];
           int n;
 
@@ -4563,8 +4593,16 @@ is nil, from any process) before the timeout expired.  */)
       /* Can't wait for a process that is dedicated to a different
 	 thread.  */
       if (!EQ (proc->thread, Qnil) && !EQ (proc->thread, Fcurrent_thread ()))
-	error ("Attempt to accept output from process %s locked to thread %s",
-	       SDATA (proc->name), SDATA (XTHREAD (proc->thread)->name));
+	{
+	  Lisp_Object proc_thread_name = XTHREAD (proc->thread)->name;
+
+	  if (STRINGP (proc_thread_name))
+	    error ("Attempt to accept output from process %s locked to thread %s",
+		   SDATA (proc->name), SDATA (proc_thread_name));
+	  else
+	    error ("Attempt to accept output from process %s locked to thread %p",
+		   SDATA (proc->name), XTHREAD (proc->thread));
+	}
     }
   else
     just_this_one = Qnil;
@@ -4626,7 +4664,7 @@ static EMACS_INT connect_counter = 0;
 static void
 server_accept_connection (Lisp_Object server, int channel)
 {
-  Lisp_Object proc, caller, name, buffer;
+  Lisp_Object buffer;
   Lisp_Object contact, host, service;
   struct Lisp_Process *ps = XPROCESS (server);
   struct Lisp_Process *p;
@@ -4668,49 +4706,43 @@ server_accept_connection (Lisp_Object server, int channel)
      information for this process.  */
   host = Qt;
   service = Qnil;
+  Lisp_Object args[11];
+  int nargs = 0;
+  AUTO_STRING (procname_format_in, "%s <%d.%d.%d.%d:%d>");
+  AUTO_STRING (procname_format_in6, "%s <[%x:%x:%x:%x:%x:%x:%x:%x]:%d>");
+  AUTO_STRING (procname_format_default, "%s <%d>");
   switch (saddr.sa.sa_family)
     {
     case AF_INET:
       {
+	args[nargs++] = procname_format_in;
+	nargs++;
 	unsigned char *ip = (unsigned char *)&saddr.in.sin_addr.s_addr;
-
-	AUTO_STRING (ipv4_format, "%d.%d.%d.%d");
-	host = CALLN (Fformat, ipv4_format,
-		      make_number (ip[0]), make_number (ip[1]),
-		      make_number (ip[2]), make_number (ip[3]));
 	service = make_number (ntohs (saddr.in.sin_port));
-	AUTO_STRING (caller_format, " <%s:%d>");
-	caller = CALLN (Fformat, caller_format, host, service);
+	for (int i = 0; i < 4; i++)
+	  args[nargs++] = make_number (ip[i]);
+	args[nargs++] = service;
       }
       break;
 
 #ifdef AF_INET6
     case AF_INET6:
       {
-	Lisp_Object args[9];
-	uint16_t *ip6 = (uint16_t *)&saddr.in6.sin6_addr;
-	int i;
-
-	AUTO_STRING (ipv6_format, "%x:%x:%x:%x:%x:%x:%x:%x");
-	args[0] = ipv6_format;
-	for (i = 0; i < 8; i++)
-	  args[i + 1] = make_number (ntohs (ip6[i]));
-	host = CALLMANY (Fformat, args);
+	args[nargs++] = procname_format_in6;
+	nargs++;
+	DECLARE_POINTER_ALIAS (ip6, uint16_t, &saddr.in6.sin6_addr);
 	service = make_number (ntohs (saddr.in.sin_port));
-	AUTO_STRING (caller_format, " <[%s]:%d>");
-	caller = CALLN (Fformat, caller_format, host, service);
+	for (int i = 0; i < 8; i++)
+	  args[nargs++] = make_number (ip6[i]);
+	args[nargs++] = service;
       }
       break;
 #endif
 
-#ifdef HAVE_LOCAL_SOCKETS
-    case AF_LOCAL:
-#endif
     default:
-      caller = Fnumber_to_string (make_number (connect_counter));
-      AUTO_STRING (space_less_than, " <");
-      AUTO_STRING (greater_than, ">");
-      caller = concat3 (space_less_than, caller, greater_than);
+      args[nargs++] = procname_format_default;
+      nargs++;
+      args[nargs++] = make_number (connect_counter);
       break;
     }
 
@@ -4731,16 +4763,17 @@ server_accept_connection (Lisp_Object server, int channel)
 	buffer = ps->name;
       if (!NILP (buffer))
 	{
-	  buffer = concat2 (buffer, caller);
-	  buffer = Fget_buffer_create (buffer);
+	  args[1] = buffer;
+	  buffer = Fget_buffer_create (Fformat (nargs, args));
 	}
     }
 
   /* Generate a unique name for the new server process.  Combine the
      server process name with the caller identification.  */
 
-  name = concat2 (ps->name, caller);
-  proc = make_process (name);
+  args[1] = ps->name;
+  Lisp_Object name = Fformat (nargs, args);
+  Lisp_Object proc = make_process (name);
 
   chan_process[s] = proc;
 
@@ -5338,14 +5371,13 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  nfds = xg_select (max_desc + 1,
 			    &Available, (check_write ? &Writeok : 0),
 			    NULL, &timeout, NULL);
+#elif defined HAVE_NS
+          /* And NS builds call thread_select in ns_select. */
+          nfds = ns_select (max_desc + 1,
+			    &Available, (check_write ? &Writeok : 0),
+			    NULL, &timeout, NULL);
 #else  /* !HAVE_GLIB */
-	  nfds = thread_select (
-# ifdef HAVE_NS
-				ns_select
-# else
-				pselect
-# endif
-				, max_desc + 1,
+	  nfds = thread_select (pselect, max_desc + 1,
 				&Available,
 				(check_write ? &Writeok : 0),
 				NULL, &timeout, NULL);

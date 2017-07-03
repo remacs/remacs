@@ -24,17 +24,13 @@
 ;;; Commentary:
 
 ;; Tramp's main Emacs version for development is Emacs 26.  This
-;; package provides compatibility functions for Emacs 23, Emacs 24 and
-;; Emacs 25.
+;; package provides compatibility functions for Emacs 24 and Emacs 25.
 
 ;;; Code:
 
-;; Pacify byte-compiler.
-(eval-when-compile
-  (require 'cl))
-
 (require 'auth-source)
 (require 'advice)
+(require 'cl-lib)
 (require 'custom)
 (require 'format-spec)
 (require 'parse-time)
@@ -45,12 +41,6 @@
 
 (require 'trampver)
 (require 'tramp-loaddefs)
-
-;; `remote-file-name-inhibit-cache' has been introduced with Emacs
-;; 24.1.  Besides t, nil, and integer, we use also timestamps (as
-;; returned by `current-time') internally.
-(unless (boundp 'remote-file-name-inhibit-cache)
-  (defvar remote-file-name-inhibit-cache nil))
 
 ;; For not existing functions, obsolete functions, or functions with a
 ;; changed argument list, there are compiler warnings.  We want to
@@ -87,22 +77,6 @@
       'file-expand-wildcards 'around 'tramp-advice-file-expand-wildcards)
      (ad-activate 'file-expand-wildcards))))
 
-;; `condition-case-unless-debug' is introduced with Emacs 24.
-(if (fboundp 'condition-case-unless-debug)
-    (defalias 'tramp-compat-condition-case-unless-debug
-      'condition-case-unless-debug)
-  (defmacro tramp-compat-condition-case-unless-debug
-    (var bodyform &rest handlers)
-  "Like `condition-case' except that it does not catch anything when debugging."
-    (declare (debug condition-case) (indent 2))
-    (let ((bodysym (make-symbol "body")))
-      `(let ((,bodysym (lambda () ,bodyform)))
-	 (if debug-on-error
-	     (funcall ,bodysym)
-	   (condition-case ,var
-	       (funcall ,bodysym)
-	     ,@handlers))))))
-
 (defsubst tramp-compat-temporary-file-directory ()
   "Return name of directory for temporary files.
 It is the default value of `temporary-file-directory'."
@@ -125,106 +99,6 @@ Add the extension of F, if existing."
   (if (fboundp 'temporary-file-directory)
       'temporary-file-directory
     'tramp-handle-temporary-file-directory))
-
-;; PRESERVE-EXTENDED-ATTRIBUTES has been introduced with Emacs 24.1
-;; (as PRESERVE-SELINUX-CONTEXT), and renamed in Emacs 24.3.
-(defun tramp-compat-copy-file
-  (filename newname &optional ok-if-already-exists keep-date
-   preserve-uid-gid preserve-extended-attributes)
-  "Like `copy-file' for Tramp files (compat function)."
-  (cond
-   (preserve-extended-attributes
-    (condition-case nil
-	(tramp-compat-funcall
-	 'copy-file filename newname ok-if-already-exists keep-date
-	 preserve-uid-gid preserve-extended-attributes)
-      (wrong-number-of-arguments
-       (copy-file
-	filename newname ok-if-already-exists keep-date preserve-uid-gid))))
-   (t
-    (copy-file
-     filename newname ok-if-already-exists keep-date preserve-uid-gid))))
-
-;; COPY-CONTENTS has been introduced with Emacs 24.1.
-(defun tramp-compat-copy-directory
-  (directory newname &optional keep-time parents copy-contents)
-  "Make a copy of DIRECTORY (compat function)."
-  (condition-case nil
-      (tramp-compat-funcall
-       'copy-directory directory newname keep-time parents copy-contents)
-
-    ;; `copy-directory' is either not implemented, or it does not
-    ;; support the the COPY-CONTENTS flag.  For the time being, we
-    ;; ignore COPY-CONTENTS as well.
-
-    (error
-     ;; If `default-directory' is a remote directory, make sure we
-     ;; find its `copy-directory' handler.
-     (let ((handler (or (find-file-name-handler directory 'copy-directory)
-			(find-file-name-handler newname 'copy-directory))))
-       (if handler
-	   (funcall handler 'copy-directory directory newname keep-time parents)
-
-	 ;; Compute target name.
-	 (setq directory (directory-file-name (expand-file-name directory))
-	       newname   (directory-file-name (expand-file-name newname)))
-	 (if (and (file-directory-p newname)
-		  (not (string-equal (file-name-nondirectory directory)
-				     (file-name-nondirectory newname))))
-	     (setq newname
-		   (expand-file-name
-		    (file-name-nondirectory directory) newname)))
-	 (if (not (file-directory-p newname)) (make-directory newname parents))
-
-	 ;; Copy recursively.
-	 (mapc
-	  (lambda (file)
-	    (if (file-directory-p file)
-		(tramp-compat-copy-directory file newname keep-time parents)
-	      (copy-file file newname t keep-time)))
-	  ;; We do not want to delete "." and "..".
-	  (directory-files directory 'full directory-files-no-dot-files-regexp))
-
-	 ;; Set directory attributes.
-	 (set-file-modes newname (file-modes directory))
-	 (if keep-time
-	     (set-file-times newname (nth 5 (file-attributes directory)))))))))
-
-;; TRASH has been introduced with Emacs 24.1.
-(defun tramp-compat-delete-file (filename &optional trash)
-  "Like `delete-file' for Tramp files (compat function)."
-  (condition-case nil
-      (tramp-compat-funcall 'delete-file filename trash)
-    ;; This Emacs version does not support the TRASH flag.
-    (wrong-number-of-arguments
-     (let ((delete-by-moving-to-trash
-	    (and (boundp 'delete-by-moving-to-trash)
-		 (symbol-value 'delete-by-moving-to-trash)
-		 trash)))
-       (delete-file filename)))))
-
-;; RECURSIVE has been introduced with Emacs 23.2.  TRASH has been
-;; introduced with Emacs 24.1.
-(defun tramp-compat-delete-directory (directory &optional recursive trash)
-  "Like `delete-directory' for Tramp files (compat function)."
-  (condition-case nil
-      (cond
-       (trash
-	(tramp-compat-funcall 'delete-directory directory recursive trash))
-       (t
-	(delete-directory directory recursive)))
-    ;; This Emacs version does not support the TRASH flag.  We use the
-    ;; implementation from Emacs 23.2.
-    (wrong-number-of-arguments
-     (setq directory (directory-file-name (expand-file-name directory)))
-     (when (not (file-symlink-p directory))
-       (mapc (lambda (file)
-	       (if (eq t (car (file-attributes file)))
-		   (tramp-compat-delete-directory file recursive trash)
-		 (tramp-compat-delete-file file trash)))
-	     (directory-files
-	      directory 'full directory-files-no-dot-files-regexp)))
-     (delete-directory directory))))
 
 (defun tramp-compat-process-running-p (process-name)
   "Returns t if system process PROCESS-NAME is running for `user-login-name'."
@@ -249,19 +123,6 @@ Add the extension of F, if existing."
                                     (concat "^" (regexp-quote comm))
                                     process-name))))
 	      (setq result t)))))))))
-
-;; `process-running-live-p' is introduced in Emacs 24.
-(defalias 'tramp-compat-process-live-p
-  (if (fboundp 'process-running-live-p)
-      'process-running-live-p
-    (lambda (process)
-      "Returns non-nil if PROCESS is alive.
-A process is considered alive if its status is `run', `open',
-`listen', `connect' or `stop'.  Value is nil if PROCESS is not a
-process."
-      (and (processp process)
-	   (memq (process-status process)
-		 '(run open listen connect stop))))))
 
 ;; `user-error' has appeared in Emacs 24.3.
 (defsubst tramp-compat-user-error (vec-or-proc format &rest args)
@@ -329,15 +190,15 @@ This is a floating point number if the size is too large for an integer."
 This is a string of ten letters or dashes as in ls -l."
     (nth 8 attributes)))
 
-;; `default-toplevel-value' has been declared in Emacs 24.
+;; `default-toplevel-value' has been declared in Emacs 24.4.
 (unless (fboundp 'default-toplevel-value)
   (defalias 'default-toplevel-value 'symbol-value))
 
-;; `format-message' is new in Emacs 25.
+;; `format-message' is new in Emacs 25.1.
 (unless (fboundp 'format-message)
   (defalias 'format-message 'format))
 
-;; `file-missing' is introduced in Emacs 26.
+;; `file-missing' is introduced in Emacs 26.1.
 (defconst tramp-file-missing
   (if (get 'file-missing 'error-conditions) 'file-missing 'file-error)
   "The error symbol for the `file-missing' error.")
@@ -378,6 +239,21 @@ If NAME is a remote file name, the local part of NAME is unquoted."
 	     (replace-match
 	      (if (= (length localname) 2) "/" "") nil t localname)))
 	  (concat (file-remote-p name) localname))))))
+
+;; `tramp-syntax' has changed its meaning in Emacs 26.  We still
+;; support old settings.
+(defsubst tramp-compat-tramp-syntax ()
+  "Return proper value of `tramp-syntax'."
+  (cond ((eq tramp-syntax 'ftp) 'default)
+	((eq tramp-syntax 'sep) 'separate)
+	(t tramp-syntax)))
+
+;; Older Emacsen keep incompatible autoloaded values of `tramp-syntax'.
+(eval-after-load 'tramp
+  '(unless
+       (memq tramp-syntax (tramp-compat-funcall (quote tramp-syntax-values)))
+     (tramp-compat-funcall
+      (quote tramp-change-syntax) (tramp-compat-tramp-syntax))))
 
 (provide 'tramp-compat)
 

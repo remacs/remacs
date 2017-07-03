@@ -72,21 +72,21 @@ local and the remote host, whereas @value{tramp} uses a combination of
 @command{ssh}/@command{scp}.
 
 You can find the latest version of this document on the web at
-@uref{http://www.gnu.org/software/tramp/}.
+@uref{https://www.gnu.org/software/tramp/}.
 
 @ifhtml
 The latest release of @value{tramp} is available for
-@uref{ftp://ftp.gnu.org/gnu/tramp/, download}, or you may see
+@uref{https://ftp.gnu.org/gnu/tramp/, download}, or you may see
 @ref{Obtaining Tramp} for more details, including the Git server
 details.
 
-@value{tramp} also has a @uref{http://savannah.gnu.org/projects/tramp/,
+@value{tramp} also has a @uref{https://savannah.gnu.org/projects/tramp/,
 Savannah Project Page}.
 @end ifhtml
 
 There is a mailing list for @value{tramp}, available at
 @email{tramp-devel@@gnu.org}, and archived at
-@uref{http://lists.gnu.org/archive/html/tramp-devel/, the
+@uref{https://lists.gnu.org/archive/html/tramp-devel/, the
 @value{tramp} Mail Archive}.
 
 @page
@@ -155,7 +155,10 @@ Configuring @value{tramp} for use
 
 Using @value{tramp}
 
-* File name Syntax::            @value{tramp} file name conventions.
+* File name syntax::            @value{tramp} file name conventions.
+@ifset unified
+* Change file name syntax::     Alternative file name syntax.
+@end ifset
 * File name completion::        File name completion.
 * Ad-hoc multi-hops::           Declaring multiple hops in the file name.
 * Remote processes::            Integration with other Emacs packages.
@@ -318,7 +321,7 @@ behind the scenes when you open a file with @value{tramp}.
 @value{tramp} is included as part of Emacs (since Emacs version 22.1).
 
 @value{tramp} is also freely packaged for download on the Internet at
-@uref{ftp://ftp.gnu.org/gnu/tramp/}.
+@uref{https://ftp.gnu.org/gnu/tramp/}.
 
 @value{tramp} development versions are available on Git servers.
 Development versions contain new and incomplete features.
@@ -328,7 +331,7 @@ page at the following URL and then clicking on the Git link in the
 navigation bar at the top.
 
 @noindent
-@uref{http://savannah.gnu.org/projects/tramp/}
+@uref{https://savannah.gnu.org/projects/tramp/}
 
 @noindent
 Another way is to follow the terminal session below:
@@ -346,7 +349,7 @@ From behind a firewall:
 @example
 @group
 ] @strong{git config --global http.proxy http://user:pwd@@proxy.server.com:8080}
-] @strong{git clone http://git.savannah.gnu.org/r/tramp.git}
+] @strong{git clone https://git.savannah.gnu.org/r/tramp.git}
 @end group
 @end example
 
@@ -914,7 +917,7 @@ numbers are not applicable to Android devices connected through USB@.
 @cindex dbus
 
 GVFS is the virtual file system for the Gnome Desktop,
-@uref{http://en.wikipedia.org/wiki/GVFS}.  Remote files on GVFS are
+@uref{https://en.wikipedia.org/wiki/GVFS}.  Remote files on GVFS are
 mounted locally through FUSE and @value{tramp} uses this locally
 mounted directory internally.
 
@@ -997,7 +1000,7 @@ Other methods to include are: @option{ftp} and @option{smb}.
 @cindex default method
 
 In a remote file name, the use of a default method is indicated by the
-pseudo method @option{-}, @ref{File name Syntax}.
+pseudo method @option{-}, @ref{File name syntax}.
 
 @defopt tramp-default-method
 Default method is for transferring files.  The user option
@@ -1500,9 +1503,15 @@ machine melancholia port scp login daniel password geheim
 
 The port can take any @value{tramp} method (@pxref{Inline methods},
 @pxref{External methods}).  Omitting port values matches all
-@value{tramp} methods.
+@value{tramp} methods.  Domain and ports, as used in @value{tramp}
+file name syntax, must be appended to the machine and login items:
 
-Setting @code{auth-source-debug} to @code{t} to debug messages.
+@example
+machine melancholia#4711 port davs login daniel%BIZARRE password geheim
+@end example
+
+@vindex auth-source-debug
+Set @code{auth-source-debug} to @code{t} to debug messages.
 
 
 @anchor{Caching passwords}
@@ -1887,12 +1896,16 @@ where @samp{192.168.0.1} is the remote host IP address
 @value{tramp} uses the @option{adb} method to access Android devices.
 Android devices provide a restricted shell access through an USB
 connection.  The local host must have the @command{adb} program
-installed.
+installed.  Usually, it is sufficient to open the file
+@file{@trampfn{adb,,/}}.  Then you can navigate in the filesystem via
+@code{dired}.
 
-Applications such as @code{SSHDroid} that run @command{sshd} process
-on the Android device can accept any @option{ssh}-based methods
-provided these settings are adjusted:
+Alternatively, applications such as @code{SSHDroid} that run
+@command{sshd} process on the Android device can accept any
+@option{ssh}-based methods provided these settings are adjusted:
 
+@itemize
+@item
 @command{sh} must be specified for remote shell since Android devices
 do not provide @command{/bin/sh}.  @command{sh} will then invoke
 whatever shell is installed on the device with this setting:
@@ -1908,6 +1921,7 @@ whatever shell is installed on the device with this setting:
 where @samp{192.168.0.26} is the Android device's IP address.
 (@pxref{Predefined connection information}).
 
+@item
 @value{tramp} requires preserving @env{PATH} environment variable from
 user settings.  Android devices prefer @file{/system/xbin} path over
 @file{/system/bin}.  Both of these are set as follows:
@@ -1919,7 +1933,7 @@ user settings.  Android devices prefer @file{/system/xbin} path over
 @end group
 @end lisp
 
-@noindent
+@item
 When the Android device is not @samp{rooted}, specify a writable
 directory for temporary files:
 
@@ -1927,7 +1941,7 @@ directory for temporary files:
 (add-to-list 'tramp-remote-process-environment "TMPDIR=$HOME")
 @end lisp
 
-@noindent
+@item
 Open a remote connection with the command @kbd{C-x C-f
 @trampfn{ssh,192.168.0.26#2222,}}, where @command{sshd} is listening
 on port @samp{2222}.
@@ -1958,6 +1972,7 @@ the previous example, fix the connection properties as follows:
 @noindent
 Open a remote connection with a more concise command @kbd{C-x C-f
 @trampfn{ssh,android,}}.
+@end itemize
 
 
 @node Auto-save and Backup
@@ -2074,7 +2089,7 @@ Pseudo-terminal will not be allocated because stdin is not a terminal.
 
 Some older versions of Cygwin's @command{ssh} work with the
 @option{sshx} access method.  Consult Cygwin's FAQ at
-@uref{http://cygwin.com/faq/} for details.
+@uref{https://cygwin.com/faq/} for details.
 
 @cindex Cygwin and fakecygpty
 @cindex fakecygpty and Cygwin
@@ -2131,7 +2146,10 @@ is a feature of Emacs that may cause missed prompts when using
 @value{tramp}.
 
 @menu
-* File name Syntax::            @value{tramp} file name conventions.
+* File name syntax::            @value{tramp} file name conventions.
+@ifset unified
+* Change file name syntax::     Alternative file name syntax.
+@end ifset
 * File name completion::        File name completion.
 * Ad-hoc multi-hops::           Declaring multiple hops in the file name.
 * Remote processes::            Integration with other Emacs packages.
@@ -2139,7 +2157,7 @@ is a feature of Emacs that may cause missed prompts when using
 @end menu
 
 
-@node File name Syntax
+@node File name syntax
 @section @value{tramp} file name conventions
 @cindex file name syntax
 @cindex file name examples
@@ -2200,6 +2218,58 @@ pseudo method @file{-}.
 @end ifset
 
 
+@ifset unified
+@node Change file name syntax
+@section Alternative file name syntax
+@cindex change file name syntax
+@cindex alternative file name syntax
+
+The syntax described in @ref{File name syntax} is the @code{default}
+syntax, which is active after Emacs startup.  However, this can be
+changed.
+
+@deffn Command tramp-change-syntax syntax
+This command changes the syntax @value{tramp} uses for remote file
+names.  Beside the @code{default} value, @var{syntax} can be
+
+@itemize
+@item @code{simplified}
+@cindex simplified syntax
+
+The remote file name syntax is similar to the syntax used by Ange FTP.
+A remote file name has the form
+@code{@value{prefix}user@@host@value{postfix}path/to/file}.  The
+@code{user@@} part is optional, and the method is determined by
+@ref{Default Method}.
+
+@item @code{separate}
+@cindex separate syntax
+
+@clear unified
+@set separate
+@include trampver.texi
+The remote file name syntax is similar to the syntax used by XEmacs.
+A remote file name has the form
+@code{@trampfn{method,user@@host,path/to/file}}.  The @code{method}
+and @code{user@@} parts are optional.
+@clear separate
+@set unified
+@include trampver.texi
+@end itemize
+@end deffn
+
+@defvar tramp-file-name-regexp
+This variable keeps a regexp which matches the selected remote file
+name syntax.  However, it is not recommended to use this variable in
+external packages, a call of @code{file-remote-p} is much more
+appropriate.
+@ifinfo
+@pxref{Magic File Names, , , elisp}
+@end ifinfo
+@end defvar
+@end ifset
+
+
 @node File name completion
 @section File name completion
 @cindex file name completion
@@ -2212,7 +2282,7 @@ in @file{.emacs}.
 @xref{Completion Options, , , emacs}.
 @end ifinfo
 
-For example, type @kbd{C-x C-f @value{prefix}s @key{TAB}},
+For example, type @kbd{C-x C-f @value{prefixwithspace} s @key{TAB}},
 @value{tramp} completion choices show up as
 
 @example
@@ -2495,9 +2565,8 @@ when using @value{tramp} between two hosts with different operating
 systems, such as @samp{windows-nt} and @samp{gnu/linux}.  This option
 ensures the correct name of the remote shell program.
 
-Starting with Emacs 24, when @option{explicit-shell-file-name} is
-equal to @code{nil}, calling @code{shell} interactively will prompt
-for a shell name.
+When @option{explicit-shell-file-name} is equal to @code{nil}, calling
+@code{shell} interactively will prompt for a shell name.
 
 Starting with Emacs 26, you could use connection-local variables for
 setting different values of @option{explicit-shell-file-name} for
@@ -2523,13 +2592,13 @@ different remote hosts.
 
 @group
 (connection-local-set-profiles
-  '(:application 'tramp :protocol "ssh" :machine "localhost")
+  '(:application tramp :protocol "ssh" :machine "localhost")
   'remote-bash)
 @end group
 
 @group
 (connection-local-set-profiles
-  `(:application 'tramp :protocol "sudo"
+  `(:application tramp :protocol "sudo"
     :user "root" :machine ,(system-name))
   'remote-ksh)
 @end group
@@ -2734,7 +2803,7 @@ this address go to all the subscribers.  This is @emph{not} the
 address to send subscription requests to.
 
 To subscribe to the mailing list, visit:
-@uref{http://lists.gnu.org/mailman/listinfo/tramp-devel/, the
+@uref{https://lists.gnu.org/mailman/listinfo/tramp-devel/, the
 @value{tramp} Mail Subscription Page}.
 
 @ifset installchapter
@@ -2786,20 +2855,19 @@ Where is the latest @value{tramp}?
 @value{tramp} is available at the GNU URL:
 
 @noindent
-@uref{ftp://ftp.gnu.org/gnu/tramp/}
+@uref{https://ftp.gnu.org/gnu/tramp/}
 
 @noindent
 @value{tramp}'s GNU project page is located here:
 
 @noindent
-@uref{http://savannah.gnu.org/projects/tramp/}
+@uref{https://savannah.gnu.org/projects/tramp/}
 
 
 @item
 Which systems does it work on?
 
-The package works successfully on Emacs 23, Emacs 24, Emacs 25, and
-Emacs 26.
+The package works successfully on Emacs 24, Emacs 25, and Emacs 26.
 
 While Unix and Unix-like systems are the primary remote targets,
 @value{tramp} has equal success connecting to other platforms, such as
@@ -3098,10 +3166,22 @@ then set them with a hook as follows:
 @item
 Why is @file{~/.sh_history} file on the remote host growing?
 
-Due to @command{ksh} saving tilde expansions triggered by
-@value{tramp}, the history file is probably growing rapidly.  To fix,
-turn off saving history by putting this shell code in the
-@file{.kshrc} file:
+Due to the remote shell saving tilde expansions triggered by
+@value{tramp}, the history file is probably growing rapidly.
+@value{tramp} can suppress this behaviour with the user option
+@code{tramp-histfile-override}.  When set to @code{t}, environment
+variable @env{HISTFILE} is unset, and environment variables
+@env{HISTFILESIZE} @env{HISTSIZE} are set to 0.
+
+Alternatively, @code{tramp-histfile-override} could be a string.
+Environment variable @env{HISTFILE} is set to this file name then.  Be
+careful when setting to @file{/dev/null}; this might result in
+undesired results when using @command{bash} as remote shell.
+
+Another approach is to disable @value{tramp}'s handling of the
+@env{HISTFILE} at all by setting @code{tramp-histfile-override} to
+@code{nil}.  In this case, saving history could be turned off by
+putting this shell code in the @file{.bashrc} or @file{.kshrc} file:
 
 @example
 @group

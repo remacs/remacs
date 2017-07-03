@@ -3,7 +3,7 @@
 ;; Copyright (C) 2003-2017 Free Software Foundation, Inc.
 
 ;; Author: Pieter E.J. Pareit <pieter.pareit@gmail.com>
-;; Maintainer: Pieter E.J. Pareit <pieter.pareit@gmail.com>
+;; Maintainer: emacs-devel@gnu.org
 ;; Created: 09 Nov 2002
 ;; Version: 0.1
 ;; Keywords: languages, Knuth, mix, mixal, asm, mixvm, The Art Of Computer Programming

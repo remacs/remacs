@@ -413,10 +413,12 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
   (declare (doc-string 3) (indent 2)
            (debug
             (&define                    ; this means we are defining something
-             [&or name ("setf" :name setf name)]
+             [&or name ("setf" name :name setf)]
              ;; ^^ This is the methods symbol
-             [ &optional keywordp ]     ; this is key :before etc
-             list                       ; arguments
+             [ &rest atom ]         ; Multiple qualifiers are allowed.
+                                    ; Like in CLOS spec, we support
+                                    ; any non-list values.
+             cl-generic-method-args     ; arguments
              [ &optional stringp ]      ; documentation string
              def-body)))                ; part to be debugged
   (let ((qualifiers nil))
@@ -1082,24 +1084,8 @@ These match if the argument is `eql' to VAL."
 ;;; Support for cl-defstructs specializers.
 
 (defun cl--generic-struct-tag (name &rest _)
-  ;; It's tempting to use (and (vectorp ,name) (aref ,name 0))
-  ;; but that would suffer from some problems:
-  ;; - the vector may have size 0.
-  ;; - when called on an actual vector (rather than an object), we'd
-  ;;   end up returning an arbitrary value, possibly colliding with
-  ;;   other tagcode's values.
-  ;; - it can also result in returning all kinds of irrelevant
-  ;;   values which would end up filling up the method-cache with
-  ;;   lots of irrelevant/redundant entries.
-  ;; FIXME: We could speed this up by introducing a dedicated
-  ;; vector type at the C level, so we could do something like
-  ;; (and (vector-objectp ,name) (aref ,name 0))
-  `(and (vectorp ,name)
-        (> (length ,name) 0)
-        (let ((tag (aref ,name 0)))
-          (and (symbolp tag)
-               (eq (symbol-function tag) :quick-object-witness-check)
-               tag))))
+  ;; Use exactly the same code as for `typeof'.
+  `(if ,name (type-of ,name) 'null))
 
 (defun cl--generic-class-parents (class)
   (let ((parents ())
@@ -1113,8 +1099,8 @@ These match if the argument is `eql' to VAL."
     (nreverse parents)))
 
 (defun cl--generic-struct-specializers (tag &rest _)
-  (and (symbolp tag) (boundp tag)
-       (let ((class (symbol-value tag)))
+  (and (symbolp tag)
+       (let ((class (get tag 'cl--class)))
          (when (cl-typep class 'cl-structure-class)
            (cl--generic-class-parents class)))))
 

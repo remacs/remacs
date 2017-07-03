@@ -56,10 +56,6 @@
   :link '(info-link "(emacs)Icomplete")
   :group 'minibuffer)
 
-(defvar icomplete-prospects-length 80)
-(make-obsolete-variable
- 'icomplete-prospects-length 'icomplete-prospects-height "23.1")
-
 (defcustom icomplete-separator " | "
   "String used by Icomplete to separate alternatives in the minibuffer."
   :type 'string
@@ -91,13 +87,14 @@ Otherwise this should be a list of the completion tables (e.g.,
   :version "24.4")
 
 ;;;_* User Customization variables
-(defcustom icomplete-prospects-height
-  ;; 20 is an estimated common size for the prompt + minibuffer content, to
-  ;; try to guess the number of lines used up by icomplete-prospects-length.
-  (+ 1 (/ (+ icomplete-prospects-length 20) (window-width)))
+(defcustom icomplete-prospects-height 2
+  ;; We used to compute how many lines 100 characters would take in
+  ;; the current window width, but the return value of `window-width'
+  ;; is unreliable on startup (e.g., if we're in daemon mode), so now
+  ;; we simply base the default value on an 80 column window.
   "Maximum number of lines to use in the minibuffer."
   :type 'integer
-  :version "23.1")
+  :version "26.1")
 
 (defcustom icomplete-compute-delay .3
   "Completions-computation stall, used only with large-number completions.

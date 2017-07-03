@@ -117,6 +117,8 @@ arriving, or after."
 
 (defun eshell-emit-prompt ()
   "Emit a prompt if eshell is being used interactively."
+  (when (boundp 'ansi-color-context-region)
+    (setq ansi-color-context-region nil))
   (run-hooks 'eshell-before-prompt-hook)
   (if (not eshell-prompt-function)
       (set-marker eshell-last-output-end (point))

@@ -308,7 +308,11 @@ displayed.  When the text in a window is scrolled horizontally, text
 lines are truncated rather than continued (@pxref{Line Truncation}).
 If a window shows truncated lines, Emacs performs automatic horizontal
 scrolling whenever point moves off the left or right edge of the
-screen.  To disable automatic horizontal scrolling, set the variable
+screen.  By default, all the lines in the window are scrolled
+horizontally together, but if you set the variable
+@code{auto-hscroll-mode} to the special value of @code{current-line},
+only the line showing the cursor will be scrolled.  To disable
+automatic horizontal scrolling entirely, set the variable
 @code{auto-hscroll-mode} to @code{nil}.  Note that when the automatic
 horizontal scrolling is turned off, if point moves off the edge of the
 screen, the cursor disappears to indicate that.  (On text terminals,
@@ -366,7 +370,10 @@ sufficiently large argument will restore the normal display.
   If you use those commands to scroll a window horizontally, that sets
 a lower bound for automatic horizontal scrolling.  Automatic scrolling
 will continue to scroll the window, but never farther to the right
-than the amount you previously set by @code{scroll-left}.
+than the amount you previously set by @code{scroll-left}.  When
+@code{auto-hscroll-mode} is set to @code{current-line}, all the lines
+other than the one showing the cursor will be scrolled by that minimal
+amount.
 
 @node Narrowing
 @section Narrowing
@@ -1338,12 +1345,18 @@ indicate what it is.
 @cindex mode, Column Number
 @findex column-number-mode
   Similarly, you can display the current column number by turning on
-Column number mode with @kbd{M-x column-number-mode}.  The column
+Column Number mode with @kbd{M-x column-number-mode}.  The column
 number is indicated by the letter @samp{C}.  However, when both of
 these modes are enabled, the line and column numbers are displayed in
 parentheses, the line number first, rather than with @samp{L} and
 @samp{C}.  For example: @samp{(561,2)}.  @xref{Minor Modes}, for more
 information about minor modes and about how to use these commands.
+
+@vindex column-number-indicator-zero-based
+  In Column Number mode, the displayed column number counts from zero
+starting at the left margin of the window.  If you would prefer for
+the displayed column number to count from one, you may set
+@code{column-number-indicator-zero-based} to @code{nil}.
 
 @cindex narrowing, and line number display
   If you have narrowed the buffer (@pxref{Narrowing}), the displayed
@@ -1750,3 +1763,9 @@ itself, in pixels; the default is 2.
 in text that is hard to read.  Call the function
 @code{tty-suppress-bold-inverse-default-colors} with a non-@code{nil}
 argument to suppress the effect of bold-face in this case.
+
+@vindex display-raw-bytes-as-hex
+  Raw bytes are displayed in octal format by default, for example a
+byte with a decimal value of 128 is displayed as @code{\200}.  To
+change display to the hexadecimal format of @code{\x80}, set the
+variable @code{display-raw-bytes-as-hex} to @code{t}.

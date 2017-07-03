@@ -1040,14 +1040,23 @@ useful if it contains the deleted text.  To reenable auto-saving after
 this happens, save the buffer with @kbd{C-x C-s}, or use @kbd{C-u 1 M-x
 auto-save-mode}.
 
-@vindex auto-save-visited-file-name
+@vindex auto-save-visited-mode
   If you want auto-saving to be done in the visited file rather than
-in a separate auto-save file, set the variable
-@code{auto-save-visited-file-name} to a non-@code{nil} value.  In this
-mode, auto-saving is very similar to explicit saving.  However,
-differences still exist, in particular for modes which modify the
-buffer-saving process in non-trivial ways via various hooks
-(@pxref{Saving Buffers,,, elisp, The Emacs Lisp Reference Manual}).
+in a separate auto-save file, enable the global minor mode
+@code{auto-save-visited-mode}.  In this mode, auto-saving is identical
+to explicit saving.  Note that this mode is orthogonal to the
+@code{auto-save} mode described above; you can enable both at the same
+time.  However, if @code{auto-save} mode is active in some buffer and
+the obsolete @code{auto-save-visited-file-name} variable is set to a
+non-@code{nil} value, that buffer won't be affected by
+@code{auto-save-visited-mode}.
+
+  You can use the variable @code{auto-save-visited-interval} to
+customize the interval between auto-save operations in
+@code{auto-save-visited-mode}; by default it's five seconds.
+@code{auto-save-interval} and @code{auto-save-timeout} have no effect
+on @code{auto-save-visited-mode}.  @xref{Auto Save Control}, for
+details on these variables.
 
 @vindex delete-auto-save-files
   A buffer's auto-save file is deleted when you save the buffer in its
@@ -1090,6 +1099,12 @@ Auto-saving during idle periods accomplishes two things: first, it
 makes sure all your work is saved if you go away from the terminal for
 a while; second, it may avoid some auto-saving while you are actually
 typing.
+
+@vindex auto-save-visited-interval
+  When @code{auto-save-visited-mode} is enabled, Emacs will auto-save
+file-visiting buffers after five seconds of idle time.  You can
+customize the variable @code{auto-save-visited-interval} to change the
+idle time interval.
 
   Emacs also does auto-saving whenever it gets a fatal error.  This
 includes killing the Emacs job with a shell command such as @samp{kill
@@ -2054,7 +2069,7 @@ as a @dfn{fileset}.  This lets you perform certain operations, such as
 visiting, @code{query-replace}, and shell commands on all the files at
 once.  To make use of filesets, you must first add the expression
 @code{(filesets-init)} to your init file (@pxref{Init File}).  This
-adds a @samp{Filesets} menu to the menu bar.
+adds a @samp{Filesets} sub-menu to the menu bar's @samp{File} menu.
 
 @findex filesets-add-buffer
 @findex filesets-remove-buffer

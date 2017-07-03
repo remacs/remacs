@@ -186,6 +186,12 @@ The message is @samp{Undefined color}.  @xref{Color Names}.
 @item user-error
 The message is the empty string.  @xref{Signaling Errors}.
 
+@item user-search-failed
+This is like @samp{search-failed}, but doesn't trigger the debugger,
+like @samp{user-error}.  @xref{Signaling Errors}, and @xref{Searching
+and Matching}.  This is used for searching in Info files, @xref{Search
+Text,,,info,Info}.
+
 @item void-function
 The message is @samp{Symbol's function definition is void}.
 @xref{Function Cells}.

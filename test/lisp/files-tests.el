@@ -1,4 +1,4 @@
-;;; files-tests.el --- tests for files.el.
+;;; files-tests.el --- tests for files.el.  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
@@ -20,6 +20,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'nadvice)
 
 ;; Set to t if the local variable was set, `query' if the query was
 ;; triggered.
@@ -242,6 +243,75 @@ be $HOME."
                          (expand-file-name (read-file-name "File: "))
                          (concat "/:/:" subdir)))))
       (delete-directory dir 'recursive))))
+
+(ert-deftest files-tests--file-name-non-special--subprocess ()
+  "Check that Bug#25949 is fixed."
+  (skip-unless (executable-find "true"))
+  (should (eq (let ((default-directory "/:/")) (process-file "true")) 0))
+  (should (processp (let ((default-directory "/:/"))
+                      (start-file-process "foo" nil "true"))))
+  (should (eq (let ((default-directory "/:/")) (shell-command "true")) 0)))
+
+(defmacro files-tests--with-advice (symbol where function &rest body)
+  (declare (indent 3))
+  (cl-check-type symbol symbol)
+  (cl-check-type where keyword)
+  (cl-check-type function function)
+  (macroexp-let2 nil function function
+    `(progn
+       (advice-add #',symbol ,where ,function)
+       (unwind-protect
+           (progn ,@body)
+         (advice-remove #',symbol ,function)))))
+
+(defmacro files-tests--with-temp-file (name &rest body)
+  (declare (indent 1))
+  (cl-check-type name symbol)
+  `(let ((,name (make-temp-file "emacs")))
+     (unwind-protect
+         (progn ,@body)
+       (delete-file ,name))))
+
+(ert-deftest files-tests--file-name-non-special--buffers ()
+  "Check that Bug#25951 is fixed.
+We call `verify-visited-file-modtime' on a buffer visiting a file
+with a quoted name.  We use two different variants: first with
+the buffer current and a nil argument, second passing the buffer
+object explicitly.  In both cases no error should be raised and
+the `file-name-non-special' handler for quoted file names should
+be invoked with the right arguments."
+  (files-tests--with-temp-file temp-file-name
+    (with-temp-buffer
+     (let* ((buffer-visiting-file (current-buffer))
+            (actual-args ())
+            (log (lambda (&rest args) (push args actual-args))))
+       (insert-file-contents (concat "/:" temp-file-name) :visit)
+       (should (stringp buffer-file-name))
+       (should (string-prefix-p "/:" buffer-file-name))
+       (should (consp (visited-file-modtime)))
+       (should (equal (find-file-name-handler buffer-file-name
+                                              #'verify-visited-file-modtime)
+                      #'file-name-non-special))
+       (files-tests--with-advice file-name-non-special :before log
+         ;; This should call the file name handler with the right
+         ;; buffer and not signal an error.  The file hasn't been
+         ;; modified, so `verify-visited-file-modtime' should return
+         ;; t.
+         (should (equal (verify-visited-file-modtime) t))
+         (with-temp-buffer
+           (should (stringp (buffer-file-name buffer-visiting-file)))
+           ;; This should call the file name handler with the right
+           ;; buffer and not signal an error.  The file hasn't been
+           ;; modified, so `verify-visited-file-modtime' should return
+           ;; t.
+           (should (equal (verify-visited-file-modtime buffer-visiting-file)
+                          t))))
+       ;; Verify that the handler was actually called.  We called
+       ;; `verify-visited-file-modtime' twice, so both calls should be
+       ;; recorded in reverse order.
+       (should (equal actual-args
+                      `((verify-visited-file-modtime ,buffer-visiting-file)
+                        (verify-visited-file-modtime nil))))))))
 
 (provide 'files-tests)
 ;;; files-tests.el ends here

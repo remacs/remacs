@@ -2978,31 +2978,6 @@ emacs_root_dir (void)
   return root_dir;
 }
 
-#include <sys/timeb.h>
-
-/* Emulate gettimeofday (Ulrich Leodolter, 1/11/95).  */
-int
-gettimeofday (struct timeval *__restrict tv, struct timezone *__restrict tz)
-{
-  struct _timeb tb;
-  _ftime (&tb);
-
-  tv->tv_sec = tb.time;
-  tv->tv_usec = tb.millitm * 1000L;
-  /* Implementation note: _ftime sometimes doesn't update the dstflag
-     according to the new timezone when the system timezone is
-     changed.  We could fix that by using GetSystemTime and
-     GetTimeZoneInformation, but that doesn't seem necessary, since
-     Emacs always calls gettimeofday with the 2nd argument NULL (see
-     current_emacs_time).  */
-  if (tz)
-    {
-      tz->tz_minuteswest = tb.timezone;	/* minutes west of Greenwich  */
-      tz->tz_dsttime = tb.dstflag;	/* type of dst correction  */
-    }
-  return 0;
-}
-
 /* Emulate fdutimens.  */
 
 /* Set the access and modification time stamps of FD (a.k.a. FILE) to be

@@ -22,7 +22,7 @@ current operating systems Windows is in
 @end ifnottex
 
   If you build Emacs for MS-DOS, the binary will also run on Windows
-3.X, Windows NT, Windows 9X/ME, Windows 2000/XP, or OS/2 as a DOS
+3.X, Windows NT, Windows 9X/ME, or Windows 2000/XP as a DOS
 application; all of this chapter applies for all of those systems, if
 you use an Emacs that was built for MS-DOS.
 

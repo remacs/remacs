@@ -106,8 +106,8 @@ To get the number of bytes, use `string-bytes'.  */)
     XSETFASTINT (val, MAX_CHAR);
   else if (BOOL_VECTOR_P (sequence))
     XSETFASTINT (val, bool_vector_size (sequence));
-  else if (COMPILEDP (sequence))
-    XSETFASTINT (val, ASIZE (sequence) & PSEUDOVECTOR_SIZE_MASK);
+  else if (COMPILEDP (sequence) || RECORDP (sequence))
+    XSETFASTINT (val, PVSIZE (sequence));
   else if (CONSP (sequence))
     {
       intptr_t i = 0;
@@ -475,12 +475,17 @@ usage: (vconcat &rest SEQUENCES)   */)
 
 
 DEFUN ("copy-sequence", Fcopy_sequence, Scopy_sequence, 1, 1, 0,
-       doc: /* Return a copy of a list, vector, string or char-table.
-The elements of a list or vector are not copied; they are shared
-with the original.  */)
+       doc: /* Return a copy of a list, vector, string, char-table or record.
+The elements of a list, vector or record are not copied; they are
+shared with the original.  */)
   (Lisp_Object arg)
 {
   if (NILP (arg)) return arg;
+
+  if (RECORDP (arg))
+    {
+      return Frecord (PVSIZE (arg), XVECTOR (arg)->contents);
+    }
 
   if (CHAR_TABLE_P (arg))
     {
@@ -2792,8 +2797,17 @@ suppressed.  */)
 
       tem = Fmemq (feature, Vfeatures);
       if (NILP (tem))
-	error ("Required feature `%s' was not provided",
-	       SDATA (SYMBOL_NAME (feature)));
+        {
+          unsigned char *tem2 = SDATA (SYMBOL_NAME (feature));
+          Lisp_Object tem3 = Fcar (Fcar (Vload_history));
+
+          if (NILP (tem3))
+            error ("Required feature `%s' was not provided", tem2);
+          else
+            /* Cf autoload-do-load.  */
+            error ("Loading file %s failed to provide feature `%s'",
+                   SDATA (tem3), tem2);
+        }
 
       /* Once loading finishes, don't undo it.  */
       Vautoload_queue = Qt;
@@ -4275,7 +4289,7 @@ sxhash_list (Lisp_Object list, int depth)
 }
 
 
-/* Return a hash for vector VECTOR.  DEPTH is the current depth in
+/* Return a hash for (pseudo)vector VECTOR.  DEPTH is the current depth in
    the Lisp structure.  */
 
 static EMACS_UINT
@@ -4284,7 +4298,7 @@ sxhash_vector (Lisp_Object vec, int depth)
   EMACS_UINT hash = ASIZE (vec);
   int i, n;
 
-  n = min (SXHASH_MAX_LEN, ASIZE (vec));
+  n = min (SXHASH_MAX_LEN, hash & PSEUDOVECTOR_FLAG ? PVSIZE (vec) : hash);
   for (i = 0; i < n; ++i)
     {
       EMACS_UINT hash2 = sxhash (AREF (vec, i), depth + 1);
@@ -4339,11 +4353,11 @@ sxhash (Lisp_Object obj, int depth)
 
       /* This can be everything from a vector to an overlay.  */
     case Lisp_Vectorlike:
-      if (VECTORP (obj))
+      if (VECTORP (obj) || RECORDP (obj))
 	/* According to the CL HyperSpec, two arrays are equal only if
 	   they are `eq', except for strings and bit-vectors.  In
 	   Emacs, this works differently.  We have to compare element
-	   by element.  */
+	   by element.  Same for records.  */
 	hash = sxhash_vector (obj, depth);
       else if (BOOL_VECTOR_P (obj))
 	hash = sxhash_bool_vector (obj);

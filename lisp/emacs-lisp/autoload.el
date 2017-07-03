@@ -164,7 +164,8 @@ expression, in which case we want to handle forms differently."
      ((and (memq car '(easy-mmode-define-global-mode define-global-minor-mode
                        define-globalized-minor-mode defun defmacro
 		       easy-mmode-define-minor-mode define-minor-mode
-                       define-inline cl-defun cl-defmacro cl-defgeneric))
+                       define-inline cl-defun cl-defmacro cl-defgeneric
+                       pcase-defmacro))
            (macrop car)
 	   (setq expand (let ((load-file-name file)) (macroexpand form)))
 	   (memq (car expand) '(progn prog1 defalias)))
@@ -254,30 +255,22 @@ expression, in which case we want to handle forms differently."
 ;; Those properties are now set in lisp-mode.el.
 
 (defun autoload-find-generated-file ()
-  "Visit the autoload file for the current buffer, and return its buffer.
-If a buffer is visiting the desired autoload file, return it."
+  "Visit the autoload file for the current buffer, and return its buffer."
   (let ((enable-local-variables :safe)
-	(enable-local-eval nil))
+        (enable-local-eval nil)
+        (delay-mode-hooks t)
+        (file (autoload-generated-file)))
     ;; We used to use `raw-text' to read this file, but this causes
     ;; problems when the file contains non-ASCII characters.
-    (let* ((delay-mode-hooks t)
-           (file (autoload-generated-file))
-           (file-missing (not (file-exists-p file))))
-      (when file-missing
-        (autoload-ensure-default-file file))
-      (with-current-buffer
-          (find-file-noselect
-           (autoload-ensure-file-writeable
-            file))
-        ;; block backups when the file has just been created, since
-        ;; the backups will just be the auto-generated headers.
-        ;; bug#23203
-        (when file-missing
-          (setq buffer-backed-up t)
-          (save-buffer))
-        (current-buffer)))))
+    (with-current-buffer (find-file-noselect
+                          (autoload-ensure-file-writeable file))
+      (if (zerop (buffer-size)) (insert (autoload-rubric file nil t)))
+      (current-buffer))))
 
 (defun autoload-generated-file ()
+  "Return `generated-autoload-file' as an absolute name.
+If local to the current buffer, expand using the default directory;
+otherwise, using `source-directory'/lisp."
   (expand-file-name generated-autoload-file
                     ;; File-local settings of generated-autoload-file should
                     ;; be interpreted relative to the file's location,
@@ -362,24 +355,28 @@ put the output in."
 (defun autoload-rubric (file &optional type feature)
   "Return a string giving the appropriate autoload rubric for FILE.
 TYPE (default \"autoloads\") is a string stating the type of
-information contained in FILE.  If FEATURE is non-nil, FILE
-will provide a feature.  FEATURE may be a string naming the
-feature, otherwise it will be based on FILE's name.
+information contained in FILE.  TYPE \"package\" acts like the default,
+but adds an extra line to the output to modify `load-path'.
 
-At present, a feature is in fact always provided, but this should
-not be relied upon."
-  (let ((basename (file-name-nondirectory file)))
+If FEATURE is non-nil, FILE will provide a feature.  FEATURE may
+be a string naming the feature, otherwise it will be based on
+FILE's name."
+  (let ((basename (file-name-nondirectory file))
+	(lp (if (equal type "package") (setq type "autoloads"))))
     (concat ";;; " basename
 	    " --- automatically extracted " (or type "autoloads") "\n"
 	    ";;\n"
 	    ";;; Code:\n\n"
+	    (if lp
+		;; `load-path' should contain only directory names.
+		"(add-to-list 'load-path (directory-file-name
+                         (or (file-name-directory #$) (car load-path))))\n\n")
 	    "\n"
 	    ;; This is used outside of autoload.el, eg cus-dep, finder.
-	    "(provide '"
-	    (if (stringp feature)
-		feature
-	      (file-name-sans-extension basename))
-	    ")\n"
+	    (if feature
+		(format "(provide '%s)\n"
+			(if (stringp feature) feature
+			  (file-name-sans-extension basename))))
 	    ";; Local Variables:\n"
 	    ";; version-control: never\n"
 	    ";; no-byte-compile: t\n"
@@ -390,7 +387,7 @@ not be relied upon."
 	    " ends here\n")))
 
 (defvar autoload-ensure-writable nil
-  "Non-nil means `autoload-ensure-default-file' makes existing file writable.")
+  "Non-nil means `autoload-find-generated-file' makes existing file writable.")
 ;; Just in case someone tries to get you to overwrite a file that you
 ;; don't want to.
 ;;;###autoload
@@ -400,18 +397,13 @@ not be relied upon."
   ;; Probably pointless, but replaces the old AUTOGEN_VCS in lisp/Makefile,
   ;; which was designed to handle CVSREAD=1 and equivalent.
   (and autoload-ensure-writable
+       (file-exists-p file)
        (let ((modes (file-modes file)))
          (if (zerop (logand modes #o0200))
              ;; Ignore any errors here, and let subsequent attempts
              ;; to write the file raise any real error.
              (ignore-errors (set-file-modes file (logior modes #o0200))))))
   file)
-
-(defun autoload-ensure-default-file (file)
-  "Make sure that the autoload file FILE exists, creating it if needed.
-If the file already exists and `autoload-ensure-writable' is non-nil,
-make it writable."
-  (write-region (autoload-rubric file) nil file))
 
 (defun autoload-insert-section-header (outbuf autoloads load-name file time)
   "Insert the section-header line,
@@ -546,7 +538,9 @@ Don't try to split prefixes that are already longer than that.")
     ;; "cc-helper" and "c-mode", you'll get "c" in the root prefixes.
     (dolist (pair (prog1 prefixes (setq prefixes nil)))
       (let ((s (car pair)))
-        (if (or (> (length s) 2)                  ;Long enough!
+        (if (or (and (> (length s) 2)   ; Long enough!
+                     ;; But don't use "def" from deffoo-pkg-thing.
+                     (not (string= "def" s)))
                 (string-match ".[[:punct:]]\\'" s) ;A real (tho short) prefix?
                 (radix-tree-lookup (cdr pair) "")) ;Nothing to expand!
             (push pair prefixes) ;Keep it as is.
@@ -595,7 +589,8 @@ Don't try to split prefixes that are already longer than that.")
               (lambda (x)
                 (let ((prefix (car x)))
                   (if (or (> (length prefix) 2) ;Long enough!
-                          (string-match ".[[:punct:]]\\'" prefix))
+                          (and (eq (length prefix) 2)
+                               (string-match "[[:punct:]]" prefix)))
                       prefix
                     ;; Some packages really don't follow the rules.
                     ;; Drop the most egregious cases such as the
@@ -875,11 +870,26 @@ FILE's modification time."
      (error "%s:0:0: error: %s: %s" file (car err) (cdr err)))
     ))
 
+;; For parallel builds, to stop another process reading a half-written file.
+(defun autoload--save-buffer ()
+  "Save current buffer to its file, atomically."
+  ;; Copied from byte-compile-file.
+  (let* ((version-control 'never)
+         (tempfile (make-temp-name buffer-file-name))
+         (kill-emacs-hook
+          (cons (lambda () (ignore-errors (delete-file tempfile)))
+                kill-emacs-hook)))
+    (write-region (point-min) (point-max) tempfile nil 1)
+    (backup-buffer)
+    (rename-file tempfile buffer-file-name t)
+    (set-buffer-modified-p nil)
+    (set-visited-file-modtime)
+    (or noninteractive (message "Wrote %s" buffer-file-name))))
+
 (defun autoload-save-buffers ()
   (while autoload-modified-buffers
     (with-current-buffer (pop autoload-modified-buffers)
-      (let ((version-control 'never))
-	(save-buffer)))))
+      (autoload--save-buffer))))
 
 ;; FIXME This command should be deprecated.
 ;; See http://debbugs.gnu.org/22213#41
@@ -1119,8 +1129,7 @@ write its autoloads into the specified file instead."
       ;; dependencies don't trigger unnecessarily.
       (if (not changed)
           (set-buffer-modified-p nil)
-        (let ((version-control 'never))
-          (save-buffer)))
+        (autoload--save-buffer))
 
       ;; In case autoload entries were added to other files because of
       ;; file-local autoload-generated-file settings.

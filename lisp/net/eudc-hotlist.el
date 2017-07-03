@@ -42,7 +42,7 @@
     (define-key map "s" 'eudc-hotlist-select-server)
     (define-key map "t" 'eudc-hotlist-transpose-servers)
     (define-key map "q" 'eudc-hotlist-quit-edit)
-    (define-key map "x" 'kill-this-buffer)
+    (define-key map "x" 'kill-current-buffer)
     map))
 
 (define-derived-mode eudc-hotlist-mode fundamental-mode "EUDC-Servers"

@@ -34,7 +34,8 @@
     (setq overlay (make-overlay opoint (point)))
     (while props
       (overlay-put overlay (car props) (cadr props))
-      (setq props (cddr props)))))
+      (setq props (cddr props)))
+    overlay))
 
 (defun test-redisplay-1 ()
   (insert "Test 1: Displaying adjacent and overlapping overlays:\n\n")
@@ -293,6 +294,44 @@ static unsigned char x_bits[] = {0xff, 0x81, 0xbd, 0xa5, 0xa5, 0xbd, 0x81, 0xff 
 
   (insert "\n"))
 
+(defvar test-redisplay-5a-expected-overlay nil)
+(defvar test-redisplay-5a-result-overlay nil)
+(defvar test-redisplay-5b-expected-overlay nil)
+(defvar test-redisplay-5b-result-overlay nil)
+
+(defun test-redisplay-5-toggle (_event)
+  (interactive "e")
+  (setq display-raw-bytes-as-hex (not display-raw-bytes-as-hex))
+  (let ((label (if display-raw-bytes-as-hex "\\x80" "\\200")))
+    (overlay-put test-redisplay-5a-expected-overlay 'display
+                 (propertize label 'face 'escape-glyph)))
+  (let ((label (if display-raw-bytes-as-hex "\\x3fffc" "\\777774")))
+    (overlay-put test-redisplay-5b-expected-overlay 'display
+                 (propertize label 'face 'escape-glyph))))
+
+(defun test-redisplay-5 ()
+  (insert "Test 5: Display of raw bytes:\n\n")
+  (insert "  Expected: ")
+  (setq test-redisplay-5a-expected-overlay
+        (test-insert-overlay " " 'display
+                             (propertize "\\200" 'face 'escape-glyph)))
+  (insert "\n    Result: ")
+  (setq test-redisplay-5a-result-overlay
+        (test-insert-overlay " " 'display "\200"))
+  (insert "\n\n")
+  (insert "  Expected: ")
+  ;; This tests a large codepoint, to make sure the internal buffer we
+  ;; use to produce the representation is large enough.
+  (aset printable-chars #x3fffc nil)
+  (setq test-redisplay-5b-expected-overlay
+        (test-insert-overlay " " 'display
+                             (propertize "\\777774" 'face 'escape-glyph)))
+  (insert "\n    Result: ")
+  (setq test-redisplay-5b-result-overlay
+        (test-insert-overlay " " 'display (char-to-string #x3fffc)))
+  (insert "\n\n")
+  (insert-button "Toggle between octal and hex display"
+                 'action 'test-redisplay-5-toggle))
 
 (defun test-redisplay ()
   (interactive)
@@ -309,5 +348,6 @@ static unsigned char x_bits[] = {0xff, 0x81, 0xbd, 0xa5, 0xa5, 0xbd, 0x81, 0xff 
     (test-redisplay-2)
     (test-redisplay-3)
     (test-redisplay-4)
+    (test-redisplay-5)
     (goto-char (point-min))))
 

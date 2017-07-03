@@ -52,7 +52,27 @@ set this variable to \"normal:-dhe-rsa\"."
                  string))
 
 (defcustom gnutls-verify-error nil
-  "If non-nil, this should be a list of checks per hostname regex or t."
+  "If non-nil, this should be t or a list of checks per hostname regex.
+If nil, the default, failures in certificate verification will be
+logged (subject to `gnutls-log-level'), but the connection will be
+allowed to proceed.
+If the value is a list, it should have the form
+
+   ((HOST-REGEX FLAGS...) (HOST-REGEX FLAGS...) ...)
+
+where each HOST-REGEX is a regular expression to be matched
+against the hostname, and FLAGS is either t or a list of
+one or more verification flags.  The supported flags and the
+corresponding conditions to be tested are:
+
+  :trustfiles -- certificate must be issued by a trusted authority.
+  :hostname   -- hostname must match presented certificate's host name.
+  t           -- all of the above conditions are tested.
+
+If the condition test fails, an error will be signaled.
+
+If the value of this variable is t, every connection will be subjected
+to all of the tests described above."
   :group 'gnutls
   :version "24.4"
   :type '(choice

@@ -105,10 +105,10 @@ FTOASTR (char *buf, size_t bufsize, int flags, int width, FLOAT x)
   /* The following method is simple but slow.
      For ideas about speeding things up, please see:
 
-     Florian Loitsch, Printing floating-point numbers quickly and accurately
-     with integers.  ACM SIGPLAN notices 46, 6 (June 2010), 233-243
-     <http://dx.doi.org/10.1145/1809028.1806623>; also see the
-     2010-03-21 draft <http://florian.loitsch.com/tmp/article.pdf>.  */
+     Andrysco M, Jhala R, Lerner S. Printing floating-point numbers:
+     a faster, always correct method. ACM SIGPLAN notices - POPL '16.
+     2016;51(1):555-67 <http://dx.doi.org/10.1145/2914770.2837654>; draft at
+     <http://cseweb.ucsd.edu/~lerner/papers/fp-printing-popl16.pdf>.  */
 
   PROMOTED_FLOAT promoted_x = x;
   char format[sizeof "%-+ 0*.*Lg"];

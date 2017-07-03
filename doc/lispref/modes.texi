@@ -1737,7 +1737,9 @@ holds a @dfn{mode line construct}: a template that controls what is
 displayed on the buffer's mode line.  The value of
 @code{header-line-format} specifies the buffer's header line in the same
 way.  All windows for the same buffer use the same
-@code{mode-line-format} and @code{header-line-format}.
+@code{mode-line-format} and @code{header-line-format} unless a
+@code{mode-line-format} or @code{header-line-format} parameter has been
+specified for that window (@pxref{Window Parameters}).
 
   For efficiency, Emacs does not continuously recompute each window's
 mode line and header line.  It does so when circumstances appear to call
@@ -1972,6 +1974,14 @@ displays the buffer percentage and, optionally, the buffer size, the
 line number and the column number.
 @end defvar
 
+@defopt mode-line-percent-position
+This option is used in @code{mode-line-position}.  Its value specifies
+both the buffer percentage to display (one of @code{nil}, @code{"%o"},
+@code{"%p"}, @code{"%P"} or @code{"%q"}, @pxref{%-Constructs}) and a
+width to space-fill or truncate to.  You are recommended to set this
+option with the @code{customize-variable} facility.
+@end defopt
+
 @defvar vc-mode
 The variable @code{vc-mode}, buffer-local in each buffer, records
 whether the buffer's visited file is maintained with version control,
@@ -2111,7 +2121,12 @@ The current buffer name, obtained with the @code{buffer-name} function.
 @xref{Buffer Names}.
 
 @item %c
-The current column number of point.
+The current column number of point, counting from zero starting at the
+left margin of the window.
+
+@item %C
+The current column number of point, counting from one starting at the
+left margin of the window.
 
 @item %e
 When Emacs is nearly out of memory for Lisp objects, a brief message
@@ -2142,6 +2157,12 @@ of the buffer.
 @samp{Narrow} when narrowing is in effect; nothing otherwise (see
 @code{narrow-to-region} in @ref{Narrowing}).
 
+@item %o
+The degree of @dfn{travel} of the window through (the visible portion
+of) the buffer, i.e. the size of the text above the top of the window
+expressed as a percentage of all the text outside the window, or
+@samp{Top}, @samp{Bottom} or @samp{All}.
+
 @item %p
 The percentage of the buffer text above the @strong{top} of window, or
 @samp{Top}, @samp{Bottom} or @samp{All}.  Note that the default mode
@@ -2152,6 +2173,10 @@ The percentage of the buffer text that is above the @strong{bottom} of
 the window (which includes the text visible in the window, as well as
 the text above the top), plus @samp{Top} if the top of the buffer is
 visible on screen; or @samp{Bottom} or @samp{All}.
+
+@item %q
+The percentages of text above both the @strong{top} and the
+@strong{bottom} of the window, separated by @samp{-}, or @samp{All}.
 
 @item %s
 The status of the subprocess belonging to the current buffer, obtained with

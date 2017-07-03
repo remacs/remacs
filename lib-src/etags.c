@@ -123,6 +123,7 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 #include <errno.h>
 #include <fcntl.h>
 #include <binary-io.h>
+#include <unlocked-io.h>
 #include <c-ctype.h>
 #include <c-strcase.h>
 
@@ -1157,7 +1158,7 @@ main (int argc, char **argv)
       case 'c':
 	/* Backward compatibility: support obsolete --ignore-case-regexp. */
 	optarg = concat (optarg, "i", ""); /* memory leak here */
-	/* FALLTHRU */
+	FALLTHROUGH;
       case 'r':
 	argbuffer[current_arg].arg_type = at_regexp;
 	argbuffer[current_arg].what = optarg;
@@ -1192,7 +1193,7 @@ main (int argc, char **argv)
       case 't': typedefs = true;				break;
       case 'T': typedefs = typedefs_or_cplusplus = true;	break;
       case 'u': update = true;					break;
-      case 'v': vgrind_style = true;			  /*FALLTHRU*/
+      case 'v': vgrind_style = true;				FALLTHROUGH;
       case 'x': cxref_style = true;				break;
       case 'w': no_warnings = true;				break;
       default:
@@ -2564,7 +2565,7 @@ hash (const char *str, int len)
     {
       default:
         hval += asso_values[(unsigned char) str[2]];
-      /*FALLTHROUGH*/
+	FALLTHROUGH;
       case 2:
         hval += asso_values[(unsigned char) str[1]];
         break;
@@ -3013,7 +3014,7 @@ consider_token (char *str, int len, int c, int *c_extp,
 	 *c_extp = (*c_extp | C_PLPL) & ~C_AUTO;
        if (toktype == st_C_template)
 	 break;
-       /* FALLTHRU */
+       FALLTHROUGH;
      case st_C_struct:
      case st_C_enum:
        if (parlev == 0
@@ -3176,7 +3177,7 @@ consider_token (char *str, int len, int c, int *c_extp,
 	     default:
 	       break;
 	     }
-	  /* FALLTHRU */
+	   FALLTHROUGH;
 	  case fvnameseen:
 	  if (len >= 10 && strneq (str+len-10, "::operator", 10))
 	    {
@@ -3387,7 +3388,7 @@ C_entries (int c_ext, FILE *inf)
 	    case '\0':
 	      /* Hmmm, something went wrong. */
 	      CNL ();
-	      /* FALLTHRU */
+	      FALLTHROUGH;
 	    case '\'':
 	      inchar = false;
 	      break;
@@ -3828,7 +3829,7 @@ C_entries (int c_ext, FILE *inf)
 		      || (members
 			  && plainc && instruct))
 		    make_C_tag (true);  /* a function */
-		  /* FALLTHRU */
+		  FALLTHROUGH;
 		default:
 		  fvextern = false;
 		  fvdef = fvnone;
@@ -3838,7 +3839,7 @@ C_entries (int c_ext, FILE *inf)
 		  else
 		    token.valid = false;
 		} /* switch (fvdef) */
-	      /* FALLTHRU */
+	      FALLTHROUGH;
 	    default:
 	      if (!instruct)
 		typdef = tnone;
@@ -3926,7 +3927,7 @@ C_entries (int c_ext, FILE *inf)
 		      || (globals && bracelev == 0
 			  && (!fvextern || declarations)))
 		    make_C_tag (false); /* a variable */
-		  /* FALLTHRU */
+		  FALLTHROUGH;
 		default:
 		  fvdef = fvnone;
 		}
@@ -3959,7 +3960,7 @@ C_entries (int c_ext, FILE *inf)
 		  fvdef = fignore;
 		  break;
 		}
-	      /* FALLTHRU */
+	      FALLTHROUGH;
 	    case foperator:
 	      fvdef = fstartlist;
 	      break;
@@ -4049,7 +4050,7 @@ C_entries (int c_ext, FILE *inf)
 		    }
 		}
 	      make_C_tag (true);    /* a function */
-	      /* FALLTHRU */
+	      FALLTHROUGH;
 	    case fignore:
 	      fvdef = fvnone;
 	      break;
@@ -4142,7 +4143,7 @@ C_entries (int c_ext, FILE *inf)
 	      if ((members && bracelev == 1)
 		  || (globals && bracelev == 0 && (!fvextern || declarations)))
 		make_C_tag (false); /* a variable */
-	      /* FALLTHRU */
+	      FALLTHROUGH;
 	    default:
 	      fvdef = vignore;
 	    }
@@ -4169,7 +4170,7 @@ C_entries (int c_ext, FILE *inf)
 	      objdef = omethodsign;
 	      break;
 	    }
-	  /* FALLTHRU */
+	  FALLTHROUGH;
 	resetfvdef:
 	case '#': case '~': case '&': case '%': case '/':
 	case '|': case '^': case '!': case '.': case '?':
@@ -6354,7 +6355,7 @@ add_regex (char *regexp_pattern, language *lang)
 	break;
       case 's':
 	single_line = true;
-	/* FALLTHRU */
+	FALLTHROUGH;
       case 'm':
 	multi_line = true;
 	need_filebuf = true;

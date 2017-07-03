@@ -296,8 +296,8 @@ in parentheses follows the development revision and the time stamp.")
     ("1.4.1" . "25.1")
     ("1.4.2" . "25.1")
     ("1.5.0" . "26.1")
-    ("1.5.1" . "26.2")
-    ("1.5.2" . "26.2")
+    ("1.5.1" . "26.1")
+    ("1.5.2" . "26.1")
     ;; Whatever the Emacs version is this rst.el version ends up in.
     ))
 
@@ -2711,6 +2711,12 @@ indentation style:
   :group 'rst-toc)
 (rst-testcover-defcustom)
 
+(defconst rst-toc-link-keymap
+  (let ((map (make-sparse-keymap)))
+       (define-key map [mouse-1] 'rst-toc-mouse-follow-link)
+       map)
+  "Keymap used for links in TOC.")
+
 (defun rst-toc-insert (&optional max-level)
   ;; testcover: ok.
   "Insert the table of contents of the current section at the current column.
@@ -2772,12 +2778,6 @@ If KEYMAP use this as keymap property.  PFX is inserted before text."
     (unless (buffer-live-p (marker-buffer mrkr))
       (error "Buffer for this section was killed"))
     mrkr))
-
-(defconst rst-toc-link-keymap
-  (let ((map (make-sparse-keymap)))
-       (define-key map [mouse-1] 'rst-toc-mouse-follow-link)
-       map)
-  "Keymap used for links in TOC.")
 
 (defun rst-toc-insert-tree (stn buf style depth keymap tgt-stn)
   ;; testcover: ok.

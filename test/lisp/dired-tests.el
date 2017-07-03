@@ -63,11 +63,11 @@
          (dired-recursive-copies 'always)) ; Don't prompt me.
     (advice-add 'dired-query ; Don't ask confirmation to overwrite a file.
                 :override
-                (lambda (sym prompt &rest args) (setq dired-query t))
+                (lambda (_sym _prompt &rest _args) (setq dired-query t))
                 '((name . "advice-dired-query")))
     (advice-add 'completing-read ; Just return init.
                 :override
-                (lambda (prompt coll &optional pred match init hist def inherit keymap)
+                (lambda (_prompt _coll &optional _pred _match init _hist _def _inherit _keymap)
                   init)
                 '((name . "advice-completing-read")))
     (dired to)

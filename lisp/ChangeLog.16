@@ -7343,7 +7343,7 @@
 	(js-paren-indent-offset, js-square-indent-offset)
 	(js-curly-indent-offset): Add :safe (Bug#12257).
 
-2012-08-22  Edward O'Connor  <hober0@gmail.com>
+2012-08-22  Theresa O'Connor  <hober0@gmail.com>
 
 	* json.el (json-key-format): Add error properties.
 	(json-encode-key): New function.
@@ -22485,7 +22485,7 @@
 	* nxml/nxml-mode.el (nxml-electric-slash): Reindent when completion is
 	enabled.  Suggested by James Ahlborn <jahlborn@gmail.com> (bug#8704).
 
-2011-05-20  Nix  <nix@esperi.org.uk>
+2011-05-20  Nick Alcock  <nix@esperi.org.uk>
 
 	* files.el (basic-save-buffer-2):
 	Fix handling of break-hardlink-on-save with non-existent files.

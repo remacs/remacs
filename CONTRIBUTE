@@ -14,7 +14,7 @@ Briefly, the following shell commands build and run Emacs from scratch:
 	git config --global transfer.fsckObjects true
 	git clone git://git.sv.gnu.org/emacs.git
 	cd emacs
-	./autogen.sh
+	./autogen.sh all
 	./configure
 	make
 	src/emacs
@@ -131,9 +131,12 @@ them right the first time, so here are guidelines for formatting them:
 
 - Preferred form for several entries with the same content:
 
-	* lisp/help.el (view-lossage):
-	* lisp/kmacro.el (kmacro-edit-lossage):
-	* lisp/edmacro.el (edit-kbd-macro): Fix docstring, lossage is now 300.
+	* lisp/menu-bar.el (clipboard-yank, clipboard-kill-ring-save)
+	(clipboard-kill-region):
+	* lisp/eshell/esh-io.el (eshell-virtual-targets)
+	(eshell-clipboard-append):
+	Replace option gui-select-enable-clipboard with
+	select-enable-clipboard; renamed October 2014.  (Bug#25145)
 
   (Rather than anything involving "ditto" and suchlike.)
 
@@ -209,7 +212,11 @@ reasons.  These should be marked by including something like "Do not
 merge to master" or anything that matches gitmerge-skip-regexp (see
 admin/gitmerge.el) in the commit message.
 
-** Other process information
+** GNU ELPA
+
+This repository does not contain the Emacs Lisp package archive
+(elpa.gnu.org).  See admin/notes/elpa for how to access the GNU ELPA
+repository.
 
 ** Emacs Mailing lists.
 

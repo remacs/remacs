@@ -939,7 +939,7 @@ On a dumb terminal, switches between ASCII highlighting and no highlighting."
   (interactive)
   (ediff-barf-if-not-control-buffer)
   (if ediff-word-mode
-      (error "No fine differences in this mode"))
+      (user-error "No fine differences in this mode"))
   (cond ((eq ediff-auto-refine 'nix)
 	 (setq ediff-auto-refine 'on)
 	 (ediff-make-fine-diffs ediff-current-difference 'noforce)
@@ -956,9 +956,9 @@ On a dumb terminal, switches between ASCII highlighting and no highlighting."
 (defun ediff--check-ancestor-exists ()
   (or (ediff-buffer-live-p ediff-ancestor-buffer)
       (if ediff-merge-with-ancestor-job
-	  (error "Lost connection to ancestor buffer.  This shouldn't happen.  \
+	  (user-error "Lost connection to ancestor buffer.  This shouldn't happen.  \
 Please report this bug to bug-gnu-emacs@gnu.org")
-	(error "Not merging with ancestor"))))
+	(user-error "Not merging with ancestor"))))
 
 ;; Restore `ediff-show-ancestor' on exit.
 (defun ediff--restore-options-on-exit ()
@@ -1080,7 +1080,7 @@ of the current buffer."
 	      (save-window-excursion
 		(select-window (ediff-get-visible-buffer-window buf))
 		(command-execute toggle-ro-cmd)))
-	  (error "Don't know how to toggle read-only in buffer %S" buf))
+	  (user-error "Don't know how to toggle read-only in buffer %S" buf))
 
 	;; Check if we made the current buffer updatable, but its file is RO.
 	;; Signal a warning in this case.
@@ -1270,7 +1270,7 @@ This is especially useful when comparing buffers side-by-side."
   (interactive)
   (ediff-barf-if-not-control-buffer)
   (or (ediff-window-display-p)
-      (error "%sEmacs is not running as a window application"
+      (user-error "%sEmacs is not running as a window application"
 	     (if (featurep 'emacs) "" "X")))
   (ediff-recenter 'no-rehighlight) ; make sure buffs are displayed in windows
   (let ((ctl-buf ediff-control-buffer))
@@ -1300,7 +1300,7 @@ which see."
   (interactive)
   (let (window-setup-func)
     (or (ediff-window-display-p)
-	(error "%sEmacs is not running as a window application"
+	(user-error "%sEmacs is not running as a window application"
 	       (if (featurep 'emacs) "" "X")))
 
   (cond ((eq ediff-window-setup-function 'ediff-setup-windows-multiframe)
@@ -1346,7 +1346,7 @@ To change the default, set the variable `ediff-use-toolbar-p', which see."
   (if (featurep 'ediff-tbar)
       (progn
 	(or (ediff-window-display-p)
-	    (error "%sEmacs is not running as a window application"
+	    (user-error "%sEmacs is not running as a window application"
 		   (if (featurep 'emacs) "" "X")))
 	(if (ediff-use-toolbar-p)
 	    (ediff-kill-bottom-toolbar))
@@ -1401,7 +1401,7 @@ To change the default, set the variable `ediff-use-toolbar-p', which see."
   (interactive)
   (ediff-barf-if-not-control-buffer)
   (if (not ediff-merge-with-ancestor-job)
-      (error "This command makes sense only when merging with an ancestor"))
+      (user-error "This command makes sense only when merging with an ancestor"))
   (setq ediff-show-clashes-only (not ediff-show-clashes-only))
   (if ediff-show-clashes-only
       (message "Focus on regions where both buffers differ from the ancestor")
@@ -1793,7 +1793,7 @@ With a prefix argument, go forward that many differences."
 	(ediff-unselect-and-select-difference n)
 	) ; let
     (ediff-visible-region)
-    (error "At end of the difference list")))
+    (user-error "At end of the difference list")))
 
 (defun ediff-previous-difference (&optional arg)
   "Go to the previous difference.
@@ -1842,7 +1842,7 @@ With a prefix argument, go back that many differences."
 	(ediff-unselect-and-select-difference n)
 	) ; let
     (ediff-visible-region)
-    (error "At beginning of the difference list")))
+    (user-error "At beginning of the difference list")))
 
 ;; The diff number is as perceived by the user (i.e., 1+ the internal
 ;; representation)
@@ -2161,7 +2161,7 @@ ARG is a prefix argument.  If nil, copy the current difference region."
     (if (cdr saved-rec)
 	(setq saved-diff (cdr saved-rec))
       (if (> ediff-number-of-differences 0)
-	  (error "Nothing saved for diff %d in buffer %S" (1+ n) buf-type)
+	  (user-error "Nothing saved for diff %d in buffer %S" (1+ n) buf-type)
 	(error ediff-NO-DIFFERENCES)))
 
     (setq reg-beg (ediff-get-diff-posn buf-type 'beg n ediff-control-buffer))
@@ -3200,7 +3200,7 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 	(setq f (expand-file-name
 		 (file-name-nondirectory default-file) f)))
     (if (and no-dirs (file-directory-p f))
-	(error "File %s is a directory" f))
+	(user-error "File %s is a directory" f))
     f))
 
 ;; If PREFIX is given, then it is used as a prefix for the temp file
@@ -3277,16 +3277,14 @@ Hit \\[ediff-recenter] to reset the windows afterward."
     file))
 
 
-;; Quote metacharacters (using \) when executing diff in Unix, but not in
-;; EMX OS/2
+;; Quote metacharacters (using \) when executing diff in Unix.
 ;;(defun ediff-protect-metachars (str)
-;;  (or (memq system-type '(emx))
-;;      (let ((limit 0))
-;;	(while (string-match ediff-metachars str limit)
-;;	  (setq str (concat (substring str 0 (match-beginning 0))
-;;			    "\\"
-;;			    (substring str (match-beginning 0))))
-;;	  (setq limit (1+ (match-end 0))))))
+;;  (let ((limit 0))
+;;    (while (string-match ediff-metachars str limit)
+;;      (setq str (concat (substring str 0 (match-beginning 0))
+;;			"\\"
+;;			(substring str (match-beginning 0))))
+;;      (setq limit (1+ (match-end 0)))))
 ;;  str)
 
 ;; Make sure the current buffer (for a file) has the same contents as the
@@ -3309,7 +3307,7 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 		(error
 		 (beep)
 		 (message "Couldn't save %s" buffer-file-name)))
-	    (error "Buffer is out of sync for file %s" buffer-file-name))
+	    (user-error "Buffer is out of sync for file %s" buffer-file-name))
 	;; If buffer is not obsolete and is not modified, do nothing
 	nil)
     ;; If buffer is obsolete, offer to revert
@@ -3322,7 +3320,7 @@ Hit \\[ediff-recenter] to reset the windows afterward."
 	  (if file-magic
 	      (erase-buffer))
 	  (revert-buffer t t))
-      (error "Buffer out of sync for file %s" buffer-file-name))))
+      (user-error "Buffer out of sync for file %s" buffer-file-name))))
 
 ;; if there is another buffer visiting the file of the merge buffer, offer to
 ;; save and delete the buffer; else bark
@@ -3377,7 +3375,7 @@ Without an argument, it saves customized diff argument, if available
 		    ediff-custom-diff-buffer)
 		   ((ediff-buffer-live-p ediff-diff-buffer)
 		    ediff-diff-buffer)
-		   (t (error "Output from `diff' not found"))))
+		   (t (user-error "Output from `diff' not found"))))
 	    )
     (let ((window-min-height 2))
       (save-buffer))))
@@ -4059,7 +4057,7 @@ interfaces to several other packages and runs under Emacs and XEmacs,
 byte-compilation may produce output like this:
 
        While compiling toplevel forms in file ediff.el:
-	 ** reference to free variable pm-color-alist
+	 ** reference to free variable zzz
 	   ........................
        While compiling the end of the data:
 	 ** The following functions are not known to be defined:

@@ -53,8 +53,12 @@
 			    &rest body)
   "Set up temporary locations and variables for testing."
   (declare (indent 1) (debug (sexp body)))
-  `(let ((epg-tests-home-directory (make-temp-file "epg-tests-homedir" t))
-         (process-environment (cons "GPG_AGENT_INFO" process-environment)))
+  `(let* ((epg-tests-home-directory (make-temp-file "epg-tests-homedir" t))
+	  (process-environment
+	   (append
+	    (list "GPG_AGENT_INFO"
+		  (format "GNUPGHOME=%s" epg-tests-home-directory))
+	    process-environment)))
      (unwind-protect
 	 (let ((context (epg-make-context 'OpenPGP)))
            (setf (epg-context-program context)

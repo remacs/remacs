@@ -495,7 +495,6 @@
 
 (ert-deftest cl-lib-symbol-macrolet ()
   ;; bug#26325
-  :expected-result :failed
   (should (equal (cl-flet ((f (x) (+ x 5)))
                    (let ((x 5))
                      (f (+ x 6))))
@@ -518,5 +517,35 @@
 
 (ert-deftest cl-lib-symbol-macrolet-2 ()
   (should (equal (cl-lib-symbol-macrolet-4+5) (+ 4 5))))
+
+(ert-deftest cl-lib-defstruct-record ()
+  (cl-defstruct foo x)
+  (let ((x (make-foo :x 42)))
+    (should (recordp x))
+    (should (eq (type-of x) 'foo))
+    (should (eql (foo-x x) 42))))
+
+(ert-deftest old-struct ()
+  (cl-defstruct foo x)
+  (let ((x [cl-struct-foo])
+        (saved cl-old-struct-compat-mode))
+    (cl-old-struct-compat-mode -1)
+    (should (eq (type-of x) 'vector))
+
+    (cl-old-struct-compat-mode 1)
+    (let ((cl-struct-foo (cl--struct-get-class 'foo)))
+      (setf (symbol-function 'cl-struct-foo) :quick-object-witness-check)
+      (should (eq (type-of x) 'foo))
+      (should (eq (type-of [foo]) 'vector)))
+
+    (cl-old-struct-compat-mode (if saved 1 -1))))
+
+(ert-deftest cl-lib-old-struct ()
+  (let ((saved cl-old-struct-compat-mode))
+    (cl-old-struct-compat-mode -1)
+    (cl-struct-define 'foo "" 'cl-structure-object nil nil nil
+                      'cl-struct-foo-tags 'cl-struct-foo t)
+    (should cl-old-struct-compat-mode)
+    (cl-old-struct-compat-mode (if saved 1 -1))))
 
 ;;; cl-lib.el ends here
