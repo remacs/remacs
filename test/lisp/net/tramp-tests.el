@@ -3703,8 +3703,8 @@ process sentinels.  They shall not disturb each other."
 	 ;; On hydra, timings are bad.
 	 (timer-repeat
           (cond
-           ((getenv "NIX_STORE") 10
-            (t 1))))
+           ((getenv "NIX_STORE") 10)
+           (t 1)))
 	 ;; We must distinguish due to performance reasons.
 	 (timer-operation
 	  (cond
