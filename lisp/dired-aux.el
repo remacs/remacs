@@ -738,7 +738,7 @@ can be produced by `dired-get-marked-files', for example."
                ;; Drop all ? and * surrounded by spaces and `?`.
                (while (and (string-match regexp res)
                            (dired--star-or-qmark-p res str))
-                 (setq res (replace-match "" t t res 0)))
+                 (setq res (replace-match "" t t res 2)))
                (string-match regexp res))))
   (let* ((on-each (not (dired--star-or-qmark-p command "*" 'keep)))
 	 (no-subst (not (dired--star-or-qmark-p command "?" 'keep)))
