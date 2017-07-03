@@ -451,8 +451,15 @@ whitespace, opening parenthesis, or quote and leaves \\=` alone."
   :version "26.1"
   :type 'boolean :safe #'booleanp :group 'electricity)
 
-(defvar electric-quote-code-faces ()
-  "List of faces to treat as inline code in `text-mode'.")
+(defvar electric-quote-inhibit-functions ()
+  "List of functions that should inhibit electric quoting.
+When the variable `electric-quote-mode' is non-nil, Emacs will
+call these functions in order after the user has typed an \\=` or
+\\=' character.  If one of them returns non-nil, electric quote
+substitution is inhibited.  The functions are called after the
+\\=` or \\=' character has been inserted with point directly
+after the inserted character.  The functions in this hook should
+not move point or change the current buffer.")
 
 (defun electric-quote-post-self-insert-function ()
   "Function that `electric-quote-mode' adds to `post-self-insert-hook'.
@@ -460,7 +467,9 @@ This requotes when a quoting key is typed."
   (when (and electric-quote-mode
              (or (eq last-command-event ?\')
                  (and (not electric-quote-context-sensitive)
-                      (eq last-command-event ?\`))))
+                      (eq last-command-event ?\`)))
+             (not (run-hook-with-args-until-success
+                   'electric-quote-inhibit-functions)))
     (let ((start
            (if (and comment-start comment-use-syntax)
                (when (or electric-quote-comment electric-quote-string)
@@ -475,10 +484,6 @@ This requotes when a quoting key is typed."
                                          (syntax-ppss (1- (point)))))))))
              (and electric-quote-paragraph
                   (derived-mode-p 'text-mode)
-                  ;; FIXME: There should be a ‘cl-disjoint’ function.
-                  (null (cl-intersection (face-at-point nil 'multiple)
-                                         electric-quote-code-faces
-                                         :test #'eq))
                   ;; FIXME: Why is the next form there?  It’s never
                   ;; nil.
                   (or (eq last-command-event ?\`)

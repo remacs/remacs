@@ -697,16 +697,24 @@ baz\"\""
 (define-electric-pair-test electric-quote-markdown-in-text
   "" "'" :expected-string "’" :expected-point 2
   :modes '(text-mode)
-  :fixture-fn #'electric-quote-local-mode
-  :bindings '((electric-quote-code-faces font-lock-constant-face))
+  :fixture-fn (lambda ()
+                (electric-quote-local-mode)
+                (add-hook 'electric-quote-inhibit-functions
+                          (lambda ()
+                            (save-excursion (search-backward "`" nil t)))
+                          nil :local))
   :test-in-comments nil :test-in-strings nil)
 
 (define-electric-pair-test electric-quote-markdown-in-code
   #("`a`" 1 2 (face font-lock-constant-face)) "-'"
   :expected-string "`'a`" :expected-point 3
   :modes '(text-mode)
-  :fixture-fn #'electric-quote-local-mode
-  :bindings '((electric-quote-code-faces font-lock-constant-face))
+  :fixture-fn (lambda ()
+                (electric-quote-local-mode)
+                (add-hook 'electric-quote-inhibit-functions
+                          (lambda ()
+                            (save-excursion (search-backward "`" nil t)))
+                          nil :local))
   :test-in-comments nil :test-in-strings nil)
 
 (provide 'electric-tests)
