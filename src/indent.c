@@ -2077,11 +2077,24 @@ whether or not it is currently displayed in some window.  */)
 	  && !EQ (Vdisplay_line_numbers, Qvisual))
 	{
 	  struct text_pos wstart;
+	  bool saved_restriction = false;
+	  ptrdiff_t count1 = SPECPDL_INDEX ();
 	  SET_TEXT_POS_FROM_MARKER (wstart, w->start);
 	  itdata = bidi_shelve_cache ();
+	  /* We must start from window's start point, but it could be
+	     outside the accessible region.  */
+	  if (wstart.charpos < BEGV || wstart.charpos > ZV)
+	    {
+	      record_unwind_protect (save_restriction_restore,
+				     save_restriction_save ());
+	      Fwiden ();
+	      saved_restriction = true;
+	    }
 	  start_display (&it, w, wstart);
 	  move_it_by_lines (&it, 1);
 	  lnum_width = it.lnum_width;
+	  if (saved_restriction)
+	    unbind_to (count1, Qnil);
 	  bidi_unshelve_cache (itdata, 0);
 	}
       SET_TEXT_POS (pt, PT, PT_BYTE);
