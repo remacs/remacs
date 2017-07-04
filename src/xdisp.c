@@ -20938,7 +20938,10 @@ maybe_produce_line_number (struct it *it)
 	 default face for the blank field beyond ZV.  */
       if (beyond_zv)
 	tem_it.face_id = it->base_face_id;
-      else if (lnum_face_id != current_lnum_face_id && this_line == it->pt_lnum)
+      else if (lnum_face_id != current_lnum_face_id
+	       && (EQ (Vdisplay_line_numbers, Qvisual)
+		   ? this_line == 0
+		   : this_line == it->pt_lnum))
 	tem_it.face_id = current_lnum_face_id;
       else
 	tem_it.face_id = lnum_face_id;
