@@ -182,37 +182,66 @@ changes."
   (should (equal (help-function-arglist #'mod-test-sum)
                  '(arg1 arg2))))
 
-(ert-deftest module--test-assertions ()
-  "Check that -module-assertions work."
+(defmacro module--with-temp-directory (name &rest body)
+  "Bind NAME to the name of a temporary directory and evaluate BODY.
+NAME must be a symbol.  Delete the temporary directory after BODY
+exits normally or non-locally.  NAME will be bound to the
+directory name (not the directory file name) of the temporary
+directory."
+  (declare (indent 1))
+  (cl-check-type name symbol)
+  `(let ((,name (file-name-as-directory
+                 (make-temp-file "emacs-module-test" :directory))))
+     (unwind-protect
+         (progn ,@body)
+       (delete-directory ,name :recursive))))
+
+(defmacro module--test-assertion (pattern &rest body)
+  "Test that PATTERN matches the assertion triggered by BODY.
+Run Emacs as a subprocess, load the test module `mod-test-file',
+and evaluate BODY.  Verify that Emacs aborts and prints a module
+assertion message that matches PATTERN.  PATTERN is evaluated and
+must evaluate to a regular expression string."
+  (declare (indent 1))
+  ;; To contain any core dumps.
+  `(module--with-temp-directory tempdir
+     (with-temp-buffer
+       (let* ((default-directory tempdir)
+              (status (call-process mod-test-emacs nil t nil
+                                    "-batch" "-Q" "-module-assertions" "-eval"
+                                    ,(prin1-to-string
+                                      `(progn
+                                         (require 'mod-test ,mod-test-file)
+                                         ,@body)))))
+         (should (stringp status))
+         ;; eg "Aborted" or "Abort trap: 6"
+         (should (string-prefix-p "Abort" status))
+         (search-backward "Emacs module assertion: ")
+         (goto-char (match-end 0))
+         (should (string-match-p ,pattern
+                                 (buffer-substring-no-properties
+                                  (point) (point-max))))))))
+
+(ert-deftest module--test-assertions--load-non-live-object ()
+  "Check that -module-assertions verify that non-live objects
+aren’t accessed."
   (skip-unless (file-executable-p mod-test-emacs))
   ;; This doesn’t yet cause undefined behavior.
   (should (eq (mod-test-invalid-store) 123))
-  ;; To contain any core dumps.
-  (let ((tempdir (make-temp-file "emacs-module-test" t)))
-    (unwind-protect
-        (with-temp-buffer
-          (should (string-match-p
-                   "Abort" ; eg "Aborted" or "Abort trap: 6"
-                   (let ((default-directory tempdir))
-                     (call-process mod-test-emacs nil t nil
-                                   "-batch" "-Q" "-module-assertions" "-eval"
-                                   (prin1-to-string
-                                    `(progn
-                                       (require 'mod-test ,mod-test-file)
-                                       ;; Storing and reloading a local
-                                       ;; value causes undefined behavior,
-                                       ;; which should be detected by the
-                                       ;; module assertions.
-                                       (mod-test-invalid-store)
-                                       (mod-test-invalid-load)))))))
-          (search-backward "Emacs module assertion:")
-          (should (string-match-p (rx bos "Emacs module assertion: "
-                                      "Emacs value not found in "
-                                      (+ digit) " values of "
-                                      (+ digit) " environments" eos)
-                                  (buffer-substring-no-properties
-                                   (line-beginning-position)
-                                   (line-end-position)))))
-      (delete-directory tempdir t))))
+  (module--test-assertion (rx "Emacs value not found in "
+                              (+ digit) " values of "
+                              (+ digit) " environments\n" eos)
+    ;; Storing and reloading a local value causes undefined behavior,
+    ;; which should be detected by the module assertions.
+    (mod-test-invalid-store)
+    (mod-test-invalid-load)))
+
+(ert-deftest module--test-assertions--call-emacs-from-gc ()
+  "Check that -module-assertions prevents calling Emacs functions
+during garbage collection."
+  (skip-unless (file-executable-p mod-test-emacs))
+  (module--test-assertion
+      (rx "Module function called during garbage collection\n" eos)
+    (mod-test-invalid-finalizer)))
 
 ;;; emacs-module-tests.el ends here

@@ -817,9 +817,11 @@ in_current_thread (void)
 static void
 module_assert_thread (void)
 {
-  if (! module_assertions || in_current_thread ())
+  if (! module_assertions || (in_current_thread () && ! gc_in_progress))
     return;
-  module_abort ("Module function called from outside the current Lisp thread");
+  module_abort (gc_in_progress ?
+                "Module function called during garbage collection" :
+                "Module function called from outside the current Lisp thread");
 }
 
 static void
