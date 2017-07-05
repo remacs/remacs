@@ -367,6 +367,8 @@ to it is returned.  This function does not modify the point or the mark."
 	  (t (error "Unknown buffer position requested: %s" position))))
        (point))))
 
+(defvar lookup-syntax-properties)       ;XEmacs.
+
 (eval-and-compile
   ;; Constant to decide at compilation time whether to use category
   ;; properties.  Currently (2010-03) they're available only on GNU Emacs.
@@ -1831,8 +1833,6 @@ non-nil, a caret is prepended to invert the set."
 ;; Figure out what features this Emacs has
 
 (cc-bytecomp-defvar open-paren-in-column-0-is-defun-start)
-
-(defvar lookup-syntax-properties)       ;XEmacs.
 
 (defconst c-emacs-features
   (let (list)
