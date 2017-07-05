@@ -19,10 +19,10 @@ use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE,
-                 EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp, Qsymbolp,
-                 Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp, circular_list,
-                 internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp, Qwholenump, Qvectorp,
-                 SYMBOL_NAME, PseudovecType, lispsym};
+                 EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
+                 Qsymbolp, Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp,
+                 circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp,
+                 Qwholenump, Qvectorp, SYMBOL_NAME, PseudovecType, lispsym};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -160,7 +160,9 @@ impl LispObject {
     #[inline]
     pub fn as_symbol(&self) -> Option<LispSymbolRef> {
         if self.is_symbol() {
-            Some(LispSymbolRef::new(unsafe { mem::transmute(self.symbol_ptr_value()) })) 
+            Some(LispSymbolRef::new(
+                unsafe { mem::transmute(self.symbol_ptr_value()) },
+            ))
         } else {
             None
         }
@@ -169,7 +171,7 @@ impl LispObject {
     #[inline]
     pub fn as_symbol_or_error(&self) -> LispSymbolRef {
         if self.is_symbol() {
-            LispSymbolRef::new(unsafe { mem::transmute(self.symbol_ptr_value()) } )
+            LispSymbolRef::new(unsafe { mem::transmute(self.symbol_ptr_value()) })
         } else {
             unsafe { wrong_type_argument(Qsymbolp, self.to_raw()) }
         }
@@ -178,8 +180,12 @@ impl LispObject {
     #[inline]
     pub fn as_string_or_symbol(string: LispObject) -> LispStringRef {
         match string.as_symbol() {
-            Some(sym) => sym.symbol_name().as_string().expect("Expected a symbol name?"),
-            None => string.as_string_or_error()
+            Some(sym) => {
+                sym.symbol_name().as_string().expect(
+                    "Expected a symbol name?",
+                )
+            }
+            None => string.as_string_or_error(),
         }
     }
 
@@ -187,7 +193,7 @@ impl LispObject {
     fn symbol_ptr_value(&self) -> EmacsInt {
         let ptr_value = if USE_LSB_TAG {
             self.to_raw() as EmacsInt
-        } else { 
+        } else {
             self.get_untaggedptr() as EmacsInt
         };
 

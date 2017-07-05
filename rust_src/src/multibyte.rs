@@ -108,7 +108,7 @@ impl LispStringRef {
 
 pub struct LispStringRefIterator<'a> {
     string_ref: &'a LispStringRef,
-    cur: usize
+    cur: usize,
 }
 
 // Substitue for FETCH_STRING_CHAR_ADVANCE
@@ -128,7 +128,7 @@ impl<'a> Iterator for LispStringRefIterator<'a> {
                 codepoint = ref_slice[self.cur] as Codepoint;
                 self.cur += 1;
             }
-            
+
             Some((codepoint, point))
         } else {
             None
@@ -140,7 +140,7 @@ impl LispStringRef {
     pub fn iter(&self) -> LispStringRefIterator {
         LispStringRefIterator {
             string_ref: self,
-            cur: 0
+            cur: 0,
         }
     }
 }
