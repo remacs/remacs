@@ -115,7 +115,7 @@
 
 ;; For Emacs < 22.2.
 (eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest r))))
+  (unless (fboundp 'declare-function) (defmacro declare-function (&rest _))))
 
 (eval-when-compile
   (let ((load-path
@@ -245,12 +245,12 @@ the evaluated constant value at compile time."
     (unless (listp (car-safe ops))
       (setq ops (list ops)))
     (cond ((eq opgroup-filter t)
-	   (setq opgroup-filter (lambda (opgroup) t)))
+	   (setq opgroup-filter (lambda (_opgroup) t)))
 	  ((not (functionp opgroup-filter))
 	   (setq opgroup-filter `(lambda (opgroup)
 				   (memq opgroup ',opgroup-filter)))))
     (cond ((eq op-filter t)
-	   (setq op-filter (lambda (op) t)))
+	   (setq op-filter (lambda (_op) t)))
 	  ((stringp op-filter)
 	   (setq op-filter `(lambda (op)
 			      (string-match ,op-filter op)))))
@@ -2852,14 +2852,7 @@ Note that Java specific rules are currently applied to tell this from
 			    left-assoc
 			    right-assoc
 			    right-assoc-sequence)
-			  t))
-
-	   (unambiguous-prefix-ops (c--set-difference nonkeyword-prefix-ops
-						      in-or-postfix-ops
-						      :test 'string-equal))
-	   (ambiguous-prefix-ops (c--intersection nonkeyword-prefix-ops
-						  in-or-postfix-ops
-						  :test 'string-equal)))
+			  t)))
 
       (concat
        "\\("

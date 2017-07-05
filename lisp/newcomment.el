@@ -815,7 +815,7 @@ N defaults to 0.
 If N is `re', a regexp is returned instead, that would match
 the string for any N."
   (setq n (or n 0))
-  (when (and (stringp str) (not (string= "" str)))
+  (when (and (stringp str) (string-match "\\S-" str))
     ;; Separate the actual string from any leading/trailing padding
     (string-match "\\`\\s-*\\(.*?\\)\\s-*\\'" str)
     (let ((s (match-string 1 str))	;actual string
