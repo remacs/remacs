@@ -3739,6 +3739,8 @@ process sentinels.  They shall not disturb each other."
 
             ;; Open asynchronous processes.  Set process filter and sentinel.
             (dolist (buf buffers)
+	      ;; Activate timer.
+	      (sit-for 0.01 'nodisp)
               (let ((proc
                      (start-file-process-shell-command
                       (buffer-name buf) buf
@@ -3768,6 +3770,8 @@ process sentinels.  They shall not disturb each other."
             ;; with regular operation.
             (let ((buffers (copy-sequence buffers)))
               (while buffers
+		;; Activate timer.
+		(sit-for 0.01 'nodisp)
                 (let* ((buf (nth (random (length buffers)) buffers))
                        (proc (get-buffer-process buf))
                        (file (process-get proc 'foo))
@@ -3808,31 +3812,34 @@ process sentinels.  They shall not disturb each other."
   "Check that Tramp does not fail due to recursive load."
   (skip-unless (tramp--test-enabled))
 
-  (dolist (code
-	   (list
-	    (format "(expand-file-name %S)" tramp-test-temporary-file-directory)
-	    (format
-	     "(let ((default-directory %S)) (expand-file-name %S))"
-	     tramp-test-temporary-file-directory
-	     temporary-file-directory)))
-    (should-not
-     (string-match
-      "Recursive load"
-      (shell-command-to-string
-       (format
-	"%s -batch -Q -L %s --eval %s"
-	(expand-file-name invocation-name invocation-directory)
-	(mapconcat 'shell-quote-argument load-path " -L ")
-	(shell-quote-argument code)))))))
+  (let ((default-directory (expand-file-name temporary-file-directory)))
+    (dolist (code
+	     (list
+	      (format
+	       "(expand-file-name %S)" tramp-test-temporary-file-directory)
+	      (format
+	       "(let ((default-directory %S)) (expand-file-name %S))"
+	       tramp-test-temporary-file-directory
+	       temporary-file-directory)))
+      (should-not
+       (string-match
+	"Recursive load"
+	(shell-command-to-string
+	 (format
+	  "%s -batch -Q -L %s --eval %s"
+	  (expand-file-name invocation-name invocation-directory)
+	  (mapconcat 'shell-quote-argument load-path " -L ")
+	  (shell-quote-argument code))))))))
 
 (ert-deftest tramp-test38-remote-load-path ()
   "Check that Tramp autoloads its packages with remote `load-path'."
   ;; `tramp-cleanup-all-connections' is autoloaded from tramp-cmds.el.
   ;; It shall still work, when a remote file name is in the
   ;; `load-path'.
-  (let ((code
-	 "(let ((force-load-messages t)\
-		(load-path (cons \"/foo:bar:\" load-path)))\
+  (let ((default-directory (expand-file-name temporary-file-directory))
+	(code
+	 "(let ((force-load-messages t) \
+		(load-path (cons \"/foo:bar:\" load-path))) \
 	    (tramp-cleanup-all-connections))"))
     (should
      (string-match
