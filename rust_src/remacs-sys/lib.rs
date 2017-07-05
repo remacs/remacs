@@ -676,9 +676,6 @@ pub union SymbolUnion {
 /// This struct has 4 bytes of padding, representing the bitfield that 
 /// lives at the top of a Lisp_Symbol. The first 10 bits of this field are
 /// used
-
-// @TODO check the value of name post and pre transmutation, it seems that name is surviving but
-// may not be the correct value
 #[repr(C)]
 pub struct Lisp_Symbol {
     pub symbol_bitfield: u32,
@@ -732,7 +729,8 @@ extern "C" {
     pub static Qfont_spec: Lisp_Object;
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
-
+    pub static lispsym: Lisp_Symbol;
+    
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fget_buffer(buffer_or_name: Lisp_Object) -> Lisp_Object;
