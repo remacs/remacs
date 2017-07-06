@@ -15,3 +15,8 @@ impl LispSymbolRef {
 fn symbolp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_symbol())
 }
+
+#[lisp_fn]
+fn symbol_name(symbol: LispObject) -> LispObject {
+    symbol.as_symbol_or_error().symbol_name()
+}
