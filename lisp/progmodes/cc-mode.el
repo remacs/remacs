@@ -927,7 +927,7 @@ Note that the style variables are always made local to the buffer."
       (c-clear-char-property-with-value
        m-beg (point) 'syntax-table '(1)))))
 
-(defun c-extend-region-for-CPP (beg end)
+(defun c-extend-region-for-CPP (_beg _end)
   ;; Adjust `c-new-BEG', `c-new-END' respectively to the beginning and end of
   ;; any preprocessor construct they may be in.
   ;;
@@ -951,7 +951,7 @@ Note that the style variables are always made local to the buffer."
   (when (> (point) c-new-END)
     (setq c-new-END (min (point) (c-determine-+ve-limit 500 c-new-END)))))
 
-(defun c-depropertize-new-text (beg end old-len)
+(defun c-depropertize-new-text (beg end _old-len)
   ;; Remove from the new text in (BEG END) any and all text properties which
   ;; might interfere with CC Mode's proper working.
   ;;
@@ -970,7 +970,7 @@ Note that the style variables are always made local to the buffer."
       (c-clear-char-properties beg end 'c-type)
       (c-clear-char-properties beg end 'c-awk-NL-prop))))
 
-(defun c-extend-font-lock-region-for-macros (begg endd old-len)
+(defun c-extend-font-lock-region-for-macros (_begg endd _old-len)
   ;; Extend the region (c-new-BEG c-new-END) to cover all (possibly changed)
   ;; preprocessor macros; The return value has no significance.
   ;;
@@ -1015,7 +1015,7 @@ Note that the style variables are always made local to the buffer."
 	      t)
 	     (t nil)))))))
 
-(defun c-neutralize-syntax-in-and-mark-CPP (begg endd old-len)
+(defun c-neutralize-syntax-in-and-mark-CPP (_begg _endd _old-len)
   ;; (i) "Neutralize" every preprocessor line wholly or partially in the
   ;; changed region.  "Restore" lines which were CPP lines before the change
   ;; and are no longer so.
@@ -1197,7 +1197,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;;
   ;; This function is called exclusively as a before-change function via the
   ;; variable `c-get-state-before-change-functions'.
-  (c-save-buffer-state (p-limit limits found)
+  (c-save-buffer-state (p-limit found)
     ;; Special consideraton for deleting \ from '\''.
     (if (and (> end beg)
 	     (eq (char-before end) ?\\)
@@ -1266,7 +1266,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
        'c-digit-separator t
        ?'))))
 
-(defun c-parse-quotes-after-change (beg end old-len)
+(defun c-parse-quotes-after-change (_beg _end _old-len)
   ;; This function applies syntax-table properties (value '(1)) and
   ;; c-digit-separator properties as needed to 's within the range (c-new-BEG
   ;; c-new-END).  This operation is performed even within strings and
@@ -1274,7 +1274,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;;
   ;; This function is called exclusively as an after-change function via the
   ;; variable `c-before-font-lock-functions'.
-  (c-save-buffer-state (p-limit limits num-beg num-end clear-from-BEG-to)
+  (c-save-buffer-state (num-beg num-end)
     ;; Apply the needed syntax-table and c-digit-separator text properties to
     ;; quotes.
     (goto-char c-new-BEG)

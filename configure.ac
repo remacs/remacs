@@ -957,6 +957,7 @@ AS_IF([test $gl_gcc_warnings = no],
   # This part is merely for shortening the command line,
   # since -Wno-FOO needs to be added below regardless.
   nw="$nw -Wmissing-field-initializers"
+  nw="$nw -Woverride-init"
   nw="$nw -Wtype-limits"
   nw="$nw -Wunused-parameter"
 
@@ -978,6 +979,7 @@ AS_IF([test $gl_gcc_warnings = no],
   done
   gl_WARN_ADD([-Wredundant-decls])     # Prefer this, as we don't use Bison.
   gl_WARN_ADD([-Wno-missing-field-initializers]) # We need this one
+  gl_WARN_ADD([-Wno-override-init])    # More trouble than it is worth
   gl_WARN_ADD([-Wno-sign-compare])     # Too many warnings for now
   gl_WARN_ADD([-Wno-type-limits])      # Too many warnings for now
   gl_WARN_ADD([-Wno-unused-parameter]) # Too many warnings for now
@@ -1005,9 +1007,10 @@ AS_IF([test $gl_gcc_warnings = no],
   ])
  ])
 
-# clang is unduly picky about these regardless of whether
+# clang is picky about these regardless of whether
 # --enable-gcc-warnings is specified.
 if test "$emacs_cv_clang" = yes; then
+  gl_WARN_ADD([-Wno-initializer-overrides])
   gl_WARN_ADD([-Wno-tautological-compare])
   gl_WARN_ADD([-Wno-tautological-constant-out-of-range-compare])
 fi

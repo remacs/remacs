@@ -602,6 +602,7 @@ font-lock keywords will not be case sensitive."
   ;;(set (make-local-variable 'adaptive-fill-mode) nil)
   (setq-local indent-line-function 'lisp-indent-line)
   (setq-local indent-region-function 'lisp-indent-region)
+  (setq-local comment-indent-function #'lisp-comment-indent)
   (setq-local outline-regexp ";;;\\(;* [^ \t\n]\\|###autoload\\)\\|(")
   (setq-local outline-level 'lisp-outline-level)
   (setq-local add-log-current-defun-function #'lisp-current-defun-name)
@@ -735,9 +736,15 @@ or to switch back to an existing one."
 
 (autoload 'lisp-eval-defun "inf-lisp" nil t)
 
-;; May still be used by some external Lisp-mode variant.
-(define-obsolete-function-alias 'lisp-comment-indent
-    'comment-indent-default "22.1")
+(defun lisp-comment-indent ()
+  "Like `comment-indent-default', but don't put space after open paren."
+  (let ((pt (point)))
+    (skip-syntax-backward " ")
+    (if (eq (preceding-char) ?\()
+        (cons (current-column) (current-column))
+      (goto-char pt)
+      (comment-indent-default))))
+
 (define-obsolete-function-alias 'lisp-mode-auto-fill 'do-auto-fill "23.1")
 
 (defcustom lisp-indent-offset nil

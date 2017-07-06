@@ -33,7 +33,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <unistd.h>
 #include <limits.h>
 #include <sys/types.h>
-#include <c-ctype.h>
 #include "lisp.h"
 #include "character.h"
 #include "charset.h"
@@ -434,14 +433,15 @@ read_hex (FILE *fp, bool *eof, bool *overflow)
       return 0;
     }
   n = 0;
-  while (c_isxdigit (c = getc_unlocked (fp)))
+  while (true)
     {
+      c = getc_unlocked (fp);
+      int digit = char_hexdigit (c);
+      if (digit < 0)
+	break;
       if (INT_LEFT_SHIFT_OVERFLOW (n, 4))
 	*overflow = 1;
-      n = ((n << 4)
-	   | (c - ('0' <= c && c <= '9' ? '0'
-		   : 'A' <= c && c <= 'F' ? 'A' - 10
-		   : 'a' - 10)));
+      n = (n << 4) + digit;
     }
   if (c != EOF)
     ungetc (c, fp);

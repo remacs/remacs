@@ -87,7 +87,7 @@ use c-constant-symbol instead."
   :value nil
   :tag "Symbol"
   :format "%t: %v\n%d"
-  :match (lambda (widget value) (symbolp value))
+  :match (lambda (_widget value) (symbolp value))
   :value-to-internal
   (lambda (widget value)
     (let ((s (if (symbolp value)
@@ -98,7 +98,7 @@ use c-constant-symbol instead."
 	  (setq s (concat s (make-string (- l (length s)) ?\ ))))
       s))
   :value-to-external
-  (lambda (widget value)
+  (lambda (_widget value)
     (if (stringp value)
 	(intern (progn
 		  (string-match "\\`[^ ]*" value)
@@ -109,14 +109,14 @@ use c-constant-symbol instead."
   "An integer or the value nil."
   :value nil
   :tag "Optional integer"
-  :match (lambda (widget value) (or (integerp value) (null value))))
+  :match (lambda (_widget value) (or (integerp value) (null value))))
 
 (define-widget 'c-symbol-list 'sexp
   "A single symbol or a list of symbols."
   :tag "Symbols separated by spaces"
   :validate 'widget-field-validate
   :match
-  (lambda (widget value)
+  (lambda (_widget value)
     (or (symbolp value)
 	(catch 'ok
 	  (while (listp value)
@@ -125,7 +125,7 @@ use c-constant-symbol instead."
 	    (setq value (cdr value)))
 	  (null value))))
   :value-to-internal
-  (lambda (widget value)
+  (lambda (_widget value)
     (cond ((null value)
 	   "")
 	  ((symbolp value)
@@ -138,7 +138,7 @@ use c-constant-symbol instead."
 	  (t
 	   value)))
   :value-to-external
-  (lambda (widget value)
+  (lambda (_widget value)
     (if (stringp value)
 	(let (list end)
 	  (while (string-match "\\S +" value end)

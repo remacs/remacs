@@ -2128,9 +2128,7 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 				  (unwind-protect
 				      (let ((tramp-locker t))
 					(apply foreign operation args))
-				    ;; Give timers a chance.
-				    (unless (setq tramp-locked tl)
-				      (sit-for 0.001 'nodisp)))))))
+				    (setq tramp-locked tl))))))
 		      (cond
 		       ((eq result 'non-essential)
 			(tramp-message

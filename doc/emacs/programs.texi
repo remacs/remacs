@@ -1146,9 +1146,12 @@ comment or for aligning an existing comment.  It is set differently by
 various major modes.  The function is called with no arguments, but with
 point at the beginning of the comment, or at the end of a line if a new
 comment is to be inserted.  It should return the column in which the
-comment ought to start.  For example, in Lisp mode, the indent hook
-function bases its decision on how many semicolons begin an existing
-comment, and on the code in the preceding lines.
+comment ought to start.  For example, the default hook function bases
+its decision on how many comment characters begin an existing comment.
+
+Emacs also tries to align comments on adjacent lines.  To override
+this, the function may return a cons of two (possibly equal) integers
+to indicate an acceptable range of indentation.
 
 @node Documentation
 @section Documentation Lookup

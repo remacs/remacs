@@ -2426,25 +2426,13 @@ read_escape (Lisp_Object readcharfun, bool stringp)
 	while (1)
 	  {
 	    c = READCHAR;
-	    if (c >= '0' && c <= '9')
-	      {
-		i *= 16;
-		i += c - '0';
-	      }
-	    else if ((c >= 'a' && c <= 'f')
-		     || (c >= 'A' && c <= 'F'))
-	      {
-		i *= 16;
-		if (c >= 'a' && c <= 'f')
-		  i += c - 'a' + 10;
-		else
-		  i += c - 'A' + 10;
-	      }
-	    else
+	    int digit = char_hexdigit (c);
+	    if (digit < 0)
 	      {
 		UNREAD (c);
 		break;
 	      }
+	    i = (i << 4) + digit;
 	    /* Allow hex escapes as large as ?\xfffffff, because some
 	       packages use them to denote characters with modifiers.  */
 	    if ((CHAR_META | (CHAR_META - 1)) < i)
@@ -2474,11 +2462,10 @@ read_escape (Lisp_Object readcharfun, bool stringp)
 	    c = READCHAR;
 	    /* `isdigit' and `isalpha' may be locale-specific, which we don't
 	       want.  */
-	    if      (c >= '0' && c <= '9')  i = (i << 4) + (c - '0');
-	    else if (c >= 'a' && c <= 'f')  i = (i << 4) + (c - 'a') + 10;
-            else if (c >= 'A' && c <= 'F')  i = (i << 4) + (c - 'A') + 10;
-	    else
+	    int digit = char_hexdigit (c);
+	    if (digit < 0)
 	      error ("Non-hex digit used for Unicode escape");
+	    i = (i << 4) + digit;
 	  }
 	if (i > 0x10FFFF)
 	  error ("Non-Unicode character: 0x%x", i);
