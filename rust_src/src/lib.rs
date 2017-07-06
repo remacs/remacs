@@ -81,6 +81,7 @@ pub use objects::Fequal_including_properties;
 pub use symbols::Fsymbolp;
 pub use symbols::Fsymbol_name;
 pub use symbols::Ffboundp;
+pub use symbols::Fsymbol_function;
 pub use strings::Fstring_equal;
 pub use strings::Fstring_as_multibyte;
 pub use strings::Fstring_to_multibyte;
@@ -150,6 +151,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*symbols::Ssymbolp);
         defsubr(&*symbols::Ssymbol_name);
         defsubr(&*symbols::Sfboundp);
+        defsubr(&*symbols::Ssymbol_function);
         defsubr(&*lists::Sconsp);
         defsubr(&*lists::Ssetcar);
         defsubr(&*lists::Ssetcdr);
