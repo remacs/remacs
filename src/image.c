@@ -2444,7 +2444,8 @@ static struct image_type xbm_type =
 enum xbm_token
 {
   XBM_TK_IDENT = 256,
-  XBM_TK_NUMBER
+  XBM_TK_NUMBER,
+  XBM_TK_OVERFLOW
 };
 
 
@@ -2586,6 +2587,7 @@ xbm_scan (char **s, char *end, char *sval, int *ival)
   else if (c_isdigit (c))
     {
       int value = 0, digit;
+      bool overflow = false;
 
       if (c == '0' && *s < end)
 	{
@@ -2598,15 +2600,19 @@ xbm_scan (char **s, char *end, char *sval, int *ival)
 		  digit = char_hexdigit (c);
 		  if (digit < 0)
 		    break;
-		  value = 16 * value + digit;
+		  overflow |= INT_MULTIPLY_WRAPV (value, 16, &value);
+		  value += digit;
 		}
 	    }
-	  else if (c_isdigit (c))
+	  else if ('0' <= c && c <= '7')
 	    {
 	      value = c - '0';
 	      while (*s < end
-		     && (c = *(*s)++, c_isdigit (c)))
-		value = 8 * value + c - '0';
+		     && (c = *(*s)++, '0' <= c && c <= '7'))
+		{
+		  overflow |= INT_MULTIPLY_WRAPV (value, 8, &value);
+		  value += c - '0';
+		}
 	    }
 	}
       else
@@ -2614,13 +2620,16 @@ xbm_scan (char **s, char *end, char *sval, int *ival)
 	  value = c - '0';
 	  while (*s < end
 		 && (c = *(*s)++, c_isdigit (c)))
-	    value = 10 * value + c - '0';
+	    {
+	      overflow |= INT_MULTIPLY_WRAPV (value, 10, &value);
+	      overflow |= INT_ADD_WRAPV (value, c - '0', &value);
+	    }
 	}
 
       if (*s < end)
 	*s = *s - 1;
       *ival = value;
-      return XBM_TK_NUMBER;
+      return overflow ? XBM_TK_OVERFLOW : XBM_TK_NUMBER;
     }
   else if (c_isalpha (c) || c == '_')
     {
