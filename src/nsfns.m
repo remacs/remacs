@@ -1592,7 +1592,7 @@ ns_run_file_dialog (void)
 }
 
 #ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_9
+#if MAC_OS_X_VERSION_MAX_ALLOWED > 1090
 #define MODAL_OK_RESPONSE NSModalResponseOK
 #endif
 #endif
@@ -2512,52 +2512,61 @@ ns_screen_name (CGDirectDisplayID did)
 {
   char *name = NULL;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
-  mach_port_t masterPort;
-  io_iterator_t it;
-  io_object_t obj;
-
-  // CGDisplayIOServicePort is deprecated.  Do it another (harder) way.
-
-  if (IOMasterPort (MACH_PORT_NULL, &masterPort) != kIOReturnSuccess
-      || IOServiceGetMatchingServices (masterPort,
-                                       IOServiceMatching ("IONDRVDevice"),
-                                       &it) != kIOReturnSuccess)
-    return name;
-
-  /* Must loop until we find a name.  Many devices can have the same unit
-     number (represents different GPU parts), but only one has a name.  */
-  while (! name && (obj = IOIteratorNext (it)))
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1090
+  if (CGDisplayIOServicePort == NULL)
+#endif
     {
-      CFMutableDictionaryRef props;
-      const void *val;
+      mach_port_t masterPort;
+      io_iterator_t it;
+      io_object_t obj;
 
-      if (IORegistryEntryCreateCFProperties (obj,
-                                             &props,
-                                             kCFAllocatorDefault,
-                                             kNilOptions) == kIOReturnSuccess
-          && props != nil
-          && (val = CFDictionaryGetValue(props, @"IOFBDependentIndex")))
+      /* CGDisplayIOServicePort is deprecated.  Do it another (harder) way.
+
+         Is this code OK for macOS < 10.9, and GNUstep?  I suspect it is,
+         in which case is it worth keeping the other method in here? */
+
+      if (IOMasterPort (MACH_PORT_NULL, &masterPort) != kIOReturnSuccess
+          || IOServiceGetMatchingServices (masterPort,
+                                           IOServiceMatching ("IONDRVDevice"),
+                                           &it) != kIOReturnSuccess)
+        return name;
+
+      /* Must loop until we find a name.  Many devices can have the same unit
+         number (represents different GPU parts), but only one has a name.  */
+      while (! name && (obj = IOIteratorNext (it)))
         {
-          unsigned nr = [(NSNumber *)val unsignedIntegerValue];
-          if (nr == CGDisplayUnitNumber (did))
-            name = ns_get_name_from_ioreg (obj);
+          CFMutableDictionaryRef props;
+          const void *val;
+
+          if (IORegistryEntryCreateCFProperties (obj,
+                                                 &props,
+                                                 kCFAllocatorDefault,
+                                                 kNilOptions) == kIOReturnSuccess
+              && props != nil
+              && (val = CFDictionaryGetValue(props, @"IOFBDependentIndex")))
+            {
+              unsigned nr = [(NSNumber *)val unsignedIntegerValue];
+              if (nr == CGDisplayUnitNumber (did))
+                name = ns_get_name_from_ioreg (obj);
+            }
+
+          CFRelease (props);
+          IOObjectRelease (obj);
         }
 
-      CFRelease (props);
-      IOObjectRelease (obj);
+      IOObjectRelease (it);
     }
-
-  IOObjectRelease (it);
-
-#else
-
-  name = ns_get_name_from_ioreg (CGDisplayIOServicePort (did));
-
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1090
+  else
+#endif
+#endif /* #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090 */
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1090
+    name = ns_get_name_from_ioreg (CGDisplayIOServicePort (did));
 #endif
   return name;
 }
-#endif
+#endif /* NS_IMPL_COCOA */
 
 static Lisp_Object
 ns_make_monitor_attribute_list (struct MonitorInfo *monitors,

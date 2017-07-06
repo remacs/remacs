@@ -2869,11 +2869,19 @@ macfont_draw (struct glyph_string *s, int from, int to, int x, int y,
              and synthetic bold looks thinner on such environments.
              Apple says there are no plans to address this issue
              (rdar://11644870) currently.  So we add a workaround.  */
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
-          CGContextSetLineWidth (context, synthetic_bold_factor * font_size
-                                 * [[FRAME_NS_VIEW(f) window] backingScaleFactor]);
-#else
-          CGContextSetLineWidth (context, synthetic_bold_factor * font_size);
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+          if ([[FRAME_NS_VIEW(f) window] respondsToSelector:
+                                           @selector(backingScaleFactor)])
+#endif
+            CGContextSetLineWidth (context, synthetic_bold_factor * font_size
+                                   * [[FRAME_NS_VIEW(f) window] backingScaleFactor]);
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+          else
+#endif
+#endif
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+            CGContextSetLineWidth (context, synthetic_bold_factor * font_size);
 #endif
           CG_SET_STROKE_COLOR_WITH_FACE_FOREGROUND (context, face, f);
         }

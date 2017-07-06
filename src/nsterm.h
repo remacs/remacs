@@ -25,30 +25,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "sysselect.h"
 
 #ifdef HAVE_NS
-
-#ifdef NS_IMPL_COCOA
-#ifndef MAC_OS_X_VERSION_10_6
-#define MAC_OS_X_VERSION_10_6 1060
-#endif
-#ifndef MAC_OS_X_VERSION_10_7
-#define MAC_OS_X_VERSION_10_7 1070
-#endif
-#ifndef MAC_OS_X_VERSION_10_8
-#define MAC_OS_X_VERSION_10_8 1080
-#endif
-#ifndef MAC_OS_X_VERSION_10_9
-#define MAC_OS_X_VERSION_10_9 1090
-#endif
-#ifndef MAC_OS_X_VERSION_10_12
-#define MAC_OS_X_VERSION_10_12 101200
-#endif
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
-#define HAVE_NATIVE_FS
-#endif
-
-#endif /* NS_IMPL_COCOA */
-
 #ifdef __OBJC__
 
 /* CGFloat on GNUstep may be 4 or 8 byte, but functions expect float* for some
@@ -471,7 +447,7 @@ typedef id instancetype;
 - (void) toggleFullScreen: (id) sender;
 - (BOOL) fsIsNative;
 - (BOOL) isFullscreen;
-#ifdef HAVE_NATIVE_FS
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
 - (void) updateCollectionBehavior;
 #endif
 
@@ -1277,9 +1253,17 @@ extern char gnustep_base_version[];  /* version tracking */
                                 ? (min) : (((x)>(max)) ? (max) : (x)))
 #define SCREENMAXBOUND(x) (IN_BOUND (-SCREENMAX, x, SCREENMAX))
 
+/* macOS 10.7 introduces some new constants. */
+#if !defined (NS_IMPL_COCOA) || !defined (MAC_OS_X_VERSION_10_7)
+#define NSFullScreenWindowMask                      (1 << 14)
+#define NSWindowCollectionBehaviorFullScreenPrimary (1 << 7)
+#define NSApplicationPresentationFullScreen         (1 << 10)
+#define NSApplicationPresentationAutoHideToolbar    (1 << 11)
+#define NSAppKitVersionNumber10_7                   1138
+#endif /* !defined (MAC_OS_X_VERSION_10_7) */
+
 /* macOS 10.12 deprecates a bunch of constants. */
-#if !defined (NS_IMPL_COCOA) || \
-  MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
+#if !defined (NS_IMPL_COCOA) || !defined (MAC_OS_X_VERSION_10_12)
 #define NSEventModifierFlagCommand         NSCommandKeyMask
 #define NSEventModifierFlagControl         NSControlKeyMask
 #define NSEventModifierFlagHelp            NSHelpKeyMask
@@ -1305,6 +1289,7 @@ extern char gnustep_base_version[];  /* version tracking */
 #define NSEventTypeKeyUp                   NSKeyUp
 #define NSEventTypeFlagsChanged            NSFlagsChanged
 #define NSEventMaskAny                     NSAnyEventMask
+#define NSEventTypeSystemDefined           NSSystemDefined
 #define NSWindowStyleMaskBorderless        NSBorderlessWindowMask
 #define NSWindowStyleMaskClosable          NSClosableWindowMask
 #define NSWindowStyleMaskFullScreen        NSFullScreenWindowMask
@@ -1319,6 +1304,13 @@ extern char gnustep_base_version[];  /* version tracking */
 #ifdef __OBJC__
 typedef NSUInteger NSWindowStyleMask;
 #endif
-#endif
 
+/* Window tabbing mode enums are new too. */
+enum NSWindowTabbingMode
+  {
+    NSWindowTabbingModeAutomatic,
+    NSWindowTabbingModePreferred,
+    NSWindowTabbingModeDisallowed
+  };
+#endif
 #endif	/* HAVE_NS */

@@ -532,9 +532,14 @@ x_activate_menubar (struct frame *f)
 {
   ++trackingMenu;
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
   // On 10.6 we get repeated calls, only the one for NSSystemDefined is "real".
-  if ([[NSApp currentEvent] type] != NSSystemDefined) return;
+  if (
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+      NSAppKitVersionNumber < NSAppKitVersionNumber10_7 &&
+#endif
+      [[NSApp currentEvent] type] != NSEventTypeSystemDefined)
+    return;
 #endif
 
   /* When dragging from one menu to another, we get willOpen followed by didClose,
