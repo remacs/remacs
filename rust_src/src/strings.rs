@@ -207,8 +207,8 @@ fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
     let lispstr1 = LispObject::as_string_or_symbol(string1);
     let lispstr2 = LispObject::as_string_or_symbol(string2);
 
-    let zip = lispstr1.iter().zip(lispstr2.iter());
-    for ((codept1, _), (codept2, _)) in zip {
+    let zip = lispstr1.chars().zip(lispstr2.chars());
+    for (codept1, codept2) in zip {
         if codept1 != codept2 {
             return LispObject::from_bool(codept1 < codept2);
         }
