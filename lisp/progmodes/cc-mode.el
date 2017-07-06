@@ -1198,7 +1198,7 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;; This function is called exclusively as a before-change function via the
   ;; variable `c-get-state-before-change-functions'.
   (c-save-buffer-state (p-limit found)
-    ;; Special consideraton for deleting \ from '\''.
+    ;; Special consideration for deleting \ from '\''.
     (if (and (> end beg)
 	     (eq (char-before end) ?\\)
 	     (<= c-new-END end))

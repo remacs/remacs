@@ -11992,11 +11992,11 @@
 	* progmodes/verilog-mode.el (verilog-pretty-expr): Don't line up
 	assignment with tests in ifs and for loops.
 	(verilog-extended-complete-re, verilog-complete-reg): Change so
-	that DPI inport functions don't look like fuction declarations.
+	that DPI inport functions don't look like function declarations.
 	(verilog-pretty-expr): Don't line up assignment
 	operations to the test and increment in if and for loops
 	(verilog-extended-complete-re, verilog-complete-reg): Change so
-	that DPI inport functions don't look like fuction declarations.
+	that DPI inport functions don't look like function declarations.
 
 2012-05-03  Kenichi Handa  <handa@m17n.org>
 

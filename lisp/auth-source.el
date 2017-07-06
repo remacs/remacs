@@ -934,7 +934,7 @@ Note that the MAX parameter is used so we can exit the parse early."
                              (or
                               ;; the required list of keys is nil, or
                               (null require)
-                              ;; every element of require is in n(ormalized)
+                              ;; every element of require is in n (normalized)
                               (let ((n (nth 0 (auth-source-netrc-normalize
                                                (list alist) file))))
                                 (cl-loop for req in require

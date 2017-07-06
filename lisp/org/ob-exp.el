@@ -41,7 +41,7 @@
 (defcustom org-export-babel-evaluate t
   "Switch controlling code evaluation during export.
 When set to nil no code will be evaluated as part of the export
-process and no header argumentss will be obeyed.  When set to
+process and no header arguments will be obeyed.  When set to
 `inline-only', only inline code blocks will be executed.  Users
 who wish to avoid evaluating code on export should use the header
 argument `:eval never-export'."

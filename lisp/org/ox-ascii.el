@@ -916,7 +916,8 @@ as a plist."
 	   ;; If destination is a target, make sure we can name the
 	   ;; container it refers to.
 	   (enumerable
-	    (org-element-lineage datum '(headline paragrah src-block table) t)))
+	    (org-element-lineage datum
+				 '(headline paragraph src-block table) t)))
        (pcase (org-element-type enumerable)
 	 (`headline
 	  (format (org-ascii--translate "See section %s" info)
@@ -1752,7 +1753,7 @@ contextual information."
   "Transcode a SPECIAL-BLOCK element from Org to ASCII.
 CONTENTS holds the contents of the block.  INFO is a plist
 holding contextual information."
-  ;; "JUSTIFYLEFT" and "JUSTFYRIGHT" have already been taken care of
+  ;; "JUSTIFYLEFT" and "JUSTIFYRIGHT" have already been taken care of
   ;; at a lower level.  There is no other special block type to
   ;; handle.
   contents)

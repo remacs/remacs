@@ -1983,7 +1983,7 @@ you can use the usual commands to follow these links.
 @item C-c '
 @item C-c '
 Edit the footnote definition corresponding to the reference at point in
-a seperate window.  The window can be closed by pressing @kbd{C-c '}.
+a separate window.  The window can be closed by pressing @kbd{C-c '}.
 
 @end table
 
@@ -5291,7 +5291,7 @@ or with a tree they need to be inserted into a special drawer
 right below a headline, and its planning line (@pxref{Deadlines and
 scheduling}) when applicable.  Each property is specified on a single line,
 with the key (surrounded by colons) first, and the value after it.  Keys are
-case-insensitives.  Here is an example:
+case-insensitive.  Here is an example:
 
 @example
 * CD collection
@@ -6218,7 +6218,7 @@ format is shorter, things do work as expected.
 @section Deadlines and scheduling
 
 A timestamp may be preceded by special keywords to facilitate planning.  Both
-the timestamp and the keyword have to be positioned immediatly after the task
+the timestamp and the keyword have to be positioned immediately after the task
 they refer to.
 
 @table @var
@@ -10011,7 +10011,7 @@ completions.  If you need such a symbol inside a word, terminate it with
 a pair of curly brackets.  For example
 
 @example
-Protip: Given a circle \Gamma of diameter d, the length of its circumference
+Pro tip: Given a circle \Gamma of diameter d, the length of its circumference
 is \pi@{@}d.
 @end example
 
@@ -11395,7 +11395,7 @@ transcoding @LaTeX{} fragments to images (@pxref{Math formatting in HTML
 export}).
 
 @item SUBTITLE
-@cindex #+SUBTILE (HTML)
+@cindex #+SUBTITLE (HTML)
 The document's subtitle.  HTML exporter formats subtitle if document type is
 @samp{HTML5} and the CSS has a @samp{subtitle} class.
 @end table
@@ -11692,7 +11692,7 @@ buffer.  For example, with the following settings,
 @smallexample
 #+HTML_MATHJAX: align: left indent: 5em tagside: left font: Neo-Euler
 @end smallexample
-equation labels will be displayed on the left marign and equations will be
+equation labels will be displayed on the left margin and equations will be
 five ems from the left margin.
 
 @noindent See the docstring of
@@ -17679,7 +17679,7 @@ thes variable, @code{org-imenu-depth}.
 @cindex Ludlam, Eric M.
 Speedbar package creates a special Emacs frame for displaying files and index
 items in files.  Org mode supports Speedbar; users can drill into Org files
-directly from the Speedbar.  The @kbd{<} in the Speedbar frame tweeks the
+directly from the Speedbar.  The @kbd{<} in the Speedbar frame tweaks the
 agenda commands to that file or to a subtree.
 @cindex @file{table.el}
 @item @file{table.el} by Takaaki Ota
@@ -18459,7 +18459,7 @@ meaningful string suitable for the agenda view.
 @vindex org-agenda-skip-function
 
 Search for entries with a limit set on levels for the custom search.  This is
-a general appraoch to creating custom searches in Org.  To include all
+a general approach to creating custom searches in Org.  To include all
 levels, use @samp{LEVEL>0}@footnote{Note that, for
 @code{org-odd-levels-only}, a level number corresponds to order in the
 hierarchy, not to the number of stars.}.  Then to selectively pick the
@@ -19116,7 +19116,7 @@ calculations and improved XEmacs compatibility, in particular by porting
 @file{nouline.el} to XEmacs.
 @item
 @i{Sacha Chua} suggested copying some linking code from Planner, and helped
-make Org pupular through her blog.
+make Org popular through her blog.
 @item
 @i{Toby S. Cubitt} contributed to the code for clock formats.
 @item

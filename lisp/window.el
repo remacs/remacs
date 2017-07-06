@@ -8033,7 +8033,7 @@ parameters of FRAME."
            ;; to its workarea or the parent frame's native rectangle.
            (margins (or (frame-parameter frame 'fit-frame-to-buffer-margins)
                         fit-frame-to-buffer-margins))
-           ;; Convert margins intto pixel offsets from the left-top
+           ;; Convert margins into pixel offsets from the left-top
            ;; corner of FRAME's display or parent.
            (left-margin (if (nth 0 margins)
                             (window--sanitize-margin

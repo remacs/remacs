@@ -663,7 +663,7 @@ frame with the mouse."
          ;; difference between `pos-x' and `snap-x' (or `pos-y' and
          ;; `snap-y') exceeds the value of FRAME's `snap-width'
          ;; parameter, unsnap FRAME (at the respective side).  `snap-x'
-         ;; and `snap-y' nil mean FRAME is curerntly not snapped.
+         ;; and `snap-y' nil mean FRAME is currently not snapped.
          snap-x snap-y
          (exitfun nil)
          (move

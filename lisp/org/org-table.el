@@ -1748,7 +1748,7 @@ function is being called interactively."
 		 (or compare-func
 		     (and interactive?
 			  (org-read-function
-			   (concat "Fuction for comparing keys "
+			   (concat "Function for comparing keys "
 				   "(empty for default `sort-subr' predicate): ")
 			   'allow-empty)))))))
 	(goto-char (point-min))

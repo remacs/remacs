@@ -25,7 +25,7 @@
 ;; for session support, lua-mode is needed.
 ;; lua-mode is not part of GNU Emacs/orgmode, but can be obtained
 ;; from marmalade or melpa.
-;; The source respository is here:
+;; The source repository is here:
 ;; https://github.com/immerrr/lua-mode
 
 ;; However, sessions are not yet working.

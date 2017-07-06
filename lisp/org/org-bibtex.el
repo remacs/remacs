@@ -290,8 +290,8 @@ is non-nil."
 (defcustom org-bibtex-inherit-tags nil
   "Controls whether inherited tags are converted to bibtex keywords.
 It is relevant only if `org-bibtex-tags-are-keywords' is non-nil.
-Tag inheritence itself is controlled by `org-use-tag-inheritence'
-and `org-exclude-tags-from-inheritence'."
+Tag inheritance itself is controlled by `org-use-tag-inheritance'
+and `org-exclude-tags-from-inheritance'."
   :group 'org-bibtex
   :version "26.1"
   :package-version '(Org . "8.3")

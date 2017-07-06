@@ -105,7 +105,7 @@ Pass nil to omit that arg."
   (format "%s/%s@%s:%s/%s" user password host port database))
 
 (defun org-babel-sql-dbstring-mssql (host user password database)
-  "Make sqlcmd commmand line args for database connection.
+  "Make sqlcmd command line args for database connection.
 `sqlcmd' is the preferred command line tool to access Microsoft
 SQL Server on Windows and Linux platform."
   (mapconcat #'identity
