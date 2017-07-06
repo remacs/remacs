@@ -4704,10 +4704,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  char src0 = src[0];
 		  int exponent_bytes = 0;
 		  bool signedp = src0 == '-' || src0 == '+' || src0 == ' ';
-		  if (zero_flag
-		      && ((src[signedp] >= '0' && src[signedp] <= '9')
-			  || (src[signedp] >= 'a' && src[signedp] <= 'f')
-			  || (src[signedp] >= 'A' && src[signedp] <= 'F')))
+		  unsigned char after_sign = src[signedp];
+		  if (zero_flag && 0 <= char_hexdigit (after_sign))
 		    {
 		      leading_zeros += padding;
 		      padding = 0;

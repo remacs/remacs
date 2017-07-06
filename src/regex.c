@@ -306,9 +306,7 @@ enum syntaxcode { Swhitespace = 0, Sword = 1, Ssymbol = 2 };
 /* In Emacs, these are only used for single-byte characters.  */
 # define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 # define ISCNTRL(c) ((c) < ' ')
-# define ISXDIGIT(c) (((c) >= '0' && (c) <= '9')		\
-		     || ((c) >= 'a' && (c) <= 'f')	\
-		     || ((c) >= 'A' && (c) <= 'F'))
+# define ISXDIGIT(c) (0 <= char_hexdigit (c))
 
 /* The rest must handle multibyte characters.  */
 

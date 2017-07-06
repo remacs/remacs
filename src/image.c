@@ -2595,13 +2595,8 @@ xbm_scan (char **s, char *end, char *sval, int *ival)
 	      while (*s < end)
 		{
 		  c = *(*s)++;
-		  if (c_isdigit (c))
-		    digit = c - '0';
-		  else if (c >= 'a' && c <= 'f')
-		    digit = c - 'a' + 10;
-		  else if (c >= 'A' && c <= 'F')
-		    digit = c - 'A' + 10;
-		  else
+		  digit = char_hexdigit (c);
+		  if (digit < 0)
 		    break;
 		  value = 16 * value + digit;
 		}
