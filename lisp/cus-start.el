@@ -608,7 +608,14 @@ since it could result in memory overflow and make Emacs crash."
                                          :value t)
                                   (const :tag "Display zero as number of current line"
                                          :value nil))
-                                  "26.1")
+                                 "26.1")
+             (display-line-numbers-widen display
+                                 (choice
+                                  (const :tag "Disregard narrowing when calculating line numbers"
+                                         :value t)
+                                  (const :tag "Count lines from beinning of narrowed region"
+                                         :value nil))
+                                 "26.1")
 	     ;; xfaces.c
 	     (scalable-fonts-allowed display boolean "22.1")
 	     ;; xfns.c

@@ -1756,6 +1756,14 @@ zero.  This is handy if you don't care about the number of the current
 line, and want to leave more horizontal space for text in large
 buffers.
 
+@vindex display-line-numbers-widen
+In a narrowed buffer (@pxref{Narrowing}) lines are normally numbered
+starting at the beginning of the narrowing.  However, if you customize
+the variable @code{display-line-numbers-widen} to a non-@code{nil}
+value, line numbers will disregard any narrowing and will start at the
+first character of the buffer.
+
+@cindex line-number face
 The line numbers are displayed in a special face @code{line-number}.
 The current line number is displayed in a different face,
 @code{line-number-current-line}, so you can make the current line's

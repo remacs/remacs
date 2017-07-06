@@ -20749,6 +20749,24 @@ find_row_edges (struct it *it, struct glyph_row *row,
     row->maxpos = it->current.pos;
 }
 
+/* Like display_count_lines, but capable of counting outside of the
+   current narrowed region.  */
+static ptrdiff_t
+display_count_lines_logically (ptrdiff_t start_byte, ptrdiff_t limit_byte,
+			       ptrdiff_t count, ptrdiff_t *byte_pos_ptr)
+{
+  if (!display_line_numbers_widen || (BEGV == BEG && ZV == Z))
+    return display_count_lines (start_byte, limit_byte, count, byte_pos_ptr);
+
+  ptrdiff_t val;
+  ptrdiff_t pdl_count = SPECPDL_INDEX ();
+  record_unwind_protect (save_restriction_restore, save_restriction_save ());
+  Fwiden ();
+  val = display_count_lines (start_byte, limit_byte, count, byte_pos_ptr);
+  unbind_to (pdl_count, Qnil);
+  return val;
+}
+
 /* Count the number of screen lines in window IT->w between character
    position IT_CHARPOS(*IT) and the line showing that window's point.  */
 static ptrdiff_t
@@ -20806,6 +20824,9 @@ maybe_produce_line_number (struct it *it)
   ptrdiff_t start_from, bytepos;
   ptrdiff_t this_line;
   bool first_time = false;
+  ptrdiff_t beg = display_line_numbers_widen ? BEG : BEGV;
+  ptrdiff_t beg_byte = display_line_numbers_widen ? BEG_BYTE : BEGV_BYTE;
+  ptrdiff_t z_byte = display_line_numbers_widen ? Z_BYTE : ZV_BYTE;
   void *itdata = bidi_shelve_cache ();
 
   if (EQ (Vdisplay_line_numbers, Qvisual))
@@ -20815,7 +20836,7 @@ maybe_produce_line_number (struct it *it)
       if (!last_line)
 	{
 	  /* FIXME: Maybe reuse the data in it->w->base_line_number.  */
-	  start_from = BEGV;
+	  start_from = beg;
 	  if (!it->lnum_bytepos)
 	    first_time = true;
 	}
@@ -20825,17 +20846,17 @@ maybe_produce_line_number (struct it *it)
       /* Paranoia: what if someone changes the narrowing since the
 	 last time display_line was called?  Shouldn't really happen,
 	 but who knows what some crazy Lisp invoked by :eval could do?  */
-      if (!(BEGV_BYTE <= start_from && start_from < ZV_BYTE))
+      if (!(beg_byte <= start_from && start_from < z_byte))
 	{
 	  last_line = 0;
-	  start_from = BEGV_BYTE;
+	  start_from = beg_byte;
 	}
 
       this_line =
-	last_line + display_count_lines (start_from,
-					 IT_BYTEPOS (*it), IT_CHARPOS (*it),
-					 &bytepos);
-      eassert (this_line > 0 || (this_line == 0 && start_from == BEGV_BYTE));
+	last_line + display_count_lines_logically (start_from,
+						   IT_BYTEPOS (*it),
+						   IT_CHARPOS (*it), &bytepos);
+      eassert (this_line > 0 || (this_line == 0 && start_from == beg_byte));
       eassert (bytepos == IT_BYTEPOS (*it));
     }
 
@@ -20863,11 +20884,11 @@ maybe_produce_line_number (struct it *it)
       ptrdiff_t ignored;
       if (PT_BYTE > it->lnum_bytepos && !EQ (Vdisplay_line_numbers, Qvisual))
 	it->pt_lnum =
-	  this_line + display_count_lines (it->lnum_bytepos, PT_BYTE, PT,
-					   &ignored);
+	  this_line + display_count_lines_logically (it->lnum_bytepos, PT_BYTE,
+						     PT, &ignored);
       else
-	it->pt_lnum = display_count_lines (BEGV_BYTE, PT_BYTE, PT,
-					   &ignored);
+	it->pt_lnum = display_count_lines_logically (beg_byte, PT_BYTE, PT,
+						     &ignored);
     }
   /* Compute the required width if needed.  */
   if (!it->lnum_width)
@@ -32603,6 +32624,12 @@ Any other value is treated as nil.  */);
 This variable has effect only when `display-line-numbers' is
 either `relative' or `visual'.  */);
   Vdisplay_line_numbers_current_absolute = Qt;
+
+  DEFVAR_BOOL ("display-line-numbers-widen", display_line_numbers_widen,
+    doc: /* Non-nil means display line numbers disregarding any narrowing.  */);
+  display_line_numbers_widen = false;
+  DEFSYM (Qdisplay_line_numbers_widen, "display-line-numbers-widen");
+  Fmake_variable_buffer_local (Qdisplay_line_numbers_widen);
 
   DEFVAR_BOOL ("inhibit-eval-during-redisplay", inhibit_eval_during_redisplay,
     doc: /* Non-nil means don't eval Lisp during redisplay.  */);
