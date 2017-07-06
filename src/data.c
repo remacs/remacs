@@ -331,20 +331,6 @@ global value outside of any lexical scope.  */)
   return (EQ (valcontents, Qunbound) ? Qnil : Qt);
 }
 
-/* FIXME: It has been previously suggested to make this function an
-   alias for symbol-function, but upon discussion at Bug#23957,
-   there is a risk breaking backward compatibility, as some users of
-   fboundp may expect `t' in particular, rather than any true
-   value.  An alias is still welcome so long as the compatibility
-   issues are addressed.  */
-DEFUN ("fboundp", Ffboundp, Sfboundp, 1, 1, 0,
-       doc: /* Return t if SYMBOL's function definition is not void.  */)
-  (register Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  return NILP (XSYMBOL (symbol)->function) ? Qnil : Qt;
-}
-
 DEFUN ("makunbound", Fmakunbound, Smakunbound, 1, 1, 0,
        doc: /* Make SYMBOL's value be void.
 Return SYMBOL.  */)
@@ -3050,7 +3036,6 @@ syms_of_data (void)
   defsubr (&Smakunbound);
   defsubr (&Sfmakunbound);
   defsubr (&Sboundp);
-  defsubr (&Sfboundp);
   defsubr (&Sfset);
   defsubr (&Sdefalias);
   defsubr (&Ssetplist);
