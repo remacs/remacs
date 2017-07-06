@@ -198,6 +198,32 @@ Expected initialization file: `%s'\"
       (indent-region (point-min) (point-max))
       (should (equal (buffer-string) correct)))))
 
+(ert-deftest lisp-comment-indent-1 ()
+  (with-temp-buffer
+    (insert "\
+\(let (                                  ;sf
+      (x 3))
+  4)")
+    (let ((indent-tabs-mode nil)
+          (correct (buffer-string)))
+      (emacs-lisp-mode)
+      (goto-char (point-min))
+      (comment-indent)
+      (should (equal (buffer-string) correct)))))
+
+(ert-deftest lisp-comment-indent-2 ()
+  (with-temp-buffer
+    (insert "\
+\(let (;;sf
+      (x 3))
+  4)")
+    (let ((indent-tabs-mode nil)
+          (correct (buffer-string)))
+      (emacs-lisp-mode)
+      (goto-char (point-min))
+      (comment-indent)
+      (should (equal (buffer-string) correct)))))
+
 
 (provide 'lisp-mode-tests)
 ;;; lisp-mode-tests.el ends here
