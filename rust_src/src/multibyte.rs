@@ -110,17 +110,17 @@ pub struct LispStringRefIterator<'a> {
     string_ref: &'a LispStringRef,
     cur: usize,
 }
+
 pub struct LispStringRefCharIterator<'a>(LispStringRefIterator<'a>);
-pub struct LispStringRefIndexIterator<'a>(LispStringRefIterator<'a>);
 
 // Substitue for FETCH_STRING_CHAR_ADVANCE
 impl<'a> Iterator for LispStringRefIterator<'a> {
-    type Item = (Codepoint, usize);
+    type Item = (usize, Codepoint);
 
-    fn next(&mut self) -> Option<(Codepoint, usize)> {
+    fn next(&mut self) -> Option<(usize, Codepoint)> {
         if self.cur < self.string_ref.len_bytes() as usize {
             let codepoint: Codepoint;
-            let point = self.cur;
+            let old_index = self.cur;
             let ref_slice = self.string_ref.as_slice();
             if self.string_ref.is_multibyte() {
                 let (cp, advance) = multibyte_char_at(&ref_slice[self.cur..]);
@@ -131,7 +131,7 @@ impl<'a> Iterator for LispStringRefIterator<'a> {
                 self.cur += 1;
             }
 
-            Some((codepoint, point))
+            Some((old_index, codepoint))
         } else {
             None
         }
@@ -142,20 +142,12 @@ impl<'a> Iterator for LispStringRefCharIterator<'a> {
     type Item = Codepoint;
 
     fn next(&mut self) -> Option<Codepoint> {
-        self.0.next().map(|result| result.0)
-    }
-}
-
-impl<'a> Iterator for LispStringRefIndexIterator<'a> {
-    type Item = usize;
-
-    fn next(&mut self) -> Option<usize> {
         self.0.next().map(|result| result.1)
     }
 }
 
 impl LispStringRef {
-    pub fn iter(&self) -> LispStringRefIterator {
+    pub fn char_indices(&self) -> LispStringRefIterator {
         LispStringRefIterator {
             string_ref: self,
             cur: 0,
@@ -163,11 +155,7 @@ impl LispStringRef {
     }
 
     pub fn chars(&self) -> LispStringRefCharIterator {
-        LispStringRefCharIterator(self.iter())
-    }
-
-    pub fn char_indices(&self) -> LispStringRefIndexIterator {
-        LispStringRefIndexIterator(self.iter())
+        LispStringRefCharIterator(self.char_indices())
     }
 }
 
