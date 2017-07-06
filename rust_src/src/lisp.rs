@@ -178,7 +178,7 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn as_string_or_symbol(string: LispObject) -> LispStringRef {
+    pub fn symbol_or_string_as_string(string: LispObject) -> LispStringRef {
         match string.as_symbol() {
             Some(sym) => {
                 sym.symbol_name().as_string().expect(

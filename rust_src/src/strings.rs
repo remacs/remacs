@@ -204,8 +204,8 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
-    let lispstr1 = LispObject::as_string_or_symbol(string1);
-    let lispstr2 = LispObject::as_string_or_symbol(string2);
+    let lispstr1 = LispObject::symbol_or_string_as_string(string1);
+    let lispstr2 = LispObject::symbol_or_string_as_string(string2);
 
     let zip = lispstr1.chars().zip(lispstr2.chars());
     for (codept1, codept2) in zip {
