@@ -738,12 +738,14 @@ or to switch back to an existing one."
 
 (defun lisp-comment-indent ()
   "Like `comment-indent-default', but don't put space after open paren."
-  (let ((pt (point)))
-    (skip-syntax-backward " ")
-    (if (eq (preceding-char) ?\()
-        (cons (current-column) (current-column))
-      (goto-char pt)
-      (comment-indent-default))))
+  (or (when (looking-at "\\s<\\s<")
+        (let ((pt (point)))
+          (skip-syntax-backward " ")
+          (if (eq (preceding-char) ?\()
+              (cons (current-column) (current-column))
+            (goto-char pt)
+            nil)))
+      (comment-indent-default)))
 
 (define-obsolete-function-alias 'lisp-mode-auto-fill 'do-auto-fill "23.1")
 

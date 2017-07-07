@@ -143,7 +143,7 @@ the region 0:00:00."
 	      (seconds-to-time
 	       ;; Pass `current-time' result to `float-time' (instead
 	       ;; of calling without arguments) so that only
-	       ;; `current-time' has to be overriden in tests.
+	       ;; `current-time' has to be overridden in tests.
 	       (- (float-time (current-time)) delta))))
       (setq org-timer-pause-time nil)
       (org-timer-set-mode-line 'on)
@@ -172,7 +172,7 @@ With prefix arg STOP, stop it entirely."
 	(setq org-timer-start-time
 	      ;; Pass `current-time' result to `float-time' (instead
 	      ;; of calling without arguments) so that only
-	      ;; `current-time' has to be overriden in tests.
+	      ;; `current-time' has to be overridden in tests.
 	      (seconds-to-time (- (float-time (current-time))
 				  (- pause-secs start-secs)))))
       (setq org-timer-pause-time nil)
@@ -235,7 +235,7 @@ it in the buffer."
 (defun org-timer-seconds ()
   ;; Pass `current-time' result to `float-time' (instead of calling
   ;; without arguments) so that only `current-time' has to be
-  ;; overriden in tests.
+  ;; overridden in tests.
   (if org-timer-countdown-timer
       (- (float-time org-timer-start-time)
 	 (float-time (or org-timer-pause-time (current-time))))

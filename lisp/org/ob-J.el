@@ -89,7 +89,7 @@ This function is called by `org-babel-execute-src-block'"
        (org-babel-J-eval-string full-body)))))
 
 (defun org-babel-J-eval-string (str)
-  "Sends STR to the `j-console-cmd' session and exectues it."
+  "Sends STR to the `j-console-cmd' session and executes it."
   (let ((session (j-console-ensure-session)))
     (with-current-buffer (process-buffer session)
       (goto-char (point-max))

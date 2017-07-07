@@ -4132,7 +4132,7 @@ PROPERTIES accepts the following attributes:
   :image-output-type  string, output file type of image converter (e.g., \"png\").
   :use-xcolor         boolean, when non-nil, LaTeX \"xcolor\" macro is used to
                       deal with background and foreground color of image.
-                      Otherwise, dvipng style background and foregroud color
+                      Otherwise, dvipng style background and foreground color
                       format are generated.  You may then refer to them in
                       command options with \"%F\" and \"%B\".
   :image-size-adjust  cons of numbers, the car element is used to adjust LaTeX
@@ -17106,7 +17106,7 @@ user."
   ;; FIXME: cleanup and comment
   ;; Pass `current-time' result to `decode-time' (instead of calling
   ;; without arguments) so that only `current-time' has to be
-  ;; overriden in tests.
+  ;; overridden in tests.
   (let ((org-def def)
 	(org-defdecode defdecode)
 	(nowdecode (decode-time (current-time)))
@@ -17288,7 +17288,7 @@ user."
       (unless deltadef
 	;; Pass `current-time' result to `decode-time' (instead of
 	;; calling without arguments) so that only `current-time' has
-	;; to be overriden in tests.
+	;; to be overridden in tests.
 	(let ((now (decode-time (current-time))))
 	  (setq day (nth 3 now) month (nth 4 now) year (nth 5 now))))
       (cond ((member deltaw '("d" "")) (setq day (+ day deltan)))
@@ -17743,7 +17743,7 @@ BUFFER.
 
 Diary sexp timestamps are matched against DAYNR, when non-nil.
 If matching fails or DAYNR is nil, `org-diary-sexp-no-match' is
-signalled."
+signaled."
   (cond
    ((string-match "\\`%%\\((.*)\\)" s)
     ;; Sexp timestamp: try to match DAYNR, if available, since we're

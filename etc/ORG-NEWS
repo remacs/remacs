@@ -20,7 +20,7 @@ above is suggested.
 *** XEmacs support has been dropped
 
 Incomplete compatibility layer with XEmacs has been removed.  If you
-want to take over maintainance of this compatibility, please contact
+want to take over maintenance of this compatibility, please contact
 our mailing list.
 
 *** New syntax for export blocks
@@ -117,7 +117,7 @@ exists.
 *** ~org-file-apps~ no longer accepts S-expressions as commands
 
 The variable now accepts functions of two arguments instead of plain
-S-expressions.  Replacing a S-expresion with an appropriate function
+S-expressions.  Replacing an S-expression with an appropriate function
 is straightforward.  For example
 
 : ("pdf" . (foo))
@@ -198,7 +198,7 @@ entries are added to last in the date tree.
 
 *** New ~vbar~ entity
 
-~\vbar~ or ~\vbar{}~ will be exported unconditionnally as a =|=,
+~\vbar~ or ~\vbar{}~ will be exported unconditionally as a =|=,
 unlike to existing ~\vert~, which is expanded as ~&vert;~ when using
 a HTML derived export back-end.
 
@@ -579,7 +579,7 @@ is that spaces are allowed within the path.
 *** ~:preparation-function~ called earlier during publishing
 
 Functions in this list are called before any file is associated to the
-current projet.  Thus, they can be used to generate to be published
+current project.  Thus, they can be used to generate to be published
 Org files.
 
 *** Function ~org-remove-indentation~ changes.
@@ -986,7 +986,7 @@ a source block.
 *** New option in ASCII export
 
 Plain lists can have an extra margin by setting ~org-ascii-list-margin~
-variable to an appopriate integer.
+variable to an appropriate integer.
 
 *** New blocks in ASCII export
 
@@ -1022,7 +1022,7 @@ more features.  See docstring for details.
 *** New filter: ~org-export-filter-body-functions~
 
 Functions in this filter are applied on the body of the exported
-document, befor wrapping it within the template.
+document, before wrapping it within the template.
 
 *** New :environment parameter when exporting example blocks to LaTeX
 
@@ -1087,7 +1087,7 @@ property is inherited by children.
 
 *** Tables can be sorted with an arbitrary function
 
-It is now possible to specify a function, both programatically,
+It is now possible to specify a function, both programmatically,
 through a new optional argument, and interactively with ~f~ or ~F~ keys,
 to sort a table.
 

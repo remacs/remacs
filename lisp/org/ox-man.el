@@ -1014,7 +1014,7 @@ information."
 
 (defun org-man-timestamp (_timestamp _contents _info)
   "Transcode a TIMESTAMP object from Org to Man.
-ONTENTS is nil.  INFO is a plist holding contextual information."
+CONTENTS is nil.  INFO is a plist holding contextual information."
   "")
 
 

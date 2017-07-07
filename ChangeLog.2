@@ -16541,7 +16541,7 @@
 	* lisp/faces.el (faces--attribute-at-point): Fix an issue
 
 	Previous code would signal an error when the face at point was
-	a manually built list of attributes such as '(:foregroud "white").
+	a manually built list of attributes such as '(:foreground "white").
 
 	* test/automated/faces-tests.el (faces--test-color-at-point): Add a test
 
@@ -32017,10 +32017,10 @@
 
 2015-05-18  Dmitry Gutov  <dgutov@yandex.ru>
 
-	Add a test case for Maven warning ouput
+	Add a test case for Maven warning output
 	* test/automated/compile-tests.el
 	(compile-tests--test-regexps-data): Add a case for Maven warning
-	ouput.
+	output.
 	(compile--test-error-line): Check the compilation message type, if
 	it's specified in the test data.
 
@@ -32142,7 +32142,7 @@
 	(xpm_load): Call the above functions.  Handle XPM without mask
 	when USE_CAIRO.
 	(png_load_body): Handle USE_CAIRO case.
-	(png_load): Remove USE_CAIRO specific fuction, modify png_load_body
+	(png_load): Remove USE_CAIRO specific function, modify png_load_body
 	instead.
 	(jpeg_load_body): Call create_cairo_image_surface.
 	(gif_load, svg_load_image): Handle specified background, call

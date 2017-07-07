@@ -4875,7 +4875,7 @@ mark_window_cursors_off (struct window *w)
  * window_wants_mode_line:
  *
  * Return 1 if window W wants a mode line and is high enough to
- * accomodate it, 0 otherwise.
+ * accommodate it, 0 otherwise.
  *
  * W wants a mode line if it's a leaf window and neither a minibuffer
  * nor a pseudo window.  Moreover, its 'window-mode-line-format'
@@ -4905,14 +4905,14 @@ window_wants_mode_line (struct window *w)
  * window_wants_header_line:
  *
  * Return 1 if window W wants a header line and is high enough to
- * accomodate it, 0 otherwise.
+ * accommodate it, 0 otherwise.
  *
  * W wants a header line if it's a leaf window and neither a minibuffer
  * nor a pseudo window.  Moreover, its 'window-mode-line-format'
  * parameter must not be 'none' and either that parameter or W's
  * buffer's 'mode-line-format' value must be non-nil.  Finally, W must
  * be higher than its frame's canonical character height and be able to
- * accomodate a mode line too if necessary (the mode line prevails).
+ * accommodate a mode line too if necessary (the mode line prevails).
  */
 bool
 window_wants_header_line (struct window *w)

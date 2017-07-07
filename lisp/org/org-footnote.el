@@ -345,7 +345,7 @@ to rename."
 	(t nil)))
 
 (defun org-footnote--collect-references (&optional anonymous)
-  "Collect all labelled footnote references in current buffer.
+  "Collect all labeled footnote references in current buffer.
 
 Return an alist where associations follow the pattern
 

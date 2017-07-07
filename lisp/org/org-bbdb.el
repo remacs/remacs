@@ -105,7 +105,7 @@
 (declare-function bbdb-name "ext:bbdb-com" (string elidep))
 (declare-function bbdb-completing-read-record "ext:bbdb-com"
 		  (prompt &optional omit-records))
-(declare-function bbdb-record-field "ext:bbdb" (recond field))
+(declare-function bbdb-record-field "ext:bbdb" (record field))
 (declare-function bbdb-record-getprop "ext:bbdb" (record property))
 (declare-function bbdb-record-name "ext:bbdb" (record))
 (declare-function bbdb-records "ext:bbdb"

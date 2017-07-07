@@ -521,7 +521,7 @@ data to the clipboard manager, change the variable
 
   Since strings containing NUL bytes are usually truncated when passed
 through the clipboard, Emacs replaces such characters with ``\0''
-before transfering them to the system's clipboard.
+before transferring them to the system's clipboard.
 
 @vindex select-enable-primary
 @findex clipboard-kill-region

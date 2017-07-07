@@ -634,7 +634,7 @@ Optional fifth argument CASE-FOLD-P specifies the value of
     (dired-mark-if
      (and
       ;; not already marked
-      (looking-at-p " ")
+      (= (following-char) ?\s)
       ;; uninteresting
       (let ((fn (dired-get-filename localp t))
             ;; Match patterns case-insensitively on case-insensitive
@@ -1530,7 +1530,7 @@ refer at all to the underlying file system.  Contrast this with
           (setq mode (buffer-substring (point) (+ mode-len (point))))
           (forward-char mode-len)
           ;; Skip any extended attributes marker ("." or "+").
-          (or (looking-at " ")
+          (or (= (following-char) ?\s)
               (forward-char 1))
           (setq nlink (read (current-buffer)))
           ;; Karsten Wenger <kw@cis.uni-muenchen.de> fixed uid.

@@ -1107,7 +1107,7 @@ publishing directory."
 (defun org-publish--store-crossrefs (output _backend info)
   "Store cross-references for current published file.
 
-OUPUT is the produced output, as a string.  BACKEND is the export
+OUTPUT is the produced output, as a string.  BACKEND is the export
 back-end used, as a symbol.  INFO is the final export state, as
 a plist.
 

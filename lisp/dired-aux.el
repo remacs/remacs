@@ -1399,7 +1399,7 @@ files matching `dired-omit-regexp'."
 		    ;; else try to find correct place to insert
 		    (if (dired-goto-subdir directory)
 			(progn ;; unhide if necessary
-			  (if (looking-at-p "\r")
+			  (if (= (following-char) ?\r)
 			      ;; Point is at end of subdir line.
 			      (dired-unhide-subdir))
 			  ;; found - skip subdir and `total' line
@@ -2639,7 +2639,7 @@ Lower levels are unaffected."
   (and selective-display
        (save-excursion
 	 (dired-goto-subdir dir)
-	 (looking-at-p "\r"))))
+	 (= (following-char) ?\r))))
 
 ;;;###autoload
 (defun dired-hide-subdir (arg)
