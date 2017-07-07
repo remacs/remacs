@@ -1186,7 +1186,7 @@ fs_query_fontset (Lisp_Object name, int name_pattern)
     {
       tem = Frassoc (name, Vfontset_alias_alist);
       if (NILP (tem))
-	tem = Fassoc (name, Vfontset_alias_alist);
+	tem = Fassoc (name, Vfontset_alias_alist, Qnil);
       if (CONSP (tem) && STRINGP (XCAR (tem)))
 	name = XCAR (tem);
       else if (name_pattern == 0)

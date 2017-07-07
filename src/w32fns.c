@@ -467,7 +467,7 @@ if the entry is new.  */)
   block_input ();
 
   /* replace existing entry in w32-color-map or add new entry. */
-  entry = Fassoc (name, Vw32_color_map);
+  entry = Fassoc (name, Vw32_color_map, Qnil);
   if (NILP (entry))
     {
       entry = Fcons (name, rgb);

@@ -1893,7 +1893,7 @@ otf_tag_symbol (OTF_Tag tag)
 static OTF *
 otf_open (Lisp_Object file)
 {
-  Lisp_Object val = Fassoc (file, otf_list);
+  Lisp_Object val = Fassoc (file, otf_list, Qnil);
   OTF *otf;
 
   if (! NILP (val))

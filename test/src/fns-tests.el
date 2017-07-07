@@ -373,6 +373,12 @@
     (should-error (assoc 3 d1) :type 'wrong-type-argument)
     (should-error (assoc 3 d2) :type 'wrong-type-argument)))
 
+(ert-deftest test-assoc-testfn ()
+  (let ((alist '(("a" . 1) ("b" . 2))))
+    (should-not (assoc "a" alist #'ignore))
+    (should (eq (assoc "b" alist #'string-equal) (cadr alist)))
+    (should-not (assoc "b" alist #'eq))))
+
 (ert-deftest test-cycle-rassq ()
   (let ((c1 (cyc1 '(0 . 1)))
         (c2 (cyc2 '(0 . 1) '(0 . 2)))

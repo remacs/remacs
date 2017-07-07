@@ -1417,17 +1417,22 @@ assq_no_quit (Lisp_Object key, Lisp_Object list)
   return Qnil;
 }
 
-DEFUN ("assoc", Fassoc, Sassoc, 2, 2, 0,
-       doc: /* Return non-nil if KEY is `equal' to the car of an element of LIST.
-The value is actually the first element of LIST whose car equals KEY.  */)
-  (Lisp_Object key, Lisp_Object list)
+DEFUN ("assoc", Fassoc, Sassoc, 2, 3, 0,
+       doc: /* Return non-nil if KEY is equal to the car of an element of LIST.
+The value is actually the first element of LIST whose car equals KEY.
+
+Equality is defined by TESTFN if non-nil or by `equal' if nil.  */)
+     (Lisp_Object key, Lisp_Object list, Lisp_Object testfn)
 {
   Lisp_Object tail = list;
   FOR_EACH_TAIL (tail)
     {
       Lisp_Object car = XCAR (tail);
       if (CONSP (car)
-	  && (EQ (XCAR (car), key) || !NILP (Fequal (XCAR (car), key))))
+	  && (NILP (testfn)
+	      ? (EQ (XCAR (car), key) || !NILP (Fequal
+						(XCAR (car), key)))
+	      : !NILP (call2 (testfn, XCAR (car), key))))
 	return car;
     }
   CHECK_LIST_END (tail, list);

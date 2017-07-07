@@ -4231,7 +4231,7 @@ xpm_load_image (struct frame *f,
       color_val = Qnil;
       if (!NILP (color_symbols) && !NILP (symbol_color))
 	{
-	  Lisp_Object specified_color = Fassoc (symbol_color, color_symbols);
+	  Lisp_Object specified_color = Fassoc (symbol_color, color_symbols, Qnil);
 
 	  if (CONSP (specified_color) && STRINGP (XCDR (specified_color)))
 	    {

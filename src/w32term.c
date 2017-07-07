@@ -6110,7 +6110,7 @@ x_calc_absolute_position (struct frame *f)
 
           list = CDR(list);
 
-          geometry = Fassoc (Qgeometry, attributes);
+          geometry = Fassoc (Qgeometry, attributes, Qnil);
           if (!NILP (geometry))
             {
               monitor_left = Fnth (make_number (1), geometry);

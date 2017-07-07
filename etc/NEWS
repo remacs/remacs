@@ -100,6 +100,11 @@ required capabilities are found in terminfo.  See the FAQ node
 
 * Changes in Emacs 26.1
 
++++
+** The function 'assoc' now takes an optional third argument 'testfn'.
+This argument, when non-nil, is used for comparison instead of
+'equal'.
+
 ** The variable 'emacs-version' no longer includes the build number.
 This is now stored separately in a new variable, 'emacs-build-number'.
 
