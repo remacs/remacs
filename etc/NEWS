@@ -420,6 +420,10 @@ line by putting the 'display-line-numbers-disable' text property or
 overlay property on the first character of that screen line.  This is
 intended for add-on packages that need a finer control of the display.
 
+Lisp programs that need to know how much screen estate is used up for
+line-number display in a window can use the new function
+'line-number-display-width'.
+
 Linum mode and all similar packages are henceforth becoming obsolete.
 Users and developers are encouraged to switch to this new feature
 instead.
