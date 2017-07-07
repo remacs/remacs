@@ -1731,46 +1731,49 @@ done items sections are visible, the sequence of N items can
 consist of the the last todo items and the first done items."
   (interactive "p")
   (when (todo-item-string)
-    (unless (> n 1) (setq n 1))
-    (catch 'end
-      (dotimes (i n)
-	(let* ((cat (todo-current-category))
-	       (marks (assoc cat todo-categories-with-marks))
-	       (ov (progn
-		     (unless (looking-at todo-item-start)
-		       (todo-item-start))
-		     (todo-get-overlay 'prefix)))
-	       (pref (overlay-get ov 'before-string)))
-	  (if (todo-marked-item-p)
-	      (progn
-		(overlay-put ov 'before-string (substring pref 1))
-		(if (= (cdr marks) 1)	; Deleted last mark in this category.
-		    (setq todo-categories-with-marks
-			  (assq-delete-all cat todo-categories-with-marks))
-		  (setcdr marks (1- (cdr marks)))))
-	    (overlay-put ov 'before-string (concat todo-item-mark pref))
-	    (if marks
-		(setcdr marks (1+ (cdr marks)))
-	      (push (cons cat 1) todo-categories-with-marks))))
-	(todo-forward-item)
-	;; Don't try to mark the empty lines at the end of the todo
-	;; and done items sections.
-	(when (looking-at "^$")
-	  (if (eobp)
-	      (throw 'end nil)
-	    (todo-forward-item)))))))
+    (let ((cat (todo-current-category)))
+      (unless (> n 1) (setq n 1))
+      (catch 'end
+        (dotimes (i n)
+          (let* ((marks (assoc cat todo-categories-with-marks))
+                 (ov (progn
+                       (unless (looking-at todo-item-start)
+                         (todo-item-start))
+                       (todo-get-overlay 'prefix)))
+                 (pref (overlay-get ov 'before-string)))
+            (if (todo-marked-item-p)
+                (progn
+                  (overlay-put ov 'before-string (substring pref 1))
+                  (if (= (cdr marks) 1)	; Deleted last mark in this category.
+                      (setq todo-categories-with-marks
+                            (assq-delete-all cat todo-categories-with-marks))
+                    (setcdr marks (1- (cdr marks)))))
+              (overlay-put ov 'before-string (concat todo-item-mark pref))
+              (if marks
+                  (setcdr marks (1+ (cdr marks)))
+                (push (cons cat 1) todo-categories-with-marks))))
+          (todo-forward-item)
+          ;; Don't try to mark the empty lines at the end of the todo
+          ;; and done items sections.
+          (when (looking-at "^$")
+            (if (eobp)
+                (throw 'end nil)
+              (todo-forward-item))))))))
 
 (defun todo-mark-category ()
   "Mark all visible items in this category with `todo-item-mark'."
   (interactive)
-  (let* ((cat (todo-current-category))
-	 (marks (assoc cat todo-categories-with-marks)))
+  (let ((cat (todo-current-category)))
     (save-excursion
       (goto-char (point-min))
       (while (not (eobp))
-	(let* ((ov (todo-get-overlay 'prefix))
-	       (pref (overlay-get ov 'before-string)))
-	  (unless (todo-marked-item-p)
+	(let* ((marks (assoc cat todo-categories-with-marks))
+               (ov (todo-get-overlay 'prefix))
+               ;; When done items are shown and there are no todo items, the
+               ;; loop starts on the empty line in the todo items sections,
+               ;; which has no overlay, so don't try to get it.
+	       (pref (when ov (overlay-get ov 'before-string))))
+	  (unless (or (todo-marked-item-p) (not ov))
 	    (overlay-put ov 'before-string (concat todo-item-mark pref))
 	    (if marks
 		(setcdr marks (1+ (cdr marks)))
@@ -1791,7 +1794,7 @@ consist of the the last todo items and the first done items."
       (goto-char (point-min))
       (while (not (eobp))
 	(let* ((ov (todo-get-overlay 'prefix))
-	       ;; No overlay on empty line between todo and done items.
+	       ;; See comment above in `todo-mark-category'.
 	       (pref (when ov (overlay-get ov 'before-string))))
 	  (when (todo-marked-item-p)
 	    (overlay-put ov 'before-string (substring pref 1)))
@@ -2513,7 +2516,7 @@ numerical prefix argument, or noninteractively by argument ARG,
 whose value can be either of the symbols `raise' or `lower',
 meaning to raise or lower the item's priority by one."
   (interactive)
-  (unless (and (called-interactively-p 'any)
+  (unless (and (or (called-interactively-p 'any) (memq arg '(raise lower)))
 	       (or (todo-done-item-p) (looking-at "^$")))
     (let* ((item (or item (todo-item-string)))
 	   (marked (todo-marked-item-p))
@@ -2530,7 +2533,7 @@ meaning to raise or lower the item's priority by one."
 				   (re-search-forward regexp1 nil t)
 				   (match-string-no-properties 1)))))))
 	   curnum
-	   (todo (cond ((or (eq arg 'raise) (eq arg 'lower)
+	   (todo (cond ((or (memq arg '(raise lower))
 			    (eq major-mode 'todo-filtered-items-mode))
 			(save-excursion
 			  (let ((curstart (todo-item-start))
@@ -2761,10 +2764,13 @@ section in the category moved to."
 			(forward-line)
 			(setq beg (point))
 			(setq end (if (re-search-forward
-				       (concat "^" (regexp-quote
-						    todo-category-beg)) nil t)
-				      (match-beginning 0)
-				    (point-max)))
+				       (concat "^"
+                                               (regexp-quote todo-category-beg))
+                                       nil t)
+                                      (progn
+				        (goto-char (match-beginning 0))
+                                        (point-marker))
+				    (point-max-marker)))
 			(goto-char beg)
 			(while (< (point) end)
 			  (if (todo-marked-item-p)
@@ -3263,6 +3269,10 @@ the only category in the archive, the archive file is deleted."
 			   (set-buffer (find-file-noselect tfile)))
 	(todo-category-number cat)
 	(todo-category-select)
+        ;; Selecting the category leaves point at the end of the done
+        ;; items separator string, so move it to the (first) restored
+        ;; done item.
+        (forward-line)
 	(message "Items unarchived.")))))
 
 (defun todo-jump-to-archive-category (&optional file)
@@ -5221,7 +5231,10 @@ Also preserve category display, if applicable."
   (let ((revert-buffer-function nil))
     (revert-buffer ignore-auto noconfirm 'preserve-modes)
     (when (memq major-mode '(todo-mode todo-archive-mode))
-      (todo-category-select))))
+      (save-excursion (todo-category-select))
+      ;; revert-buffer--default calls after-find-file, which makes
+      ;; buffer writable.
+      (setq buffer-read-only t))))
 
 (defun todo-desktop-save-buffer (_dir)
   `((catnum . ,(todo-category-number (todo-current-category)))))
