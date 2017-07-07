@@ -16431,9 +16431,6 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
   eassert (XMARKER (w->start)->buffer == buffer);
   eassert (XMARKER (w->pointm)->buffer == buffer);
 
-  /* We come here again if we need to run window-text-change-functions
-     below.  */
- restart:
   reconsider_clip_changes (w);
   frame_line_height = default_line_pixel_height (w);
   margin = window_scroll_margin (w, MARGIN_IN_LINES);
@@ -16499,16 +16496,6 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
        && !current_buffer->prevent_redisplay_optimizations_p
        && !window_outdated (w)
        && !hscrolling_current_line_p (w));
-
-  /* Run the window-text-change-functions
-     if it is possible that the text on the screen has changed
-     (either due to modification of the text, or any other reason).  */
-  if (!current_matrix_up_to_date_p
-      && !NILP (Vwindow_text_change_functions))
-    {
-      safe_run_hooks (Qwindow_text_change_functions);
-      goto restart;
-    }
 
   beg_unchanged = BEG_UNCHANGED;
   end_unchanged = END_UNCHANGED;
@@ -31692,7 +31679,6 @@ They are still logged to the *Messages* buffer.  */);
   DEFSYM (Qoverriding_terminal_local_map, "overriding-terminal-local-map");
   DEFSYM (Qoverriding_local_map, "overriding-local-map");
   DEFSYM (Qwindow_scroll_functions, "window-scroll-functions");
-  DEFSYM (Qwindow_text_change_functions, "window-text-change-functions");
   DEFSYM (Qredisplay_end_trigger_functions, "redisplay-end-trigger-functions");
   DEFSYM (Qinhibit_point_motion_hooks, "inhibit-point-motion-hooks");
   DEFSYM (Qeval, "eval");
@@ -32015,11 +32001,6 @@ Warning: Do not use this feature to alter the way the window
 is scrolled.  It is not designed for that, and such use probably won't
 work.  */);
   Vwindow_scroll_functions = Qnil;
-
-  DEFVAR_LISP ("window-text-change-functions",
-	       Vwindow_text_change_functions,
-    doc: /* Functions to call in redisplay when text in the window might change.  */);
-  Vwindow_text_change_functions = Qnil;
 
   DEFVAR_LISP ("redisplay-end-trigger-functions", Vredisplay_end_trigger_functions,
     doc: /* Functions called when redisplay of a window reaches the end trigger.
