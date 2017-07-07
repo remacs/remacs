@@ -3694,15 +3694,17 @@ example:
 (defun widget-color--choose-action (widget &optional _event)
   (list-colors-display
    nil nil
-   `(lambda (color)
-      (when (buffer-live-p ,(current-buffer))
-	(widget-value-set ',(widget-get widget :parent) color)
-	(let* ((buf (get-buffer "*Colors*"))
-	       (win (get-buffer-window buf 0)))
-	  (if win
-	      (quit-window nil win)
-	    (bury-buffer buf)))
-	(pop-to-buffer ,(current-buffer))))))
+   (let ((cbuf ,(current-buffer))
+         (wp (widget-get widget :parent)))
+     (lambda (color)
+       (when (buffer-live-p cbuf)
+	 (widget-value-set wp color)
+	 (let* ((buf (get-buffer "*Colors*"))
+	        (win (get-buffer-window buf 0)))
+	   (if win
+	       (quit-window nil win)
+	     (bury-buffer buf)))
+	 (pop-to-buffer cbuf))))))
 
 (defun widget-color-sample-face-get (widget)
   (let* ((value (condition-case nil
