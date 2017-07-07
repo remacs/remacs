@@ -7192,9 +7192,9 @@ See `display-buffer' for the format of display actions."
        (let ((pars (special-display-p (buffer-name buffer))))
 	 (when pars
            (list (list #'display-buffer-reuse-window
-                       `(lambda (buffer _alist)
-                          (funcall special-display-function
-                                   buffer ',(if (listp pars) pars)))))))))
+                       (lambda (buffer _alist)
+                         (funcall special-display-function
+                                  buffer (if (listp pars) pars)))))))))
 
 (defun display-buffer-pop-up-frame (buffer alist)
   "Display BUFFER in a new frame.
