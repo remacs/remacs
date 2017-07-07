@@ -12,6 +12,10 @@ impl LispSymbolRef {
     pub fn get_function(&self) -> LispObject {
         LispObject::from_raw(self.function)
     }
+
+    pub fn get_plist(&self) -> LispObject {
+        LispObject::from_raw(self.plist)
+    }
 }
 
 /// Return t if OBJECT is a symbol.
@@ -44,4 +48,10 @@ fn fboundp(object: LispObject) -> LispObject {
 #[lisp_fn]
 fn symbol_function(object: LispObject) -> LispObject {
     object.as_symbol_or_error().get_function()
+}
+
+/// Return SYMBOL's property list.
+#[lisp_fn]
+fn symbol_plist(object: LispObject) -> LispObject {
+    object.as_symbol_or_error().get_plist()
 }
