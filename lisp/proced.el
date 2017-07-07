@@ -767,7 +767,7 @@ The time interval for updates is specified via `proced-auto-update-interval'."
       (while (not (eobp))
         (cond ((looking-at mark-re)
                (proced-insert-mark nil))
-              ((looking-at " ")
+              ((= (following-char) ?\s)
                (proced-insert-mark t))
               (t
                (forward-line 1)))))))

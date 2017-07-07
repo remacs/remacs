@@ -1880,8 +1880,8 @@ after indenting."
     ;; FIXME This means f90-calculate-indent gives different answers
     ;; for comments and preprocessor lines to this function.
     ;; Better to make f90-calculate-indent return the correct answer?
-    (cond ((looking-at "!") (setq indent (f90-comment-indent)))
-          ((looking-at "#") (setq indent 0))
+    (cond ((= (following-char) ?!) (setq indent (f90-comment-indent)))
+          ((= (following-char) ?#) (setq indent 0))
           (t
            (and f90-smart-end (looking-at "end")
                 (f90-match-end))
