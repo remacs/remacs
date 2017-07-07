@@ -1995,9 +1995,7 @@ line numbers, `line-number'.  */)
   line_number_display_width (XWINDOW (selected_window), &width, &pixel_width);
   if (!NILP (pixelwise))
     return make_number (pixel_width);
-  /* FIXME: The "+ 2" part knows that we add a blank on each side of
-     the line number when producing glyphs for display.  */
-  return make_number (width + 2);
+  return make_number (width);
 }
 
 /* In window W (derived from WINDOW), return x coordinate for column
