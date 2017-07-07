@@ -3694,7 +3694,7 @@ example:
 (defun widget-color--choose-action (widget &optional _event)
   (list-colors-display
    nil nil
-   (let ((cbuf ,(current-buffer))
+   (let ((cbuf (current-buffer))
          (wp (widget-get widget :parent)))
      (lambda (color)
        (when (buffer-live-p cbuf)
