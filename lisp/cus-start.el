@@ -613,7 +613,7 @@ since it could result in memory overflow and make Emacs crash."
                                  (choice
                                   (const :tag "Disregard narrowing when calculating line numbers"
                                          :value t)
-                                  (const :tag "Count lines from beinning of narrowed region"
+                                  (const :tag "Count lines from beginning of narrowed region"
                                          :value nil))
                                  "26.1")
 	     ;; xfaces.c
