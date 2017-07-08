@@ -340,14 +340,13 @@ readchar (Lisp_Object readcharfun, bool *multibyte)
   len = BYTES_BY_CHAR_HEAD (c);
   while (i < len)
     {
-      c = (*readbyte) (-1, readcharfun);
+      buf[i++] = c = (*readbyte) (-1, readcharfun);
       if (c < 0 || ! TRAILING_CODE_P (c))
 	{
-	  while (--i > 1)
+	  for (i -= c < 0; 0 < --i; )
 	    (*readbyte) (buf[i], readcharfun);
 	  return BYTE8_TO_CHAR (buf[0]);
 	}
-      buf[i++] = c;
     }
   return STRING_CHAR (buf);
 }
@@ -530,14 +529,13 @@ read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object rea
   buf[i++] = c;
   while (i < len)
     {
-      c = (*readbyte) (-1, readcharfun);
+      buf[i++] = c = (*readbyte) (-1, readcharfun);
       if (c < 0xA0)
 	{
-	  while (--i > 1)
+	  for (i -= c < 0; 0 < --i; )
 	    (*readbyte) (buf[i], readcharfun);
 	  return BYTE8_TO_CHAR (buf[0]);
 	}
-      buf[i++] = c;
     }
 
   if (len == 2)
