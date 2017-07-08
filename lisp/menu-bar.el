@@ -1112,7 +1112,7 @@ The selected font will be the default on both the existing and future frames."
   (let ((menu (make-sparse-keymap "Show/Hide")))
 
     (bindings--define-key menu [display-line-numbers]
-      `(menu-item "Line Numbers for all lines"
+      `(menu-item "Line Numbers for All Lines"
                   ,(lambda ()
                      (interactive)
                      (toggle-display-line-numbers))
