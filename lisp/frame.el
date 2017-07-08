@@ -2458,7 +2458,13 @@ See also `toggle-frame-maximized'."
 (make-obsolete-variable
  'window-system-version "it does not give useful information." "24.3")
 
-;; Variables which should trigger redisplay of the current buffer.
+;; Variables whose change of value should trigger redisplay of the
+;; current buffer.
+;; To test whether a given variable needs to be added to this list,
+;; write a simple interactive function that changes the variable's
+;; value and bind that function to a simple key, like F5.  If typing
+;; F5 then produces the correct effect, the variable doesn't need
+;; to be in this list; otherwise, it does.
 (mapc (lambda (var)
         (add-variable-watcher var (symbol-function 'set-buffer-redisplay)))
       '(line-spacing
