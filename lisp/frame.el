@@ -2466,6 +2466,10 @@ See also `toggle-frame-maximized'."
         line-prefix
         wrap-prefix
         truncate-lines
+        display-line-numbers
+        display-line-number-width
+        display-line-numbers-current-absolute
+        display-line-numbers-widen
         bidi-paragraph-direction
         bidi-display-reordering))
 

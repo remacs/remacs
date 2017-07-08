@@ -2045,6 +2045,23 @@ selected window.  The value includes the line spacing of the line
 (@pxref{Line Height}).
 @end defun
 
+When a buffer is displayed with line numbers (@pxref{Display Custom,,,
+emacs, The GNU Emacs Manual}), it is sometimes useful to know the
+width taken for displaying the line numbers.  The following function
+is for Lisp programs which need this information for layout
+calculations.
+
+@defun line-number-display-width &optional pixelwise
+This function returns the width used for displaying the line numbers
+in the selected window.  Optional argument @var{pixelwise}, if
+non-@code{nil}, means return the value in pixels; otherwise the value
+is returned in column units of the font defined for the
+@code{line-number} face.  If line numbers are not displayed in the
+selected window, the value is zero.  Use @code{with-selected-window}
+(@pxref{Selecting Windows}) if you need this information about another
+window.
+@end defun
+
 
 @node Line Height
 @section Line Height

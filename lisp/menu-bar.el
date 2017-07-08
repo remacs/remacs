@@ -1101,17 +1101,32 @@ The selected font will be the default on both the existing and future frames."
                     :button (:radio . (eq tool-bar-mode nil))))
       menu)))
 
+(defun toggle-display-line-numbers ()
+  (interactive)
+  (if display-line-numbers
+      (setq display-line-numbers nil)
+    (setq display-line-numbers t))
+  (force-mode-line-update))
+
 (defvar menu-bar-showhide-menu
   (let ((menu (make-sparse-keymap "Show/Hide")))
 
+    (bindings--define-key menu [display-line-numbers]
+      `(menu-item "Line Numbers for all lines"
+                  ,(lambda ()
+                     (interactive)
+                     (toggle-display-line-numbers))
+                  :help "Show the line number alongside each line"
+                  :button (:toggle . display-line-numbers)))
+
     (bindings--define-key menu [column-number-mode]
       (menu-bar-make-mm-toggle column-number-mode
-                               "Column Numbers"
+                               "Column Numbers in Mode Line"
                                "Show the current column number in the mode line"))
 
     (bindings--define-key menu [line-number-mode]
       (menu-bar-make-mm-toggle line-number-mode
-                               "Line Numbers"
+                               "Line Numbers in Mode Line"
                                "Show the current line number in the mode line"))
 
     (bindings--define-key menu [size-indication-mode]

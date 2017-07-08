@@ -1947,6 +1947,57 @@ vmotion (register ptrdiff_t from, register ptrdiff_t from_byte,
 			 -1, hscroll, 0, w);
 }
 
+/* Return the width taken by line-number display in window W.  */
+static void
+line_number_display_width (struct window *w, int *width, int *pixel_width)
+{
+  if (NILP (Vdisplay_line_numbers))
+    {
+      *width = 0;
+      *pixel_width = 0;
+    }
+  else
+    {
+      struct it it;
+      struct text_pos wstart;
+      bool saved_restriction = false;
+      ptrdiff_t count = SPECPDL_INDEX ();
+      SET_TEXT_POS_FROM_MARKER (wstart, w->start);
+      void *itdata = bidi_shelve_cache ();
+      /* We must start from window's start point, but it could be
+	 outside the accessible region.  */
+      if (wstart.charpos < BEGV || wstart.charpos > ZV)
+	{
+	  record_unwind_protect (save_restriction_restore,
+				 save_restriction_save ());
+	  Fwiden ();
+	  saved_restriction = true;
+	}
+      start_display (&it, w, wstart);
+      move_it_by_lines (&it, 1);
+      *width = it.lnum_width;
+      *pixel_width = it.lnum_pixel_width;
+      if (saved_restriction)
+	unbind_to (count, Qnil);
+      bidi_unshelve_cache (itdata, 0);
+    }
+}
+
+DEFUN ("line-number-display-width", Fline_number_display_width,
+       Sline_number_display_width, 0, 1, 0,
+       doc: /* Return the width used for displaying line numbers in the selected window.
+If optional argument PIXELWISE is non-nil, return the width in pixels,
+otherwise return the width in columns of the face used to display
+line numbers, `line-number'.  */)
+  (Lisp_Object pixelwise)
+{
+  int width, pixel_width;
+  line_number_display_width (XWINDOW (selected_window), &width, &pixel_width);
+  if (!NILP (pixelwise))
+    return make_number (pixel_width);
+  return make_number (width);
+}
+
 /* In window W (derived from WINDOW), return x coordinate for column
    COL (derived from COLUMN).  */
 static int
@@ -2068,9 +2119,19 @@ whether or not it is currently displayed in some window.  */)
 	  start_x = window_column_x (w, window, start_col, cur_col);
 	}
 
-      itdata = bidi_shelve_cache ();
+      /* When displaying line numbers, we need to prime IT's
+	 lnum_width with the value calculated at window's start, since
+	 that's what normal window redisplay does.  Otherwise C-n/C-p
+	 will sometimes err by one column.  */
+      int lnum_width = 0;
+      int lnum_pixel_width = 0;
+      if (!NILP (Vdisplay_line_numbers)
+	  && !EQ (Vdisplay_line_numbers, Qvisual))
+	line_number_display_width (w, &lnum_width, &lnum_pixel_width);
       SET_TEXT_POS (pt, PT, PT_BYTE);
+      itdata = bidi_shelve_cache ();
       start_display (&it, w, pt);
+      it.lnum_width = lnum_width;
       first_x = it.first_visible_x;
       it_start = IT_CHARPOS (it);
 
@@ -2247,6 +2308,12 @@ whether or not it is currently displayed in some window.  */)
 	 an addition to the hscroll amount.  */
       if (lcols_given)
 	{
+	  /* If we are displaying line numbers, we could cross the
+	     line where the width of the line-number display changes,
+	     in which case we need to fix up the pixel coordinate
+	     accordingly.  */
+	  if (lnum_pixel_width > 0)
+	    to_x += it.lnum_pixel_width - lnum_pixel_width;
 	  move_it_in_display_line (&it, ZV, first_x + to_x, MOVE_TO_X);
 	  /* If we find ourselves in the middle of an overlay string
 	     which includes a newline after current string position,
@@ -2292,6 +2359,7 @@ syms_of_indent (void)
   defsubr (&Sindent_to);
   defsubr (&Scurrent_column);
   defsubr (&Smove_to_column);
+  defsubr (&Sline_number_display_width);
   defsubr (&Svertical_motion);
   defsubr (&Scompute_motion);
 }
