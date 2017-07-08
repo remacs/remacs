@@ -26,15 +26,13 @@
 ;; If there are lines marked as failing (see
 ;; `ucs-normalize-tests--failing-lines-part1' and
 ;; `ucs-normalize-tests--failing-lines-part2'), they may need to be
-;; adjusted when NormalizationTest.txt is updated.  To get a list of
-;; currently failing lines, set those 2 variables to nil, run the
-;; tests, and inspect the values of
-;; `ucs-normalize-tests--part1-rule1-failed-lines' and
-;; `ucs-normalize-tests--part1-rule2-failed-chars', respectively.
+;; adjusted when NormalizationTest.txt is updated.  Run the function
+;; `ucs-normalize-check-failing-lines' to see what changes are needed.
 
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
+(require 'seq)
 (require 'ert)
 (require 'ucs-normalize)
 
@@ -67,11 +65,11 @@ And NORM is one of the symbols `NFC', `NFD', `NFKC', `NFKD' for brevity."
 
 (defvar ucs-normalize-tests--chars-part1 nil)
 
-(defun ucs-normalize-tests--invariants-hold-p (&rest columns)
+(defun ucs-normalize-tests--rule1-holds-p (&rest columns)
   "Check 1st conformance rule.
 The following invariants must be true for all conformant implementations..."
   (when ucs-normalize-tests--chars-part1
-    ;; See `ucs-normalize-tests--invariants-rule2-hold-p'.
+    ;; See `ucs-normalize-tests--rule2-holds-p'.
     (aset ucs-normalize-tests--chars-part1
           (caar columns) 1))
   (cl-destructuring-bind (source nfc nfd nfkc nfkd)
@@ -107,7 +105,7 @@ The following invariants must be true for all conformant implementations..."
      (equal nfkd (ucs-normalize-tests--normalize NFKD nfkc))
      (equal nfkd (ucs-normalize-tests--normalize NFKD nfkd)))))
 
-(defun ucs-normalize-tests--invariants-rule2-hold-p (char)
+(defun ucs-normalize-tests--rule2-holds-p (char)
  "Check 2nd conformance rule.
 For every code point X assigned in this version of Unicode that is not specifically
 listed in Part 1, the following invariants must be true for all conformant
@@ -120,7 +118,7 @@ implementations:
         (equal X (ucs-normalize-tests--normalize NFKC X))
         (equal X (ucs-normalize-tests--normalize NFKD X)))))
 
-(cl-defun ucs-normalize-tests--invariants-failing-for-part (part &optional skip-lines &key progress-str)
+(cl-defun ucs-normalize-tests--rule1-failing-for-partX (part &optional skip-lines &key progress-str)
   "Returns a list of failed line numbers."
   (with-temp-buffer
     (insert-file-contents ucs-normalize-test-data-file)
@@ -137,7 +135,7 @@ implementations:
                                                  0 nil 0.5))
                for line from beg-line to (1- end-line)
                unless (or (= (following-char) ?#)
-                          (ucs-normalize-tests--invariants-hold-p
+                          (ucs-normalize-tests--rule1-holds-p
                            (ucs-normalize-tests--parse-column)
                            (ucs-normalize-tests--parse-column)
                            (ucs-normalize-tests--parse-column)
@@ -148,7 +146,7 @@ implementations:
                do (forward-line)
                if reporter do (progress-reporter-update reporter line)))))
 
-(defun ucs-normalize-tests--invariants-failing-for-lines (lines)
+(defun ucs-normalize-tests--rule1-failing-for-lines (lines)
   "Returns a list of failed line numbers."
   (with-temp-buffer
     (insert-file-contents ucs-normalize-test-data-file)
@@ -156,7 +154,7 @@ implementations:
     (cl-loop for prev-line = 1 then line
              for line in lines
              do (forward-line (- line prev-line))
-             unless (ucs-normalize-tests--invariants-hold-p
+             unless (ucs-normalize-tests--rule1-holds-p
                      (ucs-normalize-tests--parse-column)
                      (ucs-normalize-tests--parse-column)
                      (ucs-normalize-tests--parse-column)
@@ -165,7 +163,7 @@ implementations:
              collect line)))
 
 (ert-deftest ucs-normalize-part0 ()
-  (should-not (ucs-normalize-tests--invariants-failing-for-part 0)))
+  (should-not (ucs-normalize-tests--rule1-failing-for-partX 0)))
 
 (defconst ucs-normalize-tests--failing-lines-part1
   (list 15131 15132 15133 15134 15135 15136 15137 15138
@@ -195,6 +193,8 @@ implementations:
   "A list of line numbers.")
 (defvar ucs-normalize-tests--part1-rule2-failed-chars nil
   "A list of code points.")
+(defvar ucs-normalize-tests--part2-rule1-failed-lines nil
+  "A list of line numbers.")
 
 (defun ucs-normalize-tests--part1-rule2 (chars-part1)
   (let ((reporter (make-progress-reporter "UCS Normalize Test Part1, rule 2"
@@ -204,11 +204,11 @@ implementations:
      (lambda (char-range listed-in-part)
        (unless (eq listed-in-part 1)
          (if (characterp char-range)
-             (progn (unless (ucs-normalize-tests--invariants-rule2-hold-p char-range)
+             (progn (unless (ucs-normalize-tests--rule2-holds-p char-range)
                       (push char-range failed-chars))
                     (progress-reporter-update reporter char-range))
            (cl-loop for char from (car char-range) to (cdr char-range)
-                    unless (ucs-normalize-tests--invariants-rule2-hold-p char)
+                    unless (ucs-normalize-tests--rule2-holds-p char)
                     do (push char failed-chars)
                     do (progress-reporter-update reporter char)))))
      chars-part1)
@@ -219,26 +219,27 @@ implementations:
   :tags '(:expensive-test)
   ;; This takes a long time, so make sure we're compiled.
   (dolist (fun '(ucs-normalize-tests--part1-rule2
-                 ucs-normalize-tests--invariants-failing-for-part
-                 ucs-normalize-tests--invariants-hold-p
-                 ucs-normalize-tests--invariants-rule2-hold-p))
+                 ucs-normalize-tests--rule1-failing-for-partX
+                 ucs-normalize-tests--rule1-holds-p
+                 ucs-normalize-tests--rule2-holds-p))
     (or (byte-code-function-p (symbol-function fun))
         (byte-compile fun)))
   (let ((ucs-normalize-tests--chars-part1 (make-char-table 'ucs-normalize-tests t)))
-    (should-not
-     (setq ucs-normalize-tests--part1-rule1-failed-lines
-           (ucs-normalize-tests--invariants-failing-for-part
-            1 ucs-normalize-tests--failing-lines-part1
-            :progress-str "UCS Normalize Test Part1, rule 1")))
-    (should-not (setq ucs-normalize-tests--part1-rule2-failed-chars
-                      (ucs-normalize-tests--part1-rule2
-                       ucs-normalize-tests--chars-part1)))))
+    (setq ucs-normalize-tests--part1-rule1-failed-lines
+          (ucs-normalize-tests--rule1-failing-for-partX
+           1 ucs-normalize-tests--failing-lines-part1
+           :progress-str "UCS Normalize Test Part1, rule 1"))
+    (setq ucs-normalize-tests--part1-rule2-failed-chars
+          (ucs-normalize-tests--part1-rule2
+           ucs-normalize-tests--chars-part1))
+    (should-not ucs-normalize-tests--part1-rule1-failed-lines)
+    (should-not ucs-normalize-tests--part1-rule2-failed-chars)))
 
 (ert-deftest ucs-normalize-part1-failing ()
   :expected-result :failed
   (skip-unless ucs-normalize-tests--failing-lines-part1)
   (should-not
-   (ucs-normalize-tests--invariants-failing-for-lines
+   (ucs-normalize-tests--rule1-failing-for-lines
     ucs-normalize-tests--failing-lines-part1)))
 
 (defconst ucs-normalize-tests--failing-lines-part2
@@ -259,19 +260,60 @@ implementations:
 (ert-deftest ucs-normalize-part2 ()
   :tags '(:expensive-test)
   (should-not
-   (ucs-normalize-tests--invariants-failing-for-part
-    2 ucs-normalize-tests--failing-lines-part2
-    :progress-str "UCS Normalize Test Part2")))
+   (setq ucs-normalize-tests--part2-rule1-failed-lines
+         (ucs-normalize-tests--rule1-failing-for-partX
+          2 ucs-normalize-tests--failing-lines-part2
+          :progress-str "UCS Normalize Test Part2"))))
 
 (ert-deftest ucs-normalize-part2-failing ()
   :expected-result :failed
   (skip-unless ucs-normalize-tests--failing-lines-part2)
   (should-not
-   (ucs-normalize-tests--invariants-failing-for-lines
+   (ucs-normalize-tests--rule1-failing-for-lines
     ucs-normalize-tests--failing-lines-part2)))
 
 (ert-deftest ucs-normalize-part3 ()
   (should-not
-   (ucs-normalize-tests--invariants-failing-for-part 3)))
+   (ucs-normalize-tests--rule1-failing-for-partX 3)))
+
+(defun ucs-normalize-tests--insert-failing-lines (var newval)
+  (insert (format "`%s' should be updated to:\n
+\(defconst %s
+  (list " var var))
+  (dolist (linos (seq-partition newval 8))
+    (insert (mapconcat #'number-to-string linos " ") "\n"))
+  (insert ")\)"))
+
+(defun ucs-normalize-check-failing-lines ()
+  (interactive)
+  (let ((ucs-normalize-tests--failing-lines-part1 nil)
+        (ucs-normalize-tests--failing-lines-part2 nil))
+    (setq ucs-normalize-tests--part1-rule1-failed-lines nil)
+    (setq ucs-normalize-tests--part1-rule2-failed-chars nil)
+    (setq ucs-normalize-tests--part2-rule1-failed-lines nil)
+    (ert "\\`ucs-normalize"))
+
+  (with-current-buffer (get-buffer-create "*ucs normalize change bad lines*")
+    (erase-buffer)
+    (unless (equal ucs-normalize-tests--part1-rule1-failed-lines
+                   ucs-normalize-tests--failing-lines-part1)
+      (ucs-normalize-tests--insert-failing-lines
+       'ucs-normalize-tests--failing-lines-part1
+       ucs-normalize-tests--part1-rule1-failed-lines))
+
+    (when ucs-normalize-tests--part1-rule2-failed-chars
+      (insert (format "Some characters failed rule 2!\n\n%S"
+                      `(list ,@ucs-normalize-tests--part1-rule2-failed-chars))))
+
+    (unless (equal ucs-normalize-tests--part2-rule1-failed-lines
+                   ucs-normalize-tests--failing-lines-part2)
+      (ucs-normalize-tests--insert-failing-lines
+       'ucs-normalize-tests--failing-lines-part2
+       ucs-normalize-tests--part2-rule1-failed-lines))
+    (if (> (buffer-size) 0)
+        (if noninteractive
+            (princ (buffer-string) standard-output)
+          (display-buffer (current-buffer)))
+      (message "No changes to failing lines needed"))))
 
 ;;; ucs-normalize-tests.el ends here
