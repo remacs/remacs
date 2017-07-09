@@ -315,18 +315,13 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
   MODULE_FUNCTION_BEGIN ();
   struct Lisp_Hash_Table *h = XHASH_TABLE (Vmodule_refs_hash);
   Lisp_Object obj = value_to_lisp (ref);
-  EMACS_UINT hashcode;
-  ptrdiff_t i = hash_lookup (h, obj, &hashcode);
+  ptrdiff_t i = hash_lookup (h, obj, NULL);
 
   if (i >= 0)
     {
-      Lisp_Object value = HASH_VALUE (h, i);
-      EMACS_INT refcount = XFASTINT (value) - 1;
+      EMACS_INT refcount = XFASTINT (HASH_VALUE (h, i)) - 1;
       if (refcount > 0)
-        {
-          value = make_natnum (refcount);
-          set_hash_value_slot (h, i, value);
-        }
+        set_hash_value_slot (h, i, make_natnum (refcount));
       else
         {
           eassert (refcount == 0);
