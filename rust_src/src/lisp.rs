@@ -22,7 +22,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
                  Qsymbolp, Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp,
                  circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp,
-                 Qwholenump, Qvectorp, SYMBOL_NAME, PseudovecType, lispsym};
+                 Qwholenump, Qvectorp, Qcharacterp, SYMBOL_NAME, PseudovecType, lispsym};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -147,6 +147,18 @@ impl LispObject {
     #[inline]
     pub fn get_untaggedptr(self) -> *mut c_void {
         (self.to_raw() & VALMASK) as intptr_t as *mut c_void
+    }
+
+    // Same as CHECK_TYPE macro,
+    // order of arguments changed
+    #[inline]
+    #[allow(dead_code)]
+    fn check_type_or_error(self, ok: bool, predicate: CLisp_Object) -> () {
+        if !ok {
+            unsafe {
+                wrong_type_argument(predicate, self.to_raw());
+            }
+        }
     }
 }
 
@@ -879,6 +891,15 @@ impl LispObject {
             false,
             |i| 0 <= i && i <= MAX_CHAR as EmacsInt,
         )
+    }
+
+    /// Check if Lisp object is a character or not.
+    /// Similar to CHECK_CHARACTER
+    #[inline]
+    pub fn is_character_or_error(self) -> () {
+        unsafe {
+            self.check_type_or_error(self.is_character(), Qcharacterp);
+        }
     }
 
     #[inline]
