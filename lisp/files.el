@@ -434,8 +434,11 @@ and toggle it if ARG is `toggle'."
              (not (and buffer-auto-save-file-name
                        auto-save-visited-file-name)))))))
 
+;; The 'set' part is so we don't get a warning for using this variable
+;; above, while still catching code that _sets_ the variable to get
+;; the same effect as the new auto-save-visited-mode.
 (make-obsolete-variable 'auto-save-visited-file-name 'auto-save-visited-mode
-                        "Emacs 26.1")
+                        "Emacs 26.1" 'set)
 
 (defcustom save-abbrevs t
   "Non-nil means save word abbrevs too when files are saved.
