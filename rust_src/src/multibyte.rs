@@ -35,6 +35,7 @@
 use std::ptr;
 use std::slice;
 use libc::{ptrdiff_t, c_char, c_uchar, c_uint, c_int};
+use std::ascii::AsciiExt;
 
 use lisp::ExternalPtr;
 use remacs_sys::{CHAR_MODIFIER_MASK, CHAR_SHIFT, CHAR_CTL, emacs_abort, CHARACTERBITS, EmacsInt,
@@ -189,6 +190,24 @@ fn raw_byte_codepoint(byte: c_uchar) -> Codepoint {
 #[inline]
 fn raw_byte_from_codepoint(cp: Codepoint) -> c_uchar {
     (cp - 0x3F_FF00) as c_uchar
+}
+
+/// UNIBYTE_TO_CHAR macro
+#[inline]
+pub fn unibyte_to_char(cp: Codepoint) -> Codepoint {
+    if (cp as u8).is_ascii() {
+        cp
+    } else {
+        raw_byte_codepoint(cp as c_uchar)
+    }
+}
+
+/// MAKE_CHAR_MULTIBYTE macro
+#[inline]
+#[allow(unused_comparisons)]
+pub fn make_char_multibyte(cp: Codepoint) -> Codepoint {
+    debug_assert!((cp) >= 0 && (cp) < 256);
+    unibyte_to_char(cp)
 }
 
 /// Same as the CHAR_STRING macro.
