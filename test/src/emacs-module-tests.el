@@ -230,7 +230,7 @@ aren’t accessed."
   (should (eq (mod-test-invalid-store) 123))
   (module--test-assertion (rx "Emacs value not found in "
                               (+ digit) " values of "
-                              (+ digit) " environments\n" eos)
+                              (+ digit) " environments\n")
     ;; Storing and reloading a local value causes undefined behavior,
     ;; which should be detected by the module assertions.
     (mod-test-invalid-store)
@@ -241,7 +241,7 @@ aren’t accessed."
 during garbage collection."
   (skip-unless (file-executable-p mod-test-emacs))
   (module--test-assertion
-      (rx "Module function called during garbage collection\n" eos)
+      (rx "Module function called during garbage collection\n")
     (mod-test-invalid-finalizer)))
 
 ;;; emacs-module-tests.el ends here
