@@ -3,6 +3,7 @@
 #![allow(private_no_mangle_fns)]
 #![feature(proc_macro)]
 #![cfg_attr(feature = "strict", deny(warnings))]
+#![feature(global_allocator)]
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
 #[cfg(all(not(test), target_os = "macos"))]
@@ -35,6 +36,11 @@ mod crypto;
 mod str2sig;
 mod multibyte;
 mod buffers;
+
+#[cfg(all(not(test), target_os = "macos"))]
+use alloc_unexecmacosx::OsxUnexecAlloc;
+#[global_allocator]
+static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
 use remacs_sys::Lisp_Subr;
 
