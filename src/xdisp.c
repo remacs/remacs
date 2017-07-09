@@ -20823,7 +20823,6 @@ maybe_produce_line_number (struct it *it)
   ptrdiff_t start_from, bytepos;
   ptrdiff_t this_line;
   bool first_time = false;
-  ptrdiff_t beg = display_line_numbers_widen ? BEG : BEGV;
   ptrdiff_t beg_byte = display_line_numbers_widen ? BEG_BYTE : BEGV_BYTE;
   ptrdiff_t z_byte = display_line_numbers_widen ? Z_BYTE : ZV_BYTE;
   void *itdata = bidi_shelve_cache ();
@@ -20834,8 +20833,21 @@ maybe_produce_line_number (struct it *it)
     {
       if (!last_line)
 	{
-	  /* FIXME: Maybe reuse the data in it->w->base_line_number.  */
-	  start_from = beg;
+	  /* If possible, reuse data cached by line-number-mode.  */
+	  if (it->w->base_line_number > 0
+	      && it->w->base_line_pos > 0
+	      && it->w->base_line_pos <= IT_CHARPOS (*it)
+	      /* line-number-mode always displays narrowed line
+		 numbers, so we cannot use its data if the user wants
+		 line numbers that disregard narrowing.  */
+	      && !(display_line_numbers_widen
+		   && (BEG_BYTE != BEGV_BYTE || Z_BYTE != ZV_BYTE)))
+	    {
+	      start_from = CHAR_TO_BYTE (it->w->base_line_pos);
+	      last_line = it->w->base_line_number - 1;
+	    }
+	  else
+	    start_from = beg_byte;
 	  if (!it->lnum_bytepos)
 	    first_time = true;
 	}
@@ -20845,7 +20857,7 @@ maybe_produce_line_number (struct it *it)
       /* Paranoia: what if someone changes the narrowing since the
 	 last time display_line was called?  Shouldn't really happen,
 	 but who knows what some crazy Lisp invoked by :eval could do?  */
-      if (!(beg_byte <= start_from && start_from < z_byte))
+      if (!(beg_byte <= start_from && start_from <= z_byte))
 	{
 	  last_line = 0;
 	  start_from = beg_byte;
