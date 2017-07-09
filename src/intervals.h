@@ -242,8 +242,7 @@ extern void traverse_intervals (INTERVAL, ptrdiff_t,
                                 void (*) (INTERVAL, Lisp_Object),
                                 Lisp_Object);
 extern void traverse_intervals_noorder (INTERVAL,
-                                        void (*) (INTERVAL, Lisp_Object),
-                                        Lisp_Object);
+					void (*) (INTERVAL, void *), void *);
 extern INTERVAL split_interval_right (INTERVAL, ptrdiff_t);
 extern INTERVAL split_interval_left (INTERVAL, ptrdiff_t);
 extern INTERVAL find_interval (INTERVAL, ptrdiff_t);

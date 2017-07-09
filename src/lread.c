@@ -595,6 +595,20 @@ read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object rea
 }
 
 
+/* An in-progress substitution of OBJECT for PLACEHOLDER.  */
+struct subst
+{
+  Lisp_Object object;
+  Lisp_Object placeholder;
+
+  /* Hash table of subobjects of OBJECT that might be circular.  If
+     Qt, all such objects might be circular.  */
+  Lisp_Object completed;
+
+  /* List of subobjects of OBJECT that have already been visited.  */
+  Lisp_Object seen;
+};
+
 static Lisp_Object read_internal_start (Lisp_Object, Lisp_Object,
                                         Lisp_Object);
 static Lisp_Object read0 (Lisp_Object);
@@ -603,9 +617,8 @@ static Lisp_Object read1 (Lisp_Object, int *, bool);
 static Lisp_Object read_list (bool, Lisp_Object);
 static Lisp_Object read_vector (Lisp_Object, bool);
 
-static Lisp_Object substitute_object_recurse (Lisp_Object, Lisp_Object,
-                                              Lisp_Object);
-static void substitute_in_interval (INTERVAL, Lisp_Object);
+static Lisp_Object substitute_object_recurse (struct subst *, Lisp_Object);
+static void substitute_in_interval (INTERVAL, void *);
 
 
 /* Get a character from the tty.  */
@@ -3107,7 +3120,8 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
                         }
                       else
                         {
-		          Fsubstitute_object_in_subtree (tem, placeholder);
+		          Flread__substitute_object_in_subtree
+			    (tem, placeholder, read_objects_completed);
 
 		          /* ...and #n# will use the real value from now on.  */
 			  i = hash_lookup (h, number, &hash);
@@ -3513,26 +3527,16 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
     }
 }
 
-
-/* List of nodes we've seen during substitute_object_in_subtree.  */
-static Lisp_Object seen_list;
-
-DEFUN ("substitute-object-in-subtree", Fsubstitute_object_in_subtree,
-       Ssubstitute_object_in_subtree, 2, 2, 0,
-       doc: /* Replace every reference to PLACEHOLDER in OBJECT with OBJECT.  */)
-  (Lisp_Object object, Lisp_Object placeholder)
+DEFUN ("lread--substitute-object-in-subtree",
+       Flread__substitute_object_in_subtree,
+       Slread__substitute_object_in_subtree, 3, 3, 0,
+       doc: /* In OBJECT, replace every occurrence of PLACEHOLDER with OBJECT.
+COMPLETED is a hash table of objects that might be circular, or is t
+if any object might be circular.  */)
+  (Lisp_Object object, Lisp_Object placeholder, Lisp_Object completed)
 {
-  Lisp_Object check_object;
-
-  /* We haven't seen any objects when we start.  */
-  seen_list = Qnil;
-
-  /* Make all the substitutions.  */
-  check_object
-    = substitute_object_recurse (object, placeholder, object);
-
-  /* Clear seen_list because we're done with it.  */
-  seen_list = Qnil;
+  struct subst subst = { object, placeholder, completed, Qnil };
+  Lisp_Object check_object = substitute_object_recurse (&subst, object);
 
   /* The returned object here is expected to always eq the
      original.  */
@@ -3541,26 +3545,12 @@ DEFUN ("substitute-object-in-subtree", Fsubstitute_object_in_subtree,
   return Qnil;
 }
 
-/*  Feval doesn't get called from here, so no gc protection is needed.  */
-#define SUBSTITUTE(get_val, set_val)			\
-  do {							\
-    Lisp_Object old_value = get_val;			\
-    Lisp_Object true_value				\
-      = substitute_object_recurse (object, placeholder,	\
-				   old_value);		\
-    							\
-    if (!EQ (old_value, true_value))			\
-      {							\
-	set_val;					\
-      }							\
-  } while (0)
-
 static Lisp_Object
-substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Object subtree)
+substitute_object_recurse (struct subst *subst, Lisp_Object subtree)
 {
   /* If we find the placeholder, return the target object.  */
-  if (EQ (placeholder, subtree))
-    return object;
+  if (EQ (subst->placeholder, subtree))
+    return subst->object;
 
   /* For common object types that can't contain other objects, don't
      bother looking them up; we're done.  */
@@ -3570,15 +3560,16 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
     return subtree;
 
   /* If we've been to this node before, don't explore it again.  */
-  if (!EQ (Qnil, Fmemq (subtree, seen_list)))
+  if (!EQ (Qnil, Fmemq (subtree, subst->seen)))
     return subtree;
 
   /* If this node can be the entry point to a cycle, remember that
      we've seen it.  It can only be such an entry point if it was made
      by #n=, which means that we can find it as a value in
-     read_objects_completed.  */
-  if (hash_lookup (XHASH_TABLE (read_objects_completed), subtree, NULL) >= 0)
-    seen_list = Fcons (subtree, seen_list);
+     COMPLETED.  */
+  if (EQ (subst->completed, Qt)
+      || hash_lookup (XHASH_TABLE (subst->completed), subtree, NULL) >= 0)
+    subst->seen = Fcons (subtree, subst->seen);
 
   /* Recurse according to subtree's type.
      Every branch must return a Lisp_Object.  */
@@ -3605,19 +3596,15 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	if (SUB_CHAR_TABLE_P (subtree))
 	  i = 2;
 	for ( ; i < length; i++)
-	  SUBSTITUTE (AREF (subtree, i),
-		      ASET (subtree, i, true_value));
+	  ASET (subtree, i,
+		substitute_object_recurse (subst, AREF (subtree, i)));
 	return subtree;
       }
 
     case Lisp_Cons:
-      {
-	SUBSTITUTE (XCAR (subtree),
-		    XSETCAR (subtree, true_value));
-	SUBSTITUTE (XCDR (subtree),
-		    XSETCDR (subtree, true_value));
-	return subtree;
-      }
+      XSETCAR (subtree, substitute_object_recurse (subst, XCAR (subtree)));
+      XSETCDR (subtree, substitute_object_recurse (subst, XCDR (subtree)));
+      return subtree;
 
     case Lisp_String:
       {
@@ -3625,11 +3612,8 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	   substitute_in_interval contains part of the logic.  */
 
 	INTERVAL root_interval = string_intervals (subtree);
-	AUTO_CONS (arg, object, placeholder);
-
 	traverse_intervals_noorder (root_interval,
-				    &substitute_in_interval, arg);
-
+				    substitute_in_interval, subst);
 	return subtree;
       }
 
@@ -3641,12 +3625,10 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 
 /*  Helper function for substitute_object_recurse.  */
 static void
-substitute_in_interval (INTERVAL interval, Lisp_Object arg)
+substitute_in_interval (INTERVAL interval, void *arg)
 {
-  Lisp_Object object      = Fcar (arg);
-  Lisp_Object placeholder = Fcdr (arg);
-
-  SUBSTITUTE (interval->plist, set_interval_plist (interval, true_value));
+  set_interval_plist (interval,
+		      substitute_object_recurse (arg, interval->plist));
 }
 
 
@@ -4744,7 +4726,7 @@ syms_of_lread (void)
 {
   defsubr (&Sread);
   defsubr (&Sread_from_string);
-  defsubr (&Ssubstitute_object_in_subtree);
+  defsubr (&Slread__substitute_object_in_subtree);
   defsubr (&Sintern);
   defsubr (&Sintern_soft);
   defsubr (&Sunintern);
@@ -5057,8 +5039,6 @@ that are loaded before your customizations are read!  */);
   read_objects_map = Qnil;
   staticpro (&read_objects_completed);
   read_objects_completed = Qnil;
-  staticpro (&seen_list);
-  seen_list = Qnil;
 
   Vloads_in_progress = Qnil;
   staticpro (&Vloads_in_progress);

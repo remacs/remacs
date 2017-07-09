@@ -164,4 +164,10 @@ literals (Bug#20852)."
                    (concat (format-message "Loading `%s': " file-name)
                            "old-style backquotes detected!")))))
 
+(ert-deftest lread-lread--substitute-object-in-subtree ()
+  (let ((x (cons 0 1)))
+    (setcar x x)
+    (lread--substitute-object-in-subtree x 1 t)
+    (should (eq x (cdr x)))))
+
 ;;; lread-tests.el ends here

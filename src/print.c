@@ -566,7 +566,7 @@ temp_output_buffer_setup (const char *bufname)
 
 static void print (Lisp_Object, Lisp_Object, bool);
 static void print_preprocess (Lisp_Object);
-static void print_preprocess_string (INTERVAL, Lisp_Object);
+static void print_preprocess_string (INTERVAL, void *);
 static void print_object (Lisp_Object, Lisp_Object, bool);
 
 DEFUN ("terpri", Fterpri, Sterpri, 0, 2, 0,
@@ -1214,7 +1214,7 @@ print_preprocess (Lisp_Object obj)
 	case Lisp_String:
 	  /* A string may have text properties, which can be circular.  */
 	  traverse_intervals_noorder (string_intervals (obj),
-				      print_preprocess_string, Qnil);
+				      print_preprocess_string, NULL);
 	  break;
 
 	case Lisp_Cons:
@@ -1263,7 +1263,7 @@ Fills `print-number-table'.  */)
 }
 
 static void
-print_preprocess_string (INTERVAL interval, Lisp_Object arg)
+print_preprocess_string (INTERVAL interval, void *arg)
 {
   print_preprocess (interval->plist);
 }

@@ -1553,7 +1553,7 @@ make_interval (void)
 /* Mark Lisp objects in interval I.  */
 
 static void
-mark_interval (register INTERVAL i, Lisp_Object dummy)
+mark_interval (INTERVAL i, void *dummy)
 {
   /* Intervals should never be shared.  So, if extra internal checking is
      enabled, GC aborts if it seems to have visited an interval twice.  */
@@ -1567,7 +1567,7 @@ mark_interval (register INTERVAL i, Lisp_Object dummy)
 #define MARK_INTERVAL_TREE(i)					\
   do {								\
     if (i && !i->gcmarkbit)					\
-      traverse_intervals_noorder (i, mark_interval, Qnil);	\
+      traverse_intervals_noorder (i, mark_interval, NULL);	\
   } while (0)
 
 /***********************************************************************
