@@ -1,9 +1,9 @@
 //! Operations on characters.
 
 use lisp::LispObject;
-use multibyte::MAX_CHAR;
+use multibyte::{MAX_CHAR, make_char_multibyte};
 use remacs_macros::lisp_fn;
-use remacs_sys::EmacsInt;
+use remacs_sys::{EmacsInt, error};
 
 /// Return the character of the maximum code.
 #[lisp_fn]
@@ -25,4 +25,18 @@ fn characterp(object: LispObject, _ignore: LispObject) -> LispObject {
 #[lisp_fn]
 fn char_or_string_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_character() || object.is_string())
+}
+
+/// Convert the byte CH to multibyte character.
+#[lisp_fn]
+fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
+    ch.is_character_or_error();
+    let mut c = ch.as_fixnum().unwrap() as u32;
+    if c >= 0x100 {
+        unsafe {
+            error("Not a unibyte character: %d".as_ptr(), c);
+        }
+    }
+    c = make_char_multibyte(c);
+    LispObject::from_fixnum(c as EmacsInt)
 }

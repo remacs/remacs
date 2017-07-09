@@ -193,6 +193,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*character::Smax_char);
         defsubr(&*character::Scharacterp);
         defsubr(&*character::Schar_or_string_p);
+        defsubr(&*character::Sunibyte_char_to_multibyte);
         defsubr(&*vectors::Sarrayp);
         defsubr(&*vectors::Sbool_vector_p);
         defsubr(&*vectors::Sbufferp);
