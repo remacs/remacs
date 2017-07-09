@@ -1468,7 +1468,7 @@ For details see the section "Mouse Window Auto-selection" in the Elisp
 manual.
 
 ---
-** 'tcl-auto-fill-mode' is now declared obsolete.  It's functionality
+** 'tcl-auto-fill-mode' is now declared obsolete.  Its functionality
 can be replicated simply by setting 'comment-auto-fill-only-comments'.
 
 
