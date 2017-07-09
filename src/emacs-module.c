@@ -328,7 +328,10 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
           set_hash_value_slot (h, i, value);
         }
       else
-	hash_remove_from_table (h, obj);
+        {
+          eassert (refcount == 0);
+          hash_remove_from_table (h, obj);
+        }
     }
 
   if (module_assertions)
