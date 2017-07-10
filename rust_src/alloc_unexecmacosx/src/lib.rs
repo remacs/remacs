@@ -31,17 +31,10 @@ unsafe impl<'a> Alloc for &'a OsxUnexecAlloc {
 
     unsafe fn realloc(&mut self,
                       ptr: *mut u8,
-                      layout: Layout,
+                      _old_layout: Layout,
                       new_layout: Layout) -> Result<*mut u8, AllocErr> {
-        let addr = unexec_realloc(ptr as *mut libc::c_void, layout.size() as libc::size_t) as usize;
+        let addr = unexec_realloc(ptr as *mut libc::c_void, new_layout.size() as libc::size_t) as usize;
         assert_eq!(addr & (new_layout.align() - 1), 0);
-        Ok(addr as *mut u8)
-    }
-
-    unsafe fn alloc_zeroed(&mut self, layout: Layout) -> Result<*mut u8, AllocErr> {
-        let size = layout.size();
-        let addr = self.alloc(layout)?;
-        libc::memset(addr as *mut libc::c_void, 0, size);
         Ok(addr as *mut u8)
     }
 }

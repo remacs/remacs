@@ -39,6 +39,8 @@ mod buffers;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
+
+#[cfg(all(not(test), target_os = "macos"))]
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
