@@ -34,7 +34,7 @@ fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
     let mut c = ch.as_fixnum().unwrap() as u32;
     if c >= 0x100 {
         unsafe {
-            error("Not a unibyte character: %d".as_ptr(), c);
+            error("Not a unibyte character: %d\0".as_ptr(), c);
         }
     }
     c = make_char_multibyte(c);
