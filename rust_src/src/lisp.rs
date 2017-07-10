@@ -13,7 +13,7 @@ use std::fmt::{Debug, Formatter, Error};
 use libc::{c_void, intptr_t};
 
 use marker::{LispMarker, marker_position};
-use multibyte::{LispStringRef, MAX_CHAR};
+use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
@@ -152,7 +152,6 @@ impl LispObject {
     // Same as CHECK_TYPE macro,
     // order of arguments changed
     #[inline]
-    #[allow(dead_code)]
     fn check_type_or_error(self, ok: bool, predicate: CLisp_Object) -> () {
         if !ok {
             unsafe {
@@ -893,13 +892,14 @@ impl LispObject {
         )
     }
 
-    /// Check if Lisp object is a character or not.
+    /// Check if Lisp object is a character or not and return the codepoint
     /// Similar to CHECK_CHARACTER
     #[inline]
-    pub fn is_character_or_error(self) -> () {
+    pub fn as_character_or_error(self) -> Codepoint {
         unsafe {
             self.check_type_or_error(self.is_character(), Qcharacterp);
         }
+        self.as_fixnum().unwrap() as Codepoint
     }
 
     #[inline]

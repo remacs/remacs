@@ -30,13 +30,11 @@ fn char_or_string_p(object: LispObject) -> LispObject {
 /// Convert the byte CH to multibyte character.
 #[lisp_fn]
 fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
-    ch.is_character_or_error();
-    let mut c = ch.as_fixnum().unwrap() as u32;
+    let c = ch.as_character_or_error();
     if c >= 0x100 {
         unsafe {
             error("Not a unibyte character: %d\0".as_ptr(), c);
         }
     }
-    c = make_char_multibyte(c);
-    LispObject::from_fixnum(c as EmacsInt)
+    LispObject::from_fixnum(make_char_multibyte(c) as EmacsInt)
 }
