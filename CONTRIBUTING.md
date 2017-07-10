@@ -21,6 +21,6 @@ Thank you for contributing to Remacs!
 ## Getting your PRs merged
 
 * Your PR needs to be reviewed by a collaborator. The following users
-  can do this for you: @Wilfred @c-nixon @CrLF0710 @jeandudey
+  can do this for you: @Wilfred @c-nixon @CrLF0710 @jeandudey @birkenfeld
 * The build needs to be passing.
 
