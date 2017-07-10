@@ -1600,6 +1600,9 @@ debugger has been attached to it.
 ** 'set-mouse-position' and 'set-mouse-absolute-pixel-position' work
 on macOS.
 
+** Emacs can now be run as a GUI application from the command line on
+macOS.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.
