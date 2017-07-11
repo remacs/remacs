@@ -32690,11 +32690,11 @@ If the value is t, display absolute line numbers starting at the
 beginning of the current narrowing, or at buffer beginning.
 If the value is `relative', display line numbers relative to the
 line showing point.
-The value `visual' counts screen lines rather than physical line:
-by default, line numbers are displayed before each non-continuation
-line that displays buffer text, i.e. after each newline that came
-from buffer text.  However, if the value is `visual', every screen
-line will have a number.
+The value `visual' countse lative screen lines rather than
+physical line: by default, line numbers are displayed before each
+non-continuation line that displays buffer text, i.e. after each
+newline that came from buffer text.  However, if the value is `visual',
+every screen line will have a number.
 
 Lisp programs can disable display of a line number of a particular
 screen line by putting the `display-line-numbers-disable' text
