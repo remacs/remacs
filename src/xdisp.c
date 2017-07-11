@@ -32686,7 +32686,12 @@ To add a prefix to continuation lines, use `wrap-prefix'.  */);
 
   DEFVAR_LISP ("display-line-numbers", Vdisplay_line_numbers,
     doc: /* Non-nil means display line numbers.
-By default, line numbers are displayed before each non-continuation
+If the value is t, display absolute line numbers starting at the
+beginning of the current narrowing, or at buffer beginning.
+If the value is `relative', display line numbers relative to the
+line showing point.
+The value `visual' counts screen lines rather than physical line:
+by default, line numbers are displayed before each non-continuation
 line that displays buffer text, i.e. after each newline that came
 from buffer text.  However, if the value is `visual', every screen
 line will have a number.
