@@ -113,7 +113,7 @@ pub struct LispStringRefIterator<'a> {
 
 pub struct LispStringRefCharIterator<'a>(LispStringRefIterator<'a>);
 
-// Substitue for FETCH_STRING_CHAR_ADVANCE
+// Substitute for FETCH_STRING_CHAR_ADVANCE
 impl<'a> Iterator for LispStringRefIterator<'a> {
     type Item = (usize, Codepoint);
 

@@ -202,6 +202,8 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
     }
 }
 
+/// Return non-nil if STRING1 is less than STRING2 in lexicographic order.
+/// Case is significant.
 #[lisp_fn]
 fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
     let lispstr1 = LispObject::symbol_or_string_as_string(string1);
