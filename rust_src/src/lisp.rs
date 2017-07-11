@@ -14,14 +14,15 @@ use libc::{c_void, intptr_t};
 
 use marker::{LispMarker, marker_position};
 use multibyte::{LispStringRef, MAX_CHAR};
+use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE,
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
-                 Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp, circular_list,
-                 internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp, Qwholenump, Qvectorp,
-                 SYMBOL_NAME, PseudovecType};
+                 Qsymbolp, Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp,
+                 circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp,
+                 Qwholenump, Qvectorp, SYMBOL_NAME, PseudovecType, lispsym};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -150,10 +151,54 @@ impl LispObject {
 }
 
 // Symbol support (LispType == Lisp_Symbol == 0)
-
 impl LispObject {
+    #[inline]
     pub fn is_symbol(self) -> bool {
         self.get_type() == LispType::Lisp_Symbol
+    }
+
+    #[inline]
+    pub fn as_symbol(&self) -> Option<LispSymbolRef> {
+        if self.is_symbol() {
+            Some(LispSymbolRef::new(
+                unsafe { mem::transmute(self.symbol_ptr_value()) },
+            ))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_symbol_or_error(&self) -> LispSymbolRef {
+        if self.is_symbol() {
+            LispSymbolRef::new(unsafe { mem::transmute(self.symbol_ptr_value()) })
+        } else {
+            unsafe { wrong_type_argument(Qsymbolp, self.to_raw()) }
+        }
+    }
+
+    #[inline]
+    pub fn symbol_or_string_as_string(string: LispObject) -> LispStringRef {
+        match string.as_symbol() {
+            Some(sym) => {
+                sym.symbol_name().as_string().expect(
+                    "Expected a symbol name?",
+                )
+            }
+            None => string.as_string_or_error(),
+        }
+    }
+
+    #[inline]
+    fn symbol_ptr_value(&self) -> EmacsInt {
+        let ptr_value = if USE_LSB_TAG {
+            self.to_raw() as EmacsInt
+        } else {
+            self.get_untaggedptr() as EmacsInt
+        };
+
+        let lispsym_offset = unsafe { &lispsym as *const _ as EmacsInt };
+        ptr_value + lispsym_offset
     }
 }
 

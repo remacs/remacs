@@ -43,7 +43,7 @@ use remacs_sys::{CHAR_MODIFIER_MASK, CHAR_SHIFT, CHAR_CTL, emacs_abort, CHARACTE
 pub type LispStringRef = ExternalPtr<Lisp_String>;
 
 // cannot use `char`, it takes values out of its range
-type Codepoint = u32;
+pub type Codepoint = u32;
 
 /// Maximum character code
 pub const MAX_CHAR: Codepoint = (1 << CHARACTERBITS) - 1;
@@ -103,6 +103,59 @@ impl LispStringRef {
     #[inline]
     pub fn as_mut_slice(&self) -> &mut [u8] {
         unsafe { slice::from_raw_parts_mut(self.data as *mut u8, self.len_bytes() as usize) }
+    }
+}
+
+pub struct LispStringRefIterator<'a> {
+    string_ref: &'a LispStringRef,
+    cur: usize,
+}
+
+pub struct LispStringRefCharIterator<'a>(LispStringRefIterator<'a>);
+
+// Substitute for FETCH_STRING_CHAR_ADVANCE
+impl<'a> Iterator for LispStringRefIterator<'a> {
+    type Item = (usize, Codepoint);
+
+    fn next(&mut self) -> Option<(usize, Codepoint)> {
+        if self.cur < self.string_ref.len_bytes() as usize {
+            let codepoint: Codepoint;
+            let old_index = self.cur;
+            let ref_slice = self.string_ref.as_slice();
+            if self.string_ref.is_multibyte() {
+                let (cp, advance) = multibyte_char_at(&ref_slice[self.cur..]);
+                codepoint = cp;
+                self.cur += advance;
+            } else {
+                codepoint = ref_slice[self.cur] as Codepoint;
+                self.cur += 1;
+            }
+
+            Some((old_index, codepoint))
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a> Iterator for LispStringRefCharIterator<'a> {
+    type Item = Codepoint;
+
+    fn next(&mut self) -> Option<Codepoint> {
+        self.0.next().map(|result| result.1)
+    }
+}
+
+impl LispStringRef {
+    pub fn char_indices(&self) -> LispStringRefIterator {
+        LispStringRefIterator {
+            string_ref: self,
+            cur: 0,
+        }
+    }
+
+    pub fn chars(&self) -> LispStringRefCharIterator {
+        LispStringRefCharIterator(self.char_indices())
     }
 }
 

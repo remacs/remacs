@@ -167,43 +167,6 @@ If string STR1 is greater, the value is a positive number N;
   return Qt;
 }
 
-DEFUN ("string-lessp", Fstring_lessp, Sstring_lessp, 2, 2, 0,
-       doc: /* Return non-nil if STRING1 is less than STRING2 in lexicographic order.
-Case is significant.
-Symbols are also allowed; their print names are used instead.  */)
-  (register Lisp_Object string1, Lisp_Object string2)
-{
-  register ptrdiff_t end;
-  register ptrdiff_t i1, i1_byte, i2, i2_byte;
-
-  if (SYMBOLP (string1))
-    string1 = SYMBOL_NAME (string1);
-  if (SYMBOLP (string2))
-    string2 = SYMBOL_NAME (string2);
-  CHECK_STRING (string1);
-  CHECK_STRING (string2);
-
-  i1 = i1_byte = i2 = i2_byte = 0;
-
-  end = SCHARS (string1);
-  if (end > SCHARS (string2))
-    end = SCHARS (string2);
-
-  while (i1 < end)
-    {
-      /* When we find a mismatch, we must compare the
-	 characters, not just the bytes.  */
-      int c1, c2;
-
-      FETCH_STRING_CHAR_ADVANCE (c1, string1, i1, i1_byte);
-      FETCH_STRING_CHAR_ADVANCE (c2, string2, i2, i2_byte);
-
-      if (c1 != c2)
-	return c1 < c2 ? Qt : Qnil;
-    }
-  return i1 < SCHARS (string2) ? Qt : Qnil;
-}
-
 DEFUN ("string-version-lessp", Fstring_version_lessp,
        Sstring_version_lessp, 2, 2, 0,
        doc: /* Return non-nil if S1 is less than S2, as version strings.
@@ -4009,7 +3972,6 @@ this variable.  */);
   defsubr (&Sidentity);
   defsubr (&Srandom);
   defsubr (&Scompare_strings);
-  defsubr (&Sstring_lessp);
   defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
   defsubr (&Sstring_collate_equalp);

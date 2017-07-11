@@ -665,6 +665,27 @@ pub struct Lisp_String {
     pub data: *mut libc::c_char,
 }
 
+#[repr(C)]
+pub union SymbolUnion {
+    pub value: Lisp_Object,
+    pub alias: *mut Lisp_Symbol,
+pub blv: *mut libc::c_void, // @TODO implement Lisp_Buffer_Local_Value
+pub fwd: *mut libc::c_void, // @TODO implement Lisp_Fwd
+}
+
+/// This struct has 4 bytes of padding, representing the bitfield that
+/// lives at the top of a Lisp_Symbol. The first 10 bits of this field are
+/// used
+#[repr(C)]
+pub struct Lisp_Symbol {
+    pub symbol_bitfield: u32,
+    pub name: Lisp_Object,
+    pub val: SymbolUnion,
+    pub function: Lisp_Object,
+    pub plist: Lisp_Object,
+    pub next: *mut Lisp_Symbol,
+}
+
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static Qt: Lisp_Object;
@@ -675,6 +696,7 @@ extern "C" {
     pub static Qintegerp: Lisp_Object;
     pub static Qfloatp: Lisp_Object;
     pub static Qstringp: Lisp_Object;
+    pub static Qsymbolp: Lisp_Object;
     pub static Qlistp: Lisp_Object;
     pub static Qmarkerp: Lisp_Object;
     pub static Qwholenump: Lisp_Object;
@@ -707,6 +729,7 @@ extern "C" {
     pub static Qfont_spec: Lisp_Object;
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
+    pub static lispsym: Lisp_Symbol;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
