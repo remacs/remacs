@@ -147,7 +147,8 @@ endif
 %.log: %.elc
 	$(AM_V_at)${MKDIR_P} $(dir $@)
 	$(AM_V_GEN)HOME=/nonexistent $(emacs) -l ert -l $(testloadfile) \
-	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
+	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" \
+	  $(if $(and ${NIX_STORE}, $(findstring tramp, $(testloadfile))), , ${WRITE_LOG})
 
 ifeq (@HAVE_MODULES@, yes)
 maybe_exclude_module_tests :=

@@ -3729,13 +3729,17 @@ process sentinels.  They shall not disturb each other."
                   (let ((default-directory tmp-name)
                         (file
                          (buffer-name (nth (random (length buffers)) buffers))))
-                    (funcall timer-operation file))))))
+                    (tramp--test-message
+                     "Start timer %s %s" file (current-time-string))
+                    (funcall timer-operation file)
+                    (tramp--test-message
+                     "Stop timer %s %s" file (current-time-string)))))))
 
             ;; Create temporary buffers.  The number of buffers
             ;; corresponds to the number of processes; it could be
             ;; increased in order to make pressure on Tramp.
             (dotimes (_i number-proc)
-              (add-to-list 'buffers (generate-new-buffer "foo")))
+              (setq buffers (cons (generate-new-buffer "foo") buffers)))
 
             ;; Open asynchronous processes.  Set process filter and sentinel.
             (dolist (buf buffers)
@@ -3776,6 +3780,8 @@ process sentinels.  They shall not disturb each other."
                        (proc (get-buffer-process buf))
                        (file (process-get proc 'foo))
                        (count (process-get proc 'bar)))
+                  (tramp--test-message
+                   "Start action %d %s %s" count buf (current-time-string))
                   ;; Regular operation.
                   (if (= count 0)
                       (should-not (file-attributes file))
@@ -3787,6 +3793,8 @@ process sentinels.  They shall not disturb each other."
                   (if (= count 2)
                       (should-not (file-attributes file))
                     (should (file-attributes file)))
+                  (tramp--test-message
+                   "Stop action %d %s %s" count buf (current-time-string))
                   (process-put proc 'bar (1+ count))
                   (unless (process-live-p proc)
                     (setq buffers (delq buf buffers))))))
@@ -3794,6 +3802,8 @@ process sentinels.  They shall not disturb each other."
             ;; Checks.  All process output shall exists in the
             ;; respective buffers.  All created files shall be
             ;; deleted.
+            (tramp--test-message
+             "Check %s" (current-time-string))
             (dolist (buf buffers)
               (with-current-buffer buf
                 (should (string-equal (format "%s\n" buf) (buffer-string)))))
