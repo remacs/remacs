@@ -417,6 +417,17 @@ to it is returned.  This function does not modify the point or the mark."
     ;; Emacs.
     `(setq mark-active ,activate)))
 
+(defmacro c-set-keymap-parent (map parent)
+  (cond
+   ;; XEmacs
+   ((cc-bytecomp-fboundp 'set-keymap-parents)
+    `(set-keymap-parents ,map ,parent))
+   ;; Emacs
+   ((cc-bytecomp-fboundp 'set-keymap-parent)
+    `(set-keymap-parent ,map ,parent))
+   ;; incompatible
+   (t (error "CC Mode is incompatible with this version of Emacs"))))
+
 (defmacro c-delete-and-extract-region (start end)
   "Delete the text between START and END and return it."
   (if (cc-bytecomp-fboundp 'delete-and-extract-region)
@@ -1266,6 +1277,7 @@ with value CHAR in the region [FROM to)."
 (def-edebug-spec cc-eval-when-compile (&rest def-form))
 (def-edebug-spec c-point t)
 (def-edebug-spec c-set-region-active t)
+(def-edebug-spec c-set-keymap-parent t)
 (def-edebug-spec c-safe t)
 (def-edebug-spec c-save-buffer-state let*)
 (def-edebug-spec c-tentative-buffer-changes t)
