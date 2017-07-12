@@ -2375,6 +2375,10 @@ FROM-MENU-BAR, if non-nil, means we are dropping one of menu-bar's menus."
       ;; `setup-specified-language-environment', for instance,
       ;; expects this to be set from a menu keymap.
       (setq last-command-event (car (last event)))
+      ;; Update `this-command' and run `pre-command-hook' so that
+      ;; things like `delete-selection-pre-hook' will work correctly.
+      (setq this-command cmd)
+      (run-hooks 'pre-command-hook)
       ;; mouse-major-mode-menu was using `command-execute' instead.
       (call-interactively cmd))))
 
