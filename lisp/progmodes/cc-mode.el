@@ -265,6 +265,8 @@ control).  See \"cc-mode.el\" for more info."
     nil
 
   (setq c-mode-base-map (make-sparse-keymap))
+  (when (boundp 'prog-mode-map)
+    (c-set-keymap-parent c-mode-base-map prog-mode-map))
 
   ;; Separate M-BS from C-M-h.  The former should remain
   ;; backward-kill-word.
