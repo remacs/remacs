@@ -1066,7 +1066,7 @@ static void
 close_infile_unwind (void *arg)
 {
   FILE *stream = arg;
-  eassert (infile->stream == stream);
+  eassert (infile == NULL || infile->stream == stream);
   infile = NULL;
   fclose (stream);
 }
