@@ -442,7 +442,7 @@ new face 'line-number-current-line' can be customized to display the
 current line's number differently from all the other line numbers; by
 default these two faces are identical.
 
-You can also customize the new variable 'display-line-number-width' to
+You can also customize the new variable 'display-line-numbers-width' to
 specify a fixed minimal with of the area allocated to line-number
 display.  The default is nil, meaning that Emacs will dynamically
 calculate the area width, enlarging or shrinking it as needed.
