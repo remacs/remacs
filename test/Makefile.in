@@ -136,7 +136,8 @@ endif
 	$(AM_V_ELC)$(emacs) -f batch-byte-compile $<
 
 ## Save logs, and show logs for failed tests.
-WRITE_LOG = > $@ 2>&1 || { STAT=$$?; cat $@; exit $$STAT; }
+WRITE_LOG = $(if $(and ${NIX_STORE}, $(findstring tramp, $@)), |& tee $@, > $@ 2>&1) \
+		|| { STAT=$$?; cat $@; exit $$STAT; }
 
 ifeq ($(TEST_LOAD_EL), yes)
 testloadfile = $*.el
@@ -147,8 +148,7 @@ endif
 %.log: %.elc
 	$(AM_V_at)${MKDIR_P} $(dir $@)
 	$(AM_V_GEN)HOME=/nonexistent $(emacs) -l ert -l $(testloadfile) \
-	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" \
-	  $(if $(and ${NIX_STORE}, $(findstring tramp, $(testloadfile))), , ${WRITE_LOG})
+	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
 ifeq (@HAVE_MODULES@, yes)
 maybe_exclude_module_tests :=

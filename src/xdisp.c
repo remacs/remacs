@@ -20904,8 +20904,8 @@ maybe_produce_line_number (struct it *it)
   /* Compute the required width if needed.  */
   if (!it->lnum_width)
     {
-      if (NATNUMP (Vdisplay_line_number_width))
-	it->lnum_width = XFASTINT (Vdisplay_line_number_width);
+      if (NATNUMP (Vdisplay_line_numbers_width))
+	it->lnum_width = XFASTINT (Vdisplay_line_numbers_width);
 
       /* Max line number to be displayed cannot be more than the one
 	 corresponding to the last row of the desired matrix.  */
@@ -32686,35 +32686,38 @@ To add a prefix to continuation lines, use `wrap-prefix'.  */);
 
   DEFVAR_LISP ("display-line-numbers", Vdisplay_line_numbers,
     doc: /* Non-nil means display line numbers.
-If the value is t, display absolute line numbers starting at the
-beginning of the current narrowing, or at buffer beginning.
-If the value is `relative', display line numbers relative to the
-line showing point.
-The value `visual' countse lative screen lines rather than
-physical line: by default, line numbers are displayed before each
-non-continuation line that displays buffer text, i.e. after each
-newline that came from buffer text.  However, if the value is `visual',
-every screen line will have a number.
+If the value is t, display the absolute number of each line of a buffer
+shown in a window.  Absolute line numbers count from the beginning of
+the current narrowing, or from buffer beginning.  If the value is
+`relative', display for each line not containing the window's point its
+relative number instead, i.e. the number of the line relative to the
+line showing the window's point.
+
+In either case, line numbers are displayed at the beginning of each
+non-continuation line that displays buffer text, i.e. after each newline
+character that comes from the buffer.  The value `visual' is like
+`relative' but counts screen lines instead of buffer lines.  In practice
+this means that continuation lines count as well when calculating the
+relative number of a line.
 
 Lisp programs can disable display of a line number of a particular
-screen line by putting the `display-line-numbers-disable' text
-property or overlay property on the first visible character of
-that line.  */);
+buffer line by putting the `display-line-numbers-disable' text property
+or overlay property on the first visible character of that line.  */);
   Vdisplay_line_numbers = Qnil;
   DEFSYM (Qdisplay_line_numbers, "display-line-numbers");
   Fmake_variable_buffer_local (Qdisplay_line_numbers);
   DEFSYM (Qrelative, "relative");
   DEFSYM (Qvisual, "visual");
 
-  DEFVAR_LISP ("display-line-number-width", Vdisplay_line_number_width,
+  DEFVAR_LISP ("display-line-numbers-width", Vdisplay_line_numbers_width,
     doc: /* Minimum width of space reserved for line number display.
 A positive number means reserve that many columns for line numbers,
 even if the actual number needs less space.
 The default value of nil means compute the space dynamically.
 Any other value is treated as nil.  */);
-  Vdisplay_line_number_width = Qnil;
-  DEFSYM (Qdisplay_line_number_width, "display-line-number-width");
-  Fmake_variable_buffer_local (Qdisplay_line_number_width);
+  Vdisplay_line_numbers_width = Qnil;
+  DEFSYM (Qdisplay_line_numbers_width, "display-line-number-width");
+  Fmake_variable_buffer_local (Qdisplay_line_numbers_width);
 
   DEFVAR_LISP ("display-line-numbers-current-absolute",
 	       Vdisplay_line_numbers_current_absolute,

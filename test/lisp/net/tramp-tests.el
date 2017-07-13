@@ -3787,9 +3787,15 @@ process sentinels.  They shall not disturb each other."
                       (should-not (file-attributes file))
                     (should (file-attributes file)))
                   ;; Send string to process.
+                  (tramp--test-message
+                   "Trace 1 action %d %s %s" count buf (current-time-string))
                   (process-send-string proc (format "%s\n" (buffer-name buf)))
+                  (tramp--test-message
+                   "Trace 2 action %d %s %s" count buf (current-time-string))
                   (accept-process-output proc 0.1 nil 0)
                   ;; Regular operation.
+                  (tramp--test-message
+                   "Trace 3 action %d %s %s" count buf (current-time-string))
                   (if (= count 2)
                       (should-not (file-attributes file))
                     (should (file-attributes file)))

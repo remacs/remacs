@@ -2473,7 +2473,7 @@ See also `toggle-frame-maximized'."
         wrap-prefix
         truncate-lines
         display-line-numbers
-        display-line-number-width
+        display-line-numbers-width
         display-line-numbers-current-absolute
         display-line-numbers-widen
         bidi-paragraph-direction
