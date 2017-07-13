@@ -330,3 +330,57 @@ fn abs(arg: LispObject) -> LispObject {
         }
     }
 }
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub enum ArithComparison {
+    ArithEqual,
+    ArithNotequal,
+    ArithLess,
+    ArithGrtr,
+    ArithLessOrEqual,
+    ArithGrtrOrEqual,
+}
+
+pub extern "C" fn arithcompare(
+    num1: LispObject,
+    num2: LispObject,
+    comparison: ArithComparison,
+) -> LispObject {
+
+    let obj1 = check_number_coerce_marker(num1);
+    let obj2 = check_number_coerce_marker(num2);
+
+    let result = if obj1.is_float() || obj2.is_float() {
+        let f1 = obj1.any_to_float();
+        let f2 = obj2.any_to_float();
+
+        match comparison {
+            ArithComparison::ArithEqual => f1 == f2,
+            ArithComparison::ArithNotequal => f1 != f2,
+            ArithComparison::ArithLess => f1 < f2,
+            ArithComparison::ArithLessOrEqual => f1 <= f2,
+            ArithComparison::ArithGrtr => f1 > f2,
+            ArithComparison::ArithGrtrOrEqual => f1 >= f2,
+        }
+    } else {
+        let f1 = obj1.as_fixnum();
+        let f2 = obj2.as_fixnum();
+
+        match comparison {
+            ArithComparison::ArithEqual => f1 == f2,
+            ArithComparison::ArithNotequal => f1 != f2,
+            ArithComparison::ArithLess => f1 < f2,
+            ArithComparison::ArithLessOrEqual => f1 <= f2,
+            ArithComparison::ArithGrtr => f1 > f2,
+            ArithComparison::ArithGrtrOrEqual => f1 >= f2,
+        }
+    };
+    LispObject::from_bool(result)
+}
+
+fn arithcompare_driver(comparison: ArithComparison, args: &mut [LispObject]) -> LispObject {
+    let failed =
+        (0..args.len() - 1).any(|i| arithcompare(args[i], args[i + 1], comparison).is_nil());
+    LispObject::from_bool(!failed)
+}
