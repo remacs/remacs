@@ -437,27 +437,36 @@ preferably use the `c-mode-menu' language constant directly."
 	t))))
 
 (defun c-unfind-coalesced-tokens (beg end)
-  ;; unless the non-empty region (beg end) is entirely WS and there's at
-  ;; least one character of WS just before or after this region, remove
-  ;; the tokens which touch the region from `c-found-types' should they
-  ;; be present.
-  (or (c-partial-ws-p beg end)
-      (save-excursion
-	(progn
-	  (goto-char beg)
-	  (or (eq beg (point-min))
-	      (c-skip-ws-backward (1- beg))
-	      (/= (point) beg)
-	      (= (c-backward-token-2) 1)
-	      (c-unfind-type (buffer-substring-no-properties
-			      (point) beg)))
-	  (goto-char end)
-	  (or (eq end (point-max))
-	      (c-skip-ws-forward (1+ end))
-	      (/= (point) end)
-	      (progn (forward-char) (c-end-of-current-token) nil)
-	      (c-unfind-type (buffer-substring-no-properties
-			      end (point))))))))
+  ;; If removing the region (beg end) would coalesce an identifier ending at
+  ;; beg with an identifier (fragment) beginning at end, or an identifier
+  ;; fragment ending at beg with an identifier beginning at end, remove the
+  ;; pertinent identifier(s) from `c-found-types'.
+  (save-excursion
+    (when (< beg end)
+      (goto-char beg)
+      (when
+	  (and (not (bobp))
+	       (progn (c-backward-syntactic-ws) (eq (point) beg))
+	       (/= (skip-chars-backward c-symbol-chars (1- (point))) 0)
+	       (progn (goto-char beg) (c-forward-syntactic-ws) (<= (point) end))
+	       (> (point) beg)
+	       (goto-char end)
+	       (looking-at c-symbol-char-key))
+	(goto-char beg)
+	(c-simple-skip-symbol-backward)
+	(c-unfind-type (buffer-substring-no-properties (point) beg)))
+
+      (goto-char end)
+      (when
+	  (and (not (eobp))
+	       (progn (c-forward-syntactic-ws) (eq (point) end))
+	       (looking-at c-symbol-char-key)
+	       (progn (c-backward-syntactic-ws) (>= (point) beg))
+	       (< (point) end)
+	       (/= (skip-chars-backward c-symbol-chars (1- (point))) 0))
+	(goto-char (1+ end))
+	(c-end-of-current-token)
+	(c-unfind-type (buffer-substring-no-properties end (point)))))))
 
 ;; c-maybe-stale-found-type records a place near the region being
 ;; changed where an element of `found-types' might become stale.  It

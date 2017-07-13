@@ -6091,6 +6091,13 @@ comment at the start of cc-engine.el for more info."
   ;; Clears `c-found-types'.
   (setq c-found-types (make-vector 53 0)))
 
+(defun c-copy-found-types ()
+  (let ((copy (make-vector 53 0)))
+    (mapatoms (lambda (sym)
+		(intern (symbol-name sym) copy))
+	      c-found-types)
+    copy))
+
 (defun c-add-type (from to)
   ;; Add the given region as a type in `c-found-types'.  If the region
   ;; doesn't match an existing type but there is a type which is equal
@@ -7059,6 +7066,7 @@ comment at the start of cc-engine.el for more info."
   ;; This function might do hidden buffer changes.
 
   (let ((start (point))
+	(old-found-types (c-copy-found-types))
 	;; If `c-record-type-identifiers' is set then activate
 	;; recording of any found types that constitute an argument in
 	;; the arglist.
@@ -7074,6 +7082,7 @@ comment at the start of cc-engine.el for more info."
 		  (nconc c-record-found-types c-record-type-identifiers)))
 	  t)
 
+      (setq c-found-types old-found-types)
       (goto-char start)
       nil)))
 
