@@ -1715,7 +1715,7 @@ to each symbol."
 		     (set (make-local-variable sym) nil)
 		     (put sym 'ses-cell (cons row col)))))) )))
     ;; Relocate the cell values.
-    (let (oldval myrow mycol xrow xcol)
+    (let (oldval myrow mycol xrow xcol sym)
       (cond
        ((and (<= rowincr 0) (<= colincr 0))
 	;; Deletion of rows and/or columns.
@@ -1725,16 +1725,16 @@ to each symbol."
 	  (dotimes (col (- ses--numcols mincol))
 	    (setq mycol  (+ col mincol)
 		  xrow   (- myrow rowincr)
-		  xcol   (- mycol colincr))
-	    (let ((sym (ses-cell-symbol myrow mycol)))
-	      ;; We don't need to relocate value for renamed cells, as they keep the same
-	      ;; symbol.
-	      (unless (eq (get sym 'ses-cell) :ses-named)
-		(ses-set-cell myrow mycol 'value
-			      (if (and (< xrow ses--numrows) (< xcol ses--numcols))
-				  (ses-cell-value xrow xcol)
-				;; Cell is off the end of the array.
-				(symbol-value (ses-create-cell-symbol xrow xcol))))))))
+		  xcol   (- mycol colincr)
+                  sym (ses-cell-symbol myrow mycol))
+	    ;; We don't need to relocate value for renamed cells, as they keep the same
+	    ;; symbol.
+	    (unless (eq (get sym 'ses-cell) :ses-named)
+	      (ses-set-cell myrow mycol 'value
+			    (if (and (< xrow ses--numrows) (< xcol ses--numcols))
+				(ses-cell-value xrow xcol)
+			      ;; Cell is off the end of the array.
+			      (symbol-value (ses-create-cell-symbol xrow xcol)))))))
 	(when ses--in-killing-named-cell-list
 	  (message "Unbinding killed named cell symbols...")
 	  (setq ses-start-time (float-time))
@@ -1754,13 +1754,17 @@ to each symbol."
 	    (dotimes (col (- ses--numcols mincol))
 	      (setq mycol (- distx col)
 		    xrow  (- myrow rowincr)
-		    xcol  (- mycol colincr))
-	      (if (or (< xrow minrow) (< xcol mincol))
-		  ;; Newly-inserted value.
-		  (setq oldval nil)
-		;; Transfer old value.
-		(setq oldval (ses-cell-value xrow xcol)))
-	      (ses-set-cell myrow mycol 'value oldval)))
+		    xcol  (- mycol colincr)
+                    sym (ses-cell-symbol myrow mycol))
+	      ;; We don't need to relocate value for renamed cells, as they keep the same
+	      ;; symbol.
+	      (unless (eq (get sym 'ses-cell) :ses-named)
+	        (if (or (< xrow minrow) (< xcol mincol))
+		    ;; Newly-inserted value.
+		    (setq oldval nil)
+		  ;; Transfer old value.
+		  (setq oldval (ses-cell-value xrow xcol)))
+	        (ses-set-cell myrow mycol 'value oldval))))
 	  t))  ; Make testcover happy by returning non-nil here.
        (t
 	(error "ROWINCR and COLINCR must have the same sign"))))
@@ -3496,9 +3500,10 @@ highlighted range in the spreadsheet."
 	 (rowcol (ses-sym-rowcol sym))
 	 (row (car rowcol))
 	 (col (cdr rowcol))
-	 new-rowcol old-name)
+	 new-rowcol old-name old-value)
     (setq cell (or cell (ses-get-cell row col))
 	  old-name (ses-cell-symbol cell)
+          old-value (symbol-value old-name)
 	  new-rowcol (ses-decode-cell-symbol (symbol-name new-name)))
     ;; when ses-rename-cell is called interactively, then 'sym' is the
     ;; 'cursor-intangible' property of text at cursor position, while
@@ -3518,10 +3523,12 @@ highlighted range in the spreadsheet."
       (put new-name 'ses-cell :ses-named)
       (puthash new-name rowcol ses--named-cell-hashmap))
     (push `(ses-rename-cell ,old-name ,cell) buffer-undo-list)
+    (cl-pushnew rowcol ses--deferred-write :test #'equal)
     ;; Replace name by new name in formula of cells refering to renamed cell.
     (dolist (ref (ses-cell-references cell))
       (let* ((x (ses-sym-rowcol ref))
 	     (xcell  (ses-get-cell (car x) (cdr x))))
+        (cl-pushnew x ses--deferred-write :test #'equal)
 	(setf (ses-cell-formula xcell)
               (ses-replace-name-in-formula
                (ses-cell-formula xcell)
@@ -3532,11 +3539,14 @@ highlighted range in the spreadsheet."
     (dolist (ref (ses-formula-references (ses-cell-formula cell)))
       (let* ((x (ses-sym-rowcol ref))
 	     (xcell (ses-get-cell (car x) (cdr x))))
+        (cl-pushnew x ses--deferred-write :test #'equal)
 	(setf (ses-cell-references xcell)
               (cons new-name (delq old-name
                                    (ses-cell-references xcell))))))
     (set (make-local-variable new-name) (symbol-value sym))
     (setf (ses-cell--symbol cell) new-name)
+    ;; set new name to value
+    (set new-name old-value)
     ;; Unbind old name
     (if (eq (get old-name 'ses-cell) :ses-named)
         (ses--unbind-cell-name old-name)
