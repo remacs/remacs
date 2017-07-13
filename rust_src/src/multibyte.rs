@@ -508,7 +508,7 @@ pub fn str_as_multibyte(
             );
         }
         let mut to = 0;
-        let mut from = 0;
+        let mut from = offset;
         while from < slice.len() {
             chars += 1;
             match multibyte_length(&slice[from..], false) {
@@ -522,6 +522,7 @@ pub fn str_as_multibyte(
                 None => {
                     let byte = slice[from];
                     to += write_codepoint(&mut slice[to..], raw_byte_codepoint(byte));
+                    from += 1;
                 }
             }
         }
