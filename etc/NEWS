@@ -485,6 +485,10 @@ Tramp for some look-alike remote file names.
 ** The options.el library has been removed.
 It was obsolete since Emacs 22.1, replaced by customize.
 
+** The tls.el and starttls.el libraries are now marked obsolete.
+Use of built-in libgnutls based functionality (described in the Emacs
+GnuTLS manual) is recommended instead.
+
 
 ** Message
 

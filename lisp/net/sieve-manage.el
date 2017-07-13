@@ -77,7 +77,6 @@
 
 (eval-when-compile (require 'cl-lib))
 (require 'sasl)
-(require 'starttls)
 (autoload 'sasl-find-mechanism "sasl")
 (autoload 'auth-source-search "auth-source")
 

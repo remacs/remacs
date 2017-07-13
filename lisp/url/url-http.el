@@ -1600,7 +1600,6 @@ p3p
 
 ;; HTTPS.  This used to be in url-https.el, but that file collides
 ;; with url-http.el on systems with 8-character file names.
-(require 'tls)
 
 (defconst url-https-asynchronous-p t "HTTPS retrievals are asynchronous.")
 

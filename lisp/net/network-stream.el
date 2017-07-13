@@ -42,14 +42,20 @@
 
 ;;; Code:
 
-(require 'tls)
-(require 'starttls)
 (require 'auth-source)
 (require 'nsm)
 (require 'puny)
 
+(declare-function starttls-available-p "starttls" ())
+(declare-function starttls-negotiate "starttls" (process))
+
 (autoload 'gnutls-negotiate "gnutls")
 (autoload 'open-gnutls-stream "gnutls")
+(defvar starttls-extra-arguments)
+(defvar starttls-extra-args)
+(defvar starttls-use-gnutls)
+(defvar starttls-gnutls-program)
+(defvar starttls-program)
 
 ;;;###autoload
 (defun open-network-stream (name buffer host service &rest parameters)
@@ -255,7 +261,8 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
 		     (or (gnutls-available-p)
 			 (and (or require-tls
 				  (plist-get parameters :use-starttls-if-possible))
-			      (starttls-available-p))))
+			      (require 'starttls)
+                              (starttls-available-p))))
 	       (not (eq (plist-get parameters :type) 'plain)))
       ;; If using external STARTTLS, drop this connection and start
       ;; anew with `starttls-open-stream'.
@@ -336,7 +343,8 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
 	      ;; See `starttls-available-p'.  If this predicate
 	      ;; changes to allow running under Windows, the error
 	      ;; message below should be amended.
-	      (if (memq system-type '(windows-nt ms-dos))
+	      (if (or (memq system-type '(windows-nt ms-dos))
+                      (not (featurep 'starttls)))
 		  (concat "Emacs does not support TLS")
 		(concat "Emacs does not support TLS, and no external `"
 			(if starttls-use-gnutls
@@ -373,6 +381,8 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
 	(unless (= start (point))
 	  (buffer-substring start (point)))))))
 
+(declare-function open-tls-stream "tls" (name buffer host port))
+
 (defun network-stream-open-tls (name buffer host service parameters)
   (with-current-buffer buffer
     (let* ((start (point-max))
@@ -380,6 +390,7 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
             (if (gnutls-available-p)
                 (open-gnutls-stream name buffer host service
                                     (plist-get parameters :nowait))
+              (require 'tls)
               (open-tls-stream name buffer host service)))
 	   (eoc (plist-get parameters :end-of-command)))
       (if (plist-get parameters :nowait)
@@ -405,6 +416,9 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
                   (network-stream-get-response stream start eoc)
                   (network-stream-command stream capability-command eo-capa)
                   'tls)))))))
+
+(declare-function format-spec "format-spec" (format spec))
+(declare-function format-spec-make "format-spec" (&rest pairs))
 
 (defun network-stream-open-shell (name buffer host service parameters)
   (require 'format-spec)

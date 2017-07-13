@@ -36,7 +36,6 @@
 (require 'nnoo)
 (require 'netrc)
 (require 'utf7)
-(require 'tls)
 (require 'parse-time)
 (require 'nnmail)
 
