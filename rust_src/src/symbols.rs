@@ -24,6 +24,7 @@ fn symbolp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_symbol())
 }
 
+/// Return SYMBOL's name, a string.
 #[lisp_fn]
 fn symbol_name(symbol: LispObject) -> LispObject {
     symbol.as_symbol_or_error().symbol_name()
