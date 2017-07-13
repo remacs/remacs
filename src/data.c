@@ -2044,6 +2044,7 @@ bool-vector.  IDX starts at 0.  */)
   return newelt;
 }
 
+
 /* Convert the integer I to a cons-of-integers, where I is not in
    fixnum range.  */
 
@@ -2961,12 +2962,6 @@ syms_of_data (void)
   defsubr (&Saset);
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);
-  defsubr (&Seqlsign);
-  defsubr (&Slss);
-  defsubr (&Sgtr);
-  defsubr (&Sleq);
-  defsubr (&Sgeq);
-  defsubr (&Sneq);
   defsubr (&Srem);
   defsubr (&Slsh);
   defsubr (&Sash);

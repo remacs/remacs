@@ -59,6 +59,8 @@ pub use math::Ftimes;
 pub use math::Fmax;
 pub use math::Fmin;
 pub use math::Fquo;
+pub use math::Flss;
+pub use math::arithcompare;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -146,6 +148,12 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Smax);
         defsubr(&*math::Smin);
         defsubr(&*math::Sabs);
+        defsubr(&*math::Seqlsign);
+        defsubr(&*math::Slss);
+        defsubr(&*math::Sgtr);
+        defsubr(&*math::Sleq);
+        defsubr(&*math::Sgeq);
+        defsubr(&*math::Sneq);
         defsubr(&*numbers::Sintegerp);
         defsubr(&*numbers::Sinteger_or_marker_p);
         defsubr(&*numbers::Sfloatp);
