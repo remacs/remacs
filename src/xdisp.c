@@ -21009,6 +21009,8 @@ maybe_produce_line_number (struct it *it)
   struct glyph *p = it->glyph_row ? it->glyph_row->glyphs[TEXT_AREA] : NULL;
   short *u = it->glyph_row ? &it->glyph_row->used[TEXT_AREA] : NULL;
 
+  eassert (it->glyph_row == NULL || it->glyph_row->used[TEXT_AREA] == 0);
+
   for ( ; g < e; g++)
     {
       it->current_x += g->pixel_width;
