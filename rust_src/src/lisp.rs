@@ -13,7 +13,7 @@ use std::fmt::{Debug, Formatter, Error};
 use libc::{c_void, intptr_t};
 
 use marker::{LispMarker, marker_position};
-use multibyte::{LispStringRef, MAX_CHAR};
+use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
@@ -22,7 +22,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
                  Qsymbolp, Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp,
                  circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp,
-                 Qwholenump, Qvectorp, SYMBOL_NAME, PseudovecType, lispsym};
+                 Qwholenump, Qvectorp, Qcharacterp, SYMBOL_NAME, PseudovecType, lispsym};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -147,6 +147,17 @@ impl LispObject {
     #[inline]
     pub fn get_untaggedptr(self) -> *mut c_void {
         (self.to_raw() & VALMASK) as intptr_t as *mut c_void
+    }
+
+    // Same as CHECK_TYPE macro,
+    // order of arguments changed
+    #[inline]
+    fn check_type_or_error(self, ok: bool, predicate: CLisp_Object) -> () {
+        if !ok {
+            unsafe {
+                wrong_type_argument(predicate, self.to_raw());
+            }
+        }
     }
 }
 
@@ -879,6 +890,16 @@ impl LispObject {
             false,
             |i| 0 <= i && i <= MAX_CHAR as EmacsInt,
         )
+    }
+
+    /// Check if Lisp object is a character or not and return the codepoint
+    /// Similar to CHECK_CHARACTER
+    #[inline]
+    pub fn as_character_or_error(self) -> Codepoint {
+        unsafe {
+            self.check_type_or_error(self.is_character(), Qcharacterp);
+        }
+        self.as_fixnum().unwrap() as Codepoint
     }
 
     #[inline]

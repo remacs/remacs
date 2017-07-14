@@ -67,22 +67,6 @@ translate_char (Lisp_Object table, int c)
   return c;
 }
 
-
-DEFUN ("unibyte-char-to-multibyte", Funibyte_char_to_multibyte,
-       Sunibyte_char_to_multibyte, 1, 1, 0,
-       doc: /* Convert the byte CH to multibyte character.  */)
-  (Lisp_Object ch)
-{
-  int c;
-
-  CHECK_CHARACTER (ch);
-  c = XFASTINT (ch);
-  if (c >= 0x100)
-    error ("Not a unibyte character: %d", c);
-  MAKE_CHAR_MULTIBYTE (c);
-  return make_number (c);
-}
-
 DEFUN ("multibyte-char-to-unibyte", Fmultibyte_char_to_unibyte,
        Smultibyte_char_to_unibyte, 1, 1, 0,
        doc: /* Convert the multibyte character CH to a byte.
@@ -631,7 +615,6 @@ syms_of_character (void)
   staticpro (&Vchar_unify_table);
   Vchar_unify_table = Qnil;
 
-  defsubr (&Sunibyte_char_to_multibyte);
   defsubr (&Smultibyte_char_to_unibyte);
   defsubr (&Schar_width);
   defsubr (&Sstring_width);
