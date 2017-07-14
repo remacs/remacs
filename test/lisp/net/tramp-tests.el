@@ -44,6 +44,7 @@
 (require 'vc-bzr)
 (require 'vc-git)
 (require 'vc-hg)
+(require 'subr-x)
 
 (declare-function tramp-find-executable "tramp-sh")
 (declare-function tramp-get-remote-path "tramp-sh")
@@ -2993,7 +2994,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (should
 	   (string-equal
 	    (number-to-string port)
-	    (shell-command-to-string (format "echo -n $%s" envvar))))))
+	    (string-trim (shell-command-to-string (format "echo $%s" envvar)))))))
 
     ;; Cleanup.
     (dolist (dir '("/mock:localhost#11111:" "/mock:localhost#22222:"))
