@@ -86,6 +86,7 @@ emacs_gnutls_read (struct Lisp_Process *proc, char *buf, ptrdiff_t nbyte);
 extern ptrdiff_t emacs_gnutls_record_check_pending (gnutls_session_t state);
 #ifdef WINDOWSNT
 extern void emacs_gnutls_transport_set_errno (gnutls_session_t state, int err);
+extern int w32_gnutls_rnd (gnutls_rnd_level_t, void *, size_t);
 #endif
 extern Lisp_Object emacs_gnutls_deinit (Lisp_Object);
 extern Lisp_Object emacs_gnutls_global_init (void);

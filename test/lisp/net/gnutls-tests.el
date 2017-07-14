@@ -45,20 +45,23 @@
           (secure-hash-algorithms)))
 
 (defvar gnutls-tests-tested-macs
-  (remove-duplicates
-   (append (mapcar 'cdr gnutls-tests-internal-macs-upcased)
-           (mapcar 'car (gnutls-macs)))))
+  (when (gnutls-available-p)
+    (remove-duplicates
+     (append (mapcar 'cdr gnutls-tests-internal-macs-upcased)
+             (mapcar 'car (gnutls-macs))))))
 
 (defvar gnutls-tests-tested-digests
-  (remove-duplicates
-   (append (mapcar 'cdr gnutls-tests-internal-macs-upcased)
-           (mapcar 'car (gnutls-digests)))))
+  (when (gnutls-available-p)
+    (remove-duplicates
+     (append (mapcar 'cdr gnutls-tests-internal-macs-upcased)
+             (mapcar 'car (gnutls-digests))))))
 
 (defvar gnutls-tests-tested-ciphers
-  (remove-duplicates
-   ; these cause FPEs or SEGVs
-   (remove-if (lambda (e) (memq e '(ARCFOUR-128)))
-              (mapcar 'car (gnutls-ciphers)))))
+  (when (gnutls-available-p)
+    (remove-duplicates
+    ; these cause FPEs or SEGVs
+     (remove-if (lambda (e) (memq e '(ARCFOUR-128)))
+                (mapcar 'car (gnutls-ciphers))))))
 
 (defvar gnutls-tests-mondo-strings
   (list
