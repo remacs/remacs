@@ -62,8 +62,14 @@ struct thread_state
   char *m_stack_bottom;
 #define stack_bottom (current_thread->m_stack_bottom)
 
-  /* An address near the top of the stack.  */
-  char *stack_top;
+  /* The address of an object near the C stack top, used to determine
+     which words need to be scanned by the garbage collector.  This is
+     also used to detect heuristically whether segmentation violation
+     address indicates stack overflow, as opposed to some internal
+     error in Emacs.  If the C function F calls G which calls H which
+     calls ... F, then at least one of the functions in the chain
+     should set this to the address of a local variable.  */
+  void *stack_top;
 
   struct catchtag *m_catchlist;
 #define catchlist (current_thread->m_catchlist)

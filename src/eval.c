@@ -213,13 +213,6 @@ backtrace_next (union specbinding *pdl)
   return pdl;
 }
 
-/* Return a pointer to somewhere near the top of the C stack.  */
-void *
-near_C_stack_top (void)
-{
-  return backtrace_args (backtrace_top ());
-}
-
 void
 init_eval_once (void)
 {
@@ -2090,7 +2083,7 @@ record_in_backtrace (Lisp_Object function, Lisp_Object *args, ptrdiff_t nargs)
   specpdl_ptr->bt.kind = SPECPDL_BACKTRACE;
   specpdl_ptr->bt.debug_on_exit = false;
   specpdl_ptr->bt.function = function;
-  specpdl_ptr->bt.args = args;
+  current_thread->stack_top = specpdl_ptr->bt.args = args;
   specpdl_ptr->bt.nargs = nargs;
   grow_specpdl ();
 

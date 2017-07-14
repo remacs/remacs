@@ -1748,7 +1748,7 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
   char buf[max (sizeof "from..to..in " + 2 * INT_STRLEN_BOUND (EMACS_INT),
 		max (sizeof " . #" + INT_STRLEN_BOUND (printmax_t),
 		     40))];
-
+  current_thread->stack_top = buf;
   maybe_quit ();
 
   /* Detect circularities and truncate them.  */

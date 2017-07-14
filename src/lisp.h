@@ -3874,7 +3874,6 @@ extern Lisp_Object vformat_string (const char *, va_list)
   ATTRIBUTE_FORMAT_PRINTF (1, 0);
 extern void un_autoload (Lisp_Object);
 extern Lisp_Object call_debugger (Lisp_Object arg);
-extern void *near_C_stack_top (void);
 extern void init_eval_once (void);
 extern Lisp_Object safe_call (ptrdiff_t, Lisp_Object, ...);
 extern Lisp_Object safe_call1 (Lisp_Object, Lisp_Object);
