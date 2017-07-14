@@ -99,6 +99,8 @@
                          int _file; \
                          unsigned int _flag; \
                        } *) fp)
+# elif defined __VMS                /* OpenVMS */
+#  define fp_ ((struct _iobuf *) fp)
 # else
 #  define fp_ fp
 # endif
