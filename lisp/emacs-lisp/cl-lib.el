@@ -293,9 +293,6 @@ If true return the decimal value of digit CHAR in RADIX."
     (while (>= (cl-decf i) 0) (setq v (+ (* v 3) (aref time i))))
     v))
 
-(defvar cl--random-state
-  (vector 'cl--random-state-tag -1 30 (cl--random-time)))
-
 (defconst cl-most-positive-float nil
   "The largest value that a Lisp float can hold.
 If your system supports infinities, this is the largest finite value.
