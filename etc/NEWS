@@ -358,6 +358,9 @@ variable of this kind to swap modifiers in Emacs.
 ---
 ** New input methods: 'cyrillic-tuvan', 'polish-prefix'.
 
+---
+** The 'dutch' input method no longer attempts to support Turkish too.
+
 +++
 ** File name quoting by adding the prefix "/:" is now possible for the
 local part of a remote file name.  Thus, if you have a directory named
