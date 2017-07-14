@@ -17655,6 +17655,9 @@ try_window_reusing_current_matrix (struct window *w)
   if (w->vscroll || MATRIX_ROW_PARTIALLY_VISIBLE_P (w, start_row))
     return false;
 
+  /* Clear the desired matrix for the display below.  */
+  clear_glyph_matrix (w->desired_matrix);
+
   /* Give up if line numbers are being displayed, because reusing the
      current matrix might use the wrong width for line-number
      display.  */
@@ -17666,9 +17669,6 @@ try_window_reusing_current_matrix (struct window *w)
   SET_TEXT_POS_FROM_MARKER (new_start, w->start);
   start = start_row->minpos;
   start_vpos = MATRIX_ROW_VPOS (start_row, w->current_matrix);
-
-  /* Clear the desired matrix for the display below.  */
-  clear_glyph_matrix (w->desired_matrix);
 
   if (CHARPOS (new_start) <= CHARPOS (start))
     {
