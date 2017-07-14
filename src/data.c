@@ -331,20 +331,6 @@ global value outside of any lexical scope.  */)
   return (EQ (valcontents, Qunbound) ? Qnil : Qt);
 }
 
-/* FIXME: It has been previously suggested to make this function an
-   alias for symbol-function, but upon discussion at Bug#23957,
-   there is a risk breaking backward compatibility, as some users of
-   fboundp may expect `t' in particular, rather than any true
-   value.  An alias is still welcome so long as the compatibility
-   issues are addressed.  */
-DEFUN ("fboundp", Ffboundp, Sfboundp, 1, 1, 0,
-       doc: /* Return t if SYMBOL's function definition is not void.  */)
-  (register Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  return NILP (XSYMBOL (symbol)->function) ? Qnil : Qt;
-}
-
 DEFUN ("makunbound", Fmakunbound, Smakunbound, 1, 1, 0,
        doc: /* Make SYMBOL's value be void.
 Return SYMBOL.  */)
@@ -367,33 +353,6 @@ Return SYMBOL.  */)
     xsignal1 (Qsetting_constant, symbol);
   set_symbol_function (symbol, Qnil);
   return symbol;
-}
-
-DEFUN ("symbol-function", Fsymbol_function, Ssymbol_function, 1, 1, 0,
-       doc: /* Return SYMBOL's function definition, or nil if that is void.  */)
-  (register Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  return XSYMBOL (symbol)->function;
-}
-
-DEFUN ("symbol-plist", Fsymbol_plist, Ssymbol_plist, 1, 1, 0,
-       doc: /* Return SYMBOL's property list.  */)
-  (register Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  return XSYMBOL (symbol)->plist;
-}
-
-DEFUN ("symbol-name", Fsymbol_name, Ssymbol_name, 1, 1, 0,
-       doc: /* Return SYMBOL's name, a string.  */)
-  (register Lisp_Object symbol)
-{
-  register Lisp_Object name;
-
-  CHECK_SYMBOL (symbol);
-  name = SYMBOL_NAME (symbol);
-  return name;
 }
 
 DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
@@ -3055,14 +3014,10 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
-  defsubr (&Ssymbol_function);
   defsubr (&Sindirect_function);
-  defsubr (&Ssymbol_plist);
-  defsubr (&Ssymbol_name);
   defsubr (&Smakunbound);
   defsubr (&Sfmakunbound);
   defsubr (&Sboundp);
-  defsubr (&Sfboundp);
   defsubr (&Sfset);
   defsubr (&Sdefalias);
   defsubr (&Ssetplist);
