@@ -3726,12 +3726,18 @@ process sentinels.  They shall not disturb each other."
               0 timer-repeat
               (lambda ()
                 (when buffers
-                  (let ((default-directory tmp-name)
+                  (let ((time (float-time))
+                        (default-directory tmp-name)
                         (file
                          (buffer-name (nth (random (length buffers)) buffers))))
                     (tramp--test-message
                      "Start timer %s %s" file (current-time-string))
                     (funcall timer-operation file)
+                    ;; Adjust timer if it takes too much time.
+                    (when (> (- (float-time) time) timer-repeat)
+                      (setq timer-repeat (* 1.5 timer-repeat))
+                      (setf (timer--repeat-delay timer) timer-repeat)
+                      (tramp--test-message "Increase timer %s" timer-repeat))
                     (tramp--test-message
                      "Stop timer %s %s" file (current-time-string)))))))
 
