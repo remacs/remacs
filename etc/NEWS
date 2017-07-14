@@ -1114,6 +1114,20 @@ break.
 ** New function 'seq-set-equal-p' to check if SEQUENCE1 and SEQUENCE2
 contain the same elements, regardless of the order.
 
+** Checksum/Hash
+
++++
+** New function 'secure-hash-algorithms' to list the algorithms that
+'secure-hash' supports.
+See the node "(elisp) Checksum/Hash" in the ELisp manual for details.
+
++++
+** Emacs now exposes the GnuTLS cryptographic API with the functions
+'gnutls-macs' and 'gnutls-hash-mac'; 'gnutls-digests' and
+'gnutls-hash-digest'; 'gnutls-ciphers' and 'gnutls-symmetric-encrypt'
+and 'gnutls-symmetric-decrypt'.
+See the node "(elisp) GnuTLS Cryptography" in the ELisp manual for details.
+
 +++
 ** Emacs now supports records for user-defined types, via the new
 functions 'make-record', 'record', and 'recordp'.  Records are now

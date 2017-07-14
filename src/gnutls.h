@@ -23,6 +23,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
+#ifdef HAVE_GNUTLS3
+#include <gnutls/crypto.h>
+#endif
+
 #include "lisp.h"
 
 /* This limits the attempts to handshake per process (connection).  It

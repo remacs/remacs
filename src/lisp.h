@@ -3386,6 +3386,9 @@ enum { NEXT_ALMOST_PRIME_LIMIT = 11 };
 extern EMACS_INT next_almost_prime (EMACS_INT) ATTRIBUTE_CONST;
 extern Lisp_Object larger_vector (Lisp_Object, ptrdiff_t, ptrdiff_t);
 extern void sweep_weak_hash_tables (void);
+extern const char* extract_data_from_object (Lisp_Object spec,
+                                             ptrdiff_t *start_byte,
+                                             ptrdiff_t *end_byte);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
 Lisp_Object make_hash_table (struct hash_table_test, EMACS_INT, float, float,

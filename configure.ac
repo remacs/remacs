@@ -2831,6 +2831,61 @@ if test "${with_gnutls}" = "yes" ; then
     AC_DEFINE(HAVE_GNUTLS, 1, [Define if using GnuTLS.])
     EMACS_CHECK_MODULES([LIBGNUTLS3], [gnutls >= 3.0.0],
       [AC_DEFINE(HAVE_GNUTLS3, 1, [Define if using GnuTLS v3.])], [])
+
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
+]],
+[[
+int main (int argc, char **argv)
+{
+  gnutls_hmac_hd_t handle;
+  gnutls_hmac_deinit(handle, NULL);
+}
+]])],
+    [AC_DEFINE(HAVE_GNUTLS3_HMAC, 1, [Define if using GnuTLS v3 with HMAC support.])])
+
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
+]],
+[[
+int main (int argc, char **argv)
+{
+    gnutls_aead_cipher_hd_t handle;
+    gnutls_aead_cipher_deinit(handle);
+}
+]])],
+    [AC_DEFINE(HAVE_GNUTLS3_AEAD, 1, [Define if using GnuTLS v3 with AEAD support.])])
+
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
+]],
+[[
+int main (int argc, char **argv)
+{
+    gnutls_cipher_hd_t handle;
+    gnutls_cipher_encrypt2 (handle,
+                            NULL, 0,
+                            NULL, 0);
+    gnutls_cipher_deinit(handle);
+}
+]])],
+    [AC_DEFINE(HAVE_GNUTLS3_CIPHER, 1, [Define if using GnuTLS v3 with cipher support.])])
+
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
+]],
+[[
+int main (int argc, char **argv)
+{
+    gnutls_hash_hd_t handle;
+    gnutls_hash_deinit(handle, NULL);
+}
+]])],
+    [AC_DEFINE(HAVE_GNUTLS3_DIGEST, 1, [Define if using GnuTLS v3 with digest support.])])
   fi
 
   # Windows loads GnuTLS dynamically
