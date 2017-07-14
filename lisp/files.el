@@ -1821,10 +1821,6 @@ otherwise a string <2> or <3> or ... is appended to get an unused name.
 Emacs treats buffers whose names begin with a space as internal buffers.
 To avoid confusion when visiting a file whose name begins with a space,
 this function prepends a \"|\" to the final result if necessary."
-  ;; We need the following 'declare' form to shut up the byte
-  ;; compiler, which displays a bogus warning for advised functions,
-  ;; see bug#14860.
-  (declare (advertised-calling-convention (filename) "18.59"))
   (let ((lastname (file-name-nondirectory filename)))
     (if (string= lastname "")
 	(setq lastname filename))
@@ -6594,11 +6590,6 @@ When SWITCHES contains the long `--dired' option, this function
 treats it specially, for the sake of dired.  However, the
 normally equivalent short `-D' option is just passed on to
 `insert-directory-program', as any other option."
-  ;; We need the following 'declare' form to shut up the byte
-  ;; compiler, which displays a bogus warning for advised functions,
-  ;; see bug#14860.
-  (declare (advertised-calling-convention
-            (file switches &optional wildcard full-directory-p) "19.34"))
   ;; We need the directory in order to find the right handler.
   (let ((handler (find-file-name-handler (expand-file-name file)
 					 'insert-directory)))

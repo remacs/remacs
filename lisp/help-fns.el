@@ -564,7 +564,6 @@ FILE is the file where FUNCTION was probably defined."
   "Return information about FUNCTION.
 Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
   (let* ((advised (and (symbolp function)
-		       (featurep 'nadvice)
 		       (advice--p (advice--symbol-function function))))
 	 ;; If the function is advised, use the symbol that has the
 	 ;; real definition, if that symbol is already set up.

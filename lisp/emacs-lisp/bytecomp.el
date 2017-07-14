@@ -1263,12 +1263,6 @@ when printing the error message."
 
 (defun byte-compile-arglist-signature (arglist)
   (cond
-   ;; New style byte-code arglist.
-   ((integerp arglist)
-    (cons (logand arglist 127)             ;Mandatory.
-          (if (zerop (logand arglist 128)) ;No &rest.
-              (lsh arglist -8))))          ;Nonrest.
-   ;; Old style byte-code, or interpreted function.
    ((listp arglist)
     (let ((args 0)
           opts
@@ -1289,6 +1283,19 @@ when printing the error message."
    ;; Unknown arglist.
    (t '(0))))
 
+(defun byte-compile--function-signature (f)
+  ;; Similar to help-function-arglist, except that it returns the info
+  ;; in a different format.
+  (and (eq 'macro (car-safe f)) (setq f (cdr f)))
+  ;; Advice wrappers have "catch all" args, so fetch the actual underlying
+  ;; function to find the real arguments.
+  (while (advice--p f) (setq f (advice--cdr f)))
+  (if (eq (car-safe f) 'declared)
+      (byte-compile-arglist-signature (nth 1 f))
+    (condition-case nil
+        (let ((sig (func-arity f)))
+          (if (numberp (cdr sig)) sig (list (car sig))))
+      (error '(0)))))
 
 (defun byte-compile-arglist-signatures-congruent-p (old new)
   (not (or
@@ -1330,19 +1337,7 @@ when printing the error message."
 (defun byte-compile-callargs-warn (form)
   (let* ((def (or (byte-compile-fdefinition (car form) nil)
 		  (byte-compile-fdefinition (car form) t)))
-	 (sig (if (and def (not (eq def t)))
-		  (progn
-		    (and (eq (car-safe def) 'macro)
-			 (eq (car-safe (cdr-safe def)) 'lambda)
-			 (setq def (cdr def)))
-		    (byte-compile-arglist-signature
-		     (if (memq (car-safe def) '(declared lambda))
-			 (nth 1 def)
-		       (if (byte-code-function-p def)
-			   (aref def 0)
-			 '(&rest def)))))
-		(if (subrp (symbol-function (car form)))
-		    (subr-arity (symbol-function (car form))))))
+	 (sig (byte-compile--function-signature def))
 	 (ncall (length (cdr form))))
     ;; Check many or unevalled from subr-arity.
     (if (and (cdr-safe sig)
@@ -1461,15 +1456,7 @@ extra args."
     (and initial (symbolp initial)
          (setq old (byte-compile-fdefinition initial nil)))
     (when (and old (not (eq old t)))
-      (and (eq 'macro (car-safe old))
-           (eq 'lambda (car-safe (cdr-safe old)))
-           (setq old (cdr old)))
-      (let ((sig1 (byte-compile-arglist-signature
-                   (pcase old
-                     (`(lambda ,args . ,_) args)
-                     (`(closure ,_ ,args . ,_) args)
-                     ((pred byte-code-function-p) (aref old 0))
-                     (_ '(&rest def)))))
+      (let ((sig1 (byte-compile--function-signature old))
             (sig2 (byte-compile-arglist-signature arglist)))
         (unless (byte-compile-arglist-signatures-congruent-p sig1 sig2)
           (byte-compile-set-symbol-position name)
