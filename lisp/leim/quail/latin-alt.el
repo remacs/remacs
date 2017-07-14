@@ -1174,9 +1174,6 @@ Doubling the postfix separates the letter and postfix: e.g. a\\='\\=' -> a\\='
 (quail-define-rules
  ("fl." ?ƒ) ;; LATIN SMALL LETTER F WITH HOOK (florin currency symbol)
  ("eur." ?€) ;; EURO SIGN
- ;; “The 25th letter of the Dutch alphabet.”
- ("ij" ?ĳ) ;; LATIN SMALL LIGATURE IJ
- ("IJ" ?Ĳ) ;; LATIN CAPITAL LIGATURE IJ
  ;; “Trema on the second letter of vowel pair.”  Yudit uses `:', not `"'.
  ("\"a" ?ä) ;; LATIN SMALL LETTER A WITH DIAERESIS
  ("\"e" ?ë) ;; LATIN SMALL LETTER E WITH DIAERESIS

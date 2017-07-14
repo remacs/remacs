@@ -360,6 +360,9 @@ variable of this kind to swap modifiers in Emacs.
 
 ---
 ** The 'dutch' input method no longer attempts to support Turkish too.
+Also, it no longer converts 'IJ' and 'ij' to the compatibility
+characters U+0132 LATIN CAPITAL LIGATURE IJ and U+0133 LATIN SMALL
+LIGATURE IJ.
 
 +++
 ** File name quoting by adding the prefix "/:" is now possible for the
