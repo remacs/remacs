@@ -2465,12 +2465,9 @@ If you set `term-file-prefix' to nil, this function does nothing."
   :version "21.1"
   :group 'basic-faces)
 
-;; Definition originally stolen from linum.el.
-;; The monospace part is so we don't accidentally display numbers
-;; using a variable-pitch font just because the default face uses
-;; such a font.
+;; Definition stolen from linum.el.
 (defface line-number
-  '((t :inherit (shadow default) :family "Monospace Serif"))
+  '((t :inherit (shadow default)))
   "Face for displaying line numbers.
 This face is used when `display-line-numbers' is non-nil.
 
