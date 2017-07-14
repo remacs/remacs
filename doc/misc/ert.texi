@@ -551,15 +551,15 @@ on their environment is easy.  Such tests often look like this:
 
 @lisp
 (ert-deftest ert-test-mismatch ()
-  (should (eql (ert--mismatch "" "") nil))
-  (should (eql (ert--mismatch "" "a") 0))
-  (should (eql (ert--mismatch "a" "a") nil))
-  (should (eql (ert--mismatch "ab" "a") 1))
-  (should (eql (ert--mismatch "Aa" "aA") 0))
-  (should (eql (ert--mismatch '(a b c) '(a b d)) 2)))
+  (should (eql (cl-mismatch "" "") nil))
+  (should (eql (cl-mismatch "" "a") 0))
+  (should (eql (cl-mismatch "a" "a") nil))
+  (should (eql (cl-mismatch "ab" "a") 1))
+  (should (eql (cl-mismatch "Aa" "aA") 0))
+  (should (eql (cl-mismatch '(a b c) '(a b d)) 2)))
 @end lisp
 
-This test calls the function @code{ert--mismatch} several times with
+This test calls the function @code{cl-mismatch} several times with
 various combinations of arguments and compares the return value to the
 expected return value.  (Some programmers prefer @code{(should (eql
 EXPECTED ACTUAL))} over the @code{(should (eql ACTUAL EXPECTED))}

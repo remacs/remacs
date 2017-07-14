@@ -142,7 +142,7 @@ be one of the following:
 @table @code
 @item exact
 The result must be accurate.  The function may need to encode and
-decode a large part of the buffer.
+decode a large part of the buffer, which is expensive and can be slow.
 @item approximate
 The value can be an approximation.  The function may avoid expensive
 processing and return an inexact result.
@@ -619,6 +619,29 @@ Corresponds to the Unicode @code{Simple_Titlecase_Mapping} property.
 character of a word needs to be capitalized.  The value of this
 property is a single character.  For unassigned codepoints, the value
 is @code{nil}, which means the character itself.
+
+@item special-uppercase
+Corresponds to Unicode language- and context-independent special upper-casing
+rules.  The value of this property is a string (which may be empty).  For
+example mapping for @code{U+00DF} (@sc{latin small letter sharp s}) is
+@code{"SS"}.  For characters with no special mapping, the value is @code{nil}
+which means @code{uppercase} property needs to be consulted instead.
+
+@item special-lowercase
+Corresponds to Unicode language- and context-independent special lower-casing
+rules.  The value of this property is a string (which may be empty).  For
+example mapping for @code{U+0130} (@sc{latin capital letter i with dot above})
+the value is @code{"i\u0307"} (i.e. 2-character string consisting of @sc{latin
+small letter i} followed by @sc{combining dot above}).  For characters with no
+special mapping, the value is @code{nil} which means @code{lowercase} property
+needs to be consulted instead.
+
+@item special-titlecase
+Corresponds to Unicode unconditional special title-casing rules.  The value of
+this property is a string (which may be empty).  For example mapping for
+@code{U+FB01} (@sc{latin small ligature fi}) the value is @code{"Fi"}.  For
+characters with no special mapping, the value is @code{nil} which means
+@code{titlecase} property needs to be consulted instead.
 @end table
 
 @defun get-char-code-property char propname
@@ -1017,10 +1040,14 @@ alternative encodings for the same characters; for example, there are
 three coding systems for the Cyrillic (Russian) alphabet: ISO,
 Alternativnyj, and KOI8.
 
+@vindex undecided@r{ coding system}
+@vindex prefer-utf-8@r{ coding system}
   Every coding system specifies a particular set of character code
 conversions, but the coding system @code{undecided} is special: it
 leaves the choice unspecified, to be chosen heuristically for each
-file, based on the file's data.
+file, based on the file's data.  The coding system @code{prefer-utf-8}
+is like @code{undecided}, but it prefers to choose @code{utf-8} when
+possible.
 
   In general, a coding system doesn't guarantee roundtrip identity:
 decoding a byte sequence using coding system, then encoding the
@@ -1124,7 +1151,7 @@ encode the buffer contents.
 (@pxref{Specifying Coding Systems}), or implicitly using a default
 mechanism (@pxref{Default Coding Systems}).  But these methods may not
 completely specify what to do.  For example, they may choose a coding
-system such as @code{undefined} which leaves the character code
+system such as @code{undecided} which leaves the character code
 conversion to be determined from the data.  In these cases, the I/O
 operation finishes the job of choosing a coding system.  Very often
 you will want to find out afterwards which coding system was chosen.
@@ -1426,19 +1453,21 @@ Otherwise, it asks the user to choose from a list of coding systems
 which can encode all the text, and returns the user's choice.
 
 @var{default-coding-system} can also be a list whose first element is
-t and whose other elements are coding systems.  Then, if no coding
+@code{t} and whose other elements are coding systems.  Then, if no coding
 system in the list can handle the text, @code{select-safe-coding-system}
 queries the user immediately, without trying any of the three
-alternatives described above.
+alternatives described above.  This is handy for checking only the
+coding systems in the list.
 
-The optional argument @var{accept-default-p}, if non-@code{nil},
-should be a function to determine whether a coding system selected
-without user interaction is acceptable.  @code{select-safe-coding-system}
-calls this function with one argument, the base coding system of the
-selected coding system.  If @var{accept-default-p} returns @code{nil},
-@code{select-safe-coding-system} rejects the silently selected coding
-system, and asks the user to select a coding system from a list of
-possible candidates.
+The optional argument @var{accept-default-p} determines whether a
+coding system selected without user interaction is acceptable.  If
+it's omitted or @code{nil}, such a silent selection is always
+acceptable.  If it is non-@code{nil}, it should be a function;
+@code{select-safe-coding-system} calls this function with one
+argument, the base coding system of the selected coding system.  If
+the function returns @code{nil}, @code{select-safe-coding-system}
+rejects the silently selected coding system, and asks the user to
+select a coding system from a list of possible candidates.
 
 @vindex select-safe-coding-system-accept-default-p
 If the variable @code{select-safe-coding-system-accept-default-p} is
@@ -1458,6 +1487,18 @@ similar functions).  If it detects an apparent inconsistency,
 @code{select-safe-coding-system} queries the user before selecting the
 coding system.
 @end defun
+
+@defvar select-safe-coding-system-function
+This variable names the function to be called to request the user to
+select a proper coding system for encoding text when the default
+coding system for an output operation cannot safely encode that text.
+The default value of this variable is @code{select-safe-coding-system}.
+Emacs primitives that write text to files, such as
+@code{write-region}, or send text to other processes, such as
+@code{process-send-region}, normally call the value of this variable,
+unless @code{coding-system-for-write} is bound to a non-@code{nil}
+value (@pxref{Specifying Coding Systems}).
+@end defvar
 
   Here are two functions you can use to let the user specify a coding
 system, with completion.  @xref{Completion}.
@@ -1719,12 +1760,31 @@ including @code{file-coding-system-alist},
 @defvar coding-system-for-write
 This works much like @code{coding-system-for-read}, except that it
 applies to output rather than input.  It affects writing to files,
-as well as sending output to subprocesses and net connections.
+as well as sending output to subprocesses and net connections.  It
+also applies to encoding command-line arguments with which Emacs
+invokes subprocesses.
 
 When a single operation does both input and output, as do
 @code{call-process-region} and @code{start-process}, both
 @code{coding-system-for-read} and @code{coding-system-for-write}
 affect it.
+@end defvar
+
+@defvar coding-system-require-warning
+Binding @code{coding-system-for-write} to a non-@code{nil} value
+prevents output primitives from calling the function specified by
+@code{select-safe-coding-system-function} (@pxref{User-Chosen Coding
+Systems}).  This is because @kbd{C-x RET c}
+(@code{universal-coding-system-argument}) works by binding
+@code{coding-system-for-write}, and Emacs should obey user selection.
+If a Lisp program binds @code{coding-system-for-write} to a value that
+might not be safe for encoding the text to be written, it can also bind
+@code{coding-system-require-warning} to a non-@code{nil} value, which
+will force the output primitives to check the encoding by calling the
+value of @code{select-safe-coding-system-function} even though
+@code{coding-system-for-write} is non-@code{nil}.  Alternatively, call
+@code{select-safe-coding-system} explicitly before using the specified
+encoding.
 @end defvar
 
 @defopt inhibit-eol-conversion

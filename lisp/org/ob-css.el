@@ -1,4 +1,4 @@
-;;; ob-css.el --- org-babel functions for css evaluation
+;;; ob-css.el --- Babel Functions for CSS            -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
@@ -24,19 +24,19 @@
 ;;; Commentary:
 
 ;; Since CSS can't be executed, this file exists solely for tangling
-;; CSS from org-mode files.
+;; CSS from Org files.
 
 ;;; Code:
 (require 'ob)
 
 (defvar org-babel-default-header-args:css '())
 
-(defun org-babel-execute:css (body params)
+(defun org-babel-execute:css (body _params)
   "Execute a block of CSS code.
 This function is called by `org-babel-execute-src-block'."
   body)
 
-(defun org-babel-prep-session:css (session params)
+(defun org-babel-prep-session:css (_session _params)
   "Return an error if the :session header argument is set.
 CSS does not support sessions."
   (error "CSS sessions are nonsensical"))

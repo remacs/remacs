@@ -380,6 +380,7 @@ struct glyph
       glyph standing for newline at end of line    0
       empty space after the end of the line       -1
       overlay arrow on a TTY                      -1
+      glyph displaying line number                -1
       glyph at EOB that ends in a newline         -1
       left truncation glyphs:                     -1
       right truncation/continuation glyphs        next buffer position
@@ -1102,7 +1103,7 @@ struct glyph_row *matrix_row (struct glyph_matrix *, int);
 #define MATRIX_BOTTOM_TEXT_ROW(MATRIX, W)		\
      ((MATRIX)->rows					\
       + (MATRIX)->nrows					\
-      - (WINDOW_WANTS_MODELINE_P ((W)) ? 1 : 0))
+      - (window_wants_mode_line ((W)) ? 1 : 0))
 
 /* Non-zero if the face of the last glyph in ROW's text area has
    to be drawn to the end of the text area.  */
@@ -1465,40 +1466,6 @@ struct glyph_string
 #define DESIRED_HEADER_LINE_HEIGHT(W) \
      MATRIX_HEADER_LINE_HEIGHT ((W)->desired_matrix)
 
-/* PXW: The height checks below serve to show at least one text line
-   instead of a mode- and/or header line when a window gets very small.
-   But (1) the check fails when the mode- or header-line is taller than
-   the associated frame's line height and (2) we don't care much about
-   text visibility anyway when shrinking a frame containing a toolbar.
-
-   So maybe these checks should be removed and any clipping left to the
-   window manager.  */
-
-/* Value is true if window W wants a mode line and is large enough
-   to accommodate it.  */
-#define WINDOW_WANTS_MODELINE_P(W)					\
-  (BUFFERP ((W)->contents)						\
-   ? (!MINI_WINDOW_P (W)						\
-      && !(W)->pseudo_window_p						\
-      && FRAME_WANTS_MODELINE_P (XFRAME (WINDOW_FRAME (W)))		\
-      && !NILP (BVAR (XBUFFER ((W)->contents), mode_line_format))	\
-      && WINDOW_PIXEL_HEIGHT (W) > WINDOW_FRAME_LINE_HEIGHT (W))	\
-   : false)
-
-/* Value is true if window W wants a header line and is large enough
-   to accommodate it.  */
-#define WINDOW_WANTS_HEADER_LINE_P(W)					\
-     (BUFFERP ((W)->contents)						\
-      ? (!MINI_WINDOW_P (W)						\
-	 && !(W)->pseudo_window_p					\
-	 && FRAME_WANTS_MODELINE_P (XFRAME (WINDOW_FRAME (W)))		\
-	 && !NILP (BVAR (XBUFFER ((W)->contents), header_line_format))	\
-	 && (WINDOW_PIXEL_HEIGHT (W)					\
-	     > (WINDOW_WANTS_MODELINE_P (W)				\
-		? (2 * WINDOW_FRAME_LINE_HEIGHT (W))			\
-		: WINDOW_FRAME_LINE_HEIGHT (W))))			\
-      : false)
-
 /* Return proper value to be used as baseline offset of font that has
    ASCENT and DESCENT to draw characters by the font at the vertical
    center of the line of frame F.
@@ -1780,6 +1747,7 @@ enum face_id
   WINDOW_DIVIDER_FACE_ID,
   WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID,
   WINDOW_DIVIDER_LAST_PIXEL_FACE_ID,
+  INTERNAL_BORDER_FACE_ID,
   BASIC_FACE_ID_SENTINEL
 };
 
@@ -2566,7 +2534,12 @@ struct it
      Do NOT use !BUFFERP (it.object) as a test whether we are
      iterating over a string; use STRINGP (it.string) instead.
 
-     Position is the current iterator position in object.  */
+     Position is the current iterator position in object.
+
+     The 'position's CHARPOS is copied to glyph->charpos of the glyph
+     produced by PRODUCE_GLYPHS, so any artificial value documented
+     under 'struct glyph's 'charpos' member can also be found in the
+     'position' member here.  */
   Lisp_Object object;
   struct text_pos position;
 
@@ -2649,6 +2622,20 @@ struct it
      Only set there, not in display_line, and only when the X
      coordinate is past first_visible_x.  */
   int hpos;
+
+  /* Current line number, zero-based.  */
+  ptrdiff_t lnum;
+
+  /* The byte position corresponding to lnum.  */
+  ptrdiff_t lnum_bytepos;
+
+  /* The width, in columns and in pixels, needed for display of the
+     line numbers, or zero if not computed.  */
+  int lnum_width;
+  int lnum_pixel_width;
+
+  /* The line number of point's line, or zero if not computed yet.  */
+  ptrdiff_t pt_lnum;
 
   /* Left fringe bitmap number (enum fringe_bitmap_type).  */
   unsigned left_user_fringe_bitmap : FRINGE_ID_BITS;
@@ -3289,6 +3276,7 @@ extern void dump_glyph_string (struct glyph_string *) EXTERNALLY_VISIBLE;
 
 extern void x_get_glyph_overhangs (struct glyph *, struct frame *,
                                    int *, int *);
+extern struct font *font_for_underline_metrics (struct glyph_string *);
 extern void x_produce_glyphs (struct it *);
 
 extern void x_write_glyphs (struct window *, struct glyph_row *,

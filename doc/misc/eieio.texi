@@ -479,31 +479,31 @@ Name of a generic function which can be used to fetch the value of this slot.
 You can call this function later on your object and retrieve the value
 of the slot.
 
-This options is in the CLOS spec, but is not fully compliant in @eieio{}.
+This option is in the CLOS spec, but is not fully compliant in @eieio{}.
 
 @item :writer
 Name of a generic function which will write this slot.
 
-This options is in the CLOS spec, but is not fully compliant in @eieio{}.
+This option is in the CLOS spec, but is not fully compliant in @eieio{}.
 
 @item :reader
 Name of a generic function which will read this slot.
 
-This options is in the CLOS spec, but is not fully compliant in @eieio{}.
+This option is in the CLOS spec, but is not fully compliant in @eieio{}.
 
 @item :custom
 A custom :type specifier used when editing an object of this type.
 See documentation for @code{defcustom} for details.  This specifier is
 equivalent to the :type spec of a @code{defcustom} call.
 
-This options is specific to Emacs, and is not in the CLOS spec.
+This option is specific to Emacs, and is not in the CLOS spec.
 
 @item :label
 When customizing an object, the value of :label will be used instead
 of the slot name.  This enables better descriptions of the data than
 would usually be afforded.
 
-This options is specific to Emacs, and is not in the CLOS spec.
+This option is specific to Emacs, and is not in the CLOS spec.
 
 @item :group
 Similar to @code{defcustom}'s :group command, this organizes different
@@ -511,7 +511,7 @@ slots in an object into groups.  When customizing an object, only the
 slots belonging to a specific group need be worked with, simplifying the
 size of the display.
 
-This options is specific to Emacs, and is not in the CLOS spec.
+This option is specific to Emacs, and is not in the CLOS spec.
 
 @item :printer
 This routine takes a symbol which is a function name.  The function
@@ -546,7 +546,7 @@ Access this slot only from methods of the same class or a child class.
 Access this slot only from methods of the same class.
 @end table
 
-This options is specific to Emacs, and is not in the CLOS spec.
+This option is specific to Emacs, and is not in the CLOS spec.
 
 @end table
 
@@ -571,7 +571,7 @@ the @code{:type} is specifies something such as @code{string} then allow
 this to pass.  The default is to have this option be off.  This is
 implemented as an alternative to unbound slots.
 
-This options is specific to Emacs, and is not in the CLOS spec.
+This option is specific to Emacs, and is not in the CLOS spec.
 
 @item :abstract
 A class which is @code{:abstract} cannot be instantiated, and instead
@@ -1017,7 +1017,7 @@ If @var{errorp} is non-@code{nil}, @code{wrong-argument-type} is signaled.
 
 @defun class-p class
 @anchor{class-p}
-Return @code{t} if @var{class} is a valid class vector.
+Return @code{t} if @var{class} is a valid class object.
 @var{class} is a symbol.
 @end defun
 
@@ -1055,7 +1055,7 @@ Will fetch the documentation string for @code{eieio-default-superclass}.
 Return a string of the form @samp{#<object-class myobjname>} for @var{obj}.
 This should look like Lisp symbols from other parts of Emacs such as
 buffers and processes, and is shorter and cleaner than printing the
-object's vector.  It is more useful to use @code{object-print} to get
+object's record.  It is more useful to use @code{object-print} to get
 and object's print form, as this allows the object to add extra display
 information into the symbol.
 @end defun
@@ -1212,7 +1212,7 @@ items defined in this second slot.
 
 Introspection permits a programmer to peek at the contents of a class
 without any previous knowledge of that class.  While @eieio{} implements
-objects on top of vectors, and thus everything is technically visible,
+objects on top of records, and thus everything is technically visible,
 some functions have been provided.  None of these functions are a part
 of CLOS.
 
@@ -1525,7 +1525,7 @@ Currently, the default superclass is defined as follows:
   nil
   "Default parent class for classes with no specified parent class.
 Its slots are automatically adopted by classes with no specified
-parents.  This class is not stored in the `parent' slot of a class vector."
+parents.  This class is not stored in the `parent' slot of a class object."
   :abstract t)
 @end example
 

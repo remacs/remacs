@@ -255,9 +255,11 @@
       ;; format statements
       ("^[ \t]*format.*=[ \t]*\\(\n\\)"
        (1 (prog1 "\"" (perl-syntax-propertize-special-constructs end))))
-      ;; Funny things in `sub' arg-specs like `sub myfun ($)' or `sub ($)'.
-      ;; Be careful not to match "sub { (...) ... }".
-      ("\\<sub\\(?:[\s\t\n]+\\(?:\\sw\\|\\s_\\)+\\)?[\s\t\n]*(\\([^)]+\\))"
+      ;; Propertize perl prototype chars `$%&*;+@\[]' as punctuation
+      ;; in `sub' arg-specs like `sub myfun ($)' and `sub ($)'.  But
+      ;; don't match subroutine signatures like `sub add ($a, $b)', or
+      ;; anonymous subs like "sub { (...) ... }".
+      ("\\<sub\\(?:[\s\t\n]+\\(?:\\sw\\|\\s_\\)+\\)?[\s\t\n]*(\\([][$%&*;+@\\]+\\))"
        (1 "."))
       ;; Turn __DATA__ trailer into a comment.
       ("^\\(_\\)_\\(?:DATA\\|END\\)__[ \t]*\\(?:\\(\n\\)#.-\\*-.*perl.*-\\*-\\|\n.*\\)"
@@ -1102,9 +1104,9 @@ With argument, repeat that many times; negative args move backward."
 (defun perl-mark-function ()
   "Put mark at end of Perl function, point at beginning."
   (interactive)
-  (push-mark (point))
+  (push-mark)
   (perl-end-of-function)
-  (push-mark (point))
+  (push-mark)
   (perl-beginning-of-function)
   (backward-paragraph))
 

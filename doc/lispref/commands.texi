@@ -484,7 +484,8 @@ I/O.
 @cindex region argument
 Point and the mark, as two numeric arguments, smallest first.  This is
 the only code letter that specifies two successive arguments rather than
-one.  No I/O.
+one.  This will signal an error if the mark is not set in the buffer
+which is current when the command is invoked.  No I/O.
 
 @item s
 Arbitrary text, read in the minibuffer and returned as a string

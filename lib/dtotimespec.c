@@ -29,15 +29,9 @@
 struct timespec
 dtotimespec (double sec)
 {
-  double min_representable = TYPE_MINIMUM (time_t);
-  double max_representable =
-    ((TYPE_MAXIMUM (time_t) * (double) TIMESPEC_RESOLUTION
-      + (TIMESPEC_RESOLUTION - 1))
-     / TIMESPEC_RESOLUTION);
-
-  if (! (min_representable < sec))
+  if (! (TYPE_MINIMUM (time_t) < sec))
     return make_timespec (TYPE_MINIMUM (time_t), 0);
-  else if (! (sec < max_representable))
+  else if (! (sec < 1.0 + TYPE_MAXIMUM (time_t)))
     return make_timespec (TYPE_MAXIMUM (time_t), TIMESPEC_RESOLUTION - 1);
   else
     {

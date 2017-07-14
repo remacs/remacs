@@ -151,7 +151,7 @@ extern char *getenv ();
 #endif
 
 /* Make a leaner executable.  */
-#define WIN32_LEAN_AND_MEAN 1
+#define WIN32_LEAN_AND_MEAN
 
 #include <sys/types.h>
 
@@ -595,13 +595,6 @@ typedef unsigned int EMACS_UINT;
 
 /* #define FULL_DEBUG */
 /* #define EMACSDEBUG */
-
-#ifdef EMACSDEBUG
-extern void _DebPrint (const char *fmt, ...);
-#define DebPrint(stuff) _DebPrint stuff
-#else
-#define DebPrint(stuff)
-#endif
 
 #ifdef _MSC_VER
 #if _MSC_VER >= 800 && !defined(__cplusplus)

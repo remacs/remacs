@@ -297,6 +297,21 @@ if [ $check = yes ]; then
       make --question info || error=yes
   fi
 
+  ## Is this a release?
+  case $version in
+      [1-9][0-9].[0-9])
+          if [ -e ChangeLog ]; then
+              if ! grep -q "Version $version released" ChangeLog; then
+                  echo "No release notice in ChangeLog"
+                  error=yes
+              fi
+          else
+              echo "A release must have a ChangeLog"
+              error=yes
+          fi
+      ;;
+  esac
+
   if [ $error = yes ]; then
       echo "Failed checks" >&2
       exit 1
@@ -345,9 +360,15 @@ mkdir ${tempdir}
 
 if [ "$changelog" = yes ]; then
   if test -e .git; then
-    echo "Making top-level ChangeLog"
-    make ChangeLog CHANGELOG=${tempdir}/ChangeLog || \
-      { x=$?; echo "make ChangeLog FAILED (try --no-changelog?)" >&2; exit $x; }
+    ## When making a release or pretest the ChangeLog should already
+    ## have been created and edited as needed.  Don't ignore it.
+    if test -e ChangeLog; then
+      echo "Using existing top-level ChangeLog"
+    else
+      echo "Making top-level ChangeLog"
+      make ChangeLog CHANGELOG=${tempdir}/ChangeLog || \
+        { x=$?; echo "make ChangeLog FAILED (try --no-changelog?)" >&2; exit $x; }
+    fi
   else
     echo "No repository, so omitting top-level ChangeLog"
   fi
@@ -361,17 +382,17 @@ echo "Making links to top-level files"
 ln INSTALL README BUGS ${tempdir}
 ln ChangeLog.*[0-9] Makefile.in autogen.sh configure configure.ac ${tempdir}
 ln config.bat make-dist .dir-locals.el ${tempdir}
-ln aclocal.m4 CONTRIBUTE ${tempdir}
+ln aclocal.m4 CONTRIBUTE ChangeLog ${tempdir}
 
 echo "Creating subdirectories"
 for subdir in site-lisp \
 	      leim leim/CXTERM-DIC leim/MISC-DIC leim/SKK-DIC \
-	      build-aux build-aux/snippet \
+	      build-aux \
 	      src src/bitmaps lib lib-src oldXMenu lwlib \
 	      nt nt/inc nt/inc/sys nt/inc/arpa nt/inc/netinet nt/icons \
 	      `find etc lisp admin test -type d` \
 	      doc doc/emacs doc/misc doc/man doc/lispref doc/lispintro \
-	      info m4 modules modules/mod-test \
+	      info m4 modules \
 	      nextstep nextstep/templates \
 	      nextstep/Cocoa nextstep/Cocoa/Emacs.base \
 	      nextstep/Cocoa/Emacs.base/Contents \
@@ -383,7 +404,7 @@ do
 
   if [ "$with_tests" != "yes" ]; then
     case $subdir in
-        test*|*/mod-test*) continue ;;
+        test*) continue ;;
     esac
   fi
 
@@ -418,15 +439,11 @@ echo "Making links to 'leim' and its subdirectories"
 ## FIXME Can we not just use the "find -type f" method for this one?
 echo "Making links to 'build-aux'"
 (cd build-aux
- ln compile config.guess config.sub depcomp msys-to-w32 ../${tempdir}/build-aux
+ ln config.guess config.sub msys-to-w32 ../${tempdir}/build-aux
  ln gitlog-to-changelog gitlog-to-emacslog ../${tempdir}/build-aux
- ln install-sh missing move-if-change ../${tempdir}/build-aux
+ ln install-sh move-if-change ../${tempdir}/build-aux
  ln update-copyright update-subdirs ../${tempdir}/build-aux
- ln dir_top make-info-dir ar-lib ../${tempdir}/build-aux)
-
-echo "Making links to 'build-aux/snippet'"
-(cd build-aux/snippet
- ln *.h ../../${tempdir}/build-aux/snippet)
+ ln dir_top make-info-dir ../${tempdir}/build-aux)
 
 echo "Making links to 'src'"
 ### Don't distribute the configured versions of
@@ -446,20 +463,18 @@ echo "Making links to 'src/bitmaps'"
  ln README *.xbm ../../${tempdir}/src/bitmaps)
 
 echo "Making links to 'lib'"
-(snippet_h=`(cd build-aux/snippet && ls *.h)`
- cd lib
- ln [a-zA-Z]*.[ch] ../${tempdir}/lib
- ln gnulib.mk Makefile.am Makefile.in ../${tempdir}/lib
+(cd lib
+ ln [a-zA-Z_]*.[ch] ../${tempdir}/lib
+ ln gnulib.mk.in Makefile.in ../${tempdir}/lib
  cd ../${tempdir}/lib
  script='/[*]/d; s/\.in\.h$/.h/'
- rm -f `(echo "$snippet_h"; ls *.in.h) | sed "$script"`)
+ rm -f `ls *.in.h | sed "$script"`)
 
 echo "Making links to 'lib-src'"
 (cd lib-src
  ln [a-zA-Z]*.[ch] ../${tempdir}/lib-src
  ln ChangeLog.*[0-9] Makefile.in README ../${tempdir}/lib-src
- ln rcs2log ../${tempdir}/lib-src
- ln update-game-score.exe.manifest ../${tempdir}/lib-src)
+ ln rcs2log ../${tempdir}/lib-src)
 
 echo "Making links to 'm4'"
 (cd m4
@@ -468,21 +483,13 @@ echo "Making links to 'm4'"
 echo "Making links to 'modules'"
 (cd modules
  ln *.py ../${tempdir}/modules
- if [ "$with_tests" = "yes" ]; then
-   for f in `find mod-test -type f`; do
-       case $f in
-           *.log|*.o|*.so) continue ;;
-       esac
-       ln $f ../$tempdir/modules/$f
-   done
- fi
 )
 
 echo "Making links to 'nt'"
 (cd nt
  ln emacs-x86.manifest emacs-x64.manifest ../${tempdir}/nt
  ln [a-z]*.bat [a-z]*.[ch] ../${tempdir}/nt
- ln *.in gnulib.mk gnulib-modules-to-delete.cfg ../${tempdir}/nt
+ ln *.in gnulib-cfg.mk ../${tempdir}/nt
  ln mingw-cfg.site epaths.nt INSTALL.W64 ../${tempdir}/nt
  ln ChangeLog.*[0-9] INSTALL README README.W32 ../${tempdir}/nt)
 
@@ -538,11 +545,11 @@ done
 
 if [ "$with_tests" = "yes" ]; then
   echo "Making links to 'test' and its subdirectories"
-  for f in `find test -type f`; do
+  for f in `find test -type f ! -name '*.log' ! -name a.out \
+	      ! -name '*.so' ! -name '*.dll' ! -name '*.o'
+  `; do
     case $f in
-      test/automated/*.log) continue ;;
-      test/automated/flymake/warnpred/a.out) continue ;;
-      test/automated/Makefile) continue ;;
+        */Makefile) [ -f $f.in ] && continue ;;
     esac
     ln $f $tempdir/$f
   done

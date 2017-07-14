@@ -40,7 +40,6 @@
 (require 'mail-utils)
 (require 'mm-util)
 (require 'gnus-util)
-(require 'subr-x)
 (autoload 'gnus-range-add "gnus-range")
 (autoload 'gnus-remove-from-range "gnus-range")
 ;; FIXME none of these are used explicitly in this file.
@@ -82,8 +81,7 @@ Integer values will in effect be rounded up to the nearest multiple of
   :type 'integer)
 
 (defvar nnheader-read-timeout
-  (if (string-match "windows-nt\\|os/2\\|cygwin"
-		    (symbol-name system-type))
+  (if (memq system-type '(windows-nt cygwin))
       ;; http://thread.gmane.org/v9655t3pjo.fsf@marauder.physik.uni-ulm.de
       ;;
       ;; IIRC, values lower than 1.0 didn't/don't work on Windows/DOS.
@@ -105,17 +103,8 @@ Integer values will in effect be rounded up to the nearest multiple of
 Shorter values mean quicker response, but are more CPU intensive.")
 
 (defcustom nnheader-file-name-translation-alist
-  (let ((case-fold-search t))
-    (cond
-     ((string-match "windows-nt\\|os/2\\|cygwin"
-		    (symbol-name system-type))
-      (append (mapcar (lambda (c) (cons c ?_))
-		      '(?: ?* ?\" ?< ?> ??))
-	      (if (string-match "windows-nt\\|cygwin"
-				(symbol-name system-type))
-		  nil
-		'((?+ . ?-)))))
-     (t nil)))
+  (if (memq system-type '(windows-nt cygwin))
+      (mapcar (lambda (c) (cons c ?_)) '(?: ?* ?\" ?< ?> ??)))
   "Alist that says how to translate characters in file names.
 For instance, if \":\" is invalid as a file character in file names
 on your system, you could say something like:

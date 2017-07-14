@@ -71,7 +71,7 @@ arguments.)
 * Font X::              Choosing a font for text, under X.
 * Colors X::            Choosing display colors.
 * Window Size X::       Start-up window size, under X.
-* Borders X::           Internal and external borders, under X.
+* Borders X::           Internal and outer borders, under X.
 * Title X::             Specifying the initial frame's title.
 * Icons X::             Choosing what sort of icon to use, under X.
 * Misc X::              Other display options.
@@ -336,16 +336,16 @@ setting @code{inhibit-x-resources} to @code{t} (@pxref{Resources}).
 @opindex -daemon
 @itemx --daemon[=@var{name}]
 @opindex --daemon
-@itemx --old-daemon[=@var{name}]
-@itemx --new-daemon[=@var{name}]
+@itemx --bg-daemon[=@var{name}]
+@itemx --fg-daemon[=@var{name}]
 Start Emacs as a daemon---after Emacs starts up, it starts the Emacs
 server without opening any frames.
 (Optionally, you can specify an explicit @var{name} for the server.)
 You can then use the @command{emacsclient} command to connect to Emacs
 for editing.  @xref{Emacs Server}, for information about using Emacs
-as a daemon.  An ``old-style'' daemon disconnects from the terminal
+as a daemon.  A ``background'' daemon disconnects from the terminal
 and runs in the background (@samp{--daemon} is an alias for
-@samp{--old-daemon}).
+@samp{--bg-daemon}).
 
 @item --no-desktop
 @opindex --no-desktop
@@ -470,11 +470,11 @@ bus as well as autolaunching the D-Bus session bus if not running yet.
 Directory for the architecture-independent files that come with Emacs.
 This is used to initialize the variable @code{data-directory}.
 @item EMACSDOC
-#vindex EMACSDOC, environment variable
+@vindex EMACSDOC, environment variable
 Directory for the documentation string file, which is used to
 initialize the Lisp variable @code{doc-directory}.
 @item EMACSLOADPATH
-#vindex EMACSLOADPATH, environment variable
+@vindex EMACSLOADPATH, environment variable
 A colon-separated list of directories@footnote{Here and below,
 whenever we say ``colon-separated list of directories'', it pertains
 to Unix and GNU/Linux systems.  On MS-Windows, the
@@ -1017,15 +1017,15 @@ program-specified and user-specified positions.  If these are set,
 Emacs fails to position the window correctly.
 
 @node Borders X
-@appendixsec Internal and External Borders
+@appendixsec Internal and Outer Borders
 @cindex borders (X Window System)
 
-  An Emacs frame has an internal border and an external border.  The
+  An Emacs frame has an internal border and an outer border.  The
 internal border is an extra strip of the background color around the
-text portion of the frame.  Emacs itself draws the internal border.
-The external border is added by the window manager outside the frame;
-depending on the window manager you use, it may contain various boxes
-you can click on to move or iconify the window.
+text portion of the frame.  Emacs itself draws the internal border.  The
+outer border is drawn by X outside the tool and menu bars of the frame.
+There is also an external border which is drawn by the window manager.
+The size of the external border cannot be set from within Emacs.
 
 @table @samp
 @item -ib @var{width}
@@ -1033,15 +1033,16 @@ you can click on to move or iconify the window.
 @itemx --internal-border=@var{width}
 @opindex --internal-border
 @cindex internal border width, command-line argument
-Specify @var{width} as the width of the internal border (between the text
-and the main border), in pixels.
+Specify @var{width} as the width of the internal border (around the
+frame's text area), in pixels.
 
 @item -bw @var{width}
 @opindex -bw
 @itemx --border-width=@var{width}
 @opindex --border-width
 @cindex main border width, command-line argument
-Specify @var{width} as the width of the main border, in pixels.
+@cindex outer border width, command-line argument
+Specify @var{width} as the width of the outer border, in pixels.
 @end table
 
   When you specify the size of the frame, that does not count the
@@ -1050,9 +1051,9 @@ external border.
 
   Use the @samp{-ib @var{n}} option to specify an internal border
 @var{n} pixels wide.  The default is 1.  Use @samp{-bw @var{n}} to
-specify the width of the external border (though the window manager may
-not pay attention to what you specify).  The default width of the
-external border is 2.
+specify the width of the outer border (though the window manager may not
+pay attention to what you specify).  The default width of the outer
+border is 2.
 
 @node Title X
 @appendixsec Frame Titles

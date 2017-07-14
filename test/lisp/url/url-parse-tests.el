@@ -162,6 +162,11 @@
   (should (equal (url-generic-parse-url "#") (url-parse-make-urlobj nil nil nil nil nil "" "" nil nil)))
   (should (equal (url-generic-parse-url "#foo") (url-parse-make-urlobj nil nil nil nil nil "" "foo" nil nil))))
 
+(ert-deftest url-generic-parse-url/multibyte-host-and-path ()
+  (should (equal (url-generic-parse-url "http://банки.рф/фыва/")
+                 (url-parse-make-urlobj "http" nil nil "банки.рф" nil
+                                        "/фыва/" nil nil t))))
+
 (provide 'url-parse-tests)
 
 ;;; url-parse-tests.el ends here

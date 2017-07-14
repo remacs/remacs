@@ -202,6 +202,9 @@ enum event_kind
 
   FOCUS_OUT_EVENT,
 
+  /* Generated when a frame is moved.  */
+  MOVE_FRAME_EVENT,
+
   /* Generated when mouse moves over window not currently selected.  */
   SELECT_WINDOW_EVENT,
 

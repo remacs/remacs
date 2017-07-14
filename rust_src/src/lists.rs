@@ -168,14 +168,23 @@ fn assq(key: LispObject, list: LispObject) -> LispObject {
     Qnil
 }
 
-/// Return non-nil if KEY is `equal' to the car of an element of LIST.
+/// Return non-nil if KEY is equal to the car of an element of LIST.
 /// The value is actually the first element of LIST whose car equals KEY.
-#[lisp_fn]
-fn assoc(key: LispObject, list: LispObject) -> LispObject {
+///
+/// Equality is defined by TESTFN is non-nil or by `equal' if nil.
+#[lisp_fn(min = "2")]
+fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
         if let Some(item_cons) = item.as_cons() {
-            if key.eq(item_cons.car()) || key.equal(item_cons.car()) {
+            let is_equal = if testfn.is_nil() {
+                key.eq(item_cons.car()) || key.equal(item_cons.car())
+            } else {
+                let res = unsafe { call2(testfn.to_raw(), key.to_raw(),
+                                         item_cons.car().to_raw()) };
+                !LispObject::from_raw(res).is_nil()
+            };
+            if is_equal {
                 return item;
             }
         }

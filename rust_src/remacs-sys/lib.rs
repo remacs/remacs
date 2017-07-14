@@ -66,11 +66,13 @@ pub enum PseudovecType {
     PVEC_THREAD,
     PVEC_MUTEX,
     PVEC_CONDVAR,
+    PVEC_MODULE_FUNCTION,
 
     /* These should be last, check internal_equal to see why.  */
     PVEC_COMPILED,
     PVEC_CHAR_TABLE,
     PVEC_SUB_CHAR_TABLE,
+    PVEC_RECORD,
     PVEC_FONT, /* Should be last because it's used for range checking.  */
 }
 
@@ -686,6 +688,13 @@ pub struct Lisp_Symbol {
     pub next: *mut Lisp_Symbol,
 }
 
+#[repr(C)]
+pub enum EqualKind {
+    NoQuit,
+    Plain,
+    IncludingProperties,
+}
+
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static Qt: Lisp_Object;
@@ -748,8 +757,8 @@ extern "C" {
     pub fn internal_equal(
         o1: Lisp_Object,
         o2: Lisp_Object,
+        kind: EqualKind,
         depth: libc::c_int,
-        props: bool,
         ht: Lisp_Object,
     ) -> bool;
     pub fn call2(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object) -> Lisp_Object;

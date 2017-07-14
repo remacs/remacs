@@ -861,7 +861,7 @@ drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
 
 }
 
-/* Delete all overlays of B and reset it's overlay lists.  */
+/* Delete all overlays of B and reset its overlay lists.  */
 
 void
 delete_all_overlays (struct buffer *b)
@@ -1155,7 +1155,7 @@ buffer_local_value (Lisp_Object variable, Lisp_Object buffer)
       { /* Look in local_var_alist.  */
 	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
 	XSETSYMBOL (variable, sym); /* Update In case of aliasing.  */
-	result = Fassoc (variable, BVAR (buf, local_var_alist));
+	result = Fassoc (variable, BVAR (buf, local_var_alist), Qnil);
 	if (!NILP (result))
 	  {
 	    if (blv->fwd)
@@ -1689,7 +1689,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   if (EQ (buffer, XWINDOW (minibuf_window)->contents))
     return Qnil;
 
-  /* When we kill an ordinary buffer which shares it's buffer text
+  /* When we kill an ordinary buffer which shares its buffer text
      with indirect buffer(s), we must kill indirect buffer(s) too.
      We do it at this stage so nothing terrible happens if they
      ask questions or their hooks get errors.  */
@@ -3045,6 +3045,33 @@ mouse_face_overlay_overlaps (Lisp_Object overlay)
   return i < n;
 }
 
+/* Return the value of the 'display-line-numbers-disable' property at
+   EOB, if there's an overlay at ZV with a non-nil value of that property.  */
+Lisp_Object
+disable_line_numbers_overlay_at_eob (void)
+{
+  ptrdiff_t n, i, size;
+  Lisp_Object *v, tem = Qnil;
+  Lisp_Object vbuf[10];
+  USE_SAFE_ALLOCA;
+
+  size = ARRAYELTS (vbuf);
+  v = vbuf;
+  n = overlays_in (ZV, ZV, 0, &v, &size, NULL, NULL);
+  if (n > size)
+    {
+      SAFE_NALLOCA (v, 1, n);
+      overlays_in (ZV, ZV, 0, &v, &n, NULL, NULL);
+    }
+
+  for (i = 0; i < n; ++i)
+    if ((tem = Foverlay_get (v[i], Qdisplay_line_numbers_disable),
+	 !NILP (tem)))
+      break;
+
+  SAFE_FREE ();
+  return tem;
+}
 
 
 /* Fast function to just test if we're at an overlay boundary.  */
@@ -5470,8 +5497,11 @@ A string is printed verbatim in the mode line except for %-constructs:
 	For a modified read-only buffer, %* gives % and %+ gives *.
   %s -- print process status.   %l -- print the current line number.
   %c -- print the current column number (this makes editing slower).
+        Columns are numbered starting from the left margin, and the
+        leftmost column is displayed as zero.
         To make the column number update correctly in all cases,
 	`column-number-mode' must be non-nil.
+  %C -- Like %c, but the leftmost column is displayed as one.
   %i -- print the size of the buffer.
   %I -- like %i, but use k, M, G, etc., to abbreviate.
   %p -- print percent of buffer above top of window, or Top, Bot or All.
@@ -5613,7 +5643,9 @@ visual lines rather than logical lines.  See the documentation of
   DEFVAR_PER_BUFFER ("default-directory", &BVAR (current_buffer, directory),
 		     Qstringp,
 		     doc: /* Name of default directory of current buffer.
-To interactively change the default directory, use command `cd'.  */);
+It should be a directory name (as opposed to a directory file-name).
+On GNU and Unix systems, directory names end in a slash `/'.
+To interactively change the default directory, use command `cd'. */);
 
   DEFVAR_PER_BUFFER ("auto-fill-function", &BVAR (current_buffer, auto_fill_function),
 		     Qnil,

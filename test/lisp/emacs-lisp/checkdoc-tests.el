@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2016-2017 Free Software Foundation, Inc.
 
-;; Author: Google Inc.
+;; Author: Philipp Stephani <phst@google.com>
 
 ;; This file is part of GNU Emacs.
 

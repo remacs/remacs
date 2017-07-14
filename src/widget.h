@@ -90,7 +90,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 typedef struct _EmacsFrameRec *EmacsFrame;
 typedef struct _EmacsFrameClassRec *EmacsFrameClass;
 
-extern WidgetClass emacsFrameClass;
+extern WidgetClass emacsFrameClass (void);
 
 extern struct _DisplayContext *display_context;
 

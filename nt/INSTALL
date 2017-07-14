@@ -182,8 +182,8 @@ build will run on Windows 9X and newer systems).
   removal in the mingw-get GUI, then select Installation->Apply Changes.)
 
   (Similarly, we recommend to refrain from installing the MinGW
-  Automake and Autoconf packages; instead, install their MSYS builds
-  available from the ezwinports site, see below.)
+  Autoconf package; instead, install its MSYS build available from the
+  ezwinports site, see below.)
 
   At this point, you should be ready to configure and build Emacs in
   its basic configuration.  Skip to the "Generating the configure
@@ -290,11 +290,9 @@ build will run on Windows 9X and newer systems).
      These should only be needed if you intend to build development
      versions of Emacs from the repository.
 
-   . Additional packages (needed only if building from the
-     repository): Automake and Autoconf.  They are available from
-     here:
+   . Additional package (needed only if building from the repository):
+     Autoconf.  It is available from here:
 
-       http://sourceforge.net/projects/ezwinports/files/automake-1.11.6-msys-bin.zip/download
        http://sourceforge.net/projects/ezwinports/files/autoconf-2.65-msys-bin.zip/download
 
   MSYS packages are distributed as .tar.lzma compressed archives.  To
@@ -305,11 +303,10 @@ build will run on Windows 9X and newer systems).
   For example, use D:\MSYS or D:\usr\MSYS as the top-level directory
   from which you unpack all of the MSYS packages.
 
-  After installing Automake and Autoconf, make sure any of the *.m4
-  files you might have in your MinGW installation also exist in the
-  MSYS installation tree, in the share/aclocal directory.  Those *.m4
-  files which exist in the MinGW tree, but not in the MSYS tree should
-  be copied there.
+  After installing Autoconf, make sure any of the *.m4 files you might
+  have in your MinGW installation also exist in the MSYS installation
+  tree, in the share/aclocal directory.  Those *.m4 files which exist
+  in the MinGW tree, but not in the MSYS tree should be copied there.
 
   If/when you are confident in your MinGW/MSYS installation, and want
   to speed up the builds, we recommend installing a pre-release
@@ -382,13 +379,10 @@ build will run on Windows 9X and newer systems).
      $ ./autogen.sh
      Checking whether you have the necessary tools...
      (Read INSTALL.REPO for more details on building Emacs)
-
-     Checking for autoconf (need at least version 2.65)...
-     ok
-     Checking for automake (need at least version 1.11)...
-     ok
-     Your system has the required tools, running autoreconf...
-     Installing git hooks...
+     Checking for autoconf (need at least version 2.65) ... ok
+     Your system has the required tools.
+     Building aclocal.m4 ...
+     Running 'autoreconf -fi -I m4' ...
      You can now run './configure'.
 
   If the script fails because it cannot find Git, you will need to

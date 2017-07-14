@@ -402,7 +402,7 @@ problems."
                                                'nowarn)
         (set-buffer-modified-p nil)
         (unlock-buffer)
-        (kill-this-buffer))))))
+        (kill-current-buffer))))))
 
 (define-minor-mode type-break-mode-line-message-mode
   "Toggle warnings about typing breaks in the mode line.

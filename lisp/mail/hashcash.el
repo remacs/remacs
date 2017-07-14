@@ -3,7 +3,7 @@
 ;; Copyright (C) 2003-2005, 2007-2017 Free Software Foundation, Inc.
 
 ;; Written by: Paul Foley <mycroft@actrix.gen.nz> (1997-2002)
-;; Maintainer: Paul Foley <mycroft@actrix.gen.nz>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: mail, hashcash
 
 ;; This file is part of GNU Emacs.

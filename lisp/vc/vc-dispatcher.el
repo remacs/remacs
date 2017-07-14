@@ -3,7 +3,7 @@
 ;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
 ;; Author:     FSF (see below for full credits)
-;; Maintainer: Eric S. Raymond <esr@thyrsus.com>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: vc tools
 ;; Package: vc
 

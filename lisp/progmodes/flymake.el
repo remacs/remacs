@@ -363,7 +363,7 @@ instead of SOURCE-FILE-NAME.
 
 For example, foo.cpp is a master file if it includes foo.h.
 
-Whether a buffer for MATER-FILE-NAME exists, use it as a source
+When a buffer for MASTER-FILE-NAME exists, use it as a source
 instead of reading master file from disk."
   (let* ((source-file-nondir (file-name-nondirectory source-file-name))
          (source-file-extension (file-name-extension source-file-nondir))

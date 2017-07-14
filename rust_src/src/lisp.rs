@@ -22,7 +22,8 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE
                  EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
                  Qsymbolp, Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp,
                  circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp,
-                 Qwholenump, Qvectorp, Qcharacterp, SYMBOL_NAME, PseudovecType, lispsym};
+                 Qwholenump, Qvectorp, Qcharacterp, SYMBOL_NAME, PseudovecType, lispsym,
+                 EqualKind};
 use remacs_sys::Lisp_Object as CLisp_Object;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -920,7 +921,7 @@ impl LispObject {
     #[inline]
     pub fn eql(self, other: LispObject) -> bool {
         if self.is_float() {
-            self.equal(other)
+            self.equal_no_quit(other)
         } else {
             self.eq(other)
         }
@@ -928,7 +929,12 @@ impl LispObject {
 
     #[inline]
     pub fn equal(self, other: LispObject) -> bool {
-        unsafe { internal_equal(self.to_raw(), other.to_raw(), 0, false, Qnil.to_raw()) }
+        unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::Plain, 0, Qnil.to_raw()) }
+    }
+
+    #[inline]
+    pub fn equal_no_quit(self, other: LispObject) -> bool {
+        unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::NoQuit, 0, Qnil.to_raw()) }
     }
 }
 

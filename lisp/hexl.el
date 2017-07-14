@@ -730,13 +730,13 @@ If there is no byte at the target address move to the last byte in that line."
 Leaves `hexl-mark' at previous position.
 With prefix arg N, puts point N bytes of the way from the true beginning."
   (interactive "p")
-  (push-mark (point))
+  (push-mark)
   (hexl-goto-address (+ 0 (1- arg))))
 
 (defun hexl-end-of-buffer (arg)
   "Go to `hexl-max-address' minus ARG."
   (interactive "p")
-  (push-mark (point))
+  (push-mark)
   (hexl-goto-address (- hexl-max-address (1- arg))))
 
 (defun hexl-beginning-of-line ()

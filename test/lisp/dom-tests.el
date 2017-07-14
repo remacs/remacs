@@ -26,7 +26,7 @@
 
 (require 'dom)
 (require 'ert)
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 
 (defun dom-tests--tree ()
   "Return a DOM tree for testing."

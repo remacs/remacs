@@ -109,7 +109,7 @@ The properties returned may include `top', `left', `height', and `width'."
 (define-key global-map [?\s-:] 'ispell)
 (define-key global-map [?\s-?] 'info)
 (define-key global-map [?\s-^] 'kill-some-buffers)
-(define-key global-map [?\s-&] 'kill-this-buffer)
+(define-key global-map [?\s-&] 'kill-current-buffer)
 (define-key global-map [?\s-C] 'ns-popup-color-panel)
 (define-key global-map [?\s-D] 'dired)
 (define-key global-map [?\s-E] 'edit-abbrevs)
@@ -125,7 +125,7 @@ The properties returned may include `top', `left', `height', and `width'."
 (define-key global-map [?\s-h] 'ns-do-hide-emacs)
 (define-key global-map [?\s-H] 'ns-do-hide-others)
 (define-key global-map [?\s-j] 'exchange-point-and-mark)
-(define-key global-map [?\s-k] 'kill-this-buffer)
+(define-key global-map [?\s-k] 'kill-current-buffer)
 (define-key global-map [?\s-l] 'goto-line)
 (define-key global-map [?\s-m] 'iconify-frame)
 (define-key global-map [?\s-n] 'make-frame)
@@ -229,6 +229,15 @@ The properties returned may include `top', `left', `height', and `width'."
 
 (declare-function dnd-open-file "dnd" (uri action))
 
+;; Handles multiline strings that are passed to the "open-file" service.
+(defun ns-open-file-service (filenames)
+  "Open multiple files when selecting a multiline string FILENAMES."
+  (let ((filelist (split-string filenames "[\n\r]+" t "[ \u00A0\t]+")))
+    ;; The path strings are trimmed for spaces, nbsp and tabs.
+    (dolist (filestring filelist)
+      (dnd-open-file filestring nil))))
+
+
 (defun ns-spi-service-call ()
   "Respond to a service request."
   (interactive)
@@ -236,7 +245,7 @@ The properties returned may include `top', `left', `height', and `width'."
 	 (switch-to-buffer (generate-new-buffer "*untitled*"))
 	 (insert ns-input-spi-arg))
 	((string-equal ns-input-spi-name "open-file")
-	 (dnd-open-file ns-input-spi-arg nil))
+	 (ns-open-file-service ns-input-spi-arg))
 	((string-equal ns-input-spi-name "mail-selection")
 	 (compose-mail)
 	 (rfc822-goto-eoh)

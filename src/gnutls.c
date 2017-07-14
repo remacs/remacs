@@ -605,6 +605,7 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
                        max_log_level,
                        "retry:",
                        str);
+	  FALLTHROUGH;
         default:
           GNUTLS_LOG2 (1,
                        max_log_level,

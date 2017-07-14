@@ -380,7 +380,9 @@ the bounds of a possible ill-formed URI (one lacking a scheme)."
 	     (save-restriction
 	       (narrow-to-region (1- url-beg) (min end (point-max)))
 	       (setq paren-end (ignore-errors
-				 (scan-lists (1- url-beg) 1 0))))
+                                 ;; Make the scan work inside comments.
+                                 (let ((parse-sexp-ignore-comments nil))
+                                   (scan-lists (1- url-beg) 1 0)))))
 	     (not (blink-matching-check-mismatch (1- url-beg) paren-end))
 	     (setq end (1- paren-end)))
 	;; Ensure PT is actually within BOUNDARY. Check the following

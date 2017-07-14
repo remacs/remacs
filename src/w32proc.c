@@ -1622,38 +1622,43 @@ w32_executable_type (char * filename,
               /* Look for Cygwin DLL in the DLL import list. */
               IMAGE_DATA_DIRECTORY import_dir =
                 data_dir[IMAGE_DIRECTORY_ENTRY_IMPORT];
-              IMAGE_IMPORT_DESCRIPTOR * imports =
-		RVA_TO_PTR (import_dir.VirtualAddress,
-			    rva_to_section (import_dir.VirtualAddress,
-					    nt_header),
-			    executable);
 
-              for ( ; imports->Name; imports++)
-                {
-		  IMAGE_SECTION_HEADER * section =
-		    rva_to_section (imports->Name, nt_header);
-                  char * dllname = RVA_TO_PTR (imports->Name, section,
-                                               executable);
+	      /* Import directory can be missing in .NET DLLs.  */
+	      if (import_dir.VirtualAddress != 0)
+		{
+		  IMAGE_IMPORT_DESCRIPTOR * imports =
+		    RVA_TO_PTR (import_dir.VirtualAddress,
+				rva_to_section (import_dir.VirtualAddress,
+						nt_header),
+				executable);
 
-                  /* The exact name of the Cygwin DLL has changed with
-                     various releases, but hopefully this will be
-                     reasonably future-proof.  */
-                  if (strncmp (dllname, "cygwin", 6) == 0)
-                    {
-                      *is_cygnus_app = TRUE;
-                      break;
-                    }
-		  else if (strncmp (dllname, "msys-", 5) == 0)
+		  for ( ; imports->Name; imports++)
 		    {
-		      /* This catches both MSYS 1.x and MSYS2
-			 executables (the DLL name is msys-1.0.dll and
-			 msys-2.0.dll, respectively).  There doesn't
-			 seem to be a reason to distinguish between
-			 the two, for now.  */
-		      *is_msys_app = TRUE;
-		      break;
+		      IMAGE_SECTION_HEADER * section =
+			rva_to_section (imports->Name, nt_header);
+		      char * dllname = RVA_TO_PTR (imports->Name, section,
+						   executable);
+
+		      /* The exact name of the Cygwin DLL has changed with
+			 various releases, but hopefully this will be
+			 reasonably future-proof.  */
+		      if (strncmp (dllname, "cygwin", 6) == 0)
+			{
+			  *is_cygnus_app = TRUE;
+			  break;
+			}
+		      else if (strncmp (dllname, "msys-", 5) == 0)
+			{
+			  /* This catches both MSYS 1.x and MSYS2
+			     executables (the DLL name is msys-1.0.dll and
+			     msys-2.0.dll, respectively).  There doesn't
+			     seem to be a reason to distinguish between
+			     the two, for now.  */
+			  *is_msys_app = TRUE;
+			  break;
+			}
 		    }
-                }
+		}
             }
   	}
     }

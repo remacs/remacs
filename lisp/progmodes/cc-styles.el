@@ -47,6 +47,7 @@
 ;; `c-add-style' often contains references to functions defined there.
 
 ;; Silence the compiler.
+(cc-bytecomp-defun c-guess-basic-syntax)
 (cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs
 
 

@@ -2052,15 +2052,17 @@ This is like `cl-flet', but for macros instead of functions.
 This function replaces `macroexpand' during macro expansion
 of `cl-symbol-macrolet', and does the same thing as `macroexpand'
 except that it additionally expands symbol macros."
-  (let ((macroexpand-all-environment env))
+  (let ((macroexpand-all-environment env)
+        (venv (alist-get :cl-symbol-macros env)))
     (while
         (progn
           (setq exp (funcall cl--old-macroexpand exp env))
           (pcase exp
             ((pred symbolp)
              ;; Perform symbol-macro expansion.
-             (when (cdr (assq (symbol-name exp) env))
-               (setq exp (cadr (assq (symbol-name exp) env)))))
+             (let ((symval (assq exp venv)))
+               (when symval
+                 (setq exp (cadr symval)))))
             (`(setq . ,_)
              ;; Convert setq to setf if required by symbol-macro expansion.
              (let* ((args (mapcar (lambda (f) (cl--sm-macroexpand f env))
@@ -2078,7 +2080,7 @@ except that it additionally expands symbol macros."
              (let ((letf nil) (found nil) (nbs ()))
                (dolist (binding bindings)
                  (let* ((var (if (symbolp binding) binding (car binding)))
-                        (sm (assq (symbol-name var) env)))
+                        (sm (assq var venv)))
                    (push (if (not (cdr sm))
                              binding
                            (let ((nexp (cadr sm)))
@@ -2136,29 +2138,28 @@ by EXPANSION, and (setq NAME ...) will act like (setf EXPANSION ...).
 
 \(fn ((NAME EXPANSION) ...) FORM...)"
   (declare (indent 1) (debug ((&rest (symbolp sexp)) cl-declarations body)))
-  (cond
-   ((cdr bindings)
-    `(cl-symbol-macrolet (,(car bindings))
-       (cl-symbol-macrolet ,(cdr bindings) ,@body)))
-   ((null bindings) (macroexp-progn body))
-   (t
-    (let ((previous-macroexpand (symbol-function 'macroexpand)))
-      (unwind-protect
-          (progn
-            (fset 'macroexpand #'cl--sm-macroexpand)
-            (let ((expansion
-                   ;; FIXME: For N bindings, this will traverse `body' N times!
-                   (macroexpand-all (macroexp-progn body)
-                                    (cons (list (symbol-name (caar bindings))
-                                                (cl-cadar bindings))
-                                          macroexpand-all-environment))))
-              (if (or (null (cdar bindings)) (cl-cddar bindings))
-                  (macroexp--warn-and-return
-                   (format-message "Malformed `cl-symbol-macrolet' binding: %S"
-                                   (car bindings))
-                   expansion)
-                expansion)))
-        (fset 'macroexpand previous-macroexpand))))))
+  (let ((previous-macroexpand (symbol-function 'macroexpand))
+        (malformed-bindings nil))
+    (dolist (binding bindings)
+      (unless (and (consp binding) (symbolp (car binding))
+                   (consp (cdr binding)) (null (cddr binding)))
+        (push binding malformed-bindings)))
+    (unwind-protect
+        (progn
+          (fset 'macroexpand #'cl--sm-macroexpand)
+          (let* ((venv (cdr (assq :cl-symbol-macros macroexpand-all-environment)))
+                 (expansion
+                  (macroexpand-all (macroexp-progn body)
+                                   (cons (cons :cl-symbol-macros
+                                               (append bindings venv))
+                                         macroexpand-all-environment))))
+            (if malformed-bindings
+                (macroexp--warn-and-return
+                 (format-message "Malformed `cl-symbol-macrolet' binding(s): %S"
+                                 (nreverse malformed-bindings))
+                 expansion)
+              expansion)))
+      (fset 'macroexpand previous-macroexpand))))
 
 ;;; Multiple values.
 
@@ -2604,11 +2605,24 @@ non-nil value, that slot cannot be set via `setf'.
 	 (print-func nil) (print-auto nil)
 	 (safety (if (cl--compiling-file) cl--optimize-safety 3))
 	 (include nil)
-	 (tag (intern (format "cl-struct-%s" name)))
+         ;; There are 4 types of structs:
+         ;; - `vector' type: means we should use a vector, which can come
+         ;;   with or without a tag `name', which is usually in slot 0
+         ;;   but obeys :initial-offset.
+         ;; - `list' type: same as `vector' but using lists.
+         ;; - `record' type: means we should use a record, which necessarily
+         ;;   comes tagged in slot 0.  Currently we'll use the `name' as
+         ;;   the tag, but we may want to change it so that the class object
+         ;;   is used as the tag.
+         ;; - nil type: this is the "pre-record default", which uses a vector
+         ;;   with a tag in slot 0 which is a symbol of the form
+         ;;   `cl-struct-NAME'.  We need to still support this for backward
+         ;;   compatibility with old .elc files.
+	 (tag name)
 	 (tag-symbol (intern (format "cl-struct-%s-tags" name)))
 	 (include-descs nil)
 	 (include-name nil)
-	 (type nil)
+	 (type nil)         ;nil here means not specified explicitly.
 	 (named nil)
 	 (forms nil)
          (docstring (if (stringp (car descs)) (pop descs)))
@@ -2648,7 +2662,9 @@ non-nil value, that slot cannot be set via `setf'.
 	      ((eq opt :print-function)
 	       (setq print-func (car args)))
 	      ((eq opt :type)
-	       (setq type (car args)))
+	       (setq type (car args))
+               (unless (memq type '(vector list))
+                 (error "Invalid :type specifier: %s" type)))
 	      ((eq opt :named)
 	       (setq named t))
 	      ((eq opt :initial-offset)
@@ -2680,13 +2696,11 @@ non-nil value, that slot cannot be set via `setf'.
 		    (pop include-descs)))
 	  (setq descs (append old-descs (delq (assq 'cl-tag-slot descs) descs))
 		type inc-type
-		named (if type (assq 'cl-tag-slot descs) 'true))
-	  (if (cl--struct-class-named include) (setq tag name named t)))
-      (if type
-	  (progn
-	    (or (memq type '(vector list))
-		(error "Invalid :type specifier: %s" type))
-	    (if named (setq tag name)))
+		named (if (memq type '(vector list))
+                          (assq 'cl-tag-slot descs)
+                        'true))
+	  (if (cl--struct-class-named include) (setq named t)))
+      (unless type
 	(setq named 'true)))
     (or named (setq descs (delq (assq 'cl-tag-slot descs) descs)))
     (when (and (null predicate) named)
@@ -2696,7 +2710,9 @@ non-nil value, that slot cannot be set via `setf'.
 				       (length (memq (assq 'cl-tag-slot descs)
 						     descs)))))
 			   (cond
-                            ((memq type '(nil vector))
+                            ((null type) ;Record type.
+                             `(memq (type-of cl-x) ,tag-symbol))
+                            ((eq type 'vector)
                              `(and (vectorp cl-x)
                                    (>= (length cl-x) ,(length descs))
                                    (memq (aref cl-x ,pos) ,tag-symbol)))
@@ -2793,7 +2809,8 @@ non-nil value, that slot cannot be set via `setf'.
     (setq slots (nreverse slots)
 	  defaults (nreverse defaults))
     (and copier
-         (push `(defalias ',copier #'copy-sequence) forms))
+         (push `(defalias ',copier #'copy-sequence)
+               forms))
     (if constructor
 	(push (list constructor
                     (cons '&key (delq nil (copy-sequence slots))))
@@ -2808,7 +2825,7 @@ non-nil value, that slot cannot be set via `setf'.
                     (format "Constructor for objects of type `%s'." name))
                  ,@(if (cl--safe-expr-p `(progn ,@(mapcar #'cl-second descs)))
                        '((declare (side-effect-free t))))
-                 (,(or type #'vector) ,@make))
+                 (,(or type #'record) ,@make))
               forms)))
     (if print-auto (nconc print-func (list '(princ ")" cl-s) t)))
     ;; Don't bother adding to cl-custom-print-functions since it's not used
@@ -2830,8 +2847,8 @@ non-nil value, that slot cannot be set via `setf'.
        ;; struct as a parent.
        (eval-and-compile
          (cl-struct-define ',name ,docstring ',include-name
-                           ',type ,(eq named t) ',descs ',tag-symbol ',tag
-                           ',print-auto))
+                           ',(or type 'record) ,(eq named t) ',descs
+                           ',tag-symbol ',tag ',print-auto))
        ',name)))
 
 ;;; Add cl-struct support to pcase
@@ -2866,6 +2883,15 @@ is a shorthand for (NAME NAME)."
                      ,pat)))
            fields)))
 
+(defun cl--defstruct-predicate (type)
+  (let ((cons (assq (cl-struct-sequence-type type)
+                    `((list . consp)
+                      (vector . vectorp)
+                      (nil . recordp)))))
+    (if cons
+        (cdr cons)
+      'recordp)))
+
 (defun cl--pcase-mutually-exclusive-p (orig pred1 pred2)
   "Extra special cases for `cl-typep' predicates."
   (let* ((x1 pred1) (x2 pred2)
@@ -2888,14 +2914,12 @@ is a shorthand for (NAME NAME)."
                           (memq c2 (cl--struct-all-parents c1)))))))
      (let ((c1 (and (symbolp t1) (cl--find-class t1))))
        (and c1 (cl--struct-class-p c1)
-            (funcall orig (if (eq 'list (cl-struct-sequence-type t1))
-                              'consp 'vectorp)
+            (funcall orig (cl--defstruct-predicate t1)
                      pred2)))
      (let ((c2 (and (symbolp t2) (cl--find-class t2))))
        (and c2 (cl--struct-class-p c2)
             (funcall orig pred1
-                     (if (eq 'list (cl-struct-sequence-type t2))
-                         'consp 'vectorp))))
+                     (cl--defstruct-predicate t2))))
      (funcall orig pred1 pred2))))
 (advice-add 'pcase--mutually-exclusive-p
             :around #'cl--pcase-mutually-exclusive-p)
@@ -2903,8 +2927,8 @@ is a shorthand for (NAME NAME)."
 
 (defun cl-struct-sequence-type (struct-type)
   "Return the sequence used to build STRUCT-TYPE.
-STRUCT-TYPE is a symbol naming a struct type.  Return `vector' or
-`list', or nil if STRUCT-TYPE is not a struct type. "
+STRUCT-TYPE is a symbol naming a struct type.  Return `record',
+`vector`, or `list' if STRUCT-TYPE is a struct type, nil otherwise."
   (declare (side-effect-free t) (pure t))
   (cl--struct-class-type (cl--struct-get-class struct-type)))
 

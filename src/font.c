@@ -306,18 +306,20 @@ font_pixel_size (struct frame *f, Lisp_Object spec)
     return XINT (size);
   if (NILP (size))
     return 0;
-  eassert (FLOATP (size));
-  point_size = XFLOAT_DATA (size);
-  val = AREF (spec, FONT_DPI_INDEX);
-  if (INTEGERP (val))
-    dpi = XINT (val);
-  else
-    dpi = FRAME_RES_Y (f);
-  pixel_size = POINT_TO_PIXEL (point_size, dpi);
-  return pixel_size;
-#else
-  return 1;
+  if (FRAME_WINDOW_P (f))
+    {
+      eassert (FLOATP (size));
+      point_size = XFLOAT_DATA (size);
+      val = AREF (spec, FONT_DPI_INDEX);
+      if (INTEGERP (val))
+	dpi = XINT (val);
+      else
+	dpi = FRAME_RES_Y (f);
+      pixel_size = POINT_TO_PIXEL (point_size, dpi);
+      return pixel_size;
+    }
 #endif
+  return 1;
 }
 
 
@@ -1891,7 +1893,7 @@ otf_tag_symbol (OTF_Tag tag)
 static OTF *
 otf_open (Lisp_Object file)
 {
-  Lisp_Object val = Fassoc (file, otf_list);
+  Lisp_Object val = Fassoc (file, otf_list, Qnil);
   OTF *otf;
 
   if (! NILP (val))
@@ -2777,21 +2779,27 @@ font_list_entities (struct frame *f, Lisp_Object spec)
 	  val = XCDR (val);
 	else
 	  {
-	    val = driver_list->driver->list (f, scratch_font_spec);
-	    if (!NILP (val))
-	      {
-		Lisp_Object copy = copy_font_spec (scratch_font_spec);
+	    Lisp_Object copy;
 
-		val = Fvconcat (1, &val);
-		ASET (copy, FONT_TYPE_INDEX, driver_list->driver->type);
-		XSETCDR (cache, Fcons (Fcons (copy, val), XCDR (cache)));
-	      }
+	    val = driver_list->driver->list (f, scratch_font_spec);
+	    /* We put zero_vector in the font-cache to indicate that
+	       no fonts matching SPEC were found on the system.
+	       Failure to have this indication in the font cache can
+	       cause severe performance degradation in some rare
+	       cases, see bug#21028.  */
+	    if (NILP (val))
+	      val = zero_vector;
+	    else
+	      val = Fvconcat (1, &val);
+	    copy = copy_font_spec (scratch_font_spec);
+	    ASET (copy, FONT_TYPE_INDEX, driver_list->driver->type);
+	    XSETCDR (cache, Fcons (Fcons (copy, val), XCDR (cache)));
 	  }
-	if (VECTORP (val) && ASIZE (val) > 0
+	if (ASIZE (val) > 0
 	    && (need_filtering
 		|| ! NILP (Vface_ignored_fonts)))
 	  val = font_delete_unmatched (val, need_filtering ? spec : Qnil, size);
-	if (VECTORP (val) && ASIZE (val) > 0)
+	if (ASIZE (val) > 0)
 	  list = Fcons (val, list);
       }
 

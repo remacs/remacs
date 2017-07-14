@@ -94,6 +94,11 @@ impl LispVectorlikeRef {
     }
 
     #[inline]
+    pub fn pseudovector_size(&self) -> EmacsInt {
+        (self.header.size & PSEUDOVECTOR_SIZE_MASK) as EmacsInt
+    }
+
+    #[inline]
     pub fn as_bool_vector(&self) -> Option<LispBoolVecRef> {
         if self.is_pseudovector(PseudovecType::PVEC_BOOL_VECTOR) {
             Some(unsafe { mem::transmute::<_, LispBoolVecRef>(*self) })
@@ -174,8 +179,10 @@ fn length(sequence: LispObject) -> LispObject {
             return LispObject::from_natnum(bv.len() as EmacsInt);
         } else if vl.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE) {
             return LispObject::from_natnum(MAX_CHAR as EmacsInt);
-        } else if vl.is_pseudovector(PseudovecType::PVEC_COMPILED) {
-            return LispObject::from_natnum((vl.header.size & PSEUDOVECTOR_SIZE_MASK) as EmacsInt);
+        } else if vl.is_pseudovector(PseudovecType::PVEC_COMPILED) ||
+            vl.is_pseudovector(PseudovecType::PVEC_RECORD)
+        {
+            return LispObject::from_natnum(vl.pseudovector_size());
         }
     } else if let Some(_) = sequence.as_cons() {
         let len = sequence.iter_tails().count();

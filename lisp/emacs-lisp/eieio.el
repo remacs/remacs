@@ -235,7 +235,7 @@ This method is obsolete."
            (let ((f (intern (format "%s-child-p" name))))
              `((defalias ',f ',testsym2)
                (make-obsolete
-                ',f ,(format "use (cl-typep ... '%s) instead" name)
+                ',f ,(format "use (cl-typep ... \\='%s) instead" name)
                 "25.1"))))
 
        ;; When using typep, (typep OBJ 'myclass) returns t for objects which
@@ -337,14 +337,12 @@ variable name of the same name as the slot."
 ;; hard-coded in random .elc files.
 (defun eieio-pcase-slot-index-table (obj)
   "Return some data structure from which can be extracted the slot offset."
-  (eieio--class-index-table
-   (symbol-value (eieio--object-class-tag obj))))
+  (eieio--class-index-table (eieio--object-class obj)))
 
 (defun eieio-pcase-slot-index-from-index-table (index-table slot)
   "Find the index to pass to `aref' to access SLOT."
   (let ((index (gethash slot index-table)))
-    (if index (+ (eval-when-compile
-                   (length (cl-struct-slot-info 'eieio--object)))
+    (if index (+ (eval-when-compile eieio--object-num-slots)
                  index))))
 
 (pcase-defmacro eieio (&rest fields)

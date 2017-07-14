@@ -340,7 +340,7 @@ one optional arguments, diff-number to refine.")
 	(ediff-skip-unsuitable-frames)
 	(switch-to-buffer error-buf)
 	(ediff-kill-buffer-carefully ctl-buf)
-	(error "Errors in diff output.  Diff output is in %S" diff-buff))))
+	(user-error "Errors in diff output.  Diff output is in %S" diff-buff))))
 
 ;; BOUNDS specifies visibility bounds to use.
 ;; WORD-MODE tells whether we are in the word-mode or not.
@@ -1134,12 +1134,20 @@ delimiter regions"))
    ))
 
 
-;; Execute PROGRAM asynchronously, unless OS/2, Windows-*, or DOS, or unless
-;; SYNCH is non-nil.  BUFFER must be a buffer object, and must be alive.  The
-;; OPTIONS arg is a list of options to pass to PROGRAM. It may be a blank
-;; string.  All elements in FILES must be strings.  We also delete nil from
-;; args.
 (defun ediff-exec-process (program buffer synch options &rest files)
+  "Execute the diff PROGRAM.
+
+The PROGRAM output is sent to BUFFER, which must be a live buffer
+object.
+
+The PROGRAM is executed asynchronously unless `system-type' is
+`windows-nt' or `ms-dos', or SYNCH is non-nil.
+
+OPTIONS is a string of space-separated options to pass to PROGRAM.  It
+may be a blank string.
+
+FILES is a list of filenames to pass to PROGRAM; nil and \"\" elements
+are ignored."
   (let ((data (match-data))
 	;; If this is a buffer job, we are diffing temporary files
 	;; produced by Emacs with ediff-coding-system-for-write, so
@@ -1149,7 +1157,12 @@ delimiter regions"))
 	     ediff-coding-system-for-write
 	   ediff-coding-system-for-read))
 	args)
-    (setq args (append (split-string options) files))
+    (setq args (append (split-string options)
+                       (mapcar (lambda (file)
+                                 (when (stringp file)
+                                   (file-name-unquote
+                                    (or (file-local-copy file) file))))
+                               files)))
     (setq args (delete "" (delq nil args))) ; delete nil and "" from arguments
     ;; the --binary option, if present, should be used only for buffer jobs
     ;; or for refining the differences

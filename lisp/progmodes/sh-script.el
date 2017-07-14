@@ -492,7 +492,10 @@ name symbol."
 This is buffer-local in every such buffer.")
 
 (defvar sh-mode-syntax-table-input
-  '((sh . nil))
+  `((sh . nil)
+    ;; Treat ' as punctuation rather than a string delimiter, as RPM
+    ;; files often contain prose with apostrophes.
+    (rpm . (,sh-mode-syntax-table ?\' ".")))
   "Syntax-table used in Shell-Script mode.  See `sh-feature'.")
 
 (defvar sh-mode-map
@@ -599,8 +602,8 @@ This is buffer-local in every such buffer.")
     map)
   "Keymap used in Shell-Script mode.")
 
-(defvar sh-skeleton-pair-default-alist '((?( _ ?)) (?\))
-				      (?[ ?\s _ ?\s ?]) (?\])
+(defvar sh-skeleton-pair-default-alist '((?\( _ ?\)) (?\))
+				      (?\[ ?\s _ ?\s ?\]) (?\])
 				      (?{ _ ?}) (?\}))
   "Value to use for `skeleton-pair-default-alist' in Shell-Script mode.")
 

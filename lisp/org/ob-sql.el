@@ -1,4 +1,4 @@
-;;; ob-sql.el --- org-babel functions for sql evaluation
+;;; ob-sql.el --- Babel Functions for SQL            -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
@@ -36,6 +36,7 @@
 ;; - engine
 ;; - cmdline
 ;; - dbhost
+;; - dbport
 ;; - dbuser
 ;; - dbpassword
 ;; - database
@@ -56,11 +57,11 @@
 
 ;;; Code:
 (require 'ob)
-(eval-when-compile (require 'cl))
 
 (declare-function org-table-import "org-table" (file arg))
 (declare-function orgtbl-to-csv "org-table" (table params))
 (declare-function org-table-to-lisp "org-table" (&optional txt))
+(declare-function cygwin-convert-file-name-to-windows "cygw32.c" (file &optional absolute-p))
 
 (defvar org-babel-default-header-args:sql '())
 
@@ -68,6 +69,7 @@
   '((engine	       . :any)
     (out-file	       . :any)
     (dbhost	       . :any)
+    (dbport	       . :any)
     (dbuser	       . :any)
     (dbpassword	       . :any)
     (database	       . :any))
@@ -76,98 +78,167 @@
 (defun org-babel-expand-body:sql (body params)
   "Expand BODY according to the values of PARAMS."
   (org-babel-sql-expand-vars
-   body (mapcar #'cdr (org-babel-get-header params :var))))
+   body (org-babel--get-vars params)))
 
-(defun dbstring-mysql (host user password database)
+(defun org-babel-sql-dbstring-mysql (host port user password database)
   "Make MySQL cmd line args for database connection.  Pass nil to omit that arg."
   (combine-and-quote-strings
-   (remq nil
+   (delq nil
 	 (list (when host     (concat "-h" host))
+	       (when port     (format "-P%d" port))
 	       (when user     (concat "-u" user))
 	       (when password (concat "-p" password))
 	       (when database (concat "-D" database))))))
 
+(defun org-babel-sql-dbstring-postgresql (host port user database)
+  "Make PostgreSQL command line args for database connection.
+Pass nil to omit that arg."
+  (combine-and-quote-strings
+   (delq nil
+	 (list (when host (concat "-h" host))
+	       (when port (format "-p%d" port))
+	       (when user (concat "-U" user))
+	       (when database (concat "-d" database))))))
+
+(defun org-babel-sql-dbstring-oracle (host port user password database)
+  "Make Oracle command line args for database connection."
+  (format "%s/%s@%s:%s/%s" user password host port database))
+
+(defun org-babel-sql-dbstring-mssql (host user password database)
+  "Make sqlcmd command line args for database connection.
+`sqlcmd' is the preferred command line tool to access Microsoft
+SQL Server on Windows and Linux platform."
+  (mapconcat #'identity
+	     (delq nil
+		   (list (when host (format "-S \"%s\"" host))
+			 (when user (format "-U \"%s\"" user))
+			 (when password (format "-P \"%s\"" password))
+			 (when database (format "-d \"%s\"" database))))
+	     " "))
+
+(defun org-babel-sql-convert-standard-filename (file)
+  "Convert FILE to OS standard file name.
+If in Cygwin environment, uses Cygwin specific function to
+convert the file name.  In a Windows-NT environment, do nothing.
+Otherwise, use Emacs' standard conversion function."
+  (cond ((fboundp 'cygwin-convert-file-name-to-windows)
+	 (format "%S" (cygwin-convert-file-name-to-windows file)))
+	((string= "windows-nt" system-type) file)
+	(t (format "%S" (convert-standard-filename file)))))
+
 (defun org-babel-execute:sql (body params)
   "Execute a block of Sql code with Babel.
 This function is called by `org-babel-execute-src-block'."
-  (let* ((result-params (cdr (assoc :result-params params)))
-         (cmdline (cdr (assoc :cmdline params)))
-         (dbhost (cdr (assoc :dbhost params)))
-         (dbuser (cdr (assoc :dbuser params)))
-         (dbpassword (cdr (assoc :dbpassword params)))
-         (database (cdr (assoc :database params)))
-         (engine (cdr (assoc :engine params)))
-         (colnames-p (not (equal "no" (cdr (assoc :colnames params)))))
+  (let* ((result-params (cdr (assq :result-params params)))
+         (cmdline (cdr (assq :cmdline params)))
+         (dbhost (cdr (assq :dbhost params)))
+         (dbport (cdr (assq :dbport params)))
+         (dbuser (cdr (assq :dbuser params)))
+         (dbpassword (cdr (assq :dbpassword params)))
+         (database (cdr (assq :database params)))
+         (engine (cdr (assq :engine params)))
+         (colnames-p (not (equal "no" (cdr (assq :colnames params)))))
          (in-file (org-babel-temp-file "sql-in-"))
-         (out-file (or (cdr (assoc :out-file params))
+         (out-file (or (cdr (assq :out-file params))
                        (org-babel-temp-file "sql-out-")))
 	 (header-delim "")
-         (command (case (intern engine)
-                    ('dbi (format "dbish --batch %s < %s | sed '%s' > %s"
+         (command (pcase (intern engine)
+                    (`dbi (format "dbish --batch %s < %s | sed '%s' > %s"
 				  (or cmdline "")
 				  (org-babel-process-file-name in-file)
 				  "/^+/d;s/^|//;s/(NULL)/ /g;$d"
 				  (org-babel-process-file-name out-file)))
-                    ('monetdb (format "mclient -f tab %s < %s > %s"
-                                      (or cmdline "")
-                                      (org-babel-process-file-name in-file)
-                                      (org-babel-process-file-name out-file)))
-                    ('msosql (format "osql %s -s \"\t\" -i %s -o %s"
-                                     (or cmdline "")
-                                     (org-babel-process-file-name in-file)
-                                     (org-babel-process-file-name out-file)))
-                    ('mysql (format "mysql %s %s %s < %s > %s"
-				    (dbstring-mysql dbhost dbuser dbpassword database)
+                    (`monetdb (format "mclient -f tab %s < %s > %s"
+				      (or cmdline "")
+				      (org-babel-process-file-name in-file)
+				      (org-babel-process-file-name out-file)))
+		    (`mssql (format "sqlcmd %s -s \"\t\" %s -i %s -o %s"
+				    (or cmdline "")
+				    (org-babel-sql-dbstring-mssql
+				     dbhost dbuser dbpassword database)
+				    (org-babel-sql-convert-standard-filename
+				     (org-babel-process-file-name in-file))
+				    (org-babel-sql-convert-standard-filename
+				     (org-babel-process-file-name out-file))))
+                    (`mysql (format "mysql %s %s %s < %s > %s"
+				    (org-babel-sql-dbstring-mysql
+				     dbhost dbport dbuser dbpassword database)
 				    (if colnames-p "" "-N")
-                                    (or cmdline "")
+				    (or cmdline "")
 				    (org-babel-process-file-name in-file)
 				    (org-babel-process-file-name out-file)))
-		    ('postgresql (format
-				  "psql -A -P footer=off -F \"\t\"  -f %s -o %s %s"
+		    (`postgresql (format
+				  "%spsql --set=\"ON_ERROR_STOP=1\" %s -A -P \
+footer=off -F \"\t\"  %s -f %s -o %s %s"
+				  (if dbpassword
+				      (format "PGPASSWORD=%s " dbpassword)
+				    "")
+				  (if colnames-p "" "-t")
+				  (org-babel-sql-dbstring-postgresql
+				   dbhost dbport dbuser database)
 				  (org-babel-process-file-name in-file)
 				  (org-babel-process-file-name out-file)
 				  (or cmdline "")))
-                    (t (error "No support for the %s SQL engine" engine)))))
+                    (`oracle (format
+			      "sqlplus -s %s < %s > %s"
+			      (org-babel-sql-dbstring-oracle
+			       dbhost dbport dbuser dbpassword database)
+			      (org-babel-process-file-name in-file)
+			      (org-babel-process-file-name out-file)))
+                    (_ (error "No support for the %s SQL engine" engine)))))
     (with-temp-file in-file
       (insert
-       (case (intern engine)
-	 ('dbi "/format partbox\n")
-	 (t ""))
+       (pcase (intern engine)
+	 (`dbi "/format partbox\n")
+         (`oracle "SET PAGESIZE 50000
+SET NEWPAGE 0
+SET TAB OFF
+SET SPACE 0
+SET LINESIZE 9999
+SET ECHO OFF
+SET FEEDBACK OFF
+SET VERIFY OFF
+SET HEADING ON
+SET MARKUP HTML OFF SPOOL OFF
+SET COLSEP '|'
+
+")
+	 (`mssql "SET NOCOUNT ON
+
+")
+	 (_ ""))
        (org-babel-expand-body:sql body params)))
-    (message command)
     (org-babel-eval command "")
     (org-babel-result-cond result-params
       (with-temp-buffer
-	  (progn (insert-file-contents-literally out-file) (buffer-string)))
+	(progn (insert-file-contents-literally out-file) (buffer-string)))
       (with-temp-buffer
 	(cond
-	  ((or (eq (intern engine) 'mysql)
-	       (eq (intern engine) 'dbi)
-	       (eq (intern engine) 'postgresql))
-	   ;; Add header row delimiter after column-names header in first line
-	   (cond
-	    (colnames-p
-	     (with-temp-buffer
-	       (insert-file-contents out-file)
-	       (goto-char (point-min))
-	       (forward-line 1)
-	       (insert "-\n")
-	       (setq header-delim "-")
-	       (write-file out-file)))))
-	  (t
-	   ;; Need to figure out the delimiter for the header row
-	   (with-temp-buffer
-	     (insert-file-contents out-file)
-	     (goto-char (point-min))
-	     (when (re-search-forward "^\\(-+\\)[^-]" nil t)
-	       (setq header-delim (match-string-no-properties 1)))
-	     (goto-char (point-max))
-	     (forward-char -1)
-	     (while (looking-at "\n")
-	       (delete-char 1)
-	       (goto-char (point-max))
-	       (forward-char -1))
-	     (write-file out-file))))
+	 ((memq (intern engine) '(dbi mysql postgresql))
+	  ;; Add header row delimiter after column-names header in first line
+	  (cond
+	   (colnames-p
+	    (with-temp-buffer
+	      (insert-file-contents out-file)
+	      (goto-char (point-min))
+	      (forward-line 1)
+	      (insert "-\n")
+	      (setq header-delim "-")
+	      (write-file out-file)))))
+	 (t
+	  ;; Need to figure out the delimiter for the header row
+	  (with-temp-buffer
+	    (insert-file-contents out-file)
+	    (goto-char (point-min))
+	    (when (re-search-forward "^\\(-+\\)[^-]" nil t)
+	      (setq header-delim (match-string-no-properties 1)))
+	    (goto-char (point-max))
+	    (forward-char -1)
+	    (while (looking-at "\n")
+	      (delete-char 1)
+	      (goto-char (point-max))
+	      (forward-char -1))
+	    (write-file out-file))))
 	(org-table-import out-file '(16))
 	(org-babel-reassemble-table
 	 (mapcar (lambda (x)
@@ -175,10 +246,10 @@ This function is called by `org-babel-execute-src-block'."
 		       'hline
 		     x))
 		 (org-table-to-lisp))
-	 (org-babel-pick-name (cdr (assoc :colname-names params))
-			      (cdr (assoc :colnames params)))
-	 (org-babel-pick-name (cdr (assoc :rowname-names params))
-			      (cdr (assoc :rownames params))))))))
+	 (org-babel-pick-name (cdr (assq :colname-names params))
+			      (cdr (assq :colnames params)))
+	 (org-babel-pick-name (cdr (assq :rowname-names params))
+			      (cdr (assq :rownames params))))))))
 
 (defun org-babel-sql-expand-vars (body vars)
   "Expand the variables held in VARS in BODY."
@@ -201,7 +272,7 @@ This function is called by `org-babel-execute-src-block'."
    vars)
   body)
 
-(defun org-babel-prep-session:sql (session params)
+(defun org-babel-prep-session:sql (_session _params)
   "Raise an error because Sql sessions aren't implemented."
   (error "SQL sessions not yet implemented"))
 

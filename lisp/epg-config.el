@@ -83,9 +83,9 @@ Note that the buffer name starts with a space."
 (defconst epg-gpg-minimum-version "1.4.3")
 
 (defconst epg-config--program-alist
-  '((OpenPGP
+  `((OpenPGP
      epg-gpg-program
-     ("gpg2" . "2.1.6") ("gpg" . "1.4.3"))
+     ("gpg2" . "2.1.6") ("gpg" . ,epg-gpg-minimum-version))
     (CMS
      epg-gpgsm-program
      ("gpgsm" . "2.0.4")))
@@ -129,7 +129,8 @@ version requirement is met."
         (or (and (not no-cache) (alist-get protocol epg--configurations))
             ;; If the executable value is already set with M-x
             ;; customize, use it without checking.
-            (if (and symbol (get symbol 'saved-value))
+            (if (and symbol (or (get symbol 'saved-value)
+                                (get symbol 'customized-value)))
                 (let ((configuration
                        (funcall constructor (symbol-value symbol))))
                   (push (cons protocol configuration) epg--configurations)

@@ -35,8 +35,8 @@ AC_DEFUN([gl_STDALIGN_H],
                  || (defined __APPLE__ && defined __MACH__ \
                      ? 4 < __GNUC__ + (1 <= __GNUC_MINOR__) \
                      : __GNUC__) \
-                 || __HP_cc || __HP_aCC || __IBMC__ || __IBMCPP__ \
-                 || __ICC || 0x5110 <= __SUNPRO_C \
+                 || (__ia64 && (61200 <= __HP_cc || 61200 <= __HP_aCC)) \
+                 || __ICC || 0x590 <= __SUNPRO_C || 0x0600 <= __xlC__ \
                  || 1300 <= _MSC_VER)
               struct alignas_test { char c; char alignas (8) alignas_8; };
               char test_alignas[offsetof (struct alignas_test, alignas_8) == 8

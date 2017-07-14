@@ -32,14 +32,10 @@
 
 ## Tools we need:
 ## Note that we respect the values of AUTOCONF etc, like autoreconf does.
-progs="autoconf automake"
+progs="autoconf"
 
 ## Minimum versions we need:
 autoconf_min=`sed -n 's/^ *AC_PREREQ(\([0-9\.]*\)).*/\1/p' configure.ac`
-
-## This will need improving if more options are ever added to the
-## AM_INIT_AUTOMAKE call.
-automake_min=`sed -n 's/^ *AM_INIT_AUTOMAKE(\([0-9\.]*\)).*/\1/p' configure.ac`
 
 
 ## $1 = program, eg "autoconf".
@@ -49,8 +45,8 @@ automake_min=`sed -n 's/^ *AM_INIT_AUTOMAKE(\([0-9\.]*\)).*/\1/p' configure.ac`
 ## Also note that we do not handle micro versions.
 get_version ()
 {
-    ## Remove eg "./autogen.sh: line 50: autoconf: command not found".
-    $1 --version 2>&1 | sed -e '/not found/d' -e 's/.* //' -n -e '1 s/\([0-9][0-9\.]*\).*/\1/p'
+    vers=`($1 --version) 2> /dev/null` && expr "$vers" : '[^
+]* \([0-9][0-9.]*\).*'
 }
 
 ## $1 = version string, eg "2.59"
@@ -75,16 +71,19 @@ minor_version ()
 ## Return 3 for unexpected error (eg failed to parse version).
 check_version ()
 {
-    ## Respect eg $AUTOMAKE if it is set, like autoreconf does.
-    uprog=`echo $1 | sed -e 's/-/_/g' -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+    ## Respect, e.g., $AUTOCONF if it is set, like autoreconf does.
+    uprog0=`echo $1 | sed -e 's/-/_/g' -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
 
-    eval uprog=\$${uprog}
+    eval uprog=\$${uprog0}
 
-    [ x"$uprog" = x ] && uprog=$1
+    if [ x"$uprog" = x ]; then
+        uprog=$1
+    else
+        printf '%s' "(using $uprog0=$uprog) "
+    fi
 
-    have_version=`get_version $uprog`
-
-    [ x"$have_version" = x ] && return 1
+    command -v $uprog > /dev/null || return 1
+    have_version=`get_version $uprog` || return 4
 
     have_maj=`major_version $have_version`
     need_maj=`major_version $2`
@@ -131,7 +130,7 @@ case $do_autoconf,$do_git in
     do_autoconf=true;;
 esac
 
-# Generate Autoconf and Automake related files, if requested.
+# Generate Autoconf-related files, if requested.
 
 if $do_autoconf; then
 
@@ -158,6 +157,7 @@ if $do_autoconf; then
           0) stat="ok" ;;
           1) stat="missing" ;;
           2) stat="too old" ;;
+          4) stat="broken?" ;;
           *) stat="unable to check" ;;
       esac
 
@@ -229,23 +229,23 @@ Please report any problems with this script to bug-gnu-emacs@gnu.org .'
 
   fi                            # do_check
 
-  ## Create nt/gnulib.mk if it doesn't exist, as autoreconf will need it.
-  if test ! -f nt/gnulib.mk; then
-      echo 'Inferring nt/gnulib.mk from lib/gnulib.mk ...'
-      metascript='/^[^#]/s|^.*$|/^## begin  *gnulib module &/,/^## end  *gnulib module &/d|p'
-      script=`sed -n "$metascript" nt/gnulib-modules-to-delete.cfg` || exit
-      sed "$script" lib/gnulib.mk > nt/gnulib.mk || exit
-  fi
+  # Build aclocal.m4 here so that autoreconf need not use aclocal.
+  # aclocal is part of Automake and might not be installed, and
+  # autoreconf skips aclocal if aclocal.m4 is already supplied.
+  ls m4/*.m4 | LC_ALL=C sort | sed 's,.*\.m4$,m4_include([&]),' \
+    > aclocal.m4.tmp || exit
+  if cmp -s aclocal.m4.tmp aclocal.m4; then
+    rm -f aclocal.m4.tmp
+  else
+    echo "Building aclocal.m4 ..."
+    mv aclocal.m4.tmp aclocal.m4
+  fi || exit
 
   echo "Running 'autoreconf -fi -I m4' ..."
 
   ## Let autoreconf figure out what, if anything, needs doing.
   ## Use autoreconf's -f option in case autoreconf itself has changed.
-  autoreconf -fi -I m4 || exit $?
-
-  ## Create a timestamp, so that './autogen.sh; make' doesn't
-  ## cause 'make' to needlessly run 'autoheader'.
-  echo timestamp > src/stamp-h.in || exit
+  autoreconf -fi -I m4 || exit
 fi
 
 

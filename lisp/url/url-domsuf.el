@@ -89,7 +89,7 @@
 
 ;; Tests:
 
-;; TODO convert to a proper test/automated test.
+;; TODO convert to a proper test.
 ;; (url-domsuf-cookie-allowed-p "com") => nil
 ;; (url-domsuf-cookie-allowed-p "foo.bar.bd") => t
 ;; (url-domsuf-cookie-allowed-p "bar.bd") => nil

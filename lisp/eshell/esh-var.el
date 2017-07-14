@@ -563,6 +563,8 @@ For example, to retrieve the second element of a user's record in
 
 (defun eshell-index-value (value index)
   "Reference VALUE using the given INDEX."
+  (when (and (stringp index) (get-text-property 0 'number index))
+    (setq index (string-to-number index)))
   (if (stringp index)
       (cdr (assoc index value))
     (cond

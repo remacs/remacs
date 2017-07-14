@@ -140,6 +140,43 @@ if (!/[ (:,='\"]/.test(value)) {
       (font-lock-ensure)
       (should (eq (get-text-property (point) 'face) (caddr test))))))
 
+(ert-deftest js-mode-propertize-bug-1 ()
+  (with-temp-buffer
+    (js-mode)
+    (save-excursion (insert "x"))
+    (insert "/")
+    ;; The bug was a hang.
+    (should t)))
+
+(ert-deftest js-mode-propertize-bug-2 ()
+  (with-temp-buffer
+    (js-mode)
+    (insert "function f() {
+    function g()
+    {
+        1 / 2;
+    }
+
+    function h() {
+")
+    (save-excursion
+      (insert "
+        00000000000000000000000000000000000000000000000000;
+        00000000000000000000000000000000000000000000000000;
+        00000000000000000000000000000000000000000000000000;
+        00000000000000000000000000000000000000000000000000;
+        00000000000000000000000000000000000000000000000000;
+        00000000000000000000000000000000000000000000000000;
+        00000000000000000000000000000000000000000000000000;
+        00000000000000000000000000000000000000000000000000;
+        00;
+    }
+}
+"))
+    (insert "/")
+    ;; The bug was a hang.
+    (should t)))
+
 (provide 'js-tests)
 
 ;;; js-tests.el ends here

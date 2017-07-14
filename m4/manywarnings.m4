@@ -99,12 +99,11 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
   # comm -3 \
   #  <(sed -n 's/^  *\(-[^ ]*\) .*/\1/p' manywarnings.m4 | sort) \
   #  <(gcc --help=warnings | sed -n 's/^  \(-[^ ]*\) .*/\1/p' | sort |
-  #      grep -v -x -f <(
+  #      grep -v -x -F -f <(
   #         awk '/^[^#]/ {print $1}' ../build-aux/gcc-warning.spec))
 
   gl_manywarn_set=
-  for gl_manywarn_item in \
-    -fno-common \
+  for gl_manywarn_item in -fno-common \
     -W \
     -Wabi \
     -Waddress \
@@ -113,6 +112,8 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wattributes \
     -Wbad-function-cast \
     -Wbool-compare \
+    -Wbool-operation \
+    -Wbuiltin-declaration-mismatch \
     -Wbuiltin-macro-redefined \
     -Wcast-align \
     -Wchar-subscripts \
@@ -122,6 +123,7 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wcomments \
     -Wcoverage-mismatch \
     -Wcpp \
+    -Wdangling-else \
     -Wdate-time \
     -Wdeprecated \
     -Wdeprecated-declarations \
@@ -131,10 +133,13 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wdiscarded-qualifiers \
     -Wdiv-by-zero \
     -Wdouble-promotion \
+    -Wduplicated-branches \
     -Wduplicated-cond \
+    -Wduplicate-decl-specifier \
     -Wempty-body \
     -Wendif-labels \
     -Wenum-compare \
+    -Wexpansion-to-defined \
     -Wextra \
     -Wformat-contains-nul \
     -Wformat-extra-args \
@@ -155,6 +160,7 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Winit-self \
     -Winline \
     -Wint-conversion \
+    -Wint-in-bool-context \
     -Wint-to-pointer-cast \
     -Winvalid-memory-model \
     -Winvalid-pch \
@@ -163,6 +169,7 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wlogical-op \
     -Wmain \
     -Wmaybe-uninitialized \
+    -Wmemset-elt-size \
     -Wmemset-transposed-args \
     -Wmisleading-indentation \
     -Wmissing-braces \
@@ -188,9 +195,12 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wpacked-bitfield-compat \
     -Wparentheses \
     -Wpointer-arith \
+    -Wpointer-compare \
     -Wpointer-sign \
     -Wpointer-to-int-cast \
     -Wpragmas \
+    -Wpsabi \
+    -Wrestrict \
     -Wreturn-local-addr \
     -Wreturn-type \
     -Wscalar-storage-order \
@@ -214,6 +224,7 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
     -Wswitch \
     -Wswitch-bool \
     -Wswitch-default \
+    -Wswitch-unreachable \
     -Wsync-nand \
     -Wsystem-headers \
     -Wtautological-compare \
@@ -247,10 +258,18 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
 
   # gcc --help=warnings outputs an unusual form for these options; list
   # them here so that the above 'comm' command doesn't report a false match.
+  # Would prefer "min (PTRDIFF_MAX, SIZE_MAX)", but it must be a literal:
+  ptrdiff_max_max=9223372036854775807
+  gl_manywarn_set="$gl_manywarn_set -Walloc-size-larger-than=$ptrdiff_max_max"
   gl_manywarn_set="$gl_manywarn_set -Warray-bounds=2"
+  gl_manywarn_set="$gl_manywarn_set -Wformat-overflow=2"
+  gl_manywarn_set="$gl_manywarn_set -Wformat-truncation=2"
+  gl_manywarn_set="$gl_manywarn_set -Wimplicit-fallthrough=5"
   gl_manywarn_set="$gl_manywarn_set -Wnormalized=nfc"
   gl_manywarn_set="$gl_manywarn_set -Wshift-overflow=2"
+  gl_manywarn_set="$gl_manywarn_set -Wstringop-overflow=2"
   gl_manywarn_set="$gl_manywarn_set -Wunused-const-variable=2"
+  gl_manywarn_set="$gl_manywarn_set -Wvla-larger-than=4031"
 
   # These are needed for older GCC versions.
   if test -n "$GCC"; then

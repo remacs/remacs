@@ -281,7 +281,7 @@ If you click outside the slider, the window scrolls to bring the slider there."
     (with-current-buffer (window-buffer window)
       (setq before-scroll point-before-scroll))
     (save-selected-window
-      (select-window window)
+      (select-window window 'mark-for-redisplay)
       (setq before-scroll
 	    (or before-scroll (point))))
     (scroll-bar-drag-1 event)
@@ -326,7 +326,7 @@ If you click outside the slider, the window scrolls to bring the slider there."
     (with-current-buffer (window-buffer window)
       (setq before-scroll point-before-scroll))
     (save-selected-window
-      (select-window window)
+      (select-window window 'mark-for-redisplay)
       (setq before-scroll
 	    (or before-scroll (point))))
     (scroll-bar-horizontal-drag-1 event)
@@ -356,7 +356,7 @@ EVENT should be a scroll bar click."
     (unwind-protect
 	(save-selected-window
 	  (let ((portion-whole (nth 2 end-position)))
-	    (select-window window)
+	    (select-window window 'mark-for-redisplay)
 	    (setq before-scroll
 		  (or before-scroll (point)))
 	    (scroll-down
@@ -377,7 +377,7 @@ EVENT should be a scroll bar click."
     (unwind-protect
 	(save-selected-window
 	  (let ((portion-whole (nth 2 end-position)))
-	    (select-window window)
+	    (select-window window 'mark-for-redisplay)
 	    (setq before-scroll
 		  (or before-scroll (point)))
 	    (scroll-up
@@ -402,7 +402,7 @@ EVENT should be a scroll bar click."
       (with-current-buffer (window-buffer window)
 	(setq before-scroll point-before-scroll))
       (save-selected-window
-	(select-window window)
+	(select-window window 'mark-for-redisplay)
 	(setq before-scroll (or before-scroll (point)))
 	(cond
 	 ((eq part 'above-handle)
@@ -449,7 +449,7 @@ EVENT should be a scroll bar click."
       (with-current-buffer (window-buffer window)
 	(setq before-scroll point-before-scroll))
       (save-selected-window
-	(select-window window)
+	(select-window window 'mark-for-redisplay)
 	(setq before-scroll (or before-scroll (point)))
 	(cond
 	 ((eq part 'before-handle)

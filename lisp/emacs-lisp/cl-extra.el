@@ -437,22 +437,38 @@ as an integer unless JUNK-ALLOWED is non-nil."
 
 ;; Random numbers.
 
+(defun cl--random-time ()
+  (let* ((time (copy-sequence (current-time-string))) (i (length time)) (v 0))
+    (while (>= (cl-decf i) 0) (setq v (+ (* v 3) (aref time i))))
+    v))
+
+;;;###autoload (autoload 'cl-random-state-p "cl-extra")
+(cl-defstruct (cl--random-state
+               (:copier nil)
+               (:predicate cl-random-state-p)
+               (:constructor nil)
+               (:constructor cl--make-random-state (vec)))
+  (i -1) (j 30) vec)
+
+(defvar cl--random-state (cl--make-random-state (cl--random-time)))
+
 ;;;###autoload
 (defun cl-random (lim &optional state)
   "Return a random nonnegative number less than LIM, an integer or float.
 Optional second arg STATE is a random-state object."
   (or state (setq state cl--random-state))
   ;; Inspired by "ran3" from Numerical Recipes.  Additive congruential method.
-  (let ((vec (aref state 3)))
+  (let ((vec (cl--random-state-vec state)))
     (if (integerp vec)
 	(let ((i 0) (j (- 1357335 (abs (% vec 1357333)))) (k 1))
-	  (aset state 3 (setq vec (make-vector 55 nil)))
+	  (setf (cl--random-state-vec state)
+                (setq vec (make-vector 55 nil)))
 	  (aset vec 0 j)
 	  (while (> (setq i (% (+ i 21) 55)) 0)
 	    (aset vec i (setq j (prog1 k (setq k (- j k))))))
 	  (while (< (setq i (1+ i)) 200) (cl-random 2 state))))
-    (let* ((i (aset state 1 (% (1+ (aref state 1)) 55)))
-	   (j (aset state 2 (% (1+ (aref state 2)) 55)))
+    (let* ((i (cl-callf (lambda (x) (% (1+ x) 55)) (cl--random-state-i state)))
+	   (j (cl-callf (lambda (x) (% (1+ x) 55)) (cl--random-state-j state)))
 	   (n (logand 8388607 (aset vec i (- (aref vec i) (aref vec j))))))
       (if (integerp lim)
 	  (if (<= lim 512) (% n lim)
@@ -466,17 +482,10 @@ Optional second arg STATE is a random-state object."
 (defun cl-make-random-state (&optional state)
   "Return a copy of random-state STATE, or of the internal state if omitted.
 If STATE is t, return a new state object seeded from the time of day."
-  (cond ((null state) (cl-make-random-state cl--random-state))
-	((vectorp state) (copy-tree state t))
-	((integerp state) (vector 'cl--random-state-tag -1 30 state))
-	(t (cl-make-random-state (cl--random-time)))))
-
-;;;###autoload
-(defun cl-random-state-p (object)
-  "Return t if OBJECT is a random-state object."
-  (and (vectorp object) (= (length object) 4)
-       (eq (aref object 0) 'cl--random-state-tag)))
-
+  (unless state (setq state cl--random-state))
+  (if (cl-random-state-p state)
+      (copy-tree state t)
+    (cl--make-random-state (if (integerp state) state (cl--random-time)))))
 
 ;; Implementation limits.
 
@@ -775,8 +784,7 @@ including `cl-block' and `cl-eval-when'."
 (defun cl--describe-class (type &optional class)
   (unless class (setq class (cl--find-class type)))
   (let ((location (find-lisp-object-file-name type 'define-type))
-        ;; FIXME: Add a `cl-class-of' or `cl-typeof' or somesuch.
-        (metatype (cl--class-name (symbol-value (aref class 0)))))
+        (metatype (type-of class)))
     (insert (symbol-name type)
             (substitute-command-keys " is a type (of kind `"))
     (help-insert-xref-button (symbol-name metatype)
@@ -865,19 +873,65 @@ including `cl-block' and `cl-eval-when'."
               "\n")))
    "\n"))
 
+(defun cl--print-table (header rows)
+  ;; FIXME: Isn't this functionality already implemented elsewhere?
+  (let ((cols (apply #'vector (mapcar #'string-width header)))
+        (col-space 2))
+    (dolist (row rows)
+      (dotimes (i (length cols))
+        (let* ((x (pop row))
+               (curwidth (aref cols i))
+               (newwidth (if x (string-width x) 0)))
+          (if (> newwidth curwidth)
+              (setf (aref cols i) newwidth)))))
+    (let ((formats '())
+          (col 0))
+      (dotimes (i (length cols))
+        (push (concat (propertize "	"
+                                  'display
+                                  `(space :align-to ,(+ col col-space)))
+                      "%s")
+              formats)
+        (cl-incf col (+ col-space (aref cols i))))
+      (let ((format (mapconcat #'identity (nreverse formats) "")))
+        (insert (apply #'format format
+                       (mapcar (lambda (str) (propertize str 'face 'italic))
+                               header))
+                "\n")
+        (insert (apply #'format format
+                       (mapcar (lambda (str) (make-string (string-width str) ?—))
+                               header))
+                "\n")
+        (dolist (row rows)
+          (insert (apply #'format format row) "\n"))))))
+
 (defun cl--describe-class-slots (class)
   "Print help description for the slots in CLASS.
 Outputs to the current buffer."
   (let* ((slots (cl--class-slots class))
-         ;; FIXME: Add a `cl-class-of' or `cl-typeof' or somesuch.
-         (metatype (cl--class-name (symbol-value (aref class 0))))
+         (metatype (type-of class))
          ;; ¡For EIEIO!
          (cslots (condition-case nil
                      (cl-struct-slot-value metatype 'class-slots class)
                    (cl-struct-unknown-slot nil))))
     (insert (propertize "Instance Allocated Slots:\n\n"
 			'face 'bold))
-    (mapc #'cl--describe-class-slot slots)
+    (let* ((has-doc nil)
+           (slots-strings
+            (mapcar
+             (lambda (slot)
+               (list (cl-prin1-to-string (cl--slot-descriptor-name slot))
+                     (cl-prin1-to-string (cl--slot-descriptor-type slot))
+                     (cl-prin1-to-string (cl--slot-descriptor-initform slot))
+                     (let ((doc (alist-get :documentation
+                                           (cl--slot-descriptor-props slot))))
+                       (if (not doc) ""
+                         (setq has-doc t)
+                         (substitute-command-keys doc)))))
+             slots)))
+      (cl--print-table `("Name" "Type" "Default" . ,(if has-doc '("Doc")))
+                       slots-strings))
+    (insert "\n")
     (when (> (length cslots) 0)
       (insert (propertize "\nClass Allocated Slots:\n\n" 'face 'bold))
       (mapc #'cl--describe-class-slot cslots))))

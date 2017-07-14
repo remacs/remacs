@@ -169,7 +169,7 @@ classified as spam (see the option `mh-junk-program')."
 
 
 
-;; Spamassassin Interface
+;; SpamAssassin Interface
 
 (defvar mh-spamassassin-executable (executable-find "spamassassin"))
 (defvar mh-sa-learn-executable (executable-find "sa-learn"))

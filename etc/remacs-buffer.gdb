@@ -105,8 +105,6 @@ define ybuffer-list
   while $alist != $qnil
     set $this  = ((struct Lisp_Cons *) $ptr)->car
     set $alist = ((struct Lisp_Cons *) $ptr)->u.cdr
-    ygetptr $alist
-    set $alist = $ptr
 
     # Vbuffer_alist elts are pairs of the form (name . buffer)
     ygetptr $this
@@ -136,6 +134,8 @@ define ybuffer-list
     end
 
     set $i++
+    ygetptr $alist
+    set $alist = $ptr
   end
 end
 document ybuffer-list

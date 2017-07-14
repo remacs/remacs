@@ -733,9 +733,9 @@ Maybe clear the markers and delete the symbol's edebug property?"
      ((eq class 'string) (read (current-buffer)))
      ((eq class 'quote) (forward-char 1)
       (list 'quote (edebug-read-sexp)))
-     ((eq class 'backquote)
+     ((eq class 'backquote) (forward-char 1)
       (list '\` (edebug-read-sexp)))
-     ((eq class 'comma)
+     ((eq class 'comma) (forward-char 1)
       (list '\, (edebug-read-sexp)))
      (t ; anything else, just read it.
       (read (current-buffer))))))
@@ -906,7 +906,7 @@ circular objects.  Let `read' read everything else."
                 ;; with the object itself, wherever it occurs.
                 (forward-char 1)
                 (let ((obj (edebug-read-storing-offsets stream)))
-                  (substitute-object-in-subtree obj placeholder)
+                  (lread--substitute-object-in-subtree obj placeholder t)
                   (throw 'return (setf (cdr elem) obj)))))
              ((eq ?# (following-char))
               ;; #n# returns a previously read object.
@@ -1607,6 +1607,7 @@ expressions; a `progn' form will be returned enclosing these forms."
 		;; Less frequently used:
 		;; (function . edebug-match-function)
 		(lambda-expr . edebug-match-lambda-expr)
+                (cl-generic-method-args . edebug-match-cl-generic-method-args)
 		(&not . edebug-match-&not)
 		(&key . edebug-match-&key)
 		(place . edebug-match-place)
@@ -1899,6 +1900,16 @@ expressions; a `progn' form will be returned enclosing these forms."
 	    (intern (format "%s@%s" edebug-def-name spec))
 	  spec))
   nil)
+
+(defun edebug-match-cl-generic-method-args (cursor)
+  (let ((args (edebug-top-element-required cursor "Expected arguments")))
+    (if (not (consp args))
+        (edebug-no-match cursor "List expected"))
+    ;; Append the arguments to edebug-def-name.
+    (setq edebug-def-name
+          (intern (format "%s %s" edebug-def-name args)))
+    (edebug-move-cursor cursor)
+    (list args)))
 
 (defun edebug-match-arg (cursor)
   ;; set the def-args bound in edebug-defining-form
@@ -3186,8 +3197,11 @@ go to the end of the last sexp, or if that is the same point, then step."
 	 )))))
 
 (defun edebug-instrument-function (func)
-  ;; Func should be a function symbol.
-  ;; Return the function symbol, or nil if not instrumented.
+  "Instrument the function or generic method FUNC.
+Return the list of function symbols which were instrumented.
+This may be simply (FUNC) for a normal function, or a list of
+generated symbols for methods.  If a function or method to
+instrument cannot be found, signal an error."
   (let ((func-marker (get func 'edebug)))
     (cond
      ((and (markerp func-marker) (marker-buffer func-marker))
@@ -3195,10 +3209,24 @@ go to the end of the last sexp, or if that is the same point, then step."
       (with-current-buffer (marker-buffer func-marker)
 	(goto-char func-marker)
 	(edebug-eval-top-level-form)
-	func))
+        (list func)))
      ((consp func-marker)
       (message "%s is already instrumented." func)
-      func)
+      (list func))
+     ((get func 'cl--generic)
+      (let ((method-defs (method-files func))
+            symbols)
+        (unless method-defs
+          (error "Could not find any method definitions for %s" func))
+        (pcase-dolist (`(,file . ,spec) method-defs)
+          (let* ((loc (find-function-search-for-symbol spec 'cl-defmethod file)))
+            (unless (cdr loc)
+              (error "Could not find the definition for %s in its file" spec))
+            (with-current-buffer (car loc)
+              (goto-char (cdr loc))
+              (edebug-eval-top-level-form)
+              (push (edebug-form-data-symbol) symbols))))
+        symbols))
      (t
       (let ((loc (find-function-noselect func t)))
 	(unless (cdr loc)
@@ -3206,13 +3234,16 @@ go to the end of the last sexp, or if that is the same point, then step."
 	(with-current-buffer (car loc)
 	  (goto-char (cdr loc))
 	  (edebug-eval-top-level-form)
-	  func))))))
+          (list func)))))))
 
 (defun edebug-instrument-callee ()
   "Instrument the definition of the function or macro about to be called.
 Do this when stopped before the form or it will be too late.
 One side effect of using this command is that the next time the
-function or macro is called, Edebug will be called there as well."
+function or macro is called, Edebug will be called there as well.
+If the callee is a generic function, Edebug will instrument all
+the methods, not just the one which is about to be called.  Return
+the list of symbols which were instrumented."
   (interactive)
   (if (not (looking-at "("))
       (error "You must be before a list form")
@@ -3227,15 +3258,15 @@ function or macro is called, Edebug will be called there as well."
 
 
 (defun edebug-step-in ()
-  "Step into the definition of the function or macro about to be called.
+  "Step into the definition of the function, macro or method about to be called.
 This first does `edebug-instrument-callee' to ensure that it is
 instrumented.  Then it does `edebug-on-entry' and switches to `go' mode."
   (interactive)
-  (let ((func (edebug-instrument-callee)))
-    (if func
+  (let ((funcs (edebug-instrument-callee)))
+    (if funcs
 	(progn
-	  (edebug-on-entry func 'temp)
-	  (edebug-go-mode nil)))))
+          (mapc (lambda (func) (edebug-on-entry func 'temp)) funcs)
+          (edebug-go-mode nil)))))
 
 (defun edebug-on-entry (function &optional flag)
   "Cause Edebug to stop when FUNCTION is called.

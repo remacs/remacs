@@ -306,9 +306,7 @@ enum syntaxcode { Swhitespace = 0, Sword = 1, Ssymbol = 2 };
 /* In Emacs, these are only used for single-byte characters.  */
 # define ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 # define ISCNTRL(c) ((c) < ' ')
-# define ISXDIGIT(c) (((c) >= '0' && (c) <= '9')		\
-		     || ((c) >= 'a' && (c) <= 'f')	\
-		     || ((c) >= 'A' && (c) <= 'F'))
+# define ISXDIGIT(c) (0 <= char_hexdigit (c))
 
 /* The rest must handle multibyte characters.  */
 
@@ -2636,8 +2634,9 @@ regex_compile (const_re_char *pattern, size_t size,
 	  if ((syntax & RE_BK_PLUS_QM)
 	      || (syntax & RE_LIMITED_OPS))
 	    goto normal_char;
-	handle_plus:
+	  FALLTHROUGH;
 	case '*':
+	handle_plus:
 	  /* If there is no previous pattern...  */
 	  if (!laststart)
 	    {
@@ -3086,6 +3085,7 @@ regex_compile (const_re_char *pattern, size_t size,
 				   with non-0. */
 				if (regnum == 0)
 				  FREE_STACK_RETURN (REG_BADPAT);
+				FALLTHROUGH;
 			      case '1': case '2': case '3': case '4':
 			      case '5': case '6': case '7': case '8': case '9':
 				regnum = 10*regnum + (c - '0'); break;
@@ -3905,8 +3905,7 @@ analyze_first (const_re_char *p, const_re_char *pend, char *fastmap,
 		 j < (1 << BYTEWIDTH); j++)
 	      fastmap[j] = 1;
 	  }
-
-	  /* Fallthrough */
+	  FALLTHROUGH;
 	case charset:
 	  if (!fastmap) break;
 	  not = (re_opcode_t) *(p - 1) == charset_not;
@@ -6182,8 +6181,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, const_re_char *string1,
 	    case on_failure_jump_nastyloop:
 	      assert ((re_opcode_t)pat[-2] == no_op);
 	      PUSH_FAILURE_POINT (pat - 2, str);
-	      /* Fallthrough */
-
+	      FALLTHROUGH;
 	    case on_failure_jump_loop:
 	    case on_failure_jump:
 	    case succeed_n:

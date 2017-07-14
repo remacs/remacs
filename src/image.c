@@ -20,7 +20,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 
 #include <fcntl.h>
-#include <stdio.h>
 #include <unistd.h>
 
 /* Include this before including <setjmp.h> to work around bugs with
@@ -41,6 +40,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "dispextern.h"
 #include "blockinput.h"
+#include "sysstdio.h"
 #include "systime.h"
 #include <epaths.h>
 #include "coding.h"
@@ -1269,8 +1269,7 @@ image_background_transparent (struct image *img, struct frame *f, XImagePtr_or_D
   return img->background_transparent;
 }
 
-#if defined (HAVE_PNG) || defined (HAVE_NS) \
-  || defined (HAVE_IMAGEMAGICK) || defined (HAVE_RSVG)
+#if defined (HAVE_PNG) || defined (HAVE_IMAGEMAGICK) || defined (HAVE_RSVG)
 
 /* Store F's background color into *BGCOLOR.  */
 static void
@@ -1284,7 +1283,7 @@ x_query_frame_background_color (struct frame *f, XColor *bgcolor)
 #endif
 }
 
-#endif /* HAVE_PNG || HAVE_NS || HAVE_IMAGEMAGICK || HAVE_RSVG */
+#endif /* HAVE_PNG || HAVE_IMAGEMAGICK || HAVE_RSVG */
 
 /***********************************************************************
 		  Helper functions for X image types
@@ -2042,10 +2041,20 @@ x_create_x_image_and_pixmap (struct frame *f, int width, int height, int depth,
       (*ximg)->info.bmiColors[0].rgbGreen = 0;
       (*ximg)->info.bmiColors[0].rgbRed = 0;
       (*ximg)->info.bmiColors[0].rgbReserved = 0;
+      /* bmiColors is a variable-length array declared by w32api
+	 headers as bmiColors[1], which triggers a warning under
+	 -Warray-bounds; shut that up.  */
+#     if GNUC_PREREQ (4, 4, 0)
+#      pragma GCC push_options
+#      pragma GCC diagnostic ignored "-Warray-bounds"
+#     endif
       (*ximg)->info.bmiColors[1].rgbBlue = 255;
       (*ximg)->info.bmiColors[1].rgbGreen = 255;
       (*ximg)->info.bmiColors[1].rgbRed = 255;
       (*ximg)->info.bmiColors[1].rgbReserved = 0;
+#     if GNUC_PREREQ (4, 4, 0)
+#      pragma GCC pop_options
+#     endif
     }
 
   hdc = get_frame_dc (f);
@@ -2352,7 +2361,7 @@ slurp_file (int fd, ptrdiff_t *size)
 	     This can happen if the file grows as we read it.  */
 	  ptrdiff_t buflen = st.st_size;
 	  buf = xmalloc (buflen + 1);
-	  if (fread (buf, 1, buflen + 1, fp) == buflen)
+	  if (fread_unlocked (buf, 1, buflen + 1, fp) == buflen)
 	    *size = buflen;
 	  else
 	    {
@@ -2435,7 +2444,8 @@ static struct image_type xbm_type =
 enum xbm_token
 {
   XBM_TK_IDENT = 256,
-  XBM_TK_NUMBER
+  XBM_TK_NUMBER,
+  XBM_TK_OVERFLOW
 };
 
 
@@ -2577,6 +2587,7 @@ xbm_scan (char **s, char *end, char *sval, int *ival)
   else if (c_isdigit (c))
     {
       int value = 0, digit;
+      bool overflow = false;
 
       if (c == '0' && *s < end)
 	{
@@ -2586,23 +2597,22 @@ xbm_scan (char **s, char *end, char *sval, int *ival)
 	      while (*s < end)
 		{
 		  c = *(*s)++;
-		  if (c_isdigit (c))
-		    digit = c - '0';
-		  else if (c >= 'a' && c <= 'f')
-		    digit = c - 'a' + 10;
-		  else if (c >= 'A' && c <= 'F')
-		    digit = c - 'A' + 10;
-		  else
+		  digit = char_hexdigit (c);
+		  if (digit < 0)
 		    break;
-		  value = 16 * value + digit;
+		  overflow |= INT_MULTIPLY_WRAPV (value, 16, &value);
+		  value += digit;
 		}
 	    }
-	  else if (c_isdigit (c))
+	  else if ('0' <= c && c <= '7')
 	    {
 	      value = c - '0';
 	      while (*s < end
-		     && (c = *(*s)++, c_isdigit (c)))
-		value = 8 * value + c - '0';
+		     && (c = *(*s)++, '0' <= c && c <= '7'))
+		{
+		  overflow |= INT_MULTIPLY_WRAPV (value, 8, &value);
+		  value += c - '0';
+		}
 	    }
 	}
       else
@@ -2610,13 +2620,16 @@ xbm_scan (char **s, char *end, char *sval, int *ival)
 	  value = c - '0';
 	  while (*s < end
 		 && (c = *(*s)++, c_isdigit (c)))
-	    value = 10 * value + c - '0';
+	    {
+	      overflow |= INT_MULTIPLY_WRAPV (value, 10, &value);
+	      overflow |= INT_ADD_WRAPV (value, c - '0', &value);
+	    }
 	}
 
       if (*s < end)
 	*s = *s - 1;
       *ival = value;
-      return XBM_TK_NUMBER;
+      return overflow ? XBM_TK_OVERFLOW : XBM_TK_NUMBER;
     }
   else if (c_isalpha (c) || c == '_')
     {
@@ -4218,7 +4231,7 @@ xpm_load_image (struct frame *f,
       color_val = Qnil;
       if (!NILP (color_symbols) && !NILP (symbol_color))
 	{
-	  Lisp_Object specified_color = Fassoc (symbol_color, color_symbols);
+	  Lisp_Object specified_color = Fassoc (symbol_color, color_symbols, Qnil);
 
 	  if (CONSP (specified_color) && STRINGP (XCDR (specified_color)))
 	    {
@@ -5881,7 +5894,7 @@ png_read_from_file (png_structp png_ptr, png_bytep data, png_size_t length)
 {
   FILE *fp = png_get_io_ptr (png_ptr);
 
-  if (fread (data, 1, length, fp) < length)
+  if (fread_unlocked (data, 1, length, fp) < length)
     png_error (png_ptr, "Read error");
 }
 
@@ -5950,7 +5963,7 @@ png_load_body (struct frame *f, struct image *img, struct png_load_context *c)
 	}
 
       /* Check PNG signature.  */
-      if (fread (sig, 1, sizeof sig, fp) != sizeof sig
+      if (fread_unlocked (sig, 1, sizeof sig, fp) != sizeof sig
 	  || png_sig_cmp (sig, 0, sizeof sig))
 	{
 	  fclose (fp);
@@ -6589,7 +6602,8 @@ our_stdio_fill_input_buffer (j_decompress_ptr cinfo)
     {
       ptrdiff_t bytes;
 
-      bytes = fread (src->buffer, 1, JPEG_STDIO_BUFFER_SIZE, src->file);
+      bytes = fread_unlocked (src->buffer, 1, JPEG_STDIO_BUFFER_SIZE,
+			      src->file);
       if (bytes > 0)
         src->mgr.bytes_in_buffer = bytes;
       else
@@ -8077,7 +8091,7 @@ compute_image_size (size_t width, size_t height,
 
   value = image_spec_value (spec, QCscale, NULL);
   if (NUMBERP (value))
-    scale = extract_float (value);
+    scale = XFLOATINT (value);
 
   /* If width and/or height is set in the display spec assume we want
      to scale to those values.  If either h or w is unspecified, the
@@ -8684,7 +8698,7 @@ imagemagick_load_image (struct frame *f, struct image *img,
   value = image_spec_value (img->spec, QCrotation, NULL);
   if (FLOATP (value))
     {
-      rotation = extract_float (value);
+      rotation = XFLOAT_DATA (value);
       status = MagickRotateImage (image_wand, bg_wand, rotation);
       if (status == MagickFalse)
         {

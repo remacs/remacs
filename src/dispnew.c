@@ -377,7 +377,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
     {
       window_box (w, ANY_AREA, 0, 0, &window_width, &window_height);
 
-      header_line_p = WINDOW_WANTS_HEADER_LINE_P (w);
+      header_line_p = window_wants_header_line (w);
       header_line_changed_p = header_line_p != matrix->header_line_p;
     }
   matrix->header_line_p = header_line_p;
@@ -446,7 +446,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 
 	  if (w == NULL
 	      || (row == matrix->rows + dim.height - 1
-		  && WINDOW_WANTS_MODELINE_P (w))
+		  && window_wants_mode_line (w))
 	      || (row == matrix->rows && matrix->header_line_p))
 	    {
 	      row->glyphs[TEXT_AREA]
@@ -491,7 +491,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 
 	      /* The mode line, if displayed, never has marginal areas.  */
 	      if ((row == matrix->rows + dim.height - 1
-		   && !(w && WINDOW_WANTS_MODELINE_P (w)))
+		   && !(w && window_wants_mode_line (w)))
 		  || (row == matrix->rows && matrix->header_line_p))
 		{
 		  row->glyphs[TEXT_AREA]
@@ -570,7 +570,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	     the mode line, if any, since otherwise it will remain
 	     disabled in the current matrix, and expose events won't
 	     redraw it.  */
-	  if (WINDOW_WANTS_MODELINE_P (w))
+	  if (window_wants_mode_line (w))
 	    w->update_mode_line = 1;
 	}
       else if (matrix == w->desired_matrix)
@@ -3124,9 +3124,9 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
       if (FRAME_TERMCAP_P (f))
         {
           if (FRAME_TTY (f)->termscript)
-            fflush (FRAME_TTY (f)->termscript);
+	    fflush_unlocked (FRAME_TTY (f)->termscript);
 	  if (FRAME_TERMCAP_P (f))
-	    fflush (FRAME_TTY (f)->output);
+	    fflush_unlocked (FRAME_TTY (f)->output);
         }
 
       /* Check window matrices for lost pointers.  */
@@ -3179,8 +3179,8 @@ update_frame_with_menu (struct frame *f, int row, int col)
   update_end (f);
 
   if (FRAME_TTY (f)->termscript)
-    fflush (FRAME_TTY (f)->termscript);
-  fflush (FRAME_TTY (f)->output);
+    fflush_unlocked (FRAME_TTY (f)->termscript);
+  fflush_unlocked (FRAME_TTY (f)->output);
   /* Check window matrices for lost pointers.  */
 #if GLYPH_DEBUG
 #if 0
@@ -4529,7 +4529,7 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p,
 		  ptrdiff_t outq = __fpending (display_output);
 		  if (outq > 900
 		      || (outq > 20 && ((i - 1) % preempt_count == 0)))
-		    fflush (display_output);
+		    fflush_unlocked (display_output);
 		}
 	    }
 
@@ -5186,7 +5186,7 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
      start position, i.e. it excludes the header-line row, but
      MATRIX_ROW includes the header-line row.  Adjust for a possible
      header-line row.  */
-  it_vpos = it.vpos + WINDOW_WANTS_HEADER_LINE_P (w);
+  it_vpos = it.vpos + window_wants_header_line (w);
   if (it_vpos < w->current_matrix->nrows
       && (row = MATRIX_ROW (w->current_matrix, it_vpos),
 	  row->enabled_p))
@@ -5599,13 +5599,13 @@ when TERMINAL is nil.  */)
 
       if (tty->termscript)
 	{
-	  fwrite (SDATA (string), 1, SBYTES (string), tty->termscript);
-	  fflush (tty->termscript);
+	  fwrite_unlocked (SDATA (string), 1, SBYTES (string), tty->termscript);
+	  fflush_unlocked (tty->termscript);
 	}
       out = tty->output;
     }
-  fwrite (SDATA (string), 1, SBYTES (string), out);
-  fflush (out);
+  fwrite_unlocked (SDATA (string), 1, SBYTES (string), out);
+  fflush_unlocked (out);
   unblock_input ();
   return Qnil;
 }
@@ -5620,7 +5620,7 @@ terminate any keyboard macro currently executing.  */)
   if (!NILP (arg))
     {
       if (noninteractive)
-	putchar (07);
+	putchar_unlocked (07);
       else
 	ring_bell (XFRAME (selected_frame));
     }
@@ -5634,7 +5634,7 @@ void
 bitch_at_user (void)
 {
   if (noninteractive)
-    putchar (07);
+    putchar_unlocked (07);
   else if (!INTERACTIVE)  /* Stop executing a keyboard macro.  */
     {
       const char *msg

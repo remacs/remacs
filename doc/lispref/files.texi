@@ -408,7 +408,11 @@ buffer name instead.
 @end deffn
 
   Saving a buffer runs several hooks.  It also performs format
-conversion (@pxref{Format Conversion}).
+conversion (@pxref{Format Conversion}).  Note that these hooks,
+described below, are only run by @code{save-buffer}, they are not run
+by other primitives and functions that write buffer text to files, and
+in particular auto-saving (@pxref{Auto-Saving}) doesn't run these
+hooks.
 
 @defvar write-file-functions
 The value of this variable is a list of functions to be called before

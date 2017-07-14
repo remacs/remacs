@@ -26,14 +26,6 @@
 # Built by 'autogen.sh'.
 /aclocal.m4
 /configure
-build-aux/ar-lib
-build-aux/compile
-build-aux/config.guess
-build-aux/config.sub
-build-aux/depcomp
-build-aux/install-sh
-build-aux/missing
-lib/Makefile.in
 src/config.in
 
 # Built by 'configure'.
@@ -42,29 +34,29 @@ InfoPlist.strings
 Makefile
 makefile
 !etc/refcards/Makefile
-!modules/mod-test/Makefile
 !test/lisp/progmodes/flymake-resources/Makefile
-!test/manual/indent/Makefile
 !test/manual/etags/Makefile
 !test/manual/etags/make-src/Makefile
+!test/manual/indent/Makefile
 /*.cache
 /confdefs.h
 /config.status
 /configure.lineno
 /conftest*
+lib/gnulib.mk
 src/config.h
 src/epaths.h
+src/emacs-module.h
 
 # C-level sources built by 'make'.
 lib/alloca.h
-lib/arg-nonnull.h
 lib/byteswap.h
-lib/c++defs.h
 lib/dirent.h
 lib/errno.h
 lib/execinfo.h
 lib/fcntl.h
 lib/getopt.h
+lib/getopt-cdefs.h
 lib/inttypes.h
 lib/libgnu.a
 lib/limits.h
@@ -76,7 +68,6 @@ lib/string.h
 lib/sys/
 lib/time.h
 lib/unistd.h
-lib/warn-on-use.h
 src/buildobj.h
 src/globals.h
 src/lisp.mk
@@ -131,8 +122,6 @@ deps/
 *.stamp
 stamp_BLD
 src/gl-stamp
-src/stamp-h.in
-src/stamp-h1
 
 # Object files and debugging.
 *.a
@@ -143,7 +132,6 @@ src/stamp-h1
 *.o
 *.res
 *.so
-[0-9]*.core
 core
 core.*[0-9]
 gmon.out
@@ -152,13 +140,12 @@ oo-spd/
 src/*.map
 
 # Tests.
-test/indent/*.new
-test/make-test-deps.mk
 test/manual/biditest.txt
 test/manual/etags/srclist
 test/manual/etags/regexfile
 test/manual/etags/ETAGS
 test/manual/etags/CTAGS
+test/manual/indent/*.new
 
 # ctags, etags.
 TAGS
@@ -256,6 +243,7 @@ gnustmp*
 # Version control and locks.
 *.orig
 *.rej
+*.swp
 *~
 .#*
 \#*\#
@@ -274,7 +262,7 @@ etc/emacs.tmpdesktop
 # Microsoft-related builds and installations.
 *.in-h
 _*
-!build-aux/snippet/_Noreturn.h
+!lib/_Noreturn.h
 /bin/
 /BIN/
 /data/
@@ -288,7 +276,6 @@ lib/SYS/
 /site-lisp/
 nt/emacs.rc
 nt/emacsclient.rc
-nt/gnulib.mk
 src/gdb.ini
 /var/
 

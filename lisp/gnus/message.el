@@ -49,7 +49,7 @@
 (require 'mm-util)
 (require 'rfc2047)
 (require 'puny)
-(require 'subr-x)
+(require 'subr-x)			; read-multiple-choice
 
 (autoload 'mailclient-send-it "mailclient")
 

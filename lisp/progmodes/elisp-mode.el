@@ -1119,29 +1119,29 @@ current buffer.  If EVAL-LAST-SEXP-ARG-INTERNAL is `0', print
 output with no limit on the length and level of lists, and
 include additional formats for integers \(octal, hexadecimal, and
 character)."
-  (let ((standard-output (if eval-last-sexp-arg-internal (current-buffer) t)))
+  (pcase-let*
+      ((`(,insert-value ,no-truncate ,char-print-limit)
+        (eval-expression-get-print-arguments eval-last-sexp-arg-internal)))
     ;; Setup the lexical environment if lexical-binding is enabled.
     (elisp--eval-last-sexp-print-value
      (eval (eval-sexp-add-defvars (elisp--preceding-sexp)) lexical-binding)
-     eval-last-sexp-arg-internal)))
+     (if insert-value (current-buffer) t) no-truncate char-print-limit)))
 
-(defun elisp--eval-last-sexp-print-value (value &optional eval-last-sexp-arg-internal)
-  (let ((unabbreviated (let ((print-length nil) (print-level nil))
-			 (prin1-to-string value)))
-	(print-length (and (not (zerop (prefix-numeric-value
-					eval-last-sexp-arg-internal)))
-			   eval-expression-print-length))
-	(print-level (and (not (zerop (prefix-numeric-value
-				       eval-last-sexp-arg-internal)))
-			  eval-expression-print-level))
-	(beg (point))
-	end)
+(defun elisp--eval-last-sexp-print-value
+    (value output &optional no-truncate char-print-limit)
+  (let* ((unabbreviated (let ((print-length nil) (print-level nil))
+                          (prin1-to-string value)))
+         (eval-expression-print-maximum-character char-print-limit)
+         (print-length (unless no-truncate eval-expression-print-length))
+         (print-level  (unless no-truncate eval-expression-print-level))
+         (beg (point))
+         end)
     (prog1
-	(prin1 value)
-      (let ((str (eval-expression-print-format value)))
-	(if str (princ str)))
+	(prin1 value output)
+      (let ((str (and char-print-limit (eval-expression-print-format value))))
+	(if str (princ str output)))
       (setq end (point))
-      (when (and (bufferp standard-output)
+      (when (and (bufferp output)
 		 (or (not (null print-length))
 		     (not (null print-level)))
 		 (not (string= unabbreviated
@@ -1176,14 +1176,17 @@ POS specifies the starting position where EXP was found and defaults to point."
 
 (defun eval-last-sexp (eval-last-sexp-arg-internal)
   "Evaluate sexp before point; print value in the echo area.
-Interactively, with prefix argument, print output into current buffer.
+Interactively, with a non `-' prefix argument, print output into
+current buffer.
 
-Normally, this function truncates long output according to the value
-of the variables `eval-expression-print-length' and
+Normally, this function truncates long output according to the
+value of the variables `eval-expression-print-length' and
 `eval-expression-print-level'.  With a prefix argument of zero,
 however, there is no such truncation.  Such a prefix argument
 also causes integers to be printed in several additional formats
-\(octal, hexadecimal, and character).
+\(octal, hexadecimal, and character when the prefix argument is
+-1 or the integer is `eval-expression-print-maximum-character' or
+less).
 
 If `eval-expression-debug-on-error' is non-nil, which is the default,
 this command arranges for all errors to enter the debugger."
@@ -1369,7 +1372,7 @@ or elsewhere, return a 1-line docstring."
 				(condition-case nil (documentation sym t)
 				  (invalid-function nil))
 				sym))
-		     (car doc))
+		     (substitute-command-keys (car doc)))
 		    (t (help-function-arglist sym)))))
              ;; Stringify, and store before highlighting, downcasing, etc.
 	     (elisp--last-data-store sym (elisp-function-argstring args)

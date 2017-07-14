@@ -68,6 +68,14 @@ extern char *tzname[];
 #include <string.h>
 #include <stdbool.h>
 
+#ifndef FALLTHROUGH
+# if __GNUC__ < 7
+#  define FALLTHROUGH ((void) 0)
+# else
+#  define FALLTHROUGH __attribute__ ((__fallthrough__))
+# endif
+#endif
+
 #ifdef COMPILE_WIDE
 # include <endian.h>
 # define CHAR_T wchar_t
@@ -1138,8 +1146,7 @@ __strftime_internal (STREAM_OR_CHAR_T *s, STRFTIME_ARG (size_t maxsize)
 #ifndef _NL_CURRENT
           format_char = L_('p');
 #endif
-          /* FALLTHROUGH */
-
+          FALLTHROUGH;
         case L_('p'):
           if (change_case)
             {
@@ -1474,7 +1481,7 @@ __strftime_internal (STREAM_OR_CHAR_T *s, STRFTIME_ARG (size_t maxsize)
 
         case L_('\0'):          /* GNU extension: % at end of format.  */
             --f;
-            /* Fall through.  */
+            FALLTHROUGH;
         default:
           /* Unknown format; output the format, including the '%',
              since this is most likely the right thing to do if a

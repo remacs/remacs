@@ -90,6 +90,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <Xm/FileSB.h>
 #include <Xm/List.h>
 #include <Xm/TextF.h>
+#include <Xm/MwmUtil.h>
 #endif
 
 #ifdef USE_LUCID
@@ -116,6 +117,35 @@ static ptrdiff_t image_cache_refcount;
 #ifdef GLYPH_DEBUG
 static int dpyinfo_refcount;
 #endif
+
+#ifndef USE_MOTIF
+#ifndef USE_GTK
+/** #define MWM_HINTS_FUNCTIONS     (1L << 0) **/
+#define MWM_HINTS_DECORATIONS   (1L << 1)
+/** #define MWM_HINTS_INPUT_MODE    (1L << 2) **/
+/** #define MWM_HINTS_STATUS        (1L << 3) **/
+
+#define MWM_DECOR_ALL           (1L << 0)
+/** #define MWM_DECOR_BORDER        (1L << 1) **/
+/** #define MWM_DECOR_RESIZEH       (1L << 2) **/
+/** #define MWM_DECOR_TITLE         (1L << 3) **/
+/** #define MWM_DECOR_MENU          (1L << 4) **/
+/** #define MWM_DECOR_MINIMIZE      (1L << 5) **/
+/** #define MWM_DECOR_MAXIMIZE      (1L << 6) **/
+
+/** #define _XA_MOTIF_WM_HINTS "_MOTIF_WM_HINTS" **/
+
+typedef struct {
+    unsigned long flags;
+    unsigned long functions;
+    unsigned long decorations;
+    long input_mode;
+    unsigned long status;
+} PropMotifWmHints;
+
+#define PROP_MOTIF_WM_HINTS_ELEMENTS 5
+#endif /* NOT USE_GTK */
+#endif /* NOT USE_MOTIF */
 
 static struct x_display_info *x_display_info_for_name (Lisp_Object);
 static void set_up_x_back_buffer (struct frame *f);
@@ -185,7 +215,9 @@ x_real_pos_and_offsets (struct frame *f,
   int win_x = 0, win_y = 0, outer_x = 0, outer_y = 0;
   int real_x = 0, real_y = 0;
   bool had_errors = false;
-  Window win = f->output_data.x->parent_desc;
+  Window win = (FRAME_PARENT_FRAME (f)
+		? FRAME_X_WINDOW (FRAME_PARENT_FRAME (f))
+		: f->output_data.x->parent_desc);
   struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   long max_len = 400;
   Atom target_type = XA_CARDINAL;
@@ -323,7 +355,8 @@ x_real_pos_and_offsets (struct frame *f,
 	outer_geom_cookie = xcb_get_geometry (xcb_conn,
 					      FRAME_OUTER_WINDOW (f));
 
-      if (dpyinfo->root_window == f->output_data.x->parent_desc)
+      if ((dpyinfo->root_window == f->output_data.x->parent_desc)
+	  && !FRAME_PARENT_FRAME (f))
 	/* Try _NET_FRAME_EXTENTS if our parent is the root window.  */
 	prop_cookie = xcb_get_property (xcb_conn, 0, win,
 					dpyinfo->Xatom_net_frame_extents,
@@ -437,7 +470,8 @@ x_real_pos_and_offsets (struct frame *f,
 #endif
     }
 
-  if (dpyinfo->root_window == f->output_data.x->parent_desc)
+  if ((dpyinfo->root_window == f->output_data.x->parent_desc)
+      && !FRAME_PARENT_FRAME (f))
     {
       /* Try _NET_FRAME_EXTENTS if our parent is the root window.  */
 #ifdef USE_XCB
@@ -735,6 +769,204 @@ x_set_inhibit_double_buffering (struct frame *f,
   unblock_input ();
 }
 
+/**
+ * x_set_undecorated:
+ *
+ * Set frame F's `undecorated' parameter.  If non-nil, F's window-system
+ * window is drawn without decorations, title, minimize/maximize boxes
+ * and external borders.  This usually means that the window cannot be
+ * dragged, resized, iconified, maximized or deleted with the mouse.  If
+ * nil, draw the frame with all the elements listed above unless these
+ * have been suspended via window manager settings.
+ *
+ * Some window managers may not honor this parameter.
+ */
+static void
+x_set_undecorated (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  if (!EQ (new_value, old_value))
+    {
+      FRAME_UNDECORATED (f) = NILP (new_value) ? false : true;
+#ifdef USE_GTK
+      xg_set_undecorated (f, new_value);
+#else
+      Display *dpy = FRAME_X_DISPLAY (f);
+      PropMotifWmHints hints;
+      Atom prop = XInternAtom (dpy, "_MOTIF_WM_HINTS", False);
+
+      memset (&hints, 0, sizeof(hints));
+      hints.flags = MWM_HINTS_DECORATIONS;
+      hints.decorations = NILP (new_value) ? MWM_DECOR_ALL : 0;
+
+      block_input ();
+      /* For some reason the third and fourth arguments in the following
+	 call must be identical: In the corresponding XGetWindowProperty
+	 call in getMotifHints, xfwm has the third and seventh args both
+	 display_info->atoms[MOTIF_WM_HINTS].  Obviously, YMMV.   */
+      XChangeProperty (dpy, FRAME_OUTER_WINDOW (f), prop, prop, 32,
+		       PropModeReplace, (unsigned char *) &hints,
+		       PROP_MOTIF_WM_HINTS_ELEMENTS);
+      unblock_input ();
+
+#endif /* USE_GTK */
+    }
+}
+
+/**
+ * x_set_parent_frame:
+ *
+ * Set frame F's `parent-frame' parameter.  If non-nil, make F a child
+ * frame of the frame specified by that parameter.  Technically, this
+ * makes F's window-system window a child window of the parent frame's
+ * window-system window.  If nil, make F's window-system window a
+ * top-level window--a child of its display's root window.
+ *
+ * A child frame is clipped at the native edges of its parent frame.
+ * Its `left' and `top' parameters specify positions relative to the
+ * top-left corner of its parent frame's native rectangle.  Usually,
+ * moving a parent frame moves all its child frames too, keeping their
+ * position relative to the parent unaltered.  When a parent frame is
+ * iconified or made invisible, its child frames are made invisible.
+ * When a parent frame is deleted, its child frames are deleted too.
+ *
+ * A visible child frame always appears on top of its parent frame thus
+ * obscuring parts of it.  When a frame has more than one child frame,
+ * their stacking order is specified just as that of non-child frames
+ * relative to their display.
+ *
+ * Whether a child frame has a menu or tool bar may be window-system or
+ * window manager dependent.  It's advisable to disable both via the
+ * frame parameter settings.
+ *
+ * Some window managers may not honor this parameter.
+ */
+static void
+x_set_parent_frame (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  struct frame *p = NULL;
+
+  if (!NILP (new_value)
+      && (!FRAMEP (new_value)
+	  || !FRAME_LIVE_P (p = XFRAME (new_value))
+	  || !FRAME_X_P (p)))
+    {
+      store_frame_param (f, Qparent_frame, old_value);
+      error ("Invalid specification of `parent-frame'");
+    }
+
+  if (p != FRAME_PARENT_FRAME (f))
+    {
+      block_input ();
+      XReparentWindow
+	(FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+	 p ? FRAME_X_WINDOW (p) : DefaultRootWindow (FRAME_X_DISPLAY (f)),
+	 f->left_pos, f->top_pos);
+      unblock_input ();
+
+      fset_parent_frame (f, new_value);
+    }
+}
+
+/**
+ * x_set_no_focus_on_map:
+ *
+ * Set frame F's `no-focus-on-map' parameter which, if non-nil, means
+ * that F's window-system window does not want to receive input focus
+ * when it is mapped.  (A frame's window is mapped when the frame is
+ * displayed for the first time and when the frame changes its state
+ * from `iconified' or `invisible' to `visible'.)
+ *
+ * Some window managers may not honor this parameter.
+ */
+static void
+x_set_no_focus_on_map (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  if (!EQ (new_value, old_value))
+    {
+#ifdef USE_GTK
+      xg_set_no_focus_on_map (f, new_value);
+#else /* not USE_GTK */
+      Display *dpy = FRAME_X_DISPLAY (f);
+      Atom prop = XInternAtom (dpy, "_NET_WM_USER_TIME", False);
+      Time timestamp = NILP (new_value) ? CurrentTime : 0;
+
+      XChangeProperty (dpy, FRAME_OUTER_WINDOW (f), prop,
+		       XA_CARDINAL, 32, PropModeReplace,
+		       (unsigned char *) &timestamp, 1);
+#endif /* USE_GTK */
+      FRAME_NO_FOCUS_ON_MAP (f) = !NILP (new_value);
+    }
+}
+
+/**
+ * x_set_no_accept_focus:
+ *
+ * Set frame F's `no-accept-focus' parameter which, if non-nil, hints
+ * that F's window-system window does not want to receive input focus
+ * via mouse clicks or by moving the mouse into it.
+ *
+ * If non-nil, this may have the unwanted side-effect that a user cannot
+ * scroll a non-selected frame with the mouse.
+ *
+ * Some window managers may not honor this parameter.
+ */
+static void
+x_set_no_accept_focus (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  if (!EQ (new_value, old_value))
+    {
+#ifdef USE_GTK
+      xg_set_no_accept_focus (f, new_value);
+#else /* not USE_GTK */
+#ifdef USE_X_TOOLKIT
+      Arg al[1];
+
+      XtSetArg (al[0], XtNinput, NILP (new_value) ? True : False);
+      XtSetValues (f->output_data.x->widget, al, 1);
+#else /* not USE_X_TOOLKIT */
+      Window window = FRAME_X_WINDOW (f);
+
+      f->output_data.x->wm_hints.input = NILP (new_value) ? True : False;
+      XSetWMHints (FRAME_X_DISPLAY (f), window, &f->output_data.x->wm_hints);
+#endif /* USE_X_TOOLKIT */
+#endif /* USE_GTK */
+      FRAME_NO_ACCEPT_FOCUS (f) = !NILP (new_value);
+    }
+}
+
+/**
+ * x_set_override_redirect:
+ *
+ * Set frame F's `override_redirect' parameter which, if non-nil, hints
+ * that the window manager doesn't want to deal with F.  Usually, such
+ * frames have no decorations and always appear on top of all frames.
+ *
+ * Some window managers may not honor this parameter.
+ */
+static void
+x_set_override_redirect (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+  if (!EQ (new_value, old_value))
+    {
+      /* Here (xfwm) override_redirect can be changed for invisible
+	 frames only.  */
+      x_make_frame_invisible (f);
+
+#ifdef USE_GTK
+      xg_set_override_redirect (f, new_value);
+#else /* not USE_GTK */
+      XSetWindowAttributes attributes;
+
+      attributes.override_redirect = NILP (new_value) ? False : True;
+      XChangeWindowAttributes (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+			       CWOverrideRedirect, &attributes);
+#endif
+      x_make_frame_visible (f);
+      FRAME_OVERRIDE_REDIRECT (f) = !NILP (new_value);
+    }
+}
+
+
 #ifdef USE_GTK
 
 /* Set icon from FILE for frame F.  By using GTK functions the icon
@@ -888,6 +1120,14 @@ enum mouse_cursor {
   mouse_cursor_hand,
   mouse_cursor_horizontal_drag,
   mouse_cursor_vertical_drag,
+  mouse_cursor_left_edge,
+  mouse_cursor_top_left_corner,
+  mouse_cursor_top_edge,
+  mouse_cursor_top_right_corner,
+  mouse_cursor_right_edge,
+  mouse_cursor_bottom_right_corner,
+  mouse_cursor_bottom_edge,
+  mouse_cursor_bottom_left_corner,
   mouse_cursor_max
 };
 
@@ -907,13 +1147,21 @@ struct mouse_cursor_types {
 
 /* This array must stay in sync with enum mouse_cursor above!  */
 static const struct mouse_cursor_types mouse_cursor_types[] = {
-  { "text",      &Vx_pointer_shape,                XC_xterm             },
-  { "nontext",   &Vx_nontext_pointer_shape,        XC_left_ptr          },
-  { "hourglass", &Vx_hourglass_pointer_shape,      XC_watch             },
-  { "modeline",  &Vx_mode_pointer_shape,           XC_xterm             },
-  { NULL,        &Vx_sensitive_text_pointer_shape, XC_hand2             },
-  { NULL,        &Vx_window_horizontal_drag_shape, XC_sb_h_double_arrow },
-  { NULL,        &Vx_window_vertical_drag_shape,   XC_sb_v_double_arrow },
+  { "text",      &Vx_pointer_shape,                    XC_xterm               },
+  { "nontext",   &Vx_nontext_pointer_shape,            XC_left_ptr            },
+  { "hourglass", &Vx_hourglass_pointer_shape,          XC_watch               },
+  { "modeline",  &Vx_mode_pointer_shape,               XC_xterm               },
+  { NULL,        &Vx_sensitive_text_pointer_shape,     XC_hand2               },
+  { NULL,        &Vx_window_horizontal_drag_shape,     XC_sb_h_double_arrow   },
+  { NULL,        &Vx_window_vertical_drag_shape,       XC_sb_v_double_arrow   },
+  { NULL,        &Vx_window_left_edge_shape,           XC_left_side           },
+  { NULL,        &Vx_window_top_left_corner_shape,     XC_top_left_corner     },
+  { NULL,        &Vx_window_top_edge_shape,            XC_top_side            },
+  { NULL,        &Vx_window_top_right_corner_shape,    XC_top_right_corner    },
+  { NULL,        &Vx_window_right_edge_shape,          XC_right_side          },
+  { NULL,        &Vx_window_bottom_right_corner_shape, XC_bottom_right_corner },
+  { NULL,        &Vx_window_bottom_edge_shape,         XC_bottom_side         },
+  { NULL,        &Vx_window_bottom_left_corner_shape,  XC_bottom_left_corner  },
 };
 
 struct mouse_cursor_data {
@@ -1064,6 +1312,14 @@ x_set_mouse_color (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
   INSTALL_CURSOR (hand_cursor, hand);
   INSTALL_CURSOR (horizontal_drag_cursor, horizontal_drag);
   INSTALL_CURSOR (vertical_drag_cursor, vertical_drag);
+  INSTALL_CURSOR (left_edge_cursor, left_edge);
+  INSTALL_CURSOR (top_left_corner_cursor, top_left_corner);
+  INSTALL_CURSOR (top_edge_cursor, top_edge);
+  INSTALL_CURSOR (top_right_corner_cursor, top_right_corner);
+  INSTALL_CURSOR (right_edge_cursor, right_edge);
+  INSTALL_CURSOR (bottom_right_corner_cursor, bottom_right_corner);
+  INSTALL_CURSOR (bottom_edge_cursor, bottom_edge);
+  INSTALL_CURSOR (bottom_left_corner_cursor, bottom_left_corner);
 
 #undef INSTALL_CURSOR
 
@@ -1272,7 +1528,7 @@ x_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
      most of the commands try to apply themselves to the minibuffer
      frame itself, and get an error because you can't switch buffers
      in or split the minibuffer window.  */
-  if (FRAME_MINIBUF_ONLY_P (f))
+  if (FRAME_MINIBUF_ONLY_P (f) || FRAME_PARENT_FRAME (f))
     return;
 
   if (TYPE_RANGED_INTEGERP (int, value))
@@ -1471,15 +1727,10 @@ x_set_internal_border_width (struct frame *f, Lisp_Object arg, Lisp_Object oldva
 	widget_store_internal_border (FRAME_X_OUTPUT (f)->edit_widget);
 #endif
 
-      if (FRAME_X_WINDOW (f) != 0)
+      if (FRAME_X_WINDOW (f))
 	{
 	  adjust_frame_size (f, -1, -1, 3, false, Qinternal_border_width);
-
-#ifdef USE_GTK
-	  xg_clear_under_internal_border (f);
-#else
 	  x_clear_under_internal_border (f);
-#endif
 	}
     }
 
@@ -2640,15 +2891,15 @@ x_window (struct frame *f, long window_prompting)
 
   ac = 0;
   XtSetArg (al[ac], XtNmappedWhenManaged, 0); ac++;
-  XtSetArg (al[ac], XtNshowGrip, 0); ac++;
-  XtSetArg (al[ac], XtNallowResize, 1); ac++;
-  XtSetArg (al[ac], XtNresizeToPreferred, 1); ac++;
-  XtSetArg (al[ac], XtNemacsFrame, f); ac++;
+  XtSetArg (al[ac], (char *) XtNshowGrip, 0); ac++;
+  XtSetArg (al[ac], (char *) XtNallowResize, 1); ac++;
+  XtSetArg (al[ac], (char *) XtNresizeToPreferred, 1); ac++;
+  XtSetArg (al[ac], (char *) XtNemacsFrame, f); ac++;
   XtSetArg (al[ac], XtNvisual, FRAME_X_VISUAL (f)); ac++;
   XtSetArg (al[ac], XtNdepth, FRAME_DISPLAY_INFO (f)->n_planes); ac++;
   XtSetArg (al[ac], XtNcolormap, FRAME_X_COLORMAP (f)); ac++;
   XtSetArg (al[ac], XtNborderWidth, 0); ac++;
-  frame_widget = XtCreateWidget (f->namebuf, emacsFrameClass, pane_widget,
+  frame_widget = XtCreateWidget (f->namebuf, emacsFrameClass (), pane_widget,
 				 al, ac);
 
   f->output_data.x->edit_widget = frame_widget;
@@ -2693,7 +2944,7 @@ x_window (struct frame *f, long window_prompting)
        and specify it.
        Note that we do not specify here whether the position
        is a user-specified or program-specified one.
-       We pass that information later, in x_wm_set_size_hints.  */
+       We pass that information later, in x_wm_set_size_hint.  */
     {
       int left = f->left_pos;
       bool xneg = (window_prompting & XNegative) != 0;
@@ -2783,7 +3034,8 @@ x_window (struct frame *f, long window_prompting)
     }
 #endif /* HAVE_X_I18N */
 
-  attribute_mask = CWEventMask;
+  attributes.override_redirect = FRAME_OVERRIDE_REDIRECT (f);
+  attribute_mask = CWEventMask | CWOverrideRedirect;
   XChangeWindowAttributes (XtDisplay (shell_widget), XtWindow (shell_widget),
 			   attribute_mask, &attributes);
 
@@ -2802,6 +3054,25 @@ x_window (struct frame *f, long window_prompting)
     fset_name (f, Qnil);
     x_set_name (f, name, explicit);
   }
+
+  if (FRAME_UNDECORATED (f))
+    {
+      Display *dpy = FRAME_X_DISPLAY (f);
+      PropMotifWmHints hints;
+      Atom prop = XInternAtom (dpy, "_MOTIF_WM_HINTS", False);
+
+      memset (&hints, 0, sizeof(hints));
+      hints.flags = MWM_HINTS_DECORATIONS;
+      hints.decorations = 0;
+
+      /* For some reason the third and fourth arguments in the following
+	 call must be identical: In the corresponding XGetWindowProperty
+	 call in getMotifHints, xfwm has the third and seventh args both
+	 display_info->atoms[MOTIF_WM_HINTS].  Obviously, YMMV.   */
+      XChangeProperty (dpy, FRAME_OUTER_WINDOW (f), prop, prop, 32,
+		       PropModeReplace, (unsigned char *) &hints,
+		       PROP_MOTIF_WM_HINTS_ELEMENTS);
+    }
 
   XDefineCursor (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
 		 f->output_data.x->current_cursor
@@ -2870,8 +3141,9 @@ x_window (struct frame *f)
   attributes.save_under = True;
   attributes.event_mask = STANDARD_EVENT_SET;
   attributes.colormap = FRAME_X_COLORMAP (f);
+  attributes.override_redirect = FRAME_OVERRIDE_REDIRECT (f);
   attribute_mask = (CWBackPixel | CWBorderPixel | CWBitGravity | CWEventMask
-		    | CWColormap);
+		    | CWOverrideRedirect | CWColormap);
 
   block_input ();
   FRAME_X_WINDOW (f)
@@ -2942,6 +3214,26 @@ x_window (struct frame *f)
     fset_name (f, Qnil);
     x_set_name (f, name, explicit);
   }
+
+  if (FRAME_UNDECORATED (f))
+    {
+      Display *dpy = FRAME_X_DISPLAY (f);
+      PropMotifWmHints hints;
+      Atom prop = XInternAtom (dpy, "_MOTIF_WM_HINTS", False);
+
+      memset (&hints, 0, sizeof(hints));
+      hints.flags = MWM_HINTS_DECORATIONS;
+      hints.decorations = 0;
+
+      /* For some reason the third and fourth arguments in the following
+	 call must be identical: In the corresponding XGetWindowProperty
+	 call in getMotifHints, xfwm has the third and seventh args both
+	 display_info->atoms[MOTIF_WM_HINTS].  Obviously, YMMV.   */
+      XChangeProperty (dpy, FRAME_OUTER_WINDOW (f), prop, prop, 32,
+		       PropModeReplace, (unsigned char *) &hints,
+		       PROP_MOTIF_WM_HINTS_ELEMENTS);
+    }
+
 
   XDefineCursor (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
 		 f->output_data.x->current_cursor
@@ -3285,11 +3577,12 @@ This function is an internal primitive--use `make-frame' instead.  */)
   Lisp_Object frame, tem;
   Lisp_Object name;
   bool minibuffer_only = false;
+  bool undecorated = false, override_redirect = false;
   long window_prompting = 0;
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object display;
   struct x_display_info *dpyinfo = NULL;
-  Lisp_Object parent;
+  Lisp_Object parent, parent_frame;
   struct kboard *kb;
   int x_width = 0, x_height = 0;
 
@@ -3340,6 +3633,36 @@ This function is an internal primitive--use `make-frame' instead.  */)
     f = make_frame_without_minibuffer (tem, kb, display);
   else
     f = make_frame (true);
+
+  parent_frame = x_get_arg (dpyinfo, parms, Qparent_frame, NULL, NULL,
+			    RES_TYPE_SYMBOL);
+  /* Accept parent-frame iff parent-id was not specified.  */
+  if (!NILP (parent)
+      || EQ (parent_frame, Qunbound)
+      || NILP (parent_frame)
+      || !FRAMEP (parent_frame)
+      || !FRAME_LIVE_P (XFRAME (parent_frame))
+      || !FRAME_X_P (XFRAME (parent_frame)))
+    parent_frame = Qnil;
+
+  fset_parent_frame (f, parent_frame);
+  store_frame_param (f, Qparent_frame, parent_frame);
+
+  if (!NILP (tem = (x_get_arg (dpyinfo, parms, Qundecorated, NULL, NULL,
+			       RES_TYPE_BOOLEAN)))
+      && !(EQ (tem, Qunbound)))
+    undecorated = true;
+
+  FRAME_UNDECORATED (f) = undecorated;
+  store_frame_param (f, Qundecorated, undecorated ? Qt : Qnil);
+
+  if (!NILP (tem = (x_get_arg (dpyinfo, parms, Qoverride_redirect, NULL, NULL,
+			       RES_TYPE_BOOLEAN)))
+      && !(EQ (tem, Qunbound)))
+    override_redirect = true;
+
+  FRAME_OVERRIDE_REDIRECT (f) = override_redirect;
+  store_frame_param (f, Qoverride_redirect, override_redirect ? Qt : Qnil);
 
   XSETFRAME (frame, f);
 
@@ -3515,6 +3838,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
 		       "leftFringe", "LeftFringe", RES_TYPE_NUMBER);
   x_default_parameter (f, parms, Qright_fringe, Qnil,
 		       "rightFringe", "RightFringe", RES_TYPE_NUMBER);
+  x_default_parameter (f, parms, Qno_special_glyphs, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
 
   x_default_scroll_bar_color_parameter (f, parms, Qscroll_bar_foreground,
 					"scrollBarForeground",
@@ -3528,15 +3853,24 @@ This function is an internal primitive--use `make-frame' instead.  */)
      init_iterator with a null face cache, which should not happen.  */
   init_frame_faces (f);
 
-  /* The following call of change_frame_size is needed since otherwise
+  /* We have to call adjust_frame_size here since otherwise
      x_set_tool_bar_lines will already work with the character sizes
-     installed by init_frame_faces while the frame's pixel size is
-     still calculated from a character size of 1 and we subsequently
-     hit the (height >= 0) assertion in window_box_height.
+     installed by init_frame_faces while the frame's pixel size is still
+     calculated from a character size of 1 and we subsequently hit the
+     (height >= 0) assertion in window_box_height.
 
      The non-pixelwise code apparently worked around this because it
      had one frame line vs one toolbar line which left us with a zero
-     root window height which was obviously wrong as well ...  */
+     root window height which was obviously wrong as well ...
+
+     Also process `min-width' and `min-height' parameters right here
+     because `frame-windows-min-size' needs them.  */
+  tem = x_get_arg (dpyinfo, parms, Qmin_width, NULL, NULL, RES_TYPE_NUMBER);
+  if (NUMBERP (tem))
+    store_frame_param (f, Qmin_width, tem);
+  tem = x_get_arg (dpyinfo, parms, Qmin_height, NULL, NULL, RES_TYPE_NUMBER);
+  if (NUMBERP (tem))
+    store_frame_param (f, Qmin_height, tem);
   adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
 		     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 5, true,
 		     Qx_create_frame_1);
@@ -3611,6 +3945,21 @@ This function is an internal primitive--use `make-frame' instead.  */)
   x_default_parameter (f, parms, Qalpha, Qnil,
 		       "alpha", "Alpha", RES_TYPE_NUMBER);
 
+  if (!NILP (parent_frame))
+    {
+      struct frame *p = XFRAME (parent_frame);
+
+      block_input ();
+      XReparentWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+		       FRAME_X_WINDOW (p), f->left_pos, f->top_pos);
+      unblock_input ();
+    }
+
+  x_default_parameter (f, parms, Qno_focus_on_map, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
+  x_default_parameter (f, parms, Qno_accept_focus, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
+
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
   /* Create the menu bar.  */
   if (!minibuffer_only && FRAME_EXTERNAL_MENU_BAR (f))
@@ -3656,23 +4005,23 @@ This function is an internal primitive--use `make-frame' instead.  */)
   /* Make the window appear on the frame and enable display, unless
      the caller says not to.  However, with explicit parent, Emacs
      cannot control visibility, so don't try.  */
-  if (! f->output_data.x->explicit_parent)
+  if (!f->output_data.x->explicit_parent)
     {
-      Lisp_Object visibility;
-
-      visibility = x_get_arg (dpyinfo, parms, Qvisibility, 0, 0,
-			      RES_TYPE_SYMBOL);
-      if (EQ (visibility, Qunbound))
-	visibility = Qt;
+      Lisp_Object visibility
+	= x_get_arg (dpyinfo, parms, Qvisibility, 0, 0, RES_TYPE_SYMBOL);
 
       if (EQ (visibility, Qicon))
 	x_iconify_frame (f);
-      else if (! NILP (visibility))
-	x_make_frame_visible (f);
       else
 	{
-	  /* Must have been Qnil.  */
+	  if (EQ (visibility, Qunbound))
+	    visibility = Qt;
+
+	  if (!NILP (visibility))
+	    x_make_frame_visible (f);
 	}
+
+      store_frame_param (f, Qvisibility, visibility);
     }
 
   block_input ();
@@ -3685,13 +4034,20 @@ This function is an internal primitive--use `make-frame' instead.  */)
   if (dpyinfo->client_leader_window != 0)
     {
       XChangeProperty (FRAME_X_DISPLAY (f),
-                       FRAME_OUTER_WINDOW (f),
-                       dpyinfo->Xatom_wm_client_leader,
-                       XA_WINDOW, 32, PropModeReplace,
-                       (unsigned char *) &dpyinfo->client_leader_window, 1);
+		       FRAME_OUTER_WINDOW (f),
+		       dpyinfo->Xatom_wm_client_leader,
+		       XA_WINDOW, 32, PropModeReplace,
+		       (unsigned char *) &dpyinfo->client_leader_window, 1);
     }
 
   unblock_input ();
+
+  /* Works iff frame has been already mapped.  */
+  x_default_parameter (f, parms, Qskip_taskbar, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
+  /* The `z-group' parameter works only for visible frames.  */
+  x_default_parameter (f, parms, Qz_group, Qnil,
+		       NULL, NULL, RES_TYPE_SYMBOL);
 
   /* Initialize `default-minibuffer-frame' in case this is the first
      frame on this terminal.  */
@@ -3710,7 +4066,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
      and similar functions.  */
   Vwindow_list = Qnil;
 
-  return unbind_to (count, frame);
+ return unbind_to (count, frame);
 }
 
 
@@ -3741,7 +4097,7 @@ x_get_focus_frame (struct frame *frame)
    following a user-command.  */
 
 void
-x_focus_frame (struct frame *f)
+x_focus_frame (struct frame *f, bool noactivate)
 {
   Display *dpy = FRAME_X_DISPLAY (f);
 
@@ -3759,7 +4115,8 @@ x_focus_frame (struct frame *f)
     {
       XSetInputFocus (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
 		      RevertToParent, CurrentTime);
-      x_ewmh_activate_frame (f);
+      if (!noactivate)
+	x_ewmh_activate_frame (f);
     }
 
   x_uncatch_errors ();
@@ -4644,9 +5001,9 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
   struct frame *f = decode_live_frame (frame);
   /**   XWindowAttributes atts; **/
   Window rootw;
-  unsigned int ign, native_width, native_height;
-  int xy_ign, xptr, yptr;
-  int left_off, right_off, top_off, bottom_off;
+  unsigned int ign, native_width, native_height, x_border_width = 0;
+  int x_native = 0, y_native = 0, xptr = 0, yptr = 0;
+  int left_off = 0, right_off = 0, top_off = 0, bottom_off = 0;
   int outer_left, outer_top, outer_right, outer_bottom;
   int native_left, native_top, native_right, native_bottom;
   int inner_left, inner_top, inner_right, inner_bottom;
@@ -4660,25 +5017,51 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 
   block_input ();
   XGetGeometry (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
-		&rootw, &xy_ign, &xy_ign, &native_width, &native_height,
-		&ign, &ign);
+		&rootw, &x_native, &y_native, &native_width, &native_height,
+		&x_border_width, &ign);
   /**   XGetWindowAttributes (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f), &atts); **/
-  x_real_pos_and_offsets (f, &left_off, &right_off, &top_off, &bottom_off,
-                          NULL, NULL, &xptr, &yptr, NULL);
+  if (!FRAME_PARENT_FRAME (f))
+    x_real_pos_and_offsets (f, &left_off, &right_off, &top_off, &bottom_off,
+			    NULL, NULL, &xptr, &yptr, NULL);
   unblock_input ();
 
   /**   native_width = atts.width; **/
   /**   native_height = atts.height; **/
 
-  outer_left = xptr;
-  outer_top = yptr;
-  outer_right = outer_left + left_off + native_width + right_off;
-  outer_bottom = outer_top + top_off + native_height + bottom_off;
+  if (FRAME_PARENT_FRAME (f))
+    {
+      Lisp_Object parent, edges;
 
-  native_left = outer_left + left_off;
-  native_top = outer_top + top_off;
-  native_right = native_left + native_width;
-  native_bottom = native_top + native_height;
+      XSETFRAME (parent, FRAME_PARENT_FRAME (f));
+      edges = Fx_frame_edges (parent, Qnative_edges);
+      if (!NILP (edges))
+	{
+	  x_native += XINT (Fnth (make_number (0), edges));
+	  y_native += XINT (Fnth (make_number (1), edges));
+	}
+
+      outer_left = x_native;
+      outer_top = y_native;
+      outer_right = outer_left + native_width + 2 * x_border_width;
+      outer_bottom = outer_top + native_height + 2 * x_border_width;
+
+      native_left = x_native + x_border_width;
+      native_top = y_native + x_border_width;
+      native_right = native_left + native_width;
+      native_bottom = native_top + native_height;
+    }
+  else
+    {
+      outer_left = xptr;
+      outer_top = yptr;
+      outer_right = outer_left + left_off + native_width + right_off;
+      outer_bottom = outer_top + top_off + native_height + bottom_off;
+
+      native_left = outer_left + left_off;
+      native_top = outer_top + top_off;
+      native_right = native_left + native_width;
+      native_bottom = native_top + native_height;
+    }
 
   internal_border_width = FRAME_INTERNAL_BORDER_WIDTH (f);
   inner_left = native_left + internal_border_width;
@@ -4749,7 +5132,7 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 		  make_number (inner_right), make_number (inner_bottom));
   else
     return
-      listn (CONSTYPE_HEAP, 10,
+      listn (CONSTYPE_HEAP, 11,
 	     Fcons (Qouter_position,
 		    Fcons (make_number (outer_left),
 			   make_number (outer_top))),
@@ -4760,6 +5143,7 @@ frame_geometry (Lisp_Object frame, Lisp_Object attribute)
 	     Fcons (Qexternal_border_size,
 		    Fcons (make_number (right_off),
 			   make_number (bottom_off))),
+	     Fcons (Qouter_border_width, make_number (x_border_width)),
 	     /* Approximate.  */
 	     Fcons (Qtitle_bar_size,
 		    Fcons (make_number (0),
@@ -4788,7 +5172,8 @@ and width values are in pixels.
 
 `outer-size' is a cons of the outer width and height of FRAME.  The
   outer size includes the title bar and the external borders as well as
-  any menu and/or tool bar of frame.
+  any menu and/or tool bar of frame.  For a child frame the value
+  includes FRAME's X borders, if any.
 
 `external-border-size' is a cons of the horizontal and vertical width of
   FRAME's external borders as supplied by the window manager.
@@ -4815,7 +5200,11 @@ and width values are in pixels.
   FRAME.
 
 `internal-border-width' is the width of the internal border of
-  FRAME.  */)
+  FRAME.
+
+`outer-border-width' is the width of the X border of FRAME.  The X
+  border is usually only shown for frames without window manager
+  decorations like child and tooltip frames.  */)
   (Lisp_Object frame)
 {
   return frame_geometry (frame, Qnil);
@@ -4844,6 +5233,139 @@ menu bar or tool bar of FRAME.  */)
 				 ? type
 				 : Qnative_edges));
 }
+
+/**
+ * x_frame_list_z_order:
+ *
+ * Recursively add list of all frames on the display specified via
+ * DPYINFO and whose window-system window's parent is specified by
+ * WINDOW to FRAMES and return FRAMES.
+ */
+static Lisp_Object
+x_frame_list_z_order (Display* dpy, Window window)
+{
+  Window root, parent, *children;
+  unsigned int nchildren;
+  int i;
+  Lisp_Object frames = Qnil;
+
+  block_input ();
+  if (XQueryTree (dpy, window, &root, &parent, &children, &nchildren))
+    {
+      unblock_input ();
+      for (i = 0; i < nchildren; i++)
+	{
+	  Lisp_Object frame, tail;
+
+	  FOR_EACH_FRAME (tail, frame)
+	    /* With a reparenting window manager the parent_desc field
+	       usually specifies the topmost windows of our frames.
+	       Otherwise FRAME_OUTER_WINDOW should do.  */
+	    if (XFRAME (frame)->output_data.x->parent_desc == children[i]
+		|| FRAME_OUTER_WINDOW (XFRAME (frame)) == children[i])
+	      frames = Fcons (frame, frames);
+	}
+
+      if (children) XFree ((char *)children);
+    }
+  else
+    unblock_input ();
+
+  return frames;
+}
+
+
+DEFUN ("x-frame-list-z-order", Fx_frame_list_z_order,
+       Sx_frame_list_z_order, 0, 1, 0,
+       doc: /* Return list of Emacs' frames, in Z (stacking) order.
+The optional argument TERMINAL specifies which display to ask about.
+TERMINAL should be either a frame or a display name (a string).  If
+omitted or nil, that stands for the selected frame's display.  Return
+nil if TERMINAL contains no Emacs frame.
+
+As a special case, if TERMINAL is non-nil and specifies a live frame,
+return the child frames of that frame in Z (stacking) order.
+
+Frames are listed from topmost (first) to bottommost (last).  */)
+  (Lisp_Object terminal)
+{
+  struct x_display_info *dpyinfo = check_x_display_info (terminal);
+  Display *dpy = dpyinfo->display;
+  Window window;
+
+  if (FRAMEP (terminal) && FRAME_LIVE_P (XFRAME (terminal)))
+    window = FRAME_X_WINDOW (XFRAME (terminal));
+  else
+    window = dpyinfo->root_window;
+
+  return x_frame_list_z_order (dpy, window);
+}
+
+/**
+ * x_frame_restack:
+ *
+ * Restack frame F1 below frame F2, above if ABOVE_FLAG is non-nil.  In
+ * practice this is a two-step action: The first step removes F1's
+ * window-system window from the display.  The second step reinserts
+ * F1's window below (above if ABOVE_FLAG is true) that of F2.
+ */
+static void
+x_frame_restack (struct frame *f1, struct frame *f2, bool above_flag)
+{
+#if defined (USE_GTK) && GTK_CHECK_VERSION (2, 18, 0)
+  block_input ();
+  xg_frame_restack (f1, f2, above_flag);
+  unblock_input ();
+#else
+  Display *dpy = FRAME_X_DISPLAY (f1);
+  Window window1 = FRAME_OUTER_WINDOW (f1);
+  XWindowChanges wc;
+  unsigned long mask = (CWSibling | CWStackMode);
+
+  wc.sibling = FRAME_OUTER_WINDOW (f2);
+  wc.stack_mode = above_flag ? Above : Below;
+  block_input ();
+  /* Configure the window manager window (a normal XConfigureWindow
+     won't cut it).  This should also work for child frames.  */
+  XReconfigureWMWindow (dpy, window1, FRAME_X_SCREEN_NUMBER (f1), mask, &wc);
+  unblock_input ();
+#endif /* USE_GTK */
+}
+
+
+DEFUN ("x-frame-restack", Fx_frame_restack, Sx_frame_restack, 2, 3, 0,
+       doc: /* Restack FRAME1 below FRAME2.
+This means that if both frames are visible and the display areas of
+these frames overlap, FRAME2 (partially) obscures FRAME1.  If optional
+third argument ABOVE is non-nil, restack FRAME1 above FRAME2.  This
+means that if both frames are visible and the display areas of these
+frames overlap, FRAME1 (partially) obscures FRAME2.
+
+This may be thought of as an atomic action performed in two steps: The
+first step removes FRAME1's window-step window from the display.  The
+second step reinserts FRAME1's window below (above if ABOVE is true)
+that of FRAME2.  Hence the position of FRAME2 in its display's Z
+\(stacking) order relative to all other frames excluding FRAME1 remains
+unaltered.
+
+Some window managers may refuse to restack windows.  */)
+     (Lisp_Object frame1, Lisp_Object frame2, Lisp_Object above)
+{
+  struct frame *f1 = decode_live_frame (frame1);
+  struct frame *f2 = decode_live_frame (frame2);
+
+  if (FRAME_OUTER_WINDOW (f1) && FRAME_OUTER_WINDOW (f2))
+    {
+      x_frame_restack (f1, f2, !NILP (above));
+      return Qt;
+    }
+  else
+    {
+      error ("Cannot restack frames");
+      return Qnil;
+    }
+}
+
 
 DEFUN ("x-mouse-absolute-pixel-position", Fx_mouse_absolute_pixel_position,
        Sx_mouse_absolute_pixel_position, 0, 0, 0,
@@ -5700,6 +6222,8 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
 		       "cursorColor", "Foreground", RES_TYPE_STRING);
   x_default_parameter (f, parms, Qborder_color, build_string ("black"),
 		       "borderColor", "BorderColor", RES_TYPE_STRING);
+  x_default_parameter (f, parms, Qno_special_glyphs, Qnil,
+		       NULL, NULL, RES_TYPE_BOOLEAN);
 
   /* Init faces before x_default_parameter is called for the
      scroll-bar-width parameter because otherwise we end up in
@@ -6585,6 +7109,8 @@ value of DIR as in previous invocations; this is standard Windows behavior.  */)
 
   if (popup_activated ())
     error ("Trying to use a menu from within a menu-entry");
+  else
+    x_menu_set_in_use (true);
 
   CHECK_STRING (prompt);
   CHECK_STRING (dir);
@@ -6641,6 +7167,8 @@ nil, it defaults to the selected frame. */)
 
   if (popup_activated ())
     error ("Trying to use a menu from within a menu-entry");
+  else
+    x_menu_set_in_use (true);
 
   /* Prevent redisplay.  */
   specbind (Qinhibit_redisplay, Qt);
@@ -6979,6 +7507,14 @@ frame_parm_handler x_frame_parm_handlers[] =
   x_set_sticky,
   x_set_tool_bar_position,
   x_set_inhibit_double_buffering,
+  x_set_undecorated,
+  x_set_parent_frame,
+  x_set_skip_taskbar,
+  x_set_no_focus_on_map,
+  x_set_no_accept_focus,
+  x_set_z_group,
+  x_set_override_redirect,
+  x_set_no_special_glyphs,
 };
 
 void
@@ -7056,6 +7592,62 @@ or when you set the mouse color.  */);
 This variable takes effect when you create a new frame
 or when you set the mouse color.  */);
   Vx_window_vertical_drag_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-left-edge-cursor",
+	       Vx_window_left_edge_shape,
+  doc: /* Pointer shape indicating a left x-window edge can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_left_edge_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-top-left-corner-cursor",
+	       Vx_window_top_left_corner_shape,
+  doc: /* Pointer shape indicating a top left x-window corner can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_top_left_corner_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-top-edge-cursor",
+	       Vx_window_top_edge_shape,
+  doc: /* Pointer shape indicating a top x-window edge can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_top_edge_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-top-right-corner-cursor",
+	       Vx_window_top_right_corner_shape,
+  doc: /* Pointer shape indicating a top right x-window corner can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_top_right_corner_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-right-edge-cursor",
+	       Vx_window_right_edge_shape,
+  doc: /* Pointer shape indicating a right x-window edge can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_right_edge_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-bottom-right-corner-cursor",
+	       Vx_window_bottom_right_corner_shape,
+  doc: /* Pointer shape indicating a bottom right x-window corner can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_bottom_right_corner_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-bottom-edge-cursor",
+	       Vx_window_bottom_edge_shape,
+  doc: /* Pointer shape indicating a bottom x-window edge can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_bottom_edge_shape = Qnil;
+
+  DEFVAR_LISP ("x-window-bottom-left-corner-cursor",
+	       Vx_window_bottom_left_corner_shape,
+  doc: /* Pointer shape indicating a bottom left x-window corner can be dragged.
+This variable takes effect when you create a new frame
+or when you set the mouse color.  */);
+  Vx_window_bottom_left_corner_shape = Qnil;
 
   DEFVAR_LISP ("x-cursor-fore-pixel", Vx_cursor_fore_pixel,
     doc: /* A string indicating the foreground color of the cursor box.  */);
@@ -7183,6 +7775,8 @@ When using Gtk+ tooltips, the tooltip face is not used.  */);
   defsubr (&Sx_display_monitor_attributes_list);
   defsubr (&Sx_frame_geometry);
   defsubr (&Sx_frame_edges);
+  defsubr (&Sx_frame_list_z_order);
+  defsubr (&Sx_frame_restack);
   defsubr (&Sx_mouse_absolute_pixel_position);
   defsubr (&Sx_set_mouse_absolute_pixel_position);
   defsubr (&Sx_wm_set_size_hint);
