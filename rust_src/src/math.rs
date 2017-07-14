@@ -252,7 +252,11 @@ fn minmax_driver(args: &[LispObject], greater: bool) -> LispObject {
     for &arg in &args[1..] {
         // TODO: this is arithcompare inlined, remove it once the PR is merged
         let arg = check_number_coerce_marker(arg);
-        let i1; let i2; let f1; let f2; let fneq;
+        let i1;
+        let i2;
+        let f1;
+        let f2;
+        let fneq;
         if arg.is_float() {
             f1 = arg.as_float_or_error();
             if accum.is_float() {
@@ -260,15 +264,15 @@ fn minmax_driver(args: &[LispObject], greater: bool) -> LispObject {
                 i2 = 0;
                 f2 = accum.as_float_or_error();
             } else {
-                f2 = i2 as f64;  // NB: order of assignment and rounding is important here!
-                i1 = f2 as EmacsInt;
                 i2 = accum.as_fixnum_or_error();
+                f2 = i2 as f64; // NB: order of assignment and rounding is important here!
+                i1 = f2 as EmacsInt;
             }
             fneq = f1 != f2;
         } else {
             i1 = arg.as_fixnum_or_error();
             if accum.is_float() {
-                f1 = i1 as f64;  // NB: order of assignment and rounding is important here!
+                f1 = i1 as f64; // NB: order of assignment and rounding is important here!
                 i2 = f1 as EmacsInt;
                 f2 = accum.as_float_or_error();
             } else {

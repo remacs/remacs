@@ -180,8 +180,7 @@ fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObject {
             let is_equal = if testfn.is_nil() {
                 key.eq(item_cons.car()) || key.equal(item_cons.car())
             } else {
-                let res = unsafe { call2(testfn.to_raw(), key.to_raw(),
-                                         item_cons.car().to_raw()) };
+                let res = unsafe { call2(testfn.to_raw(), key.to_raw(), item_cons.car().to_raw()) };
                 !LispObject::from_raw(res).is_nil()
             };
             if is_equal {

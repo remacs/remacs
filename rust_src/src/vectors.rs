@@ -180,7 +180,7 @@ fn length(sequence: LispObject) -> LispObject {
         } else if vl.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE) {
             return LispObject::from_natnum(MAX_CHAR as EmacsInt);
         } else if vl.is_pseudovector(PseudovecType::PVEC_COMPILED) ||
-            vl.is_pseudovector(PseudovecType::PVEC_RECORD)
+                   vl.is_pseudovector(PseudovecType::PVEC_RECORD)
         {
             return LispObject::from_natnum(vl.pseudovector_size());
         }
