@@ -46,10 +46,6 @@ static void sort_vector_copy (Lisp_Object, ptrdiff_t,
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 static bool internal_equal (Lisp_Object, Lisp_Object,
 			    enum equal_kind, int, Lisp_Object);
-static Lisp_Object
-secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start,
-	     Lisp_Object end, Lisp_Object coding_system, Lisp_Object noerror,
-	     Lisp_Object binary);
 
 DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
        doc: /* Return the argument unchanged.  */
@@ -4767,29 +4763,24 @@ DEFUN ("secure-hash-algorithms", Fsecure_hash_algorithms,
 (BUFFER-OR-STRING-OR-SYMBOL START END CODING-SYSTEM NOERROR) which behave as
 specified with `secure-hash' and in Info node
 `(elisp)Format of GnuTLS Cryptography Inputs'.  */
-const char*
+char *
 extract_data_from_object (Lisp_Object spec,
                           ptrdiff_t *start_byte,
                           ptrdiff_t *end_byte)
 {
-  ptrdiff_t size, start_char = 0, end_char = 0;
-  register EMACS_INT b, e;
-  register struct buffer *bp;
-  EMACS_INT temp;
+  Lisp_Object object = XCAR (spec);
 
-  Lisp_Object object        = XCAR (spec);
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object start = CAR_SAFE (spec);
 
-  if (! NILP (spec)) spec = XCDR (spec);
-  Lisp_Object start	    = (CONSP (spec)) ? XCAR (spec) : Qnil;
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object end = CAR_SAFE (spec);
 
-  if (! NILP (spec)) spec = XCDR (spec);
-  Lisp_Object end	    = (CONSP (spec)) ? XCAR (spec) : Qnil;
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object coding_system = CAR_SAFE (spec);
 
-  if (! NILP (spec)) spec = XCDR (spec);
-  Lisp_Object coding_system = (CONSP (spec)) ? XCAR (spec) : Qnil;
-
-  if (! NILP (spec)) spec = XCDR (spec);
-  Lisp_Object noerror	    = (CONSP (spec)) ? XCAR (spec) : Qnil;
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object noerror = CAR_SAFE (spec);
 
   if (STRINGP (object))
     {
@@ -4817,7 +4808,7 @@ extract_data_from_object (Lisp_Object spec,
       if (STRING_MULTIBYTE (object))
 	object = code_convert_string (object, coding_system, Qnil, 1, 0, 1);
 
-      size = SCHARS (object);
+      ptrdiff_t size = SCHARS (object), start_char, end_char;
       validate_subarray (object, start, end, size, &start_char, &end_char);
 
       *start_byte = !start_char ? 0 : string_char_to_byte (object, start_char);
@@ -4828,12 +4819,13 @@ extract_data_from_object (Lisp_Object spec,
   else if (BUFFERP (object))
     {
       struct buffer *prev = current_buffer;
+      EMACS_INT b, e;
 
       record_unwind_current_buffer ();
 
       CHECK_BUFFER (object);
 
-      bp = XBUFFER (object);
+      struct buffer *bp = XBUFFER (object);
       set_buffer_internal (bp);
 
       if (NILP (start))
@@ -4853,7 +4845,11 @@ extract_data_from_object (Lisp_Object spec,
 	}
 
       if (b > e)
-	temp = b, b = e, e = temp;
+	{
+	  EMACS_INT temp = b;
+	  b = e;
+	  e = temp;
+	}
 
       if (!(BEGV <= b && e <= ZV))
 	args_out_of_range (start, end);
@@ -4932,14 +4928,13 @@ extract_data_from_object (Lisp_Object spec,
   else if (EQ (object, Qiv_auto))
     {
 #ifdef HAVE_GNUTLS3
-      // Format: (iv-auto REQUIRED-LENGTH)
+      /* Format: (iv-auto REQUIRED-LENGTH).  */
 
-      if (! INTEGERP (start))
+      if (! NATNUMP (start))
         error ("Without a length, iv-auto can't be used. See manual.");
       else
         {
-          /* Make sure the value of "start" doesn't change.  */
-          size_t start_hold = XUINT (start);
+	  EMACS_INT start_hold = XFASTINT (start);
           object = make_uninit_string (start_hold);
           gnutls_rnd (GNUTLS_RND_NONCE, SSDATA (object), start_hold);
 
@@ -4971,7 +4966,7 @@ secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start,
 
   Lisp_Object spec = list5 (object, start, end, coding_system, noerror);
 
-  const char* input = extract_data_from_object (spec, &start_byte, &end_byte);
+  const char *input = extract_data_from_object (spec, &start_byte, &end_byte);
 
   if (input == NULL)
     error ("secure_hash: failed to extract data from object, aborting!");
