@@ -1413,7 +1413,7 @@ get_compressor_from_suffix (char *file, char **extptr)
       for (compr = compressors; compr->suffix != NULL; compr++)
 	if (streq (compr->suffix, suffix))
 	  return compr;
-	break;			/* do it only once: not really a loop */
+      break;			/* do it only once: not really a loop */
       if (extptr != NULL)
 	*extptr = ++suffix;
     } while (*suffix != '\0');

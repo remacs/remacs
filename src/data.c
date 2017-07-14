@@ -2471,24 +2471,6 @@ Both must be integers or markers.  */)
 }
 
 static Lisp_Object
-minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
-	       enum Arith_Comparison comparison)
-{
-  eassume (0 < nargs);
-  Lisp_Object accum;
-  for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
-    {
-      Lisp_Object val = args[argnum];
-      CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
-      if (argnum == 0 || !NILP (arithcompare (val, accum, comparison)))
-	accum = val;
-      else if (FLOATP (accum) && isnan (XFLOAT_DATA (accum)))
-	return accum;
-    }
-  return accum;
-}
-
-static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
   /* This code assumes that signed right shifts are arithmetic.  */
