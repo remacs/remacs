@@ -8129,10 +8129,10 @@ compute_image_size (size_t width, size_t height,
   width = width * scale;
   height = height * scale;
 
-  if (desired_width != -1 && desired_height == -1)
+  if (desired_width != -1)
     /* Width known, calculate height. */
     desired_height = scale_image_size (desired_width, width, height);
-  else if (desired_width == -1 && desired_height != -1)
+  else if (desired_height != -1)
     /* Height known, calculate width. */
     desired_width = scale_image_size (desired_height, height, width);
   else
