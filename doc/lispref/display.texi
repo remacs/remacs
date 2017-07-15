@@ -5305,6 +5305,17 @@ and if @code{:height} is set it will have precedence over
 wish.  @code{:max-width} and @code{:max-height} will always preserve
 the aspect ratio.
 
+If both @code{:width} and @code{:max-height} has been set (but
+@code{:height} has not been set), then @code{:max-height} will have
+precedence.  The same is the case for the opposite combination: The
+``max'' keyword has precedence.  That is, if you have a 200x100 image
+and specify that @code{:width} should be 400 and @code{:max-height}
+should be 150, you'll end up with an image that is 300x150: Preserving
+the aspect ratio and not exceeding the ``max'' setting.  This
+combination of parameters is a useful way of saying ``display this
+image as large as possible, but no larger than the available display
+area''.
+
 @item :scale @var{scale}
 This should be a number, where values higher than 1 means to increase
 the size, and lower means to decrease the size.  For instance, a value

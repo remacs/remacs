@@ -763,6 +763,14 @@ Ido mode is active.
 in question).
 
 +++
+*** It's now possible to specify aspect-ratio preserving combinations
+of :width/:max-height and :height/:max-width keywords.  In either
+case, the "max" keywords win.  (Previously some combinations would,
+depending on the aspect ratio of the image, just be ignored and in
+other instances this would lead to the aspect ratio not being
+preserved.)
+
++++
 *** Images inserted with 'insert-image' and related functions get a
 keymap put into the text properties (or overlays) that span the
 image.  This keymap binds keystrokes for manipulating size and
