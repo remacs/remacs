@@ -3080,6 +3080,25 @@ The coordinates X and Y are interpreted in pixels relative to a position
   return Qnil;
 }
 
+DEFUN ("ns-mouse-absolute-pixel-position",
+       Fns_mouse_absolute_pixel_position,
+       Sns_mouse_absolute_pixel_position, 0, 0, 0,
+       doc: /* Return absolute position of mouse cursor in pixels.
+The position is returned as a cons cell (X . Y) of the
+coordinates of the mouse cursor position in pixels relative to a
+position (0, 0) of the selected frame's terminal. */)
+     (void)
+{
+  struct frame *f = SELECTED_FRAME ();
+  EmacsView *view = FRAME_NS_VIEW (f);
+  NSScreen *screen = [[view window] screen];
+  NSPoint pt = [NSEvent mouseLocation];
+
+  return Fcons(make_number(pt.x - screen.frame.origin.x),
+               make_number(screen.frame.size.height -
+                           (pt.y - screen.frame.origin.y)));
+}
+
 /* ==========================================================================
 
     Class implementations
@@ -3269,6 +3288,7 @@ be used as the image of the icon representing the frame.  */);
   defsubr (&Sns_frame_list_z_order);
   defsubr (&Sns_frame_restack);
   defsubr (&Sns_set_mouse_absolute_pixel_position);
+  defsubr (&Sns_mouse_absolute_pixel_position);
   defsubr (&Sx_display_mm_width);
   defsubr (&Sx_display_mm_height);
   defsubr (&Sx_display_screens);

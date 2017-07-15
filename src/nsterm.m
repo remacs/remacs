@@ -1570,6 +1570,7 @@ x_make_frame_visible (struct frame *f)
   if (!FRAME_VISIBLE_P (f))
     {
       EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
+      NSWindow *window = [view window];
 
       SET_FRAME_VISIBLE (f, 1);
       ns_raise_frame (f, ! FRAME_NO_FOCUS_ON_MAP (f));
@@ -1585,6 +1586,23 @@ x_make_frame_visible (struct frame *f)
           block_input ();
           [view handleFS];
           unblock_input ();
+        }
+
+      /* Making a frame invisible seems to break the parent->child
+         relationship, so reinstate it. */
+      if ([window parentWindow] == nil && FRAME_PARENT_FRAME (f) != NULL)
+        {
+          NSWindow *parent = [FRAME_NS_VIEW (FRAME_PARENT_FRAME (f)) window];
+
+          block_input ();
+          [parent addChildWindow: window
+                         ordered: NSWindowAbove];
+          unblock_input ();
+
+          /* If the parent frame moved while the child frame was
+             invisible, the child frame's position won't have been
+             updated.  Make sure it's in the right place now. */
+          x_set_offset(f, f->left_pos, f->top_pos, 0);
         }
     }
 }
