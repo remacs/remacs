@@ -102,11 +102,16 @@ a font height that isn't optimal."
     ;; Monospace Serif is an Emacs invention, intended to work around
     ;; portability problems when using Courier.  It should work well
     ;; when combined with Monospaced and with other standard fonts.
+    ;; One of its uses is for 'tex-verbatim' and 'Info-quoted' faces,
+    ;; so the result must be different from the default face's font,
+    ;; and must be monospaced.
     ("Monospace Serif"
 
      ;; This looks good on GNU/Linux.
      "Courier 10 Pitch"
-     ;; This looks good on MS-Windows and OS X.
+     ;; This looks good on MS-Windows and OS X.  Note that this is
+     ;; actually a sans-serif font, but it's here for lack of a better
+     ;; alternative.
      "Consolas"
      ;; This looks good on macOS.  "Courier" looks good too, but is
      ;; jagged on GNU/Linux and so is listed later as "courier".
