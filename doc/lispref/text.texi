@@ -4521,6 +4521,11 @@ Please consult @uref{https://www.gnutls.org/} for specific
 documentation which may help you understand the terminology and
 structure of the GnuTLS library.
 
+@menu
+* Format of GnuTLS Cryptography Inputs::
+* GnuTLS Cryptographic Functions::
+@end menu
+
 @node Format of GnuTLS Cryptography Inputs
 @subsection Format of GnuTLS Cryptography Inputs
 @cindex format of gnutls cryptography inputs
