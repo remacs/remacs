@@ -32,8 +32,7 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'pcase)
-(require 'eieio-loaddefs)
+(require 'eieio-loaddefs nil t)
 
 ;;;
 ;; A few functions that are better in the official EIEIO src, but
@@ -85,7 +84,7 @@ Currently under control of this var:
 (progn
   ;; Arrange for field access not to bother checking if the access is indeed
   ;; made to an eieio--class object.
-  (cl-declaim (optimize (safety 0)))
+  (eval-when-compile (cl-declaim (optimize (safety 0))))
 
 (cl-defstruct (eieio--class
                (:constructor nil)
@@ -104,25 +103,22 @@ Currently under control of this var:
   options ;; storage location of tagged class option
           ; Stored outright without modifications or stripping
   )
-  ;; Set it back to the default value.
-  (cl-declaim (optimize (safety 1))))
+  ;; Set it back to the default value.  NOTE: Using the default
+  ;; `safety' value does NOT give the default
+  ;; `byte-compile-delete-errors' value.  Therefore limit this (and
+  ;; the above `cl-declaim') to compile time so that we don't affect
+  ;; code which only loads this library.
+  (eval-when-compile (cl-declaim (optimize (safety 1)))))
 
 
-(cl-defstruct (eieio--object
-               (:type vector)           ;We manage our own tagging system.
-               (:constructor nil)
-               (:copier nil))
-  ;; `class-tag' holds a symbol, which is not the class name, but is instead
-  ;; properly prefixed as an internal EIEIO thingy and which holds the class
-  ;; object/struct in its `symbol-value' slot.
-  class-tag)
+(eval-and-compile
+  (defconst eieio--object-num-slots 1))
 
-(eval-when-compile
-  (defconst eieio--object-num-slots
-    (length (cl-struct-slot-info 'eieio--object))))
+(defsubst eieio--object-class-tag (obj)
+  (aref obj 0))
 
 (defsubst eieio--object-class (obj)
-  (symbol-value (eieio--object-class-tag obj)))
+  (eieio--object-class-tag obj))
 
 
 ;;; Important macros used internally in eieio.
@@ -166,13 +162,8 @@ Return nil if that option doesn't exist."
 
 (defun eieio-object-p (obj)
   "Return non-nil if OBJ is an EIEIO object."
-  (and (vectorp obj)
-       (> (length obj) 0)
-       (let ((tag (eieio--object-class-tag obj)))
-         (and (symbolp tag)
-              ;; (eq (symbol-function tag) :quick-object-witness-check)
-              (boundp tag)
-              (eieio--class-p (symbol-value tag))))))
+  (and (recordp obj)
+       (eieio--class-p (eieio--object-class-tag obj))))
 
 (define-obsolete-function-alias 'object-p 'eieio-object-p "25.1")
 
@@ -496,18 +487,11 @@ See `defclass' for more information."
     (if clearparent (setf (eieio--class-parents newc) nil))
 
     ;; Create the cached default object.
-    (let ((cache (make-vector (+ (length (eieio--class-slots newc))
-                                 (eval-when-compile eieio--object-num-slots))
-                              nil))
-          ;; We don't strictly speaking need to use a symbol, but the old
-          ;; code used the class's name rather than the class's object, so
-          ;; we follow this preference for using a symbol, which is probably
-          ;; convenient to keep the printed representation of such Elisp
-          ;; objects readable.
-          (tag (intern (format "eieio-class-tag--%s" cname))))
-      (set tag newc)
-      (fset tag :quick-object-witness-check)
-      (setf (eieio--object-class-tag cache) tag)
+    (let ((cache (make-record newc
+                              (+ (length (eieio--class-slots newc))
+                                 (eval-when-compile eieio--object-num-slots)
+                                 -1)
+                              nil)))
       (let ((eieio-skip-typecheck t))
 	;; All type-checking has been done to our satisfaction
 	;; before this call.  Don't waste our time in this call..
@@ -1060,9 +1044,10 @@ method invocation orders of the involved classes."
   ;; part of the dispatch code.
   50 #'cl--generic-struct-tag
   (lambda (tag &rest _)
-    (and (symbolp tag) (boundp tag) (eieio--class-p (symbol-value tag))
-         (mapcar #'eieio--class-name
-                 (eieio--class-precedence-list (symbol-value tag))))))
+    (let ((class (cl--find-class tag)))
+      (and (eieio--class-p class)
+           (mapcar #'eieio--class-name
+                   (eieio--class-precedence-list class))))))
 
 (cl-defmethod cl-generic-generalizers :extra "class" (specializer)
   "Support for dispatch on types defined by EIEIO's `defclass'."

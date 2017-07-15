@@ -217,6 +217,28 @@ result in an endless loop.
 If you need Emacs to be able to recover from closing displays, compile
 it with the Lucid toolkit instead of GTK.
 
+** Emacs compiled with GTK crashes at startup due to X protocol error.
+
+This is known to happen on elementary OS GNU/Linux systems.
+
+The error message is:
+
+  X protocol error: BadMatch (invalid parameter attributes) on protocol request 140
+  When compiled with GTK, Emacs cannot recover from X disconnects.
+  This is a GTK bug: https://bugzilla.gnome.org/show_bug.cgi?id=85715
+  For details, see etc/PROBLEMS.
+  Fatal error 6: Aborted
+
+followed by a C backtrace.  (Sometimes the offending protocol request
+number is 139.)
+
+The relevant bug report is here:
+
+  https://bugs.launchpad.net/elementaryos/+bug/1355274
+
+A workaround is to set XLIB_SKIP_ARGB_VISUALS=1 in the environment
+before starting Emacs, or run Emacs as root.
+
 ** Emacs crashes when you try to view a file with complex characters.
 
 For example, the etc/HELLO file (as shown by C-h h).
@@ -323,12 +345,17 @@ or set the variable 'cannot-suspend' to a non-nil value.
 
 *** movemail compiled with POP support can't connect to the POP server.
 
-Make sure that the 'pop' entry in /etc/services, or in the services
-NIS map if your machine uses NIS, has the same port number as the
-entry on the POP server.  A common error is for the POP server to be
-listening on port 110, the assigned port for the POP3 protocol, while
-the client is trying to connect on port 109, the assigned port for the
-old POP protocol.
+This problem can occur if you do not configure --with-mailutils,
+and don't have GNU Mailutils installed.  Then Emacs uses its own
+version of movemail, which doesn't support secure POP connections.
+To solve this, install GNU Mailutils.
+
+Also, make sure that the 'pop' entry in /etc/services, or in the
+services NIS map if your machine uses NIS, has the same port number as
+the entry on the POP server.  A common error is for the POP server to
+be listening on port 110, the assigned port for the POP3 protocol,
+while the client is trying to connect on port 109, the assigned port
+for the old POP protocol.
 
 *** RMAIL gets error getting new mail.
 
@@ -463,6 +490,34 @@ problem by adding this to your .cshrc file:
         unset edit
         stty -icrnl -onlcr -echo susp ^Z
     endif
+
+*** In Shell buffers using ksh, resizing a window inserts random characters.
+
+The characters come from the PS2 prompt, but they are not followed by
+a newline, which messes up the next command you type.  This strange
+effect is caused by Emacs 25 and later telling the shell that its
+screen size changed.
+
+To work around the problem, customize the option
+'window-adjust-process-window-size-function' to "Do not adjust process
+window sizes" (Lisp value 'ignore').
+
+*** In Inferior Python mode, input is echoed and native completion doesn't work.
+<https://debbugs.gnu.org/cgi/bugreport.cgi?bug=25753>
+
+This happens when python uses a libedit based readline module, which
+is the default on macOS.  This can be worked around by installing a
+GNU readline based module instead, for example, using setuptools
+
+    sudo easy_install gnureadline
+
+And then rename the system's readline so that it won't be loaded:
+
+    cd /Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/lib-dynload
+    mv readline.so readline.so.bak
+
+See <https://pypi.python.org/pypi/gnureadline> for more details on
+installation.
 
 *** Emacs startup on GNU/Linux systems (and possibly other systems) is slow.
 
@@ -740,6 +795,40 @@ The solution is to install the appropriate fonts on your machine. For
 instance if you are editing a text with a lot of math symbols, then
 installing a font like 'Symbola' should solve this problem.
 
+Another reason for slow display is reportedly the nerd-fonts
+installation, even when Symbola is installed as well.  Uninstalling
+nerd-fonts was reported to solve the problem in that case.
+
+** Emacs running on GNU/Linux system with the m17n library Ver.1.7.1 or the
+earlier version has a problem with rendering Bengali script.
+
+The problem can be fixed by installing the newer version of the m17n
+library (if any), or by following this procedure:
+
+1. Locate the file BENG-OTF.flt installed on your system as part of the
+m17n library.  Usually it is under the directory /usr/share/m17n.
+
+2. Apply the following patch to BENG-OTF.flt
+
+------------------------------------------------------------
+diff --git a/FLT/BENG-OTF.flt b/FLT/BENG-OTF.flt
+index 45cc554..0cc5e76 100644
+--- a/FLT/BENG-OTF.flt
++++ b/FLT/BENG-OTF.flt
+@@ -232,7 +232,7 @@
+  (lang-forms
+   (cond
+    ("(.H)J" (1 :otf=beng=half+))
+-   (".H" :otf=beng=blwf,half,vatu+)
++   (".+H" :otf=beng=blwf,half,vatu+)
+    ("." =)))
+
+  (post
+------------------------------------------------------------
+
+If you can't modify that file directly, copy it to the directory
+~/.m17n.d/ (create it if it doesn't exist), and apply the patch.
+
 * Internationalization problems
 
 ** M-{ does not work on a Spanish PC keyboard.
@@ -1004,6 +1093,13 @@ into the buffer.  The reason this happens is an apparent
 incompatibility of the Gnome terminal with Xterm, which also affects
 other programs using the Xterm mouse interface.  A problem report has
 been filed.
+
+*** Gnome: GPaste clipboard manager causes erratic behavior of 'yank'
+
+The symptom is that 'kill-line' followed by 'yank' often (but not
+always) doesn't insert the whitespace of the killed and yanked line.
+
+The solution is to set the GPaste "trim items" option to OFF.
 
 *** KDE: When running on KDE, colors or fonts are not as specified for Emacs,
 or messed up.
@@ -2371,6 +2467,10 @@ middle button press.  In such cases, setting the wheel press to
 "scroll" sometimes works if you press the button twice.  Trying a
 generic mouse driver might help.
 
+One particular situation where this happens is when you have
+"Microsoft Intellipoint" installed, which runs the program
+ipoint.exe.  The fix is reportedly to uninstall this software.
+
 ** Scrolling the mouse wheel on MS-Windows always scrolls the top window.
 
 This is another common problem with mouse drivers.  Instead of
@@ -2415,17 +2515,6 @@ If this does not work, please inform bug-gnu-emacs@gnu.org.  Then
 please call support for your X-server and see if you can get a fix.
 If you do, please send it to bug-gnu-emacs@gnu.org so we can list it here.
 
-
-* Runtime problems specific to Mac OS X
-
-** On Mac OS X, file-name-case-insensitive-p may be unreliable
-
-The implementation of that function on Mac OS X uses pathconf with the
-_PC_CASE_SENSITIVE flag.  There have been reports that this use of
-pathconf does not work reliably.  If you have a problem, please
-recompile Emacs with -D DARWIN_OS_CASE_SENSITIVE_FIXME=1 or
--D DARWIN_OS_CASE_SENSITIVE_FIXME=2, and file a bug report saying
-whether this fixed your problem.
 
 * Build-time problems
 

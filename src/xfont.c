@@ -505,7 +505,8 @@ xfont_list (struct frame *f, Lisp_Object spec)
       Lisp_Object alter;
 
       if ((alter = Fassoc (SYMBOL_NAME (registry),
-			   Vface_alternative_font_registry_alist),
+			   Vface_alternative_font_registry_alist,
+			   Qnil),
 	   CONSP (alter)))
 	{
 	  /* Pointer to REGISTRY-ENCODING field.  */

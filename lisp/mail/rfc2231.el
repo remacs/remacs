@@ -234,7 +234,7 @@ These look like:
 	(decode-coding-string (buffer-string) coding-system)))))
 
 (defun rfc2231-encode-string (param value)
-  "Return and PARAM=VALUE string encoded according to RFC2231.
+  "Return a PARAM=VALUE string encoded according to RFC2231.
 Use `mml-insert-parameter' or `mml-insert-parameter-string' to insert
 the result of this function."
   (let ((control (ietf-drums-token-to-list ietf-drums-no-ws-ctl-token))

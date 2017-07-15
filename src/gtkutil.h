@@ -150,7 +150,6 @@ extern void update_frame_tool_bar (struct frame *f);
 extern void free_frame_tool_bar (struct frame *f);
 extern void xg_change_toolbar_position (struct frame *f, Lisp_Object pos);
 
-extern void xg_clear_under_internal_border (struct frame *f);
 extern void xg_frame_resized (struct frame *f,
                               int pixelwidth,
                               int pixelheight);
@@ -171,6 +170,13 @@ extern bool xg_check_special_colors (struct frame *f,
 extern void xg_set_frame_icon (struct frame *f,
                                Pixmap icon_pixmap,
                                Pixmap icon_mask);
+
+extern void xg_set_undecorated (struct frame *f, Lisp_Object undecorated);
+extern void xg_frame_restack (struct frame *f1, struct frame *f2, bool above);
+extern void xg_set_skip_taskbar (struct frame *f, Lisp_Object skip_taskbar);
+extern void xg_set_no_focus_on_map (struct frame *f, Lisp_Object no_focus_on_map);
+extern void xg_set_no_accept_focus (struct frame *f, Lisp_Object no_accept_focus);
+extern void xg_set_override_redirect (struct frame *f, Lisp_Object override_redirect);
 
 extern bool xg_prepare_tooltip (struct frame *f,
 				Lisp_Object string,

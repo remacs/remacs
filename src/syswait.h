@@ -56,7 +56,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 /* Defined in sysdep.c.  */
-extern void wait_for_termination (pid_t, int *, bool);
+extern bool wait_for_termination (pid_t, int *, bool);
 extern pid_t child_status_changed (pid_t, int *, int);
 
 #endif /* EMACS_SYSWAIT_H */

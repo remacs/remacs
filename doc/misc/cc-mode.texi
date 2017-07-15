@@ -274,6 +274,7 @@ Font Locking
 * Font Locking Preliminaries::
 * Faces::
 * Doc Comments::
+* Misc Font Locking::
 * AWK Mode Font Locking::
 
 Configuration Basics
@@ -811,6 +812,10 @@ often (in seconds) progress messages are to be displayed.
 @cindex comments (insertion of)
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+When the commands in this section add comment delimiters, they use
+either line comments or block comments depending on the setting of the
+comment style (@pxref{Minor Modes}).
+
 @table @asis
 @item @kbd{C-c C-c} (@code{comment-region})
 @kindex C-c C-c
@@ -1132,6 +1137,9 @@ line break.
 find useful while writing new code or editing old code:
 
 @table @asis
+@item comment style
+This specifies whether comment commands (such as @kbd{M-;}) insert
+block comments or line comments.
 @item electric mode
 When this is enabled, certain visible characters cause reformatting as
 they are typed.  This is normally helpful, but can be a nuisance when
@@ -1167,20 +1175,32 @@ and @ref{Indentation Engine Basics}.
 You can toggle each of these minor modes on and off, and you can
 configure @ccmode{} so that it starts up with your favorite
 combination of them (@pxref{Sample Init File}).  By default, when
-you initialize a buffer, electric mode and syntactic-indentation mode
-are enabled but the other three modes are disabled.
+you initialize a buffer, the comment style is set to the default for
+the major mode, electric mode and syntactic-indentation mode are
+enabled, but the other three modes are disabled.
 
-@ccmode{} displays the current state of the first four of these minor
-modes on the modeline by appending letters to the major mode's name,
-one letter for each enabled minor mode: @samp{l} for electric mode,
-@samp{a} for auto-newline mode, @samp{h} for hungry delete mode, and
-@samp{w} for subword mode.  If all these modes were enabled, you'd see
-@samp{C/lahw}@footnote{The @samp{C} would be replaced with the name of
-the language in question for the other languages @ccmode{} supports.}.
+@ccmode{} displays the current state of the first five of these minor
+modes on the mode line by appending characters to the major mode's
+name: @samp{/} or @samp{*} to indicate the comment style (respectively
+line or block), and one letter for each of the other minor modes which
+is enabled - @samp{l} for electric mode, @samp{a} for auto-newline
+mode, @samp{h} for hungry delete mode, and @samp{w} for subword mode.
+If the comment style was block and all the other modes were enabled,
+you'd see @samp{C/*lahw}@footnote{The @samp{C} would be replaced with
+the name of the language in question for the other languages @ccmode{}
+supports.}.
 
 Here are the commands to toggle these modes:
 
 @table @asis
+@item @kbd{C-c C-k} (@code{c-toggle-comment-style})
+@kindex C-c C-k
+@findex c-toggle-comment-style
+@findex toggle-comment-style (c-)
+Toggle the comment style between line style and block style.  In modes
+(such as AWK Mode) which only have one of these styles, this function
+does nothing.
+
 @item @kbd{C-c C-l} (@code{c-toggle-electric-state})
 @kindex C-c C-l
 @findex c-toggle-electric-state
@@ -1217,10 +1237,12 @@ Toggle syntactic-indentation mode.
 @end table
 
 Common to all the toggle functions above is that if they are called
-programmatically, they take an optional numerical argument.  A
-positive value will turn on the minor mode (or both of them in the
-case of @code{c-toggle-auto-hungry-state}) and a negative value will
-turn it (or them) off.
+programmatically, they take an optional numerical argument.  For
+@code{c-toggle-comment style}, a positive value will select block
+comments, a negative value will select line comments.  For the other
+functions, a positive value will turn on the minor mode (or both of
+them in the case of @code{c-toggle-auto-hungry-state}) and a negative
+value will turn it (or them) off.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1821,6 +1843,7 @@ sections apply to the other languages.
 * Font Locking Preliminaries::
 * Faces::
 * Doc Comments::
+* Misc Font Locking::
 * AWK Mode Font Locking::
 @end menu
 
@@ -2023,7 +2046,7 @@ since those aren't syntactic errors in themselves.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Doc Comments, AWK Mode Font Locking, Faces, Font Locking
+@node    Doc Comments, Misc Font Locking, Faces, Font Locking
 @comment node-name, next, previous, up
 @section Documentation Comments
 @cindex documentation comments
@@ -2099,9 +2122,63 @@ initialization and the result is prepended.  For an example, see
 If you add support for another doc comment style, please consider
 contributing it: send a note to @email{bug-cc-mode@@gnu.org}.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Misc Font Locking, AWK Mode Font Locking, Doc Comments, Font Locking
+@comment  node-name,  next,  previous,  up
+@section Miscellaneous Font Locking
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+In some languages, particularly in C++, there are constructs which are
+syntactically ambiguous---they could be either declarations or
+expressions, and @ccmode{} cannot tell for sure which.  Often such a
+construct is one of the operators @samp{*} or @samp{&} surrounded by
+two identifiers.
+
+Experience shows that very often when such a construct is a
+declaration it will be written with the operator touching exactly one
+of the identifiers, like:
+
+@example
+foo *bar
+@end example
+or
+@example
+foo& bar
+@end example
+
+.  Whether such code is fontified depends on the setting of
+@code{c-asymmetry-fontification-flag}.
+
+@defvar c-asymmetry-fontification-flag
+@vindex asymmetry-fontification-flag (c-)
+When @code{c-asymmetry-fontification-flag} is non-nil (which it is by
+default), code like the above, with white space either before or after
+the operator, but not both, is fontified as a declaration.  When the
+variable is nil, such a construct gets the default face.
+@end defvar
+
+When the construct is an expression there will often be white space
+both before and after the operator or there will be no white space
+around it at all, like:
+
+@example
+foo * bar
+@end example
+or
+@example
+foo&bar
+@end example
+.
+
+Such code is not fontified as a declaration.  (Typically, the
+identifiers don't get a non-default face.)
+
+For clarity's sake, we emphasize that the ``asymmetry'' rule in this
+section only applies when CC Mode cannot disambiguate a construct in
+any other way.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    AWK Mode Font Locking,  , Doc Comments, Font Locking
+@node    AWK Mode Font Locking,  , Misc Font Locking, Font Locking
 @comment  node-name,  next,  previous,  up
 @section AWK Mode Font Locking
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4255,8 +4332,8 @@ Analogous to the above, but for CORBA CIDL @code{composition} blocks.
 C++ template argument list continuations.  @ref{Class Symbols}.
 @item inlambda
 Analogous to @code{inclass} syntactic symbol, but used inside lambda
-(i.e., anonymous) functions.  Only used in Pike mode.  @ref{Statement
-Block Symbols}.
+(i.e., anonymous) functions.  Used in C++ and Pike modes.
+@ref{Statement Block Symbols}.
 @item lambda-intro-cont
 Lines continuing the header of a lambda function, i.e., between the
 @code{lambda} keyword and the function body.  Only used in Pike mode.
@@ -4992,6 +5069,21 @@ symbols they'd get in a normal block.  Therefore, the indentation put on
 @code{inexpr-statement} is added to the normal statement block
 indentation.  An @code{inexpr-statement} syntactic element doesn't
 contain an anchor position.
+
+C++11's lambda expressions involve a block inside a statement.  For
+example:
+
+@example
+ 1:  std::for_each(someList.begin(), someList.end(), [&total](int x) @{
+ 2:                                                     total += x;
+ 3:                                                 @});
+@end example
+
+Here a lambda expressions begins at the open bracket on line 1 and
+ends at the closing brace on line 3.  Line 2, in addition to the
+familiar @code{defun-block-intro} syntactic element, is also prefixed
+by an @code{inlambda} element, which is typically used to indent the
+entire lambda expression to under the opening bracket.
 
 In Pike code, there are a few other situations where blocks occur inside
 statements, as illustrated here:
@@ -7159,6 +7251,38 @@ too, add this to your @code{c-initialization-hook}:
 @end example
 
 @xref{Getting Started}.  This was a very common question.
+
+@item
+@emph{How do I get block comments in my C++ files?}
+
+Interactively, change the comment style with @kbd{C-c C-k}.
+@xref{Minor Modes}.
+
+To configure this setting, say, for files within the gdb project, you
+could amend your C++ Mode hook like this:
+
+@example
+(defun my-c++-mode-hook ()
+  (if (string-match "/gdb/" (buffer-file-name))
+      (c-toggle-comment-style 1)))
+(add-hook 'c++-mode-hook 'my-c++-mode-hook)
+@end example
+
+@item
+@emph{How do I stop my C++ lambda expressions being indented way over
+to the right?}
+
+Change the offset associated with @code{inlambda} from its default,
+the function @code{c-lineup-inexpr-block}, to 0.  For example, if you
+are setting offsets in a hook function you might include the following
+line:
+
+@example
+(c-set-offset 'inlambda 0)
+@end example
+
+For details of the different ways you can make this setting,
+@ref{Config Basics}.
 
 @item
 @emph{How do I stop my code jumping all over the place when I type?}

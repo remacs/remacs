@@ -547,6 +547,11 @@ effect in an existing buffer until the next time auto-save mode is
 reenabled in it.  If auto-save mode is already enabled, auto-saves
 continue to go in the same file name until @code{auto-save-mode} is
 called again.
+
+Note that setting this variable to a non-@code{nil} value does not
+change the fact that auto-saving is different from saving the buffer;
+e.g., the hooks described in @ref{Saving Buffers} are @emph{not} run
+when a buffer is auto-saved.
 @end defopt
 
 @defun recent-auto-save-p

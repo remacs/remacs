@@ -53,6 +53,7 @@
 (require 'moz nil t)
 (require 'json nil t)
 (require 'sgml-mode)
+(require 'prog-mode)
 
 (eval-when-compile
   (require 'cl-lib)
@@ -471,6 +472,11 @@ The value must not be negative."
 (defcustom js-flat-functions nil
   "Treat nested functions as top-level functions in `js-mode'.
 This applies to function movement, marking, and so on."
+  :type 'boolean
+  :group 'js)
+
+(defcustom js-indent-align-list-continuation t
+  "Align continuation of non-empty ([{ lines in `js-mode'."
   :type 'boolean
   :group 'js)
 
@@ -1713,7 +1719,7 @@ This performs fontification according to `js--class-styles'."
               (not (any ?\] ?\\))
               (and "\\" not-newline)))
          "]")))
-   (group "/"))
+   (group (zero-or-one "/")))
   "Regular expression matching a JavaScript regexp literal.")
 
 (defun js-syntax-propertize-regexp (end)
@@ -1721,12 +1727,13 @@ This performs fontification according to `js--class-styles'."
     (when (eq (nth 3 ppss) ?/)
       ;; A /.../ regexp.
       (goto-char (nth 8 ppss))
-      (when (and (looking-at js--syntax-propertize-regexp-regexp)
-                 ;; Don't touch text after END.
-                 (<= (match-end 1) end))
-        (put-text-property (match-beginning 1) (match-end 1)
+      (when (looking-at js--syntax-propertize-regexp-regexp)
+        ;; Don't touch text after END.
+        (when (> end (match-end 1))
+          (setq end (match-end 1)))
+        (put-text-property (match-beginning 1) end
                            'syntax-table (string-to-syntax "\"/"))
-        (goto-char (match-end 0))))))
+        (goto-char end)))))
 
 (defun js-syntax-propertize (start end)
   ;; JavaScript allows immediate regular expression objects, written /.../.
@@ -1786,6 +1793,8 @@ This performs fontification according to `js--class-styles'."
     (and (looking-at js--indent-operator-re)
          (or (not (eq (char-after) ?:))
              (save-excursion
+               (js--backward-syntactic-ws)
+               (when (= (char-before) ?\)) (backward-list))
                (and (js--re-search-backward "[?:{]\\|\\_<case\\_>" nil t)
                     (eq (char-after) ??))))
          (not (and
@@ -2088,7 +2097,8 @@ indentation is aligned to that column."
                  (switch-keyword-p (looking-at "default\\_>\\|case\\_>[^:]"))
                  (continued-expr-p (js--continued-expression-p)))
              (goto-char (nth 1 parse-status)) ; go to the opening char
-             (if (looking-at "[({[]\\s-*\\(/[/*]\\|$\\)")
+             (if (or (not js-indent-align-list-continuation)
+                     (looking-at "[({[]\\s-*\\(/[/*]\\|$\\)"))
                  (progn ; nothing following the opening paren/bracket
                    (skip-syntax-backward " ")
                    (when (eq (char-before) ?\)) (backward-list))
@@ -2124,7 +2134,7 @@ indentation is aligned to that column."
 
           ((js--continued-expression-p)
            (+ js-indent-level js-expr-indent-offset))
-          (t 0))))
+          (t (prog-first-column)))))
 
 ;;; JSX Indentation
 

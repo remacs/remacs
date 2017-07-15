@@ -139,7 +139,7 @@ things in their .emacs.
 case to make sure it stays fixed.  Or pick your favorite programming
 major-mode, and write a test for its indentation.  Or a version
 control backend, and write a test for its status parser.  Etc.
-See test/automated for examples.
+See the 'test' directory for examples.
 
 * Small but important fixes needed in existing features:
 

@@ -9,7 +9,7 @@ Steps to take before starting on the first pretest in any release sequence:
     and you should use it for all that follows.  Diffs from this
     branch should be going to the emacs-diffs mailing list.
 
-1.  Decide on versions of automake and autoconf, and ensure you will
+1.  Decide on versions of m4 and autoconf, and ensure you will
     have them available for the duration of the release process.
 
 2.  Consider increasing the value of the variable
@@ -55,9 +55,12 @@ General steps (for each step, check for possible errors):
     M-x set-version RET).  For a pretest, start at version .90.  After
     .99, use .990 (so that it sorts).
 
-    The final pretest should be a release candidate.  Set the version
-    number to that of the actual release.  Pick a date about a week
-    from now when you intend to make the release.  Use M-x
+    The final pretest should be a release candidate.
+    Before a release candidate is made, the tasks listed in
+    admin/release-process must be completed.
+
+    Set the version number to that of the actual release.  Pick a date
+    about a week from now when you intend to make the release.  Use M-x
     add-release-logs to add entries to etc/HISTORY and the ChangeLog
     file.  It's best not to commit these files until the release is
     actually made.  Merge the entries from (unversioned) ChangeLog
@@ -84,7 +87,9 @@ General steps (for each step, check for possible errors):
      make -C etc/refcards
      make -C etc/refcards clean
 
-5.  Commit ChangeLog.N, etc/AUTHORS, lisp/ldefs-boot.el, and the
+5.  Copy lisp/loaddefs.el to lisp/ldefs-boot.el.
+
+    Commit ChangeLog.N, etc/AUTHORS, lisp/ldefs-boot.el, and the
     files changed by M-x set-version.
 
     If someone else made a commit between step 1 and now,
@@ -188,6 +193,10 @@ The pages to update are:
 emacs.html (for a new major release, a more thorough update is needed)
 history.html
 add the new NEWS file as news/NEWS.xx.y
+
+For every new release, a banner is displayed on top of the emacs.html
+page.  Uncomment and the release banner in emacs.html.  Keep it on the
+page for about a month, then comment it again.
 
 Use M-x make-manuals from admin/admin.el to regenerate the html
 manuals in manual/.  If there are new manuals, add appropriate index

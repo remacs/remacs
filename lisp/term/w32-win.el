@@ -396,7 +396,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 ;;; Fix interface to (X-specific) mouse.el
 (defun w32--set-selection (type value)
   (if (eq type 'CLIPBOARD)
-      (w32-set-clipboard-data value)
+      (w32-set-clipboard-data (replace-regexp-in-string "\0" "\\0" value t t))
     (put 'x-selections (or type 'PRIMARY) value)))
 
 (defun w32--get-selection  (&optional type data-type)

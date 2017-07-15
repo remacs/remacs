@@ -250,7 +250,7 @@ If LIMIT is non-nil, show no more than this many entries."
   (set (make-local-variable 'log-view-font-lock-keywords)
        (append log-view-font-lock-keywords
                '(("^[ |]+Author: \\(.*\\)" (1 'change-log-email))
-                 ("^[ |]+Date: \\(.*\\)" (1 'change-log-date-face))))))
+                 ("^[ |]+Date: \\(.*\\)" (1 'change-log-date))))))
 
 ;; (defun vc-mtn-show-log-entry (revision)
 ;;   )

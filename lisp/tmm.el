@@ -247,7 +247,7 @@ Its value should be an event that has a binding in MENU."
                        ;; candidates in the order they are shown on
                        ;; the menu bar.  So pass completing-read the
                        ;; reversed copy of the list.
-                       (completing-read
+                       (completing-read-default
                         (concat gl-str
                                 " (up/down to change, PgUp to menu): ")
                         (tmm--completion-table (reverse tmm-km-list)) nil t nil

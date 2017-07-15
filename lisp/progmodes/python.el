@@ -273,7 +273,7 @@
 (autoload 'help-function-arglist "help-fns")
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist (cons (purecopy "\\.pyw?\\'")  'python-mode))
+(add-to-list 'auto-mode-alist (cons (purecopy "\\.py[iw]?\\'") 'python-mode))
 ;;;###autoload
 (add-to-list 'interpreter-mode-alist (cons (purecopy "python[0-9.]*") 'python-mode))
 
@@ -1048,13 +1048,13 @@ possibilities can be narrowed to specific indentation points."
            (max line-indentation base-indent)))
         (`(,(or :after-block-start
                 :after-backslash-first-line
+                :after-backslash-assignment-continuation
                 :inside-paren-newline-start) . ,start)
          ;; Add one indentation level.
          (goto-char start)
          (+ (current-indentation) python-indent-offset))
         (`(,(or :inside-paren
                 :after-backslash-block-continuation
-                :after-backslash-assignment-continuation
                 :after-backslash-dotted-continuation) . ,start)
          ;; Use the column given by the context.
          (goto-char start)
@@ -1491,10 +1491,18 @@ Optional argument NOEND is internal and makes the logic to not
 jump to the end of line when moving forward searching for the end
 of the statement."
   (interactive "^")
-  (let (string-start bs-pos)
+  (let (string-start bs-pos (last-string-end 0))
     (while (and (or noend (goto-char (line-end-position)))
                 (not (eobp))
                 (cond ((setq string-start (python-syntax-context 'string))
+                       ;; The assertion can only fail if syntax table
+                       ;; text properties and the `syntax-ppss' cache
+                       ;; are somehow out of whack.  This has been
+                       ;; observed when using `syntax-ppss' during
+                       ;; narrowing.
+                       (cl-assert (> string-start last-string-end)
+                                  :show-args
+                                  "Overlapping strings detected")
                        (goto-char string-start)
                        (if (python-syntax-context 'paren)
                            ;; Ended up inside a paren, roll again.
@@ -1504,8 +1512,10 @@ of the statement."
                          (goto-char (+ (point)
                                        (python-syntax-count-quotes
                                         (char-after (point)) (point))))
-                         (or (re-search-forward (rx (syntax string-delimiter)) nil t)
-                             (goto-char (point-max)))))
+                         (setq last-string-end
+                               (or (re-search-forward
+                                    (rx (syntax string-delimiter)) nil t)
+                                   (goto-char (point-max))))))
                       ((python-syntax-context 'paren)
                        ;; The statement won't end before we've escaped
                        ;; at least one level of parenthesis.
@@ -2721,7 +2731,8 @@ variable.
        '(ansi-color-process-output
          python-shell-comint-watch-for-first-prompt-output-filter
          python-pdbtrack-comint-output-filter-function
-         python-comint-postoutput-scroll-to-bottom))
+         python-comint-postoutput-scroll-to-bottom
+         comint-watch-for-password-prompt))
   (set (make-local-variable 'compilation-error-regexp-alist)
        python-shell-compilation-regexp-alist)
   (add-hook 'completion-at-point-functions
@@ -2850,8 +2861,7 @@ of `error' with a user-friendly message."
   (or (python-shell-get-process)
       (if interactivep
           (user-error
-           "Start a Python process first with `%s' or `%s'."
-           (substitute-command-keys "\\[run-python]")
+           "Start a Python process first with `M-x run-python' or `%s'."
            ;; Get the binding.
            (key-description
             (where-is-internal
@@ -3277,8 +3287,10 @@ the full statement in the case of imports."
   "Completion string code must work for (i)pdb.")
 
 (defcustom python-shell-completion-native-disabled-interpreters
-  ;; PyPy's readline cannot handle some escape sequences yet.
-  (list "pypy")
+  ;; PyPy's readline cannot handle some escape sequences yet.  Native
+  ;; completion was found to be non-functional for IPython (see
+  ;; Bug#25067).
+  (list "pypy" "ipython")
   "List of disabled interpreters.
 When a match is found, native completion is disabled."
   :version "25.1"
@@ -3472,7 +3484,7 @@ With argument MSG show activation/deactivation message."
            :warning
            (concat
             "Your `python-shell-interpreter' doesn't seem to "
-            "support readline, yet `python-shell-completion-native' "
+            "support readline, yet `python-shell-completion-native-enable' "
             (format "was t and %S is not part of the "
                     (file-name-nondirectory python-shell-interpreter))
             "`python-shell-completion-native-disabled-interpreters' "

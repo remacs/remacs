@@ -267,7 +267,7 @@ set_frame_menubar (struct frame *f, bool first_time, bool deep_p)
   HMENU menubar_widget = f->output_data.w32->menubar_widget;
   Lisp_Object items;
   widget_value *wv, *first_wv, *prev_wv = 0;
-  int i, last_i;
+  int i, last_i = 0;
   int *submenu_start, *submenu_end;
   int *submenu_top_level_items, *submenu_n_panes;
 

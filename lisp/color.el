@@ -52,14 +52,18 @@ displayed.  If FRAME is omitted or nil, use the selected frame.
 If FRAME cannot display COLOR, return nil."
   ;; `colors-values' maximum value is either 65535 or 65280 depending on the
   ;; display system.  So we use a white conversion to get the max value.
-  (let ((valmax (float (car (color-values "#ffffff")))))
+  (let ((valmax (float (car (color-values "#ffffffffffff")))))
     (mapcar (lambda (x) (/ x valmax)) (color-values color frame))))
 
-(defun color-rgb-to-hex  (red green blue)
-  "Return hexadecimal notation for the color RED GREEN BLUE.
-RED, GREEN, and BLUE should be numbers between 0.0 and 1.0, inclusive."
-  (format "#%02x%02x%02x"
-          (* red 255) (* green 255) (* blue 255)))
+(defun color-rgb-to-hex  (red green blue &optional digits-per-component)
+  "Return hexadecimal #RGB notation for the color specified by RED GREEN BLUE.
+RED, GREEN, and BLUE should be numbers between 0.0 and 1.0, inclusive.
+Optional argument DIGITS-PER-COMPONENT can be either 4 (the default)
+or 2; use the latter if you need a 24-bit specification of a color."
+  (or digits-per-component (setq digits-per-component 4))
+  (let* ((maxval (if (= digits-per-component 2) 255 65535))
+         (fmt (if (= digits-per-component 2) "#%02x%02x%02x" "#%04x%04x%04x")))
+    (format fmt (* red maxval) (* green maxval) (* blue maxval))))
 
 (defun color-complement (color-name)
   "Return the color that is the complement of COLOR-NAME.

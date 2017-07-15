@@ -87,7 +87,7 @@ use c-constant-symbol instead."
   :value nil
   :tag "Symbol"
   :format "%t: %v\n%d"
-  :match (lambda (widget value) (symbolp value))
+  :match (lambda (_widget value) (symbolp value))
   :value-to-internal
   (lambda (widget value)
     (let ((s (if (symbolp value)
@@ -98,7 +98,7 @@ use c-constant-symbol instead."
 	  (setq s (concat s (make-string (- l (length s)) ?\ ))))
       s))
   :value-to-external
-  (lambda (widget value)
+  (lambda (_widget value)
     (if (stringp value)
 	(intern (progn
 		  (string-match "\\`[^ ]*" value)
@@ -109,14 +109,14 @@ use c-constant-symbol instead."
   "An integer or the value nil."
   :value nil
   :tag "Optional integer"
-  :match (lambda (widget value) (or (integerp value) (null value))))
+  :match (lambda (_widget value) (or (integerp value) (null value))))
 
 (define-widget 'c-symbol-list 'sexp
   "A single symbol or a list of symbols."
   :tag "Symbols separated by spaces"
   :validate 'widget-field-validate
   :match
-  (lambda (widget value)
+  (lambda (_widget value)
     (or (symbolp value)
 	(catch 'ok
 	  (while (listp value)
@@ -125,7 +125,7 @@ use c-constant-symbol instead."
 	    (setq value (cdr value)))
 	  (null value))))
   :value-to-internal
-  (lambda (widget value)
+  (lambda (_widget value)
     (cond ((null value)
 	   "")
 	  ((symbolp value)
@@ -138,7 +138,7 @@ use c-constant-symbol instead."
 	  (t
 	   value)))
   :value-to-external
-  (lambda (widget value)
+  (lambda (_widget value)
     (if (stringp value)
 	(let (list end)
 	  (while (string-match "\\S +" value end)
@@ -1632,6 +1632,18 @@ capitalized words are treated as type names (the requirement for a
 lower case char is to avoid recognizing all-caps macro and constant
 names)."))
   :type 'c-extra-types-widget
+  :group 'c)
+
+(defcustom c-asymmetry-fontification-flag t
+  "Whether to fontify certain ambiguous constructs by white space asymmetry.
+
+In the fontification engine, it is sometimes impossible to determine
+whether a construct is a declaration or an expression.  This happens
+particularly in C++, due to ambiguities in the language.  When such a
+construct is like \"foo * bar\" or \"foo &bar\", and this variable is non-nil
+(the default), the construct will be fontified as a declaration if there is
+white space either before or after the operator, but not both."
+  :type 'boolean
   :group 'c)
 
 (defvar c-noise-macro-with-parens-name-re "\\<\\>")

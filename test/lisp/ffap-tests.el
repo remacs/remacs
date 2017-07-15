@@ -23,6 +23,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'ert)
 (require 'ffap)
 
@@ -65,6 +66,18 @@ Host = example.com\n")
                    (list (point-min) (point-max))))
     (let ((ffap-gopher-regexp nil))
       (should-not (ffap-gopher-at-point)))))
+
+(ert-deftest ffap-other-window--bug-25352 ()
+  "Test for Bug#25352.  Checks that the window configuration is
+left alone when opening a URL in an external browser."
+  (cl-letf* ((old (current-window-configuration))
+             ((symbol-function 'ffap-prompter)
+              (lambda () "http://www.gnu.org"))
+             (urls nil)
+             (ffap-url-fetcher (lambda (url) (push url urls) nil)))
+    (should-not (ffap-other-window))
+    (should (equal (current-window-configuration) old))
+    (should (equal urls '("http://www.gnu.org")))))
 
 (provide 'ffap-tests)
 

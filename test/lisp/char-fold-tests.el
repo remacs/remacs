@@ -54,6 +54,14 @@
        (concat w1 "\s\n\s\t\f\t\n\r\t" w2)
        (concat w1 (make-string 10 ?\s) w2)))))
 
+(defun char-fold--ascii-upcase (string)
+  "Like `upcase' but acts on ASCII characters only."
+  (replace-regexp-in-string "[a-z]+" 'upcase string))
+
+(defun char-fold--ascii-downcase (string)
+  "Like `downcase' but acts on ASCII characters only."
+  (replace-regexp-in-string "[a-z]+" 'downcase string))
+
 (defun char-fold--test-match-exactly (string &rest strings-to-match)
   (let ((re (concat "\\`" (char-fold-to-regexp string) "\\'")))
     (dolist (it strings-to-match)
@@ -61,8 +69,8 @@
     ;; Case folding
     (let ((case-fold-search t))
       (dolist (it strings-to-match)
-        (should (string-match (upcase re) (downcase it)))
-        (should (string-match (downcase re) (upcase it)))))))
+        (should (string-match (char-fold--ascii-upcase re) (downcase it)))
+        (should (string-match (char-fold--ascii-downcase re) (upcase it)))))))
 
 (ert-deftest char-fold--test-some-defaults ()
   (dolist (it '(("ffl" . "ﬄ") ("ffi" . "ﬃ")

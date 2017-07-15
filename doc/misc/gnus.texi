@@ -13871,6 +13871,7 @@ installed.  You then define a server as follows:
       (nntp-address "snews.bar.com"))
 @end lisp
 
+@c FIXME openssl s_client should be deprecated in favor of gnutls.
 @findex nntp-open-ssl-stream
 @item nntp-open-ssl-stream
 Opens a connection to a server over a @dfn{secure} channel.  To use
@@ -26378,7 +26379,7 @@ read when doing the operation described above.
 @cindex characters in file names
 This is an alist that says how to translate characters in file names.
 For instance, if @samp{:} is invalid as a file character in file names
-on your system (you OS/2 user you), you could say something like:
+on your system (you MS Windows user you), you could say something like:
 
 @lisp
 @group
@@ -26387,7 +26388,7 @@ on your system (you OS/2 user you), you could say something like:
 @end group
 @end lisp
 
-In fact, this is the default value for this variable on OS/2 and MS
+In fact, this is (part of) the default value for this variable on MS
 Windows (phooey) systems.
 
 @item gnus-hidden-properties

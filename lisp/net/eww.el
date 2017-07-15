@@ -312,11 +312,19 @@ word(s) will be searched for via `eww-search-prefix'."
 	       (expand-file-name file))))
 
 ;;;###autoload
-(defun eww-search-words (&optional beg end)
+(defun eww-search-words ()
   "Search the web for the text between BEG and END.
-See the `eww-search-prefix' variable for the search engine used."
-  (interactive "r")
-  (eww (buffer-substring beg end)))
+If region is active (and not whitespace), search the web for
+the text between BEG and END.  Else, prompt the user for a search
+string.  See the `eww-search-prefix' variable for the search
+engine used."
+  (interactive)
+  (if (use-region-p)
+      (let ((region-string (buffer-substring (region-beginning) (region-end))))
+        (if (not (string-match-p "\\`[ \n\t\r\v\f]*\\'" region-string))
+            (eww region-string)
+          (call-interactively 'eww)))
+    (call-interactively 'eww)))
 
 (defun eww-open-in-new-buffer ()
   "Fetch link at point in a new EWW buffer."
@@ -514,6 +522,7 @@ Currently this means either text/html or application/xhtml+xml."
              (< eww-redirect-level 5))
     (when-let (refresh (dom-attr dom 'content))
       (when (or (string-match "^\\([0-9]+\\) *;.*url=\"\\([^\"]+\\)\"" refresh)
+                (string-match "^\\([0-9]+\\) *;.*url='\\([^']+\\)'" refresh)
                 (string-match "^\\([0-9]+\\) *;.*url=\\([^ ]+\\)" refresh))
         (let ((timeout (match-string 1 refresh))
               (url (match-string 2 refresh))
@@ -640,8 +649,11 @@ Currently this means either text/html or application/xhtml+xml."
             (when (coding-system-p cs)
               (decode-coding-region (point-min) (point-max) cs)
               (setq buffer-file-coding-system last-coding-system-used))))
-	(when (fboundp 'html-mode)
-	  (html-mode))))
+        (cond
+         ((fboundp 'mhtml-mode)
+          (mhtml-mode))
+         ((fboundp 'html-mode)
+	  (html-mode)))))
     (view-buffer buf)))
 
 (defun eww-toggle-paragraph-direction ()
@@ -899,8 +911,9 @@ appears in a <link> or <a> tag."
 
 (defun eww-reload (&optional local encode)
   "Reload the current page.
-If LOCAL (the command prefix), don't reload the page from the
-network, but just re-display the HTML already fetched."
+If LOCAL is non-nil (interactively, the command was invoked with
+a prefix argument), don't reload the page from the network, but
+just re-display the HTML already fetched."
   (interactive "P")
   (let ((url (plist-get eww-data :url)))
     (if local

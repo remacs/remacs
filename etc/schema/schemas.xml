@@ -55,4 +55,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>. -->
   <typeId id="XHTML" uri="xhtml.rnc"/>
   <typeId id="DocBook" uri="docbook.rnc"/>
   <typeId id="RDF" uri="rdfxml.rnc"/>
+
+  <documentElement prefix="office" typeId="OpenDocument"/>
+  <documentElement prefix="manifest" localName="manifest" typeId="OpenDocument Manifest"/>
+  <typeId id="OpenDocument" uri="od-schema-v1.2-os.rnc"/>
+  <typeId id="OpenDocument Manifest" uri="od-manifest-schema-v1.2-os.rnc"/>
+
 </locatingRules>

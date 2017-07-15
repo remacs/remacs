@@ -7644,10 +7644,10 @@ Whitelisted message face
 @end vtable
 
 @cindex SpamProbe
-@cindex Spamassassin
+@cindex SpamAssassin
 @cindex bogofilter
 @cindex spam filters, SpamProbe
-@cindex spam filters, Spamassassin
+@cindex spam filters, SpamAssassin
 @cindex spam filters, bogofilter
 
 MH-E depends on @uref{http://spamassassin.apache.org/, SpamAssassin},
@@ -7720,8 +7720,8 @@ MH-E can work with.
 
 @subheading SpamAssassin
 
-@cindex Spamassassin
-@cindex spam filters, Spamassassin
+@cindex SpamAssassin
+@cindex spam filters, SpamAssassin
 
 SpamAssassin is one of the more popular spam filtering programs. Get
 it from your local distribution or from the

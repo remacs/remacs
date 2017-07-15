@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1993, 2001-2017 Free Software Foundation, Inc.
 
-;; Author: ATAE@spva.physics.imperial.ac.uk (Ata Etemadi)
+;; Author: Ata Etemadi <ATAE@spva.physics.imperial.ac.uk>
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: data
 

@@ -1311,8 +1311,8 @@ Internal use only.")
                                     preferred))))))
          (completion-ignore-case t)
          (completion-pcm--delim-wild-regex ; Let "u8" complete to "utf-8".
-          (concat completion-pcm--delim-wild-regex
-                  "\\|\\([[:alpha:]]\\)[[:digit:]]"))
+          (concat "\\(?:" completion-pcm--delim-wild-regex
+                  "\\|\\([[:alpha:]]\\)[[:digit:]]\\)"))
          (cs (completing-read
               (format "Coding system for saving file (default %s): " default)
               combined-table
@@ -1970,7 +1970,7 @@ use \"coding: 'raw-text\" instead."
 	  (goto-char tail-start)
 	  (re-search-forward "[\r\n]\^L" tail-end t)
 	  (if (re-search-forward
-	       "[\r\n]\\([^[\r\n]*\\)[ \t]*Local Variables:[ \t]*\\([^\r\n]*\\)[\r\n]"
+	       "[\r\n]\\([^\r\n]*\\)[ \t]*Local Variables:[ \t]*\\([^\r\n]*\\)[\r\n]"
 	       tail-end t)
 	      ;; The prefix is what comes before "local variables:" in its
 	      ;; line.  The suffix is what comes after "local variables:"

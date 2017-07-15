@@ -1,9 +1,9 @@
-;;; ob-clojure.el --- org-babel functions for clojure evaluation
+;;; ob-clojure.el --- Babel Functions for Clojure    -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 
-;; Author: Joel Boehland
-;;	Eric Schulte
+;; Author: Joel Boehland, Eric Schulte, Oleh Krehel
+;;
 ;; Keywords: literate programming, reproducible research
 ;; Homepage: http://orgmode.org
 
@@ -24,21 +24,30 @@
 
 ;;; Commentary:
 
-;; Support for evaluating clojure code, relies on slime for all eval.
+;; Support for evaluating clojure code
 
-;;; Requirements:
+;; Requirements:
 
 ;; - clojure (at least 1.2.0)
 ;; - clojure-mode
-;; - slime
+;; - either cider or SLIME
 
-;; By far, the best way to install these components is by following
+;; For Cider, see https://github.com/clojure-emacs/cider
+
+;; For SLIME, the best way to install these components is by following
 ;; the directions as set out by Phil Hagelberg (Technomancy) on the
 ;; web page: http://technomancy.us/126
 
 ;;; Code:
+(require 'cl-lib)
 (require 'ob)
 
+(declare-function cider-current-connection "ext:cider-client" (&optional type))
+(declare-function cider-current-session "ext:cider-client" ())
+(declare-function nrepl-dict-get "ext:nrepl-client" (dict key))
+(declare-function nrepl-sync-request:eval "ext:nrepl-client"
+		  (input connection session &optional ns))
+(declare-function org-trim "org" (s &optional keep-lead))
 (declare-function slime-eval "ext:slime" (sexp &optional package))
 
 (defvar org-babel-tangle-lang-exts)
@@ -47,49 +56,63 @@
 (defvar org-babel-default-header-args:clojure '())
 (defvar org-babel-header-args:clojure '((package . :any)))
 
+(defcustom org-babel-clojure-backend
+  (cond ((featurep 'cider) 'cider)
+	(t 'slime))
+  "Backend used to evaluate Clojure code blocks."
+  :group 'org-babel
+  :type '(choice
+	  (const :tag "cider" cider)
+	  (const :tag "SLIME" slime)))
+
 (defun org-babel-expand-body:clojure (body params)
   "Expand BODY according to PARAMS, return the expanded body."
-  (let* ((vars (mapcar #'cdr (org-babel-get-header params :var)))
-	 (result-params (cdr (assoc :result-params params)))
+  (let* ((vars (org-babel--get-vars params))
+	 (result-params (cdr (assq :result-params params)))
 	 (print-level nil) (print-length nil)
-	 (body (org-babel-trim
-		(if (> (length vars) 0)
-		    (concat "(let ["
-			    (mapconcat
-			     (lambda (var)
-			       (format "%S (quote %S)" (car var) (cdr var)))
-			     vars "\n      ")
-			    "]\n" body ")")
-		  body))))
-    (cond ((or (member "code" result-params) (member "pp" result-params))
-	   (format (concat "(let [org-mode-print-catcher (java.io.StringWriter.)] "
-			   "(clojure.pprint/with-pprint-dispatch clojure.pprint/%s-dispatch "
-			   "(clojure.pprint/pprint (do %s) org-mode-print-catcher) "
-			   "(str org-mode-print-catcher)))")
-		   (if (member "code" result-params) "code" "simple") body))
-	  ;; if (:results output), collect printed output
-	  ((member "output" result-params)
-	   (format "(clojure.core/with-out-str %s)" body))
-	  (t body))))
+	 (body (org-trim
+		(if (null vars) (org-trim body)
+		  (concat "(let ["
+			  (mapconcat
+			   (lambda (var)
+			     (format "%S (quote %S)" (car var) (cdr var)))
+			   vars "\n      ")
+			  "]\n" body ")")))))
+    (if (or (member "code" result-params)
+	    (member "pp" result-params))
+	(format "(clojure.pprint/pprint (do %s))" body)
+      body)))
 
 (defun org-babel-execute:clojure (body params)
   "Execute a block of Clojure code with Babel."
-  (require 'slime)
-  (with-temp-buffer
-    (insert (org-babel-expand-body:clojure body params))
-    (let ((result
-           (slime-eval
-            `(swank:eval-and-grab-output
-              ,(buffer-substring-no-properties (point-min) (point-max)))
-            (cdr (assoc :package params)))))
-      (let ((result-params (cdr (assoc :result-params params))))
-        (org-babel-result-cond result-params
-          result
-          (condition-case nil (org-babel-script-escape result)
-            (error result)))))))
+  (let ((expanded (org-babel-expand-body:clojure body params))
+	result)
+    (cl-case org-babel-clojure-backend
+      (cider
+       (require 'cider)
+       (let ((result-params (cdr (assq :result-params params))))
+	 (setq result
+	       (nrepl-dict-get
+		(nrepl-sync-request:eval
+		 expanded (cider-current-connection) (cider-current-session))
+		(if (or (member "output" result-params)
+			(member "pp" result-params))
+		    "out"
+		  "value")))))
+      (slime
+       (require 'slime)
+       (with-temp-buffer
+	 (insert expanded)
+	 (setq result
+	       (slime-eval
+		`(swank:eval-and-grab-output
+		  ,(buffer-substring-no-properties (point-min) (point-max)))
+		(cdr (assq :package params)))))))
+    (org-babel-result-cond (cdr (assq :result-params params))
+      result
+      (condition-case nil (org-babel-script-escape result)
+	(error result)))))
 
 (provide 'ob-clojure)
-
-
 
 ;;; ob-clojure.el ends here

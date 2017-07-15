@@ -39,6 +39,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "intervals.h"
 #include "keymap.h"
 #include "blockinput.h"
+#include "sysstdio.h"
 #include "systime.h"
 #include "atimer.h"
 #include "process.h"
@@ -629,7 +630,8 @@ echo_length (void)
 static void
 echo_truncate (ptrdiff_t nchars)
 {
-  if (STRINGP (KVAR (current_kboard, echo_string)))
+  Lisp_Object es = KVAR (current_kboard, echo_string);
+  if (STRINGP (es) && SCHARS (es) > nchars)
     kset_echo_string (current_kboard,
 		      Fsubstring (KVAR (current_kboard, echo_string),
 				  make_number (0), make_number (nchars)));
@@ -3240,7 +3242,7 @@ record_char (Lisp_Object c)
 	    }
 	}
     }
-  else
+  else if (NILP (Vexecuting_kbd_macro))
     store_kbd_macro_char (c);
 
   /* recent_keys should not include events from keyboard macros.  */
@@ -3284,7 +3286,7 @@ record_char (Lisp_Object c)
       if (INTEGERP (c))
 	{
 	  if (XUINT (c) < 0x100)
-	    putc (XUINT (c), dribble);
+	    putc_unlocked (XUINT (c), dribble);
 	  else
 	    fprintf (dribble, " 0x%"pI"x", XUINT (c));
 	}
@@ -3297,15 +3299,15 @@ record_char (Lisp_Object c)
 
 	  if (SYMBOLP (dribblee))
 	    {
-	      putc ('<', dribble);
-	      fwrite (SDATA (SYMBOL_NAME (dribblee)), sizeof (char),
-		      SBYTES (SYMBOL_NAME (dribblee)),
-		      dribble);
-	      putc ('>', dribble);
+	      putc_unlocked ('<', dribble);
+	      fwrite_unlocked (SDATA (SYMBOL_NAME (dribblee)), sizeof (char),
+			       SBYTES (SYMBOL_NAME (dribblee)),
+			       dribble);
+	      putc_unlocked ('>', dribble);
 	    }
 	}
 
-      fflush (dribble);
+      fflush_unlocked (dribble);
       unblock_input ();
     }
 }
@@ -3759,7 +3761,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 	 detaching from the terminal.  */
       || (IS_DAEMON && DAEMON_RUNNING))
     {
-      int c = getchar ();
+      int c = getchar_unlocked ();
       XSETINT (obj, c);
       *kbp = current_kboard;
       return obj;
@@ -4047,6 +4049,14 @@ kbd_buffer_get_event (KBOARD **kbp,
 	  kbd_fetch_ptr = event + 1;
 	}
 #endif
+#if defined (HAVE_X11) || defined (HAVE_NTGUI) || defined (HAVE_NS)
+      else if (event->kind == MOVE_FRAME_EVENT)
+	{
+	  /* Make an event (move-frame (FRAME)).  */
+	  obj = list2 (Qmove_frame, list1 (event->ie.frame_or_window));
+	  kbd_fetch_ptr = event + 1;
+	}
+#endif
 #ifdef HAVE_XWIDGETS
       else if (event->kind == XWIDGET_EVENT)
 	{
@@ -4057,6 +4067,11 @@ kbd_buffer_get_event (KBOARD **kbp,
       else if (event->kind == CONFIG_CHANGED_EVENT)
 	{
 	  obj = make_lispy_event (&event->ie);
+	  kbd_fetch_ptr = event + 1;
+	}
+      else if (event->kind == SELECT_WINDOW_EVENT)
+	{
+	  obj = list2 (Qselect_window, list1 (event->ie.frame_or_window));
 	  kbd_fetch_ptr = event + 1;
 	}
       else
@@ -5103,6 +5118,19 @@ static short const scroll_bar_parts[] = {
   SYMBOL_INDEX (Qrightmost), SYMBOL_INDEX (Qend_scroll), SYMBOL_INDEX (Qratio)
 };
 
+#ifdef HAVE_WINDOW_SYSTEM
+/* An array of symbol indexes of internal border parts, indexed by an enum
+   internal_border_part value.  Note that Qnil corresponds to
+   internal_border_part_none and should not appear in Lisp events.  */
+static short const internal_border_parts[] = {
+  SYMBOL_INDEX (Qnil), SYMBOL_INDEX (Qleft_edge),
+  SYMBOL_INDEX (Qtop_left_corner), SYMBOL_INDEX (Qtop_edge),
+  SYMBOL_INDEX (Qtop_right_corner), SYMBOL_INDEX (Qright_edge),
+  SYMBOL_INDEX (Qbottom_right_corner), SYMBOL_INDEX (Qbottom_edge),
+  SYMBOL_INDEX (Qbottom_left_corner)
+};
+#endif
+
 /* A vector, indexed by button number, giving the down-going location
    of currently depressed buttons, both scroll bar and non-scroll bar.
 
@@ -5140,15 +5168,15 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
   Lisp_Object extra_info = Qnil;
   /* Coordinate pixel positions to return.  */
   int xret = 0, yret = 0;
-  /* The window under frame pixel coordinates (x,y)  */
-  Lisp_Object window = f
+  /* The window or frame under frame pixel coordinates (x,y)  */
+  Lisp_Object window_or_frame = f
     ? window_from_coordinates (f, XINT (x), XINT (y), &part, 0)
     : Qnil;
 
-  if (WINDOWP (window))
+  if (WINDOWP (window_or_frame))
     {
       /* It's a click in window WINDOW at frame coordinates (X,Y)  */
-      struct window *w = XWINDOW (window);
+      struct window *w = XWINDOW (window_or_frame);
       Lisp_Object string_info = Qnil;
       ptrdiff_t textpos = 0;
       int col = -1, row = -1;
@@ -5337,17 +5365,31 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 					       make_number (row)),
 					extra_info)));
     }
-  else if (f != 0)
+
+#ifdef HAVE_WINDOW_SYSTEM
+  else if (f)
     {
       /* Return mouse pixel coordinates here.  */
-      XSETFRAME (window, f);
+      XSETFRAME (window_or_frame, f);
       xret = XINT (x);
       yret = XINT (y);
-    }
-  else
-    window = Qnil;
 
-  return Fcons (window,
+      if (FRAME_LIVE_P (f)
+	  && FRAME_INTERNAL_BORDER_WIDTH (f) > 0
+	  && !NILP (get_frame_param (f, Qdrag_internal_border)))
+	{
+	  enum internal_border_part part
+	    = frame_internal_border_part (f, xret, yret);
+
+	  posn = builtin_lisp_symbol (internal_border_parts[part]);
+	}
+    }
+#endif
+
+  else
+    window_or_frame = Qnil;
+
+  return Fcons (window_or_frame,
 		Fcons (posn,
 		       Fcons (Fcons (make_number (xret),
 				     make_number (yret)),
@@ -10338,7 +10380,7 @@ handle_interrupt (bool in_signal_handler)
 	  sigemptyset (&blocked);
 	  sigaddset (&blocked, SIGINT);
 	  pthread_sigmask (SIG_BLOCK, &blocked, 0);
-	  fflush (stdout);
+	  fflush_unlocked (stdout);
 	}
 
       reset_all_sys_modes ();
@@ -10713,13 +10755,13 @@ The `posn-' functions access elements of such lists.  */)
 }
 
 DEFUN ("posn-at-point", Fposn_at_point, Sposn_at_point, 0, 2, 0,
-       doc: /* Return position information for buffer POS in WINDOW.
+       doc: /* Return position information for buffer position POS in WINDOW.
 POS defaults to point in WINDOW; WINDOW defaults to the selected window.
 
-Return nil if position is not visible in window.  Otherwise,
+Return nil if POS is not visible in WINDOW.  Otherwise,
 the return value is similar to that returned by `event-start' for
 a mouse click at the upper left corner of the glyph corresponding
-to the given buffer position:
+to POS:
    (WINDOW AREA-OR-POS (X . Y) TIMESTAMP OBJECT POS (COL . ROW)
     IMAGE (DX . DY) (WIDTH . HEIGHT))
 The `posn-' functions access elements of such lists.  */)
@@ -10932,6 +10974,7 @@ static const struct event_head head_table[] = {
 
   {SYMBOL_INDEX (Qfocus_in),            SYMBOL_INDEX (Qfocus_in)},
   {SYMBOL_INDEX (Qfocus_out),           SYMBOL_INDEX (Qfocus_out)},
+  {SYMBOL_INDEX (Qmove_frame),          SYMBOL_INDEX (Qmove_frame)},
   {SYMBOL_INDEX (Qdelete_frame),        SYMBOL_INDEX (Qdelete_frame)},
   {SYMBOL_INDEX (Qiconify_frame),       SYMBOL_INDEX (Qiconify_frame)},
   {SYMBOL_INDEX (Qmake_frame_visible),  SYMBOL_INDEX (Qmake_frame_visible)},
@@ -11098,12 +11141,24 @@ syms_of_keyboard (void)
   Fset (Qinput_method_exit_on_first_char, Qnil);
   Fset (Qinput_method_use_echo_area, Qnil);
 
+  /* Symbols for dragging internal borders.  */
+  DEFSYM (Qdrag_internal_border, "drag-internal-border");
+  DEFSYM (Qleft_edge, "left-edge");
+  DEFSYM (Qtop_left_corner, "top-left-corner");
+  DEFSYM (Qtop_edge, "top-edge");
+  DEFSYM (Qtop_right_corner, "top-right-corner");
+  DEFSYM (Qright_edge, "right-edge");
+  DEFSYM (Qbottom_right_corner, "bottom-right-corner");
+  DEFSYM (Qbottom_edge, "bottom-edge");
+  DEFSYM (Qbottom_left_corner, "bottom-left-corner");
+
   /* Symbols to head events.  */
   DEFSYM (Qmouse_movement, "mouse-movement");
   DEFSYM (Qscroll_bar_movement, "scroll-bar-movement");
   DEFSYM (Qswitch_frame, "switch-frame");
   DEFSYM (Qfocus_in, "focus-in");
   DEFSYM (Qfocus_out, "focus-out");
+  DEFSYM (Qmove_frame, "move-frame");
   DEFSYM (Qdelete_frame, "delete-frame");
   DEFSYM (Qiconify_frame, "iconify-frame");
   DEFSYM (Qmake_frame_visible, "make-frame-visible");
@@ -11850,6 +11905,8 @@ keys_of_keyboard (void)
 			    "handle-focus-in");
   initial_define_lispy_key (Vspecial_event_map, "focus-out",
 			    "handle-focus-out");
+  initial_define_lispy_key (Vspecial_event_map, "move-frame",
+			    "handle-move-frame");
 }
 
 /* Mark the pointers in the kboard objects.

@@ -32,6 +32,8 @@
   ;; This should not crash.
   (should-error (funcall '(closure)) :type 'invalid-function))
 
+(defvar byte-compile-debug)
+
 (ert-deftest eval-tests--bugs-24912-and-24913 ()
   "Checks that Emacs doesn’t accept weird argument lists.
 Bug#24912 and Bug#24913."

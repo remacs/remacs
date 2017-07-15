@@ -1,4 +1,4 @@
-;;; ob-ledger.el --- org-babel functions for ledger evaluation
+;;; ob-ledger.el --- Babel Functions for Ledger      -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
 
@@ -46,8 +46,7 @@
   "Execute a block of Ledger entries with org-babel.  This function is
 called by `org-babel-execute-src-block'."
   (message "executing Ledger source code block")
-  (let ((result-params (split-string (or (cdr (assoc :results params)) "")))
-	(cmdline (cdr (assoc :cmdline params)))
+  (let ((cmdline (cdr (assq :cmdline params)))
         (in-file (org-babel-temp-file "ledger-"))
 	(out-file (org-babel-temp-file "ledger-output-")))
     (with-temp-file in-file (insert body))
@@ -61,7 +60,7 @@ called by `org-babel-execute-src-block'."
 			     " > " (org-babel-process-file-name out-file))))
     (with-temp-buffer (insert-file-contents out-file) (buffer-string))))
 
-(defun org-babel-prep-session:ledger (session params)
+(defun org-babel-prep-session:ledger (_session _params)
   (error "Ledger does not support sessions"))
 
 (provide 'ob-ledger)

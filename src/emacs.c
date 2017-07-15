@@ -23,7 +23,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <sys/file.h>
@@ -33,6 +32,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define MAIN_PROGRAM
 #include "lisp.h"
+#include "sysstdio.h"
 
 #ifdef WINDOWSNT
 #include <fcntl.h>
@@ -124,18 +124,12 @@ Lisp_Object Vlibrary_cache;
    on subsequent starts.  */
 bool initialized;
 
-bool generating_ldefs_boot;
-
 #ifndef CANNOT_DUMP
 /* Set to true if this instance of Emacs might dump.  */
 # ifndef DOUG_LEA_MALLOC
 static
 # endif
 bool might_dump;
-#endif
-
-#ifdef DARWIN_OS
-extern void unexec_init_emacs_zone (void);
 #endif
 
 /* If true, Emacs should not attempt to use a window-specific code,
@@ -220,11 +214,16 @@ Initialization options:\n\
     "\
 --batch                     do not do interactive display; implies -q\n\
 --chdir DIR                 change to directory DIR\n\
---daemon, --old-daemon[=NAME] start a (named) server in the background\n\
---new-daemon[=NAME]         start a (named) server in the foreground\n\
+--daemon, --bg-daemon[=NAME] start a (named) server in the background\n\
+--fg-daemon[=NAME]          start a (named) server in the foreground\n\
 --debug-init                enable Emacs Lisp debugger for init file\n\
 --display, -d DISPLAY       use X server DISPLAY\n\
 ",
+#ifdef HAVE_MODULES
+    "\
+--module-assertions         assert behavior of dynamic modules\n\
+",
+#endif
     "\
 --no-build-details          do not add build details such as time stamps\n\
 --no-desktop                do not load a saved desktop\n\
@@ -462,6 +461,9 @@ init_cmdargs (int argc, char **argv, int skip_args, char *original_pwd)
 
   if (!NILP (Vinvocation_directory))
     {
+      if (NILP (Vpurify_flag) && !NILP (Ffboundp (Qfile_truename)))
+        Vinvocation_directory = call1 (Qfile_truename, Vinvocation_directory);
+
       dir = Vinvocation_directory;
 #ifdef WINDOWSNT
       /* If we are running from the build directory, set DIR to the
@@ -637,8 +639,11 @@ close_output_streams (void)
       _exit (EXIT_FAILURE);
     }
 
-   if (close_stream (stderr) != 0)
-     _exit (EXIT_FAILURE);
+  /* Do not close stderr if addresses are being sanitized, as the
+     sanitizer might report to stderr after this function is
+     invoked.  */
+  if (!ADDRESS_SANITIZER && close_stream (stderr) != 0)
+    _exit (EXIT_FAILURE);
 }
 
 /* ARGSUSED */
@@ -663,11 +668,12 @@ main (int argc, char **argv)
   /* Record (approximately) where the stack begins.  */
   stack_bottom = &stack_bottom_variable;
 
+#ifndef CANNOT_DUMP
   dumping = !initialized && (strcmp (argv[argc - 1], "dump") == 0
-			     || strcmp (argv[argc - 1], "bootstrap") == 0 );
-
-  generating_ldefs_boot = !!getenv ("GENERATE_LDEFS_BOOT");
-
+			     || strcmp (argv[argc - 1], "bootstrap") == 0);
+#else
+  dumping = false;
+#endif
 
   /* True if address randomization interferes with memory allocation.  */
 # ifdef __PPC64__
@@ -725,7 +731,7 @@ main (int argc, char **argv)
 #endif
 
 /* If using unexmacosx.c (set by s/darwin.h), we must do this. */
-#ifdef DARWIN_OS
+#if defined DARWIN_OS && !defined CANNOT_DUMP
   if (!initialized)
     unexec_init_emacs_zone ();
 #endif
@@ -857,7 +863,7 @@ main (int argc, char **argv)
     }
 #endif /* HAVE_SETRLIMIT and RLIMIT_STACK and not CYGWIN */
 
-  clearerr (stdin);
+  clearerr_unlocked (stdin);
 
   emacs_backtrace (-1);
 
@@ -949,7 +955,7 @@ main (int argc, char **argv)
       int i;
       printf ("Usage: %s [OPTION-OR-FILENAME]...\n", argv[0]);
       for (i = 0; i < ARRAYELTS (usage_message); i++)
-	fputs (usage_message[i], stdout);
+	fputs_unlocked (usage_message[i], stdout);
       exit (0);
     }
 
@@ -965,15 +971,15 @@ main (int argc, char **argv)
 
   int sockfd = -1;
 
-  if (argmatch (argv, argc, "-new-daemon", "--new-daemon", 10, NULL, &skip_args)
-      || argmatch (argv, argc, "-new-daemon", "--new-daemon", 10, &dname_arg, &skip_args))
+  if (argmatch (argv, argc, "-fg-daemon", "--fg-daemon", 10, NULL, &skip_args)
+      || argmatch (argv, argc, "-fg-daemon", "--fg-daemon", 10, &dname_arg, &skip_args))
     {
       daemon_type = 1;           /* foreground */
     }
   else if (argmatch (argv, argc, "-daemon", "--daemon", 5, NULL, &skip_args)
       || argmatch (argv, argc, "-daemon", "--daemon", 5, &dname_arg, &skip_args)
-      || argmatch (argv, argc, "-old-daemon", "--old-daemon", 10, NULL, &skip_args)
-      || argmatch (argv, argc, "-old-daemon", "--old-daemon", 10, &dname_arg, &skip_args))
+      || argmatch (argv, argc, "-bg-daemon", "--bg-daemon", 10, NULL, &skip_args)
+      || argmatch (argv, argc, "-bg-daemon", "--bg-daemon", 10, &dname_arg, &skip_args))
     {
       daemon_type = 2;          /* background */
     }
@@ -1088,7 +1094,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
                 char fdStr[80];
                 int fdStrlen =
                   snprintf (fdStr, sizeof fdStr,
-                            "--old-daemon=\n%d,%d\n%s", daemon_pipe[0],
+                            "--bg-daemon=\n%d,%d\n%s", daemon_pipe[0],
                             daemon_pipe[1], dname_arg ? dname_arg : "");
 
                 if (! (0 <= fdStrlen && fdStrlen < sizeof fdStr))
@@ -1230,6 +1236,18 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
   build_details = ! argmatch (argv, argc, "-no-build-details",
 			      "--no-build-details", 7, NULL, &skip_args);
+
+#ifdef HAVE_MODULES
+  bool module_assertions
+    = argmatch (argv, argc, "-module-assertions", "--module-assertions", 15,
+                NULL, &skip_args);
+  if (dumping && module_assertions)
+    {
+      fputs ("Module assertions are not supported during dumping\n", stderr);
+      exit (1);
+    }
+  init_module_assertions (module_assertions);
+#endif
 
 #ifdef HAVE_NS
   ns_pool = ns_alloc_autorelease_pool ();
@@ -1665,12 +1683,15 @@ static const struct standard_args standard_args[] =
   { "-batch", "--batch", 100, 0 },
   { "-script", "--script", 100, 1 },
   { "-daemon", "--daemon", 99, 0 },
-  { "-old-daemon", "--old-daemon", 99, 0 },
-  { "-new-daemon", "--new-daemon", 99, 0 },
+  { "-bg-daemon", "--bg-daemon", 99, 0 },
+  { "-fg-daemon", "--fg-daemon", 99, 0 },
   { "-help", "--help", 90, 0 },
   { "-nl", "--no-loadup", 70, 0 },
   { "-nsl", "--no-site-lisp", 65, 0 },
   { "-no-build-details", "--no-build-details", 63, 0 },
+#ifdef HAVE_MODULES
+  { "-module-assertions", "--module-assertions", 62, 0 },
+#endif
   /* -d must come last before the options handled in startup.el.  */
   { "-d", "--display", 60, 1 },
   { "-display", 0, 60, 1 },
@@ -2124,7 +2145,7 @@ You must run Emacs in batch mode in order to dump it.  */)
   }
 #endif
 
-  fflush (stdout);
+  fflush_unlocked (stdout);
   /* Tell malloc where start of impure now is.  */
   /* Also arrange for warnings when nearly out of space.  */
 #if !defined SYSTEM_MALLOC && !defined HYBRID_MALLOC

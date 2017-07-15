@@ -56,6 +56,7 @@ versions of a source file, storing information such as the creation
 time of each version, who made it, and a description of what was
 changed.
 
+@cindex VC
   The Emacs version control interface is called @dfn{VC}@.  VC
 commands work with several different version control systems;
 currently, it supports Bazaar, CVS, Git, Mercurial, Monotone, RCS,

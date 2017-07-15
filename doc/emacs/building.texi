@@ -1478,7 +1478,9 @@ expression.)
 Emacs Lisp expression preceding point in the buffer, and displays the
 value in the echo area.  When the result of an evaluation is an
 integer, it is displayed together with the value in other formats
-(octal, hexadecimal, and character).
+(octal, hexadecimal, and character if
+@code{eval-expression-print-maximum-character}, described below,
+allows it).
 
   If @kbd{M-:} or @kbd{C-x C-e} is given a prefix argument, it inserts
 the value into the current buffer at point, rather than displaying it
@@ -1486,8 +1488,10 @@ in the echo area.  If the prefix argument is zero, any integer output
 is inserted together with its value in other formats (octal,
 hexadecimal, and character).  Such a prefix argument also prevents
 abbreviation of the output according to the variables
-@code{eval-expression-print-level} and @code{eval-expression-print-length}
-(see below).
+@code{eval-expression-print-level} and
+@code{eval-expression-print-length} (see below).  Similarly, a prefix
+argument of @code{-1} overrides the effect of
+@code{eval-expression-print-length}.
 
 @kindex C-M-x @r{(Emacs Lisp mode)}
 @findex eval-defun
@@ -1517,6 +1521,7 @@ eval-buffer} is similar but evaluates the entire buffer.
 
 @vindex eval-expression-print-level
 @vindex eval-expression-print-length
+@vindex eval-expression-print-maximum-character
 @vindex eval-expression-debug-on-error
   The options @code{eval-expression-print-level} and
 @code{eval-expression-print-length} control the maximum depth and
@@ -1526,6 +1531,8 @@ before abbreviating them.  Supplying a zero prefix argument to
 printed in full.  @code{eval-expression-debug-on-error} controls
 whether evaluation errors invoke the debugger when these commands are
 used; its default is @code{t}.
+@code{eval-expression-print-maximum-character} prevents integers which
+are larger than it from being displayed as characters.
 
 @node Lisp Interaction
 @section Lisp Interaction Buffers

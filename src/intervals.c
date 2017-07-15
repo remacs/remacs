@@ -224,7 +224,8 @@ intervals_equal (INTERVAL i0, INTERVAL i1)
    Pass FUNCTION two args: an interval, and ARG.  */
 
 void
-traverse_intervals_noorder (INTERVAL tree, void (*function) (INTERVAL, Lisp_Object), Lisp_Object arg)
+traverse_intervals_noorder (INTERVAL tree, void (*function) (INTERVAL, void *),
+			    void *arg)
 {
   /* Minimize stack usage.  */
   while (tree)
@@ -256,69 +257,6 @@ traverse_intervals (INTERVAL tree, ptrdiff_t position,
       position += LENGTH (tree); tree = tree->right;
     }
 }
-
-#if 0
-
-static int icount;
-static int idepth;
-static int zero_length;
-
-/* These functions are temporary, for debugging purposes only.  */
-
-INTERVAL search_interval, found_interval;
-
-void
-check_for_interval (INTERVAL i)
-{
-  if (i == search_interval)
-    {
-      found_interval = i;
-      icount++;
-    }
-}
-
-INTERVAL
-search_for_interval (INTERVAL i, INTERVAL tree)
-{
-  icount = 0;
-  search_interval = i;
-  found_interval = NULL;
-  traverse_intervals_noorder (tree, &check_for_interval, Qnil);
-  return found_interval;
-}
-
-static void
-inc_interval_count (INTERVAL i)
-{
-  icount++;
-  if (LENGTH (i) == 0)
-    zero_length++;
-  if (depth > idepth)
-    idepth = depth;
-}
-
-int
-count_intervals (INTERVAL i)
-{
-  icount = 0;
-  idepth = 0;
-  zero_length = 0;
-  traverse_intervals_noorder (i, &inc_interval_count, Qnil);
-
-  return icount;
-}
-
-static INTERVAL
-root_interval (INTERVAL interval)
-{
-  register INTERVAL i = interval;
-
-  while (! ROOT_INTERVAL_P (i))
-    i = INTERVAL_PARENT (i);
-
-  return i;
-}
-#endif
 
 /* Assuming that a left child exists, perform the following operation:
 

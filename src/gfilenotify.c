@@ -266,7 +266,7 @@ reason.  Removing the watch by calling `gfile-rm-watch' also makes it
 invalid.  */)
      (Lisp_Object watch_descriptor)
 {
-  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
+  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list, Qnil);
   if (NILP (watch_object))
     return Qnil;
   else

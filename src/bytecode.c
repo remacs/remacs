@@ -327,14 +327,6 @@ bcall0 (Lisp_Object f)
   Ffuncall (1, &f);
 }
 
-// Defined in Rust.
-Lisp_Object Fminus(ptrdiff_t, Lisp_Object*);
-Lisp_Object Fplus(ptrdiff_t, Lisp_Object*);
-Lisp_Object Ftimes(ptrdiff_t, Lisp_Object*);
-Lisp_Object Fquo(ptrdiff_t, Lisp_Object*);
-Lisp_Object Fmax(ptrdiff_t, Lisp_Object*);
-Lisp_Object Fmin(ptrdiff_t, Lisp_Object*);
-
 /* Execute the byte-code in BYTESTR.  VECTOR is the constant vector, and
    MAXDEPTH is the maximum stack depth used (if MAXDEPTH is incorrect,
    emacs may crash!).  If ARGS_TEMPLATE is non-nil, it should be a lisp
@@ -460,14 +452,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	 the table clearer.  */
 #define LABEL(OP) [OP] = &&insn_ ## OP
 
-#if GNUC_PREREQ (4, 6, 0)
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Woverride-init"
-#elif defined __clang__
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Winitializer-overrides"
-#endif
-
       /* This is the dispatch table for the threaded interpreter.  */
       static const void *const targets[256] =
 	{
@@ -478,10 +462,6 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  BYTE_CODES
 #undef DEFINE
 	};
-
-#if GNUC_PREREQ (4, 6, 0) || defined __clang__
-# pragma GCC diagnostic pop
-#endif
 
 #endif
 
@@ -1000,18 +980,14 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	CASE (Beqlsign):
 	  {
 	    Lisp_Object v2 = POP, v1 = TOP;
-	    CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v1);
-	    CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v2);
-	    bool equal;
 	    if (FLOATP (v1) || FLOATP (v2))
-	      {
-		double f1 = FLOATP (v1) ? XFLOAT_DATA (v1) : XINT (v1);
-		double f2 = FLOATP (v2) ? XFLOAT_DATA (v2) : XINT (v2);
-		equal = f1 == f2;
-	      }
+	      TOP = arithcompare (v1, v2, ARITH_EQUAL);
 	    else
-	      equal = XINT (v1) == XINT (v2);
-	    TOP = equal ? Qt : Qnil;
+	      {
+		CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v1);
+		CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (v2);
+		TOP = EQ (v1, v2) ? Qt : Qnil;
+	      }
 	    NEXT;
 	  }
 

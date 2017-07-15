@@ -285,7 +285,7 @@ indentation by specifying a large negative ARG."
   "Indent current line to COLUMN.
 This function removes or adds spaces and tabs at beginning of line
 only if necessary.  It leaves point at end of indentation."
-  (backward-to-indentation 0)
+  (back-to-indentation)
   (let ((cur-col (current-column)))
     (cond ((< cur-col column)
 	   (if (>= (- column (* (/ cur-col tab-width) tab-width)) tab-width)

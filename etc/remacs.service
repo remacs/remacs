@@ -4,12 +4,12 @@
 ## to use absolute file names for the executables.
 [Unit]
 Description=remacs text editor
-Documentation=info:remacs man:remacs(1) https://gnu.org/software/emacs/
+Documentation=info:remacs man:emacs(1) https://gnu.org/software/emacs/
 
 [Service]
 Type=simple
-ExecStart=remacs --new-daemon
-ExecStop=remacsclient --eval "(kill-emacs)"
+ExecStart=emacs --fg-daemon
+ExecStop=emacsclient --eval "(kill-emacs)"
 Environment=SSH_AUTH_SOCK=%t/keyring/ssh
 Restart=on-failure
 

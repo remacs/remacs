@@ -731,7 +731,13 @@ the first newsgroup."
     (kill-buffer (get-file-buffer (gnus-newsgroup-kill-file nil))))
   (gnus-kill-buffer nntp-server-buffer)
   ;; Kill Gnus buffers.
+  (do-auto-save t)
   (dolist (buffer (gnus-buffers))
+    (when (gnus-buffer-exists-p buffer)
+      (with-current-buffer buffer
+	(set-buffer-modified-p nil)
+	(when (local-variable-p 'kill-buffer-hook)
+	  (setq kill-buffer-hook nil))))
     (gnus-kill-buffer buffer))
   ;; Remove Gnus frames.
   (gnus-kill-gnus-frames))
@@ -3196,7 +3202,7 @@ If this variable is nil, don't do anything."
 
 (defun gnus-display-time-event-handler ()
   (if (and (fboundp 'display-time-event-handler)
-	   (gnus-boundp 'display-time-timer))
+	   (bound-and-true-p display-time-timer))
       (display-time-event-handler)))
 
 (defun gnus-check-reasonable-setup ()

@@ -58,9 +58,6 @@ This is to avoid conflict with user settings if URL is dumped with
 Emacs."
   (unless url-setup-done
 
-    ;; Make OS/2 happy
-    ;;(push '("http" "80") tcp-binary-process-input-services)
-
     (mailcap-parse-mailcaps)
     (mailcap-parse-mimetypes)
 
@@ -186,7 +183,7 @@ URL-encoded before it's used."
   (when (stringp url)
     (set-text-properties 0 (length url) nil url)
     (setq url (url-encode-url url)))
-  (if (not (vectorp url))
+  (if (not (url-p url))
       (setq url (url-generic-parse-url url)))
   (if (not (functionp callback))
       (error "Must provide a callback function to url-retrieve"))

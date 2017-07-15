@@ -43,7 +43,7 @@
 
 ;;; Code:
 
-(require 'seq)
+(eval-when-compile (require 'cl-lib))
 
 ;;; User variables:
 
@@ -203,43 +203,21 @@ LIBRARY should be a string (the name of the library)."
           (locate-file rel
                        (or find-function-source-path load-path)
                        load-file-rep-suffixes)))))
-   (find-library--from-load-path library)
+   (find-library--from-load-history library)
    (error "Can't find library %s" library)))
 
-(defun find-library--from-load-path (library)
+(defun find-library--from-load-history (library)
   ;; In `load-history', the file may be ".elc", ".el", ".el.gz", and
-  ;; LIBRARY may be "foo.el" or "foo", so make sure that we get all
-  ;; potential matches, and then see whether any of them lead us to an
-  ;; ".el" or an ".el.gz" file.
-  (let* ((elc-regexp "\\.el\\(c\\(\\..*\\)?\\)\\'")
-         (suffix-regexp
-          (concat "\\("
-                  (mapconcat 'regexp-quote (find-library-suffixes) "\\'\\|")
-                  "\\|" elc-regexp "\\)\\'"))
-         (potentials
-          (mapcar
-           (lambda (entry)
-             (if (string-match suffix-regexp (car entry))
-                 (replace-match "" t t (car entry))
-               (car entry)))
-           (seq-filter
-            (lambda (entry)
-              (string-match
-               (concat "\\`"
-                       (regexp-quote
-                        (replace-regexp-in-string suffix-regexp "" library))
-                       suffix-regexp)
-               (file-name-nondirectory (car entry))))
-            load-history)))
-         result)
-    (dolist (file potentials)
-      (dolist (suffix (find-library-suffixes))
-        (when (not result)
-          (cond ((file-exists-p file)
-                 (setq result file))
-                ((file-exists-p (concat file suffix))
-                 (setq result (concat file suffix)))))))
-    result))
+  ;; LIBRARY may be "foo.el" or "foo".
+  (let ((load-re
+         (concat "\\(" (regexp-quote (file-name-sans-extension library)) "\\)"
+                 (regexp-opt (get-load-suffixes)) "\\'")))
+    (cl-loop
+     for (file . _) in load-history thereis
+     (and (stringp file) (string-match load-re file)
+          (let ((dir (substring file 0 (match-beginning 1)))
+                (basename (match-string 1 file)))
+            (locate-file basename (list dir) (find-library-suffixes)))))))
 
 (defvar find-function-C-source-directory
   (let ((dir (expand-file-name "src" source-directory)))
@@ -330,43 +308,65 @@ TYPE should be nil to find a function, or `defvar' to find a variable."
 
 
 ;;;###autoload
-(defun find-library (library &optional other-window)
+(defun find-library (library)
   "Find the Emacs Lisp source of LIBRARY.
-LIBRARY should be a string (the name of the library).  If the
-optional OTHER-WINDOW argument (i.e., the command argument) is
-specified, pop to a different window before displaying the
-buffer."
-  (interactive
-   (let* ((dirs (or find-function-source-path load-path))
-          (suffixes (find-library-suffixes))
-          (table (apply-partially 'locate-file-completion-table
-                                  dirs suffixes))
-	  (def (if (eq (function-called-at-point) 'require)
-		   ;; `function-called-at-point' may return 'require
-		   ;; with `point' anywhere on this line.  So wrap the
-		   ;; `save-excursion' below in a `condition-case' to
-		   ;; avoid reporting a scan-error here.
-		   (condition-case nil
-		       (save-excursion
-			 (backward-up-list)
-			 (forward-char)
-			 (forward-sexp 2)
-			 (thing-at-point 'symbol))
-		     (error nil))
-		 (thing-at-point 'symbol))))
-     (when (and def (not (test-completion def table)))
-       (setq def nil))
-     (list
-      (completing-read (if def
-                           (format "Library name (default %s): " def)
-			 "Library name: ")
-		       table nil nil nil nil def)
-      current-prefix-arg)))
+
+Interactively, prompt for LIBRARY using the one at or near point."
+  (interactive (list (read-library-name)))
   (prog1
-      (funcall (if other-window
-                   'pop-to-buffer
-                 'pop-to-buffer-same-window)
-               (find-file-noselect (find-library-name library)))
+      (switch-to-buffer (find-file-noselect (find-library-name library)))
+    (run-hooks 'find-function-after-hook)))
+
+(defun read-library-name ()
+  "Read and return a library name, defaulting to the one near point.
+
+A library name is the filename of an Emacs Lisp library located
+in a directory under `load-path' (or `find-function-source-path',
+if non-nil)."
+  (let* ((dirs (or find-function-source-path load-path))
+         (suffixes (find-library-suffixes))
+         (table (apply-partially 'locate-file-completion-table
+                                 dirs suffixes))
+         (def (if (eq (function-called-at-point) 'require)
+                  ;; `function-called-at-point' may return 'require
+                  ;; with `point' anywhere on this line.  So wrap the
+                  ;; `save-excursion' below in a `condition-case' to
+                  ;; avoid reporting a scan-error here.
+                  (condition-case nil
+                      (save-excursion
+                        (backward-up-list)
+                        (forward-char)
+                        (forward-sexp 2)
+                        (thing-at-point 'symbol))
+                    (error nil))
+                (thing-at-point 'symbol))))
+    (when (and def (not (test-completion def table)))
+      (setq def nil))
+    (completing-read (if def
+                         (format "Library name (default %s): " def)
+                       "Library name: ")
+                     table nil nil nil nil def)))
+
+;;;###autoload
+(defun find-library-other-window (library)
+  "Find the Emacs Lisp source of LIBRARY in another window.
+
+See `find-library' for more details."
+  (interactive (list (read-library-name)))
+  (prog1
+      (switch-to-buffer-other-window (find-file-noselect
+                                      (find-library-name library)))
+    (run-hooks 'find-function-after-hook)))
+
+;;;###autoload
+(defun find-library-other-frame (library)
+  "Find the Emacs Lisp source of LIBRARY in another frame.
+
+See `find-library' for more details."
+  (interactive (list (read-library-name)))
+  (prog1
+      (switch-to-buffer-other-frame (find-file-noselect
+                                     (find-library-name library)))
     (run-hooks 'find-function-after-hook)))
 
 (defun find-function-lisp-source (symbol type library)

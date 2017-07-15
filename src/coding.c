@@ -1449,7 +1449,7 @@ decode_coding_utf_8 (struct coding_system *coding)
 }
 
 
-static bool
+bool
 encode_coding_utf_8 (struct coding_system *coding)
 {
   bool multibytep = coding->dst_multibyte;
@@ -3611,7 +3611,7 @@ decode_coding_iso_2022 (struct coding_system *coding)
 	      || CODING_ISO_FLAGS (coding) & CODING_ISO_FLAG_SEVEN_BITS)
 	    goto invalid_code;
 	  /* This is a graphic character, we fall down ... */
-
+	  FALLTHROUGH;
 	case ISO_graphic_plane_1:
 	  if (charset_id_1 < 0)
 	    goto invalid_code;
@@ -3646,6 +3646,7 @@ decode_coding_iso_2022 (struct coding_system *coding)
 	case ISO_single_shift_2_7:
 	  if (! (CODING_ISO_FLAGS (coding) & CODING_ISO_FLAG_SEVEN_BITS))
 	    goto invalid_code;
+	  FALLTHROUGH;
 	case ISO_single_shift_2:
 	  if (! (CODING_ISO_FLAGS (coding) & CODING_ISO_FLAG_SINGLE_SHIFT))
 	    goto invalid_code;
@@ -3797,6 +3798,7 @@ decode_coding_iso_2022 (struct coding_system *coding)
 		{
 		case ']':	/* end of the current direction */
 		  coding->mode &= ~CODING_MODE_DIRECTION;
+		  break;
 
 		case '0':	/* end of the current direction */
 		case '1':	/* start of left-to-right direction */
@@ -9399,8 +9401,8 @@ When called from a program, takes four arguments:
         START, END, CODING-SYSTEM and DESTINATION.
 START and END are buffer positions.
 
-Optional 4th arguments DESTINATION specifies where the encoded text goes.
-If nil, the region between START and END is replace by the encoded text.
+Optional 4th argument DESTINATION specifies where the encoded text goes.
+If nil, the region between START and END is replaced by the encoded text.
 If buffer, the encoded text is inserted in that buffer after point (point
 does not move).
 In those cases, the length of the encoded text is returned.
@@ -10537,7 +10539,7 @@ usage: (define-coding-system-internal ...)  */)
 	  ASET (this_spec, 2, this_eol_type);
 	  Fputhash (this_name, this_spec, Vcoding_system_hash_table);
 	  Vcoding_system_list = Fcons (this_name, Vcoding_system_list);
-	  val = Fassoc (Fsymbol_name (this_name), Vcoding_system_alist);
+	  val = Fassoc (Fsymbol_name (this_name), Vcoding_system_alist, Qnil);
 	  if (NILP (val))
 	    Vcoding_system_alist
 	      = Fcons (Fcons (Fsymbol_name (this_name), Qnil),
@@ -10552,7 +10554,7 @@ usage: (define-coding-system-internal ...)  */)
 
   Fputhash (name, spec_vec, Vcoding_system_hash_table);
   Vcoding_system_list = Fcons (name, Vcoding_system_list);
-  val = Fassoc (Fsymbol_name (name), Vcoding_system_alist);
+  val = Fassoc (Fsymbol_name (name), Vcoding_system_alist, Qnil);
   if (NILP (val))
     Vcoding_system_alist = Fcons (Fcons (Fsymbol_name (name), Qnil),
 				  Vcoding_system_alist);
@@ -10660,7 +10662,7 @@ DEFUN ("define-coding-system-alias", Fdefine_coding_system_alias,
 
   Fputhash (alias, spec, Vcoding_system_hash_table);
   Vcoding_system_list = Fcons (alias, Vcoding_system_list);
-  val = Fassoc (Fsymbol_name (alias), Vcoding_system_alist);
+  val = Fassoc (Fsymbol_name (alias), Vcoding_system_alist, Qnil);
   if (NILP (val))
     Vcoding_system_alist = Fcons (Fcons (Fsymbol_name (alias), Qnil),
 				  Vcoding_system_alist);

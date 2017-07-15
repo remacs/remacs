@@ -24,36 +24,40 @@
 
 (ert-deftest casefiddle-tests-char-properties ()
   "Sanity check of character Unicode properties."
-  (should-not
-   (let (errors)
-     ;;            character  uppercase  lowercase  titlecase
-     (dolist (test '((?A nil ?a nil)
-                     (?a ?A nil ?A)
-                     (?Ł nil ?ł nil)
-                     (?ł ?Ł nil ?Ł)
+  (let ((props '(uppercase lowercase titlecase
+                 special-uppercase special-lowercase special-titlecase))
+        (tests '((?A nil ?a  nil  nil  nil  nil)
+                 (?a ?A  nil ?A   nil  nil  nil)
+                 (?Ł nil ?ł  nil  nil  nil  nil)
+                 (?ł ?Ł  nil ?Ł   nil  nil  nil)
 
-                     (?Ǆ nil ?ǆ ?ǅ)
-                     (?ǅ ?Ǆ ?ǆ ?ǅ)
-                     (?ǆ ?Ǆ nil ?ǅ)
+                 (?Ǆ nil ?ǆ  ?ǅ   nil  nil  nil)
+                 (?ǅ ?Ǆ  ?ǆ  ?ǅ   nil  nil  nil)
+                 (?ǆ ?Ǆ  nil ?ǅ   nil  nil  nil)
 
-                     (?Σ nil ?σ nil)
-                     (?σ ?Σ nil ?Σ)
-                     (?ς ?Σ nil ?Σ)
+                 (?Σ nil ?σ  nil  nil  nil  nil)
+                 (?σ ?Σ  nil ?Σ   nil  nil  nil)
+                 (?ς ?Σ  nil ?Σ   nil  nil  nil)
 
-                     (?ⅷ ?Ⅷ nil ?Ⅷ)
-                     (?Ⅷ nil ?ⅷ nil)))
-       (let ((ch (car test))
-             (expected (cdr test))
-             (props '(uppercase lowercase titlecase)))
-         (while props
-           (let ((got (get-char-code-property ch (car props))))
-             (unless (equal (car expected) got)
-               (push (format "\n%c %s; expected: %s but got: %s"
-                             ch (car props) (car expected) got)
-                     errors)))
-           (setq props (cdr props) expected (cdr expected)))))
-     (when errors
-       (mapconcat (lambda (line) line) (nreverse errors) "")))))
+                 (?ⅷ ?Ⅷ  nil ?Ⅷ   nil  nil  nil)
+                 (?Ⅷ nil ?ⅷ  nil  nil  nil  nil)
+
+                 (?ﬁ nil nil nil  "FI" nil "Fi")
+                 (?ß nil nil nil  "SS" nil "Ss")
+                 (?İ nil ?i  nil  nil "i\u0307" nil)))
+        errors)
+    (dolist (test tests)
+      (let ((ch (car test))
+            (expected (cdr test)))
+        (dolist (prop props)
+          (let ((got (get-char-code-property ch prop)))
+            (unless (equal (car expected) got)
+              (push (format "\n%c %s; expected: %s but got: %s"
+                            ch prop (car expected) got)
+                    errors)))
+          (setq expected (cdr expected)))))
+    (when errors
+      (ert-fail (mapconcat (lambda (line) line) (nreverse errors) "")))))
 
 
 (defconst casefiddle-tests--characters
@@ -63,13 +67,9 @@
     (?Ł ?Ł ?ł ?Ł)
     (?ł ?Ł ?ł ?Ł)
 
-    ;; FIXME(bug#24603): Commented ones are what we want.
-    ;;(?Ǆ ?Ǆ ?ǆ ?ǅ)
-    (?Ǆ ?Ǆ ?ǆ ?Ǆ)
-    ;;(?ǅ ?Ǆ ?ǆ ?ǅ)
-    (?ǅ ?Ǆ ?ǆ ?Ǆ)
-    ;;(?ǆ ?Ǆ ?ǆ ?ǅ)
-    (?ǆ ?Ǆ ?ǆ ?Ǆ)
+    (?Ǆ ?Ǆ ?ǆ ?ǅ)
+    (?ǅ ?Ǆ ?ǆ ?ǅ)
+    (?ǆ ?Ǆ ?ǆ ?ǅ)
 
     (?Σ ?Σ ?σ ?Σ)
     (?σ ?Σ ?σ ?Σ)
@@ -186,25 +186,25 @@
       ;; input     upper     lower    capitalize up-initials
       '(("Foo baR" "FOO BAR" "foo bar" "Foo Bar" "Foo BaR")
         ("Ⅷ ⅷ" "Ⅷ Ⅷ" "ⅷ ⅷ" "Ⅷ Ⅷ" "Ⅷ Ⅷ")
-        ;; FIXME(bug#24603): Everything below is broken at the moment.
-        ;; Here’s what should happen:
-        ;;("ǄUNGLA" "ǄUNGLA" "ǆungla" "ǅungla" "ǅUNGLA")
-        ;;("ǅungla" "ǄUNGLA" "ǆungla" "ǅungla" "ǅungla")
-        ;;("ǆungla" "ǄUNGLA" "ǆungla" "ǅungla" "ǅungla")
-        ;;("deﬁne" "DEFINE" "deﬁne" "Deﬁne" "Deﬁne")
-        ;;("ﬁsh" "FIsh" "ﬁsh" "Fish" "Fish")
-        ;;("Straße" "STRASSE" "straße" "Straße" "Straße")
-        ;;("ΌΣΟΣ" "ΌΣΟΣ" "όσος" "Όσος" "Όσος")
-        ;; And here’s what is actually happening:
-        ("ǄUNGLA" "ǄUNGLA" "ǆungla" "Ǆungla" "ǄUNGLA")
-        ("ǅungla" "ǄUNGLA" "ǆungla" "Ǆungla" "Ǆungla")
-        ("ǆungla" "ǄUNGLA" "ǆungla" "Ǆungla" "Ǆungla")
-        ("deﬁne" "DEﬁNE" "deﬁne" "Deﬁne" "Deﬁne")
-        ("ﬁsh" "ﬁSH" "ﬁsh" "ﬁsh" "ﬁsh")
-        ("Straße" "STRAßE" "straße" "Straße" "Straße")
-        ("ΌΣΟΣ" "ΌΣΟΣ" "όσοσ" "Όσοσ" "ΌΣΟΣ")
+        ;; "ǅUNGLA" is an unfortunate result but it’s really best we can
+        ;; do while still being consistent.  Hopefully, users only ever
+        ;; use upcase-initials on camelCase identifiers not real words.
+        ("ǄUNGLA" "ǄUNGLA" "ǆungla" "ǅungla" "ǅUNGLA")
+        ("ǅungla" "ǄUNGLA" "ǆungla" "ǅungla" "ǅungla")
+        ("ǆungla" "ǄUNGLA" "ǆungla" "ǅungla" "ǅungla")
+        ("deﬁne" "DEFINE" "deﬁne" "Deﬁne" "Deﬁne")
+        ("ﬁsh" "FISH" "ﬁsh" "Fish" "Fish")
+        ("Straße" "STRASSE" "straße" "Straße" "Straße")
 
-        ("όσος" "ΌΣΟΣ" "όσος" "Όσος" "Όσος"))))))
+        ;; The word repeated twice to test behaviour at the end of a word
+        ;; inside of an input string as well as at the end of the string.
+        ("ΌΣΟΣ ΌΣΟΣ" "ΌΣΟΣ ΌΣΟΣ" "όσος όσος" "Όσος Όσος" "ΌΣΟΣ ΌΣΟΣ")
+        ;; What should be done with sole sigma?  It is ‘final’ but on the
+        ;; other hand it does not form a word.  We’re using regular sigma.
+        ("Σ Σ" "Σ Σ" "σ σ" "Σ Σ" "Σ Σ")
+        ("όσος" "ΌΣΟΣ" "όσος" "Όσος" "Όσος")
+        ;; If sigma is already lower case, we don’t want to change it.
+        ("όσοσ" "ΌΣΟΣ" "όσοσ" "Όσοσ" "Όσοσ"))))))
 
 (ert-deftest casefiddle-tests-casing-byte8 ()
   (should-not
@@ -241,6 +241,23 @@
                 "\xff\xff\xff zażółć gęślą \xcf\xcf"
                 "\xef\xff\xff Zażółć Gęślą \xcf\xcf"
                 "\xef\xff\xef Zażółć GĘŚlą \xcf\xcf")))))))
+
+
+(ert-deftest casefiddle-tests-char-casing ()
+  ;;             input upcase downcase [titlecase]
+  (dolist (test '((?a ?A ?a) (?A ?A ?a)
+                  (?ł ?Ł ?ł) (?Ł ?Ł ?ł)
+                  (?ß ?ß ?ß) (?ẞ ?ẞ ?ß)
+                  (?ⅷ ?Ⅷ ?ⅷ) (?Ⅷ ?Ⅷ ?ⅷ)
+                  (?Ǆ ?Ǆ ?ǆ ?ǅ) (?ǅ ?Ǆ ?ǆ ?ǅ) (?ǆ ?Ǆ ?ǆ ?ǅ)))
+    (let ((ch (car test))
+          (up (nth 1 test))
+          (lo (nth 2 test))
+          (tc (or (nth 3 test) (nth 1 test))))
+      (should (eq up (upcase ch)))
+      (should (eq lo (downcase ch)))
+      (should (eq tc (capitalize ch)))
+      (should (eq tc (upcase-initials ch))))))
 
 
 ;;; casefiddle-tests.el ends here

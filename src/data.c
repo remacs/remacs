@@ -19,6 +19,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
+
+#include <math.h>
 #include <stdio.h>
 
 #include <byteswap.h>
@@ -207,8 +209,6 @@ for example, (type-of 1) returns `integer'.  */)
 	  return Qmarker;
 	case Lisp_Misc_Overlay:
 	  return Qoverlay;
-	case Lisp_Misc_Float:
-          return Qfloat;
         case Lisp_Misc_Finalizer:
           return Qfinalizer;
 #ifdef HAVE_MODULES
@@ -220,39 +220,51 @@ for example, (type-of 1) returns `integer'.  */)
 	}
 
     case Lisp_Vectorlike:
-      if (WINDOW_CONFIGURATIONP (object))
-	return Qwindow_configuration;
-      if (PROCESSP (object))
-	return Qprocess;
-      if (WINDOWP (object))
-	return Qwindow;
-      if (SUBRP (object))
-	return Qsubr;
-      if (COMPILEDP (object))
-	return Qcompiled_function;
-      if (BUFFERP (object))
-	return Qbuffer;
-      if (CHAR_TABLE_P (object))
-	return Qchar_table;
-      if (BOOL_VECTOR_P (object))
-	return Qbool_vector;
-      if (FRAMEP (object))
-	return Qframe;
-      if (HASH_TABLE_P (object))
-	return Qhash_table;
-      if (FONT_SPEC_P (object))
-	return Qfont_spec;
-      if (FONT_ENTITY_P (object))
-	return Qfont_entity;
-      if (FONT_OBJECT_P (object))
-	return Qfont_object;
-      if (THREADP (object))
-	return Qthread;
-      if (MUTEXP (object))
-	return Qmutex;
-      if (CONDVARP (object))
-	return Qcondition_variable;
-      return Qvector;
+      switch (PSEUDOVECTOR_TYPE (XVECTOR (object)))
+        {
+        case PVEC_NORMAL_VECTOR: return Qvector;
+        case PVEC_WINDOW_CONFIGURATION: return Qwindow_configuration;
+        case PVEC_PROCESS: return Qprocess;
+        case PVEC_WINDOW: return Qwindow;
+        case PVEC_SUBR: return Qsubr;
+        case PVEC_COMPILED: return Qcompiled_function;
+        case PVEC_BUFFER: return Qbuffer;
+        case PVEC_CHAR_TABLE: return Qchar_table;
+        case PVEC_BOOL_VECTOR: return Qbool_vector;
+        case PVEC_FRAME: return Qframe;
+        case PVEC_HASH_TABLE: return Qhash_table;
+        case PVEC_FONT:
+          if (FONT_SPEC_P (object))
+	    return Qfont_spec;
+          if (FONT_ENTITY_P (object))
+	    return Qfont_entity;
+          if (FONT_OBJECT_P (object))
+	    return Qfont_object;
+          else
+            emacs_abort (); /* return Qfont?  */
+        case PVEC_THREAD: return Qthread;
+        case PVEC_MUTEX: return Qmutex;
+        case PVEC_CONDVAR: return Qcondition_variable;
+        case PVEC_TERMINAL: return Qterminal;
+        case PVEC_RECORD:
+          {
+            Lisp_Object t = AREF (object, 0);
+            if (RECORDP (t) && 1 < PVSIZE (t))
+              /* Return the type name field of the class!  */
+              return AREF (t, 1);
+            else
+              return t;
+          }
+        case PVEC_MODULE_FUNCTION:
+          return Qmodule_function;
+        /* "Impossible" cases.  */
+        case PVEC_XWIDGET:
+        case PVEC_OTHER:
+        case PVEC_XWIDGET_VIEW:
+        case PVEC_SUB_CHAR_TABLE:
+        case PVEC_FREE: ;
+        }
+      emacs_abort ();
 
     case Lisp_Float:
       return Qfloat;
@@ -277,6 +289,15 @@ interned in the initial obarray.  */)
   return Qnil;
 }
 
+DEFUN ("recordp", Frecordp, Srecordp, 1, 1, 0,
+       doc: /* Return t if OBJECT is a record.  */)
+  (Lisp_Object object)
+{
+  if (RECORDP (object))
+    return Qt;
+  return Qnil;
+}
+
 #ifdef HAVE_MODULES
 DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
        doc: /* Return t if OBJECT is a module user pointer.  */)
@@ -287,6 +308,14 @@ DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
   return Qnil;
 }
 #endif
+
+DEFUN ("module-function-p", Fmodule_function_p, Smodule_function_p, 1, 1, NULL,
+       doc: /* Return t if OBJECT is a function loaded from a dynamic module.  */
+       attributes: const)
+  (Lisp_Object object)
+{
+  return MODULE_FUNCTIONP (object) ? Qt : Qnil;
+}
 
 
 /* Extract and set components of symbols.  */
@@ -502,7 +531,7 @@ Value, if non-nil, is a list (interactive SPEC).  */)
     }
   else if (COMPILEDP (fun))
     {
-      if ((ASIZE (fun) & PSEUDOVECTOR_SIZE_MASK) > COMPILED_INTERACTIVE)
+      if (PVSIZE (fun) > COMPILED_INTERACTIVE)
 	return list2 (Qinteractive, AREF (fun, COMPILED_INTERACTIVE));
     }
   else if (AUTOLOADP (fun))
@@ -731,10 +760,8 @@ store_symval_forwarding (union Lisp_Fwd *valcontents, register Lisp_Object newva
 		else if ((prop = Fget (predicate, Qrange), !NILP (prop)))
 		  {
 		    Lisp_Object min = XCAR (prop), max = XCDR (prop);
-
-		    if (!NUMBERP (newval)
-			|| !NILP (arithcompare (newval, min, ARITH_LESS))
-			|| !NILP (arithcompare (newval, max, ARITH_GRTR)))
+		    if (! NUMBERP (newval)
+			|| NILP (CALLN (Fleq, min, newval, max)))
 		      wrong_range (min, max, newval);
 		  }
 		else if (FUNCTIONP (predicate))
@@ -1753,7 +1780,7 @@ If the current binding is global (the default), the value is nil.  */)
 	else if (!BUFFER_OBJFWDP (valcontents))
 	  return Qnil;
       }
-      /* FALLTHROUGH */
+      FALLTHROUGH;
     case SYMBOL_LOCALIZED:
       /* For a local variable, record both the symbol and which
 	 buffer's or frame's value we are saving.  */
@@ -1868,8 +1895,8 @@ function chain of symbols.  */)
 /* Extract and set vector and string elements.  */
 
 DEFUN ("aref", Faref, Saref, 2, 2, 0,
-       doc: /* Return the element of ARRAY at index IDX.
-ARRAY may be a vector, a string, a char-table, a bool-vector,
+       doc: /* Return the element of ARG at index IDX.
+ARG may be a vector, a string, a char-table, a bool-vector, a record,
 or a byte-code object.  IDX starts at 0.  */)
   (register Lisp_Object array, Lisp_Object idx)
 {
@@ -1907,8 +1934,8 @@ or a byte-code object.  IDX starts at 0.  */)
       ptrdiff_t size = 0;
       if (VECTORP (array))
 	size = ASIZE (array);
-      else if (COMPILEDP (array))
-	size = ASIZE (array) & PSEUDOVECTOR_SIZE_MASK;
+      else if (COMPILEDP (array) || RECORDP (array))
+	size = PVSIZE (array);
       else
 	wrong_type_argument (Qarrayp, array);
 
@@ -1928,7 +1955,8 @@ bool-vector.  IDX starts at 0.  */)
 
   CHECK_NUMBER (idx);
   idxval = XINT (idx);
-  CHECK_ARRAY (array, Qarrayp);
+  if (! RECORDP (array))
+    CHECK_ARRAY (array, Qarrayp);
 
   if (VECTORP (array))
     {
@@ -1948,7 +1976,13 @@ bool-vector.  IDX starts at 0.  */)
       CHECK_CHARACTER (idx);
       CHAR_TABLE_SET (array, idxval, newelt);
     }
-  else
+  else if (RECORDP (array))
+    {
+      if (idxval < 0 || idxval >= PVSIZE (array))
+	args_out_of_range (array, idx);
+      ASET (array, idxval, newelt);
+    }
+  else /* STRINGP */
     {
       int c;
 
@@ -2013,68 +2047,104 @@ bool-vector.  IDX starts at 0.  */)
 /* Arithmetic functions */
 
 Lisp_Object
-arithcompare (Lisp_Object num1, Lisp_Object num2, enum Arith_Comparison comparison)
+arithcompare (Lisp_Object num1, Lisp_Object num2,
+	      enum Arith_Comparison comparison)
 {
-  double f1 = 0, f2 = 0;
-  bool floatp = 0;
+  double f1, f2;
+  EMACS_INT i1, i2;
+  bool fneq;
+  bool test;
 
   CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num1);
   CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (num2);
 
-  if (FLOATP (num1) || FLOATP (num2))
+  /* If either arg is floating point, set F1 and F2 to the 'double'
+     approximations of the two arguments, and set FNEQ if floating-point
+     comparison reports that F1 is not equal to F2, possibly because F1
+     or F2 is a NaN.  Regardless, set I1 and I2 to integers that break
+     ties if the floating-point comparison is either not done or reports
+     equality.  */
+
+  if (FLOATP (num1))
     {
-      floatp = 1;
-      f1 = (FLOATP (num1)) ? XFLOAT_DATA (num1) : XINT (num1);
-      f2 = (FLOATP (num2)) ? XFLOAT_DATA (num2) : XINT (num2);
+      f1 = XFLOAT_DATA (num1);
+      if (FLOATP (num2))
+	{
+	  i1 = i2 = 0;
+	  f2 = XFLOAT_DATA (num2);
+	}
+      else
+	{
+	  /* Compare a float NUM1 to an integer NUM2 by converting the
+	     integer I2 (i.e., NUM2) to the double F2 (a conversion that
+	     can round on some platforms, if I2 is large enough), and then
+	     converting F2 back to the integer I1 (a conversion that is
+	     always exact), so that I1 exactly equals ((double) NUM2).  If
+	     floating-point comparison reports a tie, NUM1 = F1 = F2 = I1
+	     (exactly) so I1 - I2 = NUM1 - NUM2 (exactly), so comparing I1
+	     to I2 will break the tie correctly.  */
+	  i1 = f2 = i2 = XINT (num2);
+	}
+      fneq = f1 != f2;
+    }
+  else
+    {
+      i1 = XINT (num1);
+      if (FLOATP (num2))
+	{
+	  /* Compare an integer NUM1 to a float NUM2.  This is the
+	     converse of comparing float to integer (see above).  */
+	  i2 = f1 = i1;
+	  f2 = XFLOAT_DATA (num2);
+	  fneq = f1 != f2;
+	}
+      else
+	{
+	  i2 = XINT (num2);
+	  fneq = false;
+	}
     }
 
   switch (comparison)
     {
     case ARITH_EQUAL:
-      if (floatp ? f1 == f2 : XINT (num1) == XINT (num2))
-	return Qt;
-      return Qnil;
+      test = !fneq && i1 == i2;
+      break;
 
     case ARITH_NOTEQUAL:
-      if (floatp ? f1 != f2 : XINT (num1) != XINT (num2))
-	return Qt;
-      return Qnil;
+      test = fneq || i1 != i2;
+      break;
 
     case ARITH_LESS:
-      if (floatp ? f1 < f2 : XINT (num1) < XINT (num2))
-	return Qt;
-      return Qnil;
+      test = fneq ? f1 < f2 : i1 < i2;
+      break;
 
     case ARITH_LESS_OR_EQUAL:
-      if (floatp ? f1 <= f2 : XINT (num1) <= XINT (num2))
-	return Qt;
-      return Qnil;
+      test = fneq ? f1 <= f2 : i1 <= i2;
+      break;
 
     case ARITH_GRTR:
-      if (floatp ? f1 > f2 : XINT (num1) > XINT (num2))
-	return Qt;
-      return Qnil;
+      test = fneq ? f1 > f2 : i1 > i2;
+      break;
 
     case ARITH_GRTR_OR_EQUAL:
-      if (floatp ? f1 >= f2 : XINT (num1) >= XINT (num2))
-	return Qt;
-      return Qnil;
+      test = fneq ? f1 >= f2 : i1 >= i2;
+      break;
 
     default:
-      emacs_abort ();
+      eassume (false);
     }
+
+  return test ? Qt : Qnil;
 }
 
 static Lisp_Object
 arithcompare_driver (ptrdiff_t nargs, Lisp_Object *args,
                      enum Arith_Comparison comparison)
 {
-  ptrdiff_t argnum;
-  for (argnum = 1; argnum < nargs; ++argnum)
-    {
-      if (EQ (Qnil, arithcompare (args[argnum - 1], args[argnum], comparison)))
-        return Qnil;
-    }
+  for (ptrdiff_t i = 1; i < nargs; i++)
+    if (NILP (arithcompare (args[i - 1], args[i], comparison)))
+      return Qnil;
   return Qt;
 }
 
@@ -2153,26 +2223,26 @@ uintbig_to_lisp (uintmax_t i)
 }
 
 /* Convert the cons-of-integers, integer, or float value C to an
-   unsigned value with maximum value MAX.  Signal an error if C does not
-   have a valid format or is out of range.  */
+   unsigned value with maximum value MAX, where MAX is one less than a
+   power of 2.  Signal an error if C does not have a valid format or
+   is out of range.  */
 uintmax_t
 cons_to_unsigned (Lisp_Object c, uintmax_t max)
 {
-  bool valid = 0;
+  bool valid = false;
   uintmax_t val;
   if (INTEGERP (c))
     {
-      valid = 0 <= XINT (c);
+      valid = XINT (c) >= 0;
       val = XINT (c);
     }
   else if (FLOATP (c))
     {
       double d = XFLOAT_DATA (c);
-      if (0 <= d
-	  && d < (max == UINTMAX_MAX ? (double) UINTMAX_MAX + 1 : max + 1))
+      if (d >= 0 && d < 1.0 + max)
 	{
 	  val = d;
-	  valid = 1;
+	  valid = val == d;
 	}
     }
   else if (CONSP (c) && NATNUMP (XCAR (c)))
@@ -2186,7 +2256,7 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
 	{
 	  uintmax_t mid = XFASTINT (XCAR (rest));
 	  val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
-	  valid = 1;
+	  valid = true;
 	}
       else if (top <= UINTMAX_MAX >> 16)
 	{
@@ -2195,66 +2265,67 @@ cons_to_unsigned (Lisp_Object c, uintmax_t max)
 	  if (NATNUMP (rest) && XFASTINT (rest) < 1 << 16)
 	    {
 	      val = top << 16 | XFASTINT (rest);
-	      valid = 1;
+	      valid = true;
 	    }
 	}
     }
 
   if (! (valid && val <= max))
-    error ("Not an in-range integer, float, or cons of integers");
+    error ("Not an in-range integer, integral float, or cons of integers");
   return val;
 }
 
 /* Convert the cons-of-integers, integer, or float value C to a signed
-   value with extrema MIN and MAX.  Signal an error if C does not have
-   a valid format or is out of range.  */
+   value with extrema MIN and MAX.  MAX should be one less than a
+   power of 2, and MIN should be zero or the negative of a power of 2.
+   Signal an error if C does not have a valid format or is out of
+   range.  */
 intmax_t
 cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 {
-  bool valid = 0;
+  bool valid = false;
   intmax_t val;
   if (INTEGERP (c))
     {
       val = XINT (c);
-      valid = 1;
+      valid = true;
     }
   else if (FLOATP (c))
     {
       double d = XFLOAT_DATA (c);
-      if (min <= d
-	  && d < (max == INTMAX_MAX ? (double) INTMAX_MAX + 1 : max + 1))
+      if (d >= min && d < 1.0 + max)
 	{
 	  val = d;
-	  valid = 1;
+	  valid = val == d;
 	}
     }
   else if (CONSP (c) && INTEGERP (XCAR (c)))
     {
       intmax_t top = XINT (XCAR (c));
       Lisp_Object rest = XCDR (c);
-      if (INTMAX_MIN >> 24 >> 16 <= top && top <= INTMAX_MAX >> 24 >> 16
+      if (top >= INTMAX_MIN >> 24 >> 16 && top <= INTMAX_MAX >> 24 >> 16
 	  && CONSP (rest)
 	  && NATNUMP (XCAR (rest)) && XFASTINT (XCAR (rest)) < 1 << 24
 	  && NATNUMP (XCDR (rest)) && XFASTINT (XCDR (rest)) < 1 << 16)
 	{
 	  intmax_t mid = XFASTINT (XCAR (rest));
 	  val = top << 24 << 16 | mid << 16 | XFASTINT (XCDR (rest));
-	  valid = 1;
+	  valid = true;
 	}
-      else if (INTMAX_MIN >> 16 <= top && top <= INTMAX_MAX >> 16)
+      else if (top >= INTMAX_MIN >> 16 && top <= INTMAX_MAX >> 16)
 	{
 	  if (CONSP (rest))
 	    rest = XCAR (rest);
 	  if (NATNUMP (rest) && XFASTINT (rest) < 1 << 16)
 	    {
 	      val = top << 16 | XFASTINT (rest);
-	      valid = 1;
+	      valid = true;
 	    }
 	}
     }
 
   if (! (valid && min <= val && val <= max))
-    error ("Not an in-range integer, float, or cons of integers");
+    error ("Not an in-range integer, integral float, or cons of integers");
   return val;
 }
 
@@ -2298,7 +2369,7 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
   else
     {
       CHECK_NUMBER (base);
-      if (! (2 <= XINT (base) && XINT (base) <= 16))
+      if (! (XINT (base) >= 2 && XINT (base) <= 16))
 	xsignal1 (Qargs_out_of_range, base);
       b = XINT (base);
     }
@@ -2319,16 +2390,16 @@ enum arithop
     Adiv,
     Alogand,
     Alogior,
-    Alogxor,
-    Amax,
-    Amin
+    Alogxor
   };
 
-Lisp_Object float_arith_driver (double, ptrdiff_t, enum arithop,
-                                       ptrdiff_t, Lisp_Object *);
+#ifndef isnan
+# define isnan(x) ((x) != (x))
+#endif
 
-#undef isnan
-#define isnan(x) ((x) != (x))
+Lisp_Object
+float_arith_driver (double, ptrdiff_t, enum arithop,
+		    ptrdiff_t, Lisp_Object *);
 
 Lisp_Object
 float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
@@ -2376,14 +2447,6 @@ float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
 	case Alogior:
 	case Alogxor:
 	  wrong_type_argument (Qinteger_or_marker_p, val);
-	case Amax:
-	  if (!argnum || isnan (next) || next > accum)
-	    accum = next;
-	  break;
-	case Amin:
-	  if (!argnum || isnan (next) || next < accum)
-	    accum = next;
-	  break;
 	}
     }
 
@@ -2408,9 +2471,12 @@ Both must be integers or markers.  */)
 }
 
 static Lisp_Object
-ash_lsh_impl (register Lisp_Object value, Lisp_Object count, bool lsh)
+ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
 {
-  register Lisp_Object val;
+  /* This code assumes that signed right shifts are arithmetic.  */
+  verify ((EMACS_INT) -1 >> 1 == -1);
+
+  Lisp_Object val;
 
   CHECK_NUMBER (value);
   CHECK_NUMBER (count);
@@ -2418,12 +2484,12 @@ ash_lsh_impl (register Lisp_Object value, Lisp_Object count, bool lsh)
   if (XINT (count) >= EMACS_INT_WIDTH)
     XSETINT (val, 0);
   else if (XINT (count) > 0)
-    XSETINT (val, XUINT (value) << XFASTINT (count));
+    XSETINT (val, XUINT (value) << XINT (count));
   else if (XINT (count) <= -EMACS_INT_WIDTH)
     XSETINT (val, lsh ? 0 : XINT (value) < 0 ? -1 : 0);
   else
-    XSETINT (val, lsh ? XUINT (value) >> -XINT (count) : \
-                        XINT (value) >> -XINT (count));
+    XSETINT (val, (lsh ? XUINT (value) >> -XINT (count)
+		   : XINT (value) >> -XINT (count)));
   return val;
 }
 
@@ -2843,7 +2909,6 @@ syms_of_data (void)
 
   DEFSYM (Qquote, "quote");
   DEFSYM (Qlambda, "lambda");
-  DEFSYM (Qsubr, "subr");
   DEFSYM (Qerror_conditions, "error-conditions");
   DEFSYM (Qerror_message, "error-message");
   DEFSYM (Qtop_level, "top-level");
@@ -2884,6 +2949,7 @@ syms_of_data (void)
   DEFSYM (Qsequencep, "sequencep");
   DEFSYM (Qbufferp, "bufferp");
   DEFSYM (Qvectorp, "vectorp");
+  DEFSYM (Qrecordp, "recordp");
   DEFSYM (Qbool_vector_p, "bool-vector-p");
   DEFSYM (Qchar_or_string_p, "char-or-string-p");
   DEFSYM (Qmarkerp, "markerp");
@@ -2984,28 +3050,31 @@ syms_of_data (void)
   DEFSYM (Qoverlay, "overlay");
   DEFSYM (Qfinalizer, "finalizer");
 #ifdef HAVE_MODULES
+  DEFSYM (Qmodule_function, "module-function");
   DEFSYM (Quser_ptr, "user-ptr");
 #endif
   DEFSYM (Qfloat, "float");
   DEFSYM (Qwindow_configuration, "window-configuration");
   DEFSYM (Qprocess, "process");
   DEFSYM (Qwindow, "window");
+  DEFSYM (Qsubr, "subr");
   DEFSYM (Qcompiled_function, "compiled-function");
   DEFSYM (Qbuffer, "buffer");
   DEFSYM (Qframe, "frame");
   DEFSYM (Qvector, "vector");
+  DEFSYM (Qrecord, "record");
   DEFSYM (Qchar_table, "char-table");
   DEFSYM (Qbool_vector, "bool-vector");
   DEFSYM (Qhash_table, "hash-table");
   DEFSYM (Qthread, "thread");
   DEFSYM (Qmutex, "mutex");
   DEFSYM (Qcondition_variable, "condition-variable");
-
-  DEFSYM (Qdefun, "defun");
-
   DEFSYM (Qfont_spec, "font-spec");
   DEFSYM (Qfont_entity, "font-entity");
   DEFSYM (Qfont_object, "font-object");
+  DEFSYM (Qterminal, "terminal");
+
+  DEFSYM (Qdefun, "defun");
 
   DEFSYM (Qinteractive_form, "interactive-form");
   DEFSYM (Qdefalias_fset_function, "defalias-fset-function");
@@ -3014,6 +3083,8 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
+  defsubr (&Srecordp);
+  defsubr (&Smodule_function_p);
   defsubr (&Sindirect_function);
   defsubr (&Smakunbound);
   defsubr (&Sfmakunbound);

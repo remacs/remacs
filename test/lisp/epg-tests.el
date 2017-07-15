@@ -30,17 +30,8 @@
   (expand-file-name "data/epg" (getenv "EMACS_TEST_DIRECTORY"))
   "Directory containing epg test data.")
 
-(defconst epg-tests-program-alist-for-passphrase-callback
-  '((OpenPGP
-     nil
-     ("gpg" . "1.4.3"))))
-
-(defun epg-tests-find-usable-gpg-configuration (&optional require-passphrase)
-  (epg-find-configuration
-   'OpenPGP
-   'no-cache
-   (if require-passphrase
-       epg-tests-program-alist-for-passphrase-callback)))
+(defun epg-tests-find-usable-gpg-configuration (&optional _require-passphrase)
+  (epg-find-configuration 'OpenPGP 'no-cache))
 
 (defun epg-tests-passphrase-callback (_c _k _d)
   ;; Need to create a copy here, since the string will be wiped out
@@ -52,8 +43,13 @@
 					require-secret-key)
 			    &rest body)
   "Set up temporary locations and variables for testing."
-  (declare (indent 1))
-  `(let ((epg-tests-home-directory (make-temp-file "epg-tests-homedir" t)))
+  (declare (indent 1) (debug (sexp body)))
+  `(let* ((epg-tests-home-directory (make-temp-file "epg-tests-homedir" t))
+	  (process-environment
+	   (append
+	    (list "GPG_AGENT_INFO"
+		  (format "GNUPGHOME=%s" epg-tests-home-directory))
+	    process-environment)))
      (unwind-protect
 	 (let ((context (epg-make-context 'OpenPGP)))
            (setf (epg-context-program context)
@@ -63,11 +59,16 @@
                                   `'require-passphrase))))
 	   (setf (epg-context-home-directory context)
 		 epg-tests-home-directory)
-	   (setenv "GPG_AGENT_INFO")
 	   ,(if require-passphrase
-		`(epg-context-set-passphrase-callback
-		  context
-		  #'epg-tests-passphrase-callback))
+		`(with-temp-file (expand-file-name
+                                  "gpg-agent.conf" epg-tests-home-directory)
+                   (insert "pinentry-program "
+                           (expand-file-name "dummy-pinentry"
+                                             epg-tests-data-directory)
+                           "\n")
+                   (epg-context-set-passphrase-callback
+                    context
+                    #'epg-tests-passphrase-callback)))
 	   ,(if require-public-key
 		`(epg-import-keys-from-file
 		  context

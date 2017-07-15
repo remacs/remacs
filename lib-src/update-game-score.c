@@ -39,13 +39,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <time.h>
 #include <pwd.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <getopt.h>
+
+#include <unlocked-io.h>
 
 #ifdef WINDOWSNT
 #include "ntlib.h"

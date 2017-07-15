@@ -896,6 +896,8 @@ Subclasses to override slot attributes.")
   ;; Skipping on Remacs as this fails non-deterministically on Travis
   ;; https://github.com/Wilfred/remacs/issues/159
   (skip-unless (equal invocation-name "emacs"))
+  ;; FIXME repeated intermittent failures on hydra (bug#24503)
+  (skip-unless (not (getenv "NIX_STORE")))
   (should (equal (eieio--testing "toto") '("toto" 2))))
 
 (ert-deftest eieio-autoload ()

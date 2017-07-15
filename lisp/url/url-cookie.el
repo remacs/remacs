@@ -229,16 +229,19 @@ telling Microsoft that."
 (defun url-cookie-host-can-set-p (host domain)
   (let ((last nil)
 	(case-fold-search t))
-    (if (string= host domain)	; Apparently netscape lets you do this
-	t
+    (cond
+     ((string= host domain)	; Apparently netscape lets you do this
+      t)
+     ((zerop (length domain))
+      nil)
+     (t
       ;; Remove the dot from wildcard domains before matching.
       (when (eq ?. (aref domain 0))
 	(setq domain (substring domain 1)))
       (and (url-domsuf-cookie-allowed-p domain)
 	   ;; Need to check and make sure the host is actually _in_ the
 	   ;; domain it wants to set a cookie for though.
-	   (string-match (concat (regexp-quote domain)
-				 "$") host)))))
+	   (string-match (concat (regexp-quote domain) "$") host))))))
 
 (defun url-cookie-handle-set-cookie (str)
   (setq url-cookies-changed-since-last-save t)

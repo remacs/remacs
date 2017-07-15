@@ -39,9 +39,13 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <binary-io.h>
+#include <intprops.h>
+#include <min-max.h>
+#include <unlocked-io.h>
 
 #ifdef WINDOWSNT
 /* Defined to be sys_fopen in ms-w32.h, but only #ifdef emacs, so this
@@ -49,10 +53,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #undef fopen
 #include <direct.h>
 #endif /* WINDOWSNT */
-
-#include <binary-io.h>
-#include <intprops.h>
-#include <min-max.h>
 
 #ifdef DOS_NT
 /* Defined to be sys_chdir in ms-w32.h, but only #ifdef emacs, so this
@@ -850,8 +850,7 @@ scan_c_stream (FILE *infile)
       bool defvarperbufferflag = false;
       bool defvarflag = false;
       enum global_type type = INVALID;
-      static char *name;
-      static ptrdiff_t name_size;
+      static char name[sizeof input_buffer];
 
       if (c != '\n' && c != '\r')
 	{
@@ -972,22 +971,13 @@ scan_c_stream (FILE *infile)
 	      if (c < 0)
 		goto eof;
 	      input_buffer[i++] = c;
+	      if (sizeof input_buffer <= i)
+		fatal ("identifier too long");
 	      c = getc (infile);
 	    }
 	  while (! (c == ',' || c == ' ' || c == '\t'
 		    || c == '\n' || c == '\r'));
 	  input_buffer[i] = '\0';
-
-	  if (name_size <= i)
-	    {
-	      free (name);
-	      name_size = i + 1;
-	      ptrdiff_t doubled;
-	      if (! INT_MULTIPLY_WRAPV (name_size, 2, &doubled)
-		  && doubled <= SIZE_MAX)
-		name_size = doubled;
-	      name = xmalloc (name_size);
-	    }
 	  memcpy (name, input_buffer, i + 1);
 
 	  if (type == SYMBOL)

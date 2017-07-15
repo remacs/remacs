@@ -1252,3 +1252,99 @@ commands
   end
   continue
 end
+
+
+# Put the Python code at the end of .gdbinit so that if GDB does not
+# support Python, GDB will do all the above initializations before
+# reporting an error.
+
+python
+
+# Omit pretty-printing in older (pre-7.3) GDBs that lack it.
+if hasattr(gdb, 'printing'):
+
+  class Emacs_Pretty_Printers (gdb.printing.RegexpCollectionPrettyPrinter):
+    """A collection of pretty-printers.  This is like GDB's
+       RegexpCollectionPrettyPrinter except when printing Lisp_Object."""
+    def __call__ (self, val):
+      """Look up the pretty-printer for the provided value."""
+      type = val.type.unqualified ()
+      typename = type.tag or type.name
+      basic_type = gdb.types.get_basic_type (type)
+      basic_typename = basic_type.tag or basic_type.name
+      for printer in self.subprinters:
+        if (printer.enabled
+            and ((printer.regexp == '^Lisp_Object$'
+                  and typename == 'Lisp_Object')
+                 or (basic_typename
+                     and printer.compiled_re.search (basic_typename)))):
+          return printer.gen_printer (val)
+      return None
+
+  class Lisp_Object_Printer:
+    "A printer for Lisp_Object values."
+    def __init__ (self, val):
+      self.val = val
+
+    def to_string (self):
+      "Yield a string that can be fed back into GDB."
+
+      # This implementation should work regardless of C compiler, and
+      # it should not attempt to run any code in the inferior.
+      EMACS_INT_WIDTH = int(gdb.lookup_symbol("EMACS_INT_WIDTH")[0].value())
+      USE_LSB_TAG = int(gdb.lookup_symbol("USE_LSB_TAG")[0].value())
+      GCTYPEBITS = 3
+      VALBITS = EMACS_INT_WIDTH - GCTYPEBITS
+      Lisp_Int0 = 2
+      Lisp_Int1 = 6 if USE_LSB_TAG else 3
+
+      # Unpack the Lisp value from its containing structure, if necessary.
+      val = self.val
+      basic_type = gdb.types.get_basic_type (val.type)
+      if (basic_type.code == gdb.TYPE_CODE_STRUCT
+          and gdb.types.has_field (basic_type, "i")):
+        val = val["i"]
+
+      # For nil, yield "XIL(0)", which is easier to read than "XIL(0x0)".
+      if not val:
+        return "XIL(0)"
+
+      # Extract the integer representation of the value and its Lisp type.
+      ival = int(val)
+      itype = ival >> (0 if USE_LSB_TAG else VALBITS)
+      itype = itype & ((1 << GCTYPEBITS) - 1)
+
+      # For a Lisp integer N, yield "make_number(N)".
+      if itype == Lisp_Int0 or itype == Lisp_Int1:
+        if USE_LSB_TAG:
+          ival = ival >> (GCTYPEBITS - 1)
+        elif (ival >> VALBITS) & 1:
+          ival = ival | (-1 << VALBITS)
+        else:
+          ival = ival & ((1 << VALBITS) - 1)
+        return "make_number(%d)" % ival
+
+      # For non-integers other than nil yield "XIL(N)", where N is a C integer.
+      # This helps humans distinguish Lisp_Object values from ordinary
+      # integers even when Lisp_Object is an integer.
+      # Perhaps some day the pretty-printing could be fancier.
+      # Prefer the unsigned representation to negative values, converting
+      # by hand as val.cast(gdb.lookup_type("EMACS_UINT") does not work in
+      # GDB 7.12.1; see <http://patchwork.sourceware.org/patch/11557/>.
+      if ival < 0:
+        ival = ival + (1 << EMACS_INT_WIDTH)
+      return "XIL(0x%x)" % ival
+
+  def build_pretty_printer ():
+    pp = Emacs_Pretty_Printers ("Emacs")
+    pp.add_printer ('Lisp_Object', '^Lisp_Object$', Lisp_Object_Printer)
+    return pp
+
+  gdb.printing.register_pretty_printer (gdb.current_objfile (),
+                                        build_pretty_printer (), True)
+end
+
+# GDB mishandles indentation with leading tabs when feeding it to Python.
+# Local Variables:
+# indent-tabs-mode: nil
+# End:

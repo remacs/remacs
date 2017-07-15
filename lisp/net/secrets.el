@@ -737,7 +737,7 @@ If there is no such item, or the item doesn't own this attribute, return nil."
     (set-keymap-parent map (make-composed-keymap special-mode-map widget-keymap))
     (define-key map "n" 'next-line)
     (define-key map "p" 'previous-line)
-    (define-key map "z" 'kill-this-buffer)
+    (define-key map "z" 'kill-current-buffer)
     map)
   "Keymap used in `secrets-mode' buffers.")
 

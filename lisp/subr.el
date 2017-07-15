@@ -121,6 +121,7 @@ BODY should be a list of Lisp expressions.
 (defmacro setq-local (var val)
   "Set variable VAR to value VAL in current buffer."
   ;; Can't use backquote here, it's too early in the bootstrap.
+  (declare (debug (symbolp form)))
   (list 'set (list 'make-local-variable (list 'quote var)) val))
 
 (defmacro defvar-local (var val &optional docstring)
@@ -131,15 +132,6 @@ buffer-local wherever it is set."
   ;; Can't use backquote here, it's too early in the bootstrap.
   (list 'progn (list 'defvar var val docstring)
         (list 'make-variable-buffer-local (list 'quote var))))
-
-(defun apply-partially (fun &rest args)
-  "Return a function that is a partial application of FUN to ARGS.
-ARGS is a list of the first N arguments to pass to FUN.
-The result is a new function which does the same as FUN, except that
-the first N arguments are fixed at the values with which this function
-was called."
-  (lambda (&rest args2)
-    (apply fun (append args args2))))
 
 (defmacro push (newelt place)
   "Add NEWELT to the list stored in the generalized variable PLACE.
@@ -199,6 +191,10 @@ Then evaluate RESULT to get return value, default nil.
 
 \(fn (VAR LIST [RESULT]) BODY...)"
   (declare (indent 1) (debug ((symbolp form &optional form) body)))
+  (unless (consp spec)
+    (signal 'wrong-type-argument (list 'consp spec)))
+  (unless (<= 2 (length spec) 3)
+    (signal 'wrong-number-of-arguments (list '(2 . 3) (length spec))))
   ;; It would be cleaner to create an uninterned symbol,
   ;; but that uses a lot more space when many functions in many files
   ;; use dolist.
@@ -343,6 +339,15 @@ Any list whose car is `frame-configuration' is assumed to be a frame
 configuration."
   (and (consp object)
        (eq (car object) 'frame-configuration)))
+
+(defun apply-partially (fun &rest args)
+  "Return a function that is a partial application of FUN to ARGS.
+ARGS is a list of the first N arguments to pass to FUN.
+The result is a new function which does the same as FUN, except that
+the first N arguments are fixed at the values with which this function
+was called."
+  (lambda (&rest args2)
+    (apply fun (append args args2))))
 
 
 ;;;; List functions.
@@ -1872,13 +1877,18 @@ Only affects hooks run in the current buffer."
 
 ;; PUBLIC: find if the current mode derives from another.
 
+(defun provided-mode-derived-p (mode &rest modes)
+  "Non-nil if MODE is derived from one of MODES.
+Uses the `derived-mode-parent' property of the symbol to trace backwards.
+If you just want to check `major-mode', use `derived-mode-p'."
+  (while (and (not (memq mode modes))
+              (setq mode (get mode 'derived-mode-parent))))
+  mode)
+
 (defun derived-mode-p (&rest modes)
   "Non-nil if the current major mode is derived from one of MODES.
 Uses the `derived-mode-parent' property of the symbol to trace backwards."
-  (let ((parent major-mode))
-    (while (and (not (memq parent modes))
-		(setq parent (get parent 'derived-mode-parent))))
-    parent))
+  (apply #'provided-mode-derived-p major-mode modes))
 
 ;;;; Minor modes.
 
@@ -2017,6 +2027,25 @@ definition, variable definition, or face definition only."
 	(setq files (cdr files)))
       file)))
 
+(defun method-files (method)
+  "Return a list of files where METHOD is defined by `cl-defmethod'.
+The list will have entries of the form (FILE . (METHOD ...))
+where (METHOD ...) contains the qualifiers and specializers of
+the method and is a suitable argument for
+`find-function-search-for-symbol'.  Filenames are absolute."
+  (let ((files load-history)
+        result)
+    (while files
+      (let ((defs (cdr (car files))))
+        (while defs
+          (let ((def (car defs)))
+            (if (and (eq (car-safe def) 'cl-defmethod)
+                     (eq (cadr def) method))
+                (push (cons (car (car files)) (cdr def)) result)))
+          (setq defs (cdr defs))))
+      (setq files (cdr files)))
+    result))
+
 (defun locate-library (library &optional nosuffix path interactive-call)
   "Show the precise file name of Emacs library LIBRARY.
 LIBRARY should be a relative file name of the library, a string.
@@ -2068,7 +2097,12 @@ arguments PROGRAM-ARGS are strings to give program as arguments.
 
 If you want to separate standard output from standard error, use
 `make-process' or invoke the command through a shell and redirect
-one of them using the shell syntax."
+one of them using the shell syntax.
+
+The process runs in `default-directory' if that is local (as
+determined by `unhandled-file-name-directory'), or \"~\"
+otherwise.  If you want to run a process in a remote directory
+use `start-file-process'."
   (unless (fboundp 'make-process)
     (error "Emacs was compiled without subprocess support"))
   (apply #'make-process
@@ -2235,7 +2269,7 @@ by doing (clear-string STRING)."
                 (second (read-passwd "Confirm password: " nil default)))
             (if (equal first second)
                 (progn
-                  (and (arrayp second) (clear-string second))
+                  (and (arrayp second) (not (eq first second)) (clear-string second))
                   (setq success first))
               (and (arrayp first) (clear-string first))
               (and (arrayp second) (clear-string second))
@@ -4480,7 +4514,8 @@ EVALD, FUNC, ARGS, FLAGS are as in `mapbacktrace'."
 (defun backtrace ()
   "Print a trace of Lisp function calls currently active.
 Output stream used is value of `standard-output'."
-  (let ((print-level (or print-level 8)))
+  (let ((print-level (or print-level 8))
+        (print-escape-control-characters t))
     (mapbacktrace #'backtrace--print-frame 'backtrace)))
 
 (defun backtrace-frames (&optional base)
@@ -4616,7 +4651,10 @@ called from a keyboard macro or in batch mode?
 To test whether your function was called with `call-interactively',
 either (i) add an extra optional argument and give it an `interactive'
 spec that specifies non-nil unconditionally (such as \"p\"); or (ii)
-use `called-interactively-p'."
+use `called-interactively-p'.
+
+To test whether a function can be called interactively, use
+`commandp'."
   (declare (obsolete called-interactively-p "23.2"))
   (called-interactively-p 'interactive))
 

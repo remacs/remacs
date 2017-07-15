@@ -248,11 +248,15 @@ the same as @kbd{C-M-a} with a positive argument.
 (@code{mark-defun}), which sets the mark at the end of the current
 defun and puts point at its beginning.  @xref{Marking Objects}.  This
 is the easiest way to get ready to kill the defun in order to move it
-to a different place in the file.  If you use the command while point
-is between defuns, it uses the following defun.  If you use the
-command while the mark is already active, it sets the mark but does
-not move point; furthermore, each successive use of @kbd{C-M-h}
-extends the end of the region to include one more defun.
+to a different place in the file.  If the defun is directly preceded
+by comments (with no intervening blank lines), they are marked, too.
+If you use the command while point is between defuns, it uses the
+following defun.  If you use the command while the mark is already
+active, it extends the end of the region to include one more defun.
+With a prefix argument, it marks that many defuns or extends the
+region by the appropriate number of defuns.  With negative prefix
+argument it marks defuns in the opposite direction and also changes
+the direction of selecting for subsequent uses of @code{mark-defun}.
 
   In C mode, @kbd{C-M-h} runs the function @code{c-mark-function},
 which is almost the same as @code{mark-defun}; the difference is that
@@ -327,7 +331,7 @@ as you move around in a buffer.
 @vindex which-func-modes
   To either enable or disable Which Function mode, use the command
 @kbd{M-x which-function-mode}.  Which Function mode is a global minor
-mode.  By default, it takes effect in all major modes major modes that
+mode.  By default, it takes effect in all major modes that
 know how to support it (i.e., all the major modes that support
 Imenu).  You can restrict it to a specific list of major modes by
 changing the value of the variable @code{which-func-modes} from
@@ -1142,9 +1146,12 @@ comment or for aligning an existing comment.  It is set differently by
 various major modes.  The function is called with no arguments, but with
 point at the beginning of the comment, or at the end of a line if a new
 comment is to be inserted.  It should return the column in which the
-comment ought to start.  For example, in Lisp mode, the indent hook
-function bases its decision on how many semicolons begin an existing
-comment, and on the code in the preceding lines.
+comment ought to start.  For example, the default hook function bases
+its decision on how many comment characters begin an existing comment.
+
+Emacs also tries to align comments on adjacent lines.  To override
+this, the function may return a cons of two (possibly equal) integers
+to indicate an acceptable range of indentation.
 
 @node Documentation
 @section Documentation Lookup

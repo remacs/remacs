@@ -151,20 +151,19 @@ This function generalizes @code{aref} (@pxref{Array Functions}) and
 @code{nth} (@pxref{Definition of nth}).
 @end defun
 
-@defun copy-sequence sequence
+@defun copy-sequence seqr
 @cindex copying sequences
-This function returns a copy of @var{sequence}.  The copy is the same
-type of object as the original sequence, and it has the same elements
-in the same order.
+This function returns a copy of @var{seqr}, which should be either a
+sequence or a record.  The copy is the same type of object as the
+original, and it has the same elements in the same order.
 
 Storing a new element into the copy does not affect the original
-@var{sequence}, and vice versa.  However, the elements of the new
-sequence are not copies; they are identical (@code{eq}) to the elements
+@var{seqr}, and vice versa.  However, the elements of the copy
+are not copies; they are identical (@code{eq}) to the elements
 of the original.  Therefore, changes made within these elements, as
-found via the copied sequence, are also visible in the original
-sequence.
+found via the copy, are also visible in the original.
 
-If the sequence is a string with text properties, the property list in
+If the argument is a string with text properties, the property list in
 the copy is itself a copy, not shared with the original's property
 list.  However, the actual values of the properties are shared.
 @xref{Text Properties}.
@@ -793,6 +792,33 @@ it is a function of two arguments to use instead of the default @code{equal}.
 
 @end defun
 
+@defun seq-set-equal-p sequence1 sequence2 &optional testfn
+This function checks whether @var{sequence1} and @var{sequence2}
+contain the same elements, regardless of the order. If the optional
+argument @var{testfn} is non-@code{nil}, it is a function of two
+arguments to use instead of the default @code{equal}.
+
+@example
+@group
+(seq-set-equal-p '(a b c) '(c b a))
+@result{} t
+@end group
+@group
+(seq-set-equal-p '(a b c) '(c b))
+@result{} nil
+@end group
+@group
+(seq-set-equal-p '("a" "b" "c") '("c" "b" "a"))
+@result{} t
+@end group
+@group
+(seq-set-equal-p '("a" "b" "c") '("c" "b" "a") #'eq)
+@result{} nil
+@end group
+@end example
+
+@end defun
+
 @defun seq-position sequence elt &optional function
   This function returns the index of the first element in
 @var{sequence} that is equal to @var{elt}.  If the optional argument
@@ -1148,10 +1174,10 @@ vector, a string, a bool-vector or a char-table).
 @end example
 @end defun
 
-@defun aref array index
+@defun aref arr index
 @cindex array elements
-This function returns the @var{index}th element of @var{array}.  The
-first element is at index zero.
+This function returns the @var{index}th element of the array or record
+@var{arr}.  The first element is at index zero.
 
 @example
 @group

@@ -176,6 +176,9 @@ if there's no opener/closer near point, or a list of the form
 Where HERE-BEG..HERE-END is expected to be near point.")
 
 (defun show-paren--default ()
+  "Finds the opener/closer near point and its match.
+
+It is the default value of `show-paren-data-function'."
   (let* ((temp (show-paren--locate-near-paren))
 	 (dir (car temp))
 	 (outside (cdr temp))
@@ -228,9 +231,8 @@ Where HERE-BEG..HERE-END is expected to be near point.")
 		  (if (= dir 1) pos (1+ pos))
 		  mismatch)))))))
 
-;; Find the place to show, if there is one,
-;; and show it until input arrives.
 (defun show-paren-function ()
+  "Highlight the parentheses until the next input arrives."
   (let ((data (and show-paren-mode (funcall show-paren-data-function))))
     (if (not data)
         (progn

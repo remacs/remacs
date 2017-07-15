@@ -1,4 +1,4 @@
-;;; ob.el --- working with code blocks in org-mode
+;;; ob.el --- Working with Code Blocks in Org        -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
 

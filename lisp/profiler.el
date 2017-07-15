@@ -27,7 +27,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'pcase)
 
 (defgroup profiler nil
   "Emacs profiler."

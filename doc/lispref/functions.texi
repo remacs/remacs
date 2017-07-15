@@ -1862,6 +1862,13 @@ More specifically, the composition of the two functions behaves like:
 @node Porting old advice
 @subsection Adapting code using the old defadvice
 @cindex old advices, porting
+@c NB: The following index entries deliberately avoid ``old'',
+@c an adjective that does not come to mind for those who grew up
+@c on ‘defadvice’ et al.  For those folks, that way is ``current''.
+@c They discover its oldness reading this node.
+@cindex advices, porting from @code{defadvice}
+@findex defadvice
+@findex ad-activate
 
 A lot of code uses the old @code{defadvice} mechanism, which is largely made
 obsolete by the new @code{advice-add}, whose implementation and semantics is

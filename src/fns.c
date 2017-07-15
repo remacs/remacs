@@ -36,7 +36,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "puresize.h"
 
-bool internal_equal (Lisp_Object, Lisp_Object, int, bool, Lisp_Object);
+enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
+bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 
 DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
        doc: /* Return the argument unchanged.  */
@@ -354,12 +355,17 @@ usage: (vconcat &rest SEQUENCES)   */)
 
 
 DEFUN ("copy-sequence", Fcopy_sequence, Scopy_sequence, 1, 1, 0,
-       doc: /* Return a copy of a list, vector, string or char-table.
-The elements of a list or vector are not copied; they are shared
-with the original.  */)
+       doc: /* Return a copy of a list, vector, string, char-table or record.
+The elements of a list, vector or record are not copied; they are
+shared with the original.  */)
   (Lisp_Object arg)
 {
   if (NILP (arg)) return arg;
+
+  if (RECORDP (arg))
+    {
+      return Frecord (PVSIZE (arg), XVECTOR (arg)->contents);
+    }
 
   if (CHAR_TABLE_P (arg))
     {
@@ -1122,7 +1128,8 @@ assq_no_quit (Lisp_Object key, Lisp_Object list)
 }
 
 /* Like Fassoc but never report an error and do not allow quits.
-   Use only on objects known to be non-circular lists.  */
+   Use only on keys and lists known to be non-circular, and on keys
+   that are not too deep and are not window configurations.  */
 
 Lisp_Object
 assoc_no_quit (Lisp_Object key, Lisp_Object list)
@@ -1131,7 +1138,7 @@ assoc_no_quit (Lisp_Object key, Lisp_Object list)
     {
       Lisp_Object car = XCAR (list);
       if (CONSP (car)
-	  && (EQ (XCAR (car), key) || !NILP (Fequal (XCAR (car), key))))
+	  && (EQ (XCAR (car), key) || equal_no_quit (XCAR (car), key)))
 	return car;
     }
   return Qnil;
@@ -1402,18 +1409,36 @@ It can be retrieved with `(get SYMBOL PROPNAME)'.  */)
   return value;
 }
 
-/* DEPTH is current depth of recursion.  Signal an error if it
-   gets too deep.
-   PROPS means compare string text properties too.  */
+/* Return true if O1 and O2 are equal.  Do not quit or check for cycles.
+   Use this only on arguments that are cycle-free and not too large and
+   are not window configurations.  */
+
+bool
+equal_no_quit (Lisp_Object o1, Lisp_Object o2)
+{
+  return internal_equal (o1, o2, EQUAL_NO_QUIT, 0, Qnil);
+}
+
+/* Return true if O1 and O2 are equal.  EQUAL_KIND specifies what kind
+   of equality test to use: if it is EQUAL_NO_QUIT, do not check for
+   cycles or large arguments or quits; if EQUAL_PLAIN, do ordinary
+   Lisp equality; and if EQUAL_INCLUDING_PROPERTIES, do
+   equal-including-properties.
+
+   If DEPTH is the current depth of recursion; signal an error if it
+   gets too deep.  HT is a hash table used to detect cycles; if nil,
+   it has not been allocated yet.  But ignore the last two arguments
+   if EQUAL_KIND == EQUAL_NO_QUIT.  */
 
 /* NOTE: made this non-static to call it from Rust. */
 bool
-internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
-		Lisp_Object ht)
+internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
+		int depth, Lisp_Object ht)
 {
  tail_recurse:
   if (depth > 10)
     {
+      eassert (equal_kind != EQUAL_NO_QUIT);
       if (depth > 200)
 	error ("Stack overflow in equal");
       if (NILP (ht))
@@ -1429,7 +1454,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	      { /* `o1' was seen already.  */
 		Lisp_Object o2s = HASH_VALUE (h, i);
 		if (!NILP (Fmemq (o2, o2s)))
-		  return 1;
+		  return true;
 		else
 		  set_hash_value_slot (h, i, Fcons (o2, o2s));
 	      }
@@ -1441,49 +1466,58 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
     }
 
   if (EQ (o1, o2))
-    return 1;
+    return true;
   if (XTYPE (o1) != XTYPE (o2))
-    return 0;
+    return false;
 
   switch (XTYPE (o1))
     {
     case Lisp_Float:
       {
-	double d1, d2;
-
-	d1 = extract_float (o1);
-	d2 = extract_float (o2);
+	double d1 = XFLOAT_DATA (o1);
+	double d2 = XFLOAT_DATA (o2);
 	/* If d is a NaN, then d != d. Two NaNs should be `equal' even
 	   though they are not =.  */
 	return d1 == d2 || (d1 != d1 && d2 != d2);
       }
 
     case Lisp_Cons:
-      {
-	FOR_EACH_TAIL (o1)
+      if (equal_kind == EQUAL_NO_QUIT)
+	for (; CONSP (o1); o1 = XCDR (o1))
 	  {
 	    if (! CONSP (o2))
 	      return false;
-	    if (! internal_equal (XCAR (o1), XCAR (o2), depth + 1, props, ht))
+	    if (! equal_no_quit (XCAR (o1), XCAR (o2)))
 	      return false;
 	    o2 = XCDR (o2);
 	    if (EQ (XCDR (o1), o2))
 	      return true;
 	  }
-	depth++;
-	goto tail_recurse;
-      }
+      else
+	FOR_EACH_TAIL (o1)
+	  {
+	    if (! CONSP (o2))
+	      return false;
+	    if (! internal_equal (XCAR (o1), XCAR (o2),
+				  equal_kind, depth + 1, ht))
+	      return false;
+	    o2 = XCDR (o2);
+	    if (EQ (XCDR (o1), o2))
+	      return true;
+	  }
+      depth++;
+      goto tail_recurse;
 
     case Lisp_Misc:
       if (XMISCTYPE (o1) != XMISCTYPE (o2))
-	return 0;
+	return false;
       if (OVERLAYP (o1))
 	{
 	  if (!internal_equal (OVERLAY_START (o1), OVERLAY_START (o2),
-			       depth + 1, props, ht)
+			       equal_kind, depth + 1, ht)
 	      || !internal_equal (OVERLAY_END (o1), OVERLAY_END (o2),
-				  depth + 1, props, ht))
-	    return 0;
+				  equal_kind, depth + 1, ht))
+	    return false;
 	  o1 = XOVERLAY (o1)->plist;
 	  o2 = XOVERLAY (o2)->plist;
 	  depth++;
@@ -1505,20 +1539,23 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	   actually checks that the objects have the same type as well as the
 	   same size.  */
 	if (ASIZE (o2) != size)
-	  return 0;
+	  return false;
 	/* Boolvectors are compared much like strings.  */
 	if (BOOL_VECTOR_P (o1))
 	  {
 	    EMACS_INT size = bool_vector_size (o1);
 	    if (size != bool_vector_size (o2))
-	      return 0;
+	      return false;
 	    if (memcmp (bool_vector_data (o1), bool_vector_data (o2),
 			bool_vector_bytes (size)))
-	      return 0;
-	    return 1;
+	      return false;
+	    return true;
 	  }
 	if (WINDOW_CONFIGURATIONP (o1))
-	  return compare_window_configurations (o1, o2, 0);
+	  {
+	    eassert (equal_kind != EQUAL_NO_QUIT);
+	    return compare_window_configurations (o1, o2, false);
+	  }
 
 	/* Aside from them, only true vectors, char-tables, compiled
 	   functions, and fonts (font-spec, font-entity, font-object)
@@ -1527,7 +1564,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	  {
 	    if (((size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS)
 		< PVEC_COMPILED)
-	      return 0;
+	      return false;
 	    size &= PSEUDOVECTOR_SIZE_MASK;
 	  }
 	for (i = 0; i < size; i++)
@@ -1535,29 +1572,30 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, int depth, bool props,
 	    Lisp_Object v1, v2;
 	    v1 = AREF (o1, i);
 	    v2 = AREF (o2, i);
-	    if (!internal_equal (v1, v2, depth + 1, props, ht))
-	      return 0;
+	    if (!internal_equal (v1, v2, equal_kind, depth + 1, ht))
+	      return false;
 	  }
-	return 1;
+	return true;
       }
       break;
 
     case Lisp_String:
       if (SCHARS (o1) != SCHARS (o2))
-	return 0;
+	return false;
       if (SBYTES (o1) != SBYTES (o2))
-	return 0;
+	return false;
       if (memcmp (SDATA (o1), SDATA (o2), SBYTES (o1)))
-	return 0;
-      if (props && !compare_string_intervals (o1, o2))
-	return 0;
-      return 1;
+	return false;
+      if (equal_kind == EQUAL_INCLUDING_PROPERTIES
+	  && !compare_string_intervals (o1, o2))
+	return false;
+      return true;
 
     default:
       break;
     }
 
-  return 0;
+  return false;
 }
 
 
@@ -2048,8 +2086,17 @@ suppressed.  */)
 
       tem = Fmemq (feature, Vfeatures);
       if (NILP (tem))
-	error ("Required feature `%s' was not provided",
-	       SDATA (SYMBOL_NAME (feature)));
+        {
+          unsigned char *tem2 = SDATA (SYMBOL_NAME (feature));
+          Lisp_Object tem3 = Fcar (Fcar (Vload_history));
+
+          if (NILP (tem3))
+            error ("Required feature `%s' was not provided", tem2);
+          else
+            /* Cf autoload-do-load.  */
+            error ("Loading file %s failed to provide feature `%s'",
+                   SDATA (tem3), tem2);
+        }
 
       /* Once loading finishes, don't undo it.  */
       Vautoload_queue = Qt;
@@ -3178,7 +3225,7 @@ sxhash_list (Lisp_Object list, int depth)
 }
 
 
-/* Return a hash for vector VECTOR.  DEPTH is the current depth in
+/* Return a hash for (pseudo)vector VECTOR.  DEPTH is the current depth in
    the Lisp structure.  */
 
 static EMACS_UINT
@@ -3187,7 +3234,7 @@ sxhash_vector (Lisp_Object vec, int depth)
   EMACS_UINT hash = ASIZE (vec);
   int i, n;
 
-  n = min (SXHASH_MAX_LEN, ASIZE (vec));
+  n = min (SXHASH_MAX_LEN, hash & PSEUDOVECTOR_FLAG ? PVSIZE (vec) : hash);
   for (i = 0; i < n; ++i)
     {
       EMACS_UINT hash2 = sxhash (AREF (vec, i), depth + 1);
@@ -3242,11 +3289,11 @@ sxhash (Lisp_Object obj, int depth)
 
       /* This can be everything from a vector to an overlay.  */
     case Lisp_Vectorlike:
-      if (VECTORP (obj))
+      if (VECTORP (obj) || RECORDP (obj))
 	/* According to the CL HyperSpec, two arrays are equal only if
 	   they are `eq', except for strings and bit-vectors.  In
 	   Emacs, this works differently.  We have to compare element
-	   by element.  */
+	   by element.  Same for records.  */
 	hash = sxhash_vector (obj, depth);
       else if (BOOL_VECTOR_P (obj))
 	hash = sxhash_bool_vector (obj);

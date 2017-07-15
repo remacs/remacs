@@ -551,14 +551,17 @@ may be any one of the following:
                         database and server) needed to connect to
                         the database.
 
- :sqli-comint-func      name of a function which accepts no
-                        parameters that will use the values of
-                        `sql-user', `sql-password',
-                        `sql-database', `sql-server' and
-                        `sql-port' to open a comint buffer and
-                        connect to the database.  Do product
+ :sqli-comint-func      function of two arguments, PRODUCT
+                        and OPTIONS, that will open a comint buffer
+                        and connect to the database.  PRODUCT is the
+                        first argument to be passed to `sql-comint',
+                        and OPTIONS should be included in its second
+                        argument.  The function should use the values
+                        of `sql-user', `sql-password', `sql-database',
+                        `sql-server' and `sql-port' to .  Do product
                         specific configuration of comint in this
-                        function.
+                        function.  See `sql-comint-oracle' for an
+                        example of such a function.
 
  :list-all              Command string or function which produces
                         a listing of all objects in the database.
@@ -2952,17 +2955,20 @@ value.  (The property value is used as the PREDICATE argument to
           (use-dialog-box nil))
      (cond
       ((plist-member plist :file)
-       (expand-file-name
-        (read-file-name prompt
-                        (file-name-directory last-value) default 'confirm
-                        (file-name-nondirectory last-value)
-                        (when (plist-get plist :file)
-                          `(lambda (f)
-                             (if (not (file-regular-p f))
-                                 t
-                               (string-match
-                                (concat "\\<" ,(plist-get plist :file) "\\>")
-                                (file-name-nondirectory f))))))))
+       (let ((file-name
+              (read-file-name prompt
+                              (file-name-directory last-value) default 'confirm
+                              (file-name-nondirectory last-value)
+                              (when (plist-get plist :file)
+                                `(lambda (f)
+                                   (if (not (file-regular-p f))
+                                       t
+                                     (string-match
+                                      (concat "\\<" ,(plist-get plist :file) "\\>")
+                                      (file-name-nondirectory f))))))))
+         (if (string= file-name "")
+             ""
+           (expand-file-name file-name))))
 
       ((plist-member plist :completion)
        (completing-read prompt-def (plist-get plist :completion) nil t

@@ -1118,7 +1118,7 @@ for this to be permanent."
 	(save-excursion
 	  (goto-char (point-min))
 	  (while (not (eobp))
-	    (if (looking-at "D")
+	    (if (= (following-char) ?D)
 		(progn (tar-expunge-internal)
 		       (setq n (1+ n)))
 		(forward-line 1)))

@@ -355,10 +355,19 @@
 ;; math-simplify-step, which is called by math-simplify.
 (defvar math-top-only)
 
+(defun calc-input-angle-units (input)
+  (cond ((math-expr-contains input '(var deg var-deg)) 'deg)
+        ((math-expr-contains input '(var rad var-rad)) 'rad)
+        ((math-expr-contains input '(var hms var-hms)) 'hms)
+        (t nil)))
+
 ;; math-normalize-error is declared in calc.el.
 (defvar math-normalize-error)
 (defun math-simplify (top-expr)
   (let ((math-simplifying t)
+        (calc-angle-mode (if (calc-input-angle-units top-expr)
+                             'rad
+                           calc-angle-mode))
 	(math-top-only (consp calc-simplify-mode))
 	(simp-rules (append (and (calc-has-rules 'var-AlgSimpRules)
 				 '((var AlgSimpRules var-AlgSimpRules)))

@@ -447,7 +447,9 @@ like <img alt=\"Some thing.\">."
 ;;*    The minor mode declaration.                                      */
 ;;*---------------------------------------------------------------------*/
 (defvar flyspell-mouse-map
-  (make-sparse-keymap)
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mouse-2] 'flyspell-correct-word)
+    map)
   "Keymap for Flyspell to put on erroneous words.")
 
 (defvar flyspell-mode-map
@@ -1759,6 +1761,9 @@ for the overlay."
     (overlay-put overlay 'flyspell-overlay t)
     (overlay-put overlay 'evaporate t)
     (overlay-put overlay 'help-echo "mouse-2: correct word at point")
+    ;; If misspelled text has a 'keymap' property, let that remain in
+    ;; effect for the bindings that flyspell-mouse-map doesn't override.
+    (set-keymap-parent flyspell-mouse-map (get-char-property beg 'keymap))
     (overlay-put overlay 'keymap flyspell-mouse-map)
     (when (eq face 'flyspell-incorrect)
       (and (stringp flyspell-before-incorrect-word-string)

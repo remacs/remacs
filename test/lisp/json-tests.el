@@ -89,7 +89,10 @@ Point is moved to beginning of the buffer."
 (ert-deftest test-json-skip-whitespace ()
   (json-tests--with-temp-buffer "\t\r\n\f\b { \"a\": 1 }"
     (json-skip-whitespace)
-    (should (equal (char-after (point)) ?{))))
+    (should (equal (char-after) ?\f)))
+  (json-tests--with-temp-buffer "\t\r\n\t { \"a\": 1 }"
+    (json-skip-whitespace)
+    (should (equal (char-after) ?{))))
 
 ;;; Paths
 

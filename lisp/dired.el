@@ -335,9 +335,8 @@ The directory name must be absolute, but need not be fully expanded.")
 (defvar dired-re-dir (concat dired-re-maybe-mark dired-re-inode-size "d[^:]"))
 (defvar dired-re-sym (concat dired-re-maybe-mark dired-re-inode-size "l[^:]"))
 (defvar dired-re-exe;; match ls permission string of an executable file
-  (mapconcat (function
-	      (lambda (x)
-		(concat dired-re-maybe-mark dired-re-inode-size x)))
+  (mapconcat (lambda (x)
+		(concat dired-re-maybe-mark dired-re-inode-size x))
 	     '("-[-r][-w][xs][-r][-w].[-r][-w]."
 	       "-[-r][-w].[-r][-w][xs][-r][-w]."
 	       "-[-r][-w].[-r][-w].[-r][-w][xst]")
@@ -607,9 +606,9 @@ marked file, return (t FILENAME) instead of (FILENAME)."
 		 (progn	;; no save-excursion, want to move point.
 		   (dired-repeat-over-lines
 		    ,arg
-		    (function (lambda ()
-				(if ,show-progress (sit-for 0))
-				(setq results (cons ,body results)))))
+		    (lambda ()
+		      (if ,show-progress (sit-for 0))
+		      (setq results (cons ,body results))))
 		   (if (< ,arg 0)
 		       (nreverse results)
 		     results))
@@ -1995,8 +1994,8 @@ Keybindings:
   ;; Ignore dired-hide-details-* value of invisible text property by default.
   (when (eq buffer-invisibility-spec t)
     (setq buffer-invisibility-spec (list t)))
-  (setq-local revert-buffer-function (function dired-revert))
-  (setq-local buffer-stale-function (function dired-buffer-stale-p))
+  (setq-local revert-buffer-function #'dired-revert)
+  (setq-local buffer-stale-function #'dired-buffer-stale-p)
   (setq-local page-delimiter "\n\n")
   (setq-local dired-directory (or dirname default-directory))
   ;; list-buffers uses this to display the dir being edited in this buffer.
@@ -2126,7 +2125,16 @@ directory in another window."
   (interactive)
   ;; Bind `find-file-run-dired' so that the command works on directories
   ;; too, independent of the user's setting.
-  (let ((find-file-run-dired t))
+  (let ((find-file-run-dired t)
+        ;; This binding prevents problems with preserving point in
+        ;; windows displaying Dired buffers, because reverting a Dired
+        ;; buffer empties it, which changes the places where the
+        ;; markers used by switch-to-buffer-preserve-window-point
+        ;; point.
+        (switch-to-buffer-preserve-window-point
+         (if dired-auto-revert-buffer
+             nil
+           switch-to-buffer-preserve-window-point)))
     (find-file (dired-get-file-for-visit))))
 
 (defun dired-find-alternate-file ()
@@ -2460,7 +2468,7 @@ You can then feed the file name(s) to other commands with \\[yank]."
   (interactive "P")
   (let ((string
          (or (dired-get-subdir)
-             (mapconcat (function identity)
+             (mapconcat #'identity
                         (if arg
                             (cond ((zerop (prefix-numeric-value arg))
                                    (dired-get-marked-files))
@@ -2962,12 +2970,12 @@ non-empty directories is allowed."
   ;; lines still to be changed, so the (point) values in L stay valid.
   ;; Also, for subdirs in natural order, a subdir's files are deleted
   ;; before the subdir itself - the other way around would not work.
-  (let* ((files (mapcar (function car) l))
+  (let* ((files (mapcar #'car l))
 	 (count (length l))
 	 (succ 0)
 	 (trashing (and trash delete-by-moving-to-trash)))
     ;; canonicalize file list for pop up
-    (setq files (nreverse (mapcar (function dired-make-relative) files)))
+    (setq files (nreverse (mapcar #'dired-make-relative files)))
     (if (dired-mark-pop-up
 	 " *Deletions*" 'delete files dired-deletion-confirmer
 	 (format "%s %s "
@@ -2990,7 +2998,7 @@ non-empty directories is allowed."
 		      (progress-reporter-update progress-reporter succ)
 		      (dired-fun-in-all-buffers
 		       (file-name-directory fn) (file-name-nondirectory fn)
-		       (function dired-delete-entry) fn))
+		       #'dired-delete-entry fn))
 		  (error ;; catch errors from failed deletions
 		   (dired-log "%s\n" err)
 		   (setq failures (cons (car (car l)) failures)))))
@@ -3284,7 +3292,7 @@ this subdir."
     (let ((inhibit-read-only t))
       (dired-repeat-over-lines
        (prefix-numeric-value arg)
-       (function (lambda () (delete-char 1) (insert dired-marker-char))))))))
+       (lambda () (delete-char 1) (insert dired-marker-char)))))))
 
 (defun dired-unmark (arg &optional interactive)
   "Unmark the file at point in the Dired buffer.
@@ -3919,7 +3927,7 @@ Ask means pop up a menu for the user to select one of copy, move or link."
    (cdr
      (nreverse
        (mapcar
-         (function (lambda (f) (desktop-file-name (car f) dirname)))
+        (lambda (f) (desktop-file-name (car f) dirname))
          dired-subdir-alist)))))
 
 (defun dired-restore-desktop-buffer (_file-name

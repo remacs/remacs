@@ -252,8 +252,9 @@ Blind aliases or users from /etc/passwd are not expanded."
    (t
     (mh-alias-ali alias))))
 
-(mh-require 'crm nil t)                 ; completing-read-multiple
-(mh-require 'multi-prompt nil t)
+(eval-and-compile
+  (mh-require 'crm nil t)                 ; completing-read-multiple
+  (mh-require 'multi-prompt nil t))
 
 ;;;###mh-autoload
 (defun mh-read-address (prompt)
@@ -589,7 +590,7 @@ filing messages."
       (set-buffer (get-buffer-create mh-temp-buffer))
       (insert-file-contents (mh-msg-filename (mh-get-msg-num t))))
      ((eq major-mode 'mh-folder-mode)
-      (error "Cursor not pointing to a message")))
+      (user-error "Cursor not pointing to a message")))
     (let* ((address (or (mh-extract-from-header-value)
                         (error "Message has no From: header")))
            (alias (mh-alias-suggest-alias address)))

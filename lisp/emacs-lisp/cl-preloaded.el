@@ -45,7 +45,7 @@
 
 (defun cl--assertion-failed (form &optional string sargs args)
   (if debug-on-error
-      (funcall debugger `(cl-assertion-failed ,form ,string ,@sargs))
+      (funcall debugger 'error `(cl-assertion-failed (,form ,string ,@sargs)))
     (if string
         (apply #'error string (append sargs args))
       (signal 'cl-assertion-failed `(,form ,@sargs)))))
@@ -64,7 +64,7 @@
       ;; cl--slot-descriptor.
       ;; BEWARE: Obviously, it's important to keep the two in sync!
       (lambda (name &optional initform type props)
-        (vector 'cl-struct-cl-slot-descriptor
+        (record 'cl-slot-descriptor
                 name initform type props)))
 
 (defun cl--struct-get-class (name)
@@ -101,7 +101,7 @@
 (defun cl--struct-register-child (parent tag)
   ;; Can't use (cl-typep parent 'cl-structure-class) at this stage
   ;; because `cl-structure-class' is defined later.
-  (while (vectorp parent)
+  (while (recordp parent)
     (add-to-list (cl--struct-class-children-sym parent) tag)
     ;; Only register ourselves as a child of the leftmost parent since structs
     ;; can only only have one parent.
@@ -110,6 +110,12 @@
 ;;;###autoload
 (defun cl-struct-define (name docstring parent type named slots children-sym
                               tag print)
+  (unless type
+    ;; Legacy defstruct, using tagged vectors.  Enable backward compatibility.
+    (cl-old-struct-compat-mode 1))
+  (if (eq type 'record)
+      ;; Defstruct using record objects.
+      (setq type nil))
   (cl-assert (or type (not named)))
   (if (boundp children-sym)
       (add-to-list children-sym tag)
@@ -150,7 +156,7 @@
                    parent name))))
     (add-to-list 'current-load-list `(define-type . ,name))
     (cl--struct-register-child parent-class tag)
-    (unless (eq named t)
+    (unless (or (eq named t) (eq tag name))
       ;; We used to use `defconst' instead of `set' but that
       ;; has a side-effect of purecopying during the dump, so that the
       ;; class object stored in the tag ends up being a *copy* of the

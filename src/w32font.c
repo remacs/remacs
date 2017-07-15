@@ -436,7 +436,7 @@ w32font_text_extents (struct font *font, unsigned *code,
   int i;
   HFONT old_font = NULL;
   HDC dc = NULL;
-  struct frame * f;
+  struct frame * f UNINIT;
   int total_width = 0;
   WORD *wcode;
   SIZE size;
@@ -1627,7 +1627,7 @@ x_to_w32_charset (char * lpcs)
      Format of each entry is
        (CHARSET_NAME . (WINDOWS_CHARSET . CODEPAGE)).
   */
-  this_entry = Fassoc (build_string (charset), Vw32_charset_info_alist);
+  this_entry = Fassoc (build_string (charset), Vw32_charset_info_alist, Qnil);
 
   if (NILP (this_entry))
     {
@@ -2553,11 +2553,22 @@ in the font selection dialog. */)
   SelectObject (hdc, oldobj);
   ReleaseDC (FRAME_W32_WINDOW (f), hdc);
 
-  if (!ChooseFont (&cf)
-      || logfont_to_fcname (&lf, cf.iPointSize, buf, 100) < 0)
-    return Qnil;
+  {
+    int count = SPECPDL_INDEX ();
+    Lisp_Object value = Qnil;
 
-  return DECODE_SYSTEM (build_string (buf));
+    w32_dialog_in_progress (Qt);
+    specbind (Qinhibit_redisplay, Qt);
+    record_unwind_protect (w32_dialog_in_progress, Qnil);
+
+    if (ChooseFont (&cf)
+	&& logfont_to_fcname (&lf, cf.iPointSize, buf, 100) >= 0)
+      value = DECODE_SYSTEM (build_string (buf));
+
+    unbind_to (count, Qnil);
+
+    return value;
+  }
 }
 
 static const char *const w32font_booleans [] = {

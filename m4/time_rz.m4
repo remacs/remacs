@@ -10,9 +10,8 @@ dnl Written by Paul Eggert.
 AC_DEFUN([gl_TIME_RZ],
 [
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
-  AC_REQUIRE([gl_HEADER_SYS_TIME_H_DEFAULTS])
+  AC_REQUIRE([gl_HEADER_TIME_H_DEFAULTS])
   AC_REQUIRE([AC_STRUCT_TIMEZONE])
-  AC_CHECK_FUNCS_ONCE([tzset])
 
   AC_CHECK_TYPES([timezone_t], [], [], [[#include <time.h>]])
   if test "$ac_cv_type_timezone_t" = yes; then

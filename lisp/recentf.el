@@ -1304,7 +1304,9 @@ Read data from the file specified by `recentf-save-file'.
 When `recentf-initialize-file-name-history' is non-nil, initialize an
 empty `file-name-history' with the recent list."
   (interactive)
-  (let ((file (expand-file-name recentf-save-file)))
+  (let ((file (expand-file-name recentf-save-file))
+        ;; We do not want Tramp asking for passwords.
+        (non-essential t))
     (when (file-readable-p file)
       (load-file file)
       (and recentf-initialize-file-name-history

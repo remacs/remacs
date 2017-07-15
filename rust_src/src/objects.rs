@@ -1,7 +1,7 @@
 //! Various functions operating on any object.
 
 use lisp::{LispObject, Qnil};
-use remacs_sys::internal_equal;
+use remacs_sys::{internal_equal, EqualKind};
 use remacs_macros::lisp_fn;
 
 
@@ -41,6 +41,14 @@ fn equal(o1: LispObject, o2: LispObject) -> LispObject {
 /// of strings.  (`equal' ignores text properties.)
 #[lisp_fn]
 fn equal_including_properties(o1: LispObject, o2: LispObject) -> LispObject {
-    let res = unsafe { internal_equal(o1.to_raw(), o2.to_raw(), 0, true, Qnil.to_raw()) };
+    let res = unsafe {
+        internal_equal(
+            o1.to_raw(),
+            o2.to_raw(),
+            EqualKind::IncludingProperties,
+            0,
+            Qnil.to_raw(),
+        )
+    };
     LispObject::from_bool(res)
 }

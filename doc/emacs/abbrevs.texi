@@ -388,6 +388,9 @@ words that follow the expansion in its original context.  Simply type
 @kbd{@key{SPC} M-/} for each additional word you want to copy.  The
 spacing and punctuation between words is copied along with the words.
 
+  You can control the way @kbd{M-/} determines the word to expand and
+how to expand it, see @ref{Dabbrev Customization}.
+
   The command @kbd{C-M-/} (@code{dabbrev-completion}) performs
 completion of a dynamic abbrev.  Instead of trying the possible
 expansions one by one, it finds all of them, then inserts the text
@@ -437,12 +440,17 @@ copies the expansion verbatim including its case pattern.
 
 @vindex dabbrev-abbrev-char-regexp
   The variable @code{dabbrev-abbrev-char-regexp}, if non-@code{nil},
-controls which characters are considered part of a word, for dynamic expansion
-purposes.  The regular expression must match just one character, never
-two or more.  The same regular expression also determines which
-characters are part of an expansion.  The (default) value @code{nil}
-has a special meaning: dynamic abbrevs are made of word characters,
-but expansions are made of word and symbol characters.
+controls which characters are considered part of a word, for dynamic
+expansion purposes.  The regular expression must match just one
+character, never two or more.  The same regular expression also
+determines which characters are part of an expansion.  The (default)
+value @code{nil} has a special meaning: dynamic abbrevs (i.e.@: the
+word at point) are made of word characters, but their expansions are
+looked for as sequences of word and symbol characters.  This is
+generally appropriate for expanding symbols in a program source and
+also for human-readable text in many languages, but may not be what
+you want in a text buffer that includes unusual punctuation characters;
+in that case, the value @code{"\\sw"} might produce better results.
 
 @vindex dabbrev-abbrev-skip-leading-regexp
   In shell scripts and makefiles, a variable name is sometimes prefixed

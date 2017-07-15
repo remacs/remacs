@@ -200,6 +200,15 @@ buffers are scrolled.  The variable
 @code{mouse-wheel-progressive-speed} determines whether the scroll
 speed is linked to how fast you move the wheel.
 
+@vindex mwheel-tilt-scroll-p
+@vindex mwheel-flip-direction
+Emacs can also support horizontal scrolling if your mouse's wheel can
+be tilted.  This feature is off by default; the variable
+@code{mwheel-tilt-scroll-p} turns it on.  If you'd like to reverse the
+direction of horizontal scrolling, customize the variable
+@code{mwheel-flip-direction} to a non-@code{nil} value.
+
+
 @node Word and Line Mouse
 @section Mouse Commands for Words and Lines
 
@@ -1058,6 +1067,18 @@ file on a Dired buffer moves or copies the file (according to the
 conventions of the application it came from) into the directory
 displayed in that buffer.
 
+@vindex mouse-drag-and-drop-region
+  Emacs can also optionally drag the region of text by mouse into
+another portion of this or another buffer.  To enable that, customize
+the variable @code{mouse-drag-and-drop-region} to a non-nil value.
+Normally, the text is moved, i.e. cut and pasted, when the destination
+is the same buffer as the origin; dropping the region on another
+buffer copies the text instead.  If the value of this variable names a
+modifier key, such as @samp{shift} or @samp{control} or @samp{alt},
+then pressing that modifier key when dropping the text will copy it
+instead of cutting it, even if you drop on the same buffer as the one
+from which the text came.
+
 @vindex dnd-open-file-other-window
   Dropping a file normally visits it in the window you drop it on.  If
 you prefer to visit the file in a new window in such cases, customize
@@ -1124,6 +1145,12 @@ specific tool bar style, customize the variable @code{tool-bar-style}.
   You can also control the placement of the tool bar for the GTK+ tool
 bar with the frame parameter @code{tool-bar-position}.  @xref{Frame
 Parameters,,, elisp, The Emacs Lisp Reference Manual}.
+
+  NS builds consider the tool bar to be a window decoration, and
+therefore do not display it when a window is undecorated.  @xref{Frame
+Parameters,,, elisp, The Emacs Lisp Reference Manual}.  On macOS the
+tool bar is hidden when the frame is put into fullscreen, but can be
+displayed by moving the mouse pointer to the top of the screen.
 
 @node Dialog Boxes
 @section Using Dialog Boxes

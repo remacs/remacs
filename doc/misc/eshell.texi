@@ -493,7 +493,7 @@ History I-search.
 @itemx M-n
 Previous and next history line.  If there is anything on the input
 line when you run these commands, they will instead jump to the
-precious or next line that begins with that string.
+previous or next line that begins with that string.
 @end table
 
 @node Completion

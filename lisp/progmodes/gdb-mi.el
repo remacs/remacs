@@ -1767,13 +1767,17 @@ static char *magick[] = {
   :group 'gdb)
 
 
+(defvar gdb-python-guile-commands-regexp
+  "python\\|python-interactive\\|pi\\|guile\\|guile-repl\\|gr"
+  "Regexp that matches Python and Guile commands supported by GDB.")
+
 (defvar gdb-control-commands-regexp
   (concat
    "^\\("
    "commands\\|if\\|while\\|define\\|document\\|"
-   "python\\|python-interactive\\|pi\\|guile\\|guile-repl\\|gr\\|"
-   "while-stepping\\|stepping\\|ws\\|actions"
-   "\\)\\([[:blank:]]+.*\\)?$")
+   gdb-python-guile-commands-regexp
+   "\\|while-stepping\\|stepping\\|ws\\|actions"
+   "\\)\\([[:blank:]]+\\([^[:blank:]]*\\)\\)?$")
   "Regexp matching GDB commands that enter a recursive reading loop.
 As long as GDB is in the recursive reading loop, it does not expect
 commands to be prefixed by \"-interpreter-exec console\".")
@@ -1831,8 +1835,17 @@ commands to be prefixed by \"-interpreter-exec console\".")
 	       (> gdb-control-level 0))
 	  (setq gdb-control-level (1- gdb-control-level)))
       (setq gdb-continuation nil)))
-  (if (string-match gdb-control-commands-regexp string)
-      (setq gdb-control-level (1+ gdb-control-level))))
+  ;; Python and Guile commands that have an argument don't enter the
+  ;; recursive reading loop.
+  (let* ((control-command-p (string-match gdb-control-commands-regexp string))
+         (command-arg (match-string 3 string))
+         (python-or-guile-p (string-match gdb-python-guile-commands-regexp
+                                          string)))
+    (if (and control-command-p
+             (or (not python-or-guile-p)
+                 (null command-arg)
+                 (zerop (length command-arg))))
+        (setq gdb-control-level (1+ gdb-control-level)))))
 
 (defun gdb-mi-quote (string)
   "Return STRING quoted properly as an MI argument.
@@ -3484,7 +3497,7 @@ in `gdb-memory-format'."
 (defvar gdb-memory-mode-map
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map t)
-    (define-key map "q" 'kill-this-buffer)
+    (define-key map "q" 'kill-current-buffer)
     (define-key map "n" 'gdb-memory-show-next-page)
     (define-key map "p" 'gdb-memory-show-previous-page)
     (define-key map "a" 'gdb-memory-set-address)
@@ -3838,7 +3851,7 @@ DOC is an optional documentation string."
   ;; TODO
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
-    (define-key map "q" 'kill-this-buffer)
+    (define-key map "q" 'kill-current-buffer)
     map))
 
 (define-derived-mode gdb-disassembly-mode gdb-parent-mode "Disassembly"
@@ -4042,7 +4055,7 @@ member."
 (defvar gdb-frames-mode-map
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
-    (define-key map "q" 'kill-this-buffer)
+    (define-key map "q" 'kill-current-buffer)
     (define-key map "\r" 'gdb-select-frame)
     (define-key map [mouse-2] 'gdb-select-frame)
     (define-key map [follow-link] 'mouse-face)
@@ -4168,7 +4181,7 @@ member."
 (defvar gdb-locals-mode-map
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
-    (define-key map "q" 'kill-this-buffer)
+    (define-key map "q" 'kill-current-buffer)
     (define-key map "\t" (lambda ()
                            (interactive)
                            (gdb-set-window-buffer
@@ -4259,7 +4272,7 @@ member."
     (suppress-keymap map)
     (define-key map "\r" 'gdb-edit-register-value)
     (define-key map [mouse-2] 'gdb-edit-register-value)
-    (define-key map "q" 'kill-this-buffer)
+    (define-key map "q" 'kill-current-buffer)
     (define-key map "\t" (lambda ()
                            (interactive)
                            (gdb-set-window-buffer

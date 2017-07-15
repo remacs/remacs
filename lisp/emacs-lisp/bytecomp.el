@@ -124,11 +124,13 @@
 (require 'backquote)
 (require 'macroexp)
 (require 'cconv)
+(require 'cl-lib)
 
 ;; During bootstrap, cl-loaddefs.el is not created yet, so loading cl-lib
 ;; doesn't setup autoloads for things like cl-every, which is why we have to
-;; require cl-extra instead (bug#18804).
-(require 'cl-extra)
+;; require cl-extra as well (bug#18804).
+(or (fboundp 'cl-every)
+    (require 'cl-extra))
 
 (or (fboundp 'defsubst)
     ;; This really ought to be loaded already!
@@ -164,24 +166,19 @@ file name, and return the name of the compiled file."
 	(funcall handler 'byte-compiler-base-file-name filename)
       filename)))
 
-(or (fboundp 'byte-compile-dest-file)
-    ;; The user may want to redefine this along with emacs-lisp-file-regexp,
-    ;; so only define it if it is undefined.
-    ;; Note - redefining this function is obsolete as of 23.2.
-    ;; Customize byte-compile-dest-file-function instead.
-    (defun byte-compile-dest-file (filename)
-      "Convert an Emacs Lisp source file name to a compiled file name.
+(defun byte-compile-dest-file (filename)
+  "Convert an Emacs Lisp source file name to a compiled file name.
 If `byte-compile-dest-file-function' is non-nil, uses that
 function to do the work.  Otherwise, if FILENAME matches
 `emacs-lisp-file-regexp' (by default, files with the extension `.el'),
 adds `c' to it; otherwise adds `.elc'."
-      (if byte-compile-dest-file-function
-	  (funcall byte-compile-dest-file-function filename)
-	(setq filename (file-name-sans-versions
-			(byte-compiler-base-file-name filename)))
-	(cond ((string-match emacs-lisp-file-regexp filename)
-	       (concat (substring filename 0 (match-beginning 0)) ".elc"))
-	      (t (concat filename ".elc"))))))
+  (if byte-compile-dest-file-function
+      (funcall byte-compile-dest-file-function filename)
+    (setq filename (file-name-sans-versions
+		    (byte-compiler-base-file-name filename)))
+    (cond ((string-match emacs-lisp-file-regexp filename)
+	   (concat (substring filename 0 (match-beginning 0)) ".elc"))
+	  (t (concat filename ".elc")))))
 
 ;; This can be the 'byte-compile property of any symbol.
 (autoload 'byte-compile-inline-expand "byte-opt")
@@ -416,7 +413,8 @@ specify different fields to sort on."
   :type '(choice (const name) (const callers) (const calls)
 		 (const calls+callers) (const nil)))
 
-(defvar byte-compile-debug nil)
+(defvar byte-compile-debug nil
+  "If non-nil, byte compile errors will be raised as signals instead of logged.")
 (defvar byte-compile-jump-tables nil
   "List of all jump tables used during compilation of this form.")
 (defvar byte-compile-constants nil
@@ -442,7 +440,7 @@ Return the compile-time value of FORM."
   ;; Macroexpand (not macroexpand-all!) form at toplevel in case it
   ;; expands into a toplevel-equivalent `progn'.  See CLHS section
   ;; 3.2.3.1, "Processing of Top Level Forms".  The semantics are very
-  ;; subtle: see test/automated/bytecomp-tests.el for interesting
+  ;; subtle: see test/lisp/emacs-lisp/bytecomp-tests.el for interesting
   ;; cases.
   (setf form (macroexp-macroexpand form byte-compile-macro-environment))
   (if (eq (car-safe form) 'progn)
@@ -1377,10 +1375,15 @@ extra args."
     (let ((nfields (with-temp-buffer
 		     (insert (nth 1 form))
 		     (goto-char (point-min))
-		     (let ((n 0))
+		     (let ((i 0) (n 0))
 		       (while (re-search-forward "%." nil t)
-			 (unless (eq ?% (char-after (1+ (match-beginning 0))))
-			   (setq n (1+ n))))
+                         (backward-char)
+			 (unless (eq ?% (char-after))
+                           (setq i (if (looking-at "\\([0-9]+\\)\\$")
+                                       (string-to-number (match-string 1) 10)
+                                     (1+ i))
+                                 n (max n i)))
+                         (forward-char))
 		       n)))
 	  (nargs (- (length form) 2)))
       (unless (= nargs nfields)
@@ -1661,7 +1664,12 @@ that already has a `.elc' file."
   (if arg (setq arg (prefix-numeric-value arg)))
   (if noninteractive
       nil
-    (save-some-buffers)
+    (save-some-buffers
+     nil (lambda ()
+           (let ((file (buffer-file-name)))
+             (and file
+                  (string-match-p emacs-lisp-file-regexp file)
+                  (file-in-directory-p file directory)))))
     (force-mode-line-update))
   (with-current-buffer (get-buffer-create byte-compile-log-buffer)
     (setq default-directory (expand-file-name directory))
@@ -2023,13 +2031,20 @@ With argument ARG, insert value in current buffer after the form."
 		 (not (eobp)))
 	  (setq byte-compile-read-position (point)
 		byte-compile-last-position byte-compile-read-position)
-	  (let* ((old-style-backquotes nil)
+	  (let* ((lread--old-style-backquotes nil)
+                 (lread--unescaped-character-literals nil)
                  (form (read inbuffer)))
             ;; Warn about the use of old-style backquotes.
-            (when old-style-backquotes
+            (when lread--old-style-backquotes
               (byte-compile-warn "!! The file uses old-style backquotes !!
 This functionality has been obsolete for more than 10 years already
 and will be removed soon.  See (elisp)Backquote in the manual."))
+            (when lread--unescaped-character-literals
+              (byte-compile-warn
+               "unescaped character literals %s detected!"
+               (mapconcat (lambda (char) (format "`?%c'" char))
+                          (sort lread--unescaped-character-literals #'<)
+                          ", ")))
 	    (byte-compile-toplevel-file-form form)))
 	;; Compile pending forms at end of file.
 	(byte-compile-flush-pending)
@@ -3201,47 +3216,53 @@ for symbols generated by the byte compiler itself."
          (fmax2 (if (numberp fargs) (lsh fargs -7)))     ;2*max+rest.
          ;; (fmin (if (numberp fargs) (logand fargs 127)))
          (alen (length (cdr form)))
-         (dynbinds ()))
+         (dynbinds ())
+         lap)
     (fetch-bytecode fun)
-    (mapc 'byte-compile-form (cdr form))
-    (unless fmax2
-      ;; Old-style byte-code.
-      (cl-assert (listp fargs))
-      (while fargs
-        (pcase (car fargs)
-          (`&optional (setq fargs (cdr fargs)))
-          (`&rest (setq fmax2 (+ (* 2 (length dynbinds)) 1))
-                 (push (cadr fargs) dynbinds)
-                 (setq fargs nil))
-          (_ (push (pop fargs) dynbinds))))
-      (unless fmax2 (setq fmax2 (* 2 (length dynbinds)))))
-    (cond
-     ((<= (+ alen alen) fmax2)
-      ;; Add missing &optional (or &rest) arguments.
-      (dotimes (_ (- (/ (1+ fmax2) 2) alen))
-        (byte-compile-push-constant nil)))
-     ((zerop (logand fmax2 1))
-      (byte-compile-report-error
-       (format "Too many arguments for inlined function %S" form))
-      (byte-compile-discard (- alen (/ fmax2 2))))
-     (t
-      ;; Turn &rest args into a list.
-      (let ((n (- alen (/ (1- fmax2) 2))))
-        (cl-assert (> n 0) nil "problem: fmax2=%S alen=%S n=%S" fmax2 alen n)
-        (if (< n 5)
-            (byte-compile-out
-             (aref [byte-list1 byte-list2 byte-list3 byte-list4] (1- n))
-             0)
-          (byte-compile-out 'byte-listN n)))))
-    (mapc #'byte-compile-dynamic-variable-bind dynbinds)
-    (byte-compile-inline-lapcode
-     (byte-decompile-bytecode-1 (aref fun 1) (aref fun 2) t)
-     (1+ start-depth))
-    ;; Unbind dynamic variables.
-    (when dynbinds
-      (byte-compile-out 'byte-unbind (length dynbinds)))
-    (cl-assert (eq byte-compile-depth (1+ start-depth))
-            nil "Wrong depth start=%s end=%s" start-depth byte-compile-depth)))
+    (setq lap (byte-decompile-bytecode-1 (aref fun 1) (aref fun 2) t))
+    ;; optimized switch bytecode makes it impossible to guess the correct
+    ;; `byte-compile-depth', which can result in incorrect inlined code.
+    ;; therefore, we do not inline code that uses the `byte-switch'
+    ;; instruction.
+    (if (assq 'byte-switch lap)
+        (byte-compile-normal-call form)
+      (mapc 'byte-compile-form (cdr form))
+      (unless fmax2
+        ;; Old-style byte-code.
+        (cl-assert (listp fargs))
+        (while fargs
+          (pcase (car fargs)
+            (`&optional (setq fargs (cdr fargs)))
+            (`&rest (setq fmax2 (+ (* 2 (length dynbinds)) 1))
+                    (push (cadr fargs) dynbinds)
+                    (setq fargs nil))
+            (_ (push (pop fargs) dynbinds))))
+        (unless fmax2 (setq fmax2 (* 2 (length dynbinds)))))
+      (cond
+       ((<= (+ alen alen) fmax2)
+        ;; Add missing &optional (or &rest) arguments.
+        (dotimes (_ (- (/ (1+ fmax2) 2) alen))
+          (byte-compile-push-constant nil)))
+       ((zerop (logand fmax2 1))
+        (byte-compile-report-error
+         (format "Too many arguments for inlined function %S" form))
+        (byte-compile-discard (- alen (/ fmax2 2))))
+       (t
+        ;; Turn &rest args into a list.
+        (let ((n (- alen (/ (1- fmax2) 2))))
+          (cl-assert (> n 0) nil "problem: fmax2=%S alen=%S n=%S" fmax2 alen n)
+          (if (< n 5)
+              (byte-compile-out
+               (aref [byte-list1 byte-list2 byte-list3 byte-list4] (1- n))
+               0)
+            (byte-compile-out 'byte-listN n)))))
+      (mapc #'byte-compile-dynamic-variable-bind dynbinds)
+      (byte-compile-inline-lapcode lap (1+ start-depth))
+      ;; Unbind dynamic variables.
+      (when dynbinds
+        (byte-compile-out 'byte-unbind (length dynbinds)))
+      (cl-assert (eq byte-compile-depth (1+ start-depth))
+                 nil "Wrong depth start=%s end=%s" start-depth byte-compile-depth))))
 
 (defun byte-compile-check-variable (var access-type)
   "Do various error checks before a use of the variable VAR."
@@ -4057,8 +4078,8 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
                         ;; discard duplicate clauses
                         (not (assq obj2 cases)))
                    (push (list (if (consp obj2) (eval obj2) obj2) body) cases)
-                 (if (eq condition t)
-                     (progn (push (list 'default body) cases)
+                 (if (and (macroexp-const-p condition) condition)
+                     (progn (push (list 'default (or body `(,condition))) cases)
                             (throw 'break t))
                    (setq ok nil)
                    (throw 'break nil))))))
@@ -4128,7 +4149,9 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
           ;; depth/tag conflicts or violating asserts down the road.
           ;; To make sure `byte-compile-body' itself doesn't violate this,
           ;; we use `cl-assert'.
-          (byte-compile-body body byte-compile--for-effect)
+          (if (null body)
+              (byte-compile-form t byte-compile--for-effect)
+            (byte-compile-body body byte-compile--for-effect))
           (cl-assert (or (= byte-compile-depth init-depth)
                          (= byte-compile-depth (1+ init-depth))))
           (byte-compile-goto 'byte-goto donetag)
@@ -4942,6 +4965,10 @@ already up-to-date."
   (defvar command-line-args-left)	;Avoid 'free variable' warning
   (if (not noninteractive)
       (error "`batch-byte-compile' is to be used only with -batch"))
+  ;; Better crash loudly than attempting to recover from undefined
+  ;; behavior.
+  (setq attempt-stack-overflow-recovery nil
+        attempt-orderly-shutdown-on-fatal-signal nil)
   (let ((error nil))
     (while command-line-args-left
       (if (file-directory-p (expand-file-name (car command-line-args-left)))
@@ -5034,6 +5061,10 @@ and corresponding effects."
   (defvar command-line-args-left)	;Avoid 'free variable' warning
   (if (not noninteractive)
       (error "batch-byte-recompile-directory is to be used only with -batch"))
+  ;; Better crash loudly than attempting to recover from undefined
+  ;; behavior.
+  (setq attempt-stack-overflow-recovery nil
+        attempt-orderly-shutdown-on-fatal-signal nil)
   (or command-line-args-left
       (setq command-line-args-left '(".")))
   (while command-line-args-left

@@ -66,7 +66,10 @@ process (@pxref{Interactive Shell}).
 first visit a file or create a buffer (@pxref{Choosing Modes}).  You
 can explicitly select a new major mode by using an @kbd{M-x} command.
 Take the name of the mode and add @code{-mode} to get the name of the
-command to select that mode (e.g., @kbd{M-x lisp-mode} enters Lisp mode).
+command to select that mode (e.g., @kbd{M-x lisp-mode} enters Lisp
+mode).  Since every buffer has exactly one major mode, there is no way
+to ``turn off'' a major mode; instead you must switch to a different
+one.
 
 @vindex major-mode
   The value of the buffer-local variable @code{major-mode} is a symbol
@@ -221,11 +224,6 @@ Flyspell mode automatically highlights misspelled words.
 Font-Lock mode automatically highlights certain textual units found in
 programs.  It is enabled globally by default, but you can disable it
 in individual buffers.  @xref{Faces}.
-
-@findex linum-mode
-@cindex Linum mode
-@item
-Linum mode displays each line's line number in the window's left margin.
 
 @item
 Outline minor mode provides similar facilities to the major mode

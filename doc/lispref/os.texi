@@ -337,10 +337,10 @@ Do not display a splash screen.
 Run without an interactive terminal.  @xref{Batch Mode}.
 
 @item --daemon
-@itemx --old-daemon
-@itemx --new-daemon
+@itemx --bg-daemon
+@itemx --fg-daemon
 Do not initialize any display; just start a server.
-(An ``old-style'' daemon automatically runs in the background.)
+(A ``background'' daemon automatically runs in the background.)
 
 @item --no-init-file
 @itemx -q
@@ -2701,7 +2701,10 @@ This does not depend on one of the libraries linked to Emacs.
 
 Since all these libraries emit different events on notified file
 changes, there is the Emacs library @code{filenotify} which provides a
-unique interface.
+unified interface.  Lisp programs that want to receive file
+notifications should always use this library in preference to the
+native ones.
+
 
 @defun file-notify-add-watch file flags callback
 Add a watch for filesystem events pertaining to @var{file}.  This

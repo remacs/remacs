@@ -73,7 +73,7 @@ path components followed by `..' are removed, along with the `..' itself."
 
   ;; Need to figure out how/where to expand the fragment relative to
   (setq default (cond
-		 ((vectorp default)
+		 ((url-p default)
 		  ;; Default URL has already been parsed
 		  default)
 		 (default

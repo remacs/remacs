@@ -746,7 +746,7 @@ If the current buffer is not a minibuffer, erase its entire contents."
 
 (defcustom completion-auto-help t
   "Non-nil means automatically provide help for invalid completion input.
-If the value is t the *Completion* buffer is displayed whenever completion
+If the value is t the *Completions* buffer is displayed whenever completion
 is requested but cannot be done.
 If the value is `lazy', the *Completions* buffer is only displayed after
 the second failed attempt to complete."
@@ -834,7 +834,8 @@ styles for specific categories, such as files, buffers, etc."
 (defvar completion-category-defaults
   '((buffer (styles . (basic substring)))
     (unicode-name (styles . (basic substring)))
-    (project-file (styles . (basic substring))))
+    (project-file (styles . (basic substring)))
+    (info-menu (styles . (basic substring))))
   "Default settings for specific completion categories.
 Each entry has the shape (CATEGORY . ALIST) where ALIST is
 an association list that can specify properties such as:
@@ -3005,7 +3006,7 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
 	(let ((poss ()))
 	  (dolist (c compl)
 	    (when (string-match-p regex c) (push c poss)))
-	  poss)))))
+	  (nreverse poss))))))
 
 (defun completion-pcm--hilit-commonality (pattern completions)
   (when completions
@@ -3257,7 +3258,7 @@ the same set of elements."
                       "\\)\\'")))
       (dolist (f all)
         (unless (string-match-p re f) (push f try)))
-      (or try all))))
+      (or (nreverse try) all))))
 
 
 (defun completion-pcm--merge-try (pattern all prefix suffix)
