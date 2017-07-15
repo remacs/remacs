@@ -449,7 +449,7 @@ w32_gnutls_rnd (gnutls_rnd_level_t level, void *data, size_t len)
   return gnutls_rnd (level, data, len);
 }
 
-#endif
+#endif	/* WINDOWSNT */
 
 
 /* Report memory exhaustion if ERR is an out-of-memory indication.  */
@@ -549,7 +549,7 @@ emacs_gnutls_nonblock_errno (gnutls_transport_ptr_t ptr)
       return err;
     }
 }
-#endif
+#endif	/* !WINDOWSNT */
 
 static int
 emacs_gnutls_handshake (struct Lisp_Process *proc)
@@ -2359,7 +2359,7 @@ the number itself. */)
   return digest;
 }
 
-#endif
+#endif	/* HAVE_GNUTLS3 */
 
 DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
        doc: /* Return list of capabilities if GnuTLS is available in this instance of Emacs.
@@ -2372,20 +2372,6 @@ GnuTLS symmetric ciphers: the list will contain `ciphers'.
 GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
   (void)
 {
-#ifdef WINDOWSNT
-  Lisp_Object found = Fassq (Qgnutls, Vlibrary_cache);
-  if (CONSP (found))
-    return XCDR (found); /* TODO: use capabilities.  */
-  else
-    {
-      Lisp_Object status;
-      /* TODO: should the capabilities be dynamic here?  */
-      status = init_gnutls_functions () ? capabilities : Qnil;
-      Vlibrary_cache = Fcons (Fcons (Qgnutls, status), Vlibrary_cache);
-      return status;
-    }
-#else
-
   Lisp_Object capabilities = Qnil;
 
 # ifdef HAVE_GNUTLS3
@@ -2405,10 +2391,24 @@ GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
 #   ifdef HAVE_GNUTLS3_HMAC
   capabilities = Fcons (intern("macs"), capabilities);
 #   endif
-#  endif
-# endif
+#  endif  /* HAVE_GNUTLS3_CIPHER */
+# endif	  /* HAVE_GNUTLS3 */
+
+#ifdef WINDOWSNT
+  Lisp_Object found = Fassq (Qgnutls, Vlibrary_cache);
+  if (CONSP (found))
+    return XCDR (found);
+  else
+    {
+      Lisp_Object status;
+      status = init_gnutls_functions () ? capabilities : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qgnutls, status), Vlibrary_cache);
+      return status;
+    }
+#else  /* !WINDOWSNT */
 
   return capabilities;
+
 #endif
 }
 
