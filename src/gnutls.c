@@ -2518,6 +2518,7 @@ syms_of_gnutls (void)
   defsubr (&Sgnutls_peer_status);
   defsubr (&Sgnutls_peer_status_warning_describe);
 
+#ifdef HAVE_GNUTLS3
   defsubr (&Sgnutls_ciphers);
   defsubr (&Sgnutls_macs);
   defsubr (&Sgnutls_digests);
@@ -2525,6 +2526,7 @@ syms_of_gnutls (void)
   defsubr (&Sgnutls_hash_digest);
   defsubr (&Sgnutls_symmetric_encrypt);
   defsubr (&Sgnutls_symmetric_decrypt);
+#endif
 
   DEFVAR_INT ("gnutls-log-level", global_gnutls_log_level,
 	      doc: /* Logging level used by the GnuTLS functions.
