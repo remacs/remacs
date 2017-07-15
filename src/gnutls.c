@@ -1852,6 +1852,7 @@ The alist key is the cipher name. */)
 {
   Lisp_Object ciphers = Qnil;
 
+#ifdef HAVE_GNUTLS3_CIPHER
   const gnutls_cipher_algorithm_t *gciphers = gnutls_cipher_list ();
   for (ptrdiff_t pos = 0; gciphers[pos] != GNUTLS_CIPHER_NULL; pos++)
     {
@@ -1877,6 +1878,7 @@ The alist key is the cipher name. */)
 
       ciphers = Fcons (cp, ciphers);
     }
+#endif
 
   return ciphers;
 }
@@ -2176,6 +2178,7 @@ name. */)
   (void)
 {
   Lisp_Object mac_algorithms = Qnil;
+#ifdef HAVE_GNUTLS3_HMAC
   const gnutls_mac_algorithm_t *macs = gnutls_mac_list ();
   for (ptrdiff_t pos = 0; macs[pos] != 0; pos++)
     {
@@ -2197,6 +2200,7 @@ name. */)
                               make_number (gnutls_mac_get_nonce_size (gma)));
       mac_algorithms = Fcons (mp, mac_algorithms);
     }
+#endif
 
   return mac_algorithms;
 }
@@ -2210,6 +2214,7 @@ method name. */)
   (void)
 {
   Lisp_Object digest_algorithms = Qnil;
+#ifdef HAVE_GNUTLS3_DIGEST
   const gnutls_digest_algorithm_t *digests = gnutls_digest_list ();
   for (ptrdiff_t pos = 0; digests[pos] != 0; pos++)
     {
@@ -2226,6 +2231,7 @@ method name. */)
 
       digest_algorithms = Fcons (mp, digest_algorithms);
     }
+#endif
 
   return digest_algorithms;
 }
