@@ -84,5 +84,17 @@
       (advice-remove 'dired-query "advice-dired-query")
       (advice-remove 'completing-read "advice-completing-read"))))
 
+(ert-deftest dired-test-bug27693 ()
+  "Test for http://debbugs.gnu.org/27693 ."
+  (require 'ls-lisp)
+  (let ((size "")
+	ls-lisp-use-insert-directory-program)
+    (dired (list (expand-file-name "lisp" source-directory) "simple.el" "subr.el"))
+    (setq size (number-to-string
+                (file-attribute-size
+                 (file-attributes (dired-get-filename)))))
+    (search-backward-regexp size nil t)
+    (should (looking-back "[[:space:]]" (1- (point))))))
+
 (provide 'dired-tests)
 ;; dired-tests.el ends here

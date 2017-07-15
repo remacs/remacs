@@ -245,11 +245,11 @@ to fail to line up, e.g. if month names are not all of the same length."
   "Format to display integer GIDs.")
 (defvar ls-lisp-gid-s-fmt " %s"
   "Format to display user group names.")
-(defvar ls-lisp-filesize-d-fmt "%d"
+(defvar ls-lisp-filesize-d-fmt " %d"
   "Format to display integer file sizes.")
-(defvar ls-lisp-filesize-f-fmt "%.0f"
+(defvar ls-lisp-filesize-f-fmt " %.0f"
   "Format to display float file sizes.")
-(defvar ls-lisp-filesize-b-fmt "%.0f"
+(defvar ls-lisp-filesize-b-fmt " %.0f"
   "Format to display file sizes in blocks (for the -s switch).")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
