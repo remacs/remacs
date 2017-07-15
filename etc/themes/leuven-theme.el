@@ -4,7 +4,7 @@
 
 ;; Author: Fabrice Niessen <(concat "fniessen" at-sign "pirilampo.org")>
 ;; URL: https://github.com/fniessen/emacs-leuven-theme
-;; Version: 20140929.1232
+;; Version: 20170715.0521
 ;; Keywords: color theme
 
 ;; This file is part of GNU Emacs.
@@ -600,6 +600,15 @@ Semantic, and Ansi-Color faces are included -- and much more...")
    `(rainbow-delimiters-depth-9-face ((,class (:foreground "#887070"))))
    `(rainbow-delimiters-mismatched-face ((,class ,paren-unmatched)))
    `(rainbow-delimiters-unmatched-face ((,class ,paren-unmatched)))
+   `(realgud-overlay-arrow1  ((,class (:foreground "#005522"))))
+   `(realgud-overlay-arrow2  ((,class (:foreground "#c18401"))))
+   `(realgud-overlay-arrow3  ((,class (:foreground "#909183"))))
+   `(realgud-bp-disabled-face      ((,class (:foreground "#909183"))))
+   `(realgud-bp-line-enabled-face  ((,class (:underline "red"))))
+   `(realgud-bp-line-disabled-face ((,class (:underline "#909183"))))
+   `(realgud-file-name             ((,class :foreground "#005522")))
+   `(realgud-line-number           ((,class :foreground "#A535AE")))
+   `(realgud-backtrace-number      ((,class :foreground "#A535AE" :weight bold)))
    `(recover-this-file ((,class (:weight bold :background "#FF3F3F"))))
    `(rng-error ((,class (:weight bold :foreground "red" :background "#FBE3E4"))))
    `(sh-heredoc ((,class (:foreground "blue" :background "#EEF5FE"))))
