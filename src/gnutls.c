@@ -172,8 +172,14 @@ DEF_DLL_FN (const char *, gnutls_cipher_get_name,
 DEF_DLL_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
 DEF_DLL_FN (const char *, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
 
-# if (GNUTLS_VERSION_MAJOR + (GNUTLS_VERSION_MINOR >= 4) > 3)
+# ifdef HAVE_GNUTLS3
 DEF_DLL_FN (int, gnutls_rnd, (gnutls_rnd_level_t, void *, size_t));
+DEF_DLL_FN (const gnutls_mac_algorithm_t *, gnutls_mac_list, (void));
+DEF_DLL_FN (size_t, gnutls_mac_get_nonce_size, (gnutls_mac_algorithm_t));
+DEF_DLL_FN (size_t, gnutls_mac_get_key_size, (gnutls_mac_algorithm_t));
+DEF_DLL_FN (const gnutls_digest_algorithm_t *, gnutls_digest_list, (void));
+DEF_DLL_FN (const char *, gnutls_digest_get_name, (gnutls_digest_algorithm_t));
+#  ifdef HAVE_GNUTLS3_CIPHER
 DEF_DLL_FN (gnutls_cipher_algorithm_t *, gnutls_cipher_list, (void));
 DEF_DLL_FN (int, gnutls_cipher_get_iv_size, (gnutls_cipher_algorithm_t));
 DEF_DLL_FN (size_t, gnutls_cipher_get_key_size, (gnutls_cipher_algorithm_t));
@@ -182,6 +188,13 @@ DEF_DLL_FN (int, gnutls_cipher_get_tag_size, (gnutls_cipher_algorithm_t));
 DEF_DLL_FN (int, gnutls_cipher_init,
 	    (gnutls_cipher_hd_t *, gnutls_cipher_algorithm_t,
 	     const gnutls_datum_t *, const gnutls_datum_t *));
+DEF_DLL_FN (void, gnutls_cipher_set_iv, (gnutls_cipher_hd_t, void *, size_t));
+DEF_DLL_FN (int, gnutls_cipher_encrypt2,
+	    (gnutls_cipher_hd_t, const void *, size_t, void *, size_t));
+DEF_DLL_FN (void, gnutls_cipher_deinit, (gnutls_cipher_hd_t));
+DEF_DLL_FN (int, gnutls_cipher_decrypt2,
+	    (gnutls_cipher_hd_t, const void *, size_t, void *, size_t));
+#   ifdef HAVE_GNUTLS3_AEAD
 DEF_DLL_FN (int, gnutls_aead_cipher_init,
 	    (gnutls_aead_cipher_hd_t *, gnutls_cipher_algorithm_t,
 	     const gnutls_datum_t *));
@@ -192,30 +205,25 @@ DEF_DLL_FN (int, gnutls_aead_cipher_encrypt,
 DEF_DLL_FN (int, gnutls_aead_cipher_decrypt,
 	    (gnutls_aead_cipher_hd_t, const void *, size_t, const void *,
 	     size_t, size_t, const void *, size_t, void *, size_t *));
-DEF_DLL_FN (void, gnutls_cipher_set_iv, (gnutls_cipher_hd_t, void *, size_t));
-DEF_DLL_FN (int, gnutls_cipher_encrypt2,
-	    (gnutls_cipher_hd_t, const void *, size_t, void *, size_t));
-DEF_DLL_FN (void, gnutls_cipher_deinit, (gnutls_cipher_hd_t));
-DEF_DLL_FN (int, gnutls_cipher_decrypt2,
-	    (gnutls_cipher_hd_t, const void *, size_t, void *, size_t));
-DEF_DLL_FN (const gnutls_mac_algorithm_t *, gnutls_mac_list, (void));
-DEF_DLL_FN (size_t, gnutls_mac_get_nonce_size, (gnutls_mac_algorithm_t));
-DEF_DLL_FN (size_t, gnutls_mac_get_key_size, (gnutls_mac_algorithm_t));
-DEF_DLL_FN (const gnutls_digest_algorithm_t *, gnutls_digest_list, (void));
-DEF_DLL_FN (const char *, gnutls_digest_get_name, (gnutls_digest_algorithm_t));
+#   endif /* HAVE_GNUTLS3_AEAD */
+#   ifdef HAVE_GNUTLS3_HMAC
 DEF_DLL_FN (int, gnutls_hmac_init,
 	    (gnutls_hmac_hd_t *, gnutls_mac_algorithm_t, const void *, size_t));
 DEF_DLL_FN (int, gnutls_hmac_get_len, (gnutls_mac_algorithm_t));
 DEF_DLL_FN (int, gnutls_hmac, (gnutls_hmac_hd_t, const void *, size_t));
 DEF_DLL_FN (void, gnutls_hmac_deinit, (gnutls_hmac_hd_t, void *));
-DEF_DLL_FN (int, gnutls_hash_init,
-	    (gnutls_hash_hd_t *, gnutls_digest_algorithm_t));
 DEF_DLL_FN (void, gnutls_hmac_output, (gnutls_hmac_hd_t, void *));
+#   endif  /* HAVE_GNUTLS3_HMAC */
+#  endif  /* HAVE_GNUTLS3_CIPHER */
+#  ifdef HAVE_GNUTLS3_DIGEST
+  DEF_DLL_FN (int, gnutls_hash_init,
+	    (gnutls_hash_hd_t *, gnutls_digest_algorithm_t));
 DEF_DLL_FN (int, gnutls_hash_get_len, (gnutls_digest_algorithm_t));
 DEF_DLL_FN (int, gnutls_hash, (gnutls_hash_hd_t, const void *, size_t));
 DEF_DLL_FN (void, gnutls_hash_deinit, (gnutls_hash_hd_t, void *));
 DEF_DLL_FN (void, gnutls_hash_output, (gnutls_hash_hd_t, void *));
-# endif
+#  endif  /* HAVE_GNUTLS3_DIGEST */
+# endif	 /* HAVE_GNUTLS3 */
 
 
 static bool
@@ -301,38 +309,46 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_cipher_get_name);
   LOAD_DLL_FN (library, gnutls_mac_get);
   LOAD_DLL_FN (library, gnutls_mac_get_name);
-# if GNUTLS_VERSION_MAJOR + (GNUTLS_VERSION_MINOR >= 4) > 3
+# ifdef HAVE_GNUTLS3
   LOAD_DLL_FN (library, gnutls_rnd);
+  LOAD_DLL_FN (library, gnutls_mac_list);
+  LOAD_DLL_FN (library, gnutls_mac_get_nonce_size);
+  LOAD_DLL_FN (library, gnutls_mac_get_key_size);
+  LOAD_DLL_FN (library, gnutls_digest_list);
+  LOAD_DLL_FN (library, gnutls_digest_get_name);
+#  ifdef HAVE_GNUTLS3_CIPHER
   LOAD_DLL_FN (library, gnutls_cipher_list);
   LOAD_DLL_FN (library, gnutls_cipher_get_iv_size);
   LOAD_DLL_FN (library, gnutls_cipher_get_key_size);
   LOAD_DLL_FN (library, gnutls_cipher_get_block_size);
   LOAD_DLL_FN (library, gnutls_cipher_get_tag_size);
   LOAD_DLL_FN (library, gnutls_cipher_init);
-  LOAD_DLL_FN (library, gnutls_aead_cipher_encrypt);
-  LOAD_DLL_FN (library, gnutls_aead_cipher_decrypt);
-  LOAD_DLL_FN (library, gnutls_aead_cipher_init);
-  LOAD_DLL_FN (library, gnutls_aead_cipher_deinit);
   LOAD_DLL_FN (library, gnutls_cipher_set_iv);
   LOAD_DLL_FN (library, gnutls_cipher_encrypt2);
-  LOAD_DLL_FN (library, gnutls_cipher_decrypt2);
   LOAD_DLL_FN (library, gnutls_cipher_deinit);
-  LOAD_DLL_FN (library, gnutls_mac_list);
-  LOAD_DLL_FN (library, gnutls_mac_get_nonce_size);
-  LOAD_DLL_FN (library, gnutls_mac_get_key_size);
-  LOAD_DLL_FN (library, gnutls_digest_list);
-  LOAD_DLL_FN (library, gnutls_digest_get_name);
+  LOAD_DLL_FN (library, gnutls_cipher_decrypt2);
+#   ifdef HAVE_GNUTLS3_AEAD
+  LOAD_DLL_FN (library, gnutls_aead_cipher_init);
+  LOAD_DLL_FN (library, gnutls_aead_cipher_deinit);
+  LOAD_DLL_FN (library, gnutls_aead_cipher_encrypt);
+  LOAD_DLL_FN (library, gnutls_aead_cipher_decrypt);
+#   endif
+#   ifdef HAVE_GNUTLS3_HMAC
   LOAD_DLL_FN (library, gnutls_hmac_init);
   LOAD_DLL_FN (library, gnutls_hmac_get_len);
   LOAD_DLL_FN (library, gnutls_hmac);
   LOAD_DLL_FN (library, gnutls_hmac_deinit);
   LOAD_DLL_FN (library, gnutls_hmac_output);
+#   endif  /* HAVE_GNUTLS3_HMAC */
+#  endif  /* HAVE_GNUTLS3_CIPHER */
+#  ifdef HAVE_GNUTLS3_DIGEST
   LOAD_DLL_FN (library, gnutls_hash_init);
   LOAD_DLL_FN (library, gnutls_hash_get_len);
   LOAD_DLL_FN (library, gnutls_hash);
   LOAD_DLL_FN (library, gnutls_hash_deinit);
   LOAD_DLL_FN (library, gnutls_hash_output);
-# endif
+#  endif
+# endif	 /* HAVE_GNUTLS3 */
 
   max_log_level = global_gnutls_log_level;
 
@@ -410,36 +426,46 @@ init_gnutls_functions (void)
 # define gnutls_x509_crt_get_version fn_gnutls_x509_crt_get_version
 # define gnutls_x509_crt_import fn_gnutls_x509_crt_import
 # define gnutls_x509_crt_init fn_gnutls_x509_crt_init
+# ifdef HAVE_GNUTLS3
 # define gnutls_rnd fn_gnutls_rnd
+# define gnutls_mac_list fn_gnutls_mac_list
+# define gnutls_mac_get_nonce_size fn_gnutls_mac_get_nonce_size
+# define gnutls_mac_get_key_size fn_gnutls_mac_get_key_size
+# define gnutls_digest_list fn_gnutls_digest_list
+# define gnutls_digest_get_name fn_gnutls_digest_get_name
+#  ifdef HAVE_GNUTLS3_CIPHER
 # define gnutls_cipher_list fn_gnutls_cipher_list
 # define gnutls_cipher_get_iv_size fn_gnutls_cipher_get_iv_size
 # define gnutls_cipher_get_key_size fn_gnutls_cipher_get_key_size
 # define gnutls_cipher_get_block_size fn_gnutls_cipher_get_block_size
 # define gnutls_cipher_get_tag_size fn_gnutls_cipher_get_tag_size
 # define gnutls_cipher_init fn_gnutls_cipher_init
-# define gnutls_aead_cipher_encrypt fn_gnutls_aead_cipher_encrypt
-# define gnutls_aead_cipher_decrypt fn_gnutls_aead_cipher_decrypt
-# define gnutls_aead_cipher_init fn_gnutls_aead_cipher_init
-# define gnutls_aead_cipher_deinit fn_gnutls_aead_cipher_deinit
 # define gnutls_cipher_set_iv fn_gnutls_cipher_set_iv
 # define gnutls_cipher_encrypt2 fn_gnutls_cipher_encrypt2
 # define gnutls_cipher_decrypt2 fn_gnutls_cipher_decrypt2
 # define gnutls_cipher_deinit fn_gnutls_cipher_deinit
-# define gnutls_mac_list fn_gnutls_mac_list
-# define gnutls_mac_get_nonce_size fn_gnutls_mac_get_nonce_size
-# define gnutls_mac_get_key_size fn_gnutls_mac_get_key_size
-# define gnutls_digest_list fn_gnutls_digest_list
-# define gnutls_digest_get_name fn_gnutls_digest_get_name
+#   ifdef HAVE_GNUTLS3_AEAD
+# define gnutls_aead_cipher_encrypt fn_gnutls_aead_cipher_encrypt
+# define gnutls_aead_cipher_decrypt fn_gnutls_aead_cipher_decrypt
+# define gnutls_aead_cipher_init fn_gnutls_aead_cipher_init
+# define gnutls_aead_cipher_deinit fn_gnutls_aead_cipher_deinit
+#   endif /* HAVE_GNUTLS3_AEAD */
+#   ifdef HAVE_GNUTLS3_HMAC
 # define gnutls_hmac_init fn_gnutls_hmac_init
 # define gnutls_hmac_get_len fn_gnutls_hmac_get_len
 # define gnutls_hmac fn_gnutls_hmac
 # define gnutls_hmac_deinit fn_gnutls_hmac_deinit
 # define gnutls_hmac_output fn_gnutls_hmac_output
+#   endif  /* HAVE_GNUTLS3_HMAC */
+#  endif  /* HAVE_GNUTLS3_CIPHER */
+#  ifdef HAVE_GNUTLS3_DIGEST
 # define gnutls_hash_init fn_gnutls_hash_init
 # define gnutls_hash_get_len fn_gnutls_hash_get_len
 # define gnutls_hash fn_gnutls_hash
 # define gnutls_hash_deinit fn_gnutls_hash_deinit
 # define gnutls_hash_output fn_gnutls_hash_output
+#  endif
+# endif	 /* HAVE_GNUTLS3 */
 
 /* This wrapper is called from fns.c, which doesn't know about the
    LOAD_DLL_FN stuff above.  */
