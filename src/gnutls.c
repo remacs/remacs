@@ -1950,8 +1950,12 @@ gnutls_symmetric_aead (bool encrypting, gnutls_cipher_algorithm_t gca,
       memset (storage, 0, storage_length);
       SAFE_FREE ();
       gnutls_aead_cipher_deinit (acipher);
-      error ("GnuTLS AEAD cipher %s %sion failed: %s",
-	     gnutls_cipher_get_name (gca), desc, emacs_gnutls_strerror (ret));
+      if (encrypting)
+	error ("GnuTLS AEAD cipher %s encryption failed: %s",
+	       gnutls_cipher_get_name (gca), emacs_gnutls_strerror (ret));
+      else
+	error ("GnuTLS AEAD cipher %s decryption failed: %s",
+	       gnutls_cipher_get_name (gca), emacs_gnutls_strerror (ret));
     }
 
   gnutls_aead_cipher_deinit (acipher);
@@ -2096,8 +2100,12 @@ gnutls_symmetric (bool encrypting, Lisp_Object cipher,
   if (ret < GNUTLS_E_SUCCESS)
     {
       gnutls_cipher_deinit (hcipher);
-      error ("GnuTLS cipher %s %sion failed: %s",
-	     gnutls_cipher_get_name (gca), desc, emacs_gnutls_strerror (ret));
+      if (encrypting)
+	error ("GnuTLS cipher %s encryption failed: %s",
+	       gnutls_cipher_get_name (gca), emacs_gnutls_strerror (ret));
+      else
+	error ("GnuTLS cipher %s decryption failed: %s",
+	       gnutls_cipher_get_name (gca), emacs_gnutls_strerror (ret));
     }
 
   gnutls_cipher_deinit (hcipher);

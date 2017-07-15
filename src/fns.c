@@ -4931,7 +4931,7 @@ extract_data_from_object (Lisp_Object spec,
       /* Format: (iv-auto REQUIRED-LENGTH).  */
 
       if (! NATNUMP (start))
-        error ("Without a length, iv-auto can't be used. See manual.");
+        error ("Without a length, `iv-auto' can't be used; see ELisp manual");
       else
         {
 	  EMACS_INT start_hold = XFASTINT (start);
@@ -4942,7 +4942,7 @@ extract_data_from_object (Lisp_Object spec,
           *end_byte = start_hold;
         }
 #else
-      error ("GnuTLS integration is not available, so iv-auto can't be used.");
+      error ("GnuTLS is not available, so `iv-auto' can't be used");
 #endif
     }
 
