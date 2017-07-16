@@ -204,13 +204,30 @@ xg_display_open (char *display_name, Display **dpy)
   *dpy = gdpy ? GDK_DISPLAY_XDISPLAY (gdpy) : NULL;
 }
 
+static int
+xg_get_gdk_scale (void)
+{
+  const char *sscale = getenv ("GDK_SCALE");
+
+  if (sscale)
+    {
+      long scale = atol (sscale);
+      if (0 < scale)
+	return min (scale, INT_MAX);
+    }
+
+  return 1;
+}
+
 /* Scaling/HiDPI functions. */
 int
 xg_get_scale (struct frame *f)
 {
+#ifdef HAVE_GTK3
   if (FRAME_GTK_WIDGET (f))
     return gtk_widget_get_scale_factor (FRAME_GTK_WIDGET (f));
-  return 1;
+#endif
+  return xg_get_gdk_scale ();
 }
 
 /* Close display DPY.  */
