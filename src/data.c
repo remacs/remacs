@@ -2247,62 +2247,6 @@ enum arithop
 # define isnan(x) ((x) != (x))
 #endif
 
-Lisp_Object
-float_arith_driver (double, ptrdiff_t, enum arithop,
-		    ptrdiff_t, Lisp_Object *);
-
-Lisp_Object
-float_arith_driver (double accum, ptrdiff_t argnum, enum arithop code,
-		    ptrdiff_t nargs, Lisp_Object *args)
-{
-  register Lisp_Object val;
-  double next;
-
-  for (; argnum < nargs; argnum++)
-    {
-      val = args[argnum];    /* using args[argnum] as argument to CHECK_NUMBER_... */
-      CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
-
-      if (FLOATP (val))
-	{
-	  next = XFLOAT_DATA (val);
-	}
-      else
-	{
-	  args[argnum] = val;    /* runs into a compiler bug. */
-	  next = XINT (args[argnum]);
-	}
-      switch (code)
-	{
-	case Aadd:
-	  accum += next;
-	  break;
-	case Asub:
-	  accum = argnum ? accum - next : nargs == 1 ? - next : next;
-	  break;
-	case Amult:
-	  accum *= next;
-	  break;
-	case Adiv:
-	  if (! (argnum || nargs == 1))
-	    accum = next;
-	  else
-	    {
-	      if (! IEEE_FLOATING_POINT && next == 0)
-		xsignal0 (Qarith_error);
-	      accum /= next;
-	    }
-	  break;
-	case Alogand:
-	case Alogior:
-	case Alogxor:
-	  wrong_type_argument (Qinteger_or_marker_p, val);
-	}
-    }
-
-  return make_float (accum);
-}
-
 DEFUN ("%", Frem, Srem, 2, 2, 0,
        doc: /* Return remainder of X divided by Y.
 Both must be integers or markers.  */)
