@@ -81,9 +81,9 @@ ftcrfont_glyph_extents (struct font *font,
       ftcrfont_info->metrics =
 	xrealloc (ftcrfont_info->metrics,
 		  sizeof (struct font_metrics *) * (row + 1));
-      bzero (ftcrfont_info->metrics + ftcrfont_info->metrics_nrows,
-	     (sizeof (struct font_metrics *)
-	      * (row + 1 - ftcrfont_info->metrics_nrows)));
+      memset (ftcrfont_info->metrics + ftcrfont_info->metrics_nrows, 0,
+	      (sizeof (struct font_metrics *)
+	       * (row + 1 - ftcrfont_info->metrics_nrows)));
       ftcrfont_info->metrics_nrows = row + 1;
     }
   if (ftcrfont_info->metrics[row] == NULL)
