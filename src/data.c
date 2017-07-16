@@ -24,7 +24,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 
 #include <byteswap.h>
-#include <count-one-bits.h>
 #include <intprops.h>
 
 #include "lisp.h"
