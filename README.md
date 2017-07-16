@@ -195,7 +195,7 @@ $ make CARGO_FLAGS="-vv" RUSTFLAGS="-Zunstable-options --pretty"
 
 You can now run your shiny new Remacs build!
 
-```
+```bash
 # Using -q to ignore your .emacs.d, so Remacs starts up quickly.
 # RUST_BACKTRACE is optional, but useful if your instance crashes.
 $ RUST_BACKTRACE=1 src/remacs -q
