@@ -334,12 +334,12 @@ fn abs(arg: LispObject) -> LispObject {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub enum ArithComparison {
-    ArithEqual,
-    ArithNotequal,
-    ArithLess,
-    ArithGrtr,
-    ArithLessOrEqual,
-    ArithGrtrOrEqual,
+    Equal,
+    Notequal,
+    Less,
+    Grtr,
+    LessOrEqual,
+    GrtrOrEqual,
 }
 
 #[no_mangle]
@@ -357,74 +357,72 @@ pub extern "C" fn arithcompare(
         let f2 = obj2.any_to_float();
 
         match comparison {
-            ArithComparison::ArithEqual => f1 == f2,
-            ArithComparison::ArithNotequal => f1 != f2,
-            ArithComparison::ArithLess => f1 < f2,
-            ArithComparison::ArithLessOrEqual => f1 <= f2,
-            ArithComparison::ArithGrtr => f1 > f2,
-            ArithComparison::ArithGrtrOrEqual => f1 >= f2,
+            ArithComparison::Equal => f1 == f2,
+            ArithComparison::Notequal => f1 != f2,
+            ArithComparison::Less => f1 < f2,
+            ArithComparison::LessOrEqual => f1 <= f2,
+            ArithComparison::Grtr => f1 > f2,
+            ArithComparison::GrtrOrEqual => f1 >= f2,
         }
     } else {
         let f1 = obj1.as_fixnum();
         let f2 = obj2.as_fixnum();
 
         match comparison {
-            ArithComparison::ArithEqual => f1 == f2,
-            ArithComparison::ArithNotequal => f1 != f2,
-            ArithComparison::ArithLess => f1 < f2,
-            ArithComparison::ArithLessOrEqual => f1 <= f2,
-            ArithComparison::ArithGrtr => f1 > f2,
-            ArithComparison::ArithGrtrOrEqual => f1 >= f2,
+            ArithComparison::Equal => f1 == f2,
+            ArithComparison::Notequal => f1 != f2,
+            ArithComparison::Less => f1 < f2,
+            ArithComparison::LessOrEqual => f1 <= f2,
+            ArithComparison::Grtr => f1 > f2,
+            ArithComparison::GrtrOrEqual => f1 >= f2,
         }
     };
     LispObject::from_bool(result)
 }
 
-fn arithcompare_driver(args: &mut [LispObject], comparison: ArithComparison) -> LispObject {
-    let failed =
-        (0..args.len() - 1).any(|i| arithcompare(args[i], args[i + 1], comparison).is_nil());
-    LispObject::from_bool(!failed)
+fn arithcompare_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject {
+    LispObject::from_bool(args.windows(2).all(|i| {
+        !arithcompare(i[0], i[1], comparison).is_nil()
+    }))
 }
-
-/* Arithmetic functions */
 
 /// Return t if args, all numbers or markers, are equal.
 /// usage: (= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
-#[lisp_fn(name = "=", c_name = "eqlsign")]
+#[lisp_fn(name = "=")]
 fn eqlsign(args: &mut [LispObject]) -> LispObject {
-    arithcompare_driver(args, ArithComparison::ArithEqual)
+    arithcompare_driver(args, ArithComparison::Equal)
 }
 
 /// Return t if each arg (a number or marker), is less than the next arg.
 /// usage: (< NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
-#[lisp_fn(name = "<", c_name = "lss")]
+#[lisp_fn(name = "<")]
 fn lss(args: &mut [LispObject]) -> LispObject {
-    arithcompare_driver(args, ArithComparison::ArithLess)
+    arithcompare_driver(args, ArithComparison::Less)
 }
 
 /// Return t if each arg (a number or marker) is greater than the next arg.
 /// usage: (> NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
-#[lisp_fn(name = ">", c_name = "gtr")]
+#[lisp_fn(name = ">")]
 fn gtr(args: &mut [LispObject]) -> LispObject {
-    arithcompare_driver(args, ArithComparison::ArithGrtr)
+    arithcompare_driver(args, ArithComparison::Grtr)
 }
 
 /// Return t if each arg (a number or marker) is less than or equal to the next.
-///usage: (<= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
-#[lisp_fn(name = "<=", c_name = "leq")]
+/// usage: (<= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
+#[lisp_fn(name = "<=")]
 fn leq(args: &mut [LispObject]) -> LispObject {
-    arithcompare_driver(args, ArithComparison::ArithLessOrEqual)
+    arithcompare_driver(args, ArithComparison::LessOrEqual)
 }
 
 /// Return t if each arg (a number or marker) is greater than or equal to the next.
 /// usage: (>= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
-#[lisp_fn(name = ">=", c_name = "geq")]
+#[lisp_fn(name = ">=")]
 fn geq(args: &mut [LispObject]) -> LispObject {
-    arithcompare_driver(args, ArithComparison::ArithGrtrOrEqual)
+    arithcompare_driver(args, ArithComparison::GrtrOrEqual)
 }
 
 /// Return t if first arg is not equal to second arg.  Both must be numbers or markers.
-#[lisp_fn(name = "/=", c_name = "neq")]
+#[lisp_fn(name = "/=")]
 fn neq(num1: LispObject, num2: LispObject) -> LispObject {
-    arithcompare(num1, num2, ArithComparison::ArithNotequal)
+    arithcompare(num1, num2, ArithComparison::Notequal)
 }
