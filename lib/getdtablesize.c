@@ -1,4 +1,4 @@
-/* getdtablesize() function for platforms that don't have it.
+/* getdtablesize() function: Return maximum possible file descriptor value + 1.
    Copyright (C) 2008-2017 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2008.
 
