@@ -204,6 +204,7 @@ xg_display_open (char *display_name, Display **dpy)
   *dpy = gdpy ? GDK_DISPLAY_XDISPLAY (gdpy) : NULL;
 }
 
+/* Scaling/HiDPI functions. */
 static int
 xg_get_gdk_scale (void)
 {
@@ -219,7 +220,6 @@ xg_get_gdk_scale (void)
   return 1;
 }
 
-/* Scaling/HiDPI functions. */
 int
 xg_get_scale (struct frame *f)
 {
