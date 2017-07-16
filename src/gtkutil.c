@@ -204,6 +204,14 @@ xg_display_open (char *display_name, Display **dpy)
   *dpy = gdpy ? GDK_DISPLAY_XDISPLAY (gdpy) : NULL;
 }
 
+/* Scaling/HiDPI functions. */
+int
+xg_get_scale (struct frame *f)
+{
+  if (FRAME_VISIBLE_P (f) && FRAME_GTK_WIDGET (f))
+    return gtk_widget_get_scale_factor (FRAME_GTK_WIDGET (f));
+  return 1;
+}
 
 /* Close display DPY.  */
 
@@ -724,7 +732,8 @@ xg_show_tooltip (struct frame *f, int root_x, int root_y)
   if (x->ttip_window)
     {
       block_input ();
-      gtk_window_move (x->ttip_window, root_x, root_y);
+      gtk_window_move (x->ttip_window, root_x / xg_get_scale (f),
+		       root_y / xg_get_scale (f));
       gtk_widget_show_all (GTK_WIDGET (x->ttip_window));
       unblock_input ();
     }
