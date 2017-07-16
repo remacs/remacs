@@ -700,6 +700,7 @@ extern "C" {
     pub static Qt: Lisp_Object;
     pub static Qarith_error: Lisp_Object;
     pub static Qnumber_or_marker_p: Lisp_Object;
+    pub static Qinteger_or_marker_p: Lisp_Object;
     pub static Qconsp: Lisp_Object;
     pub static Qnumberp: Lisp_Object;
     pub static Qintegerp: Lisp_Object;

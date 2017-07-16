@@ -854,10 +854,39 @@ impl LispObject {
 
 // Other functions
 
+pub enum LispNumber {
+    Fixnum(EmacsInt),
+    Float(f64),
+}
+
 impl LispObject {
     #[inline]
     pub fn is_number(self) -> bool {
-        self.is_integer() || self.is_float()
+        self.is_fixnum() || self.is_float()
+    }
+
+    #[inline]
+    pub fn as_number_or_error(self) -> LispNumber {
+        if let Some(n) = self.as_fixnum() {
+            LispNumber::Fixnum(n)
+        } else if let Some(f) = self.as_float() {
+            LispNumber::Float(f)
+        } else {
+            unsafe { wrong_type_argument(Qnumberp, self.to_raw()) }
+        }
+    }
+
+    #[inline]
+    pub fn as_number_coerce_marker_or_error(self) -> LispNumber {
+        if let Some(n) = self.as_fixnum() {
+            LispNumber::Fixnum(n)
+        } else if let Some(f) = self.as_float() {
+            LispNumber::Float(f)
+        } else if let Some(m) = self.as_marker() {
+            LispNumber::Fixnum(marker_position(m) as EmacsInt)
+        } else {
+            unsafe { wrong_type_argument(Qnumber_or_marker_p, self.to_raw()) }
+        }
     }
 
     #[inline]
@@ -1035,26 +1064,5 @@ impl Debug for LispObject {
             }
         }
         Ok(())
-    }
-}
-
-/// Check that `x` is an integer or float, coercing markers to integers.
-///
-/// If `x` has a different type, raise an elisp error.
-///
-/// This function is equivalent to
-/// `CHECK_NUMBER_OR_FLOAT_COERCE_MARKER` in Emacs C, but returns a
-/// value rather than assigning to a variable.
-pub fn check_number_coerce_marker(x: LispObject) -> LispObject {
-    match x.as_marker() {
-        Some(m) => LispObject::from_natnum(marker_position(m) as EmacsInt),
-        None => {
-            if !x.is_number() {
-                unsafe {
-                    wrong_type_argument(Qnumber_or_marker_p, x.to_raw());
-                }
-            }
-            x
-        }
     }
 }

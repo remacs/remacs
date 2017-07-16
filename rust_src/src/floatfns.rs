@@ -1,7 +1,10 @@
 //! Functions operating on float numbers.
 
-use lisp::LispObject;
-use remacs_sys::{EmacsDouble, Lisp_Object, Qnumberp, wrong_type_argument};
+use lisp::{LispObject, LispNumber};
+use math::ArithOp;
+use eval::xsignal0;
+use remacs_sys::{EmacsDouble, Lisp_Object, Qnumberp, Qarith_error, Qinteger_or_marker_p,
+                 wrong_type_argument};
 use remacs_macros::lisp_fn;
 
 pub fn init_float_syms() {
@@ -69,6 +72,51 @@ simple_float_op!("tan", tan, "Return the tangent of ARG.");
 
 simple_float_op!("exp", exp, "Return the exponential base e of ARG.");
 simple_float_op!("sqrt", sqrt, "Return the square root of ARG.");
+
+/// Driver for standard arithmetic operations on floats.
+pub fn float_arith_driver(
+    mut accum: f64,
+    argstart: usize,
+    code: ArithOp,
+    args: &[LispObject],
+) -> LispObject {
+    for (i, &val) in args[argstart..].iter().enumerate() {
+        let argnum = argstart + i;
+        let next = match val.as_number_coerce_marker_or_error() {
+            LispNumber::Float(f) => f,
+            LispNumber::Fixnum(d) => d as f64,
+        };
+        match code {
+            ArithOp::Add => accum += next,
+            ArithOp::Sub => {
+                accum = {
+                    if argnum > 0 {
+                        accum - next
+                    } else if args.len() == 1 {
+                        -next
+                    } else {
+                        next
+                    }
+                }
+            }
+            ArithOp::Mult => accum *= next,
+            ArithOp::Div => {
+                if args.len() > 1 && argnum == 0 {
+                    accum = next;
+                } else {
+                    if next == 0. {
+                        xsignal0(LispObject::from_raw(unsafe { Qarith_error }));
+                    }
+                    accum /= next;
+                }
+            }
+            ArithOp::Logand | ArithOp::Logior | ArithOp::Logxor => unsafe {
+                wrong_type_argument(Qinteger_or_marker_p, val.to_raw())
+            },
+        }
+    }
+    LispObject::from_float(accum)
+}
 
 /// Return non nil if argument X is a NaN.
 #[lisp_fn]
