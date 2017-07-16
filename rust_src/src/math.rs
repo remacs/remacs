@@ -257,7 +257,7 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
             return accum;
         }
     }
-    accum
+    check_number_coerce_marker(accum)
 }
 
 /// Return largest of all the arguments (which must be numbers or markers).
