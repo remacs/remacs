@@ -9,7 +9,7 @@ and lib-src/. The code in this module should be:
 
 ## Conventions for code in this crate
 
-When porting an existing c function, try to preserve the guarantees
+When porting an existing C function, try to preserve the guarantees
 that function makes according to its man page. For example, the rust
 implementation of `mkostemp` (called `rust_make_temp`), has the
 interface and errno guarantees described in
