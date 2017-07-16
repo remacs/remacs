@@ -180,7 +180,7 @@ For a description of possible values, see `vc-check-master-templates'."
 
 (defun vc-src-dir-status-files (dir files update-function)
   ;; FIXME: Use one src status -a call for this
-  (if (not files) (setq files (vc-expand-dirs (list dir) 'RCS)))
+  (if (not files) (setq files (vc-expand-dirs (list dir) 'SRC)))
   (let ((result nil))
     (dolist (file files)
       (let ((state (vc-state file))
