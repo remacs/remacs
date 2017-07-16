@@ -170,7 +170,7 @@ docker-compose up -d
 
 First time you run this command docker will build the image.  After that any subsequent startups will happen in less than a second.
 
-The working directory with remacs will be mount under the same path in the container so editing the files on your host machine will automatically be reflected inside the container.   To build remacs use the steps from [Building Remacs](#building-remacs) prefixed with `docker-compose exec remacs`, this will ensure the commands are executed inside the container.
+The working directory with remacs will be mounted under the same path in the container so editing the files on your host machine will automatically be reflected inside the container.   To build remacs use the steps from [Building Remacs](#building-remacs) prefixed with `docker-compose exec remacs`, this will ensure the commands are executed inside the container.
 
 ### Building Remacs
 
