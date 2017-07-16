@@ -16,6 +16,7 @@ extern crate remacs_sys;
 extern crate remacs_lib;
 extern crate remacs_macros;
 extern crate libc;
+extern crate rand;
 extern crate sha1;
 extern crate sha2;
 
@@ -89,6 +90,7 @@ pub use lists::Flist;
 pub use lists::Fmake_list;
 pub use floatfns::extract_float;
 pub use floatfns::fmod_float;
+pub use numbers::Frandom;
 pub use objects::Fequal;
 pub use objects::Fequal_including_properties;
 pub use symbols::Fsymbolp;
@@ -163,6 +165,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*numbers::Snatnump);
         defsubr(&*numbers::Snumber_or_marker_p);
         defsubr(&*numbers::Snumberp);
+        defsubr(&*numbers::Srandom);
         defsubr(&*objects::Snull);
         defsubr(&*objects::Seq);
         defsubr(&*objects::Seql);

@@ -95,7 +95,7 @@ const VAL_MAX: EmacsInt = EMACS_INT_MAX >> (GCTYPEBITS - 1);
 
 const VALMASK: EmacsInt = [VAL_MAX, -(1 << GCTYPEBITS)][USE_LSB_TAG as usize];
 
-const INTMASK: EmacsInt = (EMACS_INT_MAX >> (INTTYPEBITS - 1));
+pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (INTTYPEBITS - 1));
 
 /// Bit pattern used in the least significant bits of a lisp object,
 /// to denote its type.

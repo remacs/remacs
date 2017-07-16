@@ -47,42 +47,6 @@ DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
   return arg;
 }
 
-DEFUN ("random", Frandom, Srandom, 0, 1, 0,
-       doc: /* Return a pseudo-random number.
-All integers representable in Lisp, i.e. between `most-negative-fixnum'
-and `most-positive-fixnum', inclusive, are equally likely.
-
-With positive integer LIMIT, return random number in interval [0,LIMIT).
-With argument t, set the random number seed from the system's entropy
-pool if available, otherwise from less-random volatile data such as the time.
-With a string argument, set the seed based on the string's contents.
-Other values of LIMIT are ignored.
-
-See Info node `(elisp)Random Numbers' for more details.  */)
-  (Lisp_Object limit)
-{
-  EMACS_INT val;
-
-  if (EQ (limit, Qt))
-    init_random ();
-  else if (STRINGP (limit))
-    seed_random (SSDATA (limit), SBYTES (limit));
-
-  val = get_random ();
-  if (INTEGERP (limit) && 0 < XINT (limit))
-    while (true)
-      {
-	/* Return the remainder, except reject the rare case where
-	   get_random returns a number so close to INTMASK that the
-	   remainder isn't random.  */
-	EMACS_INT remainder = val % XINT (limit);
-	if (val - remainder <= INTMASK - XINT (limit) + 1)
-	  return make_number (remainder);
-	val = get_random ();
-      }
-  return make_number (val);
-}
-
 /* Random data-structure functions.  */
 
 DEFUN ("compare-strings", Fcompare_strings, Scompare_strings, 6, 7, 0,
@@ -3996,7 +3960,6 @@ this variable.  */);
   use_file_dialog = 1;
 
   defsubr (&Sidentity);
-  defsubr (&Srandom);
   defsubr (&Scompare_strings);
   defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
