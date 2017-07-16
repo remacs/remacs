@@ -301,13 +301,6 @@ wset_buffer (struct window *w, Lisp_Object val)
   adjust_window_count (w, 1);
 }
 
-DEFUN ("windowp", Fwindowp, Swindowp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a window and nil otherwise.  */)
-  (Lisp_Object object)
-{
-  return WINDOWP (object) ? Qt : Qnil;
-}
-
 DEFUN ("window-valid-p", Fwindow_valid_p, Swindow_valid_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a valid window and nil otherwise.
 A valid window is either a window that displays a buffer or an internal
@@ -7737,7 +7730,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sselected_window);
   defsubr (&Sminibuffer_window);
   defsubr (&Swindow_minibuffer_p);
-  defsubr (&Swindowp);
   defsubr (&Swindow_valid_p);
   defsubr (&Swindow_live_p);
   defsubr (&Swindow_frame);
