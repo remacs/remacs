@@ -83,6 +83,8 @@ pub use lists::Fdelq;
 pub use lists::Fplist_get;
 pub use lists::Fplist_member;
 pub use lists::Fplist_put;
+pub use lists::Fget;
+pub use lists::Fput;
 pub use lists::Flist;
 pub use lists::Fmake_list;
 pub use floatfns::extract_float;
@@ -193,6 +195,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*lists::Splist_member);
         defsubr(&*lists::Splist_put);
         defsubr(&*lists::Slax_plist_put);
+        defsubr(&*lists::Sget);
+        defsubr(&*lists::Sput);
         defsubr(&*lists::Slist);
         defsubr(&*lists::Smake_list);
         defsubr(&*lists::Ssafe_length);

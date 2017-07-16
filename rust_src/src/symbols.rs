@@ -16,6 +16,10 @@ impl LispSymbolRef {
     pub fn get_plist(&self) -> LispObject {
         LispObject::from_raw(self.plist)
     }
+
+    pub fn set_plist(&mut self, plist: LispObject) {
+        self.plist = plist.to_raw();
+    }
 }
 
 /// Return t if OBJECT is a symbol.
