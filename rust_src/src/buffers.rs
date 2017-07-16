@@ -205,7 +205,7 @@ impl LispBufferRef {
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
-        !self.name.is_nil()
+        self.name.is_not_nil()
     }
 }
 

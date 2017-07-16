@@ -866,6 +866,11 @@ impl LispObject {
     }
 
     #[inline]
+    pub fn is_not_nil(self) -> bool {
+        self != Qnil
+    }
+
+    #[inline]
     pub fn is_marker(self) -> bool {
         self.as_misc().map_or(
             false,

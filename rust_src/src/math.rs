@@ -250,7 +250,7 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
     assert!(args.len() > 0);
     let mut accum = args[0];
     for &arg in &args[1..] {
-        if !arithcompare(arg, accum, comparison).is_nil() {
+        if arithcompare(arg, accum, comparison).is_not_nil() {
             accum = arg;
         }
         if accum.as_float().map_or(false, |f| f.is_nan()) {
@@ -378,7 +378,7 @@ pub extern "C" fn arithcompare(
 
 fn arithcompare_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject {
     LispObject::from_bool(args.windows(2).all(|i| {
-        !arithcompare(i[0], i[1], comparison).is_nil()
+        arithcompare(i[0], i[1], comparison).is_not_nil()
     }))
 }
 

@@ -40,7 +40,7 @@ fn symbol_name(symbol: LispObject) -> LispObject {
 #[lisp_fn]
 fn fboundp(object: LispObject) -> LispObject {
     let symbol = object.as_symbol_or_error();
-    LispObject::from_bool(!symbol.get_function().is_nil())
+    LispObject::from_bool(symbol.get_function().is_not_nil())
 }
 
 /// Return SYMBOL's function definition, or nil if that is void.
