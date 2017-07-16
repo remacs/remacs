@@ -36,6 +36,7 @@ mod crypto;
 mod str2sig;
 mod multibyte;
 mod buffers;
+mod windows;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -135,6 +136,7 @@ pub extern "C" fn rust_init_syms() {
     unsafe {
         defsubr(&*buffers::Soverlayp);
         defsubr(&*buffers::Sbuffer_live_p);
+        defsubr(&*windows::Swindowp);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
         defsubr(&*lists::Snlistp);
