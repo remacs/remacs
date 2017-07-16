@@ -191,6 +191,20 @@ fn raw_byte_from_codepoint(cp: Codepoint) -> c_uchar {
     (cp - 0x3F_FF00) as c_uchar
 }
 
+/// Same as the CHAR_TO_BYTE_SAFE macro.
+/// Return the raw 8-bit byte for character CP,
+/// or -1 if CP doesn't correspond to a byte.
+#[inline]
+pub fn raw_byte_from_codepoint_safe(cp: Codepoint) -> EmacsInt {
+    if cp < 0x80 {
+        cp as EmacsInt
+    } else if cp > MAX_5_BYTE_CHAR {
+        raw_byte_from_codepoint(cp) as EmacsInt
+    } else {
+        -1
+    }
+}
+
 /// UNIBYTE_TO_CHAR macro
 #[inline]
 pub fn unibyte_to_char(cp: Codepoint) -> Codepoint {
