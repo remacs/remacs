@@ -26,7 +26,10 @@
 
 (require 'dom)
 (require 'ert)
-(eval-when-compile (require 'subr-x))
+
+;; `defsubst's are not inlined inside `ert-deftest' (see Bug#24402),
+;; therefore we can't use `eval-when-compile' here.
+(require 'subr-x)
 
 (defun dom-tests--tree ()
   "Return a DOM tree for testing."
