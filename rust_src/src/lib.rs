@@ -60,6 +60,7 @@ pub use math::Fmax;
 pub use math::Fmin;
 pub use math::Fquo;
 pub use math::Flss;
+pub use math::Fleq;
 pub use math::arithcompare;
 
 // Widely used in the C codebase.
