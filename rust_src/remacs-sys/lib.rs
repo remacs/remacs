@@ -17,6 +17,8 @@
 
 extern crate libc;
 
+pub mod libm;
+
 use std::isize;
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
@@ -699,6 +701,7 @@ extern "C" {
     pub static mut globals: emacs_globals;
     pub static Qt: Lisp_Object;
     pub static Qarith_error: Lisp_Object;
+    pub static Qrange_error: Lisp_Object;
     pub static Qnumber_or_marker_p: Lisp_Object;
     pub static Qinteger_or_marker_p: Lisp_Object;
     pub static Qconsp: Lisp_Object;
@@ -745,9 +748,11 @@ extern "C" {
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fget_buffer(buffer_or_name: Lisp_Object) -> Lisp_Object;
+    pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
 
     pub fn make_float(float_value: libc::c_double) -> Lisp_Object;
     pub fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
+    pub fn build_string(s: *const libc::c_char) -> Lisp_Object;
     pub fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
     pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;
     pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
