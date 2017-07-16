@@ -87,9 +87,7 @@ struct random_data
 # endif
 #endif
 
-#if (@GNULIB_MKSTEMP@ || @GNULIB_MKSTEMPS@ || @GNULIB_GETSUBOPT@ || defined GNULIB_POSIXCHECK) && ! defined __GLIBC__ && !((defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__)
-/* On Mac OS X 10.3, only <unistd.h> declares mkstemp.  */
-/* On Mac OS X 10.5, only <unistd.h> declares mkstemps.  */
+#if (@GNULIB_GETSUBOPT@ || defined GNULIB_POSIXCHECK) && ! defined __GLIBC__ && !((defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__)
 /* On Cygwin 1.7.1, only <unistd.h> declares getsubopt.  */
 /* But avoid namespace pollution on glibc systems and native Windows.  */
 # include <unistd.h>
@@ -323,119 +321,6 @@ _GL_CXXALIASWARN (mkdtemp);
 # if HAVE_RAW_DECL_MKDTEMP
 _GL_WARN_ON_USE (mkdtemp, "mkdtemp is unportable - "
                  "use gnulib module mkdtemp for portability");
-# endif
-#endif
-
-#if @GNULIB_MKOSTEMP@
-/* Create a unique temporary file from TEMPLATE.
-   The last six characters of TEMPLATE must be "XXXXXX";
-   they are replaced with a string that makes the file name unique.
-   The flags are a bitmask, possibly including O_CLOEXEC (defined in <fcntl.h>)
-   and O_TEXT, O_BINARY (defined in "binary-io.h").
-   The file is then created, with the specified flags, ensuring it didn't exist
-   before.
-   The file is created read-write (mask at least 0600 & ~umask), but it may be
-   world-readable and world-writable (mask 0666 & ~umask), depending on the
-   implementation.
-   Returns the open file descriptor if successful, otherwise -1 and errno
-   set.  */
-# if !@HAVE_MKOSTEMP@
-_GL_FUNCDECL_SYS (mkostemp, int, (char * /*template*/, int /*flags*/)
-                                 _GL_ARG_NONNULL ((1)));
-# endif
-_GL_CXXALIAS_SYS (mkostemp, int, (char * /*template*/, int /*flags*/));
-_GL_CXXALIASWARN (mkostemp);
-#elif defined GNULIB_POSIXCHECK
-# undef mkostemp
-# if HAVE_RAW_DECL_MKOSTEMP
-_GL_WARN_ON_USE (mkostemp, "mkostemp is unportable - "
-                 "use gnulib module mkostemp for portability");
-# endif
-#endif
-
-#if @GNULIB_MKOSTEMPS@
-/* Create a unique temporary file from TEMPLATE.
-   The last six characters of TEMPLATE before a suffix of length
-   SUFFIXLEN must be "XXXXXX";
-   they are replaced with a string that makes the file name unique.
-   The flags are a bitmask, possibly including O_CLOEXEC (defined in <fcntl.h>)
-   and O_TEXT, O_BINARY (defined in "binary-io.h").
-   The file is then created, with the specified flags, ensuring it didn't exist
-   before.
-   The file is created read-write (mask at least 0600 & ~umask), but it may be
-   world-readable and world-writable (mask 0666 & ~umask), depending on the
-   implementation.
-   Returns the open file descriptor if successful, otherwise -1 and errno
-   set.  */
-# if !@HAVE_MKOSTEMPS@
-_GL_FUNCDECL_SYS (mkostemps, int,
-                  (char * /*template*/, int /*suffixlen*/, int /*flags*/)
-                  _GL_ARG_NONNULL ((1)));
-# endif
-_GL_CXXALIAS_SYS (mkostemps, int,
-                  (char * /*template*/, int /*suffixlen*/, int /*flags*/));
-_GL_CXXALIASWARN (mkostemps);
-#elif defined GNULIB_POSIXCHECK
-# undef mkostemps
-# if HAVE_RAW_DECL_MKOSTEMPS
-_GL_WARN_ON_USE (mkostemps, "mkostemps is unportable - "
-                 "use gnulib module mkostemps for portability");
-# endif
-#endif
-
-#if @GNULIB_MKSTEMP@
-/* Create a unique temporary file from TEMPLATE.
-   The last six characters of TEMPLATE must be "XXXXXX";
-   they are replaced with a string that makes the file name unique.
-   The file is then created, ensuring it didn't exist before.
-   The file is created read-write (mask at least 0600 & ~umask), but it may be
-   world-readable and world-writable (mask 0666 & ~umask), depending on the
-   implementation.
-   Returns the open file descriptor if successful, otherwise -1 and errno
-   set.  */
-# if @REPLACE_MKSTEMP@
-#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
-#   define mkstemp rpl_mkstemp
-#  endif
-_GL_FUNCDECL_RPL (mkstemp, int, (char * /*template*/) _GL_ARG_NONNULL ((1)));
-_GL_CXXALIAS_RPL (mkstemp, int, (char * /*template*/));
-# else
-#  if ! @HAVE_MKSTEMP@
-_GL_FUNCDECL_SYS (mkstemp, int, (char * /*template*/) _GL_ARG_NONNULL ((1)));
-#  endif
-_GL_CXXALIAS_SYS (mkstemp, int, (char * /*template*/));
-# endif
-_GL_CXXALIASWARN (mkstemp);
-#elif defined GNULIB_POSIXCHECK
-# undef mkstemp
-# if HAVE_RAW_DECL_MKSTEMP
-_GL_WARN_ON_USE (mkstemp, "mkstemp is unportable - "
-                 "use gnulib module mkstemp for portability");
-# endif
-#endif
-
-#if @GNULIB_MKSTEMPS@
-/* Create a unique temporary file from TEMPLATE.
-   The last six characters of TEMPLATE prior to a suffix of length
-   SUFFIXLEN must be "XXXXXX";
-   they are replaced with a string that makes the file name unique.
-   The file is then created, ensuring it didn't exist before.
-   The file is created read-write (mask at least 0600 & ~umask), but it may be
-   world-readable and world-writable (mask 0666 & ~umask), depending on the
-   implementation.
-   Returns the open file descriptor if successful, otherwise -1 and errno
-   set.  */
-# if !@HAVE_MKSTEMPS@
-_GL_FUNCDECL_SYS (mkstemps, int, (char * /*template*/, int /*suffixlen*/)
-                                 _GL_ARG_NONNULL ((1)));
-# endif
-_GL_CXXALIAS_SYS (mkstemps, int, (char * /*template*/, int /*suffixlen*/));
-_GL_CXXALIASWARN (mkstemps);
-#elif defined GNULIB_POSIXCHECK
-# undef mkstemps
-# if HAVE_RAW_DECL_MKSTEMPS
-_GL_WARN_ON_USE (mkstemps, "mkstemps is unportable - "
-                 "use gnulib module mkstemps for portability");
 # endif
 #endif
 
