@@ -3281,7 +3281,9 @@ enum Arith_Comparison {
   ARITH_LESS_OR_EQUAL,
   ARITH_GRTR_OR_EQUAL
 };
-extern Lisp_Object arithcompare (Lisp_Object num1, Lisp_Object num2,
+
+/* Defined in rust  */
+Lisp_Object arithcompare (Lisp_Object num1, Lisp_Object num2,
                                  enum Arith_Comparison comparison);
 
 /* Convert the integer I to an Emacs representation, either the integer
