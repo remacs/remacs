@@ -1883,6 +1883,22 @@ The alist key is the cipher name. */)
   return ciphers;
 }
 
+/* Zero out STORAGE (even if it will become inaccessible.  It has
+   STORAGE_LENGTH bytes.  The goal is to improve security a bit, in
+   case an Emacs module or some buggy part of Emacs attempts to
+   inspect STORAGE later to retrieve a secret.
+
+   Calls to this function document when storage containing a secret is
+   known to go out of scope.  This function is not guaranteed to erase
+   the secret, as copies of STORAGE may well be accessible elsewhere
+   on the machine.  */
+
+static void
+clear_storage (void *storage, ptrdiff_t storage_length)
+{
+  explicit_bzero (storage, storage_length);
+}
+
 static Lisp_Object
 gnutls_symmetric_aead (bool encrypting, gnutls_cipher_algorithm_t gca,
                        Lisp_Object cipher,
@@ -1949,7 +1965,7 @@ gnutls_symmetric_aead (bool encrypting, gnutls_cipher_algorithm_t gca,
 
   if (ret < GNUTLS_E_SUCCESS)
     {
-      memset (storage, 0, storage_length);
+      clear_storage (storage, storage_length);
       SAFE_FREE ();
       gnutls_aead_cipher_deinit (acipher);
       if (encrypting)
@@ -1963,7 +1979,7 @@ gnutls_symmetric_aead (bool encrypting, gnutls_cipher_algorithm_t gca,
   gnutls_aead_cipher_deinit (acipher);
 
   Lisp_Object output = make_unibyte_string (storage, storage_length);
-  memset (storage, 0, storage_length);
+  clear_storage (storage, storage_length);
   SAFE_FREE ();
   return list2 (output, actual_iv);
 #else

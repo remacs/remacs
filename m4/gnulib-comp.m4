@@ -72,6 +72,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module errno:
   # Code from module euidaccess:
   # Code from module execinfo:
+  # Code from module explicit_bzero:
   # Code from module extensions:
   # Code from module extern-inline:
   # Code from module faccessat:
@@ -210,6 +211,12 @@ AC_DEFUN([gl_INIT],
   gl_UNISTD_MODULE_INDICATOR([environ])
   gl_HEADER_ERRNO_H
   gl_EXECINFO_H
+  gl_FUNC_EXPLICIT_BZERO
+  if test $HAVE_EXPLICIT_BZERO = 0; then
+    AC_LIBOBJ([explicit_bzero])
+    gl_PREREQ_EXPLICIT_BZERO
+  fi
+  gl_STRING_MODULE_INDICATOR([explicit_bzero])
   AC_REQUIRE([gl_EXTERN_INLINE])
   gl_FUNC_FACCESSAT
   if test $HAVE_FACCESSAT = 0; then
@@ -837,6 +844,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/euidaccess.c
   lib/execinfo.c
   lib/execinfo.in.h
+  lib/explicit_bzero.c
   lib/faccessat.c
   lib/fcntl.c
   lib/fcntl.in.h
@@ -967,6 +975,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/errno_h.m4
   m4/euidaccess.m4
   m4/execinfo.m4
+  m4/explicit_bzero.m4
   m4/extensions.m4
   m4/extern-inline.m4
   m4/faccessat.m4
