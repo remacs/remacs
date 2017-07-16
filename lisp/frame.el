@@ -1482,6 +1482,7 @@ FRAME."
 
 (declare-function w32-mouse-absolute-pixel-position "w32fns.c")
 (declare-function x-mouse-absolute-pixel-position "xfns.c")
+(declare-function ns-mouse-absolute-pixel-position "nsfns.c")
 
 (defun mouse-absolute-pixel-position ()
   "Return absolute position of mouse cursor in pixels.
