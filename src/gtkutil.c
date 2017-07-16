@@ -208,7 +208,7 @@ xg_display_open (char *display_name, Display **dpy)
 int
 xg_get_scale (struct frame *f)
 {
-  if (FRAME_VISIBLE_P (f) && FRAME_GTK_WIDGET (f))
+  if (FRAME_GTK_WIDGET (f))
     return gtk_widget_get_scale_factor (FRAME_GTK_WIDGET (f));
   return 1;
 }
