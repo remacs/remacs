@@ -38,6 +38,7 @@ mod str2sig;
 mod multibyte;
 mod buffers;
 mod windows;
+mod interactive;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -129,6 +130,9 @@ pub use multibyte::str_as_multibyte;
 pub use multibyte::str_to_multibyte;
 pub use multibyte::str_as_unibyte;
 pub use multibyte::str_to_unibyte;
+
+// Used in window.c, macros.c
+pub use interactive::Fprefix_numeric_value;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
@@ -234,6 +238,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Svectorp);
         defsubr(&*vectors::Slength);
         defsubr(&*crypto::Sbuffer_hash);
+        defsubr(&*interactive::Sprefix_numeric_value);
 
         defsubr(&*floatfns::Sisnan);
         defsubr(&*floatfns::Sacos);

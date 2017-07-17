@@ -848,29 +848,6 @@ invoke it.  If KEYS is omitted or nil, the return value of
   }
 }
 
-DEFUN ("prefix-numeric-value", Fprefix_numeric_value, Sprefix_numeric_value,
-       1, 1, 0,
-       doc: /* Return numeric meaning of raw prefix argument RAW.
-A raw prefix argument is what you get from `(interactive "P")'.
-Its numeric meaning is what you would get from `(interactive "p")'.  */)
-  (Lisp_Object raw)
-{
-  Lisp_Object val;
-
-  if (NILP (raw))
-    XSETFASTINT (val, 1);
-  else if (EQ (raw, Qminus))
-    XSETINT (val, -1);
-  else if (CONSP (raw) && INTEGERP (XCAR (raw)))
-    XSETINT (val, XINT (XCAR (raw)));
-  else if (INTEGERP (raw))
-    val = raw;
-  else
-    XSETFASTINT (val, 1);
-
-  return val;
-}
-
 void
 syms_of_callint (void)
 {
@@ -956,5 +933,4 @@ a way to turn themselves off when a mouse command switches windows.  */);
   defsubr (&Sinteractive);
   defsubr (&Scall_interactively);
   defsubr (&Sfuncall_interactively);
-  defsubr (&Sprefix_numeric_value);
 }
