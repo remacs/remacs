@@ -19,8 +19,8 @@ extern crate libc;
 pub mod libm;
 
 use std::isize;
-use libc::{c_char, c_uchar, c_short, c_int, c_double, c_void, ptrdiff_t, size_t, off_t,
-           time_t, timespec};
+use libc::{c_char, c_uchar, c_short, c_int, c_double, c_void, ptrdiff_t, size_t, off_t, time_t,
+           timespec};
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 
@@ -44,7 +44,7 @@ pub const PSEUDOVECTOR_SIZE_BITS: ptrdiff_t = 12;
 pub const PSEUDOVECTOR_SIZE_MASK: ptrdiff_t = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
 pub const PSEUDOVECTOR_REST_BITS: ptrdiff_t = 12;
 pub const PSEUDOVECTOR_REST_MASK: ptrdiff_t = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
-                                                         PSEUDOVECTOR_SIZE_BITS);
+                                                   PSEUDOVECTOR_SIZE_BITS);
 pub const PSEUDOVECTOR_AREA_BITS: ptrdiff_t = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
 pub const PVEC_TYPE_MASK: ptrdiff_t = 0x3f << PSEUDOVECTOR_AREA_BITS;
 
@@ -185,8 +185,8 @@ pub struct Lisp_String {
 pub union SymbolUnion {
     pub value: Lisp_Object,
     pub alias: *mut Lisp_Symbol,
-    pub blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
-    pub fwd: *mut c_void, // @TODO implement Lisp_Fwd
+pub blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
+pub fwd: *mut c_void, // @TODO implement Lisp_Fwd
 }
 
 /// This struct has 4 bytes of padding, representing the bitfield that

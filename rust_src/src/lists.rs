@@ -78,13 +78,19 @@ fn cdr(list: LispObject) -> LispObject {
 /// Return the car of OBJECT if it is a cons cell, or else nil.
 #[lisp_fn]
 fn car_safe(object: LispObject) -> LispObject {
-    object.as_cons().map_or(LispObject::constant_nil(), |cons| cons.car())
+    object.as_cons().map_or(
+        LispObject::constant_nil(),
+        |cons| cons.car(),
+    )
 }
 
 /// Return the cdr of OBJECT if it is a cons cell, or else nil.
 #[lisp_fn]
 fn cdr_safe(object: LispObject) -> LispObject {
-    object.as_cons().map_or(LispObject::constant_nil(), |cons| cons.cdr())
+    object.as_cons().map_or(
+        LispObject::constant_nil(),
+        |cons| cons.cdr(),
+    )
 }
 
 /// Take cdr N times on LIST, return the result.
@@ -397,16 +403,19 @@ fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispObjec
 /// usage: (list &rest OBJECTS)
 #[lisp_fn]
 fn list(args: &mut [LispObject]) -> LispObject {
-    args.iter().rev().fold(LispObject::constant_nil(), |list, &arg| {
-        LispObject::cons(arg, list)
-    })
+    args.iter().rev().fold(
+        LispObject::constant_nil(),
+        |list, &arg| LispObject::cons(arg, list),
+    )
 }
 
 /// Return a newly created list of length LENGTH, with each element being INIT.
 #[lisp_fn]
 fn make_list(length: LispObject, init: LispObject) -> LispObject {
     let length = length.as_natnum_or_error();
-    (0..length).fold(LispObject::constant_nil(), |list, _| LispObject::cons(init, list))
+    (0..length).fold(LispObject::constant_nil(), |list, _| {
+        LispObject::cons(init, list)
+    })
 }
 
 /// Return the length of a list, but avoid error or infinite loop.

@@ -17,11 +17,12 @@ use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
 use marker::LispMarkerRef;
 
-use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK, USE_LSB_TAG,
-                 MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type, Lisp_Misc_Any, Lisp_Misc_Type,
-                 Lisp_Float, Lisp_Cons, Lisp_Object, lispsym, wrong_type_argument, make_float,
-                 circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt, Qnumberp, Qfloatp, Qstringp,
-                 Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp,
+use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
+                 USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
+                 Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
+                 wrong_type_argument, make_float, circular_list, internal_equal, Fcons,
+                 CHECK_IMPURE, Qnil, Qt, Qnumberp, Qfloatp, Qstringp, Qsymbolp,
+                 Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp,
                  Qconsp, SYMBOL_NAME, PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -60,7 +61,11 @@ impl LispObject {
 
     #[inline]
     pub fn from_bool(v: bool) -> LispObject {
-        if v { LispObject::constant_t() } else { LispObject::constant_nil() }
+        if v {
+            LispObject::constant_t()
+        } else {
+            LispObject::constant_nil()
+        }
     }
 
     #[inline]
@@ -844,28 +849,12 @@ impl LispObject {
 
     #[inline]
     pub fn equal(self, other: LispObject) -> bool {
-        unsafe {
-            internal_equal(
-                self.to_raw(),
-                other.to_raw(),
-                EqualKind::Plain,
-                0,
-                Qnil,
-            )
-        }
+        unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::Plain, 0, Qnil) }
     }
 
     #[inline]
     pub fn equal_no_quit(self, other: LispObject) -> bool {
-        unsafe {
-            internal_equal(
-                self.to_raw(),
-                other.to_raw(),
-                EqualKind::NoQuit,
-                0,
-                Qnil,
-            )
-        }
+        unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::NoQuit, 0, Qnil) }
     }
 }
 

@@ -11,10 +11,9 @@ use lisp::{ExternalPtr, LispObject};
 use multibyte::MAX_CHAR;
 use lists::{sort_list, inorder};
 use buffers::LispBufferRef;
-use remacs_sys::{Qsequencep, EmacsInt, wrong_type_argument, error,
-                 PSEUDOVECTOR_FLAG, PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS,
-                 PSEUDOVECTOR_SIZE_MASK, PseudovecType, Lisp_Vectorlike, Lisp_Vector,
-                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{Qsequencep, EmacsInt, wrong_type_argument, error, PSEUDOVECTOR_FLAG,
+                 PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_SIZE_MASK, PseudovecType,
+                 Lisp_Vectorlike, Lisp_Vector, Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM};
 use remacs_macros::lisp_fn;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
