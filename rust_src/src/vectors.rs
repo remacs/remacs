@@ -7,69 +7,18 @@ use std::cmp::Ordering;
 
 use libc::ptrdiff_t;
 
-use lisp::{ExternalPtr, LispObject, MOST_POSITIVE_FIXNUM};
+use lisp::{ExternalPtr, LispObject};
 use multibyte::MAX_CHAR;
 use lists::{sort_list, inorder};
 use buffers::LispBufferRef;
-use remacs_sys::{Lisp_Object, Qsequencep, EmacsInt, wrong_type_argument, error, bits_word,
+use remacs_sys::{Qsequencep, EmacsInt, wrong_type_argument, error,
                  PSEUDOVECTOR_FLAG, PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS,
-                 PSEUDOVECTOR_SIZE_MASK, PseudovecType};
+                 PSEUDOVECTOR_SIZE_MASK, PseudovecType, Lisp_Vectorlike, Lisp_Vector,
+                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM};
 use remacs_macros::lisp_fn;
 
-/* The only field contains various pieces of information:
-- The MSB (ARRAY_MARK_FLAG) holds the gcmarkbit.
-- The next bit (PSEUDOVECTOR_FLAG) indicates whether this is a plain
-  vector (0) or a pseudovector (1).
-- If PSEUDOVECTOR_FLAG is 0, the rest holds the size (number
-  of slots) of the vector.
-- If PSEUDOVECTOR_FLAG is 1, the rest is subdivided into three fields:
-  - a) pseudovector subtype held in PVEC_TYPE_MASK field;
-  - b) number of Lisp_Objects slots at the beginning of the object
-    held in PSEUDOVECTOR_SIZE_MASK field.  These objects are always
-    traced by the GC;
-  - c) size of the rest fields held in PSEUDOVECTOR_REST_MASK and
-    measured in word_size units.  Rest fields may also include
-    Lisp_Objects, but these objects usually needs some special treatment
-    during GC.
-  There are some exceptions.  For PVEC_FREE, b) is always zero.  For
-  PVEC_BOOL_VECTOR and PVEC_SUBR, both b) and c) are always zero.
-  Current layout limits the pseudovectors to 63 PVEC_xxx subtypes,
-  4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
-
-#[repr(C)]
-#[allow(non_camel_case_types)]
-pub struct Lisp_Vectorlike_Header {
-    size: ptrdiff_t,
-}
-
-#[repr(C)]
-#[allow(non_camel_case_types)]
-pub struct Lisp_Vectorlike {
-    header: Lisp_Vectorlike_Header,
-    // shouldn't look at the contents without knowing the structure...
-}
-
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
-
-#[repr(C)]
-#[allow(non_camel_case_types)]
-pub struct Lisp_Vector {
-    header: Lisp_Vectorlike_Header,
-    // actually any number of items... not sure how to express this
-    contents: [Lisp_Object; 1],
-}
-
 pub type LispVectorRef = ExternalPtr<Lisp_Vector>;
-
-#[repr(C)]
-#[allow(non_camel_case_types)]
-pub struct Lisp_Bool_Vector {
-    _header: Lisp_Vectorlike_Header,
-    size: EmacsInt,
-    // actually any number of items again
-    _data: [bits_word; 1],
-}
-
 pub type LispBoolVecRef = ExternalPtr<Lisp_Bool_Vector>;
 
 impl LispVectorlikeRef {

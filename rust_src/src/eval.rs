@@ -1,4 +1,6 @@
-use lisp::{LispObject, Qnil};
+//! Generic Lisp eval functions.
+
+use lisp::LispObject;
 use remacs_sys::Fsignal;
 
 /// Signal an error in Emacs.
@@ -14,7 +16,7 @@ fn xsignal(error_symbol: LispObject, data: LispObject) -> ! {
 
 /// Convenience function for calling `xsignal` with an empty list.
 pub fn xsignal0(error_symbol: LispObject) -> ! {
-    xsignal(error_symbol, Qnil);
+    xsignal(error_symbol, LispObject::constant_nil());
 }
 
 /// Convenience function for calling `xsignal` with a two-element list.

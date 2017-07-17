@@ -1,27 +1,12 @@
 use std::ptr;
 use libc::ptrdiff_t;
 
-use lisp::{LispObject, LispMiscType};
-use buffers::Lisp_Buffer;
-use remacs_sys::error;
+use lisp::LispObject;
+use remacs_sys::{error, Lisp_Marker};
 use remacs_macros::lisp_fn;
 
-// TODO: write a docstring based on the docs in lisp.h.
-#[repr(C)]
-pub struct LispMarker {
-    ty: LispMiscType,
-    // GC mark bit, 13 bits spacer, needs_adjustment flag,
-    // insertion_type flag.
-    padding: u16,
-    // TODO: define a proper buffer struct.
-    buffer: *const Lisp_Buffer,
-    next: *const LispMarker,
-    charpos: ptrdiff_t,
-    bytepos: ptrdiff_t,
-}
-
 /// Return the char position of marker MARKER, as a C integer.
-pub fn marker_position(m_ptr: *const LispMarker) -> ptrdiff_t {
+pub fn marker_position(m_ptr: *const Lisp_Marker) -> ptrdiff_t {
     let m = unsafe { ptr::read(m_ptr) };
 
     let buf = m.buffer;
