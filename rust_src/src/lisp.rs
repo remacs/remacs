@@ -8,7 +8,7 @@
 use std::cmp::max;
 use std::mem;
 use std::slice;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
 use libc::{c_void, intptr_t};
 
@@ -95,7 +95,7 @@ const VAL_MAX: EmacsInt = EMACS_INT_MAX >> (GCTYPEBITS - 1);
 
 const VALMASK: EmacsInt = [VAL_MAX, -(1 << GCTYPEBITS)][USE_LSB_TAG as usize];
 
-const INTMASK: EmacsInt = (EMACS_INT_MAX >> (INTTYPEBITS - 1));
+pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (INTTYPEBITS - 1));
 
 /// Bit pattern used in the least significant bits of a lisp object,
 /// to denote its type.
@@ -265,6 +265,12 @@ impl<T> Deref for ExternalPtr<T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         unsafe { &*self.0 }
+    }
+}
+
+impl<T> DerefMut for ExternalPtr<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { &mut *self.0 }
     }
 }
 

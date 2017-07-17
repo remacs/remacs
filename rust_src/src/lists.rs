@@ -374,6 +374,24 @@ fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispOb
     internal_plist_put(plist, prop, val, LispObject::equal)
 }
 
+/// Return the value of SYMBOL's PROPNAME property.
+/// This is the last value stored with `(put SYMBOL PROPNAME VALUE)'.
+#[lisp_fn]
+fn get(symbol: LispObject, propname: LispObject) -> LispObject {
+    let sym = symbol.as_symbol_or_error();
+    plist_get(sym.get_plist(), propname)
+}
+
+/// Store SYMBOL's PROPNAME property with value VALUE.
+/// It can be retrieved with `(get SYMBOL PROPNAME)'.
+#[lisp_fn]
+fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispObject {
+    let mut sym = symbol.as_symbol_or_error();
+    let new_plist = plist_put(sym.get_plist(), propname, value);
+    sym.set_plist(new_plist);
+    value
+}
+
 /// Return a newly created list with specified arguments as elements.
 /// Any number of arguments, even zero arguments, are allowed.
 /// usage: (list &rest OBJECTS)
