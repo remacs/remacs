@@ -106,6 +106,28 @@ renaming A1 to `foo' makes `foo' value equal to 2."
       (should (equal (ses-cell-formula 1 0) '(1+ foo)))
       (should (eq A2 2)))))
 
+(ert-deftest ses-tests-renaming-cell-with-one-symbol-formula ()
+  "Check that setting A1 to 1 and A2 to A1, and then renaming A1
+to `foo' makes `foo' value equal to 1. Then set A1 to 2 and check
+that `foo' becomes 2."
+  (let ((ses-initial-size '(3 . 1)))
+    (with-temp-buffer
+      (ses-mode)
+      (dolist (c '((0 0 1) (1 0 A1)))
+        (apply 'funcall-interactively 'ses-edit-cell c))
+      (ses-command-hook); deferred recalc
+      (ses-rename-cell 'foo (ses-get-cell 0 0))
+      (ses-command-hook); deferred recalc
+      (should-not  (local-variable-p 'A1))
+      (should (eq foo 1))
+      (should (equal (ses-cell-formula 1 0) 'foo))
+      (should (eq A2 1))
+      (funcall-interactively 'ses-edit-cell 0 0 2)
+      (ses-command-hook); deferred recalc
+      (should (eq A2 2))
+      (should (eq foo 2)))))
+
+
 ;; ROW INSERTION TESTS
 ;; ======================================================================
 

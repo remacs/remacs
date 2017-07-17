@@ -3634,8 +3634,12 @@ highlighted range in the spreadsheet."
 
 (defun ses-replace-name-in-formula (formula old-name new-name)
   (let ((new-formula formula))
-    (unless (and (consp formula)
-		 (eq (car-safe formula) 'quote))
+    (cond
+     ((eq (car-safe formula) 'quote))
+     ((symbolp formula)
+      (if (eq formula old-name)
+          (setq new-formula new-name)))
+     ((consp formula)
       (while formula
 	(let ((elt (car-safe formula)))
 	  (cond
@@ -3644,8 +3648,8 @@ highlighted range in the spreadsheet."
 	   ((and (symbolp elt)
 		 (eq (car-safe formula) old-name))
 	    (setcar formula new-name))))
-	(setq formula (cdr formula))))
-    new-formula))
+	(setq formula (cdr formula)))))
+  new-formula))
 
 (defun ses-rename-cell (new-name &optional cell)
   "Rename current cell."
