@@ -1115,7 +1115,7 @@ parent directory.
 @findex dired-next-dirline
 @kindex > @r{(Dired)}
 @item >
-Move down to the next directory-file line (@code{dired-prev-dirline}).
+Move down to the next directory-file line (@code{dired-next-dirline}).
 @end table
 
 @node Hiding Subdirectories
