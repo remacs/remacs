@@ -84,6 +84,36 @@
       (advice-remove 'dired-query "advice-dired-query")
       (advice-remove 'completing-read "advice-completing-read"))))
 
+(ert-deftest dired-test-bug27243 ()
+  "Test for http://debbugs.gnu.org/27243 ."
+  (let ((test-dir (make-temp-file "test-dir-" t))
+        (dired-auto-revert-buffer t))
+    (with-current-buffer (find-file-noselect test-dir)
+      (make-directory "test-subdir"))
+    (dired test-dir)
+    (unwind-protect
+        (let ((buf (current-buffer))
+              (pt1 (point))
+              (test-file (concat (file-name-as-directory "test-subdir")
+                                 "test-file")))
+          (write-region "Test" nil test-file nil 'silent nil 'excl)
+          ;; Sanity check: point should now be on the subdirectory.
+          (should (equal (dired-file-name-at-point)
+                         (concat (file-name-as-directory test-dir)
+                                 (file-name-as-directory "test-subdir"))))
+          (dired-find-file)
+          (let ((pt2 (point)))          ; Point is on test-file.
+            (switch-to-buffer buf)
+            ;; Sanity check: point should now be back on the subdirectory.
+            (should (eq (point) pt1))
+            ;; Case 1: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#5
+            (dired-find-file)
+            (should (eq (point) pt2))
+            ;; Case 2: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#28
+            (dired test-dir)
+            (should (eq (point) pt1))))
+      (delete-directory test-dir t))))
+
 (ert-deftest dired-test-bug27693 ()
   "Test for http://debbugs.gnu.org/27693 ."
   (require 'ls-lisp)

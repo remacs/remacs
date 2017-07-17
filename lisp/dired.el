@@ -785,7 +785,7 @@ Type \\[describe-mode] after entering Dired for more info.
 If DIRNAME is already in a Dired buffer, that buffer is used without refresh."
   ;; Cannot use (interactive "D") because of wildcards.
   (interactive (dired-read-dir-and-switches ""))
-  (switch-to-buffer (dired-noselect dirname switches)))
+  (pop-to-buffer-same-window (dired-noselect dirname switches)))
 
 ;;;###autoload (define-key ctl-x-4-map "d" 'dired-other-window)
 ;;;###autoload
