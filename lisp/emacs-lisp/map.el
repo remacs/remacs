@@ -130,8 +130,6 @@ MAP can be a list, hash-table or array."
 If KEY is already present in MAP, replace the associated value
 with VALUE.
 When MAP is a list, test equality with TESTFN if non-nil, otherwise use `eql'.
-TESTFN, if non-nil, means use its function definition instead of
-`eql'.
 
 MAP can be a list, hash-table or array."
   `(setf (map-elt ,map ,key nil ,testfn) ,value))
