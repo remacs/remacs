@@ -50,7 +50,6 @@ OMIT_GNULIB_MODULE_dirfd = true
 OMIT_GNULIB_MODULE_fcntl = true
 OMIT_GNULIB_MODULE_fcntl-h = true
 OMIT_GNULIB_MODULE_inttypes-incomplete = true
-OMIT_GNULIB_MODULE_mkostemp = true
 OMIT_GNULIB_MODULE_pipe2 = true
 OMIT_GNULIB_MODULE_secure_getenv = true
 OMIT_GNULIB_MODULE_signal-h = true

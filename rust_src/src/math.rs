@@ -33,7 +33,9 @@ fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
 
             LispObject::from_fixnum(i1)
         }
-        _ => LispObject::from_raw(floatfns::fmod_float(x.to_raw(), y.to_raw())),
+        (LispNumber::Fixnum(i1), LispNumber::Float(f2)) => floatfns::fmod_float(i1 as f64, f2),
+        (LispNumber::Float(f1), LispNumber::Fixnum(i2)) => floatfns::fmod_float(f1, i2 as f64),
+        (LispNumber::Float(f1), LispNumber::Float(f2)) => floatfns::fmod_float(f1, f2),
     }
 }
 
@@ -242,17 +244,13 @@ fn min(args: &mut [LispObject]) -> LispObject {
 /// Return the absolute value of ARG.
 #[lisp_fn]
 fn abs(arg: LispObject) -> LispObject {
-    if !arg.is_number() {
+    if let Some(f) = arg.as_float() {
+        LispObject::from_float(f.abs())
+    } else if let Some(n) = arg.as_fixnum() {
+        LispObject::from_fixnum(n.abs())
+    } else {
         unsafe {
             wrong_type_argument(Qnumberp, arg.to_raw());
-        }
-    }
-
-    match arg.as_float() {
-        Some(f) => LispObject::from_float(f.abs()),
-        _ => {
-            let n = arg.as_fixnum().unwrap();
-            LispObject::from_fixnum(n.abs())
         }
     }
 }

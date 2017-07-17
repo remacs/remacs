@@ -369,6 +369,11 @@ impl LispObject {
     }
 
     #[inline]
+    pub fn fixnum_overflow(n: EmacsInt) -> bool {
+        n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM
+    }
+
+    #[inline]
     unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
         let raw = self.to_raw();
         if !USE_LSB_TAG {

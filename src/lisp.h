@@ -551,7 +551,7 @@ extern bool might_dump;
    Used during startup to detect startup of dumped Emacs.  */
 extern bool initialized;
 
-/* Defined in floatfns.c.  */
+/* Defined in Rust.  */
 extern double extract_float (Lisp_Object);
 
 
@@ -3385,10 +3385,6 @@ extern ptrdiff_t string_byte_to_char (Lisp_Object, ptrdiff_t);
 extern Lisp_Object string_to_multibyte (Lisp_Object);
 extern Lisp_Object string_make_unibyte (Lisp_Object);
 extern void syms_of_fns (void);
-
-/* Defined in floatfns.c.  */
-extern void syms_of_floatfns (void);
-extern Lisp_Object fmod_float (Lisp_Object x, Lisp_Object y);
 
 /* Defined in fringe.c.  */
 extern void syms_of_fringe (void);
