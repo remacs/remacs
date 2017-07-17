@@ -132,12 +132,12 @@ If QUOTED is non-nil, the local part of the file is quoted."
     (make-temp-name "tramp-test")
     (if local temporary-file-directory tramp-test-temporary-file-directory))))
 
-;; Don't print messages in nested `tramp--instrument-test-case' calls.
-(defvar tramp--instrument-test-case-p nil
-  "Whether `tramp--instrument-test-case' run.
+;; Don't print messages in nested `tramp--test-instrument-test-case' calls.
+(defvar tramp--test-instrument-test-case-p nil
+  "Whether `tramp--test-instrument-test-case' run.
 This shall used dynamically bound only.")
 
-(defmacro tramp--instrument-test-case (verbose &rest body)
+(defmacro tramp--test-instrument-test-case (verbose &rest body)
   "Run BODY with `tramp-verbose' equal VERBOSE.
 Print the the content of the Tramp debug buffer, if BODY does not
 eval properly in `should' or `should-not'.  `should-error' is not
@@ -150,9 +150,9 @@ handled properly.  BODY shall not contain a timeout."
 	  (cons "^make-symbolic-link not supported$" debug-ignored-errors))
 	 inhibit-message)
      (unwind-protect
-	 (let ((tramp--instrument-test-case-p t)) ,@body)
+	 (let ((tramp--test-instrument-test-case-p t)) ,@body)
        ;; Unwind forms.
-       (when (and (null tramp--instrument-test-case-p) (> tramp-verbose 3))
+       (when (and (null tramp--test-instrument-test-case-p) (> tramp-verbose 3))
 	 (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
 	   (with-current-buffer (tramp-get-connection-buffer v)
 	     (message "%s" (buffer-string)))
@@ -161,7 +161,7 @@ handled properly.  BODY shall not contain a timeout."
 
 (defsubst tramp--test-message (fmt-string &rest arguments)
   "Emit a message into ERT *Messages*."
-  (tramp--instrument-test-case 0
+  (tramp--test-instrument-test-case 0
     (apply
      'tramp-message
      (tramp-dissect-file-name tramp-test-temporary-file-directory) 0
@@ -169,7 +169,7 @@ handled properly.  BODY shall not contain a timeout."
 
 (defsubst tramp--test-backtrace ()
   "Dump a backtrace into ERT *Messages*."
-  (tramp--instrument-test-case 10
+  (tramp--test-instrument-test-case 10
     (tramp-backtrace
      (tramp-dissect-file-name tramp-test-temporary-file-directory))))
 
@@ -3699,6 +3699,9 @@ process sentinels.  They shall not disturb each other."
            (process-file-side-effects t)
            ;; Suppress nasty messages.
            (inhibit-message t)
+	   ;; Do not run delayed timers.
+	   (timer-max-repeats 0)
+	   ;; Number of asynchronous processes for test.
            (number-proc 10)
            ;; On hydra, timings are bad.
            (timer-repeat
@@ -3879,8 +3882,6 @@ process sentinels.  They shall not disturb each other."
 (ert-deftest tramp-test39-unload ()
   "Check that Tramp and its subpackages unload completely.
 Since it unloads Tramp, it shall be the last test to run."
-  ;; Mark as failed until all symbols are unbound.
-  :expected-result (if (featurep 'tramp) :failed :passed)
   :tags '(:expensive-test)
   (skip-unless noninteractive)
 
@@ -3891,11 +3892,13 @@ Since it unloads Tramp, it shall be the last test to run."
     (should-not (all-completions "tramp" (delq 'tramp-tests features)))
     ;; `file-name-handler-alist' must be clean.
     (should-not (all-completions "tramp" (mapcar 'cdr file-name-handler-alist)))
-    ;; There shouldn't be left a bound symbol.  We do not regard our
-    ;; test symbols, and the Tramp unload hooks.
+    ;; There shouldn't be left a bound symbol, except buffer-local
+    ;; variables, and autoload functions.  We do not regard our test
+    ;; symbols, and the Tramp unload hooks.
     (mapatoms
      (lambda (x)
-       (and (or (boundp x) (functionp x))
+       (and (or (and (boundp x) (null (local-variable-if-set-p x)))
+		(and (functionp x) (null (autoloadp (symbol-function x)))))
 	    (string-match "^tramp" (symbol-name x))
 	    (not (string-match "^tramp--?test" (symbol-name x)))
 	    (not (string-match "unload-hook$" (symbol-name x)))
@@ -3905,7 +3908,7 @@ Since it unloads Tramp, it shall be the last test to run."
     (mapatoms
      (lambda (x)
        (and (boundp x)
-	    (string-match "-hooks?$" (symbol-name x))
+	    (string-match "-\\(hook\\|function\\)s?$" (symbol-name x))
 	    (not (string-match "unload-hook$" (symbol-name x)))
 	    (consp (symbol-value x))
 	    (ignore-errors (all-completions "tramp" (symbol-value x)))
@@ -3929,8 +3932,6 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix Bug#27009.  Set expected error of
 ;;   `tramp-test29-environment-variables-and-port-numbers'.
 ;; * Fix Bug#16928 in `tramp-test36-asynchronous-requests'.
-;; * Fix `tramp-test39-unload' (Not all symbols are unbound).  Set
-;;   expected error.
 
 (defun tramp-test-all (&optional interactive)
   "Run all tests for \\[tramp]."
