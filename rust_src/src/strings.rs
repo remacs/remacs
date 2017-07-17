@@ -6,7 +6,7 @@ use libc::{self, c_char, c_void, ptrdiff_t};
 
 use lisp::LispObject;
 use multibyte;
-use remacs_sys::{SYMBOL_NAME, EmacsInt, error, base64_encode_1, base64_decode_1, make_string,
+use remacs_sys::{SYMBOL_NAME, EmacsInt, error, base64_encode_1, base64_decode_1,
                  make_uninit_multibyte_string, string_to_multibyte as c_string_to_multibyte,
                  make_unibyte_string};
 use remacs_macros::lisp_fn;
@@ -38,7 +38,7 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
     let mut buffer: Vec<c_char> = Vec::with_capacity(allength as usize);
     unsafe {
         let encoded = buffer.as_mut_ptr();
-        let encodedLength = base64_encode_1(
+        let encoded_length = base64_encode_1(
             string.sdata_ptr(),
             encoded,
             length,
@@ -46,15 +46,15 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
             string.is_multibyte(),
         );
 
-        if encodedLength > allength {
+        if encoded_length > allength {
             panic!("base64 encoded length is larger then allocated buffer");
         }
 
-        if encodedLength < 0 {
+        if encoded_length < 0 {
             error("Multibyte character in data for base64 encoding\0".as_ptr());
         }
 
-        LispObject::from_raw(make_string(encoded, encodedLength))
+        LispObject::from_raw(make_unibyte_string(encoded, encoded_length))
     }
 }
 
@@ -65,7 +65,6 @@ fn base64_decode_string(string: LispObject) -> LispObject {
 
     let length = string.len_bytes();
     let mut buffer: Vec<c_char> = Vec::with_capacity(length as usize);
-    let mut decoded_string: LispObject = LispObject::constant_nil();
 
     unsafe {
         let decoded = buffer.as_mut_ptr();
@@ -74,15 +73,10 @@ fn base64_decode_string(string: LispObject) -> LispObject {
 
         if decoded_length > length {
             panic!("Decoded length is above length");
-        } else if decoded_length >= 0 {
-            decoded_string = LispObject::from_raw(make_string(decoded, decoded_length));
-        }
-
-        if !decoded_string.is_string() {
+        } else if decoded_length < 0 {
             error("Invalid base64 data\0".as_ptr());
         }
-
-        decoded_string
+        LispObject::from_raw(make_unibyte_string(decoded, decoded_length))
     }
 }
 
