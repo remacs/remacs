@@ -67,7 +67,7 @@ pub fn car(list: LispObject) -> LispObject {
 /// See Info node `(elisp)Cons Cells' for a discussion of related basic
 /// Lisp concepts such as cdr, car, cons cell and list.
 #[lisp_fn]
-fn cdr(list: LispObject) -> LispObject {
+pub fn cdr(list: LispObject) -> LispObject {
     if list.is_nil() {
         list
     } else {

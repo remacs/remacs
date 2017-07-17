@@ -1045,10 +1045,10 @@ extern "C" {
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
     pub static lispsym: Lisp_Symbol;
+    pub static Vbuffer_alist: Lisp_Object;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
-    pub fn Fget_buffer(buffer_or_name: Lisp_Object) -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
