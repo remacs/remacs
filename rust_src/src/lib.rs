@@ -17,6 +17,7 @@ extern crate remacs_lib;
 extern crate remacs_macros;
 extern crate libc;
 extern crate md5;
+extern crate rand;
 extern crate sha1;
 extern crate sha2;
 
@@ -37,6 +38,7 @@ mod crypto;
 mod str2sig;
 mod multibyte;
 mod buffers;
+mod windows;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -84,10 +86,12 @@ pub use lists::Fdelq;
 pub use lists::Fplist_get;
 pub use lists::Fplist_member;
 pub use lists::Fplist_put;
+pub use lists::Fget;
+pub use lists::Fput;
 pub use lists::Flist;
 pub use lists::Fmake_list;
 pub use floatfns::extract_float;
-pub use floatfns::fmod_float;
+pub use numbers::Frandom;
 pub use objects::Fequal;
 pub use objects::Fequal_including_properties;
 pub use symbols::Fsymbolp;
@@ -137,6 +141,7 @@ pub extern "C" fn rust_init_syms() {
     unsafe {
         defsubr(&*buffers::Soverlayp);
         defsubr(&*buffers::Sbuffer_live_p);
+        defsubr(&*windows::Swindowp);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
         defsubr(&*lists::Snlistp);
@@ -163,6 +168,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*numbers::Snatnump);
         defsubr(&*numbers::Snumber_or_marker_p);
         defsubr(&*numbers::Snumberp);
+        defsubr(&*numbers::Srandom);
         defsubr(&*objects::Snull);
         defsubr(&*objects::Seq);
         defsubr(&*objects::Seql);
@@ -195,6 +201,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*lists::Splist_member);
         defsubr(&*lists::Splist_put);
         defsubr(&*lists::Slax_plist_put);
+        defsubr(&*lists::Sget);
+        defsubr(&*lists::Sput);
         defsubr(&*lists::Slist);
         defsubr(&*lists::Smake_list);
         defsubr(&*lists::Ssafe_length);
@@ -229,6 +237,29 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Slength);
         defsubr(&*crypto::Sbuffer_hash);
 
-        floatfns::init_float_syms();
+        defsubr(&*floatfns::Sisnan);
+        defsubr(&*floatfns::Sacos);
+        defsubr(&*floatfns::Sasin);
+        defsubr(&*floatfns::Satan);
+        defsubr(&*floatfns::Scos);
+        defsubr(&*floatfns::Ssin);
+        defsubr(&*floatfns::Stan);
+        defsubr(&*floatfns::Slog);
+        defsubr(&*floatfns::Ssqrt);
+        defsubr(&*floatfns::Sexp);
+        defsubr(&*floatfns::Sffloor);
+        defsubr(&*floatfns::Sfceiling);
+        defsubr(&*floatfns::Sftruncate);
+        defsubr(&*floatfns::Sfloat);
+        defsubr(&*floatfns::Scopysign);
+        defsubr(&*floatfns::Sfrexp);
+        defsubr(&*floatfns::Sldexp);
+        defsubr(&*floatfns::Sexpt);
+        defsubr(&*floatfns::Slogb);
+        defsubr(&*floatfns::Sfround);
+        defsubr(&*floatfns::Sceiling);
+        defsubr(&*floatfns::Sfloor);
+        defsubr(&*floatfns::Sround);
+        defsubr(&*floatfns::Struncate);
     }
 }

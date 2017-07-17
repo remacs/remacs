@@ -54,9 +54,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module careadlinkat:
   # Code from module clock-time:
   # Code from module close-stream:
-  # Code from module count-leading-zeros:
-  # Code from module count-one-bits:
-  # Code from module count-trailing-zeros:
   # Code from module crypto/md5:
   # Code from module crypto/sha1:
   # Code from module crypto/sha256:
@@ -107,7 +104,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module manywarnings:
   # Code from module memrchr:
   # Code from module minmax:
-  # Code from module mkostemp:
   # Code from module mktime:
   # Code from module mktime-internal:
   # Code from module multiarch:
@@ -190,9 +186,6 @@ AC_DEFUN([gl_INIT],
   gl_CLOCK_TIME
   gl_CLOSE_STREAM
   gl_MODULE_INDICATOR([close-stream])
-  gl_COUNT_LEADING_ZEROS
-  gl_COUNT_ONE_BITS
-  gl_COUNT_TRAILING_ZEROS
   gl_MD5
   gl_SHA1
   gl_SHA256
@@ -292,8 +285,6 @@ AC_DEFUN([gl_INIT],
   fi
   gl_STRING_MODULE_INDICATOR([memrchr])
   gl_MINMAX
-  gl_MODULE_INDICATOR([mkostemp])
-  gl_STDLIB_MODULE_INDICATOR([mkostemp])
   gl_FUNC_MKTIME
   if test $REPLACE_MKTIME = 1; then
     AC_LIBOBJ([mktime])
@@ -798,12 +789,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/careadlinkat.h
   lib/close-stream.c
   lib/close-stream.h
-  lib/count-leading-zeros.c
-  lib/count-leading-zeros.h
-  lib/count-one-bits.c
-  lib/count-one-bits.h
-  lib/count-trailing-zeros.c
-  lib/count-trailing-zeros.h
   lib/diffseq.h
   lib/dirent.in.h
   lib/dirfd.c
@@ -860,7 +845,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/md5.h
   lib/memrchr.c
   lib/minmax.h
-  lib/mkostemp.c
   lib/mktime-internal.h
   lib/mktime.c
   lib/openat-priv.h
@@ -933,9 +917,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/c-strtod.m4
   m4/clock_time.m4
   m4/close-stream.m4
-  m4/count-leading-zeros.m4
-  m4/count-one-bits.m4
-  m4/count-trailing-zeros.m4
   m4/dirent_h.m4
   m4/dirfd.m4
   m4/dup2.m4
@@ -976,7 +957,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/md5.m4
   m4/memrchr.m4
   m4/minmax.m4
-  m4/mkostemp.m4
   m4/mktime.m4
   m4/multiarch.m4
   m4/nocrash.m4

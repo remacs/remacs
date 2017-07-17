@@ -1430,7 +1430,6 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       syms_of_lread ();
       syms_of_print ();
       syms_of_eval ();
-      syms_of_floatfns ();
 
       syms_of_buffer ();
       syms_of_bytecode ();

@@ -28,14 +28,13 @@ GNULIB_URL=git://git.savannah.gnu.org/gnulib.git
 GNULIB_MODULES='
   alloca-opt binary-io byteswap c-ctype c-strcase
   careadlinkat close-stream
-  count-leading-zeros count-one-bits count-trailing-zeros
   crypto/md5 crypto/sha1 crypto/sha256 crypto/sha512
   diffseq dtoastr dtotimespec dup2 environ execinfo faccessat
   fcntl fcntl-h fdatasync fdopendir
   filemode filevercmp flexmember fstatat fsync
   getloadavg getopt-gnu gettime gettimeofday gitlog-to-changelog
   ignore-value intprops largefile lstat
-  manywarnings memrchr minmax mkostemp mktime
+  manywarnings memrchr minmax mktime
   pipe2 pselect pthread_sigmask putenv qcopy-acl readlink readlinkat
   socklen stat-time std-gnu11 stdalign stddef stdio
   stpcpy strftime strtoimax symlink sys_stat
