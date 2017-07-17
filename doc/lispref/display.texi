@@ -7456,6 +7456,35 @@ truncated or continued when the text reaches the right margin.
 Right-to-left paragraphs are displayed beginning at the right margin,
 and are continued or truncated at the left margin.
 
+@cindex paragraph-start, and bidirectional display
+@cindex paragraph-separate, and bidirectional display
+  Where exactly paragraphs start and end, for the purpose of the Emacs
+@acronym{UBA} implementation, is determined by the following two
+buffer-local variables (note that that @code{paragraph-start} and
+@code{paragraph-separate} have no influence on this).  By default both
+of these variables are @code{nil}, and paragraphs are bounded by empty
+lines, i.e., lines that consist entirely of zero or more whitespace
+characters followed by a newline.
+
+@defvar bidi-paragraph-start-re
+If non-@code{nil}, this variable's value should be a regular
+expression matching a line that starts or separates two paragraphs.
+The regular expression is always matched after a newline, so it is
+best to anchor it, i.e., begin it with a @code{"^"}.
+@end defvar
+
+@defvar bidi-paragraph-separate-re
+If non-@code{nil}, this variable's value should be a regular
+expression matching a line separates two paragraphs.  The regular
+expression is always matched after a newline, so it is best to anch
+it, i.e., begin it with a @code{"^"}.
+@end defvar
+
+  If you modify any of these two variables, you should normally modify
+both, to make sure they describe paragraphs consistently.  For
+example, to have each new line start a new paragraph for
+bidi-reordering purposes, set both variables to @code{"^"}.
+
   By default, Emacs determines the base direction of each paragraph by
 looking at the text at its beginning.  The precise method of
 determining the base direction is specified by the @acronym{UBA}; in a

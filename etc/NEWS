@@ -561,6 +561,12 @@ current buffer with the contents of the accessible portion of a
 different buffer while keeping point, mark, markers, and text
 properties as intact as possible.
 
++++
+** More user control of reordering bidirectional text for display.
+The two new variables, 'bidi-paragraph-start-re' and
+'bidi-paragraph-separate-re', allow customization of what exactly are
+paragraphs, for the purposes of bidirectional display.
+
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 

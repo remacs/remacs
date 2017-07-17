@@ -611,6 +611,12 @@ struct buffer
      direction dynamically for each paragraph.  */
   Lisp_Object bidi_paragraph_direction_;
 
+  /* If non-nil, a regular expression for bidi paragraph separator.  */
+  Lisp_Object bidi_paragraph_separate_re_;
+
+  /* If non-nil, a regular expression for bidi paragraph start.  */
+  Lisp_Object bidi_paragraph_start_re_;
+
   /* Non-nil means do selective display;
      see doc string in syms_of_buffer (buffer.c) for details.  */
   Lisp_Object selective_display_;
