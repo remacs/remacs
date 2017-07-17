@@ -11,14 +11,14 @@ use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
 use libc::{c_void, intptr_t};
 
-use marker::marker_position;
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
+use marker::LispMarkerRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK, USE_LSB_TAG,
-                 MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type, Lisp_Marker, Lisp_Misc_Any, Lisp_Misc_Type,
+                 MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type, Lisp_Misc_Any, Lisp_Misc_Type,
                  Lisp_Float, Lisp_Cons, Lisp_Object, lispsym, wrong_type_argument, make_float,
                  circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt, Qnumberp, Qfloatp, Qstringp,
                  Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp,
@@ -765,7 +765,7 @@ impl LispObject {
         } else if let Some(f) = self.as_float() {
             LispNumber::Float(f)
         } else if let Some(m) = self.as_marker() {
-            LispNumber::Fixnum(marker_position(m) as EmacsInt)
+            LispNumber::Fixnum(m.position() as EmacsInt)
         } else {
             unsafe { wrong_type_argument(Qnumber_or_marker_p, self.to_raw()) }
         }
@@ -790,7 +790,7 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn as_marker(self) -> Option<*mut Lisp_Marker> {
+    pub fn as_marker(self) -> Option<LispMarkerRef> {
         self.as_misc().and_then(
             |m| if m.ty == Lisp_Misc_Type::Marker {
                 unsafe { Some(mem::transmute(m)) }
