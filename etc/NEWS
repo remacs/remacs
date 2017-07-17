@@ -1119,6 +1119,9 @@ break.
 
 * Lisp Changes in Emacs 26.1
 
++++
+** New optional argument TESTFN in 'alist-get', 'map-elt' and 'map-put'.
+
 ** New function 'seq-set-equal-p' to check if SEQUENCE1 and SEQUENCE2
 contain the same elements, regardless of the order.
 

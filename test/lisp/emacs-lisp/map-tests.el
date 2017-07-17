@@ -63,6 +63,11 @@ Evaluate BODY for each created map.
   (with-maps-do map
     (should (= 5 (map-elt map 7 5)))))
 
+(ert-deftest test-map-elt-testfn ()
+  (let ((map (list (cons "a" 1) (cons "b" 2))))
+    (should-not (map-elt map "a"))
+    (should (map-elt map "a" nil 'equal))))
+
 (ert-deftest test-map-elt-with-nil-value ()
   (should (null (map-elt '((a . 1)
                            (b))
@@ -93,6 +98,13 @@ Evaluate BODY for each created map.
     (map-put alist 2 'b)
     (should (eq (map-elt alist 2)
                 'b))))
+
+(ert-deftest test-map-put-testfn-alist ()
+  (let ((alist (list (cons "a" 1) (cons "b" 2))))
+    (map-put alist "a" 3 'equal)
+    (should-not (cddr alist))
+    (map-put alist "a" 9)
+    (should (cddr alist))))
 
 (ert-deftest test-map-put-return-value ()
   (let ((ht (make-hash-table)))
