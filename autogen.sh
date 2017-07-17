@@ -30,6 +30,10 @@
 
 ### Code:
 
+## Used when remacs is dependent on nightly
+## Will print an error message telling people they need nightly rust
+require_nightly=true
+
 ## Tools we need:
 ## Note that we respect the values of AUTOCONF etc, like autoreconf does.
 progs="autoconf"
@@ -129,6 +133,15 @@ case $do_autoconf,$do_git in
   false,false)
     do_autoconf=true;;
 esac
+
+echo "Validating Rust install ..."
+command -v rustc >/dev/null 2>&1 || { echo >&2 "Remacs requires rust to be installed in order to build. Please install it via rustup: https://www.rustup.rs/; Aborting."; exit 1; }
+command -v cargo >/dev/null 2>&1 || { echo >&2 "Remacs requires cargo to be installed in order to build. Please install it via rustup: https://www.rustup.rs/; Aborting."; exit 1; }
+
+if $require_nightly; then
+    rustc --version | grep nightly || { echo >&2 "Remacs currently requires nightly Rust. If you do not have nightly Rust, you should install rustup at https://www.rustup.rs/, and run 'rustup install nightly && rustup override set nightly' in the remacs directory."; exit 1; }
+    echo "Your system has the required rust installation for building remacs."
+fi
 
 # Generate Autoconf-related files, if requested.
 
