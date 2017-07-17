@@ -16,6 +16,7 @@ use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
 use marker::LispMarkerRef;
+use hashtable::LispHashTableRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
@@ -23,7 +24,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  wrong_type_argument, make_float, circular_list, internal_equal, Fcons,
                  CHECK_IMPURE, Qnil, Qt, Qnumberp, Qfloatp, Qstringp, Qsymbolp,
                  Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp,
-                 Qconsp, SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qconsp, Qhash_table_p, SYMBOL_NAME, PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -190,6 +191,10 @@ impl<T> ExternalPtr<T> {
     }
 
     pub fn as_ptr(&self) -> *const T {
+        self.0
+    }
+
+    pub fn as_mut(&mut self) -> *mut T {
         self.0
     }
 }
@@ -477,6 +482,31 @@ impl LispObject {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_FONT)
         })
+    }
+}
+
+impl LispObject {
+    pub fn as_hash_table_or_error(&self) -> LispHashTableRef {
+        if self.is_hash_table() {
+            LispHashTableRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+        } else {
+            unsafe { wrong_type_argument(Qhash_table_p, self.to_raw()) }
+        }
+    }
+
+    pub fn as_hash_table(&self) -> Option<LispHashTableRef> {
+        if self.is_hash_table() {
+            Some(LispHashTableRef::new(
+                unsafe { mem::transmute(self.get_untaggedptr()) },
+            ))
+        } else {
+            None
+        }
+    }
+
+    /// Equivalent to XSET_HASH_TABLE in C
+    pub fn from_hash_table(_: &LispHashTableRef) -> LispObject {
+        LispObject::constant_t() // @TODO
     }
 }
 

@@ -248,3 +248,36 @@ pub fn mutexp(object: LispObject) -> LispObject {
 pub fn condition_variable_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_condition_variable())
 }
+
+// This is kind of a hack way of getting offsetof into Rust,
+// but I believe it should be fine for what we need it for.
+macro_rules! offset_of {
+    ($ty:ty, $field:ident) => {
+        &(*(0 as *const $ty)).$field as *const _ as usize
+    }
+}
+
+/// Equivalent to PSEUDOVECSIZE in C
+macro_rules! pseudovecsize {
+    ($ty: ty, $field: ident) => {
+        ((offset_of!($ty, $field) - ::remacs_sys::header_size) / ::remacs_sys::word_size)
+    }
+}
+
+/// Equivalent to VECSIZE in C
+macro_rules! vecsize {
+    ($ty: ty) => {
+        ((::std::mem::size_of::<$ty>()
+          - ::remacs_sys::header_size + ::remacs_sys::word_size - 1) / ::remacs_sys::word_size)
+    }
+}
+
+/// Equivalent to ALLOCATE_PSEUDOVECTOR in C
+macro_rules! allocate_pseudovector {
+    ($ty: ty, $field: ident, $vectype: expr) => {
+        unsafe { ::remacs_sys::allocate_pseudovector(vecsize!($ty) as ::libc::c_int,
+                                       pseudovecsize!($ty, $field) as ::libc::c_int,
+                                       pseudovecsize!($ty, $field) as ::libc::c_int,
+                                       $vectype) as *mut $ty}
+    }
+}

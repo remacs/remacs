@@ -30,6 +30,7 @@ mod numbers;
 mod objects;
 mod strings;
 mod symbols;
+#[macro_use]
 mod vectors;
 mod character;
 mod base64;
@@ -38,6 +39,7 @@ mod str2sig;
 mod multibyte;
 mod buffers;
 mod windows;
+mod hashtable;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;

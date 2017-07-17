@@ -18,9 +18,9 @@ extern crate libc;
 
 pub mod libm;
 
-use std::isize;
-use libc::{c_char, c_uchar, c_short, c_int, c_double, c_void, ptrdiff_t, size_t, off_t, time_t,
+use libc::{c_char, c_uchar, c_short, c_int, c_double, c_float, c_void, ptrdiff_t, size_t, off_t, time_t,
            timespec};
+
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 
@@ -94,7 +94,7 @@ pub enum Lisp_Type {
     Lisp_Float = 7,
 }
 
-#[repr(isize)]
+#[repr(C)]
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum PseudovecType {
     PVEC_NORMAL_VECTOR = 0,
@@ -124,7 +124,6 @@ pub enum PseudovecType {
     PVEC_FONT, /* Should be last because it's used for range checking.  */
 }
 
-// XXX: this can also be char on some archs
 pub type bits_word = size_t;
 
 /// Representation of an Emacs Lisp function symbol.
@@ -998,6 +997,32 @@ pub struct emacs_globals {
     pub f_x_use_underline_position_properties: bool,
 }
 
+#[repr(C)]
+pub struct hash_table_test {
+    pub name: Lisp_Object,
+    pub user_hash_function: Lisp_Object,
+    pub user_cmp_function: Lisp_Object,
+    pub cmpfn: extern fn(t: *mut hash_table_test, a: Lisp_Object, b: Lisp_Object) -> bool,
+    pub hashfn: extern fn(t: *mut hash_table_test, a: Lisp_Object) -> EmacsUint
+}
+
+#[repr(C)]
+pub struct Lisp_Hash_Table {
+    pub header: Lisp_Vectorlike_Header,
+    pub weak: Lisp_Object,
+    pub hash: Lisp_Object,
+    pub next: Lisp_Object,
+    pub index: Lisp_Object,
+    pub count: ptrdiff_t,
+    pub next_free: ptrdiff_t,
+    pub pure_: bool, // pure is a reserved keyword in Rust
+    pub rehash_threshold: c_float,
+    pub rehash_size: c_float,
+    pub key_and_value: Lisp_Object,
+    pub test: hash_table_test,
+    pub next_weak: *mut Lisp_Hash_Table
+}
+
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static Qt: Lisp_Object;
@@ -1044,7 +1069,12 @@ extern "C" {
     pub static Qfont_spec: Lisp_Object;
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
+    pub static Qhash_table_p: Lisp_Object;
     pub static lispsym: Lisp_Symbol;
+
+    pub static header_size: size_t;
+    pub static bool_header_size: size_t;
+    pub static word_size: size_t;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
@@ -1095,4 +1125,10 @@ extern "C" {
         multibyte: bool,
         nchars_return: *mut ptrdiff_t,
     ) -> ptrdiff_t;
+
+    pub fn allocate_pseudovector(vecsize: c_int,
+                                 offset1: c_int,
+                                 offset2: c_int,
+                                 pvec_type: PseudovecType)
+                                 -> *mut Lisp_Vector;
 }
