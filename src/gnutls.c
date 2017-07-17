@@ -2435,6 +2435,8 @@ GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
 {
   Lisp_Object capabilities = Qnil;
 
+#ifdef HAVE_GNUTLS
+
 # ifdef HAVE_GNUTLS3
   capabilities = Fcons (intern("gnutls3"), capabilities);
 
@@ -2470,7 +2472,11 @@ GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
 
   return capabilities;
 
-#endif
+#endif /* WINDOWSNT */
+
+#else  /* !HAVE_GNUTLS */
+  return Qnil;
+#endif	/* HAVE_GNUTLS */
 }
 
 void
