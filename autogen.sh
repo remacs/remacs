@@ -134,12 +134,12 @@ case $do_autoconf,$do_git in
     do_autoconf=true;;
 esac
 
-if $require_nightly; then
-    echo "Validating Rust install ..."
-    command -v rustc >/dev/null 2>&1 || { echo >&2 "Remacs requires rust to be installed in order to build. Please install it via rustup: https://www.rustup.rs/; Aborting."; exit 1; }
-    command -v cargo >/dev/null 2>&1 || { echo >&2 "Remacs requires cargo to be installed in order to build. Please install it via rustup: https://www.rustup.rs/; Aborting."; exit 1; }
+echo "Validating Rust install ..."
+command -v rustc >/dev/null 2>&1 || { echo >&2 "Remacs requires rust to be installed in order to build. Please install it via rustup: https://www.rustup.rs/; Aborting."; exit 1; }
+command -v cargo >/dev/null 2>&1 || { echo >&2 "Remacs requires cargo to be installed in order to build. Please install it via rustup: https://www.rustup.rs/; Aborting."; exit 1; }
 
-    rustc --version | grep nightly || { echo >&2 "Remacs currently requires nightly Rust. If you do not have nightly Rust, you should install rustup at https://www.rustup.rs/, and run 'rustup install nightly && rustup override nightly' in the remacs directory."; exit 1; }
+if $require_nightly; then
+    rustc --version | grep nightly || { echo >&2 "Remacs currently requires nightly Rust. If you do not have nightly Rust, you should install rustup at https://www.rustup.rs/, and run 'rustup install nightly && rustup override set nightly' in the remacs directory."; exit 1; }
     echo "Your system has the required rust installation for building remacs."
 fi
 
