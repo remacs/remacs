@@ -98,7 +98,7 @@ fn string_bytes(string: LispObject) -> LispObject {
 /// Case is significant, but text properties are ignored.
 /// Symbols are also allowed; their print names are used instead.
 #[lisp_fn]
-fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
+pub fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
     if s1.is_symbol() {
         s1 = LispObject::from_raw(unsafe { SYMBOL_NAME(s1.to_raw()) });
     }

@@ -408,18 +408,7 @@ followed by the rest of the buffers.  */)
 /* Like Fassoc, but use Fstring_equal to compare
    (which ignores text properties), and don't ever quit.  */
 
-static Lisp_Object
-assoc_ignore_text_properties (Lisp_Object key, Lisp_Object list)
-{
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
-    {
-      Lisp_Object elt = XCAR (tail);
-      if (!NILP (Fstring_equal (Fcar (elt), key)))
-	return elt;
-    }
-  return Qnil;
-}
+Lisp_Object assoc_ignore_text_properties (Lisp_Object key, Lisp_Object list);
 
 DEFUN ("get-buffer", Fget_buffer, Sget_buffer, 1, 1, 0,
        doc: /* Return the buffer named BUFFER-OR-NAME.

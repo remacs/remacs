@@ -107,6 +107,7 @@ pub use strings::Fstring_lessp;
 pub use vectors::Flength;
 pub use vectors::Fsort;
 pub use lists::merge;
+pub use buffers::assoc_ignore_text_properties;
 
 // Cryptographic functions used in the C codebase.
 pub use crypto::sha1_buffer;

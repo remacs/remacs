@@ -53,7 +53,7 @@ fn setcdr(cell: LispObject, newcdr: LispObject) -> LispObject {
 /// See Info node `(elisp)Cons Cells' for a discussion of related basic
 /// Lisp concepts such as car, cdr, cons cell and list.
 #[lisp_fn]
-fn car(list: LispObject) -> LispObject {
+pub fn car(list: LispObject) -> LispObject {
     if list.is_nil() {
         list
     } else {

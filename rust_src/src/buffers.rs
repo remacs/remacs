@@ -2,8 +2,12 @@
 
 use libc::{c_uchar, ptrdiff_t};
 
-use lisp::{LispObject, ExternalPtr};
+use lisp::{LispObject, ExternalPtr, Qnil};
 use remacs_sys::Lisp_Buffer;
+use strings::string_equal;
+use lists::car;
+
+use remacs_sys::EmacsInt;
 
 use remacs_macros::lisp_fn;
 
@@ -70,4 +74,18 @@ pub fn overlayp(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn buffer_live_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_buffer().map_or(false, |m| m.is_live()))
+}
+
+/// Like Fassoc, but use Fstring_equal to compare
+/// (which ignores text properties), and don't ever quit.
+#[no_mangle]
+pub fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
+    let result = list.iter_tails_safe().find(|&item| {
+        string_equal(car(item.car()), key).is_not_nil()
+    });
+    if let Some(elt) = result {
+        elt.car()
+    } else {
+        Qnil
+    }
 }
