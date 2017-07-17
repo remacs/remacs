@@ -1857,7 +1857,10 @@ The alist key is the cipher name. */)
   for (ptrdiff_t pos = 0; gciphers[pos] != GNUTLS_CIPHER_NULL; pos++)
     {
       gnutls_cipher_algorithm_t gca = gciphers[pos];
+
+      /* A symbol representing the GnuTLS cipher.  */
       Lisp_Object cipher_symbol = intern (gnutls_cipher_get_name (gca));
+
       ptrdiff_t cipher_tag_size = gnutls_cipher_get_tag_size (gca);
 
       Lisp_Object cp
@@ -2200,9 +2203,10 @@ name. */)
     {
       const gnutls_mac_algorithm_t gma = macs[pos];
 
-      const char *name = gnutls_mac_get_name (gma);
+      /* A symbol representing the GnuTLS MAC algorithm.  */
+      Lisp_Object gma_symbol = intern (gnutls_mac_get_name (gma));
 
-      Lisp_Object mp = listn (CONSTYPE_HEAP, 11, intern (name),
+      Lisp_Object mp = listn (CONSTYPE_HEAP, 11, gma_symbol,
 			      QCmac_algorithm_id, make_number (gma),
 			      QCtype, Qgnutls_type_mac_algorithm,
 
@@ -2236,9 +2240,10 @@ method name. */)
     {
       const gnutls_digest_algorithm_t gda = digests[pos];
 
-      const char *name = gnutls_digest_get_name (gda);
+      /* A symbol representing the GnuTLS digest algorithm.  */
+      Lisp_Object gda_symbol = intern (gnutls_digest_get_name (gda));
 
-      Lisp_Object mp = listn (CONSTYPE_HEAP, 7, intern (name),
+      Lisp_Object mp = listn (CONSTYPE_HEAP, 7, gda_symbol,
 			      QCdigest_algorithm_id, make_number (gda),
 			      QCtype, Qgnutls_type_digest_algorithm,
 
