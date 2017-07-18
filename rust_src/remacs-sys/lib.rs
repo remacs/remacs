@@ -1,5 +1,4 @@
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
+#![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
 //! This module contains all FFI declarations.
 //!
@@ -20,11 +19,14 @@ extern crate libc;
 pub mod libm;
 
 use std::isize;
+use libc::{c_char, c_uchar, c_short, c_int, c_double, c_void, ptrdiff_t, size_t, off_t, time_t,
+           timespec};
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 
 pub type Lisp_Object = EmacsInt;
 
+pub const Qnil: Lisp_Object = 0;
 
 pub type char_bits = u32;
 pub const CHAR_ALT: char_bits = 0x0400000;
@@ -37,19 +39,63 @@ pub const CHAR_MODIFIER_MASK: char_bits = CHAR_ALT | CHAR_SUPER | CHAR_HYPER | C
     CHAR_CTL | CHAR_META;
 pub const CHARACTERBITS: char_bits = 22;
 
-pub const PSEUDOVECTOR_FLAG: libc::ptrdiff_t = std::isize::MAX - std::isize::MAX / 2;
-pub const PSEUDOVECTOR_SIZE_BITS: libc::ptrdiff_t = 12;
-pub const PSEUDOVECTOR_SIZE_MASK: libc::ptrdiff_t = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
-pub const PSEUDOVECTOR_REST_BITS: libc::ptrdiff_t = 12;
-pub const PSEUDOVECTOR_REST_MASK: libc::ptrdiff_t = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
-                                                         PSEUDOVECTOR_SIZE_BITS);
-pub const PSEUDOVECTOR_AREA_BITS: libc::ptrdiff_t = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
-pub const PVEC_TYPE_MASK: libc::ptrdiff_t = 0x3f << PSEUDOVECTOR_AREA_BITS;
+pub const PSEUDOVECTOR_FLAG: ptrdiff_t = std::isize::MAX - std::isize::MAX / 2;
+pub const PSEUDOVECTOR_SIZE_BITS: ptrdiff_t = 12;
+pub const PSEUDOVECTOR_SIZE_MASK: ptrdiff_t = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
+pub const PSEUDOVECTOR_REST_BITS: ptrdiff_t = 12;
+pub const PSEUDOVECTOR_REST_MASK: ptrdiff_t = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
+                                                   PSEUDOVECTOR_SIZE_BITS);
+pub const PSEUDOVECTOR_AREA_BITS: ptrdiff_t = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
+pub const PVEC_TYPE_MASK: ptrdiff_t = 0x3f << PSEUDOVECTOR_AREA_BITS;
+
+// Number of bits in a Lisp_Object tag.
+pub const VALBITS: EmacsInt = EMACS_INT_SIZE * 8 - GCTYPEBITS;
+pub const INTTYPEBITS: EmacsInt = GCTYPEBITS - 1;
+pub const FIXNUM_BITS: EmacsInt = VALBITS + 1;
+pub const VAL_MAX: EmacsInt = EMACS_INT_MAX >> (GCTYPEBITS - 1);
+pub const VALMASK: EmacsInt = [VAL_MAX, -(1 << GCTYPEBITS)][USE_LSB_TAG as usize];
+pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (INTTYPEBITS - 1));
+
+// Largest and smallest numbers that can be represented as fixnums in
+// Emacs lisp.
+pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
+pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
+
+/// Bit pattern used in the least significant bits of a lisp object,
+/// to denote its type.
+#[repr(u8)]
+#[derive(PartialEq, Eq)]
+#[derive(Copy, Clone, Debug)]
+pub enum Lisp_Type {
+    // Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.
+    Lisp_Symbol = 0,
+
+    // Miscellaneous.  XMISC (object) points to a union Lisp_Misc,
+    // whose first member indicates the subtype.
+    Lisp_Misc = 1,
+
+    // Integer.  XINT (obj) is the integer value.
+    Lisp_Int0 = 2,
+    Lisp_Int1 = 3 + (USE_LSB_TAG as usize as u8) * 3, // 3 | 6
+
+    // String.  XSTRING (object) points to a struct Lisp_String.
+    // The length of the string, and its contents, are stored therein.
+    Lisp_String = 4,
+
+    // Vector of Lisp objects, or something resembling it.
+    // XVECTOR (object) points to a struct Lisp_Vector, which contains
+    // the size and contents.  The size field also contains the type
+    // information, if it's not a real vector object.
+    Lisp_Vectorlike = 5,
+
+    // Cons.  XCONS (object) points to a struct Lisp_Cons.
+    Lisp_Cons = 6 - (USE_LSB_TAG as usize as u8) * 3, // 6 | 3
+
+    Lisp_Float = 7,
+}
 
 #[repr(isize)]
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
-#[allow(dead_code)]
-#[allow(non_camel_case_types)]
 pub enum PseudovecType {
     PVEC_NORMAL_VECTOR = 0,
     PVEC_FREE,
@@ -78,48 +124,41 @@ pub enum PseudovecType {
     PVEC_FONT, /* Should be last because it's used for range checking.  */
 }
 
-#[derive(Debug)]
-#[repr(C)]
-pub struct vectorlike_header {
-    pub size: libc::ptrdiff_t,
-}
-
 // XXX: this can also be char on some archs
-pub type bits_word = libc::size_t;
+pub type bits_word = size_t;
 
 /// Representation of an Emacs Lisp function symbol.
-#[derive(Debug)]
 #[repr(C)]
 pub struct Lisp_Subr {
-    pub header: vectorlike_header,
+    pub header: Lisp_Vectorlike_Header,
 
     /// This is the function pointer that will be called when the user invokes
     /// the Emacs Lisp function. Also, this field is actually an union in C.
-    pub function: *const libc::c_void,
+    pub function: *const c_void,
 
     /// The minimum number of arguments that can be passed to the Emacs Lisp
     /// function.
-    pub min_args: libc::c_short,
+    pub min_args: c_short,
 
     /// The maximum number of arguments that can be passed to te Emacs Lisp
     /// function.
-    pub max_args: libc::c_short,
+    pub max_args: c_short,
 
     /// The name of the function in Emacs Lisp.
-    pub symbol_name: *const libc::c_char,
+    pub symbol_name: *const c_char,
 
     /// The interactive specification. This may be a normal prompt
     /// string, such as `"bBuffer: "` or an elisp form as a string.
     /// If the function is not interactive, this should be a null
     /// pointer.
-    pub intspec: *const libc::c_char,
+    pub intspec: *const c_char,
 
     // TODO: Change this to EMACS_INT
     //
     // If you wan't to give it a try and solve this you should see this commit:
     // https://github.com/Wilfred/remacs/commit/c5461d03a411ff5c6f43885a0a9030e8a94bbc2e
     /// The docstring of the Emacs Lisp function.
-    pub doc: *const libc::c_char,
+    pub doc: *const c_char,
 }
 
 // In order to use `lazy_static!` with LispSubr, it must be Sync. Raw
@@ -129,6 +168,308 @@ pub struct Lisp_Subr {
 //
 // Based on http://stackoverflow.com/a/28116557/509706
 unsafe impl Sync for Lisp_Subr {}
+
+/// Represents a string value in elisp
+#[repr(C)]
+pub struct Lisp_String {
+    pub size: ptrdiff_t,
+    pub size_byte: ptrdiff_t,
+    // TODO: Use correct definition for this.
+    //
+    // Maybe use rust nightly unions?
+    pub intervals: *mut c_void, // @TODO implement
+    pub data: *mut c_char,
+}
+
+#[repr(C)]
+pub union SymbolUnion {
+    pub value: Lisp_Object,
+    pub alias: *mut Lisp_Symbol,
+pub blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
+pub fwd: *mut c_void, // @TODO implement Lisp_Fwd
+}
+
+/// This struct has 4 bytes of padding, representing the bitfield that
+/// lives at the top of a Lisp_Symbol. The first 10 bits of this field are
+/// used.
+#[repr(C)]
+pub struct Lisp_Symbol {
+    pub symbol_bitfield: u32,
+    pub name: Lisp_Object,
+    pub val: SymbolUnion,
+    pub function: Lisp_Object,
+    pub plist: Lisp_Object,
+    pub next: *mut Lisp_Symbol,
+}
+
+/* The only field contains various pieces of information:
+- The MSB (ARRAY_MARK_FLAG) holds the gcmarkbit.
+- The next bit (PSEUDOVECTOR_FLAG) indicates whether this is a plain
+  vector (0) or a pseudovector (1).
+- If PSEUDOVECTOR_FLAG is 0, the rest holds the size (number
+  of slots) of the vector.
+- If PSEUDOVECTOR_FLAG is 1, the rest is subdivided into three fields:
+  - a) pseudovector subtype held in PVEC_TYPE_MASK field;
+  - b) number of Lisp_Objects slots at the beginning of the object
+    held in PSEUDOVECTOR_SIZE_MASK field.  These objects are always
+    traced by the GC;
+  - c) size of the rest fields held in PSEUDOVECTOR_REST_MASK and
+    measured in word_size units.  Rest fields may also include
+    Lisp_Objects, but these objects usually needs some special treatment
+    during GC.
+  There are some exceptions.  For PVEC_FREE, b) is always zero.  For
+  PVEC_BOOL_VECTOR and PVEC_SUBR, both b) and c) are always zero.
+  Current layout limits the pseudovectors to 63 PVEC_xxx subtypes,
+  4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
+
+#[repr(C)]
+pub struct Lisp_Vectorlike_Header {
+    pub size: ptrdiff_t,
+}
+
+#[repr(C)]
+pub struct Lisp_Vectorlike {
+    pub header: Lisp_Vectorlike_Header,
+    // shouldn't look at the contents without knowing the structure...
+}
+
+#[repr(C)]
+pub struct Lisp_Vector {
+    pub header: Lisp_Vectorlike_Header,
+    // actually any number of items... not sure how to express this
+    pub contents: [Lisp_Object; 1],
+}
+
+#[repr(C)]
+pub struct Lisp_Bool_Vector {
+    pub _header: Lisp_Vectorlike_Header,
+    pub size: EmacsInt,
+    // actually any number of items again
+    pub _data: [bits_word; 1],
+}
+
+// This is the set of data types that share a common structure.
+// The first member of the structure is a type code from this set.
+// The enum values are arbitrary, but we'll use large numbers to make it
+// more likely that we'll spot the error if a random word in memory is
+// mistakenly interpreted as a Lisp_Misc.
+#[repr(u16)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+pub enum Lisp_Misc_Type {
+    Free = 0x5eab,
+    Marker,
+    Overlay,
+    SaveValue,
+    Finalizer,
+}
+
+// Supertype of all Misc types.
+#[repr(C)]
+pub struct Lisp_Misc_Any {
+    pub ty: Lisp_Misc_Type,
+    // This is actually a GC marker bit plus 15 bits of padding, but
+    // we don't care right now.
+    padding: u16,
+}
+
+// TODO: write a docstring based on the docs in lisp.h.
+#[repr(C)]
+pub struct Lisp_Marker {
+    pub ty: Lisp_Misc_Type,
+    // GC mark bit, 13 bits spacer, needs_adjustment flag,
+    // insertion_type flag.
+    padding: u16,
+    // TODO: define a proper buffer struct.
+    pub buffer: *const Lisp_Buffer,
+    pub next: *const Lisp_Marker,
+    pub charpos: ptrdiff_t,
+    pub bytepos: ptrdiff_t,
+}
+
+/// Represents an Emacs buffer. For documentation see struct buffer in
+/// buffer.h.
+#[repr(C)]
+pub struct Lisp_Buffer {
+    pub header: Lisp_Vectorlike_Header,
+    pub name: Lisp_Object,
+    pub filename: Lisp_Object,
+    pub directory: Lisp_Object,
+    pub backed_up: Lisp_Object,
+    pub save_length: Lisp_Object,
+    pub auto_save_file_name: Lisp_Object,
+    pub read_only: Lisp_Object,
+    pub mark: Lisp_Object,
+    pub local_var_alist: Lisp_Object,
+    pub major_mode: Lisp_Object,
+    pub mode_name: Lisp_Object,
+    pub mode_line_format: Lisp_Object,
+    pub header_line_format: Lisp_Object,
+    pub keymap: Lisp_Object,
+    pub abbrev_table: Lisp_Object,
+    pub syntax_table: Lisp_Object,
+    pub category_table: Lisp_Object,
+    pub case_fold_search: Lisp_Object,
+    pub tab_width: Lisp_Object,
+    pub fill_column: Lisp_Object,
+    pub left_margin: Lisp_Object,
+    pub auto_fill_function: Lisp_Object,
+    pub downcase_table: Lisp_Object,
+    pub upcase_table: Lisp_Object,
+    pub case_canon_table: Lisp_Object,
+    pub case_eqv_table: Lisp_Object,
+    pub truncate_lines: Lisp_Object,
+    pub word_wrap: Lisp_Object,
+    pub ctl_arrow: Lisp_Object,
+    pub bidi_display_reordering: Lisp_Object,
+    pub bidi_paragraph_direction: Lisp_Object,
+    pub selective_display: Lisp_Object,
+    pub selective_display_ellipses: Lisp_Object,
+    pub minor_modes: Lisp_Object,
+    pub overwrite_mode: Lisp_Object,
+    pub abbrev_mode: Lisp_Object,
+    pub display_table: Lisp_Object,
+    pub mark_active: Lisp_Object,
+    pub enable_multibyte_characters: Lisp_Object,
+    pub buffer_file_coding_system: Lisp_Object,
+    pub file_format: Lisp_Object,
+    pub auto_save_file_format: Lisp_Object,
+    pub cache_long_scans: Lisp_Object,
+    pub width_table: Lisp_Object,
+    pub pt_marker: Lisp_Object,
+    pub begv_marker: Lisp_Object,
+    pub zv_marker: Lisp_Object,
+    pub point_before_scroll: Lisp_Object,
+    pub file_truename: Lisp_Object,
+    pub invisibility_spec: Lisp_Object,
+    pub last_selected_window: Lisp_Object,
+    pub display_count: Lisp_Object,
+    pub left_margin_cols: Lisp_Object,
+    pub right_margin_cols: Lisp_Object,
+    pub left_fringe_width: Lisp_Object,
+    pub right_fringe_width: Lisp_Object,
+    pub fringes_outside_margins: Lisp_Object,
+    pub scroll_bar_width: Lisp_Object,
+    pub scroll_bar_height: Lisp_Object,
+    pub vertical_scroll_bar_type: Lisp_Object,
+    pub horizontal_scroll_bar_type: Lisp_Object,
+    pub indicate_empty_lines: Lisp_Object,
+    pub indicate_buffer_boundaries: Lisp_Object,
+    pub fringe_indicator_alist: Lisp_Object,
+    pub fringe_cursor_alist: Lisp_Object,
+    pub display_time: Lisp_Object,
+    pub scroll_up_aggressively: Lisp_Object,
+    pub scroll_down_aggressively: Lisp_Object,
+    pub cursor_type: Lisp_Object,
+    pub extra_line_spacing: Lisp_Object,
+    pub cursor_in_non_selected_windows: Lisp_Object,
+
+    pub own_text: Lisp_Buffer_Text,
+    pub text: *mut Lisp_Buffer_Text,
+    pub next: *mut Lisp_Buffer,
+
+    pub pt: ptrdiff_t,
+    pub pt_byte: ptrdiff_t,
+    pub begv: ptrdiff_t,
+    pub begv_byte: ptrdiff_t,
+    pub zv: ptrdiff_t,
+    pub zv_byte: ptrdiff_t,
+
+    pub base_buffer: *mut Lisp_Buffer,
+    pub indirections: c_int,
+    pub window_count: c_int,
+    pub local_flags: [c_uchar; 50],
+
+    pub modtime: timespec,
+    pub modtime_size: off_t,
+    pub auto_save_modified: EmacsInt,
+    pub display_error_modiff: EmacsInt,
+    pub auto_save_failure_time: time_t,
+
+    pub last_window_start: ptrdiff_t,
+    pub newline_cache: *mut c_void,
+    pub width_run_cache: *mut c_void,
+    pub bidi_paragraph_cache: *mut c_void,
+
+    // XXX in C, bitfield with two bools
+    pub flags: u8,
+
+    pub overlays_before: *mut c_void,
+    pub overlays_after: *mut c_void,
+    pub overlay_center: ptrdiff_t,
+
+    pub undo_list: Lisp_Object,
+}
+
+/// Represents text contents of an Emacs buffer. For documentation see
+/// struct buffer_text in buffer.h.
+#[repr(C)]
+pub struct Lisp_Buffer_Text {
+    pub beg: *mut c_uchar,
+
+    pub gpt: ptrdiff_t,
+    pub z: ptrdiff_t,
+    pub gpt_byte: ptrdiff_t,
+    pub z_byte: ptrdiff_t,
+    pub gap_size: ptrdiff_t,
+
+    pub modiff: EmacsInt,
+    pub chars_modiff: EmacsInt,
+    pub save_modiff: EmacsInt,
+    pub overlay_modiff: EmacsInt,
+    pub compact: EmacsInt,
+
+    pub beg_unchanged: ptrdiff_t,
+    pub end_unchanged: ptrdiff_t,
+
+    pub unchanged_modified: EmacsInt,
+    pub overlay_unchanged_modified: EmacsInt,
+    // until we define struct interval
+    pub intervals: *mut c_void,
+    pub markers: *mut Lisp_Marker,
+
+    // XXX: in Emacs, a bitfield of 2 booleans
+    pub flags: u8,
+}
+
+/// Represents a floating point value in elisp, or GC bookkeeping for
+/// floats.
+///
+/// # Porting from C
+///
+/// `Lisp_Float` in C uses a union between a `double` and a
+/// pointer. We assume a double, as that's the common case, and
+/// require callers to transmute to a `LispFloatChain` if they need
+/// the pointer.
+#[repr(C)]
+pub struct Lisp_Float {
+    pub data: [u8; EMACS_FLOAT_SIZE as usize],
+}
+
+/// Represents a cons cell, or GC bookkeeping for cons cells.
+///
+/// A cons cell is pair of two pointers, used to build linked lists in
+/// lisp.
+///
+/// # C Porting Notes
+///
+/// The equivalent C struct is `Lisp_Cons`. Note that the second field
+/// may be used as the cdr or GC bookkeeping.
+// TODO: this should be aligned to 8 bytes.
+#[repr(C)]
+pub struct Lisp_Cons {
+    /// Car of this cons cell.
+    pub car: Lisp_Object,
+    /// Cdr of this cons cell, or the chain used for the free list.
+    pub cdr: Lisp_Object,
+}
+
+/// Type of comparison for `internal_equal()`.
+#[repr(C)]
+pub enum EqualKind {
+    NoQuit,
+    Plain,
+    IncludingProperties,
+}
 
 /// Represents the global state of the editor.
 ///
@@ -657,46 +998,6 @@ pub struct emacs_globals {
     pub f_x_use_underline_position_properties: bool,
 }
 
-/// Represents a string value in elisp
-#[repr(C)]
-pub struct Lisp_String {
-    pub size: libc::ptrdiff_t,
-    pub size_byte: libc::ptrdiff_t,
-    // TODO: Use correct definition for this.
-    //
-    // Maybe use rust nightly unions?
-    pub intervals: *mut libc::c_void, // @TODO implement
-    pub data: *mut libc::c_char,
-}
-
-#[repr(C)]
-pub union SymbolUnion {
-    pub value: Lisp_Object,
-    pub alias: *mut Lisp_Symbol,
-pub blv: *mut libc::c_void, // @TODO implement Lisp_Buffer_Local_Value
-pub fwd: *mut libc::c_void, // @TODO implement Lisp_Fwd
-}
-
-/// This struct has 4 bytes of padding, representing the bitfield that
-/// lives at the top of a Lisp_Symbol. The first 10 bits of this field are
-/// used
-#[repr(C)]
-pub struct Lisp_Symbol {
-    pub symbol_bitfield: u32,
-    pub name: Lisp_Object,
-    pub val: SymbolUnion,
-    pub function: Lisp_Object,
-    pub plist: Lisp_Object,
-    pub next: *mut Lisp_Symbol,
-}
-
-#[repr(C)]
-pub enum EqualKind {
-    NoQuit,
-    Plain,
-    IncludingProperties,
-}
-
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static Qt: Lisp_Object;
@@ -750,21 +1051,21 @@ extern "C" {
     pub fn Fget_buffer(buffer_or_name: Lisp_Object) -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
 
-    pub fn make_float(float_value: libc::c_double) -> Lisp_Object;
-    pub fn make_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
-    pub fn build_string(s: *const libc::c_char) -> Lisp_Object;
-    pub fn make_unibyte_string(s: *const libc::c_char, length: libc::ptrdiff_t) -> Lisp_Object;
+    pub fn make_float(float_value: c_double) -> Lisp_Object;
+    pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
+    pub fn build_string(s: *const c_char) -> Lisp_Object;
+    pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;
     pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
     pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
 
     pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
-    pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);
+    pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const c_void);
     pub fn internal_equal(
         o1: Lisp_Object,
         o2: Lisp_Object,
         kind: EqualKind,
-        depth: libc::c_int,
+        depth: c_int,
         ht: Lisp_Object,
     ) -> bool;
     pub fn call2(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object) -> Lisp_Object;
@@ -781,17 +1082,17 @@ extern "C" {
     pub fn emacs_abort() -> !;
 
     pub fn base64_encode_1(
-        from: *const libc::c_char,
-        to: *mut libc::c_char,
-        length: libc::ptrdiff_t,
+        from: *const c_char,
+        to: *mut c_char,
+        length: ptrdiff_t,
         line_break: bool,
         multibyte: bool,
-    ) -> libc::ptrdiff_t;
+    ) -> ptrdiff_t;
     pub fn base64_decode_1(
-        from: *const libc::c_char,
-        to: *mut libc::c_char,
-        length: libc::ptrdiff_t,
+        from: *const c_char,
+        to: *mut c_char,
+        length: ptrdiff_t,
         multibyte: bool,
-        nchars_return: *mut libc::ptrdiff_t,
-    ) -> libc::ptrdiff_t;
+        nchars_return: *mut ptrdiff_t,
+    ) -> ptrdiff_t;
 }

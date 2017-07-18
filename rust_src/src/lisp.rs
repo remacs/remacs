@@ -1,4 +1,3 @@
-#![allow(non_upper_case_globals)]
 #![macro_use]
 
 //! This module contains Rust definitions whose C equivalents live in
@@ -12,18 +11,19 @@ use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
 use libc::{c_void, intptr_t};
 
-use marker::{LispMarker, marker_position};
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
+use marker::LispMarkerRef;
 
-use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, EMACS_INT_MAX, EMACS_INT_SIZE,
-                 EMACS_FLOAT_SIZE, USE_LSB_TAG, GCTYPEBITS, wrong_type_argument, Qstringp,
-                 Qsymbolp, Qnumber_or_marker_p, Qt, make_float, Qlistp, Qintegerp, Qconsp,
-                 circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnumberp, Qfloatp,
-                 Qwholenump, Qvectorp, Qcharacterp, SYMBOL_NAME, PseudovecType, lispsym, EqualKind};
-use remacs_sys::Lisp_Object as CLisp_Object;
+use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
+                 USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
+                 Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
+                 wrong_type_argument, make_float, circular_list, internal_equal, Fcons,
+                 CHECK_IMPURE, Qnil, Qt, Qnumberp, Qfloatp, Qstringp, Qsymbolp,
+                 Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp,
+                 Qconsp, SYMBOL_NAME, PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -46,9 +46,7 @@ use remacs_sys::Lisp_Object as CLisp_Object;
 /// Under casual systems, they're the type isize and usize respectively.
 #[repr(C)]
 #[derive(PartialEq, Eq, Clone, Copy)]
-pub struct LispObject(CLisp_Object);
-
-pub const Qnil: LispObject = LispObject(0);
+pub struct LispObject(Lisp_Object);
 
 impl LispObject {
     #[inline]
@@ -58,12 +56,16 @@ impl LispObject {
 
     #[inline]
     pub fn constant_nil() -> LispObject {
-        Qnil
+        LispObject::from_raw(Qnil)
     }
 
     #[inline]
     pub fn from_bool(v: bool) -> LispObject {
-        if v { LispObject::constant_t() } else { Qnil }
+        if v {
+            LispObject::constant_t()
+        } else {
+            LispObject::constant_nil()
+        }
     }
 
     #[inline]
@@ -82,59 +84,8 @@ impl LispObject {
     }
 }
 
-// Number of bits in a Lisp_Object tag.
-#[allow(dead_code)]
-const VALBITS: EmacsInt = EMACS_INT_SIZE * 8 - GCTYPEBITS;
-
-const INTTYPEBITS: EmacsInt = GCTYPEBITS - 1;
-
-#[allow(dead_code)]
-const FIXNUM_BITS: EmacsInt = VALBITS + 1;
-
-const VAL_MAX: EmacsInt = EMACS_INT_MAX >> (GCTYPEBITS - 1);
-
-const VALMASK: EmacsInt = [VAL_MAX, -(1 << GCTYPEBITS)][USE_LSB_TAG as usize];
-
-pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (INTTYPEBITS - 1));
-
-/// Bit pattern used in the least significant bits of a lisp object,
-/// to denote its type.
-#[repr(u8)]
-#[derive(PartialEq, Eq)]
-#[allow(dead_code)]
-#[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
-pub enum LispType {
-    // Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.
-    Lisp_Symbol = 0,
-
-    // Miscellaneous.  XMISC (object) points to a union Lisp_Misc,
-    // whose first member indicates the subtype.
-    Lisp_Misc = 1,
-
-    // Integer.  XINT (obj) is the integer value.
-    Lisp_Int0 = 2,
-    Lisp_Int1 = 3 + (USE_LSB_TAG as usize as u8) * 3, // 3 | 6
-
-    // String.  XSTRING (object) points to a struct Lisp_String.
-    // The length of the string, and its contents, are stored therein.
-    Lisp_String = 4,
-
-    // Vector of Lisp objects, or something resembling it.
-    // XVECTOR (object) points to a struct Lisp_Vector, which contains
-    // the size and contents.  The size field also contains the type
-    // information, if it's not a real vector object.
-    Lisp_Vectorlike = 5,
-
-    // Cons.  XCONS (object) points to a struct Lisp_Cons.
-    Lisp_Cons = 6 - (USE_LSB_TAG as usize as u8) * 3, // 6 | 3
-
-    Lisp_Float = 7,
-}
-
 impl LispObject {
-    #[allow(unused_unsafe)]
-    pub fn get_type(self) -> LispType {
+    pub fn get_type(self) -> Lisp_Type {
         let raw = self.to_raw() as EmacsUint;
         let res = (if USE_LSB_TAG {
                        raw & (!VALMASK as EmacsUint)
@@ -152,7 +103,7 @@ impl LispObject {
     // Same as CHECK_TYPE macro,
     // order of arguments changed
     #[inline]
-    fn check_type_or_error(self, ok: bool, predicate: CLisp_Object) -> () {
+    fn check_type_or_error(self, ok: bool, predicate: Lisp_Object) -> () {
         if !ok {
             unsafe {
                 wrong_type_argument(predicate, self.to_raw());
@@ -165,7 +116,7 @@ impl LispObject {
 impl LispObject {
     #[inline]
     pub fn is_symbol(self) -> bool {
-        self.get_type() == LispType::Lisp_Symbol
+        self.get_type() == Lisp_Type::Lisp_Symbol
     }
 
     #[inline]
@@ -215,23 +166,6 @@ impl LispObject {
 
 // Misc support (LispType == Lisp_Misc == 1)
 
-// This is the set of data types that share a common structure.
-// The first member of the structure is a type code from this set.
-// The enum values are arbitrary, but we'll use large numbers to make it
-// more likely that we'll spot the error if a random word in memory is
-// mistakenly interpreted as a Lisp_Misc.
-#[repr(u16)]
-#[derive(PartialEq, Eq, Copy, Clone, Debug)]
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
-pub enum LispMiscType {
-    Free = 0x5eab,
-    Marker,
-    Overlay,
-    SaveValue,
-    Finalizer,
-}
-
 // Lisp_Misc is a union. Now we don't really care about its variants except the
 // super type layout. LispMisc is an unsized type for this, and LispMiscAny is
 // only the header and a padding, which is consistent with the c version.
@@ -255,7 +189,6 @@ impl<T> ExternalPtr<T> {
         ExternalPtr(p)
     }
 
-    #[allow(dead_code)]
     pub fn as_ptr(&self) -> *const T {
         self.0
     }
@@ -274,27 +207,18 @@ impl<T> DerefMut for ExternalPtr<T> {
     }
 }
 
-pub type LispMiscRef = ExternalPtr<LispMiscAny>;
-
-// Supertype of all Misc types.
-#[repr(C)]
-pub struct LispMiscAny {
-    pub ty: LispMiscType,
-    // This is actually a GC marker bit plus 15 bits of padding, but
-    // we don't care right now.
-    padding: u16,
-}
+pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
 
 #[test]
 fn test_lisp_misc_any_size() {
     // Should be 32 bits, which is 4 bytes.
-    assert!(mem::size_of::<LispMiscAny>() == 4);
+    assert!(mem::size_of::<Lisp_Misc_Any>() == 4);
 }
 
 impl LispObject {
     #[inline]
     pub fn is_misc(self) -> bool {
-        self.get_type() == LispType::Lisp_Misc
+        self.get_type() == Lisp_Type::Lisp_Misc
     }
 
     #[inline]
@@ -316,12 +240,6 @@ impl LispObject {
 /// Fixnums are inline integers that fit directly into Lisp's tagged word.
 /// There's two LispType variants to provide an extra bit.
 
-// Largest and smallest numbers that can be represented as fixnums in
-// Emacs lisp.
-pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
-#[allow(dead_code)]
-pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
-
 /// Natnums(natural number) are the non-negative fixnums.
 /// There were special branches in the original code for better performance.
 /// However they are unified into the fixnum logic under LSB mode.
@@ -337,9 +255,9 @@ impl LispObject {
     #[inline]
     pub fn from_fixnum_truncated(n: EmacsInt) -> LispObject {
         let o = if USE_LSB_TAG {
-            (n << INTTYPEBITS) as EmacsUint + LispType::Lisp_Int0 as EmacsUint
+            (n << INTTYPEBITS) as EmacsUint + Lisp_Type::Lisp_Int0 as EmacsUint
         } else {
-            (n & INTMASK) as EmacsUint + ((LispType::Lisp_Int0 as EmacsUint) << VALBITS)
+            (n & INTMASK) as EmacsUint + ((Lisp_Type::Lisp_Int0 as EmacsUint) << VALBITS)
         };
         LispObject::from_raw(o as EmacsInt)
     }
@@ -386,8 +304,8 @@ impl LispObject {
     #[inline]
     pub fn is_fixnum(self) -> bool {
         let ty = self.get_type();
-        (ty as u8 & ((LispType::Lisp_Int0 as u8) | !(LispType::Lisp_Int1 as u8))) ==
-            LispType::Lisp_Int0 as u8
+        (ty as u8 & ((Lisp_Type::Lisp_Int0 as u8) | !(Lisp_Type::Lisp_Int1 as u8))) ==
+            Lisp_Type::Lisp_Int0 as u8
     }
 
     #[inline]
@@ -432,16 +350,17 @@ impl LispObject {
 // Vectorlike support (LispType == 5)
 
 impl LispObject {
+    #[inline]
     pub fn is_vectorlike(self) -> bool {
-        self.get_type() == LispType::Lisp_Vectorlike
+        self.get_type() == Lisp_Type::Lisp_Vectorlike
     }
 
+    #[inline]
     pub fn is_vector(self) -> bool {
         self.as_vectorlike().map_or(false, |v| v.is_vector())
     }
 
     #[inline]
-    #[allow(dead_code)]
     pub fn as_vectorlike(self) -> Option<LispVectorlikeRef> {
         if self.is_vectorlike() {
             Some(LispVectorlikeRef::new(
@@ -605,7 +524,7 @@ impl Iterator for TailsIter {
         match self.tail.as_cons() {
             None => {
                 if !self.safe {
-                    if self.tail != Qnil {
+                    if self.tail.is_not_nil() {
                         unsafe { wrong_type_argument(Qlistp, self.list.to_raw()) }
                     }
                 }
@@ -645,7 +564,7 @@ impl LispObject {
 
     #[inline]
     pub fn is_cons(self) -> bool {
-        self.get_type() == LispType::Lisp_Cons
+        self.get_type() == Lisp_Type::Lisp_Cons
     }
 
     #[inline]
@@ -680,33 +599,6 @@ impl LispObject {
     }
 }
 
-/// Represents a cons cell, or GC bookkeeping for cons cells.
-///
-/// A cons cell is pair of two pointers, used to build linked lists in
-/// lisp.
-///
-/// # C Porting Notes
-///
-/// The equivalent C struct is `Lisp_Cons`. Note that the second field
-/// may be used as the cdr or GC bookkeeping.
-// TODO: this should be aligned to 8 bytes.
-#[repr(C)]
-#[allow(unused_variables)]
-struct Lisp_Cons {
-    /// Car of this cons cell.
-    car: LispObject,
-    /// Cdr of this cons cell, or the chain used for the free list.
-    cdr: LispObject,
-}
-
-// alloc.c uses a union for `Lisp_Cons`, which we emulate with an
-// opaque struct.
-#[repr(C)]
-#[allow(dead_code)]
-pub struct LispConsChain {
-    chain: *const LispCons,
-}
-
 /// A newtype for objects we know are conses.
 #[derive(Clone, Copy)]
 pub struct LispCons(LispObject);
@@ -722,25 +614,25 @@ impl LispCons {
 
     /// Return the car (first cell).
     pub fn car(self) -> LispObject {
-        unsafe { (*self._extract()).car }
+        LispObject::from_raw(unsafe { (*self._extract()).car })
     }
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        unsafe { (*self._extract()).cdr }
+        LispObject::from_raw(unsafe { (*self._extract()).cdr })
     }
 
     /// Set the car of the cons cell.
     pub fn set_car(self, n: LispObject) {
         unsafe {
-            (*self._extract()).car = n;
+            (*self._extract()).car = n.to_raw();
         }
     }
 
     /// Set the car of the cons cell.
     pub fn set_cdr(self, n: LispObject) {
         unsafe {
-            (*self._extract()).cdr = n;
+            (*self._extract()).cdr = n.to_raw();
         }
     }
 
@@ -754,40 +646,26 @@ impl LispCons {
 
 // Float support (LispType == Lisp_Float == 7 )
 
-/// Represents a floating point value in elisp, or GC bookkeeping for
-/// floats.
-///
-/// # Porting from C
-///
-/// `Lisp_Float` in C uses a union between a `double` and a
-/// pointer. We assume a double, as that's the common case, and
-/// require callers to transmute to a `LispFloatChain` if they need
-/// the pointer.
-#[repr(C)]
-pub struct LispFloat {
-    data: [u8; EMACS_FLOAT_SIZE as usize],
+#[test]
+fn test_lisp_float_size() {
+    let double_size = mem::size_of::<EmacsDouble>();
+    let ptr_size = mem::size_of::<*const Lisp_Float>();
+
+    assert!(mem::size_of::<Lisp_Float>() == max(double_size, ptr_size));
 }
 
-impl LispFloat {
+pub type LispFloatRef = ExternalPtr<Lisp_Float>;
+
+impl LispFloatRef {
     pub fn as_data(&self) -> &EmacsDouble {
         unsafe { &*(self.data.as_ptr() as *const EmacsDouble) }
     }
 }
 
-#[test]
-fn test_lisp_float_size() {
-    let double_size = mem::size_of::<EmacsDouble>();
-    let ptr_size = mem::size_of::<*const LispFloat>();
-
-    assert!(mem::size_of::<LispFloat>() == max(double_size, ptr_size));
-}
-
-pub type LispFloatRef = ExternalPtr<LispFloat>;
-
 impl LispObject {
     #[inline]
     pub fn is_float(self) -> bool {
-        self.get_type() == LispType::Lisp_Float
+        self.get_type() == Lisp_Type::Lisp_Float
     }
 
     #[inline]
@@ -817,7 +695,6 @@ impl LispObject {
     }
 
     /// If the LispObject is a number (of any kind), get a floating point value for it
-    #[allow(dead_code)]
     pub fn any_to_float(self) -> Option<EmacsDouble> {
         self.as_float().or_else(
             || self.as_fixnum().map(|i| i as EmacsDouble),
@@ -838,11 +715,10 @@ impl LispObject {
 impl LispObject {
     #[inline]
     pub fn is_string(self) -> bool {
-        self.get_type() == LispType::Lisp_String
+        self.get_type() == Lisp_Type::Lisp_String
     }
 
     #[inline]
-    #[allow(dead_code)]
     pub fn as_string(self) -> Option<LispStringRef> {
         if self.is_string() {
             Some(LispStringRef::new(
@@ -894,7 +770,7 @@ impl LispObject {
         } else if let Some(f) = self.as_float() {
             LispNumber::Float(f)
         } else if let Some(m) = self.as_marker() {
-            LispNumber::Fixnum(marker_position(m) as EmacsInt)
+            LispNumber::Fixnum(m.position() as EmacsInt)
         } else {
             unsafe { wrong_type_argument(Qnumber_or_marker_p, self.to_raw()) }
         }
@@ -902,26 +778,26 @@ impl LispObject {
 
     #[inline]
     pub fn is_nil(self) -> bool {
-        self == Qnil
+        self.to_raw() == Qnil
     }
 
     #[inline]
     pub fn is_not_nil(self) -> bool {
-        self != Qnil
+        self.to_raw() != Qnil
     }
 
     #[inline]
     pub fn is_marker(self) -> bool {
         self.as_misc().map_or(
             false,
-            |m| m.ty == LispMiscType::Marker,
+            |m| m.ty == Lisp_Misc_Type::Marker,
         )
     }
 
     #[inline]
-    pub fn as_marker(self) -> Option<*mut LispMarker> {
+    pub fn as_marker(self) -> Option<LispMarkerRef> {
         self.as_misc().and_then(
-            |m| if m.ty == LispMiscType::Marker {
+            |m| if m.ty == Lisp_Misc_Type::Marker {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
@@ -951,7 +827,7 @@ impl LispObject {
     pub fn is_overlay(self) -> bool {
         self.as_misc().map_or(
             false,
-            |m| m.ty == LispMiscType::Overlay,
+            |m| m.ty == Lisp_Misc_Type::Overlay,
         )
     }
 
@@ -973,28 +849,12 @@ impl LispObject {
 
     #[inline]
     pub fn equal(self, other: LispObject) -> bool {
-        unsafe {
-            internal_equal(
-                self.to_raw(),
-                other.to_raw(),
-                EqualKind::Plain,
-                0,
-                Qnil.to_raw(),
-            )
-        }
+        unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::Plain, 0, Qnil) }
     }
 
     #[inline]
     pub fn equal_no_quit(self, other: LispObject) -> bool {
-        unsafe {
-            internal_equal(
-                self.to_raw(),
-                other.to_raw(),
-                EqualKind::NoQuit,
-                0,
-                Qnil.to_raw(),
-            )
-        }
+        unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::NoQuit, 0, Qnil) }
     }
 }
 
@@ -1022,31 +882,31 @@ impl Debug for LispObject {
             )?;
             return Ok(());
         }
-        if self == &Qnil {
+        if self.is_nil() {
             return write!(f, "nil");
         }
         match ty {
-            LispType::Lisp_Symbol => {
+            Lisp_Type::Lisp_Symbol => {
                 let name = LispObject::from_raw(unsafe { SYMBOL_NAME(self.to_raw()) });
                 write!(f, "'{}", display_string(name))?;
             }
-            LispType::Lisp_Cons => {
+            Lisp_Type::Lisp_Cons => {
                 let mut cdr = *self;
                 write!(f, "'(")?;
                 while let Some(cons) = cdr.as_cons() {
                     write!(f, "{:?} ", cons.car())?;
                     cdr = cons.cdr();
                 }
-                if cdr == Qnil {
+                if cdr.is_nil() {
                     write!(f, ")")?;
                 } else {
                     write!(f, ". {:?}", cdr)?;
                 }
             }
-            LispType::Lisp_Float => {
+            Lisp_Type::Lisp_Float => {
                 write!(f, "{}", self.as_float().unwrap())?;
             }
-            LispType::Lisp_Vectorlike => {
+            Lisp_Type::Lisp_Vectorlike => {
                 let vl = self.as_vectorlike().unwrap();
                 if vl.is_vector() {
                     write!(f, "[")?;
@@ -1063,14 +923,14 @@ impl Debug for LispObject {
                     )?;
                 }
             }
-            LispType::Lisp_Int0 |
-            LispType::Lisp_Int1 => {
+            Lisp_Type::Lisp_Int0 |
+            Lisp_Type::Lisp_Int1 => {
                 write!(f, "{}", self.as_fixnum().unwrap())?;
             }
-            LispType::Lisp_Misc => {
+            Lisp_Type::Lisp_Misc => {
                 write!(f, "#<MISC @ {:#X}: VAL({:#X})>", self_ptr, self.to_raw())?;
             }
-            LispType::Lisp_String => {
+            Lisp_Type::Lisp_String => {
                 write!(f, "{:?}", display_string(*self))?;
             }
         }

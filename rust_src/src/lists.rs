@@ -1,6 +1,6 @@
 //! Operations on lists.
 
-use lisp::{LispObject, LispCons, Qnil};
+use lisp::{LispObject, LispCons};
 use remacs_sys::{wrong_type_argument, Qlistp, EmacsInt, call2};
 use remacs_macros::lisp_fn;
 
@@ -55,7 +55,7 @@ fn setcdr(cell: LispObject, newcdr: LispObject) -> LispObject {
 #[lisp_fn]
 fn car(list: LispObject) -> LispObject {
     if list.is_nil() {
-        Qnil
+        list
     } else {
         list.as_cons_or_error().car()
     }
@@ -69,7 +69,7 @@ fn car(list: LispObject) -> LispObject {
 #[lisp_fn]
 fn cdr(list: LispObject) -> LispObject {
     if list.is_nil() {
-        Qnil
+        list
     } else {
         list.as_cons_or_error().cdr()
     }
@@ -78,13 +78,19 @@ fn cdr(list: LispObject) -> LispObject {
 /// Return the car of OBJECT if it is a cons cell, or else nil.
 #[lisp_fn]
 fn car_safe(object: LispObject) -> LispObject {
-    object.as_cons().map_or(Qnil, |cons| cons.car())
+    object.as_cons().map_or(
+        LispObject::constant_nil(),
+        |cons| cons.car(),
+    )
 }
 
 /// Return the cdr of OBJECT if it is a cons cell, or else nil.
 #[lisp_fn]
 fn cdr_safe(object: LispObject) -> LispObject {
-    object.as_cons().map_or(Qnil, |cons| cons.cdr())
+    object.as_cons().map_or(
+        LispObject::constant_nil(),
+        |cons| cons.cdr(),
+    )
 }
 
 /// Take cdr N times on LIST, return the result.
@@ -95,10 +101,10 @@ fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
     for _ in 0..num {
         match tail.as_cons() {
             None => {
-                if tail != Qnil {
+                if tail.is_not_nil() {
                     unsafe { wrong_type_argument(Qlistp, list.to_raw()) }
                 }
-                return Qnil;
+                return tail;
             }
             Some(tail_cons) => tail = tail_cons.cdr(),
         }
@@ -122,7 +128,7 @@ fn memq(elt: LispObject, list: LispObject) -> LispObject {
             return tail.as_obj();
         }
     }
-    Qnil
+    LispObject::constant_nil()
 }
 
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `eql'.
@@ -137,7 +143,7 @@ fn memql(elt: LispObject, list: LispObject) -> LispObject {
             return tail.as_obj();
         }
     }
-    Qnil
+    LispObject::constant_nil()
 }
 
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
@@ -149,7 +155,7 @@ fn member(elt: LispObject, list: LispObject) -> LispObject {
             return tail.as_obj();
         }
     }
-    Qnil
+    LispObject::constant_nil()
 }
 
 /// Return non-nil if KEY is `eq' to the car of an element of LIST.
@@ -165,7 +171,7 @@ fn assq(key: LispObject, list: LispObject) -> LispObject {
             }
         }
     }
-    Qnil
+    LispObject::constant_nil()
 }
 
 /// Return non-nil if KEY is equal to the car of an element of LIST.
@@ -188,7 +194,7 @@ fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObject {
             }
         }
     }
-    Qnil
+    LispObject::constant_nil()
 }
 
 /// Return non-nil if KEY is `eq' to the cdr of an element of LIST.
@@ -203,7 +209,7 @@ fn rassq(key: LispObject, list: LispObject) -> LispObject {
             }
         }
     }
-    Qnil
+    LispObject::constant_nil()
 }
 
 /// Return non-nil if KEY is `equal' to the cdr of an element of LIST.
@@ -219,7 +225,7 @@ fn rassoc(key: LispObject, list: LispObject) -> LispObject {
             }
         }
     }
-    Qnil
+    LispObject::constant_nil()
 }
 
 /// Delete members of LIST which are `eq' to ELT, and return the result.
@@ -233,7 +239,7 @@ fn rassoc(key: LispObject, list: LispObject) -> LispObject {
 /// argument.
 #[lisp_fn]
 fn delq(elt: LispObject, mut list: LispObject) -> LispObject {
-    let mut prev = Qnil;
+    let mut prev = LispObject::constant_nil();
     for tail in list.iter_tails() {
         let item = tail.car();
         if elt.eq(item) {
@@ -270,7 +276,7 @@ where
     }
     // exhaust the iterator to get the list-end check if necessary
     iter.count();
-    Qnil
+    LispObject::constant_nil()
 }
 
 /// Extract a value from a property list.
@@ -308,7 +314,7 @@ fn plist_member(plist: LispObject, prop: LispObject) -> LispObject {
         }
         prop_item = !prop_item;
     }
-    Qnil
+    LispObject::constant_nil()
 }
 
 fn internal_plist_put<F>(plist: LispObject, prop: LispObject, val: LispObject, cmp: F) -> LispObject
@@ -323,7 +329,7 @@ where
                 None => {
                     // need an extra call to CHECK_LIST_END here to catch odd-length lists
                     // (like Emacs we signal the somewhat confusing `wrong-type-argument')
-                    if tail.as_obj() != Qnil {
+                    if tail.as_obj().is_not_nil() {
                         unsafe { wrong_type_argument(Qlistp, plist.to_raw()) }
                     }
                     break;
@@ -340,7 +346,7 @@ where
         prop_item = !prop_item;
     }
     match last_cons {
-        None => LispObject::cons(prop, LispObject::cons(val, Qnil)),
+        None => LispObject::cons(prop, LispObject::cons(val, LispObject::constant_nil())),
         Some(last_cons) => {
             let last_cons_cdr = last_cons.cdr().as_cons_or_error();
             let newcell = LispObject::cons(prop, LispObject::cons(val, last_cons_cdr.cdr()));
@@ -397,16 +403,19 @@ fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispObjec
 /// usage: (list &rest OBJECTS)
 #[lisp_fn]
 fn list(args: &mut [LispObject]) -> LispObject {
-    args.iter().rev().fold(Qnil, |list, &arg| {
-        LispObject::cons(arg, list)
-    })
+    args.iter().rev().fold(
+        LispObject::constant_nil(),
+        |list, &arg| LispObject::cons(arg, list),
+    )
 }
 
 /// Return a newly created list of length LENGTH, with each element being INIT.
 #[lisp_fn]
 fn make_list(length: LispObject, init: LispObject) -> LispObject {
     let length = length.as_natnum_or_error();
-    (0..length).fold(Qnil, |list, _| LispObject::cons(init, list))
+    (0..length).fold(LispObject::constant_nil(), |list, _| {
+        LispObject::cons(init, list)
+    })
 }
 
 /// Return the length of a list, but avoid error or infinite loop.
@@ -428,7 +437,7 @@ pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
 
     let item = nthcdr(LispObject::from_fixnum((length / 2 - 1) as EmacsInt), list);
     let back = cdr(item);
-    setcdr(item, Qnil);
+    setcdr(item, LispObject::constant_nil());
 
     let front = sort_list(list, pred);
     let back = sort_list(back, pred);
@@ -444,8 +453,8 @@ pub fn inorder(pred: LispObject, a: LispObject, b: LispObject) -> bool {
 /// Merge step of linked-list sorting.
 #[no_mangle]
 pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispObject {
-    let mut tail = Qnil;
-    let mut value = Qnil;
+    let mut tail = LispObject::constant_nil();
+    let mut value = LispObject::constant_nil();
 
     loop {
         if l1.is_nil() {

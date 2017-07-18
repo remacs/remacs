@@ -5,9 +5,10 @@ use libc;
 
 use eval::{xsignal0, xsignal2};
 use math::ArithOp;
-use lisp::{LispObject, LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
+use lisp::{LispObject, LispNumber};
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qnumberp, Qinteger_or_marker_p,
-                 Qarith_error, Qrange_error, wrong_type_argument, build_string};
+                 Qarith_error, Qrange_error, wrong_type_argument, build_string,
+                 MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
 use remacs_sys::libm;
 use remacs_macros::lisp_fn;
 

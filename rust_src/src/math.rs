@@ -3,7 +3,6 @@
 use floatfns;
 use lisp::{LispObject, LispNumber};
 use eval::xsignal0;
-use marker::marker_position;
 use remacs_sys::{EmacsInt, Qarith_error, Qnumberp, wrong_type_argument};
 use remacs_macros::lisp_fn;
 
@@ -219,7 +218,7 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
     }
     // we should return the same object if it's not a marker
     if let Some(m) = accum.as_marker() {
-        LispObject::from_fixnum(marker_position(m) as EmacsInt)
+        LispObject::from_fixnum(m.position() as EmacsInt)
     } else {
         accum
     }
