@@ -3806,7 +3806,10 @@ process sentinels.  They shall not disturb each other."
                   (tramp--test-message
                    "Trace 3 action %d %s %s" count buf (current-time-string))
                   (if (= count 2)
-                      (should-not (file-attributes file))
+                      (if (= (length buffers) 1)
+                          (tramp--test-instrument-test-case 10
+                            (should-not (file-attributes file)))
+                        (should-not (file-attributes file)))
                     (should (file-attributes file)))
                   (tramp--test-message
                    "Stop action %d %s %s" count buf (current-time-string))
@@ -3929,8 +3932,6 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test05-expand-file-name-relative' in `expand-file-name'.
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
-;; * Fix Bug#27009.  Set expected error of
-;;   `tramp-test29-environment-variables-and-port-numbers'.
 ;; * Fix Bug#16928 in `tramp-test36-asynchronous-requests'.
 
 (defun tramp-test-all (&optional interactive)
