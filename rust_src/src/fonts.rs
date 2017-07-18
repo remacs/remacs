@@ -32,6 +32,28 @@ pub const FONT_SPEC_MAX: i32 = font_property_index::FONT_OBJLIST_INDEX as i32;
 pub const FONT_ENTITY_MAX: i32 = font_property_index::FONT_NAME_INDEX as i32;
 pub const FONT_OBJECT_MAX: i32 = (font_property_index::FONT_FILE_INDEX as i32) + 1;
 
+pub enum FontExtraType {
+    Spec,
+    Entity,
+    Object,
+}
+
+impl FontExtraType {
+    pub fn from_symbol_or_error(extra_type: LispObject) -> FontExtraType {
+        if extra_type.eq(LispObject::from_raw(unsafe { Qfont_spec })) {
+            FontExtraType::Spec
+        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_entity })) {
+            FontExtraType::Entity
+        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_object })) {
+            FontExtraType::Object
+        } else {
+            // TODO: This should actually be equivalent to
+            // intern("font-extra-type"), not Qsymbolp.
+            unsafe { wrong_type_argument(Qsymbolp, extra_type.to_raw()) }
+        }
+    }
+}
+
 /// Return t if OBJECT is a font-spec, font-entity, or font-object.
 /// Return nil otherwise.
 /// Optional 2nd argument EXTRA-TYPE, if non-nil, specifies to check
@@ -42,16 +64,12 @@ pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
     if object.is_font() {
         if extra_type.eq(LispObject::constant_nil()) {
             LispObject::constant_t()
-        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_spec })) {
-            LispObject::from_bool(object.is_font_spec())
-        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_entity })) {
-            LispObject::from_bool(object.is_font_entity())
-        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_object })) {
-            LispObject::from_bool(object.is_font_object())
         } else {
-            // TODO: This should actually be equivalent to
-            // intern("font-extra-type"), not Qsymbolp.
-            unsafe { wrong_type_argument(Qsymbolp, extra_type.to_raw()) }
+            match FontExtraType::from_symbol_or_error(extra_type) {
+                FontExtraType::Spec => LispObject::from_bool(object.is_font_spec()),
+                FontExtraType::Entity => LispObject::from_bool(object.is_font_entity()),
+                FontExtraType::Object => LispObject::from_bool(object.is_font_object()),
+            }
         }
     } else {
         // As with the C version, checking that object is a font takes priority
