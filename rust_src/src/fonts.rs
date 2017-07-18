@@ -1,7 +1,6 @@
 use remacs_macros::lisp_fn;
-use remacs_sys::{PseudovecType, Qfont_spec, Qfont_entity, Qfont_object, Qsymbolp,
-                 wrong_type_argument};
-use lisp::{LispObject, Qnil};
+use remacs_sys::{Qfont_spec, Qfont_entity, Qfont_object, Qsymbolp, wrong_type_argument};
+use lisp::LispObject;
 
 // See font_property_index in font.h for details.
 #[allow(non_camel_case_types, dead_code)]
@@ -29,9 +28,9 @@ enum font_property_index {
     // In C, we have FONT_OBJECT_MAX here.
 }
 
-const FONT_SPEC_MAX: i32 = font_property_index::FONT_OBJLIST_INDEX as i32;
-const FONT_ENTITY_MAX: i32 = font_property_index::FONT_NAME_INDEX as i32;
-const FONT_OBJECT_MAX: i32 = (font_property_index::FONT_FILE_INDEX as i32) + 1;
+pub const FONT_SPEC_MAX: i32 = font_property_index::FONT_OBJLIST_INDEX as i32;
+pub const FONT_ENTITY_MAX: i32 = font_property_index::FONT_NAME_INDEX as i32;
+pub const FONT_OBJECT_MAX: i32 = (font_property_index::FONT_FILE_INDEX as i32) + 1;
 
 /// Return t if OBJECT is a font-spec, font-entity, or font-object.
 /// Return nil otherwise.
@@ -40,25 +39,23 @@ const FONT_OBJECT_MAX: i32 = (font_property_index::FONT_FILE_INDEX as i32) + 1;
 /// `font-object'.
 #[lisp_fn(min = "1")]
 pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
-    object.as_vectorlike().map_or(Qnil, |v| {
-        if v.is_pseudovector(PseudovecType::PVEC_FONT) {
-            if extra_type.eq(Qnil) {
-                LispObject::constant_t()
-            } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_spec })) {
-                LispObject::from_bool(v.pseudovector_size() == FONT_SPEC_MAX as i64)
-            } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_entity })) {
-                LispObject::from_bool(v.pseudovector_size() == FONT_ENTITY_MAX as i64)
-            } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_object })) {
-                LispObject::from_bool(v.pseudovector_size() == FONT_OBJECT_MAX as i64)
-            } else {
-                // TODO: This should actually be equivalent to
-                // intern("font-extra-type"), not Qsymbolp.
-                unsafe { wrong_type_argument(Qsymbolp, extra_type.to_raw()) }
-            }
+    if object.is_font() {
+        if extra_type.eq(LispObject::constant_nil()) {
+            LispObject::constant_t()
+        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_spec })) {
+            LispObject::from_bool(object.is_font_spec())
+        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_entity })) {
+            LispObject::from_bool(object.is_font_entity())
+        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_object })) {
+            LispObject::from_bool(object.is_font_object())
         } else {
-            // As with the C version, checking that object is a font takes priority
-            // over checking that extra_type is well-formed.
-            Qnil
+            // TODO: This should actually be equivalent to
+            // intern("font-extra-type"), not Qsymbolp.
+            unsafe { wrong_type_argument(Qsymbolp, extra_type.to_raw()) }
         }
-    })
+    } else {
+        // As with the C version, checking that object is a font takes priority
+        // over checking that extra_type is well-formed.
+        LispObject::constant_nil()
+    }
 }
