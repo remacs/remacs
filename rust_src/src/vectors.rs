@@ -9,8 +9,8 @@ use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Bool_Vector, Lisp_Object, Lisp_Vector, Lisp_Vectorlike,
-                 PseudovecType, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG,
-                 PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
+                 Lisp_Vectorlike_With_Slots, PseudovecType, MOST_POSITIVE_FIXNUM,
+                 PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG, PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
 use remacs_sys::Faref;
 use remacs_sys::Qsequencep;
 
@@ -28,6 +28,7 @@ use windows::LispWindowRef;
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
 pub type LispVectorRef = ExternalPtr<Lisp_Vector>;
 pub type LispBoolVecRef = ExternalPtr<Lisp_Bool_Vector>;
+pub type LispVectorlikeSlotsRef = ExternalPtr<Lisp_Vectorlike_With_Slots>;
 
 impl LispVectorlikeRef {
     #[inline]
@@ -138,32 +139,129 @@ impl LispVectorlikeRef {
             None
         }
     }
+
+    #[inline]
+    pub fn as_compiled(&self) -> Option<LispVectorlikeSlotsRef> {
+        if self.is_pseudovector(PseudovecType::PVEC_COMPILED) {
+            Some(unsafe { mem::transmute(*self) })
+        } else {
+            None
+        }
+    }
 }
 
-impl LispVectorRef {
+macro_rules! impl_vectorlike_ref {
+    ($type:ident, $itertype:ident, $size_mask:expr) => {
+        impl $type {
+            #[inline]
+            pub fn len(&self) -> usize {
+                (self.header.size & $size_mask) as usize
+            }
+
+            #[inline]
+            pub fn as_slice(&self) -> &[LispObject] {
+                unsafe {
+                    slice::from_raw_parts(
+                        mem::transmute::<_, *const LispObject>(&self.contents),
+                        self.len(),
+                    )
+                }
+            }
+
+            #[inline]
+            pub fn as_mut_slice(&self) -> &mut [LispObject] {
+                unsafe {
+                    slice::from_raw_parts_mut(
+                        mem::transmute::<_, *mut LispObject>(&self.contents),
+                        self.len(),
+                    )
+                }
+            }
+
+            #[inline]
+            pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
+                ptr::read(
+                    mem::transmute::<_, *const LispObject>(&self.contents).offset(idx),
+                )
+            }
+
+            #[inline]
+            pub unsafe fn set_unchecked(&self, idx: ptrdiff_t, item: LispObject) {
+                ptr::write(
+                    mem::transmute::<_, *mut LispObject>(&self.contents).offset(idx),
+                    item,
+                )
+            }
+
+            #[inline]
+            pub fn get(&self, idx: usize) -> LispObject {
+                assert!(idx < self.len());
+                unsafe { self.get_unchecked(idx as ptrdiff_t) }
+            }
+
+            #[inline]
+            pub fn set(&mut self, idx: usize, item: LispObject) {
+                assert!(idx < self.len());
+                unsafe { self.set_unchecked(idx as ptrdiff_t, item) }
+            }
+
+            pub fn iter<'a>(&'a self) -> $itertype<'a> {
+                $itertype { vec: self, cur: 0 }
+            }
+        }
+
+        pub struct $itertype<'a> {
+            vec: &'a $type,
+            cur: usize,
+        }
+
+        impl<'a> Iterator for $itertype<'a> {
+            type Item = LispObject;
+
+            fn next(&mut self) -> Option<LispObject> {
+                if self.cur >= self.vec.len() {
+                    None
+                } else {
+                    let res = unsafe { self.vec.get_unchecked(self.cur as ptrdiff_t) };
+                    self.cur += 1;
+                    Some(res)
+                }
+            }
+
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                let remaining = self.vec.len() - self.cur;
+                (remaining, Some(remaining))
+            }
+        }
+
+        impl<'a> ExactSizeIterator for $itertype<'a> {}
+    }
+}
+
+impl_vectorlike_ref! { LispVectorRef, LispVecIterator, ptrdiff_t::max_value() }
+impl_vectorlike_ref! { LispVectorlikeSlotsRef, LispVecSlotsIterator, PSEUDOVECTOR_SIZE_MASK }
+
+impl LispBoolVecRef {
     #[inline]
-    pub fn len(self) -> usize {
-        self.header.size as usize
+    pub unsafe fn as_byte_ptr(&self) -> *const u8 {
+        mem::transmute::<_, *const u8>(&self.data)
     }
 
     #[inline]
-    pub fn as_slice(&self) -> &[LispObject] {
-        unsafe {
-            slice::from_raw_parts(
-                &self.contents as *const [Lisp_Object; 1] as *const LispObject,
-                self.len(),
-            )
-        }
+    pub unsafe fn as_mut_byte_ptr(&self) -> *mut u8 {
+        mem::transmute::<_, *mut u8>(&self.data)
     }
 
     #[inline]
-    pub fn as_mut_slice(&mut self) -> &mut [LispObject] {
-        unsafe {
-            slice::from_raw_parts_mut(
-                &mut self.contents as *mut [Lisp_Object; 1] as *mut LispObject,
-                self.len(),
-            )
-        }
+    pub fn len(&self) -> usize {
+        self.size as usize
+    }
+
+    #[inline]
+    pub fn get_bit(&self, idx: usize) -> bool {
+        assert!(idx < self.len());
+        let limb = unsafe { *self.as_byte_ptr().offset(idx as isize / 8) };
+        limb & (1 << (idx % 8)) != 0
     }
 
     #[inline]
@@ -172,19 +270,61 @@ impl LispVectorRef {
         ptr::read(tmp.offset(idx))
     }
 
+    #[inline]
+    pub fn get(&self, idx: usize) -> LispObject {
+        LispObject::from_bool(self.get_bit(idx))
+    }
+
     #[allow(dead_code)]
     #[inline]
-    pub fn get(self, idx: ptrdiff_t) -> LispObject {
-        assert!(0 <= idx && idx < self.len() as ptrdiff_t);
-        unsafe { self.get_unchecked(idx) }
+    pub fn set_bit(&self, idx: usize, b: bool) {
+        assert!(idx < self.len());
+        let limbp = unsafe { self.as_mut_byte_ptr().offset(idx as isize / 8) };
+        if b {
+            unsafe { *limbp |= 1 << (idx % 8) }
+        } else {
+            unsafe { *limbp &= !(1 << (idx % 8)) }
+        }
+    }
+
+    pub fn iter<'a>(&'a self) -> LispBoolVecIterator<'a> {
+        LispBoolVecIterator {
+            bvec: self,
+            limb: 0,
+            cur: 0,
+        }
     }
 }
 
-impl LispBoolVecRef {
-    pub fn len(self) -> usize {
-        self.size as usize
+pub struct LispBoolVecIterator<'a> {
+    bvec: &'a LispBoolVecRef,
+    limb: u8,
+    cur: usize,
+}
+
+impl<'a> Iterator for LispBoolVecIterator<'a> {
+    type Item = LispObject;
+
+    fn next(&mut self) -> Option<LispObject> {
+        if self.cur >= self.bvec.len() {
+            None
+        } else {
+            if self.cur % 8 == 0 {
+                self.limb = unsafe { *self.bvec.as_byte_ptr().offset(self.cur as isize / 8) };
+            }
+            let res = LispObject::from_bool(self.limb & (1 << (self.cur % 8)) != 0);
+            self.cur += 1;
+            Some(res)
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.bvec.len() - self.cur;
+        (remaining, Some(remaining))
     }
 }
+
+impl<'a> ExactSizeIterator for LispBoolVecIterator<'a> {}
 
 /// Return the length of vector, list or string SEQUENCE.
 /// A byte-code function object is also allowed.

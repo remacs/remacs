@@ -1,10 +1,18 @@
 //! Operations on lists.
 
+use std::iter;
+use std::mem;
+
+use itertools::Itertools;
+use libc::ptrdiff_t;
+
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Qcircular_list, Qplistp};
+use remacs_sys::{EmacsInt, Lisp_Object};
+use remacs_sys::{Fconcat, Fnconc};
+use remacs_sys::{Qcircular_list, Qplistp, Qsequencep};
 use remacs_sys::globals;
 
-use lisp::LispObject;
+use lisp::{LispCons, LispObject};
 use lisp::defsubr;
 use symbols::LispSymbolRef;
 
@@ -500,6 +508,90 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
 
 pub fn circular_list(obj: LispObject) -> ! {
     xsignal!(Qcircular_list, obj);
+}
+
+/// Struct that we can use to map a sequence without storing the results.
+struct SideEffectOnly;
+
+impl<T> iter::FromIterator<T> for SideEffectOnly {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        iter.into_iter().count(); // Need to exhaust the iterator.
+        SideEffectOnly
+    }
+}
+
+/// Guts of all mapping functions.
+fn mapcar1<T: iter::FromIterator<LispObject>>(seq: LispObject, func: LispObject) -> T {
+    if seq.is_cons() {
+        seq.iter_tails_safe()
+            .map(|cons| call!(func, cons.car()))
+            .collect()
+    } else if seq.is_nil() {
+        iter::empty().collect()
+    } else if let Some(vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {
+        vec.iter().map(|item| call!(func, item)).collect()
+    } else if let Some(bvec) = seq.as_vectorlike().and_then(|v| v.as_bool_vector()) {
+        bvec.iter().map(|item| call!(func, item)).collect()
+    } else if let Some(string) = seq.as_string() {
+        string
+            .chars()
+            .map(|ch| call!(func, LispObject::from_fixnum(ch as EmacsInt)))
+            .collect()
+    } else if let Some(comp) = seq.as_vectorlike().and_then(|v| v.as_compiled()) {
+        comp.iter().map(|item| call!(func, item)).collect()
+    } else {
+        if seq.is_char_table() {
+            // For compatibility with the C functions.
+            wrong_type!(Qlistp, seq)
+        } else {
+            wrong_type!(Qsequencep, seq)
+        }
+    }
+}
+
+/// Apply FUNCTION to each element of SEQUENCE, and concat the results as strings.
+/// In between each pair of results, stick in SEPARATOR.  Thus, " " as
+/// SEPARATOR results in spaces between the values returned by FUNCTION.
+/// SEQUENCE may be a list, a vector, a bool-vector, or a string.
+#[lisp_fn]
+fn mapconcat(function: LispObject, sequence: LispObject, separator: LispObject) -> LispObject {
+    let mapped: Vec<_> = mapcar1(sequence, function);
+    let mut with_sep: Vec<_> = mapped
+        .into_iter()
+        .map(LispObject::to_raw)
+        .intersperse(separator.to_raw())
+        .collect();
+    unsafe { LispObject::from_raw(Fconcat(with_sep.len() as ptrdiff_t, with_sep.as_mut_ptr())) }
+}
+
+/// Apply FUNCTION to each element of SEQUENCE, and make a list of the results.
+/// The result is a list just as long as SEQUENCE.
+/// SEQUENCE may be a list, a vector, a bool-vector, or a string.
+#[lisp_fn]
+fn mapcar(function: LispObject, sequence: LispObject) -> LispObject {
+    let mut mapped: Vec<_> = mapcar1(sequence, function);
+    list(&mut mapped)
+}
+
+/// Apply FUNCTION to each element of SEQUENCE for side effects only.
+/// Unlike `mapcar', don't accumulate the results.  Return SEQUENCE.
+/// SEQUENCE may be a list, a vector, a bool-vector, or a string.
+#[lisp_fn]
+fn mapc(function: LispObject, sequence: LispObject) -> LispObject {
+    let _: SideEffectOnly = mapcar1(sequence, function);
+    sequence
+}
+
+/// Apply FUNCTION to each element of SEQUENCE, and concatenate
+/// the results by altering them (using `nconc').
+/// SEQUENCE may be a list, a vector, a bool-vector, or a string.
+#[lisp_fn]
+fn mapcan(function: LispObject, sequence: LispObject) -> LispObject {
+    let mut mapped: Vec<_> = mapcar1(sequence, function);
+    unsafe {
+        let raw_slice = mem::transmute::<&mut [LispObject], &mut [Lisp_Object]>(&mut mapped);
+        LispObject::from_raw(Fnconc(raw_slice.len() as ptrdiff_t, raw_slice.as_mut_ptr()))
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));

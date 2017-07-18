@@ -10,6 +10,7 @@
 extern crate lazy_static;
 
 extern crate base64 as base64_crate;
+extern crate itertools;
 extern crate libc;
 extern crate md5;
 extern crate rand;

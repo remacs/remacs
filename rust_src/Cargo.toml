@@ -20,6 +20,7 @@ base64 = "0.8.0"
 sha1 = "0.2.0"
 sha2 = "0.4.2"
 mock_derive = "0.7.0"
+itertools = "0.6.2"
 
 # Only want this local crate as dependency on Mac OS X
 [target.'cfg(target_os = "macos")'.dependencies]
