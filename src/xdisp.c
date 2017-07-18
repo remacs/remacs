@@ -1326,6 +1326,15 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
   if (charpos >= 0 && CHARPOS (top) > charpos)
     return visible_p;
 
+  /* Some Lisp hook could call us in the middle of redisplaying this
+     very window.  If, by some bad luck, we are retrying redisplay
+     because we found that the mode-line height and/or header-line
+     height needs to be updated, the assignment of mode_line_height
+     and header_line_height below could disrupt that, due to the
+     selected/nonselected window dance during mode-line display, and
+     we could infloop.  Avoid that.  */
+  int prev_mode_line_height = w->mode_line_height;
+  int prev_header_line_height = w->header_line_height;
   /* Compute exact mode line heights.  */
   if (window_wants_mode_line (w))
     {
@@ -1671,6 +1680,10 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
   else
     fprintf (stderr, "-pv pt=%d vs=%d\n", charpos, w->vscroll);
 #endif
+
+  /* Restore potentially overwritten values.  */
+  w->mode_line_height = prev_mode_line_height;
+  w->header_line_height = prev_header_line_height;
 
   return visible_p;
 }
