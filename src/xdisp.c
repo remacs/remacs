@@ -28082,7 +28082,7 @@ x_produce_glyphs (struct it *it)
 	      /* If the distance from the current position to the next tab
 		 stop is less than a space character width, use the
 		 tab stop after that.  */
-	      if (next_tab_x - x0 < font->space_width)
+	      if (next_tab_x - x < font->space_width)
 		next_tab_x += tab_width;
 	      if (!NILP (Vdisplay_line_numbers) && x0 >= it->lnum_pixel_width)
 		next_tab_x += (it->lnum_pixel_width
