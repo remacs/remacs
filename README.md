@@ -141,8 +141,13 @@ more Emacs-y.
 
 ### Requirements
 
-1. You will need [Rust installed](https://www.rust-lang.org/en-US/install.html). If you're on macOS, you will need Rust
-   nightly.
+1. You will need
+   [Rust installed](https://www.rust-lang.org/en-US/install.html). Remacs
+   uses unstable Rust features, so you will need to use nightly.
+
+        rustup install nightly
+        cd /path/to/remacs
+        rustup override set nightly
 
 2. You will need a C compiler and toolchain. On Linux, you can do
    something like `apt-get install build-essential automake`. On
