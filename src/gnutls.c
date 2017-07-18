@@ -1854,12 +1854,17 @@ The alist key is the cipher name. */)
 
 #ifdef HAVE_GNUTLS3_CIPHER
   const gnutls_cipher_algorithm_t *gciphers = gnutls_cipher_list ();
-  for (ptrdiff_t pos = 0; gciphers[pos] != GNUTLS_CIPHER_NULL; pos++)
+  for (ptrdiff_t pos = 0; gciphers[pos] != 0; pos++)
     {
       gnutls_cipher_algorithm_t gca = gciphers[pos];
+      if (gca == GNUTLS_CIPHER_NULL)
+	continue;
+      char const *cipher_name = gnutls_cipher_get_name (gca);
+      if (!cipher_name)
+	continue;
 
       /* A symbol representing the GnuTLS cipher.  */
-      Lisp_Object cipher_symbol = intern (gnutls_cipher_get_name (gca));
+      Lisp_Object cipher_symbol = intern (cipher_name);
 
       ptrdiff_t cipher_tag_size = gnutls_cipher_get_tag_size (gca);
 
