@@ -152,7 +152,7 @@ impl LispObject {
     // Same as CHECK_TYPE macro,
     // order of arguments changed
     #[inline]
-    fn check_type_or_error(self, ok: bool, predicate: CLisp_Object) -> () {
+    pub fn check_type_or_error(self, ok: bool, predicate: CLisp_Object) -> () {
         if !ok {
             unsafe {
                 wrong_type_argument(predicate, self.to_raw());

@@ -15,7 +15,7 @@ pub static MIME_LINE_LENGTH: isize = 76;
 
 /// Return t if OBJECT is a string.
 #[lisp_fn]
-fn stringp(object: LispObject) -> LispObject {
+pub fn stringp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_string())
 }
 

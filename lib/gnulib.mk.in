@@ -1088,20 +1088,6 @@ EXTRA_DIST += close-stream.h
 endif
 ## end   gnulib module close-stream
 
-## begin gnulib module crypto/md5
-ifeq (,$(OMIT_GNULIB_MODULE_crypto/md5))
-
-EXTRA_DIST += md5.h
-
-endif
-## end   gnulib module crypto/md5
-
-## begin crypto in rust
-
-EXTRA_DIST += sha1.h gl_openssl.h sha256.h
-
-## end   crypto in rust
-
 ## begin gnulib module diffseq
 ifeq (,$(OMIT_GNULIB_MODULE_diffseq))
 

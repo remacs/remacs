@@ -17,6 +17,13 @@ pub fn xsignal0(error_symbol: LispObject) -> ! {
     xsignal(error_symbol, Qnil);
 }
 
+/// Convenience function for calling `xsignal` with a one-element list.
+pub fn xsignal1(error_symbol: LispObject, arg1: LispObject) -> ! {
+    xsignal(
+        error_symbol,
+        LispObject::cons(arg1, LispObject::constant_nil()),
+    )
+}
 /// Convenience function for calling `xsignal` with a two-element list.
 pub fn xsignal2(error_symbol: LispObject, arg1: LispObject, arg2: LispObject) -> ! {
     xsignal(

@@ -743,6 +743,17 @@ extern "C" {
     pub static Qfont_spec: Lisp_Object;
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
+
+    pub static Qmd5: Lisp_Object;
+    pub static Qsha1: Lisp_Object;
+    pub static Qsha224: Lisp_Object;
+    pub static Qsha256: Lisp_Object;
+    pub static Qsha384: Lisp_Object;
+    pub static Qsha512: Lisp_Object;
+
+    pub static Qraw_text: Lisp_Object;
+    pub static Qcoding_system_error: Lisp_Object;
+
     pub static lispsym: Lisp_Symbol;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
@@ -757,6 +768,12 @@ extern "C" {
     pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;
     pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
     pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
+
+    pub fn preferred_coding_system() -> Lisp_Object;
+    pub fn Fcoding_system_p(o: Lisp_Object) -> Lisp_Object;
+    pub fn code_convert_string(string: Lisp_Object, coding_system: Lisp_Object, dst_object: Lisp_Object, encodep: bool, nocopy: bool, norecord: bool) -> Lisp_Object;
+    pub fn validate_subarray(array: Lisp_Object, from: Lisp_Object, to: Lisp_Object, size: libc::ptrdiff_t, ifrom: &mut libc::ptrdiff_t, ito: &mut libc::ptrdiff_t);
+    pub fn string_char_to_byte(string: Lisp_Object, char_index: libc::ptrdiff_t) -> libc::ptrdiff_t;
 
     pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
     pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);

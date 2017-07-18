@@ -30,7 +30,7 @@ fn symbolp(object: LispObject) -> LispObject {
 
 /// Return SYMBOL's name, a string.
 #[lisp_fn]
-fn symbol_name(symbol: LispObject) -> LispObject {
+pub fn symbol_name(symbol: LispObject) -> LispObject {
     symbol.as_symbol_or_error().symbol_name()
 }
 
