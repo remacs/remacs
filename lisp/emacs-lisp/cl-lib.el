@@ -631,7 +631,7 @@ If ALIST is non-nil, the new pairs are prepended to it."
   (require 'cl-seq))
 
 (defun cl--old-struct-type-of (orig-fun object)
-  (or (and (vectorp object)
+  (or (and (vectorp object) (> (length object) 0)
            (let ((tag (aref object 0)))
              (when (and (symbolp tag)
                         (string-prefix-p "cl-struct-" (symbol-name tag)))
