@@ -8,6 +8,7 @@ NOTES FOR EMACS CONTINUOUS BUILD ON HYDRA
 A continuous build for Emacs can be found at
 http://hydra.nixos.org/jobset/gnu/emacs-trunk
 http://hydra.nixos.org/jobset/gnu/emacs-24
+http://hydra.nixos.org/jobset/gnu/emacs-25
 
 * It builds Emacs on various platforms.
 Sometimes jobs fail due to hydra problems rather than Emacs problems.
@@ -42,6 +43,11 @@ http://git.savannah.gnu.org/cgit/hydra-recipes.git/tree/emacs
 
 To modify the build job, email the patch to hydra-users@gnu.org.  The
 build recipes are written in the Nix language.
+
+* Identifying hydra
+Lisp packages, Makefiles, scripts, and other software could determine
+whether they run on hydra by checking for the environment variable
+EMACS_HYDRA_CI.
 
 * Other Information
 For a list of other GNU packages that have a continuous build on
