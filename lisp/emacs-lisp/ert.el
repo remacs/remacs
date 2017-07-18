@@ -1512,7 +1512,7 @@ Ran \\([0-9]+\\) tests, \\([0-9]+\\) results as expected\
       (message "%d files contained unexpected results:" (length unexpected))
       (mapc (lambda (l) (message "  %s" l)) unexpected))
     ;; More details on hydra, where the logs are harder to get to.
-    (when (and (getenv "NIX_STORE")
+    (when (and (getenv "EMACS_HYDRA_CI")
                (not (zerop (+ nunexpected nskipped))))
       (message "\nDETAILS")
       (message "-------")

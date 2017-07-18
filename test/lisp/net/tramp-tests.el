@@ -86,8 +86,8 @@
       tramp-message-show-message nil
       tramp-persistency-file-name nil)
 
-;; This shall happen on hydra only.
-(when (getenv "NIX_STORE")
+;; This should happen on hydra only.
+(when (getenv "EMACS_HYDRA_CI")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 (defvar tramp--test-expensive-test
@@ -3706,7 +3706,7 @@ process sentinels.  They shall not disturb each other."
            ;; On hydra, timings are bad.
            (timer-repeat
             (cond
-             ((getenv "NIX_STORE") 10)
+             ((getenv "EMACS_HYDRA_CI") 10)
              (t 1)))
            ;; We must distinguish due to performance reasons.
            (timer-operation
