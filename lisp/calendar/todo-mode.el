@@ -823,7 +823,7 @@ buries it and restores state as needed."
 	   (when (buffer-live-p buf) (kill-buffer buf)))
 	  ((eq major-mode 'todo-mode)
 	   (todo-save)
-	   (bury-buffer)))))
+           (quit-window)))))
 
 ;; -----------------------------------------------------------------------------
 ;;; Navigation between and within categories
