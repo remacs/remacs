@@ -1891,6 +1891,8 @@ The alist key is the cipher name. */)
   return ciphers;
 }
 
+#ifdef HAVE_GNUTLS3_AEAD
+
 /* Zero out STORAGE (even if it will become inaccessible.  It has
    STORAGE_LENGTH bytes.  The goal is to improve security a bit, in
    case an Emacs module or some buggy part of Emacs attempts to
@@ -1906,6 +1908,8 @@ clear_storage (void *storage, ptrdiff_t storage_length)
 {
   explicit_bzero (storage, storage_length);
 }
+
+#endif  /* HAVE_GNUTLS3_AEAD */
 
 static Lisp_Object
 gnutls_symmetric_aead (bool encrypting, gnutls_cipher_algorithm_t gca,
