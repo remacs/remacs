@@ -6,10 +6,12 @@ use libc::{ptrdiff_t};
 
 use buffers::LispBufferRef;
 use eval::{xsignal1};
+use libc;
 use lisp::{LispObject, Qnil};
 use multibyte::LispStringRef;
 use remacs_sys::{error, nsberror, Fcurrent_buffer, Fget_buffer, EmacsInt, make_uninit_string, make_unibyte_string};
 use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string, validate_subarray, string_char_to_byte, wrong_type_argument};
+use remacs_sys::{current_buffer, record_unwind_current_buffer, set_buffer_internal, make_buffer_string, specpdl_ptr};
 use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw_text, Qcoding_system_error};
 use remacs_macros::lisp_fn;
 use symbols::symbol_name;
@@ -93,6 +95,13 @@ fn get_input_from_string<'a>(object: &'a LispObject, string: &'a LispStringRef, 
 }
 
 fn get_input_from_buffer<'a>(object: &'a LispObject, buffer: &'a LispBufferRef, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> &'a [u8] {
+    let prev_buffer = unsafe { current_buffer };
+    unsafe { record_unwind_current_buffer() };
+    unsafe { set_buffer_internal(&buffer as *const _ as *const libc::c_void) };
+    //let string = unsafe { make_buffer_string(b, e, false) };
+    unsafe { set_buffer_internal(prev_buffer) };
+    unsafe { specpdl_ptr -= 40 }; // TODO: this needs to be std::mem::size_of<specbinding>()
+    //string.as_slice()
     b"foo"
 }
 
