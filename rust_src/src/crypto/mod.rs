@@ -52,7 +52,7 @@ fn hash_alg(algorithm: LispObject) -> HashAlg {
     }
 }
 
-fn get_input_from_string<'a>(object: &'a LispObject, string: &'a LispStringRef, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> &'a str {
+fn get_input_from_string<'a>(object: &'a LispObject, string: &'a LispStringRef, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> &'a [u8] {
     let mut coding_system = coding_system;
     let size: ptrdiff_t;
     let start_byte: ptrdiff_t;
@@ -89,14 +89,11 @@ fn get_input_from_string<'a>(object: &'a LispObject, string: &'a LispStringRef, 
     unsafe { validate_subarray(object.to_raw(), start.to_raw(), end.to_raw(), size, &mut start_char, &mut end_char); }
     start_byte = if start_char == 0 { 0 } else { unsafe { string_char_to_byte(object.to_raw(), start_char) } };
     end_byte = if end_char == size { string.len_bytes() } else { unsafe { string_char_to_byte(object.to_raw(), end_char) } };
-    let s: &[u8] = string.as_slice();
-    unsafe {
-        str::from_utf8_unchecked(&s[start_byte as usize..end_byte as usize])
-    }
+    string.as_slice()
 }
 
-fn get_input_from_buffer<'a>(object: &'a LispObject, buffer: &'a LispBufferRef, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> &'a str {
-    "foo"
+fn get_input_from_buffer<'a>(object: &'a LispObject, buffer: &'a LispBufferRef, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> &'a [u8] {
+    b"foo"
 }
 
 /// Return the secure hash of OBJECT, a buffer or string.
@@ -119,14 +116,14 @@ fn md5(
     let string: LispStringRef;
     let buffer: LispBufferRef;
     let input = if object.is_string() {
-        string = object.as_string_or_error();
-        get_input_from_string(&object, &string, start, end, coding_system, noerror)
-    } else if object.is_buffer() {
-        buffer = object.as_buffer().unwrap();
-        get_input_from_buffer(&object, &buffer, start, end, coding_system, noerror)
-    } else {
-        unsafe { wrong_type_argument(Qstringp, object.to_raw()); }
-    };
+                    string = object.as_string_or_error();
+                    get_input_from_string(&object, &string, start, end, coding_system, noerror)
+                } else if object.is_buffer() {
+                    buffer = object.as_buffer().unwrap();
+                    get_input_from_buffer(&object, &buffer, start, end, coding_system, noerror)
+                } else {
+                    unsafe { wrong_type_argument(Qstringp, object.to_raw()); }
+                };
     _secure_hash(HashAlg::HashMD5, input, true)
 }
 
@@ -147,19 +144,28 @@ fn secure_hash(
     end: LispObject,
     binary: LispObject
 ) -> LispObject {
-    let string = object.as_string_or_error();
-    let input = get_input_from_string(&object, &string, start, end, Qnil, Qnil);
+    let string: LispStringRef;
+    let buffer: LispBufferRef;
+    let input = if object.is_string() {
+                    string = object.as_string_or_error();
+                    get_input_from_string(&object, &string, start, end, Qnil, Qnil)
+                } else if object.is_buffer() {
+                    buffer = object.as_buffer().unwrap();
+                    get_input_from_buffer(&object, &buffer, start, end, Qnil, Qnil)
+                } else {
+                    unsafe { wrong_type_argument(Qstringp, object.to_raw()); }
+                };
     _secure_hash(hash_alg(algorithm), input, binary.is_nil())
 }
 
 #[no_mangle]
 fn _secure_hash(
     algorithm: HashAlg,
-    input: &str,
+    input: &[u8],
     hex: bool
 ) -> LispObject {
     let digest_size: usize;
-    let hash_func: unsafe fn (&str, &mut [u8]);
+    let hash_func: unsafe fn (&[u8], &mut [u8]);
     match algorithm {
         HashAlg::HashMD5    => { digest_size = MD5_DIGEST_LEN;    hash_func = md5_buffer;    },
         HashAlg::HashSHA1   => { digest_size = SHA1_DIGEST_LEN;   hash_func = sha1_buffer;   },
@@ -191,42 +197,42 @@ fn make_digest_string(buffer: &mut [u8], len: usize) {
     }
 }
 
-unsafe fn md5_buffer(buffer: &str, dest_buf: &mut [u8]) {
+unsafe fn md5_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     let output = md5::compute(buffer);
     ptr::copy_nonoverlapping(output.as_ptr(), dest_buf.as_ptr() as *mut u8, output.len());
 }
 
-unsafe fn sha1_buffer(buffer: &str, dest_buf: &mut [u8]) {
+unsafe fn sha1_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     let mut hasher = sha1::Sha1::new();
-    hasher.update(buffer.as_bytes());
+    hasher.update(buffer);
     let output = hasher.digest().bytes();
     ptr::copy_nonoverlapping(output.as_ptr(), dest_buf.as_ptr() as *mut u8, output.len());
 }
 
 /// Given an instance of `Digest`, and `buffer` write its hash to `dest_buf`.
-unsafe fn sha2_hash_buffer<D>(hasher: D, buffer: &str, dest_buf: &mut [u8])
+unsafe fn sha2_hash_buffer<D>(hasher: D, buffer: &[u8], dest_buf: &mut [u8])
 where
     D: Digest,
 {
     let mut hasher = hasher;
-    hasher.input(buffer.as_bytes());
+    hasher.input(buffer);
     let output = hasher.result();
     ptr::copy_nonoverlapping(output.as_ptr(), dest_buf.as_ptr() as *mut u8, output.len());
 }
 
-unsafe fn sha224_buffer(buffer: &str, dest_buf: &mut [u8]) {
+unsafe fn sha224_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     sha2_hash_buffer(Sha224::new(), buffer, dest_buf);
 }
 
-unsafe fn sha256_buffer(buffer: &str, dest_buf: &mut [u8]) {
+unsafe fn sha256_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     sha2_hash_buffer(Sha256::new(), buffer, dest_buf);
 }
 
-unsafe fn sha384_buffer(buffer: &str, dest_buf: &mut [u8]) {
+unsafe fn sha384_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     sha2_hash_buffer(Sha384::new(), buffer, dest_buf);
 }
 
-unsafe fn sha512_buffer(buffer: &str, dest_buf: &mut [u8]) {
+unsafe fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     sha2_hash_buffer(Sha512::new(), buffer, dest_buf);
 }
 
