@@ -3,7 +3,9 @@
 use libc::{c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::Lisp_Buffer;
+use remacs_sys::{Lisp_Buffer, Vbuffer_alist};
+use strings::string_equal;
+use lists::{car, cdr};
 
 use remacs_macros::lisp_fn;
 
@@ -70,4 +72,34 @@ pub fn overlayp(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn buffer_live_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_buffer().map_or(false, |m| m.is_live()))
+}
+
+/// Like Fassoc, but use Fstring_equal to compare
+/// (which ignores text properties), and don't ever quit.
+fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
+    let result = list.iter_tails_safe().find(|&item| {
+        string_equal(car(item.car()), key).is_not_nil()
+    });
+    if let Some(elt) = result {
+        elt.car()
+    } else {
+        LispObject::constant_nil()
+    }
+}
+
+/// Return the buffer named BUFFER-OR-NAME.
+/// BUFFER-OR-NAME must be either a string or a buffer.  If BUFFER-OR-NAME
+/// is a string and there is no buffer with that name, return nil.  If
+/// BUFFER-OR-NAME is a buffer, return it as given.
+#[lisp_fn]
+pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
+    if buffer_or_name.is_buffer() {
+        buffer_or_name
+    } else {
+        buffer_or_name.as_string_or_error();
+        cdr(assoc_ignore_text_properties(
+            buffer_or_name,
+            LispObject::from_raw(unsafe { Vbuffer_alist }),
+        ))
+    }
 }

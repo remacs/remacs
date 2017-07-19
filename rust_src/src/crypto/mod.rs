@@ -4,7 +4,8 @@ use std::{ptr, slice};
 use libc::{c_char, c_void, size_t};
 
 use lisp::LispObject;
-use remacs_sys::{nsberror, Fcurrent_buffer, Fget_buffer, EmacsInt, make_uninit_string};
+use buffers::get_buffer;
+use remacs_sys::{nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string};
 use remacs_macros::lisp_fn;
 
 #[no_mangle]
@@ -79,11 +80,12 @@ pub unsafe extern "C" fn sha512_buffer(
 /// disregarding any coding systems.  If nil, use the current buffer.
 #[lisp_fn(min = "0")]
 fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
-    let buffer = LispObject::from_raw(if buffer_or_name.is_nil() {
-        unsafe { Fcurrent_buffer() }
+    let buffer = if buffer_or_name.is_nil() {
+        LispObject::from_raw(unsafe { Fcurrent_buffer() })
     } else {
-        unsafe { Fget_buffer(buffer_or_name.to_raw()) }
-    });
+        get_buffer(buffer_or_name)
+    };
+
     if buffer.is_nil() {
         unsafe { nsberror(buffer_or_name.to_raw()) };
     }
