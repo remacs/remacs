@@ -176,16 +176,17 @@ fn _secure_hash(
     }
 
     let buffer_size = if hex { (digest_size * 2) as EmacsInt } else { digest_size as EmacsInt };
-    let mut digest = LispObject::from_raw(unsafe { make_uninit_string(buffer_size as i64) }).as_string_or_error();
+    let digest = LispObject::from_raw(unsafe { make_uninit_string(buffer_size as i64) });
+    let digest_str = digest.as_string_or_error();
     unsafe {
         // we can call this safely because we know that we made
         // digest's buffer long enough
-        hash_func(input, digest.as_mut_slice());
+        hash_func(input, digest_str.as_mut_slice());
     }
     if hex {
-        make_digest_string(digest.as_mut_slice(), digest_size);
+        make_digest_string(digest_str.as_mut_slice(), digest_size);
     }
-    LispObject::from_raw(unsafe { make_unibyte_string(digest.sdata_ptr(), buffer_size as isize) })
+    digest
 }
 
 fn make_digest_string(buffer: &mut [u8], len: usize) {
