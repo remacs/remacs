@@ -16,6 +16,7 @@ extern crate remacs_sys;
 extern crate remacs_lib;
 extern crate remacs_macros;
 extern crate libc;
+extern crate md5;
 extern crate rand;
 extern crate sha1;
 extern crate sha2;
@@ -111,6 +112,7 @@ pub use lists::merge;
 pub use buffers::Fget_buffer;
 
 // Cryptographic functions used in the C codebase.
+pub use crypto::md5_buffer;
 pub use crypto::sha1_buffer;
 pub use crypto::sha224_buffer;
 pub use crypto::sha256_buffer;

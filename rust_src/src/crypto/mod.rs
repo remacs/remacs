@@ -1,3 +1,4 @@
+use md5;
 use sha1;
 use sha2::{Sha224, Digest, Sha256, Sha384, Sha512};
 use std::{ptr, slice};
@@ -7,6 +8,18 @@ use lisp::LispObject;
 use buffers::get_buffer;
 use remacs_sys::{nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string};
 use remacs_macros::lisp_fn;
+
+#[no_mangle]
+pub unsafe extern "C" fn md5_buffer(
+    buffer: *const c_char,
+    len: size_t,
+    dest_buf: *mut c_void,
+) -> *mut c_void {
+    let buffer_slice = slice::from_raw_parts(buffer as *const u8, len);
+    let output = md5::compute(buffer_slice);
+    ptr::copy_nonoverlapping(output.as_ptr(), dest_buf as *mut u8, output.len());
+    dest_buf
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn sha1_buffer(

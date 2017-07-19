@@ -1091,9 +1091,7 @@ endif
 ## begin gnulib module crypto/md5
 ifeq (,$(OMIT_GNULIB_MODULE_crypto/md5))
 
-libgnu_a_SOURCES += md5.c
-
-EXTRA_DIST += gl_openssl.h md5.h
+EXTRA_DIST += md5.h
 
 endif
 ## end   gnulib module crypto/md5

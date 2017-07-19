@@ -5,6 +5,7 @@ dependencies = [
  "alloc_unexecmacosx 0.1.0",
  "lazy_static 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
+ "md5 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "remacs-lib 0.1.0",
  "remacs-macros 0.1.0",
@@ -84,6 +85,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "libc"
 version = "0.2.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "md5"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -207,6 +213,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 "checksum lazy_static 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)" = "4732c563b9a21a406565c4747daa7b46742f082911ae4753f390dc9ec7ee1a97"
 "checksum libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)" = "88ee81885f9f04bff991e306fea7c1c60a5f0f9e409e99f6b40e3311a3363135"
+"checksum md5 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "11f2f3240857d306c26118e2e92a5eaf8990df379e3d96573ee6c92cdbf58a81"
 "checksum nodrop 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "52cd74cd09beba596430cc6e3091b74007169a56246e1262f0ba451ea95117b2"
 "checksum odds 0.2.25 (registry+https://github.com/rust-lang/crates.io-index)" = "c3df9b730298cea3a1c3faa90b7e2f9df3a9c400d0936d6015e6165734eefcba"
 "checksum quote 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "7a6e920b65c65f10b2ae65c831a81a073a89edd28c7cce89475bff467ab4167a"
