@@ -54,39 +54,37 @@ fn hash_alg(algorithm: LispObject) -> HashAlg {
     }
 }
 
-fn get_input_from_string<'a>(object: &'a LispObject, string: &'a LispStringRef, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> &'a [u8] {
-    let mut coding_system = coding_system;
+fn get_coding_system_for_string(string: LispStringRef, coding_system: LispObject, noerror: LispObject) -> LispObject {
+    if coding_system.is_nil() {
+        /* Decide the coding-system to encode the data with. */
+        if string.is_multibyte() {
+            /* use default, we can't guess correct value */
+            LispObject::from_raw(unsafe { preferred_coding_system() })
+        } else {
+            LispObject::from_raw(unsafe { Qraw_text })
+        }
+    } else {
+        if LispObject::from_raw(unsafe { Fcoding_system_p(coding_system.to_raw()) }).is_nil() {
+            /* Invalid coding system. */
+            if noerror.is_not_nil() {
+                LispObject::from_raw(unsafe { Qraw_text })
+            }
+            else {
+                xsignal1(LispObject::from_raw(unsafe { Qcoding_system_error }), coding_system);
+            }
+        } else {
+            coding_system
+        }
+    }
+}
+
+fn get_input_from_string<'a>(object: &'a LispObject, string: &'a LispStringRef, start: LispObject, end: LispObject) -> &'a [u8] {
     let size: ptrdiff_t;
     let start_byte: ptrdiff_t;
     let end_byte: ptrdiff_t;
     let mut start_char: ptrdiff_t = 0;
     let mut end_char: ptrdiff_t = 0;
-    if coding_system.is_nil() {
-        /* Decide the coding-system to encode the data with. */
-        coding_system = if string.is_multibyte() {
-                            /* use default, we can't guess correct value */
-                            LispObject::from_raw(unsafe { preferred_coding_system() })
-                        } else {
-                            LispObject::from_raw(unsafe { Qraw_text })
-                        };
-    }
 
-    if LispObject::from_raw(unsafe { Fcoding_system_p(coding_system.to_raw()) }).is_nil() {
-        /* Invalid coding system. */
-        if noerror.is_not_nil() {
-            coding_system = LispObject::from_raw(unsafe { Qraw_text });
-        }
-        else {
-            xsignal1(LispObject::from_raw(unsafe { Qcoding_system_error }), coding_system);
-        }
-    }
-
-    //let object = if string.is_multibyte() {
-    //               LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), Qnil.to_raw(), true, false, true) })
-    //             } else {
-    //               *object
-    //             };
-    //let string = object.as_string_or_error();
     size = string.len_bytes();
     unsafe { validate_subarray(object.to_raw(), start.to_raw(), end.to_raw(), size, &mut start_char, &mut end_char); }
     start_byte = if start_char == 0 { 0 } else { unsafe { string_char_to_byte(object.to_raw(), start_char) } };
@@ -122,11 +120,17 @@ fn md5(
     coding_system: LispObject,
     noerror: LispObject
 ) -> LispObject {
-    let string: LispStringRef;
+    let mut string: LispStringRef;
     let buffer: LispBufferRef;
     let input = if object.is_string() {
                     string = object.as_string_or_error();
-                    get_input_from_string(&object, &string, start, end, coding_system, noerror)
+                    let coding_system = get_coding_system_for_string(string, coding_system, noerror);
+                    string = if string.is_multibyte() {
+                                 LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), Qnil.to_raw(), true, false, true) }).as_string_or_error()
+                             } else {
+                                 object.as_string_or_error()
+                             };
+                    get_input_from_string(&object, &string, start, end)
                 } else if object.is_buffer() {
                     buffer = object.as_buffer().unwrap();
                     get_input_from_buffer(&object, &buffer, start, end, coding_system, noerror)
@@ -153,11 +157,17 @@ fn secure_hash(
     end: LispObject,
     binary: LispObject
 ) -> LispObject {
-    let string: LispStringRef;
+    let mut string: LispStringRef;
     let buffer: LispBufferRef;
     let input = if object.is_string() {
                     string = object.as_string_or_error();
-                    get_input_from_string(&object, &string, start, end, Qnil, Qnil)
+                    let coding_system = get_coding_system_for_string(string, Qnil, Qnil);
+                    string = if string.is_multibyte() {
+                                 LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), Qnil.to_raw(), true, false, true) }).as_string_or_error()
+                             } else {
+                                 object.as_string_or_error()
+                             };
+                    get_input_from_string(&object, &string, start, end)
                 } else if object.is_buffer() {
                     buffer = object.as_buffer().unwrap();
                     get_input_from_buffer(&object, &buffer, start, end, Qnil, Qnil)
