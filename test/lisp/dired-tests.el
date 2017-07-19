@@ -21,7 +21,7 @@
 (require 'ert)
 (require 'dired)
 (require 'nadvice)
-
+(require 'ls-lisp)
 
 (ert-deftest dired-autoload ()
   "Tests to see whether dired-x has been autoloaded"
@@ -116,15 +116,58 @@
 
 (ert-deftest dired-test-bug27693 ()
   "Test for http://debbugs.gnu.org/27693 ."
-  (require 'ls-lisp)
-  (let ((size "")
-	ls-lisp-use-insert-directory-program)
-    (dired (list (expand-file-name "lisp" source-directory) "simple.el" "subr.el"))
-    (setq size (number-to-string
-                (file-attribute-size
-                 (file-attributes (dired-get-filename)))))
-    (search-backward-regexp size nil t)
-    (should (looking-back "[[:space:]]" (1- (point))))))
+  (let ((dir (expand-file-name "lisp" source-directory))
+        (size "")
+        ls-lisp-use-insert-directory-program buf)
+    (unwind-protect
+        (progn
+          (setq buf (dired (list dir "simple.el" "subr.el"))
+                size (number-to-string
+                      (file-attribute-size
+                       (file-attributes (dired-get-filename)))))
+          (search-backward-regexp size nil t)
+          (should (looking-back "[[:space:]]" (1- (point)))))
+      (when (buffer-live-p buf) (kill-buffer buf)))))
+
+(ert-deftest dired-test-bug7131 ()
+  "Test for http://debbugs.gnu.org/7131 ."
+  :expected-result :failed
+  (let* ((dir (expand-file-name "lisp" source-directory))
+         (buf (dired dir)))
+    (unwind-protect
+        (progn
+          (setq buf (dired (list dir "simple.el")))
+          (dired-toggle-marks)
+          (should-not (cdr (dired-get-marked-files)))
+          (kill-buffer buf)
+          (setq buf (dired (list dir "simple.el"))
+                buf (dired dir))
+          (dired-toggle-marks)
+          (should (cdr (dired-get-marked-files))))
+      (when (buffer-live-p buf) (kill-buffer buf)))))
+
+(ert-deftest dired-test-bug27762 ()
+  "Test for http://debbugs.gnu.org/27762 ."
+  :expected-result :failed
+  (let* ((dir source-directory)
+         (default-directory dir)
+         (files (mapcar (lambda (f) (concat "src/" f))
+                        (directory-files
+                         (expand-file-name "src") nil "\\.*\\.c\\'")))
+         ls-lisp-use-insert-directory-program buf)
+    (unwind-protect
+        (let ((file1 "src/cygw32.c")
+              (file2 "src/atimer.c"))
+          (setq buf (dired (nconc (list dir) files)))
+          (dired-goto-file (expand-file-name file2 default-directory))
+          (should-not (looking-at "^   -")) ; Must be 2 spaces not 3.
+          (setq files (cons file1 (delete file1 files)))
+          (kill-buffer buf)
+          (setq buf (dired (nconc (list dir) files)))
+          (should (looking-at "src"))
+          (next-line) ; File names must be aligned.
+          (should (looking-at "src")))
+      (when (buffer-live-p buf) (kill-buffer buf)))))
 
 (provide 'dired-tests)
 ;; dired-tests.el ends here
