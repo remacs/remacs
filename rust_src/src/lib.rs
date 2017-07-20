@@ -108,6 +108,7 @@ pub use vectors::Flength;
 pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
+pub use buffers::Fcurrent_buffer;
 
 // Cryptographic functions used in the C codebase.
 pub use crypto::sha1_buffer;
@@ -141,6 +142,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Soverlayp);
         defsubr(&*buffers::Sbuffer_live_p);
         defsubr(&*buffers::Sget_buffer);
+        defsubr(&*buffers::Scurrent_buffer);
         defsubr(&*windows::Swindowp);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
