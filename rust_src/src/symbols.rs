@@ -1,6 +1,7 @@
+use libc;
 use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::Lisp_Symbol;
+use remacs_sys::{Lisp_Symbol, intern_1};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
@@ -57,4 +58,14 @@ fn symbol_function(object: LispObject) -> LispObject {
 #[lisp_fn]
 fn symbol_plist(object: LispObject) -> LispObject {
     object.as_symbol_or_error().get_plist()
+}
+
+/// Intern (e.g. create a symbol from) a string slice.
+pub fn intern(s: &str) -> LispObject {
+    unsafe {
+        LispObject::from_raw(intern_1(
+            s.as_ptr() as *const libc::c_char,
+            s.len() as libc::ptrdiff_t,
+        ))
+    }
 }
