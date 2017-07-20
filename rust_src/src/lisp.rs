@@ -504,7 +504,6 @@ impl LispObject {
         }
     }
 
-    /// Equivalent to XSET_HASH_TABLE in C
     pub fn from_hash_table(_: LispHashTableRef) -> LispObject {
         LispObject::constant_t() // @TODO
     }

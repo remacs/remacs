@@ -1075,11 +1075,12 @@ extern "C" {
     pub static header_size: size_t;
     pub static bool_header_size: size_t;
     pub static word_size: size_t;
-
+        
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fget_buffer(buffer_or_name: Lisp_Object) -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
+    pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
