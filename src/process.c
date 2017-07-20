@@ -270,7 +270,7 @@ static Lisp_Object chan_process[FD_SETSIZE];
 static void wait_for_socket_fds (Lisp_Object, char const *);
 
 /* Alist of elements (NAME . PROCESS).  */
-static Lisp_Object Vprocess_alist;
+Lisp_Object Vprocess_alist;
 
 /* Buffered-ahead input char from process, indexed by channel.
    -1 means empty (no char is buffered).
