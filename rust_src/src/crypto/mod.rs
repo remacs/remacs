@@ -4,12 +4,12 @@ use sha2::{Sha224, Digest, Sha256, Sha384, Sha512};
 use std::{ptr, slice, str};
 use libc::{ptrdiff_t};
 
-use buffers::LispBufferRef;
+use buffers::{LispBufferRef, get_buffer};
 use eval::{xsignal1};
 use libc;
-use lisp::{LispObject, Qnil};
+use lisp::LispObject;
 use multibyte::LispStringRef;
-use remacs_sys::{error, nsberror, Fcurrent_buffer, get_buffer, EmacsInt, make_uninit_string, make_unibyte_string};
+use remacs_sys::{error, nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string, make_unibyte_string};
 use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string, validate_subarray, string_char_to_byte, wrong_type_argument};
 use remacs_sys::{current_buffer, record_unwind_current_buffer, set_buffer_internal, make_buffer_string, specpdl_ptr};
 use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw_text, Qcoding_system_error};
@@ -126,7 +126,7 @@ fn md5(
                     string = object.as_string_or_error();
                     let coding_system = get_coding_system_for_string(string, coding_system, noerror);
                     string = if string.is_multibyte() {
-                                 LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), Qnil.to_raw(), true, false, true) }).as_string_or_error()
+                                 LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), LispObject::constant_nil().to_raw(), true, false, true) }).as_string_or_error()
                              } else {
                                  object.as_string_or_error()
                              };
@@ -161,16 +161,16 @@ fn secure_hash(
     let buffer: LispBufferRef;
     let input = if object.is_string() {
                     string = object.as_string_or_error();
-                    let coding_system = get_coding_system_for_string(string, Qnil, Qnil);
+                    let coding_system = get_coding_system_for_string(string, LispObject::constant_nil(), LispObject::constant_nil());
                     string = if string.is_multibyte() {
-                                 LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), Qnil.to_raw(), true, false, true) }).as_string_or_error()
+                                 LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), LispObject::constant_nil().to_raw(), true, false, true) }).as_string_or_error()
                              } else {
                                  object.as_string_or_error()
                              };
                     get_input_from_string(&object, &string, start, end)
                 } else if object.is_buffer() {
                     buffer = object.as_buffer().unwrap();
-                    get_input_from_buffer(&object, &buffer, start, end, Qnil, Qnil)
+                    get_input_from_buffer(&object, &buffer, start, end, LispObject::constant_nil(), LispObject::constant_nil())
                 } else {
                     unsafe { wrong_type_argument(Qstringp, object.to_raw()); }
                 };
