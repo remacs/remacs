@@ -8631,6 +8631,7 @@ move_it_in_display_line_to (struct it *it,
   ptrdiff_t closest_pos UNINIT;
   ptrdiff_t prev_pos = IT_CHARPOS (*it);
   bool saw_smaller_pos = prev_pos < to_charpos;
+  bool line_number_pending = false;
 
   /* Don't produce glyphs in produce_glyphs.  */
   saved_glyph_row = it->glyph_row;
@@ -8682,9 +8683,13 @@ move_it_in_display_line_to (struct it *it,
   if (it->hpos == 0)
     {
       /* If line numbers are being displayed, produce a line number.  */
-      if (should_produce_line_number (it)
-	  && it->current_x == it->first_visible_x)
-	maybe_produce_line_number (it);
+      if (should_produce_line_number (it))
+	{
+	  if (it->current_x == it->first_visible_x)
+	    maybe_produce_line_number (it);
+	  else
+	    line_number_pending = true;
+	}
       /* If there's a line-/wrap-prefix, handle it.  */
       if (it->method == GET_FROM_BUFFER)
 	handle_line_prefix (it);
@@ -9055,6 +9060,15 @@ move_it_in_display_line_to (struct it *it,
 
 	      if (new_x > it->first_visible_x)
 		{
+		  /* If we have reached the visible portion of the
+		     screen line, produce the line number if needed.  */
+		  if (line_number_pending)
+		    {
+		      line_number_pending = false;
+		      it->current_x = it->first_visible_x;
+		      maybe_produce_line_number (it);
+		      it->current_x += new_x - it->first_visible_x;
+		    }
 		  /* Glyph is visible.  Increment number of glyphs that
 		     would be displayed.  */
 		  ++it->hpos;
