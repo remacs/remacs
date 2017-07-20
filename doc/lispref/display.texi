@@ -7476,7 +7476,7 @@ best to anchor it, i.e., begin it with a @code{"^"}.
 @defvar bidi-paragraph-separate-re
 If non-@code{nil}, this variable's value should be a regular
 expression matching a line separates two paragraphs.  The regular
-expression is always matched after a newline, so it is best to anch
+expression is always matched after a newline, so it is best to anchor
 it, i.e., begin it with a @code{"^"}.
 @end defvar
 

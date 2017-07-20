@@ -90,7 +90,7 @@
   ;; Both max-width/height.
   (im-should :h 50 100 :max-width 75 :max-height 100)
   (im-should :h 25 50 :max-width 25 :max-height 100)
-  ;; :hieght and :max-width (max-width wins).
+  ;; :height and :max-width (max-width wins).
   (im-should :h 200 400 :height 400 :max-width 200)
   (im-should :h 200 400 :height 500 :max-width 200)
   )

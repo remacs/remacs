@@ -57,8 +57,8 @@ equal to 2. This is done  using interactive calls."
 (ert-deftest ses-tests-lowlevel-renamed-cell ()
   "Check that renaming A1 to `foo' and setting `foo' to 1 and A2 to (1+ foo), makes A2 value equal to 2.
 This is done using low level functions, `ses-rename-cell' is not
-called but instead we use text replacement in the buffer priorly
-passed in text mode."
+called but instead we use text replacement in the buffer
+previously passed in text mode."
   (let ((ses-initial-size '(2 . 1)))
     (with-temp-buffer
       (ses-mode)

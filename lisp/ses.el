@@ -2526,7 +2526,7 @@ cell formula was unsafe and user declined confirmation."
 	   (setq initial (cons initial (length initial))))
        (dolist (key ses-completion-keys)
          (define-key ses-mode-edit-map key 'ses-edit-cell-complete-symbol))
-       ;; make it globally visible, so that it can be visbile from the minibuffer.
+       ;; make it globally visible, so that it can be visible from the minibuffer.
        (setq ses--completion-table ses--named-cell-hashmap)
        (list row col
 	     (read-from-minibuffer (format "Cell %s: " ses--curcell)
@@ -2670,7 +2670,7 @@ canceled."
 			 default)))
   (dolist (key ses-completion-keys)
     (define-key ses-mode-edit-map key 'ses-read-printer-complete-symbol))
-  ;; make it globally visible, so that it can be visbile from the minibuffer.
+  ;; make it globally visible, so that it can be visible from the minibuffer.
   (setq ses--completion-table ses--local-printer-hashmap)
   (let ((new (read-from-minibuffer prompt
 				   nil ; Initial contents.
