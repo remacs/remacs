@@ -1555,6 +1555,9 @@ manual.
 ** 'tcl-auto-fill-mode' is now declared obsolete.  Its functionality
 can be replicated simply by setting 'comment-auto-fill-only-comments'.
 
+** New pcase pattern 'rx' to match against a rx-style regular
+expression.
+
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
 
