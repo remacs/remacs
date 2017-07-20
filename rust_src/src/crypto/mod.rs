@@ -1,17 +1,18 @@
 use md5;
 use sha1;
 use sha2::{Sha224, Digest, Sha256, Sha384, Sha512};
+use std;
 use std::{ptr, slice, str};
 use libc::{ptrdiff_t};
 
 use buffers::{LispBufferRef, get_buffer};
 use eval::{xsignal1};
 use libc;
-use lisp::LispObject;
+use lisp::{LispObject, LispNumber};
 use multibyte::LispStringRef;
-use remacs_sys::{error, nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string, make_unibyte_string};
+use remacs_sys::{error, nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string, make_unibyte_string, make_specified_string};
 use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string, validate_subarray, string_char_to_byte, wrong_type_argument};
-use remacs_sys::{current_buffer, record_unwind_current_buffer, set_buffer_internal, make_buffer_string, specpdl_ptr};
+use remacs_sys::{current_thread, record_unwind_current_buffer, set_buffer_internal, make_buffer_string};
 use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw_text, Qcoding_system_error};
 use remacs_macros::lisp_fn;
 use symbols::symbol_name;
@@ -78,7 +79,11 @@ fn get_coding_system_for_string(string: LispStringRef, coding_system: LispObject
     }
 }
 
-fn get_input_from_string<'a>(object: &'a LispObject, string: &'a LispStringRef, start: LispObject, end: LispObject) -> &'a [u8] {
+fn get_coding_system_for_buffer(object: LispObject, buffer: LispBufferRef, start: LispObject, end: LispObject, coding_system: LispObject) -> LispObject {
+    coding_system
+}
+
+fn get_input_from_string(object: LispObject, string: LispStringRef, start: LispObject, end: LispObject) -> LispObject {
     let size: ptrdiff_t;
     let start_byte: ptrdiff_t;
     let end_byte: ptrdiff_t;
@@ -89,18 +94,63 @@ fn get_input_from_string<'a>(object: &'a LispObject, string: &'a LispStringRef, 
     unsafe { validate_subarray(object.to_raw(), start.to_raw(), end.to_raw(), size, &mut start_char, &mut end_char); }
     start_byte = if start_char == 0 { 0 } else { unsafe { string_char_to_byte(object.to_raw(), start_char) } };
     end_byte = if end_char == size { string.len_bytes() } else { unsafe { string_char_to_byte(object.to_raw(), end_char) } };
-    string.as_slice()
+    if start_byte == 0 && end_byte == size {
+        object
+    } else {
+        LispObject::from_raw(unsafe { make_specified_string(string.const_sdata_ptr().offset(start_byte), -1 as ptrdiff_t, end_byte - start_byte, string.is_multibyte()) })
+    }
 }
 
-fn get_input_from_buffer<'a>(object: &'a LispObject, buffer: &'a LispBufferRef, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> &'a [u8] {
-    let prev_buffer = unsafe { current_buffer };
-    unsafe { record_unwind_current_buffer() };
-    unsafe { set_buffer_internal(&buffer as *const _ as *const libc::c_void) };
-    //let string = unsafe { make_buffer_string(b, e, false) };
-    unsafe { set_buffer_internal(prev_buffer) };
-    unsafe { specpdl_ptr -= 40 }; // TODO: this needs to be std::mem::size_of<specbinding>()
-    //string.as_slice()
-    b"foo"
+fn get_input_from_buffer(object: LispObject, buffer: LispBufferRef, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> LispObject {
+    let prev_buffer = unsafe { (*current_thread).m_current_buffer };
+    //unsafe { record_unwind_current_buffer() };
+    //unsafe { set_buffer_internal(&buffer as *const _ as *const libc::c_void) };
+    let mut b = if start.is_nil() {
+                    buffer.begv
+                } else {
+                    match start.as_number_coerce_marker_or_error() {
+                        LispNumber::Fixnum(n) => n as ptrdiff_t,
+                        LispNumber::Float(n) => n as ptrdiff_t
+                    }
+                };
+    let mut e = if end.is_nil() {
+                    buffer.zv
+                } else {
+                    match end.as_number_coerce_marker_or_error() {
+                        LispNumber::Fixnum(n) => n as ptrdiff_t,
+                        LispNumber::Float(n) => n as ptrdiff_t
+                    }
+                };
+    if b > e {
+        std::mem::swap(&mut b, &mut e);
+    }
+    //if !(buffer.begv <= b && e <= buffer.zv) {
+    //    args_out_of_range(start, end);
+    //}
+    let string = LispObject::from_raw(unsafe { make_buffer_string(b, e, false) });
+    //unsafe { set_buffer_internal(prev_buffer) };
+    //unsafe { (*current_thread).m_specpdl_ptr.offset(-40) }; // TODO: this needs to be std::mem::size_of<specbinding>()
+    string
+}
+
+fn get_input(object: LispObject, string: &mut Option<LispStringRef>, buffer: &Option<LispBufferRef>, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> LispStringRef {
+    if object.is_string() {
+        if string.unwrap().is_multibyte() {
+            let coding_system = get_coding_system_for_string(string.unwrap(), coding_system, noerror);
+            *string = Some(LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), LispObject::constant_nil().to_raw(), true, false, true) }).as_string_or_error())
+        }
+        get_input_from_string(object, string.unwrap(), start, end).as_string_or_error()
+    } else if object.is_buffer() {
+        let s = get_input_from_buffer(object, buffer.unwrap(), start, end, coding_system, noerror);
+        if s.as_string_or_error().is_multibyte() {
+            let coding_system = get_coding_system_for_buffer(object, buffer.unwrap(), start, end, coding_system);
+            LispObject::from_raw(unsafe { code_convert_string(s.to_raw(), coding_system.to_raw(), LispObject::constant_nil().to_raw(), true, false, false) }).as_string_or_error()
+        } else {
+            s.as_string_or_error()
+        }
+    } else {
+        unsafe { wrong_type_argument(Qstringp, object.to_raw()); }
+    }
 }
 
 /// Return the secure hash of OBJECT, a buffer or string.
@@ -120,24 +170,10 @@ fn md5(
     coding_system: LispObject,
     noerror: LispObject
 ) -> LispObject {
-    let mut string: LispStringRef;
-    let buffer: LispBufferRef;
-    let input = if object.is_string() {
-                    string = object.as_string_or_error();
-                    let coding_system = get_coding_system_for_string(string, coding_system, noerror);
-                    string = if string.is_multibyte() {
-                                 LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), LispObject::constant_nil().to_raw(), true, false, true) }).as_string_or_error()
-                             } else {
-                                 object.as_string_or_error()
-                             };
-                    get_input_from_string(&object, &string, start, end)
-                } else if object.is_buffer() {
-                    buffer = object.as_buffer().unwrap();
-                    get_input_from_buffer(&object, &buffer, start, end, coding_system, noerror)
-                } else {
-                    unsafe { wrong_type_argument(Qstringp, object.to_raw()); }
-                };
-    _secure_hash(HashAlg::HashMD5, input, true)
+    let mut string = object.as_string();
+    let buffer = object.as_buffer();
+    let input = get_input(object, &mut string, &buffer, start, end, coding_system, noerror);
+    _secure_hash(HashAlg::HashMD5, input.as_slice(), true)
 }
 
 /// Return the secure hash of OBJECT, a buffer or string.
@@ -157,24 +193,10 @@ fn secure_hash(
     end: LispObject,
     binary: LispObject
 ) -> LispObject {
-    let mut string: LispStringRef;
-    let buffer: LispBufferRef;
-    let input = if object.is_string() {
-                    string = object.as_string_or_error();
-                    let coding_system = get_coding_system_for_string(string, LispObject::constant_nil(), LispObject::constant_nil());
-                    string = if string.is_multibyte() {
-                                 LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), LispObject::constant_nil().to_raw(), true, false, true) }).as_string_or_error()
-                             } else {
-                                 object.as_string_or_error()
-                             };
-                    get_input_from_string(&object, &string, start, end)
-                } else if object.is_buffer() {
-                    buffer = object.as_buffer().unwrap();
-                    get_input_from_buffer(&object, &buffer, start, end, LispObject::constant_nil(), LispObject::constant_nil())
-                } else {
-                    unsafe { wrong_type_argument(Qstringp, object.to_raw()); }
-                };
-    _secure_hash(hash_alg(algorithm), input, binary.is_nil())
+    let mut string = object.as_string();
+    let buffer = object.as_buffer();
+    let input = get_input(object, &mut string, &buffer, start, end, LispObject::constant_nil(), LispObject::constant_nil());
+    _secure_hash(hash_alg(algorithm), input.as_slice(), binary.is_nil())
 }
 
 #[no_mangle]
