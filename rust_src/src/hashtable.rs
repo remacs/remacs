@@ -1,3 +1,4 @@
+use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence};
 use std::mem;
@@ -51,7 +52,8 @@ impl LispHashTableRef {
     }
 }
 
-#[allow(dead_code)] // @TODO remove once this function is hooked up.
+/// Return a copy of hash table TABLE. 
+#[lisp_fn]
 fn copy_hash_table(htable: LispObject) -> LispObject {
     let mut table = htable.as_hash_table_or_error();
     let mut vec = LispHashTableRef::allocate();

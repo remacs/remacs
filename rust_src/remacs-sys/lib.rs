@@ -1071,10 +1071,6 @@ extern "C" {
     pub static Qfont_object: Lisp_Object;
     pub static Qhash_table_p: Lisp_Object;
     pub static lispsym: Lisp_Symbol;
-
-    pub static header_size: size_t;
-    pub static bool_header_size: size_t;
-    pub static word_size: size_t;
         
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;

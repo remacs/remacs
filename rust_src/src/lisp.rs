@@ -9,7 +9,7 @@ use std::mem;
 use std::slice;
 use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
-use libc::{c_void, intptr_t};
+use libc::{c_void, intptr_t, uintptr_t};
 
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
@@ -94,6 +94,22 @@ impl LispObject {
                        raw >> VALBITS
                    }) as u8;
         unsafe { mem::transmute(res) }
+    }
+
+    pub fn tag_ptr<T>(external: ExternalPtr<T>, ty: Lisp_Type) -> LispObject {
+        let raw = external.as_ptr() as intptr_t;
+        let res;
+        if USE_LSB_TAG {
+            let ptr = raw as intptr_t;
+            let tag = ty as intptr_t;
+            res = (ptr + tag) as EmacsInt;
+        } else {
+            let ptr = raw as EmacsUint as uintptr_t;
+            let tag = ty as EmacsUint as uintptr_t;
+            res = ((tag << VALBITS) + ptr) as EmacsInt;
+        }
+
+        LispObject::from_raw(res)
     }
 
     #[inline]
@@ -504,8 +520,12 @@ impl LispObject {
         }
     }
 
-    pub fn from_hash_table(_: LispHashTableRef) -> LispObject {
-        LispObject::constant_t() // @TODO
+    pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
+        let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
+        debug_assert!(object.get_type() == Lisp_Type::Lisp_Vectorlike
+                      && object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void);
+        debug_assert!(object.is_hash_table());
+        object
     }
 }
 
