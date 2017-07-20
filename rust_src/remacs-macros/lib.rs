@@ -79,7 +79,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
 
         lazy_static! {
             pub static ref #sname: ::remacs_sys::Lisp_Subr = ::remacs_sys::Lisp_Subr {
-                header: ::remacs_sys::vectorlike_header {
+                header: ::remacs_sys::Lisp_Vectorlike_Header {
                     size: (::remacs_sys::PseudovecType::PVEC_SUBR as ::libc::ptrdiff_t)
                         << ::remacs_sys::PSEUDOVECTOR_AREA_BITS,
                 },

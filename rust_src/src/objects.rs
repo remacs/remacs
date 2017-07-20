@@ -1,7 +1,7 @@
 //! Various functions operating on any object.
 
-use lisp::{LispObject, Qnil};
-use remacs_sys::{internal_equal, EqualKind};
+use lisp::LispObject;
+use remacs_sys::{internal_equal, EqualKind, Qnil};
 use remacs_macros::lisp_fn;
 
 
@@ -47,7 +47,7 @@ fn equal_including_properties(o1: LispObject, o2: LispObject) -> LispObject {
             o2.to_raw(),
             EqualKind::IncludingProperties,
             0,
-            Qnil.to_raw(),
+            Qnil,
         )
     };
     LispObject::from_bool(res)

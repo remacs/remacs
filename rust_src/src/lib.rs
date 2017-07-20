@@ -108,6 +108,7 @@ pub use strings::Fstring_lessp;
 pub use vectors::Flength;
 pub use vectors::Fsort;
 pub use lists::merge;
+pub use buffers::Fget_buffer;
 
 // Used in process.c
 pub use str2sig::str2sig;
@@ -133,6 +134,7 @@ pub extern "C" fn rust_init_syms() {
     unsafe {
         defsubr(&*buffers::Soverlayp);
         defsubr(&*buffers::Sbuffer_live_p);
+        defsubr(&*buffers::Sget_buffer);
         defsubr(&*windows::Swindowp);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);

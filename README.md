@@ -141,8 +141,13 @@ more Emacs-y.
 
 ### Requirements
 
-1. You will need [Rust installed](https://www.rust-lang.org/en-US/install.html). If you're on macOS, you will need Rust
-   nightly.
+1. You will need
+   [Rust installed](https://www.rust-lang.org/en-US/install.html). Remacs
+   uses unstable Rust features, so you will need to use nightly.
+
+        rustup install nightly
+        cd /path/to/remacs
+        rustup override set nightly
 
 2. You will need a C compiler and toolchain. On Linux, you can do
    something like `apt-get install build-essential automake`. On
@@ -229,15 +234,9 @@ First, make sure you have configured and built Remacs on your
 system. You'll probably want to generate TAGS too, so you can jump to
 definitions of C functions.
 
-Emacs C uses a lot of macros, so it's also useful to look at the expanded
-version of the code.
-
-Define a little file `src/dummy.c` with the C source of `numberp`, along
-with the `lisp.h` header file:
+This is the definition of `numberp`:
 
 ``` c
-#include "lisp.h"
-
 DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
        doc: /* Return t if OBJECT is a number (floating point or integer).  */
        attributes: const)
@@ -250,36 +249,13 @@ DEFUN ("numberp", Fnumberp, Snumberp, 1, 1, 0,
 }
 ```
 
-Then expand it with GCC:
+The `DEFUN` macro, in addition to defining a function `Fnumberp`, also
+creates a static struct `Snumberp` that describes the function for Emacs'
+Lisp interpreter.
 
-```
-$ cd /path/to/remacs
-$ gcc -Ilib -E src/dummy.c > dummy_exp.c
-```
-
-This gives us a file that ends with:
-
-``` c
-static struct Lisp_Subr
-# 3 "src/dummy.c" 3 4
-_Alignas
-# 3 "src/dummy.c"
-(8) Snumberp = { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS }, { .a1 = Fnumberp }, 1, 1, "numberp", 0, 0}; Lisp_Object Fnumberp
-
-
-  (Lisp_Object object)
-{
-  if (NUMBERP (object))
-    return Qt;
-  else
-    return builtin_lisp_symbol (0);
-}
-```
-
-We can see we need to define a `Snumberp` and a `Fnumberp`. We define
-a `numberp` function that does the actual work, then use an attribute
-(implemented as a procedural macro) named `lisp_fn` that handles
-these definitions for us:
+In Rust, we define a `numberp` function in Rust that does the actual work,
+then use an attribute (implemented as a procedural macro) named
+`lisp_fn` that handles these definitions for us:
 
 ``` rust
 // This is the function that gets called when
@@ -334,11 +310,24 @@ to be exported in lib.rs:
 pub use yourmodulename::Fnumberp;
 ```
 
-and add a declaration in the C where the function used to be:
+If the function is not a Lisp function (i.e. doesn't use the `#[lisp_fn]`
+macro), you need to manually mark it as `#[no_mangle]` and `extern "C"`
+to be exported with the correct ABI.
 
-```c
-// This should take the same number of arguments as the Rust function.
-Lisp_Object Fnumberp(Lisp_Object);
+### Source code style guide
+
+In order to pass Travis checks on pull requests, the source has to
+be formatted according to the default style of `rustfmt`, version 0.9.
+To do that, install `rustfmt`:
+
+```
+$ cargo install rustfmt
+```
+
+Then you can run this in the checkout root to reformat all Rust code:
+
+```
+$ make rustfmt
 ```
 
 ## Design Goals
@@ -388,19 +377,18 @@ one. If you do, please open a new issue to keep track of the task and link to it
 Easy tasks:
 
 - [ ] Find a small function in lisp.h and write an equivalent in lisp.rs.
-- [ ] Improve our unit tests. Currently we're passing `Qnil` to test
-  functions, which isn't very useful.
+- [ ] Add Rust unit tests. Currently we're relying on Emacs' own
+  test suite.
 - [ ] Add docstrings to public functions in lisp.rs.
 - [ ] Tidy up messy Rust that's been translated directly from C. Run
-  `rustfmt`, add or rename internal variables, run `clippy`, and so
-  on.
+  `rustfmt`, add or rename internal variables, run `clippy`, and so on.
 - [ ] Add Rust-level unit tests to elisp functions defined in lib.rs.
 
 Medium tasks:
 
 - [ ] Choose an elisp function you like, and port it to rust. Look at
   `rust-mod` for an example.
-- [ ] Teach `describe-function` to find functions defined in Rust.
+- [x] Teach `describe-function` to find functions defined in Rust.
 - [ ] Expand our Travis configuration to run 'make check', so we know
   remacs passes Emacs' internal test suite.
 - [x] Expand our Travis configuration to ensure that Rust code has been
@@ -409,7 +397,6 @@ Medium tasks:
 - [ ] Set up a badge tracking pub struct/function coverage using
   cargo-doc-coverage.
 - [ ] Search the Rust source code for `TODO` comments and fix them.
-- [ ] Teach Emacs how to jump to definition for Rust functions.
 
 Big tasks:
 

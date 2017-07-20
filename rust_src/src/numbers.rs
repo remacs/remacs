@@ -3,8 +3,8 @@
 use std::sync::Mutex;
 use rand::{StdRng, Rng, SeedableRng};
 
-use lisp::{LispObject, INTMASK};
-use remacs_sys::EmacsInt;
+use lisp::LispObject;
+use remacs_sys::{EmacsInt, INTMASK};
 use remacs_macros::lisp_fn;
 
 lazy_static! {

@@ -9,7 +9,7 @@ use eval::{xsignal1};
 use libc;
 use lisp::{LispObject, Qnil};
 use multibyte::LispStringRef;
-use remacs_sys::{error, nsberror, Fcurrent_buffer, Fget_buffer, EmacsInt, make_uninit_string, make_unibyte_string};
+use remacs_sys::{error, nsberror, Fcurrent_buffer, get_buffer, EmacsInt, make_uninit_string, make_unibyte_string};
 use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string, validate_subarray, string_char_to_byte, wrong_type_argument};
 use remacs_sys::{current_buffer, record_unwind_current_buffer, set_buffer_internal, make_buffer_string, specpdl_ptr};
 use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw_text, Qcoding_system_error};
@@ -261,11 +261,12 @@ unsafe fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
 /// disregarding any coding systems.  If nil, use the current buffer.
 #[lisp_fn(min = "0")]
 fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
-    let buffer = LispObject::from_raw(if buffer_or_name.is_nil() {
-        unsafe { Fcurrent_buffer() }
+    let buffer = if buffer_or_name.is_nil() {
+        LispObject::from_raw(unsafe { Fcurrent_buffer() })
     } else {
-        unsafe { Fget_buffer(buffer_or_name.to_raw()) }
-    });
+        get_buffer(buffer_or_name)
+    };
+
     if buffer.is_nil() {
         unsafe { nsberror(buffer_or_name.to_raw()) };
     }

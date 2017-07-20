@@ -1169,3 +1169,12 @@ check-declare:
 	  exit 1; \
 	fi
 	$(MAKE) -C lisp $@
+
+.PHONY: rustfmt
+
+rustfmt:
+	(cd rust_src && cargo fmt -- --write-mode overwrite)
+	(cd rust_src/remacs-sys && cargo fmt -- --write-mode overwrite)
+	(cd rust_src/remacs-lib && cargo fmt -- --write-mode overwrite)
+	(cd rust_src/remacs-macros && cargo fmt -- --write-mode overwrite lib.rs)
+	(cd rust_src/alloc_unexecmacosx && cargo fmt -- --write-mode overwrite)
