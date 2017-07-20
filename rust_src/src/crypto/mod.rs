@@ -103,8 +103,8 @@ fn get_input_from_string(object: LispObject, string: LispStringRef, start: LispO
 
 fn get_input_from_buffer(object: LispObject, buffer: LispBufferRef, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> LispObject {
     let prev_buffer = unsafe { (*current_thread).m_current_buffer };
-    //unsafe { record_unwind_current_buffer() };
-    //unsafe { set_buffer_internal(&buffer as *const _ as *const libc::c_void) };
+    unsafe { record_unwind_current_buffer() };
+    unsafe { set_buffer_internal(buffer.as_ptr() as *const _ as *const libc::c_void) };
     let mut b = if start.is_nil() {
                     buffer.begv
                 } else {
@@ -128,8 +128,8 @@ fn get_input_from_buffer(object: LispObject, buffer: LispBufferRef, start: LispO
     //    args_out_of_range(start, end);
     //}
     let string = LispObject::from_raw(unsafe { make_buffer_string(b, e, false) });
-    //unsafe { set_buffer_internal(prev_buffer) };
-    //unsafe { (*current_thread).m_specpdl_ptr.offset(-40) }; // TODO: this needs to be std::mem::size_of<specbinding>()
+    unsafe { set_buffer_internal(prev_buffer) };
+    unsafe { (*current_thread).m_specpdl_ptr.offset(-40) }; // TODO: this needs to be std::mem::size_of<specbinding>()
     string
 }
 
