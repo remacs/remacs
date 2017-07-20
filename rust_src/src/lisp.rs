@@ -15,6 +15,7 @@ use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
+use windows::LispWindowRef;
 use marker::LispMarkerRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
@@ -459,6 +460,10 @@ impl LispObject {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_WINDOW)
         })
+    }
+
+    pub fn as_window(self) -> Option<LispWindowRef> {
+        self.as_vectorlike().map_or(None, |v| v.as_window())
     }
 
     pub fn is_frame(self) -> bool {
