@@ -12,6 +12,10 @@ fn get_process(name: LispObject) -> LispObject {
         name
     } else {
         name.as_string_or_error();
-        cdr( assoc( name, LispObject::from_raw(unsafe { Vprocess_alist }), LispObject::constant_nil()) )
+        cdr(assoc(
+            name,
+            LispObject::from_raw(unsafe { Vprocess_alist }),
+            LispObject::constant_nil(),
+        ))
     }
 }
