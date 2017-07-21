@@ -2,7 +2,7 @@ use md5;
 use sha1;
 use sha2::{Sha224, Digest, Sha256, Sha384, Sha512};
 use std;
-use std::{ptr, slice, str};
+use std::{ptr, slice};
 use libc::{ptrdiff_t};
 
 use buffers::{LispBufferRef, get_buffer};
@@ -10,7 +10,7 @@ use eval::{xsignal1};
 use libc;
 use lisp::{LispObject, LispNumber};
 use multibyte::LispStringRef;
-use remacs_sys::{error, nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string, make_unibyte_string, make_specified_string};
+use remacs_sys::{error, nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string, make_specified_string};
 use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string, validate_subarray, string_char_to_byte, wrong_type_argument};
 use remacs_sys::{current_thread, record_unwind_current_buffer, set_buffer_internal, make_buffer_string, call4};
 use remacs_sys::{globals, Fbuffer_file_name, Ffind_operation_coding_system, Flocal_variable_p};
@@ -70,7 +70,7 @@ fn validate_coding_system(coding_system: LispObject, noerror: LispObject) -> Lis
     }
 }
 
-fn get_coding_system_for_string(string: LispStringRef, coding_system: LispObject, noerror: LispObject) -> LispObject {
+fn get_coding_system_for_string(string: LispStringRef, coding_system: LispObject) -> LispObject {
     if coding_system.is_nil() {
         /* Decide the coding-system to encode the data with. */
         if string.is_multibyte() {
@@ -136,7 +136,7 @@ fn get_input_from_string(object: LispObject, string: LispStringRef, start: LispO
     }
 }
 
-fn get_input_from_buffer(object: LispObject, buffer: LispBufferRef, start: LispObject, end: LispObject, start_byte: &mut ptrdiff_t, end_byte: &mut ptrdiff_t, coding_system: LispObject, noerror: LispObject) -> LispObject {
+fn get_input_from_buffer(buffer: LispBufferRef, start: LispObject, end: LispObject, start_byte: &mut ptrdiff_t, end_byte: &mut ptrdiff_t) -> LispObject {
     let prev_buffer = unsafe { (*current_thread).m_current_buffer };
     unsafe { record_unwind_current_buffer() };
     unsafe { set_buffer_internal(buffer.as_ptr() as *const _ as *const libc::c_void) };
@@ -171,14 +171,14 @@ fn get_input_from_buffer(object: LispObject, buffer: LispBufferRef, start: LispO
 fn get_input(object: LispObject, string: &mut Option<LispStringRef>, buffer: &Option<LispBufferRef>, start: LispObject, end: LispObject, coding_system: LispObject, noerror: LispObject) -> LispStringRef {
     if object.is_string() {
         if string.unwrap().is_multibyte() {
-            let coding_system = validate_coding_system(get_coding_system_for_string(string.unwrap(), coding_system, noerror), noerror);
+            let coding_system = validate_coding_system(get_coding_system_for_string(string.unwrap(), coding_system), noerror);
             *string = Some(LispObject::from_raw(unsafe { code_convert_string(object.to_raw(), coding_system.to_raw(), LispObject::constant_nil().to_raw(), true, false, true) }).as_string_or_error())
         }
         get_input_from_string(object, string.unwrap(), start, end).as_string_or_error()
     } else if object.is_buffer() {
         let mut start_byte: ptrdiff_t = 0;
         let mut end_byte: ptrdiff_t = 0;
-        let s = get_input_from_buffer(object, buffer.unwrap(), start, end, &mut start_byte, &mut end_byte, coding_system, noerror);
+        let s = get_input_from_buffer(buffer.unwrap(), start, end, &mut start_byte, &mut end_byte);
         if s.as_string_or_error().is_multibyte() {
             let coding_system = validate_coding_system(get_coding_system_for_buffer(object, buffer.unwrap(), start, end, start_byte, end_byte, coding_system), noerror);
             LispObject::from_raw(unsafe { code_convert_string(s.to_raw(), coding_system.to_raw(), LispObject::constant_nil().to_raw(), true, false, false) }).as_string_or_error()
