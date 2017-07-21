@@ -131,7 +131,6 @@
 
 (ert-deftest dired-test-bug7131 ()
   "Test for http://debbugs.gnu.org/7131 ."
-  :expected-result :failed
   (let* ((dir (expand-file-name "lisp" source-directory))
          (buf (dired dir)))
     (unwind-protect
