@@ -1150,6 +1150,8 @@ extern "C" {
     pub static Qfont_spec: Lisp_Object;
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
+    pub static Qwrite_region: Lisp_Object;
+    pub static Qbuffer_file_coding_system: Lisp_Object;
 
     pub static Qmd5: Lisp_Object;
     pub static Qsha1: Lisp_Object;
@@ -1167,6 +1169,9 @@ extern "C" {
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
+    pub fn Fbuffer_file_name(buffer: Lisp_Object) -> Lisp_Object;
+    pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
+    pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
@@ -1198,6 +1203,7 @@ extern "C" {
         ht: Lisp_Object,
     ) -> bool;
     pub fn call2(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object) -> Lisp_Object;
+    pub fn call4(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object, arg3: Lisp_Object, arg4: Lisp_Object) -> Lisp_Object;
 
     // These signal an error, therefore are marked as non-returning.
     pub fn circular_list(tail: Lisp_Object) -> !;
