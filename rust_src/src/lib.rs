@@ -44,6 +44,7 @@ mod windows;
 mod interactive;
 mod process;
 mod fonts;
+mod threads;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
