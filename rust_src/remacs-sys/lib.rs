@@ -471,11 +471,6 @@ pub enum EqualKind {
     IncludingProperties,
 }
 
-// TODO: the correct type for the thread types depends on whether
-// THREADS_ENABLED is true, and whether we have pthread enabled.
-type sys_thread_t = libc::c_ulonglong;
-type sys_cond_t = c_void;
-
 #[repr(C)]
 pub struct re_registers {
     pub num_regs: libc::c_uint,
@@ -486,117 +481,99 @@ pub struct re_registers {
 #[repr(C)]
 pub struct thread_state {
     pub header: Lisp_Vectorlike_Header,
-    /* The buffer in which the last search was performed, or
-    Qt if the last search was done in a string;
-    Qnil if no searching has been done yet.  */
+    /// The buffer in which the last search was performed, or
+    /// Qt if the last search was done in a string;
+    /// Qnil if no searching has been done yet.
     pub m_last_thing_searched: Lisp_Object,
 
     pub m_saved_last_thing_searched: Lisp_Object,
-    /* The thread's name.  */
+    /// The thread's name.
     pub name: Lisp_Object,
 
-    /* The thread's function.  */
+    /// The thread's function.
     pub function: Lisp_Object,
 
-    /* If non-nil, this thread has been signaled.  */
+    /// If non-nil, this thread has been signaled.
     pub error_symbol: Lisp_Object,
     pub error_data: Lisp_Object,
 
-    /* If we are waiting for some event, this holds the object we are
-    waiting on.  */
+    /// If we are waiting for some event, this holds the object we are
+    /// waiting on.
     pub event_object: Lisp_Object,
 
-    /* m_stack_bottom must be the first non-Lisp field.  */
-    /* An address near the bottom of the stack.
-    Tells GC how to save a copy of the stack.  */
+    /// m_stack_bottom must be the first non-Lisp field.
+    /// An address near the bottom of the stack.
+    /// Tells GC how to save a copy of the stack.
     pub m_stack_bottom: *mut c_char,
-    /* An address near the top of the stack.  */
+    /// An address near the top of the stack.
     pub stack_top: *mut c_char,
 
     pub m_catchlist: *mut c_void, // TODO
-    /* Chain of condition handlers currently in effect.
-    The elements of this chain are contained in the stack frames
-    of Fcondition_case and internal_condition_case.
-    When an error is signaled (by calling Fsignal),
-    this chain is searched for an element that applies.  */
+    /// Chain of condition handlers currently in effect.
+    /// The elements of this chain are contained in the stack frames
+    /// of Fcondition_case and internal_condition_case.
+    /// When an error is signaled (by calling Fsignal),
+    /// this chain is searched for an element that applies.
     pub m_handlerlist: *mut c_void, // TODO
     pub m_handlerlist_list: *mut c_void, // TODO
 
-    /* Current number of specbindings allocated in specpdl.  */
+    /// Current number of specbindings allocated in specpdl.
     pub m_specpdl_size: ptrdiff_t,
     
-    /* Pointer to beginning of specpdl.  */
+    /// Pointer to beginning of specpdl.
     pub m_specpdl: *mut c_void, // TODO
-    /* Pointer to first unused element in specpdl.  */
+    /// Pointer to first unused element in specpdl.
     pub m_specpdl_ptr: *mut c_void, // TODO
-    /* Depth in Lisp evaluations and function calls.  */
+    /// Depth in Lisp evaluations and function calls.
     pub m_lisp_eval_depth: EmacsInt,
 
-    /* This points to the current buffer.  */
-    // TODO: use ExternalPtr?
+    /// This points to the current buffer.
     pub m_current_buffer: *mut c_void,
-    /* Every call to re_match, etc., must pass &search_regs as the regs
-    argument unless you can show it is unnecessary (i.e., if re_match
-    is certainly going to be called again before region-around-match
-    can be called).
+    /// Every call to re_match, etc., must pass &search_regs as the regs
+    /// argument unless you can show it is unnecessary (i.e., if re_match
+    /// is certainly going to be called again before region-around-match
+    /// can be called).
 
-    Since the registers are now dynamically allocated, we need to make
-    sure not to refer to the Nth register before checking that it has
-    been allocated by checking search_regs.num_regs.
+    /// Since the registers are now dynamically allocated, we need to make
+    /// sure not to refer to the Nth register before checking that it has
+    /// been allocated by checking search_regs.num_regs.
 
-    The regex code keeps track of whether it has allocated the search
-    buffer using bits in the re_pattern_buffer.  This means that whenever
-    you compile a new pattern, it completely forgets whether it has
-    allocated any registers, and will allocate new registers the next
-    time you call a searching or matching function.  Therefore, we need
-    to call re_set_registers after compiling a new pattern or after
-    setting the match registers, so that the regex functions will be
-    able to free or re-allocate it properly.  */
+    /// The regex code keeps track of whether it has allocated the search
+    /// buffer using bits in the re_pattern_buffer.  This means that whenever
+    /// you compile a new pattern, it completely forgets whether it has
+    /// allocated any registers, and will allocate new registers the next
+    /// time you call a searching or matching function.  Therefore, we need
+    /// to call re_set_registers after compiling a new pattern or after
+    /// setting the match registers, so that the regex functions will be
+    /// able to free or re-allocate it properly.
     pub m_search_regs: re_registers,
-    /* If non-zero the match data have been saved in saved_search_regs
-    during the execution of a sentinel or filter. */
+    /// If non-zero the match data have been saved in saved_search_regs
+    /// during the execution of a sentinel or filter. */
     pub m_search_regs_saved: bool,
     pub m_saved_search_regs: re_registers,
-    /* This is the string or buffer in which we
-    are matching.  It is used for looking up syntax properties.
+    /// This is the string or buffer in which we
+    /// are matching.  It is used for looking up syntax properties.
 
-    If the value is a Lisp string object, we are matching text in that
-    string; if it's nil, we are matching text in the current buffer; if
-    it's t, we are matching text in a C string.  */
+    /// If the value is a Lisp string object, we are matching text in that
+    /// string; if it's nil, we are matching text in the current buffer; if
+    /// it's t, we are matching text in a C string.
     pub m_re_match_object: Lisp_Object,
-    /* This member is different from waiting_for_input.
-    It is used to communicate to a lisp process-filter/sentinel (via the
-    function Fwaiting_for_user_input_p) whether Emacs was waiting
-    for user-input when that process-filter was called.
-    waiting_for_input cannot be used as that is by definition 0 when
-    lisp code is being evalled.
-    This is also used in record_asynch_buffer_change.
-    For that purpose, this must be 0
-    when not inside wait_reading_process_output.  */
+    /// This member is different from waiting_for_input.
+    /// It is used to communicate to a lisp process-filter/sentinel (via the
+    /// function Fwaiting_for_user_input_p) whether Emacs was waiting
+    /// for user-input when that process-filter was called.
+    /// waiting_for_input cannot be used as that is by definition 0 when
+    /// lisp code is being evalled.
+    /// This is also used in record_asynch_buffer_change.
+    /// For that purpose, this must be 0
+    /// when not inside wait_reading_process_output.
     pub m_waiting_for_user_input_p: c_int,
-    /* True while doing kbd input.  */
+    /// True while doing kbd input.
     pub m_waiting_for_input: bool,
 
-    /* The OS identifier for this thread.  */
-    pub thread_id: sys_thread_t,
-    /* The condition variable for this thread.  This is associated with
-    the global lock.  This thread broadcasts to it when it exits.  */
-    pub thread_condvar: sys_cond_t,
-
-    /* This thread might be waiting for some condition.  If so, this
-    points to the condition.  If the thread is interrupted, the
-    interrupter should broadcast to this condition.  */
-    pub wait_condvar: *mut sys_cond_t,
-
-    /* This thread might have released the global lock.  If so, this is
-    non-zero.  When a thread runs outside thread_select with this
-    flag non-zero, it means it has been interrupted by SIGINT while
-    in thread_select, and didn't have a chance of acquiring the lock.
-    It must do so ASAP.  */
-    pub not_holding_lock: c_int,
-
-    /* Threads are kept on a linked list.  */
-    pub next_thread: *mut c_void,
+    // TODO: this struct is incomplete. We're missing thread_id,
+    // thread_condvar, wait_condvar, not_holding_lock, and
+    // next_thread.
 }
 
 /// Represents the global state of the editor.
@@ -1128,6 +1105,7 @@ pub struct emacs_globals {
 
 extern "C" {
     pub static mut globals: emacs_globals;
+    pub static current_thread: *const thread_state;
     pub static Qt: Lisp_Object;
     pub static Qarith_error: Lisp_Object;
     pub static Qrange_error: Lisp_Object;
@@ -1185,7 +1163,6 @@ extern "C" {
 
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;
-    pub static current_thread: *mut thread_state;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
@@ -1193,6 +1170,7 @@ extern "C" {
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
+    pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
     pub fn build_string(s: *const c_char) -> Lisp_Object;
     pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;
