@@ -49,14 +49,14 @@ pub type Codepoint = u32;
 pub const MAX_CHAR: Codepoint = (1 << CHARACTERBITS) - 1;
 
 /// Maximum character codes for several encoded lengths
-const MAX_1_BYTE_CHAR: Codepoint = 0x7F;
-const MAX_2_BYTE_CHAR: Codepoint = 0x7FF;
-const MAX_3_BYTE_CHAR: Codepoint = 0xFFFF;
-const MAX_4_BYTE_CHAR: Codepoint = 0x1F_FFFF;
-const MAX_5_BYTE_CHAR: Codepoint = 0x3F_FF7F;
+pub const MAX_1_BYTE_CHAR: Codepoint = 0x7F;
+pub const MAX_2_BYTE_CHAR: Codepoint = 0x7FF;
+pub const MAX_3_BYTE_CHAR: Codepoint = 0xFFFF;
+pub const MAX_4_BYTE_CHAR: Codepoint = 0x1F_FFFF;
+pub const MAX_5_BYTE_CHAR: Codepoint = 0x3F_FF7F;
 
 /// Maximum length of a single encoded codepoint
-const MAX_MULTIBYTE_LENGTH: usize = 5;
+pub const MAX_MULTIBYTE_LENGTH: usize = 5;
 
 
 impl LispStringRef {
@@ -177,7 +177,7 @@ pub fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdiff_t) -> ptrdiff_t
 
 /// Same as the BYTE8_TO_CHAR macro.
 #[inline]
-fn raw_byte_codepoint(byte: c_uchar) -> Codepoint {
+pub fn raw_byte_codepoint(byte: c_uchar) -> Codepoint {
     if byte >= 0x80 {
         byte as Codepoint + 0x3F_FF00
     } else {
@@ -187,7 +187,7 @@ fn raw_byte_codepoint(byte: c_uchar) -> Codepoint {
 
 /// Same as the CHAR_TO_BYTE8 macro.
 #[inline]
-fn raw_byte_from_codepoint(cp: Codepoint) -> c_uchar {
+pub fn raw_byte_from_codepoint(cp: Codepoint) -> c_uchar {
     (cp - 0x3F_FF00) as c_uchar
 }
 
@@ -372,7 +372,7 @@ fn multibyte_length(slice: &[c_uchar], allow_encoded_raw: bool) -> Option<usize>
 
 /// Same as the STRING_CHAR_ADVANCE macro.
 #[inline]
-fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
+pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
     let head = slice[0] as Codepoint;
     if head & 0x80 == 0 {
         (head, 1)
