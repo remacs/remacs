@@ -1623,10 +1623,14 @@ Special value `always' suppresses confirmation."
 	  (setq default-directory to
 		dired-directory (expand-file-name;; this is correct
 				 ;; with and without wildcards
-				 (file-name-nondirectory dired-directory)
+				 (file-name-nondirectory (if (stringp dired-directory)
+                                                             dired-directory
+                                                           (car dired-directory)))
 				 to))
 	  (let ((new-name (file-name-nondirectory
-			   (directory-file-name dired-directory))))
+			   (directory-file-name (if (stringp dired-directory)
+                                                    dired-directory
+                                                  (car dired-directory))))))
 	    ;; try to rename buffer, but just leave old name if new
 	    ;; name would already exist (don't try appending "<%d>")
 	    (or (get-buffer new-name)
