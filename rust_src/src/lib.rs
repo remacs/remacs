@@ -20,6 +20,7 @@ extern crate md5;
 extern crate rand;
 extern crate sha1;
 extern crate sha2;
+extern crate base64 as base64_crate;
 
 mod lisp;
 mod lists;
@@ -39,6 +40,7 @@ mod str2sig;
 mod multibyte;
 mod buffers;
 mod windows;
+mod interactive;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -126,6 +128,9 @@ pub use multibyte::str_to_multibyte;
 pub use multibyte::str_as_unibyte;
 pub use multibyte::str_to_unibyte;
 
+// Used in window.c, macros.c
+pub use interactive::Fprefix_numeric_value;
+
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
 }
@@ -204,9 +209,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*lists::Ssafe_length);
         defsubr(&*marker::Smarkerp);
         defsubr(&*strings::Sstringp);
-        defsubr(&*strings::Sbase64_encode_string);
-        defsubr(&*strings::Sbase64_decode_string);
         defsubr(&*strings::Smultibyte_string_p);
+        defsubr(&*base64::Sbase64_encode_string);
+        defsubr(&*base64::Sbase64_decode_string);
         defsubr(&*strings::Sstring_bytes);
         defsubr(&*strings::Sstring_equal);
         defsubr(&*strings::Sstring_as_multibyte);
@@ -234,6 +239,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*crypto::Smd5);
         defsubr(&*crypto::Ssecure_hash);
         defsubr(&*crypto::Sbuffer_hash);
+        defsubr(&*interactive::Sprefix_numeric_value);
 
         defsubr(&*floatfns::Sisnan);
         defsubr(&*floatfns::Sacos);
