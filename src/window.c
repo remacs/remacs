@@ -310,15 +310,6 @@ window.  Windows that have been deleted are not valid.  */)
   return WINDOW_VALID_P (object) ? Qt : Qnil;
 }
 
-DEFUN ("window-live-p", Fwindow_live_p, Swindow_live_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a live window and nil otherwise.
-A live window is a window that displays a buffer.
-Internal windows and deleted windows are not live.  */)
-  (Lisp_Object object)
-{
-  return WINDOW_LIVE_P (object) ? Qt : Qnil;
-}
-
 /* Frames and windows.  */
 DEFUN ("window-frame", Fwindow_frame, Swindow_frame, 0, 1, 0,
        doc: /* Return the frame that window WINDOW is on.
@@ -7731,7 +7722,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sminibuffer_window);
   defsubr (&Swindow_minibuffer_p);
   defsubr (&Swindow_valid_p);
-  defsubr (&Swindow_live_p);
   defsubr (&Swindow_frame);
   defsubr (&Sframe_root_window);
   defsubr (&Sframe_first_window);
