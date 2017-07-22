@@ -23,12 +23,12 @@ use remacs_macros::lisp_fn;
 use symbols::{symbol_name, fboundp};
 
 enum HashAlg {
-    HashMD5,
-    HashSHA1,
-    HashSHA224,
-    HashSHA256,
-    HashSHA384,
-    HashSHA512,
+    MD5,
+    SHA1,
+    SHA224,
+    SHA256,
+    SHA384,
+    SHA512,
 }
 
 static MD5_DIGEST_LEN: usize = 16;
@@ -41,17 +41,17 @@ static SHA512_DIGEST_LEN: usize = 512 / 8;
 fn hash_alg(algorithm: LispObject) -> HashAlg {
     algorithm.as_symbol_or_error();
     if algorithm.to_raw() == unsafe { Qmd5 } {
-        HashAlg::HashMD5
+        HashAlg::MD5
     } else if algorithm.to_raw() == unsafe { Qsha1 } {
-        HashAlg::HashSHA1
+        HashAlg::SHA1
     } else if algorithm.to_raw() == unsafe { Qsha224 } {
-        HashAlg::HashSHA224
+        HashAlg::SHA224
     } else if algorithm.to_raw() == unsafe { Qsha256 } {
-        HashAlg::HashSHA256
+        HashAlg::SHA256
     } else if algorithm.to_raw() == unsafe { Qsha384 } {
-        HashAlg::HashSHA384
+        HashAlg::SHA384
     } else if algorithm.to_raw() == unsafe { Qsha512 } {
-        HashAlg::HashSHA512
+        HashAlg::SHA512
     } else {
         let name = symbol_name(algorithm).as_string_or_error();
         unsafe {
@@ -60,7 +60,7 @@ fn hash_alg(algorithm: LispObject) -> HashAlg {
     }
 }
 
-fn validate_coding_system(coding_system: LispObject, noerror: LispObject) -> LispObject {
+fn check_coding_system_or_error(coding_system: LispObject, noerror: LispObject) -> LispObject {
     if LispObject::from_raw(unsafe { Fcoding_system_p(coding_system.to_raw()) }).is_nil() {
         /* Invalid coding system. */
         if noerror.is_not_nil() {
@@ -238,7 +238,8 @@ fn get_input_from_buffer(
     //}
     let string = LispObject::from_raw(unsafe { make_buffer_string(*start_byte, *end_byte, false) });
     unsafe { set_buffer_internal(prev_buffer) };
-    unsafe { (*current_thread).m_specpdl_ptr.offset(-40) }; // TODO: this needs to be std::mem::size_of<specbinding>()
+    // TODO: this needs to be std::mem::size_of<specbinding>()
+    unsafe { (*current_thread).m_specpdl_ptr.offset(-40) };
     string
 }
 
@@ -253,7 +254,7 @@ fn get_input(
 ) -> LispStringRef {
     if object.is_string() {
         if string.unwrap().is_multibyte() {
-            let coding_system = validate_coding_system(
+            let coding_system = check_coding_system_or_error(
                 get_coding_system_for_string(string.unwrap(), coding_system),
                 noerror,
             );
@@ -275,8 +276,9 @@ fn get_input(
         let mut start_byte: ptrdiff_t = 0;
         let mut end_byte: ptrdiff_t = 0;
         let s = get_input_from_buffer(buffer.unwrap(), start, end, &mut start_byte, &mut end_byte);
-        if s.as_string_or_error().is_multibyte() {
-            let coding_system = validate_coding_system(
+        let ss = s.as_string_or_error();
+        if ss.is_multibyte() {
+            let coding_system = check_coding_system_or_error(
                 get_coding_system_for_buffer(
                     object,
                     buffer.unwrap(),
@@ -299,7 +301,7 @@ fn get_input(
                 )
             }).as_string_or_error()
         } else {
-            s.as_string_or_error()
+            ss
         }
     } else {
         unsafe {
@@ -336,7 +338,7 @@ fn md5(
         coding_system,
         noerror,
     );
-    _secure_hash(HashAlg::HashMD5, input.as_slice(), true)
+    _secure_hash(HashAlg::MD5, input.as_slice(), true)
 }
 
 /// Return the secure hash of OBJECT, a buffer or string.
@@ -370,32 +372,31 @@ fn secure_hash(
     _secure_hash(hash_alg(algorithm), input.as_slice(), binary.is_nil())
 }
 
-#[no_mangle]
 fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
     let digest_size: usize;
     let hash_func: unsafe fn(&[u8], &mut [u8]);
     match algorithm {
-        HashAlg::HashMD5 => {
+        HashAlg::MD5 => {
             digest_size = MD5_DIGEST_LEN;
             hash_func = md5_buffer;
         }
-        HashAlg::HashSHA1 => {
+        HashAlg::SHA1 => {
             digest_size = SHA1_DIGEST_LEN;
             hash_func = sha1_buffer;
         }
-        HashAlg::HashSHA224 => {
+        HashAlg::SHA224 => {
             digest_size = SHA224_DIGEST_LEN;
             hash_func = sha224_buffer;
         }
-        HashAlg::HashSHA256 => {
+        HashAlg::SHA256 => {
             digest_size = SHA256_DIGEST_LEN;
             hash_func = sha256_buffer;
         }
-        HashAlg::HashSHA384 => {
+        HashAlg::SHA384 => {
             digest_size = SHA384_DIGEST_LEN;
             hash_func = sha384_buffer;
         }
-        HashAlg::HashSHA512 => {
+        HashAlg::SHA512 => {
             digest_size = SHA512_DIGEST_LEN;
             hash_func = sha512_buffer;
         }
@@ -414,19 +415,29 @@ fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
         hash_func(input, digest_str.as_mut_slice());
     }
     if hex {
-        make_digest_string(digest_str.as_mut_slice(), digest_size);
+        hexify_digest_string(digest_str.as_mut_slice(), digest_size);
     }
     digest
 }
 
-fn make_digest_string(buffer: &mut [u8], len: usize) {
+/// To avoid a copy, buffer is both the source and the destination of
+/// this transformation. Buffer must contain len bytes of data and
+/// 2*len bytes of space for the final hex string.
+fn hexify_digest_string(buffer: &mut [u8], len: usize) {
     static hexdigit: [u8; 16] = *b"0123456789abcdef";
+    debug_assert!(buffer.len() == 2 * len, "buffer must be long enough to hold 2*len hex digits");
     for i in (0..len).rev() {
         let v = buffer[i];
         buffer[2 * i] = hexdigit[(v >> 4) as usize];
         buffer[2 * i + 1] = hexdigit[(v & 0xf) as usize];
     }
 }
+
+// For the following hash functions, the caller must ensure that the
+// destination buffer is at least long enough to hold the
+// digest. Additionall, the caller may have been asked to return a hex
+// string, in which case dest_buf will be twice as long as the digest.
+// Thus, these functions are unsafe.
 
 unsafe fn md5_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     let output = md5::compute(buffer);
