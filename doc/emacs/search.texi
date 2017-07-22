@@ -624,8 +624,9 @@ matching}) has no effect on them.
   To search the Web for the text in region, type @kbd{M-s M-w}.  This
 command performs an Internet search for the words in region using the
 search engine whose @acronym{URL} is specified by the variable
-@code{eww-search-prefix}.  @xref{Basics, EWW, , eww, The Emacs Web
-Wowser Manual}.
+@code{eww-search-prefix} (@pxref{Basics, EWW, , eww, The Emacs Web
+Wowser Manual}).  If the region is not active, or doesn't contain any
+words, this command prompts the user for a URL or keywords to search.
 
 
 @node Symbol Search
