@@ -1,7 +1,6 @@
 use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence};
-use std::mem;
 use std::ptr;
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
@@ -10,7 +9,7 @@ impl LispHashTableRef {
     pub fn allocate() -> LispHashTableRef {
         let vec_ptr =
             allocate_pseudovector!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE);
-        LispHashTableRef::new(unsafe { mem::transmute(vec_ptr) })
+        LispHashTableRef::new(vec_ptr)
     }
 
     pub fn copy(&mut self, other: LispHashTableRef) {
@@ -24,7 +23,7 @@ impl LispHashTableRef {
     }
 
     pub fn get_next_weak(&self) -> LispHashTableRef {
-        LispHashTableRef::new(unsafe { mem::transmute(self.next_weak) })
+        LispHashTableRef::new(self.next_weak)
     }
 
     pub fn set_hash(&mut self, hash: LispObject) {
@@ -52,21 +51,19 @@ impl LispHashTableRef {
     }
 }
 
-/// Return a copy of hash table TABLE. 
+/// Return a copy of hash table TABLE.
 #[lisp_fn]
 fn copy_hash_table(htable: LispObject) -> LispObject {
     let mut table = htable.as_hash_table_or_error();
     let mut vec = LispHashTableRef::allocate();
     vec.copy(table);
-    
-    unsafe {
-        let hash = LispObject::from_raw(Fcopy_sequence(vec.get_hash().to_raw()));
-        let next = LispObject::from_raw(Fcopy_sequence(vec.get_next().to_raw()));
-        let index = LispObject::from_raw(Fcopy_sequence(vec.get_index().to_raw()));
-        vec.set_hash(hash);
-        vec.set_next(next);
-        vec.set_index(index);
-    }
+
+    let hash = LispObject::from_raw(unsafe { Fcopy_sequence(vec.get_hash().to_raw()) });
+    let next = LispObject::from_raw(unsafe { Fcopy_sequence(vec.get_next().to_raw()) });
+    let index = LispObject::from_raw(unsafe { Fcopy_sequence(vec.get_index().to_raw()) });
+    vec.set_hash(hash);
+    vec.set_next(next);
+    vec.set_index(index);
 
     let returnval = LispObject::from_hash_table(vec);
     if returnval.is_not_nil() {

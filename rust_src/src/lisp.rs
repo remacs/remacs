@@ -522,8 +522,10 @@ impl LispObject {
 
     pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
         let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
-        debug_assert!(object.get_type() == Lisp_Type::Lisp_Vectorlike
-                      && object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void);
+        debug_assert!(
+            object.is_vectorlike() && object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void
+        );
+
         debug_assert!(object.is_hash_table());
         object
     }

@@ -258,8 +258,12 @@ macro_rules! offset_of {
 }
 
 lazy_static! {
-    pub static ref HEADER_SIZE: usize = { unsafe { offset_of!(::remacs_sys::Lisp_Vector, contents) } };
-    pub static ref WORD_SIZE: usize = { ::std::mem::size_of::<::remacs_sys::Lisp_Object>() };
+    pub static ref HEADER_SIZE: usize = {
+        unsafe { offset_of!(::remacs_sys::Lisp_Vector, contents) }
+    };
+    pub static ref WORD_SIZE: usize = {
+        ::std::mem::size_of::<::remacs_sys::Lisp_Object>()
+    };
 }
 
 /// Equivalent to PSEUDOVECSIZE in C
@@ -272,7 +276,8 @@ macro_rules! pseudovecsize {
 /// Equivalent to VECSIZE in C
 macro_rules! vecsize {
     ($ty: ty) => {
-        ((::std::mem::size_of::<$ty>() - *::vectors::HEADER_SIZE + *::vectors::WORD_SIZE - 1) / *::vectors::WORD_SIZE)
+        ((::std::mem::size_of::<$ty>()
+          - *::vectors::HEADER_SIZE + *::vectors::WORD_SIZE - 1) / *::vectors::WORD_SIZE)
     }
 }
 
