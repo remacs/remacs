@@ -18,12 +18,12 @@ use buffers::LispBufferRef;
 use windows::LispWindowRef;
 use marker::LispMarkerRef;
 
-use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, INTMASK, USE_LSB_TAG, globals,
-                 Lisp_Type, Lisp_Bits, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons,
-                 Lisp_Object, lispsym, wrong_type_argument, make_float, circular_list,
-                 internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt, Qnumberp, Qfloatp, Qstringp,
-                 Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp, Qlistp,
-                 Qintegerp, Qconsp, SYMBOL_NAME, pvec_type, EqualKind};
+use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, INTMASK, USE_LSB_TAG,
+                 MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type, Lisp_Bits, Lisp_Misc_Any,
+                 Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym, wrong_type_argument,
+                 make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
+                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
+                 Qcharacterp, Qlistp, Qintegerp, Qconsp, SYMBOL_NAME, pvec_type, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -248,10 +248,7 @@ impl LispObject {
 impl LispObject {
     #[inline]
     pub fn from_fixnum(n: EmacsInt) -> LispObject {
-        debug_assert!(
-            unsafe { globals }.f_Vmost_negative_fixnum <= n &&
-                n <= unsafe { globals }.f_Vmost_positive_fixnum
-        );
+        debug_assert!(MOST_NEGATIVE_FIXNUM <= n && n <= MOST_POSITIVE_FIXNUM);
         Self::from_fixnum_truncated(n)
     }
 
@@ -277,15 +274,13 @@ impl LispObject {
     // TODO: it would be clearer if this function took a u64 or libc::c_int.
     #[inline]
     pub fn from_natnum(n: EmacsInt) -> LispObject {
-        debug_assert!(0 <= n && n <= unsafe { globals }.f_Vmost_positive_fixnum);
+        debug_assert!(0 <= n && n <= MOST_POSITIVE_FIXNUM);
         LispObject::from_fixnum_truncated(n)
     }
 
     #[inline]
     pub fn int_or_float_from_fixnum(n: EmacsInt) -> LispObject {
-        if n < unsafe { globals }.f_Vmost_negative_fixnum ||
-            n > unsafe { globals }.f_Vmost_positive_fixnum
-        {
+        if n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM {
             Self::from_float(n as f64)
         } else {
             Self::from_fixnum(n)
@@ -294,8 +289,7 @@ impl LispObject {
 
     #[inline]
     pub fn fixnum_overflow(n: EmacsInt) -> bool {
-        n < unsafe { globals }.f_Vmost_negative_fixnum ||
-            n > unsafe { globals }.f_Vmost_positive_fixnum
+        n < MOST_NEGATIVE_FIXNUM || n > MOST_POSITIVE_FIXNUM
     }
 
     #[inline]

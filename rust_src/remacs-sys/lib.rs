@@ -72,3 +72,8 @@ extern "C" {
 
     pub fn build_string(s: *const std::os::raw::c_char) -> Lisp_Object;
 }
+
+// Largest and smallest numbers that can be represented as fixnums in
+// Emacs lisp.
+pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> Lisp_Bits::INTTYPEBITS as u32;
+pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);

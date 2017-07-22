@@ -14,7 +14,7 @@ use buffers::LispBufferRef;
 use windows::LispWindowRef;
 use remacs_sys::{Qsequencep, EmacsInt, wrong_type_argument, error, PSEUDOVECTOR_FLAG,
                  More_Lisp_Bits, pvec_type, Lisp_Vectorlike, Lisp_Vector, Lisp_Bool_Vector,
-                 globals};
+                 MOST_POSITIVE_FIXNUM};
 use remacs_macros::lisp_fn;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
@@ -146,7 +146,7 @@ fn length(sequence: LispObject) -> LispObject {
         }
     } else if let Some(_) = sequence.as_cons() {
         let len = sequence.iter_tails().count();
-        if len > unsafe { globals }.f_Vmost_positive_fixnum as usize {
+        if len > MOST_POSITIVE_FIXNUM as usize {
             unsafe {
                 error("List too long\0".as_ptr());
             }

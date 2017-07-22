@@ -7,7 +7,8 @@ use eval::{xsignal0, xsignal2};
 use math::ArithOp;
 use lisp::{LispObject, LispNumber};
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qnumberp, Qinteger_or_marker_p,
-                 Qarith_error, Qrange_error, wrong_type_argument, build_string, globals};
+                 Qarith_error, Qrange_error, wrong_type_argument, build_string,
+                 MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM};
 use remacs_sys::libm;
 use remacs_macros::lisp_fn;
 
@@ -248,18 +249,18 @@ fn logb(arg: LispObject) -> LispObject {
     let res = if let Some(n) = arg.as_fixnum() {
         let i = n.abs();
         if i == 0 {
-            unsafe { globals }.f_Vmost_negative_fixnum
+            MOST_NEGATIVE_FIXNUM
         } else {
             (mem::size_of::<EmacsUint>() * 8) as EmacsInt - 1 - i.leading_zeros() as EmacsInt
         }
     } else if let Some(f) = arg.as_float() {
         if f == 0.0 {
-            unsafe { globals }.f_Vmost_negative_fixnum
+            MOST_NEGATIVE_FIXNUM
         } else if f.is_finite() {
             let (_, exp) = libm::frexp(f);
             exp as EmacsInt - 1
         } else {
-            unsafe { globals }.f_Vmost_positive_fixnum
+            MOST_POSITIVE_FIXNUM
         }
     } else {
         unsafe {
@@ -350,7 +351,7 @@ where
     // for overflow after converting (as FIXNUM_OVERFLOW_P is inaccurate
     // on floats).
     let dr = double_round(d);
-    if dr.abs() < (2 * (unsafe { globals }.f_Vmost_positive_fixnum + 1)) as f64 {
+    if dr.abs() < (2 * (MOST_POSITIVE_FIXNUM + 1)) as f64 {
         let ir = dr as EmacsInt;
         if !LispObject::fixnum_overflow(ir) {
             return LispObject::from_fixnum(ir);
