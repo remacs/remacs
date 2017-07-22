@@ -179,7 +179,7 @@ fn assq(key: LispObject, list: LispObject) -> LispObject {
 ///
 /// Equality is defined by TESTFN is non-nil or by `equal' if nil.
 #[lisp_fn(min = "2")]
-fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObject {
+pub fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
         if let Some(item_cons) = item.as_cons() {
