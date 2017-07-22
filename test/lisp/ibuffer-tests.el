@@ -150,6 +150,7 @@
 
 ;; Test Filter Inclusion
 (let* (test-buffer-list  ; accumulated buffers to clean up
+       test-file-list
        ;; Utility functions without polluting the environment
        (set-buffer-mode
         (lambda (buffer mode)
@@ -192,6 +193,7 @@
                  (file    (make-temp-file prefix nil suffix))
                  (buf     (find-file-noselect file t)))
             (push buf test-buffer-list) ; record for cleanup
+            (push file test-file-list)
             (funcall set-buffer-mode buf mode)
             (funcall set-buffer-contents buf size include)
             buf)))
@@ -213,6 +215,8 @@
        (clean-up
         (lambda ()
           "Restore all emacs state modified during the tests"
+          (dolist (f test-file-list)
+            (and f (file-exists-p f) (delete-file f)))
           (while test-buffer-list       ; created temporary buffers
             (let ((buf (pop test-buffer-list)))
               (with-current-buffer buf (bury-buffer)) ; ensure not selected
