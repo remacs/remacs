@@ -12,10 +12,8 @@ impl LispHashTableRef {
         LispHashTableRef::new(vec_ptr)
     }
 
-    pub fn copy(&mut self, other: LispHashTableRef) {
-        unsafe {
-            ptr::copy_nonoverlapping(other.as_ptr(), self.as_mut(), 1);
-        };
+    pub unsafe fn copy(&mut self, other: LispHashTableRef) {
+        ptr::copy_nonoverlapping(other.as_ptr(), self.as_mut(), 1);
     }
 
     pub fn set_next_weak(&mut self, other: LispHashTableRef) {
@@ -69,7 +67,7 @@ impl LispHashTableRef {
 fn copy_hash_table(htable: LispObject) -> LispObject {
     let mut table = htable.as_hash_table_or_error();
     let mut new_table = LispHashTableRef::allocate();
-    new_table.copy(table);
+    unsafe { new_table.copy(table) };
     assert!(new_table.as_ptr() != table.as_ptr());
 
     let key_and_value = LispObject::from_raw(unsafe {
