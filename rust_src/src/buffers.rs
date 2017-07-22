@@ -3,7 +3,7 @@
 use libc::{c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Buffer, Vbuffer_alist};
+use remacs_sys::{buffer, Vbuffer_alist};
 use strings::string_equal;
 use lists::{car, cdr};
 
@@ -11,7 +11,7 @@ use remacs_macros::lisp_fn;
 
 pub const BEG_BYTE: ptrdiff_t = 1;
 
-pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
+pub type LispBufferRef = ExternalPtr<buffer>;
 
 impl LispBufferRef {
     #[inline]
@@ -57,7 +57,7 @@ impl LispBufferRef {
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
-        LispObject::from_raw(self.name).is_not_nil()
+        LispObject::from_raw(self.name_).is_not_nil()
     }
 }
 

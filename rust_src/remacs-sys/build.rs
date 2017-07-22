@@ -109,14 +109,28 @@ fn run_bindgen() {
         // this is wallpaper for a function argument that shadows a static of the same name
         // https://github.com/servo/rust-bindgen/issues/840
         .hide_type("face_change")
+        // these never return, and bindgen doesn't yet detect that, so we will do them manually
+        .hide_type("error")
+        .hide_type("circular_list")
+        .hide_type("wrong_type_argument")
+        .hide_type("nsberror")
+        .hide_type("emacs_abort")
+        .hide_type("Fsignal")
         .generate()
         .expect("Unable to generate bindings");
 
     // https://github.com/servo/rust-bindgen/issues/839
     let source = bindings.to_string();
-    let re = regex::Regex::new(r"pub use self::gnutls_cipher_algorithm_t as gnutls_cipher_algorithm;");
-    let munged = re.unwrap().replace_all(&source, "// pub use self::gnutls_cipher_algorithm_t as gnutls_cipher_algorithm;");
+    let re = regex::Regex::new(
+        r"pub use self::gnutls_cipher_algorithm_t as gnutls_cipher_algorithm;",
+    );
+    let munged = re.unwrap().replace_all(
+        &source,
+        "// pub use self::gnutls_cipher_algorithm_t as gnutls_cipher_algorithm;",
+    );
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
     let file = File::create(out_path);
-    file.unwrap().write_all(munged.into_owned().as_bytes()).unwrap();
+    file.unwrap()
+        .write_all(munged.into_owned().as_bytes())
+        .unwrap();
 }
