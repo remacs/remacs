@@ -60,12 +60,14 @@ fn symbol_plist(object: LispObject) -> LispObject {
     object.as_symbol_or_error().get_plist()
 }
 
-/// Intern (e.g. create a symbol from) a string slice.
-pub fn intern(s: &str) -> LispObject {
-    unsafe {
-        LispObject::from_raw(intern_1(
+/// Intern (e.g. create a symbol from) a string.
+#[allow(dead_code)]
+pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
+    let s = string.as_ref();
+    LispObject::from_raw(unsafe {
+        intern_1(
             s.as_ptr() as *const libc::c_char,
             s.len() as libc::ptrdiff_t,
-        ))
-    }
+        )
+    })
 }
