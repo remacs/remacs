@@ -249,8 +249,6 @@ pub fn condition_variable_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_condition_variable())
 }
 
-// This is kind of a hack way of getting offsetof into Rust,
-// but I believe it should be fine for what we need it for.
 macro_rules! offset_of {
     ($ty:ty, $field:ident) => {
         &(*(0 as *const $ty)).$field as *const _ as usize

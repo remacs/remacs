@@ -64,6 +64,7 @@ impl LispHashTableRef {
 }
 
 /// Return a copy of hash table TABLE.
+/// Keys and values are not copied, only the table itself is.
 #[lisp_fn]
 fn copy_hash_table(htable: LispObject) -> LispObject {
     let mut table = htable.as_hash_table_or_error();
