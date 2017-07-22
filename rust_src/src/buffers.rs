@@ -32,20 +32,18 @@ impl LispBufferRef {
     #[inline]
     pub fn gap_end_addr(&self) -> *mut c_uchar {
         unsafe {
-            (*self.text).beg.offset(
-                (*self.text).gpt_byte + (*self.text).gap_size -
-                    BEG_BYTE,
-            )
+            (*self.text)
+                .beg
+                .offset((*self.text).gpt_byte + (*self.text).gap_size - BEG_BYTE)
         }
     }
 
     #[inline]
     pub fn z_addr(&self) -> *mut c_uchar {
         unsafe {
-            (*self.text).beg.offset(
-                (*self.text).gap_size + (*self.text).z_byte -
-                    BEG_BYTE,
-            )
+            (*self.text)
+                .beg
+                .offset((*self.text).gap_size + (*self.text).z_byte - BEG_BYTE)
         }
     }
 
@@ -77,9 +75,8 @@ pub fn buffer_live_p(object: LispObject) -> LispObject {
 /// Like Fassoc, but use Fstring_equal to compare
 /// (which ignores text properties), and don't ever quit.
 fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
-    let result = list.iter_tails_safe().find(|&item| {
-        string_equal(car(item.car()), key).is_not_nil()
-    });
+    let result = list.iter_tails_safe()
+        .find(|&item| string_equal(car(item.car()), key).is_not_nil());
     if let Some(elt) = result {
         elt.car()
     } else {

@@ -161,9 +161,9 @@ impl LispObject {
     pub fn symbol_or_string_as_string(string: LispObject) -> LispStringRef {
         match string.as_symbol() {
             Some(sym) => {
-                sym.symbol_name().as_string().expect(
-                    "Expected a symbol name?",
-                )
+                sym.symbol_name()
+                    .as_string()
+                    .expect("Expected a symbol name?")
             }
             None => string.as_string_or_error(),
         }
@@ -405,39 +405,33 @@ impl LispObject {
 
 impl LispObject {
     pub fn is_thread(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_THREAD)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_THREAD))
     }
 
     pub fn is_mutex(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_MUTEX)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_MUTEX))
     }
 
     pub fn is_condition_variable(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_CONDVAR)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_CONDVAR))
     }
 
     pub fn is_byte_code_function(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_COMPILED)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_COMPILED))
     }
 
     pub fn is_subr(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_SUBR)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_SUBR))
     }
 
     pub fn is_buffer(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_BUFFER)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_BUFFER))
     }
 
     pub fn as_buffer(self) -> Option<LispBufferRef> {
@@ -445,9 +439,8 @@ impl LispObject {
     }
 
     pub fn is_char_table(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE))
     }
 
     pub fn is_bool_vector(self) -> bool {
@@ -472,15 +465,13 @@ impl LispObject {
     }
 
     pub fn is_process(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_PROCESS)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_PROCESS))
     }
 
     pub fn is_window(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_WINDOW)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_WINDOW))
     }
 
     pub fn as_window(self) -> Option<LispWindowRef> {
@@ -488,21 +479,18 @@ impl LispObject {
     }
 
     pub fn is_frame(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_FRAME)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_FRAME))
     }
 
     pub fn is_hash_table(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_HASH_TABLE)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_HASH_TABLE))
     }
 
     pub fn is_font(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_FONT)
-        })
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_FONT))
     }
 }
 
@@ -752,16 +740,15 @@ impl LispObject {
 
     /// If the LispObject is a number (of any kind), get a floating point value for it
     pub fn any_to_float(self) -> Option<EmacsDouble> {
-        self.as_float().or_else(
-            || self.as_fixnum().map(|i| i as EmacsDouble),
-        )
+        self.as_float()
+            .or_else(|| self.as_fixnum().map(|i| i as EmacsDouble))
     }
 
     pub fn any_to_float_or_error(self) -> EmacsDouble {
         self.as_float().unwrap_or_else(|| {
-            self.as_fixnum().unwrap_or_else(|| unsafe {
-                wrong_type_argument(Qnumberp, self.to_raw())
-            }) as EmacsDouble
+            self.as_fixnum()
+                .unwrap_or_else(|| unsafe { wrong_type_argument(Qnumberp, self.to_raw()) }) as
+                EmacsDouble
         })
     }
 }
@@ -844,10 +831,8 @@ impl LispObject {
 
     #[inline]
     pub fn is_marker(self) -> bool {
-        self.as_misc().map_or(
-            false,
-            |m| m.ty == Lisp_Misc_Type::Marker,
-        )
+        self.as_misc()
+            .map_or(false, |m| m.ty == Lisp_Misc_Type::Marker)
     }
 
     #[inline]
@@ -863,10 +848,8 @@ impl LispObject {
 
     /// Nonzero iff X is a character.
     pub fn is_character(self) -> bool {
-        self.as_fixnum().map_or(
-            false,
-            |i| 0 <= i && i <= MAX_CHAR as EmacsInt,
-        )
+        self.as_fixnum()
+            .map_or(false, |i| 0 <= i && i <= MAX_CHAR as EmacsInt)
     }
 
     /// Check if Lisp object is a character or not and return the codepoint
@@ -881,10 +864,8 @@ impl LispObject {
 
     #[inline]
     pub fn is_overlay(self) -> bool {
-        self.as_misc().map_or(
-            false,
-            |m| m.ty == Lisp_Misc_Type::Overlay,
-        )
+        self.as_misc()
+            .map_or(false, |m| m.ty == Lisp_Misc_Type::Overlay)
     }
 
     // The three Emacs Lisp comparison functions.
@@ -979,8 +960,7 @@ impl Debug for LispObject {
                     )?;
                 }
             }
-            Lisp_Type::Lisp_Int0 |
-            Lisp_Type::Lisp_Int1 => {
+            Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => {
                 write!(f, "{}", self.as_fixnum().unwrap())?;
             }
             Lisp_Type::Lisp_Misc => {
