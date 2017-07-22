@@ -97,6 +97,10 @@ Terminal is automatically initialized to use 24-bit colors if the
 required capabilities are found in terminfo.  See the FAQ node
 "Colors on a TTY" for more information.
 
++++
+** Emacs now obeys the X resource "scrollBar" at startup.
+The effect is similar to that of "toolBar" resource on the tool bar.
+
 
 * Changes in Emacs 26.1
 
