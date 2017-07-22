@@ -124,6 +124,17 @@ pub enum PseudovecType {
     PVEC_FONT, /* Should be last because it's used for range checking.  */
 }
 
+#[repr(C)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
+pub enum TextCursorKinds {
+    DEFAULT_CURSOR = -2,
+    NO_CURSOR = -1,
+    FILLED_BOX_CURSOR,
+    HOLLOW_BOX_CURSOR,
+    BAR_CURSOR,
+    HBAR_CURSOR,
+}
+
 pub type bits_word = size_t;
 
 /// Representation of an Emacs Lisp function symbol.
@@ -283,6 +294,97 @@ pub struct Lisp_Marker {
     pub next: *const Lisp_Marker,
     pub charpos: ptrdiff_t,
     pub bytepos: ptrdiff_t,
+}
+
+/// Represents the cursor position within an Emacs window. For
+/// documentation see stuct cursor_pos in window.h.
+#[repr(C)]
+pub struct CursorPos {
+    // Pixel position.  These are always window relative.
+    x: c_int,
+    y: c_int,
+    // Glyph matrix position.
+    hpos: c_int,
+    vpos: c_int,
+}
+
+/// Represents an Emacs window. For documentation see struct window in
+/// window.h.
+#[repr(C)]
+pub struct Lisp_Window {
+    pub header: Lisp_Vectorlike_Header,
+    pub frame: Lisp_Object,
+    pub next: Lisp_Object,
+    pub prev: Lisp_Object,
+    pub parent: Lisp_Object,
+    pub normal_lines: Lisp_Object,
+    pub normal_cols: Lisp_Object,
+    pub new_total: Lisp_Object,
+    pub new_normal: Lisp_Object,
+    pub new_pixel: Lisp_Object,
+    pub contents: Lisp_Object,
+    pub start: Lisp_Object,
+    pub pointm: Lisp_Object,
+    pub old_pointm: Lisp_Object,
+    pub temslot: Lisp_Object,
+    pub vertical_scroll_bar: Lisp_Object,
+    pub vertical_scroll_bar_type: Lisp_Object,
+    pub horizontal_scroll_bar: Lisp_Object,
+    pub horizontal_scroll_bar_type: Lisp_Object,
+    pub display_table: Lisp_Object,
+    pub dedicated: Lisp_Object,
+    pub redisplay_end_trigger: Lisp_Object,
+    pub combination_limit: Lisp_Object,
+    pub window_parameters: Lisp_Object,
+    pub current_matrix: *mut c_void,
+    pub desired_matrix: *mut c_void,
+    pub prev_buffers: Lisp_Object,
+    pub next_buffers: Lisp_Object,
+    pub use_time: EmacsInt,
+    pub sequence_number: EmacsInt,
+    pub pixel_left: c_int,
+    pub pixel_top: c_int,
+    pub left_col: c_int,
+    pub top_line: c_int,
+    pub pixel_width: c_int,
+    pub pixel_height: c_int,
+    pub pixel_width_before_size_change: c_int,
+    pub pixel_height_before_size_change: c_int,
+    pub total_cols: c_int,
+    pub total_lines: c_int,
+    pub hscroll: ptrdiff_t,
+    pub min_hscroll: ptrdiff_t,
+    pub hscroll_whole: ptrdiff_t,
+    pub last_modified: EmacsInt,
+    pub last_overlay_modified: EmacsInt,
+    pub last_point: ptrdiff_t,
+    pub base_line_number: ptrdiff_t,
+    pub base_line_pos: ptrdiff_t,
+    pub column_number_displayed: ptrdiff_t,
+    pub nrows_scale_factor: c_int,
+    pub ncols_scale_factor: c_int,
+    pub cursor: CursorPos,
+    pub phys_cursor: CursorPos,
+    pub output_cursor: CursorPos,
+    pub last_cursor_vpos: c_int,
+    pub phys_cursor_type: TextCursorKinds,
+    pub phys_cursor_width: c_int,
+    pub phys_cursor_ascent: c_int,
+    pub phys_cursor_height: c_int,
+    pub left_fringe_width: c_int,
+    pub right_fringe_width: c_int,
+    pub left_margin_cols: c_int,
+    pub right_margin_cols: c_int,
+    pub scroll_bar_width: c_int,
+    pub scroll_bar_height: c_int,
+    pub mode_line_height: c_int,
+    pub header_line_height: c_int,
+    pub window_end_pos: ptrdiff_t,
+    pub window_end_vpos: c_int,
+    // XXX: in Emacs, a bitfield of 16 booleans
+    pub flags: u16,
+    pub vscroll: c_int,
+    pub window_end_bytepos: ptrdiff_t,
 }
 
 /// Represents an Emacs buffer. For documentation see struct buffer in
@@ -1042,6 +1144,7 @@ extern "C" {
     pub static Qvectorp: Lisp_Object;
     pub static Qsequencep: Lisp_Object;
     pub static Qcharacterp: Lisp_Object;
+    pub static Qminus: Lisp_Object;
 
     pub static Qinteger: Lisp_Object;
     pub static Qsymbol: Lisp_Object;
@@ -1071,10 +1174,10 @@ extern "C" {
     pub static Qfont_object: Lisp_Object;
     pub static Qhash_table_p: Lisp_Object;
     pub static lispsym: Lisp_Symbol;
-        
+    pub static Vbuffer_alist: Lisp_Object;
+
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
-    pub fn Fget_buffer(buffer_or_name: Lisp_Object) -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
 

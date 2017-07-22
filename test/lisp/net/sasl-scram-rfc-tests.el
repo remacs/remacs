@@ -41,7 +41,7 @@
     (should
      (equal
       (sasl-scram-sha-1-client-final-message client (vector nil data))
-      "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=wr9Fw7zCv3Bzw5k9AiRmw4lDIXRfw6HDiMOhOw=="))
+      "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts="))
 
     ;; This should not throw an error:
     (sasl-scram-sha-1-authenticate-server client (vector nil "v=rmF9pqV8S7suAoZWja4dJRkFsKQ=

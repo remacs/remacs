@@ -19,6 +19,7 @@ extern crate libc;
 extern crate rand;
 extern crate sha1;
 extern crate sha2;
+extern crate base64 as base64_crate;
 
 mod lisp;
 mod lists;
@@ -40,6 +41,7 @@ mod multibyte;
 mod buffers;
 mod windows;
 mod hashtable;
+mod interactive;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -109,6 +111,7 @@ pub use strings::Fstring_lessp;
 pub use vectors::Flength;
 pub use vectors::Fsort;
 pub use lists::merge;
+pub use buffers::Fget_buffer;
 
 // Cryptographic functions used in the C codebase.
 pub use crypto::sha1_buffer;
@@ -132,6 +135,9 @@ pub use multibyte::str_to_multibyte;
 pub use multibyte::str_as_unibyte;
 pub use multibyte::str_to_unibyte;
 
+// Used in window.c, macros.c
+pub use interactive::Fprefix_numeric_value;
+
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
 }
@@ -141,7 +147,9 @@ pub extern "C" fn rust_init_syms() {
     unsafe {
         defsubr(&*buffers::Soverlayp);
         defsubr(&*buffers::Sbuffer_live_p);
+        defsubr(&*buffers::Sget_buffer);
         defsubr(&*windows::Swindowp);
+        defsubr(&*windows::Swindow_live_p);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
         defsubr(&*lists::Snlistp);
@@ -208,9 +216,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*lists::Ssafe_length);
         defsubr(&*marker::Smarkerp);
         defsubr(&*strings::Sstringp);
-        defsubr(&*strings::Sbase64_encode_string);
-        defsubr(&*strings::Sbase64_decode_string);
         defsubr(&*strings::Smultibyte_string_p);
+        defsubr(&*base64::Sbase64_encode_string);
+        defsubr(&*base64::Sbase64_decode_string);
         defsubr(&*strings::Sstring_bytes);
         defsubr(&*strings::Sstring_equal);
         defsubr(&*strings::Sstring_as_multibyte);
@@ -237,6 +245,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Slength);
         defsubr(&*hashtable::Scopy_hash_table);
         defsubr(&*crypto::Sbuffer_hash);
+        defsubr(&*interactive::Sprefix_numeric_value);
 
         defsubr(&*floatfns::Sisnan);
         defsubr(&*floatfns::Sacos);

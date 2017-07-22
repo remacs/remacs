@@ -405,36 +405,6 @@ followed by the rest of the buffers.  */)
     return general;
 }
 
-/* Like Fassoc, but use Fstring_equal to compare
-   (which ignores text properties), and don't ever quit.  */
-
-static Lisp_Object
-assoc_ignore_text_properties (Lisp_Object key, Lisp_Object list)
-{
-  Lisp_Object tail;
-  for (tail = list; CONSP (tail); tail = XCDR (tail))
-    {
-      Lisp_Object elt = XCAR (tail);
-      if (!NILP (Fstring_equal (Fcar (elt), key)))
-	return elt;
-    }
-  return Qnil;
-}
-
-DEFUN ("get-buffer", Fget_buffer, Sget_buffer, 1, 1, 0,
-       doc: /* Return the buffer named BUFFER-OR-NAME.
-BUFFER-OR-NAME must be either a string or a buffer.  If BUFFER-OR-NAME
-is a string and there is no buffer with that name, return nil.  If
-BUFFER-OR-NAME is a buffer, return it as given.  */)
-  (register Lisp_Object buffer_or_name)
-{
-  if (BUFFERP (buffer_or_name))
-    return buffer_or_name;
-  CHECK_STRING (buffer_or_name);
-
-  return Fcdr (assoc_ignore_text_properties (buffer_or_name, Vbuffer_alist));
-}
-
 DEFUN ("get-file-buffer", Fget_file_buffer, Sget_file_buffer, 1, 1, 0,
        doc: /* Return the buffer visiting file FILENAME (a string).
 The buffer's `buffer-file-name' must match exactly the expansion of FILENAME.
@@ -6172,7 +6142,6 @@ Functions running this hook are, `get-buffer-create',
   DEFSYM (Qbuffer_list_update_hook, "buffer-list-update-hook");
 
   defsubr (&Sbuffer_list);
-  defsubr (&Sget_buffer);
   defsubr (&Sget_file_buffer);
   defsubr (&Sget_buffer_create);
   defsubr (&Smake_indirect_buffer);
