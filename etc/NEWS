@@ -438,13 +438,18 @@ range of indentation.
 This is similar to what linum-mode provides, but much faster and
 doesn't usurp the display margin for the line numbers.  Customize the
 buffer-local variable 'display-line-numbers' to activate this optional
-display.  If set to t, Emacs will display the number of each line
-before the line.  If set to 'relative', Emacs will display the line
-number relative to the line showing point, with that line's number
-displayed as absolute.  If set to 'visual', Emacs will display a
-relative number for every screen line, i.e. it will count screen lines
-rather than buffer lines.  The default is nil, which doesn't display
-the line numbers.
+display.  Alternatively, you can use the `display-line-numbers-mode'
+minor mode or the global `global-display-line-numbers-mode'.  When
+using these modes, customize `display-line-numbers-type' with the same
+value as you would use with `display-line-numbers'.
+
+If `display-line-numbers' is set to t, Emacs will display the number
+of each line before the line.  If set to 'relative', Emacs will
+display the line number relative to the line showing point, with that
+line's number displayed as absolute.  If set to 'visual', Emacs will
+display a relative number for every screen line, i.e. it will count
+screen lines rather than buffer lines.  The default is nil, which
+doesn't display the line numbers.
 
 In 'relative' and 'visual' modes, the variable
 'display-line-numbers-current-absolute' controls what number is
@@ -462,14 +467,23 @@ new face 'line-number-current-line' can be customized to display the
 current line's number differently from all the other line numbers; by
 default these two faces are identical.
 
-You can also customize the new variable 'display-line-numbers-width' to
-specify a fixed minimal with of the area allocated to line-number
-display.  The default is nil, meaning that Emacs will dynamically
-calculate the area width, enlarging or shrinking it as needed.
-Setting it to a non-negative integer specifies that as the minimal
-width; selecting a value  that is large enough to display all line
-numbers in a buffer will then keep the line-number display area of
-constant width at all times, if that is desired.
+You can also customize the new buffer-local variable
+'display-line-numbers-width' to specify a fixed minimal with of the
+area allocated to line-number display.  The default is nil, meaning
+that Emacs will dynamically calculate the area width, enlarging or
+shrinking it as needed.  Setting it to a non-negative integer
+specifies that as the minimal width; selecting a value that is large
+enough to display all line numbers in a buffer will then keep the
+line-number display area of constant width at all times, if that is
+desired.
+
+When using `display-line-numbers-mode', you can customize the variable
+`display-line-numbers-grow-only' to a non-nil value; this means that
+Emacs may grow the above area width dynamically, but never shrink it.
+Under this mode, customizing the variable
+`display-line-numbers-width-start' to a non-nil value will cause Emacs
+to set `display-line-numbers-width' to the minimum width necessary to
+display all line numbers in the current buffer when first visiting it.
 
 Lisp programs can disable line-number display for a particular screen
 line by putting the 'display-line-numbers-disable' text property or
