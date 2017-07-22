@@ -1105,7 +1105,7 @@ pub struct emacs_globals {
 
 extern "C" {
     pub static mut globals: emacs_globals;
-    pub static current_thread: *const thread_state;
+    pub static current_thread: *mut thread_state;
     pub static Qt: Lisp_Object;
     pub static Qarith_error: Lisp_Object;
     pub static Qrange_error: Lisp_Object;

@@ -239,7 +239,7 @@ fn get_input_from_buffer(
     let string = LispObject::from_raw(unsafe { make_buffer_string(*start_byte, *end_byte, false) });
     unsafe { set_buffer_internal(prev_buffer) };
     // TODO: this needs to be std::mem::size_of<specbinding>()
-    unsafe { (*current_thread).m_specpdl_ptr.offset(-40) };
+    unsafe { (*current_thread).m_specpdl_ptr = (*current_thread).m_specpdl_ptr.offset(-40) };
     string
 }
 
