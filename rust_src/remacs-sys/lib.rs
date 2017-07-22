@@ -519,7 +519,7 @@ pub struct thread_state {
 
     /// Current number of specbindings allocated in specpdl.
     pub m_specpdl_size: ptrdiff_t,
-    
+
     /// Pointer to beginning of specpdl.
     pub m_specpdl: *mut c_void, // TODO
     /// Pointer to first unused element in specpdl.
@@ -1181,18 +1181,42 @@ extern "C" {
     pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;
     pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
-    pub fn make_specified_string(contents: *const c_char, nchars: ptrdiff_t, nbytes: ptrdiff_t, multibyte: bool) -> Lisp_Object;
+    pub fn make_specified_string(
+        contents: *const c_char,
+        nchars: ptrdiff_t,
+        nbytes: ptrdiff_t,
+        multibyte: bool,
+    ) -> Lisp_Object;
     pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
 
     pub fn preferred_coding_system() -> Lisp_Object;
     pub fn Fcoding_system_p(o: Lisp_Object) -> Lisp_Object;
-    pub fn code_convert_string(string: Lisp_Object, coding_system: Lisp_Object, dst_object: Lisp_Object, encodep: bool, nocopy: bool, norecord: bool) -> Lisp_Object;
-    pub fn validate_subarray(array: Lisp_Object, from: Lisp_Object, to: Lisp_Object, size: libc::ptrdiff_t, ifrom: &mut libc::ptrdiff_t, ito: &mut libc::ptrdiff_t);
-    pub fn string_char_to_byte(string: Lisp_Object, char_index: libc::ptrdiff_t) -> libc::ptrdiff_t;
+    pub fn code_convert_string(
+        string: Lisp_Object,
+        coding_system: Lisp_Object,
+        dst_object: Lisp_Object,
+        encodep: bool,
+        nocopy: bool,
+        norecord: bool,
+    ) -> Lisp_Object;
+    pub fn validate_subarray(
+        array: Lisp_Object,
+        from: Lisp_Object,
+        to: Lisp_Object,
+        size: libc::ptrdiff_t,
+        ifrom: &mut libc::ptrdiff_t,
+        ito: &mut libc::ptrdiff_t,
+    );
+    pub fn string_char_to_byte(string: Lisp_Object, char_index: libc::ptrdiff_t)
+        -> libc::ptrdiff_t;
 
     pub fn record_unwind_current_buffer();
     pub fn set_buffer_internal(buffer: *const libc::c_void); // TODO: buffer*
-    pub fn make_buffer_string(start: libc::ptrdiff_t, end: libc::ptrdiff_t, props: bool) -> Lisp_Object;
+    pub fn make_buffer_string(
+        start: libc::ptrdiff_t,
+        end: libc::ptrdiff_t,
+        props: bool,
+    ) -> Lisp_Object;
 
     pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
     pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const c_void);
@@ -1204,7 +1228,13 @@ extern "C" {
         ht: Lisp_Object,
     ) -> bool;
     pub fn call2(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object) -> Lisp_Object;
-    pub fn call4(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object, arg3: Lisp_Object, arg4: Lisp_Object) -> Lisp_Object;
+    pub fn call4(
+        fn_: Lisp_Object,
+        arg1: Lisp_Object,
+        arg2: Lisp_Object,
+        arg3: Lisp_Object,
+        arg4: Lisp_Object,
+    ) -> Lisp_Object;
 
     // These signal an error, therefore are marked as non-returning.
     pub fn circular_list(tail: Lisp_Object) -> !;
