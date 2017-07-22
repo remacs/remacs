@@ -49,26 +49,43 @@ impl LispHashTableRef {
     pub fn get_index(&self) -> LispObject {
         LispObject::from_raw(self.index)
     }
+
+    pub fn get_key_and_value(&self) -> LispObject {
+        LispObject::from_raw(self.key_and_value)
+    }
+
+    pub fn set_key_and_value(&mut self, key_and_value: LispObject) {
+        self.key_and_value = key_and_value.to_raw();
+    }
+
+    pub fn get_weak(&self) -> LispObject {
+        LispObject::from_raw(self.weak)
+    }
 }
 
 /// Return a copy of hash table TABLE.
 #[lisp_fn]
 fn copy_hash_table(htable: LispObject) -> LispObject {
     let mut table = htable.as_hash_table_or_error();
-    let mut vec = LispHashTableRef::allocate();
-    vec.copy(table);
+    let mut new_table = LispHashTableRef::allocate();
+    new_table.copy(table);
+    assert!(new_table.as_ptr() != table.as_ptr());
 
-    let hash = LispObject::from_raw(unsafe { Fcopy_sequence(vec.get_hash().to_raw()) });
-    let next = LispObject::from_raw(unsafe { Fcopy_sequence(vec.get_next().to_raw()) });
-    let index = LispObject::from_raw(unsafe { Fcopy_sequence(vec.get_index().to_raw()) });
-    vec.set_hash(hash);
-    vec.set_next(next);
-    vec.set_index(index);
+    let key_and_value = LispObject::from_raw(unsafe {
+        Fcopy_sequence(new_table.get_key_and_value().to_raw())
+    });
+    let hash = LispObject::from_raw(unsafe { Fcopy_sequence(new_table.get_hash().to_raw()) });
+    let next = LispObject::from_raw(unsafe { Fcopy_sequence(new_table.get_next().to_raw()) });
+    let index = LispObject::from_raw(unsafe { Fcopy_sequence(new_table.get_index().to_raw()) });
+    new_table.set_key_and_value(key_and_value);
+    new_table.set_hash(hash);
+    new_table.set_next(next);
+    new_table.set_index(index);
 
-    let returnval = LispObject::from_hash_table(vec);
-    if returnval.is_not_nil() {
-        vec.set_next_weak(table.get_next_weak());
-        table.set_next_weak(vec);
+    let returnval = LispObject::from_hash_table(new_table);
+    if new_table.get_weak().is_not_nil() {
+        new_table.set_next_weak(table.get_next_weak());
+        table.set_next_weak(new_table);
     }
 
     returnval
