@@ -105,6 +105,16 @@ required capabilities are found in terminfo.  See the FAQ node
 This argument, when non-nil, is used for comparison instead of
 'equal'.
 
+---
+** New variable 'executable-prefix-env' for inserting magic signatures.
+This variable affects the format of the interpreter magic number
+inserted by 'executable-set-magic'.  If non-nil, the magic number now
+takes the form "#!/usr/bin/env interpreter", otherwise the value
+determined by 'executable-prefix', which is by default
+"#!/path/to/interpreter".  By default, 'executable-prefix-env' is nil,
+so the default behavior is not changed.
+
++++
 ** The variable 'emacs-version' no longer includes the build number.
 This is now stored separately in a new variable, 'emacs-build-number'.
 
