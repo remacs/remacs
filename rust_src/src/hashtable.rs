@@ -83,11 +83,10 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
     new_table.set_next(next);
     new_table.set_index(index);
 
-    let returnval = LispObject::from_hash_table(new_table);
     if new_table.get_weak().is_not_nil() {
         new_table.set_next_weak(table.get_next_weak());
         table.set_next_weak(new_table);
     }
 
-    returnval
+    LispObject::from_hash_table(new_table)
 }
