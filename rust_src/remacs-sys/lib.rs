@@ -56,9 +56,11 @@ pub enum EqualKind {
     IncludingProperties,
 }
 
-// bindgen apparently misses these
+// bindgen apparently misses these, for various reasons
 pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (Lisp_Bits::INTTYPEBITS as u32 - 1));
 extern "C" {
+    // this one wasn't declared in a header, for example
+    pub static Vprocess_alist: Lisp_Object;
     pub fn internal_equal(
         o1: Lisp_Object,
         o2: Lisp_Object,
