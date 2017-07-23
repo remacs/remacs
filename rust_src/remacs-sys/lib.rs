@@ -18,8 +18,8 @@ extern crate libc;
 
 pub mod libm;
 
-use libc::{c_char, c_uchar, c_short, c_int, c_double, c_float, c_void, ptrdiff_t, size_t, off_t, time_t,
-           timespec};
+use libc::{c_char, c_uchar, c_short, c_int, c_double, c_float, c_void, ptrdiff_t, size_t, off_t,
+           time_t, timespec};
 
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
@@ -1104,8 +1104,8 @@ pub struct hash_table_test {
     pub name: Lisp_Object,
     pub user_hash_function: Lisp_Object,
     pub user_cmp_function: Lisp_Object,
-    pub cmpfn: extern fn(t: *mut hash_table_test, a: Lisp_Object, b: Lisp_Object) -> bool,
-    pub hashfn: extern fn(t: *mut hash_table_test, a: Lisp_Object) -> EmacsUint
+    pub cmpfn: extern "C" fn(t: *mut hash_table_test, a: Lisp_Object, b: Lisp_Object) -> bool,
+    pub hashfn: extern "C" fn(t: *mut hash_table_test, a: Lisp_Object) -> EmacsUint,
 }
 
 #[repr(C)]
@@ -1122,7 +1122,7 @@ pub struct Lisp_Hash_Table {
     pub rehash_size: c_float,
     pub key_and_value: Lisp_Object,
     pub test: hash_table_test,
-    pub next_weak: *mut Lisp_Hash_Table
+    pub next_weak: *mut Lisp_Hash_Table,
 }
 
 extern "C" {
@@ -1226,9 +1226,10 @@ extern "C" {
         nchars_return: *mut ptrdiff_t,
     ) -> ptrdiff_t;
 
-    pub fn allocate_pseudovector(vecsize: c_int,
-                                 offset1: c_int,
-                                 offset2: c_int,
-                                 pvec_type: PseudovecType)
-                                 -> *mut Lisp_Vector;
+    pub fn allocate_pseudovector(
+        vecsize: c_int,
+        offset1: c_int,
+        offset2: c_int,
+        pvec_type: PseudovecType,
+    ) -> *mut Lisp_Vector;
 }
