@@ -1,7 +1,7 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{font, Qfont_spec, Qfont_entity, Qfont_object};
 use lisp::LispObject;
-use symbols::intern;
+use lisp::intern;
 use vectors::LispVectorlikeRef;
 
 // A font is not a type in and of itself, it's just a group of three kinds of
