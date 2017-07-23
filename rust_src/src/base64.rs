@@ -8,7 +8,7 @@ use base64_crate;
 use lisp::LispObject;
 use strings::MIME_LINE_LENGTH;
 use multibyte::{MAX_5_BYTE_CHAR, multibyte_char_at, raw_byte_from_codepoint};
-use remacs_sys::{error, make_unibyte_string};
+use remacs_sys::make_unibyte_string;
 use remacs_macros::lisp_fn;
 
 #[no_mangle]
@@ -151,24 +151,24 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
     // This function uses SAFE_ALLOCA in the c layer, however I cannot find an equivalent
     // for rust. Instead, we will use a Vec to store the temporary char buffer.
     let mut buffer: Vec<c_char> = Vec::with_capacity(allength as usize);
+    let encoded = buffer.as_mut_ptr();
+    let encoded_length = base64_encode_1(
+        string.sdata_ptr(),
+        encoded,
+        length,
+        no_line_break.is_nil(),
+        string.is_multibyte(),
+    );
+
+    if encoded_length > allength {
+        panic!("base64 encoded length is larger then allocated buffer");
+    }
+
+    if encoded_length < 0 {
+        error!("Multibyte character in data for base64 encoding");
+    }
+
     unsafe {
-        let encoded = buffer.as_mut_ptr();
-        let encoded_length = base64_encode_1(
-            string.sdata_ptr(),
-            encoded,
-            length,
-            no_line_break.is_nil(),
-            string.is_multibyte(),
-        );
-
-        if encoded_length > allength {
-            panic!("base64 encoded length is larger then allocated buffer");
-        }
-
-        if encoded_length < 0 {
-            error("Multibyte character in data for base64 encoding\0".as_ptr());
-        }
-
         LispObject::from_raw(make_unibyte_string(encoded, encoded_length))
     }
 }
@@ -181,16 +181,15 @@ fn base64_decode_string(string: LispObject) -> LispObject {
     let length = string.len_bytes();
     let mut buffer: Vec<c_char> = Vec::with_capacity(length as usize);
 
-    unsafe {
-        let decoded = buffer.as_mut_ptr();
-        let decoded_length =
-            base64_decode_1(string.sdata_ptr(), decoded, length, false, ptr::null_mut());
+    let decoded = buffer.as_mut_ptr();
+    let decoded_length = base64_decode_1(string.sdata_ptr(), decoded, length, false, ptr::null_mut());
 
-        if decoded_length > length {
-            panic!("Decoded length is above length");
-        } else if decoded_length < 0 {
-            error("Invalid base64 data\0".as_ptr());
-        }
+    if decoded_length > length {
+        panic!("Decoded length is above length");
+    } else if decoded_length < 0 {
+        error!("Invalid base64 data");
+    }
+    unsafe {
         LispObject::from_raw(make_unibyte_string(decoded, decoded_length))
     }
 }

@@ -6,7 +6,7 @@ use libc::{self, c_void};
 
 use lisp::LispObject;
 use multibyte;
-use remacs_sys::{SYMBOL_NAME, EmacsInt, error, make_unibyte_string, make_uninit_multibyte_string,
+use remacs_sys::{SYMBOL_NAME, EmacsInt, make_unibyte_string, make_uninit_multibyte_string,
                  string_to_multibyte as c_string_to_multibyte};
 use remacs_macros::lisp_fn;
 
@@ -118,17 +118,14 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
         let converted_size =
             multibyte::str_to_unibyte(lispstr.const_data_ptr(), buffer.as_mut_ptr(), size);
 
-        unsafe {
-            if converted_size < size {
-                error(
-                    "Can't convert %ldth character to unibyte\0".as_ptr(),
-                    converted_size,
-                );
-            }
-
-            let raw_ptr = make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size);
-            LispObject::from_raw(raw_ptr)
+        if converted_size < size {
+            error!("Can't convert {}th character to unibyte", converted_size);
         }
+
+        let raw_ptr = unsafe {
+            make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size)
+        };
+        LispObject::from_raw(raw_ptr)
     } else {
         string
     }

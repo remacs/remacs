@@ -1,7 +1,7 @@
 //! Operations on lists.
 
 use lisp::{LispObject, LispCons};
-use remacs_sys::{wrong_type_argument, Qlistp, EmacsInt};
+use remacs_sys::{Qlistp, EmacsInt};
 use remacs_macros::lisp_fn;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
@@ -102,7 +102,7 @@ fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
         match tail.as_cons() {
             None => {
                 if tail.is_not_nil() {
-                    unsafe { wrong_type_argument(Qlistp, list.to_raw()) }
+                    wrong_type!(Qlistp, list)
                 }
                 return tail;
             }
@@ -329,7 +329,7 @@ where
                     // need an extra call to CHECK_LIST_END here to catch odd-length lists
                     // (like Emacs we signal the somewhat confusing `wrong-type-argument')
                     if tail.as_obj().is_not_nil() {
-                        unsafe { wrong_type_argument(Qlistp, plist.to_raw()) }
+                        wrong_type!(Qlistp, plist)
                     }
                     break;
                 }
@@ -401,7 +401,7 @@ fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispObjec
 /// Any number of arguments, even zero arguments, are allowed.
 /// usage: (list &rest OBJECTS)
 #[lisp_fn]
-fn list(args: &mut [LispObject]) -> LispObject {
+pub fn list(args: &mut [LispObject]) -> LispObject {
     args.iter().rev().fold(
         LispObject::constant_nil(),
         |list, &arg| LispObject::cons(arg, list),
