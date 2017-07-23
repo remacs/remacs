@@ -443,6 +443,13 @@ non-@code{nil}, and in programming-language strings if
 @code{nil} for @code{electric-quote-string} and @code{t} for the other
 variables.
 
+@vindex electric-quote-replace-double
+  You can also set the option @code{electric-quote-replace-double} to
+a non-@code{nil} value.  Then, typing @t{"} insert an appropriate
+curved double quote depending on context: @t{“} at the beginning of
+the buffer or after a line break, whitespace, opening parenthesis, or
+quote character, and @t{”} otherwise.
+
   Electric Quote mode is disabled by default.  To toggle it, type
 @kbd{M-x electric-quote-mode}.  To toggle it in a single buffer, use
 @kbd{M-x electric-quote-local-mode}.  To suppress it for a single use,

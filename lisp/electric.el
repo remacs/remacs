@@ -451,6 +451,14 @@ whitespace, opening parenthesis, or quote and leaves \\=` alone."
   :version "26.1"
   :type 'boolean :safe #'booleanp :group 'electricity)
 
+(defcustom electric-quote-replace-double nil
+  "Non-nil means to replace \" with an electric double quote.
+Emacs replaces \" with an opening double quote after a line
+break, whitespace, opening parenthesis, or quote, and with a
+closing double quote otherwise."
+  :version "26.1"
+  :type 'boolean :safe #'booleanp :group 'electricity)
+
 (defvar electric-quote-inhibit-functions ()
   "List of functions that should inhibit electric quoting.
 When the variable `electric-quote-mode' is non-nil, Emacs will
@@ -467,7 +475,9 @@ This requotes when a quoting key is typed."
   (when (and electric-quote-mode
              (or (eq last-command-event ?\')
                  (and (not electric-quote-context-sensitive)
-                      (eq last-command-event ?\`)))
+                      (eq last-command-event ?\`))
+                 (and electric-quote-replace-double
+                      (eq last-command-event ?\")))
              (not (run-hook-with-args-until-success
                    'electric-quote-inhibit-functions))
              (if (derived-mode-p 'text-mode)
@@ -488,7 +498,8 @@ This requotes when a quoting key is typed."
        (save-excursion
          (let ((backtick ?\`))
            (if (or (eq last-command-event ?\`)
-                   (and electric-quote-context-sensitive
+                   (and (or electric-quote-context-sensitive
+                            electric-quote-replace-double)
                         (save-excursion
                           (backward-char)
                           (or (bobp) (bolp)
@@ -506,13 +517,19 @@ This requotes when a quoting key is typed."
                       (setq last-command-event q<<))
                      ((search-backward (string backtick) (1- (point)) t)
                       (replace-match (string q<))
-                      (setq last-command-event q<)))
+                      (setq last-command-event q<))
+                     ((search-backward "\"" (1- (point)) t)
+                      (replace-match (string q<<))
+                      (setq last-command-event q<<)))
              (cond ((search-backward (string q> ?') (- (point) 2) t)
                     (replace-match (string q>>))
                     (setq last-command-event q>>))
                    ((search-backward "'" (1- (point)) t)
                     (replace-match (string q>))
-                    (setq last-command-event q>))))))))))
+                    (setq last-command-event q>))
+                   ((search-backward "\"" (1- (point)) t)
+                    (replace-match (string q>>))
+                    (setq last-command-event q>>))))))))))
 
 (put 'electric-quote-post-self-insert-function 'priority 10)
 

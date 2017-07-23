@@ -617,6 +617,12 @@ baz\"\""
   :fixture-fn #'electric-quote-local-mode
   :test-in-comments nil :test-in-strings nil)
 
+(define-electric-pair-test electric-quote-replace-double-disabled
+  "" "\"" :expected-string "\"" :expected-point 2
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :test-in-comments nil :test-in-strings nil)
+
 (define-electric-pair-test electric-quote-context-sensitive-backtick
   "" "`" :expected-string "`" :expected-point 2
   :modes '(text-mode)
@@ -638,6 +644,13 @@ baz\"\""
   :bindings '((electric-quote-context-sensitive . t))
   :test-in-comments nil :test-in-strings nil)
 
+(define-electric-pair-test electric-quote-replace-double-bob
+  "" "\"" :expected-string "“" :expected-point 2
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t))
+  :test-in-comments nil :test-in-strings nil)
+
 (define-electric-pair-test electric-quote-context-sensitive-bol-single
   "a\n" "--'" :expected-string "a\n‘" :expected-point 4
   :modes '(text-mode)
@@ -650,6 +663,13 @@ baz\"\""
   :modes '(text-mode)
   :fixture-fn #'electric-quote-local-mode
   :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-replace-double-bol
+  "a\n" "--\"" :expected-string "a\n“" :expected-point 4
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t))
   :test-in-comments nil :test-in-strings nil)
 
 (define-electric-pair-test electric-quote-context-sensitive-after-space-single
@@ -666,6 +686,13 @@ baz\"\""
   :bindings '((electric-quote-context-sensitive . t))
   :test-in-comments nil :test-in-strings nil)
 
+(define-electric-pair-test electric-quote-replace-double-after-space
+  " " "-\"" :expected-string " “" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t))
+  :test-in-comments nil :test-in-strings nil)
+
 (define-electric-pair-test electric-quote-context-sensitive-after-letter-single
   "a" "-'" :expected-string "a’" :expected-point 3
   :modes '(text-mode)
@@ -680,6 +707,13 @@ baz\"\""
   :bindings '((electric-quote-context-sensitive . t))
   :test-in-comments nil :test-in-strings nil)
 
+(define-electric-pair-test electric-quote-replace-double-after-letter
+  "a" "-\"" :expected-string "a”" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t))
+  :test-in-comments nil :test-in-strings nil)
+
 (define-electric-pair-test electric-quote-context-sensitive-after-paren-single
   "(" "-'" :expected-string "(‘" :expected-point 3
   :modes '(text-mode)
@@ -692,6 +726,13 @@ baz\"\""
   :modes '(text-mode)
   :fixture-fn #'electric-quote-local-mode
   :bindings '((electric-quote-context-sensitive . t))
+  :test-in-comments nil :test-in-strings nil)
+
+(define-electric-pair-test electric-quote-replace-double-after-paren
+  "(" "-\"" :expected-string "(“" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t))
   :test-in-comments nil :test-in-strings nil)
 
 ;; Simulate ‘markdown-mode’: it sets both ‘comment-start’ and

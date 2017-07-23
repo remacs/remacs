@@ -42,6 +42,11 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 This controls how long Emacs will wait for updates to the graphical
 state to take effect (making a frame visible, for example).
 
++++
+** The new user option 'electric-quote-replace-double' controls
+whether " is also replaced in 'electric-quote-mode'.  If non-nil, " is
+replaced by a double typographic quote.
+
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
