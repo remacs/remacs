@@ -3557,27 +3557,22 @@ AC_SUBST(LIBZ)
 LIBMODULES=
 HAVE_MODULES=no
 MODULES_OBJ=
-MODULES_SUFFIX=
+case $opsys in
+  cygwin|mingw32) MODULES_SUFFIX=".dll" ;;
+  *) MODULES_SUFFIX=".so" ;;
+esac
 if test "${with_modules}" != "no"; then
   case $opsys in
     gnu|gnu-linux)
       LIBMODULES="-ldl"
-      MODULES_SUFFIX=".so"
       HAVE_MODULES=yes
       ;;
-    cygwin|mingw32)
-      MODULES_SUFFIX=".dll"
-      HAVE_MODULES=yes
-      ;;
-    darwin)
-      MODULES_SUFFIX=".so"
+    cygwin|mingw32|darwin)
       HAVE_MODULES=yes
       ;;
     *)
       # BSD systems have dlopen in libc.
-      AC_CHECK_FUNC([dlopen],
-        [MODULES_SUFFIX=".so"
-         HAVE_MODULES=yes])
+      AC_CHECK_FUNC([dlopen], [HAVE_MODULES=yes])
       ;;
   esac
 
