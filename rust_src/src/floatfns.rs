@@ -6,8 +6,8 @@ use libc;
 use math::ArithOp;
 use lisp::{LispObject, LispNumber};
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qnumberp, Qinteger_or_marker_p,
-                 Qarith_error, Qrange_error, build_string,
-                 MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
+                 Qarith_error, Qrange_error, build_string, MOST_NEGATIVE_FIXNUM,
+                 MOST_POSITIVE_FIXNUM};
 use remacs_sys::libm;
 use remacs_macros::lisp_fn;
 
@@ -92,7 +92,7 @@ pub fn float_arith_driver(
             }
             ArithOp::Logand | ArithOp::Logior | ArithOp::Logxor => {
                 wrong_type!(Qinteger_or_marker_p, val)
-            },
+            }
         }
     }
     LispObject::from_float(accum)

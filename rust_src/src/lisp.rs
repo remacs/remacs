@@ -21,10 +21,9 @@ use marker::LispMarkerRef;
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
-                 make_float, circular_list, internal_equal, Fcons,
-                 CHECK_IMPURE, Qnil, Qt, Qnumberp, Qfloatp, Qstringp, Qsymbolp,
-                 Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp,
-                 Qconsp, SYMBOL_NAME, PseudovecType, EqualKind};
+                 make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
+                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
+                 Qcharacterp, Qlistp, Qintegerp, Qconsp, SYMBOL_NAME, PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -697,7 +696,9 @@ impl LispObject {
 
     pub fn any_to_float_or_error(self) -> EmacsDouble {
         self.as_float().unwrap_or_else(|| {
-            self.as_fixnum().unwrap_or_else(|| wrong_type!(Qnumberp, self)) as EmacsDouble
+            self.as_fixnum().unwrap_or_else(
+                || wrong_type!(Qnumberp, self),
+            ) as EmacsDouble
         })
     }
 }

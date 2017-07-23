@@ -168,9 +168,7 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
         error!("Multibyte character in data for base64 encoding");
     }
 
-    unsafe {
-        LispObject::from_raw(make_unibyte_string(encoded, encoded_length))
-    }
+    unsafe { LispObject::from_raw(make_unibyte_string(encoded, encoded_length)) }
 }
 
 /// Base64-decode STRING and return the result.
@@ -182,14 +180,13 @@ fn base64_decode_string(string: LispObject) -> LispObject {
     let mut buffer: Vec<c_char> = Vec::with_capacity(length as usize);
 
     let decoded = buffer.as_mut_ptr();
-    let decoded_length = base64_decode_1(string.sdata_ptr(), decoded, length, false, ptr::null_mut());
+    let decoded_length =
+        base64_decode_1(string.sdata_ptr(), decoded, length, false, ptr::null_mut());
 
     if decoded_length > length {
         panic!("Decoded length is above length");
     } else if decoded_length < 0 {
         error!("Invalid base64 data");
     }
-    unsafe {
-        LispObject::from_raw(make_unibyte_string(decoded, decoded_length))
-    }
+    unsafe { LispObject::from_raw(make_unibyte_string(decoded, decoded_length)) }
 }
