@@ -2,7 +2,7 @@ use md5;
 use sha1;
 use sha2::{Sha224, Digest, Sha256, Sha384, Sha512};
 use std;
-use std::{ptr, slice};
+use std::slice;
 use libc::ptrdiff_t;
 
 use buffers::{LispBufferRef, get_buffer};
@@ -374,7 +374,7 @@ fn secure_hash(
 
 fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
     let digest_size: usize;
-    let hash_func: unsafe fn(&[u8], &mut [u8]);
+    let hash_func: fn(&[u8], &mut [u8]);
     match algorithm {
         HashAlg::MD5 => {
             digest_size = MD5_DIGEST_LEN;
@@ -409,11 +409,7 @@ fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
     };
     let digest = LispObject::from_raw(unsafe { make_uninit_string(buffer_size as i64) });
     let digest_str = digest.as_string_or_error();
-    unsafe {
-        // we can call this safely because we know that we made
-        // digest's buffer long enough
-        hash_func(input, digest_str.as_mut_slice());
-    }
+    hash_func(input, digest_str.as_mut_slice());
     if hex {
         hexify_digest_string(digest_str.as_mut_slice(), digest_size);
     }
@@ -438,46 +434,46 @@ fn hexify_digest_string(buffer: &mut [u8], len: usize) {
 
 // For the following hash functions, the caller must ensure that the
 // destination buffer is at least long enough to hold the
-// digest. Additionall, the caller may have been asked to return a hex
-// string, in which case dest_buf will be twice as long as the digest.
-// Thus, these functions are unsafe.
+// digest. Additionally, the caller may have been asked to return a
+// hex string, in which case dest_buf will be twice as long as the
+// digest.
 
-unsafe fn md5_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
+fn md5_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     let output = md5::compute(buffer);
-    ptr::copy_nonoverlapping(output.as_ptr(), dest_buf.as_ptr() as *mut u8, output.len());
+    dest_buf[..output.len()].copy_from_slice(&*output)
 }
 
-unsafe fn sha1_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
+fn sha1_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     let mut hasher = sha1::Sha1::new();
     hasher.update(buffer);
     let output = hasher.digest().bytes();
-    ptr::copy_nonoverlapping(output.as_ptr(), dest_buf.as_ptr() as *mut u8, output.len());
+    dest_buf[..output.len()].copy_from_slice(&output)
 }
 
 /// Given an instance of `Digest`, and `buffer` write its hash to `dest_buf`.
-unsafe fn sha2_hash_buffer<D>(hasher: D, buffer: &[u8], dest_buf: &mut [u8])
+fn sha2_hash_buffer<D>(hasher: D, buffer: &[u8], dest_buf: &mut [u8])
 where
     D: Digest,
 {
     let mut hasher = hasher;
     hasher.input(buffer);
     let output = hasher.result();
-    ptr::copy_nonoverlapping(output.as_ptr(), dest_buf.as_ptr() as *mut u8, output.len());
+    dest_buf[..output.len()].copy_from_slice(&output)
 }
 
-unsafe fn sha224_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
+fn sha224_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     sha2_hash_buffer(Sha224::new(), buffer, dest_buf);
 }
 
-unsafe fn sha256_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
+fn sha256_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     sha2_hash_buffer(Sha256::new(), buffer, dest_buf);
 }
 
-unsafe fn sha384_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
+fn sha384_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     sha2_hash_buffer(Sha384::new(), buffer, dest_buf);
 }
 
-unsafe fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
+fn sha512_buffer(buffer: &[u8], dest_buf: &mut [u8]) {
     sha2_hash_buffer(Sha512::new(), buffer, dest_buf);
 }
 
