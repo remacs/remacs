@@ -12,6 +12,7 @@ addons:
     - texinfo
     - libgif-dev
     - libxpm-dev
+    - libxt-dev
 
 env:
   # Ensure that we build without warnings.
