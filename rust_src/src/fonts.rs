@@ -1,6 +1,7 @@
 use remacs_macros::lisp_fn;
-use remacs_sys::{font, Qfont_spec, Qfont_entity, Qfont_object, Qsymbolp, wrong_type_argument};
+use remacs_sys::{font, Qfont_spec, Qfont_entity, Qfont_object, wrong_type_argument};
 use lisp::LispObject;
+use symbols::intern;
 use vectors::LispVectorlikeRef;
 
 // A font is not a type in and of itself, it's just a group of three kinds of
@@ -42,9 +43,7 @@ impl FontExtraType {
         } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_object })) {
             FontExtraType::Object
         } else {
-            // TODO: This should actually be equivalent to
-            // intern("font-extra-type"), not Qsymbolp.
-            unsafe { wrong_type_argument(Qsymbolp, extra_type.to_raw()) }
+            unsafe { wrong_type_argument(intern("font-extra-type").to_raw(), extra_type.to_raw()) }
         }
     }
 }
