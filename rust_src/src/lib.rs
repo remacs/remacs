@@ -124,6 +124,7 @@ pub use lists::merge;
 pub use buffers::Fget_buffer;
 pub use buffers::Fcurrent_buffer;
 pub use obarray::intern_1;
+pub use obarray::Fintern;
 pub use obarray::Fintern_soft;
 
 // used in chartab.c
@@ -268,6 +269,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*chartable::Schar_table_parent);
         defsubr(&*chartable::Sset_char_table_parent);
         defsubr(&*obarray::Sintern_soft);
+        defsubr(&*obarray::Sintern);
 
         defsubr(&*floatfns::Sisnan);
         defsubr(&*floatfns::Sacos);

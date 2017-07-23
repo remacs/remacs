@@ -1351,6 +1351,7 @@ extern "C" {
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
+    pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
@@ -1397,6 +1398,7 @@ extern "C" {
     ) -> Lisp_Object;
 
     pub fn check_obarray(obarray: Lisp_Object) -> Lisp_Object;
+    pub fn purify_is_nil() -> bool;
     pub fn check_vobarray() -> Lisp_Object;
     pub fn intern_1(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn intern_driver(

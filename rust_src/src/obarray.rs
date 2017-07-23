@@ -1,8 +1,8 @@
 use libc;
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
-use remacs_sys::{Lisp_Object, Lisp_Symbol, check_obarray, check_vobarray, intern_driver,
-                 make_unibyte_string, oblookup};
+use remacs_sys::{Lisp_Object, Lisp_Symbol, check_obarray, check_vobarray, Fpurecopy,
+                 intern_driver, make_unibyte_string, oblookup, purify_is_nil};
 
 /// A lisp object containing an `obarray`.
 pub struct LispObarrayRef(LispObject);
@@ -77,6 +77,32 @@ impl LispObarrayRef {
             )
         })
     }
+
+    /// Intern the string or symbol STRING. That is, return the new or existing
+    /// symbol with that name in this `LispObarrayRef`. If Emacs is loading Lisp
+    /// code to dump to an executable (ie. `purify-flag` is `t`), the symbol
+    /// name will be transferred to pure storage.
+    ///
+    /// # C Porting Notes
+    ///
+    /// This is makes use of the C function `intern_driver`. It is capable of
+    /// handling multibyte strings, unlike `intern_cstring`.
+    pub fn intern(&mut self, string: LispObject) -> LispObject {
+        let tem = self.lookup(string);
+        if tem.is_symbol() {
+            tem
+        } else if unsafe { purify_is_nil() } {
+            LispObject::from_raw(unsafe {
+                intern_driver(string.to_raw(), self.0.to_raw(), tem.to_raw())
+            })
+        } else {
+            // When Emacs is running lisp code to dump to an executable, make
+            // use of pure storage.
+            LispObject::from_raw(unsafe {
+                intern_driver(Fpurecopy(string.to_raw()), self.0.to_raw(), tem.to_raw())
+            })
+        }
+    }
 }
 
 /// Intern the C string `s`: return a symbol with that name, interned in the
@@ -105,5 +131,18 @@ fn intern_soft(name: LispObject, obarray: LispObject) -> LispObject {
         LispObject::constant_nil()
     } else {
         tem
+    }
+}
+
+/// Return the canonical symbol whose name is STRING.
+/// If there is none, one is created by this function and returned.
+/// A second optional argument specifies the obarray to use;
+/// it defaults to the value of `obarray'.
+#[lisp_fn(min = "1")]
+fn intern(string: LispObject, obarray: LispObject) -> LispObject {
+    if obarray.is_nil() {
+        LispObarrayRef::constant_obarray().intern(string)
+    } else {
+        LispObarrayRef::from_object_or_error(obarray).intern(string)
     }
 }

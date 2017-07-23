@@ -4017,6 +4017,12 @@ check_vobarray(void)
   return check_obarray (Vobarray);
 }
 
+bool
+purify_is_nil(void)
+{
+  return NILP(Vpurify_flag) ? true : false;
+}
+
 /* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
 static Lisp_Object
@@ -4083,25 +4089,6 @@ define_symbol (Lisp_Object sym, char const *str)
       eassert (INTEGERP (bucket));
       intern_sym (sym, initial_obarray, bucket);
     }
-}
-
-DEFUN ("intern", Fintern, Sintern, 1, 2, 0,
-       doc: /* Return the canonical symbol whose name is STRING.
-If there is none, one is created by this function and returned.
-A second optional argument specifies the obarray to use;
-it defaults to the value of `obarray'.  */)
-  (Lisp_Object string, Lisp_Object obarray)
-{
-  Lisp_Object tem;
-
-  obarray = check_obarray (NILP (obarray) ? Vobarray : obarray);
-  CHECK_STRING (string);
-
-  tem = oblookup (obarray, SSDATA (string), SCHARS (string), SBYTES (string));
-  if (!SYMBOLP (tem))
-    tem = intern_driver (NILP (Vpurify_flag) ? string : Fpurecopy (string),
-			 obarray, tem);
-  return tem;
 }
 
 
@@ -4687,7 +4674,6 @@ syms_of_lread (void)
   defsubr (&Sread);
   defsubr (&Sread_from_string);
   defsubr (&Slread__substitute_object_in_subtree);
-  defsubr (&Sintern);
   defsubr (&Sunintern);
   defsubr (&Sget_load_suffixes);
   defsubr (&Sload);
