@@ -9,7 +9,7 @@ use std::mem;
 use std::slice;
 use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
-use std::os::raw::c_void;
+use libc::c_void;
 
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;

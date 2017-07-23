@@ -116,6 +116,7 @@ fn run_bindgen() {
         .hide_type("nsberror")
         .hide_type("emacs_abort")
         .hide_type("Fsignal")
+        .ctypes_prefix("::libc")
         .generate()
         .expect("Unable to generate bindings");
 

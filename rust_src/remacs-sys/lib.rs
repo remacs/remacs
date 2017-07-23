@@ -65,7 +65,7 @@ extern "C" {
         o1: Lisp_Object,
         o2: Lisp_Object,
         kind: EqualKind,
-        depth: std::os::raw::c_int,
+        depth: libc::c_int,
         ht: Lisp_Object,
     ) -> bool;
 
