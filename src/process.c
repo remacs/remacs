@@ -929,13 +929,6 @@ free_dns_request (Lisp_Object proc)
 }
 #endif
 
-DEFUN ("processp", Fprocessp, Sprocessp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a process.  */)
-  (Lisp_Object object)
-{
-  return PROCESSP (object) ? Qt : Qnil;
-}
-
 /* This is how commands for the user decode process arguments.  It
    accepts a process, a process name, a buffer, a buffer name, or nil.
    Buffers denote the first process in the buffer, and nil denotes the
@@ -7906,7 +7899,6 @@ non-nil value means that the delay is not reset on write.
 The variable takes effect when `start-process' is called.  */);
   Vprocess_adaptive_read_buffering = Qt;
 
-  defsubr (&Sprocessp);
   defsubr (&Sdelete_process);
   defsubr (&Sprocess_status);
   defsubr (&Sprocess_exit_status);
