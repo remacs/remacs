@@ -4104,33 +4104,6 @@ it defaults to the value of `obarray'.  */)
   return tem;
 }
 
-DEFUN ("intern-soft", Fintern_soft, Sintern_soft, 1, 2, 0,
-       doc: /* Return the canonical symbol named NAME, or nil if none exists.
-NAME may be a string or a symbol.  If it is a symbol, that exact
-symbol is searched for.
-A second optional argument specifies the obarray to use;
-it defaults to the value of `obarray'.  */)
-  (Lisp_Object name, Lisp_Object obarray)
-{
-  register Lisp_Object tem, string;
-
-  if (NILP (obarray)) obarray = Vobarray;
-  obarray = check_obarray (obarray);
-
-  if (!SYMBOLP (name))
-    {
-      CHECK_STRING (name);
-      string = name;
-    }
-  else
-    string = SYMBOL_NAME (name);
-
-  tem = oblookup (obarray, SSDATA (string), SCHARS (string), SBYTES (string));
-  if (INTEGERP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
-    return Qnil;
-  else
-    return tem;
-}
 
 DEFUN ("unintern", Funintern, Sunintern, 1, 2, 0,
        doc: /* Delete the symbol named NAME, if any, from OBARRAY.
@@ -4715,7 +4688,6 @@ syms_of_lread (void)
   defsubr (&Sread_from_string);
   defsubr (&Slread__substitute_object_in_subtree);
   defsubr (&Sintern);
-  defsubr (&Sintern_soft);
   defsubr (&Sunintern);
   defsubr (&Sget_load_suffixes);
   defsubr (&Sload);
