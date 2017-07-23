@@ -1,7 +1,7 @@
 //! Operations on lists.
 
 use lisp::{LispObject, LispCons};
-use remacs_sys::{wrong_type_argument, Qlistp, EmacsInt, call2};
+use remacs_sys::{wrong_type_argument, Qlistp, EmacsInt};
 use remacs_macros::lisp_fn;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
@@ -186,8 +186,7 @@ pub fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObjec
             let is_equal = if testfn.is_nil() {
                 key.eq(item_cons.car()) || key.equal(item_cons.car())
             } else {
-                let res = unsafe { call2(testfn.to_raw(), key.to_raw(), item_cons.car().to_raw()) };
-                LispObject::from_raw(res).is_not_nil()
+                call!(testfn, key, item_cons.car()).is_not_nil()
             };
             if is_equal {
                 return item;
@@ -446,8 +445,7 @@ pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
 
 // also needed by vectors.rs
 pub fn inorder(pred: LispObject, a: LispObject, b: LispObject) -> bool {
-    let res = unsafe { call2(pred.to_raw(), b.to_raw(), a.to_raw()) };
-    LispObject::from_raw(res).is_nil()
+    call!(pred, b, a).is_nil()
 }
 
 /// Merge step of linked-list sorting.

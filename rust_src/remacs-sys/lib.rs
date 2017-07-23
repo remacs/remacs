@@ -1174,7 +1174,6 @@ extern "C" {
         depth: c_int,
         ht: Lisp_Object,
     ) -> bool;
-    pub fn call2(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object) -> Lisp_Object;
 
     // These signal an error, therefore are marked as non-returning.
     pub fn circular_list(tail: Lisp_Object) -> !;

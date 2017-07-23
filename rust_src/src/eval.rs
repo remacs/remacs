@@ -26,3 +26,16 @@ pub fn xsignal2(error_symbol: LispObject, arg1: LispObject, arg2: LispObject) ->
         LispObject::cons(arg1, LispObject::cons(arg2, LispObject::constant_nil())),
     )
 }
+
+/// Macro to call Lisp functions with any number of arguments.
+/// Replaces CALLN, call1, etc. in the C layer.
+macro_rules! call {
+    ($func:expr, $($arg:expr),*) => {{
+        let mut argsarray = [$func.to_raw(), $($arg.to_raw()),*];
+        unsafe {
+            LispObject::from_raw(
+                ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
+            )
+        }
+    }}
+}

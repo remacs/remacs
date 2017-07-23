@@ -127,7 +127,7 @@ impl LispBoolVecRef {
 /// the number of bytes in the string; it is the number of characters.
 /// To get the number of bytes, use `string-bytes'.
 #[lisp_fn]
-fn length(sequence: LispObject) -> LispObject {
+pub fn length(sequence: LispObject) -> LispObject {
     if let Some(s) = sequence.as_string() {
         return LispObject::from_natnum(s.len_chars() as EmacsInt);
     } else if let Some(vl) = sequence.as_vectorlike() {
