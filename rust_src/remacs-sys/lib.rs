@@ -1396,7 +1396,20 @@ extern "C" {
         props: bool,
     ) -> Lisp_Object;
 
+    pub fn check_obarray(obarray: Lisp_Object) -> Lisp_Object;
+    pub fn check_vobarray() -> Lisp_Object;
     pub fn intern_1(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
+    pub fn intern_driver(
+        string: Lisp_Object,
+        obarray: Lisp_Object,
+        index: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn oblookup(
+        obarray: Lisp_Object,
+        s: *const c_char,
+        size: ptrdiff_t,
+        size_bytes: ptrdiff_t,
+    ) -> Lisp_Object;
 
     pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
     pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const c_void);

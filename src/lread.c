@@ -4009,6 +4009,14 @@ check_obarray (Lisp_Object obarray)
   return obarray;
 }
 
+/* Like check_obarray, but for the global Vobarray. */
+
+Lisp_Object
+check_vobarray(void)
+{
+  return check_obarray (Vobarray);
+}
+
 /* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
 static Lisp_Object
@@ -4043,19 +4051,6 @@ intern_driver (Lisp_Object string, Lisp_Object obarray, Lisp_Object index)
 
 /* Intern the C string STR: return a symbol with that name,
    interned in the current obarray.  */
-
-Lisp_Object
-intern_1 (const char *str, ptrdiff_t len)
-{
-  Lisp_Object obarray = check_obarray (Vobarray);
-  Lisp_Object tem = oblookup (obarray, str, len, len);
-
-  return (SYMBOLP (tem) ? tem
-	  /* The above `oblookup' was done on the basis of nchars==nbytes, so
-	     the string has to be unibyte.  */
-	  : intern_driver (make_unibyte_string (str, len),
-			   obarray, tem));
-}
 
 Lisp_Object
 intern_c_string_1 (const char *str, ptrdiff_t len)
