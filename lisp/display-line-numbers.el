@@ -91,13 +91,16 @@ the mode is on, set `display-line-numbers' directly."
     (setq display-line-numbers nil)))
 
 ;;;###autoload
+(defun turn-on-display-line-numbers-mode ()
+  "Turn on `display-line-numbers-mode'."
+  (unless (or (minibufferp)
+              ;; taken from linum.el
+              (and (daemonp) (null (frame-parameter nil 'client))))
+    (display-line-numbers-mode)))
+
+;;;###autoload
 (define-globalized-minor-mode global-display-line-numbers-mode
-  display-line-numbers-mode
-  (lambda ()
-    (unless (or (minibufferp)
-                ;; taken from linum.el
-                (and (daemonp) (null (frame-parameter nil 'client))))
-      (display-line-numbers-mode))))
+  display-line-numbers-mode turn-on-display-line-numbers-mode)
 
 (provide 'display-line-numbers)
 
