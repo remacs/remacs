@@ -306,44 +306,19 @@ pub extern "C" fn arithcompare(
     let result = match comparison {
         ArithComparison::Equal => !fneq && i1 == i2,
         ArithComparison::Notequal => fneq || i1 != i2,
-        ArithComparison::Less => {
-            if fneq {
-                f1 < f2
-            } else {
-                i1 < i2
-            }
-        }
-        ArithComparison::LessOrEqual => {
-            if fneq {
-                f1 <= f2
-            } else {
-                i1 <= i2
-            }
-        }
-        ArithComparison::Grtr => {
-            if fneq {
-                f1 > f2
-            } else {
-                i1 > i2
-            }
-        }
-        ArithComparison::GrtrOrEqual => {
-            if fneq {
-                f1 >= f2
-            } else {
-                i1 >= i2
-            }
-        }
+        ArithComparison::Less => if fneq { f1 < f2 } else { i1 < i2 },
+        ArithComparison::LessOrEqual => if fneq { f1 <= f2 } else { i1 <= i2 },
+        ArithComparison::Grtr => if fneq { f1 > f2 } else { i1 > i2 },
+        ArithComparison::GrtrOrEqual => if fneq { f1 >= f2 } else { i1 >= i2 },
     };
 
     LispObject::from_bool(result)
 }
 
 fn arithcompare_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject {
-    LispObject::from_bool(
-        args.windows(2)
-            .all(|i| arithcompare(i[0], i[1], comparison).is_not_nil()),
-    )
+    LispObject::from_bool(args.windows(2).all(|i| {
+        arithcompare(i[0], i[1], comparison).is_not_nil()
+    }))
 }
 
 /// Return t if args, all numbers or markers, are equal.

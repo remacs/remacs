@@ -106,10 +106,9 @@ fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
 
     let formatted = ctx.digest().to_string();
     let digest = LispObject::from_raw(unsafe { make_uninit_string(formatted.len() as EmacsInt) });
-    digest
-        .as_string()
-        .unwrap()
-        .as_mut_slice()
-        .copy_from_slice(formatted.as_bytes());
+    digest.as_string().unwrap().as_mut_slice().copy_from_slice(
+        formatted
+            .as_bytes(),
+    );
     digest
 }
