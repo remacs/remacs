@@ -67,28 +67,6 @@ translate_char (Lisp_Object table, int c)
   return c;
 }
 
-DEFUN ("multibyte-char-to-unibyte", Fmultibyte_char_to_unibyte,
-       Smultibyte_char_to_unibyte, 1, 1, 0,
-       doc: /* Convert the multibyte character CH to a byte.
-If the multibyte character does not represent a byte, return -1.  */)
-  (Lisp_Object ch)
-{
-  int cm;
-
-  CHECK_CHARACTER (ch);
-  cm = XFASTINT (ch);
-  if (cm < 256)
-    /* Can't distinguish a byte read from a unibyte buffer from
-       a latin1 char, so let's let it slide.  */
-    return ch;
-  else
-    {
-      int cu = CHAR_TO_BYTE_SAFE (cm);
-      return make_number (cu);
-    }
-}
-
-
 /* Return width (columns) of C considering the buffer display table DP. */
 
 static ptrdiff_t
@@ -632,7 +610,6 @@ syms_of_character (void)
   staticpro (&Vchar_unify_table);
   Vchar_unify_table = Qnil;
 
-  defsubr (&Smultibyte_char_to_unibyte);
   defsubr (&Schar_width);
   defsubr (&Sstring_width);
   defsubr (&Sstring);

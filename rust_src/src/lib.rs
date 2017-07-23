@@ -41,6 +41,7 @@ mod multibyte;
 mod buffers;
 mod windows;
 mod interactive;
+mod process;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -115,6 +116,7 @@ pub use buffers::Fcurrent_buffer;
 
 // Used in process.c
 pub use str2sig::str2sig;
+pub use process::Fget_process;
 
 // Used in character.c
 pub use multibyte::char_resolve_modifier_mask;
@@ -143,6 +145,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Sget_buffer);
         defsubr(&*buffers::Scurrent_buffer);
         defsubr(&*windows::Swindowp);
+        defsubr(&*windows::Swindow_live_p);
+        defsubr(&*process::Sget_process);
+        defsubr(&*process::Sprocessp);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
         defsubr(&*lists::Snlistp);
@@ -222,6 +227,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*character::Scharacterp);
         defsubr(&*character::Schar_or_string_p);
         defsubr(&*character::Sunibyte_char_to_multibyte);
+        defsubr(&*character::Smultibyte_char_to_unibyte);
         defsubr(&*vectors::Sarrayp);
         defsubr(&*vectors::Sbool_vector_p);
         defsubr(&*vectors::Sbufferp);
