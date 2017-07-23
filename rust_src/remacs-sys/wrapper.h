@@ -2,6 +2,14 @@
 #include "conf_post.h"
 #include "limits.h"
 
+// we want bindgen to include bindings for the same set of functions
+// on all platforms. We must thus take care that functions which are
+// inline on any platform are always inline here, because we can't
+// reliably call into inline functions. See m4/inline-extern.m4 for
+// details on why functions might not always be marked inline.
+#define INLINE inline
+#define EXTERN_INLINE extern inline
+
 #include "lisp.h"
 
 #include "atimer.h"

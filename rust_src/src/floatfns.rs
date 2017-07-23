@@ -7,7 +7,7 @@ use eval::{xsignal0, xsignal2};
 use math::ArithOp;
 use lisp::{LispObject, LispNumber};
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qnumberp, Qinteger_or_marker_p,
-                 Qarith_error, Qrange_error, wrong_type_argument, build_string,
+                 Qarith_error, Qrange_error, wrong_type_argument, make_string,
                  MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM};
 use remacs_sys::libm;
 use remacs_macros::lisp_fn;
@@ -358,7 +358,7 @@ where
         }
     }
     let errstr = LispObject::from_raw(unsafe {
-        build_string(name.as_ptr() as *const libc::c_char)
+        make_string(name.as_ptr() as *const libc::c_char, name.len() as isize)
     });
     xsignal2(LispObject::from_raw(unsafe { Qrange_error }), errstr, arg)
 }

@@ -68,11 +68,6 @@ extern "C" {
         depth: libc::c_int,
         ht: Lisp_Object,
     ) -> bool;
-
-    pub fn SYMBOL_NAME(sym: Lisp_Object) -> Lisp_Object;
-    pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const std::os::raw::c_void);
-
-    pub fn build_string(s: *const std::os::raw::c_char) -> Lisp_Object;
 }
 
 // Largest and smallest numbers that can be represented as fixnums in

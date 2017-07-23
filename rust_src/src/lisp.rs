@@ -17,13 +17,14 @@ use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
 use windows::LispWindowRef;
 use marker::LispMarkerRef;
+use puresize;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, INTMASK, USE_LSB_TAG,
                  MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type, Lisp_Bits, Lisp_Misc_Any,
                  Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym, wrong_type_argument,
-                 make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
-                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
-                 Qcharacterp, Qlistp, Qintegerp, Qconsp, SYMBOL_NAME, pvec_type, EqualKind};
+                 make_float, circular_list, internal_equal, Fcons, Qnil, Qt, Qnumberp, Qfloatp,
+                 Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp,
+                 Qlistp, Qintegerp, Qconsp, pvec_type, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -642,9 +643,7 @@ impl LispCons {
 
     /// Check that "self" is an impure (i.e. not readonly) cons cell.
     pub fn check_impure(self) {
-        unsafe {
-            CHECK_IMPURE(self.0.to_raw(), self._extract() as *const c_void);
-        }
+        puresize::check_impure(self.0, self._extract() as *mut c_void);
     }
 }
 
@@ -889,7 +888,7 @@ impl Debug for LispObject {
         }
         match ty {
             Lisp_Type::Lisp_Symbol => {
-                let name = LispObject::from_raw(unsafe { SYMBOL_NAME(self.to_raw()) });
+                let name = self.as_symbol_or_error().symbol_name();
                 write!(f, "'{}", display_string(name))?;
             }
             Lisp_Type::Lisp_Cons => {

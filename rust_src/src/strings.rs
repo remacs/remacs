@@ -6,7 +6,7 @@ use libc::{self, c_void};
 
 use lisp::LispObject;
 use multibyte;
-use remacs_sys::{SYMBOL_NAME, EmacsInt, error, make_unibyte_string, make_uninit_multibyte_string,
+use remacs_sys::{EmacsInt, error, make_unibyte_string, make_uninit_multibyte_string,
                  string_to_multibyte as c_string_to_multibyte};
 use remacs_macros::lisp_fn;
 
@@ -32,10 +32,10 @@ fn string_bytes(string: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
     if s1.is_symbol() {
-        s1 = LispObject::from_raw(unsafe { SYMBOL_NAME(s1.to_raw()) });
+        s1 = s1.as_symbol_or_error().symbol_name();
     }
     if s2.is_symbol() {
-        s2 = LispObject::from_raw(unsafe { SYMBOL_NAME(s2.to_raw()) });
+        s2 = s2.as_symbol_or_error().symbol_name();
     }
     let mut s1 = s1.as_string_or_error();
     let mut s2 = s2.as_string_or_error();
