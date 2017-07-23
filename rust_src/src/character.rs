@@ -1,7 +1,7 @@
 //! Operations on characters.
 
 use lisp::LispObject;
-use multibyte::{MAX_CHAR, make_char_multibyte};
+use multibyte::{MAX_CHAR, make_char_multibyte, raw_byte_from_codepoint_safe};
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, error};
 
@@ -37,4 +37,18 @@ fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
         }
     }
     LispObject::from_fixnum(make_char_multibyte(c) as EmacsInt)
+}
+
+/// Convert the multibyte character CH to a byte.
+/// If the multibyte character does not represent a byte, return -1.
+#[lisp_fn]
+fn multibyte_char_to_unibyte(ch: LispObject) -> LispObject {
+    let c = ch.as_character_or_error();
+    if c < 256 {
+        // Can't distinguish a byte read from a unibyte buffer from
+        // a latin1 char, so let's let it slide.
+        ch
+    } else {
+        LispObject::from_fixnum(raw_byte_from_codepoint_safe(c))
+    }
 }
