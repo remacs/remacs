@@ -12,9 +12,9 @@ use multibyte::MAX_CHAR;
 use lists::{sort_list, inorder};
 use buffers::LispBufferRef;
 use windows::LispWindowRef;
-use remacs_sys::{Qsequencep, EmacsInt, wrong_type_argument, error, PSEUDOVECTOR_FLAG,
-                 PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_SIZE_MASK, PseudovecType,
-                 Lisp_Vectorlike, Lisp_Vector, Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{Qsequencep, EmacsInt, PSEUDOVECTOR_FLAG, PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS,
+                 PSEUDOVECTOR_SIZE_MASK, PseudovecType, Lisp_Vectorlike, Lisp_Vector,
+                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM};
 use remacs_macros::lisp_fn;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
@@ -127,7 +127,7 @@ impl LispBoolVecRef {
 /// the number of bytes in the string; it is the number of characters.
 /// To get the number of bytes, use `string-bytes'.
 #[lisp_fn]
-fn length(sequence: LispObject) -> LispObject {
+pub fn length(sequence: LispObject) -> LispObject {
     if let Some(s) = sequence.as_string() {
         return LispObject::from_natnum(s.len_chars() as EmacsInt);
     } else if let Some(vl) = sequence.as_vectorlike() {
@@ -145,15 +145,13 @@ fn length(sequence: LispObject) -> LispObject {
     } else if let Some(_) = sequence.as_cons() {
         let len = sequence.iter_tails().count();
         if len > MOST_POSITIVE_FIXNUM as usize {
-            unsafe {
-                error("List too long\0".as_ptr());
-            }
+            error!("List too long");
         }
         return LispObject::from_natnum(len as EmacsInt);
     } else if sequence.is_nil() {
         return LispObject::from_natnum(0);
     }
-    unsafe { wrong_type_argument(Qsequencep, sequence.to_raw()) }
+    wrong_type!(Qsequencep, sequence)
 }
 
 /// Sort SEQ, stably, comparing elements using PREDICATE.
@@ -183,7 +181,7 @@ fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
     } else if seq.is_nil() {
         seq
     } else {
-        unsafe { wrong_type_argument(Qsequencep, seq.to_raw()) }
+        wrong_type!(Qsequencep, seq)
     }
 }
 

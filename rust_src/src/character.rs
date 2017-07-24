@@ -3,7 +3,7 @@
 use lisp::LispObject;
 use multibyte::{MAX_CHAR, make_char_multibyte, raw_byte_from_codepoint_safe};
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, error};
+use remacs_sys::EmacsInt;
 
 /// Return the character of the maximum code.
 #[lisp_fn]
@@ -32,9 +32,7 @@ fn char_or_string_p(object: LispObject) -> LispObject {
 fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
     let c = ch.as_character_or_error();
     if c >= 0x100 {
-        unsafe {
-            error("Not a unibyte character: %d\0".as_ptr(), c);
-        }
+        error!("Not a unibyte character: {}", c);
     }
     LispObject::from_fixnum(make_char_multibyte(c) as EmacsInt)
 }

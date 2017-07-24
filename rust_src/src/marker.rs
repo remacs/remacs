@@ -1,7 +1,7 @@
 use libc::ptrdiff_t;
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{error, Lisp_Marker};
+use remacs_sys::Lisp_Marker;
 use remacs_macros::lisp_fn;
 
 pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
@@ -11,9 +11,7 @@ impl LispMarkerRef {
     pub fn position(self) -> ptrdiff_t {
         let buf = self.buffer;
         if buf.is_null() {
-            unsafe {
-                error("Marker does not point anywhere\0".as_ptr());
-            }
+            error!("Marker does not point anywhere");
         }
 
         // TODO: add assertions that marker_position in marker.c has.

@@ -6,16 +6,15 @@ use std::slice;
 use libc::ptrdiff_t;
 
 use buffers::{LispBufferRef, get_buffer};
-use eval::xsignal1;
 use libc;
 use lisp::{LispObject, LispNumber};
 use multibyte::LispStringRef;
-use remacs_sys::{error, nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string,
+use remacs_sys::{nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string,
                  make_specified_string};
 use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string,
-                 validate_subarray, string_char_to_byte, wrong_type_argument};
+                 validate_subarray, string_char_to_byte};
 use remacs_sys::{current_thread, record_unwind_current_buffer, set_buffer_internal,
-                 make_buffer_string, call4};
+                 make_buffer_string};
 use remacs_sys::{globals, Fbuffer_file_name, Ffind_operation_coding_system, Flocal_variable_p};
 use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw_text,
                  Qcoding_system_error, Qwrite_region, Qbuffer_file_coding_system};
@@ -54,9 +53,7 @@ fn hash_alg(algorithm: LispObject) -> HashAlg {
         HashAlg::SHA512
     } else {
         let name = symbol_name(algorithm).as_string_or_error();
-        unsafe {
-            error(b"Invalid algorithm arg: %s\0".as_ptr(), name.as_slice());
-        }
+        error!("Invalid algorithm arg: {:?}\0", &name.as_slice());
     }
 }
 
@@ -66,10 +63,7 @@ fn check_coding_system_or_error(coding_system: LispObject, noerror: LispObject) 
         if noerror.is_not_nil() {
             LispObject::from_raw(unsafe { Qraw_text })
         } else {
-            xsignal1(
-                LispObject::from_raw(unsafe { Qcoding_system_error }),
-                coding_system,
-            );
+            xsignal!(Qcoding_system_error, coding_system);
         }
     } else {
         coding_system
@@ -139,20 +133,17 @@ fn get_coding_system_for_buffer(
            default value of buffer-file-coding-system. */
         return LispObject::from_raw(buffer.buffer_file_coding_system);
     }
-    if fboundp(LispObject::from_raw(
-        unsafe { globals.f_Vselect_safe_coding_system_function },
-    )).is_not_nil()
+    let sscsf = LispObject::from_raw(unsafe { globals.f_Vselect_safe_coding_system_function });
+    if fboundp(sscsf).is_not_nil()
     {
         /* Confirm that VAL can surely encode the current region. */
-        return LispObject::from_raw(unsafe {
-            call4(
-                globals.f_Vselect_safe_coding_system_function,
-                LispObject::from_natnum(start_byte as EmacsInt).to_raw(),
-                LispObject::from_natnum(end_byte as EmacsInt).to_raw(),
-                coding_system.to_raw(),
-                LispObject::constant_nil().to_raw(),
-            )
-        });
+        return call!(
+            sscsf,
+            LispObject::from_natnum(start_byte as EmacsInt),
+            LispObject::from_natnum(end_byte as EmacsInt),
+            coding_system,
+            LispObject::constant_nil()
+        )
     }
     LispObject::constant_nil()
 }
@@ -304,9 +295,7 @@ fn get_input(
             ss
         }
     } else {
-        unsafe {
-            wrong_type_argument(Qstringp, object.to_raw());
-        }
+        wrong_type!(Qstringp, object);
     }
 }
 

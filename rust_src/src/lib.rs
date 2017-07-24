@@ -22,10 +22,11 @@ extern crate sha1;
 extern crate sha2;
 extern crate base64 as base64_crate;
 
+#[macro_use]
+mod eval;
 mod lisp;
 mod lists;
 mod marker;
-mod eval;
 mod floatfns;
 mod math;
 mod numbers;
@@ -42,6 +43,7 @@ mod buffers;
 mod windows;
 mod interactive;
 mod process;
+mod fonts;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -242,6 +244,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Svector_or_char_table_p);
         defsubr(&*vectors::Svectorp);
         defsubr(&*vectors::Slength);
+        defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
         defsubr(&*crypto::Ssecure_hash);
         defsubr(&*crypto::Sbuffer_hash);

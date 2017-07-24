@@ -1209,8 +1209,10 @@ extern "C" {
     pub static mut globals: emacs_globals;
     pub static current_thread: *mut thread_state;
     pub static Qt: Lisp_Object;
+    pub static Qerror: Lisp_Object;
     pub static Qarith_error: Lisp_Object;
     pub static Qrange_error: Lisp_Object;
+    pub static Qwrong_type_argument: Lisp_Object;
     pub static Qnumber_or_marker_p: Lisp_Object;
     pub static Qinteger_or_marker_p: Lisp_Object;
     pub static Qconsp: Lisp_Object;
@@ -1255,6 +1257,7 @@ extern "C" {
     pub static Qfont_object: Lisp_Object;
     pub static Qwrite_region: Lisp_Object;
     pub static Qbuffer_file_coding_system: Lisp_Object;
+    pub static Qfont_extra_type: Lisp_Object;
 
     pub static Qmd5: Lisp_Object;
     pub static Qsha1: Lisp_Object;
@@ -1276,6 +1279,7 @@ extern "C" {
     pub fn Fbuffer_file_name(buffer: Lisp_Object) -> Lisp_Object;
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
+    pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
@@ -1332,22 +1336,9 @@ extern "C" {
         depth: c_int,
         ht: Lisp_Object,
     ) -> bool;
-    pub fn call2(fn_: Lisp_Object, arg1: Lisp_Object, arg2: Lisp_Object) -> Lisp_Object;
-    pub fn call4(
-        fn_: Lisp_Object,
-        arg1: Lisp_Object,
-        arg2: Lisp_Object,
-        arg3: Lisp_Object,
-        arg4: Lisp_Object,
-    ) -> Lisp_Object;
 
     // These signal an error, therefore are marked as non-returning.
     pub fn circular_list(tail: Lisp_Object) -> !;
-    pub fn wrong_type_argument(predicate: Lisp_Object, value: Lisp_Object) -> !;
-    // defined in eval.c, where it can actually take an arbitrary
-    // number of arguments.
-    // TODO: define a Rust version of this that uses Rust strings.
-    pub fn error(m: *const u8, ...) -> !;
     pub fn nsberror(spec: Lisp_Object) -> !;
 
     pub fn emacs_abort() -> !;
@@ -1366,4 +1357,48 @@ extern "C" {
         multibyte: bool,
         nchars_return: *mut ptrdiff_t,
     ) -> ptrdiff_t;
+}
+
+/// Contains C definitions from the font.h header.
+pub mod font {
+    use libc::c_int;
+
+    /// Represents the indices of font properties in the contents of a font
+    /// vector.
+    ///
+    /// # C Porting Notes
+    ///
+    /// The equivalent C enum is `font_property_index`. Since it is meant to
+    /// represent indices for three different length vectors, the C definition
+    /// contains duplicate variants, e.g `FONT_OBJLIST_INDEX = FONT_SPEC_MAX`,
+    /// to represent sizes. These have been moved out of this enum and are
+    /// available as constant `c_int` values on this module.
+    #[allow(non_camel_case_types, dead_code)]
+    #[repr(C)]
+    pub enum FontPropertyIndex {
+        FONT_TYPE_INDEX,
+        FONT_FOUNDRY_INDEX,
+        FONT_FAMILY_INDEX,
+        FONT_ADSTYLE_INDEX,
+        FONT_REGISTRY_INDEX,
+        FONT_WEIGHT_INDEX,
+        FONT_SLANT_INDEX,
+        FONT_WIDTH_INDEX,
+        FONT_SIZE_INDEX,
+        FONT_DPI_INDEX,
+        FONT_SPACING_INDEX,
+        FONT_AVGWIDTH_INDEX,
+        FONT_EXTRA_INDEX,
+        // In C, we have FONT_SPEC_MAX, FONT_OBJLIST_INDEX = FONT_SPEC_MAX here.
+        FONT_OBJLIST_INDEX,
+        // In C, we have FONT_ENTITY_MAX, FONT_NAME_INDEX = FONT_ENTITY_MAX here.
+        FONT_NAME_INDEX,
+        FONT_FULLNAME_INDEX,
+        FONT_FILE_INDEX,
+        // In C, we have FONT_OBJECT_MAX here.
+    }
+
+    pub const FONT_SPEC_MAX: c_int = FontPropertyIndex::FONT_OBJLIST_INDEX as c_int;
+    pub const FONT_ENTITY_MAX: c_int = FontPropertyIndex::FONT_NAME_INDEX as c_int;
+    pub const FONT_OBJECT_MAX: c_int = (FontPropertyIndex::FONT_FILE_INDEX as c_int) + 1;
 }
