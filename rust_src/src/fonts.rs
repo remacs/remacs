@@ -1,5 +1,5 @@
 use remacs_macros::lisp_fn;
-use remacs_sys::{font, Qfont_spec, Qfont_entity, Qfont_object, wrong_type_argument};
+use remacs_sys::{font, Qfont_spec, Qfont_entity, Qfont_object};
 use lisp::LispObject;
 use symbols::intern;
 use vectors::LispVectorlikeRef;
@@ -35,6 +35,8 @@ pub enum FontExtraType {
 }
 
 impl FontExtraType {
+    // Needed for wrong_type! that is using a safe predicate. This may change in the future.
+    #[allow(unused_unsafe)]
     pub fn from_symbol_or_error(extra_type: LispObject) -> FontExtraType {
         if extra_type.eq(LispObject::from_raw(unsafe { Qfont_spec })) {
             FontExtraType::Spec
@@ -43,7 +45,7 @@ impl FontExtraType {
         } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_object })) {
             FontExtraType::Object
         } else {
-            unsafe { wrong_type_argument(intern("font-extra-type").to_raw(), extra_type.to_raw()) }
+            wrong_type!(intern("font-extra-type").to_raw(), extra_type);
         }
     }
 }
