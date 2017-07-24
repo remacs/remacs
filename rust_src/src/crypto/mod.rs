@@ -9,8 +9,7 @@ use buffers::{LispBufferRef, get_buffer};
 use libc;
 use lisp::{LispObject, LispNumber};
 use multibyte::LispStringRef;
-use remacs_sys::{nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string,
-                 make_specified_string};
+use remacs_sys::{nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string, make_specified_string};
 use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string,
                  validate_subarray, string_char_to_byte};
 use remacs_sys::{current_thread, record_unwind_current_buffer, set_buffer_internal,
@@ -134,8 +133,7 @@ fn get_coding_system_for_buffer(
         return LispObject::from_raw(buffer.buffer_file_coding_system);
     }
     let sscsf = LispObject::from_raw(unsafe { globals.f_Vselect_safe_coding_system_function });
-    if fboundp(sscsf).is_not_nil()
-    {
+    if fboundp(sscsf).is_not_nil() {
         /* Confirm that VAL can surely encode the current region. */
         return call!(
             sscsf,
@@ -143,7 +141,7 @@ fn get_coding_system_for_buffer(
             LispObject::from_natnum(end_byte as EmacsInt),
             coding_system,
             LispObject::constant_nil()
-        )
+        );
     }
     LispObject::constant_nil()
 }
