@@ -38,19 +38,21 @@
          (file      "test")
          (full-name (expand-file-name file dir))
          (regexp    "bar")
-         (dired-always-read-filesystem t))
+         (dired-always-read-filesystem t) buffers)
     (if (file-exists-p dir)
         (delete-directory dir 'recursive))
     (make-directory dir)
     (with-temp-file full-name (insert "foo"))
-    (find-file-noselect full-name)
-    (dired dir)
+    (push (find-file-noselect full-name) buffers)
+    (push (dired dir) buffers)
     (with-temp-file full-name (insert "bar"))
     (dired-mark-files-containing-regexp regexp)
     (unwind-protect
         (should (equal (dired-get-marked-files nil nil nil 'distinguish-1-mark)
                        `(t ,full-name)))
       ;; Clean up
+      (dolist (buf buffers)
+        (when (buffer-live-p buf) (kill-buffer buf)))
       (delete-directory dir 'recursive))))
 
 (ert-deftest dired-test-bug25609 ()
@@ -60,7 +62,8 @@
          (target (expand-file-name (file-name-nondirectory from) to))
          (nested (expand-file-name (file-name-nondirectory from) target))
          (dired-dwim-target t)
-         (dired-recursive-copies 'always)) ; Don't prompt me.
+         (dired-recursive-copies 'always) ; Don't prompt me.
+         buffers)
     (advice-add 'dired-query ; Don't ask confirmation to overwrite a file.
                 :override
                 (lambda (_sym _prompt &rest _args) (setq dired-query t))
@@ -70,8 +73,8 @@
                 (lambda (_prompt _coll &optional _pred _match init _hist _def _inherit _keymap)
                   init)
                 '((name . "advice-completing-read")))
-    (dired to)
-    (dired-other-window temporary-file-directory)
+    (push (dired to) buffers)
+    (push (dired-other-window temporary-file-directory) buffers)
     (dired-goto-file from)
     (dired-do-copy)
     (dired-do-copy); Again.
@@ -79,6 +82,8 @@
         (progn
           (should (file-exists-p target))
           (should-not (file-exists-p nested)))
+      (dolist (buf buffers)
+        (when (buffer-live-p buf) (kill-buffer buf)))
       (delete-directory from 'recursive)
       (delete-directory to 'recursive)
       (advice-remove 'dired-query "advice-dired-query")
@@ -87,10 +92,10 @@
 (ert-deftest dired-test-bug27243 ()
   "Test for http://debbugs.gnu.org/27243 ."
   (let ((test-dir (make-temp-file "test-dir-" t))
-        (dired-auto-revert-buffer t))
+        (dired-auto-revert-buffer t) buffers)
     (with-current-buffer (find-file-noselect test-dir)
       (make-directory "test-subdir"))
-    (dired test-dir)
+    (push (dired test-dir) buffers)
     (unwind-protect
         (let ((buf (current-buffer))
               (pt1 (point))
@@ -101,17 +106,19 @@
           (should (equal (dired-file-name-at-point)
                          (concat (file-name-as-directory test-dir)
                                  (file-name-as-directory "test-subdir"))))
-          (dired-find-file)
+          (push (dired-find-file) buffers)
           (let ((pt2 (point)))          ; Point is on test-file.
             (switch-to-buffer buf)
             ;; Sanity check: point should now be back on the subdirectory.
             (should (eq (point) pt1))
             ;; Case 1: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#5
-            (dired-find-file)
+            (push (dired-find-file) buffers)
             (should (eq (point) pt2))
             ;; Case 2: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#28
-            (dired test-dir)
+            (push (dired test-dir) buffers)
             (should (eq (point) pt1))))
+      (dolist (buf buffers)
+        (when (buffer-live-p buf) (kill-buffer buf)))
       (delete-directory test-dir t))))
 
 (ert-deftest dired-test-bug27693 ()
