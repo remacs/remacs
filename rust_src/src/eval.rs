@@ -75,3 +75,12 @@ macro_rules! wrong_type {
         xsignal!(::remacs_sys::Qwrong_type_argument, LispObject::from_raw(unsafe { $pred }), $arg);
     }}
 }
+
+macro_rules! args_out_of_range {
+    ($arg1:expr, $arg2:expr) => {{
+        xsignal!(::remacs_sys::Qargs_out_of_range, $arg1, $arg2);
+    }};
+    ($arg1:expr, $arg2:expr, $arg3:expr) => {{
+        xsignal!(::remacs_sys::Qargs_out_of_range, $arg1, $arg2, $arg3);
+    }}
+}

@@ -1213,6 +1213,7 @@ extern "C" {
     pub static Qarith_error: Lisp_Object;
     pub static Qrange_error: Lisp_Object;
     pub static Qwrong_type_argument: Lisp_Object;
+    pub static Qargs_out_of_range: Lisp_Object;
     pub static Qnumber_or_marker_p: Lisp_Object;
     pub static Qinteger_or_marker_p: Lisp_Object;
     pub static Qconsp: Lisp_Object;
