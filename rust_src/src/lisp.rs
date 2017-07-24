@@ -17,6 +17,7 @@ use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
 use windows::LispWindowRef;
 use marker::LispMarkerRef;
+use fonts::LispFontRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
@@ -469,6 +470,17 @@ impl LispObject {
     pub fn is_font(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_FONT)
+        })
+    }
+
+    pub fn as_font(self) -> Option<LispFontRef> {
+        self.as_vectorlike().map_or(None, |v| if v.is_pseudovector(
+            PseudovecType::PVEC_FONT,
+        )
+        {
+            Some(LispFontRef::from_vectorlike(v))
+        } else {
+            None
         })
     }
 }
