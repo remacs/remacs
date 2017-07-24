@@ -1,7 +1,7 @@
 //! Operations on lists.
 
 use lisp::{LispObject, LispCons};
-use remacs_sys::{wrong_type_argument, Qlistp, EmacsInt, call2};
+use remacs_sys::{Qlistp, EmacsInt};
 use remacs_macros::lisp_fn;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
@@ -102,7 +102,7 @@ fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
         match tail.as_cons() {
             None => {
                 if tail.is_not_nil() {
-                    unsafe { wrong_type_argument(Qlistp, list.to_raw()) }
+                    wrong_type!(Qlistp, list)
                 }
                 return tail;
             }
@@ -179,15 +179,14 @@ fn assq(key: LispObject, list: LispObject) -> LispObject {
 ///
 /// Equality is defined by TESTFN is non-nil or by `equal' if nil.
 #[lisp_fn(min = "2")]
-fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObject {
+pub fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
         if let Some(item_cons) = item.as_cons() {
             let is_equal = if testfn.is_nil() {
                 key.eq(item_cons.car()) || key.equal(item_cons.car())
             } else {
-                let res = unsafe { call2(testfn.to_raw(), key.to_raw(), item_cons.car().to_raw()) };
-                LispObject::from_raw(res).is_not_nil()
+                call!(testfn, key, item_cons.car()).is_not_nil()
             };
             if is_equal {
                 return item;
@@ -330,7 +329,7 @@ where
                     // need an extra call to CHECK_LIST_END here to catch odd-length lists
                     // (like Emacs we signal the somewhat confusing `wrong-type-argument')
                     if tail.as_obj().is_not_nil() {
-                        unsafe { wrong_type_argument(Qlistp, plist.to_raw()) }
+                        wrong_type!(Qlistp, plist)
                     }
                     break;
                 }
@@ -402,7 +401,7 @@ fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispObjec
 /// Any number of arguments, even zero arguments, are allowed.
 /// usage: (list &rest OBJECTS)
 #[lisp_fn]
-fn list(args: &mut [LispObject]) -> LispObject {
+pub fn list(args: &mut [LispObject]) -> LispObject {
     args.iter().rev().fold(
         LispObject::constant_nil(),
         |list, &arg| LispObject::cons(arg, list),
@@ -446,8 +445,7 @@ pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
 
 // also needed by vectors.rs
 pub fn inorder(pred: LispObject, a: LispObject, b: LispObject) -> bool {
-    let res = unsafe { call2(pred.to_raw(), b.to_raw(), a.to_raw()) };
-    LispObject::from_raw(res).is_nil()
+    call!(pred, b, a).is_nil()
 }
 
 /// Merge step of linked-list sorting.

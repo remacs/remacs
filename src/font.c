@@ -3838,25 +3838,6 @@ font_range (ptrdiff_t pos, ptrdiff_t pos_byte, ptrdiff_t *limit,
 
 /* Lisp API.  */
 
-DEFUN ("fontp", Ffontp, Sfontp, 1, 2, 0,
-       doc: /* Return t if OBJECT is a font-spec, font-entity, or font-object.
-Return nil otherwise.
-Optional 2nd argument EXTRA-TYPE, if non-nil, specifies to check
-which kind of font it is.  It must be one of `font-spec', `font-entity',
-`font-object'.  */)
-  (Lisp_Object object, Lisp_Object extra_type)
-{
-  if (NILP (extra_type))
-    return (FONTP (object) ? Qt : Qnil);
-  if (EQ (extra_type, Qfont_spec))
-    return (FONT_SPEC_P (object) ? Qt : Qnil);
-  if (EQ (extra_type, Qfont_entity))
-    return (FONT_ENTITY_P (object) ? Qt : Qnil);
-  if (EQ (extra_type, Qfont_object))
-    return (FONT_OBJECT_P (object) ? Qt : Qnil);
-  wrong_type_argument (intern ("font-extra-type"), extra_type);
-}
-
 DEFUN ("font-spec", Ffont_spec, Sfont_spec, 0, MANY, 0,
        doc: /* Return a newly created font-spec with arguments as properties.
 
@@ -5354,7 +5335,6 @@ syms_of_font (void)
 #endif	/* HAVE_LIBOTF */
 #endif	/* 0 */
 
-  defsubr (&Sfontp);
   defsubr (&Sfont_spec);
   defsubr (&Sfont_get);
 #ifdef HAVE_WINDOW_SYSTEM

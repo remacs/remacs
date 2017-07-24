@@ -270,7 +270,7 @@ static Lisp_Object chan_process[FD_SETSIZE];
 static void wait_for_socket_fds (Lisp_Object, char const *);
 
 /* Alist of elements (NAME . PROCESS).  */
-static Lisp_Object Vprocess_alist;
+Lisp_Object Vprocess_alist;
 
 /* Buffered-ahead input char from process, indexed by channel.
    -1 means empty (no char is buffered).
@@ -930,23 +930,6 @@ free_dns_request (Lisp_Object proc)
 #endif
 
 
-DEFUN ("processp", Fprocessp, Sprocessp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a process.  */)
-  (Lisp_Object object)
-{
-  return PROCESSP (object) ? Qt : Qnil;
-}
-
-DEFUN ("get-process", Fget_process, Sget_process, 1, 1, 0,
-       doc: /* Return the process named NAME, or nil if there is none.  */)
-  (register Lisp_Object name)
-{
-  if (PROCESSP (name))
-    return name;
-  CHECK_STRING (name);
-  return Fcdr (Fassoc (name, Vprocess_alist, Qnil));
-}
-
 /* This is how commands for the user decode process arguments.  It
    accepts a process, a process name, a buffer, a buffer name, or nil.
    Buffers denote the first process in the buffer, and nil denotes the
@@ -7917,8 +7900,6 @@ non-nil value means that the delay is not reset on write.
 The variable takes effect when `start-process' is called.  */);
   Vprocess_adaptive_read_buffering = Qt;
 
-  defsubr (&Sprocessp);
-  defsubr (&Sget_process);
   defsubr (&Sdelete_process);
   defsubr (&Sprocess_status);
   defsubr (&Sprocess_exit_status);
