@@ -2,8 +2,7 @@
 
 use floatfns;
 use lisp::{LispObject, LispNumber};
-use eval::xsignal0;
-use remacs_sys::{EmacsInt, Qarith_error, Qnumberp, wrong_type_argument};
+use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
 use remacs_macros::lisp_fn;
 
 /// Return X modulo Y.
@@ -18,9 +17,7 @@ fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
     ) {
         (LispNumber::Fixnum(mut i1), LispNumber::Fixnum(i2)) => {
             if i2 == 0 {
-                unsafe {
-                    xsignal0(LispObject::from_raw(Qarith_error));
-                }
+                xsignal!(Qarith_error);
             }
 
             i1 %= i2;
@@ -114,9 +111,7 @@ fn arith_driver(code: ArithOp, args: &[LispObject]) -> LispObject {
                             accum = next;
                         } else {
                             if next == 0 {
-                                unsafe {
-                                    xsignal0(LispObject::from_raw(Qarith_error));
-                                }
+                                xsignal!(Qarith_error);
                             }
                             if accum.checked_div(next).is_none() {
                                 overflow = true;
@@ -248,9 +243,7 @@ fn abs(arg: LispObject) -> LispObject {
     } else if let Some(n) = arg.as_fixnum() {
         LispObject::from_fixnum(n.abs())
     } else {
-        unsafe {
-            wrong_type_argument(Qnumberp, arg.to_raw());
-        }
+        wrong_type!(Qnumberp, arg);
     }
 }
 

@@ -21,10 +21,11 @@ extern crate sha1;
 extern crate sha2;
 extern crate base64 as base64_crate;
 
+#[macro_use]
+mod eval;
 mod lisp;
 mod lists;
 mod marker;
-mod eval;
 mod floatfns;
 mod math;
 mod numbers;

@@ -38,7 +38,7 @@ use libc::{ptrdiff_t, c_char, c_uchar, c_uint, c_int};
 
 use lisp::ExternalPtr;
 use remacs_sys::{CHAR_MODIFIER_MASK, CHAR_SHIFT, CHAR_CTL, emacs_abort, CHARACTERBITS, EmacsInt,
-                 Lisp_String, error};
+                 Lisp_String};
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
 
@@ -160,7 +160,7 @@ impl LispStringRef {
 }
 
 fn string_overflow() -> ! {
-    unsafe { error("Maximum string size exceeded\0".as_ptr()) }
+    error!("Maximum string size exceeded")
 }
 
 /// Parse unibyte string at STR of LEN bytes, and return the number of
@@ -257,7 +257,7 @@ fn write_codepoint(to: &mut [c_uchar], cp: Codepoint) -> usize {
         to[0] = 0xC0 | ((b >> 6) & 1);
         2
     } else {
-        unsafe { error("Invalid character: %x\0".as_ptr(), cp) }
+        error!("Invalid character: {:#x}", cp)
     }
 }
 

@@ -21,10 +21,9 @@ use marker::LispMarkerRef;
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
-                 wrong_type_argument, make_float, circular_list, internal_equal, Fcons,
-                 CHECK_IMPURE, Qnil, Qt, Qnumberp, Qfloatp, Qstringp, Qsymbolp,
-                 Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp,
-                 Qconsp, SYMBOL_NAME, PseudovecType, EqualKind};
+                 make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
+                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
+                 Qcharacterp, Qlistp, Qintegerp, Qconsp, SYMBOL_NAME, PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -100,17 +99,6 @@ impl LispObject {
     pub fn get_untaggedptr(self) -> *mut c_void {
         (self.to_raw() & VALMASK) as intptr_t as *mut c_void
     }
-
-    // Same as CHECK_TYPE macro,
-    // order of arguments changed
-    #[inline]
-    fn check_type_or_error(self, ok: bool, predicate: Lisp_Object) -> () {
-        if !ok {
-            unsafe {
-                wrong_type_argument(predicate, self.to_raw());
-            }
-        }
-    }
 }
 
 // Symbol support (LispType == Lisp_Symbol == 0)
@@ -121,7 +109,7 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn as_symbol(&self) -> Option<LispSymbolRef> {
+    pub fn as_symbol(self) -> Option<LispSymbolRef> {
         if self.is_symbol() {
             Some(LispSymbolRef::new(
                 unsafe { mem::transmute(self.symbol_ptr_value()) },
@@ -132,11 +120,11 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn as_symbol_or_error(&self) -> LispSymbolRef {
+    pub fn as_symbol_or_error(self) -> LispSymbolRef {
         if self.is_symbol() {
             LispSymbolRef::new(unsafe { mem::transmute(self.symbol_ptr_value()) })
         } else {
-            unsafe { wrong_type_argument(Qsymbolp, self.to_raw()) }
+            wrong_type!(Qsymbolp, self)
         }
     }
 
@@ -323,7 +311,7 @@ impl LispObject {
         if self.is_fixnum() {
             unsafe { self.to_fixnum_unchecked() }
         } else {
-            unsafe { wrong_type_argument(Qintegerp, self.to_raw()) }
+            wrong_type!(Qintegerp, self)
         }
     }
 
@@ -343,7 +331,7 @@ impl LispObject {
         if self.is_natnum() {
             unsafe { self.to_fixnum_unchecked() }
         } else {
-            unsafe { wrong_type_argument(Qwholenump, self.to_raw()) }
+            wrong_type!(Qwholenump, self)
         }
     }
 }
@@ -377,7 +365,7 @@ impl LispObject {
         if self.is_vectorlike() {
             LispVectorlikeRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
         } else {
-            unsafe { wrong_type_argument(Qvectorp, self.to_raw()) }
+            wrong_type!(Qvectorp, self)
         }
     }
 }
@@ -530,7 +518,7 @@ impl Iterator for TailsIter {
             None => {
                 if !self.safe {
                     if self.tail.is_not_nil() {
-                        unsafe { wrong_type_argument(Qlistp, self.list.to_raw()) }
+                        wrong_type!(Qlistp, self.list)
                     }
                 }
                 return None;
@@ -586,7 +574,7 @@ impl LispObject {
         if self.is_cons() {
             LispCons(self)
         } else {
-            unsafe { wrong_type_argument(Qconsp, self.to_raw()) }
+            wrong_type!(Qconsp, self)
         }
     }
 
@@ -695,7 +683,7 @@ impl LispObject {
         if self.is_float() {
             unsafe { self.get_float_data_unchecked() }
         } else {
-            unsafe { wrong_type_argument(Qfloatp, self.to_raw()) }
+            wrong_type!(Qfloatp, self)
         }
     }
 
@@ -708,9 +696,9 @@ impl LispObject {
 
     pub fn any_to_float_or_error(self) -> EmacsDouble {
         self.as_float().unwrap_or_else(|| {
-            self.as_fixnum().unwrap_or_else(|| unsafe {
-                wrong_type_argument(Qnumberp, self.to_raw())
-            }) as EmacsDouble
+            self.as_fixnum().unwrap_or_else(
+                || wrong_type!(Qnumberp, self),
+            ) as EmacsDouble
         })
     }
 }
@@ -739,7 +727,7 @@ impl LispObject {
         if self.is_string() {
             LispStringRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
         } else {
-            unsafe { wrong_type_argument(Qstringp, self.to_raw()) }
+            wrong_type!(Qstringp, self)
         }
     }
 }
@@ -764,7 +752,7 @@ impl LispObject {
         } else if let Some(f) = self.as_float() {
             LispNumber::Float(f)
         } else {
-            unsafe { wrong_type_argument(Qnumberp, self.to_raw()) }
+            wrong_type!(Qnumberp, self)
         }
     }
 
@@ -777,7 +765,7 @@ impl LispObject {
         } else if let Some(m) = self.as_marker() {
             LispNumber::Fixnum(m.position() as EmacsInt)
         } else {
-            unsafe { wrong_type_argument(Qnumber_or_marker_p, self.to_raw()) }
+            wrong_type!(Qnumber_or_marker_p, self)
         }
     }
 
@@ -822,8 +810,8 @@ impl LispObject {
     /// Similar to CHECK_CHARACTER
     #[inline]
     pub fn as_character_or_error(self) -> Codepoint {
-        unsafe {
-            self.check_type_or_error(self.is_character(), Qcharacterp);
+        if !self.is_character() {
+            wrong_type!(Qcharacterp, self)
         }
         self.as_fixnum().unwrap() as Codepoint
     }

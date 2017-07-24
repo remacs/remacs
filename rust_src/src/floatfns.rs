@@ -3,12 +3,11 @@
 use std::mem;
 use libc;
 
-use eval::{xsignal0, xsignal2};
 use math::ArithOp;
 use lisp::{LispObject, LispNumber};
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qnumberp, Qinteger_or_marker_p,
-                 Qarith_error, Qrange_error, wrong_type_argument, build_string,
-                 MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM};
+                 Qarith_error, Qrange_error, build_string, MOST_NEGATIVE_FIXNUM,
+                 MOST_POSITIVE_FIXNUM};
 use remacs_sys::libm;
 use remacs_macros::lisp_fn;
 
@@ -86,14 +85,14 @@ pub fn float_arith_driver(
                     accum = next;
                 } else {
                     if next == 0. {
-                        xsignal0(LispObject::from_raw(unsafe { Qarith_error }));
+                        xsignal!(Qarith_error);
                     }
                     accum /= next;
                 }
             }
-            ArithOp::Logand | ArithOp::Logior | ArithOp::Logxor => unsafe {
-                wrong_type_argument(Qinteger_or_marker_p, val.to_raw())
-            },
+            ArithOp::Logand | ArithOp::Logior | ArithOp::Logxor => {
+                wrong_type!(Qinteger_or_marker_p, val)
+            }
         }
     }
     LispObject::from_float(accum)
@@ -181,9 +180,7 @@ fn float(arg: LispObject) -> LispObject {
     } else if let Some(n) = arg.as_fixnum() {
         LispObject::from_float(n as EmacsDouble)
     } else {
-        unsafe {
-            wrong_type_argument(Qnumberp, arg.to_raw());
-        }
+        wrong_type!(Qnumberp, arg);
     }
 }
 
@@ -263,9 +260,7 @@ fn logb(arg: LispObject) -> LispObject {
             MOST_POSITIVE_FIXNUM
         }
     } else {
-        unsafe {
-            wrong_type_argument(Qnumberp, arg.to_raw());
-        }
+        wrong_type!(Qnumberp, arg)
     };
     LispObject::from_fixnum(res)
 }
@@ -330,14 +325,12 @@ where
         } else if let Some(f) = arg.as_float() {
             d = f;
         } else {
-            unsafe {
-                wrong_type_argument(Qnumberp, arg.to_raw());
-            }
+            wrong_type!(Qnumberp, arg)
         }
     } else {
         if let (Some(arg), Some(div)) = (arg.as_fixnum(), divisor.as_fixnum()) {
             if div == 0 {
-                xsignal0(LispObject::from_raw(unsafe { Qarith_error }));
+                xsignal!(Qarith_error);
             }
             return LispObject::from_fixnum(int_round2(arg, div));
         }
@@ -360,7 +353,7 @@ where
     let errstr = LispObject::from_raw(unsafe {
         build_string(name.as_ptr() as *const libc::c_char)
     });
-    xsignal2(LispObject::from_raw(unsafe { Qrange_error }), errstr, arg)
+    xsignal!(Qrange_error, errstr, arg)
 }
 
 fn ceiling2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
