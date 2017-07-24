@@ -196,11 +196,8 @@ restore a previous autoload if possible.")
 (cl-defmethod loadhist-unload-element ((x (head autoload)))
   (loadhist--unload-function x))
 
-(cl-defmethod loadhist-unload-element ((x (head require))) nil)
-(cl-defmethod loadhist-unload-element ((x (head defface))) nil)
-;; The following two might require more actions.
-(cl-defmethod loadhist-unload-element ((x (head ert-deftest))) nil)
-(cl-defmethod loadhist-unload-element ((x (head cl-defmethod))) nil)
+(cl-defmethod loadhist-unload-element ((_ (head require))) nil)
+(cl-defmethod loadhist-unload-element ((_ (head defface))) nil)
 
 (cl-defmethod loadhist-unload-element ((x (head provide)))
   ;; Remove any feature names that this file provided.
@@ -220,8 +217,7 @@ restore a previous autoload if possible.")
     (makunbound x)))
 
 (cl-defmethod loadhist-unload-element ((x (head define-type)))
-  (let* ((name (cdr x))
-         (slots (mapcar 'car (cdr (cl-struct-slot-info name)))))
+  (let* ((name (cdr x)))
     ;; Remove the struct.
     (setf (cl--find-class name) nil)))
 

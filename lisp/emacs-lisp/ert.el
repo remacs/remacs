@@ -136,7 +136,14 @@ Emacs bug 6581 at URL `http://debbugs.gnu.org/cgi/bugreport.cgi?bug=6581'."
     ;; ert-test objects.  It designates an anonymous test.
     (error "Attempt to define a test named nil"))
   (put symbol 'ert--test definition)
+  ;; Register in load-history, so `symbol-file' can find us, and so
+  ;; unload-feature can unload our tests.
+  (cl-pushnew `(ert-deftest . ,symbol) current-load-list :test #'equal)
   definition)
+
+(cl-defmethod loadhist-unload-element ((x (head ert-deftest)))
+  (let ((name (cdr x)))
+    (put name 'ert--test nil)))
 
 (defun ert-make-test-unbound (symbol)
   "Make SYMBOL name no test.  Return SYMBOL."
@@ -214,12 +221,6 @@ description of valid values for RESULT-TYPE.
                         ,@(when tags-supplied-p
                             `(:tags ,tags))
                         :body (lambda () ,@body)))
-         ;; This hack allows `symbol-file' to associate `ert-deftest'
-         ;; forms with files, and therefore enables `find-function' to
-         ;; work with tests.  However, it leads to warnings in
-         ;; `unload-feature', which doesn't know how to undefine tests
-         ;; and has no mechanism for extension.
-         (push '(ert-deftest . ,name) current-load-list)
          ',name))))
 
 ;; We use these `put' forms in addition to the (declare (indent)) in
