@@ -68,6 +68,12 @@ extern "C" {
         depth: libc::c_int,
         ht: Lisp_Object,
     ) -> bool;
+
+    // this is an inline function, so in principle we shouldn't try to
+    // call it (it may not actually exist, if the compiler inlined all
+    // the call sites), but it hasn't caused us any problems so
+    // far. See puresize.rs
+    pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const libc::c_void);
 }
 
 // Largest and smallest numbers that can be represented as fixnums in

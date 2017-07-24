@@ -17,7 +17,6 @@ use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
 use windows::LispWindowRef;
 use marker::LispMarkerRef;
-use puresize;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, INTMASK, USE_LSB_TAG,
                  MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type, Lisp_Bits, Lisp_Misc_Any,
@@ -25,6 +24,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, INTMASK, USE_LSB_TAG
                  make_float, circular_list, internal_equal, Fcons, Qnil, Qt, Qnumberp, Qfloatp,
                  Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp,
                  Qlistp, Qintegerp, Qconsp, pvec_type, EqualKind};
+use remacs_sys::CHECK_IMPURE;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -643,7 +643,9 @@ impl LispCons {
 
     /// Check that "self" is an impure (i.e. not readonly) cons cell.
     pub fn check_impure(self) {
-        puresize::check_impure(self.0, self._extract() as *mut c_void);
+        unsafe {
+            CHECK_IMPURE(self.0.to_raw(), self._extract() as *const c_void);
+        }
     }
 }
 

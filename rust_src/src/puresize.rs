@@ -2,6 +2,10 @@ use libc;
 use lisp::LispObject;
 use remacs_sys::{pure_write_error, pure_, PURESIZE};
 
+// TODO: this apparently has a bug; if we use it then remacs fails to
+// load and compile .el files during the build. For now we'll keep
+// using remacs_sys::CHECK_IMPURE.
+
 // checks to see if the pointer is inside the pure_ array
 #[inline]
 pub fn pure_p(ptr: *mut libc::c_void) -> bool {

@@ -41,7 +41,7 @@ mod buffers;
 mod windows;
 mod interactive;
 mod process;
-mod puresize;
+//mod puresize;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
