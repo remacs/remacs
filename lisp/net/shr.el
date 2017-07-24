@@ -945,6 +945,7 @@ If EXTERNAL, browse the URL using `shr-external-browser'."
     (when (and (buffer-name buffer)
 	       (not (plist-get status :error)))
       (url-store-in-cache image-buffer)
+      (goto-char (point-min))
       (when (or (search-forward "\n\n" nil t)
 		(search-forward "\r\n\r\n" nil t))
 	(let ((data (shr-parse-image-data)))
