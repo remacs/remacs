@@ -3906,6 +3906,14 @@ Since it unloads Tramp, it shall be the last test to run."
 	    (not (string-match "^tramp--?test" (symbol-name x)))
 	    (not (string-match "unload-hook$" (symbol-name x)))
 	    (ert-fail (format "`%s' still bound" x)))))
+    ;; The defstruct `tramp-file-name' and all its internal functions
+    ;; shall be purged.
+    (should-not (cl--find-class 'tramp-file-name))
+    (mapatoms
+     (lambda (x)
+       (and (string-match "tramp-file-name" (symbol-name x))
+            (functionp x)
+            (ert-fail (format "Structure function `%s' still exists" x)))))
     ;; There shouldn't be left a hook function containing a Tramp
     ;; function.  We do not regard the Tramp unload hooks.
     (mapatoms
