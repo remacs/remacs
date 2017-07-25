@@ -204,6 +204,31 @@ xg_display_open (char *display_name, Display **dpy)
   *dpy = gdpy ? GDK_DISPLAY_XDISPLAY (gdpy) : NULL;
 }
 
+/* Scaling/HiDPI functions. */
+static int
+xg_get_gdk_scale (void)
+{
+  const char *sscale = getenv ("GDK_SCALE");
+
+  if (sscale)
+    {
+      long scale = atol (sscale);
+      if (0 < scale)
+	return min (scale, INT_MAX);
+    }
+
+  return 1;
+}
+
+int
+xg_get_scale (struct frame *f)
+{
+#if GTK_CHECK_VERSION (3, 10, 0)
+  if (FRAME_GTK_WIDGET (f))
+    return gtk_widget_get_scale_factor (FRAME_GTK_WIDGET (f));
+#endif
+  return xg_get_gdk_scale ();
+}
 
 /* Close display DPY.  */
 
@@ -724,7 +749,8 @@ xg_show_tooltip (struct frame *f, int root_x, int root_y)
   if (x->ttip_window)
     {
       block_input ();
-      gtk_window_move (x->ttip_window, root_x, root_y);
+      gtk_window_move (x->ttip_window, root_x / xg_get_scale (f),
+		       root_y / xg_get_scale (f));
       gtk_widget_show_all (GTK_WIDGET (x->ttip_window));
       unblock_input ();
     }
@@ -836,21 +862,6 @@ xg_set_geometry (struct frame *f)
     }
 }
 
-static int
-xg_get_gdk_scale (void)
-{
-  const char *sscale = getenv ("GDK_SCALE");
-
-  if (sscale)
-    {
-      long scale = atol (sscale);
-      if (0 < scale)
-	return min (scale, INT_MAX);
-    }
-
-  return 1;
-}
-
 /* Function to handle resize of our frame.  As we have a Gtk+ tool bar
    and a Gtk+ menu bar, we get resize events for the edit part of the
    frame only.  We let Gtk+ deal with the Gtk+ parts.
@@ -912,12 +923,8 @@ xg_frame_set_char_size (struct frame *f, int width, int height)
   /* Do this before resize, as we don't know yet if we will be resized.  */
   x_clear_under_internal_border (f);
 
-  if (FRAME_VISIBLE_P (f))
-    {
-      int scale = xg_get_gdk_scale ();
-      totalheight /= scale;
-      totalwidth /= scale;
-    }
+  totalheight /= xg_get_scale (f);
+  totalwidth /= xg_get_scale (f);
 
   x_wm_set_size_hint (f, 0, 0);
 
@@ -1343,7 +1350,7 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
   int min_rows = 0, min_cols = 0;
   int win_gravity = f->win_gravity;
   Lisp_Object fs_state, frame;
-  int scale = xg_get_gdk_scale ();
+  int scale = xg_get_scale (f);
 
   /* Don't set size hints during initialization; that apparently leads
      to a race condition.  See the thread at
@@ -3659,16 +3666,16 @@ update_theme_scrollbar_height (void)
 }
 
 int
-xg_get_default_scrollbar_width (void)
+xg_get_default_scrollbar_width (struct frame *f)
 {
-  return scroll_bar_width_for_theme * xg_get_gdk_scale ();
+  return scroll_bar_width_for_theme * xg_get_scale (f);
 }
 
 int
-xg_get_default_scrollbar_height (void)
+xg_get_default_scrollbar_height (struct frame *f)
 {
   /* Apparently there's no default height for themes.  */
-  return scroll_bar_width_for_theme * xg_get_gdk_scale ();
+  return scroll_bar_width_for_theme * xg_get_scale (f);
 }
 
 /* Return the scrollbar id for X Window WID on display DPY.
@@ -3858,7 +3865,7 @@ xg_update_scrollbar_pos (struct frame *f,
       GtkWidget *wfixed = f->output_data.x->edit_widget;
       GtkWidget *wparent = gtk_widget_get_parent (wscroll);
       gint msl;
-      int scale = xg_get_gdk_scale ();
+      int scale = xg_get_scale (f);
 
       top /= scale;
       left /= scale;

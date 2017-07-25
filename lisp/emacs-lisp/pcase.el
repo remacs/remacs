@@ -930,6 +930,5 @@ QPAT can take the following forms:
    ((or (stringp qpat) (integerp qpat) (symbolp qpat)) `',qpat)
    (t (error "Unknown QPAT: %S" qpat))))
 
-
 (provide 'pcase)
 ;;; pcase.el ends here

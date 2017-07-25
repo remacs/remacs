@@ -951,7 +951,7 @@ DEFUN ("get-process", Fget_process, Sget_process, 1, 1, 0,
   if (PROCESSP (name))
     return name;
   CHECK_STRING (name);
-  return Fcdr (Fassoc (name, Vprocess_alist));
+  return Fcdr (Fassoc (name, Vprocess_alist, Qnil));
 }
 
 /* This is how commands for the user decode process arguments.  It

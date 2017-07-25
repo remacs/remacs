@@ -642,7 +642,7 @@ WATCH-DESCRIPTOR should be an object returned by `w32notify-add-watch'.  */)
   /* Remove the watch object from watch list.  Do this before freeing
      the object, do that even if we fail to free it, watch_list is
      kept free of junk.  */
-  watch_object = Fassoc (watch_descriptor, watch_list);
+  watch_object = Fassoc (watch_descriptor, watch_list, Qnil);
   if (!NILP (watch_object))
     {
       watch_list = Fdelete (watch_object, watch_list);
@@ -679,7 +679,7 @@ the watcher thread exits abnormally for any other reason.  Removing the
 watch by calling `w32notify-rm-watch' also makes it invalid.  */)
      (Lisp_Object watch_descriptor)
 {
-  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list);
+  Lisp_Object watch_object = Fassoc (watch_descriptor, watch_list, Qnil);
 
   if (!NILP (watch_object))
     {

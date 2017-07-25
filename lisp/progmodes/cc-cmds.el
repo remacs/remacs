@@ -1843,19 +1843,25 @@ with a brace block."
 	  (unless (eq where 'at-header)
 	    (c-backward-to-nth-BOF-{ 1 where)
 	    (c-beginning-of-decl-1))
+	  (when (looking-at c-typedef-key)
+	    (goto-char (match-end 0))
+	    (c-forward-syntactic-ws))
 
 	  ;; Pick out the defun name, according to the type of defun.
 	  (cond
 	   ;; struct, union, enum, or similar:
-	   ((and (looking-at c-type-prefix-key)
-		 (progn (c-forward-token-2 2) ; over "struct foo "
-			(or (eq (char-after) ?\{)
-			    (looking-at c-symbol-key)))) ; "struct foo bar ..."
-	    (save-match-data (c-forward-token-2))
-	    (when (eq (char-after) ?\{)
-	      (c-backward-token-2)
-	      (looking-at c-symbol-key))
-	    (match-string-no-properties 0))
+	   ((looking-at c-type-prefix-key)
+	    (let ((key-pos (point)))
+	      (c-forward-token-2 1)	; over "struct ".
+	      (cond
+	       ((looking-at c-symbol-key)	; "struct foo { ..."
+		(buffer-substring-no-properties key-pos (match-end 0)))
+	       ((eq (char-after) ?{)	; "struct { ... } foo"
+		(when (c-go-list-forward)
+		  (c-forward-syntactic-ws)
+		  (when (looking-at c-symbol-key) ; a bit bogus - there might
+						  ; be several identifiers.
+		    (match-string-no-properties 0)))))))
 
 	   ((looking-at "DEFUN\\s-*(") ;"DEFUN\\_>") think of XEmacs!
 	    ;; DEFUN ("file-name-directory", Ffile_name_directory, Sfile_name_directory, ...) ==> Ffile_name_directory
@@ -1900,7 +1906,8 @@ with a brace block."
 		(c-backward-syntactic-ws))
 	      (setq name-end (point))
 	      (c-back-over-compound-identifier)
-	      (buffer-substring-no-properties (point) name-end)))))))))
+	      (and (looking-at c-symbol-start)
+		   (buffer-substring-no-properties (point) name-end))))))))))
 
 (defun c-declaration-limits (near)
   ;; Return a cons of the beginning and end positions of the current

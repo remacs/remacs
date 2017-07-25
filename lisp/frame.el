@@ -1482,6 +1482,7 @@ FRAME."
 
 (declare-function w32-mouse-absolute-pixel-position "w32fns.c")
 (declare-function x-mouse-absolute-pixel-position "xfns.c")
+(declare-function ns-mouse-absolute-pixel-position "nsfns.c")
 
 (defun mouse-absolute-pixel-position ()
   "Return absolute position of mouse cursor in pixels.
@@ -1494,6 +1495,8 @@ position (0, 0) of the selected frame's terminal."
       (x-mouse-absolute-pixel-position))
      ((eq frame-type 'w32)
       (w32-mouse-absolute-pixel-position))
+     ((eq frame-type 'ns)
+      (ns-mouse-absolute-pixel-position))
      (t
       (cons 0 0)))))
 
@@ -2458,7 +2461,13 @@ See also `toggle-frame-maximized'."
 (make-obsolete-variable
  'window-system-version "it does not give useful information." "24.3")
 
-;; Variables which should trigger redisplay of the current buffer.
+;; Variables whose change of value should trigger redisplay of the
+;; current buffer.
+;; To test whether a given variable needs to be added to this list,
+;; write a simple interactive function that changes the variable's
+;; value and bind that function to a simple key, like F5.  If typing
+;; F5 then produces the correct effect, the variable doesn't need
+;; to be in this list; otherwise, it does.
 (mapc (lambda (var)
         (add-variable-watcher var (symbol-function 'set-buffer-redisplay)))
       '(line-spacing
@@ -2466,6 +2475,10 @@ See also `toggle-frame-maximized'."
         line-prefix
         wrap-prefix
         truncate-lines
+        display-line-numbers
+        display-line-numbers-width
+        display-line-numbers-current-absolute
+        display-line-numbers-widen
         bidi-paragraph-direction
         bidi-display-reordering))
 

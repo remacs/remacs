@@ -24,6 +24,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "process.h"
 #include "gnutls.h"
 #include "coding.h"
+#include "buffer.h"
 
 #ifdef HAVE_GNUTLS
 
@@ -171,6 +172,59 @@ DEF_DLL_FN (const char *, gnutls_cipher_get_name,
 DEF_DLL_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
 DEF_DLL_FN (const char *, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
 
+# ifdef HAVE_GNUTLS3
+DEF_DLL_FN (int, gnutls_rnd, (gnutls_rnd_level_t, void *, size_t));
+DEF_DLL_FN (const gnutls_mac_algorithm_t *, gnutls_mac_list, (void));
+DEF_DLL_FN (size_t, gnutls_mac_get_nonce_size, (gnutls_mac_algorithm_t));
+DEF_DLL_FN (size_t, gnutls_mac_get_key_size, (gnutls_mac_algorithm_t));
+DEF_DLL_FN (const gnutls_digest_algorithm_t *, gnutls_digest_list, (void));
+DEF_DLL_FN (const char *, gnutls_digest_get_name, (gnutls_digest_algorithm_t));
+#  ifdef HAVE_GNUTLS3_CIPHER
+DEF_DLL_FN (gnutls_cipher_algorithm_t *, gnutls_cipher_list, (void));
+DEF_DLL_FN (int, gnutls_cipher_get_iv_size, (gnutls_cipher_algorithm_t));
+DEF_DLL_FN (size_t, gnutls_cipher_get_key_size, (gnutls_cipher_algorithm_t));
+DEF_DLL_FN (int, gnutls_cipher_get_block_size, (gnutls_cipher_algorithm_t));
+DEF_DLL_FN (int, gnutls_cipher_get_tag_size, (gnutls_cipher_algorithm_t));
+DEF_DLL_FN (int, gnutls_cipher_init,
+	    (gnutls_cipher_hd_t *, gnutls_cipher_algorithm_t,
+	     const gnutls_datum_t *, const gnutls_datum_t *));
+DEF_DLL_FN (void, gnutls_cipher_set_iv, (gnutls_cipher_hd_t, void *, size_t));
+DEF_DLL_FN (int, gnutls_cipher_encrypt2,
+	    (gnutls_cipher_hd_t, const void *, size_t, void *, size_t));
+DEF_DLL_FN (void, gnutls_cipher_deinit, (gnutls_cipher_hd_t));
+DEF_DLL_FN (int, gnutls_cipher_decrypt2,
+	    (gnutls_cipher_hd_t, const void *, size_t, void *, size_t));
+#   ifdef HAVE_GNUTLS3_AEAD
+DEF_DLL_FN (int, gnutls_aead_cipher_init,
+	    (gnutls_aead_cipher_hd_t *, gnutls_cipher_algorithm_t,
+	     const gnutls_datum_t *));
+DEF_DLL_FN (void, gnutls_aead_cipher_deinit, (gnutls_aead_cipher_hd_t));
+DEF_DLL_FN (int, gnutls_aead_cipher_encrypt,
+	    (gnutls_aead_cipher_hd_t, const void *, size_t, const void *,
+	     size_t, size_t, const void *, size_t, void *, size_t *));
+DEF_DLL_FN (int, gnutls_aead_cipher_decrypt,
+	    (gnutls_aead_cipher_hd_t, const void *, size_t, const void *,
+	     size_t, size_t, const void *, size_t, void *, size_t *));
+#   endif /* HAVE_GNUTLS3_AEAD */
+#   ifdef HAVE_GNUTLS3_HMAC
+DEF_DLL_FN (int, gnutls_hmac_init,
+	    (gnutls_hmac_hd_t *, gnutls_mac_algorithm_t, const void *, size_t));
+DEF_DLL_FN (int, gnutls_hmac_get_len, (gnutls_mac_algorithm_t));
+DEF_DLL_FN (int, gnutls_hmac, (gnutls_hmac_hd_t, const void *, size_t));
+DEF_DLL_FN (void, gnutls_hmac_deinit, (gnutls_hmac_hd_t, void *));
+DEF_DLL_FN (void, gnutls_hmac_output, (gnutls_hmac_hd_t, void *));
+#   endif  /* HAVE_GNUTLS3_HMAC */
+#  endif  /* HAVE_GNUTLS3_CIPHER */
+#  ifdef HAVE_GNUTLS3_DIGEST
+  DEF_DLL_FN (int, gnutls_hash_init,
+	    (gnutls_hash_hd_t *, gnutls_digest_algorithm_t));
+DEF_DLL_FN (int, gnutls_hash_get_len, (gnutls_digest_algorithm_t));
+DEF_DLL_FN (int, gnutls_hash, (gnutls_hash_hd_t, const void *, size_t));
+DEF_DLL_FN (void, gnutls_hash_deinit, (gnutls_hash_hd_t, void *));
+DEF_DLL_FN (void, gnutls_hash_output, (gnutls_hash_hd_t, void *));
+#  endif  /* HAVE_GNUTLS3_DIGEST */
+# endif	 /* HAVE_GNUTLS3 */
+
 
 static bool
 init_gnutls_functions (void)
@@ -255,6 +309,46 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_cipher_get_name);
   LOAD_DLL_FN (library, gnutls_mac_get);
   LOAD_DLL_FN (library, gnutls_mac_get_name);
+# ifdef HAVE_GNUTLS3
+  LOAD_DLL_FN (library, gnutls_rnd);
+  LOAD_DLL_FN (library, gnutls_mac_list);
+  LOAD_DLL_FN (library, gnutls_mac_get_nonce_size);
+  LOAD_DLL_FN (library, gnutls_mac_get_key_size);
+  LOAD_DLL_FN (library, gnutls_digest_list);
+  LOAD_DLL_FN (library, gnutls_digest_get_name);
+#  ifdef HAVE_GNUTLS3_CIPHER
+  LOAD_DLL_FN (library, gnutls_cipher_list);
+  LOAD_DLL_FN (library, gnutls_cipher_get_iv_size);
+  LOAD_DLL_FN (library, gnutls_cipher_get_key_size);
+  LOAD_DLL_FN (library, gnutls_cipher_get_block_size);
+  LOAD_DLL_FN (library, gnutls_cipher_get_tag_size);
+  LOAD_DLL_FN (library, gnutls_cipher_init);
+  LOAD_DLL_FN (library, gnutls_cipher_set_iv);
+  LOAD_DLL_FN (library, gnutls_cipher_encrypt2);
+  LOAD_DLL_FN (library, gnutls_cipher_deinit);
+  LOAD_DLL_FN (library, gnutls_cipher_decrypt2);
+#   ifdef HAVE_GNUTLS3_AEAD
+  LOAD_DLL_FN (library, gnutls_aead_cipher_init);
+  LOAD_DLL_FN (library, gnutls_aead_cipher_deinit);
+  LOAD_DLL_FN (library, gnutls_aead_cipher_encrypt);
+  LOAD_DLL_FN (library, gnutls_aead_cipher_decrypt);
+#   endif
+#   ifdef HAVE_GNUTLS3_HMAC
+  LOAD_DLL_FN (library, gnutls_hmac_init);
+  LOAD_DLL_FN (library, gnutls_hmac_get_len);
+  LOAD_DLL_FN (library, gnutls_hmac);
+  LOAD_DLL_FN (library, gnutls_hmac_deinit);
+  LOAD_DLL_FN (library, gnutls_hmac_output);
+#   endif  /* HAVE_GNUTLS3_HMAC */
+#  endif  /* HAVE_GNUTLS3_CIPHER */
+#  ifdef HAVE_GNUTLS3_DIGEST
+  LOAD_DLL_FN (library, gnutls_hash_init);
+  LOAD_DLL_FN (library, gnutls_hash_get_len);
+  LOAD_DLL_FN (library, gnutls_hash);
+  LOAD_DLL_FN (library, gnutls_hash_deinit);
+  LOAD_DLL_FN (library, gnutls_hash_output);
+#  endif
+# endif	 /* HAVE_GNUTLS3 */
 
   max_log_level = global_gnutls_log_level;
 
@@ -332,8 +426,56 @@ init_gnutls_functions (void)
 # define gnutls_x509_crt_get_version fn_gnutls_x509_crt_get_version
 # define gnutls_x509_crt_import fn_gnutls_x509_crt_import
 # define gnutls_x509_crt_init fn_gnutls_x509_crt_init
+# ifdef HAVE_GNUTLS3
+# define gnutls_rnd fn_gnutls_rnd
+# define gnutls_mac_list fn_gnutls_mac_list
+# define gnutls_mac_get_nonce_size fn_gnutls_mac_get_nonce_size
+# define gnutls_mac_get_key_size fn_gnutls_mac_get_key_size
+# define gnutls_digest_list fn_gnutls_digest_list
+# define gnutls_digest_get_name fn_gnutls_digest_get_name
+#  ifdef HAVE_GNUTLS3_CIPHER
+# define gnutls_cipher_list fn_gnutls_cipher_list
+# define gnutls_cipher_get_iv_size fn_gnutls_cipher_get_iv_size
+# define gnutls_cipher_get_key_size fn_gnutls_cipher_get_key_size
+# define gnutls_cipher_get_block_size fn_gnutls_cipher_get_block_size
+# define gnutls_cipher_get_tag_size fn_gnutls_cipher_get_tag_size
+# define gnutls_cipher_init fn_gnutls_cipher_init
+# define gnutls_cipher_set_iv fn_gnutls_cipher_set_iv
+# define gnutls_cipher_encrypt2 fn_gnutls_cipher_encrypt2
+# define gnutls_cipher_decrypt2 fn_gnutls_cipher_decrypt2
+# define gnutls_cipher_deinit fn_gnutls_cipher_deinit
+#   ifdef HAVE_GNUTLS3_AEAD
+# define gnutls_aead_cipher_encrypt fn_gnutls_aead_cipher_encrypt
+# define gnutls_aead_cipher_decrypt fn_gnutls_aead_cipher_decrypt
+# define gnutls_aead_cipher_init fn_gnutls_aead_cipher_init
+# define gnutls_aead_cipher_deinit fn_gnutls_aead_cipher_deinit
+#   endif /* HAVE_GNUTLS3_AEAD */
+#   ifdef HAVE_GNUTLS3_HMAC
+# define gnutls_hmac_init fn_gnutls_hmac_init
+# define gnutls_hmac_get_len fn_gnutls_hmac_get_len
+# define gnutls_hmac fn_gnutls_hmac
+# define gnutls_hmac_deinit fn_gnutls_hmac_deinit
+# define gnutls_hmac_output fn_gnutls_hmac_output
+#   endif  /* HAVE_GNUTLS3_HMAC */
+#  endif  /* HAVE_GNUTLS3_CIPHER */
+#  ifdef HAVE_GNUTLS3_DIGEST
+# define gnutls_hash_init fn_gnutls_hash_init
+# define gnutls_hash_get_len fn_gnutls_hash_get_len
+# define gnutls_hash fn_gnutls_hash
+# define gnutls_hash_deinit fn_gnutls_hash_deinit
+# define gnutls_hash_output fn_gnutls_hash_output
+#  endif
+# endif	 /* HAVE_GNUTLS3 */
 
-#endif
+/* This wrapper is called from fns.c, which doesn't know about the
+   LOAD_DLL_FN stuff above.  */
+int
+w32_gnutls_rnd (gnutls_rnd_level_t level, void *data, size_t len)
+{
+  return gnutls_rnd (level, data, len);
+}
+
+#endif	/* WINDOWSNT */
 
 
 /* Report memory exhaustion if ERR is an out-of-memory indication.  */
@@ -433,7 +575,7 @@ emacs_gnutls_nonblock_errno (gnutls_transport_ptr_t ptr)
       return err;
     }
 }
-#endif
+#endif	/* !WINDOWSNT */
 
 static int
 emacs_gnutls_handshake (struct Lisp_Process *proc)
@@ -556,6 +698,13 @@ emacs_gnutls_read (struct Lisp_Process *proc, char *buf, ptrdiff_t nbyte)
   }
 }
 
+static char const *
+emacs_gnutls_strerror (int err)
+{
+  char const *str = gnutls_strerror (err);
+  return str ? str : "unknown";
+}
+
 /* Report a GnuTLS error to the user.
    Return true if the error code was successfully handled.  */
 static bool
@@ -564,7 +713,6 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
   int max_log_level = 0;
 
   bool ret;
-  const char *str;
 
   /* TODO: use a Lisp_Object generated by gnutls_make_error?  */
   if (err >= 0)
@@ -576,9 +724,7 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
 
   /* TODO: use gnutls-error-fatalp and gnutls-error-string.  */
 
-  str = gnutls_strerror (err);
-  if (!str)
-    str = "unknown";
+  char const *str = emacs_gnutls_strerror (err);
 
   if (gnutls_error_is_fatal (err))
     {
@@ -592,11 +738,11 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
 #endif
 
       GNUTLS_LOG2 (level, max_log_level, "fatal error:", str);
-      ret = 0;
+      ret = false;
     }
   else
     {
-      ret = 1;
+      ret = true;
 
       switch (err)
         {
@@ -784,7 +930,7 @@ usage: (gnutls-error-string ERROR)  */)
   if (! TYPE_RANGED_INTEGERP (int, err))
     return build_string ("Not an error symbol or code");
 
-  return build_string (gnutls_strerror (XINT (err)));
+  return build_string (emacs_gnutls_strerror (XINT (err)));
 }
 
 DEFUN ("gnutls-deinit", Fgnutls_deinit, Sgnutls_deinit, 1, 1, 0,
@@ -1476,9 +1622,9 @@ one trustfile (usually a CA bundle).  */)
       XPROCESS (proc)->gnutls_x509_cred = x509_cred;
 
       verify_flags = Fplist_get (proplist, QCverify_flags);
-      if (NUMBERP (verify_flags))
+      if (TYPE_RANGED_INTEGERP (unsigned int, verify_flags))
 	{
-	  gnutls_verify_flags = XINT (verify_flags);
+	  gnutls_verify_flags = XFASTINT (verify_flags);
 	  GNUTLS_LOG (2, max_log_level, "setting verification flags");
 	}
       else if (NILP (verify_flags))
@@ -1697,28 +1843,624 @@ This function may also return `gnutls-e-again', or
 
 #endif	/* HAVE_GNUTLS */
 
-DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
-       doc: /* Return t if GnuTLS is available in this instance of Emacs.  */)
-     (void)
+#ifdef HAVE_GNUTLS3
+
+DEFUN ("gnutls-ciphers", Fgnutls_ciphers, Sgnutls_ciphers, 0, 0, 0,
+       doc: /* Return alist of GnuTLS symmetric cipher descriptions as plists.
+The alist key is the cipher name. */)
+  (void)
 {
+  Lisp_Object ciphers = Qnil;
+
+#ifdef HAVE_GNUTLS3_CIPHER
+  const gnutls_cipher_algorithm_t *gciphers = gnutls_cipher_list ();
+  for (ptrdiff_t pos = 0; gciphers[pos] != 0; pos++)
+    {
+      gnutls_cipher_algorithm_t gca = gciphers[pos];
+      if (gca == GNUTLS_CIPHER_NULL)
+	continue;
+      char const *cipher_name = gnutls_cipher_get_name (gca);
+      if (!cipher_name)
+	continue;
+
+      /* A symbol representing the GnuTLS cipher.  */
+      Lisp_Object cipher_symbol = intern (cipher_name);
+
+      ptrdiff_t cipher_tag_size = gnutls_cipher_get_tag_size (gca);
+
+      Lisp_Object cp
+	= listn (CONSTYPE_HEAP, 15, cipher_symbol,
+		 QCcipher_id, make_number (gca),
+		 QCtype, Qgnutls_type_cipher,
+		 QCcipher_aead_capable, cipher_tag_size == 0 ? Qnil : Qt,
+		 QCcipher_tagsize, make_number (cipher_tag_size),
+
+		 QCcipher_blocksize,
+		 make_number (gnutls_cipher_get_block_size (gca)),
+
+		 QCcipher_keysize,
+		 make_number (gnutls_cipher_get_key_size (gca)),
+
+		 QCcipher_ivsize,
+		 make_number (gnutls_cipher_get_iv_size (gca)));
+
+      ciphers = Fcons (cp, ciphers);
+    }
+#endif
+
+  return ciphers;
+}
+
+static Lisp_Object
+gnutls_symmetric_aead (bool encrypting, gnutls_cipher_algorithm_t gca,
+                       Lisp_Object cipher,
+		       const char *kdata, ptrdiff_t ksize,
+		       const char *vdata, ptrdiff_t vsize,
+		       const char *idata, ptrdiff_t isize,
+                       Lisp_Object aead_auth)
+{
+#ifdef HAVE_GNUTLS3_AEAD
+
+  const char *desc = encrypting ? "encrypt" : "decrypt";
+  Lisp_Object actual_iv = make_unibyte_string (vdata, vsize);
+
+  gnutls_aead_cipher_hd_t acipher;
+  gnutls_datum_t key_datum = { (unsigned char *) kdata, ksize };
+  int ret = gnutls_aead_cipher_init (&acipher, gca, &key_datum);
+
+  if (ret < GNUTLS_E_SUCCESS)
+    error ("GnuTLS AEAD cipher %s/%s initialization failed: %s",
+	   gnutls_cipher_get_name (gca), desc, emacs_gnutls_strerror (ret));
+
+  ptrdiff_t cipher_tag_size = gnutls_cipher_get_tag_size (gca);
+  ptrdiff_t tagged_size;
+  if (INT_ADD_WRAPV (isize, cipher_tag_size, &tagged_size)
+      || SIZE_MAX < tagged_size)
+    memory_full (SIZE_MAX);
+  size_t storage_length = tagged_size;
+  USE_SAFE_ALLOCA;
+  char *storage = SAFE_ALLOCA (storage_length);
+
+  const char *aead_auth_data = NULL;
+  ptrdiff_t aead_auth_size = 0;
+
+  if (!NILP (aead_auth))
+    {
+      if (BUFFERP (aead_auth) || STRINGP (aead_auth))
+        aead_auth = list1 (aead_auth);
+
+      CHECK_CONS (aead_auth);
+
+      ptrdiff_t astart_byte, aend_byte;
+      const char *adata
+	= extract_data_from_object (aead_auth, &astart_byte, &aend_byte);
+      if (adata == NULL)
+        error ("GnuTLS AEAD cipher auth extraction failed");
+
+      aead_auth_data = adata;
+      aead_auth_size = aend_byte - astart_byte;
+    }
+
+  ptrdiff_t expected_remainder = encrypting ? 0 : cipher_tag_size;
+  ptrdiff_t cipher_block_size = gnutls_cipher_get_block_size (gca);
+
+  if (isize < expected_remainder
+      || (isize - expected_remainder) % cipher_block_size != 0)
+    error (("GnuTLS AEAD cipher %s/%s input block length %"pD"d "
+	    "is not %"pD"d greater than a multiple of the required %"pD"d"),
+           gnutls_cipher_get_name (gca), desc,
+	   isize, expected_remainder, cipher_block_size);
+
+  ret = ((encrypting ? gnutls_aead_cipher_encrypt : gnutls_aead_cipher_decrypt)
+	 (acipher, vdata, vsize, aead_auth_data, aead_auth_size,
+	  cipher_tag_size, idata, isize, storage, &storage_length));
+
+  Lisp_Object output;
+  if (GNUTLS_E_SUCCESS <= ret)
+    output = make_unibyte_string (storage, storage_length);
+  explicit_bzero (storage, storage_length);
+  gnutls_aead_cipher_deinit (acipher);
+
+  if (ret < GNUTLS_E_SUCCESS)
+    error ((encrypting
+	    ? "GnuTLS AEAD cipher %s encryption failed: %s"
+	    : "GnuTLS AEAD cipher %s decryption failed: %s"),
+	   gnutls_cipher_get_name (gca), emacs_gnutls_strerror (ret));
+
+  SAFE_FREE ();
+  return list2 (output, actual_iv);
+#else
+  printmax_t print_gca = gca;
+  error ("GnuTLS AEAD cipher %"pMd" is invalid or not found", print_gca);
+#endif
+}
+
+static Lisp_Object
+gnutls_symmetric (bool encrypting, Lisp_Object cipher,
+                  Lisp_Object key, Lisp_Object iv,
+                  Lisp_Object input, Lisp_Object aead_auth)
+{
+  if (BUFFERP (key) || STRINGP (key))
+    key = list1 (key);
+
+  CHECK_CONS (key);
+
+  if (BUFFERP (input) || STRINGP (input))
+    input = list1 (input);
+
+  CHECK_CONS (input);
+
+  if (BUFFERP (iv) || STRINGP (iv))
+    iv = list1 (iv);
+
+  CHECK_CONS (iv);
+
+
+  const char *desc = encrypting ? "encrypt" : "decrypt";
+
+  gnutls_cipher_algorithm_t gca = GNUTLS_CIPHER_UNKNOWN;
+
+  Lisp_Object info = Qnil;
+  if (STRINGP (cipher))
+    cipher = intern (SSDATA (cipher));
+
+  if (SYMBOLP (cipher))
+    info = XCDR (Fassq (cipher, Fgnutls_ciphers ()));
+  else if (TYPE_RANGED_INTEGERP (gnutls_cipher_algorithm_t, cipher))
+    gca = XINT (cipher);
+  else
+    info = cipher;
+
+  if (!NILP (info) && CONSP (info))
+    {
+      Lisp_Object v = Fplist_get (info, QCcipher_id);
+      if (TYPE_RANGED_INTEGERP (gnutls_cipher_algorithm_t, v))
+        gca = XINT (v);
+    }
+
+  ptrdiff_t key_size = gnutls_cipher_get_key_size (gca);
+  if (key_size == 0)
+    error ("GnuTLS cipher is invalid or not found");
+
+  ptrdiff_t kstart_byte, kend_byte;
+  const char *kdata = extract_data_from_object (key, &kstart_byte, &kend_byte);
+
+  if (kdata == NULL)
+    error ("GnuTLS cipher key extraction failed");
+
+  if (kend_byte - kstart_byte != key_size)
+    error (("GnuTLS cipher %s/%s key length %"pD"d is not equal to "
+	    "the required %"pD"d"),
+           gnutls_cipher_get_name (gca), desc,
+	   kend_byte - kstart_byte, key_size);
+
+  ptrdiff_t vstart_byte, vend_byte;
+  char *vdata = extract_data_from_object (iv, &vstart_byte, &vend_byte);
+
+  if (vdata == NULL)
+    error ("GnuTLS cipher IV extraction failed");
+
+  ptrdiff_t iv_size = gnutls_cipher_get_iv_size (gca);
+  if (vend_byte - vstart_byte != iv_size)
+    error (("GnuTLS cipher %s/%s IV length %"pD"d is not equal to "
+	    "the required %"pD"d"),
+           gnutls_cipher_get_name (gca), desc,
+	   vend_byte - vstart_byte, iv_size);
+
+  Lisp_Object actual_iv = make_unibyte_string (vdata, vend_byte - vstart_byte);
+
+  ptrdiff_t istart_byte, iend_byte;
+  const char *idata
+    = extract_data_from_object (input, &istart_byte, &iend_byte);
+
+  if (idata == NULL)
+    error ("GnuTLS cipher input extraction failed");
+
+  /* Is this an AEAD cipher? */
+  if (gnutls_cipher_get_tag_size (gca) > 0)
+    {
+      Lisp_Object aead_output =
+        gnutls_symmetric_aead (encrypting, gca, cipher,
+                               kdata, kend_byte - kstart_byte,
+                               vdata, vend_byte - vstart_byte,
+                               idata, iend_byte - istart_byte,
+                               aead_auth);
+      if (STRINGP (XCAR (key)))
+        Fclear_string (XCAR (key));
+      return aead_output;
+    }
+
+  ptrdiff_t cipher_block_size = gnutls_cipher_get_block_size (gca);
+  if ((iend_byte - istart_byte) % cipher_block_size != 0)
+    error (("GnuTLS cipher %s/%s input block length %"pD"d is not a multiple "
+	    "of the required %"pD"d"),
+           gnutls_cipher_get_name (gca), desc,
+	   iend_byte - istart_byte, cipher_block_size);
+
+  gnutls_cipher_hd_t hcipher;
+  gnutls_datum_t key_datum
+    = { (unsigned char *) kdata, kend_byte - kstart_byte };
+
+  int ret = gnutls_cipher_init (&hcipher, gca, &key_datum, NULL);
+
+  if (ret < GNUTLS_E_SUCCESS)
+    error ("GnuTLS cipher %s/%s initialization failed: %s",
+	   gnutls_cipher_get_name (gca), desc, emacs_gnutls_strerror (ret));
+
+  /* Note that this will not support streaming block mode. */
+  gnutls_cipher_set_iv (hcipher, vdata, vend_byte - vstart_byte);
+
+  /* GnuTLS docs: "For the supported ciphers the encrypted data length
+     will equal the plaintext size."  */
+  ptrdiff_t storage_length = iend_byte - istart_byte;
+  Lisp_Object storage = make_uninit_string (storage_length);
+
+  ret = ((encrypting ? gnutls_cipher_encrypt2 : gnutls_cipher_decrypt2)
+	 (hcipher, idata, iend_byte - istart_byte,
+	  SSDATA (storage), storage_length));
+
+  if (STRINGP (XCAR (key)))
+    Fclear_string (XCAR (key));
+
+  if (ret < GNUTLS_E_SUCCESS)
+    {
+      gnutls_cipher_deinit (hcipher);
+      if (encrypting)
+	error ("GnuTLS cipher %s encryption failed: %s",
+	       gnutls_cipher_get_name (gca), emacs_gnutls_strerror (ret));
+      else
+	error ("GnuTLS cipher %s decryption failed: %s",
+	       gnutls_cipher_get_name (gca), emacs_gnutls_strerror (ret));
+    }
+
+  gnutls_cipher_deinit (hcipher);
+
+  return list2 (storage, actual_iv);
+}
+
+DEFUN ("gnutls-symmetric-encrypt", Fgnutls_symmetric_encrypt,
+       Sgnutls_symmetric_encrypt, 4, 5, 0,
+       doc: /* Encrypt INPUT with symmetric CIPHER, KEY+AEAD_AUTH, and IV to a unibyte string.
+
+Return nil on error.
+
+The KEY can be specified as a buffer or string or in other ways (see
+Info node `(elisp)Format of GnuTLS Cryptography Inputs').  The KEY
+will be wiped after use if it's a string.
+
+The IV and INPUT and the optional AEAD_AUTH can be specified as a
+buffer or string or in other ways (see Info node `(elisp)Format of
+GnuTLS Cryptography Inputs').
+
+The alist of symmetric ciphers can be obtained with `gnutls-ciphers`.
+The CIPHER may be a string or symbol matching a key in that alist, or
+a plist with the :cipher-id numeric property, or the number itself.
+
+AEAD ciphers: these ciphers will have a `gnutls-ciphers' entry with
+:cipher-aead-capable set to t.  AEAD_AUTH can be supplied for
+these AEAD ciphers, but it may still be omitted (nil) as well. */)
+  (Lisp_Object cipher, Lisp_Object key, Lisp_Object iv,
+   Lisp_Object input, Lisp_Object aead_auth)
+{
+  return gnutls_symmetric (true, cipher, key, iv, input, aead_auth);
+}
+
+DEFUN ("gnutls-symmetric-decrypt", Fgnutls_symmetric_decrypt,
+       Sgnutls_symmetric_decrypt, 4, 5, 0,
+       doc: /* Decrypt INPUT with symmetric CIPHER, KEY+AEAD_AUTH, and IV to a unibyte string.
+
+Return nil on error.
+
+The KEY can be specified as a buffer or string or in other ways (see
+Info node `(elisp)Format of GnuTLS Cryptography Inputs').  The KEY
+will be wiped after use if it's a string.
+
+The IV and INPUT and the optional AEAD_AUTH can be specified as a
+buffer or string or in other ways (see Info node `(elisp)Format of
+GnuTLS Cryptography Inputs').
+
+The alist of symmetric ciphers can be obtained with `gnutls-ciphers`.
+The CIPHER may be a string or symbol matching a key in that alist, or
+a plist with the `:cipher-id' numeric property, or the number itself.
+
+AEAD ciphers: these ciphers will have a `gnutls-ciphers' entry with
+:cipher-aead-capable set to t.  AEAD_AUTH can be supplied for
+these AEAD ciphers, but it may still be omitted (nil) as well. */)
+  (Lisp_Object cipher, Lisp_Object key, Lisp_Object iv,
+   Lisp_Object input, Lisp_Object aead_auth)
+{
+  return gnutls_symmetric (false, cipher, key, iv, input, aead_auth);
+}
+
+DEFUN ("gnutls-macs", Fgnutls_macs, Sgnutls_macs, 0, 0, 0,
+       doc: /* Return alist of GnuTLS mac-algorithm method descriptions as plists.
+
+Use the value of the alist (extract it with `alist-get' for instance)
+with `gnutls-hash-mac'.  The alist key is the mac-algorithm method
+name. */)
+  (void)
+{
+  Lisp_Object mac_algorithms = Qnil;
+#ifdef HAVE_GNUTLS3_HMAC
+  const gnutls_mac_algorithm_t *macs = gnutls_mac_list ();
+  for (ptrdiff_t pos = 0; macs[pos] != 0; pos++)
+    {
+      const gnutls_mac_algorithm_t gma = macs[pos];
+
+      /* A symbol representing the GnuTLS MAC algorithm.  */
+      Lisp_Object gma_symbol = intern (gnutls_mac_get_name (gma));
+
+      Lisp_Object mp = listn (CONSTYPE_HEAP, 11, gma_symbol,
+			      QCmac_algorithm_id, make_number (gma),
+			      QCtype, Qgnutls_type_mac_algorithm,
+
+                              QCmac_algorithm_length,
+                              make_number (gnutls_hmac_get_len (gma)),
+
+                              QCmac_algorithm_keysize,
+                              make_number (gnutls_mac_get_key_size (gma)),
+
+                              QCmac_algorithm_noncesize,
+                              make_number (gnutls_mac_get_nonce_size (gma)));
+      mac_algorithms = Fcons (mp, mac_algorithms);
+    }
+#endif
+
+  return mac_algorithms;
+}
+
+DEFUN ("gnutls-digests", Fgnutls_digests, Sgnutls_digests, 0, 0, 0,
+       doc: /* Return alist of GnuTLS digest-algorithm method descriptions as plists.
+
+Use the value of the alist (extract it with `alist-get' for instance)
+with `gnutls-hash-digest'.  The alist key is the digest-algorithm
+method name. */)
+  (void)
+{
+  Lisp_Object digest_algorithms = Qnil;
+#ifdef HAVE_GNUTLS3_DIGEST
+  const gnutls_digest_algorithm_t *digests = gnutls_digest_list ();
+  for (ptrdiff_t pos = 0; digests[pos] != 0; pos++)
+    {
+      const gnutls_digest_algorithm_t gda = digests[pos];
+
+      /* A symbol representing the GnuTLS digest algorithm.  */
+      Lisp_Object gda_symbol = intern (gnutls_digest_get_name (gda));
+
+      Lisp_Object mp = listn (CONSTYPE_HEAP, 7, gda_symbol,
+			      QCdigest_algorithm_id, make_number (gda),
+			      QCtype, Qgnutls_type_digest_algorithm,
+
+                              QCdigest_algorithm_length,
+                              make_number (gnutls_hash_get_len (gda)));
+
+      digest_algorithms = Fcons (mp, digest_algorithms);
+    }
+#endif
+
+  return digest_algorithms;
+}
+
+DEFUN ("gnutls-hash-mac", Fgnutls_hash_mac, Sgnutls_hash_mac, 3, 3, 0,
+       doc: /* Hash INPUT with HASH-METHOD and KEY into a unibyte string.
+
+Return nil on error.
+
+The KEY can be specified as a buffer or string or in other ways (see
+Info node `(elisp)Format of GnuTLS Cryptography Inputs').  The KEY
+will be wiped after use if it's a string.
+
+The INPUT can be specified as a buffer or string or in other
+ways (see Info node `(elisp)Format of GnuTLS Cryptography Inputs').
+
+The alist of MAC algorithms can be obtained with `gnutls-macs`.  The
+HASH-METHOD may be a string or symbol matching a key in that alist, or
+a plist with the `:mac-algorithm-id' numeric property, or the number
+itself. */)
+  (Lisp_Object hash_method, Lisp_Object key, Lisp_Object input)
+{
+  if (BUFFERP (input) || STRINGP (input))
+    input = list1 (input);
+
+  CHECK_CONS (input);
+
+  if (BUFFERP (key) || STRINGP (key))
+    key = list1 (key);
+
+  CHECK_CONS (key);
+
+  gnutls_mac_algorithm_t gma = GNUTLS_MAC_UNKNOWN;
+
+  Lisp_Object info = Qnil;
+  if (STRINGP (hash_method))
+    hash_method = intern (SSDATA (hash_method));
+
+  if (SYMBOLP (hash_method))
+    info = XCDR (Fassq (hash_method, Fgnutls_macs ()));
+  else if (TYPE_RANGED_INTEGERP (gnutls_mac_algorithm_t, hash_method))
+    gma = XINT (hash_method);
+  else
+    info = hash_method;
+
+  if (!NILP (info) && CONSP (info))
+    {
+      Lisp_Object v = Fplist_get (info, QCmac_algorithm_id);
+      if (TYPE_RANGED_INTEGERP (gnutls_mac_algorithm_t, v))
+        gma = XINT (v);
+    }
+
+  ptrdiff_t digest_length = gnutls_hmac_get_len (gma);
+  if (digest_length == 0)
+    error ("GnuTLS MAC-method is invalid or not found");
+
+  ptrdiff_t kstart_byte, kend_byte;
+  const char *kdata = extract_data_from_object (key, &kstart_byte, &kend_byte);
+  if (kdata == NULL)
+    error ("GnuTLS MAC key extraction failed");
+
+  gnutls_hmac_hd_t hmac;
+  int ret = gnutls_hmac_init (&hmac, gma,
+			      kdata + kstart_byte, kend_byte - kstart_byte);
+  if (ret < GNUTLS_E_SUCCESS)
+    error ("GnuTLS MAC %s initialization failed: %s",
+	   gnutls_mac_get_name (gma), emacs_gnutls_strerror (ret));
+
+  ptrdiff_t istart_byte, iend_byte;
+  const char *idata
+    = extract_data_from_object (input, &istart_byte, &iend_byte);
+  if (idata == NULL)
+    error ("GnuTLS MAC input extraction failed");
+
+  Lisp_Object digest = make_uninit_string (digest_length);
+
+  ret = gnutls_hmac (hmac, idata + istart_byte, iend_byte - istart_byte);
+
+  if (STRINGP (XCAR (key)))
+    Fclear_string (XCAR (key));
+
+  if (ret < GNUTLS_E_SUCCESS)
+    {
+      gnutls_hmac_deinit (hmac, NULL);
+      error ("GnuTLS MAC %s application failed: %s",
+	     gnutls_mac_get_name (gma), emacs_gnutls_strerror (ret));
+    }
+
+  gnutls_hmac_output (hmac, SSDATA (digest));
+  gnutls_hmac_deinit (hmac, NULL);
+
+  return digest;
+}
+
+DEFUN ("gnutls-hash-digest", Fgnutls_hash_digest, Sgnutls_hash_digest, 2, 2, 0,
+       doc: /* Digest INPUT with DIGEST-METHOD into a unibyte string.
+
+Return nil on error.
+
+The INPUT can be specified as a buffer or string or in other
+ways (see Info node `(elisp)Format of GnuTLS Cryptography Inputs').
+
+The alist of digest algorithms can be obtained with `gnutls-digests`.
+The DIGEST-METHOD may be a string or symbol matching a key in that
+alist, or a plist with the `:digest-algorithm-id' numeric property, or
+the number itself. */)
+  (Lisp_Object digest_method, Lisp_Object input)
+{
+  if (BUFFERP (input) || STRINGP (input))
+    input = list1 (input);
+
+  CHECK_CONS (input);
+
+  gnutls_digest_algorithm_t gda = GNUTLS_DIG_UNKNOWN;
+
+  Lisp_Object info = Qnil;
+  if (STRINGP (digest_method))
+    digest_method = intern (SSDATA (digest_method));
+
+  if (SYMBOLP (digest_method))
+    info = XCDR (Fassq (digest_method, Fgnutls_digests ()));
+  else if (TYPE_RANGED_INTEGERP (gnutls_digest_algorithm_t, digest_method))
+    gda = XINT (digest_method);
+  else
+    info = digest_method;
+
+  if (!NILP (info) && CONSP (info))
+    {
+      Lisp_Object v = Fplist_get (info, QCdigest_algorithm_id);
+      if (TYPE_RANGED_INTEGERP (gnutls_digest_algorithm_t, v))
+        gda = XINT (v);
+    }
+
+  ptrdiff_t digest_length = gnutls_hash_get_len (gda);
+  if (digest_length == 0)
+    error ("GnuTLS digest-method is invalid or not found");
+
+  gnutls_hash_hd_t hash;
+  int ret = gnutls_hash_init (&hash, gda);
+
+  if (ret < GNUTLS_E_SUCCESS)
+    error ("GnuTLS digest initialization failed: %s",
+	   emacs_gnutls_strerror (ret));
+
+  Lisp_Object digest = make_uninit_string (digest_length);
+
+  ptrdiff_t istart_byte, iend_byte;
+  const char *idata
+    = extract_data_from_object (input, &istart_byte, &iend_byte);
+  if (idata == NULL)
+    error ("GnuTLS digest input extraction failed");
+
+  ret = gnutls_hash (hash, idata + istart_byte, iend_byte - istart_byte);
+
+  if (ret < GNUTLS_E_SUCCESS)
+    {
+      gnutls_hash_deinit (hash, NULL);
+      error ("GnuTLS digest application failed: %s",
+	     emacs_gnutls_strerror (ret));
+    }
+
+  gnutls_hash_output (hash, SSDATA (digest));
+  gnutls_hash_deinit (hash, NULL);
+
+  return digest;
+}
+
+#endif	/* HAVE_GNUTLS3 */
+
+DEFUN ("gnutls-available-p", Fgnutls_available_p, Sgnutls_available_p, 0, 0, 0,
+       doc: /* Return list of capabilities if GnuTLS is available in this instance of Emacs.
+
+...if supported         : then...
+GnuTLS 3 or higher      : the list will contain `gnutls3'.
+GnuTLS MACs             : the list will contain `macs'.
+GnuTLS digests          : the list will contain `digests'.
+GnuTLS symmetric ciphers: the list will contain `ciphers'.
+GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
+  (void)
+{
+  Lisp_Object capabilities = Qnil;
+
 #ifdef HAVE_GNUTLS
-# ifdef WINDOWSNT
+
+# ifdef HAVE_GNUTLS3
+  capabilities = Fcons (intern("gnutls3"), capabilities);
+
+#  ifdef HAVE_GNUTLS3_DIGEST
+  capabilities = Fcons (intern("digests"), capabilities);
+#  endif
+
+#  ifdef HAVE_GNUTLS3_CIPHER
+  capabilities = Fcons (intern("ciphers"), capabilities);
+
+#   ifdef HAVE_GNUTLS3_AEAD
+  capabilities = Fcons (intern("AEAD-ciphers"), capabilities);
+#   endif
+
+#   ifdef HAVE_GNUTLS3_HMAC
+  capabilities = Fcons (intern("macs"), capabilities);
+#   endif
+#  endif  /* HAVE_GNUTLS3_CIPHER */
+# endif	  /* HAVE_GNUTLS3 */
+
+#ifdef WINDOWSNT
   Lisp_Object found = Fassq (Qgnutls, Vlibrary_cache);
   if (CONSP (found))
     return XCDR (found);
   else
     {
       Lisp_Object status;
-      status = init_gnutls_functions () ? Qt : Qnil;
+      status = init_gnutls_functions () ? capabilities : Qnil;
       Vlibrary_cache = Fcons (Fcons (Qgnutls, status), Vlibrary_cache);
       return status;
     }
-# else	/* !WINDOWSNT */
-  return Qt;
-# endif	 /* !WINDOWSNT */
+#else  /* !WINDOWSNT */
+
+  return capabilities;
+
+#endif /* WINDOWSNT */
+
 #else  /* !HAVE_GNUTLS */
   return Qnil;
-#endif	/* !HAVE_GNUTLS */
+#endif	/* HAVE_GNUTLS */
 }
 
 void
@@ -1753,6 +2495,27 @@ syms_of_gnutls (void)
   DEFSYM (QCverify_flags, ":verify-flags");
   DEFSYM (QCverify_error, ":verify-error");
 
+  DEFSYM (QCcipher_id, ":cipher-id");
+  DEFSYM (QCcipher_aead_capable, ":cipher-aead-capable");
+  DEFSYM (QCcipher_blocksize, ":cipher-blocksize");
+  DEFSYM (QCcipher_keysize, ":cipher-keysize");
+  DEFSYM (QCcipher_tagsize, ":cipher-tagsize");
+  DEFSYM (QCcipher_keysize, ":cipher-keysize");
+  DEFSYM (QCcipher_ivsize, ":cipher-ivsize");
+
+  DEFSYM (QCmac_algorithm_id, ":mac-algorithm-id");
+  DEFSYM (QCmac_algorithm_noncesize, ":mac-algorithm-noncesize");
+  DEFSYM (QCmac_algorithm_keysize, ":mac-algorithm-keysize");
+  DEFSYM (QCmac_algorithm_length, ":mac-algorithm-length");
+
+  DEFSYM (QCdigest_algorithm_id, ":digest-algorithm-id");
+  DEFSYM (QCdigest_algorithm_length, ":digest-algorithm-length");
+
+  DEFSYM (QCtype, ":type");
+  DEFSYM (Qgnutls_type_cipher, "gnutls-symmetric-cipher");
+  DEFSYM (Qgnutls_type_mac_algorithm, "gnutls-mac-algorithm");
+  DEFSYM (Qgnutls_type_digest_algorithm, "gnutls-digest-algorithm");
+
   DEFSYM (Qgnutls_e_interrupted, "gnutls-e-interrupted");
   Fput (Qgnutls_e_interrupted, Qgnutls_code,
 	make_number (GNUTLS_E_INTERRUPTED));
@@ -1779,6 +2542,16 @@ syms_of_gnutls (void)
   defsubr (&Sgnutls_bye);
   defsubr (&Sgnutls_peer_status);
   defsubr (&Sgnutls_peer_status_warning_describe);
+
+#ifdef HAVE_GNUTLS3
+  defsubr (&Sgnutls_ciphers);
+  defsubr (&Sgnutls_macs);
+  defsubr (&Sgnutls_digests);
+  defsubr (&Sgnutls_hash_mac);
+  defsubr (&Sgnutls_hash_digest);
+  defsubr (&Sgnutls_symmetric_encrypt);
+  defsubr (&Sgnutls_symmetric_decrypt);
+#endif
 
   DEFVAR_INT ("gnutls-log-level", global_gnutls_log_level,
 	      doc: /* Logging level used by the GnuTLS functions.

@@ -434,8 +434,11 @@ and toggle it if ARG is `toggle'."
              (not (and buffer-auto-save-file-name
                        auto-save-visited-file-name)))))))
 
+;; The 'set' part is so we don't get a warning for using this variable
+;; above, while still catching code that _sets_ the variable to get
+;; the same effect as the new auto-save-visited-mode.
 (make-obsolete-variable 'auto-save-visited-file-name 'auto-save-visited-mode
-                        "Emacs 26.1")
+                        "Emacs 26.1" 'set)
 
 (defcustom save-abbrevs t
   "Non-nil means save word abbrevs too when files are saved.
@@ -2540,7 +2543,7 @@ since only a single case-insensitive search through the alist is made."
      ("\\.[ckz]?sh\\'\\|\\.shar\\'\\|/\\.z?profile\\'" . sh-mode)
      ("\\.bash\\'" . sh-mode)
      ("\\(/\\|\\`\\)\\.\\(bash_\\(profile\\|history\\|log\\(in\\|out\\)\\)\\|z?log\\(in\\|out\\)\\)\\'" . sh-mode)
-     ("\\(/\\|\\`\\)\\.\\(shrc\\|[kz]shrc\\|bashrc\\|t?cshrc\\|esrc\\)\\'" . sh-mode)
+     ("\\(/\\|\\`\\)\\.\\(shrc\\|zshrc\\|m?kshrc\\|bashrc\\|t?cshrc\\|esrc\\)\\'" . sh-mode)
      ("\\(/\\|\\`\\)\\.\\([kz]shenv\\|xinitrc\\|startxrc\\|xsession\\)\\'" . sh-mode)
      ("\\.m?spec\\'" . sh-mode)
      ("\\.m[mes]\\'" . nroff-mode)

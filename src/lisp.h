@@ -838,13 +838,13 @@ make_lisp_symbol (struct Lisp_Symbol *sym)
 INLINE Lisp_Object
 builtin_lisp_symbol (int index)
 {
-  return make_lisp_symbol (lispsym + index);
+  return make_lisp_symbol (&lispsym[index].s);
 }
 
 INLINE void
 (CHECK_SYMBOL) (Lisp_Object x)
 {
- lisp_h_CHECK_SYMBOL (x);
+  lisp_h_CHECK_SYMBOL (x);
 }
 
 /* In the size word of a vector, this bit means the vector has been marked.  */
@@ -3386,6 +3386,7 @@ enum { NEXT_ALMOST_PRIME_LIMIT = 11 };
 extern EMACS_INT next_almost_prime (EMACS_INT) ATTRIBUTE_CONST;
 extern Lisp_Object larger_vector (Lisp_Object, ptrdiff_t, ptrdiff_t);
 extern void sweep_weak_hash_tables (void);
+extern char *extract_data_from_object (Lisp_Object, ptrdiff_t *, ptrdiff_t *);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
 Lisp_Object make_hash_table (struct hash_table_test, EMACS_INT, float, float,
@@ -3874,7 +3875,6 @@ extern Lisp_Object vformat_string (const char *, va_list)
   ATTRIBUTE_FORMAT_PRINTF (1, 0);
 extern void un_autoload (Lisp_Object);
 extern Lisp_Object call_debugger (Lisp_Object arg);
-extern void *near_C_stack_top (void);
 extern void init_eval_once (void);
 extern Lisp_Object safe_call (ptrdiff_t, Lisp_Object, ...);
 extern Lisp_Object safe_call1 (Lisp_Object, Lisp_Object);
@@ -3965,6 +3965,7 @@ extern void syms_of_editfns (void);
 
 /* Defined in buffer.c.  */
 extern bool mouse_face_overlay_overlaps (Lisp_Object);
+extern Lisp_Object disable_line_numbers_overlay_at_eob (void);
 extern _Noreturn void nsberror (Lisp_Object);
 extern void adjust_overlays_for_insert (ptrdiff_t, ptrdiff_t);
 extern void adjust_overlays_for_delete (ptrdiff_t, ptrdiff_t);

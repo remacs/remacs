@@ -1292,7 +1292,7 @@ silly_event_symbol_error (Lisp_Object c)
   base = XCAR (parsed);
   name = Fsymbol_name (base);
   /* This alist includes elements such as ("RET" . "\\r").  */
-  assoc = Fassoc (name, exclude_keys);
+  assoc = Fassoc (name, exclude_keys, Qnil);
 
   if (! NILP (assoc))
     {

@@ -352,7 +352,8 @@ OPTION_DEFAULT_OFF([w32], [use native MS Windows GUI in a Cygwin build])
 
 OPTION_DEFAULT_ON([gpm],[don't use -lgpm for mouse support on a GNU/Linux console])
 OPTION_DEFAULT_ON([dbus],[don't compile with D-Bus support])
-OPTION_DEFAULT_ON([gconf],[don't compile with GConf support])
+AC_ARG_WITH([gconf],[AS_HELP_STRING([--with-gconf],
+[compile with Gconf support (Gsettings replaces this)])],[],[with_gconf=maybe])
 OPTION_DEFAULT_ON([gsettings],[don't compile with GSettings support])
 OPTION_DEFAULT_ON([selinux],[don't compile with SELinux support])
 OPTION_DEFAULT_ON([gnutls],[don't use -lgnutls for SSL/TLS support])
@@ -2506,7 +2507,8 @@ if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}"
   if test "${with_imagemagick}" != "no"; then
     ## 6.3.5 is the earliest version known to work; see Bug#17339.
     ## 6.8.2 makes Emacs crash; see Bug#13867.
-    IMAGEMAGICK_MODULE="Wand >= 6.3.5 Wand != 6.8.2"
+    ## 7 and later have not been ported to; See Bug#25967.
+    IMAGEMAGICK_MODULE="Wand >= 6.3.5 Wand != 6.8.2 Wand < 7"
     EMACS_CHECK_MODULES([IMAGEMAGICK], [$IMAGEMAGICK_MODULE])
 
     if test $HAVE_IMAGEMAGICK = yes; then
@@ -2775,6 +2777,7 @@ if test "${HAVE_X11}" = "yes" && test "${with_gsettings}" = "yes"; then
         AC_DEFINE(HAVE_GSETTINGS, 1, [Define to 1 if using GSettings.])
 	SETTINGS_CFLAGS="$GSETTINGS_CFLAGS"
 	SETTINGS_LIBS="$GSETTINGS_LIBS"
+	test "$with_gconf" = "yes" || with_gconf=no
       fi
       CFLAGS=$old_CFLAGS
       LIBS=$old_LIBS
@@ -2784,7 +2787,7 @@ fi
 dnl GConf has been tested under GNU/Linux only.
 dnl The version is really arbitrary, it is about the same age as Gtk+ 2.6.
 HAVE_GCONF=no
-if test "${HAVE_X11}" = "yes" && test "${with_gconf}" = "yes"; then
+if test "${HAVE_X11}" = "yes" && test "${with_gconf}" != "no"; then
    EMACS_CHECK_MODULES([GCONF], [gconf-2.0 >= 2.13])
    if test "$HAVE_GCONF" = yes; then
       AC_DEFINE(HAVE_GCONF, 1, [Define to 1 if using GConf.])
@@ -2831,6 +2834,87 @@ if test "${with_gnutls}" = "yes" ; then
     AC_DEFINE(HAVE_GNUTLS, 1, [Define if using GnuTLS.])
     EMACS_CHECK_MODULES([LIBGNUTLS3], [gnutls >= 3.0.0],
       [AC_DEFINE(HAVE_GNUTLS3, 1, [Define if using GnuTLS v3.])], [])
+
+    AC_CACHE_CHECK([for GnuTLS v3 with HMAC], [emacs_cv_gnutls3_hmac],
+      [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM([[
+	      #include <gnutls/gnutls.h>
+	      #include <gnutls/crypto.h>
+	   ]], [[
+	     int
+	     main (void)
+	     {
+	       gnutls_hmac_hd_t handle;
+	       gnutls_hmac_deinit (handle, NULL);
+	     }
+	   ]])],
+	[emacs_cv_gnutls3_hmac=yes],
+	[emacs_cv_gnutls3_hmac=no])])
+    if test "$emacs_cv_gnutls3_hmac" = yes; then
+      AC_DEFINE([HAVE_GNUTLS3_HMAC], [1],
+	[Define if using GnuTLS v3 with HMAC support.])
+    fi
+
+    AC_CACHE_CHECK([for GnuTLS v3 with AEAD], [emacs_cv_gnutls3_aead],
+      [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM([[
+	      #include <gnutls/gnutls.h>
+	      #include <gnutls/crypto.h>
+	   ]], [[
+	     int
+	     main (void)
+	     {
+	       gnutls_aead_cipher_hd_t handle;
+	       gnutls_aead_cipher_deinit (handle);
+	     }
+	   ]])],
+	[emacs_cv_gnutls3_aead=yes],
+	[emacs_cv_gnutls3_aead=no])])
+    if test "$emacs_cv_gnutls3_aead" = yes; then
+      AC_DEFINE([HAVE_GNUTLS3_AEAD], [1],
+	[Define if using GnuTLS v3 with AEAD support.])
+    fi
+
+    AC_CACHE_CHECK([for GnuTLS v3 with cipher], [emacs_cv_gnutls3_cipher],
+      [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM([[
+	      #include <gnutls/gnutls.h>
+	      #include <gnutls/crypto.h>
+	   ]], [[
+	     int
+	     main (void)
+	     {
+	       gnutls_cipher_hd_t handle;
+	       gnutls_cipher_encrypt2 (handle, NULL, 0, NULL, 0);
+	       gnutls_cipher_deinit (handle);
+	     }
+	   ]])],
+	[emacs_cv_gnutls3_cipher=yes],
+	[emacs_cv_gnutls3_cipher=no])])
+    if test "$emacs_cv_gnutls3_cipher" = yes; then
+      AC_DEFINE([HAVE_GNUTLS3_CIPHER], [1],
+	[Define if using GnuTLS v3 with cipher support.])
+    fi
+
+    AC_CACHE_CHECK([for GnuTLS v3 with digest], [emacs_cv_gnutls3_digest],
+      [AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM([[
+	      #include <gnutls/gnutls.h>
+	      #include <gnutls/crypto.h>
+	   ]], [[
+	     int
+	     main (void)
+	     {
+	       gnutls_hash_hd_t handle;
+	       gnutls_hash_deinit (handle, NULL);
+	     }
+	   ]])],
+	[emacs_cv_gnutls3_digest=yes],
+	[emacs_cv_gnutls3_digest=no])])
+    if test "$emacs_cv_gnutls3_digest" = yes; then
+      AC_DEFINE([HAVE_GNUTLS3_DIGEST], [1],
+	[Define if using GnuTLS v3 with digest support.])
+    fi
   fi
 
   # Windows loads GnuTLS dynamically
@@ -3476,27 +3560,22 @@ AC_SUBST(LIBZ)
 LIBMODULES=
 HAVE_MODULES=no
 MODULES_OBJ=
-MODULES_SUFFIX=
+case $opsys in
+  cygwin|mingw32) MODULES_SUFFIX=".dll" ;;
+  *) MODULES_SUFFIX=".so" ;;
+esac
 if test "${with_modules}" != "no"; then
   case $opsys in
     gnu|gnu-linux)
       LIBMODULES="-ldl"
-      MODULES_SUFFIX=".so"
       HAVE_MODULES=yes
       ;;
-    cygwin|mingw32)
-      MODULES_SUFFIX=".dll"
-      HAVE_MODULES=yes
-      ;;
-    darwin)
-      MODULES_SUFFIX=".so"
+    cygwin|mingw32|darwin)
       HAVE_MODULES=yes
       ;;
     *)
       # BSD systems have dlopen in libc.
-      AC_CHECK_FUNC([dlopen],
-        [MODULES_SUFFIX=".so"
-         HAVE_MODULES=yes])
+      AC_CHECK_FUNC([dlopen], [HAVE_MODULES=yes])
       ;;
   esac
 
@@ -5383,7 +5462,7 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs use a png library?                           ${HAVE_PNG} $LIBPNG
   Does Emacs use -lrsvg-2?                                ${HAVE_RSVG}
   Does Emacs use cairo?                                   ${HAVE_CAIRO}
-  Does Emacs use imagemagick?                             ${HAVE_IMAGEMAGICK}
+  Does Emacs use imagemagick (version 6)?                 ${HAVE_IMAGEMAGICK}
   Does Emacs support sound?                               ${HAVE_SOUND}
   Does Emacs use -lgpm?                                   ${HAVE_GPM}
   Does Emacs use -ldbus?                                  ${HAVE_DBUS}

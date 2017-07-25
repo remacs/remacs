@@ -9780,8 +9780,11 @@ If ARG is a negative number, hide the unwanted header lines."
 	     (inhibit-point-motion-hooks t)
 	     (hidden (if (numberp arg)
 			 (>= arg 0)
-		       (or (not (looking-at "[^ \t\n]+:"))
-			   (gnus-article-hidden-text-p 'headers))))
+		       (or
+			;; The case where there's no visible header
+			;; that matches `gnus-visible-headers'.
+			(looking-at "\n?\\'")
+			(gnus-article-hidden-text-p 'headers))))
 	     s e)
 	(delete-region (point-min) (point-max))
 	(with-current-buffer gnus-original-article-buffer

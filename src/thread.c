@@ -595,14 +595,15 @@ thread_select (select_func *func, int max_fds, fd_set *rfds,
 static void
 mark_one_thread (struct thread_state *thread)
 {
-  struct handler *handler;
-  Lisp_Object tem;
+  /* Get the stack top now, in case mark_specpdl changes it.  */
+  void *stack_top = thread->stack_top;
 
   mark_specpdl (thread->m_specpdl, thread->m_specpdl_ptr);
 
-  mark_stack (thread->m_stack_bottom, thread->stack_top);
+  mark_stack (thread->m_stack_bottom, stack_top);
 
-  for (handler = thread->m_handlerlist; handler; handler = handler->next)
+  for (struct handler *handler = thread->m_handlerlist;
+       handler; handler = handler->next)
     {
       mark_object (handler->tag_or_ch);
       mark_object (handler->val);
@@ -610,6 +611,7 @@ mark_one_thread (struct thread_state *thread)
 
   if (thread->m_current_buffer)
     {
+      Lisp_Object tem;
       XSETBUFFER (tem, thread->m_current_buffer);
       mark_object (tem);
     }

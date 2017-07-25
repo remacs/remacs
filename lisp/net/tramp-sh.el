@@ -3432,7 +3432,9 @@ the result will be a local, non-Tramp, file name."
 	       `((,(tramp-file-name-regexp) . tramp-vc-file-name-handler))))
 
 	  ;; Here we collect only file names, which need an operation.
-	  (ignore-errors (tramp-run-real-handler 'vc-registered (list file)))
+	  (tramp-with-demoted-errors
+	      v "Error in 1st pass of `vc-registered': %s"
+	    (tramp-run-real-handler 'vc-registered (list file)))
 	  (tramp-message v 10 "\n%s" tramp-vc-registered-file-names)
 
 	  ;; Send just one command, in order to fill the cache.
@@ -3493,7 +3495,8 @@ the result will be a local, non-Tramp, file name."
 			     v vc-hg-program (tramp-get-remote-path v)))))
 	    (setq vc-handled-backends (remq 'Hg vc-handled-backends)))
 	  ;; Run.
-	  (ignore-errors
+	  (tramp-with-demoted-errors
+	      v "Error in 2nd pass of `vc-registered': %s"
 	    (tramp-run-real-handler 'vc-registered (list file))))))))
 
 ;;;###tramp-autoload

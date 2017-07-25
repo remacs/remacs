@@ -182,8 +182,7 @@ SPECIALIZERS-FUNCTION takes as first argument a tag value TAG
              origname))
     (if generic
         (cl-assert (eq name (cl--generic-name generic)))
-      (setf (cl--generic name) (setq generic (cl--generic-make name)))
-      (defalias name (cl--generic-make-function generic)))
+      (setf (cl--generic name) (setq generic (cl--generic-make name))))
     generic))
 
 ;;;###autoload
@@ -1209,6 +1208,19 @@ Used internally for the (major-mode MODE) context specializers."
                     ;;E.g. could be (eql ...)
                     (progn (cl-assert (null modes)) mode)
                   `(derived-mode ,mode . ,modes))))
+
+;;; Support for unloading.
+
+(cl-defmethod loadhist-unload-element ((x (head cl-defmethod)))
+  (pcase-let*
+      ((`(,name ,qualifiers . ,specializers) (cdr x))
+       (generic (cl-generic-ensure-function name 'noerror)))
+    (when generic
+      (let* ((mt (cl--generic-method-table generic))
+             (me (cl--generic-member-method specializers qualifiers mt)))
+        (when me
+          (setf (cl--generic-method-table generic) (delq (car me) mt)))))))
+
 
 (provide 'cl-generic)
 ;;; cl-generic.el ends here

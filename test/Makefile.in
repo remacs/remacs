@@ -136,7 +136,8 @@ endif
 	$(AM_V_ELC)$(emacs) -f batch-byte-compile $<
 
 ## Save logs, and show logs for failed tests.
-WRITE_LOG = > $@ 2>&1 || { STAT=$$?; cat $@; exit $$STAT; }
+WRITE_LOG = $(if $(and ${EMACS_HYDRA_CI}, $(findstring tramp, $@)), |& tee $@, > $@ 2>&1) \
+		|| { STAT=$$?; cat $@; exit $$STAT; }
 
 ifeq ($(TEST_LOAD_EL), yes)
 testloadfile = $*.el

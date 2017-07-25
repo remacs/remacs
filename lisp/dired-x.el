@@ -546,7 +546,9 @@ Should never be used as marker by the user or other packages.")
   (interactive)
   (let ((dired-omit-mode nil)) (revert-buffer)) ;; Show omitted files
   (dired-mark-unmarked-files (dired-omit-regexp) nil nil dired-omit-localp
-                             (dired-omit-case-fold-p dired-directory)))
+                             (dired-omit-case-fold-p (if (stringp dired-directory)
+                                                         dired-directory
+                                                       (car dired-directory)))))
 
 (defcustom dired-omit-extensions
   (append completion-ignored-extensions
@@ -591,7 +593,9 @@ This functions works by temporarily binding `dired-marker-char' to
             (let ((dired-marker-char dired-omit-marker-char))
               (when dired-omit-verbose (message "Omitting..."))
               (if (dired-mark-unmarked-files omit-re nil nil dired-omit-localp
-                                             (dired-omit-case-fold-p dired-directory))
+                                             (dired-omit-case-fold-p (if (stringp dired-directory)
+                                                                         dired-directory
+                                                                       (car dired-directory))))
                   (progn
                     (setq count (dired-do-kill-lines
 				 nil

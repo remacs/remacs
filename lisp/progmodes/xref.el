@@ -917,20 +917,21 @@ IGNORES is a list of glob patterns."
   (grep-compute-defaults)
   (defvar grep-find-template)
   (defvar grep-highlight-matches)
-  (let* ((grep-find-template (replace-regexp-in-string "<C>" "<C> -E"
-                                                       grep-find-template t t))
-         (grep-highlight-matches nil)
-         ;; TODO: Sanitize the regexp to remove Emacs-specific terms,
-         ;; so that Grep can search for the "relaxed" version.  Can we
-         ;; do that reliably enough, without creating false negatives?
-         (command (xref--rgrep-command (xref--regexp-to-extended regexp)
-                                       files
-                                       (expand-file-name dir)
-                                       ignores))
-         (buf (get-buffer-create " *xref-grep*"))
-         (grep-re (caar grep-regexp-alist))
-         status
-         hits)
+  (pcase-let*
+      ((grep-find-template (replace-regexp-in-string "<C>" "<C> -E"
+                                                     grep-find-template t t))
+       (grep-highlight-matches nil)
+       ;; TODO: Sanitize the regexp to remove Emacs-specific terms,
+       ;; so that Grep can search for the "relaxed" version.  Can we
+       ;; do that reliably enough, without creating false negatives?
+       (command (xref--rgrep-command (xref--regexp-to-extended regexp)
+                                     files
+                                     (expand-file-name dir)
+                                     ignores))
+       (buf (get-buffer-create " *xref-grep*"))
+       (`(,grep-re ,file-group ,line-group . ,_) (car (grep-regexp-alist)))
+       (status nil)
+       (hits nil))
     (with-current-buffer buf
       (erase-buffer)
       (setq status
@@ -944,8 +945,8 @@ IGNORES is a list of glob patterns."
                  (not (looking-at grep-re)))
         (user-error "Search failed with status %d: %s" status (buffer-string)))
       (while (re-search-forward grep-re nil t)
-        (push (list (string-to-number (match-string 2))
-                    (match-string 1)
+        (push (list (string-to-number (match-string line-group))
+                    (match-string file-group)
                     (buffer-substring-no-properties (point) (line-end-position)))
               hits)))
     (xref--convert-hits (nreverse hits) regexp)))

@@ -1,4 +1,4 @@
-# serial 28
+# serial 29
 dnl Copyright (C) 2002-2003, 2005-2007, 2009-2017 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
@@ -25,6 +25,7 @@ dnl Test whether mktime works. Set gl_cv_func_working_mktime.
 AC_DEFUN([gl_FUNC_MKTIME_WORKS],
 [
   AC_REQUIRE([gl_TIME_T_IS_SIGNED])
+  AC_REQUIRE([AC_CANONICAL_HOST]) dnl for cross-compiles
 
   dnl We don't use AC_FUNC_MKTIME any more, because it is no longer maintained
   dnl in Autoconf and because it invokes AC_LIBOBJ.
@@ -239,7 +240,12 @@ main ()
 }]])],
        [gl_cv_func_working_mktime=yes],
        [gl_cv_func_working_mktime=no],
-       [gl_cv_func_working_mktime="guessing no"])
+       [case "$host_os" in
+                  # Guess no on native Windows.
+          mingw*) gl_cv_func_working_mktime="guessing no" ;;
+          *)      gl_cv_func_working_mktime="guessing no" ;;
+        esac
+       ])
     ])
 ])
 

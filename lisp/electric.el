@@ -469,56 +469,50 @@ This requotes when a quoting key is typed."
                  (and (not electric-quote-context-sensitive)
                       (eq last-command-event ?\`)))
              (not (run-hook-with-args-until-success
-                   'electric-quote-inhibit-functions)))
-    (let ((start
-           (if (and comment-start comment-use-syntax)
-               (when (or electric-quote-comment electric-quote-string)
-                 (let* ((syntax (syntax-ppss))
-                        (beg (nth 8 syntax)))
-                   (and beg
-                        (or (and electric-quote-comment (nth 4 syntax))
-                            (and electric-quote-string (nth 3 syntax)))
-                        ;; Do not requote a quote that starts or ends
-                        ;; a comment or string.
-                        (eq beg (nth 8 (save-excursion
-                                         (syntax-ppss (1- (point)))))))))
-             (and electric-quote-paragraph
-                  (derived-mode-p 'text-mode)
-                  ;; FIXME: Why is the next form there?  It’s never
-                  ;; nil.
-                  (or (eq last-command-event ?\`)
-                      (save-excursion (backward-paragraph) (point)))))))
-      (pcase electric-quote-chars
-        (`(,q< ,q> ,q<< ,q>>)
-         (when start
-           (save-excursion
-             (let ((backtick ?\`))
-               (if (or (eq last-command-event ?\`)
-                       (and electric-quote-context-sensitive
-                            (save-excursion
-                              (backward-char)
-                              (or (bobp) (bolp)
-                                  (memq (char-before) (list q< q<<))
-                                  (memq (char-syntax (char-before))
-                                        '(?\s ?\())))
-                            (setq backtick ?\')))
-                   (cond ((search-backward (string q< backtick) (- (point) 2) t)
-                          (replace-match (string q<<))
-                          (when (and electric-pair-mode
-                                     (eq (cdr-safe
-                                          (assq q< electric-pair-text-pairs))
-                                         (char-after)))
-                            (delete-char 1))
-                          (setq last-command-event q<<))
-                         ((search-backward (string backtick) (1- (point)) t)
-                          (replace-match (string q<))
-                          (setq last-command-event q<)))
-                 (cond ((search-backward (string q> ?') (- (point) 2) t)
-                        (replace-match (string q>>))
-                        (setq last-command-event q>>))
-                       ((search-backward "'" (1- (point)) t)
-                        (replace-match (string q>))
-                        (setq last-command-event q>))))))))))))
+                   'electric-quote-inhibit-functions))
+             (if (derived-mode-p 'text-mode)
+                 electric-quote-paragraph
+               (and comment-start comment-use-syntax
+                    (or electric-quote-comment electric-quote-string)
+                    (let* ((syntax (syntax-ppss))
+                           (beg (nth 8 syntax)))
+                      (and beg
+                           (or (and electric-quote-comment (nth 4 syntax))
+                               (and electric-quote-string (nth 3 syntax)))
+                           ;; Do not requote a quote that starts or ends
+                           ;; a comment or string.
+                           (eq beg (nth 8 (save-excursion
+                                            (syntax-ppss (1- (point)))))))))))
+    (pcase electric-quote-chars
+      (`(,q< ,q> ,q<< ,q>>)
+       (save-excursion
+         (let ((backtick ?\`))
+           (if (or (eq last-command-event ?\`)
+                   (and electric-quote-context-sensitive
+                        (save-excursion
+                          (backward-char)
+                          (or (bobp) (bolp)
+                              (memq (char-before) (list q< q<<))
+                              (memq (char-syntax (char-before))
+                                    '(?\s ?\())))
+                        (setq backtick ?\')))
+               (cond ((search-backward (string q< backtick) (- (point) 2) t)
+                      (replace-match (string q<<))
+                      (when (and electric-pair-mode
+                                 (eq (cdr-safe
+                                      (assq q< electric-pair-text-pairs))
+                                     (char-after)))
+                        (delete-char 1))
+                      (setq last-command-event q<<))
+                     ((search-backward (string backtick) (1- (point)) t)
+                      (replace-match (string q<))
+                      (setq last-command-event q<)))
+             (cond ((search-backward (string q> ?') (- (point) 2) t)
+                    (replace-match (string q>>))
+                    (setq last-command-event q>>))
+                   ((search-backward "'" (1- (point)) t)
+                    (replace-match (string q>))
+                    (setq last-command-event q>))))))))))
 
 (put 'electric-quote-post-self-insert-function 'priority 10)
 

@@ -1641,6 +1641,18 @@ an input event arrives.  The other arguments are passed to `tramp-error'."
 	(when (tramp-file-name-equal-p vec (car tramp-current-connection))
 	  (setcdr tramp-current-connection (current-time)))))))
 
+(defmacro tramp-with-demoted-errors (vec-or-proc format &rest body)
+  "Execute BODY while redirecting the error message to `tramp-message'.
+BODY is executed like wrapped by `with-demoted-errors'.  FORMAT
+is a format-string containing a %-sequence meaning to substitute
+the resulting error message."
+  (declare (debug (symbolp body))
+           (indent 2))
+  (let ((err (make-symbol "err")))
+    `(condition-case-unless-debug ,err
+         (progn ,@body)
+       (error (tramp-message ,vec-or-proc 3 ,format ,err) nil))))
+
 (defmacro with-parsed-tramp-file-name (filename var &rest body)
   "Parse a Tramp filename and make components available in the body.
 

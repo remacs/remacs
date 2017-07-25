@@ -385,6 +385,18 @@ of the piece of advice."
 
 (defun advice--defalias-fset (fsetfun symbol newdef)
   (unless fsetfun (setq fsetfun #'fset))
+  ;; `newdef' shouldn't include advice wrappers, since that's what *we* manage!
+  ;; So if `newdef' includes advice wrappers, it's usually because someone
+  ;; naively took (symbol-function F) and then passed that back to `defalias':
+  ;; let's strip them away.
+  (cond
+   ((advice--p newdef) (setq newdef (advice--cd*r newdef)))
+   ((and (eq 'macro (car-safe newdef))
+         (advice--p (cdr newdef)))
+    (setq newdef `(macro . ,(advice--cd*r (cdr newdef))))))
+  ;; The saved-rewrite is specific to the current value, so since we are about
+  ;; to overwrite that current value with new value, the old saved-rewrite is
+  ;; not relevant any more.
   (when (get symbol 'advice--saved-rewrite)
     (put symbol 'advice--saved-rewrite nil))
   (setq newdef (advice--normalize symbol newdef))

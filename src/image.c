@@ -4231,7 +4231,7 @@ xpm_load_image (struct frame *f,
       color_val = Qnil;
       if (!NILP (color_symbols) && !NILP (symbol_color))
 	{
-	  Lisp_Object specified_color = Fassoc (symbol_color, color_symbols);
+	  Lisp_Object specified_color = Fassoc (symbol_color, color_symbols, Qnil);
 
 	  if (CONSP (specified_color) && STRINGP (XCDR (specified_color)))
 	    {
@@ -8086,83 +8086,76 @@ compute_image_size (size_t width, size_t height,
 		    int *d_width, int *d_height)
 {
   Lisp_Object value;
-  int desired_width, desired_height;
+  int desired_width = -1, desired_height = -1, max_width = -1, max_height = -1;
   double scale = 1;
 
   value = image_spec_value (spec, QCscale, NULL);
   if (NUMBERP (value))
     scale = XFLOATINT (value);
 
+  value = image_spec_value (spec, QCmax_width, NULL);
+  if (NATNUMP (value))
+    max_width = min (XFASTINT (value), INT_MAX);
+
+  value = image_spec_value (spec, QCmax_height, NULL);
+  if (NATNUMP (value))
+    max_height = min (XFASTINT (value), INT_MAX);
+
   /* If width and/or height is set in the display spec assume we want
      to scale to those values.  If either h or w is unspecified, the
      unspecified should be calculated from the specified to preserve
      aspect ratio.  */
   value = image_spec_value (spec, QCwidth, NULL);
-  desired_width = NATNUMP (value) ?
-    min (XFASTINT (value) * scale, INT_MAX) : -1;
+  if (NATNUMP (value))
+    {
+      desired_width = min (XFASTINT (value) * scale, INT_MAX);
+      /* :width overrides :max-width. */
+      max_width = -1;
+    }
+
   value = image_spec_value (spec, QCheight, NULL);
-  desired_height = NATNUMP (value) ?
-    min (XFASTINT (value) * scale, INT_MAX) : -1;
+  if (NATNUMP (value))
+    {
+      desired_height = min (XFASTINT (value) * scale, INT_MAX);
+      /* :height overrides :max-height. */
+      max_height = -1;
+    }
+
+  /* If we have both width/height set explicitly, we skip past all the
+     aspect ratio-preserving computations below. */
+  if (desired_width != -1 && desired_height != -1)
+    goto out;
 
   width = width * scale;
   height = height * scale;
 
-  if (desired_width == -1)
-    {
-      value = image_spec_value (spec, QCmax_width, NULL);
-      if (NATNUMP (value))
-	{
-	  int max_width = min (XFASTINT (value), INT_MAX);
-	  if (max_width < width)
-	    {
-	      /* The image is wider than :max-width. */
-	      desired_width = max_width;
-	      if (desired_height == -1)
-		{
-		  desired_height = scale_image_size (desired_width,
-						     width, height);
-		  value = image_spec_value (spec, QCmax_height, NULL);
-		  if (NATNUMP (value))
-		    {
-		      int max_height = min (XFASTINT (value), INT_MAX);
-		      if (max_height < desired_height)
-			{
-			  desired_height = max_height;
-			  desired_width = scale_image_size (desired_height,
-							    height, width);
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-  if (desired_height == -1)
-    {
-      value = image_spec_value (spec, QCmax_height, NULL);
-      if (NATNUMP (value))
-	{
-	  int max_height = min (XFASTINT (value), INT_MAX);
-	  if (max_height < height)
-	    desired_height = max_height;
-	}
-    }
-
-  if (desired_width != -1 && desired_height == -1)
-    /* w known, calculate h.  */
+  if (desired_width != -1)
+    /* Width known, calculate height. */
     desired_height = scale_image_size (desired_width, width, height);
-
-  if (desired_width == -1 && desired_height != -1)
-    /* h known, calculate w.  */
+  else if (desired_height != -1)
+    /* Height known, calculate width. */
     desired_width = scale_image_size (desired_height, height, width);
-
-  /* We have no width/height settings, so just apply the scale. */
-  if (desired_width == -1 && desired_height == -1)
+  else
     {
       desired_width = width;
       desired_height = height;
     }
 
+  if (max_width != -1 && desired_width > max_width)
+    {
+      /* The image is wider than :max-width. */
+      desired_width = max_width;
+      desired_height = scale_image_size (desired_width, width, height);
+    }
+
+  if (max_height != -1 && desired_height > max_height)
+    {
+      /* The image is higher than :max-height. */
+      desired_height = max_height;
+      desired_width = scale_image_size (desired_height, height, width);
+    }
+
+ out:
   *d_width = desired_width;
   *d_height = desired_height;
 }

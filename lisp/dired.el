@@ -785,7 +785,7 @@ Type \\[describe-mode] after entering Dired for more info.
 If DIRNAME is already in a Dired buffer, that buffer is used without refresh."
   ;; Cannot use (interactive "D") because of wildcards.
   (interactive (dired-read-dir-and-switches ""))
-  (switch-to-buffer (dired-noselect dirname switches)))
+  (pop-to-buffer-same-window (dired-noselect dirname switches)))
 
 ;;;###autoload (define-key ctl-x-4-map "d" 'dired-other-window)
 ;;;###autoload
@@ -872,13 +872,15 @@ periodically reverts at specified time intervals."
   :version "23.2")
 
 (defun dired-internal-noselect (dir-or-list &optional switches mode)
-  ;; If there is an existing dired buffer for DIRNAME, just leave
-  ;; buffer as it is (don't even call dired-revert).
+  ;; If DIR-OR-LIST is a string and there is an existing dired buffer
+  ;; for it, just leave buffer as it is (don't even call dired-revert).
   ;; This saves time especially for deep trees or with ange-ftp.
   ;; The user can type `g' easily, and it is more consistent with find-file.
   ;; But if SWITCHES are given they are probably different from the
   ;; buffer's old value, so call dired-sort-other, which does
   ;; revert the buffer.
+  ;; Revert the buffer if DIR-OR-LIST is a cons or `dired-directory'
+  ;; is a cons and DIR-OR-LIST is a string.
   ;; A pity we can't possibly do "Directory has changed - refresh? "
   ;; like find-file does.
   ;; Optional argument MODE is passed to dired-find-buffer-nocreate,
@@ -898,6 +900,11 @@ periodically reverts at specified time intervals."
 	       (setq dired-directory dir-or-list)
 	       ;; this calls dired-revert
 	       (dired-sort-other switches))
+	      ;; Always revert when `dir-or-list' is a cons.  Also revert
+	      ;; if `dired-directory' is a cons but `dir-or-list' is not.
+	      ((or (consp dir-or-list) (consp dired-directory))
+	       (setq dired-directory dir-or-list)
+	       (revert-buffer))
 	      ;; Always revert regardless of whether it has changed or not.
 	      ((eq dired-auto-revert-buffer t)
 	       (revert-buffer))

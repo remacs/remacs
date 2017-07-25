@@ -86,8 +86,8 @@
       tramp-message-show-message nil
       tramp-persistency-file-name nil)
 
-;; This shall happen on hydra only.
-(when (getenv "NIX_STORE")
+;; This should happen on hydra only.
+(when (getenv "EMACS_HYDRA_CI")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 (defvar tramp--test-expensive-test
@@ -132,12 +132,12 @@ If QUOTED is non-nil, the local part of the file is quoted."
     (make-temp-name "tramp-test")
     (if local temporary-file-directory tramp-test-temporary-file-directory))))
 
-;; Don't print messages in nested `tramp--instrument-test-case' calls.
-(defvar tramp--instrument-test-case-p nil
-  "Whether `tramp--instrument-test-case' run.
+;; Don't print messages in nested `tramp--test-instrument-test-case' calls.
+(defvar tramp--test-instrument-test-case-p nil
+  "Whether `tramp--test-instrument-test-case' run.
 This shall used dynamically bound only.")
 
-(defmacro tramp--instrument-test-case (verbose &rest body)
+(defmacro tramp--test-instrument-test-case (verbose &rest body)
   "Run BODY with `tramp-verbose' equal VERBOSE.
 Print the the content of the Tramp debug buffer, if BODY does not
 eval properly in `should' or `should-not'.  `should-error' is not
@@ -150,9 +150,9 @@ handled properly.  BODY shall not contain a timeout."
 	  (cons "^make-symbolic-link not supported$" debug-ignored-errors))
 	 inhibit-message)
      (unwind-protect
-	 (let ((tramp--instrument-test-case-p t)) ,@body)
+	 (let ((tramp--test-instrument-test-case-p t)) ,@body)
        ;; Unwind forms.
-       (when (and (null tramp--instrument-test-case-p) (> tramp-verbose 3))
+       (when (and (null tramp--test-instrument-test-case-p) (> tramp-verbose 3))
 	 (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
 	   (with-current-buffer (tramp-get-connection-buffer v)
 	     (message "%s" (buffer-string)))
@@ -161,7 +161,7 @@ handled properly.  BODY shall not contain a timeout."
 
 (defsubst tramp--test-message (fmt-string &rest arguments)
   "Emit a message into ERT *Messages*."
-  (tramp--instrument-test-case 0
+  (tramp--test-instrument-test-case 0
     (apply
      'tramp-message
      (tramp-dissect-file-name tramp-test-temporary-file-directory) 0
@@ -169,7 +169,7 @@ handled properly.  BODY shall not contain a timeout."
 
 (defsubst tramp--test-backtrace ()
   "Dump a backtrace into ERT *Messages*."
-  (tramp--instrument-test-case 10
+  (tramp--test-instrument-test-case 10
     (tramp-backtrace
      (tramp-dissect-file-name tramp-test-temporary-file-directory))))
 
@@ -3699,11 +3699,14 @@ process sentinels.  They shall not disturb each other."
            (process-file-side-effects t)
            ;; Suppress nasty messages.
            (inhibit-message t)
+	   ;; Do not run delayed timers.
+	   (timer-max-repeats 0)
+	   ;; Number of asynchronous processes for test.
            (number-proc 10)
            ;; On hydra, timings are bad.
            (timer-repeat
             (cond
-             ((getenv "NIX_STORE") 10)
+             ((getenv "EMACS_HYDRA_CI") 10)
              (t 1)))
            ;; We must distinguish due to performance reasons.
            (timer-operation
@@ -3726,16 +3729,26 @@ process sentinels.  They shall not disturb each other."
               0 timer-repeat
               (lambda ()
                 (when buffers
-                  (let ((default-directory tmp-name)
+                  (let ((time (float-time))
+                        (default-directory tmp-name)
                         (file
                          (buffer-name (nth (random (length buffers)) buffers))))
-                    (funcall timer-operation file))))))
+                    (tramp--test-message
+                     "Start timer %s %s" file (current-time-string))
+                    (funcall timer-operation file)
+                    ;; Adjust timer if it takes too much time.
+                    (when (> (- (float-time) time) timer-repeat)
+                      (setq timer-repeat (* 1.5 timer-repeat))
+                      (setf (timer--repeat-delay timer) timer-repeat)
+                      (tramp--test-message "Increase timer %s" timer-repeat))
+                    (tramp--test-message
+                     "Stop timer %s %s" file (current-time-string)))))))
 
             ;; Create temporary buffers.  The number of buffers
             ;; corresponds to the number of processes; it could be
             ;; increased in order to make pressure on Tramp.
             (dotimes (_i number-proc)
-              (add-to-list 'buffers (generate-new-buffer "foo")))
+              (setq buffers (cons (generate-new-buffer "foo") buffers)))
 
             ;; Open asynchronous processes.  Set process filter and sentinel.
             (dolist (buf buffers)
@@ -3776,17 +3789,30 @@ process sentinels.  They shall not disturb each other."
                        (proc (get-buffer-process buf))
                        (file (process-get proc 'foo))
                        (count (process-get proc 'bar)))
+                  (tramp--test-message
+                   "Start action %d %s %s" count buf (current-time-string))
                   ;; Regular operation.
                   (if (= count 0)
                       (should-not (file-attributes file))
                     (should (file-attributes file)))
                   ;; Send string to process.
+                  (tramp--test-message
+                   "Trace 1 action %d %s %s" count buf (current-time-string))
                   (process-send-string proc (format "%s\n" (buffer-name buf)))
+                  (tramp--test-message
+                   "Trace 2 action %d %s %s" count buf (current-time-string))
                   (accept-process-output proc 0.1 nil 0)
                   ;; Regular operation.
+                  (tramp--test-message
+                   "Trace 3 action %d %s %s" count buf (current-time-string))
                   (if (= count 2)
-                      (should-not (file-attributes file))
+                      (if (= (length buffers) 1)
+                          (tramp--test-instrument-test-case 10
+                            (should-not (file-attributes file)))
+                        (should-not (file-attributes file)))
                     (should (file-attributes file)))
+                  (tramp--test-message
+                   "Stop action %d %s %s" count buf (current-time-string))
                   (process-put proc 'bar (1+ count))
                   (unless (process-live-p proc)
                     (setq buffers (delq buf buffers))))))
@@ -3794,6 +3820,8 @@ process sentinels.  They shall not disturb each other."
             ;; Checks.  All process output shall exists in the
             ;; respective buffers.  All created files shall be
             ;; deleted.
+            (tramp--test-message
+             "Check %s" (current-time-string))
             (dolist (buf buffers)
               (with-current-buffer buf
                 (should (string-equal (format "%s\n" buf) (buffer-string)))))
@@ -3857,8 +3885,6 @@ process sentinels.  They shall not disturb each other."
 (ert-deftest tramp-test39-unload ()
   "Check that Tramp and its subpackages unload completely.
 Since it unloads Tramp, it shall be the last test to run."
-  ;; Mark as failed until all symbols are unbound.
-  :expected-result (if (featurep 'tramp) :failed :passed)
   :tags '(:expensive-test)
   (skip-unless noninteractive)
 
@@ -3869,21 +3895,31 @@ Since it unloads Tramp, it shall be the last test to run."
     (should-not (all-completions "tramp" (delq 'tramp-tests features)))
     ;; `file-name-handler-alist' must be clean.
     (should-not (all-completions "tramp" (mapcar 'cdr file-name-handler-alist)))
-    ;; There shouldn't be left a bound symbol.  We do not regard our
-    ;; test symbols, and the Tramp unload hooks.
+    ;; There shouldn't be left a bound symbol, except buffer-local
+    ;; variables, and autoload functions.  We do not regard our test
+    ;; symbols, and the Tramp unload hooks.
     (mapatoms
      (lambda (x)
-       (and (or (boundp x) (functionp x))
+       (and (or (and (boundp x) (null (local-variable-if-set-p x)))
+		(and (functionp x) (null (autoloadp (symbol-function x)))))
 	    (string-match "^tramp" (symbol-name x))
 	    (not (string-match "^tramp--?test" (symbol-name x)))
 	    (not (string-match "unload-hook$" (symbol-name x)))
 	    (ert-fail (format "`%s' still bound" x)))))
+    ;; The defstruct `tramp-file-name' and all its internal functions
+    ;; shall be purged.
+    (should-not (cl--find-class 'tramp-file-name))
+    (mapatoms
+     (lambda (x)
+       (and (string-match "tramp-file-name" (symbol-name x))
+            (functionp x)
+            (ert-fail (format "Structure function `%s' still exists" x)))))
     ;; There shouldn't be left a hook function containing a Tramp
     ;; function.  We do not regard the Tramp unload hooks.
     (mapatoms
      (lambda (x)
        (and (boundp x)
-	    (string-match "-hooks?$" (symbol-name x))
+	    (string-match "-\\(hook\\|function\\)s?$" (symbol-name x))
 	    (not (string-match "unload-hook$" (symbol-name x)))
 	    (consp (symbol-value x))
 	    (ignore-errors (all-completions "tramp" (symbol-value x)))
@@ -3904,11 +3940,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test05-expand-file-name-relative' in `expand-file-name'.
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
-;; * Fix Bug#27009.  Set expected error of
-;;   `tramp-test29-environment-variables-and-port-numbers'.
 ;; * Fix Bug#16928 in `tramp-test36-asynchronous-requests'.
-;; * Fix `tramp-test39-unload' (Not all symbols are unbound).  Set
-;;   expected error.
 
 (defun tramp-test-all (&optional interactive)
   "Run all tests for \\[tramp]."

@@ -142,6 +142,23 @@ literals (Bug#20852)."
                            "unescaped character literals "
                            "`?\"', `?(', `?)', `?;', `?[', `?]' detected!")))))
 
+(ert-deftest lread-tests--funny-quote-symbols ()
+  "Check that 'smart quotes' or similar trigger errors in symbol names."
+  (dolist (quote-char
+           '(#x2018 ;; LEFT SINGLE QUOTATION MARK
+             #x2019 ;; RIGHT SINGLE QUOTATION MARK
+             #x201B ;; SINGLE HIGH-REVERSED-9 QUOTATION MARK
+             #x201C ;; LEFT DOUBLE QUOTATION MARK
+             #x201D ;; RIGHT DOUBLE QUOTATION MARK
+             #x201F ;; DOUBLE HIGH-REVERSED-9 QUOTATION MARK
+             #x301E ;; DOUBLE PRIME QUOTATION MARK
+             #xFF02 ;; FULLWIDTH QUOTATION MARK
+             #xFF07 ;; FULLWIDTH APOSTROPHE
+             ))
+    (let ((str (format "%cfoo" quote-char)))
+     (should-error (read str) :type 'invalid-read-syntax)
+     (should (eq (read (concat "\\" str)) (intern str))))))
+
 (ert-deftest lread-test-bug26837 ()
   "Test for http://debbugs.gnu.org/26837 ."
   (let ((load-path (cons
@@ -163,5 +180,11 @@ literals (Bug#20852)."
     (should (equal (lread-tests--last-message)
                    (concat (format-message "Loading `%s': " file-name)
                            "old-style backquotes detected!")))))
+
+(ert-deftest lread-lread--substitute-object-in-subtree ()
+  (let ((x (cons 0 1)))
+    (setcar x x)
+    (lread--substitute-object-in-subtree x 1 t)
+    (should (eq x (cdr x)))))
 
 ;;; lread-tests.el ends here

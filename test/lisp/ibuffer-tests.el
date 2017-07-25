@@ -32,7 +32,7 @@
 (declare-function ibuffer-format-qualifier "ibuf-ext" (qualifier))
 (declare-function ibuffer-unary-operand "ibuf-ext" (filter))
 
-(ert-deftest ibuffer-autoload ()
+(ert-deftest ibuffer-0autoload ()       ; sort first
   "Tests to see whether ibuffer has been autoloaded"
   (skip-unless (not (featurep 'ibuf-ext)))
   (should
@@ -76,7 +76,7 @@
 
 (ert-deftest ibuffer-save-filters ()
   "Tests that `ibuffer-save-filters' saves in the proper format."
-  (skip-unless (featurep 'ibuf-ext))
+  (require 'ibuf-ext)
   (let ((ibuffer-save-with-custom nil)
         (ibuffer-saved-filters nil)
         (test1 '((mode . org-mode)
@@ -150,6 +150,7 @@
 
 ;; Test Filter Inclusion
 (let* (test-buffer-list  ; accumulated buffers to clean up
+       test-file-list
        ;; Utility functions without polluting the environment
        (set-buffer-mode
         (lambda (buffer mode)
@@ -192,6 +193,7 @@
                  (file    (make-temp-file prefix nil suffix))
                  (buf     (find-file-noselect file t)))
             (push buf test-buffer-list) ; record for cleanup
+            (push file test-file-list)
             (funcall set-buffer-mode buf mode)
             (funcall set-buffer-contents buf size include)
             buf)))
@@ -213,6 +215,8 @@
        (clean-up
         (lambda ()
           "Restore all emacs state modified during the tests"
+          (dolist (f test-file-list)
+            (and f (file-exists-p f) (delete-file f)))
           (while test-buffer-list       ; created temporary buffers
             (let ((buf (pop test-buffer-list)))
               (with-current-buffer buf (bury-buffer)) ; ensure not selected
@@ -220,7 +224,7 @@
   ;; Tests
   (ert-deftest ibuffer-filter-inclusion-1 ()
     "Tests inclusion using basic filter combinators with a single buffer."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let ((buf
                (funcall create-file-buffer "ibuf-test-1" :size 100
@@ -263,7 +267,7 @@
 
   (ert-deftest ibuffer-filter-inclusion-2 ()
     "Tests inclusion of basic filters in combination on a single buffer."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let ((buf
                (funcall create-file-buffer "ibuf-test-2" :size 200
@@ -298,7 +302,7 @@
 
   (ert-deftest ibuffer-filter-inclusion-3 ()
     "Tests inclusion with filename filters on specified buffers."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let* ((bufA
                 (funcall create-file-buffer "ibuf-test-3.a" :size 50
@@ -332,7 +336,7 @@
 
   (ert-deftest ibuffer-filter-inclusion-4 ()
     "Tests inclusion with various filters on a single buffer."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let ((buf
                (funcall create-file-buffer "ibuf-test-4"
@@ -366,7 +370,7 @@
 
   (ert-deftest ibuffer-filter-inclusion-5 ()
     "Tests inclusion with various filters on a single buffer."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let ((buf
                (funcall create-non-file-buffer "ibuf-test-5.el"
@@ -392,7 +396,7 @@
 
   (ert-deftest ibuffer-filter-inclusion-6 ()
     "Tests inclusion using saved filters and DeMorgan's laws."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let ((buf
                (funcall create-non-file-buffer "*ibuf-test-6*" :size 65
@@ -425,7 +429,7 @@
 
   (ert-deftest ibuffer-filter-inclusion-7 ()
     "Tests inclusion with various filters on a single buffer."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let ((buf
                (funcall create-non-file-buffer "ibuf-test-7"
@@ -446,7 +450,7 @@
 
   (ert-deftest ibuffer-filter-inclusion-8 ()
     "Tests inclusion with various filters."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let ((bufA
                (funcall create-non-file-buffer "ibuf-test-8a"
@@ -534,7 +538,7 @@
   ;; Tests
   (ert-deftest ibuffer-decompose-filter ()
     "Tests `ibuffer-decompose-filter' for and, or, not, and saved."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let ((ibuf (funcall get-test-ibuffer)))
           (with-current-buffer ibuf
@@ -583,7 +587,7 @@
 
   (ert-deftest ibuffer-and-filter ()
     "Tests `ibuffer-and-filter' in an Ibuffer buffer."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let ((ibuf (funcall get-test-ibuffer)))
           (with-current-buffer ibuf
@@ -660,7 +664,7 @@
 
   (ert-deftest ibuffer-or-filter ()
     "Tests `ibuffer-or-filter' in an Ibuffer buffer."
-    (skip-unless (featurep 'ibuf-ext))
+    (require 'ibuf-ext)
     (unwind-protect
         (let ((ibuf (funcall get-test-ibuffer)))
           (with-current-buffer ibuf
@@ -737,7 +741,7 @@
 
 (ert-deftest ibuffer-format-qualifier ()
   "Tests string recommendation of filter from `ibuffer-format-qualifier'."
-  (skip-unless (featurep 'ibuf-ext))
+  (require 'ibuf-ext)
   (let ((test1 '(mode . org-mode))
         (test2 '(size-lt . 100))
         (test3 '(derived-mode . prog-mode))
@@ -802,7 +806,7 @@
 
 (ert-deftest ibuffer-unary-operand ()
   "Tests `ibuffer-unary-operand': (not cell) or (not . cell) -> cell."
-  (skip-unless (featurep 'ibuf-ext))
+  (require 'ibuf-ext)
   (should (equal (ibuffer-unary-operand '(not . (mode "foo")))
                  '(mode "foo")))
   (should (equal (ibuffer-unary-operand '(not (mode "foo")))

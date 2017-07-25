@@ -103,8 +103,20 @@ static Lisp_Object read_objects_map;
    (to reduce allocations), or nil.  */
 static Lisp_Object read_objects_completed;
 
-/* File for get_file_char to read from.  Use by load.  */
-static FILE *instream;
+/* File and lookahead for get-file-char and get-emacs-mule-file-char
+   to read from.  Used by Fload.  */
+static struct infile
+{
+  /* The input stream.  */
+  FILE *stream;
+
+  /* Lookahead byte count.  */
+  signed char lookahead;
+
+  /* Lookahead bytes, in reverse order.  Keep these here because it is
+     not portable to ungetc more than one byte at a time.  */
+  unsigned char buf[MAX_MULTIBYTE_LENGTH - 1];
+} *infile;
 
 /* For use within read-from-string (this reader is non-reentrant!!)  */
 static ptrdiff_t read_from_string_index;
@@ -149,7 +161,7 @@ static Lisp_Object Vloads_in_progress;
 static int read_emacs_mule_char (int, int (*) (int, Lisp_Object),
                                  Lisp_Object);
 
-static void readevalloop (Lisp_Object, FILE *, Lisp_Object, bool,
+static void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
                           Lisp_Object, Lisp_Object,
                           Lisp_Object, Lisp_Object);
 
@@ -340,14 +352,13 @@ readchar (Lisp_Object readcharfun, bool *multibyte)
   len = BYTES_BY_CHAR_HEAD (c);
   while (i < len)
     {
-      c = (*readbyte) (-1, readcharfun);
+      buf[i++] = c = (*readbyte) (-1, readcharfun);
       if (c < 0 || ! TRAILING_CODE_P (c))
 	{
-	  while (--i > 1)
+	  for (i -= c < 0; 0 < --i; )
 	    (*readbyte) (buf[i], readcharfun);
 	  return BYTE8_TO_CHAR (buf[0]);
 	}
-      buf[i++] = c;
     }
   return STRING_CHAR (buf);
 }
@@ -362,8 +373,9 @@ skip_dyn_bytes (Lisp_Object readcharfun, ptrdiff_t n)
   if (FROM_FILE_P (readcharfun))
     {
       block_input ();		/* FIXME: Not sure if it's needed.  */
-      fseek (instream, n, SEEK_CUR);
+      fseek (infile->stream, n - infile->lookahead, SEEK_CUR);
       unblock_input ();
+      infile->lookahead = 0;
     }
   else
     { /* We're not reading directly from a file.  In that case, it's difficult
@@ -385,8 +397,9 @@ skip_dyn_eof (Lisp_Object readcharfun)
   if (FROM_FILE_P (readcharfun))
     {
       block_input ();		/* FIXME: Not sure if it's needed.  */
-      fseek (instream, 0, SEEK_END);
+      fseek (infile->stream, 0, SEEK_END);
       unblock_input ();
+      infile->lookahead = 0;
     }
   else
     while (READCHAR >= 0);
@@ -459,15 +472,13 @@ readbyte_for_lambda (int c, Lisp_Object readcharfun)
 
 
 static int
-readbyte_from_file (int c, Lisp_Object readcharfun)
+readbyte_from_stdio (void)
 {
-  if (c >= 0)
-    {
-      block_input ();
-      ungetc (c, instream);
-      unblock_input ();
-      return 0;
-    }
+  if (infile->lookahead)
+    return infile->buf[--infile->lookahead];
+
+  int c;
+  FILE *instream = infile->stream;
 
   block_input ();
 
@@ -484,6 +495,19 @@ readbyte_from_file (int c, Lisp_Object readcharfun)
   unblock_input ();
 
   return (c == EOF ? -1 : c);
+}
+
+static int
+readbyte_from_file (int c, Lisp_Object readcharfun)
+{
+  if (c >= 0)
+    {
+      eassert (infile->lookahead < sizeof infile->buf);
+      infile->buf[infile->lookahead++] = c;
+      return 0;
+    }
+
+  return readbyte_from_stdio ();
 }
 
 static int
@@ -508,7 +532,7 @@ readbyte_from_string (int c, Lisp_Object readcharfun)
 }
 
 
-/* Read one non-ASCII character from INSTREAM.  The character is
+/* Read one non-ASCII character from INFILE.  The character is
    encoded in `emacs-mule' and the first byte is already read in
    C.  */
 
@@ -530,14 +554,13 @@ read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object rea
   buf[i++] = c;
   while (i < len)
     {
-      c = (*readbyte) (-1, readcharfun);
+      buf[i++] = c = (*readbyte) (-1, readcharfun);
       if (c < 0xA0)
 	{
-	  while (--i > 1)
+	  for (i -= c < 0; 0 < --i; )
 	    (*readbyte) (buf[i], readcharfun);
 	  return BYTE8_TO_CHAR (buf[0]);
 	}
-      buf[i++] = c;
     }
 
   if (len == 2)
@@ -572,6 +595,20 @@ read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object rea
 }
 
 
+/* An in-progress substitution of OBJECT for PLACEHOLDER.  */
+struct subst
+{
+  Lisp_Object object;
+  Lisp_Object placeholder;
+
+  /* Hash table of subobjects of OBJECT that might be circular.  If
+     Qt, all such objects might be circular.  */
+  Lisp_Object completed;
+
+  /* List of subobjects of OBJECT that have already been visited.  */
+  Lisp_Object seen;
+};
+
 static Lisp_Object read_internal_start (Lisp_Object, Lisp_Object,
                                         Lisp_Object);
 static Lisp_Object read0 (Lisp_Object);
@@ -580,9 +617,8 @@ static Lisp_Object read1 (Lisp_Object, int *, bool);
 static Lisp_Object read_list (bool, Lisp_Object);
 static Lisp_Object read_vector (Lisp_Object, bool);
 
-static Lisp_Object substitute_object_recurse (Lisp_Object, Lisp_Object,
-                                              Lisp_Object);
-static void substitute_in_interval (INTERVAL, Lisp_Object);
+static Lisp_Object substitute_object_recurse (struct subst *, Lisp_Object);
+static void substitute_in_interval (INTERVAL, void *);
 
 
 /* Get a character from the tty.  */
@@ -779,11 +815,9 @@ DEFUN ("get-file-char", Fget_file_char, Sget_file_char, 0, 0, 0,
        doc: /* Don't use this yourself.  */)
   (void)
 {
-  register Lisp_Object val;
-  block_input ();
-  XSETINT (val, getc_unlocked (instream));
-  unblock_input ();
-  return val;
+  if (!infile)
+    error ("get-file-char misused");
+  return make_number (readbyte_from_stdio ());
 }
 
 
@@ -1026,6 +1060,15 @@ suffix_p (Lisp_Object string, const char *suffix)
   ptrdiff_t string_len = SBYTES (string);
 
   return string_len >= suffix_len && !strcmp (SSDATA (string) + string_len - suffix_len, suffix);
+}
+
+static void
+close_infile_unwind (void *arg)
+{
+  FILE *stream = arg;
+  eassert (infile == NULL || infile->stream == stream);
+  infile = NULL;
+  fclose (stream);
 }
 
 DEFUN ("load", Fload, Sload, 1, 5, 0,
@@ -1347,7 +1390,7 @@ Return t if the file exists and loads successfully.  */)
     }
   if (! stream)
     report_file_error ("Opening stdio stream", file);
-  set_unwind_protect_ptr (fd_index, fclose_unwind, stream);
+  set_unwind_protect_ptr (fd_index, close_infile_unwind, stream);
 
   if (! NILP (Vpurify_flag))
     Vpreloaded_file_list = Fcons (Fpurecopy (file), Vpreloaded_file_list);
@@ -1370,19 +1413,23 @@ Return t if the file exists and loads successfully.  */)
   specbind (Qinhibit_file_name_operation, Qnil);
   specbind (Qload_in_progress, Qt);
 
-  instream = stream;
+  struct infile input;
+  input.stream = stream;
+  input.lookahead = 0;
+  infile = &input;
+
   if (lisp_file_lexically_bound_p (Qget_file_char))
     Fset (Qlexical_binding, Qt);
 
   if (! version || version >= 22)
-    readevalloop (Qget_file_char, stream, hist_file_name,
+    readevalloop (Qget_file_char, &input, hist_file_name,
 		  0, Qnil, Qnil, Qnil, Qnil);
   else
     {
       /* We can't handle a file which was compiled with
 	 byte-compile-dynamic by older version of Emacs.  */
       specbind (Qload_force_doc_strings, Qt);
-      readevalloop (Qget_emacs_mule_file_char, stream, hist_file_name,
+      readevalloop (Qget_emacs_mule_file_char, &input, hist_file_name,
 		    0, Qnil, Qnil, Qnil, Qnil);
     }
   unbind_to (count, Qnil);
@@ -1813,7 +1860,7 @@ readevalloop_eager_expand_eval (Lisp_Object val, Lisp_Object macroexpand)
 
 static void
 readevalloop (Lisp_Object readcharfun,
-	      FILE *stream,
+	      struct infile *infile0,
 	      Lisp_Object sourcename,
 	      bool printflag,
 	      Lisp_Object unibyte, Lisp_Object readfun,
@@ -1913,7 +1960,7 @@ readevalloop (Lisp_Object readcharfun,
       if (b && first_sexp)
 	whole_buffer = (BUF_PT (b) == BUF_BEG (b) && BUF_ZV (b) == BUF_Z (b));
 
-      instream = stream;
+      infile = infile0;
     read_next:
       c = READCHAR;
       if (c == ';')
@@ -2003,7 +2050,7 @@ readevalloop (Lisp_Object readcharfun,
     }
 
   build_load_history (sourcename,
-		      stream || whole_buffer);
+		      infile0 || whole_buffer);
 
   unbind_to (count, Qnil);
 }
@@ -2629,6 +2676,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
   bool uninterned_symbol = false;
   bool multibyte;
   char stackbuf[MAX_ALLOCA];
+  current_thread->stack_top = stackbuf;
 
   *pch = 0;
 
@@ -2943,11 +2991,17 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		  saved_doc_string_size = nskip + extra;
 		}
 
-	      saved_doc_string_position = file_tell (instream);
+	      FILE *instream = infile->stream;
+	      saved_doc_string_position = (file_tell (instream)
+					   - infile->lookahead);
 
-	      /* Copy that many characters into saved_doc_string.  */
+	      /* Copy that many bytes into saved_doc_string.  */
+	      i = 0;
+	      for (int n = min (nskip, infile->lookahead); 0 < n; n--)
+		saved_doc_string[i++]
+		  = c = infile->buf[--infile->lookahead];
 	      block_input ();
-	      for (i = 0; i < nskip && c >= 0; i++)
+	      for (; i < nskip && 0 <= c; i++)
 		saved_doc_string[i] = c = getc_unlocked (instream);
 	      unblock_input ();
 
@@ -3067,7 +3121,8 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
                         }
                       else
                         {
-		          Fsubstitute_object_in_subtree (tem, placeholder);
+		          Flread__substitute_object_in_subtree
+			    (tem, placeholder, read_objects_completed);
 
 		          /* ...and #n# will use the real value from now on.  */
 			  i = hash_lookup (h, number, &hash);
@@ -3424,6 +3479,24 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	    if (! NILP (result))
 	      return unbind_to (count, result);
 	  }
+        if (!quoted && multibyte)
+          {
+            int ch = STRING_CHAR ((unsigned char *) read_buffer);
+            switch (ch)
+              {
+              case 0x2018: /* LEFT SINGLE QUOTATION MARK */
+              case 0x2019: /* RIGHT SINGLE QUOTATION MARK */
+              case 0x201B: /* SINGLE HIGH-REVERSED-9 QUOTATION MARK */
+              case 0x201C: /* LEFT DOUBLE QUOTATION MARK */
+              case 0x201D: /* RIGHT DOUBLE QUOTATION MARK */
+              case 0x201F: /* DOUBLE HIGH-REVERSED-9 QUOTATION MARK */
+              case 0x301E: /* DOUBLE PRIME QUOTATION MARK */
+              case 0xFF02: /* FULLWIDTH QUOTATION MARK */
+              case 0xFF07: /* FULLWIDTH APOSTROPHE */
+                xsignal2 (Qinvalid_read_syntax, build_string ("strange quote"),
+                          CALLN (Fstring, make_number (ch)));
+              }
+          }
 	{
 	  Lisp_Object result;
 	  ptrdiff_t nbytes = p - read_buffer;
@@ -3473,26 +3546,16 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
     }
 }
 
-
-/* List of nodes we've seen during substitute_object_in_subtree.  */
-static Lisp_Object seen_list;
-
-DEFUN ("substitute-object-in-subtree", Fsubstitute_object_in_subtree,
-       Ssubstitute_object_in_subtree, 2, 2, 0,
-       doc: /* Replace every reference to PLACEHOLDER in OBJECT with OBJECT.  */)
-  (Lisp_Object object, Lisp_Object placeholder)
+DEFUN ("lread--substitute-object-in-subtree",
+       Flread__substitute_object_in_subtree,
+       Slread__substitute_object_in_subtree, 3, 3, 0,
+       doc: /* In OBJECT, replace every occurrence of PLACEHOLDER with OBJECT.
+COMPLETED is a hash table of objects that might be circular, or is t
+if any object might be circular.  */)
+  (Lisp_Object object, Lisp_Object placeholder, Lisp_Object completed)
 {
-  Lisp_Object check_object;
-
-  /* We haven't seen any objects when we start.  */
-  seen_list = Qnil;
-
-  /* Make all the substitutions.  */
-  check_object
-    = substitute_object_recurse (object, placeholder, object);
-
-  /* Clear seen_list because we're done with it.  */
-  seen_list = Qnil;
+  struct subst subst = { object, placeholder, completed, Qnil };
+  Lisp_Object check_object = substitute_object_recurse (&subst, object);
 
   /* The returned object here is expected to always eq the
      original.  */
@@ -3501,26 +3564,12 @@ DEFUN ("substitute-object-in-subtree", Fsubstitute_object_in_subtree,
   return Qnil;
 }
 
-/*  Feval doesn't get called from here, so no gc protection is needed.  */
-#define SUBSTITUTE(get_val, set_val)			\
-  do {							\
-    Lisp_Object old_value = get_val;			\
-    Lisp_Object true_value				\
-      = substitute_object_recurse (object, placeholder,	\
-				   old_value);		\
-    							\
-    if (!EQ (old_value, true_value))			\
-      {							\
-	set_val;					\
-      }							\
-  } while (0)
-
 static Lisp_Object
-substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Object subtree)
+substitute_object_recurse (struct subst *subst, Lisp_Object subtree)
 {
   /* If we find the placeholder, return the target object.  */
-  if (EQ (placeholder, subtree))
-    return object;
+  if (EQ (subst->placeholder, subtree))
+    return subst->object;
 
   /* For common object types that can't contain other objects, don't
      bother looking them up; we're done.  */
@@ -3530,15 +3579,16 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
     return subtree;
 
   /* If we've been to this node before, don't explore it again.  */
-  if (!EQ (Qnil, Fmemq (subtree, seen_list)))
+  if (!EQ (Qnil, Fmemq (subtree, subst->seen)))
     return subtree;
 
   /* If this node can be the entry point to a cycle, remember that
      we've seen it.  It can only be such an entry point if it was made
      by #n=, which means that we can find it as a value in
-     read_objects_completed.  */
-  if (hash_lookup (XHASH_TABLE (read_objects_completed), subtree, NULL) >= 0)
-    seen_list = Fcons (subtree, seen_list);
+     COMPLETED.  */
+  if (EQ (subst->completed, Qt)
+      || hash_lookup (XHASH_TABLE (subst->completed), subtree, NULL) >= 0)
+    subst->seen = Fcons (subtree, subst->seen);
 
   /* Recurse according to subtree's type.
      Every branch must return a Lisp_Object.  */
@@ -3565,19 +3615,15 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	if (SUB_CHAR_TABLE_P (subtree))
 	  i = 2;
 	for ( ; i < length; i++)
-	  SUBSTITUTE (AREF (subtree, i),
-		      ASET (subtree, i, true_value));
+	  ASET (subtree, i,
+		substitute_object_recurse (subst, AREF (subtree, i)));
 	return subtree;
       }
 
     case Lisp_Cons:
-      {
-	SUBSTITUTE (XCAR (subtree),
-		    XSETCAR (subtree, true_value));
-	SUBSTITUTE (XCDR (subtree),
-		    XSETCDR (subtree, true_value));
-	return subtree;
-      }
+      XSETCAR (subtree, substitute_object_recurse (subst, XCAR (subtree)));
+      XSETCDR (subtree, substitute_object_recurse (subst, XCDR (subtree)));
+      return subtree;
 
     case Lisp_String:
       {
@@ -3585,11 +3631,8 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 	   substitute_in_interval contains part of the logic.  */
 
 	INTERVAL root_interval = string_intervals (subtree);
-	AUTO_CONS (arg, object, placeholder);
-
 	traverse_intervals_noorder (root_interval,
-				    &substitute_in_interval, arg);
-
+				    substitute_in_interval, subst);
 	return subtree;
       }
 
@@ -3601,12 +3644,10 @@ substitute_object_recurse (Lisp_Object object, Lisp_Object placeholder, Lisp_Obj
 
 /*  Helper function for substitute_object_recurse.  */
 static void
-substitute_in_interval (INTERVAL interval, Lisp_Object arg)
+substitute_in_interval (INTERVAL interval, void *arg)
 {
-  Lisp_Object object      = Fcar (arg);
-  Lisp_Object placeholder = Fcdr (arg);
-
-  SUBSTITUTE (interval->plist, set_interval_plist (interval, true_value));
+  set_interval_plist (interval,
+		      substitute_object_recurse (arg, interval->plist));
 }
 
 
@@ -4704,7 +4745,7 @@ syms_of_lread (void)
 {
   defsubr (&Sread);
   defsubr (&Sread_from_string);
-  defsubr (&Ssubstitute_object_in_subtree);
+  defsubr (&Slread__substitute_object_in_subtree);
   defsubr (&Sintern);
   defsubr (&Sintern_soft);
   defsubr (&Sunintern);
@@ -5017,8 +5058,6 @@ that are loaded before your customizations are read!  */);
   read_objects_map = Qnil;
   staticpro (&read_objects_completed);
   read_objects_completed = Qnil;
-  staticpro (&seen_list);
-  seen_list = Qnil;
 
   Vloads_in_progress = Qnil;
   staticpro (&Vloads_in_progress);

@@ -582,6 +582,8 @@ word search (@code{isearch-forward-word}).
 Search for @var{words}, using a forward nonincremental word search.
 @item M-s w C-r @key{RET} @var{words} @key{RET}
 Search backward for @var{words}, using a nonincremental word search.
+@item M-s M-w
+Search the Web for the text in region.
 @end table
 
 @kindex M-s w
@@ -617,12 +619,15 @@ toggling lax whitespace matching (@pxref{Lax Search, lax space
 matching}) has no effect on them.
 
 @kindex M-s M-w
-@findex eww-search-word
+@findex eww-search-words
 @vindex eww-search-prefix
-  Search the Web for the text in region.  This command performs an
-Internet search for the words in region using the search engine whose
-@acronym{URL} is specified by the variable @code{eww-search-prefix}.
-@xref{Basics, EWW, , eww, The Emacs Web Wowser Manual}.
+  To search the Web for the text in region, type @kbd{M-s M-w}.  This
+command performs an Internet search for the words in region using the
+search engine whose @acronym{URL} is specified by the variable
+@code{eww-search-prefix} (@pxref{Basics, EWW, , eww, The Emacs Web
+Wowser Manual}).  If the region is not active, or doesn't contain any
+words, this command prompts the user for a URL or keywords to search.
+
 
 @node Symbol Search
 @section Symbol Search

@@ -258,9 +258,9 @@ This exercises `backtrace-frame', and indirectly `mapbacktrace'."
     (should (equal (mapbacktrace #'error unbound) nil)))
   ;; First frame is backtrace-related function
   (should (equal (backtrace-frame 0) '(t backtrace-frame 0)))
-  (should (equal (catch 'ret
-                   (mapbacktrace (lambda (&rest args) (throw 'ret args))))
-                 '(t mapbacktrace ((lambda (&rest args) (throw 'ret args))) nil)))
+  (let ((throw-args (lambda (&rest args) (throw 'ret args))))
+    (should (equal (catch 'ret (mapbacktrace throw-args))
+                   `(t mapbacktrace (,throw-args) nil))))
   ;; Past-end NFRAMES is silently ignored
   (should (equal (backtrace-frame most-positive-fixnum) nil)))
 

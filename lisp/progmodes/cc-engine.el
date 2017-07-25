@@ -6089,7 +6089,8 @@ comment at the start of cc-engine.el for more info."
 
 (defsubst c-clear-found-types ()
   ;; Clears `c-found-types'.
-  (setq c-found-types (make-vector 53 0)))
+  (setq c-found-types
+	(make-hash-table :test #'equal :weakness nil)))
 
 (defun c-add-type (from to)
   ;; Add the given region as a type in `c-found-types'.  If the region
@@ -6103,29 +6104,27 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; This function might do hidden buffer changes.
   (let ((type (c-syntactic-content from to c-recognize-<>-arglists)))
-    (unless (intern-soft type c-found-types)
-      (unintern (substring type 0 -1) c-found-types)
-      (intern type c-found-types))))
+    (unless (gethash type c-found-types)
+      (remhash (substring type 0 -1) c-found-types)
+      (puthash type t c-found-types))))
 
 (defun c-unfind-type (name)
   ;; Remove the "NAME" from c-found-types, if present.
-  (unintern name c-found-types))
+  (remhash name c-found-types))
 
 (defsubst c-check-type (from to)
   ;; Return non-nil if the given region contains a type in
   ;; `c-found-types'.
   ;;
   ;; This function might do hidden buffer changes.
-  (intern-soft (c-syntactic-content from to c-recognize-<>-arglists)
-	       c-found-types))
+  (gethash (c-syntactic-content from to c-recognize-<>-arglists) c-found-types))
 
 (defun c-list-found-types ()
   ;; Return all the types in `c-found-types' as a sorted list of
   ;; strings.
   (let (type-list)
-    (mapatoms (lambda (type)
-		(setq type-list (cons (symbol-name type)
-				      type-list)))
+    (maphash (lambda (type _)
+	       (setq type-list (cons type type-list)))
 	      c-found-types)
     (sort type-list 'string-lessp)))
 
@@ -7059,6 +7058,7 @@ comment at the start of cc-engine.el for more info."
   ;; This function might do hidden buffer changes.
 
   (let ((start (point))
+	(old-found-types (copy-hash-table c-found-types))
 	;; If `c-record-type-identifiers' is set then activate
 	;; recording of any found types that constitute an argument in
 	;; the arglist.
@@ -7074,6 +7074,7 @@ comment at the start of cc-engine.el for more info."
 		  (nconc c-record-found-types c-record-type-identifiers)))
 	  t)
 
+      (setq c-found-types old-found-types)
       (goto-char start)
       nil)))
 

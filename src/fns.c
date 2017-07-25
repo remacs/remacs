@@ -35,6 +35,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "intervals.h"
 #include "window.h"
 #include "puresize.h"
+#include "gnutls.h"
+
+#ifdef WINDOWSNT
+# define gnutls_rnd w32_gnutls_rnd
+#endif
 
 static void sort_vector_copy (Lisp_Object, ptrdiff_t,
 			      Lisp_Object *restrict, Lisp_Object *restrict);
@@ -1417,17 +1422,22 @@ assq_no_quit (Lisp_Object key, Lisp_Object list)
   return Qnil;
 }
 
-DEFUN ("assoc", Fassoc, Sassoc, 2, 2, 0,
-       doc: /* Return non-nil if KEY is `equal' to the car of an element of LIST.
-The value is actually the first element of LIST whose car equals KEY.  */)
-  (Lisp_Object key, Lisp_Object list)
+DEFUN ("assoc", Fassoc, Sassoc, 2, 3, 0,
+       doc: /* Return non-nil if KEY is equal to the car of an element of LIST.
+The value is actually the first element of LIST whose car equals KEY.
+
+Equality is defined by TESTFN if non-nil or by `equal' if nil.  */)
+     (Lisp_Object key, Lisp_Object list, Lisp_Object testfn)
 {
   Lisp_Object tail = list;
   FOR_EACH_TAIL (tail)
     {
       Lisp_Object car = XCAR (tail);
       if (CONSP (car)
-	  && (EQ (XCAR (car), key) || !NILP (Fequal (XCAR (car), key))))
+	  && (NILP (testfn)
+	      ? (EQ (XCAR (car), key) || !NILP (Fequal
+						(XCAR (car), key)))
+	      : !NILP (call2 (testfn, XCAR (car), key))))
 	return car;
     }
   CHECK_LIST_END (tail, list);
@@ -4735,22 +4745,42 @@ make_digest_string (Lisp_Object digest, int digest_size)
   return digest;
 }
 
-/* ALGORITHM is a symbol: md5, sha1, sha224 and so on. */
-
-static Lisp_Object
-secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start,
-	     Lisp_Object end, Lisp_Object coding_system, Lisp_Object noerror,
-	     Lisp_Object binary)
+DEFUN ("secure-hash-algorithms", Fsecure_hash_algorithms,
+       Ssecure_hash_algorithms, 0, 0, 0,
+       doc: /* Return a list of all the supported `secure_hash' algorithms. */)
+  (void)
 {
-  ptrdiff_t size, start_char = 0, start_byte, end_char = 0, end_byte;
-  register EMACS_INT b, e;
-  register struct buffer *bp;
-  EMACS_INT temp;
-  int digest_size;
-  void *(*hash_func) (const char *, size_t, void *);
-  Lisp_Object digest;
+  return listn (CONSTYPE_HEAP, 6,
+                Qmd5,
+                Qsha1,
+                Qsha224,
+                Qsha256,
+                Qsha384,
+                Qsha512);
+}
 
-  CHECK_SYMBOL (algorithm);
+/* Extract data from a string or a buffer. SPEC is a list of
+(BUFFER-OR-STRING-OR-SYMBOL START END CODING-SYSTEM NOERROR) which behave as
+specified with `secure-hash' and in Info node
+`(elisp)Format of GnuTLS Cryptography Inputs'.  */
+char *
+extract_data_from_object (Lisp_Object spec,
+                          ptrdiff_t *start_byte,
+                          ptrdiff_t *end_byte)
+{
+  Lisp_Object object = XCAR (spec);
+
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object start = CAR_SAFE (spec);
+
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object end = CAR_SAFE (spec);
+
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object coding_system = CAR_SAFE (spec);
+
+  if (CONSP (spec)) spec = XCDR (spec);
+  Lisp_Object noerror = CAR_SAFE (spec);
 
   if (STRINGP (object))
     {
@@ -4778,23 +4808,24 @@ secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start,
       if (STRING_MULTIBYTE (object))
 	object = code_convert_string (object, coding_system, Qnil, 1, 0, 1);
 
-      size = SCHARS (object);
+      ptrdiff_t size = SCHARS (object), start_char, end_char;
       validate_subarray (object, start, end, size, &start_char, &end_char);
 
-      start_byte = !start_char ? 0 : string_char_to_byte (object, start_char);
-      end_byte = (end_char == size
-		  ? SBYTES (object)
-		  : string_char_to_byte (object, end_char));
+      *start_byte = !start_char ? 0 : string_char_to_byte (object, start_char);
+      *end_byte = (end_char == size
+                   ? SBYTES (object)
+                   : string_char_to_byte (object, end_char));
     }
-  else
+  else if (BUFFERP (object))
     {
       struct buffer *prev = current_buffer;
+      EMACS_INT b, e;
 
       record_unwind_current_buffer ();
 
       CHECK_BUFFER (object);
 
-      bp = XBUFFER (object);
+      struct buffer *bp = XBUFFER (object);
       set_buffer_internal (bp);
 
       if (NILP (start))
@@ -4814,7 +4845,11 @@ secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start,
 	}
 
       if (b > e)
-	temp = b, b = e, e = temp;
+	{
+	  EMACS_INT temp = b;
+	  b = e;
+	  e = temp;
+	}
 
       if (!(BEGV <= b && e <= ZV))
 	args_out_of_range (start, end);
@@ -4887,9 +4922,54 @@ secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start,
 
       if (STRING_MULTIBYTE (object))
 	object = code_convert_string (object, coding_system, Qnil, 1, 0, 0);
-      start_byte = 0;
-      end_byte = SBYTES (object);
+      *start_byte = 0;
+      *end_byte = SBYTES (object);
     }
+  else if (EQ (object, Qiv_auto))
+    {
+#ifdef HAVE_GNUTLS3
+      /* Format: (iv-auto REQUIRED-LENGTH).  */
+
+      if (! NATNUMP (start))
+        error ("Without a length, `iv-auto' can't be used; see ELisp manual");
+      else
+        {
+	  EMACS_INT start_hold = XFASTINT (start);
+          object = make_uninit_string (start_hold);
+          gnutls_rnd (GNUTLS_RND_NONCE, SSDATA (object), start_hold);
+
+          *start_byte = 0;
+          *end_byte = start_hold;
+        }
+#else
+      error ("GnuTLS is not available, so `iv-auto' can't be used");
+#endif
+    }
+
+  return SSDATA (object);
+}
+
+
+/* ALGORITHM is a symbol: md5, sha1, sha224 and so on. */
+
+static Lisp_Object
+secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start,
+	     Lisp_Object end, Lisp_Object coding_system, Lisp_Object noerror,
+	     Lisp_Object binary)
+{
+  ptrdiff_t start_byte, end_byte;
+  int digest_size;
+  void *(*hash_func) (const char *, size_t, void *);
+  Lisp_Object digest;
+
+  CHECK_SYMBOL (algorithm);
+
+  Lisp_Object spec = list5 (object, start, end, coding_system, noerror);
+
+  const char *input = extract_data_from_object (spec, &start_byte, &end_byte);
+
+  if (input == NULL)
+    error ("secure_hash: failed to extract data from object, aborting!");
 
   if (EQ (algorithm, Qmd5))
     {
@@ -4928,7 +5008,7 @@ secure_hash (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start,
      hexified value */
   digest = make_uninit_string (digest_size * 2);
 
-  hash_func (SSDATA (object) + start_byte,
+  hash_func (input + start_byte,
 	     end_byte - start_byte,
 	     SSDATA (digest));
 
@@ -4979,6 +5059,8 @@ The two optional arguments START and END are positions specifying for
 which part of OBJECT to compute the hash.  If nil or omitted, uses the
 whole OBJECT.
 
+The full list of algorithms can be obtained with `secure-hash-algorithms'.
+
 If BINARY is non-nil, returns a string in binary form.  */)
   (Lisp_Object algorithm, Lisp_Object object, Lisp_Object start, Lisp_Object end, Lisp_Object binary)
 {
@@ -5026,13 +5108,6 @@ disregarding any coding systems.  If nil, use the current buffer.  */ )
 void
 syms_of_fns (void)
 {
-  DEFSYM (Qmd5,    "md5");
-  DEFSYM (Qsha1,   "sha1");
-  DEFSYM (Qsha224, "sha224");
-  DEFSYM (Qsha256, "sha256");
-  DEFSYM (Qsha384, "sha384");
-  DEFSYM (Qsha512, "sha512");
-
   /* Hash table stuff.  */
   DEFSYM (Qhash_table_p, "hash-table-p");
   DEFSYM (Qeq, "eq");
@@ -5068,6 +5143,18 @@ syms_of_fns (void)
   defsubr (&Sremhash);
   defsubr (&Smaphash);
   defsubr (&Sdefine_hash_table_test);
+
+  /* Crypto and hashing stuff.  */
+  DEFSYM (Qiv_auto, "iv-auto");
+
+  DEFSYM (Qmd5,    "md5");
+  DEFSYM (Qsha1,   "sha1");
+  DEFSYM (Qsha224, "sha224");
+  DEFSYM (Qsha256, "sha256");
+  DEFSYM (Qsha384, "sha384");
+  DEFSYM (Qsha512, "sha512");
+
+  /* Miscellaneous stuff.  */
 
   DEFSYM (Qstring_lessp, "string-lessp");
   DEFSYM (Qprovide, "provide");
@@ -5187,6 +5274,7 @@ this variable.  */);
   defsubr (&Sbase64_encode_string);
   defsubr (&Sbase64_decode_string);
   defsubr (&Smd5);
+  defsubr (&Ssecure_hash_algorithms);
   defsubr (&Ssecure_hash);
   defsubr (&Sbuffer_hash);
   defsubr (&Slocale_info);

@@ -173,6 +173,16 @@ bset_bidi_display_reordering (struct buffer *b, Lisp_Object val)
   b->bidi_display_reordering_ = val;
 }
 static void
+bset_bidi_paragraph_start_re (struct buffer *b, Lisp_Object val)
+{
+  b->bidi_paragraph_start_re_ = val;
+}
+static void
+bset_bidi_paragraph_separate_re (struct buffer *b, Lisp_Object val)
+{
+  b->bidi_paragraph_separate_re_ = val;
+}
+static void
 bset_buffer_file_coding_system (struct buffer *b, Lisp_Object val)
 {
   b->buffer_file_coding_system_ = val;
@@ -1164,7 +1174,7 @@ buffer_local_value (Lisp_Object variable, Lisp_Object buffer)
       { /* Look in local_var_alist.  */
 	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
 	XSETSYMBOL (variable, sym); /* Update In case of aliasing.  */
-	result = Fassoc (variable, BVAR (buf, local_var_alist));
+	result = Fassoc (variable, BVAR (buf, local_var_alist), Qnil);
 	if (!NILP (result))
 	  {
 	    if (blv->fwd)
@@ -2322,6 +2332,8 @@ results, see Info node `(elisp)Swapping Text'.  */)
   swapfield_ (enable_multibyte_characters, Lisp_Object);
   swapfield_ (bidi_display_reordering, Lisp_Object);
   swapfield_ (bidi_paragraph_direction, Lisp_Object);
+  swapfield_ (bidi_paragraph_separate_re, Lisp_Object);
+  swapfield_ (bidi_paragraph_start_re, Lisp_Object);
   /* FIXME: Not sure what we should do with these *_marker fields.
      Hopefully they're just nil anyway.  */
   swapfield_ (pt_marker, Lisp_Object);
@@ -3054,6 +3066,33 @@ mouse_face_overlay_overlaps (Lisp_Object overlay)
   return i < n;
 }
 
+/* Return the value of the 'display-line-numbers-disable' property at
+   EOB, if there's an overlay at ZV with a non-nil value of that property.  */
+Lisp_Object
+disable_line_numbers_overlay_at_eob (void)
+{
+  ptrdiff_t n, i, size;
+  Lisp_Object *v, tem = Qnil;
+  Lisp_Object vbuf[10];
+  USE_SAFE_ALLOCA;
+
+  size = ARRAYELTS (vbuf);
+  v = vbuf;
+  n = overlays_in (ZV, ZV, 0, &v, &size, NULL, NULL);
+  if (n > size)
+    {
+      SAFE_NALLOCA (v, 1, n);
+      overlays_in (ZV, ZV, 0, &v, &n, NULL, NULL);
+    }
+
+  for (i = 0; i < n; ++i)
+    if ((tem = Foverlay_get (v[i], Qdisplay_line_numbers_disable),
+	 !NILP (tem)))
+      break;
+
+  SAFE_FREE ();
+  return tem;
+}
 
 
 /* Fast function to just test if we're at an overlay boundary.  */
@@ -5094,6 +5133,8 @@ init_buffer_once (void)
   XSETFASTINT (BVAR (&buffer_local_flags, category_table), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, bidi_display_reordering), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, bidi_paragraph_direction), idx); ++idx;
+  XSETFASTINT (BVAR (&buffer_local_flags, bidi_paragraph_separate_re), idx); ++idx;
+  XSETFASTINT (BVAR (&buffer_local_flags, bidi_paragraph_start_re), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, buffer_file_coding_system), idx);
   /* Make this one a permanent local.  */
   buffer_permanent_local_flags[idx++] = 1;
@@ -5175,6 +5216,8 @@ init_buffer_once (void)
   bset_ctl_arrow (&buffer_defaults, Qt);
   bset_bidi_display_reordering (&buffer_defaults, Qt);
   bset_bidi_paragraph_direction (&buffer_defaults, Qnil);
+  bset_bidi_paragraph_start_re (&buffer_defaults, Qnil);
+  bset_bidi_paragraph_separate_re (&buffer_defaults, Qnil);
   bset_cursor_type (&buffer_defaults, Qt);
   bset_extra_line_spacing (&buffer_defaults, Qnil);
   bset_cursor_in_non_selected_windows (&buffer_defaults, Qt);
@@ -5588,6 +5631,49 @@ This variable is never applied to a way of decoding a file while reading it.  */
   DEFVAR_PER_BUFFER ("bidi-display-reordering",
 		     &BVAR (current_buffer, bidi_display_reordering), Qnil,
 		     doc: /* Non-nil means reorder bidirectional text for display in the visual order.  */);
+
+  DEFVAR_PER_BUFFER ("bidi-paragraph-start-re",
+		     &BVAR (current_buffer, bidi_paragraph_start_re), Qnil,
+		     doc: /* If non-nil, a regexp matching a line that starts OR separates paragraphs.
+
+The value of nil means to use empty lines as lines that start and
+separate paragraphs.
+
+When Emacs displays bidirectional text, it by default computes
+the base paragraph direction separately for each paragraph.
+Setting this variable changes the places where paragraph base
+direction is recomputed.
+
+The regexp is always matched after a newline, so it is best to
+anchor it by beginning it with a "^".
+
+If you change the value of this variable, be sure to change
+the value of `bidi-paragraph-separate-re' accordingly.  For
+example, to have a single newline behave as a paragraph separator,
+set both these variables to "^".
+
+See also `bidi-paragraph-direction'.  */);
+
+  DEFVAR_PER_BUFFER ("bidi-paragraph-separate-re",
+		     &BVAR (current_buffer, bidi_paragraph_separate_re), Qnil,
+		     doc: /* If non-nil, a regexp matching a line that separates paragraphs.
+
+The value of nil means to use empty lines as paragraph separators.
+
+When Emacs displays bidirectional text, it by default computes
+the base paragraph direction separately for each paragraph.
+Setting this variable changes the places where paragraph base
+direction is recomputed.
+
+The regexp is always matched after a newline, so it is best to
+anchor it by beginning it with a "^".
+
+If you change the value of this variable, be sure to change
+the value of `bidi-paragraph-start-re' accordingly.  For
+example, to have a single newline behave as a paragraph separator,
+set both these variables to "^".
+
+See also `bidi-paragraph-direction'.  */);
 
   DEFVAR_PER_BUFFER ("bidi-paragraph-direction",
 		     &BVAR (current_buffer, bidi_paragraph_direction), Qnil,
