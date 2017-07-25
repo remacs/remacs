@@ -1,8 +1,48 @@
+use libc::c_int;
 use remacs_macros::lisp_fn;
-use remacs_sys::{font, Qfont_spec, Qfont_entity, Qfont_object};
+use remacs_sys::{Qfont_spec, Qfont_entity, Qfont_object};
 use lisp::LispObject;
 use symbols::intern;
 use vectors::LispVectorlikeRef;
+
+/// Represents the indices of font properties in the contents of a font
+/// vector.
+///
+/// # C Porting Notes
+///
+/// The equivalent C enum is `font_property_index`. Since it is meant to
+/// represent indices for three different length vectors, the C definition
+/// contains duplicate variants, e.g `FONT_OBJLIST_INDEX = FONT_SPEC_MAX`,
+/// to represent sizes. These have been moved out of this enum and are
+/// available as constant `c_int` values on this module.
+#[allow(non_camel_case_types, dead_code)]
+#[repr(C)]
+pub enum FontPropertyIndex {
+    FONT_TYPE_INDEX,
+    FONT_FOUNDRY_INDEX,
+    FONT_FAMILY_INDEX,
+    FONT_ADSTYLE_INDEX,
+    FONT_REGISTRY_INDEX,
+    FONT_WEIGHT_INDEX,
+    FONT_SLANT_INDEX,
+    FONT_WIDTH_INDEX,
+    FONT_SIZE_INDEX,
+    FONT_DPI_INDEX,
+    FONT_SPACING_INDEX,
+    FONT_AVGWIDTH_INDEX,
+    FONT_EXTRA_INDEX,
+    // In C, we have FONT_SPEC_MAX, FONT_OBJLIST_INDEX = FONT_SPEC_MAX here.
+    FONT_OBJLIST_INDEX,
+    // In C, we have FONT_ENTITY_MAX, FONT_NAME_INDEX = FONT_ENTITY_MAX here.
+    FONT_NAME_INDEX,
+    FONT_FULLNAME_INDEX,
+    FONT_FILE_INDEX,
+    // In C, we have FONT_OBJECT_MAX here.
+}
+
+pub const FONT_SPEC_MAX: c_int = FontPropertyIndex::FONT_OBJLIST_INDEX as c_int;
+pub const FONT_ENTITY_MAX: c_int = FontPropertyIndex::FONT_NAME_INDEX as c_int;
+pub const FONT_OBJECT_MAX: c_int = (FontPropertyIndex::FONT_FILE_INDEX as c_int) + 1;
 
 // A font is not a type in and of itself, it's just a group of three kinds of
 // pseudovector. This newtype allows us to define methods that yield the actual
@@ -16,15 +56,15 @@ impl LispFontRef {
     }
 
     pub fn is_font_spec(self) -> bool {
-        self.0.pseudovector_size() == font::FONT_SPEC_MAX as i64
+        self.0.pseudovector_size() == FONT_SPEC_MAX as i64
     }
 
     pub fn is_font_entity(self) -> bool {
-        self.0.pseudovector_size() == font::FONT_ENTITY_MAX as i64
+        self.0.pseudovector_size() == FONT_ENTITY_MAX as i64
     }
 
     pub fn is_font_object(self) -> bool {
-        self.0.pseudovector_size() == font::FONT_OBJECT_MAX as i64
+        self.0.pseudovector_size() == FONT_OBJECT_MAX as i64
     }
 }
 
