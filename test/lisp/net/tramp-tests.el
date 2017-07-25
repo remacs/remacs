@@ -149,6 +149,7 @@ handled properly.  BODY shall not contain a timeout."
 	 (debug-ignored-errors
 	  (cons "^make-symbolic-link not supported$" debug-ignored-errors))
 	 inhibit-message)
+     (message "tramp--test-instrument-test-case %s" tramp-verbose)
      (unwind-protect
 	 (let ((tramp--test-instrument-test-case-p t)) ,@body)
        ;; Unwind forms.
@@ -3911,8 +3912,8 @@ Since it unloads Tramp, it shall be the last test to run."
     (should-not (cl--find-class 'tramp-file-name))
     (mapatoms
      (lambda (x)
-       (and (string-match "tramp-file-name" (symbol-name x))
-            (functionp x)
+       (and (functionp x)
+            (string-match "tramp-file-name" (symbol-name x))
             (ert-fail (format "Structure function `%s' still exists" x)))))
     ;; There shouldn't be left a hook function containing a Tramp
     ;; function.  We do not regard the Tramp unload hooks.
