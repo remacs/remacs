@@ -1,4 +1,4 @@
-;;; ls-lisp.el --- emulate insert-directory completely in Emacs Lisp
+;;; ls-lisp.el --- emulate insert-directory completely in Emacs Lisp  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1992, 1994, 2000-2017 Free Software Foundation, Inc.
 
@@ -865,6 +865,12 @@ All ls time options, namely c, t and u, are handled."
 		ls-lisp-filesize-d-fmt)
 	      file-size)
     (format " %6s" (file-size-human-readable file-size))))
+
+(defun ls-lisp-unload-function ()
+  "Unload ls-lisp library."
+  (advice-remove 'insert-directory #'ls-lisp--insert-directory)
+  ;; Continue standard unloading.
+  nil)
 
 (provide 'ls-lisp)
 
