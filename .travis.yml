@@ -19,7 +19,7 @@ env:
   - CARGO_FLAGS="--features 'strict'"
 
 before_install:
-  - if [ $TRAVIS_OS_NAME = osx ]; then ./.osx-deps.sh; done
+  - if [ $TRAVIS_OS_NAME = osx ]; then ./.osx-deps.sh; fi
 
 before_script:
   # Install rustfmt 0.9.0 if it isn't already installed on
