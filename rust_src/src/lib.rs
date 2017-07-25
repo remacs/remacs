@@ -43,6 +43,7 @@ mod buffers;
 mod windows;
 mod interactive;
 mod process;
+//mod puresize;
 mod fonts;
 
 #[cfg(all(not(test), target_os = "macos"))]

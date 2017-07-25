@@ -9,7 +9,7 @@ use std::mem;
 use std::slice;
 use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
-use libc::{c_void, intptr_t};
+use libc::c_void;
 
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
@@ -19,12 +19,13 @@ use windows::LispWindowRef;
 use marker::LispMarkerRef;
 use fonts::LispFontRef;
 
-use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
-                 USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
-                 Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
-                 make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
-                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
-                 Qcharacterp, Qlistp, Qintegerp, Qconsp, SYMBOL_NAME, PseudovecType, EqualKind};
+use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, INTMASK, USE_LSB_TAG,
+                 MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type, Lisp_Bits, Lisp_Misc_Any,
+                 Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym, make_float,
+                 circular_list, internal_equal, Fcons, Qnil, Qt, Qnumberp, Qfloatp, Qstringp,
+                 Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp, Qlistp,
+                 Qintegerp, Qconsp, pvec_type, EqualKind};
+use remacs_sys::CHECK_IMPURE;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -57,7 +58,7 @@ impl LispObject {
 
     #[inline]
     pub fn constant_nil() -> LispObject {
-        LispObject::from_raw(Qnil)
+        LispObject::from_raw(unsafe { Qnil })
     }
 
     #[inline]
@@ -88,17 +89,17 @@ impl LispObject {
 impl LispObject {
     pub fn get_type(self) -> Lisp_Type {
         let raw = self.to_raw() as EmacsUint;
-        let res = (if USE_LSB_TAG {
-                       raw & (!VALMASK as EmacsUint)
-                   } else {
-                       raw >> VALBITS
-                   }) as u8;
-        unsafe { mem::transmute(res) }
+        let res = if USE_LSB_TAG {
+            raw & (!unsafe { VALMASK } as EmacsUint)
+        } else {
+            raw >> (Lisp_Bits::VALBITS as u32)
+        };
+        unsafe { mem::transmute(res as u32) }
     }
 
     #[inline]
     pub fn get_untaggedptr(self) -> *mut c_void {
-        (self.to_raw() & VALMASK) as intptr_t as *mut c_void
+        (self.to_raw() & unsafe { VALMASK }) as *mut c_void
     }
 }
 
@@ -182,6 +183,10 @@ impl<T> ExternalPtr<T> {
     pub fn as_ptr(&self) -> *const T {
         self.0
     }
+
+    pub fn as_mut_ptr(&self) -> *mut T {
+        self.0
+    }
 }
 
 impl<T> Deref for ExternalPtr<T> {
@@ -245,9 +250,10 @@ impl LispObject {
     #[inline]
     pub fn from_fixnum_truncated(n: EmacsInt) -> LispObject {
         let o = if USE_LSB_TAG {
-            (n << INTTYPEBITS) as EmacsUint + Lisp_Type::Lisp_Int0 as EmacsUint
+            (n << (Lisp_Bits::INTTYPEBITS as u32)) as EmacsUint + Lisp_Type::Lisp_Int0 as EmacsUint
         } else {
-            (n & INTMASK) as EmacsUint + ((Lisp_Type::Lisp_Int0 as EmacsUint) << VALBITS)
+            (n & INTMASK) as EmacsUint +
+                ((Lisp_Type::Lisp_Int0 as EmacsUint) << (Lisp_Bits::VALBITS as u32))
         };
         LispObject::from_raw(o as EmacsInt)
     }
@@ -287,7 +293,7 @@ impl LispObject {
         if !USE_LSB_TAG {
             raw & INTMASK
         } else {
-            raw >> INTTYPEBITS
+            raw >> (Lisp_Bits::INTTYPEBITS as u32)
         }
     }
 
@@ -374,37 +380,37 @@ impl LispObject {
 impl LispObject {
     pub fn is_thread(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_THREAD)
+            v.is_pseudovector(pvec_type::PVEC_THREAD)
         })
     }
 
     pub fn is_mutex(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_MUTEX)
+            v.is_pseudovector(pvec_type::PVEC_MUTEX)
         })
     }
 
     pub fn is_condition_variable(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_CONDVAR)
+            v.is_pseudovector(pvec_type::PVEC_CONDVAR)
         })
     }
 
     pub fn is_byte_code_function(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_COMPILED)
+            v.is_pseudovector(pvec_type::PVEC_COMPILED)
         })
     }
 
     pub fn is_subr(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_SUBR)
+            v.is_pseudovector(pvec_type::PVEC_SUBR)
         })
     }
 
     pub fn is_buffer(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_BUFFER)
+            v.is_pseudovector(pvec_type::PVEC_BUFFER)
         })
     }
 
@@ -414,15 +420,14 @@ impl LispObject {
 
     pub fn is_char_table(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE)
+            v.is_pseudovector(pvec_type::PVEC_CHAR_TABLE)
         })
     }
 
     pub fn is_bool_vector(self) -> bool {
-        self.as_vectorlike().map_or(
-            false,
-            |v| v.is_pseudovector(PseudovecType::PVEC_BOOL_VECTOR),
-        )
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(pvec_type::PVEC_BOOL_VECTOR)
+        })
     }
 
     pub fn is_array(self) -> bool {
@@ -435,19 +440,19 @@ impl LispObject {
 
     pub fn is_window_configuration(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION)
+            v.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION)
         })
     }
 
     pub fn is_process(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_PROCESS)
+            v.is_pseudovector(pvec_type::PVEC_PROCESS)
         })
     }
 
     pub fn is_window(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_WINDOW)
+            v.is_pseudovector(pvec_type::PVEC_WINDOW)
         })
     }
 
@@ -457,25 +462,25 @@ impl LispObject {
 
     pub fn is_frame(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_FRAME)
+            v.is_pseudovector(pvec_type::PVEC_FRAME)
         })
     }
 
     pub fn is_hash_table(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_HASH_TABLE)
+            v.is_pseudovector(pvec_type::PVEC_HASH_TABLE)
         })
     }
 
     pub fn is_font(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_FONT)
+            v.is_pseudovector(pvec_type::PVEC_FONT)
         })
     }
 
     pub fn as_font(self) -> Option<LispFontRef> {
         self.as_vectorlike().map_or(None, |v| if v.is_pseudovector(
-            PseudovecType::PVEC_FONT,
+            pvec_type::PVEC_FONT,
         )
         {
             Some(LispFontRef::from_vectorlike(v))
@@ -624,7 +629,7 @@ impl LispCons {
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        LispObject::from_raw(unsafe { (*self._extract()).cdr })
+        LispObject::from_raw(unsafe { (*self._extract()).u.cdr })
     }
 
     /// Set the car of the cons cell.
@@ -637,7 +642,7 @@ impl LispCons {
     /// Set the car of the cons cell.
     pub fn set_cdr(self, n: LispObject) {
         unsafe {
-            (*self._extract()).cdr = n.to_raw();
+            (*self._extract()).u.cdr = n.to_raw();
         }
     }
 
@@ -663,7 +668,7 @@ pub type LispFloatRef = ExternalPtr<Lisp_Float>;
 
 impl LispFloatRef {
     pub fn as_data(&self) -> &EmacsDouble {
-        unsafe { &*(self.data.as_ptr() as *const EmacsDouble) }
+        unsafe { &self.u.data }
     }
 }
 
@@ -783,31 +788,30 @@ impl LispObject {
 
     #[inline]
     pub fn is_nil(self) -> bool {
-        self.to_raw() == Qnil
+        self.to_raw() == unsafe { Qnil }
     }
 
     #[inline]
     pub fn is_not_nil(self) -> bool {
-        self.to_raw() != Qnil
+        self.to_raw() != unsafe { Qnil }
     }
 
     #[inline]
     pub fn is_marker(self) -> bool {
-        self.as_misc().map_or(
-            false,
-            |m| m.ty == Lisp_Misc_Type::Marker,
-        )
+        self.as_misc().map_or(false, |m| {
+            m.type_() == Lisp_Misc_Type::Lisp_Misc_Marker
+        })
     }
 
     #[inline]
     pub fn as_marker(self) -> Option<LispMarkerRef> {
-        self.as_misc().and_then(
-            |m| if m.ty == Lisp_Misc_Type::Marker {
-                unsafe { Some(mem::transmute(m)) }
-            } else {
-                None
-            },
-        )
+        self.as_misc().and_then(|m| if m.type_() ==
+            Lisp_Misc_Type::Lisp_Misc_Marker
+        {
+            unsafe { Some(mem::transmute(m)) }
+        } else {
+            None
+        })
     }
 
     /// Nonzero iff X is a character.
@@ -830,10 +834,9 @@ impl LispObject {
 
     #[inline]
     pub fn is_overlay(self) -> bool {
-        self.as_misc().map_or(
-            false,
-            |m| m.ty == Lisp_Misc_Type::Overlay,
-        )
+        self.as_misc().map_or(false, |m| {
+            m.type_() == Lisp_Misc_Type::Lisp_Misc_Overlay
+        })
     }
 
     // The three Emacs Lisp comparison functions.
@@ -892,7 +895,7 @@ impl Debug for LispObject {
         }
         match ty {
             Lisp_Type::Lisp_Symbol => {
-                let name = LispObject::from_raw(unsafe { SYMBOL_NAME(self.to_raw()) });
+                let name = self.as_symbol_or_error().symbol_name();
                 write!(f, "'{}", display_string(name))?;
             }
             Lisp_Type::Lisp_Cons => {

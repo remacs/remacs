@@ -6,13 +6,12 @@ use std::slice;
 use libc::ptrdiff_t;
 
 use buffers::{LispBufferRef, get_buffer};
-use libc;
 use lisp::{LispObject, LispNumber};
 use multibyte::LispStringRef;
 use remacs_sys::{nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string, make_specified_string};
 use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string,
                  validate_subarray, string_char_to_byte};
-use remacs_sys::{current_thread, record_unwind_current_buffer, set_buffer_internal,
+use remacs_sys::{current_thread, record_unwind_protect, set_buffer_if_live, set_buffer_internal_1,
                  make_buffer_string};
 use remacs_sys::{globals, Fbuffer_file_name, Ffind_operation_coding_system, Flocal_variable_p};
 use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw_text,
@@ -100,7 +99,7 @@ fn get_coding_system_for_buffer(
     if LispObject::from_raw(unsafe { globals.f_Vcoding_system_for_write }).is_not_nil() {
         return LispObject::from_raw(unsafe { globals.f_Vcoding_system_for_write });
     }
-    if LispObject::from_raw(buffer.buffer_file_coding_system).is_nil() ||
+    if LispObject::from_raw(buffer.buffer_file_coding_system_).is_nil() ||
         LispObject::from_raw(unsafe {
             Flocal_variable_p(
                 Qbuffer_file_coding_system,
@@ -108,7 +107,7 @@ fn get_coding_system_for_buffer(
             )
         }).is_nil()
     {
-        if LispObject::from_raw(buffer.enable_multibyte_characters).is_nil() {
+        if LispObject::from_raw(buffer.enable_multibyte_characters_).is_nil() {
             return LispObject::from_raw(unsafe { Qraw_text });
         }
     }
@@ -127,10 +126,10 @@ fn get_coding_system_for_buffer(
             return val.as_cons_or_error().cdr();
         }
     }
-    if LispObject::from_raw(buffer.buffer_file_coding_system).is_not_nil() {
+    if LispObject::from_raw(buffer.buffer_file_coding_system_).is_not_nil() {
         /* If we still have not decided a coding system, use the
            default value of buffer-file-coding-system. */
-        return LispObject::from_raw(buffer.buffer_file_coding_system);
+        return LispObject::from_raw(buffer.buffer_file_coding_system_);
     }
     let sscsf = LispObject::from_raw(unsafe { globals.f_Vselect_safe_coding_system_function });
     if fboundp(sscsf).is_not_nil() {
@@ -201,8 +200,8 @@ fn get_input_from_buffer(
     end_byte: &mut ptrdiff_t,
 ) -> LispObject {
     let prev_buffer = unsafe { (*current_thread).m_current_buffer };
-    unsafe { record_unwind_current_buffer() };
-    unsafe { set_buffer_internal(buffer.as_ptr() as *const _ as *const libc::c_void) };
+    unsafe { record_unwind_protect(Some(set_buffer_if_live), Fcurrent_buffer()) }
+    unsafe { set_buffer_internal_1(buffer.as_mut_ptr()) };
     *start_byte = if start.is_nil() {
         buffer.begv
     } else {
@@ -226,16 +225,15 @@ fn get_input_from_buffer(
         args_out_of_range!(start, end);
     }
     let string = LispObject::from_raw(unsafe { make_buffer_string(*start_byte, *end_byte, false) });
-    unsafe { set_buffer_internal(prev_buffer) };
-    // TODO: this needs to be std::mem::size_of<specbinding>()
-    unsafe { (*current_thread).m_specpdl_ptr = (*current_thread).m_specpdl_ptr.offset(-40) };
+    unsafe { set_buffer_internal_1(prev_buffer) };
+    unsafe { (*current_thread).m_specpdl_ptr = (*current_thread).m_specpdl_ptr.offset(-1) };
     string
 }
 
 fn get_input(
     object: LispObject,
     string: &mut Option<LispStringRef>,
-    buffer: &Option<LispBufferRef>,
+    buffer: Option<LispBufferRef>,
     start: LispObject,
     end: LispObject,
     coding_system: LispObject,
@@ -319,7 +317,7 @@ fn md5(
     let input = get_input(
         object,
         &mut string,
-        &buffer,
+        buffer,
         start,
         end,
         coding_system,
@@ -350,7 +348,7 @@ fn secure_hash(
     let input = get_input(
         object,
         &mut string,
-        &buffer,
+        buffer,
         start,
         end,
         LispObject::constant_nil(),
