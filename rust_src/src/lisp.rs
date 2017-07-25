@@ -25,7 +25,8 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
-                 Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qconsp, SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qconsp, SYMBOL_NAME,
+                 PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
