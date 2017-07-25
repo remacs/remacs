@@ -98,6 +98,7 @@ extern crate regex;
 
 fn run_bindgen() {
     let bindings = bindgen::Builder::default()
+        .unstable_rust(true)
         .generate_comments(true)
         .clang_arg("-I../../src")
         .clang_arg("-I../../lib")

@@ -1977,15 +1977,6 @@ the current buffer's major mode.  */)
   return unbind_to (count, Qnil);
 }
 
-DEFUN ("current-buffer", Fcurrent_buffer, Scurrent_buffer, 0, 0, 0,
-       doc: /* Return the current buffer as a Lisp object.  */)
-  (void)
-{
-  register Lisp_Object buf;
-  XSETBUFFER (buf, current_buffer);
-  return buf;
-}
-
 /* Set the current buffer to B, and do not set windows_or_buffers_changed.
    This is used by redisplay.  */
 
@@ -6162,7 +6153,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);
-  defsubr (&Scurrent_buffer);
   defsubr (&Sset_buffer);
   defsubr (&Sbarf_if_buffer_read_only);
   defsubr (&Serase_buffer);

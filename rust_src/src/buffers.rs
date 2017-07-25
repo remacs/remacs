@@ -3,7 +3,7 @@
 use libc::{c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{buffer, Vbuffer_alist};
+use remacs_sys::{buffer, Vbuffer_alist, current_thread, make_lisp_ptr, Lisp_Type};
 use strings::string_equal;
 use lists::{car, cdr};
 
@@ -101,5 +101,14 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
             buffer_or_name,
             LispObject::from_raw(unsafe { Vbuffer_alist }),
         ))
+    }
+}
+
+/// Return the current buffer as a Lisp object.
+#[lisp_fn]
+pub fn current_buffer() -> LispObject {
+    unsafe {
+        let buffer_ref = (*current_thread).m_current_buffer;
+        LispObject::from_raw(make_lisp_ptr(buffer_ref as *mut ::libc::c_void, Lisp_Type::Lisp_Vectorlike))
     }
 }

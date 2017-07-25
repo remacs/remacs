@@ -87,14 +87,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                     size: (::remacs_sys::pvec_type::PVEC_SUBR as isize)
                         << (::remacs_sys::More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS as u32),
                 },
-                function: {
-                    let mut f: ::remacs_sys::Lisp_Subr__bindgen_ty_1
-                        = unsafe { ::std::mem::zeroed() };
-                    unsafe {
-                        *f.#max_args_ident.as_mut() = ::std::option::Option::Some(self::#fname);
-                    }
-                    f
-                },
+                function: ::remacs_sys::Lisp_Subr__bindgen_ty_1 { #max_args_ident: Some(self::#fname) },
                 min_args: #min_args,
                 max_args: #max_args,
                 symbol_name: (#symbol_name).as_ptr() as *const ::libc::c_char,

@@ -1,6 +1,7 @@
+use libc;
 use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::Lisp_Symbol;
+use remacs_sys::{Lisp_Symbol, intern_1};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
@@ -30,7 +31,7 @@ fn symbolp(object: LispObject) -> LispObject {
 
 /// Return SYMBOL's name, a string.
 #[lisp_fn]
-fn symbol_name(symbol: LispObject) -> LispObject {
+pub fn symbol_name(symbol: LispObject) -> LispObject {
     symbol.as_symbol_or_error().symbol_name()
 }
 
@@ -42,7 +43,7 @@ fn symbol_name(symbol: LispObject) -> LispObject {
 
 /// Return t if SYMBOL's function definition is not void.
 #[lisp_fn]
-fn fboundp(object: LispObject) -> LispObject {
+pub fn fboundp(object: LispObject) -> LispObject {
     let symbol = object.as_symbol_or_error();
     LispObject::from_bool(symbol.get_function().is_not_nil())
 }
@@ -57,4 +58,16 @@ fn symbol_function(object: LispObject) -> LispObject {
 #[lisp_fn]
 fn symbol_plist(object: LispObject) -> LispObject {
     object.as_symbol_or_error().get_plist()
+}
+
+/// Intern (e.g. create a symbol from) a string.
+#[allow(dead_code)]
+pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
+    let s = string.as_ref();
+    LispObject::from_raw(unsafe {
+        intern_1(
+            s.as_ptr() as *const libc::c_char,
+            s.len() as libc::ptrdiff_t,
+        )
+    })
 }
