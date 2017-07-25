@@ -363,16 +363,6 @@ DEFUN ("string-to-char", Fstring_to_char, Sstring_to_char, 1, 1, 0,
   return val;
 }
 
-DEFUN ("point", Fpoint, Spoint, 0, 0, 0,
-       doc: /* Return value of point, as an integer.
-Beginning of buffer is position (point-min).  */)
-  (void)
-{
-  Lisp_Object temp;
-  XSETFASTINT (temp, PT);
-  return temp;
-}
-
 DEFUN ("point-marker", Fpoint_marker, Spoint_marker, 0, 0, 0,
        doc: /* Return value of point, as a marker object.  */)
   (void)
@@ -5430,7 +5420,6 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Spoint_marker);
   defsubr (&Smark_marker);
-  defsubr (&Spoint);
   defsubr (&Sregion_beginning);
   defsubr (&Sregion_end);
 
