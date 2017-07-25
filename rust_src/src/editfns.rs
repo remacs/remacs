@@ -5,6 +5,7 @@ use lisp::{LispObject};
 use remacs_sys::{Fcurrent_buffer, EmacsInt};
 
 
+/// Return value of point, as an integer.
 #[lisp_fn]
 pub fn point() -> LispObject {
     let buffer = LispObject::from_raw(unsafe { Fcurrent_buffer() });
