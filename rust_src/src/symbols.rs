@@ -31,7 +31,7 @@ fn symbolp(object: LispObject) -> LispObject {
 
 /// Return SYMBOL's name, a string.
 #[lisp_fn]
-fn symbol_name(symbol: LispObject) -> LispObject {
+pub fn symbol_name(symbol: LispObject) -> LispObject {
     symbol.as_symbol_or_error().symbol_name()
 }
 
@@ -43,7 +43,7 @@ fn symbol_name(symbol: LispObject) -> LispObject {
 
 /// Return t if SYMBOL's function definition is not void.
 #[lisp_fn]
-fn fboundp(object: LispObject) -> LispObject {
+pub fn fboundp(object: LispObject) -> LispObject {
     let symbol = object.as_symbol_or_error();
     LispObject::from_bool(symbol.get_function().is_not_nil())
 }

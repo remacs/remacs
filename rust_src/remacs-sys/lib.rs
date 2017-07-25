@@ -573,6 +573,111 @@ pub enum EqualKind {
     IncludingProperties,
 }
 
+#[repr(C)]
+pub struct re_registers {
+    pub num_regs: libc::c_uint,
+    pub start: *mut c_void, // TODO
+    pub end: *mut c_void, // TODO
+}
+
+#[repr(C)]
+pub struct thread_state {
+    pub header: Lisp_Vectorlike_Header,
+    /// The buffer in which the last search was performed, or
+    /// Qt if the last search was done in a string;
+    /// Qnil if no searching has been done yet.
+    pub m_last_thing_searched: Lisp_Object,
+
+    pub m_saved_last_thing_searched: Lisp_Object,
+    /// The thread's name.
+    pub name: Lisp_Object,
+
+    /// The thread's function.
+    pub function: Lisp_Object,
+
+    /// If non-nil, this thread has been signaled.
+    pub error_symbol: Lisp_Object,
+    pub error_data: Lisp_Object,
+
+    /// If we are waiting for some event, this holds the object we are
+    /// waiting on.
+    pub event_object: Lisp_Object,
+
+    /// m_stack_bottom must be the first non-Lisp field.
+    /// An address near the bottom of the stack.
+    /// Tells GC how to save a copy of the stack.
+    pub m_stack_bottom: *mut c_char,
+    /// An address near the top of the stack.
+    pub stack_top: *mut c_char,
+
+    pub m_catchlist: *mut c_void, // TODO
+    /// Chain of condition handlers currently in effect.
+    /// The elements of this chain are contained in the stack frames
+    /// of Fcondition_case and internal_condition_case.
+    /// When an error is signaled (by calling Fsignal),
+    /// this chain is searched for an element that applies.
+    pub m_handlerlist: *mut c_void, // TODO
+    pub m_handlerlist_list: *mut c_void, // TODO
+
+    /// Current number of specbindings allocated in specpdl.
+    pub m_specpdl_size: ptrdiff_t,
+
+    /// Pointer to beginning of specpdl.
+    pub m_specpdl: *mut c_void, // TODO
+    /// Pointer to first unused element in specpdl.
+    pub m_specpdl_ptr: *mut c_void, // TODO
+    /// Depth in Lisp evaluations and function calls.
+    pub m_lisp_eval_depth: EmacsInt,
+
+    /// This points to the current buffer.
+    pub m_current_buffer: *mut c_void,
+    /// Every call to re_match, etc., must pass &search_regs as the regs
+    /// argument unless you can show it is unnecessary (i.e., if re_match
+    /// is certainly going to be called again before region-around-match
+    /// can be called).
+
+    /// Since the registers are now dynamically allocated, we need to make
+    /// sure not to refer to the Nth register before checking that it has
+    /// been allocated by checking search_regs.num_regs.
+
+    /// The regex code keeps track of whether it has allocated the search
+    /// buffer using bits in the re_pattern_buffer.  This means that whenever
+    /// you compile a new pattern, it completely forgets whether it has
+    /// allocated any registers, and will allocate new registers the next
+    /// time you call a searching or matching function.  Therefore, we need
+    /// to call re_set_registers after compiling a new pattern or after
+    /// setting the match registers, so that the regex functions will be
+    /// able to free or re-allocate it properly.
+    pub m_search_regs: re_registers,
+    /// If non-zero the match data have been saved in saved_search_regs
+    /// during the execution of a sentinel or filter. */
+    pub m_search_regs_saved: bool,
+    pub m_saved_search_regs: re_registers,
+    /// This is the string or buffer in which we
+    /// are matching.  It is used for looking up syntax properties.
+
+    /// If the value is a Lisp string object, we are matching text in that
+    /// string; if it's nil, we are matching text in the current buffer; if
+    /// it's t, we are matching text in a C string.
+    pub m_re_match_object: Lisp_Object,
+    /// This member is different from waiting_for_input.
+    /// It is used to communicate to a lisp process-filter/sentinel (via the
+    /// function Fwaiting_for_user_input_p) whether Emacs was waiting
+    /// for user-input when that process-filter was called.
+    /// waiting_for_input cannot be used as that is by definition 0 when
+    /// lisp code is being evalled.
+    /// This is also used in record_asynch_buffer_change.
+    /// For that purpose, this must be 0
+    /// when not inside wait_reading_process_output.
+    pub m_waiting_for_user_input_p: c_int,
+    /// True while doing kbd input.
+    pub m_waiting_for_input: bool,
+
+    // TODO: this struct is incomplete. We're missing thread_id,
+    // thread_condvar, wait_condvar, not_holding_lock, and
+    // next_thread.
+}
+
 /// Represents the global state of the editor.
 ///
 /// This has been factored out to a single struct in C Emacs to help
@@ -1102,11 +1207,13 @@ pub struct emacs_globals {
 
 extern "C" {
     pub static mut globals: emacs_globals;
+    pub static current_thread: *mut thread_state;
     pub static Qt: Lisp_Object;
     pub static Qerror: Lisp_Object;
     pub static Qarith_error: Lisp_Object;
     pub static Qrange_error: Lisp_Object;
     pub static Qwrong_type_argument: Lisp_Object;
+    pub static Qargs_out_of_range: Lisp_Object;
     pub static Qnumber_or_marker_p: Lisp_Object;
     pub static Qinteger_or_marker_p: Lisp_Object;
     pub static Qconsp: Lisp_Object;
@@ -1149,6 +1256,20 @@ extern "C" {
     pub static Qfont_spec: Lisp_Object;
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
+    pub static Qwrite_region: Lisp_Object;
+    pub static Qbuffer_file_coding_system: Lisp_Object;
+    pub static Qfont_extra_type: Lisp_Object;
+
+    pub static Qmd5: Lisp_Object;
+    pub static Qsha1: Lisp_Object;
+    pub static Qsha224: Lisp_Object;
+    pub static Qsha256: Lisp_Object;
+    pub static Qsha384: Lisp_Object;
+    pub static Qsha512: Lisp_Object;
+
+    pub static Qraw_text: Lisp_Object;
+    pub static Qcoding_system_error: Lisp_Object;
+
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
@@ -1156,15 +1277,54 @@ extern "C" {
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
+    pub fn Fbuffer_file_name(buffer: Lisp_Object) -> Lisp_Object;
+    pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
+    pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
+    pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
     pub fn build_string(s: *const c_char) -> Lisp_Object;
     pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;
     pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
+    pub fn make_specified_string(
+        contents: *const c_char,
+        nchars: ptrdiff_t,
+        nbytes: ptrdiff_t,
+        multibyte: bool,
+    ) -> Lisp_Object;
     pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
+
+    pub fn preferred_coding_system() -> Lisp_Object;
+    pub fn Fcoding_system_p(o: Lisp_Object) -> Lisp_Object;
+    pub fn code_convert_string(
+        string: Lisp_Object,
+        coding_system: Lisp_Object,
+        dst_object: Lisp_Object,
+        encodep: bool,
+        nocopy: bool,
+        norecord: bool,
+    ) -> Lisp_Object;
+    pub fn validate_subarray(
+        array: Lisp_Object,
+        from: Lisp_Object,
+        to: Lisp_Object,
+        size: libc::ptrdiff_t,
+        ifrom: &mut libc::ptrdiff_t,
+        ito: &mut libc::ptrdiff_t,
+    );
+    pub fn string_char_to_byte(string: Lisp_Object, char_index: libc::ptrdiff_t)
+        -> libc::ptrdiff_t;
+
+    pub fn record_unwind_current_buffer();
+    pub fn set_buffer_internal(buffer: *const libc::c_void); // TODO: buffer*
+    pub fn make_buffer_string(
+        start: libc::ptrdiff_t,
+        end: libc::ptrdiff_t,
+        props: bool,
+    ) -> Lisp_Object;
 
     pub fn intern_1(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
 

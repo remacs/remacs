@@ -16,6 +16,7 @@ extern crate remacs_sys;
 extern crate remacs_lib;
 extern crate remacs_macros;
 extern crate libc;
+extern crate md5;
 extern crate rand;
 extern crate sha1;
 extern crate sha2;
@@ -113,13 +114,7 @@ pub use vectors::Flength;
 pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
-
-// Cryptographic functions used in the C codebase.
-pub use crypto::sha1_buffer;
-pub use crypto::sha224_buffer;
-pub use crypto::sha256_buffer;
-pub use crypto::sha384_buffer;
-pub use crypto::sha512_buffer;
+pub use buffers::Fcurrent_buffer;
 
 // Used in process.c
 pub use str2sig::str2sig;
@@ -150,6 +145,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Soverlayp);
         defsubr(&*buffers::Sbuffer_live_p);
         defsubr(&*buffers::Sget_buffer);
+        defsubr(&*buffers::Scurrent_buffer);
         defsubr(&*windows::Swindowp);
         defsubr(&*windows::Swindow_live_p);
         defsubr(&*process::Sget_process);
@@ -249,6 +245,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Svectorp);
         defsubr(&*vectors::Slength);
         defsubr(&*fonts::Sfontp);
+        defsubr(&*crypto::Smd5);
+        defsubr(&*crypto::Ssecure_hash);
         defsubr(&*crypto::Sbuffer_hash);
         defsubr(&*interactive::Sprefix_numeric_value);
 
