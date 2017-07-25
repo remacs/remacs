@@ -6,8 +6,8 @@ use libc;
 use math::ArithOp;
 use lisp::{LispObject, LispNumber};
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qnumberp, Qinteger_or_marker_p,
-                 Qarith_error, Qrange_error, make_string,
-                 MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM};
+                 Qarith_error, Qrange_error, make_string, MOST_POSITIVE_FIXNUM,
+                 MOST_NEGATIVE_FIXNUM};
 
 use remacs_sys::libm;
 use remacs_macros::lisp_fn;

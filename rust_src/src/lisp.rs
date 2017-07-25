@@ -21,10 +21,10 @@ use fonts::LispFontRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, INTMASK, USE_LSB_TAG,
                  MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type, Lisp_Bits, Lisp_Misc_Any,
-                 Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
-                 make_float, circular_list, internal_equal, Fcons, Qnil, Qt, Qnumberp, Qfloatp,
-                 Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp,
-                 Qlistp, Qintegerp, Qconsp, pvec_type, EqualKind};
+                 Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym, make_float,
+                 circular_list, internal_equal, Fcons, Qnil, Qt, Qnumberp, Qfloatp, Qstringp,
+                 Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp, Qcharacterp, Qlistp,
+                 Qintegerp, Qconsp, pvec_type, EqualKind};
 use remacs_sys::CHECK_IMPURE;
 
 // TODO: tweak Makefile to rebuild C files if this changes.

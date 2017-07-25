@@ -109,6 +109,9 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
 pub fn current_buffer() -> LispObject {
     unsafe {
         let buffer_ref = (*current_thread).m_current_buffer;
-        LispObject::from_raw(make_lisp_ptr(buffer_ref as *mut ::libc::c_void, Lisp_Type::Lisp_Vectorlike))
+        LispObject::from_raw(make_lisp_ptr(
+            buffer_ref as *mut ::libc::c_void,
+            Lisp_Type::Lisp_Vectorlike,
+        ))
     }
 }
