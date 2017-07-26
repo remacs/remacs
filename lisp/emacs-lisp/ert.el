@@ -2406,8 +2406,7 @@ To be used in the ERT results buffer."
            (buffer-disable-undo)
            (erase-buffer)
            (ert-simple-view-mode)
-           ;; Use unibyte because `debugger-setup-buffer' also does so.
-           (set-buffer-multibyte nil)
+           (set-buffer-multibyte t)     ; mimic debugger-setup-buffer
            (setq truncate-lines t)
            (ert--print-backtrace backtrace t)
            (goto-char (point-min))
