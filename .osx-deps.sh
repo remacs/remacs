@@ -4,3 +4,6 @@ chmod +x ./macports-ci
 ./macports-ci install
 PATH="/opt/local/bin:$PATH"
 sudo port install xorg-libXt
+
+find /usr/X11/include
+find /opt/local/include
