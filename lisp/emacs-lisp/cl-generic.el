@@ -409,7 +409,7 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
 \(and can be extended) by the various methods of `cl-generic-generalizers'.
 
 \(fn NAME [QUALIFIER] ARGS &rest [DOCSTRING] BODY)"
-  (declare (doc-string 3) (indent 2)
+  (declare (doc-string 3) (indent defun)
            (debug
             (&define                    ; this means we are defining something
              [&or name ("setf" name :name setf)]
