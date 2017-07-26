@@ -392,7 +392,7 @@ obeys predicates."
                                   (and (funcall pred1 x) (funcall pred2 x)))))
         ;; If completion failed and we're not applying pred1 strictly, try
         ;; again without pred1.
-        (and (not strict) pred1 pred2
+        (and (not strict) pred1
              (complete-with-action action table string pred2))))))
 
 (defun completion-table-in-turn (&rest tables)
