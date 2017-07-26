@@ -3,7 +3,6 @@ cache: cargo
 rust:
   - nightly
 os:
-  - linux
   - osx
 
 addons:

@@ -3,4 +3,4 @@ wget https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports
 chmod +x ./macports-ci
 ./macports-ci install
 PATH="/opt/local/bin:$PATH"
-sudo port -v install xorg-libXt
+sudo port install xorg-libXt
