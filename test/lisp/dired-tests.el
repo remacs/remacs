@@ -175,5 +175,18 @@
           (should (looking-at "src")))
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
+(ert-deftest dired-test-bug27817 ()
+  "Test for http://debbugs.gnu.org/27817 ."
+  (require 'em-ls)
+  (let ((orig eshell-ls-use-in-dired)
+        (dired-use-ls-dired 'unspecified)
+        buf insert-directory-program)
+    (unwind-protect
+        (progn
+          (customize-set-variable 'eshell-ls-use-in-dired t)
+          (should (setq buf (dired source-directory))))
+      (customize-set-variable 'eshell-ls-use-in-dired orig)
+      (and (buffer-live-p buf) (kill-buffer)))))
+
 (provide 'dired-tests)
 ;; dired-tests.el ends here
