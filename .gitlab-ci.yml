@@ -24,7 +24,7 @@
 # Maintainer: tzz@lifelogs.com
 # URL: https://gitlab.com/emacs-ci/emacs
 
-image: debian:unstable
+image: debian:stretch
 
 before_script:
   - apt update -qq
