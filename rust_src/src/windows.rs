@@ -2,9 +2,9 @@
 
 use lisp::{LispObject, ExternalPtr};
 use remacs_macros::lisp_fn;
-use remacs_sys::Lisp_Window;
+use remacs_sys::window;
 
-pub type LispWindowRef = ExternalPtr<Lisp_Window>;
+pub type LispWindowRef = ExternalPtr<window>;
 
 impl LispWindowRef {
     // Check if window is live

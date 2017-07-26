@@ -12,9 +12,8 @@ use multibyte::MAX_CHAR;
 use lists::{sort_list, inorder};
 use buffers::LispBufferRef;
 use windows::LispWindowRef;
-use remacs_sys::{Qsequencep, EmacsInt, PSEUDOVECTOR_FLAG, PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS,
-                 PSEUDOVECTOR_SIZE_MASK, PseudovecType, Lisp_Vectorlike, Lisp_Vector,
-                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{Qsequencep, EmacsInt, PSEUDOVECTOR_FLAG, More_Lisp_Bits, pvec_type,
+                 Lisp_Vectorlike, Lisp_Vector, Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM};
 use remacs_macros::lisp_fn;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
@@ -24,7 +23,7 @@ pub type LispBoolVecRef = ExternalPtr<Lisp_Bool_Vector>;
 impl LispVectorlikeRef {
     #[inline]
     pub fn is_vector(&self) -> bool {
-        self.header.size & PSEUDOVECTOR_FLAG == 0
+        self.header.size & (PSEUDOVECTOR_FLAG as isize) == 0
     }
 
     #[inline]
@@ -37,19 +36,21 @@ impl LispVectorlikeRef {
     }
 
     #[inline]
-    pub fn is_pseudovector(&self, tp: PseudovecType) -> bool {
-        self.header.size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK) ==
-            (PSEUDOVECTOR_FLAG | ((tp as isize) << PSEUDOVECTOR_AREA_BITS))
+    pub fn is_pseudovector(&self, tp: pvec_type) -> bool {
+        self.header.size &
+            (PSEUDOVECTOR_FLAG as isize | (More_Lisp_Bits::PVEC_TYPE_MASK as isize)) ==
+            (PSEUDOVECTOR_FLAG as isize |
+                 ((tp as isize) << (More_Lisp_Bits::PSEUDOVECTOR_AREA_BITS as u32)))
     }
 
     #[inline]
     pub fn pseudovector_size(&self) -> EmacsInt {
-        (self.header.size & PSEUDOVECTOR_SIZE_MASK) as EmacsInt
+        (self.header.size & (More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize)) as EmacsInt
     }
 
     #[inline]
     pub fn as_bool_vector(&self) -> Option<LispBoolVecRef> {
-        if self.is_pseudovector(PseudovecType::PVEC_BOOL_VECTOR) {
+        if self.is_pseudovector(pvec_type::PVEC_BOOL_VECTOR) {
             Some(unsafe { mem::transmute::<_, LispBoolVecRef>(*self) })
         } else {
             None
@@ -58,7 +59,7 @@ impl LispVectorlikeRef {
 
     #[inline]
     pub fn as_buffer(&self) -> Option<LispBufferRef> {
-        if self.is_pseudovector(PseudovecType::PVEC_BUFFER) {
+        if self.is_pseudovector(pvec_type::PVEC_BUFFER) {
             Some(unsafe { mem::transmute(*self) })
         } else {
             None
@@ -67,7 +68,7 @@ impl LispVectorlikeRef {
 
     #[inline]
     pub fn as_window(&self) -> Option<LispWindowRef> {
-        if self.is_pseudovector(PseudovecType::PVEC_WINDOW) {
+        if self.is_pseudovector(pvec_type::PVEC_WINDOW) {
             Some(unsafe { mem::transmute(*self) })
         } else {
             None
@@ -135,10 +136,10 @@ pub fn length(sequence: LispObject) -> LispObject {
             return LispObject::from_natnum(v.len() as EmacsInt);
         } else if let Some(bv) = vl.as_bool_vector() {
             return LispObject::from_natnum(bv.len() as EmacsInt);
-        } else if vl.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE) {
+        } else if vl.is_pseudovector(pvec_type::PVEC_CHAR_TABLE) {
             return LispObject::from_natnum(MAX_CHAR as EmacsInt);
-        } else if vl.is_pseudovector(PseudovecType::PVEC_COMPILED) ||
-                   vl.is_pseudovector(PseudovecType::PVEC_RECORD)
+        } else if vl.is_pseudovector(pvec_type::PVEC_COMPILED) ||
+                   vl.is_pseudovector(pvec_type::PVEC_RECORD)
         {
             return LispObject::from_natnum(vl.pseudovector_size());
         }

@@ -80,12 +80,6 @@ fn main() {
 
     let bits = 8; // bits in a byte.
     let gc_type_bits = 3;
-    write!(
-        &mut file,
-        "pub const GCTYPEBITS: EmacsInt = {};\n",
-        gc_type_bits
-    ).expect("Write error!");
-
     let uint_max_len = integer_type_item.2 * bits;
     let int_max_len = uint_max_len - 1;
     let val_max_len = int_max_len - (gc_type_bits - 1);
@@ -96,4 +90,50 @@ fn main() {
         if use_lsb_tag { "true" } else { "false" }
     ).expect("Write error!");
 
+    run_bindgen();
+}
+
+extern crate bindgen;
+extern crate regex;
+
+fn run_bindgen() {
+    let bindings = bindgen::Builder::default()
+        .unstable_rust(true)
+        .generate_comments(true)
+        .clang_arg("-I../../src")
+        .clang_arg("-I../../lib")
+        .clang_arg("-I/usr/X11/include")
+        .header("wrapper.h")
+        .hide_type("USE_LSB_TAG")
+        // this is wallpaper for a bug in bindgen, we don't lose anything by it
+        // https://github.com/servo/rust-bindgen/issues/687
+        .hide_type("BOOL_VECTOR_BITS_PER_CHAR")
+        // this is wallpaper for a function argument that shadows a static of the same name
+        // https://github.com/servo/rust-bindgen/issues/840
+        .hide_type("face_change")
+        // these never return, and bindgen doesn't yet detect that, so we will do them manually
+        .hide_type("error")
+        .hide_type("circular_list")
+        .hide_type("wrong_type_argument")
+        .hide_type("nsberror")
+        .hide_type("emacs_abort")
+        .hide_type("Fsignal")
+        .ctypes_prefix("::libc")
+        .generate()
+        .expect("Unable to generate bindings");
+
+    // https://github.com/servo/rust-bindgen/issues/839
+    let source = bindings.to_string();
+    let re = regex::Regex::new(
+        r"pub use self::gnutls_cipher_algorithm_t as gnutls_cipher_algorithm;",
+    );
+    let munged = re.unwrap().replace_all(
+        &source,
+        "// pub use self::gnutls_cipher_algorithm_t as gnutls_cipher_algorithm;",
+    );
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
+    let file = File::create(out_path);
+    file.unwrap()
+        .write_all(munged.into_owned().as_bytes())
+        .unwrap();
 }

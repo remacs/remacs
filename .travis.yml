@@ -3,7 +3,6 @@ cache: cargo
 rust:
   - nightly
 os:
-  - linux
   - osx
 
 addons:
@@ -12,10 +11,15 @@ addons:
     - texinfo
     - libgif-dev
     - libxpm-dev
+    - libxt-dev
 
 env:
   # Ensure that we build without warnings.
   - CARGO_FLAGS="--features 'strict'"
+
+before_install:
+  # please actually build this version of the file this time
+  - if [ $TRAVIS_OS_NAME = osx ]; then ./.osx-deps.sh; fi
 
 before_script:
   # Install rustfmt 0.9.0 if it isn't already installed on
