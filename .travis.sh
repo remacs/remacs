@@ -34,7 +34,7 @@ echo 'Configuring Emacs for building'
 ./autogen.sh
 # These configure flags are only required on OS X.
 # TODO: remove them.
-CFLAGS="-I/opt/include" ./configure --without-makeinfo --with-xpm=no --with-gif=no --with-gnutls=no
+./configure --without-makeinfo --with-xpm=no --with-gif=no --with-gnutls=no
 
 echo 'Building Emacs'
 make -j 3

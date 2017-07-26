@@ -102,6 +102,7 @@ fn run_bindgen() {
         .generate_comments(true)
         .clang_arg("-I../../src")
         .clang_arg("-I../../lib")
+        .clang_arg("-I/usr/X11/include")
         .header("wrapper.h")
         .hide_type("USE_LSB_TAG")
         // this is wallpaper for a bug in bindgen, we don't lose anything by it
