@@ -1182,10 +1182,15 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (goto-char match-pos)
 		  (backward-char)
 		  (c-backward-token-2)
-		  (or (looking-at c-block-stmt-2-key)
-		      (looking-at c-block-stmt-1-2-key)
-		      (looking-at c-typeof-key))))
-	   (cons nil t))
+		  (cond
+		   ((looking-at c-paren-stmt-key)
+		    ;; Allow comma separated <> arglists in for statements.
+		    (cons nil nil))
+		   ((or (looking-at c-block-stmt-2-key)
+			(looking-at c-block-stmt-1-2-key)
+			(looking-at c-typeof-key))
+		    (cons nil t))
+		   (t nil)))))
 	  ;; Near BOB.
 	  ((<= match-pos (point-min))
 	   (cons 'arglist t))
