@@ -500,25 +500,26 @@ The set of acceptable TYPEs (also called \"specializers\") is defined
               (cons method mt)
             ;; Keep the ordering; important for methods with :extra qualifiers.
             (mapcar (lambda (x) (if (eq x (car me)) method x)) mt)))
-    (cl-pushnew `(cl-defmethod . ,(cl--generic-load-hist-format
-                                   (cl--generic-name generic)
-                                   qualifiers specializers))
-                current-load-list :test #'equal)
-    ;; FIXME: Try to avoid re-constructing a new function if the old one
-    ;; is still valid (e.g. still empty method cache)?
-    (let ((gfun (cl--generic-make-function generic))
-          ;; Prevent `defalias' from recording this as the definition site of
-          ;; the generic function.
-          current-load-list)
-      ;; For aliases, cl--generic-name gives us the actual name.
-      (let ((purify-flag
-             ;; BEWARE!  Don't purify this function definition, since that leads
-             ;; to memory corruption if the hash-tables it holds are modified
-             ;; (the GC doesn't trace those pointers).
-             nil))
+    (let ((sym (cl--generic-name generic))) ; Actual name (for aliases).
+      (unless (symbol-function sym)
+        (defalias sym 'dummy))   ;Record definition into load-history.
+      (cl-pushnew `(cl-defmethod . ,(cl--generic-load-hist-format
+                                     (cl--generic-name generic)
+                                     qualifiers specializers))
+                  current-load-list :test #'equal)
+      ;; FIXME: Try to avoid re-constructing a new function if the old one
+      ;; is still valid (e.g. still empty method cache)?
+      (let ((gfun (cl--generic-make-function generic))
+            ;; Prevent `defalias' from recording this as the definition site of
+            ;; the generic function.
+            current-load-list
+            ;; BEWARE!  Don't purify this function definition, since that leads
+            ;; to memory corruption if the hash-tables it holds are modified
+            ;; (the GC doesn't trace those pointers).
+            (purify-flag nil))
         ;; But do use `defalias', so that it interacts properly with nadvice,
         ;; e.g. for tracing/debug-on-entry.
-        (defalias (cl--generic-name generic) gfun)))))
+        (defalias sym gfun)))))
 
 (defmacro cl--generic-with-memoization (place &rest code)
   (declare (indent 1) (debug t))
