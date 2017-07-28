@@ -221,6 +221,11 @@ restore a previous autoload if possible.")
     ;; Remove the struct.
     (setf (cl--find-class name) nil)))
 
+(cl-defmethod loadhist-unload-element ((x (head define-symbol-props)))
+  (pcase-dolist (`(,symbol . ,props) (cdr x))
+    (dolist (prop props)
+      (put symbol prop nil))))
+
 ;;;###autoload
 (defun unload-feature (feature &optional force)
   "Unload the library that provided FEATURE.

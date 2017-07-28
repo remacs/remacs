@@ -1175,6 +1175,8 @@ break.
 
 * Lisp Changes in Emacs 26.1
 
+** New function `define-symbol-prop'.
+
 +++
 ** New optional argument TESTFN in 'alist-get', 'map-elt' and 'map-put'.
 
