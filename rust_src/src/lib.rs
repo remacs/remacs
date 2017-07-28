@@ -117,6 +117,8 @@ pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
 pub use alloc::rust_mark_hashtable;
+pub use alloc::rust_unmark;
+pub use alloc::rust_sweep;
 
 // Cryptographic functions used in the C codebase.
 pub use crypto::sha1_buffer;

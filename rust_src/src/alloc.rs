@@ -1,9 +1,7 @@
-#[macro_use]
-use lazy_static;
-use lisp::{ExternalPtr, LispObject};
-use remacs_sys::{Lisp_Object};
+use lisp::ExternalPtr;
 use hashtable::LispHashTable;
 use std::sync::Mutex;
+use libc::c_void;
 
 pub trait GCObject: Send + Sync {
     fn mark(&mut self);
@@ -35,30 +33,29 @@ impl LispGarbageCollector {
         gc.managed_objects.retain(|ref x| x.is_marked());
     }
 
-    pub unsafe fn mark_object<T: 'static + GCObject + Sized>(object: LispObject) {
-        let mut ptr = ExternalPtr::new(object.get_untaggedptr() as *mut T);
-        ptr.mark();
-    }
-
-    pub unsafe fn unmark_object<T: 'static + GCObject + Sized>(object: LispObject) {
-        let mut ptr = ExternalPtr::new(object.get_untaggedptr() as *mut T);
-        ptr.unmark();
-    }
-
-    pub fn mark<T: 'static + GCObject + Sized>(ptr: ExternalPtr<T>) {
-        let mut boxed = unsafe { Box::from_raw(ptr.clone().as_mut()) };
-        boxed.mark();
-        Box::into_raw(boxed);
-    }
-
-    pub fn unmark<T: 'static + GCObject + Sized>(ptr: ExternalPtr<T>) {
-        let mut boxed = unsafe { Box::from_raw(ptr.clone().as_mut()) };
-        boxed.unmark();
-        Box::into_raw(boxed);
+    pub unsafe fn unmark_all() {
+        let mut gc = GC.lock().unwrap();
+        for boxed in gc.managed_objects.iter_mut() {
+            boxed.unmark();
+        }
     }
 }
 
+// Since we have already done a typecheck on the C layer, we can avoid a vtable look up here
+// by casting to a specific type and calling mark directly. In the future, as we transition away from the C,
+// we can rely on the trait to do what we need to do.
 #[no_mangle]
-pub unsafe fn rust_mark_hashtable(object: Lisp_Object) {
-    LispGarbageCollector::mark_object::<LispHashTable>(LispObject::from_raw(object));
+pub unsafe fn rust_mark_hashtable(ptr: *mut c_void) {
+    let mut ptr = ExternalPtr::new(ptr as *mut LispHashTable);
+    ptr.mark();
+}
+
+#[no_mangle]
+pub unsafe fn rust_unmark() {
+    LispGarbageCollector::unmark_all();
+}
+
+#[no_mangle]
+pub fn rust_sweep() {
+    LispGarbageCollector::sweep();
 }

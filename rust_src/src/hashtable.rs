@@ -7,6 +7,7 @@ use alloc::{GCObject, LispGarbageCollector};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
+#[allow(dead_code)] // @TODO remove
 struct HashTableTest {
     name: LispObject,
     user_hash_function: LispObject,
@@ -23,6 +24,7 @@ impl HashTableTest {
     }
 }
 
+#[allow(dead_code)] // @TODO remove
 pub struct LispHashTable {
     header: Lisp_Vectorlike_Header,
     weak: LispObject,
@@ -33,14 +35,17 @@ pub struct LispHashTable {
 
 // @TODO make this a #[derive(MarkVectorlike)] since this will be a common impl of this trait
 impl GCObject for LispHashTable {
+    #[inline]
     fn mark(&mut self) {
         self.header.size = self.header.size | ARRAY_MARK_FLAG;
     }
 
+    #[inline]
     fn unmark(&mut self) {
         self.header.size = self.header.size & !ARRAY_MARK_FLAG;
     }
 
+    #[inline]
     fn is_marked(&self) -> bool {
         self.header.size & ARRAY_MARK_FLAG != 0
     }
