@@ -1,6 +1,7 @@
 use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, ARRAY_MARK_FLAG, Lisp_Vectorlike_Header, Lisp_Type};
+use vectors::LispVectorlikeHeader;
+use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type};
 use std::ptr;
 use std::collections::HashMap;
 use alloc::{GCObject, LispGarbageCollector};
@@ -8,6 +9,7 @@ use alloc::{GCObject, LispGarbageCollector};
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
 #[allow(dead_code)] // @TODO remove
+#[repr(C)]
 struct HashTableTest {
     name: LispObject,
     user_hash_function: LispObject,
@@ -25,36 +27,36 @@ impl HashTableTest {
 }
 
 #[allow(dead_code)] // @TODO remove
+#[repr(C)]
 pub struct LispHashTable {
-    header: Lisp_Vectorlike_Header,
+    header: LispVectorlikeHeader,
     weak: LispObject,
     is_pure: bool,
     table_test: HashTableTest,
     map: HashMap<LispObject, LispObject>, // @TODO implement a custom hasher here for lisp objects.
 }
 
-// @TODO make this a #[derive(MarkVectorlike)] since this will be a common impl of this trait
 impl GCObject for LispHashTable {
     #[inline]
     fn mark(&mut self) {
-        self.header.size = self.header.size | ARRAY_MARK_FLAG;
+        self.header.mark();
     }
 
     #[inline]
     fn unmark(&mut self) {
-        self.header.size = self.header.size & !ARRAY_MARK_FLAG;
+        self.header.unmark();
     }
 
     #[inline]
     fn is_marked(&self) -> bool {
-        self.header.size & ARRAY_MARK_FLAG != 0
+        self.header.is_marked()
     }
 }
 
 impl LispHashTable {
     pub fn new() -> LispHashTable {
         LispHashTable {
-            header: Lisp_Vectorlike_Header { size: 0 },
+            header: LispVectorlikeHeader::new(),
             weak: LispObject::constant_nil(),
             is_pure: false,
             table_test: HashTableTest::new(),
@@ -149,7 +151,8 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn make_hash_map() -> LispObject {
-    let ptr = LispGarbageCollector::manage_hashtable(LispHashTable::new());
+    let mut ptr = LispGarbageCollector::manage_hashtable(LispHashTable::new());
+    ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
 }
 
@@ -174,4 +177,11 @@ fn test_table_marking() {
     
     table.unmark();
     assert!(!table.is_marked());
+}
+
+#[test]
+fn test_hashtable_tag() {
+    let table = make_hash_map();
+    assert!(table.is_hash_table());
+    assert!(table.is_vectorlike());
 }
