@@ -3,6 +3,8 @@ use hashtable::LispHashTable;
 use std::sync::Mutex;
 use libc::c_void;
 
+use test::Bencher;
+
 pub trait GCObject: Send + Sync {
     fn mark(&mut self);
     fn unmark(&mut self);
@@ -15,7 +17,7 @@ pub struct LispGarbageCollector {
 
 lazy_static! {
     pub static ref GC: Mutex<LispGarbageCollector> = {
-        Mutex::new(LispGarbageCollector { managed_objects: Vec::new() })
+        Mutex::new(LispGarbageCollector { managed_objects: Vec::with_capacity(256) })
     };
 }
 
@@ -110,4 +112,51 @@ fn gc_collection_2() {
         let gc = GC.lock().unwrap();
         assert!(gc.managed_objects.len() == 0);
     }
+}
+
+#[bench]
+fn gc_collection_bench(b: &mut Bencher) {
+    b.iter(|| {
+        for _ in 0..4096 {
+            LispGarbageCollector::manage(LispHashTable::new());
+        }
+
+        LispGarbageCollector::sweep();
+    });
+}
+
+#[bench]
+fn gc_no_box_or_vtable(b: &mut Bencher) {
+    b.iter(|| {
+        let mut vec: Vec<LispHashTable> = Vec::new();
+        for _ in 0..4096 {
+            vec.push(LispHashTable::new());
+        }
+
+        vec.retain(|x| x.is_marked());
+    });
+}
+
+#[bench]
+fn gc_no_box_or_vtable_option(b: &mut Bencher) {
+    b.iter(|| {
+        let mut vec: Vec<Option<LispHashTable>> = Vec::new();
+        for _ in 0..4096 {
+            vec.push(Some(LispHashTable::new()));
+        }
+
+        vec.retain(|x| x.is_some() && x.as_ref().unwrap().is_marked());
+    });
+}
+
+#[bench]
+fn gc_box_with_no_vtable(b: &mut Bencher) {
+    b.iter(|| {
+        let mut vec: Vec<Box<LispHashTable>> = Vec::new();
+        for _ in 0..4096 {
+            vec.push(Box::new(LispHashTable::new()));
+        }
+
+        vec.retain(|x| x.is_marked());
+    });
 }
