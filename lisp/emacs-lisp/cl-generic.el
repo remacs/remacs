@@ -166,6 +166,10 @@ SPECIALIZERS-FUNCTION takes as first argument a tag value TAG
 (defmacro cl--generic (name)
   `(get ,name 'cl--generic))
 
+(defun cl-generic-p (f)
+  "Return non-nil if F is a generic function."
+  (and (symbolp f) (cl--generic f)))
+
 (defun cl-generic-ensure-function (name &optional noerror)
   (let (generic
         (origname name))
@@ -1022,6 +1026,20 @@ The value returned is a list of elements of the form
                (cl--generic-method-specializers method) type)
           (push (cl--generic-method-info method) docs))))
     docs))
+
+(defun cl--generic-method-files (method)
+  "Return a list of files where METHOD is defined by `cl-defmethod'.
+The list will have entries of the form (FILE . (METHOD ...))
+where (METHOD ...) contains the qualifiers and specializers of
+the method and is a suitable argument for
+`find-function-search-for-symbol'.  Filenames are absolute."
+  (let (result)
+    (pcase-dolist (`(,file . ,defs) load-history)
+      (dolist (def defs)
+        (when (and (eq (car-safe def) 'cl-defmethod)
+                   (eq (cadr def) method))
+          (push (cons file (cdr def)) result))))
+    result))
 
 ;;; Support for (head <val>) specializers.
 

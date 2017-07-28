@@ -2031,25 +2031,6 @@ definition, variable definition, or face definition only."
 	(setq files (cdr files)))
       file)))
 
-(defun method-files (method)
-  "Return a list of files where METHOD is defined by `cl-defmethod'.
-The list will have entries of the form (FILE . (METHOD ...))
-where (METHOD ...) contains the qualifiers and specializers of
-the method and is a suitable argument for
-`find-function-search-for-symbol'.  Filenames are absolute."
-  (let ((files load-history)
-        result)
-    (while files
-      (let ((defs (cdr (car files))))
-        (while defs
-          (let ((def (car defs)))
-            (if (and (eq (car-safe def) 'cl-defmethod)
-                     (eq (cadr def) method))
-                (push (cons (car (car files)) (cdr def)) result)))
-          (setq defs (cdr defs))))
-      (setq files (cdr files)))
-    result))
-
 (defun locate-library (library &optional nosuffix path interactive-call)
   "Show the precise file name of Emacs library LIBRARY.
 LIBRARY should be a relative file name of the library, a string.

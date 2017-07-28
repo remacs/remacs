@@ -604,6 +604,8 @@ paragraphs, for the purposes of bidirectional display.
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
+** New function `cl-generic-p'.
+
 ** Dired
 
 +++
