@@ -1084,6 +1084,9 @@ fontification, and commenting for embedded JavaScript and CSS.
 
 * Incompatible Lisp Changes in Emacs 26.1
 
+*** password-data is now a hash-table
+so that `password-read' can use any object for the `key' argument.
+
 +++
 *** Command 'dired-mark-extension' now automatically prepends a '.' to the
 extension when not present.  The new command 'dired-mark-suffix' behaves
