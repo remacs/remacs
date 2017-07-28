@@ -30,13 +30,24 @@ impl LispGarbageCollector {
 
     pub fn sweep() {
         let mut gc = GC.lock().unwrap();
-        gc.managed_objects.retain(|ref x| x.is_marked());
-    }
-
-    pub fn unmark_all() {
-        let mut gc = GC.lock().unwrap();
-        for boxed in gc.managed_objects.iter_mut() {
-            boxed.unmark();
+        // This isn't just using Vec::retain because we want to be able to mutate our objects
+        // as we iterate over them. This should be equiv in performance to Vec::retain.
+        let len = gc.managed_objects.len();
+        let mut del = 0;
+        for i in 0..len {
+            if !gc.managed_objects[i].is_marked() {
+                del += 1;
+            } else {
+                gc.managed_objects[i].unmark();
+                
+                if del > 0 {
+                    gc.managed_objects.swap(i - del, i);
+                }
+            }
+        }
+        
+        if del > 0 {
+            gc.managed_objects.truncate(len - del);
         }
     }
 }
@@ -48,11 +59,6 @@ impl LispGarbageCollector {
 pub unsafe fn rust_mark_hashtable(ptr: *mut c_void) {
     let mut ptr = ExternalPtr::new(ptr as *mut LispHashTable);
     ptr.mark();
-}
-
-#[no_mangle]
-pub fn rust_unmark() {
-    LispGarbageCollector::unmark_all();
 }
 
 #[no_mangle]
@@ -70,8 +76,36 @@ fn gc_collection() {
         assert!(gc.managed_objects.len() == 1);
     }
 
-    LispGarbageCollector::unmark_all();
     LispGarbageCollector::sweep();
+    {
+        let gc = GC.lock().unwrap();
+        assert!(gc.managed_objects.len() == 0);
+    }
+}
+
+#[test]
+fn gc_collection_2() {
+    let mut table = LispGarbageCollector::manage(LispHashTable::new());
+    let mut table2 = LispGarbageCollector::manage(LispHashTable::new());
+    let mut table3 = LispGarbageCollector::manage(LispHashTable::new());
+    table.mark();
+    table2.mark();
+    table3.mark();
+    LispGarbageCollector::sweep();
+    {
+        let gc = GC.lock().unwrap();
+        assert!(gc.managed_objects.len() == 3);
+    }
+
+    table.mark();
+    table2.mark();
+    LispGarbageCollector::sweep();
+    {
+        let gc = GC.lock().unwrap();
+        assert!(gc.managed_objects.len() == 2);
+    }
+
+        LispGarbageCollector::sweep();
     {
         let gc = GC.lock().unwrap();
         assert!(gc.managed_objects.len() == 0);
