@@ -590,6 +590,12 @@ different buffer while keeping point, mark, markers, and text
 properties as intact as possible.
 
 +++
+** New commands 'apropos-local-variable' and 'apropos-local-value.
+These are buffer-local versions of 'apropos-variable' and
+'apropos-value', respectively.  They show buffer-local variables whose
+names and values, respectively, match a given pattern.
+
++++
 ** More user control of reordering bidirectional text for display.
 The two new variables, 'bidi-paragraph-start-re' and
 'bidi-paragraph-separate-re', allow customization of what exactly are
