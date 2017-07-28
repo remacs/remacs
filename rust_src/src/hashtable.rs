@@ -155,13 +155,23 @@ fn make_hash_map() -> LispObject {
 
 #[lisp_fn]
 fn map_put(map: LispObject, key: LispObject, value: LispObject) -> LispObject {
-    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable); // @TODO replace with with haashtable or erorr
     hashmap.map.insert(key, value);
-    map
+    value 
 }
 
 #[lisp_fn]
 fn map_get(map: LispObject, key: LispObject) -> LispObject {
     let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
     hashmap.map.get(&key).map_or(LispObject::constant_nil(), |key| key.clone())
+}
+
+#[test]
+fn test_table_marking() {
+    let mut table = LispHashTable::new();
+    table.mark();
+    assert!(table.is_marked());
+    
+    table.unmark();
+    assert!(!table.is_marked());
 }

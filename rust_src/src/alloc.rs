@@ -33,7 +33,7 @@ impl LispGarbageCollector {
         gc.managed_objects.retain(|ref x| x.is_marked());
     }
 
-    pub unsafe fn unmark_all() {
+    pub fn unmark_all() {
         let mut gc = GC.lock().unwrap();
         for boxed in gc.managed_objects.iter_mut() {
             boxed.unmark();
@@ -51,11 +51,29 @@ pub unsafe fn rust_mark_hashtable(ptr: *mut c_void) {
 }
 
 #[no_mangle]
-pub unsafe fn rust_unmark() {
+pub fn rust_unmark() {
     LispGarbageCollector::unmark_all();
 }
 
 #[no_mangle]
 pub fn rust_sweep() {
     LispGarbageCollector::sweep();
+}
+
+#[test]
+fn gc_collection() {
+    let mut table = LispGarbageCollector::manage(LispHashTable::new());
+    table.mark();
+    LispGarbageCollector::sweep();
+    {
+        let gc = GC.lock().unwrap();
+        assert!(gc.managed_objects.len() == 1);
+    }
+
+    LispGarbageCollector::unmark_all();
+    LispGarbageCollector::sweep();
+    {
+        let gc = GC.lock().unwrap();
+        assert!(gc.managed_objects.len() == 0);
+    }
 }
