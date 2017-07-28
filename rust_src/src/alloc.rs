@@ -26,7 +26,7 @@ impl LispGarbageCollector {
         let mut gc = GC.lock().unwrap();
         let boxed = Box::new(t);
         let ptr = Box::into_raw(boxed);
-        let object = gc.managed_objects.push(unsafe { Box::from_raw(ptr) });
+        gc.managed_objects.push(unsafe { Box::from_raw(ptr) });
         ExternalPtr::new(ptr)
     }
 

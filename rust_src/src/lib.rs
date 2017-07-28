@@ -116,6 +116,7 @@ pub use vectors::Flength;
 pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
+pub use alloc::rust_mark_hashtable;
 
 // Cryptographic functions used in the C codebase.
 pub use crypto::sha1_buffer;
@@ -252,6 +253,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Svectorp);
         defsubr(&*vectors::Slength);
         defsubr(&*hashtable::Scopy_hash_table);
+        defsubr(&*hashtable::Smake_hash_map);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Sbuffer_hash);
         defsubr(&*interactive::Sprefix_numeric_value);

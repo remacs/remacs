@@ -48,7 +48,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
 /// Their definition are determined in a way consistent with Emacs C.
 /// Under casual systems, they're the type isize and usize respectively.
 #[repr(C)]
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct LispObject(Lisp_Object);
 
 impl LispObject {

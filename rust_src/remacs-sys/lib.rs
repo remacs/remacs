@@ -237,6 +237,8 @@ pub struct Lisp_Vectorlike_Header {
     pub size: ptrdiff_t,
 }
 
+pub static ARRAY_MARK_FLAG: ptrdiff_t = std::isize::MIN;
+
 #[repr(C)]
 pub struct Lisp_Vectorlike {
     pub header: Lisp_Vectorlike_Header,
