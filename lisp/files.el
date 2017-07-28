@@ -978,12 +978,15 @@ or mount points potentially requiring authentication as a different user.")
 ;;       nil)))
 
 (defun locate-dominating-file (file name)
-  "Look up the directory hierarchy from FILE for a directory containing NAME.
+  "Starting from FILE, look up directory hierarchy for directory containing NAME.
+FILE can be a file or a directory.  If it's a file, its directory will
+serve as the starting point for searching the hierarchy of directories.
 Stop at the first parent directory containing a file NAME,
 and return the directory.  Return nil if not found.
 Instead of a string, NAME can also be a predicate taking one argument
 \(a directory) and returning a non-nil value if that directory is the one for
-which we're looking."
+which we're looking.  The predicate will be called with every file/directory
+the function needs to examine, starting with FILE."
   ;; We used to use the above locate-dominating-files code, but the
   ;; directory-files call is very costly, so we're much better off doing
   ;; multiple calls using the code in here.
