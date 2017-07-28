@@ -2,8 +2,27 @@ use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence};
 use std::ptr;
+use alloc::GCObject;
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
+
+pub struct LispHashTable {
+    pub mark: bool
+}
+
+impl GCObject for LispHashTable {
+    fn mark(&mut self) {
+        self.mark = true;
+    }
+
+    fn unmark(&mut self) {
+        self.mark = false;
+    }
+
+    fn is_marked(&self) -> bool {
+        self.mark
+    }
+}
 
 impl LispHashTableRef {
     pub fn allocate() -> LispHashTableRef {
