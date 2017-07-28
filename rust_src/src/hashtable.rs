@@ -149,7 +149,19 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn make_hash_map() -> LispObject {
-    let hashmap = LispHashTable::new();
-    let ptr = LispGarbageCollector::manage(hashmap);
+    let ptr = LispGarbageCollector::manage(LispHashTable::new());
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
+}
+
+#[lisp_fn]
+fn map_put(map: LispObject, key: LispObject, value: LispObject) -> LispObject {
+    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    hashmap.map.insert(key, value);
+    map
+}
+
+#[lisp_fn]
+fn map_get(map: LispObject, key: LispObject) -> LispObject {
+    let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    hashmap.map.get(&key).map_or(LispObject::constant_nil(), |key| key.clone())
 }
