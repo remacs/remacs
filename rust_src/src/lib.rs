@@ -4,7 +4,6 @@
 #![feature(proc_macro)]
 #![cfg_attr(feature = "strict", deny(warnings))]
 #![feature(global_allocator)]
-#![feature(test)]
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
 #[cfg(all(not(test), target_os = "macos"))]
@@ -21,7 +20,6 @@ extern crate rand;
 extern crate sha1;
 extern crate sha2;
 extern crate base64 as base64_crate;
-extern crate test;
 
 #[macro_use]
 mod eval;

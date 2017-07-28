@@ -149,7 +149,7 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn make_hash_map() -> LispObject {
-    let ptr = LispGarbageCollector::manage(LispHashTable::new());
+    let ptr = LispGarbageCollector::manage_hashtable(LispHashTable::new());
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
 }
 

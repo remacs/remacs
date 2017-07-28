@@ -3,54 +3,91 @@ use hashtable::LispHashTable;
 use std::sync::Mutex;
 use libc::c_void;
 
-use test::Bencher;
-
 pub trait GCObject: Send + Sync {
     fn mark(&mut self);
     fn unmark(&mut self);
     fn is_marked(&self) -> bool;
 }
 
+struct ManagedList<T: GCObject + Sized> {
+    managed: Vec<Option<T>>,
+    free_list: Vec<usize>
+}
+
+impl<T: GCObject + Sized> ManagedList<T> {
+    fn new() -> ManagedList<T> {
+        ManagedList {
+            managed: Vec::new(),
+            free_list: Vec::new()
+        }
+    }
+
+    fn free(&mut self, idx: usize) {
+        assert!(self.managed.len() > idx);
+        self.managed[idx] = None;
+        self.free_list.push(idx);
+    }
+
+    fn alloc(&mut self, t: T) -> ExternalPtr<T> {
+        let addr = match self.free_list.pop() {
+            Some(idx) => {
+                self.managed[idx] = Some(t);
+                &mut self.managed[idx]
+            },
+            
+            None => {
+                self.managed.push(Some(t));
+                let len = self.managed.len();
+                &mut self.managed[len - 1]
+            }
+            
+        };
+
+        ExternalPtr::new(addr.as_mut().unwrap())
+    }
+
+    fn sweep(&mut self) {
+        let len = self.managed.len();
+        let mut one_marked = false;
+        for i in 0..len {
+            if self.managed[i].is_some() {
+                if self.managed[i].as_ref().unwrap().is_marked() {
+                    self.managed[i].as_mut().unwrap().unmark();
+                    one_marked = true;
+                } else {
+                    self.free(i);
+                }   
+            }
+        }
+
+        if !one_marked {
+            self.managed.clear();
+            self.free_list.clear();
+        }
+    }
+}
+
 pub struct LispGarbageCollector {
-    managed_objects: Vec<Box<GCObject>>
+    managed_hashtables: ManagedList<LispHashTable>
 }
 
 lazy_static! {
     pub static ref GC: Mutex<LispGarbageCollector> = {
-        Mutex::new(LispGarbageCollector { managed_objects: Vec::with_capacity(256) })
+        Mutex::new(LispGarbageCollector { managed_hashtables: ManagedList::new() })
     };
 }
 
 impl LispGarbageCollector {
-    pub fn manage<T: 'static + GCObject + Sized>(t: T) -> ExternalPtr<T> {
-        let mut gc = GC.lock().unwrap();
-        let boxed = Box::new(t);
-        let ptr = Box::into_raw(boxed);
-        gc.managed_objects.push(unsafe { Box::from_raw(ptr) });
-        ExternalPtr::new(ptr)
+    pub fn manage_hashtable(table: LispHashTable) -> ExternalPtr<LispHashTable> {
+        GC.lock().unwrap().managed_hashtables.alloc(table)
+    }
+
+    fn sweep_hashtables() {
+        GC.lock().unwrap().managed_hashtables.sweep();
     }
 
     pub fn sweep() {
-        let mut gc = GC.lock().unwrap();
-        // This isn't just using Vec::retain because we want to be able to mutate our objects
-        // as we iterate over them. This should be equiv in performance to Vec::retain.
-        let len = gc.managed_objects.len();
-        let mut del = 0;
-        for i in 0..len {
-            if !gc.managed_objects[i].is_marked() {
-                del += 1;
-            } else {
-                gc.managed_objects[i].unmark();
-                
-                if del > 0 {
-                    gc.managed_objects.swap(i - del, i);
-                }
-            }
-        }
-        
-        if del > 0 {
-            gc.managed_objects.truncate(len - del);
-        }
+        Self::sweep_hashtables();
     }
 }
 
@@ -68,95 +105,74 @@ pub fn rust_sweep() {
     LispGarbageCollector::sweep();
 }
 
-#[test]
+#[cfg(test)]
+macro_rules! count_managed {
+    ($map: ident) => ({
+        let gc = GC.lock().unwrap();
+        let countvec = gc.$map.managed.iter()
+            .filter(|x| x.is_some())
+            .collect::<Vec<_>>();
+        countvec.len()
+    })
+}
+
+#[cfg(test)]
 fn gc_collection() {
-    let mut table = LispGarbageCollector::manage(LispHashTable::new());
+    let mut table = LispGarbageCollector::manage_hashtable(LispHashTable::new());
     table.mark();
     LispGarbageCollector::sweep();
-    {
-        let gc = GC.lock().unwrap();
-        assert!(gc.managed_objects.len() == 1);
-    }
+    assert!(count_managed!(managed_hashtables) == 1);
 
     LispGarbageCollector::sweep();
-    {
-        let gc = GC.lock().unwrap();
-        assert!(gc.managed_objects.len() == 0);
-    }
+    assert!(count_managed!(managed_hashtables) == 0);
 }
 
 #[test]
+fn gc_ptr_management() {
+    let mut table = LispGarbageCollector::manage_hashtable(LispHashTable::new());
+    table.mark();
+    assert!(table.is_marked());
+    table.unmark();
+    assert!(!table.is_marked());
+}
+
+#[cfg(test)]
 fn gc_collection_2() {
-    let mut table = LispGarbageCollector::manage(LispHashTable::new());
-    let mut table2 = LispGarbageCollector::manage(LispHashTable::new());
-    let mut table3 = LispGarbageCollector::manage(LispHashTable::new());
+    let mut table = LispGarbageCollector::manage_hashtable(LispHashTable::new());
+    let mut table2 = LispGarbageCollector::manage_hashtable(LispHashTable::new());
+    let mut table3 = LispGarbageCollector::manage_hashtable(LispHashTable::new());
     table.mark();
     table2.mark();
     table3.mark();
     LispGarbageCollector::sweep();
-    {
-        let gc = GC.lock().unwrap();
-        assert!(gc.managed_objects.len() == 3);
-    }
-
+    assert!(count_managed!(managed_hashtables) == 3);
+    
     table.mark();
     table2.mark();
     LispGarbageCollector::sweep();
-    {
-        let gc = GC.lock().unwrap();
-        assert!(gc.managed_objects.len() == 2);
+    assert!(count_managed!(managed_hashtables) == 2);
+
+    LispGarbageCollector::sweep();
+    assert!(count_managed!(managed_hashtables) == 0);
+}
+
+#[cfg(test)]
+fn gc_collection_3() {
+    for idx in 0..1024 {
+        let mut table = LispGarbageCollector::manage_hashtable(LispHashTable::new());
+        if idx % 2 == 0 {
+            table.mark();
+        }
     }
 
-        LispGarbageCollector::sweep();
-    {
-        let gc = GC.lock().unwrap();
-        assert!(gc.managed_objects.len() == 0);
-    }
+    LispGarbageCollector::sweep();
+    assert!(count_managed!(managed_hashtables) == 512);
 }
 
-#[bench]
-fn gc_collection_bench(b: &mut Bencher) {
-    b.iter(|| {
-        for _ in 0..4096 {
-            LispGarbageCollector::manage(LispHashTable::new());
-        }
-
-        LispGarbageCollector::sweep();
-    });
+#[test]
+fn gc_tests() {
+    gc_collection();
+    gc_collection_2();
+    gc_collection_3();
 }
 
-#[bench]
-fn gc_no_box_or_vtable(b: &mut Bencher) {
-    b.iter(|| {
-        let mut vec: Vec<LispHashTable> = Vec::new();
-        for _ in 0..4096 {
-            vec.push(LispHashTable::new());
-        }
-
-        vec.retain(|x| x.is_marked());
-    });
-}
-
-#[bench]
-fn gc_no_box_or_vtable_option(b: &mut Bencher) {
-    b.iter(|| {
-        let mut vec: Vec<Option<LispHashTable>> = Vec::new();
-        for _ in 0..4096 {
-            vec.push(Some(LispHashTable::new()));
-        }
-
-        vec.retain(|x| x.is_some() && x.as_ref().unwrap().is_marked());
-    });
-}
-
-#[bench]
-fn gc_box_with_no_vtable(b: &mut Bencher) {
-    b.iter(|| {
-        let mut vec: Vec<Box<LispHashTable>> = Vec::new();
-        for _ in 0..4096 {
-            vec.push(Box::new(LispHashTable::new()));
-        }
-
-        vec.retain(|x| x.is_marked());
-    });
-}
