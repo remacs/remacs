@@ -33,6 +33,7 @@ mod numbers;
 mod objects;
 mod strings;
 mod symbols;
+#[macro_use]
 mod vectors;
 mod character;
 mod base64;
@@ -41,10 +42,13 @@ mod str2sig;
 mod multibyte;
 mod buffers;
 mod windows;
+mod hashtable;
 mod interactive;
 mod process;
 mod fonts;
 mod editfns;
+mod threads;
+
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -246,6 +250,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Svector_or_char_table_p);
         defsubr(&*vectors::Svectorp);
         defsubr(&*vectors::Slength);
+        defsubr(&*hashtable::Scopy_hash_table);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
         defsubr(&*crypto::Ssecure_hash);

@@ -1,11 +1,12 @@
 //! Functions operating on buffers.
 
-use libc::{c_uchar, ptrdiff_t};
+use libc::{c_void, c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Buffer, Lisp_Type, Vbuffer_alist, current_thread, make_lisp_ptr};
+use remacs_sys::{Lisp_Buffer, Lisp_Type, Vbuffer_alist, make_lisp_ptr};
 use strings::string_equal;
 use lists::{car, cdr};
+use threads::ThreadState;
 
 use remacs_macros::lisp_fn;
 
@@ -107,8 +108,11 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
 /// Return the current buffer as a Lisp object.
 #[lisp_fn]
 pub fn current_buffer() -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
     unsafe {
-        let buffer_ref = (*current_thread).m_current_buffer;
-        LispObject::from_raw(make_lisp_ptr(buffer_ref, Lisp_Type::Lisp_Vectorlike))
+        LispObject::from_raw(make_lisp_ptr(
+            buffer_ref.as_ptr() as *mut c_void,
+            Lisp_Type::Lisp_Vectorlike,
+        ))
     }
 }
