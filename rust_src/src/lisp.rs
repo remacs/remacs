@@ -9,7 +9,7 @@ use std::mem;
 use std::slice;
 use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
-use libc::{c_void, intptr_t};
+use libc::{c_void, intptr_t, uintptr_t};
 
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
@@ -17,6 +17,7 @@ use vectors::LispVectorlikeRef;
 use buffers::LispBufferRef;
 use windows::LispWindowRef;
 use marker::LispMarkerRef;
+use hashtable::LispHashTableRef;
 use fonts::LispFontRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
@@ -24,7 +25,8 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
-                 Qcharacterp, Qlistp, Qintegerp, Qconsp, SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qconsp, SYMBOL_NAME,
+                 PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -94,6 +96,22 @@ impl LispObject {
                        raw >> VALBITS
                    }) as u8;
         unsafe { mem::transmute(res) }
+    }
+
+    pub fn tag_ptr<T>(external: ExternalPtr<T>, ty: Lisp_Type) -> LispObject {
+        let raw = external.as_ptr() as intptr_t;
+        let res;
+        if USE_LSB_TAG {
+            let ptr = raw as intptr_t;
+            let tag = ty as intptr_t;
+            res = (ptr + tag) as EmacsInt;
+        } else {
+            let ptr = raw as EmacsUint as uintptr_t;
+            let tag = ty as EmacsUint as uintptr_t;
+            res = ((tag << VALBITS) + ptr) as EmacsInt;
+        }
+
+        LispObject::from_raw(res)
     }
 
     #[inline]
@@ -180,6 +198,10 @@ impl<T> ExternalPtr<T> {
     }
 
     pub fn as_ptr(&self) -> *const T {
+        self.0
+    }
+
+    pub fn as_mut(&mut self) -> *mut T {
         self.0
     }
 }
@@ -482,6 +504,36 @@ impl LispObject {
         } else {
             None
         })
+    }
+}
+
+impl LispObject {
+    pub fn as_hash_table_or_error(&self) -> LispHashTableRef {
+        if self.is_hash_table() {
+            LispHashTableRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+        } else {
+            wrong_type!(Qhash_table_p, *self);
+        }
+    }
+
+    pub fn as_hash_table(&self) -> Option<LispHashTableRef> {
+        if self.is_hash_table() {
+            Some(LispHashTableRef::new(
+                unsafe { mem::transmute(self.get_untaggedptr()) },
+            ))
+        } else {
+            None
+        }
+    }
+
+    pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
+        let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
+        debug_assert!(
+            object.is_vectorlike() && object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void
+        );
+
+        debug_assert!(object.is_hash_table());
+        object
     }
 }
 

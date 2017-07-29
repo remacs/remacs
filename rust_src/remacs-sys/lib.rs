@@ -18,9 +18,9 @@ extern crate libc;
 
 pub mod libm;
 
-use std::isize;
-use libc::{c_char, c_uchar, c_short, c_int, c_double, c_void, ptrdiff_t, size_t, off_t, time_t,
-           timespec};
+use libc::{c_char, c_uchar, c_short, c_int, c_double, c_float, c_void, ptrdiff_t, size_t, off_t,
+           time_t, timespec};
+
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 
@@ -94,7 +94,7 @@ pub enum Lisp_Type {
     Lisp_Float = 7,
 }
 
-#[repr(isize)]
+#[repr(C)]
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum PseudovecType {
     PVEC_NORMAL_VECTOR = 0,
@@ -135,7 +135,6 @@ pub enum TextCursorKinds {
     HBAR_CURSOR,
 }
 
-// XXX: this can also be char on some archs
 pub type bits_word = size_t;
 
 /// Representation of an Emacs Lisp function symbol.
@@ -1205,6 +1204,32 @@ pub struct emacs_globals {
     pub f_x_use_underline_position_properties: bool,
 }
 
+#[repr(C)]
+pub struct hash_table_test {
+    pub name: Lisp_Object,
+    pub user_hash_function: Lisp_Object,
+    pub user_cmp_function: Lisp_Object,
+    pub cmpfn: extern "C" fn(t: *mut hash_table_test, a: Lisp_Object, b: Lisp_Object) -> bool,
+    pub hashfn: extern "C" fn(t: *mut hash_table_test, a: Lisp_Object) -> EmacsUint,
+}
+
+#[repr(C)]
+pub struct Lisp_Hash_Table {
+    pub header: Lisp_Vectorlike_Header,
+    pub weak: Lisp_Object,
+    pub hash: Lisp_Object,
+    pub next: Lisp_Object,
+    pub index: Lisp_Object,
+    pub count: ptrdiff_t,
+    pub next_free: ptrdiff_t,
+    pub pure_: bool, // pure is a reserved keyword in Rust
+    pub rehash_threshold: c_float,
+    pub rehash_size: c_float,
+    pub key_and_value: Lisp_Object,
+    pub test: hash_table_test,
+    pub next_weak: *mut Lisp_Hash_Table,
+}
+
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static current_thread: *mut thread_state;
@@ -1256,6 +1281,7 @@ extern "C" {
     pub static Qfont_spec: Lisp_Object;
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
+    pub static Qhash_table_p: Lisp_Object;
     pub static Qwrite_region: Lisp_Object;
     pub static Qbuffer_file_coding_system: Lisp_Object;
     pub static Qfont_extra_type: Lisp_Object;
@@ -1277,6 +1303,7 @@ extern "C" {
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
+    pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
     pub fn Fbuffer_file_name(buffer: Lisp_Object) -> Lisp_Object;
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
@@ -1358,6 +1385,13 @@ extern "C" {
         multibyte: bool,
         nchars_return: *mut ptrdiff_t,
     ) -> ptrdiff_t;
+
+    pub fn allocate_pseudovector(
+        vecsize: c_int,
+        offset1: c_int,
+        offset2: c_int,
+        pvec_type: PseudovecType,
+    ) -> *mut Lisp_Vector;
 }
 
 /// Contains C definitions from the font.h header.

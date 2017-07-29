@@ -2693,35 +2693,6 @@ make_hash_table (struct hash_table_test test, EMACS_INT size,
   return table;
 }
 
-
-/* Return a copy of hash table H1.  Keys and values are not copied,
-   only the table itself is.  */
-
-static Lisp_Object
-copy_hash_table (struct Lisp_Hash_Table *h1)
-{
-  Lisp_Object table;
-  struct Lisp_Hash_Table *h2;
-
-  h2 = allocate_hash_table ();
-  *h2 = *h1;
-  h2->key_and_value = Fcopy_sequence (h1->key_and_value);
-  h2->hash = Fcopy_sequence (h1->hash);
-  h2->next = Fcopy_sequence (h1->next);
-  h2->index = Fcopy_sequence (h1->index);
-  XSET_HASH_TABLE (table, h2);
-
-  /* Maybe add this hash table to the list of all weak hash tables.  */
-  if (!NILP (h2->weak))
-    {
-      h2->next_weak = h1->next_weak;
-      h1->next_weak = h2;
-    }
-
-  return table;
-}
-
-
 /* Resize hash table H if it's too full.  If H cannot be resized
    because it's already too large, throw an error.  */
 
@@ -3421,15 +3392,6 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
                           pure);
 }
 
-
-DEFUN ("copy-hash-table", Fcopy_hash_table, Scopy_hash_table, 1, 1, 0,
-       doc: /* Return a copy of hash table TABLE.  */)
-  (Lisp_Object table)
-{
-  return copy_hash_table (check_hash_table (table));
-}
-
-
 DEFUN ("hash-table-count", Fhash_table_count, Shash_table_count, 1, 1, 0,
        doc: /* Return the number of elements in TABLE.  */)
   (Lisp_Object table)
@@ -3620,7 +3582,6 @@ syms_of_fns (void)
   defsubr (&Ssxhash_eql);
   defsubr (&Ssxhash_equal);
   defsubr (&Smake_hash_table);
-  defsubr (&Scopy_hash_table);
   defsubr (&Shash_table_count);
   defsubr (&Shash_table_rehash_size);
   defsubr (&Shash_table_rehash_threshold);
