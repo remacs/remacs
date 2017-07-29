@@ -1,7 +1,9 @@
 use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
 use vectors::LispVectorlikeHeader;
-use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type};
+use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type,
+                 QCtest, Qeq, Qeql, Qequal, QCpurecopy,
+                 QCsize, QCweakness};
 use std::ptr;
 use std::collections::HashMap;
 use alloc::{GCObject};
@@ -47,6 +49,7 @@ impl GCObject for LispHashTable {
     #[inline]
     fn mark(&mut self) {
         self.header.mark();
+        // @TODO make this mark objects according to the mark function in alloc.c
     }
 
     #[inline]
@@ -159,10 +162,37 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
 #[lisp_fn]
 fn make_hash_map(args: &mut [LispObject]) -> LispObject {
     let mut ptr = garbage_collector!().manage_hashtable(LispHashTable::new());
-    let _ = args.len();
-    // for mut i in 0..len {
-    //     i += 1;
-    // }
+    let len = args.len();
+    let mut i = 0;
+    while i < len {
+        if i + 1 > len {
+            panic!("Inproper args list"); // @TODO make this a signal_error
+        }
+
+        let key = args[i];
+        let value = args[i + 1];
+        i += 2;
+        // @TODO handle default case if QCtest is not found etc.
+        if key.to_raw() == unsafe { QCtest } {
+            if value.to_raw() == unsafe { Qeq } {
+
+            } else if value.to_raw() == unsafe { Qeql } {
+
+            } else if value.to_raw() == unsafe { Qequal } {
+
+            } else {
+                // Custom hash table test
+            }
+        } else if key.to_raw() == unsafe { QCpurecopy } {
+
+        } else if key.to_raw() == unsafe { QCsize } {
+            
+        } else if key.to_raw() == unsafe { QCweakness } {
+
+        }
+    }
+
+    // @TODO handle if there are unused args
     
     ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)

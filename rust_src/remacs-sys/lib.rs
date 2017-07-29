@@ -1181,6 +1181,13 @@ extern "C" {
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
     pub static Qhash_table_p: Lisp_Object;
+    pub static QCtest: Lisp_Object;
+    pub static Qeql: Lisp_Object;
+    pub static Qeq: Lisp_Object;
+    pub static Qequal: Lisp_Object;
+    pub static QCpurecopy: Lisp_Object;
+    pub static QCsize: Lisp_Object;
+    pub static QCweakness: Lisp_Object;
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
