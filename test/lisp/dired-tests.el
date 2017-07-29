@@ -89,8 +89,40 @@
       (advice-remove 'dired-query "advice-dired-query")
       (advice-remove 'completing-read "advice-completing-read"))))
 
-(ert-deftest dired-test-bug27243 ()
-  "Test for http://debbugs.gnu.org/27243 ."
+;; (ert-deftest dired-test-bug27243 ()
+;;   "Test for http://debbugs.gnu.org/27243 ."
+;;   (let ((test-dir (make-temp-file "test-dir-" t))
+;;         (dired-auto-revert-buffer t) buffers)
+;;     (with-current-buffer (find-file-noselect test-dir)
+;;       (make-directory "test-subdir"))
+;;     (push (dired test-dir) buffers)
+;;     (unwind-protect
+;;         (let ((buf (current-buffer))
+;;               (pt1 (point))
+;;               (test-file (concat (file-name-as-directory "test-subdir")
+;;                                  "test-file")))
+;;           (write-region "Test" nil test-file nil 'silent nil 'excl)
+;;           ;; Sanity check: point should now be on the subdirectory.
+;;           (should (equal (dired-file-name-at-point)
+;;                          (concat (file-name-as-directory test-dir)
+;;                                  (file-name-as-directory "test-subdir"))))
+;;           (push (dired-find-file) buffers)
+;;           (let ((pt2 (point)))          ; Point is on test-file.
+;;             (switch-to-buffer buf)
+;;             ;; Sanity check: point should now be back on the subdirectory.
+;;             (should (eq (point) pt1))
+;;             ;; Case 1: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#5
+;;             (push (dired-find-file) buffers)
+;;             (should (eq (point) pt2))
+;;             ;; Case 2: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#28
+;;             (push (dired test-dir) buffers)
+;;             (should (eq (point) pt1))))
+;;       (dolist (buf buffers)
+;;         (when (buffer-live-p buf) (kill-buffer buf)))
+;;       (delete-directory test-dir t))))
+
+(ert-deftest dired-test-bug27243-01 ()
+  "Test for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#5 ."
   (let ((test-dir (make-temp-file "test-dir-" t))
         (dired-auto-revert-buffer t) buffers)
     (with-current-buffer (find-file-noselect test-dir)
@@ -111,13 +143,70 @@
             (switch-to-buffer buf)
             ;; Sanity check: point should now be back on the subdirectory.
             (should (eq (point) pt1))
-            ;; Case 1: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#5
             (push (dired-find-file) buffers)
-            (should (eq (point) pt2))
-            ;; Case 2: https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#28
+            (should (eq (point) pt2))))
+      (dolist (buf buffers)
+        (when (buffer-live-p buf) (kill-buffer buf)))
+      (delete-directory test-dir t))))
+
+(ert-deftest dired-test-bug27243-02 ()
+  "Test for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#28 ."
+  (let ((test-dir (make-temp-file "test-dir-" t))
+        (dired-auto-revert-buffer t) buffers)
+    (with-current-buffer (find-file-noselect test-dir)
+      (make-directory "test-subdir"))
+    (push (dired test-dir) buffers)
+    (unwind-protect
+        (let ((buf (current-buffer))
+              (pt1 (point))
+              (test-file (concat (file-name-as-directory "test-subdir")
+                                 "test-file")))
+          (write-region "Test" nil test-file nil 'silent nil 'excl)
+          ;; Sanity check: point should now be on the subdirectory.
+          (should (equal (dired-file-name-at-point)
+                         (concat (file-name-as-directory test-dir)
+                                 (file-name-as-directory "test-subdir"))))
+          (push (dired-find-file) buffers)
+          (let ((pt2 (point)))          ; Point is on test-file.
+            (switch-to-buffer buf)
+            ;; Sanity check: point should now be back on the subdirectory.
+            (should (eq (point) pt1))
             (push (dired test-dir) buffers)
             (should (eq (point) pt1))))
       (dolist (buf buffers)
+        (when (buffer-live-p buf) (kill-buffer buf)))
+      (delete-directory test-dir t))))
+
+(ert-deftest dired-test-bug27243-03 ()
+  "Test for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#61 ."
+  (let ((test-dir (make-temp-file "test-dir-" t))
+        (dired-auto-revert-buffer t)
+        test-subdir1 test-subdir2 allbufs)
+    (unwind-protect
+        (progn
+          (with-current-buffer (find-file-noselect test-dir)
+            (push (current-buffer) allbufs)
+            (make-directory "test-subdir1")
+            (make-directory "test-subdir2")
+            (let ((test-file1 "test-file1")
+                  (test-file2 "test-file2"))
+              (with-current-buffer (find-file-noselect "test-subdir1")
+                (push (current-buffer) allbufs)
+                (write-region "Test1" nil test-file1 nil 'silent nil 'excl))
+              (with-current-buffer (find-file-noselect "test-subdir2")
+                (push (current-buffer) allbufs)
+                (write-region "Test2" nil test-file2 nil 'silent nil 'excl))))
+          ;; Call find-file with a wild card and test point in each file.
+          (let ((buffers (find-file (concat (file-name-as-directory test-dir)
+                                            "*")
+                                    t)))
+            (dolist (buf buffers)
+              (let ((pt (with-current-buffer buf (point))))
+                (switch-to-buffer (find-file-noselect test-dir))
+                (find-file (buffer-name buf))
+                (should (equal (point) pt))))
+            (append buffers allbufs)))
+      (dolist (buf allbufs)
         (when (buffer-live-p buf) (kill-buffer buf)))
       (delete-directory test-dir t))))
 
