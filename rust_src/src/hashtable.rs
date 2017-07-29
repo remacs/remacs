@@ -152,7 +152,9 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
 #[lisp_fn]
 fn make_hash_map() -> LispObject {
     let mut ptr = LispGarbageCollector::manage_hashtable(LispHashTable::new());
-    ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
+    // Commented out so that the C layer doesn't think this is a hashtable, and attempt to access C hash table
+    // fields.
+    // ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
 }
 
@@ -167,6 +169,13 @@ fn map_put(map: LispObject, key: LispObject, value: LispObject) -> LispObject {
 fn map_get(map: LispObject, key: LispObject) -> LispObject {
     let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
     hashmap.map.get(&key).map_or(LispObject::constant_nil(), |key| key.clone())
+}
+
+#[lisp_fn]
+fn map_rm(map: LispObject, key: LispObject) -> LispObject {
+    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    hashmap.map.remove(&key);
+    map
 }
 
 #[test]
