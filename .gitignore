@@ -112,7 +112,6 @@ lisp/subdirs.el
 
 # Dependencies.
 deps/
-.deps/
 
 # Logs and temporaries.
 *.log
