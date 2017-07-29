@@ -158,7 +158,7 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn make_hash_map(args: &mut [LispObject]) -> LispObject {
-    let mut ptr = ::alloc::GC.lock().unwrap().manage_hashtable(LispHashTable::new());
+    let mut ptr = garbage_collector!().manage_hashtable(LispHashTable::new());
     let _ = args.len();
     // for mut i in 0..len {
     //     i += 1;

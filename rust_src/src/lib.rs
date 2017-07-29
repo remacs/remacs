@@ -26,6 +26,8 @@ extern crate serde_derive;
 extern crate serde;
 
 #[macro_use]
+mod alloc;
+#[macro_use]
 mod eval;
 mod lisp;
 mod lists;
@@ -49,8 +51,6 @@ mod hashtable;
 mod interactive;
 mod process;
 mod fonts;
-#[macro_use]
-mod alloc;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;

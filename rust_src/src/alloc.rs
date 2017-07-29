@@ -77,7 +77,7 @@ lazy_static! {
     };
 }
 
-macro_rules! lisp_gc {
+macro_rules! garbage_collector {
     () => { ::alloc::GC.lock().unwrap() }
 }
 
@@ -111,7 +111,7 @@ pub unsafe fn rust_mark_hashtable(ptr: *mut c_void) {
 
 #[no_mangle]
 pub fn rust_sweep() {
-    lisp_gc!().sweep();
+    garbage_collector!().sweep();
 }
 
 #[cfg(test)]
