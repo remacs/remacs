@@ -172,7 +172,10 @@ fn gc_collection_3() {
 #[test]
 fn gc_tests() {
     gc_collection();
+    LispGarbageCollector::sweep();
     gc_collection_2();
+    LispGarbageCollector::sweep();
     gc_collection_3();
+    LispGarbageCollector::sweep();
 }
 

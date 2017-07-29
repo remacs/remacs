@@ -15,6 +15,9 @@
 //! - `USE_LSB_TAG`
 
 extern crate libc;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
 
 pub mod libm;
 
@@ -233,6 +236,7 @@ pub struct Lisp_Symbol {
   4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
 
 #[repr(C)]
+#[derive(Serialize, Deserialize)]
 pub struct Lisp_Vectorlike_Header {
     pub size: ptrdiff_t,
 }

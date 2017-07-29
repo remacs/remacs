@@ -5,10 +5,13 @@ use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type};
 use std::ptr;
 use std::collections::HashMap;
 use alloc::{GCObject, LispGarbageCollector};
+use libc::ptrdiff_t;
+use bincode::{serialize, deserialize, Infinite};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
 #[allow(dead_code)] // @TODO remove
+#[derive(Serialize, Deserialize)]
 #[repr(C)]
 struct HashTableTest {
     name: LispObject,
@@ -26,7 +29,11 @@ impl HashTableTest {
     }
 }
 
+// @TODO add pure copy functionality. We will use a binary serializer, dump the memory into
+// pure alloc space, while calling purecopy on all underlying objects.
+// This should allow us to easily serialize/deserialize the hash table even though it has Rust objects.
 #[allow(dead_code)] // @TODO remove
+#[derive(Serialize, Deserialize)]
 #[repr(C)]
 pub struct LispHashTable {
     header: LispVectorlikeHeader,
@@ -150,11 +157,14 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
 }
 
 #[lisp_fn]
-fn make_hash_map() -> LispObject {
+fn make_hash_map(args: &mut [LispObject]) -> LispObject {
     let mut ptr = LispGarbageCollector::manage_hashtable(LispHashTable::new());
-    // Commented out so that the C layer doesn't think this is a hashtable, and attempt to access C hash table
-    // fields.
-    // ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
+    let len = args.len();
+    for mut i in 0..len {
+        i += 1;
+    }
+    
+    ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
 }
 
@@ -178,6 +188,13 @@ fn map_rm(map: LispObject, key: LispObject) -> LispObject {
     map
 }
 
+#[lisp_fn]
+fn clear(map: LispObject) -> LispObject {
+    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    hashmap.map.clear();
+    map
+}
+
 #[test]
 fn test_table_marking() {
     let mut table = LispHashTable::new();
@@ -190,7 +207,16 @@ fn test_table_marking() {
 
 #[test]
 fn test_hashtable_tag() {
-    let table = make_hash_map();
+    let table = make_hash_map(&mut []);
     assert!(table.is_hash_table());
     assert!(table.is_vectorlike());
+}
+
+#[test]
+fn bin_dump() {
+    let mut table = LispHashTable::new();
+    table.mark();
+    let encoded: Vec<u8> = serialize(&table, Infinite).unwrap();
+    let decoded: LispHashTable = deserialize(&encoded[..]).unwrap();
+    assert!(decoded.is_marked() == table.is_marked());
 }

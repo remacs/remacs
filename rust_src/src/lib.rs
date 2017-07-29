@@ -20,6 +20,10 @@ extern crate rand;
 extern crate sha1;
 extern crate sha2;
 extern crate base64 as base64_crate;
+extern crate bincode;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
 
 #[macro_use]
 mod eval;

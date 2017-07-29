@@ -17,6 +17,9 @@ rand = "0.3.15"
 base64 = "0.6.0"
 sha1 = "0.2.0"
 sha2 = "0.4.2"
+bincode = "0.8.0"
+serde_derive = "1.0.11"
+serde = "1.0"
 
 # Only want this local crate as dependency on Mac OS X
 [target.'cfg(target_os = "macos")'.dependencies]
