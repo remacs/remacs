@@ -4,8 +4,8 @@ use vectors::LispVectorlikeHeader;
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type};
 use std::ptr;
 use std::collections::HashMap;
-use alloc::{GCObject, LispGarbageCollector};
-use libc::ptrdiff_t;
+use alloc::{GCObject};
+#[cfg(test)]
 use bincode::{serialize, deserialize, Infinite};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
@@ -158,11 +158,11 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn make_hash_map(args: &mut [LispObject]) -> LispObject {
-    let mut ptr = LispGarbageCollector::manage_hashtable(LispHashTable::new());
-    let len = args.len();
-    for mut i in 0..len {
-        i += 1;
-    }
+    let mut ptr = ::alloc::GC.lock().unwrap().manage_hashtable(LispHashTable::new());
+    let _ = args.len();
+    // for mut i in 0..len {
+    //     i += 1;
+    // }
     
     ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
@@ -181,19 +181,19 @@ fn map_get(map: LispObject, key: LispObject) -> LispObject {
     hashmap.map.get(&key).map_or(LispObject::constant_nil(), |key| key.clone())
 }
 
-#[lisp_fn]
-fn map_rm(map: LispObject, key: LispObject) -> LispObject {
-    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
-    hashmap.map.remove(&key);
-    map
-}
+// #[lisp_fn]
+// fn map_rm(map: LispObject, key: LispObject) -> LispObject {
+//     let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+//     hashmap.map.remove(&key);
+//     map
+// }
 
-#[lisp_fn]
-fn clear(map: LispObject) -> LispObject {
-    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
-    hashmap.map.clear();
-    map
-}
+// #[lisp_fn]
+// fn clear(map: LispObject) -> LispObject {
+//     let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+//     hashmap.map.clear();
+//     map
+// }
 
 #[test]
 fn test_table_marking() {

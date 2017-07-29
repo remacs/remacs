@@ -49,6 +49,7 @@ mod hashtable;
 mod interactive;
 mod process;
 mod fonts;
+#[macro_use]
 mod alloc;
 
 #[cfg(all(not(test), target_os = "macos"))]

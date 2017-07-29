@@ -73,21 +73,30 @@ pub struct LispGarbageCollector {
 
 lazy_static! {
     pub static ref GC: Mutex<LispGarbageCollector> = {
-        Mutex::new(LispGarbageCollector { managed_hashtables: ManagedList::new() })
+        Mutex::new(LispGarbageCollector::new())
     };
 }
 
+macro_rules! lisp_gc {
+    () => { ::alloc::GC.lock().unwrap() }
+}
+
 impl LispGarbageCollector {
-    pub fn manage_hashtable(table: LispHashTable) -> ExternalPtr<LispHashTable> {
-        GC.lock().unwrap().managed_hashtables.alloc(table)
+    pub fn new() -> LispGarbageCollector {
+        LispGarbageCollector {
+            managed_hashtables: ManagedList::new()
+        }
+    }
+    pub fn manage_hashtable(&mut self, table: LispHashTable) -> ExternalPtr<LispHashTable> {
+        self.managed_hashtables.alloc(table)
     }
 
-    fn sweep_hashtables() {
-        GC.lock().unwrap().managed_hashtables.sweep();
+    fn sweep_hashtables(&mut self) {
+        self.managed_hashtables.sweep();
     }
 
-    pub fn sweep() {
-        Self::sweep_hashtables();
+    pub fn sweep(&mut self) {
+        self.sweep_hashtables();
     }
 }
 
@@ -102,80 +111,73 @@ pub unsafe fn rust_mark_hashtable(ptr: *mut c_void) {
 
 #[no_mangle]
 pub fn rust_sweep() {
-    LispGarbageCollector::sweep();
+    lisp_gc!().sweep();
 }
 
 #[cfg(test)]
 macro_rules! count_managed {
-    ($map: ident) => ({
-        let gc = GC.lock().unwrap();
-        let countvec = gc.$map.managed.iter()
+    ($gc: ident, $map: ident) => ({
+        let countvec = $gc.$map.managed.iter()
             .filter(|x| x.is_some())
             .collect::<Vec<_>>();
         countvec.len()
     })
 }
 
-#[cfg(test)]
+#[test]
 fn gc_collection() {
-    let mut table = LispGarbageCollector::manage_hashtable(LispHashTable::new());
+    let mut gc = LispGarbageCollector::new();
+    let mut table = gc.manage_hashtable(LispHashTable::new());
     table.mark();
-    LispGarbageCollector::sweep();
-    assert!(count_managed!(managed_hashtables) == 1);
+    gc.sweep();
+    assert!(count_managed!(gc, managed_hashtables) == 1);
 
-    LispGarbageCollector::sweep();
-    assert!(count_managed!(managed_hashtables) == 0);
+    gc.sweep();
+    assert!(count_managed!(gc, managed_hashtables) == 0);
 }
 
 #[test]
 fn gc_ptr_management() {
-    let mut table = LispGarbageCollector::manage_hashtable(LispHashTable::new());
+    let mut gc = LispGarbageCollector::new();
+    let mut table = gc.manage_hashtable(LispHashTable::new());
     table.mark();
     assert!(table.is_marked());
     table.unmark();
     assert!(!table.is_marked());
 }
 
-#[cfg(test)]
+#[test]
 fn gc_collection_2() {
-    let mut table = LispGarbageCollector::manage_hashtable(LispHashTable::new());
-    let mut table2 = LispGarbageCollector::manage_hashtable(LispHashTable::new());
-    let mut table3 = LispGarbageCollector::manage_hashtable(LispHashTable::new());
+    let mut gc = LispGarbageCollector::new();
+    let mut table = gc.manage_hashtable(LispHashTable::new());
+    let mut table2 = gc.manage_hashtable(LispHashTable::new());
+    let mut table3 = gc.manage_hashtable(LispHashTable::new());
     table.mark();
     table2.mark();
     table3.mark();
-    LispGarbageCollector::sweep();
-    assert!(count_managed!(managed_hashtables) == 3);
+    gc.sweep();
+    assert!(count_managed!(gc, managed_hashtables) == 3);
     
     table.mark();
     table2.mark();
-    LispGarbageCollector::sweep();
-    assert!(count_managed!(managed_hashtables) == 2);
+    gc.sweep();
+    assert!(count_managed!(gc, managed_hashtables) == 2);
 
-    LispGarbageCollector::sweep();
-    assert!(count_managed!(managed_hashtables) == 0);
+    gc.sweep();
+    assert!(count_managed!(gc, managed_hashtables) == 0);
 }
 
-#[cfg(test)]
+#[test]
 fn gc_collection_3() {
+    let mut gc = LispGarbageCollector::new();
     for idx in 0..1024 {
-        let mut table = LispGarbageCollector::manage_hashtable(LispHashTable::new());
+        let mut table = gc.manage_hashtable(LispHashTable::new());
         if idx % 2 == 0 {
             table.mark();
         }
     }
 
-    LispGarbageCollector::sweep();
-    assert!(count_managed!(managed_hashtables) == 512);
-}
-
-#[test]
-fn gc_tests() {
-    gc_collection();
-    LispGarbageCollector::sweep();
-    gc_collection_2();
-    LispGarbageCollector::sweep();
-    gc_collection_3();
-    LispGarbageCollector::sweep();
+    gc.sweep();
+    assert!(count_managed!(gc, managed_hashtables) == 512);
 }
 
