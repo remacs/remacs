@@ -175,6 +175,7 @@ esac
 
 canonical=$host
 configuration=${host_alias-${build_alias-$host}}
+emacs_uname_r=`uname -r`
 
 dnl Support for --program-prefix, --program-suffix and
 dnl --program-transform-name options
@@ -1222,8 +1223,8 @@ if test $opsys = gnu-linux; then
     AC_SUBST([SETFATTR])
   fi
 fi
-case $opsys,$PAXCTL_notdumped in
-  gnu-linux, | netbsd,)
+case $opsys,$PAXCTL_notdumped,$emacs_uname_r in
+  gnu-linux,,* | netbsd,,[0-7].*)
     AC_PATH_PROG([PAXCTL], [paxctl], [],
       [$PATH$PATH_SEPARATOR/sbin$PATH_SEPARATOR/usr/sbin])
     if test -n "$PAXCTL"; then
@@ -5509,13 +5510,12 @@ to run if these resources are not installed."])
    echo
 fi
 
-if test "${opsys}" = "cygwin"; then
-  case `uname -r` in
-    1.5.*) AC_MSG_WARN([[building Emacs on Cygwin 1.5 is not supported.]])
+case $opsys,$emacs_uname_r in
+  cygwin,1.5.*)
+    AC_MSG_WARN([[building Emacs on Cygwin 1.5 is not supported.]])
            echo
 	   ;;
-  esac
-fi
+esac
 
 # Remove any trailing slashes in these variables.
 case $prefix in
