@@ -193,7 +193,7 @@ This shell should support pipe redirect syntax."
   "Parse one line of grep output, and return it as a match list.
 Moves cursor to end of the match."
   (pcase-let
-      ((`(,grep-re ,file-group ,line-group . ,_) (car (grep-regexp-alist))))
+      ((`(,grep-re ,file-group ,line-group . ,_) (car grep-regexp-alist)))
     (cond ((eq (oref tool :resulttype) 'file)
 	   ;; Search for files
 	   (when (re-search-forward "^\\([^\n]+\\)$" nil t)

@@ -929,7 +929,7 @@ IGNORES is a list of glob patterns."
                                      (expand-file-name dir)
                                      ignores))
        (buf (get-buffer-create " *xref-grep*"))
-       (`(,grep-re ,file-group ,line-group . ,_) (car (grep-regexp-alist)))
+       (`(,grep-re ,file-group ,line-group . ,_) (car grep-regexp-alist))
        (status nil)
        (hits nil))
     (with-current-buffer buf
