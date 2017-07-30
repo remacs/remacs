@@ -2,6 +2,7 @@ use lisp::ExternalPtr;
 use hashtable::LispHashTable;
 use std::sync::Mutex;
 use libc::c_void;
+use std::mem;
 
 pub trait GCObject: Send + Sync {
     fn mark(&mut self);
@@ -13,19 +14,23 @@ static BLOCK_SIZE: usize = 4096;
 
 struct Block<T: GCObject + Sized> {
     managed: Vec<Option<T>>,
-    free_list: Vec<usize>
+    free_list: Vec<usize>,
+}
+
+fn block_capacity<T: GCObject + Sized>() -> usize {
+    BLOCK_SIZE / mem::size_of::<T>()
 }
 
 impl<T: GCObject + Sized> Block<T> {
     fn new() -> Block<T> {
+        let capacity = block_capacity::<T>();
         Block {
-            managed: Vec::with_capacity(BLOCK_SIZE),
-            free_list: Vec::with_capacity(BLOCK_SIZE)
+            managed: Vec::with_capacity(capacity),
+            free_list: Vec::with_capacity(capacity)
         }
     }
 
     fn dealloc(&mut self, idx: usize) {
-        assert!(self.managed.len() > idx);
         self.managed[idx] = None;
         self.free_list.push(idx);
     }
@@ -95,9 +100,10 @@ impl<T: GCObject + Sized> BlockAllocator<T> {
         let curr_block = self.curr_block;
         let managed_len = self.blocks[curr_block].managed.len();
         let free_is_empty = self.blocks[curr_block].free_list.is_empty();
+        let capacity = block_capacity::<T>();
         let ptr;
         
-        if managed_len == BLOCK_SIZE && free_is_empty {
+        if managed_len == capacity && free_is_empty {
             ptr = self.new_block(t);
             self.curr_block += 1;
         } else {
@@ -110,14 +116,12 @@ impl<T: GCObject + Sized> BlockAllocator<T> {
     fn sweep(&mut self) {
         let len = self.blocks.len();
         let mut del = 0;
-        {            
-            for i in 0..len {
-                let empty = self.blocks[i].sweep();
-                if empty {
-                    del += 1;
-                } else if del > 0 {
-                    self.blocks.swap(i - del, i);
-                }
+        for i in 0..len {
+            let empty = self.blocks[i].sweep();
+            if empty {
+                del += 1;
+            } else if del > 0 {
+                self.blocks.swap(i - del, i);
             }
         }
         
@@ -251,14 +255,15 @@ fn gc_collection_3() {
 fn block_alloc_test() {
     let mut gc = LispGarbageCollector::new();
     let mut vec = Vec::new();
-    let count = BLOCK_SIZE + (BLOCK_SIZE / 2);
+    let capacity = block_capacity::<LispHashTable>();
+    let count = capacity + (capacity / 2);
     for _ in 0..count {
         vec.push(gc.manage_hashtable(LispHashTable::new()));
     }
 
     assert!(gc.managed_hashtables.blocks.len() == 2);
 
-    for idx in 0..BLOCK_SIZE {
+    for idx in 0..capacity {
         vec[idx].mark();
     }
 

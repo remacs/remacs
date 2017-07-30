@@ -5,7 +5,7 @@ use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type,
                  QCtest, Qeq, Qeql, Qequal, QCpurecopy,
                  QCsize, QCweakness};
 use std::ptr;
-use std::collections::HashMap;
+use fnv::FnvHashMap;
 use alloc::{GCObject};
 #[cfg(test)]
 use bincode::{serialize, deserialize, Infinite};
@@ -42,7 +42,7 @@ pub struct LispHashTable {
     weak: LispObject,
     is_pure: bool,
     table_test: HashTableTest,
-    map: HashMap<LispObject, LispObject>, // @TODO implement a custom hasher here for lisp objects.
+    map: FnvHashMap<LispObject, LispObject>,
 }
 
 impl GCObject for LispHashTable {
@@ -70,7 +70,7 @@ impl LispHashTable {
             weak: LispObject::constant_nil(),
             is_pure: false,
             table_test: HashTableTest::new(),
-            map: HashMap::new(),
+            map: FnvHashMap::with_capacity_and_hasher(65, Default::default()),
         }
     }
 }
@@ -194,7 +194,7 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
 
     // @TODO handle if there are unused args
     
-    ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
+//    ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
 }
 

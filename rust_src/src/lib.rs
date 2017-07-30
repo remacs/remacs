@@ -24,6 +24,7 @@ extern crate bincode;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
+extern crate fnv;
 
 #[macro_use]
 mod alloc;
