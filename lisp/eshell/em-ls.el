@@ -283,7 +283,7 @@ instead."
 
 (declare-function eshell-extended-glob "em-glob" (glob))
 (declare-function dired-read-dir-and-switches "dired" (str))
-(declare-function dired-goto-next-file "em-glob" ())
+(declare-function dired-goto-next-file "dired" ())
 
 (defun eshell-ls--dired (orig-fun dir-or-list &optional switches)
   (interactive (dired-read-dir-and-switches ""))
