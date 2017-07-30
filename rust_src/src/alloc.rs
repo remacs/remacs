@@ -9,20 +9,22 @@ pub trait GCObject: Send + Sync {
     fn is_marked(&self) -> bool;
 }
 
-struct ManagedList<T: GCObject + Sized> {
+static BLOCK_SIZE: usize = 4096;
+
+struct Block<T: GCObject + Sized> {
     managed: Vec<Option<T>>,
     free_list: Vec<usize>
 }
 
-impl<T: GCObject + Sized> ManagedList<T> {
-    fn new() -> ManagedList<T> {
-        ManagedList {
-            managed: Vec::new(),
-            free_list: Vec::new()
+impl<T: GCObject + Sized> Block<T> {
+    fn new() -> Block<T> {
+        Block {
+            managed: Vec::with_capacity(BLOCK_SIZE),
+            free_list: Vec::with_capacity(BLOCK_SIZE)
         }
     }
 
-    fn free(&mut self, idx: usize) {
+    fn dealloc(&mut self, idx: usize) {
         assert!(self.managed.len() > idx);
         self.managed[idx] = None;
         self.free_list.push(idx);
@@ -46,29 +48,89 @@ impl<T: GCObject + Sized> ManagedList<T> {
         ExternalPtr::new(addr.as_mut().unwrap())
     }
 
-    fn sweep(&mut self) {
+    fn sweep(&mut self) -> bool {
         let len = self.managed.len();
-        let mut one_marked = false;
+        let mut all_none = true;
         for i in 0..len {
             if self.managed[i].is_some() {
                 if self.managed[i].as_ref().unwrap().is_marked() {
                     self.managed[i].as_mut().unwrap().unmark();
-                    one_marked = true;
+                    all_none = false;
                 } else {
-                    self.free(i);
-                }   
+                    self.dealloc(i);
+                }
             }
         }
+    
+        all_none
+    }
+}
 
-        if !one_marked {
-            self.managed.clear();
-            self.free_list.clear();
+struct BlockAllocator<T: GCObject + Sized> {
+    blocks: Vec<Box<Block<T>>>,
+    curr_block: usize
+}
+
+impl<T: GCObject + Sized> BlockAllocator<T> {
+    fn new() -> BlockAllocator<T> {
+        BlockAllocator {
+            blocks: vec![Box::new(Block::new())],
+            curr_block: 0
         }
+    }
+
+    fn new_block(&mut self, t: T) -> ExternalPtr<T> {
+        let mut new_block = Box::new(Block::new());
+        let ptr = new_block.alloc(t);
+        self.blocks.push(new_block);
+        ptr
+    }
+
+    fn alloc(&mut self, t: T) -> ExternalPtr<T> {
+        if self.blocks.is_empty() {
+            self.curr_block = 0;
+            return self.new_block(t);
+        }
+        
+        let curr_block = self.curr_block;
+        let managed_len = self.blocks[curr_block].managed.len();
+        let free_is_empty = self.blocks[curr_block].free_list.is_empty();
+        let ptr;
+        
+        if managed_len == BLOCK_SIZE && free_is_empty {
+            ptr = self.new_block(t);
+            self.curr_block += 1;
+        } else {
+            ptr = self.blocks[curr_block].alloc(t);
+        }
+
+        ptr
+    }
+
+    fn sweep(&mut self) {
+        let len = self.blocks.len();
+        let mut del = 0;
+        {            
+            for i in 0..len {
+                let empty = self.blocks[i].sweep();
+                if empty {
+                    del += 1;
+                } else if del > 0 {
+                    self.blocks.swap(i - del, i);
+                }
+            }
+        }
+        
+        if del > 0 {
+            self.blocks.truncate(len - del);
+        }
+
+        self.curr_block = 0;
     }
 }
 
 pub struct LispGarbageCollector {
-    managed_hashtables: ManagedList<LispHashTable>
+    managed_hashtables: BlockAllocator<LispHashTable>
 }
 
 lazy_static! {
@@ -84,19 +146,18 @@ macro_rules! garbage_collector {
 impl LispGarbageCollector {
     pub fn new() -> LispGarbageCollector {
         LispGarbageCollector {
-            managed_hashtables: ManagedList::new()
+            managed_hashtables: BlockAllocator::new()
         }
     }
     pub fn manage_hashtable(&mut self, table: LispHashTable) -> ExternalPtr<LispHashTable> {
+        // @TODO have equiv of
+        // consing_since_gc += nbytes;
+        // vector_sells_consed += len;
         self.managed_hashtables.alloc(table)
     }
 
-    fn sweep_hashtables(&mut self) {
-        self.managed_hashtables.sweep();
-    }
-
     pub fn sweep(&mut self) {
-        self.sweep_hashtables();
+        self.managed_hashtables.sweep();
     }
 }
 
@@ -117,10 +178,15 @@ pub fn rust_sweep() {
 #[cfg(test)]
 macro_rules! count_managed {
     ($gc: ident, $map: ident) => ({
-        let countvec = $gc.$map.managed.iter()
-            .filter(|x| x.is_some())
-            .collect::<Vec<_>>();
-        countvec.len()
+        let mut count = 0;
+        for x in $gc.$map.blocks.iter() {
+            let countvec = x.managed.iter()
+                .filter(|x| x.is_some())
+                .collect::<Vec<_>>();
+            count += countvec.len();
+        }
+
+        count
     })
 }
 
@@ -181,3 +247,26 @@ fn gc_collection_3() {
     assert!(count_managed!(gc, managed_hashtables) == 512);
 }
 
+#[test]
+fn block_alloc_test() {
+    let mut gc = LispGarbageCollector::new();
+    let mut vec = Vec::new();
+    let count = BLOCK_SIZE + (BLOCK_SIZE / 2);
+    for _ in 0..count {
+        vec.push(gc.manage_hashtable(LispHashTable::new()));
+    }
+
+    assert!(gc.managed_hashtables.blocks.len() == 2);
+
+    for idx in 0..BLOCK_SIZE {
+        vec[idx].mark();
+    }
+
+    gc.sweep();
+    assert!(gc.managed_hashtables.blocks.len() == 1);
+
+    gc.sweep();
+    assert!(gc.managed_hashtables.blocks.len() == 0);
+    gc.manage_hashtable(LispHashTable::new());
+    assert!(gc.managed_hashtables.blocks.len() == 1);
+}

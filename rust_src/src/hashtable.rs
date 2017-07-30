@@ -236,13 +236,6 @@ fn test_table_marking() {
 }
 
 #[test]
-fn test_hashtable_tag() {
-    let table = make_hash_map(&mut []);
-    assert!(table.is_hash_table());
-    assert!(table.is_vectorlike());
-}
-
-#[test]
 fn bin_dump() {
     let mut table = LispHashTable::new();
     table.mark();
