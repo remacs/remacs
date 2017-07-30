@@ -1209,19 +1209,20 @@ If HDR is non-nil, insert a header line with the directory name."
 	 ;; as indicated by `ls-lisp-use-insert-directory-program'.
 	 (not (and (featurep 'ls-lisp)
 		   (null ls-lisp-use-insert-directory-program)))
-         (not (and (featurep 'eshell) (bound-and-true-p eshell-ls-use-in-dired)))
-	 (or (if (eq dired-use-ls-dired 'unspecified)
+         (not (and (featurep 'eshell)
+                   (bound-and-true-p eshell-ls-use-in-dired)))
+	 (or (file-remote-p dir)
+             (if (eq dired-use-ls-dired 'unspecified)
 		 ;; Check whether "ls --dired" gives exit code 0, and
 		 ;; save the answer in `dired-use-ls-dired'.
 		 (or (setq dired-use-ls-dired
 			   (eq 0 (call-process insert-directory-program
-					     nil nil nil "--dired")))
+                                               nil nil nil "--dired")))
 		     (progn
 		       (message "ls does not support --dired; \
 see `dired-use-ls-dired' for more details.")
 		       nil))
-	       dired-use-ls-dired)
-	     (file-remote-p dir)))
+	       dired-use-ls-dired)))
 	(setq switches (concat "--dired " switches)))
     ;; Expand directory wildcards and fill file-list.
     (let ((dir-wildcard (insert-directory-wildcard-in-dir-p dir)))
@@ -1229,13 +1230,18 @@ see `dired-use-ls-dired' for more details.")
              (setq switches (concat "-d " switches))
              (let ((default-directory (car dir-wildcard))
                    (script (format "ls %s %s" switches (cdr dir-wildcard))))
-               (unless (zerop (process-file "/bin/sh" nil (current-buffer) nil "-c" script))
-                 (user-error "%s: No files matching wildcard" (cdr dir-wildcard)))
+               (unless
+                   (zerop
+                    (process-file
+                     "/bin/sh" nil (current-buffer) nil "-c" script))
+                 (user-error
+                  "%s: No files matching wildcard" (cdr dir-wildcard)))
                (insert-directory-clean (point) switches)))
             (t
-             ;; We used to specify the C locale here, to force English month names;
-             ;; but this should not be necessary any more,
-             ;; with the new value of `directory-listing-before-filename-regexp'.
+             ;; We used to specify the C locale here, to force English
+             ;; month names; but this should not be necessary any
+             ;; more, with the new value of
+             ;; `directory-listing-before-filename-regexp'.
              (if file-list
 	         (dolist (f file-list)
 	           (let ((beg (point)))
