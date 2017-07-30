@@ -2202,6 +2202,108 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))))))
 
+(ert-deftest tramp-test17-dired-with-wildcards ()
+  "Check `dired' with wildcards."
+  (skip-unless (tramp--test-enabled))
+  (skip-unless (fboundp 'insert-directory-wildcard-in-dir-p))
+
+  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+    (let* ((tmp-name1
+	    (expand-file-name (tramp--test-make-temp-name nil quoted)))
+	   (tmp-name2
+            (expand-file-name (tramp--test-make-temp-name nil quoted)))
+	   (tmp-name3 (expand-file-name "foo" tmp-name1))
+	   (tmp-name4 (expand-file-name "bar" tmp-name2))
+	   (tramp-test-temporary-file-directory
+	    (funcall
+	     (if quoted 'tramp-compat-file-name-quote 'identity)
+	     tramp-test-temporary-file-directory))
+	   buffer)
+      (unwind-protect
+	  (progn
+	    (make-directory tmp-name1)
+	    (write-region "foo" nil tmp-name3)
+	    (should (file-directory-p tmp-name1))
+	    (should (file-exists-p tmp-name3))
+	    (make-directory tmp-name2)
+	    (write-region "foo" nil tmp-name4)
+	    (should (file-directory-p tmp-name2))
+	    (should (file-exists-p tmp-name4))
+
+	    ;; Check for expanded directory names.
+	    (with-current-buffer
+		(setq buffer
+		      (dired-noselect
+		       (expand-file-name
+			"tramp-test*" tramp-test-temporary-file-directory)))
+	      (goto-char (point-min))
+	      (should
+	       (re-search-forward
+		(regexp-quote
+		 (file-relative-name
+		  tmp-name1 tramp-test-temporary-file-directory))))
+	      (goto-char (point-min))
+	      (should
+	       (re-search-forward
+		(regexp-quote
+		 (file-relative-name
+		  tmp-name2 tramp-test-temporary-file-directory)))))
+	    (kill-buffer buffer)
+
+	    ;; Check for expanded directory and file names.
+	    (with-current-buffer
+		(setq buffer
+		      (dired-noselect
+		       (expand-file-name
+			"tramp-test*/*" tramp-test-temporary-file-directory)))
+	      (goto-char (point-min))
+	      (should
+	       (re-search-forward
+		(regexp-quote
+		 (file-relative-name
+		  tmp-name3 tramp-test-temporary-file-directory))))
+	      (goto-char (point-min))
+	      (should
+	       (re-search-forward
+		(regexp-quote
+		 (file-relative-name
+		  tmp-name4
+		  tramp-test-temporary-file-directory)))))
+	    (kill-buffer buffer)
+
+	    ;; Check for special characters.
+	    (setq tmp-name3 (expand-file-name "*?" tmp-name1))
+	    (setq tmp-name4 (expand-file-name "[a-z0-9]" tmp-name2))
+	    (write-region "foo" nil tmp-name3)
+	    (should (file-exists-p tmp-name3))
+	    (write-region "foo" nil tmp-name4)
+	    (should (file-exists-p tmp-name4))
+
+	    (with-current-buffer
+		(setq buffer
+		      (dired-noselect
+		       (expand-file-name
+			"tramp-test*/*" tramp-test-temporary-file-directory)))
+	      (goto-char (point-min))
+	      (should
+	       (re-search-forward
+		(regexp-quote
+		 (file-relative-name
+		  tmp-name3 tramp-test-temporary-file-directory))))
+	      (goto-char (point-min))
+	      (should
+	       (re-search-forward
+		(regexp-quote
+		 (file-relative-name
+		  tmp-name4
+		  tramp-test-temporary-file-directory)))))
+	    (kill-buffer buffer))
+
+	;; Cleanup.
+	(ignore-errors (kill-buffer buffer))
+	(ignore-errors (delete-directory tmp-name1 'recursive))
+	(ignore-errors (delete-directory tmp-name2 'recursive))))))
+
 (ert-deftest tramp-test18-file-attributes ()
   "Check `file-attributes'.
 This tests also `file-readable-p', `file-regular-p' and
@@ -3812,11 +3914,11 @@ process sentinels.  They shall not disturb each other."
                   (tramp--test-message
                    "Trace 2 action %d %s %s" count buf (current-time-string))
                   (accept-process-output proc 0.1 nil 0)
-                  ;; Regular operation.
                   (tramp--test-message
                    "Trace 3 action %d %s %s" count buf (current-time-string))
                   ;; Give the watchdog a chance.
                   (read-event nil nil 0.01)
+                  ;; Regular operation.
                   (if (= count 2)
                       (if (= (length buffers) 1)
                           (tramp--test-instrument-test-case 10
