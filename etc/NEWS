@@ -609,6 +609,9 @@ paragraphs, for the purposes of bidirectional display.
 ** Dired
 
 +++
+*** Dired supports wildcards in the directory part of the file names.
+
++++
 *** You can now use '`?`' in 'dired-do-shell-command'; as ' ? ', it gets replaced
 by the current file name.
 

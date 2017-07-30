@@ -920,11 +920,12 @@ periodically reverts at specified time intervals."
 			   "Directory has changed on disk; type \\[revert-buffer] to update Dired")))))
       ;; Else a new buffer
       (setq default-directory
-	    ;; We can do this unconditionally
-	    ;; because dired-noselect ensures that the name
-	    ;; is passed in directory name syntax
-	    ;; if it was the name of a directory at all.
-	    (file-name-directory dirname))
+            (or (car-safe (insert-directory-wildcard-in-dir-p dirname))
+	        ;; We can do this unconditionally
+	        ;; because dired-noselect ensures that the name
+	        ;; is passed in directory name syntax
+	        ;; if it was the name of a directory at all.
+	        (file-name-directory dirname)))
       (or switches (setq switches dired-listing-switches))
       (if mode (funcall mode)
         (dired-mode dir-or-list switches))
@@ -1056,13 +1057,14 @@ wildcards, erases the buffer, and builds the subdir-alist anew
 	     (not file-list))
 	;; If we are reading a whole single directory...
 	(dired-insert-directory dir dired-actual-switches nil nil t)
-      (if (not (file-readable-p
-		(directory-file-name (file-name-directory dir))))
-	  (error "Directory %s inaccessible or nonexistent" dir)
-	;; Else treat it as a wildcard spec
-	;; unless we have an explicit list of files.
-	(dired-insert-directory dir dired-actual-switches
-				file-list (not file-list) t)))))
+      (if (and (not (insert-directory-wildcard-in-dir-p dir))
+               (not (file-readable-p
+		     (directory-file-name (file-name-directory dir)))))
+	  (error "Directory %s inaccessible or nonexistent" dir))
+      ;; Else treat it as a wildcard spec
+      ;; unless we have an explicit list of files.
+      (dired-insert-directory dir dired-actual-switches
+			      file-list (not file-list) t))))
 
 (defun dired-align-file (beg end)
   "Align the fields of a file to the ones of surrounding lines.
@@ -1221,16 +1223,26 @@ see `dired-use-ls-dired' for more details.")
 	       dired-use-ls-dired)
 	     (file-remote-p dir)))
 	(setq switches (concat "--dired " switches)))
-    ;; We used to specify the C locale here, to force English month names;
-    ;; but this should not be necessary any more,
-    ;; with the new value of `directory-listing-before-filename-regexp'.
-    (if file-list
-	(dolist (f file-list)
-	  (let ((beg (point)))
-	    (insert-directory f switches nil nil)
-	    ;; Re-align fields, if necessary.
-	    (dired-align-file beg (point))))
-      (insert-directory dir switches wildcard (not wildcard)))
+    ;; Expand directory wildcards and fill file-list.
+    (let ((dir-wildcard (insert-directory-wildcard-in-dir-p dir)))
+      (cond (dir-wildcard
+             (setq switches (concat "-d " switches))
+             (let ((default-directory (car dir-wildcard))
+                   (script (format "ls %s %s" switches (cdr dir-wildcard))))
+               (unless (zerop (process-file "/bin/sh" nil (current-buffer) nil "-c" script))
+                 (user-error "%s: No files matching wildcard" (cdr dir-wildcard)))
+               (insert-directory-clean (point) switches)))
+            (t
+             ;; We used to specify the C locale here, to force English month names;
+             ;; but this should not be necessary any more,
+             ;; with the new value of `directory-listing-before-filename-regexp'.
+             (if file-list
+	         (dolist (f file-list)
+	           (let ((beg (point)))
+	             (insert-directory f switches nil nil)
+	             ;; Re-align fields, if necessary.
+	             (dired-align-file beg (point))))
+               (insert-directory dir switches wildcard (not wildcard))))))
     ;; Quote certain characters, unless ls quoted them for us.
     (if (not (dired-switches-escape-p dired-actual-switches))
 	(save-excursion
@@ -1280,11 +1292,14 @@ see `dired-use-ls-dired' for more details.")
 	  ;; Note that dired-build-subdir-alist will replace the name
 	  ;; by its expansion, so it does not matter whether what we insert
 	  ;; here is fully expanded, but it should be absolute.
-	  (insert "  " (directory-file-name (file-name-directory dir)) ":\n")
+	  (insert "  " (or (car-safe (insert-directory-wildcard-in-dir-p dir))
+                           (directory-file-name (file-name-directory dir))) ":\n")
 	  (setq content-point (point)))
 	(when wildcard
 	  ;; Insert "wildcard" line where "total" line would be for a full dir.
-	  (insert "  wildcard " (file-name-nondirectory dir) "\n")))
+	  (insert "  wildcard " (or (cdr-safe (insert-directory-wildcard-in-dir-p dir))
+                                    (file-name-nondirectory dir))
+                  "\n")))
       (dired-insert-set-properties content-point (point)))))
 
 (defun dired-insert-set-properties (beg end)

@@ -277,5 +277,43 @@
       (customize-set-variable 'eshell-ls-use-in-dired orig)
       (and (buffer-live-p buf) (kill-buffer)))))
 
+(ert-deftest dired-test-bug27631 ()
+  "Test for http://debbugs.gnu.org/27631 ."
+  (let* ((dir (make-temp-file "bug27631" 'dir))
+         (dir1 (expand-file-name "dir1" dir))
+         (dir2 (expand-file-name "dir2" dir))
+         (default-directory dir)
+         buf)
+    (unwind-protect
+        (progn
+          (make-directory dir1)
+          (make-directory dir2)
+          (with-temp-file (expand-file-name "a.txt" dir1))
+          (with-temp-file (expand-file-name "b.txt" dir2))
+          (setq buf (dired (expand-file-name "dir*/*.txt" dir)))
+          (dired-toggle-marks)
+          (should (cdr (dired-get-marked-files)))
+          ;; Must work with ls-lisp ...
+	  (require 'ls-lisp)
+          (kill-buffer buf)
+	  (setq default-directory dir)
+	  (let (ls-lisp-use-insert-directory-program)
+            (setq buf (dired (expand-file-name "dir*/*.txt" dir)))
+            (dired-toggle-marks)
+            (should (cdr (dired-get-marked-files))))
+	  ;; ... And with em-ls as well.
+	  (kill-buffer buf)
+	  (setq default-directory dir)
+	  (unload-feature 'ls-lisp 'force)
+	  (require 'em-ls)
+	  (let ((orig eshell-ls-use-in-dired))
+	    (customize-set-value 'eshell-ls-use-in-dired t)
+	    (setq buf (dired (expand-file-name "dir*/*.txt" dir)))
+	    (dired-toggle-marks)
+	    (should (cdr (dired-get-marked-files)))))
+      (delete-directory dir 'recursive)
+      (when (buffer-live-p buf) (kill-buffer buf)))))
+
+
 (provide 'dired-tests)
 ;; dired-tests.el ends here
