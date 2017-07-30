@@ -116,3 +116,16 @@ pub fn current_buffer() -> LispObject {
         ))
     }
 }
+
+/// Return name of file BUFFER is visiting, or nil if none.
+/// No argument or nil as argument means use the current buffer.
+#[lisp_fn(min = "0")]
+pub fn buffer_file_name(buffer: LispObject) -> LispObject {
+    let buf = if buffer.is_nil() {
+        ThreadState::current_buffer()
+    } else {
+        buffer.as_buffer_or_error()
+    };
+
+    LispObject::from_raw(buf.filename)
+}

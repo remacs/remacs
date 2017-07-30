@@ -26,7 +26,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
-                 Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qchar_table_p, Qconsp,
+                 Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qchar_table_p, Qconsp, Qbufferp,
                  SYMBOL_NAME, PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -433,6 +433,12 @@ impl LispObject {
 
     pub fn as_buffer(self) -> Option<LispBufferRef> {
         self.as_vectorlike().map_or(None, |v| v.as_buffer())
+    }
+
+    pub fn as_buffer_or_error(self) -> LispBufferRef {
+        self.as_buffer().unwrap_or_else(
+            || wrong_type!(Qbufferp, self),
+        )
     }
 
     pub fn is_char_table(self) -> bool {
