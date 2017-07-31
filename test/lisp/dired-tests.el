@@ -21,7 +21,6 @@
 (require 'ert)
 (require 'dired)
 (require 'nadvice)
-(require 'ls-lisp)
 
 (ert-deftest dired-autoload ()
   "Tests to see whether dired-x has been autoloaded"
@@ -212,6 +211,7 @@
 
 (ert-deftest dired-test-bug27693 ()
   "Test for http://debbugs.gnu.org/27693 ."
+  (require 'ls-lisp)
   (let ((dir (expand-file-name "lisp" source-directory))
         (size "")
         ls-lisp-use-insert-directory-program buf)
@@ -223,6 +223,7 @@
                        (file-attributes (dired-get-filename)))))
           (search-backward-regexp size nil t)
           (should (looking-back "[[:space:]]" (1- (point)))))
+      (unload-feature 'ls-lisp 'force)
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
 (ert-deftest dired-test-bug7131 ()
@@ -244,6 +245,7 @@
 (ert-deftest dired-test-bug27762 ()
   "Test for http://debbugs.gnu.org/27762 ."
   :expected-result :failed
+  (require 'ls-lisp)
   (let* ((dir source-directory)
          (default-directory dir)
          (files (mapcar (lambda (f) (concat "src/" f))
@@ -262,6 +264,7 @@
           (should (looking-at "src"))
           (next-line) ; File names must be aligned.
           (should (looking-at "src")))
+      (unload-feature 'ls-lisp 'force)
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
 (ert-deftest dired-test-bug27817 ()
@@ -275,6 +278,7 @@
           (customize-set-variable 'eshell-ls-use-in-dired t)
           (should (setq buf (dired source-directory))))
       (customize-set-variable 'eshell-ls-use-in-dired orig)
+      (unload-feature 'em-ls 'force)
       (and (buffer-live-p buf) (kill-buffer)))))
 
 (ert-deftest dired-test-bug27631 ()
@@ -311,6 +315,7 @@
 	    (setq buf (dired (expand-file-name "dir*/*.txt" dir)))
 	    (dired-toggle-marks)
 	    (should (cdr (dired-get-marked-files)))))
+      (unload-feature 'em-ls 'force)
       (delete-directory dir 'recursive)
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
