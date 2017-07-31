@@ -47,6 +47,7 @@ mod interactive;
 mod process;
 mod fonts;
 mod threads;
+mod chartable;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -118,6 +119,9 @@ pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
 pub use buffers::Fcurrent_buffer;
+
+// used in chartab.c
+pub use chartable::Fset_char_table_parent;
 
 // Used in process.c
 pub use str2sig::str2sig;
@@ -253,6 +257,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*crypto::Ssecure_hash);
         defsubr(&*crypto::Sbuffer_hash);
         defsubr(&*interactive::Sprefix_numeric_value);
+        defsubr(&*chartable::Schar_table_subtype);
+        defsubr(&*chartable::Schar_table_parent);
+        defsubr(&*chartable::Sset_char_table_parent);
 
         defsubr(&*floatfns::Sisnan);
         defsubr(&*floatfns::Sacos);
