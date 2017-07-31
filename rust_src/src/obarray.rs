@@ -1,8 +1,8 @@
 use libc;
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
-use remacs_sys::{Lisp_Object, check_obarray, check_vobarray, Fpurecopy, intern_driver,
-                 make_unibyte_string, oblookup, purify_is_nil};
+use remacs_sys::{Lisp_Object, check_obarray, check_vobarray, Fpurecopy, globals, intern_driver,
+                 make_unibyte_string, oblookup};
 
 /// A lisp object containing an `obarray`.
 pub struct LispObarrayRef(LispObject);
@@ -91,15 +91,15 @@ impl LispObarrayRef {
         let tem = self.lookup(string);
         if tem.is_symbol() {
             tem
-        } else if unsafe { purify_is_nil() } {
-            LispObject::from_raw(unsafe {
-                intern_driver(string.to_raw(), self.0.to_raw(), tem.to_raw())
-            })
-        } else {
+        } else if LispObject::from_raw(unsafe { globals.f_Vpurify_flag }).is_not_nil() {
             // When Emacs is running lisp code to dump to an executable, make
             // use of pure storage.
             LispObject::from_raw(unsafe {
                 intern_driver(Fpurecopy(string.to_raw()), self.0.to_raw(), tem.to_raw())
+            })
+        } else {
+            LispObject::from_raw(unsafe {
+                intern_driver(string.to_raw(), self.0.to_raw(), tem.to_raw())
             })
         }
     }

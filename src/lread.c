@@ -4017,12 +4017,6 @@ check_vobarray(void)
   return check_obarray (Vobarray);
 }
 
-bool
-purify_is_nil(void)
-{
-  return NILP(Vpurify_flag) ? true : false;
-}
-
 /* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
 static Lisp_Object

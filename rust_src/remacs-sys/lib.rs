@@ -1398,7 +1398,6 @@ extern "C" {
     ) -> Lisp_Object;
 
     pub fn check_obarray(obarray: Lisp_Object) -> Lisp_Object;
-    pub fn purify_is_nil() -> bool;
     pub fn check_vobarray() -> Lisp_Object;
     pub fn intern_1(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn intern_driver(
