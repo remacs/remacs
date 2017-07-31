@@ -61,6 +61,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module crypto/sha1:
   # Code from module crypto/sha256:
   # Code from module crypto/sha512:
+  # Code from module d-type:
   # Code from module diffseq:
   # Code from module dirent:
   # Code from module dirfd:
@@ -199,6 +200,7 @@ AC_DEFUN([gl_INIT],
   gl_SHA1
   gl_SHA256
   gl_SHA512
+  gl_CHECK_TYPE_STRUCT_DIRENT_D_TYPE
   gl_DIRENT_H
   AC_REQUIRE([gl_C99_STRTOLD])
   gl_FUNC_DUP2
@@ -968,6 +970,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/count-leading-zeros.m4
   m4/count-one-bits.m4
   m4/count-trailing-zeros.m4
+  m4/d-type.m4
   m4/dirent_h.m4
   m4/dirfd.m4
   m4/dup2.m4
