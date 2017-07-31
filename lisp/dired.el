@@ -1228,6 +1228,11 @@ see `dired-use-ls-dired' for more details.")
     (let ((dir-wildcard (insert-directory-wildcard-in-dir-p dir)))
       (cond (dir-wildcard
              (setq switches (concat "-d " switches))
+             ;; We don't know whether the remote ls supports
+             ;; "--dired", so we cannot add it to the `process-file'
+             ;; call for wildcards.
+             (when (file-remote-p dir)
+               (setq switches (dired-replace-in-string "--dired" "" switches)))
              (let ((default-directory (car dir-wildcard))
                    (script (format "ls %s %s" switches (cdr dir-wildcard))))
                (unless

@@ -123,9 +123,10 @@ being the result.")
   (cdr tramp--test-enabled-checked))
 
 (defun tramp--test-make-temp-name (&optional local quoted)
-  "Create a temporary file name for test.
-If LOCAL is non-nil, a local file is created.
-If QUOTED is non-nil, the local part of the file is quoted."
+  "Return a temporary file name for test.
+If LOCAL is non-nil, a local file name is returned.
+If QUOTED is non-nil, the local part of the file name is quoted.
+The temporary file is not created."
   (funcall
    (if quoted 'tramp-compat-file-name-quote 'identity)
    (expand-file-name
@@ -2204,6 +2205,8 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 (ert-deftest tramp-test17-dired-with-wildcards ()
   "Check `dired' with wildcards."
   (skip-unless (tramp--test-enabled))
+  (skip-unless (tramp--test-sh-p))
+  ;; Since Emacs 26.1.
   (skip-unless (fboundp 'insert-directory-wildcard-in-dir-p))
 
   (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
@@ -3107,6 +3110,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
+  ;; Since Emacs 26.1.
   (skip-unless (and (fboundp 'connection-local-set-profile-variables)
 		    (fboundp 'connection-local-set-profiles)))
 
@@ -3316,6 +3320,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 (ert-deftest tramp-test33-make-nearby-temp-file ()
   "Check `make-nearby-temp-file' and `temporary-file-directory'."
   (skip-unless (tramp--test-enabled))
+  ;; Since Emacs 26.1.
   (skip-unless
    (and (fboundp 'make-nearby-temp-file) (fboundp 'temporary-file-directory)))
 
@@ -3902,7 +3907,7 @@ process sentinels.  They shall not disturb each other."
                        (count (process-get proc 'bar)))
                   (tramp--test-message
                    "Start action %d %s %s" count buf (current-time-string))
-                  ;; Regular operation.
+                  ;; Regular operation prior process action.
                   (if (= count 0)
                       (should-not (file-attributes file))
                     (should (file-attributes file)))
@@ -3911,7 +3916,7 @@ process sentinels.  They shall not disturb each other."
                   (accept-process-output proc 0.1 nil 0)
                   ;; Give the watchdog a chance.
                   (read-event nil nil 0.01)
-                  ;; Regular operation.
+                  ;; Regular operation post process action.
                   (tramp--test-instrument-test-case 10
                     (if (= count 2)
                         (should-not (file-attributes file))
