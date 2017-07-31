@@ -149,7 +149,6 @@ handled properly.  BODY shall not contain a timeout."
 	 (debug-ignored-errors
 	  (cons "^make-symbolic-link not supported$" debug-ignored-errors))
 	 inhibit-message)
-     (message "tramp--test-instrument-test-case %s" tramp-verbose)
      (unwind-protect
 	 (let ((tramp--test-instrument-test-case-p t)) ,@body)
        ;; Unwind forms.
@@ -3908,23 +3907,15 @@ process sentinels.  They shall not disturb each other."
                       (should-not (file-attributes file))
                     (should (file-attributes file)))
                   ;; Send string to process.
-                  (tramp--test-message
-                   "Trace 1 action %d %s %s" count buf (current-time-string))
                   (process-send-string proc (format "%s\n" (buffer-name buf)))
-                  (tramp--test-message
-                   "Trace 2 action %d %s %s" count buf (current-time-string))
                   (accept-process-output proc 0.1 nil 0)
-                  (tramp--test-message
-                   "Trace 3 action %d %s %s" count buf (current-time-string))
                   ;; Give the watchdog a chance.
                   (read-event nil nil 0.01)
                   ;; Regular operation.
-                  (if (= count 2)
-                      (if (= (length buffers) 1)
-                          (tramp--test-instrument-test-case 10
-                            (should-not (file-attributes file)))
-                        (should-not (file-attributes file)))
-                    (should (file-attributes file)))
+                  (tramp--test-instrument-test-case 10
+                    (if (= count 2)
+                        (should-not (file-attributes file))
+                      (should (file-attributes file))))
                   (tramp--test-message
                    "Stop action %d %s %s" count buf (current-time-string))
                   (process-put proc 'bar (1+ count))
