@@ -279,7 +279,7 @@ try_nocreate (char *tmpl, void *flags _GL_UNUSED)
 {
   struct_stat64 st;
 
-  if (__lxstat64 (_STAT_VER, tmpl, &st) == 0)
+  if (__lxstat64 (_STAT_VER, tmpl, &st) == 0 || errno == EOVERFLOW)
     __set_errno (EEXIST);
   return errno == ENOENT ? 0 : -1;
 }
