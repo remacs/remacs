@@ -124,6 +124,11 @@
   "Test for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#5 ."
   (let ((test-dir (file-name-as-directory (make-temp-file "test-dir-" t)))
         (dired-auto-revert-buffer t) buffers)
+    ;; On MS-Windows, get rid of 8+3 short names in test-dir, if the
+    ;; corresponding long file names exist, otherwise such names trip
+    ;; dired-buffers-for-dir.
+    (if (eq system-type 'windows-nt)
+        (setq test-dir (file-truename test-dir)))
     (should-not (dired-buffers-for-dir test-dir))
     (with-current-buffer (find-file-noselect test-dir)
       (make-directory "test-subdir"))
@@ -158,6 +163,11 @@
   "Test for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#28 ."
   (let ((test-dir (make-temp-file "test-dir-" t))
         (dired-auto-revert-buffer t) buffers)
+    ;; On MS-Windows, get rid of 8+3 short names in test-dir, if the
+    ;; corresponding long file names exist, otherwise such names trip
+    ;; string comparisons below.
+    (if (eq system-type 'windows-nt)
+        (setq test-dir (file-truename test-dir)))
     (with-current-buffer (find-file-noselect test-dir)
       (make-directory "test-subdir"))
     (push (dired test-dir) buffers)
