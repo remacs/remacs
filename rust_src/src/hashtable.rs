@@ -65,12 +65,16 @@ impl GCObject for LispHashTable {
 
 impl LispHashTable {
     pub fn new() -> LispHashTable {
+        Self::with_capacity(65)
+    }
+
+    pub fn with_capacity(cap: usize) -> LispHashTable {
         LispHashTable {
             header: LispVectorlikeHeader::new(),
             weak: LispObject::constant_nil(),
             is_pure: false,
             table_test: HashTableTest::new(),
-            map: FnvHashMap::with_capacity_and_hasher(65, Default::default()),
+            map: FnvHashMap::with_capacity_and_hasher(cap, Default::default()),
         }
     }
 }
@@ -193,8 +197,12 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
     }
 
     // @TODO handle if there are unused args
-    
-//    ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
+    // @TODO Examine this tagging API. This is 'if false'd because if we tag as it as hashmap, it
+    // will be treated like a Lisp_Hash_Table in other places in the code, which will cause
+    // memory errors
+    if false {
+        ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
+    }
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
 }
 

@@ -17,16 +17,20 @@ struct Block<T: GCObject + Sized> {
     free_list: Vec<usize>,
 }
 
+#[inline]
 fn block_capacity<T: GCObject + Sized>() -> usize {
     BLOCK_SIZE / mem::size_of::<T>()
 }
 
+/// A contiguous block of memory, storing BLOCK_SIZE / size_of::<T>()
+/// objects in memory. These objects are gaurenteed to have a stable memory address
+/// for their lifetime in the block.
 impl<T: GCObject + Sized> Block<T> {
     fn new() -> Block<T> {
         let capacity = block_capacity::<T>();
         Block {
             managed: Vec::with_capacity(capacity),
-            free_list: Vec::with_capacity(capacity)
+            free_list: Vec::new()
         }
     }
 
@@ -71,21 +75,27 @@ impl<T: GCObject + Sized> Block<T> {
     }
 }
 
+/// An basic "pooling" allocator, used to avoid general fragmentation of allocations,
+/// and for cache friendliness when iterating while sweeping.
+/// Objects are organizied into fixed-size contiguous blocks. When a block is full, a
+/// new block will be allocated. 
+/// When a block is swept, if it no longer has any used objects it in, it will be freed,
+/// and removed from the allocators block list.
 struct BlockAllocator<T: GCObject + Sized> {
-    blocks: Vec<Box<Block<T>>>,
+    blocks: Vec<Block<T>>,
     curr_block: usize
 }
 
 impl<T: GCObject + Sized> BlockAllocator<T> {
     fn new() -> BlockAllocator<T> {
         BlockAllocator {
-            blocks: vec![Box::new(Block::new())],
+            blocks: vec![Block::new()],
             curr_block: 0
         }
     }
 
     fn new_block(&mut self, t: T) -> ExternalPtr<T> {
-        let mut new_block = Box::new(Block::new());
+        let mut new_block = Block::new();
         let ptr = new_block.alloc(t);
         self.blocks.push(new_block);
         ptr
@@ -129,6 +139,9 @@ impl<T: GCObject + Sized> BlockAllocator<T> {
             self.blocks.truncate(len - del);
         }
 
+        // @TODO rexamine what to set this value. If the 0th block is full,
+        // then our next allocation will cause a new block to be allocated,
+        // even if we have another (almost) empty block in between. 
         self.curr_block = 0;
     }
 }
@@ -273,5 +286,30 @@ fn block_alloc_test() {
     gc.sweep();
     assert!(gc.managed_hashtables.blocks.len() == 0);
     gc.manage_hashtable(LispHashTable::new());
+    assert!(gc.managed_hashtables.blocks.len() == 1);
+}
+
+// This test is to determine memory stability. That allocating a new block will not shift
+// old memory addresses
+#[test]
+fn stable_alloc_test() {
+    let mut gc = LispGarbageCollector::new();
+    let capacity = block_capacity::<LispHashTable>() - 1;
+    for _ in 0..capacity {
+        gc.manage_hashtable(LispHashTable::new());
+    }
+
+    assert!(gc.managed_hashtables.blocks.len() == 1);
+    let mut ptr = gc.manage_hashtable(LispHashTable::new());
+    gc.manage_hashtable(LispHashTable::new());
+    assert!(gc.managed_hashtables.blocks.len() == 2);
+    let ptr2 = ExternalPtr::new(gc.managed_hashtables.blocks[0].managed[capacity].as_mut().unwrap());
+    assert!(ptr.as_ptr() == ptr2.as_ptr());
+    
+    ptr.mark();
+    gc.sweep();
+
+    let ptr3 = ExternalPtr::new(gc.managed_hashtables.blocks[0].managed[capacity].as_mut().unwrap());
+    assert!(ptr.as_ptr() == ptr3.as_ptr());
     assert!(gc.managed_hashtables.blocks.len() == 1);
 }
