@@ -15,6 +15,15 @@ pub fn point() -> LispObject {
     LispObject::from_natnum(buffer_ref.pt as EmacsInt)
 }
 
+/// Return the number of characters in the current buffer.
+/// If BUFFER is not nil, return the number of characters in that buffer
+/// instead.
+
+/// This does not take narrowing into account; to count the number of
+/// characters in the accessible portion of the current buffer, use
+/// `(- (point-max) (point-min))', and to count the number of characters
+/// in some other BUFFER, use
+/// `(with-current-buffer BUFFER (- (point-max) (point-min)))'.
 #[lisp_fn(min = "0")]
 pub fn buffer_size(object: LispObject) -> LispObject {
     let buffer_ref = if object.is_not_nil() {
