@@ -1101,6 +1101,7 @@ The selected font will be the default on both the existing and future frames."
                     :button (:radio . (eq tool-bar-mode nil))))
       menu)))
 
+(defvar display-line-numbers-type)
 (defun menu-bar-display-line-numbers-mode (type)
   (setq display-line-numbers-type type)
   (if global-display-line-numbers-mode
