@@ -34,6 +34,7 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'subr-x))
 ;; When bootstrapping dired-loaddefs has not been generated.
 (require 'dired-loaddefs nil t)
 
@@ -871,6 +872,46 @@ periodically reverts at specified time intervals."
   :group 'dired
   :version "23.2")
 
+(defun dired--need-align-p ()
+  "Return non-nil if some file names are misaligned.
+The return value is the target column for the file names."
+  (save-excursion
+    (goto-char (point-min))
+    (dired-goto-next-file)
+    ;; Use point difference instead of `current-column', because
+    ;; the former works when `dired-hide-details-mode' is enabled.
+    (let* ((first (- (point) (point-at-bol)))
+           (target first))
+      (while (and (not (eobp))
+                  (progn
+                    (forward-line)
+                    (dired-move-to-filename)))
+        (when-let* ((distance (- (point) (point-at-bol)))
+                    (higher (> distance target)))
+          (setq target distance)))
+      (and (/= first target) target))))
+
+(defun dired--align-all-files ()
+  "Align all files adding spaces in front of the size column."
+  (let ((target (dired--need-align-p))
+        (regexp directory-listing-before-filename-regexp))
+    (when target
+      (save-excursion
+        (goto-char (point-min))
+        (dired-goto-next-file)
+        (while (dired-move-to-filename)
+          ;; Use point difference instead of `current-column', because
+          ;; the former works when `dired-hide-details-mode' is enabled.
+          (let ((distance (- target (- (point) (point-at-bol))))
+                (inhibit-read-only t))
+            (unless (zerop distance)
+              (re-search-backward regexp nil t)
+              (goto-char (match-beginning 0))
+              (search-backward-regexp "[[:space:]]" nil t)
+              (skip-chars-forward "[:space:]")
+              (insert-char ?\s distance 'inherit))
+            (forward-line)))))))
+
 (defun dired-internal-noselect (dir-or-list &optional switches mode)
   ;; If DIR-OR-LIST is a string and there is an existing dired buffer
   ;; for it, just leave buffer as it is (don't even call dired-revert).
@@ -940,6 +981,8 @@ periodically reverts at specified time intervals."
 	  (if failed (kill-buffer buffer))))
       (goto-char (point-min))
       (dired-initial-position dirname))
+    (when (consp dired-directory)
+      (dired--align-all-files))
     (set-buffer old-buf)
     buffer))
 

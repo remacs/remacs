@@ -260,7 +260,6 @@
 
 (ert-deftest dired-test-bug27762 ()
   "Test for http://debbugs.gnu.org/27762 ."
-  :expected-result :failed
   (require 'ls-lisp)
   (let* ((dir source-directory)
          (default-directory dir)
