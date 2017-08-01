@@ -278,8 +278,12 @@ instead."
           (let ((insert-func 'insert)
                 (error-func 'insert)
                 (flush-func 'ignore)
-                eshell-ls-dired-initial-args)
-            (eshell-do-ls (append switches (list file)))))))))
+                (switches
+                 (append eshell-ls-dired-initial-args
+                         (and (or (consp dired-directory) wildcard) (list "-d"))
+                         switches)))
+            (eshell-do-ls (nconc switches (list file)))))))))
+
 
 (declare-function eshell-extended-glob "em-glob" (glob))
 (declare-function dired-read-dir-and-switches "dired" (str))

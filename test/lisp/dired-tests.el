@@ -325,6 +325,21 @@
       (delete-directory dir 'recursive)
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
+(ert-deftest dired-test-bug27843 ()
+  "Test for http://debbugs.gnu.org/27843 ."
+  (require 'em-ls)
+  (let ((orig eshell-ls-use-in-dired)
+        (dired-use-ls-dired 'unspecified)
+        buf insert-directory-program)
+    (unwind-protect
+        (progn
+          (customize-set-variable 'eshell-ls-use-in-dired t)
+          (setq buf (dired (list source-directory "lisp")))
+          (dired-toggle-marks)
+          (should-not (cdr (dired-get-marked-files))))
+      (customize-set-variable 'eshell-ls-use-in-dired orig)
+      (unload-feature 'em-ls 'force)
+      (and (buffer-live-p buf) (kill-buffer)))))
 
 (provide 'dired-tests)
 ;; dired-tests.el ends here
