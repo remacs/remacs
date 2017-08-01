@@ -1045,28 +1045,6 @@ usage: (save-current-buffer &rest BODY)  */)
   return unbind_to (count, Fprogn (args));
 }
 
-DEFUN ("buffer-size", Fbuffer_size, Sbuffer_size, 0, 1, 0,
-       doc: /* Return the number of characters in the current buffer.
-If BUFFER is not nil, return the number of characters in that buffer
-instead.
-
-This does not take narrowing into account; to count the number of
-characters in the accessible portion of the current buffer, use
-`(- (point-max) (point-min))', and to count the number of characters
-in some other BUFFER, use
-`(with-current-buffer BUFFER (- (point-max) (point-min)))'.  */)
-  (Lisp_Object buffer)
-{
-  if (NILP (buffer))
-    return make_number (Z - BEG);
-  else
-    {
-      CHECK_BUFFER (buffer);
-      return make_number (BUF_Z (XBUFFER (buffer))
-			  - BUF_BEG (XBUFFER (buffer)));
-    }
-}
-
 DEFUN ("point-min", Fpoint_min, Spoint_min, 0, 0, 0,
        doc: /* Return the minimum permissible value of point in the current buffer.
 This is 1, unless narrowing (a buffer restriction) is in effect.  */)
@@ -5442,7 +5420,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Ssave_excursion);
   defsubr (&Ssave_current_buffer);
 
-  defsubr (&Sbuffer_size);
   defsubr (&Spoint_max);
   defsubr (&Spoint_min);
   defsubr (&Spoint_min_marker);

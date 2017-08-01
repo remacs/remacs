@@ -24,8 +24,8 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
-                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
-                 Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qconsp, SYMBOL_NAME,
+                 Qbufferp, Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump,
+                 Qvectorp, Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qconsp, SYMBOL_NAME,
                  PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -432,6 +432,14 @@ impl LispObject {
 
     pub fn as_buffer(self) -> Option<LispBufferRef> {
         self.as_vectorlike().map_or(None, |v| v.as_buffer())
+    }
+
+    pub fn as_buffer_or_error(&self) -> LispBufferRef {
+        if self.is_buffer() {
+            LispBufferRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+        } else {
+            wrong_type!(Qbufferp, *self);
+        }
     }
 
     pub fn is_char_table(self) -> bool {

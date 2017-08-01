@@ -1251,6 +1251,7 @@ extern "C" {
     pub static Qmarkerp: Lisp_Object;
     pub static Qwholenump: Lisp_Object;
     pub static Qvectorp: Lisp_Object;
+    pub static Qbufferp: Lisp_Object;
     pub static Qsequencep: Lisp_Object;
     pub static Qcharacterp: Lisp_Object;
     pub static Qminus: Lisp_Object;
