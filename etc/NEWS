@@ -1106,6 +1106,9 @@ fontification, and commenting for embedded JavaScript and CSS.
 
 ** New minor mode 'pixel-scroll-mode' provides smooth pixel-level scrolling.
 
+** New major mode 'less-css-mode' (a minor variant of 'css-mode') for
+editing Less files.
+
 
 * Incompatible Lisp Changes in Emacs 26.1
 
