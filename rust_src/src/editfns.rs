@@ -33,4 +33,3 @@ pub fn buffer_size(object: LispObject) -> LispObject {
     };
     LispObject::from_natnum((buffer_ref.z() - BEG_BYTE) as EmacsInt)
 }
-
