@@ -2216,7 +2216,7 @@ With a prefix argument, TRASH is nil.  */)
 
   encoded_file = ENCODE_FILE (filename);
 
-  if (unlink (SSDATA (encoded_file)) < 0)
+  if (unlink (SSDATA (encoded_file)) != 0 && errno != ENOENT)
     report_file_error ("Removing old name", filename);
   return Qnil;
 }
