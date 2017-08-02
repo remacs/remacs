@@ -1205,7 +1205,7 @@ BEG..END is the line where the file info is located."
 	      (setq file-col (+ spaces file-col))
 	      (if (> file-col other-col)
 		  (setq spaces (- spaces (- file-col other-col))))
-	      (insert-char ?\s spaces)
+	      (insert-char ?\s spaces 'inherit)
 	      ;; Let's just make really sure we did not mess up.
 	      (unless (save-excursion
 			(eq (dired-move-to-filename) (marker-position file)))

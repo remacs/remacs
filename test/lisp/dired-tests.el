@@ -260,6 +260,21 @@
       (delete-directory dir 'recursive)
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
+(ert-deftest dired-test-bug27899 ()
+  "Test for http://debbugs.gnu.org/27899 ."
+  (let* ((dir (expand-file-name "src" source-directory))
+	 (buf (dired (list dir "cygw32.c" "alloc.c" "w32xfns.c" "xdisp.c")))
+         (orig dired-hide-details-mode))
+    (dired-goto-file (expand-file-name "cygw32.c"))
+    (forward-line 0)
+    (unwind-protect
+        (progn
+          (let ((inhibit-read-only t))
+            (dired-align-file (point) (point-max)))
+          (dired-hide-details-mode t)
+          (dired-move-to-filename)
+          (should (eq 2 (current-column))))
+      (dired-hide-details-mode orig))))
 
 (provide 'dired-tests)
 ;; dired-tests.el ends here
