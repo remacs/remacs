@@ -29,6 +29,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qchar_table_p, Qconsp, Qbufferp,
                  SYMBOL_NAME, PseudovecType, EqualKind};
 
+
 // TODO: tweak Makefile to rebuild C files if this changes.
 
 /// Emacs values are represented as tagged pointers. A few bits are
