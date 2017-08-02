@@ -1066,14 +1066,6 @@ Return nil if BUFFER has been killed.  */)
   return BVAR (decode_buffer (buffer), name);
 }
 
-DEFUN ("buffer-file-name", Fbuffer_file_name, Sbuffer_file_name, 0, 1, 0,
-       doc: /* Return name of file BUFFER is visiting, or nil if none.
-No argument or nil as argument means use the current buffer.  */)
-  (register Lisp_Object buffer)
-{
-  return BVAR (decode_buffer (buffer), filename);
-}
-
 DEFUN ("buffer-base-buffer", Fbuffer_base_buffer, Sbuffer_base_buffer,
        0, 1, 0,
        doc: /* Return the base buffer of indirect buffer BUFFER.
@@ -6138,7 +6130,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sgenerate_new_buffer_name);
   defsubr (&Sbuffer_name);
-  defsubr (&Sbuffer_file_name);
   defsubr (&Sbuffer_base_buffer);
   defsubr (&Sbuffer_local_value);
   defsubr (&Sbuffer_local_variables);

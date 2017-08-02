@@ -677,6 +677,48 @@ pub struct thread_state {
     // next_thread.
 }
 
+/// Lisp_Char_Table
+#[repr(C)]
+#[allow(dead_code)]
+enum ChartabSize {
+    Bits0 = 6,
+    Bits1 = 4,
+    Bits2 = 5,
+    Bits3 = 7,
+}
+
+#[repr(C)]
+pub struct Lisp_Char_Table {
+    /// HEADER.SIZE is the vector's size field, which also holds the
+    /// pseudovector type information.  It holds the size, too.
+    /// The size counts the defalt, parent, purpose, ascii,
+    /// contents, and extras slots.
+    pub header: Lisp_Vectorlike_Header,
+
+    /// This holds a default value,
+    /// which is used whenever the value for a specific character is nil.
+    pub default: Lisp_Object,
+
+    /// This points to another char table, which we inherit from when the
+    /// value for a specific character is nil.  The `defalt' slot takes
+    /// precedence over this.
+    pub parent: Lisp_Object,
+
+    /// This is a symbol which says what kind of use this char-table is
+    /// meant for.
+    pub purpose: Lisp_Object,
+
+    /// The bottom sub char-table for characters of the range 0..127.  It
+    /// is nil if none of ASCII character has a specific value.
+    pub ascii: Lisp_Object,
+
+    pub contents: [Lisp_Object; 1 << ChartabSize::Bits0 as u8],
+
+    /// These hold additional data.  It is a vector.
+    // actually any number of items
+    pub extras: [Lisp_Object; 1],
+}
+
 /// Represents the global state of the editor.
 ///
 /// This has been factored out to a single struct in C Emacs to help
@@ -1254,6 +1296,8 @@ extern "C" {
     pub static Qbufferp: Lisp_Object;
     pub static Qsequencep: Lisp_Object;
     pub static Qcharacterp: Lisp_Object;
+    pub static Qchar_table_p: Lisp_Object;
+    pub static Qbufferp: Lisp_Object;
     pub static Qminus: Lisp_Object;
 
     pub static Qinteger: Lisp_Object;
@@ -1305,7 +1349,6 @@ extern "C" {
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
-    pub fn Fbuffer_file_name(buffer: Lisp_Object) -> Lisp_Object;
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;

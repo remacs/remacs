@@ -48,6 +48,7 @@ mod process;
 mod fonts;
 mod editfns;
 mod threads;
+mod chartable;
 
 
 #[cfg(all(not(test), target_os = "macos"))]
@@ -64,6 +65,9 @@ pub use base64::base64_decode_1;
 
 // Used in buffer.c
 pub use buffers::Fbuffer_live_p;
+
+// Used in nsfns.m
+pub use buffers::Fbuffer_file_name;
 
 // These need to be exported as bytecode.c depends upon them.
 pub use math::Fplus;
@@ -123,6 +127,9 @@ pub use buffers::Fcurrent_buffer;
 pub use editfns::Fpoint;
 pub use editfns::Fbuffer_size;
 
+// used in chartab.c
+pub use chartable::Fset_char_table_parent;
+
 // Used in process.c
 pub use str2sig::str2sig;
 pub use process::Fget_process;
@@ -153,6 +160,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Sbuffer_live_p);
         defsubr(&*buffers::Sget_buffer);
         defsubr(&*buffers::Scurrent_buffer);
+        defsubr(&*buffers::Sbuffer_file_name);
         defsubr(&*windows::Swindowp);
         defsubr(&*windows::Swindow_live_p);
         defsubr(&*process::Sget_process);
@@ -257,6 +265,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*crypto::Ssecure_hash);
         defsubr(&*crypto::Sbuffer_hash);
         defsubr(&*interactive::Sprefix_numeric_value);
+        defsubr(&*chartable::Schar_table_subtype);
+        defsubr(&*chartable::Schar_table_parent);
+        defsubr(&*chartable::Sset_char_table_parent);
 
         defsubr(&*floatfns::Sisnan);
         defsubr(&*floatfns::Sacos);

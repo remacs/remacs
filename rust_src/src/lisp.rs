@@ -19,14 +19,16 @@ use windows::LispWindowRef;
 use marker::LispMarkerRef;
 use hashtable::LispHashTableRef;
 use fonts::LispFontRef;
+use chartable::LispCharTableRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
-                 Qbufferp, Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump,
-                 Qvectorp, Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qconsp, SYMBOL_NAME,
-                 PseudovecType, EqualKind};
+                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
+                 Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qchar_table_p, Qconsp, Qbufferp,
+                 SYMBOL_NAME, PseudovecType, EqualKind};
+
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -434,18 +436,28 @@ impl LispObject {
         self.as_vectorlike().map_or(None, |v| v.as_buffer())
     }
 
-    pub fn as_buffer_or_error(&self) -> LispBufferRef {
-        if self.is_buffer() {
-            LispBufferRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
-        } else {
-            wrong_type!(Qbufferp, *self);
-        }
+    pub fn as_buffer_or_error(self) -> LispBufferRef {
+        self.as_buffer().unwrap_or_else(
+            || wrong_type!(Qbufferp, self),
+        )
     }
 
     pub fn is_char_table(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE)
         })
+    }
+
+    pub fn as_char_table(self) -> Option<LispCharTableRef> {
+        self.as_vectorlike().and_then(|v| v.as_char_table())
+    }
+
+    pub fn as_char_table_or_error(self) -> LispCharTableRef {
+        if let Some(chartable) = self.as_char_table() {
+            chartable
+        } else {
+            wrong_type!(Qchar_table_p, self)
+        }
     }
 
     pub fn is_bool_vector(self) -> bool {
