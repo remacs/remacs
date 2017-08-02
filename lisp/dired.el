@@ -1276,12 +1276,17 @@ see `dired-use-ls-dired' for more details.")
              ;; call for wildcards.
              (when (file-remote-p dir)
                (setq switches (dired-replace-in-string "--dired" "" switches)))
-             (let ((default-directory (car dir-wildcard))
-                   (script (format "ls %s %s" switches (cdr dir-wildcard))))
+             (let* ((default-directory (car dir-wildcard))
+                    (script (format "ls %s %s" switches (cdr dir-wildcard)))
+                    (remotep (file-remote-p dir))
+                    (sh (or (and remotep "/bin/sh")
+                            (and (bound-and-true-p explicit-shell-file-name)
+                                 (executable-find explicit-shell-file-name))
+                            (executable-find "sh")))
+                    (switch (if remotep "-c" shell-command-switch)))
                (unless
                    (zerop
-                    (process-file
-                     "/bin/sh" nil (current-buffer) nil "-c" script))
+                    (process-file sh nil (current-buffer) nil switch script))
                  (user-error
                   "%s: No files matching wildcard" (cdr dir-wildcard)))
                (insert-directory-clean (point) switches)))
