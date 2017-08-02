@@ -225,23 +225,6 @@
         (when (buffer-live-p buf) (kill-buffer buf)))
       (delete-directory test-dir t))))
 
-(ert-deftest dired-test-bug27693 ()
-  "Test for http://debbugs.gnu.org/27693 ."
-  (require 'ls-lisp)
-  (let ((dir (expand-file-name "lisp" source-directory))
-        (size "")
-        ls-lisp-use-insert-directory-program buf)
-    (unwind-protect
-        (progn
-          (setq buf (dired (list dir "simple.el" "subr.el"))
-                size (number-to-string
-                      (file-attribute-size
-                       (file-attributes (dired-get-filename)))))
-          (search-backward-regexp size nil t)
-          (should (looking-back "[[:space:]]" (1- (point)))))
-      (unload-feature 'ls-lisp 'force)
-      (when (buffer-live-p buf) (kill-buffer buf)))))
-
 (ert-deftest dired-test-bug7131 ()
   "Test for http://debbugs.gnu.org/7131 ."
   (let* ((dir (expand-file-name "lisp" source-directory))
@@ -258,44 +241,6 @@
           (should (cdr (dired-get-marked-files))))
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
-(ert-deftest dired-test-bug27762 ()
-  "Test for http://debbugs.gnu.org/27762 ."
-  (require 'ls-lisp)
-  (let* ((dir source-directory)
-         (default-directory dir)
-         (files (mapcar (lambda (f) (concat "src/" f))
-                        (directory-files
-                         (expand-file-name "src") nil "\\.*\\.c\\'")))
-         ls-lisp-use-insert-directory-program buf)
-    (unwind-protect
-        (let ((file1 "src/cygw32.c")
-              (file2 "src/atimer.c"))
-          (setq buf (dired (nconc (list dir) files)))
-          (dired-goto-file (expand-file-name file2 default-directory))
-          (should-not (looking-at "^   -")) ; Must be 2 spaces not 3.
-          (setq files (cons file1 (delete file1 files)))
-          (kill-buffer buf)
-          (setq buf (dired (nconc (list dir) files)))
-          (should (looking-at "src"))
-          (next-line) ; File names must be aligned.
-          (should (looking-at "src")))
-      (unload-feature 'ls-lisp 'force)
-      (when (buffer-live-p buf) (kill-buffer buf)))))
-
-(ert-deftest dired-test-bug27817 ()
-  "Test for http://debbugs.gnu.org/27817 ."
-  (require 'em-ls)
-  (let ((orig eshell-ls-use-in-dired)
-        (dired-use-ls-dired 'unspecified)
-        buf insert-directory-program)
-    (unwind-protect
-        (progn
-          (customize-set-variable 'eshell-ls-use-in-dired t)
-          (should (setq buf (dired source-directory))))
-      (customize-set-variable 'eshell-ls-use-in-dired orig)
-      (unload-feature 'em-ls 'force)
-      (and (buffer-live-p buf) (kill-buffer)))))
-
 (ert-deftest dired-test-bug27631 ()
   "Test for http://debbugs.gnu.org/27631 ."
   (let* ((dir (make-temp-file "bug27631" 'dir))
@@ -311,44 +256,10 @@
           (with-temp-file (expand-file-name "b.txt" dir2))
           (setq buf (dired (expand-file-name "dir*/*.txt" dir)))
           (dired-toggle-marks)
-          (should (cdr (dired-get-marked-files)))
-          ;; Must work with ls-lisp ...
-	  (require 'ls-lisp)
-          (kill-buffer buf)
-	  (setq default-directory dir)
-	  (let (ls-lisp-use-insert-directory-program)
-            (setq buf (dired (expand-file-name "dir*/*.txt" dir)))
-            (dired-toggle-marks)
-            (should (cdr (dired-get-marked-files))))
-	  ;; ... And with em-ls as well.
-	  (kill-buffer buf)
-	  (setq default-directory dir)
-	  (unload-feature 'ls-lisp 'force)
-	  (require 'em-ls)
-	  (let ((orig eshell-ls-use-in-dired))
-	    (customize-set-value 'eshell-ls-use-in-dired t)
-	    (setq buf (dired (expand-file-name "dir*/*.txt" dir)))
-	    (dired-toggle-marks)
-	    (should (cdr (dired-get-marked-files)))))
-      (unload-feature 'em-ls 'force)
+          (should (cdr (dired-get-marked-files))))
       (delete-directory dir 'recursive)
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
-(ert-deftest dired-test-bug27843 ()
-  "Test for http://debbugs.gnu.org/27843 ."
-  (require 'em-ls)
-  (let ((orig eshell-ls-use-in-dired)
-        (dired-use-ls-dired 'unspecified)
-        buf insert-directory-program)
-    (unwind-protect
-        (progn
-          (customize-set-variable 'eshell-ls-use-in-dired t)
-          (setq buf (dired (list source-directory "lisp")))
-          (dired-toggle-marks)
-          (should-not (cdr (dired-get-marked-files))))
-      (customize-set-variable 'eshell-ls-use-in-dired orig)
-      (unload-feature 'em-ls 'force)
-      (and (buffer-live-p buf) (kill-buffer)))))
 
 (provide 'dired-tests)
 ;; dired-tests.el ends here
