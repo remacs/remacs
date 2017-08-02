@@ -448,7 +448,7 @@ config.status: ${srcdir}/configure
 	fi
 
 $(srcdir)/configure: $(srcdir)/configure.ac $(srcdir)/m4/*.m4
-	cd $(srcdir) && ./autogen.sh
+	cd $(srcdir) && ./autogen.sh autoconf
 
 # ==================== Installation ====================
 
@@ -1094,7 +1094,7 @@ check-info: info
 #  * Rebuild Makefile, to update the build procedure itself.
 #  * Do the actual build.
 bootstrap: bootstrap-clean
-	cd $(srcdir) && ./autogen.sh
+	cd $(srcdir) && ./autogen.sh autoconf
 	$(MAKE) MAKEFILE_NAME=force-Makefile force-Makefile
 	$(MAKE) all
 
