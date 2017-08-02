@@ -2311,6 +2311,7 @@ This is what happens in interactive use with M-x.  */)
 {
   Lisp_Object handler;
   Lisp_Object encoded_file, encoded_newname, symlink_target;
+  int dirp = -1;
 
   symlink_target = encoded_file = encoded_newname = Qnil;
   CHECK_STRING (file);
@@ -2324,8 +2325,8 @@ This is what happens in interactive use with M-x.  */)
       && (NILP (Ffile_name_case_insensitive_p (file))
 	  || NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname)))))
     {
-      Lisp_Object fname = (NILP (Ffile_directory_p (file))
-			   ? file : Fdirectory_file_name (file));
+      dirp = !NILP (Ffile_directory_p (file));
+      Lisp_Object fname = dirp ? Fdirectory_file_name (file) : file;
       newname = Fexpand_file_name (Ffile_name_nondirectory (fname), newname);
     }
   else
@@ -2343,47 +2344,55 @@ This is what happens in interactive use with M-x.  */)
   encoded_file = ENCODE_FILE (file);
   encoded_newname = ENCODE_FILE (newname);
 
-  /* If the filesystem is case-insensitive and the file names are
-     identical but for the case, don't ask for confirmation: they
-     simply want to change the letter-case of the file name.  */
-  if ((!(file_name_case_insensitive_p (SSDATA (encoded_file)))
-       || NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname))))
-      && ((NILP (ok_if_already_exists) || INTEGERP (ok_if_already_exists))))
-    barf_or_query_if_file_exists (newname, false, "rename to it",
-				  INTEGERP (ok_if_already_exists), false);
-  if (rename (SSDATA (encoded_file), SSDATA (encoded_newname)) < 0)
+  if (renameat_noreplace (AT_FDCWD, SSDATA (encoded_file),
+			  AT_FDCWD, SSDATA (encoded_newname))
+      == 0)
+    return Qnil;
+  int rename_errno = errno;
+
+  if (rename_errno == EEXIST || rename_errno == ENOSYS)
     {
-      int rename_errno = errno;
-      if (rename_errno == EXDEV)
-	{
-          ptrdiff_t count;
-          symlink_target = Ffile_symlink_p (file);
-          if (! NILP (symlink_target))
-            Fmake_symbolic_link (symlink_target, newname,
-                                 NILP (ok_if_already_exists) ? Qnil : Qt);
-	  else if (!NILP (Ffile_directory_p (file)))
-	    call4 (Qcopy_directory, file, newname, Qt, Qnil);
-	  else
-	    /* We have already prompted if it was an integer, so don't
-	       have copy-file prompt again.  */
-	    Fcopy_file (file, newname,
-			NILP (ok_if_already_exists) ? Qnil : Qt,
-			Qt, Qt, Qt);
+      /* If the filesystem is case-insensitive and the file names are
+	 identical but for the case, don't ask for confirmation: they
+	 simply want to change the letter-case of the file name.  */
+      if ((NILP (ok_if_already_exists) || INTEGERP (ok_if_already_exists))
+	  && (! file_name_case_insensitive_p (SSDATA (encoded_file))
+	      || NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname)))))
+	barf_or_query_if_file_exists (newname, rename_errno == EEXIST,
+				      "rename to it",
+				      INTEGERP (ok_if_already_exists), false);
+      if (rename (SSDATA (encoded_file), SSDATA (encoded_newname)) == 0)
+	return Qnil;
+      rename_errno = errno;
+      /* Don't prompt again.  */
+      ok_if_already_exists = Qt;
+    }
+  else if (!NILP (ok_if_already_exists))
+    ok_if_already_exists = Qt;
 
-	  count = SPECPDL_INDEX ();
-	  specbind (Qdelete_by_moving_to_trash, Qnil);
+  if (rename_errno != EXDEV)
+    report_file_errno ("Renaming", list2 (file, newname), rename_errno);
 
-	  if (!NILP (Ffile_directory_p (file)) && NILP (symlink_target))
-	    call2 (Qdelete_directory, file, Qt);
-	  else
-	    Fdelete_file (file, Qnil);
-	  unbind_to (count, Qnil);
-	}
+  symlink_target = Ffile_symlink_p (file);
+  if (!NILP (symlink_target))
+    Fmake_symbolic_link (symlink_target, newname, ok_if_already_exists);
+  else
+    {
+      if (dirp < 0)
+	dirp = !NILP (Ffile_directory_p (file));
+      if (dirp)
+	call4 (Qcopy_directory, file, newname, Qt, Qnil);
       else
-	report_file_errno ("Renaming", list2 (file, newname), rename_errno);
+	Fcopy_file (file, newname, ok_if_already_exists, Qt, Qt, Qt);
     }
 
-  return Qnil;
+  ptrdiff_t count = SPECPDL_INDEX ();
+  specbind (Qdelete_by_moving_to_trash, Qnil);
+  if (dirp && NILP (symlink_target))
+    call2 (Qdelete_directory, file, Qt);
+  else
+    Fdelete_file (file, Qnil);
+  return unbind_to (count, Qnil);
 }
 
 DEFUN ("add-name-to-file", Fadd_name_to_file, Sadd_name_to_file, 2, 3,

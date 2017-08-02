@@ -4298,13 +4298,15 @@ extern ptrdiff_t emacs_write (int, void const *, ptrdiff_t);
 extern ptrdiff_t emacs_write_sig (int, void const *, ptrdiff_t);
 extern ptrdiff_t emacs_write_quit (int, void const *, ptrdiff_t);
 extern void emacs_perror (char const *);
+extern int renameat_noreplace (int, char const *, int, char const *);
+extern int str_collate (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
 
-extern void unlock_all_files (void);
+/* Defined in filelock.c.  */
 extern void lock_file (Lisp_Object);
 extern void unlock_file (Lisp_Object);
+extern void unlock_all_files (void);
 extern void unlock_buffer (struct buffer *);
 extern void syms_of_filelock (void);
-extern int str_collate (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
 
 /* Defined in sound.c.  */
 extern void syms_of_sound (void);

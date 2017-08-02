@@ -37,6 +37,11 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "sysselect.h"
 #include "blockinput.h"
 
+#ifdef HAVE_LINUX_FS_H
+# include <linux/fs.h>
+# include <sys/syscall.h>
+#endif
+
 #if defined DARWIN_OS || defined __FreeBSD__
 # include <sys/sysctl.h>
 #endif
@@ -2677,6 +2682,21 @@ set_file_times (int fd, const char *filename,
   timespec[0] = atime;
   timespec[1] = mtime;
   return fdutimens (fd, filename, timespec);
+}
+
+/* Rename directory SRCFD's entry SRC to directory DSTFD's entry DST.
+   This is like renameat except that it fails if DST already exists,
+   or if this operation is not supported atomically.  Return 0 if
+   successful, -1 (setting errno) otherwise.  */
+int
+renameat_noreplace (int srcfd, char const *src, int dstfd, char const *dst)
+{
+#ifdef SYS_renameat2
+  return syscall (SYS_renameat2, srcfd, src, dstfd, dst, RENAME_NOREPLACE);
+#else
+  errno = ENOSYS;
+  return -1;
+#endif
 }
 
 /* Like strsignal, except async-signal-safe, and this function typically
