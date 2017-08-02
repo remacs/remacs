@@ -2425,19 +2425,21 @@ This is what happens in interactive use with M-x.  */)
   encoded_file = ENCODE_FILE (file);
   encoded_newname = ENCODE_FILE (newname);
 
-  if (NILP (ok_if_already_exists)
-      || INTEGERP (ok_if_already_exists))
-    barf_or_query_if_file_exists (newname, false, "make it a new name",
-				  INTEGERP (ok_if_already_exists), false);
+  if (link (SSDATA (encoded_file), SSDATA (encoded_newname)) == 0)
+    return Qnil;
 
-  unlink (SSDATA (newname));
-  if (link (SSDATA (encoded_file), SSDATA (encoded_newname)) < 0)
+  if (errno == EEXIST)
     {
-      int link_errno = errno;
-      report_file_errno ("Adding new name", list2 (file, newname), link_errno);
+      if (NILP (ok_if_already_exists)
+	  || INTEGERP (ok_if_already_exists))
+	barf_or_query_if_file_exists (newname, true, "make it a new name",
+				      INTEGERP (ok_if_already_exists), false);
+      unlink (SSDATA (newname));
+      if (link (SSDATA (encoded_file), SSDATA (encoded_newname)) == 0)
+	return Qnil;
     }
 
-  return Qnil;
+  report_file_error ("Adding new name", list2 (file, newname));
 }
 
 DEFUN ("make-symbolic-link", Fmake_symbolic_link, Smake_symbolic_link, 2, 3,
@@ -2484,31 +2486,25 @@ This happens for interactive use with M-x.  */)
   encoded_target = ENCODE_FILE (target);
   encoded_linkname = ENCODE_FILE (linkname);
 
-  if (NILP (ok_if_already_exists)
-      || INTEGERP (ok_if_already_exists))
-    barf_or_query_if_file_exists (linkname, false, "make it a link",
-				  INTEGERP (ok_if_already_exists), false);
-  if (symlink (SSDATA (encoded_target), SSDATA (encoded_linkname)) < 0)
-    {
-      /* If we didn't complain already, silently delete existing file.  */
-      int symlink_errno;
-      if (errno == EEXIST)
-	{
-	  unlink (SSDATA (encoded_linkname));
-	  if (symlink (SSDATA (encoded_target), SSDATA (encoded_linkname))
-	      >= 0)
-	    return Qnil;
-	}
-      if (errno == ENOSYS)
-	xsignal1 (Qfile_error,
-		  build_string ("Symbolic links are not supported"));
+  if (symlink (SSDATA (encoded_target), SSDATA (encoded_linkname)) == 0)
+    return Qnil;
 
-      symlink_errno = errno;
-      report_file_errno ("Making symbolic link", list2 (target, linkname),
-			 symlink_errno);
+  if (errno == ENOSYS)
+    xsignal1 (Qfile_error,
+	      build_string ("Symbolic links are not supported"));
+
+  if (errno == EEXIST)
+    {
+      if (NILP (ok_if_already_exists)
+	  || INTEGERP (ok_if_already_exists))
+	barf_or_query_if_file_exists (linkname, true, "make it a link",
+				      INTEGERP (ok_if_already_exists), false);
+      unlink (SSDATA (encoded_linkname));
+      if (symlink (SSDATA (encoded_target), SSDATA (encoded_linkname)) == 0)
+	return Qnil;
     }
 
-  return Qnil;
+  report_file_error ("Making symbolic link", list2 (target, linkname));
 }
 
 
