@@ -479,14 +479,19 @@ not contain `d', so that a full listing is expected."
 	(message "%s: doesn't exist or is inaccessible" file)
 	(ding) (sit-for 2)))))		; to show user the message!
 
-
-(declare-function eshell-extended-glob "em-glob" (glob))
+;; We cannot require 'em-glob' in the top of the file:
+;; ls-lisp is compiled before than eshell, and esh-groups.el
+;; wouldn't be created yet.  If we require 'em-glob' inside
+;; `ls-lisp--dired', then this function cannot be called
+;; before eshell is compiled.
+;; So instead we add an autoload call here.
+;; (https://lists.gnu.org/archive/html/emacs-devel/2017-07/msg01083.html).
+(autoload 'eshell-extended-glob "em-glob")
 (declare-function dired-read-dir-and-switches "dired" (str))
 (declare-function dired-goto-next-file "dired" ())
 
 (defun ls-lisp--dired (orig-fun dir-or-list &optional switches)
   (interactive (dired-read-dir-and-switches ""))
-  (require 'em-glob)
   (if (consp dir-or-list)
       (funcall orig-fun dir-or-list switches)
     (let ((dir-wildcard (insert-directory-wildcard-in-dir-p
