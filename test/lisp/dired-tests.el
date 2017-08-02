@@ -122,8 +122,11 @@
 
 (ert-deftest dired-test-bug27243-01 ()
   "Test for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27243#5 ."
-  (let ((test-dir (file-name-as-directory (make-temp-file "test-dir-" t)))
-        (dired-auto-revert-buffer t) buffers)
+  (let* ((test-dir (file-name-as-directory (make-temp-file "test-dir-" t)))
+         (save-pos (lambda ()
+                     (with-current-buffer (car (dired-buffers-for-dir test-dir))
+                       (dired-save-positions))))
+         (dired-auto-revert-buffer t) buffers)
     ;; On MS-Windows, get rid of 8+3 short names in test-dir, if the
     ;; corresponding long file names exist, otherwise such names trip
     ;; dired-buffers-for-dir.
@@ -132,10 +135,12 @@
     (should-not (dired-buffers-for-dir test-dir))
     (with-current-buffer (find-file-noselect test-dir)
       (make-directory "test-subdir"))
+    (message "Saved pos: %S" (funcall save-pos))
     ;; Point must be at end-of-buffer.
     (with-current-buffer (car (dired-buffers-for-dir test-dir))
       (should (eobp)))
     (push (dired test-dir) buffers)
+    (message "Saved pos: %S" (funcall save-pos))
     ;; Previous dired call shouldn't create a new buffer: must visit the one
     ;; created by `find-file-noselect' above.
     (should (eq 1 (length (dired-buffers-for-dir test-dir))))
@@ -144,10 +149,13 @@
               (pt1 (point))
               (test-file (concat (file-name-as-directory "test-subdir")
                                  "test-file")))
+          (message "Saved pos: %S" (funcall save-pos))
           (write-region "Test" nil test-file nil 'silent nil 'excl)
+          (message "Saved pos: %S" (funcall save-pos))
           ;; Sanity check: point should now be on the subdirectory.
           (should (equal (dired-file-name-at-point)
                          (concat test-dir (file-name-as-directory "test-subdir"))))
+          (message "Saved pos: %S" (funcall save-pos))
           (push (dired-find-file) buffers)
           (let ((pt2 (point)))          ; Point is on test-file.
             (pop-to-buffer-same-window buf)
