@@ -27,8 +27,6 @@ extern crate serde;
 extern crate fnv;
 
 #[macro_use]
-mod alloc;
-#[macro_use]
 mod eval;
 mod lisp;
 mod lists;
@@ -122,8 +120,6 @@ pub use vectors::Flength;
 pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
-pub use alloc::rust_mark_hashtable;
-pub use alloc::rust_sweep;
 
 // Cryptographic functions used in the C codebase.
 pub use crypto::sha1_buffer;

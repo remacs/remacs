@@ -6,28 +6,47 @@ use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type,
                  QCsize, QCweakness};
 use std::ptr;
 use fnv::FnvHashMap;
-use alloc::{GCObject};
 #[cfg(test)]
 use bincode::{serialize, deserialize, Infinite};
+use std::hash::{Hash, Hasher};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
-#[allow(dead_code)] // @TODO remove
-#[derive(Serialize, Deserialize)]
-#[repr(C)]
-struct HashTableTest {
-    name: LispObject,
-    user_hash_function: LispObject,
-    user_comp_function: LispObject,
+#[derive(Eq, PartialEq, Serialize, Deserialize, Copy, Clone)]
+enum HashFunction {
+    Eq,
+    Eql,
+    Equal,
+    UserFunc(LispObject, LispObject, LispObject)
 }
 
-impl HashTableTest {
-    fn new() -> HashTableTest {
-        HashTableTest {
-            name: LispObject::constant_nil(),
-            user_hash_function: LispObject::constant_nil(),
-            user_comp_function: LispObject::constant_nil(),
+// @TODO manually derive Eq and PartialEq
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
+struct HashableLispObject {
+    object: LispObject,
+    func: HashFunction
+}
+
+impl HashableLispObject {
+    fn with_hashfunc_and_object(o: LispObject, f: HashFunction) -> HashableLispObject {
+        HashableLispObject {
+            object: o,
+            func: f
         }
+    }
+}
+
+impl Hash for HashableLispObject {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self.func {
+            HashFunction::Eq => { },
+            HashFunction::Eql => { },
+            HashFunction::Equal => { },
+            HashFunction::UserFunc(_, _, _) => { /* @TODO */ },
+        }
+
+        // @TODO remove
+        self.object.hash(state);
     }
 }
 
@@ -41,26 +60,8 @@ pub struct LispHashTable {
     header: LispVectorlikeHeader,
     weak: LispObject,
     is_pure: bool,
-    table_test: HashTableTest,
-    map: FnvHashMap<LispObject, LispObject>,
-}
-
-impl GCObject for LispHashTable {
-    #[inline]
-    fn mark(&mut self) {
-        self.header.mark();
-        // @TODO make this mark objects according to the mark function in alloc.c
-    }
-
-    #[inline]
-    fn unmark(&mut self) {
-        self.header.unmark();
-    }
-
-    #[inline]
-    fn is_marked(&self) -> bool {
-        self.header.is_marked()
-    }
+    func: HashFunction,
+    map: FnvHashMap<HashableLispObject, HashableLispObject>,
 }
 
 impl LispHashTable {
@@ -73,7 +74,7 @@ impl LispHashTable {
             header: LispVectorlikeHeader::new(),
             weak: LispObject::constant_nil(),
             is_pure: false,
-            table_test: HashTableTest::new(),
+            func: HashFunction::Eq,
             map: FnvHashMap::with_capacity_and_hasher(cap, Default::default()),
         }
     }
@@ -165,7 +166,8 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn make_hash_map(args: &mut [LispObject]) -> LispObject {
-    let mut ptr = garbage_collector!().manage_hashtable(LispHashTable::new());
+    // @TODO this needs to be managed by the GC, we are just leaking this for testing right now.
+    let mut ptr = ExternalPtr::new(Box::into_raw(Box::new(LispHashTable::new())));
     let len = args.len();
     let mut i = 0;
     while i < len {
@@ -179,11 +181,11 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
         // @TODO handle default case if QCtest is not found etc.
         if key.to_raw() == unsafe { QCtest } {
             if value.to_raw() == unsafe { Qeq } {
-
+                ptr.func = HashFunction::Eq;
             } else if value.to_raw() == unsafe { Qeql } {
-
+                ptr.func = HashFunction::Eql;
             } else if value.to_raw() == unsafe { Qequal } {
-
+                ptr.func = HashFunction::Equal;
             } else {
                 // Custom hash table test
             }
@@ -207,16 +209,19 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
 }
 
 #[lisp_fn]
-fn map_put(map: LispObject, key: LispObject, value: LispObject) -> LispObject {
+fn map_put(map: LispObject, k: LispObject, v: LispObject) -> LispObject {
     let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable); // @TODO replace with with haashtable or erorr
+    let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
+    let value = HashableLispObject::with_hashfunc_and_object(v, hashmap.func);
     hashmap.map.insert(key, value);
-    value 
+    v 
 }
 
 #[lisp_fn]
-fn map_get(map: LispObject, key: LispObject) -> LispObject {
+fn map_get(map: LispObject, k: LispObject) -> LispObject {
     let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
-    hashmap.map.get(&key).map_or(LispObject::constant_nil(), |key| key.clone())
+    let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
+    hashmap.map.get(&key).map_or(LispObject::constant_nil(), |key| key.object)
 }
 
 // #[lisp_fn]
@@ -234,20 +239,8 @@ fn map_get(map: LispObject, key: LispObject) -> LispObject {
 // }
 
 #[test]
-fn test_table_marking() {
-    let mut table = LispHashTable::new();
-    table.mark();
-    assert!(table.is_marked());
-    
-    table.unmark();
-    assert!(!table.is_marked());
-}
-
-#[test]
 fn bin_dump() {
     let mut table = LispHashTable::new();
-    table.mark();
     let encoded: Vec<u8> = serialize(&table, Infinite).unwrap();
     let decoded: LispHashTable = deserialize(&encoded[..]).unwrap();
-    assert!(decoded.is_marked() == table.is_marked());
 }

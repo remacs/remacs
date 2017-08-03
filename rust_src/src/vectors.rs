@@ -14,7 +14,7 @@ use buffers::LispBufferRef;
 use windows::LispWindowRef;
 use remacs_sys::{Qsequencep, EmacsInt, PSEUDOVECTOR_FLAG, PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS,
                  PSEUDOVECTOR_SIZE_MASK, PseudovecType, Lisp_Vectorlike, Lisp_Vector,
-                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM, Lisp_Vectorlike_Header, ARRAY_MARK_FLAG};
+                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM, Lisp_Vectorlike_Header};
 use remacs_macros::lisp_fn;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
@@ -133,21 +133,6 @@ impl LispVectorlikeHeader {
 
     pub fn tag(&mut self, tag: isize) {
         self.0.size = tag;
-    }
-
-    #[inline]
-    pub fn mark(&mut self) {
-        self.0.size |= ARRAY_MARK_FLAG;
-    }
-
-    #[inline]
-    pub fn unmark(&mut self) {
-        self.0.size &= !ARRAY_MARK_FLAG;
-    }
-
-    #[inline]
-    pub fn is_marked(&self) -> bool {
-        self.0.size & ARRAY_MARK_FLAG != 0
     }
 }
 
