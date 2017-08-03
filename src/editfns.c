@@ -1177,16 +1177,6 @@ If the buffer is narrowed, this means the beginning of the narrowed part.  */)
   return Qnil;
 }
 
-DEFUN ("eobp", Feobp, Seobp, 0, 0, 0,
-       doc: /* Return t if point is at the end of the buffer.
-If the buffer is narrowed, this means the end of the narrowed part.  */)
-  (void)
-{
-  if (PT == ZV)
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("bolp", Fbolp, Sbolp, 0, 0, 0,
        doc: /* Return t if point is at the beginning of a line.  */)
   (void)
@@ -5430,7 +5420,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sbyte_to_position);
 
   defsubr (&Sbobp);
-  defsubr (&Seobp);
   defsubr (&Sbolp);
   defsubr (&Seolp);
   defsubr (&Sfollowing_char);

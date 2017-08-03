@@ -33,3 +33,16 @@ pub fn buffer_size(object: LispObject) -> LispObject {
     };
     LispObject::from_natnum((buffer_ref.z() - BEG_BYTE) as EmacsInt)
 }
+
+/// Return t if point is at the end of the buffer.
+/// If the buffer is narrowed, this means the end of the narrowed part.
+#[lisp_fn]
+pub fn eobp() -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+    let zv = LispObject::from_natnum(buffer_ref.zv() as EmacsInt);
+    if point() == zv {
+        LispObject::constant_t()
+    } else {
+        LispObject::constant_nil()
+    }
+}
