@@ -234,9 +234,16 @@ AC_DEFUN([OPTION_DEFAULT_ON], [dnl
 # in a movemail implementation that supports only unencrypted POP3
 # connections.  Encrypted connections should be the default.
 
-OPTION_DEFAULT_OFF([mailutils],
-  [rely on GNU Mailutils, so that the --without-pop through --with-mailhost
-   options are irrelevant])
+AC_ARG_WITH([mailutils],
+  [AS_HELP_STRING([--with-mailutils],
+     [rely on GNU Mailutils, so that the --without-pop through --with-mailhost
+      options are irrelevant; this is the default if GNU Mailutils is
+      installed])],
+  [],
+  [with_mailutils=$with_features
+   if test "$with_mailutils" = yes; then
+     (movemail --version) >/dev/null 2>&1 || with_mailutils=no
+   fi])
 if test "$with_mailutils" = no; then
   with_mailutils=
 fi
