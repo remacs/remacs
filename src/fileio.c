@@ -2344,23 +2344,38 @@ This is what happens in interactive use with M-x.  */)
   encoded_file = ENCODE_FILE (file);
   encoded_newname = ENCODE_FILE (newname);
 
-  if (renameat_noreplace (AT_FDCWD, SSDATA (encoded_file),
-			  AT_FDCWD, SSDATA (encoded_newname))
-      == 0)
-    return Qnil;
-  int rename_errno = errno;
+  /* If the filesystem is case-insensitive and the file names are
+     identical but for the case, don't worry whether the destination
+     already exists: the caller simply wants to change the letter-case
+     of the file name.  */
+  bool plain_rename
+    = ((!NILP (ok_if_already_exists) && !INTEGERP (ok_if_already_exists))
+       || (file_name_case_insensitive_p (SSDATA (encoded_file))
+	   && ! NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname)))));
 
-  if (rename_errno == EEXIST || rename_errno == ENOSYS)
+  int rename_errno;
+  if (!plain_rename)
     {
-      /* If the filesystem is case-insensitive and the file names are
-	 identical but for the case, don't ask for confirmation: they
-	 simply want to change the letter-case of the file name.  */
-      if ((NILP (ok_if_already_exists) || INTEGERP (ok_if_already_exists))
-	  && (! file_name_case_insensitive_p (SSDATA (encoded_file))
-	      || NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname)))))
-	barf_or_query_if_file_exists (newname, rename_errno == EEXIST,
-				      "rename to it",
-				      INTEGERP (ok_if_already_exists), false);
+      if (renameat_noreplace (AT_FDCWD, SSDATA (encoded_file),
+			      AT_FDCWD, SSDATA (encoded_newname))
+	  == 0)
+	return Qnil;
+
+      rename_errno = errno;
+      switch (rename_errno)
+	{
+	case EEXIST: case EINVAL: case ENOSYS:
+	  barf_or_query_if_file_exists (newname, rename_errno == EEXIST,
+					"rename to it",
+					INTEGERP (ok_if_already_exists),
+					false);
+	  plain_rename = true;
+	  break;
+	}
+    }
+
+  if (plain_rename)
+    {
       if (rename (SSDATA (encoded_file), SSDATA (encoded_newname)) == 0)
 	return Qnil;
       rename_errno = errno;
