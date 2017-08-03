@@ -29,10 +29,19 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #endif
 
 #if 0x030400 <= GNUTLS_VERSION_NUMBER
-# define HAVE_GNUTLS3_AEAD
 # define HAVE_GNUTLS3_CIPHER
 # define HAVE_GNUTLS3_DIGEST
 # define HAVE_GNUTLS3_HMAC
+#endif
+
+/* Although AEAD support started in GnuTLS 3.4.0 and works in 3.5.14,
+   it was broken through at least GnuTLS 3.4.10; see:
+   https://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00992.html
+   The relevant fix seems to have been made in GnuTLS 3.5.1; see:
+   https://gitlab.com/gnutls/gnutls/commit/568935848dd6b82b9315d8b6c529d00e2605e03d
+   So use 3.5.1 for now.  */
+#if 0x030501 <= GNUTLS_VERSION_NUMBER
+# define HAVE_GNUTLS3_AEAD
 #endif
 
 #include "lisp.h"
