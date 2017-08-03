@@ -16,6 +16,11 @@ pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 
 impl LispBufferRef {
     #[inline]
+    pub fn zv(self) -> ptrdiff_t {
+        self.zv
+    }
+
+    #[inline]
     pub fn beg_addr(&self) -> *mut c_uchar {
         unsafe { (*self.text).beg }
     }
