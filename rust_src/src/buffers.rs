@@ -55,6 +55,11 @@ impl LispBufferRef {
         unsafe { (*self.text).z_byte }
     }
 
+    #[inline]
+    pub fn z(&self) -> ptrdiff_t {
+        unsafe { (*self.text).z }
+    }
+
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
