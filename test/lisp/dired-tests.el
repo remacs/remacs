@@ -271,6 +271,10 @@
 
 (ert-deftest dired-test-bug27631 ()
   "Test for http://debbugs.gnu.org/27631 ."
+  ;; For dired using 'ls' emulation we test for this bug in
+  ;; ls-lisp-tests.el and em-ls-tests.el.
+  (skip-unless (and (not (featurep 'ls-lisp))
+                    (not (featurep 'eshell))))
   (let* ((dir (make-temp-file "bug27631" 'dir))
          (dir1 (expand-file-name "dir1" dir))
          (dir2 (expand-file-name "dir2" dir))
