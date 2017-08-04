@@ -236,7 +236,7 @@ pub struct Lisp_Symbol {
   4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
 
 #[repr(C)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Lisp_Vectorlike_Header {
     pub size: ptrdiff_t,
 }

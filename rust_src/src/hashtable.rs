@@ -21,7 +21,7 @@ enum HashFunction {
 }
 
 // @TODO manually derive Eq and PartialEq
-#[derive(Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Serialize, Deserialize, Clone)]
 struct HashableLispObject {
     object: LispObject,
     func: HashFunction
@@ -65,7 +65,7 @@ impl Hash for HashableLispObject {
 // pure alloc space, while calling purecopy on all underlying objects.
 // This should allow us to easily serialize/deserialize the hash table even though it has Rust objects.
 #[allow(dead_code)] // @TODO remove
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[repr(C)]
 pub struct LispHashTable {
     header: LispVectorlikeHeader,
@@ -254,6 +254,15 @@ fn map_clear(map: LispObject) -> LispObject {
 fn map_count(map: LispObject) -> LispObject {
     let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
     LispObject::from_natnum(hashmap.map.len() as EmacsInt)
+}
+
+// @TODO have this use things managed by the GC.
+#[lisp_fn]
+fn map_copy(map: LispObject) -> LispObject {
+    let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    // @TODO if table is weak, add it to weak table data structure.
+    let new_map = ExternalPtr::new(Box::into_raw(Box::new(hashmap.clone())));
+    LispObject::tag_ptr(new_map, Lisp_Type::Lisp_Vectorlike)
 }
 
 #[test]
