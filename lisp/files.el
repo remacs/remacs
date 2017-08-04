@@ -6701,7 +6701,7 @@ normally equivalent short `-D' option is just passed on to
 			;; See eg dired-safe-switches-p.
 			(call-process
 			 shell-file-name nil t nil
-			 "-c"
+			 shell-command-switch
 			 (concat (if (memq system-type '(ms-dos windows-nt))
 				     ""
 				   "\\") ; Disregard Unix shell aliases!

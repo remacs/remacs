@@ -1354,8 +1354,7 @@ commands to use in that buffer.
   (interactive (list (read-from-minibuffer "Run program: "
 					   (or explicit-shell-file-name
 					       (getenv "ESHELL")
-					       (getenv "SHELL")
-					       "/bin/sh"))))
+					       shell-file-name))))
   (set-buffer (make-term "terminal" program))
   (term-mode)
   (term-char-mode)
@@ -4149,8 +4148,7 @@ the process.  Any more args are arguments to PROGRAM."
   (interactive (list (read-from-minibuffer "Run program: "
 					   (or explicit-shell-file-name
 					       (getenv "ESHELL")
-					       (getenv "SHELL")
-					       "/bin/sh"))))
+					       shell-file-name))))
 
   ;; Pick the name of the new buffer.
   (setq term-ansi-buffer-name
