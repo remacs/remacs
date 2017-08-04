@@ -54,6 +54,7 @@
         (when (buffer-live-p buf) (kill-buffer buf)))
       (delete-directory dir 'recursive))))
 
+(defvar dired-dwim-target)
 (ert-deftest dired-test-bug25609 ()
   "Test for http://debbugs.gnu.org/25609 ."
   (let* ((from (make-temp-file "foo" 'dir))
@@ -67,20 +68,30 @@
                 :override
                 (lambda (_sym _prompt &rest _args) (setq dired-query t))
                 '((name . "advice-dired-query")))
-    (advice-add 'completing-read ; Just return init.
+    (advice-add 'completing-read ; Don't prompt me: just return init.
                 :override
                 (lambda (_prompt _coll &optional _pred _match init _hist _def _inherit _keymap)
                   init)
                 '((name . "advice-completing-read")))
+    (delete-other-windows) ; We don't want to display any other dired buffers.
     (push (dired to) buffers)
     (push (dired-other-window temporary-file-directory) buffers)
-    (dired-goto-file from)
-    (dired-do-copy)
-    (dired-do-copy); Again.
     (unwind-protect
-        (progn
-          (should (file-exists-p target))
-          (should-not (file-exists-p nested)))
+        (let ((ok-fn
+	       (lambda ()
+		 (let ((win-buffers (mapcar #'window-buffer (window-list))))
+		   (and (memq (car buffers) win-buffers)
+			(memq (cadr buffers) win-buffers))))))
+	  (dired-goto-file from)
+	  ;; Right before `dired-do-copy' call, to reproduce the bug conditions,
+	  ;; ensure we have windows displaying the two dired buffers.
+	  (and (funcall ok-fn) (dired-do-copy))
+	  ;; Call `dired-do-copy' again: this must overwrite `target'; if the bug
+	  ;; still exists, then it creates `nested' instead.
+	  (when (funcall ok-fn)
+	    (dired-do-copy)
+            (should (file-exists-p target))
+            (should-not (file-exists-p nested))))
       (dolist (buf buffers)
         (when (buffer-live-p buf) (kill-buffer buf)))
       (delete-directory from 'recursive)
