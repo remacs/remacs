@@ -78,6 +78,7 @@ pub use math::Fquo;
 pub use math::Flss;
 pub use math::Fleq;
 pub use math::arithcompare;
+pub use editfns::Feobp;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -123,9 +124,9 @@ pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
 pub use buffers::Fcurrent_buffer;
+
+// Used in fileio.c
 pub use editfns::Fpoint;
-pub use editfns::Fbuffer_size;
-pub use editfns::Feobp;
 
 // used in chartab.c
 pub use chartable::Fset_char_table_parent;

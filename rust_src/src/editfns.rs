@@ -4,7 +4,7 @@ use remacs_macros::lisp_fn;
 use lisp::LispObject;
 use remacs_sys::EmacsInt;
 use threads::ThreadState;
-use buffers::{get_buffer, BEG_BYTE};
+use buffers::get_buffer;
 
 
 /// Return value of point, as an integer.
@@ -18,7 +18,7 @@ pub fn point() -> LispObject {
 /// Return the number of characters in the current buffer.
 /// If BUFFER is not nil, return the number of characters in that buffer
 /// instead.
-
+///
 /// This does not take narrowing into account; to count the number of
 /// characters in the accessible portion of the current buffer, use
 /// `(- (point-max) (point-min))', and to count the number of characters
@@ -31,7 +31,7 @@ pub fn buffer_size(object: LispObject) -> LispObject {
     } else {
         ThreadState::current_buffer()
     };
-    LispObject::from_natnum((buffer_ref.z() - BEG_BYTE) as EmacsInt)
+    LispObject::from_natnum((buffer_ref.z() - buffer_ref.beg()) as EmacsInt)
 }
 
 /// Return t if point is at the end of the buffer.
@@ -39,10 +39,5 @@ pub fn buffer_size(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn eobp() -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
-    let zv = LispObject::from_natnum(buffer_ref.zv() as EmacsInt);
-    if point() == zv {
-        LispObject::constant_t()
-    } else {
-        LispObject::constant_nil()
-    }
+    LispObject::from_bool(buffer_ref.zv() == buffer_ref.pt)
 }
