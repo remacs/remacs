@@ -4,7 +4,7 @@ use remacs_macros::lisp_fn;
 use lisp::LispObject;
 use remacs_sys::EmacsInt;
 use threads::ThreadState;
-use buffers::{get_buffer, BEG_BYTE};
+use buffers::get_buffer;
 
 
 /// Return value of point, as an integer.
@@ -31,7 +31,7 @@ pub fn buffer_size(object: LispObject) -> LispObject {
     } else {
         ThreadState::current_buffer()
     };
-    LispObject::from_natnum((buffer_ref.z() - BEG_BYTE) as EmacsInt)
+    LispObject::from_natnum((buffer_ref.z() - buffer_ref.beg_byte()) as EmacsInt)
 }
 
 /// Return t if point is at the end of the buffer.
