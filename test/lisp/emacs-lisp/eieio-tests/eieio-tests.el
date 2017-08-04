@@ -529,15 +529,7 @@ METHOD is the method that was attempting to be called."
        "This class should break."))
    :type 'invalid-slot-type))
 
-(defun eieio-tests--dummy-function ()
-  ;; Dummy function to see if the file is compiled.
-  t)
-
 (ert-deftest eieio-test-23-inheritance-check ()
-  ;; This test fails when compiled, see Bug#27718.
-  :expected-result (if (byte-code-function-p
-                        (symbol-function 'eieio-tests--dummy-function))
-                       :failed :passed)
   (should (child-of-class-p 'class-ab 'class-a))
   (should (child-of-class-p 'class-ab 'class-b))
   (should (object-of-class-p eitest-a 'class-a))
@@ -556,10 +548,6 @@ METHOD is the method that was attempting to be called."
   (should (not (cl-typep "foo" 'class-a))))
 
 (ert-deftest eieio-test-24-object-predicates ()
-  ;; This test fails when compiled, see Bug#27718.
-  :expected-result (if (byte-code-function-p
-                        (symbol-function 'eieio-tests--dummy-function))
-                       :failed :passed)
   (let ((listooa (list (class-ab) (class-a)))
 	(listoob (list (class-ab) (class-b))))
     (should (cl-typep listooa '(list-of class-a)))
