@@ -58,7 +58,16 @@
 (ert-deftest dired-test-bug25609 ()
   "Test for http://debbugs.gnu.org/25609 ."
   (let* ((from (make-temp-file "foo" 'dir))
+         ;; Make sure we have long file-names in 'from' and 'to', not
+         ;; their 8+3 short aliases, because the latter will confuse
+         ;; Dired commands invoked below.
+         (from (if (memq system-type '(ms-dos windows-nt))
+                   (file-truename from)
+                 from))
          (to (make-temp-file "bar" 'dir))
+         (to (if (memq system-type '(ms-dos windows-nt))
+                 (file-truename to)
+                 to))
          (target (expand-file-name (file-name-nondirectory from) to))
          (nested (expand-file-name (file-name-nondirectory from) target))
          (dired-dwim-target t)
