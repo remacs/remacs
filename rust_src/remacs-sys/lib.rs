@@ -1245,6 +1245,8 @@ extern "C" {
         offset2: c_int,
         pvec_type: PseudovecType,
     ) -> *mut Lisp_Vector;
+
+    pub fn sxhash(ht: *mut hash_table_test, key: Lisp_Object) -> EmacsUint;
 }
 
 /// Contains C definitions from the font.h header.

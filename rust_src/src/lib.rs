@@ -259,6 +259,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*hashtable::Smake_hash_map);
         defsubr(&*hashtable::Smap_put);
         defsubr(&*hashtable::Smap_get);
+        defsubr(&*hashtable::Smap_rm);
+        defsubr(&*hashtable::Smap_clear);
+        defsubr(&*hashtable::Smap_count);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Sbuffer_hash);
         defsubr(&*interactive::Sprefix_numeric_value);

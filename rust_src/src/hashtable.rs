@@ -3,7 +3,7 @@ use lisp::{LispObject, ExternalPtr};
 use vectors::LispVectorlikeHeader;
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type,
                  QCtest, Qeq, Qeql, Qequal, QCpurecopy,
-                 QCsize, QCweakness};
+                 QCsize, QCweakness, sxhash, EmacsInt};
 use std::ptr;
 use fnv::FnvHashMap;
 #[cfg(test)]
@@ -39,14 +39,25 @@ impl HashableLispObject {
 impl Hash for HashableLispObject {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self.func {
-            HashFunction::Eq => { },
-            HashFunction::Eql => { },
-            HashFunction::Equal => { },
+            HashFunction::Eq => {
+                self.object.hash(state);
+            },
+            HashFunction::Eql => {
+                if self.object.is_float() {
+                    let hash = unsafe { sxhash(ptr::null_mut(), self.object.to_raw()) } as u64;
+                    state.write_u64(hash);
+                } else {
+                    self.object.hash(state);
+                }
+            },
+            HashFunction::Equal => {
+                let hash = unsafe { sxhash(ptr::null_mut(), self.object.to_raw()) } as u64;
+                state.write_u64(hash);
+            },
             HashFunction::UserFunc(_, _, _) => { /* @TODO */ },
         }
 
-        // @TODO remove
-        self.object.hash(state);
+        state.finish();
     }
 }
 
@@ -58,7 +69,7 @@ impl Hash for HashableLispObject {
 #[repr(C)]
 pub struct LispHashTable {
     header: LispVectorlikeHeader,
-    weak: LispObject,
+    weak: bool,
     is_pure: bool,
     func: HashFunction,
     map: FnvHashMap<HashableLispObject, HashableLispObject>,
@@ -72,7 +83,7 @@ impl LispHashTable {
     pub fn with_capacity(cap: usize) -> LispHashTable {
         LispHashTable {
             header: LispVectorlikeHeader::new(),
-            weak: LispObject::constant_nil(),
+            weak: false,
             is_pure: false,
             func: HashFunction::Eq,
             map: FnvHashMap::with_capacity_and_hasher(cap, Default::default()),
@@ -178,7 +189,6 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
         let key = args[i];
         let value = args[i + 1];
         i += 2;
-        // @TODO handle default case if QCtest is not found etc.
         if key.to_raw() == unsafe { QCtest } {
             if value.to_raw() == unsafe { Qeq } {
                 ptr.func = HashFunction::Eq;
@@ -190,11 +200,12 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
                 // Custom hash table test
             }
         } else if key.to_raw() == unsafe { QCpurecopy } {
-
+            ptr.is_pure = true;
         } else if key.to_raw() == unsafe { QCsize } {
-            
+            let size = value.as_natnum_or_error() as usize;
+            ptr.map.reserve(size);
         } else if key.to_raw() == unsafe { QCweakness } {
-
+            ptr.weak = true;
         }
     }
 
@@ -224,19 +235,26 @@ fn map_get(map: LispObject, k: LispObject) -> LispObject {
     hashmap.map.get(&key).map_or(LispObject::constant_nil(), |key| key.object)
 }
 
-// #[lisp_fn]
-// fn map_rm(map: LispObject, key: LispObject) -> LispObject {
-//     let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
-//     hashmap.map.remove(&key);
-//     map
-// }
+#[lisp_fn]
+fn map_rm(map: LispObject, k: LispObject) -> LispObject {
+    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
+    hashmap.map.remove(&key);
+    map
+}
 
-// #[lisp_fn]
-// fn clear(map: LispObject) -> LispObject {
-//     let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
-//     hashmap.map.clear();
-//     map
-// }
+#[lisp_fn]
+fn map_clear(map: LispObject) -> LispObject {
+    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    hashmap.map.clear();
+    map
+}
+
+#[lisp_fn]
+fn map_count(map: LispObject) -> LispObject {
+    let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    LispObject::from_natnum(hashmap.map.len() as EmacsInt)
+}
 
 #[test]
 fn bin_dump() {

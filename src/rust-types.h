@@ -3,7 +3,6 @@
 
 typedef void LispHashTable;
 
-void rust_sweep(void);
-void rust_mark_hashtable(LispHashTable* table); 
+void finalize_hashtable(LispHashTable *table);
 
 #endif /* __REMACS_RUST_TYPES */
