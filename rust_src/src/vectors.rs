@@ -316,8 +316,10 @@ macro_rules! pseudovector_tag_for {
     ($ty: ty, $field: ident, $vectype: expr) => {
         unsafe {
             ::remacs_sys::PSEUDOVECTOR_FLAG
-                | (($vectype as ::libc::c_int) << ::remacs_sys::PSEUDOVECTOR_AREA_BITS) as isize
-                | ((vecsize!($ty) - pseudovecsize!($ty, $field)) << ::remacs_sys::PSEUDOVECTOR_SIZE_BITS) as isize
+                | (($vectype as ::libc::c_int)
+                   << ::remacs_sys::PSEUDOVECTOR_AREA_BITS) as isize
+                | ((vecsize!($ty) - pseudovecsize!($ty, $field))
+                   << ::remacs_sys::PSEUDOVECTOR_SIZE_BITS) as isize
                 | (pseudovecsize!($ty, $field)) as isize
         }
     }

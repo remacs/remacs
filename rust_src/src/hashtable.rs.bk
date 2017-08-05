@@ -1,8 +1,9 @@
 use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
 use vectors::LispVectorlikeHeader;
-use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type, QCtest, Qeq, Qeql,
-                 Qequal, QCpurecopy, QCsize, QCweakness, sxhash, EmacsInt};
+use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type,
+                 QCtest, Qeq, Qeql, Qequal, QCpurecopy,
+                 QCsize, QCweakness, sxhash, EmacsInt};
 use std::ptr;
 use fnv::FnvHashMap;
 #[cfg(test)]
@@ -16,19 +17,22 @@ enum HashFunction {
     Eq,
     Eql,
     Equal,
-    UserFunc(LispObject, LispObject, LispObject),
+    UserFunc(LispObject, LispObject, LispObject)
 }
 
 // @TODO manually derive Eq and PartialEq
 #[derive(Eq, PartialEq, Serialize, Deserialize, Clone)]
 struct HashableLispObject {
     object: LispObject,
-    func: HashFunction,
+    func: HashFunction
 }
 
 impl HashableLispObject {
     fn with_hashfunc_and_object(o: LispObject, f: HashFunction) -> HashableLispObject {
-        HashableLispObject { object: o, func: f }
+        HashableLispObject {
+            object: o,
+            func: f
+        }
     }
 }
 
@@ -37,7 +41,7 @@ impl Hash for HashableLispObject {
         match self.func {
             HashFunction::Eq => {
                 self.object.hash(state);
-            }
+            },
             HashFunction::Eql => {
                 if self.object.is_float() {
                     let hash = unsafe { sxhash(ptr::null_mut(), self.object.to_raw()) } as u64;
@@ -45,12 +49,12 @@ impl Hash for HashableLispObject {
                 } else {
                     self.object.hash(state);
                 }
-            }
+            },
             HashFunction::Equal => {
                 let hash = unsafe { sxhash(ptr::null_mut(), self.object.to_raw()) } as u64;
                 state.write_u64(hash);
-            }
-            HashFunction::UserFunc(_, _, _) => { /* @TODO */ }
+            },
+            HashFunction::UserFunc(_, _, _) => { /* @TODO */ },
         }
 
         state.finish();
@@ -59,10 +63,8 @@ impl Hash for HashableLispObject {
 
 // @TODO add pure copy functionality. We will use a binary serializer, dump the memory into
 // pure alloc space, while calling purecopy on all underlying objects.
-// This should allow us to easily serialize/deserialize
-// the hash table even though it has Rust objects.
-#[allow(dead_code)]
-// @TODO remove
+// This should allow us to easily serialize/deserialize the hash table even though it has Rust objects.
+#[allow(dead_code)] // @TODO remove
 #[derive(Serialize, Deserialize, Clone)]
 #[repr(C)]
 pub struct LispHashTable {
@@ -212,33 +214,25 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
     // will be treated like a Lisp_Hash_Table in other places in the code, which will cause
     // memory errors
     if false {
-        ptr.header.tag(pseudovector_tag_for!(
-            Lisp_Hash_Table,
-            count,
-            PseudovecType::PVEC_HASH_TABLE
-        ));
+        ptr.header.tag(pseudovector_tag_for!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE));
     }
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
 }
 
 #[lisp_fn]
 fn map_put(map: LispObject, k: LispObject, v: LispObject) -> LispObject {
-    // @TODO replace with with haashtable or erorr
-    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable); // @TODO replace with with haashtable or erorr
     let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
     let value = HashableLispObject::with_hashfunc_and_object(v, hashmap.func);
     hashmap.map.insert(key, value);
-    v
+    v 
 }
 
 #[lisp_fn]
 fn map_get(map: LispObject, k: LispObject) -> LispObject {
     let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
     let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
-    hashmap.map.get(&key).map_or(
-        LispObject::constant_nil(),
-        |key| key.object,
-    )
+    hashmap.map.get(&key).map_or(LispObject::constant_nil(), |key| key.object)
 }
 
 #[lisp_fn]
@@ -277,3 +271,4 @@ fn bin_dump() {
     let encoded: Vec<u8> = serialize(&table, Infinite).unwrap();
     let decoded: LispHashTable = deserialize(&encoded[..]).unwrap();
 }
+
