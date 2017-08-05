@@ -1454,7 +1454,7 @@ If FRAME is omitted or nil, use the selected frame."
 	(setq face (list face)))
     (with-help-window (help-buffer)
       (with-current-buffer standard-output
-	(dolist (f face)
+	(dolist (f face (buffer-string))
 	  (if (stringp f) (setq f (intern f)))
 	  ;; We may get called for anonymous faces (i.e., faces
 	  ;; expressed using prop-value plists).  Those can't be
