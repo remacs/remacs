@@ -1186,6 +1186,7 @@
 (unify-charset 'chinese-cns11643-5)
 (unify-charset 'chinese-cns11643-6)
 (unify-charset 'chinese-cns11643-7)
+(unify-charset 'chinese-cns11643-15)
 (unify-charset 'big5)
 (unify-charset 'chinese-big5-1)
 (unify-charset 'chinese-big5-2)
