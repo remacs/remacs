@@ -313,5 +313,23 @@ be invoked with the right arguments."
                       `((verify-visited-file-modtime ,buffer-visiting-file)
                         (verify-visited-file-modtime nil))))))))
 
+(ert-deftest files-tests--insert-directory-wildcard-in-dir-p ()
+  (let ((alist (list (cons "/home/user/*/.txt" (cons "/home/user/" "*/.txt"))
+                     (cons "/home/user/.txt" nil)
+                     (cons "/home/*/.txt" (cons "/home/" "*/.txt"))
+                     (cons "/home/*/" (cons "/home/" "*/"))
+                     (cons "/*/.txt" (cons "/" "*/.txt"))
+                     ;;
+                     (cons "c:/tmp/*/*.txt" (cons "c:/tmp/" "*/*.txt"))
+                     (cons "c:/tmp/*.txt" nil)
+                     (cons "c:/tmp/*/" (cons "c:/tmp/" "*/"))
+                     (cons "c:/*/*.txt" (cons "c:/" "*/*.txt")))))
+    (dolist (path-res alist)
+      (should
+       (equal
+        (cdr path-res)
+        (insert-directory-wildcard-in-dir-p (car path-res)))))))
+
+
 (provide 'files-tests)
 ;;; files-tests.el ends here

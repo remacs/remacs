@@ -6566,7 +6566,7 @@ Valid wildcards are '*', '?', '[abc]' and '[a-z]'."
                    ls-lisp-support-shell-wildcards)
                (string-match (concat "[" wildcards "]") (file-name-directory dir))
                (not (file-exists-p dir))) ; Prefer an existing file to wildcards.
-      (let ((regexp (format "\\`\\([^%s]+/\\)\\([^%s]*[%s].*\\)"
+      (let ((regexp (format "\\`\\([^%s]*/\\)\\([^%s]*[%s].*\\)"
                             wildcards wildcards wildcards)))
         (string-match regexp dir)
         (cons (match-string 1 dir) (match-string 2 dir))))))
