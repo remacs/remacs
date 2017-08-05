@@ -1077,7 +1077,8 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
 
   CHECK_STRING (name);
 
-  if (!NILP (Fstring_equal (name, ignore)) || NILP (Fget_buffer (name)))
+  if ((!NILP (ignore) && !NILP (Fstring_equal (name, ignore)))
+      || NILP (Fget_buffer (name)))
     return name;
 
   if (SREF (name, 0) != ' ') /* See bug#1229.  */
