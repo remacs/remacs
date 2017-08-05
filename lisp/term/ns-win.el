@@ -774,7 +774,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 (defun ns-suspend-error ()
   ;; Don't allow suspending if any of the frames are NS frames.
   (if (memq 'ns (mapcar 'window-system (frame-list)))
-      (error "Cannot suspend Emacs while running under NS")))
+      (error "Cannot suspend Emacs while an NS GUI frame exists")))
 
 
 ;; Set some options to be as Nextstep-like as possible.
