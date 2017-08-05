@@ -2691,7 +2691,7 @@ set_file_times (int fd, const char *filename,
 int
 renameat_noreplace (int srcfd, char const *src, int dstfd, char const *dst)
 {
-#ifdef SYS_renameat2
+#if defined SYS_renameat2 && defined RENAME_NOREPLACE
   return syscall (SYS_renameat2, srcfd, src, dstfd, dst, RENAME_NOREPLACE);
 #else
   errno = ENOSYS;
