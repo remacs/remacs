@@ -838,7 +838,8 @@ The font must be already used by Emacs."
   (interactive "sFont name (default current choice for ASCII chars): ")
   (or (and window-system (fboundp 'fontset-list))
       (error "No fonts being used"))
-  (let (font-info)
+  (let ((xref-item (list #'describe-font fontname))
+        font-info)
     (if (or (not fontname) (= (length fontname) 0))
 	(setq fontname (face-attribute 'default :font)))
     (setq font-info (font-info fontname))
@@ -850,6 +851,7 @@ The font must be already used by Emacs."
 	    ;; this problem.
 	    (message "No information about \"%s\"" (font-xlfd-name fontname))
 	  (message "No matching font found"))
+      (help-setup-xref xref-item (called-interactively-p 'interactive))
       (with-output-to-temp-buffer "*Help*"
 	(describe-font-internal font-info)))))
 
