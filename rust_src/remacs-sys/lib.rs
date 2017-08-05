@@ -1316,6 +1316,7 @@ extern "C" {
     pub static Qframe: Lisp_Object;
     pub static Qvector: Lisp_Object;
     pub static Qchar_table: Lisp_Object;
+    pub static Qcategory_table: Lisp_Object;
     pub static Qbool_vector: Lisp_Object;
     pub static Qhash_table: Lisp_Object;
     pub static Qthread: Lisp_Object;
