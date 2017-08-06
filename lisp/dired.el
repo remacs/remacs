@@ -1444,18 +1444,22 @@ ARG and NOCONFIRM, passed from `revert-buffer', are ignored."
 The positions have the form (BUFFER-POSITION WINDOW-POSITIONS).
 
 BUFFER-POSITION is the point position in the current Dired buffer.
-It has the form (BUFFER DIRED-FILENAME BUFFER-POINT).
+It has the form (BUFFER DIRED-FILENAME BUFFER-LINE-NUMBER).
 
 WINDOW-POSITIONS are current positions in all windows displaying
 this dired buffer.  The window positions have the form (WINDOW
-DIRED-FILENAME WINDOW-POINT)."
+DIRED-FILENAME WINDOW-LINE-NUMBER).
+
+We store line numbers instead of point positions because the header
+lines might change as well: when this happen the line number doesn't
+change; the point does."
   (list
-   (list (current-buffer) (dired-get-filename nil t) (point))
+   (list (current-buffer) (dired-get-filename nil t) (line-number-at-pos))
    (mapcar (lambda (w)
-	     (list w
-		   (with-selected-window w
-		     (dired-get-filename nil t))
-		   (window-point w)))
+	     (with-selected-window w
+               (list w
+		     (dired-get-filename nil t)
+                     (line-number-at-pos (window-point w)))))
 	   (get-buffer-window-list nil 0 t))))
 
 (defun dired-restore-positions (positions)
@@ -1464,7 +1468,8 @@ DIRED-FILENAME WINDOW-POINT)."
 	 (buffer (nth 0 buf-file-pos)))
     (unless (and (nth 1 buf-file-pos)
 		 (dired-goto-file (nth 1 buf-file-pos)))
-      (goto-char (nth 2 buf-file-pos))
+      (goto-char (point-min))
+      (forward-line (1- (nth 2 buf-file-pos)))
       (dired-move-to-filename))
     (dolist (win-file-pos (nth 1 positions))
       ;; Ensure that window still displays the original buffer.
@@ -1472,7 +1477,8 @@ DIRED-FILENAME WINDOW-POINT)."
 	(with-selected-window (nth 0 win-file-pos)
 	  (unless (and (nth 1 win-file-pos)
 		       (dired-goto-file (nth 1 win-file-pos)))
-	    (goto-char (nth 2 win-file-pos))
+            (goto-char (point-min))
+	    (forward-line (1- (nth 2 win-file-pos)))
 	    (dired-move-to-filename)))))))
 
 (defun dired-remember-marks (beg end)

@@ -308,5 +308,51 @@
           (should (eq 2 (current-column))))
       (dired-hide-details-mode orig))))
 
+(ert-deftest dired-test-bug27968 ()
+  "Test for http://debbugs.gnu.org/27968 ."
+  (let* ((top-dir (make-temp-file "top-dir" t))
+         (subdir (expand-file-name "subdir" top-dir))
+         (header-len-fn (lambda ()
+                          (save-excursion
+                            (goto-char 1)
+                            (forward-line 1)
+                            (- (point-at-eol) (point)))))
+         orig-len len diff pos line-nb)
+    (make-directory subdir 'parents)
+    (unwind-protect
+        (with-current-buffer (dired-noselect subdir)
+          (setq orig-len (funcall header-len-fn)
+                pos (point)
+                line-nb (line-number-at-pos))
+          ;; Bug arises when the header line changes its length; this may
+          ;; happen if the used space has changed: for instance, with the
+          ;; creation of additional files.
+          (make-directory "subdir" t)
+          (dired-revert)
+          ;; Change the header line.
+          (save-excursion
+            (goto-char 1)
+            (forward-line 1)
+            (let ((inhibit-read-only t))
+              (delete-region (point) (point-at-eol))
+              (insert "  test-bug27968")))
+          (setq len (funcall header-len-fn)
+                diff (- len orig-len))
+          (should-not (zerop diff)) ; Header length has changed.
+          ;; If diff > 0, then the point moves back.
+          ;; If diff < 0, then the point moves forward.
+          ;; If diff = 0, then the point doesn't move.
+          ;; Sometimes this point movement causes
+          ;; line-nb != (line-number-at-pos pos), so that we get
+          ;; an unexpected file at point if we store buffer points.
+          ;; Note that the line number before/after revert
+          ;; doesn't change.
+          (should (= line-nb
+                     (line-number-at-pos)
+                     (line-number-at-pos (+ pos diff))))
+          ;; After revert, the point must be in 'subdir' line.
+          (should (equal "subdir" (dired-get-filename 'local t))))
+      (delete-directory top-dir t))))
+
 (provide 'dired-tests)
 ;; dired-tests.el ends here
