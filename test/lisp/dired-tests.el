@@ -333,9 +333,13 @@
           (save-excursion
             (goto-char 1)
             (forward-line 1)
-            (let ((inhibit-read-only t))
+            (let ((inhibit-read-only t)
+                  (new-header "  test-bug27968"))
               (delete-region (point) (point-at-eol))
-              (insert "  test-bug27968")))
+              (when (= orig-len (length new-header))
+                ;; Wow lucky guy! I must buy lottery today.
+                (setq new-header (concat new-header " :-)")))
+              (insert new-header)))
           (setq len (funcall header-len-fn)
                 diff (- len orig-len))
           (should-not (zerop diff)) ; Header length has changed.
