@@ -1382,10 +1382,9 @@ unless optional argument SOFT is non-nil."
   (interactive)
   (comment-normalize-vars t)
   (let (compos comin)
-    ;; If we are not inside a comment and we only auto-fill comments,
-    ;; don't do anything (unless no comment syntax is defined).
+    ;; If we are not inside a comment don't do anything (unless no
+    ;; comment syntax is defined).
     (unless (and comment-start
-		 comment-auto-fill-only-comments
 		 (not (called-interactively-p 'interactive))
 		 (not (save-excursion
 			(prog1 (setq compos (comment-beginning))

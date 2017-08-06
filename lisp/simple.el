@@ -7219,6 +7219,13 @@ unless optional argument SOFT is non-nil."
        ;; If we're not inside a comment, just try to indent.
        (t (indent-according-to-mode))))))
 
+(defun internal-auto-fill ()
+  "The function called by `self-insert-command' to perform auto-filling."
+  (when (or (not comment-start)
+            (not comment-auto-fill-only-comments)
+            (nth 4 (syntax-ppss)))
+    (do-auto-fill)))
+
 (defvar normal-auto-fill-function 'do-auto-fill
   "The function to use for `auto-fill-function' if Auto Fill mode is turned on.
 Some major modes set this.")
