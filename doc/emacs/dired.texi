@@ -236,6 +236,14 @@ Dired cannot delete directories that are nonempty.  If the variable
 @code{dired-recursive-deletes} is non-@code{nil}, then Dired can
 delete nonempty directories including all their contents.  That can
 be somewhat risky.
+Even if you have set @code{dired-recursive-deletes} to @code{nil},
+you might want sometimes to delete recursively directories
+without being asked for confirmation for all of them.  This is handy
+when you have marked many directories for deletion and you are very
+sure that all of them can safely being deleted.  For every nonempty
+directory you are asked for confirmation; if you answer @code{all},
+then all the remaining directories will be deleted without more
+questions.
 
 @vindex delete-by-moving-to-trash
   If you change the variable @code{delete-by-moving-to-trash} to

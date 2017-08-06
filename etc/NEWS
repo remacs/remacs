@@ -611,6 +611,10 @@ paragraphs, for the purposes of bidirectional display.
 ** Dired
 
 +++
+*** You can answer 'all' in 'dired-do-delete' to delete recursively all
+remaining directories without more prompts.
+
++++
 *** Dired supports wildcards in the directory part of the file names.
 
 +++

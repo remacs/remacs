@@ -2981,6 +2981,14 @@ Any other value means to ask for each directory."
 ;; Match anything but `.' and `..'.
 (defvar dired-re-no-dot "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")
 
+(defconst dired-delete-help
+  "Type:
+`yes' to delete recursively the current directory,
+`no' to skip to next,
+`all' to delete all remaining directories with no more questions,
+`quit' to exit,
+`help' to show this help message.")
+
 ;; Delete file, possibly delete a directory and all its files.
 ;; This function is useful outside of dired.  One could change its name
 ;; to e.g. recursive-delete-file and put it somewhere else.
@@ -2996,23 +3004,40 @@ its possible values is:
 
 TRASH non-nil means to trash the file instead of deleting, provided
 `delete-by-moving-to-trash' (which see) is non-nil."
-  ;; This test is equivalent to
-  ;; (and (file-directory-p fn) (not (file-symlink-p fn)))
-  ;; but more efficient
-  (if (not (eq t (car (file-attributes file))))
-      (delete-file file trash)
-    (if (and recursive
-	     (directory-files file t dired-re-no-dot) ; Not empty.
-	     (or (eq recursive 'always)
-		 (yes-or-no-p (format "Recursively %s %s? "
-				      (if (and trash
-					       delete-by-moving-to-trash)
-					  "trash"
-					"delete")
-				      (dired-make-relative file)))))
-	(if (eq recursive 'top) (setq recursive 'always)) ; Don't ask again.
-      (setq recursive nil))
-    (delete-directory file recursive trash)))
+       ;; This test is equivalent to
+       ;; (and (file-directory-p fn) (not (file-symlink-p fn)))
+       ;; but more efficient
+       (if (not (eq t (car (file-attributes file))))
+           (delete-file file trash)
+         (let* ((valid-answers (list "yes" "no" "all" "quit" "help"))
+                (answer "")
+                (input-fn (lambda ()
+                            (setq answer
+                                  (completing-read
+                                   (format "Recursively %s %s? [yes, no, all, quit, help] "
+				           (if (and trash
+					            delete-by-moving-to-trash)
+					       "trash"
+				             "delete")
+				           (dired-make-relative file))
+                                   valid-answers nil t))
+                            (when (string= answer "help")
+                              (setq answer "")
+                              (with-help-window "*Help*"
+                                (with-current-buffer "*Help*" (insert dired-delete-help))))
+                            answer)))
+           (if (and recursive
+	            (directory-files file t dired-re-no-dot) ; Not empty.
+	            (eq recursive 'always))
+	       (if (eq recursive 'top) (setq recursive 'always)) ; Don't ask again.
+             ;; Otherwise prompt user:
+             (while (string= "" answer) (funcall input-fn))
+             (pcase answer
+               ('"all" (setq recursive 'always dired-recursive-deletes recursive))
+               ('"yes" (if (eq recursive 'top) (setq recursive 'always)))
+               ('"no" (setq recursive nil))
+               ('"quit" (keyboard-quit))))
+           (delete-directory file recursive trash))))
 
 (defun dired-do-flagged-delete (&optional nomessage)
   "In Dired, delete the files flagged for deletion.
@@ -3061,6 +3086,9 @@ non-empty directories is allowed."
   (let* ((files (mapcar #'car l))
 	 (count (length l))
 	 (succ 0)
+	 ;; Bind `dired-recursive-deletes' so that we can change it
+	 ;; locally according with the user answer within `dired-delete-file'.
+	 (dired-recursive-deletes dired-recursive-deletes)
 	 (trashing (and trash delete-by-moving-to-trash)))
     ;; canonicalize file list for pop up
     (setq files (nreverse (mapcar #'dired-make-relative files)))
@@ -3070,6 +3098,7 @@ non-empty directories is allowed."
 		 (if trashing "Trash" "Delete")
 		 (dired-mark-prompt arg files)))
 	(save-excursion
+          (catch '--delete-cancel
 	  (let ((progress-reporter
 		 (make-progress-reporter
 		  (if trashing "Trashing..." "Deleting...")
@@ -3087,6 +3116,7 @@ non-empty directories is allowed."
 		      (dired-fun-in-all-buffers
 		       (file-name-directory fn) (file-name-nondirectory fn)
 		       #'dired-delete-entry fn))
+                  (quit (throw '--delete-cancel (message "OK, canceled")))
 		  (error ;; catch errors from failed deletions
 		   (dired-log "%s\n" err)
 		   (setq failures (cons (car (car l)) failures)))))
@@ -3097,7 +3127,7 @@ non-empty directories is allowed."
 	       (format "%d of %d deletion%s failed"
 		       (length failures) count
 		       (dired-plural-s count))
-	       failures))))
+	       failures)))))
       (message "(No deletions performed)")))
   (dired-move-to-filename))
 
