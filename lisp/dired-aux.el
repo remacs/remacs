@@ -619,8 +619,9 @@ with a prefix argument."
 This function is used to add all related commands retrieved by `mailcap'
 to the end of the list of defaults just after the default value."
   (interactive)
-  (let ((commands (and (boundp 'files) (require 'mailcap nil t)
-		       (mailcap-file-default-commands files))))
+  (let* ((files minibuffer-completion-table)
+         (commands (and (require 'mailcap nil t)
+                        (mailcap-file-default-commands files))))
     (if (listp minibuffer-default)
 	(append minibuffer-default commands)
       (cons minibuffer-default commands))))
@@ -638,6 +639,7 @@ This normally reads using `read-shell-command', but if the
 offer a smarter default choice of shell command."
   (minibuffer-with-setup-hook
       (lambda ()
+        (set (make-local-variable 'minibuffer-completion-table) files)
 	(set (make-local-variable 'minibuffer-default-add-function)
 	     'minibuffer-default-add-dired-shell-commands))
     (setq prompt (format prompt (dired-mark-prompt arg files)))
