@@ -75,6 +75,24 @@
       (customize-set-variable 'eshell-ls-use-in-dired orig)
       (and (buffer-live-p buf) (kill-buffer)))))
 
+(ert-deftest em-ls-test-bug27844 ()
+  "Test for http://debbugs.gnu.org/27844 ."
+  (let ((orig eshell-ls-use-in-dired)
+        (dired-use-ls-dired 'unspecified)
+        buf insert-directory-program)
+    (unwind-protect
+        (progn
+          (customize-set-variable 'eshell-ls-use-in-dired t)
+          (setq buf (dired (expand-file-name "lisp/*.el" source-directory)))
+          (dired-toggle-marks)
+          (should (cdr (dired-get-marked-files)))
+          (kill-buffer buf)
+          (setq buf (dired (expand-file-name "lisp/subr.el" source-directory)))
+          (should (looking-at "subr\\.el")))
+      (customize-set-variable 'eshell-ls-use-in-dired orig)
+      (and (buffer-live-p buf) (kill-buffer)))))
+
+
 (provide 'em-ls-test)
 
 ;;; em-ls-tests.el ends here

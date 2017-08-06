@@ -243,6 +243,9 @@ scope during the evaluation of TEST-SEXP."
 
 ;;; Functions:
 
+(declare-function eshell-extended-glob "em-glob" (glob))
+(defvar eshell-error-if-no-glob)
+
 (defun eshell-ls--insert-directory
   (orig-fun file switches &optional wildcard full-directory-p)
   "Insert directory listing for FILE, formatted according to SWITCHES.
@@ -275,14 +278,22 @@ instead."
                 (set 'font-lock-buffers
                      (delq (current-buffer)
                            (symbol-value 'font-lock-buffers)))))
-          (let ((insert-func 'insert)
-                (error-func 'insert)
-                (flush-func 'ignore)
-                (switches
-                 (append eshell-ls-dired-initial-args
-                         (and (or (consp dired-directory) wildcard) (list "-d"))
-                         switches)))
-            (eshell-do-ls (nconc switches (list file)))))))))
+          (require 'em-glob)
+          (let* ((insert-func 'insert)
+                 (error-func 'insert)
+                 (flush-func 'ignore)
+                 (eshell-error-if-no-glob t)
+                 (target ; Expand the shell wildcards if any.
+                  (if (and (atom file)
+                           (string-match "[[?*]" file)
+                           (not (file-exists-p file)))
+                      (mapcar #'file-relative-name (eshell-extended-glob file))
+                    (file-relative-name file)))
+                 (switches
+                  (append eshell-ls-dired-initial-args
+                          (and (or (consp dired-directory) wildcard) (list "-d"))
+                          switches)))
+            (eshell-do-ls (nconc switches (list target)))))))))
 
 
 (declare-function eshell-extended-glob "em-glob" (glob))
