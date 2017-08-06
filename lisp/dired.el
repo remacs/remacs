@@ -3011,27 +3011,32 @@ TRASH non-nil means to trash the file instead of deleting, provided
            (delete-file file trash)
          (let* ((valid-answers (list "yes" "no" "all" "quit" "help"))
                 (answer "")
-                (input-fn (lambda ()
-                            (setq answer
-                                  (completing-read
-                                   (format "Recursively %s %s? [yes, no, all, quit, help] "
-				           (if (and trash
-					            delete-by-moving-to-trash)
-					       "trash"
-				             "delete")
-				           (dired-make-relative file))
-                                   valid-answers nil t))
-                            (when (string= answer "help")
-                              (setq answer "")
-                              (with-help-window "*Help*"
-                                (with-current-buffer "*Help*" (insert dired-delete-help))))
-                            answer)))
+                (input-fn
+                 (lambda ()
+                   (setq answer
+                         (read-string
+	                  (format "Recursively %s %s? [yes, no, all, quit, help] "
+		                  (if (and trash
+			                   delete-by-moving-to-trash)
+		                      "trash"
+		                    "delete")
+		                  (dired-make-relative file))))
+                   (when (string= answer "help")
+                     (with-help-window "*Help*"
+                       (with-current-buffer "*Help*" (insert dired-delete-help))))
+                   answer)))
            (if (and recursive
 	            (directory-files file t dired-re-no-dot) ; Not empty.
 	            (eq recursive 'always))
 	       (if (eq recursive 'top) (setq recursive 'always)) ; Don't ask again.
              ;; Otherwise prompt user:
-             (while (string= "" answer) (funcall input-fn))
+             (funcall input-fn)
+             (while (not (member answer valid-answers))
+               (unless (string= answer "help")
+                 (beep)
+                 (message "Please answer `yes' or `no' or `all' or `quit'")
+                 (sleep-for 2))
+               (funcall input-fn))
              (pcase answer
                ('"all" (setq recursive 'always dired-recursive-deletes recursive))
                ('"yes" (if (eq recursive 'top) (setq recursive 'always)))
