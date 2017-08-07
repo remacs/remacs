@@ -5248,6 +5248,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	  it->prev_stop = 0;
 	  it->base_level_stop = 0;
 	  it->string_from_display_prop_p = true;
+	  it->cmp_it.id = -1;
 	  /* Say that we haven't consumed the characters with
 	     `display' property yet.  The call to pop_it in
 	     set_iterator_to_next will clean this up.  */
@@ -5966,6 +5967,7 @@ get_overlay_strings_1 (struct it *it, ptrdiff_t charpos, bool compute_stop_p)
       it->multibyte_p = STRING_MULTIBYTE (it->string);
       it->method = GET_FROM_STRING;
       it->from_disp_prop_p = 0;
+      it->cmp_it.id = -1;
 
       /* Force paragraph direction to be that of the parent
 	 buffer.  */
@@ -20506,6 +20508,7 @@ push_prefix_prop (struct it *it, Lisp_Object prop)
       it->stop_charpos = 0;
       it->prev_stop = 0;
       it->base_level_stop = 0;
+      it->cmp_it.id = -1;
 
       /* Force paragraph direction to be that of the parent
 	 buffer/string.  */
