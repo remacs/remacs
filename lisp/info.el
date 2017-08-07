@@ -171,7 +171,11 @@ A header-line does not scroll with the rest of the buffer."
 ;; defvar and explicitly give it a standard-value property, and
 ;; call custom-initialize-delay on it.
 ;; The progn forces the autoloader to include the whole thing, not
-;; just an abbreviated version.
+;; just an abbreviated version.  The value is initialized at startup
+;; time, when command-line calls custom-reevaluate-setting on all
+;; the defcustoms in custom-delayed-init-variables.  This is
+;; somewhat sub-optimal, as ideally this should be done when Info
+;; mode is first invoked.
 ;;;###autoload
 (progn
 (defcustom Info-default-directory-list

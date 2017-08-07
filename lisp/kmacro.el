@@ -1,4 +1,4 @@
-;;; kmacro.el --- enhanced keyboard macros
+;;; kmacro.el --- enhanced keyboard macros -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
 

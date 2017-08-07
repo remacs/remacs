@@ -104,7 +104,9 @@ a font height that isn't optimal."
     ;; when combined with Monospaced and with other standard fonts.
     ;; One of its uses is for 'tex-verbatim' and 'Info-quoted' faces,
     ;; so the result must be different from the default face's font,
-    ;; and must be monospaced.
+    ;; and must be monospaced.  For 'tex-verbatim', it is desirable
+    ;; that the font really is a Serif font, so as to look like
+    ;; TeX's 'verbatim'.
     ("Monospace Serif"
 
      ;; This looks good on GNU/Linux.
@@ -1452,7 +1454,7 @@ If FRAME is omitted or nil, use the selected frame."
 	(setq face (list face)))
     (with-help-window (help-buffer)
       (with-current-buffer standard-output
-	(dolist (f face)
+	(dolist (f face (buffer-string))
 	  (if (stringp f) (setq f (intern f)))
 	  ;; We may get called for anonymous faces (i.e., faces
 	  ;; expressed using prop-value plists).  Those can't be

@@ -1888,25 +1888,27 @@ The value is non-nil if there were no errors, nil if errors."
 	  (insert "\n")			; aaah, unix.
 	  (if (file-writable-p target-file)
 	      ;; We must disable any code conversion here.
-	      (let* ((coding-system-for-write 'no-conversion)
-		     ;; Write to a tempfile so that if another Emacs
-		     ;; process is trying to load target-file (eg in a
-		     ;; parallel bootstrap), it does not risk getting a
-		     ;; half-finished file.  (Bug#4196)
-		     (tempfile (make-temp-name target-file))
-		     (kill-emacs-hook
-		      (cons (lambda () (ignore-errors (delete-file tempfile)))
-			    kill-emacs-hook)))
-		(write-region (point-min) (point-max) tempfile nil 1)
-		;; This has the intentional side effect that any
-		;; hard-links to target-file continue to
-		;; point to the old file (this makes it possible
-		;; for installed files to share disk space with
-		;; the build tree, without causing problems when
-		;; emacs-lisp files in the build tree are
-		;; recompiled).  Previously this was accomplished by
-		;; deleting target-file before writing it.
-		(rename-file tempfile target-file t)
+	      (progn
+		(let* ((coding-system-for-write 'no-conversion)
+		       ;; Write to a tempfile so that if another Emacs
+		       ;; process is trying to load target-file (eg in a
+		       ;; parallel bootstrap), it does not risk getting a
+		       ;; half-finished file.  (Bug#4196)
+		       (tempfile (make-temp-file target-file))
+		       (kill-emacs-hook
+			(cons (lambda () (ignore-errors
+					   (delete-file tempfile)))
+			      kill-emacs-hook)))
+		  (write-region (point-min) (point-max) tempfile nil 1)
+		  ;; This has the intentional side effect that any
+		  ;; hard-links to target-file continue to
+		  ;; point to the old file (this makes it possible
+		  ;; for installed files to share disk space with
+		  ;; the build tree, without causing problems when
+		  ;; emacs-lisp files in the build tree are
+		  ;; recompiled).  Previously this was accomplished by
+		  ;; deleting target-file before writing it.
+		  (rename-file tempfile target-file t))
 		(or noninteractive (message "Wrote %s" target-file)))
 	    ;; This is just to give a better error message than write-region
 	    (let ((exists (file-exists-p target-file)))

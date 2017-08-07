@@ -268,9 +268,10 @@ Whichever character you type to run this command is inserted.
 The numeric prefix argument N says how many times to repeat the insertion.
 Before insertion, `expand-abbrev' is executed if the inserted character does
 not have word syntax and the previous character in the buffer does.
-After insertion, the value of `auto-fill-function' is called if the
-`auto-fill-chars' table has a non-nil value for the inserted character.
-At the end, it runs `post-self-insert-hook'.  */)
+After insertion, `internal-auto-fill' is called if
+`auto-fill-function' is non-nil and if the `auto-fill-chars' table has
+a non-nil value for the inserted character.  At the end, it runs
+`post-self-insert-hook'.  */)
   (Lisp_Object n)
 {
   CHECK_NUMBER (n);
@@ -475,7 +476,7 @@ internal_self_insert (int c, EMACS_INT n)
 	   that.  Must have the newline in place already so filling and
 	   justification, if any, know where the end is going to be.  */
 	SET_PT_BOTH (PT - 1, PT_BYTE - 1);
-      auto_fill_result = call0 (BVAR (current_buffer, auto_fill_function));
+      auto_fill_result = call0 (Qinternal_auto_fill);
       /* Test PT < ZV in case the auto-fill-function is strange.  */
       if (c == '\n' && PT < ZV)
 	SET_PT_BOTH (PT + 1, PT_BYTE + 1);
@@ -494,6 +495,8 @@ internal_self_insert (int c, EMACS_INT n)
 void
 syms_of_cmds (void)
 {
+  DEFSYM (Qinternal_auto_fill, "internal-auto-fill");
+
   DEFSYM (Qundo_auto_amalgamate, "undo-auto-amalgamate");
   DEFSYM (Qundo_auto__this_command_amalgamating,
           "undo-auto--this-command-amalgamating");

@@ -23,8 +23,9 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
-#ifdef HAVE_GNUTLS3
-#include <gnutls/crypto.h>
+#if 0x030000 <= GNUTLS_VERSION_NUMBER
+# define HAVE_GNUTLS3
+# include <gnutls/crypto.h>
 #endif
 
 #include "lisp.h"

@@ -26,12 +26,26 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "buffer.h"
 
+#if 0x030014 <= GNUTLS_VERSION_NUMBER
+# define HAVE_GNUTLS_X509_SYSTEM_TRUST
+#endif
+
+/* Although AEAD support started in GnuTLS 3.4.0 and works in 3.5.14,
+   it was broken through at least GnuTLS 3.4.10; see:
+   https://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00992.html
+   The relevant fix seems to have been made in GnuTLS 3.5.1; see:
+   https://gitlab.com/gnutls/gnutls/commit/568935848dd6b82b9315d8b6c529d00e2605e03d
+   So, require 3.5.1.  */
+#if 0x030501 <= GNUTLS_VERSION_NUMBER
+# define HAVE_GNUTLS_AEAD
+#endif
+
 #ifdef HAVE_GNUTLS
 
-#ifdef WINDOWSNT
-#include <windows.h>
-#include "w32.h"
-#endif
+# ifdef WINDOWSNT
+#  include <windows.h>
+#  include "w32.h"
+# endif
 
 static bool emacs_gnutls_handle_error (gnutls_session_t, int);
 
@@ -39,9 +53,9 @@ static bool gnutls_global_initialized;
 
 static void gnutls_log_function (int, const char *);
 static void gnutls_log_function2 (int, const char *, const char *);
-#ifdef HAVE_GNUTLS3
+# ifdef HAVE_GNUTLS3
 static void gnutls_audit_log_function (gnutls_session_t, const char *);
-#endif
+# endif
 
 enum extra_peer_verification
 {
@@ -49,7 +63,7 @@ enum extra_peer_verification
 };
 
 
-#ifdef WINDOWSNT
+# ifdef WINDOWSNT
 
 DEF_DLL_FN (gnutls_alert_description_t, gnutls_alert_get,
 	    (gnutls_session_t));
@@ -74,12 +88,10 @@ DEF_DLL_FN (int, gnutls_certificate_set_x509_crl_file,
 DEF_DLL_FN (int, gnutls_certificate_set_x509_key_file,
 	    (gnutls_certificate_credentials_t, const char *, const char *,
 	     gnutls_x509_crt_fmt_t));
-# if ((GNUTLS_VERSION_MAJOR						\
-       + (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20))	\
-      > 3)
+#  ifdef HAVE_GNUTLS_X509_SYSTEM_TRUST
 DEF_DLL_FN (int, gnutls_certificate_set_x509_system_trust,
 	    (gnutls_certificate_credentials_t));
-# endif
+#  endif
 DEF_DLL_FN (int, gnutls_certificate_set_x509_trust_file,
 	    (gnutls_certificate_credentials_t, const char *,
 	     gnutls_x509_crt_fmt_t));
@@ -96,9 +108,9 @@ DEF_DLL_FN (int, gnutls_dh_get_prime_bits, (gnutls_session_t));
 DEF_DLL_FN (int, gnutls_error_is_fatal, (int));
 DEF_DLL_FN (int, gnutls_global_init, (void));
 DEF_DLL_FN (void, gnutls_global_set_log_function, (gnutls_log_func));
-# ifdef HAVE_GNUTLS3
+#  ifdef HAVE_GNUTLS3
 DEF_DLL_FN (void, gnutls_global_set_audit_log_function, (gnutls_audit_log_func));
-# endif
+#  endif
 DEF_DLL_FN (void, gnutls_global_set_log_level, (int));
 DEF_DLL_FN (int, gnutls_handshake, (gnutls_session_t));
 DEF_DLL_FN (int, gnutls_init, (gnutls_session_t *, unsigned int));
@@ -172,14 +184,13 @@ DEF_DLL_FN (const char *, gnutls_cipher_get_name,
 DEF_DLL_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
 DEF_DLL_FN (const char *, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
 
-# ifdef HAVE_GNUTLS3
+#  ifdef HAVE_GNUTLS3
 DEF_DLL_FN (int, gnutls_rnd, (gnutls_rnd_level_t, void *, size_t));
 DEF_DLL_FN (const gnutls_mac_algorithm_t *, gnutls_mac_list, (void));
 DEF_DLL_FN (size_t, gnutls_mac_get_nonce_size, (gnutls_mac_algorithm_t));
 DEF_DLL_FN (size_t, gnutls_mac_get_key_size, (gnutls_mac_algorithm_t));
 DEF_DLL_FN (const gnutls_digest_algorithm_t *, gnutls_digest_list, (void));
 DEF_DLL_FN (const char *, gnutls_digest_get_name, (gnutls_digest_algorithm_t));
-#  ifdef HAVE_GNUTLS3_CIPHER
 DEF_DLL_FN (gnutls_cipher_algorithm_t *, gnutls_cipher_list, (void));
 DEF_DLL_FN (int, gnutls_cipher_get_iv_size, (gnutls_cipher_algorithm_t));
 DEF_DLL_FN (size_t, gnutls_cipher_get_key_size, (gnutls_cipher_algorithm_t));
@@ -194,7 +205,7 @@ DEF_DLL_FN (int, gnutls_cipher_encrypt2,
 DEF_DLL_FN (void, gnutls_cipher_deinit, (gnutls_cipher_hd_t));
 DEF_DLL_FN (int, gnutls_cipher_decrypt2,
 	    (gnutls_cipher_hd_t, const void *, size_t, void *, size_t));
-#   ifdef HAVE_GNUTLS3_AEAD
+#   ifdef HAVE_GNUTLS_AEAD
 DEF_DLL_FN (int, gnutls_aead_cipher_init,
 	    (gnutls_aead_cipher_hd_t *, gnutls_cipher_algorithm_t,
 	     const gnutls_datum_t *));
@@ -205,25 +216,20 @@ DEF_DLL_FN (int, gnutls_aead_cipher_encrypt,
 DEF_DLL_FN (int, gnutls_aead_cipher_decrypt,
 	    (gnutls_aead_cipher_hd_t, const void *, size_t, const void *,
 	     size_t, size_t, const void *, size_t, void *, size_t *));
-#   endif /* HAVE_GNUTLS3_AEAD */
-#   ifdef HAVE_GNUTLS3_HMAC
+#   endif
 DEF_DLL_FN (int, gnutls_hmac_init,
 	    (gnutls_hmac_hd_t *, gnutls_mac_algorithm_t, const void *, size_t));
 DEF_DLL_FN (int, gnutls_hmac_get_len, (gnutls_mac_algorithm_t));
 DEF_DLL_FN (int, gnutls_hmac, (gnutls_hmac_hd_t, const void *, size_t));
 DEF_DLL_FN (void, gnutls_hmac_deinit, (gnutls_hmac_hd_t, void *));
 DEF_DLL_FN (void, gnutls_hmac_output, (gnutls_hmac_hd_t, void *));
-#   endif  /* HAVE_GNUTLS3_HMAC */
-#  endif  /* HAVE_GNUTLS3_CIPHER */
-#  ifdef HAVE_GNUTLS3_DIGEST
   DEF_DLL_FN (int, gnutls_hash_init,
 	    (gnutls_hash_hd_t *, gnutls_digest_algorithm_t));
 DEF_DLL_FN (int, gnutls_hash_get_len, (gnutls_digest_algorithm_t));
 DEF_DLL_FN (int, gnutls_hash, (gnutls_hash_hd_t, const void *, size_t));
 DEF_DLL_FN (void, gnutls_hash_deinit, (gnutls_hash_hd_t, void *));
 DEF_DLL_FN (void, gnutls_hash_output, (gnutls_hash_hd_t, void *));
-#  endif  /* HAVE_GNUTLS3_DIGEST */
-# endif	 /* HAVE_GNUTLS3 */
+#  endif	 /* HAVE_GNUTLS3 */
 
 
 static bool
@@ -249,11 +255,9 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_certificate_set_verify_flags);
   LOAD_DLL_FN (library, gnutls_certificate_set_x509_crl_file);
   LOAD_DLL_FN (library, gnutls_certificate_set_x509_key_file);
-# if ((GNUTLS_VERSION_MAJOR						\
-       + (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20))	\
-      > 3)
+#  ifdef HAVE_GNUTLS_X509_SYSTEM_TRUST
   LOAD_DLL_FN (library, gnutls_certificate_set_x509_system_trust);
-# endif
+#  endif
   LOAD_DLL_FN (library, gnutls_certificate_set_x509_trust_file);
   LOAD_DLL_FN (library, gnutls_certificate_type_get);
   LOAD_DLL_FN (library, gnutls_certificate_verify_peers2);
@@ -264,9 +268,9 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_error_is_fatal);
   LOAD_DLL_FN (library, gnutls_global_init);
   LOAD_DLL_FN (library, gnutls_global_set_log_function);
-# ifdef HAVE_GNUTLS3
+#  ifdef HAVE_GNUTLS3
   LOAD_DLL_FN (library, gnutls_global_set_audit_log_function);
-# endif
+#  endif
   LOAD_DLL_FN (library, gnutls_global_set_log_level);
   LOAD_DLL_FN (library, gnutls_handshake);
   LOAD_DLL_FN (library, gnutls_init);
@@ -309,14 +313,13 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_cipher_get_name);
   LOAD_DLL_FN (library, gnutls_mac_get);
   LOAD_DLL_FN (library, gnutls_mac_get_name);
-# ifdef HAVE_GNUTLS3
+#  ifdef HAVE_GNUTLS3
   LOAD_DLL_FN (library, gnutls_rnd);
   LOAD_DLL_FN (library, gnutls_mac_list);
   LOAD_DLL_FN (library, gnutls_mac_get_nonce_size);
   LOAD_DLL_FN (library, gnutls_mac_get_key_size);
   LOAD_DLL_FN (library, gnutls_digest_list);
   LOAD_DLL_FN (library, gnutls_digest_get_name);
-#  ifdef HAVE_GNUTLS3_CIPHER
   LOAD_DLL_FN (library, gnutls_cipher_list);
   LOAD_DLL_FN (library, gnutls_cipher_get_iv_size);
   LOAD_DLL_FN (library, gnutls_cipher_get_key_size);
@@ -327,28 +330,23 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_cipher_encrypt2);
   LOAD_DLL_FN (library, gnutls_cipher_deinit);
   LOAD_DLL_FN (library, gnutls_cipher_decrypt2);
-#   ifdef HAVE_GNUTLS3_AEAD
+#   ifdef HAVE_GNUTLS_AEAD
   LOAD_DLL_FN (library, gnutls_aead_cipher_init);
   LOAD_DLL_FN (library, gnutls_aead_cipher_deinit);
   LOAD_DLL_FN (library, gnutls_aead_cipher_encrypt);
   LOAD_DLL_FN (library, gnutls_aead_cipher_decrypt);
 #   endif
-#   ifdef HAVE_GNUTLS3_HMAC
   LOAD_DLL_FN (library, gnutls_hmac_init);
   LOAD_DLL_FN (library, gnutls_hmac_get_len);
   LOAD_DLL_FN (library, gnutls_hmac);
   LOAD_DLL_FN (library, gnutls_hmac_deinit);
   LOAD_DLL_FN (library, gnutls_hmac_output);
-#   endif  /* HAVE_GNUTLS3_HMAC */
-#  endif  /* HAVE_GNUTLS3_CIPHER */
-#  ifdef HAVE_GNUTLS3_DIGEST
   LOAD_DLL_FN (library, gnutls_hash_init);
   LOAD_DLL_FN (library, gnutls_hash_get_len);
   LOAD_DLL_FN (library, gnutls_hash);
   LOAD_DLL_FN (library, gnutls_hash_deinit);
   LOAD_DLL_FN (library, gnutls_hash_output);
-#  endif
-# endif	 /* HAVE_GNUTLS3 */
+#  endif	 /* HAVE_GNUTLS3 */
 
   max_log_level = global_gnutls_log_level;
 
@@ -361,111 +359,105 @@ init_gnutls_functions (void)
   return 1;
 }
 
-# define gnutls_alert_get fn_gnutls_alert_get
-# define gnutls_alert_get_name fn_gnutls_alert_get_name
-# define gnutls_anon_allocate_client_credentials fn_gnutls_anon_allocate_client_credentials
-# define gnutls_anon_free_client_credentials fn_gnutls_anon_free_client_credentials
-# define gnutls_bye fn_gnutls_bye
-# define gnutls_certificate_allocate_credentials fn_gnutls_certificate_allocate_credentials
-# define gnutls_certificate_free_credentials fn_gnutls_certificate_free_credentials
-# define gnutls_certificate_get_peers fn_gnutls_certificate_get_peers
-# define gnutls_certificate_set_verify_flags fn_gnutls_certificate_set_verify_flags
-# define gnutls_certificate_set_x509_crl_file fn_gnutls_certificate_set_x509_crl_file
-# define gnutls_certificate_set_x509_key_file fn_gnutls_certificate_set_x509_key_file
-# define gnutls_certificate_set_x509_system_trust fn_gnutls_certificate_set_x509_system_trust
-# define gnutls_certificate_set_x509_trust_file fn_gnutls_certificate_set_x509_trust_file
-# define gnutls_certificate_type_get fn_gnutls_certificate_type_get
-# define gnutls_certificate_verify_peers2 fn_gnutls_certificate_verify_peers2
-# define gnutls_cipher_get fn_gnutls_cipher_get
-# define gnutls_cipher_get_name fn_gnutls_cipher_get_name
-# define gnutls_credentials_set fn_gnutls_credentials_set
-# define gnutls_deinit fn_gnutls_deinit
-# define gnutls_dh_get_prime_bits fn_gnutls_dh_get_prime_bits
-# define gnutls_dh_set_prime_bits fn_gnutls_dh_set_prime_bits
-# define gnutls_error_is_fatal fn_gnutls_error_is_fatal
-# define gnutls_global_init fn_gnutls_global_init
-# define gnutls_global_set_audit_log_function fn_gnutls_global_set_audit_log_function
-# define gnutls_global_set_log_function fn_gnutls_global_set_log_function
-# define gnutls_global_set_log_level fn_gnutls_global_set_log_level
-# define gnutls_handshake fn_gnutls_handshake
-# define gnutls_init fn_gnutls_init
-# define gnutls_kx_get fn_gnutls_kx_get
-# define gnutls_kx_get_name fn_gnutls_kx_get_name
-# define gnutls_mac_get fn_gnutls_mac_get
-# define gnutls_mac_get_name fn_gnutls_mac_get_name
-# define gnutls_pk_algorithm_get_name fn_gnutls_pk_algorithm_get_name
-# define gnutls_pk_bits_to_sec_param fn_gnutls_pk_bits_to_sec_param
-# define gnutls_priority_set_direct fn_gnutls_priority_set_direct
-# define gnutls_protocol_get_name fn_gnutls_protocol_get_name
-# define gnutls_protocol_get_version fn_gnutls_protocol_get_version
-# define gnutls_record_check_pending fn_gnutls_record_check_pending
-# define gnutls_record_recv fn_gnutls_record_recv
-# define gnutls_record_send fn_gnutls_record_send
-# define gnutls_sec_param_get_name fn_gnutls_sec_param_get_name
-# define gnutls_server_name_set fn_gnutls_server_name_set
-# define gnutls_sign_get_name fn_gnutls_sign_get_name
-# define gnutls_strerror fn_gnutls_strerror
-# define gnutls_transport_set_errno fn_gnutls_transport_set_errno
-# define gnutls_transport_set_ptr2 fn_gnutls_transport_set_ptr2
-# define gnutls_transport_set_pull_function fn_gnutls_transport_set_pull_function
-# define gnutls_transport_set_push_function fn_gnutls_transport_set_push_function
-# define gnutls_x509_crt_check_hostname fn_gnutls_x509_crt_check_hostname
-# define gnutls_x509_crt_check_issuer fn_gnutls_x509_crt_check_issuer
-# define gnutls_x509_crt_deinit fn_gnutls_x509_crt_deinit
-# define gnutls_x509_crt_get_activation_time fn_gnutls_x509_crt_get_activation_time
-# define gnutls_x509_crt_get_dn fn_gnutls_x509_crt_get_dn
-# define gnutls_x509_crt_get_expiration_time fn_gnutls_x509_crt_get_expiration_time
-# define gnutls_x509_crt_get_fingerprint fn_gnutls_x509_crt_get_fingerprint
-# define gnutls_x509_crt_get_issuer_dn fn_gnutls_x509_crt_get_issuer_dn
-# define gnutls_x509_crt_get_issuer_unique_id fn_gnutls_x509_crt_get_issuer_unique_id
-# define gnutls_x509_crt_get_key_id fn_gnutls_x509_crt_get_key_id
-# define gnutls_x509_crt_get_pk_algorithm fn_gnutls_x509_crt_get_pk_algorithm
-# define gnutls_x509_crt_get_serial fn_gnutls_x509_crt_get_serial
-# define gnutls_x509_crt_get_signature_algorithm fn_gnutls_x509_crt_get_signature_algorithm
-# define gnutls_x509_crt_get_subject_unique_id fn_gnutls_x509_crt_get_subject_unique_id
-# define gnutls_x509_crt_get_version fn_gnutls_x509_crt_get_version
-# define gnutls_x509_crt_import fn_gnutls_x509_crt_import
-# define gnutls_x509_crt_init fn_gnutls_x509_crt_init
-# ifdef HAVE_GNUTLS3
-# define gnutls_rnd fn_gnutls_rnd
-# define gnutls_mac_list fn_gnutls_mac_list
-# define gnutls_mac_get_nonce_size fn_gnutls_mac_get_nonce_size
-# define gnutls_mac_get_key_size fn_gnutls_mac_get_key_size
-# define gnutls_digest_list fn_gnutls_digest_list
-# define gnutls_digest_get_name fn_gnutls_digest_get_name
-#  ifdef HAVE_GNUTLS3_CIPHER
-# define gnutls_cipher_list fn_gnutls_cipher_list
-# define gnutls_cipher_get_iv_size fn_gnutls_cipher_get_iv_size
-# define gnutls_cipher_get_key_size fn_gnutls_cipher_get_key_size
-# define gnutls_cipher_get_block_size fn_gnutls_cipher_get_block_size
-# define gnutls_cipher_get_tag_size fn_gnutls_cipher_get_tag_size
-# define gnutls_cipher_init fn_gnutls_cipher_init
-# define gnutls_cipher_set_iv fn_gnutls_cipher_set_iv
-# define gnutls_cipher_encrypt2 fn_gnutls_cipher_encrypt2
-# define gnutls_cipher_decrypt2 fn_gnutls_cipher_decrypt2
-# define gnutls_cipher_deinit fn_gnutls_cipher_deinit
-#   ifdef HAVE_GNUTLS3_AEAD
-# define gnutls_aead_cipher_encrypt fn_gnutls_aead_cipher_encrypt
-# define gnutls_aead_cipher_decrypt fn_gnutls_aead_cipher_decrypt
-# define gnutls_aead_cipher_init fn_gnutls_aead_cipher_init
-# define gnutls_aead_cipher_deinit fn_gnutls_aead_cipher_deinit
-#   endif /* HAVE_GNUTLS3_AEAD */
-#   ifdef HAVE_GNUTLS3_HMAC
-# define gnutls_hmac_init fn_gnutls_hmac_init
-# define gnutls_hmac_get_len fn_gnutls_hmac_get_len
-# define gnutls_hmac fn_gnutls_hmac
-# define gnutls_hmac_deinit fn_gnutls_hmac_deinit
-# define gnutls_hmac_output fn_gnutls_hmac_output
-#   endif  /* HAVE_GNUTLS3_HMAC */
-#  endif  /* HAVE_GNUTLS3_CIPHER */
-#  ifdef HAVE_GNUTLS3_DIGEST
-# define gnutls_hash_init fn_gnutls_hash_init
-# define gnutls_hash_get_len fn_gnutls_hash_get_len
-# define gnutls_hash fn_gnutls_hash
-# define gnutls_hash_deinit fn_gnutls_hash_deinit
-# define gnutls_hash_output fn_gnutls_hash_output
-#  endif
-# endif	 /* HAVE_GNUTLS3 */
+#  define gnutls_alert_get fn_gnutls_alert_get
+#  define gnutls_alert_get_name fn_gnutls_alert_get_name
+#  define gnutls_anon_allocate_client_credentials fn_gnutls_anon_allocate_client_credentials
+#  define gnutls_anon_free_client_credentials fn_gnutls_anon_free_client_credentials
+#  define gnutls_bye fn_gnutls_bye
+#  define gnutls_certificate_allocate_credentials fn_gnutls_certificate_allocate_credentials
+#  define gnutls_certificate_free_credentials fn_gnutls_certificate_free_credentials
+#  define gnutls_certificate_get_peers fn_gnutls_certificate_get_peers
+#  define gnutls_certificate_set_verify_flags fn_gnutls_certificate_set_verify_flags
+#  define gnutls_certificate_set_x509_crl_file fn_gnutls_certificate_set_x509_crl_file
+#  define gnutls_certificate_set_x509_key_file fn_gnutls_certificate_set_x509_key_file
+#  define gnutls_certificate_set_x509_system_trust fn_gnutls_certificate_set_x509_system_trust
+#  define gnutls_certificate_set_x509_trust_file fn_gnutls_certificate_set_x509_trust_file
+#  define gnutls_certificate_type_get fn_gnutls_certificate_type_get
+#  define gnutls_certificate_verify_peers2 fn_gnutls_certificate_verify_peers2
+#  define gnutls_cipher_get fn_gnutls_cipher_get
+#  define gnutls_cipher_get_name fn_gnutls_cipher_get_name
+#  define gnutls_credentials_set fn_gnutls_credentials_set
+#  define gnutls_deinit fn_gnutls_deinit
+#  define gnutls_dh_get_prime_bits fn_gnutls_dh_get_prime_bits
+#  define gnutls_dh_set_prime_bits fn_gnutls_dh_set_prime_bits
+#  define gnutls_error_is_fatal fn_gnutls_error_is_fatal
+#  define gnutls_global_init fn_gnutls_global_init
+#  define gnutls_global_set_audit_log_function fn_gnutls_global_set_audit_log_function
+#  define gnutls_global_set_log_function fn_gnutls_global_set_log_function
+#  define gnutls_global_set_log_level fn_gnutls_global_set_log_level
+#  define gnutls_handshake fn_gnutls_handshake
+#  define gnutls_init fn_gnutls_init
+#  define gnutls_kx_get fn_gnutls_kx_get
+#  define gnutls_kx_get_name fn_gnutls_kx_get_name
+#  define gnutls_mac_get fn_gnutls_mac_get
+#  define gnutls_mac_get_name fn_gnutls_mac_get_name
+#  define gnutls_pk_algorithm_get_name fn_gnutls_pk_algorithm_get_name
+#  define gnutls_pk_bits_to_sec_param fn_gnutls_pk_bits_to_sec_param
+#  define gnutls_priority_set_direct fn_gnutls_priority_set_direct
+#  define gnutls_protocol_get_name fn_gnutls_protocol_get_name
+#  define gnutls_protocol_get_version fn_gnutls_protocol_get_version
+#  define gnutls_record_check_pending fn_gnutls_record_check_pending
+#  define gnutls_record_recv fn_gnutls_record_recv
+#  define gnutls_record_send fn_gnutls_record_send
+#  define gnutls_sec_param_get_name fn_gnutls_sec_param_get_name
+#  define gnutls_server_name_set fn_gnutls_server_name_set
+#  define gnutls_sign_get_name fn_gnutls_sign_get_name
+#  define gnutls_strerror fn_gnutls_strerror
+#  define gnutls_transport_set_errno fn_gnutls_transport_set_errno
+#  define gnutls_transport_set_ptr2 fn_gnutls_transport_set_ptr2
+#  define gnutls_transport_set_pull_function fn_gnutls_transport_set_pull_function
+#  define gnutls_transport_set_push_function fn_gnutls_transport_set_push_function
+#  define gnutls_x509_crt_check_hostname fn_gnutls_x509_crt_check_hostname
+#  define gnutls_x509_crt_check_issuer fn_gnutls_x509_crt_check_issuer
+#  define gnutls_x509_crt_deinit fn_gnutls_x509_crt_deinit
+#  define gnutls_x509_crt_get_activation_time fn_gnutls_x509_crt_get_activation_time
+#  define gnutls_x509_crt_get_dn fn_gnutls_x509_crt_get_dn
+#  define gnutls_x509_crt_get_expiration_time fn_gnutls_x509_crt_get_expiration_time
+#  define gnutls_x509_crt_get_fingerprint fn_gnutls_x509_crt_get_fingerprint
+#  define gnutls_x509_crt_get_issuer_dn fn_gnutls_x509_crt_get_issuer_dn
+#  define gnutls_x509_crt_get_issuer_unique_id fn_gnutls_x509_crt_get_issuer_unique_id
+#  define gnutls_x509_crt_get_key_id fn_gnutls_x509_crt_get_key_id
+#  define gnutls_x509_crt_get_pk_algorithm fn_gnutls_x509_crt_get_pk_algorithm
+#  define gnutls_x509_crt_get_serial fn_gnutls_x509_crt_get_serial
+#  define gnutls_x509_crt_get_signature_algorithm fn_gnutls_x509_crt_get_signature_algorithm
+#  define gnutls_x509_crt_get_subject_unique_id fn_gnutls_x509_crt_get_subject_unique_id
+#  define gnutls_x509_crt_get_version fn_gnutls_x509_crt_get_version
+#  define gnutls_x509_crt_import fn_gnutls_x509_crt_import
+#  define gnutls_x509_crt_init fn_gnutls_x509_crt_init
+#  ifdef HAVE_GNUTLS3
+#  define gnutls_rnd fn_gnutls_rnd
+#  define gnutls_mac_list fn_gnutls_mac_list
+#  define gnutls_mac_get_nonce_size fn_gnutls_mac_get_nonce_size
+#  define gnutls_mac_get_key_size fn_gnutls_mac_get_key_size
+#  define gnutls_digest_list fn_gnutls_digest_list
+#  define gnutls_digest_get_name fn_gnutls_digest_get_name
+#  define gnutls_cipher_list fn_gnutls_cipher_list
+#  define gnutls_cipher_get_iv_size fn_gnutls_cipher_get_iv_size
+#  define gnutls_cipher_get_key_size fn_gnutls_cipher_get_key_size
+#  define gnutls_cipher_get_block_size fn_gnutls_cipher_get_block_size
+#  define gnutls_cipher_get_tag_size fn_gnutls_cipher_get_tag_size
+#  define gnutls_cipher_init fn_gnutls_cipher_init
+#  define gnutls_cipher_set_iv fn_gnutls_cipher_set_iv
+#  define gnutls_cipher_encrypt2 fn_gnutls_cipher_encrypt2
+#  define gnutls_cipher_decrypt2 fn_gnutls_cipher_decrypt2
+#  define gnutls_cipher_deinit fn_gnutls_cipher_deinit
+#   ifdef HAVE_GNUTLS_AEAD
+#  define gnutls_aead_cipher_encrypt fn_gnutls_aead_cipher_encrypt
+#  define gnutls_aead_cipher_decrypt fn_gnutls_aead_cipher_decrypt
+#  define gnutls_aead_cipher_init fn_gnutls_aead_cipher_init
+#  define gnutls_aead_cipher_deinit fn_gnutls_aead_cipher_deinit
+#   endif
+#  define gnutls_hmac_init fn_gnutls_hmac_init
+#  define gnutls_hmac_get_len fn_gnutls_hmac_get_len
+#  define gnutls_hmac fn_gnutls_hmac
+#  define gnutls_hmac_deinit fn_gnutls_hmac_deinit
+#  define gnutls_hmac_output fn_gnutls_hmac_output
+#  define gnutls_hash_init fn_gnutls_hash_init
+#  define gnutls_hash_get_len fn_gnutls_hash_get_len
+#  define gnutls_hash fn_gnutls_hash
+#  define gnutls_hash_deinit fn_gnutls_hash_deinit
+#  define gnutls_hash_output fn_gnutls_hash_output
+#  endif	 /* HAVE_GNUTLS3 */
 
 /* This wrapper is called from fns.c, which doesn't know about the
    LOAD_DLL_FN stuff above.  */
@@ -475,7 +467,7 @@ w32_gnutls_rnd (gnutls_rnd_level_t level, void *data, size_t len)
   return gnutls_rnd (level, data, len);
 }
 
-#endif	/* WINDOWSNT */
+# endif	/* WINDOWSNT */
 
 
 /* Report memory exhaustion if ERR is an out-of-memory indication.  */
@@ -489,7 +481,7 @@ check_memory_full (int err)
     memory_full (0);
 }
 
-#ifdef HAVE_GNUTLS3
+# ifdef HAVE_GNUTLS3
 /* Log a simple audit message.  */
 static void
 gnutls_audit_log_function (gnutls_session_t session, const char *string)
@@ -499,7 +491,7 @@ gnutls_audit_log_function (gnutls_session_t session, const char *string)
       message ("gnutls.c: [audit] %s", string);
     }
 }
-#endif
+# endif
 
 /* Log a simple message.  */
 static void
@@ -552,7 +544,7 @@ gnutls_try_handshake (struct Lisp_Process *proc)
   return ret;
 }
 
-#ifndef WINDOWSNT
+# ifndef WINDOWSNT
 static int
 emacs_gnutls_nonblock_errno (gnutls_transport_ptr_t ptr)
 {
@@ -560,13 +552,13 @@ emacs_gnutls_nonblock_errno (gnutls_transport_ptr_t ptr)
 
   switch (err)
     {
-# ifdef _AIX
+#  ifdef _AIX
       /* This is taken from the GnuTLS system_errno function circa 2016;
 	 see <http://savannah.gnu.org/support/?107464>.  */
     case 0:
       errno = EAGAIN;
       /* Fall through.  */
-# endif
+#  endif
     case EINPROGRESS:
     case ENOTCONN:
       return EAGAIN;
@@ -575,7 +567,7 @@ emacs_gnutls_nonblock_errno (gnutls_transport_ptr_t ptr)
       return err;
     }
 }
-#endif	/* !WINDOWSNT */
+# endif	/* !WINDOWSNT */
 
 static int
 emacs_gnutls_handshake (struct Lisp_Process *proc)
@@ -587,7 +579,7 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
 
   if (proc->gnutls_initstage < GNUTLS_STAGE_TRANSPORT_POINTERS_SET)
     {
-#ifdef WINDOWSNT
+# ifdef WINDOWSNT
       /* On W32 we cannot transfer socket handles between different runtime
 	 libraries, so we tell GnuTLS to use our special push/pull
 	 functions.  */
@@ -596,7 +588,7 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
 				 (gnutls_transport_ptr_t) proc);
       gnutls_transport_set_push_function (state, &emacs_gnutls_push);
       gnutls_transport_set_pull_function (state, &emacs_gnutls_pull);
-#else
+# else
       /* This is how GnuTLS takes sockets: as file descriptors passed
 	 in.  For an Emacs process socket, infd and outfd are the
 	 same but we use this two-argument version for clarity.  */
@@ -606,7 +598,7 @@ emacs_gnutls_handshake (struct Lisp_Process *proc)
       if (proc->is_non_blocking_client)
 	gnutls_transport_set_errno_function (state,
 					     emacs_gnutls_nonblock_errno);
-#endif
+# endif
 
       proc->gnutls_initstage = GNUTLS_STAGE_TRANSPORT_POINTERS_SET;
     }
@@ -620,13 +612,13 @@ emacs_gnutls_record_check_pending (gnutls_session_t state)
   return gnutls_record_check_pending (state);
 }
 
-#ifdef WINDOWSNT
+# ifdef WINDOWSNT
 void
 emacs_gnutls_transport_set_errno (gnutls_session_t state, int err)
 {
   gnutls_transport_set_errno (state, err);
 }
-#endif
+# endif
 
 ptrdiff_t
 emacs_gnutls_write (struct Lisp_Process *proc, const char *buf, ptrdiff_t nbyte)
@@ -732,10 +724,10 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
       /* Mostly ignore "The TLS connection was non-properly
 	 terminated" message which just means that the peer closed the
 	 connection.  */
-#ifdef HAVE_GNUTLS3
+# ifdef HAVE_GNUTLS3
       if (err == GNUTLS_E_PREMATURE_TERMINATION)
 	level = 3;
-#endif
+# endif
 
       GNUTLS_LOG2 (level, max_log_level, "fatal error:", str);
       ret = false;
@@ -1300,7 +1292,7 @@ gnutls_ip_address_p (char *string)
   return true;
 }
 
-#if 0
+# if 0
 /* Deinitialize global GnuTLS state.
    See also `gnutls-global-init'.  */
 static Lisp_Object
@@ -1313,7 +1305,7 @@ emacs_gnutls_global_deinit (void)
 
   return gnutls_make_error (GNUTLS_E_SUCCESS);
 }
-#endif
+# endif
 
 static void ATTRIBUTE_FORMAT_PRINTF (2, 3)
 boot_error (struct Lisp_Process *p, const char *m, ...)
@@ -1585,9 +1577,9 @@ one trustfile (usually a CA bundle).  */)
   if (TYPE_RANGED_INTEGERP (int, loglevel))
     {
       gnutls_global_set_log_function (gnutls_log_function);
-#ifdef HAVE_GNUTLS3
+# ifdef HAVE_GNUTLS3
       gnutls_global_set_audit_log_function (gnutls_audit_log_function);
-#endif
+# endif
       gnutls_global_set_log_level (XINT (loglevel));
       max_log_level = XINT (loglevel);
       XPROCESS (proc)->gnutls_log_level = max_log_level;
@@ -1649,8 +1641,7 @@ one trustfile (usually a CA bundle).  */)
       int file_format = GNUTLS_X509_FMT_PEM;
       Lisp_Object tail;
 
-#if GNUTLS_VERSION_MAJOR +					\
-  (GNUTLS_VERSION_MINOR > 0 || GNUTLS_VERSION_PATCH >= 20) > 3
+# ifdef HAVE_GNUTLS_X509_SYSTEM_TRUST
       ret = gnutls_certificate_set_x509_system_trust (x509_cred);
       if (ret < GNUTLS_E_SUCCESS)
 	{
@@ -1658,7 +1649,7 @@ one trustfile (usually a CA bundle).  */)
 	  GNUTLS_LOG2i (4, max_log_level,
 			"setting system trust failed with code ", ret);
 	}
-#endif
+# endif
 
       for (tail = trustfiles; CONSP (tail); tail = XCDR (tail))
 	{
@@ -1668,12 +1659,12 @@ one trustfile (usually a CA bundle).  */)
 	      GNUTLS_LOG2 (1, max_log_level, "setting the trustfile: ",
 			   SSDATA (trustfile));
 	      trustfile = ENCODE_FILE (trustfile);
-#ifdef WINDOWSNT
+# ifdef WINDOWSNT
 	      /* Since GnuTLS doesn't support UTF-8 or UTF-16 encoded
 		 file names on Windows, we need to re-encode the file
 		 name using the current ANSI codepage.  */
 	      trustfile = ansi_encode_filename (trustfile);
-#endif
+# endif
 	      ret = gnutls_certificate_set_x509_trust_file
 		(x509_cred,
 		 SSDATA (trustfile),
@@ -1698,9 +1689,9 @@ one trustfile (usually a CA bundle).  */)
 	      GNUTLS_LOG2 (1, max_log_level, "setting the CRL file: ",
 			   SSDATA (crlfile));
 	      crlfile = ENCODE_FILE (crlfile);
-#ifdef WINDOWSNT
+# ifdef WINDOWSNT
 	      crlfile = ansi_encode_filename (crlfile);
-#endif
+# endif
 	      ret = gnutls_certificate_set_x509_crl_file
 		(x509_cred, SSDATA (crlfile), file_format);
 
@@ -1727,10 +1718,10 @@ one trustfile (usually a CA bundle).  */)
 			   SSDATA (certfile));
 	      keyfile = ENCODE_FILE (keyfile);
 	      certfile = ENCODE_FILE (certfile);
-#ifdef WINDOWSNT
+# ifdef WINDOWSNT
 	      keyfile = ansi_encode_filename (keyfile);
 	      certfile = ansi_encode_filename (certfile);
-#endif
+# endif
 	      ret = gnutls_certificate_set_x509_key_file
 		(x509_cred, SSDATA (certfile), SSDATA (keyfile), file_format);
 
@@ -1755,10 +1746,10 @@ one trustfile (usually a CA bundle).  */)
 
   GNUTLS_LOG (1, max_log_level, "gnutls_init");
   int gnutls_flags = GNUTLS_CLIENT;
-#ifdef GNUTLS_NONBLOCK
+# ifdef GNUTLS_NONBLOCK
   if (XPROCESS (proc)->is_non_blocking_client)
     gnutls_flags |= GNUTLS_NONBLOCK;
-#endif
+# endif
   ret = gnutls_init (&state, gnutls_flags);
   XPROCESS (proc)->gnutls_state = state;
   if (ret < GNUTLS_E_SUCCESS)
@@ -1852,7 +1843,6 @@ The alist key is the cipher name. */)
 {
   Lisp_Object ciphers = Qnil;
 
-#ifdef HAVE_GNUTLS3_CIPHER
   const gnutls_cipher_algorithm_t *gciphers = gnutls_cipher_list ();
   for (ptrdiff_t pos = 0; gciphers[pos] != 0; pos++)
     {
@@ -1886,7 +1876,6 @@ The alist key is the cipher name. */)
 
       ciphers = Fcons (cp, ciphers);
     }
-#endif
 
   return ciphers;
 }
@@ -1899,7 +1888,7 @@ gnutls_symmetric_aead (bool encrypting, gnutls_cipher_algorithm_t gca,
 		       const char *idata, ptrdiff_t isize,
                        Lisp_Object aead_auth)
 {
-#ifdef HAVE_GNUTLS3_AEAD
+# ifdef HAVE_GNUTLS_AEAD
 
   const char *desc = encrypting ? "encrypt" : "decrypt";
   Lisp_Object actual_iv = make_unibyte_string (vdata, vsize);
@@ -1969,10 +1958,10 @@ gnutls_symmetric_aead (bool encrypting, gnutls_cipher_algorithm_t gca,
 
   SAFE_FREE ();
   return list2 (output, actual_iv);
-#else
+# else
   printmax_t print_gca = gca;
   error ("GnuTLS AEAD cipher %"pMd" is invalid or not found", print_gca);
-#endif
+# endif
 }
 
 static Lisp_Object
@@ -2181,7 +2170,6 @@ name. */)
   (void)
 {
   Lisp_Object mac_algorithms = Qnil;
-#ifdef HAVE_GNUTLS3_HMAC
   const gnutls_mac_algorithm_t *macs = gnutls_mac_list ();
   for (ptrdiff_t pos = 0; macs[pos] != 0; pos++)
     {
@@ -2204,7 +2192,6 @@ name. */)
                               make_number (gnutls_mac_get_nonce_size (gma)));
       mac_algorithms = Fcons (mp, mac_algorithms);
     }
-#endif
 
   return mac_algorithms;
 }
@@ -2218,7 +2205,6 @@ method name. */)
   (void)
 {
   Lisp_Object digest_algorithms = Qnil;
-#ifdef HAVE_GNUTLS3_DIGEST
   const gnutls_digest_algorithm_t *digests = gnutls_digest_list ();
   for (ptrdiff_t pos = 0; digests[pos] != 0; pos++)
     {
@@ -2236,7 +2222,6 @@ method name. */)
 
       digest_algorithms = Fcons (mp, digest_algorithms);
     }
-#endif
 
   return digest_algorithms;
 }
@@ -2423,25 +2408,17 @@ GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
 
 # ifdef HAVE_GNUTLS3
   capabilities = Fcons (intern("gnutls3"), capabilities);
-
-#  ifdef HAVE_GNUTLS3_DIGEST
   capabilities = Fcons (intern("digests"), capabilities);
-#  endif
-
-#  ifdef HAVE_GNUTLS3_CIPHER
   capabilities = Fcons (intern("ciphers"), capabilities);
 
-#   ifdef HAVE_GNUTLS3_AEAD
+#  ifdef HAVE_GNUTLS_AEAD
   capabilities = Fcons (intern("AEAD-ciphers"), capabilities);
-#   endif
+#  endif
 
-#   ifdef HAVE_GNUTLS3_HMAC
   capabilities = Fcons (intern("macs"), capabilities);
-#   endif
-#  endif  /* HAVE_GNUTLS3_CIPHER */
 # endif	  /* HAVE_GNUTLS3 */
 
-#ifdef WINDOWSNT
+# ifdef WINDOWSNT
   Lisp_Object found = Fassq (Qgnutls, Vlibrary_cache);
   if (CONSP (found))
     return XCDR (found);
@@ -2452,15 +2429,10 @@ GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
       Vlibrary_cache = Fcons (Fcons (Qgnutls, status), Vlibrary_cache);
       return status;
     }
-#else  /* !WINDOWSNT */
+# endif /* WINDOWSNT */
+#endif	/* HAVE_GNUTLS */
 
   return capabilities;
-
-#endif /* WINDOWSNT */
-
-#else  /* !HAVE_GNUTLS */
-  return Qnil;
-#endif	/* HAVE_GNUTLS */
 }
 
 void

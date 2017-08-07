@@ -31,7 +31,6 @@
 
 (require 'compile)
 
-
 (defgroup grep nil
   "Run `grep' and display the results."
   :group 'tools
@@ -366,53 +365,44 @@ A grep buffer becomes most recent when you select Grep mode in it.
 Notice that using \\[next-error] or \\[compile-goto-error] modifies
 `compilation-last-buffer' rather than `grep-last-buffer'.")
 
-(defconst grep--regexp-alist-column
-  ;; Calculate column positions (col . end-col) of first grep match on a line
-  (cons
-   (lambda ()
-     (when grep-highlight-matches
-       (let* ((beg (match-end 0))
-              (end (save-excursion (goto-char beg) (line-end-position)))
-              (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face)))
-         (when mbeg
-           (- mbeg beg)))))
-   (lambda ()
-     (when grep-highlight-matches
-       (let* ((beg (match-end 0))
-              (end (save-excursion (goto-char beg) (line-end-position)))
-              (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face))
-              (mend (and mbeg (next-single-property-change mbeg 'font-lock-face nil end))))
-         (when mend
-           (- mend beg)))))))
-(defconst grep--regexp-alist-bin-matcher
-  '("^Binary file \\(.+\\) matches$" 1 nil nil 0 1))
-(defconst grep-with-null-regexp-alist
-  `(("^\\([^\0]+\\)\\(\0\\)\\([0-9]+\\):" 1 3 ,grep--regexp-alist-column nil nil
-     (2 '(face unspecified display ":")))
-    ,grep--regexp-alist-bin-matcher)
-  "Regexp used to match grep hits.
-See `compilation-error-regexp-alist'.")
-(defconst grep-fallback-regexp-alist
-  `(;; Use a tight regexp to handle weird file names (with colons
-    ;; in them) as well as possible.  E.g., use [1-9][0-9]* rather
-    ;; than [0-9]+ so as to accept ":034:" in file names.
-    ("^\\(.*?[^/\n]\\):[ \t]*\\([1-9][0-9]*\\)[ \t]*:"
-     1 2 ,grep--regexp-alist-column)
-    ,grep--regexp-alist-bin-matcher)
-  "Regexp used to match grep hits when `--null' is not supported.
-See `compilation-error-regexp-alist'.")
-
-(defvaralias 'grep-regex-alist 'grep-with-null-regexp-alist)
-(make-obsolete-variable
- 'grep-regex-alist "Call `grep-regexp-alist' instead." "26.1")
-
 ;;;###autoload
-(defun grep-regexp-alist ()
-  "Return a regexp alist to match grep hits.
-The regexp used depends on `grep-use-null-filename-separator'.
-See `compilation-error-regexp-alist' for format details."
-  (if grep-use-null-filename-separator
-      grep-with-null-regexp-alist grep-fallback-regexp-alist))
+(defconst grep-regexp-alist
+  `((,(concat "^\\(?:"
+              ;; Parse using NUL characters when `--null' is used.
+              ;; Note that we must still assume no newlines in
+              ;; filenames due to "foo: Is a directory." type
+              ;; messages.
+              "\\(?1:[^\0\n]+\\)\\(?3:\0\\)\\(?2:[0-9]+\\):"
+              "\\|"
+              ;; Fallback if `--null' is not used, use a tight regexp
+              ;; to handle weird file names (with colons in them) as
+              ;; well as possible.  E.g., use [1-9][0-9]* rather than
+              ;; [0-9]+ so as to accept ":034:" in file names.
+              "\\(?1:[^\n:]+?[^\n/:]\\):[\t ]*\\(?2:[1-9][0-9]*\\)[\t ]*:"
+              "\\)")
+     1 2
+     ;; Calculate column positions (col . end-col) of first grep match on a line
+     (,(lambda ()
+         (when grep-highlight-matches
+           (let* ((beg (match-end 0))
+                  (end (save-excursion (goto-char beg) (line-end-position)))
+                  (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face)))
+             (when mbeg
+               (- mbeg beg)))))
+      .
+      ,(lambda ()
+         (when grep-highlight-matches
+           (let* ((beg (match-end 0))
+                  (end (save-excursion (goto-char beg) (line-end-position)))
+                  (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face))
+                  (mend (and mbeg (next-single-property-change mbeg 'font-lock-face nil end))))
+             (when mend
+               (- mend beg))))))
+     nil nil
+     (3 '(face nil display ":")))
+    ("^Binary file \\(.+\\) matches$" 1 nil nil 0 1))
+  "Regexp used to match grep hits.
+See `compilation-error-regexp-alist' for format details.")
 
 (defvar grep-first-column 0		; bug#10594
   "Value to use for `compilation-first-column' in grep buffers.")
@@ -451,7 +441,9 @@ See `compilation-error-regexp-alist' for format details."
       (2 grep-error-face nil t))
      ;; "filename-linenumber-" format is used for context lines in GNU grep,
      ;; "filename=linenumber=" for lines with function names in "git grep -p".
-     ("^.+?[-=][0-9]+[-=].*\n" (0 grep-context-face)))
+     ("^.+?\\([-=\0]\\)[0-9]+\\([-=]\\).*\n" (0 grep-context-face)
+      (1 (if (eq (char-after (match-beginning 1)) ?\0)
+             `(face nil display ,(match-string 2))))))
    "Additional things to highlight in grep output.
 This gets tacked on the end of the generated expressions.")
 
@@ -781,7 +773,7 @@ This function is called from `compilation-filter-hook'."
   (set (make-local-variable 'compilation-error-face)
        grep-hit-face)
   (set (make-local-variable 'compilation-error-regexp-alist)
-       (grep-regexp-alist))
+       grep-regexp-alist)
   ;; compilation-directory-matcher can't be nil, so we set it to a regexp that
   ;; can never match.
   (set (make-local-variable 'compilation-directory-matcher) '("\\`a\\`"))

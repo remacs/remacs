@@ -261,10 +261,10 @@ Emacs with the options '--without-dbus --without-gconf --without-gsettings'.
 
 To read email via a network protocol like IMAP or POP, you can
 configure Emacs with the option '--with-mailutils', so that it always
-uses the GNU Mailutils 'movemail' program to retrieve mail.  Otherwise
-the Emacs build procedure builds and installs an auxiliary 'movemail'
-program, a limited and insecure substitute that Emacs can use when
-Mailutils is not installed; when this happens, there are several
+uses the GNU Mailutils 'movemail' program to retrieve mail; this is
+the default if GNU Mailutils is installed.  Otherwise the Emacs build
+procedure builds and installs an auxiliary 'movemail' program, a
+limited and insecure substitute; when this happens, there are several
 configure options such as --without-pop that provide fine-grained
 control over Emacs 'movemail' construction.
 
@@ -272,10 +272,9 @@ The Emacs mail reader RMAIL is configured to be able to read mail from
 a POP3 server by default.  Versions of the POP protocol older than
 POP3 are not supported.  While POP3 support is typically enabled,
 whether Emacs actually uses POP3 is controlled by individual users;
-see the Rmail chapter of the Emacs manual.  Unless you configure
---with-mailutils, it is a good idea to configure --without-pop so that
-users are less likely to inadvertently read email via insecure
-channels.
+see the Rmail chapter of the Emacs manual.  Unless --with-mailutils is
+in effect, it is a good idea to configure --without-pop so that users
+are less likely to inadvertently read email via insecure channels.
 
 For image support you may have to download, build, and install the
 appropriate image support libraries for image types other than XBM and
@@ -550,7 +549,7 @@ information on this.
 Emacs info files.
 
 8) If your system uses lock files to interlock access to mailer inbox files,
-and if you did not configure --with-mailutils, then you might need to
+and if --with-mailutils is not in effect, then you might need to
 make the Emacs-specific 'movemail' program setuid or setgid in order
 to enable it to write the lock files.  We believe this is safe.
 

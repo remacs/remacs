@@ -31,10 +31,12 @@ Use 'configure --with-gnutls=no' to build even when GnuTLS is missing.
 version 2.6.6 or later.
 
 ** The new option 'configure --with-mailutils' causes Emacs to rely on
-GNU Mailutils 'movemail' to retrieve email.  By default, the Emacs
-build procedure continues to build and install a limited and insecure
-'movemail' substitute.  Although --with-mailutils is recommended, it
-is not yet the default due to backward-compatibility concerns.
+GNU Mailutils to retrieve email.  It is recommended, and is the
+default if GNU Mailutils is installed.  When --with-mailutils is not
+in effect, the Emacs build procedure by default continues to build and
+install a limited 'movemail' substitute that retrieves POP3 email only
+via insecure channels; to avoid this problem, use either
+--with-mailutils or --without-pop when configuring.
 
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
 GCC to issue warnings without stopping the build.  This behavior is
@@ -590,6 +592,12 @@ different buffer while keeping point, mark, markers, and text
 properties as intact as possible.
 
 +++
+** New commands 'apropos-local-variable' and 'apropos-local-value.
+These are buffer-local versions of 'apropos-variable' and
+'apropos-value', respectively.  They show buffer-local variables whose
+names and values, respectively, match a given pattern.
+
++++
 ** More user control of reordering bidirectional text for display.
 The two new variables, 'bidi-paragraph-start-re' and
 'bidi-paragraph-separate-re', allow customization of what exactly are
@@ -598,7 +606,16 @@ paragraphs, for the purposes of bidirectional display.
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
+** New function `cl-generic-p'.
+
 ** Dired
+
++++
+*** You can answer 'all' in 'dired-do-delete' to delete recursively all
+remaining directories without more prompts.
+
++++
+*** Dired supports wildcards in the directory part of the file names.
 
 +++
 *** You can now use '`?`' in 'dired-do-shell-command'; as ' ? ', it gets replaced
@@ -1076,6 +1093,9 @@ fontification, and commenting for embedded JavaScript and CSS.
 
 * Incompatible Lisp Changes in Emacs 26.1
 
+*** password-data is now a hash-table
+so that `password-read' can use any object for the `key' argument.
+
 +++
 *** Command 'dired-mark-extension' now automatically prepends a '.' to the
 extension when not present.  The new command 'dired-mark-suffix' behaves
@@ -1166,6 +1186,8 @@ break.
 
 
 * Lisp Changes in Emacs 26.1
+
+** New function `define-symbol-prop'.
 
 +++
 ** New optional argument TESTFN in 'alist-get', 'map-elt' and 'map-put'.

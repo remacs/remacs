@@ -1,4 +1,4 @@
-# manywarnings.m4 serial 8
+# manywarnings.m4 serial 10
 dnl Copyright (C) 2008-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -258,9 +258,20 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
 
   # gcc --help=warnings outputs an unusual form for these options; list
   # them here so that the above 'comm' command doesn't report a false match.
-  # Would prefer "min (PTRDIFF_MAX, SIZE_MAX)", but it must be a literal:
-  ptrdiff_max_max=9223372036854775807
-  gl_manywarn_set="$gl_manywarn_set -Walloc-size-larger-than=$ptrdiff_max_max"
+  # Would prefer "min (PTRDIFF_MAX, SIZE_MAX)", but it must be a literal
+  # and AC_COMPUTE_INT requires it to fit in a long:
+  AC_MSG_CHECKING([max safe object size])
+  AC_COMPUTE_INT([gl_alloc_max],
+    [(LONG_MAX < PTRDIFF_MAX ? LONG_MAX : PTRDIFF_MAX) < (size_t) -1
+     ? (LONG_MAX < PTRDIFF_MAX ? LONG_MAX : PTRDIFF_MAX)
+     : (size_t) -1],
+    [[#include <limits.h>
+      #include <stddef.h>
+      #include <stdint.h>
+    ]],
+    [gl_alloc_max=2147483647])
+  AC_MSG_RESULT([$gl_alloc_max])
+  gl_manywarn_set="$gl_manywarn_set -Walloc-size-larger-than=$gl_alloc_max"
   gl_manywarn_set="$gl_manywarn_set -Warray-bounds=2"
   gl_manywarn_set="$gl_manywarn_set -Wformat-overflow=2"
   gl_manywarn_set="$gl_manywarn_set -Wformat-truncation=2"

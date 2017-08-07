@@ -194,6 +194,8 @@ Populated by `tabulated-list-init-header'.")
 			mouse-face highlight
 			keymap ,tabulated-list-sort-button-map))
 	(cols nil))
+    (if display-line-numbers
+        (setq x (+ x (line-number-display-width) 2)))
     (push (propertize " " 'display `(space :align-to ,x)) cols)
     (dotimes (n (length tabulated-list-format))
       (let* ((col (aref tabulated-list-format n))
@@ -410,6 +412,8 @@ of column descriptors."
 	(x     (max tabulated-list-padding 0))
 	(ncols (length tabulated-list-format))
 	(inhibit-read-only t))
+    (if display-line-numbers
+        (setq x (+ x (line-number-display-width) 2)))
     (if (> tabulated-list-padding 0)
 	(insert (make-string x ?\s)))
     (let ((tabulated-list--near-rows ; Bind it if not bound yet (Bug#25506).

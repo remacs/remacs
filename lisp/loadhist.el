@@ -221,6 +221,11 @@ restore a previous autoload if possible.")
     ;; Remove the struct.
     (setf (cl--find-class name) nil)))
 
+(cl-defmethod loadhist-unload-element ((x (head define-symbol-props)))
+  (pcase-dolist (`(,symbol . ,props) (cdr x))
+    (dolist (prop props)
+      (put symbol prop nil))))
+
 ;;;###autoload
 (defun unload-feature (feature &optional force)
   "Unload the library that provided FEATURE.
@@ -300,11 +305,6 @@ something strange, such as redefining an Emacs function."
 
       ;; Change major mode in all buffers using one defined in the feature being unloaded.
       (unload--set-major-mode)
-
-      (when (fboundp 'elp-restore-function) ; remove ELP stuff first
-	(dolist (elt unload-function-defs-list)
-	  (when (symbolp elt)
-	    (elp-restore-function elt))))
 
       (mapc #'loadhist-unload-element unload-function-defs-list)
       ;; Delete the load-history element for this file.

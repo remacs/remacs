@@ -64,6 +64,21 @@ dirent_namelen (struct dirent *dp)
 #endif
 }
 
+#ifndef HAVE_STRUCT_DIRENT_D_TYPE
+enum { DT_UNKNOWN, DT_DIR, DT_LNK };
+#endif
+
+/* Return the file type of DP.  */
+static int
+dirent_type (struct dirent *dp)
+{
+#ifdef HAVE_STRUCT_DIRENT_D_TYPE
+  return dp->d_type;
+#else
+  return DT_UNKNOWN;
+#endif
+}
+
 static DIR *
 open_directory (Lisp_Object dirname, int *fdp)
 {
@@ -434,7 +449,7 @@ is matched against file and directory names relative to DIRECTORY.  */)
   return file_name_completion (file, directory, 1, Qnil);
 }
 
-static int file_name_completion_stat (int, struct dirent *, struct stat *);
+static bool file_name_completion_dirp (int, struct dirent *, ptrdiff_t);
 
 static Lisp_Object
 file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
@@ -448,7 +463,6 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
   Lisp_Object bestmatch, tem, elt, name;
   Lisp_Object encoded_file;
   Lisp_Object encoded_dir;
-  struct stat st;
   bool directoryp;
   /* If not INCLUDEALL, exclude files in completion-ignored-extensions as
      well as "." and "..".  Until shown otherwise, assume we can't exclude
@@ -512,10 +526,21 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 	      >= 0))
 	continue;
 
-      if (file_name_completion_stat (fd, dp, &st) < 0)
-	continue;
+      switch (dirent_type (dp))
+	{
+	case DT_DIR:
+	  directoryp = true;
+	  break;
 
-      directoryp = S_ISDIR (st.st_mode) != 0;
+	case DT_LNK: case DT_UNKNOWN:
+	  directoryp = file_name_completion_dirp (fd, dp, len);
+	  break;
+
+	default:
+	  directoryp = false;
+	  break;
+	}
+
       tem = Qnil;
       /* If all_flag is set, always include all.
 	 It would not actually be helpful to the user to ignore any possible
@@ -781,32 +806,18 @@ scmp (const char *s1, const char *s2, ptrdiff_t len)
     return len - l;
 }
 
-static int
-file_name_completion_stat (int fd, struct dirent *dp, struct stat *st_addr)
+/* Return true if in the directory FD the directory entry DP, whose
+   string length is LEN, is that of a subdirectory that can be searched.  */
+static bool
+file_name_completion_dirp (int fd, struct dirent *dp, ptrdiff_t len)
 {
-  int value;
-
-#ifdef MSDOS
-  /* Some fields of struct stat are *very* expensive to compute on MS-DOS,
-     but aren't required here.  Avoid computing the following fields:
-     st_inode, st_size and st_nlink for directories, and the execute bits
-     in st_mode for non-directory files with non-standard extensions.  */
-
-  unsigned short save_djstat_flags = _djstat_flags;
-
-  _djstat_flags = _STAT_INODE | _STAT_EXEC_MAGIC | _STAT_DIRSIZE;
-#endif /* MSDOS */
-
-  /* We want to return success if a link points to a nonexistent file,
-     but we want to return the status for what the link points to,
-     in case it is a directory.  */
-  value = fstatat (fd, dp->d_name, st_addr, AT_SYMLINK_NOFOLLOW);
-  if (value == 0 && S_ISLNK (st_addr->st_mode))
-    fstatat (fd, dp->d_name, st_addr, 0);
-#ifdef MSDOS
-  _djstat_flags = save_djstat_flags;
-#endif /* MSDOS */
-  return value;
+  USE_SAFE_ALLOCA;
+  char *subdir_name = SAFE_ALLOCA (len + 2);
+  memcpy (subdir_name, dp->d_name, len);
+  strcpy (subdir_name + len, "/");
+  bool dirp = faccessat (fd, subdir_name, F_OK, AT_EACCESS) == 0;
+  SAFE_FREE ();
+  return dirp;
 }
 
 static char *

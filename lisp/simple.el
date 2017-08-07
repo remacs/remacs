@@ -996,23 +996,24 @@ instead of deleted."
   :version "24.1")
 
 (defvar region-extract-function
-  (lambda (delete)
+  (lambda (method)
     (when (region-beginning)
       (cond
-       ((eq delete 'bounds)
+       ((eq method 'bounds)
         (list (cons (region-beginning) (region-end))))
-       ((eq delete 'delete-only)
+       ((eq method 'delete-only)
         (delete-region (region-beginning) (region-end)))
        (t
-        (filter-buffer-substring (region-beginning) (region-end) delete)))))
+        (filter-buffer-substring (region-beginning) (region-end) method)))))
   "Function to get the region's content.
-Called with one argument DELETE.
-If DELETE is `delete-only', then only delete the region and the return value
-is undefined.  If DELETE is nil, just return the content as a string.
-If DELETE is `bounds', then don't delete, but just return the
-boundaries of the region as a list of (START . END) positions.
-If anything else, delete the region and return its content as a string,
-after filtering it with `filter-buffer-substring'.")
+Called with one argument METHOD.
+If METHOD is `delete-only', then delete the region; the return value
+is undefined.  If METHOD is nil, then return the content as a string.
+If METHOD is `bounds', then return the boundaries of the region
+as a list of the form (START . END).
+If METHOD is anything else, delete the region and return its content
+as a string, after filtering it with `filter-buffer-substring', which
+is called with METHOD as its 3rd argument.")
 
 (defvar region-insert-function
   (lambda (lines)
@@ -7217,6 +7218,13 @@ unless optional argument SOFT is non-nil."
 	(insert-and-inherit fill-prefix))
        ;; If we're not inside a comment, just try to indent.
        (t (indent-according-to-mode))))))
+
+(defun internal-auto-fill ()
+  "The function called by `self-insert-command' to perform auto-filling."
+  (when (or (not comment-start)
+            (not comment-auto-fill-only-comments)
+            (nth 4 (syntax-ppss)))
+    (do-auto-fill)))
 
 (defvar normal-auto-fill-function 'do-auto-fill
   "The function to use for `auto-fill-function' if Auto Fill mode is turned on.

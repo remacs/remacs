@@ -393,12 +393,12 @@ it does not already exist."
 
 (defvar describe-symbol-backends
   `((nil ,#'fboundp ,(lambda (s _b _f) (describe-function s)))
-    ("face" ,#'facep ,(lambda (s _b _f) (describe-face s)))
     (nil
      ,(lambda (symbol)
         (or (and (boundp symbol) (not (keywordp symbol)))
             (get symbol 'variable-documentation)))
-     ,#'describe-variable)))
+     ,#'describe-variable)
+    ("face" ,#'facep ,(lambda (s _b _f) (describe-face s)))))
 
 ;;;###autoload
 (defun help-make-xrefs (&optional buffer)

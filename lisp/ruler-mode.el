@@ -304,7 +304,10 @@ or remove a tab stop.  \\[ruler-mode-toggle-show-tab-stops] or
 
 (defsubst ruler-mode-window-col (n)
   "Return a column number relative to the selected window.
-N is a column number relative to selected frame."
+N is a column number relative to selected frame.
+If required, account for screen estate taken by `display-line-numbers'."
+  (if display-line-numbers
+      (setq n (- n (line-number-display-width) 2)))
   (- n
      (or (car (window-margins)) 0)
      (fringe-columns 'left)
@@ -665,7 +668,7 @@ Optional argument PROPS specifies other text properties to apply."
   (let* ((w (ruler-mode-text-scaled-window-width))
          (m (window-margins))
          (f (window-fringes))
-         (i 0)
+         (i (if display-line-numbers (+ (line-number-display-width) 2) 0))
          (j (ruler-mode-text-scaled-window-hscroll))
          ;; Setup the scrollbar, fringes, and margins areas.
          (lf (ruler-mode-space
@@ -696,8 +699,20 @@ Optional argument PROPS specifies other text properties to apply."
          ;; Create an "clean" ruler.
          (ruler
           (propertize
+           ;; FIXME: `make-string' returns a unibyte string if it's ASCII-only,
+           ;; which prevents further `aset' from inserting non-ASCII chars,
+           ;; hence the need for `string-to-multibyte'.
+           ;; http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00841.html
            (string-to-multibyte
-	    (make-string w ruler-mode-basic-graduation-char))
+            ;; Make the part of header-line corresponding to the
+            ;; line-number display be blank, not filled with
+            ;; ruler-mode-basic-graduation-char.
+            (if display-line-numbers
+                (let* ((lndw (+ (line-number-display-width) 2))
+                       (s (make-string lndw ?\s)))
+                  (concat s (make-string (- w lndw)
+                                         ruler-mode-basic-graduation-char)))
+              (make-string w ruler-mode-basic-graduation-char)))
            'face 'ruler-mode-default
            'local-map ruler-mode-map
            'help-echo (cond

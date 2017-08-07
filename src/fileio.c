@@ -2216,7 +2216,7 @@ With a prefix argument, TRASH is nil.  */)
 
   encoded_file = ENCODE_FILE (filename);
 
-  if (unlink (SSDATA (encoded_file)) < 0)
+  if (unlink (SSDATA (encoded_file)) != 0 && errno != ENOENT)
     report_file_error ("Removing old name", filename);
   return Qnil;
 }
@@ -2311,6 +2311,7 @@ This is what happens in interactive use with M-x.  */)
 {
   Lisp_Object handler;
   Lisp_Object encoded_file, encoded_newname, symlink_target;
+  int dirp = -1;
 
   symlink_target = encoded_file = encoded_newname = Qnil;
   CHECK_STRING (file);
@@ -2324,8 +2325,8 @@ This is what happens in interactive use with M-x.  */)
       && (NILP (Ffile_name_case_insensitive_p (file))
 	  || NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname)))))
     {
-      Lisp_Object fname = (NILP (Ffile_directory_p (file))
-			   ? file : Fdirectory_file_name (file));
+      dirp = !NILP (Ffile_directory_p (file));
+      Lisp_Object fname = dirp ? Fdirectory_file_name (file) : file;
       newname = Fexpand_file_name (Ffile_name_nondirectory (fname), newname);
     }
   else
@@ -2344,46 +2345,69 @@ This is what happens in interactive use with M-x.  */)
   encoded_newname = ENCODE_FILE (newname);
 
   /* If the filesystem is case-insensitive and the file names are
-     identical but for the case, don't ask for confirmation: they
-     simply want to change the letter-case of the file name.  */
-  if ((!(file_name_case_insensitive_p (SSDATA (encoded_file)))
-       || NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname))))
-      && ((NILP (ok_if_already_exists) || INTEGERP (ok_if_already_exists))))
-    barf_or_query_if_file_exists (newname, false, "rename to it",
-				  INTEGERP (ok_if_already_exists), false);
-  if (rename (SSDATA (encoded_file), SSDATA (encoded_newname)) < 0)
+     identical but for the case, don't worry whether the destination
+     already exists: the caller simply wants to change the letter-case
+     of the file name.  */
+  bool plain_rename
+    = ((!NILP (ok_if_already_exists) && !INTEGERP (ok_if_already_exists))
+       || (file_name_case_insensitive_p (SSDATA (encoded_file))
+	   && ! NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname)))));
+
+  int rename_errno;
+  if (!plain_rename)
     {
-      int rename_errno = errno;
-      if (rename_errno == EXDEV)
+      if (renameat_noreplace (AT_FDCWD, SSDATA (encoded_file),
+			      AT_FDCWD, SSDATA (encoded_newname))
+	  == 0)
+	return Qnil;
+
+      rename_errno = errno;
+      switch (rename_errno)
 	{
-          ptrdiff_t count;
-          symlink_target = Ffile_symlink_p (file);
-          if (! NILP (symlink_target))
-            Fmake_symbolic_link (symlink_target, newname,
-                                 NILP (ok_if_already_exists) ? Qnil : Qt);
-	  else if (!NILP (Ffile_directory_p (file)))
-	    call4 (Qcopy_directory, file, newname, Qt, Qnil);
-	  else
-	    /* We have already prompted if it was an integer, so don't
-	       have copy-file prompt again.  */
-	    Fcopy_file (file, newname,
-			NILP (ok_if_already_exists) ? Qnil : Qt,
-			Qt, Qt, Qt);
-
-	  count = SPECPDL_INDEX ();
-	  specbind (Qdelete_by_moving_to_trash, Qnil);
-
-	  if (!NILP (Ffile_directory_p (file)) && NILP (symlink_target))
-	    call2 (Qdelete_directory, file, Qt);
-	  else
-	    Fdelete_file (file, Qnil);
-	  unbind_to (count, Qnil);
+	case EEXIST: case EINVAL: case ENOSYS:
+	  barf_or_query_if_file_exists (newname, rename_errno == EEXIST,
+					"rename to it",
+					INTEGERP (ok_if_already_exists),
+					false);
+	  plain_rename = true;
+	  break;
 	}
-      else
-	report_file_errno ("Renaming", list2 (file, newname), rename_errno);
     }
 
-  return Qnil;
+  if (plain_rename)
+    {
+      if (rename (SSDATA (encoded_file), SSDATA (encoded_newname)) == 0)
+	return Qnil;
+      rename_errno = errno;
+      /* Don't prompt again.  */
+      ok_if_already_exists = Qt;
+    }
+  else if (!NILP (ok_if_already_exists))
+    ok_if_already_exists = Qt;
+
+  if (rename_errno != EXDEV)
+    report_file_errno ("Renaming", list2 (file, newname), rename_errno);
+
+  symlink_target = Ffile_symlink_p (file);
+  if (!NILP (symlink_target))
+    Fmake_symbolic_link (symlink_target, newname, ok_if_already_exists);
+  else
+    {
+      if (dirp < 0)
+	dirp = !NILP (Ffile_directory_p (file));
+      if (dirp)
+	call4 (Qcopy_directory, file, newname, Qt, Qnil);
+      else
+	Fcopy_file (file, newname, ok_if_already_exists, Qt, Qt, Qt);
+    }
+
+  ptrdiff_t count = SPECPDL_INDEX ();
+  specbind (Qdelete_by_moving_to_trash, Qnil);
+  if (dirp && NILP (symlink_target))
+    call2 (Qdelete_directory, file, Qt);
+  else
+    Fdelete_file (file, Qnil);
+  return unbind_to (count, Qnil);
 }
 
 DEFUN ("add-name-to-file", Fadd_name_to_file, Sadd_name_to_file, 2, 3,
@@ -2425,19 +2449,21 @@ This is what happens in interactive use with M-x.  */)
   encoded_file = ENCODE_FILE (file);
   encoded_newname = ENCODE_FILE (newname);
 
-  if (NILP (ok_if_already_exists)
-      || INTEGERP (ok_if_already_exists))
-    barf_or_query_if_file_exists (newname, false, "make it a new name",
-				  INTEGERP (ok_if_already_exists), false);
+  if (link (SSDATA (encoded_file), SSDATA (encoded_newname)) == 0)
+    return Qnil;
 
-  unlink (SSDATA (newname));
-  if (link (SSDATA (encoded_file), SSDATA (encoded_newname)) < 0)
+  if (errno == EEXIST)
     {
-      int link_errno = errno;
-      report_file_errno ("Adding new name", list2 (file, newname), link_errno);
+      if (NILP (ok_if_already_exists)
+	  || INTEGERP (ok_if_already_exists))
+	barf_or_query_if_file_exists (newname, true, "make it a new name",
+				      INTEGERP (ok_if_already_exists), false);
+      unlink (SSDATA (newname));
+      if (link (SSDATA (encoded_file), SSDATA (encoded_newname)) == 0)
+	return Qnil;
     }
 
-  return Qnil;
+  report_file_error ("Adding new name", list2 (file, newname));
 }
 
 DEFUN ("make-symbolic-link", Fmake_symbolic_link, Smake_symbolic_link, 2, 3,
@@ -2484,31 +2510,25 @@ This happens for interactive use with M-x.  */)
   encoded_target = ENCODE_FILE (target);
   encoded_linkname = ENCODE_FILE (linkname);
 
-  if (NILP (ok_if_already_exists)
-      || INTEGERP (ok_if_already_exists))
-    barf_or_query_if_file_exists (linkname, false, "make it a link",
-				  INTEGERP (ok_if_already_exists), false);
-  if (symlink (SSDATA (encoded_target), SSDATA (encoded_linkname)) < 0)
-    {
-      /* If we didn't complain already, silently delete existing file.  */
-      int symlink_errno;
-      if (errno == EEXIST)
-	{
-	  unlink (SSDATA (encoded_linkname));
-	  if (symlink (SSDATA (encoded_target), SSDATA (encoded_linkname))
-	      >= 0)
-	    return Qnil;
-	}
-      if (errno == ENOSYS)
-	xsignal1 (Qfile_error,
-		  build_string ("Symbolic links are not supported"));
+  if (symlink (SSDATA (encoded_target), SSDATA (encoded_linkname)) == 0)
+    return Qnil;
 
-      symlink_errno = errno;
-      report_file_errno ("Making symbolic link", list2 (target, linkname),
-			 symlink_errno);
+  if (errno == ENOSYS)
+    xsignal1 (Qfile_error,
+	      build_string ("Symbolic links are not supported"));
+
+  if (errno == EEXIST)
+    {
+      if (NILP (ok_if_already_exists)
+	  || INTEGERP (ok_if_already_exists))
+	barf_or_query_if_file_exists (linkname, true, "make it a link",
+				      INTEGERP (ok_if_already_exists), false);
+      unlink (SSDATA (encoded_linkname));
+      if (symlink (SSDATA (encoded_target), SSDATA (encoded_linkname)) == 0)
+	return Qnil;
     }
 
-  return Qnil;
+  report_file_error ("Making symbolic link", list2 (target, linkname));
 }
 
 

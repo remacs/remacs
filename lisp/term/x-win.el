@@ -1182,7 +1182,7 @@ as returned by `x-server-vendor'."
 This returns an error if any Emacs frames are X frames."
   ;; Don't allow suspending if any of the frames are X frames.
   (if (memq 'x (mapcar #'window-system (frame-list)))
-      (error "Cannot suspend Emacs while running under X")))
+      (error "Cannot suspend Emacs while an X GUI frame exists")))
 
 (defvar x-initialized nil
   "Non-nil if the X window system has been initialized.")

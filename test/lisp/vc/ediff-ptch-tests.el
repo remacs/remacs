@@ -66,41 +66,55 @@ index 6a07f80..6e8e947 100644
       (write-region nil nil bar nil 'silent))
     (call-process git-program nil `(:file ,patch) nil "diff")
     (call-process git-program nil nil nil "reset" "--hard" "HEAD")
+    ;; Visit the diff file i.e., patch; extract from it the parts
+    ;; affecting just each of the files: store in patch-bar the part
+    ;; affecting 'bar', and in patch-qux the part affecting 'qux'.
     (find-file patch)
     (unwind-protect
         (let* ((info
                 (progn (ediff-map-patch-buffer (current-buffer)) ediff-patch-map))
-               (patch1
+               (patch-bar
                 (buffer-substring-no-properties
                  (car (nth 3 (car info)))
                  (car (nth 4 (car info)))))
-               (patch2
+               (patch-qux
                 (buffer-substring-no-properties
                  (car (nth 3 (cadr info)))
                  (car (nth 4 (cadr info))))))
           ;; Apply both patches.
-          (dolist (x (list (cons patch1 bar) (cons patch2 qux)))
+          (dolist (x (list (cons patch-bar bar) (cons patch-qux qux)))
             (with-temp-buffer
-              (insert (car x))
-              (call-process-region (point-min)
-                                   (point-max)
-                                   ediff-patch-program
-                                   nil nil nil
-                                   "-b" (cdr x))))
-          ;; Check backup files were saved correctly.
+              ;; Some windows variants require the option '--binary'
+              ;; in order to 'patch' create backup files.
+              (let ((opts (format "--backup%s"
+                                  (if (memq system-type '(windows-nt ms-dos))
+                                      " --binary" ""))))
+                (insert (car x))
+                (call-process-region (point-min)
+                                     (point-max)
+                                     ediff-patch-program
+                                     nil nil nil
+                                     opts (cdr x)))))
+          ;; Check backup files were saved correctly; in Bug#26084 some
+          ;; of the backup files are overwritten with the actual content
+          ;; of the updated file.  To ensure that the bug is fixed we just
+          ;; need to check that every backup file produced has different
+          ;; content that the current updated file.
           (dolist (x (list qux bar))
             (let ((backup
                    (car
                     (directory-files
                      tmpdir 'full
                      (concat (file-name-nondirectory x) ".")))))
-              (should-not
-               (string= (with-temp-buffer
-                          (insert-file-contents x)
-                          (buffer-string))
-                        (with-temp-buffer
-                          (insert-file-contents backup)
-                          (buffer-string))))))
+              ;; Compare files only if the backup has being created.
+              (when backup
+                (should-not
+                 (string= (with-temp-buffer
+                            (insert-file-contents x)
+                            (buffer-string))
+                          (with-temp-buffer
+                            (insert-file-contents backup)
+                            (buffer-string)))))))
           (delete-directory tmpdir 'recursive)
           (delete-file patch)))))
 

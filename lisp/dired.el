@@ -34,6 +34,7 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'subr-x))
 ;; When bootstrapping dired-loaddefs has not been generated.
 (require 'dired-loaddefs nil t)
 
@@ -133,7 +134,7 @@ always set this variable to t."
   :type 'boolean
   :group 'dired-mark)
 
-(defcustom dired-trivial-filenames (purecopy "^\\.\\.?$\\|^#")
+(defcustom dired-trivial-filenames (purecopy "\\`\\.\\.?\\'\\|\\`#")
   "Regexp of files to skip when finding first file of a directory.
 A value of nil means move to the subdir line.
 A value of t means move to first file."
@@ -871,6 +872,46 @@ periodically reverts at specified time intervals."
   :group 'dired
   :version "23.2")
 
+(defun dired--need-align-p ()
+  "Return non-nil if some file names are misaligned.
+The return value is the target column for the file names."
+  (save-excursion
+    (goto-char (point-min))
+    (dired-goto-next-file)
+    ;; Use point difference instead of `current-column', because
+    ;; the former works when `dired-hide-details-mode' is enabled.
+    (let* ((first (- (point) (point-at-bol)))
+           (target first))
+      (while (and (not (eobp))
+                  (progn
+                    (forward-line)
+                    (dired-move-to-filename)))
+        (when-let* ((distance (- (point) (point-at-bol)))
+                    (higher (> distance target)))
+          (setq target distance)))
+      (and (/= first target) target))))
+
+(defun dired--align-all-files ()
+  "Align all files adding spaces in front of the size column."
+  (let ((target (dired--need-align-p))
+        (regexp directory-listing-before-filename-regexp))
+    (when target
+      (save-excursion
+        (goto-char (point-min))
+        (dired-goto-next-file)
+        (while (dired-move-to-filename)
+          ;; Use point difference instead of `current-column', because
+          ;; the former works when `dired-hide-details-mode' is enabled.
+          (let ((distance (- target (- (point) (point-at-bol))))
+                (inhibit-read-only t))
+            (unless (zerop distance)
+              (re-search-backward regexp nil t)
+              (goto-char (match-beginning 0))
+              (search-backward-regexp "[[:space:]]" nil t)
+              (skip-chars-forward "[:space:]")
+              (insert-char ?\s distance 'inherit))
+            (forward-line)))))))
+
 (defun dired-internal-noselect (dir-or-list &optional switches mode)
   ;; If DIR-OR-LIST is a string and there is an existing dired buffer
   ;; for it, just leave buffer as it is (don't even call dired-revert).
@@ -920,11 +961,12 @@ periodically reverts at specified time intervals."
 			   "Directory has changed on disk; type \\[revert-buffer] to update Dired")))))
       ;; Else a new buffer
       (setq default-directory
-	    ;; We can do this unconditionally
-	    ;; because dired-noselect ensures that the name
-	    ;; is passed in directory name syntax
-	    ;; if it was the name of a directory at all.
-	    (file-name-directory dirname))
+            (or (car-safe (insert-directory-wildcard-in-dir-p dirname))
+	        ;; We can do this unconditionally
+	        ;; because dired-noselect ensures that the name
+	        ;; is passed in directory name syntax
+	        ;; if it was the name of a directory at all.
+	        (file-name-directory dirname)))
       (or switches (setq switches dired-listing-switches))
       (if mode (funcall mode)
         (dired-mode dir-or-list switches))
@@ -939,6 +981,8 @@ periodically reverts at specified time intervals."
 	  (if failed (kill-buffer buffer))))
       (goto-char (point-min))
       (dired-initial-position dirname))
+    (when (consp dired-directory)
+      (dired--align-all-files))
     (set-buffer old-buf)
     buffer))
 
@@ -1056,13 +1100,14 @@ wildcards, erases the buffer, and builds the subdir-alist anew
 	     (not file-list))
 	;; If we are reading a whole single directory...
 	(dired-insert-directory dir dired-actual-switches nil nil t)
-      (if (not (file-readable-p
-		(directory-file-name (file-name-directory dir))))
-	  (error "Directory %s inaccessible or nonexistent" dir)
-	;; Else treat it as a wildcard spec
-	;; unless we have an explicit list of files.
-	(dired-insert-directory dir dired-actual-switches
-				file-list (not file-list) t)))))
+      (if (and (not (insert-directory-wildcard-in-dir-p dir))
+               (not (file-readable-p
+		     (directory-file-name (file-name-directory dir)))))
+	  (error "Directory %s inaccessible or nonexistent" dir))
+      ;; Else treat it as a wildcard spec
+      ;; unless we have an explicit list of files.
+      (dired-insert-directory dir dired-actual-switches
+			      file-list (not file-list) t))))
 
 (defun dired-align-file (beg end)
   "Align the fields of a file to the ones of surrounding lines.
@@ -1160,7 +1205,7 @@ BEG..END is the line where the file info is located."
 	      (setq file-col (+ spaces file-col))
 	      (if (> file-col other-col)
 		  (setq spaces (- spaces (- file-col other-col))))
-	      (insert-char ?\s spaces)
+	      (insert-char ?\s spaces 'inherit)
 	      ;; Let's just make really sure we did not mess up.
 	      (unless (save-excursion
 			(eq (dired-move-to-filename) (marker-position file)))
@@ -1207,29 +1252,56 @@ If HDR is non-nil, insert a header line with the directory name."
 	 ;; as indicated by `ls-lisp-use-insert-directory-program'.
 	 (not (and (featurep 'ls-lisp)
 		   (null ls-lisp-use-insert-directory-program)))
-	 (or (if (eq dired-use-ls-dired 'unspecified)
+         (not (and (featurep 'eshell)
+                   (bound-and-true-p eshell-ls-use-in-dired)))
+	 (or (file-remote-p dir)
+             (if (eq dired-use-ls-dired 'unspecified)
 		 ;; Check whether "ls --dired" gives exit code 0, and
 		 ;; save the answer in `dired-use-ls-dired'.
 		 (or (setq dired-use-ls-dired
 			   (eq 0 (call-process insert-directory-program
-					     nil nil nil "--dired")))
+                                               nil nil nil "--dired")))
 		     (progn
 		       (message "ls does not support --dired; \
 see `dired-use-ls-dired' for more details.")
 		       nil))
-	       dired-use-ls-dired)
-	     (file-remote-p dir)))
+	       dired-use-ls-dired)))
 	(setq switches (concat "--dired " switches)))
-    ;; We used to specify the C locale here, to force English month names;
-    ;; but this should not be necessary any more,
-    ;; with the new value of `directory-listing-before-filename-regexp'.
-    (if file-list
-	(dolist (f file-list)
-	  (let ((beg (point)))
-	    (insert-directory f switches nil nil)
-	    ;; Re-align fields, if necessary.
-	    (dired-align-file beg (point))))
-      (insert-directory dir switches wildcard (not wildcard)))
+    ;; Expand directory wildcards and fill file-list.
+    (let ((dir-wildcard (insert-directory-wildcard-in-dir-p dir)))
+      (cond (dir-wildcard
+             (setq switches (concat "-d " switches))
+             ;; We don't know whether the remote ls supports
+             ;; "--dired", so we cannot add it to the `process-file'
+             ;; call for wildcards.
+             (when (file-remote-p dir)
+               (setq switches (dired-replace-in-string "--dired" "" switches)))
+             (let* ((default-directory (car dir-wildcard))
+                    (script (format "ls %s %s" switches (cdr dir-wildcard)))
+                    (remotep (file-remote-p dir))
+                    (sh (or (and remotep "/bin/sh")
+                            (and (bound-and-true-p explicit-shell-file-name)
+                                 (executable-find explicit-shell-file-name))
+                            (executable-find "sh")))
+                    (switch (if remotep "-c" shell-command-switch)))
+               (unless
+                   (zerop
+                    (process-file sh nil (current-buffer) nil switch script))
+                 (user-error
+                  "%s: No files matching wildcard" (cdr dir-wildcard)))
+               (insert-directory-clean (point) switches)))
+            (t
+             ;; We used to specify the C locale here, to force English
+             ;; month names; but this should not be necessary any
+             ;; more, with the new value of
+             ;; `directory-listing-before-filename-regexp'.
+             (if file-list
+	         (dolist (f file-list)
+	           (let ((beg (point)))
+	             (insert-directory f switches nil nil)
+	             ;; Re-align fields, if necessary.
+	             (dired-align-file beg (point))))
+               (insert-directory dir switches wildcard (not wildcard))))))
     ;; Quote certain characters, unless ls quoted them for us.
     (if (not (dired-switches-escape-p dired-actual-switches))
 	(save-excursion
@@ -1279,11 +1351,14 @@ see `dired-use-ls-dired' for more details.")
 	  ;; Note that dired-build-subdir-alist will replace the name
 	  ;; by its expansion, so it does not matter whether what we insert
 	  ;; here is fully expanded, but it should be absolute.
-	  (insert "  " (directory-file-name (file-name-directory dir)) ":\n")
+	  (insert "  " (or (car-safe (insert-directory-wildcard-in-dir-p dir))
+                           (directory-file-name (file-name-directory dir))) ":\n")
 	  (setq content-point (point)))
 	(when wildcard
 	  ;; Insert "wildcard" line where "total" line would be for a full dir.
-	  (insert "  wildcard " (file-name-nondirectory dir) "\n")))
+	  (insert "  wildcard " (or (cdr-safe (insert-directory-wildcard-in-dir-p dir))
+                                    (file-name-nondirectory dir))
+                  "\n")))
       (dired-insert-set-properties content-point (point)))))
 
 (defun dired-insert-set-properties (beg end)
@@ -1369,18 +1444,22 @@ ARG and NOCONFIRM, passed from `revert-buffer', are ignored."
 The positions have the form (BUFFER-POSITION WINDOW-POSITIONS).
 
 BUFFER-POSITION is the point position in the current Dired buffer.
-It has the form (BUFFER DIRED-FILENAME BUFFER-POINT).
+It has the form (BUFFER DIRED-FILENAME BUFFER-LINE-NUMBER).
 
 WINDOW-POSITIONS are current positions in all windows displaying
 this dired buffer.  The window positions have the form (WINDOW
-DIRED-FILENAME WINDOW-POINT)."
+DIRED-FILENAME WINDOW-LINE-NUMBER).
+
+We store line numbers instead of point positions because the header
+lines might change as well: when this happen the line number doesn't
+change; the point does."
   (list
-   (list (current-buffer) (dired-get-filename nil t) (point))
+   (list (current-buffer) (dired-get-filename nil t) (line-number-at-pos))
    (mapcar (lambda (w)
-	     (list w
-		   (with-selected-window w
-		     (dired-get-filename nil t))
-		   (window-point w)))
+	     (with-selected-window w
+               (list w
+		     (dired-get-filename nil t)
+                     (line-number-at-pos (window-point w)))))
 	   (get-buffer-window-list nil 0 t))))
 
 (defun dired-restore-positions (positions)
@@ -1389,7 +1468,8 @@ DIRED-FILENAME WINDOW-POINT)."
 	 (buffer (nth 0 buf-file-pos)))
     (unless (and (nth 1 buf-file-pos)
 		 (dired-goto-file (nth 1 buf-file-pos)))
-      (goto-char (nth 2 buf-file-pos))
+      (goto-char (point-min))
+      (forward-line (1- (nth 2 buf-file-pos)))
       (dired-move-to-filename))
     (dolist (win-file-pos (nth 1 positions))
       ;; Ensure that window still displays the original buffer.
@@ -1397,7 +1477,8 @@ DIRED-FILENAME WINDOW-POINT)."
 	(with-selected-window (nth 0 win-file-pos)
 	  (unless (and (nth 1 win-file-pos)
 		       (dired-goto-file (nth 1 win-file-pos)))
-	    (goto-char (nth 2 win-file-pos))
+            (goto-char (point-min))
+	    (forward-line (1- (nth 2 win-file-pos)))
 	    (dired-move-to-filename)))))))
 
 (defun dired-remember-marks (beg end)
@@ -2900,6 +2981,14 @@ Any other value means to ask for each directory."
 ;; Match anything but `.' and `..'.
 (defvar dired-re-no-dot "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")
 
+(defconst dired-delete-help
+  "Type:
+`yes' to delete recursively the current directory,
+`no' to skip to next,
+`all' to delete all remaining directories with no more questions,
+`quit' to exit,
+`help' to show this help message.")
+
 ;; Delete file, possibly delete a directory and all its files.
 ;; This function is useful outside of dired.  One could change its name
 ;; to e.g. recursive-delete-file and put it somewhere else.
@@ -2915,23 +3004,45 @@ its possible values is:
 
 TRASH non-nil means to trash the file instead of deleting, provided
 `delete-by-moving-to-trash' (which see) is non-nil."
-  ;; This test is equivalent to
-  ;; (and (file-directory-p fn) (not (file-symlink-p fn)))
-  ;; but more efficient
-  (if (not (eq t (car (file-attributes file))))
-      (delete-file file trash)
-    (if (and recursive
-	     (directory-files file t dired-re-no-dot) ; Not empty.
-	     (or (eq recursive 'always)
-		 (yes-or-no-p (format "Recursively %s %s? "
-				      (if (and trash
-					       delete-by-moving-to-trash)
-					  "trash"
-					"delete")
-				      (dired-make-relative file)))))
-	(if (eq recursive 'top) (setq recursive 'always)) ; Don't ask again.
-      (setq recursive nil))
-    (delete-directory file recursive trash)))
+       ;; This test is equivalent to
+       ;; (and (file-directory-p fn) (not (file-symlink-p fn)))
+       ;; but more efficient
+       (if (not (eq t (car (file-attributes file))))
+           (delete-file file trash)
+         (let* ((valid-answers (list "yes" "no" "all" "quit" "help"))
+                (answer "")
+                (input-fn
+                 (lambda ()
+                   (setq answer
+                         (read-string
+	                  (format "Recursively %s %s? [yes, no, all, quit, help] "
+		                  (if (and trash
+			                   delete-by-moving-to-trash)
+		                      "trash"
+		                    "delete")
+		                  (dired-make-relative file))))
+                   (when (string= answer "help")
+                     (with-help-window "*Help*"
+                       (with-current-buffer "*Help*" (insert dired-delete-help))))
+                   answer)))
+           (if (and recursive
+	            (directory-files file t dired-re-no-dot) ; Not empty.
+	            (eq recursive 'always))
+	       (if (eq recursive 'top) (setq recursive 'always)) ; Don't ask again.
+             ;; Otherwise prompt user:
+             (funcall input-fn)
+             (while (not (member answer valid-answers))
+               (unless (string= answer "help")
+                 (beep)
+                 (message "Please answer `yes' or `no' or `all' or `quit'")
+                 (sleep-for 2))
+               (funcall input-fn))
+             (pcase answer
+               ('"all" (setq recursive 'always dired-recursive-deletes recursive))
+               ('"yes" (if (eq recursive 'top) (setq recursive 'always)))
+               ('"no" (setq recursive nil))
+               ('"quit" (keyboard-quit))))
+           (delete-directory file recursive trash))))
 
 (defun dired-do-flagged-delete (&optional nomessage)
   "In Dired, delete the files flagged for deletion.
@@ -2980,6 +3091,9 @@ non-empty directories is allowed."
   (let* ((files (mapcar #'car l))
 	 (count (length l))
 	 (succ 0)
+	 ;; Bind `dired-recursive-deletes' so that we can change it
+	 ;; locally according with the user answer within `dired-delete-file'.
+	 (dired-recursive-deletes dired-recursive-deletes)
 	 (trashing (and trash delete-by-moving-to-trash)))
     ;; canonicalize file list for pop up
     (setq files (nreverse (mapcar #'dired-make-relative files)))
@@ -2989,6 +3103,7 @@ non-empty directories is allowed."
 		 (if trashing "Trash" "Delete")
 		 (dired-mark-prompt arg files)))
 	(save-excursion
+          (catch '--delete-cancel
 	  (let ((progress-reporter
 		 (make-progress-reporter
 		  (if trashing "Trashing..." "Deleting...")
@@ -3006,6 +3121,7 @@ non-empty directories is allowed."
 		      (dired-fun-in-all-buffers
 		       (file-name-directory fn) (file-name-nondirectory fn)
 		       #'dired-delete-entry fn))
+                  (quit (throw '--delete-cancel (message "OK, canceled")))
 		  (error ;; catch errors from failed deletions
 		   (dired-log "%s\n" err)
 		   (setq failures (cons (car (car l)) failures)))))
@@ -3016,7 +3132,7 @@ non-empty directories is allowed."
 	       (format "%d of %d deletion%s failed"
 		       (length failures) count
 		       (dired-plural-s count))
-	       failures))))
+	       failures)))))
       (message "(No deletions performed)")))
   (dired-move-to-filename))
 

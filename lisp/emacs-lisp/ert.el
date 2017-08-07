@@ -135,15 +135,8 @@ Emacs bug 6581 at URL `http://debbugs.gnu.org/cgi/bugreport.cgi?bug=6581'."
     ;; Note that nil is still a valid value for the `name' slot in
     ;; ert-test objects.  It designates an anonymous test.
     (error "Attempt to define a test named nil"))
-  (put symbol 'ert--test definition)
-  ;; Register in load-history, so `symbol-file' can find us, and so
-  ;; unload-feature can unload our tests.
-  (cl-pushnew `(ert-deftest . ,symbol) current-load-list :test #'equal)
+  (define-symbol-prop symbol 'ert--test definition)
   definition)
-
-(cl-defmethod loadhist-unload-element ((x (head ert-deftest)))
-  (let ((name (cdr x)))
-    (put name 'ert--test nil)))
 
 (defun ert-make-test-unbound (symbol)
   "Make SYMBOL name no test.  Return SYMBOL."
@@ -2406,8 +2399,7 @@ To be used in the ERT results buffer."
            (buffer-disable-undo)
            (erase-buffer)
            (ert-simple-view-mode)
-           ;; Use unibyte because `debugger-setup-buffer' also does so.
-           (set-buffer-multibyte nil)
+           (set-buffer-multibyte t)     ; mimic debugger-setup-buffer
            (setq truncate-lines t)
            (ert--print-backtrace backtrace t)
            (goto-char (point-min))
@@ -2540,7 +2532,7 @@ To be used in the ERT results buffer."
           (insert (if test-name (format "%S" test-name) "<anonymous test>"))
           (insert " is a test")
           (let ((file-name (and test-name
-                                (symbol-file test-name 'ert-deftest))))
+                                (symbol-file test-name 'ert--test))))
             (when file-name
               (insert (format-message " defined in `%s'"
                                       (file-name-nondirectory file-name)))

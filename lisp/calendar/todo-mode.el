@@ -701,7 +701,8 @@ and done items are always shown on visiting a category."
 	  ;; We just initialized the first todo file, so make it the default.
 	  (setq todo-default-todo-file (todo-short-file-name file)
 		first-file t)
-	  (todo-reevaluate-default-file-defcustom))
+          (put 'todo-default-todo-file 'custom-type
+               `(radio ,@(todo--files-type-list))))
 	(unless (member file todo-visited)
 	  ;; Can't setq t-c-t-f here, otherwise wrong file shown when
 	  ;; todo-show is called from todo-show-categories-table.
@@ -780,7 +781,8 @@ and done items are always shown on visiting a category."
 		  (when first-file
 		    (setq todo-default-todo-file nil
 			  todo-current-todo-file nil)
-		    (todo-reevaluate-default-file-defcustom))
+                    (put 'todo-default-todo-file 'custom-type
+                         `(radio ,@(todo--files-type-list))))
 		  (kill-buffer)
 		  (keyboard-quit)))))
 	  (save-excursion (todo-category-select))
@@ -1102,7 +1104,7 @@ Noninteractively, return the name of the new file."
       (write-region (point-min) (point-max) file nil 'nomessage nil t)
       (kill-buffer file))
     (setq todo-files (funcall todo-files-function))
-    (todo-reevaluate-filelist-defcustoms)
+    (todo-update-filelist-defcustoms)
     (if (called-interactively-p 'any)
 	(progn
 	  (set-window-buffer (selected-window)
@@ -1156,7 +1158,7 @@ these files, also rename them accordingly."
       (setq todo-default-todo-file snname))
     (when (string= todo-global-current-todo-file oname)
       (setq todo-global-current-todo-file nname))
-    (todo-reevaluate-filelist-defcustoms)))
+    (todo-update-filelist-defcustoms)))
 
 (defun todo-delete-file ()
   "Delete the current todo, archive or filtered items file.
@@ -1217,7 +1219,7 @@ visiting the deleted files."
       (when (or (string= file1 todo-global-current-todo-file)
 		(and delete2 (string= file2 todo-global-current-todo-file)))
 	(setq todo-global-current-todo-file nil))
-      (todo-reevaluate-filelist-defcustoms)
+      (todo-update-filelist-defcustoms)
       (message (concat (cond (todo "Todo") (archive "Archive")) " file \"%s\" "
 		       (when delete2
 			 (concat "and its "
@@ -1387,7 +1389,7 @@ todo or done items."
 	  (if (= (length todo-categories) 1)
 	      ;; If deleted category was the only one, delete the file.
 	      (progn
-		(todo-reevaluate-filelist-defcustoms)
+                (todo-update-filelist-defcustoms)
 		;; Skip confirming killing the archive buffer if it has been
 		;; modified and not saved.
 		(set-buffer-modified-p nil)
@@ -1430,7 +1432,7 @@ the archive of the file moved to, creating it if it does not exist."
 	  (write-region (point-min) (point-max) nfile nil 'nomessage nil t)
 	  (kill-buffer nfile))
 	(setq todo-files (funcall todo-files-function))
-	(todo-reevaluate-filelist-defcustoms))
+        (todo-update-filelist-defcustoms))
       (dolist (buf buffers)
         ;; Make sure archive file is in Todo Archive mode so that
         ;; todo-categories has correct value.
@@ -1524,7 +1526,7 @@ the archive of the file moved to, creating it if it does not exist."
 		  (delete-file todo-current-todo-file)
 		  (kill-buffer)
 		  (when (member todo-current-todo-file todo-files)
-		    (todo-reevaluate-filelist-defcustoms)))
+                    (todo-update-filelist-defcustoms)))
 	      (setq todo-categories (delete (assoc cat todo-categories)
 					     todo-categories))
 	      (todo-update-categories-sexp)
@@ -4527,11 +4529,9 @@ If the file already exists, overwrite it only on confirmation."
 
 (defcustom todo-print-buffer-function #'ps-print-buffer-with-faces
   "Function called by `todo-print-buffer' to print Todo mode buffers.
-The function should take an optional argument whose non-nil value
-is a string naming a file to save the print image to; calling
-`todo-print-buffer-to-file' prompts for the file name, which is
-passed to this function.  Calling this function with no or a nil
-argument sends the image to the printer."
+Called with one argument which can either be:
+- a string, naming a file to save the print image to.
+- nil, to send the image to the printer."
   :type 'symbol
   :group 'todo)
 
@@ -4801,7 +4801,7 @@ name in `todo-directory'.  See also the documentation string of
 	      (prin1 sexp (current-buffer)))
 	    (write-region (point-min) (point-max) file nil 'nomessage))
 	  (setq todo-archives (funcall todo-files-function t)))
-	(todo-reevaluate-filelist-defcustoms)
+        (todo-update-filelist-defcustoms)
 	(when (y-or-n-p (concat "Format conversion done; do you want to "
 				"visit the converted file now? "))
 	  (setq todo-current-todo-file file)
@@ -4865,7 +4865,7 @@ buffer, clean up the state and return nil."
 		      (member todo-default-todo-file files))
 	    (setq todo-default-todo-file (todo-short-file-name
 					  (car todo-files))))
-	  (todo-reevaluate-filelist-defcustoms)
+          (todo-update-filelist-defcustoms)
 	  (when buf (kill-buffer buf))
 	  nil)))))
 
@@ -5751,7 +5751,8 @@ have been removed."
 			 " been deleted and removed from\n"
 			 "the list of category completion files")
 		 names))
-      (todo-reevaluate-category-completions-files-defcustom)
+      (put 'todo-category-completions-files 'custom-type
+           `(set ,@(todo--files-type-list)))
       (custom-set-default 'todo-category-completions-files
 			  (symbol-value 'todo-category-completions-files))
       (sleep-for 1.5)))
@@ -6251,59 +6252,12 @@ the empty string (i.e., no time string)."
 		  (hl-line-mode 1)
 		(hl-line-mode -1)))))))))
 
-(defun todo-reevaluate-filelist-defcustoms ()
-  "Reevaluate defcustoms that provide choice list of todo files."
-  ;; FIXME: This is hideous!  I don't know enough about Custom to
-  ;; offer something better, but please ask on emacs-devel!
-  (custom-set-default 'todo-default-todo-file
-		      (symbol-value 'todo-default-todo-file))
-  (todo-reevaluate-default-file-defcustom)
-  (custom-set-default 'todo-filter-files (symbol-value 'todo-filter-files))
-  (todo-reevaluate-filter-files-defcustom)
-  (custom-set-default 'todo-category-completions-files
-		      (symbol-value 'todo-category-completions-files))
-  (todo-reevaluate-category-completions-files-defcustom))
-
-(defun todo-reevaluate-default-file-defcustom ()
-  "Reevaluate defcustom of `todo-default-todo-file'.
-Called after adding or deleting a todo file.  If the value of
-`todo-default-todo-file' before calling this function was
-associated with an existing file, keep that value."
-  ;; FIXME: This is hideous!  I don't know enough about Custom to
-  ;; offer something better, but please ask on emacs-devel!
-  ;; (let ((curval todo-default-todo-file))
-    (eval
-     (defcustom todo-default-todo-file (todo-short-file-name
-					(car (funcall todo-files-function)))
-       "Todo file visited by first session invocation of `todo-show'."
-       :type (when todo-files
-	       `(radio ,@(todo--files-type-list)))
-       :group 'todo))
-    ;; (when (and curval (file-exists-p (todo-absolute-file-name curval)))
-    ;;   (custom-set-default 'todo-default-todo-file curval)
-    ;;   ;; (custom-reevaluate-setting 'todo-default-todo-file)
-    ;;   )))
-    )
-
-(defun todo-reevaluate-category-completions-files-defcustom ()
-  "Reevaluate defcustom of `todo-category-completions-files'.
-Called after adding or deleting a todo file."
-  ;; FIXME: This is hideous!  I don't know enough about Custom to
-  ;; offer something better, but please ask on emacs-devel!
-  (eval (defcustom todo-category-completions-files nil
-  "List of files for building `todo-read-category' completions."
-	  :type `(set ,@(todo--files-type-list))
-	  :group 'todo)))
-
-(defun todo-reevaluate-filter-files-defcustom ()
-  "Reevaluate defcustom of `todo-filter-files'.
-Called after adding or deleting a todo file."
-  ;; FIXME: This is hideous!  I don't know enough about Custom to
-  ;; offer something better, but please ask on emacs-devel!
-  (eval (defcustom todo-filter-files nil
-	  "List of files for multifile item filtering."
-	  :type `(set ,@(todo--files-type-list))
-	  :group 'todo)))
+(defun todo-update-filelist-defcustoms ()
+  "Update defcustoms that provide choice list of todo files."
+  (put 'todo-default-todo-file 'custom-type `(radio ,@(todo--files-type-list)))
+  (put 'todo-category-completions-files 'custom-type
+       `(set ,@(todo--files-type-list)))
+  (put 'todo-filter-files 'custom-type `(set ,@(todo--files-type-list))))
 
 ;; -----------------------------------------------------------------------------
 ;;; Font locking

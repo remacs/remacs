@@ -247,10 +247,11 @@ be $HOME."
 (ert-deftest files-tests--file-name-non-special--subprocess ()
   "Check that Bug#25949 is fixed."
   (skip-unless (executable-find "true"))
-  (should (eq (let ((default-directory "/:/")) (process-file "true")) 0))
-  (should (processp (let ((default-directory "/:/"))
-                      (start-file-process "foo" nil "true"))))
-  (should (eq (let ((default-directory "/:/")) (shell-command "true")) 0)))
+  (let ((defdir (if (memq system-type '(ms-dos windows-nt)) "/:c:/" "/:/")))
+    (should (eq (let ((default-directory defdir)) (process-file "true")) 0))
+    (should (processp (let ((default-directory defdir))
+                        (start-file-process "foo" nil "true"))))
+    (should (eq (let ((default-directory defdir)) (shell-command "true")) 0))))
 
 (defmacro files-tests--with-advice (symbol where function &rest body)
   (declare (indent 3))
@@ -312,6 +313,24 @@ be invoked with the right arguments."
        (should (equal actual-args
                       `((verify-visited-file-modtime ,buffer-visiting-file)
                         (verify-visited-file-modtime nil))))))))
+
+(ert-deftest files-tests--insert-directory-wildcard-in-dir-p ()
+  (let ((alist (list (cons "/home/user/*/.txt" (cons "/home/user/" "*/.txt"))
+                     (cons "/home/user/.txt" nil)
+                     (cons "/home/*/.txt" (cons "/home/" "*/.txt"))
+                     (cons "/home/*/" (cons "/home/" "*/"))
+                     (cons "/*/.txt" (cons "/" "*/.txt"))
+                     ;;
+                     (cons "c:/tmp/*/*.txt" (cons "c:/tmp/" "*/*.txt"))
+                     (cons "c:/tmp/*.txt" nil)
+                     (cons "c:/tmp/*/" (cons "c:/tmp/" "*/"))
+                     (cons "c:/*/*.txt" (cons "c:/" "*/*.txt")))))
+    (dolist (path-res alist)
+      (should
+       (equal
+        (cdr path-res)
+        (insert-directory-wildcard-in-dir-p (car path-res)))))))
+
 
 (provide 'files-tests)
 ;;; files-tests.el ends here

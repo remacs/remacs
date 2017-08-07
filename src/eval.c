@@ -354,10 +354,11 @@ usage: (or CONDITIONS...)  */)
 
   while (CONSP (args))
     {
-      val = eval_sub (XCAR (args));
+      Lisp_Object arg = XCAR (args);
+      args = XCDR (args);
+      val = eval_sub (arg);
       if (!NILP (val))
 	break;
-      args = XCDR (args);
     }
 
   return val;
@@ -374,10 +375,11 @@ usage: (and CONDITIONS...)  */)
 
   while (CONSP (args))
     {
-      val = eval_sub (XCAR (args));
+      Lisp_Object arg = XCAR (args);
+      args = XCDR (args);
+      val = eval_sub (arg);
       if (NILP (val))
 	break;
-      args = XCDR (args);
     }
 
   return val;
@@ -397,7 +399,7 @@ usage: (if COND THEN ELSE...)  */)
 
   if (!NILP (cond))
     return eval_sub (Fcar (XCDR (args)));
-  return Fprogn (XCDR (XCDR (args)));
+  return Fprogn (Fcdr (XCDR (args)));
 }
 
 DEFUN ("cond", Fcond, Scond, 0, UNEVALLED, 0,
@@ -439,8 +441,9 @@ usage: (progn BODY...)  */)
 
   while (CONSP (body))
     {
-      val = eval_sub (XCAR (body));
+      Lisp_Object form = XCAR (body);
       body = XCDR (body);
+      val = eval_sub (form);
     }
 
   return val;
@@ -488,35 +491,26 @@ The return value of the `setq' form is the value of the last VAL.
 usage: (setq [SYM VAL]...)  */)
   (Lisp_Object args)
 {
-  Lisp_Object val, sym, lex_binding;
+  Lisp_Object val = args, tail = args;
 
-  val = args;
-  if (CONSP (args))
+  for (EMACS_INT nargs = 0; CONSP (tail); nargs += 2)
     {
-      Lisp_Object args_left = args;
-      Lisp_Object numargs = Flength (args);
-
-      if (XINT (numargs) & 1)
-        xsignal2 (Qwrong_number_of_arguments, Qsetq, numargs);
-
-      do
-	{
-	  val = eval_sub (Fcar (XCDR (args_left)));
-	  sym = XCAR (args_left);
-
-	  /* Like for eval_sub, we do not check declared_special here since
-	     it's been done when let-binding.  */
-	  if (!NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
-	      && SYMBOLP (sym)
-	      && !NILP (lex_binding
-			= Fassq (sym, Vinternal_interpreter_environment)))
-	    XSETCDR (lex_binding, val); /* SYM is lexically bound.  */
-	  else
-	    Fset (sym, val);	/* SYM is dynamically bound.  */
-
-	  args_left = Fcdr (XCDR (args_left));
-	}
-      while (CONSP (args_left));
+      Lisp_Object sym = XCAR (tail), lex_binding;
+      tail = XCDR (tail);
+      if (!CONSP (tail))
+	xsignal2 (Qwrong_number_of_arguments, Qsetq, make_number (nargs + 1));
+      Lisp_Object arg = XCAR (tail);
+      tail = XCDR (tail);
+      val = eval_sub (arg);
+      /* Like for eval_sub, we do not check declared_special here since
+	 it's been done when let-binding.  */
+      if (!NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
+	  && SYMBOLP (sym)
+	  && !NILP (lex_binding
+		    = Fassq (sym, Vinternal_interpreter_environment)))
+	XSETCDR (lex_binding, val); /* SYM is lexically bound.  */
+      else
+	Fset (sym, val);	/* SYM is dynamically bound.  */
     }
 
   return val;
@@ -535,7 +529,7 @@ of unexpected results when a quoted object is modified.
 usage: (quote ARG)  */)
   (Lisp_Object args)
 {
-  if (CONSP (XCDR (args)))
+  if (!NILP (XCDR (args)))
     xsignal2 (Qwrong_number_of_arguments, Qquote, Flength (args));
   return XCAR (args);
 }
@@ -549,7 +543,7 @@ usage: (function ARG)  */)
 {
   Lisp_Object quoted = XCAR (args);
 
-  if (CONSP (XCDR (args)))
+  if (!NILP (XCDR (args)))
     xsignal2 (Qwrong_number_of_arguments, Qfunction, Flength (args));
 
   if (!NILP (Vinternal_interpreter_environment)
@@ -734,9 +728,9 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
   sym = XCAR (args);
   tail = XCDR (args);
 
-  if (CONSP (tail))
+  if (!NILP (tail))
     {
-      if (CONSP (XCDR (tail)) && CONSP (XCDR (XCDR (tail))))
+      if (!NILP (XCDR (tail)) && !NILP (XCDR (XCDR (tail))))
 	error ("Too many arguments");
 
       tem = Fdefault_boundp (sym);
@@ -803,20 +797,24 @@ usage: (defconst SYMBOL INITVALUE [DOCSTRING])  */)
   Lisp_Object sym, tem;
 
   sym = XCAR (args);
-  if (CONSP (Fcdr (XCDR (XCDR (args)))))
-    error ("Too many arguments");
+  Lisp_Object docstring = Qnil;
+  if (!NILP (XCDR (XCDR (args))))
+    {
+      if (!NILP (XCDR (XCDR (XCDR (args)))))
+	error ("Too many arguments");
+      docstring = XCAR (XCDR (XCDR (args)));
+    }
 
-  tem = eval_sub (Fcar (XCDR (args)));
+  tem = eval_sub (XCAR (XCDR (args)));
   if (!NILP (Vpurify_flag))
     tem = Fpurecopy (tem);
   Fset_default (sym, tem);
   XSYMBOL (sym)->declared_special = 1;
-  tem = Fcar (XCDR (XCDR (args)));
-  if (!NILP (tem))
+  if (!NILP (docstring))
     {
       if (!NILP (Vpurify_flag))
-	tem = Fpurecopy (tem);
-      Fput (sym, Qvariable_documentation, tem);
+	docstring = Fpurecopy (docstring);
+      Fput (sym, Qvariable_documentation, docstring);
     }
   Fput (sym, Qrisky_local_variable, Qt);
   LOADHIST_ATTACH (sym);
@@ -844,27 +842,29 @@ Each VALUEFORM can refer to the symbols already bound by this VARLIST.
 usage: (let* VARLIST BODY...)  */)
   (Lisp_Object args)
 {
-  Lisp_Object varlist, var, val, elt, lexenv;
+  Lisp_Object var, val, elt, lexenv;
   ptrdiff_t count = SPECPDL_INDEX ();
 
   lexenv = Vinternal_interpreter_environment;
 
-  for (varlist = XCAR (args); CONSP (varlist); varlist = XCDR (varlist))
+  Lisp_Object varlist = XCAR (args);
+  while (CONSP (varlist))
     {
       maybe_quit ();
 
       elt = XCAR (varlist);
+      varlist = XCDR (varlist);
       if (SYMBOLP (elt))
 	{
 	  var = elt;
 	  val = Qnil;
 	}
-      else if (! NILP (Fcdr (Fcdr (elt))))
-	signal_error ("`let' bindings can have only one value-form", elt);
       else
 	{
 	  var = Fcar (elt);
-	  val = eval_sub (Fcar (Fcdr (elt)));
+	  if (! NILP (Fcdr (XCDR (elt))))
+	    signal_error ("`let' bindings can have only one value-form", elt);
+	  val = eval_sub (Fcar (XCDR (elt)));
 	}
 
       if (!NILP (lexenv) && SYMBOLP (var)
@@ -911,33 +911,37 @@ usage: (let VARLIST BODY...)  */)
   CHECK_LIST (varlist);
 
   /* Make space to hold the values to give the bound variables.  */
-  elt = Flength (varlist);
-  SAFE_ALLOCA_LISP (temps, XFASTINT (elt));
+  EMACS_INT varlist_len = XFASTINT (Flength (varlist));
+  SAFE_ALLOCA_LISP (temps, varlist_len);
+  ptrdiff_t nvars = varlist_len;
 
   /* Compute the values and store them in `temps'.  */
 
-  for (argnum = 0; CONSP (varlist); varlist = XCDR (varlist))
+  for (argnum = 0; argnum < nvars && CONSP (varlist); argnum++)
     {
       maybe_quit ();
       elt = XCAR (varlist);
+      varlist = XCDR (varlist);
       if (SYMBOLP (elt))
-	temps [argnum++] = Qnil;
+	temps[argnum] = Qnil;
       else if (! NILP (Fcdr (Fcdr (elt))))
 	signal_error ("`let' bindings can have only one value-form", elt);
       else
-	temps [argnum++] = eval_sub (Fcar (Fcdr (elt)));
+	temps[argnum] = eval_sub (Fcar (Fcdr (elt)));
     }
+  nvars = argnum;
 
   lexenv = Vinternal_interpreter_environment;
 
   varlist = XCAR (args);
-  for (argnum = 0; CONSP (varlist); varlist = XCDR (varlist))
+  for (argnum = 0; argnum < nvars && CONSP (varlist); argnum++)
     {
       Lisp_Object var;
 
       elt = XCAR (varlist);
+      varlist = XCDR (varlist);
       var = SYMBOLP (elt) ? elt : Fcar (elt);
-      tem = temps[argnum++];
+      tem = temps[argnum];
 
       if (!NILP (lexenv) && SYMBOLP (var)
 	  && !XSYMBOL (var)->declared_special
@@ -2135,6 +2139,7 @@ eval_sub (Lisp_Object form)
 
   original_fun = XCAR (form);
   original_args = XCDR (form);
+  CHECK_LIST (original_args);
 
   /* This also protects them from gc.  */
   count = record_in_backtrace (original_fun, &original_args, UNEVALLED);
@@ -2176,15 +2181,16 @@ eval_sub (Lisp_Object form)
 
 	  SAFE_ALLOCA_LISP (vals, XINT (numargs));
 
-	  while (!NILP (args_left))
+	  while (CONSP (args_left) && argnum < XINT (numargs))
 	    {
-	      vals[argnum++] = eval_sub (Fcar (args_left));
-	      args_left = Fcdr (args_left);
+	      Lisp_Object arg = XCAR (args_left);
+	      args_left = XCDR (args_left);
+	      vals[argnum++] = eval_sub (arg);
 	    }
 
-	  set_backtrace_args (specpdl + count, vals, XINT (numargs));
+	  set_backtrace_args (specpdl + count, vals, argnum);
 
-	  val = (XSUBR (fun)->function.aMANY) (XINT (numargs), vals);
+	  val = XSUBR (fun)->function.aMANY (argnum, vals);
 
 	  check_cons_list ();
 	  lisp_eval_depth--;

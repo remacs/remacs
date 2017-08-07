@@ -38,7 +38,6 @@
   "Display line numbers in the buffer."
   :group 'display)
 
-;;;###autoload
 (defcustom display-line-numbers-type t
   "The default type of line numbers to use in `display-line-numbers-mode'.
 See `display-line-numbers' for value options."

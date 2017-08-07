@@ -339,6 +339,9 @@ rename_lock_file (char const *old, char const *new, bool force)
     {
       struct stat st;
 
+      int r = renameat_noreplace (AT_FDCWD, old, AT_FDCWD, new);
+      if (! (r < 0 && errno == ENOSYS))
+	return r;
       if (link (old, new) == 0)
 	return unlink (old) == 0 || errno == ENOENT ? 0 : -1;
       if (errno != ENOSYS && errno != LINKS_MIGHT_NOT_WORK)
