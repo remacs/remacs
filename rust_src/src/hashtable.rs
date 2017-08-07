@@ -11,6 +11,9 @@ use std::hash::{Hash, Hasher};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
+// This was implemented in the C as a struct with function pointers. The problem with that
+// was the way that we are serializing the LispHashTable does not work well with function pointers.
+// So instead we have an enum that we match on. 
 #[derive(Eq, PartialEq, Serialize, Deserialize, Copy, Clone)]
 enum HashFunction {
     Eq,
@@ -19,8 +22,7 @@ enum HashFunction {
     UserFunc(LispObject, LispObject, LispObject),
 }
 
-// @TODO manually derive Eq and PartialEq
-#[derive(Eq, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 struct HashableLispObject {
     object: LispObject,
     func: HashFunction,
@@ -56,6 +58,21 @@ impl Hash for HashableLispObject {
         state.finish();
     }
 }
+
+impl PartialEq for HashableLispObject {
+    fn eq(&self, other: &Self) -> bool {
+        match self.func {
+            HashFunction::Eq => { self.object.eq(other.object) },
+            HashFunction::Eql => { self.object.eql(other.object) },
+            HashFunction::Equal => { self.object.equal(other.object) },
+            HashFunction::UserFunc(_, _, _) => {
+                false // @TODO
+            }
+        }
+    }
+}
+
+impl Eq for HashableLispObject {}
 
 // @TODO add pure copy functionality. We will use a binary serializer, dump the memory into
 // pure alloc space, while calling purecopy on all underlying objects.
