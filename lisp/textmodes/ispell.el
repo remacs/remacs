@@ -208,10 +208,6 @@ Must be greater than 1."
   :type 'integer
   :group 'ispell)
 
-;; XXX Add enchant to this list once enchant >= 1.6.1 is widespread.
-;; Before that, adding it is useless, as if it is found, it will just
-;; cause an error; and one of the other spelling engines below is
-;; almost certainly installed in any case, for enchant to use.
 (defcustom ispell-program-name
   (or (executable-find "aspell")
       (executable-find "ispell")
@@ -609,8 +605,6 @@ english.aff).  Aspell and Hunspell don't have this limitation.")
   "Non-nil if we can use Aspell extensions.")
 (defvar ispell-really-hunspell nil
   "Non-nil if we can use Hunspell extensions.")
-(defvar ispell-really-enchant nil
-  "Non-nil if we can use Enchant extensions.")
 (defvar ispell-encoding8-command nil
   "Command line option prefix to select encoding if supported, nil otherwise.
 If setting the encoding is supported by spellchecker and is selectable from
@@ -745,26 +739,17 @@ Otherwise returns the library directory name, if that is defined."
 		  (and (search-forward-regexp
 			"(but really Hunspell \\([0-9]+\\.[0-9\\.-]+\\)?)"
                         nil t)
-		       (match-string 1)))
-            (setq ispell-really-enchant
-		  (and (search-forward-regexp
-			"(but really Enchant \\([0-9]+\\.[0-9\\.-]+\\)?)"
-                        nil t)
 		       (match-string 1)))))
 
       (let* ((aspell8-minver   "0.60")
              (ispell-minver    "3.1.12")
              (hunspell8-minver "1.1.6")
-             (enchant-minver   "1.6.1")
              (minver (cond
                       ((not (version<= ispell-minver ispell-program-version))
                        ispell-minver)
                       ((and ispell-really-aspell
                             (not (version<= aspell8-minver ispell-really-aspell)))
-                       aspell8-minver)
-                      ((and ispell-really-enchant
-                            (not (version<= enchant-minver ispell-really-enchant)))
-                       enchant-minver))))
+                       aspell8-minver))))
 
         (if minver
 	    (error "%s release %s or greater is required"
@@ -1198,36 +1183,6 @@ dictionary from that list was found."
                     (list dict))
                   ispell-hunspell-dictionary-alist :test #'equal))))
 
-;; Make ispell.el work better with enchant.
-
-(defvar ispell-enchant-dictionary-alist nil
-  "An alist of parsed Enchant dicts and associated parameters.
-Internal use.")
-
-(defun ispell-find-enchant-dictionaries ()
-  "Find Enchant's dictionaries, and record in `ispell-enchant-dictionary-alist'."
-  (let* ((dictionaries
-	  (split-string
-	   (with-temp-buffer
-	     (ispell-call-process
-              (concat ispell-program-name "-lsmod") nil t nil "-list-dicts")
-	     (buffer-string))
-           " ([^)]+)\n"))
-         (found
-          (mapcar #'(lambda (lang)
-                      `(,lang "[[:alpha:]]" "[^[:alpha:]]" "['.’-]" t nil nil utf-8))
-                  dictionaries)))
-    ;; Merge into FOUND any elements from the standard ispell-dictionary-base-alist
-    ;; which have no element in FOUND at all.
-    (dolist (dict ispell-dictionary-base-alist)
-      (unless (assoc (car dict) found)
-	(setq found (nconc found (list dict)))))
-    (setq ispell-enchant-dictionary-alist found)
-    ;; Add a default entry
-    (let ((default-dict
-           '(nil "[[:alpha:]]" "[^[:alpha:]]" "['.’-]" t nil nil utf-8)))
-      (push default-dict ispell-enchant-dictionary-alist))))
-
 ;; Set params according to the selected spellchecker
 
 (defvar ispell-last-program-name nil
@@ -1253,7 +1208,7 @@ aspell is used along with Emacs).")
 		   (setq ispell-library-directory (ispell-check-version))
 		   t)
 	       (error nil))
-	     (or ispell-encoding8-command ispell-really-enchant))
+	     ispell-encoding8-command)
 	;; auto-detection will only be used if spellchecker is not
 	;; ispell and supports a way to set communication to UTF-8.
 	(if ispell-really-aspell
@@ -1261,14 +1216,11 @@ aspell is used along with Emacs).")
 		(ispell-find-aspell-dictionaries))
 	  (if ispell-really-hunspell
 	      (or ispell-hunspell-dictionary-alist
-		  (ispell-find-hunspell-dictionaries))
-            (if ispell-really-enchant
-                (or ispell-enchant-dictionary-alist
-                    (ispell-find-enchant-dictionaries))))))
+		  (ispell-find-hunspell-dictionaries)))))
 
     ;; Substitute ispell-dictionary-alist with the list of
     ;; dictionaries corresponding to the given spellchecker.
-    ;; With programs that support it, use the list of really
+    ;; If a recent aspell or hunspell, use the list of really
     ;; installed dictionaries and add to it elements of the original
     ;; list that are not present there. Allow distro info.
     (let ((found-dicts-alist
@@ -1277,19 +1229,17 @@ aspell is used along with Emacs).")
 		   ispell-aspell-dictionary-alist
 		 (if ispell-really-hunspell
 		     ispell-hunspell-dictionary-alist))
-	     (if ispell-really-enchant
-                 ispell-enchant-dictionary-alist
-               nil)))
+	     nil))
 	  (ispell-dictionary-base-alist ispell-dictionary-base-alist)
 	  ispell-base-dicts-override-alist ; Override only base-dicts-alist
 	  all-dicts-alist)
 
       ;; While ispell and aspell (through aliases) use the traditional
-      ;; dict naming originally expected by ispell.el, hunspell & Enchant
-      ;; use locale-based names with no alias.  We need to map
+      ;; dict naming originally expected by ispell.el, hunspell
+      ;; uses locale based names with no alias.  We need to map
       ;; standard names to locale based names to make default dict
-      ;; definitions available to these programs.
-      (if (or ispell-really-hunspell ispell-really-enchant)
+      ;; definitions available for hunspell.
+      (if ispell-really-hunspell
 	  (let (tmp-dicts-alist)
 	    (dolist (adict ispell-dictionary-base-alist)
 	      (let* ((dict-name (nth 0 adict))
@@ -1314,7 +1264,7 @@ aspell is used along with Emacs).")
 			(setq ispell-args
 			      (nconc ispell-args (list "-d" dict-equiv)))
 		      (message
-		       "ispell-set-spellchecker-params: Missing equivalent for \"%s\". Skipping."
+		       "ispell-set-spellchecker-params: Missing Hunspell equiv for \"%s\". Skipping."
 		       dict-name)
 		      (setq skip-dict t)))
 
@@ -1356,7 +1306,7 @@ aspell is used along with Emacs).")
                          (nth 4 adict)   ; many-otherchars-p
                          (nth 5 adict)   ; ispell-args
                          (nth 6 adict)   ; extended-character-mode
-                         (if (or ispell-encoding8-command ispell-really-enchant)
+                         (if ispell-encoding8-command
                              'utf-8
                            (nth 7 adict)))
                       adict)
@@ -1792,10 +1742,9 @@ and pass it the output of the last Ispell invocation."
 	    (erase-buffer)))))))
 
 (defun ispell-send-replacement (misspelled replacement)
-  "Notify spell checker that MISSPELLED should be spelled REPLACEMENT.
-This allows improving the suggestion list based on actual misspellings.
-Only works for Aspell and Enchant."
-  (and (or ispell-really-aspell ispell-really-enchant)
+  "Notify Aspell that MISSPELLED should be spelled REPLACEMENT.
+This allows improving the suggestion list based on actual misspellings."
+  (and ispell-really-aspell
        (ispell-send-string (concat "$$ra " misspelled "," replacement "\n"))))
 
 
