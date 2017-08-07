@@ -144,8 +144,8 @@
 	    (setq end
 		  (next-single-property-change
 		   (1+ beg) 'gnus-backlog (current-buffer) (point-max)))))
-	(with-current-buffer (or (current-buffer) buffer)
-	  (let ((buffer-read-only nil))
+	(with-current-buffer (or buffer (current-buffer))
+	  (let ((inhibit-read-only t))
 	    (erase-buffer)
 	    (insert-buffer-substring gnus-backlog-buffer beg end)))
 	t))))
