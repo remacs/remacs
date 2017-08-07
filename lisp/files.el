@@ -5090,48 +5090,33 @@ Before and after saving the buffer, this function runs
 	  ;; This requires write access to the containing dir,
 	  ;; which is why we don't try it if we don't have that access.
 	  (let ((realname buffer-file-name)
-		tempname succeed
-		(umask (default-file-modes))
+		tempname
 		(old-modtime (visited-file-modtime)))
 	    ;; Create temp files with strict access rights.  It's easy to
 	    ;; loosen them later, whereas it's impossible to close the
 	    ;; time-window of loose permissions otherwise.
-	    (unwind-protect
+	    (condition-case err
 		(progn
 		  (clear-visited-file-modtime)
-		  (set-default-file-modes ?\700)
-		  ;; Try various temporary names.
-		  ;; This code follows the example of make-temp-file,
-		  ;; but it calls write-region in the appropriate way
+		  ;; Call write-region in the appropriate way
 		  ;; for saving the buffer.
-		  (while (condition-case ()
-			     (progn
-			       (setq tempname
-				     (make-temp-name
-				      (expand-file-name "tmp" dir)))
-                               ;; Pass in nil&nil rather than point-min&max
-                               ;; cause we're saving the whole buffer.
-                               ;; write-region-annotate-functions may use it.
-                               (write-region nil nil
-                                             tempname nil  realname
-                                             buffer-file-truename 'excl)
-                               (when save-silently (message nil))
-			       nil)
-			   (file-already-exists t))
-		    ;; The file was somehow created by someone else between
-		    ;; `make-temp-name' and `write-region', let's try again.
-		    nil)
-		  (setq succeed t))
-	      ;; Reset the umask.
-	      (set-default-file-modes umask)
+		  (setq tempname
+			(make-temp-file
+			 (expand-file-name "tmp" dir)))
+		  ;; Pass in nil&nil rather than point-min&max
+		  ;; cause we're saving the whole buffer.
+		  ;; write-region-annotate-functions may use it.
+		  (write-region nil nil tempname nil realname
+				buffer-file-truename)
+		  (when save-silently (message nil)))
 	      ;; If we failed, restore the buffer's modtime.
-	      (unless succeed
-		(set-visited-file-modtime old-modtime)))
+	      (error (set-visited-file-modtime old-modtime)
+		     (signal (car err) (cdr err))))
 	    ;; Since we have created an entirely new file,
 	    ;; make sure it gets the right permission bits set.
 	    (setq setmodes (or setmodes
  			       (list (or (file-modes buffer-file-name)
-					 (logand ?\666 umask))
+					 (logand ?\666 (default-file-modes)))
 				     (file-extended-attributes buffer-file-name)
 				     buffer-file-name)))
 	    ;; We succeeded in writing the temp file,
@@ -7330,37 +7315,25 @@ Otherwise, trash FILENAME using the freedesktop.org conventions,
 		       (format-time-string "%Y-%m-%dT%T")
 		       "\n")
 
-	       ;; Attempt to make .trashinfo file, trying up to 5
-	       ;; times.  The .trashinfo file is opened with O_EXCL,
-	       ;; as per trash-spec 0.7, even if that can be a problem
-	       ;; on old NFS versions...
-	       (let* ((tries 5)
-		      (base-fn (expand-file-name
-				(file-name-nondirectory fn)
-				trash-files-dir))
-		      (new-fn base-fn)
-		      success info-fn)
-		 (while (> tries 0)
-		   (setq info-fn (expand-file-name
-				  (concat (file-name-nondirectory new-fn)
-					  ".trashinfo")
-				  trash-info-dir))
-		   (unless (condition-case nil
-			       (progn
-				 (write-region nil nil info-fn nil
-					       'quiet info-fn 'excl)
-				 (setq tries 0 success t))
-			     (file-already-exists nil))
-		     (setq tries (1- tries))
-		     ;; Uniquify new-fn.  (Some file managers do not
-		     ;; like Emacs-style backup file names---e.g. bug
-		     ;; 170956 in Konqueror bug tracker.)
-		     (setq new-fn (make-temp-name (concat base-fn "_")))))
-		 (unless success
-		   (error "Cannot move %s to trash: Lock failed" filename))
-
+	       ;; Make a .trashinfo file.  Use O_EXCL, as per trash-spec 1.0.
+	       (let* ((files-base (file-name-nondirectory fn))
+		      (info-fn (expand-file-name
+				(concat files-base ".trashinfo")
+				trash-info-dir)))
+		 (condition-case nil
+		     (write-region nil nil info-fn nil 'quiet info-fn 'excl)
+		   (file-already-exists
+		    ;; Uniquify new-fn.  Some file managers do not
+		    ;; like Emacs-style backup file names.  E.g.:
+		    ;; https://bugs.kde.org/170956
+		    (setq info-fn (make-temp-file
+				   (expand-file-name files-base trash-info-dir)
+				   nil ".trashinfo"))
+		    (setq files-base (file-name-nondirectory info-fn))
+		    (write-region nil nil info-fn nil 'quiet info-fn)))
 		 ;; Finally, try to move the file to the trashcan.
-		 (let ((delete-by-moving-to-trash nil))
+		 (let ((delete-by-moving-to-trash nil)
+		       (new-fn (expand-file-name files-base trash-files-dir)))
 		   (rename-file fn new-fn)))))))))
 
 (defsubst file-attribute-type (attributes)
