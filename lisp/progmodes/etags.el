@@ -599,12 +599,13 @@ Returns t if it visits a tags table, or nil if there are no more in the list."
 		;; be frobnicated, and CONT will be set non-nil so we don't
 		;; do it below.
 		(and buffer-file-name
-		     (or
-		      ;; First check only tables already in buffers.
-		      (tags-table-including buffer-file-name t)
-		      ;; Since that didn't find any, now do the
-		      ;; expensive version: reading new files.
-		      (tags-table-including buffer-file-name nil)))
+                     (save-current-buffer
+                       (or
+                        ;; First check only tables already in buffers.
+                        (tags-table-including buffer-file-name t)
+                        ;; Since that didn't find any, now do the
+                        ;; expensive version: reading new files.
+                        (tags-table-including buffer-file-name nil))))
 		;; Fourth, use the user variable tags-file-name, if it is
 		;; not already in the current list.
 		(and tags-file-name
