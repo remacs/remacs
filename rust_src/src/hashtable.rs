@@ -271,6 +271,31 @@ fn map_copy(map: LispObject) -> LispObject {
     LispObject::tag_ptr(new_map, Lisp_Type::Lisp_Vectorlike)
 }
 
+#[lisp_fn]
+fn map_test(map: LispObject) -> LispObject {
+    let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    match hashmap.func {
+        HashFunction::Eq => { unsafe { LispObject::from_raw(Qeq) } },
+        HashFunction::Eql => { unsafe { LispObject::from_raw(Qeql) } },
+        HashFunction::Equal => { unsafe { LispObject::from_raw(Qequal) } },
+        HashFunction::UserFunc(name, _, _) => { name },
+    }
+}
+
+
+// Remacs has dropped support for controlling rehash size and threshold,
+// however for backwards compatability, we will define these functions, and return
+// the default values defined in lisp.h
+#[lisp_fn]
+fn map_rehash_size(_map: LispObject) -> LispObject {
+    LispObject::from_float(0.5)
+}
+
+#[lisp_fn]
+fn map_rehash_threshold(_map: LispObject) -> LispObject {
+    LispObject::from_float(0.8125)
+}
+
 #[test]
 fn bin_dump() {
     let mut table = LispHashTable::new();
