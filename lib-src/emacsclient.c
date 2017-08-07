@@ -110,9 +110,6 @@ char *w32_getenv (const char *);
 /* Name used to invoke this program.  */
 const char *progname;
 
-/* The first argument to main.  */
-int main_argc;
-
 /* The second argument to main.  */
 char **main_argv;
 
@@ -204,35 +201,6 @@ xmalloc (size_t size)
   return result;
 }
 
-/* Like realloc but get fatal error if memory is exhausted.  */
-
-static void *
-xrealloc (void *ptr, size_t size)
-{
-  void *result = realloc (ptr, size);
-  if (result == NULL)
-    {
-      perror ("realloc");
-      exit (EXIT_FAILURE);
-    }
-  return result;
-}
-
-/* Like strdup but get a fatal error if memory is exhausted. */
-char *xstrdup (const char *);
-
-char *
-xstrdup (const char *s)
-{
-  char *result = strdup (s);
-  if (result == NULL)
-    {
-      perror ("strdup");
-      exit (EXIT_FAILURE);
-    }
-  return result;
-}
-
 /* From sysdep.c */
 #if !defined (HAVE_GET_CURRENT_DIR_NAME) || defined (BROKEN_GET_CURRENT_DIR_NAME)
 
@@ -295,6 +263,21 @@ get_current_dir_name (void)
 #endif
 
 #ifdef WINDOWSNT
+
+/* Like strdup but get a fatal error if memory is exhausted. */
+char *xstrdup (const char *);
+
+char *
+xstrdup (const char *s)
+{
+  char *result = strdup (s);
+  if (result == NULL)
+    {
+      perror ("strdup");
+      exit (EXIT_FAILURE);
+    }
+  return result;
+}
 
 #define REG_ROOT "SOFTWARE\\GNU\\Emacs"
 
@@ -690,7 +673,7 @@ Report bugs with M-x report-emacs-bug.\n");
 }
 
 /* Try to run a different command, or --if no alternate editor is
-   defined-- exit with an decoderde.
+   defined-- exit with an errorcode.
    Uses argv, but gets it from the global variable main_argv.  */
 
 static _Noreturn void
@@ -698,27 +681,9 @@ fail (void)
 {
   if (alternate_editor)
     {
-      size_t extra_args_size = (main_argc - optind + 1) * sizeof (char *);
-      size_t new_argv_size = extra_args_size;
-      char **new_argv = NULL;
-      /* Needed because strtok overwrites its input.  */
-      char *s = xstrdup (alternate_editor);
-      unsigned toks = 0;
-      char *tok = strtok(s, " ");
+      int i = optind - 1;
 
-      /* Unpack alternate_editor's space-separated tokens into new_argv.  */
-      do
-        {
-          toks++;
-          new_argv = xrealloc (new_argv, new_argv_size + toks * sizeof (char *));
-          new_argv[toks - 1] = tok;
-        }
-      while ((tok = strtok (NULL, " ")));
-
-      /* Append main_argv arguments to new_argv.  */
-      memcpy (&new_argv[toks], main_argv + optind, extra_args_size);
-
-      execvp (s, new_argv);
+      execvp (alternate_editor, main_argv + i);
       message (true, "%s: error executing alternate editor \"%s\"\n",
 	       progname, alternate_editor);
     }
@@ -731,7 +696,6 @@ fail (void)
 int
 main (int argc, char **argv)
 {
-  main_argc = argc;
   main_argv = argv;
   progname = argv[0];
   message (true, "%s: Sorry, the Emacs server is supported only\n"
@@ -1665,7 +1629,6 @@ main (int argc, char **argv)
   int start_daemon_if_needed;
   int exit_status = EXIT_SUCCESS;
 
-  main_argc = argc;
   main_argv = argv;
   progname = argv[0];
 
