@@ -225,7 +225,7 @@ file named by `eshell-aliases-file'.")
                         (eshell-command-arguments ',eshell-last-arguments)
                         (eshell-prevent-alias-expansion
                          ',(cons command eshell-prevent-alias-expansion)))
-                    ,(eshell-parse-command (nth 1 alias))))))))
+                    ,(eshell-parse-command (nth 1 alias) args)))))))
 
 (defun eshell-alias-completions (name)
   "Find all possible completions for NAME.
