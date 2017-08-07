@@ -4096,17 +4096,17 @@ WINDOW must be a valid window and defaults to the selected one.
 Return nil.
 
 If the variable `ignore-window-parameters' is non-nil or the
-`delete-other-windows' parameter of WINDOW equals t, do not
-process any parameters of WINDOW.  Otherwise, if the
+`delete-other-windows' parameter of WINDOW equals t, do not pay
+attention to any other parameters of WINDOW.  Otherwise, if the
 `delete-other-windows' parameter of WINDOW specifies a function,
 call that function with WINDOW as its sole argument and return
 the value returned by that function.
 
-Otherwise, if WINDOW is part of an atomic window, call this
-function with the root of the atomic window as its argument.  If
-WINDOW is a non-side window, make WINDOW the only non-side window
-on the frame.  Side windows are not deleted.  If WINDOW is a side
-window signal an error."
+Else, if WINDOW is part of an atomic window, call this function
+with the root of the atomic window as its argument.  Signal an
+error if that root window is the root window of WINDOW's frame.
+Also signal an error if WINDOW is a side window.  Do not delete
+any window whose `no-delete-other-window' parameter is non-nil."
   (interactive)
   (setq window (window-normalize-window window))
   (let* ((frame (window-frame window))
@@ -4152,8 +4152,8 @@ window signal an error."
           t)
         (setq main (window-main-window frame)))
        (t
-        ;; Delete other windows via `delete-window' because either a
-        ;; side window is or a non-side-window is not deletable.
+        ;; Delete windows via `delete-window' because we found either a
+        ;; deletable side window or a non-deletable non-side-window.
         (dolist (other (window-list frame))
           (when (and (window-live-p other)
                      (not (eq other window))
