@@ -2221,6 +2221,26 @@ It is called with three arguments, as if it were
   ;; Close overlays opened by `isearch-range-invisible' in `perform-replace'.
   (isearch-clean-overlays))
 
+;; A macro because we push STACK, i.e. a local var in `perform-replace'.
+(defmacro replace--push-stack (replaced search-str next-replace stack)
+  (declare (indent 0) (debug (form form form gv-place)))
+  `(push (list (point) ,replaced
+;;;  If the replacement has already happened, all we need is the
+;;;  current match start and end.  We could get this with a trivial
+;;;  match like
+;;;  (save-excursion (goto-char (match-beginning 0))
+;;;		     (search-forward (match-string 0))
+;;;                  (match-data t))
+;;;  if we really wanted to avoid manually constructing match data.
+;;;  Adding current-buffer is necessary so that match-data calls can
+;;;  return markers which are appropriate for editing.
+	       (if ,replaced
+		   (list
+		    (match-beginning 0) (match-end 0) (current-buffer))
+	         (match-data t))
+	       ,search-str ,next-replace)
+         ,stack))
+
 (defun perform-replace (from-string replacements
 		        query-flag regexp-flag delimited-flag
 			&optional repeat-count map start end backward region-noncontiguous-p)
@@ -2264,6 +2284,8 @@ It must return a string."
          (next-replacement-replaced nil) ; replacement string
                                          ; (substituted regexp)
          (last-was-undo)
+         (last-was-act-and-show)
+         (update-stack t)
          (replace-count 0)
          (skip-read-only-count 0)
          (skip-filtered-count 0)
@@ -2547,7 +2569,7 @@ It must return a string."
                                  next-replacement)
                              (while (and (< stack-idx stack-len)
                                          stack
-                                         (null replaced))
+                                         (or (null replaced) last-was-act-and-show))
                                (let* ((elt (nth stack-idx stack)))
                                  (setq
                                   stack-idx (1+ stack-idx)
@@ -2557,10 +2579,11 @@ It must return a string."
                                   search-string (nth (if replaced 4 3) elt)
                                   next-replacement (nth (if replaced 3 4) elt)
                                   search-string-replaced search-string
-                                  next-replacement-replaced next-replacement)
+                                  next-replacement-replaced next-replacement
+                                  last-was-act-and-show nil)
 
                                  (when (and (= stack-idx stack-len)
-                                            (null replaced)
+                                            (and (null replaced) (not last-was-act-and-show))
                                             (zerop num-replacements))
                                           (message "Nothing to undo")
                                           (ding 'no-terminate)
@@ -2600,7 +2623,7 @@ It must return a string."
                                           "replacements"))
                                (ding 'no-terminate)
                                (sit-for 1)))
-			   (setq replaced nil last-was-undo t)))
+			   (setq replaced nil last-was-undo t last-was-act-and-show nil)))
 			((eq def 'act)
 			 (or replaced
 			     (setq noedit
@@ -2608,7 +2631,7 @@ It must return a string."
 				    next-replacement nocasify literal
 				    noedit real-match-data backward)
 				   replace-count (1+ replace-count)))
-			 (setq done t replaced t))
+			 (setq done t replaced t update-stack (not last-was-act-and-show)))
 			((eq def 'act-and-exit)
 			 (or replaced
 			     (setq noedit
@@ -2619,7 +2642,7 @@ It must return a string."
 			 (setq keep-going nil)
 			 (setq done t replaced t))
 			((eq def 'act-and-show)
-			 (if (not replaced)
+			 (unless replaced
 			     (setq noedit
 				   (replace-match-maybe-edit
 				    next-replacement nocasify literal
@@ -2627,7 +2650,11 @@ It must return a string."
 				   replace-count (1+ replace-count)
 				   real-match-data (replace-match-data
 						    t real-match-data)
-				   replaced t)))
+				   replaced t last-was-act-and-show t)
+                             (replace--push-stack
+                              replaced
+                              search-string-replaced
+                              next-replacement-replaced stack)))
 			((or (eq def 'automatic) (eq def 'automatic-all))
 			 (or replaced
 			     (setq noedit
@@ -2638,7 +2665,7 @@ It must return a string."
 			 (setq done t query-flag nil replaced t)
 			 (if (eq def 'automatic-all) (setq multi-buffer t)))
 			((eq def 'skip)
-			 (setq done t))
+			 (setq done t update-stack (not last-was-act-and-show)))
 			((eq def 'recenter)
 			 ;; `this-command' has the value `query-replace',
 			 ;; so we need to bind it to `recenter-top-bottom'
@@ -2708,27 +2735,14 @@ It must return a string."
 		;; Record previous position for ^ when we move on.
 		;; Change markers to numbers in the match data
 		;; since lots of markers slow down editing.
-		(push (list (point) replaced
-;;;  If the replacement has already happened, all we need is the
-;;;  current match start and end.  We could get this with a trivial
-;;;  match like
-;;;  (save-excursion (goto-char (match-beginning 0))
-;;;		     (search-forward (match-string 0))
-;;;                  (match-data t))
-;;;  if we really wanted to avoid manually constructing match data.
-;;;  Adding current-buffer is necessary so that match-data calls can
-;;;  return markers which are appropriate for editing.
-			    (if replaced
-				(list
-				 (match-beginning 0)
-				 (match-end 0)
-				 (current-buffer))
-			      (match-data t))
-				search-string-replaced
-				next-replacement-replaced)
-		      stack)
+                (when update-stack
+                  (replace--push-stack
+                   replaced
+                   search-string-replaced
+                   next-replacement-replaced stack))
                 (setq next-replacement-replaced nil
-                      search-string-replaced    nil))))))
+                      search-string-replaced    nil
+                      last-was-act-and-show     nil))))))
       (replace-dehighlight))
     (or unread-command-events
 	(message "Replaced %d occurrence%s%s"
