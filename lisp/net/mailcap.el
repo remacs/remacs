@@ -1,4 +1,4 @@
-;;; mailcap.el --- MIME media types configuration
+;;; mailcap.el --- MIME media types configuration -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
@@ -29,7 +29,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-lib))
 (autoload 'mail-header-parse-content-type "mail-parse")
 
 (defgroup mailcap nil
@@ -70,11 +69,10 @@
 
 (defun mailcap--set-user-mime-data (sym val)
   (let (res)
-    (dolist (entry val)
-      (push `((viewer . ,(car entry))
-              (type . ,(cadr entry))
-              ,@(when (cl-caddr entry)
-                  `((test . ,(cl-caddr entry)))))
+    (pcase-dolist (`(,viewer ,type ,test) val)
+      (push `((viewer . ,viewer)
+              (type . ,type)
+              ,@(when test `((test . ,test))))
             res))
     (set-default sym (nreverse res))))
 
@@ -121,12 +119,6 @@ is consulted."
       (viewer . "gnumeric %s")
       (test   . (getenv "DISPLAY"))
       (type . "application/vnd.ms-excel"))
-     ("x-x509-ca-cert"
-      (viewer . ssl-view-site-cert)
-      (type . "application/x-x509-ca-cert"))
-     ("x-x509-user-cert"
-      (viewer . ssl-view-user-cert)
-      (type . "application/x-x509-user-cert"))
      ("octet-stream"
       (viewer . mailcap-save-binary-file)
       (non-viewer . t)
@@ -172,10 +164,6 @@ is consulted."
       (non-viewer . t)
       (type   . "application/zip")
       ("copiousoutput"))
-     ("pdf"
-      (viewer . pdf-view-mode)
-      (type . "application/pdf")
-      (test . (eq window-system 'x)))
      ("pdf"
       (viewer . doc-view-mode)
       (type . "application/pdf")
@@ -434,9 +422,8 @@ MAILCAPS if set; otherwise (on Unix) use the path from RFC 1524, plus
                     (if (stringp path)
                         (split-string path path-separator t)
                       path)))
-      (if (and (file-readable-p fname)
-               (file-regular-p fname))
-          (mailcap-parse-mailcap fname)))
+      (when (and (file-readable-p fname) (file-regular-p fname))
+        (mailcap-parse-mailcap fname)))
     (setq mailcap-parsed-p t)))
 
 (defun mailcap-parse-mailcap (fname)
@@ -597,13 +584,12 @@ the test clause will be unchanged."
   "Return a list of possible viewers from MAJOR for minor type MINOR."
   (let ((exact '())
 	(wildcard '()))
-    (while major
+    (pcase-dolist (`(,type . ,attrs) major)
       (cond
-       ((equal (car (car major)) minor)
-	(push (cdr (car major)) exact))
-       ((and minor (string-match (concat "^" (car (car major)) "$") minor))
-	(push (cdr (car major)) wildcard)))
-      (setq major (cdr major)))
+       ((equal type minor)
+	(push attrs exact))
+       ((and minor (string-match (concat "^" type "$") minor))
+	(push attrs wildcard))))
     (nconc exact wildcard)))
 
 (defun mailcap-unescape-mime-test (test type-info)
@@ -801,10 +787,9 @@ If NO-DECODE is non-nil, don't decode STRING."
             (setq info (mapcar (lambda (a) (cons (symbol-name (car a))
                                             (cdr a)))
                                (cdr ctl)))
-            (while viewers
-              (if (mailcap-viewer-passes-test (car viewers) info)
-                  (push (car viewers) passed))
-              (setq viewers (cdr viewers)))
+            (dolist (entry viewers)
+              (when (mailcap-viewer-passes-test entry info)
+                (push entry passed)))
             (setq passed (sort passed 'mailcap-viewer-lessp))
             (setq viewer (car passed))))
         (when (and (stringp (cdr (assq 'viewer viewer)))
@@ -971,8 +956,8 @@ If FORCE, re-parse even if already parsed."
     (dolist (fname (reverse (if (stringp path)
                                 (split-string path path-separator t)
                               path)))
-      (if (and (file-readable-p fname))
-          (mailcap-parse-mimetype-file fname)))
+      (when (file-readable-p fname)
+        (mailcap-parse-mimetype-file fname)))
     (setq mailcap-mimetypes-parsed-p t)))
 
 (defun mailcap-parse-mimetype-file (fname)
@@ -980,7 +965,7 @@ If FORCE, re-parse even if already parsed."
   (let (type				; The MIME type for this line
 	extns				; The extensions for this line
 	save-pos			; Misc. saved buffer positions
-	)
+        save-extn)
     (with-temp-buffer
       (insert-file-contents fname)
       (mailcap-replace-regexp "#.*" "")
@@ -1000,15 +985,13 @@ If FORCE, re-parse even if already parsed."
 	  (skip-chars-forward " \t")
 	  (setq save-pos (point))
 	  (skip-chars-forward "^ \t\n")
-	  (setq extns (cons (buffer-substring save-pos (point)) extns)))
-	(while extns
-	  (setq mailcap-mime-extensions
-		(cons
-		 (cons (if (= (string-to-char (car extns)) ?.)
-			   (car extns)
-			 (concat "." (car extns))) type)
-		 mailcap-mime-extensions)
-		extns (cdr extns)))))))
+          (setq save-extn (buffer-substring save-pos (point)))
+	  (push (cons (if (= (string-to-char save-extn) ?.)
+		          save-extn (concat "." save-extn))
+                      type)
+                extns))
+        (setq mailcap-mime-extensions (append extns mailcap-mime-extensions)
+              extns nil)))))
 
 (defun mailcap-extension-to-mime (extn)
   "Return the MIME content type of the file extensions EXTN."
@@ -1017,9 +1000,6 @@ If FORCE, re-parse even if already parsed."
 	   (not (eq (string-to-char extn) ?.)))
       (setq extn (concat "." extn)))
   (cdr (assoc (downcase extn) mailcap-mime-extensions)))
-
-;; Unused?
-(defalias 'mailcap-command-p 'executable-find)
 
 (defun mailcap-mime-types ()
   "Return a list of MIME media types."
