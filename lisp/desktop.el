@@ -709,8 +709,8 @@ if different)."
   (setq desktop-io-file-version nil)
   (dolist (var desktop-globals-to-clear)
     (if (symbolp var)
-	(eval `(setq-default ,var nil))
-      (eval `(setq-default ,(car var) ,(cdr var)))))
+	(set-default var nil)
+      (set-default var (eval (cdr var)))))
   (let ((preserve-regexp (concat "^\\("
                                  (mapconcat (lambda (regexp)
                                               (concat "\\(" regexp "\\)"))

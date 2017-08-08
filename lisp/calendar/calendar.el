@@ -835,7 +835,7 @@ For examples of three common styles, see `diary-american-date-forms',
                                    diary-american-date-forms)
   :initialize 'custom-initialize-default
   :set (lambda (symbol value)
-         (unless (equal value (eval symbol))
+         (unless (equal value (default-value symbol))
            (custom-set-default symbol value)
            (setq diary-font-lock-keywords (diary-font-lock-keywords))
            ;; Need to redraw not just to get new font-locking, but also

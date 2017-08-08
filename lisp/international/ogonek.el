@@ -301,13 +301,12 @@ Store the name in the parameter-variable DEFAULT-NAME-VAR.
 PROMPT is a string to be shown when the user is asked for a name."
  (let ((encoding
         (completing-read
-         (format "%s (default %s): " prompt (eval default-name-var))
+         (format "%s (default %s): " prompt (symbol-value default-name-var))
          ogonek-name-encoding-alist nil t)))
-  ;; change the default name to the one just read
-  (set default-name-var
-    (if (string= encoding "") (eval default-name-var) encoding))
+  ;; change the default name to the one just read, and
   ;; return the new default as the name you read
-  (eval default-name-var)))
+  (set default-name-var
+    (if (string= encoding "") (symbol-value default-name-var) encoding))))
 
 (defun ogonek-read-prefix (prompt default-prefix-var)
   "Read a prefix character for prefix notation.
