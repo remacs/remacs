@@ -5058,11 +5058,14 @@ and `gnus-mime-delete-part', and not provided at run-time normally."
       (gnus-article-edit-done))
     (gnus-configure-windows 'article)
     (sit-for 0)
-    (when (and current-id (integerp gnus-auto-select-part))
-      (gnus-article-jump-to-part
-       (min (max (+ current-id gnus-auto-select-part) 1)
-	    (with-current-buffer gnus-article-buffer
-	      (length gnus-article-mime-handle-alist)))))))
+    (let ((handles (with-current-buffer gnus-article-buffer
+		     gnus-article-mime-handle-alist)))
+      ;; `handles' will be nil if there is the only one part
+      ;; in the article and is deleted.
+      (when (and handles current-id (integerp gnus-auto-select-part))
+	(gnus-article-jump-to-part
+	 (min (max (+ current-id gnus-auto-select-part) 1)
+	      (length handles)))))))
 
 (defun gnus-mime-replace-part (file)
   "Replace MIME part under point with an external body."
