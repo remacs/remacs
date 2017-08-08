@@ -294,6 +294,15 @@ failed or if there was a problem."
                   "the error signaled was a subtype of the expected type")))))
     ))
 
+(ert-deftest ert-test-should-error-argument ()
+  "Errors due to evaluating arguments should not break tests."
+  (should-error (identity (/ 1 0))))
+
+(ert-deftest ert-test-should-error-macroexpansion ()
+  "Errors due to expanding macros should not break tests."
+  (cl-macrolet ((test () (error "Foo")))
+    (should-error (test))))
+
 (ert-deftest ert-test-skip-unless ()
   ;; Don't skip.
   (let ((test (make-ert-test :body (lambda () (skip-unless t)))))

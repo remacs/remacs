@@ -1987,6 +1987,10 @@ This is the last value stored with `(put SYMBOL PROPNAME VALUE)'.  */)
   (Lisp_Object symbol, Lisp_Object propname)
 {
   CHECK_SYMBOL (symbol);
+  Lisp_Object propval = Fplist_get (CDR (Fassq (symbol, Voverriding_plist_environment)),
+                                    propname);
+  if (!NILP (propval))
+    return propval;
   return Fplist_get (XSYMBOL (symbol)->plist, propname);
 }
 
@@ -5162,6 +5166,13 @@ syms_of_fns (void)
   DEFSYM (Qyes_or_no_p_history, "yes-or-no-p-history");
   DEFSYM (Qcursor_in_echo_area, "cursor-in-echo-area");
   DEFSYM (Qwidget_type, "widget-type");
+
+  DEFVAR_LISP ("overriding-plist-environment", Voverriding_plist_environment,
+               doc: /* An alist overrides the plists of the symbols which it lists.
+Used by the byte-compiler to apply `define-symbol-prop' during
+compilation.  */);
+  Voverriding_plist_environment = Qnil;
+  DEFSYM (Qoverriding_plist_environment, "overriding-plist-environment");
 
   staticpro (&string_char_byte_cache_string);
   string_char_byte_cache_string = Qnil;

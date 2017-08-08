@@ -1572,6 +1572,7 @@ extra args."
           ;; macroenvironment.
           (copy-alist byte-compile-initial-macro-environment))
          (byte-compile--outbuffer nil)
+         (overriding-plist-environment nil)
          (byte-compile-function-environment nil)
          (byte-compile-bound-variables nil)
          (byte-compile-lexical-variables nil)
@@ -4714,6 +4715,34 @@ binding slots have been popped."
      'byte-hunk-handler 'byte-compile-form-make-variable-buffer-local)
 (defun byte-compile-form-make-variable-buffer-local (form)
   (byte-compile-keep-pending form 'byte-compile-normal-call))
+
+(put 'function-put 'byte-hunk-handler 'byte-compile-define-symbol-prop)
+(put 'define-symbol-prop 'byte-hunk-handler 'byte-compile-define-symbol-prop)
+(defun byte-compile-define-symbol-prop (form)
+  (pcase form
+    ((and `(,op ,fun ,prop ,val)
+          (guard (and (macroexp-const-p fun)
+                      (macroexp-const-p prop)
+                      (or (macroexp-const-p val)
+                          ;; Also accept anonymous functions, since
+                          ;; we're at top-level which implies they're
+                          ;; also constants.
+                          (pcase val (`(function (lambda . ,_)) t))))))
+     (byte-compile-push-constant op)
+     (byte-compile-form fun)
+     (byte-compile-form prop)
+     (let* ((fun (eval fun))
+            (prop (eval prop))
+            (val (if (macroexp-const-p val)
+                     (eval val)
+                   (byte-compile-lambda (cadr val)))))
+       (push `(,fun
+               . (,prop ,val ,@(alist-get fun overriding-plist-environment)))
+             overriding-plist-environment)
+       (byte-compile-push-constant val)
+       (byte-compile-out 'byte-call 3)))
+
+    (_ (byte-compile-keep-pending form))))
 
 ;;; tags
 

@@ -490,4 +490,14 @@ edebug spec, so testcover needs to cope with that."
 
 (should (eq (testcover-testcase-how-do-i-know-you "Liz") 'unknown))
 
+;; ==== circular-lists-bug-24402 ====
+"Testcover captures and ignores circular list errors."
+;; ====
+(defun testcover-testcase-cyc1 (a)
+  (let ((ls (make-list 10 a%%%)))
+    (nconc ls ls)
+    ls))
+(testcover-testcase-cyc1 1)
+(testcover-testcase-cyc1 1)
+
 ;; testcases.el ends here.

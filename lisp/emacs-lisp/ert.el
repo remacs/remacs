@@ -260,6 +260,14 @@ DATA is displayed to the user and should state the reason for skipping."
   (when ert--should-execution-observer
     (funcall ert--should-execution-observer form-description)))
 
+;; See Bug#24402 for why this exists
+(defun ert--should-signal-hook (error-symbol data)
+  "Stupid hack to stop `condition-case' from catching ert signals.
+It should only be stopped when ran from inside ert--run-test-internal."
+  (when (and (not (symbolp debugger))   ; only run on anonymous debugger
+             (memq error-symbol '(ert-test-failed ert-test-skipped)))
+    (funcall debugger 'error data)))
+
 (defun ert--special-operator-p (thing)
   "Return non-nil if THING is a symbol naming a special operator."
   (and (symbolp thing)
@@ -267,16 +275,22 @@ DATA is displayed to the user and should state the reason for skipping."
          (and (subrp definition)
               (eql (cdr (subr-arity definition)) 'unevalled)))))
 
+;; FIXME: Code inside of here should probably be evaluated like it is
+;; outside of tests, with the sole exception of error handling
 (defun ert--expand-should-1 (whole form inner-expander)
   "Helper function for the `should' macro and its variants."
   (let ((form
-         (macroexpand form (append (bound-and-true-p
-                                    byte-compile-macro-environment)
-                                   (cond
-                                    ((boundp 'macroexpand-all-environment)
-                                     macroexpand-all-environment)
-                                    ((boundp 'cl-macro-environment)
-                                     cl-macro-environment))))))
+         ;; catch macroexpansion errors
+         (condition-case err
+             (macroexpand-all form
+                              (append (bound-and-true-p
+                                       byte-compile-macro-environment)
+                                      (cond
+                                       ((boundp 'macroexpand-all-environment)
+                                        macroexpand-all-environment)
+                                       ((boundp 'cl-macro-environment)
+                                        cl-macro-environment))))
+           (error `(signal ',(car err) ',(cdr err))))))
     (cond
      ((or (atom form) (ert--special-operator-p (car form)))
       (let ((value (cl-gensym "value-")))
@@ -297,8 +311,13 @@ DATA is displayed to the user and should state the reason for skipping."
               (args (cl-gensym "args-"))
               (value (cl-gensym "value-"))
               (default-value (cl-gensym "ert-form-evaluation-aborted-")))
-          `(let ((,fn (function ,fn-name))
-                 (,args (list ,@arg-forms)))
+          `(let* ((,fn (function ,fn-name))
+                  (,args (condition-case err
+                             (let ((signal-hook-function #'ert--should-signal-hook))
+                               (list ,@arg-forms))
+                           (error (progn (setq ,fn #'signal)
+                                         (list (car err)
+                                               (cdr err)))))))
              (let ((,value ',default-value))
                ,(funcall inner-expander
                          `(setq ,value (apply ,fn ,args))
@@ -760,6 +779,10 @@ This mainly sets up debugger-related bindings."
     ;; too expensive, we can remove it.
     (with-temp-buffer
       (save-window-excursion
+        ;; FIXME: Use `signal-hook-function' instead of `debugger' to
+        ;; handle ert errors. Once that's done, remove
+        ;; `ert--should-signal-hook'.  See Bug#24402 and Bug#11218 for
+        ;; details.
         (let ((debugger (lambda (&rest args)
                           (ert--run-test-debugger test-execution-info
                                                   args)))

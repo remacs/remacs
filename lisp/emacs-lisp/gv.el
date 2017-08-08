@@ -146,12 +146,7 @@ NAME is a symbol: the name of a function, macro, or special form.
 HANDLER is a function which takes an argument DO followed by the same
 arguments as NAME.  DO is a function as defined in `gv-get'."
   (declare (indent 1) (debug (sexp form)))
-  ;; Use eval-and-compile so the method can be used in the same file as it
-  ;; is defined.
-  ;; FIXME: Just like byte-compile-macro-environment, we should have something
-  ;; like byte-compile-symbolprop-environment so as to handle these things
-  ;; cleanly without affecting the running Emacs.
-  `(eval-and-compile (put ',name 'gv-expander ,handler)))
+  `(function-put ',name 'gv-expander ,handler))
 
 ;;;###autoload
 (defun gv--defun-declaration (symbol name args handler &optional fix)

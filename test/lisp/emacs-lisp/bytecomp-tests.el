@@ -545,6 +545,23 @@ literals (Bug#20852)."
 This functionality has been obsolete for more than 10 years already
 and will be removed soon.  See (elisp)Backquote in the manual.")))))))
 
+
+(ert-deftest bytecomp-tests-function-put ()
+  "Check `function-put' operates during compilation."
+  (should (boundp 'lread--old-style-backquotes))
+  (bytecomp-tests--with-temp-file source
+    (dolist (form '((function-put 'bytecomp-tests--foo 'foo 1)
+                    (function-put 'bytecomp-tests--foo 'bar 2)
+                    (defmacro bytecomp-tests--foobar ()
+                      `(cons ,(function-get 'bytecomp-tests--foo 'foo)
+                             ,(function-get 'bytecomp-tests--foo 'bar)))
+                    (defvar bytecomp-tests--foobar 1)
+                    (setq bytecomp-tests--foobar (bytecomp-tests--foobar))))
+      (print form (current-buffer)))
+    (write-region (point-min) (point-max) source nil 'silent)
+    (byte-compile-file source t)
+    (should (equal bytecomp-tests--foobar (cons 1 2)))))
+
 ;; Local Variables:
 ;; no-byte-compile: t
 ;; End:

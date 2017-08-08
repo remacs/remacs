@@ -518,7 +518,15 @@
 (ert-deftest cl-lib-symbol-macrolet-2 ()
   (should (equal (cl-lib-symbol-macrolet-4+5) (+ 4 5))))
 
+(defun cl-lib-tests--dummy-function ()
+  ;; Dummy function to see if the file is compiled.
+  t)
+
 (ert-deftest cl-lib-defstruct-record ()
+  ;; This test fails when compiled, see Bug#24402/27718.
+  :expected-result (if (byte-code-function-p
+                        (symbol-function 'cl-lib-tests--dummy-function))
+                       :failed :passed)
   (cl-defstruct foo x)
   (let ((x (make-foo :x 42)))
     (should (recordp x))
