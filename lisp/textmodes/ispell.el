@@ -1,10 +1,8 @@
-;;; ispell.el --- interface to International Ispell Versions 3.1 and 3.2  -*- lexical-binding:t -*-
+;;; ispell.el --- interface to spell checkers  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1994-1995, 1997-2017 Free Software Foundation, Inc.
 
 ;; Author:           Ken Stevens <k.stevens@ieee.org>
-;; Status          : Release with 3.1.12+ and 3.2.0+ ispell.
-;; Keywords: unix wp
 
 ;; This file is part of GNU Emacs.
 
@@ -21,23 +19,11 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
-;; Note: version numbers and time stamp are not updated
-;;   when this file is edited for release with GNU Emacs.
-
 ;;; Commentary:
 
 ;; INSTRUCTIONS
 
-;;   This code contains a section of user-settable variables that you
-;; should inspect prior to installation.  Look past the end of the history
-;; list.  Set them up for your locale and the preferences of the majority
-;; of the users.  Otherwise the users may need to set a number of variables
-;; themselves.
-;;   You particularly may want to change the default dictionary for your
-;; country and language.
-;;   Most dictionary changes should be made in this file so all users can
-;; enjoy them.  Local or modified dictionaries are supported in your .emacs
-;; file.  Use the variable `ispell-local-dictionary-alist' to specify
+;;   Use the variable `ispell-local-dictionary-alist' to specify
 ;; your own dictionaries.
 
 ;;  Depending on the mail system you use, you may want to include these:
@@ -112,7 +98,7 @@
 ;;  Need a way to select between different character mappings without separate
 ;;    dictionary entries.
 ;;  Multi-byte characters if not defined by current dictionary may result in the
-;;    evil "misalignment error" in some versions of MULE Emacs.
+;;    evil "misalignment error" in some versions of Emacs.
 ;;  On some versions of Emacs, growing the minibuffer fails.
 ;;    see `ispell-help-in-bufferp'.
 ;;  Recursive edits (?C-r or ?R) inside a keyboard text replacement check (?r)
@@ -3524,17 +3510,9 @@ Returns the sum SHIFT due to changes in word replacements."
                       (setq ispell-filter recheck-region
                             recheck-region nil
                             replace replace-word)))))
+              (setq shift (+ shift (- (length replace) word-len)))))
 
-              (setq shift (+ shift (- (length replace) word-len)))
-
-              ;; Move line-start across word...
-              ;; new shift function does this now...
-              ;;(set-marker line-start (+ line-start
-              ;;			(- (length replace)
-              ;;			   (length (car poss)))))
-              ))
             (if (not ispell-quit)
-                ;; FIXME: remove redundancy with identical code above.
                 (let (message-log-max)
                   (message
                    "Continuing spelling check using %s with %s dictionary..."
