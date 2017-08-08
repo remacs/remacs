@@ -1,8 +1,10 @@
 use remacs_macros::lisp_fn;
+use lists;
 use lisp::{LispObject, ExternalPtr};
 use vectors::LispVectorlikeHeader;
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type, QCtest, Qeq, Qeql,
-                 Qequal, QCpurecopy, QCsize, QCweakness, sxhash, EmacsInt};
+                 Qequal, QCpurecopy, QCsize, QCweakness, sxhash, EmacsInt,
+                 Qhash_table_test};
 use std::ptr;
 use fnv::FnvHashMap;
 #[cfg(test)]
@@ -52,7 +54,9 @@ impl Hash for HashableLispObject {
                 let hash = unsafe { sxhash(ptr::null_mut(), self.object.to_raw()) } as u64;
                 state.write_u64(hash);
             }
-            HashFunction::UserFunc(_, _, _) => { /* @TODO */ }
+            HashFunction::UserFunc(_, _, hashfn) => {
+                call! (hashfn, self.object).hash(state);
+            }
         }
 
         state.finish();
@@ -65,8 +69,8 @@ impl PartialEq for HashableLispObject {
             HashFunction::Eq => { self.object.eq(other.object) },
             HashFunction::Eql => { self.object.eql(other.object) },
             HashFunction::Equal => { self.object.equal(other.object) },
-            HashFunction::UserFunc(_, _, _) => {
-                false // @TODO
+            HashFunction::UserFunc(_, cmpfn, _) => {
+                call! (cmpfn, self.object, other.object).is_not_nil()
             }
         }
     }
@@ -213,6 +217,16 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
                 ptr.func = HashFunction::Equal;
             } else {
                 // Custom hash table test
+                unsafe {
+                    let prop = lists::get(value, LispObject::from_raw(Qhash_table_test));
+                    if !prop.is_cons() || !prop.as_cons_unchecked().cdr().is_cons() {
+                        panic! ("Invalid hash table test"); // @TODO make this signal_erorr
+                    }
+
+                    let cons = prop.as_cons_unchecked();
+                    let cdr = cons.cdr().as_cons_unchecked();
+                    ptr.func = HashFunction::UserFunc(value, cons.car(), cdr.car());
+                }
             }
         } else if key.to_raw() == unsafe { QCpurecopy } {
             ptr.is_pure = true;

@@ -382,7 +382,7 @@ fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispOb
 /// Return the value of SYMBOL's PROPNAME property.
 /// This is the last value stored with `(put SYMBOL PROPNAME VALUE)'.
 #[lisp_fn]
-fn get(symbol: LispObject, propname: LispObject) -> LispObject {
+pub fn get(symbol: LispObject, propname: LispObject) -> LispObject {
     let sym = symbol.as_symbol_or_error();
     plist_get(sym.get_plist(), propname)
 }

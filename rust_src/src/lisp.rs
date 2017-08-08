@@ -642,6 +642,11 @@ impl LispObject {
         }
     }
 
+    #[inline]
+    pub unsafe fn as_cons_unchecked(self) -> LispCons {
+        LispCons(self)
+    }
+
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
