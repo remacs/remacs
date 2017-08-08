@@ -2325,7 +2325,7 @@ With prefix-argument just set Follow-Up, don't cross-post."
   (setq message-cross-post-old-target target-group))
 
 (defun message-cross-post-insert-note (target-group cross-post in-old
-						    old-groups)
+						    _old-groups)
   "Insert a in message body note about a set Followup or Crosspost.
 If there have been previous notes, delete them.  TARGET-GROUP specifies the
 group to Followup-To.  When CROSS-POST is t, insert note about
@@ -2843,7 +2843,7 @@ These properties are essential to work, so we should never strip them."
       (eq message-mail-alias-type type)
     (memq type message-mail-alias-type)))
 
-(defun message-strip-forbidden-properties (begin end &optional old-length)
+(defun message-strip-forbidden-properties (begin end &optional _old-length)
   "Strip forbidden properties between BEGIN and END, ignoring the third arg.
 This function is intended to be called from `after-change-functions'.
 See also `message-forbidden-properties'."
@@ -4842,17 +4842,13 @@ command evaluates `message-send-mail-hook' just before sending a message."
   (run-hooks 'message-send-mail-hook)
   (mailclient-send-it))
 
-(defvar sha1-maximum-internal-length)
-
 (defun message-canlock-generate ()
   "Return a string that is non-trivial to guess.
 Do not use this for anything important, it is cryptographically weak."
-  (require 'sha1)
-  (let (sha1-maximum-internal-length)
-    (sha1 (concat (message-unique-id)
-		  (format "%x%x%x" (random) (random) (random))
-		  (prin1-to-string (recent-keys))
-		  (prin1-to-string (garbage-collect))))))
+  (sha1 (concat (message-unique-id)
+                (format "%x%x%x" (random) (random) (random))
+                (prin1-to-string (recent-keys))
+                (prin1-to-string (garbage-collect)))))
 
 (defvar canlock-password)
 (defvar canlock-password-for-verify)
@@ -5852,7 +5848,7 @@ subscribed address (and not the additional To and Cc header contents)."
       (let ((list
 	     (loop for recipient in recipients
 	       when (loop for regexp in mft-regexps
-		      when (string-match regexp recipient) return t)
+		      thereis (string-match regexp recipient))
 	       return recipient)))
 	(when list
 	  (if only-show-subscribed
