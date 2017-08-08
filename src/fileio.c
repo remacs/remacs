@@ -757,7 +757,8 @@ danger of generating a name being used by another Emacs process
 \(so long as only a single host can access the containing directory...).
 
 This function tries to choose a name that has no existing file.
-For this to work, PREFIX should be an absolute file name.
+For this to work, PREFIX should be an absolute file name, and PREFIX
+and the returned string should both be non-magic.
 
 There is a race condition between calling `make-temp-name' and creating the
 file, which opens all kinds of security holes.  For that reason, you should

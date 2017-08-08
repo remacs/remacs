@@ -2547,13 +2547,14 @@ should compute the directory like this:
 @end defopt
 
 @defun make-temp-name base-name
-This function generates a string that can be used as a unique file
+This function generates a string that might be a unique file
 name.  The name starts with @var{base-name}, and has several random
 characters appended to it, which are different in each Emacs job.  It
 is like @code{make-temp-file} except that (i) it just constructs a
-name, and does not create a file, and (ii) @var{base-name} should be
-an absolute file name (on MS-DOS, this function can truncate
-@var{base-name} to fit into the 8+3 file-name limits).
+name and does not create a file, (ii) @var{base-name} should be an
+absolute file name that is not magic, and (iii) if the returned file
+name is magic, it might name an existing file.  @xref{Magic File
+Names}.
 
 @strong{Warning:} In most cases, you should not use this function; use
 @code{make-temp-file} instead!  This function is susceptible to a race
