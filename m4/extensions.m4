@@ -1,4 +1,4 @@
-# serial 15  -*- Autoconf -*-
+# serial 16  -*- Autoconf -*-
 # Enable extensions on systems that normally disable them.
 
 # Copyright (C) 2003, 2006-2017 Free Software Foundation, Inc.
@@ -68,6 +68,10 @@ dnl configure.ac when using autoheader 2.62.
 #ifndef _GNU_SOURCE
 # undef _GNU_SOURCE
 #endif
+/* Enable OpenBSD extensions on NetBSD.  */
+#ifndef _OPENBSD_SOURCE
+# undef _OPENBSD_SOURCE
+#endif
 /* Enable threading extensions on Solaris.  */
 #ifndef _POSIX_PTHREAD_SEMANTICS
 # undef _POSIX_PTHREAD_SEMANTICS
@@ -128,6 +132,7 @@ dnl configure.ac when using autoheader 2.62.
   AC_DEFINE([_ALL_SOURCE])
   AC_DEFINE([_DARWIN_C_SOURCE])
   AC_DEFINE([_GNU_SOURCE])
+  AC_DEFINE([_OPENBSD_SOURCE])
   AC_DEFINE([_POSIX_PTHREAD_SEMANTICS])
   AC_DEFINE([__STDC_WANT_IEC_60559_ATTRIBS_EXT__])
   AC_DEFINE([__STDC_WANT_IEC_60559_BFP_EXT__])

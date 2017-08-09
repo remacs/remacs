@@ -69,7 +69,6 @@
 # define __mkdir mkdir
 # define __open open
 # define __lxstat64(version, file, buf) lstat (file, buf)
-# define __secure_getenv secure_getenv
 #endif
 
 #ifdef _LIBC

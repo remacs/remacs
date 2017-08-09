@@ -903,7 +903,6 @@ gl_GNULIB_ENABLED_dosname = @gl_GNULIB_ENABLED_dosname@
 gl_GNULIB_ENABLED_euidaccess = @gl_GNULIB_ENABLED_euidaccess@
 gl_GNULIB_ENABLED_getdtablesize = @gl_GNULIB_ENABLED_getdtablesize@
 gl_GNULIB_ENABLED_getgroups = @gl_GNULIB_ENABLED_getgroups@
-gl_GNULIB_ENABLED_secure_getenv = @gl_GNULIB_ENABLED_secure_getenv@
 gl_GNULIB_ENABLED_strtoll = @gl_GNULIB_ENABLED_strtoll@
 gl_GNULIB_ENABLED_tempname = @gl_GNULIB_ENABLED_tempname@
 gl_LIBOBJS = @gl_LIBOBJS@
@@ -1911,19 +1910,6 @@ EXTRA_DIST += root-uid.h
 
 endif
 ## end   gnulib module root-uid
-
-## begin gnulib module secure_getenv
-ifeq (,$(OMIT_GNULIB_MODULE_secure_getenv))
-
-ifneq (,$(gl_GNULIB_ENABLED_secure_getenv))
-
-endif
-EXTRA_DIST += secure_getenv.c
-
-EXTRA_libgnu_a_SOURCES += secure_getenv.c
-
-endif
-## end   gnulib module secure_getenv
 
 ## begin gnulib module sig2str
 ifeq (,$(OMIT_GNULIB_MODULE_sig2str))

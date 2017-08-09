@@ -1,4 +1,4 @@
-# manywarnings.m4 serial 10
+# manywarnings.m4 serial 11
 dnl Copyright (C) 2008-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -33,8 +33,16 @@ AC_DEFUN([gl_MANYWARN_COMPLEMENT],
 # Add all documented GCC warning parameters to variable VARIABLE.
 # Note that you need to test them using gl_WARN_ADD if you want to
 # make sure your gcc understands it.
+#
+# The effects of this macro depend on the current language (_AC_LANG).
 AC_DEFUN([gl_MANYWARN_ALL_GCC],
+[_AC_LANG_DISPATCH([$0], _AC_LANG, $@)])
+
+# Specialization for _AC_LANG = C.
+AC_DEFUN([gl_MANYWARN_ALL_GCC(C)],
 [
+  AC_LANG_PUSH([C])
+
   dnl First, check for some issues that only occur when combining multiple
   dnl gcc warning categories.
   AC_REQUIRE([AC_PROG_CC])
@@ -303,4 +311,12 @@ AC_DEFUN([gl_MANYWARN_ALL_GCC],
   fi
 
   $1=$gl_manywarn_set
+
+  AC_LANG_POP([C])
+])
+
+# Specialization for _AC_LANG = C++.
+AC_DEFUN([gl_MANYWARN_ALL_GCC(C++)],
+[
+  gl_MANYWARN_ALL_GCC_CXX_IMPL([$1])
 ])
