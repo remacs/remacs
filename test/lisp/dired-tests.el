@@ -358,5 +358,90 @@
           (should (equal "subdir" (dired-get-filename 'local t))))
       (delete-directory top-dir t))))
 
+
+(defmacro dired-test-with-temp-dirs (just-empty-dirs &rest body)
+  "Helper macro for Bug#27940 test."
+  (declare (indent 1) (debug body))
+  (let ((dir (make-symbol "dir"))
+        (ignore-funcs (make-symbol "ignore-funcs")))
+    `(let* ((,dir (make-temp-file "bug27940" t))
+            (dired-deletion-confirmer (lambda (_) "yes")) ; Suppress prompts.
+            (inhibit-message t)
+            (default-directory ,dir))
+       (dotimes (i 5) (make-directory (format "empty-dir-%d" i)))
+       (unless ,just-empty-dirs
+         (dotimes (i 5) (make-directory (format "non-empty-%d/foo" i) 'parents)))
+       (make-directory "zeta-empty-dir")
+       (unwind-protect
+           (progn
+             ,@body)
+         (delete-directory ,dir t)
+         (kill-buffer (current-buffer))))))
+
+(ert-deftest dired-test-bug27940 ()
+  "Test for http://debbugs.gnu.org/27940 ."
+  ;; If just empty dirs we shouln't be prompted.
+  (dired-test-with-temp-dirs
+   'just-empty-dirs
+   (let (asked)
+     (advice-add 'dired--yes-no-all-quit-help
+                 :override
+                 (lambda (_) (setq asked t) "")
+                 '((name . dired-test-bug27940-advice)))
+     (dired default-directory)
+     (dired-toggle-marks)
+     (dired-do-delete nil)
+     (unwind-protect
+         (progn
+           (should-not asked)
+           (should-not (dired-get-marked-files))) ; All dirs deleted.
+       (advice-remove 'dired--yes-no-all-quit-help 'dired-test-bug27940-advice))))
+  ;; Answer yes
+  (dired-test-with-temp-dirs
+   nil
+   (advice-add 'dired--yes-no-all-quit-help :override (lambda (_) "yes")
+               '((name . dired-test-bug27940-advice)))
+   (dired default-directory)
+   (dired-toggle-marks)
+   (dired-do-delete nil)
+   (unwind-protect
+       (should-not (dired-get-marked-files)) ; All dirs deleted.
+     (advice-remove 'dired--yes-no-all-quit-help 'dired-test-bug27940-advice)))
+  ;; Answer no
+  (dired-test-with-temp-dirs
+   nil
+   (advice-add 'dired--yes-no-all-quit-help :override (lambda (_) "no")
+               '((name . dired-test-bug27940-advice)))
+   (dired default-directory)
+   (dired-toggle-marks)
+   (dired-do-delete nil)
+   (unwind-protect
+       (should (= 5 (length (dired-get-marked-files)))) ; Just the empty dirs deleted.
+     (advice-remove 'dired--yes-no-all-quit-help 'dired-test-bug27940-advice)))
+  ;; Answer all
+  (dired-test-with-temp-dirs
+   nil
+   (advice-add 'dired--yes-no-all-quit-help :override (lambda (_) "all")
+               '((name . dired-test-bug27940-advice)))
+   (dired default-directory)
+   (dired-toggle-marks)
+   (dired-do-delete nil)
+   (unwind-protect
+       (should-not (dired-get-marked-files)) ; All dirs deleted.
+     (advice-remove 'dired--yes-no-all-quit-help 'dired-test-bug27940-advice)))
+  ;; Answer quit
+  (dired-test-with-temp-dirs
+   nil
+   (advice-add 'dired--yes-no-all-quit-help :override (lambda (_) "quit")
+               '((name . dired-test-bug27940-advice)))
+   (dired default-directory)
+   (dired-toggle-marks)
+   (let ((inhibit-message t))
+     (dired-do-delete nil))
+   (unwind-protect
+       (should (= 6 (length (dired-get-marked-files)))) ; All empty dirs but zeta-empty-dir deleted.
+     (advice-remove 'dired--yes-no-all-quit-help 'dired-test-bug27940-advice))))
+
+
 (provide 'dired-tests)
 ;; dired-tests.el ends here

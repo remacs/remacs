@@ -2989,6 +2989,29 @@ Any other value means to ask for each directory."
 `quit' to exit,
 `help' to show this help message.")
 
+(defun dired--yes-no-all-quit-help (prompt &optional help-msg)
+  "Ask a question with valid answers: yes, no, all, quit, help.
+PROMPT must end with '? ', for instance, 'Delete it? '.
+If optional arg HELP-MSG is non-nil, then is a message to show when
+the user answers 'help'.  Otherwise, default to `dired-delete-help'."
+  (let ((valid-answers (list "yes" "no" "all" "quit"))
+        (answer "")
+        (input-fn (lambda ()
+                    (read-string
+	             (format "%s [yes, no, all, quit, help] " prompt)))))
+    (setq answer (funcall input-fn))
+    (when (string= answer "help")
+      (with-help-window "*Help*"
+        (with-current-buffer "*Help*"
+          (insert (or help-msg dired-delete-help)))))
+    (while (not (member answer valid-answers))
+      (unless (string= answer "help")
+        (beep)
+        (message "Please answer `yes' or `no' or `all' or `quit'")
+        (sleep-for 2))
+      (setq answer (funcall input-fn)))
+    answer))
+
 ;; Delete file, possibly delete a directory and all its files.
 ;; This function is useful outside of dired.  One could change its name
 ;; to e.g. recursive-delete-file and put it somewhere else.
@@ -3009,39 +3032,21 @@ TRASH non-nil means to trash the file instead of deleting, provided
        ;; but more efficient
        (if (not (eq t (car (file-attributes file))))
            (delete-file file trash)
-         (let* ((valid-answers (list "yes" "no" "all" "quit" "help"))
-                (answer "")
-                (input-fn
-                 (lambda ()
-                   (setq answer
-                         (read-string
-	                  (format "Recursively %s %s? [yes, no, all, quit, help] "
-		                  (if (and trash
-			                   delete-by-moving-to-trash)
-		                      "trash"
-		                    "delete")
-		                  (dired-make-relative file))))
-                   (when (string= answer "help")
-                     (with-help-window "*Help*"
-                       (with-current-buffer "*Help*" (insert dired-delete-help))))
-                   answer)))
-           (if (and recursive
-	            (directory-files file t dired-re-no-dot) ; Not empty.
-	            (eq recursive 'always))
-	       (if (eq recursive 'top) (setq recursive 'always)) ; Don't ask again.
-             ;; Otherwise prompt user:
-             (funcall input-fn)
-             (while (not (member answer valid-answers))
-               (unless (string= answer "help")
-                 (beep)
-                 (message "Please answer `yes' or `no' or `all' or `quit'")
-                 (sleep-for 2))
-               (funcall input-fn))
-             (pcase answer
-               ('"all" (setq recursive 'always dired-recursive-deletes recursive))
-               ('"yes" (if (eq recursive 'top) (setq recursive 'always)))
-               ('"no" (setq recursive nil))
-               ('"quit" (keyboard-quit))))
+         (let* ((empty-dir-p (null (directory-files file t dired-re-no-dot))))
+           (if (and recursive (not empty-dir-p))
+               (unless (eq recursive 'always)
+                 (let ((prompt
+                        (format "Recursively %s %s? "
+				(if (and trash delete-by-moving-to-trash)
+				    "trash"
+				  "delete")
+				(dired-make-relative file))))
+                   (pcase (dired--yes-no-all-quit-help prompt) ; Prompt user.
+                     ('"all" (setq recursive 'always dired-recursive-deletes recursive))
+                     ('"yes" (if (eq recursive 'top) (setq recursive 'always)))
+                     ('"no" (setq recursive nil))
+                     ('"quit" (keyboard-quit)))))
+             (setq recursive nil)) ; Empty dir or recursive is nil.
            (delete-directory file recursive trash))))
 
 (defun dired-do-flagged-delete (&optional nomessage)
