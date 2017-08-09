@@ -1206,6 +1206,8 @@ extern "C" {
     pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;
     pub fn make_uninit_multibyte_string(nchars: EmacsInt, nbytes: EmacsInt) -> Lisp_Object;
     pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
+    pub fn mark_vectorlike(ptr: *mut Lisp_Vector);
+    pub fn mark_object(obj: Lisp_Object);
 
     pub fn intern_1(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
 

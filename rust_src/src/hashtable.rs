@@ -4,12 +4,13 @@ use lisp::{LispObject, ExternalPtr};
 use vectors::LispVectorlikeHeader;
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type, QCtest, Qeq, Qeql,
                  Qequal, QCpurecopy, QCsize, QCweakness, sxhash, EmacsInt,
-                 Qhash_table_test};
+                 Qhash_table_test, mark_object, mark_vectorlike, Lisp_Vector};
 use std::ptr;
 use fnv::FnvHashMap;
 #[cfg(test)]
 use bincode::{serialize, deserialize, Infinite};
 use std::hash::{Hash, Hasher};
+use libc::c_void;
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
@@ -82,8 +83,6 @@ impl Eq for HashableLispObject {}
 // pure alloc space, while calling purecopy on all underlying objects.
 // This should allow us to easily serialize/deserialize
 // the hash table even though it has Rust objects.
-#[allow(dead_code)]
-// @TODO remove
 #[derive(Serialize, Deserialize, Clone)]
 #[repr(C)]
 pub struct LispHashTable {
@@ -325,6 +324,29 @@ fn map_rehash_size(_map: LispObject) -> LispObject {
 #[lisp_fn]
 fn map_rehash_threshold(_map: LispObject) -> LispObject {
     LispObject::from_float(0.8125)
+}
+
+#[no_mangle]
+pub unsafe fn hashtable_finalize(map: *mut c_void) {
+    Box::from_raw(map as *mut LispHashTable);
+}
+
+#[no_mangle]
+pub unsafe fn mark_hashtable(map: *mut c_void) {
+    let ptr = ExternalPtr::new(map as *mut LispHashTable);
+    mark_vectorlike(map as *mut Lisp_Vector);
+    if let HashFunction::UserFunc(name, cmp, hash) = ptr.func {
+        mark_object(name.to_raw());
+        mark_object(cmp.to_raw());
+        mark_object(hash.to_raw());
+    }
+
+    if !ptr.weak {
+        for (key, value) in ptr.map.iter() {
+            mark_object(key.object.to_raw());
+            mark_object(value.object.to_raw());
+        }
+    }
 }
 
 #[test]
