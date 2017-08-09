@@ -43,5 +43,15 @@
     (should (equal (sql-postgres-list-databases)
                    '("db-name-1" "db_name_2")))))
 
+(ert-deftest sql-tests-postgres-list-databases-error ()
+  "Test that nil is returned when `psql -ltX' fails."
+  (cl-letf
+      (((symbol-function 'executable-find)
+        (lambda (_command) t))
+       ((symbol-function 'process-lines)
+        (lambda (_program &rest _args)
+          (error))))
+    (should-not (sql-postgres-list-databases))))
+
 (provide 'sql-tests)
 ;;; sql-tests.el ends here

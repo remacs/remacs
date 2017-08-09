@@ -1095,9 +1095,10 @@ add your name with a \"-U\" prefix (such as \"-Umark\") to the list."
   "Return a list of available PostgreSQL databases."
   (when (executable-find sql-postgres-program)
     (let ((res '()))
-      (dolist (row (process-lines sql-postgres-program "-ltX"))
-        (when (string-match "^ \\([[:alnum:]-_]+\\) +|.*" row)
-          (push (match-string 1 row) res)))
+      (ignore-errors
+        (dolist (row (process-lines sql-postgres-program "-ltX"))
+          (when (string-match "^ \\([[:alnum:]-_]+\\) +|.*" row)
+            (push (match-string 1 row) res))))
       (nreverse res))))
 
 ;; Customization for Interbase
