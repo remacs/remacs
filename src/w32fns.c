@@ -10708,6 +10708,11 @@ default value t means to add the width of one canonical character of the
 tip frame.  */);
   Vw32_tooltip_extra_pixels = Qt;
 
+  DEFVAR_BOOL ("w32-disable-abort-dialog",
+	       w32_disable_abort_dialog,
+	       doc: /* Non-nil means don't display the abort dialog when aborting.  */);
+  w32_disable_abort_dialog = 0;
+
 #if 0 /* TODO: Port to W32 */
   defsubr (&Sx_change_window_property);
   defsubr (&Sx_delete_window_property);
@@ -10902,6 +10907,9 @@ w32_backtrace (void **buffer, int limit)
 void
 emacs_abort (void)
 {
+  if (w32_disable_abort_dialog)
+    abort ();
+
   int button;
   button = MessageBox (NULL,
 		       "A fatal error has occurred!\n\n"
