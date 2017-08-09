@@ -9,7 +9,7 @@ use std::mem;
 use std::slice;
 use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
-use libc::{c_void, intptr_t, uintptr_t};
+use libc::{c_char, c_void, intptr_t, ptrdiff_t, uintptr_t};
 
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
@@ -20,6 +20,7 @@ use marker::LispMarkerRef;
 use hashtable::LispHashTableRef;
 use fonts::LispFontRef;
 use chartable::LispCharTableRef;
+use obarray::LispObarrayRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
@@ -149,14 +150,14 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn symbol_or_string_as_string(string: LispObject) -> LispStringRef {
-        match string.as_symbol() {
+    pub fn symbol_or_string_as_string(self) -> LispStringRef {
+        match self.as_symbol() {
             Some(sym) => {
                 sym.symbol_name().as_string().expect(
                     "Expected a symbol name?",
                 )
             }
-            None => string.as_string_or_error(),
+            None => self.as_string_or_error(),
         }
     }
 
@@ -1012,4 +1013,14 @@ impl Debug for LispObject {
         }
         Ok(())
     }
+}
+
+/// Intern (e.g. create a symbol from) a string.
+pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
+    let s = string.as_ref();
+    LispObarrayRef::constant_obarray().intern_cstring(
+        s.as_ptr() as
+            *const c_char,
+        s.len() as ptrdiff_t,
+    )
 }

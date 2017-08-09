@@ -48,6 +48,8 @@ mod process;
 mod fonts;
 mod threads;
 mod chartable;
+mod category;
+mod obarray;
 mod editfns;
 
 #[cfg(all(not(test), target_os = "macos"))]
@@ -124,12 +126,18 @@ pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
 pub use buffers::Fcurrent_buffer;
+pub use obarray::intern_1;
+pub use obarray::Fintern;
+pub use obarray::Fintern_soft;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
 
 // used in chartab.c
 pub use chartable::Fset_char_table_parent;
+
+// used in category.c
+pub use category::Fcategory_table_p;
 
 // Used in process.c
 pub use str2sig::str2sig;
@@ -269,6 +277,10 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*chartable::Schar_table_subtype);
         defsubr(&*chartable::Schar_table_parent);
         defsubr(&*chartable::Sset_char_table_parent);
+        defsubr(&*category::Scategory_table_p);
+        defsubr(&*category::Scategory_table);
+        defsubr(&*obarray::Sintern_soft);
+        defsubr(&*obarray::Sintern);
 
         defsubr(&*floatfns::Sisnan);
         defsubr(&*floatfns::Sacos);

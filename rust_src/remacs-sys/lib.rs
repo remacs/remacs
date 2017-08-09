@@ -1316,6 +1316,7 @@ extern "C" {
     pub static Qframe: Lisp_Object;
     pub static Qvector: Lisp_Object;
     pub static Qchar_table: Lisp_Object;
+    pub static Qcategory_table: Lisp_Object;
     pub static Qbool_vector: Lisp_Object;
     pub static Qhash_table: Lisp_Object;
     pub static Qthread: Lisp_Object;
@@ -1351,6 +1352,7 @@ extern "C" {
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
+    pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
@@ -1396,7 +1398,19 @@ extern "C" {
         props: bool,
     ) -> Lisp_Object;
 
-    pub fn intern_1(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
+    pub fn check_obarray(obarray: Lisp_Object) -> Lisp_Object;
+    pub fn check_vobarray() -> Lisp_Object;
+    pub fn intern_driver(
+        string: Lisp_Object,
+        obarray: Lisp_Object,
+        index: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn oblookup(
+        obarray: Lisp_Object,
+        s: *const c_char,
+        size: ptrdiff_t,
+        size_bytes: ptrdiff_t,
+    ) -> Lisp_Object;
 
     pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
     pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const c_void);

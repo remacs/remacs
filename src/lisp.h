@@ -3738,6 +3738,7 @@ extern ptrdiff_t evxprintf (char **, ptrdiff_t *, char const *, ptrdiff_t,
 
 /* Defined in lread.c.  */
 extern Lisp_Object check_obarray (Lisp_Object);
+extern Lisp_Object check_vobarray (void);
 extern Lisp_Object intern_1 (const char *, ptrdiff_t);
 extern Lisp_Object intern_c_string_1 (const char *, ptrdiff_t);
 extern Lisp_Object intern_driver (Lisp_Object, Lisp_Object, Lisp_Object);
