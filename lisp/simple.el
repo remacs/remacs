@@ -7243,7 +7243,7 @@ unless optional argument SOFT is non-nil."
   (when (or (not comment-start)
             (not comment-auto-fill-only-comments)
             (nth 4 (syntax-ppss)))
-    (do-auto-fill)))
+    (funcall auto-fill-function)))
 
 (defvar normal-auto-fill-function 'do-auto-fill
   "The function to use for `auto-fill-function' if Auto Fill mode is turned on.
