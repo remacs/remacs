@@ -4,7 +4,8 @@ use lisp::{LispObject, ExternalPtr};
 use vectors::LispVectorlikeHeader;
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type, QCtest, Qeq, Qeql,
                  Qequal, QCpurecopy, QCsize, QCweakness, sxhash, EmacsInt,
-                 Qhash_table_test, mark_object, mark_vectorlike, Lisp_Vector};
+                 Qhash_table_test, mark_object, mark_vectorlike, Lisp_Vector,
+                 Qkey_and_value};
 use std::ptr;
 use fnv::FnvHashMap;
 #[cfg(test)]
@@ -87,7 +88,7 @@ impl Eq for HashableLispObject {}
 #[repr(C)]
 pub struct LispHashTable {
     header: LispVectorlikeHeader,
-    weak: bool,
+    weak: LispObject,
     is_pure: bool,
     func: HashFunction,
     map: FnvHashMap<HashableLispObject, HashableLispObject>,
@@ -101,7 +102,7 @@ impl LispHashTable {
     pub fn with_capacity(cap: usize) -> LispHashTable {
         LispHashTable {
             header: LispVectorlikeHeader::new(),
-            weak: false,
+            weak: LispObject::constant_nil(),
             is_pure: false,
             func: HashFunction::Eq,
             map: FnvHashMap::with_capacity_and_hasher(cap, Default::default()),
@@ -233,7 +234,12 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
             let size = value.as_natnum_or_error() as usize;
             ptr.map.reserve(size);
         } else if key.to_raw() == unsafe { QCweakness } {
-            ptr.weak = true;
+            ptr.weak = value;
+            if value == LispObject::constant_t() {
+                ptr.weak = unsafe { LispObject::from_raw(Qkey_and_value) };
+            }
+
+            // @TODO signal error or not Qkey/Qvalue/Qkey_or_value/Qkey_and_value
         }
     }
 
@@ -341,7 +347,7 @@ pub unsafe fn mark_hashtable(map: *mut c_void) {
         mark_object(hash.to_raw());
     }
 
-    if !ptr.weak {
+    if ptr.weak.is_not_nil() {
         for (key, value) in ptr.map.iter() {
             mark_object(key.object.to_raw());
             mark_object(value.object.to_raw());
