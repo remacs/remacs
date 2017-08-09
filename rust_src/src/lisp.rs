@@ -26,7 +26,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
                  Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qconsp, SYMBOL_NAME,
-                 PseudovecType, EqualKind};
+                 PseudovecType, EqualKind, purecopy};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -48,7 +48,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
 /// Their definition are determined in a way consistent with Emacs C.
 /// Under casual systems, they're the type isize and usize respectively.
 #[repr(C)]
-#[derive(PartialEq, Eq, Clone, Copy, Hash, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct LispObject(Lisp_Object);
 
 impl LispObject {
@@ -917,6 +917,13 @@ impl LispObject {
     #[inline]
     pub fn equal_no_quit(self, other: LispObject) -> bool {
         unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::NoQuit, 0, Qnil) }
+    }
+}
+
+impl LispObject {
+    #[inline]
+    pub fn purecopy(self) -> LispObject {
+        unsafe { Self::from_raw(purecopy(self.to_raw())) }
     }
 }
 

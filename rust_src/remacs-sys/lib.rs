@@ -15,9 +15,6 @@
 //! - `USE_LSB_TAG`
 
 extern crate libc;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
 
 pub mod libm;
 
@@ -236,7 +233,7 @@ pub struct Lisp_Symbol {
   4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
 
 #[repr(C)]
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 pub struct Lisp_Vectorlike_Header {
     pub size: ptrdiff_t,
 }
@@ -1209,6 +1206,8 @@ extern "C" {
     pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
     pub fn mark_vectorlike(ptr: *mut Lisp_Vector);
     pub fn mark_object(obj: Lisp_Object);
+    pub fn pure_alloc(size: size_t, tag: c_int) -> *mut c_void;
+    pub fn purecopy(obj: Lisp_Object) -> Lisp_Object;
 
     pub fn intern_1(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
 

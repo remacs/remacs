@@ -122,7 +122,7 @@ impl LispBoolVecRef {
 }
 
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 #[repr(C)]
 pub struct LispVectorlikeHeader(Lisp_Vectorlike_Header);
 

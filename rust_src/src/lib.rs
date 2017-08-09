@@ -20,10 +20,6 @@ extern crate rand;
 extern crate sha1;
 extern crate sha2;
 extern crate base64 as base64_crate;
-extern crate bincode;
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
 extern crate fnv;
 
 #[macro_use]
@@ -150,6 +146,7 @@ pub use interactive::Fprefix_numeric_value;
 // Used in alloc.c
 pub use hashtable::hashtable_finalize;
 pub use hashtable::mark_hashtable;
+pub use hashtable::pure_copy_hashtable;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);

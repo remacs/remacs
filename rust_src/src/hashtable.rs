@@ -3,22 +3,17 @@ use lists;
 use lisp::{LispObject, ExternalPtr};
 use vectors::LispVectorlikeHeader;
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type, QCtest, Qeq, Qeql,
-                 Qequal, QCpurecopy, QCsize, QCweakness, sxhash, EmacsInt,
-                 Qhash_table_test, mark_object, mark_vectorlike, Lisp_Vector,
-                 Qkey_and_value};
+                 Qequal, QCpurecopy, QCsize, QCweakness, sxhash, EmacsInt, Qhash_table_test,
+                 mark_object, mark_vectorlike, Lisp_Vector, Qkey_and_value, pure_alloc};
 use std::ptr;
 use fnv::FnvHashMap;
-#[cfg(test)]
-use bincode::{serialize, deserialize, Infinite};
+use std::mem;
 use std::hash::{Hash, Hasher};
-use libc::c_void;
+use libc::{c_void, c_int};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
-// This was implemented in the C as a struct with function pointers. The problem with that
-// was the way that we are serializing the LispHashTable does not work well with function pointers.
-// So instead we have an enum that we match on. 
-#[derive(Eq, PartialEq, Serialize, Deserialize, Copy, Clone)]
+#[derive(Eq, PartialEq, Copy, Clone)]
 enum HashFunction {
     Eq,
     Eql,
@@ -26,7 +21,7 @@ enum HashFunction {
     UserFunc(LispObject, LispObject, LispObject),
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 struct HashableLispObject {
     object: LispObject,
     func: HashFunction,
@@ -57,7 +52,7 @@ impl Hash for HashableLispObject {
                 state.write_u64(hash);
             }
             HashFunction::UserFunc(_, _, hashfn) => {
-                call! (hashfn, self.object).hash(state);
+                call!(hashfn, self.object).hash(state);
             }
         }
 
@@ -68,11 +63,11 @@ impl Hash for HashableLispObject {
 impl PartialEq for HashableLispObject {
     fn eq(&self, other: &Self) -> bool {
         match self.func {
-            HashFunction::Eq => { self.object.eq(other.object) },
-            HashFunction::Eql => { self.object.eql(other.object) },
-            HashFunction::Equal => { self.object.equal(other.object) },
+            HashFunction::Eq => self.object.eq(other.object),
+            HashFunction::Eql => self.object.eql(other.object),
+            HashFunction::Equal => self.object.equal(other.object),
             HashFunction::UserFunc(_, cmpfn, _) => {
-                call! (cmpfn, self.object, other.object).is_not_nil()
+                call!(cmpfn, self.object, other.object).is_not_nil()
             }
         }
     }
@@ -80,11 +75,7 @@ impl PartialEq for HashableLispObject {
 
 impl Eq for HashableLispObject {}
 
-// @TODO add pure copy functionality. We will use a binary serializer, dump the memory into
-// pure alloc space, while calling purecopy on all underlying objects.
-// This should allow us to easily serialize/deserialize
-// the hash table even though it has Rust objects.
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 #[repr(C)]
 pub struct LispHashTable {
     header: LispVectorlikeHeader,
@@ -220,7 +211,7 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
                 unsafe {
                     let prop = lists::get(value, LispObject::from_raw(Qhash_table_test));
                     if !prop.is_cons() || !prop.as_cons_unchecked().cdr().is_cons() {
-                        panic! ("Invalid hash table test"); // @TODO make this signal_erorr
+                        panic!("Invalid hash table test"); // @TODO make this signal_erorr
                     }
 
                     let cons = prop.as_cons_unchecked();
@@ -311,10 +302,10 @@ fn map_copy(map: LispObject) -> LispObject {
 fn map_test(map: LispObject) -> LispObject {
     let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
     match hashmap.func {
-        HashFunction::Eq => { unsafe { LispObject::from_raw(Qeq) } },
-        HashFunction::Eql => { unsafe { LispObject::from_raw(Qeql) } },
-        HashFunction::Equal => { unsafe { LispObject::from_raw(Qequal) } },
-        HashFunction::UserFunc(name, _, _) => { name },
+        HashFunction::Eq => unsafe { LispObject::from_raw(Qeq) },
+        HashFunction::Eql => unsafe { LispObject::from_raw(Qeql) },
+        HashFunction::Equal => unsafe { LispObject::from_raw(Qequal) },
+        HashFunction::UserFunc(name, _, _) => name,
     }
 }
 
@@ -355,9 +346,38 @@ pub unsafe fn mark_hashtable(map: *mut c_void) {
     }
 }
 
-#[test]
-fn bin_dump() {
-    let mut table = LispHashTable::new();
-    let encoded: Vec<u8> = serialize(&table, Infinite).unwrap();
-    let decoded: LispHashTable = deserialize(&encoded[..]).unwrap();
+// @TODO have this function eassert on table purity/weakness etc.
+#[no_mangle]
+pub unsafe fn pure_copy_hashtable(map: *mut c_void) -> *mut c_void {
+    let table_ptr = ExternalPtr::new(map as *mut LispHashTable);
+
+    // @TODO verify that the alignment for this is correct.
+    let mut ptr = ExternalPtr::new(pure_alloc(
+        mem::size_of::<LispHashTable>(),
+        Lisp_Type::Lisp_Vectorlike as c_int,
+    ) as *mut LispHashTable);
+    if let HashFunction::UserFunc(name, cmp, hash) = table_ptr.func {
+        ptr.func = HashFunction::UserFunc(name.purecopy(), cmp.purecopy(), hash.purecopy());
+    } else {
+        ptr.func = table_ptr.func;
+    }
+
+    ptr.header = table_ptr.header.clone();
+    ptr.weak = LispObject::constant_nil().purecopy();
+    ptr.is_pure = table_ptr.is_pure;
+    ptr.map = FnvHashMap::with_capacity_and_hasher(table_ptr.map.len(), Default::default());
+
+    for (key, value) in table_ptr.map.iter() {
+        let purekey = HashableLispObject {
+            object: key.object.purecopy(),
+            func: key.func,
+        };
+        let purevalue = HashableLispObject {
+            object: value.object.purecopy(),
+            func: value.func,
+        };
+        ptr.map.insert(purekey, purevalue);
+    }
+
+    ptr.as_ptr() as *mut c_void
 }

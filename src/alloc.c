@@ -476,7 +476,8 @@ static Lisp_Object *staticvec[NSTATICS] = {&Vpurify_flag};
 
 static int staticidx;
 
-static void *pure_alloc (size_t, int);
+void *pure_alloc (size_t, int);
+void mark_vectorlike(struct Lisp_Vector*);
 
 /* True if N is a power of 2.  N should be positive.  */
 
@@ -5240,7 +5241,7 @@ valid_lisp_object_p (Lisp_Object obj)
    pointer to it.  TYPE is the Lisp type for which the memory is
    allocated.  TYPE < 0 means it's not used for a Lisp object.  */
 
-static void *
+void *
 pure_alloc (size_t size, int type)
 {
   void *result;
@@ -5402,7 +5403,7 @@ make_pure_c_string (const char *data, ptrdiff_t nchars)
   return string;
 }
 
-static Lisp_Object purecopy (Lisp_Object obj);
+Lisp_Object purecopy (Lisp_Object obj);
 
 /* Return a cons allocated from pure space.  Give it pure copies
    of CAR as car and CDR as cdr.  */
@@ -5500,7 +5501,7 @@ static struct pinned_object
   struct pinned_object *next;
 } *pinned_objects;
 
-static Lisp_Object
+Lisp_Object
 purecopy (Lisp_Object obj)
 {
   if (INTEGERP (obj)
@@ -6107,7 +6108,7 @@ static int last_marked_index;
    Normally this is zero and the check never goes off.  */
 ptrdiff_t mark_object_loop_halt EXTERNALLY_VISIBLE;
 
-static void
+void
 mark_vectorlike (struct Lisp_Vector *ptr)
 {
   ptrdiff_t size = ptr->header.size;
