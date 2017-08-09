@@ -3057,9 +3057,10 @@ non-empty directories is allowed."
     (if (save-excursion (goto-char (point-min))
 			(re-search-forward regexp nil t))
 	(dired-internal-do-deletions
-	 ;; this can't move point since ARG is nil
-	 (dired-map-over-marks (cons (dired-get-filename) (point))
-			       nil)
+         (nreverse
+	  ;; this can't move point since ARG is nil
+	  (dired-map-over-marks (cons (dired-get-filename) (point))
+			        nil))
 	 nil t)
       (or nomessage
 	  (message "(No deletions requested)")))))
@@ -3072,9 +3073,10 @@ non-empty directories is allowed."
   ;; dired-do-flagged-delete.
   (interactive "P")
   (dired-internal-do-deletions
-   ;; this may move point if ARG is an integer
-   (dired-map-over-marks (cons (dired-get-filename) (point))
-			 arg)
+   (nreverse
+    ;; this may move point if ARG is an integer
+    (dired-map-over-marks (cons (dired-get-filename) (point))
+			  arg))
    arg t))
 
 (defvar dired-deletion-confirmer 'yes-or-no-p) ; or y-or-n-p?
