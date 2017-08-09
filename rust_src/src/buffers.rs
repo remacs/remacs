@@ -7,7 +7,6 @@ use remacs_sys::{Lisp_Buffer, Lisp_Type, Vbuffer_alist, make_lisp_ptr};
 use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
-use remacs_sys::EmacsInt;
 
 use remacs_macros::lisp_fn;
 
