@@ -147,6 +147,7 @@ pub use interactive::Fprefix_numeric_value;
 pub use hashtable::hashtable_finalize;
 pub use hashtable::mark_hashtable;
 pub use hashtable::pure_copy_hashtable;
+pub use hashtable::sweep_weak_hashtable;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);

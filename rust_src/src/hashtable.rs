@@ -4,15 +4,21 @@ use lisp::{LispObject, ExternalPtr};
 use vectors::LispVectorlikeHeader;
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type, QCtest, Qeq, Qeql,
                  Qequal, QCpurecopy, QCsize, QCweakness, sxhash, EmacsInt, Qhash_table_test,
-                 mark_object, mark_vectorlike, Lisp_Vector, Qkey_and_value, pure_alloc};
+                 mark_object, mark_vectorlike, Lisp_Vector, Qkey_and_value, Qkey, Qvalue,
+                 Qkey_or_value, pure_alloc, survives_gc};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
 use std::hash::{Hash, Hasher};
 use libc::{c_void, c_int};
 
+static DEFAULT_TABLE_SIZE: usize = 65;
+
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
+// @TODO now that this has been changed to not use a binary serializer,
+// we can have the HashFunction use function pointers again, to avoid having to copy
+// this enum across ALL lisp objects.
 #[derive(Eq, PartialEq, Copy, Clone)]
 enum HashFunction {
     Eq,
@@ -87,7 +93,7 @@ pub struct LispHashTable {
 
 impl LispHashTable {
     pub fn new() -> LispHashTable {
-        Self::with_capacity(65)
+        Self::with_capacity(DEFAULT_TABLE_SIZE)
     }
 
     pub fn with_capacity(cap: usize) -> LispHashTable {
@@ -344,6 +350,55 @@ pub unsafe fn mark_hashtable(map: *mut c_void) {
             mark_object(value.object.to_raw());
         }
     }
+}
+
+pub unsafe fn sweep_weak_hashtable(map: *mut c_void, remove_entries: bool) -> bool {
+    let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
+    let weakness = ptr.weak.to_raw();
+    let mut to_remove = Vec::<HashableLispObject>::new();
+    let mut marked = false;
+
+    for (key, value) in ptr.map.iter() {
+        let key_survives_gc = survives_gc(key.object.to_raw());
+        let value_survives_gc = survives_gc(value.object.to_raw());
+        let remove_p;
+
+        if weakness == Qkey {
+            remove_p = !key_survives_gc;
+        } else if weakness == Qvalue {
+            remove_p = !value_survives_gc;
+        } else if weakness == Qkey_or_value {
+            remove_p = !(key_survives_gc || value_survives_gc);
+        } else if weakness == Qkey_and_value {
+            remove_p = !(key_survives_gc && value_survives_gc);
+        } else {
+            panic!();
+        }
+
+        if remove_entries {
+            if remove_p {
+                to_remove.push(key.clone());
+            }
+        } else {
+            if !remove_p {
+                if !key_survives_gc {
+                    mark_object(key.object.to_raw());
+                    marked = true;
+                }
+
+                if !value_survives_gc {
+                    mark_object(value.object.to_raw());
+                    marked = true;
+                }
+            }
+        }
+    }
+
+    for x in to_remove.iter() {
+        ptr.map.remove(&x);
+    }
+
+    marked
 }
 
 // @TODO have this function eassert on table purity/weakness etc.
