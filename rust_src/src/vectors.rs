@@ -14,7 +14,7 @@ use buffers::LispBufferRef;
 use windows::LispWindowRef;
 use remacs_sys::{Qsequencep, EmacsInt, PSEUDOVECTOR_FLAG, PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS,
                  PSEUDOVECTOR_SIZE_MASK, PseudovecType, Lisp_Vectorlike, Lisp_Vector,
-                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM, Lisp_Vectorlike_Header};
+                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM};
 use remacs_macros::lisp_fn;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
@@ -118,21 +118,6 @@ impl LispVectorRef {
 impl LispBoolVecRef {
     pub fn len(&self) -> usize {
         self.size as usize
-    }
-}
-
-
-#[derive(Clone)]
-#[repr(C)]
-pub struct LispVectorlikeHeader(Lisp_Vectorlike_Header);
-
-impl LispVectorlikeHeader {
-    pub fn new() -> LispVectorlikeHeader {
-        LispVectorlikeHeader(Lisp_Vectorlike_Header { size: 0 })
-    }
-
-    pub fn tag(&mut self, tag: isize) {
-        self.0.size = tag;
     }
 }
 
@@ -309,18 +294,5 @@ macro_rules! allocate_pseudovector {
                                        pseudovecsize!($ty, $field) as ::libc::c_int,
                                        pseudovecsize!($ty, $field) as ::libc::c_int,
                                        $vectype) as *mut $ty}
-    }
-}
-
-macro_rules! pseudovector_tag_for {
-    ($ty: ty, $field: ident, $vectype: expr) => {
-        unsafe {
-            ::remacs_sys::PSEUDOVECTOR_FLAG
-                | (($vectype as ::libc::c_int)
-                   << ::remacs_sys::PSEUDOVECTOR_AREA_BITS) as isize
-                | ((vecsize!($ty) - pseudovecsize!($ty, $field))
-                   << ::remacs_sys::PSEUDOVECTOR_SIZE_BITS) as isize
-                | (pseudovecsize!($ty, $field)) as isize
-        }
     }
 }

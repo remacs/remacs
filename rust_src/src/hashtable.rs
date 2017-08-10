@@ -1,11 +1,10 @@
 use remacs_macros::lisp_fn;
 use lists;
 use lisp::{LispObject, ExternalPtr};
-use vectors::LispVectorlikeHeader;
-use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Lisp_Type, QCtest, Qeq, Qeql,
+use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql,
                  Qequal, QCpurecopy, QCsize, QCweakness, sxhash, EmacsInt, Qhash_table_test,
                  mark_object, mark_vectorlike, Lisp_Vector, Qkey_and_value, Qkey, Qvalue,
-                 Qkey_or_value, pure_alloc, survives_gc};
+                 Qkey_or_value, pure_alloc, survives_gc, Lisp_Vectorlike_Header};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
@@ -14,7 +13,7 @@ use libc::{c_void, c_int};
 
 static DEFAULT_TABLE_SIZE: usize = 65;
 
-pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
+pub type LispHashTableRef = ExternalPtr<LispHashTable>;
 
 // @TODO now that this has been changed to not use a binary serializer,
 // we can have the HashFunction use function pointers again, to avoid having to copy
@@ -84,7 +83,7 @@ impl Eq for HashableLispObject {}
 #[derive(Clone)]
 #[repr(C)]
 pub struct LispHashTable {
-    header: LispVectorlikeHeader,
+    header: Lisp_Vectorlike_Header,
     weak: LispObject,
     is_pure: bool,
     func: HashFunction,
@@ -98,7 +97,7 @@ impl LispHashTable {
 
     pub fn with_capacity(cap: usize) -> LispHashTable {
         LispHashTable {
-            header: LispVectorlikeHeader::new(),
+            header: Lisp_Vectorlike_Header { size: 0 },
             weak: LispObject::constant_nil(),
             is_pure: false,
             func: HashFunction::Eq,
@@ -107,94 +106,9 @@ impl LispHashTable {
     }
 }
 
-impl LispHashTableRef {
-    pub fn allocate() -> LispHashTableRef {
-        let vec_ptr =
-            allocate_pseudovector!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE);
-        LispHashTableRef::new(vec_ptr)
-    }
-
-    pub unsafe fn copy(&mut self, other: LispHashTableRef) {
-        ptr::copy_nonoverlapping(other.as_ptr(), self.as_mut(), 1);
-    }
-
-    pub fn set_next_weak(&mut self, other: LispHashTableRef) {
-        self.next_weak = other.as_ptr() as *mut Lisp_Hash_Table;
-    }
-
-    pub fn get_next_weak(&self) -> LispHashTableRef {
-        LispHashTableRef::new(self.next_weak)
-    }
-
-    pub fn set_hash(&mut self, hash: LispObject) {
-        self.hash = hash.to_raw();
-    }
-
-    pub fn get_hash(&self) -> LispObject {
-        LispObject::from_raw(self.hash)
-    }
-
-    pub fn set_next(&mut self, next: LispObject) {
-        self.next = next.to_raw();
-    }
-
-    pub fn get_next(&self) -> LispObject {
-        LispObject::from_raw(self.next)
-    }
-
-    pub fn set_index(&mut self, index: LispObject) {
-        self.index = index.to_raw();
-    }
-
-    pub fn get_index(&self) -> LispObject {
-        LispObject::from_raw(self.index)
-    }
-
-    pub fn get_key_and_value(&self) -> LispObject {
-        LispObject::from_raw(self.key_and_value)
-    }
-
-    pub fn set_key_and_value(&mut self, key_and_value: LispObject) {
-        self.key_and_value = key_and_value.to_raw();
-    }
-
-    pub fn get_weak(&self) -> LispObject {
-        LispObject::from_raw(self.weak)
-    }
-}
-
-/// Return a copy of hash table TABLE.
-/// Keys and values are not copied, only the table itself is.
-#[lisp_fn]
-fn copy_hash_table(htable: LispObject) -> LispObject {
-    let mut table = htable.as_hash_table_or_error();
-    let mut new_table = LispHashTableRef::allocate();
-    unsafe { new_table.copy(table) };
-    assert!(new_table.as_ptr() != table.as_ptr());
-
-    let key_and_value = LispObject::from_raw(unsafe {
-        Fcopy_sequence(new_table.get_key_and_value().to_raw())
-    });
-    let hash = LispObject::from_raw(unsafe { Fcopy_sequence(new_table.get_hash().to_raw()) });
-    let next = LispObject::from_raw(unsafe { Fcopy_sequence(new_table.get_next().to_raw()) });
-    let index = LispObject::from_raw(unsafe { Fcopy_sequence(new_table.get_index().to_raw()) });
-    new_table.set_key_and_value(key_and_value);
-    new_table.set_hash(hash);
-    new_table.set_next(next);
-    new_table.set_index(index);
-
-    if new_table.get_weak().is_not_nil() {
-        new_table.set_next_weak(table.get_next_weak());
-        table.set_next_weak(new_table);
-    }
-
-    LispObject::from_hash_table(new_table)
-}
-
 #[lisp_fn]
 fn make_hash_map(args: &mut [LispObject]) -> LispObject {
-    // @TODO this needs to be managed by the GC, we are just leaking this for testing right now.
-    let mut ptr = ExternalPtr::new(Box::into_raw(Box::new(LispHashTable::new())));
+    let mut ptr = ExternalPtr::new(allocate_pseudovector!(LispHashTable, map, PseudovecType::PVEC_HASH_TABLE));
     let len = args.len();
     let mut i = 0;
     while i < len {
@@ -240,24 +154,13 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
         }
     }
 
-    // @TODO handle if there are unused args
-    // @TODO Examine this tagging API. This is 'if false'd because if we tag as it as hashmap, it
-    // will be treated like a Lisp_Hash_Table in other places in the code, which will cause
-    // memory errors
-    if false {
-        ptr.header.tag(pseudovector_tag_for!(
-            Lisp_Hash_Table,
-            count,
-            PseudovecType::PVEC_HASH_TABLE
-        ));
-    }
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
 }
 
 #[lisp_fn]
 fn map_put(map: LispObject, k: LispObject, v: LispObject) -> LispObject {
     // @TODO replace with with haashtable or erorr
-    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    let mut hashmap = map.as_hash_table_or_error();
     let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
     let value = HashableLispObject::with_hashfunc_and_object(v, hashmap.func);
     hashmap.map.insert(key, value);
@@ -266,7 +169,7 @@ fn map_put(map: LispObject, k: LispObject, v: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn map_get(map: LispObject, k: LispObject) -> LispObject {
-    let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    let hashmap = map.as_hash_table_or_error();
     let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
     hashmap.map.get(&key).map_or(
         LispObject::constant_nil(),
@@ -276,7 +179,7 @@ fn map_get(map: LispObject, k: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn map_rm(map: LispObject, k: LispObject) -> LispObject {
-    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    let mut hashmap = map.as_hash_table_or_error();
     let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
     hashmap.map.remove(&key);
     map
@@ -284,21 +187,21 @@ fn map_rm(map: LispObject, k: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn map_clear(map: LispObject) -> LispObject {
-    let mut hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    let mut hashmap = map.as_hash_table_or_error();
     hashmap.map.clear();
     map
 }
 
 #[lisp_fn]
 fn map_count(map: LispObject) -> LispObject {
-    let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    let hashmap = map.as_hash_table_or_error();
     LispObject::from_natnum(hashmap.map.len() as EmacsInt)
 }
 
 // @TODO have this use things managed by the GC.
 #[lisp_fn]
 fn map_copy(map: LispObject) -> LispObject {
-    let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    let hashmap = map.as_hash_table_or_error();
     // @TODO if table is weak, add it to weak table data structure.
     let new_map = ExternalPtr::new(Box::into_raw(Box::new(hashmap.clone())));
     LispObject::tag_ptr(new_map, Lisp_Type::Lisp_Vectorlike)
@@ -306,7 +209,7 @@ fn map_copy(map: LispObject) -> LispObject {
 
 #[lisp_fn]
 fn map_test(map: LispObject) -> LispObject {
-    let hashmap = ExternalPtr::new(map.get_untaggedptr() as *mut LispHashTable);
+    let hashmap = map.as_hash_table_or_error();
     match hashmap.func {
         HashFunction::Eq => unsafe { LispObject::from_raw(Qeq) },
         HashFunction::Eql => unsafe { LispObject::from_raw(Qeql) },
@@ -331,7 +234,8 @@ fn map_rehash_threshold(_map: LispObject) -> LispObject {
 
 #[no_mangle]
 pub unsafe fn hashtable_finalize(map: *mut c_void) {
-    Box::from_raw(map as *mut LispHashTable);
+    let ptr = map as *mut LispHashTable;
+    mem::drop(&*ptr);
 }
 
 #[no_mangle]
