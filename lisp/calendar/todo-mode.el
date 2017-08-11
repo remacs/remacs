@@ -5381,20 +5381,21 @@ marked) not done todo items."
 
 (defun todo-get-overlay (val)
   "Return the overlay at point whose `todo' property has value VAL."
-  ;; When headers are hidden, the display engine makes item's start
-  ;; inaccessible to commands, so go there here, if necessary, in
-  ;; order to check for prefix and header overlays.
-  (when (memq val '(prefix header))
-    (unless (looking-at todo-item-start) (todo-item-start)))
-  ;; Use overlays-in to find prefix overlays and check over two
-  ;; positions to find done separator overlay.
-  (let ((ovs (overlays-in (point) (1+ (point))))
-  	ov)
-    (catch 'done
-      (while ovs
-  	(setq ov (pop ovs))
-  	(when (eq (overlay-get ov 'todo) val)
-  	  (throw 'done ov))))))
+  (save-excursion
+    ;; When headers are hidden, the display engine makes item's start
+    ;; inaccessible to commands, so then we have to go there
+    ;; non-interactively to check for prefix and header overlays.
+    (when (memq val '(prefix header))
+      (unless (looking-at todo-item-start) (todo-item-start)))
+    ;; Use overlays-in to find prefix overlays and check over two
+    ;; positions to find done separator overlay.
+    (let ((ovs (overlays-in (point) (1+ (point))))
+          ov)
+      (catch 'done
+        (while ovs
+          (setq ov (pop ovs))
+          (when (eq (overlay-get ov 'todo) val)
+            (throw 'done ov)))))))
 
 (defun todo-marked-item-p ()
   "Non-nil if this item begins with `todo-item-mark'.
