@@ -1,10 +1,10 @@
 use remacs_macros::lisp_fn;
 use lists;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql,
-                 Qequal, QCpurecopy, QCsize, QCweakness, sxhash, EmacsInt, Qhash_table_test,
-                 mark_object, mark_vectorlike, Lisp_Vector, Qkey_and_value, Qkey, Qvalue,
-                 Qkey_or_value, pure_alloc, survives_gc, Lisp_Vectorlike_Header};
+use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy, QCsize,
+                 QCweakness, sxhash, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
+                 Lisp_Vector, Qkey_and_value, Qkey, Qvalue, Qkey_or_value, pure_alloc,
+                 survives_gc, Lisp_Vectorlike_Header, pure_write_error};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
@@ -104,11 +104,57 @@ impl LispHashTable {
             map: FnvHashMap::with_capacity_and_hasher(cap, Default::default()),
         }
     }
+
+    pub fn is_not_pure_or_error(&self, object: LispObject) {
+        if self.is_pure {
+            unsafe { pure_write_error(object.to_raw()) };
+        }
+    }
 }
 
+/// Create and return a new hash table.
+///
+/// Arguments are specified as keyword/argument pairs.  The following
+/// arguments are defined:
+
+/// :test TEST -- TEST must be a symbol that specifies how to compare
+/// keys.  Default is `eql'.  Predefined are the tests `eq', `eql', and
+/// `equal'.  User-supplied test and hash functions can be specified via
+/// `define-hash-table-test'.
+
+/// :size SIZE -- A hint as to how many elements will be put in the table.
+/// Default is 65.
+
+/// :rehash-size REHASH-SIZE - Indicates how to expand the table when it
+/// fills up.  If REHASH-SIZE is an integer, increase the size by that
+/// amount.  If it is a float, it must be > 1.0, and the new size is the
+/// old size multiplied by that factor.  Default is 1.5.
+
+/// :rehash-threshold THRESHOLD -- THRESHOLD must a float > 0, and <= 1.0.
+/// Resize the hash table when the ratio (table entries / table size)
+/// exceeds an approximation to THRESHOLD.  Default is 0.8125.
+
+/// :weakness WEAK -- WEAK must be one of nil, t, `key', `value',
+/// `key-or-value', or `key-and-value'.  If WEAK is not nil, the table
+/// returned is a weak table.  Key/value pairs are removed from a weak
+/// hash table when there are no non-weak references pointing to their
+/// key, value, one of key or value, or both key and value, depending on
+/// WEAK.  WEAK t is equivalent to `key-and-value'.  Default value of WEAK
+/// is nil.
+
+/// :purecopy PURECOPY -- If PURECOPY is non-nil, the table can be copied
+/// to pure storage when Emacs is being dumped, making the contents of the
+/// table read only. Any further changes to purified tables will result
+/// in an error.
+
+///usage: (make-hash-table &rest KEYWORD-ARGS)
 #[lisp_fn]
-fn make_hash_map(args: &mut [LispObject]) -> LispObject {
-    let mut ptr = ExternalPtr::new(allocate_pseudovector!(LispHashTable, map, PseudovecType::PVEC_HASH_TABLE));
+fn make_hash_table(args: &mut [LispObject]) -> LispObject {
+    let mut ptr = ExternalPtr::new(allocate_pseudovector!(
+        LispHashTable,
+        map,
+        PseudovecType::PVEC_HASH_TABLE
+    ));
     let len = args.len();
     let mut i = 0;
     while i < len {
@@ -157,58 +203,102 @@ fn make_hash_map(args: &mut [LispObject]) -> LispObject {
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
 }
 
+/// Associate KEY with VALUE in hash table TABLE.
+/// If KEY is already present in table, replace its current value with
+/// VALUE.  In any case, return VALUE.
 #[lisp_fn]
-fn map_put(map: LispObject, k: LispObject, v: LispObject) -> LispObject {
-    // @TODO replace with with haashtable or erorr
+fn puthash(k: LispObject, v: LispObject, map: LispObject) -> LispObject {
     let mut hashmap = map.as_hash_table_or_error();
+    hashmap.is_not_pure_or_error(map);
     let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
     let value = HashableLispObject::with_hashfunc_and_object(v, hashmap.func);
     hashmap.map.insert(key, value);
     v
 }
 
-#[lisp_fn]
-fn map_get(map: LispObject, k: LispObject) -> LispObject {
+/// Look up KEY in TABLE and return its associated value.
+/// If KEY is not found, return DFLT which defaults to nil.
+#[lisp_fn(min = 2)]
+fn gethash(k: LispObject, map: LispObject, default: LispObject) -> LispObject {
     let hashmap = map.as_hash_table_or_error();
     let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
-    hashmap.map.get(&key).map_or(
-        LispObject::constant_nil(),
-        |key| key.object,
-    )
+    hashmap.map.get(&key).map_or(default, |key| key.object)
 }
 
+/// Remove KEY from TABLE.
 #[lisp_fn]
-fn map_rm(map: LispObject, k: LispObject) -> LispObject {
+fn remhash(k: LispObject, map: LispObject) -> LispObject {
     let mut hashmap = map.as_hash_table_or_error();
+    hashmap.is_not_pure_or_error(map);
+
     let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
     hashmap.map.remove(&key);
-    map
+    LispObject::constant_nil()
 }
 
+/// Call FUNCTION for all entries in hash table TABLE.
+/// FUNCTION is called with two arguments, KEY and VALUE.
+/// `maphash' always returns nil.
 #[lisp_fn]
-fn map_clear(map: LispObject) -> LispObject {
+fn maphash(function: LispObject, map: LispObject) -> LispObject {
+    let table = map.as_hash_table_or_error();
+    for (key, value) in table.map.iter() {
+        // @TODO C code had a null check on the HASH_HASH call here, we may need to emulate.
+        call!(function, key.object, value.object);
+    }
+
+    LispObject::constant_nil()
+}
+
+/// Return the weakness of TABLE.
+#[lisp_fn]
+fn hash_table_weakness(map: LispObject) -> LispObject {
+    map.as_hash_table_or_error().weak
+}
+
+/// Clear hash table TABLE and return it.
+#[lisp_fn]
+fn clrhash(map: LispObject) -> LispObject {
     let mut hashmap = map.as_hash_table_or_error();
+    hashmap.is_not_pure_or_error(map);
     hashmap.map.clear();
     map
 }
 
+/// Return the number of elements in TABLE.
 #[lisp_fn]
-fn map_count(map: LispObject) -> LispObject {
+fn hash_table_count(map: LispObject) -> LispObject {
     let hashmap = map.as_hash_table_or_error();
     LispObject::from_natnum(hashmap.map.len() as EmacsInt)
 }
 
-// @TODO have this use things managed by the GC.
+/// Return the size of TABLE.
+/// The size can be used as an argument to `make-hash-table' to create
+/// a hash table than can hold as many elements as TABLE holds
+/// without need for resizing.
 #[lisp_fn]
-fn map_copy(map: LispObject) -> LispObject {
-    let hashmap = map.as_hash_table_or_error();
-    // @TODO if table is weak, add it to weak table data structure.
-    let new_map = ExternalPtr::new(Box::into_raw(Box::new(hashmap.clone())));
-    LispObject::tag_ptr(new_map, Lisp_Type::Lisp_Vectorlike)
+fn hash_table_size(map: LispObject) -> LispObject {
+    let table = map.as_hash_table_or_error();
+    LispObject::from_natnum(table.map.capacity() as EmacsInt)
 }
 
 #[lisp_fn]
-fn map_test(map: LispObject) -> LispObject {
+fn copy_hash_table(map: LispObject) -> LispObject {
+    let hashmap = map.as_hash_table_or_error();
+    let mut new_ptr = ExternalPtr::new(allocate_pseudovector!(
+        LispHashTable,
+        map,
+        PseudovecType::PVEC_HASH_TABLE
+    ));
+    let new_table = hashmap.clone();
+    unsafe { ptr::copy_nonoverlapping(new_table.as_ptr(), new_ptr.as_mut(), 1) };
+    // @TODO if table is weak, add it to weak table data structure.
+    LispObject::tag_ptr(new_ptr, Lisp_Type::Lisp_Vectorlike)
+}
+
+/// Return the test TABLE uses.
+#[lisp_fn]
+fn hash_table_test(map: LispObject) -> LispObject {
     let hashmap = map.as_hash_table_or_error();
     match hashmap.func {
         HashFunction::Eq => unsafe { LispObject::from_raw(Qeq) },
@@ -222,13 +312,18 @@ fn map_test(map: LispObject) -> LispObject {
 // Remacs has dropped support for controlling rehash size and threshold,
 // however for backwards compatability, we will define these functions, and return
 // the default values defined in lisp.h
+
+/// Return the current rehash size of TABLE.
+/// NOTE: In remacs this always returns the default value of 0.5
 #[lisp_fn]
-fn map_rehash_size(_map: LispObject) -> LispObject {
+fn hash_table_rehash_size(_map: LispObject) -> LispObject {
     LispObject::from_float(0.5)
 }
 
+/// Return the current rehash threshold of TABLE.
+/// NOTE: In remacs this always returns the default value of 0.8125
 #[lisp_fn]
-fn map_rehash_threshold(_map: LispObject) -> LispObject {
+fn hash_table_rehash_threshold(_map: LispObject) -> LispObject {
     LispObject::from_float(0.8125)
 }
 
@@ -305,10 +400,11 @@ pub unsafe fn sweep_weak_hashtable(map: *mut c_void, remove_entries: bool) -> bo
     marked
 }
 
-// @TODO have this function eassert on table purity/weakness etc.
 #[no_mangle]
 pub unsafe fn pure_copy_hashtable(map: *mut c_void) -> *mut c_void {
     let table_ptr = ExternalPtr::new(map as *mut LispHashTable);
+    debug_assert!(table_ptr.is_pure);
+    debug_assert!(table_ptr.weak.is_nil());
 
     // @TODO verify that the alignment for this is correct.
     let mut ptr = ExternalPtr::new(pure_alloc(

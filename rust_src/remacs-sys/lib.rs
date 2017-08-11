@@ -1254,6 +1254,7 @@ extern "C" {
 
     pub fn sxhash(ht: *mut hash_table_test, key: Lisp_Object) -> EmacsUint;
     pub fn survives_gc(o: Lisp_Object) -> bool;
+    pub fn pure_write_error(o: Lisp_Object) -> !;
 }
 
 /// Contains C definitions from the font.h header.
