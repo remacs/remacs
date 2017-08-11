@@ -1496,7 +1496,8 @@ When DIE is non-nil, throw an error if file not found."
   (and n (setq conf-variable (nth n conf-variable)))
   (or (eq conf-variable t)
       (and (stringp conf-variable)
-           (string-match (concat "[" conf-variable "]") typekey))))
+           (let ((case-fold-search nil))
+             (string-match (concat "[" conf-variable "]") typekey)))))
 
 (defun reftex-check-recursive-edit ()
   ;; Check if we are already in a recursive edit.  Abort with helpful
