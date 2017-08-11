@@ -267,9 +267,9 @@ Otherwise, return nil.
 A file name is handled if one of the regular expressions in
 `file-name-handler-alist' matches it.
 
-If OPERATION equals `inhibit-file-name-operation', then we ignore
+If OPERATION equals `inhibit-file-name-operation', then ignore
 any handlers that are members of `inhibit-file-name-handlers',
-but we still do run any other handlers.  This lets handlers
+but still do run any other handlers.  This lets handlers
 use the standard functions without calling themselves recursively.  */)
   (Lisp_Object filename, Lisp_Object operation)
 {
@@ -581,6 +581,38 @@ directory_file_name (char *dst, char *src, ptrdiff_t srclen, bool multibyte)
   dostounix_filename (dst);
 #endif
   return srclen;
+}
+
+DEFUN ("directory-name-p", Fdirectory_name_p, Sdirectory_name_p, 1, 1, 0,
+       doc: /* Return non-nil if NAME ends with a directory separator character.  */)
+  (Lisp_Object name)
+{
+  CHECK_STRING (name);
+  ptrdiff_t namelen = SBYTES (name);
+  unsigned char c = namelen ? SREF (name, namelen - 1) : 0;
+  return IS_DIRECTORY_SEP (c) ? Qt : Qnil;
+}
+
+/* Return true if NAME must be that of a directory if it exists.
+   When NAME is a directory name, this avoids system calls compared to
+   just calling Ffile_directory_p.  */
+
+static bool
+directory_like (Lisp_Object name)
+{
+  return !NILP (Fdirectory_name_p (name)) || !NILP (Ffile_directory_p (name));
+}
+
+/* Return the expansion of NEWNAME, except that if NEWNAME is like a
+   directory then return the expansion of FILE's basename under
+   NEWNAME.  This is like how 'cp FILE NEWNAME' works.  */
+
+static Lisp_Object
+expand_cp_target (Lisp_Object file, Lisp_Object newname)
+{
+  return (directory_like (newname)
+	  ? Fexpand_file_name (Ffile_name_nondirectory (file), newname)
+	  : Fexpand_file_name (newname, Qnil));
 }
 
 DEFUN ("directory-file-name", Fdirectory_file_name, Sdirectory_file_name,
@@ -1874,9 +1906,9 @@ This function always sets the file modes of the output file to match
 the input file.
 
 The optional third argument OK-IF-ALREADY-EXISTS specifies what to do
-if file NEWNAME already exists.  If OK-IF-ALREADY-EXISTS is nil, we
+if file NEWNAME already exists.  If OK-IF-ALREADY-EXISTS is nil,
 signal a `file-already-exists' error without overwriting.  If
-OK-IF-ALREADY-EXISTS is a number, we request confirmation from the user
+OK-IF-ALREADY-EXISTS is an integer, request confirmation from the user
 about overwriting; this is what happens in interactive use with M-x.
 Any other value for OK-IF-ALREADY-EXISTS means to overwrite the
 existing file.
@@ -1886,8 +1918,8 @@ last-modified time as the old one.  (This works on only some systems.)
 
 A prefix arg makes KEEP-TIME non-nil.
 
-If PRESERVE-UID-GID is non-nil, we try to transfer the
-uid and gid of FILE to NEWNAME.
+If PRESERVE-UID-GID is non-nil, try to transfer the uid and gid of
+FILE to NEWNAME.
 
 If PRESERVE-PERMISSIONS is non-nil, copy permissions of FILE to NEWNAME;
 this includes the file modes, along with ACL entries and SELinux
@@ -1914,16 +1946,8 @@ permissions.  */)
   struct stat st;
 #endif
 
-  encoded_file = encoded_newname = Qnil;
-  CHECK_STRING (file);
-  CHECK_STRING (newname);
-
-  if (!NILP (Ffile_directory_p (newname)))
-    newname = Fexpand_file_name (Ffile_name_nondirectory (file), newname);
-  else
-    newname = Fexpand_file_name (newname, Qnil);
-
   file = Fexpand_file_name (file, Qnil);
+  newname = expand_cp_target (file, newname);
 
   /* If the input file name has special constructs in it,
      call the corresponding file handler.  */
@@ -2304,9 +2328,9 @@ DEFUN ("rename-file", Frename_file, Srename_file, 2, 3,
        "fRename file: \nGRename %s to file: \np",
        doc: /* Rename FILE as NEWNAME.  Both args must be strings.
 If file has names other than FILE, it continues to have those names.
-Signals a `file-already-exists' error if a file NEWNAME already exists
+Signal a `file-already-exists' error if a file NEWNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.
-A number as third arg means request confirmation if NEWNAME already exists.
+An integer third arg means request confirmation if NEWNAME already exists.
 This is what happens in interactive use with M-x.  */)
   (Lisp_Object file, Lisp_Object newname, Lisp_Object ok_if_already_exists)
 {
@@ -2314,24 +2338,22 @@ This is what happens in interactive use with M-x.  */)
   Lisp_Object encoded_file, encoded_newname, symlink_target;
   int dirp = -1;
 
-  symlink_target = encoded_file = encoded_newname = Qnil;
-  CHECK_STRING (file);
-  CHECK_STRING (newname);
   file = Fexpand_file_name (file, Qnil);
 
-  if ((!NILP (Ffile_directory_p (newname)))
-      /* If the filesystem is case-insensitive and the file names are
-	 identical but for the case, don't attempt to move directory
-	 to itself.  */
-      && (NILP (Ffile_name_case_insensitive_p (file))
-	  || NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname)))))
+  /* If the filesystem is case-insensitive and the file names are
+     identical but for case, treat it as a change-case request, and do
+     not worry whether NEWNAME exists or whether it is a directory, as
+     it is already another name for FILE.  */
+  bool case_only_rename = false;
+  if (!NILP (Ffile_name_case_insensitive_p (file)))
     {
-      dirp = !NILP (Ffile_directory_p (file));
-      Lisp_Object fname = dirp ? Fdirectory_file_name (file) : file;
-      newname = Fexpand_file_name (Ffile_name_nondirectory (fname), newname);
+      newname = Fexpand_file_name (newname, Qnil);
+      case_only_rename = !NILP (Fstring_equal (Fdowncase (file),
+					       Fdowncase (newname)));
     }
-  else
-    newname = Fexpand_file_name (newname, Qnil);
+
+  if (!case_only_rename)
+    newname = expand_cp_target (Fdirectory_file_name (file), newname);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -2345,15 +2367,9 @@ This is what happens in interactive use with M-x.  */)
   encoded_file = ENCODE_FILE (file);
   encoded_newname = ENCODE_FILE (newname);
 
-  /* If the filesystem is case-insensitive and the file names are
-     identical but for the case, don't worry whether the destination
-     already exists: the caller simply wants to change the letter-case
-     of the file name.  */
-  bool plain_rename
-    = ((!NILP (ok_if_already_exists) && !INTEGERP (ok_if_already_exists))
-       || (file_name_case_insensitive_p (SSDATA (encoded_file))
-	   && ! NILP (Fstring_equal (Fdowncase (file), Fdowncase (newname)))));
-
+  bool plain_rename = (case_only_rename
+		       || (!NILP (ok_if_already_exists)
+			   && !INTEGERP (ok_if_already_exists)));
   int rename_errno;
   if (!plain_rename)
     {
@@ -2395,7 +2411,7 @@ This is what happens in interactive use with M-x.  */)
   else
     {
       if (dirp < 0)
-	dirp = !NILP (Ffile_directory_p (file));
+	dirp = directory_like (file);
       if (dirp)
 	call4 (Qcopy_directory, file, newname, Qt, Qnil);
       else
@@ -2414,24 +2430,17 @@ This is what happens in interactive use with M-x.  */)
 DEFUN ("add-name-to-file", Fadd_name_to_file, Sadd_name_to_file, 2, 3,
        "fAdd name to file: \nGName to add to %s: \np",
        doc: /* Give FILE additional name NEWNAME.  Both args must be strings.
-Signals a `file-already-exists' error if a file NEWNAME already exists
+Signal a `file-already-exists' error if a file NEWNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.
-A number as third arg means request confirmation if NEWNAME already exists.
+An integer third arg means request confirmation if NEWNAME already exists.
 This is what happens in interactive use with M-x.  */)
   (Lisp_Object file, Lisp_Object newname, Lisp_Object ok_if_already_exists)
 {
   Lisp_Object handler;
   Lisp_Object encoded_file, encoded_newname;
 
-  encoded_file = encoded_newname = Qnil;
-  CHECK_STRING (file);
-  CHECK_STRING (newname);
   file = Fexpand_file_name (file, Qnil);
-
-  if (!NILP (Ffile_directory_p (newname)))
-    newname = Fexpand_file_name (Ffile_name_nondirectory (file), newname);
-  else
-    newname = Fexpand_file_name (newname, Qnil);
+  newname = expand_cp_target (file, newname);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -2471,28 +2480,23 @@ DEFUN ("make-symbolic-link", Fmake_symbolic_link, Smake_symbolic_link, 2, 3,
        "FMake symbolic link to file: \nGMake symbolic link to file %s: \np",
        doc: /* Make a symbolic link to TARGET, named LINKNAME.
 Both args must be strings.
-Signals a `file-already-exists' error if a file LINKNAME already exists
+Signal a `file-already-exists' error if a file LINKNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.
-A number as third arg means request confirmation if LINKNAME already exists.
+An integer third arg means request confirmation if LINKNAME already exists.
 This happens for interactive use with M-x.  */)
   (Lisp_Object target, Lisp_Object linkname, Lisp_Object ok_if_already_exists)
 {
   Lisp_Object handler;
   Lisp_Object encoded_target, encoded_linkname;
 
-  encoded_target = encoded_linkname = Qnil;
   CHECK_STRING (target);
-  CHECK_STRING (linkname);
   /* If the link target has a ~, we must expand it to get
      a truly valid file name.  Otherwise, do not expand;
      we want to permit links to relative file names.  */
   if (SREF (target, 0) == '~')
     target = Fexpand_file_name (target, Qnil);
 
-  if (!NILP (Ffile_directory_p (linkname)))
-    linkname = Fexpand_file_name (Ffile_name_nondirectory (target), linkname);
-  else
-    linkname = Fexpand_file_name (linkname, Qnil);
+  linkname = expand_cp_target (target, linkname);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
@@ -5577,7 +5581,7 @@ and are changed since last auto-saved.
 Auto-saving writes the buffer into a file
 so that your editing is not lost if the system crashes.
 This file is not the file you visited; that changes only when you save.
-Normally we run the normal hook `auto-save-hook' before saving.
+Normally, run the normal hook `auto-save-hook' before saving.
 
 A non-nil NO-MESSAGE argument means do not print any message if successful.
 A non-nil CURRENT-ONLY argument means save only current buffer.  */)
@@ -6111,7 +6115,7 @@ This applies only to the operation `inhibit-file-name-operation'.  */);
   Vinhibit_file_name_operation = Qnil;
 
   DEFVAR_LISP ("auto-save-list-file-name", Vauto_save_list_file_name,
-	       doc: /* File name in which we write a list of all auto save file names.
+	       doc: /* File name in which to write a list of all auto save file names.
 This variable is initialized automatically from `auto-save-list-file-prefix'
 shortly after Emacs reads your init file, if you have not yet given it
 a non-nil value.  */);
@@ -6166,6 +6170,7 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sfile_name_nondirectory);
   defsubr (&Sunhandled_file_name_directory);
   defsubr (&Sfile_name_as_directory);
+  defsubr (&Sdirectory_name_p);
   defsubr (&Sdirectory_file_name);
   defsubr (&Smake_temp_name);
   defsubr (&Sexpand_file_name);
