@@ -1007,7 +1007,7 @@ Entry to this mode runs the hooks on `term-mode-hook'."
   (setq indent-tabs-mode nil)
   (setq buffer-display-table term-display-table)
   (set (make-local-variable 'term-home-marker) (copy-marker 0))
-  (set (make-local-variable 'term-height) (1- (window-height)))
+  (set (make-local-variable 'term-height) (window-text-height))
   (set (make-local-variable 'term-width) (window-max-chars-per-line))
   (set (make-local-variable 'term-last-input-start) (make-marker))
   (set (make-local-variable 'term-last-input-end) (make-marker))
