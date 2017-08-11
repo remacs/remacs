@@ -34,6 +34,8 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <intprops.h>
 #include <verify.h>
 
+#include "rust-types.h"
+
 INLINE_HEADER_BEGIN
 
 /* Define a TYPE constant ID as an externally visible name.  Use like this:
@@ -1931,95 +1933,6 @@ INLINE int
 /* Placeholder for make-docfile to process.  The actual symbol
    definition is done by lread.c's defsym.  */
 #define DEFSYM(sym, name) /* empty */
-
-
-/***********************************************************************
-			     Hash Tables
- ***********************************************************************/
-
-/* The structure of a Lisp hash table.  */
-
-struct hash_table_test
-{
-  /* Name of the function used to compare keys.  */
-  Lisp_Object name;
-
-  /* User-supplied hash function, or nil.  */
-  Lisp_Object user_hash_function;
-
-  /* User-supplied key comparison function, or nil.  */
-  Lisp_Object user_cmp_function;
-
-  /* C function to compare two keys.  */
-  bool (*cmpfn) (struct hash_table_test *t, Lisp_Object, Lisp_Object);
-
-  /* C function to compute hash code.  */
-  EMACS_UINT (*hashfn) (struct hash_table_test *t, Lisp_Object);
-};
-
-struct Lisp_Hash_Table
-{
-  /* This is for Lisp; the hash table code does not refer to it.  */
-  struct vectorlike_header header;
-
-  /* Nil if table is non-weak.  Otherwise a symbol describing the
-     weakness of the table.  */
-  Lisp_Object weak;
-
-  /* Vector of hash codes.  If hash[I] is nil, this means that the
-     I-th entry is unused.  */
-  Lisp_Object hash;
-
-  /* Vector used to chain entries.  If entry I is free, next[I] is the
-     entry number of the next free item.  If entry I is non-free,
-     next[I] is the index of the next entry in the collision chain,
-     or -1 if there is such entry.  */
-  Lisp_Object next;
-
-  /* Bucket vector.  An entry of -1 indicates no item is present,
-     and a nonnegative entry is the index of the first item in
-     a collision chain.  This vector's size can be larger than the
-     hash table size to reduce collisions.  */
-  Lisp_Object index;
-
-  /* Only the fields above are traced normally by the GC.  The ones below
-     `count' are special and are either ignored by the GC or traced in
-     a special way (e.g. because of weakness).  */
-
-  /* Number of key/value entries in the table.  */
-  ptrdiff_t count;
-
-  /* Index of first free entry in free list, or -1 if none.  */
-  ptrdiff_t next_free;
-
-  /* True if the table can be purecopied.  The table cannot be
-     changed afterwards.  */
-  bool pure;
-
-  /* Resize hash table when number of entries / table size is >= this
-     ratio.  */
-  float rehash_threshold;
-
-  /* Used when the table is resized.  If equal to a negative integer,
-     the user rehash-size is the integer -REHASH_SIZE, and the new
-     size is the old size plus -REHASH_SIZE.  If positive, the user
-     rehash-size is the floating-point value REHASH_SIZE + 1, and the
-     new size is the old size times REHASH_SIZE + 1.  */
-  float rehash_size;
-
-  /* Vector of keys and values.  The key of item I is found at index
-     2 * I, the value is found at index 2 * I + 1.
-     This is gc_marked specially if the table is weak.  */
-  Lisp_Object key_and_value;
-
-  /* The comparison and hash functions.  */
-  struct hash_table_test test;
-
-  /* Next weak hash table if this is a weak hash table.  The head
-     of the list is in weak_hash_tables.  */
-  struct Lisp_Hash_Table *next_weak;
-};
-
 
 INLINE bool
 HASH_TABLE_P (Lisp_Object a)

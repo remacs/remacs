@@ -83,10 +83,19 @@ impl Eq for HashableLispObject {}
 #[derive(Clone)]
 #[repr(C)]
 pub struct LispHashTable {
+    /// This is for Lisp; the hash table code does not refer to it.
     header: Lisp_Vectorlike_Header,
+    
+    /// Nil if table is non-weak.  Otherwise a symbol describing the weakness of the table. 
     weak: LispObject,
+
+    /// true if the table can be purecopied.  The table cannot be changed afterwards.  
     is_pure: bool,
+
+    /// The comparison and hash functions.
     func: HashFunction,
+
+    /// The Hashmap used to store lisp objects.
     map: FnvHashMap<HashableLispObject, HashableLispObject>,
 }
 
@@ -351,6 +360,17 @@ pub unsafe fn mark_hashtable(map: *mut c_void) {
     }
 }
 
+
+/************************************************************************
+			   Weak Hash Tables
+ ************************************************************************/
+
+/* Sweep weak hash table H.  REMOVE_ENTRIES_P means remove
+   entries from the table that don't survive the current GC.
+   !REMOVE_ENTRIES_P means mark entries that are in use.  Value is
+   true if anything was marked.  */
+
+#[no_mangle]
 pub unsafe fn sweep_weak_hashtable(map: *mut c_void, remove_entries: bool) -> bool {
     let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
     let weakness = ptr.weak.to_raw();
