@@ -206,14 +206,11 @@ get_boot_time (void)
 					    WTMP_FILE, counter);
 	  if (! NILP (Ffile_exists_p (tempname)))
 	    {
-	      /* The utmp functions on mescaline.gnu.org accept only
-		 file names up to 8 characters long.  Choose a 2
-		 character long prefix, and call make_temp_file with
-		 second arg non-zero, so that it will add not more
-		 than 6 characters to the prefix.  */
-	      filename = Fexpand_file_name (build_string ("wt"),
-					    Vtemporary_file_directory);
-	      filename = make_temp_name (filename, 1);
+	      /* The utmp functions on older systems accept only file
+		 names up to 8 bytes long.  Choose a 2 byte prefix, so
+		 the 6-byte suffix does not make the name too long.  */
+	      filename = Fmake_temp_file_internal (build_string ("wt"), Qnil,
+						   empty_unibyte_string);
 	      CALLN (Fcall_process, build_string ("gzip"), Qnil,
 		     list2 (QCfile, filename), Qnil,
 		     build_string ("-cd"), tempname);

@@ -1779,9 +1779,6 @@ if test "$GCC" = yes && test "$ac_enable_autodepend" = yes; then
 fi
 AC_SUBST(AUTO_DEPEND)
 
-dnl checks for operating system services
-AC_SYS_LONG_FILE_NAMES
-
 #### Choose a window system.
 
 ## We leave window_system equal to none if

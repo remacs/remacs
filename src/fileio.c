@@ -97,6 +97,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <allocator.h>
 #include <careadlinkat.h>
 #include <stat-time.h>
+#include <tempname.h>
 
 #include <binary-io.h>
 
@@ -655,149 +656,67 @@ In Unix-syntax, this function just removes the final slash.  */)
   return val;
 }
 
-static const char make_temp_name_tbl[64] =
+DEFUN ("make-temp-file-internal", Fmake_temp_file_internal,
+       Smake_temp_file_internal, 3, 3, 0,
+       doc: /* Generate a new file whose name starts with PREFIX, a string.
+Return the name of the generated file.  If DIR-FLAG is zero, do not
+create the file, just its name.  Otherwise, if DIR-FLAG is non-nil,
+create an empty directory.  The file name should end in SUFFIX.
+
+Signal an error if the file could not be created.
+
+This function does not grok magic file names.  */)
+  (Lisp_Object prefix, Lisp_Object dir_flag, Lisp_Object suffix)
 {
-  'A','B','C','D','E','F','G','H',
-  'I','J','K','L','M','N','O','P',
-  'Q','R','S','T','U','V','W','X',
-  'Y','Z','a','b','c','d','e','f',
-  'g','h','i','j','k','l','m','n',
-  'o','p','q','r','s','t','u','v',
-  'w','x','y','z','0','1','2','3',
-  '4','5','6','7','8','9','-','_'
-};
+  bool make_temp_name = EQ (dir_flag, make_number (0));
+  CHECK_STRING (suffix);
+  if (!make_temp_name)
+    prefix = Fexpand_file_name (prefix, Vtemporary_file_directory);
 
-static unsigned make_temp_name_count, make_temp_name_count_initialized_p;
-
-/* Value is a temporary file name starting with PREFIX, a string.
-
-   The Emacs process number forms part of the result, so there is
-   no danger of generating a name being used by another process.
-   In addition, this function makes an attempt to choose a name
-   which has no existing file.  To make this work, PREFIX should be
-   an absolute file name.
-
-   BASE64_P means add the pid as 3 characters in base64
-   encoding.  In this case, 6 characters will be added to PREFIX to
-   form the file name.  Otherwise, if Emacs is running on a system
-   with long file names, add the pid as a decimal number.
-
-   This function signals an error if no unique file name could be
-   generated.  */
-
-Lisp_Object
-make_temp_name (Lisp_Object prefix, bool base64_p)
-{
-  Lisp_Object val, encoded_prefix;
-  ptrdiff_t len;
-  printmax_t pid;
-  char *p, *data;
-  char pidbuf[INT_BUFSIZE_BOUND (printmax_t)];
-  int pidlen;
-
-  CHECK_STRING (prefix);
-
-  /* VAL is created by adding 6 characters to PREFIX.  The first
-     three are the PID of this process, in base 64, and the second
-     three are incremented if the file already exists.  This ensures
-     262144 unique file names per PID per PREFIX.  */
-
-  pid = getpid ();
-
-  if (base64_p)
+  Lisp_Object encoded_prefix = ENCODE_FILE (prefix);
+  Lisp_Object encoded_suffix = ENCODE_FILE (suffix);
+  ptrdiff_t prefix_len = SBYTES (encoded_prefix);
+  ptrdiff_t suffix_len = SBYTES (encoded_suffix);
+  if (INT_MAX < suffix_len)
+    args_out_of_range (prefix, suffix);
+  int nX = 6;
+  Lisp_Object val = make_uninit_string (prefix_len + nX + suffix_len);
+  char *data = SSDATA (val);
+  memcpy (data, SSDATA (encoded_prefix), prefix_len);
+  memset (data + prefix_len, 'X', nX);
+  memcpy (data + prefix_len + nX, SSDATA (encoded_suffix), suffix_len);
+  int kind = (NILP (dir_flag) ? GT_FILE
+	      : make_temp_name ? GT_NOCREATE
+	      : GT_DIR);
+  int fd = gen_tempname (data, suffix_len, O_BINARY | O_CLOEXEC, kind);
+  if (fd < 0 || (NILP (dir_flag) && emacs_close (fd) != 0))
     {
-      pidbuf[0] = make_temp_name_tbl[pid & 63], pid >>= 6;
-      pidbuf[1] = make_temp_name_tbl[pid & 63], pid >>= 6;
-      pidbuf[2] = make_temp_name_tbl[pid & 63], pid >>= 6;
-      pidlen = 3;
-    }
-  else
-    {
-#ifdef HAVE_LONG_FILE_NAMES
-      pidlen = sprintf (pidbuf, "%"pMd, pid);
-#else
-      pidbuf[0] = make_temp_name_tbl[pid & 63], pid >>= 6;
-      pidbuf[1] = make_temp_name_tbl[pid & 63], pid >>= 6;
-      pidbuf[2] = make_temp_name_tbl[pid & 63], pid >>= 6;
-      pidlen = 3;
-#endif
-    }
-
-  encoded_prefix = ENCODE_FILE (prefix);
-  len = SBYTES (encoded_prefix);
-  val = make_uninit_string (len + 3 + pidlen);
-  data = SSDATA (val);
-  memcpy (data, SSDATA (encoded_prefix), len);
-  p = data + len;
-
-  memcpy (p, pidbuf, pidlen);
-  p += pidlen;
-
-  /* Here we try to minimize useless stat'ing when this function is
-     invoked many times successively with the same PREFIX.  We achieve
-     this by initializing count to a random value, and incrementing it
-     afterwards.
-
-     We don't want make-temp-name to be called while dumping,
-     because then make_temp_name_count_initialized_p would get set
-     and then make_temp_name_count would not be set when Emacs starts.  */
-
-  if (!make_temp_name_count_initialized_p)
-    {
-      make_temp_name_count = time (NULL);
-      make_temp_name_count_initialized_p = 1;
-    }
-
-  while (1)
-    {
-      unsigned num = make_temp_name_count;
-
-      p[0] = make_temp_name_tbl[num & 63], num >>= 6;
-      p[1] = make_temp_name_tbl[num & 63], num >>= 6;
-      p[2] = make_temp_name_tbl[num & 63], num >>= 6;
-
-      /* Poor man's congruential RN generator.  Replace with
-         ++make_temp_name_count for debugging.  */
-      make_temp_name_count += 25229;
-      make_temp_name_count %= 225307;
-
-      if (!check_existing (data))
+      static char const kind_message[][32] =
 	{
-	  /* We want to return only if errno is ENOENT.  */
-	  if (errno == ENOENT)
-	    return DECODE_FILE (val);
-	  else
-	    /* The error here is dubious, but there is little else we
-	       can do.  The alternatives are to return nil, which is
-	       as bad as (and in many cases worse than) throwing the
-	       error, or to ignore the error, which will likely result
-	       in looping through 225307 stat's, which is not only
-	       dog-slow, but also useless since eventually nil would
-	       have to be returned anyway.  */
-	    report_file_error ("Cannot create temporary name for prefix",
-			       prefix);
-	  /* not reached */
-	}
+	  [GT_FILE] = "Creating file with prefix",
+	  [GT_DIR] = "Creating directory with prefix",
+	  [GT_NOCREATE] = "Creating file name with prefix"
+	};
+      report_file_error (kind_message[kind], prefix);
     }
+  return DECODE_FILE (val);
 }
 
 
 DEFUN ("make-temp-name", Fmake_temp_name, Smake_temp_name, 1, 1, 0,
        doc: /* Generate temporary file name (string) starting with PREFIX (a string).
-The Emacs process number forms part of the result, so there is no
-danger of generating a name being used by another Emacs process
-\(so long as only a single host can access the containing directory...).
 
 This function tries to choose a name that has no existing file.
 For this to work, PREFIX should be an absolute file name, and PREFIX
 and the returned string should both be non-magic.
 
-There is a race condition between calling `make-temp-name' and creating the
-file, which opens all kinds of security holes.  For that reason, you should
-normally use `make-temp-file' instead.  */)
+There is a race condition between calling `make-temp-name' and
+later creating the file, which opens all kinds of security holes.
+For that reason, you should normally use `make-temp-file' instead.  */)
   (Lisp_Object prefix)
 {
-  return make_temp_name (prefix, 0);
+  return Fmake_temp_file_internal (prefix, make_number (0),
+				   empty_unibyte_string);
 }
 
 DEFUN ("expand-file-name", Fexpand_file_name, Sexpand_file_name, 1, 2, 0,
@@ -6168,6 +6087,7 @@ This includes interactive calls to `delete-file' and
   defsubr (&Sfile_name_as_directory);
   defsubr (&Sdirectory_name_p);
   defsubr (&Sdirectory_file_name);
+  defsubr (&Smake_temp_file_internal);
   defsubr (&Smake_temp_name);
   defsubr (&Sexpand_file_name);
   defsubr (&Ssubstitute_in_file_name);

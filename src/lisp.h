@@ -4014,7 +4014,6 @@ extern bool file_directory_p (const char *);
 extern bool file_accessible_directory_p (Lisp_Object);
 extern void init_fileio (void);
 extern void syms_of_fileio (void);
-extern Lisp_Object make_temp_name (Lisp_Object, bool);
 
 /* Defined in search.c.  */
 extern void shrink_regexp_cache (void);

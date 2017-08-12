@@ -1085,7 +1085,6 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
     genbase = name;
   else
     {
-      /* Note fileio.c:make_temp_name does random differently.  */
       char number[sizeof "-999999"];
       int i = XFASTINT (Frandom (make_number (999999)));
       AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));

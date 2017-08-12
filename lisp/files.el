@@ -1407,6 +1407,15 @@ You can then use `write-region' to write new data into the file.
 If DIR-FLAG is non-nil, create a new empty directory instead of a file.
 
 If SUFFIX is non-nil, add that at the end of the file name."
+  (let ((absolute-prefix (expand-file-name prefix temporary-file-directory)))
+    (if (find-file-name-handler absolute-prefix 'write-region)
+        (files--make-magic-temp-file prefix dir-flag suffix)
+      (make-temp-file-internal absolute-prefix
+			       (if dir-flag t) (or suffix "")))))
+
+(defun files--make-magic-temp-file (prefix &optional dir-flag suffix)
+  "Implement (make-temp-file PREFIX DIR-FLAG SUFFIX).
+This implementation works on magic file names."
   ;; Create temp files with strict access rights.  It's easy to
   ;; loosen them later, whereas it's impossible to close the
   ;; time-window of loose permissions otherwise.
