@@ -574,6 +574,16 @@ The value is a whole shell command.
 
 @item @dots{}-switches
 The value specifies options for a command.
+
+@item @var{prefix}--@dots{}
+The variable is intended for internal use and is defined in the file
+@file{@var{prefix}.el}.  (Emacs code contributed before 2018 may
+follow other conventions, which are being phased out.)
+
+@item @dots{}-internal
+The variable is intended for internal use and is defined in C code.
+(Emacs code contributed before 2018 may follow other conventions,
+which are being phased out.)
 @end table
 
   When you define a variable, always consider whether you should mark

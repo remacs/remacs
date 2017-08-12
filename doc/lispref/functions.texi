@@ -544,6 +544,15 @@ variable; these two uses of a symbol are independent and do not
 conflict.  (This is not the case in some dialects of Lisp, like
 Scheme.)
 
+  By convention, if a function's symbol consists of two names
+separated by @samp{--}, the function is intended for internal use and
+the first part names the file defining the function.  For example, a
+function named @code{vc-git--rev-parse} is an internal function
+defined in @file{vc-git.el}.  Internal-use functions written in C have
+names ending in @samp{-internal}, e.g., @code{bury-buffer-internal}.
+Emacs code contributed before 2018 may follow other internal-use
+naming conventions, which are being phased out.
+
 @node Defining Functions
 @section Defining Functions
 @cindex defining a function
