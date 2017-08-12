@@ -2628,6 +2628,11 @@ Use the face `mode-line-highlight' for features that can be selected."
   :version "21.1"
   :group 'basic-faces)
 
+(defface header-line-highlight '((t :inherit highlight))
+  "Basic header line face for highlighting."
+  :version "26.1"
+  :group 'basic-faces)
+
 (defface vertical-border
   '((((type tty)) :inherit mode-line-inactive))
   "Face used for vertical window dividers on ttys."

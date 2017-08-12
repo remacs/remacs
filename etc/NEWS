@@ -254,6 +254,12 @@ face instead of the 'escape-glyph' face.
 ** Approximations to quotes are now displayed with the new 'homoglyph'
 face instead of the 'escape-glyph' face.
 
++++
+** New face 'header-line-highlight'.
+This face is the header-line analogue of 'mode-line-highlight'; it
+should be the preferred mouse-face for mouse-sensitive elements in the
+header line.
+
 ---
 ** 'C-x h' ('mark-whole-buffer') will now avoid marking the prompt
 part of minibuffers.

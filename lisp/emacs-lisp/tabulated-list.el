@@ -191,7 +191,7 @@ Populated by `tabulated-list-init-header'.")
   ;; FIXME: Should share code with tabulated-list-print-col!
   (let ((x (max tabulated-list-padding 0))
 	(button-props `(help-echo "Click to sort by column"
-			mouse-face highlight
+			mouse-face header-line-highlight
 			keymap ,tabulated-list-sort-button-map))
 	(cols nil))
     (if display-line-numbers

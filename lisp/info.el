@@ -4654,7 +4654,7 @@ first line or header line, and for breadcrumb links.")
             (if (string-equal (downcase tag) "node")
                 (put-text-property nbeg nend 'font-lock-face 'info-header-node)
               (put-text-property nbeg nend 'font-lock-face 'info-header-xref)
-              (put-text-property tbeg nend 'mouse-face 'highlight)
+              (put-text-property tbeg nend 'mouse-face 'header-line-highlight)
               (put-text-property tbeg nend
                                  'help-echo
                                  (concat "mouse-2: Go to node "
