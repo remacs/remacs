@@ -127,7 +127,8 @@ done
 
 case $do_autoconf,$do_git in
   false,false)
-    do_autoconf=true;;
+    do_autoconf=true
+    test -e .git && do_git=true;;
 esac
 
 # Generate Autoconf-related files, if requested.

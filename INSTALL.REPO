@@ -19,7 +19,7 @@ To use the autotools, run the following shell command to generate the
 'configure' script and some related files, and to set up your git
 configuration:
 
-  $ ./autogen.sh all
+  $ ./autogen.sh
 
 You can then configure your build as follows:
 

@@ -14,7 +14,7 @@ Briefly, the following shell commands build and run Emacs from scratch:
 	git config --global transfer.fsckObjects true
 	git clone git://git.sv.gnu.org/emacs.git
 	cd emacs
-	./autogen.sh all
+	./autogen.sh
 	./configure
 	make
 	src/emacs
