@@ -3887,14 +3887,29 @@ int
 faccessat (int dirfd, const char * path, int mode, int flags)
 {
   DWORD attributes;
+  char fullname[MAX_UTF8_PATH];
 
+  /* Rely on a hack: an open directory is modeled as file descriptor 0,
+     and its actual file name is stored in dir_pathname by opendir.
+     This is good enough for the current usage in Emacs, but is fragile.  */
   if (dirfd != AT_FDCWD
       && !(IS_DIRECTORY_SEP (path[0])
 	   || IS_DEVICE_SEP (path[1])))
     {
-      errno = EBADF;
-      return -1;
+      char lastc = dir_pathname[strlen (dir_pathname) - 1];
+
+      if (_snprintf (fullname, sizeof fullname, "%s%s%s",
+		     dir_pathname, IS_DIRECTORY_SEP (lastc) ? "" : "/", path)
+	  < 0)
+	{
+	  errno = ENAMETOOLONG;
+	  return -1;
+	}
+      path = fullname;
     }
+
+  if (IS_DIRECTORY_SEP (path[strlen (path) - 1]) && (mode & F_OK) != 0)
+    mode |= D_OK;
 
   /* MSVCRT implementation of 'access' doesn't recognize D_OK, and its
      newer versions blow up when passed D_OK.  */

@@ -3950,9 +3950,22 @@ faccessat (int dirfd, const char * path, int mode, int flags)
       && !(IS_DIRECTORY_SEP (path[0])
 	   || IS_DEVICE_SEP (path[1])))
     {
-      errno = EBADF;
-      return -1;
+      char lastc = dir_pathname[strlen (dir_pathname) - 1];
+
+      if (strlen (dir_pathname) + strlen (path) + IS_DIRECTORY_SEP (lastc)
+	  >= MAXPATHLEN)
+	{
+	  errno = ENAMETOOLONG;
+	  return -1;
+	}
+
+      sprintf (fullname, "%s%s%s",
+	       dir_pathname, IS_DIRECTORY_SEP (lastc) ? "" : "/", path);
+      path = fullname;
     }
+
+  if ((mode & F_OK) != 0 && IS_DIRECTORY_SEP (path[strlen (path) - 1]))
+    mode |= D_OK;
 
   return access (path, mode);
 }
