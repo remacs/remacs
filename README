@@ -45,7 +45,8 @@ The file 'configure.ac' is the input used by the autoconf program to
 construct the 'configure' script.
 
 The shell script 'autogen.sh' generates 'configure' and other files by
-running Autoconf, which in turn uses GNU m4.  If you want to use it,
+running Autoconf (which in turn uses GNU m4), and configures files in
+the .git subdirectory if you are using Git.  If you want to use it,
 you will need to install recent versions of these build tools.  This
 should be needed only if you edit files like 'configure.ac' that
 specify Emacs's autobuild procedure.
