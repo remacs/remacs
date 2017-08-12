@@ -137,6 +137,7 @@ call, letting the SMB client use the default one."
 	 "NT_STATUS_HOST_UNREACHABLE"
 	 "NT_STATUS_IMAGE_ALREADY_LOADED"
 	 "NT_STATUS_INVALID_LEVEL"
+	 "NT_STATUS_INVALID_PARAMETER_MIX"
 	 "NT_STATUS_IO_TIMEOUT"
 	 "NT_STATUS_LOGON_FAILURE"
 	 "NT_STATUS_NETWORK_ACCESS_DENIED"
@@ -1124,9 +1125,7 @@ target of the symlink differ."
 		  (format
 		   "File %s already exists; make it a new name anyway? "
 		   linkname)))
-	(tramp-error
-	 v2 'file-already-exists
-	 "make-symbolic-link: file %s already exists" linkname))
+	(tramp-error v2 'file-already-exists linkname))
       (unless (tramp-smb-get-cifs-capabilities v1)
 	(tramp-error v2 'file-error "make-symbolic-link not supported"))
       ;; We must also flush the cache of the directory, because
@@ -1469,14 +1468,17 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
       (error filename))))
 
 (defun tramp-smb-handle-write-region
-  (start end filename &optional append visit lockname confirm)
+  (start end filename &optional append visit lockname mustbenew)
   "Like `write-region' for Tramp files."
   (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
-    (when (and confirm (file-exists-p filename))
-      (unless (y-or-n-p (format "File %s exists; overwrite anyway? "
-				filename))
-	(tramp-error v 'file-error "File not overwritten")))
+    (when (and mustbenew (file-exists-p filename)
+	       (or (eq mustbenew 'excl)
+		   (not
+		    (y-or-n-p
+		     (format "File %s exists; overwrite anyway? " filename)))))
+      (tramp-error v 'file-already-exists filename))
+
     ;; We must also flush the cache of the directory, because
     ;; `file-attributes' reads the values from there.
     (tramp-flush-file-property v (file-name-directory localname))
@@ -1489,10 +1491,7 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
       ;; modtime data to be clobbered from the temp file.  We call
       ;; `set-visited-file-modtime' ourselves later on.
       (tramp-run-real-handler
-       'write-region
-       (if confirm ; don't pass this arg unless defined for backward compat.
-	   (list start end tmpfile append 'no-message lockname confirm)
-	 (list start end tmpfile append 'no-message lockname)))
+       'write-region (list start end tmpfile append 'no-message lockname))
 
       (with-tramp-progress-reporter
 	  v 3 (format "Moving tmp file %s to %s" tmpfile filename)

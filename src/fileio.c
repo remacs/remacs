@@ -4852,8 +4852,8 @@ write_region (Lisp_Object start, Lisp_Object end, Lisp_Object filename,
   if (!NILP (handler))
     {
       Lisp_Object val;
-      val = call6 (handler, Qwrite_region, start, end,
-		   filename, append, visit);
+      val = call8 (handler, Qwrite_region, start, end,
+		   filename, append, visit, lockname, mustbenew);
 
       if (visiting)
 	{

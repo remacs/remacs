@@ -3223,8 +3223,12 @@ system TYPE.")
 (defun ange-ftp-binary-file (file)
   (string-match-p ange-ftp-binary-file-name-regexp file))
 
-(defun ange-ftp-write-region (start end filename &optional append visit)
+(defun ange-ftp-write-region
+    (start end filename &optional append visit _lockname mustbenew)
   (setq filename (expand-file-name filename))
+  (when mustbenew
+    (ange-ftp-barf-or-query-if-file-exists
+     filename "overwrite" (not (eq mustbenew 'excl))))
   (let ((parsed (ange-ftp-ftp-name filename)))
     (if parsed
 	(let* ((host (nth 0 parsed))

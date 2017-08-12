@@ -630,14 +630,17 @@ But handle the case, if the \"test\" command is not available."
 		       rw-path)))))))
 
 (defun tramp-adb-handle-write-region
-  (start end filename &optional append visit lockname confirm)
+  (start end filename &optional append visit lockname mustbenew)
   "Like `write-region' for Tramp files."
   (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
-    (when (and confirm (file-exists-p filename))
-      (unless (y-or-n-p (format "File %s exists; overwrite anyway? "
-				filename))
-	(tramp-error v 'file-error "File not overwritten")))
+    (when (and mustbenew (file-exists-p filename)
+	       (or (eq mustbenew 'excl)
+		   (not
+		    (y-or-n-p
+		     (format "File %s exists; overwrite anyway? " filename)))))
+      (tramp-error v 'file-already-exists filename))
+
     ;; We must also flush the cache of the directory, because
     ;; `file-attributes' reads the values from there.
     (tramp-flush-file-property v (file-name-directory localname))
@@ -650,8 +653,7 @@ But handle the case, if the \"test\" command is not available."
 	 tmpfile
 	 (logior (or (file-modes tmpfile) 0) (string-to-number "0600" 8))))
       (tramp-run-real-handler
-       'write-region
-       (list start end tmpfile append 'no-message lockname confirm))
+       'write-region (list start end tmpfile append 'no-message lockname))
       (with-tramp-progress-reporter
         v 3 (format-message
              "Moving tmp file `%s' to `%s'" tmpfile filename)

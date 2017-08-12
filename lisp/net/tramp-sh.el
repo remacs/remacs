@@ -1085,8 +1085,7 @@ target of the symlink differ."
 			   (format
 			    "File %s already exists; make it a link anyway? "
 			    l-localname)))))
-	    (tramp-error
-	     l 'file-already-exists "File %s already exists" l-localname)
+	    (tramp-error l 'file-already-exists l-localname)
 	  (delete-file linkname)))
 
       ;; If FILENAME is a Tramp name, use just the localname component.
@@ -1925,9 +1924,7 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 		    (format
 		     "File %s already exists; make it a new name anyway? "
 		     newname)))
-	  (tramp-error
-	   v2 'file-already-exists
-	   "add-name-to-file: file %s already exists" newname))
+	  (tramp-error v2 'file-already-exists newname))
 	(when ok-if-already-exists (setq ln (concat ln " -f")))
 	(tramp-flush-file-property v2 (file-name-directory v2-localname))
 	(tramp-flush-file-property v2 v2-localname)
@@ -2041,8 +2038,7 @@ file names."
 
     (with-parsed-tramp-file-name (if t1 filename newname) nil
       (when (and (not ok-if-already-exists) (file-exists-p newname))
-	(tramp-error
-	 v 'file-already-exists "File %s already exists" newname))
+	(tramp-error v 'file-already-exists newname))
 
       (with-tramp-progress-reporter
 	  v 0 (format "%s %s to %s"
@@ -3150,23 +3146,16 @@ the result will be a local, non-Tramp, file name."
 
 ;; CCC grok LOCKNAME
 (defun tramp-sh-handle-write-region
-  (start end filename &optional append visit lockname confirm)
+  (start end filename &optional append visit lockname mustbenew)
   "Like `write-region' for Tramp files."
   (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
-    ;; Following part commented out because we don't know what to do about
-    ;; file locking, and it does not appear to be a problem to ignore it.
-    ;; Ange-ftp ignores it, too.
-    ;;  (when (and lockname (stringp lockname))
-    ;;    (setq lockname (expand-file-name lockname)))
-    ;;  (unless (or (eq lockname nil)
-    ;;              (string= lockname filename))
-    ;;    (error
-    ;;     "tramp-sh-handle-write-region: LOCKNAME must be nil or equal FILENAME"))
-
-    (when (and confirm (file-exists-p filename))
-      (unless (y-or-n-p (format "File %s exists; overwrite anyway? " filename))
-	(tramp-error v 'file-error "File not overwritten")))
+    (when (and mustbenew (file-exists-p filename)
+	       (or (eq mustbenew 'excl)
+		   (not
+		    (y-or-n-p
+		     (format "File %s exists; overwrite anyway? " filename)))))
+      (tramp-error v 'file-already-exists filename))
 
     (let ((uid (or (tramp-compat-file-attribute-user-id
 		    (file-attributes filename 'integer))
@@ -3185,8 +3174,7 @@ the result will be a local, non-Tramp, file name."
 		      (file-writable-p localname)))))
 	  ;; Short track: if we are on the local host, we can run directly.
 	  (tramp-run-real-handler
-	   'write-region
-	   (list start end localname append 'no-message lockname confirm))
+	   'write-region (list start end localname append 'no-message lockname))
 
 	(let* ((modes (save-excursion (tramp-default-file-modes filename)))
 	       ;; We use this to save the value of
@@ -3223,7 +3211,7 @@ the result will be a local, non-Tramp, file name."
 	    (condition-case err
 		(tramp-run-real-handler
 		 'write-region
-		 (list start end tmpfile append 'no-message lockname confirm))
+		 (list start end tmpfile append 'no-message lockname))
 	      ((error quit)
 	       (setq tramp-temp-buffer-file-name nil)
 	       (delete-file tmpfile)

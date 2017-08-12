@@ -1846,7 +1846,23 @@ This checks also `file-name-as-directory', `file-name-directory',
 	      (write-region 3 5 tmp-name))
 	    (with-temp-buffer
 	      (insert-file-contents tmp-name)
-	      (should (string-equal (buffer-string) "34"))))
+	      (should (string-equal (buffer-string) "34")))
+
+	    ;; Do not overwrite if excluded.
+	    (cl-letf (((symbol-function 'y-or-n-p) (lambda (_prompt) t)))
+	      (write-region "foo" nil tmp-name nil nil nil 'mustbenew))
+	    ;; `mustbenew' is passed to Tramp since Emacs 26.1.  We
+	    ;; have no test for this, so we check function
+	    ;; `temporary-file-directory', which has been added to
+	    ;; Emacs 26.1 as well.
+	    (when (fboundp 'temporary-file-directory)
+	      (should-error
+	       (cl-letf (((symbol-function 'y-or-n-p) 'ignore))
+		 (write-region "foo" nil tmp-name nil nil nil 'mustbenew))
+               :type 'file-already-exists)
+	      (should-error
+	       (write-region "foo" nil tmp-name nil nil nil 'excl)
+	       :type 'file-already-exists)))
 
 	;; Cleanup.
 	(ignore-errors (delete-file tmp-name))))))

@@ -1200,6 +1200,10 @@ particular, the function 'internal--module-call' has been removed.
 Code that depends on undocumented internals of the module system might
 break.
 
+---
+** The arguments LOCKNAME and MUSTBENEW of 'write-region' are
+propagated to file name handlers now.
+
 
 * Lisp Changes in Emacs 26.1
 
