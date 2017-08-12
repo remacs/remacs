@@ -74,7 +74,6 @@ char *sys_ctime (const time_t *);
 int sys_chdir (const char *);
 int sys_creat (const char *, int);
 FILE *sys_fopen (const char *, const char *);
-int sys_mkdir (const char *);
 int sys_open (const char *, int, int);
 int sys_rename (char const *, char const *);
 int sys_rmdir (const char *);
@@ -4344,7 +4343,7 @@ sys_link (const char * old, const char * new)
 }
 
 int
-sys_mkdir (const char * path)
+sys_mkdir (const char * path, mode_t mode)
 {
   path = map_w32_filename (path, NULL);
 
@@ -4395,61 +4394,6 @@ sys_open (const char * path, int oflag, int mode)
     }
 
   return res;
-}
-
-/* Implementation of mkostemp for MS-Windows, to avoid race conditions
-   when using mktemp.
-
-   Standard algorithm for generating a temporary file name seems to be
-   use pid or tid with a letter on the front (in place of the 6 X's)
-   and cycle through the letters to find a unique name.  We extend
-   that to allow any reasonable character as the first of the 6 X's,
-   so that the number of simultaneously used temporary files will be
-   greater.  */
-
-int
-mkostemp (char * template, int flags)
-{
-  char * p;
-  int i, fd = -1;
-  unsigned uid = GetCurrentThreadId ();
-  int save_errno = errno;
-  static char first_char[] = "abcdefghijklmnopqrstuvwyz0123456789!%-_@#";
-
-  errno = EINVAL;
-  if (template == NULL)
-    return -1;
-
-  p = template + strlen (template);
-  i = 5;
-  /* replace up to the last 5 X's with uid in decimal */
-  while (--p >= template && p[0] == 'X' && --i >= 0)
-    {
-      p[0] = '0' + uid % 10;
-      uid /= 10;
-    }
-
-  if (i < 0 && p[0] == 'X')
-    {
-      i = 0;
-      do
-	{
-	  p[0] = first_char[i];
-	  if ((fd = sys_open (template,
-			      flags | _O_CREAT | _O_EXCL | _O_RDWR,
-			      S_IRUSR | S_IWUSR)) >= 0
-	      || errno != EEXIST)
-	    {
-	      if (fd >= 0)
-		errno = save_errno;
-	      return fd;
-	    }
-	}
-      while (++i < sizeof (first_char));
-    }
-
-  /* Template is badly formed or else we can't generate a unique name.  */
-  return -1;
 }
 
 int

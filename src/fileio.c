@@ -2178,11 +2178,7 @@ DEFUN ("make-directory-internal", Fmake_directory_internal,
 
   dir = SSDATA (encoded_dir);
 
-#ifdef WINDOWSNT
-  if (mkdir (dir) != 0)
-#else
   if (mkdir (dir, 0777 & ~auto_saving_dir_umask) != 0)
-#endif
     report_file_error ("Creating directory", directory);
 
   return Qnil;
