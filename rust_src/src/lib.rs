@@ -50,6 +50,7 @@ mod threads;
 mod chartable;
 mod category;
 mod obarray;
+mod editfns;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -79,6 +80,7 @@ pub use math::Fquo;
 pub use math::Flss;
 pub use math::Fleq;
 pub use math::arithcompare;
+pub use editfns::Feobp;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -127,6 +129,9 @@ pub use buffers::Fcurrent_buffer;
 pub use obarray::intern_1;
 pub use obarray::Fintern;
 pub use obarray::Fintern_soft;
+
+// Used in fileio.c
+pub use editfns::Fpoint;
 
 // used in chartab.c
 pub use chartable::Fset_char_table_parent;
@@ -301,5 +306,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*floatfns::Sfloor);
         defsubr(&*floatfns::Sround);
         defsubr(&*floatfns::Struncate);
+        defsubr(&*editfns::Spoint);
+        defsubr(&*editfns::Sbuffer_size);
+        defsubr(&*editfns::Seobp);
     }
 }

@@ -10,14 +10,25 @@ use threads::ThreadState;
 
 use remacs_macros::lisp_fn;
 
+pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
 
 pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 
 impl LispBufferRef {
     #[inline]
+    pub fn zv(&self) -> ptrdiff_t {
+        self.zv
+    }
+
+    #[inline]
     pub fn beg_addr(&self) -> *mut c_uchar {
         unsafe { (*self.text).beg }
+    }
+
+    #[inline]
+    pub fn beg(&self) -> ptrdiff_t {
+        BEG
     }
 
     #[inline]
@@ -53,6 +64,11 @@ impl LispBufferRef {
     #[inline]
     pub fn z_byte(&self) -> ptrdiff_t {
         unsafe { (*self.text).z_byte }
+    }
+
+    #[inline]
+    pub fn z(&self) -> ptrdiff_t {
+        unsafe { (*self.text).z }
     }
 
     // Check if buffer is live
