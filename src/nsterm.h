@@ -668,6 +668,8 @@ typedef id instancetype;
               alpha:(unsigned char)a;
 - (void)setAlphaAtX: (int)x Y: (int)y to: (unsigned char)a;
 - (NSColor *)stippleMask;
+- (Lisp_Object)getMetadata;
+- (BOOL)setFrame: (unsigned int) index;
 @end
 
 

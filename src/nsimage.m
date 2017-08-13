@@ -76,8 +76,15 @@ ns_load_image (struct frame *f, struct image *img,
 {
   EmacsImage *eImg = nil;
   NSSize size;
+  Lisp_Object lisp_index;
+  unsigned int index;
 
   NSTRACE ("ns_load_image");
+
+  eassert (valid_image_p (img->spec));
+
+  lisp_index = Fplist_get (XCDR (img->spec), QCindex);
+  index = INTEGERP (lisp_index) ? XFASTINT (lisp_index) : 0;
 
   if (STRINGP (spec_file))
     {
@@ -99,12 +106,20 @@ ns_load_image (struct frame *f, struct image *img,
       return 0;
     }
 
+  if (index < 0 || ![eImg setFrame: index])
+    {
+      add_to_log ("Unable to set index %d for image %s", index, img->spec);
+      return 0;
+    }
+
   size = [eImg size];
   img->width = size.width;
   img->height = size.height;
 
   /* 4) set img->pixmap = emacsimage */
   img->pixmap = eImg;
+
+  img->lisp_data = [eImg getMetadata];
   return 1;
 }
 
@@ -433,6 +448,51 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   if (stippleMask == nil)
       stippleMask = [[NSColor colorWithPatternImage: self] retain];
   return stippleMask;
+}
+
+/* If the image has multiple frames, get a count of them and the
+   animation delay, if available. */
+- (Lisp_Object)getMetadata
+{
+  Lisp_Object metadata = Qnil;
+
+  for (NSImageRep * r in [self representations])
+    {
+      if ([r isKindOfClass:[NSBitmapImageRep class]])
+        {
+          NSBitmapImageRep * bm = (NSBitmapImageRep *)r;
+          int frames = [[bm valueForProperty: NSImageFrameCount] intValue];
+          float delay = [[bm valueForProperty: NSImageCurrentFrameDuration]
+                          floatValue];
+
+          if (frames > 1)
+            metadata = Fcons (Qcount, Fcons (make_number (frames), metadata));
+          if (delay > 0)
+            metadata = Fcons (Qdelay, Fcons (make_float (delay), metadata));
+          break;
+        }
+    }
+  return metadata;
+}
+
+/* Attempt to set the animation frame to be displayed. */
+- (BOOL)setFrame: (unsigned int) index
+{
+  for (NSImageRep * r in [self representations])
+    {
+      if ([r isKindOfClass:[NSBitmapImageRep class]])
+        {
+          NSBitmapImageRep * bm = (NSBitmapImageRep *)r;
+          if ([[bm valueForProperty: NSImageFrameCount] intValue] <= index)
+            continue;
+
+          [bm setProperty: NSImageCurrentFrame
+                withValue: [NSNumber numberWithUnsignedInt: index]];
+          return YES;
+        }
+    }
+
+  return NO;
 }
 
 @end
