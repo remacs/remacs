@@ -72,7 +72,7 @@ considered to be running if the newsticker timer list is not empty."
     ("Debian Security Advisories - Long format"
     "http://www.debian.org/security/dsa-long.en.rdf")
     ("Emacs Wiki"
-    "http://www.emacswiki.org/cgi-bin/wiki.pl?action=rss"
+    "https://www.emacswiki.org/emacs?action=rss"
     nil
     3600)
     ("Freshmeat.net"
