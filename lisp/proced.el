@@ -1438,7 +1438,7 @@ Replace newline characters by \"^J\" (two characters)."
              (hprops
               (if (nth 4 grammar)
                   (let ((descend (if (eq key sort-key) proced-descend (nth 5 grammar))))
-                    `(proced-key ,key mouse-face highlight
+                    `(proced-key ,key mouse-face header-line-highlight
                                  help-echo ,(format proced-header-help-echo
                                                     (if descend "-" "+")
                                                     (nth 1 grammar)

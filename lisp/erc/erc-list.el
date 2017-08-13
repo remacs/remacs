@@ -145,7 +145,7 @@
   (erc-propertize title
 		  'column-number column
 		  'help-echo "mouse-1: sort by column"
-		  'mouse-face 'highlight
+		  'mouse-face 'header-line-highlight
 		  'keymap erc-list-menu-sort-button-map))
 
 (define-derived-mode erc-list-menu-mode special-mode "ERC-List"
