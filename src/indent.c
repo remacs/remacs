@@ -2229,10 +2229,10 @@ whether or not it is currently displayed in some window.  */)
 		 screen lines we need to backtrack.  */
 	      it_overshoot_count = it.vpos;
 	    }
-	  /* We will overshoot if lines are truncated and point lies
+	  /* We might overshoot if lines are truncated and point lies
 	     beyond the right margin of the window.  */
 	  if (it.line_wrap == TRUNCATE && it.current_x >= it.last_visible_x
-	      && it_overshoot_count == 0)
+	      && it_overshoot_count == 0 && it.vpos > 0)
 	    it_overshoot_count = 1;
 	  if (it_overshoot_count > 0)
 	    move_it_by_lines (&it, -it_overshoot_count);
