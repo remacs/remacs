@@ -175,7 +175,7 @@ pub fn buffer_file_name(buffer: LispObject) -> LispObject {
 }
 
 /// Return t if BUFFER was modified since its file was last read or saved.
-/// No argument or nil as argument means use current buffer as BUFFER.  */)
+/// No argument or nil as argument means use current buffer as BUFFER.
 #[lisp_fn(min = "0")]
 pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
     let buf = buffer.as_buffer_or_current_buffer();
