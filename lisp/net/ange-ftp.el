@@ -530,33 +530,8 @@
 ;;     to fix its files hashtable.  A cookie to anyone who can think of a
 ;;     fast, sure-fire way to recognize ULTRIX over ftp.
 
-;; If you find any bugs or problems with this package, PLEASE either e-mail
-;; the above author, or send a message to the ange-ftp-lovers mailing list
-;; below.  Ideas and constructive comments are especially welcome.
-
-;; ange-ftp-lovers:
-;;
-;; ange-ftp has its own mailing list modestly called ange-ftp-lovers.  All
-;; users of ange-ftp are welcome to subscribe (see below) and to discuss
-;; aspects of ange-ftp.  New versions of ange-ftp are posted periodically to
-;; the mailing list.
-
-;; To [un]subscribe to ange-ftp-lovers, or to report mailer problems with the
-;; list, please mail one of the following addresses:
-;;
-;;     ange-ftp-lovers-request@hplb.hpl.hp.com
-;;
-;; Please don't forget the -request part.
-;;
-;; For mail to be posted directly to ange-ftp-lovers, send to one of the
-;; following addresses:
-;;
-;;     ange-ftp-lovers@hplb.hpl.hp.com
-;;
-;; Alternatively, there is a mailing list that only gets announcements of new
-;; ange-ftp releases.  This is called ange-ftp-lovers-announce, and can be
-;; subscribed to by e-mailing to the -request address as above.  Please make
-;; it clear in the request which mailing list you wish to join.
+;; If you find any bugs or problems with this package, PLEASE report a
+;; bug to the Emacs maintainers via M-x report-emacs-bug.
 
 ;; -----------------------------------------------------------
 ;; Technical information on this package:
