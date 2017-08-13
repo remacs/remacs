@@ -1407,14 +1407,17 @@ You can then use `write-region' to write new data into the file.
 If DIR-FLAG is non-nil, create a new empty directory instead of a file.
 
 If SUFFIX is non-nil, add that at the end of the file name."
-  (let ((absolute-prefix (expand-file-name prefix temporary-file-directory)))
+  (let ((absolute-prefix
+	 (if (or (zerop (length prefix)) (member prefix '("." "..")))
+	     (concat (file-name-as-directory temporary-file-directory) prefix)
+	   (expand-file-name prefix temporary-file-directory))))
     (if (find-file-name-handler absolute-prefix 'write-region)
-        (files--make-magic-temp-file prefix dir-flag suffix)
+        (files--make-magic-temp-file absolute-prefix dir-flag suffix)
       (make-temp-file-internal absolute-prefix
 			       (if dir-flag t) (or suffix "")))))
 
-(defun files--make-magic-temp-file (prefix &optional dir-flag suffix)
-  "Implement (make-temp-file PREFIX DIR-FLAG SUFFIX).
+(defun files--make-magic-temp-file (absolute-prefix &optional dir-flag suffix)
+  "Implement (make-temp-file ABSOLUTE-PREFIX DIR-FLAG SUFFIX).
 This implementation works on magic file names."
   ;; Create temp files with strict access rights.  It's easy to
   ;; loosen them later, whereas it's impossible to close the
@@ -1423,13 +1426,7 @@ This implementation works on magic file names."
     (let (file)
       (while (condition-case ()
 		 (progn
-		   (setq file
-			 (make-temp-name
-			  (if (zerop (length prefix))
-			      (file-name-as-directory
-			       temporary-file-directory)
-			    (expand-file-name prefix
-					      temporary-file-directory))))
+		   (setq file (make-temp-name absolute-prefix))
 		   (if suffix
 		       (setq file (concat file suffix)))
 		   (if dir-flag

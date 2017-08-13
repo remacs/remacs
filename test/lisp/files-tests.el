@@ -166,6 +166,20 @@ form.")
 	    (should (eq buffer-file-coding-system 'iso-2022-7bit-unix))))
       (delete-file tempfile))))
 
+(ert-deftest files-test-make-temp-file-empty-prefix ()
+  "Test make-temp-file with an empty prefix."
+  (let ((tempfile (make-temp-file ""))
+        (tempdir (make-temp-file "" t))
+        (tempfile-. (make-temp-file "."))
+        (tempdir-. (make-temp-file "." t))
+        (tempfile-.. (make-temp-file ".."))
+        (tempdir-.. (make-temp-file ".." t)))
+    (dolist (file (list tempfile tempfile-. tempfile-..))
+      (should file)
+      (delete-file file))
+    (dolist (dir (list tempdir tempdir-. tempdir-..))
+      (should dir)
+      (delete-directory dir))))
 
 ;; Stop the above "Local Var..." confusing Emacs.
 

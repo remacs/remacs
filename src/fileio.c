@@ -662,17 +662,16 @@ DEFUN ("make-temp-file-internal", Fmake_temp_file_internal,
 Return the name of the generated file.  If DIR-FLAG is zero, do not
 create the file, just its name.  Otherwise, if DIR-FLAG is non-nil,
 create an empty directory.  The file name should end in SUFFIX.
+Do not expand PREFIX; a non-absolute PREFIX is relative to the Emacs
+working directory.
 
 Signal an error if the file could not be created.
 
 This function does not grok magic file names.  */)
   (Lisp_Object prefix, Lisp_Object dir_flag, Lisp_Object suffix)
 {
-  bool make_temp_name = EQ (dir_flag, make_number (0));
+  CHECK_STRING (prefix);
   CHECK_STRING (suffix);
-  if (!make_temp_name)
-    prefix = Fexpand_file_name (prefix, Vtemporary_file_directory);
-
   Lisp_Object encoded_prefix = ENCODE_FILE (prefix);
   Lisp_Object encoded_suffix = ENCODE_FILE (suffix);
   ptrdiff_t prefix_len = SBYTES (encoded_prefix);
@@ -686,7 +685,7 @@ This function does not grok magic file names.  */)
   memset (data + prefix_len, 'X', nX);
   memcpy (data + prefix_len + nX, SSDATA (encoded_suffix), suffix_len);
   int kind = (NILP (dir_flag) ? GT_FILE
-	      : make_temp_name ? GT_NOCREATE
+	      : EQ (dir_flag, make_number (0)) ? GT_NOCREATE
 	      : GT_DIR);
   int fd = gen_tempname (data, suffix_len, O_BINARY | O_CLOEXEC, kind);
   if (fd < 0 || (NILP (dir_flag) && emacs_close (fd) != 0))
