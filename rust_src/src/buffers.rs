@@ -3,7 +3,7 @@
 use libc::{c_void, c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Buffer, Lisp_Type, Vbuffer_alist, make_lisp_ptr};
+use remacs_sys::{Lisp_Buffer, Lisp_Type, Vbuffer_alist, EmacsInt, make_lisp_ptr};
 use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
@@ -71,10 +71,33 @@ impl LispBufferRef {
         unsafe { (*self.text).z }
     }
 
+    #[inline]
+    pub fn save_modiff(&self) -> EmacsInt {
+        unsafe { (*self.text).save_modiff }
+    }
+
+    #[inline]
+    pub fn modiff(&self) -> EmacsInt {
+        unsafe { (*self.text).modiff }
+    }
+
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
         LispObject::from_raw(self.name).is_not_nil()
+    }
+}
+
+impl LispObject {
+    /// Return SELF as a struct buffer pointer, defaulting to the current buffer.
+    /// Same as the decode_buffer function in buffer.h
+    #[inline]
+    pub fn as_buffer_or_current_buffer(self) -> LispBufferRef {
+        if self.is_nil() {
+            ThreadState::current_buffer()
+        } else {
+            self.as_buffer_or_error()
+        }
     }
 }
 
@@ -144,4 +167,12 @@ pub fn buffer_file_name(buffer: LispObject) -> LispObject {
     };
 
     LispObject::from_raw(buf.filename)
+}
+
+/// Return t if BUFFER was modified since its file was last read or saved.
+/// No argument or nil as argument means use current buffer as BUFFER.  */)
+#[lisp_fn(min = "0")]
+pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
+    let buf = buffer.as_buffer_or_current_buffer();
+    LispObject::from_bool(buf.save_modiff() < buf.modiff())
 }

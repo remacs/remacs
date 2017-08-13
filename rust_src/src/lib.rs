@@ -66,6 +66,7 @@ pub use base64::base64_decode_1;
 
 // Used in buffer.c
 pub use buffers::Fbuffer_live_p;
+pub use buffers::Fbuffer_modified_p;
 
 // Used in nsfns.m
 pub use buffers::Fbuffer_file_name;
@@ -170,6 +171,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Sget_buffer);
         defsubr(&*buffers::Scurrent_buffer);
         defsubr(&*buffers::Sbuffer_file_name);
+        defsubr(&*buffers::Sbuffer_modified_p);
         defsubr(&*windows::Swindowp);
         defsubr(&*windows::Swindow_live_p);
         defsubr(&*process::Sget_process);
