@@ -176,3 +176,11 @@ pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
     let buf = buffer.as_buffer_or_current_buffer();
     LispObject::from_bool(buf.save_modiff() < buf.modiff())
 }
+
+/// Return the name of BUFFER, as a string.
+/// BUFFER defaults to the current buffer.
+/// Return nil if BUFFER has been killed.
+#[lisp_fn(min = "0")]
+pub fn buffer_name(buffer: LispObject) -> LispObject {
+    LispObject::from_raw(buffer.as_buffer_or_current_buffer().name)
+}
