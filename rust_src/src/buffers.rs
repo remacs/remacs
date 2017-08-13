@@ -81,6 +81,11 @@ impl LispBufferRef {
         unsafe { (*self.text).modiff }
     }
 
+    #[inline]
+    pub fn chars_modiff(&self) -> EmacsInt {
+        unsafe { (*self.text).chars_modiff }
+    }
+
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
@@ -183,4 +188,26 @@ pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn buffer_name(buffer: LispObject) -> LispObject {
     LispObject::from_raw(buffer.as_buffer_or_current_buffer().name)
+}
+
+/// Return BUFFER's tick counter, incremented for each change in text.
+/// Each buffer has a tick counter which is incremented each time the
+/// text in that buffer is changed.  It wraps around occasionally.
+/// No argument or nil as argument means use current buffer as BUFFER.
+#[lisp_fn(min = "0")]
+fn buffer_modified_tick(buffer: LispObject) -> LispObject {
+    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().modiff())
+}
+
+/// Return BUFFER's character-change tick counter.
+/// Each buffer has a character-change tick counter, which is set to the
+/// value of the buffer's tick counter (see `buffer-modified-tick'), each
+/// time text in that buffer is inserted or deleted.  By comparing the
+/// values returned by two individual calls of `buffer-chars-modified-tick',
+/// you can tell whether a character change occurred in that buffer in
+/// between these calls.  No argument or nil as argument means use current
+/// buffer as BUFFER.
+#[lisp_fn(min = "0")]
+fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
+    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().chars_modiff())
 }

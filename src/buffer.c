@@ -1308,31 +1308,6 @@ state of the current buffer.  Use with care.  */)
   return flag;
 }
 
-DEFUN ("buffer-modified-tick", Fbuffer_modified_tick, Sbuffer_modified_tick,
-       0, 1, 0,
-       doc: /* Return BUFFER's tick counter, incremented for each change in text.
-Each buffer has a tick counter which is incremented each time the
-text in that buffer is changed.  It wraps around occasionally.
-No argument or nil as argument means use current buffer as BUFFER.  */)
-  (register Lisp_Object buffer)
-{
-  return make_number (BUF_MODIFF (decode_buffer (buffer)));
-}
-
-DEFUN ("buffer-chars-modified-tick", Fbuffer_chars_modified_tick,
-       Sbuffer_chars_modified_tick, 0, 1, 0,
-       doc: /* Return BUFFER's character-change tick counter.
-Each buffer has a character-change tick counter, which is set to the
-value of the buffer's tick counter (see `buffer-modified-tick'), each
-time text in that buffer is inserted or deleted.  By comparing the
-values returned by two individual calls of `buffer-chars-modified-tick',
-you can tell whether a character change occurred in that buffer in
-between these calls.  No argument or nil as argument means use current
-buffer as BUFFER.  */)
-  (register Lisp_Object buffer)
-{
-  return make_number (BUF_CHARS_MODIFF (decode_buffer (buffer)));
-}
 
 DEFUN ("rename-buffer", Frename_buffer, Srename_buffer, 1, 2,
        "(list (read-string \"Rename buffer (to new name): \" \
@@ -6115,8 +6090,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sforce_mode_line_update);
   defsubr (&Sset_buffer_modified_p);
-  defsubr (&Sbuffer_modified_tick);
-  defsubr (&Sbuffer_chars_modified_tick);
   defsubr (&Srename_buffer);
   defsubr (&Sother_buffer);
   defsubr (&Sbuffer_enable_undo);
