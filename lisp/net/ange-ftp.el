@@ -3846,12 +3846,12 @@ E.g.,
   (unless okay-p (error "%s: %s" 'ange-ftp-copy-files-async line))
   (if files
       (let* ((ff (car files))
-             (from-file    (nth 0 ff))
-             (to-file      (nth 1 ff))
-             (ok-if-exists (nth 2 ff))
-             (keep-date    (nth 3 ff)))
+             (from-file            (nth 0 ff))
+             (to-file              (nth 1 ff))
+             (ok-if-already-exists (nth 2 ff))
+             (keep-date            (nth 3 ff)))
         (ange-ftp-copy-file-internal
-         from-file to-file ok-if-exists keep-date
+         from-file to-file ok-if-already-exists keep-date
          (and verbose-p (format "%s --> %s" from-file to-file))
          (list 'ange-ftp-copy-files-async verbose-p (cdr files))
          t))
