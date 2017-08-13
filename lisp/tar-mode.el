@@ -469,7 +469,7 @@ checksum before doing the check."
     (concat " " (substring str 4 16) (format-time-string " %Y" time))))
 
 (defun tar-grind-file-mode (mode)
-  "Construct a `-rw--r--r--' string indicating MODE.
+  "Construct a `rw-r--r--' string indicating MODE.
 MODE should be an integer which is a file mode value."
   (string
    (if (zerop (logand 256 mode)) ?- ?r)
