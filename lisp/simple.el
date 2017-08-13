@@ -6261,9 +6261,10 @@ If NOERROR, don't signal an error if we can't move that many lines."
       (let ((posn (posn-at-point))
 	    x-pos)
 	(cond
-	 ;; Handle the `overflow-newline-into-fringe' case:
-	 ((eq (nth 1 posn) 'right-fringe)
-	  (setq temporary-goal-column (cons (- (window-width) 1) hscroll)))
+	 ;; Handle the `overflow-newline-into-fringe' case
+	 ;; (left-fringe is for the R2L case):
+	 ((memq (nth 1 posn) '(right-fringe left-fringe))
+	  (setq temporary-goal-column (cons (window-width) hscroll)))
 	 ((car (posn-x-y posn))
 	  (setq x-pos (car (posn-x-y posn)))
 	  ;; In R2L lines, the X pixel coordinate is measured from the
