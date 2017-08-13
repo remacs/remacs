@@ -579,6 +579,88 @@ pub struct re_registers {
     pub end: *mut c_void, // TODO
 }
 
+// By setting the size of this to a byte, we replicate C Emacs using
+// enum bitfields with CHAR_BIT.
+#[repr(u8)]
+#[derive(Copy, Clone)]
+pub enum specbind_tag {
+    /// An unwind_protect function on Lisp_Object.
+    SPECPDL_UNWIND,
+    /// Likewise, on void *.
+    SPECPDL_UNWIND_PTR,
+    /// Likewise, on int.
+    SPECPDL_UNWIND_INT,
+    /// Likewise, with no arg.
+    SPECPDL_UNWIND_VOID,
+    /// An element of the backtrace.
+    SPECPDL_BACKTRACE,
+    /// A plain and simple dynamic let-binding.
+    SPECPDL_LET,
+    /// Tags greater than SPECPDL_LET must be "subkinds" of LET.
+    /// A buffer-local let-binding.
+    SPECPDL_LET_LOCAL,
+    /// A global binding for a localized var.
+    SPECPDL_LET_DEFAULT
+}
+
+// These are all Copy and Clone because a Lisp_Object is either a
+// tagged immediate (e.g. an integer) or a tagged shared pointer
+// (e.g. a cons cell).
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct specbinding_unwind {
+    pub kind: specbind_tag,
+    pub func: *mut extern fn(Lisp_Object, libc::c_void),
+    pub arg: Lisp_Object,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct specbinding_unwind_ptr {
+    pub kind: specbind_tag,
+    pub func: *mut extern fn(*mut libc::c_void, libc::c_void),
+    pub arg: *mut libc::c_void,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct specbinding_unwind_int {
+    pub kind: specbind_tag,
+    pub func: *mut extern fn(libc::c_int, libc::c_void),
+    pub arg: libc::c_int,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct specbinding_unwind_void {
+    pub kind: specbind_tag,
+    pub func: *mut extern fn(libc::c_void, libc::c_void),
+}
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct specbinding_let {
+    pub kind: specbind_tag,
+    pub symbol: Lisp_Object,
+    pub old_value: Lisp_Object,
+    // `where` is not used in the case of SPECPDL_LET.
+    pub where_: Lisp_Object,
+    // Normally this is unused; but it is set to the symbol's
+    // current value when a thread is swapped out.
+    pub saved_value: Lisp_Object,
+}
+
+#[repr(C)]
+pub union specbinding {
+    pub kind: specbind_tag,
+    pub unwind: specbinding_unwind,
+    pub unwind_ptr: specbinding_unwind_ptr,
+    pub unwind_int: specbinding_unwind_int,
+    pub unwind_void: specbinding_unwind_void,
+    pub let_: specbinding_let,
+    pub bt: *mut libc::c_void, // TODO (requires boolean bitfields)
+}
+
 #[repr(C)]
 pub struct thread_state {
     pub header: Lisp_Vectorlike_Header,
@@ -622,9 +704,9 @@ pub struct thread_state {
     pub m_specpdl_size: ptrdiff_t,
 
     /// Pointer to beginning of specpdl.
-    pub m_specpdl: *mut c_void, // TODO
+    pub m_specpdl: *mut specbinding,
     /// Pointer to first unused element in specpdl.
-    pub m_specpdl_ptr: *mut c_void, // TODO
+    pub m_specpdl_ptr: *mut specbinding,
     /// Depth in Lisp evaluations and function calls.
     pub m_lisp_eval_depth: EmacsInt,
 
@@ -1388,7 +1470,7 @@ extern "C" {
         ito: &mut libc::ptrdiff_t,
     );
     pub fn string_char_to_byte(string: Lisp_Object, char_index: libc::ptrdiff_t)
-        -> libc::ptrdiff_t;
+                               -> libc::ptrdiff_t;
 
     pub fn record_unwind_current_buffer();
     pub fn set_buffer_internal(buffer: *const libc::c_void); // TODO: buffer*

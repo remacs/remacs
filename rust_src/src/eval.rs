@@ -1,5 +1,23 @@
 //! Generic Lisp eval functions and macros.
 
+use remacs_sys::current_thread;
+
+// Grow the specpdl stack by one entry.
+// The caller should have already initialized the entry.
+// Signal an error on stack overflow.
+
+// Make sure that there is always one unused entry past the top of the
+// stack, so that the just-initialized entry is safely unwound if
+// memory exhausted and an error is signaled here.  Also, allocate a
+// never-used entry just before the bottom of the stack; sometimes its
+// address is taken.
+#[no_mangle]
+pub extern "C" fn grow_specdl_wip() {
+    unsafe {
+        (*current_thread).m_specpdl_size += 1;
+    }
+}
+
 /// Macro to generate an error with a list from any number of arguments.
 /// Replaces xsignal0, etc. in the C layer.
 ///
