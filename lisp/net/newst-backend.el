@@ -75,10 +75,6 @@ considered to be running if the newsticker timer list is not empty."
     "https://www.emacswiki.org/emacs?action=rss"
     nil
     3600)
-    ("Freshmeat.net"
-    "http://freshmeat.net/index.atom")
-    ("Kuro5hin.org"
-    "http://www.kuro5hin.org/backend.rdf")
     ("LWN (Linux Weekly News)"
     "http://lwn.net/headlines/rss")
     ("NY Times: Technology"
@@ -102,9 +98,7 @@ considered to be running if the newsticker timer list is not empty."
     ("Tagesschau (german)"
     "http://www.tagesschau.de/newsticker.rdf"
     nil
-    1800)
-    ("Telepolis (german)"
-    "http://www.heise.de/tp/news.rdf"))
+    1800))
   "Default URL list in raw form.
 This list is fed into defcustom via `newsticker--splicer'.")
 
