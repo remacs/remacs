@@ -2259,12 +2259,14 @@ This is what happens in interactive use with M-x.  */)
      not worry whether NEWNAME exists or whether it is a directory, as
      it is already another name for FILE.  */
   bool case_only_rename = false;
+#if defined CYGWIN || defined DOS_NT
   if (!NILP (Ffile_name_case_insensitive_p (file)))
     {
       newname = Fexpand_file_name (newname, Qnil);
       case_only_rename = !NILP (Fstring_equal (Fdowncase (file),
 					       Fdowncase (newname)));
     }
+#endif
 
   if (!case_only_rename)
     newname = expand_cp_target (Fdirectory_file_name (file), newname);

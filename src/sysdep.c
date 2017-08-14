@@ -2693,11 +2693,13 @@ renameat_noreplace (int srcfd, char const *src, int dstfd, char const *dst)
 {
 #if defined SYS_renameat2 && defined RENAME_NOREPLACE
   return syscall (SYS_renameat2, srcfd, src, dstfd, dst, RENAME_NOREPLACE);
+#elif defined RENAME_EXCL
+  return renameatx_np (srcfd, src, dstfd, dst, RENAME_EXCL);
 #else
-#ifdef WINDOWSNT
+# ifdef WINDOWSNT
   if (srcfd == AT_FDCWD && dstfd == AT_FDCWD)
     return sys_rename_replace (src, dst, 0);
-#endif
+# endif
   errno = ENOSYS;
   return -1;
 #endif
