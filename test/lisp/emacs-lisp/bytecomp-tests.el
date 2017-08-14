@@ -512,7 +512,9 @@ bytecompiled code, and their results compared.")
   `(let ((,file-name-var (make-temp-file "emacs")))
      (unwind-protect
          (progn ,@body)
-       (delete-file ,file-name-var))))
+       (delete-file ,file-name-var)
+       (let ((elc (concat ,file-name-var ".elc")))
+         (if (file-exists-p elc) (delete-file elc))))))
 
 (ert-deftest bytecomp-tests--unescaped-char-literals ()
   "Check that byte compiling warns about unescaped character

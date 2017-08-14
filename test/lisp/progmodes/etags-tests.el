@@ -96,15 +96,18 @@
 (ert-deftest etags-buffer-local-tags-table-list ()
   "Test that a buffer-local value of `tags-table-list' is used."
   (let ((file (make-temp-file "etag-test-tmpfile")))
-    (set-buffer (find-file-noselect file))
-    (fundamental-mode)
-    (setq-local tags-table-list
-                (list (expand-file-name "manual/etags/ETAGS.good_3"
-                                        etags-tests--test-dir)))
-    (cl-letf ((tag-tables tags-table-list)
-              (tags-file-name nil)
-              ((symbol-function 'read-file-name)
-               (lambda (&rest _)
-                 (error "We should not prompt the user"))))
-      (should (visit-tags-table-buffer))
-      (should (equal tags-file-name (car tag-tables))))))
+    (unwind-protect
+        (progn
+          (set-buffer (find-file-noselect file))
+          (fundamental-mode)
+          (setq-local tags-table-list
+                      (list (expand-file-name "manual/etags/ETAGS.good_3"
+                                              etags-tests--test-dir)))
+          (cl-letf ((tag-tables tags-table-list)
+                    (tags-file-name nil)
+                    ((symbol-function 'read-file-name)
+                     (lambda (&rest _)
+                       (error "We should not prompt the user"))))
+            (should (visit-tags-table-buffer))
+            (should (equal tags-file-name (car tag-tables)))))
+      (delete-file file))))
