@@ -4502,7 +4502,7 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
       filename_to_utf16 (temp, temp_w);
       filename_to_utf16 (newname, newname_w);
       result = _wrename (temp_w, newname_w);
-      if (result < 0 && force)
+      if (result < 0)
 	{
 	  DWORD w32err = GetLastError ();
 
@@ -4520,7 +4520,7 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
 		  && (attributes & FILE_ATTRIBUTE_DIRECTORY))
 		errno = EXDEV;
 	    }
-	  else if (errno == EEXIST)
+	  else if (errno == EEXIST && force)
 	    {
 	      if (_wchmod (newname_w, 0666) != 0)
 		return result;
@@ -4546,7 +4546,7 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
 	filename_to_ansi (temp, temp_a);
       filename_to_ansi (newname, newname_a);
       result = rename (temp_a, newname_a);
-      if (result < 0 && force)
+      if (result < 0)
 	{
 	  DWORD w32err = GetLastError ();
 
@@ -4559,7 +4559,7 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
 		  && (attributes & FILE_ATTRIBUTE_DIRECTORY))
 		errno = EXDEV;
 	    }
-	  else if (errno == EEXIST)
+	  else if (errno == EEXIST && force)
 	    {
 	      if (_chmod (newname_a, 0666) != 0)
 		return result;
