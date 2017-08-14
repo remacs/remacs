@@ -575,6 +575,13 @@ pub enum EqualKind {
     IncludingProperties,
 }
 
+#[repr(C)]
+pub struct Hash_Result {
+    pub found: bool,
+    pub key: Lisp_Object,
+    pub value: Lisp_Object
+}
+
 /// Represents the global state of the editor.
 ///
 /// This has been factored out to a single struct in C Emacs to help

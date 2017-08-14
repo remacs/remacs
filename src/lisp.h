@@ -1940,7 +1940,7 @@ HASH_TABLE_P (Lisp_Object a)
   return PSEUDOVECTORP (a, PVEC_HASH_TABLE);
 }
 
-INLINE struct Lisp_Hash_Table *
+INLINE LispHashTable *
 XHASH_TABLE (Lisp_Object a)
 {
   eassert (HASH_TABLE_P (a));
@@ -1949,34 +1949,6 @@ XHASH_TABLE (Lisp_Object a)
 
 #define XSET_HASH_TABLE(VAR, PTR) \
      (XSETPSEUDOVECTOR (VAR, PTR, PVEC_HASH_TABLE))
-
-/* Value is the key part of entry IDX in hash table H.  */
-INLINE Lisp_Object
-HASH_KEY (struct Lisp_Hash_Table *h, ptrdiff_t idx)
-{
-  return AREF (h->key_and_value, 2 * idx);
-}
-
-/* Value is the value part of entry IDX in hash table H.  */
-INLINE Lisp_Object
-HASH_VALUE (struct Lisp_Hash_Table *h, ptrdiff_t idx)
-{
-  return AREF (h->key_and_value, 2 * idx + 1);
-}
-
-/* Value is the hash code computed for entry IDX in hash table H.  */
-INLINE Lisp_Object
-HASH_HASH (struct Lisp_Hash_Table *h, ptrdiff_t idx)
-{
-  return AREF (h->hash, idx);
-}
-
-/* Value is the size of hash table H.  */
-INLINE ptrdiff_t
-HASH_TABLE_SIZE (struct Lisp_Hash_Table *h)
-{
-  return ASIZE (h->next);
-}
 
 /* Default size for hash tables if not specified.  */
 
@@ -3070,20 +3042,6 @@ vcopy (Lisp_Object v, ptrdiff_t offset, Lisp_Object *args, ptrdiff_t count)
   memcpy (XVECTOR (v)->contents + offset, args, count * sizeof *args);
 }
 
-/* Functions to modify hash tables.  */
-
-INLINE void
-set_hash_key_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
-{
-  gc_aset (h->key_and_value, 2 * idx, val);
-}
-
-INLINE void
-set_hash_value_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
-{
-  gc_aset (h->key_and_value, 2 * idx + 1, val);
-}
-
 /* Use these functions to set Lisp_Object
    or pointer slots of struct Lisp_Symbol.  */
 
@@ -3195,6 +3153,14 @@ enum Arith_Comparison {
   ARITH_GRTR_OR_EQUAL
 };
 
+struct Hash_Result {
+  bool found;
+  Lisp_Object key;
+  Lisp_Object value;
+};
+
+extern struct Hash_Result hash_lookup(LispHashTable* table, Lisp_Object key, void* unused);
+
 /* Defined in rust  */
 Lisp_Object arithcompare (Lisp_Object num1, Lisp_Object num2,
                                  enum Arith_Comparison comparison);
@@ -3273,13 +3239,6 @@ extern Lisp_Object larger_vector (Lisp_Object, ptrdiff_t, ptrdiff_t);
 extern void sweep_weak_hash_tables (void);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
-Lisp_Object make_hash_table (struct hash_table_test, EMACS_INT, float, float,
-			     Lisp_Object, bool);
-ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
-ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,
-		    EMACS_UINT);
-void hash_remove_from_table (struct Lisp_Hash_Table *, Lisp_Object);
-extern struct hash_table_test const hashtest_eq, hashtest_eql, hashtest_equal;
 extern void validate_subarray (Lisp_Object, Lisp_Object, Lisp_Object,
 			       ptrdiff_t, ptrdiff_t *, ptrdiff_t *);
 extern Lisp_Object substring_both (Lisp_Object, ptrdiff_t, ptrdiff_t,

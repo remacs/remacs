@@ -4,12 +4,14 @@ use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy, QCsize,
                  QCweakness, sxhash, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
                  Lisp_Vector, Qkey_and_value, Qkey, Qvalue, Qkey_or_value, pure_alloc,
-                 survives_gc, Lisp_Vectorlike_Header, pure_write_error};
+                 survives_gc, Lisp_Vectorlike_Header, pure_write_error, Lisp_Object,
+                 Qnil, Hash_Result};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
 use std::hash::{Hash, Hasher};
 use libc::{c_void, c_int};
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 
 static DEFAULT_TABLE_SIZE: usize = 65;
 
@@ -356,6 +358,29 @@ pub unsafe fn mark_hashtable(map: *mut c_void) {
         for (key, value) in ptr.map.iter() {
             mark_object(key.object.to_raw());
             mark_object(value.object.to_raw());
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe fn hash_lookup(map: *mut c_void, key: Lisp_Object, _: *mut c_void) -> Hash_Result {
+    let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
+    let hash_key = HashableLispObject::with_hashfunc_and_object(LispObject::from_raw(key), ptr.func);    
+    match ptr.map.entry(hash_key) {
+        Occupied(entry) => {
+            Hash_Result {
+                found: true,
+                key: entry.key().object.to_raw(),
+                value: entry.get().object.to_raw()
+            }
+        },
+        
+        Vacant(_) => {
+            Hash_Result {
+                found: false,
+                key: Qnil,
+                value: Qnil
+            }
         }
     }
 }

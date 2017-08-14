@@ -143,11 +143,12 @@ pub use multibyte::str_to_unibyte;
 // Used in window.c, macros.c
 pub use interactive::Fprefix_numeric_value;
 
-// Used in alloc.c
+// Used in alloc.c, lisp.h
 pub use hashtable::hashtable_finalize;
 pub use hashtable::mark_hashtable;
 pub use hashtable::pure_copy_hashtable;
 pub use hashtable::sweep_weak_hashtable;
+pub use hashtable::hash_lookup;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
