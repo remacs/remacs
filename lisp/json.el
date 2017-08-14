@@ -193,8 +193,7 @@ Unlike `reverse', this keeps the property-value pairs intact."
 
 (defsubst json-peek ()
   "Return the character at point."
-  (let ((char (char-after (point))))
-    (or char :json-eof)))
+  (or (char-after (point)) :json-eof))
 
 (defsubst json-pop ()
   "Advance past the character at point, returning it."
@@ -415,7 +414,7 @@ representation will be parsed correctly."
     ;; Skip over the '"'
     (json-advance)
     (if characters
-        (apply 'string (nreverse characters))
+        (concat (nreverse characters))
       "")))
 
 ;; String encoding
@@ -639,7 +638,9 @@ become JSON objects."
           (signal 'json-error (list 'bleah)))))
     ;; Skip over the "]"
     (json-advance)
-    (apply json-array-type (nreverse elements))))
+    (pcase json-array-type
+      (`vector (nreverse (vconcat elements)))
+      (`list (nreverse elements)))))
 
 ;; Array encoding
 
