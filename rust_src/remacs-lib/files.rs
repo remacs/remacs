@@ -69,9 +69,9 @@ fn validate_template(template: String) -> Result<String, i32> {
 fn generate_temporary_filename(name: &mut String) {
     let len = name.len();
     assert!(len >= 6);
-    let mut name_vec = unsafe { &mut name.as_mut_vec() };
+    let name_vec = unsafe { &mut name.as_mut_vec() };
 
-    let mut bytes = &mut name_vec[len - 6..len];
+    let bytes = &mut name_vec[len - 6..len];
     rand::thread_rng().fill_bytes(bytes);
     for byte in bytes.iter_mut() {
         *byte = match *byte % 62 {

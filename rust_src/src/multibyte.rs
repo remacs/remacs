@@ -633,7 +633,7 @@ pub fn string_char(ptr: *const c_uchar, advanced: *mut *const c_uchar, len: *mut
 #[no_mangle]
 pub fn str_to_unibyte(src: *const c_uchar, dst: *mut c_uchar, chars: ptrdiff_t) -> ptrdiff_t {
     let mut srcslice = unsafe { slice::from_raw_parts(src, chars as usize) };
-    let mut dstslice = unsafe { slice::from_raw_parts_mut(dst, chars as usize) };
+    let dstslice = unsafe { slice::from_raw_parts_mut(dst, chars as usize) };
     for i in 0..chars {
         let (cp, cplen) = multibyte_char_at(srcslice);
         srcslice = &srcslice[cplen..];
