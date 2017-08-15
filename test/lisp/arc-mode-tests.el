@@ -27,7 +27,8 @@
                      (cons 420 "-rw-r--r--")
                      (cons 292 "-r--r--r--")
                      (cons 512 "----------")
-                     (cons 1024 "---S------"))))
+                     (cons 1024 "------S---") ; Bug#28092
+                     (cons 2048 "---S------"))))
     (dolist (x alist)
       (should (equal (cdr x) (archive-int-to-mode (car x)))))))
 
