@@ -327,14 +327,32 @@ for hook in commit-msg pre-commit; do
     cmp -- build-aux/git-hooks/$hook "$hooks/$hook" >/dev/null 2>&1 ||
 	tailored_hooks="$tailored_hooks $hook"
 done
+
+git_sample_hook_src ()
+{
+    hook=$1
+    src=$hooks/$hook.sample
+    if test ! -r "$src"; then
+	case $hook in
+	    applypatch-msg) src=build-aux/git-hooks/commit-msg;;
+	    pre-applypatch) src=build-aux/git-hooks/pre-commit;;
+	esac
+    fi
+}
 for hook in applypatch-msg pre-applypatch; do
-    cmp -- "$hooks/$hook.sample" "$hooks/$hook" >/dev/null 2>&1 ||
+    git_sample_hook_src $hook
+    cmp -- "$src" "$hooks/$hook" >/dev/null 2>&1 ||
 	sample_hooks="$sample_hooks $hook"
 done
 
 if test -n "$tailored_hooks$sample_hooks"; then
     if $do_git; then
 	echo "Installing git hooks..."
+
+	if test ! -d "$hooks"; then
+	    printf "mkdir -p -- '%s'\\n" "$hooks"
+	    mkdir -p -- "$hooks" || exit
+	fi
 
 	if test -n "$tailored_hooks"; then
 	    for hook in $tailored_hooks; do
@@ -346,8 +364,9 @@ if test -n "$tailored_hooks$sample_hooks"; then
 
 	if test -n "$sample_hooks"; then
 	    for hook in $sample_hooks; do
+		git_sample_hook_src $hook
 		dst=$hooks/$hook
-		cp $cp_options -- "$dst.sample" "$dst" || exit
+		cp $cp_options -- "$src" "$dst" || exit
 		chmod -- a-w "$dst" || exit
 	    done
 	fi
