@@ -85,6 +85,7 @@ pub use math::Flss;
 pub use math::Fleq;
 pub use math::arithcompare;
 pub use editfns::Feobp;
+pub use editfns::Fbobp;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -317,5 +318,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Spoint);
         defsubr(&*editfns::Sbuffer_size);
         defsubr(&*editfns::Seobp);
+        defsubr(&*editfns::Sbobp);
     }
 }
