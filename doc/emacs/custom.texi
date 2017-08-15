@@ -1710,7 +1710,7 @@ and mouse events:
 specify the key sequence.  Using a string is simpler, but only works
 for @acronym{ASCII} characters and Meta-modified @acronym{ASCII}
 characters.  For example, here's how to bind @kbd{C-x M-l} to
-@code{make-symbolic-link} (@pxref{Misc File Ops}):
+@code{make-symbolic-link} (@pxref{Copying and Naming}):
 
 @example
 (global-set-key "\C-x\M-l" 'make-symbolic-link)

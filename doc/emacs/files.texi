@@ -33,6 +33,7 @@ on file directories.
 * Directories::         Creating, deleting, and listing file directories.
 * Comparing Files::     Finding where two files differ.
 * Diff Mode::           Mode for editing file differences.
+* Copying and Naming::  Copying, naming and renaming files.
 * Misc File Ops::       Other things you can do on files.
 * Compressed Files::    Accessing compressed files.
 * File Archives::       Operating on tar, zip, jar etc. archive files.
@@ -1545,6 +1546,72 @@ decide whether to save the changes (the list of modified files is
 displayed in the echo area).  With a prefix argument, it tries to
 modify the original source files rather than the patched source files.
 
+@node Copying and Naming
+@section Copying, Naming and Renaming Files
+
+  Emacs has several commands for copying, naming, and renaming files.
+All of them read two file names @var{old} and @var{new} using the
+minibuffer, and then copy or adjust a file's name accordingly; they do
+not accept wildcard file names.
+
+In all these commands, if the argument @var{new} is just a directory
+name, the real new name is in that directory, with the same
+non-directory component as @var{old}.  For example, @kbd{M-x
+rename-file @key{RET} ~/foo @key{RET}
+@c FIXME: This part of the example should be '/tmp/' not '/tmp',
+@c because '/tmp' is not "just a directory name".
+/tmp
+@c
+@key{RET}} renames @file{~/foo} to @file{/tmp/foo}.  All these
+commands ask for confirmation when the new file name already exists,
+too.
+
+@findex copy-file
+@cindex copying files
+  @kbd{M-x copy-file} copies the contents of the file @var{old} to the
+file @var{new}.
+
+@findex copy-directory
+  @kbd{M-x copy-directory} copies directories, similar to the
+@command{cp -r} shell command.  If @var{new} is an existing directory,
+it creates a copy of the @var{old} directory and puts it in @var{new}.
+If @var{new} is not an existing directory, it copies all the contents
+of @var{old} into a new directory named @var{new}.
+
+@cindex renaming files
+@findex rename-file
+  @kbd{M-x rename-file} renames file @var{old} as @var{new}.  If the
+file name @var{new} already exists, you must confirm with @kbd{yes} or
+renaming is not done; this is because renaming causes the old meaning
+of the name @var{new} to be lost.  If @var{old} and @var{new} are on
+different file systems, the file @var{old} is copied and deleted.
+
+@ifnottex
+  If a file is under version control (@pxref{Version Control}), you
+should rename it using @kbd{M-x vc-rename-file} instead of @kbd{M-x
+rename-file}.  @xref{VC Delete/Rename}.
+@end ifnottex
+
+@findex add-name-to-file
+@cindex hard links (creation)
+  @kbd{M-x add-name-to-file} adds an additional name to an existing
+file without removing the old name.  The new name is created as a hard
+link to the existing file.  The new name must belong on the same file
+system that the file is on.  On MS-Windows, this command works only if
+the file resides in an NTFS file system.  On MS-DOS, it works by
+copying the file.
+
+@findex make-symbolic-link
+@cindex symbolic links (creation)
+  @kbd{M-x make-symbolic-link} creates a symbolic link named
+@var{new}, which points at @var{target}.  The effect is that future
+attempts to open file @var{new} will refer to whatever file is named
+@var{target} at the time the opening is done, or will get an error if
+the name @var{target} is nonexistent at that time.  This command does
+not expand the argument @var{target}, so that it allows you to specify
+a relative name as the target of the link.  On MS-Windows, this
+command works only on MS Windows Vista and later.
+
 @node Misc File Ops
 @section Miscellaneous File Operations
 
@@ -1580,62 +1647,6 @@ them delete outright, instead of using the Trash, regardless of
 should delete it using @kbd{M-x vc-delete-file} instead of @kbd{M-x
 delete-file}.  @xref{VC Delete/Rename}.
 @end ifnottex
-
-@findex copy-file
-@cindex copying files
-  @kbd{M-x copy-file} copies the contents of the file @var{old} to the
-file @var{new}.
-
-@findex copy-directory
-  @kbd{M-x copy-directory} copies directories, similar to the
-@command{cp -r} shell command.  It prompts for a directory @var{old}
-and a destination @var{new}.  If @var{new} is an existing directory,
-it creates a copy of the @var{old} directory and puts it in @var{new}.
-If @var{new} is not an existing directory, it copies all the contents
-of @var{old} into a new directory named @var{new}.
-
-@cindex renaming files
-@findex rename-file
-  @kbd{M-x rename-file} reads two file names @var{old} and @var{new}
-using the minibuffer, then renames file @var{old} as @var{new}.  If
-the file name @var{new} already exists, you must confirm with
-@kbd{yes} or renaming is not done; this is because renaming causes the
-old meaning of the name @var{new} to be lost.  If @var{old} and
-@var{new} are on different file systems, the file @var{old} is copied
-and deleted.  If the argument @var{new} is just a directory name, the
-real new name is in that directory, with the same non-directory
-component as @var{old}.  For example, @kbd{M-x rename-file @key{RET}
-~/foo @key{RET} /tmp @key{RET}} renames @file{~/foo} to
-@file{/tmp/foo}.  The same rule applies to all the remaining commands
-in this section.  All of them ask for confirmation when the new file
-name already exists, too.
-
-@ifnottex
-  If a file is under version control (@pxref{Version Control}), you
-should rename it using @kbd{M-x vc-rename-file} instead of @kbd{M-x
-rename-file}.  @xref{VC Delete/Rename}.
-@end ifnottex
-
-@findex add-name-to-file
-@cindex hard links (creation)
-  @kbd{M-x add-name-to-file} adds an additional name to an existing
-file without removing its old name.  The new name is created as a
-hard link to the existing file.  The new name must belong on the
-same file system that the file is on.  On MS-Windows, this command
-works only if the file resides in an NTFS file system.  On MS-DOS, it
-works by copying the file.
-
-@findex make-symbolic-link
-@cindex symbolic links (creation)
-  @kbd{M-x make-symbolic-link} reads two file names @var{target} and
-@var{linkname}, then creates a symbolic link named @var{linkname},
-which points at @var{target}.  The effect is that future attempts to
-open file @var{linkname} will refer to whatever file is named
-@var{target} at the time the opening is done, or will get an error if
-the name @var{target} is nonexistent at that time.  This command does
-not expand the argument @var{target}, so that it allows you to specify
-a relative name as the target of the link.  On MS-Windows, this
-command works only on MS Windows Vista and later.
 
 @kindex C-x i
 @findex insert-file
