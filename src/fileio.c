@@ -2297,7 +2297,10 @@ This is what happens in interactive use with M-x.  */)
       rename_errno = errno;
       switch (rename_errno)
 	{
-	case EEXIST: case EINVAL: case ENOSYS: case ENOTSUP:
+	case EEXIST: case EINVAL: case ENOSYS:
+#if ENOSYS != ENOTSUP
+	case ENOTSUP:
+#endif
 	  barf_or_query_if_file_exists (newname, rename_errno == EEXIST,
 					"rename to it",
 					INTEGERP (ok_if_already_exists),
