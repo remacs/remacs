@@ -2245,7 +2245,11 @@ detection and just returns nil."
                 ;; `condition-case' and displaying the error message to
                 ;; the user in the no-prompts warning.
                 (ignore-errors
-                  (let ((code-file (python-shell--save-temp-file code)))
+                  (let ((code-file
+                         ;; Python 2.x on Windows does not handle
+                         ;; carriage returns in unbuffered mode.
+                         (let ((inhibit-eol-conversion (getenv "PYTHONUNBUFFERED")))
+                           (python-shell--save-temp-file code))))
                     ;; Use `process-file' as it is remote-host friendly.
                     (process-file
                      interpreter
