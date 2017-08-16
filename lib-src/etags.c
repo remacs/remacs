@@ -111,7 +111,6 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 # undef HAVE_NTGUI
 # undef  DOS_NT
 # define DOS_NT
-# define O_CLOEXEC O_NOINHERIT
 #endif /* WINDOWSNT */
 
 #include <limits.h>

@@ -403,8 +403,6 @@ create_lock_file (char *lfname, char *lock_info_str, bool force)
       else
 	{
 	  ptrdiff_t lock_info_len;
-	  if (! O_CLOEXEC)
-	    fcntl (fd, F_SETFD, FD_CLOEXEC);
 	  lock_info_len = strlen (lock_info_str);
 	  err = 0;
 	  if (emacs_write (fd, lock_info_str, lock_info_len) != lock_info_len

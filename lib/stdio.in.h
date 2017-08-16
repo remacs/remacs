@@ -111,9 +111,9 @@
 #define _GL_ATTRIBUTE_FORMAT_SCANF_SYSTEM(formatstring_parameter, first_argument) \
   _GL_ATTRIBUTE_FORMAT ((__scanf__, formatstring_parameter, first_argument))
 
-/* Solaris 10 declares renameat in <unistd.h>, not in <stdio.h>.  */
+/* Solaris 10 and NetBSD 7.0 declare renameat in <unistd.h>, not in <stdio.h>.  */
 /* But in any case avoid namespace pollution on glibc systems.  */
-#if (@GNULIB_RENAMEAT@ || defined GNULIB_POSIXCHECK) && defined __sun \
+#if (@GNULIB_RENAMEAT@ || defined GNULIB_POSIXCHECK) && (defined __sun || defined __NetBSD__) \
     && ! defined __GLIBC__
 # include <unistd.h>
 #endif

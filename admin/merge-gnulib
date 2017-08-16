@@ -48,7 +48,7 @@ GNULIB_MODULES='
 AVOIDED_MODULES='
   close dup fchdir fstat
   malloc-posix msvc-inval msvc-nothrow
-  open openat-die opendir raise
+  openat-die opendir raise
   save-cwd select setenv sigprocmask stat stdarg stdbool
   threadlib tzset unsetenv utime utime-h
 '

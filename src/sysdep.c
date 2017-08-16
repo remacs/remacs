@@ -2393,8 +2393,6 @@ emacs_open (const char *file, int oflags, int mode)
   oflags |= O_CLOEXEC;
   while ((fd = open (file, oflags, mode)) < 0 && errno == EINTR)
     maybe_quit ();
-  if (! O_CLOEXEC && 0 <= fd)
-    fcntl (fd, F_SETFD, FD_CLOEXEC);
   return fd;
 }
 
@@ -2436,13 +2434,7 @@ emacs_pipe (int fd[2])
 #ifdef MSDOS
   return pipe (fd);
 #else  /* !MSDOS */
-  int result = pipe2 (fd, O_BINARY | O_CLOEXEC);
-  if (! O_CLOEXEC && result == 0)
-    {
-      fcntl (fd[0], F_SETFD, FD_CLOEXEC);
-      fcntl (fd[1], F_SETFD, FD_CLOEXEC);
-    }
-  return result;
+  return pipe2 (fd, O_BINARY | O_CLOEXEC);
 #endif	/* !MSDOS */
 }
 

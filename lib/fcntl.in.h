@@ -213,7 +213,10 @@ _GL_WARN_ON_USE (openat, "openat is not portable - "
 #endif
 
 #ifndef O_CLOEXEC
-# define O_CLOEXEC 0
+# define O_CLOEXEC 0x40000000 /* Try to not collide with system O_* flags.  */
+# define GNULIB_defined_O_CLOEXEC 1
+#else
+# define GNULIB_defined_O_CLOEXEC 0
 #endif
 
 #ifndef O_DIRECT

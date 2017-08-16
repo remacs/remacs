@@ -53,6 +53,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module c-strcase:
   # Code from module careadlinkat:
   # Code from module clock-time:
+  # Code from module cloexec:
   # Code from module close-stream:
   # Code from module count-leading-zeros:
   # Code from module count-one-bits:
@@ -115,6 +116,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module multiarch:
   # Code from module nocrash:
   # Code from module nstrftime:
+  # Code from module open:
   # Code from module openat-h:
   # Code from module pipe2:
   # Code from module pselect:
@@ -413,6 +415,7 @@ AC_DEFUN([gl_INIT],
   gl_UTIMENS
   AC_C_VARARRAYS
   gl_gnulib_enabled_260941c0e5dc67ec9e87d1fb321c300b=false
+  gl_gnulib_enabled_cloexec=false
   gl_gnulib_enabled_dirfd=false
   gl_gnulib_enabled_dosname=false
   gl_gnulib_enabled_euidaccess=false
@@ -422,6 +425,7 @@ AC_DEFUN([gl_INIT],
   gl_gnulib_enabled_a9786850e999ae65a836a6041e8e5ed1=false
   gl_gnulib_enabled_2049e887c7e5308faad27b3f894bb8c9=false
   gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31=false
+  gl_gnulib_enabled_open=false
   gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7=false
   gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c=false
   gl_gnulib_enabled_strtoll=false
@@ -431,6 +435,14 @@ AC_DEFUN([gl_INIT],
     if ! $gl_gnulib_enabled_260941c0e5dc67ec9e87d1fb321c300b; then
       AC_LIBOBJ([openat-proc])
       gl_gnulib_enabled_260941c0e5dc67ec9e87d1fb321c300b=true
+      func_gl_gnulib_m4code_open
+    fi
+  }
+  func_gl_gnulib_m4code_cloexec ()
+  {
+    if ! $gl_gnulib_enabled_cloexec; then
+      gl_MODULE_INDICATOR_FOR_TESTS([cloexec])
+      gl_gnulib_enabled_cloexec=true
     fi
   }
   func_gl_gnulib_m4code_dirfd ()
@@ -536,6 +548,21 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31=true
     fi
   }
+  func_gl_gnulib_m4code_open ()
+  {
+    if ! $gl_gnulib_enabled_open; then
+      gl_FUNC_OPEN
+      if test $REPLACE_OPEN = 1; then
+        AC_LIBOBJ([open])
+        gl_PREREQ_OPEN
+      fi
+      gl_FCNTL_MODULE_INDICATOR([open])
+      gl_gnulib_enabled_open=true
+      if test $REPLACE_OPEN = 1; then
+        func_gl_gnulib_m4code_cloexec
+      fi
+    fi
+  }
   func_gl_gnulib_m4code_03e0aaad4cb89ca757653bd367a6ccb7 ()
   {
     if ! $gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7; then
@@ -622,6 +649,7 @@ AC_DEFUN([gl_INIT],
   fi
   m4_pattern_allow([^gl_GNULIB_ENABLED_])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_260941c0e5dc67ec9e87d1fb321c300b], [$gl_gnulib_enabled_260941c0e5dc67ec9e87d1fb321c300b])
+  AM_CONDITIONAL([gl_GNULIB_ENABLED_cloexec], [$gl_gnulib_enabled_cloexec])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_dirfd], [$gl_gnulib_enabled_dirfd])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_dosname], [$gl_gnulib_enabled_dosname])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_euidaccess], [$gl_gnulib_enabled_euidaccess])
@@ -631,6 +659,7 @@ AC_DEFUN([gl_INIT],
   AM_CONDITIONAL([gl_GNULIB_ENABLED_a9786850e999ae65a836a6041e8e5ed1], [$gl_gnulib_enabled_a9786850e999ae65a836a6041e8e5ed1])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_2049e887c7e5308faad27b3f894bb8c9], [$gl_gnulib_enabled_2049e887c7e5308faad27b3f894bb8c9])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_5264294aa0a5557541b53c8c741f7f31], [$gl_gnulib_enabled_5264294aa0a5557541b53c8c741f7f31])
+  AM_CONDITIONAL([gl_GNULIB_ENABLED_open], [$gl_gnulib_enabled_open])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_03e0aaad4cb89ca757653bd367a6ccb7], [$gl_gnulib_enabled_03e0aaad4cb89ca757653bd367a6ccb7])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_6099e9737f757db36c47fa9d9f02e88c], [$gl_gnulib_enabled_6099e9737f757db36c47fa9d9f02e88c])
   AM_CONDITIONAL([gl_GNULIB_ENABLED_strtoll], [$gl_gnulib_enabled_strtoll])
@@ -800,6 +829,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/c-strncasecmp.c
   lib/careadlinkat.c
   lib/careadlinkat.h
+  lib/cloexec.c
+  lib/cloexec.h
   lib/close-stream.c
   lib/close-stream.h
   lib/count-leading-zeros.c
@@ -869,6 +900,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/mktime-internal.h
   lib/mktime.c
   lib/nstrftime.c
+  lib/open.c
   lib/openat-priv.h
   lib/openat-proc.c
   lib/openat.h
@@ -987,10 +1019,13 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/minmax.m4
   m4/mkostemp.m4
   m4/mktime.m4
+  m4/mode_t.m4
   m4/multiarch.m4
   m4/nocrash.m4
   m4/nstrftime.m4
   m4/off_t.m4
+  m4/open-cloexec.m4
+  m4/open.m4
   m4/pipe2.m4
   m4/pselect.m4
   m4/pthread_sigmask.m4

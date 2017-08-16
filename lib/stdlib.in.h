@@ -765,6 +765,23 @@ _GL_WARN_ON_USE (realloc, "realloc is not POSIX compliant everywhere - "
                  "use gnulib module realloc-posix for portability");
 #endif
 
+
+#if @GNULIB_REALLOCARRAY@
+# if ! @HAVE_REALLOCARRAY@
+_GL_FUNCDECL_SYS (reallocarray, void *,
+                  (void *ptr, size_t nmemb, size_t size));
+# endif
+_GL_CXXALIAS_SYS (reallocarray, void *,
+                  (void *ptr, size_t nmemb, size_t size));
+_GL_CXXALIASWARN (reallocarray);
+#elif defined GNULIB_POSIXCHECK
+# undef reallocarray
+# if HAVE_RAW_DECL_REALLOCARRAY
+_GL_WARN_ON_USE (reallocarray, "reallocarray is not portable - "
+                 "use gnulib module reallocarray for portability");
+# endif
+#endif
+
 #if @GNULIB_REALPATH@
 # if @REPLACE_REALPATH@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
