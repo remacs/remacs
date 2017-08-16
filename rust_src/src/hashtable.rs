@@ -5,12 +5,12 @@ use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy
                  QCweakness, sxhash, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
                  Lisp_Vector, Qkey_and_value, Qkey, Qvalue, Qkey_or_value, pure_alloc,
                  survives_gc, Lisp_Vectorlike_Header, pure_write_error, Lisp_Object,
-                 Qnil, Hash_Result};
+                 EmacsUint, hash_table_test};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
 use std::hash::{Hash, Hasher};
-use libc::{c_void, c_int};
+use libc::{c_void, c_int, ptrdiff_t, c_float};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 
 static DEFAULT_TABLE_SIZE: usize = 65;
@@ -28,15 +28,16 @@ enum HashFunction {
     UserFunc(LispObject, LispObject, LispObject),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 struct HashableLispObject {
     object: LispObject,
     func: HashFunction,
+    idx: usize
 }
 
 impl HashableLispObject {
     fn with_hashfunc_and_object(o: LispObject, f: HashFunction) -> HashableLispObject {
-        HashableLispObject { object: o, func: f }
+        HashableLispObject { object: o, func: f, idx: 0 }
     }
 }
 
@@ -82,6 +83,14 @@ impl PartialEq for HashableLispObject {
 
 impl Eq for HashableLispObject {}
 
+// @TODO Need to set up key_and_value map. This will be a vector for fast access
+// we will need to switch our puts/gets into using the 'entry' API for in place access.
+// A hashable lisp object will have it's vector index. This will allow us to give the C a ptrdiff_t
+// for fast hashmap access
+
+// HASH_HASH array iteration can now become giving a pointer to the memory of key_and_value
+// and iterating over that in the C layer, without having to introduce new Rust functions for each use of
+// HASH_HASH
 #[derive(Clone)]
 #[repr(C)]
 pub struct LispHashTable {
@@ -99,6 +108,10 @@ pub struct LispHashTable {
 
     /// The Hashmap used to store lisp objects.
     map: FnvHashMap<HashableLispObject, HashableLispObject>,
+
+    /// A vector used for backwards compatability for fast lookups.
+    key_and_value: Vec<LispObject>,
+    free_list: Vec<usize>
 }
 
 impl LispHashTable {
@@ -113,6 +126,8 @@ impl LispHashTable {
             is_pure: false,
             func: HashFunction::Eq,
             map: FnvHashMap::with_capacity_and_hasher(cap, Default::default()),
+            key_and_value: Vec::new(),
+            free_list: Vec::new()
         }
     }
 
@@ -120,6 +135,78 @@ impl LispHashTable {
         if self.is_pure {
             unsafe { pure_write_error(object.to_raw()) };
         }
+    }
+
+    pub fn insert(&mut self, key: LispObject, value: LispObject) -> ptrdiff_t {
+        let mut hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
+        match self.map.entry(hash_key) {
+            Occupied(mut entry) => {
+                let mut hash_value = HashableLispObject::with_hashfunc_and_object(value, self.func);
+                let idx = entry.get().idx;
+                self.key_and_value[idx - 1] = key;
+                self.key_and_value[idx] = value;
+                hash_value.idx = idx;
+                entry.insert(hash_value);
+                idx as ptrdiff_t
+            },
+            
+            Vacant(entry) => {
+                let mut hash_value = HashableLispObject::with_hashfunc_and_object(value, self.func);
+                let retval;
+                if let Some(idx) = self.free_list.pop() {
+                    self.key_and_value[idx] = key;
+                    self.key_and_value[idx + 1] = value;
+                    retval = idx as ptrdiff_t
+                } else {
+                    self.key_and_value.push(key);
+                    self.key_and_value.push(value);
+                    retval = (self.key_and_value.len() - 2) as ptrdiff_t
+                }
+                
+                hash_key.idx = retval as usize;
+                hash_value.idx = (retval + 1) as usize;
+                entry.insert(hash_value);
+                retval
+            }
+        }        
+    }
+
+    pub fn remove(&mut self, key: LispObject) -> Option<LispObject> {
+        let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
+        let remove = self.map.remove(&hash_key);
+        if let Some(result) = remove {
+            self.key_and_value[result.idx] = LispObject::constant_nil();
+            self.key_and_value[result.idx + 1] = LispObject::constant_nil();
+            self.free_list.push(result.idx);
+        }
+
+        remove.map(|result| result.object)
+    }
+
+    pub fn get_index(&self, key: LispObject) -> ptrdiff_t {
+        let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
+        self.map.get(&hash_key).map_or(-1, |result| result.idx as ptrdiff_t)
+    }
+
+    pub fn get(&self, key: LispObject) -> Option<LispObject> {
+        let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
+        self.map.get(&hash_key).map(|result| result.object)
+    }
+
+    pub fn get_value_with_index(&self, idx: ptrdiff_t) -> LispObject {
+        self.key_and_value[(idx + 1) as usize]
+    }
+
+    pub fn get_key_with_index(&self, idx: ptrdiff_t) -> LispObject {
+        self.key_and_value[idx as usize]
+    }
+
+    pub fn set_value_with_index(&mut self, object: LispObject, idx: ptrdiff_t) {
+        self.key_and_value[(idx + 1) as usize] = object;
+    }
+    
+    pub fn set_key_with_index(&mut self, object: LispObject, idx: ptrdiff_t) {
+        self.key_and_value[idx as usize] = object;
     }
 }
 
@@ -221,9 +308,7 @@ fn make_hash_table(args: &mut [LispObject]) -> LispObject {
 fn puthash(k: LispObject, v: LispObject, map: LispObject) -> LispObject {
     let mut hashmap = map.as_hash_table_or_error();
     hashmap.is_not_pure_or_error(map);
-    let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
-    let value = HashableLispObject::with_hashfunc_and_object(v, hashmap.func);
-    hashmap.map.insert(key, value);
+    hashmap.insert(k, v);
     v
 }
 
@@ -232,8 +317,7 @@ fn puthash(k: LispObject, v: LispObject, map: LispObject) -> LispObject {
 #[lisp_fn(min = 2)]
 fn gethash(k: LispObject, map: LispObject, default: LispObject) -> LispObject {
     let hashmap = map.as_hash_table_or_error();
-    let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
-    hashmap.map.get(&key).map_or(default, |key| key.object)
+    hashmap.get(k).unwrap_or(default)
 }
 
 /// Remove KEY from TABLE.
@@ -241,9 +325,7 @@ fn gethash(k: LispObject, map: LispObject, default: LispObject) -> LispObject {
 fn remhash(k: LispObject, map: LispObject) -> LispObject {
     let mut hashmap = map.as_hash_table_or_error();
     hashmap.is_not_pure_or_error(map);
-
-    let key = HashableLispObject::with_hashfunc_and_object(k, hashmap.func);
-    hashmap.map.remove(&key);
+    hashmap.remove(k);
     LispObject::constant_nil()
 }
 
@@ -254,7 +336,6 @@ fn remhash(k: LispObject, map: LispObject) -> LispObject {
 fn maphash(function: LispObject, map: LispObject) -> LispObject {
     let table = map.as_hash_table_or_error();
     for (key, value) in table.map.iter() {
-        // @TODO C code had a null check on the HASH_HASH call here, we may need to emulate.
         call!(function, key.object, value.object);
     }
 
@@ -340,8 +421,7 @@ fn hash_table_rehash_threshold(_map: LispObject) -> LispObject {
 
 #[no_mangle]
 pub unsafe fn hashtable_finalize(map: *mut c_void) {
-    let ptr = map as *mut LispHashTable;
-    mem::drop(&*ptr);
+    mem::drop(&*(map as *mut LispHashTable));
 }
 
 #[no_mangle]
@@ -363,27 +443,81 @@ pub unsafe fn mark_hashtable(map: *mut c_void) {
 }
 
 #[no_mangle]
-pub unsafe fn hash_lookup(map: *mut c_void, key: Lisp_Object, _: *mut c_void) -> Hash_Result {
-    let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
-    let hash_key = HashableLispObject::with_hashfunc_and_object(LispObject::from_raw(key), ptr.func);    
-    match ptr.map.entry(hash_key) {
-        Occupied(entry) => {
-            Hash_Result {
-                found: true,
-                key: entry.key().object.to_raw(),
-                value: entry.get().object.to_raw()
-            }
-        },
-        
-        Vacant(_) => {
-            Hash_Result {
-                found: false,
-                key: Qnil,
-                value: Qnil
-            }
-        }
-    }
+pub unsafe fn hash_lookup(map: *mut c_void, key: Lisp_Object, _: *mut c_void) -> ptrdiff_t {
+    let ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.get_index(LispObject::from_raw(key))
 }
+
+#[no_mangle]
+pub unsafe fn hash_value_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
+    let ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.get_value_with_index(idx).to_raw()
+}
+
+#[no_mangle]
+pub unsafe fn hash_key_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
+    let ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.get_key_with_index(idx).to_raw()
+}
+
+#[no_mangle]
+pub unsafe fn hash_hash_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
+    let ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.key_and_value[idx as usize].to_raw()
+}
+
+#[no_mangle]
+pub unsafe fn hash_size(map: *mut c_void) -> ptrdiff_t {
+    let ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.key_and_value.len() as ptrdiff_t
+}
+
+pub unsafe fn set_hash_value_slot(map: *mut c_void, idx: ptrdiff_t, value: Lisp_Object) {
+    let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.set_value_with_index(LispObject::from_raw(value), idx);
+}
+
+pub unsafe fn set_hash_key_slot(map: *mut c_void, idx: ptrdiff_t, value: Lisp_Object) {
+    let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.set_key_with_index(LispObject::from_raw(value), idx);
+}
+
+pub unsafe fn hash_put(map: *mut c_void, key: Lisp_Object, value: Lisp_Object, _: EmacsUint) -> ptrdiff_t {
+    let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.insert(LispObject::from_raw(key), LispObject::from_raw(value))
+}
+
+#[allow(unused_unsafe)]
+pub unsafe fn new_hash_table (test: hash_table_test,
+                               size: EmacsInt,
+                               _: c_float,
+                               _: c_float,
+                               weak: Lisp_Object,
+                               is_pure: bool)
+                               -> Lisp_Object {
+    let mut ptr = ExternalPtr::new(allocate_pseudovector!(
+        LispHashTable,
+        map,
+        PseudovecType::PVEC_HASH_TABLE
+    ));
+    ptr.map.reserve(size as usize);
+    ptr.weak = LispObject::from_raw(weak);
+    ptr.is_pure = is_pure;
+    if test.name == Qeq {
+        ptr.func = HashFunction::Eq;
+    } else if test.name == Qeql {
+        ptr.func = HashFunction::Eql;
+    } else if test.name == Qequal {
+        ptr.func = HashFunction::Equal;
+    } else {
+        ptr.func = HashFunction::UserFunc(LispObject::from_raw(test.name),
+                                          LispObject::from_raw(test.user_cmp_function),
+                                          LispObject::from_raw(test.user_hash_function));
+    }
+
+    LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike).to_raw()
+}
+                                
 
 
 /************************************************************************
@@ -439,7 +573,7 @@ pub unsafe fn sweep_weak_hashtable(map: *mut c_void, remove_entries: bool) -> bo
     }
 
     for x in to_remove.iter() {
-        ptr.map.remove(&x);
+        ptr.remove(x.object);
     }
 
     marked
@@ -456,6 +590,7 @@ pub unsafe fn pure_copy_hashtable(map: *mut c_void) -> *mut c_void {
         mem::size_of::<LispHashTable>(),
         Lisp_Type::Lisp_Vectorlike as c_int,
     ) as *mut LispHashTable);
+    
     if let HashFunction::UserFunc(name, cmp, hash) = table_ptr.func {
         ptr.func = HashFunction::UserFunc(name.purecopy(), cmp.purecopy(), hash.purecopy());
     } else {
@@ -466,17 +601,11 @@ pub unsafe fn pure_copy_hashtable(map: *mut c_void) -> *mut c_void {
     ptr.weak = LispObject::constant_nil().purecopy();
     ptr.is_pure = table_ptr.is_pure;
     ptr.map = FnvHashMap::with_capacity_and_hasher(table_ptr.map.len(), Default::default());
-
+    ptr.key_and_value = Vec::new();
+    ptr.free_list = Vec::new();
+    
     for (key, value) in table_ptr.map.iter() {
-        let purekey = HashableLispObject {
-            object: key.object.purecopy(),
-            func: key.func,
-        };
-        let purevalue = HashableLispObject {
-            object: value.object.purecopy(),
-            func: value.func,
-        };
-        ptr.map.insert(purekey, purevalue);
+        ptr.insert(key.object.purecopy(), value.object.purecopy());
     }
 
     ptr.as_ptr() as *mut c_void

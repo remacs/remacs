@@ -575,13 +575,6 @@ pub enum EqualKind {
     IncludingProperties,
 }
 
-#[repr(C)]
-pub struct Hash_Result {
-    pub found: bool,
-    pub key: Lisp_Object,
-    pub value: Lisp_Object
-}
-
 /// Represents the global state of the editor.
 ///
 /// This has been factored out to a single struct in C Emacs to help
@@ -1116,23 +1109,6 @@ pub struct hash_table_test {
     pub user_cmp_function: Lisp_Object,
     pub cmpfn: extern "C" fn(t: *mut hash_table_test, a: Lisp_Object, b: Lisp_Object) -> bool,
     pub hashfn: extern "C" fn(t: *mut hash_table_test, a: Lisp_Object) -> EmacsUint,
-}
-
-#[repr(C)]
-pub struct Lisp_Hash_Table {
-    pub header: Lisp_Vectorlike_Header,
-    pub weak: Lisp_Object,
-    pub hash: Lisp_Object,
-    pub next: Lisp_Object,
-    pub index: Lisp_Object,
-    pub count: ptrdiff_t,
-    pub next_free: ptrdiff_t,
-    pub pure_: bool, // pure is a reserved keyword in Rust
-    pub rehash_threshold: c_float,
-    pub rehash_size: c_float,
-    pub key_and_value: Lisp_Object,
-    pub test: hash_table_test,
-    pub next_weak: *mut Lisp_Hash_Table,
 }
 
 extern "C" {

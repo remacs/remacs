@@ -149,6 +149,14 @@ pub use hashtable::mark_hashtable;
 pub use hashtable::pure_copy_hashtable;
 pub use hashtable::sweep_weak_hashtable;
 pub use hashtable::hash_lookup;
+pub use hashtable::hash_value_lookup;
+pub use hashtable::hash_key_lookup;
+pub use hashtable::hash_hash_lookup;
+pub use hashtable::hash_size;
+pub use hashtable::set_hash_value_slot;
+pub use hashtable::set_hash_key_slot;
+pub use hashtable::hash_put;
+pub use hashtable::new_hash_table;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
