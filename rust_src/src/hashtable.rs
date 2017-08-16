@@ -11,6 +11,7 @@ use fnv::FnvHashMap;
 use std::mem;
 use std::hash::{Hash, Hasher};
 use libc::{c_void, c_int, ptrdiff_t, c_float};
+use std::sync::Mutex;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 
 static DEFAULT_TABLE_SIZE: usize = 65;
@@ -83,14 +84,7 @@ impl PartialEq for HashableLispObject {
 
 impl Eq for HashableLispObject {}
 
-// @TODO Need to set up key_and_value map. This will be a vector for fast access
-// we will need to switch our puts/gets into using the 'entry' API for in place access.
-// A hashable lisp object will have it's vector index. This will allow us to give the C a ptrdiff_t
-// for fast hashmap access
-
-// HASH_HASH array iteration can now become giving a pointer to the memory of key_and_value
-// and iterating over that in the C layer, without having to introduce new Rust functions for each use of
-// HASH_HASH
+// @TODO need to verify that HASH_HASH is doing the correct thing for this data structure.
 #[derive(Clone)]
 #[repr(C)]
 pub struct LispHashTable {
@@ -111,6 +105,8 @@ pub struct LispHashTable {
 
     /// A vector used for backwards compatability for fast lookups.
     key_and_value: Vec<LispObject>,
+
+    /// Free list for available slots in the key_and_value vector.
     free_list: Vec<usize>
 }
 
@@ -126,7 +122,7 @@ impl LispHashTable {
             is_pure: false,
             func: HashFunction::Eq,
             map: FnvHashMap::with_capacity_and_hasher(cap, Default::default()),
-            key_and_value: Vec::new(),
+            key_and_value: Vec::with_capacity(cap * 2),
             free_list: Vec::new()
         }
     }
@@ -175,12 +171,16 @@ impl LispHashTable {
         let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
         let remove = self.map.remove(&hash_key);
         if let Some(result) = remove {
-            self.key_and_value[result.idx] = LispObject::constant_nil();
-            self.key_and_value[result.idx + 1] = LispObject::constant_nil();
-            self.free_list.push(result.idx);
+            self.clear_key_and_value(result.idx);
         }
 
         remove.map(|result| result.object)
+    }
+
+    fn clear_key_and_value(&mut self, idx: usize) {
+        self.key_and_value[idx] = LispObject::constant_nil();
+        self.key_and_value[idx] = LispObject::constant_nil();
+        self.free_list.push(idx);
     }
 
     pub fn get_index(&self, key: LispObject) -> ptrdiff_t {
@@ -193,21 +193,40 @@ impl LispHashTable {
         self.map.get(&hash_key).map(|result| result.object)
     }
 
+    #[inline]
     pub fn get_value_with_index(&self, idx: ptrdiff_t) -> LispObject {
         self.key_and_value[(idx + 1) as usize]
     }
 
+    #[inline]
     pub fn get_key_with_index(&self, idx: ptrdiff_t) -> LispObject {
         self.key_and_value[idx as usize]
     }
 
+    #[inline]
     pub fn set_value_with_index(&mut self, object: LispObject, idx: ptrdiff_t) {
         self.key_and_value[(idx + 1) as usize] = object;
     }
-    
+
+    #[inline]
     pub fn set_key_with_index(&mut self, object: LispObject, idx: ptrdiff_t) {
         self.key_and_value[idx as usize] = object;
     }
+}
+
+macro_rules! add_weak_table {
+    ($ident: ident) => {
+        WEAK_TABLES.lock().unwrap().push($ident);
+    }
+}
+
+#[inline]
+fn allocate_hashtable() -> LispHashTableRef {
+    ExternalPtr::new(allocate_pseudovector!(
+        LispHashTable,
+        map,
+        PseudovecType::PVEC_HASH_TABLE
+    ))
 }
 
 /// Create and return a new hash table.
@@ -248,11 +267,7 @@ impl LispHashTable {
 ///usage: (make-hash-table &rest KEYWORD-ARGS)
 #[lisp_fn]
 fn make_hash_table(args: &mut [LispObject]) -> LispObject {
-    let mut ptr = ExternalPtr::new(allocate_pseudovector!(
-        LispHashTable,
-        map,
-        PseudovecType::PVEC_HASH_TABLE
-    ));
+    let mut ptr = allocate_hashtable();
     let len = args.len();
     let mut i = 0;
     while i < len {
@@ -296,6 +311,10 @@ fn make_hash_table(args: &mut [LispObject]) -> LispObject {
 
             // @TODO signal error or not Qkey/Qvalue/Qkey_or_value/Qkey_and_value
         }
+    }
+
+    if ptr.weak.is_not_nil() {
+        add_weak_table!(ptr);
     }
 
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
@@ -377,14 +396,14 @@ fn hash_table_size(map: LispObject) -> LispObject {
 #[lisp_fn]
 fn copy_hash_table(map: LispObject) -> LispObject {
     let hashmap = map.as_hash_table_or_error();
-    let mut new_ptr = ExternalPtr::new(allocate_pseudovector!(
-        LispHashTable,
-        map,
-        PseudovecType::PVEC_HASH_TABLE
-    ));
+    let mut new_ptr = allocate_hashtable();
     let new_table = hashmap.clone();
     unsafe { ptr::copy_nonoverlapping(new_table.as_ptr(), new_ptr.as_mut(), 1) };
-    // @TODO if table is weak, add it to weak table data structure.
+    
+    if new_ptr.weak.is_not_nil() {
+        add_weak_table!(new_ptr);
+    }
+    
     LispObject::tag_ptr(new_ptr, Lisp_Type::Lisp_Vectorlike)
 }
 
@@ -495,11 +514,7 @@ pub unsafe fn new_hash_table (test: hash_table_test,
                                weak: Lisp_Object,
                                is_pure: bool)
                                -> Lisp_Object {
-    let mut ptr = ExternalPtr::new(allocate_pseudovector!(
-        LispHashTable,
-        map,
-        PseudovecType::PVEC_HASH_TABLE
-    ));
+    let mut ptr = allocate_hashtable();
     ptr.map.reserve(size as usize);
     ptr.weak = LispObject::from_raw(weak);
     ptr.is_pure = is_pure;
@@ -520,8 +535,15 @@ pub unsafe fn new_hash_table (test: hash_table_test,
 
 #[no_mangle]
 pub unsafe fn table_not_weak_or_pure(table: *mut c_void) -> bool {
-    let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
-    ptr.weak.is_not_nil() || !ptr.pure 
+    let ptr = ExternalPtr::new(table as *mut LispHashTable);
+    ptr.weak.is_not_nil() || !ptr.is_pure 
+}
+
+unsafe impl Send for LispHashTableRef {}
+lazy_static! {
+    static ref WEAK_TABLES: Mutex<Vec<LispHashTableRef>> = {
+        Mutex::new(Vec::new())
+    };
 }
                                 
 
@@ -583,6 +605,14 @@ pub unsafe fn sweep_weak_hashtable(map: *mut c_void, remove_entries: bool) -> bo
 
     marked
 }
+
+/* Remove elements from weak hash tables that don't survive the
+   current garbage collection.  Remove weak tables that don't survive
+   from Vweak_hash_tables.  Called from gc_sweep.  */
+// #[no_mangle]
+// pub unsafe fn sweep_weak_hash_tables() {
+//     let tables = WEAK_TABLES.lock().unwrap();
+// }
 
 #[no_mangle]
 pub unsafe fn purecopy_hash_table(map: *mut c_void) -> *mut c_void {
