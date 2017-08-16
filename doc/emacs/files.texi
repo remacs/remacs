@@ -1598,8 +1598,8 @@ rename-file}.  @xref{VC Delete/Rename}.
 file without removing the old name.  The new name is created as a hard
 link to the existing file.  The new name must belong on the same file
 system that the file is on.  On MS-Windows, this command works only if
-the file resides in an NTFS file system.  On MS-DOS, it works by
-copying the file.
+the file resides in an NTFS file system.  On MS-DOS, and some remote
+system types, it works by copying the file.
 
 @findex make-symbolic-link
 @cindex symbolic links (creation)
@@ -1610,7 +1610,8 @@ attempts to open file @var{new} will refer to whatever file is named
 the name @var{target} is nonexistent at that time.  This command does
 not expand the argument @var{target}, so that it allows you to specify
 a relative name as the target of the link.  On MS-Windows, this
-command works only on MS Windows Vista and later.
+command works only on MS Windows Vista and later.  On remote systems,
+it works depending on the system type.
 
 @node Misc File Ops
 @section Miscellaneous File Operations
