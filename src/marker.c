@@ -761,7 +761,6 @@ verify_bytepos (ptrdiff_t charpos)
 void
 syms_of_marker (void)
 {
-  defsubr (&Smarker_position);
   defsubr (&Smarker_buffer);
   defsubr (&Sset_marker);
   defsubr (&Scopy_marker);

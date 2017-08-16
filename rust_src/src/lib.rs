@@ -250,6 +250,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*lists::Smake_list);
         defsubr(&*lists::Ssafe_length);
         defsubr(&*marker::Smarkerp);
+        defsubr(&*marker::Smarker_position);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Smultibyte_string_p);
         defsubr(&*base64::Sbase64_encode_string);
