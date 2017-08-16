@@ -129,8 +129,7 @@ form.")
     (let ((enable-local-variables (nth 0 test-settings))
 	  (enable-local-eval      (nth 1 test-settings))
 	  ;; Prevent any dir-locals file interfering with the tests.
-	  (enable-dir-local-variables nil)
-	  (files-test-queried nil))
+	  (enable-dir-local-variables nil))
       (hack-local-variables)
       (eval (nth 2 test-settings)))))
 
