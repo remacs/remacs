@@ -41,3 +41,11 @@ pub fn eobp() -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
     LispObject::from_bool(buffer_ref.zv() == buffer_ref.pt)
 }
+
+/// Return t if point is at the beginning of the buffer.  If the
+/// buffer is narrowed, this means the beginning of the narrowed part.
+#[lisp_fn]
+pub fn bobp() -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+    LispObject::from_bool(buffer_ref.pt == buffer_ref.begv)
+}
