@@ -2522,20 +2522,6 @@ if x:
    (should (string= (python-shell-internal-get-process-name)
                     (format "%s[%s]" python-shell-internal-buffer-name (buffer-name))))))
 
-(ert-deftest python-shell-calculate-command-1 ()
-  "Check the command to execute is calculated correctly.
-Using `python-shell-interpreter' and
-`python-shell-interpreter-args'."
-  (skip-unless (executable-find python-tests-shell-interpreter))
-  (let ((python-shell-interpreter (executable-find
-                                   python-tests-shell-interpreter))
-        (python-shell-interpreter-args "-B"))
-    (should (string=
-             (format "%s %s"
-                     (shell-quote-argument python-shell-interpreter)
-                     python-shell-interpreter-args)
-             (python-shell-calculate-command)))))
-
 (ert-deftest python-shell-calculate-pythonpath-1 ()
   "Test PYTHONPATH calculation."
   (let ((process-environment '("PYTHONPATH=/path0"))
