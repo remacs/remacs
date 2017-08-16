@@ -42,6 +42,11 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn gap_size(&self) -> ptrdiff_t {
+        unsafe { (*self.text).gap_size }
+    }
+
+    #[inline]
     pub fn gap_end_addr(&self) -> *mut c_uchar {
         unsafe {
             (*self.text).beg.offset(

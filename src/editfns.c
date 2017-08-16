@@ -1167,14 +1167,14 @@ At the beginning of the buffer or accessible region, return 0.  */)
   return temp;
 }
 
-DEFUN ("bolp", Fbolp, Sbolp, 0, 0, 0,
-       doc: /* Return t if point is at the beginning of a line.  */)
-  (void)
-{
-  if (PT == BEGV || FETCH_BYTE (PT_BYTE - 1) == '\n')
-    return Qt;
-  return Qnil;
-}
+/* DEFUN ("bolp", Fbolp, Sbolp, 0, 0, 0, */
+/*        doc: /\* Return t if point is at the beginning of a line.  *\/) */
+/*   (void) */
+/* { */
+/*   if (PT == BEGV || FETCH_BYTE (PT_BYTE - 1) == '\n') */
+/*     return Qt; */
+/*   return Qnil; */
+/* } */
 
 DEFUN ("eolp", Feolp, Seolp, 0, 0, 0,
        doc: /* Return t if point is at the end of a line.
@@ -5409,7 +5409,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sposition_bytes);
   defsubr (&Sbyte_to_position);
 
-  defsubr (&Sbolp);
   defsubr (&Seolp);
   defsubr (&Sfollowing_char);
   defsubr (&Sprevious_char);

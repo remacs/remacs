@@ -162,6 +162,7 @@ pub use multibyte::str_to_unibyte;
 
 // Used in window.c, macros.c
 pub use interactive::Fprefix_numeric_value;
+pub use editfns::Fbolp;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
@@ -319,5 +320,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sbuffer_size);
         defsubr(&*editfns::Seobp);
         defsubr(&*editfns::Sbobp);
+        defsubr(&*editfns::Sbolp);
     }
 }
