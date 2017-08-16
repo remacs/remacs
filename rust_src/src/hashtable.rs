@@ -420,7 +420,7 @@ fn hash_table_rehash_threshold(_map: LispObject) -> LispObject {
 }
 
 #[no_mangle]
-pub unsafe fn hashtable_finalize(map: *mut c_void) {
+pub unsafe fn finalize_hashtable(map: *mut c_void) {
     mem::drop(&*(map as *mut LispHashTable));
 }
 
@@ -517,8 +517,13 @@ pub unsafe fn new_hash_table (test: hash_table_test,
 
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike).to_raw()
 }
-                                
 
+#[no_mangle]
+pub unsafe fn table_not_weak_or_pure(table: *mut c_void) -> bool {
+    let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.weak.is_not_nil() || !ptr.pure 
+}
+                                
 
 /************************************************************************
 			   Weak Hash Tables
@@ -580,7 +585,7 @@ pub unsafe fn sweep_weak_hashtable(map: *mut c_void, remove_entries: bool) -> bo
 }
 
 #[no_mangle]
-pub unsafe fn pure_copy_hashtable(map: *mut c_void) -> *mut c_void {
+pub unsafe fn purecopy_hash_table(map: *mut c_void) -> *mut c_void {
     let table_ptr = ExternalPtr::new(map as *mut LispHashTable);
     debug_assert!(table_ptr.is_pure);
     debug_assert!(table_ptr.weak.is_nil());

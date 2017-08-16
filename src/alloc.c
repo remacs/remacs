@@ -3153,6 +3153,8 @@ cleanup_vector (struct Lisp_Vector *vector)
     finalize_one_mutex ((struct Lisp_Mutex *) vector);
   else if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_CONDVAR))
     finalize_one_condvar ((struct Lisp_CondVar *) vector);
+  else if (PSEUDOVECTOR_TYPEP (&vector->header, PVEC_HASH_TABLE))
+    finalize_hashtable ((LispHashTable*) vector);
 }
 
 /* Reclaim space used by unmarked vectors.  */
@@ -5447,38 +5449,6 @@ make_pure_vector (ptrdiff_t len)
   return new;
 }
 
-/* Copy all contents and parameters of TABLE to a new table allocated
-   from pure space, return the purified table.  */
-static struct Lisp_Hash_Table *
-purecopy_hash_table (struct Lisp_Hash_Table *table)
-{
-  eassert (NILP (table->weak));
-  eassert (table->pure);
-
-  struct Lisp_Hash_Table *pure = pure_alloc (sizeof *pure, Lisp_Vectorlike);
-  struct hash_table_test pure_test = table->test;
-
-  /* Purecopy the hash table test.  */
-  pure_test.name = purecopy (table->test.name);
-  pure_test.user_hash_function = purecopy (table->test.user_hash_function);
-  pure_test.user_cmp_function = purecopy (table->test.user_cmp_function);
-
-  pure->header = table->header;
-  pure->weak = purecopy (Qnil);
-  pure->hash = purecopy (table->hash);
-  pure->next = purecopy (table->next);
-  pure->index = purecopy (table->index);
-  pure->count = table->count;
-  pure->next_free = table->next_free;
-  pure->pure = table->pure;
-  pure->rehash_threshold = table->rehash_threshold;
-  pure->rehash_size = table->rehash_size;
-  pure->key_and_value = purecopy (table->key_and_value);
-  pure->test = pure_test;
-
-  return pure;
-}
-
 DEFUN ("purecopy", Fpurecopy, Spurecopy, 1, 1, 0,
        doc: /* Make a copy of object OBJ in pure storage.
 Recursively copies contents of vectors and cons cells.
@@ -5530,11 +5500,11 @@ purecopy (Lisp_Object obj)
 			    STRING_MULTIBYTE (obj));
   else if (HASH_TABLE_P (obj))
     {
-      struct Lisp_Hash_Table *table = XHASH_TABLE (obj);
+      LispHashTable *table = XHASH_TABLE (obj);
       /* Do not purify hash tables which haven't been defined with
          :purecopy as non-nil or are weak - they aren't guaranteed to
          not change.  */
-      if (!NILP (table->weak) || !table->pure)
+      if (table_not_weak_or_pure(table))
         {
           /* Instead, add the hash table to the list of pinned objects,
              so that it will be marked during GC.  */
@@ -5545,7 +5515,7 @@ purecopy (Lisp_Object obj)
           return obj; /* Don't hash cons it.  */
         }
 
-      struct Lisp_Hash_Table *h = purecopy_hash_table (table);
+      LispHashTable *h = purecopy_hash_table (table);
       XSET_HASH_TABLE (obj, h);
     }
   else if (COMPILEDP (obj) || VECTORP (obj) || RECORDP (obj))
@@ -6489,21 +6459,10 @@ mark_object (Lisp_Object arg)
 
 	  case PVEC_HASH_TABLE:
 	    {
-	      struct Lisp_Hash_Table *h = (struct Lisp_Hash_Table *) ptr;
-
-	      mark_vectorlike (ptr);
-	      mark_object (h->test.name);
-	      mark_object (h->test.user_hash_function);
-	      mark_object (h->test.user_cmp_function);
-	      /* If hash table is not weak, mark all keys and values.
-		 For weak tables, mark only the vector.  */
-	      if (NILP (h->weak))
-		mark_object (h->key_and_value);
-	      else
-		VECTOR_MARK (XVECTOR (h->key_and_value));
+	      mark_hashtable ((LispHashTable*) ptr);
 	    }
 	    break;
-
+	      
 	  case PVEC_CHAR_TABLE:
 	  case PVEC_SUB_CHAR_TABLE:
 	    mark_char_table (ptr, (enum pvec_type) pvectype);

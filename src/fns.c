@@ -1390,7 +1390,7 @@ internal_equal (Lisp_Object o1, Lisp_Object o2, enum equal_kind equal_kind,
 	{
 	case Lisp_Cons: case Lisp_Misc: case Lisp_Vectorlike:
 	  {
-	    struct Lisp_Hash_Table *h = XHASH_TABLE (ht);
+	    LispHashTable *h = XHASH_TABLE (ht);
 	    EMACS_UINT hash;
 	    ptrdiff_t i = hash_lookup (h, o1, &hash);
 	    if (i >= 0)
@@ -2343,64 +2343,6 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
 
 static struct Lisp_Hash_Table *weak_hash_tables;
 
-
-/***********************************************************************
-			       Utilities
- ***********************************************************************/
-
-static void
-CHECK_HASH_TABLE (Lisp_Object x)
-{
-  CHECK_TYPE (HASH_TABLE_P (x), Qhash_table_p, x);
-}
-
-static void
-set_hash_key_and_value (struct Lisp_Hash_Table *h, Lisp_Object key_and_value)
-{
-  h->key_and_value = key_and_value;
-}
-static void
-set_hash_next (struct Lisp_Hash_Table *h, Lisp_Object next)
-{
-  h->next = next;
-}
-static void
-set_hash_next_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, ptrdiff_t val)
-{
-  gc_aset (h->next, idx, make_number (val));
-}
-static void
-set_hash_hash (struct Lisp_Hash_Table *h, Lisp_Object hash)
-{
-  h->hash = hash;
-}
-static void
-set_hash_hash_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
-{
-  gc_aset (h->hash, idx, val);
-}
-static void
-set_hash_index (struct Lisp_Hash_Table *h, Lisp_Object index)
-{
-  h->index = index;
-}
-static void
-set_hash_index_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, ptrdiff_t val)
-{
-  gc_aset (h->index, idx, make_number (val));
-}
-
-/* If OBJ is a Lisp hash table, return a pointer to its struct
-   Lisp_Hash_Table.  Otherwise, signal an error.  */
-
-static struct Lisp_Hash_Table *
-check_hash_table (Lisp_Object obj)
-{
-  CHECK_HASH_TABLE (obj);
-  return XHASH_TABLE (obj);
-}
-
-
 /* Value is the next integer I >= N, N >= 0 which is "almost" a prime
    number.  A number is "almost" a prime number if it is not divisible
    by any integer in the range 2 .. (NEXT_ALMOST_PRIME_LIMIT - 1).  */
@@ -2413,30 +2355,6 @@ next_almost_prime (EMACS_INT n)
     if (n % 3 != 0 && n % 5 != 0 && n % 7 != 0)
       return n;
 }
-
-
-/* Find KEY in ARGS which has size NARGS.  Don't consider indices for
-   which USED[I] is non-zero.  If found at index I in ARGS, set
-   USED[I] and USED[I + 1] to 1, and return I + 1.  Otherwise return
-   0.  This function is used to extract a keyword/argument pair from
-   a DEFUN parameter list.  */
-
-static ptrdiff_t
-get_key_arg (Lisp_Object key, ptrdiff_t nargs, Lisp_Object *args, char *used)
-{
-  ptrdiff_t i;
-
-  for (i = 1; i < nargs; i++)
-    if (!used[i - 1] && EQ (args[i - 1], key))
-      {
-	used[i - 1] = 1;
-	used[i] = 1;
-	return i;
-      }
-
-  return 0;
-}
-
 
 /* Return a Lisp vector which has the same contents as VEC but has
    at least INCR_MIN more entries, where INCR_MIN is positive.
@@ -2483,24 +2401,6 @@ larger_vector (Lisp_Object vec, ptrdiff_t incr_min, ptrdiff_t nitems_max)
 /***********************************************************************
 			 Low-level Functions
  ***********************************************************************/
-
-/* Return the index of the next entry in H following the one at IDX,
-   or -1 if none.  */
-
-static ptrdiff_t
-HASH_NEXT (struct Lisp_Hash_Table *h, ptrdiff_t idx)
-{
-  return XINT (AREF (h->next, idx));
-}
-
-/* Return the index of the element in hash table H that is the start
-   of the collision list at index IDX, or -1 if the list is empty.  */
-
-static ptrdiff_t
-HASH_INDEX (struct Lisp_Hash_Table *h, ptrdiff_t idx)
-{
-  return XINT (AREF (h->index, idx));
-}
 
 /* Compare KEY1 which has hash code HASH1 and KEY2 with hash code
    HASH2 in hash table H using `eql'.  Value is true if KEY1 and
@@ -2590,20 +2490,6 @@ struct hash_table_test const
 		   LISPSYM_INITIALLY (Qnil), cmpfn_eql, hashfn_eql },
   hashtest_equal = { LISPSYM_INITIALLY (Qequal), LISPSYM_INITIALLY (Qnil),
 		     LISPSYM_INITIALLY (Qnil), cmpfn_equal, hashfn_equal };
-
-/* Allocate basically initialized hash table.  */
-
-static struct Lisp_Hash_Table *
-allocate_hash_table (void)
-{
-  return ALLOCATE_PSEUDOVECTOR (struct Lisp_Hash_Table,
-				count, PVEC_HASH_TABLE);
-}
-
-/* An upper bound on the size of a hash table index.  It must fit in
-   ptrdiff_t and be a valid Emacs fixnum.  */
-#define INDEX_SIZE_BOUND \
-  ((ptrdiff_t) min (MOST_POSITIVE_FIXNUM, PTRDIFF_MAX / word_size))
 
 /* Remove elements from weak hash tables that don't survive the
    current garbage collection.  Remove weak tables that don't survive
@@ -2876,18 +2762,6 @@ DEFUN ("hash-table-p", Fhash_table_p, Shash_table_p, 1, 1, 0,
   (Lisp_Object obj)
 {
   return HASH_TABLE_P (obj) ? Qt : Qnil;
-}
-
-
-DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
-       doc: /* Clear hash table TABLE and return it.  */)
-  (Lisp_Object table)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  CHECK_IMPURE (table, h);
-  hash_clear (h);
-  /* Be compatible with XEmacs.  */
-  return table;
 }
 
 DEFUN ("define-hash-table-test", Fdefine_hash_table_test,

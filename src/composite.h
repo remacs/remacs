@@ -86,19 +86,15 @@ composition_registered_p (Lisp_Object prop)
 /* Return the Nth glyph of composition specified by CMP.  CMP is a
    pointer to `struct composition'.  */
 #define COMPOSITION_GLYPH(cmp, n)					\
-  XINT (XVECTOR (XVECTOR (XHASH_TABLE (composition_hash_table)		\
-			  ->key_and_value)				\
-		 ->contents[cmp->hash_index * 2])			\
+  XINT (XVECTOR (HASH_KEY (XHASH_TABLE (composition_hash_table), cmp->hash_index)) \
 	->contents[cmp->method == COMPOSITION_WITH_RULE_ALTCHARS	\
-		  ? (n) * 2 : (n)])
+		   ? (n) * 2 : (n)])
 
 /* Return the encoded composition rule to compose the Nth glyph of
    rule-base composition specified by CMP.  CMP is a pointer to
    `struct composition'. */
-#define COMPOSITION_RULE(cmp, n)				\
-  XINT (XVECTOR (XVECTOR (XHASH_TABLE (composition_hash_table)	\
-			  ->key_and_value)			\
-		 ->contents[cmp->hash_index * 2])		\
+#define COMPOSITION_RULE(cmp, n)					\
+  XINT (XVECTOR (HASH_KEY (XHASH_TABLE (composition_hash_table), cmp->hash_index)) \
 	->contents[(n) * 2 - 1])
 
 /* Decode encoded composition rule RULE_CODE into GREF (global

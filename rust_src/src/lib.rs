@@ -144,9 +144,9 @@ pub use multibyte::str_to_unibyte;
 pub use interactive::Fprefix_numeric_value;
 
 // Used in alloc.c, lisp.h
-pub use hashtable::hashtable_finalize;
+pub use hashtable::finalize_hashtable;
 pub use hashtable::mark_hashtable;
-pub use hashtable::pure_copy_hashtable;
+pub use hashtable::purecopy_hash_table;
 pub use hashtable::sweep_weak_hashtable;
 pub use hashtable::hash_lookup;
 pub use hashtable::hash_value_lookup;
@@ -157,6 +157,7 @@ pub use hashtable::set_hash_value_slot;
 pub use hashtable::set_hash_key_slot;
 pub use hashtable::hash_put;
 pub use hashtable::new_hash_table;
+pub use hashtable::table_not_weak_or_pure;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
