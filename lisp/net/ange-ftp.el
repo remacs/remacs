@@ -689,11 +689,17 @@ parenthesized expressions in REGEXP for the components (in that order)."
 ;; authentication methods (typically) at connection establishment. Non
 ;; security-aware FTP servers should respond to this with a 500 code,
 ;; which we ignore.
+
+;; Further messages are needed to support ftp-ssl.
 (defcustom ange-ftp-skip-msgs
   (concat "^200 \\(PORT\\|Port\\) \\|^331 \\|^150 \\|^350 \\|^[0-9]+ bytes \\|"
 	  "^Connected \\|^$\\|^Remote system\\|^Using\\|^ \\|Password:\\|"
 	  "^Data connection \\|"
+          "^200 PBSZ\\|" "^200 Protection set to Private\\|"
+          "^234 AUTH TLS successful\\|"
           "^SSL not available\\|"
+	  "^\\[SSL Cipher .+\\]\\|"
+	  "^\\[Encrypted data transfer\\.\\]\\|"
 	  "^local:\\|^Trying\\|^125 \\|^550-\\|^221 .*oodbye\\|"
           "^500 .*AUTH\\|^KERBEROS\\|"
           "^500 This security scheme is not implemented\\|"
@@ -703,7 +709,7 @@ parenthesized expressions in REGEXP for the components (in that order)."
 	  "^22[789] .*[Pp]assive\\|^200 EPRT\\|^500 .*EPRT\\|^500 .*EPSV")
   "Regular expression matching FTP messages that can be ignored."
   :group 'ange-ftp
-  :version "24.4"			; add EPSV
+  :version "26.1"
   :type 'regexp)
 
 (defcustom ange-ftp-fatal-msgs
