@@ -120,10 +120,12 @@ NAME is the file name function to use, default `flymake-get-real-file-name'."
     (flymake-log 3 "file %s, init=%s" file-name (car mode-and-masks))
     mode-and-masks))
 
-(defun flymake-can-syntax-check-file (file-name)
-  "Determine whether we can syntax check FILE-NAME.
-Return nil if we cannot, non-nil if we can."
-  (if (flymake-get-init-function file-name) t nil))
+(defun flymake-proc-can-syntax-check-buffer ()
+  "Determine whether we can syntax check current buffer.
+Return nil if we cannot, non-nil if
+we can."
+  (and buffer-file-name
+       (if (flymake-get-init-function buffer-file-name) t nil)))
 
 (defun flymake-get-init-function (file-name)
   "Return init function to be used for the file."
@@ -714,12 +716,11 @@ Return its components if so, nil otherwise."
     (error
      (flymake-log 1 "Failed to delete dir %s, error ignored" dir-name))))
 
-(defun flymake-start-syntax-check ()
+(defun flymake-proc-start-syntax-check ()
   "Start syntax checking for current buffer."
   (interactive)
   (flymake-log 3 "flymake is running: %s" flymake-is-running)
-  (when (and (not flymake-is-running)
-             (flymake-can-syntax-check-file buffer-file-name))
+  (when (not flymake-is-running)
     (when (or (not flymake-compilation-prevents-syntax-check)
               (not (flymake-compilation-is-running))) ;+ (flymake-rep-ort-status buffer "COMP")
       (flymake-clear-buildfile-cache)
@@ -1083,6 +1084,14 @@ Use CREATE-TEMP-F for creating temp copy."
   (list flymake-xml-program
         (list "val" (flymake-init-create-temp-buffer-copy
                      'flymake-create-temp-inplace))))
+
+
+;;;; Hook onto flymake-ui
+
+(add-to-list 'flymake-backends
+             `(flymake-proc-can-syntax-check-buffer
+               .
+               flymake-proc-start-syntax-check))
 
 (provide 'flymake-proc)
 ;;; flymake-proc.el ends here

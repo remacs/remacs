@@ -108,6 +108,17 @@ See `flymake-error-bitmap' and `flymake-warning-bitmap'."
   :group 'flymake
   :type 'integer)
 
+(defcustom flymake-backends '()
+  "Ordered list of backends providing syntax check information for a buffer.
+Value is an alist of conses (PREDICATE . CHECKER). Both PREDICATE
+and CHECKER are functions called with a single argument, the
+buffer in which `flymake-mode' was enabled. PREDICATE is expected
+to (quickly) return t or nil if the buffer can be syntax checked
+by CHECKER, which in can performs more morose operations,
+possibly asynchronously."
+  :group 'flymake
+  :type 'alist)
+
 (defvar-local flymake-timer nil
   "Timer for starting syntax check.")
 
@@ -368,7 +379,7 @@ For the format of LINE-ERR-INFO, see `flymake-ler-make-ler'."
 
 	(setq flymake-last-change-time nil)
 	(flymake-log 3 "starting syntax check as more than 1 second passed since last change")
-	(flymake-start-syntax-check)))))
+	(flymake--start-syntax-check)))))
 
 (define-obsolete-function-alias 'flymake-display-err-menu-for-current-line
   'flymake-popup-current-error-menu "24.4")
@@ -442,6 +453,20 @@ For the format of LINE-ERR-INFO, see `flymake-ler-make-ler'."
   (flymake-log 0 "switched OFF Flymake mode for buffer %s due to fatal status %s, warning %s"
                (buffer-name) status warning))
 
+(defvar-local flymake--backend nil
+  "The currently active backend selected by `flymake-mode'")
+
+(defun flymake--can-syntax-check-buffer (buffer)
+  (let ((all flymake-backends)
+        (candidate))
+    (catch 'done
+      (while (setq candidate (pop all))
+        (when (with-current-buffer buffer (funcall (car candidate)))
+          (throw 'done (cdr candidate)))))))
+
+(defun flymake--start-syntax-check ()
+  (funcall flymake--backend))
+
 ;;;###autoload
 (define-minor-mode flymake-mode nil
   :group 'flymake :lighter flymake-mode-line
@@ -449,31 +474,36 @@ For the format of LINE-ERR-INFO, see `flymake-ler-make-ler'."
 
    ;; Turning the mode ON.
    (flymake-mode
-    (cond
-     ((not buffer-file-name)
-      (message "Flymake unable to run without a buffer file name"))
-     ((not (flymake-can-syntax-check-file buffer-file-name))
-      (flymake-log 2 "flymake cannot check syntax in buffer %s" (buffer-name)))
-     (t
-      (add-hook 'after-change-functions 'flymake-after-change-function nil t)
-      (add-hook 'after-save-hook 'flymake-after-save-hook nil t)
-      (add-hook 'kill-buffer-hook 'flymake-kill-buffer-hook nil t)
-      ;;+(add-hook 'find-file-hook 'flymake-find-file-hook)
+    (let* ((backend (flymake--can-syntax-check-buffer (current-buffer))))
+      (cond
+       ((not backend)
+        (flymake-log 2 "flymake cannot check syntax in buffer %s" (buffer-name)))
+       (t
+        (setq flymake--backend backend)
 
-      (flymake-report-status "" "")
+        (add-hook 'after-change-functions 'flymake-after-change-function nil t)
+        (add-hook 'after-save-hook 'flymake-after-save-hook nil t)
+        (add-hook 'kill-buffer-hook 'flymake-kill-buffer-hook nil t)
+        ;;+(add-hook 'find-file-hook 'flymake-find-file-hook)
 
-      (setq flymake-timer
-            (run-at-time nil 1 'flymake-on-timer-event (current-buffer)))
+        (flymake-report-status "" "")
 
-      (when (and flymake-start-syntax-check-on-find-file
-                 ;; Since we write temp files in current dir, there's no point
-                 ;; trying if the directory is read-only (bug#8954).
-                 (file-writable-p (file-name-directory buffer-file-name)))
-        (with-demoted-errors
-          (flymake-start-syntax-check))))))
+        (setq flymake-timer
+              (run-at-time nil 1 'flymake-on-timer-event (current-buffer)))
+
+        (when (and flymake-start-syntax-check-on-find-file
+                   ;; Since we write temp files in current dir, there's no point
+                   ;; trying if the directory is read-only (bug#8954).
+                   (file-writable-p (file-name-directory buffer-file-name)))
+          (with-demoted-errors
+              (flymake--start-syntax-check)))))
+      )
+    )
 
    ;; Turning the mode OFF.
    (t
+    (setq flymake--backend nil)
+
     (remove-hook 'after-change-functions 'flymake-after-change-function t)
     (remove-hook 'after-save-hook 'flymake-after-save-hook t)
     (remove-hook 'kill-buffer-hook 'flymake-kill-buffer-hook t)
@@ -505,14 +535,14 @@ For the format of LINE-ERR-INFO, see `flymake-ler-make-ler'."
   (let((new-text (buffer-substring start stop)))
     (when (and flymake-start-syntax-check-on-newline (equal new-text "\n"))
       (flymake-log 3 "starting syntax check as new-line has been seen")
-      (flymake-start-syntax-check))
+      (flymake--start-syntax-check))
     (setq flymake-last-change-time (float-time))))
 
 (defun flymake-after-save-hook ()
   (if (local-variable-p 'flymake-mode (current-buffer))	; (???) other way to determine whether flymake is active in buffer being saved?
       (progn
 	(flymake-log 3 "starting syntax check as buffer was saved")
-	(flymake-start-syntax-check)))) ; no more mode 3. cannot start check if mode 3 (to temp copies) is active - (???)
+	(flymake--start-syntax-check)))) ; no more mode 3. cannot start check if mode 3 (to temp copies) is active - (???)
 
 (defun flymake-kill-buffer-hook ()
   (when flymake-timer
@@ -523,10 +553,10 @@ For the format of LINE-ERR-INFO, see `flymake-ler-make-ler'."
 (defun flymake-find-file-hook ()
   ;;+(when flymake-start-syntax-check-on-find-file
   ;;+    (flymake-log 3 "starting syntax check on file open")
-  ;;+    (flymake-start-syntax-check)
+  ;;+    (flymake--start-syntax-check)
   ;;+)
   (when (and (not (local-variable-p 'flymake-mode (current-buffer)))
-	     (flymake-can-syntax-check-file buffer-file-name))
+	     (flymake--can-syntax-check-buffer (current-buffer)))
     (flymake-mode)
     (flymake-log 3 "automatically turned ON flymake mode")))
 
