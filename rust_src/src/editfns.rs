@@ -58,3 +58,13 @@ pub fn bolp() -> LispObject {
     LispObject::from_bool(buffer_ref.pt == buffer_ref.begv ||
                           buffer_ref.fetch_byte(pt_byte) as char == '\n')
 }
+
+/// Return t if point is at the end of a line.
+///`End of a line' includes point being at the end of the buffer.
+#[lisp_fn]
+pub fn eolp() -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+    let pt_byte = (buffer_ref.pt_byte);
+    LispObject::from_bool(buffer_ref.pt == buffer_ref.zv() ||
+                          buffer_ref.fetch_byte(pt_byte) as char == '\n')
+}
