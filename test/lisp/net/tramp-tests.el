@@ -3821,7 +3821,9 @@ process sentinels.  They shall not disturb each other."
   (with-timeout (300 (tramp--test-timeout-handler))
     (define-key special-event-map [sigusr1] 'tramp--test-timeout-handler)
     (tramp--test-instrument-test-case (if (getenv "EMACS_HYDRA_CI") 10 0)
-    (let* ((watchdog
+    (let* (;; For the watchdog.
+	   (default-directory (expand-file-name temporary-file-directory))
+	   (watchdog
             (start-process
              "*watchdog*" nil shell-file-name shell-command-switch
              (format "sleep 300; kill -USR1 %d" (emacs-pid))))
