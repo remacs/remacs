@@ -136,6 +136,7 @@ pub use buffers::Fcurrent_buffer;
 pub use obarray::intern_1;
 pub use obarray::Fintern;
 pub use obarray::Fintern_soft;
+pub use marker::Fmarker_position;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
