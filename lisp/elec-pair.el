@@ -42,7 +42,6 @@ See also the variable `electric-pair-text-pairs'."
   :group 'electricity
   :type '(repeat (cons character character)))
 
-;;;###autoload
 (defcustom electric-pair-text-pairs
   '((?\" . ?\" )
     ((nth 0 electric-quote-chars) . (nth 1 electric-quote-chars))
