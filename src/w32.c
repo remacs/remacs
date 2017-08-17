@@ -4504,6 +4504,7 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
       result = _wrename (temp_w, newname_w);
       if (result < 0)
 	{
+	  DWORD attributes;
 	  DWORD w32err = GetLastError ();
 
 	  if (errno == EACCES
@@ -4514,8 +4515,6 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
 		 different storage device (ex. logical disk).  It returns
 		 EACCES instead.  So here we handle such situations and
 		 return EXDEV.  */
-	      DWORD attributes;
-
 	      if ((attributes = GetFileAttributesW (temp_w)) != -1
 		  && (attributes & FILE_ATTRIBUTE_DIRECTORY))
 		errno = EXDEV;
@@ -4524,7 +4523,13 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
 	    {
 	      if (_wchmod (newname_w, 0666) != 0)
 		return result;
-	      if (_wunlink (newname_w) != 0)
+	      if ((attributes = GetFileAttributesW (newname_w)) != -1
+		  && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		{
+		  if (_wrmdir (newname_w) != 0)
+		    return result;
+		}
+	      else if (_wunlink (newname_w) != 0)
 		return result;
 	      result = _wrename (temp_w, newname_w);
 	    }
@@ -4548,13 +4553,12 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
       result = rename (temp_a, newname_a);
       if (result < 0)
 	{
+	  DWORD attributes;
 	  DWORD w32err = GetLastError ();
 
 	  if (errno == EACCES
 	      && newname_dev != oldname_dev)
 	    {
-	      DWORD attributes;
-
 	      if ((attributes = GetFileAttributesA (temp_a)) != -1
 		  && (attributes & FILE_ATTRIBUTE_DIRECTORY))
 		errno = EXDEV;
@@ -4563,7 +4567,13 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
 	    {
 	      if (_chmod (newname_a, 0666) != 0)
 		return result;
-	      if (_unlink (newname_a) != 0)
+	      if ((attributes = GetFileAttributesA (newname_a)) != -1
+		  && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		{
+		  if (_rmdir (newname_a) != 0)
+		    return result;
+		}
+	      else if (_unlink (newname_a) != 0)
 		return result;
 	      result = rename (temp_a, newname_a);
 	    }
