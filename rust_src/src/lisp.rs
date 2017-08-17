@@ -28,7 +28,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
                  Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp, Qhash_table_p,
-                 Qchar_table_p, Qconsp, Qbufferp, SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, SYMBOL_NAME, PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -858,7 +858,7 @@ impl LispObject {
         } else if let Some(f) = self.as_float() {
             LispNumber::Float(f)
         } else if let Some(m) = self.as_marker() {
-            LispNumber::Fixnum(m.position() as EmacsInt)
+            LispNumber::Fixnum(m.charpos_or_error() as EmacsInt)
         } else {
             wrong_type!(Qnumber_or_marker_p, self)
         }
@@ -890,6 +890,12 @@ impl LispObject {
             } else {
                 None
             },
+        )
+    }
+
+    pub fn as_marker_or_error(self) -> LispMarkerRef {
+        self.as_marker().unwrap_or_else(
+            || wrong_type!(Qmarkerp, self),
         )
     }
 
