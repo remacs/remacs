@@ -54,16 +54,7 @@ pub fn bobp() -> LispObject {
 #[lisp_fn]
 pub fn bolp() -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
-    let pt_byte = buffer_ref.pt_byte - 1;
-
-    let addr = unsafe {
-        if pt_byte >= buffer_ref.gpt_byte() {
-            buffer_ref.gap_size()
-        } else {
-            0
-        } };
-
+    let pt_byte = (buffer_ref.pt_byte - 1);
     LispObject::from_bool(buffer_ref.pt == buffer_ref.begv ||
-                          (addr as u8 + pt_byte as u8  + buffer_ref.beg_addr() as u8 - buffer_ref.beg_byte() as u8) == '\n')
-     // LispObject::from_bool(true)
+                          buffer_ref.fetch_byte(pt_byte) as char == '\n')
 }
