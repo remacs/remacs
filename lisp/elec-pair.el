@@ -28,9 +28,9 @@
 ;;; Electric pairing.
 
 (defcustom electric-pair-pairs
-  '((?\" . ?\")
-    ((nth 0 electric-quote-chars) . (nth 1 electric-quote-chars))
-    ((nth 2 electric-quote-chars) . (nth 3 electric-quote-chars)))
+  `((?\" . ?\")
+    (,(nth 0 electric-quote-chars) . ,(nth 1 electric-quote-chars))
+    (,(nth 2 electric-quote-chars) . ,(nth 3 electric-quote-chars)))
   "Alist of pairs that should be used regardless of major mode.
 
 Pairs of delimiters in this list are a fallback in case they have
@@ -43,9 +43,9 @@ See also the variable `electric-pair-text-pairs'."
   :type '(repeat (cons character character)))
 
 (defcustom electric-pair-text-pairs
-  '((?\" . ?\" )
-    ((nth 0 electric-quote-chars) . (nth 1 electric-quote-chars))
-    ((nth 2 electric-quote-chars) . (nth 3 electric-quote-chars)))
+  `((?\" . ?\")
+    (,(nth 0 electric-quote-chars) . ,(nth 1 electric-quote-chars))
+    (,(nth 2 electric-quote-chars) . ,(nth 3 electric-quote-chars)))
   "Alist of pairs that should always be used in comments and strings.
 
 Pairs of delimiters in this list are a fallback in case they have
