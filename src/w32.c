@@ -4504,12 +4504,12 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
       result = _wrename (temp_w, newname_w);
       if (result < 0)
 	{
-	  DWORD attributes;
 	  DWORD w32err = GetLastError ();
 
 	  if (errno == EACCES
 	      && newname_dev != oldname_dev)
 	    {
+	      DWORD attributes;
 	      /* The implementation of `rename' on Windows does not return
 		 errno = EXDEV when you are moving a directory to a
 		 different storage device (ex. logical disk).  It returns
@@ -4521,10 +4521,24 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
 	    }
 	  else if (errno == EEXIST && force)
 	    {
+	      DWORD attributes_old;
+	      DWORD attributes_new;
+
 	      if (_wchmod (newname_w, 0666) != 0)
 		return result;
-	      if ((attributes = GetFileAttributesW (newname_w)) != -1
-		  && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+	      attributes_old = GetFileAttributesW (temp_w);
+	      attributes_new = GetFileAttributesW (newname_w);
+	      if (attributes_old != -1 && attributes_new != -1
+		  && ((attributes_old & FILE_ATTRIBUTE_DIRECTORY)
+		      != (attributes_new & FILE_ATTRIBUTE_DIRECTORY)))
+		{
+		  if ((attributes_old & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		    errno = ENOTDIR;
+		  else
+		    errno = EISDIR;
+		  return -1;
+		}
+	      if ((attributes_new & FILE_ATTRIBUTE_DIRECTORY) != 0)
 		{
 		  if (_wrmdir (newname_w) != 0)
 		    return result;
@@ -4553,22 +4567,36 @@ sys_rename_replace (const char *oldname, const char *newname, BOOL force)
       result = rename (temp_a, newname_a);
       if (result < 0)
 	{
-	  DWORD attributes;
 	  DWORD w32err = GetLastError ();
 
 	  if (errno == EACCES
 	      && newname_dev != oldname_dev)
 	    {
+	      DWORD attributes;
 	      if ((attributes = GetFileAttributesA (temp_a)) != -1
 		  && (attributes & FILE_ATTRIBUTE_DIRECTORY))
 		errno = EXDEV;
 	    }
 	  else if (errno == EEXIST && force)
 	    {
+	      DWORD attributes_old;
+	      DWORD attributes_new;
+
 	      if (_chmod (newname_a, 0666) != 0)
 		return result;
-	      if ((attributes = GetFileAttributesA (newname_a)) != -1
-		  && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+	      attributes_old = GetFileAttributesA (temp_a);
+	      attributes_new = GetFileAttributesA (newname_a);
+	      if (attributes_old != -1 && attributes_new != -1
+		  && ((attributes_old & FILE_ATTRIBUTE_DIRECTORY)
+		      != (attributes_new & FILE_ATTRIBUTE_DIRECTORY)))
+		{
+		  if ((attributes_old & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		    errno = ENOTDIR;
+		  else
+		    errno = EISDIR;
+		  return -1;
+		}
+	      if ((attributes_new & FILE_ATTRIBUTE_DIRECTORY) != 0)
 		{
 		  if (_rmdir (newname_a) != 0)
 		    return result;
