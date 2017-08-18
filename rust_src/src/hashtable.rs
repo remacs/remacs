@@ -4,8 +4,9 @@ use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy, QCsize,
                  QCweakness, sxhash, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
                  Lisp_Vector, Qkey_and_value, Qkey, Qvalue, Qkey_or_value, pure_alloc,
-                 survives_gc_p, Lisp_Vectorlike_Header, pure_write_error, Lisp_Object,
-                 EmacsUint, hash_table_test, ARRAY_MARK_FLAG};
+                 survives_gc_p, Lisp_Vectorlike_Header, Lisp_Object,
+                 EmacsUint, hash_table_test, ARRAY_MARK_FLAG,
+CHECK_IMPURE};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
@@ -129,12 +130,6 @@ impl LispHashTable {
         }
     }
 
-    pub fn is_not_pure_or_error(&self, object: LispObject) {
-        if self.is_pure {
-            unsafe { pure_write_error(object.to_raw()) };
-        }
-    }
-
     pub fn insert(&mut self, key: LispObject, value: LispObject) -> ptrdiff_t {
         let mut hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
         match self.map.entry(hash_key) {
@@ -221,6 +216,12 @@ impl LispHashTable {
         self.map.clear();
         self.key_and_value.clear();
         self.free_list.clear();
+    }
+}
+
+impl LispHashTableRef {
+    pub fn is_not_pure_or_error(self, object: LispObject) {
+        unsafe { CHECK_IMPURE(object.to_raw(), self.as_ptr() as *mut c_void) };
     }
 }
 
@@ -315,7 +316,7 @@ fn make_hash_table(args: &mut [LispObject]) -> LispObject {
                 }
             }
         } else if key.to_raw() == unsafe { QCpurecopy } {
-            ptr.is_pure = true;
+            ptr.is_pure = value.is_not_nil();
         } else if key.to_raw() == unsafe { QCsize } {
             let size = value.as_natnum_or_error() as usize;
             ptr.map.reserve(size);
