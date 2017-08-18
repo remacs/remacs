@@ -138,10 +138,10 @@ impl LispHashTable {
         match self.map.entry(hash_key) {
             Occupied(mut entry) => {
                 let mut hash_value = HashableLispObject::with_hashfunc_and_object(value, self.func);
-                let idx = entry.get().idx;
-                self.key_and_value[idx - 1] = key;
-                self.key_and_value[idx] = value;
-                hash_value.idx = idx;
+                let idx = entry.key().idx;
+                self.key_and_value[idx] = key;
+                self.key_and_value[idx + 1] = value;
+                hash_value.idx = idx + 1;
                 entry.insert(hash_value);
                 idx as ptrdiff_t
             },
@@ -179,13 +179,13 @@ impl LispHashTable {
 
     fn clear_key_and_value(&mut self, idx: usize) {
         self.key_and_value[idx] = LispObject::constant_nil();
-        self.key_and_value[idx] = LispObject::constant_nil();
+        self.key_and_value[idx + 1] = LispObject::constant_nil();
         self.free_list.push(idx);
     }
 
     pub fn get_index(&self, key: LispObject) -> ptrdiff_t {
         let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
-        self.map.get(&hash_key).map_or(-1, |result| result.idx as ptrdiff_t)
+        self.map.get(&hash_key).map_or(-1, |result| (result.idx - 1) as ptrdiff_t)
     }
 
     pub fn get(&self, key: LispObject) -> Option<LispObject> {
