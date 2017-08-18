@@ -344,9 +344,7 @@ Use `\\[viper-set-expert-level]' to change this.")
 	     (quail-delete-overlays))
 	 (setq describe-current-input-method-function nil)
 	 (setq current-input-method nil)
-	 (run-hooks
-	  'input-method-inactivate-hook ; for backward compatibility
-	  'input-method-deactivate-hook)
+	 (run-hooks 'input-method-deactivate-hook)
 	 (force-mode-line-update))
 	))
 (defun viper-activate-input-method ()

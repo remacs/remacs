@@ -413,9 +413,7 @@ While this input method is active, the variable
 	  (progn
 	    (setq robin-mode nil)
 	    (setq describe-current-input-method-function nil)
-	    (run-hooks
-	     'robin-inactivate-hook ; for backward compatibility
-	     'robin-deactivate-hook))
+	    (run-hooks 'robin-deactivate-hook))
 	(kill-local-variable 'input-method-function))
 
     ;; activate robin input method.

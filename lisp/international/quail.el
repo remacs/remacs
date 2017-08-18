@@ -569,9 +569,7 @@ While this input method is active, the variable
 	    (setq describe-current-input-method-function nil)
 	    (quail-hide-guidance)
 	    (remove-hook 'post-command-hook 'quail-show-guidance t)
-	    (run-hooks
-	     'quail-inactivate-hook ; for backward compatibility
-	     'quail-deactivate-hook))
+	    (run-hooks 'quail-deactivate-hook))
 	(kill-local-variable 'input-method-function))
     ;; Let's activate Quail input method.
     (if (null quail-current-package)
