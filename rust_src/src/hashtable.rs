@@ -110,7 +110,7 @@ pub struct LispHashTable {
     key_and_value: Vec<LispObject>,
 
     /// Free list for available slots in the key_and_value vector.
-    free_list: Vec<usize>
+    free_list: Vec<usize>,
 }
 
 impl LispHashTable {
@@ -126,7 +126,7 @@ impl LispHashTable {
             func: HashFunction::Eq,
             map: FnvHashMap::with_capacity_and_hasher(cap, Default::default()),
             key_and_value: Vec::with_capacity(cap * 2),
-            free_list: Vec::new()
+            free_list: Vec::new(),
         }
     }
 
@@ -135,11 +135,11 @@ impl LispHashTable {
         match self.map.entry(hash_key) {
             Occupied(mut entry) => {
                 let mut hash_value = HashableLispObject::with_hashfunc_and_object(value, self.func);
-                let idx = entry.key().idx;
+                let idx = entry.get().idx;
                 // @TODO see if it is correct to add key AND value here, vs just adding value.
-                self.key_and_value[idx] = key;
-                self.key_and_value[idx + 1] = value;
-                hash_value.idx = idx + 1;
+                self.key_and_value[idx - 1] = key;
+                self.key_and_value[idx] = value;
+                hash_value.idx = idx;
                 entry.insert(hash_value);
                 idx as ptrdiff_t
             },
