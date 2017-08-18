@@ -3519,7 +3519,7 @@ x_draw_underwave (struct glyph_string *s)
   dx = wave_length;
   dy = wave_height - 1;
   x0 = s->x;
-  y0 = s->ybase + wave_height / 2;
+  y0 = s->ybase + wave_height / 2 - scale_y;
   width = s->width;
   xmax = x0 + width;
 
