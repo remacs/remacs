@@ -141,7 +141,7 @@ impl LispHashTable {
                 self.key_and_value[idx] = value;
                 hash_value.idx = idx;
                 entry.insert(hash_value);
-                idx as ptrdiff_t
+                (idx - 1) as ptrdiff_t
             },
             
             Vacant(entry) => {
