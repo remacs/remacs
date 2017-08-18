@@ -213,7 +213,7 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
     }
     // we should return the same object if it's not a marker
     if let Some(m) = accum.as_marker() {
-        LispObject::from_fixnum(m.position() as EmacsInt)
+        LispObject::from_fixnum(m.charpos_or_error() as EmacsInt)
     } else {
         accum
     }

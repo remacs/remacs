@@ -134,6 +134,8 @@ pub use buffers::Fcurrent_buffer;
 pub use obarray::intern_1;
 pub use obarray::Fintern;
 pub use obarray::Fintern_soft;
+pub use marker::Fmarker_position;
+pub use marker::Fmarker_buffer;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
@@ -248,6 +250,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*lists::Smake_list);
         defsubr(&*lists::Ssafe_length);
         defsubr(&*marker::Smarkerp);
+        defsubr(&*marker::Smarker_position);
+        defsubr(&*marker::Smarker_buffer);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Smultibyte_string_p);
         defsubr(&*base64::Sbase64_encode_string);
