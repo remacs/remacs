@@ -1397,12 +1397,15 @@ the variable `temporary-file-directory' is returned."
           default-directory
         temporary-file-directory))))
 
-(defun make-temp-file (prefix &optional dir-flag suffix)
+(defun make-temp-file (prefix &optional dir-flag suffix text)
   "Create a temporary file.
 The returned file name (created by appending some random characters at the end
 of PREFIX, and expanding against `temporary-file-directory' if necessary),
-is guaranteed to point to a newly created empty file.
+is guaranteed to point to a newly created file.
 You can then use `write-region' to write new data into the file.
+
+If TEXT is non-nil, it will be inserted in the new
+file. Otherwise the file will be empty.
 
 If DIR-FLAG is non-nil, create a new empty directory instead of a file.
 
@@ -1431,7 +1434,7 @@ This implementation works on magic file names."
 		       (setq file (concat file suffix)))
 		   (if dir-flag
 		       (make-directory file)
-		     (write-region "" nil file nil 'silent nil 'excl))
+		     (write-region (or text "") nil file nil 'silent nil 'excl))
 		   nil)
 	       (file-already-exists t))
 	;; the file was somehow created by someone else between
