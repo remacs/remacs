@@ -234,7 +234,7 @@ macro_rules! add_weak_table {
 fn allocate_hashtable() -> LispHashTableRef {
     let mut table = ExternalPtr::new(allocate_pseudovector!(
         LispHashTable,
-        map,
+        weak,
         PseudovecType::PVEC_HASH_TABLE
     ));
     let header = table.header.clone();
