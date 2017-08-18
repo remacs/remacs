@@ -471,7 +471,7 @@ pub unsafe extern "C" fn mark_hashtable(map: *mut c_void) {
         mark_object(hash.to_raw());
     }
 
-    if ptr.weak.is_not_nil() {
+    if ptr.weak.is_nil() {
         for (key, value) in ptr.map.iter() {
             mark_object(key.object.to_raw());
             mark_object(value.object.to_raw());
