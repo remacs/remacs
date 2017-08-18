@@ -12,8 +12,7 @@ pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
 
 impl LispMarkerRef {
     pub fn charpos(self) -> Option<ptrdiff_t> {
-        let buf = self.buffer;
-        if buf.is_null() {
+        if self.buffer.is_null() {
             None
         } else {
             Some(self.charpos)
@@ -21,8 +20,7 @@ impl LispMarkerRef {
     }
 
     pub fn charpos_or_error(self) -> ptrdiff_t {
-        let buf = self.buffer;
-        if buf.is_null() {
+        if self.buffer.is_null() {
             error!("Marker does not point anywhere");
         }
 
@@ -35,7 +33,7 @@ impl LispMarkerRef {
         if buf.is_null() {
             None
         } else {
-            Some(unsafe { mem::transmute(self.buffer) })
+            Some(unsafe { mem::transmute(buf) })
         }
 
     }
