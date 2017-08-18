@@ -18,13 +18,18 @@ Tecknen ">>" i vänstermarginalen anger att du kan prova ett
 kommando. Till exempel:
 <<Tomma rader sätts in runt nästa rad när help-with-tutorial aktiveras>>
 [Tomma rader av pedagogiska skäl. Texten fortsätter nedanför.]
->> Tryck C-v (View next screen) för att hoppa till nästa skärmbild.
+>> Tryck C-v (View next screen) för att rulla nedåt i handledningen.
         Prova nu. Håll ned kontrolltangenten och tryck v. Gör så i
-        fortsättningen när du är färdig med en skärmbild.
+        fortsättningen när du når slutet av en skärmbild.
 
-Notera att det är ett överlapp på två rader när du byter från
-skärmbild till skärmbild. Detta är för att behålla sammanhanget när du
-bläddrar framåt i filen.
+Notera att det är ett överlapp på två rader när du rullar en hel sida.
+Detta är för att behålla sammanhanget när du bläddrar framåt i texten.
+
+Det här är en kopia av Emacs användarhandledning, som anpassats något
+för dig. Längre fram kommer vi att instruera dig att prova olika
+kommandon som ändrar i texten. Var inte orolig om du ändrar texten
+innan vi säger till dig att göra det. Det kallas för att redigera och
+det är det som Emacs är till för.
 
 Det första du behöver veta är hur du manövrerar från plats till plats
 i texten. Du har redan lärt dig hur du flyttar en skärmbild framåt,
@@ -34,6 +39,7 @@ META-, EDIT- eller ALT-tangent.)
 
 >> Prova att trycka M-v och C-v några gånger.
 
+Det är OK att rulla texten på andra sätt om du vet hur.
 
 * SAMMANFATTNING
 ----------------
