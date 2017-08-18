@@ -2854,6 +2854,13 @@ It is used for characters of no fonts too."
   "Face used for a matching paren."
   :group 'paren-showing-faces)
 
+(defface show-paren-match-expression
+  '((t :inherit show-paren-match))
+  "Face used for a matching paren when highlighting the whole expression.
+This face is used by `show-paren-mode'."
+  :group 'paren-showing-faces
+  :version "26.1")
+
 (defface show-paren-mismatch
   '((((class color)) (:foreground "white" :background "purple"))
     (t (:inverse-video t)))
