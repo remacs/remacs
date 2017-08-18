@@ -27,6 +27,7 @@
 ;;; Code:
 
 (require 'ert)
+(require 'cl)
 (require 'auth-source)
 
 (defvar secrets-enabled t
@@ -266,20 +267,16 @@
                    :host "b1" :port "b2" :user "b3")
                   ))
 
-         (text (string-join entries "\n"))
          (netrc-file (make-temp-file
                       "auth-source-test"
                       nil nil
                       (string-join entries "\n")))
          (auth-sources (list netrc-file))
-         (auth-source-do-cache nil))
+         (auth-source-do-cache nil)
+         found found-as-string)
 
     (dolist (test tests)
-      (let ((testname (car test))
-            (needed (cadr test))
-            (parameters (cddr test))
-            found found-as-string)
-
+      (cl-destructuring-bind (testname needed &rest parameters) test
         (setq found (apply #'auth-source-search parameters))
         (when (listp found)
           (dolist (f found)
