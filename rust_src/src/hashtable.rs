@@ -21,6 +21,7 @@ pub type LispHashTableRef = ExternalPtr<LispHashTable>;
 // @TODO now that this has been changed to not use a binary serializer,
 // we can have the HashFunction use function pointers again, to avoid having to copy
 // this enum across ALL lisp objects.
+#[repr(C)]
 #[derive(Eq, PartialEq, Copy, Clone)]
 enum HashFunction {
     Eq,
@@ -30,6 +31,7 @@ enum HashFunction {
 }
 
 #[derive(Clone, Copy)]
+#[repr(C)]
 struct HashableLispObject {
     object: LispObject,
     func: HashFunction,
@@ -139,6 +141,7 @@ impl LispHashTable {
             Occupied(mut entry) => {
                 let mut hash_value = HashableLispObject::with_hashfunc_and_object(value, self.func);
                 let idx = entry.key().idx;
+                // @TODO see if it is correct to add key AND value here, vs just adding value.
                 self.key_and_value[idx] = key;
                 self.key_and_value[idx + 1] = value;
                 hash_value.idx = idx + 1;
@@ -152,17 +155,17 @@ impl LispHashTable {
                 if let Some(idx) = self.free_list.pop() {
                     self.key_and_value[idx] = key;
                     self.key_and_value[idx + 1] = value;
-                    retval = idx as ptrdiff_t
+                    retval = idx;
                 } else {
                     self.key_and_value.push(key);
                     self.key_and_value.push(value);
-                    retval = (self.key_and_value.len() - 2) as ptrdiff_t
+                    retval = self.key_and_value.len() - 2;
                 }
                 
-                hash_key.idx = retval as usize;
-                hash_value.idx = (retval + 1) as usize;
+                hash_key.idx = retval;
+                hash_value.idx = retval + 1;
                 entry.insert(hash_value);
-                retval
+                retval as ptrdiff_t
             }
         }        
     }
@@ -171,7 +174,7 @@ impl LispHashTable {
         let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
         let remove = self.map.remove(&hash_key);
         if let Some(result) = remove {
-            self.clear_key_and_value(result.idx);
+            self.clear_key_and_value(result.idx - 1);
         }
 
         remove.map(|result| result.object)
@@ -211,6 +214,13 @@ impl LispHashTable {
     #[inline]
     pub fn set_key_with_index(&mut self, object: LispObject, idx: ptrdiff_t) {
         self.key_and_value[idx as usize] = object;
+    }
+
+    #[inline]
+    pub fn clear(&mut self) {
+        self.map.clear();
+        self.key_and_value.clear();
+        self.free_list.clear();
     }
 }
 
@@ -378,7 +388,7 @@ fn hash_table_weakness(map: LispObject) -> LispObject {
 fn clrhash(map: LispObject) -> LispObject {
     let mut hashmap = map.as_hash_table_or_error();
     hashmap.is_not_pure_or_error(map);
-    hashmap.map.clear();
+    hashmap.clear();
     map
 }
 
@@ -495,7 +505,7 @@ pub unsafe fn hash_hash_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object 
 #[no_mangle]
 pub unsafe fn hash_size(map: *mut c_void) -> ptrdiff_t {
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
-    ptr.key_and_value.len() as ptrdiff_t
+    (ptr.key_and_value.len() / 2) as ptrdiff_t
 }
 
 #[no_mangle]
@@ -559,7 +569,7 @@ pub unsafe fn new_hash_table (test: hash_table_test,
                                _: c_float,
                                weak: Lisp_Object,
                                is_pure: bool)
-                               -> Lisp_Object {
+                              -> Lisp_Object {
     let mut ptr = allocate_hashtable();
     ptr.map.reserve(size as usize);
     ptr.weak = LispObject::from_raw(weak);
