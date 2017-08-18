@@ -1556,10 +1556,14 @@ not accept wildcard file names.
 
 In all these commands, if the argument @var{new} is just a directory
 name, the real new name is in that directory, with the same
-non-directory component as @var{old}.  For example,
+non-directory component as @var{old}.  For example, the command
 @c FIXME: '/tmp' should be '/tmp/' because '/tmp'
 @c is not "just a directory name".
-@kbd{M-x rename-file @key{RET} ~/foo @key{RET} /tmp @key{RET}}
+@c And actually the fact that ``directory name'' must end in a slash
+@c is not explained anywhere in this manual.  Moreover, it many times
+@c uses ``directory name'' in contexts where the string it alludes to
+@c will clearly _not_ end in a slash
+@w{@kbd{M-x rename-file @key{RET} ~/foo @key{RET} /tmp @key{RET}}}
 renames @file{~/foo} to @file{/tmp/foo}.  All these
 commands ask for confirmation when the new file name already exists,
 too.
@@ -1586,8 +1590,8 @@ different file systems, the file @var{old} is copied and deleted.
 
 @ifnottex
   If a file is under version control (@pxref{Version Control}), you
-should rename it using @kbd{M-x vc-rename-file} instead of @kbd{M-x
-rename-file}.  @xref{VC Delete/Rename}.
+should rename it using @w{@kbd{M-x vc-rename-file}} instead of
+@w{@kbd{M-x rename-file}}.  @xref{VC Delete/Rename}.
 @end ifnottex
 
 @findex add-name-to-file

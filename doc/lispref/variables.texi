@@ -1017,11 +1017,11 @@ variables like @code{case-fold-search}:
 @subsection Lexical Binding
 
   Lexical binding was introduced to Emacs, as an optional feature, in
-version 24.1.  We expect its importance to increase in the future.
+version 24.1.  We expect its importance to increase with time.
 Lexical binding opens up many more opportunities for optimization, so
 programs using it are likely to run faster in future Emacs versions.
-Lexical binding is also more compatible with concurrency, which we
-want to add to Emacs in the future.
+Lexical binding is also more compatible with concurrency, which was
+added to Emacs in version 26.1.
 
   A lexically-bound variable has @dfn{lexical scope}, meaning that any
 reference to the variable must be located textually within the binding
