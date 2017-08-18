@@ -350,7 +350,7 @@ fn puthash(k: LispObject, v: LispObject, map: LispObject) -> LispObject {
 
 /// Look up KEY in TABLE and return its associated value.
 /// If KEY is not found, return DFLT which defaults to nil.
-#[lisp_fn(min = 2)]
+#[lisp_fn(min = "2")]
 fn gethash(k: LispObject, map: LispObject, default: LispObject) -> LispObject {
     let hashmap = map.as_hash_table_or_error();
     hashmap.get(k).unwrap_or(default)
