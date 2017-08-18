@@ -222,11 +222,17 @@ macro_rules! add_weak_table {
 
 #[inline]
 fn allocate_hashtable() -> LispHashTableRef {
-    ExternalPtr::new(allocate_pseudovector!(
+    let mut table = ExternalPtr::new(allocate_pseudovector!(
         LispHashTable,
         map,
         PseudovecType::PVEC_HASH_TABLE
-    ))
+    ));
+    let header = table.header.clone();
+    let table_mem = LispHashTable::new();
+    unsafe { ptr::copy_nonoverlapping(&table_mem, table.as_mut(), 1) };
+    mem::forget(table_mem); // We will manually run drop when the GC cleans up this table.
+    table.header = header;
+    table
 }
 
 /// Create and return a new hash table.
@@ -397,8 +403,9 @@ fn hash_table_size(map: LispObject) -> LispObject {
 fn copy_hash_table(map: LispObject) -> LispObject {
     let hashmap = map.as_hash_table_or_error();
     let mut new_ptr = allocate_hashtable();
-    let new_table = hashmap.clone();
-    unsafe { ptr::copy_nonoverlapping(new_table.as_ptr(), new_ptr.as_mut(), 1) };
+    let new_table = (*hashmap).clone();
+    unsafe { ptr::copy_nonoverlapping(&new_table, new_ptr.as_mut(), 1) };
+    mem::forget(new_table);
     
     if new_ptr.weak.is_not_nil() {
         add_weak_table!(new_ptr);
