@@ -2503,8 +2503,9 @@ The function's arguments should be treated as immutable.
              ,(if (memq '&key args)
                   `(&whole cl-whole &cl-quote ,@args)
                 (cons '&cl-quote args))
+             ,(format "compiler-macro for inlining `%s'." name)
              (cl--defsubst-expand
-              ',argns '(cl-block ,name ,@body)
+              ',argns '(cl-block ,name ,@(cdr (macroexp-parse-body body)))
               ;; We used to pass `simple' as
               ;; (not (or unsafe (cl-expr-access-order pbody argns)))
               ;; But this is much too simplistic since it
