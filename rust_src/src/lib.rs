@@ -147,7 +147,7 @@ pub use interactive::Fprefix_numeric_value;
 pub use hashtable::finalize_hashtable;
 pub use hashtable::mark_hashtable;
 pub use hashtable::purecopy_hash_table;
-pub use hashtable::sweep_weak_hashtable;
+pub use hashtable::sweep_weak_hash_tables;
 pub use hashtable::hash_lookup;
 pub use hashtable::hash_value_lookup;
 pub use hashtable::hash_key_lookup;
@@ -158,6 +158,17 @@ pub use hashtable::set_hash_key_slot;
 pub use hashtable::hash_put;
 pub use hashtable::new_hash_table;
 pub use hashtable::table_not_weak_or_pure;
+pub use hashtable::get_key_and_value;
+pub use hashtable::hash_test_name;
+pub use hashtable::hash_purity;
+pub use hashtable::hash_weakness;
+pub use hashtable::hash_next_free;
+pub use hashtable::Fputhash;
+pub use hashtable::Fgethash;
+pub use hashtable::Fmake_hash_table;
+pub use hashtable::Fhash_table_rehash_size;
+pub use hashtable::Fhash_table_rehash_threshold;
+pub use hashtable::Fremhash;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);

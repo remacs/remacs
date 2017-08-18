@@ -1972,13 +1972,13 @@ readevalloop (Lisp_Object readcharfun,
 	goto read_next;
 
       if (! HASH_TABLE_P (read_objects_map)
-	  || XHASH_TABLE (read_objects_map)->count)
+	  || HASH_TABLE_SIZE (XHASH_TABLE (read_objects_map)))
 	read_objects_map
 	  = make_hash_table (hashtest_eq, DEFAULT_HASH_SIZE,
 			     DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
 			     Qnil, false);
       if (! HASH_TABLE_P (read_objects_completed)
-	  || XHASH_TABLE (read_objects_completed)->count)
+	  || HASH_TABLE_SIZE (XHASH_TABLE (read_objects_completed)))
 	read_objects_completed
 	  = make_hash_table (hashtest_eq, DEFAULT_HASH_SIZE,
 			     DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
@@ -2011,10 +2011,10 @@ readevalloop (Lisp_Object readcharfun,
 	}
       /* Empty hashes can be reused; otherwise, reset on next call.  */
       if (HASH_TABLE_P (read_objects_map)
-	  && XHASH_TABLE (read_objects_map)->count > 0)
+	  && HASH_TABLE_SIZE (XHASH_TABLE (read_objects_map)) > 0)
 	read_objects_map = Qnil;
       if (HASH_TABLE_P (read_objects_completed)
-	  && XHASH_TABLE (read_objects_completed)->count > 0)
+	  && HASH_TABLE_SIZE (XHASH_TABLE (read_objects_completed)) > 0)
 	read_objects_completed = Qnil;
 
       if (!NILP (start) && continue_reading_p)
@@ -2190,12 +2190,12 @@ read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
   /* We can get called from readevalloop which may have set these
      already.  */
   if (! HASH_TABLE_P (read_objects_map)
-      || XHASH_TABLE (read_objects_map)->count)
+      || HASH_TABLE_SIZE (XHASH_TABLE (read_objects_map)))
     read_objects_map
       = make_hash_table (hashtest_eq, DEFAULT_HASH_SIZE, DEFAULT_REHASH_SIZE,
 			 DEFAULT_REHASH_THRESHOLD, Qnil, false);
   if (! HASH_TABLE_P (read_objects_completed)
-      || XHASH_TABLE (read_objects_completed)->count)
+      || HASH_TABLE_SIZE (XHASH_TABLE (read_objects_completed)))
     read_objects_completed
       = make_hash_table (hashtest_eq, DEFAULT_HASH_SIZE, DEFAULT_REHASH_SIZE,
 			 DEFAULT_REHASH_THRESHOLD, Qnil, false);
@@ -2228,10 +2228,10 @@ read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
     Vread_symbol_positions_list = Fnreverse (Vread_symbol_positions_list);
   /* Empty hashes can be reused; otherwise, reset on next call.  */
   if (HASH_TABLE_P (read_objects_map)
-      && XHASH_TABLE (read_objects_map)->count > 0)
+      && HASH_TABLE_SIZE (XHASH_TABLE (read_objects_map)) > 0)
     read_objects_map = Qnil;
   if (HASH_TABLE_P (read_objects_completed)
-      && XHASH_TABLE (read_objects_completed)->count > 0)
+      && HASH_TABLE_SIZE (XHASH_TABLE (read_objects_completed)) > 0)
     read_objects_completed = Qnil;
   return retval;
 }
@@ -3075,7 +3075,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 			 different purposes, which will cause crashes
 			 in GC.  */
 		      Lisp_Object placeholder = Fcons (Qnil, Qnil);
-		      struct Lisp_Hash_Table *h
+		      LispHashTable *h
 			= XHASH_TABLE (read_objects_map);
 		      EMACS_UINT hash;
 		      Lisp_Object number = make_number (n);

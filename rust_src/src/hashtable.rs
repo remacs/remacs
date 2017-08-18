@@ -4,8 +4,8 @@ use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy, QCsize,
                  QCweakness, sxhash, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
                  Lisp_Vector, Qkey_and_value, Qkey, Qvalue, Qkey_or_value, pure_alloc,
-                 survives_gc, Lisp_Vectorlike_Header, pure_write_error, Lisp_Object,
-                 EmacsUint, hash_table_test};
+                 survives_gc_p, Lisp_Vectorlike_Header, pure_write_error, Lisp_Object,
+                 EmacsUint, hash_table_test, ARRAY_MARK_FLAG};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
@@ -482,7 +482,7 @@ pub unsafe fn hash_key_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
 #[no_mangle]
 pub unsafe fn hash_hash_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
-    ptr.key_and_value[idx as usize].to_raw()
+    ptr.key_and_value[(idx * 2) as usize].to_raw()
 }
 
 #[no_mangle]
@@ -491,22 +491,61 @@ pub unsafe fn hash_size(map: *mut c_void) -> ptrdiff_t {
     ptr.key_and_value.len() as ptrdiff_t
 }
 
+#[no_mangle]
+pub unsafe fn hash_weakness(map: *mut c_void) -> Lisp_Object {
+    let ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.weak.to_raw()
+}
+
+#[no_mangle]
+pub unsafe fn hash_test_name(map: *mut c_void) -> Lisp_Object {
+    let ptr = ExternalPtr::new(map as *mut LispHashTable);
+    match ptr.func {
+        HashFunction::Eq => { Qeq },
+        HashFunction::Eql => { Qeql },
+        HashFunction::Equal => { Qequal },
+        HashFunction::UserFunc(name, _, _) => { name.to_raw() },
+    }
+}
+
+#[no_mangle]
+pub unsafe fn hash_purity(map: *mut c_void) -> bool {
+    let ptr = ExternalPtr::new(map as *mut LispHashTable);
+    ptr.is_pure
+}
+
+#[no_mangle]
 pub unsafe fn set_hash_value_slot(map: *mut c_void, idx: ptrdiff_t, value: Lisp_Object) {
     let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.set_value_with_index(LispObject::from_raw(value), idx);
 }
 
+#[no_mangle]
 pub unsafe fn set_hash_key_slot(map: *mut c_void, idx: ptrdiff_t, value: Lisp_Object) {
     let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.set_key_with_index(LispObject::from_raw(value), idx);
 }
 
+#[no_mangle]
 pub unsafe fn hash_put(map: *mut c_void, key: Lisp_Object, value: Lisp_Object, _: EmacsUint) -> ptrdiff_t {
     let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.insert(LispObject::from_raw(key), LispObject::from_raw(value))
 }
 
+/// Peeks the free list of the current map, returns -1 if free list is empty.
+#[no_mangle]
+pub unsafe fn hash_next_free(map: *mut c_void) -> ptrdiff_t {
+    let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
+    if let Some(idx) = ptr.free_list.pop() {
+        ptr.free_list.push(idx);
+        idx as ptrdiff_t
+    } else {
+        -1 
+    }
+}
+
 #[allow(unused_unsafe)]
+#[no_mangle]
 pub unsafe fn new_hash_table (test: hash_table_test,
                                size: EmacsInt,
                                _: c_float,
@@ -539,6 +578,12 @@ pub unsafe fn table_not_weak_or_pure(table: *mut c_void) -> bool {
     ptr.weak.is_not_nil() || !ptr.is_pure 
 }
 
+// @TODO
+#[no_mangle]
+pub unsafe fn get_key_and_value(_: *mut c_void) -> Lisp_Object {
+    LispObject::constant_nil().to_raw()
+}
+
 unsafe impl Send for LispHashTableRef {}
 lazy_static! {
     static ref WEAK_TABLES: Mutex<Vec<LispHashTableRef>> = {
@@ -556,16 +601,14 @@ lazy_static! {
    !REMOVE_ENTRIES_P means mark entries that are in use.  Value is
    true if anything was marked.  */
 
-#[no_mangle]
-pub unsafe fn sweep_weak_hashtable(map: *mut c_void, remove_entries: bool) -> bool {
-    let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
+unsafe fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entries: bool) -> bool {
     let weakness = ptr.weak.to_raw();
     let mut to_remove = Vec::<HashableLispObject>::new();
     let mut marked = false;
 
     for (key, value) in ptr.map.iter() {
-        let key_survives_gc = survives_gc(key.object.to_raw());
-        let value_survives_gc = survives_gc(value.object.to_raw());
+        let key_survives_gc = survives_gc_p(key.object.to_raw());
+        let value_survives_gc = survives_gc_p(value.object.to_raw());
         let remove_p;
 
         if weakness == Qkey {
@@ -606,13 +649,36 @@ pub unsafe fn sweep_weak_hashtable(map: *mut c_void, remove_entries: bool) -> bo
     marked
 }
 
-/* Remove elements from weak hash tables that don't survive the
-   current garbage collection.  Remove weak tables that don't survive
-   from Vweak_hash_tables.  Called from gc_sweep.  */
-// #[no_mangle]
-// pub unsafe fn sweep_weak_hash_tables() {
-//     let tables = WEAK_TABLES.lock().unwrap();
-// }
+/// Remove elements from weak hash tables that don't survive the
+/// current garbage collection.  Remove weak tables that don't survive
+/// from Vweak_hash_tables.  Called from gc_sweep. 
+#[no_mangle]
+pub unsafe fn sweep_weak_hash_tables() {
+    let mut marked;
+    let mut tables = WEAK_TABLES.lock().unwrap();
+    /* Mark all keys and values that are in use.  Keep on marking until
+    there is no more change.  This is necessary for cases like
+    value-weak table A containing an entry X -> Y, where Y is used in a
+    key-weak table B, Z -> Y.  If B comes after A in the list of weak
+    tables, X -> Y might be removed from A, although when looking at B
+    one finds that it shouldn't.  */
+    while {
+        marked = false;
+        for table in tables.iter() {
+            if table.header.size & ARRAY_MARK_FLAG != 0 {
+                marked = sweep_weak_hashtable(*table, false) || marked;
+            }
+        }
+        
+        marked
+    } {} // This is basically a Rust "do while" loop, by putting the logic into the while {condition} block. 
+
+    // @TODO this could be consolidated into a singular loop
+    tables.retain(|x| x.header.size & ARRAY_MARK_FLAG != 0);
+    for table in tables.iter_mut() {
+        sweep_weak_hashtable(*table, true);
+    }
+}
 
 #[no_mangle]
 pub unsafe fn purecopy_hash_table(map: *mut c_void) -> *mut c_void {

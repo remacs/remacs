@@ -18,7 +18,7 @@ extern crate libc;
 
 pub mod libm;
 
-use libc::{c_char, c_uchar, c_short, c_int, c_double, c_float, c_void, ptrdiff_t, size_t, off_t,
+use libc::{c_char, c_uchar, c_short, c_int, c_double, c_void, ptrdiff_t, size_t, off_t,
            time_t, timespec};
 
 
@@ -1236,7 +1236,7 @@ extern "C" {
     ) -> *mut Lisp_Vector;
 
     pub fn sxhash(ht: *mut hash_table_test, key: Lisp_Object) -> EmacsUint;
-    pub fn survives_gc(o: Lisp_Object) -> bool;
+    pub fn survives_gc_p(o: Lisp_Object) -> bool;
     pub fn pure_write_error(o: Lisp_Object) -> !;
 }
 

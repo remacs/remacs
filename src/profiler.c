@@ -48,11 +48,11 @@ make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth)
 				     DEFAULT_REHASH_SIZE,
 				     DEFAULT_REHASH_THRESHOLD,
 				     Qnil, false);
-  struct Lisp_Hash_Table *h = XHASH_TABLE (log);
+  LispHashTable *h = XHASH_TABLE (log);
 
   /* What is special about our hash-tables is that the keys are pre-filled
      with the vectors we'll put in them.  */
-  ptrdiff_t i = ASIZE (h->key_and_value) >> 1;
+  ptrdiff_t i = HASH_TABLE_SIZE (h) >> 1;
   while (i > 0)
     set_hash_key_slot (h, --i,
 		       Fmake_vector (make_number (max_stack_depth), Qnil));
@@ -103,7 +103,7 @@ static EMACS_INT approximate_median (log_t *log,
 
 static void evict_lower_half (log_t *log)
 {
-  ptrdiff_t size = ASIZE (log->key_and_value) / 2;
+  ptrdiff_t size = HASH_TABLE_SIZE (log) / 2;
   EMACS_INT median = approximate_median (log, 0, size);
   ptrdiff_t i;
 
@@ -118,7 +118,7 @@ static void evict_lower_half (log_t *log)
 	  XSET_HASH_TABLE (tmp, log); /* FIXME: Use make_lisp_ptr.  */
 	  Fremhash (key, tmp);
 	}
-	eassert (log->next_free == i);
+	eassert (hash_next_free(log) == i);
 
 	eassert (VECTORP (key));
 	for (ptrdiff_t j = 0; j < ASIZE (key); j++)
@@ -137,12 +137,13 @@ record_backtrace (log_t *log, EMACS_INT count)
 {
   Lisp_Object backtrace;
   ptrdiff_t index;
+  ptrdiff_t next_free = hash_next_free(log);
 
-  if (log->next_free < 0)
+  if (next_free < 0)
     /* FIXME: transfer the evicted counts to a special entry rather
        than dropping them on the floor.  */
     evict_lower_half (log);
-  index = log->next_free;
+  index = next_free;
 
   /* Get a "working memory" vector.  */
   backtrace = HASH_KEY (log, index);
@@ -162,8 +163,8 @@ record_backtrace (log_t *log, EMACS_INT count)
       }
     else
       { /* BEWARE!  hash_put in general can allocate memory.
-	   But currently it only does that if log->next_free is -1.  */
-	eassert (0 <= log->next_free);
+	   But currently it only does that if hash_next_free(log) is -1.  */
+	eassert (0 <= hash_next_free(log));
 	ptrdiff_t j = hash_put (log, backtrace, make_number (count), hash);
 	/* Let's make sure we've put `backtrace' right where it
 	   already was to start with.  */

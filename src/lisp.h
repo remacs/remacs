@@ -1960,6 +1960,11 @@ extern void set_hash_key_slot (LispHashTable *table, ptrdiff_t idx, Lisp_Object 
 extern void set_hash_value_slot (LispHashTable *table, ptrdiff_t idx, Lisp_Object val);
 extern ptrdiff_t hash_put (LispHashTable *table, Lisp_Object key, Lisp_Object value, EMACS_UINT unused);
 extern Lisp_Object new_hash_table (struct hash_table_test test, EMACS_INT size, float unused, float unused_2, Lisp_Object weak, bool pure);
+extern Lisp_Object get_key_and_value(LispHashTable *table);
+extern Lisp_Object hash_weakness(LispHashTable *table);
+extern Lisp_Object hash_test_name(LispHashTable *table);
+extern bool hash_purity(LispHashTable *table);
+extern ptrdiff_t hash_next_free(LispHashTable *table);
 
 #define make_hash_table(test, size, unused, unused_2, weak, pure) new_hash_table(test, size, unused, unused_2, weak, pure)
 
@@ -3285,7 +3290,6 @@ extern void syms_of_syntax (void);
 enum { NEXT_ALMOST_PRIME_LIMIT = 11 };
 extern EMACS_INT next_almost_prime (EMACS_INT) ATTRIBUTE_CONST;
 extern Lisp_Object larger_vector (Lisp_Object, ptrdiff_t, ptrdiff_t);
-extern void sweep_weak_hash_tables (void);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
 extern struct hash_table_test const hashtest_eq, hashtest_eql, hashtest_equal;

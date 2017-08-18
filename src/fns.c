@@ -2316,33 +2316,6 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
   return make_number (inserted_chars);
 }
 
-
-
-/***********************************************************************
- *****                                                             *****
- *****			     Hash Tables                           *****
- *****                                                             *****
- ***********************************************************************/
-
-/* Implemented by gerd@gnu.org.  This hash table implementation was
-   inspired by CMUCL hash tables.  */
-
-/* Ideas:
-
-   1. For small tables, association lists are probably faster than
-   hash tables because they have lower overhead.
-
-   For uses of hash tables where the O(1) behavior of table
-   operations is not a requirement, it might therefore be a good idea
-   not to hash.  Instead, we could just do a linear search in the
-   key_and_value vector of the hash table.  This could be done
-   if a `:linear-search t' argument is given to make-hash-table.  */
-
-
-/* The list of all weak hash tables.  Don't staticpro this one.  */
-
-static struct Lisp_Hash_Table *weak_hash_tables;
-
 /* Value is the next integer I >= N, N >= 0 which is "almost" a prime
    number.  A number is "almost" a prime number if it is not divisible
    by any integer in the range 2 .. (NEXT_ALMOST_PRIME_LIMIT - 1).  */
@@ -2429,19 +2402,6 @@ cmpfn_equal (struct hash_table_test *ht,
   return !NILP (Fequal (key1, key2));
 }
 
-
-/* Compare KEY1 which has hash code HASH1, and KEY2 with hash code
-   HASH2 in hash table H using H->user_cmp_function.  Value is true
-   if KEY1 and KEY2 are the same.  */
-
-static bool
-cmpfn_user_defined (struct hash_table_test *ht,
-		    Lisp_Object key1,
-		    Lisp_Object key2)
-{
-  return !NILP (call2 (ht->user_cmp_function, key1, key2));
-}
-
 /* Value is a hash code for KEY for use in hash table H which uses
    `eq' to compare keys.  The hash code returned is guaranteed to fit
    in a Lisp integer.  */
@@ -2472,17 +2432,6 @@ hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
   return FLOATP (key) ? hashfn_equal (ht, key) : hashfn_eq (ht, key);
 }
 
-/* Value is a hash code for KEY for use in hash table H which uses as
-   user-defined function to compare keys.  The hash code returned is
-   guaranteed to fit in a Lisp integer.  */
-
-static EMACS_UINT
-hashfn_user_defined (struct hash_table_test *ht, Lisp_Object key)
-{
-  Lisp_Object hash = call1 (ht->user_hash_function, key);
-  return hashfn_eq (ht, hash);
-}
-
 struct hash_table_test const
   hashtest_eq = { LISPSYM_INITIALLY (Qeq), LISPSYM_INITIALLY (Qnil),
 		  LISPSYM_INITIALLY (Qnil), 0, hashfn_eq },
@@ -2490,55 +2439,6 @@ struct hash_table_test const
 		   LISPSYM_INITIALLY (Qnil), cmpfn_eql, hashfn_eql },
   hashtest_equal = { LISPSYM_INITIALLY (Qequal), LISPSYM_INITIALLY (Qnil),
 		     LISPSYM_INITIALLY (Qnil), cmpfn_equal, hashfn_equal };
-
-/* Remove elements from weak hash tables that don't survive the
-   current garbage collection.  Remove weak tables that don't survive
-   from Vweak_hash_tables.  Called from gc_sweep.  */
-
-NO_INLINE /* For better stack traces */
-void
-sweep_weak_hash_tables (void)
-{
-  struct Lisp_Hash_Table *h, *used, *next;
-  bool marked;
-
-  /* Mark all keys and values that are in use.  Keep on marking until
-     there is no more change.  This is necessary for cases like
-     value-weak table A containing an entry X -> Y, where Y is used in a
-     key-weak table B, Z -> Y.  If B comes after A in the list of weak
-     tables, X -> Y might be removed from A, although when looking at B
-     one finds that it shouldn't.  */
-  do
-    {
-      marked = 0;
-      for (h = weak_hash_tables; h; h = h->next_weak)
-	{
-	  if (h->header.size & ARRAY_MARK_FLAG)
-	    marked |= sweep_weak_table (h, 0);
-	}
-    }
-  while (marked);
-
-  /* Remove tables and entries that aren't used.  */
-  for (h = weak_hash_tables, used = NULL; h; h = next)
-    {
-      next = h->next_weak;
-
-      if (h->header.size & ARRAY_MARK_FLAG)
-	{
-	  /* TABLE is marked as used.  Sweep its contents.  */
-	  if (h->count > 0)
-	    sweep_weak_table (h, 1);
-
-	  /* Add table to the list of used weak hash tables.  */
-	  h->next_weak = used;
-	  used = h;
-	}
-    }
-
-  weak_hash_tables = used;
-}
-
 
 
 /***********************************************************************

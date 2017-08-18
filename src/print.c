@@ -1240,8 +1240,8 @@ print_preprocess (Lisp_Object obj)
 	    { /* For hash tables, the key_and_value slot is past
 		 `size' because it needs to be marked specially in case
 		 the table is weak.  */
-	      struct Lisp_Hash_Table *h = XHASH_TABLE (obj);
-	      print_preprocess (h->key_and_value);
+	      LispHashTable *h = XHASH_TABLE (obj);
+	      print_preprocess (get_key_and_value(h));
 	    }
 	  break;
 
@@ -1450,23 +1450,26 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 
     case PVEC_HASH_TABLE:
       {
-	struct Lisp_Hash_Table *h = XHASH_TABLE (obj);
+	LispHashTable *h = XHASH_TABLE (obj);
 	/* Implement a readable output, e.g.:
 	  #s(hash-table size 2 test equal data (k1 v1 k2 v2)) */
 	/* Always print the size.  */
-	int len = sprintf (buf, "#s(hash-table size %"pD"d", ASIZE (h->next));
+	int len = sprintf (buf, "#s(hash-table size %"pD"d", hash_size(h));
+	Lisp_Object test_name = hash_test_name(h);
+	Lisp_Object weakness = hash_weakness(h);
+	bool purity = hash_purity(h);
 	strout (buf, len, len, printcharfun);
 
-	if (!NILP (h->test.name))
+	if (!NILP (test_name))
 	  {
 	    print_c_string (" test ", printcharfun);
-	    print_object (h->test.name, printcharfun, escapeflag);
+	    print_object (test_name, printcharfun, escapeflag);
 	  }
 
-	if (!NILP (h->weak))
+	if (!NILP (weakness))
 	  {
 	    print_c_string (" weakness ", printcharfun);
-	    print_object (h->weak, printcharfun, escapeflag);
+	    print_object (weakness, printcharfun, escapeflag);
 	  }
 
 	print_c_string (" rehash-size ", printcharfun);
@@ -1477,10 +1480,10 @@ print_vectorlike (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag,
 	print_object (Fhash_table_rehash_threshold (obj),
 		      printcharfun, escapeflag);
 
-	if (h->pure)
+	if (purity)
 	  {
 	    print_c_string (" purecopy ", printcharfun);
-	    print_object (h->pure ? Qt : Qnil, printcharfun, escapeflag);
+	    print_object (purity ? Qt : Qnil, printcharfun, escapeflag);
 	  }
 
 	print_c_string (" data ", printcharfun);
