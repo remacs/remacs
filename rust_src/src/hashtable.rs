@@ -414,7 +414,8 @@ fn hash_table_size(map: LispObject) -> LispObject {
 fn copy_hash_table(map: LispObject) -> LispObject {
     let hashmap = map.as_hash_table_or_error();
     let mut new_ptr = allocate_hashtable();
-    let new_table = (*hashmap).clone();
+    let ref old_table = *hashmap;
+    let new_table = old_table.clone();
     unsafe { ptr::copy_nonoverlapping(&new_table, new_ptr.as_mut(), 1) };
     mem::forget(new_table);
     
