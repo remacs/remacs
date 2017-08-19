@@ -99,15 +99,13 @@ impl LispBufferRef {
 
     #[inline]
     pub fn fetch_byte(&self, n: ptrdiff_t) -> u8 {
-        let base_addr =
-            if n  >= self.gpt_byte() {
-                self.gap_size()
-            } else {
-                0
-            };
-        let byte_addr = (base_addr + n +
-                         self.beg_addr() as ptrdiff_t - self.beg_byte()) as *const u8;
-        unsafe {(*byte_addr) as u8 }
+        let base_addr = if n >= self.gpt_byte() {
+            self.gap_size()
+        } else {
+            0
+        };
+
+        unsafe { self.beg_addr().offset(base_addr + n - self.beg_byte()) as u8 }
     }
 }
 
