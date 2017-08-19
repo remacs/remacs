@@ -2751,6 +2751,7 @@ KEYWORDS should be nil or a list of keywords."
               (push pkg info-list))))))
 
     ;; Print the result.
+    (tabulated-list-init-header)
     (setq tabulated-list-entries
           (mapcar #'package-menu--print-info-simple info-list))))
 

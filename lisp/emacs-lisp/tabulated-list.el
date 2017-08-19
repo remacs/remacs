@@ -191,11 +191,13 @@ Populated by `tabulated-list-init-header'.")
   ;; line-number-display-width returns the value for the selected
   ;; window, which might not be the window in which the current buffer
   ;; is displayed.
-  (let ((cbuf-window (get-buffer-window (current-buffer))))
-    (if (window-live-p cbuf-window)
-        (with-selected-window cbuf-window
-          (+ (line-number-display-width) 2))
-      (if display-line-numbers 4 0))))
+  (if (not display-line-numbers)
+           0
+    (let ((cbuf-window (get-buffer-window (current-buffer))))
+      (if (window-live-p cbuf-window)
+          (with-selected-window cbuf-window
+            (+ (line-number-display-width) 2))
+        4))))
 
 (defun tabulated-list-init-header ()
   "Set up header line for the Tabulated List buffer."
