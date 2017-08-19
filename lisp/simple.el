@@ -3928,8 +3928,7 @@ support pty association, if PROGRAM is nil."
 			       ("Command"  0 t)])
   (make-local-variable 'process-menu-query-only)
   (setq tabulated-list-sort-key (cons "Process" nil))
-  (add-hook 'tabulated-list-revert-hook 'list-processes--refresh nil t)
-  (tabulated-list-init-header))
+  (add-hook 'tabulated-list-revert-hook 'list-processes--refresh nil t))
 
 (defun process-menu-delete-process ()
   "Kill process at point in a `list-processes' buffer."
@@ -3990,7 +3989,8 @@ Also, delete any process that is exited or signaled."
 				       "")))))
 		     (mapconcat 'identity (process-command p) " "))))
 	     (push (list p (vector name pid status buf-label tty cmd))
-		   tabulated-list-entries))))))
+		   tabulated-list-entries)))))
+  (tabulated-list-init-header))
 
 (defun process-menu-visit-buffer (button)
   (display-buffer (button-get button 'process-buffer)))
