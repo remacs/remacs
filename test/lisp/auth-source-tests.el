@@ -270,7 +270,7 @@
          (netrc-file (make-temp-file
                       "auth-source-test"
                       nil nil
-                      (string-join entries "\n")))
+                      (mapconcat 'identity entries "\n")))
          (auth-sources (list netrc-file))
          (auth-source-do-cache nil)
          found found-as-string)
