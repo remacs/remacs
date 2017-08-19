@@ -27,7 +27,7 @@
 ;;; Code:
 
 (require 'ert)
-(require 'cl)
+(require 'cl-lib)
 (require 'auth-source)
 
 (defvar secrets-enabled t
