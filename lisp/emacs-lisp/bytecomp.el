@@ -4740,7 +4740,8 @@ binding slots have been popped."
                . (,prop ,val ,@(alist-get fun overriding-plist-environment)))
              overriding-plist-environment)
        (byte-compile-push-constant val)
-       (byte-compile-out 'byte-call 3)))
+       (byte-compile-out 'byte-call 3)
+       nil))
 
     (_ (byte-compile-keep-pending form))))
 
