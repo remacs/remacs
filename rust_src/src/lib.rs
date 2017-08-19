@@ -71,6 +71,8 @@ pub use buffers::Fbuffer_modified_p;
 // used in process.c
 pub use buffers::Fbuffer_name;
 
+pub use buffers::validate_region;
+
 // Used in nsfns.m
 pub use buffers::Fbuffer_file_name;
 
