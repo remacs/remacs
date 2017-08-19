@@ -235,7 +235,7 @@ macro_rules! add_weak_table {
 fn allocate_hashtable() -> LispHashTableRef {
     let mut table = ExternalPtr::new(allocate_pseudovector!(
         LispHashTable,
-        weak,
+        is_pure,
         PseudovecType::PVEC_HASH_TABLE
     ));
     let header = table.header.clone();
@@ -410,6 +410,9 @@ fn hash_table_size(map: LispObject) -> LispObject {
     LispObject::from_natnum(table.map.capacity() as EmacsInt)
 }
 
+// @TODO add docstring, and this is doing an extra copy
+// that isn't needed, one in allocate, and then another to bring
+// the clone over.
 #[lisp_fn]
 fn copy_hash_table(map: LispObject) -> LispObject {
     let hashmap = map.as_hash_table_or_error();
