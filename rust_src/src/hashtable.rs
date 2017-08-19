@@ -627,7 +627,7 @@ lazy_static! {
 
 unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entries: bool) -> bool {
     let weakness = ptr.weak.to_raw();
-    let mut to_remove = Vec::<HashableLispObject>::new();
+    let mut to_remove = Vec::<LispObject>::new();
     let mut marked = false;
 
     for (key, value) in ptr.map.iter() {
@@ -649,7 +649,7 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
 
         if remove_entries {
             if remove_p {
-                to_remove.push(key.clone());
+                to_remove.push(key.object);
             }
         } else {
             if !remove_p {
@@ -667,7 +667,7 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
     }
 
     for x in to_remove.iter() {
-        ptr.remove(x.object);
+        ptr.remove(*x);
     }
 
     marked
