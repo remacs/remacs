@@ -999,7 +999,7 @@ for displaying BUFFER, nil if no suitable window can be found.
 This function installs the `window-side' and `window-slot'
 parameters and makes them persistent.  It neither modifies ALIST
 nor installs any other window parameters unless they have been
-explicitly provided via a `window-parameter' entry in ALIST."
+explicitly provided via a `window-parameters' entry in ALIST."
   (let* ((side (or (cdr (assq 'side alist)) 'bottom))
          (slot (or (cdr (assq 'slot alist)) 0))
          (left-or-right (memq side '(left right)))
@@ -4106,7 +4106,7 @@ Else, if WINDOW is part of an atomic window, call this function
 with the root of the atomic window as its argument.  Signal an
 error if that root window is the root window of WINDOW's frame.
 Also signal an error if WINDOW is a side window.  Do not delete
-any window whose `no-delete-other-window' parameter is non-nil."
+any window whose `no-delete-other-windows' parameter is non-nil."
   (interactive)
   (setq window (window-normalize-window window))
   (let* ((frame (window-frame window))
@@ -4137,17 +4137,17 @@ any window whose `no-delete-other-window' parameter is non-nil."
 
       (cond
        ((or ignore-window-parameters
-            (not (window-with-parameter 'no-delete-other-window nil frame)))
+            (not (window-with-parameter 'no-delete-other-windows nil frame)))
         (setq main (frame-root-window frame)))
        ((catch 'tag
           (walk-window-tree
            (lambda (other)
              (when (or (and (window-parameter other 'window-side)
                             (not (window-parameter
-                                  other 'no-delete-other-window)))
+                                  other 'no-delete-other-windows)))
                        (and (not (window-parameter other 'window-side))
                             (window-parameter
-                             other 'no-delete-other-window)))
+                             other 'no-delete-other-windows)))
                (throw 'tag nil))))
           t)
         (setq main (window-main-window frame)))
@@ -4158,7 +4158,7 @@ any window whose `no-delete-other-window' parameter is non-nil."
           (when (and (window-live-p other)
                      (not (eq other window))
                      (not (window-parameter
-                           other 'no-delete-other-window))
+                           other 'no-delete-other-windows))
                      ;; When WINDOW and the other window are part of the
                      ;; same atomic window, don't delete the other.
                      (or (not atom-root)
