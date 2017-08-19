@@ -1085,7 +1085,7 @@ by that function is preserved.
 @end table
 
   @code{window-preserve-size} installs a window parameter (@pxref{Window
-Parameters}) called @code{preserved-size} which is consulted by the
+Parameters}) called @code{window-preserved-size} which is consulted by the
 window resizing functions.  This parameter will not prevent resizing the
 window when the window shows another buffer than the one when
 @code{window-preserve-size} was invoked or if its size has changed since
@@ -5016,8 +5016,8 @@ This parameter specifies the window that this one has been cloned
 from.  It is installed by @code{window-state-get} (@pxref{Window
 Configurations}).
 
-@item preserved-size
-@vindex preserved-size, a window parameter
+@item window-preserved-size
+@vindex window-preserved-size, a window parameter
 This parameter specifies a buffer, a direction where @code{nil} means
 vertical and @code{t} horizontal, and a size in pixels.  If this window
 displays the specified buffer and its size in the indicated direction
