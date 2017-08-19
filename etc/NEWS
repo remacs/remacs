@@ -1568,7 +1568,7 @@ a new window when opening man pages when there's already one, use
         (mode . Man-mode))))
 
 +++
-*** New window parameter 'no-delete-other-window' prevents that
+*** New window parameter 'no-delete-other-windows' prevents that
 its window gets deleted by 'delete-other-windows'.
 
 +++
