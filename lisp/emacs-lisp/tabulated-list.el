@@ -195,7 +195,7 @@ Populated by `tabulated-list-init-header'.")
     (if (window-live-p cbuf-window)
         (with-selected-window cbuf-window
           (+ (line-number-display-width) 2))
-      4)))
+      (if display-line-numbers 4 0))))
 
 (defun tabulated-list-init-header ()
   "Set up header line for the Tabulated List buffer."
@@ -422,11 +422,12 @@ of column descriptors."
   (let ((beg   (point))
 	(x     (max tabulated-list-padding 0))
 	(ncols (length tabulated-list-format))
+        (lnum-width (tabulated-list-line-number-width))
 	(inhibit-read-only t))
     (if display-line-numbers
-        (setq x (+ x (tabulated-list-line-number-width))))
+        (setq x (+ x lnum-width)))
     (if (> tabulated-list-padding 0)
-	(insert (make-string x ?\s)))
+	(insert (make-string (- x lnum-width) ?\s)))
     (let ((tabulated-list--near-rows ; Bind it if not bound yet (Bug#25506).
            (or (bound-and-true-p tabulated-list--near-rows)
                (list (or (tabulated-list-get-entry (point-at-bol 0))
