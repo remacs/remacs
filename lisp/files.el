@@ -1404,24 +1404,20 @@ of PREFIX, and expanding against `temporary-file-directory' if necessary),
 is guaranteed to point to a newly created file.
 You can then use `write-region' to write new data into the file.
 
-If TEXT is non-nil, it will be inserted in the new file. Otherwise
-the file will be empty.
-
 If DIR-FLAG is non-nil, create a new empty directory instead of a file.
 
-If SUFFIX is non-nil, add that at the end of the file name."
+If SUFFIX is non-nil, add that at the end of the file name.
+
+If TEXT is a string, insert it into the new file; DIR-FLAG should be nil.
+Otherwise the file will be empty."
   (let ((absolute-prefix
 	 (if (or (zerop (length prefix)) (member prefix '("." "..")))
 	     (concat (file-name-as-directory temporary-file-directory) prefix)
-	   (expand-file-name prefix temporary-file-directory)))
-        (contents (if (stringp text) text "")))
+	   (expand-file-name prefix temporary-file-directory))))
     (if (find-file-name-handler absolute-prefix 'write-region)
-        (files--make-magic-temp-file absolute-prefix dir-flag suffix contents)
-      (let ((file (make-temp-file-internal absolute-prefix
-			                   (if dir-flag t) (or suffix ""))))
-        (when (and (stringp text) (not dir-flag))
-          (write-region contents nil file nil 'silent))
-        file))))
+        (files--make-magic-temp-file absolute-prefix dir-flag suffix text)
+      (make-temp-file-internal absolute-prefix
+			       (if dir-flag t) (or suffix "") text))))
 
 (defun files--make-magic-temp-file (absolute-prefix
                                     &optional dir-flag suffix text)
