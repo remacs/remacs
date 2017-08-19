@@ -459,13 +459,15 @@ fn hash_table_rehash_threshold(_map: LispObject) -> LispObject {
 
 #[no_mangle]
 pub unsafe extern "C" fn finalize_hashtable(map: *mut c_void) {
-    mem::drop(&*(map as *mut LispHashTable));
+    ptr::drop_in_place(map as *mut LispHashTable);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn mark_hashtable(map: *mut c_void) {
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     mark_vectorlike(map as *mut Lisp_Vector);
+    debug_assert!(ptr.header.size & ARRAY_MARK_FLAG != 0);
+    
     if let HashFunction::UserFunc(name, cmp, hash) = ptr.func {
         mark_object(name.to_raw());
         mark_object(cmp.to_raw());
