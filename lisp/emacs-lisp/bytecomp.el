@@ -2569,7 +2569,7 @@ not to take responsibility for the actual compilation of the code."
           (let ((index
                  ;; If there's no doc string, provide -1 as the "doc string
                  ;; index" so that no element will be treated as a doc string.
-                 (if (not (stringp (car body))) -1 4)))
+                 (if (not (stringp (documentation code t))) -1 4)))
             ;; Output the form by hand, that's much simpler than having
             ;; b-c-output-file-form analyze the defalias.
             (byte-compile-output-docform
