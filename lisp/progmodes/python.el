@@ -2212,6 +2212,11 @@ machine then modifies `tramp-remote-process-environment' and
 Do not set this variable directly, instead use
 `python-shell-prompt-set-calculated-regexps'.")
 
+(defvar python-shell--block-prompt nil
+  "Input block prompt for inferior python shell.
+Do not set this variable directly, instead use
+`python-shell-prompt-set-calculated-regexps'.")
+
 (defvar python-shell--prompt-calculated-output-regexp nil
   "Calculated output prompt regexp for inferior python shell.
 Do not set this variable directly, instead use
@@ -2366,6 +2371,7 @@ and `python-shell-output-prompt-regexp' using the values from
         (dolist (prompt (butlast detected-prompts))
           (setq prompt (regexp-quote prompt))
           (cl-pushnew prompt input-prompts :test #'string=))
+        (setq python-shell--block-prompt (nth 1 detected-prompts))
         (cl-pushnew (regexp-quote
                      (car (last detected-prompts)))
                     output-prompts :test #'string=))
@@ -2726,6 +2732,7 @@ variable.
   (set (make-local-variable 'python-shell-interpreter-args)
        (or python-shell--interpreter-args python-shell-interpreter-args))
   (set (make-local-variable 'python-shell--prompt-calculated-input-regexp) nil)
+  (set (make-local-variable 'python-shell--block-prompt) nil)
   (set (make-local-variable 'python-shell--prompt-calculated-output-regexp) nil)
   (python-shell-prompt-set-calculated-regexps)
   (setq comint-prompt-regexp python-shell--prompt-calculated-input-regexp)
@@ -3632,7 +3639,14 @@ using that one instead of current buffer's process."
                        ;; Also, since pdb interaction is single-line
                        ;; based, this is enough.
                        (string-match-p python-shell-prompt-pdb-regexp prompt))
-                   #'python-shell-completion-get-completions)
+                   (if (or (equal python-shell--block-prompt prompt)
+                           (string-match-p
+                            python-shell-prompt-block-regexp prompt))
+                       ;; The non-native completion mechanism sends
+                       ;; newlines to the interpreter, so we can't use
+                       ;; it during a multiline statement (Bug#28051).
+                       #'ignore
+                     #'python-shell-completion-get-completions))
                   (t #'python-shell-completion-native-get-completions)))))
     (list start end
           (completion-table-dynamic
