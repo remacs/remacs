@@ -401,6 +401,8 @@ If @var{confirm} is non-@code{nil}, that means to ask for confirmation
 before overwriting an existing file.  Interactively, confirmation is
 required, unless the user supplies a prefix argument.
 
+@c FIXME: This disagrees with the doc string, which talks about
+@c directory names, not directories.  See Bug#27986.
 If @var{filename} is an existing directory, or a symbolic link to one,
 @code{write-file} uses the name of the visited file, in directory
 @var{filename}.  If the buffer is not visiting a file, it uses the
@@ -628,7 +630,10 @@ If @var{mustbenew} is non-@code{nil}, then @code{write-region} asks
 for confirmation if @var{filename} names an existing file.  If
 @var{mustbenew} is the symbol @code{excl}, then @code{write-region}
 does not ask for confirmation, but instead it signals an error
-@code{file-already-exists} if the file already exists.
+@code{file-already-exists} if the file already exists.  Although
+@code{write-region} normally follows a symbolic link and creates the
+pointed-to file if the symbolic link is dangling, it does not follow
+symbolic links if @var{mustbenew} is @code{excl}.
 
 The test for an existing file, when @var{mustbenew} is @code{excl}, uses
 a special system feature.  At least for files on a local disk, there is
@@ -817,9 +822,7 @@ are silently and automatically ignored.
 
   These functions test for permission to access a file for reading,
 writing, or execution.  Unless explicitly stated otherwise, they
-recursively follow symbolic links for their file name arguments, at
-all levels (at the level of the file itself and at all levels of
-parent directories).
+follow symbolic links.  @xref{Kinds of Files}.
 
   On some operating systems, more complex sets of access permissions
 can be specified, via mechanisms such as Access Control Lists (ACLs).
@@ -838,8 +841,8 @@ If the file does not exist, or if access control policies prevent you
 from finding its attributes, this function returns @code{nil}.
 
 Directories are files, so @code{file-exists-p} returns @code{t} when
-given a directory name.  However, symbolic links are treated
-specially; @code{file-exists-p} returns @code{t} for a symbolic link
+given a directory name.  However, because @code{file-exists-p} follows
+symbolic links, it returns @code{t} for a symbolic link
 name only if the target file exists.
 @end defun
 
@@ -906,10 +909,7 @@ returns @code{t} for nonexistent files.
 If the optional argument @var{group} is non-@code{nil}, this function
 also checks that the file's group would be unchanged.
 
-If @var{filename} is a symbolic link, then, unlike the other functions
-discussed here, @code{file-ownership-preserved-p} does @emph{not}
-replace @var{filename} with its target.  However, it does recursively
-follow symbolic links at all levels of parent directories.
+This function does not follow symbolic links.
 @end defun
 
 @defun file-modes filename
@@ -919,8 +919,8 @@ follow symbolic links at all levels of parent directories.
 @cindex file modes
 This function returns the @dfn{mode bits} of @var{filename}---an
 integer summarizing its read, write, and execution permissions.
-Symbolic links in @var{filename} are recursively followed at all
-levels.  If the file does not exist, the return value is @code{nil}.
+This function follows symbolic links.  If the file does not exist, the
+return value is @code{nil}.
 
 @xref{File permissions,,, coreutils, The @sc{gnu} @code{Coreutils}
 Manual}, for a description of mode bits.  For example, if the
@@ -971,19 +971,26 @@ Unix.  These conventions are also followed by @code{file-attributes}
 @subsection Distinguishing Kinds of Files
 @cindex file classification
 @cindex classification of file types
+@cindex symbolic links
 
   This section describes how to distinguish various kinds of files, such
 as directories, symbolic links, and ordinary files.
 
+  Symbolic links are ordinarily followed wherever they appear.  For
+example, to interpret the file name @file{a/b/c}, any of @file{a},
+@file{a/b}, and @file{a/b/c} can be symbolic links that are followed,
+possibly recursively if the link targets are themselves symbolic
+links.  However, a few functions do not follow symbolic links at the
+end of a file name (@file{a/b/c} in this example).  Such a function
+is said to @dfn{not follow symbolic links}.
+
 @defun file-symlink-p filename
-@cindex file symbolic links
-If the file @var{filename} is a symbolic link, the
-@code{file-symlink-p} function returns its (non-recursive) link target
+@cindex symbolic links
+If the file @var{filename} is a symbolic link, this function does not
+follow it and instead returns its link target
 as a string.  (The link target string is not necessarily the full
 absolute file name of the target; determining the full file name that
-the link points to is nontrivial, see below.)  If the leading
-directories of @var{filename} include symbolic links, this function
-recursively follows them.
+the link points to is nontrivial, see below.)
 
 If the file @var{filename} is not a symbolic link, or does not exist,
 @code{file-symlink-p} returns @code{nil}.
@@ -1011,9 +1018,9 @@ Here are a few examples of using this function:
 
 Note that in the third example, the function returned @file{sym-link},
 but did not proceed to resolve it, although that file is itself a
-symbolic link.  This is what we meant by ``non-recursive'' above---the
-process of following the symbolic links does not recurse if the link
-target is itself a link.
+symbolic link.  That is because this function does not follow symbolic
+links---the process of following the symbolic links does not apply to
+the last component of the file name.
 
 The string that this function returns is what is recorded in the
 symbolic link; it may or may not include any leading directories.
@@ -1044,12 +1051,10 @@ link.  If you actually need the file name of the link target, use
 @ref{Truenames}.
 @end defun
 
-The next two functions recursively follow symbolic links at
-all levels for @var{filename}.
-
 @defun file-directory-p filename
 This function returns @code{t} if @var{filename} is the name of an
 existing directory, @code{nil} otherwise.
+This function follows symbolic links.
 
 @example
 @group
@@ -1080,6 +1085,7 @@ existing directory, @code{nil} otherwise.
 This function returns @code{t} if the file @var{filename} exists and is
 a regular file (not a directory, named pipe, terminal, or
 other I/O device).
+This function follows symbolic links.
 @end defun
 
 @node Truenames
@@ -1231,15 +1237,11 @@ on the 19th, @file{aug-20} was written on the 20th, and the file
 @end example
 @end defun
 
-  If the @var{filename} argument to the next two functions is a
-symbolic link, then these function do @emph{not} replace it with its
-target.  However, they both recursively follow symbolic links at all
-levels of parent directories.
-
 @defun file-attributes filename &optional id-format
 @anchor{Definition of file-attributes}
 This function returns a list of attributes of file @var{filename}.  If
-the specified file cannot be opened, it returns @code{nil}.
+the specified file's attributes cannot be accessed, it returns @code{nil}.
+This function does not follow symbolic links.
 The optional parameter @var{id-format} specifies the preferred format
 of attributes @acronym{UID} and @acronym{GID} (see below)---the
 valid values are @code{'string} and @code{'integer}.  The latter is
@@ -1391,7 +1393,7 @@ This function returns the number of names (i.e., hard links) that
 file @var{filename} has.  If the file does not exist, this function
 returns @code{nil}.  Note that symbolic links have no effect on this
 function, because they are not considered to be names of the files
-they link to.
+they link to.  This function does not follow symbolic links.
 
 @example
 @group
@@ -1553,6 +1555,16 @@ a @code{file-missing} error instead.
 made by these functions instead of writing them immediately to
 secondary storage.  @xref{Files and Storage}.
 
+@c FIXME: This paragraph is purposely silent on what happens if
+@c @var{newname} is not a directory name but happens to name a
+@c directory.  See Bug#27986 for discussion on how to clear this up.
+  In the functions that have an argument @var{newname}, if this
+argument is a directory name it is treated as if the nondirectory part
+of the source name were appended.  Typically, a directory name is one
+that ends in @samp{/} (@pxref{Directory Names}).  For example, if the
+old name is @file{a/b/c}, the @var{newname} @file{d/e/f/} is treated
+as if it were @file{d/e/f/c}.
+
   In the functions that have an argument @var{newname}, if a file by the
 name of @var{newname} already exists, the actions taken depend on the
 value of the argument @var{ok-if-already-exists}:
@@ -1570,17 +1582,20 @@ Replace the old file without confirmation if @var{ok-if-already-exists}
 is any other value.
 @end itemize
 
-The next four commands all recursively follow symbolic links at all
-levels of parent directories for their first argument, but, if that
-argument is itself a symbolic link, then only @code{copy-file}
-replaces it with its (recursive) target.
-
 @deffn Command add-name-to-file oldname newname &optional ok-if-already-exists
 @cindex file with multiple names
 @cindex file hard link
 This function gives the file named @var{oldname} the additional name
 @var{newname}.  This means that @var{newname} becomes a new hard
 link to @var{oldname}.
+
+If @var{newname} is a symbolic link, its directory entry is replaced,
+not the directory entry it points to.  If @var{oldname} is a symbolic
+link, this function might or might not follow the link; it does not
+follow the link on GNU platforms.  If @var{oldname} is a directory,
+this function typically fails, although for the superuser on a few
+old-fashioned non-GNU platforms it can succeed and create a filesystem
+that is not tree-structured.
 
 In the first part of the following example, we list two files,
 @file{foo} and @file{foo3}.
@@ -1649,14 +1664,34 @@ This command renames the file @var{filename} as @var{newname}.
 If @var{filename} has additional names aside from @var{filename}, it
 continues to have those names.  In fact, adding the name @var{newname}
 with @code{add-name-to-file} and then deleting @var{filename} has the
-same effect as renaming, aside from momentary intermediate states.
+same effect as renaming, aside from momentary intermediate states and
+treatment of errors, directories and symbolic links.
+
+This command does not follow symbolic links.  If @var{filename} is a
+symbolic link, this command renames the symbolic link, not the file it
+points to.  If @var{newname} is a symbolic link, its directory entry
+is replaced, not the directory entry it points to.
+
+This command does nothing if @var{filename} and @var{newname} are the
+same directory entry, i.e., if they refer to the same parent directory
+and give the same name within that directory.  Otherwise, if
+@var{filename} and @var{newname} name the same file, this command does
+nothing on POSIX-conforming systems, and removes @var{filename} on
+some non-POSIX systems.
+
+If @var{newname} exists, then it must be an empty directory if
+@var{oldname} is a directory and a non-directory otherwise.
 @end deffn
 
 @deffn Command copy-file oldname newname &optional ok-if-already-exists time preserve-uid-gid preserve-extended-attributes
 This command copies the file @var{oldname} to @var{newname}.  An
-error is signaled if @var{oldname} does not exist.  If @var{newname}
+error is signaled if @var{oldname} is not a regular file.  If @var{newname}
 names a directory, it copies @var{oldname} into that directory,
 preserving its final name component.
+@c FIXME: See Bug#27986 for how the previous sentence might change.
+
+This function follows symbolic links, except that it does not follow a
+dangling symbolic link to create @var{newname}.
 
 If @var{time} is non-@code{nil}, then this function gives the new file
 the same last-modified time that the old one has.  (This works on only
@@ -1689,7 +1724,11 @@ SELinux context are not copied over in either case.
 @kindex file-already-exists
 This command makes a symbolic link to @var{filename}, named
 @var{newname}.  This is like the shell command @samp{ln -s
-@var{filename} @var{newname}}.
+@var{filename} @var{newname}}.  The @var{filename} argument
+is treated only as a string; it need not name an existing file.
+If @var{filename} is a relative file name, the resulting symbolic link
+is interpreted relative to the directory containing the symbolic link.
+@xref{Relative File Names}.
 
 This function is not available on systems that don't support symbolic
 links.
@@ -1702,8 +1741,7 @@ links.
 This command deletes the file @var{filename}.  If the file has
 multiple names, it continues to exist under the other names.  If
 @var{filename} is a symbolic link, @code{delete-file} deletes only the
-symbolic link and not its target (though it does follow symbolic links
-at all levels of parent directories).
+symbolic link and not its target.
 
 A suitable kind of @code{file-error} error is signaled if the file
 does not exist, or is not deletable.  (On Unix and GNU/Linux, a file
@@ -1724,8 +1762,7 @@ See also @code{delete-directory} in @ref{Create/Delete Dirs}.
 @cindex file modes, setting
 @deffn Command set-file-modes filename mode
 This function sets the @dfn{file mode} (or @dfn{permissions}) of
-@var{filename} to @var{mode}.  It recursively follows symbolic links
-at all levels for @var{filename}.
+@var{filename} to @var{mode}.  This function follows symbolic links.
 
 If called non-interactively, @var{mode} must be an integer.  Only the
 lowest 12 bits of the integer are used; on most systems, only the
