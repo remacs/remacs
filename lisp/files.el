@@ -1419,7 +1419,8 @@ If SUFFIX is non-nil, add that at the end of the file name."
         (files--make-magic-temp-file absolute-prefix dir-flag suffix contents)
       (let ((file (make-temp-file-internal absolute-prefix
 			                   (if dir-flag t) (or suffix ""))))
-        (write-region contents nil file nil 'silent)
+        (when (and (stringp text) (not dir-flag))
+          (write-region contents nil file nil 'silent))
         file))))
 
 (defun files--make-magic-temp-file (absolute-prefix
