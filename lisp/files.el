@@ -1404,8 +1404,8 @@ of PREFIX, and expanding against `temporary-file-directory' if necessary),
 is guaranteed to point to a newly created file.
 You can then use `write-region' to write new data into the file.
 
-If TEXT is non-nil, it will be inserted in the new
-file. Otherwise the file will be empty.
+If TEXT is non-nil, it will be inserted in the new file. Otherwise
+the file will be empty.
 
 If DIR-FLAG is non-nil, create a new empty directory instead of a file.
 
@@ -1413,20 +1413,25 @@ If SUFFIX is non-nil, add that at the end of the file name."
   (let ((absolute-prefix
 	 (if (or (zerop (length prefix)) (member prefix '("." "..")))
 	     (concat (file-name-as-directory temporary-file-directory) prefix)
-	   (expand-file-name prefix temporary-file-directory))))
+	   (expand-file-name prefix temporary-file-directory)))
+        (contents (if (stringp text) text "")))
     (if (find-file-name-handler absolute-prefix 'write-region)
-        (files--make-magic-temp-file absolute-prefix dir-flag suffix)
-      (make-temp-file-internal absolute-prefix
-			       (if dir-flag t) (or suffix "")))))
+        (files--make-magic-temp-file absolute-prefix dir-flag suffix contents)
+      (let ((file (make-temp-file-internal absolute-prefix
+			                   (if dir-flag t) (or suffix ""))))
+        (write-region contents nil file nil 'silent)
+        file))))
 
-(defun files--make-magic-temp-file (absolute-prefix &optional dir-flag suffix)
-  "Implement (make-temp-file ABSOLUTE-PREFIX DIR-FLAG SUFFIX).
+(defun files--make-magic-temp-file (absolute-prefix
+                                    &optional dir-flag suffix text)
+  "Implement (make-temp-file ABSOLUTE-PREFIX DIR-FLAG SUFFIX TEXT).
 This implementation works on magic file names."
   ;; Create temp files with strict access rights.  It's easy to
   ;; loosen them later, whereas it's impossible to close the
   ;; time-window of loose permissions otherwise.
   (with-file-modes ?\700
-    (let (file)
+    (let ((contents (if (stringp text) text ""))
+          file)
       (while (condition-case ()
 		 (progn
 		   (setq file (make-temp-name absolute-prefix))
@@ -1434,7 +1439,7 @@ This implementation works on magic file names."
 		       (setq file (concat file suffix)))
 		   (if dir-flag
 		       (make-directory file)
-		     (write-region (or text "") nil file nil 'silent nil 'excl))
+		     (write-region contents nil file nil 'silent nil 'excl))
 		   nil)
 	       (file-already-exists t))
 	;; the file was somehow created by someone else between

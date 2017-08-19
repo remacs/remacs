@@ -267,10 +267,8 @@
                    :host "b1" :port "b2" :user "b3")
                   ))
 
-         (netrc-file (make-temp-file
-                      "auth-source-test"
-                      nil nil
-                      (mapconcat 'identity entries "\n")))
+         (netrc-file (make-temp-file "auth-source-test" nil nil
+                                     (mapconcat 'identity entries "\n")))
          (auth-sources (list netrc-file))
          (auth-source-do-cache nil)
          found found-as-string)

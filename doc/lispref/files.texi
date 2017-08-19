@@ -2467,11 +2467,12 @@ construct a name for such a file:
 The job of @code{make-temp-file} is to prevent two different users or
 two different jobs from trying to use the exact same file name.
 
-@defun make-temp-file prefix &optional dir-flag suffix
+@defun make-temp-file prefix &optional dir-flag suffix text
 This function creates a temporary file and returns its name.  Emacs
 creates the temporary file's name by adding to @var{prefix} some
 random characters that are different in each Emacs job.  The result is
-guaranteed to be a newly created empty file.  On MS-DOS, this function
+guaranteed to be a newly created file, containing @var{text} if that's
+given as a string and empty otherwise. On MS-DOS, this function
 can truncate the @var{string} prefix to fit into the 8+3 file-name
 limits.  If @var{prefix} is a relative file name, it is expanded
 against @code{temporary-file-directory}.
@@ -2493,6 +2494,8 @@ not the directory name, of that directory.  @xref{Directory Names}.
 
 If @var{suffix} is non-@code{nil}, @code{make-temp-file} adds it at
 the end of the file name.
+
+If @var{text} is a string, @code{make-temp-file} inserts it in the file.
 
 To prevent conflicts among different libraries running in the same
 Emacs, each Lisp program that uses @code{make-temp-file} should have its

@@ -1210,6 +1210,8 @@ propagated to file name handlers now.
 
 * Lisp Changes in Emacs 26.1
 
+** New optional argument TEXT in 'make-temp-file'.
+
 ** New function `define-symbol-prop'.
 
 +++
