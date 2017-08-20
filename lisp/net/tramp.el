@@ -4378,6 +4378,37 @@ Only works for Bourne-like shells."
 				      t t result)))
 	result))))
 
+;;; Signal handling.  This works for remote processes, which have set
+;;; the process property `remote-pid'.
+
+(defun tramp-advice-interrupt-process (orig-fun &rest args)
+  "Interrupt remote process PROC."
+  (let* ((arg0 (car args))
+	 (proc (cond
+		((processp arg0) arg0)
+		((bufferp arg0)  (get-buffer-process arg0))
+		((stringp arg0)  (or (get-process arg0)
+				     (get-buffer-process arg0)))
+		((null arg0)     (get-buffer-process (current-buffer)))
+		(t               arg0)))
+	 pid)
+    ;; If it's a Tramp process, send the INT signal remotely.
+    (if (and (processp proc)
+	     (setq pid (process-get proc 'remote-pid)))
+	(progn
+	  (tramp-message proc 5 "%s %s" proc pid)
+	  (tramp-send-command
+	   (tramp-get-connection-property proc "vector" nil)
+	   (format "kill -2 %d" pid)))
+      ;; Otherwise, just run the original function.
+      (apply orig-fun args))))
+
+(advice-add 'interrupt-process :around 'tramp-advice-interrupt-process)
+(add-hook
+ 'tramp-unload-hook
+ (lambda ()
+   (advice-remove 'interrupt-process 'tramp-advice-interrupt-process)))
+
 ;;; Integration of eshell.el:
 
 ;; eshell.el keeps the path in `eshell-path-env'.  We must change it

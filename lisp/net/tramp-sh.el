@@ -2875,7 +2875,8 @@ the result will be a local, non-Tramp, file name."
 	   ;; We do not want to raise an error when
 	   ;; `start-file-process' has been started several times in
 	   ;; `eshell' and friends.
-	   (tramp-current-connection nil))
+	   (tramp-current-connection nil)
+	   p)
 
       (while (get-process name1)
 	;; NAME must be unique as process name.
@@ -2905,33 +2906,37 @@ the result will be a local, non-Tramp, file name."
 		  ;; to cleanup the prompt afterwards.
 		  (catch 'suppress
 		    (tramp-maybe-open-connection v)
+		    (setq p (tramp-get-connection-process v))
+		    ;; Set the pid of the remote shell.  This is
+		    ;; needed when sending signals remotely.
+		    (let ((pid (tramp-send-command-and-read v "echo $$")))
+		      (process-put p 'remote-pid pid)
+		      (tramp-set-connection-property p "remote-pid" pid))
 		    (widen)
-		    (delete-region mark (point))
+		    (delete-region mark (point-max))
 		    (narrow-to-region (point-max) (point-max))
 		    ;; Now do it.
 		    (if command
 			;; Send the command.
 			(tramp-send-command v command nil t) ; nooutput
 		      ;; Check, whether a pty is associated.
-		      (unless (process-get
-			       (tramp-get-connection-process v) 'remote-tty)
+		      (unless (process-get p 'remote-tty)
 			(tramp-error
 			 v 'file-error
 			 "pty association is not supported for `%s'" name))))
-		  (let ((p (tramp-get-connection-process v)))
-		    ;; Set query flag and process marker for this
-		    ;; process.  We ignore errors, because the process
-		    ;; could have finished already.
-		    (ignore-errors
-		      (set-process-query-on-exit-flag p t)
-		      (set-marker (process-mark p) (point)))
-		    ;; Return process.
-		    p))))
+		  ;; Set query flag and process marker for this
+		  ;; process.  We ignore errors, because the process
+		  ;; could have finished already.
+		  (ignore-errors
+		    (set-process-query-on-exit-flag p t)
+		    (set-marker (process-mark p) (point)))
+		  ;; Return process.
+		  p)))
 
 	  ;; Save exit.
 	  (if (string-match tramp-temp-buffer-name (buffer-name))
 	      (ignore-errors
-		(set-process-buffer (tramp-get-connection-process v) nil)
+		(set-process-buffer p nil)
 		(kill-buffer (current-buffer)))
 	    (set-buffer-modified-p bmp))
 	  (tramp-set-connection-property v "process-name" nil)
@@ -4111,7 +4116,8 @@ process to set up.  VEC specifies the connection."
     ;; Set `remote-tty' process property.
     (let ((tty (tramp-send-command-and-read vec "echo \\\"`tty`\\\"" 'noerror)))
       (unless (zerop (length tty))
-	(process-put proc 'remote-tty tty)))
+	(process-put proc 'remote-tty tty)
+	(tramp-set-connection-property proc "remote-tty" tty)))
 
     ;; Dump stty settings in the traces.
     (when (>= tramp-verbose 9)
@@ -5686,9 +5692,6 @@ function cell is returned to be applied on a buffer."
 ;;
 ;; * Reconnect directly to a compliant shell without first going
 ;;   through the user's default shell.  (Pete Forman)
-;;
-;; * How can I interrupt the remote process with a signal
-;;   (interrupt-process seems not to work)?  (Markus Triska)
 ;;
 ;; * Avoid the local shell entirely for starting remote processes.  If
 ;;   so, I think even a signal, when delivered directly to the local
