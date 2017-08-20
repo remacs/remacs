@@ -107,7 +107,7 @@
 ;;; Code:
 
 (eval-when-compile (require 'cl-lib))
-(require 'subr-x)
+(eval-when-compile (require 'subr-x))
 
 (defvar mail-yank-prefix)
 
