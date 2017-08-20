@@ -2036,6 +2036,58 @@ x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
     error ("Invalid z-group specification");
 }
 
+#ifdef NS_IMPL_COCOA
+void
+ns_set_appearance (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+  EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
+  NSWindow *window = [view window];
+
+  NSTRACE ("ns_set_appearance");
+
+#ifndef NSAppKitVersionNumber10_9
+#define NSAppKitVersionNumber10_9 1265
+#endif
+
+  if (NSAppKitVersionNumber < NSAppKitVersionNumber10_9)
+    return;
+
+  if (EQ (new_value, Qdark))
+    {
+      window.appearance = [NSAppearance
+                            appearanceNamed: NSAppearanceNameVibrantDark];
+      FRAME_NS_APPEARANCE (f) = ns_appearance_vibrant_dark;
+    }
+  else
+    {
+      window.appearance = [NSAppearance
+                            appearanceNamed: NSAppearanceNameAqua];
+      FRAME_NS_APPEARANCE (f) = ns_appearance_aqua;
+    }
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 1090 */
+}
+
+void
+ns_set_transparent_titlebar (struct frame *f, Lisp_Object new_value,
+                             Lisp_Object old_value)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+  EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
+  NSWindow *window = [view window];
+
+  NSTRACE ("ns_set_transparent_titlebar");
+
+  if ([window respondsToSelector: @selector(titlebarAppearsTransparent)]
+      && !EQ (new_value, old_value))
+    {
+      window.titlebarAppearsTransparent = !NILP (new_value);
+      FRAME_NS_TRANSPARENT_TITLEBAR (f) = !NILP (new_value);
+    }
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 101000 */
+}
+#endif /* NS_IMPL_COCOA */
+
 static void
 ns_fullscreen_hook (struct frame *f)
 {
@@ -7082,6 +7134,22 @@ not_in_argv (NSString *arg)
   /* toolbar support */
   if (! FRAME_UNDECORATED (f))
     [self createToolbar: f];
+
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#ifndef NSAppKitVersionNumber10_9
+#define NSAppKitVersionNumber10_9 1265
+#endif
+
+  if (NSAppKitVersionNumber >= NSAppKitVersionNumber10_9
+      && FRAME_NS_APPEARANCE (f) != ns_appearance_aqua)
+    win.appearance = [NSAppearance
+                          appearanceNamed: NSAppearanceNameVibrantDark];
+#endif
+
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+  if ([win respondsToSelector: @selector(titlebarAppearsTransparent)])
+    win.titlebarAppearsTransparent = FRAME_NS_TRANSPARENT_TITLEBAR (f);
+#endif
 
   tem = f->icon_name;
   if (!NILP (tem))

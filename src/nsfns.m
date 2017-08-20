@@ -985,6 +985,10 @@ frame_parm_handler ns_frame_parm_handlers[] =
   x_set_z_group, /* x_set_z_group */
   0, /* x_set_override_redirect */
   x_set_no_special_glyphs,
+#ifdef NS_IMPL_COCOA
+  ns_set_appearance,
+  ns_set_transparent_titlebar,
+#endif
 };
 
 
@@ -1276,6 +1280,18 @@ This function is an internal primitive--use `make-frame' instead.  */)
   tem = x_get_arg (dpyinfo, parms, Qundecorated, NULL, NULL, RES_TYPE_BOOLEAN);
   FRAME_UNDECORATED (f) = !NILP (tem) && !EQ (tem, Qunbound);
   store_frame_param (f, Qundecorated, FRAME_UNDECORATED (f) ? Qt : Qnil);
+
+#ifdef NS_IMPL_COCOA
+  tem = x_get_arg (dpyinfo, parms, Qns_appearance, NULL, NULL, RES_TYPE_SYMBOL);
+  FRAME_NS_APPEARANCE (f) = EQ (tem, Qdark)
+    ? ns_appearance_vibrant_dark : ns_appearance_aqua;
+  store_frame_param (f, Qns_appearance, tem);
+
+  tem = x_get_arg (dpyinfo, parms, Qns_transparent_titlebar,
+                   NULL, NULL, RES_TYPE_BOOLEAN);
+  FRAME_NS_TRANSPARENT_TITLEBAR (f) = !NILP (tem) && !EQ (tem, Qunbound);
+  store_frame_param (f, Qns_transparent_titlebar, tem);
+#endif
 
   parent_frame = x_get_arg (dpyinfo, parms, Qparent_frame, NULL, NULL,
 			    RES_TYPE_SYMBOL);
@@ -3248,6 +3264,7 @@ syms_of_nsfns (void)
   DEFSYM (Qfontsize, "fontsize");
   DEFSYM (Qframe_title_format, "frame-title-format");
   DEFSYM (Qicon_title_format, "icon-title-format");
+  DEFSYM (Qdark, "dark");
 
   DEFVAR_LISP ("ns-icon-type-alist", Vns_icon_type_alist,
                doc: /* Alist of elements (REGEXP . IMAGE) for images of icons associated to frames.

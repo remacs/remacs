@@ -834,6 +834,10 @@ make_frame (bool mini_p)
 #if ! defined (USE_GTK) && ! defined (HAVE_NS)
   f->last_tool_bar_item = -1;
 #endif
+#ifdef NS_IMPL_COCOA
+  f->ns_appearance = ns_appearance_aqua;
+  f->ns_transparent_titlebar = false;
+#endif
 #endif
 
   root_window = make_window ();
@@ -3520,6 +3524,10 @@ static const struct frame_parm_table frame_parms[] =
   {"z-group",			SYMBOL_INDEX (Qz_group)},
   {"override-redirect",		SYMBOL_INDEX (Qoverride_redirect)},
   {"no-special-glyphs",		SYMBOL_INDEX (Qno_special_glyphs)},
+#ifdef NS_IMPL_COCOA
+  {"ns-appearance",		SYMBOL_INDEX (Qns_appearance)},
+  {"ns-transparent-titlebar",	SYMBOL_INDEX (Qns_transparent_titlebar)},
+#endif
 };
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -5645,6 +5653,10 @@ syms_of_frame (void)
 
 #ifdef HAVE_NS
   DEFSYM (Qns_parse_geometry, "ns-parse-geometry");
+#endif
+#ifdef NS_IMPL_COCOA
+  DEFSYM (Qns_appearance, "ns-appearance");
+  DEFSYM (Qns_transparent_titlebar, "ns-transparent-titlebar");
 #endif
 
   DEFSYM (Qalpha, "alpha");

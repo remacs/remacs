@@ -65,6 +65,14 @@ enum internal_border_part
    INTERNAL_BORDER_BOTTOM_EDGE,
    INTERNAL_BORDER_BOTTOM_LEFT_CORNER,
   };
+
+#ifdef NS_IMPL_COCOA
+enum ns_appearance_type
+  {
+   ns_appearance_aqua,
+   ns_appearance_vibrant_dark
+  };
+#endif
 #endif /* HAVE_WINDOW_SYSTEM */
 
 /* The structure representing a frame.  */
@@ -563,6 +571,12 @@ struct frame
   /* All display backends seem to need these two pixel values.  */
   unsigned long background_pixel;
   unsigned long foreground_pixel;
+
+#ifdef NS_IMPL_COCOA
+  /* NSAppearance theme used on this frame.  */
+  enum ns_appearance_type ns_appearance;
+  bool_bf ns_transparent_titlebar;
+#endif
 };
 
 /* Most code should use these functions to set Lisp fields in struct frame.  */
@@ -953,6 +967,10 @@ default_pixels_per_inch_y (void)
 #define FRAME_Z_GROUP_ABOVE_SUSPENDED(f)	\
   ((f)->z_group == z_group_above_suspended)
 #define FRAME_Z_GROUP_BELOW(f) ((f)->z_group == z_group_below)
+#ifdef NS_IMPL_COCOA
+#define FRAME_NS_APPEARANCE(f) ((f)->ns_appearance)
+#define FRAME_NS_TRANSPARENT_TITLEBAR(f) ((f)->ns_transparent_titlebar)
+#endif
 #else /* not HAVE_WINDOW_SYSTEM */
 #define FRAME_UNDECORATED(f) ((void) (f), 0)
 #define FRAME_OVERRIDE_REDIRECT(f) ((void) (f), 0)
