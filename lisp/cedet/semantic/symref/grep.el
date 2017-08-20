@@ -119,10 +119,6 @@ PATTERN is the pattern used by Grep."
                pattern
                filepattern
                rootdir)))
-    ;; http://debbugs.gnu.org/20719
-    (when (string-match "find \\(\\.\\)" cmd)
-      (setq cmd (replace-match rootdir t t cmd 1)))
-    ;;(message "New command: %s" cmd)
     cmd))
 
 (defcustom semantic-symref-grep-shell shell-file-name
