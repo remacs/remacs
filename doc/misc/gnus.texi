@@ -4340,10 +4340,10 @@ does not necessarily need to be the same value that is determined by
 @code{gnus-group-name-charset-group-alist}.
 
 If @code{default-file-name-coding-system} or this variable is
-initialized by default to @code{iso-latin-1} for example, although you
+initialized by default to @code{iso-latin-1-unix} for example, although you
 want to subscribe to the groups spelled in Chinese, that is the most
 typical case where you have to customize
-@code{nnmail-pathname-coding-system}.  The @code{utf-8} coding system is
+@code{nnmail-pathname-coding-system}.  The @code{utf-8-unix} coding system is
 a good candidate for it.  Otherwise, you may change the locale in your
 system so that @code{default-file-name-coding-system} or this variable
 may be initialized to an appropriate value.

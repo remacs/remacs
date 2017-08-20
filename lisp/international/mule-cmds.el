@@ -354,11 +354,12 @@ This also sets the following values:
 
   (if (eq system-type 'darwin)
       ;; The file-name coding system on Darwin systems is always utf-8.
-      (setq default-file-name-coding-system 'utf-8)
+      (setq default-file-name-coding-system 'utf-8-unix)
     (if (and (default-value 'enable-multibyte-characters)
 	     (or (not coding-system)
 		 (coding-system-get coding-system 'ascii-compatible-p)))
-	(setq default-file-name-coding-system coding-system)))
+	(setq default-file-name-coding-system
+	      (coding-system-change-eol-conversion coding-system 'unix))))
   (setq default-terminal-coding-system coding-system)
   ;; Prevent default-terminal-coding-system from converting ^M to ^J.
   (setq default-keyboard-coding-system
@@ -414,7 +415,7 @@ To prefer, for instance, utf-8, say the following:
 	      (coding-system-change-eol-conversion base eol-type)))
     (set-default-coding-systems base)
     (if (called-interactively-p 'interactive)
-	(or (eq base default-file-name-coding-system)
+	(or (eq base (coding-system-type default-file-name-coding-system))
 	    (message "The default value of `file-name-coding-system' was not changed because the specified coding system is not suitable for file names.")))))
 
 (defvar sort-coding-systems-predicate nil
@@ -1797,9 +1798,9 @@ The default status is as follows:
 
   (set-default-coding-systems nil)
   (setq default-sendmail-coding-system 'iso-latin-1)
-  ;; On Darwin systems, this should be utf-8, but when this file is loaded
-  ;; utf-8 is not yet defined, so we set it in set-locale-environment instead.
-  (setq default-file-name-coding-system 'iso-latin-1)
+  ;; On Darwin systems, this should be utf-8-unix, but when this file is loaded
+  ;; that is not yet defined, so we set it in set-locale-environment instead.
+  (setq default-file-name-coding-system 'iso-latin-1-unix)
   ;; Preserve eol-type from existing default-process-coding-systems.
   ;; On non-unix-like systems in particular, these may have been set
   ;; carefully by the user, or by the startup code, to deal with the
@@ -2722,7 +2723,7 @@ See also `locale-charset-language-names', `locale-language-names',
     (when (eq system-type 'darwin)
       ;; On Darwin, file names are always encoded in utf-8, no matter
       ;; the locale.
-      (setq default-file-name-coding-system 'utf-8)
+      (setq default-file-name-coding-system 'utf-8-unix)
       ;; macOS's Terminal.app by default uses utf-8 regardless of
       ;; the locale.
       (when (and (null window-system)

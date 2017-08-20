@@ -3719,7 +3719,8 @@ Use the `ls' command."
 		   'utf-8-hfs 'utf-8))
 	 (coding-system-for-read utf8)
 	 (coding-system-for-write utf8)
-	 (file-name-coding-system utf8))
+	 (file-name-coding-system
+	  (coding-system-change-eol-conversion utf8 'unix)))
     (tramp--test-check-files
      (unless (tramp--test-hpux-p) "Γυρίστε το Γαλαξία με Ώτο Στοπ")
      (unless (tramp--test-hpux-p)

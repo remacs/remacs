@@ -1198,6 +1198,12 @@ accepts Lisp symbols which begin with the following quotation
 characters: ‘’‛“”‟〞＂＇, unless they are escaped with backslash.
 
 +++
+** 'default-file-name-coding-system' now defaults to a coding system
+that does not process CRLF.  For example, it defaults to utf-8-unix
+instead of to utf-8.  Before this change, Emacs would sometimes
+mishandle file names containing these control characters.
+
++++
 ** Module functions are now implemented slightly differently; in
 particular, the function 'internal--module-call' has been removed.
 Code that depends on undocumented internals of the module system might
