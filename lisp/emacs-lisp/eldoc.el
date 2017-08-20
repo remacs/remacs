@@ -276,19 +276,12 @@ Otherwise work like `message'."
           (force-mode-line-update)))
     (apply 'message format-string args)))
 
-(defun eldoc-message (&optional format-string &rest args)
-  "Display FORMAT-STRING formatted with ARGS as an ElDoc message.
+(defun eldoc-message (&optional string)
+  "Display STRING as an ElDoc message if it's non-nil.
 
-Store the message (if any) in `eldoc-last-message', and return it."
+Also store it in `eldoc-last-message' and return that value."
   (let ((omessage eldoc-last-message))
-    (setq eldoc-last-message
-	  (cond ((eq format-string eldoc-last-message) eldoc-last-message)
-		((null format-string) nil)
-		;; If only one arg, no formatting to do, so put it in
-		;; eldoc-last-message so eq test above might succeed on
-		;; subsequent calls.
-		((null args) format-string)
-		(t (apply #'format-message format-string args))))
+    (setq eldoc-last-message string)
     ;; In emacs 19.29 and later, and XEmacs 19.13 and later, all messages
     ;; are recorded in a log.  Do not put eldoc messages in that log since
     ;; they are Legion.
