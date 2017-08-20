@@ -3464,13 +3464,17 @@ best way to find results.
 @section Spell-checkers
 @cindex Spell-checker
 @cindex Checking spelling
-@cindex Ispell
-@cindex Aspell
 @cindex Hunspell
+@cindex Aspell
+@cindex Ispell
+@cindex Enchant
 
 Various spell-checkers are compatible with Emacs, including:
 
 @table @b
+
+@item Hunspell
+@uref{http://hunspell.sourceforge.net/}
 
 @item GNU Aspell
 @uref{http://aspell.net/}
@@ -3478,8 +3482,8 @@ Various spell-checkers are compatible with Emacs, including:
 @item Ispell
 @uref{http://fmg-www.cs.ucla.edu/geoff/ispell.html}
 
-@item Hunspell
-@uref{http://hunspell.sourceforge.net/}
+@item Enchant
+@uref{https://abiword.github.io/enchant/}
 
 @end table
 

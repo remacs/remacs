@@ -1084,6 +1084,17 @@ file.
 ** New DNS mode command 'dns-mode-ipv6-to-nibbles' to convert IPv6 addresses
 to a format suitable for reverse lookup zone files.
 
+** Ispell
+
++++
+*** Enchant (version 2.1.0 or later required) is now supported as a
+spell-checker.  Enchant is a meta-spell-checker that uses providers
+such as Hunspell to do the actual checking.  With it, users can use
+spell-checkers not directly supported by Emacs, such as Voikko, Hspell
+and AppleSpell, more easily share personal word-lists with other
+programs, and configure different spelling-checkers for different
+languages.
+
 ** Flymake
 
 +++
