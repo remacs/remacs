@@ -2092,22 +2092,6 @@ so the buffer is truly empty after this.  */)
   return Qnil;
 }
 
-void
-validate_region (register Lisp_Object *b, register Lisp_Object *e)
-{
-  CHECK_NUMBER_COERCE_MARKER (*b);
-  CHECK_NUMBER_COERCE_MARKER (*e);
-
-  if (XINT (*b) > XINT (*e))
-    {
-      Lisp_Object tem;
-      tem = *b;  *b = *e;  *e = tem;
-    }
-
-  if (! (BEGV <= XINT (*b) && XINT (*e) <= ZV))
-    args_out_of_range_3 (Fcurrent_buffer (), *b, *e);
-}
-
 /* Advance BYTE_POS up to a character boundary
    and return the adjusted position.  */
 

@@ -54,7 +54,7 @@ macro_rules! call {
 macro_rules! error {
     ($str:expr) => {{
         let strobj = unsafe {
-            ::remacs_sys::make_string($str.as_ptr() as *const i8,
+            ::remacs_sys::make_string($str.as_ptr() as *const ::libc::c_char,
                                       $str.len() as ::libc::ptrdiff_t)
         };
         xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
@@ -62,7 +62,7 @@ macro_rules! error {
     ($fmtstr:expr, $($arg:expr),*) => {{
         let formatted = format!($fmtstr, $($arg),*);
         let strobj = unsafe {
-            ::remacs_sys::make_string(formatted.as_ptr() as *const i8,
+            ::remacs_sys::make_string(formatted.as_ptr() as *const ::libc::c_char,
                                       formatted.len() as ::libc::ptrdiff_t)
         };
         xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));

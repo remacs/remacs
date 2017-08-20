@@ -3,10 +3,12 @@
 use libc::{c_void, c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Buffer, Lisp_Type, Vbuffer_alist, EmacsInt, make_lisp_ptr};
+use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Type, Vbuffer_alist, make_lisp_ptr};
 use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
+
+use std::mem;
 
 use remacs_macros::lisp_fn;
 
@@ -226,4 +228,30 @@ fn buffer_modified_tick(buffer: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
     LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().chars_modiff())
+}
+
+#[no_mangle]
+pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
+    let start = LispObject::from_raw(unsafe { *b });
+    let stop = LispObject::from_raw(unsafe { *e });
+
+    let mut beg = start.as_fixnum_coerce_marker_or_error();
+    let mut end = stop.as_fixnum_coerce_marker_or_error();
+
+    if beg > end {
+        mem::swap(&mut beg, &mut end);
+    }
+
+    unsafe {
+        *b = LispObject::from_fixnum(beg).to_raw();
+        *e = LispObject::from_fixnum(end).to_raw();
+    }
+
+    let buf = ThreadState::current_buffer();
+    let begv = buf.begv as EmacsInt;
+    let zv = buf.zv as EmacsInt;
+
+    if !(begv <= beg && end <= zv) {
+        args_out_of_range!(current_buffer(), start, stop);
+    }
 }

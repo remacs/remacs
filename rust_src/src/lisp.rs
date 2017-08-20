@@ -26,9 +26,9 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
-                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
-                 Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qchar_table_p, Qconsp, Qbufferp,
-                 SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
+                 Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp, Qhash_table_p,
+                 Qchar_table_p, Qconsp, Qbufferp, SYMBOL_NAME, PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -337,6 +337,17 @@ impl LispObject {
             unsafe { self.to_fixnum_unchecked() }
         } else {
             wrong_type!(Qintegerp, self)
+        }
+    }
+
+    #[inline]
+    pub fn as_fixnum_coerce_marker_or_error(self) -> EmacsInt {
+        if let Some(n) = self.as_fixnum() {
+            n
+        } else if let Some(m) = self.as_marker() {
+            m.position() as EmacsInt
+        } else {
+            wrong_type!(Qinteger_or_marker_p, self);
         }
     }
 

@@ -394,7 +394,7 @@ fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
     } else {
         digest_size as EmacsInt
     };
-    let digest = LispObject::from_raw(unsafe { make_uninit_string(buffer_size as i64) });
+    let digest = LispObject::from_raw(unsafe { make_uninit_string(buffer_size as EmacsInt) });
     let digest_str = digest.as_string_or_error();
     hash_func(input, digest_str.as_mut_slice());
     if hex {
