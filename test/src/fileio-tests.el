@@ -32,11 +32,9 @@
   (let* ((dir (make-temp-file "fileio" t))
          (link (expand-file-name "link" dir)))
     (unwind-protect
-        (let ((failure
-               (let ((default-file-name-coding-system 'utf-8-unix))
-                 (try-char (unibyte-char-to-multibyte 128) link)))
+        (let (failure
               (char 0))
-          (while (and (not failure) (< char 300))
+          (while (and (not failure) (< char 127))
             (setq char (1+ char))
             (unless (= char ?~)
               (setq failure (try-char char link))))
