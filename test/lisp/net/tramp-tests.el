@@ -4072,10 +4072,7 @@ Since it unloads Tramp, it shall be the last test to run."
 	    (not (string-match "unload-hook$" (symbol-name x)))
 	    (consp (symbol-value x))
 	    (ignore-errors (all-completions "tramp" (symbol-value x)))
-	    (ert-fail (format "Hook `%s' still contains Tramp function" x)))))
-    ;; The advice on `interrupt-process' shall be removed.
-    (should-not
-     (advice-member-p 'tramp-advice-interrupt-process 'interrupt-process))))
+	    (ert-fail (format "Hook `%s' still contains Tramp function" x)))))))
 
 ;; TODO:
 

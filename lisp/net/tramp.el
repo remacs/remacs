@@ -4381,33 +4381,36 @@ Only works for Bourne-like shells."
 ;;; Signal handling.  This works for remote processes, which have set
 ;;; the process property `remote-pid'.
 
-(defun tramp-advice-interrupt-process (orig-fun &rest args)
+(defun tramp-interrupt-process (&optional process _current-group)
   "Interrupt remote process PROC."
-  (let* ((arg0 (car args))
-	 (proc (cond
-		((processp arg0) arg0)
-		((bufferp arg0)  (get-buffer-process arg0))
-		((stringp arg0)  (or (get-process arg0)
-				     (get-buffer-process arg0)))
-		((null arg0)     (get-buffer-process (current-buffer)))
-		(t               arg0)))
-	 pid)
+  ;; CURRENT-GROUP is not implemented yet.
+  (let ((proc (cond
+	       ((processp process) process)
+	       ((bufferp process)  (get-buffer-process process))
+	       ((stringp process)  (or (get-process process)
+				       (get-buffer-process process)))
+	       ((null process)     (get-buffer-process (current-buffer)))
+	       (t                  process)))
+	pid)
     ;; If it's a Tramp process, send the INT signal remotely.
-    (if (and (processp proc)
-	     (setq pid (process-get proc 'remote-pid)))
-	(progn
-	  (tramp-message proc 5 "%s %s" proc pid)
-	  (tramp-send-command
-	   (tramp-get-connection-property proc "vector" nil)
-	   (format "kill -2 %d" pid)))
-      ;; Otherwise, just run the original function.
-      (apply orig-fun args))))
+    (when (and (processp proc)
+	       (setq pid (process-get proc 'remote-pid)))
+      (tramp-message proc 5 "Interrupt process %s with pid %s" proc pid)
+      ;; This is for tramp-sh.el.  Other backends do not support this (yet).
+      (tramp-compat-funcall
+       'tramp-send-command
+       (tramp-get-connection-property proc "vector" nil)
+       (format "kill -2 %d" pid))
+      ;; Report success.
+      proc)))
 
-(advice-add 'interrupt-process :around 'tramp-advice-interrupt-process)
-(add-hook
- 'tramp-unload-hook
- (lambda ()
-   (advice-remove 'interrupt-process 'tramp-advice-interrupt-process)))
+;; `interrupt-process-functions' exists since Emacs 26.1.
+(when (boundp 'interrupt-process-functions)
+  (add-hook 'interrupt-process-functions 'tramp-interrupt-process)
+  (add-hook
+   'tramp-unload-hook
+   (lambda ()
+     (remove-hook 'interrupt-process-functions 'tramp-interrupt-process))))
 
 ;;; Integration of eshell.el:
 
