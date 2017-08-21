@@ -1186,7 +1186,7 @@ variable.  The byte-compiler will also issue a warning if you use a
 special variable as a function argument.
 
   (To silence byte-compiler warnings about unused variables, just use
-a variable name that start with an underscore.  The byte-compiler
+a variable name that starts with an underscore.  The byte-compiler
 interprets this as an indication that this is a variable known not to
 be used.)
 
