@@ -85,16 +85,18 @@
     )
   "Files syntax checking is allowed for.
 This is an alist with elements of the form:
-  REGEXP INIT [CLEANUP [NAME]]
+  REGEXP [INIT [CLEANUP [NAME]]]
 REGEXP is a regular expression that matches a file name.
-INIT is the init function to use.
+INIT is the init function to use, missing means disable `flymake-mode'.
 CLEANUP is the cleanup function to use, default `flymake-simple-cleanup'.
 NAME is the file name function to use, default `flymake-get-real-file-name'."
   :group 'flymake
   :type '(alist :key-type (regexp :tag "File regexp")
                 :value-type
                 (list :tag "Handler functions"
-                      (function :tag "Init function")
+                      (choice :tag "Init function"
+                              (const :tag "disable" nil)
+                              function)
                       (choice :tag "Cleanup function"
                               (const :tag "flymake-simple-cleanup" nil)
                               function)
@@ -114,9 +116,10 @@ NAME is the file name function to use, default `flymake-get-real-file-name'."
   (let ((fnm flymake-allowed-file-name-masks)
 	(mode-and-masks nil))
     (while (and (not mode-and-masks) fnm)
-      (if (string-match (car (car fnm)) file-name)
-	  (setq mode-and-masks (cdr (car fnm))))
-      (setq fnm (cdr fnm)))
+      (let ((item (pop fnm)))
+        (when (string-match (car item) file-name)
+	  (setq mode-and-masks item)))) ; (cdr item) may be nil
+    (setq mode-and-masks (cdr mode-and-masks))
     (flymake-log 3 "file %s, init=%s" file-name (car mode-and-masks))
     mode-and-masks))
 
