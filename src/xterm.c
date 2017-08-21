@@ -3483,8 +3483,10 @@ x_get_scale_factor(Display *disp, int *scale_x, int *scale_y)
 
   if (dpyinfo)
     {
-      *scale_x = floor (dpyinfo->resx / base_res);
-      *scale_y = floor (dpyinfo->resy / base_res);
+      if (dpyinfo->resx > base_res)
+	*scale_x = floor (dpyinfo->resx / base_res);
+      if (dpyinfo->resy > base_res)
+	*scale_y = floor (dpyinfo->resy / base_res);
     }
 }
 
