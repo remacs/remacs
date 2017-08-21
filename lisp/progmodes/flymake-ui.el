@@ -517,6 +517,9 @@ For the format of LINE-ERR-INFO, see `flymake-ler-make-ler'."
 
     (setq flymake-is-running nil))))
 
+;; disabling flymake-mode is safe, enabling - not necessarily so
+(put 'flymake-mode 'safe-local-variable 'null)
+
 ;;;###autoload
 (defun flymake-mode-on ()
   "Turn flymake mode on."
