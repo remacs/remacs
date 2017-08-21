@@ -28,7 +28,7 @@ exec >&2
 # When doing a two-way merge, ignore problems that came from the other
 # side of the merge.
 head=HEAD
-if test -e "$GIT_DIR"/MERGE_HEAD; then
+if test -r "$GIT_DIR"/MERGE_HEAD; then
   merge_heads=`cat "$GIT_DIR"/MERGE_HEAD` || exit
   for merge_head in $merge_heads; do
     case $head in

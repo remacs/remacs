@@ -115,7 +115,7 @@ for arg; do
         do_check=false;;
       all)
 	do_autoconf=true
-	test -e .git && do_git=true;;
+	test -r .git && do_git=true;;
       autoconf)
 	do_autoconf=true;;
       git)
@@ -128,7 +128,7 @@ done
 case $do_autoconf,$do_git in
   false,false)
     do_autoconf=true
-    test -e .git && do_git=true;;
+    test -r .git && do_git=true;;
 esac
 
 # Generate Autoconf-related files, if requested.
@@ -294,7 +294,7 @@ git_config ()
 # Get location of Git's common configuration directory.  For older Git
 # versions this is just '.git'.  Newer Git versions support worktrees.
 
-{ test -e .git &&
+{ test -r .git &&
   git_common_dir=`git rev-parse --no-flags --git-common-dir 2>/dev/null` &&
   test -n "$git_common_dir"
 } || git_common_dir=.git
@@ -377,7 +377,7 @@ fi
 
 if test ! -f configure; then
     echo "You can now run '$0 autoconf'."
-elif test -e .git && test $git_was_ok = false && test $do_git = false; then
+elif test -r .git && test $git_was_ok = false && test $do_git = false; then
     echo "You can now run '$0 git'."
 elif test ! -f config.status ||
 	test -n "`find configure src/config.in -newer config.status`"; then

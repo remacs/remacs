@@ -68,7 +68,7 @@ if [ -f "$output" ]; then
 fi
 
 # If this is not a Git repository, just generate an empty ChangeLog.
-test -e .git || {
+test -r .git || {
   >"$output"
   exit
 }
@@ -81,7 +81,7 @@ test -e .git || {
   --ignore-line='^; ' --format='%B' \
   "$gen_origin..$new_origin" >"ChangeLog.tmp" || exit
 
-if test -e "ChangeLog.tmp"; then
+if test -r "ChangeLog.tmp"; then
 
   # Fix up bug references.
   # This would be better as eg a --transform option to gitlog-to-changelog,
