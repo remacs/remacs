@@ -1498,7 +1498,7 @@ w32_valid_pointer_p (void *p, int size)
 
    . Turning on w32-unicode-filename on Windows 9X (if it at all
      works) requires UNICOWS.DLL, which is thus a requirement even in
-     non-GUI sessions, something the we previously avoided.  */
+     non-GUI sessions, something that we previously avoided.  */
 
 
 
