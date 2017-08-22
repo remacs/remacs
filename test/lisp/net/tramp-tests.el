@@ -39,6 +39,7 @@
 
 (require 'dired)
 (require 'ert)
+(require 'seq)
 (require 'tramp)
 (require 'vc)
 (require 'vc-bzr)
@@ -2145,8 +2146,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
   (skip-unless (tramp--test-enabled))
 
   (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
-    (let* ((tmp-name1
-            (expand-file-name (tramp--test-make-temp-name nil quoted)))
+    (let* ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (expand-file-name "bla" tmp-name1))
 	   (tmp-name3 (expand-file-name "foo" tmp-name1)))
       (unwind-protect
@@ -2171,6 +2171,58 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))))))
+
+;; This is not a file name handler test.  But Tramp needed to apply an
+;; advice for older Emacs versions, so we check that this has been fixed.
+(ert-deftest tramp-test16-file-expand-wildcards ()
+  "Check `file-expand-wildcards'."
+  (skip-unless (tramp--test-enabled))
+
+  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+    (let* ((tmp-name1 (tramp--test-make-temp-name nil quoted))
+	   (tmp-name2 (expand-file-name "foo" tmp-name1))
+	   (tmp-name3 (expand-file-name "bar" tmp-name1))
+	   (tmp-name4 (expand-file-name "baz" tmp-name1))
+	   (default-directory tmp-name1))
+      (unwind-protect
+	  (progn
+	    (make-directory tmp-name1)
+	    (write-region "foo" nil tmp-name2)
+	    (write-region "bar" nil tmp-name3)
+	    (write-region "baz" nil tmp-name4)
+	    (should (file-directory-p tmp-name1))
+	    (should (file-exists-p tmp-name2))
+	    (should (file-exists-p tmp-name3))
+	    (should (file-exists-p tmp-name4))
+
+	    ;; We cannot use `sort', it works destructive.
+	    (should (equal (file-expand-wildcards "*")
+			   (seq-sort 'string< '("foo" "bar" "baz"))))
+	    (should (equal (file-expand-wildcards "ba?")
+			   (seq-sort 'string< '("bar" "baz"))))
+	    (should (equal (file-expand-wildcards "ba[rz]")
+			   (seq-sort 'string< '("bar" "baz"))))
+
+	    (should (equal (file-expand-wildcards "*" 'full)
+			   (seq-sort
+			    'string< `(,tmp-name2 ,tmp-name3 ,tmp-name4))))
+	    (should (equal (file-expand-wildcards "ba?" 'full)
+			   (seq-sort 'string< `(,tmp-name3 ,tmp-name4))))
+	    (should (equal (file-expand-wildcards "ba[rz]" 'full)
+			   (seq-sort 'string< `(,tmp-name3 ,tmp-name4))))
+
+	    (should (equal (file-expand-wildcards (concat tmp-name1 "/" "*"))
+			   (seq-sort
+			    'string< `(,tmp-name2 ,tmp-name3 ,tmp-name4))))
+	    (should (equal (file-expand-wildcards (concat tmp-name1 "/" "ba?"))
+			   (seq-sort 'string< `(,tmp-name3 ,tmp-name4))))
+	    (should (equal (file-expand-wildcards
+			    (concat tmp-name1 "/" "ba[rz]"))
+			   (seq-sort 'string< `(,tmp-name3 ,tmp-name4)))))
+
+	;; Cleanup.
+	(ignore-errors
+	  (delete-directory tmp-name1))))))
 
 (ert-deftest tramp-test17-insert-directory ()
   "Check `insert-directory'."
@@ -2905,6 +2957,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   :tags '(:expensive-test)
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
+  ;; Since Emacs 26.1.
+  (skip-unless (boundp 'interrupt-process-functions))
 
   (let ((default-directory tramp-test-temporary-file-directory)
 	kill-buffer-query-functions proc)
