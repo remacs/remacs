@@ -9,7 +9,7 @@ use std::mem;
 use std::slice;
 use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
-use libc::{c_void, intptr_t, uintptr_t};
+use libc::{c_char, c_void, intptr_t, ptrdiff_t, uintptr_t};
 
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
@@ -19,14 +19,18 @@ use windows::LispWindowRef;
 use marker::LispMarkerRef;
 use hashtable::LispHashTableRef;
 use fonts::LispFontRef;
+use chartable::LispCharTableRef;
+use obarray::LispObarrayRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
-                 Qcharacterp, Qlistp, Qintegerp, Qhash_table_p, Qconsp, SYMBOL_NAME,
-                 PseudovecType, EqualKind, purecopy};
+                 Qcharacterp, Qlistp,
+                 PseudovecType, EqualKind, purecopy,
+                 Qhash_table_p, Qconsp, SYMBOL_NAME, Qinteger_or_marker_p,
+                 Qbufferp, Qchar_table_p, Qintegerp};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -148,14 +152,14 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn symbol_or_string_as_string(string: LispObject) -> LispStringRef {
-        match string.as_symbol() {
+    pub fn symbol_or_string_as_string(self) -> LispStringRef {
+        match self.as_symbol() {
             Some(sym) => {
                 sym.symbol_name().as_string().expect(
                     "Expected a symbol name?",
                 )
             }
-            None => string.as_string_or_error(),
+            None => self.as_string_or_error(),
         }
     }
 
@@ -338,6 +342,17 @@ impl LispObject {
         }
     }
 
+    #[inline]
+    pub fn as_fixnum_coerce_marker_or_error(self) -> EmacsInt {
+        if let Some(n) = self.as_fixnum() {
+            n
+        } else if let Some(m) = self.as_marker() {
+            m.position() as EmacsInt
+        } else {
+            wrong_type!(Qinteger_or_marker_p, self);
+        }
+    }
+
     /// TODO: Bignum support? (Current Emacs doesn't have it)
     #[inline]
     pub fn is_integer(self) -> bool {
@@ -434,10 +449,28 @@ impl LispObject {
         self.as_vectorlike().map_or(None, |v| v.as_buffer())
     }
 
+    pub fn as_buffer_or_error(self) -> LispBufferRef {
+        self.as_buffer().unwrap_or_else(
+            || wrong_type!(Qbufferp, self),
+        )
+    }
+
     pub fn is_char_table(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE)
         })
+    }
+
+    pub fn as_char_table(self) -> Option<LispCharTableRef> {
+        self.as_vectorlike().and_then(|v| v.as_char_table())
+    }
+
+    pub fn as_char_table_or_error(self) -> LispCharTableRef {
+        if let Some(chartable) = self.as_char_table() {
+            chartable
+        } else {
+            wrong_type!(Qchar_table_p, self)
+        }
     }
 
     pub fn is_bool_vector(self) -> bool {
@@ -995,4 +1028,14 @@ impl Debug for LispObject {
         }
         Ok(())
     }
+}
+
+/// Intern (e.g. create a symbol from) a string.
+pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
+    let s = string.as_ref();
+    LispObarrayRef::constant_obarray().intern_cstring(
+        s.as_ptr() as
+            *const c_char,
+        s.len() as ptrdiff_t,
+    )
 }

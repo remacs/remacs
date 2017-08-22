@@ -1057,23 +1057,6 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
 }
 
 
-DEFUN ("buffer-name", Fbuffer_name, Sbuffer_name, 0, 1, 0,
-       doc: /* Return the name of BUFFER, as a string.
-BUFFER defaults to the current buffer.
-Return nil if BUFFER has been killed.  */)
-  (register Lisp_Object buffer)
-{
-  return BVAR (decode_buffer (buffer), name);
-}
-
-DEFUN ("buffer-file-name", Fbuffer_file_name, Sbuffer_file_name, 0, 1, 0,
-       doc: /* Return name of file BUFFER is visiting, or nil if none.
-No argument or nil as argument means use the current buffer.  */)
-  (register Lisp_Object buffer)
-{
-  return BVAR (decode_buffer (buffer), filename);
-}
-
 DEFUN ("buffer-base-buffer", Fbuffer_base_buffer, Sbuffer_base_buffer,
        0, 1, 0,
        doc: /* Return the base buffer of indirect buffer BUFFER.
@@ -1231,16 +1214,6 @@ No argument or nil as argument means use current buffer as BUFFER.  */)
   return result;
 }
 
-DEFUN ("buffer-modified-p", Fbuffer_modified_p, Sbuffer_modified_p,
-       0, 1, 0,
-       doc: /* Return t if BUFFER was modified since its file was last read or saved.
-No argument or nil as argument means use current buffer as BUFFER.  */)
-  (Lisp_Object buffer)
-{
-  struct buffer *buf = decode_buffer (buffer);
-  return BUF_SAVE_MODIFF (buf) < BUF_MODIFF (buf) ? Qt : Qnil;
-}
-
 DEFUN ("force-mode-line-update", Fforce_mode_line_update,
        Sforce_mode_line_update, 0, 1, 0,
        doc: /* Force redisplay of the current buffer's mode line and header line.
@@ -1335,31 +1308,6 @@ state of the current buffer.  Use with care.  */)
   return flag;
 }
 
-DEFUN ("buffer-modified-tick", Fbuffer_modified_tick, Sbuffer_modified_tick,
-       0, 1, 0,
-       doc: /* Return BUFFER's tick counter, incremented for each change in text.
-Each buffer has a tick counter which is incremented each time the
-text in that buffer is changed.  It wraps around occasionally.
-No argument or nil as argument means use current buffer as BUFFER.  */)
-  (register Lisp_Object buffer)
-{
-  return make_number (BUF_MODIFF (decode_buffer (buffer)));
-}
-
-DEFUN ("buffer-chars-modified-tick", Fbuffer_chars_modified_tick,
-       Sbuffer_chars_modified_tick, 0, 1, 0,
-       doc: /* Return BUFFER's character-change tick counter.
-Each buffer has a character-change tick counter, which is set to the
-value of the buffer's tick counter (see `buffer-modified-tick'), each
-time text in that buffer is inserted or deleted.  By comparing the
-values returned by two individual calls of `buffer-chars-modified-tick',
-you can tell whether a character change occurred in that buffer in
-between these calls.  No argument or nil as argument means use current
-buffer as BUFFER.  */)
-  (register Lisp_Object buffer)
-{
-  return make_number (BUF_CHARS_MODIFF (decode_buffer (buffer)));
-}
 
 DEFUN ("rename-buffer", Frename_buffer, Srename_buffer, 1, 2,
        "(list (read-string \"Rename buffer (to new name): \" \
@@ -1977,15 +1925,6 @@ the current buffer's major mode.  */)
   return unbind_to (count, Qnil);
 }
 
-DEFUN ("current-buffer", Fcurrent_buffer, Scurrent_buffer, 0, 0, 0,
-       doc: /* Return the current buffer as a Lisp object.  */)
-  (void)
-{
-  register Lisp_Object buf;
-  XSETBUFFER (buf, current_buffer);
-  return buf;
-}
-
 /* Set the current buffer to B, and do not set windows_or_buffers_changed.
    This is used by redisplay.  */
 
@@ -2153,22 +2092,6 @@ so the buffer is truly empty after this.  */)
   return Qnil;
 }
 
-void
-validate_region (register Lisp_Object *b, register Lisp_Object *e)
-{
-  CHECK_NUMBER_COERCE_MARKER (*b);
-  CHECK_NUMBER_COERCE_MARKER (*e);
-
-  if (XINT (*b) > XINT (*e))
-    {
-      Lisp_Object tem;
-      tem = *b;  *b = *e;  *e = tem;
-    }
-
-  if (! (BEGV <= XINT (*b) && XINT (*e) <= ZV))
-    args_out_of_range_3 (Fcurrent_buffer (), *b, *e);
-}
-
 /* Advance BYTE_POS up to a character boundary
    and return the adjusted position.  */
 
@@ -6146,23 +6069,17 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Sget_buffer_create);
   defsubr (&Smake_indirect_buffer);
   defsubr (&Sgenerate_new_buffer_name);
-  defsubr (&Sbuffer_name);
-  defsubr (&Sbuffer_file_name);
   defsubr (&Sbuffer_base_buffer);
   defsubr (&Sbuffer_local_value);
   defsubr (&Sbuffer_local_variables);
-  defsubr (&Sbuffer_modified_p);
   defsubr (&Sforce_mode_line_update);
   defsubr (&Sset_buffer_modified_p);
-  defsubr (&Sbuffer_modified_tick);
-  defsubr (&Sbuffer_chars_modified_tick);
   defsubr (&Srename_buffer);
   defsubr (&Sother_buffer);
   defsubr (&Sbuffer_enable_undo);
   defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);
-  defsubr (&Scurrent_buffer);
   defsubr (&Sset_buffer);
   defsubr (&Sbarf_if_buffer_read_only);
   defsubr (&Serase_buffer);

@@ -16,6 +16,7 @@ extern crate remacs_sys;
 extern crate remacs_lib;
 extern crate remacs_macros;
 extern crate libc;
+extern crate md5;
 extern crate rand;
 extern crate sha1;
 extern crate sha2;
@@ -46,6 +47,11 @@ mod hashtable;
 mod interactive;
 mod process;
 mod fonts;
+mod threads;
+mod chartable;
+mod category;
+mod obarray;
+mod editfns;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -61,6 +67,15 @@ pub use base64::base64_decode_1;
 
 // Used in buffer.c
 pub use buffers::Fbuffer_live_p;
+pub use buffers::Fbuffer_modified_p;
+
+// used in process.c
+pub use buffers::Fbuffer_name;
+
+pub use buffers::validate_region;
+
+// Used in nsfns.m
+pub use buffers::Fbuffer_file_name;
 
 // These need to be exported as bytecode.c depends upon them.
 pub use math::Fplus;
@@ -72,6 +87,8 @@ pub use math::Fquo;
 pub use math::Flss;
 pub use math::Fleq;
 pub use math::arithcompare;
+pub use editfns::Feobp;
+pub use editfns::Fbobp;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -116,13 +133,19 @@ pub use vectors::Flength;
 pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
+pub use buffers::Fcurrent_buffer;
+pub use obarray::intern_1;
+pub use obarray::Fintern;
+pub use obarray::Fintern_soft;
 
-// Cryptographic functions used in the C codebase.
-pub use crypto::sha1_buffer;
-pub use crypto::sha224_buffer;
-pub use crypto::sha256_buffer;
-pub use crypto::sha384_buffer;
-pub use crypto::sha512_buffer;
+// Used in fileio.c
+pub use editfns::Fpoint;
+
+// used in chartab.c
+pub use chartable::Fset_char_table_parent;
+
+// used in category.c
+pub use category::Fcategory_table_p;
 
 // Used in process.c
 pub use str2sig::str2sig;
@@ -180,6 +203,12 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Soverlayp);
         defsubr(&*buffers::Sbuffer_live_p);
         defsubr(&*buffers::Sget_buffer);
+        defsubr(&*buffers::Scurrent_buffer);
+        defsubr(&*buffers::Sbuffer_file_name);
+        defsubr(&*buffers::Sbuffer_modified_p);
+        defsubr(&*buffers::Sbuffer_modified_tick);
+        defsubr(&*buffers::Sbuffer_chars_modified_tick);
+        defsubr(&*buffers::Sbuffer_name);
         defsubr(&*windows::Swindowp);
         defsubr(&*windows::Swindow_live_p);
         defsubr(&*process::Sget_process);
@@ -292,8 +321,17 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*hashtable::Shash_table_rehash_size);
         defsubr(&*hashtable::Shash_table_rehash_threshold);
         defsubr(&*fonts::Sfontp);
+        defsubr(&*crypto::Smd5);
+        defsubr(&*crypto::Ssecure_hash);
         defsubr(&*crypto::Sbuffer_hash);
         defsubr(&*interactive::Sprefix_numeric_value);
+        defsubr(&*chartable::Schar_table_subtype);
+        defsubr(&*chartable::Schar_table_parent);
+        defsubr(&*chartable::Sset_char_table_parent);
+        defsubr(&*category::Scategory_table_p);
+        defsubr(&*category::Scategory_table);
+        defsubr(&*obarray::Sintern_soft);
+        defsubr(&*obarray::Sintern);
 
         defsubr(&*floatfns::Sisnan);
         defsubr(&*floatfns::Sacos);
@@ -319,5 +357,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*floatfns::Sfloor);
         defsubr(&*floatfns::Sround);
         defsubr(&*floatfns::Struncate);
+        defsubr(&*editfns::Spoint);
+        defsubr(&*editfns::Sbuffer_size);
+        defsubr(&*editfns::Seobp);
+        defsubr(&*editfns::Sbobp);
     }
 }

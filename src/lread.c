@@ -4009,6 +4009,14 @@ check_obarray (Lisp_Object obarray)
   return obarray;
 }
 
+/* Like check_obarray, but for the global Vobarray. */
+
+Lisp_Object
+check_vobarray(void)
+{
+  return check_obarray (Vobarray);
+}
+
 /* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
 static Lisp_Object
@@ -4045,19 +4053,6 @@ intern_driver (Lisp_Object string, Lisp_Object obarray, Lisp_Object index)
    interned in the current obarray.  */
 
 Lisp_Object
-intern_1 (const char *str, ptrdiff_t len)
-{
-  Lisp_Object obarray = check_obarray (Vobarray);
-  Lisp_Object tem = oblookup (obarray, str, len, len);
-
-  return (SYMBOLP (tem) ? tem
-	  /* The above `oblookup' was done on the basis of nchars==nbytes, so
-	     the string has to be unibyte.  */
-	  : intern_driver (make_unibyte_string (str, len),
-			   obarray, tem));
-}
-
-Lisp_Object
 intern_c_string_1 (const char *str, ptrdiff_t len)
 {
   Lisp_Object obarray = check_obarray (Vobarray);
@@ -4089,53 +4084,7 @@ define_symbol (Lisp_Object sym, char const *str)
       intern_sym (sym, initial_obarray, bucket);
     }
 }
-
-DEFUN ("intern", Fintern, Sintern, 1, 2, 0,
-       doc: /* Return the canonical symbol whose name is STRING.
-If there is none, one is created by this function and returned.
-A second optional argument specifies the obarray to use;
-it defaults to the value of `obarray'.  */)
-  (Lisp_Object string, Lisp_Object obarray)
-{
-  Lisp_Object tem;
 
-  obarray = check_obarray (NILP (obarray) ? Vobarray : obarray);
-  CHECK_STRING (string);
-
-  tem = oblookup (obarray, SSDATA (string), SCHARS (string), SBYTES (string));
-  if (!SYMBOLP (tem))
-    tem = intern_driver (NILP (Vpurify_flag) ? string : Fpurecopy (string),
-			 obarray, tem);
-  return tem;
-}
-
-DEFUN ("intern-soft", Fintern_soft, Sintern_soft, 1, 2, 0,
-       doc: /* Return the canonical symbol named NAME, or nil if none exists.
-NAME may be a string or a symbol.  If it is a symbol, that exact
-symbol is searched for.
-A second optional argument specifies the obarray to use;
-it defaults to the value of `obarray'.  */)
-  (Lisp_Object name, Lisp_Object obarray)
-{
-  register Lisp_Object tem, string;
-
-  if (NILP (obarray)) obarray = Vobarray;
-  obarray = check_obarray (obarray);
-
-  if (!SYMBOLP (name))
-    {
-      CHECK_STRING (name);
-      string = name;
-    }
-  else
-    string = SYMBOL_NAME (name);
-
-  tem = oblookup (obarray, SSDATA (string), SCHARS (string), SBYTES (string));
-  if (INTEGERP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
-    return Qnil;
-  else
-    return tem;
-}
 
 DEFUN ("unintern", Funintern, Sunintern, 1, 2, 0,
        doc: /* Delete the symbol named NAME, if any, from OBARRAY.
@@ -4719,8 +4668,6 @@ syms_of_lread (void)
   defsubr (&Sread);
   defsubr (&Sread_from_string);
   defsubr (&Slread__substitute_object_in_subtree);
-  defsubr (&Sintern);
-  defsubr (&Sintern_soft);
   defsubr (&Sunintern);
   defsubr (&Sget_load_suffixes);
   defsubr (&Sload);

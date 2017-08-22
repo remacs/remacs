@@ -1,22 +1,36 @@
 //! Functions operating on buffers.
 
-use libc::{c_uchar, ptrdiff_t};
+use libc::{c_void, c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Buffer, Vbuffer_alist};
+use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Type, Vbuffer_alist, make_lisp_ptr};
 use strings::string_equal;
 use lists::{car, cdr};
+use threads::ThreadState;
+
+use std::mem;
 
 use remacs_macros::lisp_fn;
 
+pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
 
 pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 
 impl LispBufferRef {
     #[inline]
+    pub fn zv(&self) -> ptrdiff_t {
+        self.zv
+    }
+
+    #[inline]
     pub fn beg_addr(&self) -> *mut c_uchar {
         unsafe { (*self.text).beg }
+    }
+
+    #[inline]
+    pub fn beg(&self) -> ptrdiff_t {
+        BEG
     }
 
     #[inline]
@@ -54,10 +68,43 @@ impl LispBufferRef {
         unsafe { (*self.text).z_byte }
     }
 
+    #[inline]
+    pub fn z(&self) -> ptrdiff_t {
+        unsafe { (*self.text).z }
+    }
+
+    #[inline]
+    pub fn save_modiff(&self) -> EmacsInt {
+        unsafe { (*self.text).save_modiff }
+    }
+
+    #[inline]
+    pub fn modiff(&self) -> EmacsInt {
+        unsafe { (*self.text).modiff }
+    }
+
+    #[inline]
+    pub fn chars_modiff(&self) -> EmacsInt {
+        unsafe { (*self.text).chars_modiff }
+    }
+
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
         LispObject::from_raw(self.name).is_not_nil()
+    }
+}
+
+impl LispObject {
+    /// Return SELF as a struct buffer pointer, defaulting to the current buffer.
+    /// Same as the decode_buffer function in buffer.h
+    #[inline]
+    pub fn as_buffer_or_current_buffer(self) -> LispBufferRef {
+        if self.is_nil() {
+            ThreadState::current_buffer()
+        } else {
+            self.as_buffer_or_error()
+        }
     }
 }
 
@@ -101,5 +148,94 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
             buffer_or_name,
             LispObject::from_raw(unsafe { Vbuffer_alist }),
         ))
+    }
+}
+
+/// Return the current buffer as a Lisp object.
+#[lisp_fn]
+pub fn current_buffer() -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+    unsafe {
+        LispObject::from_raw(make_lisp_ptr(
+            buffer_ref.as_ptr() as *mut c_void,
+            Lisp_Type::Lisp_Vectorlike,
+        ))
+    }
+}
+
+/// Return name of file BUFFER is visiting, or nil if none.
+/// No argument or nil as argument means use the current buffer.
+#[lisp_fn(min = "0")]
+pub fn buffer_file_name(buffer: LispObject) -> LispObject {
+    let buf = if buffer.is_nil() {
+        ThreadState::current_buffer()
+    } else {
+        buffer.as_buffer_or_error()
+    };
+
+    LispObject::from_raw(buf.filename)
+}
+
+/// Return t if BUFFER was modified since its file was last read or saved.
+/// No argument or nil as argument means use current buffer as BUFFER.
+#[lisp_fn(min = "0")]
+pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
+    let buf = buffer.as_buffer_or_current_buffer();
+    LispObject::from_bool(buf.save_modiff() < buf.modiff())
+}
+
+/// Return the name of BUFFER, as a string.
+/// BUFFER defaults to the current buffer.
+/// Return nil if BUFFER has been killed.
+#[lisp_fn(min = "0")]
+pub fn buffer_name(buffer: LispObject) -> LispObject {
+    LispObject::from_raw(buffer.as_buffer_or_current_buffer().name)
+}
+
+/// Return BUFFER's tick counter, incremented for each change in text.
+/// Each buffer has a tick counter which is incremented each time the
+/// text in that buffer is changed.  It wraps around occasionally.
+/// No argument or nil as argument means use current buffer as BUFFER.
+#[lisp_fn(min = "0")]
+fn buffer_modified_tick(buffer: LispObject) -> LispObject {
+    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().modiff())
+}
+
+/// Return BUFFER's character-change tick counter.
+/// Each buffer has a character-change tick counter, which is set to the
+/// value of the buffer's tick counter (see `buffer-modified-tick'), each
+/// time text in that buffer is inserted or deleted.  By comparing the
+/// values returned by two individual calls of `buffer-chars-modified-tick',
+/// you can tell whether a character change occurred in that buffer in
+/// between these calls.  No argument or nil as argument means use current
+/// buffer as BUFFER.
+#[lisp_fn(min = "0")]
+fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
+    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().chars_modiff())
+}
+
+#[no_mangle]
+pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
+    let start = LispObject::from_raw(unsafe { *b });
+    let stop = LispObject::from_raw(unsafe { *e });
+
+    let mut beg = start.as_fixnum_coerce_marker_or_error();
+    let mut end = stop.as_fixnum_coerce_marker_or_error();
+
+    if beg > end {
+        mem::swap(&mut beg, &mut end);
+    }
+
+    unsafe {
+        *b = LispObject::from_fixnum(beg).to_raw();
+        *e = LispObject::from_fixnum(end).to_raw();
+    }
+
+    let buf = ThreadState::current_buffer();
+    let begv = buf.begv as EmacsInt;
+    let zv = buf.zv as EmacsInt;
+
+    if !(begv <= beg && end <= zv) {
+        args_out_of_range!(current_buffer(), start, stop);
     }
 }

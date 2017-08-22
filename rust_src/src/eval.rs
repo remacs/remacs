@@ -54,7 +54,7 @@ macro_rules! call {
 macro_rules! error {
     ($str:expr) => {{
         let strobj = unsafe {
-            ::remacs_sys::make_string($str.as_ptr() as *const i8,
+            ::remacs_sys::make_string($str.as_ptr() as *const ::libc::c_char,
                                       $str.len() as ::libc::ptrdiff_t)
         };
         xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
@@ -62,7 +62,7 @@ macro_rules! error {
     ($fmtstr:expr, $($arg:expr),*) => {{
         let formatted = format!($fmtstr, $($arg),*);
         let strobj = unsafe {
-            ::remacs_sys::make_string(formatted.as_ptr() as *const i8,
+            ::remacs_sys::make_string(formatted.as_ptr() as *const ::libc::c_char,
                                       formatted.len() as ::libc::ptrdiff_t)
         };
         xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
@@ -73,5 +73,14 @@ macro_rules! error {
 macro_rules! wrong_type {
     ($pred:expr, $arg:expr) => {{
         xsignal!(::remacs_sys::Qwrong_type_argument, LispObject::from_raw(unsafe { $pred }), $arg);
+    }}
+}
+
+macro_rules! args_out_of_range {
+    ($arg1:expr, $arg2:expr) => {{
+        xsignal!(::remacs_sys::Qargs_out_of_range, $arg1, $arg2);
+    }};
+    ($arg1:expr, $arg2:expr, $arg3:expr) => {{
+        xsignal!(::remacs_sys::Qargs_out_of_range, $arg1, $arg2, $arg3);
     }}
 }
