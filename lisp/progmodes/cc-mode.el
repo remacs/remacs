@@ -1549,10 +1549,13 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
     (c-backward-syntactic-ws)
     (when (setq pos1 (c-on-identifier))
       (goto-char pos1)
-      (when (and (c-forward-declarator)
-		 (eq (c-forward-token-2) 0))
-	(c-backward-syntactic-ws)
-	(point)))))
+      (let ((lim (save-excursion
+		   (and (c-beginning-of-macro)
+			(progn (c-end-of-macro) (point))))))
+	(when (and (c-forward-declarator lim)
+		   (eq (c-forward-token-2 1 nil lim) 0))
+	  (c-backward-syntactic-ws)
+	  (point))))))
 
 (defun c-change-expand-fl-region (_beg _end _old-len)
   ;; Expand the region (c-new-BEG c-new-END) to an after-change font-lock
