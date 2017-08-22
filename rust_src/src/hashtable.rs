@@ -502,18 +502,21 @@ pub unsafe extern "C" fn hash_lookup(
 
 #[no_mangle]
 pub unsafe extern "C" fn hash_value_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
+    debug_assert!(idx >= 0);
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.get_value_with_index(idx).to_raw()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn hash_key_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
+    debug_assert!(idx >= 0);
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.get_key_with_index(idx).to_raw()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn hash_hash_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
+    debug_assert!(idx >= 0);
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.key_and_value[(idx * 2) as usize].to_raw()
 }
@@ -550,11 +553,13 @@ pub unsafe extern "C" fn hash_purity(map: *mut c_void) -> bool {
 #[no_mangle]
 pub unsafe extern "C" fn set_hash_value_slot(map: *mut c_void, idx: ptrdiff_t, value: Lisp_Object) {
     let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
+    debug_assert!(idx >= 0);
     ptr.set_value_with_index(LispObject::from_raw(value), idx);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn set_hash_key_slot(map: *mut c_void, idx: ptrdiff_t, value: Lisp_Object) {
+    debug_assert!(idx >= 0);
     let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.set_key_with_index(LispObject::from_raw(value), idx);
 }
