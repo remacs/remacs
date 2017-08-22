@@ -166,7 +166,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
 {
   Lisp_Object id, length, components, key, *key_contents;
   ptrdiff_t glyph_len;
-  struct Lisp_Hash_Table *hash_table = XHASH_TABLE (composition_hash_table);
+  LispHashTable *hash_table = XHASH_TABLE (composition_hash_table);
   ptrdiff_t hash_index;
   EMACS_UINT hash_code;
   enum composition_method method;
@@ -644,7 +644,7 @@ static Lisp_Object gstring_lookup_cache (Lisp_Object);
 static Lisp_Object
 gstring_lookup_cache (Lisp_Object header)
 {
-  struct Lisp_Hash_Table *h = XHASH_TABLE (gstring_hash_table);
+  LispHashTable *h = XHASH_TABLE (gstring_hash_table);
   ptrdiff_t i = hash_lookup (h, header, NULL);
 
   return (i >= 0 ? HASH_VALUE (h, i) : Qnil);

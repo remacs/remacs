@@ -4041,7 +4041,7 @@ xpm_put_color_table_h (Lisp_Object color_table,
                        int chars_len,
                        Lisp_Object color)
 {
-  struct Lisp_Hash_Table *table = XHASH_TABLE (color_table);
+  LispHashTable *table = XHASH_TABLE (color_table);
   EMACS_UINT hash_code;
   Lisp_Object chars = make_unibyte_string (chars_start, chars_len);
 
@@ -4054,7 +4054,7 @@ xpm_get_color_table_h (Lisp_Object color_table,
                        const char *chars_start,
                        int chars_len)
 {
-  struct Lisp_Hash_Table *table = XHASH_TABLE (color_table);
+  LispHashTable *table = XHASH_TABLE (color_table);
   ptrdiff_t i =
     hash_lookup (table, make_unibyte_string (chars_start, chars_len), NULL);
 

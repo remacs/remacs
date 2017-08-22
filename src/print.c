@@ -1117,7 +1117,7 @@ print (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
       if (HASH_TABLE_P (Vprint_number_table))
 	{ /* Remove unnecessary objects, which appear only once in OBJ;
 	     that is, whose status is Qt.  */
-	  struct Lisp_Hash_Table *h = XHASH_TABLE (Vprint_number_table);
+	  LispHashTable *h = XHASH_TABLE (Vprint_number_table);
 	  ptrdiff_t i;
 
 	  for (i = 0; i < HASH_TABLE_SIZE (h); ++i)

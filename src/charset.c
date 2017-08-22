@@ -843,7 +843,7 @@ usage: (define-charset-internal ...)  */)
   Lisp_Object attrs;
   Lisp_Object val;
   EMACS_UINT hash_code;
-  struct Lisp_Hash_Table *hash_table = XHASH_TABLE (Vcharset_hash_table);
+  LispHashTable *hash_table = XHASH_TABLE (Vcharset_hash_table);
   int i, j;
   struct charset charset;
   int id;

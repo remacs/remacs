@@ -3096,7 +3096,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 			  && ! NUMBERP (tem)
 			  && ! (STRINGP (tem) && !string_intervals (tem)))
 			{
-			  struct Lisp_Hash_Table *h2
+			  LispHashTable *h2
 			    = XHASH_TABLE (read_objects_completed);
 			  i = hash_lookup (h2, tem, &hash);
 			  eassert (i < 0);
@@ -3127,7 +3127,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 		  /* #n# returns a previously read object.  */
 		  if (c == '#')
 		    {
-		      struct Lisp_Hash_Table *h
+		      LispHashTable *h
 			= XHASH_TABLE (read_objects_map);
 		      ptrdiff_t i = hash_lookup (h, make_number (n), NULL);
 		      if (i >= 0)

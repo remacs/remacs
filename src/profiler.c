@@ -33,7 +33,7 @@ saturated_add (EMACS_INT a, EMACS_INT b)
 
 /* Logs.  */
 
-typedef struct Lisp_Hash_Table log_t;
+typedef LispHashTable log_t;
 
 static struct hash_table_test hashtest_profiler;
 

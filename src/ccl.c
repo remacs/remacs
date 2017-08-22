@@ -1284,7 +1284,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	    case CCL_LookupIntConstTbl:
 	      {
 		ptrdiff_t eop;
-		struct Lisp_Hash_Table *h;
+		LispHashTable *h;
 		GET_CCL_RANGE (eop, ccl_prog, ic++, 0,
 			       (VECTORP (Vtranslation_hash_table_vector)
 				? ASIZE (Vtranslation_hash_table_vector)
@@ -1310,7 +1310,7 @@ ccl_driver (struct ccl_program *ccl, int *source, int *destination, int src_size
 	    case CCL_LookupCharConstTbl:
 	      {
 		ptrdiff_t eop;
-		struct Lisp_Hash_Table *h;
+		LispHashTable *h;
 		GET_CCL_RANGE (eop, ccl_prog, ic++, 0,
 			       (VECTORP (Vtranslation_hash_table_vector)
 				? ASIZE (Vtranslation_hash_table_vector)

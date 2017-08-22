@@ -1315,7 +1315,7 @@ SSET (Lisp_Object string, ptrdiff_t index, unsigned char new)
 INLINE ptrdiff_t
 SCHARS (Lisp_Object string)
 {
-  ptrdiff_t nchars = XSTRING (string)->size;
+  volatile ptrdiff_t nchars = XSTRING (string)->size;
   eassume (0 <= nchars);
   return nchars;
 }
