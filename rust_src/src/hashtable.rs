@@ -2,10 +2,11 @@ use remacs_macros::lisp_fn;
 use lists;
 use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy, QCsize,
-                 QCweakness, sxhash, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
+                 QCweakness, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
                  Lisp_Vector, Qkey_and_value, Qkey, Qvalue, Qkey_or_value, pure_alloc,
                  survives_gc_p, Lisp_Vectorlike_Header, Lisp_Object, EmacsUint, hash_table_test,
-                 ARRAY_MARK_FLAG, CHECK_IMPURE};
+                 ARRAY_MARK_FLAG, CHECK_IMPURE,
+                 hashfn_eq, hashfn_eql, hashfn_equal};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
@@ -50,28 +51,23 @@ impl HashableLispObject {
 
 impl Hash for HashableLispObject {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        match self.func {
+        let hash = match self.func {
             HashFunction::Eq => {
-                self.object.hash(state);
+                unsafe { hashfn_eq(ptr::null_mut(), self.object.to_raw()) as u64 }
             }
             HashFunction::Eql => {
-                if self.object.is_float() {
-                    let hash = unsafe { sxhash(ptr::null_mut(), self.object.to_raw()) } as u64;
-                    state.write_u64(hash);
-                } else {
-                    self.object.hash(state);
-                }
+                unsafe { hashfn_eql(ptr::null_mut(), self.object.to_raw()) as u64 }
             }
             HashFunction::Equal => {
-                let hash = unsafe { sxhash(ptr::null_mut(), self.object.to_raw()) } as u64;
-                state.write_u64(hash);
+                unsafe { hashfn_equal(ptr::null_mut(), self.object.to_raw()) as u64 }
             }
             HashFunction::UserFunc(_, _, hashfn) => {
-                call!(hashfn, self.object).hash(state);
+                let result = call!(hashfn, self.object);
+                unsafe { hashfn_eq (ptr::null_mut(), result.to_raw()) as u64 }
             }
-        }
-
-        state.finish();
+        };
+        
+        state.write_u64(hash);
     }
 }
 
@@ -126,7 +122,7 @@ impl LispHashTable {
             header: Lisp_Vectorlike_Header { size: 0 },
             weak: LispObject::constant_nil(),
             is_pure: false,
-            func: HashFunction::Eq,
+            func: HashFunction::Eql,
             map: FnvHashMap::with_capacity_and_hasher(cap, Default::default()),
             key_and_value: Vec::with_capacity(cap * 2),
             free_list: Vec::new(),

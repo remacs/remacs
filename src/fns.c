@@ -2406,7 +2406,7 @@ cmpfn_equal (struct hash_table_test *ht,
    `eq' to compare keys.  The hash code returned is guaranteed to fit
    in a Lisp integer.  */
 
-static EMACS_UINT
+EMACS_UINT
 hashfn_eq (struct hash_table_test *ht, Lisp_Object key)
 {
   return XHASH (key) ^ XTYPE (key);
@@ -2416,7 +2416,7 @@ hashfn_eq (struct hash_table_test *ht, Lisp_Object key)
    `equal' to compare keys.  The hash code returned is guaranteed to fit
    in a Lisp integer.  */
 
-static EMACS_UINT
+EMACS_UINT
 hashfn_equal (struct hash_table_test *ht, Lisp_Object key)
 {
   return sxhash (key, 0);
@@ -2426,7 +2426,7 @@ hashfn_equal (struct hash_table_test *ht, Lisp_Object key)
    `eql' to compare keys.  The hash code returned is guaranteed to fit
    in a Lisp integer.  */
 
-static EMACS_UINT
+EMACS_UINT
 hashfn_eql (struct hash_table_test *ht, Lisp_Object key)
 {
   return FLOATP (key) ? hashfn_equal (ht, key) : hashfn_eq (ht, key);

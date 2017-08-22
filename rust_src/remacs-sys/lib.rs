@@ -1452,7 +1452,9 @@ extern "C" {
         pvec_type: PseudovecType,
     ) -> *mut Lisp_Vector;
 
-    pub fn sxhash(ht: *mut hash_table_test, key: Lisp_Object) -> EmacsUint;
+    pub fn hashfn_eq(ht: *mut hash_table_test, key: Lisp_Object) -> EmacsUint;
+    pub fn hashfn_eql(ht: *mut hash_table_test, key: Lisp_Object) -> EmacsUint;
+    pub fn hashfn_equal(ht: *mut hash_table_test, key: Lisp_Object) -> EmacsUint;
     pub fn survives_gc_p(o: Lisp_Object) -> bool;
 }
 
