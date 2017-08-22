@@ -178,12 +178,12 @@ TESTS := $(LOGFILES:.log=)
 define test_template
   ## A test FOO-tests depends on the source file with the similar
   ## name, unless FOO itself contains the string '-tests/'.
-  ## The similar name is FOO.c if FOO begins with 'src/', FOO.el
+  ## The similar name is FOO.c if FOO begins with '{lib-,}src/', FOO.el
   ## otherwise.  Although this heuristic does not identify all the
   ## dependencies, it is better than nothing.
   ifeq (,$(patsubst %-tests,,$(1))$(findstring -tests/,$(1)))
     $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1))$(if \
-					$(patsubst src/%,,$(1)),.el,.c)
+					$(patsubst src/%,,$(patsubst lib-src/%,,$(1))),.el,.c)
   endif
 
   ## Short aliases that always re-run the tests, with no logging.
