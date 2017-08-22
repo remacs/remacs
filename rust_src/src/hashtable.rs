@@ -512,7 +512,7 @@ pub unsafe extern "C" fn hash_hash_lookup(map: *mut c_void, idx: ptrdiff_t) -> L
 #[no_mangle]
 pub unsafe extern "C" fn hash_size(map: *mut c_void) -> ptrdiff_t {
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
-    (ptr.key_and_value.len() / 2) as ptrdiff_t
+    ptr.map.len() as ptrdiff_t
 }
 
 #[no_mangle]
