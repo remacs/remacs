@@ -1485,25 +1485,15 @@ used as key in `ispell-local-dictionary-alist' and `ispell-dictionary-alist'.")
   "The name of the current personal dictionary, or nil for the default.
 This is passed to the Ispell process using the `-p' switch.")
 
-(defun ispell-decode-string (str)
-  "Decodes multibyte character strings."
-  (decode-coding-string str (ispell-get-coding-system)))
-
 ;; Return a string decoded from Nth element of the current dictionary.
 (defun ispell-get-decoded-string (n)
   "Get the decoded string in slot N of the descriptor of the current dict."
   (let* ((slot (or
 		(assoc ispell-current-dictionary ispell-local-dictionary-alist)
 		(assoc ispell-current-dictionary ispell-dictionary-alist)
-		(error "No data for dictionary \"%s\", neither in `ispell-local-dictionary-alist' nor in `ispell-dictionary-alist'"
-		       ispell-current-dictionary)))
-	 (str (nth n slot)))
-    (when (and (> (length str) 0)
-	       (not (multibyte-string-p str)))
-      (setq str (ispell-decode-string str))
-      (or (multibyte-string-p str)
-	  (setq str (string-to-multibyte str))))
-    str))
+		(error "No data for dictionary \"%s\" in `ispell-local-dictionary-alist' or `ispell-dictionary-alist'"
+		       ispell-current-dictionary))))
+    (decode-coding-string (nth n slot) (ispell-get-coding-system) t)))
 
 (defun ispell-get-casechars ()
   (ispell-get-decoded-string 1))
