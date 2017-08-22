@@ -4,9 +4,8 @@ use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy, QCsize,
                  QCweakness, sxhash, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
                  Lisp_Vector, Qkey_and_value, Qkey, Qvalue, Qkey_or_value, pure_alloc,
-                 survives_gc_p, Lisp_Vectorlike_Header, Lisp_Object,
-                 EmacsUint, hash_table_test, ARRAY_MARK_FLAG,
-CHECK_IMPURE};
+                 survives_gc_p, Lisp_Vectorlike_Header, Lisp_Object, EmacsUint, hash_table_test,
+                 ARRAY_MARK_FLAG, CHECK_IMPURE};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
@@ -36,12 +35,16 @@ enum HashFunction {
 struct HashableLispObject {
     object: LispObject,
     func: HashFunction,
-    idx: usize
+    idx: usize,
 }
 
 impl HashableLispObject {
     fn with_hashfunc_and_object(o: LispObject, f: HashFunction) -> HashableLispObject {
-        HashableLispObject { object: o, func: f, idx: 0 }
+        HashableLispObject {
+            object: o,
+            func: f,
+            idx: 0,
+        }
     }
 }
 
@@ -93,11 +96,11 @@ impl Eq for HashableLispObject {}
 pub struct LispHashTable {
     /// This is for Lisp; the hash table code does not refer to it.
     header: Lisp_Vectorlike_Header,
-    
-    /// Nil if table is non-weak.  Otherwise a symbol describing the weakness of the table. 
+
+    /// Nil if table is non-weak.  Otherwise a symbol describing the weakness of the table.
     weak: LispObject,
 
-    /// true if the table can be purecopied.  The table cannot be changed afterwards.  
+    /// true if the table can be purecopied.  The table cannot be changed afterwards.
     is_pure: bool,
 
     /// The comparison and hash functions.
@@ -142,8 +145,8 @@ impl LispHashTable {
                 hash_value.idx = idx;
                 entry.insert(hash_value);
                 (idx - 1) as ptrdiff_t
-            },
-            
+            }
+
             Vacant(entry) => {
                 let mut hash_value = HashableLispObject::with_hashfunc_and_object(value, self.func);
                 let retval;
@@ -156,13 +159,13 @@ impl LispHashTable {
                     self.key_and_value.push(value);
                     retval = self.key_and_value.len() - 2;
                 }
-                
+
                 hash_key.idx = retval;
                 hash_value.idx = retval + 1;
                 entry.insert(hash_value);
                 retval as ptrdiff_t
             }
-        }        
+        }
     }
 
     pub fn remove(&mut self, key: LispObject) -> Option<LispObject> {
@@ -183,7 +186,9 @@ impl LispHashTable {
 
     pub fn get_index(&self, key: LispObject) -> ptrdiff_t {
         let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
-        self.map.get(&hash_key).map_or(-1, |result| (result.idx - 1) as ptrdiff_t)
+        self.map.get(&hash_key).map_or(-1, |result| {
+            (result.idx - 1) as ptrdiff_t
+        })
     }
 
     pub fn get(&self, key: LispObject) -> Option<LispObject> {
@@ -421,11 +426,11 @@ fn copy_hash_table(map: LispObject) -> LispObject {
     let new_table = old_table.clone();
     unsafe { ptr::copy_nonoverlapping(&new_table, new_ptr.as_mut(), 1) };
     mem::forget(new_table);
-    
+
     if new_ptr.weak.is_not_nil() {
         add_weak_table!(new_ptr);
     }
-    
+
     LispObject::tag_ptr(new_ptr, Lisp_Type::Lisp_Vectorlike)
 }
 
@@ -470,7 +475,7 @@ pub unsafe extern "C" fn mark_hashtable(map: *mut c_void) {
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     mark_vectorlike(map as *mut Lisp_Vector);
     debug_assert!(ptr.header.size & ARRAY_MARK_FLAG != 0);
-    
+
     if let HashFunction::UserFunc(name, cmp, hash) = ptr.func {
         mark_object(name.to_raw());
         mark_object(cmp.to_raw());
@@ -486,7 +491,11 @@ pub unsafe extern "C" fn mark_hashtable(map: *mut c_void) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn hash_lookup(map: *mut c_void, key: Lisp_Object, _: *mut c_void) -> ptrdiff_t {
+pub unsafe extern "C" fn hash_lookup(
+    map: *mut c_void,
+    key: Lisp_Object,
+    _: *mut c_void,
+) -> ptrdiff_t {
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.get_index(LispObject::from_raw(key))
 }
@@ -525,10 +534,10 @@ pub unsafe extern "C" fn hash_weakness(map: *mut c_void) -> Lisp_Object {
 pub unsafe extern "C" fn hash_test_name(map: *mut c_void) -> Lisp_Object {
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     match ptr.func {
-        HashFunction::Eq => { Qeq },
-        HashFunction::Eql => { Qeql },
-        HashFunction::Equal => { Qequal },
-        HashFunction::UserFunc(name, _, _) => { name.to_raw() },
+        HashFunction::Eq => Qeq,
+        HashFunction::Eql => Qeql,
+        HashFunction::Equal => Qequal,
+        HashFunction::UserFunc(name, _, _) => name.to_raw(),
     }
 }
 
@@ -551,7 +560,12 @@ pub unsafe extern "C" fn set_hash_key_slot(map: *mut c_void, idx: ptrdiff_t, val
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn hash_put(map: *mut c_void, key: Lisp_Object, value: Lisp_Object, _: EmacsUint) -> ptrdiff_t {
+pub unsafe extern "C" fn hash_put(
+    map: *mut c_void,
+    key: Lisp_Object,
+    value: Lisp_Object,
+    _: EmacsUint,
+) -> ptrdiff_t {
     let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.insert(LispObject::from_raw(key), LispObject::from_raw(value))
 }
@@ -564,19 +578,20 @@ pub unsafe extern "C" fn hash_next_free(map: *mut c_void) -> ptrdiff_t {
         ptr.free_list.push(idx);
         idx as ptrdiff_t
     } else {
-        -1 
+        -1
     }
 }
 
 #[allow(unused_unsafe)]
 #[no_mangle]
-pub unsafe extern "C" fn new_hash_table (test: hash_table_test,
-                               size: EmacsInt,
-                               _: c_float,
-                               _: c_float,
-                               weak: Lisp_Object,
-                               is_pure: bool)
-                              -> Lisp_Object {
+pub unsafe extern "C" fn new_hash_table(
+    test: hash_table_test,
+    size: EmacsInt,
+    _: c_float,
+    _: c_float,
+    weak: Lisp_Object,
+    is_pure: bool,
+) -> Lisp_Object {
     let mut ptr = allocate_hashtable();
     ptr.map.reserve(size as usize);
     ptr.weak = LispObject::from_raw(weak);
@@ -588,9 +603,11 @@ pub unsafe extern "C" fn new_hash_table (test: hash_table_test,
     } else if test.name == Qequal {
         ptr.func = HashFunction::Equal;
     } else {
-        ptr.func = HashFunction::UserFunc(LispObject::from_raw(test.name),
-                                          LispObject::from_raw(test.user_cmp_function),
-                                          LispObject::from_raw(test.user_hash_function));
+        ptr.func = HashFunction::UserFunc(
+            LispObject::from_raw(test.name),
+            LispObject::from_raw(test.user_cmp_function),
+            LispObject::from_raw(test.user_hash_function),
+        );
     }
 
     LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike).to_raw()
@@ -599,7 +616,7 @@ pub unsafe extern "C" fn new_hash_table (test: hash_table_test,
 #[no_mangle]
 pub unsafe extern "C" fn table_not_weak_or_pure(table: *mut c_void) -> bool {
     let ptr = ExternalPtr::new(table as *mut LispHashTable);
-    ptr.weak.is_not_nil() || !ptr.is_pure 
+    ptr.weak.is_not_nil() || !ptr.is_pure
 }
 
 // @TODO
@@ -614,8 +631,7 @@ lazy_static! {
         Mutex::new(Vec::new())
     };
 }
-                                
-
+
 /************************************************************************
 			   Weak Hash Tables
  ************************************************************************/
@@ -675,7 +691,7 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
 
 /// Remove elements from weak hash tables that don't survive the
 /// current garbage collection.  Remove weak tables that don't survive
-/// from Vweak_hash_tables.  Called from gc_sweep. 
+/// from Vweak_hash_tables.  Called from gc_sweep.
 #[no_mangle]
 pub unsafe extern "C" fn sweep_weak_hash_tables() {
     let mut marked;
@@ -693,9 +709,11 @@ pub unsafe extern "C" fn sweep_weak_hash_tables() {
                 marked = sweep_weak_hashtable(*table, false) || marked;
             }
         }
-        
+
         marked
-    } {} // This is basically a Rust "do while" loop, by putting the logic into the while {condition} block. 
+    }
+    {} // This is basically a Rust "do while" loop,
+    // by putting the logic into the while {condition} block.
 
     // @TODO this could be consolidated into a singular loop
     tables.retain(|x| x.header.size & ARRAY_MARK_FLAG != 0);
@@ -715,7 +733,7 @@ pub unsafe extern "C" fn purecopy_hash_table(map: *mut c_void) -> *mut c_void {
         mem::size_of::<LispHashTable>(),
         Lisp_Type::Lisp_Vectorlike as c_int,
     ) as *mut LispHashTable);
-    
+
     if let HashFunction::UserFunc(name, cmp, hash) = table_ptr.func {
         ptr.func = HashFunction::UserFunc(name.purecopy(), cmp.purecopy(), hash.purecopy());
     } else {
@@ -728,7 +746,7 @@ pub unsafe extern "C" fn purecopy_hash_table(map: *mut c_void) -> *mut c_void {
     ptr.map = FnvHashMap::with_capacity_and_hasher(table_ptr.map.len(), Default::default());
     ptr.key_and_value = Vec::new();
     ptr.free_list = Vec::new();
-    
+
     for (key, value) in table_ptr.map.iter() {
         ptr.insert(key.object.purecopy(), value.object.purecopy());
     }

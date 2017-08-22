@@ -18,8 +18,8 @@ extern crate libc;
 
 pub mod libm;
 
-use libc::{c_char, c_uchar, c_short, c_int, c_double, c_void, ptrdiff_t, size_t, off_t,
-           time_t, timespec};
+use libc::{c_char, c_uchar, c_short, c_int, c_double, c_void, ptrdiff_t, size_t, off_t, time_t,
+           timespec};
 
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
