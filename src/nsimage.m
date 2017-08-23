@@ -108,7 +108,8 @@ ns_load_image (struct frame *f, struct image *img,
 
   if (![eImg setFrame: index])
     {
-      add_to_log ("Unable to set index %d for image %s", index, img->spec);
+      add_to_log ("Unable to set index %d for image %s",
+                  make_number (index), img->spec);
       return 0;
     }
 
