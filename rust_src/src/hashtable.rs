@@ -130,12 +130,11 @@ impl LispHashTable {
     }
 
     pub fn insert(&mut self, key: LispObject, value: LispObject) -> ptrdiff_t {
-        let mut hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
+        let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
         match self.map.entry(hash_key) {
             Occupied(mut entry) => {
                 let mut hash_value = HashableLispObject::with_hashfunc_and_object(value, self.func);
                 let idx = entry.get().idx;
-                // @TODO see if it is correct to add key AND value here, vs just adding value.
                 self.key_and_value[idx - 1] = key;
                 self.key_and_value[idx] = value;
                 hash_value.idx = idx;
@@ -156,7 +155,6 @@ impl LispHashTable {
                     retval = self.key_and_value.len() - 2;
                 }
 
-                hash_key.idx = retval;
                 hash_value.idx = retval + 1;
                 entry.insert(hash_value);
                 retval as ptrdiff_t
