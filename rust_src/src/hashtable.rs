@@ -232,13 +232,19 @@ macro_rules! add_weak_table {
     }
 }
 
+#[allow(unused_unsafe)]
 #[inline]
-fn allocate_hashtable() -> LispHashTableRef {
-    let mut table = ExternalPtr::new(allocate_pseudovector!(
+unsafe fn allocate_hashtable_unititalized() -> LispHashTableRef {
+    ExternalPtr::new(allocate_pseudovector!(
         LispHashTable,
         is_pure,
         PseudovecType::PVEC_HASH_TABLE
-    ));
+    ))
+}
+
+#[inline]
+fn allocate_hashtable() -> LispHashTableRef {
+    let mut table = unsafe { allocate_hashtable_unititalized() };
     let header = table.header.clone();
     let table_mem = LispHashTable::new();
     unsafe { ptr::copy_nonoverlapping(&table_mem, table.as_mut(), 1) };
@@ -411,14 +417,13 @@ fn hash_table_size(map: LispObject) -> LispObject {
     LispObject::from_natnum(table.map.capacity() as EmacsInt)
 }
 
-// @TODO add docstring, and this is doing an extra copy
-// that isn't needed, one in allocate, and then another to bring
-// the clone over.
+/// Return a copy of hash table TABLE.
+/// Keys and values are not copied, only the table itself
 #[lisp_fn]
-fn copy_hash_table(map: LispObject) -> LispObject {
-    let hashmap = map.as_hash_table_or_error();
-    let mut new_ptr = allocate_hashtable();
-    let ref old_table = *hashmap;
+fn copy_hash_table(table: LispObject) -> LispObject {
+    let hashtable = table.as_hash_table_or_error();
+    let mut new_ptr = unsafe { allocate_hashtable_unititalized() };
+    let ref old_table = *hashtable;
     let new_table = old_table.clone();
     unsafe { ptr::copy_nonoverlapping(&new_table, new_ptr.as_mut(), 1) };
     mem::forget(new_table);
