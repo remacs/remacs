@@ -106,7 +106,7 @@ ns_load_image (struct frame *f, struct image *img,
       return 0;
     }
 
-  if (index < 0 || ![eImg setFrame: index])
+  if (![eImg setFrame: index])
     {
       add_to_log ("Unable to set index %d for image %s", index, img->spec);
       return 0;
@@ -450,27 +450,39 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   return stippleMask;
 }
 
+/* Find the first NSBitmapImageRep which has multiple frames. */
+- (NSBitmapImageRep *)getAnimatedBitmapImageRep
+{
+  for (NSImageRep * r in [self representations])
+    {
+      if ([r isKindOfClass:[NSBitmapImageRep class]])
+        {
+          NSBitmapImageRep * bm = (NSBitmapImageRep *)r;
+          if ([[bm valueForProperty:NSImageFrameCount] intValue] > 0)
+            return bm;
+        }
+    }
+  return nil;
+}
+
 /* If the image has multiple frames, get a count of them and the
    animation delay, if available. */
 - (Lisp_Object)getMetadata
 {
   Lisp_Object metadata = Qnil;
 
-  for (NSImageRep * r in [self representations])
-    {
-      if ([r isKindOfClass:[NSBitmapImageRep class]])
-        {
-          NSBitmapImageRep * bm = (NSBitmapImageRep *)r;
-          int frames = [[bm valueForProperty: NSImageFrameCount] intValue];
-          float delay = [[bm valueForProperty: NSImageCurrentFrameDuration]
-                          floatValue];
+  NSBitmapImageRep * bm = [self getAnimatedBitmapImageRep];
 
-          if (frames > 1)
-            metadata = Fcons (Qcount, Fcons (make_number (frames), metadata));
-          if (delay > 0)
-            metadata = Fcons (Qdelay, Fcons (make_float (delay), metadata));
-          break;
-        }
+  if (bm != nil)
+    {
+      int frames = [[bm valueForProperty:NSImageFrameCount] intValue];
+      float delay = [[bm valueForProperty:NSImageCurrentFrameDuration]
+                      floatValue];
+
+      if (frames > 1)
+        metadata = Fcons (Qcount, Fcons (make_number (frames), metadata));
+      if (delay > 0)
+        metadata = Fcons (Qdelay, Fcons (make_float (delay), metadata));
     }
   return metadata;
 }
@@ -478,21 +490,23 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 /* Attempt to set the animation frame to be displayed. */
 - (BOOL)setFrame: (unsigned int) index
 {
-  for (NSImageRep * r in [self representations])
-    {
-      if ([r isKindOfClass:[NSBitmapImageRep class]])
-        {
-          NSBitmapImageRep * bm = (NSBitmapImageRep *)r;
-          if ([[bm valueForProperty: NSImageFrameCount] intValue] <= index)
-            continue;
+  NSBitmapImageRep * bm = [self getAnimatedBitmapImageRep];
 
-          [bm setProperty: NSImageCurrentFrame
-                withValue: [NSNumber numberWithUnsignedInt: index]];
-          return YES;
-        }
+  if (bm != nil)
+    {
+      int frames = [[bm valueForProperty:NSImageFrameCount] intValue];
+
+      /* If index is invalid, give up. */
+      if (index < 0 || index > frames)
+        return NO;
+
+      [bm setProperty: NSImageCurrentFrame
+            withValue: [NSNumber numberWithUnsignedInt:index]];
     }
 
-  return NO;
+  /* Setting the frame has succeeded, or the image doesn't have
+     multiple frames. */
+  return YES;
 }
 
 @end
