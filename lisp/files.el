@@ -937,38 +937,8 @@ The default regexp prevents fruitless and time-consuming attempts to find
 special files in directories in which filenames are interpreted as hostnames,
 or mount points potentially requiring authentication as a different user.")
 
-;; (defun locate-dominating-files (file regexp)
-;;   "Look up the directory hierarchy from FILE for a file matching REGEXP.
-;; Stop at the first parent where a matching file is found and return the list
-;; of files that that match in this directory."
-;;   (catch 'found
-;;     ;; `user' is not initialized yet because `file' may not exist, so we may
-;;     ;; have to walk up part of the hierarchy before we find the "initial UID".
-;;     (let ((user nil)
-;;           ;; Abbreviate, so as to stop when we cross ~/.
-;;           (dir (abbreviate-file-name (file-name-as-directory file)))
-;;           files)
-;;       (while (and dir
-;;                   ;; As a heuristic, we stop looking up the hierarchy of
-;;                   ;; directories as soon as we find a directory belonging to
-;;                   ;; another user.  This should save us from looking in
-;;                   ;; things like /net and /afs.  This assumes that all the
-;;                   ;; files inside a project belong to the same user.
-;;                   (let ((prev-user user))
-;;                     (setq user (nth 2 (file-attributes dir)))
-;;                     (or (null prev-user) (equal user prev-user))))
-;;         (if (setq files (condition-case nil
-;; 			    (directory-files dir 'full regexp 'nosort)
-;; 			  (error nil)))
-;;             (throw 'found files)
-;;           (if (equal dir
-;;                      (setq dir (file-name-directory
-;;                                 (directory-file-name dir))))
-;;               (setq dir nil))))
-;;       nil)))
-
 (defun locate-dominating-file (file name)
-  "Starting from FILE, look up directory hierarchy for directory containing NAME.
+  "Starting at FILE, look up directory hierarchy for directory containing NAME.
 FILE can be a file or a directory.  If it's a file, its directory will
 serve as the starting point for searching the hierarchy of directories.
 Stop at the first parent directory containing a file NAME,
@@ -977,31 +947,13 @@ Instead of a string, NAME can also be a predicate taking one argument
 \(a directory) and returning a non-nil value if that directory is the one for
 which we're looking.  The predicate will be called with every file/directory
 the function needs to examine, starting with FILE."
-  ;; We used to use the above locate-dominating-files code, but the
-  ;; directory-files call is very costly, so we're much better off doing
-  ;; multiple calls using the code in here.
-  ;;
   ;; Represent /home/luser/foo as ~/foo so that we don't try to look for
   ;; `name' in /home or in /.
   (setq file (abbreviate-file-name (expand-file-name file)))
   (let ((root nil)
-        ;; `user' is not initialized outside the loop because
-        ;; `file' may not exist, so we may have to walk up part of the
-        ;; hierarchy before we find the "initial UID".  Note: currently unused
-        ;; (user nil)
         try)
     (while (not (or root
                     (null file)
-                    ;; FIXME: Disabled this heuristic because it is sometimes
-                    ;; inappropriate.
-                    ;; As a heuristic, we stop looking up the hierarchy of
-                    ;; directories as soon as we find a directory belonging
-                    ;; to another user.  This should save us from looking in
-                    ;; things like /net and /afs.  This assumes that all the
-                    ;; files inside a project belong to the same user.
-                    ;; (let ((prev-user user))
-                    ;;   (setq user (nth 2 (file-attributes file)))
-                    ;;   (and prev-user (not (equal user prev-user))))
                     (string-match locate-dominating-stop-dir-regexp file)))
       (setq try (if (stringp name)
                     (file-exists-p (expand-file-name name file))
