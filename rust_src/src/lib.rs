@@ -186,6 +186,7 @@ pub use hashtable::hash_test_name;
 pub use hashtable::hash_purity;
 pub use hashtable::hash_weakness;
 pub use hashtable::hash_next_free;
+pub use hashtable::hash_count;
 pub use hashtable::Fputhash;
 pub use hashtable::Fgethash;
 pub use hashtable::Fmake_hash_table;

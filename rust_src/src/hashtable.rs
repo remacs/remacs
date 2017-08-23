@@ -243,6 +243,9 @@ unsafe fn allocate_hashtable_unititalized() -> LispHashTableRef {
 #[inline]
 fn allocate_hashtable() -> LispHashTableRef {
     let mut table = unsafe { allocate_hashtable_unititalized() };
+    // The table is "almost" unititalized, but it has it's header
+    // in the correct state. We will copy the header and reassign
+    // post memcpy.
     let header = table.header.clone();
     let table_mem = LispHashTable::new();
     unsafe { ptr::copy_nonoverlapping(&table_mem, table.as_mut(), 1) };
@@ -522,6 +525,12 @@ pub unsafe extern "C" fn hash_hash_lookup(map: *mut c_void, idx: ptrdiff_t) -> L
 
 #[no_mangle]
 pub unsafe extern "C" fn hash_size(map: *mut c_void) -> ptrdiff_t {
+    let ptr = ExternalPtr::new(map as *mut LispHashTable);
+    (ptr.key_and_value.len() / 2) as ptrdiff_t
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hash_count(map: *mut c_void) -> ptrdiff_t {
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.map.len() as ptrdiff_t
 }

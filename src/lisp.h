@@ -1956,6 +1956,7 @@ extern Lisp_Object hash_value_lookup (LispHashTable *table, ptrdiff_t idx);
 extern Lisp_Object hash_key_lookup (LispHashTable *table, ptrdiff_t idx);
 extern Lisp_Object hash_hash_lookup (LispHashTable *table, ptrdiff_t idx);
 extern ptrdiff_t hash_size (LispHashTable *table);
+extern ptrdiff_t hash_count (LispHashTable *table);
 extern void set_hash_key_slot (LispHashTable *table, ptrdiff_t idx, Lisp_Object val);
 extern void set_hash_value_slot (LispHashTable *table, ptrdiff_t idx, Lisp_Object val);
 extern ptrdiff_t hash_put (LispHashTable *table, Lisp_Object key, Lisp_Object value, EMACS_UINT unused);
@@ -1966,7 +1967,7 @@ extern Lisp_Object hash_test_name(LispHashTable *table);
 extern bool hash_purity(LispHashTable *table);
 extern ptrdiff_t hash_next_free(LispHashTable *table);
 
-#define make_hash_table(test, size, unused, unused_2, weak, pure) new_hash_table(test, size, unused, unused_2, weak, pure)
+#define make_hash_table(test, size, unused, unused_2, weak, pure) new_hash_table (test, size, unused, unused_2, weak, pure)
 
 INLINE bool
 HASH_TABLE_P (Lisp_Object a)
@@ -1988,28 +1989,34 @@ XHASH_TABLE (Lisp_Object a)
 INLINE Lisp_Object
 HASH_KEY (LispHashTable *ptr, ptrdiff_t idx)
 {
-  return hash_key_lookup(ptr, idx);
+  return hash_key_lookup (ptr, idx);
 }
 
 /* Value is the value part of entry IDX in hash table H.  */
 INLINE Lisp_Object
 HASH_VALUE (LispHashTable *ptr, ptrdiff_t idx)
 {
-  return hash_value_lookup(ptr, idx);
+  return hash_value_lookup (ptr, idx);
 }
 
 /* Value is the hash code computed for entry IDX in hash table H.  */
 INLINE Lisp_Object
 HASH_HASH (LispHashTable *ptr, ptrdiff_t idx)
 {
-  return hash_hash_lookup(ptr, idx);
+  return hash_hash_lookup (ptr, idx);
 }
 
 /* Value is the size of hash table H.  */
 INLINE ptrdiff_t
 HASH_TABLE_SIZE (LispHashTable *ptr)
 {
-  return hash_size(ptr);
+  return hash_size (ptr);
+}
+
+INLINE ptrdiff_t
+HASH_TABLE_COUNT (LispHashTable *ptr)
+{
+  return hash_count (ptr);
 }
 
 /* Default size for hash tables if not specified.  */
