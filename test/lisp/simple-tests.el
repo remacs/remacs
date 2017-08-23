@@ -497,5 +497,19 @@ See Bug#21722."
       (should (equal (line-number-at-pos 5) 3))
       (should (equal (line-number-at-pos 7) 4)))))
 
+
+;;; Auto fill.
+
+(ert-deftest auto-fill-mode-no-break-before-length-of-fill-prefix ()
+  (with-temp-buffer
+    (setq-local fill-prefix "   ")
+    (set-fill-column 5)
+    ;; Shouldn't break after 'foo' (3 characters) when the next
+    ;; line is indented >= to that, that woudln't result in shorter
+    ;; lines.
+    (insert "foo bar")
+    (do-auto-fill)
+    (should (string-equal (buffer-string) "foo bar"))))
+
 (provide 'simple-test)
 ;;; simple-test.el ends here

@@ -7151,18 +7151,18 @@ Returns t if it really did any work."
 	       (setq fill-prefix prefix))))
 
       (while (and (not give-up) (> (current-column) fc))
-	;; Determine where to split the line.
-	(let* (after-prefix
-	       (fill-point
-		(save-excursion
-		  (beginning-of-line)
-		  (setq after-prefix (point))
-		  (and fill-prefix
-		       (looking-at (regexp-quote fill-prefix))
-		       (setq after-prefix (match-end 0)))
-		  (move-to-column (1+ fc))
-		  (fill-move-to-break-point after-prefix)
-		  (point))))
+        ;; Determine where to split the line.
+        (let ((fill-point
+               (save-excursion
+                 (beginning-of-line)
+                 ;; Don't split earlier in the line than the length of the
+                 ;; fill prefix, since the resulting line would be longer.
+                 (when fill-prefix
+                   (move-to-column (string-width fill-prefix)))
+                 (let ((after-prefix (point)))
+                    (move-to-column (1+ fc))
+                    (fill-move-to-break-point after-prefix)
+                    (point)))))
 
 	  ;; See whether the place we found is any good.
 	  (if (save-excursion
@@ -7170,9 +7170,6 @@ Returns t if it really did any work."
 		(or (bolp)
 		    ;; There is no use breaking at end of line.
 		    (save-excursion (skip-chars-forward " ") (eolp))
-		    ;; It is futile to split at the end of the prefix
-		    ;; since we would just insert the prefix again.
-		    (and after-prefix (<= (point) after-prefix))
 		    ;; Don't split right after a comment starter
 		    ;; since we would just make another comment starter.
 		    (and comment-start-skip
