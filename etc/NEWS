@@ -1115,6 +1115,9 @@ processes on exit.
 mode for *.html files.  This mode handles indentation,
 fontification, and commenting for embedded JavaScript and CSS.
 
+** New mode 'conf-toml-mode' is a sub-mode of conf-mode, specialized
+   for editing TOML files.
+
 ** New minor mode 'pixel-scroll-mode' provides smooth pixel-level scrolling.
 
 ** New major mode 'less-css-mode' (a minor variant of 'css-mode') for
