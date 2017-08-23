@@ -40,7 +40,7 @@ struct HashableLispObject {
 }
 
 impl HashableLispObject {
-    fn with_hashfunc_and_object(o: LispObject, f: HashFunction) -> HashableLispObject {
+    fn with_object_and_hashfn(o: LispObject, f: HashFunction) -> HashableLispObject {
         HashableLispObject {
             object: o,
             func: f,
@@ -130,10 +130,10 @@ impl LispHashTable {
     }
 
     pub fn insert(&mut self, key: LispObject, value: LispObject) -> ptrdiff_t {
-        let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
+        let hash_key = HashableLispObject::with_object_and_hashfn(key, self.func);
         match self.map.entry(hash_key) {
             Occupied(mut entry) => {
-                let mut hash_value = HashableLispObject::with_hashfunc_and_object(value, self.func);
+                let mut hash_value = HashableLispObject::with_object_and_hashfn(value, self.func);
                 let idx = entry.get().idx;
                 self.key_and_value[idx - 1] = key;
                 self.key_and_value[idx] = value;
@@ -143,7 +143,7 @@ impl LispHashTable {
             }
 
             Vacant(entry) => {
-                let mut hash_value = HashableLispObject::with_hashfunc_and_object(value, self.func);
+                let mut hash_value = HashableLispObject::with_object_and_hashfn(value, self.func);
                 let retval;
                 if let Some(idx) = self.free_list.pop() {
                     self.key_and_value[idx] = key;
@@ -163,7 +163,7 @@ impl LispHashTable {
     }
 
     pub fn remove(&mut self, key: LispObject) -> Option<LispObject> {
-        let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
+        let hash_key = HashableLispObject::with_object_and_hashfn(key, self.func);
         let remove = self.map.remove(&hash_key);
         if let Some(result) = remove {
             self.clear_key_and_value(result.idx - 1);
@@ -179,14 +179,14 @@ impl LispHashTable {
     }
 
     pub fn get_index(&self, key: LispObject) -> ptrdiff_t {
-        let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
+        let hash_key = HashableLispObject::with_object_and_hashfn(key, self.func);
         self.map.get(&hash_key).map_or(-1, |result| {
             (result.idx - 1) as ptrdiff_t
         })
     }
 
     pub fn get(&self, key: LispObject) -> Option<LispObject> {
-        let hash_key = HashableLispObject::with_hashfunc_and_object(key, self.func);
+        let hash_key = HashableLispObject::with_object_and_hashfn(key, self.func);
         self.map.get(&hash_key).map(|result| result.object)
     }
 
