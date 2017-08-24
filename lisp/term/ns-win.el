@@ -124,6 +124,8 @@ The properties returned may include `top', `left', `height', and `width'."
 (define-key global-map [?\s-g] 'isearch-repeat-forward)
 (define-key global-map [?\s-h] 'ns-do-hide-emacs)
 (define-key global-map [?\s-H] 'ns-do-hide-others)
+(define-key global-map [?\M-\s-h] 'ns-do-hide-others)
+(define-key key-translation-map [?\M-\s-\u02D9] [?\M-\s-h])
 (define-key global-map [?\s-j] 'exchange-point-and-mark)
 (define-key global-map [?\s-k] 'kill-current-buffer)
 (define-key global-map [?\s-l] 'goto-line)
