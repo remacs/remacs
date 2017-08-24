@@ -36,5 +36,17 @@
             (hi-lock-set-pattern "a" face))))
       (should (equal hi-lock--unused-faces (cdr faces))))))
 
+(ert-deftest hi-lock-test-set-pattern ()
+  (let ((faces hi-lock-face-defaults))
+    (with-temp-buffer
+      (insert "foo bar")
+      (cl-letf (((symbol-function 'completing-read)
+                 (lambda (prompt coll x y z hist defaults)
+                   (car defaults))))
+        (hi-lock-set-pattern "9999" (hi-lock-read-face-name)) ; No match
+        (hi-lock-set-pattern "foo" (hi-lock-read-face-name)))
+      ;; Only one match, then we have used just 1 face
+      (should (equal hi-lock--unused-faces (cdr faces))))))
+
 (provide 'hi-lock-tests)
 ;;; hi-lock-tests.el ends here
