@@ -1720,6 +1720,11 @@ on macOS.
 ** Emacs can now be run as a GUI application from the command line on
 macOS.
 
+** 'ns-appearance' and 'ns-transparent-titlebar' change the appearance
+of frame decorations on macOS 10.9+.
+
+** 'ns-use-thin-smoothing' enables thin font smoothing on macOS 10.8+.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.
