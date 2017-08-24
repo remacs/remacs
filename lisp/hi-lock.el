@@ -721,7 +721,9 @@ with completion and history."
                 (overlay-put overlay 'face face))
               (goto-char (match-end 0)))
             (when no-matches
-              (add-to-list 'hi-lock--unused-faces (face-name face)))))))))
+              (add-to-list 'hi-lock--unused-faces (face-name face))
+              (setq hi-lock-interactive-patterns
+                    (cdr hi-lock-interactive-patterns)))))))))
 
 (defun hi-lock-set-file-patterns (patterns)
   "Replace file patterns list with PATTERNS and refontify."
