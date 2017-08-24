@@ -1351,6 +1351,22 @@ integer); that allows you to send signals to processes that are not
 children of Emacs.  @xref{System Processes}.
 @end deffn
 
+Sometimes, it is necessary to send a signal to a non-local
+asynchronous process.  This is possible by writing an own
+@code{interrupt-process} implementation.  This function must be added
+then to @code{interrupt-process-functions}.
+
+@defvar interrupt-process-functions
+This variable is a list of functions to be called for
+@code{interrupt-process}.  The arguments of the functions are the same
+as for @code{interrupt-process}.  These functions are called in the
+order of the list, until one of them returns non-@code{nil}.  The
+default function, which shall always be the last in this list, is
+@code{internal-default-interrupt-process}.
+
+This is the mechanism, how Tramp implements @code{interrupt-process}.
+@end defvar
+
 @node Output from Processes
 @section Receiving Output from Processes
 @cindex process output

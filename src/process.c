@@ -8192,8 +8192,8 @@ The variable takes effect when `start-process' is called.  */);
   Vprocess_adaptive_read_buffering = Qt;
 
   DEFVAR_LISP ("interrupt-process-functions", Vinterrupt_process_functions,
-	       doc: /* List of functions to be called for `interrupt-function'.
-The arguments of the functions are the same as for `interrupt-function'.
+	       doc: /* List of functions to be called for `interrupt-process'.
+The arguments of the functions are the same as for `interrupt-process'.
 These functions are called in the order of the list, until one of them
 returns non-`nil'.  */);
   Vinterrupt_process_functions = list1 (Qinternal_default_interrupt_process);

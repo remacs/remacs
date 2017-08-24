@@ -2966,9 +2966,17 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	(with-temp-buffer
 	  (setq proc (start-file-process "test" (current-buffer) "sleep" "10"))
 	  (should (processp proc))
+	  (should (process-live-p proc))
 	  (should (equal (process-status proc) 'run))
-	  (interrupt-process proc)
-	  (should (equal (process-status proc) 'signal)))
+	  (should (interrupt-process proc))
+	  ;; Let the process accept the interrupt.
+          (accept-process-output proc 1 nil 0)
+	  (should-not (process-live-p proc))
+	  (should (equal (process-status proc) 'signal))
+	  ;; An interrupted process cannot be interrupted, again.
+	  ;; Does not work reliable.
+	  ;; (should-error (interrupt-process proc)))
+	  )
 
       ;; Cleanup.
       (ignore-errors (delete-process proc)))))

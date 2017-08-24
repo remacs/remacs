@@ -4393,7 +4393,7 @@ Only works for Bourne-like shells."
 	       (t                  process)))
 	pid)
     ;; If it's a Tramp process, send the INT signal remotely.
-    (when (and (processp proc)
+    (when (and (processp proc) (process-live-p proc)
 	       (setq pid (process-get proc 'remote-pid)))
       (tramp-message proc 5 "Interrupt process %s with pid %s" proc pid)
       ;; This is for tramp-sh.el.  Other backends do not support this (yet).

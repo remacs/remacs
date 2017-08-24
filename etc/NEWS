@@ -335,6 +335,13 @@ probability of data corruption due to techniques Emacs uses to recover
 in these situations.
 
 +++
+** 'interrupt-process' consults now the list
+'interrupt-process-functions', which function has to be called in
+order to deliver the SIGINT signal.  This allows Tramp to send the
+SIGINT signal to remote asynchronous processes.  The hitherto existing
+implementation has been moved to 'internal-default-interrupt-process'.
+
++++
 ** File local and directory local variables are now initialized each
 time the major mode is set, not just when the file is first visited.
 These local variables will thus not vanish on setting a major mode.
@@ -986,6 +993,9 @@ manual documents how to configure ssh and PuTTY accordingly.
 *** Setting the "ENV" environment variable in
 'tramp-remote-process-environment' enables reading of shell
 initialization files.
+
+---
+*** Tramp is able now to send SIGINT to remote asynchronous processes.
 
 ---
 *** Variable 'tramp-completion-mode' is obsoleted.
