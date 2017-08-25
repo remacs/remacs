@@ -3382,7 +3382,7 @@ If INFO is supplied it is used, else it is calculated from current line."
     (if msg (message "%s" msg) (message nil))))
 
 (defun sh-show-indent (arg)
-  "Show the how the current line would be indented.
+  "Show how the current line would be indented.
 This tells you which variable, if any, controls the indentation of
 this line.
 If optional arg ARG is non-null (called interactively with a prefix),
