@@ -1428,6 +1428,12 @@ job of signaling list cycles instead of looping indefinitely.
 can be used for creation of temporary files of remote or mounted directories.
 
 +++
+** On GNU platforms when operating on a local file, 'file-attributes'
+no longer suffers from a race when called while another process is
+altering the filesystem.  On non-GNU platforms 'file-attributes'
+attempts to detect the race, and returns nil if it does so.
+
++++
 ** The new function 'file-local-name' can be used to specify arguments
 of remote processes.
 
