@@ -419,44 +419,6 @@ name symbol."
 (define-abbrev-table 'sh-mode-abbrev-table ())
 
 
-;; I turned off this feature because it doesn't permit typing commands
-;; in the usual way without help.
-;;(defvar sh-abbrevs
-;;  '((csh sh-abbrevs shell
-;;	 "switch" 'sh-case
-;;	 "getopts" 'sh-while-getopts)
-
-;;    (es sh-abbrevs shell
-;;	"function" 'sh-function)
-
-;;    (ksh88 sh-abbrevs sh
-;;	   "select" 'sh-select)
-
-;;    (rc sh-abbrevs shell
-;;	"case" 'sh-case
-;;	"function" 'sh-function)
-
-;;    (sh sh-abbrevs shell
-;;	"case" 'sh-case
-;;	"function" 'sh-function
-;;	"until" 'sh-until
-;;	"getopts" 'sh-while-getopts)
-
-;;    ;; The next entry is only used for defining the others
-;;    (shell "for" sh-for
-;;	   "loop" sh-indexed-loop
-;;	   "if" sh-if
-;;	   "tmpfile" sh-tmp-file
-;;	   "while" sh-while)
-
-;;    (zsh sh-abbrevs ksh88
-;;	 "repeat" 'sh-repeat))
-;;  "Abbrev-table used in Shell-Script mode.  See `sh-feature'.
-;;;Due to the internal workings of abbrev tables, the shell name symbol is
-;;;actually defined as the table for the like of \\[edit-abbrevs].")
-
-
-
 (defun sh-mode-syntax-table (table &rest list)
   "Copy TABLE and set syntax for successive CHARs according to strings S."
   (setq table (copy-syntax-table table))
@@ -2510,39 +2472,6 @@ the value thus obtained, and the result is used instead."
 		    val (funcall function val)))
 	  val))))
 
-
-
-;; I commented this out because nobody calls it -- rms.
-;;(defun sh-abbrevs (ancestor &rest list)
-;;  "If it isn't, define the current shell as abbrev table and fill that.
-;;Abbrev table will inherit all abbrevs from ANCESTOR, which is either an abbrev
-;;table or a list of (NAME1 EXPANSION1 ...).  In addition it will define abbrevs
-;;according to the remaining arguments NAMEi EXPANSIONi ...
-;;EXPANSION may be either a string or a skeleton command."
-;;  (or (if (boundp sh-shell)
-;;	  (symbol-value sh-shell))
-;;      (progn
-;;	(if (listp ancestor)
-;;	    (nconc list ancestor))
-;;	(define-abbrev-table sh-shell ())
-;;	(if (vectorp ancestor)
-;;	    (mapatoms (lambda (atom)
-;;			(or (eq atom 0)
-;;			    (define-abbrev (symbol-value sh-shell)
-;;			      (symbol-name atom)
-;;			      (symbol-value atom)
-;;			      (symbol-function atom))))
-;;		      ancestor))
-;;	(while list
-;;	  (define-abbrev (symbol-value sh-shell)
-;;	    (car list)
-;;	    (if (stringp (car (cdr list)))
-;;		(car (cdr list))
-;;	      "")
-;;	    (if (symbolp (car (cdr list)))
-;;		(car (cdr list))))
-;;	  (setq list (cdr (cdr list)))))
-;;      (symbol-value sh-shell)))
 
 
 (defun sh-append (ancestor &rest list)
