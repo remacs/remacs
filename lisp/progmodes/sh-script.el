@@ -710,7 +710,7 @@ removed when closing the here document."
     (shell "cd" "echo" "eval" "set" "shift" "umask" "unset" "wait")
 
     (wksh sh-append ksh88
-          ;; FIXME: This looks too much like a regexp.  --Stef
+          ;; wksh has X toolkit APIs as built-ins!
 	  "Xt[A-Z][A-Za-z]*")
 
     (zsh sh-append ksh88
