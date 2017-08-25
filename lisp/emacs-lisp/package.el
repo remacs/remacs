@@ -708,24 +708,26 @@ correspond to previously loaded files (those returned by
     (unless pkg-dir
       (error "Internal error: unable to find directory for `%s'"
              (package-desc-full-name pkg-desc)))
-    ;; Activate its dependencies recursively.
-    ;; FIXME: This doesn't check whether the activated version is the
-    ;; required version.
-    (when deps
-      (dolist (req (package-desc-reqs pkg-desc))
-        (unless (package-activate (car req))
-          (error "Unable to activate package `%s'.\nRequired package `%s-%s' is unavailable"
-                 name (car req) (package-version-join (cadr req))))))
-    (package--load-files-for-activation pkg-desc reload)
-    ;; Add info node.
-    (when (file-exists-p (expand-file-name "dir" pkg-dir))
-      ;; FIXME: not the friendliest, but simple.
-      (require 'info)
-      (info-initialize)
-      (push pkg-dir Info-directory-list))
-    (push name package-activated-list)
-    ;; Don't return nil.
-    t))
+    (catch 'exit
+      ;; Activate its dependencies recursively.
+      ;; FIXME: This doesn't check whether the activated version is the
+      ;; required version.
+      (when deps
+        (dolist (req (package-desc-reqs pkg-desc))
+          (unless (package-activate (car req))
+            (message "Unable to activate package `%s'.\nRequired package `%s-%s' is unavailable"
+                     name (car req) (package-version-join (cadr req)))
+            (throw 'exit nil))))
+      (package--load-files-for-activation pkg-desc reload)
+      ;; Add info node.
+      (when (file-exists-p (expand-file-name "dir" pkg-dir))
+        ;; FIXME: not the friendliest, but simple.
+        (require 'info)
+        (info-initialize)
+        (push pkg-dir Info-directory-list))
+      (push name package-activated-list)
+      ;; Don't return nil.
+      t)))
 
 (declare-function find-library-name "find-func" (library))
 
@@ -866,14 +868,14 @@ untar into a directory named DIR; otherwise, signal an error."
       ;; Activation has to be done before compilation, so that if we're
       ;; upgrading and macros have changed we load the new definitions
       ;; before compiling.
-      (package-activate-1 new-desc :reload :deps)
-      ;; FIXME: Compilation should be done as a separate, optional, step.
-      ;; E.g. for multi-package installs, we should first install all packages
-      ;; and then compile them.
-      (package--compile new-desc)
-      ;; After compilation, load again any files loaded by
-      ;; `activate-1', so that we use the byte-compiled definitions.
-      (package--load-files-for-activation new-desc :reload))
+      (when (package-activate-1 new-desc :reload :deps)
+        ;; FIXME: Compilation should be done as a separate, optional, step.
+        ;; E.g. for multi-package installs, we should first install all packages
+        ;; and then compile them.
+        (package--compile new-desc)
+        ;; After compilation, load again any files loaded by
+        ;; `activate-1', so that we use the byte-compiled definitions.
+        (package--load-files-for-activation new-desc :reload)))
     pkg-dir))
 
 (defun package-generate-description-file (pkg-desc pkg-file)
@@ -1463,7 +1465,11 @@ taken care of by `package-initialize'."
   (package-read-all-archive-contents)
   (unless no-activate
     (dolist (elt package-alist)
-      (package-activate (car elt))))
+      (condition-case err
+          (package-activate (car elt))
+        ;; Don't let failure of activation of a package arbitrarily stop
+        ;; activation of further packages.
+        (error (message "%s" (error-message-string err))))))
   (setq package--initialized t)
   ;; This uses `package--mapc' so it must be called after
   ;; `package--initialized' is t.
