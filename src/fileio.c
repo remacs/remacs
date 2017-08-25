@@ -1758,11 +1758,9 @@ those `/' is discarded.  */)
    (directory-file-name (expand-file-name FOO)).  */
 
 Lisp_Object
-expand_and_dir_to_file (Lisp_Object filename, Lisp_Object defdir)
+expand_and_dir_to_file (Lisp_Object filename)
 {
-  register Lisp_Object absname;
-
-  absname = Fexpand_file_name (filename, defdir);
+  Lisp_Object absname = Fexpand_file_name (filename, Qnil);
 
   /* Remove final slash, if any (unless this is the root dir).
      stat behaves differently depending!  */
@@ -2676,14 +2674,11 @@ Symbolic links to directories count as directories.
 See `file-symlink-p' to distinguish symlinks.  */)
   (Lisp_Object filename)
 {
-  Lisp_Object absname;
-  Lisp_Object handler;
-
-  absname = expand_and_dir_to_file (filename, BVAR (current_buffer, directory));
+  Lisp_Object absname = expand_and_dir_to_file (filename);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (absname, Qfile_directory_p);
+  Lisp_Object handler = Ffind_file_name_handler (absname, Qfile_directory_p);
   if (!NILP (handler))
     return call2 (handler, Qfile_directory_p, absname);
 
@@ -2807,15 +2802,12 @@ Symbolic links to regular files count as regular files.
 See `file-symlink-p' to distinguish symlinks.  */)
   (Lisp_Object filename)
 {
-  register Lisp_Object absname;
   struct stat st;
-  Lisp_Object handler;
-
-  absname = expand_and_dir_to_file (filename, BVAR (current_buffer, directory));
+  Lisp_Object absname = expand_and_dir_to_file (filename);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (absname, Qfile_regular_p);
+  Lisp_Object handler = Ffind_file_name_handler (absname, Qfile_regular_p);
   if (!NILP (handler))
     return call2 (handler, Qfile_regular_p, absname);
 
@@ -2853,21 +2845,13 @@ Return (nil nil nil nil) if the file is nonexistent or inaccessible,
 or if SELinux is disabled, or if Emacs lacks SELinux support.  */)
   (Lisp_Object filename)
 {
-  Lisp_Object absname;
   Lisp_Object user = Qnil, role = Qnil, type = Qnil, range = Qnil;
-
-  Lisp_Object handler;
-#if HAVE_LIBSELINUX
-  security_context_t con;
-  int conlength;
-  context_t context;
-#endif
-
-  absname = expand_and_dir_to_file (filename, BVAR (current_buffer, directory));
+  Lisp_Object absname = expand_and_dir_to_file (filename);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (absname, Qfile_selinux_context);
+  Lisp_Object handler = Ffind_file_name_handler (absname,
+						 Qfile_selinux_context);
   if (!NILP (handler))
     return call2 (handler, Qfile_selinux_context, absname);
 
@@ -2876,10 +2860,11 @@ or if SELinux is disabled, or if Emacs lacks SELinux support.  */)
 #if HAVE_LIBSELINUX
   if (is_selinux_enabled ())
     {
-      conlength = lgetfilecon (SSDATA (absname), &con);
+      security_context_t con;
+      int conlength = lgetfilecon (SSDATA (absname), &con);
       if (conlength > 0)
 	{
-	  context = context_new (con);
+	  context_t context = context_new (con);
 	  if (context_user_get (context))
 	    user = build_string (context_user_get (context));
 	  if (context_role_get (context))
@@ -2990,35 +2975,28 @@ Return nil if file does not exist or is not accessible, or if Emacs
 was unable to determine the ACL entries.  */)
   (Lisp_Object filename)
 {
-#if USE_ACL
-  Lisp_Object absname;
-  Lisp_Object handler;
-# ifdef HAVE_ACL_SET_FILE
-  acl_t acl;
-  Lisp_Object acl_string;
-  char *str;
-#  ifndef HAVE_ACL_TYPE_EXTENDED
-  acl_type_t ACL_TYPE_EXTENDED = ACL_TYPE_ACCESS;
-#  endif
-# endif
+  Lisp_Object acl_string = Qnil;
 
-  absname = expand_and_dir_to_file (filename,
-				    BVAR (current_buffer, directory));
+#if USE_ACL
+  Lisp_Object absname = expand_and_dir_to_file (filename);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (absname, Qfile_acl);
+  Lisp_Object handler = Ffind_file_name_handler (absname, Qfile_acl);
   if (!NILP (handler))
     return call2 (handler, Qfile_acl, absname);
 
 # ifdef HAVE_ACL_SET_FILE
   absname = ENCODE_FILE (absname);
 
-  acl = acl_get_file (SSDATA (absname), ACL_TYPE_EXTENDED);
+#  ifndef HAVE_ACL_TYPE_EXTENDED
+  acl_type_t ACL_TYPE_EXTENDED = ACL_TYPE_ACCESS;
+#  endif
+  acl_t acl = acl_get_file (SSDATA (absname), ACL_TYPE_EXTENDED);
   if (acl == NULL)
     return Qnil;
 
-  str = acl_to_text (acl, NULL);
+  char *str = acl_to_text (acl, NULL);
   if (str == NULL)
     {
       acl_free (acl);
@@ -3028,12 +3006,10 @@ was unable to determine the ACL entries.  */)
   acl_string = build_string (str);
   acl_free (str);
   acl_free (acl);
-
-  return acl_string;
 # endif
 #endif
 
-  return Qnil;
+  return acl_string;
 }
 
 DEFUN ("set-file-acl", Fset_file_acl, Sset_file_acl,
@@ -3097,15 +3073,12 @@ DEFUN ("file-modes", Ffile_modes, Sfile_modes, 1, 1, 0,
 Return nil, if file does not exist or is not accessible.  */)
   (Lisp_Object filename)
 {
-  Lisp_Object absname;
   struct stat st;
-  Lisp_Object handler;
-
-  absname = expand_and_dir_to_file (filename, BVAR (current_buffer, directory));
+  Lisp_Object absname = expand_and_dir_to_file (filename);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (absname, Qfile_modes);
+  Lisp_Object handler = Ffind_file_name_handler (absname, Qfile_modes);
   if (!NILP (handler))
     return call2 (handler, Qfile_modes, absname);
 
@@ -3232,20 +3205,18 @@ If FILE1 does not exist, the answer is nil;
 otherwise, if FILE2 does not exist, the answer is t.  */)
   (Lisp_Object file1, Lisp_Object file2)
 {
-  Lisp_Object absname1, absname2;
   struct stat st1, st2;
-  Lisp_Object handler;
 
   CHECK_STRING (file1);
   CHECK_STRING (file2);
 
-  absname1 = Qnil;
-  absname1 = expand_and_dir_to_file (file1, BVAR (current_buffer, directory));
-  absname2 = expand_and_dir_to_file (file2, BVAR (current_buffer, directory));
+  Lisp_Object absname1 = expand_and_dir_to_file (file1);
+  Lisp_Object absname2 = expand_and_dir_to_file (file2);
 
   /* If the file name has special constructs in it,
      call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (absname1, Qfile_newer_than_file_p);
+  Lisp_Object handler = Ffind_file_name_handler (absname1,
+						 Qfile_newer_than_file_p);
   if (NILP (handler))
     handler = Ffind_file_name_handler (absname2, Qfile_newer_than_file_p);
   if (!NILP (handler))

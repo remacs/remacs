@@ -3998,7 +3998,7 @@ extern void syms_of_marker (void);
 
 /* Defined in fileio.c.  */
 
-extern Lisp_Object expand_and_dir_to_file (Lisp_Object, Lisp_Object);
+extern Lisp_Object expand_and_dir_to_file (Lisp_Object);
 extern Lisp_Object write_region (Lisp_Object, Lisp_Object, Lisp_Object,
 				 Lisp_Object, Lisp_Object, Lisp_Object,
 				 Lisp_Object, int);

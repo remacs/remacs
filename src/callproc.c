@@ -120,7 +120,7 @@ encode_current_directory (void)
   if (NILP (dir))
     dir = build_string ("~");
 
-  dir = expand_and_dir_to_file (dir, Qnil);
+  dir = expand_and_dir_to_file (dir);
 
   if (NILP (Ffile_accessible_directory_p (dir)))
     report_file_error ("Setting current directory",
