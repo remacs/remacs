@@ -3908,7 +3908,9 @@ faccessat (int dirfd, const char * path, int mode, int flags)
       path = fullname;
     }
 
-  if (IS_DIRECTORY_SEP (path[strlen (path) - 1]) && (mode & F_OK) != 0)
+  /* When dired.c calls us with F_OK and a trailing slash, it actually
+     wants to know whether PATH is a directory.  */
+  if (IS_DIRECTORY_SEP (path[strlen (path) - 1]) && ((mode & F_OK) == F_OK))
     mode |= D_OK;
 
   /* MSVCRT implementation of 'access' doesn't recognize D_OK, and its
