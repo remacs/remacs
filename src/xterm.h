@@ -49,13 +49,6 @@ typedef Widget xt_or_gtk_widget;
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 
-/* Some definitions to reduce conditionals.  */
-typedef GtkWidget *xt_or_gtk_widget;
-#undef XSync
-#define XSync(d, b) do { gdk_window_process_all_updates (); \
-                         XSync (d, b);  } while (false)
-#endif /* USE_GTK */
-
 /* True iff GTK's version is at least I.J.K.  */
 #ifndef GTK_CHECK_VERSION
 # ifdef USE_GTK
@@ -68,6 +61,18 @@ typedef GtkWidget *xt_or_gtk_widget;
 #  define GTK_CHECK_VERSION(i, j, k) false
 # endif
 #endif
+
+/* Some definitions to reduce conditionals.  */
+typedef GtkWidget *xt_or_gtk_widget;
+#undef XSync
+/* gdk_window_process_all_updates is deprecated in GDK 3.22.  */
+#if GTK_CHECK_VERSION (3, 22, 0)
+#define XSync(d, b) do { XSync ((d), (b)); } while (false)
+#else
+#define XSync(d, b) do { gdk_window_process_all_updates (); \
+                         XSync (d, b);  } while (false)
+#endif
+#endif /* USE_GTK */
 
 /* The GtkTooltip API came in 2.12, but gtk-enable-tooltips in 2.14. */
 #if GTK_CHECK_VERSION (2, 14, 0)
