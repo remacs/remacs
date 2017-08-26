@@ -9133,6 +9133,10 @@ allowing it to be used at a lower level for accented character entry.");
                "Non-nil (the default) means to render text antialiased.");
   ns_antialias_text = Qt;
 
+  DEFVAR_LISP ("ns-use-thin-smoothing", ns_use_thin_smoothing,
+               "Non-nil turns on a font smoothing method that produces thinner strokes.");
+  ns_use_thin_smoothing = Qnil;
+
   DEFVAR_LISP ("ns-confirm-quit", ns_confirm_quit,
                "Whether to confirm application quit using dialog.");
   ns_confirm_quit = Qnil;
