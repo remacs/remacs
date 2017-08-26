@@ -2119,7 +2119,7 @@ backslash, or with a drive specification @samp{@var{x}:/}, where
 
 @defun file-name-absolute-p filename
 This function returns @code{t} if file @var{filename} is an absolute
-file name, @code{nil} otherwise.
+file name or begins with @samp{~}, @code{nil} otherwise.
 
 @example
 @group

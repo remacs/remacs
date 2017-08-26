@@ -2470,8 +2470,8 @@ This happens for interactive use with M-x.  */)
 
 DEFUN ("file-name-absolute-p", Ffile_name_absolute_p, Sfile_name_absolute_p,
        1, 1, 0,
-       doc: /* Return t if file FILENAME specifies an absolute file name.
-On Unix, this is a name starting with a `/' or a `~'.  */)
+       doc: /* Return t if FILENAME is an absolute file name or starts with `~'.
+On Unix, absolute file names start with `/'.  */)
   (Lisp_Object filename)
 {
   CHECK_STRING (filename);
