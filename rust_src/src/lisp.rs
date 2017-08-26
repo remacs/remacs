@@ -345,7 +345,7 @@ impl LispObject {
         if let Some(n) = self.as_fixnum() {
             n
         } else if let Some(m) = self.as_marker() {
-            m.position() as EmacsInt
+            m.charpos_or_error() as EmacsInt
         } else {
             wrong_type!(Qinteger_or_marker_p, self);
         }
