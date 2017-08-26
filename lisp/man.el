@@ -295,7 +295,7 @@ Used in `bookmark-set' to get the default bookmark name."
 (defvar Man-heading-regexp "^\\([[:upper:]][[:upper:]0-9 /-]+\\)$"
   "Regular expression describing a manpage heading entry.")
 
-(defvar Man-see-also-regexp "SEE ALSO"
+(defvar Man-see-also-regexp "\\(SEE ALSO\\|VOIR AUSSI\\|SIEHE AUCH\\|VÉASE TAMBIÉN\\|VEJA TAMBÉM\\|VEDERE ANCHE\\|ZOBACZ TAKŻE\\|İLGİLİ BELGELER\\|参照\\|参见 SEE ALSO\\|參見 SEE ALSO\\)"
   "Regular expression for SEE ALSO heading (or your equivalent).
 This regexp should not start with a `^' character.")
 
