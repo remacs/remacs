@@ -1253,7 +1253,7 @@ On GNU platforms when operating on a local file, this function is
 atomic: if the filesystem is simultaneously being changed by some
 other process, this function returns the file's attributes either
 before or after the change.  Otherwise this function is not atomic,
-and might return @code{nil} it detects the race condition, or might
+and might return @code{nil} if it detects the race condition, or might
 return a hodgepodge of the previous and current file attributes.
 
 Accessor functions are provided to access the elements in this list.
