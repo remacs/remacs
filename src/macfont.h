@@ -82,3 +82,10 @@ typedef const struct _EmacsScreenFont *ScreenFontRef; /* opaque */
 extern void mac_register_font_driver (struct frame *f);
 extern void *macfont_get_nsctfont (struct font *font);
 extern void macfont_update_antialias_threshold (void);
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+/* This is an undocumented function that is probably not available
+   pre-10.8. */
+extern void CGContextSetFontSmoothingStyle(CGContextRef, int)
+  __attribute__((weak_import));
+#endif

@@ -2888,11 +2888,14 @@ macfont_draw (struct glyph_string *s, int from, int to, int x, int y,
       if (no_antialias_p)
         CGContextSetShouldAntialias (context, false);
 
-      if (!NILP (ns_use_thin_smoothing))
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1080
+      if (!NILP (ns_use_thin_smoothing)
+          && CGContextSetFontSmoothingStyle != NULL)
         {
           CGContextSetShouldSmoothFonts(context, YES);
           CGContextSetFontSmoothingStyle(context, 16);
         }
+#endif
 
       CGContextSetTextMatrix (context, atfm);
       CGContextSetTextPosition (context, text_position.x, text_position.y);
