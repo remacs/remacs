@@ -1040,8 +1040,8 @@ shown below.
       debug-on-quit nil)
 
 ;; add latest org-mode to load path
-(add-to-list 'load-path (expand-file-name "/path/to/org-mode/lisp"))
-(add-to-list 'load-path (expand-file-name "/path/to/org-mode/contrib/lisp" t))
+(add-to-list 'load-path "/path/to/org-mode/lisp")
+(add-to-list 'load-path "/path/to/org-mode/contrib/lisp" t)
 @end lisp
 
 If an error occurs, a backtrace can be very useful (see below on how to
@@ -16900,25 +16900,18 @@ The sample script shows batch processing of multiple files using
 
 @example
 #!/bin/sh
-# -*- mode: shell-script -*-
-#
 # tangle files with org-mode
 #
-DIR=`pwd`
-FILES=""
-
-# wrap each argument in the code required to call tangle on it
-for i in $@@; do
-    FILES="$FILES \"$i\""
-done
-
-emacs -Q --batch \
-     --eval "(progn
-     (require 'org)(require 'ob)(require 'ob-tangle)
-     (mapc (lambda (file)
-            (find-file (expand-file-name file \"$DIR\"))
-            (org-babel-tangle)
-            (kill-buffer)) '($FILES)))" 2>&1 |grep -i tangled
+emacs -Q --batch --eval "
+    (progn
+      (require 'ob-tangle)
+      (mapc (lambda (file)
+	      (save-current-buffer
+		(find-file file)
+		(org-babel-tangle)
+		(kill-buffer)))
+	    command-line-args-left))
+  " "$@@"
 @end example
 
 @node Miscellaneous

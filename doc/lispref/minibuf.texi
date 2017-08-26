@@ -1439,7 +1439,7 @@ platform-dependent.  Here, we simply document the behavior when using
 the minibuffer.
 
 @code{read-file-name} does not automatically expand the returned file
-name.  You must call @code{expand-file-name} yourself if an absolute
+name.  You can call @code{expand-file-name} yourself if an absolute
 file name is required.
 
 The optional argument @var{require-match} has the same meaning as in

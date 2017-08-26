@@ -2137,7 +2137,8 @@ file name, @code{nil} otherwise.
 @end example
 @end defun
 
-  Given a possibly relative file name, you can convert it to an
+  Given a possibly relative file name, you can expand any
+leading @samp{~} and convert the result to an
 absolute name using @code{expand-file-name} (@pxref{File Name
 Expansion}).  This function converts absolute file names to relative
 names:
@@ -2264,6 +2265,10 @@ might be nil (for example, from an element of @code{load-path}), use:
 (expand-file-name @var{relfile} @var{dirname})
 @end example
 
+However, @code{expand-file-name} expands leading @samp{~} in
+@var{relfile}, which may not be what you want.  @xref{File Name
+Expansion}.
+
   To convert a directory name to its abbreviation, use this
 function:
 
@@ -2302,7 +2307,8 @@ and eliminating redundancies like @file{./} and @file{@var{name}/../}.
 @defun expand-file-name filename &optional directory
 This function converts @var{filename} to an absolute file name.  If
 @var{directory} is supplied, it is the default directory to start with
-if @var{filename} is relative.  (The value of @var{directory} should
+if @var{filename} is relative and does not start with @samp{~}.
+(The value of @var{directory} should
 itself be an absolute directory name or directory file name; it may
 start with @samp{~}.)  Otherwise, the current buffer's value of
 @code{default-directory} is used.  For example:
@@ -2322,11 +2328,15 @@ start with @samp{~}.)  Otherwise, the current buffer's value of
 @end group
 @end example
 
-If the part of the combined file name before the first slash is
+If the part of @var{filename} before the first slash is
 @samp{~}, it expands to the value of the @env{HOME} environment
 variable (usually your home directory).  If the part before the first
 slash is @samp{~@var{user}} and if @var{user} is a valid login name,
 it expands to @var{user}'s home directory.
+If you do not want this expansion for a relative @var{filename} that
+might begin with a literal @samp{~}, you can use @code{(concat
+(file-name-as-directory directory) filename)} instead of
+@code{(expand-file-name filename directory)}.
 
 Filenames containing @samp{.} or @samp{..} are simplified to their
 canonical form:
