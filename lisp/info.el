@@ -440,22 +440,33 @@ Each element has the form (INFO-FILE INDEX-NODE-NAMES-LIST).")
 
 (defvar Info-virtual-files nil
   "List of definitions of virtual Info files.
-Each element of the list has the format (FILENAME (OPERATION . HANDLER) ...)
-where FILENAME is a regexp that matches a class of virtual Info file names.
-It should be carefully chosen to not cause file name clashes with
-existing file names.  OPERATION is one of the following operation
-symbols `find-file', `find-node', `toc-nodes' that define what HANDLER
-function to call instead of calling the default corresponding function
-to override it.")
+Each element of the list has the form (FILENAME (OPERATION . HANDLER) EXTRA)
+where FILENAME is a regexp that matches a class of virtual Info file names,
+it should be carefully chosen to not cause file name clashes with
+existing file names;
+OPERATION is one of the symbols `find-file', `find-node', `toc-nodes';
+and HANDLER is a function to call when OPERATION is invoked on a
+virtual Info file.
+EXTRA, if present, is one or more cons cells specifying extra
+attributes important to some applications which use this data.
+For example, desktop saving and desktop restoring use the `slow'
+attribute to avoid restoration of nodes that could be expensive
+to compute.")
 
 (defvar Info-virtual-nodes nil
   "List of definitions of virtual Info nodes.
-Each element of the list has the format (NODENAME (OPERATION . HANDLER) ...)
-where NODENAME is a regexp that matches a class of virtual Info node names.
-It should be carefully chosen to not cause node name clashes with
-existing node names.  OPERATION is one of the following operation
-symbols `find-node' that define what HANDLER function to call instead
-of calling the default corresponding function to override it.")
+Each element of the list has the form (NODENAME (OPERATION . HANDLER) EXTRA)
+where NODENAME is a regexp that matches a class of virtual Info node names,
+it should be carefully chosen to not cause node name clashes with
+existing node names;
+OPERATION is the symbol `find-node';
+and HANDLER is a function to call when OPERATION is invoked on a
+virtual Info node.
+EXTRA, if present, is one or more cons cells specifying extra
+attributes important to some applications which use this data.
+For example, desktop saving and desktop restoring use the `slow'
+attribute to avoid restoration of nodes that could be expensive
+to compute.")
 
 (defvar-local Info-current-node-virtual nil
   "Non-nil if the current Info node is virtual.")
