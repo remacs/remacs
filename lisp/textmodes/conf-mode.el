@@ -254,9 +254,9 @@ This variable is best set in the file local variables, or through
 
 (defvar conf-toml-font-lock-keywords
   '(;; [section] (do this first because it may look like a parameter)
-    ("^[ \t]*\\[\\(.+\\)\\]" 1 'font-lock-type-face)
+    (conf-toml-recognize-section 0 'font-lock-type-face prepend)
     ;; var=val or var[index]=val
-    ("^[ \t]*\\(.+?\\)\\(?:\\[\\(.*?\\)\\]\\)?[ \t]*="
+    ("^\\s-*\\(.+?\\)\\(?:\\[\\(.*?\\)\\]\\)?\\s-*="
      (1 'font-lock-variable-name-face)
      (2 'font-lock-constant-face nil t))
     ("\\_<false\\|true\\_>" 0 'font-lock-keyword-face))
@@ -636,6 +636,32 @@ For details see `conf-mode'.  Example:
 *background:			gray99
 *foreground:			black"
   (conf-mode-initialize "!"))
+
+(defun conf-toml-recognize-section (limit)
+  "Font-lock helper function for conf-toml-mode.
+Handles recognizing TOML section names, like [section],
+\[[section]], or [something.\"else\".section]."
+  (save-excursion
+    ;; Skip any number of "[" to handle things like [[section]].
+    (when (re-search-forward "^\\s-*\\[+" limit t)
+      (let ((start (point)))
+        (backward-char)
+        (let ((end (min limit
+                        (condition-case nil
+                            (progn
+                              (forward-list)
+                              (1- (point)))
+                          (scan-error
+                           (end-of-line)
+                           (point))))))
+          ;; If there is a comma in the text, then we assume this is
+          ;; an array and not a section.  (This could be refined to
+          ;; look only for unquoted commas if necessary.)
+          (save-excursion
+            (goto-char start)
+            (unless (search-forward "," end t)
+              (set-match-data (list start end))
+              t)))))))
 
 ;;;###autoload
 (define-derived-mode conf-toml-mode conf-mode "Conf[TOML]"
