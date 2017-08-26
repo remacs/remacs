@@ -1597,6 +1597,12 @@ signal identifier to be raised, remaining arguments passed to
 `tramp-message'.  Finally, signal SIGNAL is raised."
   (let (tramp-message-show-message)
     (tramp-backtrace vec-or-proc)
+    (unless arguments
+      ;; FMT-STRING could be just a file name, as in
+      ;; `file-already-exists' errors.  It could contain the ?\%
+      ;; character, as in smb domain spec.
+      (setq arguments (list fmt-string)
+	    fmt-string "%s"))
     (when vec-or-proc
       (tramp-message
        vec-or-proc 1 "%s"
@@ -2009,6 +2015,11 @@ ARGS are the arguments OPERATION has been called with."
 	    '(add-name-to-file copy-directory copy-file expand-file-name
 	      file-equal-p file-in-directory-p
 	      file-name-all-completions file-name-completion
+	      ;; Starting with Emacs 26.1, just the 2nd argument of
+	      ;; `make-symbolic-link' matters.  For backward
+	      ;; compatibility, we still accept the first argument as
+	      ;; file name to be checked.  Handled properly in
+	      ;; `tramp-handle-*-make-symbolic-link'.
 	      file-newer-than-file-p make-symbolic-link rename-file))
     (save-match-data
       (cond
@@ -3262,11 +3273,18 @@ User is always nil."
       t)))
 
 (defun tramp-handle-make-symbolic-link
-  (filename linkname &optional _ok-if-already-exists)
-  "Like `make-symbolic-link' for Tramp files."
-  (with-parsed-tramp-file-name
-      (if (tramp-tramp-file-p filename) filename linkname) nil
-    (tramp-error v 'file-error "make-symbolic-link not supported")))
+  (target linkname &optional ok-if-already-exists)
+  "Like `make-symbolic-link' for Tramp files.
+This is the fallback implementation for backends which do not
+support symbolic links."
+  (if (tramp-tramp-file-p (expand-file-name linkname))
+      (tramp-error
+       (tramp-dissect-file-name (expand-file-name linkname)) 'file-error
+       "make-symbolic-link not supported")
+    ;; This is needed prior Emacs 26.1, where TARGET has also be
+    ;; checked for a file name handler.
+    (tramp-run-real-handler
+     'make-symbolic-link (list target linkname ok-if-already-exists))))
 
 (defun tramp-handle-shell-command
   (command &optional output-buffer error-buffer)

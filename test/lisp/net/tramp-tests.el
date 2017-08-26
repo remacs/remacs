@@ -2587,16 +2587,19 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		(not (string-equal (error-message-string err)
 				   "make-symbolic-link not supported")))))
 	    (should (file-symlink-p tmp-name2))
-	    (should-error (make-symbolic-link tmp-name1 tmp-name2))
+	    (should-error (make-symbolic-link tmp-name1 tmp-name2)
+			  :type 'file-already-exists)
 	    (make-symbolic-link tmp-name1 tmp-name2 'ok-if-already-exists)
 	    (should (file-symlink-p tmp-name2))
 	    ;; `tmp-name3' is a local file name.
-	    (should-error (make-symbolic-link tmp-name1 tmp-name3)))
+	    (make-symbolic-link tmp-name1 tmp-name3)
+	    (should (file-symlink-p tmp-name3)))
 
 	;; Cleanup.
 	(ignore-errors
 	  (delete-file tmp-name1)
-	  (delete-file tmp-name2)))
+	  (delete-file tmp-name2)
+	  (delete-file tmp-name3)))
 
       ;; Check `add-name-to-file'.
       (unwind-protect
@@ -2605,7 +2608,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should (file-exists-p tmp-name1))
 	    (add-name-to-file tmp-name1 tmp-name2)
 	    (should-not (file-symlink-p tmp-name2))
-	    (should-error (add-name-to-file tmp-name1 tmp-name2))
+	    (should-error (add-name-to-file tmp-name1 tmp-name2)
+			  :type 'file-already-exists)
 	    (add-name-to-file tmp-name1 tmp-name2 'ok-if-already-exists)
 	    (should-not (file-symlink-p tmp-name2))
 	    ;; `tmp-name3' is a local file name.
@@ -2626,10 +2630,24 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should-not (string-equal tmp-name2 (file-truename tmp-name2)))
 	    (should
 	     (string-equal (file-truename tmp-name1) (file-truename tmp-name2)))
-	    (should (file-equal-p tmp-name1 tmp-name2)))
+	    (should (file-equal-p tmp-name1 tmp-name2))
+	    ;; `tmp-name3' is a local file name.
+	    (make-symbolic-link tmp-name1 tmp-name3)
+	    (should (file-symlink-p tmp-name3))
+            (should-not (string-equal tmp-name3 (file-truename tmp-name3)))
+	    ;; `file-truename' returns a quoted file name for `tmp-name3'.
+	    ;; We must unquote it.
+	    (should
+	     (string-equal
+	      (file-truename tmp-name1)
+	      (funcall
+	       'tramp-compat-file-name-unquote (file-truename tmp-name3)))))
+
+	;; Cleanup.
 	(ignore-errors
 	  (delete-file tmp-name1)
-	  (delete-file tmp-name2)))
+	  (delete-file tmp-name2)
+	  (delete-file tmp-name3)))
 
       ;; `file-truename' shall preserve trailing link of directories.
       (unless (file-symlink-p tramp-test-temporary-file-directory)

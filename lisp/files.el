@@ -6955,7 +6955,7 @@ only these files will be asked to be saved."
 	(setq file-arg-indices (cdr file-arg-indices))))
     (pcase method
       (`identity (car arguments))
-      (`add (concat "/:" (apply operation arguments)))
+      (`add (file-name-quote (apply operation arguments)))
       (`insert-file-contents
        (let ((visit (nth 1 arguments)))
          (unwind-protect

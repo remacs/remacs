@@ -354,16 +354,17 @@ pass to the OPERATION."
 	(tramp-error
 	 v2 'file-error
 	 "add-name-to-file: %s must not be a directory" filename))
-      (when (and (not ok-if-already-exists)
-		 (file-exists-p newname)
-		 (not (numberp ok-if-already-exists))
-		 (y-or-n-p
-		  (format
-		   "File %s already exists; make it a new name anyway? "
-		   newname)))
-	(tramp-error
-	 v2 'file-error
-	 "add-name-to-file: file %s already exists" newname))
+	;; Do the 'confirm if exists' thing.
+	(when (file-exists-p newname)
+	  ;; What to do?
+	  (if (or (null ok-if-already-exists) ; not allowed to exist
+		  (and (numberp ok-if-already-exists)
+		       (not (yes-or-no-p
+			     (format
+			      "File %s already exists; make it a link anyway? "
+			      v2-localname)))))
+	      (tramp-error v2 'file-already-exists newname)
+	    (delete-file newname)))
       ;; We must also flush the cache of the directory, because
       ;; `file-attributes' reads the values from there.
       (tramp-flush-file-property v2 (file-name-directory v2-localname))
@@ -1095,54 +1096,56 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	   v 'file-error "Couldn't make directory %s" directory))))))
 
 (defun tramp-smb-handle-make-symbolic-link
-  (filename linkname &optional ok-if-already-exists)
+  (target linkname &optional ok-if-already-exists)
   "Like `make-symbolic-link' for Tramp files.
-If LINKNAME is a non-Tramp file, it is used verbatim as the target of
-the symlink.  If LINKNAME is a Tramp file, only the localname component is
-used as the target of the symlink.
+If TARGET is a non-Tramp file, it is used verbatim as the target
+of the symlink.  If TARGET is a Tramp file, only the localname
+component is used as the target of the symlink."
+  (if (not (tramp-tramp-file-p (expand-file-name linkname)))
+      (tramp-run-real-handler
+       'make-symbolic-link (list target linkname ok-if-already-exists))
 
-If LINKNAME is a Tramp file and the localname component is relative, then
-it is expanded first, before the localname component is taken.  Note that
-this can give surprising results if the user/host for the source and
-target of the symlink differ."
-  (unless (tramp-equal-remote filename linkname)
-    (with-parsed-tramp-file-name
-	(if (tramp-tramp-file-p filename) filename linkname) nil
-      (tramp-error
-       v 'file-error
-       "make-symbolic-link: %s"
-       "only implemented for same method, same user, same host")))
-  (with-parsed-tramp-file-name filename v1
-    (with-parsed-tramp-file-name linkname v2
-      (when (file-directory-p filename)
+    (unless (tramp-equal-remote target linkname)
+      (with-parsed-tramp-file-name
+	  (if (tramp-tramp-file-p target) target linkname) nil
 	(tramp-error
-	 v2 'file-error
-	 "make-symbolic-link: %s must not be a directory" filename))
-      (when (and (not ok-if-already-exists)
-		 (file-exists-p linkname)
-		 (not (numberp ok-if-already-exists))
-		 (y-or-n-p
-		  (format
-		   "File %s already exists; make it a new name anyway? "
-		   linkname)))
-	(tramp-error v2 'file-already-exists linkname))
-      (unless (tramp-smb-get-cifs-capabilities v1)
-	(tramp-error v2 'file-error "make-symbolic-link not supported"))
-      ;; We must also flush the cache of the directory, because
-      ;; `file-attributes' reads the values from there.
-      (tramp-flush-file-property v2 (file-name-directory v2-localname))
-      (tramp-flush-file-property v2 v2-localname)
-      (unless
-	  (tramp-smb-send-command
-	   v1
-	   (format
-	    "symlink \"%s\" \"%s\""
-	    (tramp-smb-get-localname v1)
-	    (tramp-smb-get-localname v2)))
-	(tramp-error
-	 v2 'file-error
-	 "error with make-symbolic-link, see buffer `%s' for details"
-	 (buffer-name))))))
+	 v 'file-error
+	 "make-symbolic-link: %s"
+	 "only implemented for same method, same user, same host")))
+    (with-parsed-tramp-file-name target v1
+      (with-parsed-tramp-file-name linkname v2
+	(when (file-directory-p target)
+	  (tramp-error
+	   v2 'file-error
+	   "make-symbolic-link: %s must not be a directory" target))
+	;; Do the 'confirm if exists' thing.
+	(when (file-exists-p linkname)
+	  ;; What to do?
+	  (if (or (null ok-if-already-exists) ; not allowed to exist
+		  (and (numberp ok-if-already-exists)
+		       (not (yes-or-no-p
+			     (format
+			      "File %s already exists; make it a link anyway? "
+			      v2-localname)))))
+	      (tramp-error v2 'file-already-exists v2-localname)
+	    (delete-file linkname)))
+	(unless (tramp-smb-get-cifs-capabilities v1)
+	  (tramp-error v2 'file-error "make-symbolic-link not supported"))
+	;; We must also flush the cache of the directory, because
+	;; `file-attributes' reads the values from there.
+	(tramp-flush-file-property v2 (file-name-directory v2-localname))
+	(tramp-flush-file-property v2 v2-localname)
+	(unless
+	    (tramp-smb-send-command
+	     v1
+	     (format
+	      "symlink \"%s\" \"%s\""
+	      (tramp-smb-get-localname v1)
+	      (tramp-smb-get-localname v2)))
+	  (tramp-error
+	   v2 'file-error
+	   "error with make-symbolic-link, see buffer `%s' for details"
+	   (buffer-name)))))))
 
 (defun tramp-smb-handle-process-file
   (program &optional infile destination display &rest args)

@@ -1057,62 +1057,61 @@ Operations not mentioned here will be handled by the normal Emacs functions.")
 ;;; File Name Handler Functions:
 
 (defun tramp-sh-handle-make-symbolic-link
-  (filename linkname &optional ok-if-already-exists)
+    (target linkname &optional ok-if-already-exists)
   "Like `make-symbolic-link' for Tramp files.
-If LINKNAME is a non-Tramp file, it is used verbatim as the target of
-the symlink.  If LINKNAME is a Tramp file, only the localname component is
-used as the target of the symlink.
+If TARGET is a non-Tramp file, it is used verbatim as the target
+of the symlink.  If TARGET is a Tramp file, only the localname
+component is used as the target of the symlink."
+  (if (not (tramp-tramp-file-p (expand-file-name linkname)))
+      (tramp-run-real-handler
+       'make-symbolic-link (list target linkname ok-if-already-exists))
 
-If LINKNAME is a Tramp file and the localname component is relative, then
-it is expanded first, before the localname component is taken.  Note that
-this can give surprising results if the user/host for the source and
-target of the symlink differ."
-  (with-parsed-tramp-file-name linkname l
-    (let ((ln (tramp-get-remote-ln l))
-	  (cwd (tramp-run-real-handler
-		'file-name-directory (list l-localname))))
-      (unless ln
-	(tramp-error
-	 l 'file-error
-	 "Making a symbolic link.  ln(1) does not exist on the remote host."))
+    (with-parsed-tramp-file-name linkname nil
+      (let ((ln (tramp-get-remote-ln v))
+	    (cwd (tramp-run-real-handler
+		  'file-name-directory (list localname))))
+	(unless ln
+	  (tramp-error
+	   v 'file-error
+	   "Making a symbolic link.  ln(1) does not exist on the remote host."))
 
-      ;; Do the 'confirm if exists' thing.
-      (when (file-exists-p linkname)
-	;; What to do?
-	(if (or (null ok-if-already-exists) ; not allowed to exist
-		(and (numberp ok-if-already-exists)
-		     (not (yes-or-no-p
-			   (format
-			    "File %s already exists; make it a link anyway? "
-			    l-localname)))))
-	    (tramp-error l 'file-already-exists l-localname)
-	  (delete-file linkname)))
+	;; Do the 'confirm if exists' thing.
+	(when (file-exists-p linkname)
+	  ;; What to do?
+	  (if (or (null ok-if-already-exists) ; not allowed to exist
+		  (and (numberp ok-if-already-exists)
+		       (not (yes-or-no-p
+			     (format
+			      "File %s already exists; make it a link anyway? "
+			      localname)))))
+	      (tramp-error v 'file-already-exists localname)
+	    (delete-file linkname)))
 
-      ;; If FILENAME is a Tramp name, use just the localname component.
-      (when (tramp-tramp-file-p filename)
-	(setq filename
-	      (tramp-file-name-localname
-	       (tramp-dissect-file-name (expand-file-name filename)))))
+	;; If TARGET is a Tramp name, use just the localname component.
+	(when (tramp-file-name-equal-p
+	       v (tramp-dissect-file-name (expand-file-name target)))
+	  (setq target
+		(tramp-file-name-localname
+		 (tramp-dissect-file-name (expand-file-name target)))))
 
-      (tramp-flush-file-property l (file-name-directory l-localname))
-      (tramp-flush-file-property l l-localname)
+	(tramp-flush-file-property v (file-name-directory localname))
+	(tramp-flush-file-property v localname)
 
-      ;; Right, they are on the same host, regardless of user, method,
-      ;; etc.  We now make the link on the remote machine. This will
-      ;; occur as the user that FILENAME belongs to.
-      (and (tramp-send-command-and-check
-            l (format "cd %s" (tramp-shell-quote-argument cwd)))
-           (tramp-send-command-and-check
-            l (format
-               "%s -sf %s %s"
-               ln
-               (tramp-shell-quote-argument filename)
-               ;; The command could exceed PATH_MAX, so we use
-               ;; relative file names.  However, relative file names
-               ;; could start with "-".  `tramp-shell-quote-argument'
-               ;; does not handle this, we must do it ourselves.
-               (tramp-shell-quote-argument
-                (concat "./" (file-name-nondirectory l-localname)))))))))
+	;; Right, they are on the same host, regardless of user, method,
+	;; etc.  We now make the link on the remote machine. This will
+	;; occur as the user that TARGET belongs to.
+	(and (tramp-send-command-and-check
+              v (format "cd %s" (tramp-shell-quote-argument cwd)))
+             (tramp-send-command-and-check
+              v (format
+		 "%s -sf %s %s" ln
+		 (tramp-shell-quote-argument target)
+		 ;; The command could exceed PATH_MAX, so we use
+		 ;; relative file names.  However, relative file names
+		 ;; could start with "-".  `tramp-shell-quote-argument'
+		 ;; does not handle this, we must do it ourselves.
+		 (tramp-shell-quote-argument
+                  (concat "./" (file-name-nondirectory localname))))))))))
 
 (defun tramp-sh-handle-file-truename (filename)
   "Like `file-truename' for Tramp files."
@@ -1918,14 +1917,18 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
   (with-parsed-tramp-file-name filename v1
     (with-parsed-tramp-file-name newname v2
       (let ((ln (when v1 (tramp-get-remote-ln v1))))
-	(when (and (numberp ok-if-already-exists)
-		   (file-exists-p newname)
-		   (yes-or-no-p
-		    (format
-		     "File %s already exists; make it a new name anyway? "
-		     newname)))
-	  (tramp-error v2 'file-already-exists newname))
-	(when ok-if-already-exists (setq ln (concat ln " -f")))
+
+	;; Do the 'confirm if exists' thing.
+	(when (file-exists-p newname)
+	  ;; What to do?
+	  (if (or (null ok-if-already-exists) ; not allowed to exist
+		  (and (numberp ok-if-already-exists)
+		       (not (yes-or-no-p
+			     (format
+			      "File %s already exists; make it a link anyway? "
+			      v2-localname)))))
+	      (tramp-error v2 'file-already-exists newname)
+	    (delete-file newname)))
 	(tramp-flush-file-property v2 (file-name-directory v2-localname))
 	(tramp-flush-file-property v2 v2-localname)
 	(tramp-barf-unless-okay
