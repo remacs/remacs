@@ -709,9 +709,7 @@ removed when closing the here document."
     ;; The next entry is only used for defining the others
     (shell "cd" "echo" "eval" "set" "shift" "umask" "unset" "wait")
 
-    (wksh sh-append ksh88
-          ;; wksh has X toolkit APIs as built-ins!
-	  "Xt[A-Z][A-Za-z]*")
+    (wksh sh-append ksh88)
 
     (zsh sh-append ksh88
 	 "autoload" "bindkey" "builtin" "chdir" "compctl" "declare" "dirs"
