@@ -430,7 +430,8 @@ pass to the OPERATION."
 		(delete-directory tmpdir 'recursive))))
 
 	   ;; We can copy recursively.
-	   ((and (or t1 t2) (tramp-smb-get-cifs-capabilities v))
+	   ;; Does not work reliably.
+	   (nil ;(and (or t1 t2) (tramp-smb-get-cifs-capabilities v))
 	    (when (and (file-directory-p newname)
 		       (not (string-equal (file-name-nondirectory dirname)
 					  (file-name-nondirectory newname))))
@@ -888,6 +889,16 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		     (string-to-number (match-string 2)) ;; month
 		     (string-to-number (match-string 1)))))) ;; year
 	    (forward-line))
+
+	  ;; Resolve symlink.
+	  (when (and (stringp id)
+		     (tramp-smb-send-command
+		      vec
+		      (format "readlink \"%s\"" (tramp-smb-get-localname vec))))
+	    (goto-char (point-min))
+	    (and (looking-at ".+ -> \\(.+\\)")
+		 (setq id (match-string 1))))
+
 	  ;; Return the result.
 	  (list id link uid gid atime mtime ctime size mode nil inode
 		(tramp-get-device vec)))))))
@@ -1105,47 +1116,43 @@ component is used as the target of the symlink."
       (tramp-run-real-handler
        'make-symbolic-link (list target linkname ok-if-already-exists))
 
-    (unless (tramp-equal-remote target linkname)
-      (with-parsed-tramp-file-name
-	  (if (tramp-tramp-file-p target) target linkname) nil
+    (with-parsed-tramp-file-name linkname nil
+      ;; Do the 'confirm if exists' thing.
+      (when (file-exists-p linkname)
+	;; What to do?
+	(if (or (null ok-if-already-exists) ; not allowed to exist
+		(and (numberp ok-if-already-exists)
+		     (not (yes-or-no-p
+			   (format
+			    "File %s already exists; make it a link anyway? "
+			    localname)))))
+	    (tramp-error v 'file-already-exists localname)
+	  (delete-file linkname)))
+
+      (unless (tramp-smb-get-cifs-capabilities v)
+	(tramp-error v 'file-error "make-symbolic-link not supported"))
+
+      ;; If TARGET is a Tramp name, use just the localname component.
+      (when (and (tramp-tramp-file-p target)
+		 (tramp-file-name-equal-p
+		  v (tramp-dissect-file-name (expand-file-name target))))
+	(setq target
+	      (tramp-file-name-localname
+	       (tramp-dissect-file-name (expand-file-name target)))))
+
+      ;; We must also flush the cache of the directory, because
+      ;; `file-attributes' reads the values from there.
+      (tramp-flush-file-property v (file-name-directory localname))
+      (tramp-flush-file-property v localname)
+
+      (unless
+	  (tramp-smb-send-command
+	   v
+	   (format "symlink \"%s\" \"%s\"" target (tramp-smb-get-localname v)))
 	(tramp-error
 	 v 'file-error
-	 "make-symbolic-link: %s"
-	 "only implemented for same method, same user, same host")))
-    (with-parsed-tramp-file-name target v1
-      (with-parsed-tramp-file-name linkname v2
-	(when (file-directory-p target)
-	  (tramp-error
-	   v2 'file-error
-	   "make-symbolic-link: %s must not be a directory" target))
-	;; Do the 'confirm if exists' thing.
-	(when (file-exists-p linkname)
-	  ;; What to do?
-	  (if (or (null ok-if-already-exists) ; not allowed to exist
-		  (and (numberp ok-if-already-exists)
-		       (not (yes-or-no-p
-			     (format
-			      "File %s already exists; make it a link anyway? "
-			      v2-localname)))))
-	      (tramp-error v2 'file-already-exists v2-localname)
-	    (delete-file linkname)))
-	(unless (tramp-smb-get-cifs-capabilities v1)
-	  (tramp-error v2 'file-error "make-symbolic-link not supported"))
-	;; We must also flush the cache of the directory, because
-	;; `file-attributes' reads the values from there.
-	(tramp-flush-file-property v2 (file-name-directory v2-localname))
-	(tramp-flush-file-property v2 v2-localname)
-	(unless
-	    (tramp-smb-send-command
-	     v1
-	     (format
-	      "symlink \"%s\" \"%s\""
-	      (tramp-smb-get-localname v1)
-	      (tramp-smb-get-localname v2)))
-	  (tramp-error
-	   v2 'file-error
-	   "error with make-symbolic-link, see buffer `%s' for details"
-	   (buffer-name)))))))
+	 "error with make-symbolic-link, see buffer `%s' for details"
+	 (buffer-name))))))
 
 (defun tramp-smb-handle-process-file
   (program &optional infile destination display &rest args)

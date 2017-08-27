@@ -562,11 +562,7 @@ This variable is only used when Tramp needs to start up another shell
 for tilde expansion.  The extra arguments should typically prevent the
 shell from reading its init file."
   :group 'tramp
-  ;; This might be the wrong way to test whether the widget type
-  ;; `alist' is available.  Who knows the right way to test it?
-  :type (if (get 'alist 'widget-type)
-	    '(alist :key-type string :value-type string)
-	  '(repeat (cons string string)))
+  :type '(alist :key-type regexp :value-type string)
   :require 'tramp)
 
 (defconst tramp-actions-before-shell
@@ -1088,8 +1084,9 @@ component is used as the target of the symlink."
 	    (delete-file linkname)))
 
 	;; If TARGET is a Tramp name, use just the localname component.
-	(when (tramp-file-name-equal-p
-	       v (tramp-dissect-file-name (expand-file-name target)))
+	(when (and (tramp-tramp-file-p target)
+		   (tramp-file-name-equal-p
+		    v (tramp-dissect-file-name (expand-file-name target))))
 	  (setq target
 		(tramp-file-name-localname
 		 (tramp-dissect-file-name (expand-file-name target)))))

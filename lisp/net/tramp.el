@@ -3065,12 +3065,8 @@ User is always nil."
 
 (defun tramp-handle-file-symlink-p (filename)
   "Like `file-symlink-p' for Tramp files."
-  (with-parsed-tramp-file-name filename nil
-    (let ((x (tramp-compat-file-attribute-type (file-attributes filename))))
-      (when (stringp x)
-	(if (file-name-absolute-p x)
-	    (tramp-make-tramp-file-name method user domain host port x)
-	  x)))))
+  (let ((x (tramp-compat-file-attribute-type (file-attributes filename))))
+    (and (stringp x) x)))
 
 (defun tramp-handle-find-backup-file-name (filename)
   "Like `find-backup-file-name' for Tramp files."

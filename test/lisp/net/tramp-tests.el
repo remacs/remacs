@@ -2586,14 +2586,50 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	       (skip-unless
 		(not (string-equal (error-message-string err)
 				   "make-symbolic-link not supported")))))
-	    (should (file-symlink-p tmp-name2))
-	    (should-error (make-symbolic-link tmp-name1 tmp-name2)
-			  :type 'file-already-exists)
+	    (should
+	     (string-equal
+	      (funcall
+	       (if quoted 'tramp-compat-file-name-unquote 'identity)
+	       (file-remote-p tmp-name1 'localname))
+	      (file-symlink-p tmp-name2)))
+	    (should-error
+	     (make-symbolic-link tmp-name1 tmp-name2)
+	     :type 'file-already-exists)
+	    ;; 0 means interactive case.
+	    (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
+	      (should-error
+	       (make-symbolic-link tmp-name1 tmp-name2 0)
+	       :type 'file-already-exists))
+	    (cl-letf (((symbol-function 'yes-or-no-p) (lambda (_prompt) t)))
+	      (make-symbolic-link tmp-name1 tmp-name2 0)
+	      (should
+	       (string-equal
+		(funcall
+		 (if quoted 'tramp-compat-file-name-unquote 'identity)
+		 (file-remote-p tmp-name1 'localname))
+		(file-symlink-p tmp-name2))))
 	    (make-symbolic-link tmp-name1 tmp-name2 'ok-if-already-exists)
-	    (should (file-symlink-p tmp-name2))
-	    ;; `tmp-name3' is a local file name.
+	    (should
+	     (string-equal
+	      (funcall
+	       (if quoted 'tramp-compat-file-name-unquote 'identity)
+	       (file-remote-p tmp-name1 'localname))
+	      (file-symlink-p tmp-name2)))
+	    ;; If we use the local part of `tmp-name1', it shall still work.
+	    (make-symbolic-link
+	     (file-remote-p tmp-name1 'localname)
+	     tmp-name2 'ok-if-already-exists)
+	    (should
+	     (string-equal
+	      (funcall
+	       (if quoted 'tramp-compat-file-name-unquote 'identity)
+	       (file-remote-p tmp-name1 'localname))
+	      (file-symlink-p tmp-name2)))
+	    ;; `tmp-name3' is a local file name.  Therefore, the link
+	    ;; target remains unchanged, even if quoted.
 	    (make-symbolic-link tmp-name1 tmp-name3)
-	    (should (file-symlink-p tmp-name3)))
+	    (should
+	     (string-equal tmp-name1 (file-symlink-p tmp-name3))))
 
 	;; Cleanup.
 	(ignore-errors
@@ -2607,11 +2643,21 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (write-region "foo" nil tmp-name1)
 	    (should (file-exists-p tmp-name1))
 	    (add-name-to-file tmp-name1 tmp-name2)
-	    (should-not (file-symlink-p tmp-name2))
-	    (should-error (add-name-to-file tmp-name1 tmp-name2)
-			  :type 'file-already-exists)
+	    (should (file-regular-p tmp-name2))
+	    (should-error
+	     (add-name-to-file tmp-name1 tmp-name2)
+	     :type 'file-already-exists)
+	    ;; 0 means interactive case.
+	    (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
+	      (should-error
+	       (add-name-to-file tmp-name1 tmp-name2 0)
+	       :type 'file-already-exists))
+	    (cl-letf (((symbol-function 'yes-or-no-p) (lambda (_prompt) t)))
+	       (add-name-to-file tmp-name1 tmp-name2 0)
+	       (should (file-regular-p tmp-name2)))
 	    (add-name-to-file tmp-name1 tmp-name2 'ok-if-already-exists)
 	    (should-not (file-symlink-p tmp-name2))
+	    (should (file-regular-p tmp-name2))
 	    ;; `tmp-name3' is a local file name.
 	    (should-error (add-name-to-file tmp-name1 tmp-name3)))
 
@@ -2640,8 +2686,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should
 	     (string-equal
 	      (file-truename tmp-name1)
-	      (funcall
-	       'tramp-compat-file-name-unquote (file-truename tmp-name3)))))
+	      (tramp-compat-file-name-unquote (file-truename tmp-name3)))))
 
 	;; Cleanup.
 	(ignore-errors
