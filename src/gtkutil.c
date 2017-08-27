@@ -1233,12 +1233,14 @@ xg_create_frame_widgets (struct frame *f)
   if (FRAME_EXTERNAL_TOOL_BAR (f))
     update_frame_tool_bar (f);
 
+#if ! GTK_CHECK_VERSION (3, 14, 0)
   /* We don't want this widget double buffered, because we draw on it
      with regular X drawing primitives, so from a GTK/GDK point of
      view, the widget is totally blank.  When an expose comes, this
      will make the widget blank, and then Emacs redraws it.  This flickers
      a lot, so we turn off double buffering.  */
   gtk_widget_set_double_buffered (wfixed, FALSE);
+#endif
 
 #if ! GTK_CHECK_VERSION (3, 22, 0)
   gtk_window_set_wmclass (GTK_WINDOW (wtop),
