@@ -1896,10 +1896,15 @@ The value is non-nil if there were no errors, nil if errors."
 		       ;; parallel bootstrap), it does not risk getting a
 		       ;; half-finished file.  (Bug#4196)
 		       (tempfile (make-temp-file target-file))
+		       (default-modes (default-file-modes))
+		       (temp-modes (logand default-modes #o600))
+		       (desired-modes (logand default-modes #o666))
 		       (kill-emacs-hook
 			(cons (lambda () (ignore-errors
 					   (delete-file tempfile)))
 			      kill-emacs-hook)))
+		  (unless (= temp-modes desired-modes)
+		    (set-file-modes tempfile desired-modes))
 		  (write-region (point-min) (point-max) tempfile nil 1)
 		  ;; This has the intentional side effect that any
 		  ;; hard-links to target-file continue to
