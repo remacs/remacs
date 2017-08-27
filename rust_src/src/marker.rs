@@ -47,7 +47,7 @@ fn markerp(object: LispObject) -> LispObject {
 
 /// Return the position of MARKER, or nil if it points nowhere.
 #[lisp_fn]
-fn marker_position(object: LispObject) -> LispObject {
+pub fn marker_position(object: LispObject) -> LispObject {
     let pos = object.as_marker_or_error().charpos();
     match pos {
         Some(p) => LispObject::from_natnum(p as EmacsInt),

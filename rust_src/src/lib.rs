@@ -333,5 +333,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sbobp);
         defsubr(&*editfns::Sbolp);
         defsubr(&*editfns::Seolp);
+        defsubr(&*editfns::Sregion_beginning);
+        defsubr(&*editfns::Sregion_end);
+        defsubr(&*editfns::Smark_marker);
     }
 }

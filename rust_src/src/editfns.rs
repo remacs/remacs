@@ -1,11 +1,11 @@
 //! Lisp functions pertaining to editing.
 
 use remacs_macros::lisp_fn;
-use lisp::LispObject;
-use remacs_sys::EmacsInt;
+use lisp::{LispObject, clip_to_bounds};
+use remacs_sys::{EmacsInt, globals, Qmark_inactive};
 use threads::ThreadState;
 use buffers::get_buffer;
-
+use marker::marker_position;
 
 /// Return value of point, as an integer.
 /// Beginning of buffer is position (point-min).
@@ -67,4 +67,50 @@ pub fn eolp() -> LispObject {
     LispObject::from_bool(
         buffer_ref.pt == buffer_ref.zv() || buffer_ref.fetch_byte(buffer_ref.pt_byte) == b'\n',
     )
+}
+
+// Return the start or end position of the region.
+// BEGINNINGP means return the start.
+// If there is no region active, signal an error.
+fn region_limit(beginningp: bool) -> LispObject {
+    let current_buf = ThreadState::current_buffer();
+    if LispObject::from_raw(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil() &&
+        LispObject::from_raw(unsafe { globals.f_Vmark_even_if_inactive }).is_nil() &&
+        current_buf.mark_active().is_nil()
+    {
+        xsignal!(Qmark_inactive);
+    }
+
+    let m = marker_position(current_buf.mark());
+    if m.is_nil() {
+        error!("The mark is not set now, so there is no region");
+    }
+
+    let num = m.as_fixnum_or_error();
+    // Clip to the current narrowing (bug#11770)
+    LispObject::from_fixnum(if ((current_buf.pt as EmacsInt) < num) == beginningp {
+        current_buf.pt as EmacsInt
+    } else {
+        clip_to_bounds(current_buf.begv, num, current_buf.zv) as EmacsInt
+    })
+}
+
+/// Return the integer value of point or mark, whichever is smaller.
+#[lisp_fn]
+fn region_beginning() -> LispObject {
+    region_limit(true)
+}
+
+/// Return the integer value of point or mark, whichever is larger.
+#[lisp_fn]
+fn region_end() -> LispObject {
+    region_limit(false)
+}
+
+/// Return this buffer's mark, as a marker object.
+/// Watch out!  Moving this marker changes the mark position.
+/// If you set the marker not to point anywhere, the buffer will have no mark.
+#[lisp_fn]
+fn mark_marker() -> LispObject {
+    ThreadState::current_buffer().mark()
 }
