@@ -248,7 +248,7 @@
   ;; parameters.  END isn't used.
   (cond
    ((null c-macro-cache))
-   ((< beg (car c-macro-cache))
+   ((<= beg (car c-macro-cache))
     (setq c-macro-cache nil
 	  c-macro-cache-start-pos nil
 	  c-macro-cache-syntactic nil
