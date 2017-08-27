@@ -4884,7 +4884,9 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
 #ifdef USE_GTK
   double mm_width_per_pixel, mm_height_per_pixel;
   GdkDisplay *gdpy;
+#if ! GTK_CHECK_VERSION (3, 22, 0)
   GdkScreen *gscreen;
+#endif
   gint primary_monitor = 0, n_monitors, i;
   Lisp_Object monitor_frames, rest, frame;
   static const char *source = "Gdk";
@@ -4896,11 +4898,15 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
   mm_height_per_pixel = ((double) HeightMMOfScreen (dpyinfo->screen)
 			 / x_display_pixel_height (dpyinfo));
   gdpy = gdk_x11_lookup_xdisplay (dpyinfo->display);
+#if GTK_CHECK_VERSION (3, 22, 0)
+  n_monitors = gdk_display_get_n_monitors (gdpy);
+#else
   gscreen = gdk_display_get_default_screen (gdpy);
 #if GTK_CHECK_VERSION (2, 20, 0)
   primary_monitor = gdk_screen_get_primary_monitor (gscreen);
 #endif
   n_monitors = gdk_screen_get_n_monitors (gscreen);
+#endif
   monitor_frames = Fmake_vector (make_number (n_monitors), Qnil);
   monitors = xzalloc (n_monitors * sizeof *monitors);
 
@@ -4913,7 +4919,14 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
 	{
 	  GdkWindow *gwin = gtk_widget_get_window (FRAME_GTK_WIDGET (f));
 
+#if GTK_CHECK_VERSION (3, 22, 0)
+          for (i = 0; i < n_monitors; i++)
+            if (gdk_display_get_monitor_at_window (gdpy, gwin)
+                == gdk_display_get_monitor (gdpy, i))
+              break;
+#else
 	  i = gdk_screen_get_monitor_at_window (gscreen, gwin);
+#endif
 	  ASET (monitor_frames, i, Fcons (frame, AREF (monitor_frames, i)));
 	}
     }
@@ -4924,9 +4937,19 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       GdkRectangle rec, work;
       struct MonitorInfo *mi = &monitors[i];
 
+#if GTK_CHECK_VERSION (3, 22, 0)
+      GdkMonitor *monitor = gdk_display_get_monitor (gdpy, i);
+      if (gdk_monitor_is_primary (monitor))
+        primary_monitor = i;
+      gdk_monitor_get_geometry (monitor, &rec);
+#else
       gdk_screen_get_monitor_geometry (gscreen, i, &rec);
+#endif
 
-#if GTK_CHECK_VERSION (2, 14, 0)
+#if GTK_CHECK_VERSION (3, 22, 0)
+      width_mm = gdk_monitor_get_width_mm (monitor);
+      height_mm = gdk_monitor_get_height_mm (monitor);
+#elif GTK_CHECK_VERSION (2, 14, 0)
       width_mm = gdk_screen_get_monitor_width_mm (gscreen, i);
       height_mm = gdk_screen_get_monitor_height_mm (gscreen, i);
 #endif
@@ -4935,7 +4958,9 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       if (height_mm < 0)
 	height_mm = rec.height * mm_height_per_pixel + 0.5;
 
-#if GTK_CHECK_VERSION (3, 4, 0)
+#if GTK_CHECK_VERSION (3, 22, 0)
+      gdk_monitor_get_workarea (monitor, &work);
+#elif GTK_CHECK_VERSION (3, 4, 0)
       gdk_screen_get_monitor_workarea (gscreen, i, &work);
 #else
       /* Emulate the behavior of GTK+ 3.4.  */
@@ -4968,7 +4993,9 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       mi->mm_width = width_mm;
       mi->mm_height = height_mm;
 
-#if GTK_CHECK_VERSION (2, 14, 0)
+#if GTK_CHECK_VERSION (3, 22, 0)
+      mi->name = g_strdup (gdk_monitor_get_model (monitor));
+#elif GTK_CHECK_VERSION (2, 14, 0)
       mi->name = gdk_screen_get_monitor_plug_name (gscreen, i);
 #endif
     }
