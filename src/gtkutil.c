@@ -4085,8 +4085,10 @@ xg_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar,
 
         if (int_gtk_range_get_value (GTK_RANGE (wscroll)) != value)
           gtk_range_set_value (GTK_RANGE (wscroll), (gdouble)value);
+#if ! GTK_CHECK_VERSION (3, 18, 0)
         else if (changed)
           gtk_adjustment_changed (adj);
+#endif
 
         xg_ignore_gtk_scrollbar = 0;
 
@@ -4123,7 +4125,9 @@ xg_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar,
       gtk_adjustment_configure (adj, (gdouble) value, (gdouble) lower,
 				(gdouble) upper, (gdouble) step_increment,
 				(gdouble) page_increment, (gdouble) pagesize);
+#if ! GTK_CHECK_VERSION (3, 18, 0)
       gtk_adjustment_changed (adj);
+#endif
       unblock_input ();
     }
 }
