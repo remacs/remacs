@@ -4138,8 +4138,13 @@ xg_event_is_for_scrollbar (struct frame *f, const XEvent *event)
       GdkDisplay *gdpy = gdk_x11_lookup_xdisplay (FRAME_X_DISPLAY (f));
       GdkWindow *gwin;
 #ifdef HAVE_GTK3
+#if GTK_CHECK_VERSION (3, 20, 0)
+      GdkDevice *gdev
+        = gdk_seat_get_pointer (gdk_display_get_default_seat (gdpy));
+#else
       GdkDevice *gdev = gdk_device_manager_get_client_pointer
         (gdk_display_get_device_manager (gdpy));
+#endif
       gwin = gdk_device_get_window_at_position (gdev, NULL, NULL);
 #else
       gwin = gdk_display_get_window_at_pointer (gdpy, NULL, NULL);
