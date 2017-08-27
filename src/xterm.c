@@ -13311,6 +13311,7 @@ transition between the various maximization states.  */);
     doc: /* Non-nil means rely on gtk_window_move to set frame positions.
 If this variable is t (the default), the GTK build uses the function
 gtk_window_move to set or store frame positions and disables some time
-consuming frame position adjustments.  */);
+consuming frame position adjustments.  In newer versions of GTK, Emacs
+always uses gtk_window_move and ignores the value of this variable.  */);
   x_gtk_use_window_move = true;
 }

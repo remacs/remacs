@@ -1478,6 +1478,8 @@ be a list of the form returned by `event-start' and `event-end'."
 ;; but Stefan insists to mark it so.
 (make-obsolete-variable 'translation-table-for-input nil "23.1")
 
+(make-obsolete-variable 'x-gtk-use-window-move nil "26.1")
+
 (defvaralias 'messages-buffer-max-lines 'message-log-max)
 
 ;;;; Alternate names for functions - these are not being phased out.

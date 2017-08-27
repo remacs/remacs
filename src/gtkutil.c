@@ -792,6 +792,7 @@ xg_hide_tooltip (struct frame *f)
     General functions for creating widgets, resizing, events, e.t.c.
  ***********************************************************************/
 
+#if ! GTK_CHECK_VERSION (3, 22, 0)
 static void
 my_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
 		const gchar *msg, gpointer user_data)
@@ -799,6 +800,7 @@ my_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
   if (!strstr (msg, "visible children"))
     fprintf (stderr, "XX %s-WARNING **: %s\n", log_domain, msg);
 }
+#endif
 
 /* Make a geometry string and pass that to GTK.  It seems this is the
    only way to get geometry position right if the user explicitly
@@ -810,8 +812,10 @@ xg_set_geometry (struct frame *f)
 {
   if (f->size_hint_flags & (USPosition | PPosition))
     {
+#if ! GTK_CHECK_VERSION (3, 22, 0)
       if (x_gtk_use_window_move)
 	{
+#endif
 	  /* Handle negative positions without consulting
 	     gtk_window_parse_geometry (Bug#25851).  The position will
 	     be off by scrollbar width + window manager decorations.  */
@@ -828,6 +832,7 @@ xg_set_geometry (struct frame *f)
 
 	  /* Reset size hint flags.  */
 	  f->size_hint_flags &= ~ (XNegative | YNegative);
+# if ! GTK_CHECK_VERSION (3, 22, 0)
 	}
       else
 	{
@@ -859,6 +864,7 @@ xg_set_geometry (struct frame *f)
 
 	  g_log_remove_handler ("Gtk", id);
 	}
+#endif
     }
 }
 

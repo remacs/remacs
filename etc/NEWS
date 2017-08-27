@@ -1261,6 +1261,10 @@ break.
 ** The arguments LOCKNAME and MUSTBENEW of 'write-region' are
 propagated to file name handlers now.
 
+** When built against recent versions of GTK+, Emacs always uses
+gtk_window_move for moving frames and ignores the value of the
+variable 'x-gtk-use-window-move'.  The variable is now obsolete.
+
 
 * Lisp Changes in Emacs 26.1
 
