@@ -1041,14 +1041,3 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
         s.len() as ptrdiff_t,
     )
 }
-
-pub fn clip_to_bounds(lower: isize, num: EmacsInt, upper: isize) -> isize {
-    let num = num as isize;
-    if num < lower {
-        lower
-    } else if num <= upper {
-        num
-    } else {
-        upper
-    }
-}

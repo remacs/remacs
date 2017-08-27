@@ -1,7 +1,8 @@
 //! Lisp functions pertaining to editing.
 
 use remacs_macros::lisp_fn;
-use lisp::{LispObject, clip_to_bounds};
+use lisp::LispObject;
+use util::clip_to_bounds;
 use remacs_sys::{EmacsInt, globals, Qmark_inactive};
 use threads::ThreadState;
 use buffers::get_buffer;
