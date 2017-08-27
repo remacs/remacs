@@ -4617,7 +4617,11 @@ xg_make_tool_item (struct frame *f,
   if (wimage && text_image)
     gtk_box_pack_start (GTK_BOX (vb), wimage, TRUE, TRUE, 0);
 
+#if GTK_CHECK_VERSION (3, 20, 0)
+  gtk_widget_set_focus_on_click (wb, FALSE);
+#else
   gtk_button_set_focus_on_click (GTK_BUTTON (wb), FALSE);
+#endif
   gtk_button_set_relief (GTK_BUTTON (wb), GTK_RELIEF_NONE);
   gtk_container_add (GTK_CONTAINER (wb), vb);
   gtk_container_add (GTK_CONTAINER (weventbox), wb);
