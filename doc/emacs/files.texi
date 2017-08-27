@@ -1611,8 +1611,12 @@ attempts to open file @var{new} will refer to whatever file is named
 @var{target} at the time the opening is done, or will get an error if
 the name @var{target} is nonexistent at that time.  This command does
 not expand the argument @var{target}, so that it allows you to specify
-a relative name as the target of the link.  On MS-Windows, this
-command works only on MS Windows Vista and later.  On remote systems,
+a relative name as the target of the link.  However, this command
+does expand leading @samp{~} in @var{target} so that you can easily
+specify home directories, and strips leading @samp{/:} so that you can
+specify relative names beginning with literal @samp{~} or @samp{/:}.
+@xref{Quoted File Names}.  On MS-Windows, this command works only on
+MS Windows Vista and later.  When @var{new} is remote,
 it works depending on the system type.
 
 @node Misc File Ops

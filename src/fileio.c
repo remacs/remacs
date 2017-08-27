@@ -2413,7 +2413,8 @@ DEFUN ("make-symbolic-link", Fmake_symbolic_link, Smake_symbolic_link, 2, 3,
 Both args must be strings.
 Signal a `file-already-exists' error if a file LINKNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.
-An integer third arg means request confirmation if LINKNAME already exists.
+An integer third arg means request confirmation if LINKNAME already
+exists, and expand leading "~" or strip leading "/:" in TARGET.
 This happens for interactive use with M-x.  */)
   (Lisp_Object target, Lisp_Object linkname, Lisp_Object ok_if_already_exists)
 {
@@ -2421,20 +2422,14 @@ This happens for interactive use with M-x.  */)
   Lisp_Object encoded_target, encoded_linkname;
 
   CHECK_STRING (target);
-  /* If the link target has a ~, we must expand it to get
-     a truly valid file name.  Otherwise, do not expand;
-     we want to permit links to relative file names.  */
-  if (SREF (target, 0) == '~')
-    target = Fexpand_file_name (target, Qnil);
-
+  if (INTEGERP (ok_if_already_exists))
+    {
+      if (SREF (target, 0) == '~')
+	target = Fexpand_file_name (target, Qnil);
+      else if (SREF (target, 0) == '/' && SREF (target, 1) == ':')
+	target = Fsubstring_no_properties (target, make_number (2), Qnil);
+    }
   linkname = expand_cp_target (target, linkname);
-
-  /* If the file name has special constructs in it,
-     call the corresponding file handler.  */
-  handler = Ffind_file_name_handler (target, Qmake_symbolic_link);
-  if (!NILP (handler))
-    return call4 (handler, Qmake_symbolic_link, target,
-		  linkname, ok_if_already_exists);
 
   /* If the new link name has special constructs in it,
      call the corresponding file handler.  */
@@ -2633,11 +2628,6 @@ emacs_readlinkat (int fd, char const *filename)
     return Qnil;
 
   val = build_unibyte_string (buf);
-  if (buf[0] == '/' && strchr (buf, ':'))
-    {
-      AUTO_STRING (slash_colon, "/:");
-      val = concat2 (slash_colon, val);
-    }
   if (buf != readlink_buf)
     xfree (buf);
   val = DECODE_FILE (val);

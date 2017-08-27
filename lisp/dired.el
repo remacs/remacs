@@ -2332,10 +2332,7 @@ Otherwise, an error occurs in these cases."
 	  (if (and enable-multibyte-characters
 		   (not (multibyte-string-p file)))
 	      (setq file (string-to-multibyte file)))))
-    (and file (file-name-absolute-p file)
-	 ;; A relative file name can start with ~.
-	 ;; Don't treat it as absolute in this context.
-	 (not (eq (aref file 0) ?~))
+    (and file (files--name-absolute-system-p file)
 	 (setq already-absolute t))
     (cond
      ((null file)

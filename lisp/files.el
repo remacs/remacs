@@ -1146,6 +1146,13 @@ accessible."
 	(funcall handler 'file-local-copy file)
       nil)))
 
+(defun files--name-absolute-system-p (file)
+  "Return non-nil if FILE is an absolute name to the operating system.
+This is like `file-name-absolute-p', except that it returns nil for
+names beginning with `~'."
+  (and (file-name-absolute-p file)
+       (not (eq (aref file 0) ?~))))
+
 (defun file-truename (filename &optional counter prev-dirs)
   "Return the truename of FILENAME.
 If FILENAME is not absolute, first expands it against `default-directory'.
@@ -1247,9 +1254,9 @@ containing it, until no links are left at any level.
 		    ;; since target might look like foo/../bar where foo
 		    ;; is itself a link.  Instead, we handle . and .. above.
 		    (setq filename
-			  (if (file-name-absolute-p target)
-			      target
-			    (concat dir target))
+			  (concat (if (files--name-absolute-system-p target)
+				      "/:" dir)
+				  target)
 			  done nil)
 		  ;; No, we are done!
 		  (setq done t))))))))
@@ -1284,7 +1291,10 @@ it means chase no more than that many links and then stop."
 		 (directory-file-name (file-name-directory newname))))
 	  ;; Now find the parent of that dir.
 	  (setq newname (file-name-directory newname)))
-	(setq newname (expand-file-name tem (file-name-directory newname)))
+	(setq newname (concat (if (files--name-absolute-system-p tem)
+				  "/:"
+				(file-name-directory newname))
+			      tem))
 	(setq count (1+ count))))
     newname))
 
@@ -5504,10 +5514,10 @@ directly into NEWNAME instead."
 	    ;; If NEWNAME is an existing directory and COPY-CONTENTS
 	    ;; is nil, copy into NEWNAME/[DIRECTORY-BASENAME].
 	    ((not copy-contents)
-	     (setq newname (expand-file-name
+	     (setq newname (concat
+			    (file-name-as-directory newname)
 			    (file-name-nondirectory
-			     (directory-file-name directory))
-			    newname))
+			     (directory-file-name directory))))
 	     (and (file-exists-p newname)
 		  (not (file-directory-p newname))
 		  (error "Cannot overwrite non-directory %s with a directory"
@@ -5519,7 +5529,8 @@ directly into NEWNAME instead."
 	       ;; We do not want to copy "." and "..".
 	       (directory-files directory 'full
 				directory-files-no-dot-files-regexp))
-	(let ((target (expand-file-name (file-name-nondirectory file) newname))
+	(let ((target (concat (file-name-as-directory newname)
+			      (file-name-nondirectory file)))
 	      (filetype (car (file-attributes file))))
 	  (cond
 	   ((eq filetype t)       ; Directory but not a symlink.
@@ -7149,8 +7160,8 @@ Otherwise, trash FILENAME using the freedesktop.org conventions,
 	 ;; If `trash-directory' is non-nil, move the file there.
 	 (let* ((trash-dir   (expand-file-name trash-directory))
 		(fn          (directory-file-name (expand-file-name filename)))
-		(new-fn      (expand-file-name (file-name-nondirectory fn)
-					       trash-dir)))
+		(new-fn      (concat (file-name-as-directory trash-dir)
+				     (file-name-nondirectory fn))))
 	   ;; We can't trash a parent directory of trash-directory.
 	   (if (string-prefix-p fn trash-dir)
 	       (error "Trash directory `%s' is a subdirectory of `%s'"

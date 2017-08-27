@@ -19,14 +19,13 @@
 
 (require 'ert)
 
-(defun try-char (char link)
-  (let ((target (string char)))
-    (make-symbolic-link target link)
-    (let* ((read-link (file-symlink-p link))
-           (failure (unless (string-equal target read-link)
-                      (list 'string-equal target read-link))))
-      (delete-file link)
-      failure)))
+(defun try-link (target link)
+  (make-symbolic-link target link)
+  (let* ((read-link (file-symlink-p link))
+         (failure (unless (string-equal target read-link)
+                    (list 'string-equal target read-link))))
+    (delete-file link)
+    failure))
 
 (defun fileio-tests--symlink-failure ()
   (let* ((dir (make-temp-file "fileio" t))
@@ -36,9 +35,9 @@
               (char 0))
           (while (and (not failure) (< char 127))
             (setq char (1+ char))
-            (unless (= char ?~)
-              (setq failure (try-char char link))))
-          failure)
+            (setq failure (try-link (string char) link)))
+          (or failure
+              (try-link "/:" link)))
       (delete-directory dir t))))
 
 (ert-deftest fileio-tests--odd-symlink-chars ()

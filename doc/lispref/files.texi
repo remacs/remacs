@@ -1726,14 +1726,17 @@ default file permissions (see @code{set-default-file-modes} below), if
 SELinux context are not copied over in either case.
 @end deffn
 
-@deffn Command make-symbolic-link filename newname &optional ok-if-already-exists
+@deffn Command make-symbolic-link target newname &optional ok-if-already-exists
 @pindex ln
 @kindex file-already-exists
-This command makes a symbolic link to @var{filename}, named
+This command makes a symbolic link to @var{target}, named
 @var{newname}.  This is like the shell command @samp{ln -s
-@var{filename} @var{newname}}.  The @var{filename} argument
+@var{target} @var{newname}}.  The @var{target} argument
 is treated only as a string; it need not name an existing file.
-If @var{filename} is a relative file name, the resulting symbolic link
+If @var{ok-if-already-exists} is an integer, indicating interactive
+use, then leading @samp{~} is expanded and leading @samp{/:} is
+stripped in the @var{target} string.
+If @var{target} is a relative file name, the resulting symbolic link
 is interpreted relative to the directory containing the symbolic link.
 @xref{Relative File Names}.
 
