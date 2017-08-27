@@ -296,6 +296,18 @@ pub struct Lisp_Marker {
     pub bytepos: ptrdiff_t,
 }
 
+// TODO: write a docstring based on the docs in lisp.h.
+#[repr(C)]
+pub struct Lisp_Overlay {
+    pub ty: Lisp_Misc_Type,
+    // GC mark bit, 16 bits spacer
+    padding: u16,
+    pub next: *const Lisp_Overlay,
+    pub start: Lisp_Object,
+    pub end: Lisp_Object,
+    pub plist: Lisp_Object,
+}
+
 /// Represents the cursor position within an Emacs window. For
 /// documentation see stuct cursor_pos in window.h.
 #[repr(C)]
@@ -1297,6 +1309,7 @@ extern "C" {
     pub static Qcharacterp: Lisp_Object;
     pub static Qchar_table_p: Lisp_Object;
     pub static Qbufferp: Lisp_Object;
+    pub static Qoverlayp: Lisp_Object;
     pub static Qminus: Lisp_Object;
 
     pub static Qinteger: Lisp_Object;

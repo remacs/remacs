@@ -3,10 +3,12 @@
 use libc::{c_void, c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Type, Vbuffer_alist, make_lisp_ptr};
+use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+                 make_lisp_ptr};
 use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
+use marker::{marker_position, marker_buffer};
 
 use std::mem;
 
@@ -16,6 +18,7 @@ pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
 
 pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
+pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
     #[inline]
@@ -92,6 +95,18 @@ impl LispBufferRef {
     #[inline]
     pub fn is_live(self) -> bool {
         LispObject::from_raw(self.name).is_not_nil()
+    }
+}
+
+impl LispOverlayRef {
+    #[inline]
+    pub fn start(&self) -> LispObject {
+        LispObject::from_raw(self.start)
+    }
+
+    #[inline]
+    pub fn end(&self) -> LispObject {
+        LispObject::from_raw(self.end)
     }
 }
 
@@ -212,6 +227,28 @@ fn buffer_modified_tick(buffer: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
     LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().chars_modiff())
+}
+
+/// Return the position at which OVERLAY starts.
+#[lisp_fn]
+fn overlay_start(overlay: LispObject) -> LispObject {
+    let marker = overlay.as_overlay_or_error().start();
+    marker_position(marker)
+}
+
+/// Return the position at which OVERLAY ends.
+#[lisp_fn]
+fn overlay_end(overlay: LispObject) -> LispObject {
+    let marker = overlay.as_overlay_or_error().end();
+    marker_position(marker)
+}
+
+/// Return the buffer OVERLAY belongs to.
+/// Return nil if OVERLAY has been deleted.
+#[lisp_fn]
+fn overlay_buffer(overlay: LispObject) -> LispObject {
+    let marker = overlay.as_overlay_or_error().start();
+    marker_buffer(marker)
 }
 
 #[no_mangle]
