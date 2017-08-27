@@ -5244,6 +5244,7 @@ xg_initialize (void)
 
   settings = gtk_settings_get_for_screen (gdk_display_get_default_screen
                                           (gdk_display_get_default ()));
+#if ! GTK_CHECK_VERSION (3, 10, 0)
   /* Remove F10 as a menu accelerator, it does not mix well with Emacs key
      bindings.  It doesn't seem to be any way to remove properties,
      so we set it to "" which in means "no key".  */
@@ -5251,13 +5252,18 @@ xg_initialize (void)
                                     "gtk-menu-bar-accel",
                                     "",
                                     EMACS_CLASS);
+#endif
 
   /* Make GTK text input widgets use Emacs style keybindings.  This is
      Emacs after all.  */
+#if GTK_CHECK_VERSION (3, 16, 0)
+  g_object_set (settings, "gtk-key-theme-name", "Emacs", NULL);
+#else
   gtk_settings_set_string_property (settings,
                                     "gtk-key-theme-name",
                                     "Emacs",
                                     EMACS_CLASS);
+#endif
 
   /* Make dialogs close on C-g.  Since file dialog inherits from
      dialog, this works for them also.  */
