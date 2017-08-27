@@ -1050,16 +1050,23 @@ static void
 xg_set_widget_bg (struct frame *f, GtkWidget *w, unsigned long pixel)
 {
 #ifdef HAVE_GTK3
-  GdkRGBA bg;
   XColor xbg;
   xbg.pixel = pixel;
   if (XQueryColor (FRAME_X_DISPLAY (f), FRAME_X_COLORMAP (f), &xbg))
     {
-      bg.red = (double)xbg.red/65535.0;
-      bg.green = (double)xbg.green/65535.0;
-      bg.blue = (double)xbg.blue/65535.0;
-      bg.alpha = 1.0;
-      gtk_widget_override_background_color (w, GTK_STATE_FLAG_NORMAL, &bg);
+      const char format[] = "* { background-color: #%02x%02x%02x; }";
+      /* The format is always longer than the resulting string.  */
+      char buffer[sizeof format];
+      int n = snprintf(buffer, sizeof buffer, format,
+                       xbg.red >> 8, xbg.green >> 8, xbg.blue >> 8);
+      eassert (n > 0);
+      eassert (n < sizeof buffer);
+      GtkCssProvider *provider = gtk_css_provider_new ();
+      gtk_css_provider_load_from_data (provider, buffer, -1, NULL);
+      gtk_style_context_add_provider (gtk_widget_get_style_context(w),
+                                      GTK_STYLE_PROVIDER (provider),
+                                      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+      g_clear_object (&provider);
     }
 #else
   GdkColor bg;
