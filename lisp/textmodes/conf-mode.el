@@ -262,6 +262,12 @@ This variable is best set in the file local variables, or through
     ("\\_<false\\|true\\_>" 0 'font-lock-keyword-face))
   "Keywords to highlight in Conf TOML mode.")
 
+(defvar conf-desktop-font-lock-keywords
+  `(,@conf-font-lock-keywords
+    ("\\_<false\\|true\\_>" 0 'font-lock-constant-face)
+    ("\\_<%[uUfFick%]\\_>" 0 'font-lock-constant-face))
+  "Keywords to highlight in Conf Desktop mode.")
+
 (defvar conf-assignment-sign ?=
   "Sign used for assignments (char or string).")
 
@@ -449,16 +455,7 @@ The optional arg FONT-LOCK is the value for FONT-LOCK-KEYWORDS."
 ;;;###autoload
 (define-derived-mode conf-unix-mode conf-mode "Conf[Unix]"
   "Conf Mode starter for Unix style Conf files.
-Comments start with `#'.
-For details see `conf-mode'.  Example:
-
-# Conf mode font-locks this right on Unix and with \\[conf-unix-mode]
-
-[Desktop Entry]
-	 Encoding=UTF-8
-	 Name=The GIMP
-	 Name[ca]=El GIMP
-	 Name[cs]=GIMP"
+Comments start with `#'.  For details see `conf-mode'."
   (conf-mode-initialize "#"))
 
 ;;;###autoload
@@ -676,6 +673,21 @@ value = \"some string\""
   (conf-mode-initialize "#" 'conf-toml-font-lock-keywords)
   (setq-local conf-assignment-column 0)
   (setq-local conf-assignment-sign ?=))
+
+;;;###autoload
+(define-derived-mode conf-desktop-mode conf-unix-mode "Conf[Desktop]"
+  "Conf Mode started for freedesktop.org Desktop files.
+Comments start with `#' and \"assignments\" are with `='.
+For details see `conf-mode'.
+
+# Conf mode font-locks this correctly with \\[conf-desktop-mode]
+	[Desktop Entry]
+	Name=GNU Image Manipulation Program
+	Name[oc]=Editor d'imatge GIMP
+	Exec=gimp-2.8 %U
+	Terminal=false"
+  (conf-mode-initialize "#" 'conf-desktop-font-lock-keywords)
+  (conf-quote-normal nil))
 
 (provide 'conf-mode)
 
