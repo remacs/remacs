@@ -695,6 +695,7 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
         }
     }
 
+    // @TODO haha, this is not safe during a GC!
     for x in to_remove.iter() {
         ptr.remove(*x);
     }
@@ -702,6 +703,12 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
     marked
 }
 
+// Programmer note: You CANNOT trigger a hash here, or in
+// sweep_weak_table. This function happens during a GC, and
+// calling 'sxhash' during a GC is not safe, as it could trigger
+// us to hash a vector or string, which uses their size field to
+// encode their GC mark bit. Meaning that their "size" will print as
+// something like -9285893858, and will trigger all sorts of C horribleness
 /// Remove elements from weak hash tables that don't survive the
 /// current garbage collection.  Remove weak tables that don't survive
 /// from Vweak_hash_tables.  Called from gc_sweep.
