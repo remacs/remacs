@@ -89,11 +89,12 @@ fn region_limit(beginningp: bool) -> LispObject {
 
     let num = m.as_fixnum_or_error();
     // Clip to the current narrowing (bug#11770)
-    LispObject::from_fixnum(if ((current_buf.pt as EmacsInt) < num) == beginningp {
-        current_buf.pt as EmacsInt
+    if ((current_buf.pt as EmacsInt) < num) == beginningp {
+        LispObject::from_fixnum(current_buf.pt as EmacsInt)
     } else {
-        clip_to_bounds(current_buf.begv, num, current_buf.zv) as EmacsInt
-    })
+        LispObject::from_fixnum(clip_to_bounds(current_buf.begv, num, current_buf.zv) as
+            EmacsInt)
+    }
 }
 
 /// Return the integer value of point or mark, whichever is smaller.
