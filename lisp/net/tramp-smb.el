@@ -253,7 +253,7 @@ See `tramp-actions-before-shell' for more info.")
     (file-remote-p . tramp-handle-file-remote-p)
     ;; `file-selinux-context' performed by default handler.
     (file-symlink-p . tramp-handle-file-symlink-p)
-    ;; `file-truename' performed by default handler.
+    (file-truename . tramp-smb-handle-file-truename)
     (file-writable-p . tramp-smb-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
     ;; `find-file-noselect' performed by default handler.
@@ -947,6 +947,23 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		(nth 0 x))))
 	   (tramp-smb-get-file-entries directory))))))))
 
+(defun tramp-smb-handle-file-truename (filename)
+  "Like `file-truename' for Tramp files."
+  (format
+   "%s%s"
+   (with-parsed-tramp-file-name (expand-file-name filename) nil
+     (tramp-make-tramp-file-name
+      method user domain host port
+      (with-tramp-file-property v localname "file-truename"
+	(funcall
+	 (if (tramp-compat-file-name-quoted-p localname)
+	     'tramp-compat-file-name-quote 'identity)
+	 ;; We don't follow symlink of symlink.
+	 (or (file-symlink-p filename) localname)))))
+
+   ;; Preserve trailing "/".
+   (if (string-equal (file-name-nondirectory filename) "") "/" "")))
+
 (defun tramp-smb-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files."
   (if (file-exists-p filename)
@@ -1147,8 +1164,9 @@ component is used as the target of the symlink."
 
       (unless
 	  (tramp-smb-send-command
-	   v
-	   (format "symlink \"%s\" \"%s\"" target (tramp-smb-get-localname v)))
+	   v (format "symlink \"%s\" \"%s\""
+		     (tramp-compat-file-name-unquote target)
+		     (tramp-smb-get-localname v)))
 	(tramp-error
 	 v 'file-error
 	 "error with make-symbolic-link, see buffer `%s' for details"
