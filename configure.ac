@@ -3958,6 +3958,15 @@ AC_CHECK_FUNCS([aligned_alloc posix_memalign], [break])
 AC_CHECK_DECLS([aligned_alloc], [], [], [[#include <stdlib.h>]])
 
 dnl Cannot use AC_CHECK_FUNCS
+AC_CACHE_CHECK([for __builtin_frame_address],
+  [emacs_cv_func___builtin_frame_address],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([], [__builtin_frame_address (0);])],
+     [emacs_cv_func___builtin_frame_address=yes],
+     [emacs_cv_func___builtin_frame_address=no])])
+if test $emacs_cv_func___builtin_frame_address = yes; then
+  AC_DEFINE([HAVE___BUILTIN_FRAME_ADDRESS], 1,
+	    [Define to 1 if you have the '__builtin_frame_address' function.])
+fi
 AC_CACHE_CHECK([for __builtin_unwind_init],
 	       emacs_cv_func___builtin_unwind_init,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([], [__builtin_unwind_init ();])],

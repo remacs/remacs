@@ -5061,22 +5061,31 @@ typedef union
 # endif
 #endif
 
+/* Yield an address close enough to the top of the stack that the
+   garbage collector need not scan above it.  Callers should be
+   declared NO_INLINE.  */
+#ifdef HAVE___BUILTIN_FRAME_ADDRESS
+# define NEAR_STACK_TOP(addr) ((void) (addr), __builtin_frame_address (0))
+#else
+# define NEAR_STACK_TOP(addr) (addr)
+#endif
+
 /* Set *P to the address of the top of the stack.  This must be a
    macro, not a function, so that it is executed in the caller’s
    environment.  It is not inside a do-while so that its storage
-   survives the macro.  */
+   survives the macro.  Callers should be declared NO_INLINE.  */
 #ifdef HAVE___BUILTIN_UNWIND_INIT
 # define SET_STACK_TOP_ADDRESS(p)	\
    stacktop_sentry sentry;		\
    __builtin_unwind_init ();		\
-   *(p) = &sentry
+   *(p) = NEAR_STACK_TOP (&sentry)
 #else
 # define SET_STACK_TOP_ADDRESS(p)		\
    stacktop_sentry sentry;			\
    __builtin_unwind_init ();			\
    test_setjmp ();				\
    sys_setjmp (sentry.j);			\
-   *(p) = &sentry + (stack_bottom < &sentry.c)
+   *(p) = NEAR_STACK_TOP (&sentry + (stack_bottom < &sentry.c))
 #endif
 
 /* Mark live Lisp objects on the C stack.
@@ -5148,7 +5157,7 @@ mark_stack (char *bottom, char *end)
    It is invalid to run any Lisp code or to allocate any GC memory
    from FUNC.  */
 
-void
+NO_INLINE void
 flush_stack_call_func (void (*func) (void *arg), void *arg)
 {
   void *end;
@@ -6097,7 +6106,8 @@ where each entry has the form (NAME SIZE USED FREE), where:
   to return them to the OS).
 However, if there was overflow in pure space, `garbage-collect'
 returns nil, because real GC can't be done.
-See Info node `(elisp)Garbage Collection'.  */)
+See Info node `(elisp)Garbage Collection'.  */
+       attributes: noinline)
   (void)
 {
   void *end;
