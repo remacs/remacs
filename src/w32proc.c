@@ -1449,7 +1449,11 @@ waitpid (pid_t pid, int *status, int options)
 
   do
     {
-      maybe_quit ();
+      /* When child_status_changed calls us with WNOHANG in OPTIONS,
+	 we are supposed to be non-interruptible, so don't allow
+	 quitting in that case.  */
+      if (!dont_wait)
+	maybe_quit ();
       active = WaitForMultipleObjects (nh, wait_hnd, FALSE, timeout_ms);
     } while (active == WAIT_TIMEOUT && !dont_wait);
 
