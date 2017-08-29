@@ -365,6 +365,14 @@ own@footnote{This option has no effect on MS-Windows.}.
 Enable the Emacs Lisp debugger for errors in the init file.
 @xref{Error Debugging,, Entering the Debugger on an Error, elisp, The
 GNU Emacs Lisp Reference Manual}.
+
+@item --module-assertions
+@opindex --module-assertions
+@cindex module verification
+Enable expensive correctness checks when dealing with dynamically
+loadable modules.  This is intended for module authors that wish to
+verify that their module conforms to the module API requirements.  The
+option makes Emacs abort if a module-related assertion triggers.
 @end table
 
 @node Command Example

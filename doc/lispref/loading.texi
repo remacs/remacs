@@ -1184,3 +1184,8 @@ object.
 
 Loadable modules in Emacs are enabled by using the
 @kbd{--with-modules} option at configure time.
+
+If you write your own dynamic modules, you may wish to verify their
+conformance to the Emacs dynamic module API.  Invoking Emacs with the
+@kbd{--module-assertions} option will help you in this matter.
+@xref{Initial Options,,,emacs, The GNU Emacs Manual}.
