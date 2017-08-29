@@ -424,11 +424,10 @@ Assume point is in the corresponding edit buffer."
       (buffer-string))))
 
 (defun org-src--edit-element
-    (datum name &optional major write-back contents remote)
+    (datum name &optional initialize write-back contents remote)
   "Edit DATUM contents in a dedicated buffer NAME.
 
-MAJOR is the major mode used in the edit buffer.  A nil value is
-equivalent to `fundamental-mode'.
+INITIALIZE is a function to call upon creating the buffer.
 
 When WRITE-BACK is non-nil, assume contents will replace original
 region.  Moreover, if it is a function, apply it in the edit
@@ -489,12 +488,13 @@ Leave point in edit buffer."
 	(unless preserve-ind (org-do-remove-indentation))
 	(set-buffer-modified-p nil)
 	(setq buffer-file-name nil)
-	;; Start major mode.
-	(if (not major) (fundamental-mode)
+	;; Initialize buffer.
+	(when (functionp initialize)
 	  (let ((org-inhibit-startup t))
-	    (condition-case e (funcall major)
-	      (error (message "Language mode `%s' fails with: %S"
-			      major (nth 1 e))))))
+	    (condition-case e
+		(funcall initialize)
+	      (error (message "Initialization fails with: %S"
+			      (error-message-string e))))))
 	;; Transmit buffer-local variables for exit function.  It must
 	;; be done after initializing major mode, as this operation
 	;; may reset them otherwise.
@@ -837,7 +837,10 @@ A coderef format regexp can only match at the end of a line."
       (org-src--edit-element
        definition
        (format "*Edit footnote [%s]*" label)
-       #'org-mode
+       (let ((source (current-buffer)))
+	 (lambda ()
+	   (org-mode)
+	   (org-clone-local-variables source)))
        (lambda ()
 	 (if (not inline?) (delete-region (point) (search-forward "]"))
 	   (delete-region (point) (search-forward ":" nil t 2))

@@ -879,22 +879,24 @@ The file is stored under the name chosen in
   "Export current agenda view to an iCalendar FILE.
 This function assumes major mode for current buffer is
 `org-agenda-mode'."
-  (let* ((org-export-babel-evaluate)	; Don't evaluate Babel block.
+  (let* ((org-export-babel-evaluate)	;don't evaluate Babel blocks
 	 (contents
 	  (org-export-string-as
 	   (with-output-to-string
 	     (save-excursion
-	       (let ((p (point-min)))
+	       (let ((p (point-min))
+		     (seen nil))	;prevent duplicates
 		 (while (setq p (next-single-property-change p 'org-hd-marker))
 		   (let ((m (get-text-property p 'org-hd-marker)))
-		     (when m
+		     (when (and m (not (member m seen)))
+		       (push m seen)
 		       (with-current-buffer (marker-buffer m)
 			 (org-with-wide-buffer
 			  (goto-char (marker-position m))
 			  (princ
 			   (org-element-normalize-string
-			    (buffer-substring
-			     (point) (progn (outline-next-heading) (point)))))))))
+			    (buffer-substring (point)
+					      (org-entry-end-position))))))))
 		   (forward-line)))))
 	   'icalendar t
 	   '(:ascii-charset utf-8 :ascii-links-to-notes nil

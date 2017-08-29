@@ -4,7 +4,8 @@
 @settitle The Org Manual
 @include docstyle.texi
 
-@set VERSION 9.0.9
+@set VERSION 9.0.10
+@set DATE 2017-08-27
 
 @c Version and Contact Info
 @set MAINTAINERSITE @uref{http://orgmode.org,maintainers web page}
@@ -499,6 +500,12 @@ Capture templates
 * Template expansion::          Filling in information about time and context
 * Templates in contexts::       Only show a template in a specific context
 
+Protocols for external access
+
+* @code{store-link} protocol::  Store a link, push URL to kill-ring.
+* @code{capture} protocol::     Fill a buffer with external information.
+* @code{open-source} protocol::  Edit published contents.
+
 Archiving
 
 * Moving subtrees::             Moving a tree to an archive file
@@ -830,7 +837,7 @@ different formats such as HTML, @LaTeX{}, Open Document, and Markdown.  New
 export backends can be derived from existing ones, or defined from scratch.
 
 Org files can include source code blocks, which makes Org uniquely suited for
-authoring technical documents with code examples. Org source code blocks are
+authoring technical documents with code examples.  Org source code blocks are
 fully functional; they can be evaluated in place and their results can be
 captured in the file.  This makes it possible to create a single file
 reproducible research compendium.
@@ -7310,7 +7317,11 @@ dynamic insertion of content.  The templates are expanded in the order given her
             @r{%^@{prompt|default|completion2|completion3...@}.}
             @r{The arrow keys access a prompt-specific history.}
 %\1 @dots{} %\N @r{Insert the text entered at the Nth %^@{@var{prompt}@}, where @code{N} is}
-            @r{a number, starting from 1.}
+            @r{a number, starting from 1.@footnote{As required in Emacs
+               Lisp, it is necessary to escape any backslash character in
+               a string with another backslash.  So, in order to use
+               @samp{%\1} placeholder, you need to write @samp{%\\1} in
+               the template.}}
 %?          @r{After completing the template, position cursor here.}
 @end smallexample
 
@@ -7505,16 +7516,202 @@ For more information, including how to read atom feeds, see
 @node Protocols
 @section Protocols for external access
 @cindex protocols, for external access
-@cindex emacsserver
 
-You can set up Org for handling protocol calls from outside applications that
-are passed to Emacs through the @file{emacsserver}.  For example, you can
+Org protocol is a mean to trigger custom actions in Emacs from external
+applications.  Any application that supports calling external programs with
+an URL as argument may be used with this functionality.  For example, you can
 configure bookmarks in your web browser to send a link to the current page to
-Org and create a note from it using capture (@pxref{Capture}).  Or you
-could create a bookmark that will tell Emacs to open the local source file of
-a remote website you are looking at with the browser.  See
-@uref{http://orgmode.org/worg/org-contrib/org-protocol.php} for detailed
-documentation and setup instructions.
+Org and create a note from it using capture (@pxref{Capture}).  You can also
+create a bookmark that tells Emacs to open the local source file of a remote
+website you are browsing.
+
+@cindex Org protocol, set-up
+@cindex Installing Org protocol
+In order to use Org protocol from an application, you need to register
+@samp{org-protocol://} as a valid scheme-handler.  External calls are passed
+to Emacs through the @code{emacsclient} command, so you also need to ensure
+an Emacs server is running.  More precisely, when the application calls
+
+@example
+emacsclient org-protocol://PROTOCOL?key1=val1&key2=val2
+@end example
+
+@noindent
+Emacs calls the handler associated to @samp{PROTOCOL} with argument
+@samp{(:key1 val1 :key2 val2)}.
+
+@cindex protocol, new protocol
+@cindex defining new protocols
+Org protocol comes with three predefined protocols, detailed in the following
+sections.  Configure @code{org-protocol-protocol-alist} to define your own.
+
+@menu
+* @code{store-link} protocol::  Store a link, push URL to kill-ring.
+* @code{capture} protocol::     Fill a buffer with external information.
+* @code{open-source} protocol::  Edit published contents.
+@end menu
+
+@node @code{store-link} protocol
+@subsection @code{store-link} protocol
+@cindex store-link protocol
+@cindex protocol, store-link
+
+Using @code{store-link} handler, you can copy links, insertable through
+@kbd{M-x org-insert-link} or yanking thereafter.  More precisely, the command
+
+@example
+emacsclient org-protocol://store-link?url=URL&title=TITLE
+@end example
+
+@noindent
+stores the following link:
+
+@example
+[[URL][TITLE]]
+@end example
+
+In addition, @samp{URL} is pushed on the kill-ring for yanking.  You need to
+encode @samp{URL} and @samp{TITLE} if they contain slashes, and probably
+quote those for the shell.
+
+To use this feature from a browser, add a bookmark with an arbitrary name,
+e.g., @samp{Org: store-link} and enter this as @emph{Location}:
+
+@example
+javascript:location.href='org-protocol://store-link?url='+
+      encodeURIComponent(location.href);
+@end example
+
+@node @code{capture} protocol
+@subsection @code{capture} protocol
+@cindex capture protocol
+@cindex protocol, capture
+
+@cindex capture, %:url placeholder
+@cindex %:url template expansion in capture
+@cindex capture, %:title placeholder
+@cindex %:title template expansion in capture
+Activating @code{capture} handler pops up a @samp{Capture} buffer and fills
+the capture template associated to the @samp{X} key with them.  The template
+refers to the data through @code{%:url} and @code{%:title} placeholders.
+Moreover, any selected text in the browser is appended to the body of the
+entry.
+
+@example
+emacsclient org-protocol://capture?template=X?url=URL?title=TITLE?body=BODY
+@end example
+
+To use this feature, add a bookmark with an arbitrary name, e.g.
+@samp{Org: capture} and enter this as @samp{Location}:
+
+@example
+javascript:location.href='org-protocol://template=x'+
+      '&url='+encodeURIComponent(window.location.href)+
+      '&title='+encodeURIComponent(document.title)+
+      '&body='+encodeURIComponent(window.getSelection());
+@end example
+
+@vindex org-protocol-default-template-key
+The result depends on the capture template used, which is set in the bookmark
+itself, as in the example above, or in
+@code{org-protocol-default-template-key}.
+
+@node @code{open-source} protocol
+@subsection @code{open-source} protocol
+@cindex open-source protocol
+@cindex protocol, open-source
+
+The @code{open-source} handler is designed to help with editing local sources
+when reading a document.  To that effect, you can use a bookmark with the
+following location:
+
+@example
+javascript:location.href='org-protocol://open-source?&url='+
+      encodeURIComponent(location.href)
+@end example
+
+@cindex protocol, open-source, :base-url property
+@cindex :base-url property in open-source protocol
+@cindex protocol, open-source, :working-directory property
+@cindex :working-directory property in open-source protocol
+@cindex protocol, open-source, :online-suffix property
+@cindex :online-suffix property in open-source protocol
+@cindex protocol, open-source, :working-suffix property
+@cindex :working-suffix property in open-source protocol
+@vindex org-protocol-project-alist
+The variable @code{org-protocol-project-alist} maps URLs to local file names,
+by stripping URL parameters from the end and replacing the @code{:base-url}
+with @code{:working-diretory} and @code{:online-suffix} with
+@code{:working-suffix}.  For example, assuming you own a local copy of
+@url{http://orgmode.org/worg/} contents at @file{/home/user/worg}, you can
+set @code{org-protocol-project-alist} to the following
+
+@lisp
+(setq org-protocol-project-alist
+      '(("Worg"
+	 :base-url "http://orgmode.org/worg/"
+	 :working-directory "/home/user/worg/"
+	 :online-suffix ".html"
+	 :working-suffix ".org")))
+@end lisp
+
+@noindent
+If you are now browsing
+@url{http://orgmode.org/worg/org-contrib/org-protocol.html} and find a typo
+or have an idea about how to enhance the documentation, simply click the
+bookmark and start editing.
+
+@cindex handle rewritten URL in open-source protocol
+@cindex protocol, open-source rewritten URL
+However, such mapping may not yield the desired results.  Suppose you
+maintain an online store located at @url{http://example.com/}.  The local
+sources reside in @file{/home/user/example/}.  It is common practice to serve
+all products in such a store through one file and rewrite URLs that do not
+match an existing file on the server.  That way, a request to
+@url{http://example.com/print/posters.html} might be rewritten on the server
+to something like
+@url{http://example.com/shop/products.php/posters.html.php}.  The
+@code{open-source} handler probably cannot find a file named
+@file{/home/user/example/print/posters.html.php} and fails.
+
+@cindex protocol, open-source, :rewrites property
+@cindex :rewrites property in open-source protocol
+Such an entry in @code{org-protocol-project-alist} may hold an additional
+property @code{:rewrites}.  This property is a list of cons cells, each of
+which maps a regular expression to a path relative to the
+@code{:working-directory}.
+
+Now map the URL to the path @file{/home/user/example/products.php} by adding
+@code{:rewrites} rules like this:
+
+@lisp
+(setq org-protocol-project-alist
+      '(("example.com"
+         :base-url "http://example.com/"
+         :working-directory "/home/user/example/"
+         :online-suffix ".php"
+         :working-suffix ".php"
+         :rewrites (("example.com/print/" . "products.php")
+                    ("example.com/$" . "index.php")))))
+@end lisp
+
+@noindent
+Since @samp{example.com/$} is used as a regular expression, it maps
+@url{http://example.com/}, @url{https://example.com},
+@url{http://www.example.com/} and similar to
+@file{/home/user/example/index.php}.
+
+The @code{:rewrites} rules are searched as a last resort if and only if no
+existing file name is matched.
+
+@cindex protocol, open-source, set-up mapping
+@cindex set-up mappings in open-source protocol
+@findex org-protocol-create
+@findex org-protocol-create-for-org
+Two functions can help you filling @code{org-protocol-project-alist} with
+valid contents: @code{org-protocol-create} and
+@code{org-protocol-create-for-org}.  The latter is of use if you're editing
+an Org file that is part of a publishing project.
 
 @node Refile and copy
 @section Refile and copy
@@ -8081,7 +8278,7 @@ you can use the following instead:
 @end example
 
 That will give you three days' warning: on the anniversary date itself and the
-two days prior. The argument is optional: if omitted, it defaults to 7.
+two days prior.  The argument is optional: if omitted, it defaults to 7.
 
 @subsubheading Appointment reminders
 @cindex @file{appt.el}
@@ -11443,8 +11640,8 @@ The default is ``xhtml-strict''.
 Org's HTML exporter does not by default enable new block elements introduced
 with the HTML5 standard.  To enable them, set @code{org-html-html5-fancy} to
 non-@code{nil}.  Or use an @code{OPTIONS} line in the file to set
-@code{html5-fancy}.  HTML5 documents can now have arbitrary #+BEGIN and #+END
-blocks.  For example:
+@code{html5-fancy}.  HTML5 documents can now have arbitrary @code{#+BEGIN}
+and @code{#+END} blocks.  For example:
 
 @example
 #+BEGIN_aside
@@ -13590,7 +13787,7 @@ itself does not appear in the structure of the document.
 Copyright information is printed on the back of the title page.
 
 @example
-* Copying
+* Legalese
   :PROPERTIES:
   :COPYING: t
   :END:
@@ -15142,8 +15339,8 @@ customization options for extracting source code.
 When Org tangles @samp{src} code blocks, it expands, merges, and transforms
 them.  Then Org recomposes them into one or more separate files, as
 configured through the options.  During this @emph{tangling} process, Org
-expands variables in the source code, and resolves any ``noweb'' style
-references (@pxref{Noweb reference syntax}).
+expands variables in the source code, and resolves any Noweb style references
+(@pxref{Noweb reference syntax}).
 
 @subsubheading Header arguments
 
@@ -15319,6 +15516,7 @@ Org supports the following languages for the @samp{src} code blocks:
 Additional documentation for some languages are at
 @uref{http://orgmode.org/worg/org-contrib/babel/languages.html}.
 
+@vindex org-babel-load-languages
 By default, only @code{emacs-lisp} is enabled for evaluation.  To enable or
 disable other languages, customize the @code{org-babel-load-languages}
 variable either through the Emacs customization interface, or by adding code
@@ -16148,12 +16346,11 @@ Do not insert newlines to pad the tangled @samp{src} code blocks.
 By default Org expands @samp{src} code blocks during tangling.  The
 @code{:no-expand} header argument turns off such expansions.  Note that one
 side-effect of expansion by @code{org-babel-expand-src-block} also assigns
-values to @code{:var} (@pxref{var}) variables.  Expansions also replace
-``noweb'' references with their targets (@pxref{Noweb reference syntax}).
-Some of these expansions may cause premature assignment, hence this option.
-This option makes a difference only for tangling.  It has no effect when
-exporting since @samp{src} code blocks for execution have to be expanded
-anyway.
+values to @code{:var} (@pxref{var}) variables.  Expansions also replace Noweb
+references with their targets (@pxref{Noweb reference syntax}).  Some of
+these expansions may cause premature assignment, hence this option.  This
+option makes a difference only for tangling.  It has no effect when exporting
+since @samp{src} code blocks for execution have to be expanded anyway.
 
 @node session
 @subsubsection @code{:session}
@@ -16182,42 +16379,56 @@ subsequent source code language blocks change session names.
 @subsubsection @code{:noweb}
 @cindex @code{:noweb}, src header argument
 
-The @code{:noweb} header argument controls expansion of ``noweb'' syntax
+The @code{:noweb} header argument controls expansion of Noweb syntax
 references (@pxref{Noweb reference syntax}).  Expansions occur when source
 code blocks are evaluated, tangled, or exported.
 
 @itemize @bullet
 @item @code{no}
-Default.  No expansion of ``Noweb'' syntax references in the body of the code
+Default.  No expansion of Noweb syntax references in the body of the code
 when evaluating, tangling, or exporting.
 @item @code{yes}
-Expansion of ``Noweb'' syntax references in the body of the @samp{src} code
-block when evaluating, tangling, or exporting.
+Expansion of Noweb syntax references in the body of the @samp{src} code block
+when evaluating, tangling, or exporting.
 @item @code{tangle}
-Expansion of ``Noweb'' syntax references in the body of the @samp{src} code
-block when tangling.  No expansion when evaluating or exporting.
+Expansion of Noweb syntax references in the body of the @samp{src} code block
+when tangling.  No expansion when evaluating or exporting.
 @item @code{no-export}
-Expansion of ``Noweb'' syntax references in the body of the @samp{src} code
-block when evaluating or tangling.  No expansion when exporting.
+Expansion of Noweb syntax references in the body of the @samp{src} code block
+when evaluating or tangling.  No expansion when exporting.
 @item @code{strip-export}
-Expansion of ``Noweb'' syntax references in the body of the @samp{src} code
-block when expanding prior to evaluating or tangling.  Removes ``noweb''
-syntax references when exporting.
+Expansion of Noweb syntax references in the body of the @samp{src} code block
+when expanding prior to evaluating or tangling.  Removes Noweb syntax
+references when exporting.
 @item @code{eval}
-Expansion of ``Noweb'' syntax references in the body of the @samp{src} code
-block only before evaluating.
+Expansion of Noweb syntax references in the body of the @samp{src} code block
+only before evaluating.
 @end itemize
 
 @subsubheading Noweb prefix lines
-Noweb insertions now honor prefix characters that appear before
-@code{<<reference>>}.  This behavior is illustrated in the following example.
-Because the @code{<<example>>} noweb reference appears behind the SQL comment
-syntax, each line of the expanded noweb reference will be commented.
+Noweb insertions now honor prefix characters that appear before the Noweb
+syntax reference.
 
-This @samp{src} code block:
+This behavior is illustrated in the following example.  Because the
+@code{<<example>>} noweb reference appears behind the SQL comment syntax,
+each line of the expanded noweb reference will be commented.
+
+With:
 
 @example
+#+NAME: example
+#+BEGIN_SRC text
+this is the
+multi-line body of example
+#+END_SRC
+@end example
+
+this @samp{src} code block:
+
+@example
+#+BEGIN_SRC sql :noweb yes
 -- <<example>>
+#+END_SRC
 @end example
 
 expands to:
@@ -16230,17 +16441,60 @@ expands to:
 Since this change will not affect noweb replacement text without newlines in
 them, inline noweb references are acceptable.
 
+This feature can also be used for management of indentation in exported code snippets.
+
+With:
+
+@example
+#+NAME: if-true
+#+BEGIN_SRC python :exports none
+print('Do things when True')
+#+END_SRC
+
+#+NAME: if-false
+#+BEGIN_SRC python :exports none
+print('Do things when False')
+#+END_SRC
+@end example
+
+this @samp{src} code block:
+
+@example
+#+BEGIN_SRC python :noweb yes :results output
+if True:
+    <<if-true>>
+else:
+    <<if-false>>
+#+END_SRC
+@end example
+
+expands to:
+
+@example
+if True:
+    print('Do things when True')
+else:
+    print('Do things when False')
+@end example
+
+and evaluates to:
+
+@example
+Do things when True
+@end example
+
 @node noweb-ref
 @subsubsection @code{:noweb-ref}
 @cindex @code{:noweb-ref}, src header argument
 
-When expanding ``noweb'' style references, Org concatenates @samp{src} code
-blocks by matching the reference name to either the block name or the
+When expanding Noweb style references, Org concatenates @samp{src} code
+blocks by matching the reference name to either the code block name or the
 @code{:noweb-ref} header argument.
 
 For simple concatenation, set this @code{:noweb-ref} header argument at the
 sub-tree or file level.  In the example Org file shown next, the body of the
-source code in each block is extracted for concatenation to a pure code file.
+source code in each block is extracted for concatenation to a pure code file
+when tangled.
 
 @example
  #+BEGIN_SRC sh :tangle yes :noweb yes :shebang #!/bin/sh
@@ -16300,8 +16554,8 @@ A note of warning: when @code{:cache} is used for a @code{:session}, caching
 may cause unexpected results.
 
 When the caching mechanism tests for any source code changes, it will not
-expand ``noweb'' style references (@pxref{Noweb reference syntax}).  For
-reasons why, see @uref{http://thread.gmane.org/gmane.emacs.orgmode/79046}.
+expand Noweb style references (@pxref{Noweb reference syntax}).  For reasons
+why, see @uref{http://thread.gmane.org/gmane.emacs.orgmode/79046}.
 
 The @code{:cache} header argument can have one of two values: @code{yes} or
 @code{no}.
@@ -16743,38 +16997,80 @@ prints ``2''.  Results show that.
 @cindex syntax, noweb
 @cindex source code, noweb reference
 
-Org supports named blocks in ``noweb'' style syntax.  For ``noweb'' literate
+Org supports named blocks in Noweb style syntax.  For Noweb literate
 programming details, see @uref{http://www.cs.tufts.edu/~nr/noweb/}).
 
 @example
 <<code-block-name>>
 @end example
 
-For the header argument @code{:noweb yes}, Org expands ``noweb'' style
+For the header argument @code{:noweb yes}, Org expands Noweb style references
+in the @samp{src} code block before evaluation.
+
+For the header argument @code{:noweb no}, Org does not expand Noweb style
 references in the @samp{src} code block before evaluation.
 
-For the header argument @code{:noweb no}, Org does not expand ``noweb'' style
-references in the @samp{src} code block before evaluation.
+The default is @code{:noweb no}.  Org defaults to @code{:noweb no} so as not
+to cause errors in languages where Noweb syntax is ambiguous.  Change Org's
+default to @code{:noweb yes} for languages where there is no risk of
+confusion.
 
-The default is @code{:noweb no}.
-
-Org offers a more flexible way to resolve ``noweb'' style references
+Org offers a more flexible way to resolve Noweb style references
 (@pxref{noweb-ref}).
 
-Org can handle naming of @emph{results} block, rather than the body of the
-@samp{src} code block, using ``noweb'' style references.
-
-For ``noweb'' style reference, append parenthesis to the code block name for
-arguments, as shown in this example:
+Org can include the @emph{results} of a code block rather than its body.  To
+that effect, append parentheses, possibly including arguments, to the code
+block name, as show below.
 
 @example
 <<code-block-name(optional arguments)>>
 @end example
 
-Note: Org defaults to @code{:noweb no} so as not to cause errors in languages
-such as @samp{Ruby} where ``noweb'' syntax is equally valid characters.  For
-example, @code{<<arg>>}.  Change Org's default to @code{:noweb yes} for
-languages where there is no risk of confusion.
+Note that when using the above approach to a code block's results, the code
+block name set by @code{#+NAME} keyword is required; the reference set by
+@code{:noweb-ref} will not work.
+
+Here is an example that demonstrates how the exported content changes when
+Noweb style references are used with parentheses versus without.
+
+With:
+
+@example
+#+NAME: some-code
+#+BEGIN_SRC python :var num=0 :results output :exports none
+print(num*10)
+#+END_SRC
+@end example
+
+this code block:
+
+@example
+#+BEGIN_SRC text :noweb yes
+<<some-code>>
+#+END_SRC
+@end example
+
+expands to:
+
+@example
+print(num*10)
+@end example
+
+Below, a similar Noweb style reference is used, but with parentheses, while
+setting a variable @code{num} to 10:
+
+@example
+#+BEGIN_SRC text :noweb yes
+<<some-code(num=10)>>
+#+END_SRC
+@end example
+
+Note that now the expansion contains the @emph{results} of the code block
+@code{some-code}, not the code block itself:
+
+@example
+100
+@end example
 
 For faster tangling of large Org mode files, set
 @code{org-babel-use-quick-and-dirty-noweb-expansion} variable to @code{t}.
@@ -17004,12 +17300,9 @@ structural elements, such as @code{#+BEGIN_SRC} and @code{#+END_SRC}.  Easy
 templates use an expansion mechanism, which is native to Org, in a process
 similar to @file{yasnippet} and other Emacs template expansion packages.
 
-@kbd{@key{<}} @kbd{@key{s}} @kbd{@key{TAB}} completes the @samp{src} code
-block.
+@kbd{<} @kbd{s} @kbd{@key{TAB}} expands to a @samp{src} code block.
 
-@kbd{<} @kbd{l} @kbd{@key{TAB}}
-
-expands to:
+@kbd{<} @kbd{l} @kbd{@key{TAB}} expands to:
 
 #+BEGIN_EXPORT latex
 
@@ -17082,7 +17375,7 @@ Org evaluates code in the following circumstances:
 Org evaluates @samp{src} code blocks in an Org file during export.  Org also
 evaluates a @samp{src} code block with the @kbd{C-c C-c} key chord.  Users
 exporting or running code blocks must load files only from trusted sources.
-Be weary of customizing variables that remove or alter default security
+Be wary of customizing variables that remove or alter default security
 measures.
 
 @defopt org-confirm-babel-evaluate

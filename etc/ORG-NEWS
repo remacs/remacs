@@ -157,7 +157,7 @@ should be written instead
 ,* Headline
 :PROPERTIES:
 :header-args: :exports code
-:header-args: :var a=1 b=2
+:header-args+: :var a=1 b=2
 :header-args+: :var c=3
 :END:
 #+END_EXAMPLE

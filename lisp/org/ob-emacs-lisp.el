@@ -41,41 +41,38 @@ their value.  It is used as the optional LEXICAL argument to
 
 (defun org-babel-expand-body:emacs-lisp (body params)
   "Expand BODY according to PARAMS, return the expanded body."
-  (let* ((vars (org-babel--get-vars params))
-         (result-params (cdr (assq :result-params params)))
-         (print-level nil) (print-length nil)
-         (body (if (> (length vars) 0)
-		   (concat "(let ("
-			   (mapconcat
-			    (lambda (var)
-			      (format "%S" (print `(,(car var) ',(cdr var)))))
-			    vars "\n      ")
-			   ")\n" body "\n)")
-		 (concat body "\n"))))
-    (if (or (member "code" result-params)
-	    (member "pp" result-params))
-	(concat "(pp " body ")") body)))
+  (let ((vars (org-babel--get-vars params))
+	(print-level nil)
+	(print-length nil))
+    (if (null vars) (concat body "\n")
+      (format "(let (%s)\n%s\n)"
+	      (mapconcat
+	       (lambda (var)
+		 (format "%S" (print `(,(car var) ',(cdr var)))))
+	       vars "\n      ")
+	      body))))
 
 (defun org-babel-execute:emacs-lisp (body params)
   "Execute a block of emacs-lisp code with Babel."
   (save-window-excursion
     (let* ((lexical (cdr (assq :lexical params)))
-	   (result
-	    (eval (read (format (if (member "output"
-					    (cdr (assq :result-params params)))
-				    "(with-output-to-string %s)"
-				  "(progn %s)")
-				(org-babel-expand-body:emacs-lisp
-				 body params)))
-
-		  (if (listp lexical)
-		      lexical
-		    (member lexical '("yes" "t"))))))
-      (org-babel-result-cond (cdr (assq :result-params params))
+	   (result-params (cdr (assq :result-params params)))
+	   (body (format (if (member "output" result-params)
+			     "(with-output-to-string %s\n)"
+			   "(progn %s\n)")
+			 (org-babel-expand-body:emacs-lisp body params)))
+	   (result (eval (read (if (or (member "code" result-params)
+				       (member "pp" result-params))
+				   (concat "(pp " body ")")
+				 body))
+			 (if (listp lexical)
+			     lexical
+			   (member lexical '("yes" "t"))))))
+      (org-babel-result-cond result-params
 	(let ((print-level nil)
               (print-length nil))
-          (if (or (member "scalar" (cdr (assq :result-params params)))
-                  (member "verbatim" (cdr (assq :result-params params))))
+          (if (or (member "scalar" result-params)
+                  (member "verbatim" result-params))
               (format "%S" result)
             (format "%s" result)))
 	(org-babel-reassemble-table

@@ -142,11 +142,11 @@ useful to make it ever so slightly different."
 	;; Inline tasks line prefixes
 	(aset org-indent--inlinetask-line-prefixes
 	      n
-	      (org-add-props (if (bound-and-true-p org-inlinetask-show-first-star)
-				 (concat org-indent-inlinetask-first-star
-					 (substring heading-prefix 1))
-			       heading-prefix)
-		  nil 'face 'org-indent)))
+	      (cond ((<= n 1) "")
+		    ((bound-and-true-p org-inlinetask-show-first-star)
+		     (concat org-indent-inlinetask-first-star
+			     (substring heading-prefix 1)))
+		    (t (org-add-props heading-prefix nil 'face 'org-indent)))))
       ;; Text line prefixes.
       (aset org-indent--text-line-prefixes
 	    n

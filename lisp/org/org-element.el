@@ -2983,16 +2983,8 @@ Assume point is at the beginning of the LaTeX fragment."
     (save-excursion
       (let* ((begin (point))
 	     (after-fragment
-	      (if (eq (char-after) ?$)
-		  (if (eq (char-after (1+ (point))) ?$)
-		      (search-forward "$$" nil t 2)
-		    (and (not (eq (char-before) ?$))
-			 (search-forward "$" nil t 2)
-			 (not (memq (char-before (match-beginning 0))
-				    '(?\s ?\t ?\n ?, ?.)))
-			 (looking-at-p
-			  "\\(\\s.\\|\\s-\\|\\s(\\|\\s)\\|\\s\"\\|'\\|$\\)")
-			 (point)))
+	      (cond
+	       ((not (eq ?$ (char-after)))
 		(pcase (char-after (1+ (point)))
 		  (?\( (search-forward "\\)" nil t))
 		  (?\[ (search-forward "\\]" nil t))
@@ -3000,10 +2992,23 @@ Assume point is at the beginning of the LaTeX fragment."
 		   ;; Macro.
 		   (and (looking-at "\\\\[a-zA-Z]+\\*?\\(\\(\\[[^][\n{}]*\\]\\)\
 \\|\\({[^{}\n]*}\\)\\)*")
-			(match-end 0))))))
-	     (post-blank (if (not after-fragment) (throw 'no-object nil)
-			   (goto-char after-fragment)
-			   (skip-chars-forward " \t")))
+			(match-end 0)))))
+	       ((eq ?$ (char-after (1+ (point))))
+		(search-forward "$$" nil t 2))
+	       (t
+		(and (not (eq ?$ (char-before)))
+		     (not (memq (char-after (1+ (point)))
+				'(?\s ?\t ?\n ?, ?. ?\;)))
+		     (search-forward "$" nil t 2)
+		     (not (memq (char-before (match-beginning 0))
+				'(?\s ?\t ?\n ?, ?.)))
+		     (looking-at-p
+		      "\\(\\s.\\|\\s-\\|\\s(\\|\\s)\\|\\s\"\\|'\\|$\\)")
+		     (point)))))
+	     (post-blank
+	      (if (not after-fragment) (throw 'no-object nil)
+		(goto-char after-fragment)
+		(skip-chars-forward " \t")))
 	     (end (point)))
 	(list 'latex-fragment
 	      (list :value (buffer-substring-no-properties begin after-fragment)

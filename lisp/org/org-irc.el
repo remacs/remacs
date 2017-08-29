@@ -205,7 +205,8 @@ default."
   (require 'erc)
   (require 'erc-log)
   (let* ((server (car (car link)))
-	 (port (or (string-to-number (cadr (pop link))) erc-default-port))
+	 (port (let ((p (cadr (pop link))))
+		 (if p (string-to-number p) erc-default-port)))
 	 (server-buffer)
 	 (buffer-list
 	  (erc-buffer-filter

@@ -693,7 +693,7 @@ encryption program does not understand them."
 (defun org-mobile-encrypt-file (infile outfile)
   "Encrypt INFILE to OUTFILE, using `org-mobile-encryption-password'."
   (shell-command
-   (format "openssl enc -aes-256-cbc -salt -pass %s -in %s -out %s"
+   (format "openssl enc -md md5 -aes-256-cbc -salt -pass %s -in %s -out %s"
 	   (shell-quote-argument (concat "pass:"
 					 (org-mobile-encryption-password)))
 	   (shell-quote-argument (expand-file-name infile))
@@ -702,7 +702,7 @@ encryption program does not understand them."
 (defun org-mobile-decrypt-file (infile outfile)
   "Decrypt INFILE to OUTFILE, using `org-mobile-encryption-password'."
   (shell-command
-   (format "openssl enc -d -aes-256-cbc -salt -pass %s -in %s -out %s"
+   (format "openssl enc -md md5 -d -aes-256-cbc -salt -pass %s -in %s -out %s"
 	   (shell-quote-argument (concat "pass:"
 					 (org-mobile-encryption-password)))
 	   (shell-quote-argument (expand-file-name infile))

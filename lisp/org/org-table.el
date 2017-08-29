@@ -1335,7 +1335,7 @@ Only data lines count for this."
     (org-table-check-inside-data-field))
   (save-excursion
     (let ((c 0)
-	  (pos (point)))
+	  (pos (line-beginning-position)))
       (goto-char (org-table-begin))
       (while (<= (point) pos)
 	(when (looking-at org-table-dataline-regexp) (cl-incf c))
@@ -1532,28 +1532,31 @@ non-nil, the one above is used."
 	 (dline1 (org-table-current-dline))
 	 (dline2 (+ dline1 (if up -1 1)))
 	 (tonew (if up 0 2))
-	 txt hline2p)
+	 hline2p)
+    (when (and up (= (point-min) (line-beginning-position)))
+      (user-error "Cannot move row further"))
     (beginning-of-line tonew)
-    (unless (org-at-table-p)
+    (when (or (and (not up) (eobp)) (not (org-at-table-p)))
       (goto-char pos)
       (user-error "Cannot move row further"))
     (setq hline2p (looking-at org-table-hline-regexp))
     (goto-char pos)
-    (beginning-of-line 1)
-    (setq pos (point))
-    (setq txt (buffer-substring (point) (1+ (point-at-eol))))
-    (delete-region (point) (1+ (point-at-eol)))
-    (beginning-of-line tonew)
-    (insert txt)
-    (beginning-of-line 0)
-    (org-move-to-column col)
-    (unless (or hline1p hline2p
-		(not (or (not org-table-fix-formulas-confirm)
-			 (funcall org-table-fix-formulas-confirm
-				  "Fix formulas? "))))
-      (org-table-fix-formulas
-       "@" (list (cons (number-to-string dline1) (number-to-string dline2))
-		 (cons (number-to-string dline2) (number-to-string dline1)))))))
+    (let ((row (delete-and-extract-region (line-beginning-position)
+					  (line-beginning-position 2))))
+      (beginning-of-line tonew)
+      (unless (bolp) (insert "\n"))	;at eob without a newline
+      (insert row)
+      (unless (bolp) (insert "\n"))	;missing final newline in ROW
+      (beginning-of-line 0)
+      (org-move-to-column col)
+      (unless (or hline1p hline2p
+		  (not (or (not org-table-fix-formulas-confirm)
+			   (funcall org-table-fix-formulas-confirm
+				    "Fix formulas? "))))
+	(org-table-fix-formulas
+	 "@" (list
+	      (cons (number-to-string dline1) (number-to-string dline2))
+	      (cons (number-to-string dline2) (number-to-string dline1))))))))
 
 ;;;###autoload
 (defun org-table-insert-row (&optional arg)

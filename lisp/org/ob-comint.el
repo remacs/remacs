@@ -33,7 +33,6 @@
 (require 'ob-core)
 (require 'org-compat)
 (require 'comint)
-(require 'tramp)
 
 (defun org-babel-comint-buffer-livep (buffer)
   "Check if BUFFER is a comint buffer with a live process."
@@ -148,10 +147,6 @@ FILE exists at end of evaluation."
   (process-send-string
    (get-buffer-process buffer)
    (if (= (aref string (1- (length string))) ?\n) string (concat string "\n")))
-  ;; From Tramp 2.1.19 the following cache flush is not necessary
-  (when (file-remote-p default-directory)
-    (with-parsed-tramp-file-name default-directory nil
-      (tramp-flush-directory-property v "")))
   (while (not (file-exists-p file)) (sit-for (or period 0.25))))
 
 (provide 'ob-comint)

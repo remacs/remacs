@@ -724,7 +724,7 @@ Use \"export %s\" instead"
     (org-element-map ast 'footnote-reference
       (lambda (f)
 	(let ((label (org-element-property :label f)))
-	  (and label
+	  (and (eq 'standard (org-element-property :type f))
 	       (not (member label definitions))
 	       (list (org-element-property :begin f)
 		     (format "Missing definition for footnote [%s]"
