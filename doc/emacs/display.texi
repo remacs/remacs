@@ -1751,6 +1751,15 @@ Mode}), and need to move by exact number of screen lines.
 Any other non-@code{nil} value is treated as @code{t}.
 @end table
 
+@findex display-line-numbers-mode
+@findex global-display-line-numbers-mode
+@vindex display-line-numbers-type
+A convenient way of turning on display of line numbers is @w{@kbd{M-x
+display-line-numbers-mode @key{RET}}}.  This mode has a globalized
+variant, @code{global-display-line0numbers-mode}.  The user option
+@code{display-line-numbers-type} controls which sub-mode of
+line-number display, described above, will these modes activate.
+
 @vindex display-line-numbers-current-absolute
 When Emacs displays relative line numbers, you can control the number
 displayed before the current line, the line showing point.  By
