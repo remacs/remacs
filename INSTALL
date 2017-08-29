@@ -339,17 +339,13 @@ Use --disable-silent-rules to cause 'make' to give more details about
 the commands it executes.  This can be helpful when debugging a build
 that goes awry.  'make V=1' also enables the extra chatter.
 
-Use --enable-link-time-optimization to enable link-time optimizer.  If
-you're using GNU compiler, this feature is supported since version 4.5.0.
-If 'configure' can determine number of online CPUS on your system, final
-link-time optimization and code generation is executed in parallel using
-one job per each available online CPU.
-
-This option is also supported for clang.  You should have GNU binutils
-with 'gold' linker and plugin support, and clang with LLVMgold.so plugin.
-Read http://llvm.org/docs/GoldPlugin.html for details.  Also note that
-this feature is still experimental, so prepare to build binutils and
-clang from the corresponding source code repositories.
+Use --enable-link-time-optimization to enable link-time optimization.
+With GCC, you need GCC 4.5.0 and later, and 'configure' arranges for
+linking to be parallelized if possible.  With Clang, you need GNU
+binutils with the gold linker and plugin support, along with the LLVM
+gold plugin <http://llvm.org/docs/GoldPlugin.html>.  Link time
+optimization is not the default as it tends to cause crashes and to
+make Emacs slower.
 
 The '--prefix=PREFIXDIR' option specifies where the installation process
 should put emacs and its data files.  This defaults to '/usr/local'.

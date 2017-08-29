@@ -1041,12 +1041,8 @@ edit_cflags="
 
 AC_ARG_ENABLE(link-time-optimization,
 [AS_HELP_STRING([--enable-link-time-optimization],
-                [build emacs with link-time optimization.
-		 This requires GCC 4.5.0 or later, or clang.
-		 (Note that clang support is experimental - see INSTALL.)
-		 It also makes Emacs harder to debug, and when we tried it
-		 with GCC 4.9.0 x86-64 it made Emacs slower, so it's not
-		 recommended for typical use.])],
+                [build with link-time optimization
+		 (experimental; see INSTALL)])])
 if test "${enableval}" != "no"; then
    ac_lto_supported=no
    if test "$emacs_cv_clang" = yes; then
