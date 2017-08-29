@@ -672,7 +672,10 @@ close_output_streams (void)
 int
 main (int argc, char **argv)
 {
-  char stack_bottom_variable;
+  /* Variable near the bottom of the stack, and aligned appropriately
+     for pointers.  */
+  void *stack_bottom_variable;
+
   bool do_initial_setlocale;
   bool dumping;
   int skip_args = 0;
@@ -688,7 +691,7 @@ main (int argc, char **argv)
   char *original_pwd = 0;
 
   /* Record (approximately) where the stack begins.  */
-  stack_bottom = &stack_bottom_variable;
+  stack_bottom = (char *) &stack_bottom_variable;
 
 #ifndef CANNOT_DUMP
   dumping = !initialized && (strcmp (argv[argc - 1], "dump") == 0
