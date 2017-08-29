@@ -108,7 +108,6 @@ impl LispOverlayRef {
     pub fn end(&self) -> LispObject {
         LispObject::from_raw(self.end)
     }
-    
 }
 
 impl LispObject {
@@ -248,12 +247,8 @@ fn overlay_end(overlay: LispObject) -> LispObject {
 /// Return nil if OVERLAY has been deleted.
 #[lisp_fn]
 fn overlay_buffer(overlay: LispObject) -> LispObject {
-    if overlay.is_overlay() {
-        let marker = overlay.as_overlay().unwrap().start();
-        marker_buffer(marker)
-    } else {
-        LispObject::constant_nil()
-    }
+    let marker = overlay.as_overlay_or_error().start();
+    marker_buffer(marker)
 }
 
 #[no_mangle]
