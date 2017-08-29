@@ -187,6 +187,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Sbuffer_chars_modified_tick);
         defsubr(&*buffers::Sbuffer_name);
         defsubr(&*buffers::Soverlay_start);
+        defsubr(&*buffers::Soverlay_buffer);
         defsubr(&*windows::Swindowp);
         defsubr(&*windows::Swindow_live_p);
         defsubr(&*process::Sget_process);

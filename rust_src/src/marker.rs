@@ -58,7 +58,7 @@ pub fn marker_position(object: LispObject) -> LispObject {
 /// Return the buffer that MARKER points into, or nil if none.
 /// Returns nil if MARKER points into a dead buffer.
 #[lisp_fn]
-fn marker_buffer(object: LispObject) -> LispObject {
+pub fn marker_buffer(object: LispObject) -> LispObject {
     let buf = object.as_marker_or_error().buffer();
     match buf {
         Some(b) => unsafe {
