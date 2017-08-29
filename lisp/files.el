@@ -1153,6 +1153,21 @@ names beginning with `~'."
   (and (file-name-absolute-p file)
        (not (eq (aref file 0) ?~))))
 
+(defun files--splice-dirname-file (dirname file)
+  "Splice DIRNAME to FILE like the operating system would.
+If FILENAME is relative, return DIRNAME concatenated to FILE.
+Otherwise return FILE, quoted with `/:' if DIRNAME and FILE have
+different handlers; although this quoting is dubious if DIRNAME
+is remote, it is not clear what would be better.  This function
+differs from `expand-file-name' in that DIRNAME must be a
+directory name and leading `~' and `/:' are not special in FILE."
+  (if (files--name-absolute-system-p file)
+      (if (eq (find-file-name-handler dirname 'file-symlink-p)
+	      (find-file-name-handler file 'file-symlink-p))
+	  file
+	(concat "/:" file))
+    (concat dirname file)))
+
 (defun file-truename (filename &optional counter prev-dirs)
   "Return the truename of FILENAME.
 If FILENAME is not absolute, first expands it against `default-directory'.
@@ -1253,10 +1268,7 @@ containing it, until no links are left at any level.
 		    ;; We can't safely use expand-file-name here
 		    ;; since target might look like foo/../bar where foo
 		    ;; is itself a link.  Instead, we handle . and .. above.
-		    (setq filename
-			  (concat (if (files--name-absolute-system-p target)
-				      "/:" dir)
-				  target)
+		    (setq filename (files--splice-dirname-file dir target)
 			  done nil)
 		  ;; No, we are done!
 		  (setq done t))))))))
@@ -1291,10 +1303,8 @@ it means chase no more than that many links and then stop."
 		 (directory-file-name (file-name-directory newname))))
 	  ;; Now find the parent of that dir.
 	  (setq newname (file-name-directory newname)))
-	(setq newname (concat (if (files--name-absolute-system-p tem)
-				  "/:"
-				(file-name-directory newname))
-			      tem))
+	(setq newname (files--splice-dirname-file (file-name-directory newname)
+						  tem))
 	(setq count (1+ count))))
     newname))
 
