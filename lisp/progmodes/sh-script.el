@@ -1138,7 +1138,7 @@ subshells can nest."
    (syntax-propertize-rules
     (sh-here-doc-open-re
      (2 (sh-font-lock-open-heredoc
-         (match-beginning 0) (match-string 1) (match-beginning 2))))
+         (1+ (match-beginning 0)) (match-string 1) (match-beginning 2))))
     ("\\s|" (0 (prog1 nil (sh-syntax-propertize-here-doc end))))
     ;; A `#' begins a comment when it is unquoted and at the
     ;; beginning of a word.  In the shell, words are separated by
