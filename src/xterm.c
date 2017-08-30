@@ -1382,12 +1382,13 @@ x_after_update_window_line (struct window *w, struct glyph_row *desired_row)
 	  {
 	    unsigned long color = face->background;
 	    Display *display = FRAME_X_DISPLAY (f);
+	    GC gc = f->output_data.x->normal_gc;
 
-	    XSetForeground (display, f->output_data.x->normal_gc, color);
-	    x_fill_rectangle (f, f->output_data.x->normal_gc,
-			      0, y, width, height);
-	    x_fill_rectangle (f, f->output_data.x->normal_gc,
-			      FRAME_PIXEL_WIDTH (f) - width, y, width, height);
+	    XSetForeground (display, gc, color);
+	    x_fill_rectangle (f, gc, 0, y, width, height);
+	    x_fill_rectangle (f, gc, FRAME_PIXEL_WIDTH (f) - width, y,
+			      width, height);
+	    XSetForeground (display, gc, FRAME_FOREGROUND_PIXEL (f));
 	  }
 	else
 	  {
