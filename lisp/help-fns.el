@@ -883,7 +883,10 @@ it is displayed along with the global value."
                                (not (equal origval :help-eval-error)))
 		      (princ "\nOriginal value was \n")
 		      (setq from (point))
-		      (pp origval)
+                      (cl-prin1 origval)
+                      (save-restriction
+                        (narrow-to-region from (point))
+                        (save-excursion (pp-buffer)))
 		      (if (< (point) (+ from 20))
 			  (delete-region (1- from) from)))))))
 	    (terpri)
@@ -909,7 +912,10 @@ it is displayed along with the global value."
 		      ;; probably print it raw once and check it's a
 		      ;; sensible size before prettyprinting.  -- fx
 		      (let ((from (point)))
-			(pp global-val)
+                        (cl-prin1 global-val)
+                        (save-restriction
+                          (narrow-to-region from (point))
+                          (save-excursion (pp-buffer)))
 			;; See previous comment for this function.
 			;; (help-xref-on-pp from (point))
 			(if (< (point) (+ from 20))
