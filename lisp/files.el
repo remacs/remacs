@@ -1156,16 +1156,16 @@ names beginning with `~'."
 (defun files--splice-dirname-file (dirname file)
   "Splice DIRNAME to FILE like the operating system would.
 If FILENAME is relative, return DIRNAME concatenated to FILE.
-Otherwise return FILE, quoted with `/:' if DIRNAME and FILE have
+Otherwise return FILE, quoted as needed if DIRNAME and FILE have
 different handlers; although this quoting is dubious if DIRNAME
-is remote, it is not clear what would be better.  This function
+is magic, it is not clear what would be better.  This function
 differs from `expand-file-name' in that DIRNAME must be a
 directory name and leading `~' and `/:' are not special in FILE."
   (if (files--name-absolute-system-p file)
       (if (eq (find-file-name-handler dirname 'file-symlink-p)
 	      (find-file-name-handler file 'file-symlink-p))
 	  file
-	(concat "/:" file))
+	(file-name-quote file))
     (concat dirname file)))
 
 (defun file-truename (filename &optional counter prev-dirs)
