@@ -1174,10 +1174,7 @@ See the variable `Man-notify-method' for the different notification behaviors."
   (unless (eq t (compare-strings "latin-" 0 nil
 				 current-language-environment 0 6 t))
     (goto-char (point-min))
-    (let ((str "\255"))
-      (if enable-multibyte-characters
-	  (setq str (string-as-multibyte str)))
-      (while (search-forward str nil t) (replace-match "-")))))
+    (while (search-forward "­" nil t) (replace-match "-"))))
 
 (defun Man-fontify-manpage ()
   "Convert overstriking and underlining to the correct fonts.
