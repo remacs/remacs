@@ -566,7 +566,7 @@ procedure and therefore obeys saving hooks.
 'auto-save-visited-file-name' is now obsolete.
 
 +++
-** New behavior of 'mark-defun' implemented
+** New behavior of 'mark-defun'.
 Prefix argument selects that many (or that many more) defuns.
 Negative prefix arg flips the direction of selection.  Also,
 'mark-defun' between defuns correctly selects N following defuns (or
@@ -641,7 +641,7 @@ This can be customized via the info-menu category in
 completion-category-override.
 
 +++
-** The ancestor buffer is shown by default in 3way merges.
+** The ancestor buffer is shown by default in 3-way merges.
 A new option ediff-show-ancestor and a new toggle
 ediff-toggle-show-ancestor.
 
@@ -869,7 +869,7 @@ at image boundaries.
 the function 'image-dired-setup-dired-keybindings'.
 
 ---
-*** Thumbnail generation is now asynchronous
+*** Thumbnail generation is now asynchronous.
 The number of concurrent processes is limited by the variable
 'image-dired-thumb-job-limit'.
 
@@ -952,8 +952,9 @@ located and whether GnuPG's option "--homedir" is used or not.
 ** Tramp
 
 +++
-*** The method part of remote file names is mandatory now.  A valid
-remote file name starts with "/method:host:" or "/method:user@host:".
+*** The method part of remote file names is mandatory now.
+A valid remote file name starts with "/method:host:" or
+"/method:user@host:".
 
 +++
 *** The new pseudo method "-" is a marker for the default method.
@@ -975,8 +976,9 @@ different group ID.
 Drive onsite repositories.
 
 +++
-*** Gateway methods in Tramp have been removed.  Instead, the Tramp
-manual documents how to configure ssh and PuTTY accordingly.
+*** Gateway methods in Tramp have been removed.
+Instead, the Tramp manual documents how to configure ssh and PuTTY
+accordingly.
 
 +++
 *** Setting the "ENV" environment variable in
@@ -1088,13 +1090,14 @@ to a format suitable for reverse lookup zone files.
 ** Ispell
 
 +++
-*** Enchant (version 2.1.0 or later required) is now supported as a
-spell-checker.  Enchant is a meta-spell-checker that uses providers
+*** Enchant is now supported as a spell-checker.
+
+Enchant is a meta-spell-checker that uses providers
 such as Hunspell to do the actual checking.  With it, users can use
 spell-checkers not directly supported by Emacs, such as Voikko, Hspell
 and AppleSpell, more easily share personal word-lists with other
 programs, and configure different spelling-checkers for different
-languages.
+languages.  (Version 2.1.0 or later of Enchant is required.)
 
 ** Flymake
 
@@ -1140,9 +1143,9 @@ similarly but it doesn't prepend a '.'.
 
 +++
 ** Certain cond/pcase/cl-case forms are now compiled using a faster jump
-table implementation. This uses a new bytecode op 'switch', which isn't
-compatible with previous Emacs versions. This functionality can be disabled
-by setting 'byte-compile-cond-use-jump-table' to nil.
+table implementation.  This uses a new bytecode op 'switch', which
+isn't compatible with previous Emacs versions.  This functionality can
+be disabled by setting 'byte-compile-cond-use-jump-table' to nil.
 
 ---
 ** 'C-up', 'C-down', 'C-left' and 'C-right' are now defined in term
@@ -1502,12 +1505,12 @@ avoids debugger like 'user-error'.
 
 +++
 ** The function 'line-number-at-pos' now takes a second optional
-argument 'absolute'. If this parameter is nil, the default, this
+argument 'absolute'.  If this parameter is nil, the default, this
 function keeps on returning the line number taking potential narrowing
-into account. If this parameter is non-nil, the function ignores
+into account.  If this parameter is non-nil, the function ignores
 narrowing and returns the absolute line number.
 
-** Changes in Frame- and Window- Handling
+** Changes in Frame and Window Handling
 
 +++
 *** Resizing a frame no longer runs 'window-configuration-change-hook'.
@@ -1640,8 +1643,10 @@ assign window parameters to the window used for displaying the buffer.
 
 +++
 *** New function 'display-buffer-reuse-mode-window' is an action function
-suitable for use in 'display-buffer-alist'. For example, to avoid creating
-a new window when opening man pages when there's already one, use
+suitable for use in 'display-buffer-alist'.  For example, to avoid
+creating a new window when opening man pages when there's already one,
+use
+
 (add-to-list 'display-buffer-alist
      '("\\`\\*Man .*\\*\\'" .
        (display-buffer-reuse-mode-window
