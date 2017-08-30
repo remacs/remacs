@@ -1042,7 +1042,7 @@ edit_cflags="
 AC_ARG_ENABLE(link-time-optimization,
 [AS_HELP_STRING([--enable-link-time-optimization],
                 [build with link-time optimization
-		 (experimental; see INSTALL)])])
+		 (experimental; see INSTALL)])],
 if test "${enableval}" != "no"; then
    ac_lto_supported=no
    if test "$emacs_cv_clang" = yes; then
