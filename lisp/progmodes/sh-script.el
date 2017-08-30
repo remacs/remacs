@@ -593,11 +593,7 @@ sign.  See `sh-feature'."
 			       (sexp :format "Evaluate: %v"))))
   :group 'sh-script)
 
-
-(defcustom sh-indentation 4
-  "The width for further indentation in Shell-Script mode."
-  :type 'integer
-  :group 'sh-script)
+(define-obsolete-variable-alias 'sh-indentation 'sh-basic-offset "26.1")
 (put 'sh-indentation 'safe-local-variable 'integerp)
 
 (defcustom sh-remember-variable-min 3
@@ -1617,7 +1613,7 @@ with your script for an edit-interpret-debug cycle."
   (setq-local skeleton-pair-alist '((?` _ ?`)))
   (setq-local skeleton-pair-filter-function 'sh-quoted-p)
   (setq-local skeleton-further-elements
-	      '((< '(- (min sh-indentation (current-column))))))
+	      '((< '(- (min sh-basic-offset (current-column))))))
   (setq-local skeleton-filter-function 'sh-feature)
   (setq-local skeleton-newline-indent-rigidly t)
   (setq-local defun-prompt-regexp
@@ -2012,7 +2008,7 @@ May return nil if the line should not be treated as continued."
       (forward-line -1)
       (if (sh-smie--looking-back-at-continuation-p)
           (current-indentation)
-        (+ (current-indentation) sh-indentation))))
+        (+ (current-indentation) sh-basic-offset))))
    (t
     ;; Just make sure a line-continuation is indented deeper.
     (save-excursion
@@ -2033,13 +2029,13 @@ May return nil if the line should not be treated as continued."
                        ;; check the line before that one.
                        (> ci indent))
                       (t ;Previous line is the beginning of the continued line.
-                       (setq indent (min (+ ci sh-indentation) max))
+                       (setq indent (min (+ ci sh-basic-offset) max))
                        nil)))))
           indent))))))
 
 (defun sh-smie-sh-rules (kind token)
   (pcase (cons kind token)
-    (`(:elem . basic) sh-indentation)
+    (`(:elem . basic) sh-basic-offset)
     (`(:after . "case-)") (- (sh-var-value 'sh-indent-for-case-alt)
                              (sh-var-value 'sh-indent-for-case-label)))
     (`(:before . ,(or `"(" `"{" `"[" "while" "if" "for" "case"))
@@ -2248,8 +2244,8 @@ Point should be before the newline."
 
 (defun sh-smie-rc-rules (kind token)
   (pcase (cons kind token)
-    (`(:elem . basic) sh-indentation)
-    ;; (`(:after . "case") (or sh-indentation smie-indent-basic))
+    (`(:elem . basic) sh-basic-offset)
+    ;; (`(:after . "case") (or sh-basic-offset smie-indent-basic))
     (`(:after . ";")
      (if (smie-rule-parent-p "case")
          (smie-rule-parent (sh-var-value 'sh-indent-after-case))))
@@ -2490,7 +2486,7 @@ the value thus obtained, and the result is used instead."
 
 (defun sh-basic-indent-line ()
   "Indent a line for Sh mode (shell script mode).
-Indent as far as preceding non-empty line, then by steps of `sh-indentation'.
+Indent as far as preceding non-empty line, then by steps of `sh-basic-offset'.
 Lines containing only comments are considered empty."
   (interactive)
   (let ((previous (save-excursion
@@ -2514,9 +2510,9 @@ Lines containing only comments are considered empty."
 		     (delete-region (point)
 				    (progn (beginning-of-line) (point)))
 		     (if (eolp)
-			 (max previous (* (1+ (/ current sh-indentation))
-					  sh-indentation))
-		       (* (1+ (/ current sh-indentation)) sh-indentation))))))
+			 (max previous (* (1+ (/ current sh-basic-offset))
+					  sh-basic-offset))
+		       (* (1+ (/ current sh-basic-offset)) sh-basic-offset))))))
     (if (< (current-column) (current-indentation))
 	(skip-chars-forward " \t"))))
 
