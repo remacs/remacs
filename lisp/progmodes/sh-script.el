@@ -3594,6 +3594,10 @@ so that `occur-next' and `occur-prev' will work."
 (defun sh-learn-buffer-indent (&optional arg)
   "Learn how to indent the buffer the way it currently is.
 
+If `sh-use-smie' is non-nil, call `smie-config-guess'.
+Otherwise, run the sh-script specific indent learning command, as
+decribed below.
+
 Output in buffer \"*indent*\" shows any lines which have conflicting
 values of a variable, and the final value of all variables learned.
 When called interactively, pop to this buffer automatically if
@@ -3610,8 +3614,7 @@ to the value of variable `sh-learn-basic-offset'.
 
 Abnormal hook `sh-learned-buffer-hook' if non-nil is called when the
 function completes.  The function is abnormal because it is called
-with an alist of variables learned.  This feature may be changed or
-removed in the future.
+with an alist of variables learned.
 
 This command can often take a long time to run."
   (interactive "P")
@@ -3809,7 +3812,6 @@ This command can often take a long time to run."
                            " has"   "s have")
                        (if (zerop num-diffs)
                            "." ":"))))))
-        ;; Are abnormal hooks considered bad form?
         (run-hook-with-args 'sh-learned-buffer-hook learned-var-list)
         (and (called-interactively-p 'any)
              (or sh-popup-occur-buffer (> num-diffs 0))
