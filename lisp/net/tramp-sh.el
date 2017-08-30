@@ -1086,7 +1086,7 @@ component is used as the target of the symlink."
 	;; If TARGET is a Tramp name, use just the localname component.
 	(when (and (tramp-tramp-file-p target)
 		   (tramp-file-name-equal-p
-		    v (tramp-dissect-file-name (expand-file-name target))))
+		    v (tramp-dissect-file-name target)))
 	  (setq target
 		(tramp-file-name-localname
 		 (tramp-dissect-file-name (expand-file-name target)))))
@@ -1132,7 +1132,12 @@ component is used as the target of the symlink."
 		     (tramp-shell-quote-argument localname)))
 	    (with-current-buffer (tramp-get-connection-buffer v)
 	      (goto-char (point-min))
-	      (setq result (buffer-substring (point-min) (point-at-eol)))))
+	      (setq result (buffer-substring (point-min) (point-at-eol))))
+	    (when (and (file-symlink-p filename)
+		       (string-equal result localname))
+	      (tramp-error
+	       v 'file-error
+	       "Apparent cycle of symbolic links for %s" filename)))
 
 	   ;; Use Perl implementation.
 	   ((and (tramp-get-remote-perl v)
@@ -1214,8 +1219,11 @@ component is used as the target of the symlink."
 			"/"))
 		(when (string= "" result)
 		  (setq result "/")))))
-
-	  (when quoted (setq result (tramp-compat-file-name-quote result)))
+	  ;; If the resulting localname looks remote, we must quote it
+	  ;; for security reasons.
+	  (when (or quoted (file-remote-p result))
+	    (let (file-name-handler-alist)
+	      (setq result (tramp-compat-file-name-quote result))))
 	  (tramp-message v 4 "True name of `%s' is `%s'" localname result)
 	  result))))
 
@@ -3072,7 +3080,7 @@ the result will be a local, non-Tramp, file name."
 (defun tramp-sh-handle-file-local-copy (filename)
   "Like `file-local-copy' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (unless (file-exists-p filename)
+    (unless (file-exists-p (file-truename filename))
       (tramp-error
        v tramp-file-missing
        "Cannot make local copy of non-existing file `%s'" filename))

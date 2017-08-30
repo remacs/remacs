@@ -1762,7 +1762,13 @@ This checks also `file-name-as-directory', `file-name-directory',
 		  (tramp-copy-size-limit 4)
 		  (tramp-inline-compress-start-size 2))
 	      (delete-file tmp-name2)
-	      (should (setq tmp-name2 (file-local-copy tmp-name1)))))
+	      (should (setq tmp-name2 (file-local-copy tmp-name1))))
+	    ;; Error case.
+	    (delete-file tmp-name1)
+	    (delete-file tmp-name2)
+	    (should-error
+	     (setq tmp-name2 (file-local-copy tmp-name1))
+	     :type tramp-file-missing))
 
 	;; Cleanup.
 	(ignore-errors
@@ -1776,19 +1782,23 @@ This checks also `file-name-as-directory', `file-name-directory',
   (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
     (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
       (unwind-protect
-	  (progn
+	  (with-temp-buffer
 	    (write-region "foo" nil tmp-name)
-	    (with-temp-buffer
-	      (insert-file-contents tmp-name)
-	      (should (string-equal (buffer-string) "foo"))
-	      (insert-file-contents tmp-name)
-	      (should (string-equal (buffer-string) "foofoo"))
-	      ;; Insert partly.
-	      (insert-file-contents tmp-name nil 1 3)
-	      (should (string-equal (buffer-string) "oofoofoo"))
-	      ;; Replace.
-	      (insert-file-contents tmp-name nil nil nil 'replace)
-	      (should (string-equal (buffer-string) "foo"))))
+	    (insert-file-contents tmp-name)
+	    (should (string-equal (buffer-string) "foo"))
+	    (insert-file-contents tmp-name)
+	    (should (string-equal (buffer-string) "foofoo"))
+	    ;; Insert partly.
+	    (insert-file-contents tmp-name nil 1 3)
+	    (should (string-equal (buffer-string) "oofoofoo"))
+	    ;; Replace.
+	    (insert-file-contents tmp-name nil nil nil 'replace)
+	    (should (string-equal (buffer-string) "foo"))
+	    ;; Error case.
+	    (delete-file tmp-name)
+	    (should-error
+	     (insert-file-contents tmp-name)
+	     :type tramp-file-missing))
 
 	;; Cleanup.
 	(ignore-errors (delete-file tmp-name))))))
@@ -2681,6 +2691,16 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should
 	     (string-equal (file-truename tmp-name1) (file-truename tmp-name2)))
 	    (should (file-equal-p tmp-name1 tmp-name2))
+	    ;; Symbolic links could look like a remote file name.
+	    ;; They must be quoted then.
+	    (delete-file tmp-name2)
+	    (make-symbolic-link "/penguin:motd:" tmp-name2)
+	    (should (file-symlink-p tmp-name2))
+	    (should
+	     (string-equal
+	      (file-truename tmp-name2)
+	      (tramp-compat-file-name-quote
+	       (concat (file-remote-p tmp-name2) "/penguin:motd:"))))
 	    ;; `tmp-name3' is a local file name.
 	    (make-symbolic-link tmp-name1 tmp-name3)
 	    (should (file-symlink-p tmp-name3))
@@ -2697,6 +2717,48 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (delete-file tmp-name1)
 	  (delete-file tmp-name2)
 	  (delete-file tmp-name3)))
+
+      ;; Symbolic links could be nested.
+      (unwind-protect
+	  (tramp--test-ignore-make-symbolic-link-error
+	    (make-directory tmp-name1)
+	    (should (file-directory-p tmp-name1))
+	    (let* ((tramp-test-temporary-file-directory
+		    (file-truename tmp-name1))
+		   (tmp-name2 (tramp--test-make-temp-name nil quoted))
+		   (tmp-name3 tmp-name2)
+		   (number-nesting 50))
+	      (dotimes (_ number-nesting)
+		(make-symbolic-link
+		 tmp-name3
+		 (setq tmp-name3 (tramp--test-make-temp-name nil quoted))))
+	      (should
+	       (string-equal
+		(file-truename tmp-name2)
+		(file-truename tmp-name3)))
+	      (should-error
+	       (with-temp-buffer (insert-file-contents tmp-name2))
+               :type tramp-file-missing)
+	      (should-error
+	       (with-temp-buffer (insert-file-contents tmp-name3))
+               :type tramp-file-missing)))
+
+	;; Cleanup.
+	(ignore-errors (delete-directory tmp-name1 'recursive)))
+
+      ;; Detect cyclic symbolic links.
+      (unwind-protect
+	  (tramp--test-ignore-make-symbolic-link-error
+	    (make-symbolic-link tmp-name2 tmp-name1)
+	    (should (file-symlink-p tmp-name1))
+	    (make-symbolic-link tmp-name1 tmp-name2)
+	    (should (file-symlink-p tmp-name2))
+	    (should-error (file-truename tmp-name1) :type 'file-error))
+
+	;; Cleanup.
+	(ignore-errors
+	  (delete-file tmp-name1)
+	  (delete-file tmp-name2)))
 
       ;; `file-truename' shall preserve trailing link of directories.
       (unless (file-symlink-p tramp-test-temporary-file-directory)
@@ -4019,7 +4081,7 @@ process sentinels.  They shall not disturb each other."
             ;; Create temporary buffers.  The number of buffers
             ;; corresponds to the number of processes; it could be
             ;; increased in order to make pressure on Tramp.
-            (dotimes (_i number-proc)
+            (dotimes (_ number-proc)
               (setq buffers (cons (generate-new-buffer "foo") buffers)))
 
             ;; Open asynchronous processes.  Set process filter and sentinel.

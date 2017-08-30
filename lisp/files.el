@@ -1165,7 +1165,8 @@ directory name and leading `~' and `/:' are not special in FILE."
       (if (eq (find-file-name-handler dirname 'file-symlink-p)
 	      (find-file-name-handler file 'file-symlink-p))
 	  file
-	(file-name-quote file))
+        ;; If `file' is remote, we want to quote it at the beginning.
+        (let (file-name-handler-alist) (file-name-quote file)))
     (concat dirname file)))
 
 (defun file-truename (filename &optional counter prev-dirs)
