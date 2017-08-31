@@ -514,6 +514,11 @@ The two new variables, 'bidi-paragraph-start-re' and
 'bidi-paragraph-separate-re', allow customization of what exactly are
 paragraphs, for the purposes of bidirectional display.
 
+---
+** New variable 'x-wait-for-event-timeout'.
+This controls how long Emacs will wait for updates to the graphical
+state to take effect (making a frame visible, for example).
+
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
