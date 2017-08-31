@@ -547,7 +547,7 @@ system, including many technical ones.  Examples:
  ("\\propto" ?∝)
  ("\\qed" ?∎)
  ("\\quad" ? )
- ("\\rangle" ?⟩) ;; Was ?〉, see bug#12948.
+ ("\\rangle" ?\⟩) ;; Was ?〉, see bug#12948.
  ("\\rbrace" ?})
  ("\\rbrack" ?\])
  ("\\rceil" ?⌉)
@@ -739,8 +739,8 @@ system, including many technical ones.  Examples:
  ("\\textdiscount" ?⁒)
  ("\\textestimated" ?℮)
  ("\\textopenbullet" ?◦)
- ("\\textlquill" ?⁅)
- ("\\textrquill" ?⁆)
+ ("\\textlquill" ?\⁅)
+ ("\\textrquill" ?\⁆)
  ("\\textcircledP" ?℗)
  ("\\textreferencemark" ?※)
  )
