@@ -617,16 +617,16 @@ relevant to POS."
 			 (list
                           (let* ((names (ucs-names))
                                  (name
-                                  (or (when (= char 7)
+                                  (or (when (= char ?\a)
 				       ;; Special case for "BELL" which is
 				       ;; apparently the only char which
 				       ;; doesn't have a new name and whose
 				       ;; old-name is shadowed by a newer char
 				       ;; with that name (bug#25641).
-				       (car (rassoc char names)))
+				       "BELL (BEL)")
                                       (get-char-code-property char 'name)
                                       (get-char-code-property char 'old-name))))
-                            (if (and name (assoc-string name names))
+                            (if (and name (gethash name names))
                                 (format
                                  "type \"C-x 8 RET %x\" or \"C-x 8 RET %s\""
                                  char name)

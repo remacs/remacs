@@ -2923,10 +2923,10 @@ on encoding."
 (make-obsolete-variable 'nonascii-translation-table "do not use it." "23.1")
 
 (defvar ucs-names nil
-  "Alist of cached (CHAR-NAME . CHAR-CODE) pairs.")
+  "Hash table of cached CHAR-NAME keys to CHAR-CODE values.")
 
 (defun ucs-names ()
-  "Return alist of (CHAR-NAME . CHAR-CODE) pairs cached in `ucs-names'."
+  "Return table of CHAR-NAME keys and CHAR-CODE values cached in `ucs-names'."
   (or ucs-names
       (let ((ranges
 	     '((#x0000 . #x33FF)
@@ -2954,38 +2954,39 @@ on encoding."
 	       ;; (#x20000 . #xDFFFF) CJK Ideograph Extension A, B, etc, unused
 	       (#xE0000 . #xE01FF)))
 	    (gc-cons-threshold 10000000)
-	    names)
-	(dolist (range ranges)
-	  (let ((c (car range))
-		(end (cdr range)))
-	  (while (<= c end)
+	    (names (make-hash-table :size 42943 :test #'equal)))
+        (dolist (range ranges)
+          (let ((c (car range))
+	        (end (cdr range)))
+	    (while (<= c end)
 	      (let ((new-name (get-char-code-property c 'name))
 		    (old-name (get-char-code-property c 'old-name)))
-		;; In theory this code could end up pushing an "old-name" that
-		;; shadows a "new-name" but in practice every time an
-		;; `old-name' conflicts with a `new-name', the newer one has a
-		;; higher code, so it gets pushed later!
-		(if new-name (push (cons new-name c) names))
-		(if old-name (push (cons old-name c) names))
-		(setq c (1+ c))))))
-	;; Special case for "BELL" which is apparently the only char which
-	;; doesn't have a new name and whose old-name is shadowed by a newer
-	;; char with that name.
-	(setq ucs-names `(("BELL (BEL)" . 7) ,@names)))))
+	        ;; In theory this code could end up pushing an "old-name" that
+	        ;; shadows a "new-name" but in practice every time an
+	        ;; `old-name' conflicts with a `new-name', the newer one has a
+	        ;; higher code, so it gets pushed later!
+	        (if new-name (puthash new-name c names))
+	        (if old-name (puthash old-name c names))
+	        (setq c (1+ c))))))
+        ;; Special case for "BELL" which is apparently the only char which
+        ;; doesn't have a new name and whose old-name is shadowed by a newer
+        ;; char with that name.
+        (puthash "BELL (BEL)" ?\a names)
+        (setq ucs-names names))))
 
 (defun mule--ucs-names-annotation (name)
   ;; FIXME: It would be much better to add this annotation before rather than
   ;; after the char name, so the annotations are aligned.
   ;; FIXME: The default behavior of displaying annotations in italics
   ;; doesn't work well here.
-  (let ((char (assoc name ucs-names)))
-    (when char (format " (%c)" (cdr char)))))
+  (let ((char (gethash name ucs-names)))
+    (when char (format " (%c)" char))))
 
 (defun char-from-name (string &optional ignore-case)
   "Return a character as a number from its Unicode name STRING.
 If optional IGNORE-CASE is non-nil, ignore case in STRING.
 Return nil if STRING does not name a character."
-  (or (cdr (assoc-string string (ucs-names) ignore-case))
+  (or (gethash (if ignore-case (upcase string) string) (ucs-names))
       (let ((minus (string-match-p "-[0-9A-F]+\\'" string)))
         (when minus
           ;; Parse names like "VARIATION SELECTOR-17" and "CJK
