@@ -5727,11 +5727,10 @@ xaw_jump_callback (Widget widget, XtPointer client_data, XtPointer call_data)
   struct scroll_bar *bar = client_data;
   float *top_addr = call_data;
   double top = *top_addr;
-  float shown;
+  double shown;
   int whole, portion, height, width;
   enum scroll_bar_part part;
   bool horizontal = bar->horizontal;
-
 
   if (horizontal)
     {
@@ -6367,8 +6366,9 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
     }
 
   {
-    float old_top, old_shown;
+    double old_top, old_shown;
     Dimension height;
+
     XtVaGetValues (widget,
 		   XtNtopOfThumb, &old_top,
 		   XtNshown, &old_shown,
@@ -6395,7 +6395,8 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
     /* If the call to XawScrollbarSetThumb below doesn't seem to
        work, check that 'NARROWPROTO' is defined in src/config.h.
        If this is not so, most likely you need to fix configure.  */
-    float ftop = top, fshown = shown;
+    double ftop = top, fshown = shown;
+
     if (ftop != old_top || fshown != old_shown)
       {
 	if (bar->dragging == -1)
