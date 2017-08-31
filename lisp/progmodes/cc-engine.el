@@ -1980,17 +1980,10 @@ comment at the start of cc-engine.el for more info."
 		(end-of-line))
 	      (setq macro-end (point))
 	      ;; Check for an open block comment at the end of the macro.
-	      (goto-char macro-start)
-	      (let (s in-block-comment)
-		(while
-		    (progn
-		      (setq s (parse-partial-sexp (point) macro-end
-						  nil nil s 'syntax-table))
-		      (< (point) macro-end))
-		  (setq in-block-comment
-			(and (elt s 4)	     ; in a comment
-			     (null (elt s 7))))) ; a block comment
-		(if in-block-comment (setq safe-start nil)))
+	      (let ((s (parse-partial-sexp macro-start macro-end)))
+		(if (and (elt s 4)		    ; in a comment
+			 (null (elt s 7)))	    ; a block comment
+		    (setq safe-start nil)))
 	      (forward-line 1)
 	      ;; Don't cache at eob in case the buffer is narrowed.
 	      (not (eobp)))
