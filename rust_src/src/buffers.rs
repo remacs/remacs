@@ -107,7 +107,7 @@ impl LispBufferRef {
             0
         };
 
-        unsafe { self.beg_addr().offset(offset + n - self.beg_byte()) as u8 }
+        unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
     }
 }
 
