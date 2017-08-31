@@ -1710,18 +1710,16 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		 (eq (char-after ps-elt) ?\{))
 	(goto-char ps-elt)
 	(c-syntactic-skip-backward "^;{}" decl-search-lim)
-	(when (or (bobp)
-		  (memq (char-before) '(?\; ?})))
-	  (c-forward-syntactic-ws)
-	  (setq in-typedef (looking-at c-typedef-key))
-	  (if in-typedef (c-forward-token-2))
-	  (when (and c-opt-block-decls-with-vars-key
-		     (looking-at c-opt-block-decls-with-vars-key))
-	    (goto-char ps-elt)
-	    (when (c-safe (c-forward-sexp))
-	      (c-forward-syntactic-ws)
-	      (c-font-lock-declarators limit t in-typedef
-				       (not (c-bs-at-toplevel-p (point)))))))))))
+	(c-forward-syntactic-ws)
+	(setq in-typedef (looking-at c-typedef-key))
+	(if in-typedef (c-forward-token-2))
+	(when (and c-opt-block-decls-with-vars-key
+		   (looking-at c-opt-block-decls-with-vars-key))
+	  (goto-char ps-elt)
+	  (when (c-safe (c-forward-sexp))
+	    (c-forward-syntactic-ws)
+	    (c-font-lock-declarators limit t in-typedef
+				     (not (c-bs-at-toplevel-p (point))))))))))
 
 (defun c-font-lock-raw-strings (limit)
   ;; Fontify C++ raw strings.
