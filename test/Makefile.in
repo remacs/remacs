@@ -156,11 +156,11 @@ else
 maybe_exclude_module_tests := -name emacs-module-tests.el -prune -o
 endif
 
-ELFILES := $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
+ELFILES := $(sort $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
 		-path "${srcdir}/data" -prune -o \
 		-name "*resources" -prune -o \
 		${maybe_exclude_module_tests} \
-		-name "*.el" ! -name ".*" -print)
+		-name "*.el" ! -name ".*" -print))
 ## .log files may be in a different directory for out of source builds
 LOGFILES := $(patsubst %.el,%.log, \
 		$(patsubst $(srcdir)/%,%,$(ELFILES)))
