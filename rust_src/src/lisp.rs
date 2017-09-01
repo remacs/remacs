@@ -28,8 +28,8 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
                  Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp, Qhash_table_p,
-                 Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, Qoverlayp, SYMBOL_NAME, PseudovecType,
-                 EqualKind};
+                 Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, Qoverlayp, Qwindow_live_p,
+                 SYMBOL_NAME, PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -507,6 +507,14 @@ impl LispObject {
 
     pub fn as_window(self) -> Option<LispWindowRef> {
         self.as_vectorlike().map_or(None, |v| v.as_window())
+    }
+
+    pub fn as_live_window_or_error(self) -> Option<LispWindowRef> {
+        if self.as_window().map_or(false, |w| w.is_live()) {
+            self.as_window()
+        } else {
+            wrong_type!(Qwindow_live_p, self);
+        }
     }
 
     pub fn is_frame(self) -> bool {

@@ -138,6 +138,7 @@ pub use obarray::Fintern;
 pub use obarray::Fintern_soft;
 pub use marker::Fmarker_position;
 pub use marker::Fmarker_buffer;
+pub use windows::Fwindow_point;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
@@ -192,6 +193,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Soverlay_buffer);
         defsubr(&*windows::Swindowp);
         defsubr(&*windows::Swindow_live_p);
+        defsubr(&*windows::Swindow_point);
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*lists::Satom);

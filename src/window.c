@@ -1526,27 +1526,6 @@ column 0.  */)
 				  0, false);
 }
 
-DEFUN ("window-point", Fwindow_point, Swindow_point, 0, 1, 0,
-       doc: /* Return current value of point in WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-For a nonselected window, this is the value point would have if that
-window were selected.
-
-Note that, when WINDOW is selected, the value returned is the same as
-that returned by `point' for WINDOW's buffer.  It would be more strictly
-correct to return the top-level value of `point', outside of any
-`save-excursion' forms.  But that is hard to define.  */)
-  (Lisp_Object window)
-{
-  register struct window *w = decode_live_window (window);
-
-  if (w == XWINDOW (selected_window))
-    return make_number (BUF_PT (XBUFFER (w->contents)));
-  else
-    return Fmarker_position (w->pointm);
-}
-
 DEFUN ("window-old-point", Fwindow_old_point, Swindow_old_point, 0, 1, 0,
        doc: /* Return old value of point in WINDOW.
 WINDOW must be a live window and defaults to the selected one.  */)
@@ -7771,7 +7750,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_scroll_bar_height);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
-  defsubr (&Swindow_point);
   defsubr (&Swindow_old_point);
   defsubr (&Swindow_start);
   defsubr (&Swindow_end);

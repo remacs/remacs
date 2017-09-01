@@ -3,6 +3,8 @@
 use lisp::{LispObject, ExternalPtr};
 use remacs_macros::lisp_fn;
 use remacs_sys::Lisp_Window;
+use marker::marker_position;
+use editfns::point;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
@@ -11,6 +13,11 @@ impl LispWindowRef {
     #[inline]
     pub fn is_live(self) -> bool {
         LispObject::from_raw(self.contents).is_buffer()
+    }
+
+    #[inline]
+    pub fn pointm(self) -> LispObject {
+        LispObject::from_raw(self.pointm)
     }
 }
 
@@ -27,4 +34,24 @@ fn windowp(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn window_live_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_window().map_or(false, |m| m.is_live()))
+}
+
+/// Return current value of point in WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+///
+/// For a nonselected window, this is the value point would have if that
+/// window were selected.
+///
+/// Note that, when WINDOW is selected, the value returned is the same as
+/// that returned by `point' for WINDOW's buffer.  It would be more strictly
+/// correct to return the top-level value of `point', outside of any
+/// `save-excursion' forms.  But that is hard to define.
+#[lisp_fn(min = "0")]
+pub fn window_point(object: LispObject) -> LispObject {
+    if object.is_nil() {
+        point()
+    } else {
+        let marker = object.as_live_window_or_error().unwrap().pointm();
+        marker_position(marker)
+    }
 }
