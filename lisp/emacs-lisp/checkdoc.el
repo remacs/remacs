@@ -258,12 +258,13 @@ Any more than this and a warning is generated suggesting that the construct
 \\ {keymap} be used instead."
   :type 'integer)
 
-(defcustom checkdoc-arguments-in-order-flag t
+(defcustom checkdoc-arguments-in-order-flag nil
   "Non-nil means warn if arguments appear out of order.
 Setting this to nil will mean only checking that all the arguments
 appear in the proper form in the documentation, not that they are in
 the same order as they appear in the argument list.  No mention is
 made in the style guide relating to order."
+  :version "26.1"
   :type 'boolean)
 ;;;###autoload(put 'checkdoc-arguments-in-order-flag 'safe-local-variable #'booleanp)
 

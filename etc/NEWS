@@ -673,6 +673,11 @@ bound to 'Buffer-menu-unmark-all-buffers'.
 *** Two new commands 'Buffer-menu-unmark-all', bound to 'U' and
 'Buffer-menu-unmark-all-buffers', bound to 'M-DEL'.
 
+---
+** Checkdoc
+
+*** 'checkdoc-arguments-in-order-flag' now defaults to nil.
+
 ** Gnus
 
 ---
