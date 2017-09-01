@@ -5444,16 +5444,7 @@ See also `conf-space-mode', `conf-colon-mode', `conf-javaprop-mode',
 
 (autoload 'conf-unix-mode "conf-mode" "\
 Conf Mode starter for Unix style Conf files.
-Comments start with `#'.
-For details see `conf-mode'.  Example:
-
-# Conf mode font-locks this right on Unix and with \\[conf-unix-mode]
-
-\[Desktop Entry]
-	 Encoding=UTF-8
-	 Name=The GIMP
-	 Name[ca]=El GIMP
-	 Name[cs]=GIMP
+Comments start with `#'.  For details see `conf-mode'.
 
 \(fn)" t nil)
 
@@ -5556,6 +5547,32 @@ For details see `conf-mode'.  Example:
 
 *background:			gray99
 *foreground:			black
+
+\(fn)" t nil)
+
+(autoload 'conf-toml-mode "conf-mode" "\
+Conf Mode starter for TOML files.
+Comments start with `#' and \"assignments\" are with `='.
+For details see `conf-mode'.  Example:
+
+# Conf mode font-locks this right with \\[conf-toml-mode]
+
+\[entry]
+value = \"some string\"
+
+\(fn)" t nil)
+
+(autoload 'conf-desktop-mode "conf-mode" "\
+Conf Mode started for freedesktop.org Desktop files.
+Comments start with `#' and \"assignments\" are with `='.
+For details see `conf-mode'.
+
+# Conf mode font-locks this correctly with \\[conf-desktop-mode]
+	[Desktop Entry]
+	Name=GNU Image Manipulation Program
+	Name[oc]=Editor d'imatge GIMP
+	Exec=gimp-2.8 %U
+	Terminal=false
 
 \(fn)" t nil)
 
@@ -6830,9 +6847,12 @@ or call the function `delete-selection-mode'.")
 
 (autoload 'delete-selection-mode "delsel" "\
 Toggle Delete Selection mode.
-With a prefix argument ARG, enable Delete Selection mode if ARG
-is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
+Interactively, with a prefix argument, enable
+Delete Selection mode if the prefix argument is positive,
+and disable it otherwise.  If called from Lisp, toggle
+the mode if ARG is `toggle', disable the mode if ARG is
+a non-positive integer, and enable the mode otherwise
+\(including if ARG is omitted or nil or a positive integer).
 
 When Delete Selection mode is enabled, typed text replaces the selection
 if the selection is active.  Otherwise, typed text is just inserted at
@@ -9699,15 +9719,6 @@ It creates an autoload function for CNAME's constructor.
 
 ;;;### (autoloads nil "elec-pair" "elec-pair.el" (0 0 0 0))
 ;;; Generated autoloads from elec-pair.el
-
-(defvar electric-pair-text-pairs '((34 . 34) ((nth 0 electric-quote-chars) nth 1 electric-quote-chars) ((nth 2 electric-quote-chars) nth 3 electric-quote-chars)) "\
-Alist of pairs that should always be used in comments and strings.
-
-Pairs of delimiters in this list are a fallback in case they have
-no syntax relevant to `electric-pair-mode' in the syntax table
-defined in `electric-pair-text-syntax-table'")
-
-(custom-autoload 'electric-pair-text-pairs "elec-pair" t)
 
 (defvar electric-pair-mode nil "\
 Non-nil if Electric-Pair mode is enabled.
@@ -13061,7 +13072,23 @@ to get the effect of a C-q.
 ;;; Generated autoloads from progmodes/flymake.el
 (push (purecopy '(flymake 0 3)) package--builtin-versions)
 
-(autoload 'flymake-mode "flymake" "\
+;;;***
+
+;;;### (autoloads nil "flymake-proc" "progmodes/flymake-proc.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from progmodes/flymake-proc.el
+(push (purecopy '(flymake-proc 0 3)) package--builtin-versions)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake-proc" '("flymake-")))
+
+;;;***
+
+;;;### (autoloads nil "flymake-ui" "progmodes/flymake-ui.el" (0 0
+;;;;;;  0 0))
+;;; Generated autoloads from progmodes/flymake-ui.el
+(push (purecopy '(flymake-ui 0 3)) package--builtin-versions)
+
+(autoload 'flymake-mode "flymake-ui" "\
 Toggle Flymake mode on or off.
 With a prefix argument ARG, enable Flymake mode if ARG is
 positive, and disable it otherwise.  If called from Lisp, enable
@@ -13070,22 +13097,22 @@ the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
 
 \(fn &optional ARG)" t nil)
 
-(autoload 'flymake-mode-on "flymake" "\
+(autoload 'flymake-mode-on "flymake-ui" "\
 Turn flymake mode on.
 
 \(fn)" nil nil)
 
-(autoload 'flymake-mode-off "flymake" "\
+(autoload 'flymake-mode-off "flymake-ui" "\
 Turn flymake mode off.
 
 \(fn)" nil nil)
 
-(autoload 'flymake-find-file-hook "flymake" "\
+(autoload 'flymake-find-file-hook "flymake-ui" "\
 
 
 \(fn)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake" '("flymake-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake-ui" '("flymake-")))
 
 ;;;***
 
@@ -15060,12 +15087,9 @@ List of hook functions run by `grep-process-setup' (see `run-hooks').")
 
 (custom-autoload 'grep-setup-hook "grep" t)
 
-(autoload 'grep-regexp-alist "grep" "\
-Return a regexp alist to match grep hits.
-The regexp used depends on `grep-use-null-filename-separator'.
-See `compilation-error-regexp-alist' for format details.
-
-\(fn)" nil nil)
+(defconst grep-regexp-alist `((,(concat "^\\(?:" "\\(?1:[^ \n]+\\)\\(?3: \\)\\(?2:[0-9]+\\):" "\\|" "\\(?1:[^\n:]+?[^\n/:]\\):[	 ]*\\(?2:[1-9][0-9]*\\)[	 ]*:" "\\)") 1 2 (,(lambda nil (when grep-highlight-matches (let* ((beg (match-end 0)) (end (save-excursion (goto-char beg) (line-end-position))) (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face))) (when mbeg (- mbeg beg))))) \, (lambda nil (when grep-highlight-matches (let* ((beg (match-end 0)) (end (save-excursion (goto-char beg) (line-end-position))) (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face)) (mend (and mbeg (next-single-property-change mbeg 'font-lock-face nil end)))) (when mend (- mend beg)))))) nil nil (3 '(face nil display ":"))) ("^Binary file \\(.+\\) matches$" 1 nil nil 0 1)) "\
+Regexp used to match grep hits.
+See `compilation-error-regexp-alist' for format details.")
 
 (defvar grep-program (purecopy "grep") "\
 The default grep program for `grep-command' and `grep-find-command'.
@@ -19452,6 +19476,30 @@ A major mode to edit GNU ld script files
 ;;; Generated autoloads from gnus/legacy-gnus-agent.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "legacy-gnus-agent" '("gnus-agent-")))
+
+;;;***
+
+;;;### (autoloads nil "less-css-mode" "textmodes/less-css-mode.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from textmodes/less-css-mode.el
+
+(put 'less-css-compile-at-save 'safe-local-variable 'booleanp)
+
+(put 'less-css-lessc-options 'safe-local-variable t)
+
+(put 'less-css-output-directory 'safe-local-variable 'stringp)
+
+(put 'less-css-input-file-name 'safe-local-variable 'stringp)
+ (add-to-list 'auto-mode-alist '("\\.less\\'" . less-css-mode))
+
+(autoload 'less-css-mode "less-css-mode" "\
+Major mode for editing Less files (http://lesscss.org/).
+Special commands:
+\\{less-css-mode-map}
+
+\(fn)" t nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "less-css-mode" '("less-css-")))
 
 ;;;***
 
@@ -30979,7 +31027,7 @@ Return a vector containing the lines from `spook-phrases-file'.
 
 ;;;### (autoloads nil "sql" "progmodes/sql.el" (0 0 0 0))
 ;;; Generated autoloads from progmodes/sql.el
-(push (purecopy '(sql 3 5)) package--builtin-versions)
+(push (purecopy '(sql 3 6)) package--builtin-versions)
 
 (autoload 'sql-add-product-keywords "sql" "\
 Add highlighting KEYWORDS for SQL PRODUCT.
@@ -31041,7 +31089,7 @@ their settings.
 The user will not be prompted for any login parameters if a value
 is specified in the connection settings.
 
-\(fn CONNECTION &optional NEW-NAME)" t nil)
+\(fn CONNECTION &optional BUF-NAME)" t nil)
 
 (autoload 'sql-product-interactive "sql" "\
 Run PRODUCT interpreter as an inferior process.
