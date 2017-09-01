@@ -2561,7 +2561,7 @@ if x:
   "Test `python-shell-virtualenv-root' modification."
   (let* ((python-shell-virtualenv-root "/env")
          (process-environment
-          (let (process-environment process-environment)
+          (let ((process-environment process-environment))
             (setenv "PYTHONHOME" "/home")
             (setenv "VIRTUAL_ENV")
             (python-shell-calculate-process-environment))))
