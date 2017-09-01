@@ -220,7 +220,7 @@ endif
 ## the tests were arranged differently.
 .PHONY: check-no-automated-subdir
 check-no-automated-subdir:
-	test ! -d $(srcdir)/automated
+	${AM_V_at}test ! -d $(srcdir)/automated
 
 ## Rerun all default tests.
 check: mostlyclean check-no-automated-subdir
