@@ -51,7 +51,7 @@ pub fn window_point(object: LispObject) -> LispObject {
     if object.is_nil() {
         point()
     } else {
-        let marker = object.as_live_window_or_error().unwrap().pointm();
+        let marker = object.as_live_window_or_error().pointm();
         marker_position(marker)
     }
 }

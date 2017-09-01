@@ -509,9 +509,9 @@ impl LispObject {
         self.as_vectorlike().map_or(None, |v| v.as_window())
     }
 
-    pub fn as_live_window_or_error(self) -> Option<LispWindowRef> {
+    pub fn as_live_window_or_error(self) -> LispWindowRef {
         if self.as_window().map_or(false, |w| w.is_live()) {
-            self.as_window()
+            self.as_window().unwrap()
         } else {
             wrong_type!(Qwindow_live_p, self);
         }
