@@ -31,12 +31,18 @@
                                    "lib-src"))
   "Path to emacsclient binary in build tree.")
 
+(defun call-emacsclient ()
+  "Run emacsclient."
+  (call-process emacsclient-test-emacs nil nil nil
+                "--server-file" (expand-file-name "non-existent-file" invocation-directory)
+                "foo"))
+
 (ert-deftest emacsclient-test-alternate-editor-allows-arguments ()
   (let (process-environment process-environment)
     (setenv "ALTERNATE_EDITOR" (concat
                                 (expand-file-name invocation-name invocation-directory)
                                 " --batch"))
-    (should (= 0 (call-process emacsclient-test-emacs nil nil nil "foo")))))
+    (should (= 0 (call-emacsclient)))))
 
 (ert-deftest emacsclient-test-alternate-editor-allows-quotes ()
   (let (process-environment process-environment)
@@ -44,7 +50,7 @@
                                 "\""
                                 (expand-file-name invocation-name invocation-directory)
                                 "\"" " --batch"))
-    (should (= 0 (call-process emacsclient-test-emacs nil nil nil "foo")))))
+    (should (= 0 (call-emacsclient)))))
 
 (provide 'emacsclient-tests)
 ;;; emacsclient-tests.el ends here
