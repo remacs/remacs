@@ -1863,6 +1863,10 @@ For details see the section "(elisp) Mouse Window Auto-selection" in
 the ELisp manual.
 
 ---
+*** 'select-frame-by-name' now may return a frame on another display
+if it does not find a suitable one on the current display.
+
+---
 ** 'tcl-auto-fill-mode' is now declared obsolete.  Its functionality
 can be replicated simply by setting 'comment-auto-fill-only-comments'.
 
