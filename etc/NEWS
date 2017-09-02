@@ -65,9 +65,9 @@ need to copy the emacs.service file to eg ~/.config/systemd/user/)
 Emacs that is more likely to be reproducible; that is, if you build
 and install Emacs twice, the second Emacs is a copy of the first.
 Deterministic builds omit the build date from the output of the
-emacs-version and erc-cmd-SV functions, and the leave the following
-variables nil: emacs-build-system, emacs-build-time,
-erc-emacs-build-time.
+'emacs-version' and 'erc-cmd-SV' functions, and the leave the
+following variables nil: 'emacs-build-system', 'emacs-build-time',
+'erc-emacs-build-time'.
 
 ** The configure option '--with-gameuser' now defaults to 'no',
 as this appears to be the most common configuration in practice.
@@ -108,11 +108,6 @@ The effect is similar to that of "toolBar" resource on the tool bar.
 
 * Changes in Emacs 26.1
 
-+++
-** The function 'assoc' now takes an optional third argument 'testfn'.
-This argument, when non-nil, is used for comparison instead of
-'equal'.
-
 ---
 ** New variable 'executable-prefix-env' for inserting magic signatures.
 This variable affects the format of the interpreter magic number
@@ -127,10 +122,6 @@ so the default behavior is not changed.
 This is now stored separately in a new variable, 'emacs-build-number'.
 
 +++
-** The new function 'mapbacktrace' applies a function to all frames of
-the current stack trace.
-
-+++
 ** Emacs now provides a limited form of concurrency with Lisp threads.
 Concurrency in Emacs Lisp is "mostly cooperative", meaning that
 Emacs will only switch execution between threads at well-defined
@@ -142,10 +133,6 @@ buffer and its own match data.
 
 See the chapter "Threads" in the ELisp manual for full documentation
 of these facilities.
-
-+++
-** The new function 'file-name-case-insensitive-p' tests whether a
-given file is on a case-insensitive filesystem.
 
 +++
 ** The new user variable 'electric-quote-chars' provides a list
@@ -272,20 +259,6 @@ part of minibuffers.
 ** 'find-library' now takes a prefix argument to pop to a different
 window.
 
-+++
-** Several accessors for the value returned by 'file-attributes'
-have been added.  They are: 'file-attribute-type',
-'file-attribute-link-number', 'file-attribute-user-id',
-'file-attribute-group-id', 'file-attribute-access-time',
-'file-attribute-modification-time',
-'file-attribute-status-change-time', 'file-attribute-size',
-'file-attribute-modes', 'file-attribute-inode-number',
-'file-attribute-device-number' and 'file-attribute-collect'.
-
-+++
-** The new function 'buffer-hash' computes a fast, non-consing hash of
-a buffer's contents.
-
 ---
 ** 'fill-paragraph' no longer marks the buffer as changed unless it
 actually changed something.
@@ -337,13 +310,6 @@ probability of data corruption due to techniques Emacs uses to recover
 in these situations.
 
 +++
-** 'interrupt-process' now consults the list 'interrupt-process-functions',
-to determine which function has to be called in order to deliver the
-SIGINT signal.  This allows Tramp to send the SIGINT signal to remote
-asynchronous processes.  The hitherto existing implementation has been
-moved to 'internal-default-interrupt-process'.
-
-+++
 ** File local and directory local variables are now initialized each
 time the major mode is set, not just when the file is first visited.
 These local variables will thus not vanish on setting a major mode.
@@ -359,15 +325,11 @@ see the node "Connection Local Variables" in the ELisp manual.
 
 ---
 ** International domain names (IDNA) are now encoded via the new
-puny.el library, so that one can visit web sites with non-ASCII URLs.
+puny.el library, so that one can visit Web sites with non-ASCII URLs.
 
 +++
 ** The new 'timer-list' command lists all active timers in a buffer,
 where you can cancel them with the 'c' command.
-
-+++
-** The new function 'read-multiple-choice' prompts for multiple-choice
-questions, with a handy way to display help texts.
 
 +++
 ** 'switch-to-buffer-preserve-window-point' now defaults to t.
@@ -454,10 +416,6 @@ display of raw bytes from octal to hex.
 +++
 ** You can now provide explicit field numbers in format specifiers.
 For example, '(format "%2$s %1$s" "X" "Y")' produces "Y X".
-
----
-** 'comment-indent-function' values may now return a cons to specify a
-range of indentation.
 
 +++
 ** Emacs now supports optional display of line numbers in the buffer.
@@ -1289,17 +1247,61 @@ variable 'x-gtk-use-window-move'.  The variable is now obsolete.
 * Lisp Changes in Emacs 26.1
 
 +++
-** New optional argument TEXT in 'make-temp-file'.
-
----
-** New function `define-symbol-prop'.
+** The function 'assoc' now takes an optional third argument TESTFN.
+This argument, when non-nil, is used for comparison instead of
+'equal'.
 
 +++
 ** New optional argument TESTFN in 'alist-get', 'map-elt' and 'map-put'.
+If non-nil, the argument specifies a function to use for comparison,
+instead of, respectively, 'assq' and 'eql'.
 
 +++
 ** New function 'seq-set-equal-p' to check if SEQUENCE1 and SEQUENCE2
 contain the same elements, regardless of the order.
+
++++
+** The new function 'mapbacktrace' applies a function to all frames of
+the current stack trace.
+
++++
+** The new function 'file-name-case-insensitive-p' tests whether a
+given file is on a case-insensitive filesystem.
+
++++
+** Several accessors for the value returned by 'file-attributes'
+have been added.  They are: 'file-attribute-type',
+'file-attribute-link-number', 'file-attribute-user-id',
+'file-attribute-group-id', 'file-attribute-access-time',
+'file-attribute-modification-time',
+'file-attribute-status-change-time', 'file-attribute-size',
+'file-attribute-modes', 'file-attribute-inode-number',
+'file-attribute-device-number' and 'file-attribute-collect'.
+
++++
+** The new function 'buffer-hash' computes a fast, non-consing hash of
+a buffer's contents.
+
++++
+** 'interrupt-process' now consults the list 'interrupt-process-functions',
+to determine which function has to be called in order to deliver the
+SIGINT signal.  This allows Tramp to send the SIGINT signal to remote
+asynchronous processes.  The hitherto existing implementation has been
+moved to 'internal-default-interrupt-process'.
+
++++
+** The new function 'read-multiple-choice' prompts for multiple-choice
+questions, with a handy way to display help texts.
+
+---
+** 'comment-indent-function' values may now return a cons to specify a
+range of indentation.
+
++++
+** New optional argument TEXT in 'make-temp-file'.
+
+---
+** New function `define-symbol-prop'.
 
 ** Checksum/Hash
 
