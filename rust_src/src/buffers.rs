@@ -44,6 +44,11 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn gap_size(&self) -> ptrdiff_t {
+        unsafe { (*self.text).gap_size }
+    }
+
+    #[inline]
     pub fn gap_end_addr(&self) -> *mut c_uchar {
         unsafe {
             (*self.text).beg.offset(
@@ -92,6 +97,17 @@ impl LispBufferRef {
     #[inline]
     pub fn is_live(self) -> bool {
         LispObject::from_raw(self.name).is_not_nil()
+    }
+
+    #[inline]
+    pub fn fetch_byte(&self, n: ptrdiff_t) -> u8 {
+        let offset = if n >= self.gpt_byte() {
+            self.gap_size()
+        } else {
+            0
+        };
+
+        unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
     }
 }
 
