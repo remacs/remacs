@@ -212,7 +212,8 @@ symmetric encryption will be used."
     (with-current-buffer buffer
       (erase-buffer)
       (condition-case nil
-	  (insert-file-contents-literally file)
+          (let ((coding-system-for-read 'raw-text))
+            (insert-file-contents file))
 	(error))
       (setq buffer-file-name (file-truename file))
       (set-buffer-modified-p nil)
