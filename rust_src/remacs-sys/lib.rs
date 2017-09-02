@@ -1343,6 +1343,8 @@ extern "C" {
     pub static Vbuffer_alist: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
 
+    pub static gc_in_progress: bool;
+
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;

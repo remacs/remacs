@@ -5,7 +5,7 @@ use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy
                  QCweakness, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
                  Lisp_Vector, Qkey_and_value, Qkey, Qvalue, Qkey_or_value, pure_alloc,
                  survives_gc_p, Lisp_Vectorlike_Header, Lisp_Object, EmacsUint, hash_table_test,
-                 ARRAY_MARK_FLAG, CHECK_IMPURE, hashfn_eq, hashfn_eql, hashfn_equal};
+                 ARRAY_MARK_FLAG, CHECK_IMPURE, hashfn_eq, hashfn_eql, hashfn_equal, gc_in_progress};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
@@ -70,6 +70,7 @@ impl HashableLispObject {
 
 impl HashableLispObject {
     fn calculate_hash(&self) -> u64 {
+        unsafe { assert_eq!(gc_in_progress, false) };
         match self.func {
             HashFunction::Eq => unsafe { hashfn_eq(ptr::null_mut(), self.object.to_raw()) as u64 },
             HashFunction::Eql => unsafe {
