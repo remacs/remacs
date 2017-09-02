@@ -6,8 +6,7 @@
 #![feature(global_allocator)]
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
-#[cfg(all(not(test), target_os = "macos"))]
-extern crate alloc_unexecmacosx;
+extern crate alloc_unexec;
 
 #[macro_use]
 extern crate lazy_static;
@@ -53,12 +52,10 @@ mod category;
 mod obarray;
 mod editfns;
 
-#[cfg(all(not(test), target_os = "macos"))]
-use alloc_unexecmacosx::OsxUnexecAlloc;
+use alloc_unexec::UnexecAlloc;
 
-#[cfg(all(not(test), target_os = "macos"))]
 #[global_allocator]
-static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
+static ALLOCATOR: UnexecAlloc = UnexecAlloc;
 
 use remacs_sys::Lisp_Subr;
 

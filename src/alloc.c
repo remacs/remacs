@@ -7306,7 +7306,7 @@ init_alloc_once (void)
 
 #ifdef DOUG_LEA_MALLOC
   mallopt (M_TRIM_THRESHOLD, 128 * 1024); /* Trim threshold.  */
-  mallopt (M_MMAP_THRESHOLD, 64 * 1024);  /* Mmap threshold.  */
+  mallopt (M_MMAP_THRESHOLD, 8 * 64 * 1024);  /* Mmap threshold.  */
   mallopt (M_MMAP_MAX, MMAP_MAX_AREAS);   /* Max. number of mmap'ed areas.  */
 #endif
   init_strings ();

@@ -1,0 +1,7 @@
+[package]
+name = "alloc_unexec"
+version = "0.1.0"
+authors = ["David DeSimone <djd231@scarletmail.rutgers.edu>"]
+
+[dependencies]
+libc = { version = "0.2.17", default-features = false }

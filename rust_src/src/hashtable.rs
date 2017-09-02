@@ -548,6 +548,7 @@ pub unsafe extern "C" fn hash_lookup(
 #[no_mangle]
 pub unsafe extern "C" fn hash_value_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
     debug_assert!(idx >= 0);
+    debug_assert!(idx % 2 == 0);
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.get_value_with_index(idx).to_raw()
 }
@@ -555,6 +556,7 @@ pub unsafe extern "C" fn hash_value_lookup(map: *mut c_void, idx: ptrdiff_t) -> 
 #[no_mangle]
 pub unsafe extern "C" fn hash_key_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
     debug_assert!(idx >= 0);
+    debug_assert!(idx % 2 == 0);
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     ptr.get_key_with_index(idx).to_raw()
 }
