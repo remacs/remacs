@@ -261,7 +261,6 @@ impl LispHashTable {
         self.key_and_value[idx].key = object;
     }
 
-    #[inline]
     pub fn clear(&mut self) {
         self.map.clear();
         self.key_and_value.clear();
@@ -291,7 +290,6 @@ unsafe fn allocate_hashtable_unititalized() -> LispHashTableRef {
     ))
 }
 
-#[inline]
 fn allocate_hashtable() -> LispHashTableRef {
     let mut table = unsafe { allocate_hashtable_unititalized() };
     // The table is "almost" unititalized, but it has it's header
