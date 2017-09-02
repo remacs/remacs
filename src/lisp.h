@@ -34,8 +34,6 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <intprops.h>
 #include <verify.h>
 
-#include "rust-types.h"
-
 INLINE_HEADER_BEGIN
 
 /* Define a TYPE constant ID as an externally visible name.  Use like this:
@@ -1315,7 +1313,7 @@ SSET (Lisp_Object string, ptrdiff_t index, unsigned char new)
 INLINE ptrdiff_t
 SCHARS (Lisp_Object string)
 {
-  volatile ptrdiff_t nchars = XSTRING (string)->size;
+  ptrdiff_t nchars = XSTRING (string)->size;
   eassume (0 <= nchars);
   return nchars;
 }
@@ -1951,6 +1949,14 @@ struct hash_table_test {
   EMACS_UINT (*hashfn) (struct hash_table_test *t, Lisp_Object);
 };
 
+typedef void LispHashTable;
+
+extern void finalize_hashtable(LispHashTable *table);
+extern LispHashTable* purecopy_hash_table(LispHashTable *table);
+extern bool sweep_weak_hashtable(LispHashTable *table, bool remove_entries);
+extern void mark_hashtable(LispHashTable *table);
+extern bool table_not_weak_or_pure(LispHashTable *table);
+extern void sweep_weak_hash_tables(void);
 extern ptrdiff_t hash_lookup (LispHashTable *table, Lisp_Object key, void *unused);
 extern Lisp_Object hash_value_lookup (LispHashTable *table, ptrdiff_t idx);
 extern Lisp_Object hash_key_lookup (LispHashTable *table, ptrdiff_t idx);

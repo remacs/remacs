@@ -52,7 +52,7 @@ make_log (EMACS_INT heap_size, EMACS_INT max_stack_depth)
 
   /* What is special about our hash-tables is that the keys are pre-filled
      with the vectors we'll put in them.  */
-  ptrdiff_t i = HASH_TABLE_SIZE (h) >> 1;
+  ptrdiff_t i = HASH_TABLE_SIZE (h);
   while (i > 0)
     set_hash_key_slot (h, --i,
 		       Fmake_vector (make_number (max_stack_depth), Qnil));
@@ -103,7 +103,7 @@ static EMACS_INT approximate_median (log_t *log,
 
 static void evict_lower_half (log_t *log)
 {
-  ptrdiff_t size = HASH_TABLE_SIZE (log) / 2;
+  ptrdiff_t size = HASH_TABLE_SIZE (log);
   EMACS_INT median = approximate_median (log, 0, size);
   ptrdiff_t i;
 

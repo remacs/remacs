@@ -807,7 +807,6 @@ pub unsafe extern "C" fn purecopy_hash_table(map: *mut c_void) -> *mut c_void {
     debug_assert!(table_ptr.is_pure);
     debug_assert!(table_ptr.weak.is_nil());
 
-    // @TODO verify that the alignment for this is correct.
     let mut ptr = ExternalPtr::new(pure_alloc(
         mem::size_of::<LispHashTable>(),
         Lisp_Type::Lisp_Vectorlike as c_int,
