@@ -5,7 +5,8 @@ use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy
                  QCweakness, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
                  Lisp_Vector, Qkey_and_value, Qkey, Qvalue, Qkey_or_value, pure_alloc,
                  survives_gc_p, Lisp_Vectorlike_Header, Lisp_Object, EmacsUint, hash_table_test,
-                 ARRAY_MARK_FLAG, CHECK_IMPURE, hashfn_eq, hashfn_eql, hashfn_equal, gc_in_progress};
+                 ARRAY_MARK_FLAG, CHECK_IMPURE, hashfn_eq, hashfn_eql, hashfn_equal,
+                 gc_in_progress};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
@@ -98,8 +99,11 @@ impl Hash for HashableLispObject {
     }
 }
 
+// @TODO this isn't safe to be called in the Eql/Equal/UserFunc states
+// if a gc is in progress. We should try and handle that.
 impl PartialEq for HashableLispObject {
     fn eq(&self, other: &Self) -> bool {
+        //        unsafe { assert_eq!(gc_in_progress, false) };
         match self.func {
             HashFunction::Eq => self.object.eq(other.object),
             HashFunction::Eql => self.object.eql(other.object),
@@ -706,12 +710,11 @@ lazy_static! {
 
 unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entries: bool) -> bool {
     let weakness = ptr.weak.to_raw();
-    let mut to_remove = Vec::<HashableLispObject>::new();
+    let mut to_remove: Vec<HashableLispObject> = Vec::new();
     let mut marked = false;
     let len = ptr.key_and_value.len();
-    let mut i = 0;
 
-    while i < len {
+    for i in 0..len {
         let entry = ptr.key_and_value[i];
         let key = entry.key;
         let value = entry.value;
@@ -733,7 +736,7 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
 
         if remove_entries {
             if remove_p {
-                let mut object = HashableLispObject::with_object_and_hashfn(key, ptr.func);
+                let mut object = HashableLispObject::with_object_and_hashfn(key, HashFunction::Eq);
                 object.set_hash(entry.hash);
                 to_remove.push(object);
             }
@@ -750,8 +753,6 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
                 }
             }
         }
-
-        i += 1;
     }
 
     for x in to_remove.iter() {
@@ -793,11 +794,12 @@ pub unsafe extern "C" fn sweep_weak_hash_tables() {
     {} // This is basically a Rust "do while" loop,
     // by putting the logic into the while {condition} block.
 
-    // @TODO this could be consolidated into a singular loop
-    tables.retain(|x| x.header.size & ARRAY_MARK_FLAG != 0);
-    for table in tables.iter_mut() {
-        sweep_weak_hashtable(*table, true);
-    }
+    tables.retain(|x| if x.header.size & ARRAY_MARK_FLAG != 0 {
+        sweep_weak_hashtable(*x, true);
+        true
+    } else {
+        false
+    });
 }
 
 #[no_mangle]
