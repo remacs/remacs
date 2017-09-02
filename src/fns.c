@@ -2021,7 +2021,7 @@ The PLIST is modified by side effects.  */)
       if (EQ (tail, li.tortoise))
 	circular_list (plist);
     }
-  CHECK_LIST_END (tail, plist);
+  CHECK_TYPE (NILP (tail), Qplistp, plist);
   Lisp_Object newcell
     = Fcons (prop, Fcons (val, NILP (prev) ? plist : XCDR (XCDR (prev))));
   if (NILP (prev))
@@ -2061,7 +2061,7 @@ one of the properties on the list.  */)
 	circular_list (plist);
     }
 
-  CHECK_LIST_END (tail, plist);
+  CHECK_TYPE (NILP (tail), Qplistp, plist);
 
   return Qnil;
 }
@@ -2093,7 +2093,7 @@ The PLIST is modified by side effects.  */)
       if (EQ (tail, li.tortoise))
 	circular_list (plist);
     }
-  CHECK_LIST_END (tail, plist);
+  CHECK_TYPE (NILP (tail), Qplistp, plist);
   Lisp_Object newcell = list2 (prop, val);
   if (NILP (prev))
     return newcell;
@@ -2858,7 +2858,7 @@ The value is actually the tail of PLIST whose car is PROP.  */)
       if (EQ (tail, li.tortoise))
 	circular_list (tail);
     }
-  CHECK_LIST_END (tail, plist);
+  CHECK_TYPE (NILP (tail), Qplistp, plist);
   return Qnil;
 }
 
@@ -5191,6 +5191,7 @@ Used by `featurep' and `require', and altered by `provide'.  */);
   Fmake_var_non_special (Qfeatures);
   DEFSYM (Qsubfeatures, "subfeatures");
   DEFSYM (Qfuncall, "funcall");
+  DEFSYM (Qplistp, "plistp");
 
 #ifdef HAVE_LANGINFO_CODESET
   DEFSYM (Qcodeset, "codeset");
