@@ -115,7 +115,28 @@ impl PartialEq for HashableLispObject {
 
 impl Eq for HashableLispObject {}
 
-// @TODO need to verify that HASH_HASH is doing the correct thing for this data structure.
+#[repr(C)]
+#[derive(Copy, Clone)]
+struct KeyAndValueEntry {
+    key: LispObject,
+    value: LispObject,
+    hash: u64
+}
+
+impl KeyAndValueEntry {
+    fn new(key: LispObject, value: LispObject, hash: u64) -> KeyAndValueEntry {
+        KeyAndValueEntry {
+            key: key,
+            value: value,
+            hash: hash
+        }
+    }
+
+    fn nil() -> KeyAndValueEntry {
+        Self::new(LispObject::constant_nil(), LispObject::constant_nil(), 0)
+    }
+}
+
 #[derive(Clone)]
 #[repr(C)]
 pub struct LispHashTable {
@@ -135,10 +156,7 @@ pub struct LispHashTable {
     map: FnvHashMap<HashableLispObject, HashableLispObject>,
 
     /// A vector used for backwards compatability for fast lookups.
-    key_and_value: Vec<LispObject>,
-
-    /// A vector of precomputed hashes for the objects in the Hash Table.
-    hashes: Vec<u64>,
+    key_and_value: Vec<KeyAndValueEntry>,
 
     /// Free list for available slots in the key_and_value vector.
     free_list: Vec<usize>,
@@ -156,8 +174,7 @@ impl LispHashTable {
             is_pure: false,
             func: HashFunction::Eql,
             map: FnvHashMap::with_capacity_and_hasher(cap, Default::default()),
-            key_and_value: Vec::with_capacity(cap * 2),
-            hashes: Vec::with_capacity(cap),
+            key_and_value: Vec::with_capacity(cap),
             free_list: Vec::new(),
         }
     }
@@ -169,30 +186,24 @@ impl LispHashTable {
             Occupied(mut entry) => {
                 let mut hash_value = HashableLispObject::with_object_and_hashfn(value, self.func);
                 let idx = entry.get().idx;
-                self.key_and_value[idx - 1] = key;
-                self.key_and_value[idx] = value;
-                self.hashes[(idx - 1) / 2] = hash;
+                self.key_and_value[idx] = KeyAndValueEntry::new(key, value, hash);
                 hash_value.idx = idx;
                 entry.insert(hash_value);
-                (idx - 1) as ptrdiff_t
+                idx as ptrdiff_t
             }
 
             Vacant(entry) => {
                 let mut hash_value = HashableLispObject::with_object_and_hashfn(value, self.func);
                 let retval;
                 if let Some(idx) = self.free_list.pop() {
-                    self.key_and_value[idx] = key;
-                    self.key_and_value[idx + 1] = value;
-                    self.hashes[idx / 2] = hash;
+                    self.key_and_value[idx] = KeyAndValueEntry::new(key, value, hash);
                     retval = idx;
                 } else {
-                    self.key_and_value.push(key);
-                    self.key_and_value.push(value);
-                    self.hashes.push(hash);
-                    retval = self.key_and_value.len() - 2;
+                    self.key_and_value.push(KeyAndValueEntry::new(key, value, hash));
+                    retval = self.key_and_value.len() - 1;
                 }
 
-                hash_value.idx = retval + 1;
+                hash_value.idx = retval;
                 entry.insert(hash_value);
                 retval as ptrdiff_t
             }
@@ -202,8 +213,7 @@ impl LispHashTable {
     fn remove_with_hashable(&mut self, hash_key: HashableLispObject) -> Option<LispObject> {
         let remove = self.map.remove(&hash_key);
         if let Some(result) = remove {
-            self.clear_key_and_value(result.idx - 1);
-            self.hashes[(result.idx - 1) / 2] = 0;
+            self.clear_key_and_value(result.idx);
         }
 
         remove.map(|result| result.object)
@@ -215,15 +225,14 @@ impl LispHashTable {
     }
 
     fn clear_key_and_value(&mut self, idx: usize) {
-        self.key_and_value[idx] = LispObject::constant_nil();
-        self.key_and_value[idx + 1] = LispObject::constant_nil();
+        self.key_and_value[idx] = KeyAndValueEntry::nil();
         self.free_list.push(idx);
     }
 
     pub fn get_index(&self, key: LispObject) -> ptrdiff_t {
         let hash_key = HashableLispObject::with_object_and_hashfn(key, self.func);
         self.map.get(&hash_key).map_or(-1, |result| {
-            (result.idx - 1) as ptrdiff_t
+            result.idx as ptrdiff_t
         })
     }
 
@@ -233,23 +242,23 @@ impl LispHashTable {
     }
 
     #[inline]
-    pub fn get_value_with_index(&self, idx: ptrdiff_t) -> LispObject {
-        self.key_and_value[(idx + 1) as usize]
+    pub fn get_value_with_index(&self, idx: usize) -> LispObject {
+        self.key_and_value[idx].value
     }
 
     #[inline]
-    pub fn get_key_with_index(&self, idx: ptrdiff_t) -> LispObject {
-        self.key_and_value[idx as usize]
+    pub fn get_key_with_index(&self, idx: usize) -> LispObject {
+        self.key_and_value[idx].key
     }
 
     #[inline]
-    pub fn set_value_with_index(&mut self, object: LispObject, idx: ptrdiff_t) {
-        self.key_and_value[(idx + 1) as usize] = object;
+    pub fn set_value_with_index(&mut self, object: LispObject, idx: usize) {
+        self.key_and_value[idx].value = object;
     }
 
     #[inline]
-    pub fn set_key_with_index(&mut self, object: LispObject, idx: ptrdiff_t) {
-        self.key_and_value[idx as usize] = object;
+    pub fn set_key_with_index(&mut self, object: LispObject, idx: usize) {
+        self.key_and_value[idx].key = object;
     }
 
     #[inline]
@@ -257,7 +266,6 @@ impl LispHashTable {
         self.map.clear();
         self.key_and_value.clear();
         self.free_list.clear();
-        self.hashes.clear();
     }
 }
 
@@ -548,30 +556,28 @@ pub unsafe extern "C" fn hash_lookup(
 #[no_mangle]
 pub unsafe extern "C" fn hash_value_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
     debug_assert!(idx >= 0);
-    debug_assert!(idx % 2 == 0);
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
-    ptr.get_value_with_index(idx).to_raw()
+    ptr.get_value_with_index(idx as usize).to_raw()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn hash_key_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
     debug_assert!(idx >= 0);
-    debug_assert!(idx % 2 == 0);
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
-    ptr.get_key_with_index(idx).to_raw()
+    ptr.get_key_with_index(idx as usize).to_raw()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn hash_hash_lookup(map: *mut c_void, idx: ptrdiff_t) -> Lisp_Object {
     debug_assert!(idx >= 0);
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
-    ptr.get_key_with_index(idx * 2).to_raw()
+    ptr.get_key_with_index(idx as usize).to_raw()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn hash_size(map: *mut c_void) -> ptrdiff_t {
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
-    ptr.hashes.len() as ptrdiff_t
+    ptr.key_and_value.len() as ptrdiff_t
 }
 
 #[no_mangle]
@@ -607,14 +613,14 @@ pub unsafe extern "C" fn hash_purity(map: *mut c_void) -> bool {
 pub unsafe extern "C" fn set_hash_value_slot(map: *mut c_void, idx: ptrdiff_t, value: Lisp_Object) {
     let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
     debug_assert!(idx >= 0);
-    ptr.set_value_with_index(LispObject::from_raw(value), idx);
+    ptr.set_value_with_index(LispObject::from_raw(value), idx as usize);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn set_hash_key_slot(map: *mut c_void, idx: ptrdiff_t, value: Lisp_Object) {
     debug_assert!(idx >= 0);
     let mut ptr = ExternalPtr::new(map as *mut LispHashTable);
-    ptr.set_key_with_index(LispObject::from_raw(value), idx);
+    ptr.set_key_with_index(LispObject::from_raw(value), idx as usize);
 }
 
 #[no_mangle]
@@ -707,8 +713,9 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
     let mut i = 0;
     
     while i < len {
-        let key = ptr.key_and_value[i];
-        let value = ptr.key_and_value[i + 1];
+        let entry = ptr.key_and_value[i];
+        let key = entry.key;
+        let value = entry.value;
         let key_survives_gc = survives_gc_p(key.to_raw());
         let value_survives_gc = survives_gc_p(value.to_raw());
         let remove_p;
@@ -728,7 +735,7 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
         if remove_entries {
             if remove_p {
                 let mut object = HashableLispObject::with_object_and_hashfn(key, ptr.func);
-                object.set_hash(ptr.hashes[i / 2]);
+                object.set_hash(entry.hash);
                 to_remove.push(object);
             }
         } else {
@@ -745,7 +752,7 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
             }
         }
 
-        i += 2;
+        i += 1;
     }
 
     for x in to_remove.iter() {
@@ -817,7 +824,6 @@ pub unsafe extern "C" fn purecopy_hash_table(map: *mut c_void) -> *mut c_void {
     ptr.is_pure = table_ptr.is_pure;
     ptr.map = FnvHashMap::with_capacity_and_hasher(table_ptr.map.len(), Default::default());
     ptr.key_and_value = Vec::new();
-    ptr.hashes = Vec::new();
     ptr.free_list = Vec::new();
 
     for (key, value) in table_ptr.map.iter() {
