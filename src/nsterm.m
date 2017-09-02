@@ -1820,8 +1820,8 @@ x_set_window_size (struct frame *f,
 
   if (pixelwise)
     {
-      pixelwidth = FRAME_TEXT_TO_PIXEL_WIDTH (f, width);
-      pixelheight = FRAME_TEXT_TO_PIXEL_HEIGHT (f, height);
+      pixelwidth = width;
+      pixelheight = height;
     }
   else
     {
