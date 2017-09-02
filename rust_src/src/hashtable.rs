@@ -5,8 +5,7 @@ use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy
                  QCweakness, EmacsInt, Qhash_table_test, mark_object, mark_vectorlike,
                  Lisp_Vector, Qkey_and_value, Qkey, Qvalue, Qkey_or_value, pure_alloc,
                  survives_gc_p, Lisp_Vectorlike_Header, Lisp_Object, EmacsUint, hash_table_test,
-                 ARRAY_MARK_FLAG, CHECK_IMPURE,
-                 hashfn_eq, hashfn_eql, hashfn_equal};
+                 ARRAY_MARK_FLAG, CHECK_IMPURE, hashfn_eq, hashfn_eql, hashfn_equal};
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
@@ -36,7 +35,7 @@ enum HashFunction {
 #[derive(Eq, PartialEq, Copy, Clone)]
 enum HashState {
     PreCalculated(u64),
-    NeedToCalculate
+    NeedToCalculate,
 }
 
 #[derive(Clone, Copy)]
@@ -72,18 +71,16 @@ impl HashableLispObject {
 impl HashableLispObject {
     fn calculate_hash(&self) -> u64 {
         match self.func {
-            HashFunction::Eq => {
-                unsafe { hashfn_eq(ptr::null_mut(), self.object.to_raw()) as u64 }
-            }
-            HashFunction::Eql => {
-                unsafe { hashfn_eql(ptr::null_mut(), self.object.to_raw()) as u64 }
-            }
-            HashFunction::Equal => {
-                unsafe { hashfn_equal(ptr::null_mut(), self.object.to_raw()) as u64 }
-            }
+            HashFunction::Eq => unsafe { hashfn_eq(ptr::null_mut(), self.object.to_raw()) as u64 },
+            HashFunction::Eql => unsafe {
+                hashfn_eql(ptr::null_mut(), self.object.to_raw()) as u64
+            },
+            HashFunction::Equal => unsafe {
+                hashfn_equal(ptr::null_mut(), self.object.to_raw()) as u64
+            },
             HashFunction::UserFunc(_, _, hashfn) => {
                 let result = call!(hashfn, self.object);
-                unsafe { hashfn_eq (ptr::null_mut(), result.to_raw()) as u64 }
+                unsafe { hashfn_eq(ptr::null_mut(), result.to_raw()) as u64 }
             }
         }
     }
@@ -93,9 +90,9 @@ impl Hash for HashableLispObject {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let hash = match self.state {
             HashState::PreCalculated(value) => value,
-            HashState::NeedToCalculate => self.calculate_hash()
+            HashState::NeedToCalculate => self.calculate_hash(),
         };
-        
+
         state.write_u64(hash);
     }
 }
@@ -120,7 +117,7 @@ impl Eq for HashableLispObject {}
 struct KeyAndValueEntry {
     key: LispObject,
     value: LispObject,
-    hash: u64
+    hash: u64,
 }
 
 impl KeyAndValueEntry {
@@ -128,7 +125,7 @@ impl KeyAndValueEntry {
         KeyAndValueEntry {
             key: key,
             value: value,
-            hash: hash
+            hash: hash,
         }
     }
 
@@ -199,7 +196,9 @@ impl LispHashTable {
                     self.key_and_value[idx] = KeyAndValueEntry::new(key, value, hash);
                     retval = idx;
                 } else {
-                    self.key_and_value.push(KeyAndValueEntry::new(key, value, hash));
+                    self.key_and_value.push(
+                        KeyAndValueEntry::new(key, value, hash),
+                    );
                     retval = self.key_and_value.len() - 1;
                 }
 
@@ -231,9 +230,10 @@ impl LispHashTable {
 
     pub fn get_index(&self, key: LispObject) -> ptrdiff_t {
         let hash_key = HashableLispObject::with_object_and_hashfn(key, self.func);
-        self.map.get(&hash_key).map_or(-1, |result| {
-            result.idx as ptrdiff_t
-        })
+        self.map.get(&hash_key).map_or(
+            -1,
+            |result| result.idx as ptrdiff_t,
+        )
     }
 
     pub fn get(&self, key: LispObject) -> Option<LispObject> {
@@ -393,7 +393,7 @@ fn make_hash_table(args: &mut [LispObject]) -> LispObject {
         add_weak_table!(ptr);
     }
 
-    LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike)
+    LispObject::from_hash_table(ptr)
 }
 
 /// Associate KEY with VALUE in hash table TABLE.
@@ -484,7 +484,7 @@ fn copy_hash_table(table: LispObject) -> LispObject {
         add_weak_table!(new_ptr);
     }
 
-    LispObject::tag_ptr(new_ptr, Lisp_Type::Lisp_Vectorlike)
+    LispObject::from_hash_table(new_ptr)
 }
 
 /// Return the test TABLE uses.
@@ -674,7 +674,7 @@ pub unsafe extern "C" fn new_hash_table(
         );
     }
 
-    LispObject::tag_ptr(ptr, Lisp_Type::Lisp_Vectorlike).to_raw()
+    LispObject::from_hash_table(ptr).to_raw()
 }
 
 #[no_mangle]
@@ -711,7 +711,7 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
     let mut marked = false;
     let len = ptr.key_and_value.len();
     let mut i = 0;
-    
+
     while i < len {
         let entry = ptr.key_and_value[i];
         let key = entry.key;

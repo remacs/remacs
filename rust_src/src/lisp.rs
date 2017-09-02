@@ -50,7 +50,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
 /// Their definition are determined in a way consistent with Emacs C.
 /// Under casual systems, they're the type isize and usize respectively.
 #[repr(C)]
-#[derive(PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct LispObject(Lisp_Object);
 
 impl LispObject {
@@ -555,6 +555,16 @@ impl LispObject {
         } else {
             None
         }
+    }
+
+    pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
+        let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
+        debug_assert!(
+            object.is_vectorlike() &&
+                object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void &&
+                object.is_hash_table()
+        );
+        object
     }
 }
 

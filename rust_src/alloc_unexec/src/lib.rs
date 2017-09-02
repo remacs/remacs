@@ -23,7 +23,9 @@ macro_rules! alloc_functions {
         }
 
         #[inline]
-        unsafe fn remacs_realloc(old_ptr: *mut libc::c_void, new_size: libc::size_t) -> *mut libc::c_void {
+        unsafe fn remacs_realloc(old_ptr: *mut libc::c_void,
+                                 new_size: libc::size_t)
+                                 -> *mut libc::c_void {
             $realloc(old_ptr, new_size)
         }
     )
