@@ -6827,7 +6827,7 @@ other purposes."
 (defvar visual-line--saved-state nil)
 
 (define-minor-mode visual-line-mode
-  "Toggle visual line based editing (Visual Line mode).
+  "Toggle visual line based editing (Visual Line mode) in the current buffer.
 Interactively, with a prefix argument, enable
 Visual Line mode if the prefix argument is positive,
 and disable it otherwise.  If called from Lisp, toggle
