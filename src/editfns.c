@@ -1167,25 +1167,6 @@ At the beginning of the buffer or accessible region, return 0.  */)
   return temp;
 }
 
-DEFUN ("bolp", Fbolp, Sbolp, 0, 0, 0,
-       doc: /* Return t if point is at the beginning of a line.  */)
-  (void)
-{
-  if (PT == BEGV || FETCH_BYTE (PT_BYTE - 1) == '\n')
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("eolp", Feolp, Seolp, 0, 0, 0,
-       doc: /* Return t if point is at the end of a line.
-`End of a line' includes point being at the end of the buffer.  */)
-  (void)
-{
-  if (PT == ZV || FETCH_BYTE (PT_BYTE) == '\n')
-    return Qt;
-  return Qnil;
-}
-
 DEFUN ("char-after", Fchar_after, Schar_after, 0, 1, 0,
        doc: /* Return character in current buffer at position POS.
 POS is an integer or a marker and defaults to point.
@@ -5409,8 +5390,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sposition_bytes);
   defsubr (&Sbyte_to_position);
 
-  defsubr (&Sbolp);
-  defsubr (&Seolp);
   defsubr (&Sfollowing_char);
   defsubr (&Sprevious_char);
   defsubr (&Schar_after);

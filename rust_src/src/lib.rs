@@ -13,7 +13,11 @@ extern crate alloc_unexecmacosx;
 extern crate lazy_static;
 
 extern crate remacs_sys;
+
+// Needed for linking.
+#[allow(unused_extern_crates)]
 extern crate remacs_lib;
+
 extern crate remacs_macros;
 extern crate libc;
 extern crate md5;
@@ -172,6 +176,8 @@ pub use buffers::Foverlay_end;
 
 // Used in window.c, macros.c
 pub use interactive::Fprefix_numeric_value;
+pub use editfns::Fbolp;
+pub use editfns::Feolp;
 
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
@@ -335,6 +341,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sbuffer_size);
         defsubr(&*editfns::Seobp);
         defsubr(&*editfns::Sbobp);
+        defsubr(&*editfns::Sbolp);
+        defsubr(&*editfns::Seolp);
         defsubr(&*minibuf::Sminibufferp);
     }
 }
