@@ -1185,6 +1185,24 @@ This regexp is assumed to not match any non-operator identifier."
 (make-obsolete-variable 'c-opt-op-identitier-prefix 'c-opt-op-identifier-prefix
 			"CC Mode 5.31.4, 2006-04-14")
 
+(c-lang-defconst c-ambiguous-overloadable-or-identifier-prefices
+  ;; A list of strings which can be either overloadable operators or
+  ;; identifier prefixes.
+  t (c--intersection
+     (c-filter-ops (c-lang-const c-identifier-ops)
+			     '(prefix)
+			     t)
+     (c-lang-const c-overloadable-operators)
+     :test 'string-equal))
+
+(c-lang-defconst c-ambiguous-overloadable-or-identifier-prefix-re
+  ;; A regexp matching strings which can be either overloadable operators
+  ;; or identifier prefixes.
+  t (c-make-keywords-re
+	t (c-lang-const c-ambiguous-overloadable-or-identifier-prefices)))
+(c-lang-defvar c-ambiguous-overloadable-or-identifier-prefix-re
+  (c-lang-const c-ambiguous-overloadable-or-identifier-prefix-re))
+
 (c-lang-defconst c-other-op-syntax-tokens
   "List of the tokens made up of characters in the punctuation or
 parenthesis syntax classes that have uses other than as expression

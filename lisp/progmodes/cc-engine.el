@@ -7387,7 +7387,12 @@ comment at the start of cc-engine.el for more info."
 			    (setq pos (point)
 				  res subres))))
 
-		       ((looking-at c-identifier-start)
+		       ((and (looking-at c-identifier-start)
+			     (or (not (looking-at
+ c-ambiguous-overloadable-or-identifier-prefix-re))
+				 (save-excursion
+				   (and (eq (c-forward-token-2) 0)
+					(not (eq (char-after) ?\())))))
 			;; Got a cast operator.
 			(when (c-forward-type)
 			  (setq pos (point)
