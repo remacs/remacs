@@ -91,6 +91,11 @@ impl LispBufferRef {
         unsafe { (*self.text).chars_modiff }
     }
 
+    #[inline]
+    pub fn name(&self) -> LispObject {
+        LispObject::from_raw(self.name)
+    }
+
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
