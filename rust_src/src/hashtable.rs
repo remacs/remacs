@@ -13,7 +13,6 @@ use std::mem;
 use std::hash::{Hash, Hasher};
 use libc::{c_void, c_int, ptrdiff_t, c_float};
 use std::sync::Mutex;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 
 static DEFAULT_TABLE_SIZE: usize = 65;
 
@@ -207,62 +206,28 @@ impl LispHashTableRef {
         }
     }
 
-    // @TODO emacs used to update both the KEY and the VALUE
-    // in the map during an insert. While the key_and_value array
-    // always has the updated value, the map itself does not.
-    // I need to examine if this can be documented as an internal change
-    // or if that breaks backwards compatability.
     pub fn insert(mut self, key: LispObject, value: LispObject) -> ptrdiff_t {
         let mut hash_key = HashKey::with_object(key, self);
         let hash = hash_key.precalculate_hash();
         debug_assert!(hash == hash_key.get_hash());
-        let mut key_and_value = KeyAndValueEntry::new(key, value, hash);
-        let next_free = self.next_free();
-        let len = self.key_and_value.len();
-        let mut should_pop = false;
-        let mut occupied = false;
-        let idx = match self.map.entry(hash_key) {
-            Occupied(mut entry) => {
-                occupied = true;
-                let idx = entry.get().idx;
-                let hash_value = HashValue::with_object(value, idx);
-                entry.insert(hash_value);
-                idx
-            }
+        let key_and_value = KeyAndValueEntry::new(key, value, hash);
 
-            Vacant(entry) => {
-                let idx = if next_free > -1 {
-                    should_pop = true;
-                    next_free as usize
-                } else {
-                    len
-                };
-
-                let hash_value = HashValue::with_object(value, idx);
-                entry.insert(hash_value);
-                idx
-            }
-        };
-
-        if !occupied {
-            if should_pop {
-                self.free_list.pop();
-                debug_assert!(self.key_and_value[idx].empty);
+        let idx;
+        let result = self.map.remove(&hash_key);
+        if let Some(entry) = result {
+            idx = entry.idx;
+            self.key_and_value[idx] = key_and_value;
+        } else {
+            if let Some(val) = self.free_list.pop() {
+                idx = val;
                 self.key_and_value[idx] = key_and_value;
             } else {
                 self.key_and_value.push(key_and_value);
+                idx = self.key_and_value.len() - 1;
             }
-        } else {
-            debug_assert!(!self.key_and_value[idx].empty);
-            self.key_and_value[idx] = key_and_value;
         }
 
-        let k = HashKey::with_object(self.key_and_value[idx].key, self);
-        debug_assert!(
-            self.map.contains_key(&k)
-        );
-        debug_assert!(self.map.contains_key(&hash_key));
-
+        self.map.insert(hash_key, HashValue::with_object(value, idx));
         idx as ptrdiff_t
     }
 
@@ -298,6 +263,8 @@ impl LispHashTableRef {
         self.key_and_value[idx].value
     }
 
+    // @TODO the problem with this guy is that he also implcititly
+    // updates the hashmap entry in the old version.
     #[inline]
     pub fn get_key_with_index(self, idx: usize) -> LispObject {
         self.key_and_value[idx].key
@@ -479,7 +446,7 @@ fn remhash(k: LispObject, map: LispObject) -> LispObject {
 #[lisp_fn]
 fn maphash(function: LispObject, map: LispObject) -> LispObject {
     let table = map.as_hash_table_or_error();
-    for (key, value) in table.map.iter() {
+    for (key, value) in table.key_and_value.iter() {
         call!(function, key.object, value.object);
     }
 
