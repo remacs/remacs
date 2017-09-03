@@ -167,6 +167,10 @@ pub struct LispHashTable {
     /// The comparison and hash functions.
     func: HashFunction,
 
+    // @TODO this can be changed to just be a map of HashKey -> usize
+    // though we should handle key-updating in a better way
+    // then the current insert strategy. We only need to double hash
+    // in the case of the Equal state.
     /// The Hashmap used to store lisp objects.
     map: FnvHashMap<HashKey, HashValue>,
 
@@ -206,6 +210,13 @@ impl LispHashTableRef {
         }
     }
 
+    // @TODO so this can be optimized. We only need to remove -> readd
+    // if our key is different. In any other case, we don't have to
+    // do anything. EVEN THEN, we only really need to update
+    // the key in key_and_value if we compare against what is in
+    // key_and_value. This can get weird around some custom hash funcs
+    // that have equality change over time, but we might be able to pull
+    // it off.
     pub fn insert(mut self, key: LispObject, value: LispObject) -> ptrdiff_t {
         let mut hash_key = HashKey::with_object(key, self);
         let hash = hash_key.precalculate_hash();
@@ -255,7 +266,7 @@ impl LispHashTableRef {
 
     pub fn get(self, key: LispObject) -> Option<LispObject> {
         let hash_key = HashKey::with_object(key, self);
-        self.map.get(&hash_key).map(|result| result.object)
+        self.map.get(&hash_key).map(|result| self.key_and_value[result.idx].value)
     }
 
     #[inline]
@@ -446,8 +457,12 @@ fn remhash(k: LispObject, map: LispObject) -> LispObject {
 #[lisp_fn]
 fn maphash(function: LispObject, map: LispObject) -> LispObject {
     let table = map.as_hash_table_or_error();
-    for (key, value) in table.key_and_value.iter() {
-        call!(function, key.object, value.object);
+    for entry in table.key_and_value.iter() {
+        if entry.empty {
+            continue;
+        }
+        
+        call!(function, entry.key, entry.value);
     }
 
     LispObject::constant_nil()
@@ -552,9 +567,13 @@ pub unsafe extern "C" fn mark_hashtable(map: *mut c_void) {
     }
 
     if ptr.weak.is_nil() {
-        for (key, value) in ptr.map.iter() {
-            mark_object(key.object.to_raw());
-            mark_object(value.object.to_raw());
+        for entry in ptr.key_and_value.iter() {
+            if entry.empty {
+                continue;
+            }
+            
+            mark_object(entry.key.to_raw());
+            mark_object(entry.value.to_raw());
         }
     }
 }
@@ -720,13 +739,14 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
     let weakness = ptr.weak.to_raw();
     let mut to_remove: Vec<HashKey> = Vec::new();
     let mut marked = false;
-//    let len = ptr.key_and_value.len();
 
-    for (k, v) in ptr.map.iter() {
-        let entry = ptr.key_and_value[v.idx];
-        debug_assert!(!entry.empty);
-        let key = k.object;
-        let value = v.object;
+    for entry in ptr.key_and_value.iter() {
+        if entry.empty {
+            continue;
+        }
+
+        let key = entry.key;
+        let value = entry.value;
         let key_survives_gc = survives_gc_p(key.to_raw());
         let value_survives_gc = survives_gc_p(value.to_raw());
         let remove_p;
@@ -816,6 +836,7 @@ pub unsafe extern "C" fn sweep_weak_hash_tables() {
     });
 }
 
+// @TODO fix this, don't use map iter
 #[no_mangle]
 pub unsafe extern "C" fn purecopy_hash_table(map: *mut c_void) -> *mut c_void {
     let table_ptr = ExternalPtr::new(map as *mut LispHashTable);
