@@ -3143,7 +3143,16 @@ ns_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
 
   /* draw the character under the cursor */
   if (cursor_type != NO_CURSOR)
-    draw_phys_cursor_glyph (w, glyph_row, DRAW_CURSOR);
+    {
+      draw_phys_cursor_glyph (w, glyph_row, DRAW_CURSOR);
+
+#ifdef NS_IMPL_COCOA
+      /* The glyph under the cursor isn't displayed when switching
+         spaces, so force an update.  This seems to be related to the
+         use of NSDisableScreenUpdates.  */
+      [FRAME_NS_VIEW (f) setNeedsDisplay:YES];
+#endif
+    }
 
 #ifdef NS_IMPL_COCOA
   NSEnableScreenUpdates ();
