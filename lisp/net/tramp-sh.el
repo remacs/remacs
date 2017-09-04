@@ -1063,52 +1063,59 @@ component is used as the target of the symlink."
        'make-symbolic-link (list target linkname ok-if-already-exists))
 
     (with-parsed-tramp-file-name linkname nil
-      (let ((ln (tramp-get-remote-ln v))
-	    (cwd (tramp-run-real-handler
-		  'file-name-directory (list localname))))
-	(unless ln
-	  (tramp-error
-	   v 'file-error
+      ;; If TARGET is a Tramp name, use just the localname component.
+      (when (and (tramp-tramp-file-p target)
+		 (tramp-file-name-equal-p v (tramp-dissect-file-name target)))
+	(setq target
+	      (tramp-file-name-localname
+	       (tramp-dissect-file-name (expand-file-name target)))))
+
+      ;; If TARGET is still remote, quote it.
+      (if (tramp-tramp-file-p target)
+	  (make-symbolic-link
+	   (let (file-name-handler-alist) (tramp-compat-file-name-quote target))
+	   linkname ok-if-already-exists)
+
+	(let ((ln (tramp-get-remote-ln v))
+	      (cwd (tramp-run-real-handler
+		    'file-name-directory (list localname))))
+	  (unless ln
+	    (tramp-error
+	     v 'file-error
 	   "Making a symbolic link.  ln(1) does not exist on the remote host."))
 
-	;; Do the 'confirm if exists' thing.
-	(when (file-exists-p linkname)
-	  ;; What to do?
-	  (if (or (null ok-if-already-exists) ; not allowed to exist
-		  (and (numberp ok-if-already-exists)
-		       (not (yes-or-no-p
-			     (format
-			      "File %s already exists; make it a link anyway? "
-			      localname)))))
-	      (tramp-error v 'file-already-exists localname)
-	    (delete-file linkname)))
+	  ;; Do the 'confirm if exists' thing.
+	  (when (file-exists-p linkname)
+	    ;; What to do?
+	    (if (or (null ok-if-already-exists) ; not allowed to exist
+		    (and (numberp ok-if-already-exists)
+			 (not
+			  (yes-or-no-p
+			   (format
+			    "File %s already exists; make it a link anyway? "
+			    localname)))))
+		(tramp-error v 'file-already-exists localname)
+	      (delete-file linkname)))
 
-	;; If TARGET is a Tramp name, use just the localname component.
-	(when (and (tramp-tramp-file-p target)
-		   (tramp-file-name-equal-p
-		    v (tramp-dissect-file-name target)))
-	  (setq target
-		(tramp-file-name-localname
-		 (tramp-dissect-file-name (expand-file-name target)))))
+	  (tramp-flush-file-property v (file-name-directory localname))
+	  (tramp-flush-file-property v localname)
 
-	(tramp-flush-file-property v (file-name-directory localname))
-	(tramp-flush-file-property v localname)
-
-	;; Right, they are on the same host, regardless of user, method,
-	;; etc.  We now make the link on the remote machine. This will
-	;; occur as the user that TARGET belongs to.
-	(and (tramp-send-command-and-check
-              v (format "cd %s" (tramp-shell-quote-argument cwd)))
-             (tramp-send-command-and-check
-              v (format
-		 "%s -sf %s %s" ln
-		 (tramp-shell-quote-argument target)
-		 ;; The command could exceed PATH_MAX, so we use
-		 ;; relative file names.  However, relative file names
-		 ;; could start with "-".  `tramp-shell-quote-argument'
-		 ;; does not handle this, we must do it ourselves.
-		 (tramp-shell-quote-argument
-                  (concat "./" (file-name-nondirectory localname))))))))))
+	  ;; Right, they are on the same host, regardless of user,
+	  ;; method, etc.  We now make the link on the remote
+	  ;; machine. This will occur as the user that TARGET belongs to.
+	  (and (tramp-send-command-and-check
+		v (format "cd %s" (tramp-shell-quote-argument cwd)))
+               (tramp-send-command-and-check
+		v (format
+		   "%s -sf %s %s" ln
+		   (tramp-shell-quote-argument target)
+		   ;; The command could exceed PATH_MAX, so we use
+		   ;; relative file names.  However, relative file
+		   ;; names could start with "-".
+		   ;; `tramp-shell-quote-argument' does not handle
+		   ;; this, we must do it ourselves.
+		   (tramp-shell-quote-argument
+                    (concat "./" (file-name-nondirectory localname)))))))))))
 
 (defun tramp-sh-handle-file-truename (filename)
   "Like `file-truename' for Tramp files."

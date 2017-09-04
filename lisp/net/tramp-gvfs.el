@@ -453,7 +453,7 @@ Every entry is a list (NAME ADDRESS).")
 ;;;###tramp-autoload
 (defconst tramp-gvfs-file-name-handler-alist
   '((access-file . ignore)
-    (add-name-to-file . tramp-gvfs-handle-copy-file)
+    (add-name-to-file . tramp-handle-add-name-to-file)
     ;; `byte-compiler-base-file-name' performed by default handler.
     ;; `copy-directory' performed by default handler.
     (copy-file . tramp-gvfs-handle-copy-file)
@@ -494,7 +494,7 @@ Every entry is a list (NAME ADDRESS).")
     (file-remote-p . tramp-handle-file-remote-p)
     (file-selinux-context . ignore)
     (file-symlink-p . tramp-handle-file-symlink-p)
-    ;; `file-truename' performed by default handler.
+    (file-truename . tramp-handle-file-truename)
     (file-writable-p . tramp-gvfs-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
     ;; `find-file-noselect' performed by default handler.

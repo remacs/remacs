@@ -3837,6 +3837,10 @@ both the error and the signal have to be set as follows:
 @end group
 @end lisp
 
+If @code{tramp-verbose} is greater than or equal to 10, Lisp
+backtraces are also added to the @value{tramp} debug buffer in case of
+errors.
+
 To enable stepping through @value{tramp} function call traces, they
 have to be specifically enabled as shown in this code:
 

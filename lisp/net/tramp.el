@@ -2824,6 +2824,33 @@ User is always nil."
 (defvar tramp-handle-write-region-hook nil
   "Normal hook to be run at the end of `tramp-*-handle-write-region'.")
 
+(defun tramp-handle-add-name-to-file
+  (filename newname &optional ok-if-already-exists)
+  "Like `add-name-to-file' for Tramp files."
+  (with-parsed-tramp-file-name
+      (if (tramp-tramp-file-p newname) newname filename) nil
+    (unless (tramp-equal-remote filename newname)
+      (tramp-error
+       v 'file-error
+       "add-name-to-file: %s"
+       "only implemented for same method, same user, same host"))
+    ;; Do the 'confirm if exists' thing.
+    (when (file-exists-p newname)
+      ;; What to do?
+      (if (or (null ok-if-already-exists) ; not allowed to exist
+	      (and (numberp ok-if-already-exists)
+		   (not (yes-or-no-p
+			 (format
+			  "File %s already exists; make it a link anyway? "
+			  localname)))))
+	  (tramp-error v 'file-already-exists newname)
+	(delete-file newname)))
+    (tramp-flush-file-property v (file-name-directory localname))
+    (tramp-flush-file-property v localname)
+    (copy-file
+     filename newname 'ok-if-already-exists 'keep-time
+     'preserve-uid-gid 'preserve-permissions)))
+
 (defun tramp-handle-directory-file-name (directory)
   "Like `directory-file-name' for Tramp files."
   ;; If localname component of filename is "/", leave it unchanged.
@@ -3067,6 +3094,47 @@ User is always nil."
   "Like `file-symlink-p' for Tramp files."
   (let ((x (tramp-compat-file-attribute-type (file-attributes filename))))
     (and (stringp x) x)))
+
+(defun tramp-handle-file-truename (filename)
+  "Like `file-truename' for Tramp files."
+  (let ((result filename)
+	(numchase 0)
+	;; Don't make the following value larger than
+	;; necessary.  People expect an error message in a
+	;; timely fashion when something is wrong;
+	;; otherwise they might think that Emacs is hung.
+	;; Of course, correctness has to come first.
+	(numchase-limit 20)
+	symlink-target)
+    (format
+     "%s%s"
+     (with-parsed-tramp-file-name (expand-file-name result) v1
+       (with-tramp-file-property v1 v1-localname "file-truename"
+	 (while (and (setq symlink-target (file-symlink-p result))
+		     (< numchase numchase-limit))
+	   (setq numchase (1+ numchase)
+		 result
+		 (with-parsed-tramp-file-name (expand-file-name result) v2
+		   (tramp-make-tramp-file-name
+		    v2-method v2-user v2-domain v2-host v2-port
+		    (funcall
+		     (if (tramp-compat-file-name-quoted-p v2-localname)
+			 'tramp-compat-file-name-quote 'identity)
+
+		     (if (stringp symlink-target)
+			 (if (file-remote-p symlink-target)
+			     (let (file-name-handler-alist)
+			       (tramp-compat-file-name-quote symlink-target))
+			   symlink-target)
+		       v2-localname)))))
+	   (when (>= numchase numchase-limit)
+	     (tramp-error
+	      v1 'file-error
+	      "Maximum number (%d) of symlinks exceeded" numchase-limit)))
+	 result))
+
+     ;; Preserve trailing "/".
+     (if (string-equal (file-name-nondirectory filename) "") "/" ""))))
 
 (defun tramp-handle-find-backup-file-name (filename)
   "Like `find-backup-file-name' for Tramp files."

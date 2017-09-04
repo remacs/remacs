@@ -2607,7 +2607,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should-error
 	     (make-symbolic-link tmp-name1 tmp-name2)
 	     :type 'file-already-exists)
-	    ;; 0 means interactive case.
+	    ;; number means interactive case.
 	    (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
 	      (should-error
 	       (make-symbolic-link tmp-name1 tmp-name2 0)
@@ -2659,7 +2659,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should-error
 	     (add-name-to-file tmp-name1 tmp-name2)
 	     :type 'file-already-exists)
-	    ;; 0 means interactive case.
+	    ;; number means interactive case.
 	    (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
 	      (should-error
 	       (add-name-to-file tmp-name1 tmp-name2 0)
@@ -2685,6 +2685,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (tramp--test-ignore-make-symbolic-link-error
 	    (write-region "foo" nil tmp-name1)
 	    (should (file-exists-p tmp-name1))
+	    (should (string-equal tmp-name1 (file-truename tmp-name1)))
 	    (make-symbolic-link tmp-name1 tmp-name2)
 	    (should (file-symlink-p tmp-name2))
 	    (should-not (string-equal tmp-name2 (file-truename tmp-name2)))
@@ -2727,7 +2728,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		    (file-truename tmp-name1))
 		   (tmp-name2 (tramp--test-make-temp-name nil quoted))
 		   (tmp-name3 tmp-name2)
-		   (number-nesting 50))
+		   (number-nesting 15))
 	      (dotimes (_ number-nesting)
 		(make-symbolic-link
 		 tmp-name3
@@ -2741,7 +2742,13 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
                :type tramp-file-missing)
 	      (should-error
 	       (with-temp-buffer (insert-file-contents tmp-name3))
-               :type tramp-file-missing)))
+               :type tramp-file-missing)
+	      ;; `directory-files' does not show symlinks to
+	      ;; non-existing targets in the "smb" case.  So we remove
+	      ;; the symlinks manually.
+	      (while (stringp (setq tmp-name2 (file-symlink-p tmp-name3)))
+		(delete-file tmp-name3)
+		(setq tmp-name3 (concat (file-remote-p tmp-name3) tmp-name2)))))
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive)))
@@ -3750,23 +3757,27 @@ This requires restrictions of file name syntax."
 		  elt))
 
 		;; Check symlink in `directory-files-and-attributes'.
+		;; It does not work in the "smb" case, only relative
+		;; symlinks to existing files are shown there.
 		(tramp--test-ignore-make-symbolic-link-error
-		  (make-symbolic-link file2 file3)
-		  (should (file-symlink-p file3))
-		  (should
-		   (string-equal
-		    (caar (directory-files-and-attributes
-			   file1 nil (regexp-quote elt1)))
-		    elt1))
-		  (should
-		   (string-equal
-		    (funcall
-		     (if quoted 'tramp-compat-file-name-quote 'identity)
-		     (cadr (car (directory-files-and-attributes
-				 file1 nil (regexp-quote elt1)))))
-		    (file-remote-p (file-truename file2) 'localname)))
-		  (delete-file file3)
-		  (should-not (file-exists-p file3)))
+		  (unless
+		     (tramp-smb-file-name-p tramp-test-temporary-file-directory)
+		    (make-symbolic-link file2 file3)
+		    (should (file-symlink-p file3))
+		    (should
+		     (string-equal
+		      (caar (directory-files-and-attributes
+			     file1 nil (regexp-quote elt1)))
+		      elt1))
+		    (should
+		     (string-equal
+		      (funcall
+		       (if quoted 'tramp-compat-file-name-quote 'identity)
+		       (cadr (car (directory-files-and-attributes
+				   file1 nil (regexp-quote elt1)))))
+		      (file-remote-p (file-truename file2) 'localname)))
+		    (delete-file file3)
+		    (should-not (file-exists-p file3))))
 
 		(delete-file file2)
 		(should-not (file-exists-p file2))
