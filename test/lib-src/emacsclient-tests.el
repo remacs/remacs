@@ -35,6 +35,9 @@
 
 (defun emacsclient-test-call-emacsclient ()
   "Run emacsclient."
+  (when (getenv "EMACS_HYDRA_CI")
+    (message "emacsclient-test-emacs: %s" emacsclient-test-emacs)
+    (message "ALTERNATE_EDITOR: %s" (getenv "ALTERNATE_EDITOR")))
   (call-process emacsclient-test-emacs nil nil nil
                 "--server-file" (expand-file-name "non-existent-file" invocation-directory)
                 "foo"))
