@@ -669,19 +669,22 @@ become JSON objects."
 
 ;;; JSON reader.
 
-(defvar json-readtable
+(defmacro json-readtable-dispatch (char)
+  "Dispatch reader function for CHAR."
+  (declare (debug (symbolp)))
   (let ((table
          '((?t json-read-keyword "true")
            (?f json-read-keyword "false")
            (?n json-read-keyword "null")
            (?{ json-read-object)
            (?\[ json-read-array)
-           (?\" json-read-string))))
-    (mapc (lambda (char)
-            (push (list char 'json-read-number) table))
-          '(?- ?+ ?. ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9))
-    table)
-  "Readtable for JSON reader.")
+           (?\" json-read-string)))
+        res)
+    (dolist (c '(?- ?+ ?. ?0 ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9))
+      (push (list c 'json-read-number) table))
+    (pcase-dolist (`(,c . ,rest) table)
+      (push `((eq ,char ,c) (,@rest)) res))
+    `(cond ,@res (t (signal 'json-readtable-error ,char)))))
 
 (defun json-read ()
   "Parse and return the JSON object following point.
@@ -690,10 +693,7 @@ Advances point just past JSON object."
   (let ((char (json-peek)))
     (if (zerop char)
         (signal 'json-end-of-file nil)
-      (let ((record (cdr (assq char json-readtable))))
-        (if (functionp (car record))
-            (apply (car record) (cdr record))
-          (signal 'json-readtable-error record))))))
+      (json-readtable-dispatch char))))
 
 ;; Syntactic sugar for the reader
 
