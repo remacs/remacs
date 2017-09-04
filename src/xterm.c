@@ -5587,9 +5587,8 @@ xm_scroll_callback (Widget widget, XtPointer client_data, XtPointer call_data)
 
 	if (horizontal)
 	  {
-	    double dXM_SB_MAX = XM_SB_MAX;
-	    portion = bar->whole * (cs->value / dXM_SB_MAX);
-	    whole = bar->whole * ((XM_SB_MAX - slider_size) / dXM_SB_MAX);
+	    portion = bar->whole * ((float)cs->value / XM_SB_MAX);
+	    whole = bar->whole * ((float)(XM_SB_MAX - slider_size) / XM_SB_MAX);
 	    portion = min (portion, whole);
 	    part = scroll_bar_horizontal_handle;
 	  }
@@ -5726,8 +5725,8 @@ xaw_jump_callback (Widget widget, XtPointer client_data, XtPointer call_data)
 {
   struct scroll_bar *bar = client_data;
   float *top_addr = call_data;
-  double top = *top_addr;
-  double shown;
+  float top = *top_addr;
+  float shown;
   int whole, portion, height, width;
   enum scroll_bar_part part;
   bool horizontal = bar->horizontal;
@@ -5741,8 +5740,7 @@ xaw_jump_callback (Widget widget, XtPointer client_data, XtPointer call_data)
 
       if (shown < 1)
 	{
-	  double dshown = shown;
-	  whole = bar->whole - (dshown * bar->whole);
+	  whole = bar->whole - (shown * bar->whole);
 	  portion = min (top * bar->whole, whole);
 	}
       else
@@ -5763,7 +5761,7 @@ xaw_jump_callback (Widget widget, XtPointer client_data, XtPointer call_data)
       whole = 10000000;
       portion = shown < 1 ? top * whole : 0;
 
-      if (shown < 1 && (eabs (top + shown - 1) < 1.0 / height))
+      if (shown < 1 && (eabs (top + shown - 1) < 1.0f / height))
 	/* Some derivatives of Xaw refuse to shrink the thumb when you reach
 	   the bottom, so we force the scrolling whenever we see that we're
 	   too close to the bottom (in x_set_toolkit_scroll_bar_thumb
@@ -6306,8 +6304,7 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
 {
   struct frame *f = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
   Widget widget = SCROLL_BAR_X_WIDGET (FRAME_X_DISPLAY (f), bar);
-  double dwhole = whole;
-  double top, shown;
+  float top, shown;
 
   block_input ();
 
@@ -6336,8 +6333,8 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
     top = 0, shown = 1;
   else
     {
-      top = position / dwhole;
-      shown = portion / dwhole;
+      top = (float) position / whole;
+      shown = (float) portion / whole;
     }
 
   if (bar->dragging == -1)
@@ -6361,14 +6358,13 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
     top = 0, shown = 1;
   else
     {
-      top = position / dwhole;
-      shown = portion / dwhole;
+      top = (float) position / whole;
+      shown = (float) portion / whole;
     }
 
   {
-    double old_top, old_shown;
+    float old_top, old_shown;
     Dimension height;
-
     XtVaGetValues (widget,
 		   XtNtopOfThumb, &old_top,
 		   XtNshown, &old_shown,
@@ -6383,21 +6379,19 @@ x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int positio
 #if ! defined (HAVE_XAW3D)
     /* With Xaw, 'top' values too closer to 1.0 may
        cause the thumb to disappear.  Fix that.  */
-    top = min (top, 0.99);
+    top = min (top, 0.99f);
 #endif
     /* Keep two pixels available for moving the thumb down.  */
-    shown = max (0, min (1 - top - (2.0 / height), shown));
+    shown = max (0, min (1 - top - (2.0f / height), shown));
 #if ! defined (HAVE_XAW3D)
     /* Likewise with too small 'shown'.  */
-    shown = max (shown, 0.01);
+    shown = max (shown, 0.01f);
 #endif
 
     /* If the call to XawScrollbarSetThumb below doesn't seem to
        work, check that 'NARROWPROTO' is defined in src/config.h.
        If this is not so, most likely you need to fix configure.  */
-    double ftop = top, fshown = shown;
-
-    if (ftop != old_top || fshown != old_shown)
+    if (top != old_top || shown != old_shown)
       {
 	if (bar->dragging == -1)
 	  XawScrollbarSetThumb (widget, top, shown);
@@ -6422,15 +6416,14 @@ x_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar, int portion, 
 {
   struct frame *f = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
   Widget widget = SCROLL_BAR_X_WIDGET (FRAME_X_DISPLAY (f), bar);
-  double dwhole = whole;
-  double top, shown;
+  float top, shown;
 
   block_input ();
 
 #ifdef USE_MOTIF
   bar->whole = whole;
-  shown = portion / dwhole;
-  top = position / (dwhole - portion);
+  shown = (float) portion / whole;
+  top = (float) position / (whole - portion);
   {
     int size = clip_to_bounds (1, shown * XM_SB_MAX, XM_SB_MAX);
     int value = clip_to_bounds (0, top * (XM_SB_MAX - size), XM_SB_MAX - size);
@@ -6443,8 +6436,8 @@ x_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar, int portion, 
     top = 0, shown = 1;
   else
     {
-      top = position / dwhole;
-      shown = portion / dwhole;
+      top = (float) position / whole;
+      shown = (float) portion / whole;
     }
 
   {
@@ -6465,13 +6458,13 @@ x_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar, int portion, 
 #if ! defined (HAVE_XAW3D)
     /* With Xaw, 'top' values too closer to 1.0 may
        cause the thumb to disappear.  Fix that.  */
-    top = min (top, 0.99);
+    top = min (top, 0.99f);
 #endif
     /* Keep two pixels available for moving the thumb down.  */
-    shown = max (0, min (1 - top - (2.0 / height), shown));
+    shown = max (0, min (1 - top - (2.0f / height), shown));
 #if ! defined (HAVE_XAW3D)
     /* Likewise with too small 'shown'.  */
-    shown = max (shown, 0.01);
+    shown = max (shown, 0.01f);
 #endif
 #endif
 
@@ -6480,8 +6473,7 @@ x_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar, int portion, 
        If this is not so, most likely you need to fix configure.  */
     XawScrollbarSetThumb (widget, top, shown);
 #if false
-    float ftop = top, fshown = shown;
-    if (ftop != old_top || fshown != old_shown)
+    if (top != old_top || shown != old_shown)
       {
 	if (bar->dragging == -1)
 	  XawScrollbarSetThumb (widget, top, shown);
