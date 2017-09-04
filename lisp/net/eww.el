@@ -297,7 +297,8 @@ word(s) will be searched for via `eww-search-prefix'."
                (when (string= (url-filename (url-generic-parse-url url)) "")
                  (setq url (concat url "/"))))
            (setq url (concat eww-search-prefix
-                             (replace-regexp-in-string " " "+" url))))))
+                             (mapconcat
+                              #'url-hexify-string (split-string url) "+"))))))
   url)
 
 ;;;###autoload (defalias 'browse-web 'eww)
