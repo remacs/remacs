@@ -2,10 +2,9 @@
 
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
-use remacs_sys::{Lisp_Type, Vminibuffer_list, make_lisp_ptr};
+use remacs_sys::{Vminibuffer_list, minibuf_level, minibuf_window};
 use buffers::{current_buffer, get_buffer};
 use lists::memq;
-use libc::c_void;
 
 
 /// Return t if BUFFER is a minibuffer.
@@ -25,5 +24,15 @@ pub fn minibufferp(object: LispObject) -> LispObject {
         LispObject::constant_nil()
     } else {
         LispObject::constant_t()
+    }
+}
+
+/// Return the currently active minibuffer window, or nil if none.
+#[lisp_fn]
+fn active_minibuffer_window() -> LispObject {
+    if LispObject::from_raw(unsafe { minibuf_level }).is_nil() {
+        LispObject::constant_nil()
+    } else {
+        LispObject::from_raw(unsafe { minibuf_window })
     }
 }

@@ -1359,6 +1359,8 @@ extern "C" {
     pub static Vbuffer_alist: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
     pub static Vminibuffer_list: Lisp_Object;
+    pub static minibuf_level: EmacsInt;
+    pub static minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
