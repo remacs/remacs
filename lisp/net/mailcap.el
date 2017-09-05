@@ -1007,20 +1007,13 @@ If FORCE, re-parse even if already parsed."
   (delete-dups
    (nconc
     (mapcar 'cdr mailcap-mime-extensions)
-    (apply
-     'nconc
-     (mapcar
-      (lambda (l)
-	(delq nil
-	      (mapcar
-	       (lambda (m)
-		 (let ((type (cdr (assq 'type (cdr m)))))
-		   (if (equal (cadr (split-string type "/"))
-			      "*")
-		       nil
-		     type)))
-	       (cdr l))))
-      mailcap-mime-data)))))
+    (let (res type)
+      (dolist (data mailcap-mime-data)
+        (dolist (info (cdr data))
+          (setq type (cdr (assq 'type (cdr info))))
+          (unless (string-match-p "\\*" type)
+            (push type res))))
+      (nreverse res)))))
 
 ;;;
 ;;; Useful supplementary functions
@@ -1047,32 +1040,31 @@ If FORCE, re-parse even if already parsed."
 	  ;; Intersection of mime-infos from different mime-types;
 	  ;; or just the first MIME info for a single MIME type
 	  (if (cdr all-mime-info)
-	      (delq nil (mapcar (lambda (mi1)
-				  (unless (memq nil (mapcar
-						     (lambda (mi2)
-						       (member mi1 mi2))
-						     (cdr all-mime-info)))
-				    mi1))
-				(car all-mime-info)))
-	    (car all-mime-info)))
-	 (commands
-	  ;; Command strings from `viewer' field of the MIME info
-	  (delete-dups
-	   (delq nil (mapcar
-		      (lambda (mime-info)
-			(let ((command (cdr (assoc 'viewer mime-info))))
-			  (if (stringp command)
-			      (replace-regexp-in-string
-			       ;; Replace mailcap's `%s' placeholder
-			       ;; with dired's `?' placeholder
-			       "%s" "?"
-			       (replace-regexp-in-string
-				;; Remove the final filename placeholder
-				"[ \t\n]*\\('\\)?%s\\1?[ \t\n]*\\'" ""
-				command nil t)
-			       nil t))))
-			     common-mime-info)))))
-    commands))
+              (let (res)
+                (dolist (mi1 (car all-mime-info))
+                  (dolist (mi2 (cdr all-mime-info))
+                    (when (member mi1 mi2)
+                      (push mi1 res))))
+                (nreverse res))
+	    (car all-mime-info))))
+    ;; Command strings from `viewer' field of the MIME info
+    (delete-dups
+     (let (res command)
+       (dolist (mime-info common-mime-info)
+         (setq command (cdr (assq 'viewer mime-info)))
+         (when (stringp command)
+           (push
+            (replace-regexp-in-string
+             ;; Replace mailcap's `%s' placeholder
+             ;; with dired's `?' placeholder
+             "%s" "?"
+             (replace-regexp-in-string
+              ;; Remove the final filename placeholder
+              "[ \t\n]*\\('\\)?%s\\1?[ \t\n]*\\'" ""
+              command nil t)
+             nil t)
+            res)))
+       (nreverse res)))))
 
 (defun mailcap-view-mime (type)
   "View the data in the current buffer that has MIME type TYPE.
