@@ -2,7 +2,7 @@
 
 use lisp::{LispObject, ExternalPtr};
 use remacs_macros::lisp_fn;
-use remacs_sys::Lisp_Window;
+use remacs_sys::{Lisp_Window, selected_window as current_window};
 use marker::marker_position;
 use editfns::point;
 
@@ -48,10 +48,18 @@ pub fn window_live_p(object: LispObject) -> LispObject {
 /// `save-excursion' forms.  But that is hard to define.
 #[lisp_fn(min = "0")]
 pub fn window_point(object: LispObject) -> LispObject {
-    if object.is_nil() {
+    if object.is_nil() || object == selected_window() {
         point()
     } else {
         let marker = object.as_live_window_or_error().pointm();
         marker_position(marker)
     }
+}
+
+/// Return the selected window.
+/// The selected window is the window in which the standard cursor for
+/// selected windows appears and to which many commands apply.
+#[lisp_fn]
+pub fn selected_window() -> LispObject {
+    unsafe { LispObject::from_raw(current_window) }
 }

@@ -437,15 +437,6 @@ Return WINDOW.  */)
     }
 }
 
-DEFUN ("selected-window", Fselected_window, Sselected_window, 0, 0, 0,
-       doc: /* Return the selected window.
-The selected window is the window in which the standard cursor for
-selected windows appears and to which many commands apply.  */)
-  (void)
-{
-  return selected_window;
-}
-
 EMACS_INT window_select_count;
 
 /* If select_window is called with inhibit_point_swap true it will
@@ -7697,7 +7688,6 @@ Note that this optimization can cause the portion of the buffer
 displayed after a scrolling operation to be somewhat inaccurate.  */);
   Vfast_but_imprecise_scrolling = false;
 
-  defsubr (&Sselected_window);
   defsubr (&Sminibuffer_window);
   defsubr (&Swindow_minibuffer_p);
   defsubr (&Swindow_valid_p);
