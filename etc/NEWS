@@ -1210,23 +1210,35 @@ The following changes are involved.
 ---
 *** 'file-attributes' and 'file-symlink-p' no longer prepend "/:" to
 symbolic links whose targets begin with "/" and contain ":".  For
-example, if a symbolic link "x" has a target "/y:z", (file-symlink-p
-"x") now returns "/y:z" rather than "/:/y:z".
+example, if a symbolic link "x" has a target "/y:z:", '(file-symlink-p
+"x")' now returns "/y:z:" rather than "/:/y:z:".
 
 ---
-*** 'make-symbolic-link' no longer looks for file name handlers when
-creating a local symbolic link.  For example, (make-symbolic-link
-"/y:z" "x") now creates a symlink to "/y:z" instead of failing.
+*** 'make-symbolic-link' no longer looks for file name handlers of
+target when creating a symbolic link.  For example,
+'(make-symbolic-link "/y:z:" "x")' now creates a symbolic link to
+"/y:z:" instead of failing.
+
++++
+*** 'make-symbolic-link' removes the remote part of a link target if
+target and newname have the same remote part.  For example,
+'(make-symbolic-link "/x:y:a" "/x:y:b")' creates a link with the
+literal string "a"; and '(make-symbolic-link "/x:y:a" "/x:z:b")'
+creates a link with the literal string "/x:y:a" instead of failing.
 
 +++
 *** 'make-symbolic-link' now expands a link target with leading "~"
 only when the optional third arg is an integer, as when invoked
-interactively.  For example, (make-symbolic-link "~y" "x") now creates
-a link with target the literal string "~y"; to get the old behavior,
-use (make-symbolic-link (expand-file-name "~y") "x").  To avoid this
-expansion in interactive use, you can now prefix the link target with
-"/:".  For example, (make-symbolic-link "/:~y" "x" 1) now creates a
-link to literal "~y".
+interactively.  For example, '(make-symbolic-link "~y" "x")' now
+creates a link with target the literal string "~y"; to get the old
+behavior, use '(make-symbolic-link (expand-file-name "~y") "x")'.  To
+avoid this expansion in interactive use, you can now prefix the link
+target with "/:".  For example, '(make-symbolic-link "/:~y" "x" 1)'
+now creates a link to literal "~y".
+
++++
+** 'file-truename' returns a quoted file name if the target of a
+symbolic link has remote file name syntax.
 
 +++
 ** Module functions are now implemented slightly differently; in
@@ -1235,8 +1247,8 @@ Code that depends on undocumented internals of the module system might
 break.
 
 ---
-** The arguments LOCKNAME and MUSTBENEW of 'write-region' are
-propagated to file name handlers now.
+** The argument LOCKNAME of 'write-region' is propagated to file name
+handlers now.
 
 ---
 ** When built against recent versions of GTK+, Emacs always uses

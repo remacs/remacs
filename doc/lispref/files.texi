@@ -1116,8 +1116,11 @@ file name component immediately preceding @samp{..} will be
 simplified away before @code{file-truename} is called.  To
 eliminate the need for a call to @code{expand-file-name},
 @code{file-truename} handles @samp{~} in the same way that
-@code{expand-file-name} does.  @xref{File Name Expansion,, Functions
-that Expand Filenames}.
+@code{expand-file-name} does.
+
+If the target of a symbolic links has remote file name syntax,
+@code{file-truename} returns it quoted.  @xref{File Name Expansion,,
+Functions that Expand Filenames}.
 @end defun
 
 @defun file-chase-links filename &optional limit
@@ -1736,9 +1739,14 @@ is treated only as a string; it need not name an existing file.
 If @var{ok-if-already-exists} is an integer, indicating interactive
 use, then leading @samp{~} is expanded and leading @samp{/:} is
 stripped in the @var{target} string.
+
 If @var{target} is a relative file name, the resulting symbolic link
 is interpreted relative to the directory containing the symbolic link.
 @xref{Relative File Names}.
+
+If both @var{target} and @var{newname} have remote file name syntax,
+and if both remote identifications are equal, the symbolic link points
+to the local file name part of @var{target}.
 
 This function is not available on systems that don't support symbolic
 links.
