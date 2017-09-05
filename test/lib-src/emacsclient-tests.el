@@ -26,12 +26,10 @@
 (require 'ert)
 
 (defconst emacsclient-test-emacs
-  (expand-file-name "emacsclient" (concat
-                                   (file-name-directory
-                                    (directory-file-name
-                                     (file-name-directory invocation-directory)))
-                                   "lib-src"))
-  "Path to emacsclient binary in build tree.")
+  (if installation-directory
+      (expand-file-name "lib-src/emacsclient" installation-directory)
+    "emacsclient")
+  "The emacsclient binary to test.")
 
 (defun emacsclient-test-call-emacsclient ()
   "Run emacsclient."
