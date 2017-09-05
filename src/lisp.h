@@ -1007,6 +1007,8 @@ INLINE bool
 #define FIXNUM_OVERFLOW_P(i) \
   (! ((0 <= (i) || MOST_NEGATIVE_FIXNUM <= (i)) && (i) <= MOST_POSITIVE_FIXNUM))
 
+ptrdiff_t clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper);
+
 
 /* Construct a Lisp_Object from a value or address.  */
 
