@@ -3364,7 +3364,7 @@ if test "${HAVE_X11}" = "yes"; then
       AC_CACHE_CHECK([for XpmReturnAllocPixels preprocessor define],
       [emacs_cv_cpp_xpm_return_alloc_pixels],
       [AC_EGREP_CPP(no_return_alloc_pixels,
-      [#include "noX/xpm.h"
+      [#include "X11/xpm.h"
 #ifndef XpmReturnAllocPixels
 no_return_alloc_pixels
 #endif
