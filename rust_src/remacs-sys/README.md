@@ -1,6 +1,6 @@
 # remacs-sys
 
-`remacs-sys` is Rust library containing all [Foreign Function Interface (FFI)](https://doc.rust-lang.org/book/first-edition/ffi.html) declarations of structs and functions that are defined in C. Then, they can be used in the Rust code. C implementations are in `remacs/src`.
+`remacs-sys` is a Rust library containing all the [Foreign Function Interface (FFI)](https://doc.rust-lang.org/book/first-edition/ffi.html) declarations of structs and functions that are defined in C. Then, they can be used in the Rust code. C implementations are in `remacs/src`.
 
 ## Example: Use `make_float` C function in Rust
 
@@ -8,7 +8,7 @@ First, let's have a look how `make_float` is defined historically in the C code.
 
 ### On the C side
 
-`make_float` is regular C function . The declaration can be found in the header file `remacs/src/lisp.h`:
+`make_float` is a C function. The declaration can be found in the header file `remacs/src/lisp.h`:
 
 ```c
 extern Lisp_Object make_float (double);
@@ -65,7 +65,7 @@ Now everything is defined, `make_float` can be used in Rust. For example in `rem
     }
 ```
 
-Note, foreign functions are considered unsafe so the call is wrapped in a `unsafe` block.
+Note, foreign functions are considered unsafe so the call is wrapped in an `unsafe` block.
 
 ## Example: `Lisp_Hash_Table` struct ported to Rust
 
@@ -95,9 +95,9 @@ pub struct Lisp_Hash_Table {
 }
 ```
 
-All types of `Lisp_Hash_Table` have to be defined as well. Then, under the hood, C and Rust use different data layout. [`repr(C)`](https://doc.rust-lang.org/nomicon/other-reprs.html#reprc) is used to ensure the compatibility between the two.
+All types of `Lisp_Hash_Table` have to be defined as well. Then, under the hood, C and Rust use different data layouts. [`repr(C)`](https://doc.rust-lang.org/nomicon/other-reprs.html#reprc) is used to ensure the compatibility between the two.
 
-Finally, `Lisp_Hash_Table` struct can be used in Rust and abso be passed to C functions. For example, in `remacs/rust_src/src/hashtable.rs`:
+Finally, the `Lisp_Hash_Table` struct can be used in Rust and also be passed to C functions. For example, in `remacs/rust_src/src/hashtable.rs`:
 
 ```rust
 pub fn allocate() -> LispHashTableRef {
