@@ -73,6 +73,11 @@
   :prefix "ert-"
   :group 'lisp)
 
+(defcustom ert-batch-backtrace-right-margin 70
+  "Maximum length of lines in ERT backtraces in batch mode.
+Use nil for no limit (caution: backtrace lines can be very long)."
+  :type '(choice (const nil :tag "No truncation") integer))
+
 (defface ert-test-result-expected '((((class color) (background light))
                                      :background "green1")
                                     (((class color) (background dark))
@@ -1329,9 +1334,6 @@ RESULT must be an `ert-test-result-with-condition'."
 
 ;;; Running tests in batch mode.
 
-(defvar ert-batch-backtrace-right-margin 70
-  "The maximum line length for printing backtraces in `ert-run-tests-batch'.")
-
 ;;;###autoload
 (defun ert-run-tests-batch (&optional selector)
   "Run the tests specified by SELECTOR, printing results to the terminal.
@@ -1405,15 +1407,20 @@ Returns the stats object."
                  (ert--print-backtrace
                   (ert-test-result-with-condition-backtrace result)
                   nil)
-                 (goto-char (point-min))
-                 (while (not (eobp))
-                   (let ((start (point))
-                         (end (progn (end-of-line) (point))))
-                     (setq end (min end
-                                    (+ start ert-batch-backtrace-right-margin)))
-                     (message "%s" (buffer-substring-no-properties
-                                    start end)))
-                   (forward-line 1)))
+                 (if (not ert-batch-backtrace-right-margin)
+                     (message "%s"
+                              (buffer-substring-no-properties (point-min)
+                                                              (point-max)))
+                   (goto-char (point-min))
+                   (while (not (eobp))
+                     (let ((start (point))
+                           (end (line-end-position)))
+                       (setq end (min end
+                                      (+ start
+                                         ert-batch-backtrace-right-margin)))
+                       (message "%s" (buffer-substring-no-properties
+                                      start end)))
+                     (forward-line 1))))
                (with-temp-buffer
                  (ert--insert-infos result)
                  (insert "    ")
