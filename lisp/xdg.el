@@ -140,9 +140,10 @@ This should be called at the beginning of a line."
 (defun xdg-user-dir (name)
   "Return the path of user directory referred to by NAME."
   (when (null xdg-user-dirs)
-    (setq xdg-user-dirs
-          (xdg--user-dirs-parse-file
-           (expand-file-name "user-dirs.dirs" (xdg-config-home)))))
+    (save-match-data
+      (setq xdg-user-dirs
+            (xdg--user-dirs-parse-file
+             (expand-file-name "user-dirs.dirs" (xdg-config-home))))))
   (let ((dir (cdr (assoc name xdg-user-dirs))))
     (when dir (expand-file-name dir))))
 
