@@ -97,6 +97,16 @@ TEST_LOCALE = C
 # this by default since it gives nicer stacktraces.
 TEST_LOAD_EL ?= yes
 
+# Maximum length of lines in ert backtraces; nil for no limit.
+# (if empty, use the default ert-batch-backtrace-right-margin).
+TEST_BACKTRACE_LINE_LENGTH =
+
+ifeq (${TEST_BACKTRACE_LINE_LENGTH},)
+ert_opts =
+else
+ert_opts = --eval '(setq ert-batch-backtrace-right-margin ${TEST_BACKTRACE_LINE_LENGTH})'
+endif
+
 ifeq (@HAVE_MODULES@, yes)
 MODULES_EMACSOPT := --module-assertions
 else
@@ -147,7 +157,8 @@ endif
 
 %.log: %.elc
 	$(AM_V_at)${MKDIR_P} $(dir $@)
-	$(AM_V_GEN)HOME=/nonexistent $(emacs) -l ert -l $(testloadfile) \
+	$(AM_V_GEN)HOME=/nonexistent $(emacs) \
+	  -l ert ${ert_opts} -l $(testloadfile) \
 	  --eval "(ert-run-tests-batch-and-exit ${SELECTOR_ACTUAL})" ${WRITE_LOG}
 
 ifeq (@HAVE_MODULES@, yes)
