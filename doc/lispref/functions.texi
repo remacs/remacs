@@ -994,16 +994,16 @@ the results (which must be lists), by altering the results (using
 @code{nconc}; @pxref{Rearrangement}).  Like with @code{mapcar},
 @var{sequence} can be of any type except a char-table.
 
-@group
 @example
+@group
 ;; @r{Contrast this:}
 (mapcar 'list '(a b c d))
      @result{} ((a) (b) (c) (d))
 ;; @r{with this:}
 (mapcan 'list '(a b c d))
      @result{} (a b c d)
-@end example
 @end group
+@end example
 @end defun
 
 @defun mapc function sequence
