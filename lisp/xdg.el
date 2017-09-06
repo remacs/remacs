@@ -29,8 +29,12 @@
 ;; - XDG Base Directory Specification
 ;; - Thumbnail Managing Standard
 ;; - xdg-user-dirs configuration
+;; - Desktop Entry Specification
 
 ;;; Code:
+
+(eval-when-compile
+  (require 'subr-x))
 
 
 ;; XDG Base Directory Specification
@@ -128,13 +132,14 @@ This should be called at the beginning of a line."
 (defun xdg--user-dirs-parse-file (filename)
   "Return alist of xdg-user-dirs from FILENAME."
   (let (elt res)
-    (with-temp-buffer
-      (insert-file-contents filename)
-      (goto-char (point-min))
-      (while (not (eobp))
-        (setq elt (xdg--user-dirs-parse-line))
-        (when (consp elt) (push elt res))
-        (forward-line)))
+    (when (file-readable-p filename)
+      (with-temp-buffer
+        (insert-file-contents filename)
+        (goto-char (point-min))
+        (while (not (eobp))
+          (setq elt (xdg--user-dirs-parse-line))
+          (when (consp elt) (push elt res))
+          (forward-line))))
     res))
 
 (defun xdg-user-dir (name)
@@ -146,6 +151,60 @@ This should be called at the beginning of a line."
              (expand-file-name "user-dirs.dirs" (xdg-config-home))))))
   (let ((dir (cdr (assoc name xdg-user-dirs))))
     (when dir (expand-file-name dir))))
+
+
+;; Desktop Entry Specification
+;; https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-1.1.html
+
+(defconst xdg-desktop-group-regexp
+  (rx "[" (group-n 1 (+? (in " -Z\\^-~"))) "]")
+  "Regexp matching desktop file group header names.")
+
+;; TODO Localized strings left out intentionally, as Emacs has no
+;; notion of l10n/i18n
+(defconst xdg-desktop-entry-regexp
+  (rx (group-n 1 (+ (in "A-Za-z0-9-")))
+      (* blank) "=" (* blank)
+      (group-n 2 (* nonl)))
+  "Regexp matching desktop file entry key-value pairs.")
+
+(defun xdg--desktop-parse-line ()
+  (skip-chars-forward "[:blank:]")
+  (when (/= (following-char) ?#)
+    (cond
+     ((looking-at xdg-desktop-entry-regexp)
+      (cons (match-string 1) (match-string 2)))
+     ((looking-at xdg-desktop-group-regexp)
+      (match-string 1)))))
+
+(defun xdg-desktop-read-file (filename)
+  "Return \"Desktop Entry\" contents of desktop file FILENAME as a hash table."
+  (let ((res (make-hash-table :test #'equal))
+        elt group)
+    (with-temp-buffer
+      (save-match-data
+        (insert-file-contents-literally filename)
+        (goto-char (point-min))
+        (while (or (= (following-char) ?#)
+                   (string-blank-p (buffer-substring (point) (point-at-eol))))
+          (forward-line))
+        (unless (equal (setq group (xdg--desktop-parse-line)) "Desktop Entry")
+          (error "Wrong first section: %s" group))
+        (while (not (eobp))
+          (when (consp (setq elt (xdg--desktop-parse-line)))
+            (puthash (car elt) (cdr elt) res))
+          (forward-line))))
+    res))
+
+(defun xdg-desktop-strings (value)
+  "Partition VALUE into elements delimited by unescaped semicolons."
+  (let (res)
+    (save-match-data
+      (setq value (string-trim-left value))
+      (dolist (x (split-string (replace-regexp-in-string "\\\\;" "\0" value) ";"))
+        (push (replace-regexp-in-string "\0" ";" x) res)))
+    (when (null (string-match-p "[^[:blank:]]" (car res))) (pop res))
+    (nreverse res)))
 
 (provide 'xdg)
 
