@@ -17,9 +17,9 @@ pub fn minibufferp(object: LispObject) -> LispObject {
     } else if object.is_string() {
         get_buffer(object)
     } else {
+        object.as_buffer_or_error();
         object
     };
-    buffer.as_buffer_or_error();
     if memq(buffer, LispObject::from_raw(unsafe { Vminibuffer_list })).is_nil() {
         LispObject::constant_nil()
     } else {
