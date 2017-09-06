@@ -76,7 +76,7 @@
 (defcustom ert-batch-backtrace-right-margin 70
   "Maximum length of lines in ERT backtraces in batch mode.
 Use nil for no limit (caution: backtrace lines can be very long)."
-  :type '(choice (const nil :tag "No truncation") integer))
+  :type '(choice (const :tag "No truncation" nil) integer))
 
 (defface ert-test-result-expected '((((class color) (background light))
                                      :background "green1")
