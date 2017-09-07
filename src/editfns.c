@@ -1045,33 +1045,12 @@ usage: (save-current-buffer &rest BODY)  */)
   return unbind_to (count, Fprogn (args));
 }
 
-DEFUN ("point-min", Fpoint_min, Spoint_min, 0, 0, 0,
-       doc: /* Return the minimum permissible value of point in the current buffer.
-This is 1, unless narrowing (a buffer restriction) is in effect.  */)
-  (void)
-{
-  Lisp_Object temp;
-  XSETFASTINT (temp, BEGV);
-  return temp;
-}
-
 DEFUN ("point-min-marker", Fpoint_min_marker, Spoint_min_marker, 0, 0, 0,
        doc: /* Return a marker to the minimum permissible value of point in this buffer.
 This is the beginning, unless narrowing (a buffer restriction) is in effect.  */)
   (void)
 {
   return build_marker (current_buffer, BEGV, BEGV_BYTE);
-}
-
-DEFUN ("point-max", Fpoint_max, Spoint_max, 0, 0, 0,
-       doc: /* Return the maximum permissible value of point in the current buffer.
-This is (1+ (buffer-size)), unless narrowing (a buffer restriction)
-is in effect, in which case it is less.  */)
-  (void)
-{
-  Lisp_Object temp;
-  XSETFASTINT (temp, ZV);
-  return temp;
 }
 
 DEFUN ("point-max-marker", Fpoint_max_marker, Spoint_max_marker, 0, 0, 0,
@@ -5381,8 +5360,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Ssave_excursion);
   defsubr (&Ssave_current_buffer);
 
-  defsubr (&Spoint_max);
-  defsubr (&Spoint_min);
   defsubr (&Spoint_min_marker);
   defsubr (&Spoint_max_marker);
   defsubr (&Sgap_position);
