@@ -31,26 +31,29 @@
     "emacsclient")
   "The emacsclient binary to test.")
 
-(defun emacsclient-test-call-emacsclient ()
-  "Run emacsclient."
-  (call-process emacsclient-test-emacs nil nil nil
-                "--server-file" (expand-file-name "non-existent-file" invocation-directory)
-                "foo"))
+(defmacro emacsclient-test-call-emacsclient (editor)
+  "Run emacsclient with ALTERNATE_EDITOR set to EDITOR."
+  `(let* ((process-environment
+           (cons (concat "ALTERNATE_EDITOR=" ,editor) process-environment))
+          (stat (call-process emacsclient-test-emacs nil nil nil
+                              "--server-file"
+                              (expand-file-name "non-existent-file"
+                                                invocation-directory)
+                              "foo")))
+     ;; Skip if emacsclient was compiled with -pg (bug#28319).
+     ;; Use ert--skip-unless rather than skip-unless to silence compiler.
+     (ert--skip-unless (not (and (stringp stat)
+                                 (string-match-p "rofiling" stat))))
+     (should (eq 0 stat))))
 
 (ert-deftest emacsclient-test-alternate-editor-allows-arguments ()
-  (let ((process-environment process-environment))
-    (setenv "ALTERNATE_EDITOR" (concat
-                                (expand-file-name invocation-name invocation-directory)
-                                " --batch"))
-    (should (eq 0 (emacsclient-test-call-emacsclient)))))
+  (emacsclient-test-call-emacsclient
+   (concat (expand-file-name invocation-name invocation-directory) " --batch")))
 
 (ert-deftest emacsclient-test-alternate-editor-allows-quotes ()
-  (let ((process-environment process-environment))
-    (setenv "ALTERNATE_EDITOR" (concat
-                                "\""
-                                (expand-file-name invocation-name invocation-directory)
-                                "\"" " --batch"))
-    (should (eq 0 (emacsclient-test-call-emacsclient)))))
+  (emacsclient-test-call-emacsclient
+   (concat "\"" (expand-file-name invocation-name invocation-directory)
+           "\"" " --batch")))
 
 (provide 'emacsclient-tests)
 ;;; emacsclient-tests.el ends here
