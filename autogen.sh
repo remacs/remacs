@@ -269,23 +269,23 @@ fi
 
 git_config ()
 {
+    $do_git || return
+
     name=$1
     value=$2
 
     ovalue=`git config --get "$name"` && test "$ovalue" = "$value" || {
-	if $do_git; then
-	    if $git_was_ok; then
-		echo 'Configuring local git repository...'
-		case $cp_options in
-		  --backup=*)
-		    config=$git_common_dir/config
-		    cp $cp_options --force -- "$config" "$config" || exit;;
-		esac
-	    fi
-	    echo "git config $name '$value'"
-	    git config "$name" "$value" || exit
-	fi
-	git_was_ok=false
+       if $git_was_ok; then
+	   echo 'Configuring local git repository...'
+	   case $cp_options in
+	       --backup=*)
+		   config=$git_common_dir/config
+		   cp $cp_options --force -- "$config" "$config" || exit;;
+	   esac
+       fi
+       echo "git config $name '$value'"
+       git config "$name" "$value" || exit
+       git_was_ok=false
     }
 }
 
