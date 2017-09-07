@@ -347,22 +347,9 @@ status by setting @code{vc-consult-headers} to @code{nil}.  VC then
 always uses the file permissions (if it is supposed to trust them), or
 else checks the master file.
 
-@vindex vc-mistrust-permissions
-  You can specify the criterion for whether to trust the file
-permissions by setting the variable @code{vc-mistrust-permissions}.
-Its value can be @code{t} (always mistrust the file permissions and
-check the master file), @code{nil} (always trust the file
-permissions), or a function of one argument which makes the decision.
-The argument is the directory name of the @file{RCS} subdirectory.  A
-non-@code{nil} value from the function says to mistrust the file
-permissions.  If you find that the file permissions of work files are
-changed erroneously, set @code{vc-mistrust-permissions} to @code{t}.
-Then VC always checks the master file to determine the file's status.
-
   VC determines the version control state of files under SCCS much as
 with RCS@.  It does not consider SCCS version headers, though.  Thus,
-the variable @code{vc-mistrust-permissions} affects SCCS use, but
-@code{vc-consult-headers} does not.
+the variable @code{vc-consult-headers} does not affect SCCS use.
 
 @node CVS Options
 @subsubsection Options specific for CVS
