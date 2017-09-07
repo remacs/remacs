@@ -77,6 +77,15 @@ pub fn point_min() -> LispObject {
     LispObject::from_natnum(ThreadState::current_buffer().begv as EmacsInt)
 }
 
+/// Return a marker to the minimum permissible value of point in this
+/// buffer.  This is the beginning, unless narrowing (a buffer
+/// restriction) is in effect.
+#[lisp_fn]
+pub fn point_min_marker() -> LispObject {
+    let buffer = ThreadState::current_buffer();
+    build_marker(buffer, buffer.begv, buffer.beg_byte())
+}
+
 /// Return the maximum permissible value of point in the current
 /// buffer.  This is (1+ (buffer-size)), unless narrowing (a buffer
 /// restriction) is in effect, in which case it is less.

@@ -39,6 +39,19 @@ impl LispMarkerRef {
     }
 }
 
+fn build_marker(buf: LispObject, charpos: ptrdiff_t, byte_pos: ptrdiff_t) -> LispObject {
+    let m = Lisp_Marker{
+        ty: Marker,
+        padding: 0,
+        buffer: buf,
+        charpos: charpos,
+        bytepos: byte_pos,
+        next: buf.text.markers,
+    };
+    buf.text.markers = m;
+    m
+}
+
 /// Return t if OBJECT is a marker (editor pointer).
 #[lisp_fn]
 fn markerp(object: LispObject) -> LispObject {
