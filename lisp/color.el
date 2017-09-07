@@ -42,7 +42,7 @@
 (defun color-name-to-rgb (color &optional frame)
   "Convert COLOR string to a list of normalized RGB components.
 COLOR should be a color name (e.g. \"white\") or an RGB triplet
-string (e.g. \"#ff12ec\").
+string (e.g. \"#ffff1122eecc\").
 
 Normally the return value is a list of three floating-point
 numbers, (RED GREEN BLUE), each between 0.0 and 1.0 inclusive.
@@ -68,7 +68,8 @@ or 2; use the latter if you need a 24-bit specification of a color."
 (defun color-complement (color-name)
   "Return the color that is the complement of COLOR-NAME.
 COLOR-NAME should be a string naming a color (e.g. \"white\"), or
-a string specifying a color's RGB components (e.g. \"#ff12ec\")."
+a string specifying a color's RGB
+components (e.g. \"#ffff1212ecec\")."
   (let ((color (color-name-to-rgb color-name)))
     (list (- 1.0 (nth 0 color))
           (- 1.0 (nth 1 color))
@@ -178,7 +179,8 @@ each element is between 0.0 and 1.0, inclusive."
 		    ((= r max)      (- bc gc))
 		    ((= g max)      (+ 2.0 rc (- bc)))
 		    (t              (+ 4.0 gc (- rc))))
-		   6.0) 1.0)))
+		   6.0)
+                  1.0)))
 	(list h s l)))))
 
 (defun color-srgb-to-xyz (red green blue)
