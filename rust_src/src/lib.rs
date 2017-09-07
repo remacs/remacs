@@ -73,6 +73,9 @@ pub use base64::base64_decode_1;
 pub use buffers::Fbuffer_live_p;
 pub use buffers::Fbuffer_modified_p;
 
+// Used in window.c
+pub use windows::Fwindow_buffer;
+
 // used in process.c
 pub use buffers::Fbuffer_name;
 
@@ -202,6 +205,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*windows::Swindow_live_p);
         defsubr(&*windows::Swindow_point);
         defsubr(&*windows::Sselected_window);
+        defsubr(&*windows::Swindow_buffer);
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*lists::Satom);

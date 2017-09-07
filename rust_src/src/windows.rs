@@ -19,6 +19,11 @@ impl LispWindowRef {
     pub fn pointm(self) -> LispObject {
         LispObject::from_raw(self.pointm)
     }
+
+    #[inline]
+    pub fn contents(self) -> LispObject {
+        LispObject::from_raw(self.contents)
+    }
 }
 
 /// Return t if OBJECT is a window and nil otherwise.
@@ -62,4 +67,21 @@ pub fn window_point(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn selected_window() -> LispObject {
     unsafe { LispObject::from_raw(current_window) }
+}
+
+/// Return the buffer displayed in window WINDOW.
+/// If WINDOW is omitted or nil, it defaults to the selected window.
+/// Return nil for an internal window or a deleted window.
+#[lisp_fn(min = "0")]
+pub fn window_buffer(object: LispObject) -> LispObject {
+    let window = if object.is_nil() {
+        selected_window()
+    } else {
+        object
+    };
+    if window.as_window_or_error().is_live() {
+        window.as_window().unwrap().contents()
+    } else {
+        LispObject::constant_nil()
+    }
 }

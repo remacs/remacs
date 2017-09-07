@@ -562,16 +562,6 @@ the buffer of the selected window before each command.  */)
   return select_window (window, norecord, false);
 }
 
-DEFUN ("window-buffer", Fwindow_buffer, Swindow_buffer, 0, 1, 0,
-       doc: /* Return the buffer displayed in window WINDOW.
-If WINDOW is omitted or nil, it defaults to the selected window.
-Return nil for an internal window or a deleted window.  */)
-  (Lisp_Object window)
-{
-  struct window *w = decode_any_window (window);
-  return WINDOW_LEAF_P (w) ? w->contents : Qnil;
-}
-
 DEFUN ("window-parent", Fwindow_parent, Swindow_parent, 0, 1, 0,
        doc: /* Return the parent window of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -7698,7 +7688,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_frame_selected_window);
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
-  defsubr (&Swindow_buffer);
   defsubr (&Swindow_parent);
   defsubr (&Swindow_top_child);
   defsubr (&Swindow_left_child);
