@@ -293,6 +293,7 @@ static int do_play_sound (const char *, unsigned long);
 
 /* BEGIN: Common functions */
 
+#ifndef WINDOWSNT
 /* Like perror, but signals an error.  */
 
 static _Noreturn void
@@ -315,8 +316,6 @@ sound_perror (const char *msg)
     error ("%s", msg);
 }
 
-
-#ifndef WINDOWSNT
 /* Display a warning message.  */
 
 static void

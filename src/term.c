@@ -1210,6 +1210,7 @@ struct fkey_table {
   const char *cap, *name;
 };
 
+#ifndef DOS_NT
   /* Termcap capability names that correspond directly to X keysyms.
      Some of these (marked "terminfo") aren't supplied by old-style
      (Berkeley) termcap entries.  They're listed in X keysym order;
@@ -1313,7 +1314,6 @@ static const struct fkey_table keys[] =
   {"!3", "S-undo"}       /*shifted undo key*/
   };
 
-#ifndef DOS_NT
 static char **term_get_fkeys_address;
 static KBOARD *term_get_fkeys_kboard;
 static Lisp_Object term_get_fkeys_1 (void);

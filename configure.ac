@@ -976,9 +976,10 @@ AS_IF([test $gl_gcc_warnings = no],
     nw="$nw -Wmissing-braces"
   fi
 
-  # This causes too much noise in the MinGW build
+  # These cause too much noise in the MinGW build
   if test $opsys = mingw32; then
     nw="$nw -Wpointer-sign"
+    nw="$nw -Wsuggest-attribute=format"
   fi
 
   gl_MANYWARN_ALL_GCC([ws])
