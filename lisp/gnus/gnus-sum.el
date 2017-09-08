@@ -6931,7 +6931,7 @@ displayed, no centering will be performed."
     (save-excursion
       ;; Take care of tree window mode.
       (if (get-buffer-window gnus-group-buffer 0)
-	  (pop-to-buffer gnus-group-buffer)
+	  (pop-to-buffer gnus-group-buffer t)
 	(set-buffer gnus-group-buffer))
       (gnus-group-jump-to-group newsgroup))))
 
