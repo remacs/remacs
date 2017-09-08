@@ -566,15 +566,16 @@ is already present.  */)
 static ptrdiff_t
 directory_file_name (char *dst, char *src, ptrdiff_t srclen, bool multibyte)
 {
-  /* Process as Unix format: just remove any final slash.
-     But leave "/" and "//" unchanged.  */
-  while (srclen > 1
+  /* In Unix-like systems, just remove any final slashes.  However, if
+     they are all slashes, leave "/" and "//" alone, and treat "///"
+     and longer as if they were "/".  */
+  if (! (srclen == 2 && IS_DIRECTORY_SEP (src[0])))
+    while (srclen > 1
 #ifdef DOS_NT
-	 && !IS_ANY_SEP (src[srclen - 2])
+	   && !IS_ANY_SEP (src[srclen - 2])
 #endif
-	 && IS_DIRECTORY_SEP (src[srclen - 1])
-	 && ! (srclen == 2 && IS_DIRECTORY_SEP (src[0])))
-    srclen--;
+	   && IS_DIRECTORY_SEP (src[srclen - 1]))
+      srclen--;
 
   memcpy (dst, src, srclen);
   dst[srclen] = 0;

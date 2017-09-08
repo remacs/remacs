@@ -44,3 +44,22 @@
   "Check that any non-NULL ASCII character can appear in a symlink.
 Also check that an encoding error can appear in a symlink."
   (should (equal nil (fileio-tests--symlink-failure))))
+
+(ert-deftest fileio-tests--directory-file-name ()
+  (should (equal (directory-file-name "/") "/"))
+  (should (equal (directory-file-name "//") "//"))
+  (should (equal (directory-file-name "///") "/"))
+  (should (equal (directory-file-name "////") "/"))
+  (should (equal (directory-file-name "/abc") "/abc"))
+  (should (equal (directory-file-name "/abc/") "/abc"))
+  (should (equal (directory-file-name "/abc//") "/abc")))
+
+(ert-deftest fileio-tests--file-name-as-directory ()
+  (should (equal (file-name-as-directory "") "./"))
+  (should (equal (file-name-as-directory "/") "/"))
+  (should (equal (file-name-as-directory "//") "//"))
+  (should (equal (file-name-as-directory "///") "///"))
+  (should (equal (file-name-as-directory "////") "////"))
+  (should (equal (file-name-as-directory "/abc") "/abc/"))
+  (should (equal (file-name-as-directory "/abc/") "/abc/"))
+  (should (equal (file-name-as-directory "/abc//") "/abc//")))
