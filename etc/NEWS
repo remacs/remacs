@@ -1882,6 +1882,12 @@ of frame decorations on macOS 10.9+.
 ---
 ** 'process-attributes' on Darwin systems now returns more information.
 
+---
+** Mousewheel and trackpad scrolling on macOS 10.7+ now behaves more
+like the macOS default.  The new variables
+'ns-use-system-mwheel-acceleration', 'ns-touchpad-scroll-line-height'
+and 'ns-touchpad-use-momentum' can be used to customise the behavior.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.
