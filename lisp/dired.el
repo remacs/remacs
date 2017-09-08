@@ -2233,9 +2233,15 @@ directory in another window."
 ;; Don't override the setting from .emacs.
 ;;;###autoload (put 'dired-find-alternate-file 'disabled t)
 
-(defun dired-mouse-find-file-other-window (event)
-  "In Dired, visit the file or directory name you click on."
+(defun dired-mouse-find-file (event &optional find-file-func find-dir-func)
+  "In Dired, visit the file or directory name you click on.
+The optional arguments FIND-FILE-FUNC and FIND-DIR-FUNC specify
+functions to visit the file and directory, respectively.  If
+omitted or nil, these arguments default to `find-file' and `dired',
+respectively."
   (interactive "e")
+  (or find-file-func (setq find-file-func 'find-file))
+  (or find-dir-func (setq find-dir-func 'dired))
   (let (window pos file)
     (save-excursion
       (setq window (posn-window (event-end event))
@@ -2250,9 +2256,19 @@ directory in another window."
 		 (dired-goto-subdir file))
 	    (progn
 	      (select-window window)
-	      (dired-other-window file)))
+              (funcall find-dir-func file)))
       (select-window window)
-      (find-file-other-window (file-name-sans-versions file t)))))
+      (funcall find-file-func (file-name-sans-versions file t)))))
+
+(defun dired-mouse-find-file-other-window (event)
+  "In Dired, visit the file or directory name you click on in another window."
+  (interactive "e")
+  (dired-mouse-find-file event 'find-file-other-window 'dired-other-window))
+
+(defun dired-mouse-find-file-other-frame (event)
+  "In Dired, visit the file or directory name you click on in another frame."
+  (interactive "e")
+  (dired-mouse-find-file event 'find-file-other-frame 'dired-other-frame))
 
 (defun dired-view-file ()
   "In Dired, examine a file in view mode, returning to Dired when done.
