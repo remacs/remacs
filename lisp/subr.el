@@ -1270,6 +1270,11 @@ See `event-start' for a description of the value returned."
   "Return the multi-click count of EVENT, a click or drag event.
 The return value is a positive integer."
   (if (and (consp event) (integerp (nth 2 event))) (nth 2 event) 1))
+
+(defsubst event-line-count (event)
+  "Return the line count of EVENT, a mousewheel event.
+The return value is a positive integer."
+  (if (and (consp event) (integerp (nth 3 event))) (nth 3 event) 1))
 
 ;;;; Extracting fields of the positions in an event.
 

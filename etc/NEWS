@@ -419,6 +419,72 @@ sets the XTerm window title.  The default is to set the window title.
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
 
++++
+** Intercepting hotkeys on Windows 7 and later now works better.
+The new keyboard hooking code properly grabs system hotkeys such as
+Win-* and Alt-TAB, in a way that Emacs can get at them before the
+system.  This makes the 'w32-register-hot-key' functionality work
+again on all versions of MS-Windows starting with Windows 7.  On
+Windows NT and later you can now register any hotkey combination.  (On
+Windows 9X, the previous limitations, spelled out in the Emacs manual,
+still apply.)
+
+---
+** 'convert-standard-filename' no longer mirrors slashes on MS-Windows.
+Previously, on MS-Windows this function converted slash characters in
+file names into backslashes.  It no longer does that.  If your Lisp
+program used 'convert-standard-filename' to prepare file names to be
+passed to subprocesses (which is not the recommended usage of that
+function), you will now have to mirror slashes in your application
+code.  One possible way is this:
+
+         (let ((start 0))
+           (while (string-match "/" file-name start)
+             (aset file-name (match-beginning 0) ?\\)
+             (setq start (match-end 0))))
+
+---
+** GUI sessions on MS-Windows now treat SIGINT like Posix platforms do.
+The effect of delivering a Ctrl-C (SIGINT) signal to a GUI Emacs on
+MS-Windows is now the same as on Posix platforms -- Emacs saves the
+session and exits.  In particular, this will happen if you start
+emacs.exe from the Windows shell, then type Ctrl-C into that shell's
+window.
+
+---
+** 'signal-process' supports SIGTRAP on Windows XP and later.
+The 'kill' emulation on Windows now maps SIGTRAP to a call to the
+'DebugBreakProcess' API.  This causes the receiving process to break
+execution and return control to the debugger.  If no debugger is
+attached to the receiving process, the call is typically ignored.
+This is in contrast to the default action on POSIX Systems, where it
+causes the receiving process to terminate with a core dump if no
+debugger has been attached to it.
+
+---
+** 'set-mouse-position' and 'set-mouse-absolute-pixel-position' work
+on macOS.
+
+---
+** Emacs can now be run as a GUI application from the command line on
+macOS.
+
++++
+** 'ns-appearance' and 'ns-transparent-titlebar' change the appearance
+of frame decorations on macOS 10.9+.
+
+---
+** 'ns-use-thin-smoothing' enables thin font smoothing on macOS 10.8+.
+
+---
+** 'process-attributes' on Darwin systems now returns more information.
+
+---
+** Mousewheel and trackpad scrolling on macOS 10.7+ now behaves more
+like the macOS default.  The new variables
+'ns-use-system-mwheel-acceleration', 'ns-touchpad-scroll-line-height'
+and 'ns-touchpad-use-momentum' can be used to customise the behavior.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.

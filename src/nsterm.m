@@ -6498,24 +6498,139 @@ not_in_argv (NSString *arg)
 
   if ([theEvent type] == NSEventTypeScrollWheel)
     {
-      CGFloat delta = [theEvent deltaY];
-      /* Mac notebooks send wheel events w/delta =0 when trackpad scrolling */
-      if (delta == 0)
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+      if ([theEvent respondsToSelector:@selector(hasPreciseScrollingDeltas)])
         {
-          delta = [theEvent deltaX];
-          if (delta == 0)
+#endif
+          /* If the input device is a touchpad or similar, use precise
+           * scrolling deltas.  These are measured in pixels, so we
+           * have to add them up until they exceed one line height,
+           * then we can send a scroll wheel event.
+           *
+           * If the device only has coarse scrolling deltas, like a
+           * real mousewheel, the deltas represent a ratio of whole
+           * lines, so round up the number of lines.  This means we
+           * always send one scroll event per click, but can still
+           * scroll more than one line if the OS tells us to.
+           */
+          bool horizontal;
+          int lines = 0;
+          int scrollUp = NO;
+
+          /* FIXME: At the top or bottom of the buffer we should
+           * ignore momentum-phase events.  */
+          if (! ns_touchpad_use_momentum
+              && [theEvent momentumPhase] != NSEventPhaseNone)
+            return;
+
+          if ([theEvent hasPreciseScrollingDeltas])
             {
-              NSTRACE_MSG ("deltaIsZero");
-              return;
+              static int totalDeltaX, totalDeltaY;
+              int lineHeight;
+
+              if (NUMBERP (ns_touchpad_scroll_line_height))
+                lineHeight = XINT (ns_touchpad_scroll_line_height);
+              else
+                {
+                  /* FIXME: Use actual line height instead of the default.  */
+                  lineHeight = default_line_pixel_height
+                    (XWINDOW (FRAME_SELECTED_WINDOW (emacsframe)));
+                }
+
+              if ([theEvent phase] == NSEventPhaseBegan)
+                {
+                  totalDeltaX = 0;
+                  totalDeltaY = 0;
+                }
+
+              totalDeltaX += [theEvent scrollingDeltaX];
+              totalDeltaY += [theEvent scrollingDeltaY];
+
+              /* Calculate the number of lines, if any, to scroll, and
+               * reset the total delta for the direction we're NOT
+               * scrolling so that small movements don't add up.  */
+              if (abs (totalDeltaX) > abs (totalDeltaY)
+                  && abs (totalDeltaX) > lineHeight)
+                {
+                  horizontal = YES;
+                  scrollUp = totalDeltaX > 0;
+
+                  lines = abs (totalDeltaX / lineHeight);
+                  totalDeltaX = totalDeltaX % lineHeight;
+                  totalDeltaY = 0;
+                }
+              else if (abs (totalDeltaY) >= abs (totalDeltaX)
+                       && abs (totalDeltaY) > lineHeight)
+                {
+                  horizontal = NO;
+                  scrollUp = totalDeltaY > 0;
+
+                  lines = abs (totalDeltaY / lineHeight);
+                  totalDeltaY = totalDeltaY % lineHeight;
+                  totalDeltaX = 0;
+                }
+
+              if (lines > 1 && ! ns_use_system_mwheel_acceleration)
+                lines = 1;
             }
-          emacs_event->kind = HORIZ_WHEEL_EVENT;
+          else
+            {
+              CGFloat delta;
+
+              if ([theEvent scrollingDeltaY] == 0)
+                {
+                  horizontal = YES;
+                  delta = [theEvent scrollingDeltaX];
+                }
+              else
+                {
+                  horizontal = NO;
+                  delta = [theEvent scrollingDeltaY];
+                }
+
+              lines = (ns_use_system_mwheel_acceleration)
+                ? ceil (fabs (delta)) : 1;
+
+              scrollUp = delta > 0;
+            }
+
+          if (lines == 0)
+            return;
+
+          emacs_event->kind = horizontal ? HORIZ_WHEEL_EVENT : WHEEL_EVENT;
+          emacs_event->arg = (make_number (lines));
+
+          emacs_event->code = 0;
+          emacs_event->modifiers = EV_MODIFIERS (theEvent) |
+            (scrollUp ? up_modifier : down_modifier);
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
         }
       else
-        emacs_event->kind = WHEEL_EVENT;
+#endif
+#endif /* defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 */
+#if defined (NS_IMPL_GNUSTEP) || MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+        {
+          CGFloat delta = [theEvent deltaY];
+          /* Mac notebooks send wheel events w/delta =0 when trackpad scrolling */
+          if (delta == 0)
+            {
+              delta = [theEvent deltaX];
+              if (delta == 0)
+                {
+                  NSTRACE_MSG ("deltaIsZero");
+                  return;
+                }
+              emacs_event->kind = HORIZ_WHEEL_EVENT;
+            }
+          else
+            emacs_event->kind = WHEEL_EVENT;
 
-      emacs_event->code = 0;
-      emacs_event->modifiers = EV_MODIFIERS (theEvent) |
-        ((delta > 0) ? up_modifier : down_modifier);
+          emacs_event->code = 0;
+          emacs_event->modifiers = EV_MODIFIERS (theEvent) |
+            ((delta > 0) ? up_modifier : down_modifier);
+        }
+#endif
     }
   else
     {
@@ -6524,9 +6639,11 @@ not_in_argv (NSString *arg)
       emacs_event->modifiers = EV_MODIFIERS (theEvent)
                              | EV_UDMODIFIERS (theEvent);
     }
+
   XSETINT (emacs_event->x, lrint (p.x));
   XSETINT (emacs_event->y, lrint (p.y));
   EV_TRAILER (theEvent);
+  return;
 }
 
 
@@ -9165,6 +9282,23 @@ Default is nil.  */);
 Note that this does not apply to images.
 This variable is ignored on Mac OS X < 10.7 and GNUstep.  */);
   ns_use_srgb_colorspace = YES;
+
+  DEFVAR_BOOL ("ns-use-system-mwheel-acceleration",
+               ns_use_system_mwheel_acceleration,
+     doc: /*Non-nil means use macOS's standard mouse wheel acceleration.
+This variable is ignored on macOS < 10.7 and GNUstep.  Default is t.  */);
+  ns_use_system_mwheel_acceleration = YES;
+
+  DEFVAR_LISP ("ns-touchpad-scroll-line-height", ns_touchpad_scroll_line_height,
+               doc: /*The number of pixels touchpad scrolling considers a line.
+Nil or a non-number means use the default frame line height.
+This variable is ignored on macOS < 10.7 and GNUstep.  Default is nil.  */);
+  ns_touchpad_scroll_line_height = Qnil;
+
+  DEFVAR_BOOL ("ns-touchpad-use-momentum", ns_touchpad_use_momentum,
+               doc: /*Non-nil means touchpad scrolling uses momentum.
+This variable is ignored on macOS < 10.7 and GNUstep.  Default is t.  */);
+  ns_touchpad_use_momentum = YES;
 
   /* TODO: move to common code */
   DEFVAR_LISP ("x-toolkit-scroll-bars", Vx_toolkit_scroll_bars,
