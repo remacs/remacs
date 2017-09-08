@@ -339,5 +339,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sregion_beginning);
         defsubr(&*editfns::Sregion_end);
         defsubr(&*editfns::Smark_marker);
+        defsubr(&*editfns::Spoint_min);
+        defsubr(&*editfns::Spoint_max);
     }
 }

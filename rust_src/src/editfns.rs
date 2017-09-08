@@ -116,3 +116,19 @@ fn region_end() -> LispObject {
 fn mark_marker() -> LispObject {
     ThreadState::current_buffer().mark()
 }
+
+/// Return the minimum permissible value of point in the current
+/// buffer.  This is 1, unless narrowing (a buffer restriction) is in
+/// effect.
+#[lisp_fn]
+pub fn point_min() -> LispObject {
+    LispObject::from_natnum(ThreadState::current_buffer().begv as EmacsInt)
+}
+
+/// Return the maximum permissible value of point in the current
+/// buffer.  This is (1+ (buffer-size)), unless narrowing (a buffer
+/// restriction) is in effect, in which case it is less.
+#[lisp_fn]
+pub fn point_max() -> LispObject {
+    LispObject::from_natnum(ThreadState::current_buffer().zv() as EmacsInt)
+}
