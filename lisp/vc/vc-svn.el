@@ -184,6 +184,7 @@ switches."
                      (?M . edited)
                      (?D . removed)
                      (?R . removed)
+                     (?! . needs-update)
                      (?? . unregistered)
                      ;; This is what vc-svn-parse-status does.
                      (?~ . edited)))
