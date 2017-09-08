@@ -572,7 +572,7 @@ directory_file_name (char *dst, char *src, ptrdiff_t srclen, bool multibyte)
   if (! (srclen == 2 && IS_DIRECTORY_SEP (src[0])))
     while (srclen > 1
 #ifdef DOS_NT
-	   && !IS_ANY_SEP (src[srclen - 2])
+	   && !(srclen > 2 && IS_DEVICE_SEP (src[srclen - 2]))
 #endif
 	   && IS_DIRECTORY_SEP (src[srclen - 1]))
       srclen--;

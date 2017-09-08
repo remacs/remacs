@@ -43,6 +43,10 @@
 (ert-deftest fileio-tests--odd-symlink-chars ()
   "Check that any non-NULL ASCII character can appear in a symlink.
 Also check that an encoding error can appear in a symlink."
+  ;; Some Windows versions don't support symlinks, and those which do
+  ;; will pop up UAC elevation prompts, so we disable this test on
+  ;; MS-Windows.
+  (skip-unless (not (eq system-type 'windows-nt)))
   (should (equal nil (fileio-tests--symlink-failure))))
 
 (ert-deftest fileio-tests--directory-file-name ()
@@ -54,6 +58,17 @@ Also check that an encoding error can appear in a symlink."
   (should (equal (directory-file-name "/abc/") "/abc"))
   (should (equal (directory-file-name "/abc//") "/abc")))
 
+(ert-deftest fileio-tests--directory-file-name-dos-nt ()
+  "Like fileio-tests--directory-file-name, but for DOS_NT systems."
+  (skip-unless (memq system-type '(ms-dos windows-nt)))
+  (should (equal (directory-file-name "d:/") "d:/"))
+  (should (equal (directory-file-name "d://") "d:/"))
+  (should (equal (directory-file-name "d:///") "d:/"))
+  (should (equal (directory-file-name "d:////") "d:/"))
+  (should (equal (directory-file-name "d:/abc") "d:/abc"))
+  (should (equal (directory-file-name "d:/abc/") "d:/abc"))
+  (should (equal (directory-file-name "d:/abc//") "d:/abc")))
+
 (ert-deftest fileio-tests--file-name-as-directory ()
   (should (equal (file-name-as-directory "") "./"))
   (should (equal (file-name-as-directory "/") "/"))
@@ -63,3 +78,18 @@ Also check that an encoding error can appear in a symlink."
   (should (equal (file-name-as-directory "/abc") "/abc/"))
   (should (equal (file-name-as-directory "/abc/") "/abc/"))
   (should (equal (file-name-as-directory "/abc//") "/abc//")))
+
+(ert-deftest fileio-tests--file-name-as-directory-dos-nt ()
+  "Like fileio-tests--file-name-as-directory, but for DOS_NT systems."
+  (skip-unless (memq system-type '(ms-dos windows-nt)))
+  (should (equal (file-name-as-directory "d:/") "d:/"))
+  (should (equal (file-name-as-directory "d:\\") "d:/"))
+  (should (equal (file-name-as-directory "d://") "d://"))
+  (should (equal (file-name-as-directory "d:///") "d:///"))
+  (should (equal (file-name-as-directory "d:////") "d:////"))
+  (should (equal (file-name-as-directory "d:\\\\\\\\") "d:////"))
+  (should (equal (file-name-as-directory "d:/abc") "d:/abc/"))
+  (should (equal (file-name-as-directory "D:\\abc") "d:/abc/"))
+  (should (equal (file-name-as-directory "d:/abc/") "d:/abc/"))
+  (should (equal (file-name-as-directory "D:\\abc/") "d:/abc/"))
+  (should (equal (file-name-as-directory "D:/abc//") "d:/abc//")))
