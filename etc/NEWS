@@ -605,6 +605,12 @@ this is controlled by the 'wdired-create-parent-directories' variable.
 viewing HTML files and the like.
 
 ---
+*** New variable 'dired-clean-confirm-killing-deleted-buffers'
+controls whether Dired asks to kill buffers visiting deleted files and
+directories.  The default is t, so Dired asks for confirmation, to
+keep previous behavior.
+
+---
 ** html2text is now marked obsolete.
 
 ---
