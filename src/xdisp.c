@@ -1195,6 +1195,10 @@ Value is the height in pixels of the line at point.  */)
     }
   SET_TEXT_POS (pt, PT, PT_BYTE);
   start_display (&it, w, pt);
+  /* Start from the beginning of the screen line, to make sure we
+     traverse all of its display elements, and thus capture the
+     correct metrics.  */
+  move_it_by_lines (&it, 0);
   it.vpos = it.current_y = 0;
   last_height = 0;
   result = make_number (line_bottom_y (&it));
