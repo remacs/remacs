@@ -25,9 +25,9 @@ pub fn point() -> LispObject {
 /// in some other BUFFER, use
 /// `(with-current-buffer BUFFER (- (point-max) (point-min)))'.
 #[lisp_fn(min = "0")]
-pub fn buffer_size(object: LispObject) -> LispObject {
-    let buffer_ref = if object.is_not_nil() {
-        get_buffer(object).as_buffer_or_error()
+pub fn buffer_size(buffer: LispObject) -> LispObject {
+    let buffer_ref = if buffer.is_not_nil() {
+        get_buffer(buffer).as_buffer_or_error()
     } else {
         ThreadState::current_buffer()
     };

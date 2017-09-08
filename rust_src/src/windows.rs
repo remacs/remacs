@@ -73,14 +73,14 @@ pub fn selected_window() -> LispObject {
 /// If WINDOW is omitted or nil, it defaults to the selected window.
 /// Return nil for an internal window or a deleted window.
 #[lisp_fn(min = "0")]
-pub fn window_buffer(object: LispObject) -> LispObject {
-    let window = if object.is_nil() {
+pub fn window_buffer(window: LispObject) -> LispObject {
+    let win = if window.is_nil() {
         selected_window()
     } else {
-        object
+        window
     };
-    if window.as_window_or_error().is_live() {
-        window.as_window().unwrap().contents()
+    if win.as_window_or_error().is_live() {
+        win.as_window().unwrap().contents()
     } else {
         LispObject::constant_nil()
     }
