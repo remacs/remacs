@@ -95,7 +95,7 @@ fn cdr_safe(object: LispObject) -> LispObject {
 
 /// Take cdr N times on LIST, return the result.
 #[lisp_fn]
-fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
+pub fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
     let num = n.as_fixnum_or_error();
     let mut tail = list;
     for _ in 0..num {

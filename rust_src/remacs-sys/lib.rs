@@ -1364,6 +1364,7 @@ extern "C" {
     pub static minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
 
+    pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
