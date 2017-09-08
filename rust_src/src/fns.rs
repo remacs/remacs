@@ -17,4 +17,3 @@ pub fn elt(sequence: LispObject, n: LispObject) -> LispObject {
         wrong_type!(Qsequencep, sequence);
     }
 }
-

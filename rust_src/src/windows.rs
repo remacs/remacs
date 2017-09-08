@@ -85,3 +85,15 @@ pub fn window_buffer(window: LispObject) -> LispObject {
         LispObject::constant_nil()
     }
 }
+
+/// Return t if OBJECT is a valid window and nil otherwise.
+/// A valid window is either a window that displays a buffer or an internal
+/// window.  Windows that have been deleted are not valid.
+#[lisp_fn]
+pub fn window_valid_p(object: LispObject) -> LispObject {
+    if object.is_window() && object.as_window().unwrap().contents().is_not_nil() {
+        LispObject::constant_t()
+    } else {
+        LispObject::constant_nil()
+    }
+}
