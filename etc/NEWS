@@ -585,6 +585,16 @@ of this option means the file is revisited in a temporary buffer;
 this temporary buffer is the actual buffer searched: the original buffer
 visiting the file is not modified.
 
+---
+*** Users can now customize mouse clicks in Dired in a more flexible way.
+The new command 'dired-mouse-find-file' can be bound to a mouse click
+and used to visit files/directories in Dired in the selected window.
+The new command 'dired-mouse-find-file-other-frame' similarly visits
+files/directories in another frame.  You can write your own commands
+that invoke 'dired-mouse-find-file' with non-default optional
+arguments, to tailor the effects of mouse clicks on file names in
+Dired buffers.
+
 +++
 *** In wdired, when editing files to contain slash characters,
 the resulting directories are automatically created.  Whether to do
