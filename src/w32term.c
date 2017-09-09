@@ -4346,6 +4346,7 @@ w32_scroll_bar_handle_click (struct scroll_bar *bar, W32Msg *msg,
 	    SetScrollInfo (SCROLL_BAR_W32_WINDOW (bar), SB_CTL, &si, TRUE);
 	  }
 	/* fall through */
+	FALLTHROUGH;
       default:
 	emacs_event->kind = NO_EVENT;
 	return FALSE;
@@ -4460,6 +4461,7 @@ w32_horizontal_scroll_bar_handle_click (struct scroll_bar *bar, W32Msg *msg,
 	    SetScrollInfo (SCROLL_BAR_W32_WINDOW (bar), SB_CTL, &si, TRUE);
 	  }
 	/* fall through */
+	FALLTHROUGH;
       default:
 	emacs_event->kind = NO_EVENT;
 	return FALSE;

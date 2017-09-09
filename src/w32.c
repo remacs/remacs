@@ -3379,6 +3379,7 @@ map_w32_filename (const char * name, const char ** pPath)
 	      if ( ! left )
 		str[-1] = c;		/* replace last character of part */
 	      /* FALLTHRU */
+	      FALLTHROUGH;
 	    default:
 	      if ( left && 'A' <= c && c <= 'Z' )
 	        {
@@ -3958,6 +3959,7 @@ faccessat (int dirfd, const char * path, int mode, int flags)
 	      goto check_attrs;
 	    }
 	  /* FALLTHROUGH */
+	  FALLTHROUGH;
 	case ERROR_FILE_NOT_FOUND:
 	case ERROR_BAD_NETPATH:
 	  errno = ENOENT;
