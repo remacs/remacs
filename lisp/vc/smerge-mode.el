@@ -725,7 +725,7 @@ this keeps \"UUU\"."
   (let ((i 3))
     (while (or (not (match-end i))
 	       (< (point) (match-beginning i))
-	       (>= (point) (match-end i)))
+	       (> (point) (match-end i)))
       (cl-decf i))
     i))
 
