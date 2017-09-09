@@ -3612,8 +3612,9 @@ It returns the number of characters changed.  */)
   cnt = 0;
   for (; pos < end_pos; )
     {
-      register unsigned char *p = BYTE_POS_ADDR (pos_byte);
-      unsigned char *str = tt, buf[MAX_MULTIBYTE_LENGTH];
+      unsigned char *p = BYTE_POS_ADDR (pos_byte);
+      unsigned char *str UNINIT;
+      unsigned char buf[MAX_MULTIBYTE_LENGTH];
       int len, str_len;
       int oc;
       Lisp_Object val;

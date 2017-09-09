@@ -30,6 +30,15 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "dispextern.h"
 #include "buffer.h"
 
+/* CACHEABLE is ordinarily nothing, except it is 'volatile' if
+   necessary to cajole GCC into not warning incorrectly that a
+   variable should be volatile.  */
+#if defined GCC_LINT || defined lint
+# define CACHEABLE volatile
+#else
+# define CACHEABLE /* empty */
+#endif
+
 /* Chain of condition and catch handlers currently in effect.  */
 
 /* struct handler *handlerlist; */
@@ -1226,7 +1235,7 @@ internal_lisp_condition_case (Lisp_Object var, Lisp_Object bodyform,
 			      Lisp_Object handlers)
 {
   struct handler *oldhandlerlist = handlerlist;
-  volatile ptrdiff_t clausenb = 0;
+  ptrdiff_t CACHEABLE clausenb = 0;
 
   CHECK_SYMBOL (var);
 

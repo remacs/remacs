@@ -1528,7 +1528,7 @@ process_file_name (char *file, language *lang)
   fdesc *fdp;
   compressor *compr;
   char *compressed_name, *uncompressed_name;
-  char *ext, *real_name = NULL, *tmp_name;
+  char *ext, *real_name UNINIT, *tmp_name;
   int retval;
 
   canonicalize_filename (file);
@@ -5594,7 +5594,7 @@ TeX_commands (FILE *inf)
   linebuffer *key;
 
   char TEX_esc = '\0';
-  char TEX_opgrp = 0, TEX_clgrp = 0;
+  char TEX_opgrp UNINIT, TEX_clgrp UNINIT;
 
   /* Initialize token table once from environment. */
   if (TEX_toktab == NULL)

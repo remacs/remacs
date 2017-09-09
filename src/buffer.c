@@ -3764,7 +3764,7 @@ fix_overlays_before (struct buffer *bp, ptrdiff_t prev, ptrdiff_t pos)
   /* If parent is nil, replace overlays_before; otherwise, parent->next.  */
   struct Lisp_Overlay *tail = bp->overlays_before, *parent = NULL, *right_pair;
   Lisp_Object tem;
-  ptrdiff_t end = prev;
+  ptrdiff_t end UNINIT;
 
   /* After the insertion, the several overlays may be in incorrect
      order.  The possibility is that, in the list `overlays_before',
