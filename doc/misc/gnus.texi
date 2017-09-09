@@ -2601,7 +2601,7 @@ Enter a buffer where you can edit the group info
 @findex gnus-group-make-directory-group
 @cindex nndir
 Make a directory group (@pxref{Directory Groups}).  You will be prompted
-for a directory name (@code{gnus-group-make-directory-group}).
+for the directory's name (@code{gnus-group-make-directory-group}).
 
 @item G h
 @kindex G h (Group)

@@ -3035,7 +3035,7 @@ Xt toolkit.
 
 @code{XFILESEARCHPATH} and @code{XUSERFILESEARCHPATH} should be a list
 of file names separated by colons.  @code{XAPPLRESDIR} should be a list
-of directory names separated by colons.
+of directories separated by colons.
 
 Emacs searches for X resources:
 
@@ -3127,7 +3127,7 @@ this behavior, type @kbd{$$} instead.
 Emacs has no way of knowing when the shell actually changes its
 directory.  This is an intrinsic limitation of Unix.  So it tries to
 guess by recognizing @samp{cd} commands.  If you type @kbd{cd} followed
-by a directory name with a variable reference (@kbd{cd $HOME/bin}) or
+by directory with a variable reference (@kbd{cd $HOME/bin}) or
 with a shell metacharacter (@kbd{cd ../lib*}), Emacs will fail to
 correctly guess the shell's new current directory.  A huge variety of
 fixes and enhancements to shell mode for this problem have been written

@@ -1389,7 +1389,7 @@ Loading,,, elisp, the Emacs Lisp Reference Manual}.
 
 @vindex load-path
   The Emacs Lisp load path is specified by the variable
-@code{load-path}.  Its value should be a list of directory names
+@code{load-path}.  Its value should be a list of directories
 (strings).  These directories are searched, in the specified order, by
 the @kbd{M-x load-library} command, the lower-level @code{load}
 function, and other Emacs functions that find Emacs Lisp libraries.  A

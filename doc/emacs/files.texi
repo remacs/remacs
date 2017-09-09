@@ -84,7 +84,7 @@ buffer that is not visiting a file, via a command like @kbd{C-x b},
 its default directory is usually copied from the buffer that was
 current at the time (@pxref{Select Buffer}).  You can use the command
 @kbd{M-x pwd} to see the value of @code{default-directory} in the
-current buffer.  The command @kbd{M-x cd} prompts for a directory
+current buffer.  The command @kbd{M-x cd} prompts for a directory's
 name, and sets the buffer's @code{default-directory} to that directory
 (doing this does not change the buffer's file name, if any).
 
@@ -1287,7 +1287,7 @@ this, it runs the program specified by
 @code{directory-free-space-program} with arguments
 @code{directory-free-space-args}.
 
-  The command @kbd{M-x delete-directory} prompts for a directory name
+  The command @kbd{M-x delete-directory} prompts for a directory's name
 using the minibuffer, and deletes the directory if it is empty.  If
 the directory is not empty, you will be asked whether you want to
 delete it recursively.  On systems that have a ``Trash'' (or ``Recycle
@@ -1557,16 +1557,12 @@ not accept wildcard file names.
 In all these commands, if the argument @var{new} is just a directory
 name, the real new name is in that directory, with the same
 non-directory component as @var{old}.  For example, the command
-@c FIXME: '/tmp' should be '/tmp/' because '/tmp'
-@c is not "just a directory name".
-@c And actually the fact that ``directory name'' must end in a slash
-@c is not explained anywhere in this manual.  Moreover, it many times
-@c uses ``directory name'' in contexts where the string it alludes to
-@c will clearly _not_ end in a slash
-@w{@kbd{M-x rename-file @key{RET} ~/foo @key{RET} /tmp @key{RET}}}
-renames @file{~/foo} to @file{/tmp/foo}.  All these
-commands ask for confirmation when the new file name already exists,
-too.
+@w{@kbd{M-x rename-file @key{RET} ~/foo @key{RET} /tmp/ @key{RET}}}
+renames @file{~/foo} to @file{/tmp/foo}.  @xref{Directory Names,,,
+elisp, the Emacs Lisp Reference Manual}.
+
+All these commands ask for confirmation when the new file name already
+exists.
 
 @findex copy-file
 @cindex copying files
@@ -1976,7 +1972,7 @@ them all.
 @item M-x file-cache-add-directory-list @key{RET} @var{variable} @key{RET}
 Add each file name in each directory listed in @var{variable} to the
 file name cache.  @var{variable} should be a Lisp variable whose value
-is a list of directory names, like @code{load-path}.
+is a list of directories, like @code{load-path}.
 @item M-x file-cache-clear-cache @key{RET}
 Clear the cache; that is, remove all file names from it.
 @end table

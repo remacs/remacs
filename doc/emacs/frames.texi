@@ -836,8 +836,8 @@ associate the speedbar with a different frame, dismiss it and call
   The speedbar can operate in various modes.  Its default mode is
 @dfn{File Display} mode, which shows the files in the current
 directory of the selected window of the attached frame, one file per
-line.  Clicking on a file name visits that file in the selected window
-of the attached frame, and clicking on a directory name shows that
+line.  Clicking on a non-directory visits that file in the selected window
+of the attached frame, and clicking on a directory shows that
 directory in the speedbar (@pxref{Mouse References}).  Each line also
 has a box, @samp{[+]} or @samp{<+>}, that you can click on to
 @dfn{expand} the contents of that item.  Expanding a directory adds

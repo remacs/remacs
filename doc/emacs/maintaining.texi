@@ -1125,7 +1125,7 @@ it is used to specify multi-file VC filesets for commands like
 @kindex C-x v d
 @findex vc-dir
   To use the VC Directory buffer, type @kbd{C-x v d} (@code{vc-dir}).
-This reads a directory name using the minibuffer, and switches to a VC
+This reads a directory's name using the minibuffer, and switches to a VC
 Directory buffer for that directory.  By default, the buffer is named
 @file{*vc-dir*}.  Its contents are described
 @iftex

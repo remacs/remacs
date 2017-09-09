@@ -280,7 +280,7 @@ in a list of directories specified by the variable @code{load-path}.
 @defvar load-path
 The value of this variable is a list of directories to search when
 loading files with @code{load}.  Each element is a string (which must be
-a directory name) or @code{nil} (which stands for the current working
+a directory) or @code{nil} (which stands for the current working
 directory).
 @end defvar
 
@@ -339,7 +339,7 @@ the above initialization procedure.  Emacs initializes
 @code{load-path} based on the value of the environment variable.
 
 The syntax of @env{EMACSLOADPATH} is the same as used for @code{PATH};
-directory names are separated by @samp{:} (or @samp{;}, on some
+directories are separated by @samp{:} (or @samp{;}, on some
 operating systems).
 @ignore
 @c AFAICS, does not (yet) work right to specify non-absolute elements.

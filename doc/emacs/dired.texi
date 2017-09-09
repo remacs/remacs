@@ -61,7 +61,7 @@ you to operate on the listed files.  @xref{Directories}.
 @kindex C-x d
 @vindex dired-listing-switches
   To invoke Dired, type @kbd{C-x d} (@code{dired}).  This reads a
-directory name using the minibuffer, and opens a @dfn{Dired buffer}
+directory's name using the minibuffer, and opens a @dfn{Dired buffer}
 listing the files in that directory.  You can also supply a wildcard
 file name pattern as the minibuffer argument, in which case the Dired
 buffer lists all files matching that pattern.  A wildcard may appear
@@ -82,7 +82,7 @@ in particular, @kbd{M-n} puts the name of the visited file (if any) in
 the minibuffer (@pxref{Minibuffer History}).
 
   You can also invoke Dired by giving @kbd{C-x C-f} (@code{find-file})
-a directory name.
+a directory's name.
 
   The variable @code{dired-listing-switches} specifies the options to
 give to @command{ls} for listing the directory; this string
@@ -1433,7 +1433,7 @@ rotation is lossless, and uses an external utility called JpegTRAN.
 @kindex + @r{(Dired)}
 @findex dired-create-directory
   The command @kbd{+} (@code{dired-create-directory}) reads a
-directory name, and creates that directory.  It signals an error if
+directory's name, and creates that directory.  It signals an error if
 the directory already exists.
 
 @cindex searching multiple files via Dired

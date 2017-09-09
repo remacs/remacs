@@ -466,7 +466,7 @@ variables to be set, but it uses their values if they are set.
 @item CDPATH
 @vindex CDPATH, environment variable
 Used by the @code{cd} command to search for the directory you specify,
-when you specify a relative directory name.
+when you specify a relative directory,
 @item DBUS_SESSION_BUS_ADDRESS
 @vindex DBUS_SESSION_BUS_ADDRESS, environment variable
 Used by D-Bus when Emacs is compiled with it.  Usually, there is no

@@ -1726,8 +1726,8 @@ C-p} (@code{tex-print}) to print a hardcopy of the output file.
   By default, @kbd{C-c C-b} runs @TeX{} in the current directory.  The
 output of @TeX{} also goes in this directory.  To run @TeX{} in a
 different directory, change the variable @code{tex-directory} to the
-desired directory name.  If your environment variable @env{TEXINPUTS}
-contains relative directory names, or if your files contains
+the desired directory.  If your environment variable @env{TEXINPUTS}
+contains relative names, or if your files contains
 @samp{\input} commands with relative file names, then
 @code{tex-directory} @emph{must} be @code{"."} or you will get the
 wrong results.  Otherwise, it is safe to specify some other directory,
