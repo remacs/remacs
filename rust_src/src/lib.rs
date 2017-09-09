@@ -143,6 +143,7 @@ pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
 pub use buffers::Fcurrent_buffer;
+pub use buffers::Fset_buffer;
 pub use obarray::intern_1;
 pub use obarray::Fintern;
 pub use obarray::Fintern_soft;
@@ -200,6 +201,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Sbuffer_modified_tick);
         defsubr(&*buffers::Sbuffer_chars_modified_tick);
         defsubr(&*buffers::Sbuffer_name);
+        defsubr(&*buffers::Sset_buffer);
         defsubr(&*buffers::Soverlay_start);
         defsubr(&*buffers::Soverlay_end);
         defsubr(&*buffers::Soverlay_buffer);

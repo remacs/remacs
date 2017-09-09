@@ -4,7 +4,7 @@ use libc::{c_void, c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
-                 make_lisp_ptr};
+                 make_lisp_ptr, set_buffer_internal, nsberror};
 use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
@@ -296,4 +296,27 @@ pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
     if !(begv <= beg && end <= zv) {
         args_out_of_range!(current_buffer(), start, stop);
     }
+}
+
+/// Make buffer BUFFER-OR-NAME current for editing operations.
+/// BUFFER-OR-NAME may be a buffer or the name of an existing buffer.
+/// See also `with-current-buffer' when you want to make a buffer current
+/// temporarily.  This function does not display the buffer, so its effect
+/// ends when the current command terminates.  Use `switch-to-buffer' or
+/// `pop-to-buffer' to switch buffers permanently.
+/// The return value is the buffer made current.
+#[lisp_fn]
+fn set_buffer(buffer_or_name: LispObject) -> LispObject {
+    let buffer = get_buffer(buffer_or_name);
+    if buffer.is_nil() {
+        unsafe { nsberror(buffer_or_name.to_raw()) }
+    };
+    if !buffer.as_buffer().unwrap().is_live() {
+        error!("Selecting deleted buffer");
+    };
+    unsafe {
+        set_buffer_internal(buffer.as_buffer_or_error().as_ptr() as *const _ as
+            *const c_void)
+    };
+    buffer
 }

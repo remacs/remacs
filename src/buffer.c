@@ -2020,26 +2020,6 @@ set_buffer_temp (struct buffer *b)
   fetch_buffer_markers (b);
 }
 
-DEFUN ("set-buffer", Fset_buffer, Sset_buffer, 1, 1, 0,
-       doc: /* Make buffer BUFFER-OR-NAME current for editing operations.
-BUFFER-OR-NAME may be a buffer or the name of an existing buffer.
-See also `with-current-buffer' when you want to make a buffer current
-temporarily.  This function does not display the buffer, so its effect
-ends when the current command terminates.  Use `switch-to-buffer' or
-`pop-to-buffer' to switch buffers permanently.
-The return value is the buffer made current.  */)
-  (register Lisp_Object buffer_or_name)
-{
-  register Lisp_Object buffer;
-  buffer = Fget_buffer (buffer_or_name);
-  if (NILP (buffer))
-    nsberror (buffer_or_name);
-  if (!BUFFER_LIVE_P (XBUFFER (buffer)))
-    error ("Selecting deleted buffer");
-  set_buffer_internal (XBUFFER (buffer));
-  return buffer;
-}
-
 void
 restore_buffer (Lisp_Object buffer_or_name)
 {
@@ -6052,7 +6032,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);
-  defsubr (&Sset_buffer);
   defsubr (&Sbarf_if_buffer_read_only);
   defsubr (&Serase_buffer);
   defsubr (&Sbuffer_swap_text);
