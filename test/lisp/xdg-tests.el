@@ -32,12 +32,20 @@
 
 (ert-deftest xdg-desktop-parsing ()
   "Test `xdg-desktop-read-file' parsing of .desktop files."
-  (let ((tab (xdg-desktop-read-file
-              (expand-file-name "test.desktop" xdg-tests-data-dir))))
-    (should (equal (gethash "Name" tab) "Test")))
+  (let ((tab1 (xdg-desktop-read-file
+               (expand-file-name "test.desktop" xdg-tests-data-dir)))
+        (tab2 (xdg-desktop-read-file
+               (expand-file-name "test.desktop" xdg-tests-data-dir)
+               "Another Section")))
+    (should (equal (gethash "Name" tab1) "Test"))
+    (should (eq 'default (gethash "Exec" tab1 'default)))
+    (should (equal "frobnicate" (gethash "Exec" tab2))))
   (should-error
    (xdg-desktop-read-file
-    (expand-file-name "wrong.desktop" xdg-tests-data-dir))))
+    (expand-file-name "wrong.desktop" xdg-tests-data-dir)))
+  (should-error
+   (xdg-desktop-read-file
+    (expand-file-name "malformed.desktop" xdg-tests-data-dir))))
 
 (ert-deftest xdg-desktop-strings-type ()
   "Test desktop \"string(s)\" type: strings delimited by \";\"."

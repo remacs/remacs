@@ -167,32 +167,40 @@ This should be called at the beginning of a line."
       (group-n 2 (* nonl)))
   "Regexp matching desktop file entry key-value pairs.")
 
-(defun xdg--desktop-parse-line ()
-  (skip-chars-forward "[:blank:]")
-  (when (/= (following-char) ?#)
-    (cond
-     ((looking-at xdg-desktop-entry-regexp)
-      (cons (match-string 1) (match-string 2)))
-     ((looking-at xdg-desktop-group-regexp)
-      (match-string 1)))))
-
-(defun xdg-desktop-read-file (filename)
-  "Return \"Desktop Entry\" contents of desktop file FILENAME as a hash table."
-  (let ((res (make-hash-table :test #'equal))
-        elt group)
-    (with-temp-buffer
-      (insert-file-contents-literally filename)
-      (goto-char (point-min))
-      (while (or (= (following-char) ?#)
-                 (string-blank-p (buffer-substring (point) (point-at-eol))))
-        (forward-line))
-      (unless (equal (setq group (xdg--desktop-parse-line)) "Desktop Entry")
-        (error "Wrong first section: %s" group))
-      (while (not (eobp))
-        (when (consp (setq elt (xdg--desktop-parse-line)))
-          (puthash (car elt) (cdr elt) res))
-        (forward-line)))
+(defun xdg-desktop-read-group ()
+  "Return hash table of group of desktop entries in the current buffer."
+  (let ((res (make-hash-table :test #'equal)))
+    (while (not (or (eobp) (looking-at xdg-desktop-group-regexp)))
+      (skip-chars-forward "[:blank:]")
+      (cond
+       ((eolp))
+       ((= (following-char) ?#))
+       ((looking-at xdg-desktop-entry-regexp)
+        (puthash (match-string 1) (match-string 2) res))
+       (t (error "Malformed line: %s"
+                 (buffer-substring (point) (point-at-eol)))))
+      (forward-line))
     res))
+
+(defun xdg-desktop-read-file (filename &optional group)
+  "Return group contents of desktop file FILENAME as a hash table.
+Optional argument GROUP defaults to the string \"Desktop Entry\"."
+  (with-temp-buffer
+    (insert-file-contents-literally filename)
+    (goto-char (point-min))
+    (while (and (skip-chars-forward "[:blank:]" (line-end-position))
+                (or (eolp) (= (following-char) ?#)))
+      (forward-line))
+    (unless (looking-at xdg-desktop-group-regexp)
+      (error "Expected group name!  Instead saw: %s"
+             (buffer-substring (point) (point-at-eol))))
+    (unless (equal (match-string 1) "Desktop Entry")
+      (error "Wrong first group: %s" (match-string 1)))
+    (when group
+      (while (and (re-search-forward xdg-desktop-group-regexp nil t)
+                  (not (equal (match-string 1) group)))))
+    (forward-line)
+    (xdg-desktop-read-group)))
 
 (defun xdg-desktop-strings (value)
   "Partition VALUE into elements delimited by unescaped semicolons."
