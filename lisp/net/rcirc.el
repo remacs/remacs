@@ -2499,6 +2499,9 @@ If ARG is given, opens the URL in a new browser window."
            (end (match-end 0))
            (url (match-string-no-properties 0))
            (link-text (buffer-substring-no-properties start end)))
+      ;; Add a button for the URL.  Note that we use `make-text-button',
+      ;; rather than `make-button', as text-buttons are much faster in
+      ;; large buffers.
       (make-text-button start end
 			'face 'rcirc-url
 			'follow-link t
