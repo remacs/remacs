@@ -905,6 +905,16 @@ from a different message."
       (and (cdr type) (match-end (cdr type)) 0)
       2))
 
+(defun compilation-face (type)
+  (let ((typ (compilation-type type)))
+    (cond
+     ((eq typ 1)
+      compilation-warning-face)
+     ((eq typ 0)
+      compilation-info-face)
+     ((eq typ 2)
+      compilation-error-face))))
+
 ;;   LOC (or location) is a list of (COLUMN LINE FILE-STRUCTURE nil nil)
 
 ;; COLUMN and LINE are numbers parsed from an error message.  COLUMN and maybe
