@@ -228,7 +228,9 @@ init_heap (void)
 {
   if (using_dynamic_heap)
     {
+#ifndef MINGW_W64
       unsigned long enable_lfh = 2;
+#endif
 
       /* After dumping, use a new private heap.  We explicitly enable
          the low fragmentation heap (LFH) here, for the sake of pre

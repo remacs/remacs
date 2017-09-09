@@ -1823,7 +1823,7 @@ The function `default-value' gets the default value and `set-default' sets it.  
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
   union Lisp_Val_Fwd valcontents;
-  bool forwarded;
+  bool forwarded = false;
 
   CHECK_SYMBOL (variable);
   sym = XSYMBOL (variable);
@@ -2607,7 +2607,7 @@ uintmax_t
 cons_to_unsigned (Lisp_Object c, uintmax_t max)
 {
   bool valid = false;
-  uintmax_t val;
+  uintmax_t val = max;
   if (INTEGERP (c))
     {
       valid = XINT (c) >= 0;
@@ -2661,7 +2661,7 @@ intmax_t
 cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 {
   bool valid = false;
-  intmax_t val;
+  intmax_t val = max;
   if (INTEGERP (c))
     {
       val = XINT (c);

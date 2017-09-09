@@ -485,7 +485,7 @@ stop_timer_thread (int which)
   struct itimer_data *itimer =
     (which == ITIMER_REAL) ? &real_itimer : &prof_itimer;
   int i;
-  DWORD err, exit_code = 255;
+  DWORD err = 0, exit_code = 255;
   BOOL status;
 
   /* Signal the thread that it should terminate.  */

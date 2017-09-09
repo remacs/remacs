@@ -1226,7 +1226,7 @@ internal_lisp_condition_case (Lisp_Object var, Lisp_Object bodyform,
 			      Lisp_Object handlers)
 {
   struct handler *oldhandlerlist = handlerlist;
-  ptrdiff_t clausenb = 0;
+  volatile ptrdiff_t clausenb = 0;
 
   CHECK_SYMBOL (var);
 

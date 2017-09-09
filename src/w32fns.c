@@ -4413,7 +4413,6 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	  TranslateMessage (&windows_msg);
 	  goto dflt;
 	}
-
       /* Fall through */
 
     case WM_SYSCHAR:
@@ -7171,7 +7170,7 @@ compute_tip_xy (struct frame *f,
 		int width, int height, int *root_x, int *root_y)
 {
   Lisp_Object left, top, right, bottom;
-  int min_x = 0, min_y, max_x = 0, max_y;
+  int min_x = 0, min_y = 0, max_x = 0, max_y = 0;
 
   /* User-specified position?  */
   left = Fcdr (Fassq (Qleft, parms));

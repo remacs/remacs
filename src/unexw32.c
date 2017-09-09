@@ -357,7 +357,7 @@ get_section_info (file_data *p_infile)
   /* Check the NT header signature ...  */
   if (nt_header->Signature != IMAGE_NT_SIGNATURE)
     {
-      printf ("Invalid IMAGE_NT_SIGNATURE 0x%x in %s...bailing.\n",
+      printf ("Invalid IMAGE_NT_SIGNATURE 0x%lx in %s...bailing.\n",
 	      nt_header->Signature, p_infile->name);
       exit (1);
     }
@@ -496,7 +496,7 @@ copy_executable_and_dump_data (file_data *p_infile,
 	printf ("%s\n", (message));						\
 	printf ("\t0x%08x Offset in input file.\n", s - p_infile->file_base); 	\
 	printf ("\t0x%08x Offset in output file.\n", dst - p_outfile->file_base); \
-	printf ("\t0x%08x Size in bytes.\n", count);				\
+	printf ("\t0x%08lx Size in bytes.\n", count);				\
       }										\
     memcpy (dst, s, count);							\
     dst += count;								\
@@ -739,7 +739,7 @@ unexec (const char *new_name, const char *old_name)
   /* Open the undumped executable file.  */
   if (!open_input_file (&in_file, in_filename))
     {
-      printf ("Failed to open %s (%d)...bailing.\n",
+      printf ("Failed to open %s (%lu)...bailing.\n",
 	      in_filename, GetLastError ());
       exit (1);
     }
@@ -754,7 +754,7 @@ unexec (const char *new_name, const char *old_name)
     extra_bss_size_static;
   if (!open_output_file (&out_file, out_filename, size))
     {
-      printf ("Failed to open %s (%d)...bailing.\n",
+      printf ("Failed to open %s (%lu)...bailing.\n",
 	      out_filename, GetLastError ());
       exit (1);
     }
