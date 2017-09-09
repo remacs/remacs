@@ -1695,18 +1695,6 @@ new one on next Emacs startup.
 Set @option{tramp-persistency-file-name} to @code{nil} to disable
 storing connections persistently.
 
-To reuse connection information from the persistent list,
-@value{tramp} needs to uniquely identify every host.  However in some
-cases, two different connections may result in the same persistent
-information.  For example, connecting to a host using @command{ssh} and
-connecting to the same host through @code{sshd} on port 3001.  Both
-access methods result in nearly identical persistent specifications
-@file{@trampfn{ssh,localhost,}} and @file{@trampfn{ssh,localhost#3001,}}.
-
-Changing host names could avoid duplicates.  One way is to add a
-@option{Host} section in @file{~/.ssh/config} (@pxref{Frequently Asked
-Questions}).  Another way is to apply multiple hops (@pxref{Multi-hops}).
-
 When @value{tramp} detects a change in the operating system version in
 a remote host (via the command @command{uname -sr}), it flushes all
 connection related information for that host and creates a new entry.
