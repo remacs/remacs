@@ -5335,6 +5335,11 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 		break;
 	    }
 	  SET_PT_BOTH (IT_CHARPOS (it), IT_BYTEPOS (it));
+	  /* Fix up the Y position to preserve, if it is inside the
+	     scroll margin at the window top.  */
+	  if (window_scroll_pixel_based_preserve_y >= 0
+	      && window_scroll_pixel_based_preserve_y < this_scroll_margin)
+	    window_scroll_pixel_based_preserve_y = this_scroll_margin;
 	}
     }
   else if (n < 0)
