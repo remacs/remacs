@@ -143,12 +143,11 @@ This should be called at the beginning of a line."
     res))
 
 (defun xdg-user-dir (name)
-  "Return the path of user directory referred to by NAME."
+  "Return the directory referred to by NAME."
   (when (null xdg-user-dirs)
-    (save-match-data
-      (setq xdg-user-dirs
-            (xdg--user-dirs-parse-file
-             (expand-file-name "user-dirs.dirs" (xdg-config-home))))))
+    (setq xdg-user-dirs
+          (xdg--user-dirs-parse-file
+           (expand-file-name "user-dirs.dirs" (xdg-config-home)))))
   (let ((dir (cdr (assoc name xdg-user-dirs))))
     (when dir (expand-file-name dir))))
 
@@ -182,27 +181,25 @@ This should be called at the beginning of a line."
   (let ((res (make-hash-table :test #'equal))
         elt group)
     (with-temp-buffer
-      (save-match-data
-        (insert-file-contents-literally filename)
-        (goto-char (point-min))
-        (while (or (= (following-char) ?#)
-                   (string-blank-p (buffer-substring (point) (point-at-eol))))
-          (forward-line))
-        (unless (equal (setq group (xdg--desktop-parse-line)) "Desktop Entry")
-          (error "Wrong first section: %s" group))
-        (while (not (eobp))
-          (when (consp (setq elt (xdg--desktop-parse-line)))
-            (puthash (car elt) (cdr elt) res))
-          (forward-line))))
+      (insert-file-contents-literally filename)
+      (goto-char (point-min))
+      (while (or (= (following-char) ?#)
+                 (string-blank-p (buffer-substring (point) (point-at-eol))))
+        (forward-line))
+      (unless (equal (setq group (xdg--desktop-parse-line)) "Desktop Entry")
+        (error "Wrong first section: %s" group))
+      (while (not (eobp))
+        (when (consp (setq elt (xdg--desktop-parse-line)))
+          (puthash (car elt) (cdr elt) res))
+        (forward-line)))
     res))
 
 (defun xdg-desktop-strings (value)
   "Partition VALUE into elements delimited by unescaped semicolons."
   (let (res)
-    (save-match-data
-      (setq value (string-trim-left value))
-      (dolist (x (split-string (replace-regexp-in-string "\\\\;" "\0" value) ";"))
-        (push (replace-regexp-in-string "\0" ";" x) res)))
+    (setq value (string-trim-left value))
+    (dolist (x (split-string (replace-regexp-in-string "\\\\;" "\0" value) ";"))
+      (push (replace-regexp-in-string "\0" ";" x) res))
     (when (null (string-match-p "[^[:blank:]]" (car res))) (pop res))
     (nreverse res)))
 

@@ -3,7 +3,6 @@
 ;; Copyright (C) 2017  Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
-
 ;; Author: Mark Oteiza <mvoteiza@udel.edu>
 
 ;; This file is part of GNU Emacs.
@@ -30,24 +29,6 @@
 
 (defconst xdg-tests-data-dir
   (expand-file-name "test/data/xdg" source-directory))
-
-(ert-deftest xdg-match-data ()
-  "Ensure public functions do not mangle match data."
-  (let ((data '(1 9)))
-    (save-match-data
-      (set-match-data data)
-      (xdg-user-dir "DOCUMENTS")
-      (should (equal (match-data) data))))
-  (let ((data '(2 9)))
-    (save-match-data
-      (set-match-data data)
-      (xdg-desktop-read-file (expand-file-name "test.desktop" xdg-tests-data-dir))
-      (should (equal (match-data) data))))
-  (let ((data '(3 9)))
-    (save-match-data
-      (set-match-data data)
-      (xdg-desktop-strings "a;b")
-      (should (equal (match-data) data)))))
 
 (ert-deftest xdg-desktop-parsing ()
   "Test `xdg-desktop-read-file' parsing of .desktop files."
