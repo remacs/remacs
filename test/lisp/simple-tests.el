@@ -505,7 +505,7 @@ See Bug#21722."
     (setq-local fill-prefix "   ")
     (set-fill-column 5)
     ;; Shouldn't break after 'foo' (3 characters) when the next
-    ;; line is indented >= to that, that woudln't result in shorter
+    ;; line is indented >= to that, that wouldn't result in shorter
     ;; lines.
     (insert "foo bar")
     (do-auto-fill)

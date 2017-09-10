@@ -14161,7 +14161,7 @@
 
 2014-01-10  Eric S. Raymond  <esr@thyrsus.com>
 
-	* version.el (emacs-bzr-get-version): Restore compatibilty with
+	* version.el (emacs-bzr-get-version): Restore compatibility with
 	24.3 (Tested).
 
 2014-01-10  Bozhidar Batsov  <bozhidar@batsov.com>

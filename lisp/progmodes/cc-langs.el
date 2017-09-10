@@ -1185,7 +1185,7 @@ This regexp is assumed to not match any non-operator identifier."
 (make-obsolete-variable 'c-opt-op-identitier-prefix 'c-opt-op-identifier-prefix
 			"CC Mode 5.31.4, 2006-04-14")
 
-(c-lang-defconst c-ambiguous-overloadable-or-identifier-prefices
+(c-lang-defconst c-ambiguous-overloadable-or-identifier-prefixes
   ;; A list of strings which can be either overloadable operators or
   ;; identifier prefixes.
   t (c--intersection
@@ -1199,7 +1199,7 @@ This regexp is assumed to not match any non-operator identifier."
   ;; A regexp matching strings which can be either overloadable operators
   ;; or identifier prefixes.
   t (c-make-keywords-re
-	t (c-lang-const c-ambiguous-overloadable-or-identifier-prefices)))
+	t (c-lang-const c-ambiguous-overloadable-or-identifier-prefixes)))
 (c-lang-defvar c-ambiguous-overloadable-or-identifier-prefix-re
   (c-lang-const c-ambiguous-overloadable-or-identifier-prefix-re))
 

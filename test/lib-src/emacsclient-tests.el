@@ -43,7 +43,7 @@
      ;; Skip if emacsclient was compiled with -pg (bug#28319).
      ;; Use ert--skip-unless rather than skip-unless to silence compiler.
      (ert--skip-unless (not (and (stringp stat)
-                                 (string-match-p "rofiling" stat))))
+                                 (string-match-p "Profiling" stat))))
      (should (eq 0 stat))))
 
 (ert-deftest emacsclient-test-alternate-editor-allows-arguments ()

@@ -7641,7 +7641,7 @@ javascript:location.href='org-protocol://open-source?&url='+
 @vindex org-protocol-project-alist
 The variable @code{org-protocol-project-alist} maps URLs to local file names,
 by stripping URL parameters from the end and replacing the @code{:base-url}
-with @code{:working-diretory} and @code{:online-suffix} with
+with @code{:working-directory} and @code{:online-suffix} with
 @code{:working-suffix}.  For example, assuming you own a local copy of
 @url{http://orgmode.org/worg/} contents at @file{/home/user/worg}, you can
 set @code{org-protocol-project-alist} to the following

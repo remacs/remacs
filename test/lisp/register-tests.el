@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Free Software Foundation, Inc.
 
-;; Author: Tino Calacha <tino.calancha@gmail.com>
+;; Author: Tino Calancha <tino.calancha@gmail.com>
 ;; Keywords:
 
 ;; This file is part of GNU Emacs.

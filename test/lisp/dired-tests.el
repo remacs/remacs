@@ -380,7 +380,7 @@
 
 (ert-deftest dired-test-bug27940 ()
   "Test for http://debbugs.gnu.org/27940 ."
-  ;; If just empty dirs we shouln't be prompted.
+  ;; If just empty dirs we shouldn't be prompted.
   (dired-test-with-temp-dirs
    'just-empty-dirs
    (let (asked)

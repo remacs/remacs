@@ -20919,7 +20919,7 @@
 	(ses-formula-references): Robustify against self-referring cells.
 	(ses-mode): Use ses-set-localvars.
 	(ses-command-hook): Add call to ses-initialize-Dijkstra-attempt
-	before lauching the update processing.
+	before launching the update processing.
 	(ses-initialize-Dijkstra-attempt): New function.
 	(ses-recalculate-cell): Update for cycle detection based on
 	Dijkstra algorithm.

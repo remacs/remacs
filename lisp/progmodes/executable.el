@@ -228,8 +228,8 @@ executable."
 			 (and argument (string< "" argument) " ")
 			 argument))
 
-  ;; For backward compatibilty, allow `executable-prefix-env' to be
-  ;; overriden by custom `executable-prefix'.
+  ;; For backward compatibility, allow `executable-prefix-env' to be
+  ;; overridden by custom `executable-prefix'.
   (if (string-match "#!\\([ \t]*/usr/bin/env[ \t]*\\)?$" executable-prefix)
       (if executable-prefix-env
           (setq argument (concat "/usr/bin/env "
