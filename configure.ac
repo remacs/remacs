@@ -168,7 +168,9 @@ Defaulting to $host.])
       # format ("c:/foo/bar").
       srcdir=`cd "${srcdir}" && pwd -W`
       # 'eval' pacifies strict POSIX non-MinGW shells (Bug#18612).
-      eval 'srcdir="/${srcdir:0:1}${srcdir:2}"'
+      # We downcase the drive letter to avoid warnings when
+      # generating autoloads.
+      eval 'srcdir=/`echo ${srcdir:0:1} | sed "y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/`"${srcdir:2}"'
       ;;
   esac;;
 esac
