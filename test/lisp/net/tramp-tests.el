@@ -1903,7 +1903,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (should-error (copy-file tmp-name1 tmp-name2))
 	    (copy-file tmp-name1 tmp-name2 'ok)
 	    (make-directory tmp-name3)
-	    (copy-file tmp-name1 tmp-name3)
+	    (copy-file tmp-name1 (file-name-as-directory tmp-name3))
 	    (should
 	     (file-exists-p
 	      (expand-file-name (file-name-nondirectory tmp-name1) tmp-name3))))
@@ -1925,7 +1925,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (should-error (copy-file tmp-name1 tmp-name4))
 	    (copy-file tmp-name1 tmp-name4 'ok)
 	    (make-directory tmp-name5)
-	    (copy-file tmp-name1 tmp-name5)
+	    (copy-file tmp-name1 (file-name-as-directory tmp-name5))
 	    (should
 	     (file-exists-p
 	      (expand-file-name (file-name-nondirectory tmp-name1) tmp-name5))))
@@ -1947,7 +1947,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (should-error (copy-file tmp-name4 tmp-name1))
 	    (copy-file tmp-name4 tmp-name1 'ok)
 	    (make-directory tmp-name3)
-	    (copy-file tmp-name4 tmp-name3)
+	    (copy-file tmp-name4 (file-name-as-directory tmp-name3))
 	    (should
 	     (file-exists-p
 	      (expand-file-name (file-name-nondirectory tmp-name4) tmp-name3))))
@@ -1986,7 +1986,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (should-not (file-exists-p tmp-name1))
 	    (write-region "foo" nil tmp-name1)
 	    (make-directory tmp-name3)
-	    (rename-file tmp-name1 tmp-name3)
+	    (rename-file tmp-name1 (file-name-as-directory tmp-name3))
 	    (should-not (file-exists-p tmp-name1))
 	    (should
 	     (file-exists-p
@@ -2013,7 +2013,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (should-not (file-exists-p tmp-name1))
 	    (write-region "foo" nil tmp-name1)
 	    (make-directory tmp-name5)
-	    (rename-file tmp-name1 tmp-name5)
+	    (rename-file tmp-name1 (file-name-as-directory tmp-name5))
 	    (should-not (file-exists-p tmp-name1))
 	    (should
 	     (file-exists-p
@@ -2040,7 +2040,7 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (should-not (file-exists-p tmp-name4))
 	    (write-region "foo" nil tmp-name4 nil 'nomessage)
 	    (make-directory tmp-name3)
-	    (rename-file tmp-name4 tmp-name3)
+	    (rename-file tmp-name4 (file-name-as-directory tmp-name3))
 	    (should-not (file-exists-p tmp-name4))
 	    (should
 	     (file-exists-p
@@ -3681,11 +3681,11 @@ This requires restrictions of file name syntax."
 		  (should (string-equal (buffer-string) elt)))
 
 		;; Copy file both directions.
-		(copy-file file1 tmp-name2)
+		(copy-file file1 (file-name-as-directory tmp-name2))
 		(should (file-exists-p file2))
 		(delete-file file1)
 		(should-not (file-exists-p file1))
-		(copy-file file2 tmp-name1)
+		(copy-file file2 (file-name-as-directory tmp-name1))
 		(should (file-exists-p file1))
 
 		(tramp--test-ignore-make-symbolic-link-error

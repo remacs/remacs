@@ -1558,7 +1558,8 @@ In all these commands, if the argument @var{new} is just a directory
 name, the real new name is in that directory, with the same
 non-directory component as @var{old}.  For example, the command
 @w{@kbd{M-x rename-file @key{RET} ~/foo @key{RET} /tmp/ @key{RET}}}
-renames @file{~/foo} to @file{/tmp/foo}.  @xref{Directory Names,,,
+renames @file{~/foo} to @file{/tmp/foo}.  On GNU and other POSIX-like
+systems, directory names end in @samp{/}.  @xref{Directory Names,,,
 elisp, the Emacs Lisp Reference Manual}.
 
 All these commands ask for confirmation when the new file name already

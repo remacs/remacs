@@ -595,24 +595,16 @@ DEFUN ("directory-name-p", Fdirectory_name_p, Sdirectory_name_p, 1, 1, 0,
   return IS_DIRECTORY_SEP (c) ? Qt : Qnil;
 }
 
-/* Return true if NAME must be that of a directory if it exists.
-   When NAME is a directory name, this avoids system calls compared to
-   just calling Ffile_directory_p.  */
-
-static bool
-directory_like (Lisp_Object name)
-{
-  return !NILP (Fdirectory_name_p (name)) || !NILP (Ffile_directory_p (name));
-}
-
-/* Return the expansion of NEWNAME, except that if NEWNAME is like a
-   directory then return the expansion of FILE's basename under
-   NEWNAME.  This is like how 'cp FILE NEWNAME' works.  */
+/* Return the expansion of NEWNAME, except that if NEWNAME is a
+   directory name then return the expansion of FILE's basename under
+   NEWNAME.  This resembles how 'cp FILE NEWNAME' works, except that
+   it requires NEWNAME to be a directory name (typically, by ending in
+   "/").  */
 
 static Lisp_Object
 expand_cp_target (Lisp_Object file, Lisp_Object newname)
 {
-  return (directory_like (newname)
+  return (!NILP (Fdirectory_name_p (newname))
 	  ? Fexpand_file_name (Ffile_name_nondirectory (file), newname)
 	  : Fexpand_file_name (newname, Qnil));
 }
@@ -1833,7 +1825,8 @@ clone_file (int dest, int source)
 DEFUN ("copy-file", Fcopy_file, Scopy_file, 2, 6,
        "fCopy file: \nGCopy %s to file: \np\nP",
        doc: /* Copy FILE to NEWNAME.  Both args must be strings.
-If NEWNAME names a directory, copy FILE there.
+If NEWNAME is a directory name, copy FILE to a like-named file under
+NEWNAME.
 
 This function always sets the file modes of the output file to match
 the input file.
@@ -2257,6 +2250,9 @@ DEFUN ("rename-file", Frename_file, Srename_file, 2, 3,
        "fRename file: \nGRename %s to file: \np",
        doc: /* Rename FILE as NEWNAME.  Both args must be strings.
 If file has names other than FILE, it continues to have those names.
+If NEWNAME is a directory name, rename FILE to a like-named file under
+NEWNAME.
+
 Signal a `file-already-exists' error if a file NEWNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.
 An integer third arg means request confirmation if NEWNAME already exists.
@@ -2265,7 +2261,6 @@ This is what happens in interactive use with M-x.  */)
 {
   Lisp_Object handler;
   Lisp_Object encoded_file, encoded_newname, symlink_target;
-  int dirp = -1;
 
   file = Fexpand_file_name (file, Qnil);
 
@@ -2339,22 +2334,21 @@ This is what happens in interactive use with M-x.  */)
   if (rename_errno != EXDEV)
     report_file_errno ("Renaming", list2 (file, newname), rename_errno);
 
-  symlink_target = Ffile_symlink_p (file);
-  if (!NILP (symlink_target))
-    Fmake_symbolic_link (symlink_target, newname, ok_if_already_exists);
+  bool dirp = !NILP (Fdirectory_name_p (file));
+  if (dirp)
+    call4 (Qcopy_directory, file, newname, Qt, Qnil);
   else
     {
-      if (dirp < 0)
-	dirp = directory_like (file);
-      if (dirp)
-	call4 (Qcopy_directory, file, newname, Qt, Qnil);
+      symlink_target = Ffile_symlink_p (file);
+      if (!NILP (symlink_target))
+	Fmake_symbolic_link (symlink_target, newname, ok_if_already_exists);
       else
 	Fcopy_file (file, newname, ok_if_already_exists, Qt, Qt, Qt);
     }
 
   ptrdiff_t count = SPECPDL_INDEX ();
   specbind (Qdelete_by_moving_to_trash, Qnil);
-  if (dirp && NILP (symlink_target))
+  if (dirp)
     call2 (Qdelete_directory, file, Qt);
   else
     Fdelete_file (file, Qnil);
@@ -2364,6 +2358,9 @@ This is what happens in interactive use with M-x.  */)
 DEFUN ("add-name-to-file", Fadd_name_to_file, Sadd_name_to_file, 2, 3,
        "fAdd name to file: \nGName to add to %s: \np",
        doc: /* Give FILE additional name NEWNAME.  Both args must be strings.
+If NEWNAME is a directory name, give FILE a like-named new name under
+NEWNAME.
+
 Signal a `file-already-exists' error if a file NEWNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.
 An integer third arg means request confirmation if NEWNAME already exists.
@@ -2412,11 +2409,13 @@ This is what happens in interactive use with M-x.  */)
 
 DEFUN ("make-symbolic-link", Fmake_symbolic_link, Smake_symbolic_link, 2, 3,
        "FMake symbolic link to file: \nGMake symbolic link to file %s: \np",
-       doc: /* Make a symbolic link to TARGET, named LINKNAME.
-Both args must be strings.
-Signal a `file-already-exists' error if a file LINKNAME already exists
+       doc: /* Make a symbolic link to TARGET, named NEWNAME.
+If NEWNAME is a directory name, make a like-named symbolic link under
+NEWNAME.
+
+Signal a `file-already-exists' error if a file NEWNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.
-An integer third arg means request confirmation if LINKNAME already
+An integer third arg means request confirmation if NEWNAME already
 exists, and expand leading "~" or strip leading "/:" in TARGET.
 This happens for interactive use with M-x.  */)
   (Lisp_Object target, Lisp_Object linkname, Lisp_Object ok_if_already_exists)

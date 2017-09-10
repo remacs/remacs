@@ -1271,6 +1271,23 @@ handlers now.
 gtk_window_move for moving frames and ignores the value of the
 variable 'x-gtk-use-window-move'.  The variable is now obsolete.
 
++++
+** Several functions that create or rename files now treat their
+destination argument specially only when it is a directory name, i.e.,
+when it ends in '/' on GNU and other POSIX-like systems.  When the
+destination argument D of one of these functions is an existing
+directory and the intent is to act on an entry in that directory, D
+should now be a directory name.  For example, (rename-file "e" "f/")
+renames to 'f/e'.  Although this formerly happened sometimes even when
+D was not a directory name, as in (rename-file "e" "f") where 'f'
+happened to be a directory, the old behavior often contradicted the
+documentation and had inherent races that led to security holes.  A
+call like (rename-file C D) that used the old, undocumented behavior
+can be written as (rename-file C (file-name-as-directory D)), a
+formulation portable to both older and newer versions of Emacs.
+Affected functions include add-name-to-file, copy-file,
+make-symbolic-link, and rename-file.
+
 
 * Lisp Changes in Emacs 26.1
 

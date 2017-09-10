@@ -1563,15 +1563,15 @@ a @code{file-missing} error instead.
 made by these functions instead of writing them immediately to
 secondary storage.  @xref{Files and Storage}.
 
-@c FIXME: This paragraph is purposely silent on what happens if
-@c @var{newname} is not a directory name but happens to name a
-@c directory.  See Bug#27986 for discussion on how to clear this up.
   In the functions that have an argument @var{newname}, if this
 argument is a directory name it is treated as if the nondirectory part
 of the source name were appended.  Typically, a directory name is one
 that ends in @samp{/} (@pxref{Directory Names}).  For example, if the
 old name is @file{a/b/c}, the @var{newname} @file{d/e/f/} is treated
-as if it were @file{d/e/f/c}.
+as if it were @file{d/e/f/c}.  This special treatment does not apply
+if @var{newname} is not a directory name but names a file that is a
+directory; for example, the @var{newname} @file{d/e/f} is left as-is
+even if @file{d/e/f} happens to be a directory.
 
   In the functions that have an argument @var{newname}, if a file by the
 name of @var{newname} already exists, the actions taken depend on the
