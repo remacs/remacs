@@ -177,6 +177,8 @@ This should be called at the beginning of a line."
        ((= (following-char) ?#))
        ((looking-at xdg-desktop-entry-regexp)
         (puthash (match-string 1) (match-string 2) res))
+       ;; Filter localized strings
+       ((looking-at (rx (group-n 1 (+ (in alnum "-"))) (* blank) "[")))
        (t (error "Malformed line: %s"
                  (buffer-substring (point) (point-at-eol)))))
       (forward-line))

@@ -45,7 +45,18 @@
     (expand-file-name "wrong.desktop" xdg-tests-data-dir)))
   (should-error
    (xdg-desktop-read-file
-    (expand-file-name "malformed.desktop" xdg-tests-data-dir))))
+    (expand-file-name "malformed.desktop" xdg-tests-data-dir)))
+  (let ((tab (xdg-desktop-read-file
+              (expand-file-name "l10n.desktop" xdg-tests-data-dir)))
+        (env (getenv "LC_MESSAGES")))
+    (unwind-protect
+        (progn
+          (setenv "LC_MESSAGES" nil)
+          (should (equal (gethash "Comment" tab) "Cheers"))
+          ;; l10n omitted
+          (setenv "LC_MESSAGES" "sv_SE.UTF-8")
+          (should-not (equal (gethash "Comment" tab) "Skål")))
+      (setenv "LC_MESSAGES" env))))
 
 (ert-deftest xdg-desktop-strings-type ()
   "Test desktop \"string(s)\" type: strings delimited by \";\"."
