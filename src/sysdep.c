@@ -42,6 +42,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 # include <sys/syscall.h>
 #endif
 
+#ifdef CYGWIN
+# include <cygwin/fs.h>
+#endif
+
 #if defined DARWIN_OS || defined __FreeBSD__
 # include <sys/sysctl.h>
 #endif
@@ -2685,6 +2689,8 @@ renameat_noreplace (int srcfd, char const *src, int dstfd, char const *dst)
 {
 #if defined SYS_renameat2 && defined RENAME_NOREPLACE
   return syscall (SYS_renameat2, srcfd, src, dstfd, dst, RENAME_NOREPLACE);
+#elif defined RENAME_NOREPLACE	/* Cygwin >= 2.9.0. */
+  return renameat2 (srcfd, src, dstfd, dst, RENAME_NOREPLACE);
 #elif defined RENAME_EXCL
   return renameatx_np (srcfd, src, dstfd, dst, RENAME_EXCL);
 #else
