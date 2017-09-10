@@ -597,7 +597,7 @@ _GL_WARN_ON_USE (srandom, "srandom is unportable - "
 #endif
 
 #if @GNULIB_RANDOM@
-# if !@HAVE_RANDOM@
+# if !@HAVE_RANDOM@ || !@HAVE_DECL_INITSTATE@
 _GL_FUNCDECL_SYS (initstate, char *,
                   (unsigned int seed, char *buf, size_t buf_size)
                   _GL_ARG_NONNULL ((2)));
@@ -614,7 +614,7 @@ _GL_WARN_ON_USE (initstate, "initstate is unportable - "
 #endif
 
 #if @GNULIB_RANDOM@
-# if !@HAVE_RANDOM@
+# if !@HAVE_RANDOM@ || !@HAVE_DECL_SETSTATE@
 _GL_FUNCDECL_SYS (setstate, char *, (char *arg_state) _GL_ARG_NONNULL ((1)));
 # endif
 _GL_CXXALIAS_SYS (setstate, char *, (char *arg_state));

@@ -1,4 +1,4 @@
-# warnings.m4 serial 12
+# warnings.m4 serial 13
 dnl Copyright (C) 2008-2017 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -59,7 +59,8 @@ AC_DEFUN([gl_UNKNOWN_WARNINGS_ARE_ERRORS],
 [_AC_LANG_DISPATCH([$0], _AC_LANG, $@)])
 
 # Specialization for _AC_LANG = C. This macro can be AC_REQUIREd.
-AC_DEFUN([gl_UNKNOWN_WARNINGS_ARE_ERRORS(C)],
+# Use of m4_defun rather than AC_DEFUN works around a bug in autoconf < 2.63b.
+m4_defun([gl_UNKNOWN_WARNINGS_ARE_ERRORS(C)],
 [
   AC_LANG_PUSH([C])
   gl_UNKNOWN_WARNINGS_ARE_ERRORS_IMPL
@@ -67,7 +68,8 @@ AC_DEFUN([gl_UNKNOWN_WARNINGS_ARE_ERRORS(C)],
 ])
 
 # Specialization for _AC_LANG = C++. This macro can be AC_REQUIREd.
-AC_DEFUN([gl_UNKNOWN_WARNINGS_ARE_ERRORS(C++)],
+# Use of m4_defun rather than AC_DEFUN works around a bug in autoconf < 2.63b.
+m4_defun([gl_UNKNOWN_WARNINGS_ARE_ERRORS(C++)],
 [
   AC_LANG_PUSH([C++])
   gl_UNKNOWN_WARNINGS_ARE_ERRORS_IMPL
