@@ -2040,17 +2040,17 @@ x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 void
 ns_set_appearance (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
   EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
   NSWindow *window = [view window];
 
   NSTRACE ("ns_set_appearance");
 
-#ifndef NSAppKitVersionNumber10_9
-#define NSAppKitVersionNumber10_9 1265
+#ifndef NSAppKitVersionNumber10_10
+#define NSAppKitVersionNumber10_10 1343
 #endif
 
-  if (NSAppKitVersionNumber < NSAppKitVersionNumber10_9)
+  if (NSAppKitVersionNumber < NSAppKitVersionNumber10_10)
     return;
 
   if (EQ (new_value, Qdark))
@@ -2065,7 +2065,7 @@ ns_set_appearance (struct frame *f, Lisp_Object new_value, Lisp_Object old_value
                             appearanceNamed: NSAppearanceNameAqua];
       FRAME_NS_APPEARANCE (f) = ns_appearance_aqua;
     }
-#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 1090 */
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 101000 */
 }
 
 void
@@ -7135,12 +7135,12 @@ not_in_argv (NSString *arg)
   if (! FRAME_UNDECORATED (f))
     [self createToolbar: f];
 
-#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
-#ifndef NSAppKitVersionNumber10_9
-#define NSAppKitVersionNumber10_9 1265
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#ifndef NSAppKitVersionNumber10_10
+#define NSAppKitVersionNumber10_10 1343
 #endif
 
-  if (NSAppKitVersionNumber >= NSAppKitVersionNumber10_9
+  if (NSAppKitVersionNumber >= NSAppKitVersionNumber10_10
       && FRAME_NS_APPEARANCE (f) != ns_appearance_aqua)
     win.appearance = [NSAppearance
                           appearanceNamed: NSAppearanceNameVibrantDark];
