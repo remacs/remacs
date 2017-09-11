@@ -344,6 +344,27 @@ be invoked with the right arguments."
         (cdr path-res)
         (insert-directory-wildcard-in-dir-p (car path-res)))))))
 
+(ert-deftest files-tests--make-directory ()
+  (let* ((dir (make-temp-file "files-mkdir-test" t))
+	 (dirname (file-name-as-directory dir))
+	 (file (concat dirname "file"))
+	 (subdir1 (concat dirname "subdir1"))
+	 (subdir2 (concat dirname "subdir2"))
+	 (a/b (concat dirname "a/b")))
+    (write-region "" nil file)
+    (should-error (make-directory "/"))
+    (should-not (make-directory "/" t))
+    (should-error (make-directory dir))
+    (should-not (make-directory dir t))
+    (should-error (make-directory dirname))
+    (should-not (make-directory dirname t))
+    (should-error (make-directory file))
+    (should-error (make-directory file t))
+    (should-not (make-directory subdir1))
+    (should-not (make-directory subdir2 t))
+    (should-error (make-directory a/b))
+    (should-not (make-directory a/b t))))
+
 
 (provide 'files-tests)
 ;;; files-tests.el ends here

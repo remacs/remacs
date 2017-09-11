@@ -5320,6 +5320,14 @@ instance of such commands."
       (rename-buffer (generate-new-buffer-name base-name))
       (force-mode-line-update))))
 
+(defun files--ensure-directory (dir)
+  "Make directory DIR if it is not already a directory.  Return nil."
+  (condition-case err
+      (make-directory-internal dir)
+    (file-already-exists
+     (unless (file-directory-p dir)
+       (signal (car err) (cdr err))))))
+
 (defun make-directory (dir &optional parents)
   "Create the directory DIR and optionally any nonexistent parent dirs.
 If DIR already exists as a directory, signal an error, unless
@@ -5348,18 +5356,19 @@ raised."
       (if (not parents)
 	  (make-directory-internal dir)
 	(let ((dir (directory-file-name (expand-file-name dir)))
-	      create-list)
-	  (while (and (not (file-exists-p dir))
-		      ;; If directory is its own parent, then we can't
-		      ;; keep looping forever
-		      (not (equal dir
-				  (directory-file-name
-				   (file-name-directory dir)))))
+	      create-list parent)
+	  (while (progn
+		   (setq parent (directory-file-name
+				 (file-name-directory dir)))
+		   (condition-case err
+		       (files--ensure-directory dir)
+		     (file-missing
+		      ;; Do not loop if root does not exist (Bug#2309).
+		      (not (string= dir parent)))))
 	    (setq create-list (cons dir create-list)
-		  dir (directory-file-name (file-name-directory dir))))
-	  (while create-list
-	    (make-directory-internal (car create-list))
-	    (setq create-list (cdr create-list))))))))
+		  dir parent))
+	  (dolist (dir create-list)
+            (files--ensure-directory dir)))))))
 
 (defconst directory-files-no-dot-files-regexp
   "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*"
