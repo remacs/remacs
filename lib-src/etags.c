@@ -4974,6 +4974,9 @@ Ruby_functions (FILE *inf)
 			memcpy (wr_name + name_len - 1, "=", 2);
 			pfnote (wr_name, true, lb.buffer, cp - lb.buffer + 1,
 				lineno, linecharno);
+			if (debug)
+			  fprintf (stderr, "%s on %s:%d: %s\n", wr_name,
+				   curfdp->taggedfname, lineno, lb.buffer);
 			continuation = false;
 		      }
 		    if (alias)
