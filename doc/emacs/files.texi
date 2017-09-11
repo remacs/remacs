@@ -1572,10 +1572,10 @@ file @var{new}.
 
 @findex copy-directory
   @kbd{M-x copy-directory} copies directories, similar to the
-@command{cp -r} shell command.  If @var{new} is an existing directory,
-it creates a copy of the @var{old} directory and puts it in @var{new}.
-If @var{new} is not an existing directory, it copies all the contents
-of @var{old} into a new directory named @var{new}.
+@command{cp -r} shell command.  If @var{new} is a directory name, it
+creates a copy of the @var{old} directory and puts it in @var{new}.
+Otherwise it copies all the contents of @var{old} into a new directory
+named @var{new}.
 
 @cindex renaming files
 @findex rename-file

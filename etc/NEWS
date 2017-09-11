@@ -1285,8 +1285,8 @@ documentation and had inherent races that led to security holes.  A
 call like (rename-file C D) that used the old, undocumented behavior
 can be written as (rename-file C (file-name-as-directory D)), a
 formulation portable to both older and newer versions of Emacs.
-Affected functions include add-name-to-file, copy-file,
-make-symbolic-link, and rename-file.
+Affected functions include add-name-to-file, copy-directory,
+copy-file, make-symbolic-link, and rename-file.
 
 
 * Lisp Changes in Emacs 26.1

@@ -5501,10 +5501,10 @@ Noninteractively, the last argument PARENTS says whether to
 create parent directories if they don't exist.  Interactively,
 this happens by default.
 
-If NEWNAME names an existing directory, copy DIRECTORY as a
-subdirectory there.  However, if called from Lisp with a non-nil
-optional argument COPY-CONTENTS, copy the contents of DIRECTORY
-directly into NEWNAME instead."
+If NEWNAME is a directory name, copy DIRECTORY as a subdirectory
+there.  However, if called from Lisp with a non-nil optional
+argument COPY-CONTENTS, copy the contents of DIRECTORY directly
+into NEWNAME instead."
   (interactive
    (let ((dir (read-directory-name
 	       "Copy directory: " default-directory default-directory t nil)))
@@ -5526,19 +5526,17 @@ directly into NEWNAME instead."
 
       ;; Compute target name.
       (setq directory (directory-file-name (expand-file-name directory))
-	    newname   (directory-file-name (expand-file-name newname)))
+	    newname (expand-file-name newname))
 
-      (cond ((not (file-directory-p newname))
-	     ;; If NEWNAME is not an existing directory, create it;
+      (cond ((not (directory-name-p newname))
+	     ;; If NEWNAME is not a directory name, create it;
 	     ;; that is where we will copy the files of DIRECTORY.
 	     (make-directory newname parents))
-	    ;; If NEWNAME is an existing directory and COPY-CONTENTS
+	    ;; If NEWNAME is a directory name and COPY-CONTENTS
 	    ;; is nil, copy into NEWNAME/[DIRECTORY-BASENAME].
 	    ((not copy-contents)
-	     (setq newname (concat
-			    (file-name-as-directory newname)
-			    (file-name-nondirectory
-			     (directory-file-name directory))))
+	     (setq newname (concat newname
+			    (file-name-nondirectory directory)))
 	     (and (file-exists-p newname)
 		  (not (file-directory-p newname))
 		  (error "Cannot overwrite non-directory %s with a directory"
