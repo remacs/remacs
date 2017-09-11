@@ -4212,10 +4212,10 @@ Interactively, confirmation is required unless you supply a prefix argument."
 	 (not current-prefix-arg)))
   (or (null filename) (string-equal filename "")
       (progn
-	;; If arg is just a directory,
+	;; If arg is a directory name,
 	;; use the default file name, but in that directory.
-	(if (file-directory-p filename)
-	    (setq filename (concat (file-name-as-directory filename)
+	(if (directory-name-p filename)
+	    (setq filename (concat filename
 				   (file-name-nondirectory
 				    (or buffer-file-name (buffer-name))))))
 	(and confirm
