@@ -5080,7 +5080,7 @@ Before and after saving the buffer, this function runs
 	      (progn
                 ;; Pass in nil&nil rather than point-min&max to indicate
                 ;; we're saving the buffer rather than just a region.
-                ;; write-region-annotate-functions may make us of it.
+                ;; write-region-annotate-functions may make use of it.
                 (write-region nil nil
                               buffer-file-name nil t buffer-file-truename)
                 (when save-silently (message nil))
