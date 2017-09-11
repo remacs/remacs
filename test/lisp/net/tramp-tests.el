@@ -2117,7 +2117,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	    (should (file-directory-p tmp-name2))
 	    (should (file-exists-p tmp-name5))
 	    ;; Target directory does exist already.
-	    (copy-directory tmp-name1 tmp-name2)
+	    (copy-directory tmp-name1 (file-name-as-directory tmp-name2))
 	    (should (file-directory-p tmp-name3))
 	    (should (file-exists-p tmp-name6)))
 
@@ -2140,7 +2140,8 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	    ;; Target directory does exist already.
 	    (delete-file tmp-name5)
 	    (should-not (file-exists-p tmp-name5))
-	    (copy-directory tmp-name1 tmp-name2 nil 'parents 'contents)
+	    (copy-directory tmp-name1 (file-name-as-directory tmp-name2)
+			    nil 'parents 'contents)
 	    (should (file-directory-p tmp-name2))
 	    (should (file-exists-p tmp-name5))
 	    (should-not (file-directory-p tmp-name3))
