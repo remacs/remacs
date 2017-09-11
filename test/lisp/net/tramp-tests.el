@@ -2852,16 +2852,16 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
             (tramp-change-syntax syntax)
             (let ;; This is needed for the `simplified' syntax.
                 ((method-marker
-                  (if (zerop (length (tramp-method-regexp)))
+                  (if (zerop (length tramp-method-regexp))
                       "" tramp-default-method-marker))
                  ;; This is needed for the `separate' syntax.
-                 (prefix-format (substring (tramp-prefix-format) 1)))
+                 (prefix-format (substring tramp-prefix-format 1)))
               ;; Complete method name.
 	      (unless (or (zerop (length method))
-                          (zerop (length (tramp-method-regexp))))
+                          (zerop (length tramp-method-regexp)))
 	        (should
 	         (member
-		  (concat prefix-format method (tramp-postfix-method-format))
+		  (concat prefix-format method tramp-postfix-method-format)
 		  (file-name-all-completions
                    (concat prefix-format (substring method 0 1)) "/"))))
               ;; Complete host name for default method.  With gvfs
@@ -2873,25 +2873,25 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		  (should
 		   (member
 		    (concat
-                     prefix-format method-marker (tramp-postfix-method-format)
-                     host (tramp-postfix-host-format))
+                     prefix-format method-marker tramp-postfix-method-format
+                     host tramp-postfix-host-format)
 		    (file-name-all-completions
 		     (concat
-                      prefix-format method-marker (tramp-postfix-method-format)
+                      prefix-format method-marker tramp-postfix-method-format
                       (substring host 0 1))
                      "/")))))
               ;; Complete host name.
 	      (unless (or (zerop (length method))
-                          (zerop (length (tramp-method-regexp)))
+                          (zerop (length tramp-method-regexp))
                           (zerop (length host))
 			  (tramp--test-gvfs-p method))
 	        (should
 	         (member
 		  (concat
-                   prefix-format method (tramp-postfix-method-format)
-                   host (tramp-postfix-host-format))
+                   prefix-format method tramp-postfix-method-format
+                   host tramp-postfix-host-format)
 		  (file-name-all-completions
-		   (concat prefix-format method (tramp-postfix-method-format))
+		   (concat prefix-format method tramp-postfix-method-format)
                    "/"))))))
 
 	;; Cleanup.

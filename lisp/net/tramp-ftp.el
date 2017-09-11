@@ -121,10 +121,10 @@ pass to the OPERATION."
     (or (boundp 'ange-ftp-name-format)
 	(let (file-name-handler-alist) (require 'ange-ftp)))
     (let ((ange-ftp-name-format
-	   (list (nth 0 (tramp-file-name-structure))
-		 (nth 3 (tramp-file-name-structure))
-		 (nth 2 (tramp-file-name-structure))
-		 (nth 4 (tramp-file-name-structure))))
+	   (list (nth 0 tramp-file-name-structure)
+		 (nth 3 tramp-file-name-structure)
+		 (nth 2 tramp-file-name-structure)
+		 (nth 4 tramp-file-name-structure)))
 	  ;; ange-ftp uses `ange-ftp-ftp-name-arg' and `ange-ftp-ftp-name-res'
 	  ;; for optimization in `ange-ftp-ftp-name'. If Tramp wasn't active,
 	  ;; there could be incorrect values from previous calls in case the
