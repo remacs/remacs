@@ -3047,7 +3047,7 @@ of each directory."
     (while quail-dirs
       (setq dirname (car quail-dirs))
       (when dirname
-	(setq pkg-list (directory-files dirname 'full "\\.el$" 'nosort))
+	(setq pkg-list (directory-files dirname 'full "\\.el$"))
 	(while pkg-list
 	  (message "Checking %s ..." (car pkg-list))
 	  (with-temp-buffer
