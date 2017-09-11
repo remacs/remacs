@@ -1286,8 +1286,8 @@ call like (rename-file C D) that used the old, undocumented behavior
 can be written as (rename-file C (file-name-as-directory D)), a
 formulation portable to both older and newer versions of Emacs.
 Affected functions include add-name-to-file, copy-directory,
-copy-file, format-write-file, make-symbolic-link, rename-file, and
-write-file.
+copy-file, format-write-file, gnus-copy-file, make-symbolic-link,
+rename-file, and write-file.
 
 
 * Lisp Changes in Emacs 26.1

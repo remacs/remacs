@@ -594,9 +594,6 @@ If N, return the Nth ancestor instead."
 	 (read-file-name "Copy file to: " default-directory)))
   (unless to
     (setq to (read-file-name "Copy file to: " default-directory)))
-  (when (file-directory-p to)
-    (setq to (concat (file-name-as-directory to)
-		     (file-name-nondirectory file))))
   (copy-file file to))
 
 (defvar gnus-work-buffer " *gnus work*")
