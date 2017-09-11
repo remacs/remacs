@@ -3,7 +3,7 @@ use std::mem;
 
 use remacs_sys::make_lisp_ptr;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Marker, EmacsInt, Lisp_Type};
+use remacs_sys::{Lisp_Misc_Type, Lisp_Marker, EmacsInt, Lisp_Type};
 use remacs_macros::lisp_fn;
 
 use buffers::LispBufferRef;
@@ -39,16 +39,22 @@ impl LispMarkerRef {
     }
 }
 
-fn build_marker(buf: LispObject, charpos: ptrdiff_t, byte_pos: ptrdiff_t) -> LispObject {
+/// Return a newly allocated marker which points into BUF at character
+/// position CHARPOS and byte position BYTEPOS.
+pub fn build_marker(buf: LispBufferRef, charpos: ptrdiff_t, byte_pos: ptrdiff_t) -> Lisp_Marker {
+    debug_assert!(buf.is_live());
+    debug_assert!(charpos <= byte_pos);
+
     let m = Lisp_Marker{
-        ty: Marker,
+        ty: Lisp_Misc_Type::Marker,
         padding: 0,
         buffer: buf,
         charpos: charpos,
         bytepos: byte_pos,
-        next: buf.text.markers,
+        next: unsafe{ *buf.text }.markers,
     };
-    buf.text.markers = m;
+    unsafe{ *buf.text }.markers = m;
+    // (buf.text).markers = m;
     m
 }
 

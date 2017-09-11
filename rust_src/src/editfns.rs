@@ -5,6 +5,7 @@ use lisp::LispObject;
 use remacs_sys::EmacsInt;
 use threads::ThreadState;
 use buffers::get_buffer;
+use marker::build_marker;
 
 
 /// Return value of point, as an integer.
