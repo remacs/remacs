@@ -172,14 +172,15 @@ The name is made by appending a number to PREFIX, default \"G\"."
 		 (setq cl--gensym-counter (1+ cl--gensym-counter))))))
     (make-symbol (format "%s%d" pfix num))))
 
+(defvar cl--gentemp-counter 0)
 ;;;###autoload
 (defun cl-gentemp (&optional prefix)
   "Generate a new interned symbol with a unique name.
-The name is made by appending a number to PREFIX, default \"G\"."
-  (let ((pfix (if (stringp prefix) prefix "G"))
+The name is made by appending a number to PREFIX, default \"T\"."
+  (let ((pfix (if (stringp prefix) prefix "T"))
 	name)
-    (while (intern-soft (setq name (format "%s%d" pfix cl--gensym-counter)))
-      (setq cl--gensym-counter (1+ cl--gensym-counter)))
+    (while (intern-soft (setq name (format "%s%d" pfix cl--gentemp-counter)))
+      (setq cl--gentemp-counter (1+ cl--gentemp-counter)))
     (intern name)))
 
 
