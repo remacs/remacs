@@ -78,6 +78,16 @@ call other entry points instead, such as `cl-prin1'."
     (cl-print-object (aref object i) stream))
   (princ "]" stream))
 
+(cl-defmethod cl-print-object ((object hash-table) stream)
+  (princ "#<hash-table " stream)
+  (princ (hash-table-test object) stream)
+  (princ " " stream)
+  (princ (hash-table-count object) stream)
+  (princ "/" stream)
+  (princ (hash-table-size object) stream)
+  (princ (format " 0x%x" (sxhash object)) stream)
+  (princ ">" stream))
+
 (define-button-type 'help-byte-code
   'follow-link t
   'action (lambda (button)
