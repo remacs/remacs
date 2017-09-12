@@ -7759,7 +7759,9 @@ processing of the article is done before it is saved).  For a different
 approach (uudecoding, unsharing) you should use @code{gnus-uu}
 (@pxref{Decoding Articles}).
 
-For the commands listed here, the target is a file.  If you want to
+For the commands listed here, the target is a file.
+A directory name (ending in @samp{/}) causes the target
+to be a file under that directory.  If you want to
 save to a group, see the @kbd{B c} (@code{gnus-summary-copy-article})
 command (@pxref{Mail Group Commands}).
 
