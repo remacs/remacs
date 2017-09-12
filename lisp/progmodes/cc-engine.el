@@ -6418,7 +6418,7 @@ comment at the start of cc-engine.el for more info."
 			      (not (eq (c-get-char-property (point) 'c-type)
 				       'c-decl-arg-start)))))))
       (or (c-forward-<>-arglist nil)
-	  (forward-char)))))
+	  (c-forward-token-2)))))
 
 
 ;; Functions to handle C++ raw strings.
