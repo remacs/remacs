@@ -218,7 +218,7 @@ After VARS is handled, BODY is evaluated in the new environment."
     `(let* ((,bsym ())
             (,listvar (mapcar (lambda (e)
                                 (if (macroexp-copyable-p e) e
-                                  (let ((v (make-symbol "v")))
+                                  (let ((v (gensym "v")))
                                     (push (list v e) ,bsym)
                                     v)))
                               ,listvar)))

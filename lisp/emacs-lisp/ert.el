@@ -298,8 +298,8 @@ It should only be stopped when ran from inside ert--run-test-internal."
            (error `(signal ',(car err) ',(cdr err))))))
     (cond
      ((or (atom form) (ert--special-operator-p (car form)))
-      (let ((value (cl-gensym "value-")))
-        `(let ((,value (cl-gensym "ert-form-evaluation-aborted-")))
+      (let ((value (gensym "value-")))
+        `(let ((,value (gensym "ert-form-evaluation-aborted-")))
            ,(funcall inner-expander
                      `(setq ,value ,form)
                      `(list ',whole :form ',form :value ,value)
@@ -312,10 +312,10 @@ It should only be stopped when ran from inside ert--run-test-internal."
                        (and (consp fn-name)
                             (eql (car fn-name) 'lambda)
                             (listp (cdr fn-name)))))
-        (let ((fn (cl-gensym "fn-"))
-              (args (cl-gensym "args-"))
-              (value (cl-gensym "value-"))
-              (default-value (cl-gensym "ert-form-evaluation-aborted-")))
+        (let ((fn (gensym "fn-"))
+              (args (gensym "args-"))
+              (value (gensym "value-"))
+              (default-value (gensym "ert-form-evaluation-aborted-")))
           `(let* ((,fn (function ,fn-name))
                   (,args (condition-case err
                              (let ((signal-hook-function #'ert--should-signal-hook))
@@ -357,7 +357,7 @@ FORM-DESCRIPTION-FORM before it has called INNER-FORM."
   (ert--expand-should-1
    whole form
    (lambda (inner-form form-description-form value-var)
-     (let ((form-description (cl-gensym "form-description-")))
+     (let ((form-description (gensym "form-description-")))
        `(let (,form-description)
           ,(funcall inner-expander
                     `(unwind-protect
@@ -435,8 +435,8 @@ failed."
    `(should-error ,form ,@keys)
    form
    (lambda (inner-form form-description-form value-var)
-     (let ((errorp (cl-gensym "errorp"))
-           (form-description-fn (cl-gensym "form-description-fn-")))
+     (let ((errorp (gensym "errorp"))
+           (form-description-fn (gensym "form-description-fn-")))
        `(let ((,errorp nil)
               (,form-description-fn (lambda () ,form-description-form)))
           (condition-case -condition-

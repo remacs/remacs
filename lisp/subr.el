@@ -280,6 +280,20 @@ without silencing all errors."
 
 ;;;; Basic Lisp functions.
 
+(defvar gensym-counter 0
+  "Number used to construct the name of the next symbol created by `gensym'.")
+
+(defun gensym (&optional prefix)
+  "Return a new uninterned symbol.
+The name is made by appending `gensym-counter' to PREFIX.
+PREFIX can be a string, and defaults to \"G\".
+If PREFIX is a number, it replaces the value of `gensym-counter'."
+  (let ((pfix (if (stringp prefix) prefix "G"))
+        (num (if (integerp prefix) prefix
+               (prog1 gensym-counter
+                 (setq gensym-counter (1+ gensym-counter))))))
+    (make-symbol (format "%s%d" pfix num))))
+
 (defun ignore (&rest _ignore)
   "Do nothing and return nil.
 This function accepts any number of arguments, but ignores them."

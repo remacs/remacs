@@ -1525,6 +1525,9 @@ It avoids unnecessary consing (and garbage collection).
 +++
 ** 'car' and 'cdr' compositions 'cXXXr' and 'cXXXXr' are now part of Elisp.
 
++++
+** 'gensym' is now part of Elisp.
+
 ---
 ** 'if-let*', 'when-let*', and 'and-let*' are new in subr-x.el.
 The incumbent 'if-let' and 'when-let' are now aliases.

@@ -213,7 +213,7 @@ Emacs Lisp manual for more information and examples."
 (defmacro pcase-exhaustive (exp &rest cases)
   "The exhaustive version of `pcase' (which see)."
   (declare (indent 1) (debug pcase))
-  (let* ((x (make-symbol "x"))
+  (let* ((x (gensym "x"))
          (pcase--dontwarn-upats (cons x pcase--dontwarn-upats)))
     (pcase--expand
      ;; FIXME: Could we add the FILE:LINE data in the error message?
@@ -304,7 +304,7 @@ any kind of error."
   (declare (indent 1) (debug ((pcase-PAT form) body)))
   (if (pcase--trivial-upat-p (car spec))
       `(dolist ,spec ,@body)
-    (let ((tmpvar (make-symbol "x")))
+    (let ((tmpvar (gensym "x")))
       `(dolist (,tmpvar ,@(cdr spec))
          (pcase-let* ((,(car spec) ,tmpvar))
            ,@body)))))
@@ -715,7 +715,7 @@ MATCH is the pattern that needs to be matched, of the form:
            (call (progn
                    (when (memq arg vs)
                      ;; `arg' is shadowed by `env'.
-                     (let ((newsym (make-symbol "x")))
+                     (let ((newsym (gensym "x")))
                        (push (list newsym arg) env)
                        (setq arg newsym)))
                    (if (functionp fun)
@@ -842,7 +842,7 @@ Otherwise, it defers to REST which is a list of branches of the form
         ;; A upat of the form (app FUN PAT)
         (pcase--mark-used sym)
         (let* ((fun (nth 1 upat))
-               (nsym (make-symbol "x"))
+               (nsym (gensym "x"))
                (body
                 ;; We don't change `matches' to reuse the newly computed value,
                 ;; because we assume there shouldn't be such redundancy in there.

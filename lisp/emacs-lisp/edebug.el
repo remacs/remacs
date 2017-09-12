@@ -1193,7 +1193,7 @@ circular objects.  Let `read' read everything else."
   ;; Uses the dynamically bound vars edebug-def-name and edebug-def-args.
   ;; Do this after parsing since that may find a name.
   (setq edebug-def-name
-	(or edebug-def-name edebug-old-def-name (cl-gensym "edebug-anon")))
+	(or edebug-def-name edebug-old-def-name (gensym "edebug-anon")))
   `(edebug-enter
     (quote ,edebug-def-name)
     ,(if edebug-inside-func

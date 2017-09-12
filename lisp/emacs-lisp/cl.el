@@ -250,7 +250,6 @@
                eval-when
                destructuring-bind
                gentemp
-               gensym
                pairlis
                acons
                subst

@@ -86,10 +86,7 @@
 (defvar cps--cleanup-function nil)
 
 (defmacro cps--gensym (fmt &rest args)
-  ;; Change this function to use `cl-gensym' if you want the generated
-  ;; code to be easier to read and debug.
-  ;; (cl-gensym (apply #'format fmt args))
-  `(progn (ignore ,@args) (make-symbol ,fmt)))
+  `(gensym (format ,fmt ,@args)))
 
 (defvar cps--dynamic-wrappers '(identity)
   "List of transformer functions to apply to atomic forms we
