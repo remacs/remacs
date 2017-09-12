@@ -131,7 +131,7 @@ into a button whose action shows the function's disassembly.")
     (let ((button-start (and cl-print-compiled-button
                              (bufferp stream)
                              (with-current-buffer stream (point)))))
-      (princ (format "#<bytecode %x>" (sxhash object)) stream)
+      (princ (format "#<bytecode 0x%x>" (sxhash object)) stream)
       (when (eq cl-print-compiled 'static)
         (princ " " stream)
         (cl-print-object (aref object 2) stream))
