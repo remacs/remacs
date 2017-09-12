@@ -1429,7 +1429,7 @@ org-agenda}.  This command prompts for what you want to see: a list of
 things to do this week, a list of TODO items with specific keywords,
 etc.
 @ifnottex
-@xref{Agenda Views,,,org, The Org Manual}, for details.
+@xref{Agenda views,,,org, The Org Manual}, for details.
 @end ifnottex
 
 @node Org Authoring
