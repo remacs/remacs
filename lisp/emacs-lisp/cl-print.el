@@ -85,7 +85,8 @@ call other entry points instead, such as `cl-prin1'."
   'help-echo (purecopy "mouse-2, RET: disassemble this function"))
 
 (defvar cl-print-compiled nil
-  "Control how to print byte-compiled functions.  Can be:
+  "Control how to print byte-compiled functions.
+Acceptable values include:
 - `static' to print the vector of constants.
 - `disassemble' to print the disassembly of the code.
 - nil to skip printing any details about the code.")
@@ -253,6 +254,11 @@ into a button whose action shows the function's disassembly.")
 
 ;;;###autoload
 (defun cl-prin1 (object &optional stream)
+  "Print OBJECT on STREAM according to its type.
+Output is further controlled by the variables
+`cl-print-readably', `cl-print-compiled', along with output
+variables for the standard printing functions.  See Info
+node `(elisp)Output Variables'. "
   (cond
    (cl-print-readably (prin1 object stream))
    ((not print-circle) (cl-print-object object stream))
@@ -262,6 +268,7 @@ into a button whose action shows the function's disassembly.")
 
 ;;;###autoload
 (defun cl-prin1-to-string (object)
+  "Return a string containing the `cl-prin1'-printed representation of OBJECT."
   (with-temp-buffer
     (cl-prin1 object (current-buffer))
     (buffer-string)))
