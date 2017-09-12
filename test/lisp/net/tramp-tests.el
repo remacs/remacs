@@ -1900,9 +1900,14 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (with-temp-buffer
 	      (insert-file-contents tmp-name2)
 	      (should (string-equal (buffer-string) "foo")))
-	    (should-error (copy-file tmp-name1 tmp-name2))
+	    (should-error
+	     (copy-file tmp-name1 tmp-name2)
+	     :type 'file-already-exists)
 	    (copy-file tmp-name1 tmp-name2 'ok)
 	    (make-directory tmp-name3)
+	    (should-error
+	     (copy-file tmp-name1 tmp-name3)
+	     :type 'file-already-exists)
 	    (copy-file tmp-name1 (file-name-as-directory tmp-name3))
 	    (should
 	     (file-exists-p
@@ -1922,9 +1927,14 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (with-temp-buffer
 	      (insert-file-contents tmp-name4)
 	      (should (string-equal (buffer-string) "foo")))
-	    (should-error (copy-file tmp-name1 tmp-name4))
+	    (should-error
+	     (copy-file tmp-name1 tmp-name4)
+	     :type 'file-already-exists)
 	    (copy-file tmp-name1 tmp-name4 'ok)
 	    (make-directory tmp-name5)
+	    (should-error
+	     (copy-file tmp-name1 tmp-name5)
+	     :type 'file-already-exists)
 	    (copy-file tmp-name1 (file-name-as-directory tmp-name5))
 	    (should
 	     (file-exists-p
@@ -1944,9 +1954,14 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (with-temp-buffer
 	      (insert-file-contents tmp-name1)
 	      (should (string-equal (buffer-string) "foo")))
-	    (should-error (copy-file tmp-name4 tmp-name1))
+	    (should-error
+	     (copy-file tmp-name4 tmp-name1)
+	     :type 'file-already-exists)
 	    (copy-file tmp-name4 tmp-name1 'ok)
 	    (make-directory tmp-name3)
+	    (should-error
+	     (copy-file tmp-name4 tmp-name3)
+	     :type 'file-already-exists)
 	    (copy-file tmp-name4 (file-name-as-directory tmp-name3))
 	    (should
 	     (file-exists-p
@@ -1981,11 +1996,16 @@ This checks also `file-name-as-directory', `file-name-directory',
 	      (insert-file-contents tmp-name2)
 	      (should (string-equal (buffer-string) "foo")))
 	    (write-region "foo" nil tmp-name1)
-	    (should-error (rename-file tmp-name1 tmp-name2))
+	    (should-error
+	     (rename-file tmp-name1 tmp-name2)
+	     :type 'file-already-exists)
 	    (rename-file tmp-name1 tmp-name2 'ok)
 	    (should-not (file-exists-p tmp-name1))
 	    (write-region "foo" nil tmp-name1)
 	    (make-directory tmp-name3)
+	    (should-error
+	     (rename-file tmp-name1 tmp-name3)
+	     :type 'file-already-exists)
 	    (rename-file tmp-name1 (file-name-as-directory tmp-name3))
 	    (should-not (file-exists-p tmp-name1))
 	    (should
@@ -2008,11 +2028,16 @@ This checks also `file-name-as-directory', `file-name-directory',
 	      (insert-file-contents tmp-name4)
 	      (should (string-equal (buffer-string) "foo")))
 	    (write-region "foo" nil tmp-name1)
-	    (should-error (rename-file tmp-name1 tmp-name4))
+	    (should-error
+	     (rename-file tmp-name1 tmp-name4)
+	     :type 'file-already-exists)
 	    (rename-file tmp-name1 tmp-name4 'ok)
 	    (should-not (file-exists-p tmp-name1))
 	    (write-region "foo" nil tmp-name1)
 	    (make-directory tmp-name5)
+	    (should-error
+	     (rename-file tmp-name1 tmp-name5)
+	     :type 'file-already-exists)
 	    (rename-file tmp-name1 (file-name-as-directory tmp-name5))
 	    (should-not (file-exists-p tmp-name1))
 	    (should
@@ -2035,11 +2060,16 @@ This checks also `file-name-as-directory', `file-name-directory',
 	      (insert-file-contents tmp-name1)
 	      (should (string-equal (buffer-string) "foo")))
 	    (write-region "foo" nil tmp-name4 nil 'nomessage)
-	    (should-error (rename-file tmp-name4 tmp-name1))
+	    (should-error
+	     (rename-file tmp-name4 tmp-name1)
+	     :type 'file-already-exists)
 	    (rename-file tmp-name4 tmp-name1 'ok)
 	    (should-not (file-exists-p tmp-name4))
 	    (write-region "foo" nil tmp-name4 nil 'nomessage)
 	    (make-directory tmp-name3)
+	    (should-error
+	     (rename-file tmp-name4 tmp-name3)
+	     :type 'file-already-exists)
 	    (rename-file tmp-name4 (file-name-as-directory tmp-name3))
 	    (should-not (file-exists-p tmp-name4))
 	    (should
@@ -2064,7 +2094,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	    (make-directory tmp-name1)
 	    (should (file-directory-p tmp-name1))
 	    (should (file-accessible-directory-p tmp-name1))
-	    (should-error (make-directory tmp-name2))
+	    (should-error (make-directory tmp-name2) :type 'file-error)
 	    (make-directory tmp-name2 'parents)
 	    (should (file-directory-p tmp-name2))
 	    (should (file-accessible-directory-p tmp-name2)))
@@ -2088,7 +2118,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
       (should (file-directory-p tmp-name))
       (write-region "foo" nil (expand-file-name "bla" tmp-name))
       (should (file-exists-p (expand-file-name "bla" tmp-name)))
-      (should-error (delete-directory tmp-name))
+      (should-error (delete-directory tmp-name) :type 'file-error)
       (delete-directory tmp-name 'recursive)
       (should-not (file-directory-p tmp-name)))))
 
@@ -2117,6 +2147,9 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	    (should (file-directory-p tmp-name2))
 	    (should (file-exists-p tmp-name5))
 	    ;; Target directory does exist already.
+	    (should-error
+	     (copy-directory tmp-name1 tmp-name2)
+	     :type 'file-error)
 	    (copy-directory tmp-name1 (file-name-as-directory tmp-name2))
 	    (should (file-directory-p tmp-name3))
 	    (should (file-exists-p tmp-name6)))
@@ -2140,8 +2173,9 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	    ;; Target directory does exist already.
 	    (delete-file tmp-name5)
 	    (should-not (file-exists-p tmp-name5))
-	    (copy-directory tmp-name1 (file-name-as-directory tmp-name2)
-			    nil 'parents 'contents)
+	    (copy-directory
+	     tmp-name1 (file-name-as-directory tmp-name2)
+	     nil 'parents 'contents)
 	    (should (file-directory-p tmp-name2))
 	    (should (file-exists-p tmp-name5))
 	    (should-not (file-directory-p tmp-name3))
@@ -2591,7 +2625,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (file-truename tramp-test-temporary-file-directory))
 	   (tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (tramp--test-make-temp-name nil quoted))
-	   (tmp-name3 (tramp--test-make-temp-name 'local quoted)))
+	   (tmp-name3 (tramp--test-make-temp-name 'local quoted))
+	   (tmp-name4 (tramp--test-make-temp-name nil quoted)))
 
       ;; Check `make-symbolic-link'.
       (unwind-protect
@@ -2642,13 +2677,28 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; target remains unchanged, even if quoted.
 	    (make-symbolic-link tmp-name1 tmp-name3)
 	    (should
-	     (string-equal tmp-name1 (file-symlink-p tmp-name3))))
+	     (string-equal tmp-name1 (file-symlink-p tmp-name3)))
+	    ;; Check directory as newname.
+	    (make-directory tmp-name4)
+	    (should-error
+	     (make-symbolic-link tmp-name1 tmp-name4)
+	     :type 'file-already-exists)
+	    (make-symbolic-link tmp-name1 (file-name-as-directory tmp-name4))
+	    (should
+	     (string-equal
+	      (funcall
+	       (if quoted 'tramp-compat-file-name-unquote 'identity)
+	       (file-remote-p tmp-name1 'localname))
+	      (file-symlink-p
+	       (expand-file-name
+		(file-name-nondirectory tmp-name1) tmp-name4)))))
 
 	;; Cleanup.
 	(ignore-errors
 	  (delete-file tmp-name1)
 	  (delete-file tmp-name2)
-	  (delete-file tmp-name3)))
+	  (delete-file tmp-name3)
+	  (delete-directory tmp-name4 'recursive)))
 
       ;; Check `add-name-to-file'.
       (unwind-protect
@@ -2674,12 +2724,22 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; `tmp-name3' is a local file name.
 	    (should-error
 	     (add-name-to-file tmp-name1 tmp-name3)
-	     :type 'file-error))
+	     :type 'file-error)
+	    ;; Check directory as newname.
+	    (make-directory tmp-name4)
+	    (should-error
+	     (add-name-to-file tmp-name1 tmp-name4)
+	     :type 'file-already-exists)
+	    (add-name-to-file tmp-name1 (file-name-as-directory tmp-name4))
+	    (should
+	     (file-regular-p
+	      (expand-file-name (file-name-nondirectory tmp-name1) tmp-name4))))
 
 	;; Cleanup.
 	(ignore-errors
 	  (delete-file tmp-name1)
-	  (delete-file tmp-name2)))
+	  (delete-file tmp-name2)
+	  (delete-directory tmp-name4 'recursive)))
 
       ;; Check `file-truename'.
       (unwind-protect
@@ -2969,7 +3029,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (write-region "(provide 'tramp-test-load)" nil tmp-name)
 	    ;; `load' in lread.c does not pass `must-suffix'.  Why?
 	    ;;(should-error
-	    ;; (load tmp-name nil 'nomessage 'nosuffix 'must-suffix))
+	    ;; (load tmp-name nil 'nomessage 'nosuffix 'must-suffix)
+	    ;; :type 'file-error)
 	    (load tmp-name nil 'nomessage 'nosuffix)
 	    (should (featurep 'tramp-test-load)))
 
@@ -3112,7 +3173,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (should (equal (process-status proc) 'signal))
 	  ;; An interrupted process cannot be interrupted, again.
 	  ;; Does not work reliable.
-	  ;; (should-error (interrupt-process proc)))
+	  ;; (should-error (interrupt-process proc) :type 'error))
 	  )
 
       ;; Cleanup.
