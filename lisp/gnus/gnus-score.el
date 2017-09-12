@@ -2961,8 +2961,8 @@ The list is determined from the variable `gnus-score-file-alist'."
        (expand-file-name suffix gnus-kill-files-directory))
       ((gnus-use-long-file-name 'not-score)
        ;; Append ".SCORE" to newsgroup name.
-       (expand-file-name (concat (gnus-newsgroup-savable-name newsgroup)
-				 "." suffix)
+       (expand-file-name (let ((name (gnus-newsgroup-savable-name newsgroup)))
+                           (if (string= "" suffix) name (concat name "." suffix)))
 			 gnus-kill-files-directory))
       (t
        ;; Place "SCORE" under the hierarchical directory.
