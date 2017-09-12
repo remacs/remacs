@@ -108,6 +108,14 @@ The effect is similar to that of "toolBar" resource on the tool bar.
 
 * Changes in Emacs 26.1
 
++++
+** Functions in 'write-contents-functions' can fully short-circuit the
+'save-buffer' process.  Previously, saving a buffer that was not
+visiting a file would always prompt for a file name.  Now it only does
+so if 'write-contents-functions' is nil (or all its functions return
+nil).  A non-nil buffer-local value for this variable is sufficient
+for 'save-some-buffers' to consider the buffer for saving.
+
 ---
 ** New variable 'executable-prefix-env' for inserting magic signatures.
 This variable affects the format of the interpreter magic number

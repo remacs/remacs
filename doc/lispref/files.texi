@@ -457,15 +457,23 @@ Even though this is not a normal hook, you can use @code{add-hook} and
 @defvar write-contents-functions
 This works just like @code{write-file-functions}, but it is intended
 for hooks that pertain to the buffer's contents, not to the particular
-visited file or its location.  Such hooks are usually set up by major
-modes, as buffer-local bindings for this variable.  This variable
-automatically becomes buffer-local whenever it is set; switching to a
-new major mode always resets this variable, but calling
-@code{set-visited-file-name} does not.
+visited file or its location, and can be used to create arbitrary save
+processes for buffers that aren't visiting files at all.  Such hooks
+are usually set up by major modes, as buffer-local bindings for this
+variable.  This variable automatically becomes buffer-local whenever
+it is set; switching to a new major mode always resets this variable,
+but calling @code{set-visited-file-name} does not.
 
 If any of the functions in this hook returns non-@code{nil}, the file
 is considered already written and the rest are not called and neither
 are the functions in @code{write-file-functions}.
+
+When using this hook to save buffers that are not visiting files (for
+instance, special-mode buffers), keep in mind that, if the function
+fails to save correctly and returns a @code{nil} value,
+@code{save-buffer} will go on to prompt the user for a file to save
+the buffer in.  If this is undesirable, consider having the function
+fail by raising an error.
 @end defvar
 
 @defopt before-save-hook

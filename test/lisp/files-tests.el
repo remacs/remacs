@@ -365,6 +365,33 @@ be invoked with the right arguments."
     (should-error (make-directory a/b))
     (should-not (make-directory a/b t))))
 
+(ert-deftest files-test-no-file-write-contents ()
+  "Test that `write-contents-functions' permits saving a file.
+Usually `basic-save-buffer' will prompt for a file name if the
+current buffer has none.  It should first call the functions in
+`write-contents-functions', and if one of them returns non-nil,
+consider the buffer saved, without prompting for a file
+name (Bug#28412)."
+  (let ((read-file-name-function
+         (lambda (&rest _ignore)
+           (error "Prompting for file name"))))
+    ;; With contents function, and no file.
+    (with-temp-buffer
+      (setq write-contents-functions (lambda () t))
+      (set-buffer-modified-p t)
+      (should (null (save-buffer))))
+    ;; With no contents function and no file.  This should reach the
+    ;; `read-file-name' prompt.
+    (with-temp-buffer
+      (set-buffer-modified-p t)
+      (should-error (save-buffer) :type 'error))
+    ;; Then a buffer visiting a file: should save normally.
+    (files-tests--with-temp-file temp-file-name
+      (with-current-buffer (find-file-noselect temp-file-name)
+        (setq write-contents-functions nil)
+        (insert "p")
+        (should (null (save-buffer)))
+        (should (eq (buffer-size) 1))))))
 
 (provide 'files-tests)
 ;;; files-tests.el ends here
