@@ -375,7 +375,7 @@ format. See `ibuffer-update-saved-filters-format' and
     (let ((fixed (ibuffer-update-saved-filters-format ibuffer-saved-filters)))
       (prog1
           (setq ibuffer-saved-filters (cdr fixed))
-        (when-let (old-format-detected (car fixed))
+        (when-let* ((old-format-detected (car fixed)))
           (let ((warning-series t)
                 (updated-form
                  (with-output-to-string

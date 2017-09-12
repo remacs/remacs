@@ -8410,7 +8410,7 @@ Used in `message-simplify-recipients'."
     (save-excursion
       (goto-char (point-min))
       (while (not (eobp))
-	(when-let ((props (get-text-property (point) 'display)))
+	(when-let* ((props (get-text-property (point) 'display)))
 	  (when (and (consp props)
 		     (eq (car props) 'image))
 	    (put-text-property (point) (1+ (point)) 'display nil)

@@ -1363,7 +1363,7 @@ ones, in case fg and bg are nil."
       plist)))
 
 (defun shr-tag-base (dom)
-  (when-let (base (dom-attr dom 'href))
+  (when-let* ((base (dom-attr dom 'href)))
     (setq shr-base (shr-parse-base base)))
   (shr-generic dom))
 
@@ -1388,7 +1388,7 @@ ones, in case fg and bg are nil."
   (unless shr-inhibit-images
     (let ((start (point))
 	  url multimedia image)
-      (when-let (type (dom-attr dom 'type))
+      (when-let* ((type (dom-attr dom 'type)))
 	(when (string-match "\\`image/svg" type)
 	  (setq url (dom-attr dom 'data)
 		image t)))
@@ -2178,7 +2178,7 @@ flags that control whether to collect or render objects."
 	    (when (and (not (stringp column))
 		       (or (memq (dom-tag column) '(td th))
 			   (not column)))
-	      (when-let (span (dom-attr column 'rowspan))
+	      (when-let* ((span (dom-attr column 'rowspan)))
 		(aset rowspans i (+ (aref rowspans i)
 				    (1- (string-to-number span)))))
 	      ;; Sanity check for invalid column-spans.

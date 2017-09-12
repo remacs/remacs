@@ -1192,7 +1192,7 @@ errors signaled by ERROR-FORM or by BODY).
                                                  (let ((,b-sym (current-buffer)))
                                                    (require 'url-handlers)
                                                    (unless-error ,body
-                                                                 (when-let ((er (plist-get status :error)))
+                                                                 (when-let* ((er (plist-get status :error)))
                                                                    (error "Error retrieving: %s %S" ,url-sym er))
                                                                  (with-current-buffer ,b-sym
                                                                    (goto-char (point-min))
@@ -1770,8 +1770,8 @@ Only these packages will be in the return value an their cdrs are
 destructively set to nil in ONLY."
   (let ((out))
     (dolist (dep (package-desc-reqs package))
-      (when-let ((cell (assq (car dep) only))
-                 (dep-package (cdr-safe cell)))
+      (when-let* ((cell (assq (car dep) only))
+                  (dep-package (cdr-safe cell)))
         (setcdr cell nil)
         (setq out (append (package--sort-deps-in-alist dep-package only)
                           out))))
@@ -1790,7 +1790,7 @@ if all the in-between dependencies are also in PACKAGE-LIST."
     (dolist (cell alist out-list)
       ;; `package--sort-deps-in-alist' destructively changes alist, so
       ;; some cells might already be empty.  We check this here.
-      (when-let ((pkg-desc (cdr cell)))
+      (when-let* ((pkg-desc (cdr cell)))
         (setcdr cell nil)
         (setq out-list
               (append (package--sort-deps-in-alist pkg-desc alist)
@@ -1847,7 +1847,7 @@ if all the in-between dependencies are also in PACKAGE-LIST."
                ;; Update the old pkg-desc which will be shown on the description buffer.
                (setf (package-desc-signed pkg-desc) t)
                ;; Update the new (activated) pkg-desc as well.
-               (when-let ((pkg-descs (cdr (assq (package-desc-name pkg-desc) package-alist))))
+               (when-let* ((pkg-descs (cdr (assq (package-desc-name pkg-desc) package-alist))))
                  (setf (package-desc-signed (car pkg-descs)) t))))))))))
 
 (defun package-installed-p (package &optional min-version)
@@ -1970,12 +1970,12 @@ to install it but still mark it as selected."
     (unless (or dont-select (package--user-selected-p name))
       (package--save-selected-packages
        (cons name package-selected-packages)))
-    (if-let ((transaction
-              (if (package-desc-p pkg)
-                  (unless (package-installed-p pkg)
-                    (package-compute-transaction (list pkg)
-                                                 (package-desc-reqs pkg)))
-                (package-compute-transaction () (list (list pkg))))))
+    (if-let* ((transaction
+               (if (package-desc-p pkg)
+                   (unless (package-installed-p pkg)
+                     (package-compute-transaction (list pkg)
+                                                  (package-desc-reqs pkg)))
+                 (package-compute-transaction () (list (list pkg))))))
         (package-download-transaction transaction)
       (message "`%s' is already installed" name))))
 
@@ -3281,7 +3281,7 @@ Optional argument NOQUERY non-nil means do not ask the user to confirm."
           (package--update-selected-packages .install .delete)
           (package-menu--perform-transaction install-list delete-list)
           (when package-selected-packages
-            (if-let ((removable (package--removable-packages)))
+            (if-let* ((removable (package--removable-packages)))
                 (message "Package menu: Operation finished.  %d packages %s"
                   (length removable)
                   (substitute-command-keys
@@ -3353,7 +3353,7 @@ Store this list in `package-menu--new-package-list'."
 
 (defun package-menu--find-and-notify-upgrades ()
   "Notify the user of upgradable packages."
-  (when-let ((upgrades (package-menu--find-upgrades)))
+  (when-let* ((upgrades (package-menu--find-upgrades)))
     (message "%d package%s can be upgraded; type `%s' to mark %s for upgrading."
       (length upgrades)
       (if (= (length upgrades) 1) "" "s")

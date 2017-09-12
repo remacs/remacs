@@ -162,7 +162,7 @@ ATTRIBUTE would typically be `class', `id' or the like."
 
 (defun dom-previous-sibling (dom node)
   "Return the previous sibling of NODE in DOM."
-  (when-let (parent (dom-parent dom node))
+  (when-let* ((parent (dom-parent dom node)))
     (let ((siblings (dom-children parent))
 	  (previous nil))
       (while siblings

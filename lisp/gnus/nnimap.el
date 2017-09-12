@@ -950,7 +950,7 @@ textual parts.")
                            internal-move-group server message-id
                            nnimap-request-articles-find-limit)))))
 	  ;; Move the article to a different method.
-	  (when-let ((result (eval accept-form)))
+	  (when-let* ((result (eval accept-form)))
 	    (nnimap-change-group group server)
 	    (nnimap-delete-article article)
 	    result))))))

@@ -225,11 +225,11 @@ on the symbol."
       (apply #'font-lock-flush prettify-symbols--current-symbol-bounds)
       (setq prettify-symbols--current-symbol-bounds nil))
     ;; Unprettify the current symbol.
-    (when-let ((c (get-prop-as-list 'composition))
-	       (s (get-prop-as-list 'prettify-symbols-start))
-	       (e (get-prop-as-list 'prettify-symbols-end))
-	       (s (apply #'min s))
-	       (e (apply #'max e)))
+    (when-let* ((c (get-prop-as-list 'composition))
+	        (s (get-prop-as-list 'prettify-symbols-start))
+	        (e (get-prop-as-list 'prettify-symbols-end))
+	        (s (apply #'min s))
+	        (e (apply #'max e)))
       (with-silent-modifications
 	(setq prettify-symbols--current-symbol-bounds (list s e))
 	(remove-text-properties s e '(composition))))))

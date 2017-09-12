@@ -264,10 +264,10 @@ If the SVG is later changed, the image will also be updated."
 
 (defun svg-remove (svg id)
   "Remove the element identified by ID from SVG."
-  (when-let ((node (car (dom-by-id
-                         svg
-                         (concat "\\`" (regexp-quote id)
-                                 "\\'")))))
+  (when-let* ((node (car (dom-by-id
+                          svg
+                          (concat "\\`" (regexp-quote id)
+                                  "\\'")))))
     (dom-remove-node svg node)))
 
 (provide 'svg)

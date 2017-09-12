@@ -1045,7 +1045,7 @@ This function simply drops any transparency."
   "Check whether STR, seen at point, is CSS named color.
 Returns STR if it is a valid color.  Special care is taken
 to exclude some SCSS constructs."
-  (when-let ((color (assoc str css--color-map)))
+  (when-let* ((color (assoc str css--color-map)))
     (save-excursion
       (goto-char start-point)
       (forward-comment (- (point)))
@@ -1154,7 +1154,7 @@ for determining whether point is within a selector."
 
 (defun css--colon-inside-funcall ()
   "Return t if point is inside a function call."
-  (when-let (opening-paren-pos (nth 1 (syntax-ppss)))
+  (when-let* ((opening-paren-pos (nth 1 (syntax-ppss))))
     (save-excursion
       (goto-char opening-paren-pos)
       (eq (char-after) ?\())))
