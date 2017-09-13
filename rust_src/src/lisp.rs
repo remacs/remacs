@@ -30,6 +30,9 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp, Qhash_table_p,
                  Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, SYMBOL_NAME, PseudovecType, EqualKind};
 
+#[cfg(test)]
+use functions::ExternCMocks;
+
 // TODO: tweak Makefile to rebuild C files if this changes.
 
 /// Emacs values are represented as tagged pointers. A few bits are
@@ -1040,4 +1043,22 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
             *const c_char,
         s.len() as ptrdiff_t,
     )
+}
+
+#[test]
+fn test_basic_float() {
+    let val = 8.0;
+    let mock = ExternCMocks::method_make_float()
+        .called_once()
+        .return_result_of(move || {
+            // Fake an allocated float by just putting it on the heap and leaking it.
+            let boxed = Box::new(Lisp_Float { data: unsafe { mem::transmute(8.0) } });
+            let raw = ExternalPtr::new(Box::into_raw(boxed));
+            LispObject::tag_ptr(raw, Lisp_Type::Lisp_Float).to_raw()
+        });
+
+    ExternCMocks::set_make_float(mock);
+    
+    let result = LispObject::from_float(8.0);
+    assert!(result.is_float() && result.as_float() == Some(val));
 }
