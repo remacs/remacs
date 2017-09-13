@@ -87,9 +87,7 @@ threading."
 If ELT is of the form ((EXPR)), listify (EXPR) with a dummy symbol."
   (cond
    ((symbolp elt) (list elt elt))
-   ((and (null (cdr elt))
-         (let ((form (car elt)))
-           (or (listp form) (atom form))))
+   ((null (cdr elt))
     (list (make-symbol "s") (car elt)))
    (t elt)))
 
@@ -104,9 +102,7 @@ If ELT is of the form ((EXPR)), listify (EXPR) with a dummy symbol."
 (defsubst internal--build-binding-value-form (binding prev-var)
   "Build the conditional value form for BINDING using PREV-VAR."
   (let ((var (car binding)))
-    (if (and (null (cdr binding)) (atom (car binding)) (not (symbolp (car binding))))
-        `(,var (and ,prev-var ,var))
-      `(,var (and ,prev-var ,(cadr binding))))))
+    `(,var (and ,prev-var ,(cadr binding)))))
 
 (defun internal--build-binding (binding prev-var)
   "Check and build a single BINDING with PREV-VAR."
