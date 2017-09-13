@@ -177,6 +177,8 @@ syms_of_lcms2 (void)
 {
   defsubr (&Slcms_cie_de2000);
   defsubr (&Slcms_cam02_ucs);
+
+  Fprovide (intern_c_string ("lcms2"), Qnil);
 }
 
 #endif /* HAVE_LCMS2 */
