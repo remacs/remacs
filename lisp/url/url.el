@@ -119,6 +119,8 @@ variable in the original buffer as a forwarding pointer.")
 
 (defvar url-retrieve-number-of-calls 0)
 (autoload 'url-cache-prune-cache "url-cache")
+(defvar url-asynchronous t
+  "Bind to nil before calling `url-retrieve' to signal :nowait connections.")
 
 ;;;###autoload
 (defun url-retrieve (url callback &optional cbargs silent inhibit-cookies)
@@ -190,6 +192,7 @@ URL-encoded before it's used."
   (unless (url-type url)
     (error "Bad url: %s" (url-recreate-url url)))
   (setf (url-silent url) silent)
+  (setf (url-asynchronous url) url-asynchronous)
   (setf (url-use-cookies url) (not inhibit-cookies))
   ;; Once in a while, remove old entries from the URL cache.
   (when (zerop (% url-retrieve-number-of-calls 1000))
@@ -232,6 +235,7 @@ how long to wait for a response before giving up."
 
   (let ((retrieval-done nil)
 	(start-time (current-time))
+        (url-asynchronous nil)
         (asynch-buffer nil))
     (setq asynch-buffer
 	  (url-retrieve url (lambda (&rest ignored)
