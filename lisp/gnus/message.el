@@ -5778,7 +5778,10 @@ give as trustworthy answer as possible."
 	   (not (string-match message-bogus-system-names message-user-fqdn)))
       ;; `message-user-fqdn' seems to be valid
       message-user-fqdn)
-     ((not (string-match message-bogus-system-names sysname))
+     ;; A system name without any dots is unlikely to be a good fully
+     ;; qualified domain name.
+     ((and (string-match "[.]" sysname)
+	   (not (string-match message-bogus-system-names sysname)))
       ;; `system-name' returned the right result.
       sysname)
      ;; Try `mail-host-address'.
