@@ -69,6 +69,11 @@ Deterministic builds omit the build date from the output of the
 following variables nil: 'emacs-build-system', 'emacs-build-time',
 'erc-emacs-build-time'.
 
+** New configure option '--with-lcms2' attempts to build an Emacs
+linked to Little CMS, exposing color management functions in Lisp.
+Implemented functions include the color metrics 'lcms-cie-de2000' and
+'lcms-cam02-ucs'.
+
 ** The configure option '--with-gameuser' now defaults to 'no',
 as this appears to be the most common configuration in practice.
 When it is 'no', the shared game directory and the auxiliary program
@@ -1587,6 +1592,11 @@ argument 'absolute'.  If this parameter is nil, the default, this
 function keeps on returning the line number taking potential narrowing
 into account.  If this parameter is non-nil, the function ignores
 narrowing and returns the absolute line number.
+
+---
+** The function 'color-distance' now takes a second optional argument
+'metric'.  When non-nil, it should be a function of two arguments that
+accepts two colors and returns a number.
 
 ** Changes in Frame and Window Handling
 

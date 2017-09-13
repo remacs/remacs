@@ -3451,6 +3451,25 @@ if test "${with_jpeg}" != "no"; then
 fi
 AC_SUBST(LIBJPEG)
 
+HAVE_LCMS2=no
+LIBLCMS2=
+if test "${with_lcms2}" != "no"; then
+  OLIBS=$LIBS
+  AC_SEARCH_LIBS([cmsCreateTransform], [lcms2], [HAVE_LCMS2=yes])
+  LIBS=$OLIBS
+  case $ac_cv_search_cmsCreateTransform in
+    -*) LIBLCMS2=$ac_cv_search_cmsCreateTransform ;;
+  esac
+fi
+if test "${HAVE_LCMS2}" = "yes"; then
+  AC_DEFINE([HAVE_LCMS2], 1, [Define to 1 if you have the lcms2 library (-llcms2).])
+  ### ???
+  if test "${opsys}" = "mingw32"; then
+     LIBLCMS2=
+  fi
+fi
+AC_SUBST(LIBLCMS2)
+
 HAVE_ZLIB=no
 LIBZ=
 if test "${with_zlib}" != "no"; then

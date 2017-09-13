@@ -4088,12 +4088,14 @@ color_distance (XColor *x, XColor *y)
 }
 
 
-DEFUN ("color-distance", Fcolor_distance, Scolor_distance, 2, 3, 0,
+DEFUN ("color-distance", Fcolor_distance, Scolor_distance, 2, 4, 0,
        doc: /* Return an integer distance between COLOR1 and COLOR2 on FRAME.
 COLOR1 and COLOR2 may be either strings containing the color name,
-or lists of the form (RED GREEN BLUE).
-If FRAME is unspecified or nil, the current frame is used.  */)
-  (Lisp_Object color1, Lisp_Object color2, Lisp_Object frame)
+or lists of the form (RED GREEN BLUE), each in the range 0 to 65535 inclusive.
+If FRAME is unspecified or nil, the current frame is used.
+If METRIC is unspecified or nil, a modified L*u*v* metric is used.  */)
+  (Lisp_Object color1, Lisp_Object color2, Lisp_Object frame,
+   Lisp_Object metric)
 {
   struct frame *f = decode_live_frame (frame);
   XColor cdef1, cdef2;
@@ -4107,7 +4109,10 @@ If FRAME is unspecified or nil, the current frame is used.  */)
 	   && defined_color (f, SSDATA (color2), &cdef2, false)))
     signal_error ("Invalid color", color2);
 
-  return make_number (color_distance (&cdef1, &cdef2));
+  if (NILP (metric))
+    return make_number (color_distance (&cdef1, &cdef2));
+  else
+    return call2 (metric, color1, color2);
 }
 
 
