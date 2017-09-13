@@ -15,7 +15,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Code:
 
@@ -153,7 +153,7 @@ form.")
   "Test file for bug#18141.")
 
 (ert-deftest files-test-bug-18141 ()
-  "Test for http://debbugs.gnu.org/18141 ."
+  "Test for https://debbugs.gnu.org/18141 ."
   (skip-unless (executable-find "gzip"))
   (let ((tempfile (make-temp-file "files-test-bug-18141" nil ".gz")))
     (unwind-protect
@@ -184,7 +184,7 @@ form.")
 
 
 (ert-deftest files-test-bug-21454 ()
-  "Test for http://debbugs.gnu.org/21454 ."
+  "Test for https://debbugs.gnu.org/21454 ."
   :expected-result :failed
   (let ((input-result
          '(("/foo/bar//baz/:/bar/foo/baz//" nil ("/foo/bar/baz/" "/bar/foo/baz/"))

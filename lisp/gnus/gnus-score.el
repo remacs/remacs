@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -43,7 +43,7 @@ for each score file or each score file directory.  Gnus will decide
 by itself what score files are applicable to which group.
 
 Say you want to use the single score file
-\"/ftp.gnus.org@ftp:/pub/larsi/ding/score/soc.motss.SCORE\" and all
+\"/ftp.gnus.org:/pub/larsi/ding/score/soc.motss.SCORE\" and all
 score files in the \"/ftp.some-where:/pub/score\" directory.
 
  (setq gnus-global-score-files

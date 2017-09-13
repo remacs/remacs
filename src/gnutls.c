@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <errno.h>
@@ -554,7 +554,7 @@ emacs_gnutls_nonblock_errno (gnutls_transport_ptr_t ptr)
     {
 #  ifdef _AIX
       /* This is taken from the GnuTLS system_errno function circa 2016;
-	 see <http://savannah.gnu.org/support/?107464>.  */
+	 see <https://savannah.gnu.org/support/?107464>.  */
     case 0:
       errno = EAGAIN;
       /* Fall through.  */
@@ -1355,7 +1355,7 @@ gnutls_verify_boot (Lisp_Object proc, Lisp_Object proplist)
   c_hostname = SSDATA (hostname);
 
   /* Now verify the peer, following
-     http://www.gnu.org/software/gnutls/manual/html_node/Verifying-peer_0027s-certificate.html.
+     https://www.gnu.org/software/gnutls/manual/html_node/Verifying-peer_0027s-certificate.html.
      The peer should present at least one certificate in the chain; do a
      check of the certificate's hostname with
      gnutls_x509_crt_check_hostname against :hostname.  */

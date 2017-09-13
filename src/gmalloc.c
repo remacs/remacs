@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public
-License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
@@ -308,7 +308,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public
-License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
@@ -965,7 +965,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public
-License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
@@ -1275,7 +1275,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public
-License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
@@ -1445,7 +1445,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public
-License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
@@ -1483,7 +1483,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with the GNU C Library.  If not, see <http://www.gnu.org/licenses/>.  */
+along with the GNU C Library.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* uClibc defines __GNU_LIBRARY__, but it is not completely
    compatible.  */
@@ -1530,7 +1530,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public
-License along with this library.  If not, see <http://www.gnu.org/licenses/>.  */
+License along with this library.  If not, see <https://www.gnu.org/licenses/>.  */
 
 void *
 aligned_alloc (size_t alignment, size_t size)
@@ -1662,7 +1662,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public
-License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */
@@ -1847,7 +1847,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 General Public License for more details.
 
 You should have received a copy of the GNU General Public
-License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 
    The author may be reached (Email) at the address mike@ai.mit.edu,
    or (US mail) as Mike Haertel c/o Free Software Foundation.  */

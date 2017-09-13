@@ -15,7 +15,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Code:
 (require 'ert)
@@ -43,7 +43,7 @@
      'ibuffer-mark-unsaved-buffers))))
 
 (ert-deftest ibuffer-test-Bug24997 ()
-  "Test for http://debbugs.gnu.org/24997 ."
+  "Test for https://debbugs.gnu.org/24997 ."
   (ibuffer)
   (let ((orig ibuffer-filtering-qualifiers))
     (unwind-protect
@@ -58,7 +58,7 @@
       (ibuffer-update nil t))))
 
 (ert-deftest ibuffer-test-Bug25000 ()
-  "Test for http://debbugs.gnu.org/25000 ."
+  "Test for https://debbugs.gnu.org/25000 ."
   (let ((case-fold-search t)
         (buf1 (generate-new-buffer "ibuffer-test-Bug25000-buf1"))
         (buf2 (generate-new-buffer "ibuffer-test-Bug25000-buf2")))
@@ -104,7 +104,7 @@
     (should (equal (cdr (assoc "test3" ibuffer-saved-filters)) test3))))
 
 (ert-deftest ibuffer-test-Bug25058 ()
-  "Test for http://debbugs.gnu.org/25058 ."
+  "Test for https://debbugs.gnu.org/25058 ."
   (ibuffer)
   (let ((orig-filters ibuffer-saved-filter-groups)
         (tmp-filters '(("saved-filters"
@@ -137,7 +137,7 @@
 
 
 (ert-deftest ibuffer-test-Bug25042 ()
-  "Test for http://debbugs.gnu.org/25042 ."
+  "Test for https://debbugs.gnu.org/25042 ."
   (ibuffer)
   (let ((filters ibuffer-filtering-qualifiers))
     (unwind-protect

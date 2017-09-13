@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -1555,7 +1555,7 @@ The difference to vc-do-command is that this function always invokes
          (or coding-system-for-write vc-git-commits-coding-system))
         (process-environment (cons "GIT_DIR" process-environment)))
     (apply 'vc-do-command (or buffer "*vc*") okstatus vc-git-program
-	   ;; http://debbugs.gnu.org/16897
+	   ;; https://debbugs.gnu.org/16897
 	   (unless (and (not (cdr-safe file-or-list))
 			(let ((file (or (car-safe file-or-list)
 					file-or-list)))

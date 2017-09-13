@@ -118,11 +118,11 @@ some of the ways to customize it; it corresponds to GNU Emacs version
 @ifset WWW_GNU_ORG
 @html
 The homepage for GNU Emacs is at
-<a href="/software/emacs/">http://www.gnu.org/software/emacs/</a>.<br>
+<a href="/software/emacs/">https://www.gnu.org/software/emacs/</a>.<br>
 To view this manual in other formats, click
 <a href="/software/emacs/manual/emacs.html">here</a>.<br>
 You can also purchase a printed copy from the
-<a href="http://shop.fsf.org/product/emacs-manual/">FSF store</a>.
+<a href="https://shop.fsf.org/product/emacs-manual/">FSF store</a>.
 @end html
 @end ifset
 
@@ -1314,7 +1314,7 @@ Emacs editors, all sharing common principles of organization.  For
 information on the underlying philosophy of Emacs and the lessons
 learned from its development, see @cite{Emacs, the Extensible,
 Customizable Self-Documenting Display Editor}, available from
-@url{ftp://publications.ai.mit.edu/ai-publications/pdf/AIM-519A.pdf}.
+@url{http://hdl.handle.net/1721.1/5736}.
 
 This version of the manual is mainly intended for use with GNU Emacs
 installed on GNU and Unix systems.  GNU Emacs can also be used on
@@ -1348,7 +1348,7 @@ One way to get a copy of GNU Emacs is from someone else who has it.
 You need not ask for our permission to do so, or tell any one else;
 just copy it.  If you have access to the Internet, you can get the
 latest distribution version of GNU Emacs by anonymous FTP; see
-@url{http://www.gnu.org/software/emacs} on our website for more
+@url{https://www.gnu.org/software/emacs} on our website for more
 information.
 
 You may also receive GNU Emacs when you buy a computer.  Computer
@@ -1365,19 +1365,19 @@ Software Foundation are tax deductible in the US@.  If you use GNU Emacs
 at your workplace, please suggest that the company make a donation.
 To donate, see @url{https://my.fsf.org/donate/}.
 For other ways in which you can help, see
-@url{http://www.gnu.org/help/help.html}.
+@url{https://www.gnu.org/help/help.html}.
 
 @c The command view-order-manuals uses this anchor.
 @anchor{Printed Books}
 We also sell hardcopy versions of this manual and @cite{An
 Introduction to Programming in Emacs Lisp}, by Robert J. Chassell.
-You can visit our online store at @url{http://shop.fsf.org/}.
+You can visit our online store at @url{https://shop.fsf.org/}.
 The income from sales goes to support the foundation's purpose: the
 development of new free software, and improvements to our existing
 programs including GNU Emacs.
 
 If you need to contact the Free Software Foundation, see
-@url{http://www.fsf.org/about/contact/}, or write to
+@url{https://www.fsf.org/about/contact/}, or write to
 
 @display
 Free Software Foundation

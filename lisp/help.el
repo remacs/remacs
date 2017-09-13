@@ -20,7 +20,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -306,7 +306,7 @@ If that doesn't give a function, return nil."
 (defun describe-gnu-project ()
   "Browse online information on the GNU project."
   (interactive)
-  (browse-url "http://www.gnu.org/gnu/thegnuproject.html"))
+  (browse-url "https://www.gnu.org/gnu/thegnuproject.html"))
 
 (define-obsolete-function-alias 'describe-project 'describe-gnu-project "22.2")
 
@@ -1335,7 +1335,7 @@ The result, when formatted by `substitute-command-keys', should equal STRING."
 
 ;; The following functions used to be in help-fns.el, which is not preloaded.
 ;; But for various reasons, they are more widely needed, so they were
-;; moved to this file, which is preloaded.  http://debbugs.gnu.org/17001
+;; moved to this file, which is preloaded.  https://debbugs.gnu.org/17001
 
 (defun help-split-fundoc (docstring def)
   "Split a function DOCSTRING into the actual doc and the usage info.

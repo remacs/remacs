@@ -17,7 +17,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -28,7 +28,7 @@
 (require 'em-ls)
 
 (ert-deftest em-ls-test-bug27631 ()
-  "Test for http://debbugs.gnu.org/27631 ."
+  "Test for https://debbugs.gnu.org/27631 ."
   (let* ((dir (make-temp-file "bug27631" 'dir))
          (dir1 (expand-file-name "dir1" dir))
          (dir2 (expand-file-name "dir2" dir))
@@ -50,7 +50,7 @@
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
 (ert-deftest em-ls-test-bug27817 ()
-  "Test for http://debbugs.gnu.org/27817 ."
+  "Test for https://debbugs.gnu.org/27817 ."
   (let ((orig eshell-ls-use-in-dired)
         (dired-use-ls-dired 'unspecified)
         buf insert-directory-program)
@@ -62,7 +62,7 @@
       (and (buffer-live-p buf) (kill-buffer)))))
 
 (ert-deftest em-ls-test-bug27843 ()
-  "Test for http://debbugs.gnu.org/27843 ."
+  "Test for https://debbugs.gnu.org/27843 ."
   (let ((orig eshell-ls-use-in-dired)
         (dired-use-ls-dired 'unspecified)
         buf insert-directory-program)
@@ -76,7 +76,7 @@
       (and (buffer-live-p buf) (kill-buffer)))))
 
 (ert-deftest em-ls-test-bug27844 ()
-  "Test for http://debbugs.gnu.org/27844 ."
+  "Test for https://debbugs.gnu.org/27844 ."
   (let ((orig eshell-ls-use-in-dired)
         (dired-use-ls-dired 'unspecified)
         buf insert-directory-program)

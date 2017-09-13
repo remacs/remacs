@@ -17,7 +17,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -41,7 +41,7 @@
           (setq-local flymake-warning-predicate predicate)
           (goto-char (point-min))
           (flymake-mode 1)
-          ;; Weirdness here...  http://debbugs.gnu.org/17647#25
+          ;; Weirdness here...  https://debbugs.gnu.org/17647#25
           (while (and flymake-is-running (< (setq i (1+ i)) 10))
             (sleep-for (+ 0.5 flymake-no-changes-timeout)))
           (flymake-goto-next-error)

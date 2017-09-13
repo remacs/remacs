@@ -1290,7 +1290,7 @@ inelegantly, then please
 @enumerate
 @item
 try the latest version of @file{woman.el} from the Emacs repository
-on @uref{http://savannah.gnu.org/projects/emacs/}.  If it still fails, please
+on @uref{https://savannah.gnu.org/projects/emacs/}.  If it still fails, please
 
 @item
 use @kbd{M-x report-emacs-bug} to send a bug report.

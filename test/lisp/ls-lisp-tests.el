@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -28,14 +28,14 @@
 (require 'ls-lisp)
 
 (ert-deftest ls-lisp-unload ()
-  "Test for http://debbugs.gnu.org/xxxxx ."
+  "Test for https://debbugs.gnu.org/xxxxx ."
   (should (advice-member-p 'ls-lisp--insert-directory 'insert-directory))
   (unload-feature 'ls-lisp 'force)
   (should-not (advice-member-p 'ls-lisp--insert-directory 'insert-directory))
   (require 'ls-lisp))
 
 (ert-deftest ls-lisp-test-bug27762 ()
-  "Test for http://debbugs.gnu.org/27762 ."
+  "Test for https://debbugs.gnu.org/27762 ."
   (let* ((dir source-directory)
          (default-directory dir)
          (files (mapcar (lambda (f) (concat "src/" f))
@@ -57,7 +57,7 @@
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
 (ert-deftest ls-lisp-test-bug27631 ()
-  "Test for http://debbugs.gnu.org/27631 ."
+  "Test for https://debbugs.gnu.org/27631 ."
   (let* ((dir (make-temp-file "bug27631" 'dir))
          (dir1 (expand-file-name "dir1" dir))
          (dir2 (expand-file-name "dir2" dir))
@@ -76,7 +76,7 @@
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
 (ert-deftest ls-lisp-test-bug27693 ()
-  "Test for http://debbugs.gnu.org/27693 ."
+  "Test for https://debbugs.gnu.org/27693 ."
   (let ((dir (expand-file-name "lisp" source-directory))
         (size "")
         ls-lisp-use-insert-directory-program buf)

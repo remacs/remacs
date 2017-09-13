@@ -26,7 +26,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -11799,7 +11799,7 @@ comment at the start of cc-engine.el for more info."
 	      (cond
 	       ((c-backward-over-enum-header)
 		(setq placeholder (c-point 'boi)))
-	       ((consp (setq placeholder 
+	       ((consp (setq placeholder
 			     (c-looking-at-or-maybe-in-bracelist
 			      containing-sexp lim)))
 		(setq tmpsymbol (and (cdr placeholder) 'topmost-intro-cont))

@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -200,7 +200,7 @@ If this contains a %s, that will be replaced by the matching rule."
 \;; GNU General Public License for more details.
 
 \;; You should have received a copy of the GNU General Public License
-\;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+\;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 \;;; Commentary:
 
@@ -237,7 +237,7 @@ A copy of the license is included in the section entitled ``GNU
 Free Documentation License''.
 
 A copy of the license is also available from the Free Software
-Foundation Web site at @url{http://www.gnu.org/licenses/fdl.html}.
+Foundation Web site at @url{https://www.gnu.org/licenses/fdl.html}.
 
 @end quotation
 
@@ -284,7 +284,7 @@ The document was typeset with
 * GNU Free Documentation License::  License for copying this manual.
 @end menu
 
-@c Get fdl.texi from http://www.gnu.org/licenses/fdl.html
+@c Get fdl.texi from https://www.gnu.org/licenses/fdl.html
 @include fdl.texi
 
 @node Index

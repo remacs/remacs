@@ -28,7 +28,7 @@ See the "Bugs" section of the Emacs manual for more information on how
 to report bugs.  (The file 'BUGS' in this directory explains how you
 can find and read that section using the Info files that come with
 Emacs.)  For a list of mailing lists related to Emacs, see
-<http://savannah.gnu.org/mail/?group=emacs>.  For the complete
+<https://savannah.gnu.org/mail/?group=emacs>.  For the complete
 list of GNU mailing lists, see <http://lists.gnu.org/>.
 
 The 'etc' subdirectory contains several other files, named in capital
@@ -116,4 +116,4 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.

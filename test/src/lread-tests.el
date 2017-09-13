@@ -17,7 +17,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -160,7 +160,7 @@ literals (Bug#20852)."
      (should (eq (read (concat "\\" str)) (intern str))))))
 
 (ert-deftest lread-test-bug26837 ()
-  "Test for http://debbugs.gnu.org/26837 ."
+  "Test for https://debbugs.gnu.org/26837 ."
   (let ((load-path (cons
                     (file-name-as-directory
                      (expand-file-name "data" (getenv "EMACS_TEST_DIRECTORY")))

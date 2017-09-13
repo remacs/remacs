@@ -5338,7 +5338,7 @@ hint to ImageMagick to help it detect the image type.
 Specifies a rotation angle in degrees.
 
 @item :index @var{frame}
-@c Doesn't work: http://debbugs.gnu.org/7978
+@c Doesn't work: https://debbugs.gnu.org/7978
 @xref{Multi-Frame Images}.
 @end table
 

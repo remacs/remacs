@@ -3601,7 +3601,7 @@ A link should be enclosed in double brackets and may contain a descriptive
 text to be displayed instead of the URL (@pxref{Link format}), for example:
 
 @example
-[[http://www.gnu.org/software/emacs/][GNU Emacs]]
+[[https://www.gnu.org/software/emacs/][GNU Emacs]]
 @end example
 
 @noindent
@@ -3713,7 +3713,7 @@ current session are part of the history for this prompt, so you can access
 them with @key{up} and @key{down} (or @kbd{M-p/n}).
 
 @b{Completion support}@* Completion with @key{TAB} will help you to insert
-valid link prefixes like @samp{http:} or @samp{ftp:}, including the prefixes
+valid link prefixes like @samp{https:}, including the prefixes
 defined through link abbreviations (@pxref{Link abbreviations}).  If you
 press @key{RET} after inserting only the @var{prefix}, Org will offer
 specific completion support for some link types@footnote{This works if

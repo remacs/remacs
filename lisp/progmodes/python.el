@@ -23,7 +23,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -80,7 +80,7 @@
 
 ;; Using the "console" subcommand to start IPython in server-client
 ;; mode is known to fail intermittently due a bug on IPython itself
-;; (see URL `http://debbugs.gnu.org/cgi/bugreport.cgi?bug=18052#27').
+;; (see URL `https://debbugs.gnu.org/cgi/bugreport.cgi?bug=18052#27').
 ;; There seems to be a race condition in the IPython server (A.K.A
 ;; kernel) when code is sent while it is still initializing, sometimes
 ;; causing the shell to get stalled.  With that said, if an IPython
@@ -97,7 +97,7 @@
 
 ;; Missing or delayed output used to happen due to differences between
 ;; Operating Systems' pipe buffering (e.g. CPython 3.3.4 in Windows 7.
-;; See URL `http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17304').  To
+;; See URL `https://debbugs.gnu.org/cgi/bugreport.cgi?bug=17304').  To
 ;; avoid this, the `python-shell-unbuffered' defaults to non-nil and
 ;; controls whether `python-shell-calculate-process-environment'
 ;; should set the "PYTHONUNBUFFERED" environment variable on startup:

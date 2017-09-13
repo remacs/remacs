@@ -143,7 +143,7 @@ with a WWW browser with @kbd{K H}.  @xref{MIME Commands}.
 @item International host names (@acronym{IDNA}) can now be decoded
 inside article bodies using @kbd{W i}
 (@code{gnus-summary-idna-message}).  This requires that GNU Libidn
-(@url{http://www.gnu.org/software/libidn/}) has been installed.
+(@url{https://www.gnu.org/software/libidn/}) has been installed.
 @c FIXME: Also mention @code{message-use-idna}?
 
 @item The non-@acronym{ASCII} group names handling has been much
