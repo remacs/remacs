@@ -212,8 +212,17 @@ RED, GREEN and BLUE should be between 0.0 and 1.0, inclusive."
               (* 12.92 b)
             (- (* 1.055 (expt b (/ 2.4))) 0.055)))))
 
+(defconst color-d75-xyz '(0.9497 1.0 1.2264)
+  "D75 white point in CIE XYZ.")
+
 (defconst color-d65-xyz '(0.950455 1.0 1.088753)
   "D65 white point in CIE XYZ.")
+
+(defconst color-d55-xyz '(0.9568 1.0 0.9215)
+  "D55 white point in CIE XYZ.")
+
+(defconst color-d50-xyz '(0.9642 1.0 0.8249)
+  "D50 white point in CIE XYZ.")
 
 (defconst color-cie-ε (/ 216 24389.0))
 (defconst color-cie-κ (/ 24389 27.0))
@@ -268,6 +277,24 @@ conversion.  If omitted or nil, use `color-d65-xyz'."
 (defun color-lab-to-srgb (L a b)
   "Convert CIE L*a*b* to RGB."
   (apply 'color-xyz-to-srgb (color-lab-to-xyz L a b)))
+
+(defun color-xyz-to-xyy (X Y Z)
+  "Convert CIE XYZ to xyY."
+  (let ((d (float (+ X Y Z))))
+    (list (/ X d) (/ Y d) Y)))
+
+(defun color-xyy-to-xyz (x y Y)
+  "Convert CIE xyY to XYZ."
+  (let ((y (float y)))
+   (list (/ (* Y x) y) Y (/ (* Y (- 1 x y)) y))))
+
+(defun color-lab-to-lch (L a b)
+  "Convert CIE L*a*b* to L*C*h*"
+  (list L (sqrt (+ (* a a) (* b b))) (atan b a)))
+
+(defun color-lch-to-lab (L C h)
+  "Convert CIE L*a*b* to L*C*h*"
+  (list L (* C (cos h)) (* C (sin h))))
 
 (defun color-cie-de2000 (color1 color2 &optional kL kC kH)
   "Return the CIEDE2000 color distance between COLOR1 and COLOR2.
