@@ -6342,8 +6342,9 @@ Provided for backwards compatibility."
       ;; in each element are in the increasing order.
       (dolist (handle (reverse gnus-article-mime-handle-alist))
 	(if (stringp (cadr handle))
-	    (setq flat (nconc flat (gnus-article-mime-handles
-				    (cddr handle) (list (car handle)) flat)))
+	    (when (cddr handle)
+	      (setq flat (nconc flat (gnus-article-mime-handles
+				      (cddr handle) (list (car handle)) flat))))
 	  (delq (rassq (cdr handle) flat) flat)
 	  (setq flat (nconc flat (list (cons (list (car handle))
 					     (cdr handle)))))))
