@@ -286,13 +286,10 @@ without silencing all errors."
 (defun gensym (&optional prefix)
   "Return a new uninterned symbol.
 The name is made by appending `gensym-counter' to PREFIX.
-PREFIX can be a string, and defaults to \"G\".
-If PREFIX is a number, it replaces the value of `gensym-counter'."
-  (let ((pfix (if (stringp prefix) prefix "G"))
-        (num (if (integerp prefix) prefix
-               (prog1 gensym-counter
-                 (setq gensym-counter (1+ gensym-counter))))))
-    (make-symbol (format "%s%d" pfix num))))
+PREFIX is a string, and defaults to \"g\"."
+  (let ((num (prog1 gensym-counter
+               (setq gensym-counter (1+ gensym-counter)))))
+    (make-symbol (format "%s%d" prefix num))))
 
 (defun ignore (&rest _ignore)
   "Do nothing and return nil.

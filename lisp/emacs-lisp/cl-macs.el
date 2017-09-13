@@ -161,9 +161,16 @@ whether X is known at compile time, macroexpand it completely in
 
 ;;; Symbols.
 
-(defvaralias 'cl--gensym-counter 'gensym-counter)
+(defvar cl--gensym-counter 0)
 ;;;###autoload
-(cl--defalias 'cl-gensym 'gensym)
+(defun cl-gensym (&optional prefix)
+  "Generate a new uninterned symbol.
+The name is made by appending a number to PREFIX, default \"G\"."
+  (let ((pfix (if (stringp prefix) prefix "G"))
+	(num (if (integerp prefix) prefix
+	       (prog1 cl--gensym-counter
+		 (setq cl--gensym-counter (1+ cl--gensym-counter))))))
+    (make-symbol (format "%s%d" pfix num))))
 
 (defvar cl--gentemp-counter 0)
 ;;;###autoload
