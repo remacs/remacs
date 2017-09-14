@@ -343,6 +343,7 @@ OPTION_DEFAULT_ON([tiff],[don't compile with TIFF image support])
 OPTION_DEFAULT_ON([gif],[don't compile with GIF image support])
 OPTION_DEFAULT_ON([png],[don't compile with PNG image support])
 OPTION_DEFAULT_ON([rsvg],[don't compile with SVG image support])
+OPTION_DEFAULT_ON([lcms2],[don't compile with Little CMS support])
 OPTION_DEFAULT_ON([libsystemd],[don't compile with libsystemd support])
 OPTION_DEFAULT_OFF([cairo],[compile with Cairo drawing (experimental)])
 OPTION_DEFAULT_ON([xml2],[don't compile with XML parsing support])
@@ -3463,7 +3464,7 @@ if test "${with_lcms2}" != "no"; then
 fi
 if test "${HAVE_LCMS2}" = "yes"; then
   AC_DEFINE([HAVE_LCMS2], 1, [Define to 1 if you have the lcms2 library (-llcms2).])
-  ### ???
+  ### mingw32 doesn't use -llcms2, since it loads the library dynamically.
   if test "${opsys}" = "mingw32"; then
      LIBLCMS2=
   fi
