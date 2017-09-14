@@ -81,6 +81,8 @@
 (defvar timer-list-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "c" 'timer-list-cancel)
+    (define-key map "n" 'next-line)
+    (define-key map "p" 'previous-line)
     (easy-menu-define nil map ""
       '("Timers"
 	["Cancel" timer-list-cancel t]))
