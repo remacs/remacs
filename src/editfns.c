@@ -1045,13 +1045,13 @@ usage: (save-current-buffer &rest BODY)  */)
   return unbind_to (count, Fprogn (args));
 }
 
-DEFUN ("point-min-marker", Fpoint_min_marker, Spoint_min_marker, 0, 0, 0,
-       doc: /* Return a marker to the minimum permissible value of point in this buffer.
-This is the beginning, unless narrowing (a buffer restriction) is in effect.  */)
-  (void)
-{
-  return build_marker (current_buffer, BEGV, BEGV_BYTE);
-}
+/* DEFUN ("point-min-marker", Fpoint_min_marker, Spoint_min_marker, 0, 0, 0, */
+/*        doc: /\* Return a marker to the minimum permissible value of point in this buffer. */
+/* This is the beginning, unless narrowing (a buffer restriction) is in effect.  *\/) */
+/*   (void) */
+/* { */
+/*   return build_marker (current_buffer, BEGV, BEGV_BYTE); */
+/* } */
 
 DEFUN ("point-max-marker", Fpoint_max_marker, Spoint_max_marker, 0, 0, 0,
        doc: /* Return a marker to the maximum permissible value of point in this buffer.
@@ -5360,7 +5360,7 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Ssave_excursion);
   defsubr (&Ssave_current_buffer);
 
-  defsubr (&Spoint_min_marker);
+  /* defsubr (&Spoint_min_marker); */
   defsubr (&Spoint_max_marker);
   defsubr (&Sgap_position);
   defsubr (&Sgap_size);

@@ -5,6 +5,7 @@ use lisp::LispObject;
 use remacs_sys::EmacsInt;
 use threads::ThreadState;
 use buffers::get_buffer;
+use marker::build_marker;
 
 
 /// Return value of point, as an integer.
@@ -75,6 +76,15 @@ pub fn eolp() -> LispObject {
 #[lisp_fn]
 pub fn point_min() -> LispObject {
     LispObject::from_natnum(ThreadState::current_buffer().begv as EmacsInt)
+}
+
+/// Return a marker to the minimum permissible value of point in this
+/// buffer.  This is the beginning, unless narrowing (a buffer
+/// restriction) is in effect.
+#[lisp_fn]
+pub fn point_min_marker() -> LispObject {
+    let buffer = ThreadState::current_buffer();
+    build_marker(buffer, buffer.begv, buffer.beg_byte())
 }
 
 /// Return the maximum permissible value of point in the current

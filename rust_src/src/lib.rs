@@ -354,6 +354,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sbolp);
         defsubr(&*editfns::Seolp);
         defsubr(&*editfns::Spoint_min);
+        defsubr(&*editfns::Spoint_min_marker);
         defsubr(&*editfns::Spoint_max);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
