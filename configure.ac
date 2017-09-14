@@ -5367,7 +5367,7 @@ emacs_config_features=
 for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT OLDXMENU X11 NS MODULES \
-  XWIDGETS LIBSYSTEMD CANNOT_DUMP; do
+  XWIDGETS LIBSYSTEMD CANNOT_DUMP LCMS2; do
 
     case $opt in
       CANNOT_DUMP) eval val=\${$opt} ;;
@@ -5400,6 +5400,7 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs use a png library?                           ${HAVE_PNG} $LIBPNG
   Does Emacs use -lrsvg-2?                                ${HAVE_RSVG}
   Does Emacs use cairo?                                   ${HAVE_CAIRO}
+  Does Emacs use -llcms2?                                 ${HAVE_LCMS2}
   Does Emacs use imagemagick (version 6)?                 ${HAVE_IMAGEMAGICK}
   Does Emacs support sound?                               ${HAVE_SOUND}
   Does Emacs use -lgpm?                                   ${HAVE_GPM}

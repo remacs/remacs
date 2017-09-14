@@ -25,6 +25,48 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 
+#ifdef WINDOWSNT
+# include <windows.h>
+# include "w32.h"
+
+DEF_DLL_FN (cmsFloat64Number, cmsCIE2000DeltaE,
+	    (const cmsCIELab* Lab1, const cmsCIELab* Lab2, cmsFloat64Number Kl,
+	     cmsFloat64Number Kc, cmsFloat64Number Kh));
+DEF_DLL_FN (cmsHANDLE, cmsCIECAM02Init,
+	    (cmsContext ContextID, const cmsViewingConditions* pVC));
+DEF_DLL_FN (void, cmsCIECAM02Forward,
+	    (cmsHANDLE hModel, const cmsCIEXYZ* pIn, cmsJCh* pOut));
+DEF_DLL_FN (void, cmsCIECAM02Done, (cmsHANDLE hModel));
+
+static bool lcms_initialized;
+
+static bool
+init_lcms_functions (void)
+{
+  HMODULE library = w32_delayed_load (Qlcms2);
+
+  if (!library)
+    return false;
+
+  LOAD_DLL_FN (library, cmsCIE2000DeltaE);
+  LOAD_DLL_FN (library, cmsCIECAM02Init);
+  LOAD_DLL_FN (library, cmsCIECAM02Forward);
+  LOAD_DLL_FN (library, cmsCIECAM02Done);
+  return true;
+}
+
+# undef cmsCIE2000DeltaE
+# undef cmsCIECAM02Init
+# undef cmsCIECAM02Forward
+# undef cmsCIECAM02Done
+
+# define cmsCIE2000DeltaE   fn_cmsCIE2000DeltaE
+# define cmsCIECAM02Init    fn_cmsCIECAM02Init
+# define cmsCIECAM02Forward fn_cmsCIECAM02Forward
+# define cmsCIECAM02Done    fn_cmsCIECAM02Done
+
+#endif	/* WINDOWSNT */
+
 static bool
 parse_lab_list (Lisp_Object lab_list, cmsCIELab *color)
 {
@@ -57,6 +99,16 @@ chroma, and hue, respectively. The parameters each default to 1. */)
 {
   cmsCIELab Lab1, Lab2;
   cmsFloat64Number Kl, Kc, Kh;
+
+#ifdef WINDOWSNT
+  if (!lcms_initialized)
+    lcms_initialized = init_lcms_functions ();
+  if (!lcms_initialized)
+    {
+      message1 ("lcms2 library not found");
+      return Qnil;
+    }
+#endif
 
   if (!(CONSP (color1) && parse_lab_list (color1, &Lab1)))
     signal_error ("Invalid color", color1);
@@ -111,6 +163,16 @@ Optional argument is the XYZ white point, which defaults to illuminant D65. */)
   cmsCIEXYZ xyz1, xyz2, xyzw;
   double Jp1, ap1, bp1, Jp2, ap2, bp2;
   double Mp1, Mp2, FL, k, k4;
+
+#ifdef WINDOWSNT
+  if (!lcms_initialized)
+    lcms_initialized = init_lcms_functions ();
+  if (!lcms_initialized)
+    {
+      message1 ("lcms2 library not found");
+      return Qnil;
+    }
+#endif
 
   if (!(CONSP (color1) && parse_xyz_list (color1, &xyz1)))
     signal_error ("Invalid color", color1);
@@ -170,6 +232,27 @@ Optional argument is the XYZ white point, which defaults to illuminant D65. */)
                            (bp2 - bp1) * (bp2 - bp1)));
 }
 
+DEFUN ("lcms2-available-p", Flcms2_available_p, Slcms2_available_p, 0, 0, 0,
+       doc: /* Return t if lcms2 color calculations are available in this instance of Emacs.  */)
+     (void)
+{
+#ifdef WINDOWSNT
+  Lisp_Object found = Fassq (Qlcms2, Vlibrary_cache);
+  if (CONSP (found))
+    return XCDR (found);
+  else
+    {
+      Lisp_Object status;
+      lcms_initialized = init_lcms_functions ();
+      status = lcms_initialized ? Qt : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qlcms2, status), Vlibrary_cache);
+      return status;
+    }
+#else  /* !WINDOWSNT */
+  return Qt;
+#endif
+}
+
 
 /* Initialization */
 void
@@ -177,6 +260,7 @@ syms_of_lcms2 (void)
 {
   defsubr (&Slcms_cie_de2000);
   defsubr (&Slcms_cam02_ucs);
+  defsubr (&Slcms2_available_p);
 
   Fprovide (intern_c_string ("lcms2"), Qnil);
 }

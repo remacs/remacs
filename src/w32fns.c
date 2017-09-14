@@ -10405,6 +10405,7 @@ syms_of_w32fns (void)
   DEFSYM (Qlibxml2, "libxml2");
   DEFSYM (Qserif, "serif");
   DEFSYM (Qzlib, "zlib");
+  DEFSYM (Qlcms2, "lcms2");
 
   Fput (Qundefined_color, Qerror_conditions,
 	listn (CONSTYPE_PURE, 2, Qundefined_color, Qerror));
