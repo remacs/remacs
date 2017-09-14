@@ -470,6 +470,12 @@ get_section_info (file_data *p_infile)
     }
 }
 
+/* Format to print a DWORD_PTR value.  */
+#ifdef MINGW_W64
+# define pDWP  "16llx"
+#else
+# define pDWP  "08lx"
+#endif
 
 /* The dump routines.  */
 
@@ -490,13 +496,13 @@ copy_executable_and_dump_data (file_data *p_infile,
 #define COPY_CHUNK(message, src, size, verbose)					\
   do {										\
     unsigned char *s = (void *)(src);						\
-    unsigned long count = (size);						\
+    DWORD_PTR count = (size);						\
     if (verbose)								\
       {										\
 	printf ("%s\n", (message));						\
-	printf ("\t0x%08x Offset in input file.\n", s - p_infile->file_base); 	\
-	printf ("\t0x%08x Offset in output file.\n", dst - p_outfile->file_base); \
-	printf ("\t0x%08lx Size in bytes.\n", count);				\
+	printf ("\t0x%"pDWP" Offset in input file.\n", s - p_infile->file_base); 	\
+	printf ("\t0x%"pDWP" Offset in output file.\n", dst - p_outfile->file_base); \
+	printf ("\t0x%"pDWP" Size in bytes.\n", count);				\
       }										\
     memcpy (dst, s, count);							\
     dst += count;								\
@@ -505,15 +511,15 @@ copy_executable_and_dump_data (file_data *p_infile,
 #define COPY_PROC_CHUNK(message, src, size, verbose)				\
   do {										\
     unsigned char *s = (void *)(src);						\
-    unsigned long count = (size);						\
+    DWORD_PTR count = (size);						\
     if (verbose)								\
       {										\
 	printf ("%s\n", (message));						\
 	printf ("\t0x%p Address in process.\n", s);				\
 	printf ("\t0x%p Base       output file.\n", p_outfile->file_base); \
-	printf ("\t0x%p Offset  in output file.\n", dst - p_outfile->file_base); \
+	printf ("\t0x%"pDWP" Offset  in output file.\n", dst - p_outfile->file_base); \
 	printf ("\t0x%p Address in output file.\n", dst); \
-	printf ("\t0x%p Size in bytes.\n", count);				\
+	printf ("\t0x%"pDWP" Size in bytes.\n", count);				\
       }										\
     memcpy (dst, s, count);							\
     dst += count;								\
