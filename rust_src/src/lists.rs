@@ -95,7 +95,7 @@ fn cdr_safe(object: LispObject) -> LispObject {
 
 /// Take cdr N times on LIST, return the result.
 #[lisp_fn]
-fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
+pub fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
     let num = n.as_fixnum_or_error();
     let mut tail = list;
     for _ in 0..num {
@@ -122,7 +122,7 @@ fn nth(n: LispObject, list: LispObject) -> LispObject {
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
 /// The value is actually the tail of LIST whose car is ELT.
 #[lisp_fn]
-fn memq(elt: LispObject, list: LispObject) -> LispObject {
+pub fn memq(elt: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         if elt.eq(tail.car()) {
             return tail.as_obj();

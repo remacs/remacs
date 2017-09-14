@@ -55,6 +55,8 @@ mod chartable;
 mod category;
 mod obarray;
 mod editfns;
+mod minibuf;
+mod fns;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -71,6 +73,9 @@ pub use base64::base64_decode_1;
 // Used in buffer.c
 pub use buffers::Fbuffer_live_p;
 pub use buffers::Fbuffer_modified_p;
+
+// Used in window.c
+pub use windows::Fwindow_buffer;
 
 // used in process.c
 pub use buffers::Fbuffer_name;
@@ -92,6 +97,7 @@ pub use math::Fleq;
 pub use math::arithcompare;
 pub use editfns::Feobp;
 pub use editfns::Fbobp;
+pub use fns::Felt;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -137,11 +143,13 @@ pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
 pub use buffers::Fcurrent_buffer;
+pub use buffers::Fset_buffer;
 pub use obarray::intern_1;
 pub use obarray::Fintern;
 pub use obarray::Fintern_soft;
 pub use marker::Fmarker_position;
 pub use marker::Fmarker_buffer;
+pub use windows::Fwindow_point;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
@@ -168,6 +176,10 @@ pub use multibyte::str_to_multibyte;
 pub use multibyte::str_as_unibyte;
 pub use multibyte::str_to_unibyte;
 
+// Used in xdisp.c
+pub use buffers::Foverlay_start;
+pub use buffers::Foverlay_end;
+
 // Used in window.c, macros.c
 pub use interactive::Fprefix_numeric_value;
 pub use editfns::Fbolp;
@@ -189,8 +201,16 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Sbuffer_modified_tick);
         defsubr(&*buffers::Sbuffer_chars_modified_tick);
         defsubr(&*buffers::Sbuffer_name);
+        defsubr(&*buffers::Sset_buffer);
+        defsubr(&*buffers::Soverlay_start);
+        defsubr(&*buffers::Soverlay_end);
+        defsubr(&*buffers::Soverlay_buffer);
         defsubr(&*windows::Swindowp);
         defsubr(&*windows::Swindow_live_p);
+        defsubr(&*windows::Swindow_point);
+        defsubr(&*windows::Sselected_window);
+        defsubr(&*windows::Swindow_buffer);
+        defsubr(&*windows::Swindow_valid_p);
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*lists::Satom);
@@ -335,5 +355,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Seolp);
         defsubr(&*editfns::Spoint_min);
         defsubr(&*editfns::Spoint_max);
+        defsubr(&*minibuf::Sminibufferp);
+        defsubr(&*minibuf::Sactive_minibuffer_window);
+        defsubr(&*fns::Selt);
     }
 }

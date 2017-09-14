@@ -14,7 +14,7 @@ use libc::{c_char, c_void, intptr_t, ptrdiff_t, uintptr_t};
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
-use buffers::LispBufferRef;
+use buffers::{LispBufferRef, LispOverlayRef};
 use windows::LispWindowRef;
 use marker::LispMarkerRef;
 use hashtable::LispHashTableRef;
@@ -28,7 +28,8 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
                  Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp, Qhash_table_p,
-                 Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p,
+                 SYMBOL_NAME, PseudovecType, EqualKind};
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -508,6 +509,20 @@ impl LispObject {
         self.as_vectorlike().map_or(None, |v| v.as_window())
     }
 
+    pub fn as_window_or_error(self) -> LispWindowRef {
+        self.as_window().unwrap_or_else(
+            || wrong_type!(Qwindowp, self),
+        )
+    }
+
+    pub fn as_live_window_or_error(self) -> LispWindowRef {
+        if self.as_window().map_or(false, |w| w.is_live()) {
+            self.as_window().unwrap()
+        } else {
+            wrong_type!(Qwindow_live_p, self);
+        }
+    }
+
     pub fn is_frame(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_FRAME)
@@ -922,6 +937,22 @@ impl LispObject {
         self.as_misc().map_or(
             false,
             |m| m.ty == Lisp_Misc_Type::Overlay,
+        )
+    }
+
+    pub fn as_overlay(self) -> Option<LispOverlayRef> {
+        self.as_misc().and_then(
+            |m| if m.ty == Lisp_Misc_Type::Overlay {
+                unsafe { Some(mem::transmute(m)) }
+            } else {
+                None
+            },
+        )
+    }
+
+    pub fn as_overlay_or_error(self) -> LispOverlayRef {
+        self.as_overlay().unwrap_or_else(
+            || wrong_type!(Qoverlayp, self),
         )
     }
 

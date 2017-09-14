@@ -108,14 +108,6 @@ choose_minibuf_frame (void)
   }
 }
 
-DEFUN ("active-minibuffer-window", Factive_minibuffer_window,
-       Sactive_minibuffer_window, 0, 0, 0,
-       doc: /* Return the currently active minibuffer window, or nil if none.  */)
-     (void)
-{
-  return minibuf_level ? minibuf_window : Qnil;
-}
-
 DEFUN ("set-minibuffer-window", Fset_minibuffer_window,
        Sset_minibuffer_window, 1, 1, 0,
        doc: /* Specify which minibuffer window to use for the minibuffer.
@@ -263,26 +255,6 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
   return val;
 }
 
-DEFUN ("minibufferp", Fminibufferp,
-       Sminibufferp, 0, 1, 0,
-       doc: /* Return t if BUFFER is a minibuffer.
-No argument or nil as argument means use current buffer as BUFFER.
-BUFFER can be a buffer or a buffer name.  */)
-  (Lisp_Object buffer)
-{
-  Lisp_Object tem;
-
-  if (NILP (buffer))
-    buffer = Fcurrent_buffer ();
-  else if (STRINGP (buffer))
-    buffer = Fget_buffer (buffer);
-  else
-    CHECK_BUFFER (buffer);
-
-  tem = Fmemq (buffer, Vminibuffer_list);
-  return ! NILP (tem) ? Qt : Qnil;
-}
-
 DEFUN ("minibuffer-prompt-end", Fminibuffer_prompt_end,
        Sminibuffer_prompt_end, 0, 0, 0,
        doc: /* Return the buffer position of the end of the minibuffer prompt.
@@ -2104,7 +2076,6 @@ It must be a character, which will be used to mask the input
 characters.  This variable should never be set globally.  */);
   Vread_hide_char = Qnil;
 
-  defsubr (&Sactive_minibuffer_window);
   defsubr (&Sset_minibuffer_window);
   defsubr (&Sread_from_minibuffer);
   defsubr (&Sread_string);
@@ -2116,7 +2087,6 @@ characters.  This variable should never be set globally.  */);
   defsubr (&Sminibuffer_depth);
   defsubr (&Sminibuffer_prompt);
 
-  defsubr (&Sminibufferp);
   defsubr (&Sminibuffer_prompt_end);
   defsubr (&Sminibuffer_contents);
   defsubr (&Sminibuffer_contents_no_properties);
