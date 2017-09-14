@@ -255,7 +255,27 @@ extern int emacs_setenv_TZ (char const *);
 #if GNUC_PREREQ (4, 4, 0) && defined __GLIBC_MINOR__
 # define PRINTF_ARCHETYPE __gnu_printf__
 #elif GNUC_PREREQ (4, 4, 0) && defined __MINGW32__
-# define PRINTF_ARCHETYPE __ms_printf__
+# ifdef MINGW_W64
+/* When __USE_MINGW_ANSI_STDIO is non-zero (as set by config.h),
+   MinGW64 replaces printf* with its own versions that are
+   __gnu_printf__ compatible, and emits warnings for MS native %I64d
+   format spec.  */
+#  if __USE_MINGW_ANSI_STDIO
+#   define PRINTF_ARCHETYPE __gnu_printf__
+#  else
+#   define PRINTF_ARCHETYPE __ms_printf__
+#  endif
+# else	/* mingw.org's MinGW */
+/* Starting from runtime v5.0.0, mingw.org's MinGW with GCC 6 and
+   later turns on __USE_MINGW_ANSI_STDIO by default, replaces printf*
+   with its own __mingw_printf__ version, which still recognizes
+   %I64d.  */
+#  if GNUC_PREREQ (6, 0, 0) && __MINGW32_MAJOR_VERSION >= 5
+#   define PRINTF_ARCHETYPE __mingw_printf__
+#  else  /* __MINGW32_MAJOR_VERSION < 5 */
+#   define PRINTF_ARCHETYPE __ms_printf__
+#  endif  /* __MINGW32_MAJOR_VERSION < 5 */
+# endif	 /* MinGW */
 #else
 # define PRINTF_ARCHETYPE __printf__
 #endif
