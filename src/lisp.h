@@ -101,7 +101,8 @@ enum { EMACS_INT_WIDTH = LLONG_WIDTH, EMACS_UINT_WIDTH = ULLONG_WIDTH };
    which will cause a warning for %lld etc.  */
 #  if defined __MINGW32__						\
   && (!defined __USE_MINGW_ANSI_STDIO					\
-      || !(GNUC_PREREQ (6, 0, 0) && __MINGW32_MAJOR_VERSION >= 5))
+      || (!defined MINGW_W64						\
+	  && !(GNUC_PREREQ (6, 0, 0) && __MINGW32_MAJOR_VERSION >= 5)))
 #   define pI "I64"
 #  else	 /* ! MinGW */
 #   define pI "ll"
