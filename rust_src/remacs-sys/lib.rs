@@ -1313,6 +1313,7 @@ extern "C" {
     pub static Qwindow_live_p: Lisp_Object;
     pub static Qoverlayp: Lisp_Object;
     pub static Qminus: Lisp_Object;
+    pub static Qmark_inactive: Lisp_Object;
 
     pub static Qinteger: Lisp_Object;
     pub static Qsymbol: Lisp_Object;

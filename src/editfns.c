@@ -386,54 +386,6 @@ The return value is POSITION.  */)
   return position;
 }
 
-
-/* Return the start or end position of the region.
-   BEGINNINGP means return the start.
-   If there is no region active, signal an error. */
-
-static Lisp_Object
-region_limit (bool beginningp)
-{
-  Lisp_Object m;
-
-  if (!NILP (Vtransient_mark_mode)
-      && NILP (Vmark_even_if_inactive)
-      && NILP (BVAR (current_buffer, mark_active)))
-    xsignal0 (Qmark_inactive);
-
-  m = Fmarker_position (BVAR (current_buffer, mark));
-  if (NILP (m))
-    error ("The mark is not set now, so there is no region");
-
-  /* Clip to the current narrowing (bug#11770).  */
-  return make_number ((PT < XFASTINT (m)) == beginningp
-		      ? PT
-		      : clip_to_bounds (BEGV, XFASTINT (m), ZV));
-}
-
-DEFUN ("region-beginning", Fregion_beginning, Sregion_beginning, 0, 0, 0,
-       doc: /* Return the integer value of point or mark, whichever is smaller.  */)
-  (void)
-{
-  return region_limit (1);
-}
-
-DEFUN ("region-end", Fregion_end, Sregion_end, 0, 0, 0,
-       doc: /* Return the integer value of point or mark, whichever is larger.  */)
-  (void)
-{
-  return region_limit (0);
-}
-
-DEFUN ("mark-marker", Fmark_marker, Smark_marker, 0, 0, 0,
-       doc: /* Return this buffer's mark, as a marker object.
-Watch out!  Moving this marker changes the mark position.
-If you set the marker not to point anywhere, the buffer will have no mark.  */)
-  (void)
-{
-  return BVAR (current_buffer, mark);
-}
-
 
 /* Find all the overlays in the current buffer that touch position POS.
    Return the number found, and store them in a vector in VEC
@@ -5337,9 +5289,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sget_pos_property);
 
   defsubr (&Spoint_marker);
-  defsubr (&Smark_marker);
-  defsubr (&Sregion_beginning);
-  defsubr (&Sregion_end);
 
   /* Symbol for the text property used to mark fields.  */
   DEFSYM (Qfield, "field");

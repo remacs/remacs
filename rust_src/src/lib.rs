@@ -55,6 +55,7 @@ mod chartable;
 mod category;
 mod obarray;
 mod editfns;
+mod util;
 mod minibuf;
 mod fns;
 
@@ -69,6 +70,8 @@ use remacs_sys::Lisp_Subr;
 
 pub use base64::base64_encode_1;
 pub use base64::base64_decode_1;
+
+pub use util::clip_to_bounds;
 
 // Used in buffer.c
 pub use buffers::Fbuffer_live_p;
@@ -353,6 +356,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sbobp);
         defsubr(&*editfns::Sbolp);
         defsubr(&*editfns::Seolp);
+        defsubr(&*editfns::Sregion_beginning);
+        defsubr(&*editfns::Sregion_end);
+        defsubr(&*editfns::Smark_marker);
         defsubr(&*editfns::Spoint_min);
         defsubr(&*editfns::Spoint_max);
         defsubr(&*minibuf::Sminibufferp);
