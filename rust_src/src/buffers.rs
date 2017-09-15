@@ -104,6 +104,7 @@ impl LispBufferRef {
     #[inline]
     pub fn mark(&self) -> LispObject {
         LispObject::from_raw(self.mark)
+    }
 
     #[inline]
     pub fn name(&self) -> LispObject {
