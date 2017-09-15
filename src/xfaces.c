@@ -4093,7 +4093,8 @@ DEFUN ("color-distance", Fcolor_distance, Scolor_distance, 2, 4, 0,
 COLOR1 and COLOR2 may be either strings containing the color name,
 or lists of the form (RED GREEN BLUE), each in the range 0 to 65535 inclusive.
 If FRAME is unspecified or nil, the current frame is used.
-If METRIC is unspecified or nil, a modified L*u*v* metric is used.  */)
+If METRIC is specified, it should be a function that accepts
+two lists of the form (RED GREEN BLUE) aforementioned. */)
   (Lisp_Object color1, Lisp_Object color2, Lisp_Object frame,
    Lisp_Object metric)
 {
@@ -4112,7 +4113,13 @@ If METRIC is unspecified or nil, a modified L*u*v* metric is used.  */)
   if (NILP (metric))
     return make_number (color_distance (&cdef1, &cdef2));
   else
-    return call2 (metric, color1, color2);
+    return call2 (metric,
+                  list3 (make_number (cdef1.red),
+                         make_number (cdef1.green),
+                         make_number (cdef1.blue)),
+                  list3 (make_number (cdef2.red),
+                         make_number (cdef2.green),
+                         make_number (cdef2.blue)));
 }
 
 
