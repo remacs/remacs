@@ -187,29 +187,30 @@ Unlike `reverse', this keeps the property-value pairs intact."
 
 ;; Reader utilities
 
-(defsubst json-advance (&optional n)
+(define-inline json-advance (&optional n)
   "Advance N characters forward."
-  (forward-char n))
+  (inline-quote (forward-char ,n)))
 
-(defsubst json-peek ()
+(define-inline json-peek ()
   "Return the character at point."
-  (following-char))
+  (inline-quote (following-char)))
 
-(defsubst json-pop ()
+(define-inline json-pop ()
   "Advance past the character at point, returning it."
-  (let ((char (json-peek)))
-    (if (zerop char)
-        (signal 'json-end-of-file nil)
-      (json-advance)
-      char)))
+  (inline-letevals ((char (json-peek)))
+    (inline-quote
+     (if (zerop ,char)
+         (signal 'json-end-of-file nil)
+       (json-advance)
+       ,char))))
 
-(defun json-skip-whitespace ()
+(define-inline json-skip-whitespace ()
   "Skip past the whitespace at point."
   ;; See
   ;; https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf
   ;; or https://tools.ietf.org/html/rfc7159#section-2 for the
   ;; definition of whitespace in JSON.
-  (skip-chars-forward "\t\r\n "))
+  (inline-quote (skip-chars-forward "\t\r\n ")))
 
 
 
@@ -303,7 +304,8 @@ KEYWORD is the keyword expected."
                             (thing-at-point 'word)))))
           (json-advance))
         keyword)
-  (unless (looking-at "\\(\\s-\\|[],}]\\|$\\)")
+  (json-skip-whitespace)
+  (unless (memq (following-char) '(?\] ?, ?}))
     (signal 'json-unknown-keyword
             (list (save-excursion
                     (backward-word-strictly 1)
@@ -470,11 +472,10 @@ Returns the updated object, which you should save, e.g.:
     (setq obj (json-add-to-object obj \"foo\" \"bar\"))
 Please see the documentation of `json-object-type' and `json-key-type'."
   (let ((json-key-type
-         (if (eq json-key-type nil)
+         (or json-key-type
              (cdr (assq json-object-type '((hash-table . string)
                                            (alist . symbol)
-                                           (plist . keyword))))
-           json-key-type)))
+                                           (plist . keyword)))))))
     (setq key
           (cond ((eq json-key-type 'string)
                  key)
