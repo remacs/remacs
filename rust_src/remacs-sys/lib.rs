@@ -296,6 +296,18 @@ pub struct Lisp_Marker {
     pub bytepos: ptrdiff_t,
 }
 
+// TODO: write a docstring based on the docs in lisp.h.
+#[repr(C)]
+pub struct Lisp_Overlay {
+    pub ty: Lisp_Misc_Type,
+    // GC mark bit, 16 bits spacer
+    padding: u16,
+    pub next: *const Lisp_Overlay,
+    pub start: Lisp_Object,
+    pub end: Lisp_Object,
+    pub plist: Lisp_Object,
+}
+
 /// Represents the cursor position within an Emacs window. For
 /// documentation see stuct cursor_pos in window.h.
 #[repr(C)]
@@ -1297,6 +1309,9 @@ extern "C" {
     pub static Qcharacterp: Lisp_Object;
     pub static Qchar_table_p: Lisp_Object;
     pub static Qbufferp: Lisp_Object;
+    pub static Qwindowp: Lisp_Object;
+    pub static Qwindow_live_p: Lisp_Object;
+    pub static Qoverlayp: Lisp_Object;
     pub static Qminus: Lisp_Object;
     pub static Qmark_inactive: Lisp_Object;
 
@@ -1345,7 +1360,12 @@ extern "C" {
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
+    pub static Vminibuffer_list: Lisp_Object;
+    pub static minibuf_level: EmacsInt;
+    pub static minibuf_window: Lisp_Object;
+    pub static selected_window: Lisp_Object;
 
+    pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;

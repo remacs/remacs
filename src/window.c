@@ -301,15 +301,6 @@ wset_buffer (struct window *w, Lisp_Object val)
   adjust_window_count (w, 1);
 }
 
-DEFUN ("window-valid-p", Fwindow_valid_p, Swindow_valid_p, 1, 1, 0,
-       doc: /* Return t if OBJECT is a valid window and nil otherwise.
-A valid window is either a window that displays a buffer or an internal
-window.  Windows that have been deleted are not valid.  */)
-  (Lisp_Object object)
-{
-  return WINDOW_VALID_P (object) ? Qt : Qnil;
-}
-
 /* Frames and windows.  */
 DEFUN ("window-frame", Fwindow_frame, Swindow_frame, 0, 1, 0,
        doc: /* Return the frame that window WINDOW is on.
@@ -437,15 +428,6 @@ Return WINDOW.  */)
     }
 }
 
-DEFUN ("selected-window", Fselected_window, Sselected_window, 0, 0, 0,
-       doc: /* Return the selected window.
-The selected window is the window in which the standard cursor for
-selected windows appears and to which many commands apply.  */)
-  (void)
-{
-  return selected_window;
-}
-
 EMACS_INT window_select_count;
 
 /* If select_window is called with inhibit_point_swap true it will
@@ -571,16 +553,6 @@ the buffer of the selected window before each command.  */)
   return select_window (window, norecord, false);
 }
 
-DEFUN ("window-buffer", Fwindow_buffer, Swindow_buffer, 0, 1, 0,
-       doc: /* Return the buffer displayed in window WINDOW.
-If WINDOW is omitted or nil, it defaults to the selected window.
-Return nil for an internal window or a deleted window.  */)
-  (Lisp_Object window)
-{
-  struct window *w = decode_any_window (window);
-  return WINDOW_LEAF_P (w) ? w->contents : Qnil;
-}
-
 DEFUN ("window-parent", Fwindow_parent, Swindow_parent, 0, 1, 0,
        doc: /* Return the parent window of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -1524,27 +1496,6 @@ column 0.  */)
 				  (FRAME_PIXEL_Y_FROM_CANON_Y (f, y)
 				   + FRAME_INTERNAL_BORDER_WIDTH (f)),
 				  0, false);
-}
-
-DEFUN ("window-point", Fwindow_point, Swindow_point, 0, 1, 0,
-       doc: /* Return current value of point in WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-For a nonselected window, this is the value point would have if that
-window were selected.
-
-Note that, when WINDOW is selected, the value returned is the same as
-that returned by `point' for WINDOW's buffer.  It would be more strictly
-correct to return the top-level value of `point', outside of any
-`save-excursion' forms.  But that is hard to define.  */)
-  (Lisp_Object window)
-{
-  register struct window *w = decode_live_window (window);
-
-  if (w == XWINDOW (selected_window))
-    return make_number (BUF_PT (XBUFFER (w->contents)));
-  else
-    return Fmarker_position (w->pointm);
 }
 
 DEFUN ("window-old-point", Fwindow_old_point, Swindow_old_point, 0, 1, 0,
@@ -7718,10 +7669,8 @@ Note that this optimization can cause the portion of the buffer
 displayed after a scrolling operation to be somewhat inaccurate.  */);
   Vfast_but_imprecise_scrolling = false;
 
-  defsubr (&Sselected_window);
   defsubr (&Sminibuffer_window);
   defsubr (&Swindow_minibuffer_p);
-  defsubr (&Swindow_valid_p);
   defsubr (&Swindow_frame);
   defsubr (&Sframe_root_window);
   defsubr (&Sframe_first_window);
@@ -7729,7 +7678,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_frame_selected_window);
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
-  defsubr (&Swindow_buffer);
   defsubr (&Swindow_parent);
   defsubr (&Swindow_top_child);
   defsubr (&Swindow_left_child);
@@ -7771,7 +7719,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_scroll_bar_height);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
-  defsubr (&Swindow_point);
   defsubr (&Swindow_old_point);
   defsubr (&Swindow_start);
   defsubr (&Swindow_end);

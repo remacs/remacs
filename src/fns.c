@@ -1066,19 +1066,6 @@ substring_both (Lisp_Object string, ptrdiff_t from, ptrdiff_t from_byte,
   return res;
 }
 
-DEFUN ("elt", Felt, Selt, 2, 2, 0,
-       doc: /* Return element of SEQUENCE at index N.  */)
-  (register Lisp_Object sequence, Lisp_Object n)
-{
-  CHECK_NUMBER (n);
-  if (CONSP (sequence) || NILP (sequence))
-    return Fcar (Fnthcdr (n, sequence));
-
-  /* Faref signals a "not array" error, so check here.  */
-  CHECK_ARRAY (sequence, Qsequencep);
-  return Faref (sequence, n);
-}
-
 /* Like Fassq but never report an error and do not allow quits.
    Use only on objects known to be non-circular lists.  */
 
@@ -3660,7 +3647,6 @@ this variable.  */);
   defsubr (&Scopy_alist);
   defsubr (&Ssubstring);
   defsubr (&Ssubstring_no_properties);
-  defsubr (&Selt);
   defsubr (&Sdelete);
   defsubr (&Snreverse);
   defsubr (&Sreverse);

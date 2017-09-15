@@ -3,10 +3,12 @@
 use libc::{c_void, c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Type, Vbuffer_alist, make_lisp_ptr};
+use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+                 make_lisp_ptr, set_buffer_internal, nsberror};
 use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
+use marker::{marker_position, marker_buffer};
 
 use std::mem;
 
@@ -16,6 +18,7 @@ pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
 
 pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
+pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
     #[inline]
@@ -101,6 +104,10 @@ impl LispBufferRef {
     #[inline]
     pub fn mark(&self) -> LispObject {
         LispObject::from_raw(self.mark)
+
+    #[inline]
+    pub fn name(&self) -> LispObject {
+        LispObject::from_raw(self.name)
     }
 
     // Check if buffer is live
@@ -118,6 +125,18 @@ impl LispBufferRef {
         };
 
         unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
+    }
+}
+
+impl LispOverlayRef {
+    #[inline]
+    pub fn start(&self) -> LispObject {
+        LispObject::from_raw(self.start)
+    }
+
+    #[inline]
+    pub fn end(&self) -> LispObject {
+        LispObject::from_raw(self.end)
     }
 }
 
@@ -240,6 +259,28 @@ fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
     LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().chars_modiff())
 }
 
+/// Return the position at which OVERLAY starts.
+#[lisp_fn]
+fn overlay_start(overlay: LispObject) -> LispObject {
+    let marker = overlay.as_overlay_or_error().start();
+    marker_position(marker)
+}
+
+/// Return the position at which OVERLAY ends.
+#[lisp_fn]
+fn overlay_end(overlay: LispObject) -> LispObject {
+    let marker = overlay.as_overlay_or_error().end();
+    marker_position(marker)
+}
+
+/// Return the buffer OVERLAY belongs to.
+/// Return nil if OVERLAY has been deleted.
+#[lisp_fn]
+fn overlay_buffer(overlay: LispObject) -> LispObject {
+    let marker = overlay.as_overlay_or_error().start();
+    marker_buffer(marker)
+}
+
 #[no_mangle]
 pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
     let start = LispObject::from_raw(unsafe { *b });
@@ -264,4 +305,27 @@ pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
     if !(begv <= beg && end <= zv) {
         args_out_of_range!(current_buffer(), start, stop);
     }
+}
+
+/// Make buffer BUFFER-OR-NAME current for editing operations.
+/// BUFFER-OR-NAME may be a buffer or the name of an existing buffer.
+/// See also `with-current-buffer' when you want to make a buffer current
+/// temporarily.  This function does not display the buffer, so its effect
+/// ends when the current command terminates.  Use `switch-to-buffer' or
+/// `pop-to-buffer' to switch buffers permanently.
+/// The return value is the buffer made current.
+#[lisp_fn]
+fn set_buffer(buffer_or_name: LispObject) -> LispObject {
+    let buffer = get_buffer(buffer_or_name);
+    if buffer.is_nil() {
+        unsafe { nsberror(buffer_or_name.to_raw()) }
+    };
+    if !buffer.as_buffer().unwrap().is_live() {
+        error!("Selecting deleted buffer");
+    };
+    unsafe {
+        set_buffer_internal(buffer.as_buffer_or_error().as_ptr() as *const _ as
+            *const c_void)
+    };
+    buffer
 }
