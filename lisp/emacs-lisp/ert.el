@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -102,7 +102,7 @@ This is like `equal-including-properties' except that it compares
 the property values of text properties structurally (by
 recursing) rather than with `eq'.  Perhaps this is what
 `equal-including-properties' should do in the first place; see
-Emacs bug 6581 at URL `http://debbugs.gnu.org/cgi/bugreport.cgi?bug=6581'."
+Emacs bug 6581 at URL `https://debbugs.gnu.org/cgi/bugreport.cgi?bug=6581'."
   ;; This implementation is inefficient.  Rather than making it
   ;; efficient, let's hope bug 6581 gets fixed so that we can delete
   ;; it altogether.

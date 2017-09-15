@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -40,7 +40,7 @@
 ;; Also see the todo list at the bottom of this file.
 ;;
 ;; The current version of Tramp can be retrieved from the following URL:
-;;            http://ftp.gnu.org/gnu/tramp/
+;;            https://ftp.gnu.org/gnu/tramp/
 ;;
 ;; There's a mailing list for this, as well.  Its name is:
 ;;            tramp-devel@gnu.org
@@ -49,7 +49,7 @@
 ;;
 ;; For the adventurous, the current development sources are available
 ;; via Git.  You can find instructions about this at the following URL:
-;;            http://savannah.gnu.org/projects/tramp/
+;;            https://savannah.gnu.org/projects/tramp/
 ;;
 ;; Don't forget to put on your asbestos longjohns, first!
 

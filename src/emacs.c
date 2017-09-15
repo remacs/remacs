@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #define INLINE EXTERN_INLINE
 #include <config.h>
@@ -1544,6 +1544,10 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
 #ifdef HAVE_LIBXML2
       syms_of_xml ();
+#endif
+
+#ifdef HAVE_LCMS2
+      syms_of_lcms2 ();
 #endif
 
 #ifdef HAVE_ZLIB

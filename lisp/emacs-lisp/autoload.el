@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -898,7 +898,7 @@ FILE's modification time."
       (autoload--save-buffer))))
 
 ;; FIXME This command should be deprecated.
-;; See http://debbugs.gnu.org/22213#41
+;; See https://debbugs.gnu.org/22213#41
 ;;;###autoload
 (defun update-file-autoloads (file &optional save-after outfile)
   "Update the autoloads for FILE.
@@ -917,7 +917,7 @@ Return FILE if there was no autoload cookie in it, else nil."
   (let* ((generated-autoload-file (or outfile generated-autoload-file))
 	 (autoload-modified-buffers nil)
 	 ;; We need this only if the output file handles more than one input.
-	 ;; See http://debbugs.gnu.org/22213#38 and subsequent.
+	 ;; See https://debbugs.gnu.org/22213#38 and subsequent.
 	 (autoload-timestamps t)
          (no-autoloads (autoload-generate-file-autoloads file)))
     (if autoload-modified-buffers

@@ -640,7 +640,7 @@ where local file =emacs.html= is referenced.
 For most folks this file does not exist.
 Thus the new behavior is to generate this HTML link instead:
 
-: <a href="http://www.gnu.org/software/emacs/manual/html_mono/emacs.html#List-Buffers">emacs#List Buffers</a>
+: <a href="https://www.gnu.org/software/emacs/manual/html_mono/emacs.html#List-Buffers">emacs#List Buffers</a>
 
 All emacs related info links are similarly translated plus few other
 =gnu.org= manuals.
@@ -1675,7 +1675,7 @@ manual for details and check [[http://orgmode.org/worg/org-8.0.html][this Worg p
 
 *** ~ox-texinfo.el~ by Jonathan Leech-Pepin
 
-    =ox-texinfo.el= allows you to export Org files to [[http://www.gnu.org/software/texinfo/][Texinfo]] files.
+    =ox-texinfo.el= allows you to export Org files to [[https://www.gnu.org/software/texinfo/][Texinfo]] files.
 
 ** New packages in contrib
 
@@ -1728,7 +1728,7 @@ manual for details and check [[http://orgmode.org/worg/org-8.0.html][this Worg p
 
 *** ~ox-groff.el~ by Luis Anaya and Nicolas Goaziou
 
-    The [[http://www.gnu.org/software/groff/][groff]] (GNU troff) software is a typesetting package which reads
+    The [[https://www.gnu.org/software/groff/][groff]] (GNU troff) software is a typesetting package which reads
     plain text mixed with formatting commands and produces formatted
     output.
 
@@ -2408,7 +2408,7 @@ You can now add the Org ELPA repository like this:
 #+END_SRC
 
 It contains both the =org-*.tar= package (the core Org distribution, also
-available through http://elpa.gnu.org) and the =org-plus*.tar= package (the
+available through https://elpa.gnu.org) and the =org-plus*.tar= package (the
 extended Org distribution, with non-GNU packages from the =contrib/=
 directory.)
 
@@ -2436,7 +2436,7 @@ See http://orgmode.org/elpa/
 
 *** =org-eshell.el= by Konrad Hinsen is now in Org
 
-    =org-eshell.el= allows you to create links from [[http://www.gnu.org/software/emacs/manual/html_node/eshell/index.html][Eshell]].
+    =org-eshell.el= allows you to create links from [[https://www.gnu.org/software/emacs/manual/html_node/eshell/index.html][Eshell]].
 
 *** Support for execution of Scala code blocks (see ob-scala.el)
 *** Support for execution of IO code blocks (see ob-io.el)
@@ -3036,7 +3036,7 @@ that Calc formulas can operate on them.
     =org-export-html-scripts= is now a variable, so that you can adapt
     the code and the license to your needs.
 
-    See http://www.gnu.org/philosophy/javascript-trap.html for
+    See https://www.gnu.org/philosophy/javascript-trap.html for
     explanations on why these changes were necessary.
 
 * Version 7.8.11
@@ -3821,4 +3821,4 @@ that Calc formulas can operate on them.
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+  along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.

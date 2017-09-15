@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -81,6 +81,8 @@
 (defvar timer-list-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map "c" 'timer-list-cancel)
+    (define-key map "n" 'next-line)
+    (define-key map "p" 'previous-line)
     (easy-menu-define nil map ""
       '("Timers"
 	["Cancel" timer-list-cancel t]))

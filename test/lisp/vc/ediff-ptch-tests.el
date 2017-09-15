@@ -15,7 +15,7 @@
 ;; General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see `http://www.gnu.org/licenses/'.
+;; along with this program.  If not, see `https://www.gnu.org/licenses/'.
 
 ;;; Code:
 
@@ -23,7 +23,7 @@
 (require 'ediff-ptch)
 
 (ert-deftest ediff-ptch-test-bug25010 ()
-  "Test for http://debbugs.gnu.org/25010 ."
+  "Test for https://debbugs.gnu.org/25010 ."
   (with-temp-buffer
     (insert "diff --git a/lisp/vc/ediff-ptch.el b/lisp/vc/ediff-ptch.el
 index 6a07f80..6e8e947 100644
@@ -40,7 +40,7 @@ index 6a07f80..6e8e947 100644
 
 
 (ert-deftest ediff-ptch-test-bug26084 ()
-  "Test for http://debbugs.gnu.org/26084 ."
+  "Test for https://debbugs.gnu.org/26084 ."
   (skip-unless (executable-find "git"))
   (skip-unless (executable-find ediff-patch-program))
   (let* ((tmpdir (make-temp-file "ediff-ptch-test" t))

@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -4023,7 +4023,7 @@ If FORK is non-nil, it is passed to `Info-goto-node'."
     (define-key map "h" 'Info-help)
     ;; This is for compatibility with standalone info (>~ version 5.2).
     ;; Though for some time, standalone info had H and h reversed.
-    ;; See <http://debbugs.gnu.org/16455>.
+    ;; See <https://debbugs.gnu.org/16455>.
     (define-key map "H" 'describe-mode)
     (define-key map "i" 'Info-index)
     (define-key map "I" 'Info-virtual-index)

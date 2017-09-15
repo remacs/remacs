@@ -167,8 +167,8 @@ package system might not be up to date (e.g., Gnus 5.9 bundled with Emacs
 21 is outdated).
 You can get the latest released version of Gnus from
 @uref{http://www.gnus.org/dist/gnus.tar.gz}
-or via anonymous FTP from
-@uref{ftp://ftp.gnus.org/pub/gnus/gnus.tar.gz}.
+or from
+@uref{https://ftp.gnus.org/pub/gnus/gnus.tar.gz}.
 
 @node FAQ 1-4
 @subsubheading Question 1.4
@@ -1522,7 +1522,7 @@ Gimp), open the image you want to include, cut out the
 relevant part, reduce color depth to 1 bit, resize to
 48*48 and save as bitmap. Now you should get the compface
 package from
-@uref{ftp://ftp.cs.indiana.edu:/pub/faces/, this site}.
+@uref{ftp://ftp.cs.indiana.edu/pub/faces/, this site}.
 and create the actual X-face by saying
 
 @example

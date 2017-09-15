@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -9844,7 +9844,7 @@ IDNA encoded domain names looks like `xn--bar'.  If a string
 remain unencoded after running this function, it is likely an
 invalid IDNA string (`xn--bar' is invalid).
 
-You must have GNU Libidn (URL `http://www.gnu.org/software/libidn/')
+You must have GNU Libidn (URL `https://www.gnu.org/software/libidn/')
 installed for this command to work."
   (interactive "P")
   (gnus-summary-select-article)

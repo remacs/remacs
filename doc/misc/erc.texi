@@ -875,7 +875,7 @@ decided to include ERC in Emacs.
 ERC 5.1 was released.  It was subsequently included in Emacs 22.
 
 ERC became an official GNU project, and development moved to
-@uref{http://sv.gnu.org/projects/erc}.  We switched to using GNU Arch as
+@uref{https://sv.gnu.org/projects/erc}.  We switched to using GNU Arch as
 our revision control system.  Our mailing list address changed as well.
 
 @item 2007

@@ -244,7 +244,7 @@ least for a certain distance.
 @item S
 Stop: don't execute any more of the program, but wait for more
 Edebug commands (@code{edebug-stop}).
-@c FIXME Does not work. http://debbugs.gnu.org/9764
+@c FIXME Does not work. https://debbugs.gnu.org/9764
 
 @item @key{SPC}
 Step: stop at the next stop point encountered (@code{edebug-step-mode}).
@@ -1139,7 +1139,7 @@ definition, but specifications are much more general than macro
 arguments.  @xref{Defining Macros}, for more explanation of
 the @code{declare} form.
 
-@c See, e.g., http://debbugs.gnu.org/10577
+@c See, e.g., https://debbugs.gnu.org/10577
 @c FIXME  Maybe there should be an Edebug option to get it to
 @c automatically load the entire source file containing the function
 @c being instrumented.  That would avoid this.

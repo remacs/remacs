@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <limits.h>
@@ -2046,7 +2046,7 @@ permissions.  */)
     {
       /* Set the modified context back to the file.  */
       bool fail = fsetfilecon (ofd, con) != 0;
-      /* See http://debbugs.gnu.org/11245 for ENOTSUP.  */
+      /* See https://debbugs.gnu.org/11245 for ENOTSUP.  */
       if (fail && errno != ENOTSUP)
 	report_file_error ("Doing fsetfilecon", newname);
 
@@ -2943,7 +2943,7 @@ or if Emacs was not compiled with SELinux support.  */)
 	  fail = (lsetfilecon (SSDATA (encoded_absname),
 			       context_str (parsed_con))
 		  != 0);
-          /* See http://debbugs.gnu.org/11245 for ENOTSUP.  */
+          /* See https://debbugs.gnu.org/11245 for ENOTSUP.  */
 	  if (fail && errno != ENOTSUP)
 	    report_file_error ("Doing lsetfilecon", absname);
 

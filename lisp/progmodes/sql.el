@@ -6,7 +6,7 @@
 ;; Maintainer: Michael Mauger <michael@mauger.com>
 ;; Version: 3.6
 ;; Keywords: comm languages processes
-;; URL: http://savannah.gnu.org/projects/emacs/
+;; URL: https://savannah.gnu.org/projects/emacs/
 
 ;; This file is part of GNU Emacs.
 
@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 

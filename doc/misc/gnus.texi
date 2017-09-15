@@ -7759,7 +7759,9 @@ processing of the article is done before it is saved).  For a different
 approach (uudecoding, unsharing) you should use @code{gnus-uu}
 (@pxref{Decoding Articles}).
 
-For the commands listed here, the target is a file.  If you want to
+For the commands listed here, the target is a file.
+A directory name (ending in @samp{/}) causes the target
+to be a file under that directory.  If you want to
 save to a group, see the @kbd{B c} (@code{gnus-summary-copy-article})
 command (@pxref{Mail Group Commands}).
 
@@ -8968,7 +8970,7 @@ Decode IDNA encoded domain names in the current articles.  IDNA
 encoded domain names looks like @samp{xn--bar}.  If a string remain
 unencoded after running invoking this, it is likely an invalid IDNA
 string (@samp{xn--bar} is invalid).  You must have GNU Libidn
-(@url{http://www.gnu.org/software/libidn/}) installed for this command
+(@url{https://www.gnu.org/software/libidn/}) installed for this command
 to work.
 
 @item W t
@@ -9184,7 +9186,7 @@ Verify a signed control message
 hierarchy maintainer.  You need to add the @acronym{PGP} public key of
 the maintainer to your keyring to verify the
 message.@footnote{@acronym{PGP} keys for many hierarchies are
-available at @uref{ftp://ftp.isc.org/pub/pgpcontrol/README.html}}
+available at @uref{https://ftp.isc.org/pub/pgpcontrol/README.html}}
 
 @item W s
 @kindex W s (Summary)
@@ -12318,7 +12320,7 @@ This variable controls whether Gnus performs IDNA decoding of
 internationalized domain names inside @samp{From}, @samp{To} and
 @samp{Cc} headers.  @xref{IDNA, ,IDNA,message, The Message Manual},
 for how to compose such messages.  This requires
-@uref{http://www.gnu.org/software/libidn/, GNU Libidn}, and this
+@uref{https://www.gnu.org/software/libidn/, GNU Libidn}, and this
 variable is only enabled if you have installed it.
 
 @vindex gnus-inhibit-images
@@ -13858,7 +13860,7 @@ The same as the above, but don't do automatic @acronym{STARTTLS} upgrades.
 @findex nntp-open-tls-stream
 @item nntp-open-tls-stream
 Opens a connection to a server over a @dfn{secure} channel.  To use
-this you must have @uref{http://www.gnu.org/software/gnutls/, GnuTLS}
+this you must have @uref{https://www.gnu.org/software/gnutls/, GnuTLS}
 installed.  You then define a server as follows:
 
 @lisp

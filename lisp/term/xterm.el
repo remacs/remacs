@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -610,7 +610,7 @@ Return the pasted text as a string."
 ;; Set up colors, for those versions of xterm that support it.
 (defvar xterm-standard-colors
   ;; The names in the comments taken from XTerm-col.ad in the xterm
-  ;; distribution, see ftp://dickey.his.com/xterm/.  RGB values are
+  ;; distribution, see https://invisible-island.net/xterm/.  RGB values are
   ;; from rgb.txt.
   '(("black"          0 (  0   0   0))	; black
     ("red"            1 (205   0   0))	; red3

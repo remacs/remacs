@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 
 ;;; Commentary:
@@ -497,7 +497,7 @@ as first char even if `ido-enable-prefix' is nil."
   :type 'boolean
   :group 'ido)
 
-;; See http://debbugs.gnu.org/2042 for more info.
+;; See https://debbugs.gnu.org/2042 for more info.
 (defcustom ido-buffer-disable-smart-matches t
   "Non-nil means not to re-order matches for buffer switching.
 By default, Ido arranges matches in the following order:
@@ -4835,7 +4835,7 @@ Modified from `icomplete-completions'."
 (put 'dired 'ido 'dir)
 (put 'dired-other-window 'ido 'dir)
 (put 'dired-other-frame 'ido 'dir)
-;; See http://debbugs.gnu.org/11954 for reasons.
+;; See https://debbugs.gnu.org/11954 for reasons.
 (put 'dired-do-copy 'ido 'ignore)
 (put 'dired-do-rename 'ido 'ignore)
 

@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -1094,7 +1094,7 @@ used to replace chars to try and eliminate some spurious differences."
                               ;; also and more importantly because otherwise it
                               ;; may happen that diff doesn't behave like
                               ;; smerge-refine-weight-hack expects it to.
-                              ;; See http://thread.gmane.org/gmane.emacs.devel/82685, aka https://lists.gnu.org/archive/html/emacs-devel/2007-11/msg00401.html
+                              ;; See http://lists.gnu.org/archive/html/emacs-devel/2007-11/msg00401.html
                               "-awd" "-ad")
                           file1 file2))
           ;; Process diff's output.

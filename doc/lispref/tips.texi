@@ -741,7 +741,7 @@ preceded by @samp{URL}.  For example,
 
 @smallexample
 The home page for the GNU project has more information (see URL
-`http://www.gnu.org/').
+`https://www.gnu.org/').
 @end smallexample
 
 @item
@@ -944,7 +944,7 @@ explains these conventions, starting with an example:
 
 ;; This file is free software@dots{}
 @dots{}
-;; along with this file.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this file.  If not, see <https://www.gnu.org/licenses/>.
 @end group
 @end smallexample
 
@@ -966,7 +966,7 @@ might need to list them instead.  Do not say that the copyright holder
 is the Free Software Foundation (or that the file is part of GNU
 Emacs) unless your file has been accepted into the Emacs distribution.
 For more information on the form of copyright and license notices, see
-@uref{http://www.gnu.org/licenses/gpl-howto.html, the guide on the GNU
+@uref{https://www.gnu.org/licenses/gpl-howto.html, the guide on the GNU
 website}.
 
   After the copyright notice come several @dfn{header comment} lines,

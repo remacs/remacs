@@ -1817,10 +1817,9 @@ syntax:
 
 @noindent
 To carry out this request, Emacs uses a remote-login program such as
-@command{ftp}, @command{ssh}, @command{rlogin}, or @command{telnet}.
+@command{ssh}.
 You must always specify in the file name which method to use---for
-example, @file{/ftp:@var{user}@@@var{host}:@var{filename}} uses FTP,
-whereas @file{/ssh:@var{user}@@@var{host}:@var{filename}} uses
+example, @file{/ssh:@var{user}@@@var{host}:@var{filename}} uses
 @command{ssh}.  When you specify the pseudo method @var{-} in the file
 name, Emacs chooses the method as follows:
 

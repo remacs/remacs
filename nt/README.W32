@@ -8,7 +8,7 @@ See the end of the file for license conditions.
   can find the precompiled distribution on the ftp.gnu.org server and
   its mirrors:
 
-       ftp://ftp.gnu.org/gnu/emacs/windows/
+       https://ftp.gnu.org/gnu/emacs/windows/
 
   This server contains other distributions, including the full Emacs
   source distribution, as well as older releases of Emacs for Windows.

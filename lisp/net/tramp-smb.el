@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -414,6 +414,9 @@ pass to the OPERATION."
       (with-parsed-tramp-file-name (if t1 dirname newname) nil
 	(with-tramp-progress-reporter
 	    v 0 (format "Copying %s to %s" dirname newname)
+	  (when (and (file-directory-p newname)
+		     (not (directory-name-p newname)))
+	    (tramp-error v 'file-already-exists newname))
 	  (cond
 	   ;; We must use a local temporary directory.
 	   ((and t1 t2)
@@ -425,7 +428,8 @@ pass to the OPERATION."
 	      (unwind-protect
 		  (progn
 		    (make-directory tmpdir)
-		    (copy-directory dirname tmpdir keep-date 'parents)
+		    (copy-directory
+		     dirname (file-name-as-directory tmpdir) keep-date 'parents)
 		    (copy-directory
 		     (expand-file-name (file-name-nondirectory dirname) tmpdir)
 		     newname keep-date parents))
@@ -569,8 +573,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
       0 (format "Copying %s to %s" filename newname)
 
     (if (file-directory-p filename)
-	(copy-directory
-	 filename newname keep-date 'parents 'copy-contents)
+	(copy-directory filename newname keep-date 'parents 'copy-contents)
 
       (let ((tmpfile (file-local-copy filename)))
 	(if tmpfile
@@ -582,7 +585,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	       (signal (car err) (cdr err))))
 
 	  ;; Remote newname.
-	  (when (file-directory-p newname)
+	  (when (and (file-directory-p newname)
+		     (directory-name-p newname))
 	    (setq newname
 		  (expand-file-name (file-name-nondirectory filename) newname)))
 

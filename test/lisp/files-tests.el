@@ -15,7 +15,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Code:
 
@@ -153,7 +153,7 @@ form.")
   "Test file for bug#18141.")
 
 (ert-deftest files-test-bug-18141 ()
-  "Test for http://debbugs.gnu.org/18141 ."
+  "Test for https://debbugs.gnu.org/18141 ."
   (skip-unless (executable-find "gzip"))
   (let ((tempfile (make-temp-file "files-test-bug-18141" nil ".gz")))
     (unwind-protect
@@ -184,7 +184,7 @@ form.")
 
 
 (ert-deftest files-test-bug-21454 ()
-  "Test for http://debbugs.gnu.org/21454 ."
+  "Test for https://debbugs.gnu.org/21454 ."
   :expected-result :failed
   (let ((input-result
          '(("/foo/bar//baz/:/bar/foo/baz//" nil ("/foo/bar/baz/" "/bar/foo/baz/"))
@@ -365,6 +365,33 @@ be invoked with the right arguments."
     (should-error (make-directory a/b))
     (should-not (make-directory a/b t))))
 
+(ert-deftest files-test-no-file-write-contents ()
+  "Test that `write-contents-functions' permits saving a file.
+Usually `basic-save-buffer' will prompt for a file name if the
+current buffer has none.  It should first call the functions in
+`write-contents-functions', and if one of them returns non-nil,
+consider the buffer saved, without prompting for a file
+name (Bug#28412)."
+  (let ((read-file-name-function
+         (lambda (&rest _ignore)
+           (error "Prompting for file name"))))
+    ;; With contents function, and no file.
+    (with-temp-buffer
+      (setq write-contents-functions (lambda () t))
+      (set-buffer-modified-p t)
+      (should (null (save-buffer))))
+    ;; With no contents function and no file.  This should reach the
+    ;; `read-file-name' prompt.
+    (with-temp-buffer
+      (set-buffer-modified-p t)
+      (should-error (save-buffer) :type 'error))
+    ;; Then a buffer visiting a file: should save normally.
+    (files-tests--with-temp-file temp-file-name
+      (with-current-buffer (find-file-noselect temp-file-name)
+        (setq write-contents-functions nil)
+        (insert "p")
+        (should (null (save-buffer)))
+        (should (eq (buffer-size) 1))))))
 
 (provide 'files-tests)
 ;;; files-tests.el ends here

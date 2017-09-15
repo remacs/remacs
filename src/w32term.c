@@ -1645,6 +1645,7 @@ w32_setup_relief_color (struct frame *f, struct relief *relief, double factor,
   if (w32_alloc_lighter_color (f, &pixel, factor, delta))
     xgcv.foreground = relief->pixel = pixel;
 
+  xgcv.font = NULL;	/* avoid compiler warnings */
   if (relief->gc == 0)
     {
 #if 0 /* TODO: stipple */
@@ -3087,8 +3088,8 @@ parse_button (int message, int xbutton, int * pbutton, int * pup)
 static Lisp_Object
 construct_mouse_click (struct input_event *result, W32Msg *msg, struct frame *f)
 {
-  int button;
-  int up;
+  int button = 0;
+  int up = 0;
 
   parse_button (msg->msg.message, HIWORD (msg->msg.wParam),
 		&button, &up);
@@ -4976,8 +4977,8 @@ w32_read_socket (struct terminal *terminal,
             /* If we decide we want to generate an event to be seen
                by the rest of Emacs, we put it here.  */
 	    bool tool_bar_p = 0;
-	    int button;
-	    int up;
+	    int button = 0;
+	    int up = 0;
 
 	    f = (x_mouse_grabbed (dpyinfo) ? dpyinfo->last_mouse_frame
 		 : x_window_to_frame (dpyinfo, msg.msg.hwnd));

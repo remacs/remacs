@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -739,7 +739,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		     (signal (car err) (cdr err))))
 
 		;; Remote newname.
-		(when (file-directory-p newname)
+		(when (and (file-directory-p newname)
+			   (directory-name-p newname))
 		  (setq newname
 			(expand-file-name
 			 (file-name-nondirectory filename) newname)))

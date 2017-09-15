@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -7148,7 +7148,7 @@ tiff_size_of_memory (thandle_t data)
 
 /* GCC 3.x on x86 Windows targets has a bug that triggers an internal
    compiler error compiling tiff_handler, see Bugzilla bug #17406
-   (http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17406).  Declaring
+   (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=17406).  Declaring
    this function as external works around that problem.  */
 # if defined (__MINGW32__) && __GNUC__ == 3
 #  define MINGW_STATIC

@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -293,7 +293,7 @@ cf. Bug#25477."
                 :type 'wrong-type-argument))
 
 (ert-deftest subr-tests-bug22027 ()
-  "Test for http://debbugs.gnu.org/22027 ."
+  "Test for https://debbugs.gnu.org/22027 ."
   (let ((default "foo") res)
     (cl-letf (((symbol-function 'read-string)
                (lambda (_prompt _init _hist def) def)))

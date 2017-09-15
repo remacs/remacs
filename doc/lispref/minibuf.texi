@@ -57,7 +57,7 @@ including @code{beginning-of-line}, @code{forward-word},
 @code{forward-sentence}, and @code{forward-paragraph}, stop at the
 boundary between the prompt and the actual text.
 
-@c See http://debbugs.gnu.org/11276
+@c See https://debbugs.gnu.org/11276
   The minibuffer's window is normally a single line; it grows
 automatically if the contents require more space.  Whilst it is
 active, you can explicitly resize it temporarily with the window

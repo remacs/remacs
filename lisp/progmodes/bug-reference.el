@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -44,7 +44,7 @@
     map)
   "Keymap used by bug reference buttons.")
 
-;; E.g., "http://gcc.gnu.org/PR%s"
+;; E.g., "https://gcc.gnu.org/PR%s"
 (defvar bug-reference-url-format nil
   "Format used to turn a bug number into a URL.
 The bug number is supplied as a string, so this should have a single %s.

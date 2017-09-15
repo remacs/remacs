@@ -19,7 +19,7 @@
 ## GNU General Public License for more details.
 
 ## You should have received a copy of the GNU General Public License
-## along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+## along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ### Commentary:
 
@@ -210,7 +210,7 @@ If you do not have permission to do this, or if the version provided
 by your system is too old, it is normally straightforward to build
 these packages from source.  You can find the sources at:
 
-ftp://ftp.gnu.org/gnu/PACKAGE/
+https://ftp.gnu.org/gnu/PACKAGE/
 
 Download the package (make sure you get at least the minimum version
 listed above), extract it using tar, then run configure, make,

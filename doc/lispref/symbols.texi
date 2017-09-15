@@ -276,8 +276,7 @@ distinct uninterned symbol whose name is also @samp{foo}.
 @defun gensym &optional prefix
 This function returns a symbol using @code{make-symbol}, whose name is
 made by appending @code{gensym-counter} to @var{prefix}.  The prefix
-defaults to @code{"G"}.  If @var{prefix} is a number, it replaces the
-value of the counter.
+defaults to @code{"g"}.
 @end defun
 
 @defun intern name &optional obarray

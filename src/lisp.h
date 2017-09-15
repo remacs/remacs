@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef EMACS_LISP_H
 #define EMACS_LISP_H
@@ -94,9 +94,17 @@ typedef long long int EMACS_INT;
 typedef unsigned long long int EMACS_UINT;
 enum { EMACS_INT_WIDTH = LLONG_WIDTH, EMACS_UINT_WIDTH = ULLONG_WIDTH };
 #  define EMACS_INT_MAX LLONG_MAX
-#  ifdef __MINGW32__
+/* MinGW supports %lld only if __USE_MINGW_ANSI_STDIO is non-zero,
+   which is arranged by config.h, and (for mingw.org) if GCC is 6.0 or
+   later and the runtime version is 5.0.0 or later.  Otherwise,
+   printf-like functions are declared with __ms_printf__ attribute,
+   which will cause a warning for %lld etc.  */
+#  if defined __MINGW32__						\
+  && (!defined __USE_MINGW_ANSI_STDIO					\
+      || (!defined MINGW_W64						\
+	  && !(GNUC_PREREQ (6, 0, 0) && __MINGW32_MAJOR_VERSION >= 5)))
 #   define pI "I64"
-#  else
+#  else	 /* ! MinGW */
 #   define pI "ll"
 #  endif
 # else
@@ -4394,6 +4402,11 @@ extern char *x_get_keysym_name (int);
 /* Defined in xml.c.  */
 extern void syms_of_xml (void);
 extern void xml_cleanup_parser (void);
+#endif
+
+#ifdef HAVE_LCMS2
+/* Defined in lcms.c.  */
+extern void syms_of_lcms2 (void);
 #endif
 
 #ifdef HAVE_ZLIB

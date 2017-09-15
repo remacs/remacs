@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -5778,7 +5778,10 @@ give as trustworthy answer as possible."
 	   (not (string-match message-bogus-system-names message-user-fqdn)))
       ;; `message-user-fqdn' seems to be valid
       message-user-fqdn)
-     ((not (string-match message-bogus-system-names sysname))
+     ;; A system name without any dots is unlikely to be a good fully
+     ;; qualified domain name.
+     ((and (string-match "[.]" sysname)
+	   (not (string-match message-bogus-system-names sysname)))
       ;; `system-name' returned the right result.
       sysname)
      ;; Try `mail-host-address'.
@@ -8410,7 +8413,7 @@ Used in `message-simplify-recipients'."
     (save-excursion
       (goto-char (point-min))
       (while (not (eobp))
-	(when-let ((props (get-text-property (point) 'display)))
+	(when-let* ((props (get-text-property (point) 'display)))
 	  (when (and (consp props)
 		     (eq (car props) 'image))
 	    (put-text-property (point) (1+ (point)) 'display nil)

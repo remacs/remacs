@@ -24,7 +24,7 @@ find some things, or what options to use.
 'src/config.h' file containing system-dependent definitions.
 Running the 'make' utility then builds the package for your system.
 
-Building Emacs requires GNU make, <http://www.gnu.org/software/make/>.
+Building Emacs requires GNU make, <https://www.gnu.org/software/make/>.
 On most systems that Emacs supports, this is the default 'make' program.
 
 Here's the procedure to build Emacs using 'configure' on systems which
@@ -162,7 +162,7 @@ can be found (in the unlikely event that your distribution does not
 provide them).  By default, libraries marked with an X are required if
 X11 is being used.
 
-    libXaw3d          http://directory.fsf.org/project/xaw3d/
+    libXaw3d          https://directory.fsf.org/project/xaw3d/
   X libxpm for XPM:   http://www.x.org/releases/current/src/lib/
   X libpng for PNG:   http://www.libpng.org/
     libz (for PNG):   http://www.zlib.net/
@@ -187,7 +187,7 @@ them.
 On the GNU system, Emacs supports both X fonts and local fonts
 (i.e. fonts managed by the fontconfig library).  If you need more
 fonts than your distribution normally provides, you must install them
-yourself.  See <URL:http://www.gnu.org/software/freefont/> for a large
+yourself.  See <https://www.gnu.org/software/freefont/> for a large
 number of free Unicode fonts.
 
 * GNU/Linux development packages
@@ -678,4 +678,4 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.

@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -60,7 +60,7 @@ active, you must toggle the mode off and on again for this to take effect."
 
 (defcustom show-paren-priority 1000
   "Priority of paren highlighting overlays."
-  :type 'integer 
+  :type 'integer
   :version "21.1")
 
 (defcustom show-paren-ring-bell-on-mismatch nil

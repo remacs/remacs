@@ -19,7 +19,7 @@ dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 dnl  GNU General Public License for more details.
 dnl
 dnl  You should have received a copy of the GNU General Public License
-dnl  along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+dnl  along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.65)
 dnl Note this is parsed by (at least) make-dist and lisp/cedet/ede/emacs.el.
@@ -343,6 +343,7 @@ OPTION_DEFAULT_ON([tiff],[don't compile with TIFF image support])
 OPTION_DEFAULT_ON([gif],[don't compile with GIF image support])
 OPTION_DEFAULT_ON([png],[don't compile with PNG image support])
 OPTION_DEFAULT_ON([rsvg],[don't compile with SVG image support])
+OPTION_DEFAULT_ON([lcms2],[don't compile with Little CMS support])
 OPTION_DEFAULT_ON([libsystemd],[don't compile with libsystemd support])
 OPTION_DEFAULT_OFF([cairo],[compile with Cairo drawing (experimental)])
 OPTION_DEFAULT_ON([xml2],[don't compile with XML parsing support])
@@ -3451,6 +3452,25 @@ if test "${with_jpeg}" != "no"; then
 fi
 AC_SUBST(LIBJPEG)
 
+HAVE_LCMS2=no
+LIBLCMS2=
+if test "${with_lcms2}" != "no"; then
+  OLIBS=$LIBS
+  AC_SEARCH_LIBS([cmsCreateTransform], [lcms2], [HAVE_LCMS2=yes])
+  LIBS=$OLIBS
+  case $ac_cv_search_cmsCreateTransform in
+    -*) LIBLCMS2=$ac_cv_search_cmsCreateTransform ;;
+  esac
+fi
+if test "${HAVE_LCMS2}" = "yes"; then
+  AC_DEFINE([HAVE_LCMS2], 1, [Define to 1 if you have the lcms2 library (-llcms2).])
+  ### mingw32 doesn't use -llcms2, since it loads the library dynamically.
+  if test "${opsys}" = "mingw32"; then
+     LIBLCMS2=
+  fi
+fi
+AC_SUBST(LIBLCMS2)
+
 HAVE_ZLIB=no
 LIBZ=
 if test "${with_zlib}" != "no"; then
@@ -4011,7 +4031,7 @@ AC_CACHE_CHECK([for library containing tputs], [emacs_cv_tputs_lib],
   emacs_cv_tputs_lib='none required'
 else
   # Maybe curses should be tried earlier?
-  # See http://debbugs.gnu.org/cgi/bugreport.cgi?bug=9736#35
+  # See https://debbugs.gnu.org/9736#35
   for tputs_library in '' tinfo ncurses terminfo termcap curses; do
     OLIBS=$LIBS
     if test -z "$tputs_library"; then
@@ -5294,7 +5314,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 /* No code in Emacs #includes config.h twice, but some bits of code
@@ -5348,7 +5368,7 @@ emacs_config_features=
 for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
   GCONF GSETTINGS NOTIFY ACL LIBSELINUX GNUTLS LIBXML2 FREETYPE M17N_FLT \
   LIBOTF XFT ZLIB TOOLKIT_SCROLL_BARS X_TOOLKIT OLDXMENU X11 NS MODULES \
-  XWIDGETS LIBSYSTEMD CANNOT_DUMP; do
+  XWIDGETS LIBSYSTEMD CANNOT_DUMP LCMS2; do
 
     case $opt in
       CANNOT_DUMP) eval val=\${$opt} ;;
@@ -5381,6 +5401,7 @@ AS_ECHO(["  Does Emacs use -lXaw3d?                                 ${HAVE_XAW3D
   Does Emacs use a png library?                           ${HAVE_PNG} $LIBPNG
   Does Emacs use -lrsvg-2?                                ${HAVE_RSVG}
   Does Emacs use cairo?                                   ${HAVE_CAIRO}
+  Does Emacs use -llcms2?                                 ${HAVE_LCMS2}
   Does Emacs use imagemagick (version 6)?                 ${HAVE_IMAGEMAGICK}
   Does Emacs support sound?                               ${HAVE_SOUND}
   Does Emacs use -lgpm?                                   ${HAVE_GPM}

@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -1913,7 +1913,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
       /* Look for another visible frame on the same terminal.
 	 Do not call next_frame here because it may loop forever.
-	 See http://debbugs.gnu.org/cgi/bugreport.cgi?bug=15025.  */
+	 See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15025.  */
       FOR_EACH_FRAME (tail, frame1)
 	if (!EQ (frame, frame1)
 	    && (FRAME_TERMINAL (XFRAME (frame))

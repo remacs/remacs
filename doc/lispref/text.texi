@@ -4803,7 +4803,7 @@ would be:
 
 @lisp
 (dom-attr img 'href)
-=> "http://fsf.org/logo.png"
+=> "https://fsf.org/logo.png"
 @end lisp
 
 @item dom-children @var{node}

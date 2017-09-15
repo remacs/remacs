@@ -21,7 +21,7 @@ answers), at the emacs-devel@gnu.org mailing list.
 For more information about getting involved, see the CONTRIBUTE file.
 
 As well as the issues listed here, there are bug reports at
-<http://debbugs.gnu.org>.  Bugs tagged "easy" ought to be suitable for
+<https://debbugs.gnu.org>.  Bugs tagged "easy" ought to be suitable for
 beginners to work on, but unfortunately we are not very good at using
 this tag.  Bugs tagged "help" are ones where assistance is required,
 but may be difficult to fix.  Bugs with severity "important" or higher
@@ -345,7 +345,7 @@ scroll bars are extensible.
 ** Program Enriched mode to read and save in RTF.  [Is there actually a
   decent single definition of RTF?  Maybe see info at
   http://latex2rtf.sourceforge.net/.]  This task seems to be addressed
-  by http://savannah.nongnu.org/projects/emacs-rtf/, which is still in
+  by https://savannah.nongnu.org/projects/emacs-rtf/, which is still in
   very early stages.
 
   Another place to look is the Wikipedia article at
@@ -824,7 +824,7 @@ of unique features.
 **** Existing packages
 
 Note that there is a generic UI test named frame-test.el, see
-http://debbugs.gnu.org/21415#284 .
+https://debbugs.gnu.org/21415#284 .
 The NS interface passes this, with the exception of two toolbar-related errors.
 
 **** Anders frame test
@@ -872,9 +872,9 @@ of the two patches, Emacs responds that s-9 was pressed.
 More investigation is needed to fix this problem.
 
 Links:
-- http://debbugs.gnu.org/19977
-- http://debbugs.gnu.org/21330
-- http://debbugs.gnu.org/21551
+- https://debbugs.gnu.org/19977
+- https://debbugs.gnu.org/21330
+- https://debbugs.gnu.org/21551
 
 **** Toggling the toolbar in fullheight or maximized modes
 
@@ -1550,7 +1550,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;; Local Variables:
 ;; coding: utf-8

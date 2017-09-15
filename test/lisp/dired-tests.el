@@ -15,7 +15,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Code:
 (require 'ert)
@@ -32,7 +32,7 @@
      'dired-jump))))
 
 (ert-deftest dired-test-bug22694 ()
-  "Test for http://debbugs.gnu.org/22694 ."
+  "Test for https://debbugs.gnu.org/22694 ."
   (let* ((dir       (expand-file-name "bug22694" default-directory))
          (file      "test")
          (full-name (expand-file-name file dir))
@@ -56,7 +56,7 @@
 
 (defvar dired-dwim-target)
 (ert-deftest dired-test-bug25609 ()
-  "Test for http://debbugs.gnu.org/25609 ."
+  "Test for https://debbugs.gnu.org/25609 ."
   (let* ((from (make-temp-file "foo" 'dir))
          ;; Make sure we have long file-names in 'from' and 'to', not
          ;; their 8+3 short aliases, because the latter will confuse
@@ -109,7 +109,7 @@
       (advice-remove 'completing-read "advice-completing-read"))))
 
 ;; (ert-deftest dired-test-bug27243 ()
-;;   "Test for http://debbugs.gnu.org/27243 ."
+;;   "Test for https://debbugs.gnu.org/27243 ."
 ;;   (let ((test-dir (make-temp-file "test-dir-" t))
 ;;         (dired-auto-revert-buffer t) buffers)
 ;;     (with-current-buffer (find-file-noselect test-dir)
@@ -254,7 +254,7 @@
       (delete-directory test-dir t))))
 
 (ert-deftest dired-test-bug7131 ()
-  "Test for http://debbugs.gnu.org/7131 ."
+  "Test for https://debbugs.gnu.org/7131 ."
   (let* ((dir (expand-file-name "lisp" source-directory))
          (buf (dired dir)))
     (unwind-protect
@@ -270,7 +270,7 @@
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
 (ert-deftest dired-test-bug27631 ()
-  "Test for http://debbugs.gnu.org/27631 ."
+  "Test for https://debbugs.gnu.org/27631 ."
   ;; For dired using 'ls' emulation we test for this bug in
   ;; ls-lisp-tests.el and em-ls-tests.el.
   (skip-unless (and (not (featurep 'ls-lisp))
@@ -293,7 +293,7 @@
       (when (buffer-live-p buf) (kill-buffer buf)))))
 
 (ert-deftest dired-test-bug27899 ()
-  "Test for http://debbugs.gnu.org/27899 ."
+  "Test for https://debbugs.gnu.org/27899 ."
   (let* ((dir (expand-file-name "src" source-directory))
 	 (buf (dired (list dir "cygw32.c" "alloc.c" "w32xfns.c" "xdisp.c")))
          (orig dired-hide-details-mode))
@@ -309,7 +309,7 @@
       (dired-hide-details-mode orig))))
 
 (ert-deftest dired-test-bug27968 ()
-  "Test for http://debbugs.gnu.org/27968 ."
+  "Test for https://debbugs.gnu.org/27968 ."
   (let* ((top-dir (make-temp-file "top-dir" t))
          (subdir (expand-file-name "subdir" top-dir))
          (header-len-fn (lambda ()
@@ -379,7 +379,7 @@
          (kill-buffer (current-buffer))))))
 
 (ert-deftest dired-test-bug27940 ()
-  "Test for http://debbugs.gnu.org/27940 ."
+  "Test for https://debbugs.gnu.org/27940 ."
   ;; If just empty dirs we shouldn't be prompted.
   (dired-test-with-temp-dirs
    'just-empty-dirs

@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -517,10 +517,12 @@ updates before the buffer is saved, use `before-save-hook'.")
     'write-contents-functions "22.1")
 (defvar write-contents-functions nil
   "List of functions to be called before writing out a buffer to a file.
-Only used by `save-buffer'.
-If one of them returns non-nil, the file is considered already written
-and the rest are not called and neither are the functions in
-`write-file-functions'.
+
+Only used by `save-buffer'.  If one of them returns non-nil, the
+file is considered already written and the rest are not called
+and neither are the functions in `write-file-functions'.  This
+hook can thus be used to create save behavior for buffers that
+are not visiting a file at all.
 
 This variable is meant to be used for hooks that pertain to the
 buffer's contents, not to the particular visited file; thus,
@@ -4875,9 +4877,12 @@ in such cases.")
 
 (defun basic-save-buffer (&optional called-interactively)
   "Save the current buffer in its visited file, if it has been modified.
-The hooks `write-contents-functions' and `write-file-functions' get a chance
-to do the job of saving; if they do not, then the buffer is saved in
-the visited file in the usual way.
+
+The hooks `write-contents-functions', `local-write-file-hooks'
+and `write-file-functions' get a chance to do the job of saving;
+if they do not, then the buffer is saved in the visited file in
+the usual way.
+
 Before and after saving the buffer, this function runs
 `before-save-hook' and `after-save-hook', respectively."
   (interactive '(called-interactively))
@@ -4886,29 +4891,14 @@ Before and after saving the buffer, this function runs
     (if (buffer-base-buffer)
 	(set-buffer (buffer-base-buffer)))
     (if (or (buffer-modified-p)
-	    ;; handle the case when no modification has been made but
-	    ;; the file disappeared since visited
+	    ;; Handle the case when no modification has been made but
+	    ;; the file disappeared since visited.
 	    (and buffer-file-name
 		 (not (file-exists-p buffer-file-name))))
 	(let ((recent-save (recent-auto-save-p))
 	      setmodes)
-          ;; If buffer has no file name, ask user for one.
-	  (or buffer-file-name
-              (let ((filename
-                     (expand-file-name
-                      (read-file-name "File to save in: "
-                                      nil (expand-file-name (buffer-name))))))
-                (if (file-exists-p filename)
-                    (if (file-directory-p filename)
-                        ;; Signal an error if the user specified the name of an
-                        ;; existing directory.
-                        (error "%s is a directory" filename)
-                      (unless (y-or-n-p (format-message
-                                         "File `%s' exists; overwrite? "
-                                         filename))
-                        (error "Canceled"))))
-                (set-visited-file-name filename)))
-	  (or (verify-visited-file-modtime (current-buffer))
+	  (or (null buffer-file-name)
+              (verify-visited-file-modtime (current-buffer))
 	      (not (file-exists-p buffer-file-name))
 	      (yes-or-no-p
 	       (format
@@ -4920,6 +4910,7 @@ Before and after saving the buffer, this function runs
 	    (save-excursion
 	      (and (> (point-max) (point-min))
 		   (not find-file-literally)
+                   (null buffer-read-only)
 		   (/= (char-after (1- (point-max))) ?\n)
 		   (not (and (eq selective-display t)
 			     (= (char-after (1- (point-max))) ?\r)))
@@ -4932,46 +4923,65 @@ Before and after saving the buffer, this function runs
 		   (save-excursion
 		     (goto-char (point-max))
 		     (insert ?\n))))
-	    ;; Support VC version backups.
-	    (vc-before-save)
 	    ;; Don't let errors prevent saving the buffer.
 	    (with-demoted-errors (run-hooks 'before-save-hook))
-	    (or (run-hook-with-args-until-success 'write-contents-functions)
-		(run-hook-with-args-until-success 'local-write-file-hooks)
-		(run-hook-with-args-until-success 'write-file-functions)
-		;; If a hook returned t, file is already "written".
-		;; Otherwise, write it the usual way now.
-		(let ((dir (file-name-directory
-			    (expand-file-name buffer-file-name))))
-		  (unless (file-exists-p dir)
-		    (if (y-or-n-p
-			 (format-message
-                          "Directory `%s' does not exist; create? " dir))
-			(make-directory dir t)
-		      (error "Canceled")))
-		  (setq setmodes (basic-save-buffer-1))))
+            ;; Give `write-contents-functions' a chance to
+            ;; short-circuit the whole process.
+	    (unless (run-hook-with-args-until-success 'write-contents-functions)
+              ;; If buffer has no file name, ask user for one.
+              (or buffer-file-name
+                  (let ((filename
+                         (expand-file-name
+                          (read-file-name "File to save in: "
+                                          nil (expand-file-name (buffer-name))))))
+                    (if (file-exists-p filename)
+                        (if (file-directory-p filename)
+                            ;; Signal an error if the user specified the name of an
+                            ;; existing directory.
+                            (error "%s is a directory" filename)
+                          (unless (y-or-n-p (format-message
+                                             "File `%s' exists; overwrite? "
+                                             filename))
+                            (error "Canceled"))))
+                    (set-visited-file-name filename)))
+              ;; Support VC version backups.
+	      (vc-before-save)
+	      (or (run-hook-with-args-until-success 'local-write-file-hooks)
+	          (run-hook-with-args-until-success 'write-file-functions)
+	          ;; If a hook returned t, file is already "written".
+	          ;; Otherwise, write it the usual way now.
+	          (let ((dir (file-name-directory
+			      (expand-file-name buffer-file-name))))
+		    (unless (file-exists-p dir)
+		      (if (y-or-n-p
+		           (format-message
+                            "Directory `%s' does not exist; create? " dir))
+		          (make-directory dir t)
+		        (error "Canceled")))
+		    (setq setmodes (basic-save-buffer-1)))))
 	    ;; Now we have saved the current buffer.  Let's make sure
 	    ;; that buffer-file-coding-system is fixed to what
 	    ;; actually used for saving by binding it locally.
-	    (if save-buffer-coding-system
-		(setq save-buffer-coding-system last-coding-system-used)
-	      (setq buffer-file-coding-system last-coding-system-used))
-	    (setq buffer-file-number
-		  (nthcdr 10 (file-attributes buffer-file-name)))
-	    (if setmodes
-		(condition-case ()
-		    (progn
-		      (unless
-			  (with-demoted-errors
-			    (set-file-modes buffer-file-name (car setmodes)))
-			(set-file-extended-attributes buffer-file-name
-						      (nth 1 setmodes))))
-		  (error nil))))
-	  ;; If the auto-save file was recent before this command,
-	  ;; delete it now.
-	  (delete-auto-save-file-if-necessary recent-save)
-	  ;; Support VC `implicit' locking.
-	  (vc-after-save)
+            (when buffer-file-name
+	      (if save-buffer-coding-system
+		  (setq save-buffer-coding-system last-coding-system-used)
+	        (setq buffer-file-coding-system last-coding-system-used))
+	      (setq buffer-file-number
+		    (nthcdr 10 (file-attributes buffer-file-name)))
+	      (if setmodes
+		  (condition-case ()
+		      (progn
+		        (unless
+			    (with-demoted-errors
+			        (set-file-modes buffer-file-name (car setmodes)))
+			  (set-file-extended-attributes buffer-file-name
+						        (nth 1 setmodes))))
+		    (error nil)))
+              ;; Support VC `implicit' locking.
+	      (vc-after-save))
+            ;; If the auto-save file was recent before this command,
+	    ;; delete it now.
+	    (delete-auto-save-file-if-necessary recent-save))
 	  (run-hooks 'after-save-hook))
       (or noninteractive
           (not called-interactively)
@@ -5183,7 +5193,9 @@ change the additional actions you can take on files."
                      (and pred
                           (progn
                             (set-buffer buffer)
-                            (and buffer-offer-save (> (buffer-size) 0)))))
+                            (and buffer-offer-save (> (buffer-size) 0))))
+                     (buffer-local-value
+                      'write-contents-functions buffer))
                     (or (not (functionp pred))
                         (with-current-buffer buffer (funcall pred)))
                     (if arg
