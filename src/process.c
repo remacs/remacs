@@ -7102,6 +7102,10 @@ deliver_child_signal (int sig)
 static Lisp_Object
 exec_sentinel_error_handler (Lisp_Object error_val)
 {
+  /* Make sure error_val is a cons cell, as all the rest of error
+     handling expects that, and will barf otherwise.  */
+  if (!CONSP (error_val))
+    error_val = Fcons (Qerror, error_val);
   cmd_error_internal (error_val, "error in process sentinel: ");
   Vinhibit_quit = Qt;
   update_echo_area ();
