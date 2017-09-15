@@ -386,7 +386,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
      Do nothing if MATRIX' size, position, vscroll, and marginal areas
      haven't changed.  This optimization is important because preserving
      the matrix means preventing redisplay.  */
-  eassert (w != NULL || matrix->pool != NULL);
+  eassume (w != NULL || matrix->pool != NULL);
   if (matrix->pool == NULL)
     {
       left = margin_glyphs_to_reserve (w, dim.width, w->left_margin_cols);
