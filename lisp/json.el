@@ -197,12 +197,12 @@ Unlike `reverse', this keeps the property-value pairs intact."
 
 (define-inline json-pop ()
   "Advance past the character at point, returning it."
-  (inline-letevals ((char (json-peek)))
-    (inline-quote
-     (if (zerop ,char)
+  (inline-quote
+   (let ((char (json-peek)))
+     (if (zerop char)
          (signal 'json-end-of-file nil)
        (json-advance)
-       ,char))))
+       char))))
 
 (define-inline json-skip-whitespace ()
   "Skip past the whitespace at point."
