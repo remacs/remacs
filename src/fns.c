@@ -37,7 +37,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "puresize.h"
 #include "gnutls.h"
 
-#ifdef WINDOWSNT
+#if defined WINDOWSNT && defined HAVE_GNUTLS3
 # define gnutls_rnd w32_gnutls_rnd
 #endif
 
