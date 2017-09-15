@@ -305,7 +305,7 @@ KEYWORD is the keyword expected."
           (json-advance))
         keyword)
   (json-skip-whitespace)
-  (unless (memq (following-char) '(?\] ?, ?}))
+  (unless (looking-at "\\([],}]\\|$\\)")
     (signal 'json-unknown-keyword
             (list (save-excursion
                     (backward-word-strictly 1)
