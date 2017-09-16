@@ -37,6 +37,9 @@ DEF_DLL_FN (cmsHANDLE, cmsCIECAM02Init,
 DEF_DLL_FN (void, cmsCIECAM02Forward,
 	    (cmsHANDLE hModel, const cmsCIEXYZ* pIn, cmsJCh* pOut));
 DEF_DLL_FN (void, cmsCIECAM02Done, (cmsHANDLE hModel));
+DEF_DLL_FN (cmsBool, cmsWhitePointFromTemp,
+	    (cmsCIExyY* WhitePoint, cmsFloat64Number TempK));
+DEF_DLL_FN (void, cmsxyY2XYZ, (cmsCIEXYZ* Dest, const cmsCIExyY* Source));
 
 static bool lcms_initialized;
 
@@ -52,6 +55,8 @@ init_lcms_functions (void)
   LOAD_DLL_FN (library, cmsCIECAM02Init);
   LOAD_DLL_FN (library, cmsCIECAM02Forward);
   LOAD_DLL_FN (library, cmsCIECAM02Done);
+  LOAD_DLL_FN (library, cmsWhitePointFromTemp);
+  LOAD_DLL_FN (library, cmsxyY2XYZ);
   return true;
 }
 
@@ -59,11 +64,15 @@ init_lcms_functions (void)
 # undef cmsCIECAM02Init
 # undef cmsCIECAM02Forward
 # undef cmsCIECAM02Done
+# undef cmsWhitePointFromTemp
+# undef cmsxyY2XYZ
 
-# define cmsCIE2000DeltaE   fn_cmsCIE2000DeltaE
-# define cmsCIECAM02Init    fn_cmsCIECAM02Init
-# define cmsCIECAM02Forward fn_cmsCIECAM02Forward
-# define cmsCIECAM02Done    fn_cmsCIECAM02Done
+# define cmsCIE2000DeltaE      fn_cmsCIE2000DeltaE
+# define cmsCIECAM02Init       fn_cmsCIECAM02Init
+# define cmsCIECAM02Forward    fn_cmsCIECAM02Forward
+# define cmsCIECAM02Done       fn_cmsCIECAM02Done
+# define cmsWhitePointFromTemp fn_cmsWhitePointFromTemp
+# define cmsxyY2XYZ            fn_cmsxyY2XYZ
 
 #endif	/* WINDOWSNT */
 
@@ -184,7 +193,7 @@ Optional argument is the XYZ white point, which defaults to illuminant D65. */)
       xyzw.Y = 100.0;
       xyzw.Z = 108.883;
     }
-  else if (!(CONSP (whitepoint) && parse_xyz_list(whitepoint, &xyzw)))
+  else if (!(CONSP (whitepoint) && parse_xyz_list (whitepoint, &xyzw)))
     signal_error("Invalid white point", whitepoint);
 
   vc.whitePoint.X = xyzw.X;
@@ -234,7 +243,7 @@ Optional argument is the XYZ white point, which defaults to illuminant D65. */)
 
 DEFUN ("lcms-temp->white-point", Flcms_temp_to_white_point, Slcms_temp_to_white_point, 1, 1, 0,
        doc: /* Return XYZ black body chromaticity from TEMPERATURE given in K.
-Valid range is 4000K to 25000K. */)
+Valid range of TEMPERATURE is from 4000K to 25000K. */)
   (Lisp_Object temperature)
 {
   cmsFloat64Number tempK;
@@ -251,12 +260,12 @@ Valid range is 4000K to 25000K. */)
     }
 #endif
 
-  CHECK_NUMBER_OR_FLOAT(temperature);
+  CHECK_NUMBER_OR_FLOAT (temperature);
 
-  tempK = XFLOATINT(temperature);
-  if (!(cmsWhitePointFromTemp(&whitepoint, tempK)))
+  tempK = XFLOATINT (temperature);
+  if (!(cmsWhitePointFromTemp (&whitepoint, tempK)))
     signal_error("Invalid temperature", temperature);
-  cmsxyY2XYZ(&wp, &whitepoint);
+  cmsxyY2XYZ (&wp, &whitepoint);
   return list3 (make_float (wp.X), make_float (wp.Y), make_float (wp.Z));
 }
 
@@ -289,6 +298,7 @@ syms_of_lcms2 (void)
   defsubr (&Slcms_cie_de2000);
   defsubr (&Slcms_cam02_ucs);
   defsubr (&Slcms2_available_p);
+  defsubr (&Slcms_temp_to_white_point);
 
   Fprovide (intern_c_string ("lcms2"), Qnil);
 }
