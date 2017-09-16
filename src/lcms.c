@@ -102,7 +102,7 @@ DEFUN ("lcms-cie-de2000", Flcms_cie_de2000, Slcms_cie_de2000, 2, 5, 0,
 Each color is a list of L*a*b* coordinates, where the L* channel ranges from
 0 to 100, and the a* and b* channels range from -128 to 128.
 Optional arguments KL, KC, KH are weighting parameters for lightness,
-chroma, and hue, respectively. The parameters each default to 1. */)
+chroma, and hue, respectively. The parameters each default to 1.  */)
   (Lisp_Object color1, Lisp_Object color2,
    Lisp_Object kL, Lisp_Object kC, Lisp_Object kH)
 {
@@ -163,7 +163,7 @@ parse_xyz_list (Lisp_Object xyz_list, cmsCIEXYZ *color)
 DEFUN ("lcms-cam02-ucs", Flcms_cam02_ucs, Slcms_cam02_ucs, 2, 3, 0,
        doc: /* Compute CAM02-UCS metric distance between COLOR1 and COLOR2.
 Each color is a list of XYZ coordinates, with Y scaled about unity.
-Optional argument is the XYZ white point, which defaults to illuminant D65. */)
+Optional argument is the XYZ white point, which defaults to illuminant D65.  */)
   (Lisp_Object color1, Lisp_Object color2, Lisp_Object whitepoint)
 {
   cmsViewingConditions vc;
@@ -239,7 +239,7 @@ Optional argument is the XYZ white point, which defaults to illuminant D65. */)
 
 DEFUN ("lcms-temp->white-point", Flcms_temp_to_white_point, Slcms_temp_to_white_point, 1, 1, 0,
        doc: /* Return XYZ black body chromaticity from TEMPERATURE given in K.
-Valid range of TEMPERATURE is from 4000K to 25000K. */)
+Valid range of TEMPERATURE is from 4000K to 25000K.  */)
   (Lisp_Object temperature)
 {
   cmsFloat64Number tempK;
@@ -292,7 +292,7 @@ void
 syms_of_lcms2 (void)
 {
   DEFVAR_LISP ("lcms-d65-xyz", Vlcms_d65_xyz,
-               doc: /* D65 illuminant as a CIE XYZ triple. */);
+               doc: /* D65 illuminant as a CIE XYZ triple.  */);
   Vlcms_d65_xyz = list3 (make_float (0.950455),
                          make_float (1.0),
                          make_float (1.088753));
