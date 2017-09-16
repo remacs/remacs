@@ -1336,6 +1336,14 @@ Affected functions include add-name-to-file, copy-directory,
 copy-file, format-write-file, gnus-copy-file, make-symbolic-link,
 rename-file, thumbs-rename-images, and write-file.
 
+---
+** The list returned by 'overlays-at' is now in decreasing priority order.
+The documentation of this function always said the order should be
+that of decreasing priority, if the 2nd argument of the function is
+non-nil, but the code returned the list in the increasing order of
+priority instead.  Now the code does what the documentation says it
+should do.
+
 
 * Lisp Changes in Emacs 26.1
 

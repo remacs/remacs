@@ -4179,6 +4179,12 @@ If SORTED is non-nil, then sort them by decreasing priority.  */)
   /* Make a list of them all.  */
   result = Flist (noverlays, overlay_vec);
 
+  /* The doc string says the list should be in decreasing order of
+     priority, so we reverse the list, because sort_overlays sorts in
+     the increasing order of priority.  */
+  if (!NILP (sorted))
+    result = Fnreverse (result);
+
   xfree (overlay_vec);
   return result;
 }
