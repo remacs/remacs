@@ -51,6 +51,7 @@ B is considered the exact value."
 
 (ert-deftest lcms-cri-cam02-ucs ()
   "Test use of `lcms-cam02-ucs'."
+  (skip-unless (featurep 'lcms2))
   (should-error (lcms-cam02-ucs '(0 0 0) '(0 0 0) "error"))
   (should-error (lcms-cam02-ucs '(0 0 0) 'error))
   (should-not
