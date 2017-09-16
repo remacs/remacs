@@ -1791,7 +1791,7 @@ internal_terminal_init (void)
 	}
 
       Vinitial_window_system = Qpc;
-      Vwindow_system_version = make_number (26); /* RE Emacs version */
+      Vwindow_system_version = make_number (27); /* RE Emacs version */
       tty->terminal->type = output_msdos_raw;
 
       /* If Emacs was dumped on DOS/V machine, forget the stale VRAM
