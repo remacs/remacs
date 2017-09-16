@@ -232,6 +232,34 @@ Optional argument is the XYZ white point, which defaults to illuminant D65. */)
                            (bp2 - bp1) * (bp2 - bp1)));
 }
 
+DEFUN ("lcms-temp->white-point", Flcms_temp_to_white_point, Slcms_temp_to_white_point, 1, 1, 0,
+       doc: /* Return XYZ black body chromaticity from TEMPERATURE given in K.
+Valid range is 4000K to 25000K. */)
+  (Lisp_Object temperature)
+{
+  cmsFloat64Number tempK;
+  cmsCIExyY whitepoint;
+  cmsCIEXYZ wp;
+
+#ifdef WINDOWSNT
+  if (!lcms_initialized)
+    lcms_initialized = init_lcms_functions ();
+  if (!lcms_initialized)
+    {
+      message1 ("lcms2 library not found");
+      return Qnil;
+    }
+#endif
+
+  CHECK_NUMBER_OR_FLOAT(temperature);
+
+  tempK = XFLOATINT(temperature);
+  if (!(cmsWhitePointFromTemp(&whitepoint, tempK)))
+    signal_error("Invalid temperature", temperature);
+  cmsxyY2XYZ(&wp, &whitepoint);
+  return list3 (make_float (wp.X), make_float (wp.Y), make_float (wp.Z));
+}
+
 DEFUN ("lcms2-available-p", Flcms2_available_p, Slcms2_available_p, 0, 0, 0,
        doc: /* Return t if lcms2 color calculations are available in this instance of Emacs.  */)
      (void)
