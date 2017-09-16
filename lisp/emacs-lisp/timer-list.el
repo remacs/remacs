@@ -35,9 +35,7 @@
     (dolist (timer (append timer-list timer-idle-list))
       (insert (format "%4s %10s %8s %s"
                       ;; Idle.
-                      (if (aref timer 7)
-                          "*"
-                        " ")
+                      (if (aref timer 7) "*" " ")
                       ;; Next time.
                       (let ((time (float-time (list (aref timer 1)
                                                     (aref timer 2)
@@ -59,16 +57,9 @@
                          (t
                           (format "%s" repeat))))
                       ;; Function.
-                      (let ((function (aref timer 5)))
-                        (replace-regexp-in-string
-                         "\n" " "
-                         (cond
-                          ((byte-code-function-p function)
-                           (replace-regexp-in-string
-                            "[^-A-Za-z0-9 ]" ""
-                            (format "%s" function)))
-                          (t
-                           (format "%s" function)))))))
+                      (let ((cl-print-compiled 'static)
+                            (cl-print-compiled-button nil))
+                        (cl-prin1-to-string (aref timer 5)))))
       (put-text-property (line-beginning-position)
                          (1+ (line-beginning-position))
                          'timer timer)
@@ -88,8 +79,9 @@
 	["Cancel" timer-list-cancel t]))
     map))
 
-(define-derived-mode timer-list-mode special-mode "timer-list"
+(define-derived-mode timer-list-mode special-mode "Timer-List"
   "Mode for listing and controlling timers."
+  (setq bidi-paragraph-direction 'left-to-right)
   (setq truncate-lines t)
   (buffer-disable-undo)
   (setq-local revert-buffer-function 'timer-list)
