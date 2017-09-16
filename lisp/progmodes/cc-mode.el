@@ -1526,14 +1526,17 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	 (> (point) bod-lim)
 	 (progn (c-forward-syntactic-ws)
 		(setq bo-decl (point))
-		;; Are we looking at a keyword such as "template" or
-		;; "typedef" which can decorate a type, or the type itself?
-		(when (or (looking-at c-prefix-spec-kwds-re)
-			  (c-forward-type t))
-		  ;; We've found another candidate position.
-		  (setq new-pos (min new-pos bo-decl))
-		  (goto-char bo-decl))
-		t)
+		(or (not (looking-at c-protection-key))
+		    (c-forward-keyword-clause 1)))
+	 (progn
+	   ;; Are we looking at a keyword such as "template" or
+	   ;; "typedef" which can decorate a type, or the type itself?
+	   (when (or (looking-at c-prefix-spec-kwds-re)
+		     (c-forward-type t))
+	     ;; We've found another candidate position.
+	     (setq new-pos (min new-pos bo-decl))
+	     (goto-char bo-decl))
+	   t)
 	 ;; Try and go out a level to search again.
 	 (progn
 	   (c-backward-syntactic-ws bod-lim)

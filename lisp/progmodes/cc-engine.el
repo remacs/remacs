@@ -6924,7 +6924,7 @@ comment at the start of cc-engine.el for more info."
   ;; recognized are those specified by `c-type-list-kwds',
   ;; `c-ref-list-kwds', `c-colon-type-list-kwds',
   ;; `c-paren-nontype-kwds', `c-paren-type-kwds', `c-<>-type-kwds',
-  ;; and `c-<>-arglist-kwds'.
+  ;; `c-<>-arglist-kwds', and `c-protection-kwds'.
   ;;
   ;; This function records identifier ranges on
   ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
@@ -6993,6 +6993,17 @@ comment at the start of cc-engine.el for more info."
        ((and (c-keyword-member kwd-sym 'c-nonsymbol-sexp-kwds)
 	     (not (looking-at c-symbol-start))
 	     (c-safe (c-forward-sexp) t))
+	(c-forward-syntactic-ws)
+	(setq safe-pos (point)))
+
+       ((and (c-keyword-member kwd-sym 'c-protection-kwds)
+	     (or (null c-post-protection-token)
+		 (and (looking-at c-post-protection-token)
+		      (save-excursion
+			(goto-char (match-end 0))
+			(not (c-end-of-current-token))))))
+	(if c-post-protection-token
+	    (goto-char (match-end 0)))
 	(c-forward-syntactic-ws)
 	(setq safe-pos (point))))
 
@@ -10169,8 +10180,16 @@ comment at the start of cc-engine.el for more info."
 		  ;; Could be more restrictive wrt invalid keywords,
 		  ;; but that'd only occur in invalid code so there's
 		  ;; no use spending effort on it.
-		  (let ((end (match-end 0)))
-		    (unless (c-forward-keyword-clause 0)
+		  (let ((end (match-end 0))
+			(kwd-sym (c-keyword-sym (match-string 0))))
+		    (unless
+			(and kwd-sym
+			     ;; Moving over a protection kwd and the following
+			     ;; ":" (in C++ Mode) to the next token could take
+			     ;; us all the way up to `kwd-start', leaving us
+			     ;; no chance to update `first-specifier-pos'.
+			     (not (c-keyword-member kwd-sym 'c-protection-kwds))
+			     (c-forward-keyword-clause 0))
 		      (goto-char end)
 		      (c-forward-syntactic-ws)))
 
