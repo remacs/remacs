@@ -7,6 +7,7 @@ dependencies = [
  "lazy_static 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
  "md5 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mock_derive 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "remacs-lib 0.1.0",
  "remacs-macros 0.1.0",
@@ -105,6 +106,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "md5"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "mock_derive"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "lazy_static 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "quote 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.11.11 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "nodrop"
@@ -230,6 +241,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum lazy_static 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)" = "4732c563b9a21a406565c4747daa7b46742f082911ae4753f390dc9ec7ee1a97"
 "checksum libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)" = "88ee81885f9f04bff991e306fea7c1c60a5f0f9e409e99f6b40e3311a3363135"
 "checksum md5 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "11f2f3240857d306c26118e2e92a5eaf8990df379e3d96573ee6c92cdbf58a81"
+"checksum mock_derive 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c6b7f76cd7faa2dbfc958d4c5a92faba8d630028b10c565a7543b085a25f3fc3"
 "checksum nodrop 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "52cd74cd09beba596430cc6e3091b74007169a56246e1262f0ba451ea95117b2"
 "checksum odds 0.2.25 (registry+https://github.com/rust-lang/crates.io-index)" = "c3df9b730298cea3a1c3faa90b7e2f9df3a9c400d0936d6015e6165734eefcba"
 "checksum quote 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "7a6e920b65c65f10b2ae65c831a81a073a89edd28c7cce89475bff467ab4167a"

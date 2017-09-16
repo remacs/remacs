@@ -26,6 +26,12 @@ extern crate sha1;
 extern crate sha2;
 extern crate base64 as base64_crate;
 
+#[cfg(test)]
+extern crate mock_derive;
+
+#[cfg(test)]
+mod functions;
+
 #[macro_use]
 mod eval;
 mod lisp;
