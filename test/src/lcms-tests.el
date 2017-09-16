@@ -1,6 +1,6 @@
 ;;; lcms-tests.el --- tests for Little CMS interface -*- lexical-binding: t -*-
 
-;; Copyright (C) 2017  Free Software Foundation, Inc.
+;; Copyright (C) 2017 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 
@@ -67,6 +67,7 @@ B is considered the exact value."
 
 (ert-deftest lcms-whitepoint ()
   "Test use of `lcms-temp->white-point'."
+  (skip-unless (featurep 'lcms2))
   (should-error (lcms-temp->white-point 3999))
   (should-error (lcms-temp->white-point 25001))
   ;; D55
