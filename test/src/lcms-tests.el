@@ -33,6 +33,9 @@
 (require 'ert)
 (require 'color)
 
+(defconst lcms-colorspacious-d65 '(0.95047 1.0 1.08883)
+  "D65 white point from colorspacious.")
+
 (defun lcms-approx-p (a b &optional delta)
   "Check if A and B are within relative error DELTA of one another.
 B is considered the exact value."
@@ -45,6 +48,22 @@ B is considered the exact value."
    (and (lcms-approx-p a1 b1 delta)
         (lcms-approx-p a2 b2 delta)
         (lcms-approx-p a3 b3 delta))))
+
+(ert-deftest lcms-cri-cam02-ucs ()
+  "Test use of `lcms-cam02-ucs'."
+  (should-error (lcms-cam02-ucs '(0 0 0) '(0 0 0) "error"))
+  (should-error (lcms-cam02-ucs '(0 0 0) 'error))
+  (should-not
+   (lcms-approx-p
+    (let ((lcms-d65-xyz '(0.44757 1.0 0.40745)))
+      (lcms-cam02-ucs '(0.5 0.5 0.5) '(0 0 0)))
+    (lcms-cam02-ucs '(0.5 0.5 0.5) '(0 0 0))))
+  (should (eql 0.0 (lcms-cam02-ucs '(0.5 0.5 0.5) '(0.5 0.5 0.5))))
+  (should
+   (lcms-approx-p (lcms-cam02-ucs lcms-colorspacious-d65
+                                  '(0 0 0)
+                                  lcms-colorspacious-d65)
+                  100.0)))
 
 (ert-deftest lcms-whitepoint ()
   "Test use of `lcms-temp->white-point'."
