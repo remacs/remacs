@@ -2398,6 +2398,23 @@ these special properties from the text in the region.
 
   The @code{invisible} and @code{intangible} properties are not saved.
 
+@vindex enriched-allow-eval-in-display-props
+@cindex security, when displaying enriched text
+  Enriched mode also supports saving and restoring @code{display}
+properties (@pxref{Display Property,,,elisp, the Emacs Lisp Reference
+Manual}), which affect how text is displayed on the screen, and also
+allow displaying images and strings that come from sources other than
+buffer text.  The @code{display} properties also support execution of
+arbitrary Lisp forms as part of processing the property for display,
+thus providing a means to dynamically tailor the display to some
+conditions that can only be known at display time.  Since execution of
+arbitrary Lisp opens Emacs to potential attacks, especially when the
+source of enriched text is outside of Emacs or even outside of your
+system (e.g., if it was received in an email message), such execution
+is by default disabled in Enriched mode.  You can enable it by
+customizing the variable @code{enriched-allow-eval-in-display-props}
+to a non-@code{nil} value.
+
 @node Text Based Tables
 @section Editing Text-based Tables
 @cindex table mode

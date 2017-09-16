@@ -876,9 +876,9 @@ static int face_before_or_after_it_pos (struct it *, bool);
 static ptrdiff_t next_overlay_change (ptrdiff_t);
 static int handle_display_spec (struct it *, Lisp_Object, Lisp_Object,
 				Lisp_Object, struct text_pos *, ptrdiff_t, bool);
-static int handle_single_display_spec (struct it *, Lisp_Object,
-                                       Lisp_Object, Lisp_Object,
-                                       struct text_pos *, ptrdiff_t, int, bool);
+static int handle_single_display_spec (struct it *, Lisp_Object, Lisp_Object,
+				       Lisp_Object, struct text_pos *,
+				       ptrdiff_t, int, bool, bool);
 static int underlying_face_id (struct it *);
 
 #define face_before_it_pos(IT) face_before_or_after_it_pos (IT, true)
@@ -4748,6 +4748,14 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		     ptrdiff_t bufpos, bool frame_window_p)
 {
   int replacing = 0;
+  bool enable_eval = true;
+
+  /* Support (disable-eval PROP) which is used by enriched.el.  */
+  if (CONSP (spec) && EQ (XCAR (spec), Qdisable_eval))
+    {
+      enable_eval = false;
+      spec = XCAR (XCDR (spec));
+    }
 
   if (CONSP (spec)
       /* Simple specifications.  */
@@ -4771,7 +4779,8 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	{
 	  int rv = handle_single_display_spec (it, XCAR (spec), object,
 					       overlay, position, bufpos,
-					       replacing, frame_window_p);
+					       replacing, frame_window_p,
+					       enable_eval);
 	  if (rv != 0)
 	    {
 	      replacing = rv;
@@ -4789,7 +4798,8 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	{
 	  int rv = handle_single_display_spec (it, AREF (spec, i), object,
 					       overlay, position, bufpos,
-					       replacing, frame_window_p);
+					       replacing, frame_window_p,
+					       enable_eval);
 	  if (rv != 0)
 	    {
 	      replacing = rv;
@@ -4802,7 +4812,8 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
     }
   else
     replacing = handle_single_display_spec (it, spec, object, overlay, position,
-					    bufpos, 0, frame_window_p);
+					    bufpos, 0, frame_window_p,
+					    enable_eval);
   return replacing;
 }
 
@@ -4847,6 +4858,8 @@ display_prop_end (struct it *it, Lisp_Object object, struct text_pos start_pos)
    don't set up IT.  In that case, FRAME_WINDOW_P means SPEC
    is intended to be displayed in a window on a GUI frame.
 
+   Enable evaluation of Lisp forms only if ENABLE_EVAL_P is true.
+
    Value is non-zero if something was found which replaces the display
    of buffer or string text.  */
 
@@ -4854,7 +4867,7 @@ static int
 handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 			    Lisp_Object overlay, struct text_pos *position,
 			    ptrdiff_t bufpos, int display_replaced,
-			    bool frame_window_p)
+			    bool frame_window_p, bool enable_eval_p)
 {
   Lisp_Object form;
   Lisp_Object location, value;
@@ -4872,6 +4885,8 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
       spec = XCDR (spec);
     }
 
+  if (!NILP (form) && !EQ (form, Qt) && !enable_eval_p)
+    form = Qnil;
   if (!NILP (form) && !EQ (form, Qt))
     {
       ptrdiff_t count = SPECPDL_INDEX ();
@@ -4920,7 +4935,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		    steps = - steps;
 		  it->face_id = smaller_face (it->f, it->face_id, steps);
 		}
-	      else if (FUNCTIONP (it->font_height))
+	      else if (FUNCTIONP (it->font_height) && enable_eval_p)
 		{
 		  /* Call function with current height as argument.
 		     Value is the new height.  */
@@ -4941,7 +4956,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  new_height = (XFLOATINT (it->font_height)
 				* XINT (f->lface[LFACE_HEIGHT_INDEX]));
 		}
-	      else
+	      else if (enable_eval_p)
 		{
 		  /* Evaluate IT->font_height with `height' bound to the
 		     current specified height to get the new height.  */
@@ -32203,6 +32218,10 @@ They are still logged to the *Messages* buffer.  */);
   DEFSYM (QCfile, ":file");
   DEFSYM (Qfontified, "fontified");
   DEFSYM (Qfontification_functions, "fontification-functions");
+
+  /* Name of the symbol which disables Lisp evaluation in 'display'
+     properties.  This is used by enriched.el.  */
+  DEFSYM (Qdisable_eval, "disable-eval");
 
   /* Name of the face used to highlight trailing whitespace.  */
   DEFSYM (Qtrailing_whitespace, "trailing-whitespace");

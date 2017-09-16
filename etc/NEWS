@@ -117,6 +117,28 @@ The effect is similar to that of "toolBar" resource on the tool bar.
 
 * Changes in Emacs 26.1
 
+** Security vulnerability related to Enriched Text mode is removed.
+
++++
+*** Enriched Text mode does not evaluate Lisp in 'display' properties.
+This feature allows saving 'display' properties as part of text.
+Emacs 'display' properties support evaluation of arbitrary Lisp forms
+as part of processing the property for display, so displaying Enriched
+Text could be vulnerable to executing arbitrary malicious Lisp code
+included in the text (e.g., sent as part of an email message).
+Therefore, execution of arbitrary Lisp forms in 'display' properties
+decoded by Enriched Text mode is now disabled by default.  Customize
+the new option 'enriched-allow-eval-in-display-props' to a non-nil
+value to allow Lisp evaluation in decoded 'display' properties.
+
+This vulnerability was introduced in Emacs 21.1.  To work around that
+in Emacs versions before 25.3, append the following to your ~/.emacs
+init file:
+
+  (eval-after-load "enriched"
+    '(defun enriched-decode-display-prop (start end &optional param)
+       (list start end)))
+
 +++
 ** Functions in 'write-contents-functions' can fully short-circuit the
 'save-buffer' process.  Previously, saving a buffer that was not

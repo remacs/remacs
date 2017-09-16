@@ -147,6 +147,22 @@ them and their old values to `enriched-old-bindings'."
   :type 'hook
   :group 'enriched)
 
+(defcustom enriched-allow-eval-in-display-props nil
+  "If non-nil allow to evaluate arbitrary forms in display properties.
+
+Enriched mode recognizes display properties of text stored using
+an extension command to the text/enriched format, \"x-display\".
+These properties must not, by default, include evaluation of
+Lisp forms, otherwise they are not applied.  Customize this option
+to t to turn off this safety feature, and allow Enriched mode to
+apply display properties which evaluate arbitrary Lisp forms.
+Note, however, that applying unsafe display properties could
+execute malicious Lisp code, if that code came from an external source."
+  :risky t
+  :type 'boolean
+  :version "26.1"
+  :group 'enriched)
+
 (defvar enriched-old-bindings nil
   "Store old variable values that we change when entering mode.
 The value is a list of \(VAR VALUE VAR VALUE...).")
@@ -503,9 +519,8 @@ the range of text to assign text property SYMBOL with value VALUE."
 		  (error nil)))))
     (unless prop
       (message "Warning: invalid <x-display> parameter %s" param))
-    ;; Disabled in Emacs 25.3 to avoid execution of arbitrary Lisp
-    ;; forms in display properties stored within enriched text.
-    ;; (list start end 'display prop)))
-    (list start end)))
+    (if enriched-allow-eval-in-display-props
+        (list start end 'display prop)
+      (list start end 'display (list 'disable-eval prop)))))
 
 ;;; enriched.el ends here
