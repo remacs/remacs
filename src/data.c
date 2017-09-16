@@ -3011,7 +3011,7 @@ minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
 	       enum Arith_Comparison comparison)
 {
   eassume (0 < nargs);
-  Lisp_Object accum UNINIT;
+  Lisp_Object accum = args[0];	/* pacify GCC */
   for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
     {
       Lisp_Object val = args[argnum];
