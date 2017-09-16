@@ -82,6 +82,10 @@ int sys_dup2 (int, int);
 int sys_read (int, char *, unsigned int);
 int sys_write (int, const void *, unsigned int);
 struct tm *sys_localtime (const time_t *);
+/* MinGW64 system headers include string.h too early, causing the
+   compiler to emit a warning about sys_strerror having no
+   prototype.  */
+char *sys_strerror (int);
 
 #ifdef HAVE_MODULES
 extern void dynlib_reset_last_error (void);
