@@ -165,6 +165,10 @@ is consulted."
       (type   . "application/zip")
       ("copiousoutput"))
      ("pdf"
+      (viewer . pdf-view-mode)
+      (type . "application/pdf")
+      (test . (eq window-system 'x)))
+     ("pdf"
       (viewer . doc-view-mode)
       (type . "application/pdf")
       (test . (eq window-system 'x)))
