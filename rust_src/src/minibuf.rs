@@ -20,11 +20,9 @@ pub fn minibufferp(object: LispObject) -> LispObject {
         object.as_buffer_or_error();
         object
     };
-    if memq(buffer, LispObject::from_raw(unsafe { Vminibuffer_list })).is_nil() {
-        LispObject::constant_nil()
-    } else {
-        LispObject::constant_t()
-    }
+    LispObject::from_bool(
+        memq(buffer, LispObject::from_raw(unsafe { Vminibuffer_list })).is_not_nil(),
+    )
 }
 
 /// Return the currently active minibuffer window, or nil if none.

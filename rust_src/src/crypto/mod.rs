@@ -478,7 +478,7 @@ fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     if buffer.is_nil() {
         unsafe { nsberror(buffer_or_name.to_raw()) };
     }
-    let b = buffer.as_vectorlike().unwrap().as_buffer().unwrap();
+    let b = buffer.as_buffer().unwrap();
     let mut ctx = sha1::Sha1::new();
 
     ctx.update(unsafe {

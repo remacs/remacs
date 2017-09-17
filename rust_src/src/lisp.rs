@@ -893,6 +893,11 @@ impl LispObject {
     }
 
     #[inline]
+    pub fn is_t(self) -> bool {
+        self.to_raw() == unsafe { Qt }
+    }
+
+    #[inline]
     pub fn is_marker(self) -> bool {
         self.as_misc().map_or(
             false,

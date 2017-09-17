@@ -9,14 +9,15 @@ use editfns::point;
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
 impl LispWindowRef {
-    // Check if window is live
+    /// Check if window is a live window (displays a buffer).
+    /// This is also sometimes called a "leaf window" in Emacs sources.
     #[inline]
     pub fn is_live(self) -> bool {
         LispObject::from_raw(self.contents).is_buffer()
     }
 
     #[inline]
-    pub fn pointm(self) -> LispObject {
+    pub fn point_marker(self) -> LispObject {
         LispObject::from_raw(self.pointm)
     }
 
@@ -52,11 +53,11 @@ pub fn window_live_p(object: LispObject) -> LispObject {
 /// correct to return the top-level value of `point', outside of any
 /// `save-excursion' forms.  But that is hard to define.
 #[lisp_fn(min = "0")]
-pub fn window_point(object: LispObject) -> LispObject {
-    if object.is_nil() || object == selected_window() {
+pub fn window_point(window: LispObject) -> LispObject {
+    if window.is_nil() || window == selected_window() {
         point()
     } else {
-        let marker = object.as_live_window_or_error().pointm();
+        let marker = window.as_live_window_or_error().point_marker();
         marker_position(marker)
     }
 }
@@ -79,8 +80,9 @@ pub fn window_buffer(window: LispObject) -> LispObject {
     } else {
         window
     };
-    if win.as_window_or_error().is_live() {
-        win.as_window().unwrap().contents()
+    let win = win.as_window_or_error();
+    if win.is_live() {
+        win.contents()
     } else {
         LispObject::constant_nil()
     }
@@ -91,9 +93,8 @@ pub fn window_buffer(window: LispObject) -> LispObject {
 /// window.  Windows that have been deleted are not valid.
 #[lisp_fn]
 pub fn window_valid_p(object: LispObject) -> LispObject {
-    if object.is_window() && object.as_window().unwrap().contents().is_not_nil() {
-        LispObject::constant_t()
-    } else {
-        LispObject::constant_nil()
-    }
+    LispObject::from_bool(object.as_window().map_or(
+        false,
+        |win| win.contents().is_not_nil(),
+    ))
 }
