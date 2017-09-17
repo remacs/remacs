@@ -167,11 +167,11 @@ is consulted."
      ("pdf"
       (viewer . pdf-view-mode)
       (type . "application/pdf")
-      (test . (eq window-system 'x)))
+      (test . window-system))
      ("pdf"
       (viewer . doc-view-mode)
       (type . "application/pdf")
-      (test . (eq window-system 'x)))
+      (test . window-system))
      ("pdf"
       (viewer . "gv -safer %s")
       (type . "application/pdf")
