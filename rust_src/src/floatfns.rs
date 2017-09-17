@@ -57,7 +57,7 @@ simple_float_op!("sqrt", sqrt, "Return the square root of ARG.");
 pub fn float_arith_driver(
     mut accum: f64,
     argstart: usize,
-    code: ArithOp,
+    code: &ArithOp,
     args: &[LispObject],
 ) -> LispObject {
     for (i, &val) in args[argstart..].iter().enumerate() {
@@ -66,7 +66,7 @@ pub fn float_arith_driver(
             LispNumber::Float(f) => f,
             LispNumber::Fixnum(d) => d as f64,
         };
-        match code {
+        match *code {
             ArithOp::Add => accum += next,
             ArithOp::Sub => {
                 accum = {

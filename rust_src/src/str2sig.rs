@@ -91,5 +91,5 @@ pub unsafe extern "C" fn str2sig(signame: *const c_char, signum: *mut c_int) -> 
             }
         }
     }
-    return -1;
+    -1
 }

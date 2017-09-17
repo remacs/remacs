@@ -6,7 +6,7 @@ use std::heap::Layout;
 use std::heap::AllocErr;
 
 /// To adhere to the rule that all calls to malloc, realloc, and free
-/// be redirected to their "unexec_"-prefixed variants, this crate
+/// be redirected to their `unexec_`-prefixed variants, this crate
 /// provides a custom system allocator that performs such a mapping.
 
 extern "C" {

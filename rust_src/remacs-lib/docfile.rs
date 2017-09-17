@@ -67,7 +67,7 @@ pub extern "C" fn scan_rust_file(
                 continue;
             }
             let attribute = mem::replace(&mut attribute, String::new());
-            let mut split = line.split("(");
+            let mut split = line.split('(');
             let name = split.next().unwrap().split_whitespace().last().unwrap();
 
             if name.starts_with('$') {
@@ -78,13 +78,13 @@ pub extern "C" fn scan_rust_file(
             // Parse attribute properties to get minimum # of arguments,
             // and Lisp function name.
             let mut attr_props = HashMap::new();
-            if attribute.contains("(") {
+            if attribute.contains('(') {
                 let splitters = ['(', ')'];
                 // Extract part between parens
                 let attr = attribute.split(&splitters[..]).nth(1).unwrap();
                 // Parse key-value pairs
                 for arg in attr.split_terminator(',') {
-                    let mut name_val = arg.split("=");
+                    let mut name_val = arg.split('=');
                     attr_props.insert(
                         name_val.next().unwrap().trim(),
                         name_val.next().unwrap().trim().trim_matches('"'),
@@ -94,15 +94,14 @@ pub extern "C" fn scan_rust_file(
 
             // Read lines until the closing paren
             let mut sig = split.next().unwrap().to_string();
-            while !sig.contains(")") {
+            while !sig.contains(')') {
                 sig.extend(line_iter.next().unwrap());
             }
-            let sig = sig.split(")").next().unwrap();
+            let sig = sig.split(')').next().unwrap();
             let has_many_args = sig.contains("&mut");
             // Split arg names and types
             let splitters = [':', ','];
             let args = sig.split_terminator(&splitters[..]).collect::<Vec<_>>();
-
             let lisp_name = attr_props.get("name").map_or_else(
                 || name.replace("_", "-"),
                 |&name| name.into(),
