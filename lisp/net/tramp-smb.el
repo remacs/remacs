@@ -415,7 +415,7 @@ pass to the OPERATION."
 	(with-tramp-progress-reporter
 	    v 0 (format "Copying %s to %s" dirname newname)
 	  (when (and (file-directory-p newname)
-		     (not (directory-name-p newname)))
+		     (not (tramp-compat-directory-name-p newname)))
 	    (tramp-error v 'file-already-exists newname))
 	  (cond
 	   ;; We must use a local temporary directory.
@@ -586,7 +586,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 
 	  ;; Remote newname.
 	  (when (and (file-directory-p newname)
-		     (directory-name-p newname))
+		     (tramp-compat-directory-name-p newname))
 	    (setq newname
 		  (expand-file-name (file-name-nondirectory filename) newname)))
 

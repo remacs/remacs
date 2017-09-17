@@ -4547,16 +4547,17 @@ Only works for Bourne-like shells."
 	       (t                  process)))
 	pid)
     ;; If it's a Tramp process, send the INT signal remotely.
-    (when (and (processp proc) (process-live-p proc)
-	       (setq pid (process-get proc 'remote-pid)))
-      (tramp-message proc 5 "Interrupt process %s with pid %s" proc pid)
-      ;; This is for tramp-sh.el.  Other backends do not support this (yet).
-      (tramp-compat-funcall
-       'tramp-send-command
-       (tramp-get-connection-property proc "vector" nil)
-       (format "kill -2 %d" pid))
-      ;; Report success.
-      proc)))
+    (when (and (processp proc) (setq pid (process-get proc 'remote-pid)))
+      (if (not  (process-live-p proc))
+	  (tramp-error proc 'error "Process %s is not active" proc)
+	(tramp-message proc 5 "Interrupt process %s with pid %s" proc pid)
+	;; This is for tramp-sh.el.  Other backends do not support this (yet).
+	(tramp-compat-funcall
+	 'tramp-send-command
+	 (tramp-get-connection-property proc "vector" nil)
+	 (format "kill -2 %d" pid))
+	;; Report success.
+	proc))))
 
 ;; `interrupt-process-functions' exists since Emacs 26.1.
 (when (boundp 'interrupt-process-functions)

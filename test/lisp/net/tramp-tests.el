@@ -3196,15 +3196,13 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (should (processp proc))
 	  (should (process-live-p proc))
 	  (should (equal (process-status proc) 'run))
+	  (should (numberp (process-get proc 'remote-pid)))
 	  (should (interrupt-process proc))
 	  ;; Let the process accept the interrupt.
           (accept-process-output proc 1 nil 0)
 	  (should-not (process-live-p proc))
-	  (should (equal (process-status proc) 'signal))
 	  ;; An interrupted process cannot be interrupted, again.
-	  ;; Does not work reliable.
-	  ;; (should-error (interrupt-process proc) :type 'error))
-	  )
+	  (should-error (interrupt-process proc) :type 'error))
 
       ;; Cleanup.
       (ignore-errors (delete-process proc)))))
@@ -3480,7 +3478,6 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
 
-  ;; TODO: This test fails.
   (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
     (let* ((default-directory tramp-test-temporary-file-directory)
 	   (tmp-name1 (tramp--test-make-temp-name nil quoted))
