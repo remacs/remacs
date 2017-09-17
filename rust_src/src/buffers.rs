@@ -81,18 +81,21 @@ impl LispBufferRef {
         unsafe { (*self.text).z }
     }
 
+    /// Number of modifications made to the buffer.
     #[inline]
-    pub fn save_modiff(&self) -> EmacsInt {
-        unsafe { (*self.text).save_modiff }
-    }
-
-    #[inline]
-    pub fn modiff(&self) -> EmacsInt {
+    pub fn modifications(&self) -> EmacsInt {
         unsafe { (*self.text).modiff }
     }
 
+    /// Value of `modiff` last time the buffer was saved.
     #[inline]
-    pub fn chars_modiff(&self) -> EmacsInt {
+    pub fn modifications_since_save(&self) -> EmacsInt {
+        unsafe { (*self.text).save_modiff }
+    }
+
+    /// Number of modifications to the buffer's characters.
+    #[inline]
+    pub fn char_modifications(&self) -> EmacsInt {
         unsafe { (*self.text).chars_modiff }
     }
 
@@ -227,7 +230,7 @@ pub fn buffer_file_name(buffer: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
     let buf = buffer.as_buffer_or_current_buffer();
-    LispObject::from_bool(buf.save_modiff() < buf.modiff())
+    LispObject::from_bool(buf.modifications_since_save() < buf.modifications())
 }
 
 /// Return the name of BUFFER, as a string.
@@ -244,7 +247,7 @@ pub fn buffer_name(buffer: LispObject) -> LispObject {
 /// No argument or nil as argument means use current buffer as BUFFER.
 #[lisp_fn(min = "0")]
 fn buffer_modified_tick(buffer: LispObject) -> LispObject {
-    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().modiff())
+    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().modifications())
 }
 
 /// Return BUFFER's character-change tick counter.
@@ -257,7 +260,7 @@ fn buffer_modified_tick(buffer: LispObject) -> LispObject {
 /// buffer as BUFFER.
 #[lisp_fn(min = "0")]
 fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
-    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().chars_modiff())
+    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().char_modifications())
 }
 
 /// Return the position at which OVERLAY starts.
@@ -321,12 +324,10 @@ fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     if buffer.is_nil() {
         unsafe { nsberror(buffer_or_name.to_raw()) }
     };
-    if !buffer.as_buffer().unwrap().is_live() {
+    let buf = buffer.as_buffer_or_error();
+    if !buf.is_live() {
         error!("Selecting deleted buffer");
     };
-    unsafe {
-        set_buffer_internal(buffer.as_buffer_or_error().as_ptr() as *const _ as
-            *const c_void)
-    };
+    unsafe { set_buffer_internal(buf.as_ptr() as *const _ as *const c_void) };
     buffer
 }

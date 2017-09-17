@@ -57,7 +57,6 @@ mod obarray;
 mod editfns;
 mod util;
 mod minibuf;
-mod fns;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -100,7 +99,6 @@ pub use math::Fleq;
 pub use math::arithcompare;
 pub use editfns::Feobp;
 pub use editfns::Fbobp;
-pub use fns::Felt;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -142,6 +140,7 @@ pub use strings::Fstring_to_unibyte;
 pub use strings::Fmultibyte_string_p;
 pub use strings::Fstring_lessp;
 pub use vectors::Flength;
+pub use vectors::Felt;
 pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
@@ -312,6 +311,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Svector_or_char_table_p);
         defsubr(&*vectors::Svectorp);
         defsubr(&*vectors::Slength);
+        defsubr(&*vectors::Selt);
         defsubr(&*hashtable::Scopy_hash_table);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
@@ -363,6 +363,5 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Spoint_max);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
-        defsubr(&*fns::Selt);
     }
 }

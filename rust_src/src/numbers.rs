@@ -62,7 +62,7 @@ fn number_or_marker_p(object: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 fn random(limit: LispObject) -> LispObject {
     let mut rng = RNG.lock().unwrap();
-    if limit == LispObject::constant_t() {
+    if limit.is_t() {
         *rng = StdRng::new().unwrap();
     } else if let Some(s) = limit.as_string() {
         let values: Vec<usize> = s.as_slice().iter().map(|&x| x as usize).collect();

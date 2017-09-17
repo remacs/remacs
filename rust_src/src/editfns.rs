@@ -61,7 +61,7 @@ pub fn bolp() -> LispObject {
 }
 
 /// Return t if point is at the end of a line.
-///`End of a line' includes point being at the end of the buffer.
+/// `End of a line' includes point being at the end of the buffer.
 #[lisp_fn]
 pub fn eolp() -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
@@ -70,9 +70,9 @@ pub fn eolp() -> LispObject {
     )
 }
 
-// Return the start or end position of the region.
-// BEGINNINGP means return the start.
-// If there is no region active, signal an error.
+/// Return the start or end position of the region.
+/// BEGINNINGP means return the start.
+/// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> LispObject {
     let current_buf = ThreadState::current_buffer();
     if LispObject::from_raw(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil() &&

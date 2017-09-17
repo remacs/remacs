@@ -661,7 +661,7 @@ pub struct thread_state {
     /// able to free or re-allocate it properly.
     pub m_search_regs: re_registers,
     /// If non-zero the match data have been saved in saved_search_regs
-    /// during the execution of a sentinel or filter. */
+    /// during the execution of a sentinel or filter.
     pub m_search_regs_saved: bool,
     pub m_saved_search_regs: re_registers,
     /// This is the string or buffer in which we
