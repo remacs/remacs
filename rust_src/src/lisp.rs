@@ -587,7 +587,7 @@ impl LispObject {
 
 // Cons support (LispType == 6 | 3)
 
-/// From `FOR_EACH_TAIL_INTERNAL in lisp.h`
+/// From `FOR_EACH_TAIL_INTERNAL` in `lisp.h`
 pub struct TailsIter {
     list: LispObject,
     safe: bool,

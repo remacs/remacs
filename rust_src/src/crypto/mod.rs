@@ -20,6 +20,7 @@ use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw
 use remacs_macros::lisp_fn;
 use symbols::{symbol_name, fboundp};
 
+#[derive(Clone, Copy)]
 enum HashAlg {
     MD5,
     SHA1,
@@ -325,7 +326,7 @@ fn md5(
         coding_system,
         noerror,
     );
-    _secure_hash(&HashAlg::MD5, input.as_slice(), true)
+    _secure_hash(HashAlg::MD5, input.as_slice(), true)
 }
 
 /// Return the secure hash of OBJECT, a buffer or string.
@@ -356,13 +357,13 @@ fn secure_hash(
         LispObject::constant_nil(),
         LispObject::constant_nil(),
     );
-    _secure_hash(&hash_alg(algorithm), input.as_slice(), binary.is_nil())
+    _secure_hash(hash_alg(algorithm), input.as_slice(), binary.is_nil())
 }
 
-fn _secure_hash(algorithm: &HashAlg, input: &[u8], hex: bool) -> LispObject {
+fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
     let digest_size: usize;
     let hash_func: fn(&[u8], &mut [u8]);
-    match *algorithm {
+    match algorithm {
         HashAlg::MD5 => {
             digest_size = MD5_DIGEST_LEN;
             hash_func = md5_buffer;
