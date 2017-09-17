@@ -1985,7 +1985,7 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 	  ;; scp or rsync DTRT.
 	  (progn
 	    (when (and (file-directory-p newname)
-		       (not (directory-name-p newname)))
+		       (not (tramp-compat-directory-name-p newname)))
 	      (tramp-error v 'file-already-exists newname))
 	    (setq dirname (directory-file-name (expand-file-name dirname))
 		  newname (directory-file-name (expand-file-name newname)))
