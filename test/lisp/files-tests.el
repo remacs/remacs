@@ -397,5 +397,16 @@ name (Bug#28412)."
         (should (null (save-buffer)))
         (should (eq (buffer-size) 1))))))
 
+(ert-deftest files-tests--copy-directory ()
+  (let* ((dir (make-temp-file "files-mkdir-test" t))
+	 (dirname (file-name-as-directory dir))
+	 (source (concat dirname "source"))
+	 (dest (concat dirname "dest/new/directory/"))
+	 (file (concat (file-name-as-directory source) "file")))
+    (make-directory source)
+    (write-region "" nil file)
+    (copy-directory source dest t t t)
+    (should (file-exists-p (concat dest "file")))))
+
 (provide 'files-tests)
 ;;; files-tests.el ends here
