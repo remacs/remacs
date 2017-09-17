@@ -1578,7 +1578,7 @@ to look up will be substituted there."
   (goto-char (point-min))
   (let ((window (get-buffer-window (current-buffer) 'visible)))
     (when window
-      (when (re-search-forward "^Summary" nil 'move)
+      (when (re-search-forward "^\\(Summary\\|Syntax\\)" nil 'move)
         (beginning-of-line)
         (set-window-start window (point))))))
 
