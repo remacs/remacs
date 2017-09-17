@@ -297,7 +297,7 @@ macro_rules! vecsize {
     }
 }
 
-/// Equivalent to ALLOCATE_PSEUDOVECTOR in C
+/// Equivalent to `ALLOCATE_PSEUDOVECTOR` in C
 macro_rules! allocate_pseudovector {
     ($ty: ty, $field: ident, $vectype: expr) => {
         unsafe { ::remacs_sys::allocate_pseudovector(vecsize!($ty) as ::libc::c_int,

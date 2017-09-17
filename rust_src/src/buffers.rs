@@ -167,7 +167,7 @@ pub fn buffer_live_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_buffer().map_or(false, |m| m.is_live()))
 }
 
-/// Like Fassoc, but use Fstring_equal to compare
+/// Like Fassoc, but use `Fstring_equal` to compare
 /// (which ignores text properties), and don't ever quit.
 fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
     let result = list.iter_tails_safe().find(|&item| {

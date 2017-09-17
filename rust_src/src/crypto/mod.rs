@@ -325,7 +325,7 @@ fn md5(
         coding_system,
         noerror,
     );
-    _secure_hash(HashAlg::MD5, input.as_slice(), true)
+    _secure_hash(&HashAlg::MD5, input.as_slice(), true)
 }
 
 /// Return the secure hash of OBJECT, a buffer or string.
@@ -356,13 +356,13 @@ fn secure_hash(
         LispObject::constant_nil(),
         LispObject::constant_nil(),
     );
-    _secure_hash(hash_alg(algorithm), input.as_slice(), binary.is_nil())
+    _secure_hash(&hash_alg(algorithm), input.as_slice(), binary.is_nil())
 }
 
-fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
+fn _secure_hash(algorithm: &HashAlg, input: &[u8], hex: bool) -> LispObject {
     let digest_size: usize;
     let hash_func: fn(&[u8], &mut [u8]);
-    match algorithm {
+    match *algorithm {
         HashAlg::MD5 => {
             digest_size = MD5_DIGEST_LEN;
             hash_func = md5_buffer;
@@ -408,8 +408,8 @@ fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
 /// 2*len bytes of space for the final hex string.
 fn hexify_digest_string(buffer: &mut [u8], len: usize) {
     static hexdigit: [u8; 16] = *b"0123456789abcdef";
-    debug_assert!(
-        buffer.len() == 2 * len,
+    debug_assert_eq!(
+        buffer.len(), 2 * len,
         "buffer must be long enough to hold 2*len hex digits"
     );
     for i in (0..len).rev() {
