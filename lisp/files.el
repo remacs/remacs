@@ -5372,7 +5372,7 @@ raised."
 	  (while (progn
 		   (setq parent (directory-file-name
 				 (file-name-directory dir)))
-		   (condition-case err
+		   (condition-case ()
 		       (files--ensure-directory dir)
 		     (file-missing
 		      ;; Do not loop if root does not exist (Bug#2309).
@@ -5544,16 +5544,14 @@ into NEWNAME instead."
 	     ;; If NEWNAME is not a directory name, create it;
 	     ;; that is where we will copy the files of DIRECTORY.
 	     (make-directory newname parents))
-	    ;; If NEWNAME is a directory name and COPY-CONTENTS
-	    ;; is nil, copy into NEWNAME/[DIRECTORY-BASENAME].
-	    ((not copy-contents)
-	     (setq newname (concat newname
-			    (file-name-nondirectory directory)))
-	     (and (file-exists-p newname)
-		  (not (file-directory-p newname))
-		  (error "Cannot overwrite non-directory %s with a directory"
-			 newname))
-	     (make-directory newname t)))
+	    ;; NEWNAME is a directory name.  If COPY-CONTENTS is non-nil,
+	    ;; create NEWNAME if it is not already a directory;
+	    ;; otherwise, create NEWNAME/[DIRECTORY-BASENAME].
+	    ((if copy-contents
+		 (or parents (not (file-directory-p newname)))
+	       (setq newname (concat newname
+				     (file-name-nondirectory directory))))
+	     (make-directory (directory-file-name newname) parents)))
 
       ;; Copy recursively.
       (dolist (file
