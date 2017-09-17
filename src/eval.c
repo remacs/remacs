@@ -1428,7 +1428,7 @@ push_handler (Lisp_Object tag_ch_val, enum handlertype handlertype)
 struct handler *
 push_handler_nosignal (Lisp_Object tag_ch_val, enum handlertype handlertype)
 {
-  struct handler *c = handlerlist->nextfree;
+  struct handler *CACHEABLE c = handlerlist->nextfree;
   if (!c)
     {
       c = malloc (sizeof *c);
