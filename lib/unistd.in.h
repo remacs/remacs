@@ -379,7 +379,7 @@ _GL_WARN_ON_USE (dup2, "dup2 is unportable - "
    Close NEWFD first if it is open.
    Return newfd if successful, otherwise -1 and errno set.
    See the Linux man page at
-   <http://www.kernel.org/doc/man-pages/online/pages/man2/dup3.2.html>.  */
+   <https://www.kernel.org/doc/man-pages/online/pages/man2/dup3.2.html>.  */
 # if @HAVE_DUP3@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define dup3 rpl_dup3
@@ -1149,7 +1149,7 @@ _GL_WARN_ON_USE (pipe, "pipe is unportable - "
    Store the read-end as fd[0] and the write-end as fd[1].
    Return 0 upon success, or -1 with errno set upon failure.
    See also the Linux man page at
-   <http://www.kernel.org/doc/man-pages/online/pages/man2/pipe2.2.html>.  */
+   <https://www.kernel.org/doc/man-pages/online/pages/man2/pipe2.2.html>.  */
 # if @HAVE_PIPE2@
 #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
 #   define pipe2 rpl_pipe2
