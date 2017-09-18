@@ -367,7 +367,8 @@ be invoked with the right arguments."
     (should-not (make-directory subdir1))
     (should-not (make-directory subdir2 t))
     (should-error (make-directory a/b))
-    (should-not (make-directory a/b t))))
+    (should-not (make-directory a/b t))
+    (delete-directory dir 'recursive)))
 
 (ert-deftest files-test-no-file-write-contents ()
   "Test that `write-contents-functions' permits saving a file.
@@ -406,7 +407,8 @@ name (Bug#28412)."
     (make-directory source)
     (write-region "" nil file)
     (copy-directory source dest t t t)
-    (should (file-exists-p (concat dest "file")))))
+    (should (file-exists-p (concat dest "file")))
+    (delete-directory dir 'recursive)))
 
 (provide 'files-tests)
 ;;; files-tests.el ends here
