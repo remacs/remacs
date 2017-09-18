@@ -152,12 +152,16 @@ tty_ring_bell (struct frame *f)
 static void
 tty_send_additional_strings (struct terminal *terminal, Lisp_Object sym)
 {
-  Lisp_Object lisp_terminal;
-  Lisp_Object extra_codes;
+  /* Use only accessors like CDR_SAFE and assq_no_quit to avoid any
+     form of quitting or signaling an error, since this function can
+     run as part of the "emergency escape" procedure invoked in the
+     middle of GC, where quitting means crashing (Bug#17406).  */
+  if (! terminal->name)
+    return;
   struct tty_display_info *tty = terminal->display_info.tty;
 
-  XSETTERMINAL (lisp_terminal, terminal);
-  for (extra_codes = Fterminal_parameter (lisp_terminal, sym);
+  for (Lisp_Object extra_codes
+	 = CDR_SAFE (assq_no_quit (sym, terminal->param_alist));
        CONSP (extra_codes);
        extra_codes = XCDR (extra_codes))
     {
