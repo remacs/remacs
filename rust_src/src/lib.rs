@@ -247,6 +247,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Srem);
         defsubr(&*math::Sadd1);
         defsubr(&*math::Ssub1);
+        defsubr(&*math::Slognot);
         defsubr(&*numbers::Sintegerp);
         defsubr(&*numbers::Sinteger_or_marker_p);
         defsubr(&*numbers::Sfloatp);

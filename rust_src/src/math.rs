@@ -396,3 +396,9 @@ fn sub1(number: LispObject) -> LispObject {
         },
     }
 }
+
+/// Return the bitwise complement of NUMBER.  NUMBER must be an integer.
+#[lisp_fn]
+fn lognot(number: LispObject) -> LispObject {
+    LispObject::from_fixnum(!number.as_fixnum_or_error())
+}
