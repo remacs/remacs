@@ -54,16 +54,25 @@ Added time stamp is active unless value is `inactive'."
   "Find or create an entry for date D.
 If KEEP-RESTRICTION is non-nil, do not widen the buffer.
 When it is nil, the buffer will be widened to make sure an existing date
-tree can be found."
+tree can be found.  If it is the sympol `subtree-at-point', then the tree
+will be built under the headline at point."
   (setq-local org-datetree-base-level 1)
-  (or keep-restriction (widen))
   (save-restriction
-    (let ((prop (org-find-property "DATE_TREE")))
-      (when prop
-	(goto-char prop)
-	(setq-local org-datetree-base-level
-		    (org-get-valid-level (org-current-level) 1))
-	(org-narrow-to-subtree)))
+    (if (eq keep-restriction 'subtree-at-point)
+	(progn
+	  (unless (org-at-heading-p) (error "Not at heading"))
+	  (widen)
+	  (org-narrow-to-subtree)
+	  (setq-local org-datetree-base-level
+		      (org-get-valid-level (org-current-level) 1)))
+      (unless keep-restriction (widen))
+      ;; Support the old way of tree placement, using a property
+      (let ((prop (org-find-property "DATE_TREE")))
+	(when prop
+	  (goto-char prop)
+	  (setq-local org-datetree-base-level
+		      (org-get-valid-level (org-current-level) 1))
+	  (org-narrow-to-subtree))))
     (goto-char (point-min))
     (let ((year (calendar-extract-year d))
 	  (month (calendar-extract-month d))
@@ -84,18 +93,26 @@ tree can be found."
   "Find or create an ISO week entry for date D.
 Compared to `org-datetree-find-date-create' this function creates
 entries ordered by week instead of months.
-If KEEP-RESTRICTION is non-nil, do not widen the buffer.  When it
-is nil, the buffer will be widened to make sure an existing date
-tree can be found."
+When it is nil, the buffer will be widened to make sure an existing date
+tree can be found.  If it is the sympol `subtree-at-point', then the tree
+will be built under the headline at point."
   (setq-local org-datetree-base-level 1)
-  (or keep-restriction (widen))
   (save-restriction
-    (let ((prop (org-find-property "WEEK_TREE")))
-      (when prop
-	(goto-char prop)
-	(setq-local org-datetree-base-level
-		    (org-get-valid-level (org-current-level) 1))
-	(org-narrow-to-subtree)))
+    (if (eq keep-restriction 'subtree-at-point)
+	(progn
+	  (unless (org-at-heading-p) (error "Not at heading"))
+	  (widen)
+	  (org-narrow-to-subtree)
+	  (setq-local org-datetree-base-level
+		      (org-get-valid-level (org-current-level) 1)))
+      (unless keep-restriction (widen))
+      ;; Support the old way of tree placement, using a property
+      (let ((prop (org-find-property "WEEK_TREE")))
+	(when prop
+	  (goto-char prop)
+	  (setq-local org-datetree-base-level
+		      (org-get-valid-level (org-current-level) 1))
+	  (org-narrow-to-subtree))))
     (goto-char (point-min))
     (require 'cal-iso)
     (let* ((year (calendar-extract-year d))

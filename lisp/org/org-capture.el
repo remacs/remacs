@@ -56,6 +56,7 @@
 (declare-function org-decrypt-entry "org-crypt" ())
 (declare-function org-encrypt-entry "org-crypt" ())
 (declare-function org-table-analyze "org-table" ())
+(declare-function org-table-current-dline "org-table" ())
 (declare-function org-table-goto-line "org-table" (N))
 
 (defvar org-end-time-was-given)
@@ -82,6 +83,36 @@
   "Options concerning capturing new entries."
   :tag "Org Capture"
   :group 'org)
+
+(defun org-capture-upgrade-templates (templates)
+  "Update the template list to the new format.
+TEMPLATES is a template list, as in `org-capture-templates'. The
+new format unifies all the date/week tree targets into one that
+also allows for an optional outline path to specify a target."
+  (let ((modified-templates
+	 (mapcar
+	  (lambda (entry)
+	    (pcase entry
+	      ;; Match templates with an obsolete "tree" target type. Replace
+	      ;; it with common `file+olp-datetree'.  Add new properties
+	      ;; (i.e., `:time-prompt' and `:tree-type') if needed.
+	      (`(,key ,desc ,type (file+datetree . ,path) ,tpl . ,props)
+	       `(,key ,desc ,type (file+olp+datetree ,@path) ,tpl ,@props))
+	      (`(,key ,desc ,type (file+datetree+prompt . ,path) ,tpl . ,props)
+	       `(,key ,desc ,type (file+olp+datetree ,@path) ,tpl
+		      :time-prompt t ,@props))
+	      (`(,key ,desc ,type (file+weektree . ,path) ,tpl . ,props)
+	       `(,key ,desc ,type (file+olp+datetree ,@path) ,tpl
+		      :tree-type week ,@props))
+	      (`(,key ,desc ,type (file+weektree+prompt . ,path) ,tpl . ,props)
+	       `(,key ,desc ,type (file+olp+datetree ,@path) ,tpl
+		      :tree-type week :time-prompt t ,@props))
+	      ;; Other templates are left unchanged.
+	      (_ entry)))
+	  templates)))
+    (unless (equal modified-templates templates)
+      (message "Deprecated date/weektree capture templates changed to `file+olp+datetree'."))
+    modified-templates))
 
 (defcustom org-capture-templates nil
   "Templates for the creation of new entries.
@@ -124,8 +155,8 @@ target       Specification of where the captured item should be placed.
 
              Most target specifications contain a file name.  If that file
              name is the empty string, it defaults to `org-default-notes-file'.
-             A file can also be given as a variable, function, or Emacs Lisp
-             form.  When an absolute path is not specified for a
+             A file can also be given as a variable or as a function called
+             with no argument.  When an absolute path is not specified for a
              target, it is taken as relative to `org-directory'.
 
              Valid values are:
@@ -140,22 +171,17 @@ target       Specification of where the captured item should be placed.
                  Fast configuration if the target heading is unique in the file
 
              (file+olp \"path/to/file\" \"Level 1 heading\" \"Level 2\" ...)
-                 For non-unique headings, the full path is safer
+                 For non-unique headings, the full outline path is safer
 
              (file+regexp  \"path/to/file\" \"regexp to find location\")
                  File to the entry matching regexp
 
-             (file+datetree \"path/to/file\")
-                 Will create a heading in a date tree for today's date
-
-             (file+datetree+prompt \"path/to/file\")
-                 Will create a heading in a date tree, prompts for date
-
-             (file+weektree \"path/to/file\")
-                 Will create a heading in a week tree for today's date
-
-             (file+weektree+prompt \"path/to/file\")
-                 Will create a heading in a week tree, prompts for date
+             (file+olp+datetree \"path/to/file\" \"Level 1 heading\" ...)
+                 Will create a heading in a date tree for today's date.
+                 If no heading is given, the tree will be on top level.
+                 To prompt for date instead of using TODAY, use the
+                 :time-prompt property.  To create a week-tree, use the
+                 :tree-type property.
 
              (file+function \"path/to/file\" function-finding-location)
                  A function to find the right location in the file
@@ -212,6 +238,11 @@ properties are:
                      Note that :clock-keep has precedence over :clock-resume.
                      When setting both to t, the current clock will run and
                      the previous one will not be resumed.
+
+ :time-prompt        Prompt for a date/time to be used for date/week trees
+                     and when filling the template.
+
+ :tree-type          When `week', make a week tree instead of the month tree.
 
  :unnarrowed         Do not narrow the target buffer, simply show the
                      full buffer.  Default is to narrow it so that you
@@ -299,6 +330,7 @@ When you need to insert a literal percent sign in the template,
 you can escape ambiguous cases with a backward slash, e.g., \\%i."
   :group 'org-capture
   :version "24.1"
+  :set (lambda (s v) (set s (org-capture-upgrade-templates v)))
   :type
   (let ((file-variants '(choice :tag "Filename       "
 				(file :tag "Literal")
@@ -339,18 +371,11 @@ you can escape ambiguous cases with a backward slash, e.g., \\%i."
 				(const :format "" file+regexp)
 				,file-variants
 				(regexp :tag "  Regexp"))
-			  (list :tag "File & Date tree"
-				(const :format "" file+datetree)
-				,file-variants)
-			  (list :tag "File & Date tree, prompt for date"
-				(const :format "" file+datetree+prompt)
-				,file-variants)
-			  (list :tag "File & Week tree"
-				(const :format "" file+weektree)
-				,file-variants)
-			  (list :tag "File & Week tree, prompt for date"
-				(const :format "" file+weektree+prompt)
-				,file-variants)
+			  (list :tag "File [ & Outline path ] & Date tree"
+				(const :format "" file+olp+datetree)
+				,file-variants
+				(option (repeat :tag "Outline path" :inline t
+						(string :tag "Headline"))))
 			  (list :tag "File & function"
 				(const :format "" file+function)
 				,file-variants
@@ -379,8 +404,10 @@ you can escape ambiguous cases with a backward slash, e.g., \\%i."
 				   ((const :format "%v " :clock-in) (const t))
 				   ((const :format "%v " :clock-keep) (const t))
 				   ((const :format "%v " :clock-resume) (const t))
+				   ((const :format "%v " :time-prompt) (const t))
+				   ((const :format "%v " :tree-type) (const week))
 				   ((const :format "%v " :unnarrowed) (const t))
-				   ((const :format "%v " :table-line-pos) (const t))
+				   ((const :format "%v " :table-line-pos) (string))
 				   ((const :format "%v " :kill-buffer) (const t)))))))))
 
 (defcustom org-capture-before-finalize-hook nil
@@ -564,6 +591,9 @@ the last note stored.
 
 When called with a `C-0' (zero) prefix, insert a template at point.
 
+When called with a `C-1' (one) prefix, force prompting for a date when
+a datetree entry is made.
+
 ELisp programs can set KEYS to a string associated with a template
 in `org-capture-templates'.  In this case, interactive selection
 will be bypassed.
@@ -581,7 +611,6 @@ of the day at point (if any) or the current HH:MM time."
    ((equal goto '(4)) (org-capture-goto-target))
    ((equal goto '(16)) (org-capture-goto-last-stored))
    (t
-    ;; FIXME: Are these needed?
     (let* ((orig-buf (current-buffer))
 	   (annotation (if (and (boundp 'org-capture-link-is-already-stored)
 				org-capture-link-is-already-stored)
@@ -818,13 +847,17 @@ for `entry'-type templates"))
   (let* ((base (or (buffer-base-buffer) (current-buffer)))
 	 (pos (make-marker))
 	 (org-capture-is-refiling t)
-	 (kill-buffer (org-capture-get :kill-buffer 'local)))
+	 (kill-buffer (org-capture-get :kill-buffer 'local))
+	 (jump-to-captured (org-capture-get :jump-to-captured 'local)))
     ;; Since `org-capture-finalize' may alter buffer contents (e.g.,
     ;; empty lines) around entry, use a marker to refer to the
     ;; headline to be refiled.  Place the marker in the base buffer,
     ;; as the current indirect one is going to be killed.
     (set-marker pos (save-excursion (org-back-to-heading t) (point)) base)
-    (org-capture-put :kill-buffer nil)
+    ;; `org-capture-finalize' calls `org-capture-goto-last-stored' too
+    ;; early.  We want to wait for the refiling to be over, so we
+    ;; control when the latter function is called.
+    (org-capture-put :kill-buffer nil :jump-to-captured nil)
     (unwind-protect
 	(progn
 	  (org-capture-finalize)
@@ -833,7 +866,8 @@ for `entry'-type templates"))
 	      (org-with-wide-buffer
 	       (goto-char pos)
 	       (call-interactively 'org-refile))))
-	  (when kill-buffer (kill-buffer base)))
+	  (when kill-buffer (kill-buffer base))
+	  (when jump-to-captured (org-capture-goto-last-stored)))
       (set-marker pos nil))))
 
 (defun org-capture-kill ()
@@ -869,170 +903,171 @@ for `entry'-type templates"))
 (defun org-capture-set-target-location (&optional target)
   "Find TARGET buffer and position.
 Store them in the capture property list."
-  (let ((target-entry-p t) decrypted-hl-pos)
-    (setq target (or target (org-capture-get :target)))
+  (let ((target-entry-p t))
     (save-excursion
-      (cond
-       ((eq (car target) 'file)
-	(set-buffer (org-capture-target-buffer (nth 1 target)))
-	(org-capture-put-target-region-and-position)
-	(widen)
-	(setq target-entry-p nil))
-
-       ((eq (car target) 'id)
-	(let ((loc (org-id-find (nth 1 target))))
-	  (if (not loc)
-	      (error "Cannot find target ID \"%s\"" (nth 1 target))
-	    (set-buffer (org-capture-target-buffer (car loc)))
+      (pcase (or target (org-capture-get :target))
+	(`(file ,path)
+	 (set-buffer (org-capture-target-buffer path))
+	 (org-capture-put-target-region-and-position)
+	 (widen)
+	 (setq target-entry-p nil))
+	(`(id ,id)
+	 (pcase (org-id-find id)
+	   (`(,path . ,position)
+	    (set-buffer (org-capture-target-buffer path))
 	    (widen)
 	    (org-capture-put-target-region-and-position)
-	    (goto-char (cdr loc)))))
+	    (goto-char position))
+	   (_ (error "Cannot find target ID \"%s\"" id))))
+	(`(file+headline ,path ,headline)
+	 (set-buffer (org-capture-target-buffer path))
+	 (unless (derived-mode-p 'org-mode)
+	   (error "Target buffer \"%s\" for file+headline not in Org mode"
+		  (current-buffer)))
+	 (org-capture-put-target-region-and-position)
+	 (widen)
+	 (goto-char (point-min))
+	 (if (re-search-forward (format org-complex-heading-regexp-format
+					(regexp-quote headline))
+				nil t)
+	     (goto-char (line-beginning-position))
+	   (goto-char (point-max))
+	   (or (bolp) (insert "\n"))
+	   (insert "* " headline "\n")
+	   (beginning-of-line 0)))
+	(`(file+olp ,path . ,outline-path)
+	 (let ((m (org-find-olp (cons (org-capture-expand-file path)
+				      outline-path))))
+	   (set-buffer (marker-buffer m))
+	   (org-capture-put-target-region-and-position)
+	   (widen)
+	   (goto-char m)
+	   (set-marker m nil)))
+	(`(file+regexp ,path ,regexp)
+	 (set-buffer (org-capture-target-buffer path))
+	 (org-capture-put-target-region-and-position)
+	 (widen)
+	 (goto-char (point-min))
+	 (if (not (re-search-forward regexp nil t))
+	     (error "No match for target regexp in file %s" path)
+	   (goto-char (if (org-capture-get :prepend)
+			  (match-beginning 0)
+			(match-end 0)))
+	   (org-capture-put :exact-position (point))
+	   (setq target-entry-p
+		 (and (derived-mode-p 'org-mode) (org-at-heading-p)))))
+	(`(file+olp+datetree ,path . ,outline-path)
+	 (let ((m (if outline-path
+		      (org-find-olp (cons (org-capture-expand-file path)
+					  outline-path))
+		    (set-buffer (org-capture-target-buffer path))
+		    (point-marker))))
+	   (set-buffer (marker-buffer m))
+	   (org-capture-put-target-region-and-position)
+	   (widen)
+	   (goto-char m)
+	   (set-marker m nil)
+	   (require 'org-datetree)
+	   (org-capture-put-target-region-and-position)
+	   (widen)
+	   ;; Make a date/week tree entry, with the current date (or
+	   ;; yesterday, if we are extending dates for a couple of hours)
+	   (funcall
+	    (if (eq (org-capture-get :tree-type) 'week)
+		#'org-datetree-find-iso-week-create
+	      #'org-datetree-find-date-create)
+	    (calendar-gregorian-from-absolute
+	     (cond
+	      (org-overriding-default-time
+	       ;; Use the overriding default time.
+	       (time-to-days org-overriding-default-time))
+	      ((or (org-capture-get :time-prompt)
+		   (equal current-prefix-arg 1))
+	       ;; Prompt for date.
+	       (let ((prompt-time (org-read-date
+				   nil t nil "Date for tree entry:"
+				   (current-time))))
+		 (org-capture-put
+		  :default-time
+		  (cond ((and (or (not (boundp 'org-time-was-given))
+				  (not org-time-was-given))
+			      (not (= (time-to-days prompt-time) (org-today))))
+			 ;; Use 00:00 when no time is given for another
+			 ;; date than today?
+			 (apply #'encode-time
+				(append '(0 0 0)
+					(cl-cdddr (decode-time prompt-time)))))
+			((string-match "\\([^ ]+\\)--?[^ ]+[ ]+\\(.*\\)"
+				       org-read-date-final-answer)
+			 ;; Replace any time range by its start.
+			 (apply #'encode-time
+				(org-read-date-analyze
+				 (replace-match "\\1 \\2" nil nil
+						org-read-date-final-answer)
+				 prompt-time (decode-time prompt-time))))
+			(t prompt-time)))
+		 (time-to-days prompt-time)))
+	      (t
+	       ;; Current date, possibly corrected for late night
+	       ;; workers.
+	       (org-today))))
+	    ;; the following is the keep-restriction argument for
+	    ;; org-datetree-find-date-create
+	    (if outline-path 'subtree-at-point))))
+	(`(file+function ,path ,function)
+	 (set-buffer (org-capture-target-buffer path))
+	 (org-capture-put-target-region-and-position)
+	 (widen)
+	 (funcall function)
+	 (org-capture-put :exact-position (point))
+	 (setq target-entry-p
+	       (and (derived-mode-p 'org-mode) (org-at-heading-p))))
+	(`(function ,fun)
+	 (funcall fun)
+	 (org-capture-put :exact-position (point))
+	 (setq target-entry-p
+	       (and (derived-mode-p 'org-mode) (org-at-heading-p))))
+	(`(clock)
+	 (if (and (markerp org-clock-hd-marker)
+		  (marker-buffer org-clock-hd-marker))
+	     (progn (set-buffer (marker-buffer org-clock-hd-marker))
+		    (org-capture-put-target-region-and-position)
+		    (widen)
+		    (goto-char org-clock-hd-marker))
+	   (error "No running clock that could be used as capture target")))
+	(target (error "Invalid capture target specification: %S" target)))
 
-       ((eq (car target) 'file+headline)
-	(set-buffer (org-capture-target-buffer (nth 1 target)))
-	(unless (derived-mode-p 'org-mode)
-	  (error
-	   "Target buffer \"%s\" for file+headline should be in Org mode"
-	   (current-buffer)))
-	(org-capture-put-target-region-and-position)
-	(widen)
-	(let ((hd (nth 2 target)))
-	  (goto-char (point-min))
-	  (if (re-search-forward
-	       (format org-complex-heading-regexp-format (regexp-quote hd))
-	       nil t)
-	      (goto-char (point-at-bol))
-	    (goto-char (point-max))
-	    (or (bolp) (insert "\n"))
-	    (insert "* " hd "\n")
-	    (beginning-of-line 0))))
-
-       ((eq (car target) 'file+olp)
- 	(let ((m (org-find-olp
-		  (cons (org-capture-expand-file (nth 1 target))
-			(cddr target)))))
-	  (set-buffer (marker-buffer m))
-	  (org-capture-put-target-region-and-position)
-	  (widen)
-	  (goto-char m)))
-
-       ((eq (car target) 'file+regexp)
-	(set-buffer (org-capture-target-buffer (nth 1 target)))
-	(org-capture-put-target-region-and-position)
-	(widen)
-	(goto-char (point-min))
-	(if (re-search-forward (nth 2 target) nil t)
-	    (progn
-	      (goto-char (if (org-capture-get :prepend)
-			     (match-beginning 0) (match-end 0)))
-	      (org-capture-put :exact-position (point))
-	      (setq target-entry-p (and (derived-mode-p 'org-mode) (org-at-heading-p))))
-	  (error "No match for target regexp in file %s" (nth 1 target))))
-
-       ((memq (car target) '(file+datetree file+datetree+prompt file+weektree file+weektree+prompt))
-	(require 'org-datetree)
-	(set-buffer (org-capture-target-buffer (nth 1 target)))
-	(unless (derived-mode-p 'org-mode)
-	  (error "Target buffer \"%s\" for %s should be in Org mode"
-		 (current-buffer)
-		 (car target)))
-	(org-capture-put-target-region-and-position)
-	(widen)
-	;; Make a date/week tree entry, with the current date (or
-	;; yesterday, if we are extending dates for a couple of hours)
-	(funcall
-	 (cond
-	  ((memq (car target) '(file+weektree file+weektree+prompt))
-	   #'org-datetree-find-iso-week-create)
-	  (t #'org-datetree-find-date-create))
-	 (calendar-gregorian-from-absolute
-	  (cond
-	   (org-overriding-default-time
-	    ;; use the overriding default time
-	    (time-to-days org-overriding-default-time))
-
-	   ((memq (car target) '(file+datetree+prompt file+weektree+prompt))
-	    ;; prompt for date
-	    (let ((prompt-time (org-read-date
-				nil t nil "Date for tree entry:"
-				(current-time))))
-	      (org-capture-put
-	       :default-time
-	       (cond ((and (or (not (boundp 'org-time-was-given))
-			       (not org-time-was-given))
-			   (not (= (time-to-days prompt-time) (org-today))))
-		      ;; Use 00:00 when no time is given for another date than today?
-		      (apply #'encode-time
-			     (append '(0 0 0)
-				     (cl-cdddr (decode-time prompt-time)))))
-		     ((string-match "\\([^ ]+\\)--?[^ ]+[ ]+\\(.*\\)" org-read-date-final-answer)
-		      ;; Replace any time range by its start
-		      (apply 'encode-time
-			     (org-read-date-analyze
-			      (replace-match "\\1 \\2" nil nil org-read-date-final-answer)
-			      prompt-time (decode-time prompt-time))))
-		     (t prompt-time)))
-	      (time-to-days prompt-time)))
-	   (t
-	    ;; current date, possibly corrected for late night workers
-	    (org-today))))))
-
-       ((eq (car target) 'file+function)
-	(set-buffer (org-capture-target-buffer (nth 1 target)))
-	(org-capture-put-target-region-and-position)
-	(widen)
-	(funcall (nth 2 target))
-	(org-capture-put :exact-position (point))
-	(setq target-entry-p (and (derived-mode-p 'org-mode) (org-at-heading-p))))
-
-       ((eq (car target) 'function)
-	(funcall (nth 1 target))
-	(org-capture-put :exact-position (point))
-	(setq target-entry-p (and (derived-mode-p 'org-mode) (org-at-heading-p))))
-
-       ((eq (car target) 'clock)
-	(if (and (markerp org-clock-hd-marker)
-		 (marker-buffer org-clock-hd-marker))
-	    (progn (set-buffer (marker-buffer org-clock-hd-marker))
-		   (org-capture-put-target-region-and-position)
-		   (widen)
-		   (goto-char org-clock-hd-marker))
-	  (error "No running clock that could be used as capture target")))
-
-       (t (error "Invalid capture target specification")))
-
-      (when (and (featurep 'org-crypt) (org-at-encrypted-entry-p))
-	(org-decrypt-entry)
-	(setq decrypted-hl-pos
-	      (save-excursion (and (org-back-to-heading t) (point)))))
-
-      (org-capture-put :buffer (current-buffer) :pos (point)
+      (org-capture-put :buffer (current-buffer)
+		       :pos (point)
 		       :target-entry-p target-entry-p
-		       :decrypted decrypted-hl-pos))))
+		       :decrypted
+		       (and (featurep 'org-crypt)
+			    (org-at-encrypted-entry-p)
+			    (save-excursion
+			      (org-decrypt-entry)
+			      (and (org-back-to-heading t) (point))))))))
 
 (defun org-capture-expand-file (file)
   "Expand functions, symbols and file names for FILE.
 When FILE is a function, call it.  When it is a form, evaluate
-it.  When it is a variable, retrieve the value.  When it is
+it.  When it is a variable, return its value.  When it is
 a string, treat it as a file name, possibly expanding it
 according to `org-directory', and return it.  If it is the empty
 string, however, return `org-default-notes-file'.  In any other
 case, raise an error."
-  (cond
-   ((equal file "") org-default-notes-file)
-   ((stringp file) (expand-file-name file org-directory))
-   ((functionp file) (funcall file))
-   ((and (symbolp file) (boundp file)) (symbol-value file))
-   ((consp file) (eval file))
-   (t file)))
+  (let ((location (cond ((equal file "") org-default-notes-file)
+			((stringp file) (expand-file-name file org-directory))
+			((functionp file) (funcall file))
+			((and (symbolp file) (boundp file)) (symbol-value file))
+			(t nil))))
+    (or (org-string-nw-p location)
+	(error "Invalid file location: %S" location))))
 
 (defun org-capture-target-buffer (file)
   "Get a buffer for FILE.
 FILE is a generalized file location, as handled by
 `org-capture-expand-file'."
-  (let ((file (or (org-string-nw-p (org-capture-expand-file file))
-		  org-default-notes-file
-		  (error "No notes file specified, and no default available"))))
+  (let ((file (org-capture-expand-file file)))
     (or (org-find-base-buffer-visiting file)
 	(progn (org-capture-put :new-buffer t)
 	       (find-file-noselect file)))))
@@ -1062,7 +1097,7 @@ may have been stored before."
 (defun org-capture-place-entry ()
   "Place the template as a new Org entry."
   (let ((reversed? (org-capture-get :prepend))
-	level)
+	(level 1))
     (when (org-capture-get :exact-position)
       (goto-char (org-capture-get :exact-position)))
     (cond
@@ -1523,7 +1558,8 @@ is selected, only the bare key is returned."
 Lisp programs can force the template by setting KEYS to a string."
   (let ((org-capture-templates
 	 (or (org-contextualize-keys
-	      org-capture-templates org-capture-templates-contexts)
+	      (org-capture-upgrade-templates org-capture-templates)
+	      org-capture-templates-contexts)
 	     '(("t" "Task" entry (file+headline "" "Tasks")
 		"* TODO %?\n  %u\n  %a")))))
     (if keys
@@ -1651,7 +1687,7 @@ The template may still contain \"%?\" for cursor positioning."
 		(let* ((inside-sexp? (org-capture-inside-embedded-elisp-p))
 		       (replacement
 			(pcase (string-to-char value)
-			  (?< (format-time-string time-string))
+			  (?< (format-time-string time-string time))
 			  (?:
 			   (or (plist-get org-store-link-plist (intern value))
 			       ""))
