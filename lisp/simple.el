@@ -434,10 +434,6 @@ A non-nil INTERACTIVE argument means to run the `post-self-insert-hook'."
           ;; Do the rest in post-self-insert-hook, because we want to do it
           ;; *before* other functions on that hook.
           (lambda ()
-            ;; We are not going to insert any newlines if arg is
-            ;; non-positive.
-            (or (and (numberp arg) (<= arg 0))
-                (cl-assert (eq ?\n (char-before))))
             ;; Mark the newline(s) `hard'.
             (if use-hard-newlines
                 (set-hard-newline-properties
@@ -456,25 +452,22 @@ A non-nil INTERACTIVE argument means to run the `post-self-insert-hook'."
             ;; starts a page.
             (or was-page-start
                 (move-to-left-margin nil t)))))
-    (unwind-protect
-        (if (not interactive)
-            ;; FIXME: For non-interactive uses, many calls actually
-            ;; just want (insert "\n"), so maybe we should do just
-            ;; that, so as to avoid the risk of filling or running
-            ;; abbrevs unexpectedly.
-            (let ((post-self-insert-hook (list postproc)))
-              (self-insert-command arg))
-          (unwind-protect
-              (progn
-                (add-hook 'post-self-insert-hook postproc nil t)
-                (self-insert-command arg))
-            ;; We first used let-binding to protect the hook, but that
-            ;; was naive since add-hook affects the symbol-default
-            ;; value of the variable, whereas the let-binding might
-            ;; only protect the buffer-local value.
-            (remove-hook 'post-self-insert-hook postproc t)))
-      (cl-assert (not (member postproc post-self-insert-hook)))
-      (cl-assert (not (member postproc (default-value 'post-self-insert-hook))))))
+    (if (not interactive)
+	;; FIXME: For non-interactive uses, many calls actually
+	;; just want (insert "\n"), so maybe we should do just
+	;; that, so as to avoid the risk of filling or running
+	;; abbrevs unexpectedly.
+	(let ((post-self-insert-hook (list postproc)))
+	  (self-insert-command arg))
+      (unwind-protect
+	  (progn
+	    (add-hook 'post-self-insert-hook postproc nil t)
+	    (self-insert-command arg))
+	;; We first used let-binding to protect the hook, but that
+	;; was naive since add-hook affects the symbol-default
+	;; value of the variable, whereas the let-binding might
+	;; only protect the buffer-local value.
+	(remove-hook 'post-self-insert-hook postproc t))))
   nil)
 
 (defun set-hard-newline-properties (from to)
