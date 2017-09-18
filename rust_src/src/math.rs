@@ -374,12 +374,8 @@ fn rem(x: LispObject, y: LispObject) -> LispObject {
 #[lisp_fn(name = "1+")]
 fn add1(number: LispObject) -> LispObject {
     match number.as_number_coerce_marker_or_error() {
-        LispNumber::Fixnum(num) => {
-            LispObject::from_fixnum(num + 1)
-        },
-        LispNumber::Float(num) => {
-            LispObject::from_float(num + 1.0)
-        },
+        LispNumber::Fixnum(num) => LispObject::from_fixnum(num + 1),
+        LispNumber::Float(num) => LispObject::from_float(num + 1.0),
     }
 }
 
@@ -388,12 +384,8 @@ fn add1(number: LispObject) -> LispObject {
 #[lisp_fn(name = "1-")]
 fn sub1(number: LispObject) -> LispObject {
     match number.as_number_coerce_marker_or_error() {
-        LispNumber::Fixnum(num) => {
-            LispObject::from_fixnum(num - 1)
-        },
-        LispNumber::Float(num) => {
-            LispObject::from_float(num - 1.0)
-        },
+        LispNumber::Fixnum(num) => LispObject::from_fixnum(num - 1),
+        LispNumber::Float(num) => LispObject::from_float(num - 1.0),
     }
 }
 
