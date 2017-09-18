@@ -4556,6 +4556,12 @@ Only works for Bourne-like shells."
 	 'tramp-send-command
 	 (tramp-get-connection-property proc "vector" nil)
 	 (format "kill -2 %d" pid))
+	;; Wait, until the process has disappeared.
+	(with-timeout
+	    (1 (tramp-error proc 'error "Process %s did not interrupt" proc))
+	  (while (process-live-p proc)
+	    ;; We cannot run `tramp-accept-process-output', it blocks timers.
+	    (accept-process-output proc 0.1)))
 	;; Report success.
 	proc))))
 
