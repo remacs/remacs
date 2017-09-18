@@ -3440,11 +3440,6 @@ extern int x_bitmap_mask (struct frame *, ptrdiff_t);
 extern void reset_image_types (void);
 extern void syms_of_image (void);
 
-#ifdef HAVE_JSON
-/* Defined in json.c.  */
-extern void syms_of_json (void);
-#endif
-
 /* Defined in insdel.c.  */
 extern void move_gap_both (ptrdiff_t, ptrdiff_t);
 extern _Noreturn void buffer_overflow (void);
