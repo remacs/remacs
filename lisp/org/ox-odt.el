@@ -85,7 +85,8 @@
   :filters-alist '((:filter-parse-tree
 		    . (org-odt--translate-latex-fragments
 		       org-odt--translate-description-lists
-		       org-odt--translate-list-tables)))
+		       org-odt--translate-list-tables
+		       org-odt--translate-image-links)))
   :menu-entry
   '(?o "Export to ODT"
        ((?o "As ODT file" org-odt-export-to-odt)
@@ -655,7 +656,7 @@ The function should return the string to be exported.
 
 The default value simply returns the value of CONTENTS."
   :group 'org-export-odt
-  :version "24.4"
+  :version "26.1"
   :package-version '(Org . "8.3")
   :type 'function)
 
@@ -1870,7 +1871,7 @@ See `org-odt-format-headline-function' for details."
      (let ((style (if (eq todo-type 'done) "OrgDone" "OrgTodo")))
        (format "<text:span text:style-name=\"%s\">%s</text:span> " style todo)))
    (when priority
-     (let* ((style (format "OrgPriority-%s" priority))
+     (let* ((style (format "OrgPriority-%c" priority))
 	    (priority (format "[#%c]" priority)))
        (format "<text:span text:style-name=\"%s\">%s</text:span> "
 	       style priority)))
@@ -3682,6 +3683,11 @@ contextual information."
 
 ;;; Filters
 
+;;; Images
+
+(defun org-odt--translate-image-links (data _backend info)
+  (org-export-insert-image-links data info org-odt-inline-image-rules))
+
 ;;;; LaTeX fragments
 
 (defun org-odt--translate-latex-fragments (tree _backend info)
@@ -3749,6 +3755,7 @@ contextual information."
 				      nil display-msg nil
 				      processing-type)
 		    (goto-char (point-min))
+		    (skip-chars-forward " \t\n")
 		    (org-element-link-parser))))
 	    (if (not (eq 'link (org-element-type link)))
 		(message "LaTeX Conversion failed.")
