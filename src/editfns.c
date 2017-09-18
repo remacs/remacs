@@ -187,7 +187,8 @@ tzlookup (Lisp_Object zone, bool settz)
 		  if (sec != 0)
 		    prec += 2, numzone = 100 * numzone + sec;
 		}
-	      sprintf (tzbuf, tzbuf_format, prec, numzone,
+	      sprintf (tzbuf, tzbuf_format, prec,
+		       XINT (zone) < 0 ? -numzone : numzone,
 		       &"-"[XINT (zone) < 0], hour, min, sec);
 	      zone_string = tzbuf;
 	    }
