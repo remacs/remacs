@@ -8,8 +8,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 set -e
 set -x
 
-export PATH=$PATH:~/.cargo/bin
-
 echo "Checking formatting"
 cd "$DIR/rust_src"
 cargo fmt -- --version
