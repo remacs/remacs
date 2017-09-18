@@ -5188,6 +5188,7 @@ change the additional actions you can take on files."
 	       (and (buffer-live-p buffer)
 		    (buffer-modified-p buffer)
                     (not (buffer-base-buffer buffer))
+                    (not (eq (aref (buffer-name buffer) 0) ?\s))
                     (or
                      (buffer-file-name buffer)
                      (and pred
