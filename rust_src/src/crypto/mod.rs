@@ -410,7 +410,8 @@ fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
 fn hexify_digest_string(buffer: &mut [u8], len: usize) {
     static hexdigit: [u8; 16] = *b"0123456789abcdef";
     debug_assert_eq!(
-        buffer.len(), 2 * len,
+        buffer.len(),
+        2 * len,
         "buffer must be long enough to hold 2*len hex digits"
     );
     for i in (0..len).rev() {
