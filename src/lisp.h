@@ -3452,6 +3452,12 @@ extern int x_bitmap_mask (struct frame *, ptrdiff_t);
 extern void reset_image_types (void);
 extern void syms_of_image (void);
 
+#ifdef HAVE_JSON
+/* Defined in json.c.  */
+extern void init_json (void);
+extern void syms_of_json (void);
+#endif
+
 /* Defined in insdel.c.  */
 extern void move_gap_both (ptrdiff_t, ptrdiff_t);
 extern _Noreturn void buffer_overflow (void);
@@ -3875,6 +3881,7 @@ extern Lisp_Object internal_condition_case_2 (Lisp_Object (*) (Lisp_Object, Lisp
 extern Lisp_Object internal_condition_case_n
     (Lisp_Object (*) (ptrdiff_t, Lisp_Object *), ptrdiff_t, Lisp_Object *,
      Lisp_Object, Lisp_Object (*) (Lisp_Object, ptrdiff_t, Lisp_Object *));
+extern Lisp_Object internal_catch_all (Lisp_Object (*) (void *), void *, Lisp_Object (*) (Lisp_Object));
 extern struct handler *push_handler (Lisp_Object, enum handlertype);
 extern struct handler *push_handler_nosignal (Lisp_Object, enum handlertype);
 extern void specbind (Lisp_Object, Lisp_Object);

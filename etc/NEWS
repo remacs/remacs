@@ -24,6 +24,13 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Installation Changes in Emacs 27.1
 
+** The new configure option '--with-json' adds support for JSON using
+the Jansson library.  It is on by default; use 'configure
+--with-json=no' to build without Jansson support.  The new JSON
+functions 'json-serialize', 'json-insert', 'json-parse-string', and
+'json-parse-buffer' are typically much faster than their Lisp
+counterparts from json.el.
+
 
 * Startup Changes in Emacs 27.1
 
@@ -163,6 +170,10 @@ remote systems, which support this check.
 ** The function 'make-string' accepts an additional optional argument.
 If the optional third argument is non-nil, 'make-string' will produce
 a multibyte string even if its second argument is an ASCII character.
+
+** New JSON parsing and serialization functions 'json-serialize',
+'json-insert', 'json-parse-string', and 'json-parse-buffer'.  These
+are implemented in C using the Jansson library.
 
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems

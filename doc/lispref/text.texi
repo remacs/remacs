@@ -61,6 +61,7 @@ the character after point.
 * Checksum/Hash::    Computing cryptographic hashes.
 * GnuTLS Cryptography:: Cryptographic algorithms imported from GnuTLS.
 * Parsing HTML/XML:: Parsing HTML and XML.
+* Parsing JSON::     Parsing and generating JSON values.
 * Atomic Changes::   Installing several buffer changes atomically.
 * Change Hooks::     Supplying functions to be run when text is changed.
 @end menu
@@ -4932,6 +4933,92 @@ Utility functions:
 Pretty-print @var{dom} at point.  If @var{remove-empty}, don't print
 textual nodes that just contain white-space.
 @end table
+
+
+@node Parsing JSON
+@section Parsing and generating JSON values
+@cindex JSON
+
+  When Emacs is compiled with JSON support, it provides a couple of
+functions to convert between Lisp objects and JSON values.  Any JSON
+value can be converted to a Lisp object, but not vice versa.
+Specifically:
+
+@itemize
+
+@item
+JSON has a couple of keywords: @code{null}, @code{false}, and
+@code{true}.  These are represented in Lisp using the keywords
+@code{:null}, @code{:false}, and @code{t}, respectively.
+
+@item
+JSON only has floating-point numbers.  They can represent both Lisp
+integers and Lisp floating-point numbers.
+
+@item
+JSON strings are always Unicode strings.  Lisp strings can contain
+non-Unicode characters.
+
+@item
+JSON has only one sequence type, the array.  JSON arrays are
+represented using Lisp vectors.
+
+@item
+JSON has only one map type, the object.  JSON objects are represented
+using Lisp hashtables.
+
+@end itemize
+
+@noindent
+Note that @code{nil} doesn't represent any JSON values: this is to
+avoid confusion, because @code{nil} could either represent
+@code{null}, @code{false}, or an empty array, all of which are
+different JSON values.
+
+  If some Lisp object can't be represented in JSON, the serialization
+functions will signal an error of type @code{wrong-type-argument}.
+The parsing functions will signal the following errors:
+
+@table @code
+
+@item json-end-of-file
+    Signaled when encountering a premature end of the input text.
+
+@item json-trailing-content
+    Signaled when encountering unexpected input after the first JSON
+    object parsed.
+
+@item json-parse-error
+    Signaled when encountering invalid JSON syntax.
+
+@end table
+
+  Only top-level values (arrays and objects) can be serialized to
+JSON.  The subobjects within these top-level values can be of any
+type.  Likewise, the parsing functions will only return vectors and
+hashtables.
+
+@defun json-serialize object
+This function returns a new Lisp string which contains the JSON
+representation of @var{object}.
+@end defun
+
+@defun json-insert object
+This function inserts the JSON representation of @var{object} into the
+current buffer before point.
+@end defun
+
+@defun json-parse-string string
+This function parses the JSON value in @var{string}, which must be a
+Lisp string.
+@end defun
+
+@defun json-parse-buffer
+This function reads the next JSON value from the current buffer,
+starting at point.  It moves point to the position immediately after
+the value if a value could be read and converted to Lisp; otherwise it
+doesn't move point.
+@end defun
 
 
 @node Atomic Changes
