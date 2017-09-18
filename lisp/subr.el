@@ -289,7 +289,7 @@ The name is made by appending `gensym-counter' to PREFIX.
 PREFIX is a string, and defaults to \"g\"."
   (let ((num (prog1 gensym-counter
                (setq gensym-counter (1+ gensym-counter)))))
-    (make-symbol (format "%s%d" prefix num))))
+    (make-symbol (format "%s%d" (or prefix "g") num))))
 
 (defun ignore (&rest _ignore)
   "Do nothing and return nil.

@@ -300,6 +300,12 @@ cf. Bug#25477."
       (setq res (read-passwd "pass: " 'confirm (mapconcat #'string default "")))
       (should (string= default res)))))
 
+(ert-deftest subr-tests--gensym ()
+  "Test `gensym' behavior."
+  (should (equal (symbol-name (let ((gensym-counter 0)) (gensym)))
+                 "g0"))
+  (should (eq (string-to-char (symbol-name (gensym))) ?g))
+  (should (eq (string-to-char (symbol-name (gensym "X"))) ?X)))
 
 (provide 'subr-tests)
 ;;; subr-tests.el ends here
