@@ -701,6 +701,12 @@ method is an NNTP select method.
 *** A new command for sorting articles by readedness marks has been
 added: 'C-c C-s C-m C-m'.
 
++++
+
+*** In message-citation-line-format the %Z format is now the time zone name
+instead of the numeric form.  The %z format continues to be the
+numeric form.  The new behavior is compatible with format-time-string.
+
 ** Ibuffer
 
 ---
