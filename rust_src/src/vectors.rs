@@ -280,6 +280,12 @@ pub fn condition_variable_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_condition_variable())
 }
 
+/// Return t if OBJECT is a record.
+#[lisp_fn]
+pub fn recordp(object: LispObject) -> LispObject {
+    LispObject::from_bool(object.is_record())
+}
+
 macro_rules! offset_of {
     ($ty:ty, $field:ident) => {
         &(*(0 as *const $ty)).$field as *const _ as usize

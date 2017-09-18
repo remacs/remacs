@@ -58,3 +58,10 @@ fn symbol_function(object: LispObject) -> LispObject {
 fn symbol_plist(object: LispObject) -> LispObject {
     object.as_symbol_or_error().get_plist()
 }
+
+/// Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
+#[lisp_fn]
+fn setplist(symbol: LispObject, newplist: LispObject) -> LispObject {
+    symbol.as_symbol_or_error().set_plist(newplist);
+    newplist
+}
