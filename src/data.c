@@ -362,18 +362,6 @@ Return SYMBOL.  */)
   return symbol;
 }
 
-DEFUN ("fmakunbound", Ffmakunbound, Sfmakunbound, 1, 1, 0,
-       doc: /* Make SYMBOL's function definition be nil.
-Return SYMBOL.  */)
-  (register Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  if (NILP (symbol) || EQ (symbol, Qt))
-    xsignal1 (Qsetting_constant, symbol);
-  set_symbol_function (symbol, Qnil);
-  return symbol;
-}
-
 DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
        doc: /* Set SYMBOL's function definition to DEFINITION, and return DEFINITION.  */)
   (register Lisp_Object symbol, Lisp_Object definition)
@@ -2861,7 +2849,6 @@ syms_of_data (void)
   defsubr (&Smodule_function_p);
   defsubr (&Sindirect_function);
   defsubr (&Smakunbound);
-  defsubr (&Sfmakunbound);
   defsubr (&Sboundp);
   defsubr (&Sfset);
   defsubr (&Sdefalias);

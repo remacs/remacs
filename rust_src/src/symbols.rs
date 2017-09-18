@@ -1,6 +1,6 @@
 use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::Lisp_Symbol;
+use remacs_sys::{Lisp_Symbol, Qsetting_constant};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
@@ -19,6 +19,10 @@ impl LispSymbolRef {
 
     pub fn set_plist(&mut self, plist: LispObject) {
         self.plist = plist.to_raw();
+    }
+
+    pub fn set_function(&mut self, function: LispObject) {
+        self.function = function.to_raw();
     }
 }
 
@@ -64,4 +68,16 @@ fn symbol_plist(symbol: LispObject) -> LispObject {
 fn setplist(symbol: LispObject, newplist: LispObject) -> LispObject {
     symbol.as_symbol_or_error().set_plist(newplist);
     newplist
+}
+
+/// Make SYMBOL's function definition be nil.
+/// Return SYMBOL.
+#[lisp_fn]
+fn fmakunbound(symbol: LispObject) -> LispObject {
+    let mut sym = symbol.as_symbol_or_error();
+    if symbol.is_nil() || symbol.is_t() {
+        xsignal!(Qsetting_constant, symbol);
+    }
+    sym.set_function(LispObject::constant_nil());
+    symbol
 }

@@ -259,6 +259,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*symbols::Ssymbol_function);
         defsubr(&*symbols::Ssymbol_plist);
         defsubr(&*symbols::Ssetplist);
+        defsubr(&*symbols::Sfmakunbound);
         defsubr(&*lists::Sconsp);
         defsubr(&*lists::Ssetcar);
         defsubr(&*lists::Ssetcdr);
