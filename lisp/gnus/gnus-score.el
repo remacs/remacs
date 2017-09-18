@@ -2731,8 +2731,10 @@ GROUP using BNews sys file syntax."
 	(insert (car sfiles))
 	(goto-char (point-min))
 	;; First remove the suffix itself.
-	(when (re-search-forward (concat "." score-regexp) nil t)
-	  (replace-match "" t t)
+	(when (re-search-forward score-regexp nil t)
+          (unless (= (match-end 0) (match-beginning 0)) ; non-empty suffix
+            (replace-match "" t t)
+            (delete-char -1))   ; remove the "." before the suffix
 	  (goto-char (point-min))
 	  (if (looking-at (regexp-quote kill-dir))
 	      ;; If the file name was just "SCORE", `klen' is one character
