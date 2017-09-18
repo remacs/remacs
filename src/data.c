@@ -2231,37 +2231,6 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
   return NILP (val) ? make_number (0) : val;
 }
 
-enum arithop
-  {
-    Aadd,
-    Asub,
-    Amult,
-    Adiv,
-    Alogand,
-    Alogior,
-    Alogxor
-  };
-
-#ifndef isnan
-# define isnan(x) ((x) != (x))
-#endif
-
-DEFUN ("%", Frem, Srem, 2, 2, 0,
-       doc: /* Return remainder of X divided by Y.
-Both must be integers or markers.  */)
-  (register Lisp_Object x, Lisp_Object y)
-{
-  Lisp_Object val;
-
-  CHECK_NUMBER_COERCE_MARKER (x);
-  CHECK_NUMBER_COERCE_MARKER (y);
-
-  if (XINT (y) == 0)
-    xsignal0 (Qarith_error);
-
-  XSETINT (val, XINT (x) % XINT (y));
-  return val;
-}
 
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
@@ -2302,34 +2271,6 @@ In this case, zeros are shifted in on the left.  */)
   (register Lisp_Object value, Lisp_Object count)
 {
   return ash_lsh_impl (value, count, true);
-}
-
-DEFUN ("1+", Fadd1, Sadd1, 1, 1, 0,
-       doc: /* Return NUMBER plus one.  NUMBER may be a number or a marker.
-Markers are converted to integers.  */)
-  (register Lisp_Object number)
-{
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (number);
-
-  if (FLOATP (number))
-    return (make_float (1.0 + XFLOAT_DATA (number)));
-
-  XSETINT (number, XINT (number) + 1);
-  return number;
-}
-
-DEFUN ("1-", Fsub1, Ssub1, 1, 1, 0,
-       doc: /* Return NUMBER minus one.  NUMBER may be a number or a marker.
-Markers are converted to integers.  */)
-  (register Lisp_Object number)
-{
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (number);
-
-  if (FLOATP (number))
-    return (make_float (-1.0 + XFLOAT_DATA (number)));
-
-  XSETINT (number, XINT (number) - 1);
-  return number;
 }
 
 DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
@@ -2905,11 +2846,8 @@ syms_of_data (void)
   defsubr (&Saset);
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);
-  defsubr (&Srem);
   defsubr (&Slsh);
   defsubr (&Sash);
-  defsubr (&Sadd1);
-  defsubr (&Ssub1);
   defsubr (&Slognot);
   defsubr (&Sbyteorder);
   defsubr (&Ssubr_arity);
