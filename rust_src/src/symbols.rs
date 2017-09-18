@@ -42,21 +42,21 @@ pub fn symbol_name(symbol: LispObject) -> LispObject {
 
 /// Return t if SYMBOL's function definition is not void.
 #[lisp_fn]
-pub fn fboundp(object: LispObject) -> LispObject {
-    let symbol = object.as_symbol_or_error();
+pub fn fboundp(symbol: LispObject) -> LispObject {
+    let symbol = symbol.as_symbol_or_error();
     LispObject::from_bool(symbol.get_function().is_not_nil())
 }
 
 /// Return SYMBOL's function definition, or nil if that is void.
 #[lisp_fn]
-fn symbol_function(object: LispObject) -> LispObject {
-    object.as_symbol_or_error().get_function()
+fn symbol_function(symbol: LispObject) -> LispObject {
+    symbol.as_symbol_or_error().get_function()
 }
 
 /// Return SYMBOL's property list.
 #[lisp_fn]
-fn symbol_plist(object: LispObject) -> LispObject {
-    object.as_symbol_or_error().get_plist()
+fn symbol_plist(symbol: LispObject) -> LispObject {
+    symbol.as_symbol_or_error().get_plist()
 }
 
 /// Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
