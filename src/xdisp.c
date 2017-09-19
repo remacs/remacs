@@ -22395,8 +22395,8 @@ Value is the new character position of point.  */)
 	    row += dir;
 	  else
 	    row -= dir;
-	  if (row < MATRIX_FIRST_TEXT_ROW (w->current_matrix)
-	      || row > MATRIX_BOTTOM_TEXT_ROW (w->current_matrix, w))
+	  if (!(MATRIX_FIRST_TEXT_ROW (w->current_matrix) <= row
+		&& row < MATRIX_BOTTOM_TEXT_ROW (w->current_matrix, w)))
 	    goto simulate_display;
 
 	  if (dir > 0)
