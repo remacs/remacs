@@ -355,3 +355,43 @@ fn geq(args: &mut [LispObject]) -> LispObject {
 fn neq(num1: LispObject, num2: LispObject) -> LispObject {
     arithcompare(num1, num2, ArithComparison::Notequal)
 }
+
+/// Return remainder of X divided by Y.
+/// Both must be integers or markers.
+#[lisp_fn(name = "%")]
+fn rem(x: LispObject, y: LispObject) -> LispObject {
+    let x = x.as_fixnum_coerce_marker_or_error();
+    let y = y.as_fixnum_coerce_marker_or_error();
+
+    if y == 0 {
+        xsignal!(Qarith_error);
+    }
+
+    LispObject::from_fixnum(x % y)
+}
+
+/// Return NUMBER plus one.  NUMBER may be a number or a marker.
+/// Markers are converted to integers.
+#[lisp_fn(name = "1+")]
+fn add1(number: LispObject) -> LispObject {
+    match number.as_number_coerce_marker_or_error() {
+        LispNumber::Fixnum(num) => LispObject::from_fixnum(num + 1),
+        LispNumber::Float(num) => LispObject::from_float(num + 1.0),
+    }
+}
+
+/// Return NUMBER minus one.  NUMBER may be a number or a marker.
+/// Markers are converted to integers.
+#[lisp_fn(name = "1-")]
+fn sub1(number: LispObject) -> LispObject {
+    match number.as_number_coerce_marker_or_error() {
+        LispNumber::Fixnum(num) => LispObject::from_fixnum(num - 1),
+        LispNumber::Float(num) => LispObject::from_float(num - 1.0),
+    }
+}
+
+/// Return the bitwise complement of NUMBER.  NUMBER must be an integer.
+#[lisp_fn]
+fn lognot(number: LispObject) -> LispObject {
+    LispObject::from_fixnum(!number.as_fixnum_or_error())
+}
