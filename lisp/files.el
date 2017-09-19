@@ -4479,8 +4479,8 @@ extension, the value is \"\"."
             "")))))
 
 (defun file-name-base (&optional filename)
-  "Return the base name of the FILENAME: no directory, no extension.
-FILENAME defaults to `buffer-file-name'."
+  "Return the base name of the FILENAME: no directory, no extension."
+  (declare (advertised-calling-convention (filename) "27.1"))
   (file-name-sans-extension
    (file-name-nondirectory (or filename (buffer-file-name)))))
 

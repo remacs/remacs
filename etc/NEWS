@@ -48,6 +48,9 @@ sets the XTerm window title.  The default is to set the window title.
 
 * Incompatible Lisp Changes in Emacs 27.1
 
+** The FILENAME argument to 'file-name-base' is now mandatory and no
+longer defaults to 'buffer-file-name'.
+
 
 * Lisp Changes in Emacs 27.1
 

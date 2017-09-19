@@ -314,7 +314,7 @@ also applies `reftex-translate-to-ascii-function' to the string."
               (save-match-data
                 (cond
                  ((equal letter "f")
-                  (file-name-base))
+                  (file-name-base (buffer-file-name)))
                  ((equal letter "F")
                   (let ((masterdir (file-name-directory (reftex-TeX-master-file)))
                         (file (file-name-sans-extension (buffer-file-name))))
