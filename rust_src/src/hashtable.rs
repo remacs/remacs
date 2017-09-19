@@ -68,7 +68,7 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
     let mut table = htable.as_hash_table_or_error();
     let mut new_table = LispHashTableRef::allocate();
     unsafe { new_table.copy(table) };
-    assert!(new_table.as_ptr() != table.as_ptr());
+    assert_ne!(new_table.as_ptr(), table.as_ptr());
 
     let key_and_value = LispObject::from_raw(unsafe {
         Fcopy_sequence(new_table.get_key_and_value().to_raw())

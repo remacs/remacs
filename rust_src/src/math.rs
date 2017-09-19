@@ -36,6 +36,7 @@ fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub enum ArithOp {
     Add,
     Sub,
@@ -49,7 +50,7 @@ pub enum ArithOp {
     Logxor,
 }
 
-/// Given an array of LispObject, reduce over them according to the
+/// Given an array of `LispObject`, reduce over them according to the
 /// arithmetic operation specified.
 ///
 /// Modifies the array in place.
@@ -201,7 +202,7 @@ fn logxor(args: &mut [LispObject]) -> LispObject {
 }
 
 fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject {
-    assert!(args.len() > 0);
+    assert!(!args.is_empty());
     let mut accum = args[0];
     for &arg in &args[1..] {
         if arithcompare(arg, accum, comparison).is_not_nil() {

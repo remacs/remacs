@@ -165,7 +165,7 @@ fn string_overflow() -> ! {
 
 /// Parse unibyte string at STR of LEN bytes, and return the number of
 /// bytes it may occupy when converted to multibyte string by
-/// `str_to_multibyte'.
+/// `str_to_multibyte`.
 #[no_mangle]
 pub fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdiff_t) -> ptrdiff_t {
     let slice = unsafe { slice::from_raw_parts(ptr, len as usize) };
@@ -175,7 +175,7 @@ pub fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdiff_t) -> ptrdiff_t
     })
 }
 
-/// Same as the BYTE8_TO_CHAR macro.
+/// Same as the `BYTE8_TO_CHAR` macro.
 #[inline]
 pub fn raw_byte_codepoint(byte: c_uchar) -> Codepoint {
     if byte >= 0x80 {
@@ -185,13 +185,13 @@ pub fn raw_byte_codepoint(byte: c_uchar) -> Codepoint {
     }
 }
 
-/// Same as the CHAR_TO_BYTE8 macro.
+/// Same as the `CHAR_TO_BYTE8` macro.
 #[inline]
 pub fn raw_byte_from_codepoint(cp: Codepoint) -> c_uchar {
     (cp - 0x3F_FF00) as c_uchar
 }
 
-/// Same as the CHAR_TO_BYTE_SAFE macro.
+/// Same as the `CHAR_TO_BYTE_SAFE` macro.
 /// Return the raw 8-bit byte for character CP,
 /// or -1 if CP doesn't correspond to a byte.
 #[inline]
@@ -205,7 +205,7 @@ pub fn raw_byte_from_codepoint_safe(cp: Codepoint) -> EmacsInt {
     }
 }
 
-/// UNIBYTE_TO_CHAR macro
+/// `UNIBYTE_TO_CHAR` macro
 #[inline]
 pub fn unibyte_to_char(cp: Codepoint) -> Codepoint {
     if cp < 0x80 {
@@ -215,14 +215,14 @@ pub fn unibyte_to_char(cp: Codepoint) -> Codepoint {
     }
 }
 
-/// MAKE_CHAR_MULTIBYTE macro
+/// `MAKE_CHAR_MULTIBYTE` macro
 #[inline]
 pub fn make_char_multibyte(cp: Codepoint) -> Codepoint {
     debug_assert!(cp < 256);
     unibyte_to_char(cp)
 }
 
-/// Same as the CHAR_STRING macro.
+/// Same as the `CHAR_STRING` macro.
 #[inline]
 fn write_codepoint(to: &mut [c_uchar], cp: Codepoint) -> usize {
     if cp <= MAX_1_BYTE_CHAR {
@@ -354,7 +354,7 @@ pub fn str_to_multibyte(ptr: *mut c_uchar, len: ptrdiff_t, bytes: ptrdiff_t) -> 
     (start + to) as ptrdiff_t
 }
 
-/// Same as MULTIBYTE_LENGTH macro in C.
+/// Same as `MULTIBYTE_LENGTH` macro in C.
 fn multibyte_length(slice: &[c_uchar], allow_encoded_raw: bool) -> Option<usize> {
     let len = slice.len();
     if len < 1 {
@@ -384,7 +384,7 @@ fn multibyte_length(slice: &[c_uchar], allow_encoded_raw: bool) -> Option<usize>
     }
 }
 
-/// Same as the STRING_CHAR_ADVANCE macro.
+/// Same as the `STRING_CHAR_ADVANCE` macro.
 #[inline]
 pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
     let head = slice[0] as Codepoint;
@@ -419,7 +419,7 @@ pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
     }
 }
 
-/// Same as BYTES_BY_CHAR_HEAD macro in C.
+/// Same as `BYTES_BY_CHAR_HEAD` macro in C.
 fn multibyte_length_by_head(byte: c_uchar) -> usize {
     if byte & 0x80 == 0 {
         1

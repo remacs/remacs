@@ -20,6 +20,7 @@ use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw
 use remacs_macros::lisp_fn;
 use symbols::{symbol_name, fboundp};
 
+#[derive(Clone, Copy)]
 enum HashAlg {
     MD5,
     SHA1,
@@ -408,8 +409,9 @@ fn _secure_hash(algorithm: HashAlg, input: &[u8], hex: bool) -> LispObject {
 /// 2*len bytes of space for the final hex string.
 fn hexify_digest_string(buffer: &mut [u8], len: usize) {
     static hexdigit: [u8; 16] = *b"0123456789abcdef";
-    debug_assert!(
-        buffer.len() == 2 * len,
+    debug_assert_eq!(
+        buffer.len(),
+        2 * len,
         "buffer must be long enough to hold 2*len hex digits"
     );
     for i in (0..len).rev() {
