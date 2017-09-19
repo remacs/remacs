@@ -288,15 +288,6 @@ interned in the initial obarray.  */)
   return Qnil;
 }
 
-DEFUN ("recordp", Frecordp, Srecordp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a record.  */)
-  (Lisp_Object object)
-{
-  if (RECORDP (object))
-    return Qt;
-  return Qnil;
-}
-
 #ifdef HAVE_MODULES
 DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
        doc: /* Return t if OBJECT is a module user pointer.  */)
@@ -368,18 +359,6 @@ Return SYMBOL.  */)
   if (SYMBOL_CONSTANT_P (symbol))
     xsignal1 (Qsetting_constant, symbol);
   Fset (symbol, Qunbound);
-  return symbol;
-}
-
-DEFUN ("fmakunbound", Ffmakunbound, Sfmakunbound, 1, 1, 0,
-       doc: /* Make SYMBOL's function definition be nil.
-Return SYMBOL.  */)
-  (register Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  if (NILP (symbol) || EQ (symbol, Qt))
-    xsignal1 (Qsetting_constant, symbol);
-  set_symbol_function (symbol, Qnil);
   return symbol;
 }
 
@@ -457,15 +436,6 @@ The return value is undefined.  */)
      to a call to `defalias', we return `symbol' for backward compatibility
      (bug#11686).  */
   return symbol;
-}
-
-DEFUN ("setplist", Fsetplist, Ssetplist, 2, 2, 0,
-       doc: /* Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.  */)
-  (register Lisp_Object symbol, Lisp_Object newplist)
-{
-  CHECK_SYMBOL (symbol);
-  set_symbol_plist (symbol, newplist);
-  return newplist;
 }
 
 DEFUN ("subr-arity", Fsubr_arity, Ssubr_arity, 1, 1, 0,
@@ -2876,15 +2846,12 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
-  defsubr (&Srecordp);
   defsubr (&Smodule_function_p);
   defsubr (&Sindirect_function);
   defsubr (&Smakunbound);
-  defsubr (&Sfmakunbound);
   defsubr (&Sboundp);
   defsubr (&Sfset);
   defsubr (&Sdefalias);
-  defsubr (&Ssetplist);
   defsubr (&Ssymbol_value);
   defsubr (&Sset);
   defsubr (&Sdefault_boundp);

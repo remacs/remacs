@@ -554,6 +554,12 @@ impl LispObject {
             None
         })
     }
+
+    pub fn is_record(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_RECORD)
+        })
+    }
 }
 
 impl LispObject {

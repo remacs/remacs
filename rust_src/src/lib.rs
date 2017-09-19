@@ -258,6 +258,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*symbols::Sfboundp);
         defsubr(&*symbols::Ssymbol_function);
         defsubr(&*symbols::Ssymbol_plist);
+        defsubr(&*symbols::Ssetplist);
+        defsubr(&*symbols::Sfmakunbound);
         defsubr(&*lists::Sconsp);
         defsubr(&*lists::Ssetcar);
         defsubr(&*lists::Ssetcdr);
@@ -318,6 +320,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Svectorp);
         defsubr(&*vectors::Slength);
         defsubr(&*vectors::Selt);
+        defsubr(&*vectors::Srecordp);
         defsubr(&*hashtable::Scopy_hash_table);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
