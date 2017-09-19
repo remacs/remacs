@@ -5337,7 +5337,7 @@ instance of such commands."
   "Make directory DIR if it is not already a directory.  Return nil."
   (condition-case err
       (make-directory-internal dir)
-    (file-already-exists
+    (error
      (unless (file-directory-p dir)
        (signal (car err) (cdr err))))))
 
