@@ -3169,7 +3169,7 @@ User is always nil."
 
 (defun tramp-handle-file-truename (filename)
   "Like `file-truename' for Tramp files."
-  (let ((result filename)
+  (let ((result (expand-file-name filename))
 	(numchase 0)
 	;; Don't make the following value larger than
 	;; necessary.  People expect an error message in a
@@ -3180,7 +3180,7 @@ User is always nil."
 	symlink-target)
     (format
      "%s%s"
-     (with-parsed-tramp-file-name (expand-file-name result) v1
+     (with-parsed-tramp-file-name result v1
        (with-tramp-file-property v1 v1-localname "file-truename"
 	 (while (and (setq symlink-target (file-symlink-p result))
 		     (< numchase numchase-limit))
@@ -3850,7 +3850,7 @@ Erase echoed commands if exists."
 		     (min (+ (point-min) tramp-echo-mark-marker-length)
 			  (point-max))))))
       ;; No echo to be handled, now we can look for the regexp.
-      ;; Sometimes, lines are much to long, and we run into a "Stack
+      ;; Sometimes, lines are much too long, and we run into a "Stack
       ;; overflow in regexp matcher".  For example, //DIRED// lines of
       ;; directory listings with some thousand files.  Therefore, we
       ;; look from the end.
