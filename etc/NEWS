@@ -367,7 +367,7 @@ see the node "Connection Local Variables" in the ELisp manual.
 puny.el library, so that one can visit Web sites with non-ASCII URLs.
 
 +++
-** The new 'timer-list' command lists all active timers in a buffer,
+** The new 'list-timers' command lists all active timers in a buffer,
 where you can cancel them with the 'c' command.
 
 +++
