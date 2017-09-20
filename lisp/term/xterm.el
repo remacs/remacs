@@ -68,6 +68,11 @@ string bytes that can be copied is 3/4 of this value."
   :version "25.1"
   :type 'integer)
 
+(defcustom xterm-set-window-title t
+  "Whether Emacs should set window titles to an Emacs frame in an XTerm."
+  :version "27.1"
+  :type 'boolean)
+
 (defconst xterm-paste-ending-sequence "\e[201~"
   "Characters send by the terminal to end a bracketed paste.")
 
@@ -802,6 +807,8 @@ We run the first FUNCTION whose STRING matches the input events."
     (when (memq 'setSelection xterm-extra-capabilities)
       (xterm--init-activate-set-selection)))
 
+  (when xterm-set-window-title
+    (xterm--init-frame-title))
   ;; Unconditionally enable bracketed paste mode: terminals that don't
   ;; support it just ignore the sequence.
   (xterm--init-bracketed-paste-mode)
@@ -827,6 +834,34 @@ We run the first FUNCTION whose STRING matches the input events."
 (defun xterm--init-activate-set-selection ()
   "Terminal initialization for `gui-set-selection'."
   (set-terminal-parameter nil 'xterm--set-selection t))
+
+(defun xterm--init-frame-title ()
+  "Terminal initialization for XTerm frame titles."
+  (xterm-set-window-title)
+  (add-hook 'after-make-frame-functions 'xterm-set-window-title-flag)
+  (add-hook 'window-configuration-change-hook 'xterm-unset-window-title-flag)
+  (add-hook 'post-command-hook 'xterm-set-window-title)
+  (add-hook 'minibuffer-exit-hook 'xterm-set-window-title))
+
+(defvar xterm-window-title-flag nil
+  "Whether a new frame has been created, calling for a title update.")
+
+(defun xterm-set-window-title-flag (_frame)
+  "Set `xterm-window-title-flag'.
+See `xterm--init-frame-title'"
+  (setq xterm-window-title-flag t))
+
+(defun xterm-unset-window-title-flag ()
+  (when xterm-window-title-flag
+    (setq xterm-window-title-flag nil)
+    (xterm-set-window-title)))
+
+(defun xterm-set-window-title (&optional terminal)
+  "Set the window title of the Xterm TERMINAL.
+The title is constructed from `frame-title-format'."
+  (send-string-to-terminal
+   (format "\e]2;%s\a" (format-mode-line frame-title-format))
+   terminal))
 
 (defun xterm--selection-char (type)
   (pcase type
