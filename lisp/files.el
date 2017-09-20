@@ -5564,7 +5564,7 @@ into NEWNAME instead."
 	      (filetype (car (file-attributes file))))
 	  (cond
 	   ((eq filetype t)       ; Directory but not a symlink.
-	    (copy-directory file newname keep-time parents))
+	    (copy-directory file target keep-time parents t))
 	   ((stringp filetype)    ; Symbolic link
 	    (make-symbolic-link filetype target t))
 	   ((copy-file file target t keep-time)))))
