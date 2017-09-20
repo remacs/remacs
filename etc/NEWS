@@ -31,6 +31,378 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Changes in Emacs 26.1
 
+** Security vulnerability related to Enriched Text mode is removed.
+
++++
+*** Enriched Text mode does not evaluate Lisp in 'display' properties.
+This feature allows saving 'display' properties as part of text.
+Emacs 'display' properties support evaluation of arbitrary Lisp forms
+as part of processing the property for display, so displaying Enriched
+Text could be vulnerable to executing arbitrary malicious Lisp code
+included in the text (e.g., sent as part of an email message).
+Therefore, execution of arbitrary Lisp forms in 'display' properties
+decoded by Enriched Text mode is now disabled by default.  Customize
+the new option 'enriched-allow-eval-in-display-props' to a non-nil
+value to allow Lisp evaluation in decoded 'display' properties.
+
+This vulnerability was introduced in Emacs 21.1.  To work around that
+in Emacs versions before 25.3, append the following to your ~/.emacs
+init file:
+
+  (eval-after-load "enriched"
+    '(defun enriched-decode-display-prop (start end &optional param)
+       (list start end)))
+
++++
+** Functions in 'write-contents-functions' can fully short-circuit the
+'save-buffer' process.  Previously, saving a buffer that was not
+visiting a file would always prompt for a file name.  Now it only does
+so if 'write-contents-functions' is nil (or all its functions return
+nil).  A non-nil buffer-local value for this variable is sufficient
+for 'save-some-buffers' to consider the buffer for saving.
+
+---
+** New variable 'executable-prefix-env' for inserting magic signatures.
+This variable affects the format of the interpreter magic number
+inserted by 'executable-set-magic'.  If non-nil, the magic number now
+takes the form "#!/usr/bin/env interpreter", otherwise the value
+determined by 'executable-prefix', which is by default
+"#!/path/to/interpreter".  By default, 'executable-prefix-env' is nil,
+so the default behavior is not changed.
+
++++
+** The variable 'emacs-version' no longer includes the build number.
+This is now stored separately in a new variable, 'emacs-build-number'.
+
++++
+** Emacs now provides a limited form of concurrency with Lisp threads.
+Concurrency in Emacs Lisp is "mostly cooperative", meaning that
+Emacs will only switch execution between threads at well-defined
+times: when Emacs waits for input, during blocking operations related
+to threads (such as mutex locking), or when the current thread
+explicitly yields.  Global variables are shared among all threads, but
+a 'let' binding is thread-local.  Each thread also has its own current
+buffer and its own match data.
+
+See the chapter "Threads" in the ELisp manual for full documentation
+of these facilities.
+
++++
+** The new user variable 'electric-quote-chars' provides a list
+of curved quotes for 'electric-quote-mode', allowing user to choose
+the types of quotes to be used.
+
+---
+** The new user option 'electric-quote-context-sensitive' makes
+'electric-quote-mode' context sensitive.  If it is non-nil, you can
+type an ASCII apostrophe to insert an opening or closing quote,
+depending on context.  Emacs will replace the apostrophe by an opening
+quote character at the beginning of the buffer, the beginning of a
+line, after a whitespace character, and after an opening parenthesis;
+and it will replace the apostrophe by a closing quote character in all
+other cases.
+
+---
+** The new variable 'electric-quote-inhibit-functions' controls when
+to disable electric quoting based on context.  Major modes can add
+functions to this list; Emacs will temporarily disable
+'electric-quote-mode' whenever any of the functions returns non-nil.
+This can be used by major modes that derive from 'text-mode' but allow
+inline code segments, such as 'markdown-mode'.
+
++++
+** The new user variable 'dired-omit-case-fold' allows the user to
+customize the case-sensitivity of dired-omit-mode.  It defaults to
+the same sensitivity as that of the filesystem for the corresponding
+dired buffer.
+
++++
+** Emacs now uses double buffering to reduce flicker when editing and
+resizing graphical Emacs frames on the X Window System.  This support
+requires the DOUBLE-BUFFER extension, which major X servers have
+supported for many years.  If your system has this extension, but an
+Emacs built with double buffering misbehaves on some displays you use,
+you can disable the feature by adding
+
+  '(inhibit-double-buffering . t)
+
+to default-frame-alist.  Or inject this parameter into the selected
+frame by evaluating this form:
+
+  (modify-frame-parameters nil '((inhibit-double-buffering . t)))
+
+---
+The group 'wp', whose label was "text", is now deprecated.
+Use the new group 'text', which inherits from 'wp', instead.
+
++++
+** The new function 'call-shell-region' executes a command in an
+inferior shell with the buffer region as input.
+
++++
+** The new user option 'shell-command-dont-erase-buffer' controls
+if the output buffer is erased between shell commands; if non-nil,
+the output buffer is not erased; this variable also controls where
+to set the point in the output buffer: beginning of the output,
+end of the buffer or save the point.
+When 'shell-command-dont-erase-buffer' is nil, the default value,
+the behavior of 'shell-command', 'shell-command-on-region' and
+'async-shell-command' is as usual.
+
++++
+** The new user option 'async-shell-command-display-buffer' controls
+whether the output buffer of an asynchronous command is shown
+immediately, or only when there is output.
+
++++
+** The new user option 'mouse-select-region-move-to-beginning'
+controls the position of point when double-clicking mouse-1 on the end
+of a parenthetical grouping or string-delimiter: the default value nil
+keeps point at the end of the region, setting it to non-nil moves
+point to the beginning of the region.
+
++++
+** The new user option 'mouse-drag-and-drop-region' allows to drag the
+entire region of text to another place or another buffer.
+
++++
+** The new user option 'confirm-kill-processes' allows the user to
+skip a confirmation prompt for killing subprocesses when exiting
+Emacs.  When set to t (the default), Emacs will prompt for
+confirmation before killing subprocesses on exit, which is the same
+behavior as before.
+
+---
+** 'find-library-name' will now fall back on looking at 'load-history'
+to try to locate libraries that have been loaded with an explicit path
+outside 'load-path'.
+
++++
+** Faces in 'minibuffer-prompt-properties' no longer overwrite properties
+in the text in functions like 'read-from-minibuffer', but instead are
+added to the end of the face list.  This allows users to say things
+like '(read-from-minibuffer (propertize "Enter something: " 'face 'bold))'.
+
++++
+** The new variable 'extended-command-suggest-shorter' has been added
+to control whether to suggest shorter 'M-x' commands or not.
+
+---
+** icomplete now respects 'completion-ignored-extensions'.
+
++++
+** Non-breaking hyphens are now displayed with the 'nobreak-hyphen'
+face instead of the 'escape-glyph' face.
+
++++
+** Approximations to quotes are now displayed with the new 'homoglyph'
+face instead of the 'escape-glyph' face.
+
++++
+** New face 'header-line-highlight'.
+This face is the header-line analogue of 'mode-line-highlight'; it
+should be the preferred mouse-face for mouse-sensitive elements in the
+header line.
+
+---
+** 'C-x h' ('mark-whole-buffer') will now avoid marking the prompt
+part of minibuffers.
+
+---
+** 'find-library' now takes a prefix argument to pop to a different
+window.
+
+---
+** 'fill-paragraph' no longer marks the buffer as changed unless it
+actually changed something.
+
+---
+** The locale language name 'ca' is now mapped to the language
+environment 'Catalan', which has been added.
+
+---
+** 'align-regexp' has a separate history for its interactive argument.
+'align-regexp' no longer shares its history with all other
+history-less functions that use 'read-string'.
+
++++
+** The networking code has been reworked so that it's more
+asynchronous than it was (when specifying :nowait t in
+'make-network-process').  How asynchronous it is varies based on the
+capabilities of the system, but on a typical GNU/Linux system the DNS
+resolution, the connection, and (for TLS streams) the TLS negotiation
+are all done without blocking the main Emacs thread.  To get
+asynchronous TLS, the TLS boot parameters have to be passed in (see
+the manual for details).
+
+Certain process oriented functions (like 'process-datagram-address')
+will block until socket setup has been performed.  The recommended way
+to deal with asynchronous sockets is to avoid interacting with them
+until they have changed status to "run".  This is most easily done
+from a process sentinel.
+
+---
+** 'make-network-process' and 'open-network-stream' sometimes allowed
+:service to be an integer string (e.g., :service "993") and sometimes
+required an integer (e.g., :service 993).  This difference has been
+eliminated, and integer strings work everywhere.
+
+---
+** It is possible to disable attempted recovery on fatal signals.
+Two new variables support disabling attempts to recover from stack
+overflow and to avoid automatic auto-save when Emacs is delivered a
+fatal signal.  'attempt-stack-overflow-recovery', if set to 'nil',
+will disable attempts to recover from C stack overflows; Emacs will
+then crash as with any other fatal signal.
+'attempt-orderly-shutdown-on-fatal-signal', if set to 'nil', will
+disable attempts to auto-save the session and shut down in an orderly
+fashion when Emacs receives a fatal signal; instead, Emacs will
+terminate immediately.  Both variables are non-'nil' by default.
+These variables are for users who would like to avoid the small
+probability of data corruption due to techniques Emacs uses to recover
+in these situations.
+
++++
+** File local and directory local variables are now initialized each
+time the major mode is set, not just when the file is first visited.
+These local variables will thus not vanish on setting a major mode.
+
++++
+** A second dir-local file (.dir-locals-2.el) is now accepted.
+See the variable 'dir-locals-file-2' for more information.
+
++++
+** Connection-local variables can be used to specify local variables
+with a value depending on the connected remote server.  For details,
+see the node "Connection Local Variables" in the ELisp manual.
+
+---
+** International domain names (IDNA) are now encoded via the new
+puny.el library, so that one can visit Web sites with non-ASCII URLs.
+
++++
+** The new 'list-timers' command lists all active timers in a buffer,
+where you can cancel them with the 'c' command.
+
++++
+** 'switch-to-buffer-preserve-window-point' now defaults to t.
+
++++
+** The new variable 'debugger-stack-frame-as-list' allows displaying
+all call stack frames in a Lisp backtrace buffer as lists.  Both
+debug.el and edebug.el have been updated to heed to this variable.
+
+---
+** Values in call stack frames are now displayed using 'cl-prin1'.
+The old behaviour of using 'prin1' can be restored by customizing the
+new option 'debugger-print-function'.
+
++++
+** NUL bytes in text copied to the system clipboard are now replaced with "\0".
+
++++
+** The new variable 'x-ctrl-keysym' has been added to the existing
+roster of X keysyms.  It can be used in combination with another
+variable of this kind to swap modifiers in Emacs.
+
+---
+** New input methods: 'cyrillic-tuvan', 'polish-prefix'.
+
+---
+** The 'dutch' input method no longer attempts to support Turkish too.
+Also, it no longer converts 'IJ' and 'ij' to the compatibility
+characters U+0132 LATIN CAPITAL LIGATURE IJ and U+0133 LATIN SMALL
+LIGATURE IJ.
+
++++
+** File name quoting by adding the prefix "/:" is now possible for the
+local part of a remote file name.  Thus, if you have a directory named
+"/~" on the remote host "foo", you can prevent it from being
+substituted by a home directory by writing it as "/foo:/:/~/file".
+
++++
+** The new variable 'maximum-scroll-margin' allows having effective
+settings of 'scroll-margin' up to half the window size, instead of
+always restricting the margin to a quarter of the window.
+
++++
+** Emacs can scroll horizontally using mouse, touchpad, and trackbar.
+You can enable this by customizing 'mwheel-tilt-scroll-p'.  If you
+want to reverse the direction of the scroll, customize
+'mwheel-flip-direction'.
+
++++
+** Emacsclient has a new option -u/--suppress-output.
+This option suppresses display of return values from the server
+process.
+
++++
+** Emacsclient has a new option -T/--tramp.
+This helps with using a local Emacs session as the server for a remote
+emacsclient.  With appropriate setup, one can now set the EDITOR
+environment variable on a remote machine to emacsclient, and
+use the local Emacs to edit remote files via Tramp.  See the node
+"emacsclient Options" in the user manual for the details.
+
+---
+** New user option 'dig-program-options' and extended functionality
+for DNS-querying functions 'nslookup-host', 'dns-lookup-host',
+and 'run-dig'.  Each function now accepts an optional name server
+argument interactively (with a prefix argument) and non-interactively.
+
++++
+** 'describe-key-briefly' now ignores mouse movement events.
+
++++
+** The new variable 'eval-expression-print-maximum-character' prevents
+large integers from being displayed as characters by 'M-:' and similar
+commands.
+
+---
+** Two new commands for finding the source code of Emacs Lisp
+libraries: 'find-library-other-window' and 'find-library-other-frame'.
+
++++
+** The new variable 'display-raw-bytes-as-hex' allows to change the
+display of raw bytes from octal to hex.
+
++++
+** You can now provide explicit field numbers in format specifiers.
+For example, '(format "%2$s %1$s" "X" "Y")' produces "Y X".
+
++++
+** Emacs now supports optional display of line numbers in the buffer.
+This is similar to what linum-mode provides, but much faster and
+doesn't usurp the display margin for the line numbers.  Customize the
+buffer-local variable 'display-line-numbers' to activate this optional
+display.  Alternatively, you can use the `display-line-numbers-mode'
+minor mode or the global `global-display-line-numbers-mode'.  When
+using these modes, customize `display-line-numbers-type' with the same
+value as you would use with `display-line-numbers'.
+
+Line numbers are not displayed at all in minibuffer windows and in
+tooltips, as they are not useful there.
+
+Lisp programs can disable line-number display for a particular screen
+line by putting the 'display-line-numbers-disable' text property or
+overlay property on the first character of that screen line.  This is
+intended for add-on packages that need a finer control of the display.
+
+Lisp programs that need to know how much screen estate is used up for
+line-number display in a window can use the new function
+'line-number-display-width'.
+
+Linum mode and all similar packages are henceforth becoming obsolete.
+Users and developers are encouraged to switch to this new feature
+instead.
+
++++
+** emacsclient now accepts command-line options in ALTERNATE_EDITOR
+and --alternate-editor. For example, ALTERNATE_EDITOR="emacs -Q -nw".
+Arguments may be quoted "like this", so that for example an absolute
+path containing a space may be specified; quote escaping is not
+supported.
+
 
 * Editing Changes in Emacs 26.1
 
