@@ -196,6 +196,9 @@ pub use interactive::Fprefix_numeric_value;
 pub use editfns::Fbolp;
 pub use editfns::Feolp;
 
+// Used in minibuffer.c
+pub use windows::Fwindow_minibuffer_p;
+
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
 }
@@ -217,6 +220,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Soverlay_end);
         defsubr(&*buffers::Soverlay_buffer);
         defsubr(&*windows::Swindowp);
+        defsubr(&*windows::Swindow_minibuffer_p);
         defsubr(&*windows::Swindow_live_p);
         defsubr(&*windows::Swindow_point);
         defsubr(&*windows::Sselected_window);

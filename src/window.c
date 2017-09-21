@@ -340,15 +340,6 @@ If FRAME is omitted or nil, it defaults to the selected frame.  */)
   return FRAME_MINIBUF_WINDOW (decode_live_frame (frame));
 }
 
-DEFUN ("window-minibuffer-p", Fwindow_minibuffer_p,
-       Swindow_minibuffer_p, 0, 1, 0,
-       doc: /* Return non-nil if WINDOW is a minibuffer window.
-WINDOW must be a valid window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return MINI_WINDOW_P (decode_valid_window (window)) ? Qt : Qnil;
-}
-
 /* Don't move this to window.el - this must be a safe routine.  */
 DEFUN ("frame-first-window", Fframe_first_window, Sframe_first_window, 0, 1, 0,
        doc: /* Return the topmost, leftmost live window on FRAME-OR-WINDOW.
@@ -7670,7 +7661,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   Vfast_but_imprecise_scrolling = false;
 
   defsubr (&Sminibuffer_window);
-  defsubr (&Swindow_minibuffer_p);
   defsubr (&Swindow_frame);
   defsubr (&Sframe_root_window);
   defsubr (&Sframe_first_window);
