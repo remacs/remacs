@@ -1819,6 +1819,13 @@ can be replicated simply by setting 'comment-auto-fill-only-comments'.
 ** New pcase pattern 'rx' to match against a rx-style regular expression.
 For details, see the doc string of 'rx--pcase-macroexpander'.
 
+---
+** New functions to set region from secondary selection and vice versa.
+The new functions 'secondary-selection-to-region' and
+'secondary-selection-from-region' let you set the beginning and the
+end of the region from those of the secondary selection and vise
+versa.
+
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
 
