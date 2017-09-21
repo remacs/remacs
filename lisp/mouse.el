@@ -1917,7 +1917,7 @@ CLICK position, kill the secondary selection."
 	 (gui-set-selection 'SECONDARY str))))
 
 (defun secondary-selection-exist-p ()
-  "Return non-nil if there is the secondary selection in current buffer."
+  "Return non-nil if the secondary selection exists in the current buffer."
   (memq mouse-secondary-overlay (overlays-in (point-min) (point-max))))
 
 (defun secondary-selection-to-region ()
