@@ -690,8 +690,9 @@ enum text_quoting_style
 text_quoting_style (void)
 {
   if (NILP (Vtext_quoting_style)
-      ? default_to_grave_quoting_style ()
-      : EQ (Vtext_quoting_style, Qgrave))
+      || (EQ (Vtext_quoting_style, Qt)
+          ? default_to_grave_quoting_style ()
+          : EQ (Vtext_quoting_style, Qgrave)))
     return GRAVE_QUOTING_STYLE;
   else if (EQ (Vtext_quoting_style, Qstraight))
     return STRAIGHT_QUOTING_STYLE;
@@ -1018,22 +1019,25 @@ syms_of_doc (void)
   Vbuild_files = Qnil;
 
   DEFVAR_LISP ("text-quoting-style", Vtext_quoting_style,
-               doc: /* Style to use for single quotes in help and messages.
-Its value should be a symbol.  It works by substituting certain single
-quotes for grave accent and apostrophe.  This is done in help output
-and in functions like `message' and `format-message'.  It is not done
-in `format'.
+               doc: /* How to translate single quotes in help and messages.
+Its value should be a symbol, and describes the style of quote
+substituted for ASCII quote characters GRAVE ACCENT (\\=`, \\=\\x60) and
+APOSTROPHE (\\=', \\=\\x27).  This is done in help output and in functions
+like `message' and `format-message'.  It is not done in `format'.
 
-`curve' means quote with curved single quotes ‘like this’.
-`straight' means quote with straight apostrophes \\='like this\\='.
-`grave' means quote with grave accent and apostrophe \\=`like this\\=';
-i.e., do not alter quote marks.  The default value nil acts like
-`curve' if curved single quotes are displayable, and like `grave'
-otherwise.  */);
-  Vtext_quoting_style = Qnil;
+The value nil means do not translate the quotes at all.  The value t
+(the default) acts like `curve' if curved single quotes appear to be
+displayable, and like nil otherwise.  `curve' means quote with curved
+single quotes ‘like this’.  `straight' means quote with apostrophes
+\\='like this\\='.  `grave' means do not translate quote marks and is
+now a synonym for nil.
+
+(The value t was newly introduced in Emacs 26, and in Emacs 25 nil
+meant what t means now.)  */);
+  Vtext_quoting_style = Qt;
 
   DEFVAR_BOOL ("internal--text-quoting-flag", text_quoting_flag,
-	       doc: /* If nil, a nil `text-quoting-style' is treated as `grave'.  */);
+	       doc: /* If nil, a `text-quoting-style' value t is treated as `nil'.  */);
   /* Initialized by ‘main’.  */
 
   defsubr (&Sdocumentation);
