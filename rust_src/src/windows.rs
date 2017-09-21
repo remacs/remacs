@@ -108,7 +108,12 @@ pub fn window_valid_p(object: LispObject) -> LispObject {
 
 /// Return non-nil if WINDOW is a minibuffer window.
 /// WINDOW must be a valid window and defaults to the selected one.
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn window_minibuffer_p(window: LispObject) -> LispObject {
-    LispObject::from_bool(window.as_window_or_error().is_minibuffer())
+    let win = if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    };
+    LispObject::from_bool(win.as_window_or_error().is_minibuffer())
 }
