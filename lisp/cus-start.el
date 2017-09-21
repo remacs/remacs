@@ -223,6 +223,15 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (visible-bell display boolean)
 	     (no-redraw-on-reenter display boolean)
 
+             ;; doc.c
+             (text-quoting-style display
+                                 (choice
+                                  (const :tag "No translation" nil)
+                                  (const :tag "Prefer \\=‘curved\\=’ quotes, if possible" t)
+                                  (const :tag "\\=‘Curved\\=’ quotes" curved)
+                                  (const :tag "\\='Straight\\=' quotes" straight)
+                                  (const :tag "\\=`Grave\\=' quotes" grave)))
+
              ;; dosfns.c
 	     (dos-display-scancodes display boolean)
 	     (dos-hyper-key keyboard integer)
