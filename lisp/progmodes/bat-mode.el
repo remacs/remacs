@@ -84,9 +84,9 @@
          . 'bat-label-face)
         ("\\_<\\(defined\\|set\\)\\_>[ \t]*\\(\\(\\sw\\|\\s_\\)+\\)"
          (2 font-lock-variable-name-face))
-        ("%\\([^% \n]+\\)%?"
+        ("%\\([^%~ \n]+\\)%?"
          (1 font-lock-variable-name-face))
-        ("!\\([^!% \n]+\\)!?"  ; delayed-expansion !variable!
+        ("!\\([^!%~ \n]+\\)!?"  ; delayed-expansion !variable!
          (1 font-lock-variable-name-face))
         ("%%\\(?:~[adfnpstxz]*\\(?:\\$\\(\\(?:\\sw\\|\\s_\\|_\\)+\\):\\)?\\)?\\([]!#$&-:?-[_-{}~]\\)"
          (1 font-lock-variable-name-face nil t) ; PATH expansion
