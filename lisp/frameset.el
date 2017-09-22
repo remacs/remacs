@@ -447,7 +447,7 @@ DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
      (buffer-predicate   . :never)
      (buried-buffer-list . :never)
      (delete-before      . :never)
-     (font               . frameset-filter-shelve-param)
+     (font               . frameset-filter-font-param)
      (foreground-color   . frameset-filter-sanitize-color)
      (fullscreen         . frameset-filter-shelve-param)
      (GUI:font           . frameset-filter-unshelve-param)
@@ -630,6 +630,17 @@ see `frameset-filter-alist'."
 	    (cons p val)
 	  (setcdr found val)
 	  nil))))
+
+(defun frameset-filter-font-param (current filtered parameters saving
+                                           &optional prefix)
+  "When switching from a tty frame to a GUI frame, remove the FONT param.
+
+When switching from a GUI frame to a tty frame, behave
+as `frameset-filter-shelve-param' does."
+  (or saving
+      (if (frameset-switch-to-gui-p parameters)
+          (frameset-filter-shelve-param current filtered parameters saving
+                                        prefix))))
 
 (defun frameset-filter-iconified (_current _filtered parameters saving)
   "Remove CURRENT when saving an iconified frame.
