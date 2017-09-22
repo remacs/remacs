@@ -8,7 +8,7 @@ use editfns::point;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
-const FLAG_MINI: u16 = 1 << 15;
+const FLAG_MINI: u16 = 1 << 0;
 
 impl LispWindowRef {
     /// Check if window is a live window (displays a buffer).
