@@ -128,7 +128,7 @@ binding value is nil.  If all are non-nil, the value of THEN is
 returned, or the last form in ELSE is returned.
 
 Each element of VARLIST is a list (SYMBOL VALUEFORM) which binds
-SYMBOL to the value of VALUEFORM).  An element can additionally
+SYMBOL to the value of VALUEFORM.  An element can additionally
 be of the form (VALUEFORM), which is evaluated and checked for
 nil; i.e. SYMBOL can be omitted if only the test result is of
 interest."
