@@ -836,10 +836,10 @@ this'} typically generates curved quotes @t{‘like this’}.  In
 contrast, a format that quotes with only apostrophes @t{'like this'}
 typically generates two closing curved quotes @t{’like this’}, an
 unusual style in English.  One way around such problems is to bind
-@code{text-quoting-style} to @code{nil} around calls to
-@code{format-message}; this causes the @acronym{ASCII} quoting
-characters to be output unchanged.  @xref{Keys in Documentation}, for
-how the @code{text-quoting-style} variable affects generated quotes.
+@code{text-quoting-style} to the symbol @code{grave} around calls to
+@code{format-message}; this causes @acronym{ASCII} quoting characters
+to be output unchanged.  @xref{Keys in Documentation}, for how the
+@code{text-quoting-style} variable affects generated quotes.
 @end defun
 
 @cindex @samp{%} in format

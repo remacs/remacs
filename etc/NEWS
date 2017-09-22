@@ -1244,15 +1244,13 @@ change FOO, respectively.  The exhaustive list of removed variables is:
 *** Many variables obsoleted in 22.1 referring to face symbols
 
 +++
-** The variable `text-quoting-style' is now a customizable option.  It
+** The variable 'text-quoting-style' is now a customizable option.  It
 controls whether to and how to translate ASCII quotes in messages and
-help output.  The value nil now means "no translation", and the value
-t, the default, means "use curved quotes if displayable" (as nil did
-in Emacs 25).  The other possible values remain unchanged.
-`text-quoting-style' no longer affects the treatment of curved quotes
-in format arguments to functions like `message' and `format-message'.
-In particular, when this variable's value is `grave', all quotes in
-formats are output as-is.
+help output.  Its possible values and their semantics remain unchanged
+from Emacs 25, except that 'text-quoting-style' no longer affects the
+treatment of curved quotes in format arguments to functions like
+'message' and 'format-message'.  In particular, when this variable's
+value is 'grave', all quotes in formats are output as-is.
 
 ---
 ** Functions like 'check-declare-file' and 'check-declare-directory'

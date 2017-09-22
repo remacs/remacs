@@ -273,7 +273,7 @@ quotes.  In contrast, a call using a format like @t{"Missing '%s'"}
 with only apostrophes typically generates a message like @t{"Missing
 ’foo’"} with only closing curved quotes, an unusual style in English.
 One way around this problem is to bind @code{text-quoting-style} to
-@code{nil} around calls to @code{message}; this causes the
+the symbol @code{grave} around calls to @code{message}; this causes
 @acronym{ASCII} quote characters to be output unchanged.
 
 In batch mode, the message is printed to the standard error stream,
