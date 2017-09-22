@@ -27,6 +27,11 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn pt(&self) -> ptrdiff_t {
+        self.pt
+    }
+
+    #[inline]
     pub fn beg_addr(&self) -> *mut c_uchar {
         unsafe { (*self.text).beg }
     }
