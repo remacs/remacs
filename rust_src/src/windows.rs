@@ -107,7 +107,12 @@ pub fn window_valid_p(object: LispObject) -> LispObject {
 /// Return position at which display currently starts in WINDOW.
 /// WINDOW must be a live window and defaults to the selected one.
 /// This is updated by redisplay or by calling `set-window-start'.
-#[lisp_fn]
+#[lisp_fn(min = "0")]
 pub fn window_start(window: LispObject) -> LispObject {
-    marker_position(window.as_live_window_or_error().start_marker())
+    let win = if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    };
+    marker_position(win.as_live_window_or_error().start_marker())
 }
