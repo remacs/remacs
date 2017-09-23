@@ -328,7 +328,7 @@ to the real `message'."
         (funcall func "%s" msg)))))
 
 (defun ert--make-print-advice (collector)
-  "Create around advice for print functions for `ert-collect-messsges'.
+  "Create around advice for print functions for `ert-collect-messages'.
 The created advice function will just call the original function
 unless the output is going to the echo area (when PRINTCHARFUN is
 t or PRINTCHARFUN is nil and `standard-output' is t).  If the
