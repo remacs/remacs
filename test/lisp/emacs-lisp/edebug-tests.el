@@ -17,7 +17,7 @@
 ;; General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see `http://www.gnu.org/licenses/'.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -310,7 +310,7 @@ Then clear edebug-tests' saved messages."
   (setq edebug-tests-messages ""))
 
 (defun edebug-tests-locate-def (def-name)
-  "Search for a definiton of DEF-NAME from the start of the current buffer.
+  "Search for a definition of DEF-NAME from the start of the current buffer.
 Place point at the end of DEF-NAME in the buffer."
   (goto-char (point-min))
   (re-search-forward (concat "def\\S-+ edebug-test-code-" def-name)))
@@ -584,7 +584,7 @@ test and possibly others should be updated."
 
 (ert-deftest edebug-tests-error-trying-to-set-breakpoint-in-uninstrumented-code
     ()
-  "Edebug refuses to set a breakpoint in uninsented code."
+  "Edebug refuses to set a breakpoint in uninstrumented code."
   (edebug-tests-with-normal-env
    (edebug-tests-setup-@ "fac" '(5) t)
    (let* ((debug-on-error nil)
