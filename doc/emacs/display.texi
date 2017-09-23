@@ -1745,7 +1745,7 @@ invisible parts of text), and lines which wrap to consume more than
 one screen line will be numbered that many times.  The displayed
 numbers are relative, as with @code{relative} value above.  This is
 handy in modes that fold text, such as Outline mode (@pxref{Outline
-Mode}), and need to move by exact number of screen lines.
+Mode}), and when you need to move by exact number of screen lines.
 
 @item anything else
 Any other non-@code{nil} value is treated as @code{t}.
