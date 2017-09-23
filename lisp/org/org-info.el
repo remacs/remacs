@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Commentary:
@@ -92,11 +92,11 @@
     "smtpmail" "speedbar" "srecode" "todo-mode" "tramp" "url" "vip" "viper"
     "widget" "wisent" "woman")
   "List of emacs documents available.
-Taken from <http://www.gnu.org/software/emacs/manual/html_mono/.>")
+Taken from <https://www.gnu.org/software/emacs/manual/html_mono/.>")
 
 (defconst org-info-other-documents
-  '(("libc" . "http://www.gnu.org/software/libc/manual/html_mono/libc.html")
-    ("make" . "http://www.gnu.org/software/make/manual/make.html"))
+  '(("libc" . "https://www.gnu.org/software/libc/manual/html_mono/libc.html")
+    ("make" . "https://www.gnu.org/software/make/manual/make.html"))
   "Alist of documents generated from Texinfo source.
 When converting info links to HTML, links to any one of these manuals are
 converted to use these URL.")
@@ -108,7 +108,7 @@ the official page for that document, e.g., use \"gnu.org\" for all Emacs
 related documents.  Otherwise, append \".html\" extension to FILENAME.
 See `org-info-emacs-documents' and `org-info-other-documents' for details."
   (cond ((member filename org-info-emacs-documents)
-	 (format "http://www.gnu.org/software/emacs/manual/html_mono/%s.html"
+	 (format "https://www.gnu.org/software/emacs/manual/html_mono/%s.html"
 		 filename))
 	((cdr (assoc filename org-info-other-documents)))
 	(t (concat filename ".html"))))

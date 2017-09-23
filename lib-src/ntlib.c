@@ -37,8 +37,10 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 
 char *sys_ctime (const time_t *);
 FILE *sys_fopen (const char *, const char *);
+int sys_mkdir (const char *, mode_t);
 int sys_chdir (const char *);
 int sys_rename (const char *, const char *);
+int sys_open (const char *, int, int);
 
 /* MinGW64 defines _TIMEZONE_DEFINED and defines 'struct timespec' in
    its system headers.  */
@@ -245,6 +247,12 @@ sys_chdir (const char * path)
   return _chdir (path);
 }
 
+int
+sys_mkdir (const char * path, mode_t mode)
+{
+  return _mkdir (path);
+}
+
 static FILETIME utc_base_ft;
 static long double utc_base;
 static int init = 0;
@@ -408,4 +416,10 @@ sys_rename (const char *from, const char *to)
 	retval = rename (from, to);
     }
   return retval;
+}
+
+int
+sys_open (const char * path, int oflag, int mode)
+{
+  return _open (path, oflag, mode);
 }

@@ -568,7 +568,8 @@ font names in X resource files.
 If you are running Emacs on the GNOME desktop, you can tell Emacs to
 use the default system font by setting the variable
 @code{font-use-system-font} to @code{t} (the default is @code{nil}).
-For this to work, Emacs must have been compiled with Gconf support.
+For this to work, Emacs must have been compiled with support for
+Gsettings (or the older Gconf).
 
 @item
 Use the command line option @samp{-fn} (or @samp{--font}).  @xref{Font
@@ -828,8 +829,8 @@ associate the speedbar with a different frame, dismiss it and call
   The speedbar can operate in various modes.  Its default mode is
 @dfn{File Display} mode, which shows the files in the current
 directory of the selected window of the attached frame, one file per
-line.  Clicking on a file name visits that file in the selected window
-of the attached frame, and clicking on a directory name shows that
+line.  Clicking on a non-directory visits that file in the selected window
+of the attached frame, and clicking on a directory shows that
 directory in the speedbar (@pxref{Mouse References}).  Each line also
 has a box, @samp{[+]} or @samp{<+>}, that you can click on to
 @dfn{expand} the contents of that item.  Expanding a directory adds

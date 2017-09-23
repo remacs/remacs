@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -49,33 +49,6 @@
   "Call FUNCTION if it exists.  Do not raise compiler warnings."
   `(when (functionp ,function)
      (with-no-warnings (funcall ,function ,@arguments))))
-
-;; We currently use "[" and "]" in the filename format for IPv6 hosts
-;; of GNU Emacs.  This means that Emacs wants to expand wildcards if
-;; `find-file-wildcards' is non-nil, and then barfs because no
-;; expansion could be found.  We detect this situation and do
-;; something really awful: we have `file-expand-wildcards' return the
-;; original filename if it can't expand anything.  Let's just hope
-;; that this doesn't break anything else.  It is not needed anymore
-;; since GNU Emacs 23.2.
-(unless (featurep 'files 'remote-wildcards)
-  (defadvice file-expand-wildcards
-      (around tramp-advice-file-expand-wildcards activate)
-    (let ((name (ad-get-arg 0)))
-      ;; If it's a Tramp file, look if wildcards need to be expanded
-      ;; at all.
-      (if (and
-	   (tramp-tramp-file-p name)
-	   (not (string-match "[[*?]" (file-remote-p name 'localname))))
-	  (setq ad-return-value (list name))
-	;; Otherwise, just run the original function.
-	ad-do-it)))
-  (add-hook
-   'tramp-unload-hook
-   (lambda ()
-     (ad-remove-advice
-      'file-expand-wildcards 'around 'tramp-advice-file-expand-wildcards)
-     (ad-activate 'file-expand-wildcards))))
 
 (defsubst tramp-compat-temporary-file-directory ()
   "Return name of directory for temporary files.

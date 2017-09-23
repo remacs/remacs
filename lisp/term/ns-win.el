@@ -22,7 +22,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -124,6 +124,8 @@ The properties returned may include `top', `left', `height', and `width'."
 (define-key global-map [?\s-g] 'isearch-repeat-forward)
 (define-key global-map [?\s-h] 'ns-do-hide-emacs)
 (define-key global-map [?\s-H] 'ns-do-hide-others)
+(define-key global-map [?\M-\s-h] 'ns-do-hide-others)
+(define-key key-translation-map [?\M-\s-\u02D9] [?\M-\s-h])
 (define-key global-map [?\s-j] 'exchange-point-and-mark)
 (define-key global-map [?\s-k] 'kill-current-buffer)
 (define-key global-map [?\s-l] 'goto-line)
@@ -774,7 +776,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 (defun ns-suspend-error ()
   ;; Don't allow suspending if any of the frames are NS frames.
   (if (memq 'ns (mapcar 'window-system (frame-list)))
-      (error "Cannot suspend Emacs while running under NS")))
+      (error "Cannot suspend Emacs while an NS GUI frame exists")))
 
 
 ;; Set some options to be as Nextstep-like as possible.

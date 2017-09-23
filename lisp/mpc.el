@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -1029,12 +1029,12 @@ If PLAYLIST is t or nil or missing, use the main playlist."
                      (let ((dir (file-name-directory (cdr (assq 'file info)))))
                        ;; (debug)
                        (push `(equal ',dir (file-name-directory (cdr (assq 'file info)))) pred)
-                       (if-let ((covers '(".folder.png" "cover.jpg" "folder.jpg"))
-                                (cover (cl-loop for file in (directory-files (mpc-file-local-copy dir))
-                                                if (member (downcase file) covers)
-                                                return (concat dir file)))
-                                (file (with-demoted-errors "MPC: %s"
-                                        (mpc-file-local-copy cover))))
+                       (if-let* ((covers '(".folder.png" "cover.jpg" "folder.jpg"))
+                                 (cover (cl-loop for file in (directory-files (mpc-file-local-copy dir))
+                                                 if (member (downcase file) covers)
+                                                 return (concat dir file)))
+                                 (file (with-demoted-errors "MPC: %s"
+                                         (mpc-file-local-copy cover))))
                            (let (image)
                              (if (null size) (setq image (create-image file))
                                (let ((tempfile (make-temp-file "mpc" nil ".jpg")))

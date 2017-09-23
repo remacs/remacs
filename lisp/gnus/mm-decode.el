@@ -17,7 +17,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -1363,7 +1363,7 @@ PROMPT overrides the default one used to ask user for a file name."
 		       (mm-handle-disposition handle) 'filename)
 		      (mail-content-type-get
 		       (mm-handle-type handle) 'name)))
-	file)
+	file directory)
     (when filename
       (setq filename (gnus-map-function mm-file-name-rewrite-functions
 					(file-name-nondirectory filename))))
@@ -1372,16 +1372,20 @@ PROMPT overrides the default one used to ask user for a file name."
 	  (setq file
 		(read-file-name
 		 (or prompt
-		     (format "Save MIME part to (default %s): "
-			     (or filename "")))
-		 (or mm-default-directory default-directory)
-		 (expand-file-name (or filename "")
-				   (or mm-default-directory default-directory))))
+		     (format "Save MIME part to%s: "
+			     (if filename
+				 (format " (default %s)" filename)
+			       "")))
+		 (or directory mm-default-directory default-directory)
+		 (expand-file-name
+		  (or filename "")
+		  (or directory mm-default-directory default-directory))))
 	  (cond ((or (not file) (equal file ""))
 		 (message "Please enter a file name")
 		 t)
 		((and (file-directory-p file)
 		      (not filename))
+		 (setq directory file)
 		 (message "Please enter a non-directory file name")
 		 t)
 		(t nil)))

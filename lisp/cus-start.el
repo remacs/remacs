@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -582,7 +582,7 @@ since it could result in memory overflow and make Emacs crash."
 		       (const :tag "Grow only" :value grow-only))
 	      "25.1")
 	     (display-raw-bytes-as-hex display boolean "26.1")
-             (display-line-numbers display
+             (display-line-numbers display-line-numbers
                                    (choice
                                     (const :tag "Off (nil)" :value nil)
                                     (const :tag "Absolute line numbers"
@@ -592,7 +592,7 @@ since it could result in memory overflow and make Emacs crash."
                                     (const :tag "Visually relative line numbers"
                                            :value visual))
                                    "26.1")
-             (display-line-numbers-width display
+             (display-line-numbers-width display-line-numbers
                                  (choice
                                   (const :tag "Dynamically computed"
                                          :value nil)
@@ -600,14 +600,14 @@ since it could result in memory overflow and make Emacs crash."
                                            :value 2
                                            :format "%v"))
                                  "26.1")
-             (display-line-numbers-current-absolute display
+             (display-line-numbers-current-absolute display-line-numbers
                                  (choice
                                   (const :tag "Display actual number of current line"
                                          :value t)
                                   (const :tag "Display zero as number of current line"
                                          :value nil))
                                  "26.1")
-             (display-line-numbers-widen display
+             (display-line-numbers-widen display-line-numbers
                                  (choice
                                   (const :tag "Disregard narrowing when calculating line numbers"
                                          :value t)

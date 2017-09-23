@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -375,7 +375,7 @@ format. See `ibuffer-update-saved-filters-format' and
     (let ((fixed (ibuffer-update-saved-filters-format ibuffer-saved-filters)))
       (prog1
           (setq ibuffer-saved-filters (cdr fixed))
-        (when-let (old-format-detected (car fixed))
+        (when-let* ((old-format-detected (car fixed)))
           (let ((warning-series t)
                 (updated-form
                  (with-output-to-string

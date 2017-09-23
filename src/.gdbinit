@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+# along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 # Force loading of symbols, enough to give us VALBITS etc.
 set $dummy = main + 8
@@ -1291,8 +1291,21 @@ if hasattr(gdb, 'printing'):
 
       # This implementation should work regardless of C compiler, and
       # it should not attempt to run any code in the inferior.
-      EMACS_INT_WIDTH = int(gdb.lookup_symbol("EMACS_INT_WIDTH")[0].value())
-      USE_LSB_TAG = int(gdb.lookup_symbol("USE_LSB_TAG")[0].value())
+
+      # If the macros EMACS_INT_WIDTH and USE_LSB_TAG are not in the
+      # symbol table, guess reasonable defaults.
+      sym = gdb.lookup_symbol ("EMACS_INT_WIDTH")[0]
+      if sym:
+        EMACS_INT_WIDTH = int (sym.value ())
+      else:
+        sym = gdb.lookup_symbol ("EMACS_INT")[0]
+        EMACS_INT_WIDTH = 8 * sym.type.sizeof
+      sym = gdb.lookup_symbol ("USE_LSB_TAG")[0]
+      if sym:
+        USE_LSB_TAG = int (sym.value ())
+      else:
+        USE_LSB_TAG = 1
+
       GCTYPEBITS = 3
       VALBITS = EMACS_INT_WIDTH - GCTYPEBITS
       Lisp_Int0 = 2

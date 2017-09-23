@@ -15,7 +15,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Code:
 
@@ -496,6 +496,20 @@ See Bug#21722."
       (should (equal (line-number-at-pos 3) 2))
       (should (equal (line-number-at-pos 5) 3))
       (should (equal (line-number-at-pos 7) 4)))))
+
+
+;;; Auto fill.
+
+(ert-deftest auto-fill-mode-no-break-before-length-of-fill-prefix ()
+  (with-temp-buffer
+    (setq-local fill-prefix "   ")
+    (set-fill-column 5)
+    ;; Shouldn't break after 'foo' (3 characters) when the next
+    ;; line is indented >= to that, that wouldn't result in shorter
+    ;; lines.
+    (insert "foo bar")
+    (do-auto-fill)
+    (should (string-equal (buffer-string) "foo bar"))))
 
 (provide 'simple-test)
 ;;; simple-test.el ends here

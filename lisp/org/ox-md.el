@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -395,8 +395,9 @@ a communication channel."
 		       (org-export-get-reference destination info))))))))
      ((org-export-inline-image-p link org-html-inline-image-rules)
       (let ((path (let ((raw-path (org-element-property :path link)))
-		    (if (not (file-name-absolute-p raw-path)) raw-path
-		      (expand-file-name raw-path))))
+		    (cond ((not (equal "file" type)) (concat type ":" raw-path))
+			  ((not (file-name-absolute-p raw-path)) raw-path)
+			  (t (expand-file-name raw-path)))))
 	    (caption (org-export-data
 		      (org-export-get-caption
 		       (org-export-get-parent-element link)) info)))
@@ -411,7 +412,7 @@ a communication channel."
      (t (let* ((raw-path (org-element-property :path link))
 	       (path
 		(cond
-		 ((member type '("http" "https" "ftp"))
+		 ((member type '("http" "https" "ftp" "mailto" "irc"))
 		  (concat type ":" raw-path))
 		 ((string= type "file")
 		  (org-export-file-uri (funcall link-org-files-as-md raw-path)))

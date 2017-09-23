@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -5258,6 +5258,11 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 		break;
 	    }
 	  SET_PT_BOTH (IT_CHARPOS (it), IT_BYTEPOS (it));
+	  /* Fix up the Y position to preserve, if it is inside the
+	     scroll margin at the window top.  */
+	  if (window_scroll_pixel_based_preserve_y >= 0
+	      && window_scroll_pixel_based_preserve_y < this_scroll_margin)
+	    window_scroll_pixel_based_preserve_y = this_scroll_margin;
 	}
     }
   else if (n < 0)

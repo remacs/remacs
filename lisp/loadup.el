@@ -20,7 +20,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -337,7 +337,7 @@
   ;; We reset load-path after dumping.
   ;; For a permanent change in load-path, use configure's
   ;; --enable-locallisppath option.
-  ;; See http://debbugs.gnu.org/16107 for more details.
+  ;; See https://debbugs.gnu.org/16107 for more details.
   (or (equal lp load-path)
       (message "Warning: Change in load-path due to site-load will be \
 lost after dumping")))

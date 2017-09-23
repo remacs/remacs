@@ -28,20 +28,20 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
 ;; ERC is a powerful, modular, and extensible IRC client for Emacs.
 
 ;; For more information, see the following URLs:
-;; * http://sv.gnu.org/projects/erc/
+;; * https://sv.gnu.org/projects/erc/
 ;; * http://www.emacswiki.org/cgi-bin/wiki/ERC
 
 
 
 ;; As of 2006-06-13, ERC development is now hosted on Savannah
-;; (http://sv.gnu.org/projects/erc).  I invite everyone who wants to
+;; (https://sv.gnu.org/projects/erc).  I invite everyone who wants to
 ;; hack on it to contact me <mwolson@gnu.org> in order to get write
 ;; access to the shared Arch archive.
 

@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -945,6 +945,7 @@ If EXTERNAL, browse the URL using `shr-external-browser'."
     (when (and (buffer-name buffer)
 	       (not (plist-get status :error)))
       (url-store-in-cache image-buffer)
+      (goto-char (point-min))
       (when (or (search-forward "\n\n" nil t)
 		(search-forward "\r\n\r\n" nil t))
 	(let ((data (shr-parse-image-data)))
@@ -998,7 +999,7 @@ element is the data blob and the second element is the content-type."
 		      (create-image data nil t :ascent 100
 				    :format content-type))
 		     ((eq content-type 'image/svg+xml)
-		      (create-image data 'imagemagick t :ascent 100))
+		      (create-image data 'svg t :ascent 100))
 		     ((eq size 'full)
 		      (ignore-errors
 			(shr-rescale-image data content-type
@@ -1362,7 +1363,7 @@ ones, in case fg and bg are nil."
       plist)))
 
 (defun shr-tag-base (dom)
-  (when-let (base (dom-attr dom 'href))
+  (when-let* ((base (dom-attr dom 'href)))
     (setq shr-base (shr-parse-base base)))
   (shr-generic dom))
 
@@ -1387,7 +1388,7 @@ ones, in case fg and bg are nil."
   (unless shr-inhibit-images
     (let ((start (point))
 	  url multimedia image)
-      (when-let (type (dom-attr dom 'type))
+      (when-let* ((type (dom-attr dom 'type)))
 	(when (string-match "\\`image/svg" type)
 	  (setq url (dom-attr dom 'data)
 		image t)))
@@ -2177,7 +2178,7 @@ flags that control whether to collect or render objects."
 	    (when (and (not (stringp column))
 		       (or (memq (dom-tag column) '(td th))
 			   (not column)))
-	      (when-let (span (dom-attr column 'rowspan))
+	      (when-let* ((span (dom-attr column 'rowspan)))
 		(aset rowspans i (+ (aref rowspans i)
 				    (1- (string-to-number span)))))
 	      ;; Sanity check for invalid column-spans.

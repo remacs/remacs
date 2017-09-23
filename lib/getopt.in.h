@@ -16,7 +16,7 @@
    General Public License for more details.
 
    You should have received a copy of the GNU General Public
-   License along with gnulib; if not, see <http://www.gnu.org/licenses/>.  */
+   License along with gnulib; if not, see <https://www.gnu.org/licenses/>.  */
 
 #ifndef _@GUARD_PREFIX@_GETOPT_H
 

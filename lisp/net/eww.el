@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -297,7 +297,8 @@ word(s) will be searched for via `eww-search-prefix'."
                (when (string= (url-filename (url-generic-parse-url url)) "")
                  (setq url (concat url "/"))))
            (setq url (concat eww-search-prefix
-                             (replace-regexp-in-string " " "+" url))))))
+                             (mapconcat
+                              #'url-hexify-string (split-string url) "+"))))))
   url)
 
 ;;;###autoload (defalias 'browse-web 'eww)
@@ -520,7 +521,7 @@ Currently this means either text/html or application/xhtml+xml."
 (defun eww-tag-meta (dom)
   (when (and (cl-equalp (dom-attr dom 'http-equiv) "refresh")
              (< eww-redirect-level 5))
-    (when-let (refresh (dom-attr dom 'content))
+    (when-let* ((refresh (dom-attr dom 'content)))
       (when (or (string-match "^\\([0-9]+\\) *;.*url=\"\\([^\"]+\\)\"" refresh)
                 (string-match "^\\([0-9]+\\) *;.*url='\\([^']+\\)'" refresh)
                 (string-match "^\\([0-9]+\\) *;.*url=\\([^ ]+\\)" refresh))
@@ -1109,13 +1110,13 @@ just re-display the HTML already fetched."
 See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 
 (defun eww-process-text-input (beg end replace-length)
-  (when-let (pos (and (< (1+ end) (point-max))
-		      (> (1- end) (point-min))
-		      (cond
-		       ((get-text-property (1+ end) 'eww-form)
-			(1+ end))
-		       ((get-text-property (1- end) 'eww-form)
-			(1- end)))))
+  (when-let* ((pos (and (< (1+ end) (point-max))
+		        (> (1- end) (point-min))
+		        (cond
+		         ((get-text-property (1+ end) 'eww-form)
+			  (1+ end))
+		         ((get-text-property (1- end) 'eww-form)
+			  (1- end))))))
     (let* ((form (get-text-property pos 'eww-form))
 	   (properties (text-properties-at pos))
            (buffer-undo-list t)
@@ -1798,8 +1799,8 @@ If CHARSET is nil then use UTF-8."
   (setq eww-data (list :title ""))
   ;; Don't let the history grow infinitely.  We store quite a lot of
   ;; data per page.
-  (when-let (tail (and eww-history-limit
-		       (nthcdr eww-history-limit eww-history)))
+  (when-let* ((tail (and eww-history-limit
+		         (nthcdr eww-history-limit eww-history))))
     (setcdr tail nil)))
 
 (defvar eww-current-buffer)

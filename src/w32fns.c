@@ -4413,8 +4413,8 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	  TranslateMessage (&windows_msg);
 	  goto dflt;
 	}
-
       /* Fall through */
+      FALLTHROUGH;
 
     case WM_SYSCHAR:
     case WM_CHAR:
@@ -4677,6 +4677,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       if (w32_pass_extra_mouse_buttons_to_system)
 	goto dflt;
       /* else fall through and process them.  */
+      FALLTHROUGH;
     case WM_MBUTTONDOWN:
     case WM_MBUTTONUP:
     handle_plain_button:
@@ -4782,6 +4783,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	  track_mouse_event_fn (&tme);
 	  track_mouse_window = hwnd;
 	}
+      FALLTHROUGH;
     case WM_HSCROLL:
     case WM_VSCROLL:
       if (w32_mouse_move_interval <= 0
@@ -4823,6 +4825,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       if (w32_pass_multimedia_buttons_to_system)
 	goto dflt;
       /* Otherwise, pass to lisp, the same way we do with mousehwheel.  */
+      FALLTHROUGH;
 
       /* FIXME!!!  This is never reached so what's the purpose?  If the
 	 non-zero return remark below is right we're doing it wrong all
@@ -5085,6 +5088,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_MOUSELEAVE:
       /* No longer tracking mouse.  */
       track_mouse_window = NULL;
+      FALLTHROUGH;
 
     case WM_ACTIVATEAPP:
     case WM_ACTIVATE:
@@ -5125,6 +5129,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	      menu_free_timer = 0;
 	    }
 	}
+      FALLTHROUGH;
     case WM_MOVE:
     case WM_SIZE:
     command:
@@ -5163,6 +5168,7 @@ w32_wnd_proc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
          fails (see bug#25875).  But if it fails, we want to find out
          about it, so let's leave 1000 for now.  */
       sleep (1000);
+      FALLTHROUGH;
 
     case WM_WINDOWPOSCHANGING:
       /* Don't restrict the sizing of any kind of frames.  If the window
@@ -7171,7 +7177,7 @@ compute_tip_xy (struct frame *f,
 		int width, int height, int *root_x, int *root_y)
 {
   Lisp_Object left, top, right, bottom;
-  int min_x = 0, min_y, max_x = 0, max_y;
+  int min_x = 0, min_y = 0, max_x = 0, max_y = 0;
 
   /* User-specified position?  */
   left = Fcdr (Fassq (Qleft, parms));
@@ -10399,6 +10405,7 @@ syms_of_w32fns (void)
   DEFSYM (Qlibxml2, "libxml2");
   DEFSYM (Qserif, "serif");
   DEFSYM (Qzlib, "zlib");
+  DEFSYM (Qlcms2, "lcms2");
 
   Fput (Qundefined_color, Qerror_conditions,
 	listn (CONSTYPE_PURE, 2, Qundefined_color, Qerror));
@@ -10708,6 +10715,11 @@ default value t means to add the width of one canonical character of the
 tip frame.  */);
   Vw32_tooltip_extra_pixels = Qt;
 
+  DEFVAR_BOOL ("w32-disable-abort-dialog",
+	       w32_disable_abort_dialog,
+	       doc: /* Non-nil means don't display the abort dialog when aborting.  */);
+  w32_disable_abort_dialog = 0;
+
 #if 0 /* TODO: Port to W32 */
   defsubr (&Sx_change_window_property);
   defsubr (&Sx_delete_window_property);
@@ -10902,6 +10914,9 @@ w32_backtrace (void **buffer, int limit)
 void
 emacs_abort (void)
 {
+  if (w32_disable_abort_dialog)
+    abort ();
+
   int button;
   button = MessageBox (NULL,
 		       "A fatal error has occurred!\n\n"

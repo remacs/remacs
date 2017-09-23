@@ -17,7 +17,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -84,17 +84,14 @@ Optional argument MODE specifies the `major-mode' to test."
             ,@(mapcan (lambda (s) `("-o" "-name" ,s)) pat)
             ")"))))))
 
-(defvar grepflags)
-(defvar greppattern)
+(defvar semantic-symref-grep-flags)
 
 (defvar semantic-symref-grep-expand-keywords
   (condition-case nil
       (let* ((kw (copy-alist grep-expand-keywords))
-	     (C (assoc "<C>" kw))
-	     (R (assoc "<R>" kw)))
-	(setcdr C 'grepflags)
-	(setcdr R 'greppattern)
-	kw)
+             (C (assoc "<C>" kw)))
+        (setcdr C 'semantic-symref-grep-flags)
+        kw)
     (error nil))
   "Grep expand keywords used when expanding templates for symref.")
 
@@ -102,15 +99,15 @@ Optional argument MODE specifies the `major-mode' to test."
   "Use the grep template expand feature to create a grep command.
 ROOTDIR is the root location to run the `find' from.
 FILEPATTERN is a string representing find flags for searching file patterns.
-GREPFLAGS are flags passed to grep, such as -n or -l.
-GREPPATTERN is the pattern used by grep."
+FLAGS are flags passed to Grep, such as -n or -l.
+PATTERN is the pattern used by Grep."
   ;; We have grep-compute-defaults.  Let's use it.
   (grep-compute-defaults)
-  (let* ((grepflags flags)
-         (greppattern pattern)
+  (let* ((semantic-symref-grep-flags flags)
          (grep-expand-keywords semantic-symref-grep-expand-keywords)
 	 (cmd (grep-expand-template
                (if (memq system-type '(windows-nt ms-dos))
+                   ;; FIXME: Is this still needed?
                    ;; grep-find uses '--color=always' on MS-Windows
                    ;; because it wants the colorized output, to show
                    ;; it to the user.  By contrast, here we don't show
@@ -119,13 +116,9 @@ GREPPATTERN is the pattern used by grep."
                    (replace-regexp-in-string "--color=always" ""
                                              grep-find-template t t)
                  grep-find-template)
-               greppattern
+               pattern
                filepattern
                rootdir)))
-    ;; http://debbugs.gnu.org/20719
-    (when (string-match "find \\(\\.\\)" cmd)
-      (setq cmd (replace-match rootdir t t cmd 1)))
-    ;;(message "New command: %s" cmd)
     cmd))
 
 (defcustom semantic-symref-grep-shell shell-file-name
@@ -137,7 +130,7 @@ This shell should support pipe redirect syntax."
 (cl-defmethod semantic-symref-perform-search ((tool semantic-symref-tool-grep))
   "Perform a search with Grep."
   ;; Grep doesn't support some types of searches.
-  (let ((st (oref tool :searchtype)))
+  (let ((st (oref tool searchtype)))
     (when (not (memq st '(symbol regexp)))
       (error "Symref impl GREP does not support searchtype of %s" st))
     )
@@ -147,20 +140,19 @@ This shell should support pipe redirect syntax."
 	 (filepatterns (semantic-symref-derive-find-filepatterns))
          (filepattern (mapconcat #'shell-quote-argument filepatterns " "))
 	 ;; Grep based flags.
-	 (grepflags (cond ((eq (oref tool :resulttype) 'file)
+	 (grepflags (cond ((eq (oref tool resulttype) 'file)
                            "-l ")
-                          ((eq (oref tool :searchtype) 'regexp)
+                          ((eq (oref tool searchtype) 'regexp)
                            "-nE ")
                           (t "-n ")))
-	 (greppat (shell-quote-argument
-                   (cond ((eq (oref tool :searchtype) 'regexp)
-                          (oref tool searchfor))
-                         (t
-                          ;; Can't use the word boundaries: Grep
-                          ;; doesn't always agrees with the language
-                          ;; syntax on those.
-                          (format "\\(^\\|\\W\\)%s\\(\\W\\|$\\)"
-                                  (oref tool searchfor))))))
+         (greppat (cond ((eq (oref tool searchtype) 'regexp)
+                         (oref tool searchfor))
+                        (t
+                         ;; Can't use the word boundaries: Grep
+                         ;; doesn't always agrees with the language
+                         ;; syntax on those.
+                         (format "\\(^\\|\\W\\)%s\\(\\W\\|$\\)"
+                                 (oref tool searchfor)))))
 	 ;; Misc
 	 (b (get-buffer-create "*Semantic SymRef*"))
 	 (ans nil)
@@ -189,26 +181,25 @@ This shell should support pipe redirect syntax."
     ;; Return the answer
     ans))
 
-(defconst semantic-symref-grep--line-re
-  "^\\(\\(?:[a-zA-Z]:\\)?[^:\n]+\\):\\([0-9]+\\):")
-
 (cl-defmethod semantic-symref-parse-tool-output-one-line ((tool semantic-symref-tool-grep))
   "Parse one line of grep output, and return it as a match list.
 Moves cursor to end of the match."
-  (cond ((eq (oref tool :resulttype) 'file)
-	 ;; Search for files
-	 (when (re-search-forward "^\\([^\n]+\\)$" nil t)
-	   (match-string 1)))
-        ((eq (oref tool :resulttype) 'line-and-text)
-         (when (re-search-forward semantic-symref-grep--line-re nil t)
-           (list (string-to-number (match-string 2))
-                 (match-string 1)
-                 (buffer-substring-no-properties (point) (line-end-position)))))
-	(t
-	 (when (re-search-forward semantic-symref-grep--line-re nil t)
-	   (cons (string-to-number (match-string 2))
-		 (match-string 1))
-	   ))))
+  (pcase-let
+      ((`(,grep-re ,file-group ,line-group . ,_) (car grep-regexp-alist)))
+    (cond ((eq (oref tool resulttype) 'file)
+	   ;; Search for files
+	   (when (re-search-forward "^\\([^\n]+\\)$" nil t)
+	     (match-string 1)))
+          ((eq (oref tool resulttype) 'line-and-text)
+           (when (re-search-forward grep-re nil t)
+             (list (string-to-number (match-string line-group))
+                   (match-string file-group)
+                   (buffer-substring-no-properties (point) (line-end-position)))))
+	  (t
+	   (when (re-search-forward grep-re nil t)
+	     (cons (string-to-number (match-string line-group))
+		   (match-string file-group))
+	     )))))
 
 (provide 'semantic/symref/grep)
 

@@ -17,7 +17,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -225,7 +225,7 @@ file named by `eshell-aliases-file'.")
                         (eshell-command-arguments ',eshell-last-arguments)
                         (eshell-prevent-alias-expansion
                          ',(cons command eshell-prevent-alias-expansion)))
-                    ,(eshell-parse-command (nth 1 alias))))))))
+                    ,(eshell-parse-command (nth 1 alias) args)))))))
 
 (defun eshell-alias-completions (name)
   "Find all possible completions for NAME.
