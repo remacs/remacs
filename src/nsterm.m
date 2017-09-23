@@ -6824,9 +6824,10 @@ not_in_argv (NSString *arg)
 
   if (wait_for_tool_bar)
     {
-      /* The toolbar height is always 0 in fullscreen, so don't wait
-         for it to become available. */
+      /* The toolbar height is always 0 in fullscreen and undecorated
+         frames, so don't wait for it to become available. */
       if (FRAME_TOOLBAR_HEIGHT (emacsframe) == 0
+          && FRAME_UNDECORATED (emacsframe) == false
           && ! [self isFullscreen])
         {
           NSTRACE_MSG ("Waiting for toolbar");
@@ -7207,9 +7208,9 @@ not_in_argv (NSString *arg)
 
   win = [[EmacsWindow alloc]
             initWithContentRect: r
-                      styleMask: (FRAME_UNDECORATED (f)
-                                  ? FRAME_UNDECORATED_FLAGS
-                                  : FRAME_DECORATED_FLAGS
+                      styleMask: ((FRAME_UNDECORATED (f)
+                                   ? FRAME_UNDECORATED_FLAGS
+                                   : FRAME_DECORATED_FLAGS)
 #ifdef NS_IMPL_COCOA
                                   | NSWindowStyleMaskResizable
                                   | NSWindowStyleMaskMiniaturizable
