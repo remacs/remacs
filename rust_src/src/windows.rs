@@ -25,6 +25,11 @@ impl LispWindowRef {
     pub fn contents(self) -> LispObject {
         LispObject::from_raw(self.contents)
     }
+
+    #[inline]
+    pub fn start_marker(self) -> LispObject {
+        LispObject::from_raw(self.start)
+    }
 }
 
 /// Return t if OBJECT is a window and nil otherwise.
@@ -97,4 +102,17 @@ pub fn window_valid_p(object: LispObject) -> LispObject {
         false,
         |win| win.contents().is_not_nil(),
     ))
+}
+
+/// Return position at which display currently starts in WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+/// This is updated by redisplay or by calling `set-window-start'.
+#[lisp_fn(min = "0")]
+pub fn window_start(window: LispObject) -> LispObject {
+    let win = if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    };
+    marker_position(win.as_live_window_or_error().start_marker())
 }
