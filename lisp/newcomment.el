@@ -524,7 +524,7 @@ Ensure that `comment-normalize-vars' has been called before you use this."
   ;; comment-search-backward is only used to find the comment-column (in
   ;; comment-set-column) and to find the comment-start string (via
   ;; comment-beginning) in indent-new-comment-line, it should be harmless.
-  (if (not (re-search-backward comment-start-skip limit t))
+  (if (not (re-search-backward comment-start-skip limit 'move))
       (unless noerror (error "No comment"))
     (beginning-of-line)
     (let* ((end (match-end 0))
