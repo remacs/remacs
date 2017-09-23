@@ -142,7 +142,7 @@ function `string-to-number'."
 (defmacro eshell-condition-case (tag form &rest handlers)
   "If `eshell-handle-errors' is non-nil, this is `condition-case'.
 Otherwise, evaluates FORM with no error handling."
-  (declare (indent 2))
+  (declare (indent 2) (debug (sexp form &rest form)))
   (if eshell-handle-errors
       `(condition-case-unless-debug ,tag
 	   ,form
