@@ -742,9 +742,8 @@ run.  ARGS are the arguments to `debugger'."
               ;; backtrace ready for printing is important for batch
               ;; use.
               ;;
-              ;; Grab the frames starting from `signal', frames below
-              ;; that are all from the debugger.
-              (backtrace (backtrace-frames 'signal))
+              ;; Grab the frames above the debugger.
+              (backtrace (cdr (backtrace-frames debugger)))
               (infos (reverse ert--infos)))
          (setf (ert--test-execution-info-result info)
                (cl-ecase type
