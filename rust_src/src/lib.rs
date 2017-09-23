@@ -197,6 +197,9 @@ pub use interactive::Fprefix_numeric_value;
 pub use editfns::Fbolp;
 pub use editfns::Feolp;
 
+// Used in bytecode.c
+pub use editfns::Ffollowing_char;
+
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
 }
@@ -379,6 +382,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Smark_marker);
         defsubr(&*editfns::Spoint_min);
         defsubr(&*editfns::Spoint_max);
+        defsubr(&*editfns::Sfollowing_char);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
         defsubr(&*cmds::Sforward_point)

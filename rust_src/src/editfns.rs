@@ -132,3 +132,17 @@ pub fn point_min() -> LispObject {
 pub fn point_max() -> LispObject {
     LispObject::from_natnum(ThreadState::current_buffer().zv() as EmacsInt)
 }
+
+
+// Return the character following point, as a number.
+// At the end of the buffer or accessible region, return 0.
+#[lisp_fn]
+pub fn following_char() -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+
+    if buffer_ref.pt >= buffer_ref.zv() {
+        LispObject::from_natnum(0 as EmacsInt)
+    } else {
+        LispObject::from_natnum(buffer_ref.fetch_byte(buffer_ref.pt_byte) as EmacsInt)
+    }
+}
