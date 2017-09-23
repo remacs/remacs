@@ -18,12 +18,26 @@ env:
   - CARGO_FLAGS="--features 'strict'"
 
 before_script:
-  # Install rustfmt 0.9.0 if it isn't already installed on
-  # Travis. This can be slow to install, so raise the Travis timeout.
-  - (which rustfmt && rustfmt --version && [[ "$(rustfmt --version)" =~ "0.9.0" ]]) || travis_wait cargo install --force rustfmt --vers 0.9.0
+  # These configure flags are only required on OS X.
+  # TODO: remove them.
+  - ./autogen.sh && ./configure --without-makeinfo --with-xpm=no --with-gif=no --with-gnutls=no
 
 script:
-  - ./.travis.sh
+  - make -j 3 && echo '==> Running tests' && make check
+
+# Run rustfmt first.
+stages:
+  - rustfmt
+  - test
+
+jobs:
+  include:
+    - stage: rustfmt
+      # Install rustfmt 0.9.0 if it isn't already installed on
+      # Travis. This can be slow to install, so raise the Travis timeout.
+      before_script: (which rustfmt && rustfmt --version && [[ "$(rustfmt --version)" =~ "0.9.0" ]]) || travis_wait cargo install --force rustfmt --vers 0.9.0
+      script: ./.travis-format.sh
+      os: linux
 
 notifications:
   fast_finish: true
