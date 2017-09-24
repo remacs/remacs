@@ -54,6 +54,8 @@ the character after point.
 * Registers::        How registers are implemented.  Accessing the text or
                        position stored in a register.
 * Transposition::    Swapping two portions of a buffer.
+* Replacing::        Replacing the text of one buffer with the text
+                       of another buffer.
 * Decompression::    Dealing with compressed data.
 * Base 64::          Conversion to or from base 64 encoding.
 * Checksum/Hash::    Computing cryptographic hashes.
@@ -4327,6 +4329,28 @@ two characters in their new position.  However, if @var{leave-markers}
 is non-@code{nil}, @code{transpose-regions} does not do this---it leaves
 all markers unrelocated.
 @end defun
+
+@node Replacing
+@section Replacing Buffer Text
+
+  You can use the following function to replace the text of one buffer
+with the text of another buffer:
+
+@deffn Command replace-buffer-contents source
+This function replaces the accessible portion of the current buffer
+with the accessible portion of the buffer @var{source}.  @var{source}
+may either be a buffer object or the name of a buffer.  When
+@code{replace-buffer-contents} succeeds, the text of the accessible
+portion of the current buffer will be equal to the text of the
+accessible portion of the @var{source} buffer.  This function attempts
+to keep point, markers, text properties, and overlays in the current
+buffer intact.  One potential case where this behavior is useful is
+external code formatting programs: they typically write the
+reformatted text into a temporary buffer or file, and using
+@code{delete-region} and @code{insert-buffer-substring} would destroy
+these properties.  However, the latter combination is typically
+faster.  @xref{Deletion}, and @ref{Insertion}.
+@end deffn
 
 @node Decompression
 @section Dealing With Compressed Data
