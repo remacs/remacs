@@ -406,6 +406,110 @@ supported.
 
 * Editing Changes in Emacs 26.1
 
++++
+** New variable 'column-number-indicator-zero-based'.
+Traditionally, in Column Number mode, the displayed column number
+counts from zero starting at the left margin of the window.  This
+behavior is now controlled by 'column-number-indicator-zero-based'.
+If you would prefer for the displayed column number to count from one,
+you may set this variable to nil.  (Behind the scenes, there is now a
+new mode line construct, '%C', which operates exactly as '%c' does
+except that it counts from one.)
+
++++
+** New single-line horizontal scrolling mode.
+The 'auto-hscroll-mode' variable can now have a new special value,
+'current-line', which causes only the line where the cursor is
+displayed to be horizontally scrolled when lines are truncated on
+display and point moves outside the left or right window margin.
+
++++
+** New mode line constructs '%o' and '%q', and user option
+'mode-line-percent-position'.  '%o' displays the "degree of travel" of
+the window through the buffer.  Unlike the default '%p', this
+percentage approaches 100% as the window approaches the end of the
+buffer.  '%q' displays the percentage offsets of both the start and
+the end of the window, e.g. "5-17%".  The new option
+'mode-line-percent-position' makes it easier to switch between '%p',
+'%P', and these new constructs.
+
++++
+** Two new user options 'list-matching-lines-jump-to-current-line' and
+'list-matching-lines-current-line-face' to show highlighted the current
+line in *Occur* buffer.
+
++++
+** The 'occur' command can now operate on the region.
+
++++
+** New bindings for 'query-replace-map'.
+'undo', undo the last replacement; bound to 'u'.
+'undo-all', undo all replacements; bound to 'U'.
+
+---
+** 'delete-trailing-whitespace' deletes whitespace after form feed.
+In modes where form feed was treated as a whitespace character,
+'delete-trailing-whitespace' would keep lines containing it unchanged.
+It now deletes whitespace after the last form feed thus behaving the
+same as in modes where the character is not whitespace.
+
+---
+** Emacs no longer prompts about editing a changed file when the file's
+content is unchanged.  Instead of only checking the modification time,
+Emacs now also checks the file's actual content before prompting the user.
+
+---
+** Various casing improvements.
+
+*** 'upcase', 'upcase-region' et al. convert title case characters
+(such as ǲ) into their upper case form (such as Ǳ).
+
+*** 'capitalize', 'upcase-initials' et al. make use of title-case forms
+of initial characters (correctly producing for example ǅungla instead
+of incorrect Ǆungla).
+
+*** Characters which turn into multiple ones when cased are correctly handled.
+For example, ﬁ ligature is converted to FI when upper cased.
+
+*** Greek small sigma is correctly handled when at the end of the word.
+Strings such as ΌΣΟΣ are now correctly converted to Όσος when
+capitalized instead of incorrect Όσοσ (compare lowercase sigma at the
+end of the word).
+
++++
+** Emacs can now auto-save buffers to visited files in a more robust
+manner via the new mode 'auto-save-visited-mode'.  Unlike
+'auto-save-visited-file-name', this mode uses the normal saving
+procedure and therefore obeys saving hooks.
+'auto-save-visited-file-name' is now obsolete.
+
++++
+** New behavior of 'mark-defun'.
+Prefix argument selects that many (or that many more) defuns.
+Negative prefix arg flips the direction of selection.  Also,
+'mark-defun' between defuns correctly selects N following defuns (or
+-N previous for negative arguments).  Finally, comments preceding the
+defun are selected unless they are separated from the defun by a blank
+line.
+
+** New command 'replace-buffer-contents'.
+This command replaces the contents of the accessible portion of the
+current buffer with the contents of the accessible portion of a
+different buffer while keeping point, mark, markers, and text
+properties as intact as possible.
+
++++
+** New commands 'apropos-local-variable' and 'apropos-local-value.
+These are buffer-local versions of 'apropos-variable' and
+'apropos-value', respectively.  They show buffer-local variables whose
+names and values, respectively, match a given pattern.
+
++++
+** More user control of reordering bidirectional text for display.
+The two new variables, 'bidi-paragraph-start-re' and
+'bidi-paragraph-separate-re', allow customization of what exactly are
+paragraphs, for the purposes of bidirectional display.
+
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
