@@ -18,9 +18,9 @@ env:
   - CARGO_FLAGS="--features 'strict'"
 
 before_script:
-  # These configure flags are only required on OS X.
-  # TODO: remove them.
-  - ./autogen.sh && ./configure --without-makeinfo --with-xpm=no --with-gif=no --with-gnutls=no
+  - if [ $TRAVIS_OS_NAME = linux ]; then ./autogen.sh && ./configure; fi
+  # TODO: add the necessary dependencies so we can use the same configure flags on OS X.
+  - if [ $TRAVIS_OS_NAME = osx ]; then ./autogen.sh && ./configure --without-makeinfo --with-xpm=no --with-gif=no --with-gnutls=no; fi
 
 script:
   - make -j 3 && echo '==> Running tests' && make check
