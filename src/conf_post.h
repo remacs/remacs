@@ -344,3 +344,12 @@ extern int emacs_setenv_TZ (char const *);
 #else
 # define UNINIT /* empty */
 #endif
+
+/* macOS 10.13 supports futimens, futimesat and utimensat, older
+   versions don't but can appear as though they do.  Disable them
+   entirely to avoid breaking cross-version builds on macOS.  */
+#ifdef DARWIN_OS
+# undef HAVE_FUTIMENS
+# undef HAVE_FUTIMESAT
+# undef HAVE_UTIMENSAT
+#endif
