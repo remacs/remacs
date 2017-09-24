@@ -6520,7 +6520,7 @@ not_in_argv (NSString *arg)
 
           /* FIXME: At the top or bottom of the buffer we should
            * ignore momentum-phase events.  */
-          if (! ns_touchpad_use_momentum
+          if (! ns_use_mwheel_momentum
               && [theEvent momentumPhase] != NSEventPhaseNone)
             return;
 
@@ -6529,8 +6529,8 @@ not_in_argv (NSString *arg)
               static int totalDeltaX, totalDeltaY;
               int lineHeight;
 
-              if (NUMBERP (ns_touchpad_scroll_line_height))
-                lineHeight = XINT (ns_touchpad_scroll_line_height);
+              if (NUMBERP (ns_mwheel_line_height))
+                lineHeight = XINT (ns_mwheel_line_height);
               else
                 {
                   /* FIXME: Use actual line height instead of the default.  */
@@ -6571,7 +6571,7 @@ not_in_argv (NSString *arg)
                   totalDeltaX = 0;
                 }
 
-              if (lines > 1 && ! ns_use_system_mwheel_acceleration)
+              if (lines > 1 && ! ns_use_mwheel_acceleration)
                 lines = 1;
             }
           else
@@ -6589,7 +6589,7 @@ not_in_argv (NSString *arg)
                   delta = [theEvent scrollingDeltaY];
                 }
 
-              lines = (ns_use_system_mwheel_acceleration)
+              lines = (ns_use_mwheel_acceleration)
                 ? ceil (fabs (delta)) : 1;
 
               scrollUp = delta > 0;
@@ -9284,22 +9284,22 @@ Note that this does not apply to images.
 This variable is ignored on Mac OS X < 10.7 and GNUstep.  */);
   ns_use_srgb_colorspace = YES;
 
-  DEFVAR_BOOL ("ns-use-system-mwheel-acceleration",
-               ns_use_system_mwheel_acceleration,
+  DEFVAR_BOOL ("ns-use-mwheel-acceleration",
+               ns_use_mwheel_acceleration,
      doc: /*Non-nil means use macOS's standard mouse wheel acceleration.
 This variable is ignored on macOS < 10.7 and GNUstep.  Default is t.  */);
-  ns_use_system_mwheel_acceleration = YES;
+  ns_use_mwheel_acceleration = YES;
 
-  DEFVAR_LISP ("ns-touchpad-scroll-line-height", ns_touchpad_scroll_line_height,
-               doc: /*The number of pixels touchpad scrolling considers a line.
+  DEFVAR_LISP ("ns-mwheel-line-height", ns_mwheel_line_height,
+               doc: /*The number of pixels touchpad scrolling considers one line.
 Nil or a non-number means use the default frame line height.
 This variable is ignored on macOS < 10.7 and GNUstep.  Default is nil.  */);
-  ns_touchpad_scroll_line_height = Qnil;
+  ns_mwheel_line_height = Qnil;
 
-  DEFVAR_BOOL ("ns-touchpad-use-momentum", ns_touchpad_use_momentum,
-               doc: /*Non-nil means touchpad scrolling uses momentum.
+  DEFVAR_BOOL ("ns-use-mwheel-momentum", ns_use_mwheel_momentum,
+               doc: /*Non-nil means mouse wheel scrolling uses momentum.
 This variable is ignored on macOS < 10.7 and GNUstep.  Default is t.  */);
-  ns_touchpad_use_momentum = YES;
+  ns_use_mwheel_momentum = YES;
 
   /* TODO: move to common code */
   DEFVAR_LISP ("x-toolkit-scroll-bars", Vx_toolkit_scroll_bars,

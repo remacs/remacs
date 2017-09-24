@@ -1890,9 +1890,9 @@ of frame decorations on macOS 10.9+.
 
 ---
 ** Mousewheel and trackpad scrolling on macOS 10.7+ now behaves more
-like the macOS default.  The new variables
-'ns-use-system-mwheel-acceleration', 'ns-touchpad-scroll-line-height'
-and 'ns-touchpad-use-momentum' can be used to customize the behavior.
+like the macOS default.  The new variables 'ns-mwheel-line-height',
+'ns-use-mwheel-acceleration' and 'ns-use-mwheel-momentum' can be used
+to customize the behavior.
 
 
 ----------------------------------------------------------------------
