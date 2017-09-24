@@ -368,8 +368,7 @@ With an argument of 0, unconditionally do @emph{not} make any backup file.
 This command saves some modified file-visiting buffers.  Normally it
 asks the user about each buffer.  But if @var{save-silently-p} is
 non-@code{nil}, it saves all the file-visiting buffers without
-querying the user.  Additionally, buffers whose name begins with a
-space (``internal'' buffers) will not be offered for save.
+querying the user.
 
 @vindex save-some-buffers-default-predicate
 The optional @var{pred} argument provides a predicate that controls
