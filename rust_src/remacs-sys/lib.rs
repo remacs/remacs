@@ -731,6 +731,71 @@ pub struct Lisp_Char_Table {
     pub extras: [Lisp_Object; 1],
 }
 
+#[repr(C)]
+pub struct Lisp_Process {
+    /// Name of subprocess terminal.
+    pub tty_name: Lisp_Object,
+
+    /// Name of this process.
+    pub name: Lisp_Object,
+
+    /// List of command arguments that this process was run with.
+    /// Is set to t for a stopped network process; nil otherwise.
+    pub command: Lisp_Object,
+
+    /// (funcall FILTER PROC STRING)  (if FILTER is non-nil)
+    /// to dispose of a bunch of chars from the process all at once.
+    pub filter: Lisp_Object,
+
+    /// (funcall SENTINEL PROCESS) when process state changes.
+    pub sentinel: Lisp_Object,
+
+    /// (funcall LOG SERVER CLIENT MESSAGE) when a server process
+    /// accepts a connection from a client.
+    pub log: Lisp_Object,
+
+    /// Buffer that output is going to.
+    pub buffer: Lisp_Object,
+
+    /// t if this is a real child process.  For a network or serial
+    /// connection, it is a plist based on the arguments to
+    /// make-network-process or make-serial-process.
+    pub childp: Lisp_Object,
+
+    /// Plist for programs to keep per-process state information, parameters, etc.
+    pub plist: Lisp_Object,
+
+    /// Marker set to end of last buffer-inserted output from this process.
+    pub mark: Lisp_Object,
+
+    /// Symbol indicating status of process.
+    /// This may be a symbol: run, open, closed, listen, or failed.
+    /// Or it may be a pair (connect . ADDRINFOS) where ADDRINFOS is
+    /// a list of remaining (PROTOCOL . ADDRINFO) pairs to try.
+    /// Or it may be (failed ERR) where ERR is an integer, string or symbol.
+    /// Or it may be a list, whose car is stop, exit or signal
+    /// and whose cdr is a pair (EXIT_CODE . COREDUMP_FLAG)
+    /// or (SIGNAL_NUMBER . COREDUMP_FLAG).
+    pub status: Lisp_Object,
+
+    /// Coding-system for decoding the input from this process.
+    pub decode_coding_system: Lisp_Object,
+
+    /// Working buffer for decoding.
+    pub decoding_buf: Lisp_Object,
+
+    /// Coding-system for encoding the output to this process.
+    pub encode_coding_system: Lisp_Object,
+
+    /// Working buffer for encoding.
+    pub encoding_buf: Lisp_Object,
+
+    /// Queue for storing waiting writes.
+    pub write_queue: Lisp_Object,
+
+    // TODO: this struct is incomplete.
+}
+
 /// Represents the global state of the editor.
 ///
 /// This has been factored out to a single struct in C Emacs to help
@@ -1311,6 +1376,7 @@ extern "C" {
     pub static Qbufferp: Lisp_Object;
     pub static Qwindowp: Lisp_Object;
     pub static Qwindow_live_p: Lisp_Object;
+    pub static Qprocessp: Lisp_Object;
     pub static Qoverlayp: Lisp_Object;
     pub static Qminus: Lisp_Object;
     pub static Qmark_inactive: Lisp_Object;

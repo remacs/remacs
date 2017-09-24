@@ -12,6 +12,7 @@ use multibyte::MAX_CHAR;
 use lists::{sort_list, inorder, nthcdr, car};
 use buffers::LispBufferRef;
 use windows::LispWindowRef;
+use process::LispProcessRef;
 use chartable::LispCharTableRef;
 use remacs_sys::{Qsequencep, EmacsInt, PSEUDOVECTOR_FLAG, PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS,
                  PSEUDOVECTOR_SIZE_MASK, PseudovecType, Lisp_Vectorlike, Lisp_Vector,
@@ -69,6 +70,15 @@ impl LispVectorlikeRef {
     #[inline]
     pub fn as_window(&self) -> Option<LispWindowRef> {
         if self.is_pseudovector(PseudovecType::PVEC_WINDOW) {
+            Some(unsafe { mem::transmute(*self) })
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_process(&self) -> Option<LispProcessRef> {
+        if self.is_pseudovector(PseudovecType::PVEC_PROCESS) {
             Some(unsafe { mem::transmute(*self) })
         } else {
             None

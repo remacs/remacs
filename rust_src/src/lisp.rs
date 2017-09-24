@@ -16,6 +16,7 @@ use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::{LispBufferRef, LispOverlayRef};
 use windows::LispWindowRef;
+use process::LispProcessRef;
 use marker::LispMarkerRef;
 use hashtable::LispHashTableRef;
 use fonts::LispFontRef;
@@ -29,7 +30,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
                  Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp, Qhash_table_p,
                  Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p,
-                 SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qprocessp, SYMBOL_NAME, PseudovecType, EqualKind};
 
 #[cfg(test)]
 use functions::ExternCMocks;
@@ -499,6 +500,16 @@ impl LispObject {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_PROCESS)
         })
+    }
+
+    pub fn as_process(self) -> Option<LispProcessRef> {
+        self.as_vectorlike().map_or(None, |v| v.as_process())
+    }
+
+    pub fn as_process_or_error(self) -> LispProcessRef {
+        self.as_process().unwrap_or_else(
+            || wrong_type!(Qprocessp, self),
+        )
     }
 
     pub fn is_window(self) -> bool {
