@@ -132,4 +132,3 @@ pub fn point_min() -> LispObject {
 pub fn point_max() -> LispObject {
     LispObject::from_natnum(ThreadState::current_buffer().zv() as EmacsInt)
 }
-
