@@ -31,6 +31,11 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Changes in Emacs 26.1
 
++++
+** Option 'buffer-offer-save' can be set to new value, 'always'.  When
+   set to 'always', the command `save-some-buffers' will always offer
+   this buffer for saving.
+
 ** Security vulnerability related to Enriched Text mode is removed.
 
 +++
@@ -58,8 +63,7 @@ init file:
 'save-buffer' process.  Previously, saving a buffer that was not
 visiting a file would always prompt for a file name.  Now it only does
 so if 'write-contents-functions' is nil (or all its functions return
-nil).  A non-nil buffer-local value for this variable is sufficient
-for 'save-some-buffers' to consider the buffer for saving.
+nil).
 
 ---
 ** New variable 'executable-prefix-env' for inserting magic signatures.
