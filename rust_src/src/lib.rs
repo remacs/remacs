@@ -200,6 +200,9 @@ pub use editfns::Feolp;
 // Used in minibuffer.c
 pub use windows::Fwindow_minibuffer_p;
 
+// Used in term.c, dired.c
+pub use objects::Fidentity;
+
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
 }
@@ -266,6 +269,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*objects::Seql);
         defsubr(&*objects::Sequal);
         defsubr(&*objects::Sequal_including_properties);
+        defsubr(&*objects::Sidentity);
         defsubr(&*symbols::Ssymbolp);
         defsubr(&*symbols::Ssymbol_name);
         defsubr(&*symbols::Sfboundp);
@@ -385,6 +389,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Spoint_max);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
-        defsubr(&*cmds::Sforward_point)
+        defsubr(&*cmds::Sforward_point);
     }
 }
