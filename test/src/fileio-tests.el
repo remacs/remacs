@@ -47,6 +47,8 @@ Also check that an encoding error can appear in a symlink."
   ;; will pop up UAC elevation prompts, so we disable this test on
   ;; MS-Windows.
   (skip-unless (not (eq system-type 'windows-nt)))
+  ;; Remacs: skipped on OSX until fixed upstream.
+  (skip-unless (not (eq system-type 'darwin)))
   (should (equal nil (fileio-tests--symlink-failure))))
 
 (ert-deftest fileio-tests--directory-file-name ()

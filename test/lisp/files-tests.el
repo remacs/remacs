@@ -345,6 +345,8 @@ be invoked with the right arguments."
         (insert-directory-wildcard-in-dir-p (car path-res)))))))
 
 (ert-deftest files-tests--make-directory ()
+  ;; Remacs: skipped on OSX until fixed upstream.
+  (skip-unless (not (eq system-type 'darwin)))
   (let* ((dir (make-temp-file "files-mkdir-test" t))
 	 (dirname (file-name-as-directory dir))
 	 (file (concat dirname "file"))

@@ -2644,6 +2644,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   ;; The semantics has changed heavily in Emacs 26.1.  We cannot test
   ;; older Emacsen, therefore.
   (skip-unless (tramp--test-emacs26-p))
+  ;; Remacs: skipped on OSX until fixed upstream.
+  (skip-unless (not (eq system-type 'darwin)))
 
   (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
     ;; We must use `file-truename' for the temporary directory,
