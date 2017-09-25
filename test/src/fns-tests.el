@@ -15,7 +15,7 @@
 ;; General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see `http://www.gnu.org/licenses/'.
+;; along with this program.  If not, see `https://www.gnu.org/licenses/'.
 
 ;;; Commentary:
 
@@ -546,5 +546,33 @@
 (ert-deftest test-cycle-nconc ()
   (should-error (nconc (cyc1 1) 'tail) :type 'circular-list)
   (should-error (nconc (cyc2 1 2) 'tail) :type 'circular-list))
+
+(ert-deftest plist-get/odd-number-of-elements ()
+  "Test that ‘plist-get’ doesn’t signal an error on degenerate plists."
+  (should-not (plist-get '(:foo 1 :bar) :bar)))
+
+(ert-deftest lax-plist-get/odd-number-of-elements ()
+  "Check for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27726."
+  (should (equal (should-error (lax-plist-get '(:foo 1 :bar) :bar)
+                               :type 'wrong-type-argument)
+                 '(wrong-type-argument plistp (:foo 1 :bar)))))
+
+(ert-deftest plist-put/odd-number-of-elements ()
+  "Check for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27726."
+  (should (equal (should-error (plist-put '(:foo 1 :bar) :zot 2)
+                               :type 'wrong-type-argument)
+                 '(wrong-type-argument plistp (:foo 1 :bar)))))
+
+(ert-deftest lax-plist-put/odd-number-of-elements ()
+  "Check for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27726."
+  (should (equal (should-error (lax-plist-put '(:foo 1 :bar) :zot 2)
+                               :type 'wrong-type-argument)
+                 '(wrong-type-argument plistp (:foo 1 :bar)))))
+
+(ert-deftest plist-member/improper-list ()
+  "Check for https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27726."
+  (should (equal (should-error (plist-member '(:foo 1 . :bar) :qux)
+                               :type 'wrong-type-argument)
+                 '(wrong-type-argument plistp (:foo 1 . :bar)))))
 
 (provide 'fns-tests)

@@ -28,7 +28,7 @@ Please send all bug fixes and enhancements to
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -58,7 +58,7 @@ Please send all bug fixes and enhancements to
 ;; On GNU or Unix system, `printing' depends on gs and gv utilities.
 ;; On NT system, `printing' depends on gstools (gswin32.exe and gsview32.exe).
 ;; To obtain ghostscript, ghostview and GSview see the URL
-;; `http://www.gnu.org/software/ghostscript/ghostscript.html'.
+;; `https://www.gnu.org/software/ghostscript/ghostscript.html'.
 ;;
 ;; `printing' depends on ps-print package to generate PostScript files, to
 ;; spool and to despool PostScript buffer.  So, `printing' provides an
@@ -958,7 +958,7 @@ Please send all bug fixes and enhancements to
 ;;
 ;; * For GNU or Unix system:
 ;;
-;;    gs, gv         `http://www.gnu.org/software/ghostscript/ghostscript.html'
+;;    gs, gv         `https://www.gnu.org/software/ghostscript/ghostscript.html'
 ;;    enscript       `http://people.ssh.fi/mtr/genscript/'
 ;;    psnup          `http://www.knackered.org/angus/psutils/'
 ;;    mpage          `http://www.mesa.nl/pub/mpage/'
@@ -966,7 +966,7 @@ Please send all bug fixes and enhancements to
 ;; * For Windows system:
 ;;
 ;;    gswin32, gsview32
-;;                   `http://www.gnu.org/software/ghostscript/ghostscript.html'
+;;                   `https://www.gnu.org/software/ghostscript/ghostscript.html'
 ;;    gsprint        `http://www.cs.wisc.edu/~ghost/gsview/gsprint.htm'.
 ;;    enscript       `http://people.ssh.fi/mtr/genscript/'
 ;;    psnup          `http://gnuwin32.sourceforge.net/packages/psutils.htm'
@@ -2249,7 +2249,7 @@ See also `pr-path-alist'.
 Useful links:
 
 * GNU gv manual
-  `http://www.gnu.org/software/gv/manual/gv.html'
+  `https://www.gnu.org/software/gv/manual/gv.html'
 
 * GSview Help
   `http://www.cs.wisc.edu/~ghost/gsview/gsviewen.htm'

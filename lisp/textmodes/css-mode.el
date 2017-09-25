@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -835,7 +835,7 @@ cannot be completed sensibly: `custom-ident',
 (defface css-selector '((t :inherit font-lock-function-name-face))
   "Face to use for selectors."
   :group 'css)
-(defface css-property '((t :inherit font-lock-variable-name-face))
+(defface css-property '((t :inherit font-lock-keyword-face))
   "Face to use for properties."
   :group 'css)
 (defface css-proprietary-property '((t :inherit (css-property italic)))
@@ -1045,7 +1045,7 @@ This function simply drops any transparency."
   "Check whether STR, seen at point, is CSS named color.
 Returns STR if it is a valid color.  Special care is taken
 to exclude some SCSS constructs."
-  (when-let ((color (assoc str css--color-map)))
+  (when-let* ((color (assoc str css--color-map)))
     (save-excursion
       (goto-char start-point)
       (forward-comment (- (point)))
@@ -1154,7 +1154,7 @@ for determining whether point is within a selector."
 
 (defun css--colon-inside-funcall ()
   "Return t if point is inside a function call."
-  (when-let (opening-paren-pos (nth 1 (syntax-ppss)))
+  (when-let* ((opening-paren-pos (nth 1 (syntax-ppss))))
     (save-excursion
       (goto-char opening-paren-pos)
       (eq (char-after) ?\())))
@@ -1205,9 +1205,12 @@ for determining whether point is within a selector."
     (`(:before . "{")
      (when (or (smie-rule-hanging-p) (smie-rule-bolp))
        (smie-backward-sexp ";")
-       (smie-indent-virtual)))
-    (`(:before . ,(or "{" "("))
-     (if (smie-rule-hanging-p) (smie-rule-parent 0)))
+       (unless (eq (char-after) ?\{)
+         (smie-indent-virtual))))
+    (`(:before . "(")
+     (cond
+      ((smie-rule-hanging-p) (smie-rule-parent 0))
+      ((not (smie-rule-bolp)) 0)))
     (`(:after . ":-property")
      (when (smie-rule-hanging-p)
        css-indent-offset))))

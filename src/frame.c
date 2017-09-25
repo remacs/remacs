@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -815,6 +815,10 @@ make_frame (bool mini_p)
   f->z_group = z_group_none;
 #if ! defined (USE_GTK) && ! defined (HAVE_NS)
   f->last_tool_bar_item = -1;
+#endif
+#ifdef NS_IMPL_COCOA
+  f->ns_appearance = ns_appearance_aqua;
+  f->ns_transparent_titlebar = false;
 #endif
 #endif
 
@@ -1867,7 +1871,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
       /* Look for another visible frame on the same terminal.
 	 Do not call next_frame here because it may loop forever.
-	 See http://debbugs.gnu.org/cgi/bugreport.cgi?bug=15025.  */
+	 See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15025.  */
       FOR_EACH_FRAME (tail, frame1)
 	if (!EQ (frame, frame1)
 	    && (FRAME_TERMINAL (XFRAME (frame))
@@ -1980,13 +1984,17 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
     /* If needed, delete the terminal that this frame was on.
        (This must be done after the frame is killed.)  */
     terminal->reference_count--;
-#ifdef USE_GTK
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
     /* FIXME: Deleting the terminal crashes emacs because of a GTK
        bug.
        http://lists.gnu.org/archive/html/emacs-devel/2011-10/msg00363.html */
+
+    /* Since a similar behavior was observed on the Lucid and Motif
+       builds (see Bug#5802, Bug#21509, Bug#23499, Bug#27816), we now
+       don't delete the terminal for these builds either.  */
     if (terminal->reference_count == 0 && terminal->type == output_x_window)
       terminal->reference_count = 1;
-#endif /* USE_GTK */
+#endif /* USE_X_TOOLKIT || USE_GTK */
     if (terminal->reference_count == 0)
       {
 	Lisp_Object tmp;
@@ -3455,6 +3463,10 @@ static const struct frame_parm_table frame_parms[] =
   {"z-group",			SYMBOL_INDEX (Qz_group)},
   {"override-redirect",		SYMBOL_INDEX (Qoverride_redirect)},
   {"no-special-glyphs",		SYMBOL_INDEX (Qno_special_glyphs)},
+#ifdef NS_IMPL_COCOA
+  {"ns-appearance",		SYMBOL_INDEX (Qns_appearance)},
+  {"ns-transparent-titlebar",	SYMBOL_INDEX (Qns_transparent_titlebar)},
+#endif
 };
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -5580,6 +5592,10 @@ syms_of_frame (void)
 
 #ifdef HAVE_NS
   DEFSYM (Qns_parse_geometry, "ns-parse-geometry");
+#endif
+#ifdef NS_IMPL_COCOA
+  DEFSYM (Qns_appearance, "ns-appearance");
+  DEFSYM (Qns_transparent_titlebar, "ns-transparent-titlebar");
 #endif
 
   DEFSYM (Qalpha, "alpha");

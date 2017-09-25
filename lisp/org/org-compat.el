@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Commentary:
@@ -59,6 +59,12 @@
   (defalias 'xref-find-definitions 'find-tag)
   (defalias 'format-message 'format)
   (defalias 'gui-get-selection 'x-get-selection))
+
+(defun org-decode-time (&optional time zone)
+  "Backward-compatible function for `decode-time'."
+  (if (< emacs-major-version 25)
+      (decode-time time)
+    (decode-time time zone)))
 
 
 ;;; Obsolete aliases (remove them after the next major release).
@@ -292,6 +298,12 @@ See `org-link-parameters' for documentation on the other parameters."
 
 (define-obsolete-function-alias 'org-babel-number-p
   'org-babel--string-to-number "Org 9.0")
+
+;;; The function was made obsolete by commit 65399674d5 of 2013-02-22.
+;;; This make-obsolete call was added 2016-09-01.
+(make-obsolete 'org-capture-import-remember-templates
+	       "use the `org-capture-templates' variable instead."
+	       "Org 9.0")
 
 
 

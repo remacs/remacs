@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Commentary:
@@ -1418,11 +1418,13 @@ for a todo state to switch to, overriding the existing value
 
 (defun org-clock-get-sum-start ()
   "Return the time from which clock times should be counted.
-This is for the currently running clock as it is displayed
-in the mode line.  This function looks at the properties
-LAST_REPEAT and in particular CLOCK_MODELINE_TOTAL and the
-corresponding variable `org-clock-mode-line-total' and then
-decides which time to use."
+
+This is for the currently running clock as it is displayed in the
+mode line.  This function looks at the properties LAST_REPEAT and
+in particular CLOCK_MODELINE_TOTAL and the corresponding variable
+`org-clock-mode-line-total' and then decides which time to use.
+
+The time is always returned as UTC."
   (let ((cmt (or (org-entry-get nil "CLOCK_MODELINE_TOTAL")
 		 (symbol-name org-clock-mode-line-total)))
 	(lr (org-entry-get nil "LAST_REPEAT")))
@@ -1432,13 +1434,13 @@ decides which time to use."
       (current-time))
      ((equal cmt "today")
       (setq org--msg-extra "showing today's task time.")
-      (let* ((dt (decode-time))
+      (let* ((dt (org-decode-time nil t))
 	     (hour (nth 2 dt))
 	     (day (nth 3 dt)))
 	(if (< hour org-extend-today-until) (setf (nth 3 dt) (1- day)))
 	(setf (nth 2 dt) org-extend-today-until)
-	(setq dt (append (list 0 0) (nthcdr 2 dt)))
-	(apply 'encode-time dt)))
+	(setq dt (append (list 0 0) (nthcdr 2 dt) '(t)))
+	(apply #'encode-time dt)))
      ((or (equal cmt "all")
 	  (and (or (not cmt) (equal cmt "auto"))
 	       (not lr)))
@@ -1448,9 +1450,7 @@ decides which time to use."
 	  (and (or (not cmt) (equal cmt "auto"))
 	       lr))
       (setq org--msg-extra "showing task time since last repeat.")
-      (if (not lr)
-	  nil
-	(org-time-string-to-time lr)))
+      (and lr (org-time-string-to-time lr t)))
      (t nil))))
 
 (defun org-clock-find-position (find-unclosed)
@@ -1803,14 +1803,15 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
 		      "[ \t]*\\(?:\\(\\[.*?\\]\\)-+\\(\\[.*?\\]\\)\\|=>[ \t]+\\([0-9]+\\):\\([0-9]+\\)\\)"))
 	  (lmax 30)
 	  (ltimes (make-vector lmax 0))
-	  (t1 0)
 	  (level 0)
-	  ts te dt
+	  (tstart (cond ((stringp tstart) (org-time-string-to-seconds tstart t))
+			((consp tstart) (float-time tstart))
+			(t tstart)))
+	  (tend (cond ((stringp tend) (org-time-string-to-seconds tend t))
+		      ((consp tend) (float-time tend))
+		      (t tend)))
+	  (t1 0)
 	  time)
-     (if (stringp tstart) (setq tstart (org-time-string-to-seconds tstart)))
-     (if (stringp tend) (setq tend (org-time-string-to-seconds tend)))
-     (if (consp tstart) (setq tstart (float-time tstart)))
-     (if (consp tend) (setq tend (float-time tend)))
      (remove-text-properties (point-min) (point-max)
 			     `(,(or propname :org-clock-minutes) t
 			       :org-clock-force-headline-inclusion t))
@@ -1819,26 +1820,27 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
        (while (re-search-backward re nil t)
 	 (cond
 	  ((match-end 2)
-	   ;; Two time stamps
-	   (setq ts (match-string 2)
-		 te (match-string 3)
-		 ts (float-time
-		     (apply #'encode-time (org-parse-time-string ts nil t)))
-		 te (float-time
-		     (apply #'encode-time (org-parse-time-string te nil t)))
-		 ts (if tstart (max ts tstart) ts)
-		 te (if tend (min te tend) te)
-		 dt (- te ts)
-		 t1 (if (> dt 0) (+ t1 (floor (/ dt 60))) t1)))
+	   ;; Two time stamps.
+	   (let* ((ts (float-time
+		       (apply #'encode-time
+			      (save-match-data
+				(org-parse-time-string
+				 (match-string 2) nil t)))))
+		  (te (float-time
+		       (apply #'encode-time
+			      (org-parse-time-string (match-string 3) nil t))))
+		  (dt (- (if tend (min te tend) te)
+			 (if tstart (max ts tstart) ts))))
+	     (when (> dt 0) (cl-incf t1 (floor (/ dt 60))))))
 	  ((match-end 4)
-	   ;; A naked time
+	   ;; A naked time.
 	   (setq t1 (+ t1 (string-to-number (match-string 5))
 		       (* 60 (string-to-number (match-string 4))))))
-	  (t ;; A headline
-	   ;; Add the currently clocking item time to the total
+	  (t	 ;A headline
+	   ;; Add the currently clocking item time to the total.
 	   (when (and org-clock-report-include-clocking-task
-		      (equal (org-clocking-buffer) (current-buffer))
-		      (equal (marker-position org-clock-hd-marker) (point))
+		      (eq (org-clocking-buffer) (current-buffer))
+		      (eq (marker-position org-clock-hd-marker) (point))
 		      tstart
 		      tend
 		      (>= (float-time org-clock-start-time) tstart)
@@ -2701,16 +2703,14 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
       (pcase-let ((`(,month ,day ,year) (calendar-gregorian-from-absolute ts)))
 	(setq ts (float-time (encode-time 0 0 0 day month year)))))
      (ts
-      (setq ts (float-time
-		(apply #'encode-time (org-parse-time-string ts nil t))))))
+      (setq ts (float-time (apply #'encode-time (org-parse-time-string ts))))))
     (cond
      ((numberp te)
       ;; Likewise for te.
       (pcase-let ((`(,month ,day ,year) (calendar-gregorian-from-absolute te)))
 	(setq te (float-time (encode-time 0 0 0 day month year)))))
      (te
-      (setq te (float-time
-		(apply #'encode-time (org-parse-time-string te nil t))))))
+      (setq te (float-time (apply #'encode-time (org-parse-time-string te))))))
     (setq tsb
 	  (if (eq step0 'week)
 	      (- ts (* 86400 (- (nth 6 (decode-time (seconds-to-time ts))) ws)))

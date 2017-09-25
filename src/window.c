@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -1495,15 +1495,6 @@ WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
   return Fmarker_position (decode_live_window (window)->old_pointm);
-}
-
-DEFUN ("window-start", Fwindow_start, Swindow_start, 0, 1, 0,
-       doc: /* Return position at which display currently starts in WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-This is updated by redisplay or by calling `set-window-start'.  */)
-  (Lisp_Object window)
-{
-  return Fmarker_position (decode_live_window (window)->start);
 }
 
 /* This is text temporarily removed from the doc string below.
@@ -5258,6 +5249,11 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 		break;
 	    }
 	  SET_PT_BOTH (IT_CHARPOS (it), IT_BYTEPOS (it));
+	  /* Fix up the Y position to preserve, if it is inside the
+	     scroll margin at the window top.  */
+	  if (window_scroll_pixel_based_preserve_y >= 0
+	      && window_scroll_pixel_based_preserve_y < this_scroll_margin)
+	    window_scroll_pixel_based_preserve_y = this_scroll_margin;
 	}
     }
   else if (n < 0)
@@ -7710,7 +7706,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
   defsubr (&Swindow_old_point);
-  defsubr (&Swindow_start);
   defsubr (&Swindow_end);
   defsubr (&Sset_window_point);
   defsubr (&Sset_window_start);

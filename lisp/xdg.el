@@ -19,7 +19,7 @@
 ;; General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs. If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs. If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -29,8 +29,12 @@
 ;; - XDG Base Directory Specification
 ;; - Thumbnail Managing Standard
 ;; - xdg-user-dirs configuration
+;; - Desktop Entry Specification
 
 ;;; Code:
+
+(eval-when-compile
+  (require 'subr-x))
 
 
 ;; XDG Base Directory Specification
@@ -128,23 +132,87 @@ This should be called at the beginning of a line."
 (defun xdg--user-dirs-parse-file (filename)
   "Return alist of xdg-user-dirs from FILENAME."
   (let (elt res)
-    (with-temp-buffer
-      (insert-file-contents filename)
-      (goto-char (point-min))
-      (while (not (eobp))
-        (setq elt (xdg--user-dirs-parse-line))
-        (when (consp elt) (push elt res))
-        (forward-line)))
+    (when (file-readable-p filename)
+      (with-temp-buffer
+        (insert-file-contents filename)
+        (goto-char (point-min))
+        (while (not (eobp))
+          (setq elt (xdg--user-dirs-parse-line))
+          (when (consp elt) (push elt res))
+          (forward-line))))
     res))
 
 (defun xdg-user-dir (name)
-  "Return the path of user directory referred to by NAME."
+  "Return the directory referred to by NAME."
   (when (null xdg-user-dirs)
     (setq xdg-user-dirs
           (xdg--user-dirs-parse-file
            (expand-file-name "user-dirs.dirs" (xdg-config-home)))))
   (let ((dir (cdr (assoc name xdg-user-dirs))))
     (when dir (expand-file-name dir))))
+
+
+;; Desktop Entry Specification
+;; https://specifications.freedesktop.org/desktop-entry-spec/desktop-entry-spec-1.1.html
+
+(defconst xdg-desktop-group-regexp
+  (rx "[" (group-n 1 (+? (in " -Z\\^-~"))) "]")
+  "Regexp matching desktop file group header names.")
+
+;; TODO Localized strings left out intentionally, as Emacs has no
+;; notion of l10n/i18n
+(defconst xdg-desktop-entry-regexp
+  (rx (group-n 1 (+ (in "A-Za-z0-9-")))
+      ;; (? "[" (group-n 3 (+ nonl)) "]")
+      (* blank) "=" (* blank)
+      (group-n 2 (* nonl)))
+  "Regexp matching desktop file entry key-value pairs.")
+
+(defun xdg-desktop-read-group ()
+  "Return hash table of group of desktop entries in the current buffer."
+  (let ((res (make-hash-table :test #'equal)))
+    (while (not (or (eobp) (looking-at xdg-desktop-group-regexp)))
+      (skip-chars-forward "[:blank:]")
+      (cond
+       ((eolp))
+       ((= (following-char) ?#))
+       ((looking-at xdg-desktop-entry-regexp)
+        (puthash (match-string 1) (match-string 2) res))
+       ;; Filter localized strings
+       ((looking-at (rx (group-n 1 (+ (in alnum "-"))) (* blank) "[")))
+       (t (error "Malformed line: %s"
+                 (buffer-substring (point) (point-at-eol)))))
+      (forward-line))
+    res))
+
+(defun xdg-desktop-read-file (filename &optional group)
+  "Return group contents of desktop file FILENAME as a hash table.
+Optional argument GROUP defaults to the string \"Desktop Entry\"."
+  (with-temp-buffer
+    (insert-file-contents-literally filename)
+    (goto-char (point-min))
+    (while (and (skip-chars-forward "[:blank:]" (line-end-position))
+                (or (eolp) (= (following-char) ?#)))
+      (forward-line))
+    (unless (looking-at xdg-desktop-group-regexp)
+      (error "Expected group name!  Instead saw: %s"
+             (buffer-substring (point) (point-at-eol))))
+    (unless (equal (match-string 1) "Desktop Entry")
+      (error "Wrong first group: %s" (match-string 1)))
+    (when group
+      (while (and (re-search-forward xdg-desktop-group-regexp nil t)
+                  (not (equal (match-string 1) group)))))
+    (forward-line)
+    (xdg-desktop-read-group)))
+
+(defun xdg-desktop-strings (value)
+  "Partition VALUE into elements delimited by unescaped semicolons."
+  (let (res)
+    (setq value (string-trim-left value))
+    (dolist (x (split-string (replace-regexp-in-string "\\\\;" "\0" value) ";"))
+      (push (replace-regexp-in-string "\0" ";" x) res))
+    (when (null (string-match-p "[^[:blank:]]" (car res))) (pop res))
+    (nreverse res)))
 
 (provide 'xdg)
 

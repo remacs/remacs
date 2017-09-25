@@ -112,11 +112,11 @@ technically obsolete despite its widespread vernacular usage.)
 meaning.  For example, the URI
 
 @example
-http://www.gnu.org/software/emacs/
+https://www.gnu.org/software/emacs/
 @end example
 
 @noindent
-specifies the scheme component @samp{http}, the hostname component
+specifies the scheme component @samp{https}, the hostname component
 @samp{www.gnu.org}, and the path component @samp{/software/emacs/}.
 
 @cindex parsed URIs

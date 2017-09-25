@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -29,7 +29,7 @@
 (require 'vc-dir)
 
 (ert-deftest vc-bzr-test-bug9726 ()
-  "Test for http://debbugs.gnu.org/9726 ."
+  "Test for https://debbugs.gnu.org/9726 ."
   ;; Skipping on remacs until we figure out what's wrong.
   ;; https://github.com/Wilfred/remacs/issues/99
   (skip-unless (equal invocation-name "emacs"))
@@ -74,7 +74,7 @@
 
 ;; Not specific to bzr.
 (ert-deftest vc-bzr-test-bug9781 ()
-  "Test for http://debbugs.gnu.org/9781 ."
+  "Test for https://debbugs.gnu.org/9781 ."
   ;; Skipping on remacs until we figure out what's wrong.
   ;; https://github.com/Wilfred/remacs/issues/99
   (skip-unless (equal invocation-name "emacs"))

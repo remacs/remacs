@@ -29,6 +29,11 @@ impl LispWindowRef {
     }
 
     #[inline]
+    pub fn start_marker(self) -> LispObject {
+        LispObject::from_raw(self.start)
+    }
+
+    #[inline]
     pub fn is_minibuffer(&self) -> bool {
         self.flags & FLAG_MINI != 0
     }
@@ -104,6 +109,19 @@ pub fn window_valid_p(object: LispObject) -> LispObject {
         false,
         |win| win.contents().is_not_nil(),
     ))
+}
+
+/// Return position at which display currently starts in WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+/// This is updated by redisplay or by calling `set-window-start'.
+#[lisp_fn(min = "0")]
+pub fn window_start(window: LispObject) -> LispObject {
+    let win = if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    };
+    marker_position(win.as_live_window_or_error().start_marker())
 }
 
 /// Return non-nil if WINDOW is a minibuffer window.

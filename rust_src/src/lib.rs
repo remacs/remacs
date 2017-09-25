@@ -63,6 +63,7 @@ mod obarray;
 mod editfns;
 mod util;
 mod minibuf;
+mod cmds;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -226,6 +227,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*windows::Sselected_window);
         defsubr(&*windows::Swindow_buffer);
         defsubr(&*windows::Swindow_valid_p);
+        defsubr(&*windows::Swindow_start);
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*lists::Satom);
@@ -383,5 +385,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Spoint_max);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
+        defsubr(&*cmds::Sforward_point)
     }
 }

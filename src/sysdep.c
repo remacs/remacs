@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -36,6 +36,15 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "sheap.h"
 #include "sysselect.h"
 #include "blockinput.h"
+
+#ifdef HAVE_LINUX_FS_H
+# include <linux/fs.h>
+# include <sys/syscall.h>
+#endif
+
+#ifdef CYGWIN
+# include <cygwin/fs.h>
+#endif
 
 #if defined DARWIN_OS || defined __FreeBSD__
 # include <sys/sysctl.h>
@@ -1718,7 +1727,7 @@ stack_overflow (siginfo_t *siginfo)
   /* The known top and bottom of the stack.  The actual stack may
      extend a bit beyond these boundaries.  */
   char *bot = stack_bottom;
-  char *top = near_C_stack_top ();
+  char *top = current_thread->stack_top;
 
   /* Log base 2 of the stack heuristic ratio.  This ratio is the size
      of the known stack divided by the size of the guard area past the
@@ -2334,8 +2343,6 @@ emacs_open (const char *file, int oflags, int mode)
   oflags |= O_CLOEXEC;
   while ((fd = open (file, oflags, mode)) < 0 && errno == EINTR)
     maybe_quit ();
-  if (! O_CLOEXEC && 0 <= fd)
-    fcntl (fd, F_SETFD, FD_CLOEXEC);
   return fd;
 }
 
@@ -2374,13 +2381,7 @@ emacs_fopen (char const *file, char const *mode)
 int
 emacs_pipe (int fd[2])
 {
-  int result = pipe2 (fd, O_BINARY | O_CLOEXEC);
-  if (! O_CLOEXEC && result == 0)
-    {
-      fcntl (fd[0], F_SETFD, FD_CLOEXEC);
-      fcntl (fd[1], F_SETFD, FD_CLOEXEC);
-    }
-  return result;
+  return pipe2 (fd, O_BINARY | O_CLOEXEC);
 }
 
 /* Approximate posix_close and POSIX_CLOSE_RESTART well enough for Emacs.
@@ -2620,6 +2621,29 @@ set_file_times (int fd, const char *filename,
   timespec[1] = mtime;
   return fdutimens (fd, filename, timespec);
 }
+
+/* Rename directory SRCFD's entry SRC to directory DSTFD's entry DST.
+   This is like renameat except that it fails if DST already exists,
+   or if this operation is not supported atomically.  Return 0 if
+   successful, -1 (setting errno) otherwise.  */
+int
+renameat_noreplace (int srcfd, char const *src, int dstfd, char const *dst)
+{
+#if defined SYS_renameat2 && defined RENAME_NOREPLACE
+  return syscall (SYS_renameat2, srcfd, src, dstfd, dst, RENAME_NOREPLACE);
+#elif defined CYGWIN && defined RENAME_NOREPLACE
+  return renameat2 (srcfd, src, dstfd, dst, RENAME_NOREPLACE);
+#elif defined RENAME_EXCL
+  return renameatx_np (srcfd, src, dstfd, dst, RENAME_EXCL);
+#else
+# ifdef WINDOWSNT
+  if (srcfd == AT_FDCWD && dstfd == AT_FDCWD)
+    return sys_rename_replace (src, dst, 0);
+# endif
+  errno = ENOSYS;
+  return -1;
+#endif
+}
 
 /* Like strsignal, except async-signal-safe, and this function typically
    returns a string in the C locale rather than the current locale.  */
@@ -2854,7 +2878,7 @@ list_system_processes (void)
      process.  */
   procdir = build_string ("/proc");
   match = build_string ("[0-9]+");
-  proclist = directory_files_internal (procdir, Qnil, match, Qt, 0, Qnil);
+  proclist = directory_files_internal (procdir, Qnil, match, Qt, false, Qnil);
 
   /* `proclist' gives process IDs as strings.  Destructively convert
      each string into a number.  */

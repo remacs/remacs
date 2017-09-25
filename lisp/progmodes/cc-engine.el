@@ -26,7 +26,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -248,7 +248,7 @@
   ;; parameters.  END isn't used.
   (cond
    ((null c-macro-cache))
-   ((< beg (car c-macro-cache))
+   ((<= beg (car c-macro-cache))
     (setq c-macro-cache nil
 	  c-macro-cache-start-pos nil
 	  c-macro-cache-syntactic nil
@@ -1980,17 +1980,10 @@ comment at the start of cc-engine.el for more info."
 		(end-of-line))
 	      (setq macro-end (point))
 	      ;; Check for an open block comment at the end of the macro.
-	      (goto-char macro-start)
-	      (let (s in-block-comment)
-		(while
-		    (progn
-		      (setq s (parse-partial-sexp (point) macro-end
-						  nil nil s 'syntax-table))
-		      (< (point) macro-end))
-		  (setq in-block-comment
-			(and (elt s 4)	     ; in a comment
-			     (null (elt s 7))))) ; a block comment
-		(if in-block-comment (setq safe-start nil)))
+	      (let ((s (parse-partial-sexp macro-start macro-end)))
+		(if (and (elt s 4)		    ; in a comment
+			 (null (elt s 7)))	    ; a block comment
+		    (setq safe-start nil)))
 	      (forward-line 1)
 	      ;; Don't cache at eob in case the buffer is narrowed.
 	      (not (eobp)))
@@ -6089,14 +6082,8 @@ comment at the start of cc-engine.el for more info."
 
 (defsubst c-clear-found-types ()
   ;; Clears `c-found-types'.
-  (setq c-found-types (make-vector 53 0)))
-
-(defun c-copy-found-types ()
-  (let ((copy (make-vector 53 0)))
-    (mapatoms (lambda (sym)
-		(intern (symbol-name sym) copy))
-	      c-found-types)
-    copy))
+  (setq c-found-types
+	(make-hash-table :test #'equal :weakness nil)))
 
 (defun c-add-type (from to)
   ;; Add the given region as a type in `c-found-types'.  If the region
@@ -6110,29 +6097,27 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; This function might do hidden buffer changes.
   (let ((type (c-syntactic-content from to c-recognize-<>-arglists)))
-    (unless (intern-soft type c-found-types)
-      (unintern (substring type 0 -1) c-found-types)
-      (intern type c-found-types))))
+    (unless (gethash type c-found-types)
+      (remhash (substring type 0 -1) c-found-types)
+      (puthash type t c-found-types))))
 
 (defun c-unfind-type (name)
   ;; Remove the "NAME" from c-found-types, if present.
-  (unintern name c-found-types))
+  (remhash name c-found-types))
 
 (defsubst c-check-type (from to)
   ;; Return non-nil if the given region contains a type in
   ;; `c-found-types'.
   ;;
   ;; This function might do hidden buffer changes.
-  (intern-soft (c-syntactic-content from to c-recognize-<>-arglists)
-	       c-found-types))
+  (gethash (c-syntactic-content from to c-recognize-<>-arglists) c-found-types))
 
 (defun c-list-found-types ()
   ;; Return all the types in `c-found-types' as a sorted list of
   ;; strings.
   (let (type-list)
-    (mapatoms (lambda (type)
-		(setq type-list (cons (symbol-name type)
-				      type-list)))
+    (maphash (lambda (type _)
+	       (setq type-list (cons type type-list)))
 	      c-found-types)
     (sort type-list 'string-lessp)))
 
@@ -6433,7 +6418,7 @@ comment at the start of cc-engine.el for more info."
 			      (not (eq (c-get-char-property (point) 'c-type)
 				       'c-decl-arg-start)))))))
       (or (c-forward-<>-arglist nil)
-	  (forward-char)))))
+	  (c-forward-token-2)))))
 
 
 ;; Functions to handle C++ raw strings.
@@ -6939,7 +6924,7 @@ comment at the start of cc-engine.el for more info."
   ;; recognized are those specified by `c-type-list-kwds',
   ;; `c-ref-list-kwds', `c-colon-type-list-kwds',
   ;; `c-paren-nontype-kwds', `c-paren-type-kwds', `c-<>-type-kwds',
-  ;; and `c-<>-arglist-kwds'.
+  ;; `c-<>-arglist-kwds', and `c-protection-kwds'.
   ;;
   ;; This function records identifier ranges on
   ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
@@ -7009,6 +6994,17 @@ comment at the start of cc-engine.el for more info."
 	     (not (looking-at c-symbol-start))
 	     (c-safe (c-forward-sexp) t))
 	(c-forward-syntactic-ws)
+	(setq safe-pos (point)))
+
+       ((and (c-keyword-member kwd-sym 'c-protection-kwds)
+	     (or (null c-post-protection-token)
+		 (and (looking-at c-post-protection-token)
+		      (save-excursion
+			(goto-char (match-end 0))
+			(not (c-end-of-current-token))))))
+	(if c-post-protection-token
+	    (goto-char (match-end 0)))
+	(c-forward-syntactic-ws)
 	(setq safe-pos (point))))
 
       (when (c-keyword-member kwd-sym 'c-colon-type-list-kwds)
@@ -7066,7 +7062,7 @@ comment at the start of cc-engine.el for more info."
   ;; This function might do hidden buffer changes.
 
   (let ((start (point))
-	(old-found-types (c-copy-found-types))
+	(old-found-types (copy-hash-table c-found-types))
 	;; If `c-record-type-identifiers' is set then activate
 	;; recording of any found types that constitute an argument in
 	;; the arglist.
@@ -7402,7 +7398,12 @@ comment at the start of cc-engine.el for more info."
 			    (setq pos (point)
 				  res subres))))
 
-		       ((looking-at c-identifier-start)
+		       ((and (looking-at c-identifier-start)
+			     (or (not (looking-at
+ c-ambiguous-overloadable-or-identifier-prefix-re))
+				 (save-excursion
+				   (and (eq (c-forward-token-2) 0)
+					(not (eq (char-after) ?\())))))
 			;; Got a cast operator.
 			(when (c-forward-type)
 			  (setq pos (point)
@@ -10179,8 +10180,16 @@ comment at the start of cc-engine.el for more info."
 		  ;; Could be more restrictive wrt invalid keywords,
 		  ;; but that'd only occur in invalid code so there's
 		  ;; no use spending effort on it.
-		  (let ((end (match-end 0)))
-		    (unless (c-forward-keyword-clause 0)
+		  (let ((end (match-end 0))
+			(kwd-sym (c-keyword-sym (match-string 0))))
+		    (unless
+			(and kwd-sym
+			     ;; Moving over a protection kwd and the following
+			     ;; ":" (in C++ Mode) to the next token could take
+			     ;; us all the way up to `kwd-start', leaving us
+			     ;; no chance to update `first-specifier-pos'.
+			     (not (c-keyword-member kwd-sym 'c-protection-kwds))
+			     (c-forward-keyword-clause 0))
 		      (goto-char end)
 		      (c-forward-syntactic-ws)))
 
@@ -11809,7 +11818,7 @@ comment at the start of cc-engine.el for more info."
 	      (cond
 	       ((c-backward-over-enum-header)
 		(setq placeholder (c-point 'boi)))
-	       ((consp (setq placeholder 
+	       ((consp (setq placeholder
 			     (c-looking-at-or-maybe-in-bracelist
 			      containing-sexp lim)))
 		(setq tmpsymbol (and (cdr placeholder) 'topmost-intro-cont))

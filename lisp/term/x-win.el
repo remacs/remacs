@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -1182,7 +1182,7 @@ as returned by `x-server-vendor'."
 This returns an error if any Emacs frames are X frames."
   ;; Don't allow suspending if any of the frames are X frames.
   (if (memq 'x (mapcar #'window-system (frame-list)))
-      (error "Cannot suspend Emacs while running under X")))
+      (error "Cannot suspend Emacs while an X GUI frame exists")))
 
 (defvar x-initialized nil
   "Non-nil if the X window system has been initialized.")

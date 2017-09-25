@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /*
 Originally by Carl Edman
@@ -76,8 +76,15 @@ ns_load_image (struct frame *f, struct image *img,
 {
   EmacsImage *eImg = nil;
   NSSize size;
+  Lisp_Object lisp_index;
+  unsigned int index;
 
   NSTRACE ("ns_load_image");
+
+  eassert (valid_image_p (img->spec));
+
+  lisp_index = Fplist_get (XCDR (img->spec), QCindex);
+  index = INTEGERP (lisp_index) ? XFASTINT (lisp_index) : 0;
 
   if (STRINGP (spec_file))
     {
@@ -99,12 +106,21 @@ ns_load_image (struct frame *f, struct image *img,
       return 0;
     }
 
+  if (![eImg setFrame: index])
+    {
+      add_to_log ("Unable to set index %d for image %s",
+                  make_number (index), img->spec);
+      return 0;
+    }
+
   size = [eImg size];
   img->width = size.width;
   img->height = size.height;
 
   /* 4) set img->pixmap = emacsimage */
   img->pixmap = eImg;
+
+  img->lisp_data = [eImg getMetadata];
   return 1;
 }
 
@@ -433,6 +449,65 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
   if (stippleMask == nil)
       stippleMask = [[NSColor colorWithPatternImage: self] retain];
   return stippleMask;
+}
+
+/* Find the first NSBitmapImageRep which has multiple frames. */
+- (NSBitmapImageRep *)getAnimatedBitmapImageRep
+{
+  for (NSImageRep * r in [self representations])
+    {
+      if ([r isKindOfClass:[NSBitmapImageRep class]])
+        {
+          NSBitmapImageRep * bm = (NSBitmapImageRep *)r;
+          if ([[bm valueForProperty:NSImageFrameCount] intValue] > 0)
+            return bm;
+        }
+    }
+  return nil;
+}
+
+/* If the image has multiple frames, get a count of them and the
+   animation delay, if available. */
+- (Lisp_Object)getMetadata
+{
+  Lisp_Object metadata = Qnil;
+
+  NSBitmapImageRep * bm = [self getAnimatedBitmapImageRep];
+
+  if (bm != nil)
+    {
+      int frames = [[bm valueForProperty:NSImageFrameCount] intValue];
+      float delay = [[bm valueForProperty:NSImageCurrentFrameDuration]
+                      floatValue];
+
+      if (frames > 1)
+        metadata = Fcons (Qcount, Fcons (make_number (frames), metadata));
+      if (delay > 0)
+        metadata = Fcons (Qdelay, Fcons (make_float (delay), metadata));
+    }
+  return metadata;
+}
+
+/* Attempt to set the animation frame to be displayed. */
+- (BOOL)setFrame: (unsigned int) index
+{
+  NSBitmapImageRep * bm = [self getAnimatedBitmapImageRep];
+
+  if (bm != nil)
+    {
+      int frames = [[bm valueForProperty:NSImageFrameCount] intValue];
+
+      /* If index is invalid, give up. */
+      if (index < 0 || index > frames)
+        return NO;
+
+      [bm setProperty: NSImageCurrentFrame
+            withValue: [NSNumber numberWithUnsignedInt:index]];
+    }
+
+  /* Setting the frame has succeeded, or the image doesn't have
+     multiple frames. */
+  return YES;
 }
 
 @end

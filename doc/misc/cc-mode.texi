@@ -198,7 +198,7 @@ modify this GNU manual.''
 @insertcopying
 
 This manual was generated from cc-mode.texi, which is distributed with Emacs,
-or can be downloaded from @url{http://savannah.gnu.org/projects/emacs/}.
+or can be downloaded from @url{https://savannah.gnu.org/projects/emacs/}.
 @end titlepage
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -7396,7 +7396,7 @@ Emacs Lisp code that triggers the bug and include it in your report.
 
 @cindex bug report mailing list
 Reporting a bug using @code{c-submit-bug-report} files it in
-the GNU Bug Tracker at @url{http://debbugs.gnu.org}, then sends it on
+the GNU Bug Tracker at @url{https://debbugs.gnu.org}, then sends it on
 to @email{bug-cc-mode@@gnu.org}.  You can also send reports, other
 questions, and suggestions (kudos?@: @t{;-)} to that address.  It's a
 mailing list which you can join or browse an archive of; see the web site at

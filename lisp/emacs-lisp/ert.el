@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -73,6 +73,11 @@
   :prefix "ert-"
   :group 'lisp)
 
+(defcustom ert-batch-backtrace-right-margin 70
+  "Maximum length of lines in ERT backtraces in batch mode.
+Use nil for no limit (caution: backtrace lines can be very long)."
+  :type '(choice (const :tag "No truncation" nil) integer))
+
 (defface ert-test-result-expected '((((class color) (background light))
                                      :background "green1")
                                     (((class color) (background dark))
@@ -97,7 +102,7 @@ This is like `equal-including-properties' except that it compares
 the property values of text properties structurally (by
 recursing) rather than with `eq'.  Perhaps this is what
 `equal-including-properties' should do in the first place; see
-Emacs bug 6581 at URL `http://debbugs.gnu.org/cgi/bugreport.cgi?bug=6581'."
+Emacs bug 6581 at URL `https://debbugs.gnu.org/cgi/bugreport.cgi?bug=6581'."
   ;; This implementation is inefficient.  Rather than making it
   ;; efficient, let's hope bug 6581 gets fixed so that we can delete
   ;; it altogether.
@@ -135,7 +140,7 @@ Emacs bug 6581 at URL `http://debbugs.gnu.org/cgi/bugreport.cgi?bug=6581'."
     ;; Note that nil is still a valid value for the `name' slot in
     ;; ert-test objects.  It designates an anonymous test.
     (error "Attempt to define a test named nil"))
-  (put symbol 'ert--test definition)
+  (define-symbol-prop symbol 'ert--test definition)
   definition)
 
 (defun ert-make-test-unbound (symbol)
@@ -214,12 +219,6 @@ description of valid values for RESULT-TYPE.
                         ,@(when tags-supplied-p
                             `(:tags ,tags))
                         :body (lambda () ,@body)))
-         ;; This hack allows `symbol-file' to associate `ert-deftest'
-         ;; forms with files, and therefore enables `find-function' to
-         ;; work with tests.  However, it leads to warnings in
-         ;; `unload-feature', which doesn't know how to undefine tests
-         ;; and has no mechanism for extension.
-         (push '(ert-deftest . ,name) current-load-list)
          ',name))))
 
 ;; We use these `put' forms in addition to the (declare (indent)) in
@@ -266,6 +265,14 @@ DATA is displayed to the user and should state the reason for skipping."
   (when ert--should-execution-observer
     (funcall ert--should-execution-observer form-description)))
 
+;; See Bug#24402 for why this exists
+(defun ert--should-signal-hook (error-symbol data)
+  "Stupid hack to stop `condition-case' from catching ert signals.
+It should only be stopped when ran from inside ert--run-test-internal."
+  (when (and (not (symbolp debugger))   ; only run on anonymous debugger
+             (memq error-symbol '(ert-test-failed ert-test-skipped)))
+    (funcall debugger 'error data)))
+
 (defun ert--special-operator-p (thing)
   "Return non-nil if THING is a symbol naming a special operator."
   (and (symbolp thing)
@@ -273,20 +280,26 @@ DATA is displayed to the user and should state the reason for skipping."
          (and (subrp definition)
               (eql (cdr (subr-arity definition)) 'unevalled)))))
 
+;; FIXME: Code inside of here should probably be evaluated like it is
+;; outside of tests, with the sole exception of error handling
 (defun ert--expand-should-1 (whole form inner-expander)
   "Helper function for the `should' macro and its variants."
   (let ((form
-         (macroexpand form (append (bound-and-true-p
-                                    byte-compile-macro-environment)
-                                   (cond
-                                    ((boundp 'macroexpand-all-environment)
-                                     macroexpand-all-environment)
-                                    ((boundp 'cl-macro-environment)
-                                     cl-macro-environment))))))
+         ;; catch macroexpansion errors
+         (condition-case err
+             (macroexpand-all form
+                              (append (bound-and-true-p
+                                       byte-compile-macro-environment)
+                                      (cond
+                                       ((boundp 'macroexpand-all-environment)
+                                        macroexpand-all-environment)
+                                       ((boundp 'cl-macro-environment)
+                                        cl-macro-environment))))
+           (error `(signal ',(car err) ',(cdr err))))))
     (cond
      ((or (atom form) (ert--special-operator-p (car form)))
-      (let ((value (cl-gensym "value-")))
-        `(let ((,value (cl-gensym "ert-form-evaluation-aborted-")))
+      (let ((value (gensym "value-")))
+        `(let ((,value (gensym "ert-form-evaluation-aborted-")))
            ,(funcall inner-expander
                      `(setq ,value ,form)
                      `(list ',whole :form ',form :value ,value)
@@ -299,12 +312,17 @@ DATA is displayed to the user and should state the reason for skipping."
                        (and (consp fn-name)
                             (eql (car fn-name) 'lambda)
                             (listp (cdr fn-name)))))
-        (let ((fn (cl-gensym "fn-"))
-              (args (cl-gensym "args-"))
-              (value (cl-gensym "value-"))
-              (default-value (cl-gensym "ert-form-evaluation-aborted-")))
-          `(let ((,fn (function ,fn-name))
-                 (,args (list ,@arg-forms)))
+        (let ((fn (gensym "fn-"))
+              (args (gensym "args-"))
+              (value (gensym "value-"))
+              (default-value (gensym "ert-form-evaluation-aborted-")))
+          `(let* ((,fn (function ,fn-name))
+                  (,args (condition-case err
+                             (let ((signal-hook-function #'ert--should-signal-hook))
+                               (list ,@arg-forms))
+                           (error (progn (setq ,fn #'signal)
+                                         (list (car err)
+                                               (cdr err)))))))
              (let ((,value ',default-value))
                ,(funcall inner-expander
                          `(setq ,value (apply ,fn ,args))
@@ -339,7 +357,7 @@ FORM-DESCRIPTION-FORM before it has called INNER-FORM."
   (ert--expand-should-1
    whole form
    (lambda (inner-form form-description-form value-var)
-     (let ((form-description (cl-gensym "form-description-")))
+     (let ((form-description (gensym "form-description-")))
        `(let (,form-description)
           ,(funcall inner-expander
                     `(unwind-protect
@@ -417,8 +435,8 @@ failed."
    `(should-error ,form ,@keys)
    form
    (lambda (inner-form form-description-form value-var)
-     (let ((errorp (cl-gensym "errorp"))
-           (form-description-fn (cl-gensym "form-description-fn-")))
+     (let ((errorp (gensym "errorp"))
+           (form-description-fn (gensym "form-description-fn-")))
        `(let ((,errorp nil)
               (,form-description-fn (lambda () ,form-description-form)))
           (condition-case -condition-
@@ -766,6 +784,10 @@ This mainly sets up debugger-related bindings."
     ;; too expensive, we can remove it.
     (with-temp-buffer
       (save-window-excursion
+        ;; FIXME: Use `signal-hook-function' instead of `debugger' to
+        ;; handle ert errors. Once that's done, remove
+        ;; `ert--should-signal-hook'.  See Bug#24402 and Bug#11218 for
+        ;; details.
         (let ((debugger (lambda (&rest args)
                           (ert--run-test-debugger test-execution-info
                                                   args)))
@@ -1312,9 +1334,6 @@ RESULT must be an `ert-test-result-with-condition'."
 
 ;;; Running tests in batch mode.
 
-(defvar ert-batch-backtrace-right-margin 70
-  "The maximum line length for printing backtraces in `ert-run-tests-batch'.")
-
 ;;;###autoload
 (defun ert-run-tests-batch (&optional selector)
   "Run the tests specified by SELECTOR, printing results to the terminal.
@@ -1388,15 +1407,20 @@ Returns the stats object."
                  (ert--print-backtrace
                   (ert-test-result-with-condition-backtrace result)
                   nil)
-                 (goto-char (point-min))
-                 (while (not (eobp))
-                   (let ((start (point))
-                         (end (progn (end-of-line) (point))))
-                     (setq end (min end
-                                    (+ start ert-batch-backtrace-right-margin)))
-                     (message "%s" (buffer-substring-no-properties
-                                    start end)))
-                   (forward-line 1)))
+                 (if (not ert-batch-backtrace-right-margin)
+                     (message "%s"
+                              (buffer-substring-no-properties (point-min)
+                                                              (point-max)))
+                   (goto-char (point-min))
+                   (while (not (eobp))
+                     (let ((start (point))
+                           (end (line-end-position)))
+                       (setq end (min end
+                                      (+ start
+                                         ert-batch-backtrace-right-margin)))
+                       (message "%s" (buffer-substring-no-properties
+                                      start end)))
+                     (forward-line 1))))
                (with-temp-buffer
                  (ert--insert-infos result)
                  (insert "    ")
@@ -1512,7 +1536,7 @@ Ran \\([0-9]+\\) tests, \\([0-9]+\\) results as expected\
       (message "%d files contained unexpected results:" (length unexpected))
       (mapc (lambda (l) (message "  %s" l)) unexpected))
     ;; More details on hydra, where the logs are harder to get to.
-    (when (and (getenv "NIX_STORE")
+    (when (and (getenv "EMACS_HYDRA_CI")
                (not (zerop (+ nunexpected nskipped))))
       (message "\nDETAILS")
       (message "-------")
@@ -2405,8 +2429,7 @@ To be used in the ERT results buffer."
            (buffer-disable-undo)
            (erase-buffer)
            (ert-simple-view-mode)
-           ;; Use unibyte because `debugger-setup-buffer' also does so.
-           (set-buffer-multibyte nil)
+           (set-buffer-multibyte t)     ; mimic debugger-setup-buffer
            (setq truncate-lines t)
            (ert--print-backtrace backtrace t)
            (goto-char (point-min))
@@ -2539,7 +2562,7 @@ To be used in the ERT results buffer."
           (insert (if test-name (format "%S" test-name) "<anonymous test>"))
           (insert " is a test")
           (let ((file-name (and test-name
-                                (symbol-file test-name 'ert-deftest))))
+                                (symbol-file test-name 'ert--test))))
             (when file-name
               (insert (format-message " defined in `%s'"
                                       (file-name-nondirectory file-name)))

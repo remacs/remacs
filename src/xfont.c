@@ -17,7 +17,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <stdio.h>
@@ -877,7 +877,7 @@ xfont_close (struct font *font)
      the logically different X connection after the previous display
      connection was closed.  That's why we also check whether font's
      ID matches the one recorded in x_display_info for this display.
-     See http://debbugs.gnu.org/cgi/bugreport.cgi?bug=16069.  */
+     See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=16069.  */
   if (xfi->xfont
       && ((xdi = x_display_info_for_display (xfi->display))
 	  && xfi->x_display_id == xdi->x_id))

@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /*
 Originally by Carl Edman
@@ -136,14 +136,18 @@ char const * nstrace_fullscreen_type_name (int fs_type)
 + (NSColor *)colorForEmacsRed:(CGFloat)red green:(CGFloat)green
                          blue:(CGFloat)blue alpha:(CGFloat)alpha
 {
-#ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
-  if (ns_use_srgb_colorspace)
-      return [NSColor colorWithSRGBRed: red
-                                 green: green
-                                  blue: blue
-                                 alpha: alpha];
+#if defined (NS_IMPL_COCOA) \
+  && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+  if (ns_use_srgb_colorspace
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+      && [NSColor respondsToSelector:
+                    @selector(colorWithSRGBRed:green:blue:alpha:)]
 #endif
+      )
+    return [NSColor colorWithSRGBRed: red
+                               green: green
+                                blue: blue
+                               alpha: alpha];
 #endif
   return [NSColor colorWithCalibratedRed: red
                                    green: green
@@ -153,11 +157,18 @@ char const * nstrace_fullscreen_type_name (int fs_type)
 
 - (NSColor *)colorUsingDefaultColorSpace
 {
-#ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
-  if (ns_use_srgb_colorspace)
-    return [self colorUsingColorSpace: [NSColorSpace sRGBColorSpace]];
+  /* FIXMES: We're checking for colorWithSRGBRed here so this will
+     only work in the same place as in the method above.  It should
+     really be a check whether we're on macOS 10.7 or above. */
+#if defined (NS_IMPL_COCOA) \
+  && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+  if (ns_use_srgb_colorspace
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+      && [NSColor respondsToSelector:
+                    @selector(colorWithSRGBRed:green:blue:alpha:)]
 #endif
+      )
+    return [self colorUsingColorSpace: [NSColorSpace sRGBColorSpace]];
 #endif
   return [self colorUsingColorSpaceName: NSCalibratedRGBColorSpace];
 }
@@ -1570,6 +1581,7 @@ x_make_frame_visible (struct frame *f)
   if (!FRAME_VISIBLE_P (f))
     {
       EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
+      NSWindow *window = [view window];
 
       SET_FRAME_VISIBLE (f, 1);
       ns_raise_frame (f, ! FRAME_NO_FOCUS_ON_MAP (f));
@@ -1585,6 +1597,23 @@ x_make_frame_visible (struct frame *f)
           block_input ();
           [view handleFS];
           unblock_input ();
+        }
+
+      /* Making a frame invisible seems to break the parent->child
+         relationship, so reinstate it. */
+      if ([window parentWindow] == nil && FRAME_PARENT_FRAME (f) != NULL)
+        {
+          NSWindow *parent = [FRAME_NS_VIEW (FRAME_PARENT_FRAME (f)) window];
+
+          block_input ();
+          [parent addChildWindow: window
+                         ordered: NSWindowAbove];
+          unblock_input ();
+
+          /* If the parent frame moved while the child frame was
+             invisible, the child frame's position won't have been
+             updated.  Make sure it's in the right place now. */
+          x_set_offset(f, f->left_pos, f->top_pos, 0);
         }
     }
 }
@@ -1791,8 +1820,8 @@ x_set_window_size (struct frame *f,
 
   if (pixelwise)
     {
-      pixelwidth = FRAME_TEXT_TO_PIXEL_WIDTH (f, width);
-      pixelheight = FRAME_TEXT_TO_PIXEL_HEIGHT (f, height);
+      pixelwidth = width;
+      pixelheight = height;
     }
   else
     {
@@ -2006,6 +2035,58 @@ x_set_z_group (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
   else
     error ("Invalid z-group specification");
 }
+
+#ifdef NS_IMPL_COCOA
+void
+ns_set_appearance (struct frame *f, Lisp_Object new_value, Lisp_Object old_value)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+  EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
+  NSWindow *window = [view window];
+
+  NSTRACE ("ns_set_appearance");
+
+#ifndef NSAppKitVersionNumber10_10
+#define NSAppKitVersionNumber10_10 1343
+#endif
+
+  if (NSAppKitVersionNumber < NSAppKitVersionNumber10_10)
+    return;
+
+  if (EQ (new_value, Qdark))
+    {
+      window.appearance = [NSAppearance
+                            appearanceNamed: NSAppearanceNameVibrantDark];
+      FRAME_NS_APPEARANCE (f) = ns_appearance_vibrant_dark;
+    }
+  else
+    {
+      window.appearance = [NSAppearance
+                            appearanceNamed: NSAppearanceNameAqua];
+      FRAME_NS_APPEARANCE (f) = ns_appearance_aqua;
+    }
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 101000 */
+}
+
+void
+ns_set_transparent_titlebar (struct frame *f, Lisp_Object new_value,
+                             Lisp_Object old_value)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+  EmacsView *view = (EmacsView *)FRAME_NS_VIEW (f);
+  NSWindow *window = [view window];
+
+  NSTRACE ("ns_set_transparent_titlebar");
+
+  if ([window respondsToSelector: @selector(titlebarAppearsTransparent)]
+      && !EQ (new_value, old_value))
+    {
+      window.titlebarAppearsTransparent = !NILP (new_value);
+      FRAME_NS_TRANSPARENT_TITLEBAR (f) = !NILP (new_value);
+    }
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 101000 */
+}
+#endif /* NS_IMPL_COCOA */
 
 static void
 ns_fullscreen_hook (struct frame *f)
@@ -4122,7 +4203,7 @@ ns_send_appdefined (int value)
     }
 }
 
-#ifdef HAVE_NATIVE_FS
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
 static void
 check_native_fs ()
 {
@@ -4224,7 +4305,7 @@ ns_read_socket (struct terminal *terminal, struct input_event *hold_quit)
 
   NSTRACE_WHEN (NSTRACE_GROUP_EVENTS, "ns_read_socket");
 
-#ifdef HAVE_NATIVE_FS
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
   check_native_fs ();
 #endif
 
@@ -4306,7 +4387,7 @@ ns_select (int nfds, fd_set *readfds, fd_set *writefds,
 
   NSTRACE_WHEN (NSTRACE_GROUP_EVENTS, "ns_select");
 
-#ifdef HAVE_NATIVE_FS
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
   check_native_fs ();
 #endif
 
@@ -5479,6 +5560,19 @@ ns_term_shutdown (int sig)
 	 object:nil];
 #endif
 
+#ifdef NS_IMPL_COCOA
+  if ([NSApp activationPolicy] == NSApplicationActivationPolicyProhibited) {
+    /* Set the app's activation policy to regular when we run outside
+       of a bundle.  This is already done for us by Info.plist when we
+       run inside a bundle. */
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+    [NSApp setApplicationIconImage:
+	     [EmacsImage
+	       allocInitFromFile:
+		 build_string("icons/hicolor/128x128/apps/emacs.png")]];
+  }
+#endif
+
   ns_send_appdefined (-2);
 }
 
@@ -5532,8 +5626,7 @@ runAlertPanel(NSString *title,
               NSString *defaultButton,
               NSString *alternateButton)
 {
-#if !defined (NS_IMPL_COCOA) || \
-  MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_9
+#ifdef NS_IMPL_GNUSTEP
   return NSRunAlertPanel(title, msgFormat, defaultButton, alternateButton, nil)
     == NSAlertDefaultReturn;
 #else
@@ -5983,7 +6076,7 @@ not_in_argv (NSString *arg)
               /*  GNUstep uses incompatible keycodes, even for those that are
                   supposed to be hardware independent.  Just check for delete.
                   Keypad delete does not have keysym 0xFFFF.
-                  See http://savannah.gnu.org/bugs/?25395
+                  See https://savannah.gnu.org/bugs/?25395
               */
               || (fnKeysym == 0xFFFF && code == 127)
 #endif
@@ -6294,14 +6387,27 @@ not_in_argv (NSString *arg)
                                        +FRAME_LINE_HEIGHT (emacsframe));
 
   pt = [self convertPoint: pt toView: nil];
-#if !defined (NS_IMPL_COCOA) || \
-  MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
-  pt = [[self window] convertBaseToScreen: pt];
-  rect.origin = pt;
-#else
-  rect.origin = pt;
-  rect = [[self window] convertRectToScreen: rect];
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+  if ([[self window] respondsToSelector: @selector(convertRectToScreen:)])
+    {
 #endif
+      rect.origin = pt;
+      rect = [(EmacsWindow *) [self window] convertRectToScreen: rect];
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+    }
+  else
+#endif
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 */
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070 \
+  || defined (NS_IMPL_GNUSTEP)
+    {
+      pt = [[self window] convertBaseToScreen: pt];
+      rect.origin = pt;
+    }
+#endif
+
   return rect;
 }
 
@@ -6957,11 +7063,15 @@ not_in_argv (NSString *arg)
   scrollbarsNeedingUpdate = 0;
   fs_state = FULLSCREEN_NONE;
   fs_before_fs = next_maximized = -1;
-#ifdef HAVE_NATIVE_FS
-  fs_is_native = ns_use_native_fullscreen;
-#else
+
   fs_is_native = NO;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+  if (NSAppKitVersionNumber >= NSAppKitVersionNumber10_7)
 #endif
+    fs_is_native = ns_use_native_fullscreen;
+#endif
+
   maximized_width = maximized_height = -1;
   nonfs_window = nil;
 
@@ -6992,7 +7102,10 @@ not_in_argv (NSString *arg)
                         backing: NSBackingStoreBuffered
                           defer: YES];
 
-#ifdef HAVE_NATIVE_FS
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+  if (NSAppKitVersionNumber >= NSAppKitVersionNumber10_7)
+#endif
     [win setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
 #endif
 
@@ -7001,9 +7114,11 @@ not_in_argv (NSString *arg)
 
   [win setAcceptsMouseMovedEvents: YES];
   [win setDelegate: self];
-#if !defined (NS_IMPL_COCOA) || \
-  MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_9
-  [win useOptimizedDrawing: YES];
+#if !defined (NS_IMPL_COCOA) || MAC_OS_X_VERSION_MIN_REQUIRED <= 1090
+#if MAC_OS_X_VERSION_MAX_ALLOWED > 1090
+  if ([win respondsToSelector: @selector(useOptimizedDrawing:)])
+#endif
+    [win useOptimizedDrawing: YES];
 #endif
 
   [[win contentView] addSubview: self];
@@ -7019,6 +7134,22 @@ not_in_argv (NSString *arg)
   /* toolbar support */
   if (! FRAME_UNDECORATED (f))
     [self createToolbar: f];
+
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+#ifndef NSAppKitVersionNumber10_10
+#define NSAppKitVersionNumber10_10 1343
+#endif
+
+  if (NSAppKitVersionNumber >= NSAppKitVersionNumber10_10
+      && FRAME_NS_APPEARANCE (f) != ns_appearance_aqua)
+    win.appearance = [NSAppearance
+                          appearanceNamed: NSAppearanceNameVibrantDark];
+#endif
+
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 101000
+  if ([win respondsToSelector: @selector(titlebarAppearsTransparent)])
+    win.titlebarAppearsTransparent = FRAME_NS_TRANSPARENT_TITLEBAR (f);
+#endif
 
   tem = f->icon_name;
   if (!NILP (tem))
@@ -7063,9 +7194,12 @@ not_in_argv (NSString *arg)
   if ([col alphaComponent] != (EmacsCGFloat) 1.0)
     [win setOpaque: NO];
 
-#if !defined (NS_IMPL_COCOA) || \
-  MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_9
-  [self allocateGState];
+#if !defined (NS_IMPL_COCOA) \
+  || MAC_OS_X_VERSION_MIN_REQUIRED <= 1090
+#if MAC_OS_X_VERSION_MAX_ALLOWED > 1090
+  if ([self respondsToSelector: @selector(allocateGState)])
+#endif
+    [self allocateGState];
 #endif
   [NSApp registerServicesMenuSendTypes: ns_send_types
                            returnTypes: [NSArray array]];
@@ -7073,9 +7207,12 @@ not_in_argv (NSString *arg)
   /* macOS Sierra automatically enables tabbed windows.  We can't
      allow this to be enabled until it's available on a Free system.
      Currently it only happens by accident and is buggy anyway. */
-#if defined (NS_IMPL_COCOA) && \
-  MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12
-  [win setTabbingMode: NSWindowTabbingModeDisallowed];
+#if defined (NS_IMPL_COCOA) \
+  && MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101200
+  if ([win respondsToSelector: @selector(setTabbingMode:)])
+#endif
+    [win setTabbingMode: NSWindowTabbingModeDisallowed];
 #endif
 
   ns_window_num++;
@@ -7292,7 +7429,7 @@ not_in_argv (NSString *arg)
     }
 }
 
-#ifdef HAVE_NATIVE_FS
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
 - (NSApplicationPresentationOptions)window:(NSWindow *)window
       willUseFullScreenPresentationOptions:
   (NSApplicationPresentationOptions)proposedOptions
@@ -7330,8 +7467,8 @@ not_in_argv (NSString *arg)
   else
     {
       BOOL tbar_visible = FRAME_EXTERNAL_TOOL_BAR (emacsframe) ? YES : NO;
-#ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_7
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 \
+  && MAC_OS_X_VERSION_MIN_REQUIRED <= 1070
       unsigned val = (unsigned)[NSApp presentationOptions];
 
       // Mac OS X 10.7 bug fix, the menu won't appear without this.
@@ -7346,7 +7483,6 @@ not_in_argv (NSString *arg)
 
           [NSApp setPresentationOptions: options];
         }
-#endif
 #endif
       [toolbar setVisible:tbar_visible];
     }
@@ -7386,7 +7522,7 @@ not_in_argv (NSString *arg)
     }
   [self setFSValue: fs_before_fs];
   fs_before_fs = -1;
-#ifdef HAVE_NATIVE_FS
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
   [self updateCollectionBehavior];
 #endif
   if (FRAME_EXTERNAL_TOOL_BAR (emacsframe))
@@ -7418,7 +7554,7 @@ not_in_argv (NSString *arg)
     }
   else
     {
-#ifdef HAVE_NATIVE_FS
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
       res = (([[self window] styleMask] & NSWindowStyleMaskFullScreen) != 0);
 #else
       res = NO;
@@ -7431,7 +7567,7 @@ not_in_argv (NSString *arg)
   return res;
 }
 
-#ifdef HAVE_NATIVE_FS
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
 - (void)updateCollectionBehavior
 {
   NSTRACE ("[EmacsView updateCollectionBehavior]");
@@ -7446,7 +7582,10 @@ not_in_argv (NSString *arg)
         b &= ~NSWindowCollectionBehaviorFullScreenPrimary;
 
       [win setCollectionBehavior: b];
-      fs_is_native = ns_use_native_fullscreen;
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+      if (NSAppKitVersionNumber >= NSAppKitVersionNumber10_7)
+#endif
+        fs_is_native = ns_use_native_fullscreen;
     }
 }
 #endif
@@ -7463,8 +7602,11 @@ not_in_argv (NSString *arg)
 
   if (fs_is_native)
     {
-#ifdef HAVE_NATIVE_FS
-      [[self window] toggleFullScreen:sender];
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+      if ([[self window] respondsToSelector: @selector(toggleFullScreen:)])
+#endif
+        [[self window] toggleFullScreen:sender];
 #endif
       return;
     }
@@ -7481,10 +7623,13 @@ not_in_argv (NSString *arg)
     {
       NSScreen *screen = [w screen];
 
-#if defined (NS_IMPL_COCOA) && \
-  MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
+#if defined (NS_IMPL_COCOA) && MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
       /* Hide ghost menu bar on secondary monitor? */
-      if (! onFirstScreen)
+      if (! onFirstScreen
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1090
+          && [NSScreen respondsToSelector: @selector(screensHaveSeparateSpaces)]
+#endif
+          )
         onFirstScreen = [NSScreen screensHaveSeparateSpaces];
 #endif
       /* Hide dock and menubar if we are on the primary screen.  */
@@ -7512,9 +7657,12 @@ not_in_argv (NSString *arg)
       [fw setTitle:[w title]];
       [fw setDelegate:self];
       [fw setAcceptsMouseMovedEvents: YES];
-#if !defined (NS_IMPL_COCOA) || \
-  MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_9
-      [fw useOptimizedDrawing: YES];
+#if !defined (NS_IMPL_COCOA) \
+  || MAC_OS_X_VERSION_MIN_REQUIRED <= 1090
+#if MAC_OS_X_VERSION_MAX_ALLOWED > 1090
+      if ([fw respondsToSelector: @selector(useOptimizedDrawing:)])
+#endif
+        [fw useOptimizedDrawing: YES];
 #endif
       [fw setBackgroundColor: col];
       if ([col alphaComponent] != (EmacsCGFloat) 1.0)
@@ -8075,10 +8223,14 @@ not_in_argv (NSString *arg)
              NSTRACE_ARG_RECT (frameRect));
 
 #ifdef NS_IMPL_COCOA
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
   // If separate spaces is on, it is like each screen is independent.  There is
   // no spanning of frames across screens.
-  if ([NSScreen screensHaveSeparateSpaces])
+  if (
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1090
+      [NSScreen respondsToSelector: @selector(screensHaveSeparateSpaces)] &&
+#endif
+      [NSScreen screensHaveSeparateSpaces])
     {
       NSTRACE_MSG ("Screens have separate spaces");
       frameRect = [super constrainFrameRect:frameRect toScreen:screen];
@@ -8086,7 +8238,8 @@ not_in_argv (NSString *arg)
       return frameRect;
     }
   else
-#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9 */
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 1090 */
+
     // Check that the proposed frameRect is visible in at least one
     // screen.  If it is not, ask the system to reposition it (only
     // for non-child windows).
@@ -8292,12 +8445,21 @@ not_in_argv (NSString *arg)
   /* TODO: if we want to allow variable widths, this is the place to do it,
            however neither GNUstep nor Cocoa support it very well */
   CGFloat r;
-#if !defined (NS_IMPL_COCOA) || \
-  MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
-  r = [NSScroller scrollerWidth];
-#else
-  r = [NSScroller scrollerWidthForControlSize: NSControlSizeRegular
-                                scrollerStyle: NSScrollerStyleLegacy];
+#if defined (NS_IMPL_COCOA) \
+  && MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+  if ([NSScroller respondsToSelector:
+                    @selector(scrollerWidthForControlSize:scrollerStyle:)])
+#endif
+    r = [NSScroller scrollerWidthForControlSize: NSControlSizeRegular
+                                  scrollerStyle: NSScrollerStyleLegacy];
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070
+  else
+#endif
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED >= 1070 */
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1070 \
+  || defined (NS_IMPL_GNUSTEP)
+    r = [NSScroller scrollerWidth];
 #endif
   return r;
 }
@@ -8971,6 +9133,10 @@ allowing it to be used at a lower level for accented character entry.");
                "Non-nil (the default) means to render text antialiased.");
   ns_antialias_text = Qt;
 
+  DEFVAR_LISP ("ns-use-thin-smoothing", ns_use_thin_smoothing,
+               "Non-nil turns on a font smoothing method that produces thinner strokes.");
+  ns_use_thin_smoothing = Qnil;
+
   DEFVAR_LISP ("ns-confirm-quit", ns_confirm_quit,
                "Whether to confirm application quit using dialog.");
   ns_confirm_quit = Qnil;
@@ -8984,12 +9150,8 @@ Only works on Mac OS X 10.6 or later.  */);
      doc: /*Non-nil means to use native fullscreen on Mac OS X 10.7 and later.
 Nil means use fullscreen the old (< 10.7) way.  The old way works better with
 multiple monitors, but lacks tool bar.  This variable is ignored on
-Mac OS X < 10.7.  Default is t for 10.7 and later, nil otherwise.  */);
-#ifdef HAVE_NATIVE_FS
+Mac OS X < 10.7.  Default is t.  */);
   ns_use_native_fullscreen = YES;
-#else
-  ns_use_native_fullscreen = NO;
-#endif
   ns_last_use_native_fullscreen = ns_use_native_fullscreen;
 
   DEFVAR_BOOL ("ns-use-fullscreen-animation", ns_use_fullscreen_animation,
