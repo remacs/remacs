@@ -26,6 +26,6 @@ impl ThreadStateRef {
 /// Return the name of the THREAD.
 /// The name is the same object that was passed to `make-thread'.
 #[lisp_fn]
-pub fn mythread_name(thread: LispObject) -> LispObject {
+pub fn thread_name(thread: LispObject) -> LispObject {
     thread.as_thread_or_error().name()
 }
