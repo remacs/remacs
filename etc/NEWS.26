@@ -117,6 +117,11 @@ The effect is similar to that of "toolBar" resource on the tool bar.
 
 * Changes in Emacs 26.1
 
++++
+** Option 'buffer-offer-save' can be set to new value, 'always'.  When
+   set to 'always', the command `save-some-buffers' will always offer
+   this buffer for saving.
+
 ** Security vulnerability related to Enriched Text mode is removed.
 
 +++
@@ -144,8 +149,7 @@ init file:
 'save-buffer' process.  Previously, saving a buffer that was not
 visiting a file would always prompt for a file name.  Now it only does
 so if 'write-contents-functions' is nil (or all its functions return
-nil).  A non-nil buffer-local value for this variable is sufficient
-for 'save-some-buffers' to consider the buffer for saving.
+nil).
 
 ---
 ** New variable 'executable-prefix-env' for inserting magic signatures.
@@ -367,7 +371,7 @@ see the node "Connection Local Variables" in the ELisp manual.
 puny.el library, so that one can visit Web sites with non-ASCII URLs.
 
 +++
-** The new 'timer-list' command lists all active timers in a buffer,
+** The new 'list-timers' command lists all active timers in a buffer,
 where you can cancel them with the 'c' command.
 
 +++
@@ -578,7 +582,6 @@ Negative prefix arg flips the direction of selection.  Also,
 defun are selected unless they are separated from the defun by a blank
 line.
 
----
 ** New command 'replace-buffer-contents'.
 This command replaces the contents of the accessible portion of the
 current buffer with the contents of the accessible portion of a
@@ -700,6 +703,12 @@ method is an NNTP select method.
 +++
 *** A new command for sorting articles by readedness marks has been
 added: 'C-c C-s C-m C-m'.
+
++++
+
+*** In message-citation-line-format the %Z format is now the time zone name
+instead of the numeric form.  The %z format continues to be the
+numeric form.  The new behavior is compatible with format-time-string.
 
 ** Ibuffer
 
@@ -1813,6 +1822,13 @@ can be replicated simply by setting 'comment-auto-fill-only-comments'.
 ** New pcase pattern 'rx' to match against a rx-style regular expression.
 For details, see the doc string of 'rx--pcase-macroexpander'.
 
+---
+** New functions to set region from secondary selection and vice versa.
+The new functions 'secondary-selection-to-region' and
+'secondary-selection-from-region' let you set the beginning and the
+end of the region from those of the secondary selection and vise
+versa.
+
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
 
@@ -1875,6 +1891,12 @@ of frame decorations on macOS 10.9+.
 
 ---
 ** 'process-attributes' on Darwin systems now returns more information.
+
+---
+** Mousewheel and trackpad scrolling on macOS 10.7+ now behaves more
+like the macOS default.  The new variables 'ns-mwheel-line-height',
+'ns-use-mwheel-acceleration' and 'ns-use-mwheel-momentum' can be used
+to customize the behavior.
 
 
 ----------------------------------------------------------------------
