@@ -1353,6 +1353,12 @@ non-nil, but the code returned the list in the increasing order of
 priority instead.  Now the code does what the documentation says it
 should do.
 
+---
+** 'eldoc-message' only accepts one argument now.  Programs that
+called it with multiple arguments before should pass them through
+'format' first.  Even that is discouraged: for ElDoc support, you
+should set 'eldoc-documentation-function' instead of calling
+'eldoc-message' directly.
 
 * Lisp Changes in Emacs 26.1
 
