@@ -8,6 +8,8 @@ use editfns::point;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
+const FLAG_MINI: u16 = 1 << 0;
+
 impl LispWindowRef {
     /// Check if window is a live window (displays a buffer).
     /// This is also sometimes called a "leaf window" in Emacs sources.
@@ -29,6 +31,11 @@ impl LispWindowRef {
     #[inline]
     pub fn start_marker(self) -> LispObject {
         LispObject::from_raw(self.start)
+    }
+
+    #[inline]
+    pub fn is_minibuffer(&self) -> bool {
+        self.flags & FLAG_MINI != 0
     }
 }
 
@@ -115,4 +122,16 @@ pub fn window_start(window: LispObject) -> LispObject {
         window
     };
     marker_position(win.as_live_window_or_error().start_marker())
+}
+
+/// Return non-nil if WINDOW is a minibuffer window.
+/// WINDOW must be a valid window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_minibuffer_p(window: LispObject) -> LispObject {
+    let win = if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    };
+    LispObject::from_bool(win.as_window_or_error().is_minibuffer())
 }
