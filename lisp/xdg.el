@@ -84,7 +84,7 @@
 
 (defun xdg-thumb-uri (filename)
   "Return the canonical URI for FILENAME.
-If FILENAME has absolute path /foo/bar.jpg, its canonical URI is
+If FILENAME has absolute file name /foo/bar.jpg, its canonical URI is
 file:///foo/bar.jpg"
   (concat "file://" (expand-file-name filename)))
 
