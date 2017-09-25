@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #define INLINE EXTERN_INLINE
 #include <config.h>
@@ -650,7 +650,10 @@ close_output_streams (void)
 int
 main (int argc, char **argv)
 {
-  char stack_bottom_variable;
+  /* Variable near the bottom of the stack, and aligned appropriately
+     for pointers.  */
+  void *stack_bottom_variable;
+
   bool do_initial_setlocale;
   bool dumping;
   int skip_args = 0;
@@ -666,7 +669,7 @@ main (int argc, char **argv)
   char *original_pwd = 0;
 
   /* Record (approximately) where the stack begins.  */
-  stack_bottom = &stack_bottom_variable;
+  stack_bottom = (char *) &stack_bottom_variable;
 
 #ifndef CANNOT_DUMP
   dumping = !initialized && (strcmp (argv[argc - 1], "dump") == 0
@@ -1499,6 +1502,10 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 
 #ifdef HAVE_LIBXML2
       syms_of_xml ();
+#endif
+
+#ifdef HAVE_LCMS2
+      syms_of_lcms2 ();
 #endif
 
 #ifdef HAVE_ZLIB

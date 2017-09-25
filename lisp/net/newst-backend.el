@@ -23,7 +23,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;; ======================================================================
 
@@ -72,13 +72,9 @@ considered to be running if the newsticker timer list is not empty."
     ("Debian Security Advisories - Long format"
     "http://www.debian.org/security/dsa-long.en.rdf")
     ("Emacs Wiki"
-    "http://www.emacswiki.org/cgi-bin/wiki.pl?action=rss"
+    "https://www.emacswiki.org/emacs?action=rss"
     nil
     3600)
-    ("Freshmeat.net"
-    "http://freshmeat.net/index.atom")
-    ("Kuro5hin.org"
-    "http://www.kuro5hin.org/backend.rdf")
     ("LWN (Linux Weekly News)"
     "http://lwn.net/headlines/rss")
     ("NY Times: Technology"
@@ -102,9 +98,7 @@ considered to be running if the newsticker timer list is not empty."
     ("Tagesschau (german)"
     "http://www.tagesschau.de/newsticker.rdf"
     nil
-    1800)
-    ("Telepolis (german)"
-    "http://www.heise.de/tp/news.rdf"))
+    1800))
   "Default URL list in raw form.
 This list is fed into defcustom via `newsticker--splicer'.")
 

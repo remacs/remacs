@@ -44,7 +44,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 /* NB To comply with the above BSD license, copyright information is
@@ -102,6 +102,7 @@ char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
 # undef HAVE_NTGUI
 # undef  DOS_NT
 # define DOS_NT
+/* The WINDOWSNT build doesn't use Gnulib's fcntl.h.  */
 # define O_CLOEXEC O_NOINHERIT
 #endif /* WINDOWSNT */
 
@@ -454,6 +455,7 @@ static bool cplusplus;		/* .[hc] means C++, not C (undocumented) */
 static bool ignoreindent;	/* -I: ignore indentation in C */
 static int packages_only;	/* --packages-only: in Ada, only tag packages*/
 static int class_qualify;	/* -Q: produce class-qualified tags in C++/Java */
+static int debug;		/* --debug */
 
 /* STDIN is defined in LynxOS system headers */
 #ifdef STDIN
@@ -471,6 +473,7 @@ static struct option longopts[] =
   { "append",             no_argument,       NULL,               'a'   },
   { "packages-only",      no_argument,       &packages_only,     1     },
   { "c++",                no_argument,       NULL,               'C'   },
+  { "debug",              no_argument,       &debug,             1     },
   { "declarations",       no_argument,       &declarations,      1     },
   { "no-line-directive",  no_argument,       &no_line_directive, 1     },
   { "no-duplicates",      no_argument,       &no_duplicates,     1     },
@@ -1518,7 +1521,7 @@ process_file_name (char *file, language *lang)
   fdesc *fdp;
   compressor *compr;
   char *compressed_name, *uncompressed_name;
-  char *ext, *real_name, *tmp_name;
+  char *ext, *real_name UNINIT, *tmp_name;
   int retval;
 
   canonicalize_filename (file);
@@ -1889,6 +1892,10 @@ make_tag (const char *name, 	/* tag name, or NULL if unnamed */
 {
   bool named = (name != NULL && namelen > 0);
   char *nname = NULL;
+
+  if (debug)
+    fprintf (stderr, "%s on %s:%d: %s\n",
+	     named ? name : "(unnamed)", curfdp->taggedfname, lno, linestart);
 
   if (!CTAGS && named)		/* maybe set named to false */
     /* Let's try to make an implicit tag name, that is, create an unnamed tag
@@ -4941,6 +4948,9 @@ Ruby_functions (FILE *inf)
 			memcpy (wr_name + name_len - 1, "=", 2);
 			pfnote (wr_name, true, lb.buffer, cp - lb.buffer + 1,
 				lineno, linecharno);
+			if (debug)
+			  fprintf (stderr, "%s on %s:%d: %s\n", wr_name,
+				   curfdp->taggedfname, lineno, lb.buffer);
 			continuation = false;
 		      }
 		    if (alias)
@@ -5567,7 +5577,7 @@ TeX_commands (FILE *inf)
   linebuffer *key;
 
   char TEX_esc = '\0';
-  char TEX_opgrp, TEX_clgrp;
+  char TEX_opgrp UNINIT, TEX_clgrp UNINIT;
 
   /* Initialize token table once from environment. */
   if (TEX_toktab == NULL)
@@ -6520,9 +6530,16 @@ regex_tag_multiline (void)
 	      else /* make a named tag */
 		name = substitute (buffer, rp->name, &rp->regs);
 	      if (rp->force_explicit_name)
-		/* Force explicit tag name, if a name is there. */
-		pfnote (name, true, buffer + linecharno,
-			charno - linecharno + 1, lineno, linecharno);
+		{
+		  /* Force explicit tag name, if a name is there. */
+		  pfnote (name, true, buffer + linecharno,
+			  charno - linecharno + 1, lineno, linecharno);
+
+		  if (debug)
+		    fprintf (stderr, "%s on %s:%d: %s\n",
+			     name ? name : "(unnamed)", curfdp->taggedfname,
+			     lineno, buffer + linecharno);
+		}
 	      else
 		make_tag (name, strlen (name), true, buffer + linecharno,
 			  charno - linecharno + 1, lineno, linecharno);
@@ -6843,8 +6860,14 @@ readline (linebuffer *lbp, FILE *stream)
 	      else /* make a named tag */
 		name = substitute (lbp->buffer, rp->name, &rp->regs);
 	      if (rp->force_explicit_name)
-		/* Force explicit tag name, if a name is there. */
-		pfnote (name, true, lbp->buffer, match, lineno, linecharno);
+		{
+		  /* Force explicit tag name, if a name is there. */
+		  pfnote (name, true, lbp->buffer, match, lineno, linecharno);
+		  if (debug)
+		    fprintf (stderr, "%s on %s:%d: %s\n",
+			     name ? name : "(unnamed)", curfdp->taggedfname,
+			     lineno, lbp->buffer);
+		}
 	      else
 		make_tag (name, strlen (name), true,
 			  lbp->buffer, match, lineno, linecharno);

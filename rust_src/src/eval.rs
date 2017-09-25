@@ -7,33 +7,16 @@
 /// except `Qquit`, which can return from `Fsignal`. See the elisp docstring
 /// for `signal` for an explanation of the arguments.
 macro_rules! xsignal {
-    ($symbol:expr) => {{
+    ($symbol:expr) => {
         unsafe {
             ::remacs_sys::Fsignal($symbol, ::remacs_sys::Qnil);
         }
-    }};
-    ($symbol:expr, $arg:expr) => {{
-        let list = $crate::lisp::LispObject::cons($arg, $crate::lisp::LispObject::constant_nil());
+    };
+    ($symbol:expr, $($tt:tt)+) => {
         unsafe {
-            ::remacs_sys::Fsignal($symbol, list.to_raw());
+            ::remacs_sys::Fsignal($symbol, list!($($tt)+).to_raw());
         }
-    }};
-    ($symbol:expr, $arg1:expr, $arg2:expr) => {{
-        let list = $crate::lisp::LispObject::cons(
-            $arg1,
-            $crate::lisp::LispObject::cons($arg2, $crate::lisp::LispObject::constant_nil())
-        );
-        unsafe {
-            ::remacs_sys::Fsignal($symbol, list.to_raw());
-        }
-    }};
-    ($symbol:expr, $($arg:expr),*) => {{
-        let mut argsarray = [$($arg),*];
-        unsafe {
-            ::remacs_sys::Fsignal($symbol,
-                                  $crate::lists::list(&mut argsarray[..]).to_raw());
-        }
-    }}
+    };
 }
 
 /// Macro to call Lisp functions with any number of arguments.
@@ -66,21 +49,22 @@ macro_rules! error {
                                       formatted.len() as ::libc::ptrdiff_t)
         };
         xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
-    }}
+    }};
 }
 
 /// Macro to format a "wrong argument type" error message.
 macro_rules! wrong_type {
-    ($pred:expr, $arg:expr) => {{
-        xsignal!(::remacs_sys::Qwrong_type_argument, LispObject::from_raw(unsafe { $pred }), $arg);
-    }}
+    ($pred:expr, $arg:expr) => {
+        xsignal!(::remacs_sys::Qwrong_type_argument, LispObject::from_raw($pred), $arg);
+    };
 }
 
 macro_rules! args_out_of_range {
-    ($arg1:expr, $arg2:expr) => {{
-        xsignal!(::remacs_sys::Qargs_out_of_range, $arg1, $arg2);
-    }};
-    ($arg1:expr, $arg2:expr, $arg3:expr) => {{
-        xsignal!(::remacs_sys::Qargs_out_of_range, $arg1, $arg2, $arg3);
-    }}
+    ($($tt:tt)+) => { xsignal!(::remacs_sys::Qargs_out_of_range, $($tt)+); };
+}
+
+macro_rules! list {
+    ($arg:expr, $($tt:tt)+) => { $crate::lisp::LispObject::cons($arg, list!($($tt)+)) };
+    ($arg:expr) => { $crate::lisp::LispObject::cons($arg, list!()) };
+    () => { $crate::lisp::LispObject::constant_nil() };
 }

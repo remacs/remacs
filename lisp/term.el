@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;; Marck 13 2001
 ;; Fixes for CJK support by Yong Lu <lyongu@yahoo.com>.
@@ -1007,7 +1007,7 @@ Entry to this mode runs the hooks on `term-mode-hook'."
   (setq indent-tabs-mode nil)
   (setq buffer-display-table term-display-table)
   (set (make-local-variable 'term-home-marker) (copy-marker 0))
-  (set (make-local-variable 'term-height) (1- (window-height)))
+  (set (make-local-variable 'term-height) (window-text-height))
   (set (make-local-variable 'term-width) (window-max-chars-per-line))
   (set (make-local-variable 'term-last-input-start) (make-marker))
   (set (make-local-variable 'term-last-input-end) (make-marker))
@@ -1354,8 +1354,7 @@ commands to use in that buffer.
   (interactive (list (read-from-minibuffer "Run program: "
 					   (or explicit-shell-file-name
 					       (getenv "ESHELL")
-					       (getenv "SHELL")
-					       "/bin/sh"))))
+					       shell-file-name))))
   (set-buffer (make-term "terminal" program))
   (term-mode)
   (term-char-mode)
@@ -4149,8 +4148,7 @@ the process.  Any more args are arguments to PROGRAM."
   (interactive (list (read-from-minibuffer "Run program: "
 					   (or explicit-shell-file-name
 					       (getenv "ESHELL")
-					       (getenv "SHELL")
-					       "/bin/sh"))))
+					       shell-file-name))))
 
   ;; Pick the name of the new buffer.
   (setq term-ansi-buffer-name

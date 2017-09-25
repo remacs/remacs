@@ -22,7 +22,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Commentary:
@@ -520,7 +520,9 @@ The location for a browser's bookmark should look like this:
   ;; As we enter this function for a match on our protocol, the return value
   ;; defaults to nil.
   (let ((result nil)
-        (f (plist-get (org-protocol-parse-parameters fname nil '(:url)) :url)))
+	(f (org-protocol-sanitize-uri
+	    (plist-get (org-protocol-parse-parameters fname nil '(:url))
+		       :url))))
     (catch 'result
       (dolist (prolist org-protocol-project-alist)
         (let* ((base-url (plist-get (cdr prolist) :base-url))
@@ -554,7 +556,7 @@ The location for a browser's bookmark should look like this:
 		      ;; Try to match a rewritten URL and map it to
 		      ;; a real file.  Compare redirects without
 		      ;; suffix.
-		      (when (string-match-p (car rewrite) f2)
+		      (when (string-match-p (car rewrite) f1)
 			(throw 'result (concat wdir (cdr rewrite))))))))
 	      ;; -- end of redirects --
 

@@ -63,6 +63,7 @@ mod obarray;
 mod editfns;
 mod util;
 mod minibuf;
+mod cmds;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -196,6 +197,9 @@ pub use interactive::Fprefix_numeric_value;
 pub use editfns::Fbolp;
 pub use editfns::Feolp;
 
+// Used in minibuffer.c
+pub use windows::Fwindow_minibuffer_p;
+
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
 }
@@ -217,11 +221,13 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Soverlay_end);
         defsubr(&*buffers::Soverlay_buffer);
         defsubr(&*windows::Swindowp);
+        defsubr(&*windows::Swindow_minibuffer_p);
         defsubr(&*windows::Swindow_live_p);
         defsubr(&*windows::Swindow_point);
         defsubr(&*windows::Sselected_window);
         defsubr(&*windows::Swindow_buffer);
         defsubr(&*windows::Swindow_valid_p);
+        defsubr(&*windows::Swindow_start);
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*lists::Satom);
@@ -380,5 +386,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
         defsubr(&*threads::Sthread_name);
+        defsubr(&*cmds::Sforward_point);
     }
 }

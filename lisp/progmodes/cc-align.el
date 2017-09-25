@@ -26,7 +26,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -1231,7 +1231,7 @@ Works with: Any syntactic symbol which has an anchor position."
   (save-excursion
     (goto-char (c-langelem-pos langelem))
     (vector (current-column))))
-    
+
 
 (defun c-lineup-dont-change (_langelem)
   "Do not change the indentation of the current line.

@@ -23,6 +23,7 @@ use libc::{c_char, c_uchar, c_short, c_int, c_double, c_float, c_void, ptrdiff_t
 
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
+include!(concat!(env!("OUT_DIR"), "/globals.rs"));
 
 pub type Lisp_Object = EmacsInt;
 
@@ -435,6 +436,8 @@ pub struct Lisp_Buffer {
     pub ctl_arrow: Lisp_Object,
     pub bidi_display_reordering: Lisp_Object,
     pub bidi_paragraph_direction: Lisp_Object,
+    pub bidi_paragraph_separate_re: Lisp_Object,
+    pub bidi_paragraph_start_re: Lisp_Object,
     pub selective_display: Lisp_Object,
     pub selective_display_ellipses: Lisp_Object,
     pub minor_modes: Lisp_Object,
@@ -1367,6 +1370,7 @@ extern "C" {
     pub static Qstringp: Lisp_Object;
     pub static Qsymbolp: Lisp_Object;
     pub static Qlistp: Lisp_Object;
+    pub static Qplistp: Lisp_Object;
     pub static Qmarkerp: Lisp_Object;
     pub static Qwholenump: Lisp_Object;
     pub static Qvectorp: Lisp_Object;
@@ -1538,6 +1542,12 @@ extern "C" {
         offset2: c_int,
         pvec_type: PseudovecType,
     ) -> *mut Lisp_Vector;
+
+    pub fn extract_data_from_object(
+        spec: Lisp_Object,
+        start_byte: *mut ptrdiff_t,
+        end_byte: *mut ptrdiff_t,
+    ) -> *mut c_char;
 }
 
 /// Contains C definitions from the font.h header.

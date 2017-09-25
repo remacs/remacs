@@ -423,7 +423,7 @@ remove_watch (struct notification *dirwatch)
     {
       int i;
       BOOL status;
-      DWORD exit_code = 0, err;
+      DWORD exit_code = 0, err = 0;
 
       /* Only the thread that issued the outstanding I/O call can call
 	 CancelIo on it.  (CancelIoEx is available only since Vista.)

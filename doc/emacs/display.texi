@@ -711,6 +711,12 @@ Similar to @code{mode-line} for a window's header line, which appears
 at the top of a window just as the mode line appears at the bottom.
 Most windows do not have a header line---only some special modes, such
 Info mode, create one.
+@item header-line-highlight
+@cindex header-line-highlight face
+Similar to @code{highlight} and @code{mode-line-highlight}, but used
+for mouse-sensitive portions of text on header lines.  This is a
+separate face because the @code{header-line} face might be customized
+in a way that does not interact well with @code{highlight}.
 @item vertical-border
 @cindex vertical-border face
 This face is used for the vertical divider between windows on text
@@ -1744,6 +1750,15 @@ Mode}), and need to move by exact number of screen lines.
 @item anything else
 Any other non-@code{nil} value is treated as @code{t}.
 @end table
+
+@findex display-line-numbers-mode
+@findex global-display-line-numbers-mode
+@vindex display-line-numbers-type
+A convenient way of turning on display of line numbers is @w{@kbd{M-x
+display-line-numbers-mode @key{RET}}}.  This mode has a globalized
+variant, @code{global-display-line0numbers-mode}.  The user option
+@code{display-line-numbers-type} controls which sub-mode of
+line-number display, described above, will these modes activate.
 
 @vindex display-line-numbers-current-absolute
 When Emacs displays relative line numbers, you can control the number

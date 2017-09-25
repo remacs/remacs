@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -151,7 +151,7 @@ join from that split has been detected or not.")
 	    (when (nth 2 ass)
 	      ;; There was already a netjoin for this netsplit, it
 	      ;; seems like the old one didn't get finished...
-	      (erc-display-message 
+	      (erc-display-message
 	       parsed 'notice (process-buffer proc)
 	       'netsplit ?s split)
 	      (setcar (nthcdr 2 ass) t)
@@ -208,4 +208,3 @@ join from that split has been detected or not.")
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:
-

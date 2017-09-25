@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* New display code by Gerd Moellmann <gerd@gnu.org>.  */
 /* Xt features made by Fred Pierresteguy.  */
@@ -23,9 +23,7 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef USE_CAIRO
 #include <math.h>
-#endif
 
 #include "lisp.h"
 #include "blockinput.h"
@@ -1384,12 +1382,13 @@ x_after_update_window_line (struct window *w, struct glyph_row *desired_row)
 	  {
 	    unsigned long color = face->background;
 	    Display *display = FRAME_X_DISPLAY (f);
+	    GC gc = f->output_data.x->normal_gc;
 
-	    XSetForeground (display, f->output_data.x->normal_gc, color);
-	    x_fill_rectangle (f, f->output_data.x->normal_gc,
-			      0, y, width, height);
-	    x_fill_rectangle (f, f->output_data.x->normal_gc,
-			      FRAME_PIXEL_WIDTH (f) - width, y, width, height);
+	    XSetForeground (display, gc, color);
+	    x_fill_rectangle (f, gc, 0, y, width, height);
+	    x_fill_rectangle (f, gc, FRAME_PIXEL_WIDTH (f) - width, y,
+			      width, height);
+	    XSetForeground (display, gc, FRAME_FOREGROUND_PIXEL (f));
 	  }
 	else
 	  {
@@ -3475,6 +3474,23 @@ x_draw_stretch_glyph_string (struct glyph_string *s)
   s->background_filled_p = true;
 }
 
+static void
+x_get_scale_factor(Display *disp, int *scale_x, int *scale_y)
+{
+  const int base_res = 96;
+  struct x_display_info * dpyinfo = x_display_info_for_display (disp);
+
+  *scale_x = *scale_y = 1;
+
+  if (dpyinfo)
+    {
+      if (dpyinfo->resx > base_res)
+	*scale_x = floor (dpyinfo->resx / base_res);
+      if (dpyinfo->resy > base_res)
+	*scale_y = floor (dpyinfo->resy / base_res);
+    }
+}
+
 /*
    Draw a wavy line under S. The wave fills wave_height pixels from y0.
 
@@ -3485,11 +3501,16 @@ x_draw_stretch_glyph_string (struct glyph_string *s)
     wave_height = 3  | *   *   *   *
 
 */
-
 static void
 x_draw_underwave (struct glyph_string *s)
 {
-  int wave_height = 3, wave_length = 2;
+  /* Adjust for scale/HiDPI.  */
+  int scale_x, scale_y;
+
+  x_get_scale_factor (s->display, &scale_x, &scale_y);
+
+  int wave_height = 3 * scale_y, wave_length = 2 * scale_x, thickness = scale_y;
+
 #ifdef USE_CAIRO
   x_draw_horizontal_wave (s->f, s->gc, s->x, s->ybase - wave_height + 3,
 			  s->width, wave_height, wave_length);
@@ -3501,7 +3522,7 @@ x_draw_underwave (struct glyph_string *s)
   dx = wave_length;
   dy = wave_height - 1;
   x0 = s->x;
-  y0 = s->ybase - wave_height + 3;
+  y0 = s->ybase + wave_height / 2 - scale_y;
   width = s->width;
   xmax = x0 + width;
 
@@ -3535,6 +3556,8 @@ x_draw_underwave (struct glyph_string *s)
 
   while (x1 <= xmax)
     {
+      XSetLineAttributes (s->display, s->gc, thickness, LineSolid, CapButt,
+                          JoinRound);
       XDrawLine (s->display, FRAME_X_DRAWABLE (s->f), s->gc, x1, y1, x2, y2);
       x1  = x2, y1 = y2;
       x2 += dx, y2 = y0 + odd*dy;
@@ -3996,7 +4019,13 @@ XTflash (struct frame *f)
        when the scroll bars and the edit widget share the same X window.  */
     GdkWindow *window = gtk_widget_get_window (FRAME_GTK_WIDGET (f));
 #ifdef HAVE_GTK3
+#if GTK_CHECK_VERSION (3, 22, 0)
+    cairo_region_t *region = gdk_window_get_visible_region (window);
+    GdkDrawingContext *context = gdk_window_begin_draw_frame (window, region);
+    cairo_t *cr = gdk_drawing_context_get_cairo_context (context);
+#else
     cairo_t *cr = gdk_cairo_create (window);
+#endif
     cairo_set_source_rgb (cr, 1, 1, 1);
     cairo_set_operator (cr, CAIRO_OPERATOR_DIFFERENCE);
 #define XFillRectangle(d, win, gc, x, y, w, h) \
@@ -4110,7 +4139,12 @@ XTflash (struct frame *f)
 
 #ifdef USE_GTK
 #ifdef HAVE_GTK3
+#if GTK_CHECK_VERSION (3, 22, 0)
+      gdk_window_end_draw_frame (window, context);
+      cairo_region_destroy (region);
+#else
       cairo_destroy (cr);
+#endif
 #else
       g_object_unref (G_OBJECT (gc));
 #endif
@@ -5696,7 +5730,6 @@ xaw_jump_callback (Widget widget, XtPointer client_data, XtPointer call_data)
   int whole, portion, height, width;
   enum scroll_bar_part part;
   bool horizontal = bar->horizontal;
-
 
   if (horizontal)
     {
@@ -7972,7 +8005,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
             {
 #ifdef USE_GTK
               /* This seems to be needed for GTK 2.6 and later, see
-                 http://debbugs.gnu.org/cgi/bugreport.cgi?bug=15398.  */
+                 https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15398.  */
               x_clear_area (f,
                             event->xexpose.x, event->xexpose.y,
                             event->xexpose.width, event->xexpose.height);
@@ -8683,9 +8716,11 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #endif
       if (f)
         {
-	  /* Don't call x_net_wm_state for the scroll bar window.
-	     (Bug#24963, Bug#25887)  */
+#ifdef USE_GTK
+	  /* For GTK+ don't call x_net_wm_state for the scroll bar
+	     window.  (Bug#24963, Bug#25887) */
 	  if (configureEvent.xconfigure.window == FRAME_X_WINDOW (f))
+#endif
 	    x_net_wm_state (f, configureEvent.xconfigure.window);
 
 #ifdef USE_X_TOOLKIT
@@ -12233,7 +12268,7 @@ static void
 x_setup_pointer_blanking (struct x_display_info *dpyinfo)
 {
   /* FIXME: the brave tester should set EMACS_XFIXES because we're suspecting
-     X server bug, see http://debbugs.gnu.org/cgi/bugreport.cgi?bug=17609.  */
+     X server bug, see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=17609.  */
   if (egetenv ("EMACS_XFIXES") && x_probe_xfixes_extension (dpyinfo->display))
     dpyinfo->toggle_visible_pointer = xfixes_toggle_visible_pointer;
   else
@@ -13272,6 +13307,7 @@ transition between the various maximization states.  */);
     doc: /* Non-nil means rely on gtk_window_move to set frame positions.
 If this variable is t (the default), the GTK build uses the function
 gtk_window_move to set or store frame positions and disables some time
-consuming frame position adjustments.  */);
+consuming frame position adjustments.  In newer versions of GTK, Emacs
+always uses gtk_window_move and ignores the value of this variable.  */);
   x_gtk_use_window_move = true;
 }

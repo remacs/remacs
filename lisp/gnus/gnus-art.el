@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -4244,7 +4244,7 @@ If variable `gnus-use-long-file-name' is non-nil, it is
 
 (defun article-verify-x-pgp-sig ()
   "Verify X-PGP-Sig."
-  ;; <ftp://ftp.isc.org/pub/pgpcontrol/FORMAT>
+  ;; <https://ftp.isc.org/pub/pgpcontrol/FORMAT>
   (interactive)
   (if (gnus-buffer-live-p gnus-original-article-buffer)
       (let ((sig (with-current-buffer gnus-original-article-buffer
@@ -5058,11 +5058,14 @@ and `gnus-mime-delete-part', and not provided at run-time normally."
       (gnus-article-edit-done))
     (gnus-configure-windows 'article)
     (sit-for 0)
-    (when (and current-id (integerp gnus-auto-select-part))
-      (gnus-article-jump-to-part
-       (min (max (+ current-id gnus-auto-select-part) 1)
-	    (with-current-buffer gnus-article-buffer
-	      (length gnus-article-mime-handle-alist)))))))
+    (let ((handles (with-current-buffer gnus-article-buffer
+		     gnus-article-mime-handle-alist)))
+      ;; `handles' will be nil if there is the only one part
+      ;; in the article and is deleted.
+      (when (and handles current-id (integerp gnus-auto-select-part))
+	(gnus-article-jump-to-part
+	 (min (max (+ current-id gnus-auto-select-part) 1)
+	      (length handles)))))))
 
 (defun gnus-mime-replace-part (file)
   "Replace MIME part under point with an external body."
@@ -6339,8 +6342,9 @@ Provided for backwards compatibility."
       ;; in each element are in the increasing order.
       (dolist (handle (reverse gnus-article-mime-handle-alist))
 	(if (stringp (cadr handle))
-	    (setq flat (nconc flat (gnus-article-mime-handles
-				    (cddr handle) (list (car handle)) flat)))
+	    (when (cddr handle)
+	      (setq flat (nconc flat (gnus-article-mime-handles
+				      (cddr handle) (list (car handle)) flat))))
 	  (delq (rassq (cdr handle) flat) flat)
 	  (setq flat (nconc flat (list (cons (list (car handle))
 					     (cdr handle)))))))
@@ -6363,7 +6367,7 @@ buttons to be added to the header are only the ones that aren't inlined
 in the body.  Use `gnus-header-face-alist' to highlight buttons."
   (interactive (list t))
   (gnus-with-article-buffer
-    (let ((case-fold-search t) buttons handle type st)
+    (let ((case-fold-search t) buttons st)
       (save-excursion
 	(save-restriction
 	  (widen)
@@ -6384,22 +6388,7 @@ in the body.  Use `gnus-header-face-alist' to highlight buttons."
 	    ;; Find buttons.
 	    (setq buttons nil)
 	    (dolist (button (gnus-article-mime-handles))
-	      (setq handle (cdr button)
-		    type (mm-handle-media-type handle))
-	      (when (or (and (if (gnus-buffer-live-p gnus-summary-buffer)
-				 (with-current-buffer gnus-summary-buffer
-				   gnus-inhibit-images)
-			       gnus-inhibit-images)
-			     (string-match "\\`image/" type))
-			(mm-inline-override-p handle)
-			(and (mm-handle-disposition handle)
-			     (not (equal (car (mm-handle-disposition handle))
-					 "inline"))
-			     (not (mm-attachment-override-p handle)))
-			(not (mm-automatic-display-p handle))
-			(not (or (and (mm-inlinable-p handle)
-				      (mm-inlined-p handle))
-				 (mm-automatic-external-display-p type))))
+	      (unless (mm-handle-undisplayer (cdr button))
 		(push button buttons)))
 	    (when buttons
 	      ;; Add header buttons.
@@ -6410,8 +6399,7 @@ in the body.  Use `gnus-header-face-alist' to highlight buttons."
 	      (dolist (button (nreverse buttons))
 		(setq st (point))
 		(insert " ")
-		(mm-handle-set-undisplayer (setq handle (cdr button)) nil)
-		(gnus-insert-mime-button handle (car button))
+		(gnus-insert-mime-button (cdr button) (car button))
 		(skip-chars-backward "\t\n ")
 		(delete-region (point) (point-max))
 		(when (> (current-column) (window-width))

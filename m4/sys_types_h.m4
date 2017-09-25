@@ -40,7 +40,7 @@ AC_DEFUN([gl_SYS_TYPES_H_DEFAULTS],
 m4_version_prereq([2.70], [], [
 
 # This is taken from the following Autoconf patch:
-# http://git.sv.gnu.org/cgit/autoconf.git/commit/?id=e17a30e98
+# https://git.sv.gnu.org/cgit/autoconf.git/commit/?id=e17a30e98
 
 m4_undefine([AC_HEADER_MAJOR])
 AC_DEFUN([AC_HEADER_MAJOR],

@@ -486,6 +486,8 @@ build will run on Windows 9X and newer systems).
        Does Emacs use a gif library?                           yes
        Does Emacs use a png library?                           yes
        Does Emacs use -lrsvg-2?                                yes
+       Does Emacs use cairo?                                   no
+       Does Emacs use -llcms2?                                 yes
        Does Emacs use imagemagick?                             no
        Does Emacs support sound?                               no
        Does Emacs use -lgpm?                                   no
@@ -796,6 +798,13 @@ build will run on Windows 9X and newer systems).
 
   (This library is also a prerequisite for several image libraries, so
   you may already have it; look for zlib1.dll or libz-1.dll.)
+
+* Optional support for lcms2 library
+
+  Emacs can expose some capabilities of the Little CMS color
+  management engine to Lisp programs using the lcms2 library.
+  Prebuilt binaries of lcms2 DLL (for 32-bit builds of Emacs) are
+  available from the ezwinports site and from the MSYS2 project.
 
 
 This file is part of GNU Emacs.

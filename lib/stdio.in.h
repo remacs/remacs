@@ -13,7 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, see <https://www.gnu.org/licenses/>.  */
 
 #if __GNUC__ >= 3
 @PRAGMA_SYSTEM_HEADER@
@@ -111,9 +111,9 @@
 #define _GL_ATTRIBUTE_FORMAT_SCANF_SYSTEM(formatstring_parameter, first_argument) \
   _GL_ATTRIBUTE_FORMAT ((__scanf__, formatstring_parameter, first_argument))
 
-/* Solaris 10 declares renameat in <unistd.h>, not in <stdio.h>.  */
+/* Solaris 10 and NetBSD 7.0 declare renameat in <unistd.h>, not in <stdio.h>.  */
 /* But in any case avoid namespace pollution on glibc systems.  */
-#if (@GNULIB_RENAMEAT@ || defined GNULIB_POSIXCHECK) && defined __sun \
+#if (@GNULIB_RENAMEAT@ || defined GNULIB_POSIXCHECK) && (defined __sun || defined __NetBSD__) \
     && ! defined __GLIBC__
 # include <unistd.h>
 #endif

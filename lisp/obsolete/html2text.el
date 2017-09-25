@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -38,8 +38,6 @@
 ;; <Global variables>
 ;;
 
-(eval-when-compile
-  (require 'cl))
 
 (defvar html2text-format-single-element-list '(("hr" . html2text-clean-hr)))
 
@@ -300,7 +298,7 @@ formatting, and then moved afterward.")
 (defun html2text-clean-blockquote (p1 p2 p3 p4)
   (html2text-delete-tags p1 p2 p3 p4))
 
-(defun html2text-clean-anchor (p1 p2 p3 p4)
+(defun html2text-clean-anchor (p1 p2 _p3 p4)
   ;; If someone can explain how to make the URL clickable I will surely
   ;; improve upon this.
   ;; Maybe `goto-addr.el' can be used here.

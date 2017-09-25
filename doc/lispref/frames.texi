@@ -2125,6 +2125,20 @@ Specifying this lets you create an Emacs window inside some other
 application's window.  (It is not certain this will be implemented; try
 it and see if it works.)
 @end ignore
+
+@vindex ns-appearance, a frame parameter
+@item ns-appearance
+Only available on macOS, if set to @code{dark} draw this frame's
+window-system window using the ``vibrant dark'' theme, otherwise use
+the system default.  The ``vibrant dark'' theme can be used to set the
+toolbar and scrollbars to a dark appearance when using an Emacs theme
+with a dark background.
+
+@vindex ns-transparent-titlebar, a frame parameter
+@item ns-transparent-titlebar
+Only available on macOS, if non-@code{nil}, set the titlebar and
+toolbar to be transparent.  This effectively sets the background color
+of both to match the Emacs background color.
 @end table
 
 

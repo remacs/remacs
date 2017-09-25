@@ -17,7 +17,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary
 
@@ -212,7 +212,8 @@ symmetric encryption will be used."
     (with-current-buffer buffer
       (erase-buffer)
       (condition-case nil
-	  (insert-file-contents-literally file)
+          (let ((coding-system-for-read 'raw-text))
+            (insert-file-contents file))
 	(error))
       (setq buffer-file-name (file-truename file))
       (set-buffer-modified-p nil)

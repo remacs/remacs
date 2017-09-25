@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -835,7 +835,7 @@ For examples of three common styles, see `diary-american-date-forms',
                                    diary-american-date-forms)
   :initialize 'custom-initialize-default
   :set (lambda (symbol value)
-         (unless (equal value (eval symbol))
+         (unless (equal value (default-value symbol))
            (custom-set-default symbol value)
            (setq diary-font-lock-keywords (diary-font-lock-keywords))
            ;; Need to redraw not just to get new font-locking, but also

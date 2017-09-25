@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Written by Eli Zaretskii <eliz@gnu.org>.
 
@@ -1448,8 +1448,14 @@ bidi_at_paragraph_end (ptrdiff_t charpos, ptrdiff_t bytepos)
   Lisp_Object start_re;
   ptrdiff_t val;
 
-  sep_re = paragraph_separate_re;
-  start_re = paragraph_start_re;
+  if (STRINGP (BVAR (current_buffer, bidi_paragraph_separate_re)))
+    sep_re = BVAR (current_buffer, bidi_paragraph_separate_re);
+  else
+    sep_re = paragraph_separate_re;
+  if (STRINGP (BVAR (current_buffer, bidi_paragraph_start_re)))
+    start_re = BVAR (current_buffer, bidi_paragraph_start_re);
+  else
+    start_re = paragraph_start_re;
 
   val = fast_looking_at (sep_re, charpos, bytepos, ZV, ZV_BYTE, Qnil);
   if (val < 0)
@@ -1523,7 +1529,10 @@ bidi_paragraph_cache_on_off (void)
 static ptrdiff_t
 bidi_find_paragraph_start (ptrdiff_t pos, ptrdiff_t pos_byte)
 {
-  Lisp_Object re = paragraph_start_re;
+  Lisp_Object re =
+    STRINGP (BVAR (current_buffer, bidi_paragraph_start_re))
+    ? BVAR (current_buffer, bidi_paragraph_start_re)
+    : paragraph_start_re;
   ptrdiff_t limit = ZV, limit_byte = ZV_BYTE;
   struct region_cache *bpc = bidi_paragraph_cache_on_off ();
   ptrdiff_t n = 0, oldpos = pos, next;
@@ -3498,10 +3507,16 @@ bidi_move_to_visually_next (struct bidi_it *bidi_it)
 	  if (sep_len >= 0)
 	    {
 	      bidi_it->new_paragraph = 1;
-	      /* Record the buffer position of the last character of the
-		 paragraph separator.  */
-	      bidi_it->separator_limit
-		= bidi_it->charpos + bidi_it->nchars + sep_len;
+	      /* Record the buffer position of the last character of
+		 the paragraph separator.  If the paragraph separator
+		 is an empty string (e.g., the regex is "^"), the
+		 newline that precedes the end of the paragraph is
+		 that last character.  */
+	      if (sep_len > 0)
+		bidi_it->separator_limit
+		  = bidi_it->charpos + bidi_it->nchars + sep_len;
+	      else
+		bidi_it->separator_limit = bidi_it->charpos;
 	    }
 	}
     }

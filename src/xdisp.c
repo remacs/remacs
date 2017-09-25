@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* New redisplay written by Gerd Moellmann <gerd@gnu.org>.
 
@@ -876,9 +876,9 @@ static int face_before_or_after_it_pos (struct it *, bool);
 static ptrdiff_t next_overlay_change (ptrdiff_t);
 static int handle_display_spec (struct it *, Lisp_Object, Lisp_Object,
 				Lisp_Object, struct text_pos *, ptrdiff_t, bool);
-static int handle_single_display_spec (struct it *, Lisp_Object,
-                                       Lisp_Object, Lisp_Object,
-                                       struct text_pos *, ptrdiff_t, int, bool);
+static int handle_single_display_spec (struct it *, Lisp_Object, Lisp_Object,
+				       Lisp_Object, struct text_pos *,
+				       ptrdiff_t, int, bool, bool);
 static int underlying_face_id (struct it *);
 
 #define face_before_it_pos(IT) face_before_or_after_it_pos (IT, true)
@@ -1195,6 +1195,10 @@ Value is the height in pixels of the line at point.  */)
     }
   SET_TEXT_POS (pt, PT, PT_BYTE);
   start_display (&it, w, pt);
+  /* Start from the beginning of the screen line, to make sure we
+     traverse all of its display elements, and thus capture the
+     correct metrics.  */
+  move_it_by_lines (&it, 0);
   it.vpos = it.current_y = 0;
   last_height = 0;
   result = make_number (line_bottom_y (&it));
@@ -1326,6 +1330,15 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
   if (charpos >= 0 && CHARPOS (top) > charpos)
     return visible_p;
 
+  /* Some Lisp hook could call us in the middle of redisplaying this
+     very window.  If, by some bad luck, we are retrying redisplay
+     because we found that the mode-line height and/or header-line
+     height needs to be updated, the assignment of mode_line_height
+     and header_line_height below could disrupt that, due to the
+     selected/nonselected window dance during mode-line display, and
+     we could infloop.  Avoid that.  */
+  int prev_mode_line_height = w->mode_line_height;
+  int prev_header_line_height = w->header_line_height;
   /* Compute exact mode line heights.  */
   if (window_wants_mode_line (w))
     {
@@ -1671,6 +1684,10 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
   else
     fprintf (stderr, "-pv pt=%d vs=%d\n", charpos, w->vscroll);
 #endif
+
+  /* Restore potentially overwritten values.  */
+  w->mode_line_height = prev_mode_line_height;
+  w->header_line_height = prev_header_line_height;
 
   return visible_p;
 }
@@ -4731,6 +4748,14 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		     ptrdiff_t bufpos, bool frame_window_p)
 {
   int replacing = 0;
+  bool enable_eval = true;
+
+  /* Support (disable-eval PROP) which is used by enriched.el.  */
+  if (CONSP (spec) && EQ (XCAR (spec), Qdisable_eval))
+    {
+      enable_eval = false;
+      spec = XCAR (XCDR (spec));
+    }
 
   if (CONSP (spec)
       /* Simple specifications.  */
@@ -4754,7 +4779,8 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	{
 	  int rv = handle_single_display_spec (it, XCAR (spec), object,
 					       overlay, position, bufpos,
-					       replacing, frame_window_p);
+					       replacing, frame_window_p,
+					       enable_eval);
 	  if (rv != 0)
 	    {
 	      replacing = rv;
@@ -4772,7 +4798,8 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	{
 	  int rv = handle_single_display_spec (it, AREF (spec, i), object,
 					       overlay, position, bufpos,
-					       replacing, frame_window_p);
+					       replacing, frame_window_p,
+					       enable_eval);
 	  if (rv != 0)
 	    {
 	      replacing = rv;
@@ -4785,7 +4812,8 @@ handle_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
     }
   else
     replacing = handle_single_display_spec (it, spec, object, overlay, position,
-					    bufpos, 0, frame_window_p);
+					    bufpos, 0, frame_window_p,
+					    enable_eval);
   return replacing;
 }
 
@@ -4830,6 +4858,8 @@ display_prop_end (struct it *it, Lisp_Object object, struct text_pos start_pos)
    don't set up IT.  In that case, FRAME_WINDOW_P means SPEC
    is intended to be displayed in a window on a GUI frame.
 
+   Enable evaluation of Lisp forms only if ENABLE_EVAL_P is true.
+
    Value is non-zero if something was found which replaces the display
    of buffer or string text.  */
 
@@ -4837,7 +4867,7 @@ static int
 handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 			    Lisp_Object overlay, struct text_pos *position,
 			    ptrdiff_t bufpos, int display_replaced,
-			    bool frame_window_p)
+			    bool frame_window_p, bool enable_eval_p)
 {
   Lisp_Object form;
   Lisp_Object location, value;
@@ -4855,6 +4885,8 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
       spec = XCDR (spec);
     }
 
+  if (!NILP (form) && !EQ (form, Qt) && !enable_eval_p)
+    form = Qnil;
   if (!NILP (form) && !EQ (form, Qt))
     {
       ptrdiff_t count = SPECPDL_INDEX ();
@@ -4903,7 +4935,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		    steps = - steps;
 		  it->face_id = smaller_face (it->f, it->face_id, steps);
 		}
-	      else if (FUNCTIONP (it->font_height))
+	      else if (FUNCTIONP (it->font_height) && enable_eval_p)
 		{
 		  /* Call function with current height as argument.
 		     Value is the new height.  */
@@ -4924,7 +4956,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 		  new_height = (XFLOATINT (it->font_height)
 				* XINT (f->lface[LFACE_HEIGHT_INDEX]));
 		}
-	      else
+	      else if (enable_eval_p)
 		{
 		  /* Evaluate IT->font_height with `height' bound to the
 		     current specified height to get the new height.  */
@@ -5235,6 +5267,7 @@ handle_single_display_spec (struct it *it, Lisp_Object spec, Lisp_Object object,
 	  it->prev_stop = 0;
 	  it->base_level_stop = 0;
 	  it->string_from_display_prop_p = true;
+	  it->cmp_it.id = -1;
 	  /* Say that we haven't consumed the characters with
 	     `display' property yet.  The call to pop_it in
 	     set_iterator_to_next will clean this up.  */
@@ -5953,6 +5986,7 @@ get_overlay_strings_1 (struct it *it, ptrdiff_t charpos, bool compute_stop_p)
       it->multibyte_p = STRING_MULTIBYTE (it->string);
       it->method = GET_FROM_STRING;
       it->from_disp_prop_p = 0;
+      it->cmp_it.id = -1;
 
       /* Force paragraph direction to be that of the parent
 	 buffer.  */
@@ -8618,6 +8652,7 @@ move_it_in_display_line_to (struct it *it,
   ptrdiff_t closest_pos UNINIT;
   ptrdiff_t prev_pos = IT_CHARPOS (*it);
   bool saw_smaller_pos = prev_pos < to_charpos;
+  bool line_number_pending = false;
 
   /* Don't produce glyphs in produce_glyphs.  */
   saved_glyph_row = it->glyph_row;
@@ -8669,9 +8704,13 @@ move_it_in_display_line_to (struct it *it,
   if (it->hpos == 0)
     {
       /* If line numbers are being displayed, produce a line number.  */
-      if (should_produce_line_number (it)
-	  && it->current_x == it->first_visible_x)
-	maybe_produce_line_number (it);
+      if (should_produce_line_number (it))
+	{
+	  if (it->current_x == it->first_visible_x)
+	    maybe_produce_line_number (it);
+	  else
+	    line_number_pending = true;
+	}
       /* If there's a line-/wrap-prefix, handle it.  */
       if (it->method == GET_FROM_BUFFER)
 	handle_line_prefix (it);
@@ -9042,6 +9081,15 @@ move_it_in_display_line_to (struct it *it,
 
 	      if (new_x > it->first_visible_x)
 		{
+		  /* If we have reached the visible portion of the
+		     screen line, produce the line number if needed.  */
+		  if (line_number_pending)
+		    {
+		      line_number_pending = false;
+		      it->current_x = it->first_visible_x;
+		      maybe_produce_line_number (it);
+		      it->current_x += new_x - it->first_visible_x;
+		    }
 		  /* Glyph is visible.  Increment number of glyphs that
 		     would be displayed.  */
 		  ++it->hpos;
@@ -17655,6 +17703,9 @@ try_window_reusing_current_matrix (struct window *w)
   if (w->vscroll || MATRIX_ROW_PARTIALLY_VISIBLE_P (w, start_row))
     return false;
 
+  /* Clear the desired matrix for the display below.  */
+  clear_glyph_matrix (w->desired_matrix);
+
   /* Give up if line numbers are being displayed, because reusing the
      current matrix might use the wrong width for line-number
      display.  */
@@ -17666,9 +17717,6 @@ try_window_reusing_current_matrix (struct window *w)
   SET_TEXT_POS_FROM_MARKER (new_start, w->start);
   start = start_row->minpos;
   start_vpos = MATRIX_ROW_VPOS (start_row, w->current_matrix);
-
-  /* Clear the desired matrix for the display below.  */
-  clear_glyph_matrix (w->desired_matrix);
 
   if (CHARPOS (new_start) <= CHARPOS (start))
     {
@@ -20479,6 +20527,7 @@ push_prefix_prop (struct it *it, Lisp_Object prop)
       it->stop_charpos = 0;
       it->prev_stop = 0;
       it->base_level_stop = 0;
+      it->cmp_it.id = -1;
 
       /* Force paragraph direction to be that of the parent
 	 buffer/string.  */
@@ -21008,6 +21057,8 @@ maybe_produce_line_number (struct it *it)
   struct glyph *e = g + scratch_glyph_row.used[TEXT_AREA];
   struct glyph *p = it->glyph_row ? it->glyph_row->glyphs[TEXT_AREA] : NULL;
   short *u = it->glyph_row ? &it->glyph_row->used[TEXT_AREA] : NULL;
+
+  eassert (it->glyph_row == NULL || it->glyph_row->used[TEXT_AREA] == 0);
 
   for ( ; g < e; g++)
     {
@@ -28076,7 +28127,7 @@ x_produce_glyphs (struct it *it)
 	      /* If the distance from the current position to the next tab
 		 stop is less than a space character width, use the
 		 tab stop after that.  */
-	      if (next_tab_x - x0 < font->space_width)
+	      if (next_tab_x - x < font->space_width)
 		next_tab_x += tab_width;
 	      if (!NILP (Vdisplay_line_numbers) && x0 >= it->lnum_pixel_width)
 		next_tab_x += (it->lnum_pixel_width
@@ -32161,6 +32212,10 @@ They are still logged to the *Messages* buffer.  */);
   DEFSYM (Qfontified, "fontified");
   DEFSYM (Qfontification_functions, "fontification-functions");
 
+  /* Name of the symbol which disables Lisp evaluation in 'display'
+     properties.  This is used by enriched.el.  */
+  DEFSYM (Qdisable_eval, "disable-eval");
+
   /* Name of the face used to highlight trailing whitespace.  */
   DEFSYM (Qtrailing_whitespace, "trailing-whitespace");
 
@@ -32709,7 +32764,7 @@ even if the actual number needs less space.
 The default value of nil means compute the space dynamically.
 Any other value is treated as nil.  */);
   Vdisplay_line_numbers_width = Qnil;
-  DEFSYM (Qdisplay_line_numbers_width, "display-line-number-width");
+  DEFSYM (Qdisplay_line_numbers_width, "display-line-numbers-width");
   Fmake_variable_buffer_local (Qdisplay_line_numbers_width);
 
   DEFVAR_LISP ("display-line-numbers-current-absolute",

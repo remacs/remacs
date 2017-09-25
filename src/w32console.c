@@ -333,7 +333,7 @@ w32con_write_glyphs (struct frame *f, register struct glyph *string,
 					   coding->produced, cursor_coords,
 					   &r))
 	    {
-	      printf ("Failed writing console attributes: %d\n",
+	      printf ("Failed writing console attributes: %lu\n",
 		      GetLastError ());
 	      fflush (stdout);
 	    }
@@ -343,7 +343,7 @@ w32con_write_glyphs (struct frame *f, register struct glyph *string,
 					    coding->produced, cursor_coords,
 					    &r))
 	    {
-	      printf ("Failed writing console characters: %d\n",
+	      printf ("Failed writing console characters: %lu\n",
 		      GetLastError ());
 	      fflush (stdout);
 	    }

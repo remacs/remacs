@@ -15,7 +15,7 @@
 ;; General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see `http://www.gnu.org/licenses/'.
+;; along with this program.  If not, see `https://www.gnu.org/licenses/'.
 
 ;;; Commentary:
 
@@ -173,8 +173,8 @@ Return nil when any other file notification watch is still active."
       tramp-verbose 0
       tramp-message-show-message nil)
 
-;; This shall happen on hydra only.
-(when (getenv "NIX_STORE")
+;; This should happen on hydra only.
+(when (getenv "EMACS_HYDRA_CI")
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 ;; We do not want to try and fail `file-notify-add-watch'.

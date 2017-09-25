@@ -544,6 +544,7 @@ w32font_text_extents (struct font *font, unsigned *code,
      information.  */
 
   /* Make array big enough to hold surrogates.  */
+  eassume (0 <= nglyphs);	/* pacify GCC warning on next line */
   wcode = alloca (nglyphs * sizeof (WORD) * 2);
   for (i = 0; i < nglyphs; i++)
     {
@@ -2188,7 +2189,7 @@ font_supported_scripts (FONTSIGNATURE * sig)
 
   /* Match a single subrange. SYM is set if bit N is set in subranges.  */
 #define SUBRANGE(n,sym) \
-  if (subranges[(n) / 32] & (1 << ((n) % 32))) \
+  if (subranges[(n) / 32] & (1U << ((n) % 32))) \
     supported = Fcons ((sym), supported)
 
   /* Match multiple subranges. SYM is set if any MASK bit is set in

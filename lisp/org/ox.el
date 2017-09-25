@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -2712,14 +2712,11 @@ from tree."
 	     (org-element-map data '(footnote-definition footnote-reference)
 	       (lambda (f)
 		 (cond
-		  ((eq (org-element-type f) 'footnote-definition) f)
-		  ((eq (org-element-property :type f) 'standard) nil)
-		  (t (let ((label (org-element-property :label f)))
-		       (when label	;Skip anonymous references.
-			 (apply
-			  #'org-element-create
-			  'footnote-definition `(:label ,label :post-blank 1)
-			  (org-element-contents f))))))))))
+		  ((eq 'footnote-definition (org-element-type f)) f)
+		  ((and (eq 'inline (org-element-property :type f))
+			(org-element-property :label f))
+		   f)
+		  (t nil))))))
     ;; If a select tag is active, also ignore the section before the
     ;; first headline, if any.
     (when selected
