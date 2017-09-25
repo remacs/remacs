@@ -893,6 +893,199 @@ sets the XTerm window title.  The default is to set the window title.
 
 * Incompatible Lisp Changes in Emacs 26.1
 
+---
+*** password-data is now a hash-table
+so that `password-read' can use any object for the `key' argument.
+
++++
+*** Command 'dired-mark-extension' now automatically prepends a '.' to the
+extension when not present.  The new command 'dired-mark-suffix' behaves
+similarly but it doesn't prepend a '.'.
+
++++
+** Certain cond/pcase/cl-case forms are now compiled using a faster jump
+table implementation.  This uses a new bytecode op 'switch', which
+isn't compatible with previous Emacs versions.  This functionality can
+be disabled by setting 'byte-compile-cond-use-jump-table' to nil.
+
+---
+** The alist 'ucs-names' is now a hash table.
+
+---
+** 'if-let' and 'when-let' are subsumed by 'if-let*' and 'when-let*'.
+The incumbent 'if-let' and 'when-let' are now marked obsolete.
+'if-let*' and 'when-let*' do not accept the single tuple special case.
+New macro 'and-let*' is an implementation of the Scheme SRFI-2 syntax
+of the same name.  'if-let*' and 'when-let*' now accept the same
+binding syntax as 'and-let*'.
+
+---
+** 'C-up', 'C-down', 'C-left' and 'C-right' are now defined in term
+mode to send the same escape sequences that xterm does.  This makes
+things like forward-word in readline work.
+
+---
+** hideshow mode got four key bindings that are analogous to outline
+mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e.'
+
+---
+** Customizable variable 'query-replace-from-to-separator'
+now doesn't propertize the string value of the separator.
+Instead, text properties are added by query-replace-read-from.
+Additionally, the new nil value restores pre-24.5 behavior
+of not providing replacement pairs via the history.
+
+---
+** Some obsolete functions, variables, and faces have been removed:
+*** make-variable-frame-local.  Variables cannot be frame-local any more.
+*** From subr.el: window-dot, set-window-dot, read-input, show-buffer,
+eval-current-buffer, string-to-int
+*** icomplete-prospects-length.
+*** All the default-FOO variables that hold the default value of the
+FOO variable.  Use 'default-value' and 'setq-default' to access and
+change FOO, respectively.  The exhaustive list of removed variables is:
+'default-mode-line-format', 'default-header-line-format',
+'default-line-spacing', 'default-abbrev-mode', 'default-ctl-arrow',
+'default-truncate-lines', 'default-left-margin', 'default-tab-width',
+'default-case-fold-search', 'default-left-margin-width',
+'default-right-margin-width', 'default-left-fringe-width',
+'default-right-fringe-width', 'default-fringes-outside-margins',
+'default-scroll-bar-width', 'default-vertical-scroll-bar',
+'default-indicate-empty-lines', 'default-indicate-buffer-boundaries',
+'default-fringe-indicator-alist', 'default-fringe-cursor-alist',
+'default-scroll-up-aggressively', 'default-scroll-down-aggressively',
+'default-fill-column', 'default-cursor-type',
+'default-cursor-in-non-selected-windows',
+'default-buffer-file-coding-system', 'default-major-mode', and
+'default-enable-multibyte-characters'.
+*** Many variables obsoleted in 22.1 referring to face symbols
+
++++
+** The variable 'text-quoting-style' no longer affects the treatment
+of curved quotes in format arguments to functions like 'message' and
+'format-message'.  In particular, when this variable's value is
+'grave', all quotes in formats are output as-is.
+
+---
+** Functions like 'check-declare-file' and 'check-declare-directory'
+now generate less chatter and more-compact diagnostics.  The auxiliary
+function 'check-declare-errmsg' has been removed.
+
++++
+** The regular expression character class [:blank:] now matches
+Unicode horizontal whitespace as defined in the Unicode Technical
+Standard #18.  If you only want to match space and tab, use [ \t]
+instead.
+
++++
+** 'min' and 'max' no longer round their results.
+Formerly, they returned a floating-point value if any argument was
+floating-point, which was sometimes numerically incorrect.  For
+example, on a 64-bit host (max 1e16 10000000000000001) now returns its
+second argument instead of its first.
+
++++
+** The variable 'old-style-backquotes' has been made internal and
+renamed to 'lread--old-style-backquotes'.  No user code should use
+this variable.
+
+---
+** To avoid confusion caused by "smart quotes", the reader no longer
+accepts Lisp symbols which begin with the following quotation
+characters: ‘’‛“”‟〞＂＇, unless they are escaped with backslash.
+
++++
+** 'default-file-name-coding-system' now defaults to a coding system
+that does not process CRLF.  For example, it defaults to utf-8-unix
+instead of to utf-8.  Before this change, Emacs would sometimes
+mishandle file names containing these control characters.
+
++++
+** 'file-attributes', 'file-symlink-p' and 'make-symbolic-link' no
+longer quietly mutate the target of a local symbolic link, so that
+Emacs can access and copy them reliably regardless of their contents.
+The following changes are involved.
+
+---
+*** 'file-attributes' and 'file-symlink-p' no longer prepend "/:" to
+symbolic links whose targets begin with "/" and contain ":".  For
+example, if a symbolic link "x" has a target "/y:z:", '(file-symlink-p
+"x")' now returns "/y:z:" rather than "/:/y:z:".
+
+---
+*** 'make-symbolic-link' no longer looks for file name handlers of
+target when creating a symbolic link.  For example,
+'(make-symbolic-link "/y:z:" "x")' now creates a symbolic link to
+"/y:z:" instead of failing.
+
++++
+*** 'make-symbolic-link' removes the remote part of a link target if
+target and newname have the same remote part.  For example,
+'(make-symbolic-link "/x:y:a" "/x:y:b")' creates a link with the
+literal string "a"; and '(make-symbolic-link "/x:y:a" "/x:z:b")'
+creates a link with the literal string "/x:y:a" instead of failing.
+
++++
+*** 'make-symbolic-link' now expands a link target with leading "~"
+only when the optional third arg is an integer, as when invoked
+interactively.  For example, '(make-symbolic-link "~y" "x")' now
+creates a link with target the literal string "~y"; to get the old
+behavior, use '(make-symbolic-link (expand-file-name "~y") "x")'.  To
+avoid this expansion in interactive use, you can now prefix the link
+target with "/:".  For example, '(make-symbolic-link "/:~y" "x" 1)'
+now creates a link to literal "~y".
+
++++
+** 'file-truename' returns a quoted file name if the target of a
+symbolic link has remote file name syntax.
+
++++
+** Module functions are now implemented slightly differently; in
+particular, the function 'internal--module-call' has been removed.
+Code that depends on undocumented internals of the module system might
+break.
+
+---
+** The argument LOCKNAME of 'write-region' is propagated to file name
+handlers now.
+
+---
+** When built against recent versions of GTK+, Emacs always uses
+gtk_window_move for moving frames and ignores the value of the
+variable 'x-gtk-use-window-move'.  The variable is now obsolete.
+
++++
+** Several functions that create or rename files now treat their
+destination argument specially only when it is a directory name, i.e.,
+when it ends in '/' on GNU and other POSIX-like systems.  When the
+destination argument D of one of these functions is an existing
+directory and the intent is to act on an entry in that directory, D
+should now be a directory name.  For example, (rename-file "e" "f/")
+renames to 'f/e'.  Although this formerly happened sometimes even when
+D was not a directory name, as in (rename-file "e" "f") where 'f'
+happened to be a directory, the old behavior often contradicted the
+documentation and had inherent races that led to security holes.  A
+call like (rename-file C D) that used the old, undocumented behavior
+can be written as (rename-file C (file-name-as-directory D)), a
+formulation portable to both older and newer versions of Emacs.
+Affected functions include add-name-to-file, copy-directory,
+copy-file, format-write-file, gnus-copy-file, make-symbolic-link,
+rename-file, thumbs-rename-images, and write-file.
+
+---
+** The list returned by 'overlays-at' is now in decreasing priority order.
+The documentation of this function always said the order should be
+that of decreasing priority, if the 2nd argument of the function is
+non-nil, but the code returned the list in the increasing order of
+priority instead.  Now the code does what the documentation says it
+should do.
+
+---
+** 'eldoc-message' only accepts one argument now.  Programs that
+called it with multiple arguments before should pass them through
+'format' first.  Even that is discouraged: for ElDoc support, you
+should set 'eldoc-documentation-function' instead of calling
+'eldoc-message' directly.
 
 * Lisp Changes in Emacs 26.1
 
