@@ -112,11 +112,11 @@ C:\emacs\emacs-24.5:
 ** From the Git repository
 
 To download the Git repository, do something like the following -- this will
-put the Emacs source into C:\emacs\emacs-25:
+put the Emacs source into C:\emacs\emacs-26:
 
   mkdir /c/emacs
   cd /c/emacs
-  git clone git://git.sv.gnu.org/emacs.git emacs-25
+  git clone git://git.sv.gnu.org/emacs.git emacs-26
 
 (We recommend using the command shown on Savannah Emacs project page.)
 
@@ -129,7 +129,7 @@ First we need to switch to the MinGW-w64 environment.  Exit the MSYS2 BASH
 console and run mingw64_shell.bat in the C:\msys64 folder, then cd back to
 your Emacs source directory, e.g.:
 
-  cd /c/emacs/emacs-25
+  cd /c/emacs/emacs-26
 
 ** Run autogen
 
@@ -146,7 +146,7 @@ that the example given here is just a simple one - for more information
 on the options available please see the INSTALL file in this directory.
 
 The '--prefix' option specifies a location for the resulting binary files,
-which 'make install' will use - in this example we set it to C:\emacs\emacs-25.
+which 'make install' will use - in this example we set it to C:\emacs\emacs-26.
 If a prefix is not specified the files will be put in the standard Unix
 directories located in your C:\msys64 directory, but this is not recommended.
 
@@ -154,7 +154,7 @@ Note also that we need to disable Imagemagick because Emacs does not yet
 support it on Windows.
 
   PKG_CONFIG_PATH=/mingw64/lib/pkgconfig \
-  ./configure --prefix=/c/emacs/emacs-25 --without-imagemagick
+  ./configure --prefix=/c/emacs/emacs-26 --without-imagemagick
 
 ** Run make
 
