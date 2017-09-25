@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -950,7 +950,7 @@ textual parts.")
                            internal-move-group server message-id
                            nnimap-request-articles-find-limit)))))
 	  ;; Move the article to a different method.
-	  (when-let ((result (eval accept-form)))
+	  (when-let* ((result (eval accept-form)))
 	    (nnimap-change-group group server)
 	    (nnimap-delete-article article)
 	    result))))))

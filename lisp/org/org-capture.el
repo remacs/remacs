@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Commentary:
@@ -242,8 +242,10 @@ be replaced with content and expanded:
               happens after expanding non-interactive %-escapes, those can
               be used to fill the expression.
   %<...>      The result of format-time-string on the ... format specification.
-  %t          Time stamp, date only.
-  %T          Time stamp with date and time.
+  %t          Time stamp, date only.  The time stamp is the current time,
+              except when called from agendas with `\\[org-agenda-capture]' or
+              with `org-capture-use-agenda-date' set.
+  %T          Time stamp as above, with date and time.
   %u, %U      Like the above, but inactive time stamps.
   %i          Initial content, copied from the active region.  If %i is
               indented, the entire inserted text will be indented as well.
@@ -261,7 +263,8 @@ be replaced with content and expanded:
   %^g         Prompt for tags, with completion on tags in target file.
   %^G         Prompt for tags, with completion on all tags in all agenda files.
   %^t         Like %t, but prompt for date.  Similarly %^T, %^u, %^U.
-              You may define a prompt like: %^{Please specify birthday}t
+              You may define a prompt like: %^{Please specify birthday}t.
+              The default date is that of %t, see above.
   %^C         Interactive selection of which kill or clip to use.
   %^L         Like %^C, but insert as link.
   %^{prop}p   Prompt the user for a value for property `prop'.
@@ -1126,6 +1129,7 @@ may have been stored before."
 			(mapconcat 'identity (split-string txt "\n")
 				   "\n  "))))
     ;; Prepare surrounding empty lines.
+    (unless (bolp) (insert "\n"))
     (org-capture-empty-lines-before)
     (setq beg (point))
     (unless (eolp) (save-excursion (insert "\n")))
@@ -1143,10 +1147,9 @@ may have been stored before."
     (insert txt)
     (org-capture-empty-lines-after)
     (org-capture-position-for-last-stored beg)
-    (forward-char 1)
     (setq end (point))
-    (org-capture-mark-kill-region beg (1- end))
-    (org-capture-narrow beg (1- end))
+    (org-capture-mark-kill-region beg end)
+    (org-capture-narrow beg end)
     (if (or (re-search-backward "%\\?" beg t)
 	    (re-search-forward "%\\?" end t))
 	(replace-match ""))))
@@ -1575,12 +1578,16 @@ The template may still contain \"%?\" for cursor positioning."
 		  (replace-match "\\1" nil nil v-a)
 		v-a))
 	 (v-n user-full-name)
-	 (v-k (and (marker-buffer org-clock-marker)
-		   (org-no-properties org-clock-heading)))
+	 (v-k (if (marker-buffer org-clock-marker)
+		  (org-no-properties org-clock-heading)
+		""))
 	 (v-K (if (marker-buffer org-clock-marker)
 		  (org-make-link-string
-		   (buffer-file-name (marker-buffer org-clock-marker))
-		   org-clock-heading)))
+		   (format "%s::*%s"
+			   (buffer-file-name (marker-buffer org-clock-marker))
+			   v-k)
+		   v-k)
+		""))
 	 (v-f (or (org-capture-get :original-file-nondirectory) ""))
 	 (v-F (or (org-capture-get :original-file) ""))
 	 (org-capture--clipboards
@@ -1744,24 +1751,27 @@ The template may still contain \"%?\" for cursor positioning."
 			 (_ (error "Invalid `org-capture--clipboards' value: %S"
 				   org-capture--clipboards)))))
 		    ("p" (org-set-property prompt nil))
-		    ((guard key)
+		    ((or "t" "T" "u" "U")
 		     ;; These are the date/time related ones.
 		     (let* ((upcase? (equal (upcase key) key))
-			    (org-time-was-given upcase?)
-			    (org-end-time-was-given)
+			    (org-end-time-was-given nil)
 			    (time (org-read-date upcase? t nil prompt)))
-		       (org-insert-time-stamp
-			time org-time-was-given
-			(member key '("u" "U"))
-			nil nil (list org-end-time-was-given))))
-		    (_
+		       (let ((org-time-was-given upcase?))
+			 (org-insert-time-stamp
+			  time org-time-was-given
+			  (member key '("u" "U"))
+			  nil nil (list org-end-time-was-given)))))
+		    (`nil
 		     (push (org-completing-read
 			    (concat (or prompt "Enter string")
 				    (and default (format " [%s]" default))
 				    ": ")
 			    completions nil nil nil nil default)
 			   strings)
-		     (insert (car strings)))))))))
+		     (insert (car strings)))
+		    (_
+		     (error "Unknown template placeholder: \"%%^%s\""
+			    key))))))))
 
 	;; Replace %n escapes with nth %^{...} string.
 	(setq strings (nreverse strings))
@@ -1892,9 +1902,7 @@ Assume sexps have been marked with
 		       (if jump-to-captured '(:jump-to-captured t)))))
 
 	   org-remember-templates))))
-;;; The function was made obsolete by commit 65399674d5 of
-;;; 2013-02-22.  This make-obsolete call was added 2016-09-01.
-(make-obsolete 'org-capture-import-remember-templates "use the `org-capture-templates' variable instead." "Org 9.0")
+
 
 (provide 'org-capture)
 

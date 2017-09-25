@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
@@ -3465,8 +3465,9 @@ It returns the number of characters changed.  */)
   cnt = 0;
   for (; pos < end_pos; )
     {
-      register unsigned char *p = BYTE_POS_ADDR (pos_byte);
-      unsigned char *str, buf[MAX_MULTIBYTE_LENGTH];
+      unsigned char *p = BYTE_POS_ADDR (pos_byte);
+      unsigned char *str UNINIT;
+      unsigned char buf[MAX_MULTIBYTE_LENGTH];
       int len, str_len;
       int oc;
       Lisp_Object val;

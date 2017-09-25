@@ -19,7 +19,7 @@
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
-# along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+# along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 # written by Paul Eggert
 
@@ -28,16 +28,16 @@ GNULIB_URL=git://git.savannah.gnu.org/gnulib.git
 GNULIB_MODULES='
   alloca-opt binary-io byteswap c-ctype c-strcase
   careadlinkat close-stream
-  crypto/md5 crypto/sha1 crypto/sha256 crypto/sha512
-  diffseq dtoastr dtotimespec dup2 environ execinfo faccessat
+  d-type diffseq dtoastr dtotimespec dup2
+  environ execinfo explicit_bzero faccessat
   fcntl fcntl-h fdatasync fdopendir
   filemode filevercmp flexmember fstatat fsync
   getloadavg getopt-gnu gettime gettimeofday gitlog-to-changelog
   ignore-value intprops largefile lstat
-  manywarnings memrchr minmax mktime
+  manywarnings memrchr minmax mktime nstrftime
   pipe2 pselect pthread_sigmask putenv qcopy-acl readlink readlinkat
   socklen stat-time std-gnu11 stdalign stddef stdio
-  stpcpy strftime strtoimax symlink sys_stat
+  stpcpy strtoimax symlink sys_stat
   sys_time time time_r time_rz timegm timer-time timespec-add timespec-sub
   update-copyright unlocked-io utimens
   vla warnings
@@ -46,7 +46,7 @@ GNULIB_MODULES='
 AVOIDED_MODULES='
   close dup fchdir fstat
   malloc-posix msvc-inval msvc-nothrow
-  open openat-die opendir raise
+  openat-die opendir raise
   save-cwd select setenv sigprocmask stat stdarg stdbool
   threadlib tzset unsetenv utime utime-h
 '
@@ -104,6 +104,7 @@ done
 rm -- "$src"lib/gl_openssl.h "$src"m4/fcntl-o.m4 \
       "$src"m4/gl-openssl.m4 \
       "$src"m4/gnulib-cache.m4 "$src"m4/gnulib-tool.m4 \
+      "$src"m4/manywarnings-c++.m4 \
       "$src"m4/warn-on-use.m4 "$src"m4/wint_t.m4 &&
 cp -- "$gnulib_srcdir"/build-aux/texinfo.tex "$src"doc/misc &&
 cp -- "$gnulib_srcdir"/build-aux/config.guess \

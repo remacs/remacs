@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -167,12 +167,32 @@ Each function is called with ARG=1."
     ["Export values" ses-export-tsv t]
     ["Export formulas" ses-export-tsf t]))
 
+(defconst ses-completion-keys '("\M-\C-i" "\C-i")
+  "List for keys that can be used for completion while editing.")
+
+(defvar ses--completion-table nil
+  "Set globally to what completion table to use depending on type
+  of completion (local printers, cells, etc.). We need to go
+  through a local variable to pass the SES buffer local variable
+  to completing function while the current buffer is the
+  minibuffer.")
+
+(defvar ses--list-orig-buffer nil
+  "Calling buffer for SES listing help. Used for listing local
+  printers or renamed cells.")
+
+
 (defconst ses-mode-edit-map
   (let ((keys '("\C-c\C-r"    ses-insert-range
 		"\C-c\C-s"    ses-insert-ses-range
 		[S-mouse-3]   ses-insert-range-click
 		[C-S-mouse-3] ses-insert-ses-range-click
-		"\M-\C-i"     lisp-complete-symbol)) ; FIXME obsolete
+                "\C-h\C-p"    ses-list-local-printers
+                "\C-h\C-n"    ses-list-named-cells
+		"\M-\C-i"     lisp-complete-symbol)) ; redefined
+                                                     ; dynamically in
+                                                     ; editing
+                                                     ; functions
 	(newmap (make-sparse-keymap)))
     (set-keymap-parent newmap minibuffer-local-map)
     (while keys
@@ -2447,6 +2467,42 @@ to are recalculated first."
 ;;----------------------------------------------------------------------------
 ;; Input of cell formulas
 ;;----------------------------------------------------------------------------
+(defun ses-edit-cell-complete-symbol ()
+  (interactive)
+  (let ((completion-at-point-functions (cons 'ses--edit-cell-completion-at-point-function
+                                             completion-at-point-functions)))
+    (completion-at-point)))
+
+(defun ses--edit-cell-completion-at-point-function ()
+  (and
+   ses--completion-table
+   (let* ((bol (save-excursion (move-beginning-of-line nil) (point)))
+         start end collection
+         (prefix
+          (save-excursion
+            (setq end (point))
+            (backward-sexp)
+            (if (< (point) bol)
+                (progn
+                  (setq start bol)
+                  (buffer-substring start end))
+              (setq start (point))
+              (forward-sexp)
+              (if (>= (point) end)
+                  (progn
+                    (setq end (point))
+                    (buffer-substring start end))
+                nil))))
+         prefix-length)
+    (when (and prefix (null (string= prefix "")))
+      (setq prefix-length (length prefix))
+      (maphash (lambda (key val)
+                 (let ((key-name (symbol-name key)))
+                   (when (and (>= (length key-name) prefix-length)
+                              (string= prefix (substring key-name 0 prefix-length)))
+                     (push key-name collection))))
+               ses--completion-table)
+      (and collection (list start end collection))))))
 
 (defun ses-edit-cell (row col newval)
   "Display current cell contents in minibuffer, for editing.  Returns nil if
@@ -2468,6 +2524,10 @@ cell formula was unsafe and user declined confirmation."
        (if (stringp formula)
 	   ;; Position cursor inside close-quote.
 	   (setq initial (cons initial (length initial))))
+       (dolist (key ses-completion-keys)
+         (define-key ses-mode-edit-map key 'ses-edit-cell-complete-symbol))
+       ;; make it globally visible, so that it can be visible from the minibuffer.
+       (setq ses--completion-table ses--named-cell-hashmap)
        (list row col
 	     (read-from-minibuffer (format "Cell %s: " ses--curcell)
 				   initial
@@ -2562,6 +2622,40 @@ cells."
 ;;----------------------------------------------------------------------------
 ;; Input of cell-printer functions
 ;;----------------------------------------------------------------------------
+(defun ses-read-printer-complete-symbol ()
+  (interactive)
+  (let ((completion-at-point-functions (cons 'ses--read-printer-completion-at-point-function
+                                             completion-at-point-functions)))
+    (completion-at-point)))
+
+(defun ses--read-printer-completion-at-point-function ()
+  (let* ((bol (save-excursion (move-beginning-of-line nil) (point)))
+         start end collection
+         (prefix
+          (save-excursion
+            (setq end (point))
+            (backward-sexp)
+            (if (< (point) bol)
+                (progn
+                  (setq start bol)
+                  (buffer-substring start end))
+              (setq start (point))
+              (forward-sexp)
+              (if (>= (point) end)
+                  (progn
+                    (setq end (point))
+                    (buffer-substring start end))
+                nil))))
+         prefix-length)
+    (when prefix
+      (setq prefix-length (length prefix))
+      (maphash (lambda (key val)
+                 (let ((key-name (symbol-name key)))
+                   (when (and (>= (length key-name) prefix-length)
+                              (string= prefix (substring key-name 0 prefix-length)))
+                     (push key-name collection))))
+               ses--completion-table)
+      (and collection (list start end collection)))))
 
 (defun ses-read-printer (prompt default)
   "Common code for functions `ses-read-cell-printer', `ses-read-column-printer',
@@ -2574,6 +2668,10 @@ canceled."
     (setq prompt (format "%s (default %S): "
 			 (substring prompt 0 -2)
 			 default)))
+  (dolist (key ses-completion-keys)
+    (define-key ses-mode-edit-map key 'ses-read-printer-complete-symbol))
+  ;; make it globally visible, so that it can be visible from the minibuffer.
+  (setq ses--completion-table ses--local-printer-hashmap)
   (let ((new (read-from-minibuffer prompt
 				   nil ; Initial contents.
 				   ses-mode-edit-map
@@ -3282,6 +3380,78 @@ is non-nil.  Newlines and tabs in the export text are escaped."
     (setq result (apply #'concat (nreverse result)))
     (kill-new result)))
 
+;;----------------------------------------------------------------------------
+;; Interactive help on symbols
+;;----------------------------------------------------------------------------
+
+(defun ses-list-local-printers (&optional local-printer-hashmap)
+  "List local printers in a help buffer. Can be called either
+during editing a printer or a formula, or while in the SES
+buffer."
+  (interactive
+   (list (cond
+          ((derived-mode-p 'ses-mode) ses--local-printer-hashmap)
+          ((minibufferp) ses--completion-table)
+          ((derived-mode-p 'help-mode) nil)
+          (t (error "Not in a SES buffer")))))
+  (when local-printer-hashmap
+    (let ((ses--list-orig-buffer (or ses--list-orig-buffer (current-buffer))))
+      (help-setup-xref
+       (list (lambda (local-printer-hashmap buffer)
+               (let ((ses--list-orig-buffer
+                      (if (buffer-live-p buffer) buffer)))
+                 (ses-list-local-printers local-printer-hashmap)))
+             local-printer-hashmap ses--list-orig-buffer)
+       (called-interactively-p 'interactive))
+
+      (save-excursion
+        (with-help-window (help-buffer)
+          (if (= 0 (hash-table-count local-printer-hashmap))
+              (princ "No local printers defined.")
+            (princ "List of local printers definitions:\n")
+            (maphash (lambda (key val)
+                       (princ key)
+                       (princ " as ")
+                       (prin1 (ses--locprn-def val))
+                       (princ "\n"))
+                     local-printer-hashmap))
+          (with-current-buffer standard-output
+            (buffer-string)))))))
+
+(defun ses-list-named-cells (&optional named-cell-hashmap)
+  "List named cells in a help buffer. Can be called either
+during editing a printer or a formula, or while in the SES
+buffer."
+  (interactive
+   (list (cond
+          ((derived-mode-p 'ses-mode) ses--named-cell-hashmap)
+          ((minibufferp) ses--completion-table)
+          ((derived-mode-p 'help-mode) nil)
+          (t (error "Not in a SES buffer")))))
+  (when named-cell-hashmap
+    (let ((ses--list-orig-buffer (or ses--list-orig-buffer (current-buffer))))
+      (help-setup-xref
+       (list (lambda (named-cell-hashmap buffer)
+               (let ((ses--list-orig-buffer
+                      (if (buffer-live-p buffer) buffer)))
+                 (ses-list-named-cells named-cell-hashmap)))
+             named-cell-hashmap ses--list-orig-buffer)
+       (called-interactively-p 'interactive))
+
+      (save-excursion
+        (with-help-window (help-buffer)
+          (if (= 0 (hash-table-count named-cell-hashmap))
+              (princ "No cell was renamed.")
+            (princ "List of named cells definitions:\n")
+            (maphash (lambda (key val)
+                       (princ key)
+                       (princ " for ")
+                       (prin1 (ses-create-cell-symbol (car val) (cdr val)))
+                       (princ "\n"))
+                     named-cell-hashmap))
+          (with-current-buffer standard-output
+            (buffer-string)))))))
+
 
 ;;----------------------------------------------------------------------------
 ;; Other user commands
@@ -3464,8 +3634,12 @@ highlighted range in the spreadsheet."
 
 (defun ses-replace-name-in-formula (formula old-name new-name)
   (let ((new-formula formula))
-    (unless (and (consp formula)
-		 (eq (car-safe formula) 'quote))
+    (cond
+     ((eq (car-safe formula) 'quote))
+     ((symbolp formula)
+      (if (eq formula old-name)
+          (setq new-formula new-name)))
+     ((consp formula)
       (while formula
 	(let ((elt (car-safe formula)))
 	  (cond
@@ -3474,8 +3648,8 @@ highlighted range in the spreadsheet."
 	   ((and (symbolp elt)
 		 (eq (car-safe formula) old-name))
 	    (setcar formula new-name))))
-	(setq formula (cdr formula))))
-    new-formula))
+	(setq formula (cdr formula)))))
+  new-formula))
 
 (defun ses-rename-cell (new-name &optional cell)
   "Rename current cell."

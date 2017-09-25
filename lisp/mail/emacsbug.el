@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -187,7 +187,7 @@ Prompts for bug subject.  Leaves you in a mail buffer."
 	 'face 'link
 	 'help-echo (concat "mouse-2, RET: Follow this link")
 	 'action (lambda (button)
-		   (browse-url "http://debbugs.gnu.org/"))
+		   (browse-url "https://debbugs.gnu.org/"))
 	 'follow-link t)
 
 	(insert ".  Please check that

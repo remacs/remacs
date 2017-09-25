@@ -15,7 +15,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -2522,20 +2522,6 @@ if x:
    (should (string= (python-shell-internal-get-process-name)
                     (format "%s[%s]" python-shell-internal-buffer-name (buffer-name))))))
 
-(ert-deftest python-shell-calculate-command-1 ()
-  "Check the command to execute is calculated correctly.
-Using `python-shell-interpreter' and
-`python-shell-interpreter-args'."
-  (skip-unless (executable-find python-tests-shell-interpreter))
-  (let ((python-shell-interpreter (executable-find
-                                   python-tests-shell-interpreter))
-        (python-shell-interpreter-args "-B"))
-    (should (string=
-             (format "%s %s"
-                     (shell-quote-argument python-shell-interpreter)
-                     python-shell-interpreter-args)
-             (python-shell-calculate-command)))))
-
 (ert-deftest python-shell-calculate-pythonpath-1 ()
   "Test PYTHONPATH calculation."
   (let ((process-environment '("PYTHONPATH=/path0"))
@@ -2575,7 +2561,7 @@ Using `python-shell-interpreter' and
   "Test `python-shell-virtualenv-root' modification."
   (let* ((python-shell-virtualenv-root "/env")
          (process-environment
-          (let (process-environment process-environment)
+          (let ((process-environment process-environment))
             (setenv "PYTHONHOME" "/home")
             (setenv "VIRTUAL_ENV")
             (python-shell-calculate-process-environment))))

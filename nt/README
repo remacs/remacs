@@ -9,9 +9,9 @@
   subprocesses, windowing features (fonts, colors, scroll bars, multiple
   frames, etc.), and networking support.
 
-  Precompiled distributions are also available; ftp to
+  Precompiled distributions are also available; see:
 
-	ftp://ftp.gnu.org/gnu/emacs/windows/
+	https://ftp.gnu.org/gnu/emacs/windows/
 
   for the latest precompiled distributions.
 

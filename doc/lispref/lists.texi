@@ -1589,16 +1589,20 @@ keys may not be symbols:
 @end smallexample
 @end defun
 
-@defun alist-get key alist &optional default remove
-This function is like @code{assq}, but instead of returning the entire
-association for @var{key} in @var{alist},
-@w{@code{(@var{key} . @var{value})}}, it returns just the @var{value}.
-If @var{key} is not found in @var{alist}, it returns @var{default}.
+@defun alist-get key alist &optional default remove testfn
+This function is similar to @code{assq}.  It finds the first
+association @w{@code{(@var{key} . @var{value})}} by comparing
+@var{key} with @var{alist} elements, and, if found, returns the
+@var{value} of that association.  If no association is found, the
+function returns @var{default}.  Comparison of @var{key} against
+@var{alist} elements uses the function specified by @var{testfn},
+defaulting to @code{eq}.
 
-This is a generalized variable (@pxref{Generalized Variables}) that
-can be used to change a value with @code{setf}.  When using it to set
-a value, optional argument @var{remove} non-@code{nil} means to remove
-@var{key} from @var{alist} if the new value is @code{eql} to @var{default}.
+This is a generalized variable (@pxref{Generalized Variables})
+that can be used to change a value with @code{setf}.  When
+using it to set a value, optional argument @var{remove} non-@code{nil}
+means to remove @var{key}'s association from @var{alist} if the new
+value is @code{eql} to @var{default}.
 @end defun
 
 @defun rassq value alist

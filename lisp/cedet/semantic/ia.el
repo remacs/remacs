@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -163,7 +163,7 @@ Completion options are calculated with `semantic-analyze-possible-completions'."
     (if (not syms)
 	(progn
 	  (message "No smart completions found.")
-          ;; Disabled - see http://debbugs.gnu.org/14522
+          ;; Disabled - see https://debbugs.gnu.org/14522
 	  ;; (message "No smart completions found.  Trying Senator.")
 	  ;; (when (semantic-analyze-context-p a)
 	  ;;   ;; This is a quick way of getting a nice completion list

@@ -20,7 +20,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -225,7 +225,7 @@ If optional argument IGNORE-SELF is non-nil, don't return the current nick."
                  (erc-get-channel-user-list)))
         (nicks nil))
     (dolist (user users)
-      (unless (or (not user) 
+      (unless (or (not user)
                   (and ignore-self
                        (string= (erc-server-user-nickname (car user))
                                 (erc-current-nick))))
@@ -286,4 +286,3 @@ up to where point is right now."
 ;; Local Variables:
 ;; indent-tabs-mode: nil
 ;; End:
-

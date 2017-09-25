@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
@@ -1415,7 +1415,7 @@ The function `default-value' gets the default value and `set-default' sets it.  
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
   union Lisp_Val_Fwd valcontents;
-  bool forwarded;
+  bool forwarded UNINIT;
 
   CHECK_SYMBOL (variable);
   sym = XSYMBOL (variable);
@@ -2049,7 +2049,7 @@ uintmax_t
 cons_to_unsigned (Lisp_Object c, uintmax_t max)
 {
   bool valid = false;
-  uintmax_t val;
+  uintmax_t val UNINIT;
   if (INTEGERP (c))
     {
       valid = XINT (c) >= 0;
@@ -2103,7 +2103,7 @@ intmax_t
 cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 {
   bool valid = false;
-  intmax_t val;
+  intmax_t val UNINIT;
   if (INTEGERP (c))
     {
       val = XINT (c);

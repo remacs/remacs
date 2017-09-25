@@ -61,16 +61,28 @@ you to operate on the listed files.  @xref{Directories}.
 @kindex C-x d
 @vindex dired-listing-switches
   To invoke Dired, type @kbd{C-x d} (@code{dired}).  This reads a
-directory name using the minibuffer, and opens a @dfn{Dired buffer}
+directory's name using the minibuffer, and opens a @dfn{Dired buffer}
 listing the files in that directory.  You can also supply a wildcard
 file name pattern as the minibuffer argument, in which case the Dired
-buffer lists all files matching that pattern.  The usual history and
-completion commands can be used in the minibuffer; in particular,
-@kbd{M-n} puts the name of the visited file (if any) in the minibuffer
-(@pxref{Minibuffer History}).
+buffer lists all files matching that pattern.  A wildcard may appear
+in the directory part as well.
+For instance,
+
+@example
+C-x d  ~/foo/*.el  @key{RET}
+C-x d  ~/foo/*/*.el  @key{RET}
+@end example
+
+The former lists all the files with extension @samp{.el} in directory
+@samp{foo}.  The latter lists the files with extension @samp{.el}
+in subdirectories 2 levels of depth below @samp{foo}.
+
+The usual history and completion commands can be used in the minibuffer;
+in particular, @kbd{M-n} puts the name of the visited file (if any) in
+the minibuffer (@pxref{Minibuffer History}).
 
   You can also invoke Dired by giving @kbd{C-x C-f} (@code{find-file})
-a directory name.
+a directory's name.
 
   The variable @code{dired-listing-switches} specifies the options to
 give to @command{ls} for listing the directory; this string
@@ -224,6 +236,14 @@ Dired cannot delete directories that are nonempty.  If the variable
 @code{dired-recursive-deletes} is non-@code{nil}, then Dired can
 delete nonempty directories including all their contents.  That can
 be somewhat risky.
+Even if you have set @code{dired-recursive-deletes} to @code{nil},
+you might want sometimes to delete recursively directories
+without being asked for confirmation for all of them.  This is handy
+when you have marked many directories for deletion and you are very
+sure that all of them can safely being deleted.  For every nonempty
+directory you are asked for confirmation; if you answer @code{all},
+then all the remaining directories will be deleted without more
+questions.
 
 @vindex delete-by-moving-to-trash
   If you change the variable @code{delete-by-moving-to-trash} to
@@ -1115,7 +1135,7 @@ parent directory.
 @findex dired-next-dirline
 @kindex > @r{(Dired)}
 @item >
-Move down to the next directory-file line (@code{dired-prev-dirline}).
+Move down to the next directory-file line (@code{dired-next-dirline}).
 @end table
 
 @node Hiding Subdirectories
@@ -1413,7 +1433,7 @@ rotation is lossless, and uses an external utility called JpegTRAN.
 @kindex + @r{(Dired)}
 @findex dired-create-directory
   The command @kbd{+} (@code{dired-create-directory}) reads a
-directory name, and creates that directory.  It signals an error if
+directory's name, and creates that directory.  It signals an error if
 the directory already exists.
 
 @cindex searching multiple files via Dired

@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -517,10 +517,12 @@ updates before the buffer is saved, use `before-save-hook'.")
     'write-contents-functions "22.1")
 (defvar write-contents-functions nil
   "List of functions to be called before writing out a buffer to a file.
-Only used by `save-buffer'.
-If one of them returns non-nil, the file is considered already written
-and the rest are not called and neither are the functions in
-`write-file-functions'.
+
+Only used by `save-buffer'.  If one of them returns non-nil, the
+file is considered already written and the rest are not called
+and neither are the functions in `write-file-functions'.  This
+hook can thus be used to create save behavior for buffers that
+are not visiting a file at all.
 
 This variable is meant to be used for hooks that pertain to the
 buffer's contents, not to the particular visited file; thus,
@@ -792,16 +794,6 @@ The path separator is colon in GNU and GNU-like systems."
                     (lambda (f) (and (file-directory-p f) 'dir-ok)))
        (error "No such directory found via CDPATH environment variable"))))
 
-(defsubst directory-name-p (name)
-  "Return non-nil if NAME ends with a directory separator character."
-  (let ((len (length name))
-        (lastc ?.))
-    (if (> len 0)
-        (setq lastc (aref name (1- len))))
-    (or (= lastc ?/)
-        (and (memq system-type '(windows-nt ms-dos))
-             (= lastc ?\\)))))
-
 (defun directory-files-recursively (dir regexp &optional include-directories)
   "Return list of all files under DIR that have file names matching REGEXP.
 This function works recursively.  Files are returned in \"depth first\"
@@ -947,68 +939,23 @@ The default regexp prevents fruitless and time-consuming attempts to find
 special files in directories in which filenames are interpreted as hostnames,
 or mount points potentially requiring authentication as a different user.")
 
-;; (defun locate-dominating-files (file regexp)
-;;   "Look up the directory hierarchy from FILE for a file matching REGEXP.
-;; Stop at the first parent where a matching file is found and return the list
-;; of files that that match in this directory."
-;;   (catch 'found
-;;     ;; `user' is not initialized yet because `file' may not exist, so we may
-;;     ;; have to walk up part of the hierarchy before we find the "initial UID".
-;;     (let ((user nil)
-;;           ;; Abbreviate, so as to stop when we cross ~/.
-;;           (dir (abbreviate-file-name (file-name-as-directory file)))
-;;           files)
-;;       (while (and dir
-;;                   ;; As a heuristic, we stop looking up the hierarchy of
-;;                   ;; directories as soon as we find a directory belonging to
-;;                   ;; another user.  This should save us from looking in
-;;                   ;; things like /net and /afs.  This assumes that all the
-;;                   ;; files inside a project belong to the same user.
-;;                   (let ((prev-user user))
-;;                     (setq user (nth 2 (file-attributes dir)))
-;;                     (or (null prev-user) (equal user prev-user))))
-;;         (if (setq files (condition-case nil
-;; 			    (directory-files dir 'full regexp 'nosort)
-;; 			  (error nil)))
-;;             (throw 'found files)
-;;           (if (equal dir
-;;                      (setq dir (file-name-directory
-;;                                 (directory-file-name dir))))
-;;               (setq dir nil))))
-;;       nil)))
-
 (defun locate-dominating-file (file name)
-  "Look up the directory hierarchy from FILE for a directory containing NAME.
+  "Starting at FILE, look up directory hierarchy for directory containing NAME.
+FILE can be a file or a directory.  If it's a file, its directory will
+serve as the starting point for searching the hierarchy of directories.
 Stop at the first parent directory containing a file NAME,
 and return the directory.  Return nil if not found.
 Instead of a string, NAME can also be a predicate taking one argument
 \(a directory) and returning a non-nil value if that directory is the one for
-which we're looking."
-  ;; We used to use the above locate-dominating-files code, but the
-  ;; directory-files call is very costly, so we're much better off doing
-  ;; multiple calls using the code in here.
-  ;;
+which we're looking.  The predicate will be called with every file/directory
+the function needs to examine, starting with FILE."
   ;; Represent /home/luser/foo as ~/foo so that we don't try to look for
   ;; `name' in /home or in /.
   (setq file (abbreviate-file-name (expand-file-name file)))
   (let ((root nil)
-        ;; `user' is not initialized outside the loop because
-        ;; `file' may not exist, so we may have to walk up part of the
-        ;; hierarchy before we find the "initial UID".  Note: currently unused
-        ;; (user nil)
         try)
     (while (not (or root
                     (null file)
-                    ;; FIXME: Disabled this heuristic because it is sometimes
-                    ;; inappropriate.
-                    ;; As a heuristic, we stop looking up the hierarchy of
-                    ;; directories as soon as we find a directory belonging
-                    ;; to another user.  This should save us from looking in
-                    ;; things like /net and /afs.  This assumes that all the
-                    ;; files inside a project belong to the same user.
-                    ;; (let ((prev-user user))
-                    ;;   (setq user (nth 2 (file-attributes file)))
-                    ;;   (and prev-user (not (equal user prev-user))))
                     (string-match locate-dominating-stop-dir-regexp file)))
       (setq try (if (stringp name)
                     (file-exists-p (expand-file-name name file))
@@ -1201,6 +1148,29 @@ accessible."
 	(funcall handler 'file-local-copy file)
       nil)))
 
+(defun files--name-absolute-system-p (file)
+  "Return non-nil if FILE is an absolute name to the operating system.
+This is like `file-name-absolute-p', except that it returns nil for
+names beginning with `~'."
+  (and (file-name-absolute-p file)
+       (not (eq (aref file 0) ?~))))
+
+(defun files--splice-dirname-file (dirname file)
+  "Splice DIRNAME to FILE like the operating system would.
+If FILE is relative, return DIRNAME concatenated to FILE.
+Otherwise return FILE, quoted as needed if DIRNAME and FILE have
+different handlers; although this quoting is dubious if DIRNAME
+is magic, it is not clear what would be better.  This function
+differs from `expand-file-name' in that DIRNAME must be a
+directory name and leading `~' and `/:' are not special in FILE."
+  (let ((unquoted (if (files--name-absolute-system-p file)
+		      file
+		    (concat dirname file))))
+    (if (eq (find-file-name-handler dirname 'file-symlink-p)
+	    (find-file-name-handler unquoted 'file-symlink-p))
+	unquoted
+      (let (file-name-handler-alist) (file-name-quote unquoted)))))
+
 (defun file-truename (filename &optional counter prev-dirs)
   "Return the truename of FILENAME.
 If FILENAME is not absolute, first expands it against `default-directory'.
@@ -1301,10 +1271,7 @@ containing it, until no links are left at any level.
 		    ;; We can't safely use expand-file-name here
 		    ;; since target might look like foo/../bar where foo
 		    ;; is itself a link.  Instead, we handle . and .. above.
-		    (setq filename
-			  (if (file-name-absolute-p target)
-			      target
-			    (concat dir target))
+		    (setq filename (files--splice-dirname-file dir target)
 			  done nil)
 		  ;; No, we are done!
 		  (setq done t))))))))
@@ -1339,7 +1306,8 @@ it means chase no more than that many links and then stop."
 		 (directory-file-name (file-name-directory newname))))
 	  ;; Now find the parent of that dir.
 	  (setq newname (file-name-directory newname)))
-	(setq newname (expand-file-name tem (file-name-directory newname)))
+	(setq newname (files--splice-dirname-file (file-name-directory newname)
+						  tem))
 	(setq count (1+ count))))
     newname))
 
@@ -1404,35 +1372,46 @@ the variable `temporary-file-directory' is returned."
           default-directory
         temporary-file-directory))))
 
-(defun make-temp-file (prefix &optional dir-flag suffix)
+(defun make-temp-file (prefix &optional dir-flag suffix text)
   "Create a temporary file.
 The returned file name (created by appending some random characters at the end
 of PREFIX, and expanding against `temporary-file-directory' if necessary),
-is guaranteed to point to a newly created empty file.
+is guaranteed to point to a newly created file.
 You can then use `write-region' to write new data into the file.
 
 If DIR-FLAG is non-nil, create a new empty directory instead of a file.
 
-If SUFFIX is non-nil, add that at the end of the file name."
+If SUFFIX is non-nil, add that at the end of the file name.
+
+If TEXT is a string, insert it into the new file; DIR-FLAG should be nil.
+Otherwise the file will be empty."
+  (let ((absolute-prefix
+	 (if (or (zerop (length prefix)) (member prefix '("." "..")))
+	     (concat (file-name-as-directory temporary-file-directory) prefix)
+	   (expand-file-name prefix temporary-file-directory))))
+    (if (find-file-name-handler absolute-prefix 'write-region)
+        (files--make-magic-temp-file absolute-prefix dir-flag suffix text)
+      (make-temp-file-internal absolute-prefix
+			       (if dir-flag t) (or suffix "") text))))
+
+(defun files--make-magic-temp-file (absolute-prefix
+                                    &optional dir-flag suffix text)
+  "Implement (make-temp-file ABSOLUTE-PREFIX DIR-FLAG SUFFIX TEXT).
+This implementation works on magic file names."
   ;; Create temp files with strict access rights.  It's easy to
   ;; loosen them later, whereas it's impossible to close the
   ;; time-window of loose permissions otherwise.
   (with-file-modes ?\700
-    (let (file)
+    (let ((contents (if (stringp text) text ""))
+          file)
       (while (condition-case ()
 		 (progn
-		   (setq file
-			 (make-temp-name
-			  (if (zerop (length prefix))
-			      (file-name-as-directory
-			       temporary-file-directory)
-			    (expand-file-name prefix
-					      temporary-file-directory))))
+		   (setq file (make-temp-name absolute-prefix))
 		   (if suffix
 		       (setq file (concat file suffix)))
 		   (if dir-flag
 		       (make-directory file)
-		     (write-region "" nil file nil 'silent nil 'excl))
+		     (write-region contents nil file nil 'silent nil 'excl))
 		   nil)
 	       (file-already-exists t))
 	;; the file was somehow created by someone else between
@@ -1596,8 +1575,8 @@ automatically choosing a major mode, use \\[find-file-literally]."
                         (confirm-nonexistent-file-or-buffer)))
   (let ((value (find-file-noselect filename nil nil wildcards)))
     (if (listp value)
-	(mapcar 'switch-to-buffer (nreverse value))
-      (switch-to-buffer value))))
+	(mapcar 'pop-to-buffer-same-window (nreverse value))
+      (pop-to-buffer-same-window value))))
 
 (defun find-file-other-window (filename &optional wildcards)
   "Edit file FILENAME, in another window.
@@ -2543,7 +2522,7 @@ since only a single case-insensitive search through the alist is made."
      ("\\.[ckz]?sh\\'\\|\\.shar\\'\\|/\\.z?profile\\'" . sh-mode)
      ("\\.bash\\'" . sh-mode)
      ("\\(/\\|\\`\\)\\.\\(bash_\\(profile\\|history\\|log\\(in\\|out\\)\\)\\|z?log\\(in\\|out\\)\\)\\'" . sh-mode)
-     ("\\(/\\|\\`\\)\\.\\(shrc\\|[kz]shrc\\|bashrc\\|t?cshrc\\|esrc\\)\\'" . sh-mode)
+     ("\\(/\\|\\`\\)\\.\\(shrc\\|zshrc\\|m?kshrc\\|bashrc\\|t?cshrc\\|esrc\\)\\'" . sh-mode)
      ("\\(/\\|\\`\\)\\.\\([kz]shenv\\|xinitrc\\|startxrc\\|xsession\\)\\'" . sh-mode)
      ("\\.m?spec\\'" . sh-mode)
      ("\\.m[mes]\\'" . nroff-mode)
@@ -2645,10 +2624,12 @@ ARC\\|ZIP\\|LZH\\|LHA\\|ZOO\\|[JEW]AR\\|XPI\\|RAR\\|CBR\\|7Z\\)\\'" . archive-mo
      ("/config\\.\\(?:bat\\|log\\)\\'" . fundamental-mode)
      ;; Windows candidates may be opened case sensitively on Unix
      ("\\.\\(?:[iI][nN][iI]\\|[lL][sS][tT]\\|[rR][eE][gG]\\|[sS][yY][sS]\\)\\'" . conf-mode)
-     ("\\.\\(?:desktop\\|la\\)\\'" . conf-unix-mode)
+     ("\\.la\\'" . conf-unix-mode)
      ("\\.ppd\\'" . conf-ppd-mode)
      ("java.+\\.conf\\'" . conf-javaprop-mode)
      ("\\.properties\\(?:\\.[a-zA-Z0-9._-]+\\)?\\'" . conf-javaprop-mode)
+     ("\\.toml\\'" . conf-toml-mode)
+     ("\\.desktop\\'" . conf-desktop-mode)
      ("\\`/etc/\\(?:DIR_COLORS\\|ethers\\|.?fstab\\|.*hosts\\|lesskey\\|login\\.?de\\(?:fs\\|vperm\\)\\|magic\\|mtab\\|pam\\.d/.*\\|permissions\\(?:\\.d/.+\\)?\\|protocols\\|rpc\\|services\\)\\'" . conf-space-mode)
      ("\\`/etc/\\(?:acpid?/.+\\|aliases\\(?:\\.d/.+\\)?\\|default/.+\\|group-?\\|hosts\\..+\\|inittab\\|ksysguarddrc\\|opera6rc\\|passwd-?\\|shadow-?\\|sysconfig/.+\\)\\'" . conf-mode)
      ;; ChangeLog.old etc.  Other change-log-mode entries are above;
@@ -4233,10 +4214,10 @@ Interactively, confirmation is required unless you supply a prefix argument."
 	 (not current-prefix-arg)))
   (or (null filename) (string-equal filename "")
       (progn
-	;; If arg is just a directory,
+	;; If arg is a directory name,
 	;; use the default file name, but in that directory.
-	(if (file-directory-p filename)
-	    (setq filename (concat (file-name-as-directory filename)
+	(if (directory-name-p filename)
+	    (setq filename (concat filename
 				   (file-name-nondirectory
 				    (or buffer-file-name (buffer-name))))))
 	(and confirm
@@ -4728,46 +4709,6 @@ Uses `backup-directory-alist' in the same way as
   "Return number of names file FILENAME has."
   (car (cdr (file-attributes filename))))
 
-;; (defun file-relative-name (filename &optional directory)
-;;   "Convert FILENAME to be relative to DIRECTORY (default: `default-directory').
-;; This function returns a relative file name which is equivalent to FILENAME
-;; when used with that default directory as the default.
-;; If this is impossible (which can happen on MSDOS and Windows
-;; when the file name and directory use different drive names)
-;; then it returns FILENAME."
-;;   (save-match-data
-;;     (let ((fname (expand-file-name filename)))
-;;       (setq directory (file-name-as-directory
-;; 		       (expand-file-name (or directory default-directory))))
-;;       ;; On Microsoft OSes, if FILENAME and DIRECTORY have different
-;;       ;; drive names, they can't be relative, so return the absolute name.
-;;       (if (and (or (eq system-type 'ms-dos)
-;; 		   (eq system-type 'cygwin)
-;; 		   (eq system-type 'windows-nt))
-;; 	       (not (string-equal (substring fname  0 2)
-;; 				  (substring directory 0 2))))
-;; 	  filename
-;; 	(let ((ancestor ".")
-;; 	      (fname-dir (file-name-as-directory fname)))
-;; 	  (while (and (not (string-match (concat "^" (regexp-quote directory)) fname-dir))
-;; 		      (not (string-match (concat "^" (regexp-quote directory)) fname)))
-;; 	    (setq directory (file-name-directory (substring directory 0 -1))
-;; 		  ancestor (if (equal ancestor ".")
-;; 			       ".."
-;; 			     (concat "../" ancestor))))
-;; 	  ;; Now ancestor is empty, or .., or ../.., etc.
-;; 	  (if (string-match (concat "^" (regexp-quote directory)) fname)
-;; 	      ;; We matched within FNAME's directory part.
-;; 	      ;; Add the rest of FNAME onto ANCESTOR.
-;; 	      (let ((rest (substring fname (match-end 0))))
-;; 		(if (and (equal ancestor ".")
-;; 			 (not (equal rest "")))
-;; 		    ;; But don't bother with ANCESTOR if it would give us `./'.
-;; 		    rest
-;; 		  (concat (file-name-as-directory ancestor) rest)))
-;; 	    ;; We matched FNAME's directory equivalent.
-;; 	    ancestor))))))
-
 (defun file-relative-name (filename &optional directory)
   "Convert FILENAME to be relative to DIRECTORY (default: `default-directory').
 This function returns a relative file name which is equivalent to FILENAME
@@ -4936,9 +4877,12 @@ in such cases.")
 
 (defun basic-save-buffer (&optional called-interactively)
   "Save the current buffer in its visited file, if it has been modified.
-The hooks `write-contents-functions' and `write-file-functions' get a chance
-to do the job of saving; if they do not, then the buffer is saved in
-the visited file in the usual way.
+
+The hooks `write-contents-functions', `local-write-file-hooks'
+and `write-file-functions' get a chance to do the job of saving;
+if they do not, then the buffer is saved in the visited file in
+the usual way.
+
 Before and after saving the buffer, this function runs
 `before-save-hook' and `after-save-hook', respectively."
   (interactive '(called-interactively))
@@ -4947,29 +4891,14 @@ Before and after saving the buffer, this function runs
     (if (buffer-base-buffer)
 	(set-buffer (buffer-base-buffer)))
     (if (or (buffer-modified-p)
-	    ;; handle the case when no modification has been made but
-	    ;; the file disappeared since visited
+	    ;; Handle the case when no modification has been made but
+	    ;; the file disappeared since visited.
 	    (and buffer-file-name
 		 (not (file-exists-p buffer-file-name))))
 	(let ((recent-save (recent-auto-save-p))
 	      setmodes)
-          ;; If buffer has no file name, ask user for one.
-	  (or buffer-file-name
-              (let ((filename
-                     (expand-file-name
-                      (read-file-name "File to save in: "
-                                      nil (expand-file-name (buffer-name))))))
-                (if (file-exists-p filename)
-                    (if (file-directory-p filename)
-                        ;; Signal an error if the user specified the name of an
-                        ;; existing directory.
-                        (error "%s is a directory" filename)
-                      (unless (y-or-n-p (format-message
-                                         "File `%s' exists; overwrite? "
-                                         filename))
-                        (error "Canceled"))))
-                (set-visited-file-name filename)))
-	  (or (verify-visited-file-modtime (current-buffer))
+	  (or (null buffer-file-name)
+              (verify-visited-file-modtime (current-buffer))
 	      (not (file-exists-p buffer-file-name))
 	      (yes-or-no-p
 	       (format
@@ -4981,6 +4910,7 @@ Before and after saving the buffer, this function runs
 	    (save-excursion
 	      (and (> (point-max) (point-min))
 		   (not find-file-literally)
+                   (null buffer-read-only)
 		   (/= (char-after (1- (point-max))) ?\n)
 		   (not (and (eq selective-display t)
 			     (= (char-after (1- (point-max))) ?\r)))
@@ -4993,46 +4923,65 @@ Before and after saving the buffer, this function runs
 		   (save-excursion
 		     (goto-char (point-max))
 		     (insert ?\n))))
-	    ;; Support VC version backups.
-	    (vc-before-save)
 	    ;; Don't let errors prevent saving the buffer.
 	    (with-demoted-errors (run-hooks 'before-save-hook))
-	    (or (run-hook-with-args-until-success 'write-contents-functions)
-		(run-hook-with-args-until-success 'local-write-file-hooks)
-		(run-hook-with-args-until-success 'write-file-functions)
-		;; If a hook returned t, file is already "written".
-		;; Otherwise, write it the usual way now.
-		(let ((dir (file-name-directory
-			    (expand-file-name buffer-file-name))))
-		  (unless (file-exists-p dir)
-		    (if (y-or-n-p
-			 (format-message
-                          "Directory `%s' does not exist; create? " dir))
-			(make-directory dir t)
-		      (error "Canceled")))
-		  (setq setmodes (basic-save-buffer-1))))
+            ;; Give `write-contents-functions' a chance to
+            ;; short-circuit the whole process.
+	    (unless (run-hook-with-args-until-success 'write-contents-functions)
+              ;; If buffer has no file name, ask user for one.
+              (or buffer-file-name
+                  (let ((filename
+                         (expand-file-name
+                          (read-file-name "File to save in: "
+                                          nil (expand-file-name (buffer-name))))))
+                    (if (file-exists-p filename)
+                        (if (file-directory-p filename)
+                            ;; Signal an error if the user specified the name of an
+                            ;; existing directory.
+                            (error "%s is a directory" filename)
+                          (unless (y-or-n-p (format-message
+                                             "File `%s' exists; overwrite? "
+                                             filename))
+                            (error "Canceled"))))
+                    (set-visited-file-name filename)))
+              ;; Support VC version backups.
+	      (vc-before-save)
+	      (or (run-hook-with-args-until-success 'local-write-file-hooks)
+	          (run-hook-with-args-until-success 'write-file-functions)
+	          ;; If a hook returned t, file is already "written".
+	          ;; Otherwise, write it the usual way now.
+	          (let ((dir (file-name-directory
+			      (expand-file-name buffer-file-name))))
+		    (unless (file-exists-p dir)
+		      (if (y-or-n-p
+		           (format-message
+                            "Directory `%s' does not exist; create? " dir))
+		          (make-directory dir t)
+		        (error "Canceled")))
+		    (setq setmodes (basic-save-buffer-1)))))
 	    ;; Now we have saved the current buffer.  Let's make sure
 	    ;; that buffer-file-coding-system is fixed to what
 	    ;; actually used for saving by binding it locally.
-	    (if save-buffer-coding-system
-		(setq save-buffer-coding-system last-coding-system-used)
-	      (setq buffer-file-coding-system last-coding-system-used))
-	    (setq buffer-file-number
-		  (nthcdr 10 (file-attributes buffer-file-name)))
-	    (if setmodes
-		(condition-case ()
-		    (progn
-		      (unless
-			  (with-demoted-errors
-			    (set-file-modes buffer-file-name (car setmodes)))
-			(set-file-extended-attributes buffer-file-name
-						      (nth 1 setmodes))))
-		  (error nil))))
-	  ;; If the auto-save file was recent before this command,
-	  ;; delete it now.
-	  (delete-auto-save-file-if-necessary recent-save)
-	  ;; Support VC `implicit' locking.
-	  (vc-after-save)
+            (when buffer-file-name
+	      (if save-buffer-coding-system
+		  (setq save-buffer-coding-system last-coding-system-used)
+	        (setq buffer-file-coding-system last-coding-system-used))
+	      (setq buffer-file-number
+		    (nthcdr 10 (file-attributes buffer-file-name)))
+	      (if setmodes
+		  (condition-case ()
+		      (progn
+		        (unless
+			    (with-demoted-errors
+			        (set-file-modes buffer-file-name (car setmodes)))
+			  (set-file-extended-attributes buffer-file-name
+						        (nth 1 setmodes))))
+		    (error nil)))
+              ;; Support VC `implicit' locking.
+	      (vc-after-save))
+            ;; If the auto-save file was recent before this command,
+	    ;; delete it now.
+	    (delete-auto-save-file-if-necessary recent-save))
 	  (run-hooks 'after-save-hook))
       (or noninteractive
           (not called-interactively)
@@ -5087,48 +5036,33 @@ Before and after saving the buffer, this function runs
 	  ;; This requires write access to the containing dir,
 	  ;; which is why we don't try it if we don't have that access.
 	  (let ((realname buffer-file-name)
-		tempname succeed
-		(umask (default-file-modes))
+		tempname
 		(old-modtime (visited-file-modtime)))
 	    ;; Create temp files with strict access rights.  It's easy to
 	    ;; loosen them later, whereas it's impossible to close the
 	    ;; time-window of loose permissions otherwise.
-	    (unwind-protect
+	    (condition-case err
 		(progn
 		  (clear-visited-file-modtime)
-		  (set-default-file-modes ?\700)
-		  ;; Try various temporary names.
-		  ;; This code follows the example of make-temp-file,
-		  ;; but it calls write-region in the appropriate way
+		  ;; Call write-region in the appropriate way
 		  ;; for saving the buffer.
-		  (while (condition-case ()
-			     (progn
-			       (setq tempname
-				     (make-temp-name
-				      (expand-file-name "tmp" dir)))
-                               ;; Pass in nil&nil rather than point-min&max
-                               ;; cause we're saving the whole buffer.
-                               ;; write-region-annotate-functions may use it.
-                               (write-region nil nil
-                                             tempname nil  realname
-                                             buffer-file-truename 'excl)
-                               (when save-silently (message nil))
-			       nil)
-			   (file-already-exists t))
-		    ;; The file was somehow created by someone else between
-		    ;; `make-temp-name' and `write-region', let's try again.
-		    nil)
-		  (setq succeed t))
-	      ;; Reset the umask.
-	      (set-default-file-modes umask)
+		  (setq tempname
+			(make-temp-file
+			 (expand-file-name "tmp" dir)))
+		  ;; Pass in nil&nil rather than point-min&max
+		  ;; cause we're saving the whole buffer.
+		  ;; write-region-annotate-functions may use it.
+		  (write-region nil nil tempname nil realname
+				buffer-file-truename)
+		  (when save-silently (message nil)))
 	      ;; If we failed, restore the buffer's modtime.
-	      (unless succeed
-		(set-visited-file-modtime old-modtime)))
+	      (error (set-visited-file-modtime old-modtime)
+		     (signal (car err) (cdr err))))
 	    ;; Since we have created an entirely new file,
 	    ;; make sure it gets the right permission bits set.
 	    (setq setmodes (or setmodes
  			       (list (or (file-modes buffer-file-name)
-					 (logand ?\666 umask))
+					 (logand ?\666 (default-file-modes)))
 				     (file-extended-attributes buffer-file-name)
 				     buffer-file-name)))
 	    ;; We succeeded in writing the temp file,
@@ -5156,7 +5090,7 @@ Before and after saving the buffer, this function runs
 	      (progn
                 ;; Pass in nil&nil rather than point-min&max to indicate
                 ;; we're saving the buffer rather than just a region.
-                ;; write-region-annotate-functions may make us of it.
+                ;; write-region-annotate-functions may make use of it.
                 (write-region nil nil
                               buffer-file-name nil t buffer-file-truename)
                 (when save-silently (message nil))
@@ -5259,7 +5193,9 @@ change the additional actions you can take on files."
                      (and pred
                           (progn
                             (set-buffer buffer)
-                            (and buffer-offer-save (> (buffer-size) 0)))))
+                            (and buffer-offer-save (> (buffer-size) 0))))
+                     (buffer-local-value
+                      'write-contents-functions buffer))
                     (or (not (functionp pred))
                         (with-current-buffer buffer (funcall pred)))
                     (if arg
@@ -5396,6 +5332,14 @@ instance of such commands."
       (rename-buffer (generate-new-buffer-name base-name))
       (force-mode-line-update))))
 
+(defun files--ensure-directory (dir)
+  "Make directory DIR if it is not already a directory.  Return nil."
+  (condition-case err
+      (make-directory-internal dir)
+    (file-already-exists
+     (unless (file-directory-p dir)
+       (signal (car err) (cdr err))))))
+
 (defun make-directory (dir &optional parents)
   "Create the directory DIR and optionally any nonexistent parent dirs.
 If DIR already exists as a directory, signal an error, unless
@@ -5424,18 +5368,19 @@ raised."
       (if (not parents)
 	  (make-directory-internal dir)
 	(let ((dir (directory-file-name (expand-file-name dir)))
-	      create-list)
-	  (while (and (not (file-exists-p dir))
-		      ;; If directory is its own parent, then we can't
-		      ;; keep looping forever
-		      (not (equal dir
-				  (directory-file-name
-				   (file-name-directory dir)))))
+	      create-list parent)
+	  (while (progn
+		   (setq parent (directory-file-name
+				 (file-name-directory dir)))
+		   (condition-case err
+		       (files--ensure-directory dir)
+		     (file-missing
+		      ;; Do not loop if root does not exist (Bug#2309).
+		      (not (string= dir parent)))))
 	    (setq create-list (cons dir create-list)
-		  dir (directory-file-name (file-name-directory dir))))
-	  (while create-list
-	    (make-directory-internal (car create-list))
-	    (setq create-list (cdr create-list))))))))
+		  dir parent))
+	  (dolist (dir create-list)
+            (files--ensure-directory dir)))))))
 
 (defconst directory-files-no-dot-files-regexp
   "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*"
@@ -5568,10 +5513,10 @@ Noninteractively, the last argument PARENTS says whether to
 create parent directories if they don't exist.  Interactively,
 this happens by default.
 
-If NEWNAME names an existing directory, copy DIRECTORY as a
-subdirectory there.  However, if called from Lisp with a non-nil
-optional argument COPY-CONTENTS, copy the contents of DIRECTORY
-directly into NEWNAME instead."
+If NEWNAME is a directory name, copy DIRECTORY as a subdirectory
+there.  However, if called from Lisp with a non-nil optional
+argument COPY-CONTENTS, copy the contents of DIRECTORY directly
+into NEWNAME instead."
   (interactive
    (let ((dir (read-directory-name
 	       "Copy directory: " default-directory default-directory t nil)))
@@ -5593,19 +5538,17 @@ directly into NEWNAME instead."
 
       ;; Compute target name.
       (setq directory (directory-file-name (expand-file-name directory))
-	    newname   (directory-file-name (expand-file-name newname)))
+	    newname (expand-file-name newname))
 
-      (cond ((not (file-directory-p newname))
-	     ;; If NEWNAME is not an existing directory, create it;
+      (cond ((not (directory-name-p newname))
+	     ;; If NEWNAME is not a directory name, create it;
 	     ;; that is where we will copy the files of DIRECTORY.
 	     (make-directory newname parents))
-	    ;; If NEWNAME is an existing directory and COPY-CONTENTS
+	    ;; If NEWNAME is a directory name and COPY-CONTENTS
 	    ;; is nil, copy into NEWNAME/[DIRECTORY-BASENAME].
 	    ((not copy-contents)
-	     (setq newname (expand-file-name
-			    (file-name-nondirectory
-			     (directory-file-name directory))
-			    newname))
+	     (setq newname (concat newname
+			    (file-name-nondirectory directory)))
 	     (and (file-exists-p newname)
 		  (not (file-directory-p newname))
 		  (error "Cannot overwrite non-directory %s with a directory"
@@ -5617,7 +5560,8 @@ directly into NEWNAME instead."
 	       ;; We do not want to copy "." and "..".
 	       (directory-files directory 'full
 				directory-files-no-dot-files-regexp))
-	(let ((target (expand-file-name (file-name-nondirectory file) newname))
+	(let ((target (concat (file-name-as-directory newname)
+			      (file-name-nondirectory file)))
 	      (filetype (car (file-attributes file))))
 	  (cond
 	   ((eq filetype t)       ; Directory but not a symlink.
@@ -6552,6 +6496,75 @@ regardless of the language.")
 
 (defvar insert-directory-ls-version 'unknown)
 
+(defun insert-directory-wildcard-in-dir-p (dir)
+  "Return non-nil if DIR contents a shell wildcard in the directory part.
+The return value is a cons (DIR . WILDCARDS); DIR is the
+`default-directory' in the Dired buffer, and WILDCARDS are the wildcards.
+
+Valid wildcards are '*', '?', '[abc]' and '[a-z]'."
+  (let ((wildcards "[?*"))
+    (when (and (or (not (featurep 'ls-lisp))
+                   ls-lisp-support-shell-wildcards)
+               (string-match (concat "[" wildcards "]") (file-name-directory dir))
+               (not (file-exists-p dir))) ; Prefer an existing file to wildcards.
+      (let ((regexp (format "\\`\\([^%s]*/\\)\\([^%s]*[%s].*\\)"
+                            wildcards wildcards wildcards)))
+        (string-match regexp dir)
+        (cons (match-string 1 dir) (match-string 2 dir))))))
+
+(defun insert-directory-clean (beg switches)
+  (when (if (stringp switches)
+	    (string-match "--dired\\>" switches)
+	  (member "--dired" switches))
+    ;; The following overshoots by one line for an empty
+    ;; directory listed with "--dired", but without "-a"
+    ;; switch, where the ls output contains a
+    ;; "//DIRED-OPTIONS//" line, but no "//DIRED//" line.
+    ;; We take care of that case later.
+    (forward-line -2)
+    (when (looking-at "//SUBDIRED//")
+      (delete-region (point) (progn (forward-line 1) (point)))
+      (forward-line -1))
+    (if (looking-at "//DIRED//")
+	(let ((end (line-end-position))
+	      (linebeg (point))
+	      error-lines)
+	  ;; Find all the lines that are error messages,
+	  ;; and record the bounds of each one.
+	  (goto-char beg)
+	  (while (< (point) linebeg)
+	    (or (eql (following-char) ?\s)
+		(push (list (point) (line-end-position)) error-lines))
+	    (forward-line 1))
+	  (setq error-lines (nreverse error-lines))
+	  ;; Now read the numeric positions of file names.
+	  (goto-char linebeg)
+	  (forward-word-strictly 1)
+	  (forward-char 3)
+	  (while (< (point) end)
+	    (let ((start (insert-directory-adj-pos
+			  (+ beg (read (current-buffer)))
+			  error-lines))
+		  (end (insert-directory-adj-pos
+			(+ beg (read (current-buffer)))
+			error-lines)))
+	      (if (memq (char-after end) '(?\n ?\s))
+		  ;; End is followed by \n or by " -> ".
+		  (put-text-property start end 'dired-filename t)
+		;; It seems that we can't trust ls's output as to
+		;; byte positions of filenames.
+		(put-text-property beg (point) 'dired-filename nil)
+		(end-of-line))))
+	  (goto-char end)
+	  (beginning-of-line)
+	  (delete-region (point) (progn (forward-line 1) (point))))
+      ;; Take care of the case where the ls output contains a
+      ;; "//DIRED-OPTIONS//"-line, but no "//DIRED//"-line
+      ;; and we went one line too far back (see above).
+      (forward-line 1))
+    (if (looking-at "//DIRED-OPTIONS//")
+	(delete-region (point) (progn (forward-line 1) (point))))))
+
 ;; insert-directory
 ;; - must insert _exactly_one_line_ describing FILE if WILDCARD and
 ;;   FULL-DIRECTORY-P is nil.
@@ -6611,19 +6624,25 @@ normally equivalent short `-D' option is just passed on to
 			   default-file-name-coding-system))))
 	    (setq result
 		  (if wildcard
-		      ;; Run ls in the directory part of the file pattern
-		      ;; using the last component as argument.
-		      (let ((default-directory
-			      (if (file-name-absolute-p file)
-				  (file-name-directory file)
-				(file-name-directory (expand-file-name file))))
-			    (pattern (file-name-nondirectory file)))
+		      ;; If the wildcard is just in the file part, then run ls in
+                      ;; the directory part of the file pattern using the last
+                      ;; component as argument.  Otherwise, run ls in the longest
+                      ;; subdirectory of the directory part free of wildcards; use
+                      ;; the remaining of the file pattern as argument.
+		      (let* ((dir-wildcard (insert-directory-wildcard-in-dir-p file))
+                             (default-directory
+                               (cond (dir-wildcard (car dir-wildcard))
+                                     (t
+			              (if (file-name-absolute-p file)
+				          (file-name-directory file)
+				        (file-name-directory (expand-file-name file))))))
+			     (pattern (if dir-wildcard (cdr dir-wildcard) (file-name-nondirectory file))))
 			;; NB since switches is passed to the shell, be
 			;; careful of malicious values, eg "-l;reboot".
 			;; See eg dired-safe-switches-p.
 			(call-process
 			 shell-file-name nil t nil
-			 "-c"
+			 shell-command-switch
 			 (concat (if (memq system-type '(ms-dos windows-nt))
 				     ""
 				   "\\") ; Disregard Unix shell aliases!
@@ -6665,7 +6684,8 @@ normally equivalent short `-D' option is just passed on to
 				  (setq file (expand-file-name file)))
 			      (list
 			       (if full-directory-p
-				   (concat (file-name-as-directory file) ".")
+				   ;; (concat (file-name-as-directory file) ".")
+                                   file
 				 file))))))))
 
 	  ;; If we got "//DIRED//" in the output, it means we got a real
@@ -6736,59 +6756,7 @@ normally equivalent short `-D' option is just passed on to
 	      ;; Unix.  Access the file to get a suitable error.
 	      (access-file file "Reading directory")
 	      (error "Listing directory failed but `access-file' worked")))
-
-	  (when (if (stringp switches)
-		    (string-match "--dired\\>" switches)
-		  (member "--dired" switches))
-	    ;; The following overshoots by one line for an empty
-	    ;; directory listed with "--dired", but without "-a"
-	    ;; switch, where the ls output contains a
-	    ;; "//DIRED-OPTIONS//" line, but no "//DIRED//" line.
-	    ;; We take care of that case later.
-	    (forward-line -2)
-            (when (looking-at "//SUBDIRED//")
-              (delete-region (point) (progn (forward-line 1) (point)))
-              (forward-line -1))
-	    (if (looking-at "//DIRED//")
-		(let ((end (line-end-position))
-		      (linebeg (point))
-		      error-lines)
-		  ;; Find all the lines that are error messages,
-		  ;; and record the bounds of each one.
-		  (goto-char beg)
-		  (while (< (point) linebeg)
-		    (or (eql (following-char) ?\s)
-			(push (list (point) (line-end-position)) error-lines))
-		    (forward-line 1))
-		  (setq error-lines (nreverse error-lines))
-		  ;; Now read the numeric positions of file names.
-		  (goto-char linebeg)
-		  (forward-word-strictly 1)
-		  (forward-char 3)
-		  (while (< (point) end)
-		    (let ((start (insert-directory-adj-pos
-				  (+ beg (read (current-buffer)))
-				  error-lines))
-			  (end (insert-directory-adj-pos
-				(+ beg (read (current-buffer)))
-				error-lines)))
-		      (if (memq (char-after end) '(?\n ?\s))
-			  ;; End is followed by \n or by " -> ".
-			  (put-text-property start end 'dired-filename t)
-			;; It seems that we can't trust ls's output as to
-			;; byte positions of filenames.
-			(put-text-property beg (point) 'dired-filename nil)
-			(end-of-line))))
-		  (goto-char end)
-		  (beginning-of-line)
-		  (delete-region (point) (progn (forward-line 1) (point))))
-	      ;; Take care of the case where the ls output contains a
-	      ;; "//DIRED-OPTIONS//"-line, but no "//DIRED//"-line
-	      ;; and we went one line too far back (see above).
-	      (forward-line 1))
-	    (if (looking-at "//DIRED-OPTIONS//")
-		(delete-region (point) (progn (forward-line 1) (point)))))
-
+          (insert-directory-clean beg switches)
 	  ;; Now decode what read if necessary.
 	  (let ((coding (or coding-system-for-read
 			    file-name-coding-system
@@ -7029,7 +6997,7 @@ only these files will be asked to be saved."
 	(setq file-arg-indices (cdr file-arg-indices))))
     (pcase method
       (`identity (car arguments))
-      (`add (concat "/:" (apply operation arguments)))
+      (`add (file-name-quote (apply operation arguments)))
       (`insert-file-contents
        (let ((visit (nth 1 arguments)))
          (unwind-protect
@@ -7223,8 +7191,8 @@ Otherwise, trash FILENAME using the freedesktop.org conventions,
 	 ;; If `trash-directory' is non-nil, move the file there.
 	 (let* ((trash-dir   (expand-file-name trash-directory))
 		(fn          (directory-file-name (expand-file-name filename)))
-		(new-fn      (expand-file-name (file-name-nondirectory fn)
-					       trash-dir)))
+		(new-fn      (concat (file-name-as-directory trash-dir)
+				     (file-name-nondirectory fn))))
 	   ;; We can't trash a parent directory of trash-directory.
 	   (if (string-prefix-p fn trash-dir)
 	       (error "Trash directory `%s' is a subdirectory of `%s'"
@@ -7303,37 +7271,25 @@ Otherwise, trash FILENAME using the freedesktop.org conventions,
 		       (format-time-string "%Y-%m-%dT%T")
 		       "\n")
 
-	       ;; Attempt to make .trashinfo file, trying up to 5
-	       ;; times.  The .trashinfo file is opened with O_EXCL,
-	       ;; as per trash-spec 0.7, even if that can be a problem
-	       ;; on old NFS versions...
-	       (let* ((tries 5)
-		      (base-fn (expand-file-name
-				(file-name-nondirectory fn)
-				trash-files-dir))
-		      (new-fn base-fn)
-		      success info-fn)
-		 (while (> tries 0)
-		   (setq info-fn (expand-file-name
-				  (concat (file-name-nondirectory new-fn)
-					  ".trashinfo")
-				  trash-info-dir))
-		   (unless (condition-case nil
-			       (progn
-				 (write-region nil nil info-fn nil
-					       'quiet info-fn 'excl)
-				 (setq tries 0 success t))
-			     (file-already-exists nil))
-		     (setq tries (1- tries))
-		     ;; Uniquify new-fn.  (Some file managers do not
-		     ;; like Emacs-style backup file names---e.g. bug
-		     ;; 170956 in Konqueror bug tracker.)
-		     (setq new-fn (make-temp-name (concat base-fn "_")))))
-		 (unless success
-		   (error "Cannot move %s to trash: Lock failed" filename))
-
+	       ;; Make a .trashinfo file.  Use O_EXCL, as per trash-spec 1.0.
+	       (let* ((files-base (file-name-nondirectory fn))
+		      (info-fn (expand-file-name
+				(concat files-base ".trashinfo")
+				trash-info-dir)))
+		 (condition-case nil
+		     (write-region nil nil info-fn nil 'quiet info-fn 'excl)
+		   (file-already-exists
+		    ;; Uniquify new-fn.  Some file managers do not
+		    ;; like Emacs-style backup file names.  E.g.:
+		    ;; https://bugs.kde.org/170956
+		    (setq info-fn (make-temp-file
+				   (expand-file-name files-base trash-info-dir)
+				   nil ".trashinfo"))
+		    (setq files-base (file-name-nondirectory info-fn))
+		    (write-region nil nil info-fn nil 'quiet info-fn)))
 		 ;; Finally, try to move the file to the trashcan.
-		 (let ((delete-by-moving-to-trash nil))
+		 (let ((delete-by-moving-to-trash nil)
+		       (new-fn (expand-file-name files-base trash-files-dir)))
 		   (rename-file fn new-fn)))))))))
 
 (defsubst file-attribute-type (attributes)

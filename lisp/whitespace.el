@@ -1,4 +1,4 @@
-;;; whitespace.el --- minor mode to visualize TAB, (HARD) SPACE, NEWLINE
+;;; whitespace.el --- minor mode to visualize TAB, (HARD) SPACE, NEWLINE -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 

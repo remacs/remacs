@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -1623,15 +1623,15 @@ non-nil, only includes packages relevant to image generation, as
 specified in `org-latex-default-packages-alist' or
 `org-latex-packages-alist'."
   (let* ((class (plist-get info :latex-class))
-	 (class-options (plist-get info :latex-class-options))
-	 (header (nth 1 (assoc class (plist-get info :latex-classes))))
 	 (class-template
 	  (or template
-	      (and (stringp header)
-		   (if (not class-options) header
-		     (replace-regexp-in-string
-		      "^[ \t]*\\\\documentclass\\(\\(\\[[^]]*\\]\\)?\\)"
-		      class-options header t nil 1)))
+	      (let* ((class-options (plist-get info :latex-class-options))
+		     (header (nth 1 (assoc class (plist-get info :latex-classes)))))
+		(and (stringp header)
+		     (if (not class-options) header
+		       (replace-regexp-in-string
+			"^[ \t]*\\\\documentclass\\(\\(\\[[^]]*\\]\\)?\\)"
+			class-options header t nil 1))))
 	      (user-error "Unknown LaTeX class `%s'" class))))
     (org-latex-guess-polyglossia-language
      (org-latex-guess-babel-language
@@ -1644,7 +1644,9 @@ specified in `org-latex-default-packages-alist' or
 	 snippet?
 	 (mapconcat #'org-element-normalize-string
 		    (list (plist-get info :latex-header)
-			  (plist-get info :latex-header-extra)) ""))))
+			  (and (not snippet?)
+			       (plist-get info :latex-header-extra)))
+		    ""))))
       info)
      info)))
 

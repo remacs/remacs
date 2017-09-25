@@ -15,7 +15,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 (require 'ert)
 
@@ -208,14 +208,22 @@ must evaluate to a regular expression string."
      (with-temp-buffer
        (let* ((default-directory tempdir)
               (status (call-process mod-test-emacs nil t nil
-                                    "-batch" "-Q" "-module-assertions" "-eval"
+                                    "-batch" "-Q" "-module-assertions"
+                                    "-eval" "(setq w32-disable-abort-dialog t)"
+                                    "-eval"
                                     ,(prin1-to-string
                                       `(progn
                                          (require 'mod-test ,mod-test-file)
                                          ,@body)))))
-         (should (stringp status))
-         ;; eg "Aborted" or "Abort trap: 6"
-         (should (string-prefix-p "Abort" status))
+         ;; Aborting doesn't raise a signal on MS-DOS/Windows, but
+         ;; rather exits with a non-zero status: 2 on MS-DOS (see
+         ;; msdos.c:msdos_abort), 3 on Windows, per MSDN documentation
+         ;; of 'abort'.
+         (if (memq system-type '(ms-dos windows-nt))
+             (should (>= status 2))
+           (should (stringp status))
+           ;; eg "Aborted" or "Abort trap: 6"
+           (should (string-prefix-p "Abort" status)))
          (search-backward "Emacs module assertion: ")
          (goto-char (match-end 0))
          (should (string-match-p ,pattern

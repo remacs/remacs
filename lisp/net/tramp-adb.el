@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -97,7 +97,7 @@ It is used for TCP/IP devices."
 ;;;###tramp-autoload
 (defconst tramp-adb-file-name-handler-alist
   '((access-file . ignore)
-    (add-name-to-file . tramp-adb-handle-copy-file)
+    (add-name-to-file . tramp-handle-add-name-to-file)
     ;; `byte-compiler-base-file-name' performed by default handler.
     ;; `copy-directory' performed by default handler.
     (copy-file . tramp-adb-handle-copy-file)
@@ -630,14 +630,17 @@ But handle the case, if the \"test\" command is not available."
 		       rw-path)))))))
 
 (defun tramp-adb-handle-write-region
-  (start end filename &optional append visit lockname confirm)
+  (start end filename &optional append visit lockname mustbenew)
   "Like `write-region' for Tramp files."
   (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
-    (when (and confirm (file-exists-p filename))
-      (unless (y-or-n-p (format "File %s exists; overwrite anyway? "
-				filename))
-	(tramp-error v 'file-error "File not overwritten")))
+    (when (and mustbenew (file-exists-p filename)
+	       (or (eq mustbenew 'excl)
+		   (not
+		    (y-or-n-p
+		     (format "File %s exists; overwrite anyway? " filename)))))
+      (tramp-error v 'file-already-exists filename))
+
     ;; We must also flush the cache of the directory, because
     ;; `file-attributes' reads the values from there.
     (tramp-flush-file-property v (file-name-directory localname))
@@ -650,8 +653,7 @@ But handle the case, if the \"test\" command is not available."
 	 tmpfile
 	 (logior (or (file-modes tmpfile) 0) (string-to-number "0600" 8))))
       (tramp-run-real-handler
-       'write-region
-       (list start end tmpfile append 'no-message lockname confirm))
+       'write-region (list start end tmpfile append 'no-message lockname))
       (with-tramp-progress-reporter
         v 3 (format-message
              "Moving tmp file `%s' to `%s'" tmpfile filename)
@@ -737,7 +739,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		     (signal (car err) (cdr err))))
 
 		;; Remote newname.
-		(when (file-directory-p newname)
+		(when (and (file-directory-p newname)
+			   (directory-name-p newname))
 		  (setq newname
 			(expand-file-name
 			 (file-name-nondirectory filename) newname)))

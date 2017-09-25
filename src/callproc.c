@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
@@ -109,7 +109,7 @@ encode_current_directory (void)
   if (NILP (dir))
     dir = build_string ("~");
 
-  dir = expand_and_dir_to_file (dir, Qnil);
+  dir = expand_and_dir_to_file (dir);
 
   if (NILP (Ffile_accessible_directory_p (dir)))
     report_file_error ("Setting current directory",

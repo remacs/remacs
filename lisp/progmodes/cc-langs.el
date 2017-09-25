@@ -26,7 +26,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -1185,6 +1185,24 @@ This regexp is assumed to not match any non-operator identifier."
 (make-obsolete-variable 'c-opt-op-identitier-prefix 'c-opt-op-identifier-prefix
 			"CC Mode 5.31.4, 2006-04-14")
 
+(c-lang-defconst c-ambiguous-overloadable-or-identifier-prefixes
+  ;; A list of strings which can be either overloadable operators or
+  ;; identifier prefixes.
+  t (c--intersection
+     (c-filter-ops (c-lang-const c-identifier-ops)
+			     '(prefix)
+			     t)
+     (c-lang-const c-overloadable-operators)
+     :test 'string-equal))
+
+(c-lang-defconst c-ambiguous-overloadable-or-identifier-prefix-re
+  ;; A regexp matching strings which can be either overloadable operators
+  ;; or identifier prefixes.
+  t (c-make-keywords-re
+	t (c-lang-const c-ambiguous-overloadable-or-identifier-prefixes)))
+(c-lang-defvar c-ambiguous-overloadable-or-identifier-prefix-re
+  (c-lang-const c-ambiguous-overloadable-or-identifier-prefix-re))
+
 (c-lang-defconst c-other-op-syntax-tokens
   "List of the tokens made up of characters in the punctuation or
 parenthesis syntax classes that have uses other than as expression
@@ -1873,6 +1891,17 @@ the type of that expression."
   t (c-make-keywords-re t (c-lang-const c-typeof-kwds)))
 (c-lang-defvar c-typeof-key (c-lang-const c-typeof-key))
 
+(c-lang-defconst c-template-typename-kwds
+  "Keywords which, within a template declaration, can introduce a
+declaration with a type as a default value.  This is used only in
+C++ Mode, e.g. \"<typename X = Y>\"."
+  t    nil
+  c++  '("class" "typename"))
+
+(c-lang-defconst c-template-typename-key
+  t (c-make-keywords-re t (c-lang-const c-template-typename-kwds)))
+(c-lang-defvar c-template-typename-key (c-lang-const c-template-typename-key))
+
 (c-lang-defconst c-type-prefix-kwds
   "Keywords where the following name - if any - is a type name, and
 where the keyword together with the symbol works as a type in
@@ -2265,6 +2294,18 @@ one of `c-type-list-kwds', `c-ref-list-kwds',
   t    nil
   c++  '("private" "protected" "public")
   objc '("@private" "@protected" "@public"))
+
+(c-lang-defconst c-protection-key
+  ;; A regexp match an element of `c-protection-kwds' cleanly.
+  t (c-make-keywords-re t (c-lang-const c-protection-kwds)))
+(c-lang-defvar c-protection-key (c-lang-const c-protection-key))
+
+(c-lang-defconst c-post-protection-token
+  "The token which (may) follow a protection keyword,
+e.g. the \":\" in C++ Mode's \"public:\".  nil if there is no such token."
+  t    nil
+  c++  ":")
+(c-lang-defvar c-post-protection-token (c-lang-const c-post-protection-token))
 
 (c-lang-defconst c-block-decls-with-vars
   "Keywords introducing declarations that can contain a block which

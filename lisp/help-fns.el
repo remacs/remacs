@@ -20,7 +20,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -567,7 +567,6 @@ FILE is the file where FUNCTION was probably defined."
   "Return information about FUNCTION.
 Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
   (let* ((advised (and (symbolp function)
-		       (featurep 'nadvice)
 		       (advice--p (advice--symbol-function function))))
 	 ;; If the function is advised, use the symbol that has the
 	 ;; real definition, if that symbol is already set up.
@@ -887,7 +886,10 @@ it is displayed along with the global value."
                                (not (equal origval :help-eval-error)))
 		      (princ "\nOriginal value was \n")
 		      (setq from (point))
-		      (pp origval)
+                      (cl-prin1 origval)
+                      (save-restriction
+                        (narrow-to-region from (point))
+                        (save-excursion (pp-buffer)))
 		      (if (< (point) (+ from 20))
 			  (delete-region (1- from) from)))))))
 	    (terpri)
@@ -913,7 +915,10 @@ it is displayed along with the global value."
 		      ;; probably print it raw once and check it's a
 		      ;; sensible size before prettyprinting.  -- fx
 		      (let ((from (point)))
-			(pp global-val)
+                        (cl-prin1 global-val)
+                        (save-restriction
+                          (narrow-to-region from (point))
+                          (save-excursion (pp-buffer)))
 			;; See previous comment for this function.
 			;; (help-xref-on-pp from (point))
 			(if (< (point) (+ from 20))

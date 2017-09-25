@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -453,7 +453,7 @@ Every entry is a list (NAME ADDRESS).")
 ;;;###tramp-autoload
 (defconst tramp-gvfs-file-name-handler-alist
   '((access-file . ignore)
-    (add-name-to-file . tramp-gvfs-handle-copy-file)
+    (add-name-to-file . tramp-handle-add-name-to-file)
     ;; `byte-compiler-base-file-name' performed by default handler.
     ;; `copy-directory' performed by default handler.
     (copy-file . tramp-gvfs-handle-copy-file)
@@ -494,7 +494,7 @@ Every entry is a list (NAME ADDRESS).")
     (file-remote-p . tramp-handle-file-remote-p)
     (file-selinux-context . ignore)
     (file-symlink-p . tramp-handle-file-symlink-p)
-    ;; `file-truename' performed by default handler.
+    (file-truename . tramp-handle-file-truename)
     (file-writable-p . tramp-gvfs-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
     ;; `find-file-noselect' performed by default handler.
@@ -658,8 +658,7 @@ file names."
 
       (with-parsed-tramp-file-name (if t1 filename newname) nil
 	(when (and (not ok-if-already-exists) (file-exists-p newname))
-	  (tramp-error
-	   v 'file-already-exists "File %s already exists" newname))
+	  (tramp-error v 'file-already-exists newname))
 
 	(if (or (and equal-remote
 		     (tramp-get-connection-property v "direct-copy-failed" nil))
@@ -1172,12 +1171,16 @@ file-notify events."
      'rename-file (list filename newname ok-if-already-exists))))
 
 (defun tramp-gvfs-handle-write-region
-  (start end filename &optional append visit lockname confirm)
+  (start end filename &optional append visit lockname mustbenew)
   "Like `write-region' for Tramp files."
+  (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
-    (when (and confirm (file-exists-p filename))
-      (unless (y-or-n-p (format "File %s exists; overwrite anyway? " filename))
-	(tramp-error v 'file-error "File not overwritten")))
+    (when (and mustbenew (file-exists-p filename)
+	       (or (eq mustbenew 'excl)
+		   (not
+		    (y-or-n-p
+		     (format "File %s exists; overwrite anyway? " filename)))))
+      (tramp-error v 'file-already-exists filename))
 
     (let ((tmpfile (tramp-compat-make-temp-file filename)))
       (when (and append (file-exists-p filename))
@@ -1186,10 +1189,7 @@ file-notify events."
       ;; modtime data to be clobbered from the temp file.  We call
       ;; `set-visited-file-modtime' ourselves later on.
       (tramp-run-real-handler
-       'write-region
-       (if confirm ; don't pass this arg unless defined for backward compat.
-	   (list start end tmpfile append 'no-message lockname confirm)
-	 (list start end tmpfile append 'no-message lockname)))
+       'write-region (list start end tmpfile append 'no-message lockname))
       (condition-case nil
 	  (rename-file tmpfile filename 'ok-if-already-exists)
 	(error

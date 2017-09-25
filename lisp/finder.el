@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -209,7 +209,7 @@ from; the default is `load-path'."
 ;; There are multiple files in the tree with the same basename.
 ;; So skipping files based on basename means you randomly (depending
 ;; on which order the files are traversed in) miss some packages.
-;; http://debbugs.gnu.org/14010
+;; https://debbugs.gnu.org/14010
 ;; You might think this could lead to two files providing the same package,
 ;; but it does not, because the duplicates are (at time of writing)
 ;; all due to files in cedet, which end up with package-override set.

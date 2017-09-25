@@ -17,7 +17,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -104,7 +104,7 @@ This is usually a symbol that starts with `:'."
 
 ;;; Slot Writers
 ;;
-;; Replica of the test in eieio-tests.el - 
+;; Replica of the test in eieio-tests.el -
 
 (defclass persist-:printer (eieio-persistent)
   ((slot1 :initarg :slot1
@@ -164,7 +164,7 @@ persistent class.")
 	  "persist wos 1"
 	  :pnp (persist-not-persistent "pnp 1" :slot1 3)
 	  :file (concat default-directory "test-ps3.pt"))))
-					     
+
     (persist-test-save-and-compare persist-wos)
     (delete-file (oref persist-wos file))))
 
@@ -187,11 +187,11 @@ persistent class.")
 
 (ert-deftest eieio-test-non-persistent-as-slot-child ()
   (let ((persist-woss
-	 (persistent-with-objs-slot-subs 
+	 (persistent-with-objs-slot-subs
 	  "persist woss 1"
 	  :pnp (persist-not-persistent-subclass "pnps 1" :slot1 3)
 	  :file (concat default-directory "test-ps4.pt"))))
-					     
+
     (persist-test-save-and-compare persist-woss)
     (delete-file (oref persist-woss file))))
 
@@ -206,13 +206,13 @@ persistent class.")
 
 (ert-deftest eieio-test-slot-with-list-of-objects ()
   (let ((persist-wols
-	 (persistent-with-objs-list-slot 
+	 (persistent-with-objs-list-slot
 	  "persist wols 1"
 	  :pnp (list (persist-not-persistent "pnp 1" :slot1 3)
 		     (persist-not-persistent "pnp 2" :slot1 4)
 		     (persist-not-persistent "pnp 3" :slot1 5))
 	  :file (concat default-directory "test-ps5.pt"))))
-					     
+
     (persist-test-save-and-compare persist-wols)
     (delete-file (oref persist-wols file))))
 

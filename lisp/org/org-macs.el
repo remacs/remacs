@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Commentary:
@@ -303,6 +303,43 @@ error when the user input is empty."
 	   (intern func))
 	  (allow-empty? nil)
 	  (t (user-error "Empty input is not valid")))))
+
+(defconst org-unique-local-variables
+  '(org-element--cache
+    org-element--cache-objects
+    org-element--cache-sync-keys
+    org-element--cache-sync-requests
+    org-element--cache-sync-timer)
+  "List of local variables that cannot be transferred to another buffer.")
+
+(defun org-get-local-variables ()
+  "Return a list of all local variables in an Org mode buffer."
+  (delq nil
+	(mapcar
+	 (lambda (x)
+	   (let* ((binding (if (symbolp x) (list x) (list (car x) (cdr x))))
+		  (name (car binding)))
+	     (and (not (get name 'org-state))
+		  (not (memq name org-unique-local-variables))
+		  (string-match-p
+		   "\\`\\(org-\\|orgtbl-\\|outline-\\|comment-\\|paragraph-\\|\
+auto-fill\\|normal-auto-fill\\|fill-paragraph\\|indent-\\)"
+		   (symbol-name name))
+		  binding)))
+	 (with-temp-buffer
+	   (org-mode)
+	   (buffer-local-variables)))))
+
+(defun org-clone-local-variables (from-buffer &optional regexp)
+  "Clone local variables from FROM-BUFFER.
+Optional argument REGEXP selects variables to clone."
+  (dolist (pair (buffer-local-variables from-buffer))
+    (pcase pair
+      (`(,name . ,value)		;ignore unbound variables
+       (when (and (not (memq name org-unique-local-variables))
+		  (or (null regexp) (string-match-p regexp (symbol-name name))))
+	 (ignore-errors (set (make-local-variable name) value)))))))
+
 
 (provide 'org-macs)
 

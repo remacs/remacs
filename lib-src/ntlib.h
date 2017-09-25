@@ -58,10 +58,6 @@ int fchown (int fd, unsigned uid, unsigned gid);
 #undef dup2
 #define dup2    _dup2
 #undef fopen
-#undef mkdir
-#define mkdir   _mkdir
-#undef open
-#define open    _open
 #undef pipe
 #define pipe    _pipe
 #undef read

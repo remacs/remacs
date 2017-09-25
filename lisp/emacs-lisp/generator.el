@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -86,10 +86,7 @@
 (defvar cps--cleanup-function nil)
 
 (defmacro cps--gensym (fmt &rest args)
-  ;; Change this function to use `cl-gensym' if you want the generated
-  ;; code to be easier to read and debug.
-  ;; (cl-gensym (apply #'format fmt args))
-  `(progn (ignore ,@args) (make-symbol ,fmt)))
+  `(gensym (format ,fmt ,@args)))
 
 (defvar cps--dynamic-wrappers '(identity)
   "List of transformer functions to apply to atomic forms we

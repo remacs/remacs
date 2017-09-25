@@ -22,7 +22,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary
 
@@ -2380,6 +2380,10 @@ i.e., customize JSX element indentation with `sgml-basic-offset',
         (fill-paragraph-function #'c-fill-paragraph))
     (c-fill-paragraph justify)))
 
+(defun js-do-auto-fill ()
+  (let ((js--filling-paragraph t))
+    (c-do-auto-fill)))
+
 ;;; Type database and Imenu
 
 ;; We maintain a cache of semantic information, i.e., the classes and
@@ -3863,6 +3867,7 @@ If one hasn't been set, or if it's stale, prompt for a new one."
   (setq-local comment-start "// ")
   (setq-local comment-end "")
   (setq-local fill-paragraph-function #'js-c-fill-paragraph)
+  (setq-local normal-auto-fill-function #'js-do-auto-fill)
 
   ;; Parse cache
   (add-hook 'before-change-functions #'js--flush-caches t t)

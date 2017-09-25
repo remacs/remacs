@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -2429,7 +2429,7 @@ Valid input formats include:
     (gnus-read-ephemeral-gmane-group group start range)))
 
 (defcustom gnus-bug-group-download-format-alist
-  '((emacs . "http://debbugs.gnu.org/cgi/bugreport.cgi?bug=%s;mboxmaint=yes;mboxstat=yes")
+  '((emacs . "https://debbugs.gnu.org/cgi/bugreport.cgi?bug=%s;mboxmaint=yes;mboxstat=yes")
     (debian
      . "http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=%s&mbox=yes;mboxmaint=yes"))
   "Alist of symbols for bug trackers and the corresponding URL format string.

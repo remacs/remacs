@@ -120,8 +120,8 @@ load-path.
 
 This version of GCC is buggy: see
 
-  http://debbugs.gnu.org/6031
-  http://gcc.gnu.org/bugzilla/show_bug.cgi?id=43904
+  https://debbugs.gnu.org/6031
+  https://gcc.gnu.org/bugzilla/show_bug.cgi?id=43904
 
 You can work around this error in gcc-4.5 by omitting sibling call
 optimization.  To do this, configure Emacs with
@@ -166,7 +166,7 @@ untar it :-).
 ** Emacs can crash when displaying PNG images with transparency.
 
 This is due to a bug introduced in ImageMagick 6.8.2-3.  The bug should
-be fixed in ImageMagick 6.8.3-10.  See <URL:http://debbugs.gnu.org/13867>.
+be fixed in ImageMagick 6.8.3-10.  See <URL:https://debbugs.gnu.org/13867>.
 
 ** Crashes when displaying GIF images in Emacs built with version
 libungif-4.1.0 are resolved by using version libungif-4.1.0b1.
@@ -634,7 +634,7 @@ can cause this error.  Remove that file, execute 'ispell-kill-ispell'
 in Emacs, and then try spell-checking again.
 
 *** TLS problems, e.g., Gnus hangs when fetching via imaps
-http://debbugs.gnu.org/24247
+https://debbugs.gnu.org/24247
 
 gnutls-cli 3.5.3 (2016-08-09) does not generate a "- Handshake was
 completed" message that tls.el relies upon, causing affected Emacs
@@ -671,9 +671,10 @@ problem by installing additional fonts.
 
 The intlfonts distribution includes a full spectrum of fonts that can
 display all the characters Emacs supports.  The etl-unicode collection
-of fonts (available from <URL:ftp://ftp.x.org/contrib/fonts/>) includes
-fonts that can display many Unicode characters; they can also be used
-by ps-print and ps-mule to print Unicode characters.
+of fonts (available from
+<https://ftp.nluug.nl/windowing/X/contrib/fonts/>) includes fonts that
+can display many Unicode characters; they can also be used by ps-print
+and ps-mule to print Unicode characters.
 
 ** Under X, some characters appear improperly aligned in their lines.
 
@@ -1063,9 +1064,9 @@ reported to refuse such attempts and snap back to the width needed to
 show the full menu bar (wmii) or at least cause the screen to flicker
 during such resizing attempts (i3, IceWM).
 
-See also http://debbugs.gnu.org/cgi/bugreport.cgi?bug=15700,
-http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22000,
-http://debbugs.gnu.org/cgi/bugreport.cgi?bug=22898 and
+See also https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15700,
+https://debbugs.gnu.org/cgi/bugreport.cgi?bug=22000,
+https://debbugs.gnu.org/cgi/bugreport.cgi?bug=22898 and
 http://lists.gnu.org/archive/html/emacs-devel/2016-07/msg00154.html.
 
 *** Metacity: Resizing Emacs or ALT-Tab causes X to be unresponsive.
@@ -1743,7 +1744,7 @@ global-font-lock-mode RET" or by customizing the variable
 'global-font-lock-mode'.
 
 ** Unexpected characters inserted into the buffer when you start Emacs.
-See e.g. <URL:http://debbugs.gnu.org/11129>
+See e.g. <URL:https://debbugs.gnu.org/11129>
 
 This can happen when you start Emacs in -nw mode in an Xterm.
 For example, in the *scratch* buffer, you might see something like:
@@ -1782,7 +1783,7 @@ exec 2> >(exec cat >&2 2>/dev/null)
 exec ssh "$@"
 
 *** GNU/Linux: Truncated svn annotate output with SSH.
-http://debbugs.gnu.org/7791
+https://debbugs.gnu.org/7791
 
 The symptoms are: you are accessing a svn repository over SSH.
 You use vc-annotate on a large (several thousand line) file, and the
@@ -2757,7 +2758,7 @@ Compiling the lisp files fails at random places, complaining:
 "No rule to make target '/path/to/some/lisp.elc'".
 The causes of this problem are not understood.  Using GNU make 3.81 compiled
 from source, rather than the Ubuntu version, worked.
-See <URL:http://debbugs.gnu.org/327>, <URL:http://debbugs.gnu.org/821>.
+See <URL:https://debbugs.gnu.org/327>, <URL:https://debbugs.gnu.org/821>.
 
 ** Dumping
 
@@ -2927,20 +2928,6 @@ release was reported to work without problems.  It worked OK on
 another system with Solaris 8 using apparently the same 5.0 compiler
 and the default CFLAGS.
 
-**** Solaris 2.x: Emacs dumps core when built with Motif.
-
-The Solaris Motif libraries are buggy, at least up through Solaris 2.5.1.
-Install the current Motif runtime library patch appropriate for your host.
-(Make sure the patch is current; some older patch versions still have the bug.)
-You should install the other patches recommended by Sun for your host, too.
-You can obtain Sun patches from ftp://sunsolve.sun.com/pub/patches/;
-look for files with names ending in '.PatchReport' to see which patches
-are currently recommended for your host.
-
-On Solaris 2.6, Emacs is said to work with Motif when Solaris patch
-105284-12 is installed, but fail when 105284-15 is installed.
-105284-18 might fix it again.
-
 **** Solaris 2.6 and 7: the Compose key does not work.
 
 This is a bug in Motif in Solaris.  Supposedly it has been fixed for
@@ -3087,7 +3074,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 
 Local variables:

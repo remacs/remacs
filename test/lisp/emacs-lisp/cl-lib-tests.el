@@ -1,4 +1,4 @@
-;;; cl-lib.el --- tests for emacs-lisp/cl-lib.el  -*- lexical-binding:t -*-
+;;; cl-lib-tests.el --- tests for emacs-lisp/cl-lib.el  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
@@ -15,7 +15,7 @@
 ;; General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see `http://www.gnu.org/licenses/'.
+;; along with this program.  If not, see `https://www.gnu.org/licenses/'.
 
 ;;; Commentary:
 
@@ -194,9 +194,6 @@
   (should (eql (cl-mismatch "ab" "a") 1))
   (should (eql (cl-mismatch "Aa" "aA") 0))
   (should (eql (cl-mismatch '(a b c) '(a b d)) 2)))
-
-(ert-deftest cl-lib-test-loop ()
-  (should (eql (cl-loop with (a b c) = '(1 2 3) return (+ a b c)) 6)))
 
 (ert-deftest cl-lib-keyword-names-versus-values ()
   (should (equal
@@ -480,9 +477,6 @@
   (should (= 239 (cl-parse-integer "zzef" :radix 16 :start 2)))
   (should (= -123 (cl-parse-integer "	-123  "))))
 
-(ert-deftest cl-loop-destructuring-with ()
-  (should (equal (cl-loop with (a b c) = '(1 2 3) return (+ a b c)) 6)))
-
 (ert-deftest cl-flet-test ()
   (should (equal (cl-flet ((f1 (x) x)) (let ((x #'f1)) (funcall x 5))) 5)))
 
@@ -518,7 +512,15 @@
 (ert-deftest cl-lib-symbol-macrolet-2 ()
   (should (equal (cl-lib-symbol-macrolet-4+5) (+ 4 5))))
 
+(defun cl-lib-tests--dummy-function ()
+  ;; Dummy function to see if the file is compiled.
+  t)
+
 (ert-deftest cl-lib-defstruct-record ()
+  ;; This test fails when compiled, see Bug#24402/27718.
+  :expected-result (if (byte-code-function-p
+                        (symbol-function 'cl-lib-tests--dummy-function))
+                       :failed :passed)
   (cl-defstruct foo x)
   (let ((x (make-foo :x 42)))
     (should (recordp x))
@@ -548,4 +550,4 @@
     (should cl-old-struct-compat-mode)
     (cl-old-struct-compat-mode (if saved 1 -1))))
 
-;;; cl-lib.el ends here
+;;; cl-lib-tests.el ends here

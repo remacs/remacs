@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Commentary:
@@ -6992,11 +6992,16 @@ The optional argument TYPE tells the agenda type."
 	   (list 'face (org-get-todo-face (match-string 2 x)))
 	   x)
 	  (when (match-end 1)
-	    (setq x (concat (substring x 0 (match-end 1))
-			    (format org-agenda-todo-keyword-format
-				    (match-string 2 x))
-			    (org-add-props " " (text-properties-at 0 x))
-			    (substring x (match-end 3)))))))
+	    (setq x
+		  (concat
+		   (substring x 0 (match-end 1))
+		   (format org-agenda-todo-keyword-format
+			   (match-string 2 x))
+		   ;; Remove `display' property as the icon could leak
+		   ;; on the white space.
+		   (org-add-props " " (org-plist-delete (text-properties-at 0 x)
+							'display))
+		   (substring x (match-end 3)))))))
       x)))
 
 (defsubst org-cmp-values (a b property)
@@ -7592,7 +7597,7 @@ also press `-' or `+' to switch between filtering and excluding."
 		    (org-global-tags-completion-table)))
       (let ((completion-ignore-case t))
 	(setq tag (completing-read
-		   "Tag: " org-global-tags-completion-table))))
+		   "Tag: " org-global-tags-completion-table nil t))))
     (cond
      ((eq char ?\r)
       (org-agenda-filter-show-all-tag)

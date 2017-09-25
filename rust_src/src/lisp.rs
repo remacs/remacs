@@ -27,7 +27,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
-                 Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qintegerp, Qhash_table_p,
+                 Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qplistp, Qintegerp, Qhash_table_p,
                  Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p,
                  SYMBOL_NAME, PseudovecType, EqualKind};
 
@@ -596,21 +596,21 @@ impl LispObject {
 /// From `FOR_EACH_TAIL_INTERNAL` in `lisp.h`
 pub struct TailsIter {
     list: LispObject,
-    safe: bool,
     tail: LispObject,
     tortoise: LispObject,
+    errsym: Option<Lisp_Object>,
     max: isize,
     n: isize,
     q: u16,
 }
 
 impl TailsIter {
-    fn new(list: LispObject, safe: bool) -> Self {
+    fn new(list: LispObject, errsym: Option<Lisp_Object>) -> Self {
         Self {
             list,
-            safe,
             tail: list,
             tortoise: list,
+            errsym,
             max: 2,
             n: 0,
             q: 2,
@@ -618,7 +618,7 @@ impl TailsIter {
     }
 
     fn circular(&self) -> Option<LispCons> {
-        if !self.safe {
+        if self.errsym.is_some() {
             unsafe {
                 circular_list(self.tail.to_raw());
             }
@@ -634,8 +634,8 @@ impl Iterator for TailsIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self.tail.as_cons() {
             None => {
-                if !self.safe && self.tail.is_not_nil() {
-                    wrong_type!(Qlistp, self.list)
+                if self.errsym.is_some() && self.tail.is_not_nil() {
+                    wrong_type!(self.errsym.clone().unwrap(), self.list)
                 }
                 None
             }
@@ -698,13 +698,20 @@ impl LispObject {
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails(self) -> TailsIter {
-        TailsIter::new(self, false)
+        TailsIter::new(self, Some(unsafe { Qlistp }))
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_tails_safe(self) -> TailsIter {
-        TailsIter::new(self, true)
+        TailsIter::new(self, None)
+    }
+
+    /// Iterate over all tails of self.  self should be a plist, i.e. a chain
+    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
+    /// will be signaled.
+    pub fn iter_tails_plist(self) -> TailsIter {
+        TailsIter::new(self, Some(unsafe { Qplistp }))
     }
 }
 
