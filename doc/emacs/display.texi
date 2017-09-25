@@ -1745,7 +1745,7 @@ invisible parts of text), and lines which wrap to consume more than
 one screen line will be numbered that many times.  The displayed
 numbers are relative, as with @code{relative} value above.  This is
 handy in modes that fold text, such as Outline mode (@pxref{Outline
-Mode}), and need to move by exact number of screen lines.
+Mode}), and when you need to move by exact number of screen lines.
 
 @item anything else
 Any other non-@code{nil} value is treated as @code{t}.
@@ -1756,7 +1756,7 @@ Any other non-@code{nil} value is treated as @code{t}.
 @vindex display-line-numbers-type
 A convenient way of turning on display of line numbers is @w{@kbd{M-x
 display-line-numbers-mode @key{RET}}}.  This mode has a globalized
-variant, @code{global-display-line0numbers-mode}.  The user option
+variant, @code{global-display-line-numbers-mode}.  The user option
 @code{display-line-numbers-type} controls which sub-mode of
 line-number display, described above, will these modes activate.
 
@@ -1777,6 +1777,17 @@ starting at the beginning of the narrowing.  However, if you customize
 the variable @code{display-line-numbers-widen} to a non-@code{nil}
 value, line numbers will disregard any narrowing and will start at the
 first character of the buffer.
+
+@vindex display-line-numbers-width-start
+@vindex display-line-numbers-grow-only
+@vindex display-line-numbers-width
+In selective display mode (@pxref{Selective Display}), and other modes
+that hide many lines from display (such as Outline and Org modes), you
+may wish to customize the variables
+@code{display-line-numbers-width-start} and
+@code{display-line-numbers-grow-only}, or set
+@code{display-line-numbers-width} to a large enough value, to avoid
+occasional miscalculations of space reserved for the line numbers.
 
 @cindex line-number face
 The line numbers are displayed in a special face @code{line-number}.

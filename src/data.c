@@ -3010,16 +3010,16 @@ static Lisp_Object
 minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
 	       enum Arith_Comparison comparison)
 {
-  eassume (0 < nargs);
-  Lisp_Object accum = args[0];	/* pacify GCC */
-  for (ptrdiff_t argnum = 0; argnum < nargs; argnum++)
+  Lisp_Object accum = args[0];
+  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (accum);
+  for (ptrdiff_t argnum = 1; argnum < nargs; argnum++)
     {
       Lisp_Object val = args[argnum];
       CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (val);
-      if (argnum == 0 || !NILP (arithcompare (val, accum, comparison)))
+      if (!NILP (arithcompare (val, accum, comparison)))
 	accum = val;
-      else if (FLOATP (accum) && isnan (XFLOAT_DATA (accum)))
-	return accum;
+      else if (FLOATP (val) && isnan (XFLOAT_DATA (val)))
+	return val;
     }
   return accum;
 }

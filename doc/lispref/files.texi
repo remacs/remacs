@@ -332,7 +332,9 @@ in the list @code{find-file-hook}.
 that is visiting that file---that is, the contents of the file are
 copied into the buffer and the copy is what you edit.  Changes to the
 buffer do not change the file until you @dfn{save} the buffer, which
-means copying the contents of the buffer into the file.
+means copying the contents of the buffer into the file.  Buffers which
+are not visiting a file can still be ``saved'', in a sense, using
+functions in the buffer-local @code{write-contents-functions} hook.
 
 @deffn Command save-buffer &optional backup-option
 This function saves the contents of the current buffer in its visited
@@ -365,8 +367,8 @@ With an argument of 0, unconditionally do @emph{not} make any backup file.
 @anchor{Definition of save-some-buffers}
 This command saves some modified file-visiting buffers.  Normally it
 asks the user about each buffer.  But if @var{save-silently-p} is
-non-@code{nil}, it saves all the file-visiting buffers without querying
-the user.
+non-@code{nil}, it saves all the file-visiting buffers without
+querying the user.
 
 @vindex save-some-buffers-default-predicate
 The optional @var{pred} argument provides a predicate that controls

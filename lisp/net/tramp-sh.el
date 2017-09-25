@@ -613,7 +613,7 @@ use Cwd \"realpath\";
 
 sub myrealpath {
     my ($file) = @_;
-    return realpath($file) if -e $file;
+    return realpath($file) if (-e $file || -l $file);
 }
 
 sub recursive {
@@ -1139,12 +1139,7 @@ component is used as the target of the symlink."
 		     (tramp-shell-quote-argument localname)))
 	    (with-current-buffer (tramp-get-connection-buffer v)
 	      (goto-char (point-min))
-	      (setq result (buffer-substring (point-min) (point-at-eol))))
-	    (when (and (file-symlink-p filename)
-		       (string-equal result localname))
-	      (tramp-error
-	       v 'file-error
-	       "Apparent cycle of symbolic links for %s" filename)))
+	      (setq result (buffer-substring (point-min) (point-at-eol)))))
 
 	   ;; Use Perl implementation.
 	   ((and (tramp-get-remote-perl v)
@@ -1198,16 +1193,6 @@ component is used as the target of the symlink."
 			 (setq numchase (1+ numchase))
 			 (when (file-name-absolute-p symlink-target)
 			   (setq result nil))
-			 ;; If the symlink was absolute, we'll get a
-			 ;; string like "/user@host:/some/target";
-			 ;; extract the "/some/target" part from it.
-			 (when (tramp-tramp-file-p symlink-target)
-			   (unless (tramp-equal-remote filename symlink-target)
-			     (tramp-error
-			      v 'file-error
-			      "Symlink target `%s' on wrong host"
-			      symlink-target))
-			   (setq symlink-target localname))
 			 (setq steps
 			       (append
 				(split-string symlink-target "/" 'omit)	steps)))
@@ -1226,6 +1211,13 @@ component is used as the target of the symlink."
 			"/"))
 		(when (string= "" result)
 		  (setq result "/")))))
+
+	  ;; Detect cycle.
+	  (when (and (file-symlink-p filename)
+		     (string-equal result localname))
+	    (tramp-error
+	     v 'file-error
+	     "Apparent cycle of symbolic links for %s" filename))
 	  ;; If the resulting localname looks remote, we must quote it
 	  ;; for security reasons.
 	  (when (or quoted (file-remote-p result))
@@ -1985,7 +1977,7 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 	  ;; scp or rsync DTRT.
 	  (progn
 	    (when (and (file-directory-p newname)
-		       (not (directory-name-p newname)))
+		       (not (tramp-compat-directory-name-p newname)))
 	      (tramp-error v 'file-already-exists newname))
 	    (setq dirname (directory-file-name (expand-file-name dirname))
 		  newname (directory-file-name (expand-file-name newname)))

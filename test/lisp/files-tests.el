@@ -363,7 +363,8 @@ be invoked with the right arguments."
     (should-not (make-directory subdir1))
     (should-not (make-directory subdir2 t))
     (should-error (make-directory a/b))
-    (should-not (make-directory a/b t))))
+    (should-not (make-directory a/b t))
+    (delete-directory dir 'recursive)))
 
 (ert-deftest files-test-no-file-write-contents ()
   "Test that `write-contents-functions' permits saving a file.
@@ -392,6 +393,23 @@ name (Bug#28412)."
         (insert "p")
         (should (null (save-buffer)))
         (should (eq (buffer-size) 1))))))
+
+(ert-deftest files-tests--copy-directory ()
+  (let* ((dir (make-temp-file "files-mkdir-test" t))
+	 (dirname (file-name-as-directory dir))
+	 (source (concat dirname "source"))
+	 (dest (concat dirname "dest/new/directory/"))
+	 (file (concat (file-name-as-directory source) "file"))
+	 (source2 (concat dirname "source2"))
+	 (dest2 (concat dirname "dest/new2")))
+    (make-directory source)
+    (write-region "" nil file)
+    (copy-directory source dest t t t)
+    (should (file-exists-p (concat dest "file")))
+    (make-directory (concat (file-name-as-directory source2) "a") t)
+    (copy-directory source2 dest2)
+    (should (file-directory-p (concat (file-name-as-directory dest2) "a")))
+    (delete-directory dir 'recursive)))
 
 (provide 'files-tests)
 ;;; files-tests.el ends here

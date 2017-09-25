@@ -35,6 +35,8 @@
               (char 0))
           (while (and (not failure) (< char 127))
             (setq char (1+ char))
+            (when (and (eq system-type 'cygwin) (eq char 92))
+              (setq char (1+ char)))
             (setq failure (try-link (string char) link)))
           (or failure
               (try-link "/:" link)))

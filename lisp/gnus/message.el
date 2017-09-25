@@ -991,7 +991,6 @@ are replaced:
   %F   The first name if present, e.g.: \"John\", else fall
        back to the mail address.
   %L   The last name if present, e.g.: \"Doe\".
-  %Z, %z   The time zone in the numeric form, e.g.:\"+0000\".
 
 All other format specifiers are passed to `format-time-string'
 which is called using the date from the article your replying to, but

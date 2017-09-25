@@ -150,8 +150,13 @@ Called with an absolute file name as argument, it returns t to enable backup.")
 (defcustom buffer-offer-save nil
   "Non-nil in a buffer means always offer to save buffer on exit.
 Do so even if the buffer is not visiting a file.
-Automatically local in all buffers."
-  :type 'boolean
+Automatically local in all buffers.
+
+Set to the symbol `always' to offer to save buffer whenever
+`save-some-buffers' is called."
+  :type '(choice (const :tag "Never" nil)
+                 (const :tag "On Emacs exit" t)
+                 (const :tag "Whenever save-some-buffers is called" always))
   :group 'backup)
 (make-variable-buffer-local 'buffer-offer-save)
 (put 'buffer-offer-save 'permanent-local t)
@@ -5190,12 +5195,9 @@ change the additional actions you can take on files."
                     (not (buffer-base-buffer buffer))
                     (or
                      (buffer-file-name buffer)
-                     (and pred
-                          (progn
-                            (set-buffer buffer)
-                            (and buffer-offer-save (> (buffer-size) 0))))
-                     (buffer-local-value
-                      'write-contents-functions buffer))
+                     (with-current-buffer buffer
+                       (or (eq buffer-offer-save 'always)
+                           (and pred buffer-offer-save (> (buffer-size) 0)))))
                     (or (not (functionp pred))
                         (with-current-buffer buffer (funcall pred)))
                     (if arg
@@ -5336,7 +5338,7 @@ instance of such commands."
   "Make directory DIR if it is not already a directory.  Return nil."
   (condition-case err
       (make-directory-internal dir)
-    (file-already-exists
+    (error
      (unless (file-directory-p dir)
        (signal (car err) (cdr err))))))
 
@@ -5372,7 +5374,7 @@ raised."
 	  (while (progn
 		   (setq parent (directory-file-name
 				 (file-name-directory dir)))
-		   (condition-case err
+		   (condition-case ()
 		       (files--ensure-directory dir)
 		     (file-missing
 		      ;; Do not loop if root does not exist (Bug#2309).
@@ -5544,16 +5546,14 @@ into NEWNAME instead."
 	     ;; If NEWNAME is not a directory name, create it;
 	     ;; that is where we will copy the files of DIRECTORY.
 	     (make-directory newname parents))
-	    ;; If NEWNAME is a directory name and COPY-CONTENTS
-	    ;; is nil, copy into NEWNAME/[DIRECTORY-BASENAME].
-	    ((not copy-contents)
-	     (setq newname (concat newname
-			    (file-name-nondirectory directory)))
-	     (and (file-exists-p newname)
-		  (not (file-directory-p newname))
-		  (error "Cannot overwrite non-directory %s with a directory"
-			 newname))
-	     (make-directory newname t)))
+	    ;; NEWNAME is a directory name.  If COPY-CONTENTS is non-nil,
+	    ;; create NEWNAME if it is not already a directory;
+	    ;; otherwise, create NEWNAME/[DIRECTORY-BASENAME].
+	    ((if copy-contents
+		 (or parents (not (file-directory-p newname)))
+	       (setq newname (concat newname
+				     (file-name-nondirectory directory))))
+	     (make-directory (directory-file-name newname) parents)))
 
       ;; Copy recursively.
       (dolist (file
@@ -5565,7 +5565,7 @@ into NEWNAME instead."
 	      (filetype (car (file-attributes file))))
 	  (cond
 	   ((eq filetype t)       ; Directory but not a symlink.
-	    (copy-directory file newname keep-time parents))
+	    (copy-directory file target keep-time parents t))
 	   ((stringp filetype)    ; Symbolic link
 	    (make-symbolic-link filetype target t))
 	   ((copy-file file target t keep-time)))))
