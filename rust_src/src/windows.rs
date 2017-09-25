@@ -30,7 +30,7 @@ impl LispWindowRef {
 
     #[inline]
     pub fn is_minibuffer(&self) -> bool {
-        self.flags & FLAG_MINI == FLAG_MINI
+        self.flags & FLAG_MINI != 0
     }
 }
 
