@@ -1003,7 +1003,7 @@ Called with one argument METHOD.
 If METHOD is `delete-only', then delete the region; the return value
 is undefined.  If METHOD is nil, then return the content as a string.
 If METHOD is `bounds', then return the boundaries of the region
-as a list of pairs of (START . END) positions.
+as a pair of the form (START . END) positions.
 If METHOD is anything else, delete the region and return its content
 as a string, after filtering it with `filter-buffer-substring', which
 is called with METHOD as its 3rd argument.")
@@ -5473,7 +5473,8 @@ also checks the value of `use-empty-active-region'."
        (progn (cl-assert (mark)) t)))
 
 (defun region-bounds ()
-  "Return the boundaries of the region as a list of pairs of (START . END) positions."
+  "Return the boundaries of the region as a pair of positions.
+Value is of the form (START . END)."
   (funcall region-extract-function 'bounds))
 
 (defun region-noncontiguous-p ()
