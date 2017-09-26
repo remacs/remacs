@@ -49,11 +49,10 @@
 ;;   function being called is capable of returning in other cases.
 
 ;; Problems:
-;; * To detect different values, we store the form's result in a vector and
-;;   compare the next result using `equal'.  We don't copy the form's
-;;   result, so if caller alters it (`setcar', etc.) we'll think the next
-;;   call has the same value!  Also, equal thinks two strings are the same
-;;   if they differ only in properties.
+;; * `equal', which is used to compare the results of repeatedly executing
+;;   a form, has a couple of shortcomings.  It considers strings to be the same
+;;   if they only differ in properties, and it raises an error when asked to
+;;   compare circular lists.
 ;; * Because we have only a "1value" class and no "always nil" class, we have
 ;;   to treat as potentially 1-valued any `and' whose last term is 1-valued,
 ;;   in case the last term is always nil.  Example:
@@ -259,32 +258,78 @@ BEFORE-INDEX is the form's index into the code-coverage vector."
 AFTER-INDEX is the form's index into the code-coverage
 vector.  Return VALUE."
   (let ((old-result (aref testcover-vector after-index)))
-     (cond
-      ((eq 'unknown old-result)
-       (aset testcover-vector after-index value))
-      ((eq 'maybe old-result)
-       (aset testcover-vector after-index 'ok-coverage))
-      ((eq '1value old-result)
-       (aset testcover-vector after-index
-             (cons old-result value)))
-      ((and (eq (car-safe old-result) '1value)
-            (not (condition-case ()
-                     (equal (cdr old-result) value)
-                   ;; TODO: Actually check circular lists for equality.
-                   (circular-list t))))
-       (error "Value of form marked with `1value' does vary: %s" value))
-      ;; Test if a different result.
-      ((not (condition-case ()
-                (equal value old-result)
-              ;; TODO: Actually check circular lists for equality.
-              (circular-list nil)))
-       (aset testcover-vector after-index 'ok-coverage))))
+    (cond
+     ((eq 'unknown old-result)
+      (aset testcover-vector after-index (testcover--copy-object value)))
+     ((eq 'maybe old-result)
+      (aset testcover-vector after-index 'ok-coverage))
+     ((eq '1value old-result)
+      (aset testcover-vector after-index
+            (cons old-result (testcover--copy-object value))))
+     ((and (eq (car-safe old-result) '1value)
+           (not (condition-case ()
+                    (equal (cdr old-result) value)
+                  (circular-list t))))
+      (error "Value of form expected to be constant does vary, from %s to %s"
+             old-result value))
+     ;; Test if a different result.
+     ((not (condition-case ()
+               (equal value old-result)
+             (circular-list nil)))
+      (aset testcover-vector after-index 'ok-coverage))))
   value)
 
 ;; Add these behaviors to Edebug.
 (unless (assoc 'testcover edebug-behavior-alist)
   (push '(testcover testcover-enter testcover-before testcover-after)
         edebug-behavior-alist))
+
+(defun testcover--copy-object (obj)
+  "Make a copy of OBJ.
+If OBJ is a cons cell, copy both its car and its cdr.
+Contrast to `copy-tree' which does the same but fails on circular
+structures, and `copy-sequence', which copies only along the
+cdrs.  Copy vectors as well as conses."
+  (let ((ht (make-hash-table :test 'eq)))
+    (testcover--copy-object1 obj t ht)))
+
+(defun testcover--copy-object1 (obj vecp hash-table)
+  "Make a copy of OBJ, using a HASH-TABLE of objects already copied.
+If OBJ is a cons cell, this recursively copies its car and
+iteratively copies its cdr.  When VECP is non-nil, copy
+vectors as well as conses."
+  (if (and (atom obj) (or (not vecp) (not (vectorp obj))))
+      obj
+    (let ((copy (gethash obj hash-table nil)))
+      (unless copy
+        (cond
+         ((consp obj)
+          (let* ((rest obj) current)
+	    (setq copy (cons nil nil)
+                  current copy)
+            (while
+                (progn
+                  (puthash rest current hash-table)
+                  (setf (car current)
+                        (testcover--copy-object1 (car rest) vecp hash-table))
+                  (setq rest (cdr rest))
+                  (cond
+                   ((atom rest)
+                    (setf (cdr current)
+                          (testcover--copy-object1 rest vecp hash-table))
+                    nil)
+                   ((gethash rest hash-table nil)
+                    (setf (cdr current) (gethash rest hash-table nil))
+                    nil)
+                   (t (setq current
+                            (setf (cdr current) (cons nil nil)))))))))
+         (t ; (and vecp (vectorp obj)) is true due to test in if above.
+          (setq copy (copy-sequence obj))
+          (puthash obj copy hash-table)
+          (dotimes (i (length copy))
+            (aset copy i
+                  (testcover--copy-object1 (aref copy i) vecp hash-table))))))
+      copy)))
 
 ;;;=========================================================================
 ;;; Display the coverage data as color splotches on your code.
