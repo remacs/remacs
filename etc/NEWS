@@ -25,6 +25,69 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Installation Changes in Emacs 26.1
 
+** By default libgnutls is now required when building Emacs.
+Use 'configure --with-gnutls=no' to build even when GnuTLS is missing.
+
+** GnuTLS version 2.12.2 or later is now required, instead of merely
+version 2.6.6 or later.
+
+** The new option 'configure --with-mailutils' causes Emacs to rely on
+GNU Mailutils to retrieve email.  It is recommended, and is the
+default if GNU Mailutils is installed.  When --with-mailutils is not
+in effect, the Emacs build procedure by default continues to build and
+install a limited 'movemail' substitute that retrieves POP3 email only
+via insecure channels; to avoid this problem, use either
+--with-mailutils or --without-pop when configuring.
+
+** The new option 'configure --enable-gcc-warnings=warn-only' causes
+GCC to issue warnings without stopping the build.  This behavior is
+now the default in developer builds.  As before, use
+'--disable-gcc-warnings' to suppress GCC's warnings, and
+'--enable-gcc-warnings' to stop the build if GCC issues warnings.
+
+** When GCC warnings are enabled, '--enable-check-lisp-object-type' is
+now enabled by default when configuring.
+
++++
+** The Emacs server now has socket-launching support.  This allows
+socket based activation, where an external process like systemd can
+invoke the Emacs server process upon a socket connection event and
+hand the socket over to Emacs.  Emacs uses this socket to service
+emacsclient commands.  This new functionality can be disabled with the
+configure option '--disable-libsystemd'.
+
++++
+** A systemd user unit file is provided.  Use it in the standard way:
+systemctl --user enable emacs
+(If your Emacs is installed in a non-standard location, you may
+need to copy the emacs.service file to eg ~/.config/systemd/user/)
+
+** New configure option '--disable-build-details' attempts to build an
+Emacs that is more likely to be reproducible; that is, if you build
+and install Emacs twice, the second Emacs is a copy of the first.
+Deterministic builds omit the build date from the output of the
+'emacs-version' and 'erc-cmd-SV' functions, and the leave the
+following variables nil: 'emacs-build-system', 'emacs-build-time',
+'erc-emacs-build-time'.
+
+---
+** Emacs can now be built with support for Little CMS.
+
+If the lcms2 library is installed, Emacs will enable features built on
+top of that library.  The new configure option '--without-lcms2' can
+be used to build without lcms2 support even if it is installed.  Emacs
+linked to Little CMS exposes color management functions in Lisp: the
+color metrics 'lcms-cie-de2000' and 'lcms-cam02-ucs', as well as
+functions for conversion to and from CIE CAM02 and CAM02-UCS.
+
+** The configure option '--with-gameuser' now defaults to 'no',
+as this appears to be the most common configuration in practice.
+When it is 'no', the shared game directory and the auxiliary program
+update-game-score are no longer needed and are not installed.
+
+** Emacs no longer works on IRIX.  We expect that Emacs users are not
+affected by this, as SGI stopped supporting IRIX in December 2013.
+
 
 * Startup Changes in Emacs 26.1
 
