@@ -52,3 +52,9 @@ fn equal_including_properties(o1: LispObject, o2: LispObject) -> LispObject {
     };
     LispObject::from_bool(res)
 }
+
+/// Return the argument unchanged.
+#[lisp_fn]
+fn identity(arg: LispObject) -> LispObject {
+    arg
+}
