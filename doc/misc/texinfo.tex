@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2017-07-04.16}
+\def\texinfoversion{2017-08-23.19}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -5696,10 +5696,13 @@ end
       \advance\dimen@ii by 1\dimen@i
       \ifdim\wd\boxA > \dimen@ii % If the entry doesn't fit in one line
       \ifdim\dimen@ > 0.8\dimen@ii   % due to long index text
-        \dimen@ = 0.7\dimen@ % Try to split the text roughly evenly
+        % Try to split the text roughly evenly.  \dimen@ will be the length of 
+        % the first line.
+        \dimen@ = 0.7\dimen@
         \dimen@ii = \hsize
         \ifnum\dimen@>\dimen@ii
-          % If the entry is too long, use the whole line
+          % If the entry is too long (for example, if it needs more than
+          % two lines), use all the space in the first line.
           \dimen@ = \dimen@ii
         \fi
         \advance\leftskip by 0pt plus 1fill % ragged right
@@ -5709,8 +5712,9 @@ end
         % instead of using \parshape with explicit line lengths, but TeX
         % doesn't seem to provide a way to do such a thing.
         %
-        \leftskip = 1em
-        \parindent = -1em
+        % Indent all lines but the first one.
+        \advance\leftskip by 1em
+        \advance\parindent by -1em
       \fi\fi
       \indent % start paragraph
       \unhbox\boxA
@@ -6943,7 +6947,15 @@ end
 % exist, with an empty box.  Let's hope all the numbers have the same width.
 % Also ignore the page number, which is conventionally not printed.
 \def\numeralbox{\setbox0=\hbox{8}\hbox to \wd0{\hfil}}
-\def\partentry#1#2#3#4{\dochapentry{\numeralbox\labelspace#1}{}}
+\def\partentry#1#2#3#4{%
+  % Add stretch and a bonus for breaking the page before the part heading.
+  % This reduces the chance of the page being broken immediately after the
+  % part heading, before a following chapter heading.
+  \vskip 0pt plus 5\baselineskip
+  \penalty-300
+  \vskip 0pt plus -5\baselineskip
+  \dochapentry{\numeralbox\labelspace#1}{}%
+}
 %
 % Parts, in the short toc.
 \def\shortpartentry#1#2#3#4{%

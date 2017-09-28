@@ -20,6 +20,7 @@ base64 = "0.6.0"
 sha1 = "0.2.0"
 sha2 = "0.4.2"
 fnv = "1.0.3"
+mock_derive = "0.6.1"
 
 [build-dependencies]
 libc = "0.2"

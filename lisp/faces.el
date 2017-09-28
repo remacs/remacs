@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -102,11 +102,18 @@ a font height that isn't optimal."
     ;; Monospace Serif is an Emacs invention, intended to work around
     ;; portability problems when using Courier.  It should work well
     ;; when combined with Monospaced and with other standard fonts.
+    ;; One of its uses is for 'tex-verbatim' and 'Info-quoted' faces,
+    ;; so the result must be different from the default face's font,
+    ;; and must be monospaced.  For 'tex-verbatim', it is desirable
+    ;; that the font really is a Serif font, so as to look like
+    ;; TeX's 'verbatim'.
     ("Monospace Serif"
 
      ;; This looks good on GNU/Linux.
      "Courier 10 Pitch"
-     ;; This looks good on MS-Windows and OS X.
+     ;; This looks good on MS-Windows and OS X.  Note that this is
+     ;; actually a sans-serif font, but it's here for lack of a better
+     ;; alternative.
      "Consolas"
      ;; This looks good on macOS.  "Courier" looks good too, but is
      ;; jagged on GNU/Linux and so is listed later as "courier".
@@ -1447,7 +1454,7 @@ If FRAME is omitted or nil, use the selected frame."
 	(setq face (list face)))
     (with-help-window (help-buffer)
       (with-current-buffer standard-output
-	(dolist (f face)
+	(dolist (f face (buffer-string))
 	  (if (stringp f) (setq f (intern f)))
 	  ;; We may get called for anonymous faces (i.e., faces
 	  ;; expressed using prop-value plists).  Those can't be
@@ -2621,6 +2628,11 @@ Use the face `mode-line-highlight' for features that can be selected."
   :version "21.1"
   :group 'basic-faces)
 
+(defface header-line-highlight '((t :inherit highlight))
+  "Basic header line face for highlighting."
+  :version "26.1"
+  :group 'basic-faces)
+
 (defface vertical-border
   '((((type tty)) :inherit mode-line-inactive))
   "Face used for vertical window dividers on ttys."
@@ -2841,6 +2853,13 @@ It is used for characters of no fonts too."
      :inherit underline))
   "Face used for a matching paren."
   :group 'paren-showing-faces)
+
+(defface show-paren-match-expression
+  '((t :inherit show-paren-match))
+  "Face used for a matching paren when highlighting the whole expression.
+This face is used by `show-paren-mode'."
+  :group 'paren-showing-faces
+  :version "26.1")
 
 (defface show-paren-mismatch
   '((((class color)) (:foreground "white" :background "purple"))

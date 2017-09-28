@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -6931,7 +6931,7 @@ displayed, no centering will be performed."
     (save-excursion
       ;; Take care of tree window mode.
       (if (get-buffer-window gnus-group-buffer 0)
-	  (pop-to-buffer gnus-group-buffer)
+	  (pop-to-buffer gnus-group-buffer t)
 	(set-buffer gnus-group-buffer))
       (gnus-group-jump-to-group newsgroup))))
 
@@ -9780,8 +9780,11 @@ If ARG is a negative number, hide the unwanted header lines."
 	     (inhibit-point-motion-hooks t)
 	     (hidden (if (numberp arg)
 			 (>= arg 0)
-		       (or (not (looking-at "[^ \t\n]+:"))
-			   (gnus-article-hidden-text-p 'headers))))
+		       (or
+			;; The case where there's no visible header
+			;; that matches `gnus-visible-headers'.
+			(looking-at "\n?\\'")
+			(gnus-article-hidden-text-p 'headers))))
 	     s e)
 	(delete-region (point-min) (point-max))
 	(with-current-buffer gnus-original-article-buffer
@@ -9841,7 +9844,7 @@ IDNA encoded domain names looks like `xn--bar'.  If a string
 remain unencoded after running this function, it is likely an
 invalid IDNA string (`xn--bar' is invalid).
 
-You must have GNU Libidn (URL `http://www.gnu.org/software/libidn/')
+You must have GNU Libidn (URL `https://www.gnu.org/software/libidn/')
 installed for this command to work."
   (interactive "P")
   (gnus-summary-select-article)

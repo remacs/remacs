@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
@@ -391,37 +391,6 @@ buf_bytepos_to_charpos (struct buffer *b, ptrdiff_t bytepos)
 
 /* Operations on markers. */
 
-DEFUN ("marker-buffer", Fmarker_buffer, Smarker_buffer, 1, 1, 0,
-       doc: /* Return the buffer that MARKER points into, or nil if none.
-Returns nil if MARKER points into a dead buffer.  */)
-  (register Lisp_Object marker)
-{
-  register Lisp_Object buf;
-  CHECK_MARKER (marker);
-  if (XMARKER (marker)->buffer)
-    {
-      XSETBUFFER (buf, XMARKER (marker)->buffer);
-      /* If the buffer is dead, we're in trouble: the buffer pointer here
-	 does not preserve the buffer from being GC'd (it's weak), so
-	 markers have to be unlinked from their buffer as soon as the buffer
-	 is killed.  */
-      eassert (BUFFER_LIVE_P (XBUFFER (buf)));
-      return buf;
-    }
-  return Qnil;
-}
-
-DEFUN ("marker-position", Fmarker_position, Smarker_position, 1, 1, 0,
-       doc: /* Return the position of MARKER, or nil if it points nowhere.  */)
-  (Lisp_Object marker)
-{
-  CHECK_MARKER (marker);
-  if (XMARKER (marker)->buffer)
-    return make_number (XMARKER (marker)->charpos);
-
-  return Qnil;
-}
-
 /* Change M so it points to B at CHARPOS and BYTEPOS.  */
 
 static void
@@ -761,8 +730,6 @@ verify_bytepos (ptrdiff_t charpos)
 void
 syms_of_marker (void)
 {
-  defsubr (&Smarker_position);
-  defsubr (&Smarker_buffer);
   defsubr (&Sset_marker);
   defsubr (&Scopy_marker);
   defsubr (&Smarker_insertion_type);

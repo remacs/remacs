@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -583,6 +583,11 @@ displayed."
   (elp-restore-all)
   ;; continue standard unloading
   nil)
+
+(cl-defmethod loadhist-unload-element :before :extra "elp" ((x (head defun)))
+  "Un-instrument before unloading a function."
+  (elp-restore-function (cdr x)))
+
 
 (provide 'elp)
 

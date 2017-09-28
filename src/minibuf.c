@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
@@ -106,14 +106,6 @@ choose_minibuf_frame (void)
 	       && minibuf_level > 0))
 	Fset_frame_selected_window (frame, Fframe_first_window (frame), Qnil);
   }
-}
-
-DEFUN ("active-minibuffer-window", Factive_minibuffer_window,
-       Sactive_minibuffer_window, 0, 0, 0,
-       doc: /* Return the currently active minibuffer window, or nil if none.  */)
-     (void)
-{
-  return minibuf_level ? minibuf_window : Qnil;
 }
 
 DEFUN ("set-minibuffer-window", Fset_minibuffer_window,
@@ -263,26 +255,6 @@ read_minibuf_noninteractive (Lisp_Object map, Lisp_Object initial,
   return val;
 }
 
-DEFUN ("minibufferp", Fminibufferp,
-       Sminibufferp, 0, 1, 0,
-       doc: /* Return t if BUFFER is a minibuffer.
-No argument or nil as argument means use current buffer as BUFFER.
-BUFFER can be a buffer or a buffer name.  */)
-  (Lisp_Object buffer)
-{
-  Lisp_Object tem;
-
-  if (NILP (buffer))
-    buffer = Fcurrent_buffer ();
-  else if (STRINGP (buffer))
-    buffer = Fget_buffer (buffer);
-  else
-    CHECK_BUFFER (buffer);
-
-  tem = Fmemq (buffer, Vminibuffer_list);
-  return ! NILP (tem) ? Qt : Qnil;
-}
-
 DEFUN ("minibuffer-prompt-end", Fminibuffer_prompt_end,
        Sminibuffer_prompt_end, 0, 0, 0,
        doc: /* Return the buffer position of the end of the minibuffer prompt.
@@ -497,6 +469,8 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 				  Fcons (Vminibuffer_history_position,
 					 Fcons (Vminibuffer_history_variable,
 						minibuf_save_list))))));
+  minibuf_save_list
+    = Fcons (Fthis_command_keys_vector (), minibuf_save_list);
 
   record_unwind_protect_void (read_minibuf_unwind);
   minibuf_level++;
@@ -836,6 +810,11 @@ read_minibuf_unwind (void)
   Fset_buffer (XWINDOW (window)->contents);
 
   /* Restore prompt, etc, from outer minibuffer level.  */
+  Lisp_Object key_vec = Fcar (minibuf_save_list);
+  eassert (VECTORP (key_vec));
+  this_command_key_count = XFASTINT (Flength (key_vec));
+  this_command_keys = key_vec;
+  minibuf_save_list = Fcdr (minibuf_save_list);
   minibuf_prompt = Fcar (minibuf_save_list);
   minibuf_save_list = Fcdr (minibuf_save_list);
   minibuf_prompt_width = XFASTINT (Fcar (minibuf_save_list));
@@ -2104,7 +2083,6 @@ It must be a character, which will be used to mask the input
 characters.  This variable should never be set globally.  */);
   Vread_hide_char = Qnil;
 
-  defsubr (&Sactive_minibuffer_window);
   defsubr (&Sset_minibuffer_window);
   defsubr (&Sread_from_minibuffer);
   defsubr (&Sread_string);
@@ -2116,7 +2094,6 @@ characters.  This variable should never be set globally.  */);
   defsubr (&Sminibuffer_depth);
   defsubr (&Sminibuffer_prompt);
 
-  defsubr (&Sminibufferp);
   defsubr (&Sminibuffer_prompt_end);
   defsubr (&Sminibuffer_contents);
   defsubr (&Sminibuffer_contents_no_properties);

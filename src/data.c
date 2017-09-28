@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
@@ -288,15 +288,6 @@ interned in the initial obarray.  */)
   return Qnil;
 }
 
-DEFUN ("recordp", Frecordp, Srecordp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a record.  */)
-  (Lisp_Object object)
-{
-  if (RECORDP (object))
-    return Qt;
-  return Qnil;
-}
-
 #ifdef HAVE_MODULES
 DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
        doc: /* Return t if OBJECT is a module user pointer.  */)
@@ -368,18 +359,6 @@ Return SYMBOL.  */)
   if (SYMBOL_CONSTANT_P (symbol))
     xsignal1 (Qsetting_constant, symbol);
   Fset (symbol, Qunbound);
-  return symbol;
-}
-
-DEFUN ("fmakunbound", Ffmakunbound, Sfmakunbound, 1, 1, 0,
-       doc: /* Make SYMBOL's function definition be nil.
-Return SYMBOL.  */)
-  (register Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  if (NILP (symbol) || EQ (symbol, Qt))
-    xsignal1 (Qsetting_constant, symbol);
-  set_symbol_function (symbol, Qnil);
   return symbol;
 }
 
@@ -457,15 +436,6 @@ The return value is undefined.  */)
      to a call to `defalias', we return `symbol' for backward compatibility
      (bug#11686).  */
   return symbol;
-}
-
-DEFUN ("setplist", Fsetplist, Ssetplist, 2, 2, 0,
-       doc: /* Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.  */)
-  (register Lisp_Object symbol, Lisp_Object newplist)
-{
-  CHECK_SYMBOL (symbol);
-  set_symbol_plist (symbol, newplist);
-  return newplist;
 }
 
 DEFUN ("subr-arity", Fsubr_arity, Ssubr_arity, 1, 1, 0,
@@ -1445,7 +1415,7 @@ The function `default-value' gets the default value and `set-default' sets it.  
   struct Lisp_Symbol *sym;
   struct Lisp_Buffer_Local_Value *blv = NULL;
   union Lisp_Val_Fwd valcontents;
-  bool forwarded;
+  bool forwarded UNINIT;
 
   CHECK_SYMBOL (variable);
   sym = XSYMBOL (variable);
@@ -2079,7 +2049,7 @@ uintmax_t
 cons_to_unsigned (Lisp_Object c, uintmax_t max)
 {
   bool valid = false;
-  uintmax_t val;
+  uintmax_t val UNINIT;
   if (INTEGERP (c))
     {
       valid = XINT (c) >= 0;
@@ -2133,7 +2103,7 @@ intmax_t
 cons_to_signed (Lisp_Object c, intmax_t min, intmax_t max)
 {
   bool valid = false;
-  intmax_t val;
+  intmax_t val UNINIT;
   if (INTEGERP (c))
     {
       val = XINT (c);
@@ -2231,37 +2201,6 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
   return NILP (val) ? make_number (0) : val;
 }
 
-enum arithop
-  {
-    Aadd,
-    Asub,
-    Amult,
-    Adiv,
-    Alogand,
-    Alogior,
-    Alogxor
-  };
-
-#ifndef isnan
-# define isnan(x) ((x) != (x))
-#endif
-
-DEFUN ("%", Frem, Srem, 2, 2, 0,
-       doc: /* Return remainder of X divided by Y.
-Both must be integers or markers.  */)
-  (register Lisp_Object x, Lisp_Object y)
-{
-  Lisp_Object val;
-
-  CHECK_NUMBER_COERCE_MARKER (x);
-  CHECK_NUMBER_COERCE_MARKER (y);
-
-  if (XINT (y) == 0)
-    xsignal0 (Qarith_error);
-
-  XSETINT (val, XINT (x) % XINT (y));
-  return val;
-}
 
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
@@ -2302,43 +2241,6 @@ In this case, zeros are shifted in on the left.  */)
   (register Lisp_Object value, Lisp_Object count)
 {
   return ash_lsh_impl (value, count, true);
-}
-
-DEFUN ("1+", Fadd1, Sadd1, 1, 1, 0,
-       doc: /* Return NUMBER plus one.  NUMBER may be a number or a marker.
-Markers are converted to integers.  */)
-  (register Lisp_Object number)
-{
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (number);
-
-  if (FLOATP (number))
-    return (make_float (1.0 + XFLOAT_DATA (number)));
-
-  XSETINT (number, XINT (number) + 1);
-  return number;
-}
-
-DEFUN ("1-", Fsub1, Ssub1, 1, 1, 0,
-       doc: /* Return NUMBER minus one.  NUMBER may be a number or a marker.
-Markers are converted to integers.  */)
-  (register Lisp_Object number)
-{
-  CHECK_NUMBER_OR_FLOAT_COERCE_MARKER (number);
-
-  if (FLOATP (number))
-    return (make_float (-1.0 + XFLOAT_DATA (number)));
-
-  XSETINT (number, XINT (number) - 1);
-  return number;
-}
-
-DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
-       doc: /* Return the bitwise complement of NUMBER.  NUMBER must be an integer.  */)
-  (register Lisp_Object number)
-{
-  CHECK_NUMBER (number);
-  XSETINT (number, ~XINT (number));
-  return number;
 }
 
 DEFUN ("byteorder", Fbyteorder, Sbyteorder, 0, 0, 0,
@@ -2876,15 +2778,12 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
-  defsubr (&Srecordp);
   defsubr (&Smodule_function_p);
   defsubr (&Sindirect_function);
   defsubr (&Smakunbound);
-  defsubr (&Sfmakunbound);
   defsubr (&Sboundp);
   defsubr (&Sfset);
   defsubr (&Sdefalias);
-  defsubr (&Ssetplist);
   defsubr (&Ssymbol_value);
   defsubr (&Sset);
   defsubr (&Sdefault_boundp);
@@ -2905,12 +2804,8 @@ syms_of_data (void)
   defsubr (&Saset);
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);
-  defsubr (&Srem);
   defsubr (&Slsh);
   defsubr (&Sash);
-  defsubr (&Sadd1);
-  defsubr (&Ssub1);
-  defsubr (&Slognot);
   defsubr (&Sbyteorder);
   defsubr (&Ssubr_arity);
   defsubr (&Ssubr_name);

@@ -19,7 +19,7 @@
 ## GNU General Public License for more details.
 
 ## You should have received a copy of the GNU General Public License
-## along with Remacs.  If not, see <http://www.gnu.org/licenses/>.
+## along with Remacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ### Commentary:
 
@@ -119,7 +119,7 @@ for arg; do
         do_check=false;;
       all)
 	do_autoconf=true
-	test -e .git && do_git=true;;
+	test -r .git && do_git=true;;
       autoconf)
 	do_autoconf=true;;
       git)
@@ -131,7 +131,8 @@ done
 
 case $do_autoconf,$do_git in
   false,false)
-    do_autoconf=true;;
+    do_autoconf=true
+    test -r .git && do_git=true;;
 esac
 
 echo "Validating Rust install ..."
@@ -222,7 +223,7 @@ If you do not have permission to do this, or if the version provided
 by your system is too old, it is normally straightforward to build
 these packages from source.  You can find the sources at:
 
-ftp://ftp.gnu.org/gnu/PACKAGE/
+https://ftp.gnu.org/gnu/PACKAGE/
 
 Download the package (make sure you get at least the minimum version
 listed above), extract it using tar, then run configure, make,
@@ -281,38 +282,25 @@ fi
 
 git_config ()
 {
+    $do_git || return
+
     name=$1
     value=$2
 
     ovalue=`git config --get "$name"` && test "$ovalue" = "$value" || {
-	if $do_git; then
-	    if $git_was_ok; then
-		echo 'Configuring local git repository...'
-		case $cp_options in
-		  --backup=*)
-		    config=$git_common_dir/config
-		    cp $cp_options --force -- "$config" "$config" || exit;;
-		esac
-	    fi
-	    echo "git config $name '$value'"
-	    git config "$name" "$value" || exit
-	fi
-	git_was_ok=false
+       if $git_was_ok; then
+	   echo 'Configuring local git repository...'
+	   case $cp_options in
+	       --backup=*)
+		   config=$git_common_dir/config
+		   cp $cp_options --force -- "$config" "$config" || exit;;
+	   esac
+       fi
+       echo "git config $name '$value'"
+       git config "$name" "$value" || exit
+       git_was_ok=false
     }
 }
-
-## Configure Git, if requested.
-
-# Get location of Git's common configuration directory.  For older Git
-# versions this is just '.git'.  Newer Git versions support worktrees.
-
-{ test -e .git &&
-  git_common_dir=`git rev-parse --no-flags --git-common-dir 2>/dev/null` &&
-  test -n "$git_common_dir"
-} || git_common_dir=.git
-hooks=$git_common_dir/hooks
-
-# Check hashes when transferring objects among repositories.
 
 echo "You can now run './configure'."
 

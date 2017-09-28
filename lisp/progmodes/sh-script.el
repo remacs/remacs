@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -419,44 +419,6 @@ name symbol."
 (define-abbrev-table 'sh-mode-abbrev-table ())
 
 
-;; I turned off this feature because it doesn't permit typing commands
-;; in the usual way without help.
-;;(defvar sh-abbrevs
-;;  '((csh sh-abbrevs shell
-;;	 "switch" 'sh-case
-;;	 "getopts" 'sh-while-getopts)
-
-;;    (es sh-abbrevs shell
-;;	"function" 'sh-function)
-
-;;    (ksh88 sh-abbrevs sh
-;;	   "select" 'sh-select)
-
-;;    (rc sh-abbrevs shell
-;;	"case" 'sh-case
-;;	"function" 'sh-function)
-
-;;    (sh sh-abbrevs shell
-;;	"case" 'sh-case
-;;	"function" 'sh-function
-;;	"until" 'sh-until
-;;	"getopts" 'sh-while-getopts)
-
-;;    ;; The next entry is only used for defining the others
-;;    (shell "for" sh-for
-;;	   "loop" sh-indexed-loop
-;;	   "if" sh-if
-;;	   "tmpfile" sh-tmp-file
-;;	   "while" sh-while)
-
-;;    (zsh sh-abbrevs ksh88
-;;	 "repeat" 'sh-repeat))
-;;  "Abbrev-table used in Shell-Script mode.  See `sh-feature'.
-;;;Due to the internal workings of abbrev tables, the shell name symbol is
-;;;actually defined as the table for the like of \\[edit-abbrevs].")
-
-
-
 (defun sh-mode-syntax-table (table &rest list)
   "Copy TABLE and set syntax for successive CHARs according to strings S."
   (setq table (copy-syntax-table table))
@@ -747,9 +709,7 @@ removed when closing the here document."
     ;; The next entry is only used for defining the others
     (shell "cd" "echo" "eval" "set" "shift" "umask" "unset" "wait")
 
-    (wksh sh-append ksh88
-          ;; FIXME: This looks too much like a regexp.  --Stef
-	  "Xt[A-Z][A-Za-z]*")
+    (wksh sh-append ksh88)
 
     (zsh sh-append ksh88
 	 "autoload" "bindkey" "builtin" "chdir" "compctl" "declare" "dirs"
@@ -1178,7 +1138,7 @@ subshells can nest."
    (syntax-propertize-rules
     (sh-here-doc-open-re
      (2 (sh-font-lock-open-heredoc
-         (match-beginning 0) (match-string 1) (match-beginning 2))))
+         (1+ (match-beginning 0)) (match-string 1) (match-beginning 2))))
     ("\\s|" (0 (prog1 nil (sh-syntax-propertize-here-doc end))))
     ;; A `#' begins a comment when it is unquoted and at the
     ;; beginning of a word.  In the shell, words are separated by
@@ -1683,6 +1643,7 @@ with your script for an edit-interpret-debug cycle."
          ((string-match "[.]sh\\>"     buffer-file-name) "sh")
          ((string-match "[.]bash\\>"   buffer-file-name) "bash")
          ((string-match "[.]ksh\\>"    buffer-file-name) "ksh")
+         ((string-match "[.]mkshrc\\>" buffer-file-name) "mksh")
          ((string-match "[.]t?csh\\(rc\\)?\\>" buffer-file-name) "csh")
          ((string-match "[.]zsh\\(rc\\|env\\)?\\>" buffer-file-name) "zsh")
 	 ((equal (file-name-nondirectory buffer-file-name) ".profile") "sh")
@@ -2509,39 +2470,6 @@ the value thus obtained, and the result is used instead."
 		    val (funcall function val)))
 	  val))))
 
-
-
-;; I commented this out because nobody calls it -- rms.
-;;(defun sh-abbrevs (ancestor &rest list)
-;;  "If it isn't, define the current shell as abbrev table and fill that.
-;;Abbrev table will inherit all abbrevs from ANCESTOR, which is either an abbrev
-;;table or a list of (NAME1 EXPANSION1 ...).  In addition it will define abbrevs
-;;according to the remaining arguments NAMEi EXPANSIONi ...
-;;EXPANSION may be either a string or a skeleton command."
-;;  (or (if (boundp sh-shell)
-;;	  (symbol-value sh-shell))
-;;      (progn
-;;	(if (listp ancestor)
-;;	    (nconc list ancestor))
-;;	(define-abbrev-table sh-shell ())
-;;	(if (vectorp ancestor)
-;;	    (mapatoms (lambda (atom)
-;;			(or (eq atom 0)
-;;			    (define-abbrev (symbol-value sh-shell)
-;;			      (symbol-name atom)
-;;			      (symbol-value atom)
-;;			      (symbol-function atom))))
-;;		      ancestor))
-;;	(while list
-;;	  (define-abbrev (symbol-value sh-shell)
-;;	    (car list)
-;;	    (if (stringp (car (cdr list)))
-;;		(car (cdr list))
-;;	      "")
-;;	    (if (symbolp (car (cdr list)))
-;;		(car (cdr list))))
-;;	  (setq list (cdr (cdr list)))))
-;;      (symbol-value sh-shell)))
 
 
 (defun sh-append (ancestor &rest list)
@@ -3452,7 +3380,7 @@ If INFO is supplied it is used, else it is calculated from current line."
     (if msg (message "%s" msg) (message nil))))
 
 (defun sh-show-indent (arg)
-  "Show the how the current line would be indented.
+  "Show how the current line would be indented.
 This tells you which variable, if any, controls the indentation of
 this line.
 If optional arg ARG is non-null (called interactively with a prefix),

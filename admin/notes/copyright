@@ -507,7 +507,7 @@ etc/TUTORIAL* (translations)
   rms: "We can leave the TUTORIAL translations alone until their
   maintainers update them."
   Can adapt short license text from end of GPL translations at:
-  http://www.gnu.org/licenses/translations.html
+  https://www.gnu.org/licenses/translations.html
   Only a few sentences around the license notice need changing from
   previous version.
 Done: TUTORIAL.eo
@@ -590,4 +590,4 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.

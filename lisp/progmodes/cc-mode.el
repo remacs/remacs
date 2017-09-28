@@ -25,7 +25,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -1197,76 +1197,82 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   ;;
   ;; This function is called exclusively as a before-change function via the
   ;; variable `c-get-state-before-change-functions'.
-  (c-save-buffer-state (p-limit found)
-    ;; Special consideration for deleting \ from '\''.
-    (if (and (> end beg)
-	     (eq (char-before end) ?\\)
-	     (<= c-new-END end))
-	(setq c-new-END (min (1+ end) (point-max))))
-
-    ;; Do we have a ' (or something like ',',',',',') within range of
-    ;; c-new-BEG?
+  (c-save-buffer-state ()
     (goto-char c-new-BEG)
-    (setq p-limit (max (- (point) 2) (point-min)))
-    (while (and (skip-chars-backward "^\\\\'" p-limit)
-		(> (point) p-limit))
-      (when (eq (char-before) ?\\)
-	(setq p-limit (max (1- p-limit) (point-min))))
-      (backward-char)
-      (setq c-new-BEG (point)))
+    ;; We need to scan for 's from the BO (logical) line.
     (beginning-of-line)
-    (while (and
-	    (setq found (search-forward-regexp "\\('\\([^'\\]\\|\\\\.\\)\\)*'"
-					       c-new-BEG 'limit))
-	    (< (point) (1- c-new-BEG))))
-    (if found
-	(setq c-new-BEG
-	      (if (and (eq (point) (1- c-new-BEG))
-		       (eq (char-after) ?')) ; "''" before c-new-BEG.
-		  (1- c-new-BEG)
-		(match-beginning 0))))
+    (while (eq (char-before (1- (point))) ?\\)
+      (beginning-of-line 0))
+    (while (and (< (point) c-new-BEG)
+		(search-forward "'" c-new-BEG t))
+      (cond
+       ((c-quoted-number-straddling-point)
+	(goto-char (match-end 0))
+	(if (> (match-end 0) c-new-BEG)
+	    (setq c-new-BEG (match-beginning 0))))
+       ((c-quoted-number-head-before-point)
+	(if (>= (point) c-new-BEG)
+	    (setq c-new-BEG (match-beginning 0))))
+       ((looking-at "\\([^'\\]\\|\\\\.\\)'")
+	(goto-char (match-end 0))
+	(if (> (match-end 0) c-new-BEG)
+	    (setq c-new-BEG (1- (match-beginning 0)))))
+       ((or (>= (point) (1- c-new-BEG))
+	    (and (eq (point) (- c-new-BEG 2))
+		 (eq (char-after) ?\\)))
+	(setq c-new-BEG (1- (point))))
+       (t nil)))
 
-    ;; Check for a number with quote separators straddling c-new-BEG
-    (when c-has-quoted-numbers
-      (goto-char c-new-BEG)
-      (when ;; (c-quoted-number-straddling-point)
-	  (c-quoted-number-head-before-point)
-	(setq c-new-BEG (match-beginning 0))))
-
-    ;; Do we have a ' (or something like ',',',',...,',') within range of
-    ;; c-new-END?
     (goto-char c-new-END)
-    (setq p-limit (min (+ (point) 2) (point-max)))
-    (while (and (skip-chars-forward "^\\\\'" p-limit)
-		(< (point) p-limit))
-      (when (eq (char-after) ?\\)
-	(setq p-limit (min (1+ p-limit) (point-max))))
-      (forward-char)
-      (setq c-new-END (point)))
-    (if (looking-at "[^']?\\('\\([^'\\]\\|\\\\.\\)\\)*'")
-	(setq c-new-END (match-end 0)))
+    ;; We will scan from the BO (logical) line.
+    (beginning-of-line)
+    (while (eq (char-before (1- (point))) ?\\)
+      (beginning-of-line 0))
+    (while (and (< (point) c-new-END)
+		(search-forward "'" c-new-END t))
+      (cond
+       ((c-quoted-number-straddling-point)
+	(goto-char (match-end 0))
+	(if (> (match-end 0) c-new-END)
+	    (setq c-new-END (match-end 0))))
+       ((c-quoted-number-tail-after-point)
+	(goto-char (match-end 0))
+	(if (> (match-end 0) c-new-END)
+	    (setq c-new-END (match-end 0))))
+       ((looking-at "\\([^'\\]\\|\\\\.\\)'")
+	(goto-char (match-end 0))
+	(if (> (match-end 0) c-new-END)
+	    (setq c-new-END (match-end 0))))
+       (t nil)))
+    ;; Having reached c-new-END, handle any 's after it whose context may be
+    ;; changed by the current buffer change.
+    (goto-char c-new-END)
+    (cond
+     ((c-quoted-number-tail-after-point)
+      (setq c-new-END (match-end 0)))
+     ((looking-at
+       "\\(\\\\.\\|.\\)?\\('\\([^'\\]\\|\\\\.\\)\\)*'")
+      (setq c-new-END (match-end 0))))
 
-    ;; Check for a number with quote separators straddling c-new-END.
-    (when c-has-quoted-numbers
-      (goto-char c-new-END)
-      (when ;; (c-quoted-number-straddling-point)
-	  (c-quoted-number-tail-after-point)
-	(setq c-new-END (match-end 0))))
-
-    ;; Remove the '(1) syntax-table property from all "'"s within (c-new-BEG
+    ;; Remove the '(1) syntax-table property from any "'"s within (c-new-BEG
     ;; c-new-END).
-    (c-clear-char-property-with-value-on-char
-     c-new-BEG c-new-END
-     'syntax-table '(1)
-     ?')
-    ;; Remove the c-digit-separator text property from the same "'"s.
-    (when c-has-quoted-numbers
+    (goto-char c-new-BEG)
+    (when (c-search-forward-char-property-with-value-on-char
+	   'syntax-table '(1) ?\' c-new-END)
+      (c-invalidate-state-cache (1- (point)))
+      (c-truncate-semi-nonlit-pos-cache (1- (point)))
       (c-clear-char-property-with-value-on-char
-       c-new-BEG c-new-END
-       'c-digit-separator t
-       ?'))))
+       (1- (point)) c-new-END
+       'syntax-table '(1)
+       ?')
+      ;; Remove the c-digit-separator text property from the same "'"s.
+      (when c-has-quoted-numbers
+	(c-clear-char-property-with-value-on-char
+	 (1- (point)) c-new-END
+	 'c-digit-separator t
+	 ?')))))
 
-(defun c-parse-quotes-after-change (_beg _end _old-len)
+(defun c-parse-quotes-after-change (beg end old-len)
   ;; This function applies syntax-table properties (value '(1)) and
   ;; c-digit-separator properties as needed to 's within the range (c-new-BEG
   ;; c-new-END).  This operation is performed even within strings and
@@ -1277,25 +1283,34 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
   (c-save-buffer-state (num-beg num-end)
     ;; Apply the needed syntax-table and c-digit-separator text properties to
     ;; quotes.
-    (goto-char c-new-BEG)
-    (while (and (< (point) c-new-END)
-		(search-forward "'" c-new-END 'limit))
-      (cond ((and (eq (char-before (1- (point))) ?\\)
-		  ;; Check we've got an odd number of \s, here.
-		  (save-excursion
-		    (backward-char)
-		    (eq (logand (skip-chars-backward "\\\\") 1) 1)))) ; not a real '.
-	    ((c-quoted-number-straddling-point)
-	     (setq num-beg (match-beginning 0)
-		   num-end (match-end 0))
-	     (c-put-char-properties-on-char num-beg num-end
-					    'syntax-table '(1) ?')
-	     (c-put-char-properties-on-char num-beg num-end
-					    'c-digit-separator t ?')
-	     (goto-char num-end))
-	    ((looking-at "\\([^\\']\\|\\\\.\\)'") ; balanced quoted expression.
-	     (goto-char (match-end 0)))
-	    (t (c-put-char-property (1- (point)) 'syntax-table '(1)))))))
+    (save-restriction
+      (goto-char c-new-BEG)
+      (while (and (< (point) c-new-END)
+		  (search-forward "'" c-new-END 'limit))
+	(cond ((and (eq (char-before (1- (point))) ?\\)
+		    ;; Check we've got an odd number of \s, here.
+		    (save-excursion
+		      (backward-char)
+		      (eq (logand (skip-chars-backward "\\\\") 1) 1)))) ; not a real '.
+	      ((c-quoted-number-straddling-point)
+	       (setq num-beg (match-beginning 0)
+		     num-end (match-end 0))
+	       (c-invalidate-state-cache num-beg)
+	       (c-truncate-semi-nonlit-pos-cache num-beg)
+	       (c-put-char-properties-on-char num-beg num-end
+					      'syntax-table '(1) ?')
+	       (c-put-char-properties-on-char num-beg num-end
+					      'c-digit-separator t ?')
+	       (goto-char num-end))
+	      ((looking-at "\\([^\\']\\|\\\\.\\)'") ; balanced quoted expression.
+	       (goto-char (match-end 0)))
+	      (t
+	       (c-invalidate-state-cache (1- (point)))
+	       (c-truncate-semi-nonlit-pos-cache (1- (point)))
+	       (c-put-char-property (1- (point)) 'syntax-table '(1))))
+	;; Prevent the next `c-quoted-number-straddling-point' getting
+	;; confused by already processed single quotes.
+	(narrow-to-region (point) (point-max))))))
 
 (defun c-before-change (beg end)
   ;; Function to be put on `before-change-functions'.  Primarily, this calls
@@ -1511,14 +1526,17 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
 	 (> (point) bod-lim)
 	 (progn (c-forward-syntactic-ws)
 		(setq bo-decl (point))
-		;; Are we looking at a keyword such as "template" or
-		;; "typedef" which can decorate a type, or the type itself?
-		(when (or (looking-at c-prefix-spec-kwds-re)
-			  (c-forward-type t))
-		  ;; We've found another candidate position.
-		  (setq new-pos (min new-pos bo-decl))
-		  (goto-char bo-decl))
-		t)
+		(or (not (looking-at c-protection-key))
+		    (c-forward-keyword-clause 1)))
+	 (progn
+	   ;; Are we looking at a keyword such as "template" or
+	   ;; "typedef" which can decorate a type, or the type itself?
+	   (when (or (looking-at c-prefix-spec-kwds-re)
+		     (c-forward-type t))
+	     ;; We've found another candidate position.
+	     (setq new-pos (min new-pos bo-decl))
+	     (goto-char bo-decl))
+	   t)
 	 ;; Try and go out a level to search again.
 	 (progn
 	   (c-backward-syntactic-ws bod-lim)
@@ -1539,6 +1557,24 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
       (setq new-pos capture-opener))
     (and (/= new-pos pos) new-pos)))
 
+(defun c-fl-decl-end (pos)
+  ;; If POS is inside a declarator, return the end of the token that follows
+  ;; the declarator, otherwise return nil.
+  (goto-char pos)
+  (let ((lit-start (c-literal-start))
+	pos1)
+    (if lit-start (goto-char lit-start))
+    (c-backward-syntactic-ws)
+    (when (setq pos1 (c-on-identifier))
+      (goto-char pos1)
+      (let ((lim (save-excursion
+		   (and (c-beginning-of-macro)
+			(progn (c-end-of-macro) (point))))))
+	(when (and (c-forward-declarator lim)
+		   (eq (c-forward-token-2 1 nil lim) 0))
+	  (c-backward-syntactic-ws)
+	  (point))))))
+
 (defun c-change-expand-fl-region (_beg _end _old-len)
   ;; Expand the region (c-new-BEG c-new-END) to an after-change font-lock
   ;; region.  This will usually be the smallest sequence of whole lines
@@ -1552,18 +1588,16 @@ Note that this is a strict tail, so won't match, e.g. \"0x....\".")
       (setq c-new-BEG
 	    (or (c-fl-decl-start c-new-BEG) (c-point 'bol c-new-BEG))
 	    c-new-END
-	    (save-excursion
-	      (goto-char c-new-END)
-	      (if (bolp)
-		  (point)
-		(c-point 'bonl c-new-END))))))
+	    (or (c-fl-decl-end c-new-END)
+		(c-point 'bonl (max (1- c-new-END) (point-min)))))))
 
 (defun c-context-expand-fl-region (beg end)
   ;; Return a cons (NEW-BEG . NEW-END), where NEW-BEG is the beginning of a
   ;; "local" declaration containing BEG (see `c-fl-decl-start') or BOL BEG is
   ;; in.  NEW-END is beginning of the line after the one END is in.
-  (cons (or (c-fl-decl-start beg) (c-point 'bol beg))
-	(c-point 'bonl end)))
+  (c-save-buffer-state ()
+    (cons (or (c-fl-decl-start beg) (c-point 'bol beg))
+	  (or (c-fl-decl-end end) (c-point 'bonl (1- end))))))
 
 (defun c-before-context-fl-expand-region (beg end)
   ;; Expand the region (BEG END) as specified by

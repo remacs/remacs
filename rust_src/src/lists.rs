@@ -1,7 +1,7 @@
 //! Operations on lists.
 
-use lisp::{LispObject, LispCons};
-use remacs_sys::{Qlistp, EmacsInt};
+use lisp::LispObject;
+use remacs_sys::{Qlistp, Qplistp, EmacsInt, globals};
 use remacs_macros::lisp_fn;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
@@ -95,7 +95,7 @@ fn cdr_safe(object: LispObject) -> LispObject {
 
 /// Take cdr N times on LIST, return the result.
 #[lisp_fn]
-fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
+pub fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
     let num = n.as_fixnum_or_error();
     let mut tail = list;
     for _ in 0..num {
@@ -122,7 +122,7 @@ fn nth(n: LispObject, list: LispObject) -> LispObject {
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
 /// The value is actually the tail of LIST whose car is ELT.
 #[lisp_fn]
-fn memq(elt: LispObject, list: LispObject) -> LispObject {
+pub fn memq(elt: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         if elt.eq(tail.car()) {
             return tail.as_obj();
@@ -255,29 +255,6 @@ fn delq(elt: LispObject, mut list: LispObject) -> LispObject {
     list
 }
 
-
-fn internal_plist_get<F, I>(mut iter: I, prop: LispObject, cmp: F) -> LispObject
-where
-    I: Iterator<Item = LispCons>,
-    F: Fn(LispObject, LispObject) -> bool,
-{
-    let mut prop_item = true;
-    for tail in &mut iter {
-        match tail.cdr().as_cons() {
-            None => break,
-            Some(tail_cdr_cons) => {
-                if prop_item && cmp(tail.car(), prop) {
-                    return tail_cdr_cons.car();
-                }
-            }
-        }
-        prop_item = !prop_item;
-    }
-    // exhaust the iterator to get the list-end check if necessary
-    iter.count();
-    LispObject::constant_nil()
-}
-
 /// Extract a value from a property list.
 /// PLIST is a property list, which is a list of the form
 /// (PROP1 VALUE1 PROP2 VALUE2...).  This function returns the value
@@ -285,7 +262,21 @@ where
 /// properties on the list.  This function never signals an error.
 #[lisp_fn]
 fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
-    internal_plist_get(plist.iter_tails_safe(), prop, LispObject::eq)
+    let mut prop_item = true;
+    for tail in plist.iter_tails_safe() {
+        if prop_item {
+            match tail.cdr().as_cons() {
+                None => break,
+                Some(tail_cdr_cons) => {
+                    if tail.car().eq(prop) {
+                        return tail_cdr_cons.car();
+                    }
+                }
+            }
+        }
+        prop_item = !prop_item;
+    }
+    LispObject::constant_nil()
 }
 
 /// Extract a value from a property list, comparing with `equal'.
@@ -295,7 +286,27 @@ fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
 /// one of the properties on the list.
 #[lisp_fn]
 fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
-    internal_plist_get(plist.iter_tails(), prop, LispObject::equal)
+    let mut prop_item = true;
+    for tail in plist.iter_tails_plist() {
+        if prop_item {
+            match tail.cdr().as_cons() {
+                None => {
+                    // need an extra check here to catch odd-length lists
+                    if tail.as_obj().is_not_nil() {
+                        wrong_type!(Qplistp, plist)
+                    }
+                    break;
+                }
+                Some(tail_cdr_cons) => {
+                    if tail.car().equal(prop) {
+                        return tail_cdr_cons.car();
+                    }
+                }
+            }
+        }
+        prop_item = !prop_item;
+    }
+    LispObject::constant_nil()
 }
 
 /// Return non-nil if PLIST has the property PROP.
@@ -307,7 +318,7 @@ fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
 #[lisp_fn]
 fn plist_member(plist: LispObject, prop: LispObject) -> LispObject {
     let mut prop_item = true;
-    for tail in plist.iter_tails() {
+    for tail in plist.iter_tails_plist() {
         if prop_item && prop.eq(tail.car()) {
             return tail.as_obj();
         }
@@ -322,14 +333,13 @@ where
 {
     let mut prop_item = true;
     let mut last_cons = None;
-    for tail in plist.iter_tails() {
+    for tail in plist.iter_tails_plist() {
         if prop_item {
             match tail.cdr().as_cons() {
                 None => {
-                    // need an extra call to CHECK_LIST_END here to catch odd-length lists
-                    // (like Emacs we signal the somewhat confusing `wrong-type-argument')
+                    // need an extra check here to catch odd-length lists
                     if tail.as_obj().is_not_nil() {
-                        wrong_type!(Qlistp, plist)
+                        wrong_type!(Qplistp, plist)
                     }
                     break;
                 }
@@ -384,7 +394,13 @@ fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispOb
 #[lisp_fn]
 pub fn get(symbol: LispObject, propname: LispObject) -> LispObject {
     let sym = symbol.as_symbol_or_error();
-    plist_get(sym.get_plist(), propname)
+    let plist_env = LispObject::from_raw(unsafe { globals.f_Voverriding_plist_environment });
+    let propval = plist_get(cdr(assq(symbol, plist_env)), propname);
+    if propval.is_not_nil() {
+        propval
+    } else {
+        plist_get(sym.get_plist(), propname)
+    }
 }
 
 /// Store SYMBOL's PROPNAME property with value VALUE.

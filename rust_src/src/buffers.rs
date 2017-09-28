@@ -3,10 +3,12 @@
 use libc::{c_void, c_uchar, ptrdiff_t};
 
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Type, Vbuffer_alist, make_lisp_ptr};
+use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+                 make_lisp_ptr, set_buffer_internal, nsberror};
 use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
+use marker::{marker_position, marker_buffer};
 
 use std::mem;
 
@@ -16,11 +18,17 @@ pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
 
 pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
+pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
     #[inline]
     pub fn zv(&self) -> ptrdiff_t {
         self.zv
+    }
+
+    #[inline]
+    pub fn pt(&self) -> ptrdiff_t {
+        self.pt
     }
 
     #[inline]
@@ -41,6 +49,11 @@ impl LispBufferRef {
     #[inline]
     pub fn gpt_byte(&self) -> ptrdiff_t {
         unsafe { (*self.text).gpt_byte }
+    }
+
+    #[inline]
+    pub fn gap_size(&self) -> ptrdiff_t {
+        unsafe { (*self.text).gap_size }
     }
 
     #[inline]
@@ -73,25 +86,66 @@ impl LispBufferRef {
         unsafe { (*self.text).z }
     }
 
+    /// Number of modifications made to the buffer.
     #[inline]
-    pub fn save_modiff(&self) -> EmacsInt {
-        unsafe { (*self.text).save_modiff }
-    }
-
-    #[inline]
-    pub fn modiff(&self) -> EmacsInt {
+    pub fn modifications(&self) -> EmacsInt {
         unsafe { (*self.text).modiff }
     }
 
+    /// Value of `modiff` last time the buffer was saved.
     #[inline]
-    pub fn chars_modiff(&self) -> EmacsInt {
+    pub fn modifications_since_save(&self) -> EmacsInt {
+        unsafe { (*self.text).save_modiff }
+    }
+
+    /// Number of modifications to the buffer's characters.
+    #[inline]
+    pub fn char_modifications(&self) -> EmacsInt {
         unsafe { (*self.text).chars_modiff }
+    }
+
+    #[inline]
+    pub fn mark_active(&self) -> LispObject {
+        LispObject::from_raw(self.mark_active)
+    }
+
+    #[inline]
+    pub fn mark(&self) -> LispObject {
+        LispObject::from_raw(self.mark)
+    }
+
+    #[inline]
+    pub fn name(&self) -> LispObject {
+        LispObject::from_raw(self.name)
     }
 
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
         LispObject::from_raw(self.name).is_not_nil()
+    }
+
+    #[inline]
+    pub fn fetch_byte(&self, n: ptrdiff_t) -> u8 {
+        let offset = if n >= self.gpt_byte() {
+            self.gap_size()
+        } else {
+            0
+        };
+
+        unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
+    }
+}
+
+impl LispOverlayRef {
+    #[inline]
+    pub fn start(&self) -> LispObject {
+        LispObject::from_raw(self.start)
+    }
+
+    #[inline]
+    pub fn end(&self) -> LispObject {
+        LispObject::from_raw(self.end)
     }
 }
 
@@ -121,7 +175,7 @@ pub fn buffer_live_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_buffer().map_or(false, |m| m.is_live()))
 }
 
-/// Like Fassoc, but use Fstring_equal to compare
+/// Like Fassoc, but use `Fstring_equal` to compare
 /// (which ignores text properties), and don't ever quit.
 fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
     let result = list.iter_tails_safe().find(|&item| {
@@ -181,7 +235,7 @@ pub fn buffer_file_name(buffer: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
     let buf = buffer.as_buffer_or_current_buffer();
-    LispObject::from_bool(buf.save_modiff() < buf.modiff())
+    LispObject::from_bool(buf.modifications_since_save() < buf.modifications())
 }
 
 /// Return the name of BUFFER, as a string.
@@ -198,7 +252,7 @@ pub fn buffer_name(buffer: LispObject) -> LispObject {
 /// No argument or nil as argument means use current buffer as BUFFER.
 #[lisp_fn(min = "0")]
 fn buffer_modified_tick(buffer: LispObject) -> LispObject {
-    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().modiff())
+    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().modifications())
 }
 
 /// Return BUFFER's character-change tick counter.
@@ -211,7 +265,29 @@ fn buffer_modified_tick(buffer: LispObject) -> LispObject {
 /// buffer as BUFFER.
 #[lisp_fn(min = "0")]
 fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
-    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().chars_modiff())
+    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().char_modifications())
+}
+
+/// Return the position at which OVERLAY starts.
+#[lisp_fn]
+fn overlay_start(overlay: LispObject) -> LispObject {
+    let marker = overlay.as_overlay_or_error().start();
+    marker_position(marker)
+}
+
+/// Return the position at which OVERLAY ends.
+#[lisp_fn]
+fn overlay_end(overlay: LispObject) -> LispObject {
+    let marker = overlay.as_overlay_or_error().end();
+    marker_position(marker)
+}
+
+/// Return the buffer OVERLAY belongs to.
+/// Return nil if OVERLAY has been deleted.
+#[lisp_fn]
+fn overlay_buffer(overlay: LispObject) -> LispObject {
+    let marker = overlay.as_overlay_or_error().start();
+    marker_buffer(marker)
 }
 
 #[no_mangle]
@@ -238,4 +314,25 @@ pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
     if !(begv <= beg && end <= zv) {
         args_out_of_range!(current_buffer(), start, stop);
     }
+}
+
+/// Make buffer BUFFER-OR-NAME current for editing operations.
+/// BUFFER-OR-NAME may be a buffer or the name of an existing buffer.
+/// See also `with-current-buffer' when you want to make a buffer current
+/// temporarily.  This function does not display the buffer, so its effect
+/// ends when the current command terminates.  Use `switch-to-buffer' or
+/// `pop-to-buffer' to switch buffers permanently.
+/// The return value is the buffer made current.
+#[lisp_fn]
+fn set_buffer(buffer_or_name: LispObject) -> LispObject {
+    let buffer = get_buffer(buffer_or_name);
+    if buffer.is_nil() {
+        unsafe { nsberror(buffer_or_name.to_raw()) }
+    };
+    let buf = buffer.as_buffer_or_error();
+    if !buf.is_live() {
+        error!("Selecting deleted buffer");
+    };
+    unsafe { set_buffer_internal(buf.as_ptr() as *const _ as *const c_void) };
+    buffer
 }

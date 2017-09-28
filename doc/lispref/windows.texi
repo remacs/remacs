@@ -1085,7 +1085,7 @@ by that function is preserved.
 @end table
 
   @code{window-preserve-size} installs a window parameter (@pxref{Window
-Parameters}) called @code{preserved-size} which is consulted by the
+Parameters}) called @code{window-preserved-size} which is consulted by the
 window resizing functions.  This parameter will not prevent resizing the
 window when the window shows another buffer than the one when
 @code{window-preserve-size} was invoked or if its size has changed since
@@ -1319,8 +1319,8 @@ argument @var{window}, in lieu of the usual action of
 @code{delete-other-windows}.  @xref{Window Parameters}.
 
 Also, if @code{ignore-window-parameters} is @code{nil}, this function
-does not delete any window whose @code{no-delete-other-window} parameter
-is non-@code{nil}.
+does not delete any window whose @code{no-delete-other-windows}
+parameter is non-@code{nil}.
 @end deffn
 
 @deffn Command delete-windows-on &optional buffer-or-name frame
@@ -3381,7 +3381,7 @@ producing the frame layout sketched above.
 @example
 @group
 (defvar parameters
-  '(window-parameters . ((no-other-window . t) (no-delete-other-window . t))))
+  '(window-parameters . ((no-other-window . t) (no-delete-other-windows . t))))
 
 (setq fit-window-to-buffer-horizontally t)
 (setq window-resize-pixelwise t)
@@ -3423,7 +3423,7 @@ retain their respective sizes when maximizing the frame, the variable
 are accessible via @kbd{C-x o} by installing the @code{no-other-window}
 parameter for each of these windows.  In addition, it makes sure that
 side windows are not deleted via @kbd{C-x 1} by installing the
-@code{no-delete-other-window} parameter for each of these windows.
+@code{no-delete-other-windows} parameter for each of these windows.
 
    Since @code{dired} buffers have no fixed names, we use a special
 function @code{dired-default-directory-on-left} in order to display a
@@ -4990,8 +4990,8 @@ This parameter affects the execution of @code{delete-window}
 This parameter affects the execution of @code{delete-other-windows}
 (@pxref{Deleting Windows}).
 
-@item no-delete-other-window
-@vindex no-delete-other-window, a window parameter
+@item no-delete-other-windows
+@vindex no-delete-other-windows, a window parameter
 This parameter marks the window as not deletable by
 @code{delete-other-windows} (@pxref{Deleting Windows}).
 
@@ -5016,8 +5016,8 @@ This parameter specifies the window that this one has been cloned
 from.  It is installed by @code{window-state-get} (@pxref{Window
 Configurations}).
 
-@item preserved-size
-@vindex preserved-size, a window parameter
+@item window-preserved-size
+@vindex window-preserved-size, a window parameter
 This parameter specifies a buffer, a direction where @code{nil} means
 vertical and @code{t} horizontal, and a size in pixels.  If this window
 displays the specified buffer and its size in the indicated direction

@@ -15,15 +15,15 @@ impl LispFontRef {
         LispFontRef(v)
     }
 
-    pub fn is_font_spec(self) -> bool {
+    pub fn is_font_spec(&self) -> bool {
         self.0.pseudovector_size() == font::FONT_SPEC_MAX as EmacsInt
     }
 
-    pub fn is_font_entity(self) -> bool {
+    pub fn is_font_entity(&self) -> bool {
         self.0.pseudovector_size() == font::FONT_ENTITY_MAX as EmacsInt
     }
 
-    pub fn is_font_object(self) -> bool {
+    pub fn is_font_object(&self) -> bool {
         self.0.pseudovector_size() == font::FONT_OBJECT_MAX as EmacsInt
     }
 }

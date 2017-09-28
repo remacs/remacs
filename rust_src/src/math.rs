@@ -36,6 +36,7 @@ fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub enum ArithOp {
     Add,
     Sub,
@@ -49,7 +50,7 @@ pub enum ArithOp {
     Logxor,
 }
 
-/// Given an array of LispObject, reduce over them according to the
+/// Given an array of `LispObject`, reduce over them according to the
 /// arithmetic operation specified.
 ///
 /// Modifies the array in place.
@@ -201,7 +202,7 @@ fn logxor(args: &mut [LispObject]) -> LispObject {
 }
 
 fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject {
-    assert!(args.len() > 0);
+    assert!(!args.is_empty());
     let mut accum = args[0];
     for &arg in &args[1..] {
         if arithcompare(arg, accum, comparison).is_not_nil() {
@@ -213,7 +214,7 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
     }
     // we should return the same object if it's not a marker
     if let Some(m) = accum.as_marker() {
-        LispObject::from_fixnum(m.position() as EmacsInt)
+        LispObject::from_fixnum(m.charpos_or_error() as EmacsInt)
     } else {
         accum
     }
@@ -353,4 +354,44 @@ fn geq(args: &mut [LispObject]) -> LispObject {
 #[lisp_fn(name = "/=")]
 fn neq(num1: LispObject, num2: LispObject) -> LispObject {
     arithcompare(num1, num2, ArithComparison::Notequal)
+}
+
+/// Return remainder of X divided by Y.
+/// Both must be integers or markers.
+#[lisp_fn(name = "%")]
+fn rem(x: LispObject, y: LispObject) -> LispObject {
+    let x = x.as_fixnum_coerce_marker_or_error();
+    let y = y.as_fixnum_coerce_marker_or_error();
+
+    if y == 0 {
+        xsignal!(Qarith_error);
+    }
+
+    LispObject::from_fixnum(x % y)
+}
+
+/// Return NUMBER plus one.  NUMBER may be a number or a marker.
+/// Markers are converted to integers.
+#[lisp_fn(name = "1+")]
+fn add1(number: LispObject) -> LispObject {
+    match number.as_number_coerce_marker_or_error() {
+        LispNumber::Fixnum(num) => LispObject::from_fixnum(num + 1),
+        LispNumber::Float(num) => LispObject::from_float(num + 1.0),
+    }
+}
+
+/// Return NUMBER minus one.  NUMBER may be a number or a marker.
+/// Markers are converted to integers.
+#[lisp_fn(name = "1-")]
+fn sub1(number: LispObject) -> LispObject {
+    match number.as_number_coerce_marker_or_error() {
+        LispNumber::Fixnum(num) => LispObject::from_fixnum(num - 1),
+        LispNumber::Float(num) => LispObject::from_float(num - 1.0),
+    }
+}
+
+/// Return the bitwise complement of NUMBER.  NUMBER must be an integer.
+#[lisp_fn]
+fn lognot(number: LispObject) -> LispObject {
+    LispObject::from_fixnum(!number.as_fixnum_or_error())
 }

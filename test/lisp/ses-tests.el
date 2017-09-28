@@ -4,18 +4,20 @@
 
 ;; Author: Vincent Belaïche <vincentb1@users.sourceforge.net>
 
-;; This program is free software; you can redistribute it and/or modify
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or
 ;; (at your option) any later version.
 
-;; This program is distributed in the hope that it will be useful,
+;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Code:
 
@@ -55,8 +57,8 @@ equal to 2. This is done  using interactive calls."
 (ert-deftest ses-tests-lowlevel-renamed-cell ()
   "Check that renaming A1 to `foo' and setting `foo' to 1 and A2 to (1+ foo), makes A2 value equal to 2.
 This is done using low level functions, `ses-rename-cell' is not
-called but instead we use text replacement in the buffer priorly
-passed in text mode."
+called but instead we use text replacement in the buffer
+previously passed in text mode."
   (let ((ses-initial-size '(2 . 1)))
     (with-temp-buffer
       (ses-mode)
@@ -103,6 +105,28 @@ renaming A1 to `foo' makes `foo' value equal to 2."
       (should (eq foo 1))
       (should (equal (ses-cell-formula 1 0) '(1+ foo)))
       (should (eq A2 2)))))
+
+(ert-deftest ses-tests-renaming-cell-with-one-symbol-formula ()
+  "Check that setting A1 to 1 and A2 to A1, and then renaming A1
+to `foo' makes `foo' value equal to 1. Then set A1 to 2 and check
+that `foo' becomes 2."
+  (let ((ses-initial-size '(3 . 1)))
+    (with-temp-buffer
+      (ses-mode)
+      (dolist (c '((0 0 1) (1 0 A1)))
+        (apply 'funcall-interactively 'ses-edit-cell c))
+      (ses-command-hook); deferred recalc
+      (ses-rename-cell 'foo (ses-get-cell 0 0))
+      (ses-command-hook); deferred recalc
+      (should-not  (local-variable-p 'A1))
+      (should (eq foo 1))
+      (should (equal (ses-cell-formula 1 0) 'foo))
+      (should (eq A2 1))
+      (funcall-interactively 'ses-edit-cell 0 0 2)
+      (ses-command-hook); deferred recalc
+      (should (eq A2 2))
+      (should (eq foo 2)))))
+
 
 ;; ROW INSERTION TESTS
 ;; ======================================================================

@@ -1,4 +1,4 @@
-//! Functions operating on vector(like)s.
+//! Functions operating on vector(like)s, and general sequences.
 
 use std::mem;
 use std::ptr;
@@ -9,13 +9,13 @@ use libc::ptrdiff_t;
 
 use lisp::{ExternalPtr, LispObject};
 use multibyte::MAX_CHAR;
-use lists::{sort_list, inorder};
+use lists::{sort_list, inorder, nthcdr, car};
 use buffers::LispBufferRef;
 use windows::LispWindowRef;
 use chartable::LispCharTableRef;
 use remacs_sys::{Qsequencep, EmacsInt, PSEUDOVECTOR_FLAG, PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS,
                  PSEUDOVECTOR_SIZE_MASK, PseudovecType, Lisp_Vectorlike, Lisp_Vector,
-                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM};
+                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM, Faref};
 use remacs_macros::lisp_fn;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
@@ -164,6 +164,19 @@ pub fn length(sequence: LispObject) -> LispObject {
     wrong_type!(Qsequencep, sequence)
 }
 
+/// Return element of SEQUENCE at index N.
+#[lisp_fn]
+pub fn elt(sequence: LispObject, n: LispObject) -> LispObject {
+    n.as_natnum_or_error();
+    if sequence.is_cons() || sequence.is_nil() {
+        car(nthcdr(n, sequence))
+    } else if sequence.is_array() {
+        LispObject::from_raw(unsafe { Faref(sequence.to_raw(), n.to_raw()) })
+    } else {
+        wrong_type!(Qsequencep, sequence);
+    }
+}
+
 /// Sort SEQ, stably, comparing elements using PREDICATE.
 /// Returns the sorted sequence.  SEQ should be a list or vector.  SEQ is
 /// modified by side effects.  PREDICATE is called with two elements of
@@ -267,6 +280,12 @@ pub fn condition_variable_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_condition_variable())
 }
 
+/// Return t if OBJECT is a record.
+#[lisp_fn]
+pub fn recordp(object: LispObject) -> LispObject {
+    LispObject::from_bool(object.is_record())
+}
+
 macro_rules! offset_of {
     ($ty:ty, $field:ident) => {
         &(*(0 as *const $ty)).$field as *const _ as usize
@@ -297,7 +316,7 @@ macro_rules! vecsize {
     }
 }
 
-/// Equivalent to ALLOCATE_PSEUDOVECTOR in C
+/// Equivalent to `ALLOCATE_PSEUDOVECTOR` in C
 macro_rules! allocate_pseudovector {
     ($ty: ty, $field: ident, $vectype: expr) => {
         unsafe { ::remacs_sys::allocate_pseudovector(vecsize!($ty) as ::libc::c_int,

@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -171,6 +171,16 @@ static void
 bset_bidi_display_reordering (struct buffer *b, Lisp_Object val)
 {
   b->bidi_display_reordering_ = val;
+}
+static void
+bset_bidi_paragraph_start_re (struct buffer *b, Lisp_Object val)
+{
+  b->bidi_paragraph_start_re_ = val;
+}
+static void
+bset_bidi_paragraph_separate_re (struct buffer *b, Lisp_Object val)
+{
+  b->bidi_paragraph_separate_re_ = val;
 }
 static void
 bset_buffer_file_coding_system (struct buffer *b, Lisp_Object val)
@@ -1028,14 +1038,14 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
 
   CHECK_STRING (name);
 
-  if (!NILP (Fstring_equal (name, ignore)) || NILP (Fget_buffer (name)))
+  if ((!NILP (ignore) && !NILP (Fstring_equal (name, ignore)))
+      || NILP (Fget_buffer (name)))
     return name;
 
   if (SREF (name, 0) != ' ') /* See bug#1229.  */
     genbase = name;
   else
     {
-      /* Note fileio.c:make_temp_name does random differently.  */
       char number[sizeof "-999999"];
       int i = XFASTINT (Frandom (make_number (999999)));
       AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));
@@ -2020,26 +2030,6 @@ set_buffer_temp (struct buffer *b)
   fetch_buffer_markers (b);
 }
 
-DEFUN ("set-buffer", Fset_buffer, Sset_buffer, 1, 1, 0,
-       doc: /* Make buffer BUFFER-OR-NAME current for editing operations.
-BUFFER-OR-NAME may be a buffer or the name of an existing buffer.
-See also `with-current-buffer' when you want to make a buffer current
-temporarily.  This function does not display the buffer, so its effect
-ends when the current command terminates.  Use `switch-to-buffer' or
-`pop-to-buffer' to switch buffers permanently.
-The return value is the buffer made current.  */)
-  (register Lisp_Object buffer_or_name)
-{
-  register Lisp_Object buffer;
-  buffer = Fget_buffer (buffer_or_name);
-  if (NILP (buffer))
-    nsberror (buffer_or_name);
-  if (!BUFFER_LIVE_P (XBUFFER (buffer)))
-    error ("Selecting deleted buffer");
-  set_buffer_internal (XBUFFER (buffer));
-  return buffer;
-}
-
 void
 restore_buffer (Lisp_Object buffer_or_name)
 {
@@ -2206,6 +2196,8 @@ results, see Info node `(elisp)Swapping Text'.  */)
   swapfield_ (enable_multibyte_characters, Lisp_Object);
   swapfield_ (bidi_display_reordering, Lisp_Object);
   swapfield_ (bidi_paragraph_direction, Lisp_Object);
+  swapfield_ (bidi_paragraph_separate_re, Lisp_Object);
+  swapfield_ (bidi_paragraph_start_re, Lisp_Object);
   /* FIXME: Not sure what we should do with these *_marker fields.
      Hopefully they're just nil anyway.  */
   swapfield_ (pt_marker, Lisp_Object);
@@ -3636,7 +3628,7 @@ fix_overlays_before (struct buffer *bp, ptrdiff_t prev, ptrdiff_t pos)
   /* If parent is nil, replace overlays_before; otherwise, parent->next.  */
   struct Lisp_Overlay *tail = bp->overlays_before, *parent = NULL, *right_pair;
   Lisp_Object tem;
-  ptrdiff_t end;
+  ptrdiff_t end UNINIT;
 
   /* After the insertion, the several overlays may be in incorrect
      order.  The possibility is that, in the list `overlays_before',
@@ -3974,34 +3966,6 @@ buffer.  */)
 
 /* Overlay dissection functions.  */
 
-DEFUN ("overlay-start", Foverlay_start, Soverlay_start, 1, 1, 0,
-       doc: /* Return the position at which OVERLAY starts.  */)
-  (Lisp_Object overlay)
-{
-  CHECK_OVERLAY (overlay);
-
-  return (Fmarker_position (OVERLAY_START (overlay)));
-}
-
-DEFUN ("overlay-end", Foverlay_end, Soverlay_end, 1, 1, 0,
-       doc: /* Return the position at which OVERLAY ends.  */)
-  (Lisp_Object overlay)
-{
-  CHECK_OVERLAY (overlay);
-
-  return (Fmarker_position (OVERLAY_END (overlay)));
-}
-
-DEFUN ("overlay-buffer", Foverlay_buffer, Soverlay_buffer, 1, 1, 0,
-       doc: /* Return the buffer OVERLAY belongs to.
-Return nil if OVERLAY has been deleted.  */)
-  (Lisp_Object overlay)
-{
-  CHECK_OVERLAY (overlay);
-
-  return Fmarker_buffer (OVERLAY_START (overlay));
-}
-
 DEFUN ("overlay-properties", Foverlay_properties, Soverlay_properties, 1, 1, 0,
        doc: /* Return a list of the properties on OVERLAY.
 This is a copy of OVERLAY's plist; modifying its conses has no effect on
@@ -4043,6 +4007,12 @@ If SORTED is non-nil, then sort them by decreasing priority.  */)
 
   /* Make a list of them all.  */
   result = Flist (noverlays, overlay_vec);
+
+  /* The doc string says the list should be in decreasing order of
+     priority, so we reverse the list, because sort_overlays sorts in
+     the increasing order of priority.  */
+  if (!NILP (sorted))
+    result = Fnreverse (result);
 
   xfree (overlay_vec);
   return result;
@@ -4998,6 +4968,8 @@ init_buffer_once (void)
   XSETFASTINT (BVAR (&buffer_local_flags, category_table), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, bidi_display_reordering), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, bidi_paragraph_direction), idx); ++idx;
+  XSETFASTINT (BVAR (&buffer_local_flags, bidi_paragraph_separate_re), idx); ++idx;
+  XSETFASTINT (BVAR (&buffer_local_flags, bidi_paragraph_start_re), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, buffer_file_coding_system), idx);
   /* Make this one a permanent local.  */
   buffer_permanent_local_flags[idx++] = 1;
@@ -5079,6 +5051,8 @@ init_buffer_once (void)
   bset_ctl_arrow (&buffer_defaults, Qt);
   bset_bidi_display_reordering (&buffer_defaults, Qt);
   bset_bidi_paragraph_direction (&buffer_defaults, Qnil);
+  bset_bidi_paragraph_start_re (&buffer_defaults, Qnil);
+  bset_bidi_paragraph_separate_re (&buffer_defaults, Qnil);
   bset_cursor_type (&buffer_defaults, Qt);
   bset_extra_line_spacing (&buffer_defaults, Qnil);
   bset_cursor_in_non_selected_windows (&buffer_defaults, Qt);
@@ -5492,6 +5466,49 @@ This variable is never applied to a way of decoding a file while reading it.  */
   DEFVAR_PER_BUFFER ("bidi-display-reordering",
 		     &BVAR (current_buffer, bidi_display_reordering), Qnil,
 		     doc: /* Non-nil means reorder bidirectional text for display in the visual order.  */);
+
+  DEFVAR_PER_BUFFER ("bidi-paragraph-start-re",
+		     &BVAR (current_buffer, bidi_paragraph_start_re), Qnil,
+		     doc: /* If non-nil, a regexp matching a line that starts OR separates paragraphs.
+
+The value of nil means to use empty lines as lines that start and
+separate paragraphs.
+
+When Emacs displays bidirectional text, it by default computes
+the base paragraph direction separately for each paragraph.
+Setting this variable changes the places where paragraph base
+direction is recomputed.
+
+The regexp is always matched after a newline, so it is best to
+anchor it by beginning it with a "^".
+
+If you change the value of this variable, be sure to change
+the value of `bidi-paragraph-separate-re' accordingly.  For
+example, to have a single newline behave as a paragraph separator,
+set both these variables to "^".
+
+See also `bidi-paragraph-direction'.  */);
+
+  DEFVAR_PER_BUFFER ("bidi-paragraph-separate-re",
+		     &BVAR (current_buffer, bidi_paragraph_separate_re), Qnil,
+		     doc: /* If non-nil, a regexp matching a line that separates paragraphs.
+
+The value of nil means to use empty lines as paragraph separators.
+
+When Emacs displays bidirectional text, it by default computes
+the base paragraph direction separately for each paragraph.
+Setting this variable changes the places where paragraph base
+direction is recomputed.
+
+The regexp is always matched after a newline, so it is best to
+anchor it by beginning it with a "^".
+
+If you change the value of this variable, be sure to change
+the value of `bidi-paragraph-start-re' accordingly.  For
+example, to have a single newline behave as a paragraph separator,
+set both these variables to "^".
+
+See also `bidi-paragraph-direction'.  */);
 
   DEFVAR_PER_BUFFER ("bidi-paragraph-direction",
 		     &BVAR (current_buffer, bidi_paragraph_direction), Qnil,
@@ -6080,7 +6097,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);
-  defsubr (&Sset_buffer);
   defsubr (&Sbarf_if_buffer_read_only);
   defsubr (&Serase_buffer);
   defsubr (&Sbuffer_swap_text);
@@ -6091,9 +6107,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Sdelete_overlay);
   defsubr (&Sdelete_all_overlays);
   defsubr (&Smove_overlay);
-  defsubr (&Soverlay_start);
-  defsubr (&Soverlay_end);
-  defsubr (&Soverlay_buffer);
   defsubr (&Soverlay_properties);
   defsubr (&Soverlays_at);
   defsubr (&Soverlays_in);

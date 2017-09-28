@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 
 ;;; Commentary:
@@ -463,7 +463,10 @@ binding `testcover-vector' to the code-coverage vector for TESTCOVER-SYM
   (cond
    ((eq (aref testcover-vector idx) 'unknown)
     (aset testcover-vector idx val))
-   ((not (equal (aref testcover-vector idx) val))
+   ((not (condition-case ()
+             (equal (aref testcover-vector idx) val)
+           ;; TODO: Actually check circular lists for equality.
+           (circular-list nil)))
     (aset testcover-vector idx 'ok-coverage)))
   val)
 
@@ -475,7 +478,10 @@ same value during coverage testing."
    ((eq (aref testcover-vector idx) '1value)
     (aset testcover-vector idx (cons '1value val)))
    ((not (and (eq (car-safe (aref testcover-vector idx)) '1value)
-	      (equal (cdr (aref testcover-vector idx)) val)))
+	      (condition-case ()
+                  (equal (cdr (aref testcover-vector idx)) val)
+                ;; TODO: Actually check circular lists for equality.
+                (circular-list nil))))
     (error "Value of form marked with `1value' does vary: %s" val)))
   val)
 

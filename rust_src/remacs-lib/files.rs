@@ -39,7 +39,6 @@ pub extern "C" fn rust_make_temp(template: *mut c_char, flags: c_int) -> c_int {
             -1
         }
     }
-
 }
 
 pub fn make_temporary_file(template: String, flags: i32) -> Result<(i32, String), i32> {
@@ -75,9 +74,9 @@ fn generate_temporary_filename(name: &mut String) {
     rand::thread_rng().fill_bytes(bytes);
     for byte in bytes.iter_mut() {
         *byte = match *byte % 62 {
-            v @ 0...9 => (v + b'0' as u8),
-            v @ 10...35 => (v - 10 + b'a' as u8),
-            v @ 36...61 => (v - 36 + b'A' as u8),
+            v @ 0...9 => v + b'0',
+            v @ 10...35 => v - 10 + b'a',
+            v @ 36...61 => v - 36 + b'A',
             _ => unreachable!(),
         }
     }

@@ -12,7 +12,11 @@ extern crate alloc_unexec;
 extern crate lazy_static;
 
 extern crate remacs_sys;
+
+// Needed for linking.
+#[allow(unused_extern_crates)]
 extern crate remacs_lib;
+
 extern crate remacs_macros;
 extern crate libc;
 extern crate md5;
@@ -21,6 +25,12 @@ extern crate sha1;
 extern crate sha2;
 extern crate base64 as base64_crate;
 extern crate fnv;
+
+#[cfg(test)]
+extern crate mock_derive;
+
+#[cfg(test)]
+mod functions;
 
 #[macro_use]
 mod eval;
@@ -51,6 +61,9 @@ mod chartable;
 mod category;
 mod obarray;
 mod editfns;
+mod util;
+mod minibuf;
+mod cmds;
 
 use alloc_unexec::UnexecAlloc;
 
@@ -62,9 +75,14 @@ use remacs_sys::Lisp_Subr;
 pub use base64::base64_encode_1;
 pub use base64::base64_decode_1;
 
+pub use util::clip_to_bounds;
+
 // Used in buffer.c
 pub use buffers::Fbuffer_live_p;
 pub use buffers::Fbuffer_modified_p;
+
+// Used in window.c
+pub use windows::Fwindow_buffer;
 
 // used in process.c
 pub use buffers::Fbuffer_name;
@@ -83,6 +101,9 @@ pub use math::Fmin;
 pub use math::Fquo;
 pub use math::Flss;
 pub use math::Fleq;
+pub use math::Frem;
+pub use math::Fadd1;
+pub use math::Fsub1;
 pub use math::arithcompare;
 pub use editfns::Feobp;
 pub use editfns::Fbobp;
@@ -127,13 +148,18 @@ pub use strings::Fstring_to_unibyte;
 pub use strings::Fmultibyte_string_p;
 pub use strings::Fstring_lessp;
 pub use vectors::Flength;
+pub use vectors::Felt;
 pub use vectors::Fsort;
 pub use lists::merge;
 pub use buffers::Fget_buffer;
 pub use buffers::Fcurrent_buffer;
+pub use buffers::Fset_buffer;
 pub use obarray::intern_1;
 pub use obarray::Fintern;
 pub use obarray::Fintern_soft;
+pub use marker::Fmarker_position;
+pub use marker::Fmarker_buffer;
+pub use windows::Fwindow_point;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
@@ -160,8 +186,14 @@ pub use multibyte::str_to_multibyte;
 pub use multibyte::str_as_unibyte;
 pub use multibyte::str_to_unibyte;
 
+// Used in xdisp.c
+pub use buffers::Foverlay_start;
+pub use buffers::Foverlay_end;
+
 // Used in window.c, macros.c
 pub use interactive::Fprefix_numeric_value;
+pub use editfns::Fbolp;
+pub use editfns::Feolp;
 
 // Used in alloc.c, lisp.h
 pub use hashtable::finalize_hashtable;
@@ -207,8 +239,17 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Sbuffer_modified_tick);
         defsubr(&*buffers::Sbuffer_chars_modified_tick);
         defsubr(&*buffers::Sbuffer_name);
+        defsubr(&*buffers::Sset_buffer);
+        defsubr(&*buffers::Soverlay_start);
+        defsubr(&*buffers::Soverlay_end);
+        defsubr(&*buffers::Soverlay_buffer);
         defsubr(&*windows::Swindowp);
         defsubr(&*windows::Swindow_live_p);
+        defsubr(&*windows::Swindow_point);
+        defsubr(&*windows::Sselected_window);
+        defsubr(&*windows::Swindow_buffer);
+        defsubr(&*windows::Swindow_valid_p);
+        defsubr(&*windows::Swindow_start);
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*lists::Satom);
@@ -231,6 +272,10 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*math::Sleq);
         defsubr(&*math::Sgeq);
         defsubr(&*math::Sneq);
+        defsubr(&*math::Srem);
+        defsubr(&*math::Sadd1);
+        defsubr(&*math::Ssub1);
+        defsubr(&*math::Slognot);
         defsubr(&*numbers::Sintegerp);
         defsubr(&*numbers::Sinteger_or_marker_p);
         defsubr(&*numbers::Sfloatp);
@@ -248,6 +293,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*symbols::Sfboundp);
         defsubr(&*symbols::Ssymbol_function);
         defsubr(&*symbols::Ssymbol_plist);
+        defsubr(&*symbols::Ssetplist);
+        defsubr(&*symbols::Sfmakunbound);
         defsubr(&*lists::Sconsp);
         defsubr(&*lists::Ssetcar);
         defsubr(&*lists::Ssetcdr);
@@ -276,6 +323,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*lists::Smake_list);
         defsubr(&*lists::Ssafe_length);
         defsubr(&*marker::Smarkerp);
+        defsubr(&*marker::Smarker_position);
+        defsubr(&*marker::Smarker_buffer);
         defsubr(&*strings::Sstringp);
         defsubr(&*strings::Smultibyte_string_p);
         defsubr(&*base64::Sbase64_encode_string);
@@ -305,6 +354,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Svector_or_char_table_p);
         defsubr(&*vectors::Svectorp);
         defsubr(&*vectors::Slength);
+<<<<<<< HEAD
         defsubr(&*hashtable::Smake_hash_table);
         defsubr(&*hashtable::Sputhash);
         defsubr(&*hashtable::Sgethash);
@@ -314,6 +364,10 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*hashtable::Sclrhash);
         defsubr(&*hashtable::Shash_table_count);
         defsubr(&*hashtable::Shash_table_size);
+=======
+        defsubr(&*vectors::Selt);
+        defsubr(&*vectors::Srecordp);
+>>>>>>> origin/master
         defsubr(&*hashtable::Scopy_hash_table);
         defsubr(&*hashtable::Shash_table_test);
         defsubr(&*hashtable::Shash_table_rehash_size);
@@ -359,5 +413,15 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sbuffer_size);
         defsubr(&*editfns::Seobp);
         defsubr(&*editfns::Sbobp);
+        defsubr(&*editfns::Sbolp);
+        defsubr(&*editfns::Seolp);
+        defsubr(&*editfns::Sregion_beginning);
+        defsubr(&*editfns::Sregion_end);
+        defsubr(&*editfns::Smark_marker);
+        defsubr(&*editfns::Spoint_min);
+        defsubr(&*editfns::Spoint_max);
+        defsubr(&*minibuf::Sminibufferp);
+        defsubr(&*minibuf::Sactive_minibuffer_window);
+        defsubr(&*cmds::Sforward_point)
     }
 }

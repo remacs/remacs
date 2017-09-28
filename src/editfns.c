@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
 #include <config.h>
@@ -384,54 +384,6 @@ The return value is POSITION.  */)
   else
     wrong_type_argument (Qinteger_or_marker_p, position);
   return position;
-}
-
-
-/* Return the start or end position of the region.
-   BEGINNINGP means return the start.
-   If there is no region active, signal an error. */
-
-static Lisp_Object
-region_limit (bool beginningp)
-{
-  Lisp_Object m;
-
-  if (!NILP (Vtransient_mark_mode)
-      && NILP (Vmark_even_if_inactive)
-      && NILP (BVAR (current_buffer, mark_active)))
-    xsignal0 (Qmark_inactive);
-
-  m = Fmarker_position (BVAR (current_buffer, mark));
-  if (NILP (m))
-    error ("The mark is not set now, so there is no region");
-
-  /* Clip to the current narrowing (bug#11770).  */
-  return make_number ((PT < XFASTINT (m)) == beginningp
-		      ? PT
-		      : clip_to_bounds (BEGV, XFASTINT (m), ZV));
-}
-
-DEFUN ("region-beginning", Fregion_beginning, Sregion_beginning, 0, 0, 0,
-       doc: /* Return the integer value of point or mark, whichever is smaller.  */)
-  (void)
-{
-  return region_limit (1);
-}
-
-DEFUN ("region-end", Fregion_end, Sregion_end, 0, 0, 0,
-       doc: /* Return the integer value of point or mark, whichever is larger.  */)
-  (void)
-{
-  return region_limit (0);
-}
-
-DEFUN ("mark-marker", Fmark_marker, Smark_marker, 0, 0, 0,
-       doc: /* Return this buffer's mark, as a marker object.
-Watch out!  Moving this marker changes the mark position.
-If you set the marker not to point anywhere, the buffer will have no mark.  */)
-  (void)
-{
-  return BVAR (current_buffer, mark);
 }
 
 
@@ -1045,33 +997,12 @@ usage: (save-current-buffer &rest BODY)  */)
   return unbind_to (count, Fprogn (args));
 }
 
-DEFUN ("point-min", Fpoint_min, Spoint_min, 0, 0, 0,
-       doc: /* Return the minimum permissible value of point in the current buffer.
-This is 1, unless narrowing (a buffer restriction) is in effect.  */)
-  (void)
-{
-  Lisp_Object temp;
-  XSETFASTINT (temp, BEGV);
-  return temp;
-}
-
 DEFUN ("point-min-marker", Fpoint_min_marker, Spoint_min_marker, 0, 0, 0,
        doc: /* Return a marker to the minimum permissible value of point in this buffer.
 This is the beginning, unless narrowing (a buffer restriction) is in effect.  */)
   (void)
 {
   return build_marker (current_buffer, BEGV, BEGV_BYTE);
-}
-
-DEFUN ("point-max", Fpoint_max, Spoint_max, 0, 0, 0,
-       doc: /* Return the maximum permissible value of point in the current buffer.
-This is (1+ (buffer-size)), unless narrowing (a buffer restriction)
-is in effect, in which case it is less.  */)
-  (void)
-{
-  Lisp_Object temp;
-  XSETFASTINT (temp, ZV);
-  return temp;
 }
 
 DEFUN ("point-max-marker", Fpoint_max_marker, Spoint_max_marker, 0, 0, 0,
@@ -1165,25 +1096,6 @@ At the beginning of the buffer or accessible region, return 0.  */)
   else
     XSETFASTINT (temp, FETCH_BYTE (PT_BYTE - 1));
   return temp;
-}
-
-DEFUN ("bolp", Fbolp, Sbolp, 0, 0, 0,
-       doc: /* Return t if point is at the beginning of a line.  */)
-  (void)
-{
-  if (PT == BEGV || FETCH_BYTE (PT_BYTE - 1) == '\n')
-    return Qt;
-  return Qnil;
-}
-
-DEFUN ("eolp", Feolp, Seolp, 0, 0, 0,
-       doc: /* Return t if point is at the end of a line.
-`End of a line' includes point being at the end of the buffer.  */)
-  (void)
-{
-  if (PT == ZV || FETCH_BYTE (PT_BYTE) == '\n')
-    return Qt;
-  return Qnil;
 }
 
 DEFUN ("char-after", Fchar_after, Schar_after, 0, 1, 0,
@@ -3553,8 +3465,9 @@ It returns the number of characters changed.  */)
   cnt = 0;
   for (; pos < end_pos; )
     {
-      register unsigned char *p = BYTE_POS_ADDR (pos_byte);
-      unsigned char *str, buf[MAX_MULTIBYTE_LENGTH];
+      unsigned char *p = BYTE_POS_ADDR (pos_byte);
+      unsigned char *str UNINIT;
+      unsigned char buf[MAX_MULTIBYTE_LENGTH];
       int len, str_len;
       int oc;
       Lisp_Object val;
@@ -5377,9 +5290,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sget_pos_property);
 
   defsubr (&Spoint_marker);
-  defsubr (&Smark_marker);
-  defsubr (&Sregion_beginning);
-  defsubr (&Sregion_end);
 
   /* Symbol for the text property used to mark fields.  */
   DEFSYM (Qfield, "field");
@@ -5400,8 +5310,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Ssave_excursion);
   defsubr (&Ssave_current_buffer);
 
-  defsubr (&Spoint_max);
-  defsubr (&Spoint_min);
   defsubr (&Spoint_min_marker);
   defsubr (&Spoint_max_marker);
   defsubr (&Sgap_position);
@@ -5409,8 +5317,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sposition_bytes);
   defsubr (&Sbyte_to_position);
 
-  defsubr (&Sbolp);
-  defsubr (&Seolp);
   defsubr (&Sfollowing_char);
   defsubr (&Sprevious_char);
   defsubr (&Schar_after);

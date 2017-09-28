@@ -963,8 +963,9 @@ Is @ref{hfy-optimizations} member @var{symbol} set or not?
 @end lisp
 
 Return everything preceding the last @samp{/} from a relative filename,
-on the assumption that this will produce a relative directory name.  Hardly
-bombproof, but good enough in the context in which it is being used.
+on the assumption that this will produce the name of a relative
+directory.  Hardly bombproof, but good enough in the context in which
+it is being used.
 
 @item hfy-html-dekludge-buffer
 @findex hfy-html-dekludge-buffer

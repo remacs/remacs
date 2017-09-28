@@ -14,7 +14,7 @@ use libc::{c_char, c_void, intptr_t, ptrdiff_t, uintptr_t};
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
-use buffers::LispBufferRef;
+use buffers::{LispBufferRef, LispOverlayRef};
 use windows::LispWindowRef;
 use marker::LispMarkerRef;
 use hashtable::LispHashTableRef;
@@ -29,6 +29,13 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
                  Qcharacterp, Qlistp, PseudovecType, EqualKind, purecopy, Qhash_table_p, Qconsp,
                  SYMBOL_NAME, Qinteger_or_marker_p, Qbufferp, Qchar_table_p, Qintegerp};
+                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
+                 Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qplistp, Qintegerp, Qhash_table_p,
+                 Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p,
+                 SYMBOL_NAME, PseudovecType, EqualKind};
+
+#[cfg(test)]
+use functions::ExternCMocks;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -102,16 +109,15 @@ impl LispObject {
 
     pub fn tag_ptr<T>(external: ExternalPtr<T>, ty: Lisp_Type) -> LispObject {
         let raw = external.as_ptr() as intptr_t;
-        let res;
-        if USE_LSB_TAG {
+        let res = if USE_LSB_TAG {
             let ptr = raw as intptr_t;
             let tag = ty as intptr_t;
-            res = (ptr + tag) as EmacsInt;
+            (ptr + tag) as EmacsInt
         } else {
             let ptr = raw as EmacsUint as uintptr_t;
             let tag = ty as EmacsUint as uintptr_t;
-            res = ((tag << VALBITS) + ptr) as EmacsInt;
-        }
+            ((tag << VALBITS) + ptr) as EmacsInt
+        };
 
         LispObject::from_raw(res)
     }
@@ -252,7 +258,7 @@ impl LispObject {
 // Fixnum(Integer) support (LispType == Lisp_Int0 | Lisp_Int1 == 2 | 6(LSB) )
 
 /// Fixnums are inline integers that fit directly into Lisp's tagged word.
-/// There's two LispType variants to provide an extra bit.
+/// There's two `LispType` variants to provide an extra bit.
 
 /// Natnums(natural number) are the non-negative fixnums.
 /// There were special branches in the original code for better performance.
@@ -345,7 +351,7 @@ impl LispObject {
         if let Some(n) = self.as_fixnum() {
             n
         } else if let Some(m) = self.as_marker() {
-            m.position() as EmacsInt
+            m.charpos_or_error() as EmacsInt
         } else {
             wrong_type!(Qinteger_or_marker_p, self);
         }
@@ -508,6 +514,20 @@ impl LispObject {
         self.as_vectorlike().map_or(None, |v| v.as_window())
     }
 
+    pub fn as_window_or_error(self) -> LispWindowRef {
+        self.as_window().unwrap_or_else(
+            || wrong_type!(Qwindowp, self),
+        )
+    }
+
+    pub fn as_live_window_or_error(self) -> LispWindowRef {
+        if self.as_window().map_or(false, |w| w.is_live()) {
+            self.as_window().unwrap()
+        } else {
+            wrong_type!(Qwindow_live_p, self);
+        }
+    }
+
     pub fn is_frame(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_FRAME)
@@ -534,6 +554,12 @@ impl LispObject {
             Some(LispFontRef::from_vectorlike(v))
         } else {
             None
+        })
+    }
+
+    pub fn is_record(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_RECORD)
         })
     }
 }
@@ -570,24 +596,24 @@ impl LispObject {
 
 // Cons support (LispType == 6 | 3)
 
-/// From FOR_EACH_TAIL_INTERNAL in lisp.h
+/// From `FOR_EACH_TAIL_INTERNAL` in `lisp.h`
 pub struct TailsIter {
     list: LispObject,
-    safe: bool,
     tail: LispObject,
     tortoise: LispObject,
+    errsym: Option<Lisp_Object>,
     max: isize,
     n: isize,
     q: u16,
 }
 
 impl TailsIter {
-    fn new(list: LispObject, safe: bool) -> Self {
+    fn new(list: LispObject, errsym: Option<Lisp_Object>) -> Self {
         Self {
             list,
-            safe,
             tail: list,
             tortoise: list,
+            errsym,
             max: 2,
             n: 0,
             q: 2,
@@ -595,12 +621,12 @@ impl TailsIter {
     }
 
     fn circular(&self) -> Option<LispCons> {
-        if !self.safe {
+        if self.errsym.is_some() {
             unsafe {
                 circular_list(self.tail.to_raw());
             }
         } else {
-            return None;
+            None
         }
     }
 }
@@ -611,12 +637,10 @@ impl Iterator for TailsIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self.tail.as_cons() {
             None => {
-                if !self.safe {
-                    if self.tail.is_not_nil() {
-                        wrong_type!(Qlistp, self.list)
-                    }
+                if self.errsym.is_some() && self.tail.is_not_nil() {
+                    wrong_type!(self.errsym.clone().unwrap(), self.list)
                 }
-                return None;
+                None
             }
             Some(tail_cons) => {
                 self.tail = tail_cons.cdr();
@@ -682,13 +706,20 @@ impl LispObject {
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails(self) -> TailsIter {
-        TailsIter::new(self, false)
+        TailsIter::new(self, Some(unsafe { Qlistp }))
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
     /// iteration will stop at the first non-cons without signaling.
     pub fn iter_tails_safe(self) -> TailsIter {
-        TailsIter::new(self, true)
+        TailsIter::new(self, None)
+    }
+
+    /// Iterate over all tails of self.  self should be a plist, i.e. a chain
+    /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
+    /// will be signaled.
+    pub fn iter_tails_plist(self) -> TailsIter {
+        TailsIter::new(self, Some(unsafe { Qplistp }))
     }
 }
 
@@ -863,7 +894,7 @@ impl LispObject {
         } else if let Some(f) = self.as_float() {
             LispNumber::Float(f)
         } else if let Some(m) = self.as_marker() {
-            LispNumber::Fixnum(m.position() as EmacsInt)
+            LispNumber::Fixnum(m.charpos_or_error() as EmacsInt)
         } else {
             wrong_type!(Qnumber_or_marker_p, self)
         }
@@ -877,6 +908,11 @@ impl LispObject {
     #[inline]
     pub fn is_not_nil(self) -> bool {
         self.to_raw() != Qnil
+    }
+
+    #[inline]
+    pub fn is_t(self) -> bool {
+        self.to_raw() == unsafe { Qt }
     }
 
     #[inline]
@@ -895,6 +931,12 @@ impl LispObject {
             } else {
                 None
             },
+        )
+    }
+
+    pub fn as_marker_or_error(self) -> LispMarkerRef {
+        self.as_marker().unwrap_or_else(
+            || wrong_type!(Qmarkerp, self),
         )
     }
 
@@ -921,6 +963,22 @@ impl LispObject {
         self.as_misc().map_or(
             false,
             |m| m.ty == Lisp_Misc_Type::Overlay,
+        )
+    }
+
+    pub fn as_overlay(self) -> Option<LispOverlayRef> {
+        self.as_misc().and_then(
+            |m| if m.ty == Lisp_Misc_Type::Overlay {
+                unsafe { Some(mem::transmute(m)) }
+            } else {
+                None
+            },
+        )
+    }
+
+    pub fn as_overlay_or_error(self) -> LispOverlayRef {
+        self.as_overlay().unwrap_or_else(
+            || wrong_type!(Qoverlayp, self),
         )
     }
 
@@ -1046,4 +1104,24 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
             *const c_char,
         s.len() as ptrdiff_t,
     )
+}
+
+#[test]
+fn test_basic_float() {
+    let val = 8.0;
+    let mock = ExternCMocks::method_make_float()
+        .called_once()
+        .return_result_of(move || {
+            // Fake an allocated float by just putting it on the heap and leaking it.
+            let boxed = Box::new(Lisp_Float { data: unsafe { mem::transmute(val) } });
+            let raw = ExternalPtr::new(Box::into_raw(boxed));
+            LispObject::tag_ptr(raw, Lisp_Type::Lisp_Float).to_raw()
+        });
+
+    ExternCMocks::set_make_float(mock);
+
+    let result = LispObject::from_float(val);
+    assert!(result.is_float() && result.as_float() == Some(val));
+
+    ExternCMocks::clear_make_float();
 }

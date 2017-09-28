@@ -1,4 +1,4 @@
-;;; ls-lisp.el --- emulate insert-directory completely in Emacs Lisp
+;;; ls-lisp.el --- emulate insert-directory completely in Emacs Lisp  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1992, 1994, 2000-2017 Free Software Foundation, Inc.
 
@@ -21,7 +21,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -59,6 +59,8 @@
 ;; robust sorting.
 
 ;;; Code:
+
+
 
 (defgroup ls-lisp nil
   "Emulate the ls program completely in Emacs Lisp."
@@ -245,11 +247,11 @@ to fail to line up, e.g. if month names are not all of the same length."
   "Format to display integer GIDs.")
 (defvar ls-lisp-gid-s-fmt " %s"
   "Format to display user group names.")
-(defvar ls-lisp-filesize-d-fmt "%d"
+(defvar ls-lisp-filesize-d-fmt " %d"
   "Format to display integer file sizes.")
-(defvar ls-lisp-filesize-f-fmt "%.0f"
+(defvar ls-lisp-filesize-f-fmt " %.0f"
   "Format to display float file sizes.")
-(defvar ls-lisp-filesize-b-fmt "%.0f"
+(defvar ls-lisp-filesize-b-fmt " %.0f"
   "Format to display file sizes in blocks (for the -s switch).")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -476,6 +478,34 @@ not contain `d', so that a full listing is expected."
 				  switches time-index))
 	(message "%s: doesn't exist or is inaccessible" file)
 	(ding) (sit-for 2)))))		; to show user the message!
+
+(declare-function dired-read-dir-and-switches "dired" (str))
+(declare-function dired-goto-next-file "dired" ())
+
+(defun ls-lisp--dired (orig-fun dir-or-list &optional switches)
+  (interactive (dired-read-dir-and-switches ""))
+  (if (consp dir-or-list)
+      (funcall orig-fun dir-or-list switches)
+    (let ((dir-wildcard (insert-directory-wildcard-in-dir-p
+                         (expand-file-name dir-or-list))))
+      (if (not dir-wildcard)
+          (funcall orig-fun dir-or-list switches)
+        (let* ((default-directory (car dir-wildcard))
+               (files (file-expand-wildcards (cdr dir-wildcard)))
+               (dir (car dir-wildcard)))
+          (if files
+              (let ((inhibit-read-only t)
+                    (buf
+                     (apply orig-fun (nconc (list dir) files) (and switches (list switches)))))
+                (with-current-buffer buf
+                  (save-excursion
+                    (goto-char (point-min))
+                    (dired-goto-next-file)
+                    (forward-line 0)
+                    (insert "  wildcard " (cdr dir-wildcard) "\n"))))
+            (user-error "No files matching regexp")))))))
+
+(advice-add 'dired :around #'ls-lisp--dired)
 
 (defun ls-lisp-sanitize (file-alist)
   "Sanitize the elements in FILE-ALIST.
@@ -865,6 +895,13 @@ All ls time options, namely c, t and u, are handled."
 		ls-lisp-filesize-d-fmt)
 	      file-size)
     (format " %6s" (file-size-human-readable file-size))))
+
+(defun ls-lisp-unload-function ()
+  "Unload ls-lisp library."
+  (advice-remove 'insert-directory #'ls-lisp--insert-directory)
+  (advice-remove 'dired #'ls-lisp--dired)
+  ;; Continue standard unloading.
+  nil)
 
 (provide 'ls-lisp)
 

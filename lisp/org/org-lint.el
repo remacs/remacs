@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -724,7 +724,7 @@ Use \"export %s\" instead"
     (org-element-map ast 'footnote-reference
       (lambda (f)
 	(let ((label (org-element-property :label f)))
-	  (and label
+	  (and (eq 'standard (org-element-property :type f))
 	       (not (member label definitions))
 	       (list (org-element-property :begin f)
 		     (format "Missing definition for footnote [%s]"

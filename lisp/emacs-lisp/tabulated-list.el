@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -186,14 +186,29 @@ If ADVANCE is non-nil, move forward by one line afterwards."
 Populated by `tabulated-list-init-header'.")
 (defvar tabulated-list--header-overlay nil)
 
+(defun tabulated-list-line-number-width ()
+  "Return the width taken by display-line-numbers in the current buffer."
+  ;; line-number-display-width returns the value for the selected
+  ;; window, which might not be the window in which the current buffer
+  ;; is displayed.
+  (if (not display-line-numbers)
+           0
+    (let ((cbuf-window (get-buffer-window (current-buffer))))
+      (if (window-live-p cbuf-window)
+          (with-selected-window cbuf-window
+            (+ (line-number-display-width) 2))
+        4))))
+
 (defun tabulated-list-init-header ()
   "Set up header line for the Tabulated List buffer."
   ;; FIXME: Should share code with tabulated-list-print-col!
   (let ((x (max tabulated-list-padding 0))
 	(button-props `(help-echo "Click to sort by column"
-			mouse-face highlight
+			mouse-face header-line-highlight
 			keymap ,tabulated-list-sort-button-map))
 	(cols nil))
+    (if display-line-numbers
+        (setq x (+ x (tabulated-list-line-number-width))))
     (push (propertize " " 'display `(space :align-to ,x)) cols)
     (dotimes (n (length tabulated-list-format))
       (let* ((col (aref tabulated-list-format n))
@@ -409,9 +424,12 @@ of column descriptors."
   (let ((beg   (point))
 	(x     (max tabulated-list-padding 0))
 	(ncols (length tabulated-list-format))
+        (lnum-width (tabulated-list-line-number-width))
 	(inhibit-read-only t))
+    (if display-line-numbers
+        (setq x (+ x lnum-width)))
     (if (> tabulated-list-padding 0)
-	(insert (make-string x ?\s)))
+	(insert (make-string (- x lnum-width) ?\s)))
     (let ((tabulated-list--near-rows ; Bind it if not bound yet (Bug#25506).
            (or (bound-and-true-p tabulated-list--near-rows)
                (list (or (tabulated-list-get-entry (point-at-bol 0))
@@ -624,7 +642,9 @@ as the ewoc pretty-printer."
   (setq-local glyphless-char-display tabulated-list-glyphless-char-display)
   ;; Avoid messing up the entries' display just because the first
   ;; column of the first entry happens to begin with a R2L letter.
-  (setq bidi-paragraph-direction 'left-to-right))
+  (setq bidi-paragraph-direction 'left-to-right)
+  ;; This is for if/when they turn on display-line-numbers
+  (add-hook 'display-line-numbers-mode-hook #'tabulated-list-revert nil t))
 
 (put 'tabulated-list-mode 'mode-class 'special)
 

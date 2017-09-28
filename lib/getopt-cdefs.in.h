@@ -16,7 +16,7 @@
 
    You should have received a copy of the GNU General Public
    License along with gnulib; if not, see
-   <http://www.gnu.org/licenses/>.  */
+   <https://www.gnu.org/licenses/>.  */
 
 #ifndef _GETOPT_CDEFS_H
 #define _GETOPT_CDEFS_H 1

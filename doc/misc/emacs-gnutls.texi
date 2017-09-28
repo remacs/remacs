@@ -113,7 +113,7 @@ The @code{gnutls-algorithm-priority} variable sets the GnuTLS priority
 string.  This is global, not per host name (although
 @code{gnutls-negotiate} supports a priority string per connection so
 it could be done if needed).  The priority string syntax is in the
-@uref{http://www.gnu.org/software/gnutls/documentation.html, GnuTLS
+@uref{https://www.gnu.org/software/gnutls/documentation.html, GnuTLS
 documentation}.
 @end defvar
 

@@ -18,7 +18,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -205,7 +205,8 @@ default."
   (require 'erc)
   (require 'erc-log)
   (let* ((server (car (car link)))
-	 (port (or (string-to-number (cadr (pop link))) erc-default-port))
+	 (port (let ((p (cadr (pop link))))
+		 (if p (string-to-number p) erc-default-port)))
 	 (server-buffer)
 	 (buffer-list
 	  (erc-buffer-filter

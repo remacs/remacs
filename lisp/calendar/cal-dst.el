@@ -22,7 +22,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -406,7 +406,7 @@ This function respects the value of `calendar-dst-check-each-year-flag'."
                       (cadr (calendar-dst-find-startend year))
                     (nth 4 calendar-current-time-zone-cache))))
         (if expr (eval expr)))
-      ;; New US rules commencing 2007.  ftp://elsie.nci.nih.gov/pub/.
+      ;; New US rules commencing 2007.  https://www.iana.org/time-zones
       (and (not (zerop calendar-daylight-time-offset))
            (calendar-nth-named-day 2 0 3 year))))
 
@@ -417,7 +417,7 @@ This function respects the value of `calendar-dst-check-each-year-flag'."
                       (nth 2 (calendar-dst-find-startend year))
                     (nth 5 calendar-current-time-zone-cache))))
         (if expr (eval expr)))
-      ;; New US rules commencing 2007.  ftp://elsie.nci.nih.gov/pub/.
+      ;; New US rules commencing 2007.  https://www.iana.org/time-zones
       (and (not (zerop calendar-daylight-time-offset))
            (calendar-nth-named-day 1 0 11 year))))
 
