@@ -153,6 +153,11 @@ impl KeyAndValueEntry {
     }
 }
 
+// Programmers note: Malloc impl's may use mmap(2) to allocate heap space for large allocations.
+// It is possible for large hashmap allocations to be over this threshold. Allocations serviced by
+// mmap(2) will not be available after an unexec, and attempting to access them will trigger a SEGFAULT
+// (or worse...). The threshold can be controlled in alloc.c, with a call to
+//   mallopt (M_MMAP_THRESHOLD, ...)
 #[derive(Clone)]
 #[repr(C)]
 pub struct LispHashTable {
@@ -207,6 +212,11 @@ impl LispHashTableRef {
         }
     }
 
+    // LispHashTables will update both their key AND value in place with calls to insert.
+    // However, Rust's hashmap does not have this behavior. We could
+    // a) conditionally remove from the hash table first, and then reinsert
+    // b) or use unsafe code.
+    // For performance, we have chosen to go with b. 
     fn update(mut self, hash_key: HashKey, mut hash_value: HashValue) -> (usize, bool) {
         let free_idx = self.next_free();
         let mut next_idx = free_idx as usize;
@@ -799,6 +809,10 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
         }
     }
 
+    // We can't trigger a Equal call here, since we are in a GC, and equal cannot
+    // be called in a GC.
+    // However, since we know that the entries in key_and_value must match
+    // what are in the table, it's fine to do a basic eql instead of a true equal.
     let old_func = ptr.func;
     ptr.func = HashFunction::Eql;
     
@@ -843,6 +857,8 @@ pub unsafe extern "C" fn sweep_weak_hash_tables() {
     {} // This is basically a Rust "do while" loop,
     // by putting the logic into the while {condition} block.
 
+    // I am abusing External pointer to have side effects in a
+    // retain loop to save us another iteration actually sweeping the table.
     tables.retain(|x| if x.header.size & ARRAY_MARK_FLAG != 0 {
         sweep_weak_hashtable(*x, true);
         true
@@ -851,7 +867,6 @@ pub unsafe extern "C" fn sweep_weak_hash_tables() {
     });
 }
 
-// @TODO fix this, don't use map iter
 #[no_mangle]
 pub unsafe extern "C" fn purecopy_hash_table(map: *mut c_void) -> *mut c_void {
     let table_ptr = ExternalPtr::new(map as *mut LispHashTable);
