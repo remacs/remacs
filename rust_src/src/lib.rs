@@ -65,8 +65,10 @@ mod util;
 mod minibuf;
 mod cmds;
 
+#[cfg(not(test))]
 use alloc_unexec::UnexecAlloc;
 
+#[cfg(not(test))]
 #[global_allocator]
 static ALLOCATOR: UnexecAlloc = UnexecAlloc;
 
