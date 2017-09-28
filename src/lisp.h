@@ -1978,6 +1978,10 @@ extern Lisp_Object hash_test_name(LispHashTable *table);
 extern bool hash_purity(LispHashTable *table);
 extern ptrdiff_t hash_next_free(LispHashTable *table);
 
+EMACS_UINT hashfn_eq (struct hash_table_test *ht, Lisp_Object key);
+EMACS_UINT hashfn_eql (struct hash_table_test *ht, Lisp_Object key);
+EMACS_UINT hashfn_equal (struct hash_table_test *ht, Lisp_Object key);
+
 #define make_hash_table(test, size, unused, unused_2, weak, pure) new_hash_table (test, size, unused, unused_2, weak, pure)
 
 INLINE bool
