@@ -7,6 +7,7 @@ use remacs_sys::{PseudovecType, Lisp_Type, QCtest, Qeq, Qeql, Qequal, QCpurecopy
                  survives_gc_p, Lisp_Vectorlike_Header, Lisp_Object, EmacsUint, hash_table_test,
                  ARRAY_MARK_FLAG, CHECK_IMPURE, hashfn_eq, hashfn_eql, hashfn_equal,
                  gc_in_progress};
+use std;
 use std::ptr;
 use fnv::FnvHashMap;
 use std::mem;
@@ -167,10 +168,6 @@ pub struct LispHashTable {
     /// The comparison and hash functions.
     func: HashFunction,
 
-    // @TODO this can be changed to just be a map of HashKey -> usize
-    // though we should handle key-updating in a better way
-    // then the current insert strategy. We only need to double hash
-    // in the case of the Equal state.
     /// The Hashmap used to store lisp objects.
     map: FnvHashMap<HashKey, HashValue>,
 
@@ -210,35 +207,51 @@ impl LispHashTableRef {
         }
     }
 
-    // @TODO so this can be optimized. We only need to remove -> readd
-    // if our key is different. In any other case, we don't have to
-    // do anything. EVEN THEN, we only really need to update
-    // the key in key_and_value if we compare against what is in
-    // key_and_value. This can get weird around some custom hash funcs
-    // that have equality change over time, but we might be able to pull
-    // it off.
-    pub fn insert(mut self, key: LispObject, value: LispObject) -> ptrdiff_t {
-        let mut hash_key = HashKey::with_object(key, self);
-        let hash = hash_key.precalculate_hash();
-        debug_assert!(hash == hash_key.get_hash());
-        let key_and_value = KeyAndValueEntry::new(key, value, hash);
+    fn update(mut self, hash_key: HashKey, mut hash_value: HashValue) -> (usize, bool) {
+        let free_idx = self.next_free();
+        let mut next_idx = free_idx as usize;
+        let mut should_pop = true;
+        if free_idx < 0 {
+            next_idx = self.key_and_value.len();
+            should_pop = false;
+        }
+        
+        let entry = self.map.entry(hash_key);
+        unsafe {
+            let raw_ptr: *mut HashKey = mem::transmute(entry.key());
+            ptr::copy_nonoverlapping(&hash_key, raw_ptr, 1);
+        };
 
-        let idx;
-        let result = self.map.remove(&hash_key);
-        if let Some(entry) = result {
-            idx = entry.idx;
-            self.key_and_value[idx] = key_and_value;
-        } else {
-            if let Some(val) = self.free_list.pop() {
-                idx = val;
-                self.key_and_value[idx] = key_and_value;
-            } else {
-                self.key_and_value.push(key_and_value);
-                idx = self.key_and_value.len() - 1;
-            }
+        let value = entry.or_insert(hash_value);
+        if value.idx != std::usize::MAX {
+            next_idx = value.idx;
+            should_pop = false;
         }
 
-        self.map.insert(hash_key, HashValue::with_object(value, idx));
+        hash_value.idx = next_idx;
+        *value = hash_value;
+        
+        (next_idx, should_pop)
+
+    }
+
+    pub fn insert(mut self, key: LispObject, value: LispObject) -> ptrdiff_t {
+        let mut hash_key = HashKey::with_object(key, self);
+        let hash_value = HashValue::with_object(value, std::usize::MAX);
+        let hash = hash_key.precalculate_hash();
+        let key_and_value = KeyAndValueEntry::new(key, value, hash);
+        let (idx, should_pop) = self.update(hash_key, hash_value);
+
+        if idx < self.key_and_value.len() {
+            self.key_and_value[idx] = key_and_value;
+        } else {
+            self.key_and_value.push(key_and_value);
+        }
+
+        if should_pop {
+            self.free_list.pop();
+        }
+
         idx as ptrdiff_t
     }
 
@@ -274,8 +287,6 @@ impl LispHashTableRef {
         self.key_and_value[idx].value
     }
 
-    // @TODO the problem with this guy is that he also implcititly
-    // updates the hashmap entry in the old version.
     #[inline]
     pub fn get_key_with_index(self, idx: usize) -> LispObject {
         self.key_and_value[idx].key
@@ -651,11 +662,15 @@ pub unsafe extern "C" fn set_hash_value_slot(map: *mut c_void, idx: ptrdiff_t, v
     ptr.set_value_with_index(LispObject::from_raw(value), idx as usize);
 }
 
+// This function had the side effect of updating the key for all future hash lookups
+// so we just reinsert into the table so we can update the key. This is more costly then an array
+// assignment, but this function isn't called very often.
 #[no_mangle]
-pub unsafe extern "C" fn set_hash_key_slot(map: *mut c_void, idx: ptrdiff_t, value: Lisp_Object) {
+pub unsafe extern "C" fn set_hash_key_slot(map: *mut c_void, idx: ptrdiff_t, key: Lisp_Object) {
     debug_assert!(idx >= 0);
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
-    ptr.set_key_with_index(LispObject::from_raw(value), idx as usize);
+    let object = LispObject::from_raw(key);
+    ptr.insert(object, ptr.get(object).unwrap());
 }
 
 #[no_mangle]

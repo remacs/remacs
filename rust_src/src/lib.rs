@@ -354,7 +354,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Svector_or_char_table_p);
         defsubr(&*vectors::Svectorp);
         defsubr(&*vectors::Slength);
-<<<<<<< HEAD
         defsubr(&*hashtable::Smake_hash_table);
         defsubr(&*hashtable::Sputhash);
         defsubr(&*hashtable::Sgethash);
@@ -364,10 +363,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*hashtable::Sclrhash);
         defsubr(&*hashtable::Shash_table_count);
         defsubr(&*hashtable::Shash_table_size);
-=======
         defsubr(&*vectors::Selt);
         defsubr(&*vectors::Srecordp);
->>>>>>> origin/master
         defsubr(&*hashtable::Scopy_hash_table);
         defsubr(&*hashtable::Shash_table_test);
         defsubr(&*hashtable::Shash_table_rehash_size);
