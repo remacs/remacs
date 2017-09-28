@@ -28,8 +28,8 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
                  Qcharacterp, Qlistp, PseudovecType, EqualKind, purecopy, Qhash_table_p, Qconsp,
-                 SYMBOL_NAME, Qinteger_or_marker_p, Qbufferp, Qchar_table_p, Qintegerp,
-                 Qplistp, Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p};
+                 SYMBOL_NAME, Qinteger_or_marker_p, Qbufferp, Qchar_table_p, Qintegerp, Qplistp,
+                 Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p};
 
 #[cfg(test)]
 use functions::ExternCMocks;

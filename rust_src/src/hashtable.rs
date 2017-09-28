@@ -41,14 +41,14 @@ enum HashState {
 struct HashKey {
     object: LispObject,
     parent: LispHashTableRef,
-    state: HashState
+    state: HashState,
 }
 
 #[derive(Clone, Copy)]
 #[repr(C)]
 struct HashValue {
     object: LispObject,
-    idx: usize
+    idx: usize,
 }
 
 impl HashKey {
@@ -56,7 +56,7 @@ impl HashKey {
         HashKey {
             object: object,
             parent: table,
-            state: HashState::NeedToCalculate
+            state: HashState::NeedToCalculate,
         }
     }
 
@@ -103,7 +103,7 @@ impl HashValue {
     fn with_object(object: LispObject, idx: usize) -> HashValue {
         HashValue {
             object: object,
-            idx: idx
+            idx: idx,
         }
     }
 }
@@ -130,7 +130,7 @@ struct KeyAndValueEntry {
     key: LispObject,
     value: LispObject,
     hash: u64,
-    empty: bool
+    empty: bool,
 }
 
 impl KeyAndValueEntry {
@@ -149,13 +149,14 @@ impl KeyAndValueEntry {
             value: LispObject::constant_nil(),
             hash: 0,
             empty: true,
-        }        
+        }
     }
 }
 
 // Programmers note: Malloc impl's may use mmap(2) to allocate heap space for large allocations.
 // It is possible for large hashmap allocations to be over this threshold. Allocations serviced by
-// mmap(2) will not be available after an unexec, and attempting to access them will trigger a SEGFAULT
+// mmap(2) will not be available after an unexec, and attempting
+// to access them will trigger a SEGFAULT
 // (or worse...). The threshold can be controlled in alloc.c, with a call to
 //   mallopt (M_MMAP_THRESHOLD, ...)
 #[derive(Clone)]
@@ -199,7 +200,6 @@ impl LispHashTable {
             free_list: Vec::new(),
         }
     }
-
 }
 
 impl LispHashTableRef {
@@ -216,7 +216,7 @@ impl LispHashTableRef {
     // However, Rust's hashmap does not have this behavior. We could
     // a) conditionally remove from the hash table first, and then reinsert
     // b) or use unsafe code.
-    // For performance, we have chosen to go with b. 
+    // For performance, we have chosen to go with b.
     fn update(mut self, hash_key: HashKey, mut hash_value: HashValue) -> (usize, bool) {
         let free_idx = self.next_free();
         let mut next_idx = free_idx as usize;
@@ -225,7 +225,7 @@ impl LispHashTableRef {
             next_idx = self.key_and_value.len();
             should_pop = false;
         }
-        
+
         let entry = self.map.entry(hash_key);
         unsafe {
             let raw_ptr: *mut HashKey = mem::transmute(entry.key());
@@ -240,7 +240,7 @@ impl LispHashTableRef {
 
         hash_value.idx = next_idx;
         *value = hash_value;
-        
+
         (next_idx, should_pop)
 
     }
@@ -289,7 +289,9 @@ impl LispHashTableRef {
 
     pub fn get(self, key: LispObject) -> Option<LispObject> {
         let hash_key = HashKey::with_object(key, self);
-        self.map.get(&hash_key).map(|result| self.key_and_value[result.idx].value)
+        self.map.get(&hash_key).map(|result| {
+            self.key_and_value[result.idx].value
+        })
     }
 
     #[inline]
@@ -482,7 +484,7 @@ fn maphash(function: LispObject, map: LispObject) -> LispObject {
         if entry.empty {
             continue;
         }
-        
+
         call!(function, entry.key, entry.value);
     }
 
@@ -592,7 +594,7 @@ pub unsafe extern "C" fn mark_hashtable(map: *mut c_void) {
             if entry.empty {
                 continue;
             }
-            
+
             mark_object(entry.key.to_raw());
             mark_object(entry.value.to_raw());
         }
@@ -815,7 +817,7 @@ unsafe extern "C" fn sweep_weak_hashtable(mut ptr: LispHashTableRef, remove_entr
     // what are in the table, it's fine to do a basic eql instead of a true equal.
     let old_func = ptr.func;
     ptr.func = HashFunction::Eql;
-    
+
     for x in to_remove.iter() {
         let result = ptr.remove_with_hashkey(*x);
         debug_assert!(result != None);
