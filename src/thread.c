@@ -817,19 +817,6 @@ DEFUN ("current-thread", Fcurrent_thread, Scurrent_thread, 0, 0, 0,
   return result;
 }
 
-DEFUN ("thread-name", Fthread_name, Sthread_name, 1, 1, 0,
-       doc: /* Return the name of the THREAD.
-The name is the same object that was passed to `make-thread'.  */)
-     (Lisp_Object thread)
-{
-  struct thread_state *tstate;
-
-  CHECK_THREAD (thread);
-  tstate = XTHREAD (thread);
-
-  return tstate->name;
-}
-
 static void
 thread_signal_callback (void *arg)
 {
@@ -1032,7 +1019,6 @@ syms_of_threads (void)
       defsubr (&Sthread_yield);
       defsubr (&Smake_thread);
       defsubr (&Scurrent_thread);
-      defsubr (&Sthread_name);
       defsubr (&Sthread_signal);
       defsubr (&Sthread_alive_p);
       defsubr (&Sthread_join);
