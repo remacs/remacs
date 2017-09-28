@@ -223,6 +223,10 @@ pub use hashtable::Fhash_table_rehash_size;
 pub use hashtable::Fhash_table_rehash_threshold;
 pub use hashtable::Fremhash;
 
+// Used in minibuffer.c
+pub use windows::Fwindow_minibuffer_p;
+
+
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
 }
@@ -244,6 +248,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Soverlay_end);
         defsubr(&*buffers::Soverlay_buffer);
         defsubr(&*windows::Swindowp);
+        defsubr(&*windows::Swindow_minibuffer_p);
         defsubr(&*windows::Swindow_live_p);
         defsubr(&*windows::Swindow_point);
         defsubr(&*windows::Sselected_window);
