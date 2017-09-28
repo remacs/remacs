@@ -228,7 +228,8 @@ impl LispHashTableRef {
 
         let entry = self.map.entry(hash_key);
         unsafe {
-            let raw_ptr: *mut HashKey = mem::transmute(entry.key());
+            let cell: &std::cell::UnsafeCell<HashKey> = mem::transmute(entry.key());
+            let raw_ptr = cell.get();
             ptr::copy_nonoverlapping(&hash_key, raw_ptr, 1);
         };
 
