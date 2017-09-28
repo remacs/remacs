@@ -26,7 +26,7 @@ cargo fmt -- --write-mode=diff
 cd "$DIR/rust_src/remacs-macros"
 cargo fmt -- --write-mode=diff lib.rs
 
-cd "$DIR/rust_src/alloc_unexecmacosx"
+cd "$DIR/rust_src/alloc_unexec"
 cargo fmt -- --write-mode=diff
 
 cd "$DIR"
