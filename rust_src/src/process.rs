@@ -1,9 +1,11 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Vprocess_alist;
-use lisp::LispObject;
+use remacs_sys::{Lisp_Process, Vprocess_alist};
+use lisp::{LispObject, ExternalPtr};
 use lists::{assoc, cdr};
+
+pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
 /// Return t if OBJECT is a process.
 #[lisp_fn]

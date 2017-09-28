@@ -16,11 +16,13 @@ use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::{LispBufferRef, LispOverlayRef};
 use windows::LispWindowRef;
+use process::LispProcessRef;
 use marker::LispMarkerRef;
 use hashtable::LispHashTableRef;
 use fonts::LispFontRef;
 use chartable::LispCharTableRef;
 use obarray::LispObarrayRef;
+use threads::ThreadStateRef;
 
 use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS, INTMASK,
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
@@ -29,7 +31,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
                  Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qplistp, Qintegerp, Qhash_table_p,
                  Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p,
-                 SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qprocessp, Qthreadp, SYMBOL_NAME, PseudovecType, EqualKind};
 
 #[cfg(test)]
 use functions::ExternCMocks;
@@ -416,6 +418,16 @@ impl LispObject {
         })
     }
 
+    pub fn as_thread(self) -> Option<ThreadStateRef> {
+        self.as_vectorlike().map_or(None, |v| v.as_thread())
+    }
+
+    pub fn as_thread_or_error(self) -> ThreadStateRef {
+        self.as_thread().unwrap_or_else(
+            || wrong_type!(Qthreadp, self),
+        )
+    }
+
     pub fn is_mutex(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_MUTEX)
@@ -499,6 +511,16 @@ impl LispObject {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_PROCESS)
         })
+    }
+
+    pub fn as_process(self) -> Option<LispProcessRef> {
+        self.as_vectorlike().map_or(None, |v| v.as_process())
+    }
+
+    pub fn as_process_or_error(self) -> LispProcessRef {
+        self.as_process().unwrap_or_else(
+            || wrong_type!(Qprocessp, self),
+        )
     }
 
     pub fn is_window(self) -> bool {
