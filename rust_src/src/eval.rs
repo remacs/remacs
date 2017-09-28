@@ -68,3 +68,37 @@ macro_rules! list {
     ($arg:expr) => { $crate::lisp::LispObject::cons($arg, list!()) };
     () => { $crate::lisp::LispObject::constant_nil() };
 }
+
+macro_rules! signal_error {
+    ($str:expr, $arg:expr) => {
+        let mut arg = $arg;
+        let mut tortoise = arg;
+        let mut hare = arg;
+
+        while let Some(cons) = hare.as_cons() {
+            hare = cons.cdr();
+            if let Some(second_cons) = hare.as_cons() {
+                hare = second_cons.cdr();
+                tortoise = unsafe { tortoise.as_cons_unchecked().cdr() };
+                if hare.eq(tortoise) {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        if hare.is_not_nil() {
+            arg = list!(arg);
+        }
+
+        let strobj = unsafe {
+            ::remacs_sys::make_string($str.as_ptr() as *const ::libc::c_char,
+                                      $str.len() as ::libc::ptrdiff_t)
+        };
+
+        xsignal!(::remacs_sys::Qerror,
+                 LispObject::from_raw(::remacs_sys::Fcons(strobj, arg.to_raw()))
+        );
+    };
+}

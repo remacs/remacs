@@ -397,7 +397,7 @@ fn make_hash_table(args: &mut [LispObject]) -> LispObject {
     let mut i = 0;
     while i < len {
         if i + 1 > len {
-            panic!("Inproper args list"); // @TODO make this a signal_error
+            signal_error!("Invalid argument list", args[i]);
         }
 
         let key = args[i];
@@ -411,11 +411,12 @@ fn make_hash_table(args: &mut [LispObject]) -> LispObject {
             } else if value.to_raw() == unsafe { Qequal } {
                 ptr.func = HashFunction::Equal;
             } else {
+                #[allow(unused_unsafe)]
                 // Custom hash table test
                 unsafe {
                     let prop = lists::get(value, LispObject::from_raw(Qhash_table_test));
                     if !prop.is_cons() || !prop.as_cons_unchecked().cdr().is_cons() {
-                        panic!("Invalid hash table test"); // @TODO make this signal_erorr
+                        signal_error!("Invalid hash table test", value);
                     }
 
                     let cons = prop.as_cons_unchecked();
@@ -435,7 +436,13 @@ fn make_hash_table(args: &mut [LispObject]) -> LispObject {
                 ptr.weak = unsafe { LispObject::from_raw(Qkey_and_value) };
             }
 
-            // @TODO signal error or not Qkey/Qvalue/Qkey_or_value/Qkey_and_value
+            if ptr.weak.is_not_nil() && ptr.weak.to_raw() != unsafe { Qkey } &&
+                ptr.weak.to_raw() != unsafe { Qvalue } &&
+                ptr.weak.to_raw() != unsafe { Qkey_or_value } &&
+                ptr.weak.to_raw() != unsafe { Qkey_and_value }
+            {
+                signal_error!("Invalid hash table weakness", value);
+            }
         }
     }
 
