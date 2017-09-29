@@ -585,12 +585,11 @@ xg_check_special_colors (struct frame *f,
     if (get_fg)
       gtk_style_context_get_color (gsty, state, &col);
     else
-#if GTK_CHECK_VERSION (3, 16, 0)
-      /* We can't get here.  */
-      emacs_abort ();
-#else
+      /* FIXME: gtk_style_context_get_background_color is deprecated
+         in GTK+ 3.16.  New versions of GTK+ don’t use the concept of
+         a single background color any more, so we shouldn’t query for
+         it.  */
       gtk_style_context_get_background_color (gsty, state, &col);
-#endif
 
     unsigned short
       r = col.red * 65535,
