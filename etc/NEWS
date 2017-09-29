@@ -955,6 +955,71 @@ about.
 *** New variable 'xterm-set-window-title' controls whether Emacs
 sets the XTerm window title.  The default is to set the window title.
 
+---
+*** New variable 'erc-default-port-tls' used to connect to TLS IRC
+servers.
+
+** URL
+
++++
+*** The new function 'url-cookie-delete-cookie' can be used to
+programmatically delete all cookies, or cookies from a specific
+domain.
+
++++
+*** 'url-retrieve-synchronously' now takes an optional timeout parameter.
+
+---
+*** The URL package now support HTTPS over proxies supporting CONNECT.
+
++++
+*** 'url-user-agent' now defaults to 'default', and the User-Agent
+string is computed dynamically based on 'url-privacy-level'.
+
+** VC and related modes
+
+---
+*** The VC state indicator in the mode line now defaults to more
+colorful faces to make it more obvious to the user what the state is.
+See the 'vc-faces' customization group.
+
++++
+*** 'vc-dir-mode' now binds 'vc-log-outgoing' to 'O'; and has various
+branch-related commands on a keymap bound to 'B'.
+
+---
+*** 'vc-region-history' is now bound to 'C-x v h', replacing the older
+'vc-insert-headers' binding.
+
+** CC mode
+
+---
+*** Opening a .h file will turn C or C++ mode depending on language used.
+This is done with the help of 'c-or-c++-mode' function which analyses
+contents of the buffer to determine whether it's a C or C++ source
+file.
+
+---
+** New DNS mode command 'dns-mode-ipv6-to-nibbles' to convert IPv6 addresses
+to a format suitable for reverse lookup zone files.
+
+** Ispell
+
++++
+*** Enchant is now supported as a spell-checker.
+
+Enchant is a meta-spell-checker that uses providers
+such as Hunspell to do the actual checking.  With it, users can use
+spell-checkers not directly supported by Emacs, such as Voikko, Hspell
+and AppleSpell, more easily share personal word-lists with other
+programs, and configure different spelling-checkers for different
+languages.  (Version 2.1.0 or later of Enchant is required.)
+
+** Flymake
+
++++
+*** Emacs no longer prompts the user before killing Flymake processes on exit.
+
 
 * New Modes and Packages in Emacs 26.1
 
