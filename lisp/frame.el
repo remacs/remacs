@@ -604,11 +604,12 @@ new frame."
     (select-frame (make-frame))))
 
 (defvar before-make-frame-hook nil
-  "Functions to run before a frame is created.")
+  "Functions to run before `make-frame' creates a new frame.")
 
 (defvar after-make-frame-functions nil
-  "Functions to run after a frame is created.
-The functions are run with one arg, the newly created frame.")
+  "Functions to run after `make-frame' created a new frame.
+The functions are run with one argument, the newly created
+frame.")
 
 (defvar after-setting-font-hook nil
   "Functions to run after a frame's font has been changed.")
@@ -617,7 +618,7 @@ The functions are run with one arg, the newly created frame.")
 (define-obsolete-function-alias 'new-frame 'make-frame "22.1")
 
 (defvar frame-inherited-parameters '()
-  "Parameters `make-frame' copies from the `selected-frame' to the new frame.")
+  "Parameters `make-frame' copies from the selected to the new frame.")
 
 (defvar x-display-name)
 
@@ -631,9 +632,6 @@ form (NAME . VALUE), for example:
 
  (width . NUMBER)	The frame should be NUMBER characters in width.
  (height . NUMBER)	The frame should be NUMBER text lines high.
-
-You cannot specify either `width' or `height', you must specify
-neither or both.
 
  (minibuffer . t)	The frame should have a minibuffer.
  (minibuffer . nil)	The frame should have no minibuffer.
@@ -650,10 +648,10 @@ neither or both.
 In addition, any parameter specified in `default-frame-alist',
 but not present in PARAMETERS, is applied.
 
-Before creating the frame (via `frame-creation-function-alist'),
-this function runs the hook `before-make-frame-hook'.  After
-creating the frame, it runs the hook `after-make-frame-functions'
-with one arg, the newly created frame.
+Before creating the frame (via `frame-creation-function'), this
+function runs the hook `before-make-frame-hook'.  After creating
+the frame, it runs the hook `after-make-frame-functions' with one
+argument, the newly created frame.
 
 If a display parameter is supplied and a window-system is not,
 guess the window-system from the display.

@@ -101,7 +101,11 @@
   (should (= 3 (apply #'min '(3 8 3))))
   (should-error (min 9 8 'foo))
   (should-error (min (make-marker)))
-  (should (eql 1 (min (point-min-marker) 1))))
+  (should (eql 1 (min (point-min-marker) 1)))
+  (should (isnan (min 0.0e+NaN)))
+  (should (isnan (min 0.0e+NaN 1 2)))
+  (should (isnan (min 1.0 0.0e+NaN)))
+  (should (isnan (min 1.0 0.0e+NaN 1.1))))
 
 ;; Bool vector tests.  Compactly represent bool vectors as hex
 ;; strings.

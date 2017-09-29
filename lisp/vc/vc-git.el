@@ -1035,6 +1035,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (defun vc-git-log-outgoing (buffer remote-location)
   (interactive)
+  (vc-setup-buffer buffer)
   (vc-git-command
    buffer 'async nil
    "log"
@@ -1048,6 +1049,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (defun vc-git-log-incoming (buffer remote-location)
   (interactive)
+  (vc-setup-buffer buffer)
   (vc-git-command nil 0 nil "fetch")
   (vc-git-command
    buffer 'async nil

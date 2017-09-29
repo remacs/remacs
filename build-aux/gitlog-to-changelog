@@ -33,7 +33,7 @@ use POSIX qw(strftime);
 
 (my $ME = $0) =~ s|.*/||;
 
-# use File::Coda; # http://meyering.net/code/Coda/
+# use File::Coda; # https://meyering.net/code/Coda/
 END {
   defined fileno STDOUT or return;
   close STDOUT and return;

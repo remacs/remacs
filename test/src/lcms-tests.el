@@ -1,6 +1,6 @@
 ;;; lcms-tests.el --- tests for Little CMS interface -*- lexical-binding: t -*-
 
-;; Copyright (C) 2017  Free Software Foundation, Inc.
+;; Copyright (C) 2017 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 
@@ -21,9 +21,11 @@
 
 ;;; Commentary:
 
-;; Some "exact" values computed using the colorspacious python library
-;; written by Nathaniel J. Smith.  See
-;; https://colorspacious.readthedocs.io/en/v1.1.0/
+;; Some reference values computed using the colorspacious python
+;; library, assimilated from its test suite, or adopted from its
+;; aggregation of gold values.
+;; See https://colorspacious.readthedocs.io/en/v1.1.0/ and
+;; https://github.com/njsmith/colorspacious
 
 ;; Other references:
 ;; http://www.babelcolor.com/index_htm_files/A%20review%20of%20RGB%20color%20spaces.pdf
@@ -49,14 +51,20 @@ B is considered the exact value."
         (lcms-approx-p a2 b2 delta)
         (lcms-approx-p a3 b3 delta))))
 
+(defun lcms-rgb255->xyz (rgb)
+  "Return XYZ tristimulus values corresponding to RGB."
+  (let ((rgb1 (mapcar (lambda (x) (/ x 255.0)) rgb)))
+    (apply #'color-srgb-to-xyz rgb1)))
+
 (ert-deftest lcms-cri-cam02-ucs ()
   "Test use of `lcms-cam02-ucs'."
+  (skip-unless (featurep 'lcms2))
   (should-error (lcms-cam02-ucs '(0 0 0) '(0 0 0) "error"))
   (should-error (lcms-cam02-ucs '(0 0 0) 'error))
   (should-not
    (lcms-approx-p
-    (let ((lcms-d65-xyz '(0.44757 1.0 0.40745)))
-      (lcms-cam02-ucs '(0.5 0.5 0.5) '(0 0 0)))
+    (let ((wp '(0.44757 1.0 0.40745)))
+      (lcms-cam02-ucs '(0.5 0.5 0.5) '(0 0 0) wp))
     (lcms-cam02-ucs '(0.5 0.5 0.5) '(0 0 0))))
   (should (eql 0.0 (lcms-cam02-ucs '(0.5 0.5 0.5) '(0.5 0.5 0.5))))
   (should
@@ -67,6 +75,7 @@ B is considered the exact value."
 
 (ert-deftest lcms-whitepoint ()
   "Test use of `lcms-temp->white-point'."
+  (skip-unless (featurep 'lcms2))
   (should-error (lcms-temp->white-point 3999))
   (should-error (lcms-temp->white-point 25001))
   ;; D55
@@ -84,5 +93,25 @@ B is considered the exact value."
    (lcms-triple-approx-p
     (apply #'color-xyz-to-xyy (lcms-temp->white-point 7504))
     '(0.29902 0.31485 1.0))))
+
+(ert-deftest lcms-dE-cam02-ucs-silver ()
+  "Test CRI-CAM02-UCS deltaE metric values from colorspacious."
+  (skip-unless (featurep 'lcms2))
+  (should
+   (lcms-approx-p
+    (lcms-cam02-ucs (lcms-rgb255->xyz '(173 52 52))
+                    (lcms-rgb255->xyz '(59 120 51))
+                    lcms-colorspacious-d65
+                    (list 20 (/ 64 float-pi 5) 1 1))
+    44.698469808449964
+    0.03))
+  (should
+   (lcms-approx-p
+    (lcms-cam02-ucs (lcms-rgb255->xyz '(69 100 52))
+                    (lcms-rgb255->xyz '(59 120 51))
+                    lcms-colorspacious-d65
+                    (list 20 (/ 64 float-pi 5) 1 1))
+    8.503323264883667
+    0.04)))
 
 ;;; lcms-tests.el ends here

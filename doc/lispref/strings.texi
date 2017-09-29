@@ -824,8 +824,9 @@ to the produced string representations of the argument @var{objects}.
 @end defun
 
 @defun format-message string &rest objects
-@cindex curved quotes
-@cindex curly quotes
+@cindex curved quotes, in formatted messages
+@cindex curly quotes, in formatted messages
+@cindex @code{text-quoting-style}, and formatting messages
 This function acts like @code{format}, except it also converts any
 grave accents (@t{`}) and apostrophes (@t{'}) in @var{string} as per the
 value of @code{text-quoting-style}.

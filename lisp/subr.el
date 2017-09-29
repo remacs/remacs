@@ -289,7 +289,7 @@ The name is made by appending `gensym-counter' to PREFIX.
 PREFIX is a string, and defaults to \"g\"."
   (let ((num (prog1 gensym-counter
                (setq gensym-counter (1+ gensym-counter)))))
-    (make-symbol (format "%s%d" prefix num))))
+    (make-symbol (format "%s%d" (or prefix "g") num))))
 
 (defun ignore (&rest _ignore)
   "Do nothing and return nil.
@@ -1270,6 +1270,11 @@ See `event-start' for a description of the value returned."
   "Return the multi-click count of EVENT, a click or drag event.
 The return value is a positive integer."
   (if (and (consp event) (integerp (nth 2 event))) (nth 2 event) 1))
+
+(defsubst event-line-count (event)
+  "Return the line count of EVENT, a mousewheel event.
+The return value is a positive integer."
+  (if (and (consp event) (integerp (nth 3 event))) (nth 3 event) 1))
 
 ;;;; Extracting fields of the positions in an event.
 

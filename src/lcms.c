@@ -102,7 +102,7 @@ DEFUN ("lcms-cie-de2000", Flcms_cie_de2000, Slcms_cie_de2000, 2, 5, 0,
 Each color is a list of L*a*b* coordinates, where the L* channel ranges from
 0 to 100, and the a* and b* channels range from -128 to 128.
 Optional arguments KL, KC, KH are weighting parameters for lightness,
-chroma, and hue, respectively. The parameters each default to 1. */)
+chroma, and hue, respectively. The parameters each default to 1.  */)
   (Lisp_Object color1, Lisp_Object color2,
    Lisp_Object kL, Lisp_Object kC, Lisp_Object kH)
 {
@@ -139,6 +139,26 @@ chroma, and hue, respectively. The parameters each default to 1. */)
   return make_float (cmsCIE2000DeltaE (&Lab1, &Lab2, Kl, Kc, Kh));
 }
 
+static double
+deg2rad (double degrees)
+{
+  return M_PI * degrees / 180.0;
+}
+
+static cmsCIEXYZ illuminant_d65 = { .X = 95.0455, .Y = 100.0, .Z = 108.8753 };
+
+static void
+default_viewing_conditions (const cmsCIEXYZ *wp, cmsViewingConditions *vc)
+{
+  vc->whitePoint.X = wp->X;
+  vc->whitePoint.Y = wp->Y;
+  vc->whitePoint.Z = wp->Z;
+  vc->Yb = 20;
+  vc->La = 100;
+  vc->surround = AVG_SURROUND;
+  vc->D_value = 1.0;
+}
+
 /* FIXME: code duplication */
 
 static bool
@@ -160,11 +180,62 @@ parse_xyz_list (Lisp_Object xyz_list, cmsCIEXYZ *color)
   return true;
 }
 
-DEFUN ("lcms-cam02-ucs", Flcms_cam02_ucs, Slcms_cam02_ucs, 2, 3, 0,
+static bool
+parse_viewing_conditions (Lisp_Object view, const cmsCIEXYZ *wp,
+                          cmsViewingConditions *vc)
+{
+#define PARSE_VIEW_CONDITION_FLOAT(field)				\
+  if (CONSP (view) && NUMBERP (XCAR (view)))				\
+    {									\
+      vc->field = XFLOATINT (XCAR (view));				\
+      view = XCDR (view);						\
+    }									\
+  else									\
+    return false;
+#define PARSE_VIEW_CONDITION_INT(field)					\
+  if (CONSP (view) && NATNUMP (XCAR (view)))				\
+    {									\
+      CHECK_RANGED_INTEGER (XCAR (view), 1, 4);				\
+      vc->field = XINT (XCAR (view));					\
+      view = XCDR (view);						\
+    }									\
+  else									\
+    return false;
+
+  PARSE_VIEW_CONDITION_FLOAT (Yb);
+  PARSE_VIEW_CONDITION_FLOAT (La);
+  PARSE_VIEW_CONDITION_INT (surround);
+  PARSE_VIEW_CONDITION_FLOAT (D_value);
+
+  if (! NILP (view))
+    return false;
+
+  vc->whitePoint.X = wp->X;
+  vc->whitePoint.Y = wp->Y;
+  vc->whitePoint.Z = wp->Z;
+  return true;
+}
+
+/* References:
+   Li, Luo et al. "The CRI-CAM02UCS colour rendering index." COLOR research
+   and application, 37 No.3, 2012.
+   Luo et al. "Uniform colour spaces based on CIECAM02 colour appearance
+   model." COLOR research and application, 31 No.4, 2006. */
+
+DEFUN ("lcms-cam02-ucs", Flcms_cam02_ucs, Slcms_cam02_ucs, 2, 4, 0,
        doc: /* Compute CAM02-UCS metric distance between COLOR1 and COLOR2.
-Each color is a list of XYZ coordinates, with Y scaled about unity.
-Optional argument is the XYZ white point, which defaults to illuminant D65. */)
-  (Lisp_Object color1, Lisp_Object color2, Lisp_Object whitepoint)
+Each color is a list of XYZ tristimulus values, with Y scaled about unity.
+Optional argument WHITEPOINT is the XYZ white point, which defaults to
+illuminant D65.
+Optional argument VIEW is a list containing the viewing conditions, and
+is of the form (YB LA SURROUND DVALUE) where SURROUND corresponds to
+  1   AVG_SURROUND
+  2   DIM_SURROUND
+  3   DARK_SURROUND
+  4   CUTSHEET_SURROUND
+The default viewing conditions are (20 100 1 1).  */)
+  (Lisp_Object color1, Lisp_Object color2, Lisp_Object whitepoint,
+   Lisp_Object view)
 {
   cmsViewingConditions vc;
   cmsJCh jch1, jch2;
@@ -188,17 +259,13 @@ Optional argument is the XYZ white point, which defaults to illuminant D65. */)
   if (!(CONSP (color2) && parse_xyz_list (color2, &xyz2)))
     signal_error ("Invalid color", color2);
   if (NILP (whitepoint))
-    parse_xyz_list (Vlcms_d65_xyz, &xyzw);
+    xyzw = illuminant_d65;
   else if (!(CONSP (whitepoint) && parse_xyz_list (whitepoint, &xyzw)))
     signal_error ("Invalid white point", whitepoint);
-
-  vc.whitePoint.X = xyzw.X;
-  vc.whitePoint.Y = xyzw.Y;
-  vc.whitePoint.Z = xyzw.Z;
-  vc.Yb = 20;
-  vc.La = 100;
-  vc.surround = AVG_SURROUND;
-  vc.D_value = 1.0;
+  if (NILP (view))
+    default_viewing_conditions (&xyzw, &vc);
+  else if (!(CONSP (view) && parse_viewing_conditions (view, &xyzw, &vc)))
+    signal_error ("Invalid view conditions", view);
 
   h1 = cmsCIECAM02Init (0, &vc);
   h2 = cmsCIECAM02Init (0, &vc);
@@ -227,10 +294,10 @@ Optional argument is the XYZ white point, which defaults to illuminant D65. */)
   Mp2 = 43.86 * log (1.0 + 0.0228 * (jch2.C * sqrt (sqrt (FL))));
   Jp1 = 1.7 * jch1.J / (1.0 + (0.007 * jch1.J));
   Jp2 = 1.7 * jch2.J / (1.0 + (0.007 * jch2.J));
-  ap1 = Mp1 * cos (jch1.h);
-  ap2 = Mp2 * cos (jch2.h);
-  bp1 = Mp1 * sin (jch1.h);
-  bp2 = Mp2 * sin (jch2.h);
+  ap1 = Mp1 * cos (deg2rad (jch1.h));
+  ap2 = Mp2 * cos (deg2rad (jch2.h));
+  bp1 = Mp1 * sin (deg2rad (jch1.h));
+  bp2 = Mp2 * sin (deg2rad (jch2.h));
 
   return make_float (sqrt ((Jp2 - Jp1) * (Jp2 - Jp1) +
                            (ap2 - ap1) * (ap2 - ap1) +
@@ -239,7 +306,7 @@ Optional argument is the XYZ white point, which defaults to illuminant D65. */)
 
 DEFUN ("lcms-temp->white-point", Flcms_temp_to_white_point, Slcms_temp_to_white_point, 1, 1, 0,
        doc: /* Return XYZ black body chromaticity from TEMPERATURE given in K.
-Valid range of TEMPERATURE is from 4000K to 25000K. */)
+Valid range of TEMPERATURE is from 4000K to 25000K.  */)
   (Lisp_Object temperature)
 {
   cmsFloat64Number tempK;
@@ -291,12 +358,6 @@ DEFUN ("lcms2-available-p", Flcms2_available_p, Slcms2_available_p, 0, 0, 0,
 void
 syms_of_lcms2 (void)
 {
-  DEFVAR_LISP ("lcms-d65-xyz", Vlcms_d65_xyz,
-               doc: /* D65 illuminant as a CIE XYZ triple. */);
-  Vlcms_d65_xyz = list3 (make_float (0.950455),
-                         make_float (1.0),
-                         make_float (1.088753));
-
   defsubr (&Slcms_cie_de2000);
   defsubr (&Slcms_cam02_ucs);
   defsubr (&Slcms2_available_p);

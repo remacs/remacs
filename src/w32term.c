@@ -6252,7 +6252,8 @@ w32fullscreen_hook (struct frame *f)
 
       if (FRAME_PREV_FSMODE (f) == FULLSCREEN_BOTH)
         {
-          SetWindowLong (hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
+	  if (!FRAME_UNDECORATED (f))
+	    SetWindowLong (hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
 	  SetWindowPlacement (hwnd, &FRAME_NORMAL_PLACEMENT (f));
 	}
       else if (FRAME_PREV_FSMODE (f) == FULLSCREEN_HEIGHT
@@ -6278,7 +6279,8 @@ w32fullscreen_hook (struct frame *f)
 
 	  w32_fullscreen_rect (hwnd, f->want_fullscreen,
 			       FRAME_NORMAL_PLACEMENT (f).rcNormalPosition, &rect);
-          SetWindowLong (hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+	  if (!FRAME_UNDECORATED (f))
+	    SetWindowLong (hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
           SetWindowPos (hwnd, HWND_TOP, rect.left, rect.top,
                         rect.right - rect.left, rect.bottom - rect.top,
                         SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
