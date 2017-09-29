@@ -238,20 +238,19 @@ is one, to determine the file version, since it is often more reliable
 than the RCS master file.  To inhibit using the version header this
 way, change the variable @code{vc-consult-headers} to @code{nil}.
 
-@kindex C-x v h
 @findex vc-insert-headers
 @vindex vc-@var{backend}-header
-  To insert a suitable header string into the current buffer, type
-@kbd{C-x v h} (@code{vc-insert-headers}).  This command works only on
+  To insert a suitable header string into the current buffer, use the
+command @kbd{M-x vc-insert-headers}.  This command works only on
 Subversion, CVS, RCS, and SCCS@.  The variable
 @code{vc-@var{backend}-header} contains the list of keywords to insert
 into the version header; for instance, CVS uses @code{vc-cvs-header},
 whose default value is @code{'("\$Id\$")}.  (The extra backslashes
 prevent the string constant from being interpreted as a header, if the
 Emacs Lisp file defining it is maintained with version control.)  The
-@kbd{C-x v h} command inserts each keyword in the list on a new line
-at point, surrounded by tabs, and inside comment delimiters if
-necessary.
+@code{vc-insert-headers} command inserts each keyword in the list on a
+new line at point, surrounded by tabs, and inside comment delimiters
+if necessary.
 
 @vindex vc-static-header-alist
   The variable @code{vc-static-header-alist} specifies further strings

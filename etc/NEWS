@@ -1115,6 +1115,10 @@ See the 'vc-faces' customization group.
 *** 'vc-dir-mode' now binds 'vc-log-outgoing' to 'O'; and has various
 branch-related commands on a keymap bound to 'B'.
 
+---
+*** 'vc-region-history' is now bound to 'C-x v h', replacing the older
+'vc-insert-headers' binding.
+
 ** CC mode
 
 ---
