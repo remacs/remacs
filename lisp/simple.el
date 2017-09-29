@@ -53,8 +53,8 @@ restores the buffer position before the command."
   :version "26.1")
 
 (defvar shell-command-saved-pos nil
-  "Point position in the output buffer after command completes.
-It is an alist of (BUFFER . POS), where BUFFER is the output
+  "Position of point in the output buffer after command completes.
+It is a cons cell of the form (BUFFER . POS), where BUFFER is the output
 buffer, and POS is the point position in BUFFER once the command finishes.
 This variable is used when `shell-command-dont-erase-buffer' is non-nil.")
 
@@ -1003,7 +1003,7 @@ Called with one argument METHOD.
 If METHOD is `delete-only', then delete the region; the return value
 is undefined.  If METHOD is nil, then return the content as a string.
 If METHOD is `bounds', then return the boundaries of the region
-as a list of pairs of (START . END) positions.
+as a cons cell of the form (START . END).
 If METHOD is anything else, delete the region and return its content
 as a string, after filtering it with `filter-buffer-substring', which
 is called with METHOD as its 3rd argument.")
@@ -5473,7 +5473,8 @@ also checks the value of `use-empty-active-region'."
        (progn (cl-assert (mark)) t)))
 
 (defun region-bounds ()
-  "Return the boundaries of the region as a list of pairs of (START . END) positions."
+  "Return the boundaries of the region as a pair of positions.
+Value is a cons cell of the form (START . END)."
   (funcall region-extract-function 'bounds))
 
 (defun region-noncontiguous-p ()
