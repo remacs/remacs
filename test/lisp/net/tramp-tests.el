@@ -2720,7 +2720,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (file-symlink-p tmp-name5)))
 	    ;; `smbclient' does not show symlinks in directories, so
 	    ;; we cannot delete a non-empty directory.  We delete the
-	    ;; file explicitely.
+	    ;; file explicitly.
 	    (delete-file tmp-name5))
 
 	;; Cleanup.
