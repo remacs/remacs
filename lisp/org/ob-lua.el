@@ -49,7 +49,7 @@
 
 (defcustom org-babel-lua-command "lua"
   "Name of the command for executing Lua code."
-  :version "24.5"
+  :version "26.1"
   :package-version '(Org . "8.3")
   :group 'org-babel
   :type 'string)
@@ -58,21 +58,21 @@
   "Preferred lua mode for use in running lua interactively.
 This will typically be 'lua-mode."
   :group 'org-babel
-  :version "24.5"
+  :version "26.1"
   :package-version '(Org . "8.3")
   :type 'symbol)
 
 (defcustom org-babel-lua-hline-to "None"
   "Replace hlines in incoming tables with this when translating to lua."
   :group 'org-babel
-  :version "24.5"
+  :version "26.1"
   :package-version '(Org . "8.3")
   :type 'string)
 
 (defcustom org-babel-lua-None-to 'hline
   "Replace 'None' in lua tables with this before returning."
   :group 'org-babel
-  :version "24.5"
+  :version "26.1"
   :package-version '(Org . "8.3")
   :type 'symbol)
 

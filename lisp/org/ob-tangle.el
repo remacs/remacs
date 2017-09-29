@@ -29,13 +29,13 @@
 
 (require 'cl-lib)
 (require 'org-src)
+(require 'org-macs)
 
 (declare-function make-directory "files" (dir &optional parents))
 (declare-function org-at-heading-p "org" (&optional ignored))
 (declare-function org-babel-update-block-body "ob-core" (new-body))
 (declare-function org-back-to-heading "org" (&optional invisible-ok))
 (declare-function org-before-first-heading-p "org" ())
-(declare-function org-edit-special "org" (&optional arg))
 (declare-function org-element-at-point "org-element" ())
 (declare-function org-element-type "org-element" (element))
 (declare-function org-fill-template "org" (template alist))
@@ -45,7 +45,6 @@
 (declare-function org-open-link-from-string "org" (s &optional arg reference-buffer))
 (declare-function org-remove-indentation "org" (code &optional n))
 (declare-function org-store-link "org" (arg))
-(declare-function org-string-nw-p "org-macs" (s))
 (declare-function org-trim "org" (s &optional keep-lead))
 (declare-function outline-previous-heading "outline" ())
 (declare-function org-id-find "org-id" (id &optional markerp))

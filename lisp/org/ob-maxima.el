@@ -48,9 +48,13 @@
 
 (defun org-babel-maxima-expand (body params)
   "Expand a block of Maxima code according to its header arguments."
-  (let ((vars (org-babel--get-vars params)))
+  (let ((vars (org-babel--get-vars params))
+	(epilogue (cdr (assq :epilogue params)))
+	(prologue (cdr (assq :prologue params))))
     (mapconcat 'identity
 	       (list
+		;; Any code from the specified prologue at the start.
+		prologue
 		;; graphic output
 		(let ((graphic-file (ignore-errors (org-babel-graphical-output-file params))))
 		  (if graphic-file
@@ -62,6 +66,8 @@
 		(mapconcat 'org-babel-maxima-var-to-maxima vars "\n")
 		;; body
 		body
+		;; Any code from the specified epilogue at the end.
+		epilogue
 		"gnuplot_close ()$")
 	       "\n")))
 

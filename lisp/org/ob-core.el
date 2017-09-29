@@ -82,7 +82,6 @@
 (declare-function org-reverse-string "org" (string))
 (declare-function org-set-outline-overlay-data "org" (data))
 (declare-function org-show-context "org" (&optional key))
-(declare-function org-split-string "org" (string &optional separators))
 (declare-function org-src-coderef-format "org-src" (element))
 (declare-function org-src-coderef-regexp "org-src" (fmt &optional label))
 (declare-function org-table-align "org-table" ())
@@ -179,6 +178,14 @@ This string must include a \"%s\" which will be replaced by the results."
   :package-version '(Org . "9.0")
   :safe #'booleanp)
 
+(defcustom org-babel-uppercase-example-markers nil
+  "When non-nil, begin/end example markers will be inserted in upper case."
+  :group 'org-babel
+  :type 'boolean
+  :version "26.1"
+  :package-version '(Org . "9.1")
+  :safe #'booleanp)
+
 (defun org-babel-noweb-wrap (&optional regexp)
   (concat org-babel-noweb-wrap-start
 	  (or regexp "\\([^ \t\n].+?[^ \t]\\|[^ \t\n]\\)")
@@ -234,11 +241,9 @@ should be asked whether to allow evaluation."
 	 (query (or (equal eval "query")
 		    (and export (equal eval "query-export"))
 		    (if (functionp org-confirm-babel-evaluate)
-			(save-excursion
-			  (goto-char (nth 5 info))
-			  (funcall org-confirm-babel-evaluate
-				   ;; language, code block body
-				   (nth 0 info) (nth 1 info)))
+			(funcall org-confirm-babel-evaluate
+				 ;; Language, code block body.
+				 (nth 0 info) (nth 1 info))
 		      org-confirm-babel-evaluate))))
     (cond
      (noeval nil)
@@ -2348,7 +2353,7 @@ INFO may provide the values of these header arguments (in the
 		   ((assq :wrap (nth 2 info))
 		    (let ((name (or (cdr (assq :wrap (nth 2 info))) "RESULTS")))
 		      (funcall wrap (concat "#+BEGIN_" name)
-			       (concat "#+END_" (car (org-split-string name)))
+			       (concat "#+END_" (car (split-string name)))
 			       nil nil (concat "{{{results(@@" name ":") "@@)}}}")))
 		   ((member "html" result-params)
 		    (funcall wrap "#+BEGIN_EXPORT html" "#+END_EXPORT" nil nil
@@ -2483,15 +2488,12 @@ file's directory then expand relative links."
 	      result)
 	    (if description (concat "[" description "]") ""))))
 
-(defvar org-babel-capitalize-example-region-markers nil
-  "Make true to capitalize begin/end example markers inserted by code blocks.")
-
 (defun org-babel-examplify-region (beg end &optional results-switches inline)
   "Comment out region using the inline `==' or `: ' org example quote."
   (interactive "*r")
   (let ((maybe-cap
 	 (lambda (str)
-	   (if org-babel-capitalize-example-region-markers (upcase str) str))))
+	   (if org-babel-uppercase-example-markers (upcase str) str))))
     (if inline
 	(save-excursion
 	  (goto-char beg)

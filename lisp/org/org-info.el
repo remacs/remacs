@@ -129,15 +129,19 @@ See `org-info-emacs-documents' and `org-info-other-documents' for details."
 (defun org-info-export (path desc format)
   "Export an info link.
 See `org-link-parameters' for details about PATH, DESC and FORMAT."
-  (when (eq format 'html)
-    (or (string-match "\\(.*\\)[#:]:?\\(.*\\)" path)
-	(string-match "\\(.*\\)" path))
-    (let ((filename (match-string 1 path))
-	  (node (or (match-string 2 path) "Top")))
-      (format "<a href=\"%s#%s\">%s</a>"
-	      (org-info-map-html-url filename)
-	      (org-info--expand-node-name node)
-	      (or desc path)))))
+  (let* ((parts (split-string path "[#:]:?"))
+	 (manual (car parts))
+	 (node (or (nth 1 parts) "Top")))
+    (pcase format
+      (`html
+       (format "<a href=\"%s#%s\">%s</a>"
+	       (org-info-map-html-url manual)
+	       (org-info--expand-node-name node)
+	       (or desc path)))
+      (`texinfo
+       (let ((title (or desc "")))
+	 (format "@ref{%s,%s,,%s,}" node title manual)))
+      (_ nil))))
 
 (provide 'org-info)
 

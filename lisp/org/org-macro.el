@@ -36,8 +36,11 @@
 
 ;; Along with macros defined through #+MACRO: keyword, default
 ;; templates include the following hard-coded macros:
-;; {{{time(format-string)}}}, {{{property(node-property)}}},
-;; {{{input-file}}} and {{{modification-time(format-string)}}}.
+;;   {{{time(format-string)}}},
+;;   {{{property(node-property)}}},
+;;   {{{input-file}}},
+;;   {{{modification-time(format-string)}}},
+;;   {{{n(counter,action}}}.
 
 ;; Upon exporting, "ox.el" will also provide {{{author}}}, {{{date}}},
 ;; {{{email}}} and {{{title}}} macros.
@@ -52,9 +55,11 @@
 (declare-function org-element-macro-parser "org-element" ())
 (declare-function org-element-property "org-element" (property element))
 (declare-function org-element-type "org-element" (element))
-(declare-function org-file-contents "org" (file &optional noerror))
+(declare-function org-file-contents "org" (file &optional noerror nocache))
+(declare-function org-file-url-p "org" (file))
 (declare-function org-in-commented-heading-p "org" (&optional no-inheritance))
 (declare-function org-mode "org" ())
+(declare-function org-trim "org" (s &optional keep-lead))
 (declare-function vc-backend "vc-hooks" (f))
 (declare-function vc-call "vc-hooks" (fun file &rest args) t)
 (declare-function vc-exec-after "vc-dispatcher" (code))
@@ -99,16 +104,21 @@ Return an alist containing all macro templates found."
 				 (if old-cell (setcdr old-cell template)
 				   (push (cons name template) templates))))
 			   ;; Enter setup file.
-			   (let ((file (expand-file-name
-					(org-unbracket-string "\"" "\"" val))))
-			     (unless (member file files)
+			   (let* ((uri (org-unbracket-string "\"" "\"" (org-trim val)))
+				  (uri-is-url (org-file-url-p uri))
+				  (uri (if uri-is-url
+					   uri
+					 (expand-file-name uri))))
+			     ;; Avoid circular dependencies.
+			     (unless (member uri files)
 			       (with-temp-buffer
-				 (setq default-directory
-				       (file-name-directory file))
+				 (unless uri-is-url
+				   (setq default-directory
+					 (file-name-directory uri)))
 				 (org-mode)
-				 (insert (org-file-contents file 'noerror))
+				 (insert (org-file-contents uri 'noerror))
 				 (setq templates
-				       (funcall collect-macros (cons file files)
+				       (funcall collect-macros (cons uri files)
 						templates)))))))))))
 		templates))))
     (funcall collect-macros nil nil)))
@@ -126,7 +136,7 @@ function installs the following ones: \"property\",
 	    (let ((old-template (assoc (car cell) templates)))
 	      (if old-template (setcdr old-template (cdr cell))
 		(push cell templates))))))
-    ;; Install hard-coded macros.
+    ;; Install "property", "time" macros.
     (mapc update-templates
 	  (list (cons "property"
 		      "(eval (save-excursion
@@ -140,6 +150,7 @@ function installs the following ones: \"property\",
                       l)))))
         (org-entry-get nil \"$1\" 'selective)))")
 		(cons "time" "(eval (format-time-string \"$1\"))")))
+    ;; Install "input-file", "modification-time" macros.
     (let ((visited-file (buffer-file-name (buffer-base-buffer))))
       (when (and visited-file (file-exists-p visited-file))
 	(mapc update-templates
@@ -149,6 +160,10 @@ function installs the following ones: \"property\",
 				  (prin1-to-string visited-file)
 				  (prin1-to-string
 				   (nth 5 (file-attributes visited-file)))))))))
+    ;; Initialize and install "n" macro.
+    (org-macro--counter-initialize)
+    (funcall update-templates
+	     (cons "n" "(eval (org-macro--counter-increment \"$1\" \"$2\"))"))
     (setq org-macro-templates templates)))
 
 (defun org-macro-expand (macro templates)
@@ -276,6 +291,9 @@ Return a list of arguments, as strings.  This is the opposite of
     s nil t)
    "\000"))
 
+
+;;; Helper functions and variables for internal macros
+
 (defun org-macro--vc-modified-time (file)
   (save-window-excursion
     (when (vc-backend file)
@@ -299,6 +317,38 @@ Return a list of arguments, as strings.  This is the opposite of
 		(while (and proc (accept-process-output proc .5 nil t)))))
 	  (kill-buffer buf))
 	date))))
+
+(defvar org-macro--counter-table nil
+  "Hash table containing counter value per name.")
+
+(defun org-macro--counter-initialize ()
+  "Initialize `org-macro--counter-table'."
+  (setq org-macro--counter-table (make-hash-table :test #'equal)))
+
+(defun org-macro--counter-increment (name &optional action)
+  "Increment counter NAME.
+NAME is a string identifying the counter.
+
+When non-nil, optional argument ACTION is a string.
+
+If the string is \"-\", keep the NAME counter at its current
+value, i.e. do not increment.
+
+If the string represents an integer, set the counter to this number.
+
+Any other non-empty string resets the counter to 1."
+  (let ((name-trimmed (org-trim name))
+        (action-trimmed (when (org-string-nw-p action)
+                          (org-trim action))))
+    (puthash name-trimmed
+             (cond ((not (org-string-nw-p action-trimmed))
+                    (1+ (gethash name-trimmed org-macro--counter-table 0)))
+                   ((string= "-" action-trimmed)
+                    (gethash name-trimmed org-macro--counter-table 1))
+                   ((string-match-p "\\`[0-9]+\\'" action-trimmed)
+                    (string-to-number action-trimmed))
+                   (t 1))
+             org-macro--counter-table)))
 
 
 (provide 'org-macro)

@@ -89,7 +89,7 @@ you can leave the string empty on this case."
 	  (string :tag "Lilypond   ")
 	  (string :tag "PDF Viewer ")
 	  (string :tag "MIDI Player"))
-  :version "24.3"
+  :version "24.4"
   :package-version '(Org . "8.2.7")
   :set
   (lambda (_symbol value)
