@@ -54,7 +54,7 @@ Added time stamp is active unless value is `inactive'."
   "Find or create an entry for date D.
 If KEEP-RESTRICTION is non-nil, do not widen the buffer.
 When it is nil, the buffer will be widened to make sure an existing date
-tree can be found.  If it is the sympol `subtree-at-point', then the tree
+tree can be found.  If it is the symbol `subtree-at-point', then the tree
 will be built under the headline at point."
   (setq-local org-datetree-base-level 1)
   (save-restriction
@@ -94,7 +94,7 @@ will be built under the headline at point."
 Compared to `org-datetree-find-date-create' this function creates
 entries ordered by week instead of months.
 When it is nil, the buffer will be widened to make sure an existing date
-tree can be found.  If it is the sympol `subtree-at-point', then the tree
+tree can be found.  If it is the symbol `subtree-at-point', then the tree
 will be built under the headline at point."
   (setq-local org-datetree-base-level 1)
   (save-restriction

@@ -5131,7 +5131,7 @@ information."
 	     (column
 	      ;; Call costly `org-export-table-cell-address' only if
 	      ;; absolutely necessary, i.e., if one
-	      ;; of :fmt :efmt :hmft has a "plist type" value.
+	      ;; of :fmt :efmt :hfmt has a "plist type" value.
 	      ,(and (cl-some (lambda (v) (integerp (car-safe v)))
 			     (list efmt hfmt fmt))
 		    '(1+ (cdr (org-export-table-cell-address cell info))))))

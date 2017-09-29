@@ -3592,7 +3592,7 @@ so that `occur-next' and `occur-prev' will work."
 
 If `sh-use-smie' is non-nil, call `smie-config-guess'.
 Otherwise, run the sh-script specific indent learning command, as
-decribed below.
+described below.
 
 Output in buffer \"*indent*\" shows any lines which have conflicting
 values of a variable, and the final value of all variables learned.
