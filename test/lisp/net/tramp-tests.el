@@ -2653,8 +2653,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	   (tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name3 (tramp--test-make-temp-name 'local quoted))
-	   (tmp-name4 (tramp--test-make-temp-name nil quoted)))
-
+	   (tmp-name4 (tramp--test-make-temp-name nil quoted))
+	   (tmp-name5
+	    (expand-file-name (file-name-nondirectory tmp-name1) tmp-name4)))
       ;; Check `make-symbolic-link'.
       (unwind-protect
 	  (tramp--test-ignore-make-symbolic-link-error
@@ -2716,9 +2717,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (funcall
 	       (if quoted 'tramp-compat-file-name-unquote 'identity)
 	       (file-remote-p tmp-name1 'localname))
-	      (file-symlink-p
-	       (expand-file-name
-		(file-name-nondirectory tmp-name1) tmp-name4)))))
+	      (file-symlink-p tmp-name5)))
+	    ;; `smbclient' does not show symlinks in directories, so
+	    ;; we cannot delete a non-empty directory.  We delete the
+	    ;; file explicitely.
+	    (delete-file tmp-name5))
 
 	;; Cleanup.
 	(ignore-errors
@@ -2737,7 +2740,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should-error
 	     (add-name-to-file tmp-name1 tmp-name2)
 	     :type 'file-already-exists)
-	    ;; number means interactive case.
+	    ;; A number means interactive case.
 	    (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
 	      (should-error
 	       (add-name-to-file tmp-name1 tmp-name2 0)

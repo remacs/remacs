@@ -535,7 +535,7 @@ pass to the OPERATION."
 		;; Reset the transfer process properties.
 		(tramp-set-connection-property v "process-name" nil)
 		(tramp-set-connection-property v "process-buffer" nil)
-		(when t1 (delete-directory tmpdir 'recurse))))
+		(when t1 (delete-directory tmpdir 'recursive))))
 
 	    ;; Handle KEEP-DATE argument.
 	    (when keep-date
@@ -1583,6 +1583,10 @@ If VEC has no cifs capabilities, exchange \"/\" by \"\\\\\"."
   "Read entries which match DIRECTORY.
 Either the shares are listed, or the `dir' command is executed.
 Result is a list of (LOCALNAME MODE SIZE MONTH DAY TIME YEAR)."
+  ;; If CIFS capabilities are enabled, symlinks are not listed
+  ;; by `dir'.  This is a consequence of
+  ;; <https://www.samba.org/samba/news/symlink_attack.html>.  See also
+  ;; <https://bugzilla.samba.org/show_bug.cgi?id=5116>.
   (with-parsed-tramp-file-name (file-name-as-directory directory) nil
     (setq localname (or localname "/"))
     (with-tramp-file-property v localname "file-entries"

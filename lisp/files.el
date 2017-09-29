@@ -150,8 +150,13 @@ Called with an absolute file name as argument, it returns t to enable backup.")
 (defcustom buffer-offer-save nil
   "Non-nil in a buffer means always offer to save buffer on exit.
 Do so even if the buffer is not visiting a file.
-Automatically local in all buffers."
-  :type 'boolean
+Automatically local in all buffers.
+
+Set to the symbol `always' to offer to save buffer whenever
+`save-some-buffers' is called."
+  :type '(choice (const :tag "Never" nil)
+                 (const :tag "On Emacs exit" t)
+                 (const :tag "Whenever save-some-buffers is called" always))
   :group 'backup)
 (make-variable-buffer-local 'buffer-offer-save)
 (put 'buffer-offer-save 'permanent-local t)
@@ -5188,15 +5193,11 @@ change the additional actions you can take on files."
 	       (and (buffer-live-p buffer)
 		    (buffer-modified-p buffer)
                     (not (buffer-base-buffer buffer))
-                    (not (eq (aref (buffer-name buffer) 0) ?\s))
                     (or
                      (buffer-file-name buffer)
-                     (and pred
-                          (progn
-                            (set-buffer buffer)
-                            (and buffer-offer-save (> (buffer-size) 0))))
-                     (buffer-local-value
-                      'write-contents-functions buffer))
+                     (with-current-buffer buffer
+                       (or (eq buffer-offer-save 'always)
+                           (and pred buffer-offer-save (> (buffer-size) 0)))))
                     (or (not (functionp pred))
                         (with-current-buffer buffer (funcall pred)))
                     (if arg

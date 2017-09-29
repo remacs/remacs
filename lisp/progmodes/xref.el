@@ -928,12 +928,14 @@ IGNORES is a list of glob patterns."
                                      files
                                      (expand-file-name dir)
                                      ignores))
+       (def default-directory)
        (buf (get-buffer-create " *xref-grep*"))
        (`(,grep-re ,file-group ,line-group . ,_) (car grep-regexp-alist))
        (status nil)
        (hits nil))
     (with-current-buffer buf
       (erase-buffer)
+      (setq default-directory def)
       (setq status
             (call-process-shell-command command nil t))
       (goto-char (point-min))
