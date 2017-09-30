@@ -1247,10 +1247,8 @@ change FOO, respectively.  The exhaustive list of removed variables is:
 ** The variable 'text-quoting-style' is now a customizable option.  It
 controls whether to and how to translate ASCII quotes in messages and
 help output.  Its possible values and their semantics remain unchanged
-from Emacs 25, except that 'text-quoting-style' no longer affects the
-treatment of curved quotes in format arguments to functions like
-'message' and 'format-message'.  In particular, when this variable's
-value is 'grave', all quotes in formats are output as-is.
+from Emacs 25.  In particular, when this variable's value is 'grave',
+all quotes in formats are output as-is.
 
 ---
 ** Functions like 'check-declare-file' and 'check-declare-directory'

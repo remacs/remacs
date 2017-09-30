@@ -265,16 +265,10 @@ properties, it is displayed with the specified faces (@pxref{Faces}).
 The string is also added to the @file{*Messages*} buffer, but without
 text properties (@pxref{Logging Messages}).
 
-The @code{text-quoting-style} variable controls what quotes are
-generated; @xref{Keys in Documentation}.  A call using a format like
-@t{"Missing `%s'"} with grave accents and apostrophes typically
-generates a message like @t{"Missing ‘foo’"} with matching curved
-quotes.  In contrast, a call using a format like @t{"Missing '%s'"}
-with only apostrophes typically generates a message like @t{"Missing
-’foo’"} with only closing curved quotes, an unusual style in English.
-One way around this problem is to bind @code{text-quoting-style} to
-the symbol @code{grave} around calls to @code{message}; this causes
-@acronym{ASCII} quote characters to be output unchanged.
+Typically grave accent and apostrophe in the format translate to
+matching curved quotes, e.g., @t{"Missing `%s'"} might result in
+@t{"Missing ‘foo’"}.  @xref{Text Quoting Style}, for how to influence
+or inhibit this translation.
 
 In batch mode, the message is printed to the standard error stream,
 followed by a newline.
@@ -7038,7 +7032,7 @@ window display table nor a buffer display table defined, or when Emacs
 is outputting text to the standard output or error streams.  Although its
 default is typically @code{nil}, in an interactive session if the
 terminal cannot display curved quotes, its default maps curved quotes
-to ASCII approximations.  @xref{Keys in Documentation}.
+to ASCII approximations.  @xref{Text Quoting Style}.
 @end defvar
 
 The @file{disp-table} library defines several functions for changing
