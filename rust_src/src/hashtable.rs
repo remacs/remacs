@@ -905,11 +905,32 @@ pub unsafe extern "C" fn purecopy_hash_table(map: *mut c_void) -> *mut c_void {
     ptr.weak = LispObject::constant_nil().purecopy();
     ptr.is_pure = table_ptr.is_pure;
     ptr.map = FnvHashMap::with_capacity_and_hasher(table_ptr.map.len(), Default::default());
-    ptr.key_and_value = Vec::new();
-    ptr.free_list = Vec::new();
+    ptr.key_and_value = Vec::with_capacity(table_ptr.key_and_value.len());;
+    ptr.free_list = table_ptr.free_list.clone();
 
-    for (key, value) in table_ptr.map.iter() {
-        ptr.insert(key.object.purecopy(), value.object.purecopy());
+    for (idx, entry) in table_ptr.key_and_value.iter().enumerate() {
+        if entry.empty {
+            let mut pure_entry = KeyAndValueEntry::new(
+                LispObject::constant_nil().purecopy(),
+                LispObject::constant_nil().purecopy(),
+                0,
+            );
+            pure_entry.empty = true;
+            ptr.key_and_value.push(pure_entry);
+            continue;
+        }
+
+        let key = entry.key.purecopy();
+        let value = entry.value.purecopy();
+        let hash = entry.hash;
+        ptr.key_and_value.push(
+            KeyAndValueEntry::new(key, value, hash),
+        );
+
+        let mut hash_key = HashKey::with_object(key, ptr);
+        let hash_value = HashValue::with_object(value, idx);
+        hash_key.set_hash(hash);
+        ptr.update(hash_key, hash_value);
     }
 
     ptr.as_ptr() as *mut c_void
