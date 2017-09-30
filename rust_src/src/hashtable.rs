@@ -14,6 +14,7 @@ use std::mem;
 use std::hash::{Hash, Hasher};
 use libc::{c_void, c_int, ptrdiff_t, c_float};
 use std::sync::Mutex;
+use std::collections::hash_map::Entry;
 
 static DEFAULT_TABLE_SIZE: usize = 65;
 
@@ -227,11 +228,16 @@ impl LispHashTableRef {
         }
 
         let entry = self.map.entry(hash_key);
-        unsafe {
-            let cell: &std::cell::UnsafeCell<HashKey> = mem::transmute(entry.key());
-            let raw_ptr = cell.get();
-            ptr::copy_nonoverlapping(&hash_key, raw_ptr, 1);
-        };
+
+        if let Entry::Occupied(_) = entry {
+            unsafe {
+                let cell: &std::cell::UnsafeCell<HashKey> = mem::transmute(entry.key());
+                let raw_ptr = cell.get();
+                ptr::copy_nonoverlapping(&hash_key, raw_ptr, 1);
+            };
+        }
+
+        assert!(entry.key().object == hash_key.object);
 
         let value = entry.or_insert(hash_value);
         if value.idx != std::usize::MAX {
@@ -252,6 +258,7 @@ impl LispHashTableRef {
         let hash = hash_key.precalculate_hash();
         let key_and_value = KeyAndValueEntry::new(key, value, hash);
         let (idx, should_pop) = self.update(hash_key, hash_value);
+        assert!(self.map.entry(hash_key).key().object == hash_key.object);
 
         if idx < self.key_and_value.len() {
             self.key_and_value[idx] = key_and_value;
@@ -679,7 +686,8 @@ pub unsafe extern "C" fn hash_purity(map: *mut c_void) -> bool {
 pub unsafe extern "C" fn set_hash_value_slot(map: *mut c_void, idx: ptrdiff_t, value: Lisp_Object) {
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
     debug_assert!(idx >= 0);
-    ptr.set_value_with_index(LispObject::from_raw(value), idx as usize);
+    let entry = ptr.key_and_value[idx as usize];
+    ptr.insert(entry.key, LispObject::from_raw(value));
 }
 
 // This function had the side effect of updating the key for all future hash lookups
