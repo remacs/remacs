@@ -322,7 +322,7 @@ This helper manages the mark, buffer switching, and pulsing."
   (semantic-go-to-tag dest)
   ;; 3) go-to-tag doesn't switch the buffer in the current window,
   ;;    so it is like find-file-noselect.  Bring it forward.
-  (switch-to-buffer (current-buffer))
+  (pop-to-buffer-same-window (current-buffer))
   ;; 4) Fancy pulsing.
   (pulse-momentary-highlight-one-line (point))
   )
