@@ -1387,8 +1387,8 @@ Thomas Bellman, Scott Bender, Boaz Ben-Zvi, Sergey Berezin, Stephen Berman, Karl
 Berry, Anna M. Bigatti, Ray Blaak, Martin Blais, Jim Blandy, Johan
 Bockgård, Jan Böcker, Joel Boehland, Lennart Borgman, Per Bothner,
 Terrence Brannon, Frank Bresz, Peter Breton, Emmanuel Briot, Kevin
-Broadey, Vincent Broman, Michael Brouwer, David M. Brown, Stefan Bruda,
-Georges Brun-Cottan, Joe Buehler, Scott Byer, Włodek Bzyl,
+Broadey, Vincent Broman, Michael Brouwer, David M. Brown, Ken Brown, Stefan Bruda,
+Georges Brun-Cottan, Joe Buehler, Scott Byer, Włodek Bzyl, Tino Calancha,
 Bill Carpenter, Per Cederqvist, Hans Chalupsky, Chris Chase, Bob
 Chassell, Andrew Choi, Chong Yidong, Sacha Chua, Stewart Clamen, James
 Clark, Mike Clarkson, Glynn Clements, Andrew Cohen, Daniel Colascione,
@@ -1430,7 +1430,7 @@ Limpach, Lars Lindberg, Chris Lindblad, Anders Lindgren, Thomas Link,
 Juri Linkov, Francis Litterio, Sergey Litvinov, Leo Liu, Emilio C. Lopes,
 Martin Lorentzon, Dave Love, Eric Ludlam, Károly Lőrentey, Sascha
 Lüdecke, Greg McGary, Roland McGrath, Michael McNamara, Alan Mackenzie,
-Christopher J. Madsen, Neil M. Mager, Ken Manheimer, Bill Mann,
+Christopher J. Madsen, Neil M. Mager, Artur Malabarba, Ken Manheimer, Bill Mann,
 Brian Marick, Simon Marshall, Bengt Martensson, Charlie Martin,
 Yukihiro Matsumoto, Tomohiro Matsuyama, David Maus, Thomas May, Will Mengarini, David
 Megginson, Stefan Merten, Ben A. Mesander, Wayne Mesard, Brad
@@ -1441,11 +1441,11 @@ Gergely Nagy, Nobuyoshi Nakada, Thomas Neumann, Mike Newton, Thien-Thi Nguyen,
 Jurgen Nickelsen, Dan Nicolaescu, Hrvoje Nikšić, Jeff Norden,
 Andrew Norman, Theresa O'Connor, Kentaro Ohkouchi, Christian Ohler,
 Kenichi Okada, Alexandre Oliva, Bob Olson, Michael Olson, Takaaki Ota,
-Pieter E. J. Pareit, Ross Patterson, David Pearson, Juan Pechiar,
+Mark Oteiza, Pieter E. J. Pareit, Ross Patterson, David Pearson, Juan Pechiar,
 Jeff Peck, Damon Anton Permezel, Tom Perrine, William M. Perry, Per
-Persson, Jens Petersen, Daniel Pfeiffer, Justus Piater, Richard L.
+Persson, Jens Petersen, Nicolas Petton, Daniel Pfeiffer, Justus Piater, Richard L.
 Pieri, Fred Pierresteguy, François Pinard, Daniel Pittman, Christian
-Plaunt, Alexander Pohoyda, David Ponce, Francesco A. Potortì,
+Plaunt, Alexander Pohoyda, David Ponce, Noam Postavsky, Francesco A. Potortì,
 Michael D. Prange, Mukesh Prasad, Ken Raeburn, Marko Rahamaa, Ashwin
 Ram, Eric S. Raymond, Paul Reilly, Edward M. Reingold, David
 Reitter, Alex Rezinsky, Rob Riepel, Lara Rios, Adrian Robert, Nick
@@ -1462,7 +1462,7 @@ Stanislav Shalunov, Marc Shapiro, Richard Sharman, Olin Shivers, Tibor
 Šimko, Espen Skoglund, Rick Sladkey, Lynn Slater, Chris Smith,
 David Smith, Paul D. Smith, Wilson Snyder, William Sommerfeld, Simon
 South, Andre Spiegel, Michael Staats, Thomas Steffen, Ulf Stegemann,
-Reiner Steib, Sam Steingold, Ake Stenhoff, Peter Stephenson, Ken
+Reiner Steib, Sam Steingold, Ake Stenhoff, Philipp Stephani, Peter Stephenson, Ken
 Stevens, Andy Stewart, Jonathan Stigelman, Martin Stjernholm, Kim F.
 Storm, Steve Strassmann, Christopher Suckling, Olaf Sylvester, Naoto
 Takahashi, Steven Tamm, Jan Tatarik, Luc Teirlinck, Jean-Philippe Theberge, Jens
