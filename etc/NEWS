@@ -31,6 +31,9 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Changes in Emacs 27.1
 
++++
+** New function 'logcount' calculates an integer's Hamming weight.
+
 
 * Editing Changes in Emacs 27.1
 
