@@ -687,7 +687,8 @@ PREFIX is the directory name of the directory against which these
 patterns are rooted.  We understand only a subset of PCRE syntax;
 if we don't understand a construct, we signal
 `vc-hg-unsupported-syntax'."
-  (cl-assert (string-match "^/\\(.*/\\)?$" prefix))
+  (cl-assert (and (file-name-absolute-p prefix)
+                  (directory-name-p prefix)))
   (let ((parts nil)
         (i 0)
         (anchored nil)
@@ -875,7 +876,8 @@ if we don't understand a construct, we signal
 (defun vc-hg--slurp-hgignore (repo)
   "Read hg ignore patterns from REPO.
 REPO must be the directory name of an hg repository."
-  (cl-assert (string-match "^/\\(.*/\\)?$" repo))
+  (cl-assert (and (file-name-absolute-p repo)
+                  (directory-name-p repo)))
   (let* ((hgignore (concat repo ".hgignore"))
          (vc-hg--hgignore-patterns nil)
          (vc-hg--hgignore-filenames nil))
@@ -930,7 +932,8 @@ FILENAME must be the file's true absolute name."
      (concat repo repo-relative-filename))))
 
 (defun vc-hg--read-repo-requirements (repo)
-  (cl-assert (string-match "^/\\(.*/\\)?$" repo))
+  (cl-assert (and (file-name-absolute-p repo)
+                  (directory-name-p repo)))
   (let* ((requires-filename (concat repo ".hg/requires")))
     (and (file-exists-p requires-filename)
          (with-temp-buffer
@@ -1001,7 +1004,8 @@ hg binary."
          ;; dirstate must exist
          (not (progn
                 (setf repo (expand-file-name repo))
-                (cl-assert (string-match "^/\\(.*/\\)?$" repo))
+                (cl-assert (and (file-name-absolute-p repo)
+                                (directory-name-p repo)))
                 (setf dirstate (concat repo ".hg/dirstate"))
                 (setf dirstate-attr (file-attributes dirstate))))
          ;; Repository must be in an understood format
