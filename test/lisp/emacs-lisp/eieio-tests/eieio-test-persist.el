@@ -195,6 +195,28 @@ persistent class.")
     (persist-test-save-and-compare persist-woss)
     (delete-file (oref persist-woss file))))
 
+;; A slot that can contain one of two different classes, to exercise
+;; the `or' slot type.
+
+(defclass persistent-random-class ()
+  ())
+
+(defclass persistent-multiclass-slot (eieio-persistent)
+  ((slot1 :initarg :slot1
+          :type (or persistent-random-class null persist-not-persistent))
+   (slot2 :initarg :slot2
+          :type (or persist-not-persistent persist-random-class null))))
+
+(ert-deftest eieio-test-multiple-class-slot ()
+  (let ((persist
+         (persistent-multiclass-slot "random string"
+          :slot1 (persistent-random-class)
+          :slot2 (persist-not-persistent)
+          :file (concat default-directory "test-ps5.pt"))))
+    (unwind-protect
+        (persist-test-save-and-compare persist)
+     (ignore-errors (delete-file (oref persist file))))))
+
 ;;; Slot with a list of Objects
 ;;
 ;; A slot that contains another object that isn't persistent

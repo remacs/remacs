@@ -31,6 +31,7 @@
 ;;; Code:
 
 (require 'eieio)
+(require 'seq)
 (eval-when-compile (require 'cl-lib))
 
 ;;; eieio-instance-inheritor
@@ -308,14 +309,6 @@ Second, any text properties will be stripped from strings."
 		       (= (length proposed-value) 1))
 		  nil)
 
-		  ;; We have a slot with a single object that can be
-		  ;; saved here.  Recurse and evaluate that
-		  ;; sub-object.
-		 ((and classtype (class-p classtype)
-		       (child-of-class-p (car proposed-value) classtype))
-		  (eieio-persistent-convert-list-to-object
-		   proposed-value))
-
 		 ;; List of object constructors.
 		 ((and (eq (car proposed-value) 'list)
 		       ;; 2nd item is a list.
@@ -346,6 +339,16 @@ Second, any text properties will be stripped from strings."
 			    objlist))
 		    ;; return the list of objects ... reversed.
 		    (nreverse objlist)))
+		 ;; We have a slot with a single object that can be
+		 ;; saved here.  Recurse and evaluate that
+		 ;; sub-object.
+		 ((and classtype
+                       (seq-some
+                        (lambda (elt)
+                          (child-of-class-p (car proposed-value) elt))
+                        classtype))
+		  (eieio-persistent-convert-list-to-object
+		   proposed-value))
 		 (t
 		  proposed-value))))
 
@@ -402,13 +405,9 @@ If no class is referenced there, then return nil."
 	       type))
 
 	((eq (car-safe type) 'or)
-	 ;; If type is a list, and is an or, it is possibly something
-	 ;; like (or null myclass), so check for that.
-	 (let ((ans nil))
-	   (dolist (subtype (cdr type))
-	     (setq ans (eieio-persistent-slot-type-is-class-p
-			subtype)))
-	   ans))
+	 ;; If type is a list, and is an `or', return all valid class
+	 ;; types within the `or' statement.
+	 (seq-filter #'eieio-persistent-slot-type-is-class-p (cdr type)))
 
 	(t
 	 ;; No match, not a class.
