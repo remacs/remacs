@@ -101,7 +101,8 @@ See `flymake-error-bitmap' and `flymake-warning-bitmap'."
   :type 'boolean)
 
 (defcustom flymake-no-changes-timeout 0.5
-  "Time to wait after last change before starting compilation."
+  "Time to wait after last change before automatically checking buffer.
+If nil, never start checking buffer automatically like this."
   :type 'number)
 
 (defcustom flymake-gui-warnings-enabled t
@@ -146,9 +147,6 @@ See `flymake-error-bitmap' and `flymake-warning-bitmap'."
 
 (defvar-local flymake-timer nil
   "Timer for starting syntax check.")
-
-(defvar-local flymake-last-change-time nil
-  "Time of last buffer change.")
 
 (defvar-local flymake-check-start-time nil
   "Time at which syntax check was started.")
@@ -491,19 +489,6 @@ associated `flymake-category' return DEFAULT."
     (overlay-put ov 'flymake t)
     (overlay-put ov 'flymake--diagnostic diagnostic)))
 
-(defun flymake-on-timer-event (buffer)
-  "Start a syntax check for buffer BUFFER if necessary."
-  (when (buffer-live-p buffer)
-    (with-current-buffer buffer
-      (when (and (not (flymake-is-running))
-		 flymake-last-change-time
-		 (> (- (float-time) flymake-last-change-time)
-                    flymake-no-changes-timeout))
-
-	(setq flymake-last-change-time nil)
-	(flymake-log :debug "starting syntax check after no changes for some time")
-	(flymake-start)))))
-
 ;; Nothing in flymake uses this at all any more, so this is just for
 ;; third-party compatibility.
 (define-obsolete-function-alias 'flymake-display-warning 'message-box "26.1")
@@ -651,8 +636,6 @@ backends."
       (add-hook 'after-save-hook 'flymake-after-save-hook nil t)
       (add-hook 'kill-buffer-hook 'flymake-kill-buffer-hook nil t)
 
-      (setq flymake-timer
-            (run-at-time nil 1 'flymake-on-timer-event (current-buffer)))
       (setq flymake--diagnostics-table (make-hash-table))
 
       (when flymake-start-syntax-check-on-find-file
@@ -670,6 +653,28 @@ backends."
     (when flymake-timer
       (cancel-timer flymake-timer)
       (setq flymake-timer nil)))))
+
+(defun flymake--schedule-timer-maybe ()
+  "(Re)schedule an idle timer for checking the buffer.
+Do it only if `flymake-no-changes-timeout' is non-nil."
+  (when flymake-timer (cancel-timer flymake-timer))
+  (when flymake-no-changes-timeout
+    (setq
+     flymake-timer
+     (run-with-idle-timer
+      (seconds-to-time flymake-no-changes-timeout)
+      nil
+      (lambda (buffer)
+        (when (buffer-live-p buffer)
+          (with-current-buffer buffer
+            (when (and flymake-mode
+                       flymake-no-changes-timeout)
+	      (flymake-log
+               :debug "starting syntax check after idle for %s seconds"
+               flymake-no-changes-timeout)
+	      (flymake-start))
+            (setq flymake-timer nil))))
+      (current-buffer)))))
 
 ;;;###autoload
 (defun flymake-mode-on ()
@@ -690,7 +695,7 @@ backends."
     (when (and flymake-start-syntax-check-on-newline (equal new-text "\n"))
       (flymake-log :debug "starting syntax check as new-line has been seen")
       (flymake-start 'deferred))
-    (setq flymake-last-change-time (float-time))))
+    (flymake--schedule-timer-maybe)))
 
 (defun flymake-after-save-hook ()
   (when flymake-mode
