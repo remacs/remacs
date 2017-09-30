@@ -237,8 +237,6 @@ impl LispHashTableRef {
             };
         }
 
-        assert!(entry.key().object == hash_key.object);
-
         let value = entry.or_insert(hash_value);
         if value.idx != std::usize::MAX {
             next_idx = value.idx;
@@ -258,7 +256,6 @@ impl LispHashTableRef {
         let hash = hash_key.precalculate_hash();
         let key_and_value = KeyAndValueEntry::new(key, value, hash);
         let (idx, should_pop) = self.update(hash_key, hash_value);
-        assert!(self.map.entry(hash_key).key().object == hash_key.object);
 
         if idx < self.key_and_value.len() {
             self.key_and_value[idx] = key_and_value;
@@ -697,8 +694,10 @@ pub unsafe extern "C" fn set_hash_value_slot(map: *mut c_void, idx: ptrdiff_t, v
 pub unsafe extern "C" fn set_hash_key_slot(map: *mut c_void, idx: ptrdiff_t, key: Lisp_Object) {
     debug_assert!(idx >= 0);
     let ptr = ExternalPtr::new(map as *mut LispHashTable);
-    let object = LispObject::from_raw(key);
-    ptr.insert(object, ptr.get(object).unwrap());
+    ptr.insert(
+        LispObject::from_raw(key),
+        ptr.key_and_value[idx as usize].value,
+    );
 }
 
 #[no_mangle]
