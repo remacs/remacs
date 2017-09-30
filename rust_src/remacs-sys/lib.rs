@@ -200,6 +200,14 @@ pub blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
 pub fwd: *mut c_void, // @TODO implement Lisp_Fwd
 }
 
+/// Interned state of a symbol.
+#[repr(C)]
+pub enum Symbol_Interned {
+    Uninterned = 0,
+    Interned = 1,
+    InternedInInitialObarray = 2,
+}
+
 /// This struct has 4 bytes of padding, representing the bitfield that
 /// lives at the top of a Lisp_Symbol. The first 10 bits of this field are
 /// used.
