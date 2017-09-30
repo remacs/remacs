@@ -44,14 +44,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
 
-DEFUN ("identity", Fidentity, Sidentity, 1, 1, 0,
-       doc: /* Return the argument unchanged.  */
-       attributes: const)
-  (Lisp_Object arg)
-{
-  return arg;
-}
-
 /* Random data-structure functions.  */
 
 DEFUN ("compare-strings", Fcompare_strings, Scompare_strings, 6, 7, 0,
@@ -2973,7 +2965,6 @@ that disables the use of a file dialog, regardless of the value of
 this variable.  */);
   use_file_dialog = 1;
 
-  defsubr (&Sidentity);
   defsubr (&Scompare_strings);
   defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
