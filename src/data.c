@@ -3071,11 +3071,13 @@ usage: (logxor &rest INTS-OR-MARKERS)  */)
 
 DEFUN ("logcount", Flogcount, Slogcount, 1, 1, 0,
        doc: /* Return population count of VALUE.
-If VALUE is negative, the count is of its two's complement representation.  */)
+This is the number of one bits in the two's complement representation
+of VALUE.  If VALUE is negative, return the number of zero bits in the
+representation.  */)
   (Lisp_Object value)
 {
   CHECK_NUMBER (value);
-  EMACS_UINT v = XUINT (value);
+  EMACS_INT v = XINT (value) < 0 ? -1 - XINT (value) : XINT (value);
   return make_number (EMACS_UINT_WIDTH <= UINT_WIDTH
 		      ? count_one_bits (v)
 		      : EMACS_UINT_WIDTH <= ULONG_WIDTH

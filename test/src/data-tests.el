@@ -109,12 +109,14 @@
 
 (defun data-tests-popcnt (byte)
   "Calculate the Hamming weight of BYTE."
+  (if (< byte 0)
+      (setq byte (lognot byte)))
   (setq byte (- byte (logand (lsh byte -1) #x55555555)))
   (setq byte (+ (logand byte #x33333333) (logand (lsh byte -2) #x33333333)))
   (lsh (* (logand (+ byte (lsh byte -4)) #x0f0f0f0f) #x01010101) -24))
 
 (ert-deftest data-tests-logcount ()
-  (should (cl-loop for n in (number-sequence 0 255)
+  (should (cl-loop for n in (number-sequence -255 255)
                    always (= (logcount n) (data-tests-popcnt n))))
   ;; https://oeis.org/A000120
   (should (= 11 (logcount 9727)))

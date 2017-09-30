@@ -1113,9 +1113,14 @@ bit is one in the result if, and only if, the @var{n}th bit is zero in
 @defun logcount integer
 This function returns the @dfn{Hamming weight} of @var{integer}: the
 number of ones in the binary representation of @var{integer}.
+If @var{integer} is negative, it returns the number of zero bits in
+its two's complement binary representation.  The result is always
+nonnegative.
 
 @example
-(logcount 42)     ; 42 = #b101010
+(logcount 43)     ; 43 = #b101011
+     @result{} 4
+(logcount -43)    ; -43 = #b111...1010101
      @result{} 3
 @end example
 @end defun
