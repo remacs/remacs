@@ -3069,64 +3069,18 @@ usage: (logxor &rest INTS-OR-MARKERS)  */)
   return arith_driver (Alogxor, nargs, args);
 }
 
-#if GNUC_PREREQ (4, 1, 0)
-#define HAVE_BUILTIN_POPCOUNTLL
-#endif
-
-#ifndef HAVE_BUILTIN_POPCOUNTLL
-static uint32_t
-logcount32 (uint32_t b)
-{
-  b -= (b >> 1) & 0x55555555;
-  b = (b & 0x33333333) + ((b >> 2) & 0x33333333);
-  b = (b + (b >> 4)) & 0x0f0f0f0f;
-  return (b * 0x01010101) >> 24;
-}
-
-static uint64_t
-logcount64 (uint64_t b)
-{
-  b -= (b >> 1) & 0x5555555555555555ULL;
-  b = (b & 0x3333333333333333ULL) + ((b >> 2) & 0x3333333333333333ULL);
-  b = (b + (b >> 4)) & 0x0f0f0f0f0f0f0f0fULL;
-  return (b * 0x0101010101010101ULL) >> 56;
-}
-#endif /* HAVE_BUILTIN_POPCOUNTLL */
-
 DEFUN ("logcount", Flogcount, Slogcount, 1, 1, 0,
        doc: /* Return population count of VALUE.
 If VALUE is negative, the count is of its two's complement representation.  */)
-  (register Lisp_Object value)
+  (Lisp_Object value)
 {
-  Lisp_Object res;
-  EMACS_UINT v;
-
   CHECK_NUMBER (value);
-
-  v = XUINT (value);
-#ifdef HAVE_BUILTIN_POPCOUNTLL
-  if (v <= UINT_MAX)
-    XSETINT (res, __builtin_popcount (v));
-  else if (v <= ULONG_MAX)
-    XSETINT (res, __builtin_popcountl (v));
-  else if (v <= ULONG_LONG_MAX)
-    XSETINT (res, __builtin_popcountll (v));
-#else  /* HAVE_BUILTIN_POPCOUNTLL */
-  if (v <= UINT_MAX)
-    XSETINT (res, logcount32 (v));
-  else if (v <= ULONG_MAX || v <= ULONG_LONG_MAX)
-    XSETINT (res, logcount64 (v));
-#endif /* HAVE_BUILTIN_POPCOUNTLL */
-  else
-    {
-      unsigned int count;
-      for (count = 0; v; count++)
-        {
-          v &= v - 1;
-        }
-      XSETINT (res, count);
-    }
-  return res;
+  EMACS_UINT v = XUINT (value);
+  return make_number (EMACS_UINT_WIDTH <= UINT_WIDTH
+		      ? count_one_bits (v)
+		      : EMACS_UINT_WIDTH <= ULONG_WIDTH
+		      ? count_one_bits_l (v)
+		      : count_one_bits_ll (v));
 }
 
 static Lisp_Object
