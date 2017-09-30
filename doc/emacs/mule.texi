@@ -1198,7 +1198,7 @@ names (@code{set-file-name-coding-system}).
 @end table
 
 @findex set-file-name-coding-system
-@kindex C-x @key{RET} F
+@kindex C-x RET F
 @cindex file names with non-@acronym{ASCII} characters
   The command @kbd{C-x @key{RET} F} (@code{set-file-name-coding-system})
 specifies a coding system to use for encoding file @emph{names}.  It
