@@ -1918,8 +1918,8 @@ without displaying the references.
 
 @node Identifier Search
 @subsubsection Searching and Replacing with Identifiers
-@cindex search and replace in multiple files
-@cindex multiple-file search and replace
+@cindex search and replace in multiple source files
+@cindex multiple source file search and replace
 
   The commands in this section perform various search and replace
 operations either on identifiers themselves or on files that reference
