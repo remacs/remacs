@@ -50,8 +50,8 @@ You can now find them here :
 - https://github.com/org-mime/org-mime
 
 *** Change ~org-texinfo-classes~ value
-The value cannot support functions to create sectionning commands
-anymore.  Also, the sectionning commands should include commands for
+The value cannot support functions to create sectioning commands
+anymore.  Also, the sectioning commands should include commands for
 appendices.  See the docstring for more information.
 *** Removal of ~:sitemap-sans-extension~
 
@@ -159,7 +159,7 @@ developers to prepend code to the scheme block being processed.
 Multiple ~:prologue~ headers can be added each of them using a string
 with the content to be added.
 
-The scheme blocks are prepared by surronding the code in the block
+The scheme blocks are prepared by surrounding the code in the block
 with a let form. The content of the ~:prologue~ headers are prepended
 before this let form.
 
@@ -280,7 +280,7 @@ argument for the scope of the clock table.
 Global table of contents are generated using vanilla Markdown syntax
 instead of HTML.  Also #+TOC keyword, including local table of
 contents, are now supported.
-**** Add Slovanian translations
+**** Add Slovenian translations
 **** Implement ~org-export-insert-image-links~
 This new function is meant to be used in back-ends supporting images
 as descriptions of links, a.k.a. image links.  See its docstring for
@@ -467,7 +467,7 @@ far away in the future.
 *** Save point before opening a file with an unknown search option
 
 When following a file link with a search option (e.g., =::#custom-id=)
-that doesn't exist in the target file, save positon before raising an
+that doesn't exist in the target file, save position before raising an
 error.  As a consequence, it is possible to jump back to the original
 document with ~org-mark-ring-goto~ (default binding =C-c &=).
 
@@ -479,7 +479,7 @@ See docstring for details.
 
 This variable is a ~defcustom~ and replaces the variable
 ~org-babel-capitalize-example-region-markers~, which is a ~defvar~ and
-is now obselete.
+is now obsolete.
 *** =INCLUDE= keywords in commented trees are now ignored.
 *** Default value for ~org-texinfo-text-markup-alist~ changed.
 
