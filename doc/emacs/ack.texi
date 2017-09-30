@@ -1418,8 +1418,8 @@ zone out in front of Emacs.
 Eli Zaretskii made many standard Emacs features work on MS-DOS and
 Microsoft Windows.  He also wrote @file{tty-colors.el}, which
 implements transparent mapping of X colors to tty colors; and
-@file{rxvt.el}.  He implemented support for bidirectional text,
-and also menus on text-mode terminals.
+@file{rxvt.el}.  He implemented support for bidirectional text, menus
+on text-mode terminals, and built-in display of line numbers.
 
 @item
 Jamie Zawinski wrote much of the support for faces and X selections.
