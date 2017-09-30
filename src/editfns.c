@@ -1256,10 +1256,10 @@ If POS is out of range, the value is nil.  */)
   if (NILP (pos))
     {
       pos_byte = PT_BYTE;
-      XSETFASTINT (pos, PT);
+      if (pos_byte < BEGV_BYTE || pos_byte >= ZV_BYTE)
+        return Qnil;
     }
-
-  if (MARKERP (pos))
+  else if (MARKERP (pos))
     {
       pos_byte = marker_byte_position (pos);
       if (pos_byte < BEGV_BYTE || pos_byte >= ZV_BYTE)
