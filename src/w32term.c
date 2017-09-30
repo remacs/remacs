@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 #include <signal.h>
@@ -162,10 +162,6 @@ int last_scroll_bar_drag_pos;
 
 /* Keyboard code page - may be changed by language-change events.  */
 int w32_keyboard_codepage;
-
-/* Incremented by w32_read_socket whenever it really tries to read
-   events.  */
-static int volatile input_signal_count;
 
 #ifdef CYGWIN
 int w32_message_fd = -1;
@@ -4658,9 +4654,6 @@ w32_read_socket (struct terminal *terminal,
 
   block_input ();
 
-  /* So people can tell when we have read the available input.  */
-  input_signal_count++;
-
   /* Process any incoming thread messages.  */
   drain_message_queue ();
 
@@ -6252,7 +6245,8 @@ w32fullscreen_hook (struct frame *f)
 
       if (FRAME_PREV_FSMODE (f) == FULLSCREEN_BOTH)
         {
-          SetWindowLong (hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
+	  if (!FRAME_UNDECORATED (f))
+	    SetWindowLong (hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
 	  SetWindowPlacement (hwnd, &FRAME_NORMAL_PLACEMENT (f));
 	}
       else if (FRAME_PREV_FSMODE (f) == FULLSCREEN_HEIGHT
@@ -6278,7 +6272,8 @@ w32fullscreen_hook (struct frame *f)
 
 	  w32_fullscreen_rect (hwnd, f->want_fullscreen,
 			       FRAME_NORMAL_PLACEMENT (f).rcNormalPosition, &rect);
-          SetWindowLong (hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+	  if (!FRAME_UNDECORATED (f))
+	    SetWindowLong (hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
           SetWindowPos (hwnd, HWND_TOP, rect.left, rect.top,
                         rect.right - rect.left, rect.bottom - rect.top,
                         SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
@@ -6612,7 +6607,8 @@ w32_frame_raise_lower (struct frame *f, bool raise_flag)
 
 /* Change of visibility.  */
 
-/* This tries to wait until the frame is really visible.
+/* This tries to wait until the frame is really visible, depending on
+   the value of Vx_visible_frame_timeout.
    However, if the window manager asks the user where to position
    the frame, this will return before the user finishes doing that.
    The frame will not actually be visible at that time,
@@ -6671,12 +6667,16 @@ x_make_frame_visible (struct frame *f)
 		      : SW_SHOWNORMAL);
     }
 
+  if (!FLOATP (Vx_wait_for_event_timeout))
+      return;
+
   /* Synchronize to ensure Emacs knows the frame is visible
      before we do anything else.  We do this loop with input not blocked
      so that incoming events are handled.  */
   {
     Lisp_Object frame;
-    int count;
+    double timeout = XFLOAT_DATA (Vx_wait_for_event_timeout);
+    double start_time = XFLOAT_DATA (Ffloat_time (Qnil));
 
     /* This must come after we set COUNT.  */
     unblock_input ();
@@ -6686,8 +6686,8 @@ x_make_frame_visible (struct frame *f)
     /* Wait until the frame is visible.  Process X events until a
        MapNotify event has been seen, or until we think we won't get a
        MapNotify at all..  */
-    for (count = input_signal_count + 10;
-	 input_signal_count < count && !FRAME_VISIBLE_P (f);)
+    while (timeout > (XFLOAT_DATA (Ffloat_time (Qnil)) - start_time) &&
+           !FRAME_VISIBLE_P (f))
       {
 	/* Force processing of queued events.  */
         /* TODO: x_sync equivalent?  */
@@ -7318,6 +7318,17 @@ syms_of_w32term (void)
   DEFSYM (Qmodified, "modified");
   DEFSYM (Qrenamed_from, "renamed-from");
   DEFSYM (Qrenamed_to, "renamed-to");
+
+  DEFVAR_LISP ("x-wait-for-event-timeout", Vx_wait_for_event_timeout,
+    doc: /* How long to wait for X events.
+
+Emacs will wait up to this many seconds to receive X events after
+making changes which affect the state of the graphical interface.
+Under some window managers this can take an indefinite amount of time,
+so it is important to limit the wait.
+
+If set to a non-float value, there will be no wait at all.  */);
+  Vx_wait_for_event_timeout = make_float (0.1);
 
   DEFVAR_INT ("w32-num-mouse-buttons",
 	      w32_num_mouse_buttons,

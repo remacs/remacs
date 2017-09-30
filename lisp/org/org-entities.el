@@ -295,6 +295,8 @@ packages to be loaded, add these packages to `org-latex-packages-alist'."
      ("yen" "\\textyen{}" nil "&yen;" "yen" "¥" "¥")
      ("euro" "\\texteuro{}" nil "&euro;" "EUR" "EUR" "€")
      ("EUR" "\\texteuro{}" nil "&euro;" "EUR" "EUR" "€")
+     ("dollar" "\\$" nil "$" "$" "$" "$")
+     ("USD" "\\$" nil "$" "$" "$" "$")
 
      "** Property Marks"
      ("copy" "\\textcopyright{}" nil "&copy;" "(c)" "©" "©")

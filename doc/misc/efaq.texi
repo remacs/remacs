@@ -3501,7 +3501,7 @@ The most up-to-date official GNU software is normally kept at
 
 A list of sites mirroring @samp{ftp.gnu.org} can be found at
 
-@uref{httpss://www.gnu.org/prep/ftp}
+@uref{https://www.gnu.org/prep/ftp}
 
 @node Difference between Emacs and XEmacs
 @section What is the difference between Emacs and XEmacs (formerly Lucid Emacs)?
