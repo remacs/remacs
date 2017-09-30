@@ -6,6 +6,7 @@
 #![feature(global_allocator)]
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
+#[cfg(not(test))]
 extern crate alloc_unexec;
 
 #[macro_use]
