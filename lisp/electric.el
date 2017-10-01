@@ -39,6 +39,8 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'elec-pair))
+
 ;; This loop is the guts for non-standard modes which retain control
 ;; until some event occurs.  It is a `do-forever', the only way out is
 ;; to throw.  It assumes that you have set up the keymap, window, and
