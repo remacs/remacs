@@ -276,10 +276,6 @@ header line.
 part of minibuffers.
 
 ---
-** 'find-library' now takes a prefix argument to pop to a different
-window.
-
----
 ** 'fill-paragraph' no longer marks the buffer as changed unless it
 actually changed something.
 
