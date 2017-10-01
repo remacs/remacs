@@ -14034,7 +14034,7 @@ A somewhat obsessive function.
 @node A Texinfo example
 @subsection A Texinfo example
 
-Here is a more detailed example Org file.  @xref{GNU Sample
+Here is a more detailed example Org file.  See @ref{GNU Sample
 Texts,,,texinfo,GNU Texinfo Manual} for an equivalent example using Texinfo
 code.
 
