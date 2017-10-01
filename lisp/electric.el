@@ -39,8 +39,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'elec-pair))
-
 ;; This loop is the guts for non-standard modes which retain control
 ;; until some event occurs.  It is a `do-forever', the only way out is
 ;; to throw.  It assumes that you have set up the keymap, window, and
@@ -470,6 +468,8 @@ substitution is inhibited.  The functions are called after the
 \\=` or \\=' character has been inserted with point directly
 after the inserted character.  The functions in this hook should
 not move point or change the current buffer.")
+
+(defvar electric-pair-text-pairs)
 
 (defun electric-quote-post-self-insert-function ()
   "Function that `electric-quote-mode' adds to `post-self-insert-hook'.
