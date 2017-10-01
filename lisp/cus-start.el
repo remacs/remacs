@@ -319,6 +319,13 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 					    (const :tag "Always" t)
 					    (repeat (symbol :tag "Parameter")))
 					   "25.1")
+	     (iconify-child-frame frames
+				  (choice
+				   (const :tag "Do nothing" nil)
+                                   (const :tag "Iconify top level frame instead" iconify-top-level)
+                                   (const :tag "Make frame invisible instead" make-invisible)
+                                   (const :tag "Iconify" t))
+				  "26.1")
 	     (tooltip-reuse-hidden-frame tooltip boolean "26.1")
 	     ;; fringe.c
 	     (overflow-newline-into-fringe fringe boolean)

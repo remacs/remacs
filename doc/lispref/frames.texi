@@ -3076,15 +3076,14 @@ as long as the parameter is not changed or reset.  Technically, this
 makes the child frame's window-system window a child window of the
 parent frame's window-system window.
 
-@cindex top-level frame
 @cindex reparent frame
 @cindex nest frame
   The @code{parent-frame} parameter can be changed at any time.  Setting
 it to another frame @dfn{reparents} the child frame.  Setting it to
 another child frame makes the frame a @dfn{nested} child frame.  Setting
-it to @code{nil} restores the frame's status as a @dfn{top-level
-frame}---a frame whose window-system window is a child of its display's
-root window.
+it to @code{nil} restores the frame's status as a top-level frame---a
+frame whose window-system window is a child of its display's root
+window.
 
   Since child frames can be arbitrarily nested, a frame can be both a
 child and a parent frame.  Also, the relative roles of child and parent
@@ -3203,7 +3202,11 @@ a number of other ways as well.  Here we sketch a few of them:
 @item
 The semantics of maximizing and iconifying child frames is highly
 window-system dependent.  As a rule, applications should never invoke
-these operations for child frames.
+these operations for on frames.  By default, invoking
+@code{iconify-frame} on a child frame will try to iconify the top-level
+frame corresponding to that child frame instead.  To obtain a different
+behavior, users may customize the option @code{iconify-child-frame}
+described below.
 
 @item
 Raising, lowering and restacking child frames (@pxref{Raising and
@@ -3258,6 +3261,23 @@ Note also the function @code{window-largest-empty-rectangle}
 frame in the largest empty area of an existing window.  This can be
 useful to avoid that a child frame obscures any text shown in that
 window.
+
+Customizing the following option can be useful to tweak the behavior of
+@code{iconify-frame} for child frames.
+
+@defvar iconify-child-frame
+This option tells Emacs how to proceed when it is asked to iconify a
+child frame.  If it is @code{nil}, @code{iconify-frame} will do nothing
+when invoked on a child frame.  If it is @code{iconify-top-level}, Emacs
+will try to iconify the top-level frame that is the ancestor of this
+child frame instead.  If it is @code{make-invisible}, Emacs will try to
+make this child frame invisible instead of iconifying it.
+
+Any other value means to try iconifying the child frame.  Since such an
+attempt may not be honored by all window managers and can even lead to
+making the child frame unresponsive to user actions, the default is to
+iconify the top level frame instead.
+@end defvar
 
 
 @node Mouse Tracking
