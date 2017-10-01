@@ -2452,7 +2452,7 @@ for how to proceed.  */)
 {
   struct frame *f = decode_live_frame (frame);
 #ifdef HAVE_WINDOW_SYSTEM
-  Lisp_Object parent = f->parent_frame;
+ Lisp_Object parent = f->parent_frame;
 
   if (!NILP (parent))
     {
