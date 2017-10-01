@@ -2485,10 +2485,33 @@ displayed in the terminal.  */)
 DEFUN ("iconify-frame", Ficonify_frame, Siconify_frame,
        0, 1, "",
        doc: /* Make the frame FRAME into an icon.
-If omitted, FRAME defaults to the currently selected frame.  */)
+If omitted, FRAME defaults to the currently selected frame.
+
+If FRAME is a child frame, consult the variable `iconify-child-frame'
+for how to proceed.  */)
   (Lisp_Object frame)
 {
   struct frame *f = decode_live_frame (frame);
+  Lisp_Object parent = f->parent_frame;
+
+  if (!NILP (parent))
+    {
+      if (NILP (iconify_child_frame))
+	/* Do nothing.  */
+	return Qnil;
+      else if (EQ (iconify_child_frame, Qiconify_top_level))
+	{
+	  /* Iconify top level frame instead (the default).  */
+	  Ficonify_frame (parent);
+	  return Qnil;
+	}
+      else if (EQ (iconify_child_frame, Qmake_invisible))
+	{
+	  /* Make frame invisible instead.  */
+	  Fmake_frame_invisible (frame, Qnil);
+	  return Qnil;
+	}
+    }
 
   /* Don't allow minibuf_window to remain on an iconified frame.  */
   check_minibuf_window (frame, EQ (minibuf_window, selected_window));
@@ -5667,6 +5690,8 @@ syms_of_frame (void)
   DEFSYM (Qheight_only, "height-only");
   DEFSYM (Qleft_only, "left-only");
   DEFSYM (Qtop_only, "top-only");
+  DEFSYM (Qiconify_top_level, "iconify-top-level");
+  DEFSYM (Qmake_invisible, "make-invisible");
 
   {
     int i;
@@ -5969,6 +5994,21 @@ are not applied when showing a tooltip in a reused frame.
 This variable is effective only with the X toolkit (and there only when
 Gtk+ tooltips are not used) and on Windows.  */);
   tooltip_reuse_hidden_frame = false;
+
+  DEFVAR_LISP ("iconify-child-frame", iconify_child_frame,
+	       doc: /* How to handle iconification of child frames.
+This variable tells Emacs how to proceed when it is asked to iconify a
+child frame.  If it is nil, `iconify-frame' will do nothing when invoked
+on a child frame.  If it is `iconify-top-level', Emacs will try to
+iconify the top level frame associated with this child frame instead.
+If it is `make-invisible', Emacs will try to make this child frame
+invisible instead.
+
+Any other value means to try iconifying the child frame.  Since such an
+attempt is not honored by all window managers and may even lead to
+making the child frame unresponsive to user actions, the default is to
+iconify the top level frame instead.  */);
+  iconify_child_frame = Qiconify_top_level;
 
   staticpro (&Vframe_list);
 
