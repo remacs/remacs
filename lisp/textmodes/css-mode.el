@@ -1659,14 +1659,13 @@ on what is seen near point."
       (setq symbol (concat ":" symbol)))
     (let ((url (format css-lookup-url-format symbol))
           (buffer (get-buffer-create "*MDN CSS*")))
-      (save-selected-window
-        ;; Make sure to display the buffer before calling `eww', as
-        ;; that calls `pop-to-buffer-same-window'.
-        (switch-to-buffer-other-window buffer)
-        (with-current-buffer buffer
-          (eww-mode)
-          (add-hook 'eww-after-render-hook #'css--mdn-after-render nil t)
-          (eww url))))))
+      ;; Make sure to display the buffer before calling `eww', as that
+      ;; calls `pop-to-buffer-same-window'.
+      (switch-to-buffer-other-window buffer)
+      (with-current-buffer buffer
+        (eww-mode)
+        (add-hook 'eww-after-render-hook #'css--mdn-after-render nil t)
+        (eww url)))))
 
 (provide 'css-mode)
 ;;; css-mode.el ends here
