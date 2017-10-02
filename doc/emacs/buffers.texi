@@ -110,8 +110,8 @@ it, Emacs asks for the file name to use, and the buffer's major mode
 is re-established taking that file name into account (@pxref{Choosing
 Modes}).
 
-@kindex C-x @key{LEFT}
-@kindex C-x @key{RIGHT}
+@kindex C-x LEFT
+@kindex C-x RIGHT
 @findex next-buffer
 @findex previous-buffer
   For conveniently switching between a few buffers, use the commands

@@ -421,7 +421,7 @@ posting bug reports to this newsgroup directly (@pxref{Reporting bugs}).
 The FSF has maintained archives of all of the GNU mailing lists for many
 years, although there may be some unintentional gaps in coverage.  The
 archive can be browsed over the web at
-@uref{http://lists.gnu.org/archive/html/, the GNU mail archive}.
+@uref{https://lists.gnu.org/archive/html/, the GNU mail archive}.
 
 Web-based Usenet search services, such as
 @uref{http://groups.google.com/groups/dir?q=gnu&, Google}, also
@@ -457,13 +457,13 @@ RMS says:
 
 @quotation
 Sending bug reports to
-@url{http://lists.gnu.org/mailman/listinfo/help-gnu-emacs,
+@url{https://lists.gnu.org/mailman/listinfo/help-gnu-emacs,
 the help-gnu-emacs mailing list}
 (which has the effect of posting on @uref{news:gnu.emacs.help}) is
 undesirable because it takes the time of an unnecessarily large group
 of people, most of whom are just users and have no idea how to fix
 these problem.
-@url{http://lists.gnu.org/mailman/listinfo/bug-gnu-emacs, The
+@url{https://lists.gnu.org/mailman/listinfo/bug-gnu-emacs, The
 bug-gnu-emacs list} reaches a much smaller group of people who are
 more likely to know what to do and have expressed a wish to receive
 more messages about Emacs than the others.
@@ -1432,7 +1432,7 @@ of files from Macintosh, Microsoft, and Unix platforms.
 In general, new Emacs users should not be provided with @file{.emacs}
 files, because this can cause confusing non-standard behavior.  Then
 they send questions to
-@url{http://lists.gnu.org/mailman/listinfo/help-gnu-emacs,
+@url{https://lists.gnu.org/mailman/listinfo/help-gnu-emacs,
 the help-gnu-emacs mailing list} asking why Emacs
 isn't behaving as documented.
 

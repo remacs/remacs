@@ -280,7 +280,7 @@ See the end of the file for license conditions.
   In addition to the manual, there is a mailing list for help with
   Emacs here:
 
-       http://lists.gnu.org/mailman/listinfo/help-gnu-emacs
+       https://lists.gnu.org/mailman/listinfo/help-gnu-emacs
 
   To ask questions on this mailing list, send email to
   help-gnu-emacs@gnu.org.
@@ -288,7 +288,7 @@ See the end of the file for license conditions.
   A mailing list for issues specifically related to the MS-Windows port
   of Emacs is here:
 
-	http://lists.gnu.org/mailman/listinfo/help-emacs-windows
+	https://lists.gnu.org/mailman/listinfo/help-emacs-windows
 
   To ask questions on this mailing list, send email to
   help-emacs-windows@gnu.org.

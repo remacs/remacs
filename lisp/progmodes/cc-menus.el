@@ -117,7 +117,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
      ,(concat
        "^\\<"                                 ; line MUST start with word char
        ;; \n added to prevent overflow in regexp matcher.
-       ;; http://lists.gnu.org/archive/html/emacs-pretest-bug/2007-02/msg00021.html
+       ;; https://lists.gnu.org/archive/html/emacs-pretest-bug/2007-02/msg00021.html
        "[^()\n]*"                             ; no parentheses before
        "[^" c-alnum "_:<>~]"                  ; match any non-identifier char
        "\\([" c-alpha "_][" c-alnum "_:<>~]*\\)" ; match function name

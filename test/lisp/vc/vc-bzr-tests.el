@@ -106,7 +106,7 @@
           (should (get-buffer "*vc-log*")))
       (delete-directory homedir t))))
 
-;; http://lists.gnu.org/archive/html/help-gnu-emacs/2012-04/msg00145.html
+;; https://lists.gnu.org/archive/html/help-gnu-emacs/2012-04/msg00145.html
 (ert-deftest vc-bzr-test-faulty-bzr-autoloads ()
   "Test we can generate autoloads in a bzr directory when bzr is faulty."
   (skip-unless (executable-find vc-bzr-program))

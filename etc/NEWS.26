@@ -76,7 +76,8 @@ If the lcms2 library is installed, Emacs will enable features built on
 top of that library.  The new configure option '--without-lcms2' can
 be used to build without lcms2 support even if it is installed.  Emacs
 linked to Little CMS exposes color management functions in Lisp: the
-color metrics 'lcms-cie-de2000' and 'lcms-cam02-ucs'.
+color metrics 'lcms-cie-de2000' and 'lcms-cam02-ucs', as well as
+functions for conversion to and from CIE CAM02 and CAM02-UCS.
 
 ** The configure option '--with-gameuser' now defaults to 'no',
 as this appears to be the most common configuration in practice.
@@ -297,10 +298,6 @@ header line.
 ---
 ** 'C-x h' ('mark-whole-buffer') will now avoid marking the prompt
 part of minibuffers.
-
----
-** 'find-library' now takes a prefix argument to pop to a different
-window.
 
 ---
 ** 'fill-paragraph' no longer marks the buffer as changed unless it
@@ -599,6 +596,11 @@ names and values, respectively, match a given pattern.
 The two new variables, 'bidi-paragraph-start-re' and
 'bidi-paragraph-separate-re', allow customization of what exactly are
 paragraphs, for the purposes of bidirectional display.
+
+---
+** New variable 'x-wait-for-event-timeout'.
+This controls how long Emacs will wait for updates to the graphical
+state to take effect (making a frame visible, for example).
 
 
 * Changes in Specialized Modes and Packages in Emacs 26.1
@@ -1109,6 +1111,10 @@ See the 'vc-faces' customization group.
 *** 'vc-dir-mode' now binds 'vc-log-outgoing' to 'O'; and has various
 branch-related commands on a keymap bound to 'B'.
 
+---
+*** 'vc-region-history' is now bound to 'C-x v h', replacing the older
+'vc-insert-headers' binding.
+
 ** CC mode
 
 ---
@@ -1234,10 +1240,11 @@ change FOO, respectively.  The exhaustive list of removed variables is:
 *** Many variables obsoleted in 22.1 referring to face symbols
 
 +++
-** The variable 'text-quoting-style' no longer affects the treatment
-of curved quotes in format arguments to functions like 'message' and
-'format-message'.  In particular, when this variable's value is
-'grave', all quotes in formats are output as-is.
+** The variable 'text-quoting-style' is now a customizable option.  It
+controls whether to and how to translate ASCII quotes in messages and
+help output.  Its possible values and their semantics remain unchanged
+from Emacs 25.  In particular, when this variable's value is 'grave',
+all quotes in formats are output as-is.
 
 ---
 ** Functions like 'check-declare-file' and 'check-declare-directory'
@@ -1353,6 +1360,12 @@ non-nil, but the code returned the list in the increasing order of
 priority instead.  Now the code does what the documentation says it
 should do.
 
+---
+** The function 'eldoc-message' now accepts a single argument.
+Programs that called it with multiple arguments before should pass
+them through 'format' first.  Even that is discouraged: for ElDoc
+support, you should set 'eldoc-documentation-function' instead of
+calling 'eldoc-message' directly.
 
 * Lisp Changes in Emacs 26.1
 

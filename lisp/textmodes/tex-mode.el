@@ -1775,7 +1775,7 @@ Mark is left at original location."
 ;; Note this does not handle things like mismatched brackets inside
 ;; begin/end blocks.
 ;; Needs to handle escaped parens for tex-validate-*.
-;; http://lists.gnu.org/archive/html/bug-gnu-emacs/2007-09/msg00038.html
+;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2007-09/msg00038.html
 ;; Does not handle escaped parens when latex-handle-escaped-parens is nil.
 (defun latex-forward-sexp-1 ()
   "Like (forward-sexp 1) but aware of multi-char elements and escaped parens."

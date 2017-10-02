@@ -432,7 +432,7 @@ and the face `diff-added' for added lines.")
   "If non-nil, empty lines are valid in unified diffs.
 Some versions of diff replace all-blank context lines in unified format with
 empty lines.  This makes the format less robust, but is tolerated.
-See http://lists.gnu.org/archive/html/emacs-devel/2007-11/msg01990.html")
+See https://lists.gnu.org/archive/html/emacs-devel/2007-11/msg01990.html")
 
 (defconst diff-hunk-header-re
   (concat "^\\(?:" diff-hunk-header-re-unified ".*\\|\\*\\{15\\}.*\n\\*\\*\\* .+ \\*\\*\\*\\*\\|[0-9]+\\(,[0-9]+\\)?[acd][0-9]+\\(,[0-9]+\\)?\\)$"))

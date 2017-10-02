@@ -712,7 +712,7 @@ before it.  An argument of zero, rather than doing nothing, transposes
 the balanced expressions ending at or after point and the mark.
 
 @kindex C-M-@@
-@kindex C-M-@key{SPC}
+@kindex C-M-SPC
 @findex mark-sexp
   To operate on balanced expressions with a command which acts on the
 region, type @kbd{C-M-@key{SPC}} (@code{mark-sexp}).  This sets the
@@ -1467,7 +1467,7 @@ Prompt for the name of a function defined in any file Emacs has
 parsed, and move point there (@code{semantic-complete-jump}).
 
 @item C-c , @key{SPC}
-@kindex C-c , @key{SPC}
+@kindex C-c , SPC
 Display a list of possible completions for the symbol at point
 (@code{semantic-complete-analyze-inline}).  This also activates a set
 of special key bindings for choosing a completion: @key{RET} accepts
@@ -1716,8 +1716,8 @@ preprocessor commands.
 @item C-c C-@key{DEL}
 @itemx C-c @key{DEL}
 @findex c-hungry-delete-backwards
-@kindex C-c C-@key{DEL} (C Mode)
-@kindex C-c @key{DEL} (C Mode)
+@kindex C-c C-DEL (C Mode)
+@kindex C-c DEL (C Mode)
 Delete the entire block of whitespace preceding point (@code{c-hungry-delete-backwards}).
 
 @item C-c C-d
@@ -1725,8 +1725,8 @@ Delete the entire block of whitespace preceding point (@code{c-hungry-delete-bac
 @itemx C-c @key{Delete}
 @findex c-hungry-delete-forward
 @kindex C-c C-d (C Mode)
-@kindex C-c C-@key{Delete} (C Mode)
-@kindex C-c @key{Delete} (C Mode)
+@kindex C-c C-Delete (C Mode)
+@kindex C-c Delete (C Mode)
 Delete the entire block of whitespace after point (@code{c-hungry-delete-forward}).
 @end table
 

@@ -552,7 +552,7 @@ https://savannah.nongnu.org/projects/listhelper
 
 An "X-Debbugs-Envelope-To" header is used to keep track of where the
 mail was actually bound for:
-http://lists.gnu.org/archive/html/emacs-devel/2009-11/msg01211.html
+https://lists.gnu.org/archive/html/emacs-devel/2009-11/msg01211.html
 
 ** Mailing list recipient/sender filters.
 The following mailman filters are useful to stop messages being

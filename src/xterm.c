@@ -3870,7 +3870,7 @@ static void
 x_shift_glyphs_for_insert (struct frame *f, int x, int y, int width, int height, int shift_by)
 {
 /* Never called on a GUI frame, see
-   http://lists.gnu.org/archive/html/emacs-devel/2015-05/msg00456.html
+   https://lists.gnu.org/archive/html/emacs-devel/2015-05/msg00456.html
 */
   XCopyArea (FRAME_X_DISPLAY (f), FRAME_X_DRAWABLE (f), FRAME_X_DRAWABLE (f),
 	     f->output_data.x->normal_gc,
@@ -12524,7 +12524,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   dpyinfo->xcb_connection = xcb_conn;
 #endif
 
-  /* http://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
+  /* https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
   dpyinfo->smallest_font_height = 1;
   dpyinfo->smallest_char_width = 1;
 

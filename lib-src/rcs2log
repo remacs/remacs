@@ -45,7 +45,7 @@ Each entry looks something like this:
 
 	* rcs2log (Help): Clarify wording of the usage message.
 	Problem reported by Alan Mackenzie in
-	<http://mail.gnu.org/archive/html/bug-gnu-emacs/2004-04/msg00188.html>.
+	<https://mail.gnu.org/archive/html/bug-gnu-emacs/2004-04/msg00188.html>.
 
 ChangeLog entries contain the current date, full name, email address
 including hostname, the name of the affected file, and commentary.
