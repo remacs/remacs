@@ -49,7 +49,6 @@
 # if HAVE_DUSTAT_H              /* AIX PS/2 */
 #  include <sys/dustat.h>
 # endif
-# include "full-read.h"
 #endif
 
 /* Many space usage primitives use all 1 bits to denote a value that is
