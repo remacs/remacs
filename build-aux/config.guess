@@ -2,7 +2,7 @@
 # Attempt to guess a canonical system name.
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
-timestamp='2017-09-16'
+timestamp='2017-09-26'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -1400,8 +1400,20 @@ EOF
 	exit ;;
 esac
 
+echo "$0: unable to guess system type" >&2
+
+case "${UNAME_MACHINE}:${UNAME_SYSTEM}" in
+    mips:Linux | mips64:Linux)
+	# If we got here on MIPS GNU/Linux, output extra information.
+	cat >&2 <<EOF
+
+NOTE: MIPS GNU/Linux systems require a C compiler to fully recognize
+the system type. Please install a C compiler and try again.
+EOF
+	;;
+esac
+
 cat >&2 <<EOF
-$0: unable to guess system type
 
 This script (version $timestamp), has failed to recognize the
 operating system you are using. If your script is old, overwrite *all*
@@ -1441,7 +1453,7 @@ EOF
 exit 1
 
 # Local variables:
-# eval: (add-hook 'write-file-hooks 'time-stamp)
+# eval: (add-hook 'write-file-functions 'time-stamp)
 # time-stamp-start: "timestamp='"
 # time-stamp-format: "%:y-%02m-%02d"
 # time-stamp-end: "'"
