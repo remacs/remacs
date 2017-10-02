@@ -61,7 +61,7 @@ Emacs @value{EMACSVER}.
 
 This FAQ is maintained by the developers and users of Emacs on MS Windows.
 If you find any errors, or have any suggestions, please send them to
-the @url{http://lists.gnu.org/mailman/listinfo/help-emacs-windows,
+the @url{https://lists.gnu.org/mailman/listinfo/help-emacs-windows,
 help-emacs-windows} mailing list.
 
 At time of writing, the latest version of GNU Emacs is version @value{EMACSVER}.
@@ -2283,10 +2283,10 @@ and you can view the FAQ by typing @kbd{C-h C-f}. Other resources include:
 @cindex help, mailing lists
 
 The official mailing list for Windows specific help and discussion is
-@url{http://lists.gnu.org/mailman/listinfo/help-emacs-windows,
+@url{https://lists.gnu.org/mailman/listinfo/help-emacs-windows,
 help-emacs-windows}.  See that link for information on how to subscribe
 or unsubscribe.  The
-@uref{http://lists.gnu.org/archive/html/help-emacs-windows/, list archives}
+@uref{https://lists.gnu.org/archive/html/help-emacs-windows/, list archives}
 are available online.
 
 @c ------------------------------------------------------------

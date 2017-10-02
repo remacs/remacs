@@ -594,7 +594,7 @@ the last file dropped is selected."
 (declare-function tool-bar-mode "tool-bar" (&optional arg))
 
 ;; Based on a function by David Reitter <dreitter@inf.ed.ac.uk> ;
-;; see http://lists.gnu.org/archive/html/emacs-devel/2005-09/msg00681.html .
+;; see https://lists.gnu.org/archive/html/emacs-devel/2005-09/msg00681.html .
 (defun ns-toggle-toolbar (&optional frame)
   "Switches the tool bar on and off in frame FRAME.
  If FRAME is nil, the change applies to the selected frame."
@@ -878,7 +878,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
   ;; Mac OS X Lion introduces PressAndHold, which is unsupported by this port.
   ;; See this thread for more details:
-  ;; http://lists.gnu.org/archive/html/emacs-devel/2011-06/msg00505.html
+  ;; https://lists.gnu.org/archive/html/emacs-devel/2011-06/msg00505.html
   (ns-set-resource nil "ApplePressAndHoldEnabled" "NO")
 
   (x-apply-session-resources)

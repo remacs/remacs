@@ -1503,7 +1503,7 @@ Neal Ziring, Teodor Zlatanov, and Detlev Zundel.
 advanced, self-documenting, customizable, extensible editor Emacs.
 (The @samp{G} in
 @c Workaround makeinfo 4 bug.
-@c http://lists.gnu.org/archive/html/bug-texinfo/2004-08/msg00009.html
+@c https://lists.gnu.org/archive/html/bug-texinfo/2004-08/msg00009.html
 @iftex
 @acronym{GNU, @acronym{GNU}'s Not Unix}
 @end iftex

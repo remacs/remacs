@@ -195,7 +195,7 @@ Puts a full-stop before comments on a line by themselves."
 			      9) 8)))))) ; add 9 to ensure at least two blanks
       (goto-char pt))))
 
-;; http://lists.gnu.org/archive/html/emacs-devel/2007-10/msg01869.html
+;; https://lists.gnu.org/archive/html/emacs-devel/2007-10/msg01869.html
 (defun nroff-insert-comment-function ()
   "Function for `comment-insert-comment-function' in `nroff-mode'."
   (indent-to (nroff-comment-indent))

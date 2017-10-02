@@ -54,7 +54,7 @@ fx
       6:fx
 ")
     ;; * Test multi-line matches, this is the first test from
-    ;; http://lists.gnu.org/archive/html/emacs-devel/2005-06/msg01008.html
+    ;; https://lists.gnu.org/archive/html/emacs-devel/2005-06/msg01008.html
     ;; where numbers are replaced with letters.
     ("a\na" 0 "\
 a
@@ -70,7 +70,7 @@ a
        :a
 ")
     ;; * Test multi-line matches, this is the second test from
-    ;; http://lists.gnu.org/archive/html/emacs-devel/2005-06/msg01008.html
+    ;; https://lists.gnu.org/archive/html/emacs-devel/2005-06/msg01008.html
     ;; where numbers are replaced with letters.
     ("a\nb" 0 "\
 a

@@ -45,7 +45,7 @@
 ;; There's a mailing list for this, as well.  Its name is:
 ;;            tramp-devel@gnu.org
 ;; You can use the Web to subscribe, under the following URL:
-;;            http://lists.gnu.org/mailman/listinfo/tramp-devel
+;;            https://lists.gnu.org/mailman/listinfo/tramp-devel
 ;;
 ;; For the adventurous, the current development sources are available
 ;; via Git.  You can find instructions about this at the following URL:
@@ -4642,7 +4642,7 @@ Only works for Bourne-like shells."
 ;;   are.  (Andrea Crotti)
 ;;
 ;; * Run emerge on two remote files.  Bug is described here:
-;;   <http://www.mail-archive.com/tramp-devel@nongnu.org/msg01041.html>.
+;;   <https://www.mail-archive.com/tramp-devel@nongnu.org/msg01041.html>.
 ;;   (Bug#6850)
 ;;
 ;; * Refactor code from different handlers.  Start with

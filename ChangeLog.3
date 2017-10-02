@@ -1302,7 +1302,7 @@
 	Fix another CANNOT_DUMP problem
 
 	Reported by Robert Pluim in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-11/msg00468.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-11/msg00468.html
 	* src/emacs.c (might_dump) [CANNOT_DUMP]: Move enum decl from here ...
 	* src/lisp.h: ... to here.
 
@@ -1342,7 +1342,7 @@
 	Fix undefined refs on some GNU/Linux hosts
 
 	Problem reported by Ken Raeburn in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-11/msg00463.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-11/msg00463.html
 	* src/emacs.c (heap_bss_diff) [CANNOT_DUMP]: Remove, as this is
 	not needed in the CANNOT_UNDUMP case.  All uses removed.  This
 	removes unwanted references to my_endbss and my_endbss_static,
@@ -4361,7 +4361,7 @@
 	Define _GNU_SOURCE in files delaying config.h
 
 	Problem reported by Richard Copley in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-09/msg00440.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-09/msg00440.html
 	* src/w32.c, src/w32notify.c, src/w32proc.c (_GNU_SOURCE):
 	Define early.
 
@@ -4403,7 +4403,7 @@
 	Define _GNU_SOURCE in unexmacosx.c
 
 	Problem reported by Bob Halley in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-09/msg00427.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-09/msg00427.html
 	* src/unexmacosx.c (_GNU_SOURCE): Define if not already defined.
 
 2016-09-16  Alan Mackenzie  <acm@muc.de>
@@ -5206,14 +5206,14 @@
 
 	* nt/inc/ms-w32.h (execve) [MINGW_W64]: Make the prototype match
 	the GCC 6 builtin, to avoid warnings.  For more details, see
-	http://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00721.html.
+	https://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00721.html.
 
 2016-08-31  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix over-substitution of quotes on error
 
 	Problem reported by Tino Calancha in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-09/msg00000.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-09/msg00000.html
 	* src/print.c (print_error_message):
 	Substitute quotes in errmsg only when gotten from a property.
 
@@ -5452,7 +5452,7 @@
 
 	* src/keyboard.c (parse_solitary_modifier): If the argument SYMBOL
 	is not a symbol, don't try to recognize it.  See
-	http://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00502.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00502.html
 	for the details.
 
 	* test/src/keymap-tests.el (keymap-where-is-internal-test): New
@@ -5565,7 +5565,7 @@
 	Rename option to shell-command-dont-erase-buffer
 
 	Suggested by Clément Pit--Claudel in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00487.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00487.html
 	* lisp/simple.el (shell-command-dont-erase-buffer):
 	(shell-command--save-pos-or-erase):
 	(shell-command--set-point-after-cmd):
@@ -5611,7 +5611,7 @@
 	* lisp/frame.el (delete-other-frames): Delete other frames on
 	FRAME's terminal instead of the current terminal.  Delete
 	non-minibuffer-only surrogate frames too.  See
-	http://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00467.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00467.html
 	* doc/lispref/frames.texi (Deleting Frames): Minor fixes for
 	docs of `delete-frame' and `frame-live-p'.  Add entry for
 	`delete-other-frames'.
@@ -5931,7 +5931,7 @@
 
 	* lisp/server.el (server-reply-print): Fix check for truncated quote
 	sequence at end of message. Problem reported in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00101.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00101.html
 
 2016-08-18  Eli Zaretskii  <eliz@gnu.org>
 
@@ -6008,7 +6008,7 @@
 	Return a sublist of the attributes returned by 'file-attributes'.
 	Suggested by Ted Zlatanov in:
 
-	http://lists.gnu.org/archive/html/emacs-devel/2016-07/msg01195.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-07/msg01195.html
 
 2016-08-17  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -6048,7 +6048,7 @@
 	* doc/emacs/misc.texi (shell-command-not-erase-buffer):
 	Document this feature in the manual.
 	See discussion on:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-07/msg00610.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-07/msg00610.html
 
 2016-08-16  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -6857,7 +6857,7 @@
 	a second time; although it doesn’t hurt, it’s not needed.
 	* src/sysdep.c [!HAVE_GNUTLS]: Don’t include gnutls/crypto.h,
 	as it may not be available.  Problem reported by Glenn Morris in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00100.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00100.html
 
 2016-08-03  Michal Nazarewicz  <mina86@mina86.com>
 
@@ -6889,7 +6889,7 @@
 	Port to systems lacking GNUTLS_NONBLOCK
 
 	Problem reported by Colin Baxter in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00096.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00096.html
 	* src/gnutls.c (Fgnutls_boot): Don’t assume GNUTLS_NONBLOCK is defined.
 
 2016-08-03  Paul Eggert  <eggert@cs.ucla.edu>
@@ -7171,7 +7171,7 @@
 
 	* src/process.c (connect_network_socket):
 	Reverse sense of previous fix.  Problem reported by Ken Brown in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00004.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-08/msg00004.html
 
 2016-08-01  Glenn Morris  <rgm@gnu.org>
 
@@ -8364,7 +8364,7 @@
 	* lisp/ibuffer.el (ibuffer-mode-map): 'ibuffer-mark-by-content-regexp'
 	just bound to '% g'.
 	As suggested in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-07/msg00165.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-07/msg00165.html
 
 2016-07-07  Tino Calancha  <tino.calancha@gmail.com>
 
@@ -8573,7 +8573,7 @@
 	* src/process.c (wait_reading_process_output): Further fix for
 	typo introduced in 2015-07-06T02:19:13Z!eggert@cs.ucla.edu when
 	wait == INFINITY and got_output_end_time is invalid.  See:
-	http://bugs.gnu.org/23864#20
+	https://bugs.gnu.org/23864#20
 
 2016-07-03  Alan Mackenzie  <acm@muc.de>
 
@@ -8705,7 +8705,7 @@
 	strings which affect the stringiness of a piece of text.  This fixes the
 	bug
 	reported in
-	http://lists.gnu.org/archive/html/emacs-devel/2016-06/msg00695.html.
+	https://lists.gnu.org/archive/html/emacs-devel/2016-06/msg00695.html.
 
 	* lisp/progmodes/cc-engine.el (c-truncate-semi-nonlit-pos-cache): new
 	defsubst.
@@ -8927,7 +8927,7 @@
 	Problem reported by Juliusz Chroboczek (Bug#17976)
 	and by Artur Malabarba (Bug#23620).
 	Patch from a suggestion by Andreas Schwab in:
-	http://bugs.gnu.org/17976#39
+	https://bugs.gnu.org/17976#39
 	This patch is for non-MS-Windows platforms.
 	I don't know the situation on MS-Windows.
 	* src/process.c (connecting_status):
@@ -8951,7 +8951,7 @@
 	Fix GNUC_PREREQ for GCC 2.8.1 etc.
 
 	Problem reported by Eli Zaretskii in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-06/msg00608.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-06/msg00608.html
 	* src/conf_post.h (GNUC_PREREQ): Port to GCC versions like GCC
 	2.8.1 (1998), which come before GCC 3.0 and which have nonzero
 	patchlevel numbers.
@@ -8977,7 +8977,7 @@
 	Fix GNUC_PREREQ off-by-1 typo
 
 	Problem reported by Martin Rudalics in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-06/msg00587.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-06/msg00587.html
 	* src/conf_post.h (GNUC_PREREQ) [__GNUC_PATCHLEVEL__]:
 	Fix < vs <= typo.
 
@@ -9245,7 +9245,7 @@
 	* src/lread.c (Fload): Don't overwrite the last character of the
 	file name in FOUND with 'c', unless the file name ended in ".elc"
 	to begin with.  Don't treat empty files as byte-compiled.  See
-	http://lists.gnu.org/archive/html/emacs-devel/2016-06/msg00463.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-06/msg00463.html
 	for more details of the problem this caused.
 
 2016-06-22  Eli Zaretskii  <eliz@gnu.org>
@@ -9675,7 +9675,7 @@
 
 	* src/xfns.c (x_get_monitor_attributes_xrandr): Use #if, not #ifdef.
 	This ports to systems that predate xrandr 1.3. See Christian Lynbech in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-06/msg00198.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-06/msg00198.html
 
 2016-06-14  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -10030,7 +10030,7 @@
 
 	Replace IF_LINT by NONVOLATILE and UNINIT
 
-	Inspired by a suggestion from RMS in: http://bugs.gnu.org/23640#58
+	Inspired by a suggestion from RMS in: https://bugs.gnu.org/23640#58
 	* .dir-locals.el (c-mode): Adjust to macro changes.
 	* src/conf_post.h (NONVOLATILE, UNINIT): New macros (Bug#23640).
 	(IF_LINT): Remove.  All uses replaced by the new macros.
@@ -10297,7 +10297,7 @@
 	* lisp/version.el (emacs-repository-get-version):
 	Parse .git/packed-refs if it exists.
 	Problem reported by Martin Rudalics in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00554.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00554.html
 
 2016-06-01  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -10630,7 +10630,7 @@
 	Don’t document declare-function internals
 
 	Suggested by Stefan Monnier in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00618.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00618.html
 	* doc/lispref/functions.texi (Declaring Functions):
 	* lisp/subr.el (declare-function):
 	* lisp/emacs-lisp/bytecomp.el:
@@ -10716,7 +10716,7 @@
 	Fix byte-compiler pacification for declare-function
 
 	Problem reported by Michael Heerdegen in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00590.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00590.html
 	* lisp/emacs-lisp/bytecomp.el:
 	(byte-compile-macroexpand-declare-function):
 	Revert signature to previous value.
@@ -10963,7 +10963,7 @@
 	Don’t use only last protocol from getaddrinfo
 
 	Problem reported by Ken Brown in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00483.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00483.html
 	* src/process.c (conv_addrinfo_to_lisp): New function.
 	(connect_network_socket): Arg is now a list of addrinfos, not
 	merely IP addresses.  All uses changed.  Use protocol from
@@ -10981,7 +10981,7 @@
 	* lisp/image.el (image--get-image): Require seq here, not at the
 	top level, to avoid ‘(require seq) while preparing to dump’ while
 	bootstrapping.  Suggested by Tino Calancha in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00477.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00477.html
 
 2016-05-22  Nicolas Petton  <nicolas@petton.fr>
 
@@ -11498,7 +11498,7 @@
 	Port autogen.sh to Git 2.4
 
 	Problem reported by Michael Brand in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00367.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00367.html
 	* autogen.sh (git_config): Don't assume that git rev-parse
 	groks --git-common-dir.
 
@@ -12436,7 +12436,7 @@
 
 	* src/buffer.c (Fgenerate_new_buffer_name): Increment count just
 	once each time through the loop.  Reported by Lars Ingebrigtsen in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00918.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00918.html
 
 2016-04-30  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -13209,7 +13209,7 @@
 	Fix socketd fd startup bug that I introduced
 
 	Problem reported by Matthew Leach in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00778.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00778.html
 	* src/emacs.c (main): Indicate more clearly the coupling between
 	the --daemon option and init_process_emacs.
 	* src/lisp.h: Adjust to API changes.
@@ -13269,7 +13269,7 @@
 	This also fixes the mishandling of "\N{CJK COMPATIBILITY
 	IDEOGRAPH-F900}", "\N{VARIATION SELECTOR-1}", etc.
 	Problem reported by Eli Zaretskii in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00614.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00614.html
 	* doc/lispref/nonascii.texi (Character Codes), etc/NEWS: Document this.
 	* lisp/international/mule-cmds.el (char-from-name): New function.
 	(read-char-by-name): Use it.  Document that "BED" is treated as
@@ -13340,7 +13340,7 @@
 	Remove the previous change.
 	(vc-state): Same.  And update the old, incorrect comment about
 	unregistered files
-	(http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00526.html).
+	(https://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00526.html).
 
 	* test/lisp/vc/vc-tests.el (vc-test--state): Remove the check
 	calling `vc-state' on default-directory (VC state is undefined
@@ -13674,7 +13674,7 @@
 	Avoid AC_PREPROC_IFELSE glitch in configure.ac
 
 	Problem reported by Angelo Graziosi in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00545.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00545.html
 	* configure.ac (gl_gcc_warnings): Work around an Autoconf glitch:
 	AC_PREPROC_IFELSE doesn’t generate a simple shell command.
 
@@ -13871,7 +13871,7 @@
 	Port ‘./autogen.sh git’ to non-clones
 
 	Problem reported by Angelo Graziosi in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00341.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00341.html
 	* autogen.sh (do_git): Default to false when the arg is ‘all’ but
 	there is no ‘.git’.
 	(git_common_dir, hooks): New vars.
@@ -14177,7 +14177,7 @@
 	Port redirect-debugging-output to MS-Windows
 
 	Suggested by Eli Zaretskii in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00037.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00037.html
 	* src/print.c [WINDOWSNT]: Include sys/socket.h.
 	* src/w32.c (sys_dup2): Work around problem with MS-Windows _dup2.
 
@@ -14186,7 +14186,7 @@
 	Port redirect-debugging-output to non-GNU/Linux
 
 	Problem reported by Kylie McClain for musl in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-03/msg01592.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-03/msg01592.html
 	* etc/DEBUG, etc/NEWS: Mention this.
 	* src/callproc.c (child_setup) [!MSDOS]:
 	* src/dispnew.c (init_display):
@@ -14772,7 +14772,7 @@
 	Compute a better commit message for merges
 
 	Problem reported by David Engster in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-03/msg01270.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-03/msg01270.html
 	* admin/gitmerge.el (gitmerge-commit-message):
 	Truncate the computed commit message to at most 72 characters per line.
 	(gitmerge-maybe-resume): Don’t use "-" as the commit message for
@@ -14812,7 +14812,7 @@
 
 	* admin/gitmerge.el (gitmerge-skip-regexp): Omit "merge", as it
 	causes false positives.  See:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-03/msg01234.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-03/msg01234.html
 
 2016-03-22  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -15529,7 +15529,7 @@
 	Unbreak the MinGW64 build
 
 	* nt/inc/ms-w32.h [MINGW_W64]: Undefine HAVE_GAI_STRERROR.  See
-	http://lists.gnu.org/archive/html/emacs-devel/2016-03/msg00130.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-03/msg00130.html
 	for the details.  Reported by Angelo Graziosi
 	<angelo.graziosi@alice.it>.
 
@@ -15564,7 +15564,7 @@
 
 	Implement getaddrinfo fallback for MS-Windows
 
-	See http://lists.gnu.org/archive/html/emacs-devel/2016-02/msg01602.html
+	See https://lists.gnu.org/archive/html/emacs-devel/2016-02/msg01602.html
 	for more details.
 
 	* nt/mingw-cfg.site (ac_cv_func_getaddrinfo)
@@ -16907,7 +16907,7 @@
 	Port recent filevercmp addition to MS-Windows
 
 	Reported by Andy Moreton in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-02/msg01302.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-02/msg01302.html
 	* nt/gnulib.mk (libgnu_a_SOURCES): Add filevercmp.c.
 	(EXTRA_DIST): Add filevercmp.h.
 
@@ -18510,7 +18510,7 @@
 	* src/alloc.c (aligned_alloc): Define to private name when a
 	static function, to avoid collision with lisp.h extern decl.
 	Reported by John Yates in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-02/msg00439.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-02/msg00439.html
 
 2016-02-08  David Edmondson  <dme@dme.org>
 
@@ -18761,7 +18761,7 @@
 	Port to FreeBSD x86
 
 	Reported by Herbert J. Skuhra in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-02/msg00336.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-02/msg00336.html
 	* src/lisp.h (NONPOINTER_BITS) [__FreeBSD__]: Zero in this case too,
 	since malloc always returns a multiple of 8 in FreeBSD.
 
@@ -19362,7 +19362,7 @@
 
 	Port new hybrid malloc to FreeBSD
 
-	Problem reported by Wolfgang Jenkner in: http://bugs.gnu.org/22086#118
+	Problem reported by Wolfgang Jenkner in: https://bugs.gnu.org/22086#118
 	* src/gmalloc.c (__malloc_initialize_hook, __after_morecore_hook)
 	(__morecore) [HYBRID_MALLOC]: Define in this case too.
 

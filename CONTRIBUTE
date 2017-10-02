@@ -30,7 +30,7 @@ Discussion about Emacs development takes place on emacs-devel@gnu.org.
 You can subscribe to the emacs-devel@gnu.org mailing list, paying
 attention to postings with subject lines containing "emacs-announce",
 as these discuss important events like feature freezes.  See
-http://lists.gnu.org/mailman/listinfo/emacs-devel for mailing list
+https://lists.gnu.org/mailman/listinfo/emacs-devel for mailing list
 instructions and archives.  You can develop and commit changes in your
 own copy of the repository, and discuss proposed changes on the
 mailing list.  Frequent contributors to Emacs can request write access

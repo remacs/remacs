@@ -4094,7 +4094,7 @@ Instead, just auto-save the buffer and then bury it."
   "Bury this mail BUFFER."
   ;; Note that this is not quite the same as (bury-buffer buffer),
   ;; since bury-buffer does extra stuff with a nil argument.
-  ;; Eg http://lists.gnu.org/archive/html/emacs-devel/2014-01/msg00539.html
+  ;; Eg https://lists.gnu.org/archive/html/emacs-devel/2014-01/msg00539.html
   (with-current-buffer buffer (bury-buffer))
   (if message-return-action
       (apply (car message-return-action) (cdr message-return-action))))
@@ -6678,7 +6678,7 @@ is a function used to switch to and display the mail buffer."
 	;; C-h f compose-mail says that headers should be specified as
 	;; (string . value); however all the rest of message expects
 	;; headers to be symbols, not strings (eg message-header-format-alist).
-	;; http://lists.gnu.org/archive/html/emacs-devel/2011-01/msg00337.html
+	;; https://lists.gnu.org/archive/html/emacs-devel/2011-01/msg00337.html
 	;; We need to convert any string input, eg from rmail-start-mail.
 	(dolist (h other-headers other-headers)
 	  (if (stringp (car h)) (setcar h (intern (capitalize (car h)))))))
