@@ -2033,6 +2033,19 @@ Definitions" to make them defined.
 We list bugs in current versions here.  See also the section on legacy
 systems.
 
+*** On Solaris 10, Emacs crashes during the build process.
+This was reported for Emacs 25.2 on i386-pc-solaris2.10 with Sun
+Studio 12 (Sun C 5.9) and with Oracle Developer Studio 12.6 (Sun C
+5.15), and intermittently for sparc-sun-solaris2.10 with Oracle
+Developer Studio 12.5 (Sun C 5.14).  Disabling compiler optimization
+seems to fix the bug, as does upgrading the Solaris 10 operating
+system to Update 11.  The cause of the bug is unknown: it may be that
+Emacs's archaic memory-allocation scheme is not compatible with
+slightly-older versions of Solaris and/or Oracle Studio, or it may be
+something else.  Since the cause is not known, possibly the bug is
+still present in newer versions of Emacs, Oracle Studio, and/or
+Solaris.  See Bug#26638.
+
 *** On Solaris, C-x doesn't get through to Emacs when you use the console.
 
 This is a Solaris feature (at least on Intel x86 cpus).  Type C-r
