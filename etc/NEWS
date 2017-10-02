@@ -73,6 +73,10 @@ calling 'eldoc-message' directly.
 
 * Lisp Changes in Emacs 27.1
 
+** The 'file-system-info' function is now available on all platforms.
+instead of just Microsoft platforms.  This fixes a get-free-disk-space
+bug on OS X 10.8 and later (Bug#28639).
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

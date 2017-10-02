@@ -198,8 +198,10 @@ The target is used in the prompt for file copy, rename etc."
 
 ; These variables were deleted and the replacements are on files.el.
 ; We leave aliases behind for back-compatibility.
-(defvaralias 'dired-free-space-program 'directory-free-space-program)
-(defvaralias 'dired-free-space-args 'directory-free-space-args)
+(define-obsolete-variable-alias 'dired-free-space-program
+  'directory-free-space-program "27.1")
+(define-obsolete-variable-alias 'dired-free-space-args
+  'directory-free-space-args "27.1")
 
 ;;; Hook variables
 

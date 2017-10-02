@@ -6386,58 +6386,33 @@ if you want to specify options, use `directory-free-space-args'.
 
 A value of nil disables this feature.
 
-If the function `file-system-info' is defined, it is always used in
-preference to the program given by this variable."
+This variable is obsolete; Emacs no longer uses it."
   :type '(choice (string :tag "Program") (const :tag "None" nil))
   :group 'dired)
+(make-obsolete-variable 'directory-free-space-program
+			"ignored, as Emacs uses `file-system-info' instead"
+			"27.1")
 
 (defcustom directory-free-space-args
   (purecopy (if (eq system-type 'darwin) "-k" "-Pk"))
   "Options to use when running `directory-free-space-program'."
   :type 'string
   :group 'dired)
+(make-obsolete-variable 'directory-free-space-args
+			"ignored, as Emacs uses `file-system-info' instead"
+			"27.1")
 
 (defun get-free-disk-space (dir)
   "Return the amount of free space on directory DIR's file system.
 The return value is a string describing the amount of free
 space (normally, the number of free 1KB blocks).
 
-This function calls `file-system-info' if it is available, or
-invokes the program specified by `directory-free-space-program'
-and `directory-free-space-args'.  If the system call or program
-is unsuccessful, or if DIR is a remote directory, this function
-returns nil."
+If DIR's free space cannot be obtained, or if DIR is a remote
+directory, this function returns nil."
   (unless (file-remote-p (expand-file-name dir))
-    ;; Try to find the number of free blocks.  Non-Posix systems don't
-    ;; always have df, but might have an equivalent system call.
-    (if (fboundp 'file-system-info)
-	(let ((fsinfo (file-system-info dir)))
-	  (if fsinfo
-	      (format "%.0f" (/ (nth 2 fsinfo) 1024))))
-      (setq dir (expand-file-name dir))
-      (save-match-data
-	(with-temp-buffer
-	  (when (and directory-free-space-program
-		     ;; Avoid failure if the default directory does
-		     ;; not exist (Bug#2631, Bug#3911).
-                     (let ((default-directory
-                             (locate-dominating-file dir 'file-directory-p)))
-                       (eq (process-file directory-free-space-program
-					 nil t nil
-					 directory-free-space-args
-                                         (file-relative-name dir))
-			   0)))
-	    ;; Assume that the "available" column is before the
-	    ;; "capacity" column.  Find the "%" and scan backward.
-	    (goto-char (point-min))
-	    (forward-line 1)
-	    (when (re-search-forward
-		   "[[:space:]]+[^[:space:]]+%[^%]*$"
-		   (line-end-position) t)
-	      (goto-char (match-beginning 0))
-	      (let ((endpt (point)))
-		(skip-chars-backward "^[:space:]")
-		(buffer-substring-no-properties (point) endpt)))))))))
+    (let ((avail (nth 2 (file-system-info dir))))
+      (if avail
+	  (format "%.0f" (/ avail 1024))))))
 
 ;; The following expression replaces `dired-move-to-filename-regexp'.
 (defvar directory-listing-before-filename-regexp
