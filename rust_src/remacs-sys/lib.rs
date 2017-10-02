@@ -18,8 +18,8 @@ extern crate libc;
 
 pub mod libm;
 
-use libc::{c_char, c_uchar, c_short, c_int, c_double, c_float, c_void, ptrdiff_t, size_t, off_t,
-           time_t, timespec};
+use libc::{c_char, c_uchar, c_short, c_int, c_double, c_void, ptrdiff_t, size_t, off_t, time_t,
+           timespec};
 
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
@@ -234,9 +234,12 @@ pub struct Lisp_Symbol {
   4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
 
 #[repr(C)]
+#[derive(Clone)]
 pub struct Lisp_Vectorlike_Header {
     pub size: ptrdiff_t,
 }
+
+pub static ARRAY_MARK_FLAG: ptrdiff_t = std::isize::MIN;
 
 #[repr(C)]
 pub struct Lisp_Vectorlike {
@@ -808,23 +811,6 @@ pub struct hash_table_test {
     pub hashfn: extern "C" fn(t: *mut hash_table_test, a: Lisp_Object) -> EmacsUint,
 }
 
-#[repr(C)]
-pub struct Lisp_Hash_Table {
-    pub header: Lisp_Vectorlike_Header,
-    pub weak: Lisp_Object,
-    pub hash: Lisp_Object,
-    pub next: Lisp_Object,
-    pub index: Lisp_Object,
-    pub count: ptrdiff_t,
-    pub next_free: ptrdiff_t,
-    pub pure_: bool, // pure is a reserved keyword in Rust
-    pub rehash_threshold: c_float,
-    pub rehash_size: c_float,
-    pub key_and_value: Lisp_Object,
-    pub test: hash_table_test,
-    pub next_weak: *mut Lisp_Hash_Table,
-}
-
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static current_thread: *mut thread_state;
@@ -887,6 +873,18 @@ extern "C" {
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
     pub static Qhash_table_p: Lisp_Object;
+    pub static Qhash_table_test: Lisp_Object;
+    pub static Qkey: Lisp_Object;
+    pub static Qvalue: Lisp_Object;
+    pub static Qkey_or_value: Lisp_Object;
+    pub static Qkey_and_value: Lisp_Object;
+    pub static QCtest: Lisp_Object;
+    pub static Qeql: Lisp_Object;
+    pub static Qeq: Lisp_Object;
+    pub static Qequal: Lisp_Object;
+    pub static QCpurecopy: Lisp_Object;
+    pub static QCsize: Lisp_Object;
+    pub static QCweakness: Lisp_Object;
     pub static Qwrite_region: Lisp_Object;
     pub static Qbuffer_file_coding_system: Lisp_Object;
     pub static Qfont_extra_type: Lisp_Object;
@@ -909,6 +907,8 @@ extern "C" {
     pub static minibuf_level: EmacsInt;
     pub static minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
+
+    pub static gc_in_progress: bool;
 
     pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
@@ -934,6 +934,10 @@ extern "C" {
         multibyte: bool,
     ) -> Lisp_Object;
     pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
+    pub fn mark_vectorlike(ptr: *mut Lisp_Vector);
+    pub fn mark_object(obj: Lisp_Object);
+    pub fn pure_alloc(size: size_t, tag: c_int) -> *mut c_void;
+    pub fn purecopy(obj: Lisp_Object) -> Lisp_Object;
 
     pub fn preferred_coding_system() -> Lisp_Object;
     pub fn Fcoding_system_p(o: Lisp_Object) -> Lisp_Object;
@@ -1016,6 +1020,10 @@ extern "C" {
         pvec_type: PseudovecType,
     ) -> *mut Lisp_Vector;
 
+    pub fn hashfn_eq(ht: *mut hash_table_test, key: Lisp_Object) -> EmacsUint;
+    pub fn hashfn_eql(ht: *mut hash_table_test, key: Lisp_Object) -> EmacsUint;
+    pub fn hashfn_equal(ht: *mut hash_table_test, key: Lisp_Object) -> EmacsUint;
+    pub fn survives_gc_p(o: Lisp_Object) -> bool;
     pub fn extract_data_from_object(
         spec: Lisp_Object,
         start_byte: *mut ptrdiff_t,

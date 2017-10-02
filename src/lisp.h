@@ -1937,15 +1937,7 @@ INLINE int
    definition is done by lread.c's defsym.  */
 #define DEFSYM(sym, name) /* empty */
 
-
-/***********************************************************************
-			     Hash Tables
- ***********************************************************************/
-
-/* The structure of a Lisp hash table.  */
-
-struct hash_table_test
-{
+struct hash_table_test {
   /* Name of the function used to compare keys.  */
   Lisp_Object name;
 
@@ -1962,69 +1954,35 @@ struct hash_table_test
   EMACS_UINT (*hashfn) (struct hash_table_test *t, Lisp_Object);
 };
 
-struct Lisp_Hash_Table
-{
-  /* This is for Lisp; the hash table code does not refer to it.  */
-  struct vectorlike_header header;
+typedef void LispHashTable;
 
-  /* Nil if table is non-weak.  Otherwise a symbol describing the
-     weakness of the table.  */
-  Lisp_Object weak;
+extern void finalize_hashtable(LispHashTable *table);
+extern LispHashTable* purecopy_hash_table(LispHashTable *table);
+extern bool sweep_weak_hashtable(LispHashTable *table, bool remove_entries);
+extern void mark_hashtable(LispHashTable *table);
+extern bool table_not_weak_or_pure(LispHashTable *table);
+extern void sweep_weak_hash_tables(void);
+extern ptrdiff_t hash_lookup (LispHashTable *table, Lisp_Object key, void *unused);
+extern Lisp_Object hash_value_lookup (LispHashTable *table, ptrdiff_t idx);
+extern Lisp_Object hash_key_lookup (LispHashTable *table, ptrdiff_t idx);
+extern Lisp_Object hash_hash_lookup (LispHashTable *table, ptrdiff_t idx);
+extern ptrdiff_t hash_size (LispHashTable *table);
+extern ptrdiff_t hash_count (LispHashTable *table);
+extern void set_hash_key_slot (LispHashTable *table, ptrdiff_t idx, Lisp_Object val);
+extern void set_hash_value_slot (LispHashTable *table, ptrdiff_t idx, Lisp_Object val);
+extern ptrdiff_t hash_put (LispHashTable *table, Lisp_Object key, Lisp_Object value, EMACS_UINT unused);
+extern Lisp_Object new_hash_table (struct hash_table_test test, EMACS_INT size, float unused, float unused_2, Lisp_Object weak, bool pure);
+extern Lisp_Object get_key_and_value(LispHashTable *table);
+extern Lisp_Object hash_weakness(LispHashTable *table);
+extern Lisp_Object hash_test_name(LispHashTable *table);
+extern bool hash_purity(LispHashTable *table);
+extern ptrdiff_t hash_next_free(LispHashTable *table);
 
-  /* Vector of hash codes.  If hash[I] is nil, this means that the
-     I-th entry is unused.  */
-  Lisp_Object hash;
+EMACS_UINT hashfn_eq (struct hash_table_test *ht, Lisp_Object key);
+EMACS_UINT hashfn_eql (struct hash_table_test *ht, Lisp_Object key);
+EMACS_UINT hashfn_equal (struct hash_table_test *ht, Lisp_Object key);
 
-  /* Vector used to chain entries.  If entry I is free, next[I] is the
-     entry number of the next free item.  If entry I is non-free,
-     next[I] is the index of the next entry in the collision chain,
-     or -1 if there is such entry.  */
-  Lisp_Object next;
-
-  /* Bucket vector.  An entry of -1 indicates no item is present,
-     and a nonnegative entry is the index of the first item in
-     a collision chain.  This vector's size can be larger than the
-     hash table size to reduce collisions.  */
-  Lisp_Object index;
-
-  /* Only the fields above are traced normally by the GC.  The ones below
-     `count' are special and are either ignored by the GC or traced in
-     a special way (e.g. because of weakness).  */
-
-  /* Number of key/value entries in the table.  */
-  ptrdiff_t count;
-
-  /* Index of first free entry in free list, or -1 if none.  */
-  ptrdiff_t next_free;
-
-  /* True if the table can be purecopied.  The table cannot be
-     changed afterwards.  */
-  bool pure;
-
-  /* Resize hash table when number of entries / table size is >= this
-     ratio.  */
-  float rehash_threshold;
-
-  /* Used when the table is resized.  If equal to a negative integer,
-     the user rehash-size is the integer -REHASH_SIZE, and the new
-     size is the old size plus -REHASH_SIZE.  If positive, the user
-     rehash-size is the floating-point value REHASH_SIZE + 1, and the
-     new size is the old size times REHASH_SIZE + 1.  */
-  float rehash_size;
-
-  /* Vector of keys and values.  The key of item I is found at index
-     2 * I, the value is found at index 2 * I + 1.
-     This is gc_marked specially if the table is weak.  */
-  Lisp_Object key_and_value;
-
-  /* The comparison and hash functions.  */
-  struct hash_table_test test;
-
-  /* Next weak hash table if this is a weak hash table.  The head
-     of the list is in weak_hash_tables.  */
-  struct Lisp_Hash_Table *next_weak;
-};
-
+#define make_hash_table(test, size, unused, unused_2, weak, pure) new_hash_table (test, size, unused, unused_2, weak, pure)
 
 INLINE bool
 HASH_TABLE_P (Lisp_Object a)
@@ -2032,7 +1990,7 @@ HASH_TABLE_P (Lisp_Object a)
   return PSEUDOVECTORP (a, PVEC_HASH_TABLE);
 }
 
-INLINE struct Lisp_Hash_Table *
+INLINE LispHashTable *
 XHASH_TABLE (Lisp_Object a)
 {
   eassert (HASH_TABLE_P (a));
@@ -2044,30 +2002,36 @@ XHASH_TABLE (Lisp_Object a)
 
 /* Value is the key part of entry IDX in hash table H.  */
 INLINE Lisp_Object
-HASH_KEY (struct Lisp_Hash_Table *h, ptrdiff_t idx)
+HASH_KEY (LispHashTable *ptr, ptrdiff_t idx)
 {
-  return AREF (h->key_and_value, 2 * idx);
+  return hash_key_lookup (ptr, idx);
 }
 
 /* Value is the value part of entry IDX in hash table H.  */
 INLINE Lisp_Object
-HASH_VALUE (struct Lisp_Hash_Table *h, ptrdiff_t idx)
+HASH_VALUE (LispHashTable *ptr, ptrdiff_t idx)
 {
-  return AREF (h->key_and_value, 2 * idx + 1);
+  return hash_value_lookup (ptr, idx);
 }
 
 /* Value is the hash code computed for entry IDX in hash table H.  */
 INLINE Lisp_Object
-HASH_HASH (struct Lisp_Hash_Table *h, ptrdiff_t idx)
+HASH_HASH (LispHashTable *ptr, ptrdiff_t idx)
 {
-  return AREF (h->hash, idx);
+  return hash_hash_lookup (ptr, idx);
 }
 
 /* Value is the size of hash table H.  */
 INLINE ptrdiff_t
-HASH_TABLE_SIZE (struct Lisp_Hash_Table *h)
+HASH_TABLE_SIZE (LispHashTable *ptr)
 {
-  return ASIZE (h->next);
+  return hash_size (ptr);
+}
+
+INLINE ptrdiff_t
+HASH_TABLE_COUNT (LispHashTable *ptr)
+{
+  return hash_count (ptr);
 }
 
 /* Default size for hash tables if not specified.  */
@@ -3162,20 +3126,6 @@ vcopy (Lisp_Object v, ptrdiff_t offset, Lisp_Object *args, ptrdiff_t count)
   memcpy (XVECTOR (v)->contents + offset, args, count * sizeof *args);
 }
 
-/* Functions to modify hash tables.  */
-
-INLINE void
-set_hash_key_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
-{
-  gc_aset (h->key_and_value, 2 * idx, val);
-}
-
-INLINE void
-set_hash_value_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
-{
-  gc_aset (h->key_and_value, 2 * idx + 1, val);
-}
-
 /* Use these functions to set Lisp_Object
    or pointer slots of struct Lisp_Symbol.  */
 
@@ -3362,16 +3312,9 @@ extern void syms_of_syntax (void);
 enum { NEXT_ALMOST_PRIME_LIMIT = 11 };
 extern EMACS_INT next_almost_prime (EMACS_INT) ATTRIBUTE_CONST;
 extern Lisp_Object larger_vector (Lisp_Object, ptrdiff_t, ptrdiff_t);
-extern void sweep_weak_hash_tables (void);
 extern char *extract_data_from_object (Lisp_Object, ptrdiff_t *, ptrdiff_t *);
 EMACS_UINT hash_string (char const *, ptrdiff_t);
 EMACS_UINT sxhash (Lisp_Object, int);
-Lisp_Object make_hash_table (struct hash_table_test, EMACS_INT, float, float,
-			     Lisp_Object, bool);
-ptrdiff_t hash_lookup (struct Lisp_Hash_Table *, Lisp_Object, EMACS_UINT *);
-ptrdiff_t hash_put (struct Lisp_Hash_Table *, Lisp_Object, Lisp_Object,
-		    EMACS_UINT);
-void hash_remove_from_table (struct Lisp_Hash_Table *, Lisp_Object);
 extern struct hash_table_test const hashtest_eq, hashtest_eql, hashtest_equal;
 extern void validate_subarray (Lisp_Object, Lisp_Object, Lisp_Object,
 			       ptrdiff_t, ptrdiff_t *, ptrdiff_t *);

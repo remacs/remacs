@@ -166,7 +166,7 @@ get_composition_id (ptrdiff_t charpos, ptrdiff_t bytepos, ptrdiff_t nchars,
 {
   Lisp_Object id, length, components, key, *key_contents;
   ptrdiff_t glyph_len;
-  struct Lisp_Hash_Table *hash_table = XHASH_TABLE (composition_hash_table);
+  LispHashTable *hash_table = XHASH_TABLE (composition_hash_table);
   ptrdiff_t hash_index;
   EMACS_UINT hash_code;
   enum composition_method method;
@@ -644,7 +644,7 @@ static Lisp_Object gstring_lookup_cache (Lisp_Object);
 static Lisp_Object
 gstring_lookup_cache (Lisp_Object header)
 {
-  struct Lisp_Hash_Table *h = XHASH_TABLE (gstring_hash_table);
+  LispHashTable *h = XHASH_TABLE (gstring_hash_table);
   ptrdiff_t i = hash_lookup (h, header, NULL);
 
   return (i >= 0 ? HASH_VALUE (h, i) : Qnil);
@@ -653,13 +653,11 @@ gstring_lookup_cache (Lisp_Object header)
 Lisp_Object
 composition_gstring_put_cache (Lisp_Object gstring, ptrdiff_t len)
 {
-  struct Lisp_Hash_Table *h = XHASH_TABLE (gstring_hash_table);
-  EMACS_UINT hash;
+  LispHashTable *h = XHASH_TABLE (gstring_hash_table);
   Lisp_Object header, copy;
   ptrdiff_t i;
 
   header = LGSTRING_HEADER (gstring);
-  hash = h->test.hashfn (&h->test, header);
   if (len < 0)
     {
       ptrdiff_t j, glyph_len = LGSTRING_GLYPH_LEN (gstring);
@@ -673,7 +671,7 @@ composition_gstring_put_cache (Lisp_Object gstring, ptrdiff_t len)
   LGSTRING_SET_HEADER (copy, Fcopy_sequence (header));
   for (i = 0; i < len; i++)
     LGSTRING_SET_GLYPH (copy, i, Fcopy_sequence (LGSTRING_GLYPH (gstring, i)));
-  i = hash_put (h, LGSTRING_HEADER (copy), copy, hash);
+  i = hash_put (h, LGSTRING_HEADER (copy), copy, 0);
   LGSTRING_SET_ID (copy, make_number (i));
   return copy;
 }
@@ -681,7 +679,7 @@ composition_gstring_put_cache (Lisp_Object gstring, ptrdiff_t len)
 Lisp_Object
 composition_gstring_from_id (ptrdiff_t id)
 {
-  struct Lisp_Hash_Table *h = XHASH_TABLE (gstring_hash_table);
+  LispHashTable *h = XHASH_TABLE (gstring_hash_table);
 
   return HASH_VALUE (h, id);
 }

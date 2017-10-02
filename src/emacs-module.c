@@ -284,7 +284,7 @@ static emacs_value
 module_make_global_ref (emacs_env *env, emacs_value ref)
 {
   MODULE_FUNCTION_BEGIN (module_nil);
-  struct Lisp_Hash_Table *h = XHASH_TABLE (Vmodule_refs_hash);
+  LispHashTable *h = XHASH_TABLE (Vmodule_refs_hash);
   Lisp_Object new_obj = value_to_lisp (ref);
   EMACS_UINT hashcode;
   ptrdiff_t i = hash_lookup (h, new_obj, &hashcode);
@@ -313,7 +313,7 @@ module_free_global_ref (emacs_env *env, emacs_value ref)
   /* FIXME: Wait a minute.  Shouldn't this function report an error if
      the hash lookup fails?  */
   MODULE_FUNCTION_BEGIN ();
-  struct Lisp_Hash_Table *h = XHASH_TABLE (Vmodule_refs_hash);
+  LispHashTable *h = XHASH_TABLE (Vmodule_refs_hash);
   Lisp_Object obj = value_to_lisp (ref);
   ptrdiff_t i = hash_lookup (h, obj, NULL);
 

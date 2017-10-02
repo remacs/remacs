@@ -6,8 +6,8 @@
 #![feature(global_allocator)]
 
 // Wilfred/remacs#38 : Need to override the allocator for legacy unexec support on Mac.
-#[cfg(all(not(test), target_os = "macos"))]
-extern crate alloc_unexecmacosx;
+#[cfg(not(test))]
+extern crate alloc_unexec;
 
 #[macro_use]
 extern crate lazy_static;
@@ -25,6 +25,7 @@ extern crate rand;
 extern crate sha1;
 extern crate sha2;
 extern crate base64 as base64_crate;
+extern crate fnv;
 
 #[cfg(test)]
 extern crate mock_derive;
@@ -65,12 +66,12 @@ mod util;
 mod minibuf;
 mod cmds;
 
-#[cfg(all(not(test), target_os = "macos"))]
-use alloc_unexecmacosx::OsxUnexecAlloc;
+#[cfg(not(test))]
+use alloc_unexec::UnexecAlloc;
 
-#[cfg(all(not(test), target_os = "macos"))]
+#[cfg(not(test))]
 #[global_allocator]
-static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
+static ALLOCATOR: UnexecAlloc = UnexecAlloc;
 
 use remacs_sys::Lisp_Subr;
 
@@ -196,6 +197,34 @@ pub use buffers::Foverlay_end;
 pub use interactive::Fprefix_numeric_value;
 pub use editfns::Fbolp;
 pub use editfns::Feolp;
+
+// Used in alloc.c, lisp.h
+pub use hashtable::finalize_hashtable;
+pub use hashtable::mark_hashtable;
+pub use hashtable::purecopy_hash_table;
+pub use hashtable::sweep_weak_hash_tables;
+pub use hashtable::hash_lookup;
+pub use hashtable::hash_value_lookup;
+pub use hashtable::hash_key_lookup;
+pub use hashtable::hash_hash_lookup;
+pub use hashtable::hash_size;
+pub use hashtable::set_hash_value_slot;
+pub use hashtable::set_hash_key_slot;
+pub use hashtable::hash_put;
+pub use hashtable::new_hash_table;
+pub use hashtable::table_not_weak_or_pure;
+pub use hashtable::get_key_and_value;
+pub use hashtable::hash_test_name;
+pub use hashtable::hash_purity;
+pub use hashtable::hash_weakness;
+pub use hashtable::hash_next_free;
+pub use hashtable::hash_count;
+pub use hashtable::Fputhash;
+pub use hashtable::Fgethash;
+pub use hashtable::Fmake_hash_table;
+pub use hashtable::Fhash_table_rehash_size;
+pub use hashtable::Fhash_table_rehash_threshold;
+pub use hashtable::Fremhash;
 
 // Used in minibuffer.c
 pub use windows::Fwindow_minibuffer_p;
@@ -339,9 +368,21 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Svector_or_char_table_p);
         defsubr(&*vectors::Svectorp);
         defsubr(&*vectors::Slength);
+        defsubr(&*hashtable::Smake_hash_table);
+        defsubr(&*hashtable::Sputhash);
+        defsubr(&*hashtable::Sgethash);
+        defsubr(&*hashtable::Sremhash);
+        defsubr(&*hashtable::Smaphash);
+        defsubr(&*hashtable::Shash_table_weakness);
+        defsubr(&*hashtable::Sclrhash);
+        defsubr(&*hashtable::Shash_table_count);
+        defsubr(&*hashtable::Shash_table_size);
         defsubr(&*vectors::Selt);
         defsubr(&*vectors::Srecordp);
         defsubr(&*hashtable::Scopy_hash_table);
+        defsubr(&*hashtable::Shash_table_test);
+        defsubr(&*hashtable::Shash_table_rehash_size);
+        defsubr(&*hashtable::Shash_table_rehash_threshold);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
         defsubr(&*crypto::Ssecure_hash);

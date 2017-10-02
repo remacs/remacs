@@ -2,8 +2,9 @@
 name = "remacs"
 version = "0.1.0"
 dependencies = [
- "alloc_unexecmacosx 0.1.0",
+ "alloc_unexec 0.1.0",
  "base64 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fnv 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
  "md5 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -17,7 +18,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "alloc_unexecmacosx"
+name = "alloc_unexec"
 version = "0.1.0"
 dependencies = [
  "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -72,6 +73,11 @@ dependencies = [
 [[package]]
 name = "fake-simd"
 version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "fnv"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -236,6 +242,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum digest-buffer 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "79472b4b47364a1f1c23122d5b5e481b4657714c61617ea91daf6f57549b5f00"
 "checksum errno 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "b2c858c42ac0b88532f48fca88b0ed947cad4f1f64d904bcd6c9f138f7b95d70"
 "checksum fake-simd 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
+"checksum fnv 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)" = "6cc484842f1e2884faf56f529f960cc12ad8c71ce96cc7abba0a067c98fee344"
 "checksum generic-array 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7229d82657e79be00d5f2a110a973ab5340681b945cf1bc022be7cfebf2dc00c"
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 "checksum lazy_static 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)" = "4732c563b9a21a406565c4747daa7b46742f082911ae4753f390dc9ec7ee1a97"

@@ -28,10 +28,10 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  USE_LSB_TAG, MOST_POSITIVE_FIXNUM, MOST_NEGATIVE_FIXNUM, Lisp_Type,
                  Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Float, Lisp_Cons, Lisp_Object, lispsym,
                  make_float, circular_list, internal_equal, Fcons, CHECK_IMPURE, Qnil, Qt,
-                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
-                 Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qplistp, Qintegerp, Qhash_table_p,
-                 Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p,
-                 Qprocessp, Qthreadp, SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qwholenump, Qvectorp,
+                 Qcharacterp, Qlistp, PseudovecType, EqualKind, purecopy, Qhash_table_p, Qconsp,
+                 SYMBOL_NAME, Qinteger_or_marker_p, Qbufferp, Qchar_table_p, Qintegerp, Qplistp,
+                 Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p, Qprocessp, Qthreadp};
 
 #[cfg(test)]
 use functions::ExternCMocks;
@@ -605,10 +605,10 @@ impl LispObject {
     pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
         let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
         debug_assert!(
-            object.is_vectorlike() && object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void
+            object.is_vectorlike() &&
+                object.get_untaggedptr() == hashtable.as_ptr() as *mut c_void &&
+                object.is_hash_table()
         );
-
-        debug_assert!(object.is_hash_table());
         object
     }
 }
@@ -714,6 +714,11 @@ impl LispObject {
         } else {
             wrong_type!(Qconsp, self)
         }
+    }
+
+    #[inline]
+    pub unsafe fn as_cons_unchecked(self) -> LispCons {
+        LispCons(self)
     }
 
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
@@ -1020,6 +1025,13 @@ impl LispObject {
     #[inline]
     pub fn equal_no_quit(self, other: LispObject) -> bool {
         unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::NoQuit, 0, Qnil) }
+    }
+}
+
+impl LispObject {
+    #[inline]
+    pub fn purecopy(self) -> LispObject {
+        unsafe { Self::from_raw(purecopy(self.to_raw())) }
     }
 }
 

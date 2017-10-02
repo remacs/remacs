@@ -57,7 +57,7 @@ static int category_table_version;
 static Lisp_Object
 hash_get_category_set (Lisp_Object table, Lisp_Object category_set)
 {
-  struct Lisp_Hash_Table *h;
+  LispHashTable *h;
   ptrdiff_t i;
   EMACS_UINT hash;
 
