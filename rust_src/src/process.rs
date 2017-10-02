@@ -10,7 +10,7 @@ pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 impl LispProcessRef {
     #[inline]
     fn name(&self) -> LispObject {
-        return LispObject::from_raw(self.name)
+        return LispObject::from_raw(self.name);
     }
 }
 
