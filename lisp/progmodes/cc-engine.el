@@ -5410,8 +5410,7 @@ comment at the start of cc-engine.el for more info."
   ;; value.
   (let (match kwd-sym (prev-match-pos 1)
 	      (s (cdr stack))
-	      (bound-<> (car stack))
-	      )
+	      (bound-<> (car stack)))
     (save-excursion
       (cond
        ((and bound-<> (<= to bound-<>))
@@ -5472,6 +5471,9 @@ comment at the start of cc-engine.el for more info."
 	    (setq s (cdr s))))
 	 ((c-keyword-member kwd-sym 'c-flat-decl-block-kwds)
 	  (push 0 s))))
+      ;; The failing `c-syntactic-re-search-forward' may have left us in the
+      ;; middle of a token, which might be a significant token.  Fix this!
+      (c-beginning-of-current-token)
       (cons (point)
 	    (cons bound-<> s)))))
 
