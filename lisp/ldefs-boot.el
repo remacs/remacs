@@ -4961,12 +4961,16 @@ call other entry points instead, such as `cl-prin1'.
 \(fn OBJECT STREAM)" nil nil)
 
 (autoload 'cl-prin1 "cl-print" "\
-
+Print OBJECT on STREAM according to its type.
+Output is further controlled by the variables
+`cl-print-readably', `cl-print-compiled', along with output
+variables for the standard printing functions.  See Info
+node `(elisp)Output Variables'.
 
 \(fn OBJECT &optional STREAM)" nil nil)
 
 (autoload 'cl-prin1-to-string "cl-print" "\
-
+Return a string containing the `cl-prin1'-printed representation of OBJECT.
 
 \(fn OBJECT)" nil nil)
 
@@ -5032,7 +5036,7 @@ is run).
 (autoload 'color-name-to-rgb "color" "\
 Convert COLOR string to a list of normalized RGB components.
 COLOR should be a color name (e.g. \"white\") or an RGB triplet
-string (e.g. \"#ff12ec\").
+string (e.g. \"#ffff1122eecc\").
 
 Normally the return value is a list of three floating-point
 numbers, (RED GREEN BLUE), each between 0.0 and 1.0 inclusive.
@@ -7412,7 +7416,7 @@ May contain all other options that don't contradict `-l';
 may contain even `F', `b', `i' and `s'.  See also the variable
 `dired-ls-F-marks-symlinks' concerning the `F' switch.
 Options that include embedded whitespace must be quoted
-like this: \\\"--option=value with spaces\\\"; you can use
+like this: \"--option=value with spaces\"; you can use
 `combine-and-quote-strings' to produce the correct quoting of
 each option.
 On systems such as MS-DOS and MS-Windows, which use `ls' emulation in Lisp,
@@ -13072,23 +13076,7 @@ to get the effect of a C-q.
 ;;; Generated autoloads from progmodes/flymake.el
 (push (purecopy '(flymake 0 3)) package--builtin-versions)
 
-;;;***
-
-;;;### (autoloads nil "flymake-proc" "progmodes/flymake-proc.el"
-;;;;;;  (0 0 0 0))
-;;; Generated autoloads from progmodes/flymake-proc.el
-(push (purecopy '(flymake-proc 0 3)) package--builtin-versions)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake-proc" '("flymake-")))
-
-;;;***
-
-;;;### (autoloads nil "flymake-ui" "progmodes/flymake-ui.el" (0 0
-;;;;;;  0 0))
-;;; Generated autoloads from progmodes/flymake-ui.el
-(push (purecopy '(flymake-ui 0 3)) package--builtin-versions)
-
-(autoload 'flymake-mode "flymake-ui" "\
+(autoload 'flymake-mode "flymake" "\
 Toggle Flymake mode on or off.
 With a prefix argument ARG, enable Flymake mode if ARG is
 positive, and disable it otherwise.  If called from Lisp, enable
@@ -13097,22 +13085,22 @@ the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
 
 \(fn &optional ARG)" t nil)
 
-(autoload 'flymake-mode-on "flymake-ui" "\
+(autoload 'flymake-mode-on "flymake" "\
 Turn flymake mode on.
 
 \(fn)" nil nil)
 
-(autoload 'flymake-mode-off "flymake-ui" "\
+(autoload 'flymake-mode-off "flymake" "\
 Turn flymake mode off.
 
 \(fn)" nil nil)
 
-(autoload 'flymake-find-file-hook "flymake-ui" "\
+(autoload 'flymake-find-file-hook "flymake" "\
 
 
 \(fn)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake-ui" '("flymake-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake" '("flymake-")))
 
 ;;;***
 
@@ -13537,7 +13525,7 @@ and choose the directory as the fortune-file.
 Minimum set of parameters to filter for live (on-session) framesets.
 DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
 
-(defvar frameset-persistent-filter-alist (nconc '((background-color . frameset-filter-sanitize-color) (buffer-list . :never) (buffer-predicate . :never) (buried-buffer-list . :never) (delete-before . :never) (font . frameset-filter-shelve-param) (foreground-color . frameset-filter-sanitize-color) (fullscreen . frameset-filter-shelve-param) (GUI:font . frameset-filter-unshelve-param) (GUI:fullscreen . frameset-filter-unshelve-param) (GUI:height . frameset-filter-unshelve-param) (GUI:width . frameset-filter-unshelve-param) (height . frameset-filter-shelve-param) (outer-window-id . :never) (parent-frame . :never) (parent-id . :never) (mouse-wheel-frame . :never) (tty . frameset-filter-tty-to-GUI) (tty-type . frameset-filter-tty-to-GUI) (width . frameset-filter-shelve-param) (window-id . :never) (window-system . :never)) frameset-session-filter-alist) "\
+(defvar frameset-persistent-filter-alist (nconc '((background-color . frameset-filter-sanitize-color) (buffer-list . :never) (buffer-predicate . :never) (buried-buffer-list . :never) (delete-before . :never) (font . frameset-filter-font-param) (foreground-color . frameset-filter-sanitize-color) (fullscreen . frameset-filter-shelve-param) (GUI:font . frameset-filter-unshelve-param) (GUI:fullscreen . frameset-filter-unshelve-param) (GUI:height . frameset-filter-unshelve-param) (GUI:width . frameset-filter-unshelve-param) (height . frameset-filter-shelve-param) (outer-window-id . :never) (parent-frame . :never) (parent-id . :never) (mouse-wheel-frame . :never) (tty . frameset-filter-tty-to-GUI) (tty-type . frameset-filter-tty-to-GUI) (width . frameset-filter-shelve-param) (window-id . :never) (window-system . :never)) frameset-session-filter-alist) "\
 Parameters to filter for persistent framesets.
 DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
 
@@ -22984,6 +22972,13 @@ Many aspects this mode can be customized using
 
 ;;;***
 
+;;;### (autoloads nil "ob-hledger" "org/ob-hledger.el" (0 0 0 0))
+;;; Generated autoloads from org/ob-hledger.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ob-hledger" '("org-babel-")))
+
+;;;***
+
 ;;;### (autoloads nil "ob-io" "org/ob-io.el" (0 0 0 0))
 ;;; Generated autoloads from org/ob-io.el
 
@@ -23155,13 +23150,6 @@ Many aspects this mode can be customized using
 
 ;;;***
 
-;;;### (autoloads nil "ob-scala" "org/ob-scala.el" (0 0 0 0))
-;;; Generated autoloads from org/ob-scala.el
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ob-scala" '("org-babel-")))
-
-;;;***
-
 ;;;### (autoloads nil "ob-scheme" "org/ob-scheme.el" (0 0 0 0))
 ;;; Generated autoloads from org/ob-scheme.el
 
@@ -23231,6 +23219,13 @@ Many aspects this mode can be customized using
 ;;; Generated autoloads from org/ob-tangle.el
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ob-tangle" '("org-babel-")))
+
+;;;***
+
+;;;### (autoloads nil "ob-vala" "org/ob-vala.el" (0 0 0 0))
+;;; Generated autoloads from org/ob-vala.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ob-vala" '("org-babel-")))
 
 ;;;***
 
@@ -23561,7 +23556,6 @@ T     Call `org-todo-list' to display the global todo list, select only
 m     Call `org-tags-view' to display headlines with tags matching
       a condition  (the user is prompted for the condition).
 M     Like `m', but select only TODO entries, no ordinary headlines.
-L     Create a timeline for the current buffer.
 e     Export views to associated files.
 s     Search entries for keywords.
 S     Search entries for keywords, only with TODO keywords.
@@ -23701,8 +23695,9 @@ as a whole, to include whitespace.
   with a colon, this will mean that the (non-regexp) snippets of the
   Boolean search must match as full words.
 
-This command searches the agenda files, and in addition the files listed
-in `org-agenda-text-search-extra-files'.
+This command searches the agenda files, and in addition the files
+listed in `org-agenda-text-search-extra-files' unless a restriction lock
+is active.
 
 \(fn &optional TODO-ONLY STRING EDIT-AT)" t nil)
 
@@ -23872,6 +23867,9 @@ With a `\\[universal-argument] \\[universal-argument]' prefix argument, go to th
 
 When called with a `C-0' (zero) prefix, insert a template at point.
 
+When called with a `C-1' (one) prefix, force prompting for a date when
+a datetree entry is made.
+
 ELisp programs can set KEYS to a string associated with a template
 in `org-capture-templates'.  In this case, interactive selection
 will be bypassed.
@@ -24011,6 +24009,63 @@ Try very hard to provide sensible version strings.
 
 ;;;***
 
+;;;### (autoloads nil "org-duration" "org/org-duration.el" (0 0 0
+;;;;;;  0))
+;;; Generated autoloads from org/org-duration.el
+
+(autoload 'org-duration-set-regexps "org-duration" "\
+Set duration related regexps.
+
+\(fn)" t nil)
+
+(autoload 'org-duration-p "org-duration" "\
+Non-nil when string S is a time duration.
+
+\(fn S)" nil nil)
+
+(autoload 'org-duration-to-minutes "org-duration" "\
+Return number of minutes of DURATION string.
+
+When optional argument CANONICAL is non-nil, ignore
+`org-duration-units' and use standard time units value.
+
+A bare number is translated into minutes.  The empty string is
+translated into 0.0.
+
+Return value as a float.  Raise an error if duration format is
+not recognized.
+
+\(fn DURATION &optional CANONICAL)" nil nil)
+
+(autoload 'org-duration-from-minutes "org-duration" "\
+Return duration string for a given number of MINUTES.
+
+Format duration according to `org-duration-format' or FMT, when
+non-nil.
+
+When optional argument CANONICAL is non-nil, ignore
+`org-duration-units' and use standard time units value.
+
+Raise an error if expected format is unknown.
+
+\(fn MINUTES &optional FMT CANONICAL)" nil nil)
+
+(autoload 'org-duration-h:mm-only-p "org-duration" "\
+Non-nil when every duration in TIMES has \"H:MM\" or \"H:MM:SS\" format.
+
+TIMES is a list of duration strings.
+
+Return nil if any duration is expressed with units, as defined in
+`org-duration-units'.  Otherwise, if any duration is expressed
+with \"H:MM:SS\" format, return `h:mm:ss'.  Otherwise, return
+`h:mm'.
+
+\(fn TIMES)" nil nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "org-duration" '("org-duration-")))
+
+;;;***
+
 ;;;### (autoloads "actual autoloads are elsewhere" "org-element"
 ;;;;;;  "org/org-element.el" (0 0 0 0))
 ;;; Generated autoloads from org/org-element.el
@@ -24067,7 +24122,7 @@ Try very hard to provide sensible version strings.
 ;;;### (autoloads nil "org-gnus" "org/org-gnus.el" (0 0 0 0))
 ;;; Generated autoloads from org/org-gnus.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "org-gnus" '("org-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "org-gnus" '("org-gnus-")))
 
 ;;;***
 
@@ -31848,7 +31903,7 @@ Studlify-case the current buffer.
 ;;;### (autoloads nil "subr-x" "emacs-lisp/subr-x.el" (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/subr-x.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "subr-x" '("read-multiple-choice" "string-" "hash-table-" "and-let*" "when-let" "internal--" "if-let" "thread-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "subr-x" '("read-multiple-choice" "string-" "hash-table-" "when-let" "internal--" "if-let" "and-let*" "thread-")))
 
 ;;;***
 
@@ -33660,7 +33715,7 @@ Return a string giving the duration of the Emacs initialization.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "time" '("display-time-" "legacy-style-world-list" "zoneinfo-style-world-list")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "time" '("display-time-" "time--display-world-list" "legacy-style-world-list" "zoneinfo-style-world-list")))
 
 ;;;***
 
@@ -33923,11 +33978,11 @@ relative only to the time worked today, and not to past time.
 ;;;;;;  0 0 0))
 ;;; Generated autoloads from emacs-lisp/timer-list.el
 
-(autoload 'timer-list "timer-list" "\
+(autoload 'list-timers "timer-list" "\
 List all timers in a buffer.
 
 \(fn &optional IGNORE-AUTO NONCONFIRM)" t nil)
- (put 'timer-list 'disabled "Beware: manually canceling timers can ruin your Emacs session.")
+ (put 'list-timers 'disabled "Beware: manually canceling timers can ruin your Emacs session.")
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "timer-list" '("timer-list-")))
 
@@ -34253,8 +34308,10 @@ Value for `tramp-file-name-regexp' for autoload.
 It must match the initial `tramp-syntax' settings.")
 
 (defvar tramp-file-name-regexp tramp-initial-file-name-regexp "\
-Value for `tramp-file-name-regexp' for autoload.
-It must match the initial `tramp-syntax' settings.")
+Regular expression matching file names handled by Tramp.
+This regexp should match Tramp file names but no other file
+names.  When calling `tramp-register-file-name-handlers', the
+initial value is overwritten by the car of `tramp-file-name-structure'.")
 
 (defconst tramp-completion-file-name-regexp-default (concat "\\`/\\(" "\\([^/|:]+:[^/|:]*|\\)*" (if (memq system-type '(cygwin windows-nt)) "\\(-\\|[^/|:]\\{2,\\}\\)" "[^/|:]+") "\\(:[^/|:]*\\)?" "\\)?\\'") "\
 Value for `tramp-completion-file-name-regexp' for default remoting.
@@ -34374,7 +34431,7 @@ Reenable Ange-FTP, when Tramp is unloaded.
 
 ;;;### (autoloads nil "trampver" "net/trampver.el" (0 0 0 0))
 ;;; Generated autoloads from net/trampver.el
-(push (purecopy '(tramp 2 3 3 -1)) package--builtin-versions)
+(push (purecopy '(tramp 2 3 3 26 1)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "trampver" '("tramp-")))
 
@@ -38447,53 +38504,44 @@ Zone out, completely.
 ;;;;;;  "eshell/em-term.el" "eshell/em-tramp.el" "eshell/em-unix.el"
 ;;;;;;  "eshell/em-xtra.el" "facemenu.el" "faces.el" "files.el" "font-core.el"
 ;;;;;;  "font-lock.el" "format.el" "frame.el" "help.el" "hfy-cmap.el"
-;;;;;;  "ibuf-ext.el" "indent.el" "international/characters.el" "international/charprop.el"
-;;;;;;  "international/charscript.el" "international/cp51932.el"
-;;;;;;  "international/eucjp-ms.el" "international/mule-cmds.el"
-;;;;;;  "international/mule-conf.el" "international/mule.el" "international/uni-bidi.el"
-;;;;;;  "international/uni-brackets.el" "international/uni-category.el"
-;;;;;;  "international/uni-combining.el" "international/uni-comment.el"
-;;;;;;  "international/uni-decimal.el" "international/uni-decomposition.el"
-;;;;;;  "international/uni-digit.el" "international/uni-lowercase.el"
-;;;;;;  "international/uni-mirrored.el" "international/uni-name.el"
-;;;;;;  "international/uni-numeric.el" "international/uni-old-name.el"
-;;;;;;  "international/uni-titlecase.el" "international/uni-uppercase.el"
-;;;;;;  "isearch.el" "jit-lock.el" "jka-cmpr-hook.el" "language/burmese.el"
-;;;;;;  "language/cham.el" "language/chinese.el" "language/cyrillic.el"
-;;;;;;  "language/czech.el" "language/english.el" "language/ethiopic.el"
-;;;;;;  "language/european.el" "language/georgian.el" "language/greek.el"
-;;;;;;  "language/hebrew.el" "language/indian.el" "language/japanese.el"
-;;;;;;  "language/khmer.el" "language/korean.el" "language/lao.el"
-;;;;;;  "language/misc-lang.el" "language/romanian.el" "language/sinhala.el"
-;;;;;;  "language/slovak.el" "language/tai-viet.el" "language/thai.el"
-;;;;;;  "language/tibetan.el" "language/utf-8-lang.el" "language/vietnamese.el"
-;;;;;;  "ldefs-boot.el" "leim/ja-dic/ja-dic.el" "leim/leim-list.el"
-;;;;;;  "leim/quail/4Corner.el" "leim/quail/ARRAY30.el" "leim/quail/CCDOSPY.el"
-;;;;;;  "leim/quail/CTLau-b5.el" "leim/quail/CTLau.el" "leim/quail/ECDICT.el"
-;;;;;;  "leim/quail/ETZY.el" "leim/quail/PY-b5.el" "leim/quail/PY.el"
-;;;;;;  "leim/quail/Punct-b5.el" "leim/quail/Punct.el" "leim/quail/QJ-b5.el"
-;;;;;;  "leim/quail/QJ.el" "leim/quail/SW.el" "leim/quail/TONEPY.el"
-;;;;;;  "leim/quail/ZIRANMA.el" "leim/quail/ZOZY.el" "leim/quail/arabic.el"
-;;;;;;  "leim/quail/croatian.el" "leim/quail/cyril-jis.el" "leim/quail/cyrillic.el"
-;;;;;;  "leim/quail/czech.el" "leim/quail/georgian.el" "leim/quail/greek.el"
-;;;;;;  "leim/quail/hanja-jis.el" "leim/quail/hanja.el" "leim/quail/hanja3.el"
-;;;;;;  "leim/quail/hebrew.el" "leim/quail/ipa-praat.el" "leim/quail/latin-alt.el"
-;;;;;;  "leim/quail/latin-ltx.el" "leim/quail/latin-post.el" "leim/quail/latin-pre.el"
-;;;;;;  "leim/quail/persian.el" "leim/quail/programmer-dvorak.el"
-;;;;;;  "leim/quail/py-punct.el" "leim/quail/pypunct-b5.el" "leim/quail/quick-b5.el"
-;;;;;;  "leim/quail/quick-cns.el" "leim/quail/rfc1345.el" "leim/quail/sgml-input.el"
-;;;;;;  "leim/quail/slovak.el" "leim/quail/symbol-ksc.el" "leim/quail/tamil-dvorak.el"
-;;;;;;  "leim/quail/tsang-b5.el" "leim/quail/tsang-cns.el" "leim/quail/vntelex.el"
-;;;;;;  "leim/quail/vnvni.el" "leim/quail/welsh.el" "loadup.el" "mail/blessmail.el"
-;;;;;;  "mail/rmailedit.el" "mail/rmailkwd.el" "mail/rmailmm.el"
-;;;;;;  "mail/rmailmsc.el" "mail/rmailsort.el" "mail/rmailsum.el"
-;;;;;;  "mail/undigest.el" "menu-bar.el" "mh-e/mh-gnus.el" "mh-e/mh-loaddefs.el"
-;;;;;;  "minibuffer.el" "mouse.el" "net/tramp-loaddefs.el" "newcomment.el"
-;;;;;;  "obarray.el" "org/ob-core.el" "org/ob-keys.el" "org/ob-lob.el"
-;;;;;;  "org/ob-matlab.el" "org/ob-tangle.el" "org/ob.el" "org/org-archive.el"
-;;;;;;  "org/org-attach.el" "org/org-bbdb.el" "org/org-clock.el"
-;;;;;;  "org/org-datetree.el" "org/org-element.el" "org/org-feed.el"
-;;;;;;  "org/org-footnote.el" "org/org-id.el" "org/org-indent.el"
+;;;;;;  "ibuf-ext.el" "indent.el" "international/characters.el" "international/charscript.el"
+;;;;;;  "international/cp51932.el" "international/eucjp-ms.el" "international/mule-cmds.el"
+;;;;;;  "international/mule-conf.el" "international/mule.el" "isearch.el"
+;;;;;;  "jit-lock.el" "jka-cmpr-hook.el" "language/burmese.el" "language/cham.el"
+;;;;;;  "language/chinese.el" "language/cyrillic.el" "language/czech.el"
+;;;;;;  "language/english.el" "language/ethiopic.el" "language/european.el"
+;;;;;;  "language/georgian.el" "language/greek.el" "language/hebrew.el"
+;;;;;;  "language/indian.el" "language/japanese.el" "language/khmer.el"
+;;;;;;  "language/korean.el" "language/lao.el" "language/misc-lang.el"
+;;;;;;  "language/romanian.el" "language/sinhala.el" "language/slovak.el"
+;;;;;;  "language/tai-viet.el" "language/thai.el" "language/tibetan.el"
+;;;;;;  "language/utf-8-lang.el" "language/vietnamese.el" "ldefs-boot.el"
+;;;;;;  "leim/ja-dic/ja-dic.el" "leim/leim-list.el" "leim/quail/4Corner.el"
+;;;;;;  "leim/quail/ARRAY30.el" "leim/quail/CCDOSPY.el" "leim/quail/CTLau-b5.el"
+;;;;;;  "leim/quail/CTLau.el" "leim/quail/ECDICT.el" "leim/quail/ETZY.el"
+;;;;;;  "leim/quail/PY-b5.el" "leim/quail/PY.el" "leim/quail/Punct-b5.el"
+;;;;;;  "leim/quail/Punct.el" "leim/quail/QJ-b5.el" "leim/quail/QJ.el"
+;;;;;;  "leim/quail/SW.el" "leim/quail/TONEPY.el" "leim/quail/ZIRANMA.el"
+;;;;;;  "leim/quail/ZOZY.el" "leim/quail/arabic.el" "leim/quail/croatian.el"
+;;;;;;  "leim/quail/cyril-jis.el" "leim/quail/cyrillic.el" "leim/quail/czech.el"
+;;;;;;  "leim/quail/georgian.el" "leim/quail/greek.el" "leim/quail/hanja-jis.el"
+;;;;;;  "leim/quail/hanja.el" "leim/quail/hanja3.el" "leim/quail/hebrew.el"
+;;;;;;  "leim/quail/ipa-praat.el" "leim/quail/latin-alt.el" "leim/quail/latin-ltx.el"
+;;;;;;  "leim/quail/latin-post.el" "leim/quail/latin-pre.el" "leim/quail/persian.el"
+;;;;;;  "leim/quail/programmer-dvorak.el" "leim/quail/py-punct.el"
+;;;;;;  "leim/quail/pypunct-b5.el" "leim/quail/quick-b5.el" "leim/quail/quick-cns.el"
+;;;;;;  "leim/quail/rfc1345.el" "leim/quail/sgml-input.el" "leim/quail/slovak.el"
+;;;;;;  "leim/quail/symbol-ksc.el" "leim/quail/tamil-dvorak.el" "leim/quail/tsang-b5.el"
+;;;;;;  "leim/quail/tsang-cns.el" "leim/quail/vntelex.el" "leim/quail/vnvni.el"
+;;;;;;  "leim/quail/welsh.el" "loadup.el" "mail/blessmail.el" "mail/rmailedit.el"
+;;;;;;  "mail/rmailkwd.el" "mail/rmailmm.el" "mail/rmailmsc.el" "mail/rmailsort.el"
+;;;;;;  "mail/rmailsum.el" "mail/undigest.el" "menu-bar.el" "mh-e/mh-gnus.el"
+;;;;;;  "mh-e/mh-loaddefs.el" "minibuffer.el" "mouse.el" "net/tramp-loaddefs.el"
+;;;;;;  "newcomment.el" "obarray.el" "org/ob-core.el" "org/ob-keys.el"
+;;;;;;  "org/ob-lob.el" "org/ob-matlab.el" "org/ob-tangle.el" "org/ob.el"
+;;;;;;  "org/org-archive.el" "org/org-attach.el" "org/org-bbdb.el"
+;;;;;;  "org/org-clock.el" "org/org-datetree.el" "org/org-element.el"
+;;;;;;  "org/org-feed.el" "org/org-footnote.el" "org/org-id.el" "org/org-indent.el"
 ;;;;;;  "org/org-install.el" "org/org-irc.el" "org/org-mobile.el"
 ;;;;;;  "org/org-plot.el" "org/org-table.el" "org/org-timer.el" "org/ox-ascii.el"
 ;;;;;;  "org/ox-beamer.el" "org/ox-html.el" "org/ox-icalendar.el"
