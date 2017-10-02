@@ -17,7 +17,7 @@ impl LispProcessRef {
 /// Return t if OBJECT is a process.
 #[lisp_fn]
 pub fn processp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_process())
+    return LispObject::from_bool(object.is_process());
 }
 
 /// Return the process named NAME, or nil if there is none.
@@ -40,6 +40,5 @@ fn get_process(name: LispObject) -> LispObject {
 /// possibly modified to make it unique among process names.
 #[lisp_fn]
 fn process_name(process: LispObject) -> LispObject {
-    process.as_process_or_error()
-        .name()
+    process.as_process_or_error().name()
 }
