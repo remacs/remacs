@@ -492,7 +492,7 @@ by the Emacs maintainers, are shown by @kbd{M-x debbugs-gnu-usertags}.
 @item
 The @samp{bug-gnu-emacs} mailing list (also available as the newsgroup
 @samp{gnu.emacs.bug}).  You can read the list archives at
-@url{http://lists.gnu.org/mailman/listinfo/bug-gnu-emacs}.  This list
+@url{https://lists.gnu.org/mailman/listinfo/bug-gnu-emacs}.  This list
 works as a mirror of the Emacs bug reports and follow-up messages
 which are sent to the bug tracker.  It also contains old bug reports
 from before the bug tracker was introduced (in early 2008).
@@ -507,7 +507,7 @@ The @samp{emacs-pretest-bug} mailing list.  This list is no longer
 used, and is mainly of historical interest.  At one time, it was used
 for bug reports in development (i.e., not yet released) versions of
 Emacs.  You can read the archives for 2003 to mid 2007 at
-@url{http://lists.gnu.org/archive/html/emacs-pretest-bug/}.  Nowadays,
+@url{https://lists.gnu.org/archive/html/emacs-pretest-bug/}.  Nowadays,
 it is an alias for @samp{bug-gnu-emacs}.
 
 @item
@@ -663,7 +663,7 @@ will be sent to the Emacs maintainers at
 @email{bug-gnu-emacs@@gnu.org}.
 @end ifnothtml
 @ifhtml
-@url{http://lists.gnu.org/mailman/listinfo/bug-gnu-emacs, bug-gnu-emacs}.
+@url{https://lists.gnu.org/mailman/listinfo/bug-gnu-emacs, bug-gnu-emacs}.
 @end ifhtml
 (If you want to suggest an improvement or new feature, use the same
 address.)  If you cannot send mail from inside Emacs, you can copy the
@@ -1234,7 +1234,7 @@ If you would like to work on improving Emacs, please contact the maintainers at
 @email{emacs-devel@@gnu.org}.
 @end ifnothtml
 @ifhtml
-@url{http://lists.gnu.org/mailman/listinfo/emacs-devel, the
+@url{https://lists.gnu.org/mailman/listinfo/emacs-devel, the
 emacs-devel mailing list}.
 @end ifhtml
 You can ask for suggested projects or suggest your own ideas.
@@ -1245,7 +1245,7 @@ you have not yet started work, it is useful to contact
 @email{emacs-devel@@gnu.org}
 @end ifnothtml
 @ifhtml
-@url{http://lists.gnu.org/mailman/listinfo/emacs-devel, emacs-devel}
+@url{https://lists.gnu.org/mailman/listinfo/emacs-devel, emacs-devel}
 @end ifhtml
 before you start; it might be possible to suggest ways to make your
 extension fit in better with the rest of Emacs.
@@ -1409,7 +1409,7 @@ Send a message to
 the mailing list @email{help-gnu-emacs@@gnu.org},
 @end ifnothtml
 @ifhtml
-@url{http://lists.gnu.org/mailman/listinfo/help-gnu-emacs, the
+@url{https://lists.gnu.org/mailman/listinfo/help-gnu-emacs, the
 help-gnu-emacs mailing list},
 @end ifhtml
 or post your request on newsgroup @code{gnu.emacs.help}.  (This

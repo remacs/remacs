@@ -1071,7 +1071,7 @@ is given and non-nil, the unwanted frames are iconified instead."
 		 (when mini (setq parms (delq mini parms)))
 		 ;; Leave name in iff it was set explicitly.
 		 ;; This should fix the behavior reported in
-		 ;; http://lists.gnu.org/archive/html/emacs-devel/2007-08/msg01632.html
+		 ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg01632.html
 		 (when (and name (not explicit-name))
 		   (setq parms (delq name parms)))
                  parms))

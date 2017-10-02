@@ -678,7 +678,7 @@ Entry to this mode runs the hooks on `comint-mode-hook'."
   ;; comint-scroll-show-maximum-output is nil, and no-one can remember
   ;; what the original problem was.  If there are problems with point
   ;; not going to the end, consider re-enabling this.
-  ;; http://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00827.html
+  ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00827.html
   ;;
   ;; This makes it really work to keep point at the bottom.
   ;; (make-local-variable 'scroll-conservatively)

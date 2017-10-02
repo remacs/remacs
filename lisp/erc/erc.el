@@ -75,7 +75,7 @@
 (require 'erc-compat)
 
 (defvar erc-official-location
-  "http://emacswiki.org/cgi-bin/wiki/ERC (mailing list: erc-discuss@gnu.org)"
+  "https://emacswiki.org/cgi-bin/wiki/ERC (mailing list: erc-discuss@gnu.org)"
   "Location of the ERC client on the Internet.")
 
 (defgroup erc nil

@@ -8813,7 +8813,7 @@ If it does not exist, create and it switch it to `messages-buffer-mode'."
 ;; rms says this should be done by specifying symbols that define
 ;; versions together with bad values.  This is therefore not as
 ;; flexible as it could be.  See the thread:
-;; http://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00300.html
+;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00300.html
 (defconst bad-packages-alist
   ;; Not sure exactly which semantic versions have problems.
   ;; Definitely 2.0pre3, probably all 2.0pre's before this.

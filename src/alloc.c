@@ -5863,7 +5863,7 @@ mark_pinned_symbols (void)
    where mark_stack finds values that look like live Lisp objects on
    portions of stack that couldn't possibly contain such live objects.
    For more details of this, see the discussion at
-   http://lists.gnu.org/archive/html/emacs-devel/2014-05/msg00270.html.  */
+   https://lists.gnu.org/archive/html/emacs-devel/2014-05/msg00270.html.  */
 static Lisp_Object
 garbage_collect_1 (void *end)
 {

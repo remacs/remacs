@@ -248,7 +248,7 @@ The result has the proper form for `calendar-daylight-savings-starts'."
 ;; TODO it might be better to extract this information directly from
 ;; the system timezone database. But cross-platform...?
 ;; See thread
-;; http://lists.gnu.org/archive/html/emacs-pretest-bug/2006-11/msg00060.html
+;; https://lists.gnu.org/archive/html/emacs-pretest-bug/2006-11/msg00060.html
 (defun calendar-dst-find-data (&optional time)
   "Find data on the first daylight saving time transitions after TIME.
 TIME defaults to `current-time'.  Return value is as described
