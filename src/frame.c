@@ -2542,6 +2542,7 @@ for how to proceed.  */)
   (Lisp_Object frame)
 {
   struct frame *f = decode_live_frame (frame);
+#ifdef HAVE_WINDOW_SYSTEM
   Lisp_Object parent = f->parent_frame;
 
   if (!NILP (parent))
@@ -2562,6 +2563,7 @@ for how to proceed.  */)
 	  return Qnil;
 	}
     }
+#endif	/* HAVE_WINDOW_SYSTEM */
 
   /* Don't allow minibuf_window to remain on an iconified frame.  */
   check_minibuf_window (frame, EQ (minibuf_window, selected_window));
