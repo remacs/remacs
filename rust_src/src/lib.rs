@@ -232,6 +232,9 @@ pub use windows::Fwindow_minibuffer_p;
 // Used in term.c, dired.c
 pub use objects::Fidentity;
 
+#[cfg(test)]
+pub use functions::make_float;
+
 extern "C" {
     fn defsubr(sname: *const Lisp_Subr);
 }
