@@ -259,7 +259,7 @@ AC_ARG_WITH([pop],
   [],
   [case $host in
      *-mingw*) with_pop=yes;;
-     *) with_pop=no;;
+     *) with_pop=no-by-default;;
    esac])
 if test "$with_pop" = yes; then
    AC_DEFINE(MAIL_USE_POP)
@@ -1320,7 +1320,7 @@ dnl For a long time, -znocombreloc was added to LDFLAGS rather than
 dnl LD_SWITCH_SYSTEM_TEMACS.  That is:
 dnl * inappropriate, as LDFLAGS is a user option but this is essential.
 dnl   Eg "make LDFLAGS=... all" could run into problems,
-dnl   http://bugs.debian.org/684788
+dnl   https://bugs.debian.org/684788
 dnl * unnecessary, since temacs is the only thing that actually needs it.
 dnl   Indeed this is where it was originally, prior to:
 dnl   https://lists.gnu.org/archive/html/emacs-pretest-bug/2004-03/msg00170.html
@@ -1398,10 +1398,6 @@ case "$opsys" in
    # emacs, instead of the generic ELF dump code found in unexelf.c.
    # The resulting binary has a complete symbol table, and is better
    # for debugging and other observability tools (debuggers, pstack, etc).
-   #
-   # If you encounter a problem using dldump(), please consider sending
-   # a message to the OpenSolaris tools-linking mailing list:
-   #      http://mail.opensolaris.org/mailman/listinfo/tools-linking
    #
    # It is likely that dldump() works with older Solaris too, but this has
    # not been tested, so for now this change is for Solaris 10 or newer.
@@ -2651,7 +2647,7 @@ if test x"$pkg_check_gtk" = xyes; then
        closing open displays.  This is no problem if you just use
        one display, but if you use more than one and close one of them
        Emacs may crash.
-       See http://bugzilla.gnome.org/show_bug.cgi?id=85715]])
+       See https://bugzilla.gnome.org/show_bug.cgi?id=85715]])
   fi
 
 fi
@@ -4464,7 +4460,6 @@ emacs_broken_SIGIO=no
 
 case $opsys in
   dnl SIGIO exists, but the feature doesn't work in the way Emacs needs.
-  dnl See eg <http://article.gmane.org/gmane.os.openbsd.ports/46831>.
   hpux* | nacl | openbsd | sol2* | unixware )
     emacs_broken_SIGIO=yes
     ;;
@@ -5575,6 +5570,12 @@ if test ! "$with_mailutils"; then
     AC_MSG_WARN([This configuration installs a 'movemail' program
 that retrieves POP3 email via only insecure channels.
 To omit insecure POP3, you can use '$0 --without-pop'.])
+  elif test "$with_pop" = no-by-default; then
+    AC_MSG_WARN([This configuration installs a 'movemail' program
+that does not retrieve POP3 email.  By default, Emacs 25 and earlier
+installed a 'movemail' program that retrieved POP3 email via only
+insecure channels, a practice that is no longer recommended but that
+you can continue to support by using '$0 --with-pop'.])
   fi
 
   case $opsys in
@@ -5586,7 +5587,7 @@ To omit insecure POP3, you can use '$0 --without-pop'.])
       case `(movemail --version) 2>/dev/null` in
 	*Mailutils*) ;;
 	*) emacs_fix_movemail="install GNU Mailutils
-<http://mailutils.org> and $emacs_fix_movemail";;
+<https://mailutils.org> and $emacs_fix_movemail";;
       esac
       AC_MSG_NOTICE([You might want to $emacs_fix_movemail.]);;
   esac
