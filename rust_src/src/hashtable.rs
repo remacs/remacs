@@ -284,7 +284,7 @@ impl LispHashTableRef {
         self.remove_with_hashkey(HashKey::with_object(key, self))
     }
 
-    pub fn get_index(self, key: LispObject) -> ptrdiff_t {
+    fn get_index(self, key: LispObject) -> ptrdiff_t {
         let hash_key = HashKey::with_object(key, self);
         self.map.get(&hash_key).map_or(
             -1,
@@ -294,29 +294,15 @@ impl LispHashTableRef {
 
     pub fn get(self, key: LispObject) -> Option<LispObject> {
         let hash_key = HashKey::with_object(key, self);
-        self.map.get(&hash_key).map(|result| {
-            self.key_and_value[result.idx].value
-        })
+        self.map.get(&hash_key).map(|result| result.object)
     }
 
-    #[inline]
     pub fn get_value_with_index(self, idx: usize) -> LispObject {
         self.key_and_value[idx].value
     }
 
-    #[inline]
     pub fn get_key_with_index(self, idx: usize) -> LispObject {
         self.key_and_value[idx].key
-    }
-
-    #[inline]
-    pub fn set_value_with_index(mut self, object: LispObject, idx: usize) {
-        self.key_and_value[idx].value = object;
-    }
-
-    #[inline]
-    pub fn set_key_with_index(mut self, object: LispObject, idx: usize) {
-        self.key_and_value[idx].key = object;
     }
 
     pub fn clear(mut self) {
