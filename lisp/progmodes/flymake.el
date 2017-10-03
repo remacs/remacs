@@ -36,7 +36,7 @@
 ;;
 ;; The main entry points are `flymake-mode' and `flymake-start'
 ;;
-;; The docstrings of these variabless are relevant to understanding how
+;; The docstrings of these variables are relevant to understanding how
 ;; Flymake works for both the user and the backend programmer:
 ;;
 ;; * `flymake-diagnostic-functions'
@@ -370,8 +370,8 @@ Currently accepted values for REPORT-ACTION are:
   functions should first cancel any ongoing processing from
   previous calls.
 
-* The symbol `:panic', signalling that the backend has
-  encountered an exceptional situation and should be disabled.
+* The symbol `:panic', signaling that the backend has encountered
+  an exceptional situation and should be disabled.
 
 Currently accepted REPORT-KEY arguments are:
 
@@ -401,7 +401,7 @@ the diagnostics of each type.  The recognized properties are:
 * `bitmap', an image displayed in the fringe according to
   `flymake-fringe-indicator-position'.  The value actually
   follows the syntax of `flymake-error-bitmap' (which see).  It
-  is overriden by any `before-string' overlay property.
+  is overridden by any `before-string' overlay property.
 
 * `severity', a non-negative integer specifying the diagnostic's
   severity.  The higher, the more serious.  If the overlay
@@ -501,7 +501,7 @@ associated `flymake-category' return DEFAULT."
            "\n")))
       (default-maybe 'severity (warning-numeric-level :error))
       (default-maybe 'priority (+ 100 (overlay-get ov 'severity))))
-    ;; Some properties can't be overriden
+    ;; Some properties can't be overridden.
     ;;
     (overlay-put ov 'evaporate t)
     (overlay-put ov 'flymake t)
