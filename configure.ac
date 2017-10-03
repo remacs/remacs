@@ -232,9 +232,9 @@ AC_DEFUN([OPTION_DEFAULT_ON], [dnl
    m4_bpatsubst([with_$1], [[^0-9a-z]], [_])=$with_features])dnl
 ])dnl
 
-# FIXME: The default options '--without-mailutils --with-pop' result
-# in a movemail implementation that supports only unencrypted POP3
-# connections.  Encrypted connections should be the default.
+# For retrieving mail, unencrypted network connections are the default
+# only on native MS-Windows platforms.  (FIXME: These platforms should
+# also be secure by default.)
 
 AC_ARG_WITH([mailutils],
   [AS_HELP_STRING([--with-mailutils],
@@ -251,9 +251,16 @@ if test "$with_mailutils" = no; then
 fi
 AC_SUBST([with_mailutils])
 
-OPTION_DEFAULT_ON([pop],
-  [don't support POP mail retrieval with movemail (--without-pop or
-   --with-mailutils is recommended, as movemail POP is insecure)])
+AC_ARG_WITH([pop],
+  [AS_HELP_STRING([--with-pop],
+     [Support POP mail retrieval if Emacs movemail is used (not recommended,
+      as Emacs movemail POP is insecure).  This is the default only on
+      native MS-Windows.])],
+  [],
+  [case $host in
+     *-mingw*) with_pop=yes;;
+     *) with_pop=no;;
+   esac])
 if test "$with_pop" = yes; then
    AC_DEFINE(MAIL_USE_POP)
 fi
