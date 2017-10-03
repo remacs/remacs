@@ -5219,12 +5219,15 @@ AC_SUBST(CARGO_FLAGS)
 
 case "${opsys}" in
   darwin) RUST_DEPS="-ldl -lresolv"
+  	REMACSLIB_NAME="libremacs_lib.a"
         REMACSLIB_CFLAGS="-pthread" ;;
   gnu*) RUST_DEPS="-ldl -lrt"
+    	REMACSLIB_NAME="libremacs_lib.a"
         REMACSLIB_CFLAGS="-pthread" ;;
 esac
 
 if test "${HAVE_W32}" = "yes"; then
+    REMACSLIB_NAME="remacs_lib.lib"
     RUST_DEPS="$RUST_DEPS -lws2_32 -luserenv"
 fi
 
@@ -5237,6 +5240,7 @@ LDFLAGS="$LDFLAGS $LDFLAGS_REMACS"
 AC_SUBST(LIB_REMACS)
 AC_SUBST(RUST_DEPS)
 AC_SUBST(REMACSLIB_CFLAGS)
+AC_SUBST(REMACSLIB_NAME)
 
 if test "${opsys}" = "mingw32"; then
   CPPFLAGS="$CPPFLAGS -DUSE_CRT_DLL=1 -I \${abs_top_srcdir}/nt/inc"

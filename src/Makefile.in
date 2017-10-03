@@ -41,6 +41,7 @@ MKDIR_P = @MKDIR_P@
 # linked with Emacs or is duplicated by the other stuff below.
 # LIBS = @LIBS@
 LIBOBJS = @LIBOBJS@
+REMACSLIB_NAME=@REMACSLIB_NAME@
 
 rust_srcdir=$(top_srcdir)/rust_src
 lispsource = $(top_srcdir)/lisp
@@ -604,7 +605,7 @@ $(RUSTFLAGS_FILE) : FORCE
 macosx_alloc_dir=$(rust_srcdir)/alloc_unexecmacosx
 MACOSX_ALLOC_INPUTS=$(macosx_alloc_dir)/src/** $(macosx_alloc_dir)/Cargo.*
 cargo_manifest=$(rust_srcdir)/Cargo.toml
-LIBREMACS_ARCHIVE=$(rust_srcdir)/target/$(CARGO_BUILD_DIR)/libremacs.a
+LIBREMACS_ARCHIVE=$(rust_srcdir)/target/$(CARGO_BUILD_DIR)/$(REMACSLIB_NAME)
 $(LIBREMACS_ARCHIVE): $(rust_srcdir)/src/** $(rust_srcdir)/remacs-sys/*.rs $(rust_srcdir)/remacs-sys/Cargo.* $(rust_srcdir)/Cargo.* $(MACOSX_ALLOC_INPUTS)
 	RUSTFLAGS=$(RUSTFLAGS) \
 	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path $(cargo_manifest)

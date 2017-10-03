@@ -36,6 +36,7 @@ CARGO_BUILD=@CARGO_BUILD@
 CARGO_CLEAN=@CARGO_CLEAN@
 CARGO_TEST=@CARGO_TEST@
 CARGO_FLAGS=@CARGO_FLAGS@
+REMACSLIB_NAME=@REMACSLIB_NAME@
 
 ifeq ($(findstring --release,$(CARGO_FLAGS)),--release)
 CARGO_BUILD_DIR=release
@@ -192,7 +193,7 @@ SCRIPTS= rcs2log
 EXE_FILES = ${INSTALLABLES} ${UTILITIES} ${DONT_INSTALL}
 
 # Rust files to be linked as part of the executables
-RUST_ARCHIVE = ../rust_src/remacs-lib/target/$(CARGO_BUILD_DIR)/libremacs_lib.a
+RUST_ARCHIVE = ../rust_src/remacs-lib/target/$(CARGO_BUILD_DIR)/$(REMACSLIB_NAME)
 RUST_LIB = $(RUST_ARCHIVE) @RUST_DEPS@
 
 # Specify additional -D flags for movemail. Options:
