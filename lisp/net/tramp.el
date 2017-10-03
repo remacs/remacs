@@ -2079,7 +2079,9 @@ ARGS are the arguments OPERATION has been called with."
 	      substitute-in-file-name unhandled-file-name-directory
 	      vc-registered
 	      ;; Emacs 26+ only.
-	      file-name-case-insensitive-p))
+	      file-name-case-insensitive-p
+	      ;; Emacs 27+ only.
+	      file-system-info))
     (if (file-name-absolute-p (nth 0 args))
 	(nth 0 args)
       default-directory))
