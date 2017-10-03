@@ -193,10 +193,13 @@
 
 	ibuffer: compare marks with EQ
 
-	* lisp/ibuffer (ibuffer-update-title-and-summary, ibuffer-redisplay-current)
+	* lisp/ibuffer.el:
+	(ibuffer-update-title-and-summary)
+	(ibuffer-redisplay-current)
 	(ibuffer-buffer-name-face, ibuffer-unmark-all)
 	(ibuffer-count-deletion-lines, ibuffer-buffer-names-with-mark):
-	Use 'eq' instead of 'char-equal' when comparing mark characters (Bug#25000).
+	Use 'eq' instead of 'char-equal' when comparing mark characters
+	(Bug#25000).
 	* test/lisp/ibuffer-tests.el (ibuffer-test-Bug25000):
 	Update test result as pass.
 
@@ -341,7 +344,7 @@
 
 	Make TAB and M-TAB run widget-forward and widget-backward (bug#25091)
 
-	* lisp/gnus/mm-decode (mm-convert-shr-links): Avoid `shr-next-link'
+	* lisp/gnus/mm-decode.el (mm-convert-shr-links): Avoid `shr-next-link'
 	and `shr-previous-link' so TAB and M-TAB run `widget-forward' and
 	`widget-backward' instead (bug#25091).
 
@@ -1138,7 +1141,7 @@
 
 	Allow user control of progress messages in cpp.el
 
-	* progmodes/cpp.el (cpp-message-min-time-interval): New defcustom.
+	* lisp/progmodes/cpp.el (cpp-message-min-time-interval): New defcustom.
 	(cpp-progress-time): Use 'cpp-message-min-time-interval'.  Improve
 	the doc string.
 	(cpp-highlight-buffer): Use 'cpp-progress-message' instead of
@@ -1216,7 +1219,7 @@
 	This option allows the user to specify where to place point after these
 	commands.
 
-	* comint.el (comint-move-point-for-matching-input): New user option.
+	* lisp/comint.el (comint-move-point-for-matching-input): New user option.
 	(comint-previous-matching-input-from-input): Use user option.
 
 2016-11-22  Michael Albinus  <michael.albinus@gmx.de>
@@ -1804,7 +1807,7 @@
 	Check for header-line-format instead.
 	* lisp/emulation/viper.el (viper-load-custom-file): Reference
 	major-mode instead.
-	* lisp-mail-feedmail.el (feedmail-fill-to-cc-fill-column): Use
+	* lisp/mail/feedmail.el (feedmail-fill-to-cc-fill-column): Use
 	fill-column instead.
 
 2016-11-15  Simen Heggestøyl  <simenheg@gmail.com>
@@ -1844,9 +1847,9 @@
 
 	Update verilog-mode.el
 
-	* verilog-mode.el (verilog-read-decls, verilog-calc-1): Fix
-	"default clocking" indentation and preventing AUTOs from working,
-	bug1084.  Reported by Alan Morgan.
+	* lisp/progmodes/verilog-mode.el (verilog-read-decls)
+	(verilog-calc-1): Fix "default clocking" indentation and
+	preventing AUTOs from working, bug1084.  Reported by Alan Morgan.
 	(verilog-diff-report): Fix `verilog-diff-report'
 	not returning bad status on differences, bug1087.  Reported by
 	Eric Jackowski.
@@ -1920,7 +1923,7 @@
 
 	* lisp/net/tramp-adb.el (tramp-adb-maybe-open-connection):
 	* lisp/net/tramp-gvfs.el (tramp-gvfs-maybe-open-connection):
-	* lisp/net/lisp/net/tramp-sh.el (tramp-maybe-open-connection):
+	* lisp/net/tramp-sh.el (tramp-maybe-open-connection):
 	* lisp/net/tramp-smb.el (tramp-smb-maybe-open-connection): Use it.
 
 	* test/lisp/files-x-tests.el: New file.
@@ -1953,7 +1956,7 @@
 	* lisp/international/mule.el (auto-coding-alist-lookup):
 	* lisp/files.el (file-truename):
 	(abbreviate-file-name, set-auto-mode, file-relative-name):
-	* package.el (package-untar-buffer): Use
+	* lisp/emacs-lisp/package.el (package-untar-buffer): Use
 	'file-name-case-insensitive-p' instead of 'system-type' to test
 	case-insensitivity.
 
@@ -2254,7 +2257,7 @@
 
 	Fix references to long obsoleted functions/aliases
 
-	* doc/lispintro/emacs-list-intro.texi (Miscellaneous):
+	* doc/lispintro/emacs-lisp-intro.texi (Miscellaneous):
 	* doc/misc/cl.texi (Conditionals):
 	* doc/misc/speedbar.texi (Major Display Modes): Use string-to-number,
 	not string-to-int.
@@ -3079,13 +3082,13 @@
 
 	Only two of the commands there were autoloaded, one of which is an
 	easter egg.
-	* lisp/miscl.el (copy-from-above-command):
-	* lisp/miscl.el (zap-up-to-char):
-	* lisp/miscl.el (mark-beginning-of-buffer):
-	* lisp/miscl.el (mark-end-of-buffer):
-	* lisp/miscl.el (upcase-char):
-	* lisp/miscl.el (forward-to-word):
-	* lisp/miscl.el (backward-to-word):
+	* lisp/misc.el (copy-from-above-command):
+	* lisp/misc.el (zap-up-to-char):
+	* lisp/misc.el (mark-beginning-of-buffer):
+	* lisp/misc.el (mark-end-of-buffer):
+	* lisp/misc.el (upcase-char):
+	* lisp/misc.el (forward-to-word):
+	* lisp/misc.el (backward-to-word):
 	Add autoload cookie.
 
 2016-10-22  Martin Rudalics  <rudalics@gmx.at>
@@ -3157,7 +3160,7 @@
 
 	See Bug#24747.
 
-	* progmodes/cc-mode-tests.el: Rename from cc-mode.el; fix typo in
+	* test/lisp/progmodes/cc-mode-tests.el: Rename from cc-mode.el; fix typo in
 	file-local variable; add comments to make checkdoc happy.
 
 2016-10-20  Michael Albinus  <michael.albinus@gmx.de>
@@ -3330,14 +3333,14 @@
 
 	use full time objects (lists) instead of floats when possible
 
-	* midnight.el (midnight-buffer-display-time): Remove
+	* lisp/midnight.el (midnight-buffer-display-time): Remove
 	(clean-buffer-list): Use float time only for time comparison
 
 2016-10-15  Sam Steingold  <sds@gnu.org>
 
 	Save and restore buffer-display-time
 
-	* desktop.el (desktop-locals-to-save): Add `buffer-display-time'
+	* lisp/desktop.el (desktop-locals-to-save): Add `buffer-display-time'
 	(desktop-read): Set `desktop-file-modtime' before loading the desktop file
 	(desktop-create-buffer): Adjust `buffer-display-time' for the downtime
 
@@ -3351,7 +3354,7 @@
 	bracketed paste for that buffer.  If bracketed paste is inhiited for at
 	least one buffer in a terminal, it is disabled for the whole terminal.
 
-	* term/xterm.el (xterm-inhibit-bracketed-paste-mode): New mode to
+	* lisp/term/xterm.el (xterm-inhibit-bracketed-paste-mode): New mode to
 	inhibit XTerm bracketed paste per buffer.
 	(xterm--buffer-terminals, xterm--update-bracketed-paste)
 	(xterm--bracketed-paste-possible, xterm--is-xterm): New helper
@@ -3361,7 +3364,7 @@
 	(terminal-init-xterm): Update bracketed paste status when
 	initializing an XTerm and on window configuration change.
 
-	* term.el (term-char-mode, term-line-mode): Inhibit XTerm
+	* lisp/term.el (term-char-mode, term-line-mode): Inhibit XTerm
 	bracketed paste in char mode.
 
 2016-10-15  Dima Kogan  <dima@secretsauce.net>
@@ -3437,7 +3440,7 @@
 
 	Add test for Bug#24627
 
-	* /test/lisp/thingatpt-tests.el (thing-at-point-bug24627): New test.
+	* test/lisp/thingatpt-tests.el (thing-at-point-bug24627): New test.
 
 2016-10-12  Eli Zaretskii  <eliz@gnu.org>
 
@@ -3633,7 +3636,7 @@
 
 2016-10-05  Mark Oteiza  <mvoteiza@udel.edu>
 
-	* lisp/url-url-parse.el (url-generic-parse-url): Unquote macro URL argument.
+	* lisp/url/url-parse.el (url-generic-parse-url): Unquote macro URL argument.
 
 2016-10-05  Mark Oteiza  <mvoteiza@udel.edu>
 
@@ -5432,13 +5435,13 @@
 	* lisp/net/tramp-adb.el (tramp-adb-parse-device-names)
 	(tramp-adb-maybe-open-connection):
 	* lisp/net/tramp-cache.el (tramp-get-connection-property):
-	* tramp-gvfs.el (tramp-gvfs-handle-file-notify-add-watch):
+	* lisp/net/tramp-gvfs.el (tramp-gvfs-handle-file-notify-add-watch):
 	* lisp/net/tramp-gw.el (tramp-gw-gw-proc-sentinel)
 	(tramp-gw-aux-proc-sentinel, tramp-gw-open-connection):
-	* tramp-sh.el (tramp-process-sentinel)
+	* lisp/net/tramp-sh.el (tramp-process-sentinel)
 	(tramp-sh-handle-file-notify-add-watch)
 	(tramp-maybe-open-connection):
-	* lisp/net/lisp/net/lisp/net/tramp-smb.el (tramp-smb-action-with-tar)
+	* lisp/net/tramp-smb.el (tramp-smb-action-with-tar)
 	(tramp-smb-handle-copy-directory, tramp-smb-action-get-acl)
 	(tramp-smb-handle-process-file, tramp-smb-action-set-acl)
 	(tramp-smb-get-cifs-capabilities)
@@ -6386,7 +6389,7 @@
 	This can happen with `revert-buffer' or sometimes `find-file', when the file
 	is already in a buffer, but the file has been changed outside of Emacs.
 
-	* lisp/progmodes/cc-mode (c-after-change): When we detect a missing
+	* lisp/progmodes/cc-mode.el (c-after-change): When we detect a missing
 	invocation of c-before-change-functions, we assume the changed region is the
 	entire buffer, and call c-before-change explicitly before proceding.
 
@@ -6828,7 +6831,7 @@
 
 	Widen in certain low level CC Mode functions.  This fixes bug #24148.
 
-	* lisp/progmodes/cc-engine (c-state-semi-pp-to-literal)
+	* lisp/progmodes/cc-engine.el (c-state-semi-pp-to-literal)
 	(c-state-full-pp-to-literal): Widen around the functionality.
 	(c-parse-ps-state-below): Correct the order of save-excursion and
 	save-restriction.
@@ -7001,7 +7004,8 @@
 
 2016-08-02  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* cl-generic.el: Fix problems introduced by new load-history format
+	* lisp/emacs-lisp/cl-generic.el: Fix problems introduced by new
+	load-history format
 
 	* lisp/emacs-lisp/cl-generic.el (cl--generic-load-hist-format): New function.
 	(cl-generic-define-method, cl--generic-describe): Use it.
@@ -7128,7 +7132,7 @@
 
 	Don’t (require 'cl)
 
-	* test/src/regex-test.el: Don’t (require 'cl).
+	* test/src/regex-tests.el: Don’t (require 'cl).
 	(regex-tests-PCRE): s/loop/cl-loop/
 
 2016-08-02  Michal Nazarewicz  <mina86@mina86.com>
@@ -7292,8 +7296,8 @@
 	prompt the user to save it, so the customization is not lost on
 	restart.
 
-	* gnus-srvr.el (gnus-server-toggle-cloud-method-server): Prompt to
-	save the customization of `gnus-cloud-method'.
+	* lisp/gnus/gnus-srvr.el (gnus-server-toggle-cloud-method-server):
+	Prompt to save the customization of `gnus-cloud-method'.
 
 2016-07-27  Ken Brown  <kbrown@cornell.edu>
 
@@ -7344,7 +7348,8 @@
 
 2016-07-25  Ted Zlatanov  <tzz@lifelogs.com>
 
-	* gnus-cloud.el (gnus-cloud-encode-data): Fix 'base64-gzip encoding.
+	* lisp/gnus/gnus-cloud.el (gnus-cloud-encode-data): Fix
+	'base64-gzip encoding.
 
 2016-07-25  Andrew Hyatt  <ahyatt@gmail.com>
 
@@ -7940,7 +7945,7 @@
 
 2016-07-12  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* cl-generic.el (cl-defmethod): Make docstring dynamic
+	* lisp/emacs-lisp/cl-generic.el (cl-defmethod): Make docstring dynamic
 
 	* lisp/emacs-lisp/cl-generic.el (cl-defmethod): Make docstring dynamic.
 	(cl--generic-make-defmethod-docstring): New function for that.
@@ -7999,7 +8004,7 @@
 	* src/gtkutil.c (xg_hide_tip): New function.
 	(xg_hide_tooltip): Adjust to cancel GTK event loop timeout if needed.
 	* src/menu.c (Fx_popup_menu): Adjust call to Fx_hide_tip.
-	* src/nsfns.c (toplevel): Remove 'tip_frame' leftover.
+	* src/nsfns.m (toplevel): Remove 'tip_frame' leftover.
 	* src/w32fns.c (unwind_create_tip_frame): Remove.
 	(w32_display_monitor_attributes_list)
 	(w32_display_monitor_attributes_list_fallback): Use FRAME_TOOLTIP_P.
@@ -8086,7 +8091,7 @@
 
 	Dired always read file system
 
-	* dired.el (dired-always-read-filesystem): Add new option.
+	* lisp/dired.el (dired-always-read-filesystem): Add new option.
 	(dired-mark-files-containing-regexp): Use it (Bug#22694).
 	* doc/emacs/dired.texi: Mention it in the manual.
 	* test/lisp/dired-tests.el (dired-test-bug22694): Add test.
@@ -8289,8 +8294,8 @@
 
 	Copy buffer names to kill ring
 
-	* ibuf-ext.el (ibuffer-copy-buffername-as-kill): New command.
-	* lisp/ibuffer (ibuffer-mode-map): Bound it to 'B'.
+	* lisp/ibuf-ext.el (ibuffer-copy-buffername-as-kill): New command.
+	* lisp/ibuffer.el (ibuffer-mode-map): Bound it to 'B'.
 	;* etc/NEWS: Add entry for this new feature.
 
 2016-07-07  Tino Calancha  <tino.calancha@gmail.com>
@@ -8313,8 +8318,8 @@
 
 	Prevent NS event loop being re-entered (bug#11049)
 
-	* nsterm.m (ns_read_socket, ns_select): Return -1 if already in event
-	loop instead of aborting.
+	* src/nsterm.m (ns_read_socket, ns_select): Return -1 if already
+	in event loop instead of aborting.
 
 2016-07-07  Alan Third  <alan@idiocy.org>
 
@@ -8519,11 +8524,11 @@
 	* configure.ac [USE_X_TOOLKIT]: Define X_TOOLKIT_EDITRES if
 	_XEditResCheckMessages is declared in X11/Xmu/Editres.h and may be
 	linked with -lXmu.  This should work with any non-ancient Xmu library.
-	* xfns.c (toplevel): Remove old cruft.
+	* src/xfns.c (toplevel): Remove old cruft.
 	(x_window) [USE_X_TOOLKIT]: Use X_TOOLKIT_EDITRES.
-	* xterm.c (toplevel): Remove old cruft.
+	* src/xterm.c (toplevel): Remove old cruft.
 	(handle_one_xevent): Use X_TOOLKIT_EDITRES.
-	* xterm.h (toplevel): Include X11/Xmu/Editres.h if X_TOOLKIT_EDITRES.
+	* src/xterm.h (toplevel): Include X11/Xmu/Editres.h if X_TOOLKIT_EDITRES.
 
 2016-07-04  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -9661,7 +9666,8 @@
 
 2016-06-15  Ted Zlatanov  <tzz@lifelogs.com>
 
-	* generic-x.el (ansible-inventory-generic-mode): Warn if value is missing
+	* lisp/generic-x.el (ansible-inventory-generic-mode): Warn if
+	value is missing
 
 2016-06-15  Tim Chambers  <tbc@alum.mit.edu>  (tiny change)
 
@@ -10333,7 +10339,7 @@
 
 	Fix incomplete handling of translation table in a coding system.
 
-	* coding.c (get_translation): New arg NCHARS.  Even if TRANS
+	* src/coding.c (get_translation): New arg NCHARS.  Even if TRANS
 	is an alist, return a character or a vector of character.
 	(produce_chars): Adjust for the above change.
 	(consume_chars): Likewise.
@@ -11721,8 +11727,8 @@
 
 	Fixes bug #16759 and bug #23476.
 
-	* .dir-locals: Put the c-noise-macros-with-paren-names setting back into the C
-	Mode value.
+	* .dir-locals.el: Put the c-noise-macros-with-paren-names setting
+	back into the C Mode value.
 
 	* lisp/progmodes/cc-mode.el: (c-basic-common-init): Remove the call to
 	c-make-macro-with-semi-re.
@@ -12100,8 +12106,7 @@
 
 2016-05-04  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* lisp/emulation/viper(-cmd)?.el: Use lexical-binding.
-
+	* lisp/emulation/viper.el:
 	* lisp/emulation/viper-cmd.el: Use lexical-binding.
 	(viper-change-state-to-vi, viper-change-state-to-emacs): Allow dummy
 	args, for use in advice-add.
@@ -12346,8 +12351,9 @@
 
 	gitmerge: Add cherry pick to gitmerge-skip-regexp
 
-	* gitmerge.el (gitmerge-skip-regexp): Add "cherry picked from commit",
-	  which is the string appended by 'git cherry-pick -x'.
+	* admin/gitmerge.el (gitmerge-skip-regexp): Add "cherry picked
+	from commit", which is the string appended by 'git cherry-pick
+	-x'.
 
 2016-05-01  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -12642,7 +12648,8 @@
 
 2016-04-30  Alan Mackenzie  <acm@muc.de>
 
-	* .dir-locals:  Amend for correct fontification of *.[ch] containing "IF_LINT"
+	* .dir-locals.el: Amend for correct fontification of *.[ch]
+	containing "IF_LINT"
 
 2016-04-30  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -12669,7 +12676,7 @@
 
 	CC Mode: Recognize a noise macro with parens after a declarator's identifier
 
-	* lisp/progmodes/cc-engine (c-forward-decl-or-cast-1): In the while loop
+	* lisp/progmodes/cc-engine.el (c-forward-decl-or-cast-1): In the while loop
 	following comment "Skip over type decl suffix operators." insert code also
 	to check for noise macros with parentheses.
 
@@ -13173,9 +13180,10 @@
 
 	Add a number of Python 3 exceptions
 
-	* lisp/progmoes/python.el (python-font-lock-keywords): Clean up the exception
-	list, adding a number of new Python 3 exceptions and moving some exceptions
-	to the Python 2 and 3 list as Python 2.7 includes them.
+	* lisp/progmodes/python.el (python-font-lock-keywords): Clean up
+	the exception list, adding a number of new Python 3 exceptions and
+	moving some exceptions to the Python 2 and 3 list as Python 2.7
+	includes them.
 
 2016-04-26  Anders Lindgren  <andlind@gmail.com>
 
@@ -13475,12 +13483,12 @@
 
 	Compute User-Agent dynamically in url-http
 
-	* url-http.el (url-http-user-agent-string): Compute User-Agent
-	string dynamically.
+	* lisp/url/url-http.el (url-http-user-agent-string): Compute
+	User-Agent string dynamically.
 	(url-http--user-agent-default-string): New function.
 
-	* url-vars.el (url-privacy-level): Allow `emacs' in list of
-	information not to send.
+	* lisp/url/url-vars.el (url-privacy-level): Allow `emacs' in list
+	of information not to send.
 	(url-user-agent): Add nil and `default' options; do not
 	pre-compute value.
 
@@ -13581,7 +13589,7 @@
 
 	Use 'ucs-names' for character name escapes
 
-	* lread.c (invalid_character_name, check_scalar_value)
+	* src/lread.c (invalid_character_name, check_scalar_value)
 	(parse_code_after_prefix, character_name_to_code): New helper
 	functions that use 'ucs-names' and parsing for CJK ideographs.
 	(read_escape): Use helper functions.
@@ -13605,7 +13613,7 @@
 
 	Implement named character escapes, similar to Perl
 
-	* lread.c (init_character_names): New function.
+	* src/lread.c (init_character_names): New function.
 	(read_escape): Read Perl-style named character escape sequences.
 	(syms_of_lread): Initialize new variable 'character_names'.
 	* test/src/lread-tests.el (lread-char-empty-name): Add test file
@@ -13652,13 +13660,13 @@
 
 	Prevent bootstrap autoload backup files
 
-	 * lisp/emacs-lisp/autoload (autoload-find-generated-file): Suppress
-	   backups in newly created file.
+	* lisp/emacs-lisp/autoload.el (autoload-find-generated-file): Suppress
+	backups in newly created file.
 
-	  (autoload-ensure-default-file): Function split into two.
-	  (autoload-ensure-file-writeable): New function from split.
+	(autoload-ensure-default-file): Function split into two.
+	(autoload-ensure-file-writeable): New function from split.
 
-	  (Bug#23203)
+	(Bug#23203)
 
 2016-04-20  Paul Eggert  <eggert@penguin.cs.ucla.edu>
 
@@ -14955,8 +14963,8 @@
 	* lisp/progmodes/cc-engine.el (c-back-over-member-initializers): Check
 	more robustly for ":" token when searching backwards for it.
 
-	* lisp/progmodes/cc-langs (c-:$-multichar-token-regexp): New language
-	variable.
+	* lisp/progmodes/cc-langs.el (c-:$-multichar-token-regexp): New
+	language variable.
 
 	[This reapplies commit 9e5452f7166e3634f2d8e943815ed722e1672714,
 	which was inadvertently lost by merge commit
@@ -15159,15 +15167,15 @@
 
 	Add a Catalan language environment
 
-	* international/mule-cmds.el (locale-language-names): Map locale
+	* lisp/international/mule-cmds.el (locale-language-names): Map locale
 	  language name `ca' to language environment `Catalan'.
 
-	* language/european.el: Add definition of language environment for
-	  the Catalan language.
+	* lisp/language/european.el: Add definition of language
+	environment for the Catalan language.
 
-	* leim/quail/latin-pre.el: Add quail rule to the `catalan-prefix'
-	  input method to support input of middle dot characters through
-	  composition (bug#18279).
+	* lisp/leim/quail/latin-pre.el: Add quail rule to the
+	`catalan-prefix' input method to support input of middle dot
+	characters through composition (bug#18279).
 
 2016-03-19  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -15820,7 +15828,7 @@
 
 	This is possible in all functions where we catch signals anyway.
 
-	* emacs-module.c (module_make_global_ref, module_funcall)
+	* src/emacs-module.c (module_make_global_ref, module_funcall)
 	(module_copy_string_contents, module_make_string): Use xsignal0
 	and CHECK macros for argument checks.
 
@@ -15832,7 +15840,7 @@
 	and negate its sense.  Use it via AC_SUBST, not AC_DEFINE,
 	and have its value be either empty or --no-build-details.
 	All uses changed.  Change option to --disable-build-details.
-	* doc/lispref/cmdargs.texi (Initial Options):
+	* doc/emacs/cmdargs.texi (Initial Options):
 	Document --no-build-details.
 	* doc/lispref/internals.texi (Building Emacs):
 	* etc/NEWS:
@@ -16335,9 +16343,9 @@
 
 	Make checkdoc warn about variables described as "True"
 
-	* checkdoc.el (checkdoc-this-string-valid-engine): Docstrings for
-	variables "True...", and functions "Return true...", should usually be
-	"non-nil" (bug#15506).
+	* lisp/emacs-lisp/checkdoc.el (checkdoc-this-string-valid-engine):
+	Docstrings for variables "True...", and functions "Return
+	true...", should usually be "non-nil" (bug#15506).
 
 2016-02-24  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -16738,7 +16746,7 @@
 
 	Test message-strip-subject-trailing-was
 
-	* test/lisp/gnus/message-test.el (message-strip-subject-trailing-was):
+	* test/lisp/gnus/message-tests.el (message-strip-subject-trailing-was):
 	New test (bug#22632).
 
 2016-02-22  Michal Nazarewicz  <mina86@mina86.com>
@@ -16775,7 +16783,7 @@
 	* lisp/gnus/gnus-rfc1843.el: New file for Gnus/rfc1843
 	interface functions.
 
-	* lisp/gnus/rfc1843.el: Move all Gnus-specifig functions to
+	* lisp/gnus/gnus-rfc1843.el: Move all Gnus-specifig functions to
 	gnus-rfc1843.
 
 2016-02-22  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -16791,7 +16799,7 @@
 
 	Don't require mm-util
 
-	* lisp/gnus/ietf-drums.el (mm-util): Don't require.
+	* lisp/mail/ietf-drums.el (mm-util): Don't require.
 
 2016-02-22  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -17435,7 +17443,7 @@
 
 	* lisp/gnus/pop3.el: Ditto.
 
-	* lisp/gnus/sieve-manage.el: Ditto.
+	* lisp/net/sieve-manage.el: Ditto.
 
 	* lisp/net/network-stream.el (open-protocol-stream): Make obsolete.
 
@@ -17460,7 +17468,7 @@
 
 	Remove compat functions from starttls.el
 
-	* lisp/gnus/starttls.el
+	* lisp/net/starttls.el
 	(starttls-set-process-query-on-exit-flag): Remove.
 
 2016-02-13  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -17480,7 +17488,7 @@
 
 	Remove compat code from rfc2047
 
-	* lisp/gnus/rfc2047.el (rfc2047-encode-message-header): Remove
+	* lisp/mail/rfc2047.el (rfc2047-encode-message-header): Remove
 	compat code.
 	(rfc2047-decode-string): Ditto.
 
@@ -17817,9 +17825,9 @@
 
 	Fix encoding problem introduced by previous patch series
 
-	* lisp/gnus/rfc2047.el: Ditto (bug#22648).
+	* lisp/mail/rfc2047.el: Ditto (bug#22648).
 
-	* lisp/gnus/rfc2231.el: Fix problem created by the
+	* lisp/mail/rfc2231.el: Fix problem created by the
 	mm-replace-in-string conversion.
 
 2016-02-12  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -17915,7 +17923,7 @@
 
 	Make sieve-manage require sasl
 
-	* lisp/gnus/sieve-manage.el: Fix compilation warning by
+	* lisp/net/sieve-manage.el: Fix compilation warning by
 	requiring sasl.
 
 2016-02-11  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -18021,7 +18029,7 @@
 
 	Don't use mm-with-unibyte-buffer in utf7
 
-	* lisp/gnus/utf7.el (utf7-fragment-encode): Don't use
+	* lisp/international/utf7.el (utf7-fragment-encode): Don't use
 	mm-with-unibyte-buffer.
 
 2016-02-11  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -18102,7 +18110,7 @@
 
 	Remove XEmacs compat code from ietf-drums.el
 
-	* lisp/gnus/ietf-drums.el (ietf-drums-syntax-table): Drop
+	* lisp/mail/ietf-drums.el (ietf-drums-syntax-table): Drop
 	XEmacs compat.
 
 2016-02-10  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -18295,7 +18303,7 @@
 
 	Remove compat code from compface.el
 
-	* lisp/gnus/compface.el: Remove XEmacs compat code throughout.
+	* lisp/image/compface.el: Remove XEmacs compat code throughout.
 
 2016-02-09  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -18526,7 +18534,7 @@
 
 	Make `message-beginning-of-line' aware of folded headers
 
-	* lisp/gnus/message.pl (message-beginning-of-header): New function which
+	* lisp/gnus/message.el (message-beginning-of-header): New function which
 	moves point to the beginning of a mail header.  The function is aware of
 	folded headers and with non-nil argument looks for the true beginning of
 	a header while with nil argument moves to the indented text of header's
@@ -19209,7 +19217,7 @@
 
 	Build fix for --enable-check-lisp-object-type
 
-	* process.c (check_for_dns): Type fix reported by YAMAMOTO
+	* src/process.c (check_for_dns): Type fix reported by YAMAMOTO
 	Mitsuharu.
 
 2016-02-01  Glenn Morris  <rgm@gnu.org>
@@ -19225,7 +19233,7 @@
 
 	Boot parameter check fix
 
-	* process.c (send_process): Fix test for boot parameters noted
+	* src/process.c (send_process): Fix test for boot parameters noted
 	by Andy Moreton.
 
 2016-02-01  Paul Eggert  <eggert@cs.ucla.edu>
@@ -19251,7 +19259,7 @@
 
 	Return the correct server port number
 
-	* process.c (connect_network_socket): Return the correct
+	* src/process.c (connect_network_socket): Return the correct
 	server port number.
 
 2016-01-31  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -19264,7 +19272,7 @@
 
 	Better async error reporting
 
-	* process.c (connect_network_socket): Mark failed processes
+	* src/process.c (connect_network_socket): Mark failed processes
 	with a better error message.
 	(check_for_dns): Ditto.
 
@@ -19314,7 +19322,7 @@
 
 	Windows build fix
 
-	* process.c (Fmake_network_process): Build fix for systems
+	* src/process.c (Fmake_network_process): Build fix for systems
 	without local sockets.
 
 2016-01-31  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -19325,21 +19333,21 @@
 
 	Fix GC problem in async TLS connection
 
-	* process.h: All Lisp_Object slots have to come first,
+	* src/process.h: All Lisp_Object slots have to come first,
 	otherwise they won't be protected from gc.
 
 2016-01-31  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Further TLS async work
 
-	* gnutls.c (boot_error): New function to either signal an
+	* src/gnutls.c (boot_error): New function to either signal an
 	error or return an error code.
 	(Fgnutls_boot): Don't signal errors when running asynchronously.
 
-	* process.h (pset_status): Move here from process.c to be
+	* src/process.h (pset_status): Move here from process.c to be
 	able to use from gnutls.c.
 
-	* process.c (connect_network_socket): Do the TLS boot here
+	* src/process.c (connect_network_socket): Do the TLS boot here
 	when running asynchronously.
 	(wait_reading_process_output): Rework the dns_processes
 	handling for more safety.
@@ -19456,7 +19464,7 @@
 
 	Fix segfault from double free
 
-	* process.c (check_for_dns): Protect against double free
+	* src/process.c (check_for_dns): Protect against double free
 	issues.
 
 2016-01-30  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -19744,7 +19752,7 @@
 
 	Re-enable checks in member, memql, delete to complain about non-lists
 
-		* fns.c (Fmember, Fmemql, Fdelete): Revert 2007-10-16 change.
+	* src/fns.c (Fmember, Fmemql, Fdelete): Revert 2007-10-16 change.
 
 2016-01-30  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -19754,7 +19762,7 @@
 
 	Make async resolution more efficient
 
-	* process.c (wait_reading_process_output): Use a list of
+	* src/process.c (wait_reading_process_output): Use a list of
 	process objects instead of looping through an array to check
 	for name resolution.  This should be much faster.
 
@@ -19768,66 +19776,66 @@
 
 	Compilation for for systems with getaddrinfo_a
 
-	* process.c (Fmake_network_process): Make stuff work again on
+	* src/process.c (Fmake_network_process): Make stuff work again on
 	systems with getaddrinfo_a.
 
 2016-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Save correct server data
 
-	* process.c (connect_network_socket): Save the correct contact
+	* src/process.c (connect_network_socket): Save the correct contact
 	info for servers.
 
 2016-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Compilation for for non-GNU systems
 
-	* process.c (Fmake_network_process): Make compilation work
+	* src/process.c (Fmake_network_process): Make compilation work
 	again on hosts that don't have getaddrinfo_a.
 
 2016-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Avoid memory leaks in async DNS
 
-	* process.c (check_for_dns): Free async DNS resources after
+	* src/process.c (check_for_dns): Free async DNS resources after
 	they've been used.
 
 2016-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
-	* process.c (check_for_dns): Free the result data.
+	* src/process.c (check_for_dns): Free the result data.
 
 2016-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Fix server connections
 
-	* process.c (Fmake_network_process): Make creating server
+	* src/process.c (Fmake_network_process): Make creating server
 	listening ports work again.
 
 2016-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Further make_network_process clean up
 
-	* process.c (Fmake_network_process): Remove setting of unused
+	* src/process.c (Fmake_network_process): Remove setting of unused
 	family variable.
 
 2016-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Clean up GETADDRINFO usage in make-network-process
 
-	* process.c (Fmake_network_process): Clean up the GETADDRINFO
+	* src/process.c (Fmake_network_process): Clean up the GETADDRINFO
 	handling.
 
 2016-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Implement asynchronous name resolution
 
-	* process.c (Fmake_network_process): Do asynchronous DNS
+	* src/process.c (Fmake_network_process): Do asynchronous DNS
 	lookups if we have getaddrinfo_a and the user requests :nowait.
 	(check_for_dns): New function.
 	(wait_reading_process_output): Check for pending name
 	resolution in the idle loop.
 
-	* process.h: Add structure for async DNS.
+	* src/process.h: Add structure for async DNS.
 
 2016-01-28  Glenn Morris  <rgm@gnu.org>
 
@@ -19841,7 +19849,7 @@
 
 	Fix memory leak
 
-	* process.c (connect_network_socket): Free previous sockaddr
+	* src/process.c (connect_network_socket): Free previous sockaddr
 	before allocating a new one.
 
 2016-01-28  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -19877,7 +19885,7 @@
 
 2016-01-27  Glenn Morris  <rgm@gnu.org>
 
-	* test/lisp/vc/vc-hg.el: Move from test/automated/.
+	* test/lisp/vc/vc-hg-tests.el: Move from test/automated/.
 
 2016-01-25  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -20144,7 +20152,7 @@
 
 2016-01-17  Bill Wohler  <wohler@newt.com>
 
-	* mh-e.el (mh-version): Add +git to version.
+	* lisp/mh-e/mh-e.el (mh-version): Add +git to version.
 
 2016-01-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -20186,7 +20194,8 @@
 
 2016-01-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* elisp-mode.el (elisp--font-lock-flush-elisp-buffers): Fix comment
+	* lisp/progmodes/elisp-mode.el
+	(elisp--font-lock-flush-elisp-buffers): Fix comment
 
 2016-01-16  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -20231,7 +20240,8 @@
 
 2016-01-15  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* xmltok.el: Mark the "sole --" rather than the comment opener
+	* lisp/nxml/xmltok.el: Mark the "sole --" rather than the comment
+	opener.
 
 	* lisp/nxml/xmltok.el (xmltok-scan-after-comment-open): Put the error
 	marker on the "sole --" rather than on the comment opener.
@@ -20805,12 +20815,12 @@
 	free to format differently a really empty cell, ie. containing nil,
 	from a cell containing an empty string "".
 
-	* ses.el (ses-call-printer): Replace `(or value "")' by just `value'
-	in the case of a lambda expression printer function.
+	* lisp/ses.el (ses-call-printer): Replace `(or value "")' by just
+	`value' in the case of a lambda expression printer function.
 
-	* ses.texi (Printer functions): Add example and description about
-	lambda expression printer function handling all the possible values,
-	including unexpected ones.
+	* doc/misc/ses.texi (Printer functions): Add example and
+	description about lambda expression printer function handling all
+	the possible values, including unexpected ones.
 
 2015-12-30  Vincent Belaïche  <vincentb1@users.sourceforge.net>
 
@@ -20821,7 +20831,7 @@
 	removed the (setq ses--curcell t) setting in the ses-command-hook
 	function.
 
-	* ses.el (ses-check-curcell): replace `(eq ses--curcell t)' by just `t' as
+	* lisp/ses.el (ses-check-curcell): replace `(eq ses--curcell t)' by just `t' as
 	a condition to call function `ses-set-curcell'. Comment this as a quick
 	temporary hack to make it work, as I don't know yet whether a definite
 	correction would be to make the ses-set-curcell at every ses-check-curcell,
@@ -20863,14 +20873,14 @@
 
 	Further Unicode restrictive fixups
 
-	* puny.el (puny-highly-restrictive-p): Include the extra
+	* lisp/net/puny.el (puny-highly-restrictive-p): Include the extra
 	identifier characters from table 3.
 
 2015-12-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Add a new function to say whether a string is restrictive
 
-	* puny.el (puny-highly-restrictive-p): New function.
+	* lisp/net/puny.el (puny-highly-restrictive-p): New function.
 
 2015-12-28  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -20891,7 +20901,7 @@
 
 	IDNA-encode all domain names in `open-network-stream'
 
-	* network-stream.el (open-network-stream)
+	* lisp/net/network-stream.el (open-network-stream)
 	(network-stream-open-plain, network-stream-open-starttls):
 	IDNA-encode all domain names, if needed.
 
@@ -20899,13 +20909,14 @@
 
 	Fix puny-encoding all-non-ASCII domains
 
-	* puny.el (puny-encode-string): Fix the all-non-ASCII encoding case.
+	* lisp/net/puny.el (puny-encode-string): Fix the all-non-ASCII
+	encoding case.
 
 2015-12-28  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	shr link traversal fixup
 
-	* shr.el (shr-next-link): Don't bug out on adjacent links.
+	* lisp/net/shr.el (shr-next-link): Don't bug out on adjacent links.
 
 2015-12-28  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -20918,19 +20929,19 @@
 
 	Fix punycode short circuit logic
 
-	* puny.el (puny-encode-domain): Fix short-circuit logic.
+	* lisp/net//puny.el (puny-encode-domain): Fix short-circuit logic.
 
 2015-12-28  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	IDNA speed up
 
-	* puny.el (puny-encode-domain): Make the common non-IDNA case faster
+	* lisp/net/puny.el (puny-encode-domain): Make the common non-IDNA case faster
 
 2015-12-28  Lars Ingebrigtsen  <larsi@gnus.org>
 
 	Add IDNA domain encode/decode functions
 
-	* puny.el (puny-decode-domain): New function.
+	* lisp/net/puny.el (puny-decode-domain): New function.
 	(puny-encode-domain): Ditto.
 	(puny-decode-digit): Fix digit decoding error.
 
@@ -20938,7 +20949,7 @@
 
 	Rename idna.el to puny.el
 
-	* puny.el: Renamed from idna.el to avoid name collisions with
+	* lisp/net/puny.el: Renamed from idna.el to avoid name collisions with
 	the external idna.el library.
 
 2015-12-27  Katsumi Yamaoka  <yamaoka@jpl.org>
@@ -20950,7 +20961,8 @@
 
 2015-12-27  Lars Ingebrigtsen  <larsi@gnus.org>
 
-	* idna.el (idna-decode-string-internal): Implement decoding.
+	* lisp/net/idna.el (idna-decode-string-internal): Implement
+	decoding.
 
 2015-12-27  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -21276,7 +21288,7 @@
 
 	* lisp/dired.el: Remove autoloads.
 	* lisp/Makefile.in: Add dired to autogenel.
-	* lisp/dired-aux.el,lisp/dired-x.el: Update file local.
+	* lisp/dired-aux.el, lisp/dired-x.el: Update file local.
 	* test/lisp/dired-tests.el: Add new test.
 
 2015-12-17  Phillip Lord  <phillip.lord@russet.org.uk>
@@ -21284,9 +21296,9 @@
 	eieio generate autoloads to non-versioned file.
 
 	* lisp/Makefile.in: eieio-loaddefs add to autogenel.
-	* lisp/emacs-lisp/eieio.el,lisp/emacs-lisp/eieio-core.el:
+	* lisp/emacs-lisp/eieio.el, lisp/emacs-lisp/eieio-core.el:
 	  Remove autoloads.
-	* lisp/emacs-lisp/eieio-compat.el,lisp/emacs-lisp/eieio-custom.el,
+	* lisp/emacs-lisp/eieio-compat.el, lisp/emacs-lisp/eieio-custom.el,
 	  lisp/emacs-lisp/eieio-opt.el: Update file local.
 	* test/lisp/emacs-lisp/eieio-tests/eieio-tests.el: New test.
 
@@ -21314,10 +21326,10 @@
 
 	* lisp/Makefile.in: Add rmail-loaddefs.el to autogenel.
 	* lisp/mail/rmail.el: Remove autoloads, add require.
-	* lisp/mail/rmailedit.el,lisp/mail/rmailkwd.el,
-	  lisp/mail/rmailmm.el,lisp/mail/rmailmsc.el,
-	  lisp/mail/rmailsort.el,lisp/mail/rmailsum.el,
-	  lisp/mail/undigest.el: Update file-local.
+	* lisp/mail/rmailedit.el, lisp/mail/rmailkwd.el:
+	* lisp/mail/rmailmm.el, lisp/mail/rmailmsc.el:
+	* lisp/mail/rmailsort.el, lisp/mail/rmailsum.el:
+	* lisp/mail/undigest.el: Update file-local.
 	* test/lisp/mail/rmail-tests.el:
 
 2015-12-17  Phillip Lord  <phillip.lord@russet.org.uk>
@@ -21341,11 +21353,11 @@
 
 	* lisp/Makefile.in: Add reftex-loaddefs to autogen files
 	* lisp/textmodes/reftex.el: Remove autoloads.
-	* lisp/textmodes/reftex-auc.el,lisp/textmodes/reftex-cite.el,
-	  lisp/textmodes/reftex-dcr.el,lisp/textmodes/reftex-global.el,
-	  lisp/textmodes/reftex-index.el,lisp/textmodes/reftex-parse.el,
-	  lisp/textmodes/reftex-ref.el,lisp/textmodes/reftex-sel.el,
-	  lisp/textmodes/reftex-toc.el: Update autoload file-local.
+	* lisp/textmodes/reftex-auc.el, lisp/textmodes/reftex-cite.el:
+	* lisp/textmodes/reftex-dcr.el, lisp/textmodes/reftex-global.el:
+	* lisp/textmodes/reftex-index.el, lisp/textmodes/reftex-parse.el:
+	* lisp/textmodes/reftex-ref.el, lisp/textmodes/reftex-sel.el:
+	* lisp/textmodes/reftex-toc.el: Update autoload file-local.
 	* test/lisp/textmodes/reftex-tests.el: Add test of an autoloaded
 	  function.
 
@@ -21933,262 +21945,263 @@
 
 	Rename all test files to reflect source layout.
 
-	 * CONTRIBUTE,Makefile.in,configure.ac: Update to reflect
-	   test directory moves.
-	 * test/file-organisation.org: New file.
-	 * test/automated/Makefile.in
-	   test/automated/data/decompress/foo.gz
-	   test/automated/data/epg/pubkey.asc
-	   test/automated/data/epg/seckey.asc
-	   test/automated/data/files-bug18141.el.gz
-	   test/automated/data/flymake/test.c
-	   test/automated/data/flymake/test.pl
-	   test/automated/data/package/archive-contents
-	   test/automated/data/package/key.pub
-	   test/automated/data/package/key.sec
-	   test/automated/data/package/multi-file-0.2.3.tar
-	   test/automated/data/package/multi-file-readme.txt
-	   test/automated/data/package/newer-versions/archive-contents
-	   test/automated/data/package/newer-versions/new-pkg-1.0.el
-	   test/automated/data/package/newer-versions/simple-single-1.4.el
-	   test/automated/data/package/package-test-server.py
-	   test/automated/data/package/signed/archive-contents
-	   test/automated/data/package/signed/archive-contents.sig
-	   test/automated/data/package/signed/signed-bad-1.0.el
-	   test/automated/data/package/signed/signed-bad-1.0.el.sig
-	   test/automated/data/package/signed/signed-good-1.0.el
-	   test/automated/data/package/signed/signed-good-1.0.el.sig
-	   test/automated/data/package/simple-depend-1.0.el
-	   test/automated/data/package/simple-single-1.3.el
-	   test/automated/data/package/simple-single-readme.txt
-	   test/automated/data/package/simple-two-depend-1.1.el
-	   test/automated/abbrev-tests.el
-	   test/automated/auto-revert-tests.el
-	   test/automated/calc-tests.el
-	   test/automated/icalendar-tests.el
-	   test/automated/character-fold-tests.el
-	   test/automated/comint-testsuite.el
-	   test/automated/descr-text-test.el
-	   test/automated/electric-tests.el
-	   test/automated/cl-generic-tests.el
-	   test/automated/cl-lib-tests.el
-	   test/automated/eieio-test-methodinvoke.el
-	   test/automated/eieio-test-persist.el
-	   test/automated/eieio-tests.el
-	   test/automated/ert-tests.el
-	   test/automated/ert-x-tests.el
-	   test/automated/generator-tests.el
-	   test/automated/let-alist.el
-	   test/automated/map-tests.el
-	   test/automated/advice-tests.el
-	   test/automated/package-test.el
-	   test/automated/pcase-tests.el
-	   test/automated/regexp-tests.el
-	   test/automated/seq-tests.el
-	   test/automated/subr-x-tests.el
-	   test/automated/tabulated-list-test.el
-	   test/automated/thunk-tests.el
-	   test/automated/timer-tests.el
-	   test/automated/epg-tests.el
-	   test/automated/eshell.el
-	   test/automated/faces-tests.el
-	   test/automated/file-notify-tests.el
-	   test/automated/auth-source-tests.el
-	   test/automated/gnus-tests.el
-	   test/automated/message-mode-tests.el
-	   test/automated/help-fns.el
-	   test/automated/imenu-test.el
-	   test/automated/info-xref.el
-	   test/automated/mule-util.el
-	   test/automated/isearch-tests.el
-	   test/automated/json-tests.el
-	   test/automated/bytecomp-tests.el
-	   test/automated/coding-tests.el
-	   test/automated/core-elisp-tests.el
-	   test/automated/decoder-tests.el
-	   test/automated/files.el
-	   test/automated/font-parse-tests.el
-	   test/automated/lexbind-tests.el
-	   test/automated/occur-tests.el
-	   test/automated/process-tests.el
-	   test/automated/syntax-tests.el
-	   test/automated/textprop-tests.el
-	   test/automated/undo-tests.el
-	   test/automated/man-tests.el
-	   test/automated/completion-tests.el
-	   test/automated/dbus-tests.el
-	   test/automated/newsticker-tests.el
-	   test/automated/sasl-scram-rfc-tests.el
-	   test/automated/tramp-tests.el
-	   test/automated/obarray-tests.el
-	   test/automated/compile-tests.el
-	   test/automated/elisp-mode-tests.el
-	   test/automated/f90.el
-	   test/automated/flymake-tests.el
-	   test/automated/python-tests.el
-	   test/automated/ruby-mode-tests.el
-	   test/automated/subword-tests.el
-	   test/automated/replace-tests.el
-	   test/automated/simple-test.el
-	   test/automated/sort-tests.el
-	   test/automated/subr-tests.el
-	   test/automated/reftex-tests.el
-	   test/automated/sgml-mode-tests.el
-	   test/automated/tildify-tests.el
-	   test/automated/thingatpt.el
-	   test/automated/url-future-tests.el
-	   test/automated/url-util-tests.el
-	   test/automated/add-log-tests.el
-	   test/automated/vc-bzr.el
-	   test/automated/vc-tests.el
-	   test/automated/xml-parse-tests.el
-	   test/BidiCharacterTest.txt
-	   test/biditest.el
-	   test/cedet/cedet-utests.el
-	   test/cedet/ede-tests.el
-	   test/cedet/semantic-ia-utest.el
-	   test/cedet/semantic-tests.el
-	   test/cedet/semantic-utest-c.el
-	   test/cedet/semantic-utest.el
-	   test/cedet/srecode-tests.el
-	   test/cedet/tests/test.c
-	   test/cedet/tests/test.el
-	   test/cedet/tests/test.make
-	   test/cedet/tests/testdoublens.cpp
-	   test/cedet/tests/testdoublens.hpp
-	   test/cedet/tests/testfriends.cpp
-	   test/cedet/tests/testjavacomp.java
-	   test/cedet/tests/testnsp.cpp
-	   test/cedet/tests/testpolymorph.cpp
-	   test/cedet/tests/testspp.c
-	   test/cedet/tests/testsppcomplete.c
-	   test/cedet/tests/testsppreplace.c
-	   test/cedet/tests/testsppreplaced.c
-	   test/cedet/tests/testsubclass.cpp
-	   test/cedet/tests/testsubclass.hh
-	   test/cedet/tests/testtypedefs.cpp
-	   test/cedet/tests/testvarnames.c
-	   test/etags/CTAGS.good
-	   test/etags/ETAGS.good_1
-	   test/etags/ETAGS.good_2
-	   test/etags/ETAGS.good_3
-	   test/etags/ETAGS.good_4
-	   test/etags/ETAGS.good_5
-	   test/etags/ETAGS.good_6
-	   test/etags/a-src/empty.zz
-	   test/etags/a-src/empty.zz.gz
-	   test/etags/ada-src/2ataspri.adb
-	   test/etags/ada-src/2ataspri.ads
-	   test/etags/ada-src/etags-test-for.ada
-	   test/etags/ada-src/waroquiers.ada
-	   test/etags/c-src/a/b/b.c
-	   test/etags/c-src/abbrev.c
-	   test/etags/c-src/c.c
-	   test/etags/c-src/dostorture.c
-	   test/etags/c-src/emacs/src/gmalloc.c
-	   test/etags/c-src/emacs/src/keyboard.c
-	   test/etags/c-src/emacs/src/lisp.h
-	   test/etags/c-src/emacs/src/regex.h
-	   test/etags/c-src/etags.c
-	   test/etags/c-src/exit.c
-	   test/etags/c-src/exit.strange_suffix
-	   test/etags/c-src/fail.c
-	   test/etags/c-src/getopt.h
-	   test/etags/c-src/h.h
-	   test/etags/c-src/machsyscalls.c
-	   test/etags/c-src/machsyscalls.h
-	   test/etags/c-src/sysdep.h
-	   test/etags/c-src/tab.c
-	   test/etags/c-src/torture.c
-	   test/etags/cp-src/MDiagArray2.h
-	   test/etags/cp-src/Range.h
-	   test/etags/cp-src/burton.cpp
-	   test/etags/cp-src/c.C
-	   test/etags/cp-src/clheir.cpp.gz
-	   test/etags/cp-src/clheir.hpp
-	   test/etags/cp-src/conway.cpp
-	   test/etags/cp-src/conway.hpp
-	   test/etags/cp-src/fail.C
-	   test/etags/cp-src/functions.cpp
-	   test/etags/cp-src/screen.cpp
-	   test/etags/cp-src/screen.hpp
-	   test/etags/cp-src/x.cc
-	   test/etags/el-src/TAGTEST.EL
-	   test/etags/el-src/emacs/lisp/progmodes/etags.el
-	   test/etags/erl-src/gs_dialog.erl
-	   test/etags/f-src/entry.for
-	   test/etags/f-src/entry.strange.gz
-	   test/etags/f-src/entry.strange_suffix
-	   test/etags/forth-src/test-forth.fth
-	   test/etags/html-src/algrthms.html
-	   test/etags/html-src/index.shtml
-	   test/etags/html-src/software.html
-	   test/etags/html-src/softwarelibero.html
-	   test/etags/lua-src/allegro.lua
-	   test/etags/objc-src/PackInsp.h
-	   test/etags/objc-src/PackInsp.m
-	   test/etags/objc-src/Subprocess.h
-	   test/etags/objc-src/Subprocess.m
-	   test/etags/objcpp-src/SimpleCalc.H
-	   test/etags/objcpp-src/SimpleCalc.M
-	   test/etags/pas-src/common.pas
-	   test/etags/perl-src/htlmify-cystic
-	   test/etags/perl-src/kai-test.pl
-	   test/etags/perl-src/yagrip.pl
-	   test/etags/php-src/lce_functions.php
-	   test/etags/php-src/ptest.php
-	   test/etags/php-src/sendmail.php
-	   test/etags/prol-src/natded.prolog
-	   test/etags/prol-src/ordsets.prolog
-	   test/etags/ps-src/rfc1245.ps
-	   test/etags/pyt-src/server.py
-	   test/etags/tex-src/gzip.texi
-	   test/etags/tex-src/nonewline.tex
-	   test/etags/tex-src/testenv.tex
-	   test/etags/tex-src/texinfo.tex
-	   test/etags/y-src/atest.y
-	   test/etags/y-src/cccp.c
-	   test/etags/y-src/cccp.y
-	   test/etags/y-src/parse.c
-	   test/etags/y-src/parse.y
-	   test/indent/css-mode.css
-	   test/indent/js-indent-init-dynamic.js
-	   test/indent/js-indent-init-t.js
-	   test/indent/js-jsx.js
-	   test/indent/js.js
-	   test/indent/latex-mode.tex
-	   test/indent/modula2.mod
-	   test/indent/nxml.xml
-	   test/indent/octave.m
-	   test/indent/pascal.pas
-	   test/indent/perl.perl
-	   test/indent/prolog.prolog
-	   test/indent/ps-mode.ps
-	   test/indent/ruby.rb
-	   test/indent/scheme.scm
-	   test/indent/scss-mode.scss
-	   test/indent/sgml-mode-attribute.html
-	   test/indent/shell.rc
-	   test/indent/shell.sh
-	   test/redisplay-testsuite.el
-	   test/rmailmm.el
-	   test/automated/buffer-tests.el
-	   test/automated/cmds-tests.el
-	   test/automated/data-tests.el
-	   test/automated/finalizer-tests.el
-	   test/automated/fns-tests.el
-	   test/automated/inotify-test.el
-	   test/automated/keymap-tests.el
-	   test/automated/print-tests.el
-	   test/automated/libxml-tests.el
-	   test/automated/zlib-tests.el: Files Moved.
+	* CONTRIBUTE, Makefile.in, configure.ac: Update to reflect
+	test directory moves.
+	* test/file-organisation.org: New file.
+	* test/automated/Makefile.in:
+	* test/automated/data/decompress/foo.gz:
+	* test/automated/data/epg/pubkey.asc:
+	* test/automated/data/epg/seckey.asc:
+	* test/automated/data/files-bug18141.el.gz:
+	* test/automated/data/flymake/test.c:
+	* test/automated/data/flymake/test.pl:
+	* test/automated/data/package/archive-contents:
+	* test/automated/data/package/key.pub:
+	* test/automated/data/package/key.sec:
+	* test/automated/data/package/multi-file-0.2.3.tar:
+	* test/automated/data/package/multi-file-readme.txt:
+	* test/automated/data/package/newer-versions/archive-contents:
+	* test/automated/data/package/newer-versions/new-pkg-1.0.el:
+	* test/automated/data/package/newer-versions/simple-single-1.4.el:
+	* test/automated/data/package/package-test-server.py:
+	* test/automated/data/package/signed/archive-contents:
+	* test/automated/data/package/signed/archive-contents.sig:
+	* test/automated/data/package/signed/signed-bad-1.0.el:
+	* test/automated/data/package/signed/signed-bad-1.0.el.sig:
+	* test/automated/data/package/signed/signed-good-1.0.el:
+	* test/automated/data/package/signed/signed-good-1.0.el.sig:
+	* test/automated/data/package/simple-depend-1.0.el:
+	* test/automated/data/package/simple-single-1.3.el:
+	* test/automated/data/package/simple-single-readme.txt:
+	* test/automated/data/package/simple-two-depend-1.1.el:
+	* test/automated/abbrev-tests.el:
+	* test/automated/auto-revert-tests.el:
+	* test/automated/calc-tests.el:
+	* test/automated/icalendar-tests.el:
+	* test/automated/character-fold-tests.el:
+	* test/automated/comint-testsuite.el:
+	* test/automated/descr-text-test.el:
+	* test/automated/electric-tests.el:
+	* test/automated/cl-generic-tests.el:
+	* test/automated/cl-lib-tests.el:
+	* test/automated/eieio-test-methodinvoke.el:
+	* test/automated/eieio-test-persist.el:
+	* test/automated/eieio-tests.el:
+	* test/automated/ert-tests.el:
+	* test/automated/ert-x-tests.el:
+	* test/automated/generator-tests.el:
+	* test/automated/let-alist.el:
+	* test/automated/map-tests.el:
+	* test/automated/advice-tests.el:
+	* test/automated/package-test.el:
+	* test/automated/pcase-tests.el:
+	* test/automated/regexp-tests.el:
+	* test/automated/seq-tests.el:
+	* test/automated/subr-x-tests.el:
+	* test/automated/tabulated-list-test.el:
+	* test/automated/thunk-tests.el:
+	* test/automated/timer-tests.el:
+	* test/automated/epg-tests.el:
+	* test/automated/eshell.el:
+	* test/automated/faces-tests.el:
+	* test/automated/file-notify-tests.el:
+	* test/automated/auth-source-tests.el:
+	* test/automated/gnus-tests.el:
+	* test/automated/message-mode-tests.el:
+	* test/automated/help-fns.el:
+	* test/automated/imenu-test.el:
+	* test/automated/info-xref.el:
+	* test/automated/mule-util.el:
+	* test/automated/isearch-tests.el:
+	* test/automated/json-tests.el:
+	* test/automated/bytecomp-tests.el:
+	* test/automated/coding-tests.el:
+	* test/automated/core-elisp-tests.el:
+	* test/automated/decoder-tests.el:
+	* test/automated/files.el:
+	* test/automated/font-parse-tests.el:
+	* test/automated/lexbind-tests.el:
+	* test/automated/occur-tests.el:
+	* test/automated/process-tests.el:
+	* test/automated/syntax-tests.el:
+	* test/automated/textprop-tests.el:
+	* test/automated/undo-tests.el:
+	* test/automated/man-tests.el:
+	* test/automated/completion-tests.el:
+	* test/automated/dbus-tests.el:
+	* test/automated/newsticker-tests.el:
+	* test/automated/sasl-scram-rfc-tests.el:
+	* test/automated/tramp-tests.el:
+	* test/automated/obarray-tests.el:
+	* test/automated/compile-tests.el:
+	* test/automated/elisp-mode-tests.el:
+	* test/automated/f90.el:
+	* test/automated/flymake-tests.el:
+	* test/automated/python-tests.el:
+	* test/automated/ruby-mode-tests.el:
+	* test/automated/subword-tests.el:
+	* test/automated/replace-tests.el:
+	* test/automated/simple-test.el:
+	* test/automated/sort-tests.el:
+	* test/automated/subr-tests.el:
+	* test/automated/reftex-tests.el:
+	* test/automated/sgml-mode-tests.el:
+	* test/automated/tildify-tests.el:
+	* test/automated/thingatpt.el:
+	* test/automated/url-future-tests.el:
+	* test/automated/url-util-tests.el:
+	* test/automated/add-log-tests.el:
+	* test/automated/vc-bzr.el:
+	* test/automated/vc-tests.el:
+	* test/automated/xml-parse-tests.el:
+	* test/BidiCharacterTest.txt:
+	* test/biditest.el:
+	* test/cedet/cedet-utests.el:
+	* test/cedet/ede-tests.el:
+	* test/cedet/semantic-ia-utest.el:
+	* test/cedet/semantic-tests.el:
+	* test/cedet/semantic-utest-c.el:
+	* test/cedet/semantic-utest.el:
+	* test/cedet/srecode-tests.el:
+	* test/cedet/tests/test.c:
+	* test/cedet/tests/test.el:
+	* test/cedet/tests/test.make:
+	* test/cedet/tests/testdoublens.cpp:
+	* test/cedet/tests/testdoublens.hpp:
+	* test/cedet/tests/testfriends.cpp:
+	* test/cedet/tests/testjavacomp.java:
+	* test/cedet/tests/testnsp.cpp:
+	* test/cedet/tests/testpolymorph.cpp:
+	* test/cedet/tests/testspp.c:
+	* test/cedet/tests/testsppcomplete.c:
+	* test/cedet/tests/testsppreplace.c:
+	* test/cedet/tests/testsppreplaced.c:
+	* test/cedet/tests/testsubclass.cpp:
+	* test/cedet/tests/testsubclass.hh:
+	* test/cedet/tests/testtypedefs.cpp:
+	* test/cedet/tests/testvarnames.c:
+	* test/etags/CTAGS.good:
+	* test/etags/ETAGS.good_1:
+	* test/etags/ETAGS.good_2:
+	* test/etags/ETAGS.good_3:
+	* test/etags/ETAGS.good_4:
+	* test/etags/ETAGS.good_5:
+	* test/etags/ETAGS.good_6:
+	* test/etags/a-src/empty.zz:
+	* test/etags/a-src/empty.zz.gz:
+	* test/etags/ada-src/2ataspri.adb:
+	* test/etags/ada-src/2ataspri.ads:
+	* test/etags/ada-src/etags-test-for.ada:
+	* test/etags/ada-src/waroquiers.ada:
+	* test/etags/c-src/a/b/b.c:
+	* test/etags/c-src/abbrev.c:
+	* test/etags/c-src/c.c:
+	* test/etags/c-src/dostorture.c:
+	* test/etags/c-src/emacs/src/gmalloc.c:
+	* test/etags/c-src/emacs/src/keyboard.c:
+	* test/etags/c-src/emacs/src/lisp.h:
+	* test/etags/c-src/emacs/src/regex.h:
+	* test/etags/c-src/etags.c:
+	* test/etags/c-src/exit.c:
+	* test/etags/c-src/exit.strange_suffix:
+	* test/etags/c-src/fail.c:
+	* test/etags/c-src/getopt.h:
+	* test/etags/c-src/h.h:
+	* test/etags/c-src/machsyscalls.c:
+	* test/etags/c-src/machsyscalls.h:
+	* test/etags/c-src/sysdep.h:
+	* test/etags/c-src/tab.c:
+	* test/etags/c-src/torture.c:
+	* test/etags/cp-src/MDiagArray2.h:
+	* test/etags/cp-src/Range.h:
+	* test/etags/cp-src/burton.cpp:
+	* test/etags/cp-src/c.C:
+	* test/etags/cp-src/clheir.cpp.gz:
+	* test/etags/cp-src/clheir.hpp:
+	* test/etags/cp-src/conway.cpp:
+	* test/etags/cp-src/conway.hpp:
+	* test/etags/cp-src/fail.C:
+	* test/etags/cp-src/functions.cpp:
+	* test/etags/cp-src/screen.cpp:
+	* test/etags/cp-src/screen.hpp:
+	* test/etags/cp-src/x.cc:
+	* test/etags/el-src/TAGTEST.EL:
+	* test/etags/el-src/emacs/lisp/progmodes/etags.el:
+	* test/etags/erl-src/gs_dialog.erl:
+	* test/etags/f-src/entry.for:
+	* test/etags/f-src/entry.strange.gz:
+	* test/etags/f-src/entry.strange_suffix:
+	* test/etags/forth-src/test-forth.fth:
+	* test/etags/html-src/algrthms.html:
+	* test/etags/html-src/index.shtml:
+	* test/etags/html-src/software.html:
+	* test/etags/html-src/softwarelibero.html:
+	* test/etags/lua-src/allegro.lua:
+	* test/etags/objc-src/PackInsp.h:
+	* test/etags/objc-src/PackInsp.m:
+	* test/etags/objc-src/Subprocess.h:
+	* test/etags/objc-src/Subprocess.m:
+	* test/etags/objcpp-src/SimpleCalc.H:
+	* test/etags/objcpp-src/SimpleCalc.M:
+	* test/etags/pas-src/common.pas:
+	* test/etags/perl-src/htlmify-cystic:
+	* test/etags/perl-src/kai-test.pl:
+	* test/etags/perl-src/yagrip.pl:
+	* test/etags/php-src/lce_functions.php:
+	* test/etags/php-src/ptest.php:
+	* test/etags/php-src/sendmail.php:
+	* test/etags/prol-src/natded.prolog:
+	* test/etags/prol-src/ordsets.prolog:
+	* test/etags/ps-src/rfc1245.ps:
+	* test/etags/pyt-src/server.py:
+	* test/etags/tex-src/gzip.texi:
+	* test/etags/tex-src/nonewline.tex:
+	* test/etags/tex-src/testenv.tex:
+	* test/etags/tex-src/texinfo.tex:
+	* test/etags/y-src/atest.y:
+	* test/etags/y-src/cccp.c:
+	* test/etags/y-src/cccp.y:
+	* test/etags/y-src/parse.c:
+	* test/etags/y-src/parse.y:
+	* test/indent/css-mode.css:
+	* test/indent/js-indent-init-dynamic.js:
+	* test/indent/js-indent-init-t.js:
+	* test/indent/js-jsx.js:
+	* test/indent/js.js:
+	* test/indent/latex-mode.tex:
+	* test/indent/modula2.mod:
+	* test/indent/nxml.xml:
+	* test/indent/octave.m:
+	* test/indent/pascal.pas:
+	* test/indent/perl.perl:
+	* test/indent/prolog.prolog:
+	* test/indent/ps-mode.ps:
+	* test/indent/ruby.rb:
+	* test/indent/scheme.scm:
+	* test/indent/scss-mode.scss:
+	* test/indent/sgml-mode-attribute.html:
+	* test/indent/shell.rc:
+	* test/indent/shell.sh:
+	* test/redisplay-testsuite.el:
+	* test/rmailmm.el:
+	* test/automated/buffer-tests.el:
+	* test/automated/cmds-tests.el:
+	* test/automated/data-tests.el:
+	* test/automated/finalizer-tests.el:
+	* test/automated/fns-tests.el:
+	* test/automated/inotify-test.el:
+	* test/automated/keymap-tests.el:
+	* test/automated/print-tests.el:
+	* test/automated/libxml-tests.el:
+	* test/automated/zlib-tests.el: Files Moved.
 
 2015-11-21  Wilson Snyder  <wsnyder@wsnyder.org>
 
 	verilog-mode.el: Commentary and fix pre-Emacs 21 behavior.
 
-	* verilog-mode.el (verilog-save-font-no-change-functions):
-	Commentary and fix pre-Emacs 21 behavior.
+	* lisp/progmodes/verilog-mode.el
+	(verilog-save-font-no-change-functions): Commentary and fix
+	pre-Emacs 21 behavior.
 
 2015-11-20  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -22324,8 +22337,8 @@
 
 	Minor fix to comment indentation and typo in last commit
 
-	* linum.el (linum-update-window): Fix comment indentation and a
-	typo.
+	* lisp/linum.el (linum-update-window): Fix comment indentation and
+	a typo.
 
 2015-11-17  João Távora  <joaotavora@gmail.com>
 
@@ -22342,7 +22355,7 @@
 	A similar fix was commited to nlinum.el in ELPA.git's
 	e7f5f549fbfb740b911fb7f33b42381ecece56d8
 
-	* linum.el (linum-delete-overlays): Restore margins more
+	* lisp/linum.el (linum-delete-overlays): Restore margins more
 	criteriously.
 	(linum-update-window): Set margins more criteriously.
 
@@ -22518,7 +22531,7 @@
 
 	Update verilog-mode.el to 2015-11-09-b121d60-vpo.
 
-	* verilog-mode.el (verilog-auto, verilog-delete-auto)
+	* lisp/progmodes/verilog-mode.el (verilog-auto, verilog-delete-auto)
 	(verilog-modi-cache-results, verilog-save-buffer-state)
 	(verilog-save-font-no-change-functions): When internally suppressing change
 	functions, use `inhibit-modification-hooks' and call
