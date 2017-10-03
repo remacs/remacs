@@ -891,6 +891,7 @@ extern "C" {
     pub static Qbuffer_file_coding_system: Lisp_Object;
     pub static Qfont_extra_type: Lisp_Object;
     pub static Qsetting_constant: Lisp_Object;
+    pub static Qcyclic_function_indirection: Lisp_Object;
 
     pub static Qmd5: Lisp_Object;
     pub static Qsha1: Lisp_Object;

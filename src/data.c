@@ -1806,61 +1806,6 @@ selected frame's terminal device).  */)
 }
 #endif
 
-/* Find the function at the end of a chain of symbol function indirections.  */
-
-/* If OBJECT is a symbol, find the end of its function chain and
-   return the value found there.  If OBJECT is not a symbol, just
-   return it.  If there is a cycle in the function chain, signal a
-   cyclic-function-indirection error.
-
-   This is like Findirect_function, except that it doesn't signal an
-   error if the chain ends up unbound.  */
-Lisp_Object
-indirect_function (register Lisp_Object object)
-{
-  Lisp_Object tortoise, hare;
-
-  hare = tortoise = object;
-
-  for (;;)
-    {
-      if (!SYMBOLP (hare) || NILP (hare))
-	break;
-      hare = XSYMBOL (hare)->function;
-      if (!SYMBOLP (hare) || NILP (hare))
-	break;
-      hare = XSYMBOL (hare)->function;
-
-      tortoise = XSYMBOL (tortoise)->function;
-
-      if (EQ (hare, tortoise))
-	xsignal1 (Qcyclic_function_indirection, object);
-    }
-
-  return hare;
-}
-
-DEFUN ("indirect-function", Findirect_function, Sindirect_function, 1, 2, 0,
-       doc: /* Return the function at the end of OBJECT's function chain.
-If OBJECT is not a symbol, just return it.  Otherwise, follow all
-function indirections to find the final function binding and return it.
-Signal a cyclic-function-indirection error if there is a loop in the
-function chain of symbols.  */)
-  (register Lisp_Object object, Lisp_Object noerror)
-{
-  Lisp_Object result;
-
-  /* Optimize for no indirection.  */
-  result = object;
-  if (SYMBOLP (result) && !NILP (result)
-      && (result = XSYMBOL (result)->function, SYMBOLP (result)))
-    result = indirect_function (result);
-  if (!NILP (result))
-    return result;
-
-  return Qnil;
-}
-
 /* Extract and set vector and string elements.  */
 
 DEFUN ("aref", Faref, Saref, 2, 2, 0,
@@ -2779,7 +2724,6 @@ syms_of_data (void)
   defsubr (&Stype_of);
   defsubr (&Skeywordp);
   defsubr (&Smodule_function_p);
-  defsubr (&Sindirect_function);
   defsubr (&Smakunbound);
   defsubr (&Sboundp);
   defsubr (&Sfset);
