@@ -5789,6 +5789,18 @@ If the underlying system call fails, value is nil.  */)
   (Lisp_Object filename)
 {
   Lisp_Object encoded = ENCODE_FILE (Fexpand_file_name (filename, Qnil));
+
+  /* If the file name has special constructs in it,
+     call the corresponding file handler.  */
+  Lisp_Object handler = Ffind_file_name_handler (encoded, Qfile_system_info);
+  if (!NILP (handler))
+    {
+      Lisp_Object result = call2 (handler, Qfile_system_info, encoded);
+      if (CONSP (result) || NILP (result))
+	return result;
+      error ("Invalid handler in `file-name-handler-alist'");
+    }
+
   struct fs_usage u;
   if (get_fs_usage (SSDATA (encoded), NULL, &u) != 0)
     return Qnil;
@@ -5870,6 +5882,7 @@ syms_of_fileio (void)
   DEFSYM (Qwrite_region, "write-region");
   DEFSYM (Qverify_visited_file_modtime, "verify-visited-file-modtime");
   DEFSYM (Qset_visited_file_modtime, "set-visited-file-modtime");
+  DEFSYM (Qfile_system_info, "file-system-info");
 
   /* The symbol bound to coding-system-for-read when
      insert-file-contents is called for recovering a file.  This is not

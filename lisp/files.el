@@ -6407,12 +6407,10 @@ This variable is obsolete; Emacs no longer uses it."
 The return value is a string describing the amount of free
 space (normally, the number of free 1KB blocks).
 
-If DIR's free space cannot be obtained, or if DIR is a remote
-directory, this function returns nil."
-  (unless (file-remote-p (expand-file-name dir))
-    (let ((avail (nth 2 (file-system-info dir))))
-      (if avail
-	  (format "%.0f" (/ avail 1024))))))
+If DIR's free space cannot be obtained, this function returns nil."
+  (let ((avail (nth 2 (file-system-info dir))))
+    (if avail
+	(format "%.0f" (/ avail 1024)))))
 
 ;; The following expression replaces `dired-move-to-filename-regexp'.
 (defvar directory-listing-before-filename-regexp

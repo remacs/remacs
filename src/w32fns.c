@@ -9336,6 +9336,17 @@ If the underlying system call fails, value is nil.  */)
   filename = Fexpand_file_name (filename, Qnil);
   encoded = ENCODE_FILE (filename);
 
+  /* If the file name has special constructs in it,
+     call the corresponding file handler.  */
+  Lisp_Object handler = Ffind_file_name_handler (encoded, Qfile_system_info);
+  if (!NILP (handler))
+    {
+      value = call2 (handler, Qfile_system_info, encoded);
+      if (CONSP (value) || NILP (value))
+	return value;
+      error ("Invalid handler in `file-name-handler-alist'");
+    }
+
   value = Qnil;
 
   /* Determining the required information on Windows turns out, sadly,

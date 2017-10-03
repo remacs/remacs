@@ -70,12 +70,18 @@ Programs that called it with multiple arguments before should pass
 them through 'format' first.  Even that is discouraged: for ElDoc
 support, you should set 'eldoc-documentation-function' instead of
 calling 'eldoc-message' directly.
+
 
 * Lisp Changes in Emacs 27.1
 
+---
 ** The 'file-system-info' function is now available on all platforms.
-instead of just Microsoft platforms.  This fixes a get-free-disk-space
+instead of just Microsoft platforms.  This fixes a 'get-free-disk-space'
 bug on OS X 10.8 and later (Bug#28639).
+
+---
+** The function 'get-free-disk-space' returns now a non-nil value for
+remote systems, which support this check.
 
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
