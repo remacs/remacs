@@ -106,8 +106,8 @@ impl LispStringRef {
     }
 
     #[inline]
-    pub fn char_at(&self, index: ptrdiff_t) -> c_char {
-        unsafe { *(self.const_sdata_ptr()).offset(index) }
+    pub fn byte_at(&self, index: ptrdiff_t) -> u8 {
+        unsafe { *self.const_data_ptr().offset(index) }
     }
 }
 

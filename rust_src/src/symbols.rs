@@ -98,11 +98,10 @@ fn fmakunbound(symbol: LispObject) -> LispObject {
 /// interned in the initial obarray.
 #[lisp_fn]
 fn keywordp(object: LispObject) -> LispObject {
-    if object.is_symbol() {
-        let sym = object.as_symbol_or_error();
+    if let Some(sym) = object.as_symbol() {
         let name = sym.symbol_name().as_string_or_error();
         LispObject::from_bool(
-            name.char_at(0) == (b':' as i8) && sym.is_interned_in_initial_obarray(),
+            name.byte_at(0) == b':' && sym.is_interned_in_initial_obarray(),
         )
     } else {
         LispObject::constant_nil()
