@@ -10,14 +10,14 @@ pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 impl LispProcessRef {
     #[inline]
     fn name(&self) -> LispObject {
-        return LispObject::from_raw(self.name);
+        LispObject::from_raw(self.name)
     }
 }
 
 /// Return t if OBJECT is a process.
 #[lisp_fn]
 pub fn processp(object: LispObject) -> LispObject {
-    return LispObject::from_bool(object.is_process());
+    LispObject::from_bool(object.is_process())
 }
 
 /// Return the process named NAME, or nil if there is none.
