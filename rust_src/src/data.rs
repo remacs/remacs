@@ -38,6 +38,7 @@ pub extern "C" fn indirect_function(object: LispObject) -> LispObject {
 /// function chain of symbols.
 #[lisp_fn(min = "1", c_name = "indirect_function", name = "indirect-function")]
 pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispObject {
+    // Optimize for no indirection.
     let mut result = object;
 
     if let Some(symbol) = result.as_symbol() {
