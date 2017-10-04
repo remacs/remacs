@@ -806,7 +806,10 @@ Changes to files in this list are not listed.")
     "srecode-tests.el" "make-test-deps.emacs-lisp"
     "nxml-uchnm.el"
     "decoder-tests.el"
-    "obsolete/scribe.el")
+    "obsolete/scribe.el"
+    "cp51932.el"
+    "eucjp-ms.el"
+    "lisp.mk")
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
 
@@ -912,7 +915,7 @@ in the repository.")
     ("emulation/ws-mode.el" . "ws-mode.el")
     ("vc/vc-arch.el" . "vc-arch.el")
     ("lisp/gnus/messcompat.el" . "messcompat.el")
-    ("lisp/gnus/html2text.el" . "html2text.el")
+    ("html2text.el" . "html2text.el")
     ;; From lisp to etc/forms.
     ("forms-d2.el" . "forms-d2.el")
     ("forms-pass.el" . "forms-pass.el")
