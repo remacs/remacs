@@ -952,6 +952,11 @@ expression, or nil if there aren't any in the language."
 	   '("defined"))
   pike '("defined" "efun" "constant"))
 
+(c-lang-defconst c-cpp-expr-functions-key
+  ;; Matches a function in a cpp expression.
+  t (c-make-keywords-re t (c-lang-const c-cpp-expr-functions)))
+(c-lang-defvar c-cpp-expr-functions-key (c-lang-const c-cpp-expr-functions-key))
+
 (c-lang-defconst c-assignment-operators
   "List of all assignment operators."
   t    '("=" "*=" "/=" "%=" "+=" "-=" ">>=" "<<=" "&=" "^=" "|=")
