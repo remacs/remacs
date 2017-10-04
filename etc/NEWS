@@ -1556,6 +1556,13 @@ Emacs integers with %e, %f, or %g conversions.  For example, on these
 hosts (eql N (string-to-number (format "%.0f" N))) now returns t for
 all Emacs integers N.
 
++++
+** 'format' is no longer documented to return a newly-allocated string.
+This documentation was not correct, as (eq x (format x)) returned t
+when x was the empty string.  'format' now takes advantage of the doc
+change to avoid making copies of strings in common cases like (format
+"foo") and (format "%s" "foo").
+
 ---
 ** Calls that accept floating-point integers (for use on hosts with
 limited integer range) now signal an error if arguments are not
