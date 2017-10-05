@@ -98,9 +98,12 @@ This is commonly used to recompute `tabulated-list-entries'.")
 
 (defvar-local tabulated-list-printer 'tabulated-list-print-entry
   "Function for inserting a Tabulated List entry at point.
-It is called with two arguments, ID and COLS.  ID is a Lisp
-object identifying the entry, and COLS is a vector of column
-descriptors, as documented in `tabulated-list-entries'.")
+It is called with two mandatory arguments, ID and COLS, and one
+optional argument, INDENT.  ID is a Lisp object identifying the
+entry, and COLS is a vector of column
+descriptors, as documented in `tabulated-list-entries'.
+INDENT, if present, is the initial indentation of the entry in
+columns, it is used when `display-line-numbers' is in effect.")
 
 (defvar tabulated-list--near-rows)
 
@@ -350,7 +353,7 @@ changing `tabulated-list-sort-key'."
 		     (funcall tabulated-list-entries)
 		   tabulated-list-entries))
         (sorter (tabulated-list--get-sorter))
-	entry-id saved-pt saved-col window-line)
+	entry-id saved-pt saved-col window-line lnum-width)
     (and remember-pos
 	 (setq entry-id (tabulated-list-get-id))
 	 (setq saved-col (current-column))
@@ -371,6 +374,7 @@ changing `tabulated-list-sort-key'."
       (unless tabulated-list-use-header-line
         (tabulated-list-print-fake-header)))
     ;; Finally, print the resulting list.
+    (setq lnum-width (tabulated-list-line-number-width))
     (while entries
       (let* ((elt (car entries))
              (tabulated-list--near-rows
@@ -383,9 +387,9 @@ changing `tabulated-list-sort-key'."
              (equal entry-id id)
              (setq entry-id nil
                    saved-pt (point)))
-        ;; If the buffer this empty, simply print each elt.
+        ;; If the buffer is empty, simply print each elt.
         (if (or (not update) (eobp))
-            (apply tabulated-list-printer elt)
+            (apply tabulated-list-printer (append elt (list lnum-width)))
           (while (let ((local-id (tabulated-list-get-id)))
                    ;; If we find id, then nothing to update.
                    (cond ((equal id local-id)
@@ -398,7 +402,8 @@ changing `tabulated-list-sort-key'."
                                        ;; FIXME: Might be faster if
                                        ;; don't construct this list.
                                        (list local-id (tabulated-list-get-entry))))
-                          (apply tabulated-list-printer elt)
+                          (apply tabulated-list-printer
+                                 (append elt (list lnum-width)))
                           nil)
                          ;; We find an entry that sorts before id,
                          ;; it needs to be deleted.
@@ -416,20 +421,22 @@ changing `tabulated-list-sort-key'."
                  (recenter window-line)))
       (goto-char (point-min)))))
 
-(defun tabulated-list-print-entry (id cols)
+(defun tabulated-list-print-entry (id cols &optional indent)
   "Insert a Tabulated List entry at point.
 This is the default `tabulated-list-printer' function.  ID is a
 Lisp object identifying the entry to print, and COLS is a vector
-of column descriptors."
+of column descriptors.
+Optional argument INDENT is the initial indent of the entry, in
+columns.  This is used when `display-line-numbers' is in effect.
+If INDENT is omitted or nil, it is treated as zero."
   (let ((beg   (point))
 	(x     (max tabulated-list-padding 0))
 	(ncols (length tabulated-list-format))
-        (lnum-width (tabulated-list-line-number-width))
 	(inhibit-read-only t))
-    (if display-line-numbers
-        (setq x (+ x lnum-width)))
+    (or indent (setq indent 0))
+    (setq x (+ x indent))
     (if (> tabulated-list-padding 0)
-	(insert (make-string (- x lnum-width) ?\s)))
+	(insert (make-string (- x indent) ?\s)))
     (let ((tabulated-list--near-rows ; Bind it if not bound yet (Bug#25506).
            (or (bound-and-true-p tabulated-list--near-rows)
                (list (or (tabulated-list-get-entry (point-at-bol 0))
