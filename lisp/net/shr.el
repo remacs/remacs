@@ -470,12 +470,20 @@ size, and full-buffer size."
 	(shr-insert sub)
       (shr-descend sub))))
 
+(defun shr-indirect-call (tag-name dom &rest args)
+  (let ((function (intern (concat "shr-tag-" (symbol-name tag-name)) obarray))
+	;; Allow other packages to override (or provide) rendering
+	;; of elements.
+	(external (cdr (assq tag-name shr-external-rendering-functions))))
+    (cond (external
+	   (apply external dom args))
+	  ((fboundp function)
+	   (apply function dom args))
+	  (t
+	   (apply 'shr-generic dom args)))))
+
 (defun shr-descend (dom)
-  (let ((function
-         (intern (concat "shr-tag-" (symbol-name (dom-tag dom))) obarray))
-        ;; Allow other packages to override (or provide) rendering
-        ;; of elements.
-        (external (cdr (assq (dom-tag dom) shr-external-rendering-functions)))
+  (let ((tag-name (dom-tag dom))
 	(style (dom-attr dom 'style))
 	(shr-stylesheet shr-stylesheet)
 	(shr-depth (1+ shr-depth))
@@ -490,12 +498,7 @@ size, and full-buffer size."
 	  (setq style nil)))
       ;; If we have a display:none, then just ignore this part of the DOM.
       (unless (equal (cdr (assq 'display shr-stylesheet)) "none")
-        (cond (external
-               (funcall external dom))
-              ((fboundp function)
-               (funcall function dom))
-              (t
-               (shr-generic dom)))
+	(shr-indirect-call tag-name dom)
 	(when (and shr-target-id
 		   (equal (dom-attr dom 'id) shr-target-id))
 	  ;; If the element was empty, we don't have anything to put the
@@ -1404,7 +1407,7 @@ ones, in case fg and bg are nil."
       (when url
 	(cond
 	 (image
-	  (shr-tag-img dom url)
+	  (shr-indirect-call 'img dom url)
 	  (setq dom nil))
 	 (multimedia
 	  (shr-insert " [multimedia] ")
@@ -1469,7 +1472,7 @@ The preference is a float determined from `shr-prefer-media-type'."
     (unless url
       (setq url (car (shr--extract-best-source dom))))
     (if (> (length image) 0)
-        (shr-tag-img nil image)
+	(shr-indirect-call 'img nil image)
       (shr-insert " [video] "))
     (shr-urlify start (shr-expand-url url))))
 
@@ -1964,9 +1967,9 @@ flags that control whether to collect or render objects."
 	     do (setq tag (dom-tag child)) and
 	     unless (memq tag '(comment style))
 	       if (eq tag 'img)
-		 do (shr-tag-img child)
+		 do (shr-indirect-call 'img child)
 	       else if (eq tag 'object)
-		 do (shr-tag-object child)
+		 do (shr-indirect-call 'object child)
 	       else
 		 do (setq recurse t) and
 		 if (eq tag 'tr)
@@ -1980,7 +1983,7 @@ flags that control whether to collect or render objects."
 		     do (setq flags nil)
 		   else if (car flags)
 		     do (setq recurse nil)
-			(shr-tag-table child)
+			(shr-indirect-call 'table child)
 		   end end end end end end end end end end
 	   when recurse
 	     append (shr-collect-extra-strings-in-table child flags)))
