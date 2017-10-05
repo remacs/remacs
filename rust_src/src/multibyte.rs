@@ -104,6 +104,11 @@ impl LispStringRef {
     pub fn as_mut_slice(&self) -> &mut [u8] {
         unsafe { slice::from_raw_parts_mut(self.data as *mut u8, self.len_bytes() as usize) }
     }
+
+    #[inline]
+    pub fn byte_at(&self, index: ptrdiff_t) -> u8 {
+        unsafe { *self.const_data_ptr().offset(index) }
+    }
 }
 
 pub struct LispStringRefIterator<'a> {

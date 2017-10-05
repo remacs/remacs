@@ -1,8 +1,10 @@
 use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Symbol, Qsetting_constant};
+use remacs_sys::{Lisp_Symbol, Symbol_Interned, Qsetting_constant};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
+
+const FLAG_INTERNED: u32 = 0b11 << 6; // 7 and 8 bits
 
 impl LispSymbolRef {
     pub fn symbol_name(&self) -> LispObject {
@@ -23,6 +25,11 @@ impl LispSymbolRef {
 
     pub fn set_function(&mut self, function: LispObject) {
         self.function = function.to_raw();
+    }
+
+    pub fn is_interned_in_initial_obarray(&self) -> bool {
+        self.symbol_bitfield & FLAG_INTERNED ==
+            (Symbol_Interned::InternedInInitialObarray as u32) << 6
     }
 }
 
@@ -80,4 +87,23 @@ fn fmakunbound(symbol: LispObject) -> LispObject {
     }
     sym.set_function(LispObject::constant_nil());
     symbol
+}
+
+
+// Define this in Rust to avoid unnecessarily consing up the symbol
+// name.
+
+/// Return t if OBJECT is a keyword.
+/// This means that it is a symbol with a print name beginning with `:'
+/// interned in the initial obarray.
+#[lisp_fn]
+fn keywordp(object: LispObject) -> LispObject {
+    if let Some(sym) = object.as_symbol() {
+        let name = sym.symbol_name().as_string_or_error();
+        LispObject::from_bool(
+            name.byte_at(0) == b':' && sym.is_interned_in_initial_obarray(),
+        )
+    } else {
+        LispObject::constant_nil()
+    }
 }
