@@ -142,8 +142,7 @@ the CPS state machinery.
     `(let ((,dynamic-var ,static-var))
        (unwind-protect ; Update the static shadow after evaluation is done
             ,form
-         (setf ,static-var ,dynamic-var))
-       ,form)))
+         (setf ,static-var ,dynamic-var)))))
 
 (defmacro cps--with-dynamic-binding (dynamic-var static-var &rest body)
   "Evaluate BODY such that generated atomic evaluations run with
