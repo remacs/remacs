@@ -522,13 +522,13 @@ Create parent directories as needed."
          for buffer = (and full-file
                            (find-buffer-visiting full-file))
          if (and (eq buffer (process-buffer proc)) message)
-         collect (with-current-buffer buffer
-                   (pcase-let ((`(,beg . ,end)
-                                (flymake-diag-region line-number col-number)))
-                     (flymake-make-diagnostic
-                      buffer beg end
-                      (guess-type flymake-proc-diagnostic-type-pred message)
-                      message)))
+         collect (pcase-let ((`(,beg . ,end)
+                              (flymake-diag-region buffer line-number col-number)))
+                   (flymake-make-diagnostic
+                    buffer beg end
+                    (with-current-buffer buffer
+                      (guess-type flymake-proc-diagnostic-type-pred message))
+                    message))
          else
          do (flymake-log 2 "Reference to file %s is out of scope" fname))
       (error
@@ -742,16 +742,18 @@ can also be executed interactively independently of
            "There's already a Flymake process running in this buffer")
           (kill-process proc))))
     (when
-        ;; A number of situations make us not want to error right away
-        ;; (and disable ourselves), in case the situation changes in
-        ;; the near future.
-        (and buffer-file-name
-             ;; Since we write temp files in current dir, there's no point
-             ;; trying if the directory is read-only (bug#8954).
-             (file-writable-p (file-name-directory buffer-file-name))
-             (or (not flymake-proc-compilation-prevents-syntax-check)
+        ;; This particular situation make us not want to error right
+        ;; away (and disable ourselves), in case the situation changes
+        ;; in the near future.
+        (and (or (not flymake-proc-compilation-prevents-syntax-check)
                  (not (flymake-proc--compilation-is-running))))
-      (let ((init-f (flymake-proc--get-init-function buffer-file-name)))
+      (let ((init-f
+             (and
+              buffer-file-name
+              ;; Since we write temp files in current dir, there's no point
+              ;; trying if the directory is read-only (bug#8954).
+              (file-writable-p (file-name-directory buffer-file-name))
+              (flymake-proc--get-init-function buffer-file-name))))
         (unless init-f (error "Can find a suitable init function"))
         (flymake-proc--clear-buildfile-cache)
         (flymake-proc--clear-project-include-dirs-cache)
@@ -768,7 +770,6 @@ can also be executed interactively independently of
                 (flymake-log 0 "init function %s for %s failed, cleaning up"
                              init-f buffer-file-name))
                (t
-                (setq flymake-last-change-time nil)
                 (setq proc
                       (let ((default-directory (or dir default-directory)))
                         (when dir
@@ -878,8 +879,7 @@ can also be executed interactively independently of
 (defun flymake-proc-simple-cleanup ()
   "Do cleanup after `flymake-proc-init-create-temp-buffer-copy'.
 Delete temp file."
-  (flymake-proc--safe-delete-file flymake-proc--temp-source-file-name)
-  (setq flymake-last-change-time nil))
+  (flymake-proc--safe-delete-file flymake-proc--temp-source-file-name))
 
 (defun flymake-proc-get-real-file-name (file-name-from-err-msg)
   "Translate file name from error message to \"real\" file name.

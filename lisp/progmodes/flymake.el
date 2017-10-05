@@ -180,6 +180,11 @@ If nil, never start checking buffer automatically like this."
                        level)
                      "*Flymake log*")))
 
+(defun flymake-switch-to-log-buffer ()
+  "Go to the *Flymake log* buffer."
+  (interactive)
+  (switch-to-buffer "*Flymake log*"))
+
 ;;;###autoload
 (defmacro flymake-log (level msg &rest args)
   "Log, at level LEVEL, the message MSG formatted with ARGS.
@@ -282,41 +287,43 @@ verify FILTER, a function, and sort them by COMPARE (using KEY)."
 (define-obsolete-face-alias 'flymake-warnline 'flymake-warning "26.1")
 (define-obsolete-face-alias 'flymake-errline 'flymake-error "26.1")
 
-(defun flymake-diag-region (line &optional col)
-  "Compute region (BEG . END) corresponding to LINE and COL.
-If COL is nil, return a region just for LINE.
-Return nil if the region is invalid."
+;;;###autoload
+(defun flymake-diag-region (buffer line &optional col)
+  "Compute BUFFER's region (BEG . END) corresponding to LINE and COL.
+If COL is nil, return a region just for LINE.  Return nil if the
+region is invalid."
   (condition-case-unless-debug _err
-      (let ((line (min (max line 1)
-                       (line-number-at-pos (point-max) 'absolute))))
-        (save-excursion
-          (goto-char (point-min))
-          (forward-line (1- line))
-          (cl-flet ((fallback-bol
-                     () (progn (back-to-indentation) (point)))
-                    (fallback-eol
-                     (beg)
-                     (progn
-                       (end-of-line)
-                       (skip-chars-backward " \t\f\t\n" beg)
-                       (if (eq (point) beg)
-                           (line-beginning-position 2)
-                         (point)))))
-            (if (and col (cl-plusp col))
-                (let* ((beg (progn (forward-char (1- col))
-                                   (point)))
-                       (sexp-end (ignore-errors (end-of-thing 'sexp)))
-                       (end (or (and sexp-end
-                                     (not (= sexp-end beg))
-                                     sexp-end)
-                                (ignore-errors (goto-char (1+ beg)))))
-                       (safe-end (or end
-                                     (fallback-eol beg))))
-                  (cons (if end beg (fallback-bol))
-                        safe-end))
-              (let* ((beg (fallback-bol))
-                     (end (fallback-eol beg)))
-                (cons beg end))))))
+      (with-current-buffer buffer
+        (let ((line (min (max line 1)
+                         (line-number-at-pos (point-max) 'absolute))))
+          (save-excursion
+            (goto-char (point-min))
+            (forward-line (1- line))
+            (cl-flet ((fallback-bol
+                       () (progn (back-to-indentation) (point)))
+                      (fallback-eol
+                       (beg)
+                       (progn
+                         (end-of-line)
+                         (skip-chars-backward " \t\f\t\n" beg)
+                         (if (eq (point) beg)
+                             (line-beginning-position 2)
+                           (point)))))
+              (if (and col (cl-plusp col))
+                  (let* ((beg (progn (forward-char (1- col))
+                                     (point)))
+                         (sexp-end (ignore-errors (end-of-thing 'sexp)))
+                         (end (or (and sexp-end
+                                       (not (= sexp-end beg))
+                                       sexp-end)
+                                  (ignore-errors (goto-char (1+ beg)))))
+                         (safe-end (or end
+                                       (fallback-eol beg))))
+                    (cons (if end beg (fallback-bol))
+                          safe-end))
+                (let* ((beg (fallback-bol))
+                       (end (fallback-eol beg)))
+                  (cons beg end)))))))
     (error (flymake-error "Invalid region line=%s col=%s" line col))))
 
 (defvar flymake-diagnostic-functions nil
@@ -872,8 +879,17 @@ applied."
   (flymake-goto-next-error (- (or n 1)) filter interactive))
 
 
-;;; Mode-line fanciness
+;;; Mode-line and menu
 ;;;
+(easy-menu-define flymake-menu flymake-mode-map "Flymake"
+  `("Flymake"
+    [ "Go to next error"      flymake-goto-next-error t ]
+    [ "Go to previous error"  flymake-goto-prev-error t ]
+    [ "Check now"             flymake-start t ]
+    [ "Go to log buffer"      flymake-switch-to-log-buffer t ]
+    "--"
+    [ "Turn off Flymake"      flymake-mode t ]))
+
 (defvar flymake--mode-line-format `(:eval (flymake--mode-line-format)))
 
 (put 'flymake--mode-line-format 'risky-local-variable t)
@@ -903,18 +919,16 @@ applied."
                             "mouse-1: go to log buffer ")
                    keymap
                    ,(let ((map (make-sparse-keymap)))
-                      (define-key map [mode-line mouse-1]
-                        (lambda (_event)
-                          (interactive "e")
-                          (switch-to-buffer "*Flymake log*")))
+                      (define-key map [mode-line down-mouse-1]
+                        flymake-menu)
                       map))
       ,@(pcase-let ((`(,ind ,face ,explain)
                      (cond ((null known)
                             `("?" mode-line "No known backends"))
                            (some-waiting
                             `("Wait" compilation-mode-line-run
-                              ,(format "Waiting for %s running backends"
-                                       (length running))))
+                              ,(format "Waiting for %s running backend(s)"
+                                       (length some-waiting))))
                            (all-disabled
                             `("!" compilation-mode-line-run
                               "All backends disabled"))
@@ -924,7 +938,12 @@ applied."
             `((":"
                (:propertize ,ind
                             face ,face
-                            help-echo ,explain)))))
+                            help-echo ,explain
+                            keymap
+                            ,(let ((map (make-sparse-keymap)))
+                               (define-key map [mode-line mouse-1]
+                                 'flymake-switch-to-log-buffer)
+                               map))))))
       ,@(unless (or all-disabled
                     (null known))
           (cl-loop
