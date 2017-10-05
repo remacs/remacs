@@ -1254,8 +1254,7 @@ preceding cell has spilled over."
 	 ((< len width)
 	  ;; Fill field to length with spaces.
 	  (setq len  (make-string (- width len) ?\s)
-		text (if (or (stringp value)
-			     (eq ses-call-printer-return t))
+		text (if (eq ses-call-printer-return t)
 			 (concat text len)
 		       (concat len text))))
 	 ((> len width)
