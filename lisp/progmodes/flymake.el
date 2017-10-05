@@ -223,17 +223,6 @@ TYPE is a key to `flymake-diagnostic-types-alist' and TEXT is a
 description of the problem detected in this region."
   (flymake--diag-make :buffer buffer :beg beg :end end :type type :text text))
 
-(defun flymake-ler-make-ler (file line type text &optional full-file)
-  (let* ((file (or full-file file))
-         (buf (find-buffer-visiting file)))
-    (unless buf (flymake-error "No buffer visiting %s" file))
-    (pcase-let* ((`(,beg . ,end)
-                  (with-current-buffer buf
-                    (flymake-diag-region line nil))))
-      (flymake-make-diagnostic buf beg end type text))))
-
-(make-obsolete 'flymake-ler-make-ler 'flymake-make-diagnostic "26.1")
-
 (cl-defun flymake--overlays (&key beg end filter compare key)
   "Get flymake-related overlays.
 If BEG is non-nil and END is nil, consider only `overlays-at'
