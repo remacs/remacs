@@ -64,6 +64,7 @@ mod editfns;
 mod util;
 mod minibuf;
 mod cmds;
+mod data;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -162,6 +163,8 @@ pub use obarray::Fintern_soft;
 pub use marker::Fmarker_position;
 pub use marker::Fmarker_buffer;
 pub use windows::Fwindow_point;
+pub use data::Findirect_function;
+pub use data::indirect_function;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
@@ -395,5 +398,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*minibuf::Sactive_minibuffer_window);
         defsubr(&*threads::Sthread_name);
         defsubr(&*cmds::Sforward_point);
+        defsubr(&*data::Sindirect_function);
     }
 }
