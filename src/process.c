@@ -1127,16 +1127,6 @@ For a network, serial, and pipe connections, this value is nil.  */)
   return (pid ? make_fixnum_or_float (pid) : Qnil);
 }
 
-DEFUN ("process-name", Fprocess_name, Sprocess_name, 1, 1, 0,
-       doc: /* Return the name of PROCESS, as a string.
-This is the name of the program invoked in PROCESS,
-possibly modified to make it unique among process names.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->name;
-}
-
 DEFUN ("process-command", Fprocess_command, Sprocess_command, 1, 1, 0,
        doc: /* Return the command that was executed to start PROCESS.
 This is a list of strings, the first string being the program executed
@@ -7934,7 +7924,6 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_status);
   defsubr (&Sprocess_exit_status);
   defsubr (&Sprocess_id);
-  defsubr (&Sprocess_name);
   defsubr (&Sprocess_tty_name);
   defsubr (&Sprocess_command);
   defsubr (&Sset_process_buffer);
