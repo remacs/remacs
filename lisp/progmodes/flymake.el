@@ -708,18 +708,14 @@ Interactively, with a prefix arg, FORCE is t."
   (cond
    ;; Turning the mode ON.
    (flymake-mode
-    (cond
-     ((not flymake-diagnostic-functions)
-      (flymake-error "No backends to check buffer %s" (buffer-name)))
-     (t
-      (add-hook 'after-change-functions 'flymake-after-change-function nil t)
-      (add-hook 'after-save-hook 'flymake-after-save-hook nil t)
-      (add-hook 'kill-buffer-hook 'flymake-kill-buffer-hook nil t)
+    (add-hook 'after-change-functions 'flymake-after-change-function nil t)
+    (add-hook 'after-save-hook 'flymake-after-save-hook nil t)
+    (add-hook 'kill-buffer-hook 'flymake-kill-buffer-hook nil t)
 
-      (setq flymake--backend-state (make-hash-table))
+    (setq flymake--backend-state (make-hash-table))
 
-      (when flymake-start-syntax-check-on-find-file
-        (flymake-start)))))
+    (when flymake-start-syntax-check-on-find-file
+      (flymake-start)))
 
    ;; Turning the mode OFF.
    (t
