@@ -1599,8 +1599,11 @@ ARGLIST is either a string, or a list of strings or symbols."
 (defvar checkdoc-autofix-flag)
 (defvar checkdoc-generate-compile-warnings-flag)
 (defvar checkdoc-diagnostic-buffer)
-(defun elisp-flymake--checkdoc-1 ()
-  "Do actual work for `elisp-flymake-checkdoc'."
+
+;;;###autoload
+(defun elisp-flymake-checkdoc (report-fn &rest _args)
+  "A Flymake backend for `checkdoc'.
+Calls REPORT-FN directly."
   (let (collected)
     (let* ((checkdoc-create-error-function
             (lambda (text start end &optional unfixable)
@@ -1608,63 +1611,52 @@ ARGLIST is either a string, or a list of strings or symbols."
               nil))
            (checkdoc-autofix-flag nil)
            (checkdoc-generate-compile-warnings-flag nil)
-           (buf (generate-new-buffer " *checkdoc-temp*"))
-           (checkdoc-diagnostic-buffer buf))
+           (checkdoc-diagnostic-buffer
+            (generate-new-buffer " *checkdoc-temp*")))
       (unwind-protect
           (save-excursion
             (checkdoc-current-buffer t))
-        (kill-buffer buf)))
+        (kill-buffer checkdoc-diagnostic-buffer)))
+    (funcall report-fn
+             (cl-loop for (text start end _unfixable) in
+                      collected
+                      collect
+                      (flymake-make-diagnostic
+                       (current-buffer)
+                       start end :note text)))
     collected))
 
-;;;###autoload
-(defun elisp-flymake-checkdoc (report-fn &rest _args)
-  "A Flymake backend for `checkdoc'.
-Calls REPORT-FN directly."
-  (unless (derived-mode-p 'emacs-lisp-mode)
-    (error "Can only work on `emacs-lisp-mode' buffers"))
-  (funcall report-fn
-           (cl-loop for (text start end _unfixable) in
-                    (elisp-flymake--checkdoc-1)
-                    collect
-                    (flymake-make-diagnostic
-                     (current-buffer)
-                     start end :note text))))
-
 (defun elisp-flymake--byte-compile-done (report-fn
-                                         origin-buffer
-                                         output-buffer
-                                         temp-file)
-  (unwind-protect
-      (with-current-buffer
-          origin-buffer
-        (save-excursion
-          (save-restriction
-            (widen)
-            (funcall
-             report-fn
-             (cl-loop with data =
-                      (with-current-buffer output-buffer
-                        (goto-char (point-min))
-                        (search-forward ":elisp-flymake-output-start")
-                        (read (point-marker)))
-                      for (string pos _fill level) in data
-                      do (goto-char pos)
-                      for beg = (if (< (point) (point-max))
-                                    (point)
-                                  (line-beginning-position))
-                      for end = (min
-                                 (line-end-position)
-                                 (or (cdr
-                                      (bounds-of-thing-at-point 'sexp))
-                                     (point-max)))
-                      collect (flymake-make-diagnostic
-                               (current-buffer)
-                               (if (= beg end) (1- beg) beg)
-                               end
-                               level
-                               string))))))
-    (kill-buffer output-buffer)
-    (ignore-errors (delete-file temp-file))))
+                                         source-buffer
+                                         output-buffer)
+  (with-current-buffer
+      source-buffer
+    (save-excursion
+      (save-restriction
+        (widen)
+        (funcall
+         report-fn
+         (cl-loop with data =
+                  (with-current-buffer output-buffer
+                    (goto-char (point-min))
+                    (search-forward ":elisp-flymake-output-start")
+                    (read (point-marker)))
+                  for (string pos _fill level) in data
+                  do (goto-char pos)
+                  for beg = (if (< (point) (point-max))
+                                (point)
+                              (line-beginning-position))
+                  for end = (min
+                             (line-end-position)
+                             (or (cdr
+                                  (bounds-of-thing-at-point 'sexp))
+                                 (point-max)))
+                  collect (flymake-make-diagnostic
+                           (current-buffer)
+                           (if (= beg end) (1- beg) beg)
+                           end
+                           level
+                           string)))))))
 
 (defvar-local elisp-flymake--byte-compile-process nil
   "Buffer-local process started for byte-compiling the buffer.")
@@ -1674,16 +1666,11 @@ Calls REPORT-FN directly."
   "A Flymake backend for elisp byte compilation.
 Spawn an Emacs process that byte-compiles a file representing the
 current buffer state and calls REPORT-FN when done."
-  (interactive (list (lambda (stuff)
-                       (message "aha %s" stuff))))
-  (unless (derived-mode-p 'emacs-lisp-mode)
-    (error "Can only work on `emacs-lisp-mode' buffers"))
   (when elisp-flymake--byte-compile-process
-    (process-put elisp-flymake--byte-compile-process 'elisp-flymake--obsolete t)
     (when (process-live-p elisp-flymake--byte-compile-process)
       (kill-process elisp-flymake--byte-compile-process)))
   (let ((temp-file (make-temp-file "elisp-flymake-byte-compile"))
-        (origin-buffer (current-buffer)))
+        (source-buffer (current-buffer)))
     (save-restriction
       (widen)
       (write-region (point-min) (point-max) temp-file nil 'nomessage))
@@ -1703,21 +1690,22 @@ current buffer state and calls REPORT-FN when done."
         :connection-type 'pipe
         :sentinel
         (lambda (proc _event)
-          (unless (process-live-p proc)
+          (when (eq (process-status proc) 'exit)
             (unwind-protect
                 (cond
+                 ((not (eq proc elisp-flymake--byte-compile-process))
+                  (flymake-log :warning "byte-compile process %s obsolete" proc))
                  ((zerop (process-exit-status proc))
                   (elisp-flymake--byte-compile-done report-fn
-                                                    origin-buffer
-                                                    output-buffer
-                                                    temp-file))
-                 ((process-get proc 'elisp-flymake--obsolete)
-                  (flymake-log :warning "byte-compile process %s obsolete" proc))
+                                                    source-buffer
+                                                    output-buffer))
                  (t
                   (funcall report-fn
                            :panic
                            :explanation
-                           (format "byte-compile process %s died" proc)))))))))
+                           (format "byte-compile process %s died" proc))))
+              (ignore-errors (delete-file temp-file))
+              (kill-buffer output-buffer))))))
       :stderr null-device
       :noquery t)))
 
