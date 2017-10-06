@@ -483,7 +483,11 @@ size, and full-buffer size."
 	   (apply 'shr-generic dom args)))))
 
 (defun shr-descend (dom)
-  (let ((tag-name (dom-tag dom))
+  (let ((function
+         (intern (concat "shr-tag-" (symbol-name (dom-tag dom))) obarray))
+        ;; Allow other packages to override (or provide) rendering
+        ;; of elements.
+        (external (cdr (assq (dom-tag dom) shr-external-rendering-functions)))
 	(style (dom-attr dom 'style))
 	(shr-stylesheet shr-stylesheet)
 	(shr-depth (1+ shr-depth))
@@ -498,7 +502,17 @@ size, and full-buffer size."
 	  (setq style nil)))
       ;; If we have a display:none, then just ignore this part of the DOM.
       (unless (equal (cdr (assq 'display shr-stylesheet)) "none")
-	(shr-indirect-call tag-name dom)
+        ;; We don't use shr-indirect-call here, since shr-descend is
+        ;; the central bit of shr.el, and should be as fast as
+        ;; possible.  Having one more level of indirection with its
+        ;; negative effect on performance is deemed unjustified in
+        ;; this case.
+        (cond (external
+               (funcall external dom))
+              ((fboundp function)
+               (funcall function dom))
+              (t
+               (shr-generic dom)))
 	(when (and shr-target-id
 		   (equal (dom-attr dom 'id) shr-target-id))
 	  ;; If the element was empty, we don't have anything to put the
