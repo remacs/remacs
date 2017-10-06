@@ -812,15 +812,19 @@ formatting feature described here; they differ from @code{format-message} only
 in how they use the result of formatting.
 
 @defun format string &rest objects
-This function returns a new string that is made by copying
-@var{string} and then replacing any format specification
-in the copy with encodings of the corresponding @var{objects}.  The
+This function returns a string equal to @var{string}, replacing any format
+specifications with encodings of the corresponding @var{objects}.  The
 arguments @var{objects} are the computed values to be formatted.
 
 The characters in @var{string}, other than the format specifications,
 are copied directly into the output, including their text properties,
 if any.  Any text properties of the format specifications are copied
 to the produced string representations of the argument @var{objects}.
+
+The output string need not be newly-allocated.  For example, if
+@code{x} is the string @code{"foo"}, the expressions @code{(eq x
+(format x))} and @code{(eq x (format "%s" x))} might both yield
+@code{t}.
 @end defun
 
 @defun format-message string &rest objects

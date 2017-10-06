@@ -13080,23 +13080,7 @@ to get the effect of a C-q.
 ;;; Generated autoloads from progmodes/flymake.el
 (push (purecopy '(flymake 0 3)) package--builtin-versions)
 
-;;;***
-
-;;;### (autoloads nil "flymake-proc" "progmodes/flymake-proc.el"
-;;;;;;  (0 0 0 0))
-;;; Generated autoloads from progmodes/flymake-proc.el
-(push (purecopy '(flymake-proc 0 3)) package--builtin-versions)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake-proc" '("flymake-")))
-
-;;;***
-
-;;;### (autoloads nil "flymake-ui" "progmodes/flymake-ui.el" (0 0
-;;;;;;  0 0))
-;;; Generated autoloads from progmodes/flymake-ui.el
-(push (purecopy '(flymake-ui 0 3)) package--builtin-versions)
-
-(autoload 'flymake-mode "flymake-ui" "\
+(autoload 'flymake-mode "flymake" "\
 Toggle Flymake mode on or off.
 With a prefix argument ARG, enable Flymake mode if ARG is
 positive, and disable it otherwise.  If called from Lisp, enable
@@ -13105,22 +13089,22 @@ the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
 
 \(fn &optional ARG)" t nil)
 
-(autoload 'flymake-mode-on "flymake-ui" "\
+(autoload 'flymake-mode-on "flymake" "\
 Turn flymake mode on.
 
 \(fn)" nil nil)
 
-(autoload 'flymake-mode-off "flymake-ui" "\
+(autoload 'flymake-mode-off "flymake" "\
 Turn flymake mode off.
 
 \(fn)" nil nil)
 
-(autoload 'flymake-find-file-hook "flymake-ui" "\
+(autoload 'flymake-find-file-hook "flymake" "\
 
 
 \(fn)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake-ui" '("flymake-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake" '("flymake-")))
 
 ;;;***
 
@@ -33735,7 +33719,7 @@ Return a string giving the duration of the Emacs initialization.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "time" '("display-time-" "legacy-style-world-list" "zoneinfo-style-world-list")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "time" '("display-time-" "time--display-world-list" "legacy-style-world-list" "zoneinfo-style-world-list")))
 
 ;;;***
 
@@ -34451,7 +34435,7 @@ Reenable Ange-FTP, when Tramp is unloaded.
 
 ;;;### (autoloads nil "trampver" "net/trampver.el" (0 0 0 0))
 ;;; Generated autoloads from net/trampver.el
-(push (purecopy '(tramp 2 3 3 -1)) package--builtin-versions)
+(push (purecopy '(tramp 2 3 3 26 1)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "trampver" '("tramp-")))
 
@@ -38524,53 +38508,44 @@ Zone out, completely.
 ;;;;;;  "eshell/em-term.el" "eshell/em-tramp.el" "eshell/em-unix.el"
 ;;;;;;  "eshell/em-xtra.el" "facemenu.el" "faces.el" "files.el" "font-core.el"
 ;;;;;;  "font-lock.el" "format.el" "frame.el" "help.el" "hfy-cmap.el"
-;;;;;;  "ibuf-ext.el" "indent.el" "international/characters.el" "international/charprop.el"
-;;;;;;  "international/charscript.el" "international/cp51932.el"
-;;;;;;  "international/eucjp-ms.el" "international/mule-cmds.el"
-;;;;;;  "international/mule-conf.el" "international/mule.el" "international/uni-bidi.el"
-;;;;;;  "international/uni-brackets.el" "international/uni-category.el"
-;;;;;;  "international/uni-combining.el" "international/uni-comment.el"
-;;;;;;  "international/uni-decimal.el" "international/uni-decomposition.el"
-;;;;;;  "international/uni-digit.el" "international/uni-lowercase.el"
-;;;;;;  "international/uni-mirrored.el" "international/uni-name.el"
-;;;;;;  "international/uni-numeric.el" "international/uni-old-name.el"
-;;;;;;  "international/uni-titlecase.el" "international/uni-uppercase.el"
-;;;;;;  "isearch.el" "jit-lock.el" "jka-cmpr-hook.el" "language/burmese.el"
-;;;;;;  "language/cham.el" "language/chinese.el" "language/cyrillic.el"
-;;;;;;  "language/czech.el" "language/english.el" "language/ethiopic.el"
-;;;;;;  "language/european.el" "language/georgian.el" "language/greek.el"
-;;;;;;  "language/hebrew.el" "language/indian.el" "language/japanese.el"
-;;;;;;  "language/khmer.el" "language/korean.el" "language/lao.el"
-;;;;;;  "language/misc-lang.el" "language/romanian.el" "language/sinhala.el"
-;;;;;;  "language/slovak.el" "language/tai-viet.el" "language/thai.el"
-;;;;;;  "language/tibetan.el" "language/utf-8-lang.el" "language/vietnamese.el"
-;;;;;;  "ldefs-boot.el" "leim/ja-dic/ja-dic.el" "leim/leim-list.el"
-;;;;;;  "leim/quail/4Corner.el" "leim/quail/ARRAY30.el" "leim/quail/CCDOSPY.el"
-;;;;;;  "leim/quail/CTLau-b5.el" "leim/quail/CTLau.el" "leim/quail/ECDICT.el"
-;;;;;;  "leim/quail/ETZY.el" "leim/quail/PY-b5.el" "leim/quail/PY.el"
-;;;;;;  "leim/quail/Punct-b5.el" "leim/quail/Punct.el" "leim/quail/QJ-b5.el"
-;;;;;;  "leim/quail/QJ.el" "leim/quail/SW.el" "leim/quail/TONEPY.el"
-;;;;;;  "leim/quail/ZIRANMA.el" "leim/quail/ZOZY.el" "leim/quail/arabic.el"
-;;;;;;  "leim/quail/croatian.el" "leim/quail/cyril-jis.el" "leim/quail/cyrillic.el"
-;;;;;;  "leim/quail/czech.el" "leim/quail/georgian.el" "leim/quail/greek.el"
-;;;;;;  "leim/quail/hanja-jis.el" "leim/quail/hanja.el" "leim/quail/hanja3.el"
-;;;;;;  "leim/quail/hebrew.el" "leim/quail/ipa-praat.el" "leim/quail/latin-alt.el"
-;;;;;;  "leim/quail/latin-ltx.el" "leim/quail/latin-post.el" "leim/quail/latin-pre.el"
-;;;;;;  "leim/quail/persian.el" "leim/quail/programmer-dvorak.el"
-;;;;;;  "leim/quail/py-punct.el" "leim/quail/pypunct-b5.el" "leim/quail/quick-b5.el"
-;;;;;;  "leim/quail/quick-cns.el" "leim/quail/rfc1345.el" "leim/quail/sgml-input.el"
-;;;;;;  "leim/quail/slovak.el" "leim/quail/symbol-ksc.el" "leim/quail/tamil-dvorak.el"
-;;;;;;  "leim/quail/tsang-b5.el" "leim/quail/tsang-cns.el" "leim/quail/vntelex.el"
-;;;;;;  "leim/quail/vnvni.el" "leim/quail/welsh.el" "loadup.el" "mail/blessmail.el"
-;;;;;;  "mail/rmailedit.el" "mail/rmailkwd.el" "mail/rmailmm.el"
-;;;;;;  "mail/rmailmsc.el" "mail/rmailsort.el" "mail/rmailsum.el"
-;;;;;;  "mail/undigest.el" "menu-bar.el" "mh-e/mh-gnus.el" "mh-e/mh-loaddefs.el"
-;;;;;;  "minibuffer.el" "mouse.el" "net/tramp-loaddefs.el" "newcomment.el"
-;;;;;;  "obarray.el" "org/ob-core.el" "org/ob-keys.el" "org/ob-lob.el"
-;;;;;;  "org/ob-matlab.el" "org/ob-tangle.el" "org/ob.el" "org/org-archive.el"
-;;;;;;  "org/org-attach.el" "org/org-bbdb.el" "org/org-clock.el"
-;;;;;;  "org/org-datetree.el" "org/org-element.el" "org/org-feed.el"
-;;;;;;  "org/org-footnote.el" "org/org-id.el" "org/org-indent.el"
+;;;;;;  "ibuf-ext.el" "indent.el" "international/characters.el" "international/charscript.el"
+;;;;;;  "international/cp51932.el" "international/eucjp-ms.el" "international/mule-cmds.el"
+;;;;;;  "international/mule-conf.el" "international/mule.el" "isearch.el"
+;;;;;;  "jit-lock.el" "jka-cmpr-hook.el" "language/burmese.el" "language/cham.el"
+;;;;;;  "language/chinese.el" "language/cyrillic.el" "language/czech.el"
+;;;;;;  "language/english.el" "language/ethiopic.el" "language/european.el"
+;;;;;;  "language/georgian.el" "language/greek.el" "language/hebrew.el"
+;;;;;;  "language/indian.el" "language/japanese.el" "language/khmer.el"
+;;;;;;  "language/korean.el" "language/lao.el" "language/misc-lang.el"
+;;;;;;  "language/romanian.el" "language/sinhala.el" "language/slovak.el"
+;;;;;;  "language/tai-viet.el" "language/thai.el" "language/tibetan.el"
+;;;;;;  "language/utf-8-lang.el" "language/vietnamese.el" "ldefs-boot.el"
+;;;;;;  "leim/ja-dic/ja-dic.el" "leim/leim-list.el" "leim/quail/4Corner.el"
+;;;;;;  "leim/quail/ARRAY30.el" "leim/quail/CCDOSPY.el" "leim/quail/CTLau-b5.el"
+;;;;;;  "leim/quail/CTLau.el" "leim/quail/ECDICT.el" "leim/quail/ETZY.el"
+;;;;;;  "leim/quail/PY-b5.el" "leim/quail/PY.el" "leim/quail/Punct-b5.el"
+;;;;;;  "leim/quail/Punct.el" "leim/quail/QJ-b5.el" "leim/quail/QJ.el"
+;;;;;;  "leim/quail/SW.el" "leim/quail/TONEPY.el" "leim/quail/ZIRANMA.el"
+;;;;;;  "leim/quail/ZOZY.el" "leim/quail/arabic.el" "leim/quail/croatian.el"
+;;;;;;  "leim/quail/cyril-jis.el" "leim/quail/cyrillic.el" "leim/quail/czech.el"
+;;;;;;  "leim/quail/georgian.el" "leim/quail/greek.el" "leim/quail/hanja-jis.el"
+;;;;;;  "leim/quail/hanja.el" "leim/quail/hanja3.el" "leim/quail/hebrew.el"
+;;;;;;  "leim/quail/ipa-praat.el" "leim/quail/latin-alt.el" "leim/quail/latin-ltx.el"
+;;;;;;  "leim/quail/latin-post.el" "leim/quail/latin-pre.el" "leim/quail/persian.el"
+;;;;;;  "leim/quail/programmer-dvorak.el" "leim/quail/py-punct.el"
+;;;;;;  "leim/quail/pypunct-b5.el" "leim/quail/quick-b5.el" "leim/quail/quick-cns.el"
+;;;;;;  "leim/quail/rfc1345.el" "leim/quail/sgml-input.el" "leim/quail/slovak.el"
+;;;;;;  "leim/quail/symbol-ksc.el" "leim/quail/tamil-dvorak.el" "leim/quail/tsang-b5.el"
+;;;;;;  "leim/quail/tsang-cns.el" "leim/quail/vntelex.el" "leim/quail/vnvni.el"
+;;;;;;  "leim/quail/welsh.el" "loadup.el" "mail/blessmail.el" "mail/rmailedit.el"
+;;;;;;  "mail/rmailkwd.el" "mail/rmailmm.el" "mail/rmailmsc.el" "mail/rmailsort.el"
+;;;;;;  "mail/rmailsum.el" "mail/undigest.el" "menu-bar.el" "mh-e/mh-gnus.el"
+;;;;;;  "mh-e/mh-loaddefs.el" "minibuffer.el" "mouse.el" "net/tramp-loaddefs.el"
+;;;;;;  "newcomment.el" "obarray.el" "org/ob-core.el" "org/ob-keys.el"
+;;;;;;  "org/ob-lob.el" "org/ob-matlab.el" "org/ob-tangle.el" "org/ob.el"
+;;;;;;  "org/org-archive.el" "org/org-attach.el" "org/org-bbdb.el"
+;;;;;;  "org/org-clock.el" "org/org-datetree.el" "org/org-element.el"
+;;;;;;  "org/org-feed.el" "org/org-footnote.el" "org/org-id.el" "org/org-indent.el"
 ;;;;;;  "org/org-install.el" "org/org-irc.el" "org/org-mobile.el"
 ;;;;;;  "org/org-plot.el" "org/org-table.el" "org/org-timer.el" "org/ox-ascii.el"
 ;;;;;;  "org/ox-beamer.el" "org/ox-html.el" "org/ox-icalendar.el"

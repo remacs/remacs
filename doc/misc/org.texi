@@ -4,7 +4,7 @@
 @settitle The Org Manual
 @include docstyle.texi
 
-@set VERSION 9.1.1
+@set VERSION 9.1.2
 @set DATE 2017-09-17
 
 @c Version and Contact Info
@@ -1257,13 +1257,8 @@ Org uses just two commands, bound to @key{TAB} and
 @end example
 
 @vindex org-cycle-emulate-tab
-@vindex org-cycle-global-at-bob
 The cursor must be on a headline for this to work@footnote{see, however,
-the option @code{org-cycle-emulate-tab}.}.  When the cursor is at the
-beginning of the buffer and the first line is not a headline, then
-@key{TAB} actually runs global cycling (see below)@footnote{see the
-option @code{org-cycle-global-at-bob}.}.  Also when called with a prefix
-argument (@kbd{C-u @key{TAB}}), global cycling is invoked.
+the option @code{org-cycle-emulate-tab}.}.
 
 @cindex global visibility states
 @cindex global cycling
@@ -1282,6 +1277,11 @@ argument (@kbd{C-u @key{TAB}}), global cycling is invoked.
 When @kbd{S-@key{TAB}} is called with a numeric prefix argument N, the
 CONTENTS view up to headlines of level N will be shown.  Note that inside
 tables, @kbd{S-@key{TAB}} jumps to the previous field.
+
+@vindex org-cycle-global-at-bob
+You can run global cycling using @key{TAB} only if point is at the very
+beginning of the buffer, but not on a headline, and
+@code{org-cycle-global-at-bob} is set to a non-@code{nil} value.
 
 @cindex set startup visibility, command
 @orgcmd{C-u C-u @key{TAB},org-set-startup-visibility}
@@ -1659,11 +1659,9 @@ line.  In particular, if an ordered list reaches number @samp{10.}, then the
 list.  An item ends before the next line that is less or equally indented
 than its bullet/number.
 
-@vindex org-list-empty-line-terminates-plain-lists
 A list ends whenever every item has ended, which means before any line less
 or equally indented than items at top level.  It also ends before two blank
-lines@footnote{See also @code{org-list-empty-line-terminates-plain-lists}.}.
-In that case, all items are closed.  Here is an example:
+lines.  In that case, all items are closed.  Here is an example:
 
 @example
 @group
@@ -14991,6 +14989,7 @@ directory on the local machine.
       '(("org"
          :base-directory "~/org/"
          :publishing-directory "~/public_html"
+         :publishing-function org-html-publish-to-html
          :section-numbers nil
          :with-toc nil
          :html-head "<link rel=\"stylesheet\"

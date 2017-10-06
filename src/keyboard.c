@@ -145,10 +145,6 @@ static Lisp_Object recover_top_level_message;
 /* Message normally displayed by Vtop_level.  */
 static Lisp_Object regular_top_level_message;
 
-/* For longjmp to where kbd input is being done.  */
-
-static sys_jmp_buf getcjmp;
-
 /* True while displaying for echoing.   Delays C-g throwing.  */
 
 static bool echoing;
@@ -2570,9 +2566,6 @@ read_char (int commandflag, Lisp_Object map,
 	 so restore it now.  */
       restore_getcjmp (save_jump);
       pthread_sigmask (SIG_SETMASK, &empty_mask, 0);
-#if THREADS_ENABLED
-      maybe_reacquire_global_lock ();
-#endif
       unbind_to (jmpcount, Qnil);
       XSETINT (c, quit_char);
       internal_last_event_frame = selected_frame;
@@ -10508,6 +10501,13 @@ handle_interrupt (bool in_signal_handler)
          outside of polling since we don't get SIGIO like X and we don't have a
          separate event loop thread like W32.  */
 #ifndef HAVE_NS
+#ifdef THREADS_ENABLED
+  /* If we were called from a signal handler, we must be in the main
+     thread, see deliver_process_signal.  So we must make sure the
+     main thread holds the global lock.  */
+  if (in_signal_handler)
+    maybe_reacquire_global_lock ();
+#endif
   if (waiting_for_input && !echoing)
     quit_throw_to_read_char (in_signal_handler);
 #endif

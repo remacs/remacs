@@ -288,8 +288,10 @@ which is the \"1006\" extension implemented in Xterm >= 277."
                        (string-match "down-" last-name)
                        (equal name (replace-match "" t t last-name)))
               (xterm-mouse--set-click-count event click-count)))
-           ((not last-time) nil)
-           ((and (> double-click-time (* 1000 (- this-time last-time)))
+           ((and last-time
+                 double-click-time
+                 (or (eq double-click-time t)
+                     (> double-click-time (* 1000 (- this-time last-time))))
                  (equal last-name (replace-match "" t t name)))
             (setq click-count (1+ click-count))
             (xterm-mouse--set-click-count event click-count))

@@ -1865,6 +1865,26 @@ verify (offsetof (struct Lisp_Sub_Char_Table, contents)
 	== (offsetof (struct Lisp_Vector, contents)
 	    + SUB_CHAR_TABLE_OFFSET * sizeof (Lisp_Object)));
 
+
+/* Save and restore the instruction and environment pointers,
+   without affecting the signal mask.  */
+
+#ifdef HAVE__SETJMP
+typedef jmp_buf sys_jmp_buf;
+# define sys_setjmp(j) _setjmp (j)
+# define sys_longjmp(j, v) _longjmp (j, v)
+#elif defined HAVE_SIGSETJMP
+typedef sigjmp_buf sys_jmp_buf;
+# define sys_setjmp(j) sigsetjmp (j, 0)
+# define sys_longjmp(j, v) siglongjmp (j, v)
+#else
+/* A platform that uses neither _longjmp nor siglongjmp; assume
+   longjmp does not affect the sigmask.  */
+typedef jmp_buf sys_jmp_buf;
+# define sys_setjmp(j) setjmp (j)
+# define sys_longjmp(j, v) longjmp (j, v)
+#endif
+
 #include "thread.h"
 
 /***********************************************************************
@@ -3003,25 +3023,6 @@ extern void defvar_kboard (struct Lisp_Kboard_Objfwd *, const char *, int);
     static struct Lisp_Kboard_Objfwd ko_fwd;			\
     defvar_kboard (&ko_fwd, lname, offsetof (KBOARD, vname ## _)); \
   } while (false)
-
-/* Save and restore the instruction and environment pointers,
-   without affecting the signal mask.  */
-
-#ifdef HAVE__SETJMP
-typedef jmp_buf sys_jmp_buf;
-# define sys_setjmp(j) _setjmp (j)
-# define sys_longjmp(j, v) _longjmp (j, v)
-#elif defined HAVE_SIGSETJMP
-typedef sigjmp_buf sys_jmp_buf;
-# define sys_setjmp(j) sigsetjmp (j, 0)
-# define sys_longjmp(j, v) siglongjmp (j, v)
-#else
-/* A platform that uses neither _longjmp nor siglongjmp; assume
-   longjmp does not affect the sigmask.  */
-typedef jmp_buf sys_jmp_buf;
-# define sys_setjmp(j) setjmp (j)
-# define sys_longjmp(j, v) longjmp (j, v)
-#endif
 
 
 /* Elisp uses several stacks:
@@ -3969,7 +3970,6 @@ extern _Noreturn void time_overflow (void);
 extern Lisp_Object make_buffer_string (ptrdiff_t, ptrdiff_t, bool);
 extern Lisp_Object make_buffer_string_both (ptrdiff_t, ptrdiff_t, ptrdiff_t,
 					    ptrdiff_t, bool);
-extern Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool, bool);
 extern void init_editfns (bool);
 extern void syms_of_editfns (void);
 
