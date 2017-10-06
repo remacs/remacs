@@ -4,7 +4,7 @@
 @set VERSION 0.3
 @set UPDATED April 2004
 @settitle GNU Flymake @value{VERSION}
-@include ../emacs/docstyle.texi
+@include docstyle.texi
 @syncodeindex pg cp
 @comment %**end of header
 
