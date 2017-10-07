@@ -611,7 +611,12 @@ not expected."
             (flymake-log :debug "backend %s reported %d diagnostics in %.2f second(s)"
                          backend
                          (length new-diags)
-                         (- (float-time) flymake-check-start-time)))))))))
+                         (- (float-time) flymake-check-start-time)))
+          (when (and (get-buffer (flymake--diagnostics-buffer-name))
+                     (get-buffer-window (flymake--diagnostics-buffer-name))
+                     (null (cl-set-difference (flymake-running-backends)
+                                              (flymake-reporting-backends))))
+            (flymake-show-diagnostics-buffer))))))))
 
 (defun flymake-make-report-fn (backend &optional token)
   "Make a suitable anonymous report function for BACKEND.
@@ -952,6 +957,7 @@ applied."
     [ "Go to previous error"  flymake-goto-prev-error t ]
     [ "Check now"             flymake-start t ]
     [ "Go to log buffer"      flymake-switch-to-log-buffer t ]
+    [ "Show error buffer"     flymake-show-diagnostics-buffer t ]
     "--"
     [ "Turn off Flymake"      flymake-mode t ]))
 
@@ -1066,6 +1072,105 @@ applied."
                         collect a when rest collect
                         '(:propertize " "))
              (:propertize "]")))))))
+
+;;; Diagnostics buffer
+
+(defvar-local flymake--diagnostics-buffer-source nil)
+
+(defvar flymake--diagnostics-buffer-button-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map [mouse-1] 'push-button)
+    (define-key map (kbd "RET") 'push-button)
+    (define-key map (kbd "SPC") 'flymake-show-diagnostic-at-point)
+    map))
+
+(defun flymake-show-diagnostic-at-point (button)
+  "Show location of diagnostic of BUTTON."
+  (interactive (list (button-at (point))))
+  (let* ((overlay (button-get button 'flymake-overlay)))
+    (with-current-buffer (overlay-buffer overlay)
+      (with-selected-window
+          (display-buffer (current-buffer))
+        (goto-char (overlay-start overlay))
+        (pulse-momentary-highlight-region (overlay-start overlay)
+                                          (overlay-end overlay)
+                                          'highlight))
+      (current-buffer))))
+
+(defun flymake-goto-diagnostic-at-point (button)
+  "Show location of diagnostic of BUTTON."
+  (interactive (list (button-at (point))))
+  (pop-to-buffer
+   (flymake-show-diagnostic-at-point button)))
+
+(defun flymake--diagnostics-buffer-entries ()
+  (with-current-buffer flymake--diagnostics-buffer-source
+    (cl-loop for ov in (flymake--overlays)
+             for diag = (overlay-get ov
+                                     'flymake--diagnostic)
+             for (line . col) =
+             (save-excursion
+               (goto-char (overlay-start ov))
+               (cons (line-number-at-pos)
+                     (- (point)
+                        (line-beginning-position))))
+             for type = (flymake--diag-type diag)
+             collect
+             (list (list :overlay ov
+                         :line line
+                         :severity (flymake--lookup-type-property
+                                    type
+                                    'severity (warning-numeric-level :error)))
+                   `[(,(format "%s" line)
+                      keymap ,flymake--diagnostics-buffer-button-keymap
+                      action flymake-goto-diagnostic-at-point
+                      mouse-action flymake-goto-diagnostic-at-point
+                      help-echo ,(mapconcat #'identity
+                                            '("mouse-1, RET: goto location at point"
+                                              "SPC: show location at point")
+                                            "\n")
+                      flymake-diagnostic ,diag
+                      flymake-overlay ,ov)
+                     ,(format "%s" col)
+                     ,(propertize (format "%s" type)
+                                  'face (flymake--lookup-type-property
+                                         type 'mode-line-face 'flymake-error))
+                     ,(format "%s" (flymake--diag-text diag))]))))
+
+(define-derived-mode flymake-diagnostics-buffer-mode tabulated-list-mode
+  "Flymake diagnostics"
+  "A mode for listing Flymake diagnostics."
+  (setq tabulated-list-format
+        `[("Line" 5 (lambda (l1 l2)
+                      (< (plist-get (car l1) :line)
+                         (plist-get (car l2) :line)))
+           :right-align t)
+          ("Col" 3 nil :right-align t)
+          ("Type" 8 (lambda (l1 l2)
+                      (< (plist-get (car l1) :severity)
+                         (plist-get (car l2) :severity))))
+          ("Message" 0 t)])
+  (setq tabulated-list-entries
+        'flymake--diagnostics-buffer-entries)
+  (tabulated-list-init-header))
+
+(defun flymake--diagnostics-buffer-name ()
+  (format "*Flymake diagnostics for %s*" (current-buffer)))
+
+(defun flymake-show-diagnostics-buffer ()
+  "Show a list of Flymake diagnostics for current buffer."
+  (interactive)
+  (let* ((name (flymake--diagnostics-buffer-name))
+         (source (current-buffer))
+         (target (or (get-buffer name)
+                     (with-current-buffer (get-buffer-create name)
+                       (flymake-diagnostics-buffer-mode)
+                       (setq flymake--diagnostics-buffer-source source)
+                       (current-buffer)))))
+    (with-current-buffer target
+      (revert-buffer)
+      (display-buffer (current-buffer)))))
+
 (provide 'flymake)
 
 (require 'flymake-proc)
