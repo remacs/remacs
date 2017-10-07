@@ -31,6 +31,12 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Changes in Emacs 27.1
 
+---
+** The new option 'tooltip-resize-echo-area' avoids truncating tooltip text
+on GUI frames when tooltips are displayed in the echo area.  Instead,
+it resizes the echo area as needed to accommodate the full tool-tip
+text.
+
 +++
 ** New function 'logcount' calculates an integer's Hamming weight.
 
