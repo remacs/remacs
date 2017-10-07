@@ -795,7 +795,7 @@ Interactively, always move to the next error.  With a prefix arg,
 skip any diagnostics with a severity less than ‘:warning’.
 
 If ‘flymake-wrap-around’ is non-nil and no more next errors,
-resumes search from top
+resumes search from top.
 
 FILTER is a list of diagnostic types found in
 `flymake-diagnostic-types-alist', or nil, if no filter is to be
@@ -835,6 +835,7 @@ applied."
            (goto-char (overlay-start target))
            (when interactive
              (message
+              "%s"
               (funcall (overlay-get target 'help-echo)
                        nil nil (point)))))
           (interactive
