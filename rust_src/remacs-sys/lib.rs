@@ -1032,6 +1032,8 @@ extern "C" {
         start_byte: *mut ptrdiff_t,
         end_byte: *mut ptrdiff_t,
     ) -> *mut c_char;
+
+    pub fn current_column() -> ptrdiff_t;
 }
 
 /// Contains C definitions from the font.h header.
