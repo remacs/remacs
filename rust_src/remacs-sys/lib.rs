@@ -21,7 +21,7 @@ extern crate libc;
 pub mod libm;
 
 use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
-           size_t, time_t, timespec};
+           size_t, ssize_t, time_t, timespec};
 
 // libc prefers not to merge pid_t as an alias for c_int in Windows, so we will not use libc::pid_t
 // and alias it ourselves.
@@ -983,10 +983,21 @@ pub struct Lisp_Hash_Table {
     pub next_weak: *mut Lisp_Hash_Table,
 }
 
+#[repr(C)]
+pub struct re_pattern_buffer {
+    buffer: *mut c_uchar,
+    //...
+}
+
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static mut current_global_map: Lisp_Object;
     pub static current_thread: *mut thread_state;
+
+    pub static Qfile_missing: Lisp_Object;
+    pub static Qfile_attributes: Lisp_Object;
+    pub static Qdirectory_files: Lisp_Object;
+    pub static Qdirectory_files_and_attributes: Lisp_Object;
 
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;
@@ -1010,6 +1021,28 @@ extern "C" {
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
     pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
     pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
+
+    pub fn Fexpand_file_name(name: Lisp_Object, default_directory: Lisp_Object) -> Lisp_Object;
+    pub fn Ffind_file_name_handler(filename: Lisp_Object, operation: Lisp_Object) -> Lisp_Object;
+
+    pub fn re_search(
+        bufp: *mut re_pattern_buffer,
+        string: *const c_char,
+        size: size_t,
+        startpos: ssize_t,
+        range: ssize_t,
+        regs: *mut re_registers,
+    ) -> ssize_t;
+
+    pub fn compile_pattern(
+        pattern: Lisp_Object,
+        regp: *mut re_registers,
+        transmute: Lisp_Object,
+        posix: bool,
+        multibyte: bool,
+    ) -> *mut re_pattern_buffer;
+
+    pub fn filemode_string(filename: Lisp_Object) -> Lisp_Object;
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
