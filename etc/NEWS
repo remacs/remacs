@@ -1361,6 +1361,15 @@ non-nil, but the code returned the list in the increasing order of
 priority instead.  Now the code does what the documentation says it
 should do.
 
++++
+** 'format' now avoids allocating a new string in more cases.
+'format' was previously documented to return a newly-allocated string,
+but this documentation was not correct, as (eq x (format x)) returned
+t when x was the empty string.  'format' is no longer documented to
+return a newly-allocated string, and the implementation now takes
+advantage of the doc change to avoid making copies of strings in
+common cases like (format "foo") and (format "%s" "foo").
+
 ---
 ** The function 'eldoc-message' now accepts a single argument.
 Programs that called it with multiple arguments before should pass
@@ -1555,13 +1564,6 @@ incorrect answers due to internal rounding errors when formatting
 Emacs integers with %e, %f, or %g conversions.  For example, on these
 hosts (eql N (string-to-number (format "%.0f" N))) now returns t for
 all Emacs integers N.
-
-+++
-** 'format' is no longer documented to return a newly-allocated string.
-This documentation was not correct, as (eq x (format x)) returned t
-when x was the empty string.  'format' now takes advantage of the doc
-change to avoid making copies of strings in common cases like (format
-"foo") and (format "%s" "foo").
 
 ---
 ** Calls that accept floating-point integers (for use on hosts with
