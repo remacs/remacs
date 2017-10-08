@@ -232,7 +232,18 @@ emacs_get_current_dir_name (void)
   bool use_libc = true;
 #  endif
   if (use_libc)
-    return get_current_dir_name ();
+    {
+      /* GNU/Linux get_current_dir_name can return a string starting
+	 with "(unreachable)" (Bug#27871).  */
+      char *wd = get_current_dir_name ();
+      if (wd && ! (IS_DIRECTORY_SEP (*wd) || (*wd && IS_DEVICE_SEP (wd[1]))))
+	{
+	  free (wd);
+	  errno = ENOENT;
+	  return NULL;
+	}
+      return wd;
+    }
 # endif
 
   char *buf;

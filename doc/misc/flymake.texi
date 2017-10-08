@@ -4,7 +4,7 @@
 @set VERSION 0.3
 @set UPDATED April 2004
 @settitle GNU Flymake @value{VERSION}
-@include ../emacs/docstyle.texi
+@include docstyle.texi
 @syncodeindex pg cp
 @comment %**end of header
 
@@ -182,7 +182,7 @@ to the first diagnostic when invoked in the end of the buffer.
 @cindex Syntax check statuses
 
 After syntax check is finished, its status is displayed in the mode line.
-The following statuses are defined.
+The following statuses are defined:
 
 @multitable @columnfractions 0.25 0.75
 @item @code{Wait}
@@ -356,7 +356,7 @@ selected.  If no match is found, @code{flymake-mode} is switched off.
 @code{init-function} is required to initialize the syntax check,
 usually by creating a temporary copy of the buffer contents.  The
 function must return @code{(list cmd-name arg-list)}.  If
-@code{init-function} returns null, syntax check is aborted, by
+@code{init-function} returns null, syntax check is aborted, but
 @code{flymake-mode} is not switched off.
 
 @item cleanup-function
@@ -375,7 +375,7 @@ used as @code{getfname-function}.
 @end table
 
 To add support for a new syntax check tool, write corresponding
-@code{init-function}, and, optionally @code{cleanup-function} and
+@code{init-function} and, optionally, @code{cleanup-function} and
 @code{getfname-function}.  If the format of error messages reported by
 the new tool is not yet supported by Flymake, add a new entry to
 the @code{flymake-proc-err-line-patterns} list.
@@ -493,7 +493,7 @@ check-syntax:
 
 @code{flymake-proc-legacy-backend} saves a copy of the buffer in a
 temporary file in the buffer's directory (or in the system temp
-directory, for java files), creates a syntax check command and
+directory, for Java files), creates a syntax check command and
 launches a process with this command.  The output is parsed using a
 list of error message patterns, and error information (file name, line
 number, type and text) is saved.  After the process has finished,
@@ -631,7 +631,7 @@ include directories for C++.  The latter files are syntax checked
 using some build tool, like Make or Ant.
 
 All Make configuration data is usually stored in a file called
-@code{Makefile}.  To allow for future extensions, flymake uses a notion of
+@code{Makefile}.  To allow for future extensions, Flymake uses a notion of
 buildfile to reference the 'project configuration' file.
 
 Special function, @code{flymake-proc-find-buildfile} is provided for locating buildfiles.

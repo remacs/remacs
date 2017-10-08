@@ -1026,7 +1026,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  (goto-char pos)))))
   nil)
 
-(defun c-font-lock-declarators (limit list types not-top)
+(defun c-font-lock-declarators (limit list types not-top
+				      &optional template-class)
   ;; Assuming the point is at the start of a declarator in a declaration,
   ;; fontify the identifier it declares.  (If TYPES is set, it does this via
   ;; the macro `c-fontify-types-and-refs'.)
@@ -1039,6 +1040,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; If TYPES is non-nil, fontify all identifiers as types.  If NOT-TOP is
   ;; non-nil, we are not at the top-level ("top-level" includes being directly
   ;; inside a class or namespace, etc.).
+  ;;
+  ;; TEMPLATE-CLASS is non-nil when the declaration is in template delimiters
+  ;; and was introduced by, e.g. "typename" or "class", such that if there is
+  ;; a default (introduced by "="), it will be fontified as a type.
+  ;; E.g. "<class X = Y>".
   ;;
   ;; Nil is always returned.  The function leaves point at the delimiter after
   ;; the last declarator it processes.
@@ -1112,6 +1118,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
       (goto-char next-pos)
       (setq pos nil)	      ; So as to terminate the enclosing `while' form.
+      (if (and template-class
+	       (eq got-init ?=) ; C++ "<class X = Y>"?
+	       (c-forward-token-2 1 nil limit) ; Over "="
+	       (let ((c-promote-possible-types t))
+		 (c-forward-type t)))	       ; Over "Y"
+	  (setq list nil)) ; Shouldn't be needed.  We can't have a list, here.
+
       (when list
 	;; Jump past any initializer or function prototype to see if
 	;; there's a ',' to continue at.
@@ -1340,8 +1353,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		   (c-backward-syntactic-ws)
 		   (and (c-simple-skip-symbol-backward)
 			(looking-at c-paren-stmt-key))))
-	     t)))
-
+	     t))
+	  (template-class (and (eq context '<>)
+			       (save-excursion
+				 (goto-char match-pos)
+				 (c-forward-syntactic-ws)
+				 (looking-at c-template-typename-key)))))
       ;; Fix the `c-decl-id-start' or `c-decl-type-start' property
       ;; before the first declarator if it's a list.
       ;; `c-font-lock-declarators' handles the rest.
@@ -1353,10 +1370,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				 (if (cadr decl-or-cast)
 				     'c-decl-type-start
 				   'c-decl-id-start)))))
-
       (c-font-lock-declarators
        (min limit (point-max)) decl-list
-       (cadr decl-or-cast) (not toplev)))
+       (cadr decl-or-cast) (not toplev) template-class))
 
     ;; A declaration has been successfully identified, so do all the
     ;; fontification of types and refs that've been recorded.
@@ -1650,7 +1666,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
   ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
   ;; fontification".
-  (let ((decl-search-lim (c-determine-limit 1000))
+  (let ((here (point))
+	(decl-search-lim (c-determine-limit 1000))
 	paren-state encl-pos token-end context decl-or-cast
 	start-pos top-level c-restricted-<>-arglists
 	c-recognize-knr-p)		; Strictly speaking, bogus, but it
@@ -1667,26 +1684,27 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(when (or (bobp)
 		  (memq (char-before) '(?\; ?{ ?})))
 	  (setq token-end (point))
-	  (c-forward-syntactic-ws)
-	  ;; We're now putatively at the declaration.
-	  (setq start-pos (point))
-	  (setq paren-state (c-parse-state))
-	  ;; At top level or inside a "{"?
-	  (if (or (not (setq encl-pos
-			     (c-most-enclosing-brace paren-state)))
-		  (eq (char-after encl-pos) ?\{))
-	      (progn
-		(setq top-level (c-at-toplevel-p))
-		(let ((got-context (c-get-fontification-context
-				    token-end nil top-level)))
-		  (setq context (car got-context)
-			c-restricted-<>-arglists (cdr got-context)))
-		(setq decl-or-cast
-		      (c-forward-decl-or-cast-1 token-end context nil))
-		(when (consp decl-or-cast)
-		  (goto-char start-pos)
-		  (c-font-lock-single-decl limit decl-or-cast token-end
-					   context top-level)))))))
+	  (c-forward-syntactic-ws here)
+	  (when (< (point) here)
+	    ;; We're now putatively at the declaration.
+	    (setq start-pos (point))
+	    (setq paren-state (c-parse-state))
+	    ;; At top level or inside a "{"?
+	    (if (or (not (setq encl-pos
+			       (c-most-enclosing-brace paren-state)))
+		    (eq (char-after encl-pos) ?\{))
+		(progn
+		  (setq top-level (c-at-toplevel-p))
+		  (let ((got-context (c-get-fontification-context
+				      token-end nil top-level)))
+		    (setq context (car got-context)
+			  c-restricted-<>-arglists (cdr got-context)))
+		  (setq decl-or-cast
+			(c-forward-decl-or-cast-1 token-end context nil))
+		  (when (consp decl-or-cast)
+		    (goto-char start-pos)
+		    (c-font-lock-single-decl limit decl-or-cast token-end
+					     context top-level))))))))
     nil))
 
 (defun c-font-lock-enclosing-decls (limit)
@@ -1996,85 +2014,6 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 	       2 font-lock-type-face)
 	   `(,(concat "\\<\\(" re "\\)\\>")
 	     1 'font-lock-type-face)))
-
-      ;; Fontify types preceded by `c-type-prefix-kwds' (e.g. "struct").
-      ,@(when (c-lang-const c-type-prefix-kwds)
-	  `((,(byte-compile
-	       `(lambda (limit)
-		  (c-fontify-types-and-refs
-		      ((c-promote-possible-types t)
-		       ;; The font-lock package in Emacs is known to clobber
-		       ;; `parse-sexp-lookup-properties' (when it exists).
-		       (parse-sexp-lookup-properties
-			(cc-eval-when-compile
-			  (boundp 'parse-sexp-lookup-properties))))
-		    (save-restriction
-		      ;; Narrow to avoid going past the limit in
-		      ;; `c-forward-type'.
-		      (narrow-to-region (point) limit)
-		      (while (re-search-forward
-			      ,(concat "\\<\\("
-				       (c-make-keywords-re nil
-					 (c-lang-const c-type-prefix-kwds))
-				       "\\)\\>")
-			      limit t)
-			(unless (c-skip-comments-and-strings limit)
-			  (c-forward-syntactic-ws)
-			  ;; Handle prefix declaration specifiers.
-			  (while
-			      (or
-			       (when (or (looking-at c-prefix-spec-kwds-re)
-					 (and (c-major-mode-is 'java-mode)
-					      (looking-at "@[A-Za-z0-9]+")))
-				 (c-forward-keyword-clause 1)
-				 t)
-			       (when (and c-opt-cpp-prefix
-					  (looking-at
-					   c-noise-macro-with-parens-name-re))
-				 (c-forward-noise-clause)
-				 t)))
-			  ,(if (c-major-mode-is 'c++-mode)
-			       `(when (and (c-forward-type)
-					   (eq (char-after) ?=))
-				  ;; In C++ we additionally check for a "class
-				  ;; X = Y" construct which is used in
-				  ;; templates, to fontify Y as a type.
-				  (forward-char)
-				  (c-forward-syntactic-ws)
-				  (c-forward-type))
-			     `(c-forward-type))
-			  )))))))))
-
-      ;; Fontify symbols after closing braces as declaration
-      ;; identifiers under the assumption that they are part of
-      ;; declarations like "class Foo { ... } foo;".  It's too
-      ;; expensive to check this accurately by skipping past the
-      ;; brace block, so we use the heuristic that it's such a
-      ;; declaration if the first identifier is on the same line as
-      ;; the closing brace.  `c-font-lock-declarations' will later
-      ;; override it if it turns out to be an new declaration, but
-      ;; it will be wrong if it's an expression (see the test
-      ;; decls-8.cc).
-;;       ,@(when (c-lang-const c-opt-block-decls-with-vars-key)
-;; 	  `((,(c-make-font-lock-search-function
-;; 	       (concat "}"
-;; 		       (c-lang-const c-single-line-syntactic-ws)
-;; 		       "\\("		; 1 + c-single-line-syntactic-ws-depth
-;; 		       (c-lang-const c-type-decl-prefix-key)
-;; 		       "\\|"
-;; 		       (c-lang-const c-symbol-key)
-;; 		       "\\)")
-;; 	       `((c-font-lock-declarators limit t nil) ; That nil says use `font-lock-variable-name-face';
-;; 					; t would mean `font-lock-function-name-face'.
-;; 		 (progn
-;; 		   (c-put-char-property (match-beginning 0) 'c-type
-;; 					'c-decl-id-start)
-;; ;					'c-decl-type-start)
-;; 		   (goto-char (match-beginning
-;; 			       ,(1+ (c-lang-const
-;; 				     c-single-line-syntactic-ws-depth)))))
-;; 		 (goto-char (match-end 0)))))))
-
       ;; Fontify the type in C++ "new" expressions.
       ,@(when (c-major-mode-is 'c++-mode)
 	  ;; This pattern is a probably a "(MATCHER . ANCHORED-HIGHLIGHTER)"

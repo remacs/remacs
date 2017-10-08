@@ -203,7 +203,7 @@ generated it."
     `(flymake--log-1 ,level ',sublog ,msg ,@args)))
 
 (defun flymake-error (text &rest args)
-  "Format TEXT with ARGS and signal an error for flymake."
+  "Format TEXT with ARGS and signal an error for Flymake."
   (let ((msg (apply #'format-message text args)))
     (flymake-log :error msg)
     (error (concat "[Flymake] " msg))))
@@ -222,17 +222,6 @@ generated it."
 TYPE is a key to `flymake-diagnostic-types-alist' and TEXT is a
 description of the problem detected in this region."
   (flymake--diag-make :buffer buffer :beg beg :end end :type type :text text))
-
-(defun flymake-ler-make-ler (file line type text &optional full-file)
-  (let* ((file (or full-file file))
-         (buf (find-buffer-visiting file)))
-    (unless buf (flymake-error "No buffer visiting %s" file))
-    (pcase-let* ((`(,beg . ,end)
-                  (with-current-buffer buf
-                    (flymake-diag-region line nil))))
-      (flymake-make-diagnostic buf beg end type text))))
-
-(make-obsolete 'flymake-ler-make-ler 'flymake-make-diagnostic "26.1")
 
 (cl-defun flymake--overlays (&key beg end filter compare key)
   "Get flymake-related overlays.
@@ -342,7 +331,7 @@ function is called with an arbitrary number of arguments:
 * the remaining arguments are keyword-value pairs in the
   form (:KEY VALUE :KEY2 VALUE2...).  Currently, Flymake provides
   no such arguments, but backend functions must be prepared to
-  accept to accept and possibly ignore any number of them.
+  accept and possibly ignore any number of them.
 
 Backend functions are expected to initiate the buffer check, but
 aren't required to complete it check before exiting: if the
@@ -385,8 +374,8 @@ Currently accepted REPORT-KEY arguments are:
 * ‘:explanation’: value should give user-readable details of
   the situation encountered, if any.
 
-* ‘:force’: value should be a boolean suggesting that the Flymake
-  considers the report even if was somehow unexpected.")
+* ‘:force’: value should be a boolean suggesting that Flymake
+  consider the report even if it was somehow unexpected.")
 
 (defvar flymake-diagnostic-types-alist
   `((:error
@@ -395,15 +384,17 @@ Currently accepted REPORT-KEY arguments are:
      . ((flymake-category . flymake-warning)))
     (:note
      . ((flymake-category . flymake-note))))
-  "Alist ((KEY . PROPS)*) of properties of Flymake error types.
-KEY can be anything passed as `:type' to `flymake-diag-make'.
+  "Alist ((KEY . PROPS)*) of properties of Flymake diagnostic types.
+KEY designates a kind of diagnostic can be anything passed as
+`:type' to `flymake-make-diagnostic'.
 
 PROPS is an alist of properties that are applied, in order, to
-the diagnostics of each type.  The recognized properties are:
+the diagnostics of the type designated by KEY.  The recognized
+properties are:
 
 * Every property pertaining to overlays, except `category' and
   `evaporate' (see Info Node `(elisp)Overlay Properties'), used
-  affect the appearance of Flymake annotations.
+  to affect the appearance of Flymake annotations.
 
 * `bitmap', an image displayed in the fringe according to
   `flymake-fringe-indicator-position'.  The value actually
@@ -522,23 +513,22 @@ associated `flymake-category' return DEFAULT."
   "Buffer-local hash table of a Flymake backend's state.
 The keys to this hash table are functions as found in
 `flymake-diagnostic-functions'. The values are structures
-of the type `flymake--backend-state', with these slots
+of the type `flymake--backend-state', with these slots:
 
 `running', a symbol to keep track of a backend's replies via its
 REPORT-FN argument. A backend is running if this key is
-present. If the key is absent if the backend isn't expecting any
-replies from the backend.
+present. If nil, Flymake isn't expecting any replies from the
+backend.
 
-`diags', a (possibly empty) list of diagnostic objects created
-with `flymake-make-diagnostic'. This key is absent if the
-backend hasn't reported anything yet.
+`diags', a (possibly empty) list of recent diagnostic objects
+created by the backend with `flymake-make-diagnostic'.
 
 `reported-p', a boolean indicating if the backend has replied
 since it last was contacted.
 
 `disabled', a string with the explanation for a previous
-exceptional situation reported by the backend. If this key is
-present the backend is disabled.")
+exceptional situation reported by the backend, nil if the
+backend is operating normally.")
 
 (cl-defstruct (flymake--backend-state
                (:constructor flymake--make-backend-state))
@@ -563,7 +553,6 @@ present the backend is disabled.")
                                           &key explanation force
                                           &allow-other-keys)
   "Handle reports from BACKEND identified by TOKEN.
-
 BACKEND, REPORT-ACTION and EXPLANATION, and FORCE conform to the calling
 convention described in `flymake-diagnostic-functions' (which
 see). Optional FORCE says to handle a report even if TOKEN was
@@ -650,7 +639,7 @@ different runs of the same backend."
 
 (defun flymake--disable-backend (backend &optional explanation)
   "Disable BACKEND because EXPLANATION.
-If is is running also stop it."
+If it is running also stop it."
   (flymake-log :warning "Disabling backend %s because %s" backend explanation)
   (flymake--with-backend-state backend state
     (setf (flymake--backend-state-running state) nil
@@ -666,7 +655,7 @@ If is is running also stop it."
             (flymake--backend-state-disabled state) nil
             (flymake--backend-state-diags state) nil
             (flymake--backend-state-reported-p state) nil))
-    ;; FIXME: Should use `condition-case-unless-debug' here, for don't
+    ;; FIXME: Should use `condition-case-unless-debug' here, but don't
     ;; for two reasons: (1) that won't let me catch errors from inside
     ;; `ert-deftest' where `debug-on-error' appears to be always
     ;; t. (2) In cases where the user is debugging elisp somewhere
@@ -719,18 +708,14 @@ Interactively, with a prefix arg, FORCE is t."
   (cond
    ;; Turning the mode ON.
    (flymake-mode
-    (cond
-     ((not flymake-diagnostic-functions)
-      (flymake-error "No backends to check buffer %s" (buffer-name)))
-     (t
-      (add-hook 'after-change-functions 'flymake-after-change-function nil t)
-      (add-hook 'after-save-hook 'flymake-after-save-hook nil t)
-      (add-hook 'kill-buffer-hook 'flymake-kill-buffer-hook nil t)
+    (add-hook 'after-change-functions 'flymake-after-change-function nil t)
+    (add-hook 'after-save-hook 'flymake-after-save-hook nil t)
+    (add-hook 'kill-buffer-hook 'flymake-kill-buffer-hook nil t)
 
-      (setq flymake--backend-state (make-hash-table))
+    (setq flymake--backend-state (make-hash-table))
 
-      (when flymake-start-syntax-check-on-find-file
-        (flymake-start)))))
+    (when flymake-start-syntax-check-on-find-file
+      (flymake-start)))
 
    ;; Turning the mode OFF.
    (t
@@ -806,13 +791,11 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
 
 (defun flymake-goto-next-error (&optional n filter interactive)
   "Go to Nth next Flymake error in buffer matching FILTER.
+Interactively, always move to the next error.  With a prefix arg,
+skip any diagnostics with a severity less than ‘:warning’.
 
-Interactively, always move to the next error.  Interactively, and
-with a prefix arg, skip any diagnostics with a severity less than
-‘:warning’.
-
-If ‘flymake-wrap-around’ is non-nil, resumes search from top
-at end of buffer.
+If ‘flymake-wrap-around’ is non-nil and no more next errors,
+resumes search from top.
 
 FILTER is a list of diagnostic types found in
 `flymake-diagnostic-types-alist', or nil, if no filter is to be
@@ -852,6 +835,7 @@ applied."
            (goto-char (overlay-start target))
            (when interactive
              (message
+              "%s"
               (funcall (overlay-get target 'help-echo)
                        nil nil (point)))))
           (interactive
@@ -862,13 +846,11 @@ applied."
 
 (defun flymake-goto-prev-error (&optional n filter interactive)
   "Go to Nth previous Flymake error in buffer matching FILTER.
+Interactively, always move to the previous error.  With a prefix
+arg, skip any diagnostics with a severity less than ‘:warning’.
 
-Interactively, always move to the previous error.  Interactively,
-and with a prefix arg, skip any diagnostics with a severity less
-than ‘:warning’.
-
-If ‘flymake-wrap-around’ is non-nil, resumes search from top
-at end of buffer.
+If ‘flymake-wrap-around’ is non-nil and no more previous errors,
+resumes search from bottom.
 
 FILTER is a list of diagnostic types found in
 `flymake-diagnostic-types-alist', or nil, if no filter is to be

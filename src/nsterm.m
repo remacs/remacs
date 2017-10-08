@@ -6893,6 +6893,9 @@ not_in_argv (NSString *arg)
   NSTRACE_RECT   ("[sender frame]", [sender frame]);
   NSTRACE_FSTYPE ("fs_state", fs_state);
 
+  if (!FRAME_LIVE_P (emacsframe))
+    return frameSize;
+
   if (fs_state == FULLSCREEN_MAXIMIZED
       && (maximized_width != (int)frameSize.width
           || maximized_height != (int)frameSize.height))

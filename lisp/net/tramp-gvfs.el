@@ -416,6 +416,19 @@ Every entry is a list (NAME ADDRESS).")
 (defconst tramp-hal-interface-device "org.freedesktop.Hal.Device"
   "The device interface of the HAL daemon.")
 
+;; "gvfs-<command>" utilities have been deprecated in GVFS 1.31.1.  We
+;; must use "gio <command>" tool instead.
+(defconst tramp-gvfs-gio-mapping
+  '(("gvfs-copy" . "copy")
+    ("gvfs-info" . "info")
+    ("gvfs-ls" . "list")
+    ("gvfs-mkdir" . "mkdir")
+    ("gvfs-monitor-file" . "monitor")
+    ("gvfs-move" . "move")
+    ("gvfs-rm" . "remove")
+    ("gvfs-trash" . "trash"))
+  "List of cons cells, mapping \"gvfs-<command>\" to \"gio <command>\".")
+
 (defconst tramp-gvfs-file-attributes
   '("name"
     "type"
@@ -1078,9 +1091,12 @@ If FILE-SYSTEM is non-nil, return file system attributes."
 	     ((memq 'change flags)
 	      '(created changed changes-done-hint moved deleted))
 	     ((memq 'attribute-change flags) '(attribute-changed))))
-	   (p (start-process
-	       "gvfs-monitor-file" (generate-new-buffer " *gvfs-monitor-file*")
-	       "gvfs-monitor-file" (tramp-gvfs-url-file-name file-name))))
+	   (p (apply
+	       'start-process
+	       "gvfs-monitor" (generate-new-buffer " *gvfs-monitor*")
+	       (if (tramp-gvfs-gio-tool-p v)
+		   `("gio" "monitor" ,(tramp-gvfs-url-file-name file-name)))
+	       `("gvfs-monitor-file" (tramp-gvfs-url-file-name file-name)))))
       (if (not (processp p))
 	  (tramp-error
 	   v 'file-notify-error "Monitoring not supported for `%s'" file-name)
@@ -1785,10 +1801,16 @@ connection if a previous connection has died for some reason."
       (tramp-gvfs-get-remote-uid vec 'string)
       (tramp-gvfs-get-remote-gid vec 'string))))
 
+(defun tramp-gvfs-gio-tool-p (vec)
+  "Check, whether the gio tool is available."
+  (with-tramp-connection-property vec "gio-tool"
+    (zerop (tramp-call-process vec "gio" nil nil nil "version"))))
+
 (defun tramp-gvfs-send-command (vec command &rest args)
   "Send the COMMAND with its ARGS to connection VEC.
-COMMAND is usually a command from the gvfs-* utilities.
-`call-process' is applied, and it returns t if the return code is zero."
+COMMAND is a command from the gvfs-* utilities.  It is replaced
+by the corresponding gio tool call if available.  `call-process'
+is applied, and it returns t if the return code is zero."
   (let* ((locale (tramp-get-local-locale vec))
 	 (process-environment
 	  (append
@@ -1796,6 +1818,11 @@ COMMAND is usually a command from the gvfs-* utilities.
 	     ,(format "LANGUAGE=%s" locale)
 	     ,(format "LC_ALL=%s" locale))
 	   process-environment)))
+    (when (tramp-gvfs-gio-tool-p vec)
+      ;; Use gio tool.
+      (setq args (cons (cdr (assoc command tramp-gvfs-gio-mapping)) args)
+	    command "gio"))
+
     (with-current-buffer (tramp-get-connection-buffer vec)
       (tramp-gvfs-maybe-open-connection vec)
       (erase-buffer)

@@ -66,7 +66,7 @@ struct dim
 
 /* Function prototypes.  */
 
-static void update_frame_line (struct frame *, int);
+static void update_frame_line (struct frame *, int, bool);
 static int required_matrix_height (struct window *);
 static int required_matrix_width (struct window *);
 static void increment_row_positions (struct glyph_row *, ptrdiff_t, ptrdiff_t);
@@ -88,7 +88,7 @@ static void check_matrix_pointers (struct glyph_matrix *,
 static void mirror_line_dance (struct window *, int, int, int *, char *);
 static bool update_window_tree (struct window *, bool);
 static bool update_window (struct window *, bool);
-static bool update_frame_1 (struct frame *, bool, bool, bool);
+static bool update_frame_1 (struct frame *, bool, bool, bool, bool);
 static bool scrolling (struct frame *);
 static void set_window_cursor_after_update (struct window *);
 static void adjust_frame_glyphs_for_window_redisplay (struct frame *);
@@ -3121,7 +3121,7 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
 
       /* Update the display.  */
       update_begin (f);
-      paused_p = update_frame_1 (f, force_p, inhibit_hairy_id_p, 1);
+      paused_p = update_frame_1 (f, force_p, inhibit_hairy_id_p, 1, false);
       update_end (f);
 
       if (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
@@ -3174,7 +3174,7 @@ update_frame_with_menu (struct frame *f, int row, int col)
   cursor_at_point_p = !(row >= 0 && col >= 0);
   /* Force update_frame_1 not to stop due to pending input, and not
      try scrolling.  */
-  paused_p = update_frame_1 (f, 1, 1, cursor_at_point_p);
+  paused_p = update_frame_1 (f, 1, 1, cursor_at_point_p, true);
   /* ROW and COL tell us where in the menu to position the cursor, so
      that screen readers know the active region on the screen.  */
   if (!cursor_at_point_p)
@@ -4474,7 +4474,7 @@ scrolling_window (struct window *w, bool header_line_p)
 
 static bool
 update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p,
-		bool set_cursor_p)
+		bool set_cursor_p, bool updating_menu_p)
 {
   /* Frame matrices to work on.  */
   struct glyph_matrix *current_matrix = f->current_matrix;
@@ -4513,7 +4513,7 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p,
 
   /* Update the individual lines as needed.  Do bottom line first.  */
   if (MATRIX_ROW_ENABLED_P (desired_matrix, desired_matrix->nrows - 1))
-    update_frame_line (f, desired_matrix->nrows - 1);
+    update_frame_line (f, desired_matrix->nrows - 1, updating_menu_p);
 
   /* Now update the rest of the lines.  */
   for (i = 0; i < desired_matrix->nrows - 1 && (force_p || !input_pending); i++)
@@ -4539,7 +4539,7 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p,
 	  if (!force_p && (i - 1) % preempt_count == 0)
 	    detect_input_pending_ignore_squeezables ();
 
-	  update_frame_line (f, i);
+	  update_frame_line (f, i, updating_menu_p);
 	}
     }
 
@@ -4775,7 +4775,7 @@ count_match (struct glyph *str1, struct glyph *end1, struct glyph *str2, struct 
 /* Perform a frame-based update on line VPOS in frame FRAME.  */
 
 static void
-update_frame_line (struct frame *f, int vpos)
+update_frame_line (struct frame *f, int vpos, bool updating_menu_p)
 {
   struct glyph *obody, *nbody, *op1, *op2, *np1, *nend;
   int tem;
@@ -4813,6 +4813,12 @@ update_frame_line (struct frame *f, int vpos)
 
   current_row->enabled_p = true;
   current_row->used[TEXT_AREA] = desired_row->used[TEXT_AREA];
+
+  /* For some reason, cursor is sometimes moved behind our back when a
+     frame with a TTY menu is redrawn.  Homing the cursor as below
+     fixes that.  */
+  if (updating_menu_p)
+    cursor_to (f, 0, 0);
 
   /* If desired line is empty, just clear the line.  */
   if (!desired_row->enabled_p)

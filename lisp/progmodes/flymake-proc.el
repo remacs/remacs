@@ -113,7 +113,7 @@ NAME is the file name function to use, default `flymake-proc-get-real-file-name'
   "Currently active Flymake process for a buffer, if any.")
 
 (defvar flymake-proc--report-fn nil
-  "If bound, function used to report back to flymake's UI.")
+  "If bound, function used to report back to Flymake's UI.")
 
 (defun flymake-proc-reformat-err-line-patterns-from-compile-el (original-list)
   "Grab error line patterns from ORIGINAL-LIST in compile.el format.
@@ -265,7 +265,6 @@ Return t if so, nil if not."
 
 (defun flymake-proc--find-possible-master-files (file-name master-file-dirs masks)
   "Find (by name and location) all possible master files.
-
 Name is specified by FILE-NAME and location is specified by
 MASTER-FILE-DIRS.  Master files include .cpp and .c for .h.
 Files are searched for starting from the .h directory and max
@@ -626,7 +625,7 @@ Create parent directories as needed."
 (defun flymake-proc--panic (problem explanation)
   "Tell Flymake UI about a fatal PROBLEM with this backend.
 May only be called in a dynamic environment where
-`flymake-proc--dynamic-report-fn' is bound"
+`flymake-proc--report-fn' is bound."
   (flymake-log 0 "%s: %s" problem explanation)
   (if (and (boundp 'flymake-proc--report-fn)
            flymake-proc--report-fn)
@@ -718,7 +717,7 @@ May only be called in a dynamic environment where
 (defun flymake-proc-legacy-flymake (report-fn &rest args)
   "Flymake backend based on the original Flymake implementation.
 This function is suitable for inclusion in
-`flymake-diagnostic-types-alist'. For backward compatibility, it
+`flymake-diagnostic-functions'. For backward compatibility, it
 can also be executed interactively independently of
 `flymake-mode'."
   ;; Interactively, behave as if flymake had invoked us through its
