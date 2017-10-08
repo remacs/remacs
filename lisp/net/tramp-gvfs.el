@@ -1206,8 +1206,9 @@ file-notify events."
 	(when (and parents (not (file-directory-p ldir)))
 	  (make-directory ldir parents))
 	;; Just do it.
-	(unless (tramp-gvfs-send-command
-		 v "gvfs-mkdir" (tramp-gvfs-url-file-name dir))
+	(unless (or (tramp-gvfs-send-command
+		     v "gvfs-mkdir" (tramp-gvfs-url-file-name dir))
+		    (and parents (file-directory-p dir)))
 	  (tramp-error v 'file-error "Couldn't make directory %s" dir))))))
 
 (defun tramp-gvfs-handle-rename-file

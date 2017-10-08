@@ -2105,7 +2105,10 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	    (should-error (make-directory tmp-name2) :type 'file-error)
 	    (make-directory tmp-name2 'parents)
 	    (should (file-directory-p tmp-name2))
-	    (should (file-accessible-directory-p tmp-name2)))
+	    (should (file-accessible-directory-p tmp-name2))
+	    ;; If PARENTS is non-nil, `make-directory' shall not
+	    ;; signal an error when DIR exists already.
+	    (make-directory tmp-name2 'parents))
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))))))
