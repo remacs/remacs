@@ -491,6 +491,9 @@ Arguments may be quoted "like this", so that for example an absolute
 path containing a space may be specified; quote escaping is not
 supported.
 
+** The new user option 'arabic-shaper-ZWNJ-handling' controls how to
+handle ZWNJ in Arabic text rendering.
+
 
 * Editing Changes in Emacs 26.1
 
@@ -1849,6 +1852,10 @@ The new functions 'secondary-selection-to-region' and
 'secondary-selection-from-region' let you set the beginning and the
 end of the region from those of the secondary selection and vise
 versa.
+
+** New function 'lgstring-remove-glyph' can be used to modify a
+gstring returned by the underlying layout engine (e.g. m17n-flt,
+uniscribe).
 
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
