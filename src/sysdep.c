@@ -221,9 +221,12 @@ init_standard_fds (void)
 }
 
 /* Return the current working directory.  The result should be freed
-   with 'free'.  Return NULL on errors.  */
-char *
-emacs_get_current_dir_name (void)
+   with 'free'.  Return NULL (setting errno) on errors.  If the
+   current directory is unreachable, return either NULL or a string
+   beginning with '('.  */
+
+static char *
+get_current_dir_name_or_unreachable (void)
 {
 # if HAVE_GET_CURRENT_DIR_NAME && !BROKEN_GET_CURRENT_DIR_NAME
 #  ifdef HYBRID_MALLOC
@@ -233,16 +236,9 @@ emacs_get_current_dir_name (void)
 #  endif
   if (use_libc)
     {
-      /* GNU/Linux get_current_dir_name can return a string starting
-	 with "(unreachable)" (Bug#27871).  */
-      char *wd = get_current_dir_name ();
-      if (wd && ! (IS_DIRECTORY_SEP (*wd) || (*wd && IS_DEVICE_SEP (wd[1]))))
-	{
-	  free (wd);
-	  errno = ENOENT;
-	  return NULL;
-	}
-      return wd;
+      /* For an unreachable directory, this returns a string that starts
+	 with "(unreachable)"; see Bug#27871.  */
+      return get_current_dir_name ();
     }
 # endif
 
@@ -292,6 +288,23 @@ emacs_get_current_dir_name (void)
         }
     }
   return buf;
+}
+
+/* Return the current working directory.  The result should be freed
+   with 'free'.  Return NULL (setting errno) on errors; an unreachable
+   directory (e.g., its name starts with '(') counts as an error.  */
+
+char *
+emacs_get_current_dir_name (void)
+{
+  char *dir = get_current_dir_name_or_unreachable ();
+  if (dir && *dir == '(')
+    {
+      free (dir);
+      errno = ENOENT;
+      return NULL;
+    }
+  return dir;
 }
 
 
