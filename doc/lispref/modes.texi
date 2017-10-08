@@ -314,6 +314,11 @@ Data}, for other possible forms).  The name of the mode appears
 in the mode line.
 
 @item
+Calling the major mode command twice in direct succession should not
+fail and should do the same thing as calling the command only once.
+In other words, the major mode command should be idempotent.
+
+@item
 @cindex functions in modes
 Since all global names are in the same name space, all the global
 variables, constants, and functions that are part of the mode should
@@ -1411,6 +1416,10 @@ a minor mode in a mode hook is a little uglier:
 
 @noindent
 However, this is not very commonly done.
+
+  Enabling or disabling a minor mode twice in direct succession should
+not fail and should do the same thing as enabling or disabling it only
+once.  In other words, the minor mode command should be idempotent.
 
 @item
 Add an element to @code{minor-mode-alist} for each minor mode
