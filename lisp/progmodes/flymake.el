@@ -1079,31 +1079,31 @@ applied."
 
 (defvar flymake-diagnostics-buffer-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [mouse-1] 'flymake-goto-diagnostic-at-point)
-    (define-key map (kbd "RET") 'flymake-goto-diagnostic-at-point)
-    (define-key map (kbd "SPC") 'flymake-show-diagnostic-at-point)
+    (define-key map (kbd "RET") 'flymake-goto-diagnostic)
+    (define-key map (kbd "SPC") 'flymake-show-diagnostic)
     map))
 
-(defun flymake-show-diagnostic-at-point ()
-  "Show location of diagnostic at point."
-  (interactive)
-  (let* ((id (or (tabulated-list-get-id)
+(defun flymake-show-diagnostic (pos &optional other-window)
+  "Show location of diagnostic at POS."
+  (interactive (list (point) t))
+  (let* ((id (or (tabulated-list-get-id pos)
                  (user-error "Nothing at point")))
          (overlay (plist-get id :overlay)))
     (with-current-buffer (overlay-buffer overlay)
       (with-selected-window
-          (display-buffer (current-buffer))
+          (display-buffer (current-buffer) other-window)
         (goto-char (overlay-start overlay))
         (pulse-momentary-highlight-region (overlay-start overlay)
                                           (overlay-end overlay)
                                           'highlight))
       (current-buffer))))
 
-(defun flymake-goto-diagnostic-at-point ()
-  "Show location of diagnostic at point."
-  (interactive)
+(defun flymake-goto-diagnostic (pos)
+  "Show location of diagnostic at POS.
+POS can be a buffer position or a button"
+  (interactive "d")
   (pop-to-buffer
-   (flymake-show-diagnostic-at-point)))
+   (flymake-show-diagnostic (if (button-type pos) (button-start pos) pos))))
 
 (defun flymake--diagnostics-buffer-entries ()
   (with-current-buffer flymake--diagnostics-buffer-source
@@ -1128,7 +1128,11 @@ applied."
                      ,(propertize (format "%s" type)
                                   'face (flymake--lookup-type-property
                                          type 'mode-line-face 'flymake-error))
-                     ,(format "%s" (flymake--diag-text diag))]))))
+                     (,(format "%s" (flymake--diag-text diag))
+                      mouse-face highlight
+                      help-echo "mouse-2: visit this diagnostic"
+                      face nil
+                      mouse-action flymake-goto-diagnostic)]))))
 
 (define-derived-mode flymake-diagnostics-buffer-mode tabulated-list-mode
   "Flymake diagnostics"
