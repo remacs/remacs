@@ -1077,17 +1077,19 @@ applied."
 
 (defvar-local flymake--diagnostics-buffer-source nil)
 
-(defvar flymake--diagnostics-buffer-button-keymap
+(defvar flymake-diagnostics-buffer-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map [mouse-1] 'push-button)
-    (define-key map (kbd "RET") 'push-button)
+    (define-key map [mouse-1] 'flymake-goto-diagnostic-at-point)
+    (define-key map (kbd "RET") 'flymake-goto-diagnostic-at-point)
     (define-key map (kbd "SPC") 'flymake-show-diagnostic-at-point)
     map))
 
-(defun flymake-show-diagnostic-at-point (button)
-  "Show location of diagnostic of BUTTON."
-  (interactive (list (button-at (point))))
-  (let* ((overlay (button-get button 'flymake-overlay)))
+(defun flymake-show-diagnostic-at-point ()
+  "Show location of diagnostic at point."
+  (interactive)
+  (let* ((id (or (tabulated-list-get-id)
+                 (user-error "Nothing at point")))
+         (overlay (plist-get id :overlay)))
     (with-current-buffer (overlay-buffer overlay)
       (with-selected-window
           (display-buffer (current-buffer))
@@ -1097,11 +1099,11 @@ applied."
                                           'highlight))
       (current-buffer))))
 
-(defun flymake-goto-diagnostic-at-point (button)
-  "Show location of diagnostic of BUTTON."
-  (interactive (list (button-at (point))))
+(defun flymake-goto-diagnostic-at-point ()
+  "Show location of diagnostic at point."
+  (interactive)
   (pop-to-buffer
-   (flymake-show-diagnostic-at-point button)))
+   (flymake-show-diagnostic-at-point)))
 
 (defun flymake--diagnostics-buffer-entries ()
   (with-current-buffer flymake--diagnostics-buffer-source
@@ -1121,16 +1123,7 @@ applied."
                          :severity (flymake--lookup-type-property
                                     type
                                     'severity (warning-numeric-level :error)))
-                   `[(,(format "%s" line)
-                      keymap ,flymake--diagnostics-buffer-button-keymap
-                      action flymake-goto-diagnostic-at-point
-                      mouse-action flymake-goto-diagnostic-at-point
-                      help-echo ,(mapconcat #'identity
-                                            '("mouse-1, RET: goto location at point"
-                                              "SPC: show location at point")
-                                            "\n")
-                      flymake-diagnostic ,diag
-                      flymake-overlay ,ov)
+                   `[,(format "%s" line)
                      ,(format "%s" col)
                      ,(propertize (format "%s" type)
                                   'face (flymake--lookup-type-property
