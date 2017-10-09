@@ -3477,18 +3477,6 @@ VALUE.  In any case, return VALUE.  */)
   return value;
 }
 
-
-DEFUN ("remhash", Fremhash, Sremhash, 2, 2, 0,
-       doc: /* Remove KEY from TABLE.  */)
-  (Lisp_Object key, Lisp_Object table)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  CHECK_IMPURE (table, h);
-  hash_remove_from_table (h, key);
-  return Qnil;
-}
-
-
 DEFUN ("maphash", Fmaphash, Smaphash, 2, 2, 0,
        doc: /* Call FUNCTION for all entries in hash table TABLE.
 FUNCTION is called with two arguments, KEY and VALUE.
@@ -3760,7 +3748,6 @@ syms_of_fns (void)
   defsubr (&Shash_table_p);
   defsubr (&Sclrhash);
   defsubr (&Sputhash);
-  defsubr (&Sremhash);
   defsubr (&Smaphash);
   defsubr (&Sdefine_hash_table_test);
 

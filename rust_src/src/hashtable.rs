@@ -1,7 +1,8 @@
 use remacs_macros::lisp_fn;
+use libc::c_void;
 use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Faref, hash_lookup, EmacsInt,
-                 EmacsUint};
+                 EmacsUint, CHECK_IMPURE, hash_remove_from_table};
 use std::ptr;
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
@@ -70,6 +71,14 @@ impl LispHashTableRef {
         let mutself = self.as_ptr() as *mut Lisp_Hash_Table;
         unsafe { hash_lookup(mutself, key.to_raw(), hashptr) }
     }
+
+    pub fn check_impure(self, object: LispObject) {
+        unsafe { CHECK_IMPURE(object.to_raw(), self.as_ptr() as *mut c_void) };
+    }
+
+    pub fn remove(mut self, key: LispObject) {
+        unsafe { hash_remove_from_table(self.as_mut(), key.to_raw()) };
+    }
 }
 
 /// Return a copy of hash table TABLE.
@@ -112,4 +121,14 @@ fn gethash(key: LispObject, table: LispObject, dflt: LispObject) -> LispObject {
     } else {
         dflt
     }
+}
+
+/// Remove KEY from TABLE.
+#[lisp_fn]
+fn remhash(key: LispObject, table: LispObject) -> LispObject {
+    let hash_table = table.as_hash_table_or_error();
+    hash_table.check_impure(table);
+    hash_table.remove(key);
+
+    LispObject::constant_nil()
 }
