@@ -3457,18 +3457,6 @@ DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
   return table;
 }
 
-
-DEFUN ("gethash", Fgethash, Sgethash, 2, 3, 0,
-       doc: /* Look up KEY in TABLE and return its associated value.
-If KEY is not found, return DFLT which defaults to nil.  */)
-  (Lisp_Object key, Lisp_Object table, Lisp_Object dflt)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  ptrdiff_t i = hash_lookup (h, key, NULL);
-  return i >= 0 ? HASH_VALUE (h, i) : dflt;
-}
-
-
 DEFUN ("puthash", Fputhash, Sputhash, 3, 3, 0,
        doc: /* Associate KEY with VALUE in hash table TABLE.
 If KEY is already present in table, replace its current value with
@@ -3771,7 +3759,6 @@ syms_of_fns (void)
   defsubr (&Shash_table_weakness);
   defsubr (&Shash_table_p);
   defsubr (&Sclrhash);
-  defsubr (&Sgethash);
   defsubr (&Sputhash);
   defsubr (&Sremhash);
   defsubr (&Smaphash);

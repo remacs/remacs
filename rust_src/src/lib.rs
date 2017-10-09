@@ -207,6 +207,8 @@ pub use windows::Fwindow_minibuffer_p;
 // Used in term.c, dired.c
 pub use objects::Fidentity;
 
+pub use hashtable::Fgethash;
+
 #[cfg(test)]
 pub use functions::make_float;
 
@@ -348,6 +350,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*vectors::Selt);
         defsubr(&*vectors::Srecordp);
         defsubr(&*hashtable::Scopy_hash_table);
+        defsubr(&*hashtable::Sgethash);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
         defsubr(&*crypto::Ssecure_hash);

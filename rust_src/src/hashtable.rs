@@ -1,6 +1,7 @@
 use remacs_macros::lisp_fn;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence};
+use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Faref, hash_lookup, EmacsInt,
+                 EmacsUint};
 use std::ptr;
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
@@ -59,6 +60,16 @@ impl LispHashTableRef {
     pub fn get_weak(&self) -> LispObject {
         LispObject::from_raw(self.weak)
     }
+
+    pub fn get_hash_value(self, idx: isize) -> LispObject {
+        let index = LispObject::from_natnum((2 * idx + 1) as EmacsInt);
+        unsafe { LispObject::from_raw(Faref(self.key_and_value, index.to_raw())) }
+    }
+
+    pub fn lookup(self, key: LispObject, hashptr: *mut EmacsUint) -> isize {
+        let mutself = self.as_ptr() as *mut Lisp_Hash_Table;
+        unsafe { hash_lookup(mutself, key.to_raw(), hashptr) }
+    }
 }
 
 /// Return a copy of hash table TABLE.
@@ -87,4 +98,18 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
     }
 
     LispObject::from_hash_table(new_table)
+}
+
+/// Look up KEY in TABLE and return its associated value.
+/// If KEY is not found, return DFLT which defaults to nil.
+#[lisp_fn(min = "2")]
+fn gethash(key: LispObject, table: LispObject, dflt: LispObject) -> LispObject {
+    let hash_table = table.as_hash_table_or_error();
+    let idx = hash_table.lookup(key, ptr::null_mut());
+
+    if idx >= 0 {
+        hash_table.get_hash_value(idx)
+    } else {
+        dflt
+    }
 }
