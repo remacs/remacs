@@ -1,3 +1,4 @@
+
 2017-10-05  Nicolas Petton  <nicolas@petton.fr>
 
 	Update authors.el
@@ -1379,7 +1380,7 @@
 
 	Doc amendment for syntax-ppss.
 
-	* doc/elisp/syntax.texi (Position Parse): Note, twice, that syntax-ppss is
+	* doc/lispref/syntax.texi (Position Parse): Note, twice, that syntax-ppss is
 	equivalent to parse-partial-sexp from the beginning of THE VISIBLE PART OF the
 	buffer.  Final part of the fix for bug #22983.
 
@@ -1869,7 +1870,8 @@
 
 2017-09-25  Michael Albinus  <michael.albinus@gmx.de>
 
-	* test/lisp/tramp-tests.el (tramp-test21-file-links): Special code for smb.
+	* test/lisp/net/tramp-tests.el (tramp-test21-file-links): Special
+	code for smb.
 
 2017-09-25  Mark Oteiza  <mvoteiza@udel.edu>
 
@@ -10608,8 +10610,8 @@
 
 2017-06-18  Andreas Schwab  <schwab@linux-m68k.org>
 
-	* url/url-util.el (url-get-url-at-point): Add missing group in
-	regex.
+	* lisp/url/url-util.el (url-get-url-at-point): Add missing group
+	in regex.
 
 2017-06-18  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -10720,8 +10722,8 @@
 
 2017-06-17  Andreas Schwab  <schwab@linux-m68k.org>
 
-	* international/characters.el: Update list of zero and full width
-	characters according to Unicode 9.0.0.
+	* lisp/international/characters.el: Update list of zero and full
+	width characters according to Unicode 9.0.0.
 
 2017-06-17  Simen Heggestøyl  <simenheg@gmail.com>
 
@@ -10820,7 +10822,7 @@
 
 	Fix hang in CC Mode when ":" is typed after identifier at EOB.
 
-	* list/progmodes/cc-engine.el (c-forward-declarator): Fix coding error
+	* lisp/progmodes/cc-engine.el (c-forward-declarator): Fix coding error
 	confusing ":" and EOB.
 
 2017-06-15  Alan Mackenzie  <acm@muc.de>
@@ -11394,7 +11396,7 @@
 	Rather than checking for the main thread, check for the current
 	thread.
 
-	* emacs-module.c (check_thread): New function.
+	* src/emacs-module.c (check_thread): New function.
 	(MODULE_FUNCTION_BEGIN_NO_CATCH, module_get_environment)
 	(module_non_local_exit_check, module_non_local_exit_clear)
 	(module_non_local_exit_get, module_non_local_exit_signal)
@@ -11797,7 +11799,7 @@
 
 	These can help module authors debug crashes.
 
-	* emacs-module.c (module_non_local_exit_check)
+	* src/emacs-module.c (module_non_local_exit_check)
 	(module_non_local_exit_clear, module_non_local_exit_get)
 	(module_non_local_exit_signal, module_non_local_exit_throw)
 	(module_copy_string_contents, module_make_string)
@@ -12294,7 +12296,7 @@
 
 	Mode line "%q" construct: Just use one number when both would be the same.
 
-	* src/xdisp (decode_mode_spec): recode the "%q" bit appropriately.
+	* src/xdisp.c (decode_mode_spec): recode the "%q" bit appropriately.
 
 2017-05-30  Alan Mackenzie  <acm@muc.de>
 
@@ -12528,7 +12530,7 @@
 
 	Fix Tramp for Android 7
 
-	* tramp-adb.el (tramp-adb-ls-toolbox-regexp):
+	* lisp/net/tramp-adb.el (tramp-adb-ls-toolbox-regexp):
 	Username part of prompt is empty on Android 7.
 	(tramp-adb-ls-toolbox-regexp):
 	Ignore addition links column on Android 7.
@@ -13208,8 +13210,8 @@
 
 	Remove unused automatic variables
 
-	* nsterm.m (ns_read_socket):
-	* macfont.m (macfont_open): Remove unused automatic variables.
+	* src/nsterm.m (ns_read_socket):
+	* src/macfont.m (macfont_open): Remove unused automatic variables.
 
 2017-05-21  Philipp Stephani  <phst@google.com>
 
@@ -13278,7 +13280,7 @@
 
 	This removes compiler warnings on macOS and improves type safety.
 
-	* nsterm.m (initFrameFromEmacs:):
+	* src/nsterm.m (initFrameFromEmacs:):
 	(menuDown:):
 	(toolbarClicked:):
 	(toggleToolbar:):
@@ -13286,12 +13288,12 @@
 	(initFrame:window:):
 	(condemn, reprieve, setPosition:portion:whole:):
 	(repeatScroll:):
-	* nsmenu.m (initWithTitle:):
+	* src/nsmenu.m (initWithTitle:):
 	(initWithTitle:frame:):
 	(initForView:withIdentifier:):
 	(init, initWithContentRect:styleMask:backing:defer:):
 	(initFromContents:isQuestion:):
-	* nsimage.m (allocInitFromFile:):
+	* src/nsimage.m (allocInitFromFile:):
 	(initFromXBM:width:height:fg:bg:):
 	(setXBMColor:):
 	(initForXPMWithDepth:width:height:): Use instancetype as return
@@ -14144,7 +14146,7 @@
 	variable.
 	* test/src/lread-tests.el (lread-tests--old-style-backquotes): Add
 	unit test.
-	* emacs-lisp/bytecomp-tests.el
+	* lisp/emacs-lisp/bytecomp-tests.el
 	(bytecomp-tests--old-style-backquotes): Add unit test.
 
 2017-05-13  Philipp Stephani  <phst@google.com>
@@ -15569,13 +15571,13 @@
 
 	Add support for IRCv3 message tags.
 
-	* erc-backend.el:
+	* lisp/erc/erc-backend.el:
 	  erc-response: Add `tags' element.
 	  Add (erc-parse-tags).
 	  (erc-parse-server-response): Use (erc-parse-tags) to parse message
 	  tags (if any), and store them in `erc-resopnse' struct.
 
-	* erc.el: (erc-display-message): Expose message tags with text
+	* lisp/erc/erc.el: (erc-display-message): Expose message tags with text
 	  properties of the corresponding message line.
 
 2017-04-24  Lars Ingebrigtsen  <larsi@gnus.org>
@@ -16094,7 +16096,7 @@
 	  (xml-maybe-do-ns): Properly handle default namespace by not
 	  interning new symbol when 'special' flag is set.
 
-	* tests/lisp/xml-tests.el (xml-parse-test--namespace-attribute-qnames)
+	* test/lisp/xml-tests.el (xml-parse-test--namespace-attribute-qnames)
 	  (xml-parse-namespace-attribute-qnames): Add test for Bug#26533.
 
 2017-04-17  Paul Eggert  <eggert@Penguin.CS.UCLA.EDU>
@@ -16770,7 +16772,7 @@
 	* src/fns.c (Flength, Fcopy_sequence):
 	* src/font.h (FONT_SPEC_P, FONT_ENTITY_P, FONT_OBJECT_P):
 	* src/lread.c (substitute_object_recurse):
-	* src/src/print.c (print_object):
+	* src/print.c (print_object):
 	  Use it.
 
 2017-04-10  Michael Albinus  <michael.albinus@gmx.de>
@@ -16960,9 +16962,9 @@
 
 	Fix circular read syntax for records.
 
-	* lread.c (substitute_object_recurse): Work with records.
+	* src/lread.c (substitute_object_recurse): Work with records.
 
-	* lread-tests.el (lread-record-1): New test.
+	* test/src/lread-tests.el (lread-record-1): New test.
 
 2017-04-08  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -17051,7 +17053,7 @@
 
 2017-04-07  Lars Brinkhoff  <lars@nocrew.org>
 
-	* records.texi (Record Functions): fix typo.
+	* doc/lispref/records.texi (Record Functions): fix typo.
 
 2017-04-07  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -17065,15 +17067,15 @@
 
 	Output number of characters added to file (Bug#354)
 
-	* fileio.c (write_region):
-	* epa-file.el (epa-file-write-region):
-	* jka-compr.el (jka-compr-write-region):
-	* ange-ftp.el (ange-ftp-write-region):
-	* tramp-gvfs.el (tramp-gvfs-handle-write-region):
-	* tramp-sh.el (tramp-sh-handle-write-region):
-	* mm-util.el (mm-append-to-file): Functions now output
+	* src/fileio.c (write_region):
+	* lisp/epa-file.el (epa-file-write-region):
+	* lisp/jka-compr.el (jka-compr-write-region):
+	* lisp/net/ange-ftp.el (ange-ftp-write-region):
+	* lisp/net/tramp-gvfs.el (tramp-gvfs-handle-write-region):
+	* lisp/net/tramp-sh.el (tramp-sh-handle-write-region):
+	* lisp/gnus/mm-utils.el (mm-append-to-file): Functions now output
 	characters written in addition to file name.
-	* files.texi: Added documentation to write-region and
+	* doc/lispref/files.texi: Added documentation to write-region and
 	append-to-file describing their output.
 
 2017-04-07  Noam Postavsky  <npostavs@users.sourceforge.net>
@@ -17197,7 +17199,8 @@
 
 2017-04-07  Hong Xu  <hong@topbug.net>
 
-	* search.c (Fre_search_forward, Fre_search_backward): Improve doc (Bug#25193).
+	* src/search.c (Fre_search_forward, Fre_search_backward): Improve
+	doc (Bug#25193).
 
 2017-04-07  Noam Postavsky  <npostavs@gmail.com>
 
@@ -17315,7 +17318,7 @@
 	standard distribution.
 	* admin/unidata/README: Mention SpecialCasing.txt.
 
-	* admin/unidata/unidata-get.el (unidata-gen-table-special-casing,
+	* admin/unidata/unidata-gen.el (unidata-gen-table-special-casing,
 	unidata-gen-table-special-casing--do-load): New functions generating
 	‘special-uppercase’, ‘special-lowercase’ and ‘special-titlecase’
 	character Unicode properties built from the SpecialCasing.txt Unicode
@@ -17422,14 +17425,14 @@
 
 	Update documentation for type semantics of records.
 
-	* objects.texi (Record Type): improve description of what
+	* doc/lispref/objects.texi (Record Type): improve description of what
 	`type-of' returns for records.
 	(Type Descriptors): new section.
-	* elisp.texi: reference it.
-	* records.texi (Records): reference it.  Document behaviour when type
-	slot is a record.
+	* doc/lispref/elisp.texi: reference it.
+	* doc/lispref/records.texi (Records): reference it.  Document
+	behaviour when type slot is a record.
 
-	* alloc.c (Fmake_record, Frecord): mention type desciptors.
+	* admin/alloc-colors.c (Fmake_record, Frecord): mention type desciptors.
 
 2017-04-06  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -18240,8 +18243,9 @@
 
 	Add check for expected backtrace in module calls.
 
-	* test.el (mod-test-non-local-exit-signal-test): Compare actual
-	  backtrace to expected backtrace.
+	* test/manual/cedet/tests/test.el
+	(mod-test-non-local-exit-signal-test): Compare actual backtrace to
+	expected backtrace.
 
 2017-03-26  Eli Zaretskii  <eliz@gnu.org>
 
@@ -18397,7 +18401,7 @@
 
 	Make it easier to abort a series of tests with C-g
 
-	* emacs-lisp/ert.el (ert-run-tests): Add "interactively" arg.  If
+	* lisp/emacs-lisp/ert.el (ert-run-tests): Add "interactively" arg.  If
 	interactively is true and a test was aborted then ask if the remaining
 	tests should be aborted too.
 	(ert-run-tests-batch, ert-run-tests-interactively): Pass in
@@ -18435,8 +18439,9 @@
 	`python-nav-end-of-statement'.  Protect against this by checking
 	whether the search for the end of the current string makes progress.
 
-	* python.el (python-nav-end-of-statement): Protect against infloop.
-	* progmodes/python-tests.el
+	* lisp/progmodes/python.el (python-nav-end-of-statement): Protect
+	against infloop.
+	* lisp/progmodes/python-tests.el
 	(python-tests--python-nav-end-of-statement--infloop): Add unit test.
 
 2017-03-23  Michael Albinus  <michael.albinus@gmx.de>
@@ -50754,7 +50759,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 82d2a05a74c120480dc1b68243430c9417bfc523 (inclusive).
+commit 16dc580aa61832285269f8de081248bac618cf84 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
