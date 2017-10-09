@@ -132,3 +132,9 @@ fn remhash(key: LispObject, table: LispObject) -> LispObject {
 
     LispObject::constant_nil()
 }
+
+/// Return t if OBJ is a Lisp hash table object.
+#[lisp_fn]
+fn hash_table_p(obj: LispObject) -> LispObject {
+    LispObject::from_bool(obj.is_hash_table())
+}

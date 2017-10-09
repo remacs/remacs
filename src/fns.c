@@ -3437,15 +3437,6 @@ DEFUN ("hash-table-weakness", Fhash_table_weakness, Shash_table_weakness,
   return check_hash_table (table)->weak;
 }
 
-
-DEFUN ("hash-table-p", Fhash_table_p, Shash_table_p, 1, 1, 0,
-       doc: /* Return t if OBJ is a Lisp hash table object.  */)
-  (Lisp_Object obj)
-{
-  return HASH_TABLE_P (obj) ? Qt : Qnil;
-}
-
-
 DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
        doc: /* Clear hash table TABLE and return it.  */)
   (Lisp_Object table)
@@ -3745,7 +3736,6 @@ syms_of_fns (void)
   defsubr (&Shash_table_size);
   defsubr (&Shash_table_test);
   defsubr (&Shash_table_weakness);
-  defsubr (&Shash_table_p);
   defsubr (&Sclrhash);
   defsubr (&Sputhash);
   defsubr (&Smaphash);
