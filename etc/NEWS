@@ -67,8 +67,9 @@ globally or for individual definitions.
 
 ** Enhanced xterm support
 
-*** New variable 'xterm-set-window-title' controls whether Emacs
-sets the XTerm window title.  The default is to set the window title.
+*** New variable 'xterm-set-window-title' controls whether Emacs sets
+the XTerm window title.  This feature is experimental and is disabled
+by default.
 
 
 * New Modes and Packages in Emacs 27.1
