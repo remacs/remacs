@@ -622,24 +622,42 @@ different runs of the same backend."
         (with-current-buffer buffer
           (apply #'flymake--handle-report backend token args))))))
 
-(defun flymake--collect (fn)
+(defun flymake--collect (fn &optional message-prefix)
+  "Collect Flymake backends matching FN.
+If MESSAGE-PREFIX, echo a message using that prefix"
+  (unless flymake--backend-state
+    (user-error "Flymake is not initialized"))
   (let (retval)
     (maphash (lambda (backend state)
                (when (funcall fn state) (push backend retval)))
              flymake--backend-state)
+    (when message-prefix
+      (message "%s%s"
+               message-prefix
+               (mapconcat (lambda (s) (format "%s" s))
+                          retval ", ")))
     retval))
 
 (defun flymake-running-backends ()
   "Compute running Flymake backends in current buffer."
-  (flymake--collect #'flymake--backend-state-running))
+  (interactive)
+  (flymake--collect #'flymake--backend-state-running
+                    (and (called-interactively-p 'interactive)
+                         "Running backends: ")))
 
 (defun flymake-disabled-backends ()
   "Compute disabled Flymake backends in current buffer."
-  (flymake--collect #'flymake--backend-state-disabled))
+  (interactive)
+  (flymake--collect #'flymake--backend-state-disabled
+                    (and (called-interactively-p 'interactive)
+                         "Disabled backends: ")))
 
 (defun flymake-reporting-backends ()
   "Compute reporting Flymake backends in current buffer."
-  (flymake--collect #'flymake--backend-state-reported-p))
+  (interactive)
+  (flymake--collect #'flymake--backend-state-reported-p
+                    (and (called-interactively-p 'interactive)
+                         "Reporting backends: ")))
 
 (defun flymake--disable-backend (backend &optional explanation)
   "Disable BACKEND because EXPLANATION.
