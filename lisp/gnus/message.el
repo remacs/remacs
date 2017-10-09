@@ -8063,8 +8063,7 @@ regexp VARSTR."
 	   ;; Cloning message-default-charset could cause an already
 	   ;; encoded text to be encoded again, yielding raw bytes
 	   ;; instead of characters in the message.
-	   (unless (string-match "message-default-charset"
-				 (symbol-name (car local)))
+	   (unless (eq 'message-default-charset (car local))
 	     (set (make-local-variable (car local))
 		  (cdr local))))))
      locals)))
