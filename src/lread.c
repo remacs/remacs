@@ -1003,11 +1003,14 @@ load_error_handler (Lisp_Object data)
   return Qnil;
 }
 
-static _Noreturn void
-load_error_old_style_backquotes (void)
+static void
+load_warn_old_style_backquotes (Lisp_Object file)
 {
-  AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
-  xsignal1 (Qerror, CALLN (Fformat_message, format, Vload_file_name));
+  if (!NILP (Vlread_old_style_backquotes))
+    {
+      AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
+      CALLN (Fmessage, format, file);
+    }
 }
 
 static void
@@ -1278,6 +1281,10 @@ Return t if the file exists and loads successfully.  */)
                     : found) ;
 
   version = -1;
+
+  /* Check for the presence of old-style quotes and warn about them.  */
+  specbind (Qlread_old_style_backquotes, Qnil);
+  record_unwind_protect (load_warn_old_style_backquotes, file);
 
   /* Check for the presence of unescaped character literals and warn
      about them. */
@@ -3171,7 +3178,10 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	   first_in_list exception (old-style can still be obtained via
 	   "(\`" anyway).  */
 	if (!new_backquote_flag && first_in_list && next_char == ' ')
-	  load_error_old_style_backquotes ();
+	  {
+	    Vlread_old_style_backquotes = Qt;
+	    goto default_label;
+	  }
 	else
 	  {
 	    Lisp_Object value;
@@ -3222,7 +3232,10 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	    return list2 (comma_type, value);
 	  }
 	else
-	  load_error_old_style_backquotes ();
+	  {
+	    Vlread_old_style_backquotes = Qt;
+	    goto default_label;
+	  }
       }
     case '?':
       {
@@ -3410,6 +3423,7 @@ read1 (Lisp_Object readcharfun, int *pch, bool first_in_list)
 	 row.  */
       FALLTHROUGH;
     default:
+    default_label:
       if (c <= 040) goto retry;
       if (c == NO_BREAK_SPACE)
 	goto retry;
@@ -4981,6 +4995,12 @@ variables, this must be set in the first line of a file.  */);
   DEFVAR_LISP ("eval-buffer-list", Veval_buffer_list,
 	       doc: /* List of buffers being read from by calls to `eval-buffer' and `eval-region'.  */);
   Veval_buffer_list = Qnil;
+
+  DEFVAR_LISP ("lread--old-style-backquotes", Vlread_old_style_backquotes,
+	       doc: /* Set to non-nil when `read' encounters an old-style backquote.
+For internal use only.  */);
+  Vlread_old_style_backquotes = Qnil;
+  DEFSYM (Qlread_old_style_backquotes, "lread--old-style-backquotes");
 
   DEFVAR_LISP ("lread--unescaped-character-literals",
                Vlread_unescaped_character_literals,

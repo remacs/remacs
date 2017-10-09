@@ -173,13 +173,13 @@ literals (Bug#20852)."
     (should (string-suffix-p "/somelib.el" (caar load-history)))))
 
 (ert-deftest lread-tests--old-style-backquotes ()
-  "Check that loading doesn't accept old-style backquotes."
+  "Check that loading warns about old-style backquotes."
   (lread-tests--with-temp-file file-name
     (write-region "(` (a b))" nil file-name)
-    (let ((data (should-error (load file-name nil :nomessage :nosuffix))))
-      (should (equal (cdr data)
-                     (list (concat (format-message "Loading `%s': " file-name)
-                                   "old-style backquotes detected!")))))))
+    (should (equal (load file-name nil :nomessage :nosuffix) t))
+    (should (equal (lread-tests--last-message)
+                   (concat (format-message "Loading `%s': " file-name)
+                           "old-style backquotes detected!")))))
 
 (ert-deftest lread-lread--substitute-object-in-subtree ()
   (let ((x (cons 0 1)))

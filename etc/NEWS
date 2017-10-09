@@ -87,9 +87,6 @@ them through 'format' first.  Even that is discouraged: for ElDoc
 support, you should set 'eldoc-documentation-function' instead of
 calling 'eldoc-message' directly.
 
-** Old-style backquotes now generate an error.  They have been
-generating warnings for a decade.
-
 
 * Lisp Changes in Emacs 27.1
 
