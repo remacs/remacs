@@ -73,7 +73,9 @@ SEVERITY-PREDICATE is used to setup
             (when sev-pred-supplied-p
               (setq-local flymake-proc-diagnostic-type-pred severity-predicate))
             (goto-char (point-min))
-            (unless flymake-mode (flymake-mode 1))
+            (let ((flymake-start-on-flymake-mode nil))
+              (unless flymake-mode (flymake-mode 1)))
+            (flymake-start)
             (flymake-tests--wait-for-backends)
             (funcall fn)))
       (and buffer
@@ -230,7 +232,9 @@ SEVERITY-PREDICATE is used to setup
                    'crashing-backend
                    ))
             (flymake-wrap-around nil))
-        (flymake-mode)
+        (let ((flymake-start-on-flymake-mode nil))
+          (flymake-mode))
+        (flymake-start)
 
         (flymake-tests--assert-set (flymake-running-backends)
           (error-backend warning-backend panicking-backend)
@@ -299,7 +303,9 @@ SEVERITY-PREDICATE is used to setup
         (let ((flymake-diagnostic-functions
                (list 'eager-backend))
               (flymake-wrap-around nil))
-          (flymake-mode)
+          (let ((flymake-start-on-flymake-mode nil))
+            (flymake-mode))
+          (flymake-start)
           (flymake-tests--assert-set (flymake-running-backends)
             (eager-backend) ())
           (cl-loop until tick repeat 4 do (sleep-for 0.2))

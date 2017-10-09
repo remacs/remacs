@@ -123,9 +123,13 @@ If nil, never start checking buffer automatically like this."
 (make-obsolete-variable 'flymake-gui-warnings-enabled
 			"it no longer has any effect." "26.1")
 
-(defcustom flymake-start-syntax-check-on-find-file t
-  "Start syntax check on find file."
+(defcustom flymake-start-on-flymake-mode t
+  "Start syntax check when `pflymake-mode'is enabled.
+Specifically, start it when the buffer is actually displayed."
   :type 'boolean)
+
+(define-obsolete-variable-alias 'flymake-start-syntax-check-on-find-file
+  'flymake-start-on-flymake-mode "26.1")
 
 (defcustom flymake-log-level -1
   "Obsolete and ignored variable."
@@ -670,33 +674,59 @@ If it is running also stop it."
        (flymake--disable-backend backend err)))))
 
 (defun flymake-start (&optional deferred force)
-  "Start a syntax check.
-Start it immediately, or after current command if DEFERRED is
-non-nil.  With optional FORCE run even disabled backends.
+  "Start a syntax check for the current buffer.
+DEFERRED is a list of symbols designating conditions to wait for
+before actually starting the check.  If it is nil (the list is
+empty), start it immediately, else defer the check to when those
+conditions are met.  Currently recognized conditions are
+`post-command', for waiting until the current command is over,
+`on-display', for waiting until the buffer is actually displayed
+in a window.  If DEFERRED is t, wait for all known conditions.
+
+With optional FORCE run even disabled backends.
 
 Interactively, with a prefix arg, FORCE is t."
   (interactive (list nil current-prefix-arg))
-  (cl-labels
-      ((start
-        ()
-        (remove-hook 'post-command-hook #'start 'local)
-        (setq flymake-check-start-time (float-time))
-        (run-hook-wrapped
-         'flymake-diagnostic-functions
-         (lambda (backend)
-           (cond
-            ((and (not force)
-                  (flymake--with-backend-state backend state
-                    (flymake--backend-state-disabled state)))
-             (flymake-log :debug "Backend %s is disabled, not starting"
-                          backend))
+  (let ((deferred (if (eq t deferred)
+                      '(post-command on-display)
+                    deferred))
+        (buffer (current-buffer)))
+    (cl-labels
+        ((start-post-command
+          ()
+          (remove-hook 'post-command-hook #'start-post-command
+                       nil)
+          (with-current-buffer buffer
+              (flymake-start (remove 'post-command deferred) force)))
+         (start-on-display
+          ()
+          (remove-hook 'window-configuration-change-hook #'start-on-display
+                       'local)
+          (flymake-start (remove 'on-display deferred) force)))
+      (cond ((and (memq 'post-command deferred)
+                  this-command)
+             (add-hook 'post-command-hook
+                       #'start-post-command
+                       'append nil))
+            ((and (memq 'on-display deferred)
+                  (not (get-buffer-window (current-buffer))))
+             (add-hook 'window-configuration-change-hook
+                       #'start-on-display
+                       'append 'local))
             (t
-             (flymake--run-backend backend)))
-           nil))))
-    (if (and deferred
-             this-command)
-        (add-hook 'post-command-hook #'start 'append 'local)
-      (start))))
+             (setq flymake-check-start-time (float-time))
+             (run-hook-wrapped
+              'flymake-diagnostic-functions
+              (lambda (backend)
+                (cond
+                 ((and (not force)
+                       (flymake--with-backend-state backend state
+                         (flymake--backend-state-disabled state)))
+                  (flymake-log :debug "Backend %s is disabled, not starting"
+                               backend))
+                 (t
+                  (flymake--run-backend backend)))
+                nil)))))))
 
 (defvar flymake-mode-map
   (let ((map (make-sparse-keymap))) map)
@@ -714,8 +744,7 @@ Interactively, with a prefix arg, FORCE is t."
 
     (setq flymake--backend-state (make-hash-table))
 
-    (when flymake-start-syntax-check-on-find-file
-      (flymake-start)))
+    (when flymake-start-on-flymake-mode (flymake-start t)))
 
    ;; Turning the mode OFF.
    (t
@@ -748,7 +777,7 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
 	      (flymake-log
                :debug "starting syntax check after idle for %s seconds"
                flymake-no-changes-timeout)
-	      (flymake-start))
+	      (flymake-start t))
             (setq flymake-timer nil))))
       (current-buffer)))))
 
@@ -770,13 +799,13 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
   (let((new-text (buffer-substring start stop)))
     (when (and flymake-start-syntax-check-on-newline (equal new-text "\n"))
       (flymake-log :debug "starting syntax check as new-line has been seen")
-      (flymake-start 'deferred))
+      (flymake-start t))
     (flymake--schedule-timer-maybe)))
 
 (defun flymake-after-save-hook ()
   (when flymake-mode
     (flymake-log :debug "starting syntax check as buffer was saved")
-    (flymake-start)))
+    (flymake-start t)))
 
 (defun flymake-kill-buffer-hook ()
   (when flymake-timer
