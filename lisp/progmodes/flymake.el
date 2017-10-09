@@ -124,7 +124,7 @@ If nil, never start checking buffer automatically like this."
 			"it no longer has any effect." "26.1")
 
 (defcustom flymake-start-on-flymake-mode t
-  "Start syntax check when `pflymake-mode'is enabled.
+  "Start syntax check when `flymake-mode'is enabled.
 Specifically, start it when the buffer is actually displayed."
   :type 'boolean)
 
@@ -751,8 +751,42 @@ Interactively, with a prefix arg, FORCE is t."
   "Keymap for `flymake-mode'")
 
 ;;;###autoload
-(define-minor-mode flymake-mode nil
-  :group 'flymake :lighter flymake--mode-line-format :keymap flymake-mode-map
+(define-minor-mode flymake-mode
+  "Toggle Flymake mode on or off.
+With a prefix argument ARG, enable Flymake mode if ARG is
+positive, and disable it otherwise.  If called from Lisp, enable
+the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
+
+Flymake is an Emacs minor mode for on-the-fly syntax checking.
+Flymake collects diagnostic information from multiple sources,
+called backends, and visually annotates the buffer with the
+results.
+
+Flymake performs these checks while the user is editing.  The
+customization variables `flymake-start-on-flymake-mode',
+`flymake-no-changes-timeout' and
+`flymake-start-syntax-check-on-newline' determine the exact
+circumstances whereupon Flymake decides to initiate a check of
+the buffer.
+
+The commands `flymake-goto-next-error' and
+`flymake-goto-prev-error' can be used to navigate among Flymake
+diagnostics annotated in the buffer.
+
+The visual appearance of each type of diagnostic can be changed
+in the variable `flymake-diagnostic-types-alist'.
+
+Activation or deactivation of backends used by Flymake in each
+buffer happens via the special hook
+`flymake-diagnostic-functions'.
+
+Some backends may take longer than others to respond or complete,
+and some may decide to disable themselves if they are not
+suitable for the current buffer. The commands
+`flymake-running-backends', `flymake-disabled-backends' and
+`flymake-reporting-backends' summarize the situation, as does the
+special *Flymake log* buffer."  :group 'flymake :lighter
+  flymake--mode-line-format :keymap flymake-mode-map
   (cond
    ;; Turning the mode ON.
    (flymake-mode
@@ -945,11 +979,16 @@ applied."
                    ,(concat (format "%s known backends\n" (length known))
                             (format "%s running\n" (length running))
                             (format "%s disabled\n" (length disabled))
-                            "mouse-1: go to log buffer ")
+                            "mouse-1: Display minor mode menu\n"
+                            "mouse-2: Show help for minor mode")
                    keymap
                    ,(let ((map (make-sparse-keymap)))
                       (define-key map [mode-line down-mouse-1]
                         flymake-menu)
+                      (define-key map [mode-line mouse-2]
+                        (lambda ()
+                          (interactive)
+                          (describe-function 'flymake-mode)))
                       map))
       ,@(pcase-let ((`(,ind ,face ,explain)
                      (cond ((null known)
@@ -1023,7 +1062,6 @@ applied."
                         collect a when rest collect
                         '(:propertize " "))
              (:propertize "]")))))))
-
 (provide 'flymake)
 
 (require 'flymake-proc)
