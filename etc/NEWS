@@ -16,9 +16,9 @@ You can narrow news to a specific version by calling 'view-emacs-news'
 with a prefix argument or by typing C-u C-h C-n.
 
 Temporary note:
-+++ indicates that all necessary documentation updates are complete.
-    (This means all relevant manuals in doc/ AND lisp doc-strings.)
---- means no change in the manuals is needed.
++++ indicates that all necessary documentation updates have been done.
+    (This means all the relevant manuals in doc/ AND lisp doc-strings.)
+--- means doc strings are updated, and no change in the manuals is needed.
 When you add a new item, use the appropriate mark if you are sure it applies,
 
 
