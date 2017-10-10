@@ -138,24 +138,25 @@ If nil, never start checking buffer automatically like this."
   "If non-nil, moving to errors wraps around buffer boundaries."
   :type 'boolean)
 
-(define-fringe-bitmap 'flymake-double-exclamation-mark
-  (vector #b00000000
-          #b00000000
-          #b00000000
-          #b00000000
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b00000000
-          #b01100110
-          #b00000000
-          #b00000000
-          #b00000000))
+(when (fboundp 'define-fringe-bitmap)
+  (define-fringe-bitmap 'flymake-double-exclamation-mark
+    (vector #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b00000000
+            #b01100110
+            #b00000000
+            #b00000000
+            #b00000000)))
 
 (defvar-local flymake-timer nil
   "Timer for starting syntax check.")
@@ -952,13 +953,15 @@ applied."
                      ,(let ((map (make-sparse-keymap))
                             (type type))
                         (define-key map [mode-line mouse-4]
-                          (lambda (_event)
+                          (lambda (event)
                             (interactive "e")
-                            (flymake-goto-prev-error 1 (list type) t)))
+                            (with-selected-window (posn-window (event-start event))
+                              (flymake-goto-prev-error 1 (list type) t))))
                         (define-key map [mode-line mouse-5]
-                          (lambda (_event)
+                          (lambda (event)
                             (interactive "e")
-                            (flymake-goto-next-error 1 (list type) t)))
+                            (with-selected-window (posn-window (event-start event))
+                              (flymake-goto-next-error 1 (list type) t))))
                         map)
                      help-echo
                      ,(concat (format "%s diagnostics of type %s\n"
