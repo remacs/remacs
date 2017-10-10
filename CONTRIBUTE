@@ -105,7 +105,7 @@ tested).
 
 Emacs uses ERT, Emacs Lisp Regression Testing, for testing.  See
 https://www.gnu.org/software/emacs/manual/html_node/ert/
-or run 'info "(ert)"' for for more information on writing and running
+or run 'info "(ert)"' for more information on writing and running
 tests.
 
 If your test lasts longer than some few seconds, mark it in its

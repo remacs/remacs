@@ -140,7 +140,7 @@ This shall used dynamically bound only.")
 
 (defmacro tramp--test-instrument-test-case (verbose &rest body)
   "Run BODY with `tramp-verbose' equal VERBOSE.
-Print the the content of the Tramp debug buffer, if BODY does not
+Print the content of the Tramp debug buffer, if BODY does not
 eval properly in `should' or `should-not'.  `should-error' is not
 handled properly.  BODY shall not contain a timeout."
   (declare (indent 1) (debug (natnump body)))

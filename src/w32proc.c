@@ -838,7 +838,7 @@ alarm (int seconds)
        updates the status of the read accordingly, and signals the 2nd
        event object, char_avail, on whose handle sys_select is
        waiting.  This tells sys_select that the file descriptor
-       allocated for the subprocess or the the stream is ready to be
+       allocated for the subprocess or the stream is ready to be
        read from.
 
    When the subprocess exits or the network/serial stream is closed,

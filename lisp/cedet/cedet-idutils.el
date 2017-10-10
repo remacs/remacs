@@ -98,7 +98,7 @@ Return the created buffer with program output."
 
 (defun cedet-idutils-lid-call (flags)
   "Call ID Utils lid with the list of FLAGS.
-Return the created buffer with with program output."
+Return the created buffer with program output."
   (let ((b (get-buffer-create "*CEDET lid*"))
 	(cd default-directory)
 	)

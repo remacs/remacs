@@ -25,7 +25,7 @@ less and less available/popular as you move farther back in time.
 
 @item
 For similar reasons, we've reverted back to building our own version
-of of @command{movemail} that retrieves POP3 mail as clear text via
+of @command{movemail} that retrieves POP3 mail as clear text via
 insecure channels.  As you move back in time, the availability of
 secure alternatives to POP3 will diminish, and we are only keen to
 support that.  We've also removed the @option{--with-mailutils}

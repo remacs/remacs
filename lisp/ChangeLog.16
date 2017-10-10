@@ -2728,7 +2728,7 @@
 
 	* vc/ediff-util.el (ediff-buffer-type): New function.
 	(ediff-clone-buffer-for-current-diff-comparison): Compute the buf-type
-	rather than taking it as as argument.
+	rather than taking it as an argument.
 	(ediff-inferior-compare-regions): Adjust calls accordingly (bug#11319).
 
 2012-12-14  Ryan Crum  <ryan.crum@eleostech.com>

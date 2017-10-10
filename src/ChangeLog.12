@@ -3348,7 +3348,7 @@
 	with plain -g rather than with -g3, and they need the duplicate
 	definitions for .gdbinit to work; see <https://bugs.gnu.org/12814#26>.
 	* lisp.h (GCTYPEBITS, ARRAY_MARK_FLAG, PSEUDOVECTOR_FLAG, VALMASK):
-	Define as macros, as well as as enums or as constants.
+	Define as macros, as well as enums or constants.
 
 2012-11-06  Jan Djärv  <jan.h.d@swipnet.se>
 

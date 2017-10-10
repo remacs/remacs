@@ -36,7 +36,7 @@
 ;; represented by the overlay itself, or text-properties, in which case
 ;; the button is represented by a marker or buffer-position pointing
 ;; somewhere in the button.  In the latter case, no markers into the
-;; buffer are retained, which is important for speed if there are are
+;; buffer are retained, which is important for speed if there are
 ;; extremely large numbers of buttons.  Note however that if there is
 ;; an existing face text-property at the site of the button, the
 ;; button face may not be visible.  Using overlays avoids this.

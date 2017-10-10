@@ -3958,7 +3958,7 @@
 
 2006-05-12  Chong Yidong  <cyd@stupidchicken.com>
 
-	* intervals.c (set_point_both): Fix mixup before before and after
+	* intervals.c (set_point_both): Fix mixup before and after
 	in variable names.
 
 	* editfns.c (Fline_beginning_position): Inhibit point-motion hooks

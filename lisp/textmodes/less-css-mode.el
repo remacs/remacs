@@ -129,7 +129,7 @@ variable in most cases is likely to be via directory local
 variables.
 
 This can be also be set to a full path, or a relative path.  If
-the path is relative, it will be relative to the the current
+the path is relative, it will be relative to the current
 directory by default."
   :type 'file)
 ;;;###autoload
