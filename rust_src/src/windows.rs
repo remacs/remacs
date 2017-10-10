@@ -2,7 +2,7 @@
 
 use lisp::{LispObject, ExternalPtr};
 use remacs_macros::lisp_fn;
-use remacs_sys::{Lisp_Window, selected_window as current_window};
+use remacs_sys::{EmacsInt, Lisp_Window, selected_window as current_window};
 use marker::marker_position;
 use editfns::point;
 
@@ -134,4 +134,33 @@ pub fn window_minibuffer_p(window: LispObject) -> LispObject {
         window
     };
     LispObject::from_bool(win.as_window_or_error().is_minibuffer())
+}
+
+/// Get width of marginal areas of window WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+///
+/// Value is a cons of the form (LEFT-WIDTH . RIGHT-WIDTH).
+/// If a marginal area does not exist, its width will be returned
+/// as nil.
+#[lisp_fn(min = "0")]
+pub fn window_margins(window: LispObject) -> LispObject {
+    let win = if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    }.as_window_or_error();
+
+    let left = if win.left_margin_cols != 0 {
+        LispObject::from_fixnum(win.left_margin_cols as EmacsInt)
+    } else {
+        LispObject::constant_nil()
+    };
+
+    let right = if win.right_margin_cols != 0 {
+        LispObject::from_fixnum(win.right_margin_cols as EmacsInt)
+    } else {
+        LispObject::constant_nil()
+    };
+
+    LispObject::cons(left, right)
 }
