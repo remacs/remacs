@@ -76,7 +76,7 @@ and Italian.")))
 	    (documentation . "Bidirectional editing is supported.")))
 
 (defcustom arabic-shaper-ZWNJ-handling nil
-  "How to handle ZWMJ in Arabic text renderling.
+  "How to handle ZWMJ in Arabic text rendering.
 This variable controls the way to handle a glyph for ZWNJ
 returned by the underling shaping engine.
 
