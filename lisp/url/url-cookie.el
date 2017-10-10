@@ -94,7 +94,7 @@ i.e. 1970-1-1) are loaded as expiring one year from now instead."
 	     ;; (message "skipping empty line"))
 	     ((= (length fields) 7)
 	      (let ((dom (nth 0 fields))
-		    (match (nth 1 fields))
+		    ;; (match (nth 1 fields))
 		    (path (nth 2 fields))
 		    (secure (string= (nth 3 fields) "TRUE"))
 		    ;; session cookies (expire time = 0) are supposed
@@ -112,7 +112,7 @@ i.e. 1970-1-1) are loaded as expiring one year from now instead."
 				   s)))))
 		    (key (nth 5 fields))
 		    (val (nth 6 fields)))
-		(incf n)
+		(cl-incf n)
 		;;(message "adding <%s>=<%s> exp=<%s> dom=<%s> path=<%s> sec=%S" key val expires dom path secure)
 		(url-cookie-store key val expires dom path secure)
 		))
