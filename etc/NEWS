@@ -1146,7 +1146,19 @@ languages.  (Version 2.1.0 or later of Enchant is required.)
 ** Flymake
 
 +++
-*** Emacs no longer prompts the user before killing Flymake processes on exit.
+*** Flymake has been completely redesigned
+
+Flymake now annotates arbitrary buffer regions, not just lines.  It
+supports arbitrary diagnostic types, not just errors and warnings (see
+variable 'flymake-diagnostic-types-alist').
+
+It also supports multiple simultaneous backends, meaning that you can
+check your buffer from different perspectives (see variable
+'flymake-diagnostic-functions').  Backends for Emacs Lisp mode are
+provided.
+
+The old Flymake behaviour is preserved in the so-called "legacy
+backend", which has been updated to benefit from the new UI features.
 
 
 * New Modes and Packages in Emacs 26.1
