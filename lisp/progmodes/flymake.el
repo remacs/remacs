@@ -322,12 +322,12 @@ region is invalid."
 (defvar flymake-diagnostic-functions nil
   "Special hook of Flymake backends that check a buffer.
 
-The functions in this hook diagnose problems in a buffer’s
+The functions in this hook diagnose problems in a buffer's
 contents and provide information to the Flymake user interface
 about where and how to annotate problems diagnosed in a buffer.
 
-Whenever Flymake or the user decides to re-check the buffer, each
-function is called with an arbitrary number of arguments:
+Each backend function must be prepared to accept an arbitrary
+number of arguments:
 
 * the first argument is always REPORT-FN, a callback function
   detailed below;
@@ -337,11 +337,12 @@ function is called with an arbitrary number of arguments:
   no such arguments, but backend functions must be prepared to
   accept and possibly ignore any number of them.
 
-Backend functions are expected to initiate the buffer check, but
-aren't required to complete it check before exiting: if the
-computation involved is expensive, especially for large buffers,
-that task can be scheduled for the future using asynchronous
-processes or other asynchronous mechanisms.
+Whenever Flymake or the user decides to re-check the buffer,
+backend functions are called as detailed above and are expected
+to initiate this check, but aren't required to complete it before
+exiting: if the computation involved is expensive, especially for
+large buffers, that task can be scheduled for the future using
+asynchronous processes or other asynchronous mechanisms.
 
 In any case, backend functions are expected to return quickly or
 signal an error, in which case the backend is disabled.  Flymake
@@ -375,10 +376,10 @@ Currently accepted values for REPORT-ACTION are:
 
 Currently accepted REPORT-KEY arguments are:
 
-* ‘:explanation’: value should give user-readable details of
+* `:explanation' value should give user-readable details of
   the situation encountered, if any.
 
-* ‘:force’: value should be a boolean suggesting that Flymake
+* `:force': value should be a boolean suggesting that Flymake
   consider the report even if it was somehow unexpected.")
 
 (defvar flymake-diagnostic-types-alist
@@ -407,12 +408,12 @@ properties are:
 
 * `severity', a non-negative integer specifying the diagnostic's
   severity.  The higher, the more serious.  If the overlay
-  priority `priority' is not specified, `severity' is used to set
+  property `priority' is not specified, `severity' is used to set
   it and help sort overlapping overlays.
 
 * `flymake-category', a symbol whose property list is considered
-  as a default for missing values of any other properties.  This
-  is useful to backend authors when creating new diagnostic types
+  a default for missing values of any other properties.  This is
+  useful to backend authors when creating new diagnostic types
   that differ from an existing type by only a few properties.")
 
 (put 'flymake-error 'face 'flymake-error)
@@ -497,8 +498,7 @@ associated `flymake-category' return DEFAULT."
         (lambda (_window _ov pos)
           (mapconcat
            (lambda (ov)
-             (let ((diag (overlay-get ov 'flymake--diagnostic)))
-               (flymake--diag-text diag)))
+             (overlay-get ov 'flymake-text))
            (flymake--overlays :beg pos)
            "\n")))
       (default-maybe 'severity (warning-numeric-level :error))
@@ -507,6 +507,7 @@ associated `flymake-category' return DEFAULT."
     ;;
     (overlay-put ov 'evaporate t)
     (overlay-put ov 'flymake t)
+    (overlay-put ov 'flymake-text (flymake--diag-text diagnostic))
     (overlay-put ov 'flymake--diagnostic diagnostic)))
 
 ;; Nothing in Flymake uses this at all any more, so this is just for
@@ -715,7 +716,7 @@ Interactively, with a prefix arg, FORCE is t."
           (remove-hook 'post-command-hook #'start-post-command
                        nil)
           (with-current-buffer buffer
-              (flymake-start (remove 'post-command deferred) force)))
+            (flymake-start (remove 'post-command deferred) force)))
          (start-on-display
           ()
           (remove-hook 'window-configuration-change-hook #'start-on-display
@@ -873,9 +874,9 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
 (defun flymake-goto-next-error (&optional n filter interactive)
   "Go to Nth next Flymake error in buffer matching FILTER.
 Interactively, always move to the next error.  With a prefix arg,
-skip any diagnostics with a severity less than ‘:warning’.
+skip any diagnostics with a severity less than `:warning'.
 
-If ‘flymake-wrap-around’ is non-nil and no more next errors,
+If `flymake-wrap-around' is non-nil and no more next errors,
 resumes search from top.
 
 FILTER is a list of diagnostic types found in
@@ -928,9 +929,9 @@ applied."
 (defun flymake-goto-prev-error (&optional n filter interactive)
   "Go to Nth previous Flymake error in buffer matching FILTER.
 Interactively, always move to the previous error.  With a prefix
-arg, skip any diagnostics with a severity less than ‘:warning’.
+arg, skip any diagnostics with a severity less than `:warning'.
 
-If ‘flymake-wrap-around’ is non-nil and no more previous errors,
+If `flymake-wrap-around' is non-nil and no more previous errors,
 resumes search from bottom.
 
 FILTER is a list of diagnostic types found in
