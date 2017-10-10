@@ -1032,6 +1032,14 @@ extern "C" {
         start_byte: *mut ptrdiff_t,
         end_byte: *mut ptrdiff_t,
     ) -> *mut c_char;
+
+    pub fn hash_lookup(
+        h: *mut Lisp_Hash_Table,
+        key: Lisp_Object,
+        hash: *mut EmacsUint,
+    ) -> ptrdiff_t;
+
+    pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: Lisp_Object);
 }
 
 /// Contains C definitions from the font.h header.

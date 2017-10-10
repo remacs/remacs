@@ -1,6 +1,8 @@
 use remacs_macros::lisp_fn;
+use libc::c_void;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence};
+use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Faref, hash_lookup, EmacsInt,
+                 EmacsUint, CHECK_IMPURE, hash_remove_from_table};
 use std::ptr;
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
@@ -59,6 +61,24 @@ impl LispHashTableRef {
     pub fn get_weak(&self) -> LispObject {
         LispObject::from_raw(self.weak)
     }
+
+    pub fn get_hash_value(self, idx: isize) -> LispObject {
+        let index = LispObject::from_natnum((2 * idx + 1) as EmacsInt);
+        unsafe { LispObject::from_raw(Faref(self.key_and_value, index.to_raw())) }
+    }
+
+    pub fn lookup(self, key: LispObject, hashptr: *mut EmacsUint) -> isize {
+        let mutself = self.as_ptr() as *mut Lisp_Hash_Table;
+        unsafe { hash_lookup(mutself, key.to_raw(), hashptr) }
+    }
+
+    pub fn check_impure(self, object: LispObject) {
+        unsafe { CHECK_IMPURE(object.to_raw(), self.as_ptr() as *mut c_void) };
+    }
+
+    pub fn remove(mut self, key: LispObject) {
+        unsafe { hash_remove_from_table(self.as_mut(), key.to_raw()) };
+    }
 }
 
 /// Return a copy of hash table TABLE.
@@ -87,4 +107,34 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
     }
 
     LispObject::from_hash_table(new_table)
+}
+
+/// Look up KEY in TABLE and return its associated value.
+/// If KEY is not found, return DFLT which defaults to nil.
+#[lisp_fn(min = "2")]
+fn gethash(key: LispObject, table: LispObject, dflt: LispObject) -> LispObject {
+    let hash_table = table.as_hash_table_or_error();
+    let idx = hash_table.lookup(key, ptr::null_mut());
+
+    if idx >= 0 {
+        hash_table.get_hash_value(idx)
+    } else {
+        dflt
+    }
+}
+
+/// Remove KEY from TABLE.
+#[lisp_fn]
+fn remhash(key: LispObject, table: LispObject) -> LispObject {
+    let hash_table = table.as_hash_table_or_error();
+    hash_table.check_impure(table);
+    hash_table.remove(key);
+
+    LispObject::constant_nil()
+}
+
+/// Return t if OBJ is a Lisp hash table object.
+#[lisp_fn]
+fn hash_table_p(obj: LispObject) -> LispObject {
+    LispObject::from_bool(obj.is_hash_table())
 }

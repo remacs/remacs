@@ -3437,15 +3437,6 @@ DEFUN ("hash-table-weakness", Fhash_table_weakness, Shash_table_weakness,
   return check_hash_table (table)->weak;
 }
 
-
-DEFUN ("hash-table-p", Fhash_table_p, Shash_table_p, 1, 1, 0,
-       doc: /* Return t if OBJ is a Lisp hash table object.  */)
-  (Lisp_Object obj)
-{
-  return HASH_TABLE_P (obj) ? Qt : Qnil;
-}
-
-
 DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
        doc: /* Clear hash table TABLE and return it.  */)
   (Lisp_Object table)
@@ -3456,18 +3447,6 @@ DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
   /* Be compatible with XEmacs.  */
   return table;
 }
-
-
-DEFUN ("gethash", Fgethash, Sgethash, 2, 3, 0,
-       doc: /* Look up KEY in TABLE and return its associated value.
-If KEY is not found, return DFLT which defaults to nil.  */)
-  (Lisp_Object key, Lisp_Object table, Lisp_Object dflt)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  ptrdiff_t i = hash_lookup (h, key, NULL);
-  return i >= 0 ? HASH_VALUE (h, i) : dflt;
-}
-
 
 DEFUN ("puthash", Fputhash, Sputhash, 3, 3, 0,
        doc: /* Associate KEY with VALUE in hash table TABLE.
@@ -3488,18 +3467,6 @@ VALUE.  In any case, return VALUE.  */)
 
   return value;
 }
-
-
-DEFUN ("remhash", Fremhash, Sremhash, 2, 2, 0,
-       doc: /* Remove KEY from TABLE.  */)
-  (Lisp_Object key, Lisp_Object table)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  CHECK_IMPURE (table, h);
-  hash_remove_from_table (h, key);
-  return Qnil;
-}
-
 
 DEFUN ("maphash", Fmaphash, Smaphash, 2, 2, 0,
        doc: /* Call FUNCTION for all entries in hash table TABLE.
@@ -3769,11 +3736,8 @@ syms_of_fns (void)
   defsubr (&Shash_table_size);
   defsubr (&Shash_table_test);
   defsubr (&Shash_table_weakness);
-  defsubr (&Shash_table_p);
   defsubr (&Sclrhash);
-  defsubr (&Sgethash);
   defsubr (&Sputhash);
-  defsubr (&Sremhash);
   defsubr (&Smaphash);
   defsubr (&Sdefine_hash_table_test);
 
