@@ -3,8 +3,10 @@ use std::mem;
 
 use remacs_sys::make_lisp_ptr;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Marker, EmacsInt, Lisp_Type};
+use remacs_sys::{buf_charpos_to_bytepos, set_point_both, EmacsInt, Lisp_Marker, Lisp_Type};
 use remacs_macros::lisp_fn;
+use util::clip_to_bounds;
+use threads::ThreadState;
 
 use buffers::LispBufferRef;
 
@@ -26,6 +28,14 @@ impl LispMarkerRef {
 
         // TODO: add assertions that marker_position in marker.c has.
         self.charpos
+    }
+
+    pub fn bytepos_or_error(self) -> ptrdiff_t {
+        if self.buffer.is_null() {
+            error!("Marker does not point anywhere");
+        } else {
+            self.bytepos
+        }
     }
 
     pub fn buffer(self) -> Option<LispBufferRef> {
@@ -69,4 +79,23 @@ pub fn marker_buffer(marker: LispObject) -> LispObject {
         },
         None => LispObject::constant_nil(),
     }
+}
+
+/// Set PT from MARKER's clipped position.
+pub fn set_point_from_marker(marker: LispMarkerRef) {
+    let cur_buf = ThreadState::current_buffer();
+    let charpos = clip_to_bounds(
+        cur_buf.begv,
+        marker.charpos_or_error() as EmacsInt,
+        cur_buf.zv,
+    );
+    let mut bytepos = marker.bytepos_or_error();
+    // Don't trust the byte position if the marker belongs to a
+    // different buffer.
+    if marker.buffer().map_or(false, |b| b != cur_buf) {
+        bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), charpos) };
+    } else {
+        bytepos = clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
+    };
+    unsafe { set_point_both(charpos, bytepos) };
 }
