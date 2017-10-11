@@ -186,7 +186,7 @@ transparency extends to editing, version control, and @code{dired}.
 @value{tramp} can access remote hosts using any number of access
 methods, such as @command{rsh}, @command{rlogin}, @command{telnet},
 and related programs.  If these programs can successfully pass
-@acronym{ASCII]} characters, @value{tramp} can use them.
+@acronym{ASCII} characters, @value{tramp} can use them.
 @value{tramp} does not require or mandate 8-bit clean connections.
 
 @value{tramp}'s most common access method is through @command{ssh}, a
@@ -339,8 +339,8 @@ Another way is to follow the terminal session below:
 
 @example
 @group
-] @strong{cd ~/emacs}
-] @strong{git clone git://git.savannah.gnu.org/tramp.git}
+$ cd ~/emacs
+$ git clone git://git.savannah.gnu.org/tramp.git
 @end group
 @end example
 
@@ -349,8 +349,8 @@ From behind a firewall:
 
 @example
 @group
-] @strong{git config --global http.proxy http://user:pwd@@proxy.server.com:8080}
-] @strong{git clone https://git.savannah.gnu.org/r/tramp.git}
+$ git config --global http.proxy http://user:pwd@@proxy.server.com:8080
+$ git clone https://git.savannah.gnu.org/r/tramp.git
 @end group
 @end example
 
@@ -358,7 +358,7 @@ From behind a firewall:
 @value{tramp} developers:
 
 @example
-] @strong{git clone login@@git.sv.gnu.org:/srv/git/tramp.git}
+$ git clone login@@git.sv.gnu.org:/srv/git/tramp.git
 @end example
 
 @noindent
@@ -370,8 +370,8 @@ To fetch updates from the repository, use git pull:
 
 @example
 @group
-] @strong{cd ~/emacs/tramp}
-] @strong{git pull}
+$ cd ~/emacs/tramp
+$ git pull
 @end group
 @end example
 
@@ -381,8 +381,8 @@ Run @command{autoconf} as follows to generate an up-to-date
 
 @example
 @group
-] @strong{cd ~/emacs/tramp}
-] @strong{autoconf}
+$ cd ~/emacs/tramp
+$ autoconf
 @end group
 @end example
 
@@ -2000,7 +2000,7 @@ fi
 install and execute a listener as follows (see @code{tramp-methods}):
 
 @example
-# nc -l -p 42
+$ nc -l -p 42
 @end example
 
 The above command-line syntax has changed with @command{busybox}
