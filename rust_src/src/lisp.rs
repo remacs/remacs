@@ -227,6 +227,16 @@ impl<T> DerefMut for ExternalPtr<T> {
     }
 }
 
+impl<T> PartialEq for ExternalPtr<T> {
+    fn eq(&self, other: &ExternalPtr<T>) -> bool {
+        self.as_ptr() == other.as_ptr()
+    }
+
+    fn ne(&self, other: &ExternalPtr<T>) -> bool {
+        self.as_ptr() != other.as_ptr()
+    }
+}
+
 pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
 
 #[test]
