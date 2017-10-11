@@ -158,6 +158,8 @@ pub fn window_margins(window: LispObject) -> LispObject {
         window
     }.as_live_window_or_error();
 
-    LispObject::cons(margin_as_object(win.left_margin_cols),
-                     margin_as_object(win.right_margin_cols))
+    LispObject::cons(
+        margin_as_object(win.left_margin_cols),
+        margin_as_object(win.right_margin_cols),
+    )
 }
