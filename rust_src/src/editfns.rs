@@ -3,10 +3,11 @@
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
 use util::clip_to_bounds;
-use remacs_sys::{EmacsInt, globals, Qmark_inactive};
+use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Qinteger_or_marker_p,
+                 Qmark_inactive};
 use threads::ThreadState;
 use buffers::get_buffer;
-use marker::marker_position;
+use marker::{marker_position, set_point_from_marker};
 
 /// Return value of point, as an integer.
 /// Beginning of buffer is position (point-min).
@@ -131,4 +132,23 @@ pub fn point_min() -> LispObject {
 #[lisp_fn]
 pub fn point_max() -> LispObject {
     LispObject::from_natnum(ThreadState::current_buffer().zv() as EmacsInt)
+}
+
+/// Set point to POSITION, a number or marker.
+/// Beginning of buffer is position (point-min), end is (point-max).
+///
+/// The return value is POSITION.
+#[lisp_fn]
+pub fn goto_char(position: LispObject) -> LispObject {
+    if let Some(marker) = position.as_marker() {
+        set_point_from_marker(marker);
+    } else if let Some(num) = position.as_fixnum() {
+        let cur_buf = ThreadState::current_buffer();
+        let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
+        unsafe { set_point_both(pos, bytepos) };
+    } else {
+        wrong_type!(Qinteger_or_marker_p, position)
+    };
+    position
 }
