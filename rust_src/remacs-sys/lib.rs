@@ -810,6 +810,98 @@ pub struct Lisp_Process {
 }
 
 #[repr(C)]
+pub struct Lisp_Frame {
+    pub header: Lisp_Vectorlike_Header,
+
+    /// All Lisp_Object components must come first.
+    /// That ensures they are all aligned normally.
+
+    /// Name of this frame: a Lisp string.  It is used for looking up resources,
+    /// as well as for the title in some cases.
+    pub name: Lisp_Object,
+
+    /// The name to use for the icon, the last time
+    /// it was refreshed.  nil means not explicitly specified.
+    pub icon_name: Lisp_Object,
+
+    /// This is the frame title specified explicitly, if any.
+    /// Usually it is nil.
+    pub title: Lisp_Object,
+
+    ///  The frame which should receive keystrokes that occur in this
+    /// frame, or nil if they should go to the frame itself.  This is
+    /// usually nil, but if the frame is minibufferless, we can use this
+    /// to redirect keystrokes to a surrogate minibuffer frame when
+    /// needed.
+    ///
+    /// Note that a value of nil is different than having the field point
+    /// to the frame itself.  Whenever the Fselect_frame function is used
+    /// to shift from one frame to the other, any redirections to the
+    /// original frame are shifted to the newly selected frame; if
+    /// focus_frame is nil, Fselect_frame will leave it alone.
+    pub focus_frame: Lisp_Object,
+
+    /// This frame's root window.  Every frame has one.
+    /// If the frame has only a minibuffer window, this is it.
+    /// Otherwise, if the frame has a minibuffer window, this is its sibling.
+    pub root_window: Lisp_Object,
+
+    /// This frame's selected window.
+    /// Each frame has its own window hierarchy
+    /// and one of the windows in it is selected within the frame.
+    /// The selected window of the selected frame is Emacs's selected window.
+    pub selected_window: Lisp_Object,
+
+    /// This frame's minibuffer window.
+    /// Most frames have their own minibuffer windows,
+    /// but only the selected frame's minibuffer window
+    /// can actually appear to exist.
+    pub minibuffer_window: Lisp_Object,
+
+    /// Parameter alist of this frame.
+    /// These are the parameters specified when creating the frame
+    /// or modified with modify-frame-parameters.
+    pub param_alist: Lisp_Object,
+
+    /// List of scroll bars on this frame.
+    /// Actually, we don't specify exactly what is stored here at all; the
+    /// scroll bar implementation code can use it to store anything it likes.
+    /// This field is marked by the garbage collector.  It is here
+    /// instead of in the `device' structure so that the garbage
+    /// collector doesn't need to look inside the window-system-dependent
+    /// structure.
+    pub scroll_bars: Lisp_Object,
+    pub condemned_scroll_bars: Lisp_Object,
+
+    /// Vector describing the items to display in the menu bar.
+    /// Each item has four elements in this vector.
+    /// They are KEY, STRING, SUBMAP, and HPOS.
+    /// (HPOS is not used in when the X toolkit is in use.)
+    /// There are four additional elements of nil at the end, to terminate.
+    pub menu_bar_items: Lisp_Object,
+
+    /// Alist of elements (FACE-NAME . FACE-VECTOR-DATA).
+    pub face_alist: Lisp_Object,
+
+    /// A vector that records the entire structure of this frame's menu bar.
+    /// For the format of the data, see extensive comments in xmenu.c.
+    /// Only the X toolkit version uses this.
+    pub menu_bar_vector: Lisp_Object,
+
+    /// Predicate for selecting buffers for other-buffer.
+    pub buffer_predicate: Lisp_Object,
+
+    /// List of buffers viewed in this frame, for other-buffer.
+    pub buffer_list: Lisp_Object,
+
+    /// List of buffers that were viewed, then buried in this frame.  The
+    /// most recently buried buffer is first.  For last-buffer.
+    pub buried_buffer_list: Lisp_Object,
+
+    // TODO: this struct is incomplete.
+}
+
+#[repr(C)]
 pub struct hash_table_test {
     pub name: Lisp_Object,
     pub user_hash_function: Lisp_Object,
@@ -863,6 +955,8 @@ extern "C" {
     pub static Qbufferp: Lisp_Object;
     pub static Qwindowp: Lisp_Object;
     pub static Qwindow_live_p: Lisp_Object;
+    pub static Qframep: Lisp_Object;
+    pub static Qframe_live_p: Lisp_Object;
     pub static Qprocessp: Lisp_Object;
     pub static Qthreadp: Lisp_Object;
     pub static Qoverlayp: Lisp_Object;
@@ -920,6 +1014,7 @@ extern "C" {
     pub static minibuf_level: EmacsInt;
     pub static minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
+    pub static selected_frame: Lisp_Object;
 
     pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
