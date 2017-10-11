@@ -148,7 +148,7 @@ pub fn window_margins(window: LispObject) -> LispObject {
         selected_window()
     } else {
         window
-    }.as_window_or_error();
+    }.as_live_window_or_error();
 
     let left = if win.left_margin_cols != 0 {
         LispObject::from_fixnum(win.left_margin_cols as EmacsInt)
