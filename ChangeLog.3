@@ -1,3 +1,528 @@
+2017-10-11  Michael Albinus  <michael.albinus@gmx.de>
+
+	Format shell commands in tramp.texi
+
+	* doc/misc/tramp.texi (Obtaining Tramp, Remote shell setup):
+	Format shell commands better.
+
+2017-10-10  João Távora  <joaotavora@gmail.com>
+
+	Unbreak the button in the Flymake diagnostics buffer again
+
+	Adding the 'keymap' property enabled RET but broke the mouse-action.
+
+	* lisp/progmodes/flymake.el
+	(flymake--diagnostics-buffer-entries): Use 'action' instead of 'keymap'.
+
+2017-10-10  Mark Oteiza  <mvoteiza@udel.edu>
+
+	Add mode map to Flymake diagnostic button
+
+	* lisp/progmodes/flymake.el (flymake--diagnostics-buffer-entries): Add
+	keymap propery.
+
+2017-10-10  João Távora  <joaotavora@gmail.com>
+
+	Tweak the Flymake diagnostics buffer again
+
+	* lisp/progmodes/flymake.el
+	(flymake-diagnostics-buffer-mode-map): Don't bind [mouse-1].
+	(flymake-show-diagnostic): Rename from
+	flymake-show-diagnostic-at-point.  Really use another window.
+	(flymake-goto-diagnostic): Rename from
+	flymake-goto-diagnostic-at-point.
+	(flymake--diagnostics-buffer-entries): Use a button just for
+	the message bit.
+
+2017-10-10  Mark Oteiza  <mvoteiza@udel.edu>
+
+	Simplify Flymake diagnostics buffer UX
+
+	Don't create text-buttons unnecessarily, just bind RET and SPC in the
+	diagnostics buffer to a command that figures out which diagnostic it
+	was invoked on.
+
+	* lisp/progmodes/flymake.el
+	(flymake--diagnostics-buffer-mode-keymap): Renamed from
+	flymake--diagnostics-buffer-button-keymap.
+	(flymake-show-diagnostic-at-point): Don't take a button.
+	(flymake-goto-diagnostic-at-point): Don't pass button to
+	flymake-show-diagnostic-at-point.
+	(flymake--diagnostics-buffer-entries): Simplify.
+
+2017-10-10  João Távora  <joaotavora@gmail.com>
+
+	First stab at a Flymake diagnostics buffer
+
+	The diagnostics buffer summarizes the diagnostics of a buffer in a
+	tabulated list and is permanently updated after each Flymake check.
+
+	* lisp/progmodes/flymake.el (flymake--handle-report): Call
+	flymake-show-diagnostics-buffer under certain conditions.
+	(flymake-menu, flymake--diagnostics-buffer-source)
+	(flymake--diagnostics-buffer-button-keymap)
+	(flymake-show-diagnostic-at-point)
+	(flymake-goto-diagnostic-at-point)
+	(flymake--diagnostics-buffer-entries)
+	(flymake-diagnostics-buffer-mode)
+	(flymake--diagnostics-buffer-name)
+	(flymake-show-diagnostics-buffer): New definitions.
+
+2017-10-10  João Távora  <joaotavora@gmail.com>
+
+	* etc/NEWS (Flymake): Rewrite entry.
+
+2017-10-10  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve the Flymake manual
+
+	* doc/misc/flymake.texi: Add a 'coding' cookie.  Add a
+	@syncodeindex directive for @vindex.  Use 2 spaces between
+	sentences.  Lower-case @cindex entries.
+	(Overview of Flymake): Fix use of @itemize and @pxref.  Fix
+	punctuation and markup.
+	(Backend exceptions): Use @emph instead of @dfn.  Add more
+	indexing.
+	(Customizable variables, Extending Flymake): Improve wording.
+	(Flymake error types): Fix usage of @itemize.  Improve wording.
+	(Backend functions): Fix punctuation.  Fix markup.  Add a
+	cross-reference to ELisp manual.
+	(Flymake utility functions): Add a cross-reference to ELisp manual.
+	(An annotated example backend): Fix punctuation and typos.
+	(Flymake mode, Running the syntax check)
+	(Navigating to error lines, Backend exceptions)
+	(Customizable variables, Flymake error types, Backend functions)
+	(Flymake utility functions, Proc customization variables)
+	(Locating a master file, Locating the buildfile)
+	(Starting the syntax check process, Parsing the output)
+	(Interaction with other modes): Fix indexing.  Add index entries
+	for functions, variables, and concepts.
+
+2017-10-10  João Távora  <joaotavora@gmail.com>
+
+	Fix two Flymake bugs
+
+	* lisp/progmodes/flymake.el (define-fringe-bitmap): Protect
+	against --without-x.
+	(flymake--mode-line-format): Ensure mode-line's mouse-4 and mouse-5 work
+	in their own windows.
+
+2017-10-10  João Távora  <joaotavora@gmail.com>
+
+	Don't log "emergencies" in the Flymake legacy backend
+
+	* lisp/progmodes/flymake-proc.el (flymake-proc--panic)
+	(flymake-proc-legacy-flymake): Don't log "emergencies"
+
+2017-10-10  João Távora  <joaotavora@gmail.com>
+
+	Add full documentation on new Flymake API
+
+	Also, as a minor addition to this API, set flymake-text
+	on the diagnostic overlay.  This enables a good example in
+	the section "Customization Flymake annotations".
+
+	* doc/misc/flymake.texi (Overview of Flymake)
+	(Syntax check statuses): Rework.
+	(Backend exceptions): Rename from "Troubleshooting"
+	(Customizable variables): Add flymake-start-on-flymake-mode. Rework.
+	(Extending Flymake): Write chapter.
+	(Customizing Flymake annotations, Flymake backends)
+	(Flymake utility functions, An annotated example backend):
+	New sections and subsections
+
+	* lisp/progmodes/flymake.el (flymake-diagnostic-functions)
+	(flymake-diagnostic-types-alist): Rework docstring.
+	(flymake--highlight-line): Set and use flymake-text property in overlay.
+	(flymake-goto-next-error, flymake-goto-prev-error): Fix funny quotes.
+
+2017-10-10  João Távora  <joaotavora@gmail.com>
+
+	Fix some Flymake docstrings and messages
+
+	* lisp/progmodes/flymake.el
+	(flymake-start-on-flymake-mode): fix typo.
+	(flymake-mode): Add docstring.
+	(flymake-mode-line-format): Fix help-echo indications. mouse-2
+	describes flymake-mode.
+
+2017-10-10  João Távora  <joaotavora@gmail.com>
+
+	Make three new Flymake commands for debugging common problems
+
+	* lisp/progmodes/flymake.el (flymake-running-backends)
+	(flymake-disabled-backends)
+	(flymake-reporting-backends): Make interactive.
+	(flymake--collect): Take optional arg.
+
+2017-10-09  Nicolas Petton  <nicolas@petton.fr>
+
+	* admin/authors.el (authors-renamed-files-alist): addition.
+
+2017-10-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix PWD check on DOS_NT
+
+	* src/sysdep.c (get_current_dir_name_or_unreachable):
+	Do not consider a file name like "a:b" to be absolute on DOS_NT.
+
+2017-10-09  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix unlikely overflows with wd length
+
+	* src/sysdep.c (get_current_dir_name_or_unreachable):
+	Avoid integer overflow if working directory name is absurdly long.
+	When allocating memory for getcwd, do not exceed MAXPATHLEN.
+
+2017-10-09  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* lisp/gnus/message.el: Improve last commit
+
+	(message-clone-locals): Don't mistakenly match other variables whose
+	name happens to include "message-default-charset".
+
+2017-10-09  Ken Olum  <kdo@cosmos.phy.tufts.edu>
+
+	Fix problems when editing raw undecoded message (Bug#28671)
+
+	* lisp/mail/rmailedit.el (rmail-cease-edit): If rmail-old-mime-state
+	is set, meaning that we are editing the raw message, do not
+	encode it again.  Delete old body after, not before, inserting
+	new, to avoid moving marker at beginning of next message.
+
+2017-10-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid encoding errors in message.el
+
+	* lisp/gnus/message.el (message-clone-locals): Don't clone
+	message-default-charset.  (Bug#25645)
+
+2017-10-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Improve doc string and prompt of 'grep-read-files'
+
+	* lisp/progmodes/grep.el (grep-read-files): Clarify in the doc
+	string and in the prompt that shell wildcards can be used.
+	Suggested by Allen Li <vianchielfaura@gmail.com>.  (Bug#28615)
+
+2017-10-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid assertion violations when line numbers are displayed
+
+	* src/xdisp.c (redisplay_window): Clear the window's desired glyph
+	matrix before calling try_window with the same starting	point.
+	This avoids assertion violations when switching from a buffer
+	without line numbers to a buffer with line numbers.  (Bug28710)
+
+2017-10-09  João Távora  <joaotavora@gmail.com>
+
+	Be lazy when starting Flymake checks
+
+	Don't start the check immediately if the buffer is not being
+	displayed.  Wait until it is, using window-configuration-change-hook.
+
+	This enables the user to batch-enable flymake-mode on many buffers and
+	not have that operation exhaust system resources for checking each
+	one.  Likewise, an editing or save operation in a currently
+	non-displayed buffer does not immediately start a check.
+
+	* lisp/progmodes/flymake.el (flymake-start-on-flymake-mode):
+	Rename from flymake-start-syntax-check-on-find-file.
+	(flymake-start-syntax-check-on-find-file): Obsolete alias for
+	flymake-start-on-flymake-mode.
+	(flymake-start): Redesign.  Affect the global post-command-hook
+	and local window-configuraiton-change-hook.
+	(flymake--schedule-timer-maybe)
+	(flymake-after-change-function, flymake-after-save-hook): Pass
+	t to flymake-start.
+
+	* test/lisp/progmodes/flymake-tests.el (flymake-tests--call-with-fixture)
+	(dummy-backends, recurrent-backend): Start flymake check
+	explicitly and immediately.
+
+2017-10-09  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix last change in frameset.el
+
+	* lisp/frameset.el (frameset-filter-font-param): Fix a thinko in
+	filtering the 'font' parameter.  (Bug#17352)
+
+2017-10-09  Martin Rudalics  <rudalics@gmx.at>
+
+	Describe how window dividers can replicate vertical borders (Bug#27830)
+
+	* doc/emacs/frames.texi (Scroll Bars): Describe how window
+	dividers can be used to replicate vertical borders when scroll
+	bars are disabled (Bug#27830).
+	* doc/emacs/frames.texi (Window Dividers): Mention their use
+	in replicating vertical borders.
+
+2017-10-09  Alexander Gramiak  <agrambot@gmail.com>
+
+	Add line-number faces to the display-line-numbers group
+
+	See https://lists.gnu.org/archive/html/emacs-devel/2017-10/msg00151.html
+	and its resulting thread.
+
+	* lisp/display-line-numbers.el (display-line-numbers): Add to the
+	convenience group.
+	* lisp/faces.el (line-number):
+	(line-number-current-line): Add to the display-line-numbers group.
+
+2017-10-09  Alexander Gramiak  <agrambot@gmail.com>
+
+	Increase xterm click count only within double-click-fuzz
+
+	* lisp/xt-mouse.el (xterm-mouse-event): Save the last click's position
+	and check it against the current click's position.  (Bug#28658)
+
+2017-10-08  Alan Third  <alan@idiocy.org>
+
+	Change pause in fullscreen toggling for NS port (bug#28496)
+
+	* lisp/frame.el (toggle-frame-fullscreen): Replace sit-for with
+	sleep-for, and reduce time.
+
+2017-10-08  Michael Albinus  <michael.albinus@gmx.de>
+
+	Handle PARENTS properly in tramp-*-handle-make-directory
+
+	* lisp/net/tramp-adb.el (tramp-adb-handle-make-directory):
+	* lisp/net/tramp-gvfs.el (tramp-gvfs-handle-make-directory):
+	Handle PARENTS properly.
+
+	* test/lisp/net/tramp-tests.el (tramp-test13-make-directory):
+	Extend test.
+
+2017-10-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Improve test for unreachable dirs
+
+	* src/sysdep.c (get_current_dir_name_or_unreachable):
+	New function, with most of the old contents of
+	emacs_get_current_dir_name.
+	(emacs_get_current_dir_name): Use it.  Use a simpler
+	test for unreachable directory strings, and also apply
+	it to getcwd etc. (Bug#27871)
+
+2017-10-08  Paul Eggert  <eggert@cs.ucla.edu>
+
+	* src/xsmfns.c (x_session_initialize): Fix memory leak.
+
+2017-10-08  K. Handa  <handa@gnu.org>
+
+	New option for handling ZWNJ in Arabic text rendering
+
+	Provide a new option 'arabic-shaper-ZWNJ-handling' that controls how
+	to display ZWNJ in Arabic text rendering (Bug#28339).
+	* lisp/language/misc-lang.el: Register arabic-shape-gstring in
+	composition-function-table.
+	(arabic-shaper-ZWNJ-handling): New variable.
+	(arabic-shape-log): New variable.
+	(arabic-shape-gstring): New function.
+	* lisp/composite.el (lgstring-remove-glyph): New function.
+
+2017-10-08  Noam Postavsky  <npostavs@gmail.com>
+
+	Make python prettify symbols into a defvar (Bug#28713)
+
+	* lisp/progmodes/python.el (python-prettify-symbols-alist): New
+	variable.
+	(python--prettify-symbols-alist): Make into obsolete alias for
+	`python-prettify-symbols-alist'.
+
+2017-10-07  Alan Third  <alan@idiocy.org>
+
+	Fix fullscreen crash on macOS (bug#28496)
+
+	* lisp/frame.el (toggle-frame-fullscreen): Wait for animation to
+	complete on macOS.
+
+2017-10-07  Alan Third  <alan@idiocy.org>
+
+	Fix crash when closing fullscreen frame on macOS (bug#28661)
+
+	* src/nsterm.m (EmacsView::windowWillResize): Return new frame size
+	unmodified if the frame isn't live.
+
+2017-10-07  Michael Albinus  <michael.albinus@gmx.de>
+
+	Support gio tool in Tramp
+
+	"gvfs-<command>" utilities have been deprecated in GVFS 1.31.1.  We
+	must use "gio <command>" tool instead.
+
+	* lisp/net/tramp-gvfs.el (tramp-gvfs-gio-mapping): New defconst.
+	(tramp-gvfs-handle-file-notify-add-watch): Support also "gio monitor"
+	(tramp-gvfs-gio-tool-p): New defun.
+	(tramp-gvfs-send-command): Use it.  Call gio tool if available.
+
+2017-10-07  João Távora  <joaotavora@gmail.com>
+
+	Fix flymake-goto-next-error when message has %-constructs
+
+	* lisp/progmodes/flymake.el (flymake-goto-next-error): Fix
+	message call.  Add missing period in docstring.
+
+2017-10-07  Piotr Trojanek  <piotr.trojanek@gmail.com>
+
+	* src/gnutls.c (syms_of_gnutls): Remove duplicated call to DEFSYM.
+
+2017-10-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Move the entry about 'format' into Incompatible Lisp Changes
+
+	* etc/NEWS: Move the entry about 'format' refraining from allocating
+	new strings into Incompatible Lisp Changes.  (Bug#28625)
+
+2017-10-07  Eli Zaretskii  <eliz@gnu.org>
+
+	Fix glitches in displaying TTY menus
+
+	* src/dispnew.c (update_frame_line): Accept an additional argument
+	UPDATING_MENU_P; if non-zero, home the cursor before updating a
+	frame's line.  All callers changed.
+	(update_frame_1): Accept an additional argument UPDATING_MENU_P,
+	and pass it to update_frame_line.  All callers changed.
+	(update_frame_with_menu): Call update_frame_1 with last argument
+	non-zero.  (Bug#17497)
+
+2017-10-06  Gemini Lasswell  <gazally@runbox.com>
+
+	Create new Edebug spec for docstrings and use it in closures
+
+	Since (:documentation FORM) can be used to create a docstring
+	when lexical-binding is on, allow for that possibility in Edebug
+	specs (bug#24773).
+	* lisp/emacs-lisp/edebug.el: Define an Edebug spec for docstrings
+	called lambda-doc and modify the Edebug specs for defun and
+	defmacro to use it.
+	(edebug-instrument-function): Check for generic functions first,
+	to fix bug where edebug-step-in didn't work on methods now that
+	cl-defgeneric has an Edebug spec.
+	* lisp/subr.el (lambda): Modify Edebug spec to use lambda-doc.
+	* lisp/emacs-lisp/cl-generic.el (cl-defgeneric): Add Edebug spec
+	(bug#27747).
+	(cl-defmethod): Use lambda-doc in Edebug spec.
+	* lisp/emacs-lisp/cl-macs.el: Modify Edebug spec for
+	cl-declarations-or-string to use lambda-doc, and modify Edebug
+	spec for cl-lambda-expr to use cl-declarations-or-string.
+	* lisp/emacs-lisp/pcase.el (pcase-lambda): Modify Edebug spec to
+	use lambda-doc, as well as &define and def-body which are
+	necessary for using Edebug on code wrapped by lambda.
+	* lisp/emacs-lisp/generator.el (iter-defun, iter-lambda): Add
+	Edebug specs.
+
+2017-10-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Avoid byte-compilation warnings in message.el
+
+	* lisp/gnus/message.el: Require 'subr-x' when compiling, to
+	avoid compiler warnings.
+
+2017-10-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix bug in recent styled_format change
+
+	Problem reported by Kaushal Modi in:
+	http://lists.gnu.org/archive/html/emacs-devel/2017-10/msg00141.html
+	* src/editfns.c (styled_format): Fix bug where USE_SAFE_ALLOCA was
+	not always followed by SAFE_FREE.  This bug was introduced in my
+	patch 2017-09-26T23:31:57Z!eggert@cs.ucla.edu entitled "Avoid some
+	unnecessary copying in Fformat etc."
+
+2017-10-06  João Távora  <joaotavora@gmail.com>
+
+	Cleanup emacs-lisp-mode's use of Flymake
+
+	* lisp/progmodes/elisp-mode.el (elisp-flymake--checkdoc-1):
+	Delete.
+	(elisp-flymake-checkdoc): Incorporate old
+	elisp-flymake--checkdoc-1.
+	(elisp-flymake--byte-compile-done): Simplify.  Don't cleanup
+	here.
+	(elisp-flymake-byte-compile): Remove spurious interactive spec.
+	Simplify.  Cleanup on every possible exit.
+
+2017-10-06  João Távora  <joaotavora@gmail.com>
+
+	Fix @include directive in Flymake doc
+
+	* doc/misc/flymake.texi: Don't @include a relative path.
+
+2017-10-06  Mark Oteiza  <mvoteiza@udel.edu>
+
+	Move read-multiple-choice to its own library
+
+	* lisp/emacs-lisp/rmc.el: New file.
+	* lisp/emacs-lisp/subr-x.el (read-multiple-choice): Remove.
+	* lisp/gnus/message.el:
+	* lisp/net/nsm.el: Change required library.
+
+2017-10-06  Piotr Trojanek  <piotr.trojanek@gmail.com>
+
+	* src/process.c (syms_of_process): Remove duplicated call to DEFSYM.
+
+	Fixes: Bug#28721
+
+2017-10-06  Lele Gaifax  <lele@metapensiero.it>
+
+	Fix typos in Flymake documentation
+
+	* doc/misc/flymake.texi (Syntax check statuses)
+	(Adding support for a new syntax check tool)
+	(Implementation overview, Locating the buildfile): Fix typos.
+
+	* lisp/progmodes/flymake-proc.el (flymake-proc--report-fn)
+	(flymake-proc--find-possible-master-files):Fix typos.
+	(flymake-proc--panic)
+	(flymake-proc-legacy-flymake): Fix function reference in doc.
+
+	* lisp/progmodes/flymake.el (flymake-error)
+	(flymake-diagnostic-functions): Fix typos.
+	(flymake-diagnostic-types-alist): Rephrase and fix typos.
+	(flymake--backend-state): Fix typos and rephrase.
+	(flymake--handle-report): Delete empty line.
+	(flymake--disable-backend)
+	(flymake--run-backend): Fix typos.
+	(flymake-goto-next-error, flymake-goto-prev-error): Rephrase.
+
+2017-10-06  Eli Zaretskii  <eliz@gnu.org>
+
+	Revert last change in 'shr-descend'
+
+	* lisp/net/shr.el (shr-descend): Revert the part of the last
+	change which introduced calls to shr-indirect-call into this
+	function.  Add a comment explaining the rationale for that.
+	(Bug#28402)
+
+2017-10-06  João Távora  <joaotavora@gmail.com>
+
+	Don't error when turning on Flymake with no known backends
+
+	Leave it to the mode line indicator to inform the user that there
+	is still some configuration to do.
+
+	* lisp/progmodes/flymake.el (flymake-mode): Simplify.
+
+2017-10-06  João Távora  <joaotavora@gmail.com>
+
+	Delete a Flymake obsolete alias that can't possibly work
+
+	The function `flymake-ler-make-ler' can't possibly work as an backward
+	compatible interface to existing extensinos (even purely hypothetical
+	ones, since none are known).  This is because every diagnostic
+	considered by Flymake has to passed to a report-fn function.
+
+	* lisp/progmodes/flymake.el (flymake-ler-make-ler): Delete.
+
+2017-10-06  Paul Eggert  <eggert@cs.ucla.edu>
+
+	Fix bug with unmounted directory on GNU/Linux
+
+	* src/sysdep.c (emacs_get_current_dir_name): Do not use
+	get_current_dir_name result unless it is absolute (Bug#27871).
+
 
 2017-10-05  Nicolas Petton  <nicolas@petton.fr>
 
