@@ -13076,31 +13076,87 @@ to get the effect of a C-q.
 ;;; Generated autoloads from progmodes/flymake.el
 (push (purecopy '(flymake 0 3)) package--builtin-versions)
 
+(autoload 'flymake-log "flymake" "\
+Log, at level LEVEL, the message MSG formatted with ARGS.
+LEVEL is passed to `display-warning', which is used to display
+the warning.  If this form is included in a byte-compiled file,
+the generated warning contains an indication of the file that
+generated it.
+
+\(fn LEVEL MSG &rest ARGS)" nil t)
+
+(autoload 'flymake-make-diagnostic "flymake" "\
+Make a Flymake diagnostic for BUFFER's region from BEG to END.
+TYPE is a key to `flymake-diagnostic-types-alist' and TEXT is a
+description of the problem detected in this region.
+
+\(fn BUFFER BEG END TYPE TEXT)" nil nil)
+
+(autoload 'flymake-diag-region "flymake" "\
+Compute BUFFER's region (BEG . END) corresponding to LINE and COL.
+If COL is nil, return a region just for LINE.  Return nil if the
+region is invalid.
+
+\(fn BUFFER LINE &optional COL)" nil nil)
+
 (autoload 'flymake-mode "flymake" "\
 Toggle Flymake mode on or off.
 With a prefix argument ARG, enable Flymake mode if ARG is
 positive, and disable it otherwise.  If called from Lisp, enable
 the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
-\\{flymake-mode-map}
+
+Flymake is an Emacs minor mode for on-the-fly syntax checking.
+Flymake collects diagnostic information from multiple sources,
+called backends, and visually annotates the buffer with the
+results.
+
+Flymake performs these checks while the user is editing.  The
+customization variables `flymake-start-on-flymake-mode',
+`flymake-no-changes-timeout' and
+`flymake-start-syntax-check-on-newline' determine the exact
+circumstances whereupon Flymake decides to initiate a check of
+the buffer.
+
+The commands `flymake-goto-next-error' and
+`flymake-goto-prev-error' can be used to navigate among Flymake
+diagnostics annotated in the buffer.
+
+The visual appearance of each type of diagnostic can be changed
+in the variable `flymake-diagnostic-types-alist'.
+
+Activation or deactivation of backends used by Flymake in each
+buffer happens via the special hook
+`flymake-diagnostic-functions'.
+
+Some backends may take longer than others to respond or complete,
+and some may decide to disable themselves if they are not
+suitable for the current buffer. The commands
+`flymake-running-backends', `flymake-disabled-backends' and
+`flymake-reporting-backends' summarize the situation, as does the
+special *Flymake log* buffer.
 
 \(fn &optional ARG)" t nil)
 
 (autoload 'flymake-mode-on "flymake" "\
-Turn flymake mode on.
+Turn Flymake mode on.
 
 \(fn)" nil nil)
 
 (autoload 'flymake-mode-off "flymake" "\
-Turn flymake mode off.
-
-\(fn)" nil nil)
-
-(autoload 'flymake-find-file-hook "flymake" "\
-
+Turn Flymake mode off.
 
 \(fn)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake" '("flymake-")))
+
+;;;***
+
+;;;### (autoloads nil "flymake-proc" "progmodes/flymake-proc.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from progmodes/flymake-proc.el
+(push (purecopy '(flymake-proc 0 3)) package--builtin-versions)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flymake-proc" '("flymake-proc-")))
 
 ;;;***
 
@@ -14561,8 +14617,7 @@ match any of the group-specified splitting rules.  See
 
 (autoload 'gnus-group-split-update "gnus-mlspl" "\
 Computes nnmail-split-fancy from group params and CATCH-ALL.
-It does this by calling by calling (gnus-group-split-fancy nil
-nil CATCH-ALL).
+It does this by calling (gnus-group-split-fancy nil nil CATCH-ALL).
 
 If CATCH-ALL is nil, `gnus-group-split-default-catch-all-group' is used
 instead.  This variable is set by `gnus-group-split-setup'.
@@ -28059,6 +28114,46 @@ than appending to it.  Deletes the message after writing if
 
 ;;;***
 
+;;;### (autoloads nil "rmc" "emacs-lisp/rmc.el" (0 0 0 0))
+;;; Generated autoloads from emacs-lisp/rmc.el
+
+(autoload 'read-multiple-choice "rmc" "\
+Ask user a multiple choice question.
+PROMPT should be a string that will be displayed as the prompt.
+
+CHOICES is an alist where the first element in each entry is a
+character to be entered, the second element is a short name for
+the entry to be displayed while prompting (if there's room, it
+might be shortened), and the third, optional entry is a longer
+explanation that will be displayed in a help buffer if the user
+requests more help.
+
+This function translates user input into responses by consulting
+the bindings in `query-replace-map'; see the documentation of
+that variable for more information.  In this case, the useful
+bindings are `recenter', `scroll-up', and `scroll-down'.  If the
+user enters `recenter', `scroll-up', or `scroll-down' responses,
+perform the requested window recentering or scrolling and ask
+again.
+
+When `use-dialog-box' is t (the default), this function can pop
+up a dialog window to collect the user input. That functionality
+requires `display-popup-menus-p' to return t. Otherwise, a text
+dialog will be used.
+
+The return value is the matching entry from the CHOICES list.
+
+Usage example:
+
+\(read-multiple-choice \"Continue connecting?\"
+                      \\='((?a \"always\")
+                        (?s \"session only\")
+                        (?n \"no\")))
+
+\(fn PROMPT CHOICES)" nil nil)
+
+;;;***
+
 ;;;### (autoloads nil "rng-cmpct" "nxml/rng-cmpct.el" (0 0 0 0))
 ;;; Generated autoloads from nxml/rng-cmpct.el
 
@@ -31903,7 +31998,7 @@ Studlify-case the current buffer.
 ;;;### (autoloads nil "subr-x" "emacs-lisp/subr-x.el" (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/subr-x.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "subr-x" '("read-multiple-choice" "string-" "hash-table-" "when-let" "internal--" "if-let" "and-let*" "thread-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "subr-x" '("string-" "hash-table-" "when-let" "internal--" "if-let" "and-let*" "thread-")))
 
 ;;;***
 
