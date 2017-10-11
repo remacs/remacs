@@ -809,7 +809,20 @@ Changes to files in this list are not listed.")
     "obsolete/scribe.el"
     "cp51932.el"
     "eucjp-ms.el"
-    "lisp.mk")
+    "lisp.mk"
+    "update-game-score.exe.manifest"
+    "lisp/obsolete/awk-mode.el"
+    "lisp/obsolete/iso-acc.el"
+    "lisp/obsolete/iso-insert.el"
+    "lisp/obsolete/resume.el"
+    "lisp/obsolete/scribe.el"
+    "lisp/obsolete/swedish.el"
+    "lisp/obsolete/spell.el"
+    "lisp/obsolete/swedish.el"
+    "lisp/obsolete/sym-comp.el"
+    "library-of-babel.org"
+    "flymake-elisp.el"
+    "flymake-ui.el")
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
 
@@ -894,6 +907,7 @@ in the repository.")
     ("progmodes/octave-inf.el" . "octave.el")
     ("progmodes/octave-mod.el" . "octave.el")
     ;; Obsolete.
+    ("lisp/gs.el" . "gs.el")
     ("emacs-lisp/assoc.el" . "assoc.el")
     ("emacs-lisp/cust-print.el" . "cust-print.el")
     ("emacs-lisp/gulp.el" . "gulp.el")
