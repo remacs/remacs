@@ -2539,8 +2539,8 @@
 
 	Add tests for Edebug
 
-	* tests/lisp/emacs-lisp/edeug-tests.el: New file.
-	* tests/lisp/emacs-lisp/edebug-resources/edebug-test-code.el: New file.
+	* test/lisp/emacs-lisp/edebug-tests.el: New file.
+	* test/lisp/emacs-lisp/edebug-resources/edebug-test-code.el: New file.
 
 2017-09-21  Gemini Lasswell  <gazally@runbox.com>
 
@@ -3862,7 +3862,7 @@
 	Construct Tramp syntax strings and regular expressions once instead
 	of every time they are used, and store them in alists keyed by Tramp
 	syntax.
-	* tramp.el (tramp-build-remote-file-name-spec-regexp)
+	* lisp/net/tramp.el (tramp-build-remote-file-name-spec-regexp)
 	(tramp-build-file-name-structure): New functions.
 	(tramp-prefix-format-alist, tramp-prefix-regexp-alist)
 	(tramp-method-regexp-alist)
@@ -5282,7 +5282,7 @@
 	The practical implication of this bug was a random jit-lock chunk remaining
 	entirely unfontified.
 
-	* lisp/progmodes/cc-mode (c-fl-decl-end): If point starts inside a macro,
+	* lisp/progmodes/cc-mode.el (c-fl-decl-end): If point starts inside a macro,
 	restrict two forward searches to the end of that macro.
 
 2017-08-22  Michael Albinus  <michael.albinus@gmx.de>
@@ -6729,7 +6729,7 @@
 	Before previous commit, we prompted users with `yes-or-no-p'
 	which doesn't TAB complete the user answer.  Let's play safe and
 	keep requiring full answers.
-	* emacs-master/lisp/dired.el (dired-delete-file): Use `read-string'
+	* lisp/dired.el (dired-delete-file): Use `read-string'
 	instead of `completing-read' to read the user answers.
 
 2017-08-06  Tino Calancha  <tino.calancha@gmail.com>
@@ -7227,7 +7227,8 @@
 
 2017-07-31  Tino Calancha  <tino.calancha@gmail.com>
 
-	* lisp/dired (dired-trivial-filenames): Use \` and \' to match string bounds
+	* lisp/dired.el (dired-trivial-filenames): Use \` and \' to match
+	string bounds.
 
 2017-07-31  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -7572,7 +7573,7 @@
 
 	Enable lexical binding.
 	* lisp/ls-lisp.el (ls-lisp-unload-function): New defun.
-	* test/lisp/ls-lisp.el (ls-lisp-unload): Add test.
+	* test/lisp/ls-lisp-tests.el (ls-lisp-unload): Add test.
 
 2017-07-25  Tino Calancha  <tino.calancha@gmail.com>
 
@@ -8012,7 +8013,7 @@
 
 	Stylistic changes in tramp-cache.el
 
-	* test/lisp/net/tramp-cache.el (tramp-get-file-property)
+	* lisp/net/tramp-cache.el (tramp-get-file-property)
 	(tramp-set-file-property): Use `bound-and-true-p'.  Add
 	counter variables to `tramp-cache-unload-hook'.
 
@@ -8117,7 +8118,7 @@
 
 2017-07-18  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* emacs-lisp/cl-lib.el (cl--old-struct-type-of): Accept `[]'
+	* lisp/emacs-lisp/cl-lib.el (cl--old-struct-type-of): Accept `[]'
 
 2017-07-18  Eli Zaretskii  <eliz@gnu.org>
 
@@ -8425,7 +8426,7 @@
 
 	Fix compilation of gnutls.c with older GnuTLS
 
-	* src/gnutrls.c (syms_of_gnutls): Condition some defsubr's
+	* src/gnutls.c (syms_of_gnutls): Condition some defsubr's
 	on HAVE_GNUTLS3, to avoid compilation errors when GnuTLS
 	v3.X is not available.  Reported by Colin Baxter <m43cap@yandex.com>.
 
@@ -9652,7 +9653,7 @@
 
 	* lisp/simple.el (line-number-at-pos): Add a second optional
 	  argument 'absolute'.
-	* test/list/simple-tests.el: Add tests for 'line-number-at-pos'.
+	* test/lisp/simple-tests.el: Add tests for 'line-number-at-pos'.
 
 2017-07-03  R. Bernstein  <rocky@gnu.org>
 
@@ -11118,7 +11119,7 @@
 	Add current-line in simple.el
 
 	* lisp/simple.el (current-line): New function.
-	* test/list/simple-tests.el: Add tests for current-line.
+	* test/lisp/simple-tests.el: Add tests for current-line.
 
 2017-06-19  Katsumi Yamaoka  <yamaoka@jpl.org>
 
@@ -14671,7 +14672,7 @@
 	variable.
 	* test/src/lread-tests.el (lread-tests--old-style-backquotes): Add
 	unit test.
-	* lisp/emacs-lisp/bytecomp-tests.el
+	* test/lisp/emacs-lisp/bytecomp-tests.el
 	(bytecomp-tests--old-style-backquotes): Add unit test.
 
 2017-05-13  Philipp Stephani  <phst@google.com>
@@ -17598,7 +17599,7 @@
 	* lisp/net/ange-ftp.el (ange-ftp-write-region):
 	* lisp/net/tramp-gvfs.el (tramp-gvfs-handle-write-region):
 	* lisp/net/tramp-sh.el (tramp-sh-handle-write-region):
-	* lisp/gnus/mm-utils.el (mm-append-to-file): Functions now output
+	* lisp/gnus/mm-util.el (mm-append-to-file): Functions now output
 	characters written in addition to file name.
 	* doc/lispref/files.texi: Added documentation to write-region and
 	append-to-file describing their output.
@@ -18544,7 +18545,7 @@
 
 	* lisp/gnus/gnus-start.el (gnus-display-time-event-handler): Use
 	bound-and-true-p.
-	* lisp/gnus/gnus-util (gnus-boundp): Remove.
+	* lisp/gnus/gnus-util.el (gnus-boundp): Remove.
 
 2017-03-31  Niels Möller  <nisse@lysator.liu.se>  (tiny change)
 
@@ -18966,7 +18967,7 @@
 
 	* lisp/progmodes/python.el (python-nav-end-of-statement): Protect
 	against infloop.
-	* lisp/progmodes/python-tests.el
+	* test/lisp/progmodes/python-tests.el
 	(python-tests--python-nav-end-of-statement--infloop): Add unit test.
 
 2017-03-23  Michael Albinus  <michael.albinus@gmx.de>
@@ -20198,10 +20199,10 @@
 
 2017-03-08  Andreas Schwab  <schwab@linux-m68k.org>
 
-	* data.c (minmax_driver): Use CHECK_NUMBER_OR_FLOAT_COERCE_MARKER.
+	* src/data.c (minmax_driver): Use CHECK_NUMBER_OR_FLOAT_COERCE_MARKER.
 	(Fmax, Fmin): Restore documentation.
 
-	* data.c (cons_to_unsigned, cons_to_signed, Fstring_to_number): Reorder
+	* src/data.c (cons_to_unsigned, cons_to_signed, Fstring_to_number): Reorder
 	comparisons that are written backward.
 
 2017-03-08  Thien-Thi Nguyen  <ttn@gnu.org>
@@ -20610,7 +20611,7 @@
 
 	Enable the usage of an in-memory database. Prior to this, sql-mode w/
 	sqlite could only be used with file databases.
-	* list/progmodes/sql.el (sql-get-login-ext): Don't expand an empty
+	* lisp/progmodes/sql.el (sql-get-login-ext): Don't expand an empty
 	file name provided by the user, but call sub-process sqlite with that,
 	in which case it uses an in-memory database.
 
@@ -20753,7 +20754,7 @@
 
 2017-03-02  Glenn Morris  <rgm@gnu.org>
 
-	* test/lisp/net/puny.el: New file.
+	* test/lisp/net/puny-tests.el: New file.
 
 2017-03-02  Glenn Morris  <rgm@gnu.org>
 
@@ -20879,7 +20880,7 @@
 
 	Do not use find-file non-interactively
 
-	 * lisp/international/titdic-cnv (miscdic-convert): Use
+	 * lisp/international/titdic-cnv.el (miscdic-convert): Use
 	   insert-file-contents in place of find-file.
 
 2017-02-28  Stefan Monnier  <monnier@iro.umontreal.ca>
@@ -21942,7 +21943,7 @@
 
 	Avoid errors when flyspell-generic-check-word-predicate is a lambda.
 
-	* flyspell.el (flyspell-auto-correct-word, flyspell-word): Apply
+	* lisp/textmodes/flyspell.el (flyspell-auto-correct-word, flyspell-word): Apply
 	functionp instead of fboundp on
 	flyspell-generic-check-word-predicate (Bug#25765).
 
@@ -22909,7 +22910,7 @@
 
 2017-02-05  Vibhav Pant  <vibhavp@gmail.com>
 
-	* byte-opt.el (byte-decompile-bytecode-1): Use eq instead of =.
+	* lisp/emacs-lisp/byte-opt.el (byte-decompile-bytecode-1): Use eq instead of =.
 
 2017-02-05  Vibhav Pant  <vibhavp@gmail.com>
 
@@ -23395,9 +23396,9 @@
 	nested brace lists when the opening element stands on the same line as both
 	its introductory brace and an enclosing parameter list parenthesis.
 
-	* list/progmodes/cc-align.el (c-lineup-under-anchor): New line-up function.
+	* lisp/progmodes/cc-align.el (c-lineup-under-anchor): New line-up function.
 
-	* list/progmodes/cc-engine.el (c-looking-at-or-maybe-in-bracelist): Accept the
+	* lisp/progmodes/cc-engine.el (c-looking-at-or-maybe-in-bracelist): Accept the
 	presence of exactly an identifier between an open parenthesis and an open
 	brace as evidence of the brace starting a brace list.
 	(c-looking-at-statement-block): New function, extracted from
@@ -23653,7 +23654,7 @@
 	`:purecopy t`, use purecopy_hash_table otherwise.
 	(marked_pinned_objects) New function, marks all objects in pinned_objects.
 	(garbage_collect_1) Use it. Mark all pinned objects before sweeping.
-	* src/lisp.h Add new field `pure' to struct `Lisp_Hash_Table'.
+	* src/lisp.h: Add new field `pure' to struct `Lisp_Hash_Table'.
 	* src/fns.c: Add `purecopy' parameter to hash tables.
 	(Fmake_hash_table): Check for a `:purecopy PURECOPY' argument, pass it
 	to make_hash_table.
@@ -23878,7 +23879,7 @@
 
 	Support Bash Ctrl-Z indication of directory name in term.el
 
-	* term.el (term-emulate-terminal): Do not display ?\032 escape
+	* lisp/term/xterm.el (term-emulate-terminal): Do not display ?\032 escape
 	codes even when 'handled-ansi-message' is non-nil.  (Bug#11919)
 
 2017-01-27  Eli Zaretskii  <eliz@gnu.org>
@@ -23903,12 +23904,13 @@
 
 	python-mode: Fix detection for opening blocks.
 
-		* python.el (python-info-dedenter-opening-block-positions): There
-		can't be any back-indented lines between an opening block and the
-		current line.
+	* lisp/progmodes/python.el
+	(python-info-dedenter-opening-block-positions): There can't be any
+	back-indented lines between an opening block and the current line.
 
-		* python-tests.el (python-indent-electric-colon-4): Add an indent
-		test case where there is one-more indented previous opening block.
+	* test/lisp/progmodes/python-tests.el
+	(python-indent-electric-colon-4): Add an indent test case where
+	there is one-more indented previous opening block.
 
 2017-01-27  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -24844,7 +24846,7 @@
 
 	* lisp/emacs-lisp/byte-opt.el: Optimize how tags are checked for use.
 
-	* byte-opt.el: (byte-optimize-lapcode): Return nil instantly on
+	* lisp/emacs-lisp/byte-opt.el: (byte-optimize-lapcode): Return nil instantly on
 	  finding the tag in a jump table.
 
 2017-01-15  Vibhav Pant  <vibhavp@gmail.com>
@@ -24898,7 +24900,7 @@
 
 	Correct c-parse-state-get-strategy for moving HERE backward into a macro.
 
-	* list/progmodes/c-engine.el (c-parse-state-get-strategy): When HERE is below
+	* lisp/progmodes/cc-engine.el (c-parse-state-get-strategy): When HERE is below
 	its previous value, we chose strategy 'forward, and the new HERE is in a
 	(different) macro, ensure the returned START-POINT is not above the start of
 	the macro.
@@ -25291,12 +25293,13 @@
 
 	* lisp/textmodes/rst.el: Fix rst-forward-indented-block.
 
-		* rst.el (rst-cvs-header, rst-svn-rev, rst-svn-timestamp)
-		(rst-official-version, rst-official-cvs-rev)
-		(rst-package-emacs-version-alist): Maintain version numbers.
-		(rst-forward-indented-block): Fix. Start searching at next
-		line again. Fixes fontification of comments continuing on the
-		same line they started.
+	* lisp/textmodes/rst.el (rst-cvs-header, rst-svn-rev)
+	(rst-svn-timestamp)
+	(rst-official-version, rst-official-cvs-rev)
+	(rst-package-emacs-version-alist): Maintain version numbers.
+	(rst-forward-indented-block): Fix. Start searching at next
+	line again. Fixes fontification of comments continuing on the
+	same line they started.
 
 2017-01-08  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -26085,7 +26088,7 @@
 
 2016-12-29  Mike Kupfer  <mkupfer@alum.berkeley.edu>
 
-	* mh-e.el (mh-fetch-x-image-url): Fix a docstring typo.
+	* lisp/mh-e/mh-e.el (mh-fetch-x-image-url): Fix a docstring typo.
 
 2016-12-29  Alan Mackenzie  <acm@muc.de>
 
@@ -26376,13 +26379,13 @@
 
 	Fix timezone detection of parse-iso8601-time-string
 
-	* parse-time.el (parse-iso8601-time-string): Fix timezone
+	* lisp/calendar/parse-time.el (parse-iso8601-time-string): Fix timezone
 	parsing.  Add a doc string.  (Bug#25086)
-	* editfns.c (Fdecode-time): Doc fix.
-	* emacs-mime.texi (time-date): Add an example for
+	* src/editfns.c (Fdecode-time): Doc fix.
+	* doc/misc/emacs-mime.texi (time-date): Add an example for
 	parse-iso8601-time-string.
-	* parse-time-tests.el (parse-time-tests): Add tests for
-	parse-iso8601-time-string.
+	* test/lisp/calendar/parse-time-tests.el (parse-time-tests): Add
+	tests for parse-iso8601-time-string.
 
 2016-12-24  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -26462,7 +26465,7 @@
 	Document that variable binding order is unspecified
 
 	* doc/lispref/variables.texi (Local Variables):
-	* cl.texi (Modify Macros): Document that binding order in 'let' and
+	* doc/misc/cl.texi (Modify Macros): Document that binding order in 'let' and
 	'cl-letf' is unspecified.
 
 2016-12-23  Eli Zaretskii  <eliz@gnu.org>
@@ -26570,7 +26573,8 @@
 
 2016-12-21  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	* tex-mode.el (tex-compile-commands): Add luatex and xetex commands
+	* lisp/textmodes/tex-mode.el (tex-compile-commands): Add luatex
+	and xetex commands.
 
 2016-12-21  Eli Zaretskii  <eliz@gnu.org>
 
@@ -26774,7 +26778,7 @@
 
 	Protect change of window's buffer in vertical-motion against unwinds (bug#25209)
 
-	* indent.c (restore_window_buffer): New function.
+	* src/indent.c (restore_window_buffer): New function.
 	(Fvertical_motion): Use it to restore window's buffer.
 
 2016-12-19  Glenn Morris  <rgm@gnu.org>
@@ -26835,7 +26839,7 @@
 
 	avoid Eager macro-expansion failure: (void-function string-to-list)
 
-	* loadup.el [ns]: "ucs-normalize" uses `string-to-list' which is defined
+	* lisp/loadup.el [ns]: "ucs-normalize" uses `string-to-list' which is defined
 	  in "mule-util", so we have to load "mule-util" before "ucs-normalize",
 	  otherwise I get "Eager macro-expansion failure" on "make bootstrap"
 
@@ -27061,7 +27065,8 @@
 
 2016-12-15  Paul Eggert  <eggert@cs.ucla.edu>
 
-	* emacs-document.svg: Append newline.
+	* etc/images/icons/hicolor/scalable/mimetypes/emacs-document.svg:
+	Append newline.
 
 2016-12-15  Mark Oteiza  <mvoteiza@udel.edu>
 
@@ -28563,8 +28568,8 @@
 
 	fix a latent bug in process.c
 
-		* process.c (wait_reading_process_output): Check Writeok bits,
-		not write_mask.
+	* src/process.c (wait_reading_process_output): Check Writeok bits,
+	not write_mask.
 
 2012-08-15  Tom Tromey  <tromey@redhat.com>
 
@@ -51284,7 +51289,7 @@
 
 This file records repository revisions from
 commit 9d56a21e6a696ad19ac65c4b405aeca44785884a (exclusive) to
-commit 16dc580aa61832285269f8de081248bac618cf84 (inclusive).
+commit e8a7c41b4e2dc9df18038d2931ed883946a2bb50 (inclusive).
 See ChangeLog.1 for earlier changes.
 
 ;; Local Variables:
