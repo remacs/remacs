@@ -5,6 +5,7 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Window, selected_window as current_window};
 use marker::marker_position;
 use editfns::point;
+use libc::c_int;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
@@ -144,23 +145,19 @@ pub fn window_minibuffer_p(window: LispObject) -> LispObject {
 /// as nil.
 #[lisp_fn(min = "0")]
 pub fn window_margins(window: LispObject) -> LispObject {
+    fn margin_as_object(margin: c_int) -> LispObject {
+        if margin != 0 {
+            LispObject::from_fixnum(margin as EmacsInt)
+        } else {
+            LispObject::constant_nil()
+        }
+    }
     let win = if window.is_nil() {
         selected_window()
     } else {
         window
     }.as_live_window_or_error();
 
-    let left = if win.left_margin_cols != 0 {
-        LispObject::from_fixnum(win.left_margin_cols as EmacsInt)
-    } else {
-        LispObject::constant_nil()
-    };
-
-    let right = if win.right_margin_cols != 0 {
-        LispObject::from_fixnum(win.right_margin_cols as EmacsInt)
-    } else {
-        LispObject::constant_nil()
-    };
-
-    LispObject::cons(left, right)
+    LispObject::cons(margin_as_object(win.left_margin_cols),
+                     margin_as_object(win.right_margin_cols))
 }
