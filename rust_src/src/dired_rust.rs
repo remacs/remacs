@@ -1,7 +1,6 @@
 //! Lisp functions for making directory listings.
 
 use std::io;
-use std::slice;
 use std::ptr;
 use std::ffi::CStr;
 
@@ -10,10 +9,9 @@ use std::fs;
 use std::os::unix::fs::MetadataExt;
 use libc;
 
-use remacs_sys::{Fexpand_file_name, make_string, EmacsInt, Qfile_missing, Qnil, compile_pattern,
-                 re_search, re_pattern_buffer, filemode_string, Ffind_file_name_handler,
-                 Qfile_attributes, Qdirectory_files, Qdirectory_files_and_attributes, call2,
-                 call3, call5, call6};
+use remacs_sys::{Fexpand_file_name, EmacsInt, Qfile_missing, Qnil, compile_pattern, re_search,
+                 re_pattern_buffer, filemode_string, Ffind_file_name_handler, Qfile_attributes,
+                 Qdirectory_files, Qdirectory_files_and_attributes, decode_file_name};
 
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
@@ -41,7 +39,7 @@ fn get_files(
     id_format: LispObject,
 ) -> io::Result<LispObject> {
 
-    let dirS0 = String::from(lo2string(directory));
+    let dirS0 = String::from(directory.to_string());
     let dirS1 = dirS0.clone();
     let dirP = Path::new(&dirS0);
     let slash = String::from("/");
@@ -49,7 +47,7 @@ fn get_files(
     if !dirP.is_dir() {
         xsignal!(
             Qfile_missing,
-            str2lo("Opening directory: no such file or directory"),
+            LispObject::from_str("Opening directory: no such file or directory"),
             directory
         );
     }
@@ -61,23 +59,38 @@ fn get_files(
     let mut files = Vec::new();
     for entry in fs::read_dir(dirP)? {
         let entry = entry?;
-        let fname_string = entry.file_name().into_string().unwrap();
-        let abpath = dirS1.clone() + &slash + &fname_string;
-        let abpath_lo = str2lo(&abpath);
+        let fname_string_enc = entry.file_name().into_string().unwrap();
+        let fname_lo_enc = LispObject::from_str(&fname_string_enc);
+        let fname_lo_raw = unsafe { decode_file_name(fname_lo_enc.to_raw()) };
+        let fname_string = LispObject::from_raw(fname_lo_raw).to_string();
+        let abpath_str = dirS1.clone() + &slash + &fname_string;
+        let abpath = LispObject::from_str(&abpath_str);
         if match_re.is_not_nil() {
             let fname_str = &*fname_string;
             if c_regex_matchp(recomp, fname_str) {
                 if full.is_not_nil() {
-                    pushnamesandattrs!(files, abpath_lo, abpath_lo, attrs, id_format);
+                    pushnamesandattrs!(files, abpath, abpath, attrs, id_format);
                 } else {
-                    pushnamesandattrs!(files, str2lo(&fname_string), abpath_lo, attrs, id_format);
+                    pushnamesandattrs!(
+                        files,
+                        LispObject::from_str(&fname_string),
+                        abpath,
+                        attrs,
+                        id_format
+                    );
                 }
             }
         } else {
             if full.is_not_nil() {
-                pushnamesandattrs!(files, abpath_lo, abpath_lo, attrs, id_format);
+                pushnamesandattrs!(files, abpath, abpath, attrs, id_format);
             } else {
-                pushnamesandattrs!(files, str2lo(&fname_string), abpath_lo, attrs, id_format);
+                pushnamesandattrs!(
+                    files,
+                    LispObject::from_str(&fname_string),
+                    abpath,
+                    attrs,
+                    id_format
+                );
             }
         }
     }
@@ -96,25 +109,32 @@ fn get_files(
         dirdots.push(String::from("."));
     }
 
-    for dir in dirdots {
-        let abpath = dirS1.clone() + &slash + &dir.clone();
-        let abpath_lo = str2lo(&abpath);
+    for dir_str in dirdots {
+        let abpath_str = dirS1.clone() + &slash + &dir_str.clone();
+        let abpath = LispObject::from_str(&abpath_str);
         if full.is_not_nil() {
-            pushnamesandattrs!(files, abpath_lo, abpath_lo, attrs, id_format);
+            pushnamesandattrs!(files, abpath, abpath, attrs, id_format);
         } else {
-            let dir_lo = str2lo(&dir);
-            pushnamesandattrs!(files, dir_lo, abpath_lo, attrs, id_format);
+            pushnamesandattrs!(
+                files,
+                LispObject::from_str(&dir_str),
+                abpath,
+                attrs,
+                id_format
+            );
         }
     }
 
     if nosort.is_nil() {
         if attrs {
+            Ok(sort_list(list(&mut files), |a, b| {
+                car(a).to_string() > car(b).to_string()
+            }))
+        } else {
             Ok(sort_list(
                 list(&mut files),
-                |l1, l2| string_gtp(car(l1), car(l2)),
+                |a, b| a.to_string() > b.to_string(),
             ))
-        } else {
-            Ok(sort_list(list(&mut files), string_gtp))
         }
     } else {
         Ok(list(&mut files))
@@ -166,17 +186,14 @@ fn directory_files(
     let handler_raw = unsafe { Ffind_file_name_handler(dnexp.to_raw(), Qdirectory_files) };
     let handler = LispObject::from_raw(handler_raw);
     if handler.is_not_nil() {
-        let res_raw = unsafe {
-            call5(
-                handler_raw,
-                Qdirectory_files,
-                dnexp_raw,
-                full.to_raw(),
-                match_re.to_raw(),
-                nosort.to_raw(),
-            )
-        };
-        return LispObject::from_raw(res_raw);
+        return call!(
+            handler,
+            LispObject::from_raw(unsafe { Qdirectory_files }),
+            dnexp,
+            full,
+            match_re,
+            nosort
+        );
     }
 
     directory_files_internal(
@@ -216,18 +233,15 @@ fn directory_files_and_attributes(
         unsafe { Ffind_file_name_handler(dnexp.to_raw(), Qdirectory_files_and_attributes) };
     let handler = LispObject::from_raw(handler_raw);
     if handler.is_not_nil() {
-        let res_raw = unsafe {
-            call6(
-                handler_raw,
-                Qdirectory_files_and_attributes,
-                dnexp_raw,
-                full.to_raw(),
-                match_re.to_raw(),
-                nosort.to_raw(),
-                id_format.to_raw(),
-            )
-        };
-        return LispObject::from_raw(res_raw);
+        return call!(
+            handler,
+            LispObject::from_raw(unsafe { Qdirectory_files_and_attributes }),
+            dnexp,
+            full,
+            match_re,
+            nosort,
+            id_format
+        );
     }
 
     directory_files_internal(directory, full, match_re, nosort, true, id_format)
@@ -251,7 +265,7 @@ fn lo_time(t: i64) -> i32 {
 
 fn file_attributes_internal(abpath: LispObject, id_format: LispObject) -> LispObject {
     let mut attrs = Vec::new();
-    let abpath_string = lo2string(abpath);
+    let abpath_string = abpath.to_string();
     let abpath_str = &*abpath_string;
 
     let md_res = fs::metadata(abpath_str);
@@ -265,7 +279,7 @@ fn file_attributes_internal(abpath: LispObject, id_format: LispObject) -> LispOb
     let ft = md.file_type();
     // ft.is_symlink() inexplicably always -> false on Linux (ditto Python).
     if let Ok(symmemaybe) = fs::read_link(abpath_str) {
-        attrs.push(str2lo(symmemaybe.to_str().unwrap()));
+        attrs.push(LispObject::from_str(symmemaybe.to_str().unwrap()));
     } else {
         if ft.is_dir() {
             attrs.push(LispObject::constant_t());
@@ -280,8 +294,8 @@ fn file_attributes_internal(abpath: LispObject, id_format: LispObject) -> LispOb
     // user id num & group id num
     let mut idf_is_int = true;
     if id_format.is_not_nil() {
-        let idf_lo = symbol_name(id_format);
-        let idf_string = lo2string(idf_lo).to_lowercase();
+        let idf = symbol_name(id_format);
+        let idf_string = idf.to_string().to_lowercase();
         idf_is_int = !("string".to_owned() == idf_string);
     }
 
@@ -292,15 +306,15 @@ fn file_attributes_internal(abpath: LispObject, id_format: LispObject) -> LispOb
         let pw: *mut libc::passwd = unsafe { libc::getpwuid(md.uid()) };
         let pwnam_string = unsafe { CStr::from_ptr((*pw).pw_name).to_string_lossy().into_owned() };
         let pwnam_str = &*pwnam_string;
-        attrs.push(str2lo(pwnam_str));
+        attrs.push(LispObject::from_str(pwnam_str));
 
         let gr: *mut libc::group = unsafe { libc::getgrgid(md.gid()) };
         let grnam_string = unsafe { CStr::from_ptr((*gr).gr_name).to_string_lossy().into_owned() };
         let grnam_str = &*grnam_string;
-        attrs.push(str2lo(grnam_str));
+        attrs.push(LispObject::from_str(grnam_str));
     }
 
-    //access time&modded time&creat time
+    // access time&modded time&creat time
     fn make_time_list(s: i64, ns: i64) -> LispObject {
         let mut atl = Vec::new();
         let ht = hi_time(s);
@@ -393,12 +407,18 @@ fn file_attributes(filename: LispObject, id_format: LispObject) -> LispObject {
     let handler = LispObject::from_raw(handler_raw);
     if handler.is_not_nil() {
         if id_format.is_not_nil() {
-            let res =
-                unsafe { call3(handler_raw, Qfile_attributes, fnexp_raw, id_format.to_raw()) };
-            return LispObject::from_raw(res);
+            return call!(
+                handler,
+                LispObject::from_raw(unsafe { Qfile_attributes }),
+                fnexp,
+                id_format
+            );
         } else {
-            let res = unsafe { call2(handler_raw, Qfile_attributes, fnexp_raw) };
-            return LispObject::from_raw(res);
+            return call!(
+                handler,
+                LispObject::from_raw(unsafe { Qfile_attributes }),
+                fnexp
+            );
         }
     }
 
@@ -409,7 +429,7 @@ fn file_attributes(filename: LispObject, id_format: LispObject) -> LispObject {
 /// Comparison is in lexicographic order and case is significant.  */)
 #[lisp_fn]
 fn file_attributes_lessp(f1: LispObject, f2: LispObject) -> LispObject {
-    LispObject::from_bool(string_ltp(car(f1), car(f2)))
+    LispObject::from_bool(car(f1).to_string() < car(f2).to_string())
 }
 
 /// Return a list of user names currently registered in the system.
@@ -428,46 +448,16 @@ fn system_users() -> LispObject {
             let pwnam_string =
                 unsafe { CStr::from_ptr((*pw).pw_name).to_string_lossy().into_owned() };
             let pwnam_str = &*pwnam_string;
-            unames.push(str2lo(pwnam_str));
+            unames.push(LispObject::from_str(pwnam_str));
         }
     }
     unsafe { libc::endpwent() };
 
     if unames.len() < 1 {
-        unames.push(str2lo("rms"));
+        unames.push(LispObject::from_str("rms"));
     }
 
     list(&mut unames)
-}
-
-fn string_ltp(a: LispObject, b: LispObject) -> bool {
-    let sa = lo2string(a);
-    let sb = lo2string(b);
-
-    if sa < sb { true } else { false }
-}
-
-fn string_gtp(a: LispObject, b: LispObject) -> bool {
-    let sa = lo2string(a);
-    let sb = lo2string(b);
-
-    if sa > sb { true } else { false }
-}
-
-fn str2lo(s: &str) -> LispObject {
-    LispObject::from_raw(unsafe {
-        make_string(
-            s.as_ptr() as *const libc::c_char,
-            s.len() as libc::ptrdiff_t,
-        )
-    })
-}
-
-// code "borrowed" from lisp::display_string
-fn lo2string(obj: LispObject) -> String {
-    let mut s = obj.as_string().unwrap();
-    let slice = unsafe { slice::from_raw_parts(s.data_ptr(), s.len_bytes() as usize) };
-    String::from_utf8_lossy(slice).into_owned()
 }
 
 fn c_regex_matchp(recomp: *mut re_pattern_buffer, s: &str) -> bool {

@@ -1042,6 +1042,7 @@ extern "C" {
         multibyte: bool,
     ) -> *mut re_pattern_buffer;
 
+    pub fn decode_file_name(fname: Lisp_Object) -> Lisp_Object;
     pub fn filemode_string(filename: Lisp_Object) -> Lisp_Object;
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;

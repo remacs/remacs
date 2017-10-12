@@ -993,6 +993,20 @@ impl LispObject {
             wrong_type!(Qstringp, self)
         }
     }
+
+    #[inline]
+    pub fn from_str(s: &str) -> LispObject {
+        LispObject::from_raw(unsafe {
+            make_string(s.as_ptr() as *const c_char, s.len() as ptrdiff_t)
+        })
+    }
+
+    #[inline]
+    pub fn to_string(self) -> String {
+        let mut s = self.as_string().unwrap();
+        let slice = unsafe { slice::from_raw_parts(s.data_ptr(), s.len_bytes() as usize) };
+        String::from_utf8_lossy(slice).into_owned()
+    }
 }
 
 // Other functions
