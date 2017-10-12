@@ -278,6 +278,8 @@ which is the \"1006\" extension implemented in Xterm >= 277."
                (last-name (symbol-name last-type))
                (last-time (nth 1 last-click))
                (click-count (nth 2 last-click))
+               (last-x (nth 3 last-click))
+               (last-y (nth 4 last-click))
                (this-time (float-time))
                (name (symbol-name type)))
           (cond
@@ -292,12 +294,16 @@ which is the \"1006\" extension implemented in Xterm >= 277."
                  double-click-time
                  (or (eq double-click-time t)
                      (> double-click-time (* 1000 (- this-time last-time))))
+                 (<= (abs (- x last-x))
+                     (/ double-click-fuzz 8))
+                 (<= (abs (- y last-y))
+                     (/ double-click-fuzz 8))
                  (equal last-name (replace-match "" t t name)))
             (setq click-count (1+ click-count))
             (xterm-mouse--set-click-count event click-count))
            (t (setq click-count 1)))
           (set-terminal-parameter nil 'xterm-mouse-last-click
-                                  (list type this-time click-count)))
+                                  (list type this-time click-count x y)))
 
         (set-terminal-parameter nil 'xterm-mouse-x x)
         (set-terminal-parameter nil 'xterm-mouse-y y)

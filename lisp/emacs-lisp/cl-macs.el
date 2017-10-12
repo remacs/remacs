@@ -190,7 +190,7 @@ The name is made by appending a number to PREFIX, default \"T\"."
   (&rest ("cl-declare" &rest sexp)))
 
 (def-edebug-spec cl-declarations-or-string
-  (&or stringp cl-declarations))
+  (&or lambda-doc cl-declarations))
 
 (def-edebug-spec cl-lambda-list
   (([&rest arg]
@@ -447,8 +447,8 @@ more details.
 
 (def-edebug-spec cl-lambda-expr
   (&define ("lambda" cl-lambda-list
-	    ;;cl-declarations-or-string
-	    ;;[&optional ("interactive" interactive)]
+	    cl-declarations-or-string
+	    [&optional ("interactive" interactive)]
 	    def-body)))
 
 ;; Redefine function-form to also match cl-function

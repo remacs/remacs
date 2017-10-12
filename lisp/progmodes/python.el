@@ -640,10 +640,14 @@ The type returned can be `comment', `string' or `paren'."
    ((python-rx string-delimiter)
     (0 (ignore (python-syntax-stringify))))))
 
-(defconst python--prettify-symbols-alist
+(defvar python-prettify-symbols-alist
   '(("lambda"  . ?λ)
     ("and" . ?∧)
-    ("or" . ?∨)))
+    ("or" . ?∨))
+  "Value for `prettify-symbols-alist' in `python-mode'.")
+
+(define-obsolete-variable-alias 'python--prettify-symbols-alist
+  'python-prettify-symbols-alist "26.1")
 
 (defsubst python-syntax-count-quotes (quote-char &optional point limit)
   "Count number of quotes around point (max is 3).

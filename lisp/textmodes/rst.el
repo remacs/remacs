@@ -3450,7 +3450,7 @@ applied to each line like this
 COUNT is 0 before the first paragraph and increments for every
 paragraph found on level IND.  IN-FIRST is non-nil if this is the
 first line of such a paragraph.  IN-SUB is non-nil if this line
-is part of a sub-block while IN-SUPER is non-nil of this line is
+is part of a sub-block while IN-SUPER is non-nil if this line is
 part of a less indented block (super-block).  IN-EMPTY is non-nil
 if this line is empty where an empty line is considered being
 part of the previous block.  RELIND is nil for an empty line, 0

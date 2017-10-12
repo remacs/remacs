@@ -584,7 +584,7 @@ This example will:
 When the cell is empty (ie.@: when @code{val} is @code{nil}), print an
 empty string @code{""}
 @item
-When the cell value is a non negative number, format the the value in
+When the cell value is a non negative number, format the value in
 fixed-point notation with one decimal after point
 @item
 Otherwise, handle the value as erroneous by printing it as an

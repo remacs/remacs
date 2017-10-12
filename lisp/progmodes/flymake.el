@@ -123,9 +123,13 @@ If nil, never start checking buffer automatically like this."
 (make-obsolete-variable 'flymake-gui-warnings-enabled
 			"it no longer has any effect." "26.1")
 
-(defcustom flymake-start-syntax-check-on-find-file t
-  "Start syntax check on find file."
+(defcustom flymake-start-on-flymake-mode t
+  "Start syntax check when `flymake-mode'is enabled.
+Specifically, start it when the buffer is actually displayed."
   :type 'boolean)
+
+(define-obsolete-variable-alias 'flymake-start-syntax-check-on-find-file
+  'flymake-start-on-flymake-mode "26.1")
 
 (defcustom flymake-log-level -1
   "Obsolete and ignored variable."
@@ -138,24 +142,25 @@ If nil, never start checking buffer automatically like this."
   "If non-nil, moving to errors wraps around buffer boundaries."
   :type 'boolean)
 
-(define-fringe-bitmap 'flymake-double-exclamation-mark
-  (vector #b00000000
-          #b00000000
-          #b00000000
-          #b00000000
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b01100110
-          #b00000000
-          #b01100110
-          #b00000000
-          #b00000000
-          #b00000000))
+(when (fboundp 'define-fringe-bitmap)
+  (define-fringe-bitmap 'flymake-double-exclamation-mark
+    (vector #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b01100110
+            #b00000000
+            #b01100110
+            #b00000000
+            #b00000000
+            #b00000000)))
 
 (defvar-local flymake-timer nil
   "Timer for starting syntax check.")
@@ -318,12 +323,12 @@ region is invalid."
 (defvar flymake-diagnostic-functions nil
   "Special hook of Flymake backends that check a buffer.
 
-The functions in this hook diagnose problems in a buffer’s
+The functions in this hook diagnose problems in a buffer's
 contents and provide information to the Flymake user interface
 about where and how to annotate problems diagnosed in a buffer.
 
-Whenever Flymake or the user decides to re-check the buffer, each
-function is called with an arbitrary number of arguments:
+Each backend function must be prepared to accept an arbitrary
+number of arguments:
 
 * the first argument is always REPORT-FN, a callback function
   detailed below;
@@ -333,11 +338,12 @@ function is called with an arbitrary number of arguments:
   no such arguments, but backend functions must be prepared to
   accept and possibly ignore any number of them.
 
-Backend functions are expected to initiate the buffer check, but
-aren't required to complete it check before exiting: if the
-computation involved is expensive, especially for large buffers,
-that task can be scheduled for the future using asynchronous
-processes or other asynchronous mechanisms.
+Whenever Flymake or the user decides to re-check the buffer,
+backend functions are called as detailed above and are expected
+to initiate this check, but aren't required to complete it before
+exiting: if the computation involved is expensive, especially for
+large buffers, that task can be scheduled for the future using
+asynchronous processes or other asynchronous mechanisms.
 
 In any case, backend functions are expected to return quickly or
 signal an error, in which case the backend is disabled.  Flymake
@@ -371,10 +377,10 @@ Currently accepted values for REPORT-ACTION are:
 
 Currently accepted REPORT-KEY arguments are:
 
-* ‘:explanation’: value should give user-readable details of
+* `:explanation' value should give user-readable details of
   the situation encountered, if any.
 
-* ‘:force’: value should be a boolean suggesting that Flymake
+* `:force': value should be a boolean suggesting that Flymake
   consider the report even if it was somehow unexpected.")
 
 (defvar flymake-diagnostic-types-alist
@@ -403,12 +409,12 @@ properties are:
 
 * `severity', a non-negative integer specifying the diagnostic's
   severity.  The higher, the more serious.  If the overlay
-  priority `priority' is not specified, `severity' is used to set
+  property `priority' is not specified, `severity' is used to set
   it and help sort overlapping overlays.
 
 * `flymake-category', a symbol whose property list is considered
-  as a default for missing values of any other properties.  This
-  is useful to backend authors when creating new diagnostic types
+  a default for missing values of any other properties.  This is
+  useful to backend authors when creating new diagnostic types
   that differ from an existing type by only a few properties.")
 
 (put 'flymake-error 'face 'flymake-error)
@@ -493,8 +499,7 @@ associated `flymake-category' return DEFAULT."
         (lambda (_window _ov pos)
           (mapconcat
            (lambda (ov)
-             (let ((diag (overlay-get ov 'flymake--diagnostic)))
-               (flymake--diag-text diag)))
+             (overlay-get ov 'flymake-text))
            (flymake--overlays :beg pos)
            "\n")))
       (default-maybe 'severity (warning-numeric-level :error))
@@ -503,6 +508,7 @@ associated `flymake-category' return DEFAULT."
     ;;
     (overlay-put ov 'evaporate t)
     (overlay-put ov 'flymake t)
+    (overlay-put ov 'flymake-text (flymake--diag-text diagnostic))
     (overlay-put ov 'flymake--diagnostic diagnostic)))
 
 ;; Nothing in Flymake uses this at all any more, so this is just for
@@ -605,7 +611,12 @@ not expected."
             (flymake-log :debug "backend %s reported %d diagnostics in %.2f second(s)"
                          backend
                          (length new-diags)
-                         (- (float-time) flymake-check-start-time)))))))))
+                         (- (float-time) flymake-check-start-time)))
+          (when (and (get-buffer (flymake--diagnostics-buffer-name))
+                     (get-buffer-window (flymake--diagnostics-buffer-name))
+                     (null (cl-set-difference (flymake-running-backends)
+                                              (flymake-reporting-backends))))
+            (flymake-show-diagnostics-buffer))))))))
 
 (defun flymake-make-report-fn (backend &optional token)
   "Make a suitable anonymous report function for BACKEND.
@@ -618,24 +629,42 @@ different runs of the same backend."
         (with-current-buffer buffer
           (apply #'flymake--handle-report backend token args))))))
 
-(defun flymake--collect (fn)
+(defun flymake--collect (fn &optional message-prefix)
+  "Collect Flymake backends matching FN.
+If MESSAGE-PREFIX, echo a message using that prefix"
+  (unless flymake--backend-state
+    (user-error "Flymake is not initialized"))
   (let (retval)
     (maphash (lambda (backend state)
                (when (funcall fn state) (push backend retval)))
              flymake--backend-state)
+    (when message-prefix
+      (message "%s%s"
+               message-prefix
+               (mapconcat (lambda (s) (format "%s" s))
+                          retval ", ")))
     retval))
 
 (defun flymake-running-backends ()
   "Compute running Flymake backends in current buffer."
-  (flymake--collect #'flymake--backend-state-running))
+  (interactive)
+  (flymake--collect #'flymake--backend-state-running
+                    (and (called-interactively-p 'interactive)
+                         "Running backends: ")))
 
 (defun flymake-disabled-backends ()
   "Compute disabled Flymake backends in current buffer."
-  (flymake--collect #'flymake--backend-state-disabled))
+  (interactive)
+  (flymake--collect #'flymake--backend-state-disabled
+                    (and (called-interactively-p 'interactive)
+                         "Disabled backends: ")))
 
 (defun flymake-reporting-backends ()
   "Compute reporting Flymake backends in current buffer."
-  (flymake--collect #'flymake--backend-state-reported-p))
+  (interactive)
+  (flymake--collect #'flymake--backend-state-reported-p
+                    (and (called-interactively-p 'interactive)
+                         "Reporting backends: ")))
 
 (defun flymake--disable-backend (backend &optional explanation)
   "Disable BACKEND because EXPLANATION.
@@ -670,41 +699,101 @@ If it is running also stop it."
        (flymake--disable-backend backend err)))))
 
 (defun flymake-start (&optional deferred force)
-  "Start a syntax check.
-Start it immediately, or after current command if DEFERRED is
-non-nil.  With optional FORCE run even disabled backends.
+  "Start a syntax check for the current buffer.
+DEFERRED is a list of symbols designating conditions to wait for
+before actually starting the check.  If it is nil (the list is
+empty), start it immediately, else defer the check to when those
+conditions are met.  Currently recognized conditions are
+`post-command', for waiting until the current command is over,
+`on-display', for waiting until the buffer is actually displayed
+in a window.  If DEFERRED is t, wait for all known conditions.
+
+With optional FORCE run even disabled backends.
 
 Interactively, with a prefix arg, FORCE is t."
   (interactive (list nil current-prefix-arg))
-  (cl-labels
-      ((start
-        ()
-        (remove-hook 'post-command-hook #'start 'local)
-        (setq flymake-check-start-time (float-time))
-        (run-hook-wrapped
-         'flymake-diagnostic-functions
-         (lambda (backend)
-           (cond
-            ((and (not force)
-                  (flymake--with-backend-state backend state
-                    (flymake--backend-state-disabled state)))
-             (flymake-log :debug "Backend %s is disabled, not starting"
-                          backend))
+  (let ((deferred (if (eq t deferred)
+                      '(post-command on-display)
+                    deferred))
+        (buffer (current-buffer)))
+    (cl-labels
+        ((start-post-command
+          ()
+          (remove-hook 'post-command-hook #'start-post-command
+                       nil)
+          (with-current-buffer buffer
+            (flymake-start (remove 'post-command deferred) force)))
+         (start-on-display
+          ()
+          (remove-hook 'window-configuration-change-hook #'start-on-display
+                       'local)
+          (flymake-start (remove 'on-display deferred) force)))
+      (cond ((and (memq 'post-command deferred)
+                  this-command)
+             (add-hook 'post-command-hook
+                       #'start-post-command
+                       'append nil))
+            ((and (memq 'on-display deferred)
+                  (not (get-buffer-window (current-buffer))))
+             (add-hook 'window-configuration-change-hook
+                       #'start-on-display
+                       'append 'local))
             (t
-             (flymake--run-backend backend)))
-           nil))))
-    (if (and deferred
-             this-command)
-        (add-hook 'post-command-hook #'start 'append 'local)
-      (start))))
+             (setq flymake-check-start-time (float-time))
+             (run-hook-wrapped
+              'flymake-diagnostic-functions
+              (lambda (backend)
+                (cond
+                 ((and (not force)
+                       (flymake--with-backend-state backend state
+                         (flymake--backend-state-disabled state)))
+                  (flymake-log :debug "Backend %s is disabled, not starting"
+                               backend))
+                 (t
+                  (flymake--run-backend backend)))
+                nil)))))))
 
 (defvar flymake-mode-map
   (let ((map (make-sparse-keymap))) map)
   "Keymap for `flymake-mode'")
 
 ;;;###autoload
-(define-minor-mode flymake-mode nil
-  :group 'flymake :lighter flymake--mode-line-format :keymap flymake-mode-map
+(define-minor-mode flymake-mode
+  "Toggle Flymake mode on or off.
+With a prefix argument ARG, enable Flymake mode if ARG is
+positive, and disable it otherwise.  If called from Lisp, enable
+the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
+
+Flymake is an Emacs minor mode for on-the-fly syntax checking.
+Flymake collects diagnostic information from multiple sources,
+called backends, and visually annotates the buffer with the
+results.
+
+Flymake performs these checks while the user is editing.  The
+customization variables `flymake-start-on-flymake-mode',
+`flymake-no-changes-timeout' and
+`flymake-start-syntax-check-on-newline' determine the exact
+circumstances whereupon Flymake decides to initiate a check of
+the buffer.
+
+The commands `flymake-goto-next-error' and
+`flymake-goto-prev-error' can be used to navigate among Flymake
+diagnostics annotated in the buffer.
+
+The visual appearance of each type of diagnostic can be changed
+in the variable `flymake-diagnostic-types-alist'.
+
+Activation or deactivation of backends used by Flymake in each
+buffer happens via the special hook
+`flymake-diagnostic-functions'.
+
+Some backends may take longer than others to respond or complete,
+and some may decide to disable themselves if they are not
+suitable for the current buffer. The commands
+`flymake-running-backends', `flymake-disabled-backends' and
+`flymake-reporting-backends' summarize the situation, as does the
+special *Flymake log* buffer."  :group 'flymake :lighter
+  flymake--mode-line-format :keymap flymake-mode-map
   (cond
    ;; Turning the mode ON.
    (flymake-mode
@@ -714,8 +803,7 @@ Interactively, with a prefix arg, FORCE is t."
 
     (setq flymake--backend-state (make-hash-table))
 
-    (when flymake-start-syntax-check-on-find-file
-      (flymake-start)))
+    (when flymake-start-on-flymake-mode (flymake-start t)))
 
    ;; Turning the mode OFF.
    (t
@@ -748,7 +836,7 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
 	      (flymake-log
                :debug "starting syntax check after idle for %s seconds"
                flymake-no-changes-timeout)
-	      (flymake-start))
+	      (flymake-start t))
             (setq flymake-timer nil))))
       (current-buffer)))))
 
@@ -770,13 +858,13 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
   (let((new-text (buffer-substring start stop)))
     (when (and flymake-start-syntax-check-on-newline (equal new-text "\n"))
       (flymake-log :debug "starting syntax check as new-line has been seen")
-      (flymake-start 'deferred))
+      (flymake-start t))
     (flymake--schedule-timer-maybe)))
 
 (defun flymake-after-save-hook ()
   (when flymake-mode
     (flymake-log :debug "starting syntax check as buffer was saved")
-    (flymake-start)))
+    (flymake-start t)))
 
 (defun flymake-kill-buffer-hook ()
   (when flymake-timer
@@ -792,10 +880,10 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
 (defun flymake-goto-next-error (&optional n filter interactive)
   "Go to Nth next Flymake error in buffer matching FILTER.
 Interactively, always move to the next error.  With a prefix arg,
-skip any diagnostics with a severity less than ‘:warning’.
+skip any diagnostics with a severity less than `:warning'.
 
-If ‘flymake-wrap-around’ is non-nil and no more next errors,
-resumes search from top
+If `flymake-wrap-around' is non-nil and no more next errors,
+resumes search from top.
 
 FILTER is a list of diagnostic types found in
 `flymake-diagnostic-types-alist', or nil, if no filter is to be
@@ -835,6 +923,7 @@ applied."
            (goto-char (overlay-start target))
            (when interactive
              (message
+              "%s"
               (funcall (overlay-get target 'help-echo)
                        nil nil (point)))))
           (interactive
@@ -846,9 +935,9 @@ applied."
 (defun flymake-goto-prev-error (&optional n filter interactive)
   "Go to Nth previous Flymake error in buffer matching FILTER.
 Interactively, always move to the previous error.  With a prefix
-arg, skip any diagnostics with a severity less than ‘:warning’.
+arg, skip any diagnostics with a severity less than `:warning'.
 
-If ‘flymake-wrap-around’ is non-nil and no more previous errors,
+If `flymake-wrap-around' is non-nil and no more previous errors,
 resumes search from bottom.
 
 FILTER is a list of diagnostic types found in
@@ -868,6 +957,7 @@ applied."
     [ "Go to previous error"  flymake-goto-prev-error t ]
     [ "Check now"             flymake-start t ]
     [ "Go to log buffer"      flymake-switch-to-log-buffer t ]
+    [ "Show error buffer"     flymake-show-diagnostics-buffer t ]
     "--"
     [ "Turn off Flymake"      flymake-mode t ]))
 
@@ -897,11 +987,16 @@ applied."
                    ,(concat (format "%s known backends\n" (length known))
                             (format "%s running\n" (length running))
                             (format "%s disabled\n" (length disabled))
-                            "mouse-1: go to log buffer ")
+                            "mouse-1: Display minor mode menu\n"
+                            "mouse-2: Show help for minor mode")
                    keymap
                    ,(let ((map (make-sparse-keymap)))
                       (define-key map [mode-line down-mouse-1]
                         flymake-menu)
+                      (define-key map [mode-line mouse-2]
+                        (lambda ()
+                          (interactive)
+                          (describe-function 'flymake-mode)))
                       map))
       ,@(pcase-let ((`(,ind ,face ,explain)
                      (cond ((null known)
@@ -952,13 +1047,15 @@ applied."
                      ,(let ((map (make-sparse-keymap))
                             (type type))
                         (define-key map [mode-line mouse-4]
-                          (lambda (_event)
+                          (lambda (event)
                             (interactive "e")
-                            (flymake-goto-prev-error 1 (list type) t)))
+                            (with-selected-window (posn-window (event-start event))
+                              (flymake-goto-prev-error 1 (list type) t))))
                         (define-key map [mode-line mouse-5]
-                          (lambda (_event)
+                          (lambda (event)
                             (interactive "e")
-                            (flymake-goto-next-error 1 (list type) t)))
+                            (with-selected-window (posn-window (event-start event))
+                              (flymake-goto-next-error 1 (list type) t))))
                         map)
                      help-echo
                      ,(concat (format "%s diagnostics of type %s\n"
@@ -975,6 +1072,102 @@ applied."
                         collect a when rest collect
                         '(:propertize " "))
              (:propertize "]")))))))
+
+;;; Diagnostics buffer
+
+(defvar-local flymake--diagnostics-buffer-source nil)
+
+(defvar flymake-diagnostics-buffer-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "RET") 'flymake-goto-diagnostic)
+    (define-key map (kbd "SPC") 'flymake-show-diagnostic)
+    map))
+
+(defun flymake-show-diagnostic (pos &optional other-window)
+  "Show location of diagnostic at POS."
+  (interactive (list (point) t))
+  (let* ((id (or (tabulated-list-get-id pos)
+                 (user-error "Nothing at point")))
+         (overlay (plist-get id :overlay)))
+    (with-current-buffer (overlay-buffer overlay)
+      (with-selected-window
+          (display-buffer (current-buffer) other-window)
+        (goto-char (overlay-start overlay))
+        (pulse-momentary-highlight-region (overlay-start overlay)
+                                          (overlay-end overlay)
+                                          'highlight))
+      (current-buffer))))
+
+(defun flymake-goto-diagnostic (pos)
+  "Show location of diagnostic at POS.
+POS can be a buffer position or a button"
+  (interactive "d")
+  (pop-to-buffer
+   (flymake-show-diagnostic (if (button-type pos) (button-start pos) pos))))
+
+(defun flymake--diagnostics-buffer-entries ()
+  (with-current-buffer flymake--diagnostics-buffer-source
+    (cl-loop for ov in (flymake--overlays)
+             for diag = (overlay-get ov
+                                     'flymake--diagnostic)
+             for (line . col) =
+             (save-excursion
+               (goto-char (overlay-start ov))
+               (cons (line-number-at-pos)
+                     (- (point)
+                        (line-beginning-position))))
+             for type = (flymake--diag-type diag)
+             collect
+             (list (list :overlay ov
+                         :line line
+                         :severity (flymake--lookup-type-property
+                                    type
+                                    'severity (warning-numeric-level :error)))
+                   `[,(format "%s" line)
+                     ,(format "%s" col)
+                     ,(propertize (format "%s" type)
+                                  'face (flymake--lookup-type-property
+                                         type 'mode-line-face 'flymake-error))
+                     (,(format "%s" (flymake--diag-text diag))
+                      mouse-face highlight
+                      help-echo "mouse-2: visit this diagnostic"
+                      face nil
+                      action flymake-goto-diagnostic
+                      mouse-action flymake-goto-diagnostic)]))))
+
+(define-derived-mode flymake-diagnostics-buffer-mode tabulated-list-mode
+  "Flymake diagnostics"
+  "A mode for listing Flymake diagnostics."
+  (setq tabulated-list-format
+        `[("Line" 5 (lambda (l1 l2)
+                      (< (plist-get (car l1) :line)
+                         (plist-get (car l2) :line)))
+           :right-align t)
+          ("Col" 3 nil :right-align t)
+          ("Type" 8 (lambda (l1 l2)
+                      (< (plist-get (car l1) :severity)
+                         (plist-get (car l2) :severity))))
+          ("Message" 0 t)])
+  (setq tabulated-list-entries
+        'flymake--diagnostics-buffer-entries)
+  (tabulated-list-init-header))
+
+(defun flymake--diagnostics-buffer-name ()
+  (format "*Flymake diagnostics for %s*" (current-buffer)))
+
+(defun flymake-show-diagnostics-buffer ()
+  "Show a list of Flymake diagnostics for current buffer."
+  (interactive)
+  (let* ((name (flymake--diagnostics-buffer-name))
+         (source (current-buffer))
+         (target (or (get-buffer name)
+                     (with-current-buffer (get-buffer-create name)
+                       (flymake-diagnostics-buffer-mode)
+                       (setq flymake--diagnostics-buffer-source source)
+                       (current-buffer)))))
+    (with-current-buffer target
+      (revert-buffer)
+      (display-buffer (current-buffer)))))
 
 (provide 'flymake)
 

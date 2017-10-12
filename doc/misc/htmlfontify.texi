@@ -825,7 +825,7 @@ with a class of @code{t} is considered to match any class you specify.
 This matches Emacs's behavior when deciding on which face attributes to
 use, to the best of my understanding ).
 
-If @var{class} is @code{nil}, then you just get get whatever
+If @var{class} is @code{nil}, then you just get whatever
 @code{face-attr-construct} returns; i.e., the current specification in
 effect for @var{face}.
 

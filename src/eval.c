@@ -2681,7 +2681,7 @@ call8 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3,
 }
 
 DEFUN ("functionp", Ffunctionp, Sfunctionp, 1, 1, 0,
-       doc: /* Non-nil if OBJECT is a function.  */)
+       doc: /* Return t if OBJECT is a function.  */)
      (Lisp_Object object)
 {
   if (FUNCTIONP (object))

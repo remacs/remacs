@@ -188,7 +188,7 @@
 ;; From 24 Oct - 21 Nov 2015, `open-line' took a second argument
 ;; INTERACTIVE and ran `post-self-insert-hook' if the argument was
 ;; true.  This test tested that.  Currently, however, `open-line'
-;; does not run run `post-self-insert-hook' at all, so for now
+;; does not run `post-self-insert-hook' at all, so for now
 ;; this test just makes sure that it doesn't.
 (ert-deftest open-line-hook ()
   (let* ((x 0)

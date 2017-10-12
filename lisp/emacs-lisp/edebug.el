@@ -2017,15 +2017,14 @@ expressions; a `progn' form will be returned enclosing these forms."
 (def-edebug-spec defvar (symbolp &optional form stringp))
 
 (def-edebug-spec defun
-  (&define name lambda-list
-	   [&optional stringp]
+  (&define name lambda-list lambda-doc
            [&optional ("declare" &rest sexp)]
 	   [&optional ("interactive" interactive)]
 	   def-body))
 (def-edebug-spec defmacro
   ;; FIXME: Improve `declare' so we can Edebug gv-expander and
   ;; gv-setter declarations.
-  (&define name lambda-list [&optional stringp]
+  (&define name lambda-list lambda-doc
            [&optional ("declare" &rest sexp)] def-body))
 
 (def-edebug-spec arglist lambda-list)  ;; deprecated - use lambda-list.
@@ -2035,6 +2034,10 @@ expressions; a `progn' form will be returned enclosing these forms."
     [&optional ["&optional" arg &rest arg]]
     &optional ["&rest" arg]
     )))
+
+(def-edebug-spec lambda-doc
+  (&optional [&or stringp
+                  (&define ":documentation" def-form)]))
 
 (def-edebug-spec interactive
   (&optional &or stringp def-form))
@@ -3254,15 +3257,6 @@ generated symbols for methods.  If a function or method to
 instrument cannot be found, signal an error."
   (let ((func-marker (get func 'edebug)))
     (cond
-     ((and (markerp func-marker) (marker-buffer func-marker))
-      ;; It is uninstrumented, so instrument it.
-      (with-current-buffer (marker-buffer func-marker)
-	(goto-char func-marker)
-	(edebug-eval-top-level-form)
-        (list func)))
-     ((consp func-marker)
-      (message "%s is already instrumented." func)
-      (list func))
      ((cl-generic-p func)
       (let ((method-defs (cl--generic-method-files func))
             symbols)
@@ -3277,6 +3271,15 @@ instrument cannot be found, signal an error."
               (edebug-eval-top-level-form)
               (push (edebug-form-data-symbol) symbols))))
         symbols))
+     ((and (markerp func-marker) (marker-buffer func-marker))
+      ;; It is uninstrumented, so instrument it.
+      (with-current-buffer (marker-buffer func-marker)
+	(goto-char func-marker)
+	(edebug-eval-top-level-form)
+        (list func)))
+     ((consp func-marker)
+      (message "%s is already instrumented." func)
+      (list func))
      (t
       (let ((loc (find-function-noselect func t)))
 	(unless (cdr loc)

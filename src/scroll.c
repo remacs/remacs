@@ -457,7 +457,7 @@ calculate_direct_scrolling (struct frame *frame,
   if (baud_rate <= 0)
     extra_cost = 1;
 
-  /* Overhead of setting the scroll window, plus the extra cost
+  /* Overhead of setting the scroll window, plus the extra
      cost of scrolling by a distance of one.  The extra cost is
      added once for consistency with the cost vectors */
   scroll_overhead

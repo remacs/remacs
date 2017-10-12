@@ -248,7 +248,7 @@ cause the current test to fail."
   (kmacro-tests-simulate-command '(kmacro-set-counter 1))
   (kmacro-tests-should-insert "1"
     (kmacro-tests-simulate-command '(kmacro-insert-counter nil)))
-  ;; Using universal arg to to set counter should reset to starting value.
+  ;; Using universal arg to set counter should reset to starting value.
   (kmacro-tests-simulate-command '(kmacro-set-counter (4)) '(4))
   (kmacro-tests-should-insert "5"
     (kmacro-tests-simulate-command '(kmacro-insert-counter nil))))

@@ -626,7 +626,7 @@ Create parent directories as needed."
   "Tell Flymake UI about a fatal PROBLEM with this backend.
 May only be called in a dynamic environment where
 `flymake-proc--report-fn' is bound."
-  (flymake-log 0 "%s: %s" problem explanation)
+  (flymake-log 1 "%s: %s" problem explanation)
   (if (and (boundp 'flymake-proc--report-fn)
            flymake-proc--report-fn)
       (funcall flymake-proc--report-fn :panic
@@ -766,7 +766,7 @@ can also be executed interactively independently of
           (unwind-protect
               (cond
                ((not cmd-and-args)
-                (flymake-log 0 "init function %s for %s failed, cleaning up"
+                (flymake-log 1 "init function %s for %s failed, cleaning up"
                              init-f buffer-file-name))
                (t
                 (setq proc
