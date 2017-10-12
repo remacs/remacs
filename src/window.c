@@ -6980,24 +6980,6 @@ Return t if any margin was actually changed and nil otherwise.  */)
 }
 
 
-DEFUN ("window-margins", Fwindow_margins, Swindow_margins,
-       0, 1, 0,
-       doc: /* Get width of marginal areas of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-Value is a cons of the form (LEFT-WIDTH . RIGHT-WIDTH).
-If a marginal area does not exist, its width will be returned
-as nil.  */)
-  (Lisp_Object window)
-{
-  struct window *w = decode_live_window (window);
-  return Fcons (w->left_margin_cols
-		? make_number (w->left_margin_cols) : Qnil,
-		w->right_margin_cols
-		? make_number (w->right_margin_cols) : Qnil);
-}
-
-
 
 /***********************************************************************
 			    Fringes
@@ -7742,7 +7724,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_configuration);
   defsubr (&Scurrent_window_configuration);
   defsubr (&Sset_window_margins);
-  defsubr (&Swindow_margins);
   defsubr (&Sset_window_fringes);
   defsubr (&Swindow_fringes);
   defsubr (&Sset_window_scroll_bars);
