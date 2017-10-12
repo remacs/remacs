@@ -48,7 +48,7 @@ mod chartable;
 mod cmds;
 mod crypto;
 mod data;
-mod dired_rust;
+mod dired;
 mod dispnew;
 mod editfns;
 mod floatfns;
