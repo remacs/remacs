@@ -2,10 +2,11 @@
 
 use lisp::{LispObject, ExternalPtr};
 use remacs_macros::lisp_fn;
-use remacs_sys::{Lisp_Window, selected_window as current_window,
+use remacs_sys::{EmacsInt, Lisp_Window, selected_window as current_window,
                  minibuf_selected_window as current_minibuf_window, minibuf_level};
 use marker::marker_position;
 use editfns::point;
+use libc::c_int;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
@@ -135,6 +136,33 @@ pub fn window_minibuffer_p(window: LispObject) -> LispObject {
         window
     };
     LispObject::from_bool(win.as_window_or_error().is_minibuffer())
+}
+
+/// Get width of marginal areas of window WINDOW.
+/// WINDOW must be a live window and defaults to the selected one.
+///
+/// Value is a cons of the form (LEFT-WIDTH . RIGHT-WIDTH).
+/// If a marginal area does not exist, its width will be returned
+/// as nil.
+#[lisp_fn(min = "0")]
+pub fn window_margins(window: LispObject) -> LispObject {
+    fn margin_as_object(margin: c_int) -> LispObject {
+        if margin != 0 {
+            LispObject::from_fixnum(margin as EmacsInt)
+        } else {
+            LispObject::constant_nil()
+        }
+    }
+    let win = if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    }.as_live_window_or_error();
+
+    LispObject::cons(
+        margin_as_object(win.left_margin_cols),
+        margin_as_object(win.right_margin_cols),
+    )
 }
 
 /// Return the window which was selected when entering the minibuffer.

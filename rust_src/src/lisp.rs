@@ -16,6 +16,7 @@ use symbols::LispSymbolRef;
 use vectors::LispVectorlikeRef;
 use buffers::{LispBufferRef, LispOverlayRef};
 use windows::LispWindowRef;
+use frames::LispFrameRef;
 use process::LispProcessRef;
 use marker::LispMarkerRef;
 use hashtable::LispHashTableRef;
@@ -31,7 +32,7 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
                  Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qplistp, Qintegerp, Qhash_table_p,
                  Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p,
-                 Qprocessp, Qthreadp, SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qframep, Qprocessp, Qthreadp, SYMBOL_NAME, PseudovecType, EqualKind};
 
 #[cfg(test)]
 use functions::ExternCMocks;
@@ -223,6 +224,16 @@ impl<T> Deref for ExternalPtr<T> {
 impl<T> DerefMut for ExternalPtr<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { &mut *self.0 }
+    }
+}
+
+impl<T> PartialEq for ExternalPtr<T> {
+    fn eq(&self, other: &ExternalPtr<T>) -> bool {
+        self.as_ptr() == other.as_ptr()
+    }
+
+    fn ne(&self, other: &ExternalPtr<T>) -> bool {
+        self.as_ptr() != other.as_ptr()
     }
 }
 
@@ -551,6 +562,16 @@ impl LispObject {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_FRAME)
         })
+    }
+
+    pub fn as_frame(self) -> Option<LispFrameRef> {
+        self.as_vectorlike().map_or(None, |v| v.as_frame())
+    }
+
+    pub fn as_frame_or_error(self) -> LispFrameRef {
+        self.as_frame().unwrap_or_else(
+            || wrong_type!(Qframep, self),
+        )
     }
 
     pub fn is_hash_table(self) -> bool {
