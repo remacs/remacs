@@ -506,38 +506,6 @@ Value, if non-nil, is a list (interactive SPEC).  */)
 		Getting and Setting Values of Symbols
  ***********************************************************************/
 
-/* Return the symbol holding SYMBOL's value.  Signal
-   `cyclic-variable-indirection' if SYMBOL's chain of variable
-   indirections contains a loop.  */
-
-struct Lisp_Symbol *
-indirect_variable (struct Lisp_Symbol *symbol)
-{
-  struct Lisp_Symbol *tortoise, *hare;
-
-  hare = tortoise = symbol;
-
-  while (hare->redirect == SYMBOL_VARALIAS)
-    {
-      hare = SYMBOL_ALIAS (hare);
-      if (hare->redirect != SYMBOL_VARALIAS)
-	break;
-
-      hare = SYMBOL_ALIAS (hare);
-      tortoise = SYMBOL_ALIAS (tortoise);
-
-      if (hare == tortoise)
-	{
-	  Lisp_Object tem;
-	  XSETSYMBOL (tem, symbol);
-	  xsignal1 (Qcyclic_variable_indirection, tem);
-	}
-    }
-
-  return hare;
-}
-
-
 /* Given the raw contents of a symbol value cell,
    return the Lisp value of the symbol.
    This does not handle buffer-local variables; use

@@ -147,6 +147,7 @@ pub use symbols::Fsymbol_function;
 pub use symbols::Fsymbol_plist;
 pub use symbols::Fkeywordp;
 pub use symbols::Findirect_variable;
+pub use symbols::indirect_variable;
 pub use strings::Fstring_equal;
 pub use strings::Fstring_as_multibyte;
 pub use strings::Fstring_to_multibyte;

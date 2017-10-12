@@ -72,6 +72,13 @@ impl LispSymbolRef {
     }
 }
 
+// Wrapper around LispSymbolRef::get_indirect_variable()
+// could be removed when all C references are ported
+#[no_mangle]
+pub unsafe extern "C" fn indirect_variable(symbol: *mut Lisp_Symbol) -> *mut Lisp_Symbol {
+    LispSymbolRef::new(symbol).get_indirect_variable().as_mut()
+}
+
 /// Return t if OBJECT is a symbol.
 #[lisp_fn]
 fn symbolp(object: LispObject) -> LispObject {
@@ -154,8 +161,8 @@ fn keywordp(object: LispObject) -> LispObject {
 ///
 /// If OBJECT is not a symbol, just return it.  If there is a loop in the
 /// chain of aliases, signal a `cyclic-variable-indirection' error.
-#[lisp_fn]
-fn indirect_variable(object: LispObject) -> LispObject {
+#[lisp_fn(name = "indirect-variable", c_name = "indirect_variable")]
+fn indirect_variable_lisp(object: LispObject) -> LispObject {
     if let Some(symbol) = object.as_symbol() {
         let val = symbol.get_indirect_variable();
         val.as_lisp_obj()
