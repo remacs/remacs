@@ -10055,7 +10055,12 @@ Internal use only.  */)
 
   this_command_key_count = 0;
   this_single_command_key_start = 0;
-  int key0 = SREF (keys, 0);
+
+  int charidx = 0, byteidx = 0;
+  int key0;
+  FETCH_STRING_CHAR_ADVANCE (key0, keys, charidx, byteidx);
+  if (CHAR_BYTE8_P (key0))
+    key0 = CHAR_TO_BYTE8 (key0);
 
   /* Kludge alert: this makes M-x be in the form expected by
      novice.el.  (248 is \370, a.k.a. "Meta-x".)  Any better ideas?  */
@@ -10064,7 +10069,13 @@ Internal use only.  */)
   else
     add_command_key (make_number (key0));
   for (ptrdiff_t i = 1; i < SCHARS (keys); i++)
-    add_command_key (make_number (SREF (keys, i)));
+    {
+      int key_i;
+      FETCH_STRING_CHAR_ADVANCE (key_i, keys, charidx, byteidx);
+      if (CHAR_BYTE8_P (key_i))
+	key_i = CHAR_TO_BYTE8 (key_i);
+      add_command_key (make_number (key_i));
+    }
   return Qnil;
 }
 
