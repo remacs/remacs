@@ -12,6 +12,7 @@ use multibyte::MAX_CHAR;
 use lists::{sort_list, inorder, nthcdr, car};
 use buffers::LispBufferRef;
 use windows::LispWindowRef;
+use frames::LispFrameRef;
 use process::LispProcessRef;
 use chartable::LispCharTableRef;
 use threads::ThreadStateRef;
@@ -71,6 +72,15 @@ impl LispVectorlikeRef {
     #[inline]
     pub fn as_window(&self) -> Option<LispWindowRef> {
         if self.is_pseudovector(PseudovecType::PVEC_WINDOW) {
+            Some(unsafe { mem::transmute(*self) })
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_frame(&self) -> Option<LispFrameRef> {
+        if self.is_pseudovector(PseudovecType::PVEC_FRAME) {
             Some(unsafe { mem::transmute(*self) })
         } else {
             None

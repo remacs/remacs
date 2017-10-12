@@ -369,23 +369,6 @@ DEFUN ("point-marker", Fpoint_marker, Spoint_marker, 0, 0, 0,
 {
   return build_marker (current_buffer, PT, PT_BYTE);
 }
-
-DEFUN ("goto-char", Fgoto_char, Sgoto_char, 1, 1, "NGoto char: ",
-       doc: /* Set point to POSITION, a number or marker.
-Beginning of buffer is position (point-min), end is (point-max).
-
-The return value is POSITION.  */)
-  (register Lisp_Object position)
-{
-  if (MARKERP (position))
-    set_point_from_marker (position);
-  else if (INTEGERP (position))
-    SET_PT (clip_to_bounds (BEGV, XINT (position), ZV));
-  else
-    wrong_type_argument (Qinteger_or_marker_p, position);
-  return position;
-}
-
 
 /* Find all the overlays in the current buffer that touch position POS.
    Return the number found, and store them in a vector in VEC
@@ -5280,7 +5263,6 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Spropertize);
   defsubr (&Schar_equal);
-  defsubr (&Sgoto_char);
   defsubr (&Sstring_to_char);
   defsubr (&Schar_to_string);
   defsubr (&Sbyte_to_string);

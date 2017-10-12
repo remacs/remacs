@@ -52,6 +52,7 @@ mod str2sig;
 mod multibyte;
 mod buffers;
 mod windows;
+mod frames;
 mod hashtable;
 mod interactive;
 mod process;
@@ -164,6 +165,7 @@ pub use obarray::Fintern_soft;
 pub use marker::Fmarker_position;
 pub use marker::Fmarker_buffer;
 pub use windows::Fwindow_point;
+pub use editfns::Fgoto_char;
 pub use data::Findirect_function;
 pub use data::indirect_function;
 
@@ -403,10 +405,12 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Smark_marker);
         defsubr(&*editfns::Spoint_min);
         defsubr(&*editfns::Spoint_max);
+        defsubr(&*editfns::Sgoto_char);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
         defsubr(&*threads::Sthread_name);
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);
+        defsubr(&*frames::Sselected_frame);
     }
 }
