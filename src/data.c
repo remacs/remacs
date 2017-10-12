@@ -538,25 +538,6 @@ indirect_variable (struct Lisp_Symbol *symbol)
 }
 
 
-DEFUN ("indirect-variable", Findirect_variable, Sindirect_variable, 1, 1, 0,
-       doc: /* Return the variable at the end of OBJECT's variable chain.
-If OBJECT is a symbol, follow its variable indirections (if any), and
-return the variable at the end of the chain of aliases.  See Info node
-`(elisp)Variable Aliases'.
-
-If OBJECT is not a symbol, just return it.  If there is a loop in the
-chain of aliases, signal a `cyclic-variable-indirection' error.  */)
-  (Lisp_Object object)
-{
-  if (SYMBOLP (object))
-    {
-      struct Lisp_Symbol *sym = indirect_variable (XSYMBOL (object));
-      XSETSYMBOL (object, sym);
-    }
-  return object;
-}
-
-
 /* Given the raw contents of a symbol value cell,
    return the Lisp value of the symbol.
    This does not handle buffer-local variables; use
@@ -2704,7 +2685,6 @@ syms_of_data (void)
   DEFSYM (Qinteractive_form, "interactive-form");
   DEFSYM (Qdefalias_fset_function, "defalias-fset-function");
 
-  defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Smodule_function_p);
