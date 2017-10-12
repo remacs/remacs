@@ -878,11 +878,11 @@ Do it only if `flymake-no-changes-timeout' is non-nil."
     (flymake-log :warning "Turned on in `flymake-find-file-hook'")))
 
 (defun flymake-goto-next-error (&optional n filter interactive)
-  "Go to Nth next Flymake error in buffer matching FILTER.
-Interactively, always move to the next error.  With a prefix arg,
-skip any diagnostics with a severity less than `:warning'.
+  "Go to Nth next Flymake diagnostic that matches FILTER.
+Interactively, always move to the next diagnostic.  With a prefix
+arg, skip any diagnostics with a severity less than `:warning'.
 
-If `flymake-wrap-around' is non-nil and no more next errors,
+If `flymake-wrap-around' is non-nil and no more next diagnostics,
 resumes search from top.
 
 FILTER is a list of diagnostic types found in
@@ -933,12 +933,13 @@ applied."
                          ""))))))
 
 (defun flymake-goto-prev-error (&optional n filter interactive)
-  "Go to Nth previous Flymake error in buffer matching FILTER.
-Interactively, always move to the previous error.  With a prefix
-arg, skip any diagnostics with a severity less than `:warning'.
+  "Go to Nth previous Flymake diagnostic that matches FILTER.
+Interactively, always move to the previous diagnostic.  With a
+prefix arg, skip any diagnostics with a severity less than
+`:warning'.
 
-If `flymake-wrap-around' is non-nil and no more previous errors,
-resumes search from bottom.
+If `flymake-wrap-around' is non-nil and no more previous
+diagnostics, resumes search from bottom.
 
 FILTER is a list of diagnostic types found in
 `flymake-diagnostic-types-alist', or nil, if no filter is to be
@@ -953,13 +954,13 @@ applied."
 ;;;
 (easy-menu-define flymake-menu flymake-mode-map "Flymake"
   `("Flymake"
-    [ "Go to next error"      flymake-goto-next-error t ]
-    [ "Go to previous error"  flymake-goto-prev-error t ]
-    [ "Check now"             flymake-start t ]
-    [ "Go to log buffer"      flymake-switch-to-log-buffer t ]
-    [ "Show error buffer"     flymake-show-diagnostics-buffer t ]
+    [ "Go to next problem"      flymake-goto-next-error t ]
+    [ "Go to previous problem"  flymake-goto-prev-error t ]
+    [ "Check now"               flymake-start t ]
+    [ "List all problems"       flymake-show-diagnostics-buffer t ]
     "--"
-    [ "Turn off Flymake"      flymake-mode t ]))
+    [ "Go to log buffer"        flymake-switch-to-log-buffer t ]
+    [ "Turn off Flymake"        flymake-mode t ]))
 
 (defvar flymake--mode-line-format `(:eval (flymake--mode-line-format)))
 

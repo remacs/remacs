@@ -52,8 +52,6 @@ modify this GNU manual.''
 @end ifnottex
 
 @menu
-* Overview of Flymake::
-* Installing Flymake::
 * Using Flymake::
 * Extending Flymake::
 * The legacy Proc backend::
@@ -61,18 +59,41 @@ modify this GNU manual.''
 * Index::
 @end menu
 
-@node Overview of Flymake
-@chapter Overview
+@node Using Flymake
+@chapter Using Flymake
 @cindex overview of flymake
+@cindex using flymake
 
 Flymake is a universal on-the-fly buffer checker implemented as an
-Emacs minor mode.  When enabled, Flymake visually annotates the buffer
-with diagnostic information coming from one or more different sources,
-or @dfn{backends}.
+Emacs minor minor.  To use Flymake, you must first activate
+@code{flymake-mode} by using the command @kbd{flymake-mode}.
 
-Flymake annotates the buffer by highlighting problematic buffer
-regions with a special space.  It displays an overall buffer status in
-the mode line containing totals for different types of diagnostics.
+When enabled, Flymake collects information about problems in the
+buffer, called @dfn{diagnostics}, from one or more different sources,
+or @dfn{backends}, and then visually annotates the buffer by
+highlighting problematic buffer regions with a special face.
+
+It also displays an overall buffer status in the mode line containing
+totals for different types of diagnostics.
+
+Syntax check is done ``on-the-fly''.  It is started whenever
+
+@itemize @bullet
+@item
+@code{flymake-mode} is started, unless
+@code{flymake-start-on-flymake-mode} is nil;
+
+@item
+a newline character is added to the buffer, unless
+@code{flymake-start-syntax-check-on-newline} is nil;
+
+@item
+some changes were made to the buffer more than @code{0.5} seconds ago
+(the delay is configurable in @code{flymake-no-changes-timeout}).
+@end itemize
+
+Syntax check can also be started manually by typing the @kbd{M-x
+flymake-start @key{RET}} command.
 
 @code{flymake-goto-next-error} and @code{flymake-goto-prev-error} are
 commands that allow easy navigation to the next/previous erroneous
@@ -84,27 +105,11 @@ and @kbd{M-p} in @code{flymake-mode}, by adding to your init file:
 (define-key flymake-mode-map (kbd "M-p") 'flymake-goto-prev-error)
 @end lisp
 
-Syntax check is done ``on-the-fly''.  It is started whenever
-
-@itemize @bullet
-@item
-@code{flymake-mode} is started, unless
-@code{flymake-start-on-flymake-mode} is nil.
-
-@item
-a newline character is added to the buffer, unless
-@code{flymake-start-syntax-check-on-newline} is nil.
-
-@item
-some changes were made to the buffer more than @code{0.5} seconds ago
-(the delay is configurable in @code{flymake-no-changes-timeout}).
-@end itemize
-
 Flymake is a universal syntax checker in the sense that it's easily
 extended to support new backends (@pxref{Extending Flymake}).
 
-Historically, Flymake used to accept diagnostics from a single, albeit
-reasonably flexible, backend.
+Historically, Flymake used to accept diagnostics from a single
+backend, albeit a reasonably flexible one.
 
 This backend isn't (yet) obsolete, and so is still available as a
 fallback and active by default (@pxref{The legacy Proc backend}).  It works by
@@ -114,105 +119,45 @@ background, passing it a temporary file which is a copy of the current
 buffer, and parsing the output for known error/warning message
 patterns.
 
-@node Installing Flymake
-@chapter Installing
-@cindex installing flymake
-
-Flymake is included with Emacs and its main commands, like
-@code{flymake-mode}, are autoloaded.  This means there is usually
-nothing to do by way of installation.
-
-@node Using Flymake
-@chapter Using Flymake
-@cindex using flymake
-
 @menu
-* Flymake mode::
-* Running the syntax check::
-* Navigating to error lines::   @c * Viewing error messages::
 * Syntax check statuses::
 * Backend exceptions::
 * Customizable variables::
 @end menu
 
-@node Flymake mode
-@section Flymake mode
-@cindex flymake-mode
-@cindex activating flymake-mode
-
-Flymake is an Emacs minor mode.  To use Flymake, you
-must first activate @code{flymake-mode} by using the command
-@kbd{flymake-mode}.
-
-Instead of manually activating @code{flymake-mode}, you can configure
-Emacs to automatically enable @code{flymake-mode} upon opening any
-file for which syntax check is possible.  To do so, place the following
-line in your @file{~/.emacs}:
-
-@lisp
-(add-hook 'find-file-hook 'flymake-find-file-hook)
-@end lisp
-
-@node Running the syntax check
-@section Running the syntax check
-@cindex manually starting syntax check
-@cindex syntax check, start manually
-
-@findex flymake-start
-When @code{flymake-mode} is active, syntax check is started
-automatically on any of the three conditions mentioned in
-@ref{Overview of Flymake}.  Syntax check can also be started manually
-by typing the @kbd{M-x flymake-start @key{RET}} command.
-
-@node Navigating to error lines
-@section Navigating to error lines
-@cindex navigating to error lines
-
-After syntax check is completed, lines for which at least one error or
-warning has been reported are highlighted, and the total number of errors
-and warning is shown in the mode line.  Use the following functions to
-navigate the highlighted lines:
-
-@table @code
-@findex flymake-goto-next-error
-@item flymake-goto-next-error
-Moves point to the next erroneous line, if any.
-
-@findex flymake-goto-prev-error
-@item flymake-goto-prev-error
-Moves point to the previous erroneous line.
-@end table
-
-If the user option @code{flymake-wrap-around} is active
-(@pxref{Customizable variables}), these functions treat diagnostics
-as a linked list.  Therefore, @code{flymake-goto-next-error} will go
-to the first diagnostic when invoked in the end of the buffer.
-
 @node Syntax check statuses
 @section Syntax check statuses
 @cindex Syntax check statuses
 
-While enabled, Flymake displays its status in the mode line.
+When enabled, Flymake displays its status in the mode line, which
+provides a visual summary of diagnostic collection.  It may also hint
+at certain exceptional situations encountered when communicating with
+backends.
+
 The following statuses are defined:
 
 @multitable @columnfractions 0.25 0.75
+@item [@var{nerrors} @var{nwarnings} ...]
+@tab Normal operation. @var{nerrors} and @var{nwarnings} are, respectively,
+the total number of errors and warnings found during the last buffer
+check, for all backends. They may be followed by other totals for
+other types of diagnostics (@pxref{Flymake error types}).
+
 @item @code{Wait}
-@tab  Some flymake backends haven't reported since the last time they
-where questioned.
+@tab  Some Flymake backends haven't reported since the last time they
+where questioned.  It is reasonable to assume that this is a temporary
+delay and Flymake will resume normal operation soon.
 
 @item @code{!}
-@tab All the configured Flymake backends have disabled themselves.
-Left-clicking Flymake's mode line indicator pops up a menu listing the
-option to visit Flymake's log buffer.  In this buffer these situations
-can be investigated.
+@tab All the configured Flymake backends have disabled themselves: Flymake
+cannot annotate the buffer and action from the user is needed to
+investigate and remedy the situation (@pxref{Backend exceptions}).
 
 @item @code{?}
-@tab There are no configured Flymake backends in
-@code{flymake-diagnostic-functions}.
+@tab There are no applicable Flymake backends for this buffer, thus Flymake
+cannot annotate it.  To fix this, a user may look to extending Flymake
+and add a new backend (@pxref{Extending Flymake}).
 
-@item @emph{[nerrors nwarnings]}
-@tab Normal operation, number of errors/warnings found by the syntax
-check process.
 @end multitable
 
 @node Backend exceptions
@@ -223,8 +168,9 @@ check process.
 @cindex backends, disabled
 Some backends may take longer than others to respond or complete, and
 some may decide to @emph{disable} themselves if they are not suitable
-for the current buffer.  A disabled backend is not tried again for
-future checks of the current buffer.
+for the current buffer or encounter some unavoidable problem.  A
+disabled backend is not tried again for future checks of the current
+buffer.
 
 @findex flymake-reporting-backends
 @findex flymake-running-backends
@@ -240,10 +186,12 @@ disabled backend list, so that they will be tried again in the next check.
 
 @cindex logging
 @cindex flymake logging
-Flymake also uses a simple logging facility for indicating important points
-in the control flow.  The logging facility sends logging messages to
-the @file{*Flymake log*} buffer.  The information logged can be used for
-resolving various problems related to Flymake.
+Flymake also uses a simple logging facility for indicating important
+points in the control flow.  The logging facility sends logging
+messages to the @file{*Flymake log*} buffer.  The information logged
+can be used for resolving various problems related to Flymake.  For
+convenience, a shortcut to this buffer can be found in Flymake's menu,
+accessible from the top menu bar or just left of the status indicator.
 
 @vindex warning-minimum-log-level
 @vindex warning-minimum-level
