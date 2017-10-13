@@ -3144,7 +3144,7 @@ non-empty directories is allowed."
 		       #'dired-delete-entry fn))
                   (quit (throw '--delete-cancel (message "OK, canceled")))
 		  (error ;; catch errors from failed deletions
-		   (dired-log "%s\n" err)
+		   (dired-log "%s: %s\n" (car err) (error-message-string err))
 		   (setq failures (cons (car (car l)) failures)))))
 	      (setq l (cdr l)))
 	    (if (not failures)
