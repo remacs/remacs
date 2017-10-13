@@ -253,7 +253,9 @@ first will be printed into the backtrace buffer."
 		;; Unshow debugger-buffer.
 		(quit-restore-window debugger-window debugger-bury-or-kill)
 		;; Restore current buffer (Bug#12502).
-		(set-buffer debugger-old-buffer))))
+		(set-buffer debugger-old-buffer)))
+            ;; Forget debugger window, it won't be back (Bug#17882).
+            (setq debugger-previous-window nil))
           ;; Restore previous state of debugger-buffer in case we were
           ;; in a recursive invocation of the debugger, otherwise just
           ;; erase the buffer and put it into fundamental mode.
