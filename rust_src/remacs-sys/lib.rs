@@ -996,6 +996,7 @@ extern "C" {
     pub static Qfont_extra_type: Lisp_Object;
     pub static Qsetting_constant: Lisp_Object;
     pub static Qcyclic_function_indirection: Lisp_Object;
+    pub static Qsubfeatures: Lisp_Object;
 
     pub static Qmd5: Lisp_Object;
     pub static Qsha1: Lisp_Object;
@@ -1011,6 +1012,7 @@ extern "C" {
     pub static Vbuffer_alist: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
     pub static Vminibuffer_list: Lisp_Object;
+    pub static Vfeatures: Lisp_Object;
     pub static minibuf_level: EmacsInt;
     pub static minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;

@@ -1869,24 +1869,6 @@ advisable.  */)
   return ret;
 }
 
-DEFUN ("featurep", Ffeaturep, Sfeaturep, 1, 2, 0,
-       doc: /* Return t if FEATURE is present in this Emacs.
-
-Use this to conditionalize execution of lisp code based on the
-presence or absence of Emacs or environment extensions.
-Use `provide' to declare that a feature is available.  This function
-looks at the value of the variable `features'.  The optional argument
-SUBFEATURE can be used to check a specific subfeature of FEATURE.  */)
-  (Lisp_Object feature, Lisp_Object subfeature)
-{
-  register Lisp_Object tem;
-  CHECK_SYMBOL (feature);
-  tem = Fmemq (feature, Vfeatures);
-  if (!NILP (tem) && !NILP (subfeature))
-    tem = Fmember (subfeature, Fget (feature, Qsubfeatures));
-  return (NILP (tem)) ? Qnil : Qt;
-}
-
 DEFUN ("provide", Fprovide, Sprovide, 1, 2, 0,
        doc: /* Announce that FEATURE is a feature of the current Emacs.
 The optional argument SUBFEATURES should be a list of symbols listing
@@ -3836,7 +3818,6 @@ this variable.  */);
   defsubr (&Smapconcat);
   defsubr (&Syes_or_no_p);
   defsubr (&Sload_average);
-  defsubr (&Sfeaturep);
   defsubr (&Srequire);
   defsubr (&Sprovide);
   defsubr (&Swidget_put);
