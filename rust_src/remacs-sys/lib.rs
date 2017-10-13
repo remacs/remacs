@@ -210,8 +210,8 @@ pub enum Symbol_Interned {
 
 #[repr(C)]
 pub enum Symbol_Redirect {
-    Plainval = 4,
-    Varalias = 1,
+    PlainVal = 4,
+    VarAlias = 1,
     Localized = 2,
     Forwarded = 3,
 }

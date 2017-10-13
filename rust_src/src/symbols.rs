@@ -36,7 +36,7 @@ impl LispSymbolRef {
     }
 
     pub fn is_alias(&self) -> bool {
-        self.symbol_bitfield & FLAG_REDIRECT == (Symbol_Redirect::Varalias as u32) << 1
+        self.symbol_bitfield & FLAG_REDIRECT == (Symbol_Redirect::VarAlias as u32) << 1
     }
 
     pub fn get_alias(&self) -> LispSymbolRef {
