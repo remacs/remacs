@@ -1014,6 +1014,7 @@ extern "C" {
     pub static minibuf_level: EmacsInt;
     pub static minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
+    pub static minibuf_selected_window: Lisp_Object;
     pub static selected_frame: Lisp_Object;
 
     pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;

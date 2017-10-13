@@ -5745,19 +5745,6 @@ by this function.  This happens in an interactive call.  */)
   return result;
 }
 
-DEFUN ("minibuffer-selected-window", Fminibuffer_selected_window, Sminibuffer_selected_window, 0, 0, 0,
-       doc: /* Return the window which was selected when entering the minibuffer.
-Returns nil, if selected window is not a minibuffer window.  */)
-  (void)
-{
-  if (minibuf_level > 0
-      && MINI_WINDOW_P (XWINDOW (selected_window))
-      && WINDOW_LIVE_P (minibuf_selected_window))
-    return minibuf_selected_window;
-
-  return Qnil;
-}
-
 /* Value is the number of lines actually displayed in window W,
    as opposed to its height.  */
 
@@ -7714,7 +7701,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sscroll_right);
   defsubr (&Sother_window_for_scrolling);
   defsubr (&Sscroll_other_window);
-  defsubr (&Sminibuffer_selected_window);
   defsubr (&Srecenter);
   defsubr (&Swindow_text_width);
   defsubr (&Swindow_text_height);
