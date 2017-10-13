@@ -1149,7 +1149,7 @@ This function is intended to be good enough to help SMIE during
 tokenization, but should not be regarded as a reliable function
 for determining whether point is within a selector."
   (save-excursion
-    (re-search-forward "[{};)]" nil t)
+    (re-search-forward "[{};]" nil t)
     (eq (char-before) ?\{)))
 
 (defun css--colon-inside-funcall ()
