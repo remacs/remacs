@@ -630,12 +630,12 @@ remaining directories without more prompts.
 It gets replaced by the current file name, like ' ? '.
 
 +++
-*** A new option 'dired-always-read-filesystem' default to nil.
-If non-nil, buffers visiting files are reverted before search them;
-for instance, in 'dired-mark-files-containing-regexp' a non-nil value
-of this option means the file is revisited in a temporary buffer;
-this temporary buffer is the actual buffer searched: the original buffer
-visiting the file is not modified.
+*** A new option 'dired-always-read-filesystem' defaulting to nil.
+If non-nil, buffers visiting files are reverted before they are
+searched; for instance, in 'dired-mark-files-containing-regexp' a
+non-nil value of this option means the file is revisited in a
+temporary buffer; this temporary buffer is the actual buffer searched:
+the original buffer visiting the file is not modified.
 
 ---
 *** Users can now customize mouse clicks in Dired in a more flexible way.
@@ -1102,7 +1102,7 @@ domain.
 *** 'url-retrieve-synchronously' now takes an optional timeout parameter.
 
 ---
-*** The URL package now support HTTPS over proxies supporting CONNECT.
+*** The URL package now supports HTTPS over proxies supporting CONNECT.
 
 +++
 *** 'url-user-agent' now defaults to 'default', and the User-Agent
@@ -1868,7 +1868,7 @@ For details, see the doc string of 'rx--pcase-macroexpander'.
 ** New functions to set region from secondary selection and vice versa.
 The new functions 'secondary-selection-to-region' and
 'secondary-selection-from-region' let you set the beginning and the
-end of the region from those of the secondary selection and vise
+end of the region from those of the secondary selection and vice
 versa.
 
 ** New function 'lgstring-remove-glyph' can be used to modify a
