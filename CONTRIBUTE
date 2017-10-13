@@ -82,8 +82,9 @@ Doc-strings should be updated together with the code.
 
 Think about whether your change requires updating the manuals.  If you
 know it does not, mark the NEWS entry with "---".  If you know
-that *all* the necessary documentation updates have been made, mark
-the entry with "+++".  Otherwise do not mark it.
+that *all* the necessary documentation updates have been made as part
+of your changes or those by others, mark the entry with "+++".
+Otherwise do not mark it.
 
 If your change requires updating the manuals to document new
 functions/commands/variables/faces, then use the proper Texinfo
@@ -91,6 +92,10 @@ command to index them; for instance, use @vindex for variables and
 @findex for functions/commands.  For the full list of predefine indices, see
 https://www.gnu.org/software/texinfo/manual/texinfo/html_node/Predefined-Indices.html
 or run the shell command 'info "(texinfo)Predefined Indices"'.
+
+We prefer American English both in doc strings and in the manuals.
+That includes both spelling (e.g., "behavior", not "behaviour") and
+the convention of leaving 2 spaces between sentences.
 
 For more specific tips on Emacs's doc style, see
 https://www.gnu.org/software/emacs/manual/html_node/elisp/Documentation-Tips.html
@@ -196,7 +201,8 @@ them right the first time, so here are guidelines for formatting them:
   the summary line should not end in a period).  See
   https://www.gnu.org/prep/standards/html_node/Comments.html
   or run 'info "(standards)Comments"'.  American English is preferred
-  in Emacs.
+  in Emacs; that includes spelling and leaving 2 blanks between
+  sentences.
 
   They are preserved indefinitely, and have a reasonable chance of
   being read in the future, so it's better that they have good
