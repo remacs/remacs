@@ -7504,25 +7504,6 @@ setup_process_coding_systems (Lisp_Object process)
 		       proc_encode_coding_system[outch]);
 }
 
-DEFUN ("get-buffer-process", Fget_buffer_process, Sget_buffer_process, 1, 1, 0,
-       doc: /* Return the (or a) live process associated with BUFFER.
-BUFFER may be a buffer or the name of one.
-Return nil if all processes associated with BUFFER have been
-deleted or killed.  */)
-  (register Lisp_Object buffer)
-{
-  register Lisp_Object buf, tail, proc;
-
-  if (NILP (buffer)) return Qnil;
-  buf = Fget_buffer (buffer);
-  if (NILP (buf)) return Qnil;
-
-  FOR_EACH_PROCESS (tail, proc)
-    if (EQ (XPROCESS (proc)->buffer, buf))
-      return proc;
-  return Qnil;
-}
-
 DEFUN ("process-inherit-coding-system-flag",
        Fprocess_inherit_coding_system_flag, Sprocess_inherit_coding_system_flag,
        1, 1, 0,
@@ -8009,7 +7990,6 @@ returns non-`nil'.  */);
    Fprovide (intern_c_string ("make-network-process"), subfeatures);
  }
 
-  defsubr (&Sget_buffer_process);
   defsubr (&Sprocess_inherit_coding_system_flag);
   defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
