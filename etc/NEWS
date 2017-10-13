@@ -1213,6 +1213,16 @@ New user options `term-char-mode-buffer-read-only' and
 are non-nil by default.  Customize these options to nil if you want
 the previous behavior.
 
+** Xref
+
++++
+*** When an *xref* buffer is needed, 'TAB' quits and jumps to an xref.
+
+A new command 'xref-quit-and-goto-xref', bound to 'TAB' in *xref*
+buffers, quits the window before jumping to the destination.  In many
+situations, the intended window configuration is restored, just as if
+the *xref* buffer hadn't been necessary in the first place.
+
 
 * New Modes and Packages in Emacs 26.1
 

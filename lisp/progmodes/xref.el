@@ -492,11 +492,17 @@ and finally return the window."
       (selected-window))))
 
 (defun xref--show-location (location &optional select)
+  "Help `xref-show-xref' and `xref-goto-xref' do their job.
+Go to LOCATION and if SELECT is non-nil select its window.  If
+SELECT is `quit', also quit the *xref* window."
   (condition-case err
       (let* ((marker (xref-location-marker location))
-             (buf (marker-buffer marker)))
+             (buf (marker-buffer marker))
+             (xref-buffer (current-buffer)))
         (cond (select
-               (select-window (xref--show-pos-in-buf marker buf)))
+               (if (eq select 'quit) (quit-window nil nil))
+               (with-current-buffer xref-buffer
+                 (select-window (xref--show-pos-in-buf marker buf))))
               (t
                (save-selected-window
                  (xref--with-dedicated-window
@@ -528,12 +534,19 @@ and finally return the window."
     (back-to-indentation)
     (get-text-property (point) 'xref-item)))
 
-(defun xref-goto-xref ()
-  "Jump to the xref on the current line and select its window."
+(defun xref-goto-xref (&optional quit)
+  "Jump to the xref on the current line and select its window.
+Non-interactively, non-nil QUIT means to first quit the *xref*
+buffer."
   (interactive)
   (let ((xref (or (xref--item-at-point)
                   (user-error "No reference at point"))))
-    (xref--show-location (xref-item-location xref) t)))
+    (xref--show-location (xref-item-location xref) (if quit 'quit t))))
+
+(defun xref-quit-and-goto-xref ()
+  "Quit *xref* buffer, then jump to xref on current line."
+  (interactive)
+  (xref-goto-xref t))
 
 (defun xref-query-replace-in-results (from to)
   "Perform interactive replacement of FROM with TO in all displayed xrefs.
@@ -657,6 +670,7 @@ references displayed in the current *xref* buffer."
     (define-key map (kbd "p") #'xref-prev-line)
     (define-key map (kbd "r") #'xref-query-replace-in-results)
     (define-key map (kbd "RET") #'xref-goto-xref)
+    (define-key map (kbd "TAB")  #'xref-quit-and-goto-xref)
     (define-key map (kbd "C-o") #'xref-show-location-at-point)
     ;; suggested by Johan Claesson "to further reduce finger movement":
     (define-key map (kbd ".") #'xref-next-line)
