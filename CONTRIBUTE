@@ -195,7 +195,8 @@ them right the first time, so here are guidelines for formatting them:
   sentences starting with a capital and ending with a period (except
   the summary line should not end in a period).  See
   https://www.gnu.org/prep/standards/html_node/Comments.html
-  or run 'info "(standards)Comments"'.
+  or run 'info "(standards)Comments"'.  American English is preferred
+  in Emacs.
 
   They are preserved indefinitely, and have a reasonable chance of
   being read in the future, so it's better that they have good
