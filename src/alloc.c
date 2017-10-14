@@ -2923,9 +2923,13 @@ set_next_vector (struct Lisp_Vector *v, struct Lisp_Vector *p)
 
 enum
   {
-    /* Alignment of struct Lisp_Vector objects.  */
-    vector_alignment = COMMON_MULTIPLE (FLEXALIGNOF (struct Lisp_Vector),
-					 GCALIGNMENT),
+    /* Alignment of struct Lisp_Vector objects.  Because pseudovectors
+       can contain any C type, align at least as strictly as
+       max_align_t.  On x86 and x86-64 this can waste up to 8 bytes
+       for typical vectors, since alignof (max_align_t) is 16 but
+       typical vectors need only an alignment of 8.  However, it is
+       not worth the hassle to avoid wasting those bytes.  */
+    vector_alignment = COMMON_MULTIPLE (alignof (max_align_t), GCALIGNMENT),
 
     /* Vector size requests are a multiple of this.  */
     roundup_size = COMMON_MULTIPLE (vector_alignment, word_size)
