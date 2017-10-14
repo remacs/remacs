@@ -193,12 +193,9 @@ If BYTE-COMPILE is non-nil, byte compile each function after instrumenting."
           testcover-module-constants nil
           testcover-module-1value-functions nil
           testcover-module-potentially-1value-functions nil)
-    (cl-letf ((edebug-all-defs t)
-              (edebug-after-instrumentation-functions)
-              (edebug-new-definition-functions))
-      (add-hook 'edebug-after-instrumentation-functions 'testcover-after-instrumentation)
-      (add-hook 'edebug-new-definition-functions 'testcover-init-definition)
-      (remove-hook 'edebug-new-definition-functions 'edebug-announce-definition)
+    (let ((edebug-all-defs t)
+          (edebug-after-instrumentation-function #'testcover-after-instrumentation)
+          (edebug-new-definition-function #'testcover-init-definition))
       (eval-buffer buf)))
   (when byte-compile
     (dolist (x (reverse edebug-form-data))
@@ -210,12 +207,9 @@ If BYTE-COMPILE is non-nil, byte compile each function after instrumenting."
 (defun testcover-this-defun ()
   "Start coverage on function under point."
   (interactive)
-  (cl-letf ((edebug-all-defs t)
-            (edebug-after-instrumentation-functions)
-            (edebug-new-definition-functions))
-    (add-hook 'edebug-after-instrumentation-functions 'testcover-after-instrumentation)
-    (add-hook 'edebug-new-definition-functions 'testcover-init-definition)
-    (remove-hook 'edebug-new-definition-functions 'edebug-announce-definition)
+  (let ((edebug-all-defs t)
+        (edebug-after-instrumentation-function #'testcover-after-instrumentation)
+        (edebug-new-definition-function #'testcover-init-definition))
     (eval-defun nil)))
 
 (defun testcover-end (filename)
@@ -231,11 +225,12 @@ If BYTE-COMPILE is non-nil, byte compile each function after instrumenting."
 
 (defun testcover-after-instrumentation (form)
   "Analyze FORM for code coverage."
-  (testcover-analyze-coverage form))
+  (testcover-analyze-coverage form)
+  form)
 
 (defun testcover-init-definition (sym)
   "Mark SYM as under test coverage."
-  (message "Testcover: %s" edebug-def-name)
+  (message "Testcover: %s" sym)
   (put sym 'edebug-behavior 'testcover))
 
 (defun testcover-enter (func _args body)

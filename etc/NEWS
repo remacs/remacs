@@ -71,9 +71,9 @@ directories in the destination.
 
 +++
 *** The runtime behavior of Edebug's instrumentation can be changed
-using the new variable 'edebug-behavior-alist' and the new abnormal
-hooks 'edebug-after-instrumentation-functions' and
-'edebug-new-definition-functions'. Edebug's behavior can be changed
+using the new variables 'edebug-behavior-alist',
+'edebug-after-instrumentation-function' and
+'edebug-new-definition-function'. Edebug's behavior can be changed
 globally or for individual definitions.
 
 ** Enhanced xterm support
