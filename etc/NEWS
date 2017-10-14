@@ -1,6 +1,6 @@
 GNU Emacs NEWS -- history of user-visible changes.
 
-Copyright (C) 2014-2017 Free Software Foundation, Inc.
+Copyright (C) 2017 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Please send Emacs bug reports to bug-gnu-emacs@gnu.org.
@@ -50,8 +50,8 @@ state to take effect (making a frame visible, for example).
 
 +++
 ** The new user option 'electric-quote-replace-double' controls
-whether " is also replaced in 'electric-quote-mode'.  If non-nil, " is
-replaced by a double typographic quote.
+whether '"' is also replaced in 'electric-quote-mode'.  If non-nil,
+'"' is replaced by a double typographic quote.
 
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
