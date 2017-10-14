@@ -506,57 +506,6 @@ Value, if non-nil, is a list (interactive SPEC).  */)
 		Getting and Setting Values of Symbols
  ***********************************************************************/
 
-/* Return the symbol holding SYMBOL's value.  Signal
-   `cyclic-variable-indirection' if SYMBOL's chain of variable
-   indirections contains a loop.  */
-
-struct Lisp_Symbol *
-indirect_variable (struct Lisp_Symbol *symbol)
-{
-  struct Lisp_Symbol *tortoise, *hare;
-
-  hare = tortoise = symbol;
-
-  while (hare->redirect == SYMBOL_VARALIAS)
-    {
-      hare = SYMBOL_ALIAS (hare);
-      if (hare->redirect != SYMBOL_VARALIAS)
-	break;
-
-      hare = SYMBOL_ALIAS (hare);
-      tortoise = SYMBOL_ALIAS (tortoise);
-
-      if (hare == tortoise)
-	{
-	  Lisp_Object tem;
-	  XSETSYMBOL (tem, symbol);
-	  xsignal1 (Qcyclic_variable_indirection, tem);
-	}
-    }
-
-  return hare;
-}
-
-
-DEFUN ("indirect-variable", Findirect_variable, Sindirect_variable, 1, 1, 0,
-       doc: /* Return the variable at the end of OBJECT's variable chain.
-If OBJECT is a symbol, follow its variable indirections (if any), and
-return the variable at the end of the chain of aliases.  See Info node
-`(elisp)Variable Aliases'.
-
-If OBJECT is not a symbol, just return it.  If there is a loop in the
-chain of aliases, signal a `cyclic-variable-indirection' error.  */)
-  (Lisp_Object object)
-{
-  if (SYMBOLP (object))
-    {
-      struct Lisp_Symbol *sym = indirect_variable (XSYMBOL (object));
-      XSETSYMBOL (object, sym);
-    }
-  return object;
-}
-
-
 /* Given the raw contents of a symbol value cell,
    return the Lisp value of the symbol.
    This does not handle buffer-local variables; use
@@ -2704,7 +2653,6 @@ syms_of_data (void)
   DEFSYM (Qinteractive_form, "interactive-form");
   DEFSYM (Qdefalias_fset_function, "defalias-fset-function");
 
-  defsubr (&Sindirect_variable);
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Smodule_function_p);
