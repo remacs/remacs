@@ -686,6 +686,20 @@ composition_gstring_from_id (ptrdiff_t id)
   return HASH_VALUE (h, id);
 }
 
+DEFUN ("clear-composition-cache", Fclear_composition_cache,
+       Sclear_composition_cache, 0, 0, 0,
+       doc: /* Internal use only.
+Clear composition cache.  */)
+  (void)
+{
+  Lisp_Object args[] = {QCtest, Qequal, QCsize, make_number (311)};
+  gstring_hash_table = CALLMANY (Fmake_hash_table, args);
+  /* Fixme: We call Fclear_face_cache to force complete re-building of
+     display glyphs.  But, it may be better to call this function from
+     Fclear_face_cache instead.  */
+  Fclear_face_cache (Qt);
+}
+
 bool
 composition_gstring_p (Lisp_Object gstring)
 {
@@ -1982,4 +1996,5 @@ See also the documentation of `auto-composition-mode'.  */);
   defsubr (&Scompose_string_internal);
   defsubr (&Sfind_composition_internal);
   defsubr (&Scomposition_get_gstring);
+  defsubr (&Sclear_composition_cache);
 }

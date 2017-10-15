@@ -95,7 +95,10 @@ Customizing the value takes effect when you start Emacs next time."
   :type '(choice
           (const :tag "default" nil)
           (const :tag "as space" as-space)
-          (const :tag "absorb" absorb)))
+          (const :tag "absorb" absorb))
+  :set (lambda (sym val)
+         (set-default sym val)
+         (clear-composition-cache)))
 
 ;; Record error in arabic-change-gstring.
 (defvar arabic-shape-log nil)
