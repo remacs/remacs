@@ -697,7 +697,7 @@ Clear composition cache.  */)
   /* Fixme: We call Fclear_face_cache to force complete re-building of
      display glyphs.  But, it may be better to call this function from
      Fclear_face_cache instead.  */
-  Fclear_face_cache (Qt);
+  return Fclear_face_cache (Qt);
 }
 
 bool
