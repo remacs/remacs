@@ -6,12 +6,35 @@
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xml:space="preserve"
    id="svg4768"
    viewBox="0.171 0.201 512 512"
    height="48"
    width="48"
-   version="1.0"><metadata
+   version="1.0"
+   sodipodi:docname="REmacsIcon.svg"
+   inkscape:version="0.92.2 (unknown)"><sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1118"
+     id="namedview2429"
+     showgrid="false"
+     inkscape:zoom="9.59375"
+     inkscape:cx="-13.682893"
+     inkscape:cy="39.896445"
+     inkscape:window-x="-2"
+     inkscape:window-y="-3"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg4768" /><metadata
      id="metadata70"><rdf:RDF><cc:Work
          rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><!-- Gnu Emacs Icon
@@ -32,17 +55,27 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
+   along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
 
 --><!-- Created with Inkscape (http://www.inkscape.org/) --><defs
      id="defs4770"><linearGradient
+       id="linearGradient2468"><stop
+         id="stop2462"
+         style="stop-color:#bc8152;stop-opacity:1"
+         offset="0" /><stop
+         offset="0.56639391"
+         style="stop-color:#dc5512;stop-opacity:0.99607843"
+         id="stop2464" /><stop
+         id="stop2466"
+         style="stop-color:#8a2e47;stop-opacity:0.99215686"
+         offset="1" /></linearGradient><linearGradient
        id="linearGradient4292"><stop
          id="stop4294"
          offset="0"
-         style="stop-color:#411f5d;stop-opacity:1" /><stop
+         style="stop-color:#411f28;stop-opacity:1" /><stop
          id="stop4296"
          offset="1"
-         style="stop-color:#5b2a85;stop-opacity:1" /></linearGradient><linearGradient
+         style="stop-color:#5b2a32;stop-opacity:1" /></linearGradient><linearGradient
        id="linearGradient4284"><stop
          offset="0"
          style="stop-color:#8381c5;stop-opacity:1"
@@ -249,14 +282,22 @@
        gradientUnits="userSpaceOnUse"
        id="linearGradient4245"
        xlink:href="#linearGradient4284" /><linearGradient
-       y2="66.018341"
-       x2="173.94518"
+       y2="97.564568"
+       x2="153.10213"
        y1="396.6066"
        x1="447.80933"
        gradientTransform="matrix(0.98684959,0,0,0.98684959,3.0344187,2.5250397)"
        gradientUnits="userSpaceOnUse"
        id="linearGradient4247"
-       xlink:href="#linearGradient4292" /></defs><rect
+       xlink:href="#linearGradient4292" /><linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2468"
+       id="linearGradient2460"
+       gradientUnits="userSpaceOnUse"
+       x1="15.338735"
+       y1="256.89456"
+       x2="494.9072"
+       y2="256.89456" /></defs><rect
      style="fill:none;display:none"
      id="rect4772"
      y="0.20100001"
@@ -280,7 +321,7 @@
      transform="matrix(0.98684957,0,0,0.98684957,3.0344041,2.5250397)" /><path
      d="m 488.23812,256.89456 c 0,130.06121 -104.3692,235.49665 -233.1151,235.49665 -128.7459,0 -233.115201,-105.43544 -233.115201,-235.49665 0,-130.06123 104.369301,-235.49666 233.115201,-235.49666 128.7459,0 233.1151,105.43543 233.1151,235.49666 z"
      id="path4235"
-     style="opacity:1;fill:url(#linearGradient4245);fill-opacity:1;stroke:url(#linearGradient4247);stroke-width:13.33816814;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /><path
+     style="opacity:1;fill:url(#linearGradient2460);fill-opacity:1;stroke:url(#linearGradient4247);stroke-width:13.33816814;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /><path
      d="m 175.0003,422.31057 c 0,0 19.7385,1.39634 45.1312,-0.84159 10.2834,-0.9063 49.3267,-4.74128 78.5169,-11.14289 0,0 35.5899,-7.61669 54.6301,-14.63335 19.9225,-7.34185 30.7636,-13.57304 35.6433,-22.40243 -0.2128,-1.80907 1.5024,-8.22438 -7.685,-12.07788 -23.4887,-9.85199 -50.73,-8.06998 -104.6338,-9.21285 -59.7772,-2.05391 -79.6627,-12.05971 -90.2556,-20.11838 -10.1579,-8.17519 -5.05,-30.79254 38.4742,-50.71499 21.9244,-10.60898 107.8705,-30.18698 107.8705,-30.18698 -28.9451,-14.30725 -82.9186,-39.45893 -94.0134,-44.89023 -9.7308,-4.76348 -25.303,-11.93595 -28.6785,-20.61368 -3.8271,-8.33089 9.0383,-15.50726 16.2248,-17.56236 23.1448,-6.67602 55.8182,-10.82538 85.5548,-11.29122 14.9472,-0.23417 17.3734,-1.19586 17.3734,-1.19586 20.6243,-3.42116 34.2014,-17.53175 28.5446,-39.87876 -5.0783,-22.81046 -31.8617,-36.21365 -57.3138,-31.57361 -23.9682,4.36956 -81.7378,21.15007 -81.7378,21.15007 71.4075,-0.61803 83.3592,0.57378 88.697,8.03676 3.1523,4.40742 -1.4324,10.45068 -20.4765,13.56099 -20.733,3.38616 -63.8312,7.46399 -63.8312,7.46399 -41.3449,2.4554 -70.4682,2.61974 -79.203,21.11314 -5.7065,12.08196 6.0854,22.7633 11.2538,29.4493 21.8407,24.28905 53.3882,37.38879 73.6948,47.03553 7.6405,3.62963 30.0586,10.48407 30.0586,10.48407 -65.8782,-3.62335 -113.4003,16.6055 -141.2764,39.89622 -31.5288,29.16261 -17.581403,63.92354 47.0124,85.3268 38.1517,12.6416 57.0725,18.58695 113.9815,13.46232 33.52,-1.80673 38.8041,-0.73155 39.1383,2.01892 0.4705,3.87242 -37.2311,13.49165 -47.524,16.4606 -26.1853,7.55306 -94.8276,22.80438 -95.1712,22.87835 z"
      id="path4237"
      style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" /></svg>
