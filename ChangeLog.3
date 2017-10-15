@@ -425,7 +425,7 @@
 	Fix bug in recent styled_format change
 
 	Problem reported by Kaushal Modi in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-10/msg00141.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-10/msg00141.html
 	* src/editfns.c (styled_format): Fix bug where USE_SAFE_ALLOCA was
 	not always followed by SAFE_FREE.  This bug was introduced in my
 	patch 2017-09-26T23:31:57Z!eggert@cs.ucla.edu entitled "Avoid some
@@ -2074,7 +2074,7 @@
 	* doc/emacs/maintaining.texi (VC Change Log): Mention the new binding.
 	* doc/emacs/vc1-xtra.texi (Version Headers): Remove the association of
 	'C-x v h' with `vc-insert-headers'.
-	(http://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00957.html)
+	(https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00957.html)
 
 2017-09-30  Allen Li  <vianchielfaura@gmail.com>  (tiny change)
 
@@ -2648,7 +2648,7 @@
 	* doc/emacs/cmdargs.texi (Action Arguments): Don't mention
 	'find-file', as the implementation has changed.  Reported by
 	Everton J. Carpes <everton.carpes@gmail.com> in
-	http://lists.gnu.org/archive/html/help-gnu-emacs/2017-09/msg00146.html.
+	https://lists.gnu.org/archive/html/help-gnu-emacs/2017-09/msg00146.html.
 
 2017-09-19  Eli Zaretskii  <eliz@gnu.org>
 
@@ -2843,7 +2843,7 @@
 
 	* src/eval.c (push_handler_nosignal): Use CACHEABLE to work around
 	GCC compilation warning.  Suggested by Paul Eggert <eggert@cs.ucla.edu>
-	in http://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00492.html.
+	in https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00492.html.
 
 2017-09-17  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -3162,7 +3162,7 @@
 
 	* src/lisp.h (pI) [__MINGW32__]: Provide definition that will
 	hopefully DTRT with both MinGW64 and mingw.org's MinGW.  See
-	http://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00171.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00171.html
 	for the details.
 	* src/conf_post.h (PRINTF_ARCHETYPE) [MINGW_W64]: Separate
 	definition specific to MinGW64.
@@ -3198,7 +3198,7 @@
 	Port renameat_noreplace to openSUSE 12.3
 
 	Problem reported by M. Nomiya in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00363.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00363.html
 	* src/sysdep.c (renameat_noreplace):
 	Call renameat2 only if CYGWIN.
 
@@ -3402,7 +3402,7 @@
 	* doc/misc/gnus.texi (Saving Articles):
 	Document behavior with directory name targets (Bug#27986).
 	Problem reported by Katsumi Yamaoka in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00216.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00216.html
 
 2017-09-12  Mark Oteiza  <mvoteiza@udel.edu>
 
@@ -3774,7 +3774,7 @@
 	* configure.ac (srcdir) [mingw32]: Downcase the drive letter, to
 	avoid warnings from find-file-noselect when making autoloads.  For
 	the details, see
-	http://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00049.html.
+	https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00049.html.
 
 2017-09-10  Mark Oteiza  <mvoteiza@udel.edu>
 
@@ -4006,7 +4006,7 @@
 	bit-shifting, to avoid compiler warnings.
 	(w32font_text_extents): Tell GCC NGLYPHS is non-negative, to avoid
 	a warning.  For details of the warning, see
-	http://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00093.html.
+	https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00093.html.
 	* src/term.c (keys) [WINDOWSNT]: Don't define, as it is not used
 	in that build.
 	* src/sound.c (sound_perror): Ifdef away on WINDOWSNT, as this
@@ -4093,7 +4093,7 @@
 	autogen.sh: omit bogus chatter if no .git
 
 	Problem reported by Angelo Graziosi in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00045.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00045.html
 	* autogen.sh (git_config): Do not execut 'git' if $do_git fails.
 
 2017-09-07  Glenn Morris  <rgm@gnu.org>
@@ -4112,7 +4112,7 @@
 
 	* doc/lispref/functions.texi (Mapping Functions): Fix the order of
 	@example and @group.  For the details, see
-	http://lists.gnu.org/archive/html/bug-texinfo/2017-09/msg00007.html.
+	https://lists.gnu.org/archive/html/bug-texinfo/2017-09/msg00007.html.
 
 2017-09-06  Mark Oteiza  <mvoteiza@udel.edu>
 
@@ -4240,7 +4240,7 @@
 	Revert recent float→double Motif change
 
 	Problem reported by Martin Rudalics in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00014.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00014.html
 	* src/xterm.c (xm_scroll_callback, xaw_jump_callback)
 	(x_set_toolkit_scroll_bar_thumb)
 	(x_set_toolkit_horizontal_scroll_bar_thumb):
@@ -5390,7 +5390,7 @@
 	* src/w32term.c (x_get_scale_factor):
 	* src/xterm.c (x_get_scale_factor): Don't let the scale factors
 	become less than 1.  Reported by Yuri D'Elia <wavexx@thregr.org> in
-	http://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00459.html.
+	https://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00459.html.
 
 2017-08-21  Sam Steingold  <sds@gnu.org>
 
@@ -5940,7 +5940,7 @@
 
 	Apparently Gitlab doesn’t create .git/hooks, like regular Git does.
 	Problem reported by Ted Zlatanov in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00380.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00380.html
 	* autogen.sh (git_sample_hook_src): New function.  Use it to work
 	even if .git/hooks or its samples do not exist.
 
@@ -6209,7 +6209,7 @@
 	Default autogen.sh to 'all'
 
 	This addresses a problem noted by RMS in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00052.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00052.html
 	* autogen.sh (do_git): Set to true if this script is invoked
 	with no arguments and there is a .git subdirectory.
 
@@ -6689,7 +6689,7 @@
 	Fix some crashes on self-modifying Elisp code
 
 	Prompted by a problem report by Alex in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00143.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00143.html
 	* src/eval.c (For, Fprogn, Fsetq, FletX, eval_sub):
 	Compute XCDR (x) near XCAR (x); although this doesn't fix any bugs,
 	it is likely to run a bit faster with typical hardware caches.
@@ -6976,7 +6976,7 @@
 	Port recent rename changes to RHEL 7 + NFS
 
 	Problem reported by Ted Zlatanov in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00082.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00082.html
 	* src/fileio.c (Frename_file): On RHEL 7 + NFS, renameat2 can fail
 	with errno == EINVAL when it is not supported.  So treat that case
 	like errno == ENOSYS.  Also, when ok_if_already_exists is neither
@@ -7009,7 +7009,7 @@
 
 	* configure.ac (with_mailutils): Default to 'yes' if GNU Mailutils
 	is installed.  See:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00054.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-08/msg00054.html
 
 2017-08-02  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -8075,7 +8075,7 @@
 	bury-buffer to exit todo-mode.  This restores the desired behavior
 	of not immediately returning to the exited todo-mode buffer on
 	quitting another buffer, which a dired bug fix had changed (see
-	http://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00739.html).
+	https://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00739.html).
 
 2017-07-19  Tino Calancha  <tino.calancha@gmail.com>
 
@@ -8146,8 +8146,8 @@
 	Port gnutls.c to older (buggier?) GnuTLS
 
 	Problem reported for GnuTLS 3.2.1 by Glenn Morris in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00716.html
-	http://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00742.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00716.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00742.html
 	Although I don't see how this bug can occur with vanilla GnuTLS 3.2.1,
 	perhaps hydra was using a modified GnuTLS.
 	* src/gnutls.c (Fgnutls_ciphers): Don't assume GNUTLS_CIPHER_NULL
@@ -8663,8 +8663,8 @@
 	* lisp/faces.el (line-number): Don't use a fixed-pitch font, by
 	popular demand.  For relevant discussions, see
 
-	 http://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00433.html
-	 http://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00445.html
+	 https://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00433.html
+	 https://lists.gnu.org/archive/html/emacs-devel/2017-07/msg00445.html
 
 2017-07-14  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -10603,7 +10603,7 @@
 	Adjust lm-verify to accept current notices
 
 	Problem reported by Mike Kupfer in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-06/msg00512.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-06/msg00512.html
 	* lisp/emacs-lisp/lisp-mnt.el (lm-crack-copyright):
 	Do not require later lines in a copyright notice to have more
 	indentation than earlier lines.
@@ -12009,7 +12009,7 @@
 	(gdb-send): Don't increment gdb-control-level if the command
 	matches gdb-python-guile-commands-regexp and has non-empty
 	arguments.  Reported by David Boles <boles@ieee.org> in
-	http://lists.gnu.org/archive/html/emacs-devel/2017-06/msg00009.html.
+	https://lists.gnu.org/archive/html/emacs-devel/2017-06/msg00009.html.
 
 2017-06-10  Eli Zaretskii  <eliz@gnu.org>
 
@@ -12707,7 +12707,7 @@
 
 	* src/doprnt.c (doprnt): Format "%%" correctly.
 	Problem reported by Philipp Stephani in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00901.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00901.html
 
 2017-06-01  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -12806,7 +12806,7 @@
 
 	* lisp/emacs-lisp/eldoc.el (eldoc--supported-p): New function.
 	(turn-on-eldoc-mode, eldoc-mode): Use it.
-	(http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00865.html)
+	(https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00865.html)
 
 2017-05-30  Glenn Morris  <rgm@gnu.org>
 
@@ -13638,7 +13638,7 @@
 
 	* lisp/net/tls.el (tls-program, tls-checktrust): Remove s_client.
 	Ref http://bugs.debian.org/766397
-	http://lists.gnu.org/archive/html/emacs-devel/2014-10/msg00803.html
+	https://lists.gnu.org/archive/html/emacs-devel/2014-10/msg00803.html
 
 
 	(cherry picked from commit 6e45de6bacc508db11b15b2c8ba86aad8c0570df)
@@ -14070,7 +14070,7 @@
 
 	* src/emacs-module.c (module_reset_handlerlist):
 	Check handlerlist.  Suggested by Philipp Stephani in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00521.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00521.html
 
 2017-05-20  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -14078,7 +14078,7 @@
 
 	* configure.ac (WERROR_CFLAGS): Omit -Wmissing-braces for Clang,
 	to shut off a false alarm.  Problem reportd by Philipp Stephani in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00521.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00521.html
 
 2017-05-20  Noam Postavsky  <npostavs@gmail.com>
 
@@ -14150,7 +14150,7 @@
 
 	* etc/PROBLEMS: Describe problems with Microsoft Intellipoint and
 	mouse-2 events.  For the details, see
-	http://lists.gnu.org/archive/html/help-emacs-windows/2017-05/msg00009.html.
+	https://lists.gnu.org/archive/html/help-emacs-windows/2017-05/msg00009.html.
 
 2017-05-19  Nick Helm  <nick@tenpoint.co.nz>  (tiny change)
 
@@ -14245,7 +14245,7 @@
 	Attempt to work around macOS vfork bug
 
 	Problem reported by YAMAMOTO Mitsuharu in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00342.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00342.html
 	This is related to the fix for Bug#26397.
 	* src/callproc.c (call_process_cleanup, call_process) [!MSDOS]:
 	Report internal error if wait_for_termination fails.
@@ -14269,7 +14269,7 @@
 	Don’t compile the (DARWIN_OS_CASE_SENSITIVE_FIXME == 2)
 	code unless DARWIN_OS_CASE_SENSITIVE_FIXME is 2.
 	Problem reported by Philipp Stephani in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00495.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00495.html
 
 2017-05-19  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -14277,7 +14277,7 @@
 
 	* configure.ac (WERROR_CFLAGS): Omit -Wdouble-promotion if clang.
 	Problem reported by Philipp Stephani in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00495.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00495.html
 
 2017-05-19  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -14362,7 +14362,7 @@
 	Avoid undefined behavior in struct sockaddr
 
 	Problem noted by Philipp Stephani in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00391.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00391.html
 	* src/conf_post.h (ATTRIBUTE_MAY_ALIAS, DECLARE_POINTER_ALIAS):
 	New macros.
 	* src/process.c (conv_sockaddr_to_lisp, conv_lisp_to_sockaddr)
@@ -14387,7 +14387,7 @@
 	Work around AddressSanitizer bug with vfork
 
 	Problem reported by Jim Meyering in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00246.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00246.html
 	* src/conf_post.h (vfork) [ADDRESS_SANITIZER]: Define to fork.
 	Unfortunately with the AddressSanitizer in Fedora 25 x86-64, the
 	vforked child messes up the parent’s shadow memory.  This is too
@@ -14452,7 +14452,7 @@
 	multiple calls and struct literals in the last case of a switch.
 	The old code ran afoul of GCC bug 80659, which caused an internal
 	compiler error.  Problem reported by Jim Meyering in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00182.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00182.html
 	https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80659
 
 2017-05-16  Paul Eggert  <eggert@cs.ucla.edu>
@@ -14563,9 +14563,9 @@
 	* src/process.c (connect_network_socket):
 	Use struct sockaddr_storage, not struct sockaddr_in, to store info
 	about a socket address.  Problem reported by Philipp Stephani in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00314.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00314.html
 	This fix is based on a patch by Philipp in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00357.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00357.html
 
 2017-05-14  Gemini Lasswell  <gazally@runbox.com>
 
@@ -15156,7 +15156,7 @@
 	Compare unqualified type to Lisp_Object, to do the right thing
 	when the expression has type ‘Lisp_Object const’.
 	Problem reported by Eli Zaretskii in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00138.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00138.html
 
 2017-05-06  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -15295,7 +15295,7 @@
 
 	* lisp/emacs-lisp/cl-generic.el (cl-defmethod): Denote the
 	edebug spec part for qualifiers as [&rest atom], per
-	http://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00053.html.
+	https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00053.html.
 
 2017-05-05  Mike Kupfer  <mkupfer@alum.berkeley.edu>
 
@@ -16077,7 +16077,7 @@
 
 	* lisp/net/tls.el (tls-program, tls-checktrust): Remove s_client.
 	Ref http://bugs.debian.org/766397
-	http://lists.gnu.org/archive/html/emacs-devel/2014-10/msg00803.html
+	https://lists.gnu.org/archive/html/emacs-devel/2014-10/msg00803.html
 
 2017-04-25  Glenn Morris  <rgm@gnu.org>
 
@@ -16706,7 +16706,7 @@
 
 	* src/lisp.h (STRING_SET_CHARS): Add an assertion and commentary
 	to prevent incorrect usage.  For details, see this discussion:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-04/msg00412.html.
+	https://lists.gnu.org/archive/html/emacs-devel/2017-04/msg00412.html.
 
 2017-04-16  Eli Zaretskii  <eliz@gnu.org>
 
@@ -18130,7 +18130,7 @@
 
 	* lisp/emacs-lisp/package.el (package-archives):
 	Default to https for elpa.gnu.org if gnutls is available.  Ref:
-	http://lists.gnu.org/archive/html/emacs-devel/2015-05/msg00130.html
+	https://lists.gnu.org/archive/html/emacs-devel/2015-05/msg00130.html
 
 2017-04-04  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -18369,7 +18369,7 @@
 	Fix bugs in simplified test dependencies
 
 	Problem reported by Glenn Morris in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-04/msg00017.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-04/msg00017.html
 	* test/Makefile.in (LOGFILES, TESTS): Omit leading "./".
 	(TESTS): Omit unnecessary patsubst.
 	(test_template): Redo dependency heuristic, hopefully
@@ -18778,7 +18778,7 @@
 	Fix redisplay glitches due to recent change in redisplay_internal
 
 	* src/xdisp.c (redisplay_internal): A better fix for bug#26097.
-	See http://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00695.html
+	See https://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00695.html
 	for the problems caused by the original fix.
 
 2017-03-26  Michael Albinus  <michael.albinus@gmx.de>
@@ -18938,7 +18938,7 @@
 	Don’t require chown/chgrp for game installation
 
 	Problem reported by Joseph Mingrone in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00622.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00622.html
 	* lib-src/Makefile.in (exp_archlibdir): Don’t fail if chown or
 	chgrp fails with update-game-score and the game directory.
 	Instead, expect the installer to fix this up afterwards.
@@ -19072,7 +19072,7 @@
 	Don’t remove dependency files when configuring
 
 	Problem reported by Tom Tromey in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00533.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00533.html
 	* configure.ac: Don’t remove */*.o and */deps/* when
 	--enable-autodepend is in effect.
 
@@ -19081,7 +19081,7 @@
 	Make --without-pop the default.
 
 	Suggested by Angelo Graziosi in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00431.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00431.html
 	* configure.ac: Change the default from --with-pop to
 	--without-pop.  Adjust diagnostics to match.
 
@@ -19118,7 +19118,7 @@
 	org-src fontify buffers" the hooks were enabled also for modifications
 	to the original org buffer.  This causes fontification errors when
 	combined with certain packages, as reported in
-	http://lists.gnu.org/archive/html/emacs-orgmode/2017-03/msg00420.html.
+	https://lists.gnu.org/archive/html/emacs-orgmode/2017-03/msg00420.html.
 
 	* lisp/org/org-src.el (org-src-font-lock-fontify-block): Reduce scope
 	of inhibit-modification-hooks let-binding.
@@ -19175,7 +19175,7 @@
 	Fix problem with out-of-date dependencies
 
 	Problem reported by Robert Marshall in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00501.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00501.html
 	Although this problem has been with us for a while, the recent
 	change from Automake to GNU Make exposed it again.
 	* configure.ac (AUTO_DEPEND): When autodepending, clean out any
@@ -19405,7 +19405,7 @@
 	Port out-of-source builds to windows-nt
 
 	Problem reported by Angelo Graziosi in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00431.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00431.html
 	* lib/Makefile.in: Prepend $(srcdir) to ../nt/gnulib-cfg.mk,
 	to handle out-of-source builds if windows-nt.
 
@@ -20082,7 +20082,7 @@
 	overlay, protect against that overlay's end point being outside of
 	the narrowed region.
 	Reported by Filipe Silva <filipe.silva@gmail.com> in
-	http://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00176.html.
+	https://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00176.html.
 
 2017-03-10  Glenn Morris  <rgm@gnu.org>
 
@@ -20221,7 +20221,7 @@
 	min and max should not return markers
 
 	Problem reported by Glenn Morris in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00147.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-03/msg00147.html
 	* src/data.c (minmax_driver): Convert any marker result to an
 	integer, since some callers assume this.
 	* test/src/data-tests.el (data-tests-max, data-tests-min):
@@ -22803,9 +22803,9 @@
 	Make FOR_EACH_TAIL more like other FOR_EACH macros
 
 	See comments by Stefan Monnier in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-02/msg00181.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-02/msg00181.html
 	and by Eli Zaretskii in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-02/msg00207.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-02/msg00207.html
 	* src/fns.c (internal_equal): Do not bypass check for depth
 	overflow when tail-recursing via a dotted list tail or an overlay
 	plist, to avoid a rare infloop.
@@ -23174,7 +23174,7 @@
 
 	* lisp/progmodes/xref.el (xref-collect-matches): Use '-E'
 	together with '-e', as suggested by Noam Postavsky
-	(http://lists.gnu.org/archive/html/emacs-devel/2017-01/msg00780.html).
+	(https://lists.gnu.org/archive/html/emacs-devel/2017-01/msg00780.html).
 
 2017-02-03  Paul Eggert  <eggert@cs.ucla.edu>
 
@@ -23301,7 +23301,7 @@
 	Fix quitting bug when buffers are frozen
 
 	Problem noted by Eli Zaretskii in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-01/msg00721.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-01/msg00721.html
 	This patch also fixes some other issues in that report.
 	* src/lisp.h (incr_rarely_quit): Remove.
 	All callers changed to use rarely_quit directly.
@@ -23319,7 +23319,7 @@
 	This fixes some infinite loops that cannot be quitted out of,
 	e.g., (defun foo () (nth most-positive-fixnum '#1=(1 . #1#)))
 	when byte-compiled and when run under X.  See:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-01/msg00577.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-01/msg00577.html
 	This also attempts to keep the performance improvements I recently
 	added, as much as possible under the constraint that the infloops
 	must be caught.  In some cases this fixes infloop bugs recently
@@ -23448,7 +23448,7 @@
 
 	* lisp/net/tramp.el (tramp-accept-process-output): Change argument
 	list.  Make it work when called inside a timer.  See
-	<http://lists.gnu.org/archive/html/tramp-devel/2017-01/msg00010.html>.
+	<https://lists.gnu.org/archive/html/tramp-devel/2017-01/msg00010.html>.
 
 2017-01-31  Eli Zaretskii  <eliz@gnu.org>
 
@@ -23835,7 +23835,7 @@
 	* lisp/textmodes/reftex-vars.el (reftex-cite-format-builtin): Add
 	\citetitle[*] to `reftex-cite-format' and bind them to keys i/I
 	per user request
-	http://lists.gnu.org/archive/html/auctex/2017-01/msg00049.html.
+	https://lists.gnu.org/archive/html/auctex/2017-01/msg00049.html.
 
 2017-01-27  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -23872,7 +23872,7 @@
 
 	* lisp/shell.el (shell-mode): Use setq-local.  Set
 	scroll-conservatively to 101 locally.  See the discussion at
-	http://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00736.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00736.html
 	for the reasons.
 
 2017-01-27  Michael Hoffman  <emacs-hoffman@sneakemail.com>  (tiny change)
@@ -24534,7 +24534,7 @@
 	* lisp/simple.el (region-bounds): New function.
 
 	(region-noncontiguous-p): Use it.
-	http://lists.gnu.org/archive/html/emacs-devel/2017-01/msg00044.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-01/msg00044.html
 
 2017-01-21  Alan Mackenzie  <acm@muc.de>
 
@@ -25369,7 +25369,7 @@
 	* lisp/textmodes/ispell.el (ispell-begin-skip-region-regexp):
 	Protect against 'ispell-skip-region-alist' being nil.  Reported by
 	Ernest Adrogué <nfdisco@gmail.com>, see
-	http://lists.gnu.org/archive/html/help-gnu-emacs/2017-01/msg00007.html.
+	https://lists.gnu.org/archive/html/help-gnu-emacs/2017-01/msg00007.html.
 
 2017-01-06  Philipp Stephani  <phst@google.com>
 
@@ -25662,7 +25662,7 @@
 	Remove mistakenly-added files
 
 	Problem reported by Glenn Morris in:
-	http://lists.gnu.org/archive/html/emacs-devel/2017-01/msg00008.html
+	https://lists.gnu.org/archive/html/emacs-devel/2017-01/msg00008.html
 	* lisp/gnus/gnus-ems.el, lisp/gnus/gnus-sync.el:
 	* lisp/gnus/messcompat.el, lisp/nxml/nxml-glyph.el:
 	* lisp/nxml/nxml-uchnm.el, lisp/obsolete/awk-mode.el:
@@ -25982,7 +25982,7 @@
 
 	This avoids the confusion of using two different phrases "main thread"
 	and "primary thread" internally to mean the same thing.  See:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-12/msg01142.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-12/msg01142.html
 	* src/thread.c (main_thread): Rename from primary_thread,
 	since the new name no longer clashes with main_thread_id
 	and Emacs internals normally call this the "main thread".
@@ -26175,7 +26175,7 @@
 	Simplify prog1 implementation
 
 	Inspired by a suggestion from Chris Gregory in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00965.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00965.html
 	On my platform, this generates exactly the same machine insns.
 	* src/eval.c (prog_ignore): Rename from unwind_body, since
 	it’s more general than that.  All callers changed.
@@ -26326,7 +26326,7 @@
 
 	This fixes a regression introduced in
 
-	  http://git.savannah.gnu.org/gitweb/?p=emacs.git;a=commit;h=2c8a7e50d24daf19ea7d86f1cfeaa98a41c56085
+	  https://git.savannah.gnu.org/gitweb/?p=emacs.git;a=commit;h=2c8a7e50d24daf19ea7d86f1cfeaa98a41c56085
 
 	This bug was filed in
 
@@ -26585,7 +26585,7 @@
 	therefore don't need to be inserted into the red-black tree, so
 	mem_find will never find them.  Reported by Daniel Colascione
 	<dancol@dancol.org> in
-	http://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00817.html.
+	https://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00817.html.
 
 2016-12-21  Stefan Monnier  <monnier@iro.umontreal.ca>
 
@@ -26618,7 +26618,7 @@
 	Port dumping better to WSL
 
 	Problem reported by Angelo Graziosi in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00822.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00822.html
 	* src/sysdep.c (disable_address_randomization):
 	Detect buggy platforms where 'personality' always returns 0.
 
@@ -26967,7 +26967,7 @@
 	needs to be, which then causes copy_executable_and_dump_data to
 	write beyond the requested size of the file mapping, thus relying
 	on the OS roundup to page boundary to save us from ourselves.  See
-	http://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00642.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00642.html
 	for the details.
 
 	* lib/stdio-impl.h: Revert the workaround fix of not including
@@ -27501,7 +27501,7 @@
 	Use C99 syntax for font drivers
 
 	Problem reported by Daniel Colascione in:
-	http://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00515.html
+	https://lists.gnu.org/archive/html/emacs-devel/2016-12/msg00515.html
 	* src/ftcrfont.c (ftcrfont_driver):
 	* src/ftfont.c (ftfont_driver):
 	* src/ftxfont.c (ftxfont_driver):

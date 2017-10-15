@@ -37,7 +37,7 @@
 ;;
 ;;
 (defun flymake-tests--wait-for-backends ()
-  ;; Weirdness here...  http://debbugs.gnu.org/17647#25
+  ;; Weirdness here...  https://debbugs.gnu.org/17647#25
   ;; ... meaning `sleep-for', and even
   ;; `accept-process-output', won't suffice as ways to get
   ;; process filters and sentinels to run, though they do work
