@@ -1965,6 +1965,7 @@ Optional arg HOW-TO determines how to treat the target.
 ;;;###autoload
 (defun dired-create-directory (directory)
   "Create a directory called DIRECTORY.
+Parent directories of DIRECTORY are created as needed.
 If DIRECTORY already exists, signal an error."
   (interactive
    (list (read-file-name "Create directory: " (dired-current-directory))))
