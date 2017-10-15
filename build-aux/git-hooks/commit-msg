@@ -66,6 +66,8 @@ exec $awk -v at_sign="$at_sign" -v cent_sign="$cent_sign" '
         non_print = "[^[:print:]]"
       }
     }
+    c_lower = "abcdefghijklmnopqrstuvwxyz"
+    unsafe_gnu_url = "(http|ftp)://([" c_lower ".]*\\.)?(gnu|fsf)\\.org"
   }
 
   /^#/ {
@@ -123,6 +125,14 @@ exec $awk -v at_sign="$at_sign" -v cent_sign="$cent_sign" '
   /^Signed-off-by: / {
     print "'\''Signed-off-by:'\'' in commit message"
     status = 1
+  }
+
+  {
+    if (match($0, unsafe_gnu_url)) {
+      url = substr($0, RSTART, RLENGTH)
+      printf "Use https: URL instead of '\''%s'\'' in commit message\n", url
+      status = 1
+    }
   }
 
   $0 ~ non_print {

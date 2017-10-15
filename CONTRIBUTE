@@ -175,6 +175,9 @@ them right the first time, so here are guidelines for formatting them:
   bug number NNNNN in the debbugs database.  This string is often
   parenthesized, as in "(Bug#19003)".
 
+- When citing URLs, prefer https: to http: when either will do.  In
+  particular, gnu.org and fsf.org URLs should start with "https:".
+
 - Commit messages should contain only printable UTF-8 characters.
 
 - Commit messages should not contain the "Signed-off-by:" lines that
