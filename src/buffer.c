@@ -3616,8 +3616,8 @@ void
 fix_start_end_in_overlays (register ptrdiff_t start, register ptrdiff_t end)
 {
   Lisp_Object overlay;
-  struct Lisp_Overlay *before_list;
-  struct Lisp_Overlay *after_list;
+  struct Lisp_Overlay *before_list UNINIT;
+  struct Lisp_Overlay *after_list UNINIT;
   /* These are either nil, indicating that before_list or after_list
      should be assigned, or the cons cell the cdr of which should be
      assigned.  */

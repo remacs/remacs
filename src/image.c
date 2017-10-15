@@ -2574,7 +2574,7 @@ xbm_image_p (Lisp_Object object)
 static int
 xbm_scan (char **s, char *end, char *sval, int *ival)
 {
-  unsigned char c;
+  unsigned char c UNINIT;
 
  loop:
 
@@ -7839,7 +7839,7 @@ gif_load (struct frame *f, struct image *img)
   init_color_table ();
 
 #ifndef USE_CAIRO
-  unsigned long bgcolor;
+  unsigned long bgcolor UNINIT;
   if (STRINGP (specified_bg))
     bgcolor = x_alloc_image_color (f, img, specified_bg,
 				   FRAME_BACKGROUND_PIXEL (f));
