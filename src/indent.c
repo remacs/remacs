@@ -1974,6 +1974,11 @@ line_number_display_width (struct window *w, int *width, int *pixel_width)
 	  saved_restriction = true;
 	}
       start_display (&it, w, wstart);
+      /* The call to move_it_by_lines below will not generate a line
+	 number if the first line shown in the window is hscrolled
+	 such that all of its display elements are out of view.  So we
+	 pretend the hscroll doesn't exist.  */
+      it.first_visible_x = 0;
       move_it_by_lines (&it, 1);
       *width = it.lnum_width;
       *pixel_width = it.lnum_pixel_width;
