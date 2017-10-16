@@ -249,3 +249,9 @@ fn maphash(function: LispObject, table: LispObject) -> LispObject {
 fn hash_table_p(obj: LispObject) -> LispObject {
     LispObject::from_bool(obj.is_hash_table())
 }
+
+/// Return the number of elements in TABLE.
+#[lisp_fn]
+fn hash_table_count(table: LispObject) -> LispObject {
+    LispObject::from_natnum(table.as_hash_table_or_error().count as EmacsInt)
+}

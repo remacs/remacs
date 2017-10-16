@@ -3376,14 +3376,6 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
                           pure);
 }
 
-DEFUN ("hash-table-count", Fhash_table_count, Shash_table_count, 1, 1, 0,
-       doc: /* Return the number of elements in TABLE.  */)
-  (Lisp_Object table)
-{
-  return make_number (check_hash_table (table)->count);
-}
-
-
 DEFUN ("hash-table-rehash-size", Fhash_table_rehash_size,
        Shash_table_rehash_size, 1, 1, 0,
        doc: /* Return the current rehash size of TABLE.  */)
@@ -3694,7 +3686,6 @@ syms_of_fns (void)
   defsubr (&Ssxhash_eql);
   defsubr (&Ssxhash_equal);
   defsubr (&Smake_hash_table);
-  defsubr (&Shash_table_count);
   defsubr (&Shash_table_rehash_size);
   defsubr (&Shash_table_rehash_threshold);
   defsubr (&Shash_table_size);
