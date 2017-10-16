@@ -2592,7 +2592,9 @@ a string, be sure to use a valid format, see RFC 2616."
 (defvar gnus-group-history nil)
 
 (defvar gnus-server-alist nil
-  "List of available servers.")
+  "Servers created by Gnus, or via the server buffer.
+Servers defined in the user's config files do not appear here.
+This variable is persisted in the user's .newsrc.eld file.")
 
 (defcustom gnus-cache-directory
   (nnheader-concat gnus-directory "cache/")

@@ -13216,6 +13216,11 @@ Also @pxref{Formatting Variables}.
 @subsection Server Commands
 @cindex server commands
 
+The following keybinding are available in the server buffer.  Be aware
+that some of the commands will only work on servers that you've added
+through this interface (with @kbd{a}), not with servers you've defined
+in your init files.
+
 @table @kbd
 
 @item v
