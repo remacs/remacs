@@ -364,6 +364,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*hashtable::Sremhash);
         defsubr(&*hashtable::Shash_table_p);
         defsubr(&*hashtable::Sputhash);
+        defsubr(&*hashtable::Smaphash);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
         defsubr(&*crypto::Ssecure_hash);

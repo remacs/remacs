@@ -89,6 +89,74 @@ impl LispHashTableRef {
     pub fn remove(mut self, key: LispObject) {
         unsafe { hash_remove_from_table(self.as_mut(), key.to_raw()) };
     }
+
+    pub fn get_hash_hash(self, idx: isize) -> LispObject {
+        let index = LispObject::from_natnum(idx as EmacsInt);
+        unsafe { LispObject::from_raw(Faref(self.hash, index.to_raw())) }
+    }
+
+    pub fn get_hash_key(self, idx: isize) -> LispObject {
+        let index = LispObject::from_natnum((2 * idx) as EmacsInt);
+        unsafe { LispObject::from_raw(Faref(self.key_and_value, index.to_raw())) }
+    }
+}
+
+/// An iterator used for iterating over the indicies
+/// of the 'key_and_value' vector of a Lisp_Hash_Table.
+/// Equivalent to a 'for (i = 0; i < HASH_TABLE_SIZE(h); ++i)'
+/// loop in the C layer.
+pub struct HashTableIter<'a> {
+    table: &'a LispHashTableRef,
+    current: usize,
+}
+
+impl<'a> Iterator for HashTableIter<'a> {
+    type Item = isize;
+
+    fn next(&mut self) -> Option<isize> {
+        let next_vector = unsafe { self.table.get_next().as_vector_unchecked() };
+        if self.current < next_vector.len() {
+            let cur = self.current;
+            self.current += 1;
+            Some(cur as isize)
+        } else {
+            None
+        }
+    }
+}
+
+/// An iterator used for looping over the keys and values
+/// contained in a Lisp_Hash_Table.
+pub struct KeyAndValueIter<'a>(HashTableIter<'a>);
+
+impl<'a> Iterator for KeyAndValueIter<'a> {
+    type Item = (LispObject, LispObject);
+
+    fn next(&mut self) -> Option<(LispObject, LispObject)> {
+        while let Some(idx) = self.0.next() {
+            let is_not_nil = self.0.table.get_hash_hash(idx).is_not_nil();
+            if is_not_nil {
+                let key = self.0.table.get_hash_key(idx);
+                let value = self.0.table.get_hash_value(idx);
+                return Some((key, value));
+            }
+        }
+
+        None
+    }
+}
+
+impl LispHashTableRef {
+    pub fn indicies(&self) -> HashTableIter {
+        HashTableIter {
+            table: self,
+            current: 0,
+        }
+    }
+
+    pub fn iter(&self) -> KeyAndValueIter {
+        KeyAndValueIter(self.indicies())
+    }
 }
 
 /// Return a copy of hash table TABLE.
@@ -159,6 +227,19 @@ fn remhash(key: LispObject, table: LispObject) -> LispObject {
     let hash_table = table.as_hash_table_or_error();
     hash_table.check_impure(table);
     hash_table.remove(key);
+
+    LispObject::constant_nil()
+}
+
+/// Call FUNCTION for all entries in hash table TABLE.
+/// FUNCTION is called with two arguments, KEY and VALUE.
+/// `maphash' always returns nil.
+#[lisp_fn]
+fn maphash(function: LispObject, table: LispObject) -> LispObject {
+    let hash_table = table.as_hash_table_or_error();
+    for (key, value) in hash_table.iter() {
+        call!(function, key, value);
+    }
 
     LispObject::constant_nil()
 }

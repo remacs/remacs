@@ -3448,22 +3448,6 @@ DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
   return table;
 }
 
-DEFUN ("maphash", Fmaphash, Smaphash, 2, 2, 0,
-       doc: /* Call FUNCTION for all entries in hash table TABLE.
-FUNCTION is called with two arguments, KEY and VALUE.
-`maphash' always returns nil.  */)
-  (Lisp_Object function, Lisp_Object table)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-
-  for (ptrdiff_t i = 0; i < HASH_TABLE_SIZE (h); ++i)
-    if (!NILP (HASH_HASH (h, i)))
-      call2 (function, HASH_KEY (h, i), HASH_VALUE (h, i));
-
-  return Qnil;
-}
-
-
 DEFUN ("define-hash-table-test", Fdefine_hash_table_test,
        Sdefine_hash_table_test, 3, 3, 0,
        doc: /* Define a new hash table test with name NAME, a symbol.
@@ -3717,7 +3701,6 @@ syms_of_fns (void)
   defsubr (&Shash_table_test);
   defsubr (&Shash_table_weakness);
   defsubr (&Sclrhash);
-  defsubr (&Smaphash);
   defsubr (&Sdefine_hash_table_test);
 
   /* Crypto and hashing stuff.  */
