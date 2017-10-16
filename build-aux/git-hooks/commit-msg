@@ -44,7 +44,7 @@ if test "$at_sign" != @; then
 fi
 
 # Check the log entry.
-exec $awk -v at_sign="$at_sign" -v cent_sign="$cent_sign" '
+exec $awk -v at_sign="$at_sign" -v cent_sign="$cent_sign" -v file="$1" '
   BEGIN {
     # These regular expressions assume traditional Unix unibyte behavior.
     # They are needed for old or broken versions of awk, e.g.,
@@ -69,6 +69,8 @@ exec $awk -v at_sign="$at_sign" -v cent_sign="$cent_sign" '
     c_lower = "abcdefghijklmnopqrstuvwxyz"
     unsafe_gnu_url = "(http|ftp)://([" c_lower ".]*\\.)?(gnu|fsf)\\.org"
   }
+
+  { input[NR] = $0 }
 
   /^#/ {
     # Ignore every line after a scissors line.
@@ -127,12 +129,8 @@ exec $awk -v at_sign="$at_sign" -v cent_sign="$cent_sign" '
     status = 1
   }
 
-  {
-    if (match($0, unsafe_gnu_url)) {
-      url = substr($0, RSTART, RLENGTH)
-      printf "Use https: URL instead of '\''%s'\'' in commit message\n", url
-      status = 1
-    }
+  $0 ~ unsafe_gnu_url {
+    needs_rewriting = 1
   }
 
   $0 ~ non_print {
@@ -144,6 +142,21 @@ exec $awk -v at_sign="$at_sign" -v cent_sign="$cent_sign" '
     if (nlines == 0) {
       print "Empty commit message"
       status = 1
+    }
+    if (status == 0 && needs_rewriting) {
+      for (i = 1; i <= NR; i++) {
+	line = input[i]
+	while (match(line, unsafe_gnu_url)) {
+	  prefix = substr(line, 1, RSTART - 1)
+	  suffix = substr(line, RSTART)
+	  line = prefix "https:" substr(suffix, 5 + (suffix ~ /^http:/))
+	}
+	print line >file
+      }
+      if (close(file) != 0) {
+	print "Cannot rewrite: " file
+	status = 1
+      }
     }
     if (status != 0) {
       print "Commit aborted; please see the file 'CONTRIBUTE'"
