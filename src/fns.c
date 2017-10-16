@@ -3448,26 +3448,6 @@ DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
   return table;
 }
 
-DEFUN ("puthash", Fputhash, Sputhash, 3, 3, 0,
-       doc: /* Associate KEY with VALUE in hash table TABLE.
-If KEY is already present in table, replace its current value with
-VALUE.  In any case, return VALUE.  */)
-  (Lisp_Object key, Lisp_Object value, Lisp_Object table)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  CHECK_IMPURE (table, h);
-
-  ptrdiff_t i;
-  EMACS_UINT hash;
-  i = hash_lookup (h, key, &hash);
-  if (i >= 0)
-    set_hash_value_slot (h, i, value);
-  else
-    hash_put (h, key, value, hash);
-
-  return value;
-}
-
 DEFUN ("maphash", Fmaphash, Smaphash, 2, 2, 0,
        doc: /* Call FUNCTION for all entries in hash table TABLE.
 FUNCTION is called with two arguments, KEY and VALUE.
@@ -3737,7 +3717,6 @@ syms_of_fns (void)
   defsubr (&Shash_table_test);
   defsubr (&Shash_table_weakness);
   defsubr (&Sclrhash);
-  defsubr (&Sputhash);
   defsubr (&Smaphash);
   defsubr (&Sdefine_hash_table_test);
 

@@ -2,7 +2,7 @@ use remacs_macros::lisp_fn;
 use libc::c_void;
 use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Faref, hash_lookup, EmacsInt,
-                 EmacsUint, CHECK_IMPURE, hash_remove_from_table};
+                 EmacsUint, CHECK_IMPURE, hash_remove_from_table, gc_aset, hash_put};
 use std::ptr;
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
@@ -62,14 +62,24 @@ impl LispHashTableRef {
         LispObject::from_raw(self.weak)
     }
 
+    #[inline]
     pub fn get_hash_value(self, idx: isize) -> LispObject {
         let index = LispObject::from_natnum((2 * idx + 1) as EmacsInt);
         unsafe { LispObject::from_raw(Faref(self.key_and_value, index.to_raw())) }
     }
 
+    #[inline]
+    pub fn set_hash_value(self, idx: isize, value: LispObject) {
+        unsafe { gc_aset(self.key_and_value, 2 * idx + 1, value.to_raw()) };
+    }
+
     pub fn lookup(self, key: LispObject, hashptr: *mut EmacsUint) -> isize {
         let mutself = self.as_ptr() as *mut Lisp_Hash_Table;
         unsafe { hash_lookup(mutself, key.to_raw(), hashptr) }
+    }
+
+    pub fn put(mut self, key: LispObject, value: LispObject, hash: EmacsUint) -> isize {
+        unsafe { hash_put(self.as_mut(), key.to_raw(), value.to_raw(), hash) }
     }
 
     pub fn check_impure(self, object: LispObject) {
@@ -121,6 +131,26 @@ fn gethash(key: LispObject, table: LispObject, dflt: LispObject) -> LispObject {
     } else {
         dflt
     }
+}
+
+/// Associate KEY with VALUE in hash table TABLE.
+/// If KEY is already present in table, replace its current value with
+/// VALUE.  In any case, return VALUE.
+#[lisp_fn]
+fn puthash(key: LispObject, value: LispObject, table: LispObject) -> LispObject {
+    let hash_table = table.as_hash_table_or_error();
+    hash_table.check_impure(table);
+
+    let mut hash: EmacsUint = 0;
+    let idx = hash_table.lookup(key, &mut hash);
+
+    if idx >= 0 {
+        hash_table.set_hash_value(idx, value);
+    } else {
+        hash_table.put(key, value, hash);
+    }
+
+    value
 }
 
 /// Remove KEY from TABLE.
