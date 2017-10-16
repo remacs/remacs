@@ -193,20 +193,34 @@ The name is made by appending a number to PREFIX, default \"T\"."
   (&or lambda-doc cl-declarations))
 
 (def-edebug-spec cl-lambda-list
-  (([&rest arg]
+  (([&rest cl-lambda-arg]
     [&optional ["&optional" cl-&optional-arg &rest cl-&optional-arg]]
-    [&optional ["&rest" arg]]
+    [&optional ["&rest" cl-lambda-arg]]
     [&optional ["&key" [cl-&key-arg &rest cl-&key-arg]
 		&optional "&allow-other-keys"]]
     [&optional ["&aux" &rest
 		&or (symbolp &optional def-form) symbolp]]
-    )))
+    . [&or arg nil])))
 
 (def-edebug-spec cl-&optional-arg
-  (&or (arg &optional def-form arg) arg))
+  (&or (cl-lambda-arg &optional def-form arg) arg))
 
 (def-edebug-spec cl-&key-arg
-  (&or ([&or (symbolp arg) arg] &optional def-form arg) arg))
+  (&or ([&or (symbolp cl-lambda-arg) arg] &optional def-form arg) arg))
+
+(def-edebug-spec cl-lambda-arg
+  (&or arg cl-lambda-list1))
+
+(def-edebug-spec cl-lambda-list1
+  (([&optional ["&whole" arg]]  ;; only allowed at lower levels
+    [&rest cl-lambda-arg]
+    [&optional ["&optional" cl-&optional-arg &rest cl-&optional-arg]]
+    [&optional ["&rest" cl-lambda-arg]]
+    [&optional ["&key" cl-&key-arg &rest cl-&key-arg
+                &optional "&allow-other-keys"]]
+    [&optional ["&aux" &rest
+                &or (symbolp &optional def-form) symbolp]]
+    . [&or arg nil])))
 
 (def-edebug-spec cl-type-spec sexp)
 
@@ -336,8 +350,8 @@ The full form of a Common Lisp function argument list is
     [&key (([KEYWORD] VAR) [INITFORM [SVAR]])... [&allow-other-keys]]
     [&aux (VAR [INITFORM])...])
 
-VAR maybe be replaced recursively with an argument list for
-destructing, `&whole' is supported within these sublists.  If
+VAR may be replaced recursively with an argument list for
+destructuring, `&whole' is supported within these sublists.  If
 SVAR, INITFORM, and KEYWORD are all omitted, then `(VAR)' may be
 written simply `VAR'.  See the Info node `(cl)Argument Lists' for
 more details.
@@ -430,8 +444,8 @@ The full form of a Common Lisp macro argument list is
     [&aux (VAR [INITFORM])...]
     [&environment VAR])
 
-VAR maybe be replaced recursively with an argument list for
-destructing, `&whole' is supported within these sublists.  If
+VAR may be replaced recursively with an argument list for
+destructuring, `&whole' is supported within these sublists.  If
 SVAR, INITFORM, and KEYWORD are all omitted, then `(VAR)' may be
 written simply `VAR'.  See the Info node `(cl)Argument Lists' for
 more details.
