@@ -82,6 +82,13 @@ globally or for individual definitions.
 the XTerm window title.  This feature is experimental and is disabled
 by default.
 
+** Gamegrid
+
+---
+*** Gamegrid now determines its default glyph size based on display
+dimensions, instead of always using 16 pixels. As a result, Tetris,
+Snake and Pong are more playable on HiDPI displays.
+
 
 * New Modes and Packages in Emacs 27.1
 
