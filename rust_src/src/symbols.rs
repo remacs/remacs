@@ -1,10 +1,13 @@
 use remacs_macros::lisp_fn;
+use std::mem;
 use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Symbol, Symbol_Interned, Qsetting_constant};
+use remacs_sys::{make_lisp_symbol, Lisp_Symbol, Symbol_Interned, Symbol_Redirect,
+                 Qsetting_constant, Qcyclic_variable_indirection};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
 const FLAG_INTERNED: u32 = 0b11 << 6; // 7 and 8 bits
+const FLAG_REDIRECT: u32 = 0b1110; // bits 2, 3 and 4
 
 impl LispSymbolRef {
     pub fn symbol_name(&self) -> LispObject {
@@ -31,6 +34,49 @@ impl LispSymbolRef {
         self.symbol_bitfield & FLAG_INTERNED ==
             (Symbol_Interned::InternedInInitialObarray as u32) << 6
     }
+
+    pub fn is_alias(&self) -> bool {
+        self.symbol_bitfield & FLAG_REDIRECT == (Symbol_Redirect::VarAlias as u32) << 1
+    }
+
+    pub fn get_alias(&self) -> LispSymbolRef {
+        LispSymbolRef::new(unsafe { mem::transmute(self.val.alias) })
+    }
+
+    pub fn as_lisp_obj(mut self) -> LispObject {
+        LispObject::from_raw(unsafe { make_lisp_symbol(self.as_mut()) })
+    }
+
+    /// Return the symbol holding SYMBOL's value.  Signal
+    /// `cyclic-variable-indirection' if SYMBOL's chain of variable
+    /// indirections contains a loop.
+    pub fn get_indirect_variable(self) -> Self {
+        let mut tortoise = self;
+        let mut hare = self;
+
+        while hare.is_alias() {
+            hare = hare.get_alias();
+
+            if !hare.is_alias() {
+                break;
+            }
+            hare = hare.get_alias();
+            tortoise = tortoise.get_alias();
+
+            if hare == tortoise {
+                xsignal!(Qcyclic_variable_indirection, hare.as_lisp_obj())
+            }
+        }
+
+        hare
+    }
+}
+
+// Wrapper around LispSymbolRef::get_indirect_variable()
+// could be removed when all C references are ported
+#[no_mangle]
+pub unsafe extern "C" fn indirect_variable(symbol: *mut Lisp_Symbol) -> *mut Lisp_Symbol {
+    LispSymbolRef::new(symbol).get_indirect_variable().as_mut()
 }
 
 /// Return t if OBJECT is a symbol.
@@ -105,5 +151,22 @@ fn keywordp(object: LispObject) -> LispObject {
         )
     } else {
         LispObject::constant_nil()
+    }
+}
+
+/// Return the variable at the end of OBJECT's variable chain.
+/// If OBJECT is a symbol, follow its variable indirections (if any), and
+/// return the variable at the end of the chain of aliases.  See Info node
+/// `(elisp)Variable Aliases'.
+///
+/// If OBJECT is not a symbol, just return it.  If there is a loop in the
+/// chain of aliases, signal a `cyclic-variable-indirection' error.
+#[lisp_fn(name = "indirect-variable", c_name = "indirect_variable")]
+fn indirect_variable_lisp(object: LispObject) -> LispObject {
+    if let Some(symbol) = object.as_symbol() {
+        let val = symbol.get_indirect_variable();
+        val.as_lisp_obj()
+    } else {
+        object
     }
 }

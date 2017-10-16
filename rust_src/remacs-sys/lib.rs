@@ -208,6 +208,14 @@ pub enum Symbol_Interned {
     InternedInInitialObarray = 2,
 }
 
+#[repr(C)]
+pub enum Symbol_Redirect {
+    PlainVal = 4,
+    VarAlias = 1,
+    Localized = 2,
+    Forwarded = 3,
+}
+
 /// This struct has 4 bytes of padding, representing the bitfield that
 /// lives at the top of a Lisp_Symbol. The first 10 bits of this field are
 /// used.
@@ -996,6 +1004,7 @@ extern "C" {
     pub static Qfont_extra_type: Lisp_Object;
     pub static Qsetting_constant: Lisp_Object;
     pub static Qcyclic_function_indirection: Lisp_Object;
+    pub static Qcyclic_variable_indirection: Lisp_Object;
     pub static Qsubfeatures: Lisp_Object;
 
     pub static Qmd5: Lisp_Object;
@@ -1016,6 +1025,7 @@ extern "C" {
     pub static minibuf_level: EmacsInt;
     pub static minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
+    pub static minibuf_selected_window: Lisp_Object;
     pub static selected_frame: Lisp_Object;
 
     pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
@@ -1031,6 +1041,7 @@ extern "C" {
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
+    pub fn make_lisp_symbol(ptr: *mut Lisp_Symbol) -> Lisp_Object;
     pub fn build_string(s: *const c_char) -> Lisp_Object;
     pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_uninit_string(length: EmacsInt) -> Lisp_Object;

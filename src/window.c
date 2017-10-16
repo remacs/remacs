@@ -5745,19 +5745,6 @@ by this function.  This happens in an interactive call.  */)
   return result;
 }
 
-DEFUN ("minibuffer-selected-window", Fminibuffer_selected_window, Sminibuffer_selected_window, 0, 0, 0,
-       doc: /* Return the window which was selected when entering the minibuffer.
-Returns nil, if selected window is not a minibuffer window.  */)
-  (void)
-{
-  if (minibuf_level > 0
-      && MINI_WINDOW_P (XWINDOW (selected_window))
-      && WINDOW_LIVE_P (minibuf_selected_window))
-    return minibuf_selected_window;
-
-  return Qnil;
-}
-
 /* Value is the number of lines actually displayed in window W,
    as opposed to its height.  */
 
@@ -6980,24 +6967,6 @@ Return t if any margin was actually changed and nil otherwise.  */)
 }
 
 
-DEFUN ("window-margins", Fwindow_margins, Swindow_margins,
-       0, 1, 0,
-       doc: /* Get width of marginal areas of window WINDOW.
-WINDOW must be a live window and defaults to the selected one.
-
-Value is a cons of the form (LEFT-WIDTH . RIGHT-WIDTH).
-If a marginal area does not exist, its width will be returned
-as nil.  */)
-  (Lisp_Object window)
-{
-  struct window *w = decode_live_window (window);
-  return Fcons (w->left_margin_cols
-		? make_number (w->left_margin_cols) : Qnil,
-		w->right_margin_cols
-		? make_number (w->right_margin_cols) : Qnil);
-}
-
-
 
 /***********************************************************************
 			    Fringes
@@ -7732,7 +7701,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sscroll_right);
   defsubr (&Sother_window_for_scrolling);
   defsubr (&Sscroll_other_window);
-  defsubr (&Sminibuffer_selected_window);
   defsubr (&Srecenter);
   defsubr (&Swindow_text_width);
   defsubr (&Swindow_text_height);
@@ -7742,7 +7710,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_configuration);
   defsubr (&Scurrent_window_configuration);
   defsubr (&Sset_window_margins);
-  defsubr (&Swindow_margins);
   defsubr (&Sset_window_fringes);
   defsubr (&Swindow_fringes);
   defsubr (&Sset_window_scroll_bars);
