@@ -67,6 +67,7 @@ mod minibuf;
 mod cmds;
 mod data;
 mod fns;
+mod dispnew;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -169,6 +170,7 @@ pub use windows::Fwindow_point;
 pub use editfns::Fgoto_char;
 pub use data::Findirect_function;
 pub use data::indirect_function;
+pub use dispnew::Fsleep_for;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
@@ -413,5 +415,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);
         defsubr(&*frames::Sselected_frame);
+        defsubr(&*dispnew::Ssleep_for);
     }
 }
