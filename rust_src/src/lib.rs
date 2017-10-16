@@ -171,6 +171,7 @@ pub use windows::Fwindow_point;
 pub use editfns::Fgoto_char;
 pub use data::Findirect_function;
 pub use data::indirect_function;
+pub use process::Fget_buffer_process;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
@@ -251,6 +252,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*process::Sprocess_name);
+        defsubr(&*process::Sget_buffer_process);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
         defsubr(&*lists::Snlistp);
