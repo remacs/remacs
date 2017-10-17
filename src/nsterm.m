@@ -423,20 +423,12 @@ static CGPoint menu_mouse_point;
     }
 
 
-/* GNUstep always shows decorations if the window is resizable,
-   miniaturizable or closable, but Cocoa does strange things in native
-   fullscreen mode if you don't have at least resizable enabled.
-
-   These flags will be OR'd or XOR'd with the NSWindow's styleMask
+/* These flags will be OR'd or XOR'd with the NSWindow's styleMask
    property depending on what we're doing. */
-#ifdef NS_IMPL_COCOA
-#define FRAME_DECORATED_FLAGS NSWindowStyleMaskTitled
-#else
 #define FRAME_DECORATED_FLAGS (NSWindowStyleMaskTitled              \
                                | NSWindowStyleMaskResizable         \
                                | NSWindowStyleMaskMiniaturizable    \
                                | NSWindowStyleMaskClosable)
-#endif
 #define FRAME_UNDECORATED_FLAGS NSWindowStyleMaskBorderless
 
 /* TODO: get rid of need for these forward declarations */
@@ -7211,15 +7203,9 @@ not_in_argv (NSString *arg)
 
   win = [[EmacsWindow alloc]
             initWithContentRect: r
-                      styleMask: ((FRAME_UNDECORATED (f)
-                                   ? FRAME_UNDECORATED_FLAGS
-                                   : FRAME_DECORATED_FLAGS)
-#ifdef NS_IMPL_COCOA
-                                  | NSWindowStyleMaskResizable
-                                  | NSWindowStyleMaskMiniaturizable
-                                  | NSWindowStyleMaskClosable
-#endif
-                                  )
+                      styleMask: (FRAME_UNDECORATED (f)
+                                  ? FRAME_UNDECORATED_FLAGS
+                                  : FRAME_DECORATED_FLAGS)
                         backing: NSBackingStoreBuffered
                           defer: YES];
 
