@@ -8552,13 +8552,19 @@ imagemagick_load_image (struct frame *f, struct image *img,
   char hint_buffer[MaxTextExtent];
   char *filename_hint = NULL;
 
+  /* Initialize the ImageMagick environment.  */
+  static bool imagemagick_initialized;
+  if (!imagemagick_initialized)
+    {
+      imagemagick_initialized = true;
+      MagickWandGenesis ();
+    }
+
   /* Handle image index for image types who can contain more than one image.
      Interface :index is same as for GIF.  First we "ping" the image to see how
      many sub-images it contains.  Pinging is faster than loading the image to
      find out things about it.  */
 
-  /* Initialize the imagemagick environment.  */
-  MagickWandGenesis ();
   image = image_spec_value (img->spec, QCindex, NULL);
   ino = INTEGERP (image) ? XFASTINT (image) : 0;
   image_wand = NewMagickWand ();
@@ -8859,8 +8865,10 @@ imagemagick_load_image (struct frame *f, struct image *img,
   DestroyMagickWand (image_wand);
   if (bg_wand) DestroyPixelWand (bg_wand);
 
-  /* `MagickWandTerminus' terminates the imagemagick environment.  */
-  MagickWandTerminus ();
+  /* Do not call MagickWandTerminus, to work around ImageMagick bug 825.  See:
+     https://github.com/ImageMagick/ImageMagick/issues/825
+     Although this bug was introduced in ImageMagick 6.9.9-14 and
+     fixed in 6.9.9-18, it's simpler to work around it in all versions.  */
 
   return 1;
 
@@ -8868,7 +8876,6 @@ imagemagick_load_image (struct frame *f, struct image *img,
   DestroyMagickWand (image_wand);
   if (bg_wand) DestroyPixelWand (bg_wand);
 
-  MagickWandTerminus ();
   /* TODO more cleanup.  */
   image_error ("Error parsing IMAGEMAGICK image `%s'", img->spec);
   return 0;
