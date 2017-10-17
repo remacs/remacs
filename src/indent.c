@@ -1993,7 +1993,8 @@ DEFUN ("line-number-display-width", Fline_number_display_width,
        doc: /* Return the width used for displaying line numbers in the selected window.
 If optional argument PIXELWISE is non-nil, return the width in pixels,
 otherwise return the width in columns of the face used to display
-line numbers, `line-number'.  */)
+line numbers, `line-number'.  Note that in the latter case, the value
+doesn't include the 2 columns used for padding the numbers.  */)
   (Lisp_Object pixelwise)
 {
   int width, pixel_width;
