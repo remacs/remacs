@@ -375,6 +375,9 @@ where you can cancel them with the 'c' command.
 
 +++
 ** 'switch-to-buffer-preserve-window-point' now defaults to t.
+Applications that call 'switch-to-buffer' and want to show the buffer at
+the position of its point should use 'pop-to-buffer-same-window' in lieu
+of 'switch-to-buffer'.
 
 +++
 ** The new variable 'debugger-stack-frame-as-list' allows displaying
