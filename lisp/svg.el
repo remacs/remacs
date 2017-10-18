@@ -163,7 +163,7 @@ otherwise.  IMAGE-TYPE should be a MIME image type, like
   ;; Apparently the SVG renderer needs to have all non-ASCII
   ;; characters encoded.
   (with-temp-buffer
-    (insert text)
+    (insert (xml-escape-string text))
     (goto-char (point-min))
     (while (not (eobp))
       (let ((char (following-char)))
