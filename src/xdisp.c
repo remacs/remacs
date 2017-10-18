@@ -20889,9 +20889,11 @@ maybe_produce_line_number (struct it *it)
 	      && it->w->base_line_pos <= IT_CHARPOS (*it)
 	      /* line-number-mode always displays narrowed line
 		 numbers, so we cannot use its data if the user wants
-		 line numbers that disregard narrowing.  */
+		 line numbers that disregard narrowing, or if the
+		 buffer's narrowing has just changed.  */
 	      && !(display_line_numbers_widen
-		   && (BEG_BYTE != BEGV_BYTE || Z_BYTE != ZV_BYTE)))
+		   && (BEG_BYTE != BEGV_BYTE || Z_BYTE != ZV_BYTE))
+	      && !current_buffer->clip_changed)
 	    {
 	      start_from = CHAR_TO_BYTE (it->w->base_line_pos);
 	      last_line = it->w->base_line_number - 1;
