@@ -95,12 +95,15 @@ normal bug reporting.)
 
 ** When reporting a new bug, to send a Cc to another address
 (e.g. bug-cc-mode@gnu.org), do NOT just use a Cc: header.
-Instead, use "X-Debbugs-CC:".  This ensures the Cc address will get a
+Instead, use "X-Debbugs-CC:".  This ensures the Cc address(es) will get a
 mail with the bug report number in.  If you do not do this, each reply
 in the subsequent discussion might end up creating a new bug.
 This is annoying.  (So annoying that a form of message-id tracking has
 been implemented to hopefully stop this happening, but it is still
 better to use X-Debbugs-CC.)
+
+If you want to send copies to more than one address, add them
+comma-separated in only one X-Debbugs-CC line.
 
 Like any X-Debbugs- header, this one can also be specified in the
 pseudo-header (see below), if your mail client does not let you add
