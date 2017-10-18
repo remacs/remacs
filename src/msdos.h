@@ -21,6 +21,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <dpmi.h>
 
+#include "termhooks.h"		/* struct terminal */
+
 int dos_ttraw (struct tty_display_info *);
 int dos_ttcooked (void);
 int dos_get_saved_screen (char **, int *, int *);
@@ -67,6 +69,7 @@ void syms_of_win16select (void);
 
 /* Constants.  */
 #define EINPROGRESS 112
+#define ENOTSUP     ENOSYS
 /* Gnulib sets O_CLOEXEC to O_NOINHERIT, which gets in the way when we
    need to redirect standard handles for subprocesses using temporary
    files created by mkostemp, see callproc.c.  */
