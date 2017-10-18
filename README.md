@@ -275,7 +275,7 @@ fn numberp(object: LispObject) -> LispObject {
 The elisp name of the function is derived from the Rust name, with
 underscores replaced by hyphens.  If that is not possible (like for
 the function `+`), you can give an elisp name as an argument to
-`lisp\_fn`, like `#[lisp_fn(name = "+")]`.
+`lisp_fn`, like `#[lisp_fn(name = "+")]`.
 
 Optional arguments are also possible: to make the minimum number of
 arguments from elisp different from the number of Rust arguments,
