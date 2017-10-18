@@ -167,7 +167,7 @@ otherwise.  IMAGE-TYPE should be a MIME image type, like
     (goto-char (point-min))
     (while (not (eobp))
       (let ((char (following-char)))
-        (if (<= char 128)
+        (if (< char 128)
             (forward-char 1)
           (delete-char 1)
           (insert "&#" (format "%d" char) ";"))))
