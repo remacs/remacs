@@ -926,7 +926,7 @@
 	constrained to call REPORT-FN exactly once.  It may do so any number
 	of times, cumulatively reporting diagnostics.  Flymake keeps track of
 	outdated REPORT-FN instances and disconsiders obsolete reports.
-	Backends should avoid reporting obsolete data by cancelling any
+	Backends should avoid reporting obsolete data by canceling any
 	ongoing processing at every renewed call to the backend function.
 
 	Consolidated flymake.el internal data structures to require less
@@ -18314,7 +18314,7 @@
 
 	Throw a `search-failed' derived error in Info search
 
-	The original fix for Bug#6106 switched from signalling `search-failed'
+	The original fix for Bug#6106 switched from signaling `search-failed'
 	to `user-error'.  However, this breaks incremental searching over
 	multiple nodes because the isearch code doesn't expect a `user-error'.
 
@@ -28599,7 +28599,7 @@
 	http://trac.common-lisp.net/bordeaux-threads/wiki/ApiDocumentation
 
 	... but not identically.  In particular I chose not to implement
-	interrupt-thread or destroy-thread, but instead a thread-signalling
+	interrupt-thread or destroy-thread, but instead a thread-signaling
 	approach.
 
 	I'm still undecided about *default-special-bindings* (which I did not

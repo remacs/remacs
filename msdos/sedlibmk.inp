@@ -45,7 +45,7 @@
 #      ifneq (,$(GL_GENERATE_xxxx_H))
 #    Depending on whether DJGPP uses the corresponding header, these
 #    should be edited either to 1 (thus exposing the recipe) or
-#    to notyhing, which makes Make bypass the recipe away.  Example:
+#    to nothing, which makes Make bypass the recipe away.  Example:
 #
 #       s/^@GL_GENERATE_STDBOOL_H@/1/
 #       s/^@GL_GENERATE_STDINT_H@//

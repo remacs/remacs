@@ -560,7 +560,7 @@ Binding,,, elisp, The Emacs Lisp Reference Manual}) to be active.
 
 (defun ruby-flymake (report-fn &rest _args)
   ;; Not having a ruby interpreter is a serious problem which should cause
-  ;; the backend to disable itself, so an @code{error} is signalled.
+  ;; the backend to disable itself, so an @code{error} is signaled.
   ;;
   (unless (executable-find
            "ruby") (error "Cannot find a suitable ruby"))
@@ -625,7 +625,7 @@ Binding,,, elisp, The Emacs Lisp Reference Manual}) to be active.
                                                         msg)
                        into diags
                        finally (funcall report-fn diags)))
-                  (flymake-log :warning "Cancelling obsolete check %s"
+                  (flymake-log :warning "Canceling obsolete check %s"
                                proc))
               ;; Cleanup the temporary buffer used to hold the
               ;; check's output.
