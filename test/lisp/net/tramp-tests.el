@@ -2346,6 +2346,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
   "Check `dired' with wildcards."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
+  (skip-unless (not (tramp--test-rsync-p)))
   ;; Since Emacs 26.1.
   (skip-unless (fboundp 'insert-directory-wildcard-in-dir-p))
 
@@ -4394,6 +4395,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test05-expand-file-name-relative' in `expand-file-name'.
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
+;; * Fix `tramp-test28-interrupt-process', timeout doesn't work reliably.
 ;; * Fix Bug#16928 in `tramp-test38-asynchronous-requests'.
 
 (defun tramp-test-all (&optional interactive)
