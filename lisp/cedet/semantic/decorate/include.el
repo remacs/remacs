@@ -467,7 +467,7 @@ its contents.
 	(error "Could not location include %s"
 	       (semantic-tag-name tag)))
        ((get-file-buffer file)
-       (pop-to-buffer-same-window (get-file-buffer file)))
+        (pop-to-buffer-same-window (get-file-buffer file)))
        ((stringp file)
 	(find-file file))
        ))))

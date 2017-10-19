@@ -530,11 +530,11 @@ Some tags such as includes have other reference features."
        ;; A tag
        ((semantic-tag-p result)
 	(semantic-go-to-tag result)
-       (pop-to-buffer-same-window (current-buffer))
+        (pop-to-buffer-same-window (current-buffer))
 	(semantic-momentary-highlight-tag result))
        ;; Buffers
        ((bufferp result)
-       (pop-to-buffer-same-window result)
+        (pop-to-buffer-same-window result)
 	(pulse-momentary-highlight-one-line (point)))
        ;; Files
        ((and (stringp result) (file-exists-p result))
