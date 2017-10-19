@@ -330,6 +330,11 @@ Then you can run this in the checkout root to reformat all Rust code:
 $ make rustfmt
 ```
 
+### Running elisp tests
+
+You can run the elisp test suite from the directory "test".
+Use `make` to run all tests. It's also possible to run single tests, e.g. `make src/data-tests`.
+
 ## Design Goals
 
 **Compatibility**: Remacs should not break existing elisp code, and
