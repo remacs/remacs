@@ -38,11 +38,11 @@ impl FontExtraType {
     // Needed for wrong_type! that is using a safe predicate. This may change in the future.
     #[allow(unused_unsafe)]
     pub fn from_symbol_or_error(extra_type: LispObject) -> FontExtraType {
-        if extra_type.eq(LispObject::from_raw(unsafe { Qfont_spec })) {
+        if extra_type.eq(LispObject::from(unsafe { Qfont_spec })) {
             FontExtraType::Spec
-        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_entity })) {
+        } else if extra_type.eq(LispObject::from(unsafe { Qfont_entity })) {
             FontExtraType::Entity
-        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_object })) {
+        } else if extra_type.eq(LispObject::from(unsafe { Qfont_object })) {
             FontExtraType::Object
         } else {
             wrong_type!(intern("font-extra-type").to_raw(), extra_type);

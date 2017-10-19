@@ -61,7 +61,7 @@ Now everything is defined, `make_float` can be used in Rust. For example in `rem
 ```rust
     #[inline]
     pub fn from_float(v: EmacsDouble) -> LispObject {
-        LispObject::from_raw(unsafe { make_float(v) })
+        LispObject::from(unsafe { make_float(v) })
     }
 ```
 

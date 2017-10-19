@@ -107,23 +107,23 @@ impl LispBufferRef {
 
     #[inline]
     pub fn mark_active(&self) -> LispObject {
-        LispObject::from_raw(self.mark_active)
+        LispObject::from(self.mark_active)
     }
 
     #[inline]
     pub fn mark(&self) -> LispObject {
-        LispObject::from_raw(self.mark)
+        LispObject::from(self.mark)
     }
 
     #[inline]
     pub fn name(&self) -> LispObject {
-        LispObject::from_raw(self.name)
+        LispObject::from(self.name)
     }
 
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
-        LispObject::from_raw(self.name).is_not_nil()
+        LispObject::from(self.name).is_not_nil()
     }
 
     #[inline]
@@ -166,12 +166,12 @@ impl LispBufferRef {
 impl LispOverlayRef {
     #[inline]
     pub fn start(&self) -> LispObject {
-        LispObject::from_raw(self.start)
+        LispObject::from(self.start)
     }
 
     #[inline]
     pub fn end(&self) -> LispObject {
-        LispObject::from_raw(self.end)
+        LispObject::from(self.end)
     }
 }
 
@@ -226,7 +226,7 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
         buffer_or_name.as_string_or_error();
         cdr(assoc_ignore_text_properties(
             buffer_or_name,
-            LispObject::from_raw(unsafe { Vbuffer_alist }),
+            LispObject::from(unsafe { Vbuffer_alist }),
         ))
     }
 }
@@ -236,7 +236,7 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
 pub fn current_buffer() -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
     unsafe {
-        LispObject::from_raw(make_lisp_ptr(
+        LispObject::from(make_lisp_ptr(
             buffer_ref.as_ptr() as *mut c_void,
             Lisp_Type::Lisp_Vectorlike,
         ))
@@ -253,7 +253,7 @@ pub fn buffer_file_name(buffer: LispObject) -> LispObject {
         buffer.as_buffer_or_error()
     };
 
-    LispObject::from_raw(buf.filename)
+    LispObject::from(buf.filename)
 }
 
 /// Return t if BUFFER was modified since its file was last read or saved.
@@ -269,7 +269,7 @@ pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
 /// Return nil if BUFFER has been killed.
 #[lisp_fn(min = "0")]
 pub fn buffer_name(buffer: LispObject) -> LispObject {
-    LispObject::from_raw(buffer.as_buffer_or_current_buffer().name)
+    LispObject::from(buffer.as_buffer_or_current_buffer().name)
 }
 
 /// Return BUFFER's tick counter, incremented for each change in text.
@@ -318,8 +318,8 @@ fn overlay_buffer(overlay: LispObject) -> LispObject {
 
 #[no_mangle]
 pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
-    let start = LispObject::from_raw(unsafe { *b });
-    let stop = LispObject::from_raw(unsafe { *e });
+    let start = LispObject::from(unsafe { *b });
+    let stop = LispObject::from(unsafe { *e });
 
     let mut beg = start.as_fixnum_coerce_marker_or_error();
     let mut end = stop.as_fixnum_coerce_marker_or_error();

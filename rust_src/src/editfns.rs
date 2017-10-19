@@ -79,8 +79,8 @@ pub fn eolp() -> LispObject {
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> LispObject {
     let current_buf = ThreadState::current_buffer();
-    if LispObject::from_raw(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil() &&
-        LispObject::from_raw(unsafe { globals.f_Vmark_even_if_inactive }).is_nil() &&
+    if LispObject::from(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil() &&
+        LispObject::from(unsafe { globals.f_Vmark_even_if_inactive }).is_nil() &&
         current_buf.mark_active().is_nil()
     {
         xsignal!(Qmark_inactive);

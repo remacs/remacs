@@ -18,12 +18,12 @@ fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
     feature.as_symbol_or_error();
     let mut tem = memq(
         feature,
-        LispObject::from_raw(unsafe { globals.f_Vfeatures }),
+        LispObject::from(unsafe { globals.f_Vfeatures }),
     );
     if tem.is_not_nil() && subfeature.is_not_nil() {
         tem = member(
             subfeature,
-            get(feature, LispObject::from_raw(unsafe { Qsubfeatures })),
+            get(feature, LispObject::from(unsafe { Qsubfeatures })),
         );
     }
     if tem.is_nil() {
