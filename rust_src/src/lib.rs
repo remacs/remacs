@@ -198,6 +198,9 @@ pub use multibyte::str_to_multibyte;
 pub use multibyte::str_as_unibyte;
 pub use multibyte::str_to_unibyte;
 
+// Used in bytecode.c, charset.c
+pub use editfns::Fchar_after;
+
 // Used in xdisp.c
 pub use buffers::Foverlay_start;
 pub use buffers::Foverlay_end;
@@ -413,6 +416,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Spoint_min);
         defsubr(&*editfns::Spoint_max);
         defsubr(&*editfns::Sgoto_char);
+        defsubr(&*editfns::Schar_after);
         defsubr(&*fns::Sfeaturep);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
