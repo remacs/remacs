@@ -21,9 +21,7 @@ impl LispObarrayRef {
     /// This is a wrapper around the C function `check_obarray` instead of a
     /// translation, so that fatal errors are handled in the same fashion.
     pub fn from_object_or_error(object: LispObject) -> LispObarrayRef {
-        LispObarrayRef(LispObject::from(
-            unsafe { check_obarray(object.to_raw()) },
-        ))
+        LispObarrayRef(LispObject::from(unsafe { check_obarray(object.to_raw()) }))
     }
 
     /// Return the symbol that matches C string S, of length LEN. If there is no
