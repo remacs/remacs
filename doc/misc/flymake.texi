@@ -600,7 +600,7 @@ Binding,,, elisp, The Emacs Lisp Reference Manual}) to be active.
                 ;; `ruby--flymake-proc', which indicates that
                 ;; `proc' is not an obsolete process.
                 ;;
-                (if (eq proc ruby--flymake-proc)
+                (if (with-current-buffer source (eq proc ruby--flymake-proc))
                     (with-current-buffer (process-buffer proc)
                       (goto-char (point-min))
                       ;; Parse the output buffer for diagnostic's
