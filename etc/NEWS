@@ -56,6 +56,11 @@ whether '"' is also replaced in 'electric-quote-mode'.  If non-nil,
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** Ibuffer
+
+---
+*** New filter ibuffer-filter-by-process; bound to '/E'.
+
 ** Edebug
 
 +++

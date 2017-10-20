@@ -1286,6 +1286,12 @@ currently used by buffers."
    :reader (read-from-minibuffer "Filter by name (regexp): "))
   (string-match qualifier (buffer-name buf)))
 
+;;;###autoload (autoload 'ibuffer-filter-by-process "ibuf-ext")
+(define-ibuffer-filter process
+    "Limit current view to buffers running a process."
+  (:description "process")
+  (get-buffer-process buf))
+
 ;;;###autoload (autoload 'ibuffer-filter-by-starred-name "ibuf-ext")
 (define-ibuffer-filter starred-name
     "Limit current view to buffers with name beginning and ending
