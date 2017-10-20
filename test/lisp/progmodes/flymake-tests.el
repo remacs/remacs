@@ -24,6 +24,7 @@
 ;;; Code:
 (require 'ert)
 (require 'flymake)
+(require 'subr-x) ; string-trim
 
 (defvar flymake-tests-data-directory
   (expand-file-name "lisp/progmodes/flymake-resources"
@@ -128,7 +129,11 @@ SEVERITY-PREDICATE is used to setup
 
 (ert-deftest different-diagnostic-types ()
   "Test GCC warning via function predicate."
-  (skip-unless (and (executable-find "gcc") (executable-find "make")))
+  (skip-unless (and (executable-find "gcc")
+                    (version<=
+                     "5" (string-trim
+                          (shell-command-to-string "gcc -dumpversion")))
+                    (executable-find "make")))
   (let ((flymake-wrap-around nil))
     (flymake-tests--with-flymake
         ("errors-and-warnings.c")
