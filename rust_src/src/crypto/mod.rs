@@ -21,6 +21,7 @@ use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw
                  Qcoding_system_error, Qwrite_region, Qbuffer_file_coding_system};
 use remacs_macros::lisp_fn;
 use symbols::{symbol_name, fboundp};
+use threads::ThreadState;
 
 #[derive(Clone, Copy)]
 enum HashAlg {
@@ -197,15 +198,15 @@ fn get_input_from_string(
 }
 
 fn get_input_from_buffer(
-    buffer: LispBufferRef,
+    mut buffer: LispBufferRef,
     start: LispObject,
     end: LispObject,
     start_byte: &mut ptrdiff_t,
     end_byte: &mut ptrdiff_t,
 ) -> LispObject {
-    let prev_buffer = unsafe { (*current_thread).m_current_buffer };
+    let mut prev_buffer = ThreadState::current_buffer().as_mut();
     unsafe { record_unwind_current_buffer() };
-    unsafe { set_buffer_internal(buffer.as_ptr() as *const _ as *const libc::c_void) };
+    unsafe { set_buffer_internal(buffer.as_mut()) };
     *start_byte = if start.is_nil() {
         buffer.begv
     } else {

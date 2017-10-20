@@ -1076,7 +1076,7 @@ extern "C" {
         -> libc::ptrdiff_t;
 
     pub fn record_unwind_current_buffer();
-    pub fn set_buffer_internal(buffer: *const libc::c_void); // TODO: buffer*
+    pub fn set_buffer_internal(buffer: *mut Lisp_Buffer);
     pub fn make_buffer_string(
         start: libc::ptrdiff_t,
         end: libc::ptrdiff_t,

@@ -329,10 +329,10 @@ fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     if buffer.is_nil() {
         unsafe { nsberror(buffer_or_name.to_raw()) }
     };
-    let buf = buffer.as_buffer_or_error();
+    let mut buf = buffer.as_buffer_or_error();
     if !buf.is_live() {
         error!("Selecting deleted buffer");
     };
-    unsafe { set_buffer_internal(buf.as_ptr() as *const _ as *const c_void) };
+    unsafe { set_buffer_internal(buf.as_mut()) };
     buffer
 }
