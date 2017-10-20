@@ -377,9 +377,21 @@ is a shorthand for (NAME NAME)."
 (define-obsolete-function-alias
   'object-class-fast #'eieio-object-class "24.4")
 
+;; In the past, every EIEIO object had a `name' field, so we had the
+;; two methods `eieio-object-name-string' and
+;; `eieio-object-set-name-string' "for free".  Since this field is
+;; very rarely used, we got rid of it and instead we keep it in a weak
+;; hash-tables, for those very rare objects that use it.
+;; Really, those rare objects should inherit from `eieio-named' instead!
+(defconst eieio--object-names (make-hash-table :test #'eq :weakness 'key))
+
 (cl-defgeneric eieio-object-name-string (obj)
   "Return a string which is OBJ's name."
-  (declare (obsolete eieio-named "25.1")))
+  (or (gethash obj eieio--object-names)
+      (format "%s-%x" (eieio-object-class obj) (sxhash-eq obj))))
+
+(define-obsolete-function-alias
+  'object-name-string #'eieio-object-name-string "24.4")
 
 (defun eieio-object-name (obj &optional extra)
   "Return a printed representation for object OBJ.
@@ -389,21 +401,9 @@ If EXTRA, include that in the string returned to represent the symbol."
 	  (eieio-object-name-string obj) (or extra "")))
 (define-obsolete-function-alias 'object-name #'eieio-object-name "24.4")
 
-(defconst eieio--object-names (make-hash-table :test #'eq :weakness 'key))
-
-;; In the past, every EIEIO object had a `name' field, so we had the two method
-;; below "for free".  Since this field is very rarely used, we got rid of it
-;; and instead we keep it in a weak hash-tables, for those very rare objects
-;; that use it.
-(cl-defmethod eieio-object-name-string (obj)
-  (or (gethash obj eieio--object-names)
-      (symbol-name (eieio-object-class obj))))
-(define-obsolete-function-alias
-  'object-name-string #'eieio-object-name-string "24.4")
-
-(cl-defmethod eieio-object-set-name-string (obj name)
+(cl-defgeneric eieio-object-set-name-string (obj name)
   "Set the string which is OBJ's NAME."
-  (declare (obsolete eieio-named "25.1"))
+  (declare (obsolete "inherit from `eieio-named' and use (setf (slot-value OBJ 'object-name) NAME) instead" "25.1"))
   (cl-check-type name string)
   (setf (gethash obj eieio--object-names) name))
 (define-obsolete-function-alias

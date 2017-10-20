@@ -464,7 +464,7 @@ instance."
 (cl-defmethod eieio-object-name-string ((obj eieio-named))
   "Return a string which is OBJ's name."
   (or (slot-value obj 'object-name)
-      (symbol-name (eieio-object-class obj))))
+      (cl-call-next-method)))
 
 (cl-defmethod eieio-object-set-name-string ((obj eieio-named) name)
   "Set the string which is OBJ's NAME."
