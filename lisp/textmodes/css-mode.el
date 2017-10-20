@@ -896,7 +896,7 @@ cannot be completed sensibly: `custom-ident',
                      ;; No face.
                      nil)))
     ;; Variables.
-    (,(concat "--" css-ident-re) (0 font-lock-variable-name-face))
+    (,(concat (rx symbol-start) "--" css-ident-re) (0 font-lock-variable-name-face))
     ;; Properties.  Again, we don't limit ourselves to css-property-ids.
     (,(concat "\\(?:[{;]\\|^\\)[ \t]*\\("
               "\\(?:\\(" css-proprietary-nmstart-re "\\)\\|"
