@@ -193,10 +193,10 @@ Populated by `tabulated-list-init-header'.")
   ;; is displayed.
   (if (not display-line-numbers)
            0
-    (let ((cbuf-window (get-buffer-window (current-buffer))))
+    (let ((cbuf-window (get-buffer-window (current-buffer) t)))
       (if (window-live-p cbuf-window)
           (with-selected-window cbuf-window
-            (+ (line-number-display-width) 2))
+            (line-number-display-width 'columns))
         4))))
 
 (defun tabulated-list-init-header ()
@@ -329,8 +329,6 @@ Check the current row, the previous one and the next row."
                            (string-width (if (stringp nt) nt (car nt)))))
                        tabulated-list--near-rows)))
 
-(defvar tabulated-list-entry-lnum-width nil)
-
 (defun tabulated-list-print (&optional remember-pos update)
   "Populate the current Tabulated List mode buffer.
 This sorts the `tabulated-list-entries' list if sorting is
@@ -373,7 +371,6 @@ changing `tabulated-list-sort-key'."
       (unless tabulated-list-use-header-line
         (tabulated-list-print-fake-header)))
     ;; Finally, print the resulting list.
-    (setq tabulated-list-entry-lnum-width (tabulated-list-line-number-width))
     (while entries
       (let* ((elt (car entries))
              (tabulated-list--near-rows
@@ -428,9 +425,8 @@ of column descriptors."
 	(x     (max tabulated-list-padding 0))
 	(ncols (length tabulated-list-format))
 	(inhibit-read-only t))
-    (setq x (+ x tabulated-list-entry-lnum-width))
     (if (> tabulated-list-padding 0)
-	(insert (make-string (- x tabulated-list-entry-lnum-width) ?\s)))
+	(insert (make-string x ?\s)))
     (let ((tabulated-list--near-rows ; Bind it if not bound yet (Bug#25506).
            (or (bound-and-true-p tabulated-list--near-rows)
                (list (or (tabulated-list-get-entry (point-at-bol 0))
@@ -601,6 +597,14 @@ With a numeric prefix argument N, sort the Nth column."
     (tabulated-list-init-header)
     (tabulated-list-print t)))
 
+(defvar tabulated-list--current-lnum-width nil)
+(defun tabulated-list-watch-line-number-width (_window)
+  (if display-line-numbers
+      (let ((lnum-width (tabulated-list-line-number-width)))
+        (when (not (= tabulated-list--current-lnum-width lnum-width))
+          (setq-local tabulated-list--current-lnum-width lnum-width)
+          (tabulated-list-revert)))))
+
 ;;; The mode definition:
 
 (define-derived-mode tabulated-list-mode special-mode "Tabulated"
@@ -645,7 +649,12 @@ as the ewoc pretty-printer."
   ;; column of the first entry happens to begin with a R2L letter.
   (setq bidi-paragraph-direction 'left-to-right)
   ;; This is for if/when they turn on display-line-numbers
-  (add-hook 'display-line-numbers-mode-hook #'tabulated-list-revert nil t))
+  (add-hook 'display-line-numbers-mode-hook #'tabulated-list-revert nil t)
+  ;; This is for if/when they customize the line-number face or when
+  ;; the line-number width needs to change due to scrolling.
+  (setq-local tabulated-list--current-lnum-width 0)
+  (add-hook 'pre-redisplay-functions
+            #'tabulated-list-watch-line-number-width nil t))
 
 (put 'tabulated-list-mode 'mode-class 'special)
 
