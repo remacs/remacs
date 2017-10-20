@@ -2467,9 +2467,7 @@ the bug number, and browsing the URL must return mbox output."
 	;; Add the debbugs address so that we can respond to reports easily.
 	(let ((address
 	       (format "%s@%s" (car ids)
-		       (replace-regexp-in-string
-			"/.*$" ""
-			(replace-regexp-in-string "^http://" "" mbox-url)))))
+                       (url-host (url-generic-parse-url mbox-url)))))
 	  (goto-char (point-min))
 	  (while (re-search-forward (concat "^" message-unix-mail-delimiter)
 				    nil t)
