@@ -5652,41 +5652,6 @@ bitch_at_user (void)
 			  Sleeping, Waiting
  ***********************************************************************/
 
-DEFUN ("sleep-for", Fsleep_for, Ssleep_for, 1, 2, 0,
-       doc: /* Pause, without updating display, for SECONDS seconds.
-SECONDS may be a floating-point value, meaning that you can wait for a
-fraction of a second.  Optional second arg MILLISECONDS specifies an
-additional wait period, in milliseconds; this is for backwards compatibility.
-\(Not all operating systems support waiting for a fraction of a second.)  */)
-  (Lisp_Object seconds, Lisp_Object milliseconds)
-{
-  double duration = extract_float (seconds);
-
-  if (!NILP (milliseconds))
-    {
-      CHECK_NUMBER (milliseconds);
-      duration += XINT (milliseconds) / 1000.0;
-    }
-
-  if (duration > 0)
-    {
-      struct timespec t = dtotimespec (duration);
-      struct timespec tend = timespec_add (current_timespec (), t);
-
-      /* wait_reading_process_output returns as soon as it detects
-	 output from any subprocess, so we wait in a loop until the
-	 time expires.  */
-      do {
-	wait_reading_process_output (min (t.tv_sec, WAIT_READING_MAX),
-				     t.tv_nsec, 0, 0, Qnil, NULL, 0);
-	t = timespec_sub (tend, current_timespec ());
-      } while (timespec_sign (t) > 0);
-    }
-
-  return Qnil;
-}
-
-
 /* This is just like wait_reading_process_output, except that
    it does redisplay.
 
@@ -6158,7 +6123,6 @@ syms_of_display (void)
   defsubr (&Sopen_termscript);
   defsubr (&Sding);
   defsubr (&Sredisplay);
-  defsubr (&Ssleep_for);
   defsubr (&Ssend_string_to_terminal);
   defsubr (&Sinternal_show_cursor);
   defsubr (&Sinternal_show_cursor_p);
