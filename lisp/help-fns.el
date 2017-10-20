@@ -561,6 +561,8 @@ FILE is the file where FUNCTION was probably defined."
     short))
 
 (defun help-fns--analyse-function (function)
+  ;; FIXME: Document/explain the differences between FUNCTION,
+  ;; REAL-FUNCTION, DEF, and REAL-DEF.
   "Return information about FUNCTION.
 Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
   (let* ((advised (and (symbolp function)
@@ -689,10 +691,15 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
                                 (point))))
   (terpri)(terpri)
 
-  (pcase-let ((`(,real-function ,def ,_aliased ,real-def)
-               (help-fns--analyse-function function))
-              (doc-raw (documentation function t))
-              (key-bindings-buffer (current-buffer)))
+  (pcase-let* ((`(,real-function ,def ,_aliased ,real-def)
+                (help-fns--analyse-function function))
+               (doc-raw (condition-case nil
+                            ;; FIXME: Maybe `documentation' should return nil
+                            ;; for invalid functions i.s.o. signaling an error.
+                            (documentation function t)
+                          ;; E.g. an alias for a not yet defined function.
+                          (invalid-function nil)))
+               (key-bindings-buffer (current-buffer)))
 
     ;; If the function is autoloaded, and its docstring has
     ;; key substitution constructs, load the library.
@@ -703,10 +710,15 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
 
     (help-fns--key-bindings function)
     (with-current-buffer standard-output
-      (let ((doc (help-fns--signature
-                  function doc-raw
-                  (if (subrp def) (indirect-function real-def) real-def)
-                  real-function key-bindings-buffer)))
+      (let ((doc (condition-case nil
+                     ;; FIXME: Maybe `help-fns--signature' should return `doc'
+                     ;; for invalid functions i.s.o. signaling an error.
+                     (help-fns--signature
+                      function doc-raw
+                      (if (subrp def) (indirect-function real-def) real-def)
+                      real-function key-bindings-buffer)
+                   ;; E.g. an alias for a not yet defined function.
+                   (invalid-function doc-raw))))
         (run-hook-with-args 'help-fns-describe-function-functions function)
         (insert "\n" (or doc "Not documented.")))
       ;; Avoid asking the user annoying questions if she decides
