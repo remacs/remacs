@@ -1033,8 +1033,11 @@ group definitions by setting `ibuffer-filter-groups' to nil."
       (ibuffer-jump-to-buffer (buffer-name buf)))))
 
 (defun ibuffer-push-filter (filter-specification)
-  "Add FILTER-SPECIFICATION to `ibuffer-filtering-qualifiers'."
-  (push filter-specification ibuffer-filtering-qualifiers))
+  "Add FILTER-SPECIFICATION to `ibuffer-filtering-qualifiers'.
+If FILTER-SPECIFICATION is already in the list then return nil.  Otherwise,
+return the updated list."
+  (unless (member filter-specification ibuffer-filtering-qualifiers)
+    (push filter-specification ibuffer-filtering-qualifiers)))
 
 ;;;###autoload
 (defun ibuffer-decompose-filter ()
