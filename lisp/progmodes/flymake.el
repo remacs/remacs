@@ -48,7 +48,8 @@
 (require 'thingatpt) ; end-of-thing
 (require 'warnings) ; warning-numeric-level, display-warning
 (require 'compile) ; for some faces
-(require 'subr-x) ; when-let*, if-let*, hash-table-keys, hash-table-values
+;; when-let*, if-let*, hash-table-keys, hash-table-values:
+(eval-when-compile (require 'subr-x))
 
 (defgroup flymake nil
   "Universal on-the-fly syntax checker."

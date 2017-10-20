@@ -24,7 +24,7 @@
 ;;; Code:
 (require 'ert)
 (require 'flymake)
-(require 'subr-x) ; string-trim
+(eval-when-compile (require 'subr-x)) ; string-trim
 
 (defvar flymake-tests-data-directory
   (expand-file-name "lisp/progmodes/flymake-resources"
