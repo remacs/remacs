@@ -1,6 +1,6 @@
 GNU Emacs NEWS -- history of user-visible changes.
 
-Copyright (C) 2014-2017 Free Software Foundation, Inc.
+Copyright (C) 2016-2017 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Please send Emacs bug reports to bug-gnu-emacs@gnu.org.
@@ -9,16 +9,16 @@ If possible, use M-x report-emacs-bug.
 This file is about changes in Emacs version 26.
 
 See file HISTORY for a list of GNU Emacs versions and release dates.
-See files NEWS.25, NEWS.24, NEWS.23, NEWS.22, NEWS.21, NEWS.20,
-NEWS.19, NEWS.18, and NEWS.1-17 for changes in older Emacs versions.
+See files NEWS.25, NEWS.24, ..., NEWS.18, and NEWS.1-17 for changes
+in older Emacs versions.
 
 You can narrow news to a specific version by calling 'view-emacs-news'
 with a prefix argument or by typing C-u C-h C-n.
 
 Temporary note:
-+++ indicates that all necessary documentation updates are complete.
-    (This means all relevant manuals in doc/ AND lisp doc-strings.)
---- means no change in the manuals is needed.
++++ indicates that all necessary documentation updates have been done.
+    (This means all the relevant manuals in doc/ AND lisp doc-strings.)
+--- means doc strings are updated, and no change in the manuals is needed.
 When you add a new item, use the appropriate mark if you are sure it applies,
 
 
@@ -58,7 +58,7 @@ configure option '--disable-libsystemd'.
 
 +++
 ** A systemd user unit file is provided.  Use it in the standard way:
-systemctl --user enable emacs
+'systemctl --user enable emacs'.
 (If your Emacs is installed in a non-standard location, you may
 need to copy the emacs.service file to eg ~/.config/systemd/user/)
 
@@ -107,10 +107,10 @@ requirements.  The option makes Emacs abort if a module-related
 assertion triggers.
 
 +++
-** Emacs now supports 24-bit colors on capable text terminals
+** Emacs now supports 24-bit colors on capable text terminals.
 Terminal is automatically initialized to use 24-bit colors if the
 required capabilities are found in terminfo.  See the FAQ node
-"Colors on a TTY" for more information.
+"(efaq) Colors on a TTY" for more information.
 
 +++
 ** Emacs now obeys the X resource "scrollBar" at startup.
@@ -121,8 +121,8 @@ The effect is similar to that of "toolBar" resource on the tool bar.
 
 +++
 ** Option 'buffer-offer-save' can be set to new value, 'always'.  When
-   set to 'always', the command `save-some-buffers' will always offer
-   this buffer for saving.
+set to 'always', the command 'save-some-buffers' will always offer
+this buffer for saving.
 
 ** Security vulnerability related to Enriched Text mode is removed.
 
@@ -176,8 +176,8 @@ explicitly yields.  Global variables are shared among all threads, but
 a 'let' binding is thread-local.  Each thread also has its own current
 buffer and its own match data.
 
-See the chapter "Threads" in the ELisp manual for full documentation
-of these facilities.
+See the chapter "(elisp) Threads" in the ELisp manual for full
+documentation of these facilities.
 
 +++
 ** The new user variable 'electric-quote-chars' provides a list
@@ -224,8 +224,9 @@ frame by evaluating this form:
   (modify-frame-parameters nil '((inhibit-double-buffering . t)))
 
 ---
-The group 'wp', whose label was "text", is now deprecated.
-Use the new group 'text', which inherits from 'wp', instead.
+** The customization group 'wp', whose label was "text", is now
+deprecated.  Use the new group 'text', which inherits from 'wp',
+instead.
 
 +++
 ** The new function 'call-shell-region' executes a command in an
@@ -339,13 +340,13 @@ eliminated, and integer strings work everywhere.
 ** It is possible to disable attempted recovery on fatal signals.
 Two new variables support disabling attempts to recover from stack
 overflow and to avoid automatic auto-save when Emacs is delivered a
-fatal signal.  'attempt-stack-overflow-recovery', if set to 'nil',
+fatal signal.  'attempt-stack-overflow-recovery', if set to nil,
 will disable attempts to recover from C stack overflows; Emacs will
 then crash as with any other fatal signal.
-'attempt-orderly-shutdown-on-fatal-signal', if set to 'nil', will
+'attempt-orderly-shutdown-on-fatal-signal', if set to nil, will
 disable attempts to auto-save the session and shut down in an orderly
 fashion when Emacs receives a fatal signal; instead, Emacs will
-terminate immediately.  Both variables are non-'nil' by default.
+terminate immediately.  Both variables are non-nil by default.
 These variables are for users who would like to avoid the small
 probability of data corruption due to techniques Emacs uses to recover
 in these situations.
@@ -362,7 +363,7 @@ See the variable 'dir-locals-file-2' for more information.
 +++
 ** Connection-local variables can be used to specify local variables
 with a value depending on the connected remote server.  For details,
-see the node "Connection Local Variables" in the ELisp manual.
+see the node "(elisp) Connection Local Variables" in the ELisp manual.
 
 ---
 ** International domain names (IDNA) are now encoded via the new
@@ -374,6 +375,9 @@ where you can cancel them with the 'c' command.
 
 +++
 ** 'switch-to-buffer-preserve-window-point' now defaults to t.
+Applications that call 'switch-to-buffer' and want to show the buffer at
+the position of its point should use 'pop-to-buffer-same-window' in lieu
+of 'switch-to-buffer'.
 
 +++
 ** The new variable 'debugger-stack-frame-as-list' allows displaying
@@ -382,7 +386,7 @@ debug.el and edebug.el have been updated to heed to this variable.
 
 ---
 ** Values in call stack frames are now displayed using 'cl-prin1'.
-The old behaviour of using 'prin1' can be restored by customizing the
+The old behavior of using 'prin1' can be restored by customizing the
 new option 'debugger-print-function'.
 
 +++
@@ -420,17 +424,17 @@ want to reverse the direction of the scroll, customize
 'mwheel-flip-direction'.
 
 +++
-** Emacsclient has a new option -u/--suppress-output.
+** Emacsclient has a new option '-u' / '--suppress-output'.
 This option suppresses display of return values from the server
 process.
 
 +++
-** Emacsclient has a new option -T/--tramp.
+** Emacsclient has a new option '-T' / '--tramp'.
 This helps with using a local Emacs session as the server for a remote
 emacsclient.  With appropriate setup, one can now set the EDITOR
 environment variable on a remote machine to emacsclient, and
 use the local Emacs to edit remote files via Tramp.  See the node
-"emacsclient Options" in the user manual for the details.
+"(emacs) emacsclient Options" in the user manual for the details.
 
 ---
 ** New user option 'dig-program-options' and extended functionality
@@ -456,17 +460,17 @@ display of raw bytes from octal to hex.
 
 +++
 ** You can now provide explicit field numbers in format specifiers.
-For example, '(format "%2$s %1$s" "X" "Y")' produces "Y X".
+For example, '(format "%2$s %1$s %2$s" "X" "Y")' produces "Y X Y".
 
 +++
 ** Emacs now supports optional display of line numbers in the buffer.
-This is similar to what linum-mode provides, but much faster and
+This is similar to what 'linum-mode' provides, but much faster and
 doesn't usurp the display margin for the line numbers.  Customize the
 buffer-local variable 'display-line-numbers' to activate this optional
-display.  Alternatively, you can use the `display-line-numbers-mode'
-minor mode or the global `global-display-line-numbers-mode'.  When
-using these modes, customize `display-line-numbers-type' with the same
-value as you would use with `display-line-numbers'.
+display.  Alternatively, you can use the 'display-line-numbers-mode'
+minor mode or the global 'global-display-line-numbers-mode'.  When
+using these modes, customize 'display-line-numbers-type' with the same
+value as you would use with 'display-line-numbers'.
 
 Line numbers are not displayed at all in minibuffer windows and in
 tooltips, as they are not useful there.
@@ -480,16 +484,19 @@ Lisp programs that need to know how much screen estate is used up for
 line-number display in a window can use the new function
 'line-number-display-width'.
 
-Linum mode and all similar packages are henceforth becoming obsolete.
+'linum-mode' and all similar packages are henceforth becoming obsolete.
 Users and developers are encouraged to switch to this new feature
 instead.
 
 +++
 ** emacsclient now accepts command-line options in ALTERNATE_EDITOR
-and --alternate-editor. For example, ALTERNATE_EDITOR="emacs -Q -nw".
+and '--alternate-editor'. For example, ALTERNATE_EDITOR="emacs -Q -nw".
 Arguments may be quoted "like this", so that for example an absolute
 path containing a space may be specified; quote escaping is not
 supported.
+
+** The new user option 'arabic-shaper-ZWNJ-handling' controls how to
+handle ZWNJ in Arabic text rendering.
 
 
 * Editing Changes in Emacs 26.1
@@ -523,8 +530,8 @@ the end of the window, e.g. "5-17%".  The new option
 
 +++
 ** Two new user options 'list-matching-lines-jump-to-current-line' and
-'list-matching-lines-current-line-face' to show highlighted the current
-line in *Occur* buffer.
+'list-matching-lines-current-line-face' to show the current line
+highlighted in *Occur* buffer.
 
 +++
 ** The 'occur' command can now operate on the region.
@@ -587,7 +594,7 @@ different buffer while keeping point, mark, markers, and text
 properties as intact as possible.
 
 +++
-** New commands 'apropos-local-variable' and 'apropos-local-value.
+** New commands 'apropos-local-variable' and 'apropos-local-value'.
 These are buffer-local versions of 'apropos-variable' and
 'apropos-value', respectively.  They show buffer-local variables whose
 names and values, respectively, match a given pattern.
@@ -607,7 +614,11 @@ state to take effect (making a frame visible, for example).
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
 ---
-** New function `cl-generic-p'.
+** Emacs 26.1 comes with Org v9.1.2.
+See the file ORG-NEWS for user-visible changes in Org.
+
+---
+** New function 'cl-generic-p'.
 
 ** Dired
 
@@ -623,12 +634,12 @@ remaining directories without more prompts.
 It gets replaced by the current file name, like ' ? '.
 
 +++
-*** A new option 'dired-always-read-filesystem' default to nil.
-If non-nil, buffers visiting files are reverted before search them;
-for instance, in 'dired-mark-files-containing-regexp' a non-nil value
-of this option means the file is revisited in a temporary buffer;
-this temporary buffer is the actual buffer searched: the original buffer
-visiting the file is not modified.
+*** A new option 'dired-always-read-filesystem' defaulting to nil.
+If non-nil, buffers visiting files are reverted before they are
+searched; for instance, in 'dired-mark-files-containing-regexp' a
+non-nil value of this option means the file is revisited in a
+temporary buffer; this temporary buffer is the actual buffer searched:
+the original buffer visiting the file is not modified.
 
 ---
 *** Users can now customize mouse clicks in Dired in a more flexible way.
@@ -659,17 +670,17 @@ keep previous behavior.
 ** html2text is now marked obsolete.
 
 ---
-** smerge-refine-regions can refine regions in separate buffers
+** smerge-refine-regions can refine regions in separate buffers.
 
 ---
 ** Info menu and index completion uses substring completion by default.
-This can be customized via the info-menu category in
-completion-category-override.
+This can be customized via the 'info-menu' category in
+'completion-category-overrides'.
 
 +++
 ** The ancestor buffer is shown by default in 3-way merges.
-A new option ediff-show-ancestor and a new toggle
-ediff-toggle-show-ancestor.
+A new option 'ediff-show-ancestor' and a new toggle
+'ediff-toggle-show-ancestor'.
 
 ---
 ** TeX: Add luatex and xetex as alternatives to pdftex
@@ -700,7 +711,7 @@ bound to 'Buffer-menu-unmark-all-buffers'.
 ** Gnus
 
 ---
-*** The .newsrc file will now only be saved if the native select
+*** The ~/.newsrc file will now only be saved if the native select
 method is an NNTP select method.
 
 +++
@@ -709,9 +720,10 @@ added: 'C-c C-s C-m C-m'.
 
 +++
 
-*** In message-citation-line-format the %Z format is now the time zone name
-instead of the numeric form.  The %z format continues to be the
-numeric form.  The new behavior is compatible with format-time-string.
+*** In 'message-citation-line-format' the '%Z' format is now the time
+zone name instead of the numeric form.  The '%z' format continues to
+be the numeric form.  The new behavior is compatible with
+'format-time-string'.
 
 ** Ibuffer
 
@@ -778,7 +790,7 @@ whose content matches a regexp; bound to '% g'.
 
 ---
 *** New user option 'comint-move-point-for-matching-input' to control
-where to place point after C-c M-r and C-c M-s.
+where to place point after 'C-c M-r' and 'C-c M-s'.
 
 ** Compilation mode
 
@@ -811,7 +823,7 @@ breakpoint (e.g. with "f" and "o") by customizing the new option
 'edebug-sit-on-break'.
 
 +++
-*** New customizable option 'edebug-max-depth'
+*** New customizable option 'edebug-max-depth'.
 This allows to enlarge the maximum recursion depth when instrumenting
 code.
 
@@ -853,7 +865,6 @@ bigger than the current window).
 avoid accidentally accessing remote links may rebind 'w' and 'u' in
 'eww-link-keymap' to it.
 
-
 ** Ido
 
 ---
@@ -886,8 +897,8 @@ also available in 'image-mode'.
 
 +++
 *** A new library for creating and manipulating SVG images has been
-added.  See the "SVG Images" section in the Lisp reference manual for
-details.
+added.  See the "(elisp) SVG Images" section in the ELisp reference
+manual for details.
 
 +++
 *** New setf-able function to access and set image parameters is
@@ -929,10 +940,10 @@ instead of shell command strings.  This change affects
 'image-dired-cmd-write-exif-data-options',
 'image-dired-cmd-read-exif-data-options', and introduces
 'image-dired-cmd-pngnq-options', 'image-dired-cmd-pngcrush-options',
-'image-dired-cmd-create-standard-thumbnail-options'
+'image-dired-cmd-create-standard-thumbnail-options'.
 
 ---
-*** Recognizes more tools by default, including pngnq-s9 and OptiPNG
+*** Recognizes more tools by default, including pngnq-s9 and OptiPNG.
 
 ---
 *** 'find-file' and related commands now work on thumbnails and
@@ -971,7 +982,7 @@ there are now top-level domains added all the time.  Message will no
 longer warn about sending emails to top-level domains it hasn't heard
 about.
 
-*** 'message-beginning-of-line' (bound to C-a) understands folded headers.
+*** 'message-beginning-of-line' (bound to 'C-a') understands folded headers.
 In 'visual-line-mode' it will look for the true beginning of a header
 while in non-'visual-line-mode' it will move the point to the indented
 header's value.
@@ -981,7 +992,7 @@ header's value.
 +++
 *** The new variable 'package-gnupghome-dir' has been added to control
 where the GnuPG home directory (used for signature verification) is
-located and whether GnuPG's option "--homedir" is used or not.
+located and whether GnuPG's option '--homedir' is used or not.
 
 ---
 *** Deleting a package no longer respects 'delete-by-moving-to-trash'.
@@ -1063,8 +1074,8 @@ background.
 
 +++
 ** Emacs now supports character name escape sequences in character and
-string literals.  The syntax variants \N{character name} and
-\N{U+code} are supported.
+string literals.  The syntax variants '\N{character name}' and
+'\N{U+code}' are supported.
 
 +++
 ** Prog mode has some support for multi-mode indentation.
@@ -1076,7 +1087,7 @@ A major mode can provide indentation context for a sub-mode through
 the 'prog-indentation-context' variable.  To support this, modes that
 provide indentation should use 'prog-widen' instead of 'widen' and
 'prog-first-column' instead of a literal zero.  See the node
-"Mode-Specific Indent" in the ELisp manual for more details.
+"(elisp) Mode-Specific Indent" in the ELisp manual for more details.
 
 ** ERC
 
@@ -1095,7 +1106,7 @@ domain.
 *** 'url-retrieve-synchronously' now takes an optional timeout parameter.
 
 ---
-*** The URL package now support HTTPS over proxies supporting CONNECT.
+*** The URL package now supports HTTPS over proxies supporting CONNECT.
 
 +++
 *** 'url-user-agent' now defaults to 'default', and the User-Agent
@@ -1133,17 +1144,29 @@ to a format suitable for reverse lookup zone files.
 +++
 *** Enchant is now supported as a spell-checker.
 
-Enchant is a meta-spell-checker that uses providers
-such as Hunspell to do the actual checking.  With it, users can use
-spell-checkers not directly supported by Emacs, such as Voikko, Hspell
-and AppleSpell, more easily share personal word-lists with other
-programs, and configure different spelling-checkers for different
-languages.  (Version 2.1.0 or later of Enchant is required.)
+Enchant is a meta-spell-checker that uses providers such as Hunspell
+to do the actual checking.  With it, users can use spell-checkers not
+directly supported by Emacs, such as Voikko, Hspell and AppleSpell,
+more easily share personal word-lists with other programs, and
+configure different spelling-checkers for different languages.
+(Version 2.1.0 or later of Enchant is required.)
 
 ** Flymake
 
 +++
-*** Emacs no longer prompts the user before killing Flymake processes on exit.
+*** Flymake has been completely redesigned
+
+Flymake now annotates arbitrary buffer regions, not just lines.  It
+supports arbitrary diagnostic types, not just errors and warnings (see
+variable 'flymake-diagnostic-types-alist').
+
+It also supports multiple simultaneous backends, meaning that you can
+check your buffer from different perspectives (see variable
+'flymake-diagnostic-functions').  Backends for Emacs Lisp mode are
+provided.
+
+The old Flymake behavior is preserved in the so-called "legacy
+backend", which has been updated to benefit from the new UI features.
 
 
 * New Modes and Packages in Emacs 26.1
@@ -1159,10 +1182,10 @@ languages.  (Version 2.1.0 or later of Enchant is required.)
 mode for *.html files.  This mode handles indentation,
 fontification, and commenting for embedded JavaScript and CSS.
 
-** New mode 'conf-toml-mode' is a sub-mode of conf-mode, specialized
-   for editing TOML files.
+** New mode 'conf-toml-mode' is a sub-mode of 'conf-mode', specialized
+for editing TOML files.
 
-** New mode 'conf-desktop-mode' is a sub-mode of conf-unix-mode,
+** New mode 'conf-desktop-mode' is a sub-mode of 'conf-unix-mode',
 specialized for editing freedesktop.org desktop entries.
 
 ** New minor mode 'pixel-scroll-mode' provides smooth pixel-level scrolling.
@@ -1174,11 +1197,11 @@ editing Less files.
 * Incompatible Lisp Changes in Emacs 26.1
 
 ---
-*** password-data is now a hash-table
-so that `password-read' can use any object for the `key' argument.
+** 'password-data' is now a hash-table so that 'password-read' can use
+any object for the 'key' argument.
 
 +++
-*** Command 'dired-mark-extension' now automatically prepends a '.' to the
+** Command 'dired-mark-extension' now automatically prepends a '.' to the
 extension when not present.  The new command 'dired-mark-suffix' behaves
 similarly but it doesn't prepend a '.'.
 
@@ -1202,25 +1225,29 @@ binding syntax as 'and-let*'.
 ---
 ** 'C-up', 'C-down', 'C-left' and 'C-right' are now defined in term
 mode to send the same escape sequences that xterm does.  This makes
-things like forward-word in readline work.
+things like 'forward-word' in readline work.
 
 ---
 ** hideshow mode got four key bindings that are analogous to outline
-mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e.'
+mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e'.
 
 ---
 ** Customizable variable 'query-replace-from-to-separator'
 now doesn't propertize the string value of the separator.
-Instead, text properties are added by query-replace-read-from.
+Instead, text properties are added by 'query-replace-read-from'.
 Additionally, the new nil value restores pre-24.5 behavior
 of not providing replacement pairs via the history.
 
 ---
 ** Some obsolete functions, variables, and faces have been removed:
-*** make-variable-frame-local.  Variables cannot be frame-local any more.
-*** From subr.el: window-dot, set-window-dot, read-input, show-buffer,
-eval-current-buffer, string-to-int
-*** icomplete-prospects-length.
+
+*** 'make-variable-frame-local'.  Variables cannot be frame-local any more.
+
+*** From subr.el: 'window-dot', 'set-window-dot', 'read-input',
+'show-buffer', 'eval-current-buffer', 'string-to-int'.
+
+*** 'icomplete-prospects-length'.
+
 *** All the default-FOO variables that hold the default value of the
 FOO variable.  Use 'default-value' and 'setq-default' to access and
 change FOO, respectively.  The exhaustive list of removed variables is:
@@ -1238,7 +1265,8 @@ change FOO, respectively.  The exhaustive list of removed variables is:
 'default-cursor-in-non-selected-windows',
 'default-buffer-file-coding-system', 'default-major-mode', and
 'default-enable-multibyte-characters'.
-*** Many variables obsoleted in 22.1 referring to face symbols
+
+*** Many variables obsoleted in 22.1 referring to face symbols.
 
 +++
 ** The variable 'text-quoting-style' is now a customizable option.  It
@@ -1253,9 +1281,9 @@ now generate less chatter and more-compact diagnostics.  The auxiliary
 function 'check-declare-errmsg' has been removed.
 
 +++
-** The regular expression character class [:blank:] now matches
+** The regular expression character class '[:blank:]' now matches
 Unicode horizontal whitespace as defined in the Unicode Technical
-Standard #18.  If you only want to match space and tab, use [ \t]
+Standard #18.  If you only want to match space and tab, use '[ \t]'
 instead.
 
 +++
@@ -1277,8 +1305,8 @@ characters: ‘’‛“”‟〞＂＇, unless they are escaped with backslash.
 
 +++
 ** 'default-file-name-coding-system' now defaults to a coding system
-that does not process CRLF.  For example, it defaults to utf-8-unix
-instead of to utf-8.  Before this change, Emacs would sometimes
+that does not process CRLF.  For example, it defaults to 'utf-8-unix'
+instead of to 'utf-8'.  Before this change, Emacs would sometimes
 mishandle file names containing these control characters.
 
 +++
@@ -1349,9 +1377,10 @@ documentation and had inherent races that led to security holes.  A
 call like (rename-file C D) that used the old, undocumented behavior
 can be written as (rename-file C (file-name-as-directory D)), a
 formulation portable to both older and newer versions of Emacs.
-Affected functions include add-name-to-file, copy-directory,
-copy-file, format-write-file, gnus-copy-file, make-symbolic-link,
-rename-file, thumbs-rename-images, and write-file.
+Affected functions include 'add-name-to-file', 'copy-directory',
+'copy-file', 'format-write-file', 'gnus-copy-file',
+'make-symbolic-link', 'rename-file', 'thumbs-rename-images', and
+'write-file'.
 
 ---
 ** The list returned by 'overlays-at' is now in decreasing priority order.
@@ -1361,12 +1390,22 @@ non-nil, but the code returned the list in the increasing order of
 priority instead.  Now the code does what the documentation says it
 should do.
 
++++
+** 'format' now avoids allocating a new string in more cases.
+'format' was previously documented to return a newly-allocated string,
+but this documentation was not correct, as (eq x (format x)) returned
+t when x was the empty string.  'format' is no longer documented to
+return a newly-allocated string, and the implementation now takes
+advantage of the doc change to avoid making copies of strings in
+common cases like (format "foo") and (format "%s" "foo").
+
 ---
 ** The function 'eldoc-message' now accepts a single argument.
 Programs that called it with multiple arguments before should pass
 them through 'format' first.  Even that is discouraged: for ElDoc
 support, you should set 'eldoc-documentation-function' instead of
 calling 'eldoc-message' directly.
+
 
 * Lisp Changes in Emacs 26.1
 
@@ -1425,9 +1464,7 @@ range of indentation.
 ** New optional argument TEXT in 'make-temp-file'.
 
 ---
-** New function `define-symbol-prop'.
-
-** Checksum/Hash
+** New function 'define-symbol-prop'.
 
 +++
 ** New function 'secure-hash-algorithms' to list the algorithms that
@@ -1509,7 +1546,7 @@ function instead of 'subr-arity'.
 ** New function 'region-bounds' can be used in the interactive spec
 to provide region boundaries (for rectangular regions more than one)
 to an interactively callable function as a single argument instead of
-two separate arguments region-beginning and region-end.
+two separate arguments 'region-beginning' and 'region-end'.
 
 +++
 ** 'parse-partial-sexp' state has a new element.  Element 10 is
@@ -1539,34 +1576,27 @@ compares their numerical values.  According to this predicate,
 
 ---
 ** Numeric comparisons and 'logb' no longer return incorrect answers
-due to internal rounding errors.  For example, (< most-positive-fixnum
-(+ 1.0 most-positive-fixnum)) now correctly returns t on 64-bit hosts.
+due to internal rounding errors.  For example, '(< most-positive-fixnum
+(+ 1.0 most-positive-fixnum))' now correctly returns t on 64-bit hosts.
 
 ---
 ** The functions 'ffloor', 'fceiling', 'ftruncate' and 'fround' now
 accept only floating-point arguments, as per their documentation.
 Formerly, they quietly accepted integer arguments and sometimes
-returned nonsensical answers, e.g., (< N (ffloor N)) could return t.
+returned nonsensical answers, e.g., '(< N (ffloor N))' could return t.
 
 ---
 ** On hosts like GNU/Linux x86-64 where a 'long double' fraction
 contains at least EMACS_INT_WIDTH - 3 bits, 'format' no longer returns
 incorrect answers due to internal rounding errors when formatting
-Emacs integers with %e, %f, or %g conversions.  For example, on these
-hosts (eql N (string-to-number (format "%.0f" N))) now returns t for
-all Emacs integers N.
-
-+++
-** 'format' is no longer documented to return a newly-allocated string.
-This documentation was not correct, as (eq x (format x)) returned t
-when x was the empty string.  'format' now takes advantage of the doc
-change to avoid making copies of strings in common cases like (format
-"foo") and (format "%s" "foo").
+Emacs integers with '%e', '%f', or '%g' conversions.  For example, on
+these hosts '(eql N (string-to-number (format "%.0f" N)))' now returns
+t for all Emacs integers N.
 
 ---
 ** Calls that accept floating-point integers (for use on hosts with
 limited integer range) now signal an error if arguments are not
-integral.  For example (decode-char 'ascii 0.5) now signals an error.
+integral.  For example '(decode-char 'ascii 0.5)' now signals an error.
 
 +++
 ** The new function 'char-from-name' converts a Unicode name string
@@ -1601,7 +1631,7 @@ ABBR is a time zone abbreviation.  The affected functions are
 'format-time-string', and 'set-time-zone-rule'.
 
 +++
-** 'format-time-string' now formats "%q" to the calendar quarter.
+** 'format-time-string' now formats '%q' to the calendar quarter.
 
 +++
 ** New built-in function 'mapcan'.
@@ -1678,7 +1708,7 @@ run.
 frame's outer border.
 
 +++
-*** New frame parameters and changed semantics for older ones
+*** New frame parameters and changed semantics for older ones:
 
 +++
 **** 'z-group' positions a frame above or below all others.
@@ -1689,8 +1719,8 @@ frame.
 
 +++
 **** 'parent-frame' makes a frame the child frame of another Emacs
-frame.  The section "Child Frames" in the Elisp manual describes the
-intrinsics of that relationship.
+frame.  The section "(elisp) Child Frames" in the ELisp manual
+describes the intrinsics of that relationship.
 
 +++
 **** 'delete-before' triggers deletion of one frame before that of
@@ -1706,7 +1736,7 @@ frame.
 
 +++
 **** 'skip-taskbar' removes a frame's icon from the taskbar and has
-Alt-<TAB> skip this frame.
+'Alt-<TAB>' skip this frame.
 
 +++
 **** 'no-focus-on-map' avoids that a frame gets input focus when mapped.
@@ -1775,19 +1805,18 @@ internal border.
 WINDOW for redisplay.
 
 +++
-*** Support for side windows is now official.
-The display action function 'display-buffer-in-side-window' will
-display its buffer in a side window.  Functions for toggling all side
-windows on a frame, changing and reversing the layout of side windows
-and returning the main (major non-side) window of a frame are
-provided.  For details consult the section "Side Windows" in the Elisp
-manual.
+*** Support for side windows is now official.  The display action
+function 'display-buffer-in-side-window' will display its buffer in a
+side window.  Functions for toggling all side windows on a frame,
+changing and reversing the layout of side windows and returning the
+main (major non-side) window of a frame are provided.  For details
+consult the section "(elisp) Side Windows" in the ELisp manual.
 
 +++
 *** Support for atomic windows - rectangular compositions of windows
 treated by 'split-window', 'delete-window' and 'delete-other-windows'
 like a single live window - is now official.  For details consult the
-section "Atomic Windows" in the Elisp manual.
+section "(elisp) Atomic Windows" in the ELisp manual.
 
 +++
 *** New 'display-buffer' alist entry 'window-parameters' allows to
@@ -1833,22 +1862,30 @@ window's body.
 
 +++
 *** The semantics of 'mouse-autoselect-window' has changed slightly.
-For details see the section "Mouse Window Auto-selection" in the Elisp
-manual.
+For details see the section "(elisp) Mouse Window Auto-selection" in
+the ELisp manual.
+
+---
+*** 'select-frame-by-name' now may return a frame on another display
+if it does not find a suitable one on the current display.
 
 ---
 ** 'tcl-auto-fill-mode' is now declared obsolete.  Its functionality
 can be replicated simply by setting 'comment-auto-fill-only-comments'.
 
-** New pcase pattern 'rx' to match against a rx-style regular expression.
+** New pcase pattern 'rx' to match against an rx-style regular expression.
 For details, see the doc string of 'rx--pcase-macroexpander'.
 
 ---
 ** New functions to set region from secondary selection and vice versa.
 The new functions 'secondary-selection-to-region' and
 'secondary-selection-from-region' let you set the beginning and the
-end of the region from those of the secondary selection and vise
+end of the region from those of the secondary selection and vice
 versa.
+
+** New function 'lgstring-remove-glyph' can be used to modify a
+gstring returned by the underlying layout engine (e.g. m17n-flt,
+uniscribe).
 
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems
@@ -1856,7 +1893,7 @@ versa.
 +++
 ** Intercepting hotkeys on Windows 7 and later now works better.
 The new keyboard hooking code properly grabs system hotkeys such as
-Win-* and Alt-TAB, in a way that Emacs can get at them before the
+'Win-*' and 'Alt-TAB', in a way that Emacs can get at them before the
 system.  This makes the 'w32-register-hot-key' functionality work
 again on all versions of MS-Windows starting with Windows 7.  On
 Windows NT and later you can now register any hotkey combination.  (On
