@@ -1017,17 +1017,6 @@ See also `gap-position'.  */)
   return temp;
 }
 
-DEFUN ("position-bytes", Fposition_bytes, Sposition_bytes, 1, 1, 0,
-       doc: /* Return the byte position for character position POSITION.
-If POSITION is out of range, the value is nil.  */)
-  (Lisp_Object position)
-{
-  CHECK_NUMBER_COERCE_MARKER (position);
-  if (XINT (position) < BEG || XINT (position) > Z)
-    return Qnil;
-  return make_number (CHAR_TO_BYTE (XINT (position)));
-}
-
 DEFUN ("byte-to-position", Fbyte_to_position, Sbyte_to_position, 1, 1, 0,
        doc: /* Return the character position for byte position BYTEPOS.
 If BYTEPOS is out of range, the value is nil.  */)
@@ -5296,7 +5285,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Spoint_max_marker);
   defsubr (&Sgap_position);
   defsubr (&Sgap_size);
-  defsubr (&Sposition_bytes);
   defsubr (&Sbyte_to_position);
 
   defsubr (&Sfollowing_char);

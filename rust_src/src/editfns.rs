@@ -1,7 +1,7 @@
 //! Lisp functions pertaining to editing.
 
 use remacs_macros::lisp_fn;
-use lisp::LispObject;
+use lisp::{LispObject, LispNumber};
 use util::clip_to_bounds;
 use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Qinteger_or_marker_p,
                  Qmark_inactive};
@@ -151,4 +151,28 @@ pub fn goto_char(position: LispObject) -> LispObject {
         wrong_type!(Qinteger_or_marker_p, position)
     };
     position
+}
+
+/// Return the byte position for character position POSITION.
+/// If POSITION is out of range, the value is nil.
+#[lisp_fn]
+pub fn position_bytes(position: LispObject) -> LispObject {
+    if let LispNumber::Fixnum(pos) = position.as_number_coerce_marker_or_error() {
+        let cur_buf = ThreadState::current_buffer();
+
+        // cast up to 64bit before comparing with pos
+        let begv = cur_buf.begv as EmacsInt;
+        let zv = cur_buf.zv as EmacsInt;
+
+        if pos < begv || pos > zv {
+            return LispObject::constant_nil();
+        }
+
+        unsafe {
+            let bytepos = buf_charpos_to_bytepos(cur_buf.as_ptr(), pos as isize);
+            return LispObject::from_natnum(bytepos as EmacsInt);
+        }
+    };
+
+    wrong_type!(Qinteger_or_marker_p, position)
 }
