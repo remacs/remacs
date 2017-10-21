@@ -347,7 +347,7 @@ Only works for tags in the global namespace."
 
     (push-mark)
     (semantic-go-to-tag target)
-    (switch-to-buffer (current-buffer))
+    (pop-to-buffer-same-window (current-buffer))
     (semantic-momentary-highlight-tag target))
   )
 

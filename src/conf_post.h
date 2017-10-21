@@ -31,7 +31,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <stdbool.h>
 
-#if defined DOS_NT && !defined DEFER_MS_W32_H
+#if defined WINDOWSNT && !defined DEFER_MS_W32_H
 # include <ms-w32.h>
 #endif
 

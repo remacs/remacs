@@ -806,7 +806,11 @@ If NAME is given, it must be a string; it names the new thread.  */)
     {
       /* Restore the previous situation.  */
       all_threads = all_threads->next_thread;
+#ifdef THREADS_ENABLED
       error ("Could not start a new thread");
+#else
+      error ("Concurrency is not supported in this configuration");
+#endif
     }
 
   /* FIXME: race here where new thread might not be filled in?  */

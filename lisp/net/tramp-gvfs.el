@@ -675,6 +675,11 @@ file names."
   (unless (memq op '(copy rename))
     (error "Unknown operation `%s', must be `copy' or `rename'" op))
 
+  (if (file-directory-p filename)
+      (progn
+	(copy-directory filename newname keep-date t)
+	(when (eq op 'rename) (delete-directory filename 'recursive)))
+
     (let ((t1 (tramp-tramp-file-p filename))
 	  (t2 (tramp-tramp-file-p newname))
 	  (equal-remote (tramp-equal-remote filename newname))
@@ -738,7 +743,7 @@ file names."
 	  (when t2
 	    (with-parsed-tramp-file-name newname nil
 	      (tramp-flush-file-property v (file-name-directory localname))
-	      (tramp-flush-file-property v localname)))))))
+	      (tramp-flush-file-property v localname))))))))
 
 (defun tramp-gvfs-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date

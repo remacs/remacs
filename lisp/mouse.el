@@ -2349,7 +2349,15 @@ choose a font."
 If the value is a modifier, such as `control' or `shift' or `meta',
 then if that modifier key is pressed when dropping the region, region
 text is copied instead of being cut."
-  :type 'symbol
+  :type `(choice
+          (const :tag "Disable dragging the region" nil)
+          ,@(mapcar
+             (lambda (modifier)
+               `(const :tag ,(format "Enable, but copy with the %s modifier"
+                                     modifier)
+                       modifier))
+             '(alt super hyper shift control meta))
+          (other :tag "Enable dragging the region" t))
   :version "26.1"
   :group 'mouse)
 

@@ -937,7 +937,7 @@ without repeating the prefix."
 
 ;;; Single-step editing of keyboard macros
 
-(defvar kmacro-step-edit-active)  	 ;; step-editing active
+(defvar kmacro-step-edit-active nil)  	 ;; step-editing active
 (defvar kmacro-step-edit-new-macro)  	 ;; storage for new macro
 (defvar kmacro-step-edit-inserting)  	 ;; inserting into macro
 (defvar kmacro-step-edit-appending)  	 ;; append to end of macro

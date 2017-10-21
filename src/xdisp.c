@@ -20889,9 +20889,11 @@ maybe_produce_line_number (struct it *it)
 	      && it->w->base_line_pos <= IT_CHARPOS (*it)
 	      /* line-number-mode always displays narrowed line
 		 numbers, so we cannot use its data if the user wants
-		 line numbers that disregard narrowing.  */
+		 line numbers that disregard narrowing, or if the
+		 buffer's narrowing has just changed.  */
 	      && !(display_line_numbers_widen
-		   && (BEG_BYTE != BEGV_BYTE || Z_BYTE != ZV_BYTE)))
+		   && (BEG_BYTE != BEGV_BYTE || Z_BYTE != ZV_BYTE))
+	      && !current_buffer->clip_changed)
 	    {
 	      start_from = CHAR_TO_BYTE (it->w->base_line_pos);
 	      last_line = it->w->base_line_number - 1;
@@ -25121,7 +25123,20 @@ else if the text is replaced by an ellipsis.  */)
      '(space :width (+ left-fringe left-margin (- (1))))
      '(space :width (+ left-fringe left-margin (-1)))
 
-*/
+   If ALIGN_TO is NULL, returns the result in *RES.  If ALIGN_TO is
+   non-NULL, the value of *ALIGN_TO is a window-relative pixel
+   coordinate, and *RES is the additional pixel width from that point
+   till the end of the stretch glyph.
+
+   WIDTH_P non-zero means take the width dimension or X coordinate of
+   the object specified by PROP, WIDTH_P zero means take the height
+   dimension or the Y coordinate.  (Therefore, if ALIGN_TO is
+   non-NULL, WIDTH_P should be non-zero.)
+
+   FONT is the font of the face of the surrounding text.
+
+   The return value is non-zero if width or height were successfully
+   calculated, i.e. if PROP is a valid spec.  */
 
 static bool
 calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
@@ -25143,6 +25158,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	{
 	  char *unit = SSDATA (SYMBOL_NAME (prop));
 
+	  /* The UNIT expression, e.g. as part of (NUM . UNIT).  */
 	  if (unit[0] == 'i' && unit[1] == 'n')
 	    pixels = 1.0;
 	  else if (unit[0] == 'm' && unit[1] == 'm')
@@ -25163,10 +25179,12 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	}
 
 #ifdef HAVE_WINDOW_SYSTEM
+      /* 'height': the height of FONT.  */
       if (EQ (prop, Qheight))
 	return OK_PIXELS (font
 			  ? normal_char_height (font, -1)
 			  : FRAME_LINE_HEIGHT (it->f));
+      /* 'width': the width of FONT.  */
       if (EQ (prop, Qwidth))
 	return OK_PIXELS (font
 			  ? FONT_WIDTH (font)
@@ -25176,33 +25194,48 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	return OK_PIXELS (1);
 #endif
 
+      /* 'text': the width or height of the text area.  */
       if (EQ (prop, Qtext))
 	  return OK_PIXELS (width_p
-			    ? window_box_width (it->w, TEXT_AREA)
+			    ? (window_box_width (it->w, TEXT_AREA)
+			       - it->lnum_pixel_width)
 			    : WINDOW_BOX_HEIGHT_NO_MODE_LINE (it->w));
 
+      /* ':align_to'.  First time we compute the value, window
+	 elements are interpreted as the position of the element's
+	 left edge.  */
       if (align_to && *align_to < 0)
 	{
 	  *res = 0;
+	  /* 'left': left edge of the text area.  */
 	  if (EQ (prop, Qleft))
-	    return OK_ALIGN_TO (window_box_left_offset (it->w, TEXT_AREA));
+	    return OK_ALIGN_TO (window_box_left_offset (it->w, TEXT_AREA)
+				+ it->lnum_pixel_width);
+	  /* 'right': right edge of the text area.  */
 	  if (EQ (prop, Qright))
 	    return OK_ALIGN_TO (window_box_right_offset (it->w, TEXT_AREA));
+	  /* 'center': the center of the text area.  */
 	  if (EQ (prop, Qcenter))
 	    return OK_ALIGN_TO (window_box_left_offset (it->w, TEXT_AREA)
+				+ it->lnum_pixel_width
 				+ window_box_width (it->w, TEXT_AREA) / 2);
+	  /* 'left-fringe': left edge of the left fringe.  */
 	  if (EQ (prop, Qleft_fringe))
 	    return OK_ALIGN_TO (WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (it->w)
 				? WINDOW_LEFT_SCROLL_BAR_AREA_WIDTH (it->w)
 				: window_box_right_offset (it->w, LEFT_MARGIN_AREA));
+	  /* 'right-fringe': left edge of the right fringe.  */
 	  if (EQ (prop, Qright_fringe))
 	    return OK_ALIGN_TO (WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (it->w)
 				? window_box_right_offset (it->w, RIGHT_MARGIN_AREA)
 				: window_box_right_offset (it->w, TEXT_AREA));
+	  /* 'left-margin': left edge of the left display margin.  */
 	  if (EQ (prop, Qleft_margin))
 	    return OK_ALIGN_TO (window_box_left_offset (it->w, LEFT_MARGIN_AREA));
+	  /* 'right-margin': left edge of the right display margin.  */
 	  if (EQ (prop, Qright_margin))
 	    return OK_ALIGN_TO (window_box_left_offset (it->w, RIGHT_MARGIN_AREA));
+	  /* 'scroll-bar': left edge of the vertical scroll bar.  */
 	  if (EQ (prop, Qscroll_bar))
 	    return OK_ALIGN_TO (WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT (it->w)
 				? 0
@@ -25213,6 +25246,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	}
       else
 	{
+	  /* Otherwise, the elements stand for their width.  */
 	  if (EQ (prop, Qleft_fringe))
 	    return OK_PIXELS (WINDOW_LEFT_FRINGE_WIDTH (it->w));
 	  if (EQ (prop, Qright_fringe))
@@ -25235,6 +25269,8 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
       int base_unit = (width_p
 		       ? FRAME_COLUMN_WIDTH (it->f)
 		       : FRAME_LINE_HEIGHT (it->f));
+      if (width_p && align_to && *align_to < 0)
+	return OK_PIXELS (XFLOATINT (prop) * base_unit + it->lnum_pixel_width);
       return OK_PIXELS (XFLOATINT (prop) * base_unit);
     }
 
@@ -25246,6 +25282,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
       if (SYMBOLP (car))
 	{
 #ifdef HAVE_WINDOW_SYSTEM
+	  /* '(image PROPS...)': width or height of the specified image.  */
 	  if (FRAME_WINDOW_P (it->f)
 	      && valid_image_p (prop))
 	    {
@@ -25254,12 +25291,15 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 
 	      return OK_PIXELS (width_p ? img->width : img->height);
 	    }
+	  /* '(xwidget PROPS...)': dimensions of the specified xwidget.  */
 	  if (FRAME_WINDOW_P (it->f) && valid_xwidget_spec_p (prop))
 	    {
               /* TODO: Don't return dummy size.  */
               return OK_PIXELS (100);
             }
 #endif
+	  /* '(+ EXPR...)' or '(- EXPR...)' add or subtract
+	     recursively calculated values.  */
 	  if (EQ (car, Qplus) || EQ (car, Qminus))
 	    {
 	      bool first = true;
@@ -25287,15 +25327,18 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	    car = Qnil;
 	}
 
+      /* '(NUM)': absolute number of pixels.  */
       if (NUMBERP (car))
 	{
 	  double fact;
+	  int offset =
+	    width_p && align_to && *align_to < 0 ? it->lnum_pixel_width : 0;
 	  pixels = XFLOATINT (car);
 	  if (NILP (cdr))
-	    return OK_PIXELS (pixels);
+	    return OK_PIXELS (pixels + offset);
 	  if (calc_pixel_width_or_height (&fact, it, cdr,
 					  font, width_p, align_to))
-	    return OK_PIXELS (pixels * fact);
+	    return OK_PIXELS (pixels * fact + offset);
 	  return false;
 	}
 

@@ -802,38 +802,43 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (setq filename (expand-file-name filename)
 	newname (expand-file-name newname))
 
-  (let ((t1 (tramp-tramp-file-p filename))
-	(t2 (tramp-tramp-file-p newname)))
-    (with-parsed-tramp-file-name (if t1 filename newname) nil
-      (with-tramp-progress-reporter
-	  v 0 (format "Renaming %s to %s" filename newname)
+  (if (file-directory-p filename)
+      (progn
+	(copy-directory filename newname t t)
+	(delete-directory filename 'recursive))
 
-	(if (and t1 t2
-		 (tramp-equal-remote filename newname)
-		 (not (file-directory-p filename)))
-	    (let ((l1 (file-remote-p filename 'localname))
-		  (l2 (file-remote-p newname 'localname)))
-	      (when (and (not ok-if-already-exists)
-			 (file-exists-p newname))
-		(tramp-error v 'file-already-exists newname))
-	      ;; We must also flush the cache of the directory, because
-	      ;; `file-attributes' reads the values from there.
-	      (tramp-flush-file-property v (file-name-directory l1))
-	      (tramp-flush-file-property v l1)
-	      (tramp-flush-file-property v (file-name-directory l2))
-	      (tramp-flush-file-property v l2)
-	      ;; Short track.
-	      (tramp-adb-barf-unless-okay
-	       v (format
-		  "mv -f %s %s"
-		  (tramp-shell-quote-argument l1)
-		  (tramp-shell-quote-argument l2))
-	       "Error renaming %s to %s" filename newname))
+    (let ((t1 (tramp-tramp-file-p filename))
+	  (t2 (tramp-tramp-file-p newname)))
+      (with-parsed-tramp-file-name (if t1 filename newname) nil
+	(with-tramp-progress-reporter
+	    v 0 (format "Renaming %s to %s" filename newname)
 
-	  ;; Rename by copy.
-	  (copy-file
-	   filename newname ok-if-already-exists 'keep-time 'preserve-uid-gid)
-	  (delete-file filename))))))
+	  (if (and t1 t2
+		   (tramp-equal-remote filename newname)
+		   (not (file-directory-p filename)))
+	      (let ((l1 (file-remote-p filename 'localname))
+		    (l2 (file-remote-p newname 'localname)))
+		(when (and (not ok-if-already-exists)
+			   (file-exists-p newname))
+		  (tramp-error v 'file-already-exists newname))
+		;; We must also flush the cache of the directory, because
+		;; `file-attributes' reads the values from there.
+		(tramp-flush-file-property v (file-name-directory l1))
+		(tramp-flush-file-property v l1)
+		(tramp-flush-file-property v (file-name-directory l2))
+		(tramp-flush-file-property v l2)
+		;; Short track.
+		(tramp-adb-barf-unless-okay
+		 v (format
+		    "mv -f %s %s"
+		    (tramp-shell-quote-argument l1)
+		    (tramp-shell-quote-argument l2))
+		 "Error renaming %s to %s" filename newname))
+
+	    ;; Rename by copy.
+	    (copy-file
+	     filename newname ok-if-already-exists 'keep-time 'preserve-uid-gid)
+	    (delete-file filename)))))))
 
 (defun tramp-adb-handle-process-file
   (program &optional infile destination display &rest args)

@@ -3943,6 +3943,8 @@ careadlinkat (int fd, char const *filename,
 int
 faccessat (int dirfd, const char * path, int mode, int flags)
 {
+  char fullname[MAXPATHLEN];
+
   /* We silently ignore FLAGS.  */
   flags = flags;
 

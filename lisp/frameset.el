@@ -1035,6 +1035,12 @@ Internal use only."
 					       (frameset--initial-params filtered-cfg))))
       (puthash frame :created frameset--action-map))
 
+    ;; Remove `border-width' from the list of parameters.  If it has not
+    ;; been assigned via `make-frame-on-display', any attempt to assign
+    ;; it now via `modify-frame-parameters' may result in an error on X
+    ;; (Bug#28873).
+    (setq filtered-cfg (assq-delete-all 'border-width filtered-cfg))
+
     ;; Try to assign parent-frame right here - it will improve things
     ;; for minibuffer-less child frames.
     (let* ((frame-id (frame-parameter frame 'frameset--parent-frame))

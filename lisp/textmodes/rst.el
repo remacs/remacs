@@ -109,22 +109,6 @@
 (def-edebug-spec push
   (&or [form symbolp] [form gv-place]))
 
-;; Correct wrong declaration. This still doesn't support dotted destructuring
-;; though.
-(def-edebug-spec cl-lambda-list
-  (([&rest cl-macro-arg]
-    [&optional ["&optional" cl-&optional-arg &rest cl-&optional-arg]]
-    [&optional ["&rest" arg]]
-    [&optional ["&key" [cl-&key-arg &rest cl-&key-arg]
-		&optional "&allow-other-keys"]]
-    [&optional ["&aux" &rest
-		&or (symbolp &optional def-form) symbolp]]
-    )))
-
-;; Add missing declaration.
-(def-edebug-spec cl-type-spec sexp) ;; This is not exactly correct but good
-				    ;; enough.
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for `testcover'
 

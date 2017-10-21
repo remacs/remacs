@@ -24,6 +24,7 @@
 ;;; Code:
 (require 'ert)
 (require 'flymake)
+(eval-when-compile (require 'subr-x)) ; string-trim
 
 (defvar flymake-tests-data-directory
   (expand-file-name "lisp/progmodes/flymake-resources"
@@ -37,7 +38,7 @@
 ;;
 ;;
 (defun flymake-tests--wait-for-backends ()
-  ;; Weirdness here...  http://debbugs.gnu.org/17647#25
+  ;; Weirdness here...  https://debbugs.gnu.org/17647#25
   ;; ... meaning `sleep-for', and even
   ;; `accept-process-output', won't suffice as ways to get
   ;; process filters and sentinels to run, though they do work
@@ -128,7 +129,11 @@ SEVERITY-PREDICATE is used to setup
 
 (ert-deftest different-diagnostic-types ()
   "Test GCC warning via function predicate."
-  (skip-unless (and (executable-find "gcc") (executable-find "make")))
+  (skip-unless (and (executable-find "gcc")
+                    (version<=
+                     "5" (string-trim
+                          (shell-command-to-string "gcc -dumpversion")))
+                    (executable-find "make")))
   (let ((flymake-wrap-around nil))
     (flymake-tests--with-flymake
         ("errors-and-warnings.c")

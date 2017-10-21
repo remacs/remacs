@@ -2297,7 +2297,7 @@ This is what happens in interactive use with M-x.  */)
   bool plain_rename = (case_only_rename
 		       || (!NILP (ok_if_already_exists)
 			   && !INTEGERP (ok_if_already_exists)));
-  int rename_errno;
+  int rename_errno UNINIT;
   if (!plain_rename)
     {
       if (renameat_noreplace (AT_FDCWD, SSDATA (encoded_file),

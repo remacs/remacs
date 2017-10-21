@@ -1073,10 +1073,11 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	     entries))
 
 	  ;; Insert size information.
-	  (insert
-	   (if avail
-	       (format "total used in directory %s available %s\n" used avail)
-	     (format "total %s\n" used)))
+	  (when full-directory-p
+	    (insert
+	     (if avail
+		 (format "total used in directory %s available %s\n" used avail)
+	       (format "total %s\n" used))))
 
 	  ;; Print entries.
 	  (mapc

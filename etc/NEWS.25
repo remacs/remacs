@@ -712,7 +712,9 @@ CLOS class and slot documentation.
 *** Rectangle Mark mode can have corners past EOL or in the middle of a TAB.
 
 *** 'C-x C-x' in 'rectangle-mark-mode' now cycles through the four corners.
+
 *** 'string-rectangle' provides on-the-fly preview of the result.
+Customize 'rectangle-preview' to nil for the old behavior.
 
 ** New font-lock functions 'font-lock-ensure' and 'font-lock-flush'.
 These should be used in preference to 'font-lock-fontify-buffer' when

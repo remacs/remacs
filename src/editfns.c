@@ -2038,11 +2038,11 @@ by text that describes the specified date and time in TIME:
  only blank-padded, %l is like %I blank-padded.
 %p is the locale's equivalent of either AM or PM.
 %q is the calendar quarter (1–4).
-%M is the minute.
-%S is the second.
-%N is the nanosecond, %6N the microsecond, %3N the millisecond, etc.
-%Z is the time zone name, %z is the numeric form.
+%M is the minute (00-59).
+%S is the second (00-59; 00-60 on platforms with leap seconds)
 %s is the number of seconds since 1970-01-01 00:00:00 +0000.
+%N is the nanosecond, %6N the microsecond, %3N the millisecond, etc.
+%Z is the time zone abbreviation, %z is the numeric form.
 
 %c is the locale's date and time format.
 %x is the locale's "preferred" date format.
@@ -2052,7 +2052,8 @@ by text that describes the specified date and time in TIME:
 %R is like "%H:%M", %T is like "%H:%M:%S", %r is like "%I:%M:%S %p".
 %X is the locale's "preferred" time format.
 
-Finally, %n is a newline, %t is a tab, %% is a literal %.
+Finally, %n is a newline, %t is a tab, %% is a literal %, and
+unrecognized %-sequences stand for themselves.
 
 Certain flags and modifiers are available with some format controls.
 The flags are `_', `-', `^' and `#'.  For certain characters X,

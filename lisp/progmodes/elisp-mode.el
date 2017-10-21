@@ -1693,7 +1693,8 @@ current buffer state and calls REPORT-FN when done."
           (when (eq (process-status proc) 'exit)
             (unwind-protect
                 (cond
-                 ((not (eq proc elisp-flymake--byte-compile-process))
+                 ((not (eq proc (with-current-buffer source-buffer
+                                  elisp-flymake--byte-compile-process)))
                   (flymake-log :warning "byte-compile process %s obsolete" proc))
                  ((zerop (process-exit-status proc))
                   (elisp-flymake--byte-compile-done report-fn

@@ -1883,96 +1883,98 @@ This checks also `file-name-as-directory', `file-name-directory',
   (let (quoted)
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
-	  (tmp-name3 (tramp--test-make-temp-name nil quoted))
-	  (tmp-name4 (tramp--test-make-temp-name 'local quoted))
-	  (tmp-name5 (tramp--test-make-temp-name 'local quoted)))
+	  (tmp-name3 (tramp--test-make-temp-name 'local quoted)))
+      (dolist (source-target
+	       `(;; Copy on remote side.
+		 (,tmp-name1 . ,tmp-name2)
+		 ;; Copy from remote side to local side.
+		 (,tmp-name1 . ,tmp-name3)
+		 ;; Copy from local side to remote side.
+		 (,tmp-name3 . ,tmp-name1)))
+	(let ((source (car source-target))
+	      (target (cdr source-target)))
 
-      ;; Copy on remote side.
-      (unwind-protect
-	  (progn
-	    (write-region "foo" nil tmp-name1)
-	    (copy-file tmp-name1 tmp-name2)
-	    (should (file-exists-p tmp-name2))
-	    (with-temp-buffer
-	      (insert-file-contents tmp-name2)
-	      (should (string-equal (buffer-string) "foo")))
-	    (should-error
-	     (copy-file tmp-name1 tmp-name2)
-	     :type 'file-already-exists)
-	    (copy-file tmp-name1 tmp-name2 'ok)
-	    (make-directory tmp-name3)
-	    ;; This has been changed in Emacs 26.1.
-	    (when (tramp--test-emacs26-p)
-	      (should-error
-	       (copy-file tmp-name1 tmp-name3)
-	       :type 'file-already-exists))
-	    (copy-file tmp-name1 (file-name-as-directory tmp-name3))
-	    (should
-	     (file-exists-p
-	      (expand-file-name (file-name-nondirectory tmp-name1) tmp-name3))))
+	  ;; Copy simple file.
+	  (unwind-protect
+	      (progn
+		(write-region "foo" nil source)
+		(should (file-exists-p source))
+		(copy-file source target)
+		(should (file-exists-p target))
+		(with-temp-buffer
+		  (insert-file-contents target)
+		  (should (string-equal (buffer-string) "foo")))
+		(should-error
+		 (copy-file source target)
+		 :type 'file-already-exists)
+		(copy-file source target 'ok))
 
-	;; Cleanup.
-	(ignore-errors (delete-file tmp-name1))
-	(ignore-errors (delete-file tmp-name2))
-	(ignore-errors (delete-directory tmp-name3 'recursive)))
+	    ;; Cleanup.
+	    (ignore-errors (delete-file source))
+	    (ignore-errors (delete-file target)))
 
-      ;; Copy from remote side to local side.
-      (unwind-protect
-	  (progn
-	    (write-region "foo" nil tmp-name1)
-	    (copy-file tmp-name1 tmp-name4)
-	    (should (file-exists-p tmp-name4))
-	    (with-temp-buffer
-	      (insert-file-contents tmp-name4)
-	      (should (string-equal (buffer-string) "foo")))
-	    (should-error
-	     (copy-file tmp-name1 tmp-name4)
-	     :type 'file-already-exists)
-	    (copy-file tmp-name1 tmp-name4 'ok)
-	    (make-directory tmp-name5)
-	    ;; This has been changed in Emacs 26.1.
-	    (when (tramp--test-emacs26-p)
-	      (should-error
-	       (copy-file tmp-name1 tmp-name5)
-	       :type 'file-already-exists))
-	    (copy-file tmp-name1 (file-name-as-directory tmp-name5))
-	    (should
-	     (file-exists-p
-	      (expand-file-name (file-name-nondirectory tmp-name1) tmp-name5))))
+	  ;; Copy file to directory.
+	  (unwind-protect
+	      (progn
+		(write-region "foo" nil source)
+		(should (file-exists-p source))
+		(make-directory target)
+		(should (file-directory-p target))
+		;; This has been changed in Emacs 26.1.
+		(when (tramp--test-emacs26-p)
+		  (should-error
+		   (copy-file source target)
+		   :type 'file-already-exists))
+		(copy-file source (file-name-as-directory target))
+		(should
+		 (file-exists-p
+		  (expand-file-name (file-name-nondirectory source) target))))
 
-	;; Cleanup.
-	(ignore-errors (delete-file tmp-name1))
-	(ignore-errors (delete-file tmp-name4))
-	(ignore-errors (delete-directory tmp-name5 'recursive)))
+	    ;; Cleanup.
+	    (ignore-errors (delete-file source))
+	    (ignore-errors (delete-directory target 'recursive)))
 
-      ;; Copy from local side to remote side.
-      (unwind-protect
-	  (progn
-	    (write-region "foo" nil tmp-name4 nil 'nomessage)
-	    (copy-file tmp-name4 tmp-name1)
-	    (should (file-exists-p tmp-name1))
-	    (with-temp-buffer
-	      (insert-file-contents tmp-name1)
-	      (should (string-equal (buffer-string) "foo")))
-	    (should-error
-	     (copy-file tmp-name4 tmp-name1)
-	     :type 'file-already-exists)
-	    (copy-file tmp-name4 tmp-name1 'ok)
-	    (make-directory tmp-name3)
-	    ;; This has been changed in Emacs 26.1.
-	    (when (tramp--test-emacs26-p)
-	      (should-error
-	       (copy-file tmp-name4 tmp-name3)
-	       :type 'file-already-exists))
-	    (copy-file tmp-name4 (file-name-as-directory tmp-name3))
-	    (should
-	     (file-exists-p
-	      (expand-file-name (file-name-nondirectory tmp-name4) tmp-name3))))
+	  ;; Copy directory to existing directory.
+	  (unwind-protect
+	      (progn
+		(make-directory source)
+		(should (file-directory-p source))
+		(write-region "foo" nil (expand-file-name "foo" source))
+		(should (file-exists-p (expand-file-name "foo" source)))
+		(make-directory target)
+		(should (file-directory-p target))
+		;; Directory `target' exists already, so we must use
+		;; `file-name-as-directory'.
+		(copy-file source (file-name-as-directory target))
+		(should
+		 (file-exists-p
+		  (expand-file-name
+		   (concat (file-name-nondirectory source) "/foo") target))))
 
-	;; Cleanup.
-	(ignore-errors (delete-file tmp-name1))
-	(ignore-errors (delete-file tmp-name4))
-	(ignore-errors (delete-directory tmp-name3 'recursive))))))
+	    ;; Cleanup.
+	    (ignore-errors (delete-directory source 'recursive))
+	    (ignore-errors (delete-directory target 'recursive)))
+
+	  ;; Copy directory/file to non-existing directory.
+	  (unwind-protect
+	      (progn
+		(make-directory source)
+		(should (file-directory-p source))
+		(write-region "foo" nil (expand-file-name "foo" source))
+		(should (file-exists-p (expand-file-name "foo" source)))
+		(make-directory target)
+		(should (file-directory-p target))
+		(copy-file
+		 source
+		 (expand-file-name (file-name-nondirectory source) target))
+		(should
+		 (file-exists-p
+		  (expand-file-name
+		   (concat (file-name-nondirectory source) "/foo") target))))
+
+	    ;; Cleanup.
+	    (ignore-errors (delete-directory source 'recursive))
+	    (ignore-errors (delete-directory target 'recursive))))))))
 
 (ert-deftest tramp-test12-rename-file ()
   "Check `rename-file'."
@@ -1983,111 +1985,105 @@ This checks also `file-name-as-directory', `file-name-directory',
   (let (quoted)
     (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
 	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
-	  (tmp-name3 (tramp--test-make-temp-name nil quoted))
-	  (tmp-name4 (tramp--test-make-temp-name 'local quoted))
-	  (tmp-name5 (tramp--test-make-temp-name 'local quoted)))
+	  (tmp-name3 (tramp--test-make-temp-name 'local quoted)))
+      (dolist (source-target
+	       `(;; Rename on remote side.
+		 (,tmp-name1 . ,tmp-name2)
+		 ;; Rename from remote side to local side.
+		 (,tmp-name1 . ,tmp-name3)
+		 ;; Rename from local side to remote side.
+		 (,tmp-name3 . ,tmp-name1)))
+	(let ((source (car source-target))
+	      (target (cdr source-target)))
 
-      ;; Rename on remote side.
-      (unwind-protect
-	  (progn
-	    (write-region "foo" nil tmp-name1)
-	    (rename-file tmp-name1 tmp-name2)
-	    (should-not (file-exists-p tmp-name1))
-	    (should (file-exists-p tmp-name2))
-	    (with-temp-buffer
-	      (insert-file-contents tmp-name2)
-	      (should (string-equal (buffer-string) "foo")))
-	    (write-region "foo" nil tmp-name1)
-	    (should-error
-	     (rename-file tmp-name1 tmp-name2)
-	     :type 'file-already-exists)
-	    (rename-file tmp-name1 tmp-name2 'ok)
-	    (should-not (file-exists-p tmp-name1))
-	    (write-region "foo" nil tmp-name1)
-	    (make-directory tmp-name3)
-	    ;; This has been changed in Emacs 26.1.
-	    (when (tramp--test-emacs26-p)
-	      (should-error
-	       (rename-file tmp-name1 tmp-name3)
-	       :type 'file-already-exists))
-	    (rename-file tmp-name1 (file-name-as-directory tmp-name3))
-	    (should-not (file-exists-p tmp-name1))
-	    (should
-	     (file-exists-p
-	      (expand-file-name (file-name-nondirectory tmp-name1) tmp-name3))))
+	  ;; Rename simple file.
+	  (unwind-protect
+	      (progn
+		(write-region "foo" nil source)
+		(should (file-exists-p source))
+		(rename-file source target)
+		(should-not (file-exists-p source))
+		(should (file-exists-p target))
+		(with-temp-buffer
+		  (insert-file-contents target)
+		  (should (string-equal (buffer-string) "foo")))
+		(write-region "foo" nil source)
+		(should (file-exists-p source))
+		(should-error
+		 (rename-file source target)
+		 :type 'file-already-exists)
+		(rename-file source target 'ok)
+		(should-not (file-exists-p source)))
 
-	;; Cleanup.
-	(ignore-errors (delete-file tmp-name1))
-	(ignore-errors (delete-file tmp-name2))
-	(ignore-errors (delete-directory tmp-name3 'recursive)))
+	    ;; Cleanup.
+	    (ignore-errors (delete-file source))
+	    (ignore-errors (delete-file target)))
 
-      ;; Rename from remote side to local side.
-      (unwind-protect
-	  (progn
-	    (write-region "foo" nil tmp-name1)
-	    (rename-file tmp-name1 tmp-name4)
-	    (should-not (file-exists-p tmp-name1))
-	    (should (file-exists-p tmp-name4))
-	    (with-temp-buffer
-	      (insert-file-contents tmp-name4)
-	      (should (string-equal (buffer-string) "foo")))
-	    (write-region "foo" nil tmp-name1)
-	    (should-error
-	     (rename-file tmp-name1 tmp-name4)
-	     :type 'file-already-exists)
-	    (rename-file tmp-name1 tmp-name4 'ok)
-	    (should-not (file-exists-p tmp-name1))
-	    (write-region "foo" nil tmp-name1)
-	    (make-directory tmp-name5)
-	    ;; This has been changed in Emacs 26.1.
-	    (when (tramp--test-emacs26-p)
-	      (should-error
-	       (rename-file tmp-name1 tmp-name5)
-	       :type 'file-already-exists))
-	    (rename-file tmp-name1 (file-name-as-directory tmp-name5))
-	    (should-not (file-exists-p tmp-name1))
-	    (should
-	     (file-exists-p
-	      (expand-file-name (file-name-nondirectory tmp-name1) tmp-name5))))
+	  ;; Rename file to directory.
+	  (unwind-protect
+	      (progn
+		(write-region "foo" nil source)
+		(should (file-exists-p source))
+		(make-directory target)
+		(should (file-directory-p target))
+		;; This has been changed in Emacs 26.1.
+		(when (tramp--test-emacs26-p)
+		  (should-error
+		   (rename-file source target)
+		   :type 'file-already-exists))
+		(rename-file source (file-name-as-directory target))
+		(should-not (file-exists-p source))
+		(should
+		 (file-exists-p
+		  (expand-file-name (file-name-nondirectory source) target))))
 
-	;; Cleanup.
-	(ignore-errors (delete-file tmp-name1))
-	(ignore-errors (delete-file tmp-name4))
-	(ignore-errors (delete-directory tmp-name5 'recursive)))
+	    ;; Cleanup.
+	    (ignore-errors (delete-file source))
+	    (ignore-errors (delete-directory target 'recursive)))
 
-      ;; Rename from local side to remote side.
-      (unwind-protect
-	  (progn
-	    (write-region "foo" nil tmp-name4 nil 'nomessage)
-	    (rename-file tmp-name4 tmp-name1)
-	    (should-not (file-exists-p tmp-name4))
-	    (should (file-exists-p tmp-name1))
-	    (with-temp-buffer
-	      (insert-file-contents tmp-name1)
-	      (should (string-equal (buffer-string) "foo")))
-	    (write-region "foo" nil tmp-name4 nil 'nomessage)
-	    (should-error
-	     (rename-file tmp-name4 tmp-name1)
-	     :type 'file-already-exists)
-	    (rename-file tmp-name4 tmp-name1 'ok)
-	    (should-not (file-exists-p tmp-name4))
-	    (write-region "foo" nil tmp-name4 nil 'nomessage)
-	    (make-directory tmp-name3)
-	    ;; This has been changed in Emacs 26.1.
-	    (when (tramp--test-emacs26-p)
-	      (should-error
-	       (rename-file tmp-name4 tmp-name3)
-	       :type 'file-already-exists))
-	    (rename-file tmp-name4 (file-name-as-directory tmp-name3))
-	    (should-not (file-exists-p tmp-name4))
-	    (should
-	     (file-exists-p
-	      (expand-file-name (file-name-nondirectory tmp-name4) tmp-name3))))
+	  ;; Rename directory to existing directory.
+	  (unwind-protect
+	      (progn
+		(make-directory source)
+		(should (file-directory-p source))
+		(write-region "foo" nil (expand-file-name "foo" source))
+		(should (file-exists-p (expand-file-name "foo" source)))
+		(make-directory target)
+		(should (file-directory-p target))
+		;; Directory `target' exists already, so we must use
+		;; `file-name-as-directory'.
+		(rename-file source (file-name-as-directory target))
+		(should-not (file-exists-p source))
+		(should
+		 (file-exists-p
+		  (expand-file-name
+		   (concat (file-name-nondirectory source) "/foo") target))))
 
-	;; Cleanup.
-	(ignore-errors (delete-file tmp-name1))
-	(ignore-errors (delete-file tmp-name4))
-	(ignore-errors (delete-directory tmp-name3 'recursive))))))
+	    ;; Cleanup.
+	    (ignore-errors (delete-directory source 'recursive))
+	    (ignore-errors (delete-directory target 'recursive)))
+
+	  ;; Rename directory/file to non-existing directory.
+	  (unwind-protect
+	      (progn
+		(make-directory source)
+		(should (file-directory-p source))
+		(write-region "foo" nil (expand-file-name "foo" source))
+		(should (file-exists-p (expand-file-name "foo" source)))
+		(make-directory target)
+		(should (file-directory-p target))
+		(rename-file
+		 source
+		 (expand-file-name (file-name-nondirectory source) target))
+		(should-not (file-exists-p source))
+		(should
+		 (file-exists-p
+		  (expand-file-name
+		   (concat (file-name-nondirectory source) "/foo") target))))
+
+	    ;; Cleanup.
+	    (ignore-errors (delete-directory source 'recursive))
+	    (ignore-errors (delete-directory target 'recursive))))))))
 
 (ert-deftest tramp-test13-make-directory ()
   "Check `make-directory'.
@@ -2346,6 +2342,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
   "Check `dired' with wildcards."
   (skip-unless (tramp--test-enabled))
   (skip-unless (tramp--test-sh-p))
+  (skip-unless (not (tramp--test-rsync-p)))
   ;; Since Emacs 26.1.
   (skip-unless (fboundp 'insert-directory-wildcard-in-dir-p))
 
@@ -4394,6 +4391,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test05-expand-file-name-relative' in `expand-file-name'.
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
+;; * Fix `tramp-test28-interrupt-process', timeout doesn't work reliably.
 ;; * Fix Bug#16928 in `tramp-test38-asynchronous-requests'.
 
 (defun tramp-test-all (&optional interactive)

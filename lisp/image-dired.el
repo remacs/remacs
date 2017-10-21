@@ -748,7 +748,10 @@ Increase at own risk.")
    'image-dired-cmd-create-thumbnail-program)
   (let* ((width (int-to-string (image-dired-thumb-size 'width)))
          (height (int-to-string (image-dired-thumb-size 'height)))
-         (modif-time (floor (float-time (nth 5 (file-attributes original-file)))))
+         (modif-time
+          (format "%.0f"
+                  (ffloor (float-time
+                           (nth 5 (file-attributes original-file))))))
          (thumbnail-nq8-file (replace-regexp-in-string ".png\\'" "-nq8.png"
                                                        thumbnail-file))
          (spec

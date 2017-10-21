@@ -818,7 +818,6 @@ This is a regression for item 7 in Bug#24991."
 
 (kmacro-tests-deftest kmacro-tests-step-edit-cleans-up-hook ()
   "Step-editing properly cleans up `post-command-hook.' (Bug #18708)"
-  (:expected-result :failed)
   (let (post-command-hook)
     (setq-local post-command-hook '(t))
     (kmacro-tests-run-step-edit "x"
