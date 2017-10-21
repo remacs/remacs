@@ -698,7 +698,7 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
                             ;; for invalid functions i.s.o. signaling an error.
                             (documentation function t)
                           ;; E.g. an alias for a not yet defined function.
-                          (invalid-function nil)))
+                          ((invalid-function void-function) nil)))
                (key-bindings-buffer (current-buffer)))
 
     ;; If the function is autoloaded, and its docstring has
@@ -718,7 +718,7 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
                       (if (subrp def) (indirect-function real-def) real-def)
                       real-function key-bindings-buffer)
                    ;; E.g. an alias for a not yet defined function.
-                   (invalid-function doc-raw))))
+                   ((invalid-function void-function) doc-raw))))
         (run-hook-with-args 'help-fns-describe-function-functions function)
         (insert "\n" (or doc "Not documented.")))
       ;; Avoid asking the user annoying questions if she decides
