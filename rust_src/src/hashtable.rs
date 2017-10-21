@@ -101,7 +101,7 @@ impl LispHashTableRef {
     }
 }
 
-/// An iterator used for iterating over the indicies
+/// An iterator used for iterating over the indices
 /// of the 'key_and_value' vector of a Lisp_Hash_Table.
 /// Equivalent to a 'for (i = 0; i < HASH_TABLE_SIZE(h); ++i)'
 /// loop in the C layer.
@@ -147,7 +147,7 @@ impl<'a> Iterator for KeyAndValueIter<'a> {
 }
 
 impl LispHashTableRef {
-    pub fn indicies(&self) -> HashTableIter {
+    pub fn indices(&self) -> HashTableIter {
         HashTableIter {
             table: self,
             current: 0,
@@ -155,7 +155,7 @@ impl LispHashTableRef {
     }
 
     pub fn iter(&self) -> KeyAndValueIter {
-        KeyAndValueIter(self.indicies())
+        KeyAndValueIter(self.indices())
     }
 }
 
