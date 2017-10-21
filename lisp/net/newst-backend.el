@@ -1807,7 +1807,7 @@ If the file does no exist or if it is older than 24 hours
 download it from URL first."
   (let ((image-name (concat directory feed-name)))
     (if (and (file-exists-p image-name)
-             (time-less-p (current-time)
+             (time-less-p nil
                           (time-add (nth 5 (file-attributes image-name))
                                     (seconds-to-time 86400))))
         (newsticker--debug-msg "%s: Getting image for %s skipped"
@@ -2004,7 +2004,7 @@ older than TIME."
             (when (eq (newsticker--age item) old-age)
               (let ((exp-time (time-add (newsticker--time item)
                                         (seconds-to-time time))))
-                (when (time-less-p exp-time (current-time))
+                (when (time-less-p exp-time nil)
                   (newsticker--debug-msg
                    "Item `%s' from %s has expired on %s"
                    (newsticker--title item)

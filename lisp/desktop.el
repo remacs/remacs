@@ -1554,8 +1554,7 @@ and try to load that."
           (setq buffer-display-time
                 (if buffer-display-time
                     (time-add buffer-display-time
-                              (time-subtract (current-time)
-                                             desktop-file-modtime))
+                              (time-subtract nil desktop-file-modtime))
                   (current-time)))
 	  (unless (< desktop-file-version 208) ; Don't misinterpret any old custom args
 	    (dolist (record compacted-vars)

@@ -950,7 +950,7 @@ If necessary, clock-out of the currently active clock."
 	(unless (org-is-active-clock clock)
 	  (org-clock-clock-in clock t))))
 
-     ((not (time-less-p resolve-to (current-time)))
+     ((not (time-less-p resolve-to nil))
       (error "RESOLVE-TO must refer to a time in the past"))
 
      (t
@@ -1052,7 +1052,7 @@ to be CLOCKED OUT."))))
 		(and (not (memq char-pressed '(?i ?q))) char-pressed)))))
 	 (default
 	   (floor (/ (float-time
-		      (time-subtract (current-time) last-valid)) 60)))
+		      (time-subtract nil last-valid)) 60)))
 	 (keep
 	  (and (memq ch '(?k ?K))
 	       (read-number "Keep how many minutes? " default)))
@@ -1089,8 +1089,7 @@ to be CLOCKED OUT."))))
 	      (keep
 	       (time-add last-valid (seconds-to-time (* 60 keep))))
 	      (gotback
-	       (time-subtract (current-time)
-			      (seconds-to-time (* 60 gotback))))
+	       (time-subtract nil (seconds-to-time (* 60 gotback))))
 	      (t
 	       (error "Unexpected, please report this as a bug")))
        (and gotback last-valid)
@@ -1172,7 +1171,7 @@ so long."
 	     org-clock-marker (marker-buffer org-clock-marker))
     (let* ((org-clock-user-idle-seconds (org-user-idle-seconds))
 	   (org-clock-user-idle-start
-	    (time-subtract (current-time)
+	    (time-subtract nil
 			   (seconds-to-time org-clock-user-idle-seconds)))
 	   (org-clock-resolving-clocks-due-to-idleness t))
       (if (> org-clock-user-idle-seconds (* 60 org-clock-idle-time))
@@ -1182,8 +1181,7 @@ so long."
 	   (lambda (_)
 	     (format "Clocked in & idle for %.1f mins"
 		     (/ (float-time
-			 (time-subtract (current-time)
-					org-clock-user-idle-start))
+			 (time-subtract nil org-clock-user-idle-start))
 			60.0)))
 	   org-clock-user-idle-start)))))
 

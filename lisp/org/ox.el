@@ -3243,7 +3243,7 @@ locally for the subtree through node properties."
       (let ((val (cond ((equal (car key) "DATE")
 			(or (cdr key)
 			    (with-temp-buffer
-			      (org-insert-time-stamp (current-time)))))
+			      (org-insert-time-stamp nil))))
 		       ((equal (car key) "TITLE")
 			(or (let ((visited-file
 				   (buffer-file-name (buffer-base-buffer))))
