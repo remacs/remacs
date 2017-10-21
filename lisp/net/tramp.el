@@ -660,7 +660,7 @@ Useful for \"rsync\" like methods.")
 (make-variable-buffer-local 'tramp-temp-buffer-file-name)
 (put 'tramp-temp-buffer-file-name 'permanent-local t)
 
-;;;###autoload
+;;;###tramp-autoload
 (defcustom tramp-syntax 'default
   "Tramp filename syntax to be used.
 
@@ -978,7 +978,6 @@ This regexp should match Tramp file names but no other file
 names.  When calling `tramp-register-file-name-handlers', the
 initial value is overwritten by the car of `tramp-file-name-structure'.")
 
-;;;###autoload
 (defconst tramp-completion-file-name-regexp-default
   (concat
    "\\`/\\("
@@ -1042,10 +1041,19 @@ updated after changing this variable.
 Also see `tramp-file-name-structure'.")
 
 ;;;###autoload
-(defconst tramp-initial-completion-file-name-regexp
-  tramp-completion-file-name-regexp-default
-  "Value for `tramp-completion-file-name-regexp' for autoload.
-It must match the initial `tramp-syntax' settings.")
+(defconst tramp-autoload-file-name-regexp
+  (concat
+   "\\`/"
+   (if (memq system-type '(cygwin windows-nt))
+       ;; The method is either "-", or at least two characters.
+       "\\(-\\|[^/|:]\\{2,\\}\\)"
+     ;; At least one character for method.
+     "[^/|:]+")
+   ":\\'")
+  "Regular expression matching file names handled by Tramp autoload.
+It must match the initial `tramp-syntax' settings.  It should not
+match file names at root of the underlying local file system,
+like \"/sys\" or \"/C:\".")
 
 ;; Chunked sending kludge.  We set this to 500 for black-listed constellations
 ;; known to have a bug in `process-send-string'; some ssh connections appear
@@ -1186,7 +1194,6 @@ means to use always cached values for the directory contents."
 (defvar tramp-current-connection nil
   "Last connection timestamp.")
 
-;;;###autoload
 (defconst tramp-completion-file-name-handler-alist
   '((file-name-all-completions
      . tramp-completion-handle-file-name-all-completions)
@@ -1740,20 +1747,22 @@ Second arg VAR is a symbol.  It is used as a variable name to hold
 the filename structure.  It is also used as a prefix for the variables
 holding the components.  For example, if VAR is the symbol `foo', then
 `foo' will be bound to the whole structure, `foo-method' will be bound to
-the method component, and so on for `foo-user', `foo-host', `foo-localname',
-`foo-hop'.
+the method component, and so on for `foo-user', `foo-domain', `foo-host',
+`foo-port', `foo-localname', `foo-hop'.
 
 Remaining args are Lisp expressions to be evaluated (inside an implicit
 `progn').
 
 If VAR is nil, then we bind `v' to the structure and `method', `user',
-`host', `localname', `hop' to the components."
+`domain', `host', `port', `localname', `hop' to the components."
   (let ((bindings
          (mapcar (lambda (elem)
                    `(,(if var (intern (format "%s-%s" var elem)) elem)
                      (,(intern (format "tramp-file-name-%s" elem))
                       ,(or var 'v))))
-                 '(method user domain host port localname hop))))
+                 (eval-and-compile
+                   (cdr
+                    (mapcar 'car (cl-struct-slot-info 'tramp-file-name)))))))
     `(let* ((,(or var 'v) (tramp-dissect-file-name ,filename))
             ,@bindings)
        ;; We don't know which of those vars will be used, so we bind them all,
@@ -2281,7 +2290,6 @@ Falls back to normal file name handler if no Tramp file name handler exists."
       ;; we don't do anything.
       (tramp-run-real-handler operation args))))
 
-;;;###autoload
 (defun tramp-completion-file-name-handler (operation &rest args)
   "Invoke Tramp file name completion handler.
 Falls back to normal file name handler if no Tramp file name handler exists."
@@ -2304,17 +2312,9 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 (progn (defun tramp-register-autoload-file-name-handlers ()
   "Add Tramp file name handlers to `file-name-handler-alist' during autoload."
   (add-to-list 'file-name-handler-alist
-	       (cons tramp-initial-file-name-regexp
+	       (cons tramp-autoload-file-name-regexp
 		     'tramp-autoload-file-name-handler))
-  (put 'tramp-autoload-file-name-handler 'safe-magic t)
-
-  (add-to-list 'file-name-handler-alist
-	       (cons tramp-initial-completion-file-name-regexp
-		     'tramp-completion-file-name-handler))
-  (put 'tramp-completion-file-name-handler 'safe-magic t)
-  ;; Mark `operations' the handler is responsible for.
-  (put 'tramp-completion-file-name-handler 'operations
-       (mapcar 'car tramp-completion-file-name-handler-alist))))
+  (put 'tramp-autoload-file-name-handler 'safe-magic t)))
 
 ;;;###autoload
 (tramp-register-autoload-file-name-handlers)
@@ -2455,7 +2455,8 @@ not in completion mode."
 
 ;; Method, host name and user name completion.
 ;; `tramp-completion-dissect-file-name' returns a list of
-;; tramp-file-name structures.  For all of them we return possible completions.
+;; `tramp-file-name' structures.  For all of them we return possible
+;; completions.
 (defun tramp-completion-handle-file-name-all-completions (filename directory)
   "Like `file-name-all-completions' for partial Tramp files."
 
@@ -2536,9 +2537,9 @@ not in completion mode."
 	      (tramp-connectable-p (expand-file-name filename directory)))
      (lambda (x) (funcall predicate (expand-file-name (car x) directory))))))
 
-;; I misuse a little bit the tramp-file-name structure in order to
+;; I misuse a little bit the `tramp-file-name' structure in order to
 ;; handle completion possibilities for partial methods / user names /
-;; host names.  Return value is a list of tramp-file-name structures
+;; host names.  Return value is a list of `tramp-file-name' structures
 ;; according to possible completions. If "localname" is non-nil it
 ;; means there shouldn't be a completion anymore.
 
