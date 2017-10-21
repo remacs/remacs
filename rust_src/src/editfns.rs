@@ -165,7 +165,8 @@ pub fn char_after(mut pos: LispObject) -> LispObject {
     }
     if pos.is_marker() {
         let pos_byte = pos.as_marker().unwrap().bytepos_or_error();
-        // Only works correctly if marker points to current buffer
+        // Note that this considers the position in the current buffer,
+        // even if the marker is from another buffer.
         if pos_byte < buffer_ref.begv_byte || pos_byte >= buffer_ref.zv_byte {
             LispObject::constant_nil()
         } else {
