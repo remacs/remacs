@@ -1168,6 +1168,23 @@ provided.
 The old Flymake behavior is preserved in the so-called "legacy
 backend", which has been updated to benefit from the new UI features.
 
+** Term
+
+---
+*** `term-char-mode' now makes its buffer read-only.
+
+The buffer is made read-only to prevent changes from being made by
+anything other than the process filter; and movements of point away
+from the process mark are counter-acted so that the cursor is in the
+correct position after each command.  This is needed to avoid states
+which are inconsistent with the state of the terminal understood by
+the inferior process.
+
+New user options `term-char-mode-buffer-read-only' and
+`term-char-mode-point-at-process-mark' control these behaviors, and
+are non-nil by default.  Customize these options to nil if you want
+the previous behavior.
+
 
 * New Modes and Packages in Emacs 26.1
 
