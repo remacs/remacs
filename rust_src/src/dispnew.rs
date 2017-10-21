@@ -9,10 +9,10 @@ use floatfns::extract_float;
 
 
 /// Pause, without updating display, for SECONDS seconds.
-/// -SECONDS may be a floating-point value, meaning that you can wait for a
-/// -fraction of a second.  Optional second arg MILLISECONDS specifies an
-/// -additional wait period, in milliseconds; this is for backwards compatibility.
-/// -\(Not all operating systems support waiting for a fraction of a second.)
+/// SECONDS may be a floating-point value, meaning that you can wait for a
+/// fraction of a second.  Optional second arg MILLISECONDS specifies an
+/// additional wait period, in milliseconds; this is for backwards compatibility.
+/// (Not all operating systems support waiting for a fraction of a second.)
 #[lisp_fn(min = "1")]
 fn sleep_for(seconds: LispObject, milliseconds: LispObject) -> LispObject {
     let mut duration = extract_float(seconds.to_raw());
