@@ -55,6 +55,13 @@ whether '"' is also replaced in 'electric-quote-mode'.  If non-nil,
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** Dired
+
++++
+*** The new user option 'dired-create-destination-dirs' controls whether
+'dired-do-copy' and 'dired-rename-file' should create non-existent
+directories in the destination.
+
 ** Ibuffer
 
 ---
