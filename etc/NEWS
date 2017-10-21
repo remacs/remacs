@@ -398,7 +398,7 @@ roster of X keysyms.  It can be used in combination with another
 variable of this kind to swap modifiers in Emacs.
 
 ---
-** New input methods: 'cyrillic-tuvan', 'polish-prefix'.
+** New input methods: 'cyrillic-tuvan', 'polish-prefix', 'uzbek-cyrillic'.
 
 ---
 ** The 'dutch' input method no longer attempts to support Turkish too.
