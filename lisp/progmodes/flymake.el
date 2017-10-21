@@ -1068,12 +1068,14 @@ applied."
                      keymap
                      ,(let ((map (make-sparse-keymap))
                             (type type))
-                        (define-key map [mode-line mouse-4]
+                        (define-key map (vector 'mode-line
+                                                mouse-wheel-down-event)
                           (lambda (event)
                             (interactive "e")
                             (with-selected-window (posn-window (event-start event))
                               (flymake-goto-prev-error 1 (list type) t))))
-                        (define-key map [mode-line mouse-5]
+                        (define-key map (vector 'mode-line
+                                                mouse-wheel-up-event)
                           (lambda (event)
                             (interactive "e")
                             (with-selected-window (posn-window (event-start event))
@@ -1086,7 +1088,9 @@ applied."
                                                   'face face)
                                       (propertize (format "%s" type)
                                                   'face face))
-                              "mouse-4/mouse-5: previous/next of this type\n"))
+                              (format "%s/%s: previous/next of this type"
+                                      mouse-wheel-down-event
+                                      mouse-wheel-up-event)))
            into forms
            finally return
            `((:propertize "[")
