@@ -1149,6 +1149,8 @@ extern "C" {
 
     pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: Lisp_Object);
     pub fn set_point_both(charpos: ptrdiff_t, bytepos: ptrdiff_t);
+    pub fn set_point(charpos: ptrdiff_t);
+    pub fn Fline_beginning_position(n: Lisp_Object) -> Lisp_Object;
     pub fn buf_charpos_to_bytepos(buffer: *const Lisp_Buffer, charpos: ptrdiff_t) -> ptrdiff_t;
 }
 

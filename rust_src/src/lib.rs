@@ -420,5 +420,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);
         defsubr(&*frames::Sselected_frame);
+        defsubr(&*cmds::Stest_b);
     }
 }
