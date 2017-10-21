@@ -13,7 +13,7 @@ use libc::{c_char, c_void, intptr_t, ptrdiff_t, uintptr_t};
 
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
 use symbols::LispSymbolRef;
-use vectors::LispVectorlikeRef;
+use vectors::{LispVectorlikeRef, LispVectorRef};
 use buffers::{LispBufferRef, LispOverlayRef};
 use windows::LispWindowRef;
 use frames::LispFrameRef;
@@ -419,6 +419,14 @@ impl LispObject {
         } else {
             wrong_type!(Qvectorp, self)
         }
+    }
+
+    pub unsafe fn as_vectorlike_unchecked(self) -> LispVectorlikeRef {
+        LispVectorlikeRef::new(mem::transmute(self.get_untaggedptr()))
+    }
+
+    pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
+        self.as_vectorlike_unchecked().as_vector_unchecked()
     }
 }
 

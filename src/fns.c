@@ -3358,14 +3358,6 @@ usage: (make-hash-table &rest KEYWORD-ARGS)  */)
                           pure);
 }
 
-DEFUN ("hash-table-count", Fhash_table_count, Shash_table_count, 1, 1, 0,
-       doc: /* Return the number of elements in TABLE.  */)
-  (Lisp_Object table)
-{
-  return make_number (check_hash_table (table)->count);
-}
-
-
 DEFUN ("hash-table-rehash-size", Fhash_table_rehash_size,
        Shash_table_rehash_size, 1, 1, 0,
        doc: /* Return the current rehash size of TABLE.  */)
@@ -3429,42 +3421,6 @@ DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
   /* Be compatible with XEmacs.  */
   return table;
 }
-
-DEFUN ("puthash", Fputhash, Sputhash, 3, 3, 0,
-       doc: /* Associate KEY with VALUE in hash table TABLE.
-If KEY is already present in table, replace its current value with
-VALUE.  In any case, return VALUE.  */)
-  (Lisp_Object key, Lisp_Object value, Lisp_Object table)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  CHECK_IMPURE (table, h);
-
-  ptrdiff_t i;
-  EMACS_UINT hash;
-  i = hash_lookup (h, key, &hash);
-  if (i >= 0)
-    set_hash_value_slot (h, i, value);
-  else
-    hash_put (h, key, value, hash);
-
-  return value;
-}
-
-DEFUN ("maphash", Fmaphash, Smaphash, 2, 2, 0,
-       doc: /* Call FUNCTION for all entries in hash table TABLE.
-FUNCTION is called with two arguments, KEY and VALUE.
-`maphash' always returns nil.  */)
-  (Lisp_Object function, Lisp_Object table)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-
-  for (ptrdiff_t i = 0; i < HASH_TABLE_SIZE (h); ++i)
-    if (!NILP (HASH_HASH (h, i)))
-      call2 (function, HASH_KEY (h, i), HASH_VALUE (h, i));
-
-  return Qnil;
-}
-
 
 DEFUN ("define-hash-table-test", Fdefine_hash_table_test,
        Sdefine_hash_table_test, 3, 3, 0,
@@ -3712,15 +3668,12 @@ syms_of_fns (void)
   defsubr (&Ssxhash_eql);
   defsubr (&Ssxhash_equal);
   defsubr (&Smake_hash_table);
-  defsubr (&Shash_table_count);
   defsubr (&Shash_table_rehash_size);
   defsubr (&Shash_table_rehash_threshold);
   defsubr (&Shash_table_size);
   defsubr (&Shash_table_test);
   defsubr (&Shash_table_weakness);
   defsubr (&Sclrhash);
-  defsubr (&Sputhash);
-  defsubr (&Smaphash);
   defsubr (&Sdefine_hash_table_test);
 
   /* Crypto and hashing stuff.  */
