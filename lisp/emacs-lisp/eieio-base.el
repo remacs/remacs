@@ -256,8 +256,11 @@ malicious code.
 Note: This function recurses when a slot of :type of some object is
 identified, and needing more object creation."
   (let* ((objclass (nth 0 inputlist))
-	 ;; (objname (nth 1 inputlist))
-	 (slots (nthcdr 2 inputlist))
+         ;; Earlier versions of `object-write' added a string name for
+         ;; the object, now obsolete.
+         (slots (nthcdr
+                 (if (stringp (nth 1 inputlist) 2 1)
+                     inputlist)))
 	 (createslots nil)
 	 (class
 	  (progn
