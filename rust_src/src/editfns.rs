@@ -3,8 +3,8 @@
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
 use util::clip_to_bounds;
-use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Qinteger_or_marker_p,
-                 Qmark_inactive};
+use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, Fcons, Fadd_text_properties,
+                 EmacsInt, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qstringp};
 use threads::ThreadState;
 use buffers::get_buffer;
 use marker::{marker_position, set_point_from_marker};
@@ -151,4 +151,44 @@ pub fn goto_char(position: LispObject) -> LispObject {
         wrong_type!(Qinteger_or_marker_p, position)
     };
     position
+}
+
+/// Return a copy of STRING with text properties added.
+/// First argument is the string to copy.
+/// Remaining arguments form a sequence of PROPERTY VALUE pairs for text
+/// properties to add to the result.
+/// usage: (propertize STRING &rest PROPERTIES)  */
+#[lisp_fn(min = "1")]
+pub fn propertize(args: &mut [LispObject]) -> LispObject {
+    /* Number of args must be odd. */
+    if args.len() & 1 == 0 {
+        error!("Wrong number of arguments");
+    }
+
+    let mut it = args.iter();
+
+    let first = it.next().unwrap(); // safe, there is at least 1 arg
+    if !first.is_string() {
+        wrong_type!(Qstringp, *first);
+    }
+
+    let copy = first.clone();
+    let mut properties = Qnil;
+
+    while let Some(a) = it.next() {
+        let b = it.next().unwrap(); // safe due to the odd check at the beginning
+        properties = unsafe { Fcons(a.to_raw(), Fcons(b.to_raw(), properties)) };
+    }
+
+    let strcopy = copy.as_string_or_error();
+    unsafe {
+        Fadd_text_properties(
+            LispObject::from_natnum(0).to_raw(),
+            LispObject::from_natnum(strcopy.len_chars() as EmacsInt).to_raw(),
+            properties,
+            copy.to_raw(),
+        );
+    };
+
+    copy
 }
