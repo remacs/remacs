@@ -161,12 +161,10 @@ pub fn position_bytes(position: LispObject) -> LispObject {
     let pos = position.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
     let cur_buf = ThreadState::current_buffer();
 
-    if pos < cur_buf.begv || pos > cur_buf.zv {
-        return LispObject::constant_nil();
-    }
-
-    unsafe {
-        let bytepos = buf_charpos_to_bytepos(cur_buf.as_ptr(), pos);
+    if pos >= cur_buf.begv && pos <= cur_buf.zv {
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
         LispObject::from_natnum(bytepos as EmacsInt)
+    } else {
+        LispObject::constant_nil()
     }
 }
