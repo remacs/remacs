@@ -3947,11 +3947,12 @@ This function returns either:
                   ;; The entry MTIME should match the most recent
                   ;; MTIME among matching files.
                   (and cached-files
-                       (= (float-time (nth 2 dir-elt))
-                          (apply #'max (mapcar (lambda (f)
-                                                 (float-time
-                                                  (nth 5 (file-attributes f))))
-                                               cached-files))))))
+		       (equal (nth 2 dir-elt)
+			      (let ((latest 0))
+				(dolist (f cached-files latest)
+				  (let ((f-time (nth 5 (file-attributes f))))
+				    (if (time-less-p latest f-time)
+					(setq latest f-time)))))))))
             ;; This cache entry is OK.
             dir-elt
           ;; This cache entry is invalid; clear it.
@@ -3973,10 +3974,15 @@ Return the new class name, which is a symbol named DIR."
   (let* ((class-name (intern dir))
          (files (dir-locals--all-files dir))
          (read-circle nil)
-         (success nil)
+	 ;; If there was a problem, use the values we could get but
+	 ;; don't let the cache prevent future reads.
+	 (latest 0) (success 0)
          (variables))
     (with-demoted-errors "Error reading dir-locals: %S"
       (dolist (file files)
+	(let ((file-time (nth 5 (file-attributes file))))
+	  (if (time-less-p latest file-time)
+	    (setq latest file-time)))
         (with-temp-buffer
           (insert-file-contents file)
           (condition-case-unless-debug nil
@@ -3985,18 +3991,9 @@ Return the new class name, which is a symbol named DIR."
                                     variables
                                     (read (current-buffer))))
             (end-of-file nil))))
-      (setq success t))
+      (setq success latest))
     (dir-locals-set-class-variables class-name variables)
-    (dir-locals-set-directory-class
-     dir class-name
-     (seconds-to-time
-      (if success
-          (apply #'max (mapcar (lambda (file)
-                                 (float-time (nth 5 (file-attributes file))))
-                               files))
-        ;; If there was a problem, use the values we could get but
-        ;; don't let the cache prevent future reads.
-        0)))
+    (dir-locals-set-directory-class dir class-name success)
     class-name))
 
 (define-obsolete-function-alias 'dir-locals-read-from-file

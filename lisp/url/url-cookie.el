@@ -161,7 +161,7 @@ telling Microsoft that."
   (let ((exp (url-cookie-expires cookie)))
     (and (> (length exp) 0)
 	 (condition-case ()
-	     (> (float-time) (float-time (date-to-time exp)))
+	     (time-less-p nil (date-to-time exp))
 	   (error nil)))))
 
 (defun url-cookie-retrieve (host &optional localpart secure)

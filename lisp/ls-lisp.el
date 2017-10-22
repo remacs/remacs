@@ -861,7 +861,7 @@ Use the same method as ls to decide whether to show time-of-day or year,
 depending on distance between file date and the current time.
 All ls time options, namely c, t and u, are handled."
   (let* ((time (nth (or time-index 5) file-attr)) ; default is last modtime
-	 (diff (- (float-time time) (float-time)))
+	 (diff (time-subtract time nil))
 	 ;; Consider a time to be recent if it is within the past six
 	 ;; months.  A Gregorian year has 365.2425 * 24 * 60 * 60 ==
 	 ;; 31556952 seconds on the average, and half of that is 15778476.
@@ -878,7 +878,8 @@ All ls time options, namely c, t and u, are handled."
 	  (if (member locale '("C" "POSIX"))
 	      (setq locale nil))
 	  (format-time-string
-	   (if (and (<= past-cutoff diff) (<= diff 0))
+	   (if (and (not (time-less-p diff past-cutoff))
+		    (not (time-less-p 0 diff)))
 	       (if (and locale (not ls-lisp-use-localized-time-format))
 		   "%m-%d %H:%M"
 		 (nth 0 ls-lisp-format-time-list))

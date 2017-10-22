@@ -582,10 +582,11 @@ Create the thumbnails directory if it does not exist."
   "Return the image descriptor for a thumbnail of image file FILE."
   (unless (string-match (image-file-name-regexp) file)
     (error "%s is not a valid image file" file))
-  (let ((thumb-file (image-dired-thumb-name file)))
-    (unless (and (file-exists-p thumb-file)
-		 (<= (float-time (nth 5 (file-attributes file)))
-		     (float-time (nth 5 (file-attributes thumb-file)))))
+  (let* ((thumb-file (image-dired-thumb-name file))
+	 (thumb-attr (file-attributes thumb-file)))
+    (when (or (not thumb-attr)
+	      (time-less-p (nth 5 thumb-attr)
+			   (nth 5 (file-attributes file))))
       (image-dired-create-thumb file thumb-file))
     (create-image thumb-file)
 ;;     (list 'image :type 'jpeg
@@ -748,10 +749,8 @@ Increase at own risk.")
    'image-dired-cmd-create-thumbnail-program)
   (let* ((width (int-to-string (image-dired-thumb-size 'width)))
          (height (int-to-string (image-dired-thumb-size 'height)))
-         (modif-time
-          (format "%.0f"
-                  (ffloor (float-time
-                           (nth 5 (file-attributes original-file))))))
+	 (modif-time (format-time-string
+		      "%s" (nth 5 (file-attributes original-file))))
          (thumbnail-nq8-file (replace-regexp-in-string ".png\\'" "-nq8.png"
                                                        thumbnail-file))
          (spec
