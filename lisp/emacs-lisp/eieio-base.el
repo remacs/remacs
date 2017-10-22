@@ -259,8 +259,8 @@ identified, and needing more object creation."
          ;; Earlier versions of `object-write' added a string name for
          ;; the object, now obsolete.
          (slots (nthcdr
-                 (if (stringp (nth 1 inputlist) 2 1)
-                     inputlist)))
+                 (if (stringp (nth 1 inputlist)) 2 1)
+                 inputlist))
 	 (createslots nil)
 	 (class
 	  (progn
