@@ -10,9 +10,18 @@ pub fn forward_point(n: LispObject) -> LispObject {
     LispObject::from_fixnum(n.as_fixnum_or_error() + pt as EmacsInt)
 }
 
-#[lisp_fn]
-pub fn test_b(n: LispObject) -> LispObject {
-    let pos = unsafe { Fline_beginning_position(n.as_fixnum_or_error()) };
-    //unsafe { set_point(pos as isize) };
+#[lisp_fn(min = "0")]
+pub fn beginning_of_line(n: LispObject) -> LispObject {
+
+    let x = if n.is_nil() {
+        LispObject::from_fixnum(1)
+    } else {
+        n
+    };
+
+    let pos = unsafe {
+        LispObject::from_raw(Fline_beginning_position(x.to_raw()))
+    };
+    unsafe { set_point(pos.as_fixnum_or_error() as isize) };
     LispObject::constant_nil()
 }

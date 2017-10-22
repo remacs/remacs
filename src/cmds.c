@@ -136,30 +136,6 @@ go to its beginning.  */)
   return make_number (count <= 0 ? - shortage : shortage);
 }
 
-DEFUN ("beginning-of-line", Fbeginning_of_line, Sbeginning_of_line, 0, 1, "^p",
-       doc: /* Move point to beginning of current line (in the logical order).
-With argument N not nil or 1, move forward N - 1 lines first.
-If point reaches the beginning or end of buffer, it stops there.
-
-This function constrains point to the current field unless this moves
-point to a different line than the original, unconstrained result.
-If N is nil or 1, and a front-sticky field starts at point, the point
-does not move.  To ignore field boundaries bind
-`inhibit-field-text-motion' to t, or use the `forward-line' function
-instead.  For instance, `(forward-line 0)' does the same thing as
-`(beginning-of-line)', except that it ignores field boundaries.  */)
-  (Lisp_Object n)
-{
-  if (NILP (n))
-    XSETFASTINT (n, 1);
-  else
-    CHECK_NUMBER (n);
-
-  SET_PT (XINT (Fline_beginning_position (n)));
-
-  return Qnil;
-}
-
 DEFUN ("end-of-line", Fend_of_line, Send_of_line, 0, 1, "^p",
        doc: /* Move point to end of current line (in the logical order).
 With argument N not nil or 1, move forward N - 1 lines first.
@@ -508,7 +484,6 @@ This is run after inserting the character.  */);
   defsubr (&Sforward_char);
   defsubr (&Sbackward_char);
   defsubr (&Sforward_line);
-  defsubr (&Sbeginning_of_line);
   defsubr (&Send_of_line);
 
   defsubr (&Sdelete_char);
