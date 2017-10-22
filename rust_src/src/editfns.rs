@@ -8,6 +8,7 @@ use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Qint
 use threads::ThreadState;
 use buffers::get_buffer;
 use marker::{marker_position, set_point_from_marker};
+use libc::ptrdiff_t;
 
 /// Return value of point, as an integer.
 /// Beginning of buffer is position (point-min).
@@ -151,4 +152,33 @@ pub fn goto_char(position: LispObject) -> LispObject {
         wrong_type!(Qinteger_or_marker_p, position)
     };
     position
+}
+
+/// Return character in current buffer at position POS.
+/// POS is an integer or a marker and defaults to point.
+/// If POS is out of range, the value is nil.
+#[lisp_fn(min = "0")]
+pub fn char_after(mut pos: LispObject) -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+    if pos.is_nil() {
+        pos = point();
+    }
+    if pos.is_marker() {
+        let pos_byte = pos.as_marker().unwrap().bytepos_or_error();
+        // Note that this considers the position in the current buffer,
+        // even if the marker is from another buffer.
+        if pos_byte < buffer_ref.begv_byte || pos_byte >= buffer_ref.zv_byte {
+            LispObject::constant_nil()
+        } else {
+            LispObject::from_natnum(buffer_ref.fetch_char(pos_byte) as EmacsInt)
+        }
+    } else {
+        let p = pos.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
+        if p < buffer_ref.begv || p >= buffer_ref.zv() {
+            LispObject::constant_nil()
+        } else {
+            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_ptr(), p) };
+            LispObject::from_natnum(buffer_ref.fetch_char(pos_byte) as EmacsInt)
+        }
+    }
 }
