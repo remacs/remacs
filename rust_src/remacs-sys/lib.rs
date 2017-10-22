@@ -1184,6 +1184,13 @@ extern "C" {
     pub fn timespec_sub(a: timespec, b: timespec) -> timespec;
     pub fn timespec_add(a: timespec, b: timespec) -> timespec;
 
+    // textprop
+    pub fn Fadd_text_properties(
+        start: Lisp_Object,
+        end: Lisp_Object,
+        properties: Lisp_Object,
+        object: Lisp_Object,
+    ) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
