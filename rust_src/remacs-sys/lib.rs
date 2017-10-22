@@ -19,7 +19,7 @@ extern crate libc;
 pub mod libm;
 
 use libc::{c_char, c_uchar, c_short, c_int, c_double, c_float, c_void, ptrdiff_t, size_t, off_t,
-           time_t, timespec};
+           time_t, timespec, intmax_t};
 
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
@@ -61,6 +61,9 @@ pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (INTTYPEBITS - 1));
 // Emacs lisp.
 pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
 pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
+
+// Max value for the first argument of wait_reading_process_output.
+pub const WAIT_READING_MAX: i64 = std::i64::MAX;
 
 /// Bit pattern used in the least significant bits of a lisp object,
 /// to denote its type.
@@ -1159,6 +1162,20 @@ extern "C" {
     pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: Lisp_Object);
     pub fn set_point_both(charpos: ptrdiff_t, bytepos: ptrdiff_t);
     pub fn buf_charpos_to_bytepos(buffer: *const Lisp_Buffer, charpos: ptrdiff_t) -> ptrdiff_t;
+    pub fn wait_reading_process_output(
+        time_limit: intmax_t,
+        nsecs: c_int,
+        read_kbd: c_int,
+        do_display: bool,
+        wait_for_cell: Lisp_Object,
+        wait_proc: *const Lisp_Process,
+        just_wait_proc: c_int,
+    ) -> c_int;
+
+    pub fn dtotimespec(sec: c_double) -> timespec;
+    pub fn current_timespec() -> timespec;
+    pub fn timespec_sub(a: timespec, b: timespec) -> timespec;
+    pub fn timespec_add(a: timespec, b: timespec) -> timespec;
 }
 
 /// Contains C definitions from the font.h header.
