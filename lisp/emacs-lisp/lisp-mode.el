@@ -1267,7 +1267,8 @@ and initial semicolons."
       ;; case).  The `;' and `:' stop the paragraph being filled at following
       ;; comment lines and at keywords (e.g., in `defcustom').  Left parens are
       ;; escaped to keep font-locking, filling, & paren matching in the source
-      ;; file happy.
+      ;; file happy.  The `:' must be preceded by whitespace so that keywords
+      ;; inside of the docstring don't start new paragraphs (Bug#7751).
       ;;
       ;; `paragraph-separate': A clever regexp distinguishes the first line of
       ;; a docstring and identifies it as a paragraph separator, so that it
@@ -1280,13 +1281,7 @@ and initial semicolons."
       ;; `emacs-lisp-docstring-fill-column' if that value is an integer.
       (let ((paragraph-start
              (concat paragraph-start
-                     (format "\\|\\s-*\\([(;%s\"]\\|`(\\|#'(\\)"
-                             ;; If we're inside a string (like the doc
-                             ;; string), don't consider a colon to be
-                             ;; a paragraph-start character.
-                             (if (nth 3 (syntax-ppss))
-                                 ""
-                               ":"))))
+                     "\\|\\s-*\\([(;\"]\\|\\s-:\\|`(\\|#'(\\)"))
 	    (paragraph-separate
 	     (concat paragraph-separate "\\|\\s-*\".*[,\\.]$"))
             (fill-column (if (and (integerp emacs-lisp-docstring-fill-column)
