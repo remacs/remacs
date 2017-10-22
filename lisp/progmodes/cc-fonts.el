@@ -1730,7 +1730,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(c-syntactic-skip-backward "^;{}" decl-search-lim)
 	(c-forward-syntactic-ws)
 	(setq in-typedef (looking-at c-typedef-key))
-	(if in-typedef (c-forward-token-2))
+	(if in-typedef (c-forward-over-token-and-ws))
 	(when (and c-opt-block-decls-with-vars-key
 		   (looking-at c-opt-block-decls-with-vars-key))
 	  (goto-char ps-elt)

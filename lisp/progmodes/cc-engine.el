@@ -4297,6 +4297,47 @@ comment at the start of cc-engine.el for more info."
       "\\w\\|\\s_\\|\\s\"\\|\\s|"
     "\\w\\|\\s_\\|\\s\""))
 
+(defun c-forward-over-token-and-ws (&optional balanced)
+  "Move forward over a token and any following whitespace
+Return t if we moved, nil otherwise (i.e. we were at EOB, or a
+non-token or BALANCED is non-nil and we can't move).  If we
+are at syntactic whitespace, move over this in place of a token.
+
+If BALANCED is non-nil move over any balanced parens we are at, and never move
+out of an enclosing paren.
+
+This function differs from `c-forward-token-2' in that it will move forward
+over the final token in a buffer, up to EOB."
+  (let ((jump-syntax (if balanced
+			 c-jump-syntax-balanced
+		       c-jump-syntax-unbalanced))
+	(here (point)))
+    (when
+	(condition-case nil
+	    (cond
+	     ((/= (point)
+		  (progn (c-forward-syntactic-ws) (point)))
+	      ;; If we're at whitespace, count this as the token.
+	      t)
+	     ((eobp) nil)
+	     ((looking-at jump-syntax)
+	      (goto-char (scan-sexps (point) 1))
+	      t)
+	     ((looking-at c-nonsymbol-token-regexp)
+	      (goto-char (match-end 0))
+	      t)
+	     ((save-restriction
+		(widen)
+		(looking-at c-nonsymbol-token-regexp))
+	      nil)
+	     (t
+	      (forward-char)
+	      t))
+	  (error (goto-char here)
+		 nil))
+      (c-forward-syntactic-ws)
+      t)))
+
 (defun c-forward-token-2 (&optional count balanced limit)
   "Move forward by tokens.
 A token is defined as all symbols and identifiers which aren't
@@ -4326,15 +4367,11 @@ comment at the start of cc-engine.el for more info."
   (if (< count 0)
       (- (c-backward-token-2 (- count) balanced limit))
 
-    (let ((jump-syntax (if balanced
-			   c-jump-syntax-balanced
-			 c-jump-syntax-unbalanced))
-	  (last (point))
-	  (prev (point)))
-
-      (if (zerop count)
-	  ;; If count is zero we should jump if in the middle of a token.
-	  (c-end-of-current-token))
+    (let ((here (point))
+	  (last (point)))
+      (when (zerop count)
+	;; If count is zero we should jump if in the middle of a token.
+	(c-end-of-current-token))
 
       (save-restriction
 	(if limit (narrow-to-region (point-min) limit))
@@ -4348,43 +4385,15 @@ comment at the start of cc-engine.el for more info."
 	    ;; Moved out of bounds.  Make sure the returned count isn't zero.
 	    (progn
 	      (if (zerop count) (setq count 1))
-	      (goto-char last))
-
-	  ;; Use `condition-case' to avoid having the limit tests
-	  ;; inside the loop.
-	  (condition-case nil
-	      (while (and
-		      (> count 0)
-		      (progn
-			(setq last (point))
-			(cond ((looking-at jump-syntax)
-			       (goto-char (scan-sexps (point) 1))
-			       t)
-			      ((looking-at c-nonsymbol-token-regexp)
-			       (goto-char (match-end 0))
-			       t)
-			      ;; `c-nonsymbol-token-regexp' above should always
-			      ;; match if there are correct tokens.  Try to
-			      ;; widen to see if the limit was set in the
-			      ;; middle of one, else fall back to treating
-			      ;; the offending thing as a one character token.
-			      ((and limit
-				    (save-restriction
-				      (widen)
-				      (looking-at c-nonsymbol-token-regexp)))
-			       nil)
-			      (t
-			       (forward-char)
-			       t))))
-		(c-forward-syntactic-ws)
-		(setq prev last
-		      count (1- count)))
-	    (error (goto-char last)))
-
-	  (when (eobp)
-	    (goto-char prev)
-	    (setq count (1+ count)))))
-
+	      (goto-char here))
+	  (while (and
+		  (> count 0)
+		  (c-forward-over-token-and-ws balanced)
+		  (not (eobp)))
+	    (setq last (point)
+		  count (1- count)))
+	  (if (eobp)
+	      (goto-char last))))
       count)))
 
 (defun c-backward-token-2 (&optional count balanced limit)
@@ -6424,7 +6433,8 @@ comment at the start of cc-engine.el for more info."
 			      (not (eq (c-get-char-property (point) 'c-type)
 				       'c-decl-arg-start)))))))
       (or (c-forward-<>-arglist nil)
-	  (c-forward-token-2)))))
+	  (c-forward-over-token-and-ws)
+	  (goto-char c-new-END)))))
 
 
 ;; Functions to handle C++ raw strings.
@@ -7142,7 +7152,7 @@ comment at the start of cc-engine.el for more info."
 			  (let ((c-promote-possible-types t)
 				(c-record-found-types t))
 			    (c-forward-type))
-			(c-forward-token-2))))
+			(c-forward-over-token-and-ws))))
 
 		    (c-forward-syntactic-ws)
 
@@ -9722,8 +9732,8 @@ comment at the start of cc-engine.el for more info."
 		     ;; identifiers?
 		     (progn
 		       (goto-char before-lparen)
-		       (c-forward-token-2) ; to first token inside parens
 		       (and
+			(c-forward-over-token-and-ws) ; to first token inside parens
 			(setq id-start (c-on-identifier)) ; Must be at least one.
 			(catch 'id-list
 			  (while
@@ -9735,7 +9745,7 @@ comment at the start of cc-engine.el for more info."
 				      ids)
 				(c-forward-syntactic-ws)
 				(eq (char-after) ?\,))
-			    (c-forward-token-2)
+			    (c-forward-over-token-and-ws)
 			    (unless (setq id-start (c-on-identifier))
 			      (throw 'id-list nil)))
 			  (eq (char-after) ?\)))))
@@ -10525,10 +10535,10 @@ comment at the start of cc-engine.el for more info."
 	 ((and after-type-id-pos
 	       (save-excursion
 		 (when (eq (char-after) ?\;)
-		   (c-forward-token-2 1 t))
+		   (c-forward-over-token-and-ws t))
 		 (setq bufpos (point))
 		 (when (looking-at c-opt-<>-sexp-key)
-		   (c-forward-token-2)
+		   (c-forward-over-token-and-ws)
 		   (when (and (eq (char-after) ?<)
 			      (c-get-char-property (point) 'syntax-table))
 		     (c-go-list-forward nil after-type-id-pos)
