@@ -3,8 +3,8 @@
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
 use util::clip_to_bounds;
-use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, Fcons, Fadd_text_properties,
-                 EmacsInt, Qinteger_or_marker_p, Qmark_inactive, Qnil, Qstringp};
+use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, Fcons, Fcopy_sequence,
+                 Fadd_text_properties, EmacsInt, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 use threads::ThreadState;
 use buffers::get_buffer;
 use marker::{marker_position, set_point_from_marker};
@@ -197,12 +197,14 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
 
     let mut it = args.iter();
 
-    let first = it.next().unwrap(); // safe, there is at least 1 arg
-    if !first.is_string() {
-        wrong_type!(Qstringp, *first);
-    }
+    // the unwrap call is safe, the number of args has already been checked
+    let first = it.next().unwrap();
+    let orig_string = first.as_string_or_error();
 
-    let copy = first.clone();
+    let copy = LispObject::from_raw(unsafe { Fcopy_sequence(first.to_raw()) });
+
+    // this is a C style Lisp_Object because that is what Fcons expects and returns.
+    // Once Fcons is ported to Rust this can be migrated to a LispObject.
     let mut properties = Qnil;
 
     while let Some(a) = it.next() {
@@ -210,11 +212,10 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
         properties = unsafe { Fcons(a.to_raw(), Fcons(b.to_raw(), properties)) };
     }
 
-    let strcopy = copy.as_string_or_error();
     unsafe {
         Fadd_text_properties(
             LispObject::from_natnum(0).to_raw(),
-            LispObject::from_natnum(strcopy.len_chars() as EmacsInt).to_raw(),
+            LispObject::from_natnum(orig_string.len_chars() as EmacsInt).to_raw(),
             properties,
             copy.to_raw(),
         );
