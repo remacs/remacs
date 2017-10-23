@@ -674,48 +674,54 @@ Do not change the value by `setq', it must be changed only by
 `custom-set-variables'.  See also `tramp-change-syntax'."
   :group 'tramp
   :version "26.1"
-  :package-version '(Tramp . "2.3.2")
+  :package-version '(Tramp . "2.3.3")
   :type '(choice (const :tag "Default" default)
 		 (const :tag "Ange-FTP" simplified)
 		 (const :tag "XEmacs" separate))
   :require 'tramp
   :initialize 'custom-initialize-set
-  :set (lambda (symbol value)
-	 ;; Check allowed values.
-	 (unless (memq value (tramp-syntax-values))
-	   (tramp-compat-user-error "Wrong `tramp-syntax' %s" tramp-syntax))
-         ;; Cleanup existing buffers.
-         (unless (eq (symbol-value symbol) value)
-           (tramp-cleanup-all-buffers))
-	 ;; Set the value:
-	 (set-default symbol value)
-	 ;; Reset the depending variables.
-	 (with-no-warnings
-	   (setq tramp-prefix-format (tramp-build-prefix-format)
-		 tramp-prefix-regexp (tramp-build-prefix-regexp)
-		 tramp-method-regexp (tramp-build-method-regexp)
-		 tramp-postfix-method-format (tramp-build-postfix-method-format)
-		 tramp-postfix-method-regexp (tramp-build-postfix-method-regexp)
-		 tramp-prefix-ipv6-format (tramp-build-prefix-ipv6-format)
-		 tramp-prefix-ipv6-regexp (tramp-build-prefix-ipv6-regexp)
-		 tramp-postfix-ipv6-format (tramp-build-postfix-ipv6-format)
-		 tramp-postfix-ipv6-regexp (tramp-build-postfix-ipv6-regexp)
-		 tramp-postfix-host-format (tramp-build-postfix-host-format)
-		 tramp-postfix-host-regexp (tramp-build-postfix-host-regexp)
-		 tramp-remote-file-name-spec-regexp
-		 (tramp-build-remote-file-name-spec-regexp)
-		 tramp-file-name-structure (tramp-build-file-name-structure)
-		 tramp-file-name-regexp (tramp-build-file-name-regexp)
-		 tramp-completion-file-name-regexp
-		 (tramp-build-completion-file-name-regexp)))
-	 ;; Rearrange file name handlers.
-	 (tramp-register-file-name-handlers)))
+  :set 'tramp-set-syntax)
+
+(defun tramp-set-syntax (symbol value)
+  "Set SYMBOL to value VALUE.
+Used in user option `tramp-syntax'.  There are further variables
+to be set, depending on VALUE."
+  ;; Check allowed values.
+  (unless (memq value (tramp-syntax-values))
+    (tramp-compat-user-error "Wrong `tramp-syntax' %s" tramp-syntax))
+  ;; Cleanup existing buffers.
+  (unless (eq (symbol-value symbol) value)
+    (tramp-cleanup-all-buffers))
+  ;; Set the value:
+  (set-default symbol value)
+  ;; Reset the depending variables.
+  (with-no-warnings
+    (setq tramp-prefix-format (tramp-build-prefix-format)
+	  tramp-prefix-regexp (tramp-build-prefix-regexp)
+	  tramp-method-regexp (tramp-build-method-regexp)
+	  tramp-postfix-method-format (tramp-build-postfix-method-format)
+	  tramp-postfix-method-regexp (tramp-build-postfix-method-regexp)
+	  tramp-prefix-ipv6-format (tramp-build-prefix-ipv6-format)
+	  tramp-prefix-ipv6-regexp (tramp-build-prefix-ipv6-regexp)
+	  tramp-postfix-ipv6-format (tramp-build-postfix-ipv6-format)
+	  tramp-postfix-ipv6-regexp (tramp-build-postfix-ipv6-regexp)
+	  tramp-postfix-host-format (tramp-build-postfix-host-format)
+	  tramp-postfix-host-regexp (tramp-build-postfix-host-regexp)
+	  tramp-remote-file-name-spec-regexp
+          (tramp-build-remote-file-name-spec-regexp)
+	  tramp-file-name-structure (tramp-build-file-name-structure)
+	  tramp-file-name-regexp (tramp-build-file-name-regexp)
+	  tramp-completion-file-name-regexp
+          (tramp-build-completion-file-name-regexp)))
+  ;; Rearrange file name handlers.
+  (tramp-register-file-name-handlers))
 
 ;; Initialize the Tramp syntax variables.  We want to override initial
-;; values of `tramp-file-name-regexp' and
-;; `tramp-completion-file-name-regexp'.
+;; value of `tramp-file-name-regexp'.  Other Tramp syntax variables
+;; must be initialized as well to proper values.  We do not call
+;; `custom-set-variable', this would load Tramp via custom.el.
 (eval-after-load 'tramp
-  '(custom-set-variables `(tramp-syntax ',(tramp-compat-tramp-syntax))))
+  '(tramp-set-syntax 'tramp-syntax (tramp-compat-tramp-syntax)))
 
 (defun tramp-syntax-values ()
   "Return possible values of `tramp-syntax', a list"
