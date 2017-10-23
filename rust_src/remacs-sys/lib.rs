@@ -1176,6 +1176,8 @@ extern "C" {
     pub fn current_timespec() -> timespec;
     pub fn timespec_sub(a: timespec, b: timespec) -> timespec;
     pub fn timespec_add(a: timespec, b: timespec) -> timespec;
+
+    pub fn current_column() -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
