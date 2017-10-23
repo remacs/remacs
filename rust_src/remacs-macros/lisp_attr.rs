@@ -16,7 +16,9 @@ pub struct LispFnArgs {
     /// If not given, all arguments are required for normal functions,
     /// and no arguments are required for MANY functions.
     pub min: i16,
-    /// Used to define if the lisp function is interactive.
+    /// The interactive specification. This may be a normal prompt
+    /// string, such as `"bBuffer: "` or an elisp form as a string.
+    /// If the function is not interactive, this should be None.
     pub intspec: Option<String>,
 }
 
