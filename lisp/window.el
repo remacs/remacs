@@ -320,22 +320,34 @@ WINDOW can be any window."
 
 (defun window-normalize-buffer (buffer-or-name)
   "Return buffer specified by BUFFER-OR-NAME.
-BUFFER-OR-NAME must be either a buffer or a string naming a live
-buffer and defaults to the current buffer."
-  (cond
-   ((not buffer-or-name)
-    (current-buffer))
-   ((bufferp buffer-or-name)
-    (if (buffer-live-p buffer-or-name)
-	buffer-or-name
-      (error "Buffer %s is not a live buffer" buffer-or-name)))
-   ((get-buffer buffer-or-name))
-   (t
-    (error "No such buffer %s" buffer-or-name))))
+BUFFER-OR-NAME must be a live buffer, a string naming a live
+buffer or nil which means to return the current buffer.
+
+This function is commonly used to process the (usually optional)
+\"BUFFER-OR-NAME\" argument of window related functions where nil
+stands for the current buffer."
+  (let ((buffer
+         (cond
+          ((not buffer-or-name)
+           (current-buffer))
+          ((bufferp buffer-or-name)
+           buffer-or-name)
+          ((stringp buffer-or-name)
+           (get-buffer buffer-or-name))
+          (t
+           (error "No such buffer %s" buffer-or-name)))))
+    (if (buffer-live-p buffer)
+	buffer
+      (error "No such live buffer %s" buffer-or-name))))
 
 (defun window-normalize-frame (frame)
   "Return frame specified by FRAME.
-FRAME must be a live frame and defaults to the selected frame."
+FRAME must be a live frame or nil which means to return the
+selected frame.
+
+This function is commonly used to process the (usually optional)
+\"FRAME\" argument of window and frame related functions where
+nil stands for the selected frame."
   (if frame
       (if (frame-live-p frame)
 	  frame
@@ -343,11 +355,15 @@ FRAME must be a live frame and defaults to the selected frame."
     (selected-frame)))
 
 (defun window-normalize-window (window &optional live-only)
-  "Return the window specified by WINDOW.
+  "Return window specified by WINDOW.
 If WINDOW is nil, return the selected window.  Otherwise, if
 WINDOW is a live or an internal window, return WINDOW; if
 LIVE-ONLY is non-nil, return WINDOW for a live window only.
-Otherwise, signal an error."
+Otherwise, signal an error.
+
+This function is commonly used to process the (usually optional)
+\"WINDOW\" argument of window related functions where nil stands
+for the selected window."
   (cond
    ((null window)
     (selected-window))
