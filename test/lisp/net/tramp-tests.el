@@ -3678,7 +3678,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 (defun tramp--test-emacs26-p ()
   "Check for Emacs version >= 26.1.
 Some semantics has been changed for there, w/o new functions or
-variables, so we check function Emacs version directly."
+variables, so we check the Emacs version directly."
   (>= emacs-major-version 26))
 
 (defun tramp--test-adb-p ()
@@ -4338,6 +4338,9 @@ process sentinels.  They shall not disturb each other."
 Since it unloads Tramp, it shall be the last test to run."
   :tags '(:expensive-test)
   (skip-unless noninteractive)
+  ;; The autoloaded Tramp objects are different since Emacs 26.1.  We
+  ;; cannot test older Emacsen, therefore.
+  (skip-unless (tramp--test-emacs26-p))
 
   (when (featurep 'tramp)
     (unload-feature 'tramp 'force)
