@@ -1002,6 +1002,7 @@ extern "C" {
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
     pub static Qhash_table_p: Lisp_Object;
+    pub static Qhash_table_test: Lisp_Object;
     pub static Qwrite_region: Lisp_Object;
     pub static Qbuffer_file_coding_system: Lisp_Object;
     pub static Qfont_extra_type: Lisp_Object;
@@ -1156,6 +1157,7 @@ extern "C" {
         value: Lisp_Object,
         hash: EmacsUint,
     ) -> ptrdiff_t;
+    pub fn hash_clear(h: *mut Lisp_Hash_Table);
 
     pub fn gc_aset(array: Lisp_Object, idx: ptrdiff_t, val: Lisp_Object);
 
