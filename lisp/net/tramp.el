@@ -1760,9 +1760,7 @@ If VAR is nil, then we bind `v' to the structure and `method', `user',
                    `(,(if var (intern (format "%s-%s" var elem)) elem)
                      (,(intern (format "tramp-file-name-%s" elem))
                       ,(or var 'v))))
-                 (eval-and-compile
-                   (cdr
-                    (mapcar 'car (cl-struct-slot-info 'tramp-file-name)))))))
+		 `,(tramp-compat-tramp-file-name-slots))))
     `(let* ((,(or var 'v) (tramp-dissect-file-name ,filename))
             ,@bindings)
        ;; We don't know which of those vars will be used, so we bind them all,
