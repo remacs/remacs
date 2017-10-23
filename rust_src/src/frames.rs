@@ -1,8 +1,8 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Lisp_Frame, selected_frame as current_frame};
-use lisp::{LispObject, ExternalPtr};
+use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
+use lisp::{ExternalPtr, LispObject};
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 

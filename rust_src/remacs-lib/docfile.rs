@@ -5,7 +5,7 @@ use libc::{c_char, c_int};
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Write, stdout};
+use std::io::{stdout, BufRead, BufReader, Write};
 use std::ffi::{CStr, CString};
 use std::mem;
 use std::ptr;
@@ -102,10 +102,9 @@ pub extern "C" fn scan_rust_file(
             // Split arg names and types
             let splitters = [':', ','];
             let args = sig.split_terminator(&splitters[..]).collect::<Vec<_>>();
-            let lisp_name = attr_props.get("name").map_or_else(
-                || name.replace("_", "-"),
-                |&name| name.into(),
-            );
+            let lisp_name = attr_props
+                .get("name")
+                .map_or_else(|| name.replace("_", "-"), |&name| name.into());
             let c_name = format!("F{}", attr_props.get("c_name").unwrap_or(&name));
 
             let nargs = args.len() / 2;

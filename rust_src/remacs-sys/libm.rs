@@ -2,7 +2,7 @@ use std::mem;
 use libc::c_int;
 
 mod sys {
-    use libc::{c_int, c_double};
+    use libc::{c_double, c_int};
 
     #[link_name = "m"]
     extern "C" {

@@ -2,12 +2,12 @@
 
 use std::ptr;
 use std::slice;
-use libc::{ptrdiff_t, c_char, c_uchar};
+use libc::{c_char, c_uchar, ptrdiff_t};
 use base64_crate;
 
 use lisp::LispObject;
 use strings::MIME_LINE_LENGTH;
-use multibyte::{MAX_5_BYTE_CHAR, multibyte_char_at, raw_byte_from_codepoint};
+use multibyte::{multibyte_char_at, raw_byte_from_codepoint, MAX_5_BYTE_CHAR};
 use remacs_sys::make_unibyte_string;
 use remacs_macros::lisp_fn;
 

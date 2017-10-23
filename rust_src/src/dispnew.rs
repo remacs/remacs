@@ -4,7 +4,7 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{current_timespec, dtotimespec, timespec_add, timespec_sub,
                  wait_reading_process_output, WAIT_READING_MAX};
 use lisp::LispObject;
-use std::{ptr, cmp};
+use std::{cmp, ptr};
 use floatfns::extract_float;
 
 

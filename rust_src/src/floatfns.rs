@@ -4,9 +4,9 @@ use std::mem;
 use libc;
 
 use math::ArithOp;
-use lisp::{LispObject, LispNumber};
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qnumberp, Qinteger_or_marker_p,
-                 Qarith_error, Qrange_error, build_string, MOST_NEGATIVE_FIXNUM,
+use lisp::{LispNumber, LispObject};
+use remacs_sys::{build_string, EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qarith_error,
+                 Qinteger_or_marker_p, Qnumberp, Qrange_error, MOST_NEGATIVE_FIXNUM,
                  MOST_POSITIVE_FIXNUM};
 use remacs_sys::libm;
 use remacs_macros::lisp_fn;
@@ -80,16 +80,14 @@ pub fn float_arith_driver(
                 }
             }
             ArithOp::Mult => accum *= next,
-            ArithOp::Div => {
-                if args.len() > 1 && argnum == 0 {
-                    accum = next;
-                } else {
-                    if next == 0. {
-                        xsignal!(Qarith_error);
-                    }
-                    accum /= next;
+            ArithOp::Div => if args.len() > 1 && argnum == 0 {
+                accum = next;
+            } else {
+                if next == 0. {
+                    xsignal!(Qarith_error);
                 }
-            }
+                accum /= next;
+            },
             ArithOp::Logand | ArithOp::Logior | ArithOp::Logxor => {
                 wrong_type!(Qinteger_or_marker_p, val)
             }
@@ -377,12 +375,11 @@ fn round2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
     let r = i1 % i2;
     let abs_r = r.abs();
     let abs_r1 = i2.abs() - abs_r;
-    q +
-        if abs_r + (q & 1) <= abs_r1 {
-            0
-        } else if (i2 ^ r) < 0 {
-            -1
-        } else {
-            1
-        }
+    q + if abs_r + (q & 1) <= abs_r1 {
+        0
+    } else if (i2 ^ r) < 0 {
+        -1
+    } else {
+        1
+    }
 }
