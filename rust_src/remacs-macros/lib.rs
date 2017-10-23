@@ -29,7 +29,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     } else {
         quote!{ ::std::ptr::null() }
     };
-    
+
     match function.fntype {
         function::LispFnType::Normal(_) => {
             for ident in function.args {
