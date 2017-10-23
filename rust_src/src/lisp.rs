@@ -31,8 +31,8 @@ use remacs_sys::{circular_list, internal_equal, lispsym, make_float, EmacsDouble
                  Lisp_Misc_Type, Lisp_Object, Lisp_Type, PseudovecType, Qbufferp, Qchar_table_p,
                  Qcharacterp, Qconsp, Qfloatp, Qframep, Qhash_table_p, Qinteger_or_marker_p,
                  Qintegerp, Qlistp, Qmarkerp, Qnil, Qnumber_or_marker_p, Qnumberp, Qoverlayp,
-                 Qplistp, Qprocessp, Qstringp, Qsymbolp, Qt, Qthreadp, Qvectorp, Qwholenump,
-                 Qwindow_live_p, Qwindowp, CHECK_IMPURE, INTMASK, INTTYPEBITS,
+                 Qplistp, Qprocessp, Qstringp, Qsymbolp, Qt, Qthreadp, Qunbound, Qvectorp,
+                 Qwholenump, Qwindow_live_p, Qwindowp, CHECK_IMPURE, INTMASK, INTTYPEBITS,
                  MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, SYMBOL_NAME, USE_LSB_TAG, VALBITS,
                  VALMASK};
 
@@ -63,6 +63,11 @@ use functions::ExternCMocks;
 pub struct LispObject(Lisp_Object);
 
 impl LispObject {
+    #[inline]
+    pub fn constant_unbound() -> LispObject {
+        LispObject::from(unsafe { Qunbound })
+    }
+
     #[inline]
     pub fn constant_t() -> LispObject {
         LispObject::from(unsafe { Qt })
