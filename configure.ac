@@ -4035,7 +4035,7 @@ AC_CACHE_CHECK([for library containing tputs], [emacs_cv_tputs_lib],
 else
   # Maybe curses should be tried earlier?
   # See https://debbugs.gnu.org/9736#35
-  for tputs_library in '' tinfo ncurses terminfo termcap curses; do
+  for tputs_library in '' tinfo ncurses terminfo curses termcap; do
     OLIBS=$LIBS
     if test -z "$tputs_library"; then
       emacs_cv_tputs_lib='none required'
