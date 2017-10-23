@@ -432,5 +432,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*data::Sindirect_function);
         defsubr(&*frames::Sselected_frame);
         defsubr(&*dispnew::Ssleep_for);
+        defsubr(&*process::Sprocess_list);
     }
 }

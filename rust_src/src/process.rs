@@ -1,7 +1,7 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Lisp_Process, Vprocess_alist};
+use remacs_sys::{Lisp_Process, Vprocess_alist, Fmapcar, Qcdr};
 use lisp::{LispObject, ExternalPtr};
 use lists::{assoc, cdr};
 use buffers::get_buffer;
@@ -69,4 +69,9 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
         }
     }
     return LispObject::constant_nil();
+}
+
+#[lisp_fn]
+pub fn process_list() -> LispObject {
+    LispObject::from_raw(unsafe { Fmapcar(Qcdr,  Vprocess_alist ) })
 }
