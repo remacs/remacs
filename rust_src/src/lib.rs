@@ -67,6 +67,7 @@ mod minibuf;
 mod cmds;
 mod data;
 mod fns;
+mod dispnew;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -172,6 +173,7 @@ pub use editfns::Fgoto_char;
 pub use data::Findirect_function;
 pub use data::indirect_function;
 pub use process::Fget_buffer_process;
+pub use dispnew::Fsleep_for;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
@@ -198,6 +200,9 @@ pub use multibyte::str_to_multibyte;
 pub use multibyte::str_as_unibyte;
 pub use multibyte::str_to_unibyte;
 
+// Used in bytecode.c, charset.c
+pub use editfns::Fchar_after;
+
 // Used in xdisp.c
 pub use buffers::Foverlay_start;
 pub use buffers::Foverlay_end;
@@ -213,8 +218,10 @@ pub use windows::Fwindow_minibuffer_p;
 // Used in term.c, dired.c
 pub use objects::Fidentity;
 
+// Used in xdisp.c, coding.c, et. al.
 pub use hashtable::Fgethash;
 pub use hashtable::Fremhash;
+pub use hashtable::Fputhash;
 
 #[cfg(test)]
 pub use functions::make_float;
@@ -364,6 +371,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*hashtable::Sgethash);
         defsubr(&*hashtable::Sremhash);
         defsubr(&*hashtable::Shash_table_p);
+        defsubr(&*hashtable::Sputhash);
+        defsubr(&*hashtable::Smaphash);
+        defsubr(&*hashtable::Shash_table_count);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
         defsubr(&*crypto::Ssecure_hash);
@@ -414,6 +424,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Spoint_max);
         defsubr(&*editfns::Sgoto_char);
         defsubr(&*editfns::Sinsert_byte);
+        defsubr(&*editfns::Schar_after);
         defsubr(&*fns::Sfeaturep);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
@@ -421,5 +432,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);
         defsubr(&*frames::Sselected_frame);
+        defsubr(&*dispnew::Ssleep_for);
     }
 }

@@ -1,6 +1,6 @@
 //! Functions operating on buffers.
 
-use libc::{c_void, c_uchar, ptrdiff_t};
+use libc::{c_void, c_uchar, ptrdiff_t, c_int};
 
 use lisp::{LispObject, ExternalPtr};
 use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
@@ -9,8 +9,9 @@ use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
 use marker::{marker_position, marker_buffer};
+use multibyte::string_char;
 
-use std::mem;
+use std::{mem, ptr};
 
 use remacs_macros::lisp_fn;
 
@@ -134,6 +135,31 @@ impl LispBufferRef {
         };
 
         unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
+    }
+
+    #[inline]
+    pub fn fetch_multibyte_char(&self, n: ptrdiff_t) -> c_int {
+        let offset = if n >= self.gpt_byte() && n >= 0 {
+            self.gap_size()
+        } else {
+            0
+        };
+        unsafe {
+            string_char(
+                self.beg_addr().offset(offset + n - self.beg_byte()),
+                ptr::null_mut(),
+                ptr::null_mut(),
+            )
+        }
+    }
+
+    #[inline]
+    pub fn fetch_char(&self, n: ptrdiff_t) -> c_int {
+        if LispObject::from_raw(self.enable_multibyte_characters).is_not_nil() {
+            self.fetch_multibyte_char(n)
+        } else {
+            self.fetch_byte(n) as c_int
+        }
     }
 }
 
@@ -329,10 +355,10 @@ fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     if buffer.is_nil() {
         unsafe { nsberror(buffer_or_name.to_raw()) }
     };
-    let buf = buffer.as_buffer_or_error();
+    let mut buf = buffer.as_buffer_or_error();
     if !buf.is_live() {
         error!("Selecting deleted buffer");
     };
-    unsafe { set_buffer_internal(buf.as_ptr() as *const _ as *const c_void) };
+    unsafe { set_buffer_internal(buf.as_mut()) };
     buffer
 }

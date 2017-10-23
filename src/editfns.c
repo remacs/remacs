@@ -1081,38 +1081,6 @@ At the beginning of the buffer or accessible region, return 0.  */)
   return temp;
 }
 
-DEFUN ("char-after", Fchar_after, Schar_after, 0, 1, 0,
-       doc: /* Return character in current buffer at position POS.
-POS is an integer or a marker and defaults to point.
-If POS is out of range, the value is nil.  */)
-  (Lisp_Object pos)
-{
-  register ptrdiff_t pos_byte;
-
-  if (NILP (pos))
-    {
-      pos_byte = PT_BYTE;
-      XSETFASTINT (pos, PT);
-    }
-
-  if (MARKERP (pos))
-    {
-      pos_byte = marker_byte_position (pos);
-      if (pos_byte < BEGV_BYTE || pos_byte >= ZV_BYTE)
-	return Qnil;
-    }
-  else
-    {
-      CHECK_NUMBER_COERCE_MARKER (pos);
-      if (XINT (pos) < BEGV || XINT (pos) >= ZV)
-	return Qnil;
-
-      pos_byte = CHAR_TO_BYTE (XINT (pos));
-    }
-
-  return make_number (FETCH_CHAR (pos_byte));
-}
-
 DEFUN ("char-before", Fchar_before, Schar_before, 0, 1, 0,
        doc: /* Return character in current buffer preceding position POS.
 POS is an integer or a marker and defaults to point.
@@ -5279,7 +5247,6 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Sfollowing_char);
   defsubr (&Sprevious_char);
-  defsubr (&Schar_after);
   defsubr (&Schar_before);
   defsubr (&Sinsert);
   defsubr (&Sinsert_before_markers);
