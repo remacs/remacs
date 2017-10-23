@@ -1168,15 +1168,6 @@ Return BUFFER.  */)
   return buffer;
 }
 
-DEFUN ("process-buffer", Fprocess_buffer, Sprocess_buffer,
-       1, 1, 0,
-       doc: /* Return the buffer PROCESS is associated with.
-The default process filter inserts output from PROCESS into this buffer.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->buffer;
-}
 
 DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
        1, 1, 0,
@@ -7908,7 +7899,6 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_tty_name);
   defsubr (&Sprocess_command);
   defsubr (&Sset_process_buffer);
-  defsubr (&Sprocess_buffer);
   defsubr (&Sprocess_mark);
   defsubr (&Sset_process_filter);
   defsubr (&Sprocess_filter);
