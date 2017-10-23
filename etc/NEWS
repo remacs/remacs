@@ -1160,6 +1160,10 @@ contents of the buffer to determine whether it's a C or C++ source
 file.
 
 ---
+** New option 'cpp-message-min-time-interval' to allow user control
+of progress messages in cpp.el.
+
+---
 ** New DNS mode command 'dns-mode-ipv6-to-nibbles' to convert IPv6 addresses
 to a format suitable for reverse lookup zone files.
 
