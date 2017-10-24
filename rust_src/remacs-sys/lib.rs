@@ -909,6 +909,12 @@ pub struct Lisp_Frame {
     /// most recently buried buffer is first.  For last-buffer.
     pub buried_buffer_list: Lisp_Object,
 
+    /// Canonical X unit.  Width of default font, in pixels.
+    pub column_width: c_int,
+
+    /// Canonical Y unit.  Height of a line, in pixels.
+    pub line_height: c_int,
+
     // TODO: this struct is incomplete.
 }
 
@@ -953,6 +959,8 @@ extern "C" {
     pub static Qnumberp: Lisp_Object;
     pub static Qintegerp: Lisp_Object;
     pub static Qfloatp: Lisp_Object;
+    pub static Qceiling: Lisp_Object;
+    pub static Qfloor: Lisp_Object;
     pub static Qstringp: Lisp_Object;
     pub static Qsymbolp: Lisp_Object;
     pub static Qlistp: Lisp_Object;
