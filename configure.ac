@@ -4033,8 +4033,7 @@ AC_CACHE_CHECK([for library containing tputs], [emacs_cv_tputs_lib],
 [if test "${opsys}" = "mingw32"; then
   emacs_cv_tputs_lib='none required'
 else
-  # Maybe curses should be tried earlier?
-  # See https://debbugs.gnu.org/9736#35
+  # curses precedes termcap because of AIX (Bug#9736#35) and OpenIndiana.
   for tputs_library in '' tinfo ncurses terminfo curses termcap; do
     OLIBS=$LIBS
     if test -z "$tputs_library"; then
@@ -4054,7 +4053,7 @@ fi])
 AS_CASE(["$emacs_cv_tputs_lib"],
   [no], [AC_MSG_ERROR([The required function 'tputs' was not found in any library.
 The following libraries were tried (in order):
-  libtinfo, libncurses, libterminfo, libtermcap, libcurses
+  libtinfo, libncurses, libterminfo, libcurses, libtermcap
 Please try installing whichever of these libraries is most appropriate
 for your system, together with its header files.
 For example, a libncurses-dev(el) or similar package.])],
