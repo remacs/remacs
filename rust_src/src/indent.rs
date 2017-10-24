@@ -17,5 +17,5 @@ use remacs_sys;
 /// ellipsis.
 #[lisp_fn]
 pub fn current_column() -> LispObject {
-    return LispObject::from_natnum(unsafe { remacs_sys::current_column() });
+    LispObject::from_natnum(unsafe { remacs_sys::current_column() })
 }
