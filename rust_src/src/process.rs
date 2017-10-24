@@ -73,5 +73,5 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
 
 #[lisp_fn]
 pub fn process_list() -> LispObject {
-    LispObject::from_raw(unsafe { Fmapcar(Qcdr,  Vprocess_alist ) })
+    LispObject::from_raw(unsafe { Fmapcar(Qcdr,  Vprocess_alist) })
 }
