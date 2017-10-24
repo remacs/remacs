@@ -567,6 +567,8 @@ Responds to the window width as ls should but may not!"
       (setq list (cdr list)))
     result))
 
+(defvar w32-collate-ignore-punctuation) ; Declare for non-w32 builds.
+
 (defsubst ls-lisp-string-lessp (s1 s2)
   "Return t if string S1 should sort before string S2.
 Case is significant if `ls-lisp-ignore-case' is nil.
