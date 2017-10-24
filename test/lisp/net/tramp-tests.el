@@ -4333,7 +4333,29 @@ process sentinels.  They shall not disturb each other."
 	(mapconcat 'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
-(ert-deftest tramp-test41-unload ()
+(ert-deftest tramp-test41-delay-load ()
+  "Check that Tramp is loaded lazily, only when needed."
+  ;; Tramp is neither loaded at Emacs startup, nor when completing a
+  ;; non-Tramp file name like "/foo".  Completing a Tramp-alike file
+  ;; name like "/foo:" autoloads Tramp.
+  (let ((code
+	 "(progn \
+	   (message \"Tramp loaded: %s\" (featurep 'tramp)) \
+	   (file-name-all-completions \"/foo\" \"/\") \
+	   (message \"Tramp loaded: %s\" (featurep 'tramp)) \
+	   (file-name-all-completions \"/foo:\" \"/\") \
+	   (message \"Tramp loaded: %s\" (featurep 'tramp)))"))
+    (should
+     (string-match
+      "Tramp loaded: nil[\n\r]+Tramp loaded: nil[\n\r]+Tramp loaded: t[\n\r]+"
+      (shell-command-to-string
+       (format
+	"%s -batch -Q -L %s --eval %s"
+	(expand-file-name invocation-name invocation-directory)
+	(mapconcat 'shell-quote-argument load-path " -L ")
+	(shell-quote-argument code)))))))
+
+(ert-deftest tramp-test42-unload ()
   "Check that Tramp and its subpackages unload completely.
 Since it unloads Tramp, it shall be the last test to run."
   :tags '(:expensive-test)
