@@ -699,6 +699,12 @@ case "${canonical}" in
     esac
   ;;
 
+  ## QNX Neutrino
+  *-nto-qnx* )
+    opsys=qnxnto
+    CFLAGS="$CFLAGS -D__NO_EXT_QNX"
+  ;;
+
   ## Intel 386 machines where we don't care about the manufacturer.
   i[3456]86-*-* )
     case "${canonical}" in
@@ -1507,6 +1513,8 @@ case "$opsys" in
 
   hpux*) LIBS_SYSTEM="-l:libdld.sl" ;;
 
+  qnxnto) LIBS_SYSTEM="-lsocket" ;;
+
   sol2*) LIBS_SYSTEM="-lsocket -lnsl" ;;
 
   ## Motif needs -lgen.
@@ -2210,7 +2218,8 @@ test "$CANNOT_DUMP" = yes ||
 case "$opsys" in
   ## darwin ld insists on the use of malloc routines in the System framework.
   darwin | mingw32 | nacl | sol2-10) ;;
-  cygwin) hybrid_malloc=yes
+  cygwin | qnxto)
+	  hybrid_malloc=yes
           system_malloc= ;;
   *) test "$ac_cv_func_sbrk" = yes && system_malloc=$emacs_cv_sanitize_address;;
 esac
@@ -4603,7 +4612,7 @@ case $opsys in
     AC_DEFINE(PTY_TTY_NAME_SPRINTF, [])
     ;;
 
-  gnu | openbsd )
+  gnu | openbsd | qnxnto )
     AC_DEFINE(FIRST_PTY_LETTER, ['p'])
     ;;
 
@@ -5144,6 +5153,8 @@ elif test "$opsys" = "mingw32"; then
   CYGWIN_OBJ=
   PRE_ALLOC_OBJ=
   POST_ALLOC_OBJ=lastfile.o
+elif test "$opsys" = "qnxnto"; then
+  CYGWIN_OBJ=sheap.o
 else
   CYGWIN_OBJ=
   PRE_ALLOC_OBJ=lastfile.o
