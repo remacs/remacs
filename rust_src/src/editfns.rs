@@ -239,7 +239,7 @@ pub fn char_after(mut pos: LispObject) -> LispObject {
 /// First argument is the string to copy.
 /// Remaining arguments form a sequence of PROPERTY VALUE pairs for text
 /// properties to add to the result.
-/// usage: (propertize STRING &rest PROPERTIES)  */
+/// usage: (propertize STRING &rest PROPERTIES)
 #[lisp_fn(min = "1")]
 pub fn propertize(args: &mut [LispObject]) -> LispObject {
     /* Number of args must be odd. */
