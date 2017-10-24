@@ -428,6 +428,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*fns::Sfeaturep);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
+        defsubr(&*minibuf::Sset_minibuffer_window);
         defsubr(&*threads::Sthread_name);
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);

@@ -1026,7 +1026,7 @@ extern "C" {
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vfeatures: Lisp_Object;
     pub static minibuf_level: EmacsInt;
-    pub static minibuf_window: Lisp_Object;
+    pub static mut minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
     pub static minibuf_selected_window: Lisp_Object;
     pub static selected_frame: Lisp_Object;
