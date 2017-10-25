@@ -1,4 +1,4 @@
-;;; gamegrid.el --- library for implementing grid-based games on Emacs
+;;; gamegrid.el --- library for implementing grid-based games on Emacs  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1997-1998, 2001-2017 Free Software Foundation, Inc.
 
@@ -484,7 +484,7 @@ format."
 	(buffer-read-only nil))
     (erase-buffer)
     (setq gamegrid-buffer-start (point))
-    (dotimes (i height)
+    (dotimes (_ height)
       (insert line))
     ;; Adjust the height of the default face to the height of the
     ;; images. Unlike XEmacs, Emacs doesn't allow making the default
