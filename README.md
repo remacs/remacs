@@ -253,9 +253,9 @@ The `DEFUN` macro, in addition to defining a function `Fnumberp`, also
 creates a static struct `Snumberp` that describes the function for Emacs'
 Lisp interpreter.
 
-In Rust, we define a `numberp` function in Rust that does the actual work,
-then use an attribute (implemented as a procedural macro) named
-`lisp_fn` that handles these definitions for us:
+In Rust, we define a `numberp` function that does the actual work then use
+an attribute (implemented as a procedural macro) named `lisp_fn` that
+handles these definitions for us:
 
 ``` rust
 // This is the function that gets called when

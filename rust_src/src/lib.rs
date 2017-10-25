@@ -67,6 +67,7 @@ mod minibuf;
 mod cmds;
 mod data;
 mod fns;
+mod dispnew;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -172,6 +173,7 @@ pub use editfns::Fgoto_char;
 pub use data::Findirect_function;
 pub use data::indirect_function;
 pub use process::Fget_buffer_process;
+pub use dispnew::Fsleep_for;
 
 // Used in fileio.c
 pub use editfns::Fpoint;
@@ -197,6 +199,9 @@ pub use multibyte::str_as_multibyte;
 pub use multibyte::str_to_multibyte;
 pub use multibyte::str_as_unibyte;
 pub use multibyte::str_to_unibyte;
+
+// Used in bytecode.c, charset.c
+pub use editfns::Fchar_after;
 
 // Used in xdisp.c
 pub use buffers::Foverlay_start;
@@ -419,6 +424,8 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Spoint_max);
         defsubr(&*editfns::Sgoto_char);
         defsubr(&*editfns::Sposition_bytes);
+        defsubr(&*editfns::Sinsert_byte);
+        defsubr(&*editfns::Schar_after);
         defsubr(&*fns::Sfeaturep);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
@@ -426,5 +433,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);
         defsubr(&*frames::Sselected_frame);
+        defsubr(&*dispnew::Ssleep_for);
     }
 }

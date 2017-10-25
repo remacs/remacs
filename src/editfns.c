@@ -1070,38 +1070,6 @@ At the beginning of the buffer or accessible region, return 0.  */)
   return temp;
 }
 
-DEFUN ("char-after", Fchar_after, Schar_after, 0, 1, 0,
-       doc: /* Return character in current buffer at position POS.
-POS is an integer or a marker and defaults to point.
-If POS is out of range, the value is nil.  */)
-  (Lisp_Object pos)
-{
-  register ptrdiff_t pos_byte;
-
-  if (NILP (pos))
-    {
-      pos_byte = PT_BYTE;
-      XSETFASTINT (pos, PT);
-    }
-
-  if (MARKERP (pos))
-    {
-      pos_byte = marker_byte_position (pos);
-      if (pos_byte < BEGV_BYTE || pos_byte >= ZV_BYTE)
-	return Qnil;
-    }
-  else
-    {
-      CHECK_NUMBER_COERCE_MARKER (pos);
-      if (XINT (pos) < BEGV || XINT (pos) >= ZV)
-	return Qnil;
-
-      pos_byte = CHAR_TO_BYTE (XINT (pos));
-    }
-
-  return make_number (FETCH_CHAR (pos_byte));
-}
-
 DEFUN ("char-before", Fchar_before, Schar_before, 0, 1, 0,
        doc: /* Return character in current buffer preceding position POS.
 POS is an integer or a marker and defaults to point.
@@ -2528,28 +2496,6 @@ called interactively, INHERIT is t.  */)
   else
     insert (string, n);
   return Qnil;
-}
-
-DEFUN ("insert-byte", Finsert_byte, Sinsert_byte, 2, 3, 0,
-       doc: /* Insert COUNT (second arg) copies of BYTE (first arg).
-Both arguments are required.
-BYTE is a number of the range 0..255.
-
-If BYTE is 128..255 and the current buffer is multibyte, the
-corresponding eight-bit character is inserted.
-
-Point, and before-insertion markers, are relocated as in the function `insert'.
-The optional third arg INHERIT, if non-nil, says to inherit text properties
-from adjoining text, if those properties are sticky.  */)
-  (Lisp_Object byte, Lisp_Object count, Lisp_Object inherit)
-{
-  CHECK_NUMBER (byte);
-  if (XINT (byte) < 0 || XINT (byte) > 255)
-    args_out_of_range_3 (byte, make_number (0), make_number (255));
-  if (XINT (byte) >= 128
-      && ! NILP (BVAR (current_buffer, enable_multibyte_characters)))
-    XSETFASTINT (byte, BYTE8_TO_CHAR (XINT (byte)));
-  return Finsert_char (byte, count, inherit);
 }
 
 
@@ -5289,14 +5235,12 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Sfollowing_char);
   defsubr (&Sprevious_char);
-  defsubr (&Schar_after);
   defsubr (&Schar_before);
   defsubr (&Sinsert);
   defsubr (&Sinsert_before_markers);
   defsubr (&Sinsert_and_inherit);
   defsubr (&Sinsert_and_inherit_before_markers);
   defsubr (&Sinsert_char);
-  defsubr (&Sinsert_byte);
 
   defsubr (&Suser_login_name);
   defsubr (&Suser_real_login_name);
