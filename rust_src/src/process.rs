@@ -1,8 +1,8 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Lisp_Process, Vprocess_alist};
-use lisp::{LispObject, ExternalPtr};
+use remacs_sys::{Fmapcar, Lisp_Process, Qcdr, Vprocess_alist};
+use lisp::{ExternalPtr, LispObject};
 use lists::{assoc, cdr};
 use buffers::get_buffer;
 
@@ -76,4 +76,10 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
         }
     }
     return LispObject::constant_nil();
+}
+
+/// Return a list of all processes that are Emacs sub-processes.
+#[lisp_fn]
+pub fn process_list() -> LispObject {
+    LispObject::from_raw(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
 }
