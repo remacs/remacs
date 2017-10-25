@@ -49,6 +49,13 @@ fn process_name(process: LispObject) -> LispObject {
     process.as_process_or_error().name()
 }
 
+/// Return the buffer PROCESS is associated with.
+/// The default process filter inserts output from PROCESS into this buffer.
+#[lisp_fn]
+fn process_buffer(process: LispObject) -> LispObject {
+    process.as_process_or_error().buffer()
+}
+
 /// Return the (or a) live process associated with BUFFER.
 /// BUFFER may be a buffer or the name of one.
 /// Return nil if all processes associated with BUFFER have been
