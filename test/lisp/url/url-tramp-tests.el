@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2017 Free Software Foundation, Inc.
 
-;; Author: Michael Albinus <michael.albinus@gmx>
+;; Author: Michael Albinus <michael.albinus@gmx.de>
 
 ;; This file is part of GNU Emacs.
 
