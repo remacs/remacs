@@ -266,7 +266,7 @@ pub fn window_total_width(window: LispObject, round: LispObject) -> LispObject {
 /// WINDOW's frame.  ROUND `floor' means to return the largest integer
 /// smaller than WINDOW's pixel height divided by the character height of
 /// WINDOW's frame.  Any other value of ROUND means to return the internal
-/// total height of WINDOW.  */)
+/// total height of WINDOW.
 #[lisp_fn(min = "0")]
 pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject {
     let win = get_valid_window(window).as_window_or_error();
