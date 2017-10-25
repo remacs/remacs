@@ -192,9 +192,6 @@ pub fn window_combination_limit(window: LispObject) -> LispObject {
 /// siblings.  LIMIT t means that child windows of WINDOW are never
 /// \(re-)combined with WINDOW's siblings.  Other values are reserved for
 /// future use.
-
-/// Return the window which was selected when entering the minibuffer.
-/// Returns nil, if selected window is not a minibuffer window.
 #[lisp_fn]
 pub fn set_window_combination_limit(window: LispObject, limit: LispObject) -> LispObject {
     let mut w = window.as_window_or_error();
@@ -208,6 +205,8 @@ pub fn set_window_combination_limit(window: LispObject, limit: LispObject) -> Li
     limit
 }
 
+/// Return the window which was selected when entering the minibuffer.
+/// Returns nil, if selected window is not a minibuffer window.
 #[lisp_fn]
 pub fn minibuffer_selected_window() -> LispObject {
     let level = unsafe { minibuf_level };
