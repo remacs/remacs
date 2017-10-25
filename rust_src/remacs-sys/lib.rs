@@ -1021,6 +1021,7 @@ extern "C" {
 
     pub static Qraw_text: Lisp_Object;
     pub static Qcoding_system_error: Lisp_Object;
+    pub static Qcdr: Lisp_Object;
 
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;
@@ -1042,6 +1043,7 @@ extern "C" {
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
+    pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
