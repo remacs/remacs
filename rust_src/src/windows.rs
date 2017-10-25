@@ -190,7 +190,7 @@ pub fn window_combination_limit(window: LispObject) -> LispObject {
 /// WINDOW must be a valid window used in horizontal or vertical combination.
 /// If LIMIT is nil, child windows of WINDOW can be recombined with WINDOW's
 /// siblings.  LIMIT t means that child windows of WINDOW are never
-/// \(re-)combined with WINDOW's siblings.  Other values are reserved for
+/// (re-)combined with WINDOW's siblings.  Other values are reserved for
 /// future use.
 #[lisp_fn]
 pub fn set_window_combination_limit(window: LispObject, limit: LispObject) -> LispObject {
