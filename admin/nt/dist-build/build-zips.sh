@@ -55,7 +55,7 @@ function build_zip {
     cd $HOME/emacs-build/install/emacs-$VERSION/$ARCH
     cp $HOME/emacs-build/deps/libXpm/$ARCH/libXpm-noX4.dll bin
     zip -r -9 emacs-$VERSION-$ARCH-no-deps.zip *
-    mv emacs-$VERSION-$ARCH.zip $HOME/emacs-upload
+    mv emacs-$VERSION-$ARCH-no-deps.zip $HOME/emacs-upload
     rm bin/libXpm-noX4.dll
     unzip $HOME/emacs-build/deps/emacs-26-$ARCH-deps.zip
     zip -r -9 emacs-$VERSION-$ARCH.zip *
@@ -132,12 +132,14 @@ then
     git_up
 fi
 
-if (($BUILD_32))
-then
-    build_zip i686 /mingw32/lib/pkgconfig i686-w64-mingw32
-fi
-
 if (($BUILD_64))
 then
     build_zip x86_64 /mingw64/lib/pkgconfig x86_64-w64-mingw32
+fi
+
+## Do the 64 bit build first, because we reset some environment
+## variables during the 32 bit which will break the build.
+if (($BUILD_32))
+then
+    build_zip i686 /mingw32/lib/pkgconfig i686-w64-mingw32
 fi
