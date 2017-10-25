@@ -1,3 +1,5 @@
+//! Indentation functions
+
 use lisp::LispObject;
 use remacs_macros::lisp_fn;
 use remacs_sys;
