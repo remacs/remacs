@@ -220,7 +220,8 @@ pub fn minibuffer_selected_window() -> LispObject {
 }
 
 /// Return the total width of window WINDOW in columns.
-/// WINDOW must be a valid window and defaults to the selected one.
+/// WINDOW is optional and defaults to the selected window. If provided it must
+/// be a valid window.
 ///
 /// The return value includes the widths of WINDOW's fringes, margins,
 /// scroll bars and its right divider, if any.  If WINDOW is an internal
@@ -239,15 +240,16 @@ pub fn minibuffer_selected_window() -> LispObject {
 /// smaller than WINDOW's pixel width divided by the character width of
 /// WINDOW's frame.  Any other value of ROUND means to return the internal
 /// total width of WINDOW.
-#[lisp_fn(min = "1")]
+#[lisp_fn(min = "0")]
 pub fn window_total_width(window: LispObject, round: LispObject) -> LispObject {
-    let w = window.as_window_or_error();
+    let win = get_valid_window(window).as_window_or_error();
 
-    LispObject::from_natnum(w.total_width(round) as EmacsInt)
+    LispObject::from_natnum(win.total_width(round) as EmacsInt)
 }
 
 /// Return the height of window WINDOW in lines.
-/// WINDOW must be a valid window and defaults to the selected one.
+/// WINDOW is optional and defaults to the selected window. If provided it must
+/// be a valid window.
 ///
 /// The return value includes the heights of WINDOW's mode and header line
 /// and its bottom divider, if any.  If WINDOW is an internal window, the
@@ -265,9 +267,17 @@ pub fn window_total_width(window: LispObject, round: LispObject) -> LispObject {
 /// smaller than WINDOW's pixel height divided by the character height of
 /// WINDOW's frame.  Any other value of ROUND means to return the internal
 /// total height of WINDOW.  */)
-#[lisp_fn(min = "1")]
+#[lisp_fn(min = "0")]
 pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject {
-    let w = window.as_window_or_error();
+    let win = get_valid_window(window).as_window_or_error();
 
-    LispObject::from_natnum(w.total_height(round) as EmacsInt)
+    LispObject::from_natnum(win.total_height(round) as EmacsInt)
+}
+
+fn get_valid_window(window: LispObject) -> LispObject {
+    if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    }
 }
