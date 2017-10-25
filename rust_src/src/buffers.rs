@@ -155,7 +155,7 @@ impl LispBufferRef {
 
     #[inline]
     pub fn fetch_char(&self, n: ptrdiff_t) -> c_int {
-        if LispObject::from_raw(self.enable_multibyte_characters).is_not_nil() {
+        if LispObject::from(self.enable_multibyte_characters).is_not_nil() {
             self.fetch_multibyte_char(n)
         } else {
             self.fetch_byte(n) as c_int

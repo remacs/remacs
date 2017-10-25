@@ -92,12 +92,12 @@ impl LispHashTableRef {
 
     pub fn get_hash_hash(self, idx: isize) -> LispObject {
         let index = LispObject::from_natnum(idx as EmacsInt);
-        unsafe { LispObject::from_raw(Faref(self.hash, index.to_raw())) }
+        unsafe { LispObject::from(Faref(self.hash, index.to_raw())) }
     }
 
     pub fn get_hash_key(self, idx: isize) -> LispObject {
         let index = LispObject::from_natnum((2 * idx) as EmacsInt);
-        unsafe { LispObject::from_raw(Faref(self.key_and_value, index.to_raw())) }
+        unsafe { LispObject::from(Faref(self.key_and_value, index.to_raw())) }
     }
 }
 
