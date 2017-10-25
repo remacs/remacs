@@ -111,6 +111,7 @@
 ;;; Code:
 
 ;; Customization:
+(require 'replace)
 
 (defgroup kmacro nil
   "Simplified keyboard macro user interface."
