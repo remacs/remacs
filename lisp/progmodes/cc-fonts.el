@@ -1062,7 +1062,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
     ;; The following `while' fontifies a single declarator id each time round.
     ;; It loops only when LIST is non-nil.
     (while
-	(and pos (setq decl-res (c-forward-declarator limit)))
+	(and pos (setq decl-res (c-forward-declarator)))
       (setq next-pos (point)
 	    id-start (car decl-res)
 	    id-face (if (and (eq (char-after) ?\()
@@ -1091,7 +1091,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 					       (throw 'is-function nil))
 					      ((not (eq got-type 'maybe))
 					       (throw 'is-function t)))
-					     (c-forward-declarator limit t)
+					     (c-forward-declarator nil t)
 					     (eq (char-after) ?,))
 					 (forward-char)
 					 (c-forward-syntactic-ws))
