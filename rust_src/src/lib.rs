@@ -15,7 +15,6 @@ extern crate lazy_static;
 extern crate remacs_sys;
 
 // Needed for linking.
-#[allow(unused_extern_crates)]
 extern crate remacs_lib;
 
 extern crate remacs_macros;
