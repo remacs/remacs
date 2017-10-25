@@ -56,6 +56,7 @@ mod frames;
 mod hashtable;
 mod indent;
 mod interactive;
+mod keymap;
 mod lists;
 mod marker;
 mod math;
