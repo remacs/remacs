@@ -1188,7 +1188,6 @@ extern "C" {
     pub fn timespec_sub(a: timespec, b: timespec) -> timespec;
     pub fn timespec_add(a: timespec, b: timespec) -> timespec;
 
-    // textprop
     pub fn Fadd_text_properties(
         start: Lisp_Object,
         end: Lisp_Object,
