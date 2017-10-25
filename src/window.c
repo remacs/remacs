@@ -301,15 +301,6 @@ wset_buffer (struct window *w, Lisp_Object val)
   adjust_window_count (w, 1);
 }
 
-/* Frames and windows.  */
-DEFUN ("window-frame", Fwindow_frame, Swindow_frame, 0, 1, 0,
-       doc: /* Return the frame that window WINDOW is on.
-WINDOW must be a valid window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->frame;
-}
-
 DEFUN ("frame-root-window", Fframe_root_window, Sframe_root_window, 0, 1, 0,
        doc: /* Return the root window of FRAME-OR-WINDOW.
 If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
@@ -7626,7 +7617,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   Vfast_but_imprecise_scrolling = false;
 
   defsubr (&Sminibuffer_window);
-  defsubr (&Swindow_frame);
   defsubr (&Sframe_root_window);
   defsubr (&Sframe_first_window);
   defsubr (&Sframe_selected_window);
