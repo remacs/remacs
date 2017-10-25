@@ -24,6 +24,13 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let mut rargs = quote::Tokens::new();
     let mut body = quote::Tokens::new();
     let max_args = function.args.len() as i16;
+    let intspec = if let Some(intspec) = lisp_fn_args.intspec {
+        let cbyte_intspec = CByteLiteral(intspec.as_str());
+        quote!{ (#cbyte_intspec).as_ptr() as *const ::libc::c_char }
+    } else {
+        quote!{ ::std::ptr::null() }
+    };
+
     match function.fntype {
         function::LispFnType::Normal(_) => {
             for ident in function.args {
@@ -87,7 +94,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                 min_args: #min_args,
                 max_args: #max_args,
                 symbol_name: (#symbol_name).as_ptr() as *const ::libc::c_char,
-                intspec: ::std::ptr::null(),
+                intspec: #intspec,
                 doc: ::std::ptr::null(),
             };
         }
