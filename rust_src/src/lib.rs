@@ -223,6 +223,7 @@ pub use objects::Fidentity;
 pub use hashtable::Fgethash;
 pub use hashtable::Fremhash;
 pub use hashtable::Fputhash;
+pub use hashtable::Fhash_table_rehash_threshold;
 
 #[cfg(test)]
 pub use functions::make_float;
@@ -260,6 +261,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*process::Sprocess_name);
+        defsubr(&*process::Sprocess_buffer);
         defsubr(&*process::Sget_buffer_process);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
@@ -375,6 +377,12 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*hashtable::Sputhash);
         defsubr(&*hashtable::Smaphash);
         defsubr(&*hashtable::Shash_table_count);
+        defsubr(&*hashtable::Shash_table_rehash_threshold);
+        defsubr(&*hashtable::Shash_table_size);
+        defsubr(&*hashtable::Shash_table_test);
+        defsubr(&*hashtable::Shash_table_weakness);
+        defsubr(&*hashtable::Sclrhash);
+        defsubr(&*hashtable::Sdefine_hash_table_test);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
         defsubr(&*crypto::Ssecure_hash);
@@ -426,6 +434,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sgoto_char);
         defsubr(&*editfns::Sinsert_byte);
         defsubr(&*editfns::Schar_after);
+        defsubr(&*editfns::Spropertize);
         defsubr(&*fns::Sfeaturep);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
@@ -435,5 +444,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*frames::Sselected_frame);
         defsubr(&*dispnew::Ssleep_for);
         defsubr(&*indent::Scurrent_column);
+        defsubr(&*process::Sprocess_list);
     }
 }

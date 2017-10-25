@@ -1,8 +1,8 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Lisp_Process, Vprocess_alist};
-use lisp::{LispObject, ExternalPtr};
+use remacs_sys::{Fmapcar, Lisp_Process, Qcdr, Vprocess_alist};
+use lisp::{ExternalPtr, LispObject};
 use lists::{assoc, cdr};
 use buffers::get_buffer;
 
@@ -49,6 +49,13 @@ fn process_name(process: LispObject) -> LispObject {
     process.as_process_or_error().name()
 }
 
+/// Return the buffer PROCESS is associated with.
+/// The default process filter inserts output from PROCESS into this buffer.
+#[lisp_fn]
+fn process_buffer(process: LispObject) -> LispObject {
+    process.as_process_or_error().buffer()
+}
+
 /// Return the (or a) live process associated with BUFFER.
 /// BUFFER may be a buffer or the name of one.
 /// Return nil if all processes associated with BUFFER have been
@@ -69,4 +76,10 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
         }
     }
     return LispObject::constant_nil();
+}
+
+/// Return a list of all processes that are Emacs sub-processes.
+#[lisp_fn]
+pub fn process_list() -> LispObject {
+    LispObject::from_raw(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
 }

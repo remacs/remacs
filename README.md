@@ -253,9 +253,9 @@ The `DEFUN` macro, in addition to defining a function `Fnumberp`, also
 creates a static struct `Snumberp` that describes the function for Emacs'
 Lisp interpreter.
 
-In Rust, we define a `numberp` function in Rust that does the actual work,
-then use an attribute (implemented as a procedural macro) named
-`lisp_fn` that handles these definitions for us:
+In Rust, we define a `numberp` function that does the actual work then use
+an attribute (implemented as a procedural macro) named `lisp_fn` that
+handles these definitions for us:
 
 ``` rust
 // This is the function that gets called when
@@ -271,6 +271,11 @@ fn numberp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_number())
 }
 ```
+
+Due to an issue with procedural macros (#263) `lisp_fn` will make all warnings
+and errors appear to be on its line instead of on the real line of Rust code.
+The easy work around is to comment out `lisp_fn` until the compile succeeds
+then enable it to do a final build and begin testing.
 
 The elisp name of the function is derived from the Rust name, with
 underscores replaced by hyphens.  If that is not possible (like for
