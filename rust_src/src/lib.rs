@@ -222,6 +222,7 @@ pub use objects::Fidentity;
 pub use hashtable::Fgethash;
 pub use hashtable::Fremhash;
 pub use hashtable::Fputhash;
+pub use hashtable::Fhash_table_rehash_threshold;
 
 #[cfg(test)]
 pub use functions::make_float;
@@ -375,6 +376,12 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*hashtable::Sputhash);
         defsubr(&*hashtable::Smaphash);
         defsubr(&*hashtable::Shash_table_count);
+        defsubr(&*hashtable::Shash_table_rehash_threshold);
+        defsubr(&*hashtable::Shash_table_size);
+        defsubr(&*hashtable::Shash_table_test);
+        defsubr(&*hashtable::Shash_table_weakness);
+        defsubr(&*hashtable::Sclrhash);
+        defsubr(&*hashtable::Sdefine_hash_table_test);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
         defsubr(&*crypto::Ssecure_hash);
