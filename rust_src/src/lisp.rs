@@ -32,7 +32,8 @@ use remacs_sys::{EmacsInt, EmacsUint, EmacsDouble, VALMASK, VALBITS, INTTYPEBITS
                  Qnumberp, Qfloatp, Qstringp, Qsymbolp, Qnumber_or_marker_p, Qinteger_or_marker_p,
                  Qwholenump, Qvectorp, Qcharacterp, Qlistp, Qplistp, Qintegerp, Qhash_table_p,
                  Qchar_table_p, Qconsp, Qbufferp, Qmarkerp, Qoverlayp, Qwindowp, Qwindow_live_p,
-                 Qframep, Qprocessp, Qthreadp, SYMBOL_NAME, PseudovecType, EqualKind};
+                 Qwindow_valid_p, Qframep, Qprocessp, Qthreadp, SYMBOL_NAME, PseudovecType,
+                 EqualKind};
 
 #[cfg(test)]
 use functions::ExternCMocks;
@@ -564,6 +565,12 @@ impl LispObject {
         } else {
             wrong_type!(Qwindow_live_p, self);
         }
+    }
+
+    pub fn as_valid_window_or_error(self) -> LispWindowRef {
+        self.as_window()
+            .and_then(|w| if w.is_valid() { Some(w) } else { None })
+            .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
     }
 
     pub fn is_frame(self) -> bool {
