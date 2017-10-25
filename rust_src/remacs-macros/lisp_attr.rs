@@ -51,8 +51,8 @@ fn parse_kv(kv_list: Vec<(syn::Ident, syn::StrLit)>, function: &Function) -> Lis
     LispFnArgs {
         name: name.unwrap_or_else(|| function.name.to_string().replace("_", "-")),
         c_name: c_name.unwrap_or_else(|| function.name.to_string()),
-        min: min,
-        intspec: intspec,
+        min,
+        intspec,
     }
 }
 
