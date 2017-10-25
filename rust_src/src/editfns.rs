@@ -1,6 +1,5 @@
 //! Lisp functions pertaining to editing.
 
-use libc::ptrdiff_t;
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
 use util::clip_to_bounds;
