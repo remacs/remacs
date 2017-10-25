@@ -1551,13 +1551,6 @@ Return nil if format of ADDRESS is invalid.  */)
   return Qnil;
 }
 
-DEFUN ("process-list", Fprocess_list, Sprocess_list, 0, 0, 0,
-       doc: /* Return a list of all processes that are Emacs sub-processes.  */)
-  (void)
-{
-  return Fmapcar (Qcdr, Vprocess_alist);
-}
-
 /* Starting asynchronous inferior processes.  */
 
 DEFUN ("make-process", Fmake_process, Smake_process, 0, MANY, 0,
@@ -7913,7 +7906,6 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_contact);
   defsubr (&Sprocess_plist);
   defsubr (&Sset_process_plist);
-  defsubr (&Sprocess_list);
   defsubr (&Smake_process);
   defsubr (&Smake_pipe_process);
   defsubr (&Sserial_process_configure);
