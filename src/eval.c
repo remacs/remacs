@@ -1986,12 +1986,10 @@ it defines a macro.  */)
   if (!CONSP (fundef) || !EQ (Qautoload, XCAR (fundef)))
     return fundef;
 
-  if (EQ (macro_only, Qmacro))
-    {
-      Lisp_Object kind = Fnth (make_number (4), fundef);
-      if (! (EQ (kind, Qt) || EQ (kind, Qmacro)))
-	return fundef;
-    }
+  Lisp_Object kind = Fnth (make_number (4), fundef);
+  if (EQ (macro_only, Qmacro)
+      && !(EQ (kind, Qt) || EQ (kind, Qmacro)))
+    return fundef;
 
   /* This is to make sure that loadup.el gives a clear picture
      of what files are preloaded and when.  */
@@ -2014,15 +2012,18 @@ it defines a macro.  */)
      The value saved here is to be restored into Vautoload_queue.  */
   record_unwind_protect (un_autoload, Vautoload_queue);
   Vautoload_queue = Qt;
-  /* If `macro_only', assume this autoload to be a "best-effort",
+  /* If `macro_only' is set and fundef isn't a macro, assume this autoload to
+     be a "best-effort" (e.g. to try and find a compiler macro),
      so don't signal an error if autoloading fails.  */
-  Fload (Fcar (Fcdr (fundef)), macro_only, Qt, Qnil, Qt);
+  Lisp_Object ignore_errors
+    = (EQ (kind, Qt) || EQ (kind, Qmacro)) ? Qnil : macro_only;
+  Fload (Fcar (Fcdr (fundef)), ignore_errors, Qt, Qnil, Qt);
 
   /* Once loading finishes, don't undo it.  */
   Vautoload_queue = Qt;
   unbind_to (count, Qnil);
 
-  if (NILP (funname))
+  if (NILP (funname) || !NILP (ignore_errors))
     return Qnil;
   else
     {
