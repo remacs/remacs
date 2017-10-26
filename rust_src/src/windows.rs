@@ -48,6 +48,7 @@ impl LispWindowRef {
     }
 }
 
+#[allow(dead_code)]  // FIXME: Remove as soon as it is used
 fn window_or_selected(window: LispObject) -> LispWindowRef {
     if window.is_nil() {
         selected_window()
