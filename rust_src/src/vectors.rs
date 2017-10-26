@@ -206,7 +206,7 @@ pub fn elt(sequence: LispObject, n: LispObject) -> LispObject {
     if sequence.is_cons() || sequence.is_nil() {
         car(nthcdr(n, sequence))
     } else if sequence.is_array() {
-        LispObject::from_raw(unsafe { Faref(sequence.to_raw(), n.to_raw()) })
+        LispObject::from(unsafe { Faref(sequence.to_raw(), n.to_raw()) })
     } else {
         wrong_type!(Qsequencep, sequence);
     }

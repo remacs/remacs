@@ -80,8 +80,8 @@ pub fn eolp() -> LispObject {
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> LispObject {
     let current_buf = ThreadState::current_buffer();
-    if LispObject::from_raw(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil() &&
-        LispObject::from_raw(unsafe { globals.f_Vmark_even_if_inactive }).is_nil() &&
+    if LispObject::from(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil() &&
+        LispObject::from(unsafe { globals.f_Vmark_even_if_inactive }).is_nil() &&
         current_buf.mark_active().is_nil()
     {
         xsignal!(Qmark_inactive);
@@ -179,11 +179,11 @@ pub fn insert_byte(mut byte: LispObject, count: LispObject, inherit: LispObject)
         )
     }
     let buf = ThreadState::current_buffer();
-    if b >= 128 && LispObject::from_raw(buf.enable_multibyte_characters).is_not_nil() {
+    if b >= 128 && LispObject::from(buf.enable_multibyte_characters).is_not_nil() {
         byte = LispObject::from_natnum(raw_byte_codepoint(b as c_uchar) as EmacsInt);
     }
     unsafe {
-        LispObject::from_raw(Finsert_char(
+        LispObject::from(Finsert_char(
             byte.to_raw(),
             count.to_raw(),
             inherit.to_raw(),

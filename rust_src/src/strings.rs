@@ -32,10 +32,10 @@ fn string_bytes(string: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
     if s1.is_symbol() {
-        s1 = LispObject::from_raw(unsafe { SYMBOL_NAME(s1.to_raw()) });
+        s1 = LispObject::from(unsafe { SYMBOL_NAME(s1.to_raw()) });
     }
     if s2.is_symbol() {
-        s2 = LispObject::from_raw(unsafe { SYMBOL_NAME(s2.to_raw()) });
+        s2 = LispObject::from(unsafe { SYMBOL_NAME(s2.to_raw()) });
     }
     let mut s1 = s1.as_string_or_error();
     let mut s2 = s2.as_string_or_error();
@@ -76,7 +76,7 @@ fn string_as_multibyte(string: LispObject) -> LispObject {
     multibyte::parse_str_as_multibyte(s.data_ptr(), s.len_bytes(), &mut nchars, &mut nbytes);
     let new_string =
         unsafe { make_uninit_multibyte_string(nchars as EmacsInt, nbytes as EmacsInt) };
-    let new_string = LispObject::from_raw(new_string);
+    let new_string = LispObject::from(new_string);
     let mut new_s = new_string.as_string().unwrap();
     unsafe {
         ptr::copy_nonoverlapping(s.data_ptr(), new_s.data_ptr(), s.len_bytes() as usize);
@@ -100,7 +100,7 @@ fn string_as_multibyte(string: LispObject) -> LispObject {
 #[lisp_fn]
 fn string_to_multibyte(string: LispObject) -> LispObject {
     let _ = string.as_string_or_error();
-    unsafe { LispObject::from_raw(c_string_to_multibyte(string.to_raw())) }
+    unsafe { LispObject::from(c_string_to_multibyte(string.to_raw())) }
 }
 
 /// Return a unibyte string with the same individual chars as STRING.
@@ -123,7 +123,7 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
         }
 
         let raw_ptr = unsafe { make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size) };
-        LispObject::from_raw(raw_ptr)
+        LispObject::from(raw_ptr)
     } else {
         string
     }

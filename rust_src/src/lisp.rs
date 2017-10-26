@@ -7,6 +7,7 @@
 use std::cmp::max;
 use std::mem;
 use std::slice;
+use std::convert::From;
 use std::ops::{Deref, DerefMut};
 use std::fmt::{Debug, Formatter, Error};
 use libc::{c_char, c_void, intptr_t, ptrdiff_t, uintptr_t};
@@ -63,12 +64,12 @@ pub struct LispObject(Lisp_Object);
 impl LispObject {
     #[inline]
     pub fn constant_t() -> LispObject {
-        LispObject::from_raw(unsafe { Qt })
+        LispObject::from(unsafe { Qt })
     }
 
     #[inline]
     pub fn constant_nil() -> LispObject {
-        LispObject::from_raw(Qnil)
+        LispObject::from(Qnil)
     }
 
     #[inline]
@@ -82,17 +83,19 @@ impl LispObject {
 
     #[inline]
     pub fn from_float(v: EmacsDouble) -> LispObject {
-        LispObject::from_raw(unsafe { make_float(v) })
-    }
-
-    #[inline]
-    pub fn from_raw(i: EmacsInt) -> LispObject {
-        LispObject(i)
+        LispObject::from(unsafe { make_float(v) })
     }
 
     #[inline]
     pub fn to_raw(self) -> EmacsInt {
         self.0
+    }
+}
+
+impl From<EmacsInt> for LispObject {
+    #[inline]
+    fn from(i: EmacsInt) -> Self {
+        LispObject(i)
     }
 }
 
@@ -119,7 +122,7 @@ impl LispObject {
             ((tag << VALBITS) + ptr) as EmacsInt
         };
 
-        LispObject::from_raw(res)
+        LispObject::from(res)
     }
 
     #[inline]
@@ -289,7 +292,7 @@ impl LispObject {
         } else {
             (n & INTMASK) as EmacsUint + ((Lisp_Type::Lisp_Int0 as EmacsUint) << VALBITS)
         };
-        LispObject::from_raw(o as EmacsInt)
+        LispObject::from(o as EmacsInt)
     }
 
     /// Convert a positive integer into its LispObject representation.
@@ -729,7 +732,7 @@ impl Iterator for TailsIter {
 impl LispObject {
     #[inline]
     pub fn cons(car: LispObject, cdr: LispObject) -> Self {
-        unsafe { LispObject::from_raw(Fcons(car.to_raw(), cdr.to_raw())) }
+        unsafe { LispObject::from(Fcons(car.to_raw(), cdr.to_raw())) }
     }
 
     #[inline]
@@ -791,12 +794,12 @@ impl LispCons {
 
     /// Return the car (first cell).
     pub fn car(self) -> LispObject {
-        LispObject::from_raw(unsafe { (*self._extract()).car })
+        LispObject::from(unsafe { (*self._extract()).car })
     }
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        LispObject::from_raw(unsafe { (*self._extract()).cdr })
+        LispObject::from(unsafe { (*self._extract()).cdr })
     }
 
     /// Set the car of the cons cell.
@@ -1091,7 +1094,7 @@ impl Debug for LispObject {
         }
         match ty {
             Lisp_Type::Lisp_Symbol => {
-                let name = LispObject::from_raw(unsafe { SYMBOL_NAME(self.to_raw()) });
+                let name = LispObject::from(unsafe { SYMBOL_NAME(self.to_raw()) });
                 write!(f, "'{}", display_string(name))?;
             }
             Lisp_Type::Lisp_Cons => {

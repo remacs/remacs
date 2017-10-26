@@ -72,7 +72,7 @@ pub fn marker_buffer(marker: LispObject) -> LispObject {
     let buf = marker.as_marker_or_error().buffer();
     match buf {
         Some(b) => unsafe {
-            LispObject::from_raw(make_lisp_ptr(
+            LispObject::from(make_lisp_ptr(
                 b.as_ptr() as *mut c_void,
                 Lisp_Type::Lisp_Vectorlike,
             ))
