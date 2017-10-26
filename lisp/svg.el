@@ -161,9 +161,15 @@ otherwise.  IMAGE-TYPE should be a MIME image type, like
 
 (defun svg--encode-text (text)
   ;; Apparently the SVG renderer needs to have all non-ASCII
-  ;; characters encoded.
+  ;; characters encoded, and only certain special characters.
   (with-temp-buffer
-    (insert (xml-escape-string text))
+    (insert text)
+    (dolist (substitution '(("&" . "&amp;")
+			    ("<" . "&lt;")
+			    (">" . "&gt;")))
+      (goto-char (point-min))
+      (while (search-forward (car substitution) nil t)
+	(replace-match (cdr substitution) t t nil)))
     (goto-char (point-min))
     (while (not (eobp))
       (let ((char (following-char)))
