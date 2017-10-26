@@ -1,9 +1,9 @@
 //! Functions operating on windows.
 
-use lisp::{LispObject, ExternalPtr};
+use lisp::{ExternalPtr, LispObject};
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Window, selected_window as current_window,
-                 minibuf_selected_window as current_minibuf_window, minibuf_level};
+use remacs_sys::{minibuf_level, minibuf_selected_window as current_minibuf_window,
+                 selected_window as current_window, EmacsInt, Lisp_Window};
 use marker::marker_position;
 use editfns::point;
 use libc::c_int;
@@ -112,10 +112,11 @@ pub fn window_buffer(window: LispObject) -> LispObject {
 /// window.  Windows that have been deleted are not valid.
 #[lisp_fn]
 pub fn window_valid_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.as_window().map_or(
-        false,
-        |win| win.contents().is_not_nil(),
-    ))
+    LispObject::from_bool(
+        object
+            .as_window()
+            .map_or(false, |win| win.contents().is_not_nil()),
+    )
 }
 
 /// Return position at which display currently starts in WINDOW.
@@ -176,8 +177,8 @@ pub fn window_margins(window: LispObject) -> LispObject {
 pub fn minibuffer_selected_window() -> LispObject {
     let level = unsafe { minibuf_level };
     let current_minibuf = unsafe { LispObject::from(current_minibuf_window) };
-    if level > 0 && selected_window().as_window_or_error().is_minibuffer() &&
-        current_minibuf.as_window().unwrap().is_live()
+    if level > 0 && selected_window().as_window_or_error().is_minibuffer()
+        && current_minibuf.as_window().unwrap().is_live()
     {
         current_minibuf
     } else {

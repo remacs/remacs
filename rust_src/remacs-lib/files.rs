@@ -4,10 +4,10 @@ use errno;
 use std::ffi::{CStr, CString};
 use std::io;
 
-use libc::{self, c_int, c_char, EEXIST, EINVAL};
+use libc::{self, c_char, c_int, EEXIST, EINVAL};
 
 #[cfg(unix)]
-use libc::{O_CLOEXEC, O_EXCL, O_RDWR, O_CREAT, open};
+use libc::{open, O_CLOEXEC, O_CREAT, O_EXCL, O_RDWR};
 
 #[cfg(windows)]
 extern "C" {

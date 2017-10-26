@@ -3,9 +3,8 @@
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
 use util::clip_to_bounds;
-use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, Fcons, Fcopy_sequence,
-                 Fadd_text_properties, Finsert_char, EmacsInt, Qinteger_or_marker_p,
-                 Qmark_inactive, Qnil};
+use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Fadd_text_properties,
+                 Fcons, Fcopy_sequence, Finsert_char, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 use threads::ThreadState;
 use buffers::get_buffer;
 use marker::{marker_position, set_point_from_marker};
@@ -80,9 +79,9 @@ pub fn eolp() -> LispObject {
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> LispObject {
     let current_buf = ThreadState::current_buffer();
-    if LispObject::from(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil() &&
-        LispObject::from(unsafe { globals.f_Vmark_even_if_inactive }).is_nil() &&
-        current_buf.mark_active().is_nil()
+    if LispObject::from(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil()
+        && LispObject::from(unsafe { globals.f_Vmark_even_if_inactive }).is_nil()
+        && current_buf.mark_active().is_nil()
     {
         xsignal!(Qmark_inactive);
     }
@@ -97,8 +96,8 @@ fn region_limit(beginningp: bool) -> LispObject {
     if ((current_buf.pt as EmacsInt) < num) == beginningp {
         LispObject::from_fixnum(current_buf.pt as EmacsInt)
     } else {
-        LispObject::from_fixnum(clip_to_bounds(current_buf.begv, num, current_buf.zv) as
-            EmacsInt)
+        LispObject::from_fixnum(clip_to_bounds(current_buf.begv, num, current_buf.zv)
+            as EmacsInt)
     }
 }
 
@@ -155,6 +154,21 @@ pub fn goto_char(position: LispObject) -> LispObject {
         wrong_type!(Qinteger_or_marker_p, position)
     };
     position
+}
+
+/// Return the byte position for character position POSITION.
+/// If POSITION is out of range, the value is nil.
+#[lisp_fn]
+pub fn position_bytes(position: LispObject) -> LispObject {
+    let pos = position.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
+    let cur_buf = ThreadState::current_buffer();
+
+    if pos >= cur_buf.begv && pos <= cur_buf.zv {
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
+        LispObject::from_natnum(bytepos as EmacsInt)
+    } else {
+        LispObject::constant_nil()
+    }
 }
 
 /// TODO: Write better docstring

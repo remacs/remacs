@@ -1,8 +1,8 @@
 use libc;
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
-use remacs_sys::{Lisp_Object, check_obarray, check_vobarray, Fpurecopy, globals, intern_driver,
-                 make_unibyte_string, oblookup};
+use remacs_sys::{check_obarray, check_vobarray, globals, intern_driver, make_unibyte_string,
+                 oblookup, Fpurecopy, Lisp_Object};
 
 /// A lisp object containing an `obarray`.
 pub struct LispObarrayRef(LispObject);

@@ -1,7 +1,7 @@
 extern crate libc;
 
 use std::env;
-use std::io::{Write, BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::fs::File;
 use std::path::PathBuf;
 use std::mem::size_of;
@@ -91,7 +91,6 @@ fn generate_definitions() {
         "pub const USE_LSB_TAG: bool = {};\n",
         if use_lsb_tag { "true" } else { "false" }
     ).expect("Write error!");
-
 }
 
 fn generate_globals() {

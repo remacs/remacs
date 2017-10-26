@@ -1,13 +1,15 @@
 use remacs_macros::lisp_fn;
 use std::mem;
-use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{make_lisp_symbol, Lisp_Symbol, Symbol_Interned, Symbol_Redirect,
-                 Qsetting_constant, Qcyclic_variable_indirection};
+use lisp::{ExternalPtr, LispObject};
+use remacs_sys::{make_lisp_symbol, Fset, Lisp_Symbol, Qcyclic_variable_indirection,
+                 Qsetting_constant, Qunbound, Symbol_Interned, Symbol_Redirect,
+                 Symbol_Trapped_Write};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
-const FLAG_INTERNED: u32 = 0b11 << 6; // 7 and 8 bits
 const FLAG_REDIRECT: u32 = 0b1110; // bits 2, 3 and 4
+const FLAG_TRAPPED_WRITE: u32 = 0b11 << 4; // bits 5 and 6
+const FLAG_INTERNED: u32 = 0b11 << 6; // 7 and 8 bits
 
 impl LispSymbolRef {
     pub fn symbol_name(&self) -> LispObject {
@@ -31,12 +33,16 @@ impl LispSymbolRef {
     }
 
     pub fn is_interned_in_initial_obarray(&self) -> bool {
-        self.symbol_bitfield & FLAG_INTERNED ==
-            (Symbol_Interned::InternedInInitialObarray as u32) << 6
+        self.symbol_bitfield & FLAG_INTERNED
+            == (Symbol_Interned::InternedInInitialObarray as u32) << 6
     }
 
     pub fn is_alias(&self) -> bool {
         self.symbol_bitfield & FLAG_REDIRECT == (Symbol_Redirect::VarAlias as u32) << 1
+    }
+
+    pub fn is_constant(&self) -> bool {
+        self.symbol_bitfield & FLAG_TRAPPED_WRITE == (Symbol_Trapped_Write::NoWrite as u32) << 4
     }
 
     pub fn get_alias(&self) -> LispSymbolRef {
@@ -146,9 +152,7 @@ fn fmakunbound(symbol: LispObject) -> LispObject {
 fn keywordp(object: LispObject) -> LispObject {
     if let Some(sym) = object.as_symbol() {
         let name = sym.symbol_name().as_string_or_error();
-        LispObject::from_bool(
-            name.byte_at(0) == b':' && sym.is_interned_in_initial_obarray(),
-        )
+        LispObject::from_bool(name.byte_at(0) == b':' && sym.is_interned_in_initial_obarray())
     } else {
         LispObject::constant_nil()
     }
@@ -169,4 +173,18 @@ fn indirect_variable_lisp(object: LispObject) -> LispObject {
     } else {
         object
     }
+}
+
+/// Make SYMBOL's value be void.
+/// Return SYMBOL.
+#[lisp_fn]
+fn makunbound(symbol: LispObject) -> LispObject {
+    let sym = symbol.as_symbol_or_error();
+    if sym.is_constant() {
+        xsignal!(Qsetting_constant, symbol);
+    }
+    unsafe {
+        Fset(symbol.to_raw(), Qunbound);
+    }
+    symbol
 }

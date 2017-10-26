@@ -2,25 +2,25 @@
 
 use md5;
 use sha1;
-use sha2::{Sha224, Digest, Sha256, Sha384, Sha512};
+use sha2::{Digest, Sha224, Sha256, Sha384, Sha512};
 use std;
 use std::slice;
 use libc::ptrdiff_t;
 
-use buffers::{LispBufferRef, get_buffer, buffer_file_name};
+use buffers::{buffer_file_name, get_buffer, LispBufferRef};
 use libc;
-use lisp::{LispObject, LispNumber};
+use lisp::{LispNumber, LispObject};
 use multibyte::LispStringRef;
-use remacs_sys::{nsberror, Fcurrent_buffer, EmacsInt, make_uninit_string, make_specified_string};
-use remacs_sys::{preferred_coding_system, Fcoding_system_p, code_convert_string,
-                 validate_subarray, string_char_to_byte, extract_data_from_object};
-use remacs_sys::{current_thread, record_unwind_current_buffer, set_buffer_internal,
-                 make_buffer_string};
+use remacs_sys::{make_specified_string, make_uninit_string, nsberror, EmacsInt, Fcurrent_buffer};
+use remacs_sys::{code_convert_string, extract_data_from_object, preferred_coding_system,
+                 string_char_to_byte, validate_subarray, Fcoding_system_p};
+use remacs_sys::{current_thread, make_buffer_string, record_unwind_current_buffer,
+                 set_buffer_internal};
 use remacs_sys::{globals, Ffind_operation_coding_system, Flocal_variable_p};
-use remacs_sys::{Qmd5, Qsha1, Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qraw_text,
-                 Qcoding_system_error, Qwrite_region, Qbuffer_file_coding_system};
+use remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qraw_text, Qsha1,
+                 Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qwrite_region};
 use remacs_macros::lisp_fn;
-use symbols::{symbol_name, fboundp};
+use symbols::{fboundp, symbol_name};
 use threads::ThreadState;
 
 #[derive(Clone, Copy)]
@@ -104,13 +104,12 @@ fn get_coding_system_for_buffer(
     if LispObject::from(unsafe { globals.f_Vcoding_system_for_write }).is_not_nil() {
         return LispObject::from(unsafe { globals.f_Vcoding_system_for_write });
     }
-    if LispObject::from(buffer.buffer_file_coding_system).is_nil() ||
-        LispObject::from(unsafe {
-            Flocal_variable_p(
-                Qbuffer_file_coding_system,
-                LispObject::constant_nil().to_raw(),
-            )
-        }).is_nil()
+    if LispObject::from(buffer.buffer_file_coding_system).is_nil() || LispObject::from(unsafe {
+        Flocal_variable_p(
+            Qbuffer_file_coding_system,
+            LispObject::constant_nil().to_raw(),
+        )
+    }).is_nil()
     {
         if LispObject::from(buffer.enable_multibyte_characters).is_nil() {
             return LispObject::from(unsafe { Qraw_text });
@@ -518,9 +517,10 @@ fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
 
     let formatted = ctx.digest().to_string();
     let digest = LispObject::from(unsafe { make_uninit_string(formatted.len() as EmacsInt) });
-    digest.as_string().unwrap().as_mut_slice().copy_from_slice(
-        formatted
-            .as_bytes(),
-    );
+    digest
+        .as_string()
+        .unwrap()
+        .as_mut_slice()
+        .copy_from_slice(formatted.as_bytes());
     digest
 }

@@ -1,14 +1,14 @@
 //! Functions operating on buffers.
 
-use libc::{c_void, c_uchar, ptrdiff_t, c_int};
+use libc::{c_int, c_uchar, c_void, ptrdiff_t};
 
-use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
-                 make_lisp_ptr, set_buffer_internal, nsberror};
+use lisp::{ExternalPtr, LispObject};
+use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal, EmacsInt, Lisp_Buffer, Lisp_Object,
+                 Lisp_Overlay, Lisp_Type, Vbuffer_alist};
 use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
-use marker::{marker_position, marker_buffer};
+use marker::{marker_buffer, marker_position};
 use multibyte::string_char;
 
 use std::{mem, ptr};
@@ -60,20 +60,18 @@ impl LispBufferRef {
     #[inline]
     pub fn gap_end_addr(&self) -> *mut c_uchar {
         unsafe {
-            (*self.text).beg.offset(
-                (*self.text).gpt_byte + (*self.text).gap_size -
-                    BEG_BYTE,
-            )
+            (*self.text)
+                .beg
+                .offset((*self.text).gpt_byte + (*self.text).gap_size - BEG_BYTE)
         }
     }
 
     #[inline]
     pub fn z_addr(&self) -> *mut c_uchar {
         unsafe {
-            (*self.text).beg.offset(
-                (*self.text).gap_size + (*self.text).z_byte -
-                    BEG_BYTE,
-            )
+            (*self.text)
+                .beg
+                .offset((*self.text).gap_size + (*self.text).z_byte - BEG_BYTE)
         }
     }
 
@@ -204,9 +202,8 @@ pub fn buffer_live_p(object: LispObject) -> LispObject {
 /// Like Fassoc, but use `Fstring_equal` to compare
 /// (which ignores text properties), and don't ever quit.
 fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
-    let result = list.iter_tails_safe().find(|&item| {
-        string_equal(car(item.car()), key).is_not_nil()
-    });
+    let result = list.iter_tails_safe()
+        .find(|&item| string_equal(car(item.car()), key).is_not_nil());
     if let Some(elt) = result {
         elt.car()
     } else {
