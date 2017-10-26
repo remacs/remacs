@@ -156,6 +156,21 @@ pub fn goto_char(position: LispObject) -> LispObject {
     position
 }
 
+/// Return the byte position for character position POSITION.
+/// If POSITION is out of range, the value is nil.
+#[lisp_fn]
+pub fn position_bytes(position: LispObject) -> LispObject {
+    let pos = position.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
+    let cur_buf = ThreadState::current_buffer();
+
+    if pos >= cur_buf.begv && pos <= cur_buf.zv {
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
+        LispObject::from_natnum(bytepos as EmacsInt)
+    } else {
+        LispObject::constant_nil()
+    }
+}
+
 /// TODO: Write better docstring
 /// Insert COUNT (second arg) copies of BYTE (first arg).
 /// Both arguments are required.
