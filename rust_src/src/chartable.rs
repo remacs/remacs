@@ -10,7 +10,7 @@ pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
 #[lisp_fn]
 fn char_table_subtype(chartable: LispObject) -> LispObject {
     let table = chartable.as_char_table_or_error();
-    LispObject::from_raw(table.purpose)
+    LispObject::from(table.purpose)
 }
 
 /// Return the parent char-table of CHARTABLE.
@@ -21,7 +21,7 @@ fn char_table_subtype(chartable: LispObject) -> LispObject {
 #[lisp_fn]
 fn char_table_parent(chartable: LispObject) -> LispObject {
     let table = chartable.as_char_table_or_error();
-    LispObject::from_raw(table.parent)
+    LispObject::from(table.parent)
 }
 
 /// Set the parent char-table of CHARTABLE to PARENT.

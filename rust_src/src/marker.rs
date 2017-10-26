@@ -2,7 +2,7 @@ use libc::{c_void, ptrdiff_t};
 use std::mem;
 
 use remacs_sys::make_lisp_ptr;
-use lisp::{LispObject, ExternalPtr};
+use lisp::{ExternalPtr, LispObject};
 use remacs_sys::{buf_charpos_to_bytepos, set_point_both, EmacsInt, Lisp_Marker, Lisp_Type};
 use remacs_macros::lisp_fn;
 use util::clip_to_bounds;
@@ -45,7 +45,6 @@ impl LispMarkerRef {
         } else {
             Some(unsafe { mem::transmute(buf) })
         }
-
     }
 }
 
@@ -72,7 +71,7 @@ pub fn marker_buffer(marker: LispObject) -> LispObject {
     let buf = marker.as_marker_or_error().buffer();
     match buf {
         Some(b) => unsafe {
-            LispObject::from_raw(make_lisp_ptr(
+            LispObject::from(make_lisp_ptr(
                 b.as_ptr() as *mut c_void,
                 Lisp_Type::Lisp_Vectorlike,
             ))

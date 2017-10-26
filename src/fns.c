@@ -43,6 +43,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
+void hash_clear (struct Lisp_Hash_Table *h);
 
 /* Random data-structure functions.  */
 
@@ -2847,7 +2848,7 @@ hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
 
 /* Clear hash table H.  */
 
-static void
+void
 hash_clear (struct Lisp_Hash_Table *h)
 {
   if (h->count > 0)
@@ -3373,73 +3374,6 @@ DEFUN ("hash-table-rehash-size", Fhash_table_rehash_size,
     return make_float (rehash_size + 1);
 }
 
-
-DEFUN ("hash-table-rehash-threshold", Fhash_table_rehash_threshold,
-       Shash_table_rehash_threshold, 1, 1, 0,
-       doc: /* Return the current rehash threshold of TABLE.  */)
-  (Lisp_Object table)
-{
-  return make_float (check_hash_table (table)->rehash_threshold);
-}
-
-
-DEFUN ("hash-table-size", Fhash_table_size, Shash_table_size, 1, 1, 0,
-       doc: /* Return the size of TABLE.
-The size can be used as an argument to `make-hash-table' to create
-a hash table than can hold as many elements as TABLE holds
-without need for resizing.  */)
-  (Lisp_Object table)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  return make_number (HASH_TABLE_SIZE (h));
-}
-
-
-DEFUN ("hash-table-test", Fhash_table_test, Shash_table_test, 1, 1, 0,
-       doc: /* Return the test TABLE uses.  */)
-  (Lisp_Object table)
-{
-  return check_hash_table (table)->test.name;
-}
-
-
-DEFUN ("hash-table-weakness", Fhash_table_weakness, Shash_table_weakness,
-       1, 1, 0,
-       doc: /* Return the weakness of TABLE.  */)
-  (Lisp_Object table)
-{
-  return check_hash_table (table)->weak;
-}
-
-DEFUN ("clrhash", Fclrhash, Sclrhash, 1, 1, 0,
-       doc: /* Clear hash table TABLE and return it.  */)
-  (Lisp_Object table)
-{
-  struct Lisp_Hash_Table *h = check_hash_table (table);
-  CHECK_IMPURE (table, h);
-  hash_clear (h);
-  /* Be compatible with XEmacs.  */
-  return table;
-}
-
-DEFUN ("define-hash-table-test", Fdefine_hash_table_test,
-       Sdefine_hash_table_test, 3, 3, 0,
-       doc: /* Define a new hash table test with name NAME, a symbol.
-
-In hash tables created with NAME specified as test, use TEST to
-compare keys, and HASH for computing hash codes of keys.
-
-TEST must be a function taking two arguments and returning non-nil if
-both arguments are the same.  HASH must be a function taking one
-argument and returning an object that is the hash code of the argument.
-It should be the case that if (eq (funcall HASH x1) (funcall HASH x2))
-returns nil, then (funcall TEST x1 x2) also returns nil.  */)
-  (Lisp_Object name, Lisp_Object test, Lisp_Object hash)
-{
-  return Fput (name, Qhash_table_test, list2 (test, hash));
-}
-
-
 DEFUN ("secure-hash-algorithms", Fsecure_hash_algorithms,
        Ssecure_hash_algorithms, 0, 0, 0,
        doc: /* Return a list of all the supported `secure_hash' algorithms. */)
@@ -3669,12 +3603,6 @@ syms_of_fns (void)
   defsubr (&Ssxhash_equal);
   defsubr (&Smake_hash_table);
   defsubr (&Shash_table_rehash_size);
-  defsubr (&Shash_table_rehash_threshold);
-  defsubr (&Shash_table_size);
-  defsubr (&Shash_table_test);
-  defsubr (&Shash_table_weakness);
-  defsubr (&Sclrhash);
-  defsubr (&Sdefine_hash_table_test);
 
   /* Crypto and hashing stuff.  */
   DEFSYM (Qiv_auto, "iv-auto");

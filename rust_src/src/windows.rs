@@ -1,9 +1,9 @@
 //! Functions operating on windows.
 
-use lisp::{LispObject, ExternalPtr};
+use lisp::{ExternalPtr, LispObject};
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Window, Qceiling, Qfloor, selected_window as current_window,
-                 minibuf_selected_window as current_minibuf_window, minibuf_level};
+use remacs_sys::{minibuf_level, minibuf_selected_window as current_minibuf_window,
+                 selected_window as current_window, EmacsInt, Lisp_Window};
 use marker::marker_position;
 use editfns::point;
 use libc::c_int;
@@ -17,22 +17,22 @@ impl LispWindowRef {
     /// This is also sometimes called a "leaf window" in Emacs sources.
     #[inline]
     pub fn is_live(self) -> bool {
-        LispObject::from_raw(self.contents).is_buffer()
+        LispObject::from(self.contents).is_buffer()
     }
 
     #[inline]
     pub fn point_marker(self) -> LispObject {
-        LispObject::from_raw(self.pointm)
+        LispObject::from(self.pointm)
     }
 
     #[inline]
     pub fn contents(self) -> LispObject {
-        LispObject::from_raw(self.contents)
+        LispObject::from(self.contents)
     }
 
     #[inline]
     pub fn start_marker(self) -> LispObject {
-        LispObject::from_raw(self.start)
+        LispObject::from(self.start)
     }
 
     #[inline]
@@ -120,7 +120,7 @@ pub fn window_point(window: LispObject) -> LispObject {
 /// selected windows appears and to which many commands apply.
 #[lisp_fn]
 pub fn selected_window() -> LispObject {
-    unsafe { LispObject::from_raw(current_window) }
+    unsafe { LispObject::from(current_window) }
 }
 
 /// Return the buffer displayed in window WINDOW.
@@ -146,10 +146,11 @@ pub fn window_buffer(window: LispObject) -> LispObject {
 /// window.  Windows that have been deleted are not valid.
 #[lisp_fn]
 pub fn window_valid_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.as_window().map_or(
-        false,
-        |win| win.contents().is_not_nil(),
-    ))
+    LispObject::from_bool(
+        object
+            .as_window()
+            .map_or(false, |win| win.contents().is_not_nil()),
+    )
 }
 
 /// Return position at which display currently starts in WINDOW.
@@ -209,9 +210,9 @@ pub fn window_margins(window: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn minibuffer_selected_window() -> LispObject {
     let level = unsafe { minibuf_level };
-    let current_minibuf = unsafe { LispObject::from_raw(current_minibuf_window) };
-    if level > 0 && selected_window().as_window_or_error().is_minibuffer() &&
-        current_minibuf.as_window().unwrap().is_live()
+    let current_minibuf = unsafe { LispObject::from(current_minibuf_window) };
+    if level > 0 && selected_window().as_window_or_error().is_minibuffer()
+        && current_minibuf.as_window().unwrap().is_live()
     {
         current_minibuf
     } else {

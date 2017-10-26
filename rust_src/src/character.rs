@@ -1,7 +1,7 @@
 //! Operations on characters.
 
 use lisp::LispObject;
-use multibyte::{MAX_CHAR, make_char_multibyte, raw_byte_from_codepoint_safe};
+use multibyte::{make_char_multibyte, raw_byte_from_codepoint_safe, MAX_CHAR};
 use remacs_macros::lisp_fn;
 use remacs_sys::EmacsInt;
 

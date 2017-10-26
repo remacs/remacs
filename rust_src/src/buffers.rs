@@ -1,14 +1,14 @@
 //! Functions operating on buffers.
 
-use libc::{c_void, c_uchar, ptrdiff_t, c_int};
+use libc::{c_int, c_uchar, c_void, ptrdiff_t};
 
-use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Lisp_Object, EmacsInt, Lisp_Buffer, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
-                 make_lisp_ptr, set_buffer_internal, nsberror};
+use lisp::{ExternalPtr, LispObject};
+use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal, EmacsInt, Lisp_Buffer, Lisp_Object,
+                 Lisp_Overlay, Lisp_Type, Vbuffer_alist};
 use strings::string_equal;
 use lists::{car, cdr};
 use threads::ThreadState;
-use marker::{marker_position, marker_buffer};
+use marker::{marker_buffer, marker_position};
 use multibyte::string_char;
 
 use std::{mem, ptr};
@@ -60,20 +60,18 @@ impl LispBufferRef {
     #[inline]
     pub fn gap_end_addr(&self) -> *mut c_uchar {
         unsafe {
-            (*self.text).beg.offset(
-                (*self.text).gpt_byte + (*self.text).gap_size -
-                    BEG_BYTE,
-            )
+            (*self.text)
+                .beg
+                .offset((*self.text).gpt_byte + (*self.text).gap_size - BEG_BYTE)
         }
     }
 
     #[inline]
     pub fn z_addr(&self) -> *mut c_uchar {
         unsafe {
-            (*self.text).beg.offset(
-                (*self.text).gap_size + (*self.text).z_byte -
-                    BEG_BYTE,
-            )
+            (*self.text)
+                .beg
+                .offset((*self.text).gap_size + (*self.text).z_byte - BEG_BYTE)
         }
     }
 
@@ -107,23 +105,23 @@ impl LispBufferRef {
 
     #[inline]
     pub fn mark_active(&self) -> LispObject {
-        LispObject::from_raw(self.mark_active)
+        LispObject::from(self.mark_active)
     }
 
     #[inline]
     pub fn mark(&self) -> LispObject {
-        LispObject::from_raw(self.mark)
+        LispObject::from(self.mark)
     }
 
     #[inline]
     pub fn name(&self) -> LispObject {
-        LispObject::from_raw(self.name)
+        LispObject::from(self.name)
     }
 
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
-        LispObject::from_raw(self.name).is_not_nil()
+        LispObject::from(self.name).is_not_nil()
     }
 
     #[inline]
@@ -155,7 +153,7 @@ impl LispBufferRef {
 
     #[inline]
     pub fn fetch_char(&self, n: ptrdiff_t) -> c_int {
-        if LispObject::from_raw(self.enable_multibyte_characters).is_not_nil() {
+        if LispObject::from(self.enable_multibyte_characters).is_not_nil() {
             self.fetch_multibyte_char(n)
         } else {
             self.fetch_byte(n) as c_int
@@ -166,12 +164,12 @@ impl LispBufferRef {
 impl LispOverlayRef {
     #[inline]
     pub fn start(&self) -> LispObject {
-        LispObject::from_raw(self.start)
+        LispObject::from(self.start)
     }
 
     #[inline]
     pub fn end(&self) -> LispObject {
-        LispObject::from_raw(self.end)
+        LispObject::from(self.end)
     }
 }
 
@@ -204,9 +202,8 @@ pub fn buffer_live_p(object: LispObject) -> LispObject {
 /// Like Fassoc, but use `Fstring_equal` to compare
 /// (which ignores text properties), and don't ever quit.
 fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
-    let result = list.iter_tails_safe().find(|&item| {
-        string_equal(car(item.car()), key).is_not_nil()
-    });
+    let result = list.iter_tails_safe()
+        .find(|&item| string_equal(car(item.car()), key).is_not_nil());
     if let Some(elt) = result {
         elt.car()
     } else {
@@ -226,7 +223,7 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
         buffer_or_name.as_string_or_error();
         cdr(assoc_ignore_text_properties(
             buffer_or_name,
-            LispObject::from_raw(unsafe { Vbuffer_alist }),
+            LispObject::from(unsafe { Vbuffer_alist }),
         ))
     }
 }
@@ -236,7 +233,7 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
 pub fn current_buffer() -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
     unsafe {
-        LispObject::from_raw(make_lisp_ptr(
+        LispObject::from(make_lisp_ptr(
             buffer_ref.as_ptr() as *mut c_void,
             Lisp_Type::Lisp_Vectorlike,
         ))
@@ -253,7 +250,7 @@ pub fn buffer_file_name(buffer: LispObject) -> LispObject {
         buffer.as_buffer_or_error()
     };
 
-    LispObject::from_raw(buf.filename)
+    LispObject::from(buf.filename)
 }
 
 /// Return t if BUFFER was modified since its file was last read or saved.
@@ -269,7 +266,7 @@ pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
 /// Return nil if BUFFER has been killed.
 #[lisp_fn(min = "0")]
 pub fn buffer_name(buffer: LispObject) -> LispObject {
-    LispObject::from_raw(buffer.as_buffer_or_current_buffer().name)
+    LispObject::from(buffer.as_buffer_or_current_buffer().name)
 }
 
 /// Return BUFFER's tick counter, incremented for each change in text.
@@ -318,8 +315,8 @@ fn overlay_buffer(overlay: LispObject) -> LispObject {
 
 #[no_mangle]
 pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
-    let start = LispObject::from_raw(unsafe { *b });
-    let stop = LispObject::from_raw(unsafe { *e });
+    let start = LispObject::from(unsafe { *b });
+    let stop = LispObject::from(unsafe { *e });
 
     let mut beg = start.as_fixnum_coerce_marker_or_error();
     let mut end = stop.as_fixnum_coerce_marker_or_error();
