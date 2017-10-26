@@ -320,6 +320,6 @@ fn clrhash(table: LispObject) -> LispObject {
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
 fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
-    let sym = unsafe { LispObject::from_raw(Qhash_table_test) };
+    let sym = LispObject::from_raw(Qhash_table_test);
     put(name, sym, list(&mut [test, hash]))
 }

@@ -23,7 +23,7 @@ fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
     if tem.is_not_nil() && subfeature.is_not_nil() {
         tem = member(
             subfeature,
-            get(feature, LispObject::from_raw(unsafe { Qsubfeatures })),
+            get(feature, LispObject::from_raw(Qsubfeatures)),
         );
     }
     if tem.is_nil() {
