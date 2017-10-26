@@ -1029,7 +1029,7 @@ extern "C" {
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vfeatures: Lisp_Object;
     pub static minibuf_level: EmacsInt;
-    pub static minibuf_window: Lisp_Object;
+    pub static mut minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
     pub static minibuf_selected_window: Lisp_Object;
     pub static selected_frame: Lisp_Object;
@@ -1189,6 +1189,12 @@ extern "C" {
     pub fn timespec_sub(a: timespec, b: timespec) -> timespec;
     pub fn timespec_add(a: timespec, b: timespec) -> timespec;
 
+    pub fn Fadd_text_properties(
+        start: Lisp_Object,
+        end: Lisp_Object,
+        properties: Lisp_Object,
+        object: Lisp_Object,
+    ) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

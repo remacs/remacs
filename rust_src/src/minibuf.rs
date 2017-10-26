@@ -34,3 +34,17 @@ fn active_minibuffer_window() -> LispObject {
         LispObject::from_raw(unsafe { minibuf_window })
     }
 }
+
+/// Specify which minibuffer window to use for the minibuffer.
+/// This affects where the minibuffer is displayed if you put text in it
+/// without invoking the usual minibuffer commands.
+#[lisp_fn]
+pub fn set_minibuffer_window(window: LispObject) -> LispObject {
+    window.as_minibuffer_or_error(); // just for the checks
+
+    unsafe {
+        minibuf_window = window.to_raw();
+    }
+
+    window
+}

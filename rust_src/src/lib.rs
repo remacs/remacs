@@ -15,7 +15,6 @@ extern crate lazy_static;
 extern crate remacs_sys;
 
 // Needed for linking.
-#[allow(unused_extern_crates)]
 extern crate remacs_lib;
 
 extern crate remacs_macros;
@@ -433,9 +432,11 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sgoto_char);
         defsubr(&*editfns::Sinsert_byte);
         defsubr(&*editfns::Schar_after);
+        defsubr(&*editfns::Spropertize);
         defsubr(&*fns::Sfeaturep);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
+        defsubr(&*minibuf::Sset_minibuffer_window);
         defsubr(&*threads::Sthread_name);
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);

@@ -559,6 +559,16 @@ impl LispObject {
         )
     }
 
+    pub fn as_minibuffer_or_error(self) -> LispWindowRef {
+        let w = self.as_window().unwrap_or_else(
+            || wrong_type!(Qwindowp, self),
+        );
+        if !w.is_minibuffer() {
+            error!("Window is not a minibuffer window");
+        }
+        w
+    }
+
     pub fn as_live_window_or_error(self) -> LispWindowRef {
         if self.as_window().map_or(false, |w| w.is_live()) {
             self.as_window().unwrap()
