@@ -1,3 +1,4 @@
+#![feature(const_size_of)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
 //! This module contains all FFI declarations.

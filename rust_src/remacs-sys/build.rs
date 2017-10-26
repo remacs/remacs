@@ -146,11 +146,11 @@ fn generate_globals() {
                 if line.trim().starts_with("#define") {
                     let mut parts = line.split(' ');
                     let _ = parts.next().unwrap(); // The #define
-                    let (_, symbol_name) = parts.next().unwrap().split_at(1); // Stript i in iQnil
+                    let (_, symbol_name) = parts.next().unwrap().split_at(1); // Remove the i in iQnil
                     let value = parts.next().unwrap();
                     write!(
                         out_file,
-                        "pub const {}: Lisp_Object = {};\n",
+                        "pub const {}: Lisp_Object = {} * (::std::mem::size_of::<Lisp_Symbol>() as EmacsInt);\n",
                         symbol_name,
                         value
                         ).expect("Write error in reading symbols stage");
