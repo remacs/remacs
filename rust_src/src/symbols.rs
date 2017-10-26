@@ -1,8 +1,9 @@
 use remacs_macros::lisp_fn;
 use std::mem;
-use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{Fset, make_lisp_symbol, Lisp_Symbol, Symbol_Interned, Symbol_Redirect,
-                 Symbol_Trapped_Write, Qsetting_constant, Qcyclic_variable_indirection, Qunbound};
+use lisp::{ExternalPtr, LispObject};
+use remacs_sys::{make_lisp_symbol, Fset, Lisp_Symbol, Qcyclic_variable_indirection,
+                 Qsetting_constant, Qunbound, Symbol_Interned, Symbol_Redirect,
+                 Symbol_Trapped_Write};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
