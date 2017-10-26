@@ -17,13 +17,13 @@ extern crate remacs_sys;
 // Needed for linking.
 extern crate remacs_lib;
 
-extern crate remacs_macros;
+extern crate base64 as base64_crate;
 extern crate libc;
 extern crate md5;
 extern crate rand;
+extern crate remacs_macros;
 extern crate sha1;
 extern crate sha2;
-extern crate base64 as base64_crate;
 
 #[cfg(test)]
 extern crate mock_derive;

@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{globals, Qsubfeatures};
 use lisp::LispObject;
-use lists::{memq, get, member};
+use lists::{get, member, memq};
 
 
 /// Return t if FEATURE is present in this Emacs.

@@ -1,8 +1,8 @@
 use remacs_macros::lisp_fn;
 use std::mem;
-use lisp::{LispObject, ExternalPtr};
-use remacs_sys::{make_lisp_symbol, Lisp_Symbol, Symbol_Interned, Symbol_Redirect,
-                 Qsetting_constant, Qcyclic_variable_indirection};
+use lisp::{ExternalPtr, LispObject};
+use remacs_sys::{make_lisp_symbol, Lisp_Symbol, Qcyclic_variable_indirection, Qsetting_constant,
+                 Symbol_Interned, Symbol_Redirect};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
@@ -31,8 +31,8 @@ impl LispSymbolRef {
     }
 
     pub fn is_interned_in_initial_obarray(&self) -> bool {
-        self.symbol_bitfield & FLAG_INTERNED ==
-            (Symbol_Interned::InternedInInitialObarray as u32) << 6
+        self.symbol_bitfield & FLAG_INTERNED
+            == (Symbol_Interned::InternedInInitialObarray as u32) << 6
     }
 
     pub fn is_alias(&self) -> bool {
@@ -146,9 +146,7 @@ fn fmakunbound(symbol: LispObject) -> LispObject {
 fn keywordp(object: LispObject) -> LispObject {
     if let Some(sym) = object.as_symbol() {
         let name = sym.symbol_name().as_string_or_error();
-        LispObject::from_bool(
-            name.byte_at(0) == b':' && sym.is_interned_in_initial_obarray(),
-        )
+        LispObject::from_bool(name.byte_at(0) == b':' && sym.is_interned_in_initial_obarray())
     } else {
         LispObject::constant_nil()
     }

@@ -1,10 +1,10 @@
 use remacs_macros::lisp_fn;
 use libc::c_void;
-use lisp::{LispObject, ExternalPtr};
-use lists::{put, list};
-use remacs_sys::{Lisp_Hash_Table, PseudovecType, Fcopy_sequence, Faref, hash_lookup, EmacsInt,
-                 EmacsUint, CHECK_IMPURE, hash_remove_from_table, gc_aset, hash_put, EmacsDouble,
-                 hash_clear, Qhash_table_test};
+use lisp::{ExternalPtr, LispObject};
+use lists::{list, put};
+use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table, EmacsDouble,
+                 EmacsInt, EmacsUint, Faref, Fcopy_sequence, Lisp_Hash_Table, PseudovecType,
+                 Qhash_table_test, CHECK_IMPURE};
 use std::ptr;
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
@@ -273,9 +273,7 @@ fn hash_table_count(table: LispObject) -> LispObject {
 /// Return the current rehash threshold of TABLE.
 #[lisp_fn]
 fn hash_table_rehash_threshold(table: LispObject) -> LispObject {
-    LispObject::from_float(
-        table.as_hash_table_or_error().rehash_threshold as EmacsDouble,
-    )
+    LispObject::from_float(table.as_hash_table_or_error().rehash_threshold as EmacsDouble)
 }
 
 /// Return the size of TABLE.
@@ -290,7 +288,7 @@ fn hash_table_size(table: LispObject) -> LispObject {
 /// Return the test TABLE uses.
 #[lisp_fn]
 fn hash_table_test(table: LispObject) -> LispObject {
-    LispObject::from_raw(table.as_hash_table_or_error().test.name)
+    LispObject::from(table.as_hash_table_or_error().test.name)
 }
 
 /// Return the weakness of TABLE.
@@ -320,6 +318,6 @@ fn clrhash(table: LispObject) -> LispObject {
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
 fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
-    let sym = unsafe { LispObject::from_raw(Qhash_table_test) };
+    let sym = unsafe { LispObject::from(Qhash_table_test) };
     put(name, sym, list(&mut [test, hash]))
 }

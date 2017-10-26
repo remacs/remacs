@@ -2,7 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
-use remacs_sys::{Vminibuffer_list, minibuf_level, minibuf_window};
+use remacs_sys::{minibuf_level, minibuf_window, Vminibuffer_list};
 use buffers::{current_buffer, get_buffer};
 use lists::memq;
 
@@ -20,9 +20,7 @@ pub fn minibufferp(object: LispObject) -> LispObject {
         object.as_buffer_or_error();
         object
     };
-    LispObject::from_bool(
-        memq(buffer, LispObject::from(unsafe { Vminibuffer_list })).is_not_nil(),
-    )
+    LispObject::from_bool(memq(buffer, LispObject::from(unsafe { Vminibuffer_list })).is_not_nil())
 }
 
 /// Return the currently active minibuffer window, or nil if none.

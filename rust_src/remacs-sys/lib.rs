@@ -18,8 +18,8 @@ extern crate libc;
 
 pub mod libm;
 
-use libc::{c_char, c_uchar, c_short, c_int, c_double, c_float, c_void, ptrdiff_t, size_t, off_t,
-           time_t, timespec, intmax_t};
+use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
+           size_t, time_t, timespec};
 
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
@@ -36,16 +36,16 @@ pub const CHAR_HYPER: char_bits = 0x1000000;
 pub const CHAR_SHIFT: char_bits = 0x2000000;
 pub const CHAR_CTL: char_bits = 0x4000000;
 pub const CHAR_META: char_bits = 0x8000000;
-pub const CHAR_MODIFIER_MASK: char_bits = CHAR_ALT | CHAR_SUPER | CHAR_HYPER | CHAR_SHIFT |
-    CHAR_CTL | CHAR_META;
+pub const CHAR_MODIFIER_MASK: char_bits =
+    CHAR_ALT | CHAR_SUPER | CHAR_HYPER | CHAR_SHIFT | CHAR_CTL | CHAR_META;
 pub const CHARACTERBITS: char_bits = 22;
 
 pub const PSEUDOVECTOR_FLAG: ptrdiff_t = std::isize::MAX - std::isize::MAX / 2;
 pub const PSEUDOVECTOR_SIZE_BITS: ptrdiff_t = 12;
 pub const PSEUDOVECTOR_SIZE_MASK: ptrdiff_t = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
 pub const PSEUDOVECTOR_REST_BITS: ptrdiff_t = 12;
-pub const PSEUDOVECTOR_REST_MASK: ptrdiff_t = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
-                                                   PSEUDOVECTOR_SIZE_BITS);
+pub const PSEUDOVECTOR_REST_MASK: ptrdiff_t =
+    (((1 << PSEUDOVECTOR_REST_BITS) - 1) << PSEUDOVECTOR_SIZE_BITS);
 pub const PSEUDOVECTOR_AREA_BITS: ptrdiff_t = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
 pub const PVEC_TYPE_MASK: ptrdiff_t = 0x3f << PSEUDOVECTOR_AREA_BITS;
 
@@ -68,8 +68,7 @@ pub const WAIT_READING_MAX: i64 = std::i64::MAX;
 /// Bit pattern used in the least significant bits of a lisp object,
 /// to denote its type.
 #[repr(u8)]
-#[derive(PartialEq, Eq)]
-#[derive(Copy, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Lisp_Type {
     // Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.
     Lisp_Symbol = 0,
@@ -199,8 +198,8 @@ pub struct Lisp_String {
 pub union SymbolUnion {
     pub value: Lisp_Object,
     pub alias: *mut Lisp_Symbol,
-pub blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
-pub fwd: *mut c_void, // @TODO implement Lisp_Fwd
+    pub blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
+    pub fwd: *mut c_void, // @TODO implement Lisp_Fwd
 }
 
 /// Interned state of a symbol.
@@ -610,7 +609,7 @@ pub enum EqualKind {
 pub struct re_registers {
     pub num_regs: libc::c_uint,
     pub start: *mut c_void, // TODO
-    pub end: *mut c_void, // TODO
+    pub end: *mut c_void,   // TODO
 }
 
 #[repr(C)]

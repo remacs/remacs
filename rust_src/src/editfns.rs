@@ -3,9 +3,8 @@
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
 use util::clip_to_bounds;
-use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, Fcons, Fcopy_sequence,
-                 Fadd_text_properties, Finsert_char, EmacsInt, Qinteger_or_marker_p,
-                 Qmark_inactive, Qnil};
+use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Fadd_text_properties,
+                 Fcons, Fcopy_sequence, Finsert_char, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 use threads::ThreadState;
 use buffers::get_buffer;
 use marker::{marker_position, set_point_from_marker};
@@ -80,9 +79,9 @@ pub fn eolp() -> LispObject {
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> LispObject {
     let current_buf = ThreadState::current_buffer();
-    if LispObject::from(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil() &&
-        LispObject::from(unsafe { globals.f_Vmark_even_if_inactive }).is_nil() &&
-        current_buf.mark_active().is_nil()
+    if LispObject::from(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil()
+        && LispObject::from(unsafe { globals.f_Vmark_even_if_inactive }).is_nil()
+        && current_buf.mark_active().is_nil()
     {
         xsignal!(Qmark_inactive);
     }
@@ -97,8 +96,8 @@ fn region_limit(beginningp: bool) -> LispObject {
     if ((current_buf.pt as EmacsInt) < num) == beginningp {
         LispObject::from_fixnum(current_buf.pt as EmacsInt)
     } else {
-        LispObject::from_fixnum(clip_to_bounds(current_buf.begv, num, current_buf.zv) as
-            EmacsInt)
+        LispObject::from_fixnum(clip_to_bounds(current_buf.begv, num, current_buf.zv)
+            as EmacsInt)
     }
 }
 
@@ -238,7 +237,7 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
     let first = it.next().unwrap();
     let orig_string = first.as_string_or_error();
 
-    let copy = LispObject::from_raw(unsafe { Fcopy_sequence(first.to_raw()) });
+    let copy = LispObject::from(unsafe { Fcopy_sequence(first.to_raw()) });
 
     // this is a C style Lisp_Object because that is what Fcons expects and returns.
     // Once Fcons is ported to Rust this can be migrated to a LispObject.

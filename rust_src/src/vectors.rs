@@ -9,16 +9,16 @@ use libc::ptrdiff_t;
 
 use lisp::{ExternalPtr, LispObject};
 use multibyte::MAX_CHAR;
-use lists::{sort_list, inorder, nthcdr, car};
+use lists::{car, inorder, nthcdr, sort_list};
 use buffers::LispBufferRef;
 use windows::LispWindowRef;
 use frames::LispFrameRef;
 use process::LispProcessRef;
 use chartable::LispCharTableRef;
 use threads::ThreadStateRef;
-use remacs_sys::{Qsequencep, EmacsInt, PSEUDOVECTOR_FLAG, PVEC_TYPE_MASK, PSEUDOVECTOR_AREA_BITS,
-                 PSEUDOVECTOR_SIZE_MASK, PseudovecType, Lisp_Vectorlike, Lisp_Vector,
-                 Lisp_Bool_Vector, MOST_POSITIVE_FIXNUM, Faref};
+use remacs_sys::{EmacsInt, Faref, Lisp_Bool_Vector, Lisp_Vector, Lisp_Vectorlike, PseudovecType,
+                 Qsequencep, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG,
+                 PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
 use remacs_macros::lisp_fn;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
@@ -47,8 +47,8 @@ impl LispVectorlikeRef {
 
     #[inline]
     pub fn is_pseudovector(&self, tp: PseudovecType) -> bool {
-        self.header.size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK) ==
-            (PSEUDOVECTOR_FLAG | ((tp as isize) << PSEUDOVECTOR_AREA_BITS))
+        self.header.size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK)
+            == (PSEUDOVECTOR_FLAG | ((tp as isize) << PSEUDOVECTOR_AREA_BITS))
     }
 
     #[inline]
@@ -148,9 +148,7 @@ impl LispVectorRef {
 
     #[inline]
     pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
-        ptr::read(
-            mem::transmute::<_, *const LispObject>(&self.contents).offset(idx),
-        )
+        ptr::read(mem::transmute::<_, *const LispObject>(&self.contents).offset(idx))
     }
 
     #[inline]
@@ -182,8 +180,8 @@ pub fn length(sequence: LispObject) -> LispObject {
             return LispObject::from_natnum(bv.len() as EmacsInt);
         } else if vl.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE) {
             return LispObject::from_natnum(MAX_CHAR as EmacsInt);
-        } else if vl.is_pseudovector(PseudovecType::PVEC_COMPILED) ||
-                   vl.is_pseudovector(PseudovecType::PVEC_RECORD)
+        } else if vl.is_pseudovector(PseudovecType::PVEC_COMPILED)
+            || vl.is_pseudovector(PseudovecType::PVEC_RECORD)
         {
             return LispObject::from_natnum(vl.pseudovector_size());
         }

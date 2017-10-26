@@ -6,8 +6,8 @@ use libc::{self, c_void};
 
 use lisp::LispObject;
 use multibyte;
-use remacs_sys::{SYMBOL_NAME, EmacsInt, make_unibyte_string, make_uninit_multibyte_string,
-                 string_to_multibyte as c_string_to_multibyte};
+use remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
+                 string_to_multibyte as c_string_to_multibyte, EmacsInt, SYMBOL_NAME};
 use remacs_macros::lisp_fn;
 
 pub static MIME_LINE_LENGTH: isize = 76;
@@ -41,14 +41,13 @@ pub fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
     let mut s2 = s2.as_string_or_error();
 
     LispObject::from_bool(
-        s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes() &&
-            unsafe {
-                libc::memcmp(
-                    s1.data_ptr() as *mut c_void,
-                    s2.data_ptr() as *mut c_void,
-                    s1.len_bytes() as usize,
-                ) == 0
-            },
+        s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes() && unsafe {
+            libc::memcmp(
+                s1.data_ptr() as *mut c_void,
+                s2.data_ptr() as *mut c_void,
+                s1.len_bytes() as usize,
+            ) == 0
+        },
     )
 }
 

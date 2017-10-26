@@ -1,5 +1,5 @@
 use remacs_macros::lisp_fn;
-use remacs_sys::{font, EmacsInt, Qfont_spec, Qfont_entity, Qfont_object};
+use remacs_sys::{font, EmacsInt, Qfont_entity, Qfont_object, Qfont_spec};
 use lisp::LispObject;
 use lisp::intern;
 use vectors::LispVectorlikeRef;
@@ -59,8 +59,9 @@ impl FontExtraType {
 pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
     // For compatibility with the C version, checking that object is a font
     // takes priority over checking that extra_type is well-formed.
-    object.as_font().map_or(LispObject::constant_nil(), |f| {
-        if extra_type.is_nil() {
+    object
+        .as_font()
+        .map_or(LispObject::constant_nil(), |f| if extra_type.is_nil() {
             LispObject::constant_t()
         } else {
             match FontExtraType::from_symbol_or_error(extra_type) {
@@ -68,6 +69,5 @@ pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
                 FontExtraType::Entity => LispObject::from_bool(f.is_font_entity()),
                 FontExtraType::Object => LispObject::from_bool(f.is_font_object()),
             }
-        }
-    })
+        })
 }

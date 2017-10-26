@@ -81,5 +81,5 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
 /// Return a list of all processes that are Emacs sub-processes.
 #[lisp_fn]
 pub fn process_list() -> LispObject {
-    LispObject::from_raw(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
+    LispObject::from(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
 }
