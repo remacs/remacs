@@ -1,9 +1,9 @@
 //! Functions operating on windows.
 
-use lisp::{LispObject, ExternalPtr};
+use lisp::{ExternalPtr, LispObject};
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Window, selected_window as current_window,
-                 minibuf_selected_window as current_minibuf_window, minibuf_level};
+use remacs_sys::{minibuf_level, minibuf_selected_window as current_minibuf_window,
+                 selected_window as current_window, EmacsInt, Lisp_Window};
 use marker::marker_position;
 use editfns::point;
 use libc::c_int;
@@ -48,7 +48,7 @@ impl LispWindowRef {
     }
 }
 
-#[allow(dead_code)]  // FIXME: Remove as soon as it is used
+#[allow(dead_code)] // FIXME: Remove as soon as it is used
 fn window_or_selected(window: LispObject) -> LispWindowRef {
     if window.is_nil() {
         selected_window()
@@ -183,8 +183,8 @@ pub fn window_margins(window: LispObject) -> LispObject {
 pub fn minibuffer_selected_window() -> LispObject {
     let level = unsafe { minibuf_level };
     let current_minibuf = unsafe { LispObject::from_raw(current_minibuf_window) };
-    if level > 0 && selected_window().as_window_or_error().is_minibuffer() &&
-        current_minibuf.as_window().unwrap().is_live()
+    if level > 0 && selected_window().as_window_or_error().is_minibuffer()
+        && current_minibuf.as_window().unwrap().is_live()
     {
         current_minibuf
     } else {
