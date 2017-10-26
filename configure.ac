@@ -5153,8 +5153,6 @@ elif test "$opsys" = "mingw32"; then
   CYGWIN_OBJ=
   PRE_ALLOC_OBJ=
   POST_ALLOC_OBJ=lastfile.o
-elif test "$opsys" = "qnxnto"; then
-  CYGWIN_OBJ=sheap.o
 else
   CYGWIN_OBJ=
   PRE_ALLOC_OBJ=lastfile.o
