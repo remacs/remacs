@@ -184,7 +184,7 @@ pub fn window_combination_limit(window: LispObject) -> LispObject {
         error!("Combination limit is meaningful for internal windows only");
     }
 
-    LispObject::from_raw(w.combination_limit)
+    LispObject::from(w.combination_limit)
 }
 
 /// Set combination limit of window WINDOW to LIMIT; return LIMIT.
