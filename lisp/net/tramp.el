@@ -3226,9 +3226,9 @@ User is always nil."
 		   (car x)
 		   (if (and (stringp (cdr x))
 			    (file-name-absolute-p (cdr x))
-			    (not (tramp-file-name-p (cdr x))))
+			    (not (tramp-tramp-file-p (cdr x))))
 		       (tramp-make-tramp-file-name
-			method user domain host port (cdr x))
+			method user domain host port (cdr x) hop)
 		     (cdr x))))
 		tramp-backup-directory-alist)
 	     backup-directory-alist)))
