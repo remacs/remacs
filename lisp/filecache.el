@@ -566,68 +566,67 @@ the directories that the name is available in.  With a prefix argument,
 the name is considered already unique; only the second substitution
 \(directories) is done."
   (interactive "P")
-  (let*
-      (
-       (completion-ignore-case file-cache-completion-ignore-case)
-       (case-fold-search       file-cache-case-fold-search)
-       (string                 (file-name-nondirectory (minibuffer-contents)))
-       (completion-string      (try-completion string file-cache-alist))
-       (completion-list)
-       (len)
-       (file-cache-string))
+  (let* ((completion-ignore-case file-cache-completion-ignore-case)
+         (case-fold-search       file-cache-case-fold-search)
+         (string                 (file-name-nondirectory (minibuffer-contents)))
+         (completion             (completion-try-completion
+                                  string file-cache-alist nil 0)))
     (cond
      ;; If it's the only match, replace the original contents
-     ((or arg (eq completion-string t))
-      (setq file-cache-string (file-cache-file-name string))
-      (if (string= file-cache-string (minibuffer-contents))
-	  (minibuffer-message file-cache-sole-match-message)
-	(delete-minibuffer-contents)
-	(insert file-cache-string)
-	(if file-cache-multiple-directory-message
-	    (minibuffer-message file-cache-multiple-directory-message))))
+     ((or arg (eq completion t))
+      (let ((file-name (file-cache-file-name string)))
+        (if (string= file-name (minibuffer-contents))
+            (minibuffer-message file-cache-sole-match-message)
+          (delete-minibuffer-contents)
+          (insert file-name)
+          (if file-cache-multiple-directory-message
+              (minibuffer-message file-cache-multiple-directory-message)))))
 
      ;; If it's the longest match, insert it
-     ((stringp completion-string)
-      ;; If we've already inserted a unique string, see if the user
-      ;; wants to use that one
-      (if (and (string= string completion-string)
-	       (assoc-string string file-cache-alist
-			     file-cache-ignore-case))
-	  (if (and (eq last-command this-command)
-		   (string= file-cache-last-completion completion-string))
-	      (progn
-		(delete-minibuffer-contents)
-		(insert (file-cache-file-name completion-string))
-		(setq file-cache-last-completion nil))
-	    (minibuffer-message file-cache-non-unique-message)
-	    (setq file-cache-last-completion string))
-	(setq file-cache-last-completion string)
-	(setq completion-list (all-completions string file-cache-alist)
-	      len             (length completion-list))
-	(if (> len 1)
-	    (progn
-	      (goto-char (point-max))
-	      (insert
-	       (substring completion-string (length string)))
-	      ;; Add our own setup function to the Completions Buffer
-	      (let ((completion-setup-hook
-                     (append completion-setup-hook
-                             (list 'file-cache-completion-setup-function))))
-		(with-output-to-temp-buffer file-cache-completions-buffer
-		  (display-completion-list
-                   (completion-hilit-commonality completion-list
-                                                 (length string))))))
-	  (setq file-cache-string (file-cache-file-name completion-string))
-	  (if (string= file-cache-string (minibuffer-contents))
-	      (minibuffer-message file-cache-sole-match-message)
-	    (delete-minibuffer-contents)
-	    (insert file-cache-string)
-	    (if file-cache-multiple-directory-message
-		(minibuffer-message file-cache-multiple-directory-message)))
-	  )))
+     ((consp completion)
+      (let ((newstring (car completion))
+            (newpoint  (cdr completion)))
+        ;; If we've already inserted a unique string, see if the user
+        ;; wants to use that one
+        (if (and (string= string newstring)
+                 (assoc-string string file-cache-alist
+                               file-cache-ignore-case))
+            (if (and (eq last-command this-command)
+                     (string= file-cache-last-completion newstring))
+                (progn
+                  (delete-minibuffer-contents)
+                  (insert (file-cache-file-name newstring))
+                  (setq file-cache-last-completion nil))
+              (minibuffer-message file-cache-non-unique-message)
+              (setq file-cache-last-completion string))
+          (setq file-cache-last-completion string)
+          (let* ((completion-list (completion-all-completions
+                                   newstring file-cache-alist nil newpoint))
+                 (base-size       (cdr (last completion-list))))
+            (when base-size
+              (setcdr (last completion-list) nil))
+            (if (> (length completion-list) 1)
+                (progn
+                  (delete-region (- (point-max) (length string)) (point-max))
+                  (save-excursion (insert newstring))
+                  (forward-char newpoint)
+                  ;; Add our own setup function to the Completions Buffer
+                  (let ((completion-setup-hook
+                         (append completion-setup-hook
+                                 (list 'file-cache-completion-setup-function))))
+                    (with-output-to-temp-buffer file-cache-completions-buffer
+                      (display-completion-list
+                       (completion-hilit-commonality completion-list newpoint)))))
+              (let ((file-name (file-cache-file-name newstring)))
+                (if (string= file-name (minibuffer-contents))
+                    (minibuffer-message file-cache-sole-match-message)
+                  (delete-minibuffer-contents)
+                  (insert file-name)
+                  (if file-cache-multiple-directory-message
+                      (minibuffer-message file-cache-multiple-directory-message)))))))))
 
      ;; No match
-     ((eq completion-string nil)
+     ((eq completion nil)
       (minibuffer-message file-cache-no-match-message)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

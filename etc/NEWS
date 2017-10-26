@@ -103,6 +103,12 @@ less verbose by removing non-essential information.
 dimensions, instead of always using 16 pixels. As a result, Tetris,
 Snake and Pong are more playable on HiDPI displays.
 
+** Filecache
+
+---
+*** Completing filenames in the minibuffer via 'C-TAB' now uses the
+styles as configured by the variable 'completion-styles'.
+
 
 * New Modes and Packages in Emacs 27.1
 
