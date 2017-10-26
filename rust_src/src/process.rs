@@ -1,7 +1,7 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fmapcar, Lisp_Process, Qcdr, Vprocess_alist};
+use remacs_sys::{Fmapcar, Lisp_Process, Qcdr, Qlistp, Vprocess_alist};
 use lisp::{ExternalPtr, LispObject};
 use lists::{assoc, cdr};
 use buffers::get_buffer;
@@ -17,6 +17,11 @@ impl LispProcessRef {
     #[inline]
     fn buffer(&self) -> LispObject {
         LispObject::from(self.buffer)
+    }
+
+    #[inline]
+    fn set_plist(&mut self, plist: LispObject) {
+        self.plist = plist.to_raw();
     }
 }
 
@@ -82,4 +87,16 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn process_list() -> LispObject {
     LispObject::from(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
+}
+
+/// Replace the plist of PROCESS with PLIST.  Return PLIST.
+#[lisp_fn]
+pub fn set_process_plist(process: LispObject, plist: LispObject) -> LispObject {
+    if plist.is_list() {
+        let mut p = process.as_process_or_error();
+        p.set_plist(plist);
+        plist
+    } else {
+        wrong_type!(Qlistp, plist)
+    }
 }

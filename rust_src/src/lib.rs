@@ -447,5 +447,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*dispnew::Ssleep_for);
         defsubr(&*indent::Scurrent_column);
         defsubr(&*process::Sprocess_list);
+        defsubr(&*process::Sset_process_plist);
     }
 }
