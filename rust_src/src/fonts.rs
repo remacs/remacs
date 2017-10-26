@@ -1,5 +1,5 @@
 use remacs_macros::lisp_fn;
-use remacs_sys::{font, EmacsInt, Qfont_spec, Qfont_entity, Qfont_object};
+use remacs_sys::{font, EmacsInt, Qfont_entity, Qfont_object, Qfont_spec};
 use lisp::LispObject;
 use lisp::intern;
 use vectors::LispVectorlikeRef;
@@ -38,11 +38,11 @@ impl FontExtraType {
     // Needed for wrong_type! that is using a safe predicate. This may change in the future.
     #[allow(unused_unsafe)]
     pub fn from_symbol_or_error(extra_type: LispObject) -> FontExtraType {
-        if extra_type.eq(LispObject::from_raw(unsafe { Qfont_spec })) {
+        if extra_type.eq(LispObject::from(unsafe { Qfont_spec })) {
             FontExtraType::Spec
-        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_entity })) {
+        } else if extra_type.eq(LispObject::from(unsafe { Qfont_entity })) {
             FontExtraType::Entity
-        } else if extra_type.eq(LispObject::from_raw(unsafe { Qfont_object })) {
+        } else if extra_type.eq(LispObject::from(unsafe { Qfont_object })) {
             FontExtraType::Object
         } else {
             wrong_type!(intern("font-extra-type").to_raw(), extra_type);
@@ -59,8 +59,9 @@ impl FontExtraType {
 pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
     // For compatibility with the C version, checking that object is a font
     // takes priority over checking that extra_type is well-formed.
-    object.as_font().map_or(LispObject::constant_nil(), |f| {
-        if extra_type.is_nil() {
+    object
+        .as_font()
+        .map_or(LispObject::constant_nil(), |f| if extra_type.is_nil() {
             LispObject::constant_t()
         } else {
             match FontExtraType::from_symbol_or_error(extra_type) {
@@ -68,6 +69,5 @@ pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
                 FontExtraType::Entity => LispObject::from_bool(f.is_font_entity()),
                 FontExtraType::Object => LispObject::from_bool(f.is_font_object()),
             }
-        }
-    })
+        })
 }

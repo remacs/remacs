@@ -9,7 +9,7 @@ use threads::ThreadState;
 #[lisp_fn]
 fn category_table_p(arg: LispObject) -> LispObject {
     LispObject::from_bool(arg.as_char_table().map_or(false, |table| {
-        LispObject::from_raw(table.purpose).eq(LispObject::from_raw(Qcategory_table))
+        LispObject::from(table.purpose).eq(LispObject::from(Qcategory_table))
     }))
 }
 
@@ -18,5 +18,5 @@ fn category_table_p(arg: LispObject) -> LispObject {
 #[lisp_fn]
 fn category_table() -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
-    LispObject::from_raw(buffer_ref.category_table)
+    LispObject::from(buffer_ref.category_table)
 }

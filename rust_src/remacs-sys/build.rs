@@ -1,7 +1,7 @@
 extern crate libc;
 
 use std::env;
-use std::io::{Write, BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::fs::File;
 use std::path::PathBuf;
 use std::mem::size_of;
@@ -98,7 +98,6 @@ fn generate_definitions() {
         "pub const USE_LSB_TAG: bool = {};\n",
         if use_lsb_tag { "true" } else { "false" }
     ).expect("Write error!");
-
 }
 
 fn generate_globals() {
@@ -111,12 +110,11 @@ fn generate_globals() {
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("globals.rs");
     let mut out_file = File::create(out_path).expect("Failed to create definition file");
     let mut parse_state = ParseState::ReadingGlobals;
-    
+
     write!(out_file, "#[allow(unused)]\n").expect("Write error!");
     write!(out_file, "#[repr(C)]\n").expect("Write error!");
     write!(out_file, "pub struct emacs_globals {{\n").expect("Write error!");
 
-    
     for line in in_file.lines() {
         let line = line.expect("Read error!");
         match parse_state {
@@ -135,33 +133,35 @@ fn generate_globals() {
                         }
                     ).expect("Write error!");
                 }
-                if line.starts_with('}')  {
+                if line.starts_with('}') {
                     write!(out_file, "}}\n").expect("Write error!");
                     parse_state = ParseState::ReadingSymbols;
                     continue;
                 }
-            },
+            }
 
             ParseState::ReadingSymbols => {
                 if line.trim().starts_with("#define") {
                     let mut parts = line.split(' ');
                     let _ = parts.next().unwrap(); // The #define
-                    let (_, symbol_name) = parts.next().unwrap().split_at(1); // Remove the i in iQnil
+                                                   // Remove the i in iQnil
+                    let (_, symbol_name) = parts.next().unwrap().split_at(1);
                     let value = parts.next().unwrap();
                     write!(
                         out_file,
-                        "pub const {}: Lisp_Object = {} * (::std::mem::size_of::<Lisp_Symbol>() as EmacsInt);\n",
+                        "pub const {}: Lisp_Object = {} \
+                         * (::std::mem::size_of::<Lisp_Symbol>() as EmacsInt);\n",
                         symbol_name,
                         value
-                        ).expect("Write error in reading symbols stage");
+                    ).expect("Write error in reading symbols stage");
                 } else if line.trim().starts_with("_Noreturn") {
                     parse_state = ParseState::Complete
                 }
-            },
-            
+            }
+
             ParseState::Complete => {
                 break;
-            }   
+            }
         };
     }
 }

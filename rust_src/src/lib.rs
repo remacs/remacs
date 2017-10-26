@@ -17,13 +17,13 @@ extern crate remacs_sys;
 // Needed for linking.
 extern crate remacs_lib;
 
-extern crate remacs_macros;
+extern crate base64 as base64_crate;
 extern crate libc;
 extern crate md5;
 extern crate rand;
+extern crate remacs_macros;
 extern crate sha1;
 extern crate sha2;
-extern crate base64 as base64_crate;
 
 #[cfg(test)]
 extern crate mock_derive;
@@ -67,6 +67,7 @@ mod cmds;
 mod data;
 mod fns;
 mod dispnew;
+mod indent;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -301,6 +302,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*symbols::Ssymbolp);
         defsubr(&*symbols::Ssymbol_name);
         defsubr(&*symbols::Sfboundp);
+        defsubr(&*symbols::Smakunbound);
         defsubr(&*symbols::Ssymbol_function);
         defsubr(&*symbols::Ssymbol_plist);
         defsubr(&*symbols::Ssetplist);
@@ -430,6 +432,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Spoint_min);
         defsubr(&*editfns::Spoint_max);
         defsubr(&*editfns::Sgoto_char);
+        defsubr(&*editfns::Sposition_bytes);
         defsubr(&*editfns::Sinsert_byte);
         defsubr(&*editfns::Schar_after);
         defsubr(&*editfns::Spropertize);
@@ -442,6 +445,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*data::Sindirect_function);
         defsubr(&*frames::Sselected_frame);
         defsubr(&*dispnew::Ssleep_for);
+        defsubr(&*indent::Scurrent_column);
         defsubr(&*process::Sprocess_list);
     }
 }
