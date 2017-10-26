@@ -292,12 +292,17 @@
 			      nil)))))
 	  res))))
 
-  (defun c-make-font-lock-search-form (regexp highlights)
+  (defun c-make-font-lock-search-form (regexp highlights &optional check-point)
     ;; Return a lisp form which will fontify every occurrence of REGEXP
     ;; (a regular expression, NOT a function) between POINT and `limit'
     ;; with HIGHLIGHTS, a list of highlighters as specified on page
-    ;; "Search-based Fontification" in the elisp manual.
-    `(while (re-search-forward ,regexp limit t)
+    ;; "Search-based Fontification" in the elisp manual.  If CHECK-POINT
+    ;; is non-nil, we will check (< (point) limit) in the main loop.
+    `(while
+	 ,(if check-point
+	      `(and (< (point) limit)
+		    (re-search-forward ,regexp limit t))
+	    `(re-search-forward ,regexp limit t))
        (unless (progn
 		 (goto-char (match-beginning 0))
 		 (c-skip-comments-and-strings limit))
@@ -476,7 +481,9 @@
 			,(c-make-font-lock-search-form
 			  regexp highlights)))))
 	     state-stanzas)
-	  ,(c-make-font-lock-search-form (car normal) (cdr normal))
+	  ;; In the next form, check that point hasn't been moved beyond
+	  ;; `limit' in any of the above stanzas.
+	  ,(c-make-font-lock-search-form (car normal) (cdr normal) t)
 	  nil))))
 
 ;  (eval-after-load "edebug" ; 2006-07-09: def-edebug-spec is now in subr.el.
