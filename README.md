@@ -322,12 +322,20 @@ to be exported with the correct ABI.
 ### Source code style guide
 
 In order to pass Travis checks on pull requests, the source has to
-be formatted according to the default style of `rustfmt`, version 0.9.
+be formatted according to the default style of `rustfmt-nightly`, version 0.2.9.
 To do that, install `rustfmt`:
 
 ```
-$ cargo install rustfmt
+$ cargo install rustfmt-nightly
 ```
+
+Please note that this is not the old `-nightly` version of the
+`rustfmt` crate, 0.9.0. It is a different crate with a lower version
+number which is in fact newer. See
+https://users.rust-lang.org/t/rustfmt-releases/11357 and the linked
+blog post for details. In short, `rustfmt` is being written with a new
+API which only supports nightly at the moment and the split crate
+situation will be resolved eventually.
 
 Then you can run this in the checkout root to reformat all Rust code:
 

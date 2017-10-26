@@ -11,12 +11,12 @@ pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 impl LispProcessRef {
     #[inline]
     fn name(&self) -> LispObject {
-        LispObject::from_raw(self.name)
+        LispObject::from(self.name)
     }
 
     #[inline]
     fn buffer(&self) -> LispObject {
-        LispObject::from_raw(self.buffer)
+        LispObject::from(self.buffer)
     }
 }
 
@@ -35,7 +35,7 @@ fn get_process(name: LispObject) -> LispObject {
         name.as_string_or_error();
         cdr(assoc(
             name,
-            LispObject::from_raw(unsafe { Vprocess_alist }),
+            LispObject::from(unsafe { Vprocess_alist }),
             LispObject::constant_nil(),
         ))
     }
@@ -69,7 +69,7 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
     if buf.is_nil() {
         return LispObject::constant_nil();
     }
-    for tail in LispObject::from_raw(unsafe { Vprocess_alist }).iter_tails() {
+    for tail in LispObject::from(unsafe { Vprocess_alist }).iter_tails() {
         let p = tail.car().as_cons().unwrap().cdr();
         if buf.eq(p.as_process().unwrap().buffer()) {
             return p;
@@ -81,5 +81,5 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
 /// Return a list of all processes that are Emacs sub-processes.
 #[lisp_fn]
 pub fn process_list() -> LispObject {
-    LispObject::from_raw(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
+    LispObject::from(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
 }

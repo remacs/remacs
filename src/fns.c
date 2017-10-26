@@ -43,6 +43,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 enum equal_kind { EQUAL_NO_QUIT, EQUAL_PLAIN, EQUAL_INCLUDING_PROPERTIES };
 bool internal_equal (Lisp_Object, Lisp_Object, enum equal_kind, int, Lisp_Object);
+void hash_clear (struct Lisp_Hash_Table *h);
 
 /* Random data-structure functions.  */
 

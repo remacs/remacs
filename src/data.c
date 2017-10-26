@@ -335,18 +335,6 @@ global value outside of any lexical scope.  */)
   return (EQ (valcontents, Qunbound) ? Qnil : Qt);
 }
 
-DEFUN ("makunbound", Fmakunbound, Smakunbound, 1, 1, 0,
-       doc: /* Make SYMBOL's value be void.
-Return SYMBOL.  */)
-  (register Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  if (SYMBOL_CONSTANT_P (symbol))
-    xsignal1 (Qsetting_constant, symbol);
-  Fset (symbol, Qunbound);
-  return symbol;
-}
-
 DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
        doc: /* Set SYMBOL's function definition to DEFINITION, and return DEFINITION.  */)
   (register Lisp_Object symbol, Lisp_Object definition)
@@ -2656,7 +2644,6 @@ syms_of_data (void)
   defsubr (&Sinteractive_form);
   defsubr (&Stype_of);
   defsubr (&Smodule_function_p);
-  defsubr (&Smakunbound);
   defsubr (&Sboundp);
   defsubr (&Sfset);
   defsubr (&Sdefalias);

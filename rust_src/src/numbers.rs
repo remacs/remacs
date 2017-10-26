@@ -1,7 +1,7 @@
 //! Functions operating on numbers.
 
 use std::sync::Mutex;
-use rand::{StdRng, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, StdRng};
 
 use lisp::LispObject;
 use remacs_sys::{EmacsInt, INTMASK};

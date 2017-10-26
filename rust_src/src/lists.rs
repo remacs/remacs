@@ -1,7 +1,7 @@
 //! Operations on lists.
 
 use lisp::LispObject;
-use remacs_sys::{Qlistp, Qplistp, EmacsInt, globals};
+use remacs_sys::{globals, EmacsInt, Qlistp, Qplistp};
 use remacs_macros::lisp_fn;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
@@ -78,19 +78,17 @@ pub fn cdr(list: LispObject) -> LispObject {
 /// Return the car of OBJECT if it is a cons cell, or else nil.
 #[lisp_fn]
 fn car_safe(object: LispObject) -> LispObject {
-    object.as_cons().map_or(
-        LispObject::constant_nil(),
-        |cons| cons.car(),
-    )
+    object
+        .as_cons()
+        .map_or(LispObject::constant_nil(), |cons| cons.car())
 }
 
 /// Return the cdr of OBJECT if it is a cons cell, or else nil.
 #[lisp_fn]
 fn cdr_safe(object: LispObject) -> LispObject {
-    object.as_cons().map_or(
-        LispObject::constant_nil(),
-        |cons| cons.cdr(),
-    )
+    object
+        .as_cons()
+        .map_or(LispObject::constant_nil(), |cons| cons.cdr())
 }
 
 /// Take cdr N times on LIST, return the result.
@@ -267,11 +265,9 @@ fn plist_get(plist: LispObject, prop: LispObject) -> LispObject {
         if prop_item {
             match tail.cdr().as_cons() {
                 None => break,
-                Some(tail_cdr_cons) => {
-                    if tail.car().eq(prop) {
-                        return tail_cdr_cons.car();
-                    }
-                }
+                Some(tail_cdr_cons) => if tail.car().eq(prop) {
+                    return tail_cdr_cons.car();
+                },
             }
         }
         prop_item = !prop_item;
@@ -297,11 +293,9 @@ fn lax_plist_get(plist: LispObject, prop: LispObject) -> LispObject {
                     }
                     break;
                 }
-                Some(tail_cdr_cons) => {
-                    if tail.car().equal(prop) {
-                        return tail_cdr_cons.car();
-                    }
-                }
+                Some(tail_cdr_cons) => if tail.car().equal(prop) {
+                    return tail_cdr_cons.car();
+                },
             }
         }
         prop_item = !prop_item;
@@ -394,7 +388,7 @@ fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispOb
 #[lisp_fn]
 pub fn get(symbol: LispObject, propname: LispObject) -> LispObject {
     let sym = symbol.as_symbol_or_error();
-    let plist_env = LispObject::from_raw(unsafe { globals.f_Voverriding_plist_environment });
+    let plist_env = LispObject::from(unsafe { globals.f_Voverriding_plist_environment });
     let propval = plist_get(cdr(assq(symbol, plist_env)), propname);
     if propval.is_not_nil() {
         propval
@@ -418,10 +412,11 @@ pub fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispO
 /// usage: (list &rest OBJECTS)
 #[lisp_fn]
 pub fn list(args: &mut [LispObject]) -> LispObject {
-    args.iter().rev().fold(
-        LispObject::constant_nil(),
-        |list, &arg| LispObject::cons(arg, list),
-    )
+    args.iter()
+        .rev()
+        .fold(LispObject::constant_nil(), |list, &arg| {
+            LispObject::cons(arg, list)
+        })
 }
 
 /// Return a newly created list of length LENGTH, with each element being INIT.

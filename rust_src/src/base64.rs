@@ -2,12 +2,12 @@
 
 use std::ptr;
 use std::slice;
-use libc::{ptrdiff_t, c_char, c_uchar};
+use libc::{c_char, c_uchar, ptrdiff_t};
 use base64_crate;
 
 use lisp::LispObject;
 use strings::MIME_LINE_LENGTH;
-use multibyte::{MAX_5_BYTE_CHAR, multibyte_char_at, raw_byte_from_codepoint};
+use multibyte::{multibyte_char_at, raw_byte_from_codepoint, MAX_5_BYTE_CHAR};
 use remacs_sys::make_unibyte_string;
 use remacs_macros::lisp_fn;
 
@@ -168,7 +168,7 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
         error!("Multibyte character in data for base64 encoding");
     }
 
-    unsafe { LispObject::from_raw(make_unibyte_string(encoded, encoded_length)) }
+    unsafe { LispObject::from(make_unibyte_string(encoded, encoded_length)) }
 }
 
 /// Base64-decode STRING and return the result.
@@ -188,5 +188,5 @@ fn base64_decode_string(string: LispObject) -> LispObject {
     } else if decoded_length < 0 {
         error!("Invalid base64 data");
     }
-    unsafe { LispObject::from_raw(make_unibyte_string(decoded, decoded_length)) }
+    unsafe { LispObject::from(make_unibyte_string(decoded, decoded_length)) }
 }
