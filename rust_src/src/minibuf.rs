@@ -21,16 +21,30 @@ pub fn minibufferp(object: LispObject) -> LispObject {
         object
     };
     LispObject::from_bool(
-        memq(buffer, LispObject::from_raw(unsafe { Vminibuffer_list })).is_not_nil(),
+        memq(buffer, LispObject::from(unsafe { Vminibuffer_list })).is_not_nil(),
     )
 }
 
 /// Return the currently active minibuffer window, or nil if none.
 #[lisp_fn]
 fn active_minibuffer_window() -> LispObject {
-    if LispObject::from_raw(unsafe { minibuf_level }).is_nil() {
+    if LispObject::from(unsafe { minibuf_level }).is_nil() {
         LispObject::constant_nil()
     } else {
-        LispObject::from_raw(unsafe { minibuf_window })
+        LispObject::from(unsafe { minibuf_window })
     }
+}
+
+/// Specify which minibuffer window to use for the minibuffer.
+/// This affects where the minibuffer is displayed if you put text in it
+/// without invoking the usual minibuffer commands.
+#[lisp_fn]
+pub fn set_minibuffer_window(window: LispObject) -> LispObject {
+    window.as_minibuffer_or_error(); // just for the checks
+
+    unsafe {
+        minibuf_window = window.to_raw();
+    }
+
+    window
 }

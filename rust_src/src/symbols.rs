@@ -11,15 +11,15 @@ const FLAG_REDIRECT: u32 = 0b1110; // bits 2, 3 and 4
 
 impl LispSymbolRef {
     pub fn symbol_name(&self) -> LispObject {
-        LispObject::from_raw(self.name)
+        LispObject::from(self.name)
     }
 
     pub fn get_function(&self) -> LispObject {
-        LispObject::from_raw(self.function)
+        LispObject::from(self.function)
     }
 
     pub fn get_plist(&self) -> LispObject {
-        LispObject::from_raw(self.plist)
+        LispObject::from(self.plist)
     }
 
     pub fn set_plist(&mut self, plist: LispObject) {
@@ -44,7 +44,7 @@ impl LispSymbolRef {
     }
 
     pub fn as_lisp_obj(mut self) -> LispObject {
-        LispObject::from_raw(unsafe { make_lisp_symbol(self.as_mut()) })
+        LispObject::from(unsafe { make_lisp_symbol(self.as_mut()) })
     }
 
     /// Return the symbol holding SYMBOL's value.  Signal
