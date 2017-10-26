@@ -32,7 +32,7 @@ impl LispWindowRef {
 
     #[inline]
     pub fn frame(&self) -> LispObject {
-        LispObject::from_raw(self.frame)
+        LispObject::from(self.frame)
     }
 
     #[inline]
