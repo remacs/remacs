@@ -3,7 +3,7 @@
 use lisp::{ExternalPtr, LispObject};
 use remacs_macros::lisp_fn;
 use remacs_sys::{minibuf_level, minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, EmacsInt, Lisp_Window};
+                 selected_window as current_window, EmacsInt, Lisp_Window, Qceiling, Qfloor};
 use marker::marker_position;
 use editfns::point;
 use libc::c_int;
@@ -42,12 +42,12 @@ impl LispWindowRef {
 
     #[inline]
     pub fn frame(&self) -> LispObject {
-        LispObject::from_raw(self.frame)
+        LispObject::from(self.frame)
     }
 
     pub fn total_width(&self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from_raw(unsafe { Qfloor });
-        let qceiling = LispObject::from_raw(unsafe { Qceiling });
+        let qfloor = LispObject::from(unsafe { Qfloor });
+        let qceiling = LispObject::from(unsafe { Qceiling });
 
         if !(round == qfloor || round == qceiling) {
             self.total_cols
@@ -63,8 +63,8 @@ impl LispWindowRef {
     }
 
     pub fn total_height(&self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from_raw(unsafe { Qfloor });
-        let qceiling = LispObject::from_raw(unsafe { Qceiling });
+        let qfloor = LispObject::from(unsafe { Qfloor });
+        let qceiling = LispObject::from(unsafe { Qceiling });
 
         if !(round == qfloor || round == qceiling) {
             self.total_lines
