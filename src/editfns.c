@@ -1017,17 +1017,6 @@ See also `gap-position'.  */)
   return temp;
 }
 
-DEFUN ("position-bytes", Fposition_bytes, Sposition_bytes, 1, 1, 0,
-       doc: /* Return the byte position for character position POSITION.
-If POSITION is out of range, the value is nil.  */)
-  (Lisp_Object position)
-{
-  CHECK_NUMBER_COERCE_MARKER (position);
-  if (XINT (position) < BEG || XINT (position) > Z)
-    return Qnil;
-  return make_number (CHAR_TO_BYTE (XINT (position)));
-}
-
 DEFUN ("byte-to-position", Fbyte_to_position, Sbyte_to_position, 1, 1, 0,
        doc: /* Return the character position for byte position BYTEPOS.
 If BYTEPOS is out of range, the value is nil.  */)
@@ -3804,37 +3793,6 @@ DEFUN ("current-message", Fcurrent_message, Scurrent_message, 0, 0, 0,
   return current_message ();
 }
 
-
-DEFUN ("propertize", Fpropertize, Spropertize, 1, MANY, 0,
-       doc: /* Return a copy of STRING with text properties added.
-First argument is the string to copy.
-Remaining arguments form a sequence of PROPERTY VALUE pairs for text
-properties to add to the result.
-usage: (propertize STRING &rest PROPERTIES)  */)
-  (ptrdiff_t nargs, Lisp_Object *args)
-{
-  Lisp_Object properties, string;
-  ptrdiff_t i;
-
-  /* Number of args must be odd.  */
-  if ((nargs & 1) == 0)
-    error ("Wrong number of arguments");
-
-  properties = string = Qnil;
-
-  /* First argument must be a string.  */
-  CHECK_STRING (args[0]);
-  string = Fcopy_sequence (args[0]);
-
-  for (i = 1; i < nargs; i += 2)
-    properties = Fcons (args[i], Fcons (args[i + 1], properties));
-
-  Fadd_text_properties (make_number (0),
-			make_number (SCHARS (string)),
-			properties, string);
-  return string;
-}
-
 /* Convert the prefix of STR from ASCII decimal digits to a number.
    Set *STR_END to the address of the first non-digit.  Return the
    number, or PTRDIFF_MAX on overflow.  Return 0 if there is no number.
@@ -5207,7 +5165,6 @@ functions if all the text being accessed has this property.  */);
   DEFVAR_LISP ("operating-system-release", Voperating_system_release,
 	       doc: /* The release of the operating system Emacs is running on.  */);
 
-  defsubr (&Spropertize);
   defsubr (&Schar_equal);
   defsubr (&Sstring_to_char);
   defsubr (&Schar_to_string);
@@ -5242,7 +5199,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Spoint_max_marker);
   defsubr (&Sgap_position);
   defsubr (&Sgap_size);
-  defsubr (&Sposition_bytes);
   defsubr (&Sbyte_to_position);
 
   defsubr (&Sfollowing_char);

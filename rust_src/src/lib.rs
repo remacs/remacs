@@ -15,16 +15,15 @@ extern crate lazy_static;
 extern crate remacs_sys;
 
 // Needed for linking.
-#[allow(unused_extern_crates)]
 extern crate remacs_lib;
 
-extern crate remacs_macros;
+extern crate base64 as base64_crate;
 extern crate libc;
 extern crate md5;
 extern crate rand;
+extern crate remacs_macros;
 extern crate sha1;
 extern crate sha2;
-extern crate base64 as base64_crate;
 
 #[cfg(test)]
 extern crate mock_derive;
@@ -68,6 +67,7 @@ mod cmds;
 mod data;
 mod fns;
 mod dispnew;
+mod indent;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
@@ -222,6 +222,7 @@ pub use objects::Fidentity;
 pub use hashtable::Fgethash;
 pub use hashtable::Fremhash;
 pub use hashtable::Fputhash;
+pub use hashtable::Fhash_table_rehash_threshold;
 
 #[cfg(test)]
 pub use functions::make_float;
@@ -261,6 +262,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*process::Sprocess_name);
+        defsubr(&*process::Sprocess_buffer);
         defsubr(&*process::Sget_buffer_process);
         defsubr(&*lists::Satom);
         defsubr(&*lists::Slistp);
@@ -302,6 +304,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*symbols::Ssymbolp);
         defsubr(&*symbols::Ssymbol_name);
         defsubr(&*symbols::Sfboundp);
+        defsubr(&*symbols::Smakunbound);
         defsubr(&*symbols::Ssymbol_function);
         defsubr(&*symbols::Ssymbol_plist);
         defsubr(&*symbols::Ssetplist);
@@ -376,6 +379,12 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*hashtable::Sputhash);
         defsubr(&*hashtable::Smaphash);
         defsubr(&*hashtable::Shash_table_count);
+        defsubr(&*hashtable::Shash_table_rehash_threshold);
+        defsubr(&*hashtable::Shash_table_size);
+        defsubr(&*hashtable::Shash_table_test);
+        defsubr(&*hashtable::Shash_table_weakness);
+        defsubr(&*hashtable::Sclrhash);
+        defsubr(&*hashtable::Sdefine_hash_table_test);
         defsubr(&*fonts::Sfontp);
         defsubr(&*crypto::Smd5);
         defsubr(&*crypto::Ssecure_hash);
@@ -425,15 +434,20 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Spoint_min);
         defsubr(&*editfns::Spoint_max);
         defsubr(&*editfns::Sgoto_char);
+        defsubr(&*editfns::Sposition_bytes);
         defsubr(&*editfns::Sinsert_byte);
         defsubr(&*editfns::Schar_after);
+        defsubr(&*editfns::Spropertize);
         defsubr(&*fns::Sfeaturep);
         defsubr(&*minibuf::Sminibufferp);
         defsubr(&*minibuf::Sactive_minibuffer_window);
+        defsubr(&*minibuf::Sset_minibuffer_window);
         defsubr(&*threads::Sthread_name);
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);
         defsubr(&*frames::Sselected_frame);
         defsubr(&*dispnew::Ssleep_for);
+        defsubr(&*indent::Scurrent_column);
+        defsubr(&*process::Sprocess_list);
     }
 }

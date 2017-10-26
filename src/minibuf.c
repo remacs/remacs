@@ -108,22 +108,6 @@ choose_minibuf_frame (void)
   }
 }
 
-DEFUN ("set-minibuffer-window", Fset_minibuffer_window,
-       Sset_minibuffer_window, 1, 1, 0,
-       doc: /* Specify which minibuffer window to use for the minibuffer.
-This affects where the minibuffer is displayed if you put text in it
-without invoking the usual minibuffer commands.  */)
-  (Lisp_Object window)
-{
-  CHECK_WINDOW (window);
-  if (! MINI_WINDOW_P (XWINDOW (window)))
-    error ("Window is not a minibuffer window");
-
-  minibuf_window = window;
-
-  return window;
-}
-
 
 /* Actual minibuffer invocation.  */
 
@@ -2083,7 +2067,6 @@ It must be a character, which will be used to mask the input
 characters.  This variable should never be set globally.  */);
   Vread_hide_char = Qnil;
 
-  defsubr (&Sset_minibuffer_window);
   defsubr (&Sread_from_minibuffer);
   defsubr (&Sread_string);
   defsubr (&Sread_command);

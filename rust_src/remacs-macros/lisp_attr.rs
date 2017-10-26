@@ -16,6 +16,10 @@ pub struct LispFnArgs {
     /// If not given, all arguments are required for normal functions,
     /// and no arguments are required for MANY functions.
     pub min: i16,
+    /// The interactive specification. This may be a normal prompt
+    /// string, such as `"bBuffer: "` or an elisp form as a string.
+    /// If the function is not interactive, this should be None.
+    pub intspec: Option<String>,
 }
 
 pub fn parse(input: &str, function: &Function) -> Result<LispFnArgs, &'static str> {
@@ -30,6 +34,7 @@ pub fn parse(input: &str, function: &Function) -> Result<LispFnArgs, &'static st
 fn parse_kv(kv_list: Vec<(syn::Ident, syn::StrLit)>, function: &Function) -> LispFnArgs {
     let mut name = None;
     let mut c_name = None;
+    let mut intspec = None;
     let mut min = match function.fntype {
         LispFnType::Many => 0,
         LispFnType::Normal(n) => n,
@@ -39,13 +44,15 @@ fn parse_kv(kv_list: Vec<(syn::Ident, syn::StrLit)>, function: &Function) -> Lis
             "name" => name = Some(string.value),
             "c_name" => c_name = Some(string.value),
             "min" => min = i16::from_str(&string.value).unwrap(),
+            "intspec" => intspec = Some(string.value),
             _ => (), // TODO: throw a warning?
         }
     }
     LispFnArgs {
         name: name.unwrap_or_else(|| function.name.to_string().replace("_", "-")),
         c_name: c_name.unwrap_or_else(|| function.name.to_string()),
-        min: min,
+        min,
+        intspec,
     }
 }
 
