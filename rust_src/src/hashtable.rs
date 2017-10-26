@@ -290,7 +290,7 @@ fn hash_table_size(table: LispObject) -> LispObject {
 /// Return the test TABLE uses.
 #[lisp_fn]
 fn hash_table_test(table: LispObject) -> LispObject {
-    LispObject::from_raw(table.as_hash_table_or_error().test.name)
+    LispObject::from(table.as_hash_table_or_error().test.name)
 }
 
 /// Return the weakness of TABLE.
@@ -320,6 +320,6 @@ fn clrhash(table: LispObject) -> LispObject {
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
 fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
-    let sym = unsafe { LispObject::from_raw(Qhash_table_test) };
+    let sym = unsafe { LispObject::from(Qhash_table_test) };
     put(name, sym, list(&mut [test, hash]))
 }
