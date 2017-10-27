@@ -973,6 +973,7 @@ pub struct Lisp_Hash_Table {
 
 extern "C" {
     pub static mut globals: emacs_globals;
+    pub static mut current_global_map: Lisp_Object;
     pub static current_thread: *mut thread_state;
 
     pub static lispsym: Lisp_Symbol;
