@@ -3129,7 +3129,7 @@ On Posix hosts, this setting is inherited by subprocesses.
 
 This function works by setting the Emacs's file mode creation mask.
 Each bit that is set in the mask means that the corresponding bit
-in the the permissions of newly created files will be disabled.
+in the permissions of newly created files will be disabled.
 
 Note that when `write-region' creates a file, it resets the
 execute bit, even if the mask set by this function allows that bit
