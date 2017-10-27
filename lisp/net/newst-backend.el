@@ -386,12 +386,12 @@ This hook is run at the very end of `newsticker-stop'."
 (defcustom newsticker-new-item-functions
   nil
   "List of functions run after a new headline has been retrieved.
-Each function is called with the following three arguments:
-FEED  the name of the corresponding news feed,
-TITLE the title of the headline,
-DESC  the decoded description of the headline.
+Each function is called with the following two arguments:
+FEEDNAME  the name of the corresponding news feed,
+ITEM      the decoded headline.
 
-See `newsticker-download-images', and
+See `newsticker-new-item-functions-sample',
+`newsticker-download-images', and
 `newsticker-download-enclosures' for sample functions.
 
 Please note that these functions are called only once for a
@@ -2444,24 +2444,25 @@ LIST must be an element of `newsticker-auto-mark-filter-list'."
 ;; ======================================================================
 ;;; Hook samples
 ;; ======================================================================
-(defun newsticker-new-item-functions-sample (feed item)
+(defun newsticker-new-item-functions-sample (feedname item)
   "Demonstrate the use of the `newsticker-new-item-functions' hook.
-This function just prints out the values of the FEED and title of the ITEM."
+This function just prints out the values of the FEEDNAME and title of the ITEM."
   (message (concat "newsticker-new-item-functions-sample: feed=`%s', "
                    "title=`%s'")
-           feed (newsticker--title item)))
+           feedname (newsticker--title item)))
 
-(defun newsticker-download-images (feed item)
+(defun newsticker-download-images (feedname item)
   "Download the first image.
-If FEED equals \"imagefeed\" download the first image URL found
-in the description=contents of ITEM to the directory
-\"~/tmp/newsticker/FEED/TITLE\" where TITLE is the title of the item."
-  (when (string= feed "imagefeed")
+If FEEDNAME equals \"imagefeed\" download the first image URL
+found in the description=contents of ITEM to the directory
+\"~/tmp/newsticker/FEEDNAME/TITLE\" where TITLE is the title of
+the item."
+  (when (string= feedname "imagefeed")
     (let ((title (newsticker--title item))
           (desc (newsticker--desc item)))
       (when (string-match "<img src=\"\\(http://[^ \"]+\\)\"" desc)
         (let ((url (substring desc (match-beginning 1) (match-end 1)))
-              (temp-dir (concat "~/tmp/newsticker/" feed "/" title))
+              (temp-dir (concat "~/tmp/newsticker/" feedname "/" title))
               (org-dir default-directory))
           (unless (file-directory-p temp-dir)
             (make-directory temp-dir t))
@@ -2473,17 +2474,17 @@ in the description=contents of ITEM to the directory
                  (list url))
           (cd org-dir))))))
 
-(defun newsticker-download-enclosures (feed item)
-  "In all FEEDs download the enclosed object of the news ITEM.
-The object is saved to the directory \"~/tmp/newsticker/FEED/TITLE\", which
+(defun newsticker-download-enclosures (feedname item)
+  "In all feeds download the enclosed object of the news ITEM.
+The object is saved to the directory \"~/tmp/newsticker/FEEDNAME/TITLE\", which
 is created if it does not exist.  TITLE is the title of the news
-item.  Argument FEED is ignored.
+item.  Argument FEEDNAME is ignored.
 This function is suited for adding it to `newsticker-new-item-functions'."
   (let ((title (newsticker--title item))
         (enclosure (newsticker--enclosure item)))
     (when enclosure
       (let ((url (cdr (assoc 'url enclosure)))
-            (temp-dir (concat "~/tmp/newsticker/" feed "/" title))
+            (temp-dir (concat "~/tmp/newsticker/" feedname "/" title))
             (org-dir default-directory))
         (unless (file-directory-p temp-dir)
           (make-directory temp-dir t))
