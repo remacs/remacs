@@ -10,17 +10,17 @@ pub fn forward_point(n: LispObject) -> LispObject {
     LispObject::from_fixnum(n.as_fixnum_or_error() + pt as EmacsInt)
 }
 
-#[lisp_fn(min = "0")]
-pub fn beginning_of_line(n: LispObject) -> LispObject {
+//Move point to beginning of current line (in the logical order).
+//With argument N not nil or 1, move forward N - 1 lines first.
+//If point reaches the beginning or end of buffer, it stops there.
+#[lisp_fn(min = "0", intspec = "^p")]
+pub fn beginning_of_line(mut n: LispObject) -> LispObject {
 
-    let x = if n.is_nil() {
-        LispObject::from_fixnum(1)
-    } else {
-        n
-    };
+    if n.is_nil()
+        n = LispObject::from_fixnum(1);
 
     let pos = unsafe {
-        LispObject::from_raw(Fline_beginning_position(x.to_raw()))
+        LispObject::from_raw(Fline_beginning_position(n.to_raw()))
     };
     unsafe { set_point(pos.as_fixnum_or_error() as isize) };
     LispObject::constant_nil()
