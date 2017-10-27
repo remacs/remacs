@@ -1821,7 +1821,9 @@ has these permissions, or a subset of them (@code{write-region} will
 not grant execute permissions even if the default file permissions
 allow execution).  On GNU and other POSIX-like systems, the default
 permissions are given by the bitwise complement of the @samp{umask}
-value.
+value, i.e.@: each bit that is set in the argument @var{mode} will be
+@emph{reset} in the default permissions with which Emacs creates
+files.
 
 The argument @var{mode} should be an integer which specifies the
 permissions, similar to @code{set-file-modes} above.  Only the lowest
