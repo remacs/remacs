@@ -330,7 +330,7 @@ Then you can run this in the checkout root to reformat all Rust code:
 $ make rustfmt
 ```
 
-### Running elisp tests
+### Running tests
 
 * make check
   Run all tests as defined in the directory.  Expensive tests are
@@ -340,9 +340,6 @@ $ make rustfmt
 * make check-maybe
   Like "make check", but run only the tests for files which have
   unresolved prerequisites.
-
-You can also run the elisp test suite from the directory "test".
-It's possible to run single tests, e.g. `make src/data-tests`.
 
 ## Design Goals
 
