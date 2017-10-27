@@ -5469,6 +5469,17 @@ make_monitor_attribute_list (struct MonitorInfo *monitors,
 
 #endif /* HAVE_WINDOW_SYSTEM */
 
+/* Accessors to enable Rust code to get data from the Frame struct */
+int fget_column_width(const struct frame *f)
+{
+  return f->column_width;
+}
+
+int fget_line_height(const struct frame *f)
+{
+  return f->line_height;
+}
+
 
 /***********************************************************************
 				Initialization

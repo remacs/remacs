@@ -2,8 +2,10 @@
 
 use lisp::{ExternalPtr, LispObject};
 use remacs_macros::lisp_fn;
-use remacs_sys::{minibuf_level, minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, EmacsInt, Lisp_Window};
+use remacs_sys::{fget_column_width, fget_line_height, minibuf_level,
+                 minibuf_selected_window as current_minibuf_window,
+                 selected_window as current_window, EmacsInt, Lisp_Window, Qceiling, Qfloor,
+                 Qwindowp};
 use marker::marker_position;
 use editfns::point;
 use libc::c_int;
@@ -38,6 +40,47 @@ impl LispWindowRef {
     #[inline]
     pub fn is_minibuffer(&self) -> bool {
         self.flags & FLAG_MINI != 0
+    }
+
+    #[inline]
+    pub fn frame(&self) -> LispObject {
+        LispObject::from(self.frame)
+    }
+
+    pub fn total_width(&self, round: LispObject) -> i32 {
+        let qfloor = LispObject::from(unsafe { Qfloor });
+        let qceiling = LispObject::from(unsafe { Qceiling });
+
+        if !(round == qfloor || round == qceiling) {
+            self.total_cols
+        } else {
+            let frame = self.frame().as_frame_or_error();
+            let unit = unsafe { fget_column_width(frame.as_ptr()) };
+
+            if round == qceiling {
+                (self.pixel_width + unit - 1) / unit
+            } else {
+                self.pixel_width / unit
+            }
+        }
+    }
+
+    pub fn total_height(&self, round: LispObject) -> i32 {
+        let qfloor = LispObject::from(unsafe { Qfloor });
+        let qceiling = LispObject::from(unsafe { Qceiling });
+
+        if !(round == qfloor || round == qceiling) {
+            self.total_lines
+        } else {
+            let frame = self.frame().as_frame_or_error();
+            let unit = unsafe { fget_line_height(frame.as_ptr()) };
+
+            if round == qceiling {
+                (self.pixel_height + unit - 1) / unit
+            } else {
+                self.pixel_height / unit
+            }
+        }
     }
 }
 
@@ -179,4 +222,81 @@ pub fn minibuffer_selected_window() -> LispObject {
     } else {
         LispObject::constant_nil()
     }
+}
+
+/// Return the total width of window WINDOW in columns.
+/// WINDOW is optional and defaults to the selected window. If provided it must
+/// be a valid window.
+///
+/// The return value includes the widths of WINDOW's fringes, margins,
+/// scroll bars and its right divider, if any.  If WINDOW is an internal
+/// window, the total width is the width of the screen areas spanned by its
+/// children.
+///
+/// If WINDOW's pixel width is not an integral multiple of its frame's
+/// character width, the number of lines occupied by WINDOW is rounded
+/// internally.  This is done in a way such that, if WINDOW is a parent
+/// window, the sum of the total widths of all its children internally
+/// equals the total width of WINDOW.
+///
+/// If the optional argument ROUND is `ceiling', return the smallest integer
+/// larger than WINDOW's pixel width divided by the character width of
+/// WINDOW's frame.  ROUND `floor' means to return the largest integer
+/// smaller than WINDOW's pixel width divided by the character width of
+/// WINDOW's frame.  Any other value of ROUND means to return the internal
+/// total width of WINDOW.
+#[lisp_fn(min = "0")]
+pub fn window_total_width(window: LispObject, round: LispObject) -> LispObject {
+    let win = if window.is_nil() {
+        selected_window().as_window_or_error()
+    } else {
+        window
+            .as_window()
+            .and_then(|w| if w.contents().is_not_nil() {
+                Some(w)
+            } else {
+                None
+            })
+            .unwrap_or_else(|| wrong_type!(Qwindowp, window))
+    };
+
+    LispObject::from_natnum(win.total_width(round) as EmacsInt)
+}
+
+/// Return the height of window WINDOW in lines.
+/// WINDOW is optional and defaults to the selected window. If provided it must
+/// be a valid window.
+///
+/// The return value includes the heights of WINDOW's mode and header line
+/// and its bottom divider, if any.  If WINDOW is an internal window, the
+/// total height is the height of the screen areas spanned by its children.
+///
+/// If WINDOW's pixel height is not an integral multiple of its frame's
+/// character height, the number of lines occupied by WINDOW is rounded
+/// internally.  This is done in a way such that, if WINDOW is a parent
+/// window, the sum of the total heights of all its children internally
+/// equals the total height of WINDOW.
+///
+/// If the optional argument ROUND is `ceiling', return the smallest integer
+/// larger than WINDOW's pixel height divided by the character height of
+/// WINDOW's frame.  ROUND `floor' means to return the largest integer
+/// smaller than WINDOW's pixel height divided by the character height of
+/// WINDOW's frame.  Any other value of ROUND means to return the internal
+/// total height of WINDOW.
+#[lisp_fn(min = "0")]
+pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject {
+    let win = if window.is_nil() {
+        selected_window().as_window_or_error()
+    } else {
+        window
+            .as_window()
+            .and_then(|w| if w.contents().is_not_nil() {
+                Some(w)
+            } else {
+                None
+            })
+            .unwrap_or_else(|| wrong_type!(Qwindowp, window))
+    };
+
+    LispObject::from_natnum(win.total_height(round) as EmacsInt)
 }

@@ -697,79 +697,6 @@ after that.  */)
 	  (decode_valid_window (window)->pixel_height_before_size_change));
 }
 
-DEFUN ("window-total-height", Fwindow_total_height, Swindow_total_height, 0, 2, 0,
-       doc: /* Return the height of window WINDOW in lines.
-WINDOW must be a valid window and defaults to the selected one.
-
-The return value includes the heights of WINDOW's mode and header line
-and its bottom divider, if any.  If WINDOW is an internal window, the
-total height is the height of the screen areas spanned by its children.
-
-If WINDOW's pixel height is not an integral multiple of its frame's
-character height, the number of lines occupied by WINDOW is rounded
-internally.  This is done in a way such that, if WINDOW is a parent
-window, the sum of the total heights of all its children internally
-equals the total height of WINDOW.
-
-If the optional argument ROUND is `ceiling', return the smallest integer
-larger than WINDOW's pixel height divided by the character height of
-WINDOW's frame.  ROUND `floor' means to return the largest integer
-smaller than WINDOW's pixel height divided by the character height of
-WINDOW's frame.  Any other value of ROUND means to return the internal
-total height of WINDOW.  */)
-  (Lisp_Object window, Lisp_Object round)
-{
-  struct window *w = decode_valid_window (window);
-
-  if (! EQ (round, Qfloor) && ! EQ (round, Qceiling))
-    return make_number (w->total_lines);
-  else
-    {
-      int unit = FRAME_LINE_HEIGHT (WINDOW_XFRAME (w));
-
-      return make_number (EQ (round, Qceiling)
-			  ? ((w->pixel_height + unit - 1) /unit)
-			  : (w->pixel_height / unit));
-    }
-}
-
-DEFUN ("window-total-width", Fwindow_total_width, Swindow_total_width, 0, 2, 0,
-       doc: /* Return the total width of window WINDOW in columns.
-WINDOW must be a valid window and defaults to the selected one.
-
-The return value includes the widths of WINDOW's fringes, margins,
-scroll bars and its right divider, if any.  If WINDOW is an internal
-window, the total width is the width of the screen areas spanned by its
-children.
-
-If WINDOW's pixel width is not an integral multiple of its frame's
-character width, the number of lines occupied by WINDOW is rounded
-internally.  This is done in a way such that, if WINDOW is a parent
-window, the sum of the total widths of all its children internally
-equals the total width of WINDOW.
-
-If the optional argument ROUND is `ceiling', return the smallest integer
-larger than WINDOW's pixel width divided by the character width of
-WINDOW's frame.  ROUND `floor' means to return the largest integer
-smaller than WINDOW's pixel width divided by the character width of
-WINDOW's frame.  Any other value of ROUND means to return the internal
-total width of WINDOW.  */)
-  (Lisp_Object window, Lisp_Object round)
-{
-  struct window *w = decode_valid_window (window);
-
-  if (! EQ (round, Qfloor) && ! EQ (round, Qceiling))
-    return make_number (w->total_cols);
-  else
-    {
-      int unit = FRAME_COLUMN_WIDTH (WINDOW_XFRAME (w));
-
-      return make_number (EQ (round, Qceiling)
-			  ? ((w->pixel_width + unit - 1) /unit)
-			  : (w->pixel_width / unit));
-    }
-}
-
 DEFUN ("window-new-total", Fwindow_new_total, Swindow_new_total, 0, 1, 0,
        doc: /* Return the new total size of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -7645,8 +7572,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_pixel_height);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
-  defsubr (&Swindow_total_width);
-  defsubr (&Swindow_total_height);
   defsubr (&Swindow_normal_size);
   defsubr (&Swindow_new_pixel);
   defsubr (&Swindow_new_total);
