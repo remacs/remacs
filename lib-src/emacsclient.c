@@ -1576,10 +1576,10 @@ start_daemon_and_retry_set_socket (void)
     }
   else
     {
-      char emacs[] = "emacs";
+      char remacs[] = "remacs";
       char daemon_option[] = "--daemon";
       char *d_argv[3];
-      d_argv[0] = emacs;
+      d_argv[0] = remacs;
       d_argv[1] = daemon_option;
       d_argv[2] = 0;
       if (socket_name != NULL)
@@ -1591,8 +1591,8 @@ start_daemon_and_retry_set_socket (void)
 	  strcpy (stpcpy (daemon_arg, deq), socket_name);
 	  d_argv[1] = daemon_arg;
 	}
-      execvp ("emacs", d_argv);
-      message (true, "%s: error starting emacs daemon\n", progname);
+      execvp ("remacs", d_argv);
+      message (true, "%s: error starting remacs daemon\n", progname);
     }
 #else  /* WINDOWSNT */
   DWORD wait_result;
@@ -1608,7 +1608,7 @@ start_daemon_and_retry_set_socket (void)
      it is ready to accept client connections, by asserting an event
      whose name is known to the daemon (defined by nt/inc/ms-w32.h).  */
 
-  if (!CreateProcess (NULL, (LPSTR)"emacs --daemon", NULL, NULL, FALSE,
+  if (!CreateProcess (NULL, (LPSTR)"remacs --daemon", NULL, NULL, FALSE,
                       CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
     {
       char* msg = NULL;
@@ -1617,7 +1617,7 @@ start_daemon_and_retry_set_socket (void)
 		     | FORMAT_MESSAGE_ALLOCATE_BUFFER
 		     | FORMAT_MESSAGE_ARGUMENT_ARRAY,
 		     NULL, GetLastError (), 0, (LPTSTR)&msg, 0, NULL);
-      message (true, "%s: error starting emacs daemon (%s)\n", progname, msg);
+      message (true, "%s: error starting remacs daemon (%s)\n", progname, msg);
       exit (EXIT_FAILURE);
     }
 
@@ -1647,7 +1647,7 @@ start_daemon_and_retry_set_socket (void)
 			 NULL, GetLastError (), 0, (LPTSTR)&msg, 0, NULL);
 	  break;
 	}
-      message (true, "Error: Could not start the Emacs daemon: %s\n", msg);
+      message (true, "Error: Could not start the Remacs daemon: %s\n", msg);
       exit (EXIT_FAILURE);
     }
   CloseHandle (w32_daemon_event);
@@ -1657,11 +1657,11 @@ start_daemon_and_retry_set_socket (void)
      emacsclientw.  */
   if (!w32_window_app ())
     message (true,
-	     "Emacs daemon should have started, trying to connect again\n");
+	     "Remacs daemon should have started, trying to connect again\n");
   if ((emacs_socket = set_socket (1)) == INVALID_SOCKET)
     {
       message (true,
-	       "Error: Cannot connect even after starting the Emacs daemon\n");
+	       "Error: Cannot connect even after starting the Remacs daemon\n");
       exit (EXIT_FAILURE);
     }
 #endif	/* WINDOWSNT */

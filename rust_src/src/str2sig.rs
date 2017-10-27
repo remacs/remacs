@@ -82,14 +82,12 @@ pub unsafe extern "C" fn str2sig(signame: *const c_char, signum: *mut c_int) -> 
             *signum = i;
             return 0;
         }
-        Err(_) => {
-            for &(name, num) in numname.iter() {
-                if name == s {
-                    *signum = num;
-                    return 0;
-                }
+        Err(_) => for &(name, num) in numname.iter() {
+            if name == s {
+                *signum = num;
+                return 0;
             }
-        }
+        },
     }
     -1
 }

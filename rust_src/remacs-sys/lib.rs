@@ -18,8 +18,8 @@ extern crate libc;
 
 pub mod libm;
 
-use libc::{c_char, c_uchar, c_short, c_int, c_double, c_float, c_void, ptrdiff_t, size_t, off_t,
-           time_t, timespec};
+use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
+           size_t, time_t, timespec};
 
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
@@ -36,16 +36,16 @@ pub const CHAR_HYPER: char_bits = 0x1000000;
 pub const CHAR_SHIFT: char_bits = 0x2000000;
 pub const CHAR_CTL: char_bits = 0x4000000;
 pub const CHAR_META: char_bits = 0x8000000;
-pub const CHAR_MODIFIER_MASK: char_bits = CHAR_ALT | CHAR_SUPER | CHAR_HYPER | CHAR_SHIFT |
-    CHAR_CTL | CHAR_META;
+pub const CHAR_MODIFIER_MASK: char_bits =
+    CHAR_ALT | CHAR_SUPER | CHAR_HYPER | CHAR_SHIFT | CHAR_CTL | CHAR_META;
 pub const CHARACTERBITS: char_bits = 22;
 
 pub const PSEUDOVECTOR_FLAG: ptrdiff_t = std::isize::MAX - std::isize::MAX / 2;
 pub const PSEUDOVECTOR_SIZE_BITS: ptrdiff_t = 12;
 pub const PSEUDOVECTOR_SIZE_MASK: ptrdiff_t = (1 << PSEUDOVECTOR_SIZE_BITS) - 1;
 pub const PSEUDOVECTOR_REST_BITS: ptrdiff_t = 12;
-pub const PSEUDOVECTOR_REST_MASK: ptrdiff_t = (((1 << PSEUDOVECTOR_REST_BITS) - 1) <<
-                                                   PSEUDOVECTOR_SIZE_BITS);
+pub const PSEUDOVECTOR_REST_MASK: ptrdiff_t =
+    (((1 << PSEUDOVECTOR_REST_BITS) - 1) << PSEUDOVECTOR_SIZE_BITS);
 pub const PSEUDOVECTOR_AREA_BITS: ptrdiff_t = PSEUDOVECTOR_SIZE_BITS + PSEUDOVECTOR_REST_BITS;
 pub const PVEC_TYPE_MASK: ptrdiff_t = 0x3f << PSEUDOVECTOR_AREA_BITS;
 
@@ -62,11 +62,13 @@ pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (INTTYPEBITS - 1));
 pub const MOST_POSITIVE_FIXNUM: EmacsInt = EMACS_INT_MAX >> INTTYPEBITS;
 pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 
+// Max value for the first argument of wait_reading_process_output.
+pub const WAIT_READING_MAX: i64 = std::i64::MAX;
+
 /// Bit pattern used in the least significant bits of a lisp object,
 /// to denote its type.
 #[repr(u8)]
-#[derive(PartialEq, Eq)]
-#[derive(Copy, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Lisp_Type {
     // Symbol.  XSYMBOL (object) points to a struct Lisp_Symbol.
     Lisp_Symbol = 0,
@@ -196,8 +198,8 @@ pub struct Lisp_String {
 pub union SymbolUnion {
     pub value: Lisp_Object,
     pub alias: *mut Lisp_Symbol,
-pub blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
-pub fwd: *mut c_void, // @TODO implement Lisp_Fwd
+    pub blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
+    pub fwd: *mut c_void, // @TODO implement Lisp_Fwd
 }
 
 /// Interned state of a symbol.
@@ -214,6 +216,13 @@ pub enum Symbol_Redirect {
     VarAlias = 1,
     Localized = 2,
     Forwarded = 3,
+}
+
+#[repr(C)]
+pub enum Symbol_Trapped_Write {
+    UntrappedWrite = 0,
+    NoWrite = 1,
+    TrappedWrite = 2,
 }
 
 /// This struct has 4 bytes of padding, representing the bitfield that
@@ -607,7 +616,7 @@ pub enum EqualKind {
 pub struct re_registers {
     pub num_regs: libc::c_uint,
     pub start: *mut c_void, // TODO
-    pub end: *mut c_void, // TODO
+    pub end: *mut c_void,   // TODO
 }
 
 #[repr(C)]
@@ -999,6 +1008,7 @@ extern "C" {
     pub static Qfont_entity: Lisp_Object;
     pub static Qfont_object: Lisp_Object;
     pub static Qhash_table_p: Lisp_Object;
+    pub static Qhash_table_test: Lisp_Object;
     pub static Qwrite_region: Lisp_Object;
     pub static Qbuffer_file_coding_system: Lisp_Object;
     pub static Qfont_extra_type: Lisp_Object;
@@ -1006,6 +1016,7 @@ extern "C" {
     pub static Qcyclic_function_indirection: Lisp_Object;
     pub static Qcyclic_variable_indirection: Lisp_Object;
     pub static Qsubfeatures: Lisp_Object;
+    pub static Qunbound: Lisp_Object;
 
     pub static Qmd5: Lisp_Object;
     pub static Qsha1: Lisp_Object;
@@ -1016,6 +1027,7 @@ extern "C" {
 
     pub static Qraw_text: Lisp_Object;
     pub static Qcoding_system_error: Lisp_Object;
+    pub static Qcdr: Lisp_Object;
 
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;
@@ -1023,7 +1035,7 @@ extern "C" {
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vfeatures: Lisp_Object;
     pub static minibuf_level: EmacsInt;
-    pub static minibuf_window: Lisp_Object;
+    pub static mut minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
     pub static minibuf_selected_window: Lisp_Object;
     pub static selected_frame: Lisp_Object;
@@ -1037,6 +1049,8 @@ extern "C" {
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
+    pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
+    pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
 
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
@@ -1076,7 +1090,7 @@ extern "C" {
         -> libc::ptrdiff_t;
 
     pub fn record_unwind_current_buffer();
-    pub fn set_buffer_internal(buffer: *const libc::c_void); // TODO: buffer*
+    pub fn set_buffer_internal(buffer: *mut Lisp_Buffer);
     pub fn make_buffer_string(
         start: libc::ptrdiff_t,
         end: libc::ptrdiff_t,
@@ -1147,11 +1161,51 @@ extern "C" {
         hash: *mut EmacsUint,
     ) -> ptrdiff_t;
 
+    pub fn hash_put(
+        h: *mut Lisp_Hash_Table,
+        key: Lisp_Object,
+        value: Lisp_Object,
+        hash: EmacsUint,
+    ) -> ptrdiff_t;
+    pub fn hash_clear(h: *mut Lisp_Hash_Table);
+
+    pub fn gc_aset(array: Lisp_Object, idx: ptrdiff_t, val: Lisp_Object);
+
     pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: Lisp_Object);
     pub fn set_point_both(charpos: ptrdiff_t, bytepos: ptrdiff_t);
     pub fn set_point(charpos: ptrdiff_t);
     pub fn Fline_beginning_position(n: Lisp_Object) -> Lisp_Object;
     pub fn buf_charpos_to_bytepos(buffer: *const Lisp_Buffer, charpos: ptrdiff_t) -> ptrdiff_t;
+
+    pub fn Finsert_char(
+        character: Lisp_Object,
+        count: Lisp_Object,
+        inherit: Lisp_Object,
+    ) -> Lisp_Object;
+
+    pub fn wait_reading_process_output(
+        time_limit: intmax_t,
+        nsecs: c_int,
+        read_kbd: c_int,
+        do_display: bool,
+        wait_for_cell: Lisp_Object,
+        wait_proc: *const Lisp_Process,
+        just_wait_proc: c_int,
+    ) -> c_int;
+
+    pub fn dtotimespec(sec: c_double) -> timespec;
+    pub fn current_timespec() -> timespec;
+    pub fn timespec_sub(a: timespec, b: timespec) -> timespec;
+    pub fn timespec_add(a: timespec, b: timespec) -> timespec;
+
+    pub fn current_column() -> Lisp_Object;
+
+    pub fn Fadd_text_properties(
+        start: Lisp_Object,
+        end: Lisp_Object,
+        properties: Lisp_Object,
+        object: Lisp_Object,
+    ) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

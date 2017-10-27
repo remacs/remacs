@@ -41,7 +41,9 @@ unsafe impl<'a> Alloc for &'a OsxUnexecAlloc {
     ) -> Result<*mut u8, AllocErr> {
         let addr = unexec_realloc(ptr as *mut libc::c_void, new_layout.size() as libc::size_t);
         if addr.is_null() {
-            return Err(AllocErr::Exhausted { request: new_layout });
+            return Err(AllocErr::Exhausted {
+                request: new_layout,
+            });
         }
 
         assert_eq!(addr as usize & (new_layout.align() - 1), 0);

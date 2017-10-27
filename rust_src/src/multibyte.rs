@@ -34,11 +34,11 @@
 
 use std::ptr;
 use std::slice;
-use libc::{ptrdiff_t, c_char, c_uchar, c_uint, c_int};
+use libc::{c_char, c_int, c_uchar, c_uint, ptrdiff_t};
 
 use lisp::ExternalPtr;
-use remacs_sys::{CHAR_MODIFIER_MASK, CHAR_SHIFT, CHAR_CTL, emacs_abort, CHARACTERBITS, EmacsInt,
-                 Lisp_String};
+use remacs_sys::{emacs_abort, EmacsInt, Lisp_String, CHARACTERBITS, CHAR_CTL, CHAR_MODIFIER_MASK,
+                 CHAR_SHIFT};
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
 
@@ -404,21 +404,23 @@ pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
         }
     } else if head & 0x10 == 0 {
         (
-            ((head & 0x0F) << 12) | ((slice[1] as Codepoint & 0x3F) << 6) |
-                (slice[2] as Codepoint & 0x3F),
+            ((head & 0x0F) << 12) | ((slice[1] as Codepoint & 0x3F) << 6)
+                | (slice[2] as Codepoint & 0x3F),
             3,
         )
     } else if head & 0x08 == 0 {
         (
-            ((head & 0x07) << 18) | ((slice[1] as Codepoint & 0x3F) << 12) |
-                ((slice[2] as Codepoint & 0x3F) << 6) | (slice[3] as Codepoint & 0x3F),
+            ((head & 0x07) << 18) | ((slice[1] as Codepoint & 0x3F) << 12)
+                | ((slice[2] as Codepoint & 0x3F) << 6)
+                | (slice[3] as Codepoint & 0x3F),
             4,
         )
     } else {
         // the relevant bytes of "head" are always zero
         (
-            ((slice[1] as Codepoint & 0x3F) << 18) | ((slice[2] as Codepoint & 0x3F) << 12) |
-                ((slice[3] as Codepoint & 0x3F) << 6) | (slice[4] as Codepoint & 0x3F),
+            ((slice[1] as Codepoint & 0x3F) << 18) | ((slice[2] as Codepoint & 0x3F) << 12)
+                | ((slice[3] as Codepoint & 0x3F) << 6)
+                | (slice[4] as Codepoint & 0x3F),
             5,
         )
     }
@@ -548,13 +550,11 @@ pub fn str_as_multibyte(
         while from < slice.len() {
             chars += 1;
             match multibyte_length(&slice[from..], false) {
-                Some(n) => {
-                    for _ in 0..n {
-                        slice[to] = slice[from];
-                        from += 1;
-                        to += 1;
-                    }
-                }
+                Some(n) => for _ in 0..n {
+                    slice[to] = slice[from];
+                    from += 1;
+                    to += 1;
+                },
                 None => {
                     let byte = slice[from];
                     to += write_codepoint(&mut slice[to..], raw_byte_codepoint(byte));
@@ -595,13 +595,11 @@ pub fn str_as_unibyte(ptr: *mut c_uchar, bytes: ptrdiff_t) -> ptrdiff_t {
                 from += 2;
                 to += 1;
             }
-            n => {
-                for _ in 0..n {
-                    slice[to] = slice[from];
-                    from += 1;
-                    to += 1;
-                }
-            }
+            n => for _ in 0..n {
+                slice[to] = slice[from];
+                from += 1;
+                to += 1;
+            },
         }
     }
     to as ptrdiff_t

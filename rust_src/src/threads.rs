@@ -1,7 +1,7 @@
 //! Threading code.
 
 use std::mem;
-use remacs_sys::{thread_state, current_thread};
+use remacs_sys::{current_thread, thread_state};
 use remacs_macros::lisp_fn;
 use lisp::{ExternalPtr, LispObject};
 use buffers::LispBufferRef;
@@ -19,7 +19,7 @@ impl ThreadState {
 impl ThreadStateRef {
     #[inline]
     pub fn name(&self) -> LispObject {
-        LispObject::from_raw(self.name)
+        LispObject::from(self.name)
     }
 }
 

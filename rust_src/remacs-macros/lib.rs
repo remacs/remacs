@@ -1,12 +1,12 @@
 #![feature(proc_macro)]
 #![recursion_limit = "128"]
 
-#[macro_use]
-extern crate synom;
-extern crate syn;
+extern crate proc_macro;
 #[macro_use]
 extern crate quote;
-extern crate proc_macro;
+extern crate syn;
+#[macro_use]
+extern crate synom;
 
 use proc_macro::TokenStream;
 use std::str::FromStr;
@@ -24,26 +24,29 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let mut rargs = quote::Tokens::new();
     let mut body = quote::Tokens::new();
     let max_args = function.args.len() as i16;
-    match function.fntype {
-        function::LispFnType::Normal(_) => {
-            for ident in function.args {
-                let arg = quote! { #ident: ::remacs_sys::Lisp_Object, };
-                cargs.append(arg);
+    let intspec = if let Some(intspec) = lisp_fn_args.intspec {
+        let cbyte_intspec = CByteLiteral(intspec.as_str());
+        quote!{ (#cbyte_intspec).as_ptr() as *const ::libc::c_char }
+    } else {
+        quote!{ ::std::ptr::null() }
+    };
 
-                let arg = quote! { ::lisp::LispObject::from_raw(#ident), };
-                rargs.append(arg);
-            }
-        }
+    match function.fntype {
+        function::LispFnType::Normal(_) => for ident in function.args {
+            let arg = quote! { #ident: ::remacs_sys::Lisp_Object, };
+            cargs.append(arg);
+
+            let arg = quote! { ::lisp::LispObject::from(#ident), };
+            rargs.append(arg);
+        },
         function::LispFnType::Many => {
-            let args =
-                quote! {
+            let args = quote! {
                 nargs: ::libc::ptrdiff_t,
                 args: *mut ::remacs_sys::Lisp_Object,
             };
             cargs.append(args);
 
-            let b =
-                quote! {
+            let b = quote! {
                 let args = unsafe {
                     ::std::slice::from_raw_parts_mut::<::remacs_sys::Lisp_Object>(
                         args, nargs as usize)
@@ -67,8 +70,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     };
     let symbol_name = CByteLiteral(&lisp_fn_args.name);
 
-    let tokens =
-        quote! {
+    let tokens = quote! {
         #[no_mangle]
         pub extern "C" fn #fname(#cargs) -> ::remacs_sys::Lisp_Object {
             #body
@@ -87,7 +89,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                 min_args: #min_args,
                 max_args: #max_args,
                 symbol_name: (#symbol_name).as_ptr() as *const ::libc::c_char,
-                intspec: ::std::ptr::null(),
+                intspec: #intspec,
                 doc: ::std::ptr::null(),
             };
         }
