@@ -2517,6 +2517,8 @@ the bug number, and browsing the URL must return mbox output."
   (interactive (list (string-to-number
 		      (read-string "Enter bug number: "
 				   (thing-at-point 'word) nil))))
+  (when (stringp ids)
+    (setq ids (string-to-number ids)))
   (unless (listp ids)
     (setq ids (list ids)))
   (gnus-read-ephemeral-bug-group
