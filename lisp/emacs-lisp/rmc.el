@@ -23,6 +23,8 @@
 
 ;;; Code:
 
+(require 'seq)
+
 ;;;###autoload
 (defun read-multiple-choice (prompt choices)
   "Ask user a multiple choice question.
