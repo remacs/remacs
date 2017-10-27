@@ -2887,6 +2887,16 @@ non-selected window, Emacs applies the @code{mode-line-inactive} face.
 For a header line, Emacs applies the @code{header-line} face.
 
 @item
+If the text comes from an overlay string via @code{before-string} or
+@code{after-string} properties (@pxref{Overlay Properties}), or from a
+display string (@pxref{Other Display Specs}), and the string doesn't
+contain a @code{face} or @code{mouse-face} property, but the buffer
+text affected by the overlay/display property does define a face,
+Emacs applies the face attributes of the ``underlying'' buffer text.
+Note that this is so even if the overlay or display string is
+displayed in the display margins (@pxref{Display Margins}).
+
+@item
 If any given attribute has not been specified during the preceding
 steps, Emacs applies the attribute of the @code{default} face.
 @end itemize
@@ -4852,6 +4862,13 @@ or an image descriptor.
 certain buffer text, without altering or preventing the display of
 that text, put a @code{before-string} property on the text and put the
 margin display specification on the contents of the before-string.
+
+  Note that if the string to be displayed in the margin doesn't
+specify a face, its face is determined using the same rules and
+priorities as it is for strings displayed in the text area
+(@pxref{Displaying Faces}).  If this results in undesirable
+``leaking'' of faces into the margin, make sure the string has an
+explicit face specified for it.
 
   Before the display margins can display anything, you must give
 them a nonzero width.  The usual way to do that is to set these
