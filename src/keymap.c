@@ -1774,21 +1774,6 @@ If KEYMAP is nil, that means no local keymap.  */)
   return Qnil;
 }
 
-DEFUN ("current-local-map", Fcurrent_local_map, Scurrent_local_map, 0, 0, 0,
-       doc: /* Return current buffer's local keymap, or nil if it has none.
-Normally the local keymap is set by the major mode with `use-local-map'.  */)
-  (void)
-{
-  return BVAR (current_buffer, keymap);
-}
-
-DEFUN ("current-global-map", Fcurrent_global_map, Scurrent_global_map, 0, 0, 0,
-       doc: /* Return the current global keymap.  */)
-  (void)
-{
-  return current_global_map;
-}
-
 DEFUN ("current-minor-mode-maps", Fcurrent_minor_mode_maps, Scurrent_minor_mode_maps, 0, 0, 0,
        doc: /* Return a list of keymaps for the minor modes of the current buffer.  */)
   (void)
@@ -3717,8 +3702,6 @@ be preferred.  */);
   defsubr (&Sdefine_prefix_command);
   defsubr (&Suse_global_map);
   defsubr (&Suse_local_map);
-  defsubr (&Scurrent_local_map);
-  defsubr (&Scurrent_global_map);
   defsubr (&Scurrent_minor_mode_maps);
   defsubr (&Scurrent_active_maps);
   defsubr (&Saccessible_keymaps);
