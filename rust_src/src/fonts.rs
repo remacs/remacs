@@ -1,5 +1,9 @@
+//! font support
+
 use remacs_macros::lisp_fn;
-use remacs_sys::{font, EmacsInt, Qfont_entity, Qfont_object, Qfont_spec};
+use remacs_sys::{EmacsInt, Qfont_entity, Qfont_object, Qfont_spec};
+use remacs_sys::font;
+
 use lisp::LispObject;
 use lisp::intern;
 use vectors::LispVectorlikeRef;

@@ -1,10 +1,12 @@
 //! Threading code.
 
 use std::mem;
-use remacs_sys::{current_thread, thread_state};
+
 use remacs_macros::lisp_fn;
-use lisp::{ExternalPtr, LispObject};
+use remacs_sys::{current_thread, thread_state};
+
 use buffers::LispBufferRef;
+use lisp::{ExternalPtr, LispObject};
 
 pub type ThreadStateRef = ExternalPtr<thread_state>;
 

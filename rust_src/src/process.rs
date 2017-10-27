@@ -2,9 +2,10 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{Fmapcar, Lisp_Process, Qcdr, Qlistp, Vprocess_alist};
+
+use buffers::get_buffer;
 use lisp::{ExternalPtr, LispObject};
 use lists::{assoc, cdr};
-use buffers::get_buffer;
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 

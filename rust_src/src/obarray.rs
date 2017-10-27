@@ -1,8 +1,12 @@
+//! obarray code
 use libc;
+
 use remacs_macros::lisp_fn;
-use lisp::LispObject;
+use remacs_sys::{Fpurecopy, Lisp_Object};
 use remacs_sys::{check_obarray, check_vobarray, globals, intern_driver, make_unibyte_string,
-                 oblookup, Fpurecopy, Lisp_Object};
+                 oblookup};
+
+use lisp::LispObject;
 
 /// A lisp object containing an `obarray`.
 pub struct LispObarrayRef(LispObject);

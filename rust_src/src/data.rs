@@ -1,5 +1,8 @@
+//! data helpers
+
 use remacs_macros::lisp_fn;
 use remacs_sys::Qcyclic_function_indirection;
+
 use lisp::LispObject;
 
 /// Find the function at the end of a chain of symbol function indirections.

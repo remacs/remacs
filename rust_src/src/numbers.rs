@@ -1,11 +1,12 @@
 //! Functions operating on numbers.
 
-use std::sync::Mutex;
 use rand::{Rng, SeedableRng, StdRng};
+use std::sync::Mutex;
+
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, INTMASK};
 
 use lisp::LispObject;
-use remacs_sys::{EmacsInt, INTMASK};
-use remacs_macros::lisp_fn;
 
 lazy_static! {
     static ref RNG: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());

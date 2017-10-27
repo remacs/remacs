@@ -1,15 +1,17 @@
 //! Functions operating on float numbers.
 
-use std::mem;
 use libc;
+use std::mem;
 
-use math::ArithOp;
-use lisp::{LispNumber, LispObject};
-use remacs_sys::{build_string, EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qarith_error,
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qarith_error,
                  Qinteger_or_marker_p, Qnumberp, Qrange_error, MOST_NEGATIVE_FIXNUM,
                  MOST_POSITIVE_FIXNUM};
+use remacs_sys::build_string;
 use remacs_sys::libm;
-use remacs_macros::lisp_fn;
+
+use lisp::{LispNumber, LispObject};
+use math::ArithOp;
 
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
 /// TODO this is used from C in a few places; remove afterwards.

@@ -2,6 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::Qminus;
+
 use lisp::LispObject;
 
 /// Return numeric meaning of raw prefix argument RAW.

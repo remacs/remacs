@@ -1,15 +1,18 @@
 //! Lisp functions pertaining to editing.
 
+use libc::{c_uchar, ptrdiff_t};
+
 use remacs_macros::lisp_fn;
-use lisp::LispObject;
-use util::clip_to_bounds;
-use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Fadd_text_properties,
-                 Fcons, Fcopy_sequence, Finsert_char, Qinteger_or_marker_p, Qmark_inactive, Qnil};
-use threads::ThreadState;
+use remacs_sys::{EmacsInt, Fadd_text_properties, Fcons, Fcopy_sequence, Finsert_char,
+                 Qinteger_or_marker_p, Qmark_inactive, Qnil};
+use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both};
+
 use buffers::get_buffer;
+use lisp::LispObject;
 use marker::{marker_position, set_point_from_marker};
 use multibyte::raw_byte_codepoint;
-use libc::{c_uchar, ptrdiff_t};
+use threads::ThreadState;
+use util::clip_to_bounds;
 
 
 /// Return value of point, as an integer.

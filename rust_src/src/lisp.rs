@@ -3,38 +3,40 @@
 //! This module contains Rust definitions whose C equivalents live in
 //! lisp.h.
 
-#[cfg(test)]
-use std::cmp::max;
-use std::mem;
-use std::slice;
-use std::convert::From;
-use std::ops::{Deref, DerefMut};
-use std::fmt::{Debug, Error, Formatter};
 use libc::{c_char, c_void, intptr_t, ptrdiff_t, uintptr_t};
 
-use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
-use symbols::LispSymbolRef;
-use vectors::{LispVectorRef, LispVectorlikeRef};
-use buffers::{LispBufferRef, LispOverlayRef};
-use windows::LispWindowRef;
-use frames::LispFrameRef;
-use process::LispProcessRef;
-use marker::LispMarkerRef;
-use hashtable::LispHashTableRef;
-use fonts::LispFontRef;
-use chartable::LispCharTableRef;
-use obarray::LispObarrayRef;
-use threads::ThreadStateRef;
+#[cfg(test)]
+use std::cmp::max;
+use std::convert::From;
+use std::fmt::{Debug, Error, Formatter};
+use std::mem;
+use std::ops::{Deref, DerefMut};
+use std::slice;
 
-use remacs_sys::{circular_list, internal_equal, lispsym, make_float, EmacsDouble, EmacsInt,
-                 EmacsUint, EqualKind, Fcons, Lisp_Cons, Lisp_Float, Lisp_Misc_Any,
-                 Lisp_Misc_Type, Lisp_Object, Lisp_Subr, Lisp_Type, PseudovecType, Qbufferp,
-                 Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframep, Qhash_table_p,
+use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, PseudovecType, CHECK_IMPURE,
+                 INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, SYMBOL_NAME,
+                 USE_LSB_TAG, VALBITS, VALMASK};
+use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
+                 Lisp_Type};
+use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframep, Qhash_table_p,
                  Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil, Qnumber_or_marker_p,
                  Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp, Qt, Qthreadp,
-                 Qunbound, Qvectorp, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp,
-                 CHECK_IMPURE, INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM,
-                 SYMBOL_NAME, USE_LSB_TAG, VALBITS, VALMASK};
+                 Qunbound, Qvectorp, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
+use remacs_sys::{circular_list, internal_equal, lispsym, make_float};
+
+use buffers::{LispBufferRef, LispOverlayRef};
+use chartable::LispCharTableRef;
+use fonts::LispFontRef;
+use frames::LispFrameRef;
+use hashtable::LispHashTableRef;
+use marker::LispMarkerRef;
+use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
+use obarray::LispObarrayRef;
+use process::LispProcessRef;
+use symbols::LispSymbolRef;
+use threads::ThreadStateRef;
+use vectors::{LispVectorRef, LispVectorlikeRef};
+use windows::LispWindowRef;
 
 #[cfg(test)]
 use functions::ExternCMocks;

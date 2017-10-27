@@ -1,13 +1,17 @@
 //! Functions operating on windows.
 
-use lisp::{ExternalPtr, LispObject};
+use libc::c_int;
+
 use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Lisp_Window};
+use remacs_sys::{Qceiling, Qfloor};
 use remacs_sys::{fget_column_width, fget_line_height, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, EmacsInt, Lisp_Window, Qceiling, Qfloor};
-use marker::marker_position;
+                 selected_window as current_window};
+
 use editfns::point;
-use libc::c_int;
+use lisp::{ExternalPtr, LispObject};
+use marker::marker_position;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 

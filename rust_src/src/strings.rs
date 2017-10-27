@@ -4,11 +4,13 @@ use std::ptr;
 
 use libc::{self, c_void};
 
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, SYMBOL_NAME};
+use remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
+                 string_to_multibyte as c_string_to_multibyte};
+
 use lisp::LispObject;
 use multibyte;
-use remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
-                 string_to_multibyte as c_string_to_multibyte, EmacsInt, SYMBOL_NAME};
-use remacs_macros::lisp_fn;
 
 pub static MIME_LINE_LENGTH: isize = 76;
 

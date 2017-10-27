@@ -1,8 +1,9 @@
 //! Indentation functions
 
-use lisp::LispObject;
 use remacs_macros::lisp_fn;
 use remacs_sys;
+
+use lisp::LispObject;
 
 /// Return the horizontal position of point.
 /// Beginning of line is column 0.
