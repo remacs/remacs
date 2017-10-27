@@ -9,7 +9,7 @@ use lisp::LispObject;
 /// return it.  If there is a cycle in the function chain, signal a
 /// cyclic-function-indirection error.
 ///
-/// This is like Findirect_function, except that it doesn't signal an
+/// This is like `Findirect_function`, except that it doesn't signal an
 /// error if the chain ends up unbound.
 #[no_mangle]
 pub extern "C" fn indirect_function(object: LispObject) -> LispObject {
