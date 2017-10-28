@@ -84,6 +84,12 @@ by default.
 
 ** Gamegrid
 
+** ERT
+
++++
+*** New variable 'ert-quiet' allows to make ERT output in batch mode
+less verbose by removing non-essential information.
+
 ---
 *** Gamegrid now determines its default glyph size based on display
 dimensions, instead of always using 16 pixels. As a result, Tetris,

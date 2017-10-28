@@ -1333,6 +1333,9 @@ RESULT must be an `ert-test-result-with-condition'."
 
 ;;; Running tests in batch mode.
 
+(defvar ert-quiet nil
+  "Non-nil makes ERT only print important information in batch mode.")
+
 ;;;###autoload
 (defun ert-run-tests-batch (&optional selector)
   "Run the tests specified by SELECTOR, printing results to the terminal.
@@ -1349,10 +1352,11 @@ Returns the stats object."
    (lambda (event-type &rest event-args)
      (cl-ecase event-type
        (run-started
-        (cl-destructuring-bind (stats) event-args
-          (message "Running %s tests (%s)"
-                   (length (ert--stats-tests stats))
-                   (ert--format-time-iso8601 (ert--stats-start-time stats)))))
+        (unless ert-quiet
+          (cl-destructuring-bind (stats) event-args
+            (message "Running %s tests (%s)"
+                     (length (ert--stats-tests stats))
+                     (ert--format-time-iso8601 (ert--stats-start-time stats))))))
        (run-ended
         (cl-destructuring-bind (stats abortedp) event-args
           (let ((unexpected (ert-stats-completed-unexpected stats))
@@ -1438,16 +1442,17 @@ Returns the stats object."
                         (ert-test-name test)))
               (ert-test-quit
                (message "Quit during %S" (ert-test-name test)))))
-          (let* ((max (prin1-to-string (length (ert--stats-tests stats))))
-                 (format-string (concat "%9s  %"
-                                        (prin1-to-string (length max))
-                                        "s/" max "  %S")))
-            (message format-string
-                     (ert-string-for-test-result result
-                                                 (ert-test-result-expected-p
-                                                  test result))
-                     (1+ (ert--stats-test-pos stats test))
-                     (ert-test-name test)))))))
+          (unless ert-quiet
+            (let* ((max (prin1-to-string (length (ert--stats-tests stats))))
+                   (format-string (concat "%9s  %"
+                                          (prin1-to-string (length max))
+                                          "s/" max "  %S")))
+              (message format-string
+                       (ert-string-for-test-result result
+                                                   (ert-test-result-expected-p
+                                                    test result))
+                       (1+ (ert--stats-test-pos stats test))
+                       (ert-test-name test))))))))
    nil))
 
 ;;;###autoload
