@@ -850,6 +850,13 @@ code.
 'eshell-input-filter-initial-space' to ignore adding commands prefixed
 with blank space to eshell history.
 
+** EUDC
+
+*** Backward compatibility support for BBDB versions less than 3
+(i.e., BBDB 2.x) is deprecated and will likely be removed in the next
+major release of Emacs.  Users of BBDB 2.x should plan to upgrade to
+BBDB 3.x.
+
 ** eww
 
 +++
