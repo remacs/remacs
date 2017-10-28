@@ -514,7 +514,7 @@ On MS-DOS, Emacs sets the @env{TERM} environment variable to @samp{internal}.
 @end defopt
 
 @defopt term-file-aliases
-This variable is an an association list mapping terminal types to
+This variable is an association list mapping terminal types to
 their aliases.  For example, an element of the form @code{("vt102"
 . "vt100")} means to treat a terminal of type @samp{vt102} like one of
 type @samp{vt100}.

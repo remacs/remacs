@@ -1720,7 +1720,7 @@ comment at the start of cc-engine.el for more info."
 	 `((c-debug-remove-face beg end 'c-debug-is-sws-face)
 	   (c-debug-remove-face beg end 'c-debug-in-sws-face)))))
 
-;; The type of literal position `end' is in in a `before-change-functions'
+;; The type of literal position `end' is in a `before-change-functions'
 ;; function - one of `c', `c++', `pound', or nil (but NOT `string').
 (defvar c-sws-lit-type nil)
 ;; A cons (START . STOP) of the bounds of the comment or CPP construct
@@ -2784,7 +2784,7 @@ comment at the start of cc-engine.el for more info."
 
 	    (setq pos npos)
 	    (setq c-state-nonlit-pos-cache (cons pos c-state-nonlit-pos-cache)))
-	  ;; Add one extra element above HERE so as to to avoid the previous
+	  ;; Add one extra element above HERE so as to avoid the previous
 	  ;; expensive calculation when the next call is close to the current
 	  ;; one.  This is especially useful when inside a large macro.
 	  (when npos

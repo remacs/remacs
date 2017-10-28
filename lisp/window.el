@@ -8021,7 +8021,7 @@ parameters of FRAME."
                              (- (nth 3 outer-edges) (nth 1 outer-edges))
                            ;; Another poor guess.
                            (frame-pixel-height frame)))
-           ;; The text size of of FRAME.  Needed to specify FRAME's
+           ;; The text size of FRAME.  Needed to specify FRAME's
            ;; text size after the root window's body's new sizes have
            ;; been calculated.
            (text-width (frame-text-width frame))

@@ -807,7 +807,7 @@ mechanism can change the variable @code{delayed-warnings-hook}:
 
 @defvar delayed-warnings-hook
 This is a normal hook which is run by the Emacs command loop, after
-@code{post-command-hook}, in order to to process and display delayed
+@code{post-command-hook}, in order to process and display delayed
 warnings.
 
 Its default value is a list of two functions:
@@ -7505,7 +7505,7 @@ and are continued or truncated at the left margin.
 @cindex paragraph-separate, and bidirectional display
   Where exactly paragraphs start and end, for the purpose of the Emacs
 @acronym{UBA} implementation, is determined by the following two
-buffer-local variables (note that that @code{paragraph-start} and
+buffer-local variables (note that @code{paragraph-start} and
 @code{paragraph-separate} have no influence on this).  By default both
 of these variables are @code{nil}, and paragraphs are bounded by empty
 lines, i.e., lines that consist entirely of zero or more whitespace

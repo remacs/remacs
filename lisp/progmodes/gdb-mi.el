@@ -2374,7 +2374,7 @@ file names include non-ASCII characters."
 ;; sequences are not split between chunks of output of the GDB process
 ;; due to buffering, and arrive together.  Finally, if some string
 ;; included literal \nnn strings (as opposed to non-ASCII characters
-;; converted by by GDB/MI to octal escapes), this decoding will mangle
+;; converted by GDB/MI to octal escapes), this decoding will mangle
 ;; those strings.  When/if GDB acquires the ability to not
 ;; escape-protect non-ASCII characters in its MI output, this kludge
 ;; should be removed.
