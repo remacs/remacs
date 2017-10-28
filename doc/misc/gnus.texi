@@ -21386,7 +21386,7 @@ correct group name @samp{mail.misc}.
 
 Extra switches may be passed to the namazu search command by setting the
 variable @code{nnir-namazu-additional-switches}.  It is particularly
-important not to pass any any switches to namazu that will change the
+important not to pass any switches to namazu that will change the
 output format.  Good switches to use include @option{--sort},
 @option{--ascending}, @option{--early} and @option{--late}.
 Refer to the Namazu documentation for further
