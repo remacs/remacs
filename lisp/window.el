@@ -8678,7 +8678,7 @@ result is a list containing only the selected window."
 (make-variable-buffer-local 'move-to-window-group-line-function)
 (put 'move-to-window-group-line-function 'permanent-local t)
 (defun move-to-window-group-line (arg)
-  "Position point relative to the the current group of windows.
+  "Position point relative to the current group of windows.
 When a grouping mode (such as Follow Mode) is not active, this
 function is identical to `move-to-window-line'.
 
