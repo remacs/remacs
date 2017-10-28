@@ -2583,7 +2583,7 @@ and no others."
 
 (defun minibuffer-window-active-p (window)
   "Return t if WINDOW is the currently active minibuffer window."
-  (eq window (active-minibuffer-window)))
+  (and (window-live-p window) (eq window (active-minibuffer-window))))
 
 (defun count-windows (&optional minibuf)
    "Return the number of live windows on the selected frame.
