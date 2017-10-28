@@ -621,12 +621,6 @@ buffer_memory_full (ptrdiff_t nbytes)
 #endif
 }
 
-/* A common multiple of the positive integers A and B.  Ideally this
-   would be the least common multiple, but there's no way to do that
-   as a constant expression in C, so do the best that we can easily do.  */
-#define COMMON_MULTIPLE(a, b) \
-  ((a) % (b) == 0 ? (a) : (b) % (a) == 0 ? (b) : (a) * (b))
-
 #ifndef XMALLOC_OVERRUN_CHECK
 #define XMALLOC_OVERRUN_CHECK_OVERHEAD 0
 #else

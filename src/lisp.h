@@ -283,6 +283,12 @@ error !;
 # define GCALIGNED /* empty */
 #endif
 
+/* A common multiple of the positive integers A and B.  Ideally this
+   would be the least common multiple, but there's no way to do that
+   as a constant expression in C, so do the best that we can easily do.  */
+#define COMMON_MULTIPLE(a, b) \
+  ((a) % (b) == 0 ? (a) : (b) % (a) == 0 ? (b) : (a) * (b))
+
 /* Some operations are so commonly executed that they are implemented
    as macros, not functions, because otherwise runtime performance would
    suffer too much when compiling with GCC without optimization.
