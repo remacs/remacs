@@ -76,8 +76,6 @@ use alloc_unexecmacosx::OsxUnexecAlloc;
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
-use remacs_sys::Lisp_Subr;
-
 pub use base64::base64_encode_1;
 pub use base64::base64_decode_1;
 
@@ -224,12 +222,11 @@ pub use hashtable::Fremhash;
 pub use hashtable::Fputhash;
 pub use hashtable::Fhash_table_rehash_threshold;
 
+use lisp::defsubr;
+use frames::rust_init_frame_syms;
+
 #[cfg(test)]
 pub use functions::make_float;
-
-extern "C" {
-    fn defsubr(sname: *const Lisp_Subr);
-}
 
 #[no_mangle]
 pub extern "C" fn rust_init_syms() {
@@ -443,9 +440,9 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*threads::Sthread_name);
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);
-        defsubr(&*frames::Sselected_frame);
         defsubr(&*dispnew::Ssleep_for);
         defsubr(&*indent::Scurrent_column);
         defsubr(&*process::Sprocess_list);
     }
+    rust_init_frame_syms();
 }
