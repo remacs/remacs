@@ -741,6 +741,11 @@ impl LispObject {
         }
     }
 
+    #[inline]
+    pub fn is_list(self) -> bool {
+        self.is_cons() || self.is_nil()
+    }
+
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
