@@ -5149,6 +5149,29 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
      include the hscroll. */
   to_x += it.first_visible_x;
 
+  /* If we are hscrolling only the current line, and Y is at the line
+     containing point, augment TO_X with the hscroll amount of the
+     current line.  */
+  if (it.line_wrap == TRUNCATE
+      && EQ (automatic_hscrolling, Qcurrent_line) && IT_CHARPOS (it) < PT)
+    {
+      struct it it2 = it;
+      void *it2data = bidi_shelve_cache ();
+      it2.last_visible_x = 1000000;
+      /* If the line at Y shows point, the call below to
+	 move_it_in_display_line will succeed in reaching point.  */
+      move_it_in_display_line (&it2, PT, -1, MOVE_TO_POS);
+      if (IT_CHARPOS (it2) >= PT)
+	{
+	  to_x += (w->hscroll - w->min_hscroll) * FRAME_COLUMN_WIDTH (it.f);
+	  /* We need to pretend the window is hscrolled, so that
+	     move_it_in_display_line below will DTRT with TO_X.  */
+	  it.first_visible_x += w->hscroll * FRAME_COLUMN_WIDTH (it.f);
+	  it.last_visible_x += w->hscroll * FRAME_COLUMN_WIDTH (it.f);
+	}
+      bidi_unshelve_cache (it2data, 0);
+    }
+
   /* Now move horizontally in the row to the glyph under *X.  Second
      argument is ZV to prevent move_it_in_display_line from matching
      based on buffer positions.  */
