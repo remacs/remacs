@@ -1319,16 +1319,20 @@ count as blocks.
 @kindex S-mouse-2
 @table @kbd
 @item C-c @@ C-h
+@itemx C-c @@ C-d
 Hide the current block (@code{hs-hide-block}).
 @item C-c @@ C-s
 Show the current block (@code{hs-show-block}).
 @item C-c @@ C-c
+@itemx C-x @@ C-e
 Either hide or show the current block (@code{hs-toggle-hiding}).
 @item S-mouse-2
 Toggle hiding for the block you click on (@code{hs-mouse-toggle-hiding}).
 @item C-c @@ C-M-h
+@itemx C-c @@ C-t
 Hide all top-level blocks (@code{hs-hide-all}).
 @item C-c @@ C-M-s
+@itemx C-c @@ C-a
 Show all blocks in the buffer (@code{hs-show-all}).
 @item C-c @@ C-l
 Hide all blocks @var{n} levels below this block
