@@ -787,7 +787,9 @@ Implements `bookmark-make-record-function' for help-mode buffers."
     (error "Cannot create bookmark - help command not known"))
   `(,@(bookmark-make-record-default 'NO-FILE 'NO-CONTEXT)
       (help-fn     . ,(car help-xref-stack-item))
-      (help-args   . ,(cdr help-xref-stack-item))
+      (help-args   . ,(mapcar (lambda (a)
+                                (if (bufferp a) (buffer-name a) a))
+                              (cdr help-xref-stack-item)))
       (position    . ,(point))
       (handler     . help-bookmark-jump)))
 
