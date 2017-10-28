@@ -150,6 +150,7 @@ pub use symbols::Fsymbol_plist;
 pub use symbols::Fkeywordp;
 pub use symbols::Findirect_variable;
 pub use symbols::indirect_variable;
+pub use symbols::Fsymbol_value;
 pub use strings::Fstring_equal;
 pub use strings::Fstring_as_multibyte;
 pub use strings::Fstring_to_multibyte;
@@ -309,6 +310,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*symbols::Sfmakunbound);
         defsubr(&*symbols::Skeywordp);
         defsubr(&*symbols::Sindirect_variable);
+        defsubr(&*symbols::Ssymbol_value);
         defsubr(&*lists::Sconsp);
         defsubr(&*lists::Ssetcar);
         defsubr(&*lists::Ssetcdr);
