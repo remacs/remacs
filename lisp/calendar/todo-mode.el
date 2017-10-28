@@ -1756,7 +1756,7 @@ means prompt user and omit comment only on confirmation."
 With positive numerical prefix argument N, change the marking of
 the next N items in the current category.  If both the todo and
 done items sections are visible, the sequence of N items can
-consist of the the last todo items and the first done items."
+consist of the last todo items and the first done items."
   (interactive "p")
   (when (todo-item-string)
     (let ((cat (todo-current-category)))
