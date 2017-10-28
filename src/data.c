@@ -778,21 +778,6 @@ find_symbol_value (Lisp_Object symbol)
     }
 }
 
-DEFUN ("symbol-value", Fsymbol_value, Ssymbol_value, 1, 1, 0,
-       doc: /* Return SYMBOL's value.  Error if that is void.
-Note that if `lexical-binding' is in effect, this returns the
-global value outside of any lexical scope.  */)
-  (Lisp_Object symbol)
-{
-  Lisp_Object val;
-
-  val = find_symbol_value (symbol);
-  if (!EQ (val, Qunbound))
-    return val;
-
-  xsignal1 (Qvoid_variable, symbol);
-}
-
 DEFUN ("set", Fset, Sset, 2, 2, 0,
        doc: /* Set SYMBOL's value to NEWVAL, and return NEWVAL.  */)
   (register Lisp_Object symbol, Lisp_Object newval)
@@ -2647,7 +2632,6 @@ syms_of_data (void)
   defsubr (&Sboundp);
   defsubr (&Sfset);
   defsubr (&Sdefalias);
-  defsubr (&Ssymbol_value);
   defsubr (&Sset);
   defsubr (&Sdefault_boundp);
   defsubr (&Sdefault_value);

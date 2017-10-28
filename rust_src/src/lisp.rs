@@ -64,6 +64,11 @@ pub struct LispObject(Lisp_Object);
 
 impl LispObject {
     #[inline]
+    pub fn constant_unbound() -> LispObject {
+        LispObject::from(unsafe { Qunbound })
+    }
+
+    #[inline]
     pub fn constant_t() -> LispObject {
         LispObject::from(unsafe { Qt })
     }
@@ -734,6 +739,11 @@ impl LispObject {
         } else {
             wrong_type!(Qconsp, self)
         }
+    }
+
+    #[inline]
+    pub fn is_list(self) -> bool {
+        self.is_cons() || self.is_nil()
     }
 
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
