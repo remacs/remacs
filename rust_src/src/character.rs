@@ -4,6 +4,7 @@ use libc::{c_uchar, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::EmacsInt;
+
 use threads::ThreadState;
 
 /// True iff byte starts a character in a multibyte form.
@@ -18,13 +19,11 @@ pub fn char_read_p(byte: c_uchar) -> bool {
 /// to the previous character boundary. No range checking of POS.
 ///
 /// Can be used instead of the `DEC_POS` macro.
-// XXX: Pointer arithmetic is wild. Please modify this if you know a
-//      more idiomatic way to move a pointer.
 #[inline]
-pub unsafe fn dec_pos(pos_byte: &ptrdiff_t) -> ptrdiff_t {
+pub unsafe fn dec_pos(pos_byte: ptrdiff_t) -> ptrdiff_t {
     let buffer_ref = ThreadState::current_buffer();
-    let mut new_pos = pos_byte - 1;
 
+    let mut new_pos = pos_byte - 1;
     let mut offset = new_pos - buffer_ref.beg_byte();
     if new_pos >= buffer_ref.gpt_byte() {
         offset += buffer_ref.gap_size();
