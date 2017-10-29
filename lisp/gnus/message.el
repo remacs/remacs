@@ -4346,7 +4346,7 @@ conformance."
 RECIPIENTS is a mail header.  Return a list of potentially bogus
 addresses.  If none is found, return nil.
 
-An address might be bogus if if there's a matching entry in
+An address might be bogus if there's a matching entry in
 `message-bogus-addresses'."
   ;; FIXME: How about "foo@subdomain", when the MTA adds ".domain.tld"?
   (let (found)

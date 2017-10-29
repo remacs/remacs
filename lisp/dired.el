@@ -1046,7 +1046,7 @@ wildcards, erases the buffer, and builds the subdir-alist anew
   ;; default-directory and dired-actual-switches must be buffer-local
   ;; and initialized by now.
   (let (dirname
-	;; This makes readin much much faster.
+	;; This makes read-in much faster.
 	;; In particular, it prevents the font lock hook from running
 	;; until the directory is all read in.
 	(inhibit-modification-hooks t))

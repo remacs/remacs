@@ -64,7 +64,7 @@
 ;; also be correct, see the documentation for `nnir-namazu-remove-prefix'
 ;; above.
 ;;
-;; It is particularly important not to pass any any switches to namazu
+;; It is particularly important not to pass any switches to namazu
 ;; that will change the output format.  Good switches to use include
 ;; `--sort', `--ascending', `--early' and `--late'.  Refer to the Namazu
 ;; documentation for further information on valid switches.

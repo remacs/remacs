@@ -635,7 +635,7 @@ size, and full-buffer size."
 	    (replace-match " " t t))
           (shr--translate-insertion-chars)
 	  (goto-char (point-max)))
-	;; We may have removed everything we inserted if if was just
+	;; We may have removed everything we inserted if it was just
 	;; spaces.
 	(unless (= font-start (point))
 	  ;; Mark all lines that should possibly be folded afterwards.
