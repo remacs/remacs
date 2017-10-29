@@ -28,13 +28,13 @@ use threads::ThreadStateRef;
 
 use remacs_sys::{circular_list, internal_equal, lispsym, make_float, EmacsDouble, EmacsInt,
                  EmacsUint, EqualKind, Fcons, Lisp_Cons, Lisp_Float, Lisp_Misc_Any,
-                 Lisp_Misc_Type, Lisp_Object, Lisp_Type, PseudovecType, Qbufferp, Qchar_table_p,
-                 Qcharacterp, Qconsp, Qfloatp, Qframep, Qhash_table_p, Qinteger_or_marker_p,
-                 Qintegerp, Qlistp, Qmarkerp, Qnil, Qnumber_or_marker_p, Qnumberp, Qoverlayp,
-                 Qplistp, Qprocessp, Qstringp, Qsymbolp, Qt, Qthreadp, Qvectorp, Qwholenump,
-                 Qwindow_live_p, Qwindowp, CHECK_IMPURE, INTMASK, INTTYPEBITS,
-                 MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, SYMBOL_NAME, USE_LSB_TAG, VALBITS,
-                 VALMASK};
+                 Lisp_Misc_Type, Lisp_Object, Lisp_Subr, Lisp_Type, PseudovecType, Qbufferp,
+                 Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframep, Qhash_table_p,
+                 Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil, Qnumber_or_marker_p,
+                 Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp, Qt, Qthreadp,
+                 Qunbound, Qvectorp, Qwholenump, Qwindow_live_p, Qwindowp, CHECK_IMPURE, INTMASK,
+                 INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, SYMBOL_NAME,
+                 USE_LSB_TAG, VALBITS, VALMASK};
 
 #[cfg(test)]
 use functions::ExternCMocks;
@@ -63,6 +63,11 @@ use functions::ExternCMocks;
 pub struct LispObject(Lisp_Object);
 
 impl LispObject {
+    #[inline]
+    pub fn constant_unbound() -> LispObject {
+        LispObject::from(unsafe { Qunbound })
+    }
+
     #[inline]
     pub fn constant_t() -> LispObject {
         LispObject::from(unsafe { Qt })
@@ -514,9 +519,10 @@ impl LispObject {
     }
 
     pub fn is_window_configuration(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION)
-        })
+        self.as_vectorlike().map_or(
+            false,
+            |v| v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION),
+        )
     }
 
     pub fn is_process(self) -> bool {
@@ -734,6 +740,11 @@ impl LispObject {
         } else {
             wrong_type!(Qconsp, self)
         }
+    }
+
+    #[inline]
+    pub fn is_list(self) -> bool {
+        self.is_cons() || self.is_nil()
     }
 
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
@@ -1115,6 +1126,10 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
     let s = string.as_ref();
     LispObarrayRef::constant_obarray()
         .intern_cstring(s.as_ptr() as *const c_char, s.len() as ptrdiff_t)
+}
+
+extern "C" {
+    pub fn defsubr(sname: *const Lisp_Subr);
 }
 
 #[test]
