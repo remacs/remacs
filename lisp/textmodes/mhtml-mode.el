@@ -75,11 +75,11 @@ code();
 
 (defconst mhtml--crucial-variable-prefix
   (regexp-opt '("comment-" "uncomment-" "electric-indent-"
-                "smie-" "forward-sexp-function"))
+                "smie-" "forward-sexp-function" "completion-" "major-mode"))
   "Regexp matching the prefix of \"crucial\" buffer-locals we want to capture.")
 
 (defconst mhtml--variable-prefix
-  (regexp-opt '("font-lock-" "indent-line-function" "major-mode"))
+  (regexp-opt '("font-lock-" "indent-line-function"))
   "Regexp matching the prefix of buffer-locals we want to capture.")
 
 (defun mhtml--construct-submode (mode &rest args)
