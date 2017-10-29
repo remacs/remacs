@@ -4,6 +4,6 @@
 #
 #     (setq rust-format-on-save t)
 #
-# Then make sure this script is in your path before ~/.cargo/bin
+# Then make sure this script is named `rustfmt` and in your path before ~/.cargo/bin.
 
 LD_LIBRARY_PATH=$(rustc --print sysroot)/lib:$LD_LIBRARY_PATH ~/.cargo/bin/rustfmt "$@"
