@@ -242,11 +242,7 @@ pub fn minibuffer_selected_window() -> LispObject {
 /// be a valid window.
 #[lisp_fn(min = "0")]
 pub fn window_frame(window: LispObject) -> LispObject {
-    let win = if window.is_nil() {
-        selected_window()
-    } else {
-        window
-    };
+    let win = window_valid_or_selected(window);
 
-    win.as_window_or_error().frame()
+    win.frame()
 }
