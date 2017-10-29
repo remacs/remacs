@@ -149,7 +149,12 @@ code();
 
 (defun mhtml--submode-lighter ()
   "Mode-line lighter indicating the current submode."
-  (let ((submode (get-text-property (point) 'mhtml-submode)))
+  ;; The end of the buffer has no text properties, so in this case
+  ;; back up one character, if possible.
+  (let* ((where (if (and (eobp) (not (bobp)))
+                    (1- (point))
+                  (point)))
+         (submode (get-text-property where 'mhtml-submode)))
     (if submode
         (mhtml--submode-name submode)
       "")))
