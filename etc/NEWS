@@ -1814,6 +1814,11 @@ handle fitting a frame to its buffer individually.
 'drag-with-mode-line', 'snap-width', 'top-visible' and 'bottom-visible'
 allow to drag and resize frames with the mouse.
 
++++
+**** 'minibuffer' is now set to the default minibuffer window when
+initially specified as nil and is not reset to nil when initially
+specifying a minibuffer window.
+
 *** The new function 'frame-list-z-order' returns a list of all frames
 in Z (stacking) order.
 

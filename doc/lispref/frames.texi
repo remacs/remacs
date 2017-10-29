@@ -1850,8 +1850,14 @@ yes, @code{nil} means no, @code{only} means this frame is just a
 minibuffer.  If the value is a minibuffer window (in some other
 frame), the frame uses that minibuffer.
 
-This frame parameter takes effect when the frame is created, and can
-not be changed afterwards.
+This parameter takes effect when the frame is created.  If specified as
+@code{nil}, Emacs will try to set it to the minibuffer window of
+@code{default-minibuffer-frame} (@pxref{Minibuffers and Frames}).  For
+an existing frame, this parameter can be used exclusively to specify
+another minibuffer window.  It is not allowed to change it from a
+minibuffer window to @code{t} and vice-versa, or from @code{t} to
+@code{nil}.  If the parameter specifies a minibuffer window already,
+setting it to @code{nil} has no effect.
 
 @vindex buffer-predicate, a frame parameter
 @item buffer-predicate
@@ -1871,6 +1877,7 @@ most-recently-selected first.
 @item unsplittable
 If non-@code{nil}, this frame's window is never split automatically.
 @end table
+
 
 @node Frame Interaction Parameters
 @subsubsection Frame Interaction Parameters
