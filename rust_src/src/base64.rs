@@ -55,8 +55,8 @@ pub extern "C" fn base64_encode_1(
 }
 
 /// Base64-decode the data at FROM of LENGTH bytes into TO.  If MULTIBYTE, the
-/// decoded result should be in multibyte form.  If NCHARS_RETURN is not NULL,
-/// store the number of produced characters in *NCHARS_RETURN.
+/// decoded result should be in multibyte form.  If `NCHARS_RETURN` is not NULL,
+/// store the number of produced characters in `*NCHARS_RETURN`.
 #[no_mangle]
 pub extern "C" fn base64_decode_1(
     from: *const c_char,

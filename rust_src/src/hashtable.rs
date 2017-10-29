@@ -112,8 +112,8 @@ impl LispHashTableRef {
 }
 
 /// An iterator used for iterating over the indices
-/// of the 'key_and_value' vector of a Lisp_Hash_Table.
-/// Equivalent to a 'for (i = 0; i < HASH_TABLE_SIZE(h); ++i)'
+/// of the `key_and_value` vector of a `Lisp_Hash_Table`.
+/// Equivalent to a `for (i = 0; i < HASH_TABLE_SIZE(h); ++i)`
 /// loop in the C layer.
 pub struct HashTableIter<'a> {
     table: &'a LispHashTableRef,
@@ -124,7 +124,7 @@ impl<'a> Iterator for HashTableIter<'a> {
     type Item = isize;
 
     fn next(&mut self) -> Option<isize> {
-        // This is duplicating 'LispHashTableRef::size' to keep inline with the old C code,
+        // This is duplicating `LispHashTableRef::size` to keep inline with the old C code,
         // in which the len of the vector could technically change while iterating. While
         // I don't know if any code actually uses that behavior, I'm going to avoid making
         // this use size to keep it consistent.
@@ -140,7 +140,7 @@ impl<'a> Iterator for HashTableIter<'a> {
 }
 
 /// An iterator used for looping over the keys and values
-/// contained in a Lisp_Hash_Table.
+/// contained in a `Lisp_Hash_Table`.
 pub struct KeyAndValueIter<'a>(HashTableIter<'a>);
 
 impl<'a> Iterator for KeyAndValueIter<'a> {
