@@ -141,6 +141,7 @@ pub use windows::Fwindow_minibuffer_p;
 // These need to be exported as bytecode.c depends upon them.
 pub use editfns::Fbobp;
 pub use editfns::Feobp;
+pub use editfns::Ffollowing_char;
 pub use math::Fadd1;
 pub use math::Fleq;
 pub use math::Flss;
@@ -431,6 +432,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sgoto_char);
         defsubr(&*editfns::Sposition_bytes);
         defsubr(&*editfns::Sinsert_byte);
+        defsubr(&*editfns::Sfollowing_char);
         defsubr(&*editfns::Schar_after);
         defsubr(&*editfns::Spropertize);
         defsubr(&*fns::Sfeaturep);

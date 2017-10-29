@@ -208,6 +208,19 @@ pub fn insert_byte(mut byte: LispObject, count: LispObject, inherit: LispObject)
     }
 }
 
+/// Return the character following point, as a number. At the end of
+/// the buffer or accessible region, return 0.
+#[lisp_fn]
+pub fn following_char() -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+
+    if buffer_ref.pt >= buffer_ref.zv {
+        LispObject::from_natnum(0)
+    } else {
+        LispObject::from_natnum(buffer_ref.fetch_char(buffer_ref.pt_byte) as EmacsInt)
+    }
+}
+
 /// Return character in current buffer at position POS.
 /// POS is an integer or a marker and defaults to point.
 /// If POS is out of range, the value is nil.
