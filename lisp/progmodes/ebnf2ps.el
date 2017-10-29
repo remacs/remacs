@@ -2,8 +2,8 @@
 
 ;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
 
-;; Author: Vinicius Jose Latorre <viniciusjl@ig.com.br>
-;; Maintainer: Vinicius Jose Latorre <viniciusjl@ig.com.br>
+;; Author: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
+;; Maintainer: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Keywords: wp, ebnf, PostScript
 ;; Version: 4.4
 ;; X-URL: http://www.emacswiki.org/cgi-bin/wiki/ViniciusJoseLatorre
@@ -30,7 +30,7 @@ Vinicius's last change version.  When reporting bugs, please also
 report the version of Emacs, if any, that ebnf2ps was running with.
 
 Please send all bug fixes and enhancements to
-	Vinicius Jose Latorre <viniciusjl@ig.com.br>.
+	Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>.
 ")
 
 

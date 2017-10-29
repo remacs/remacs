@@ -101,7 +101,7 @@
 ;; Michael Olson <mwolson@member.fsf.org>
 ;; Sebastian Tennant <sebyte@smolny.plus.com>
 ;; Stefan Monnier <monnier@iro.umontreal.ca>
-;; Vinicius Jose Latorre <viniciusjl@ig.com.br>
+;; Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Phil Hagelberg <phil@hagelb.org>
 
 ;;; ToDo:

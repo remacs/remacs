@@ -2,8 +2,8 @@
 
 ;; Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
-;; Author: Vinicius Jose Latorre <viniciusjl@ig.com.br>
-;; Maintainer: Vinicius Jose Latorre <viniciusjl@ig.com.br>
+;; Author: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
+;; Maintainer: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Keywords: data, wp
 ;; Version: 13.2.2
 ;; X-URL: http://www.emacswiki.org/cgi-bin/wiki/ViniciusJoseLatorre
