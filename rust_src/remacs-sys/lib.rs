@@ -918,7 +918,7 @@ pub struct Lisp_Frame {
     // This struct is incomplete.
     // It is difficult, if not impossible, to import the rest of this struct.
     // 1. #IFDEF logic means the proper number of fields is hard to determine.
-    // 2. Bitfields are compiler dependent. How much padiing, where?
+    // 2. Bitfields are compiler dependent. How much padding, where?
     //    The current count is roughly 50 bits.
     //
     // Because of this, access functions are written in src/frame.c and

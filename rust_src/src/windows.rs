@@ -52,11 +52,6 @@ impl LispWindowRef {
         self.flags & FLAG_MINI != 0
     }
 
-    #[inline]
-    pub fn frame(&self) -> LispObject {
-        LispObject::from(self.frame)
-    }
-
     pub fn total_width(&self, round: LispObject) -> i32 {
         let qfloor = LispObject::from(unsafe { Qfloor });
         let qceiling = LispObject::from(unsafe { Qceiling });
