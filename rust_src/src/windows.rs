@@ -38,8 +38,18 @@ impl LispWindowRef {
     }
 
     #[inline]
+    pub fn frame(&self) -> LispObject {
+        LispObject::from(self.frame)
+    }
+
+    #[inline]
     pub fn start_marker(self) -> LispObject {
         LispObject::from(self.start)
+    }
+
+    #[inline]
+    pub fn is_internal(&self) -> bool {
+        self.contents().is_window()
     }
 
     #[inline]
@@ -177,6 +187,41 @@ pub fn window_margins(window: LispObject) -> LispObject {
     )
 }
 
+/// Return combination limit of window WINDOW.
+/// WINDOW must be a valid window used in horizontal or vertical combination.
+/// If the return value is nil, child windows of WINDOW can be recombined with
+/// WINDOW's siblings.  A return value of t means that child windows of
+/// WINDOW are never (re-)combined with WINDOW's siblings.
+#[lisp_fn]
+pub fn window_combination_limit(window: LispObject) -> LispObject {
+    let w = window.as_window_or_error();
+
+    if !w.is_internal() {
+        error!("Combination limit is meaningful for internal windows only");
+    }
+
+    LispObject::from(w.combination_limit)
+}
+
+/// Set combination limit of window WINDOW to LIMIT; return LIMIT.
+/// WINDOW must be a valid window used in horizontal or vertical combination.
+/// If LIMIT is nil, child windows of WINDOW can be recombined with WINDOW's
+/// siblings.  LIMIT t means that child windows of WINDOW are never
+/// (re-)combined with WINDOW's siblings.  Other values are reserved for
+/// future use.
+#[lisp_fn]
+pub fn set_window_combination_limit(window: LispObject, limit: LispObject) -> LispObject {
+    let mut w = window.as_window_or_error();
+
+    if !w.is_internal() {
+        error!("Combination limit is meaningful for internal windows only");
+    }
+
+    w.combination_limit = limit.to_raw();
+
+    limit
+}
+
 /// Return the window which was selected when entering the minibuffer.
 /// Returns nil, if selected window is not a minibuffer window.
 #[lisp_fn]
@@ -190,4 +235,18 @@ pub fn minibuffer_selected_window() -> LispObject {
     } else {
         LispObject::constant_nil()
     }
+}
+
+/// Return the frame that window WINDOW is on.
+/// WINDOW is optional and defaults to the selected window. If provided it must
+/// be a valid window.
+#[lisp_fn(min = "0")]
+pub fn window_frame(window: LispObject) -> LispObject {
+    let win = if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    };
+
+    win.as_window_or_error().frame()
 }

@@ -64,6 +64,11 @@ pub struct LispObject(Lisp_Object);
 
 impl LispObject {
     #[inline]
+    pub fn constant_unbound() -> LispObject {
+        LispObject::from(unsafe { Qunbound })
+    }
+
+    #[inline]
     pub fn constant_t() -> LispObject {
         LispObject::from(unsafe { Qt })
     }
@@ -514,9 +519,10 @@ impl LispObject {
     }
 
     pub fn is_window_configuration(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION)
-        })
+        self.as_vectorlike().map_or(
+            false,
+            |v| v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION),
+        )
     }
 
     pub fn is_process(self) -> bool {
@@ -740,6 +746,11 @@ impl LispObject {
         } else {
             wrong_type!(Qconsp, self)
         }
+    }
+
+    #[inline]
+    pub fn is_list(self) -> bool {
+        self.is_cons() || self.is_nil()
     }
 
     /// Iterate over all tails of self.  self should be a list, i.e. a chain
@@ -1121,6 +1132,10 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
     let s = string.as_ref();
     LispObarrayRef::constant_obarray()
         .intern_cstring(s.as_ptr() as *const c_char, s.len() as ptrdiff_t)
+}
+
+extern "C" {
+    pub fn defsubr(sname: *const Lisp_Subr);
 }
 
 #[test]

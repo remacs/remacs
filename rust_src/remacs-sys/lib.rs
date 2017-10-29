@@ -1018,6 +1018,7 @@ extern "C" {
     pub static Qcyclic_variable_indirection: Lisp_Object;
     pub static Qsubfeatures: Lisp_Object;
     pub static Qunbound: Lisp_Object;
+    pub static Qvoid_variable: Lisp_Object;
 
     pub static Qmd5: Lisp_Object;
     pub static Qsha1: Lisp_Object;
@@ -1205,6 +1206,8 @@ extern "C" {
         properties: Lisp_Object,
         object: Lisp_Object,
     ) -> Lisp_Object;
+
+    pub fn find_symbol_value(symbol: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
