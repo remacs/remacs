@@ -76,8 +76,6 @@ use alloc_unexecmacosx::OsxUnexecAlloc;
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
-use remacs_sys::Lisp_Subr;
-
 pub use base64::base64_encode_1;
 pub use base64::base64_decode_1;
 
@@ -150,6 +148,7 @@ pub use symbols::Fsymbol_plist;
 pub use symbols::Fkeywordp;
 pub use symbols::Findirect_variable;
 pub use symbols::indirect_variable;
+pub use symbols::Fsymbol_value;
 pub use strings::Fstring_equal;
 pub use strings::Fstring_as_multibyte;
 pub use strings::Fstring_to_multibyte;
@@ -224,12 +223,11 @@ pub use hashtable::Fremhash;
 pub use hashtable::Fputhash;
 pub use hashtable::Fhash_table_rehash_threshold;
 
+use lisp::defsubr;
+use frames::rust_init_frame_syms;
+
 #[cfg(test)]
 pub use functions::make_float;
-
-extern "C" {
-    fn defsubr(sname: *const Lisp_Subr);
-}
 
 #[no_mangle]
 pub extern "C" fn rust_init_syms() {
@@ -309,6 +307,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*symbols::Sfmakunbound);
         defsubr(&*symbols::Skeywordp);
         defsubr(&*symbols::Sindirect_variable);
+        defsubr(&*symbols::Ssymbol_value);
         defsubr(&*lists::Sconsp);
         defsubr(&*lists::Ssetcar);
         defsubr(&*lists::Ssetcdr);
@@ -443,9 +442,10 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*threads::Sthread_name);
         defsubr(&*cmds::Sforward_point);
         defsubr(&*data::Sindirect_function);
-        defsubr(&*frames::Sselected_frame);
         defsubr(&*dispnew::Ssleep_for);
         defsubr(&*indent::Scurrent_column);
         defsubr(&*process::Sprocess_list);
+        defsubr(&*process::Sset_process_plist);
     }
+    rust_init_frame_syms();
 }

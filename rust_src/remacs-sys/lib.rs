@@ -1121,6 +1121,8 @@ extern "C" {
         properties: Lisp_Object,
         object: Lisp_Object,
     ) -> Lisp_Object;
+
+    pub fn find_symbol_value(symbol: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
