@@ -224,7 +224,9 @@ pub use hashtable::Fputhash;
 pub use hashtable::Fhash_table_rehash_threshold;
 
 use lisp::defsubr;
+
 use frames::rust_init_frame_syms;
+use windows::rust_init_windows_syms;
 
 #[cfg(test)]
 pub use functions::make_float;
@@ -245,19 +247,6 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*buffers::Soverlay_start);
         defsubr(&*buffers::Soverlay_end);
         defsubr(&*buffers::Soverlay_buffer);
-        defsubr(&*windows::Swindowp);
-        defsubr(&*windows::Swindow_minibuffer_p);
-        defsubr(&*windows::Swindow_live_p);
-        defsubr(&*windows::Swindow_point);
-        defsubr(&*windows::Sselected_window);
-        defsubr(&*windows::Swindow_buffer);
-        defsubr(&*windows::Swindow_valid_p);
-        defsubr(&*windows::Swindow_start);
-        defsubr(&*windows::Swindow_margins);
-        defsubr(&*windows::Swindow_combination_limit);
-        defsubr(&*windows::Sset_window_combination_limit);
-        defsubr(&*windows::Sminibuffer_selected_window);
-        defsubr(&*windows::Swindow_frame);
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*process::Sprocess_name);
@@ -451,4 +440,5 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*process::Sset_process_plist);
     }
     rust_init_frame_syms();
+    rust_init_windows_syms();
 }
