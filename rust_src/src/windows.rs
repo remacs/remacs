@@ -20,6 +20,13 @@ impl LispWindowRef {
         LispObject::from(self.contents).is_buffer()
     }
 
+    /// A window of any sort, leaf or interior, is "valid" if its
+    /// contents slot is non-nil.
+    #[inline]
+    pub fn is_valid(self) -> bool {
+        self.contents().is_not_nil()
+    }
+
     #[inline]
     pub fn point_marker(self) -> LispObject {
         LispObject::from(self.pointm)
@@ -51,6 +58,31 @@ impl LispWindowRef {
     }
 }
 
+#[allow(dead_code)] // FIXME: Remove as soon as it is used
+fn window_or_selected(window: LispObject) -> LispWindowRef {
+    if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    }.as_window_or_error()
+}
+
+fn window_live_or_selected(window: LispObject) -> LispWindowRef {
+    if window.is_nil() {
+        selected_window().as_window_or_error()
+    } else {
+        window.as_live_window_or_error()
+    }
+}
+
+fn window_valid_or_selected(window: LispObject) -> LispWindowRef {
+    if window.is_nil() {
+        selected_window().as_window_or_error()
+    } else {
+        window.as_valid_window_or_error()
+    }
+}
+
 /// Return t if OBJECT is a window and nil otherwise.
 #[lisp_fn]
 fn windowp(object: LispObject) -> LispObject {
@@ -78,11 +110,11 @@ pub fn window_live_p(object: LispObject) -> LispObject {
 /// `save-excursion' forms.  But that is hard to define.
 #[lisp_fn(min = "0")]
 pub fn window_point(window: LispObject) -> LispObject {
-    if window.is_nil() || window == selected_window() {
+    let win = window_live_or_selected(window);
+    if win == selected_window().as_window_or_error() {
         point()
     } else {
-        let marker = window.as_live_window_or_error().point_marker();
-        marker_position(marker)
+        marker_position(win.point_marker())
     }
 }
 
@@ -99,12 +131,7 @@ pub fn selected_window() -> LispObject {
 /// Return nil for an internal window or a deleted window.
 #[lisp_fn(min = "0")]
 pub fn window_buffer(window: LispObject) -> LispObject {
-    let win = if window.is_nil() {
-        selected_window()
-    } else {
-        window
-    };
-    let win = win.as_window_or_error();
+    let win = window_valid_or_selected(window);
     if win.is_live() {
         win.contents()
     } else {
@@ -117,11 +144,7 @@ pub fn window_buffer(window: LispObject) -> LispObject {
 /// window.  Windows that have been deleted are not valid.
 #[lisp_fn]
 pub fn window_valid_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(
-        object
-            .as_window()
-            .map_or(false, |win| win.contents().is_not_nil()),
-    )
+    LispObject::from_bool(object.as_window().map_or(false, |w| w.is_valid()))
 }
 
 /// Return position at which display currently starts in WINDOW.
@@ -129,24 +152,16 @@ pub fn window_valid_p(object: LispObject) -> LispObject {
 /// This is updated by redisplay or by calling `set-window-start'.
 #[lisp_fn(min = "0")]
 pub fn window_start(window: LispObject) -> LispObject {
-    let win = if window.is_nil() {
-        selected_window()
-    } else {
-        window
-    };
-    marker_position(win.as_live_window_or_error().start_marker())
+    let win = window_live_or_selected(window);
+    marker_position(win.start_marker())
 }
 
 /// Return non-nil if WINDOW is a minibuffer window.
 /// WINDOW must be a valid window and defaults to the selected one.
 #[lisp_fn(min = "0")]
 pub fn window_minibuffer_p(window: LispObject) -> LispObject {
-    let win = if window.is_nil() {
-        selected_window()
-    } else {
-        window
-    };
-    LispObject::from_bool(win.as_window_or_error().is_minibuffer())
+    let win = window_valid_or_selected(window);
+    LispObject::from_bool(win.is_minibuffer())
 }
 
 /// Get width of marginal areas of window WINDOW.
@@ -164,11 +179,7 @@ pub fn window_margins(window: LispObject) -> LispObject {
             LispObject::constant_nil()
         }
     }
-    let win = if window.is_nil() {
-        selected_window()
-    } else {
-        window
-    }.as_live_window_or_error();
+    let win = window_live_or_selected(window);
 
     LispObject::cons(
         margin_as_object(win.left_margin_cols),
@@ -231,11 +242,7 @@ pub fn minibuffer_selected_window() -> LispObject {
 /// be a valid window.
 #[lisp_fn(min = "0")]
 pub fn window_frame(window: LispObject) -> LispObject {
-    let win = if window.is_nil() {
-        selected_window()
-    } else {
-        window
-    };
+    let win = window_valid_or_selected(window);
 
-    win.as_window_or_error().frame()
+    win.frame()
 }
