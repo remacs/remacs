@@ -987,6 +987,7 @@ extern "C" {
     pub static Qchar_table_p: Lisp_Object;
     pub static Qbufferp: Lisp_Object;
     pub static Qwindowp: Lisp_Object;
+    pub static Qwindow_valid_p: Lisp_Object;
     pub static Qwindow_live_p: Lisp_Object;
     pub static Qframep: Lisp_Object;
     pub static Qframe_live_p: Lisp_Object;

@@ -322,7 +322,7 @@ to be exported with the correct ABI.
 ### Source code style guide
 
 In order to pass Travis checks on pull requests, the source has to
-be formatted according to the default style of `rustfmt-nightly`, version 0.2.12.
+be formatted according to the default style of `rustfmt-nightly`, version 0.2.9.
 To do that, install `rustfmt`:
 
 ```
