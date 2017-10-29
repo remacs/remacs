@@ -293,9 +293,7 @@ can function properly.")
   (unless (bobp)
     (let ((submode (get-text-property (1- (point)) 'mhtml-submode)))
       (if submode
-          ;; Don't search in a comment or string
-          (unless (syntax-ppss-context (syntax-ppss))
-            (mhtml--syntax-propertize-submode submode end))
+          (mhtml--syntax-propertize-submode submode end)
         ;; No submode, so do what sgml-mode does.
         (sgml-syntax-propertize-inside end))))
   (funcall
