@@ -1,8 +1,8 @@
 //! Minibuffer input and completion.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Vminibuffer_list;
 use remacs_sys::{minibuf_level, minibuf_window};
+use remacs_sys::Vminibuffer_list;
 
 use buffers::{current_buffer, get_buffer};
 use lisp::LispObject;
