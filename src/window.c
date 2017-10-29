@@ -595,42 +595,6 @@ Return nil if WINDOW has no previous sibling.  */)
   return decode_valid_window (window)->prev;
 }
 
-DEFUN ("window-combination-limit", Fwindow_combination_limit, Swindow_combination_limit, 1, 1, 0,
-       doc: /* Return combination limit of window WINDOW.
-WINDOW must be a valid window used in horizontal or vertical combination.
-If the return value is nil, child windows of WINDOW can be recombined with
-WINDOW's siblings.  A return value of t means that child windows of
-WINDOW are never (re-)combined with WINDOW's siblings.  */)
-  (Lisp_Object window)
-{
-  struct window *w;
-
-  CHECK_VALID_WINDOW (window);
-  w = XWINDOW (window);
-  if (WINDOW_LEAF_P (w))
-    error ("Combination limit is meaningful for internal windows only");
-  return w->combination_limit;
-}
-
-DEFUN ("set-window-combination-limit", Fset_window_combination_limit, Sset_window_combination_limit, 2, 2, 0,
-       doc: /* Set combination limit of window WINDOW to LIMIT; return LIMIT.
-WINDOW must be a valid window used in horizontal or vertical combination.
-If LIMIT is nil, child windows of WINDOW can be recombined with WINDOW's
-siblings.  LIMIT t means that child windows of WINDOW are never
-\(re-)combined with WINDOW's siblings.  Other values are reserved for
-future use.  */)
-  (Lisp_Object window, Lisp_Object limit)
-{
-  struct window *w;
-
-  CHECK_VALID_WINDOW (window);
-  w = XWINDOW (window);
-  if (WINDOW_LEAF_P (w))
-    error ("Combination limit is meaningful for internal windows only");
-  wset_combination_limit (w, limit);
-  return limit;
-}
-
 DEFUN ("window-use-time", Fwindow_use_time, Swindow_use_time, 0, 1, 0,
        doc: /* Return the use time of window WINDOW.
 WINDOW must be a live window and defaults to the selected one.
@@ -7638,8 +7602,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_next_sibling);
   defsubr (&Swindow_prev_sibling);
-  defsubr (&Swindow_combination_limit);
-  defsubr (&Sset_window_combination_limit);
   defsubr (&Swindow_use_time);
   defsubr (&Swindow_pixel_width);
   defsubr (&Swindow_pixel_height);
