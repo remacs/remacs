@@ -4,8 +4,7 @@ use lisp::{ExternalPtr, LispObject};
 use remacs_macros::lisp_fn;
 use remacs_sys::{fget_column_width, fget_line_height, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, EmacsInt, Lisp_Window, Qceiling, Qfloor,
-                 Qwindowp};
+                 selected_window as current_window, EmacsInt, Lisp_Window, Qceiling, Qfloor};
 use marker::marker_position;
 use editfns::point;
 use libc::c_int;
@@ -298,18 +297,7 @@ pub fn minibuffer_selected_window() -> LispObject {
 /// total width of WINDOW.
 #[lisp_fn(min = "0")]
 pub fn window_total_width(window: LispObject, round: LispObject) -> LispObject {
-    let win = if window.is_nil() {
-        selected_window().as_window_or_error()
-    } else {
-        window
-            .as_window()
-            .and_then(|w| if w.contents().is_not_nil() {
-                Some(w)
-            } else {
-                None
-            })
-            .unwrap_or_else(|| wrong_type!(Qwindowp, window))
-    };
+    let win = window_valid_or_selected(window);
 
     LispObject::from_natnum(win.total_width(round) as EmacsInt)
 }
@@ -336,18 +324,7 @@ pub fn window_total_width(window: LispObject, round: LispObject) -> LispObject {
 /// total height of WINDOW.
 #[lisp_fn(min = "0")]
 pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject {
-    let win = if window.is_nil() {
-        selected_window().as_window_or_error()
-    } else {
-        window
-            .as_window()
-            .and_then(|w| if w.contents().is_not_nil() {
-                Some(w)
-            } else {
-                None
-            })
-            .unwrap_or_else(|| wrong_type!(Qwindowp, window))
-    };
+    let win = window_valid_or_selected(window);
 
     LispObject::from_natnum(win.total_height(round) as EmacsInt)
 }
