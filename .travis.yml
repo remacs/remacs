@@ -34,12 +34,14 @@ jobs:
   include:
     - stage: rustfmt
       before_script:
+        - travis_wait rustup install nightly-2017-10-22
+        - rustup default nightly-2017-10-22
         # rustfmt doesn't know where to look for libraries yet.
         # See https://github.com/rust-lang-nursery/rustfmt/issues/1707#issuecomment-310005652
         - export LD_LIBRARY_PATH=$(rustc --print sysroot)/lib:$LD_LIBRARY_PATH
         # Install rustfmt-nightly 0.2.12 if it isn't already installed on
         # Travis. This can be slow to install, so raise the Travis timeout.
-        - (which rustfmt && rustfmt --version && [[ "$(rustfmt --version)" =~ "0.2.12" ]]) || travis_wait cargo install --force rustfmt-nightly --vers 0.2.12
+        - (which rustfmt && rustfmt --version && [[ "$(rustfmt --version)" =~ "0.2.9" ]]) || travis_wait cargo install --force rustfmt-nightly --vers 0.2.9
       script: ./.travis-format.sh
       os: linux
 
