@@ -201,6 +201,9 @@ struct Lisp_Process
     bool_bf gnutls_complete_negotiation_p : 1;
 #endif
 };
+/* Accessors for Rust */
+pid_t
+pget_pid(const struct Lisp_Process *p);
 
 INLINE bool
 PROCESSP (Lisp_Object a)
