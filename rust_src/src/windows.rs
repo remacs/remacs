@@ -4,14 +4,12 @@ use lisp::{ExternalPtr, LispObject};
 use remacs_macros::lisp_fn;
 use remacs_sys::{fget_column_width, fget_line_height, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, EmacsInt, Lisp_Window, Qceiling, Qfloor};
+                 selected_window as current_window, EmacsInt, Lisp_Window, Qceiling, Qfloor, is_minibuffer};
 use marker::marker_position;
 use editfns::point;
 use libc::c_int;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
-
-const FLAG_MINI: u16 = 1 << 0;
 
 impl LispWindowRef {
     /// Check if window is a live window (displays a buffer).
@@ -55,7 +53,7 @@ impl LispWindowRef {
 
     #[inline]
     pub fn is_minibuffer(&self) -> bool {
-        self.flags & FLAG_MINI != 0
+        unsafe { is_minibuffer(self.as_ptr()) }
     }
 
     pub fn total_width(&self, round: LispObject) -> i32 {

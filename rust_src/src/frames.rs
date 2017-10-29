@@ -15,6 +15,6 @@ pub fn selected_frame() -> LispObject {
 
 pub extern "C" fn rust_init_frame_syms() {
     unsafe {
-        defsubr(&*Sselected_frame);
+        defsubr(Sselected_frame.as_ptr());
     }
 }

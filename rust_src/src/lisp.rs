@@ -34,7 +34,7 @@ use remacs_sys::{circular_list, internal_equal, lispsym, make_float, EmacsDouble
                  Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp, Qt, Qthreadp,
                  Qunbound, Qvectorp, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp,
                  CHECK_IMPURE, INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM,
-                 SYMBOL_NAME, USE_LSB_TAG, VALBITS, VALMASK};
+                 SYMBOL_NAME, USE_LSB_TAG, VALBITS, VALMASK, misc_get_ty};
 
 #[cfg(test)]
 use functions::ExternCMocks;
@@ -243,6 +243,9 @@ impl<T> PartialEq for ExternalPtr<T> {
         self.as_ptr() != other.as_ptr()
     }
 }
+
+pub type LispSubrRef = ExternalPtr<Lisp_Subr>;
+unsafe impl Sync for LispSubrRef { }
 
 pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
 
@@ -966,13 +969,13 @@ impl LispObject {
     #[inline]
     pub fn is_marker(self) -> bool {
         self.as_misc()
-            .map_or(false, |m| m.ty == Lisp_Misc_Type::Marker)
+            .map_or(false, |m| unsafe { misc_get_ty(m.as_ptr()) } == Lisp_Misc_Type::Marker as u16)
     }
 
     #[inline]
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         self.as_misc()
-            .and_then(|m| if m.ty == Lisp_Misc_Type::Marker {
+            .and_then(|m| if unsafe { misc_get_ty(m.as_ptr()) } == Lisp_Misc_Type::Marker as u16 {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
@@ -1003,12 +1006,12 @@ impl LispObject {
     #[inline]
     pub fn is_overlay(self) -> bool {
         self.as_misc()
-            .map_or(false, |m| m.ty == Lisp_Misc_Type::Overlay)
+            .map_or(false, |m| unsafe { misc_get_ty(m.as_ptr()) } == Lisp_Misc_Type::Overlay as u16)
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
         self.as_misc()
-            .and_then(|m| if m.ty == Lisp_Misc_Type::Overlay {
+            .and_then(|m| if unsafe { misc_get_ty(m.as_ptr()) } == Lisp_Misc_Type::Overlay as u16 {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None

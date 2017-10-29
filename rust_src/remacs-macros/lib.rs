@@ -64,11 +64,19 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let fname = concat_idents("F", &cname);
     let rname = function.name;
     let min_args = lisp_fn_args.min;
+    let mut windows_header = quote! { };
     let max_args = match function.fntype {
         function::LispFnType::Normal(_) => quote! { #max_args },
         function::LispFnType::Many => quote! { ::lisp::MANY  },
     };
     let symbol_name = CByteLiteral(&lisp_fn_args.name);
+
+    if cfg!(windows) {
+        windows_header = quote!{
+            | (::std::mem::size_of::<::remacs_sys::Lisp_Subr>()
+               / ::std::mem::size_of::<::remacs_sys::EmacsInt>()) as ::libc::ptrdiff_t
+        };
+    }
 
     let tokens = quote! {
         #[no_mangle]
@@ -80,17 +88,27 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         }
 
         lazy_static! {
-            pub static ref #sname: ::remacs_sys::Lisp_Subr = ::remacs_sys::Lisp_Subr {
-                header: ::remacs_sys::Lisp_Vectorlike_Header {
-                    size: (::remacs_sys::PseudovecType::PVEC_SUBR as ::libc::ptrdiff_t)
-                        << ::remacs_sys::PSEUDOVECTOR_AREA_BITS,
-                },
-                function: self::#fname as *const ::libc::c_void,
-                min_args: #min_args,
-                max_args: #max_args,
-                symbol_name: (#symbol_name).as_ptr() as *const ::libc::c_char,
-                intspec: #intspec,
-                doc: ::std::ptr::null(),
+            pub static ref #sname: ::lisp::LispSubrRef = {
+                let subr = ::remacs_sys::Lisp_Subr {
+                    header: ::remacs_sys::Lisp_Vectorlike_Header {
+                        size: ((::remacs_sys::PseudovecType::PVEC_SUBR as ::libc::ptrdiff_t)
+                               << ::remacs_sys::PSEUDOVECTOR_AREA_BITS) #windows_header,
+                    },
+                    function: self::#fname as *const ::libc::c_void,
+                    min_args: #min_args,
+                    max_args: #max_args,
+                    symbol_name: (#symbol_name).as_ptr() as *const ::libc::c_char,
+                    intspec: #intspec,
+                    doc: ::std::ptr::null(),
+                };
+
+                unsafe {
+                    let ptr = ::remacs_sys::xmalloc(::std::mem::size_of::<::remacs_sys::Lisp_Subr>())
+                        as *mut ::remacs_sys::Lisp_Subr;
+                    ::std::ptr::copy_nonoverlapping(&subr, ptr, 1);
+                    ::std::mem::forget(subr);
+                    ::lisp::ExternalPtr::new(ptr)
+                }
             };
         }
 
