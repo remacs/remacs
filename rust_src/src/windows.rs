@@ -31,6 +31,11 @@ impl LispWindowRef {
     }
 
     #[inline]
+    pub fn frame(&self) -> LispObject {
+        LispObject::from(self.frame)
+    }
+
+    #[inline]
     pub fn start_marker(self) -> LispObject {
         LispObject::from(self.start)
     }
@@ -219,4 +224,18 @@ pub fn minibuffer_selected_window() -> LispObject {
     } else {
         LispObject::constant_nil()
     }
+}
+
+/// Return the frame that window WINDOW is on.
+/// WINDOW is optional and defaults to the selected window. If provided it must
+/// be a valid window.
+#[lisp_fn(min = "0")]
+pub fn window_frame(window: LispObject) -> LispObject {
+    let win = if window.is_nil() {
+        selected_window()
+    } else {
+        window
+    };
+
+    win.as_window_or_error().frame()
 }
