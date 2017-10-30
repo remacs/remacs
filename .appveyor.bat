@@ -57,10 +57,13 @@ cl /?
 rustc --version
 cargo --version
 
-cargo test -vv %CARGO_MODE%
-if %ERRORLEVEL% NEQ 0 exit 1
-
-REM Verify that `cargo build`, independent from `cargo test`, works; i.e.
-REM verify that non-test builds aren't trying to use test-only features.
-cargo build -vv %CARGO_MODE%
+C:\msys64\usr\bin\bash --login -c "pacman -S base-devel mingw-w64-x86_64-toolchain \
+mingw-w64-x86_64-xpm-nox mingw-w64-x86_64-libtiff \
+mingw-w64-x86_64-giflib mingw-w64-x86_64-jbigkit \
+mingw-w64-x86_64-libpng mingw-w64-x86_64-libjpeg-turbo \
+mingw-w64-x86_64-librsvg mingw-w64-x86_64-libxml2 \
+mingw-w64-x86_64-gnutls"
+C:\msys64\usr\bin\bash --login -c "./autogen.sh"
+C:\msys64\usr\bin\bash --login -c "PKG_CONFIG_PATH=/mingw64/lib/pkgconfig ./configure --without-imagemagick"
+C:\msys64\usr\bin\bash --login -c "make -j 3 && make check"
 if %ERRORLEVEL% NEQ 0 exit 1
