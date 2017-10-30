@@ -264,6 +264,7 @@ pub fn set_window_combination_limit(window: LispObject, limit: LispObject) -> Li
 #[lisp_fn]
 pub fn minibuffer_selected_window() -> LispObject {
     let level = unsafe { minibuf_level };
+    let current_minibuf = unsafe { LispObject::from(current_minibuf_window) };
     if level > 0 && selected_window().as_window_or_error().is_minibuffer()
         && current_minibuf.as_window().unwrap().is_live()
     {
