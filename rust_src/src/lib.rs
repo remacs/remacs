@@ -111,6 +111,7 @@ pub use math::Fsub1;
 pub use math::arithcompare;
 pub use editfns::Feobp;
 pub use editfns::Fbobp;
+pub use editfns::Ffollowing_char;
 
 // Widely used in the C codebase.
 pub use lists::Fsetcar;
@@ -254,7 +255,12 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*windows::Swindow_valid_p);
         defsubr(&*windows::Swindow_start);
         defsubr(&*windows::Swindow_margins);
+        defsubr(&*windows::Swindow_combination_limit);
+        defsubr(&*windows::Sset_window_combination_limit);
         defsubr(&*windows::Sminibuffer_selected_window);
+        defsubr(&*windows::Swindow_total_height);
+        defsubr(&*windows::Swindow_total_width);
+        defsubr(&*windows::Swindow_frame);
         defsubr(&*process::Sget_process);
         defsubr(&*process::Sprocessp);
         defsubr(&*process::Sprocess_name);
@@ -433,6 +439,7 @@ pub extern "C" fn rust_init_syms() {
         defsubr(&*editfns::Sgoto_char);
         defsubr(&*editfns::Sposition_bytes);
         defsubr(&*editfns::Sinsert_byte);
+        defsubr(&*editfns::Sfollowing_char);
         defsubr(&*editfns::Schar_after);
         defsubr(&*editfns::Spropertize);
         defsubr(&*fns::Sfeaturep);

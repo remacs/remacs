@@ -32,9 +32,9 @@ use remacs_sys::{circular_list, internal_equal, lispsym, make_float, EmacsDouble
                  Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframep, Qhash_table_p,
                  Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil, Qnumber_or_marker_p,
                  Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp, Qt, Qthreadp,
-                 Qunbound, Qvectorp, Qwholenump, Qwindow_live_p, Qwindowp, CHECK_IMPURE, INTMASK,
-                 INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, SYMBOL_NAME,
-                 USE_LSB_TAG, VALBITS, VALMASK};
+                 Qunbound, Qvectorp, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp,
+                 CHECK_IMPURE, INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM,
+                 SYMBOL_NAME, USE_LSB_TAG, VALBITS, VALMASK};
 
 #[cfg(test)]
 use functions::ExternCMocks;
@@ -519,10 +519,9 @@ impl LispObject {
     }
 
     pub fn is_window_configuration(self) -> bool {
-        self.as_vectorlike().map_or(
-            false,
-            |v| v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION),
-        )
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION)
+        })
     }
 
     pub fn is_process(self) -> bool {
@@ -568,6 +567,12 @@ impl LispObject {
         } else {
             wrong_type!(Qwindow_live_p, self);
         }
+    }
+
+    pub fn as_valid_window_or_error(self) -> LispWindowRef {
+        self.as_window()
+            .and_then(|w| if w.is_valid() { Some(w) } else { None })
+            .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
     }
 
     pub fn is_frame(self) -> bool {

@@ -913,7 +913,21 @@ pub struct Lisp_Frame {
     /// most recently buried buffer is first.  For last-buffer.
     pub buried_buffer_list: Lisp_Object,
 
-    // TODO: this struct is incomplete.
+    // This struct is incomplete.
+    // It is difficult, if not impossible, to import the rest of this struct.
+    // 1. #IFDEF logic means the proper number of fields is hard to determine.
+    // 2. Bitfields are compiler dependent. How much padding, where?
+    //    The current count is roughly 50 bits.
+    //
+    // Because of this, access functions are written in src/frame.c and
+    // exported here for use in Rust. This means that instead of
+    // frame.foo the proper method is fget_foo(frame).
+}
+
+/// Functions to access members of `struct frame`.
+extern "C" {
+    pub fn fget_column_width(f: *const Lisp_Frame) -> c_int;
+    pub fn fget_line_height(f: *const Lisp_Frame) -> c_int;
 }
 
 #[repr(C)]
