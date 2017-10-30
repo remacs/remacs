@@ -141,7 +141,7 @@ pub fn point_max() -> LispObject {
 /// Beginning of buffer is position (point-min), end is (point-max).
 ///
 /// The return value is POSITION.
-#[lisp_fn]
+#[lisp_fn(intspec = "NGoto char: ")]
 pub fn goto_char(position: LispObject) -> LispObject {
     if let Some(marker) = position.as_marker() {
         set_point_from_marker(marker);
