@@ -39,7 +39,7 @@ if %ERRORLEVEL% NEQ 0 (
 set RUST_URL=https://static.rust-lang.org/dist/rust-%RUST%-%TARGET_ARCH%-pc-windows-msvc.msi
 echo Downloading %RUST_URL%...
 mkdir build
-powershell -Command "(New-Object Net.WebClient).DownloadFile('%RUST_URL%', 'build\rust-%RUST%-%TARGET_ARCH%-pc-windows-msvc.msi')"
+powershell -Command "(New-Object Net.WebClient).DownloadFile('%RUST_URL%', 'build\rust-%RUST%-%TARGET_ARCH%-pc-windows-gnu.msi')"
 if %ERRORLEVEL% NEQ 0 (
   echo ...downloading Rust failed.
   exit 1
