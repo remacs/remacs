@@ -45,7 +45,7 @@ if %ERRORLEVEL% NEQ 0 (
   exit 1
 )
 
-start /wait msiexec /i build\rust-%RUST%-%TARGET_ARCH%-pc-windows-msvc.msi INSTALLDIR="%TARGET_PROGRAM_FILES%\Rust %RUST%" /quiet /qn /norestart
+start /wait msiexec /i build\rust-%RUST%-%TARGET_ARCH%-pc-windows-gnu.msi INSTALLDIR="%TARGET_PROGRAM_FILES%\Rust %RUST%" /quiet /qn /norestart
 if %ERRORLEVEL% NEQ 0 exit 1
 
 set PATH="%TARGET_PROGRAM_FILES%\Rust %RUST%\bin";%cd%\windows_build_tools;%PATH%
