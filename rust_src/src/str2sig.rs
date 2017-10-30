@@ -1,5 +1,8 @@
 //! Convert between signal names and numbers.
 
+#[cfg(not(windows))]
+use libc;
+
 use libc::{c_char, c_int};
 use std::ffi::CStr;
 use std::str::FromStr;
