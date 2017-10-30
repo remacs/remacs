@@ -9,7 +9,7 @@ use threads::ThreadState;
 #[lisp_fn]
 fn category_table_p(arg: LispObject) -> LispObject {
     LispObject::from_bool(arg.as_char_table().map_or(false, |table| {
-        LispObject::from(table.purpose).eq(unsafe { LispObject::from(Qcategory_table) })
+        LispObject::from(table.purpose).eq(LispObject::from(Qcategory_table))
     }))
 }
 

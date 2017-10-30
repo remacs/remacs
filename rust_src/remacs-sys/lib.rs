@@ -1,3 +1,4 @@
+#![feature(const_size_of)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
 //! This module contains all FFI declarations.
@@ -21,13 +22,10 @@ pub mod libm;
 use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
            size_t, time_t, timespec};
 
+pub type Lisp_Object = EmacsInt;
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 include!(concat!(env!("OUT_DIR"), "/globals.rs"));
-
-pub type Lisp_Object = EmacsInt;
-
-pub const Qnil: Lisp_Object = 0;
 
 pub type char_bits = u32;
 pub const CHAR_ALT: char_bits = 0x0400000;
@@ -961,91 +959,6 @@ pub struct Lisp_Hash_Table {
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static current_thread: *mut thread_state;
-    pub static Qt: Lisp_Object;
-    pub static Qerror: Lisp_Object;
-    pub static Qarith_error: Lisp_Object;
-    pub static Qrange_error: Lisp_Object;
-    pub static Qwrong_type_argument: Lisp_Object;
-    pub static Qargs_out_of_range: Lisp_Object;
-    pub static Qnumber_or_marker_p: Lisp_Object;
-    pub static Qinteger_or_marker_p: Lisp_Object;
-    pub static Qconsp: Lisp_Object;
-    pub static Qnumberp: Lisp_Object;
-    pub static Qintegerp: Lisp_Object;
-    pub static Qfloatp: Lisp_Object;
-    pub static Qceiling: Lisp_Object;
-    pub static Qfloor: Lisp_Object;
-    pub static Qstringp: Lisp_Object;
-    pub static Qsymbolp: Lisp_Object;
-    pub static Qlistp: Lisp_Object;
-    pub static Qplistp: Lisp_Object;
-    pub static Qmarkerp: Lisp_Object;
-    pub static Qwholenump: Lisp_Object;
-    pub static Qvectorp: Lisp_Object;
-    pub static Qsequencep: Lisp_Object;
-    pub static Qcharacterp: Lisp_Object;
-    pub static Qchar_table_p: Lisp_Object;
-    pub static Qbufferp: Lisp_Object;
-    pub static Qwindowp: Lisp_Object;
-    pub static Qwindow_valid_p: Lisp_Object;
-    pub static Qwindow_live_p: Lisp_Object;
-    pub static Qframep: Lisp_Object;
-    pub static Qframe_live_p: Lisp_Object;
-    pub static Qprocessp: Lisp_Object;
-    pub static Qthreadp: Lisp_Object;
-    pub static Qoverlayp: Lisp_Object;
-    pub static Qminus: Lisp_Object;
-    pub static Qmark_inactive: Lisp_Object;
-
-    pub static Qinteger: Lisp_Object;
-    pub static Qsymbol: Lisp_Object;
-    pub static Qstring: Lisp_Object;
-    pub static Qcons: Lisp_Object;
-    pub static Qmarker: Lisp_Object;
-    pub static Qoverlay: Lisp_Object;
-    pub static Qfinalizer: Lisp_Object;
-    pub static Quser_ptr: Lisp_Object;
-    pub static Qfloat: Lisp_Object;
-    pub static Qwindow_configuration: Lisp_Object;
-    pub static Qprocess: Lisp_Object;
-    pub static Qwindow: Lisp_Object;
-    pub static Qcompiled_function: Lisp_Object;
-    pub static Qbuffer: Lisp_Object;
-    pub static Qframe: Lisp_Object;
-    pub static Qvector: Lisp_Object;
-    pub static Qchar_table: Lisp_Object;
-    pub static Qcategory_table: Lisp_Object;
-    pub static Qbool_vector: Lisp_Object;
-    pub static Qhash_table: Lisp_Object;
-    pub static Qthread: Lisp_Object;
-    pub static Qmutex: Lisp_Object;
-    pub static Qcondition_variable: Lisp_Object;
-    pub static Qsubr: Lisp_Object;
-    pub static Qfont_spec: Lisp_Object;
-    pub static Qfont_entity: Lisp_Object;
-    pub static Qfont_object: Lisp_Object;
-    pub static Qhash_table_p: Lisp_Object;
-    pub static Qhash_table_test: Lisp_Object;
-    pub static Qwrite_region: Lisp_Object;
-    pub static Qbuffer_file_coding_system: Lisp_Object;
-    pub static Qfont_extra_type: Lisp_Object;
-    pub static Qsetting_constant: Lisp_Object;
-    pub static Qcyclic_function_indirection: Lisp_Object;
-    pub static Qcyclic_variable_indirection: Lisp_Object;
-    pub static Qsubfeatures: Lisp_Object;
-    pub static Qunbound: Lisp_Object;
-    pub static Qvoid_variable: Lisp_Object;
-
-    pub static Qmd5: Lisp_Object;
-    pub static Qsha1: Lisp_Object;
-    pub static Qsha224: Lisp_Object;
-    pub static Qsha256: Lisp_Object;
-    pub static Qsha384: Lisp_Object;
-    pub static Qsha512: Lisp_Object;
-
-    pub static Qraw_text: Lisp_Object;
-    pub static Qcoding_system_error: Lisp_Object;
-    pub static Qcdr: Lisp_Object;
 
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;

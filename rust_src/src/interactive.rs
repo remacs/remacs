@@ -11,7 +11,7 @@ use lisp::LispObject;
 fn prefix_numeric_value(raw: LispObject) -> LispObject {
     if raw.is_nil() {
         LispObject::from_fixnum(1)
-    } else if raw.eq(LispObject::from(unsafe { Qminus })) {
+    } else if raw.eq(LispObject::from(Qminus)) {
         LispObject::from_fixnum(-1)
     } else if raw.is_integer() {
         raw

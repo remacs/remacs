@@ -59,8 +59,8 @@ impl LispWindowRef {
     }
 
     pub fn total_width(&self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from(unsafe { Qfloor });
-        let qceiling = LispObject::from(unsafe { Qceiling });
+        let qfloor = LispObject::from(Qfloor);
+        let qceiling = LispObject::from(Qceiling);
 
         if !(round == qfloor || round == qceiling) {
             self.total_cols
@@ -77,8 +77,8 @@ impl LispWindowRef {
     }
 
     pub fn total_height(&self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from(unsafe { Qfloor });
-        let qceiling = LispObject::from(unsafe { Qceiling });
+        let qfloor = LispObject::from(Qfloor);
+        let qceiling = LispObject::from(Qceiling);
 
         if !(round == qfloor || round == qceiling) {
             self.total_lines
