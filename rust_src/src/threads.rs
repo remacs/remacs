@@ -4,6 +4,7 @@ use std::mem;
 use remacs_sys::{current_thread, thread_state};
 use remacs_macros::lisp_fn;
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 use buffers::LispBufferRef;
 
 pub type ThreadStateRef = ExternalPtr<thread_state>;
@@ -28,4 +29,10 @@ impl ThreadStateRef {
 #[lisp_fn]
 pub fn thread_name(thread: LispObject) -> LispObject {
     thread.as_thread_or_error().name()
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sthread_name);
+    }
 }

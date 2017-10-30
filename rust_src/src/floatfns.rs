@@ -5,6 +5,7 @@ use libc;
 
 use math::ArithOp;
 use lisp::{LispNumber, LispObject};
+use lisp::defsubr;
 use remacs_sys::{build_string, EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qarith_error,
                  Qinteger_or_marker_p, Qnumberp, Qrange_error, MOST_NEGATIVE_FIXNUM,
                  MOST_POSITIVE_FIXNUM};
@@ -381,5 +382,34 @@ fn round2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
         -1
     } else {
         1
+    }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sacos);
+        defsubr(&*Sasin);
+        defsubr(&*Satan);
+        defsubr(&*Sceiling);
+        defsubr(&*Scopysign);
+        defsubr(&*Scos);
+        defsubr(&*Sexp);
+        defsubr(&*Sexpt);
+        defsubr(&*Sfceiling);
+        defsubr(&*Sffloor);
+        defsubr(&*Sfloat);
+        defsubr(&*Sfloor);
+        defsubr(&*Sfrexp);
+        defsubr(&*Sfround);
+        defsubr(&*Sftruncate);
+        defsubr(&*Sisnan);
+        defsubr(&*Sldexp);
+        defsubr(&*Slog);
+        defsubr(&*Slogb);
+        defsubr(&*Sround);
+        defsubr(&*Ssin);
+        defsubr(&*Ssqrt);
+        defsubr(&*Stan);
+        defsubr(&*Struncate);
     }
 }

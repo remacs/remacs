@@ -6,6 +6,7 @@ use libc::{c_char, c_uchar, ptrdiff_t};
 use base64_crate;
 
 use lisp::LispObject;
+use lisp::defsubr;
 use strings::MIME_LINE_LENGTH;
 use multibyte::{multibyte_char_at, raw_byte_from_codepoint, MAX_5_BYTE_CHAR};
 use remacs_sys::make_unibyte_string;
@@ -189,4 +190,11 @@ fn base64_decode_string(string: LispObject) -> LispObject {
         error!("Invalid base64 data");
     }
     unsafe { LispObject::from(make_unibyte_string(decoded, decoded_length)) }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sbase64_decode_string);
+        defsubr(&*Sbase64_encode_string);
+    }
 }

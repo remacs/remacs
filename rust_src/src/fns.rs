@@ -3,6 +3,7 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{globals, Qsubfeatures};
 use lisp::LispObject;
+use lisp::defsubr;
 use lists::{get, member, memq};
 
 
@@ -24,5 +25,11 @@ fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
         LispObject::constant_nil()
     } else {
         LispObject::constant_t()
+    }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sfeaturep);
     }
 }

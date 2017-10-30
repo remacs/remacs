@@ -3,6 +3,7 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{Fmapcar, Lisp_Process, Qcdr, Qlistp, Vprocess_alist};
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 use lists::{assoc, cdr};
 use buffers::get_buffer;
 
@@ -98,5 +99,17 @@ pub fn set_process_plist(process: LispObject, plist: LispObject) -> LispObject {
         plist
     } else {
         wrong_type!(Qlistp, plist)
+    }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sget_buffer_process);
+        defsubr(&*Sget_process);
+        defsubr(&*Sprocess_buffer);
+        defsubr(&*Sprocess_list);
+        defsubr(&*Sprocess_name);
+        defsubr(&*Sprocessp);
+        defsubr(&*Sset_process_plist);
     }
 }
