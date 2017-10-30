@@ -332,14 +332,17 @@ $ make rustfmt
 
 ### Running tests
 
-* make check
+Run elisp and Rust tests in toplevel directory. If run in a subdirectory, 
+only run the tests in that directory.
+
+* `make check`
   Run all tests as defined in the directory.  Expensive tests are
   suppressed.  The result of the tests for <filename>.el is stored in
   <filename>.log.
 
-* make check-maybe
-  Like "make check", but run only the tests for files which have
-  unresolved prerequisites.
+* `make check-maybe`
+  Like "make check", but run only the tests for files that have been 
+  modified since the last build.
 
 ## Design Goals
 
