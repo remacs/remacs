@@ -64,7 +64,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let fname = concat_idents("F", &cname);
     let rname = function.name;
     let min_args = lisp_fn_args.min;
-    let mut windows_header = quote! { };
+    let mut windows_header = quote!{};
     let max_args = match function.fntype {
         function::LispFnType::Normal(_) => quote! { #max_args },
         function::LispFnType::Many => quote! { ::lisp::MANY  },
@@ -103,7 +103,8 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                 };
 
                 unsafe {
-                    let ptr = ::remacs_sys::xmalloc(::std::mem::size_of::<::remacs_sys::Lisp_Subr>())
+                    let ptr =
+                        ::remacs_sys::xmalloc(::std::mem::size_of::<::remacs_sys::Lisp_Subr>())
                         as *mut ::remacs_sys::Lisp_Subr;
                     ::std::ptr::copy_nonoverlapping(&subr, ptr, 1);
                     ::std::mem::forget(subr);

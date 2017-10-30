@@ -1,9 +1,9 @@
 use remacs_macros::lisp_fn;
 use lisp::{ExternalPtr, LispObject};
 
-use remacs_sys::{find_symbol_value, make_lisp_symbol, Fset, Lisp_Symbol,
-                 Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable,
-                 symbol_is_interned, symbol_is_alias,symbol_is_constant};
+use remacs_sys::{find_symbol_value, make_lisp_symbol, symbol_is_alias, symbol_is_constant,
+                 symbol_is_interned, Fset, Lisp_Symbol, Qcyclic_variable_indirection,
+                 Qsetting_constant, Qunbound, Qvoid_variable};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 

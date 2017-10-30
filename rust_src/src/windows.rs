@@ -2,9 +2,9 @@
 
 use lisp::{ExternalPtr, LispObject};
 use remacs_macros::lisp_fn;
-use remacs_sys::{fget_column_width, fget_line_height, minibuf_level,
+use remacs_sys::{fget_column_width, fget_line_height, is_minibuffer, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, EmacsInt, Lisp_Window, Qceiling, Qfloor, is_minibuffer};
+                 selected_window as current_window, EmacsInt, Lisp_Window, Qceiling, Qfloor};
 use marker::marker_position;
 use editfns::point;
 use libc::c_int;
