@@ -5832,7 +5832,7 @@ by this function.  This happens in an interactive call.  */)
 }
 
 DEFUN ("minibuffer-selected-window", Fminibuffer_selected_window, Sminibuffer_selected_window, 0, 0, 0,
-       doc: /* Return the window which was selected when entering the minibuffer.
+       doc: /* Return window selected just before minibuffer window was selected.
 Return nil if the selected window is not a minibuffer window.  */)
   (void)
 {
