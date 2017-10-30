@@ -10,16 +10,16 @@ use std::heap::AllocErr;
 /// provides a custom system allocator that performs such a mapping.
 
 extern "C" {
-    fn xmalloc(size: libc::size_t) -> *mut libc::c_void;
-    fn xrealloc(old_ptr: *mut libc::c_void, new_size: libc::size_t) -> *mut libc::c_void;
-    fn xfree(ptr: *mut libc::c_void);
+    fn unexec_malloc(size: libc::size_t) -> *mut libc::c_void;
+    fn unexec_realloc(old_ptr: *mut libc::c_void, new_size: libc::size_t) -> *mut libc::c_void;
+    fn unexec_free(ptr: *mut libc::c_void);
 }
 
 pub struct OsxUnexecAlloc;
 
 unsafe impl<'a> Alloc for &'a OsxUnexecAlloc {
     unsafe fn alloc(&mut self, layout: Layout) -> Result<*mut u8, AllocErr> {
-        let addr = xmalloc(layout.size() as libc::size_t);
+        let addr = unexec_malloc(layout.size() as libc::size_t);
         if addr.is_null() {
             return Err(AllocErr::Exhausted { request: layout });
         }
@@ -30,7 +30,7 @@ unsafe impl<'a> Alloc for &'a OsxUnexecAlloc {
 
     unsafe fn dealloc(&mut self, ptr: *mut u8, layout: Layout) {
         assert_eq!(ptr as usize & (layout.align() - 1), 0);
-        xfree(ptr as *mut libc::c_void)
+        unexec_free(ptr as *mut libc::c_void)
     }
 
     unsafe fn realloc(
@@ -39,7 +39,7 @@ unsafe impl<'a> Alloc for &'a OsxUnexecAlloc {
         _layout: Layout,
         new_layout: Layout,
     ) -> Result<*mut u8, AllocErr> {
-        let addr = xrealloc(ptr as *mut libc::c_void, new_layout.size() as libc::size_t);
+        let addr = unexec_realloc(ptr as *mut libc::c_void, new_layout.size() as libc::size_t);
         if addr.is_null() {
             return Err(AllocErr::Exhausted {
                 request: new_layout,
