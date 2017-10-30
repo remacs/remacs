@@ -57,13 +57,13 @@ cl /?
 rustc --version
 cargo --version
 
-C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm base-devel mingw-w64-x86_64-toolchain \
-mingw-w64-x86_64-xpm-nox mingw-w64-x86_64-libtiff \
-mingw-w64-x86_64-giflib mingw-w64-x86_64-jbigkit \
-mingw-w64-x86_64-libpng mingw-w64-x86_64-libjpeg-turbo \
-mingw-w64-x86_64-librsvg mingw-w64-x86_64-libxml2 \
-mingw-w64-x86_64-gnutls"
-C:\msys64\usr\bin\bash --login -c "./autogen.sh"
-C:\msys64\usr\bin\bash --login -c "PKG_CONFIG_PATH=/mingw64/lib/pkgconfig ./configure --without-imagemagick"
-C:\msys64\usr\bin\bash --login -c "make -j 3 && make check"
+C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm base-devel mingw-w64-x86_64-toolchain"
+C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-xpm-nox mingw-w64-x86_64-libtiff"
+C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-giflib mingw-w64-x86_64-jbigkit"
+C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-libpng mingw-w64-x86_64-libjpeg-turbo"
+C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-librsvg mingw-w64-x86_64-libxml2"
+C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-gnutls"
+C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && ./autogen.sh"
+C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && PKG_CONFIG_PATH=/mingw64/lib/pkgconfig ./configure --without-imagemagick"
+C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && make -j 3 && make check"
 if %ERRORLEVEL% NEQ 0 exit 1
