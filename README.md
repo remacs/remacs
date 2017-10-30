@@ -336,8 +336,8 @@ Run elisp and Rust tests in toplevel directory. If run in a subdirectory,
 only run the tests in that directory.
 
 * `make check`
-  Run all tests as defined in the directory.  Expensive tests are
-  suppressed.  The result of the tests for <filename>.el is stored in
+  Run all tests as defined in the directory. Expensive tests are
+  suppressed. The result of the tests for <filename>.el is stored in
   <filename>.log.
 
 * `make check-maybe`
