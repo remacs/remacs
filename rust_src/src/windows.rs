@@ -59,8 +59,8 @@ impl LispWindowRef {
     }
 
     pub fn total_width(&self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from(unsafe { Qfloor });
-        let qceiling = LispObject::from(unsafe { Qceiling });
+        let qfloor = LispObject::from(Qfloor);
+        let qceiling = LispObject::from(Qceiling);
 
         if !(round == qfloor || round == qceiling) {
             self.total_cols
@@ -77,8 +77,8 @@ impl LispWindowRef {
     }
 
     pub fn total_height(&self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from(unsafe { Qfloor });
-        let qceiling = LispObject::from(unsafe { Qceiling });
+        let qfloor = LispObject::from(Qfloor);
+        let qceiling = LispObject::from(Qceiling);
 
         if !(round == qfloor || round == qceiling) {
             self.total_lines
@@ -264,7 +264,6 @@ pub fn set_window_combination_limit(window: LispObject, limit: LispObject) -> Li
 #[lisp_fn]
 pub fn minibuffer_selected_window() -> LispObject {
     let level = unsafe { minibuf_level };
-    let current_minibuf = unsafe { LispObject::from(current_minibuf_window) };
     if level > 0 && selected_window().as_window_or_error().is_minibuffer()
         && current_minibuf.as_window().unwrap().is_live()
     {
