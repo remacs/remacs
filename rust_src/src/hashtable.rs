@@ -1,6 +1,7 @@
 use remacs_macros::lisp_fn;
 use libc::c_void;
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 use lists::{list, put};
 use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table, EmacsDouble,
                  EmacsInt, EmacsUint, Faref, Fcopy_sequence, Lisp_Hash_Table, PseudovecType,
@@ -320,4 +321,22 @@ fn clrhash(table: LispObject) -> LispObject {
 fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
     let sym = unsafe { LispObject::from(Qhash_table_test) };
     put(name, sym, list(&mut [test, hash]))
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sclrhash);
+        defsubr(&*Scopy_hash_table);
+        defsubr(&*Sdefine_hash_table_test);
+        defsubr(&*Sgethash);
+        defsubr(&*Shash_table_p);
+        defsubr(&*Shash_table_count);
+        defsubr(&*Shash_table_rehash_threshold);
+        defsubr(&*Shash_table_size);
+        defsubr(&*Shash_table_test);
+        defsubr(&*Shash_table_weakness);
+        defsubr(&*Smaphash);
+        defsubr(&*Sputhash);
+        defsubr(&*Sremhash);
+    }
 }

@@ -1,6 +1,7 @@
 //! Indentation functions
 
 use lisp::LispObject;
+use lisp::defsubr;
 use remacs_macros::lisp_fn;
 use remacs_sys;
 
@@ -20,4 +21,10 @@ use remacs_sys;
 #[lisp_fn]
 pub fn current_column() -> LispObject {
     LispObject::from_natnum(unsafe { remacs_sys::current_column() })
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Scurrent_column);
+    }
 }

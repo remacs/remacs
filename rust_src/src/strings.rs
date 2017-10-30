@@ -5,6 +5,7 @@ use std::ptr;
 use libc::{self, c_void};
 
 use lisp::LispObject;
+use lisp::defsubr;
 use multibyte;
 use remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
                  string_to_multibyte as c_string_to_multibyte, EmacsInt, SYMBOL_NAME};
@@ -150,4 +151,17 @@ fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
 #[lisp_fn]
 fn multibyte_string_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_string().map_or(false, |s| s.is_multibyte()))
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Smultibyte_string_p);
+        defsubr(&*Sstring_as_multibyte);
+        defsubr(&*Sstring_bytes);
+        defsubr(&*Sstring_equal);
+        defsubr(&*Sstring_lessp);
+        defsubr(&*Sstring_to_multibyte);
+        defsubr(&*Sstring_to_unibyte);
+        defsubr(&*Sstringp);
+    }
 }

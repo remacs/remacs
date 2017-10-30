@@ -3,6 +3,7 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::Qminus;
 use lisp::LispObject;
+use lisp::defsubr;
 
 /// Return numeric meaning of raw prefix argument RAW.
 /// A raw prefix argument is what you get from `(interactive "P")'.
@@ -19,5 +20,11 @@ fn prefix_numeric_value(raw: LispObject) -> LispObject {
         LispObject::from_fixnum(number)
     } else {
         LispObject::from_fixnum(1)
+    }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sprefix_numeric_value);
     }
 }

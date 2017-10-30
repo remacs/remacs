@@ -10,6 +10,7 @@ use libc::ptrdiff_t;
 use buffers::{buffer_file_name, get_buffer, LispBufferRef};
 use libc;
 use lisp::{LispNumber, LispObject};
+use lisp::defsubr;
 use multibyte::LispStringRef;
 use remacs_sys::{make_specified_string, make_uninit_string, nsberror, EmacsInt, Fcurrent_buffer};
 use remacs_sys::{code_convert_string, extract_data_from_object, preferred_coding_system,
@@ -523,4 +524,12 @@ fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
         .as_mut_slice()
         .copy_from_slice(formatted.as_bytes());
     digest
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sbuffer_hash);
+        defsubr(&*Smd5);
+        defsubr(&*Ssecure_hash);
+    }
 }

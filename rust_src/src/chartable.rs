@@ -3,6 +3,7 @@
 use remacs_sys::Lisp_Char_Table;
 use remacs_macros::lisp_fn;
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
 
@@ -42,4 +43,12 @@ fn set_char_table_parent(chartable: LispObject, parent: LispObject) -> LispObjec
 
     curr_table.parent = parent.to_raw();
     parent
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Schar_table_parent);
+        defsubr(&*Schar_table_subtype);
+        defsubr(&*Sset_char_table_parent);
+    }
 }

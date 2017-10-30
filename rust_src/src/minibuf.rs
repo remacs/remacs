@@ -2,6 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
+use lisp::defsubr;
 use remacs_sys::{minibuf_level, minibuf_window, Vminibuffer_list};
 use buffers::{current_buffer, get_buffer};
 use lists::memq;
@@ -45,4 +46,12 @@ pub fn set_minibuffer_window(window: LispObject) -> LispObject {
     }
 
     window
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sactive_minibuffer_window);
+        defsubr(&*Sminibufferp);
+        defsubr(&*Sset_minibuffer_window);
+    }
 }

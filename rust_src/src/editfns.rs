@@ -1,6 +1,7 @@
 //! Lisp functions pertaining to editing.
 
 use remacs_macros::lisp_fn;
+use lisp::defsubr;
 use lisp::LispObject;
 use util::clip_to_bounds;
 use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Fadd_text_properties,
@@ -286,4 +287,26 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
     };
 
     copy
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sbobp);
+        defsubr(&*Sbolp);
+        defsubr(&*Sbuffer_size);
+        defsubr(&*Schar_after);
+        defsubr(&*Seobp);
+        defsubr(&*Seolp);
+        defsubr(&*Sfollowing_char);
+        defsubr(&*Sgoto_char);
+        defsubr(&*Sinsert_byte);
+        defsubr(&*Smark_marker);
+        defsubr(&*Spoint);
+        defsubr(&*Spoint_max);
+        defsubr(&*Spoint_min);
+        defsubr(&*Sposition_bytes);
+        defsubr(&*Spropertize);
+        defsubr(&*Sregion_beginning);
+        defsubr(&*Sregion_end);
+    }
 }

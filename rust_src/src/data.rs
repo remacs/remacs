@@ -1,6 +1,7 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::Qcyclic_function_indirection;
 use lisp::LispObject;
+use lisp::defsubr;
 
 /// Find the function at the end of a chain of symbol function indirections.
 
@@ -48,4 +49,10 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
         }
     }
     return result;
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sindirect_function);
+    }
 }
