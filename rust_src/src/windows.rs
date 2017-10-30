@@ -1,6 +1,8 @@
 //! Functions operating on windows.
 
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
+
 use remacs_macros::lisp_fn;
 use remacs_sys::{fget_column_width, fget_line_height, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
@@ -337,4 +339,24 @@ pub fn window_frame(window: LispObject) -> LispObject {
     let win = window_valid_or_selected(window);
 
     win.frame()
+}
+
+pub fn rust_init_windows_syms() {
+    unsafe {
+        defsubr(&*Sminibuffer_selected_window);
+        defsubr(&*Sselected_window);
+        defsubr(&*Sset_window_combination_limit);
+        defsubr(&*Swindow_combination_limit);
+        defsubr(&*Swindow_buffer);
+        defsubr(&*Swindow_frame);
+        defsubr(&*Swindow_live_p);
+        defsubr(&*Swindow_margins);
+        defsubr(&*Swindow_minibuffer_p);
+        defsubr(&*Swindow_point);
+        defsubr(&*Swindow_start);
+        defsubr(&*Swindow_total_height);
+        defsubr(&*Swindow_total_width);
+        defsubr(&*Swindow_valid_p);
+        defsubr(&*Swindowp);
+    }
 }
