@@ -3,34 +3,49 @@
 use std::io;
 use std::ptr;
 use std::ffi::CStr;
+use std::cmp::Ordering;
 
 use std::path::Path;
 use std::fs;
 use std::os::unix::fs::MetadataExt;
+
 use libc;
 
-use remacs_sys::{Fexpand_file_name, EmacsInt, Qfile_missing, Qnil, compile_pattern, re_search,
+use remacs_sys::{Fexpand_file_name, Qfile_missing, Qnil, compile_pattern, re_search,
                  re_pattern_buffer, filemode_string, Ffind_file_name_handler, Qfile_attributes,
                  Qdirectory_files, Qdirectory_files_and_attributes, decode_file_name};
 
 use remacs_macros::lisp_fn;
 use lisp::LispObject;
-use lists::{list, nthcdr, cdr, car, setcdr};
+use lists::{list, car};
 use symbols::symbol_name;
 
-macro_rules! pushnamesandattrs {
-    ($files:expr, $fname:expr, $abpath:expr, $attrs:expr, $idformat:expr) => {{
+// We keep both a name string and LispObject object because
+// on osx type conversions (which generate alloc:: calls) in the
+// sort predicate fn core dumped on largeish (500ish) directeries.
+struct DirEntry {
+    name_string: String,
+    name_and_attrs: LispObject,
+}
+
+macro_rules! de_pushnamesandattrs {
+    ($entries:expr, $fname_string:expr, $fname:expr,
+     $abpath:expr, $attrs:expr, $idformat:expr) => {{
+        let name_and_attrs;
         if $attrs {
             let fileattrs = file_attributes_internal($abpath,
                                                      $idformat);
-            $files.push(LispObject::cons($fname, fileattrs));
+            name_and_attrs =  LispObject::cons($fname, fileattrs);
         } else {
-            $files.push($fname);
+            name_and_attrs = $fname;
         }
+        $entries.push(DirEntry {
+            name_string: $fname_string,
+	    name_and_attrs: name_and_attrs });
     }};
 }
 
-fn get_files(
+fn get_entries(
     directory: LispObject,
     full: LispObject,
     match_re: LispObject,
@@ -56,23 +71,25 @@ fn get_files(
     if match_re.is_not_nil() {
         recomp = unsafe { compile_pattern(match_re.to_raw(), ptr::null_mut(), Qnil, false, true) };
     }
-    let mut files = Vec::new();
+    let mut entries = Vec::new();
     for entry in fs::read_dir(dirP)? {
         let entry = entry?;
         let fname_string_enc = entry.file_name().into_string().unwrap();
         let fname_lo_enc = LispObject::from_str(&fname_string_enc);
         let fname_lo_raw = unsafe { decode_file_name(fname_lo_enc.to_raw()) };
         let fname_string = LispObject::from_raw(fname_lo_raw).to_string();
+        let fname_string2 = fname_string.clone();
         let abpath_str = dirS1.clone() + &slash + &fname_string;
         let abpath = LispObject::from_str(&abpath_str);
         if match_re.is_not_nil() {
             let fname_str = &*fname_string;
             if c_regex_matchp(recomp, fname_str) {
                 if full.is_not_nil() {
-                    pushnamesandattrs!(files, abpath, abpath, attrs, id_format);
+                    de_pushnamesandattrs!(entries, fname_string2, abpath, abpath, attrs, id_format);
                 } else {
-                    pushnamesandattrs!(
-                        files,
+                    de_pushnamesandattrs!(
+                        entries,
+                        fname_string2,
                         LispObject::from_str(&fname_string),
                         abpath,
                         attrs,
@@ -82,10 +99,11 @@ fn get_files(
             }
         } else {
             if full.is_not_nil() {
-                pushnamesandattrs!(files, abpath, abpath, attrs, id_format);
+                de_pushnamesandattrs!(entries, fname_string, abpath, abpath, attrs, id_format);
             } else {
-                pushnamesandattrs!(
-                    files,
+                de_pushnamesandattrs!(
+                    entries,
+                    fname_string,
                     LispObject::from_str(&fname_string),
                     abpath,
                     attrs,
@@ -95,7 +113,7 @@ fn get_files(
         }
     }
 
-    // read_dir() does not return .&&.. it appears so bolt them on
+    // read_dir() does not return .&.. so bolt them on
     let mut dirdots = Vec::new();
     if match_re.is_not_nil() {
         if c_regex_matchp(recomp, "..") {
@@ -109,15 +127,16 @@ fn get_files(
         dirdots.push(String::from("."));
     }
 
-    for dir_str in dirdots {
-        let abpath_str = dirS1.clone() + &slash + &dir_str.clone();
-        let abpath = LispObject::from_str(&abpath_str);
+    for dir in dirdots {
+        let abpath_string = dirS1.clone() + &slash + &dir.clone();
+        let abpath = LispObject::from_str(&abpath_string);
         if full.is_not_nil() {
-            pushnamesandattrs!(files, abpath, abpath, attrs, id_format);
+            de_pushnamesandattrs!(entries, abpath_string, abpath, abpath, attrs, id_format);
         } else {
-            pushnamesandattrs!(
-                files,
-                LispObject::from_str(&dir_str),
+            de_pushnamesandattrs!(
+                entries,
+                dir,
+                LispObject::from_str(&dir),
                 abpath,
                 attrs,
                 id_format
@@ -126,19 +145,20 @@ fn get_files(
     }
 
     if nosort.is_nil() {
-        if attrs {
-            Ok(sort_list(list(&mut files), |a, b| {
-                car(a).to_string() > car(b).to_string()
-            }))
+        entries.sort_by(|a, b| if a.name_string < b.name_string {
+            Ordering::Less
         } else {
-            Ok(sort_list(
-                list(&mut files),
-                |a, b| a.to_string() > b.to_string(),
-            ))
-        }
-    } else {
-        Ok(list(&mut files))
+            Ordering::Greater
+        });
     }
+
+    // stripoff name_string
+    let mut ents = Vec::new();
+    for ent in entries {
+        ents.push(ent.name_and_attrs);
+    }
+
+    Ok(list(&mut ents))
 }
 
 // Function shared by Fdirectory_files and Fdirectory_files_and_attributes.
@@ -156,7 +176,8 @@ pub extern "C" fn directory_files_internal(
     id_format: LispObject,
 ) -> LispObject {
 
-    match get_files(directory, full, match_re, nosort, attrs, id_format) {
+    //match get_files(directory, full, match_re, nosort, attrs, id_format) {
+    match get_entries(directory, full, match_re, nosort, attrs, id_format) {
         Ok(files) => files,
         Err(e) => {
             error!("directory-files fail: {}", e);
@@ -470,77 +491,6 @@ fn c_regex_matchp(recomp: *mut re_pattern_buffer, s: &str) -> bool {
             s.len() as libc::ssize_t,
             ptr::null_mut(),
         ) >= 0
-    }
-}
-
-
-//
-// list sorting funcs adapted from lists.rs
-//
-
-// note: orig lists::sort_list(list: LispObject, pred: LispObject) -> LispObject
-fn sort_list(list: LispObject, pred: fn(LispObject, LispObject) -> bool) -> LispObject {
-    let length = list.iter_tails().count();
-    if length < 2 {
-        return list;
-    }
-
-    let item = nthcdr(LispObject::from_fixnum((length / 2 - 1) as EmacsInt), list);
-    let back = cdr(item);
-    setcdr(item, LispObject::constant_nil());
-
-    let front = sort_list(list, pred);
-    let back = sort_list(back, pred);
-    merge_lists(front, back, pred)
-}
-
-// also needed by vectors.rs
-fn inorder(pred: fn(LispObject, LispObject) -> bool, a: LispObject, b: LispObject) -> bool {
-    //call!(pred, b, a).is_nil()
-    pred(b, a)
-}
-
-/// Merge step of linked-list sorting.
-#[no_mangle]
-fn merge_lists(
-    mut l1: LispObject,
-    mut l2: LispObject,
-    pred: fn(LispObject, LispObject) -> bool,
-) -> LispObject {
-
-    let mut tail = LispObject::constant_nil();
-    let mut value = LispObject::constant_nil();
-
-    loop {
-        if l1.is_nil() {
-            if tail.is_nil() {
-                return l2;
-            }
-            setcdr(tail, l2);
-            return value;
-        }
-        if l2.is_nil() {
-            if tail.is_nil() {
-                return l1;
-            }
-            setcdr(tail, l1);
-            return value;
-        }
-
-        let item;
-        if inorder(pred, car(l1), car(l2)) {
-            item = l1;
-            l1 = cdr(l1);
-        } else {
-            item = l2;
-            l2 = cdr(l2);
-        }
-        if tail.is_nil() {
-            value = item;
-        } else {
-            setcdr(tail, item);
-        }
-        tail = item;
     }
 }
 
