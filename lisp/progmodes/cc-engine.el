@@ -5189,16 +5189,25 @@ comment at the start of cc-engine.el for more info."
   ;; Get a "safe place" approximately TRY-SIZE characters before START.
   ;; This defsubst doesn't preserve point.
   (let* ((pos (max (- start try-size) (point-min)))
-	 (s (c-state-semi-pp-to-literal pos)))
-    (or (car (cddr s)) pos)))
+	 (s (c-state-semi-pp-to-literal pos))
+	 (cand (or (car (cddr s)) pos)))
+    (if (>= cand (point-min))
+	cand
+      (parse-partial-sexp pos start nil nil (car s) 'syntax-table)
+      (point))))
 
 (defun c-determine-limit (how-far-back &optional start try-size)
-  ;; Return a buffer position HOW-FAR-BACK non-literal characters from START
-  ;; (default point).  This is done by going back further in the buffer then
-  ;; searching forward for literals.  The position found won't be in a
-  ;; literal.  We start searching for the sought position TRY-SIZE (default
-  ;; twice HOW-FAR-BACK) bytes back from START.  This function must be fast.
-  ;; :-)
+  ;; Return a buffer position HOW-FAR-BACK non-literal characters from
+  ;; START (default point).  The starting position, either point or
+  ;; START may not be in a comment or string.
+  ;;
+  ;; The position found will not be before POINT-MIN and won't be in a
+  ;; literal.
+  ;;
+  ;; We start searching for the sought position TRY-SIZE (default
+  ;; twice HOW-FAR-BACK) bytes back from START.
+  ;;
+  ;; This function must be fast.  :-)
   (save-excursion
     (let* ((start (or start (point)))
 	   (try-size (or try-size (* 2 how-far-back)))
@@ -5254,6 +5263,8 @@ comment at the start of cc-engine.el for more info."
 	(+ (car elt) (- count how-far-back)))
        ((eq base (point-min))
 	(point-min))
+       ((> base (- start try-size)) ; Can only happen if we hit point-min.
+	(car elt))
        (t
 	(c-determine-limit (- how-far-back count) base try-size))))))
 
