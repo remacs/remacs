@@ -7024,7 +7024,9 @@ sweep_symbols (void)
         {
           if (!sym->s.gcmarkbit)
             {
-              if (sym->s.redirect == SYMBOL_LOCALIZED)
+              if (sym->s.redirect == SYMBOL_LOCALIZED
+		  /* Already freed?  */
+		  && !EQ (sym->s.function, Vdead))
                 xfree (SYMBOL_BLV (&sym->s));
               sym->s.next = symbol_free_list;
               symbol_free_list = &sym->s;
