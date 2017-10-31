@@ -7,8 +7,8 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist};
 use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal};
 
-use lisp::defsubr;
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 use lists::{car, cdr};
 use marker::{marker_buffer, marker_position};
 use multibyte::string_char;
