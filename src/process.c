@@ -653,7 +653,7 @@ clear_waiting_thread_info (void)
 
 static Lisp_Object status_convert (int);
 
-static void
+void
 update_status (struct Lisp_Process *p)
 {
   eassert (p->raw_status_new);
@@ -942,7 +942,7 @@ free_dns_request (Lisp_Object proc)
    Buffers denote the first process in the buffer, and nil denotes the
    current buffer.  */
 
-static Lisp_Object
+Lisp_Object
 get_process (register Lisp_Object name)
 {
   register Lisp_Object proc, obj;
@@ -1061,52 +1061,6 @@ nil, indicating the current buffer's process.  */)
   return Qnil;
 }
 
-DEFUN ("process-status", Fprocess_status, Sprocess_status, 1, 1, 0,
-       doc: /* Return the status of PROCESS.
-The returned value is one of the following symbols:
-run  -- for a process that is running.
-stop -- for a process stopped but continuable.
-exit -- for a process that has exited.
-signal -- for a process that has got a fatal signal.
-open -- for a network stream connection that is open.
-listen -- for a network stream server that is listening.
-closed -- for a network stream connection that is closed.
-connect -- when waiting for a non-blocking connection to complete.
-failed -- when a non-blocking connection has failed.
-nil -- if arg is a process name and no such process exists.
-PROCESS may be a process, a buffer, the name of a process, or
-nil, indicating the current buffer's process.  */)
-  (register Lisp_Object process)
-{
-  register struct Lisp_Process *p;
-  register Lisp_Object status;
-
-  if (STRINGP (process))
-    process = Fget_process (process);
-  else
-    process = get_process (process);
-
-  if (NILP (process))
-    return process;
-
-  p = XPROCESS (process);
-  if (p->raw_status_new)
-    update_status (p);
-  status = p->status;
-  if (CONSP (status))
-    status = XCAR (status);
-  if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
-    {
-      if (EQ (status, Qexit))
-	status = Qclosed;
-      else if (EQ (p->command, Qt))
-	status = Qstop;
-      else if (EQ (status, Qrun))
-	status = Qopen;
-    }
-  return status;
-}
-
 DEFUN ("process-exit-status", Fprocess_exit_status, Sprocess_exit_status,
        1, 1, 0,
        doc: /* Return the exit status of PROCESS or the signal number that killed it.
@@ -7868,7 +7822,6 @@ returns non-`nil'.  */);
   DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
 
   defsubr (&Sdelete_process);
-  defsubr (&Sprocess_status);
   defsubr (&Sprocess_exit_status);
   defsubr (&Sprocess_tty_name);
   defsubr (&Sprocess_command);
@@ -7955,4 +7908,10 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_inherit_coding_system_flag);
   defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
+}
+
+int
+pget_raw_status_new(const struct Lisp_Process *p)
+{
+  return p->raw_status_new;
 }

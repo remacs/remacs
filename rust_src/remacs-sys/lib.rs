@@ -798,6 +798,9 @@ pub struct Lisp_Process {
     /// Plist for programs to keep per-process state information, parameters, etc.
     pub plist: Lisp_Object,
 
+    /// Symbol indicating the type of process: real, network, serial.
+    pub process_type: Lisp_Object,
+
     /// Marker set to end of last buffer-inserted output from this process.
     pub mark: Lisp_Object,
 
@@ -948,6 +951,10 @@ extern "C" {
     pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
+}
+
+extern "C" {
+    pub fn pget_raw_status_new(p: *const Lisp_Process) -> c_int;
 }
 
 #[repr(C)]
@@ -1177,6 +1184,8 @@ extern "C" {
         inhibit_capture_property: Lisp_Object,
     ) -> Lisp_Object;
     pub fn Fline_end_position(n: Lisp_Object) -> Lisp_Object;
+    pub fn get_process(name: Lisp_Object) -> Lisp_Object;
+    pub fn update_status(p: *const Lisp_Process);
 }
 
 /// Contains C definitions from the font.h header.

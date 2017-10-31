@@ -304,3 +304,13 @@ extern void update_processes_for_thread_death (Lisp_Object);
 INLINE_HEADER_END
 
 #endif /* EMACS_PROCESS_H */
+
+int
+pget_raw_status_new(const struct Lisp_Process *p);
+
+
+Lisp_Object
+get_process (register Lisp_Object name);
+
+void
+update_status (struct Lisp_Process *p);
