@@ -16,6 +16,7 @@ use buffers::LispBufferRef;
 use chartable::LispCharTableRef;
 use frames::LispFrameRef;
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 use lists::{car, inorder, nthcdr, sort_list};
 use multibyte::MAX_CHAR;
 use process::LispProcessRef;
@@ -357,5 +358,26 @@ macro_rules! allocate_pseudovector {
                                        pseudovecsize!($ty, $field) as ::libc::c_int,
                                        pseudovecsize!($ty, $field) as ::libc::c_int,
                                        $vectype) as *mut $ty}
+    }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sarrayp);
+        defsubr(&*Sbool_vector_p);
+        defsubr(&*Sbufferp);
+        defsubr(&*Sbyte_code_function_p);
+        defsubr(&*Schar_table_p);
+        defsubr(&*Scondition_variable_p);
+        defsubr(&*Selt);
+        defsubr(&*Slength);
+        defsubr(&*Smutexp);
+        defsubr(&*Srecordp);
+        defsubr(&*Ssequencep);
+        defsubr(&*Ssort);
+        defsubr(&*Ssubrp);
+        defsubr(&*Sthreadp);
+        defsubr(&*Svector_or_char_table_p);
+        defsubr(&*Svectorp);
     }
 }

@@ -67,12 +67,12 @@ pub struct LispObject(Lisp_Object);
 impl LispObject {
     #[inline]
     pub fn constant_unbound() -> LispObject {
-        LispObject::from(unsafe { Qunbound })
+        LispObject::from(Qunbound)
     }
 
     #[inline]
     pub fn constant_t() -> LispObject {
-        LispObject::from(unsafe { Qt })
+        LispObject::from(Qt)
     }
 
     #[inline]
@@ -758,7 +758,7 @@ impl LispObject {
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails(self) -> TailsIter {
-        TailsIter::new(self, Some(unsafe { Qlistp }))
+        TailsIter::new(self, Some(Qlistp))
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
@@ -771,7 +771,7 @@ impl LispObject {
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails_plist(self) -> TailsIter {
-        TailsIter::new(self, Some(unsafe { Qplistp }))
+        TailsIter::new(self, Some(Qplistp))
     }
 }
 
@@ -962,7 +962,7 @@ impl LispObject {
 
     #[inline]
     pub fn is_t(self) -> bool {
-        self.to_raw() == unsafe { Qt }
+        self.to_raw() == Qt
     }
 
     #[inline]

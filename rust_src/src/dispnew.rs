@@ -9,6 +9,8 @@ use remacs_sys::WAIT_READING_MAX;
 
 use floatfns::extract_float;
 use lisp::LispObject;
+use lisp::defsubr;
+use std::{cmp, ptr};
 
 /// Pause, without updating display, for SECONDS seconds.
 /// SECONDS may be a floating-point value, meaning that you can wait for a
@@ -41,4 +43,10 @@ fn sleep_for(seconds: LispObject, milliseconds: LispObject) -> LispObject {
         }
     }
     LispObject::constant_nil()
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Ssleep_for);
+    }
 }

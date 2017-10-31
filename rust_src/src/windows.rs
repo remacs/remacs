@@ -11,6 +11,7 @@ use remacs_sys::{fget_column_width, fget_line_height, minibuf_level,
 
 use editfns::point;
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 use marker::marker_position;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
@@ -63,8 +64,8 @@ impl LispWindowRef {
     }
 
     pub fn total_width(&self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from(unsafe { Qfloor });
-        let qceiling = LispObject::from(unsafe { Qceiling });
+        let qfloor = LispObject::from(Qfloor);
+        let qceiling = LispObject::from(Qceiling);
 
         if !(round == qfloor || round == qceiling) {
             self.total_cols
@@ -81,8 +82,8 @@ impl LispWindowRef {
     }
 
     pub fn total_height(&self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from(unsafe { Qfloor });
-        let qceiling = LispObject::from(unsafe { Qceiling });
+        let qfloor = LispObject::from(Qfloor);
+        let qceiling = LispObject::from(Qceiling);
 
         if !(round == qfloor || round == qceiling) {
             self.total_lines
@@ -341,4 +342,24 @@ pub fn window_frame(window: LispObject) -> LispObject {
     let win = window_valid_or_selected(window);
 
     win.frame()
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sminibuffer_selected_window);
+        defsubr(&*Sselected_window);
+        defsubr(&*Sset_window_combination_limit);
+        defsubr(&*Swindow_buffer);
+        defsubr(&*Swindow_combination_limit);
+        defsubr(&*Swindow_frame);
+        defsubr(&*Swindow_live_p);
+        defsubr(&*Swindow_margins);
+        defsubr(&*Swindow_minibuffer_p);
+        defsubr(&*Swindow_point);
+        defsubr(&*Swindow_start);
+        defsubr(&*Swindow_total_height);
+        defsubr(&*Swindow_total_width);
+        defsubr(&*Swindow_valid_p);
+        defsubr(&*Swindowp);
+    }
 }

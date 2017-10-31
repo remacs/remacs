@@ -5,6 +5,7 @@ use remacs_sys::{EmacsInt, Qlistp, Qplistp};
 use remacs_sys::globals;
 
 use lisp::LispObject;
+use lisp::defsubr;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
 #[lisp_fn]
@@ -497,5 +498,40 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
             setcdr(tail, item);
         }
         tail = item;
+    }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sassoc);
+        defsubr(&*Sassq);
+        defsubr(&*Satom);
+        defsubr(&*Scar);
+        defsubr(&*Scar_safe);
+        defsubr(&*Scdr);
+        defsubr(&*Scdr_safe);
+        defsubr(&*Sconsp);
+        defsubr(&*Sdelq);
+        defsubr(&*Sget);
+        defsubr(&*Slax_plist_get);
+        defsubr(&*Slax_plist_put);
+        defsubr(&*Slist);
+        defsubr(&*Slistp);
+        defsubr(&*Smake_list);
+        defsubr(&*Smember);
+        defsubr(&*Smemq);
+        defsubr(&*Smemql);
+        defsubr(&*Snlistp);
+        defsubr(&*Snth);
+        defsubr(&*Snthcdr);
+        defsubr(&*Splist_get);
+        defsubr(&*Splist_member);
+        defsubr(&*Splist_put);
+        defsubr(&*Sput);
+        defsubr(&*Srassoc);
+        defsubr(&*Srassq);
+        defsubr(&*Ssafe_length);
+        defsubr(&*Ssetcar);
+        defsubr(&*Ssetcdr);
     }
 }

@@ -5,6 +5,7 @@ use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
 
 use floatfns;
 use lisp::{LispNumber, LispObject};
+use lisp::defsubr;
 
 /// Return X modulo Y.
 /// The result falls between zero (inclusive) and Y (exclusive).
@@ -412,4 +413,30 @@ fn sub1(number: LispObject) -> LispObject {
 #[lisp_fn]
 fn lognot(number: LispObject) -> LispObject {
     LispObject::from_fixnum(!number.as_fixnum_or_error())
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sabs);
+        defsubr(&*Sadd1);
+        defsubr(&*Seqlsign);
+        defsubr(&*Sgeq);
+        defsubr(&*Sgtr);
+        defsubr(&*Sleq);
+        defsubr(&*Slogand);
+        defsubr(&*Slogior);
+        defsubr(&*Slognot);
+        defsubr(&*Slogxor);
+        defsubr(&*Slss);
+        defsubr(&*Smax);
+        defsubr(&*Smin);
+        defsubr(&*Sminus);
+        defsubr(&*Smod);
+        defsubr(&*Sneq);
+        defsubr(&*Splus);
+        defsubr(&*Squo);
+        defsubr(&*Srem);
+        defsubr(&*Ssub1);
+        defsubr(&*Stimes);
+    }
 }

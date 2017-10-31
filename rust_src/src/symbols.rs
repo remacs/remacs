@@ -9,6 +9,7 @@ use remacs_sys::{Symbol_Interned, Symbol_Redirect, Symbol_Trapped_Write};
 use remacs_sys::{find_symbol_value, make_lisp_symbol};
 
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
@@ -205,4 +206,20 @@ pub fn symbol_value(symbol: LispObject) -> LispObject {
         xsignal!(Qvoid_variable, symbol);
     }
     LispObject::from(val)
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sfboundp);
+        defsubr(&*Sfmakunbound);
+        defsubr(&*Sindirect_variable);
+        defsubr(&*Skeywordp);
+        defsubr(&*Smakunbound);
+        defsubr(&*Ssetplist);
+        defsubr(&*Ssymbol_function);
+        defsubr(&*Ssymbol_name);
+        defsubr(&*Ssymbol_plist);
+        defsubr(&*Ssymbol_value);
+        defsubr(&*Ssymbolp);
+    }
 }

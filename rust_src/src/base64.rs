@@ -10,6 +10,7 @@ use remacs_macros::lisp_fn;
 use remacs_sys::make_unibyte_string;
 
 use lisp::LispObject;
+use lisp::defsubr;
 use multibyte::{multibyte_char_at, raw_byte_from_codepoint, MAX_5_BYTE_CHAR};
 use strings::MIME_LINE_LENGTH;
 
@@ -57,8 +58,8 @@ pub extern "C" fn base64_encode_1(
 }
 
 /// Base64-decode the data at FROM of LENGTH bytes into TO.  If MULTIBYTE, the
-/// decoded result should be in multibyte form.  If NCHARS_RETURN is not NULL,
-/// store the number of produced characters in *NCHARS_RETURN.
+/// decoded result should be in multibyte form.  If `NCHARS_RETURN` is not NULL,
+/// store the number of produced characters in `*NCHARS_RETURN`.
 #[no_mangle]
 pub extern "C" fn base64_decode_1(
     from: *const c_char,
@@ -191,4 +192,11 @@ fn base64_decode_string(string: LispObject) -> LispObject {
         error!("Invalid base64 data");
     }
     unsafe { LispObject::from(make_unibyte_string(decoded, decoded_length)) }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sbase64_decode_string);
+        defsubr(&*Sbase64_encode_string);
+    }
 }

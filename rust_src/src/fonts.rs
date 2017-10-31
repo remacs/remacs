@@ -5,7 +5,7 @@ use remacs_sys::{EmacsInt, Qfont_entity, Qfont_object, Qfont_spec};
 use remacs_sys::font;
 
 use lisp::LispObject;
-use lisp::intern;
+use lisp::{defsubr, intern};
 use vectors::LispVectorlikeRef;
 
 // A font is not a type in and of itself, it's just a group of three kinds of
@@ -74,4 +74,10 @@ pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
                 FontExtraType::Object => LispObject::from_bool(f.is_font_object()),
             }
         })
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sfontp);
+    }
 }

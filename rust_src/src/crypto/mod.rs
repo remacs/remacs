@@ -20,6 +20,7 @@ use remacs_sys::{current_thread, make_buffer_string, record_unwind_current_buffe
 
 use buffers::{buffer_file_name, get_buffer, LispBufferRef};
 use lisp::{LispNumber, LispObject};
+use lisp::defsubr;
 use multibyte::LispStringRef;
 use symbols::{fboundp, symbol_name};
 use threads::ThreadState;
@@ -524,4 +525,12 @@ fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
         .as_mut_slice()
         .copy_from_slice(formatted.as_bytes());
     digest
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sbuffer_hash);
+        defsubr(&*Smd5);
+        defsubr(&*Ssecure_hash);
+    }
 }

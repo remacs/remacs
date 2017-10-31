@@ -4,6 +4,7 @@ use remacs_macros::lisp_fn;
 use remacs_sys;
 
 use lisp::LispObject;
+use lisp::defsubr;
 
 /// Return the horizontal position of point.
 /// Beginning of line is column 0.
@@ -21,4 +22,10 @@ use lisp::LispObject;
 #[lisp_fn]
 pub fn current_column() -> LispObject {
     LispObject::from_natnum(unsafe { remacs_sys::current_column() })
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Scurrent_column);
+    }
 }

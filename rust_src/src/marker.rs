@@ -9,6 +9,7 @@ use remacs_sys::{buf_charpos_to_bytepos, make_lisp_ptr, set_point_both};
 
 use buffers::LispBufferRef;
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 use threads::ThreadState;
 use util::clip_to_bounds;
 
@@ -99,4 +100,12 @@ pub fn set_point_from_marker(marker: LispMarkerRef) {
         bytepos = clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
     };
     unsafe { set_point_both(charpos, bytepos) };
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Smarker_buffer);
+        defsubr(&*Smarker_position);
+        defsubr(&*Smarkerp);
+    }
 }

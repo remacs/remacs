@@ -5,6 +5,7 @@ use remacs_sys::Qsubfeatures;
 use remacs_sys::globals;
 
 use lisp::LispObject;
+use lisp::defsubr;
 use lists::{get, member, memq};
 
 
@@ -20,14 +21,17 @@ fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
     feature.as_symbol_or_error();
     let mut tem = memq(feature, LispObject::from(unsafe { globals.f_Vfeatures }));
     if tem.is_not_nil() && subfeature.is_not_nil() {
-        tem = member(
-            subfeature,
-            get(feature, LispObject::from(unsafe { Qsubfeatures })),
-        );
+        tem = member(subfeature, get(feature, LispObject::from(Qsubfeatures)));
     }
     if tem.is_nil() {
         LispObject::constant_nil()
     } else {
         LispObject::constant_t()
+    }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr(&*Sfeaturep);
     }
 }
