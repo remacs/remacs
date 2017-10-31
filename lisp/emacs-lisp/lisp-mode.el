@@ -461,11 +461,6 @@ This will generate compile-time constants from BINDINGS."
                        (throw 'found t)))))))
            (1 'font-lock-regexp-grouping-backslash prepend)
            (3 'font-lock-regexp-grouping-construct prepend))
-         ;; This is too general -- rms.
-         ;; A user complained that he has functions whose names start with `do'
-         ;; and that they get the wrong color.
-         ;; ;; CL `with-' and `do-' constructs
-         ;;("(\\(\\(do-\\|with-\\)\\(\\s_\\|\\w\\)*\\)" 1 font-lock-keyword-face)
          (lisp--match-hidden-arg
           (0 '(face font-lock-warning-face
                help-echo "Hidden behind deeper element; move to another line?")))
@@ -505,8 +500,10 @@ This will generate compile-time constants from BINDINGS."
          ;; This is too general -- rms.
          ;; A user complained that he has functions whose names start with `do'
          ;; and that they get the wrong color.
-         ;; ;; CL `with-' and `do-' constructs
-         ;;("(\\(\\(do-\\|with-\\)\\(\\s_\\|\\w\\)*\\)" 1 font-lock-keyword-face)
+         ;; That user has violated the http://www.cliki.net/Naming+conventions:
+         ;; CL (but not EL!) `with-' (context) and `do-' (iteration)
+         (,(concat "(\\(\\(do-\\|with-\\)" lisp-mode-symbol-regexp "\\)")
+           (1 font-lock-keyword-face))
          (lisp--match-hidden-arg
           (0 '(face font-lock-warning-face
                help-echo "Hidden behind deeper element; move to another line?")))
