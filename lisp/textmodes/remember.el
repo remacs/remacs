@@ -402,11 +402,19 @@ exists) might be changed."
   :type 'string
   :group 'remember)
 
+(defcustom remember-time-format "%a %b %d %H:%M:%S %Y"
+  "The format for time stamp, passed to `format-time-string'.
+The default emulates `current-time-string' for backward compatibility."
+  :type 'string
+  :group 'remember
+  :version "27.1")
+
 (defun remember-append-to-file ()
   "Remember, with description DESC, the given TEXT."
   (let* ((text (buffer-string))
          (desc (remember-buffer-desc))
-         (remember-text (concat "\n" remember-leader-text (current-time-string)
+         (remember-text (concat "\n" remember-leader-text
+                                (format-time-string remember-time-format)
                                 " (" desc ")\n\n" text
                                 (save-excursion (goto-char (point-max))
                                                 (if (bolp) nil "\n"))))
