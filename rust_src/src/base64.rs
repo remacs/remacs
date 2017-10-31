@@ -1,16 +1,18 @@
 //! Base64 de- and encoding functions.
 
+use libc::{c_char, c_uchar, ptrdiff_t};
 use std::ptr;
 use std::slice;
-use libc::{c_char, c_uchar, ptrdiff_t};
+
 use base64_crate;
+
+use remacs_macros::lisp_fn;
+use remacs_sys::make_unibyte_string;
 
 use lisp::LispObject;
 use lisp::defsubr;
-use strings::MIME_LINE_LENGTH;
 use multibyte::{multibyte_char_at, raw_byte_from_codepoint, MAX_5_BYTE_CHAR};
-use remacs_sys::make_unibyte_string;
-use remacs_macros::lisp_fn;
+use strings::MIME_LINE_LENGTH;
 
 #[no_mangle]
 pub extern "C" fn base64_encode_1(

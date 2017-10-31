@@ -1,10 +1,15 @@
-use remacs_macros::lisp_fn;
+//! symbols support
+
 use std::mem;
+
+use remacs_macros::lisp_fn;
+use remacs_sys::{Fset, Lisp_Symbol};
+use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
+use remacs_sys::{Symbol_Interned, Symbol_Redirect, Symbol_Trapped_Write};
+use remacs_sys::{find_symbol_value, make_lisp_symbol};
+
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
-use remacs_sys::{find_symbol_value, make_lisp_symbol, Fset, Lisp_Symbol,
-                 Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable,
-                 Symbol_Interned, Symbol_Redirect, Symbol_Trapped_Write};
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 

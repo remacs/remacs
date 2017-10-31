@@ -1,9 +1,11 @@
 //! Operations on lists.
 
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Qlistp, Qplistp};
+use remacs_sys::globals;
+
 use lisp::LispObject;
 use lisp::defsubr;
-use remacs_sys::{globals, EmacsInt, Qlistp, Qplistp};
-use remacs_macros::lisp_fn;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
 #[lisp_fn]

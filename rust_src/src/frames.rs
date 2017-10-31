@@ -1,7 +1,8 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
+use remacs_sys::Lisp_Frame;
+use remacs_sys::selected_frame as current_frame;
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;

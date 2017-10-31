@@ -1,7 +1,11 @@
-use lisp::LispObject;
-use lisp::defsubr;
+//! Commands
+
 use remacs_macros::lisp_fn;
 use remacs_sys::EmacsInt;
+
+use lisp::LispObject;
+use lisp::defsubr;
+
 use threads::ThreadState;
 
 /// Return buffer position N characters after (before if N negative) point.

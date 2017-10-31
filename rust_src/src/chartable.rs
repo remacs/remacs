@@ -1,7 +1,8 @@
 //! char table related functions
 
-use remacs_sys::Lisp_Char_Table;
 use remacs_macros::lisp_fn;
+use remacs_sys::Lisp_Char_Table;
+
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 

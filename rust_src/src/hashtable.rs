@@ -1,12 +1,16 @@
-use remacs_macros::lisp_fn;
+//! hashtable support
+
 use libc::c_void;
+use std::ptr;
+
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Faref, Fcopy_sequence, Lisp_Hash_Table,
+                 PseudovecType, Qhash_table_test, CHECK_IMPURE};
+use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table};
+
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{list, put};
-use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table, EmacsDouble,
-                 EmacsInt, EmacsUint, Faref, Fcopy_sequence, Lisp_Hash_Table, PseudovecType,
-                 Qhash_table_test, CHECK_IMPURE};
-use std::ptr;
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 

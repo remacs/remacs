@@ -1,15 +1,17 @@
+//! marker support
+
 use libc::{c_void, ptrdiff_t};
 use std::mem;
 
-use remacs_sys::make_lisp_ptr;
-use lisp::{ExternalPtr, LispObject};
-use lisp::defsubr;
-use remacs_sys::{buf_charpos_to_bytepos, set_point_both, EmacsInt, Lisp_Marker, Lisp_Type};
 use remacs_macros::lisp_fn;
-use util::clip_to_bounds;
-use threads::ThreadState;
+use remacs_sys::{EmacsInt, Lisp_Marker, Lisp_Type};
+use remacs_sys::{buf_charpos_to_bytepos, make_lisp_ptr, set_point_both};
 
 use buffers::LispBufferRef;
+use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
+use threads::ThreadState;
+use util::clip_to_bounds;
 
 pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
 

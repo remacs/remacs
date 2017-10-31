@@ -1,26 +1,27 @@
 #![allow(unused)] // XXX unused code belongs into translation of new extract_data_from_object fn
 
+use libc;
+use libc::ptrdiff_t;
 use md5;
 use sha1;
 use sha2::{Digest, Sha224, Sha256, Sha384, Sha512};
 use std;
 use std::slice;
-use libc::ptrdiff_t;
 
-use buffers::{buffer_file_name, get_buffer, LispBufferRef};
-use libc;
-use lisp::{LispNumber, LispObject};
-use lisp::defsubr;
-use multibyte::LispStringRef;
+use remacs_macros::lisp_fn;
 use remacs_sys::{make_specified_string, make_uninit_string, nsberror, EmacsInt, Fcurrent_buffer};
 use remacs_sys::{code_convert_string, extract_data_from_object, preferred_coding_system,
                  string_char_to_byte, validate_subarray, Fcoding_system_p};
-use remacs_sys::{current_thread, make_buffer_string, record_unwind_current_buffer,
-                 set_buffer_internal};
 use remacs_sys::{globals, Ffind_operation_coding_system, Flocal_variable_p};
 use remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qraw_text, Qsha1,
                  Qsha224, Qsha256, Qsha384, Qsha512, Qstringp, Qwrite_region};
-use remacs_macros::lisp_fn;
+use remacs_sys::{current_thread, make_buffer_string, record_unwind_current_buffer,
+                 set_buffer_internal};
+
+use buffers::{buffer_file_name, get_buffer, LispBufferRef};
+use lisp::{LispNumber, LispObject};
+use lisp::defsubr;
+use multibyte::LispStringRef;
 use symbols::{fboundp, symbol_name};
 use threads::ThreadState;
 

@@ -2,6 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::Qcategory_table;
+
 use lisp::LispObject;
 use lisp::defsubr;
 use threads::ThreadState;

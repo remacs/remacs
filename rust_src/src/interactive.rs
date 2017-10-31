@@ -2,6 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::Qminus;
+
 use lisp::LispObject;
 use lisp::defsubr;
 

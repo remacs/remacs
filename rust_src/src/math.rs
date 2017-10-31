@@ -1,10 +1,11 @@
 //! Functions doing math on numbers.
 
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
+
 use floatfns;
 use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
-use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
-use remacs_macros::lisp_fn;
 
 /// Return X modulo Y.
 /// The result falls between zero (inclusive) and Y (exclusive).

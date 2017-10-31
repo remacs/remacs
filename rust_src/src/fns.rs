@@ -1,7 +1,9 @@
 //* Random utility Lisp functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{globals, Qsubfeatures};
+use remacs_sys::Qsubfeatures;
+use remacs_sys::globals;
+
 use lisp::LispObject;
 use lisp::defsubr;
 use lists::{get, member, memq};

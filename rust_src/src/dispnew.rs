@@ -1,13 +1,15 @@
 //! Updating of data structures for redisplay.
 
+use std::{cmp, ptr};
+
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_timespec, dtotimespec, timespec_add, timespec_sub,
-                 wait_reading_process_output, WAIT_READING_MAX};
+                 wait_reading_process_output};
+use remacs_sys::WAIT_READING_MAX;
+
+use floatfns::extract_float;
 use lisp::LispObject;
 use lisp::defsubr;
-use std::{cmp, ptr};
-use floatfns::extract_float;
-
 
 /// Pause, without updating display, for SECONDS seconds.
 /// SECONDS may be a floating-point value, meaning that you can wait for a

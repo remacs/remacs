@@ -1,11 +1,11 @@
 extern crate libc;
 
-use std::env;
-use std::io::{BufRead, BufReader, Write};
-use std::fs::File;
-use std::path::PathBuf;
-use std::mem::size_of;
 use std::cmp::max;
+use std::env;
+use std::fs::File;
+use std::io::{BufRead, BufReader, Write};
+use std::mem::size_of;
+use std::path::PathBuf;
 
 #[cfg(feature = "wide-emacs-int")]
 const WIDE_EMACS_INT: bool = true;
