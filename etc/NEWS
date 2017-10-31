@@ -1692,7 +1692,7 @@ job of signaling list cycles instead of looping indefinitely.
 
 +++
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'
-can be used for creation of temporary files of remote or mounted directories.
+can be used for creation of temporary files on remote or mounted directories.
 
 +++
 ** On GNU platforms when operating on a local file, 'file-attributes'
@@ -1720,7 +1720,7 @@ operating recursively and when some other process deletes the directory
 or its files before 'delete-directory' gets to them.
 
 +++
-*** New error type 'user-search-failed' like 'search-failed' but
+** New error type 'user-search-failed' like 'search-failed' but
 avoids debugger like 'user-error'.
 
 +++

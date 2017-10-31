@@ -102,7 +102,7 @@ This is typically the filename.")
 ;;;; Commonly needed location classes are defined here:
 
 ;; FIXME: might be useful to have an optional "hint" i.e. a string to
-;; search for in case the line number is sightly out of date.
+;; search for in case the line number is slightly out of date.
 (defclass xref-file-location (xref-location)
   ((file :type string :initarg :file)
    (line :type fixnum :initarg :line :reader xref-location-line)
@@ -254,8 +254,7 @@ find a search tool; by default, this uses \"find | grep\" in the
       (project-external-roots pr)))))
 
 (cl-defgeneric xref-backend-apropos (backend pattern)
-  "Find all symbols that match PATTERN.
-PATTERN is a regexp")
+  "Find all symbols that match regexp PATTERN.")
 
 (cl-defgeneric xref-backend-identifier-at-point (_backend)
   "Return the relevant identifier at point.
