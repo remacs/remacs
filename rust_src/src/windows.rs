@@ -5,11 +5,12 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor};
-use remacs_sys::{fget_column_width, fget_line_height, minibuf_level,
-                 minibuf_selected_window as current_minibuf_window,
+use remacs_sys::{fget_column_width, fget_line_height, fget_minibuffer_window, fget_root_window,
+                 minibuf_level, minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window};
 
 use editfns::point;
+use frames::{frame_live_or_selected, window_frame_live_or_selected};
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use marker::marker_position;
@@ -344,9 +345,29 @@ pub fn window_frame(window: LispObject) -> LispObject {
     win.frame()
 }
 
+/// Return the root window of FRAME-OR-WINDOW.
+/// If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
+/// With a frame argument, return that frame's root window.
+/// With a window argument, return the root window of that window's frame.
+#[lisp_fn(min = "0")]
+pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
+    let frame = window_frame_live_or_selected(frame_or_window);
+    LispObject::from(unsafe { fget_root_window(frame.as_ptr()) })
+}
+
+/// Return the minibuffer window for frame FRAME.
+/// If FRAME is omitted or nil, it defaults to the selected frame.
+#[lisp_fn(min = "0")]
+pub fn minibuffer_window(frame: LispObject) -> LispObject {
+    let frame = frame_live_or_selected(frame);
+    LispObject::from(unsafe { fget_minibuffer_window(frame.as_ptr()) })
+}
+
 pub fn rust_init_syms() {
     unsafe {
+        defsubr(&*Sframe_root_window);
         defsubr(&*Sminibuffer_selected_window);
+        defsubr(&*Sminibuffer_window);
         defsubr(&*Sselected_window);
         defsubr(&*Sset_window_combination_limit);
         defsubr(&*Swindow_buffer);
