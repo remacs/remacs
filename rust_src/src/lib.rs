@@ -75,6 +75,8 @@ use alloc_unexecmacosx::OsxUnexecAlloc;
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
+include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
+
 pub use base64::base64_decode_1;
 pub use base64::base64_encode_1;
 
@@ -132,11 +134,6 @@ pub use process::Fget_process;
 pub use str2sig::str2sig;
 
 pub use util::clip_to_bounds;
-
-// Used in window.c
-pub use windows::Fwindow_buffer;
-// Used in minibuffer.c
-pub use windows::Fwindow_minibuffer_p;
 
 // These need to be exported as bytecode.c depends upon them.
 pub use editfns::Fbobp;
@@ -215,7 +212,6 @@ pub use symbols::indirect_variable;
 pub use vectors::Felt;
 pub use vectors::Flength;
 pub use vectors::Fsort;
-pub use windows::Fwindow_point;
 
 #[cfg(test)]
 pub use functions::make_float;
