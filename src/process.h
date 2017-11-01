@@ -314,3 +314,7 @@ get_process (register Lisp_Object name);
 
 void
 update_status (struct Lisp_Process *p);
+
+void
+send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
+	      Lisp_Object object);

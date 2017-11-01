@@ -6065,7 +6065,7 @@ write_queue_pop (struct Lisp_Process *p, Lisp_Object *obj,
 
    This function can evaluate Lisp code and can garbage collect.  */
 
-static void
+void
 send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 	      Lisp_Object object)
 {
@@ -6315,26 +6315,6 @@ set up yet, this function will block until socket setup has completed.  */)
   send_process (proc, (char *) BYTE_POS_ADDR (start_byte),
 		end_byte - start_byte, Fcurrent_buffer ());
 
-  return Qnil;
-}
-
-DEFUN ("process-send-string", Fprocess_send_string, Sprocess_send_string,
-       2, 2, 0,
-       doc: /* Send PROCESS the contents of STRING as input.
-PROCESS may be a process, a buffer, the name of a process or buffer, or
-nil, indicating the current buffer's process.
-If STRING is more than 500 characters long,
-it is sent in several bunches.  This may happen even for shorter strings.
-Output from processes can arrive in between bunches.
-
-If PROCESS is a non-blocking network process that hasn't been fully
-set up yet, this function will block until socket setup has completed.  */)
-  (Lisp_Object process, Lisp_Object string)
-{
-  CHECK_STRING (string);
-  Lisp_Object proc = get_process (process);
-  send_process (proc, SSDATA (string),
-		SBYTES (string), string);
   return Qnil;
 }
 
@@ -7833,7 +7813,6 @@ returns non-`nil'.  */);
 #endif
   defsubr (&Saccept_process_output);
   defsubr (&Sprocess_send_region);
-  defsubr (&Sprocess_send_string);
   defsubr (&Sinternal_default_interrupt_process);
   defsubr (&Sinterrupt_process);
   defsubr (&Skill_process);

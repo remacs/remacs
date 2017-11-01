@@ -1187,6 +1187,13 @@ extern "C" {
     pub fn get_process(name: Lisp_Object) -> Lisp_Object;
     pub fn update_status(p: *const Lisp_Process);
     pub fn setup_process_coding_systems(process: Lisp_Object);
+    pub fn send_process(
+        process: Lisp_Object,
+        buf: *const c_char,
+        len: ptrdiff_t,
+        object: Lisp_Object,
+    );
+    pub fn STRING_BYTES(s: *const Lisp_String) -> ptrdiff_t;
 }
 
 /// Contains C definitions from the font.h header.

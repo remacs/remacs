@@ -1,10 +1,10 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Process, QCbuffer, Qcdr, Qclose, Qexit, Qlistp, Qnetwork, Qopen,
+use remacs_sys::{EmacsInt, Lisp_Process, QCbuffer, Qcdr, Qclosed, Qexit, Qlistp, Qnetwork, Qopen,
                  Qpipe, Qrun, Qserial, Qstop, Vprocess_alist};
-use remacs_sys::{get_process as cget_process, pget_pid, pget_raw_status_new,
-                 setup_process_coding_systems, update_status, Fmapcar};
+use remacs_sys::{get_process as cget_process, pget_pid, pget_raw_status_new, send_process,
+                 setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -169,7 +169,7 @@ pub fn process_status(process: LispObject) -> LispObject {
     {
         let process_command = LispObject::from(p_ref.command);
         if status.eq(LispObject::from(Qexit)) {
-            status = LispObject::from(Qclose);
+            status = LispObject::from(Qclosed);
         } else if process_command.eq(LispObject::constant_t()) {
             status = LispObject::from(Qstop);
         } else if status.eq(LispObject::from(Qrun)) {
@@ -199,8 +199,31 @@ fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject {
             buffer,
         ));
     }
-    unsafe { setup_process_coding_systems(process.to_raw()) }
+    unsafe { setup_process_coding_systems(process.to_raw()) };
     buffer
+}
+
+/// Send PROCESS the contents of STRING as input.
+/// PROCESS may be a process, a buffer, the name of a process or buffer, or
+/// nil, indicating the current buffer's process.
+/// If STRING is more than 500 characters long,
+/// it is sent in several bunches.  This may happen even for shorter strings.
+/// Output from processes can arrive in between bunches.
+///
+/// If PROCESS is a non-blocking network process that hasn't been fully
+/// set up yet, this function will block until socket setup has completed.
+#[lisp_fn]
+fn process_send_string(process: LispObject, string: LispObject) -> LispObject {
+    let s = string.as_string_or_error();
+    unsafe {
+        send_process(
+            cget_process(process.to_raw()),
+            s.data,
+            STRING_BYTES(s.as_ptr()),
+            string.to_raw(),
+        )
+    };
+    LispObject::constant_nil()
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
