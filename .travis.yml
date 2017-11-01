@@ -22,11 +22,12 @@ jobs:
         # Travis. This can be slow to install, so raise the Travis timeout.
         - (which rustfmt && rustfmt --version && [[ "$(rustfmt --version)" =~ "0.2.9" ]]) || travis_wait cargo install --force rustfmt-nightly --vers 0.2.9
       script: ./.travis-format.sh
-    - &BASE_FULL_TEST
+    - &FULL_TEST
         stage: test
         env:
           # Ensure that we build without warnings.
           - CARGO_FLAGS="--features 'strict'"
+        os: linux
         addons:
           apt:
             packages:
@@ -40,18 +41,16 @@ jobs:
         script:
           - make -j 3 && echo '==> Running tests' && make check
     -
-      <<: *BASE_FULL_TEST
-      os: linux
-    -
-      <<: *BASE_FULL_TEST
+      <<: *FULL_TEST
       os: osx
-    - &BASE_NO_WINDOW_SYSTEM_TEST
+    - &NO_WINDOW_SYSTEM_TEST
         stage: test
         env:
           # Ensure that we build without warnings.
           - CARGO_FLAGS="--features 'strict'"
           - TRAVIS_WITH_NO_WINDOW_SYSTEM=1  # So we can tell them apart
           - TRAVIS_ALLOW_FAILURE=1
+        os: linux
         addons:
           apt:
             packages:
@@ -63,10 +62,7 @@ jobs:
         script:
           - make -j 3 && echo '==> Running nowindow tests' && make check
     -
-      <<: *BASE_NO_WINDOW_SYSTEM_TEST
-      os: linux
-    -
-      <<: *BASE_NO_WINDOW_SYSTEM_TEST
+      <<: *NO_WINDOW_SYSTEM_TEST
       os: osx
   allow_failures:
     - env: TRAVIS_ALLOW_FAILURE=1
