@@ -44,8 +44,6 @@ fn sleep_for(seconds: LispObject, milliseconds: LispObject) -> LispObject {
     LispObject::constant_nil()
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Ssleep_for);
-    }
+export_lisp_fns! {
+    sleep_for
 }

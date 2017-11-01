@@ -361,23 +361,21 @@ macro_rules! allocate_pseudovector {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sarrayp);
-        defsubr(&*Sbool_vector_p);
-        defsubr(&*Sbufferp);
-        defsubr(&*Sbyte_code_function_p);
-        defsubr(&*Schar_table_p);
-        defsubr(&*Scondition_variable_p);
-        defsubr(&*Selt);
-        defsubr(&*Slength);
-        defsubr(&*Smutexp);
-        defsubr(&*Srecordp);
-        defsubr(&*Ssequencep);
-        defsubr(&*Ssort);
-        defsubr(&*Ssubrp);
-        defsubr(&*Sthreadp);
-        defsubr(&*Svector_or_char_table_p);
-        defsubr(&*Svectorp);
-    }
+export_lisp_fns! {
+    arrayp,
+    bool_vector_p,
+    bufferp,
+    byte_code_function_p,
+    char_table_p,
+    condition_variable_p,
+    elt,
+    length,
+    mutexp,
+    recordp,
+    sequencep,
+    sort,
+    subrp,
+    threadp,
+    vector_or_char_table_p,
+    vectorp
 }

@@ -102,10 +102,8 @@ pub fn set_point_from_marker(marker: LispMarkerRef) {
     unsafe { set_point_both(charpos, bytepos) };
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Smarker_buffer);
-        defsubr(&*Smarker_position);
-        defsubr(&*Smarkerp);
-    }
+export_lisp_fns! {
+    marker_buffer,
+    marker_position,
+    markerp
 }
