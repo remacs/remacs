@@ -136,6 +136,7 @@ pub use util::clip_to_bounds;
 // Used in window.c
 pub use windows::Fwindow_buffer;
 // Used in minibuffer.c
+pub use windows::Fframe_root_window;
 pub use windows::Fwindow_minibuffer_p;
 
 // These need to be exported as bytecode.c depends upon them.
