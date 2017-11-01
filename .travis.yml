@@ -3,6 +3,11 @@ cache: cargo
 rust:
   - nightly
 
+# The matrix is about OS coverage
+os:
+  - linux
+  - osx
+
 # Run rustfmt first.
 stages:
   - rustfmt
@@ -21,7 +26,7 @@ jobs:
         # Travis. This can be slow to install, so raise the Travis timeout.
         - (which rustfmt && rustfmt --version && [[ "$(rustfmt --version)" =~ "0.2.9" ]]) || travis_wait cargo install --force rustfmt-nightly --vers 0.2.9
       script: ./.travis-format.sh
-      os: linux
+      os: linux  # No need to run this everywhere
     - stage: test
       env:
         # Ensure that we build without warnings.
@@ -38,9 +43,6 @@ jobs:
         - if [ $TRAVIS_OS_NAME = osx ]; then ./autogen.sh && ./configure --without-makeinfo --with-xpm=no --with-gif=no --with-gnutls=no; fi
       script:
         - make -j 3 && echo '==> Running tests' && make check
-      os:
-        - linux
-        - osx
     - stage: nowindow
       env:
         # Ensure that we build without warnings.
@@ -56,9 +58,6 @@ jobs:
         - if [ $TRAVIS_OS_NAME = osx ]; then ./autogen.sh && ./configure --without-makeinfo --with-gnutls=no --with-x=no --without-gconf --without-gsettings; fi
       script:
         - make -j 3 && echo '==> Running nowindow tests' && make check
-      os:
-        - linux
-        - osx
   allow_failures:
     - env: TRAVIS_ALLOW_FAILURE=1
 
