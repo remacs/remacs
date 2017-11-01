@@ -30,8 +30,6 @@ fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sfeaturep);
-    }
+export_lisp_fns! {
+    featurep
 }

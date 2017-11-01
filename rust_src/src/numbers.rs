@@ -87,14 +87,12 @@ fn random(limit: LispObject) -> LispObject {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sfloatp);
-        defsubr(&*Sinteger_or_marker_p);
-        defsubr(&*Sintegerp);
-        defsubr(&*Snatnump);
-        defsubr(&*Snumber_or_marker_p);
-        defsubr(&*Snumberp);
-        defsubr(&*Srandom);
-    }
+export_lisp_fns! {
+    floatp,
+    integer_or_marker_p,
+    integerp,
+    natnump,
+    number_or_marker_p,
+    numberp,
+    random
 }

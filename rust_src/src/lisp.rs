@@ -1139,6 +1139,18 @@ extern "C" {
     pub fn defsubr(sname: *const Lisp_Subr);
 }
 
+macro_rules! export_lisp_fns {
+    ($($f:ident),+) => {
+        pub fn rust_init_syms() {
+            unsafe {
+                $(
+                    defsubr(&*concat_idents!(S, $f));
+                )+
+            }
+        }
+    }
+}
+
 #[test]
 fn test_basic_float() {
     let val = 8.0;

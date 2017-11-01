@@ -150,9 +150,7 @@ fn intern(string: LispObject, obarray: LispObject) -> LispObject {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sintern);
-        defsubr(&*Sintern_soft);
-    }
+export_lisp_fns! {
+    intern,
+    intern_soft
 }

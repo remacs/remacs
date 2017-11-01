@@ -155,15 +155,13 @@ fn multibyte_string_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_string().map_or(false, |s| s.is_multibyte()))
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Smultibyte_string_p);
-        defsubr(&*Sstring_as_multibyte);
-        defsubr(&*Sstring_bytes);
-        defsubr(&*Sstring_equal);
-        defsubr(&*Sstring_lessp);
-        defsubr(&*Sstring_to_multibyte);
-        defsubr(&*Sstring_to_unibyte);
-        defsubr(&*Sstringp);
-    }
+export_lisp_fns! {
+    multibyte_string_p,
+    string_as_multibyte,
+    string_bytes,
+    string_equal,
+    string_lessp,
+    string_to_multibyte,
+    string_to_unibyte,
+    stringp
 }

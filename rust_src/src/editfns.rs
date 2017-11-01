@@ -291,24 +291,22 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
     copy
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sbobp);
-        defsubr(&*Sbolp);
-        defsubr(&*Sbuffer_size);
-        defsubr(&*Schar_after);
-        defsubr(&*Seobp);
-        defsubr(&*Seolp);
-        defsubr(&*Sfollowing_char);
-        defsubr(&*Sgoto_char);
-        defsubr(&*Sinsert_byte);
-        defsubr(&*Smark_marker);
-        defsubr(&*Spoint);
-        defsubr(&*Spoint_max);
-        defsubr(&*Spoint_min);
-        defsubr(&*Sposition_bytes);
-        defsubr(&*Spropertize);
-        defsubr(&*Sregion_beginning);
-        defsubr(&*Sregion_end);
-    }
+export_lisp_fns! {
+    bobp,
+    bolp,
+    buffer_size,
+    char_after,
+    eobp,
+    eolp,
+    following_char,
+    goto_char,
+    insert_byte,
+    mark_marker,
+    point,
+    point_max,
+    point_min,
+    position_bytes,
+    propertize,
+    region_beginning,
+    region_end
 }

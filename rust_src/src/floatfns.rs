@@ -387,31 +387,29 @@ fn round2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sacos);
-        defsubr(&*Sasin);
-        defsubr(&*Satan);
-        defsubr(&*Sceiling);
-        defsubr(&*Scopysign);
-        defsubr(&*Scos);
-        defsubr(&*Sexp);
-        defsubr(&*Sexpt);
-        defsubr(&*Sfceiling);
-        defsubr(&*Sffloor);
-        defsubr(&*Sfloat);
-        defsubr(&*Sfloor);
-        defsubr(&*Sfrexp);
-        defsubr(&*Sfround);
-        defsubr(&*Sftruncate);
-        defsubr(&*Sisnan);
-        defsubr(&*Sldexp);
-        defsubr(&*Slog);
-        defsubr(&*Slogb);
-        defsubr(&*Sround);
-        defsubr(&*Ssin);
-        defsubr(&*Ssqrt);
-        defsubr(&*Stan);
-        defsubr(&*Struncate);
-    }
+export_lisp_fns! {
+    acos,
+    asin,
+    atan,
+    ceiling,
+    copysign,
+    cos,
+    exp,
+    expt,
+    fceiling,
+    ffloor,
+    float,
+    floor,
+    frexp,
+    fround,
+    ftruncate,
+    isnan,
+    ldexp,
+    log,
+    logb,
+    round,
+    sin,
+    sqrt,
+    tan,
+    truncate
 }

@@ -103,14 +103,12 @@ pub fn set_process_plist(process: LispObject, plist: LispObject) -> LispObject {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sget_buffer_process);
-        defsubr(&*Sget_process);
-        defsubr(&*Sprocess_buffer);
-        defsubr(&*Sprocess_list);
-        defsubr(&*Sprocess_name);
-        defsubr(&*Sprocessp);
-        defsubr(&*Sset_process_plist);
-    }
+export_lisp_fns! {
+    get_buffer_process,
+    get_process,
+    process_buffer,
+    process_list,
+    process_name,
+    processp,
+    set_process_plist
 }

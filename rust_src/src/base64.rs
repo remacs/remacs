@@ -194,9 +194,7 @@ fn base64_decode_string(string: LispObject) -> LispObject {
     unsafe { LispObject::from(make_unibyte_string(decoded, decoded_length)) }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sbase64_decode_string);
-        defsubr(&*Sbase64_encode_string);
-    }
+export_lisp_fns! {
+    base64_decode_string,
+    base64_encode_string
 }

@@ -344,22 +344,20 @@ pub fn window_frame(window: LispObject) -> LispObject {
     win.frame()
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sminibuffer_selected_window);
-        defsubr(&*Sselected_window);
-        defsubr(&*Sset_window_combination_limit);
-        defsubr(&*Swindow_buffer);
-        defsubr(&*Swindow_combination_limit);
-        defsubr(&*Swindow_frame);
-        defsubr(&*Swindow_live_p);
-        defsubr(&*Swindow_margins);
-        defsubr(&*Swindow_minibuffer_p);
-        defsubr(&*Swindow_point);
-        defsubr(&*Swindow_start);
-        defsubr(&*Swindow_total_height);
-        defsubr(&*Swindow_total_width);
-        defsubr(&*Swindow_valid_p);
-        defsubr(&*Swindowp);
-    }
+export_lisp_fns! {
+    minibuffer_selected_window,
+    selected_window,
+    set_window_combination_limit,
+    window_buffer,
+    window_combination_limit,
+    window_frame,
+    window_live_p,
+    window_margins,
+    window_minibuffer_p,
+    window_point,
+    window_start,
+    window_total_height,
+    window_total_width,
+    window_valid_p,
+    windowp
 }
