@@ -7024,10 +7024,16 @@ sweep_symbols (void)
         {
           if (!sym->s.gcmarkbit)
             {
-              if (sym->s.redirect == SYMBOL_LOCALIZED
-		  /* Already freed?  */
-		  && !EQ (sym->s.function, Vdead))
-                xfree (SYMBOL_BLV (&sym->s));
+              if (sym->s.redirect == SYMBOL_LOCALIZED)
+		{
+                  xfree (SYMBOL_BLV (&sym->s));
+                  /* At every GC we sweep all symbol_blocks and rebuild the
+                     symbol_free_list, so those symbols which stayed unused
+                     between the two will be re-swept.
+                     So we have to make sure we don't re-free this blv next
+                     time we sweep this symbol_block (bug#29066).  */
+                  sym->s.redirect == SYMBOL_PLAINVAL;
+                }
               sym->s.next = symbol_free_list;
               symbol_free_list = &sym->s;
               symbol_free_list->function = Vdead;
