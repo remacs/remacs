@@ -13092,6 +13092,15 @@ description of the problem detected in this region.
 
 \(fn BUFFER BEG END TYPE TEXT)" nil nil)
 
+(autoload 'flymake-diagnostics "flymake" "\
+Get Flymake diagnostics in region determined by BEG and END.
+
+If neither BEG or END is supplied, use the whole buffer,
+otherwise if BEG is non-nil and END is nil, consider only
+diagnostics at BEG.
+
+\(fn &optional BEG END)" nil nil)
+
 (autoload 'flymake-diag-region "flymake" "\
 Compute BUFFER's region (BEG . END) corresponding to LINE and COL.
 If COL is nil, return a region just for LINE.  Return nil if the
@@ -27215,6 +27224,10 @@ With a prefix (or a FILL) argument, also fill too short lines.
 Replace rectangle contents with STRING on each line.
 The length of STRING need not be the same as the rectangle width.
 
+When called interactively and option `rectangle-preview' is
+non-nil, display the result as the user enters the string into
+the minibuffer.
+
 Called from a program, takes three args; START, END and STRING.
 
 \(fn START END STRING)" t nil)
@@ -30975,7 +30988,7 @@ the sort order.
 \(fn FIELD BEG END)" t nil)
 
 (autoload 'sort-regexp-fields "sort" "\
-Sort the text in the region region lexicographically.
+Sort the text in the region lexicographically.
 If called interactively, prompt for two regular expressions,
 RECORD-REGEXP and KEY-REGEXP.
 
@@ -34384,20 +34397,6 @@ If it is set to nil, all remote file names are used literally.")
 
 (custom-autoload 'tramp-mode "tramp" t)
 
-(defvar tramp-syntax 'default "\
-Tramp filename syntax to be used.
-
-It can have the following values:
-
-  `default'    -- Default syntax
-  `simplified' -- Ange-FTP like syntax
-  `separate'   -- Syntax as defined for XEmacs originally
-
-Do not change the value by `setq', it must be changed only by
-`custom-set-variables'.  See also `tramp-change-syntax'.")
-
-(custom-autoload 'tramp-syntax "tramp" nil)
-
 (defconst tramp-initial-file-name-regexp "\\`/.+:.*:" "\
 Value for `tramp-file-name-regexp' for autoload.
 It must match the initial `tramp-syntax' settings.")
@@ -34408,33 +34407,17 @@ This regexp should match Tramp file names but no other file
 names.  When calling `tramp-register-file-name-handlers', the
 initial value is overwritten by the car of `tramp-file-name-structure'.")
 
-(defconst tramp-completion-file-name-regexp-default (concat "\\`/\\(" "\\([^/|:]+:[^/|:]*|\\)*" (if (memq system-type '(cygwin windows-nt)) "\\(-\\|[^/|:]\\{2,\\}\\)" "[^/|:]+") "\\(:[^/|:]*\\)?" "\\)?\\'") "\
-Value for `tramp-completion-file-name-regexp' for default remoting.
-See `tramp-file-name-structure' for more explanations.
-
-On W32 systems, the volume letter must be ignored.")
-
-(defconst tramp-initial-completion-file-name-regexp tramp-completion-file-name-regexp-default "\
-Value for `tramp-completion-file-name-regexp' for autoload.
-It must match the initial `tramp-syntax' settings.")
-
-(defconst tramp-completion-file-name-handler-alist '((file-name-all-completions . tramp-completion-handle-file-name-all-completions) (file-name-completion . tramp-completion-handle-file-name-completion)) "\
-Alist of completion handler functions.
-Used for file names matching `tramp-completion-file-name-regexp'.
-Operations not mentioned here will be handled by Tramp's file
-name handler functions, or the normal Emacs functions.")
-
-(autoload 'tramp-completion-file-name-handler "tramp" "\
-Invoke Tramp file name completion handler.
-Falls back to normal file name handler if no Tramp file name handler exists.
-
-\(fn OPERATION &rest ARGS)" nil nil)
+(defconst tramp-autoload-file-name-regexp (concat "\\`/" (if (memq system-type '(cygwin windows-nt)) "\\(-\\|[^/|:]\\{2,\\}\\)" "[^/|:]+") ":\\'") "\
+Regular expression matching file names handled by Tramp autoload.
+It must match the initial `tramp-syntax' settings.  It should not
+match file names at root of the underlying local file system,
+like \"/sys\" or \"/C:\".")
 
 (defun tramp-autoload-file-name-handler (operation &rest args) "\
 Load Tramp file name handler, and perform OPERATION." (let ((default-directory temporary-file-directory)) (load "tramp" (quote noerror) (quote nomessage))) (apply operation args))
 
 (defun tramp-register-autoload-file-name-handlers nil "\
-Add Tramp file name handlers to `file-name-handler-alist' during autoload." (add-to-list (quote file-name-handler-alist) (cons tramp-initial-file-name-regexp (quote tramp-autoload-file-name-handler))) (put (quote tramp-autoload-file-name-handler) (quote safe-magic) t) (add-to-list (quote file-name-handler-alist) (cons tramp-initial-completion-file-name-regexp (quote tramp-completion-file-name-handler))) (put (quote tramp-completion-file-name-handler) (quote safe-magic) t) (put (quote tramp-completion-file-name-handler) (quote operations) (mapcar (quote car) tramp-completion-file-name-handler-alist)))
+Add Tramp file name handlers to `file-name-handler-alist' during autoload." (add-to-list (quote file-name-handler-alist) (cons tramp-autoload-file-name-regexp (quote tramp-autoload-file-name-handler))) (put (quote tramp-autoload-file-name-handler) (quote safe-magic) t))
 
 (tramp-register-autoload-file-name-handlers)
 
@@ -35995,7 +35978,7 @@ When called interactively with a prefix argument, prompt for LIMIT.
 \(fn &optional LIMIT)" t nil)
 
 (autoload 'vc-print-branch-log "vc" "\
-
+Show the change log for BRANCH in a window.
 
 \(fn BRANCH)" t nil)
 
