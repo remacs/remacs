@@ -265,7 +265,7 @@ fn directory_files_and_attributes(
         );
     }
 
-    directory_files_internal(directory, full, match_re, nosort, true, id_format)
+    directory_files_internal(dnexp, full, match_re, nosort, true, id_format)
 }
 
 const LO_TIME_BITS: i32 = 16;
