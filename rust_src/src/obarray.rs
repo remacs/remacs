@@ -1,8 +1,13 @@
+//! obarray code
 use libc;
+
 use remacs_macros::lisp_fn;
-use lisp::LispObject;
+use remacs_sys::{Fpurecopy, Lisp_Object};
 use remacs_sys::{check_obarray, check_vobarray, globals, intern_driver, make_unibyte_string,
-                 oblookup, Fpurecopy, Lisp_Object};
+                 oblookup};
+
+use lisp::LispObject;
+use lisp::defsubr;
 
 /// A lisp object containing an `obarray`.
 pub struct LispObarrayRef(LispObject);
@@ -142,5 +147,12 @@ fn intern(string: LispObject, obarray: LispObject) -> LispObject {
         LispObarrayRef::constant_obarray().intern(string)
     } else {
         LispObarrayRef::from_object_or_error(obarray).intern(string)
+    }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr!(Sintern);
+        defsubr!(Sintern_soft);
     }
 }

@@ -1,9 +1,11 @@
 //! Various functions operating on any object.
 
-use lisp::LispObject;
-use remacs_sys::{internal_equal, EqualKind, Qnil};
 use remacs_macros::lisp_fn;
+use remacs_sys::{EqualKind, Qnil};
+use remacs_sys::internal_equal;
 
+use lisp::LispObject;
+use lisp::defsubr;
 
 /// Return t if OBJECT is nil, and return nil otherwise.
 #[lisp_fn]
@@ -57,4 +59,15 @@ fn equal_including_properties(o1: LispObject, o2: LispObject) -> LispObject {
 #[lisp_fn]
 fn identity(arg: LispObject) -> LispObject {
     arg
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr!(Seq);
+        defsubr!(Seql);
+        defsubr!(Sequal);
+        defsubr!(Sequal_including_properties);
+        defsubr!(Sidentity);
+        defsubr!(Snull);
+    }
 }

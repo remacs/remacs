@@ -1,5 +1,5 @@
-use rand;
 use errno;
+use rand;
 
 use std::ffi::{CStr, CString};
 use std::io;

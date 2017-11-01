@@ -1,16 +1,19 @@
 //! Lisp functions pertaining to editing.
 
-use remacs_macros::lisp_fn;
-use lisp::LispObject;
-use util::clip_to_bounds;
-use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Fadd_text_properties,
-                 Fcons, Fcopy_sequence, Finsert_char, Qinteger_or_marker_p, Qmark_inactive, Qnil};
-use threads::ThreadState;
-use buffers::get_buffer;
-use marker::{marker_position, set_point_from_marker};
-use multibyte::raw_byte_codepoint;
 use libc::{c_uchar, ptrdiff_t};
 
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Fadd_text_properties, Fcons, Fcopy_sequence, Finsert_char,
+                 Qinteger_or_marker_p, Qmark_inactive, Qnil};
+use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both};
+
+use buffers::get_buffer;
+use lisp::LispObject;
+use lisp::defsubr;
+use marker::{marker_position, set_point_from_marker};
+use multibyte::raw_byte_codepoint;
+use threads::ThreadState;
+use util::clip_to_bounds;
 
 /// Return value of point, as an integer.
 /// Beginning of buffer is position (point-min).
@@ -141,7 +144,7 @@ pub fn point_max() -> LispObject {
 /// Beginning of buffer is position (point-min), end is (point-max).
 ///
 /// The return value is POSITION.
-#[lisp_fn]
+#[lisp_fn(intspec = "NGoto char: ")]
 pub fn goto_char(position: LispObject) -> LispObject {
     if let Some(marker) = position.as_marker() {
         set_point_from_marker(marker);
@@ -286,4 +289,26 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
     };
 
     copy
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr!(Sbobp);
+        defsubr!(Sbolp);
+        defsubr!(Sbuffer_size);
+        defsubr!(Schar_after);
+        defsubr!(Seobp);
+        defsubr!(Seolp);
+        defsubr!(Sfollowing_char);
+        defsubr!(Sgoto_char);
+        defsubr!(Sinsert_byte);
+        defsubr!(Smark_marker);
+        defsubr!(Spoint);
+        defsubr!(Spoint_max);
+        defsubr!(Spoint_min);
+        defsubr!(Sposition_bytes);
+        defsubr!(Spropertize);
+        defsubr!(Sregion_beginning);
+        defsubr!(Sregion_end);
+    }
 }

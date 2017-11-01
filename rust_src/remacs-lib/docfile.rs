@@ -4,9 +4,9 @@
 use libc::{c_char, c_int};
 
 use std::collections::HashMap;
+use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io::{stdout, BufRead, BufReader, Write};
-use std::ffi::{CStr, CString};
 use std::mem;
 use std::ptr;
 

@@ -1,9 +1,13 @@
-use remacs_macros::lisp_fn;
-use lisp::{ExternalPtr, LispObject};
+//! symbols support
 
+use remacs_macros::lisp_fn;
+use remacs_sys::{Fset, Lisp_Symbol};
+use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
 use remacs_sys::{find_symbol_value, make_lisp_symbol, symbol_is_alias, symbol_is_constant,
-                 symbol_is_interned, Fset, Lisp_Symbol, Qcyclic_variable_indirection,
-                 Qsetting_constant, Qunbound, Qvoid_variable};
+                 symbol_is_interned};
+
+use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
@@ -196,4 +200,20 @@ pub fn symbol_value(symbol: LispObject) -> LispObject {
         xsignal!(Qvoid_variable, symbol);
     }
     LispObject::from(val)
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr!(Sfboundp);
+        defsubr!(Sfmakunbound);
+        defsubr!(Sindirect_variable);
+        defsubr!(Skeywordp);
+        defsubr!(Smakunbound);
+        defsubr!(Ssetplist);
+        defsubr!(Ssymbol_function);
+        defsubr!(Ssymbol_name);
+        defsubr!(Ssymbol_plist);
+        defsubr!(Ssymbol_value);
+        defsubr!(Ssymbolp);
+    }
 }

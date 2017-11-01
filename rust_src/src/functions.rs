@@ -9,8 +9,10 @@
 /// This module is only for testing, and you should add all
 /// definitions to remacs-sys first and foremost.
 use libc::c_double;
-use remacs_sys::Lisp_Object;
+
 use mock_derive::mock;
+
+use remacs_sys::Lisp_Object;
 
 #[mock]
 extern "C" {

@@ -1,25 +1,27 @@
 //! Functions operating on vector(like)s, and general sequences.
 
+use std::cmp::Ordering;
 use std::mem;
 use std::ptr;
 use std::slice;
-use std::cmp::Ordering;
 
 use libc::ptrdiff_t;
 
-use lisp::{ExternalPtr, LispObject};
-use multibyte::MAX_CHAR;
-use lists::{car, inorder, nthcdr, sort_list};
-use buffers::LispBufferRef;
-use windows::LispWindowRef;
-use frames::LispFrameRef;
-use process::LispProcessRef;
-use chartable::LispCharTableRef;
-use threads::ThreadStateRef;
+use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Faref, Lisp_Bool_Vector, Lisp_Vector, Lisp_Vectorlike, PseudovecType,
                  Qsequencep, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG,
                  PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
-use remacs_macros::lisp_fn;
+
+use buffers::LispBufferRef;
+use chartable::LispCharTableRef;
+use frames::LispFrameRef;
+use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
+use lists::{car, inorder, nthcdr, sort_list};
+use multibyte::MAX_CHAR;
+use process::LispProcessRef;
+use threads::ThreadStateRef;
+use windows::LispWindowRef;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
 pub type LispVectorRef = ExternalPtr<Lisp_Vector>;
@@ -356,5 +358,26 @@ macro_rules! allocate_pseudovector {
                                        pseudovecsize!($ty, $field) as ::libc::c_int,
                                        pseudovecsize!($ty, $field) as ::libc::c_int,
                                        $vectype) as *mut $ty}
+    }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr!(Sarrayp);
+        defsubr!(Sbool_vector_p);
+        defsubr!(Sbufferp);
+        defsubr!(Sbyte_code_function_p);
+        defsubr!(Schar_table_p);
+        defsubr!(Scondition_variable_p);
+        defsubr!(Selt);
+        defsubr!(Slength);
+        defsubr!(Smutexp);
+        defsubr!(Srecordp);
+        defsubr!(Ssequencep);
+        defsubr!(Ssort);
+        defsubr!(Ssubrp);
+        defsubr!(Sthreadp);
+        defsubr!(Svector_or_char_table_p);
+        defsubr!(Svectorp);
     }
 }

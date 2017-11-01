@@ -1,11 +1,13 @@
 //! Functions operating on numbers.
 
-use std::sync::Mutex;
 use rand::{Rng, SeedableRng, StdRng};
+use std::sync::Mutex;
+
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, INTMASK};
 
 use lisp::LispObject;
-use remacs_sys::{EmacsInt, INTMASK};
-use remacs_macros::lisp_fn;
+use lisp::defsubr;
 
 lazy_static! {
     static ref RNG: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());
@@ -82,5 +84,17 @@ fn random(limit: LispObject) -> LispObject {
         }
     } else {
         LispObject::from_fixnum_truncated(rng.gen())
+    }
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr!(Sfloatp);
+        defsubr!(Sinteger_or_marker_p);
+        defsubr!(Sintegerp);
+        defsubr!(Snatnump);
+        defsubr!(Snumber_or_marker_p);
+        defsubr!(Snumberp);
+        defsubr!(Srandom);
     }
 }

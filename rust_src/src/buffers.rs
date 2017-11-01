@@ -1,19 +1,19 @@
 //! Functions operating on buffers.
 
 use libc::{c_int, c_uchar, c_void, ptrdiff_t};
-
-use lisp::{ExternalPtr, LispObject};
-use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal, EmacsInt, Lisp_Buffer, Lisp_Object,
-                 Lisp_Overlay, Lisp_Type, Vbuffer_alist};
-use strings::string_equal;
-use lists::{car, cdr};
-use threads::ThreadState;
-use marker::{marker_buffer, marker_position};
-use multibyte::string_char;
-
 use std::{mem, ptr};
 
 use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist};
+use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal};
+
+use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
+use lists::{car, cdr};
+use marker::{marker_buffer, marker_position};
+use multibyte::string_char;
+use strings::string_equal;
+use threads::ThreadState;
 
 pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
@@ -358,4 +358,22 @@ fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     };
     unsafe { set_buffer_internal(buf.as_mut()) };
     buffer
+}
+
+pub fn rust_init_syms() {
+    unsafe {
+        defsubr!(Sbuffer_chars_modified_tick);
+        defsubr!(Sbuffer_file_name);
+        defsubr!(Sbuffer_live_p);
+        defsubr!(Sbuffer_modified_p);
+        defsubr!(Sbuffer_modified_tick);
+        defsubr!(Sbuffer_name);
+        defsubr!(Scurrent_buffer);
+        defsubr!(Sget_buffer);
+        defsubr!(Soverlay_buffer);
+        defsubr!(Soverlay_end);
+        defsubr!(Soverlay_start);
+        defsubr!(Soverlayp);
+        defsubr!(Sset_buffer);
+    }
 }

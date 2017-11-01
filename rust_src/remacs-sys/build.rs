@@ -1,11 +1,11 @@
 extern crate libc;
 
-use std::env;
-use std::io::{BufRead, BufReader, Write};
-use std::fs::File;
-use std::path::PathBuf;
-use std::mem::size_of;
 use std::cmp::max;
+use std::env;
+use std::fs::File;
+use std::io::{BufRead, BufReader, Write};
+use std::mem::size_of;
+use std::path::PathBuf;
 
 #[cfg(feature = "wide-emacs-int")]
 const WIDE_EMACS_INT: bool = true;
@@ -22,6 +22,13 @@ fn integer_max_constant(len: usize) -> &'static str {
         16 => "0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF_i128",
         _ => panic!("nonstandard int size {}", len),
     }
+}
+
+#[derive(Eq, PartialEq)]
+enum ParseState {
+    ReadingGlobals,
+    ReadingSymbols,
+    Complete,
 }
 
 fn generate_definitions() {
@@ -102,6 +109,7 @@ fn generate_globals() {
     let in_file = BufReader::new(File::open(in_path).expect("Failed to open globals file"));
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("globals.rs");
     let mut out_file = File::create(out_path).expect("Failed to create definition file");
+    let mut parse_state = ParseState::ReadingGlobals;
 
     write!(out_file, "#[allow(unused)]\n").expect("Write error!");
     write!(out_file, "#[repr(C)]\n").expect("Write error!");
@@ -109,26 +117,53 @@ fn generate_globals() {
 
     for line in in_file.lines() {
         let line = line.expect("Read error!");
-        if line.starts_with("  ") {
-            let mut parts = line.trim().trim_matches(';').split(' ');
-            let vtype = parts.next().unwrap();
-            let vname = parts.next().unwrap();
-            write!(
-                out_file,
-                "    pub {}: {},\n",
-                vname,
-                match vtype {
-                    "EMACS_INT" => "EmacsInt",
-                    t => t,
+        match parse_state {
+            ParseState::ReadingGlobals => {
+                if line.starts_with("  ") {
+                    let mut parts = line.trim().trim_matches(';').split(' ');
+                    let vtype = parts.next().unwrap();
+                    let vname = parts.next().unwrap();
+                    write!(
+                        out_file,
+                        "    pub {}: {},\n",
+                        vname,
+                        match vtype {
+                            "EMACS_INT" => "EmacsInt",
+                            t => t,
+                        }
+                    ).expect("Write error!");
                 }
-            ).expect("Write error!");
-        }
-        if line.starts_with('}') {
-            break;
-        }
-    }
+                if line.starts_with('}') {
+                    write!(out_file, "}}\n").expect("Write error!");
+                    parse_state = ParseState::ReadingSymbols;
+                    continue;
+                }
+            }
 
-    write!(out_file, "}}\n").expect("Write error!");
+            ParseState::ReadingSymbols => {
+                if line.trim().starts_with("#define") {
+                    let mut parts = line.split(' ');
+                    let _ = parts.next().unwrap(); // The #define
+                                                   // Remove the i in iQnil
+                    let (_, symbol_name) = parts.next().unwrap().split_at(1);
+                    let value = parts.next().unwrap();
+                    write!(
+                        out_file,
+                        "pub const {}: Lisp_Object = {} \
+                         * (::std::mem::size_of::<Lisp_Symbol>() as EmacsInt);\n",
+                        symbol_name,
+                        value
+                    ).expect("Write error in reading symbols stage");
+                } else if line.trim().starts_with("_Noreturn") {
+                    parse_state = ParseState::Complete
+                }
+            }
+
+            ParseState::Complete => {
+                break;
+            }
+        };
+    }
 }
 
 fn main() {
