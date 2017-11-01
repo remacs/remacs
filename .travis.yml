@@ -37,8 +37,7 @@ jobs:
         script:
           - ./autogen.sh && ./configure
           - make -j 3 && echo '==> Running tests' && make check
-    -
-      <<: *FULL_TEST
+    - <<: *FULL_TEST
         os: osx
         before_script:
           - brew install gnutls
@@ -61,9 +60,8 @@ jobs:
           - if [ $TRAVIS_OS_NAME = osx ]; then ./autogen.sh && ./configure --without-makeinfo --with-gnutls=no --with-x=no --without-gconf --without-gsettings; fi
         script:
           - make -j 3 && echo '==> Running nowindow tests' && make check
-    -
-      <<: *NO_WINDOW_SYSTEM_TEST
-      os: osx
+    - <<: *NO_WINDOW_SYSTEM_TEST
+        os: osx
   allow_failures:
     - env: TRAVIS_ALLOW_FAILURE=1
 
