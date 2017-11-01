@@ -1097,26 +1097,6 @@ not the name of the pty that Emacs uses to talk with that terminal.  */)
   return XPROCESS (process)->tty_name;
 }
 
-DEFUN ("set-process-buffer", Fset_process_buffer, Sset_process_buffer,
-       2, 2, 0,
-       doc: /* Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
-Return BUFFER.  */)
-  (register Lisp_Object process, Lisp_Object buffer)
-{
-  struct Lisp_Process *p;
-
-  CHECK_PROCESS (process);
-  if (!NILP (buffer))
-    CHECK_BUFFER (buffer);
-  p = XPROCESS (process);
-  pset_buffer (p, buffer);
-  if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
-    pset_childp (p, Fplist_put (p->childp, QCbuffer, buffer));
-  setup_process_coding_systems (process);
-  return buffer;
-}
-
-
 DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
        1, 1, 0,
        doc: /* Return the marker for the end of the last output from PROCESS.  */)
@@ -7825,7 +7805,6 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_exit_status);
   defsubr (&Sprocess_tty_name);
   defsubr (&Sprocess_command);
-  defsubr (&Sset_process_buffer);
   defsubr (&Sprocess_mark);
   defsubr (&Sset_process_filter);
   defsubr (&Sprocess_filter);

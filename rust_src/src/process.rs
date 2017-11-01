@@ -1,18 +1,16 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Fmapcar, Lisp_Process, Lisp_Process, Qcdr, Qcdr, Qclose, Qexit, Qlistp,
-                 Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial, Qstop, Vprocess_alist,
-                 Vprocess_alist};
-use remacs_sys::{get_process as cget_process, pget_pid, pget_raw_status_new, update_status,
-                 Fmapcar};
+use remacs_sys::{EmacsInt, Lisp_Process, QCbuffer, Qcdr, Qclose, Qexit, Qlistp, Qnetwork, Qopen,
+                 Qpipe, Qrun, Qserial, Qstop, Vprocess_alist};
+use remacs_sys::{get_process as cget_process, pget_pid, pget_raw_status_new,
+                 setup_process_coding_systems, update_status, Fmapcar};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
-use lists::{assoc, cdr};
-
 
 use buffers::get_buffer;
+use lists::{assoc, cdr, plist_put};
 
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
@@ -179,6 +177,30 @@ pub fn process_status(process: LispObject) -> LispObject {
         }
     }
     status
+}
+
+/// Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
+/// Return BUFFER.
+#[lisp_fn]
+fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject {
+    let mut p_ref = process.as_process_or_error();
+    if buffer.is_not_nil() {
+        buffer.as_buffer_or_error();
+    }
+    p_ref.set_buffer(buffer);
+    let process_type = LispObject::from(p_ref.process_type);
+    if process_type.eq(LispObject::from(Qnetwork)) || process_type.eq(LispObject::from(Qserial))
+        || process_type.eq(LispObject::from(Qpipe))
+    {
+        let childp = LispObject::from(p_ref.childp);
+        p_ref.set_childp(plist_put(
+            LispObject::from(childp),
+            LispObject::from(QCbuffer),
+            buffer,
+        ));
+    }
+    unsafe { setup_process_coding_systems(process.to_raw()) }
+    buffer
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

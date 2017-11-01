@@ -370,7 +370,7 @@ where
 /// use `(setq x (plist-put x prop val))' to be sure to use the new value.
 /// The PLIST is modified by side effects.
 #[lisp_fn]
-fn plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
+pub fn plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
     internal_plist_put(plist, prop, val, LispObject::eq)
 }
 
