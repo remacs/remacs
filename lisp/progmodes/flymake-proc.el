@@ -41,6 +41,8 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 (require 'flymake)
 
 (defcustom flymake-proc-compilation-prevents-syntax-check t
@@ -64,6 +66,13 @@
   "Max number of master files to check."
   :group 'flymake
   :type 'integer)
+
+(defcustom flymake-proc-ignored-file-name-regexps '()
+  "Files syntax checking is forbidden for.
+Overrides `flymake-proc-allowed-file-name-masks'."
+  :group 'flymake
+  :type '(repeat (regexp))
+  :version "27.1")
 
 (defcustom flymake-proc-allowed-file-name-masks
   '(("\\.\\(?:c\\(?:pp\\|xx\\|\\+\\+\\)?\\|CC\\)\\'"
@@ -91,6 +100,7 @@
     ;; ("\\.tex\\'" 1)
     )
   "Files syntax checking is allowed for.
+Variable `flymake-proc-ignored-file-name-regexps' overrides this variable.
 This is an alist with elements of the form:
   REGEXP INIT [CLEANUP [NAME]]
 REGEXP is a regular expression that matches a file name.
@@ -188,17 +198,22 @@ expression. A match indicates `:warning' type, otherwise
          :error)))
 
 (defun flymake-proc--get-file-name-mode-and-masks (file-name)
-  "Return the corresponding entry from `flymake-proc-allowed-file-name-masks'."
+  "Return the corresponding entry from `flymake-proc-allowed-file-name-masks'.
+If the FILE-NAME matches a regexp from `flymake-proc-ignored-file-name-regexps',
+`flymake-proc-allowed-file-name-masks' is not searched."
   (unless (stringp file-name)
     (error "Invalid file-name"))
-  (let ((fnm flymake-proc-allowed-file-name-masks)
-	(mode-and-masks nil))
-    (while (and (not mode-and-masks) fnm)
-      (if (string-match (car (car fnm)) file-name)
-	  (setq mode-and-masks (cdr (car fnm))))
-      (setq fnm (cdr fnm)))
-    (flymake-log 3 "file %s, init=%s" file-name (car mode-and-masks))
-    mode-and-masks))
+  (if (cl-find file-name flymake-proc-ignored-file-name-regexps
+               :test (lambda (fn rex) (string-match rex fn)))
+      (flymake-log 3 "file %s ignored")
+    (let ((fnm flymake-proc-allowed-file-name-masks)
+          (mode-and-masks nil))
+      (while (and (not mode-and-masks) fnm)
+        (if (string-match (car (car fnm)) file-name)
+            (setq mode-and-masks (cdr (car fnm))))
+        (setq fnm (cdr fnm)))
+      (flymake-log 3 "file %s, init=%s" file-name (car mode-and-masks))
+      mode-and-masks)))
 
 (defun flymake-proc--get-init-function (file-name)
   "Return init function to be used for the file."
