@@ -220,36 +220,46 @@ pub use windows::Fwindow_point;
 #[cfg(test)]
 pub use functions::make_float;
 
-#[no_mangle]
-pub extern "C" fn rust_init_syms() {
-    base64::rust_init_syms();
-    buffers::rust_init_syms();
-    category::rust_init_syms();
-    character::rust_init_syms();
-    chartable::rust_init_syms();
-    cmds::rust_init_syms();
-    crypto::rust_init_syms();
-    data::rust_init_syms();
-    dispnew::rust_init_syms();
-    editfns::rust_init_syms();
-    floatfns::rust_init_syms();
-    fns::rust_init_syms();
-    fonts::rust_init_syms();
-    frames::rust_init_syms();
-    hashtable::rust_init_syms();
-    indent::rust_init_syms();
-    interactive::rust_init_syms();
-    lists::rust_init_syms();
-    marker::rust_init_syms();
-    math::rust_init_syms();
-    minibuf::rust_init_syms();
-    numbers::rust_init_syms();
-    obarray::rust_init_syms();
-    objects::rust_init_syms();
-    process::rust_init_syms();
-    strings::rust_init_syms();
-    symbols::rust_init_syms();
-    threads::rust_init_syms();
-    vectors::rust_init_syms();
-    windows::rust_init_syms();
+macro_rules! init_modules {
+    ($($module_name:ident),+) => {
+        #[no_mangle]
+        pub extern "C" fn rust_init_syms() {
+            $(
+                $crate::$module_name::rust_init_syms();
+            )+
+        }
+    }
+}
+
+init_modules! {
+    base64,
+    buffers,
+    category,
+    character,
+    chartable,
+    cmds,
+    crypto,
+    data,
+    dispnew,
+    editfns,
+    floatfns,
+    fns,
+    fonts,
+    frames,
+    hashtable,
+    indent,
+    interactive,
+    lists,
+    marker,
+    math,
+    minibuf,
+    numbers,
+    obarray,
+    objects,
+    process,
+    strings,
+    symbols,
+    threads,
+    vectors,
+    windows
 }
