@@ -210,6 +210,8 @@
       (should (equal (nth 3 issuer) "O=Emacs Test Servicess LLC")))))
 
 (ert-deftest connect-to-tls-ipv4-nowait ()
+  ;; Skip for the time being on Remacs.
+  (skip-unless (not (eq system-type 'windows-nt)))
   (skip-unless (executable-find "gnutls-serv"))
   (skip-unless (gnutls-available-p))
   (let ((server (make-tls-server 44331))
