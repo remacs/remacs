@@ -3,11 +3,6 @@ cache: cargo
 rust:
   - nightly
 
-# The matrix is about OS coverage
-os:
-  - linux
-  - osx
-
 # Run rustfmt first.
 stages:
   - rustfmt
@@ -28,6 +23,9 @@ jobs:
         - (which rustfmt && rustfmt --version && [[ "$(rustfmt --version)" =~ "0.2.9" ]]) || travis_wait cargo install --force rustfmt-nightly --vers 0.2.9
       script: ./.travis-format.sh
     - stage: test
+      os:
+        - linux
+        - osx
       env:
         # Ensure that we build without warnings.
         - CARGO_FLAGS="--features 'strict'"
@@ -44,6 +42,9 @@ jobs:
       script:
         - make -j 3 && echo '==> Running tests' && make check
     - stage: test # no window system
+      os:
+        - linux
+        - osx
       env:
         # Ensure that we build without warnings.
         - CARGO_FLAGS="--features 'strict'"
