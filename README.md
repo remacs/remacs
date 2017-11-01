@@ -343,6 +343,20 @@ Then you can run this in the checkout root to reformat all Rust code:
 $ make rustfmt
 ```
 
+### Running tests
+
+Run elisp and Rust tests in toplevel directory. If run in a subdirectory, 
+only run the tests in that directory.
+
+* `make check`
+  Run all tests as defined in the directory. Expensive tests are
+  suppressed. The result of the tests for <filename>.el is stored in
+  <filename>.log.
+
+* `make check-maybe`
+  Like "make check", but run only the tests for files that have been 
+  modified since the last build.
+
 ## Design Goals
 
 **Compatibility**: Remacs should not break existing elisp code, and
