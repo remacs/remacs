@@ -863,7 +863,7 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
 ;; To be called via vc-pull from vc.el, which requires vc-dispatcher.
 (declare-function vc-compilation-mode "vc-dispatcher" (backend))
 
-(defun vc-git--pushpull (command prompt)
+(defun vc-git--pushpull (command prompt extra-args)
   "Run COMMAND (a string; either push or pull) on the current Git branch.
 If PROMPT is non-nil, prompt for the Git command to run."
   (let* ((root (vc-git-root default-directory))
@@ -888,9 +888,11 @@ If PROMPT is non-nil, prompt for the Git command to run."
       (vc-run-delayed
         (vc-compilation-mode 'git)
         (setq-local compile-command
-                    (concat git-program " " command " "
+                    (concat git-program " " command " " extra-args " "
                             (if args (mapconcat 'identity args " ") "")))
         (setq-local compilation-directory root)
+        (setq-local compilation-error-regexp-alist
+                    vc-git-error-regexp-alist)
         ;; Either set `compilation-buffer-name-function' locally to nil
         ;; or use `compilation-arguments' to set `name-function'.
         ;; See `compilation-buffer-name'.
@@ -904,13 +906,13 @@ If PROMPT is non-nil, prompt for the Git command to run."
   "Pull changes into the current Git branch.
 Normally, this runs \"git pull\".  If PROMPT is non-nil, prompt
 for the Git command to run."
-  (vc-git--pushpull "pull" prompt))
+  (vc-git--pushpull "pull" prompt "--stat"))
 
 (defun vc-git-push (prompt)
   "Push changes from the current Git branch.
 Normally, this runs \"git push\".  If PROMPT is non-nil, prompt
 for the Git command to run."
-  (vc-git--pushpull "push" prompt))
+  (vc-git--pushpull "push" prompt ""))
 
 (defun vc-git-merge-branch ()
   "Merge changes into the current Git branch.
