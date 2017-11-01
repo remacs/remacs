@@ -1,3 +1,4 @@
+---
 language: rust
 cache:
   cargo: true
@@ -27,43 +28,43 @@ jobs:
         - (which rustfmt && rustfmt --version && [[ "$(rustfmt --version)" =~ "0.2.9" ]]) || travis_wait cargo install --force rustfmt-nightly --vers 0.2.9
       script: ./.travis-format.sh
     - &FULL_TEST
-        stage: test
-        env:
-          # Ensure that we build without warnings.
-          - CARGO_FLAGS="--features 'strict'"
-        os: linux
-        before_script:
-          - sudo apt install -y texinfo libgif-dev libxpm-dev
-        script:
-          - ./autogen.sh && ./configure
-          - make -j 3 && echo '==> Running tests' && make check
+      stage: test
+      env:
+        # Ensure that we build without warnings.
+        - CARGO_FLAGS="--features 'strict'"
+      os: linux
+      before_script:
+        - sudo apt install -y texinfo libgif-dev libxpm-dev
+      script:
+        - ./autogen.sh && ./configure
+        - make -j 3 && echo '==> Running tests' && make check
     -
       <<: *FULL_TEST
-        os: osx
-        before_script:
-          - brew install gnutls
-          - brew install texinfo
+      os: osx
+      before_script:
+        - brew install gnutls
+        - brew install texinfo
     - &NO_WINDOW_SYSTEM_TEST
-        stage: test
-        env:
-          # Ensure that we build without warnings.
-          - CARGO_FLAGS="--features 'strict'"
-          - TRAVIS_WITH_NO_WINDOW_SYSTEM=1  # So we can tell them apart
-          - TRAVIS_ALLOW_FAILURE=1
-        os: linux
-        addons:
-          apt:
-            packages:
-              - texinfo
-        before_script:
-          - if [ $TRAVIS_OS_NAME = linux ]; then ./autogen.sh && ./configure --without-makeinfo --with-x=no --without-gconf --without-gsettings; fi
-          # TODO: add the necessary dependencies so we can use the same configure flags on OS X.
-          - if [ $TRAVIS_OS_NAME = osx ]; then ./autogen.sh && ./configure --without-makeinfo --with-gnutls=no --with-x=no --without-gconf --without-gsettings; fi
-        script:
-          - make -j 3 && echo '==> Running nowindow tests' && make check
+      stage: test
+      env:
+        # Ensure that we build without warnings.
+        - CARGO_FLAGS="--features 'strict'"
+        - TRAVIS_WITH_NO_WINDOW_SYSTEM=1  # So we can tell them apart
+        - TRAVIS_ALLOW_FAILURE=1
+      os: linux
+      addons:
+        apt:
+          packages:
+            - texinfo
+      before_script:
+        - if [ $TRAVIS_OS_NAME = linux ]; then ./autogen.sh && ./configure --without-makeinfo --with-x=no --without-gconf --without-gsettings; fi
+        # TODO: add the necessary dependencies so we can use the same configure flags on OS X.
+        - if [ $TRAVIS_OS_NAME = osx ]; then ./autogen.sh && ./configure --without-makeinfo --with-gnutls=no --with-x=no --without-gconf --without-gsettings; fi
+      script:
+        - make -j 3 && echo '==> Running nowindow tests' && make check
     -
       <<: *NO_WINDOW_SYSTEM_TEST
-        os: osx
+      os: osx
   allow_failures:
     - env: TRAVIS_ALLOW_FAILURE=1
 
