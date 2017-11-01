@@ -327,20 +327,18 @@ fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) 
     put(name, sym, list(&mut [test, hash]))
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sclrhash);
-        defsubr(&*Scopy_hash_table);
-        defsubr(&*Sdefine_hash_table_test);
-        defsubr(&*Sgethash);
-        defsubr(&*Shash_table_p);
-        defsubr(&*Shash_table_count);
-        defsubr(&*Shash_table_rehash_threshold);
-        defsubr(&*Shash_table_size);
-        defsubr(&*Shash_table_test);
-        defsubr(&*Shash_table_weakness);
-        defsubr(&*Smaphash);
-        defsubr(&*Sputhash);
-        defsubr(&*Sremhash);
-    }
+export_lisp_fns! {
+    clrhash,
+    copy_hash_table,
+    define_hash_table_test,
+    gethash,
+    hash_table_p,
+    hash_table_count,
+    hash_table_rehash_threshold,
+    hash_table_size,
+    hash_table_test,
+    hash_table_weakness,
+    maphash,
+    puthash,
+    remhash
 }

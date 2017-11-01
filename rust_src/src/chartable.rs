@@ -46,10 +46,8 @@ fn set_char_table_parent(chartable: LispObject, parent: LispObject) -> LispObjec
     parent
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Schar_table_parent);
-        defsubr(&*Schar_table_subtype);
-        defsubr(&*Sset_char_table_parent);
-    }
+export_lisp_fns! {
+    char_table_parent,
+    char_table_subtype,
+    set_char_table_parent
 }

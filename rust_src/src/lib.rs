@@ -4,6 +4,7 @@
 #![feature(proc_macro)]
 #![cfg_attr(feature = "strict", deny(warnings))]
 #![feature(global_allocator)]
+#![feature(concat_idents)]
 
 #[macro_use]
 extern crate lazy_static;
@@ -32,6 +33,7 @@ mod functions;
 
 #[macro_use]
 mod eval;
+#[macro_use]
 mod lisp;
 mod lists;
 mod marker;

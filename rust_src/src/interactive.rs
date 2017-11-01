@@ -24,8 +24,6 @@ fn prefix_numeric_value(raw: LispObject) -> LispObject {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sprefix_numeric_value);
-    }
+export_lisp_fns! {
+    prefix_numeric_value
 }

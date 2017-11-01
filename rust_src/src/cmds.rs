@@ -15,8 +15,6 @@ pub fn forward_point(n: LispObject) -> LispObject {
     LispObject::from_fixnum(n.as_fixnum_or_error() + pt as EmacsInt)
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sforward_point);
-    }
+export_lisp_fns! {
+    forward_point
 }
