@@ -423,6 +423,11 @@ pub struct Lisp_Window {
     pub window_end_bytepos: ptrdiff_t,
 }
 
+extern "C" {
+    pub fn wget_parent(w: *const Lisp_Window) -> Lisp_Object;
+}
+
+
 /// Represents an Emacs buffer. For documentation see struct buffer in
 /// buffer.h.
 #[repr(C)]

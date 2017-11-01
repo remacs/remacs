@@ -7,7 +7,7 @@ use remacs_sys::{EmacsInt, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor};
 use remacs_sys::{fget_column_width, fget_line_height, minibuf_level,
                  minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window};
+                 selected_window as current_window, wget_parent};
 
 use editfns::point;
 use lisp::{ExternalPtr, LispObject};
@@ -344,6 +344,16 @@ pub fn window_frame(window: LispObject) -> LispObject {
     win.frame()
 }
 
+/// Return the parent window of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+/// Return nil for a window with no parent (e.g. a root window).
+#[lisp_fn(min = "0")]
+pub fn window_parent(window: LispObject) -> LispObject {
+    LispObject::from(unsafe {
+        wget_parent(window_valid_or_selected(window).as_ptr())
+    })
+}
+
 pub fn rust_init_syms() {
     unsafe {
         defsubr(&*Sminibuffer_selected_window);
@@ -355,6 +365,7 @@ pub fn rust_init_syms() {
         defsubr(&*Swindow_live_p);
         defsubr(&*Swindow_margins);
         defsubr(&*Swindow_minibuffer_p);
+        defsubr(&*Swindow_parent);
         defsubr(&*Swindow_point);
         defsubr(&*Swindow_start);
         defsubr(&*Swindow_total_height);

@@ -218,6 +218,12 @@ wset_update_mode_line (struct window *w)
     w->update_mode_line = true;
 }
 
+Lisp_Object
+wget_parent(struct window *w)
+{
+  return w->parent;
+}
+
 /* True if leaf window W doesn't reflect the actual state
    of displayed buffer due to its text or overlays change.  */
 
@@ -535,15 +541,6 @@ the buffer of the selected window before each command.  */)
   return select_window (window, norecord, false);
 }
 
-DEFUN ("window-parent", Fwindow_parent, Swindow_parent, 0, 1, 0,
-       doc: /* Return the parent window of window WINDOW.
-WINDOW must be a valid window and defaults to the selected one.
-Return nil for a window with no parent (e.g. a root window).  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->parent;
-}
-
 DEFUN ("window-top-child", Fwindow_top_child, Swindow_top_child, 0, 1, 0,
        doc: /* Return the topmost child window of window WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
@@ -7514,7 +7511,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_frame_selected_window);
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
-  defsubr (&Swindow_parent);
   defsubr (&Swindow_top_child);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_next_sibling);
