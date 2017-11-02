@@ -1,8 +1,5 @@
 use std::env;
-<<<<<<< HEAD
 use std::ffi::OsStr;
-=======
->>>>>>> 70e1f35... Computers are for automation. Let's apply their boredom.
 use std::fs;
 use std::fs::File;
 use std::io;
@@ -14,7 +11,6 @@ enum ParseState {
     Looking,
     IgnoreComments,
     NoMangleFn,
-<<<<<<< HEAD
     LispFn(Option<String>),
 }
 
@@ -66,12 +62,6 @@ fn source_file(modname: &str) -> String {
 
 static C_NAME: &str = "c_name = \"";
 
-=======
-    ReadingFnNames,
-    Complete,
-}
-
->>>>>>> 70e1f35... Computers are for automation. Let's apply their boredom.
 fn c_exports_for_module<R>(
     modname: &str,
     mut out_file: &File,
@@ -81,7 +71,6 @@ where
     R: BufRead,
 {
     let mut parse_state = ParseState::Looking;
-<<<<<<< HEAD
     let mut exported: Vec<String> = Vec::new();
     let mut has_include = false;
 
@@ -115,31 +104,11 @@ where
                     has_include = true;
                 }
             }
-=======
-    let mut has_lisp_fns = false;
-
-    for line in in_file.lines() {
-        let line = line?;
-        let line = line.trim();
-
-        match parse_state {
-            ParseState::Looking => if line.starts_with("export_lisp_fns!") {
-                parse_state = ParseState::ReadingFnNames;
-                has_lisp_fns = true;
-            } else if line.starts_with("#[no_mangle]") {
-                parse_state = ParseState::NoMangleFn;
-            } else if line.starts_with("/*") {
-                if !line.ends_with("*/") {
-                    parse_state = ParseState::IgnoreComments;
-                }
-            },
->>>>>>> 70e1f35... Computers are for automation. Let's apply their boredom.
 
             ParseState::IgnoreComments => if line.starts_with("*/") || line.ends_with("*/") {
                 parse_state = ParseState::Looking;
             },
 
-<<<<<<< HEAD
             ParseState::LispFn(name) => {
                 if line.starts_with("pub") || line.starts_with("fn") {
                     if let Some(func) = name.or_else(|| get_function_name(&line)) {
@@ -228,112 +197,21 @@ fn handle_file(mut mod_path: PathBuf, out_file: &File) -> Result<Option<String>,
 
 fn generate_c_exports() -> Result<(), io::Error> {
     let out_path: PathBuf = [&env_var("OUT_DIR"), "c_exports.rs"].iter().collect();
-=======
-            // export public #[no_mangle] functions
-            ParseState::NoMangleFn => {
-                if line.starts_with("pub") {
-                    if let Some(pos) = line.find('(') {
-                        // have to look for fn to support:
-                        // pub fn foo
-                        // pub extern "C" fn foo
-                        //
-                        if let Some(fnpos) = line.find("fn ") {
-                            let func = &line[(fnpos + 3)..pos].to_string();
-                            write!(out_file, "pub use {}::{};\n", modname, func.trim())?;
-                        }
-                    }
-                }
-                parse_state = ParseState::Looking;
-            }
-
-            ParseState::ReadingFnNames => if line.starts_with("}") {
-                parse_state = ParseState::Complete;
-            } else {
-                let mut parts = line.trim().split(',');
-                let func = parts.next().unwrap();
-                write!(out_file, "pub use {}::F{};\n", modname, func)?;
-            },
-
-            ParseState::Complete => {
-                break;
-            }
-        };
-    }
-
-    Ok(has_lisp_fns)
-}
-
-fn ignore(path: &str) -> bool {
-    path == "" || path.starts_with('.') || path == "lib.rs"
-}
-
-fn generate_c_exports() -> Result<(), io::Error> {
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("c_exports.rs");
->>>>>>> 70e1f35... Computers are for automation. Let's apply their boredom.
     let mut out_file = File::create(out_path)?;
 
     let mut modules: Vec<String> = Vec::new();
 
-<<<<<<< HEAD
     let in_path: PathBuf = [&env_var("CARGO_MANIFEST_DIR"), "src"].iter().collect();
     for entry in fs::read_dir(in_path)? {
         let mod_path = entry?.path();
 
         if !ignore(path_as_str(mod_path.file_name())) {
             if let Some(modname) = handle_file(mod_path, &out_file)? {
-=======
-    let in_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("src");
-    for entry in fs::read_dir(in_path)? {
-        let entry = entry?;
-        let mut mod_path = entry.path();
-
-        if ignore(mod_path.file_name().unwrap().to_str().unwrap()) {
-            continue;
-        }
-
-        let mut name: Option<String> = None;
-
-        if mod_path.is_dir() {
-            name = Some(
-                mod_path
-                    .file_name()
-                    .and_then(|s| s.to_str())
-                    .map_or_else(|| panic!("Cannot understand string"), |s| s.to_string()),
-            );
-            mod_path = mod_path.join("mod.rs");
-        } else if let Some(ext) = mod_path.extension() {
-            if ext == "rs" {
-                name = Some(
-                    mod_path
-                        .file_stem()
-                        .and_then(|s| s.to_str())
-                        .map_or_else(|| panic!("Cannot understand string"), |s| s.to_string()),
-                );
-            }
-        }
-
-        if let Some(modname) = name {
-            let path = mod_path
-                .to_str()
-                .map_or_else(|| panic!("Cannot understand string"), |s| s.to_string());
-
-            let fp = match File::open(PathBuf::from(&path)) {
-                Ok(f) => f,
-
-                Err(e) => {
-                    eprintln!("Failed to open {}", path);
-                    return Err(e);
-                }
-            };
-
-            if c_exports_for_module(&modname, &out_file, BufReader::new(fp))? {
->>>>>>> 70e1f35... Computers are for automation. Let's apply their boredom.
                 modules.push(modname);
             }
         }
     }
 
-<<<<<<< HEAD
     if !modules.is_empty() {
         write!(out_file, "\n")?;
 
@@ -348,28 +226,12 @@ fn generate_c_exports() -> Result<(), io::Error> {
         write!(out_file, "    floatfns::rust_init_extra_syms();\n")?;
         write!(out_file, "}}\n")?;
     }
-=======
-    write!(out_file, "\n")?;
-
-    write!(
-        out_file,
-        "#[no_mangle]\npub extern \"C\" fn rust_init_syms() {{\n"
-    )?;
-    for module in modules {
-        write!(out_file, "    {}::rust_init_syms();\n", module)?;
-    }
-    write!(out_file, "}}\n")?;
->>>>>>> 70e1f35... Computers are for automation. Let's apply their boredom.
 
     Ok(())
 }
 
 fn main() {
     if let Err(e) = generate_c_exports() {
-<<<<<<< HEAD
         panic!(format!("Errors occurred:\n{}", e));
-=======
-        eprintln!("Errors occurred: {}", e);
->>>>>>> 70e1f35... Computers are for automation. Let's apply their boredom.
     }
 }
