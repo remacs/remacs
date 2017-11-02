@@ -7032,7 +7032,7 @@ sweep_symbols (void)
                      between the two will be re-swept.
                      So we have to make sure we don't re-free this blv next
                      time we sweep this symbol_block (bug#29066).  */
-                  sym->s.redirect == SYMBOL_PLAINVAL;
+                  sym->s.redirect = SYMBOL_PLAINVAL;
                 }
               sym->s.next = symbol_free_list;
               symbol_free_list = &sym->s;
