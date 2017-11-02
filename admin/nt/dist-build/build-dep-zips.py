@@ -61,7 +61,7 @@ mingw-w64-x86_64-xpm-nox
 mingw-w64-x86_64-lcms2'''.split()
 
     # Get a list of all dependencies needed for packages mentioned above.
-    # Run `pactree -lu' for each elment of $PKG_REQ
+    # Run `pactree -lu' for each element of $PKG_REQ.
     pkgs = set()
     for x in PKG_REQ:
         pkgs.update(
@@ -125,7 +125,7 @@ def gather_source(deps):
     ## mpc, termcap, xpm -- has x86_64, and i686 versions
 
     ## This needs to have been run first at the same time as the
-    ## system was udpated.
+    ## system was updated.
     os.mkdir("emacs-src")
     os.chdir("emacs-src")
 
