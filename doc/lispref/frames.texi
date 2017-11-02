@@ -1210,6 +1210,13 @@ terminal supports colors, the parameters @code{foreground-color},
 @code{display-type} are also meaningful.  If the terminal supports
 frame transparency, the parameter @code{alpha} is also meaningful.
 
+  By default, frame parameters are saved and restored by the desktop
+library functions (@pxref{Desktop Save Mode}) when the variable
+@code{desktop-restore-frames} is non-@code{nil}.  It's the
+responsibility of applications that their parameters are included in
+@code{frameset-persistent-filter-alist} to avoid that they get
+meaningless or even harmful values in restored sessions.
+
 @menu
 * Parameter Access::       How to change a frame's parameters.
 * Initial Parameters::     Specifying frame parameters when you make a frame.
