@@ -34,7 +34,6 @@ where
     R: BufRead,
 {
     let mut parse_state = ParseState::Looking;
-    let mut has_lisp_fns = false;
     let mut exported: Vec<String> = Vec::new();
     let mut has_include = false;
 
@@ -59,7 +58,6 @@ where
                     } else {
                         parse_state = ParseState::LispFn(None);
                     }
-                    has_lisp_fns = true;
                 } else if line.starts_with("#[no_mangle]") {
                     parse_state = ParseState::NoMangleFn;
                 } else if line.starts_with("/*") {
@@ -99,7 +97,9 @@ where
         };
     }
 
-    if has_lisp_fns {
+    if exported.is_empty() {
+        Ok(false)
+    } else {
         let path =
             PathBuf::from(env::var("OUT_DIR").unwrap()).join([modname, "_exports.rs"].concat());
         let mut exports_file = File::create(path)?;
@@ -118,9 +118,9 @@ where
                 ].concat()
             );
         }
-    }
 
-    Ok(has_lisp_fns)
+        Ok(true)
+    }
 }
 
 fn ignore(path: &str) -> bool {
