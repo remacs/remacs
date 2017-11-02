@@ -1,9 +1,10 @@
 use std::env;
+use std::ffi::OsStr;
 use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::{BufRead, BufReader, Write};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(Eq, PartialEq)]
 enum ParseState {
@@ -16,14 +17,15 @@ enum ParseState {
 fn get_function_name(line: &str) -> Option<String> {
     if let Some(pos) = line.find('(') {
         if let Some(fnpos) = line.find("fn ") {
-            return Some((&line[(fnpos + 3)..pos]).to_string());
+            let name = line[(fnpos + 3)..pos].trim();
+            return Some(name.to_string());
         }
     }
 
     None
 }
 
-static C_NAME: &'static str = "c_name = \"";
+static C_NAME: &str = "c_name = \"";
 
 fn c_exports_for_module<R>(
     modname: &str,
@@ -44,10 +46,9 @@ where
             ParseState::Looking => {
                 if line.starts_with("#[lisp_fn") {
                     if let Some(begin) = line.find(C_NAME) {
-                        let input = line.to_string();
                         let start = begin + C_NAME.len();
-                        let end = &input[start..].find('"').unwrap() + start;
-                        let name = (&line[start..end]).to_string();
+                        let end = line[start..].find('"').unwrap() + start;
+                        let name = line[start..end].to_string();
                         // Ignore macros, nothing we can do with them
                         if !name.starts_with('$') {
                             // even though we do not need to parse the
@@ -111,12 +112,10 @@ where
         )?;
 
         if !has_include {
-            panic!(
-                [
-                    modname,
-                    ".rs is missing the required include for lisp_fn exports"
-                ].concat()
-            );
+            panic!(format!(
+                "{}.rs is missing the required include for lisp_fn exports",
+                modname
+            ));
         }
 
         Ok(true)
@@ -125,6 +124,11 @@ where
 
 fn ignore(path: &str) -> bool {
     path == "" || path.starts_with('.') || path == "lib.rs"
+}
+
+fn path_as_str(path: Option<&OsStr>) -> &str {
+    path.and_then(|p| p.to_str())
+        .unwrap_or_else(|| panic!(format!("Cannot understand string: {:?}", path)))
 }
 
 fn generate_c_exports() -> Result<(), io::Error> {
@@ -138,41 +142,27 @@ fn generate_c_exports() -> Result<(), io::Error> {
         let entry = entry?;
         let mut mod_path = entry.path();
 
-        if ignore(mod_path.file_name().unwrap().to_str().unwrap()) {
+        if ignore(path_as_str(mod_path.file_name())) {
             continue;
         }
 
         let mut name: Option<String> = None;
 
         if mod_path.is_dir() {
-            name = Some(
-                mod_path
-                    .file_name()
-                    .and_then(|s| s.to_str())
-                    .map_or_else(|| panic!("Cannot understand string"), |s| s.to_string()),
-            );
+            name = Some(path_as_str(mod_path.file_name()).to_string());
             mod_path = mod_path.join("mod.rs");
         } else if let Some(ext) = mod_path.extension() {
             if ext == "rs" {
-                name = Some(
-                    mod_path
-                        .file_stem()
-                        .and_then(|s| s.to_str())
-                        .map_or_else(|| panic!("Cannot understand string"), |s| s.to_string()),
-                );
+                name = Some(path_as_str(mod_path.file_stem()).to_string());
             }
         }
 
         if let Some(modname) = name {
-            let path = mod_path
-                .to_str()
-                .map_or_else(|| panic!("Cannot understand string"), |s| s.to_string());
-
-            let fp = match File::open(Path::new(&path)) {
+            let fp = match File::open(&mod_path) {
                 Ok(f) => f,
 
                 Err(e) => {
-                    eprintln!("Failed to open {}", path);
+                    eprintln!("Failed to open {:?}", mod_path);
                     return Err(e);
                 }
             };
