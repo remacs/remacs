@@ -335,21 +335,6 @@ be set in `.emacs' instead."
 ;; We define these group faces here to avoid the display
 ;; update forced when creating new faces.
 
-(defface gnus-group-news-1
-  '((((class color)
-      (background dark))
-     (:foreground "PaleTurquoise" :bold t))
-    (((class color)
-      (background light))
-     (:foreground "ForestGreen" :bold t))
-    (t
-     ()))
-  "Level 1 newsgroup face."
-  :group 'gnus-group)
-;; backward-compatibility alias
-(put 'gnus-group-news-1-face 'face-alias 'gnus-group-news-1)
-(put 'gnus-group-news-1-face 'obsolete-face "22.1")
-
 (defface gnus-group-news-1-empty
   '((((class color)
       (background dark))
@@ -365,20 +350,13 @@ be set in `.emacs' instead."
 (put 'gnus-group-news-1-empty-face 'face-alias 'gnus-group-news-1-empty)
 (put 'gnus-group-news-1-empty-face 'obsolete-face "22.1")
 
-(defface gnus-group-news-2
-  '((((class color)
-      (background dark))
-     (:foreground "turquoise" :bold t))
-    (((class color)
-      (background light))
-     (:foreground "CadetBlue4" :bold t))
-    (t
-     ()))
-  "Level 2 newsgroup face."
+(defface gnus-group-news-1
+  '((t (:inherit gnus-group-news-1-empty :bold t)))
+  "Level 1 newsgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
-(put 'gnus-group-news-2-face 'face-alias 'gnus-group-news-2)
-(put 'gnus-group-news-2-face 'obsolete-face "22.1")
+(put 'gnus-group-news-1-face 'face-alias 'gnus-group-news-1)
+(put 'gnus-group-news-1-face 'obsolete-face "22.1")
 
 (defface gnus-group-news-2-empty
   '((((class color)
@@ -395,20 +373,13 @@ be set in `.emacs' instead."
 (put 'gnus-group-news-2-empty-face 'face-alias 'gnus-group-news-2-empty)
 (put 'gnus-group-news-2-empty-face 'obsolete-face "22.1")
 
-(defface gnus-group-news-3
-  '((((class color)
-      (background dark))
-     (:bold t))
-    (((class color)
-      (background light))
-     (:bold t))
-    (t
-     ()))
-  "Level 3 newsgroup face."
+(defface gnus-group-news-2
+  '((t (:inherit gnus-group-news-2-empty :bold t)))
+  "Level 2 newsgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
-(put 'gnus-group-news-3-face 'face-alias 'gnus-group-news-3)
-(put 'gnus-group-news-3-face 'obsolete-face "22.1")
+(put 'gnus-group-news-2-face 'face-alias 'gnus-group-news-2)
+(put 'gnus-group-news-2-face 'obsolete-face "22.1")
 
 (defface gnus-group-news-3-empty
   '((((class color)
@@ -425,20 +396,13 @@ be set in `.emacs' instead."
 (put 'gnus-group-news-3-empty-face 'face-alias 'gnus-group-news-3-empty)
 (put 'gnus-group-news-3-empty-face 'obsolete-face "22.1")
 
-(defface gnus-group-news-4
-  '((((class color)
-      (background dark))
-     (:bold t))
-    (((class color)
-      (background light))
-     (:bold t))
-    (t
-     ()))
-  "Level 4 newsgroup face."
+(defface gnus-group-news-3
+  '((t (:inherit gnus-group-news-3-empty :bold t)))
+  "Level 3 newsgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
-(put 'gnus-group-news-4-face 'face-alias 'gnus-group-news-4)
-(put 'gnus-group-news-4-face 'obsolete-face "22.1")
+(put 'gnus-group-news-3-face 'face-alias 'gnus-group-news-3)
+(put 'gnus-group-news-3-face 'obsolete-face "22.1")
 
 (defface gnus-group-news-4-empty
   '((((class color)
@@ -455,20 +419,13 @@ be set in `.emacs' instead."
 (put 'gnus-group-news-4-empty-face 'face-alias 'gnus-group-news-4-empty)
 (put 'gnus-group-news-4-empty-face 'obsolete-face "22.1")
 
-(defface gnus-group-news-5
-  '((((class color)
-      (background dark))
-     (:bold t))
-    (((class color)
-      (background light))
-     (:bold t))
-    (t
-     ()))
-  "Level 5 newsgroup face."
+(defface gnus-group-news-4
+  '((t (:inherit gnus-group-news-4-empty :bold t)))
+  "Level 4 newsgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
-(put 'gnus-group-news-5-face 'face-alias 'gnus-group-news-5)
-(put 'gnus-group-news-5-face 'obsolete-face "22.1")
+(put 'gnus-group-news-4-face 'face-alias 'gnus-group-news-4)
+(put 'gnus-group-news-4-face 'obsolete-face "22.1")
 
 (defface gnus-group-news-5-empty
   '((((class color)
@@ -485,20 +442,13 @@ be set in `.emacs' instead."
 (put 'gnus-group-news-5-empty-face 'face-alias 'gnus-group-news-5-empty)
 (put 'gnus-group-news-5-empty-face 'obsolete-face "22.1")
 
-(defface gnus-group-news-6
-  '((((class color)
-      (background dark))
-     (:bold t))
-    (((class color)
-      (background light))
-     (:bold t))
-    (t
-     ()))
-  "Level 6 newsgroup face."
+(defface gnus-group-news-5
+  '((t (:inherit gnus-group-news-5-empty :bold t)))
+  "Level 5 newsgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
-(put 'gnus-group-news-6-face 'face-alias 'gnus-group-news-6)
-(put 'gnus-group-news-6-face 'obsolete-face "22.1")
+(put 'gnus-group-news-5-face 'face-alias 'gnus-group-news-5)
+(put 'gnus-group-news-5-face 'obsolete-face "22.1")
 
 (defface gnus-group-news-6-empty
   '((((class color)
@@ -515,20 +465,13 @@ be set in `.emacs' instead."
 (put 'gnus-group-news-6-empty-face 'face-alias 'gnus-group-news-6-empty)
 (put 'gnus-group-news-6-empty-face 'obsolete-face "22.1")
 
-(defface gnus-group-news-low
-  '((((class color)
-      (background dark))
-     (:foreground "DarkTurquoise" :bold t))
-    (((class color)
-      (background light))
-     (:foreground "DarkGreen" :bold t))
-    (t
-     ()))
-  "Low level newsgroup face."
+(defface gnus-group-news-6
+  '((t (:inherit gnus-group-news-6-empty :bold t)))
+  "Level 6 newsgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
-(put 'gnus-group-news-low-face 'face-alias 'gnus-group-news-low)
-(put 'gnus-group-news-low-face 'obsolete-face "22.1")
+(put 'gnus-group-news-6-face 'face-alias 'gnus-group-news-6)
+(put 'gnus-group-news-6-face 'obsolete-face "22.1")
 
 (defface gnus-group-news-low-empty
   '((((class color)
@@ -545,20 +488,13 @@ be set in `.emacs' instead."
 (put 'gnus-group-news-low-empty-face 'face-alias 'gnus-group-news-low-empty)
 (put 'gnus-group-news-low-empty-face 'obsolete-face "22.1")
 
-(defface gnus-group-mail-1
-  '((((class color)
-      (background dark))
-     (:foreground "#e1ffe1" :bold t))
-    (((class color)
-      (background light))
-     (:foreground "DeepPink3" :bold t))
-    (t
-     (:bold t)))
-  "Level 1 mailgroup face."
+(defface gnus-group-news-low
+  '((t (:inherit gnus-group-news-low-empty :bold t)))
+  "Low level newsgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
-(put 'gnus-group-mail-1-face 'face-alias 'gnus-group-mail-1)
-(put 'gnus-group-mail-1-face 'obsolete-face "22.1")
+(put 'gnus-group-news-low-face 'face-alias 'gnus-group-news-low)
+(put 'gnus-group-news-low-face 'obsolete-face "22.1")
 
 (defface gnus-group-mail-1-empty
   '((((class color)
@@ -568,27 +504,20 @@ be set in `.emacs' instead."
       (background light))
      (:foreground "DeepPink3"))
     (t
-     (:italic t :bold t)))
+     (:italic t)))
   "Level 1 empty mailgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
 (put 'gnus-group-mail-1-empty-face 'face-alias 'gnus-group-mail-1-empty)
 (put 'gnus-group-mail-1-empty-face 'obsolete-face "22.1")
 
-(defface gnus-group-mail-2
-  '((((class color)
-      (background dark))
-     (:foreground "DarkSeaGreen1" :bold t))
-    (((class color)
-      (background light))
-     (:foreground "HotPink3" :bold t))
-    (t
-     (:bold t)))
-  "Level 2 mailgroup face."
+(defface gnus-group-mail-1
+  '((t (:inherit gnus-group-mail-1-empty :bold t)))
+  "Level 1 mailgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
-(put 'gnus-group-mail-2-face 'face-alias 'gnus-group-mail-2)
-(put 'gnus-group-mail-2-face 'obsolete-face "22.1")
+(put 'gnus-group-mail-1-face 'face-alias 'gnus-group-mail-1)
+(put 'gnus-group-mail-1-face 'obsolete-face "22.1")
 
 (defface gnus-group-mail-2-empty
   '((((class color)
@@ -598,27 +527,20 @@ be set in `.emacs' instead."
       (background light))
      (:foreground "HotPink3"))
     (t
-     (:bold t)))
+     (:italic t)))
   "Level 2 empty mailgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
 (put 'gnus-group-mail-2-empty-face 'face-alias 'gnus-group-mail-2-empty)
 (put 'gnus-group-mail-2-empty-face 'obsolete-face "22.1")
 
-(defface gnus-group-mail-3
-  '((((class color)
-      (background dark))
-     (:foreground "aquamarine1" :bold t))
-    (((class color)
-      (background light))
-     (:foreground "magenta4" :bold t))
-    (t
-     (:bold t)))
-  "Level 3 mailgroup face."
+(defface gnus-group-mail-2
+  '((t (:inherit gnus-group-mail-2-empty :bold t)))
+  "Level 2 mailgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
-(put 'gnus-group-mail-3-face 'face-alias 'gnus-group-mail-3)
-(put 'gnus-group-mail-3-face 'obsolete-face "22.1")
+(put 'gnus-group-mail-2-face 'face-alias 'gnus-group-mail-2)
+(put 'gnus-group-mail-2-face 'obsolete-face "22.1")
 
 (defface gnus-group-mail-3-empty
   '((((class color)
@@ -635,20 +557,13 @@ be set in `.emacs' instead."
 (put 'gnus-group-mail-3-empty-face 'face-alias 'gnus-group-mail-3-empty)
 (put 'gnus-group-mail-3-empty-face 'obsolete-face "22.1")
 
-(defface gnus-group-mail-low
-  '((((class color)
-      (background dark))
-     (:foreground "aquamarine2" :bold t))
-    (((class color)
-      (background light))
-     (:foreground "DeepPink4" :bold t))
-    (t
-     (:bold t)))
-  "Low level mailgroup face."
+(defface gnus-group-mail-3
+  '((t (:inherit gnus-group-mail-3-empty :bold t)))
+  "Level 3 mailgroup face."
   :group 'gnus-group)
 ;; backward-compatibility alias
-(put 'gnus-group-mail-low-face 'face-alias 'gnus-group-mail-low)
-(put 'gnus-group-mail-low-face 'obsolete-face "22.1")
+(put 'gnus-group-mail-3-face 'face-alias 'gnus-group-mail-3)
+(put 'gnus-group-mail-3-face 'obsolete-face "22.1")
 
 (defface gnus-group-mail-low-empty
   '((((class color)
@@ -664,6 +579,14 @@ be set in `.emacs' instead."
 ;; backward-compatibility alias
 (put 'gnus-group-mail-low-empty-face 'face-alias 'gnus-group-mail-low-empty)
 (put 'gnus-group-mail-low-empty-face 'obsolete-face "22.1")
+
+(defface gnus-group-mail-low
+  '((t (:inherit gnus-group-mail-low-empty :bold t)))
+  "Low level mailgroup face."
+  :group 'gnus-group)
+;; backward-compatibility alias
+(put 'gnus-group-mail-low-face 'face-alias 'gnus-group-mail-low)
+(put 'gnus-group-mail-low-face 'obsolete-face "22.1")
 
 ;; Summary mode faces.
 
@@ -683,36 +606,6 @@ be set in `.emacs' instead."
 (put 'gnus-summary-cancelled-face 'face-alias 'gnus-summary-cancelled)
 (put 'gnus-summary-cancelled-face 'obsolete-face "22.1")
 
-(defface gnus-summary-high-ticked
-  '((((class color)
-      (background dark))
-     (:foreground "pink" :bold t))
-    (((class color)
-      (background light))
-     (:foreground "firebrick" :bold t))
-    (t
-     (:bold t)))
-  "Face used for high interest ticked articles."
-  :group 'gnus-summary)
-;; backward-compatibility alias
-(put 'gnus-summary-high-ticked-face 'face-alias 'gnus-summary-high-ticked)
-(put 'gnus-summary-high-ticked-face 'obsolete-face "22.1")
-
-(defface gnus-summary-low-ticked
-  '((((class color)
-      (background dark))
-     (:foreground "pink" :italic t))
-    (((class color)
-      (background light))
-     (:foreground "firebrick" :italic t))
-    (t
-     (:italic t)))
-  "Face used for low interest ticked articles."
-  :group 'gnus-summary)
-;; backward-compatibility alias
-(put 'gnus-summary-low-ticked-face 'face-alias 'gnus-summary-low-ticked)
-(put 'gnus-summary-low-ticked-face 'obsolete-face "22.1")
-
 (defface gnus-summary-normal-ticked
   '((((class color)
       (background dark))
@@ -728,35 +621,21 @@ be set in `.emacs' instead."
 (put 'gnus-summary-normal-ticked-face 'face-alias 'gnus-summary-normal-ticked)
 (put 'gnus-summary-normal-ticked-face 'obsolete-face "22.1")
 
-(defface gnus-summary-high-ancient
-  '((((class color)
-      (background dark))
-     (:foreground "SkyBlue" :bold t))
-    (((class color)
-      (background light))
-     (:foreground "RoyalBlue" :bold t))
-    (t
-     (:bold t)))
-  "Face used for high interest ancient articles."
+(defface gnus-summary-high-ticked
+  '((t (:inherit gnus-summary-normal-ticked :bold t)))
+  "Face used for high interest ticked articles."
   :group 'gnus-summary)
 ;; backward-compatibility alias
-(put 'gnus-summary-high-ancient-face 'face-alias 'gnus-summary-high-ancient)
-(put 'gnus-summary-high-ancient-face 'obsolete-face "22.1")
+(put 'gnus-summary-high-ticked-face 'face-alias 'gnus-summary-high-ticked)
+(put 'gnus-summary-high-ticked-face 'obsolete-face "22.1")
 
-(defface gnus-summary-low-ancient
-  '((((class color)
-      (background dark))
-     (:foreground "SkyBlue" :italic t))
-    (((class color)
-      (background light))
-     (:foreground "RoyalBlue" :italic t))
-    (t
-     (:italic t)))
-  "Face used for low interest ancient articles."
+(defface gnus-summary-low-ticked
+  '((t (:inherit gnus-summary-normal-ticked :italic t)))
+  "Face used for low interest ticked articles."
   :group 'gnus-summary)
 ;; backward-compatibility alias
-(put 'gnus-summary-low-ancient-face 'face-alias 'gnus-summary-low-ancient)
-(put 'gnus-summary-low-ancient-face 'obsolete-face "22.1")
+(put 'gnus-summary-low-ticked-face 'face-alias 'gnus-summary-low-ticked)
+(put 'gnus-summary-low-ticked-face 'obsolete-face "22.1")
 
 (defface gnus-summary-normal-ancient
   '((((class color)
@@ -773,31 +652,21 @@ be set in `.emacs' instead."
 (put 'gnus-summary-normal-ancient-face 'face-alias 'gnus-summary-normal-ancient)
 (put 'gnus-summary-normal-ancient-face 'obsolete-face "22.1")
 
-(defface gnus-summary-high-undownloaded
-   '((((class color)
-       (background light))
-      (:bold t :foreground "cyan4"))
-     (((class color) (background dark))
-      (:bold t :foreground "LightGray"))
-     (t (:inverse-video t :bold t)))
-  "Face used for high interest uncached articles."
+(defface gnus-summary-high-ancient
+  '((t (:inherit gnus-summary-normal-ancient :bold t)))
+  "Face used for high interest ancient articles."
   :group 'gnus-summary)
 ;; backward-compatibility alias
-(put 'gnus-summary-high-undownloaded-face 'face-alias 'gnus-summary-high-undownloaded)
-(put 'gnus-summary-high-undownloaded-face 'obsolete-face "22.1")
+(put 'gnus-summary-high-ancient-face 'face-alias 'gnus-summary-high-ancient)
+(put 'gnus-summary-high-ancient-face 'obsolete-face "22.1")
 
-(defface gnus-summary-low-undownloaded
-   '((((class color)
-       (background light))
-      (:italic t :foreground "cyan4" :bold nil))
-     (((class color) (background dark))
-      (:italic t :foreground "LightGray" :bold nil))
-     (t (:inverse-video t :italic t)))
-  "Face used for low interest uncached articles."
+(defface gnus-summary-low-ancient
+  '((t (:inherit gnus-summary-normal-ancient :italic t)))
+  "Face used for low interest ancient articles."
   :group 'gnus-summary)
 ;; backward-compatibility alias
-(put 'gnus-summary-low-undownloaded-face 'face-alias 'gnus-summary-low-undownloaded)
-(put 'gnus-summary-low-undownloaded-face 'obsolete-face "22.1")
+(put 'gnus-summary-low-ancient-face 'face-alias 'gnus-summary-low-ancient)
+(put 'gnus-summary-low-ancient-face 'obsolete-face "22.1")
 
 (defface gnus-summary-normal-undownloaded
    '((((class color)
@@ -812,23 +681,21 @@ be set in `.emacs' instead."
 (put 'gnus-summary-normal-undownloaded-face 'face-alias 'gnus-summary-normal-undownloaded)
 (put 'gnus-summary-normal-undownloaded-face 'obsolete-face "22.1")
 
-(defface gnus-summary-high-unread
-  '((t
-     (:bold t)))
-  "Face used for high interest unread articles."
+(defface gnus-summary-high-undownloaded
+  '((t (:inherit gnus-summary-normal-undownloaded :bold t)))
+  "Face used for high interest uncached articles."
   :group 'gnus-summary)
 ;; backward-compatibility alias
-(put 'gnus-summary-high-unread-face 'face-alias 'gnus-summary-high-unread)
-(put 'gnus-summary-high-unread-face 'obsolete-face "22.1")
+(put 'gnus-summary-high-undownloaded-face 'face-alias 'gnus-summary-high-undownloaded)
+(put 'gnus-summary-high-undownloaded-face 'obsolete-face "22.1")
 
-(defface gnus-summary-low-unread
-  '((t
-     (:italic t)))
-  "Face used for low interest unread articles."
+(defface gnus-summary-low-undownloaded
+  '((t (:inherit gnus-summary-normal-undownloaded :italic t)))
+  "Face used for low interest uncached articles."
   :group 'gnus-summary)
 ;; backward-compatibility alias
-(put 'gnus-summary-low-unread-face 'face-alias 'gnus-summary-low-unread)
-(put 'gnus-summary-low-unread-face 'obsolete-face "22.1")
+(put 'gnus-summary-low-undownloaded-face 'face-alias 'gnus-summary-low-undownloaded)
+(put 'gnus-summary-low-undownloaded-face 'obsolete-face "22.1")
 
 (defface gnus-summary-normal-unread
   '((t
@@ -839,39 +706,21 @@ be set in `.emacs' instead."
 (put 'gnus-summary-normal-unread-face 'face-alias 'gnus-summary-normal-unread)
 (put 'gnus-summary-normal-unread-face 'obsolete-face "22.1")
 
-(defface gnus-summary-high-read
-  '((((class color)
-      (background dark))
-     (:foreground "PaleGreen"
-		  :bold t))
-    (((class color)
-      (background light))
-     (:foreground "DarkGreen"
-		  :bold t))
-    (t
-     (:bold t)))
-  "Face used for high interest read articles."
+(defface gnus-summary-high-unread
+  '((t (:inherit gnus-summary-normal-unread :bold t)))
+  "Face used for high interest unread articles."
   :group 'gnus-summary)
 ;; backward-compatibility alias
-(put 'gnus-summary-high-read-face 'face-alias 'gnus-summary-high-read)
-(put 'gnus-summary-high-read-face 'obsolete-face "22.1")
+(put 'gnus-summary-high-unread-face 'face-alias 'gnus-summary-high-unread)
+(put 'gnus-summary-high-unread-face 'obsolete-face "22.1")
 
-(defface gnus-summary-low-read
-  '((((class color)
-      (background dark))
-     (:foreground "PaleGreen"
-		  :italic t))
-    (((class color)
-      (background light))
-     (:foreground "DarkGreen"
-		  :italic t))
-    (t
-     (:italic t)))
-  "Face used for low interest read articles."
+(defface gnus-summary-low-unread
+  '((t (:inherit gnus-summary-normal-unread :italic t)))
+  "Face used for low interest unread articles."
   :group 'gnus-summary)
 ;; backward-compatibility alias
-(put 'gnus-summary-low-read-face 'face-alias 'gnus-summary-low-read)
-(put 'gnus-summary-low-read-face 'obsolete-face "22.1")
+(put 'gnus-summary-low-unread-face 'face-alias 'gnus-summary-low-unread)
+(put 'gnus-summary-low-unread-face 'obsolete-face "22.1")
 
 (defface gnus-summary-normal-read
   '((((class color)
@@ -887,6 +736,22 @@ be set in `.emacs' instead."
 ;; backward-compatibility alias
 (put 'gnus-summary-normal-read-face 'face-alias 'gnus-summary-normal-read)
 (put 'gnus-summary-normal-read-face 'obsolete-face "22.1")
+
+(defface gnus-summary-high-read
+  '((t (:inherit gnus-summary-normal-read :bold t)))
+  "Face used for high interest read articles."
+  :group 'gnus-summary)
+;; backward-compatibility alias
+(put 'gnus-summary-high-read-face 'face-alias 'gnus-summary-high-read)
+(put 'gnus-summary-high-read-face 'obsolete-face "22.1")
+
+(defface gnus-summary-low-read
+  '((t (:inherit gnus-summary-normal-read :italic t)))
+  "Face used for low interest read articles."
+  :group 'gnus-summary)
+;; backward-compatibility alias
+(put 'gnus-summary-low-read-face 'face-alias 'gnus-summary-low-read)
+(put 'gnus-summary-low-read-face 'obsolete-face "22.1")
 
 
 ;;;
