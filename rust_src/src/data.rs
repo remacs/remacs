@@ -54,6 +54,4 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
     return result;
 }
 
-export_lisp_fns! {
-    indirect_function
-}
+include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

@@ -54,10 +54,4 @@ fn multibyte_char_to_unibyte(ch: LispObject) -> LispObject {
     }
 }
 
-export_lisp_fns! {
-    characterp,
-    char_or_string_p,
-    max_char,
-    multibyte_char_to_unibyte,
-    unibyte_char_to_multibyte
-}
+include!(concat!(env!("OUT_DIR"), "/character_exports.rs"));

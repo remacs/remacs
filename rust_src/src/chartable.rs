@@ -46,8 +46,4 @@ fn set_char_table_parent(chartable: LispObject, parent: LispObject) -> LispObjec
     parent
 }
 
-export_lisp_fns! {
-    char_table_parent,
-    char_table_subtype,
-    set_char_table_parent
-}
+include!(concat!(env!("OUT_DIR"), "/chartable_exports.rs"));

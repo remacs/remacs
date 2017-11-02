@@ -44,6 +44,4 @@ fn sleep_for(seconds: LispObject, milliseconds: LispObject) -> LispObject {
     LispObject::constant_nil()
 }
 
-export_lisp_fns! {
-    sleep_for
-}
+include!(concat!(env!("OUT_DIR"), "/dispnew_exports.rs"));

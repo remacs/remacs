@@ -360,18 +360,4 @@ fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     buffer
 }
 
-export_lisp_fns! {
-    buffer_chars_modified_tick,
-    buffer_file_name,
-    buffer_live_p,
-    buffer_modified_p,
-    buffer_modified_tick,
-    buffer_name,
-    current_buffer,
-    get_buffer,
-    overlay_buffer,
-    overlay_end,
-    overlay_start,
-    overlayp,
-    set_buffer
-}
+include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

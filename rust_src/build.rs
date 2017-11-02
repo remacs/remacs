@@ -3,16 +3,27 @@ use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Eq, PartialEq)]
 enum ParseState {
     Looking,
     IgnoreComments,
     NoMangleFn,
-    ReadingFnNames,
-    Complete,
+    LispFn(Option<String>),
 }
+
+fn get_function_name(line: &str) -> Option<String> {
+    if let Some(pos) = line.find('(') {
+        if let Some(fnpos) = line.find("fn ") {
+            return Some((&line[(fnpos + 3)..pos]).to_string());
+        }
+    }
+
+    None
+}
+
+static C_NAME: &'static str = "c_name = \"";
 
 fn c_exports_for_module<R>(
     modname: &str,
@@ -24,56 +35,89 @@ where
 {
     let mut parse_state = ParseState::Looking;
     let mut has_lisp_fns = false;
+    let mut exported: Vec<String> = Vec::new();
+    let mut has_include = false;
 
     for line in in_file.lines() {
         let line = line?;
-        let line = line.trim();
 
         match parse_state {
-            ParseState::Looking => if line.starts_with("export_lisp_fns!") {
-                parse_state = ParseState::ReadingFnNames;
-                has_lisp_fns = true;
-            } else if line.starts_with("#[no_mangle]") {
-                parse_state = ParseState::NoMangleFn;
-            } else if line.starts_with("/*") {
-                if !line.ends_with("*/") {
-                    parse_state = ParseState::IgnoreComments;
+            ParseState::Looking => {
+                if line.starts_with("#[lisp_fn") {
+                    if let Some(begin) = line.find(C_NAME) {
+                        let input = line.to_string();
+                        let start = begin + C_NAME.len();
+                        let end = &input[start..].find('"').unwrap() + start;
+                        let name = (&line[start..end]).to_string();
+                        // Ignore macros, nothing we can do with them
+                        if !name.starts_with('$') {
+                            // even though we do not need to parse the
+                            // next line of the file this keeps all of the
+                            // lisp_fn code in one place.
+                            parse_state = ParseState::LispFn(Some(name));
+                        }
+                    } else {
+                        parse_state = ParseState::LispFn(None);
+                    }
+                    has_lisp_fns = true;
+                } else if line.starts_with("#[no_mangle]") {
+                    parse_state = ParseState::NoMangleFn;
+                } else if line.starts_with("/*") {
+                    if !line.ends_with("*/") {
+                        parse_state = ParseState::IgnoreComments;
+                    }
+                } else if line.starts_with("include!(concat!(env!(\"OUT_DIR\"),") {
+                    has_include = true;
                 }
-            },
+            }
 
             ParseState::IgnoreComments => if line.starts_with("*/") || line.ends_with("*/") {
                 parse_state = ParseState::Looking;
             },
 
-            // export public #[no_mangle] functions
-            ParseState::NoMangleFn => {
-                if line.starts_with("pub") {
-                    if let Some(pos) = line.find('(') {
-                        // have to look for fn to support:
-                        // pub fn foo
-                        // pub extern "C" fn foo
-                        //
-                        if let Some(fnpos) = line.find("fn ") {
-                            let func = &line[(fnpos + 3)..pos].to_string();
-                            write!(out_file, "pub use {}::{};\n", modname, func.trim())?;
-                        }
+            ParseState::LispFn(name) => {
+                if line.starts_with("pub") || line.starts_with("fn") {
+                    if let Some(func) = name.or_else(|| get_function_name(&line)) {
+                        write!(out_file, "pub use {}::F{};\n", modname, func)?;
+                        exported.push(func);
                     }
                 }
+
                 parse_state = ParseState::Looking;
             }
 
-            ParseState::ReadingFnNames => if line.starts_with("}") {
-                parse_state = ParseState::Complete;
-            } else {
-                let mut parts = line.trim().split(',');
-                let func = parts.next().unwrap();
-                write!(out_file, "pub use {}::F{};\n", modname, func)?;
-            },
+            // export public #[no_mangle] functions
+            ParseState::NoMangleFn => {
+                if line.starts_with("pub") {
+                    if let Some(func) = get_function_name(&line) {
+                        write!(out_file, "pub use {}::{};\n", modname, func)?;
+                    }
+                }
 
-            ParseState::Complete => {
-                break;
+                parse_state = ParseState::Looking;
             }
         };
+    }
+
+    if has_lisp_fns {
+        let path =
+            PathBuf::from(env::var("OUT_DIR").unwrap()).join([modname, "_exports.rs"].concat());
+        let mut exports_file = File::create(path)?;
+
+        write!(
+            exports_file,
+            "export_lisp_fns! {{ {} }}",
+            exported.join(", ")
+        )?;
+
+        if !has_include {
+            panic!(
+                [
+                    modname,
+                    ".rs is missing the required include for lisp_fn exports"
+                ].concat()
+            );
+        }
     }
 
     Ok(has_lisp_fns)
@@ -124,7 +168,7 @@ fn generate_c_exports() -> Result<(), io::Error> {
                 .to_str()
                 .map_or_else(|| panic!("Cannot understand string"), |s| s.to_string());
 
-            let fp = match File::open(PathBuf::from(&path)) {
+            let fp = match File::open(Path::new(&path)) {
                 Ok(f) => f,
 
                 Err(e) => {
@@ -148,6 +192,8 @@ fn generate_c_exports() -> Result<(), io::Error> {
     for module in modules {
         write!(out_file, "    {}::rust_init_syms();\n", module)?;
     }
+    // Add this one by hand.
+    write!(out_file, "    floatfns::rust_init_extra_syms();\n")?;
     write!(out_file, "}}\n")?;
 
     Ok(())

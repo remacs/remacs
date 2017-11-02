@@ -415,26 +415,4 @@ fn lognot(number: LispObject) -> LispObject {
     LispObject::from_fixnum(!number.as_fixnum_or_error())
 }
 
-export_lisp_fns! {
-    abs,
-    add1,
-    eqlsign,
-    geq,
-    gtr,
-    leq,
-    logand,
-    logior,
-    lognot,
-    logxor,
-    lss,
-    max,
-    min,
-    minus,
-    mod,
-    neq,
-    plus,
-    quo,
-    rem,
-    sub1,
-    times
-}
+include!(concat!(env!("OUT_DIR"), "/math_exports.rs"));

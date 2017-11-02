@@ -327,18 +327,4 @@ fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) 
     put(name, sym, list(&mut [test, hash]))
 }
 
-export_lisp_fns! {
-    clrhash,
-    copy_hash_table,
-    define_hash_table_test,
-    gethash,
-    hash_table_p,
-    hash_table_count,
-    hash_table_rehash_threshold,
-    hash_table_size,
-    hash_table_test,
-    hash_table_weakness,
-    maphash,
-    puthash,
-    remhash
-}
+include!(concat!(env!("OUT_DIR"), "/hashtable_exports.rs"));

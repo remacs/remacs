@@ -33,6 +33,4 @@ pub fn thread_name(thread: LispObject) -> LispObject {
     thread.as_thread_or_error().name()
 }
 
-export_lisp_fns! {
-    thread_name
-}
+include!(concat!(env!("OUT_DIR"), "/threads_exports.rs"));

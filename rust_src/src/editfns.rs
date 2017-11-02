@@ -291,22 +291,4 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
     copy
 }
 
-export_lisp_fns! {
-    bobp,
-    bolp,
-    buffer_size,
-    char_after,
-    eobp,
-    eolp,
-    following_char,
-    goto_char,
-    insert_byte,
-    mark_marker,
-    point,
-    point_max,
-    point_min,
-    position_bytes,
-    propertize,
-    region_beginning,
-    region_end
-}
+include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

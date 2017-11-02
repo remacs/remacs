@@ -527,8 +527,4 @@ fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     digest
 }
 
-export_lisp_fns! {
-    buffer_hash,
-    md5,
-    secure_hash
-}
+include!(concat!(env!("OUT_DIR"), "/crypto_exports.rs"));

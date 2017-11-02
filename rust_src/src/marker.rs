@@ -102,8 +102,4 @@ pub fn set_point_from_marker(marker: LispMarkerRef) {
     unsafe { set_point_both(charpos, bytepos) };
 }
 
-export_lisp_fns! {
-    marker_buffer,
-    marker_position,
-    markerp
-}
+include!(concat!(env!("OUT_DIR"), "/marker_exports.rs"));

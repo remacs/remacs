@@ -387,29 +387,19 @@ fn round2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
     }
 }
 
-export_lisp_fns! {
-    acos,
-    asin,
-    atan,
-    ceiling,
-    copysign,
-    cos,
-    exp,
-    expt,
-    fceiling,
-    ffloor,
-    float,
-    floor,
-    frexp,
-    fround,
-    ftruncate,
-    isnan,
-    ldexp,
-    log,
-    logb,
-    round,
-    sin,
-    sqrt,
-    tan,
-    truncate
+// Since these are generated via a macro the build cannot hook them into the
+// system automatically. Do not add more items here unless they are also generated
+// with something like simple_float_op.
+pub fn rust_init_extra_syms() {
+    unsafe {
+        defsubr(&*Sacos);
+        defsubr(&*Sasin);
+        defsubr(&*Scos);
+        defsubr(&*Ssin);
+        defsubr(&*Stan);
+        defsubr(&*Sexp);
+        defsubr(&*Ssqrt);
+    }
 }
+
+include!(concat!(env!("OUT_DIR"), "/floatfns_exports.rs"));

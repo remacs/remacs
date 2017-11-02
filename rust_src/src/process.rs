@@ -103,12 +103,4 @@ pub fn set_process_plist(process: LispObject, plist: LispObject) -> LispObject {
     }
 }
 
-export_lisp_fns! {
-    get_buffer_process,
-    get_process,
-    process_buffer,
-    process_list,
-    process_name,
-    processp,
-    set_process_plist
-}
+include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));

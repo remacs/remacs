@@ -194,7 +194,4 @@ fn base64_decode_string(string: LispObject) -> LispObject {
     unsafe { LispObject::from(make_unibyte_string(decoded, decoded_length)) }
 }
 
-export_lisp_fns! {
-    base64_decode_string,
-    base64_encode_string
-}
+include!(concat!(env!("OUT_DIR"), "/base64_exports.rs"));

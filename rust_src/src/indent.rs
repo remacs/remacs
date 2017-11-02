@@ -24,6 +24,4 @@ pub fn current_column() -> LispObject {
     LispObject::from_natnum(unsafe { remacs_sys::current_column() })
 }
 
-export_lisp_fns! {
-    current_column
-}
+include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));

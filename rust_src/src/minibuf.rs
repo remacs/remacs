@@ -50,8 +50,4 @@ pub fn set_minibuffer_window(window: LispObject) -> LispObject {
     window
 }
 
-export_lisp_fns! {
-    active_minibuffer_window,
-    minibufferp,
-    set_minibuffer_window
-}
+include!(concat!(env!("OUT_DIR"), "/minibuf_exports.rs"));

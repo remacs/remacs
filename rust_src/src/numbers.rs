@@ -87,12 +87,4 @@ fn random(limit: LispObject) -> LispObject {
     }
 }
 
-export_lisp_fns! {
-    floatp,
-    integer_or_marker_p,
-    integerp,
-    natnump,
-    number_or_marker_p,
-    numberp,
-    random
-}
+include!(concat!(env!("OUT_DIR"), "/numbers_exports.rs"));

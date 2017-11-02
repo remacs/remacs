@@ -30,6 +30,4 @@ fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
     }
 }
 
-export_lisp_fns! {
-    featurep
-}
+include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

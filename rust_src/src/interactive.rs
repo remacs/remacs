@@ -24,6 +24,4 @@ fn prefix_numeric_value(raw: LispObject) -> LispObject {
     }
 }
 
-export_lisp_fns! {
-    prefix_numeric_value
-}
+include!(concat!(env!("OUT_DIR"), "/interactive_exports.rs"));

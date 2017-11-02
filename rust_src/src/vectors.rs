@@ -330,21 +330,4 @@ lazy_static! {
     };
 }
 
-export_lisp_fns! {
-    arrayp,
-    bool_vector_p,
-    bufferp,
-    byte_code_function_p,
-    char_table_p,
-    condition_variable_p,
-    elt,
-    length,
-    mutexp,
-    recordp,
-    sequencep,
-    sort,
-    subrp,
-    threadp,
-    vector_or_char_table_p,
-    vectorp
-}
+include!(concat!(env!("OUT_DIR"), "/vectors_exports.rs"));

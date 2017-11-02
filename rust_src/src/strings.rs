@@ -155,13 +155,4 @@ fn multibyte_string_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_string().map_or(false, |s| s.is_multibyte()))
 }
 
-export_lisp_fns! {
-    multibyte_string_p,
-    string_as_multibyte,
-    string_bytes,
-    string_equal,
-    string_lessp,
-    string_to_multibyte,
-    string_to_unibyte,
-    stringp
-}
+include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));

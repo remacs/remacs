@@ -344,20 +344,4 @@ pub fn window_frame(window: LispObject) -> LispObject {
     win.frame()
 }
 
-export_lisp_fns! {
-    minibuffer_selected_window,
-    selected_window,
-    set_window_combination_limit,
-    window_buffer,
-    window_combination_limit,
-    window_frame,
-    window_live_p,
-    window_margins,
-    window_minibuffer_p,
-    window_point,
-    window_start,
-    window_total_height,
-    window_total_width,
-    window_valid_p,
-    windowp
-}
+include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

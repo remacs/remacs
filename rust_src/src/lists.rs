@@ -501,35 +501,4 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
     }
 }
 
-export_lisp_fns! {
-    assoc,
-    assq,
-    atom,
-    car,
-    car_safe,
-    cdr,
-    cdr_safe,
-    consp,
-    delq,
-    get,
-    lax_plist_get,
-    lax_plist_put,
-    list,
-    listp,
-    make_list,
-    member,
-    memq,
-    memql,
-    nlistp,
-    nth,
-    nthcdr,
-    plist_get,
-    plist_member,
-    plist_put,
-    put,
-    rassoc,
-    rassq,
-    safe_length,
-    setcar,
-    setcdr
-}
+include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));

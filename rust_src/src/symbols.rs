@@ -208,16 +208,4 @@ pub fn symbol_value(symbol: LispObject) -> LispObject {
     LispObject::from(val)
 }
 
-export_lisp_fns! {
-    fboundp,
-    fmakunbound,
-    indirect_variable,
-    keywordp,
-    makunbound,
-    setplist,
-    symbol_function,
-    symbol_name,
-    symbol_plist,
-    symbol_value,
-    symbolp
-}
+include!(concat!(env!("OUT_DIR"), "/symbols_exports.rs"));

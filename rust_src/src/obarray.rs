@@ -150,7 +150,4 @@ fn intern(string: LispObject, obarray: LispObject) -> LispObject {
     }
 }
 
-export_lisp_fns! {
-    intern,
-    intern_soft
-}
+include!(concat!(env!("OUT_DIR"), "/obarray_exports.rs"));

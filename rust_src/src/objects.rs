@@ -61,11 +61,4 @@ fn identity(arg: LispObject) -> LispObject {
     arg
 }
 
-export_lisp_fns! {
-    eq,
-    eql,
-    equal,
-    equal_including_properties,
-    identity,
-    null
-}
+include!(concat!(env!("OUT_DIR"), "/objects_exports.rs"));

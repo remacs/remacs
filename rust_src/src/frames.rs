@@ -15,6 +15,4 @@ pub fn selected_frame() -> LispObject {
     unsafe { LispObject::from(current_frame) }
 }
 
-export_lisp_fns! {
-    selected_frame
-}
+include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
