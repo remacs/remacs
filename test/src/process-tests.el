@@ -76,6 +76,8 @@
 
 (ert-deftest process-test-stderr-buffer ()
   (skip-unless (executable-find "bash"))
+  ;; Skip for the time being on Remacs.
+  (skip-unless (not (eq system-type 'windows-nt)))
   (let* ((stdout-buffer (generate-new-buffer "*stdout*"))
 	 (stderr-buffer (generate-new-buffer "*stderr*"))
 	 (proc (make-process :name "test"
