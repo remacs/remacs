@@ -42,29 +42,30 @@ jobs:
       <<: *FULL_TEST
       os: osx
       before_script:
+        # Travis docs say to avoid brew update, but it works around the incorrect Ruby version
+        # https://github.com/travis-ci/travis-ci/issues/8552
+        - brew update
         - brew install gnutls
         - brew install texinfo
     - &NO_WINDOW_SYSTEM_TEST
       stage: test
+      os: linux
       env:
         # Ensure that we build without warnings.
         - CARGO_FLAGS="--features 'strict'"
         - TRAVIS_WITH_NO_WINDOW_SYSTEM=1  # So we can tell them apart
         - TRAVIS_ALLOW_FAILURE=1
-      os: linux
-      addons:
-        apt:
-          packages:
-            - texinfo
-      before_script:
-        - if [ $TRAVIS_OS_NAME = linux ]; then ./autogen.sh && ./configure --without-makeinfo --with-x=no --without-gconf --without-gsettings; fi
-        # TODO: add the necessary dependencies so we can use the same configure flags on OS X.
-        - if [ $TRAVIS_OS_NAME = osx ]; then ./autogen.sh && ./configure --without-makeinfo --with-gnutls=no --with-x=no --without-gconf --without-gsettings; fi
       script:
+        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --without-gconf --without-gsettings; fi
         - make -j 3 && echo '==> Running nowindow tests' && make check
     -
       <<: *NO_WINDOW_SYSTEM_TEST
       os: osx
+      before_script:
+        # Travis docs say to avoid brew update, but it works around the incorrect Ruby version
+        - brew update
+        - brew install gnutls
+        - brew install texinfo
   allow_failures:
     - env: TRAVIS_ALLOW_FAILURE=1
 
