@@ -455,6 +455,7 @@ Evaluation
                               the program).
 * Backquote::               Easier construction of list structure.
 * Eval::                    How to invoke the Lisp interpreter explicitly.
+* Deferred Eval::           Deferred and lazy evaluation of forms.
 
 Kinds of Forms
 
