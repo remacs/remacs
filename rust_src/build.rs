@@ -14,6 +14,15 @@ enum ParseState {
     LispFn(Option<String>),
 }
 
+fn ignore(path: &str) -> bool {
+    path == "" || path.starts_with('.') || path == "lib.rs"
+}
+
+fn path_as_str(path: Option<&OsStr>) -> &str {
+    path.and_then(|p| p.to_str())
+        .unwrap_or_else(|| panic!(format!("Cannot understand string: {:?}", path)))
+}
+
 fn get_function_name(line: &str) -> Option<String> {
     if let Some(pos) = line.find('(') {
         if let Some(fnpos) = line.find("fn ") {
@@ -23,6 +32,32 @@ fn get_function_name(line: &str) -> Option<String> {
     }
 
     None
+}
+
+fn env_var(name: &str) -> String {
+    match env::var(name) {
+        Ok(value) => value,
+        Err(e) => panic!(format!("Could not find {} in environment: {}", name, e)),
+    }
+}
+
+fn source_file(modname: &str) -> String {
+    let base_path: PathBuf = [&env_var("CARGO_MANIFEST_DIR"), "src", modname]
+        .iter()
+        .collect();
+
+    let mut file = base_path.clone();
+    if base_path.is_dir() {
+        file = base_path.join("mod.rs");
+    } else {
+        file.set_extension("rs");
+    }
+
+    if file.is_file() {
+        path_as_str(file.file_name()).to_string()
+    } else {
+        modname.to_string()
+    }
 }
 
 static C_NAME: &str = "c_name = \"";
@@ -101,8 +136,9 @@ where
     if exported.is_empty() {
         Ok(false)
     } else {
-        let path =
-            PathBuf::from(env::var("OUT_DIR").unwrap()).join([modname, "_exports.rs"].concat());
+        let path: PathBuf = [env_var("OUT_DIR"), [modname, "_exports.rs"].concat()]
+            .iter()
+            .collect();
         let mut exports_file = File::create(path)?;
 
         write!(
@@ -113,8 +149,8 @@ where
 
         if !has_include {
             panic!(format!(
-                "{}.rs is missing the required include for lisp_fn exports",
-                modname
+                "{} is missing the required include for lisp_fn exports",
+                source_file(modname)
             ));
         }
 
@@ -122,75 +158,80 @@ where
     }
 }
 
-fn ignore(path: &str) -> bool {
-    path == "" || path.starts_with('.') || path == "lib.rs"
-}
+fn handle_file(mut mod_path: PathBuf, out_file: &File) -> Result<Option<String>, io::Error> {
+    let mut name: Option<String> = None;
 
-fn path_as_str(path: Option<&OsStr>) -> &str {
-    path.and_then(|p| p.to_str())
-        .unwrap_or_else(|| panic!(format!("Cannot understand string: {:?}", path)))
+    // in order to parse correctly, determine where the code lives
+    // for submodules that will be in a mod.rs file.
+    if mod_path.is_dir() {
+        let tmp = path_as_str(mod_path.file_name()).to_string();
+        mod_path = mod_path.join("mod.rs");
+        if mod_path.is_file() {
+            name = Some(tmp);
+        }
+    } else if let Some(ext) = mod_path.extension() {
+        if ext == "rs" {
+            name = Some(path_as_str(mod_path.file_stem()).to_string());
+        }
+    }
+
+    // only handle Rust files
+    if let Some(modname) = name {
+        let fp = match File::open(&mod_path) {
+            Ok(f) => f,
+            Err(e) => {
+                return Err(io::Error::new(
+                    e.kind(),
+                    format!("Failed to open {:?}: {}", mod_path, e),
+                ))
+            }
+        };
+
+        if c_exports_for_module(&modname, out_file, BufReader::new(fp))? {
+            return Ok(Some(modname));
+        }
+    }
+
+    Ok(None)
 }
 
 fn generate_c_exports() -> Result<(), io::Error> {
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("c_exports.rs");
+    let out_path: PathBuf = [&env_var("OUT_DIR"), "c_exports.rs"].iter().collect();
     let mut out_file = File::create(out_path)?;
 
     let mut modules: Vec<String> = Vec::new();
 
-    let in_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("src");
+    let in_path: PathBuf = [&env_var("CARGO_MANIFEST_DIR"), "src"].iter().collect();
     for entry in fs::read_dir(in_path)? {
-        let entry = entry?;
-        let mut mod_path = entry.path();
+        let mod_path = entry?.path();
 
-        if ignore(path_as_str(mod_path.file_name())) {
-            continue;
-        }
-
-        let mut name: Option<String> = None;
-
-        if mod_path.is_dir() {
-            name = Some(path_as_str(mod_path.file_name()).to_string());
-            mod_path = mod_path.join("mod.rs");
-        } else if let Some(ext) = mod_path.extension() {
-            if ext == "rs" {
-                name = Some(path_as_str(mod_path.file_stem()).to_string());
-            }
-        }
-
-        if let Some(modname) = name {
-            let fp = match File::open(&mod_path) {
-                Ok(f) => f,
-
-                Err(e) => {
-                    eprintln!("Failed to open {:?}", mod_path);
-                    return Err(e);
-                }
-            };
-
-            if c_exports_for_module(&modname, &out_file, BufReader::new(fp))? {
+        if !ignore(path_as_str(mod_path.file_name())) {
+            if let Some(modname) = handle_file(mod_path, &out_file)? {
                 modules.push(modname);
             }
         }
     }
 
-    write!(out_file, "\n")?;
+    if !modules.is_empty() {
+        write!(out_file, "\n")?;
 
-    write!(
-        out_file,
-        "#[no_mangle]\npub extern \"C\" fn rust_init_syms() {{\n"
-    )?;
-    for module in modules {
-        write!(out_file, "    {}::rust_init_syms();\n", module)?;
+        write!(
+            out_file,
+            "#[no_mangle]\npub extern \"C\" fn rust_init_syms() {{\n"
+        )?;
+        for module in modules {
+            write!(out_file, "    {}::rust_init_syms();\n", module)?;
+        }
+        // Add this one by hand.
+        write!(out_file, "    floatfns::rust_init_extra_syms();\n")?;
+        write!(out_file, "}}\n")?;
     }
-    // Add this one by hand.
-    write!(out_file, "    floatfns::rust_init_extra_syms();\n")?;
-    write!(out_file, "}}\n")?;
 
     Ok(())
 }
 
 fn main() {
     if let Err(e) = generate_c_exports() {
-        eprintln!("Errors occurred: {}", e);
+        panic!(format!("Errors occurred:\n{}", e));
     }
 }
