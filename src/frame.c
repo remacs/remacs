@@ -83,6 +83,21 @@ fset_minibuffer_window (struct frame *f, Lisp_Object val)
 {
   f->minibuffer_window = val;
 }
+Lisp_Object
+fget_minibuffer_window(const struct frame *f)
+{
+  return f->minibuffer_window;
+}
+Lisp_Object
+fget_root_window(const struct frame *f)
+{
+  return f->root_window;
+}
+struct terminal *
+fget_terminal(const struct frame *f)
+{
+  return f->terminal;
+}
 
 struct frame *
 decode_live_frame (register Lisp_Object frame)
