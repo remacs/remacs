@@ -179,13 +179,13 @@ from compile.el")
   "Predicate matching against diagnostic text to detect its type.
 Takes a single argument, the diagnostic's text and should return
 a value suitable for indexing
-`flymake-diagnostic-types-alist' (which see). If the returned
-value is nil, a type of `:error' is assumed. For some backward
-compatibility, if a non-nil value is returned that that doesn't
+`flymake-diagnostic-types-alist' (which see).  If the returned
+value is nil, a type of `:error' is assumed.  For some backward
+compatibility, if a non-nil value is returned that doesn't
 index that alist, a type of `:warning' is assumed.
 
 Instead of a function, it can also be a string, a regular
-expression. A match indicates `:warning' type, otherwise
+expression.  A match indicates `:warning' type, otherwise
 `:error'")
 
 (defun flymake-proc-default-guess (text)

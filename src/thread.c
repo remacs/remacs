@@ -26,7 +26,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "syssignal.h"
 
-static struct thread_state alignas (GCALIGNMENT) main_thread;
+#define THREAD_ALIGNMENT COMMON_MULTIPLE (alignof (max_align_t), GCALIGNMENT)
+
+static struct thread_state alignas (THREAD_ALIGNMENT) main_thread;
 
 struct thread_state *current_thread = &main_thread;
 

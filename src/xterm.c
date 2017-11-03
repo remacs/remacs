@@ -11504,6 +11504,22 @@ x_make_frame_visible (struct frame *f)
 
     /* Try to wait for a MapNotify event (that is what tells us when a
        frame becomes visible).  */
+
+#ifdef CYGWIN
+    /* On Cygwin, which uses input polling, we need to force input to
+       be read.  See
+       http://lists.gnu.org/archive/html/emacs-devel/2013-12/msg00351.html
+       and https://debbugs.gnu.org/cgi/bugreport.cgi?bug=24091#131.
+       Fake an alarm signal to let the handler know that there's
+       something to be read.
+
+       It could be confusing if a real alarm arrives while processing
+       the fake one.  Turn it off and let the handler reset it.  */
+    int old_poll_suppress_count = poll_suppress_count;
+    poll_suppress_count = 1;
+    poll_for_input_1 ();
+    poll_suppress_count = old_poll_suppress_count;
+#endif
     x_wait_for_event (f, MapNotify);
   }
 }

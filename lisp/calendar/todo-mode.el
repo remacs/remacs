@@ -956,7 +956,7 @@ called with a prefix argument only moves point to a lower item,
 e.g., with point on the last todo item and called with prefix 1,
 it moves point to the first done item; but if called with point
 on the last todo item without a prefix argument, it moves point
-the the empty line above the done items separator."
+to the empty line above the done items separator."
   (interactive "p")
   ;; It's not worth the trouble to allow prefix arg value < 1, since
   ;; we have the corresponding command.
@@ -976,7 +976,7 @@ If the category's done items are visible, this command called
 with a prefix argument only moves point to a higher item, e.g.,
 with point on the first done item and called with prefix 1, it
 moves to the last todo item; but if called with point on the
-first done item without a prefix argument, it moves point the the
+first done item without a prefix argument, it moves point to the
 empty line above the done items separator."
   (interactive "p")
   ;; Avoid moving to bob if on the first item but not at bob.
@@ -1052,7 +1052,7 @@ empty line above the done items separator."
 (defun todo-toggle-item-header ()
   "Hide or show item date-time headers in the current file.
 With done items, this hides only the done date-time string, not
-the the original date-time string."
+the original date-time string."
   (interactive)
   (unless (catch 'nonempty
 	    (dolist (type '(todo done))
@@ -1756,7 +1756,7 @@ means prompt user and omit comment only on confirmation."
 With positive numerical prefix argument N, change the marking of
 the next N items in the current category.  If both the todo and
 done items sections are visible, the sequence of N items can
-consist of the the last todo items and the first done items."
+consist of the last todo items and the first done items."
   (interactive "p")
   (when (todo-item-string)
     (let ((cat (todo-current-category)))

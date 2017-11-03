@@ -1048,7 +1048,7 @@ wildcards, erases the buffer, and builds the subdir-alist anew
   ;; default-directory and dired-actual-switches must be buffer-local
   ;; and initialized by now.
   (let (dirname
-	;; This makes readin much much faster.
+	;; This makes read-in much faster.
 	;; In particular, it prevents the font lock hook from running
 	;; until the directory is all read in.
 	(inhibit-modification-hooks t))
@@ -2228,7 +2228,8 @@ directory in another window."
     (find-file (dired-get-file-for-visit))))
 
 (defun dired-find-alternate-file ()
-  "In Dired, visit this file or directory instead of the Dired buffer."
+  "In Dired, visit file or directory on current line via `find-alternate-file'.
+This kills the Dired buffer, then visits the current line's file or directory."
   (interactive)
   (set-buffer-modified-p nil)
   (find-alternate-file (dired-get-file-for-visit)))

@@ -773,7 +773,7 @@ never used by the other charsets.
 If it is a list, the elements must be charsets, nil, 94, or 96.  GN
 can be used by all the listed charsets.  If the list contains 94, any
 iso-2022 charset whose code-space ranges are 94 long can be designated
-to GN.  If the list contains 96, any charsets whose whose ranges are
+to GN.  If the list contains 96, any charsets whose ranges are
 96 long can be designated to GN.  If the first element is a charset,
 that charset is initially designated to GN.
 

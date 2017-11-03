@@ -2648,9 +2648,9 @@ otherwise `erc-server-announced-name'.  SERVER is matched against
   "Predicate indicating whether the parsed ERC response PARSED should be hidden.
 
 Messages are always hidden if the message type of PARSED appears in
-`erc-hide-list'. Message types that appear in `erc-network-hide-list'
-or `erc-channel-hide-list' are are only hidden if the target matches
-the network or channel in the list. In addition, messages whose type
+`erc-hide-list'.  Message types that appear in `erc-network-hide-list'
+or `erc-channel-hide-list' are only hidden if the target matches
+the network or channel in the list.  In addition, messages whose type
 is a member of `erc-lurker-hide-list' are hidden if `erc-lurker-p'
 returns non-nil."
   (let* ((command (erc-response.command parsed))

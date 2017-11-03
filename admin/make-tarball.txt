@@ -207,7 +207,7 @@ longer present.
 Tar up the generated html_node/emacs/ and elisp/ directories and update
 the files manual/elisp.html_node.tar.gz and emacs.html_node.tar.gz.
 
-Use M-x make-manuals-dist from from admin/admin.el to update the
+Use M-x make-manuals-dist from admin/admin.el to update the
 manual/texi/ tarfiles.
 
 Add compressed copies of the main info pages from the tarfile to manual/info/.

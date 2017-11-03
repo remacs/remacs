@@ -635,7 +635,7 @@ size, and full-buffer size."
 	    (replace-match " " t t))
           (shr--translate-insertion-chars)
 	  (goto-char (point-max)))
-	;; We may have removed everything we inserted if if was just
+	;; We may have removed everything we inserted if it was just
 	;; spaces.
 	(unless (= font-start (point))
 	  ;; Mark all lines that should possibly be folded afterwards.
@@ -700,12 +700,16 @@ size, and full-buffer size."
       ;; Success; continue.
       (when (= (preceding-char) ?\s)
 	(delete-char -1))
-      (let ((props (text-properties-at (point)))
+      (let ((props `(face ,(get-text-property (point) 'face)
+			  ;; Don't break the image-displayer property
+			  ;; as it will cause `gnus-article-show-images'
+			  ;; to show the two or more same images.
+			  image-displayer
+			  ,(get-text-property (point) 'image-displayer)))
 	    (gap-start (point)))
 	(insert "\n")
 	(shr-indent)
-	(when props
-	  (add-text-properties gap-start (point) props)))
+	(add-text-properties gap-start (point) props))
       (setq start (point))
       (shr-vertical-motion shr-internal-width)
       (when (looking-at " $")
