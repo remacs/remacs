@@ -418,9 +418,8 @@ error !;
 #define case_Lisp_Int case Lisp_Int0: case Lisp_Int1
 
 /* Idea stolen from GDB.  Pedantic GCC complains about enum bitfields,
-   MSVC doesn't support them, and xlc and Oracle Studio c99 complain
-   vociferously about them.  */
-#if (defined __STRICT_ANSI__ || defined _MSC_VER || defined __IBMC__ \
+   and xlc and Oracle Studio c99 complain vociferously about them.  */
+#if (defined __STRICT_ANSI__ || defined __IBMC__ \
      || (defined __SUNPRO_C && __STDC__))
 #define ENUM_BF(TYPE) unsigned int
 #else
@@ -2935,23 +2934,12 @@ CHECK_NUMBER_CDR (Lisp_Object x)
 
 /* This version of DEFUN declares a function prototype with the right
    arguments, so we can catch errors with maxargs at compile-time.  */
-#ifdef _MSC_VER
-#define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
-   Lisp_Object fnname DEFUN_ARGS_ ## maxargs ;				\
-   static struct Lisp_Subr GCALIGNED sname =				\
-   { { (PVEC_SUBR << PSEUDOVECTOR_AREA_BITS)				\
-       | (sizeof (struct Lisp_Subr) / sizeof (EMACS_INT)) },		\
-      { (Lisp_Object (__cdecl *)(void))fnname },                        \
-       minargs, maxargs, lname, intspec, 0};				\
-   Lisp_Object fnname
-#else  /* not _MSC_VER */
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
    static struct Lisp_Subr GCALIGNED sname =				\
      { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS },				\
        { .a ## maxargs = fnname },					\
        minargs, maxargs, lname, intspec, 0};				\
    Lisp_Object fnname
-#endif
 
 /* defsubr (Sname);
    is how we define the symbol for function `name' at start-up time.  */
