@@ -3512,7 +3512,8 @@ There might be text before point."
              (lambda (process _event)
                (when (eq (process-status process) 'exit)
                  (unwind-protect
-                     (when (eq process tex-chktex--process)
+                     (when (eq process
+                               (with-current-buffer source tex-chktex--process))
                        (with-current-buffer (process-buffer process)
                          (goto-char (point-min))
                          (cl-loop
