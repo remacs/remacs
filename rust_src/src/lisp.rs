@@ -21,8 +21,7 @@ use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Obje
 use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p, Qframep,
                  Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
-                 Qt, Qthreadp, Qunbound, Qvectorp, Qwholenump, Qwindow_live_p, Qwindow_valid_p,
-                 Qwindowp};
+                 Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
 use remacs_sys::{circular_list, internal_equal, lispsym, make_float};
 
 use buffers::{LispBufferRef, LispOverlayRef};

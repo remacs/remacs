@@ -1,7 +1,5 @@
 //! Generic frame functions.
 
-use std::ptr;
-
 use remacs_macros::lisp_fn;
 use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
 use remacs_sys::Qframe_live_p;
@@ -15,7 +13,7 @@ pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 impl LispFrameRef {
     #[inline]
     pub fn is_live(&self) -> bool {
-        unsafe { fget_terminal(self.as_ptr()) != ptr::null() }
+        unsafe { !fget_terminal(self.as_ptr()).is_null() }
     }
 }
 
