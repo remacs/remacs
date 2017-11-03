@@ -518,12 +518,12 @@ into icons, regardless of the window manager."
 ;;; Algorithm:
 ;;;   1. Never use frames that have dedicated windows in them---it is bad to
 ;;;      destroy dedicated windows.
-;;;   2. If A and B are in the same frame but C's frame is different--- use one
-;;;      frame for A and B and use a separate frame for C.
+;;;   2. If A and B are in the same frame but C's frame is different---use one
+;;;      frame for A and B, and use a separate frame for C.
 ;;;   3. If C's frame is non-existent, then: if the first suitable
-;;;      non-dedicated frame  is different from A&B's, then use it for C.
-;;;      Otherwise, put A,B, and C in one frame.
-;;;   4. If buffers A, B, C are is separate frames, use them to display these
+;;;      non-dedicated frame is different from A&B's, then use it for C.
+;;;      Otherwise, put A, B, and C in one frame.
+;;;   4. If buffers A, B, C are in separate frames, use them to display these
 ;;;      buffers.
 
   ;;   Skip dedicated or iconified frames.
