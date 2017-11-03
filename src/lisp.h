@@ -272,8 +272,9 @@ error !;
 #endif
 
 /* Declare an object to have an address that is a multiple of
-   GCALIGNMENT.  alignas is not suitable here, as it fails if the
-   object's natural alignment exceeds GCALIGNMENT.  */
+   GCALIGNMENT.  This is a no-op if the object's natural alignment is
+   already a multiple of GCALIGNMENT.  alignas is not suitable here,
+   as it fails if the object's natural alignment exceeds GCALIGNMENT.  */
 #ifdef HAVE_STRUCT_ATTRIBUTE_ALIGNED
 # define GCALIGNED __attribute__ ((aligned (GCALIGNMENT)))
 #else
