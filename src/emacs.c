@@ -1542,9 +1542,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
 #endif
 #endif /* HAVE_X_WINDOWS */
 
-#ifdef HAVE_LIBXML2
       syms_of_xml ();
-#endif
 
 #ifdef HAVE_LCMS2
       syms_of_lcms2 ();

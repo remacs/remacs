@@ -39,6 +39,14 @@ text.
 +++
 ** New function 'logcount' calculates an integer's Hamming weight.
 
++++
+** New function 'libxml-available-p'.
+This function returns non-nil if libxml support is both compiled in
+and available at run time.  Lisp programs should use this function to
+detect built-in libxml support, instead of testing for that
+indirectly, e.g., by checking that functions like
+'libxml-parse-html-region' return nil.
+
 
 * Editing Changes in Emacs 27.1
 

@@ -4536,9 +4536,9 @@ It should be somewhat more efficient on larger buffers than
 @cindex symmetric cipher
 @cindex cipher, symmetric
 
-If compiled with GnuTLS, Emacs offers built-in cryptographic support.
-Following the GnuTLS API terminology, the available tools are digests,
-MACs, symmetric ciphers, and AEAD ciphers.
+  If compiled with GnuTLS, Emacs offers built-in cryptographic
+support.  Following the GnuTLS API terminology, the available tools
+are digests, MACs, symmetric ciphers, and AEAD ciphers.
 
 The terms used herein, such as IV (Initialization Vector), require
 some familiarity with cryptography and will not be defined in detail.
@@ -4556,7 +4556,7 @@ structure of the GnuTLS library.
 @cindex format of gnutls cryptography inputs
 @cindex gnutls cryptography inputs format
 
-The inputs to GnuTLS cryptographic functions can be specified in
+  The inputs to GnuTLS cryptographic functions can be specified in
 several ways, both as primitive Emacs Lisp types or as lists.
 
 The list form is currently similar to how @code{md5} and
@@ -4723,8 +4723,15 @@ IV used.
 @section Parsing HTML and XML
 @cindex parsing html
 
-When Emacs is compiled with libxml2 support, the following functions
-are available to parse HTML or XML text into Lisp object trees.
+  Emacs can be compiled with built-in libxml2 support.
+
+@defun libxml-available-p
+This function returns non-@code{nil} if built-in libxml2 support is
+available in this Emacs session.
+@end defun
+
+When libxml2 support is available, the following functions can be used
+to parse HTML or XML text into Lisp object trees.
 
 @defun libxml-parse-html-region start end &optional base-url discard-comments
 This function parses the text between @var{start} and @var{end} as
@@ -4791,9 +4798,9 @@ about syntax).
 @cindex DOM
 @cindex Document Object Model
 
-The @acronym{DOM} returned by @code{libxml-parse-html-region} (and the
-other @acronym{XML} parsing functions) is a tree structure where each
-node has a node name (called a @dfn{tag}), and optional key/value
+  The @acronym{DOM} returned by @code{libxml-parse-html-region} (and
+the other @acronym{XML} parsing functions) is a tree structure where
+each node has a node name (called a @dfn{tag}), and optional key/value
 @dfn{attribute} list, and then a list of @dfn{child nodes}.  The child
 nodes are either strings or @acronym{DOM} objects.
 
