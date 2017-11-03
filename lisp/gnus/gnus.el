@@ -1,4 +1,4 @@
-;;; gnus.el --- a newsreader for GNU Emacs
+;;; gnus.el --- a newsreader for GNU Emacs  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1987-1990, 1993-1998, 2000-2017 Free Software
 ;; Foundation, Inc.
@@ -29,7 +29,7 @@
 
 (run-hooks 'gnus-load-hook)
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (require 'wid-edit)
 (require 'mm-util)
 (require 'nnheader)
@@ -971,12 +971,11 @@ be set in `.emacs' instead."
           (cons (car list) (list :type type :data data)))
        list)))
 
-(eval-when (load)
-  (let ((command (format "%s" this-command)))
-    (when (string-match "gnus" command)
-      (if (string-match "gnus-other-frame" command)
-	  (gnus-get-buffer-create gnus-group-buffer)
-	(gnus-splash)))))
+(let ((command (format "%s" this-command)))
+  (when (string-match "gnus" command)
+    (if (eq 'gnus-other-frame this-command)
+	(gnus-get-buffer-create gnus-group-buffer)
+      (gnus-splash))))
 
 ;;; Do the rest.
 
@@ -2344,7 +2343,7 @@ Disabling the agent may result in noticeable loss of performance."
   :group 'gnus-agent
   :type 'boolean)
 
-(defcustom gnus-other-frame-function 'gnus
+(defcustom gnus-other-frame-function #'gnus
   "Function called by the command `gnus-other-frame' when starting Gnus."
   :group 'gnus-start
   :type '(choice (function-item gnus)
@@ -2352,7 +2351,9 @@ Disabling the agent may result in noticeable loss of performance."
 		 (function-item gnus-slave)
 		 (function-item gnus-slave-no-server)))
 
-(defcustom gnus-other-frame-resume-function 'gnus-group-get-new-news
+(declare-function gnus-group-get-new-news "gnus-group")
+
+(defcustom gnus-other-frame-resume-function #'gnus-group-get-new-news
   "Function called by the command `gnus-other-frame' when resuming Gnus."
   :version "24.4"
   :group 'gnus-start
@@ -2420,7 +2421,7 @@ a string, be sure to use a valid format, see RFC 2616."
   )
 (defvar gnus-agent-target-move-group-header "X-Gnus-Agent-Move-To")
 (defvar gnus-draft-meta-information-header "X-Draft-From")
-(defvar gnus-group-get-parameter-function 'gnus-group-get-parameter)
+(defvar gnus-group-get-parameter-function #'gnus-group-get-parameter)
 (defvar gnus-original-article-buffer " *Original Article*")
 (defvar gnus-newsgroup-name nil)
 (defvar gnus-ephemeral-servers nil)
@@ -2622,7 +2623,6 @@ gnus-registry.el will populate this if it's loaded.")
 	    (nthcdr 3 package)
 	  (cdr package)))))
    '(("info" :interactive t Info-goto-node)
-     ("pp" pp-to-string)
      ("qp" quoted-printable-decode-region quoted-printable-decode-string)
      ("ps-print" ps-print-preprint)
      ("message" :interactive t
@@ -3046,9 +3046,9 @@ with a `subscribed' parameter."
 		       (or (gnus-group-fast-parameter group 'to-address)
 			   (gnus-group-fast-parameter group 'to-list))))
 	(when address
-	  (add-to-list 'addresses address))))
+	  (cl-pushnew address addresses :test #'equal))))
     (when addresses
-      (list (mapconcat 'regexp-quote addresses "\\|")))))
+      (list (mapconcat #'regexp-quote addresses "\\|")))))
 
 (defmacro gnus-string-or (&rest strings)
   "Return the first element of STRINGS that is a non-blank string.
@@ -3101,6 +3101,8 @@ If ARG, insert string at point."
 		     minor least)
 	 (format "%d.%02d%02d" major minor least))))))
 
+(defvar gnus-info-buffer)
+
 (defun gnus-info-find-node (&optional nodename)
   "Find Info documentation of Gnus."
   (interactive)
@@ -3120,7 +3122,7 @@ If ARG, insert string at point."
 (defvar gnus-current-prefix-symbols nil
   "List of current prefix symbols.")
 
-(defun gnus-interactive (string &optional params)
+(defun gnus-interactive (string)
   "Return a list that can be fed to `interactive'.
 See `interactive' for full documentation.
 
@@ -3212,9 +3214,9 @@ g -- Group name."
     (setq out (delq 'gnus-prefix-nil out))
     (nreverse out)))
 
-(defun gnus-symbolic-argument (&optional arg)
+(defun gnus-symbolic-argument ()
   "Read a symbolic argument and a command, and then execute command."
-  (interactive "P")
+  (interactive)
   (let* ((in-command (this-command-keys))
 	 (command in-command)
 	 gnus-current-prefix-symbols
@@ -3330,16 +3332,15 @@ that that variable is buffer-local to the summary buffers."
 		  (throw 'server-name (car name-method))))
 	    gnus-server-method-cache))
 
-    (mapc
-     (lambda (server-alist)
-       (mapc (lambda (name-method)
-	       (when (gnus-methods-equal-p (cdr name-method) method)
-		 (unless (member name-method gnus-server-method-cache)
-		   (push name-method gnus-server-method-cache))
-		 (throw 'server-name (car name-method))))
-	     server-alist))
-     (list gnus-server-alist
-	   gnus-predefined-server-alist))
+    (dolist (server-alist
+             (list gnus-server-alist
+	           gnus-predefined-server-alist))
+      (mapc (lambda (name-method)
+	      (when (gnus-methods-equal-p (cdr name-method) method)
+		(unless (member name-method gnus-server-method-cache)
+		  (push name-method gnus-server-method-cache))
+		(throw 'server-name (car name-method))))
+	    server-alist))
 
     (let* ((name (if (member (cadr method) '(nil ""))
 		     (format "%s" (car method))
@@ -3441,26 +3442,26 @@ that that variable is buffer-local to the summary buffers."
   (let ((p1 (copy-sequence (cddr m1)))
 	(p2 (copy-sequence (cddr m2)))
 	e1 e2)
-    (block nil
+    (cl-block nil
       (while (setq e1 (pop p1))
 	(unless (setq e2 (assq (car e1) p2))
 	  ;; The parameter doesn't exist in p2.
-	  (return nil))
+	  (cl-return nil))
 	(setq p2 (delq e2 p2))
 	(unless (equal e1 e2)
 	  (if (not (and (stringp (cadr e1))
 			(stringp (cadr e2))))
-	      (return nil)
+	      (cl-return nil)
 	    ;; Special-case string parameter comparison so that we
 	    ;; can uniquify them.
 	    (let ((s1 (cadr e1))
 		  (s2 (cadr e2)))
-	      (when (string-match "/$" s1)
+	      (when (string-match "/\\'" s1)
 		(setq s1 (directory-file-name s1)))
-	      (when (string-match "/$" s2)
+	      (when (string-match "/\\'" s2)
 		(setq s2 (directory-file-name s2)))
 	      (unless (equal s1 s2)
-		(return nil))))))
+		(cl-return nil))))))
       ;; If p2 now is empty, they were equal.
       (null p2))))
 
@@ -3848,8 +3849,7 @@ If SCORE is nil, add 1 to the score of GROUP."
   "Collapse GROUP name LEVELS.
 Select methods are stripped and any remote host name is stripped down to
 just the host name."
-  (let* ((name "")
-	 (foreign "")
+  (let* ((foreign "")
 	 (depth 0)
 	 (skip 1)
 	 (levels (or levels
@@ -3891,13 +3891,13 @@ just the host name."
 		gsep "."))
 	(setq levels (- glen levels))
 	(dolist (g glist)
-	  (push (if (>= (decf levels) 0)
+	  (push (if (>= (cl-decf levels) 0)
 		    (if (zerop (length g))
 			""
 		      (substring g 0 1))
 		  g)
 		res))
-	(concat foreign (mapconcat 'identity (nreverse res) gsep))))))
+	(concat foreign (mapconcat #'identity (nreverse res) gsep))))))
 
 (defun gnus-narrow-to-body ()
   "Narrow to the body of an article."
@@ -4139,7 +4139,7 @@ Allow completion over sensible values."
 		  gnus-server-alist))
 	 (method
 	  (gnus-completing-read
-	   prompt (mapcar 'car servers)
+	   prompt (mapcar #'car servers)
 	   t nil 'gnus-method-history)))
     (cond
      ((equal method "")
@@ -4252,13 +4252,13 @@ current display is used."
 	  (progn (switch-to-buffer gnus-group-buffer)
 		 (funcall gnus-other-frame-resume-function arg))
 	(funcall gnus-other-frame-function arg)
-	(add-hook 'gnus-exit-gnus-hook 'gnus-delete-gnus-frame)
+	(add-hook 'gnus-exit-gnus-hook #'gnus-delete-gnus-frame)
   ;; One might argue that `gnus-delete-gnus-frame' should not be called
   ;; from `gnus-suspend-gnus-hook', but, on the other hand, one might
   ;; argue that it should.  No matter what you think, for the sake of
   ;; those who want it to be called from it, please keep (defun
   ;; gnus-delete-gnus-frame) even if you remove the next `add-hook'.
-  (add-hook 'gnus-suspend-gnus-hook 'gnus-delete-gnus-frame)))))
+  (add-hook 'gnus-suspend-gnus-hook #'gnus-delete-gnus-frame)))))
 
 ;;;###autoload
 (defun gnus (&optional arg dont-connect slave)
