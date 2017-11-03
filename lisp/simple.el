@@ -3487,10 +3487,11 @@ the use of a shell (with its need to quote arguments)."
 	(save-match-data
 	  (if (string-match "[ \t]*&[ \t]*\\'" command)
 	      ;; Command ending with ampersand means asynchronous.
-	      (let ((buffer (get-buffer-create
-			     (or output-buffer "*Async Shell Command*")))
-		    (directory default-directory)
-		    proc)
+              (let* ((buffer (get-buffer-create
+                              (or output-buffer "*Async Shell Command*")))
+                     (bname (buffer-name buffer))
+                     (directory default-directory)
+                     proc)
 		;; Remove the ampersand.
 		(setq command (substring command 0 (match-beginning 0)))
 		;; Ask the user what to do with already running process.
@@ -3505,30 +3506,24 @@ the use of a shell (with its need to quote arguments)."
 		   ((eq async-shell-command-buffer 'confirm-new-buffer)
 		    ;; If will create a new buffer, query first.
 		    (if (yes-or-no-p "A command is running in the default buffer.  Use a new buffer? ")
-			(setq buffer (generate-new-buffer
-				      (or (and (bufferp output-buffer) (buffer-name output-buffer))
-					  output-buffer "*Async Shell Command*")))
+                        (setq buffer (generate-new-buffer bname))
 		      (error "Shell command in progress")))
 		   ((eq async-shell-command-buffer 'new-buffer)
 		    ;; It will create a new buffer.
-		    (setq buffer (generate-new-buffer
-				  (or (and (bufferp output-buffer) (buffer-name output-buffer))
-				      output-buffer "*Async Shell Command*"))))
+                    (setq buffer (generate-new-buffer bname)))
 		   ((eq async-shell-command-buffer 'confirm-rename-buffer)
 		    ;; If will rename the buffer, query first.
 		    (if (yes-or-no-p "A command is running in the default buffer.  Rename it? ")
 			(progn
 			  (with-current-buffer buffer
 			    (rename-uniquely))
-			  (setq buffer (get-buffer-create
-					(or output-buffer "*Async Shell Command*"))))
+                          (setq buffer (get-buffer-create bname)))
 		      (error "Shell command in progress")))
 		   ((eq async-shell-command-buffer 'rename-buffer)
 		    ;; It will rename the buffer.
 		    (with-current-buffer buffer
 		      (rename-uniquely))
-		    (setq buffer (get-buffer-create
-				  (or output-buffer "*Async Shell Command*"))))))
+                    (setq buffer (get-buffer-create bname)))))
 		(with-current-buffer buffer
                   (shell-command--save-pos-or-erase)
 		  (setq default-directory directory)
@@ -3537,19 +3532,18 @@ the use of a shell (with its need to quote arguments)."
 		  (setq mode-line-process '(":%s"))
 		  (require 'shell) (shell-mode)
 		  (set-process-sentinel proc 'shell-command-sentinel)
-		  ;; Use the comint filter for proper handling of carriage motion
-		  ;; (see `comint-inhibit-carriage-motion'),.
+		  ;; Use the comint filter for proper handling of
+		  ;; carriage motion (see comint-inhibit-carriage-motion).
 		  (set-process-filter proc 'comint-output-filter)
                   (if async-shell-command-display-buffer
                       (display-buffer buffer '(nil (allow-no-window . t)))
                     (add-function :before (process-filter proc)
-                                  `(lambda (process string)
-                                     (when (and (= 0 (buffer-size (process-buffer process)))
-                                                (string= (buffer-name (process-buffer process))
-                                                    ,(or output-buffer "*Async Shell Command*")))
-                                       (display-buffer (process-buffer process))))
-                                  ))
-                  ))
+                                  (lambda (process _string)
+                                    (let ((buf (process-buffer process)))
+                                      (when (and (zerop (buffer-size buf))
+                                                 (string= (buffer-name buf)
+                                                          bname))
+                                        (display-buffer buf))))))))
 	    ;; Otherwise, command is executed synchronously.
 	    (shell-command-on-region (point) (point) command
 				     output-buffer nil error-buffer)))))))
