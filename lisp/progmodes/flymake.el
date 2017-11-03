@@ -601,8 +601,8 @@ not expected."
           (null expected-token))
         ;; should never happen
         (flymake-error "Unexpected report from stopped backend %s" backend))
-       ((and (not (eq expected-token token))
-             (not force))
+       ((not (or (eq expected-token token)
+                 force))
         (flymake-error "Obsolete report from backend %s with explanation %s"
                        backend explanation))
        ((eq :panic report-action)
@@ -742,8 +742,11 @@ Interactively, with a prefix arg, FORCE is t."
           ()
           (remove-hook 'post-command-hook #'start-post-command
                        nil)
-          (with-current-buffer buffer
-            (flymake-start (remove 'post-command deferred) force)))
+          ;; The buffer may have disappeared already, e.g. because of
+          ;; code like `(with-temp-buffer (python-mode) ...)'.
+          (when (buffer-live-p buffer)
+            (with-current-buffer buffer
+              (flymake-start (remove 'post-command deferred) force))))
          (start-on-display
           ()
           (remove-hook 'window-configuration-change-hook #'start-on-display
