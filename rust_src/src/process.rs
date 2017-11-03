@@ -1,12 +1,12 @@
 //! Functions operating on process.
 
-use remacs_macros::lisp_fn;
-use remacs_sys::{Fmapcar, Lisp_Process, Qcdr, Qlistp, Vprocess_alist};
-
 use buffers::get_buffer;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{assoc, cdr};
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Fmapcar, Lisp_Process, Qcdr, Qlistp, Vprocess_alist};
+use remacs_sys::pget_pid;
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
@@ -61,6 +61,19 @@ fn process_name(process: LispObject) -> LispObject {
 #[lisp_fn]
 fn process_buffer(process: LispObject) -> LispObject {
     process.as_process_or_error().buffer()
+}
+
+/// Return the process id of PROCESS.
+/// This is the pid of the external process which PROCESS uses or talks to.
+/// For a network, serial, and pipe connections, this value is nil.
+#[lisp_fn]
+fn process_id(process: LispObject) -> LispObject {
+    let pid = unsafe { pget_pid(process.as_process_or_error().as_ptr()) };
+    if pid != 0 {
+        LispObject::from_fixnum(pid as EmacsInt)
+    } else {
+        LispObject::constant_nil()
+    }
 }
 
 /// Return the (or a) live process associated with BUFFER.
