@@ -936,10 +936,18 @@ pub struct Lisp_Frame {
     // frame.foo the proper method is fget_foo(frame).
 }
 
+#[repr(C)]
+pub struct terminal {
+    pub header: Lisp_Vectorlike_Header,
+}
+
 /// Functions to access members of `struct frame`.
 extern "C" {
     pub fn fget_column_width(f: *const Lisp_Frame) -> c_int;
     pub fn fget_line_height(f: *const Lisp_Frame) -> c_int;
+    pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
 }
 
 #[repr(C)]

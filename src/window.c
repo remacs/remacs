@@ -307,36 +307,6 @@ wset_buffer (struct window *w, Lisp_Object val)
   adjust_window_count (w, 1);
 }
 
-DEFUN ("frame-root-window", Fframe_root_window, Sframe_root_window, 0, 1, 0,
-       doc: /* Return the root window of FRAME-OR-WINDOW.
-If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
-With a frame argument, return that frame's root window.
-With a window argument, return the root window of that window's frame.  */)
-  (Lisp_Object frame_or_window)
-{
-  Lisp_Object window;
-
-  if (NILP (frame_or_window))
-    window = SELECTED_FRAME ()->root_window;
-  else if (WINDOW_VALID_P (frame_or_window))
-      window = XFRAME (XWINDOW (frame_or_window)->frame)->root_window;
-  else
-    {
-      CHECK_LIVE_FRAME (frame_or_window);
-      window = XFRAME (frame_or_window)->root_window;
-    }
-
-  return window;
-}
-
-DEFUN ("minibuffer-window", Fminibuffer_window, Sminibuffer_window, 0, 1, 0,
-       doc: /* Return the minibuffer window for frame FRAME.
-If FRAME is omitted or nil, it defaults to the selected frame.  */)
-  (Lisp_Object frame)
-{
-  return FRAME_MINIBUF_WINDOW (decode_live_frame (frame));
-}
-
 /* Don't move this to window.el - this must be a safe routine.  */
 DEFUN ("frame-first-window", Fframe_first_window, Sframe_first_window, 0, 1, 0,
        doc: /* Return the topmost, leftmost live window on FRAME-OR-WINDOW.
@@ -7504,8 +7474,6 @@ Note that this optimization can cause the portion of the buffer
 displayed after a scrolling operation to be somewhat inaccurate.  */);
   Vfast_but_imprecise_scrolling = false;
 
-  defsubr (&Sminibuffer_window);
-  defsubr (&Sframe_root_window);
   defsubr (&Sframe_first_window);
   defsubr (&Sframe_selected_window);
   defsubr (&Sset_frame_selected_window);

@@ -18,11 +18,10 @@ use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, PseudovecTy
                  USE_LSB_TAG, VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
                  Lisp_Type};
-use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframep, Qhash_table_p,
-                 Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil, Qnumber_or_marker_p,
-                 Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp, Qt, Qthreadp,
-                 Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
-/* use remacs_sys::Qvectorp; Unused */
+use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p, Qframep,
+                 Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
+                 Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
+                 Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
 use remacs_sys::{circular_list, internal_equal, lispsym, make_float};
 
 use buffers::{LispBufferRef, LispOverlayRef};
@@ -568,17 +567,23 @@ impl LispObject {
         w
     }
 
+    pub fn as_live_window(self) -> Option<LispWindowRef> {
+        self.as_window()
+            .and_then(|w| if w.is_live() { Some(w) } else { None })
+    }
+
     pub fn as_live_window_or_error(self) -> LispWindowRef {
-        if self.as_window().map_or(false, |w| w.is_live()) {
-            self.as_window().unwrap()
-        } else {
-            wrong_type!(Qwindow_live_p, self);
-        }
+        self.as_live_window()
+            .unwrap_or_else(|| wrong_type!(Qwindow_live_p, self))
+    }
+
+    pub fn as_valid_window(self) -> Option<LispWindowRef> {
+        self.as_window()
+            .and_then(|w| if w.is_valid() { Some(w) } else { None })
     }
 
     pub fn as_valid_window_or_error(self) -> LispWindowRef {
-        self.as_window()
-            .and_then(|w| if w.is_valid() { Some(w) } else { None })
+        self.as_valid_window()
             .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
     }
 
@@ -596,6 +601,16 @@ impl LispObject {
     pub fn as_frame_or_error(self) -> LispFrameRef {
         self.as_frame()
             .unwrap_or_else(|| wrong_type!(Qframep, self))
+    }
+
+    pub fn as_live_frame(self) -> Option<LispFrameRef> {
+        self.as_frame()
+            .and_then(|f| if f.is_live() { Some(f) } else { None })
+    }
+
+    pub fn as_live_frame_or_error(self) -> LispFrameRef {
+        self.as_live_frame()
+            .unwrap_or_else(|| wrong_type!(Qframe_live_p, self))
     }
 
     pub fn is_hash_table(self) -> bool {
