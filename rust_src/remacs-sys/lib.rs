@@ -1163,6 +1163,20 @@ extern "C" {
     ) -> Lisp_Object;
 
     pub fn find_symbol_value(symbol: Lisp_Object) -> Lisp_Object;
+    pub fn find_before_next_newline(
+        from: ptrdiff_t,
+        to: ptrdiff_t,
+        cnt: ptrdiff_t,
+        bytepos: *mut ptrdiff_t,
+    ) -> ptrdiff_t;
+    pub fn Fconstrain_to_field(
+        new_pos: Lisp_Object,
+        old_pos: Lisp_Object,
+        escape_from_edge: Lisp_Object,
+        only_in_line: Lisp_Object,
+        inhibit_capture_property: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn Fline_end_position(n: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

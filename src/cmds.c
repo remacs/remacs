@@ -136,55 +136,6 @@ go to its beginning.  */)
   return make_number (count <= 0 ? - shortage : shortage);
 }
 
-DEFUN ("end-of-line", Fend_of_line, Send_of_line, 0, 1, "^p",
-       doc: /* Move point to end of current line (in the logical order).
-With argument N not nil or 1, move forward N - 1 lines first.
-If point reaches the beginning or end of buffer, it stops there.
-To ignore intangibility, bind `inhibit-point-motion-hooks' to t.
-
-This function constrains point to the current field unless this moves
-point to a different line than the original, unconstrained result.  If
-N is nil or 1, and a rear-sticky field ends at point, the point does
-not move.  To ignore field boundaries bind `inhibit-field-text-motion'
-to t.  */)
-  (Lisp_Object n)
-{
-  ptrdiff_t newpos;
-
-  if (NILP (n))
-    XSETFASTINT (n, 1);
-  else
-    CHECK_NUMBER (n);
-
-  while (1)
-    {
-      newpos = XINT (Fline_end_position (n));
-      SET_PT (newpos);
-
-      if (PT > newpos
-	  && FETCH_CHAR (PT - 1) == '\n')
-	{
-	  /* If we skipped over a newline that follows
-	     an invisible intangible run,
-	     move back to the last tangible position
-	     within the line.  */
-
-	  SET_PT (PT - 1);
-	  break;
-	}
-      else if (PT > newpos && PT < ZV
-	       && FETCH_CHAR (PT) != '\n')
-	/* If we skipped something intangible
-	   and now we're not really at eol,
-	   keep going.  */
-	n = make_number (1);
-      else
-	break;
-    }
-
-  return Qnil;
-}
-
 DEFUN ("delete-char", Fdelete_char, Sdelete_char, 1, 2, "p\nP",
        doc: /* Delete the following N characters (previous if N is negative).
 Optional second arg KILLFLAG non-nil means kill instead (save in kill ring).
@@ -484,7 +435,6 @@ This is run after inserting the character.  */);
   defsubr (&Sforward_char);
   defsubr (&Sbackward_char);
   defsubr (&Sforward_line);
-  defsubr (&Send_of_line);
 
   defsubr (&Sdelete_char);
   defsubr (&Sself_insert_command);
