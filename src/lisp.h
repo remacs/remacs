@@ -233,7 +233,9 @@ extern bool suppress_checking EXTERNALLY_VISIBLE;
 
 enum Lisp_Bits
   {
-    GCALIGNMENT = 1 << GCTYPEBITS,
+    /* 2**GCTYPEBITS.  This must be a macro that expands to a literal
+       integer constant, for older versions of GCC (through at least 4.9).  */
+#define GCALIGNMENT 8
 
     /* Number of bits in a Lisp_Object value, not counting the tag.  */
     VALBITS = EMACS_INT_WIDTH - GCTYPEBITS,
@@ -244,6 +246,10 @@ enum Lisp_Bits
     /* Number of bits in a Lisp fixnum value, not counting the tag.  */
     FIXNUM_BITS = VALBITS + 1
   };
+
+#if GCALIGNMENT != 1 << GCTYPEBITS
+# error "GCALIGNMENT and GCTYPEBITS are inconsistent"
+#endif
 
 /* The maximum value that can be stored in a EMACS_INT, assuming all
    bits other than the type bits contribute to a nonnegative signed value.
