@@ -150,9 +150,4 @@ fn intern(string: LispObject, obarray: LispObject) -> LispObject {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sintern);
-        defsubr(&*Sintern_soft);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/obarray_exports.rs"));

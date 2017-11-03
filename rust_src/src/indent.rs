@@ -24,8 +24,4 @@ pub fn current_column() -> LispObject {
     LispObject::from_natnum(unsafe { remacs_sys::current_column() })
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Scurrent_column);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));

@@ -290,17 +290,7 @@ The docstring of the function should be the same as the docstring
 in the C code.  (Don't wonder about it being a comment there, Emacs
 has some magic that extracts it into a separate file.)
 
-Finally, we need to delete the old C definition and call `defsubr`
-inside `rust_init_syms`:
-
-``` rust
-pub extern "C" fn rust_init_syms() {
-    unsafe {
-        // ...
-        defsubr(&*yourmodule::Snumberp);
-    }
-}
-```
+Finally, delete the old C definition.
 
 You're done! Compile Remacs, try your function with `M-x ielm`, and
 open a pull request. Fame and glory await!
@@ -308,16 +298,10 @@ open a pull request. Fame and glory await!
 ### Porting Widely Used C Functions
 
 If your Rust function replaces a C function that is used elsewhere in
-the C codebase, you will need to export it. The wrapper function needs
-to be exported in lib.rs:
-
-```rust
-pub use yourmodulename::Fnumberp;
-```
-
-If the function is not a Lisp function (i.e. doesn't use the `#[lisp_fn]`
-macro), you need to manually mark it as `#[no_mangle]` and `extern "C"`
-to be exported with the correct ABI.
+the C codebase, it needs to be exported. If the function is not a Lisp
+function (i.e. doesn't use the `#[lisp_fn]` macro), you need to
+manually mark it as `#[no_mangle]` and `extern "C"` to be exported
+with the correct ABI.
 
 ### Source code style guide
 
