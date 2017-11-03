@@ -54,12 +54,4 @@ fn multibyte_char_to_unibyte(ch: LispObject) -> LispObject {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr!(Scharacterp);
-        defsubr!(Schar_or_string_p);
-        defsubr!(Smax_char);
-        defsubr!(Smultibyte_char_to_unibyte);
-        defsubr!(Sunibyte_char_to_multibyte);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/character_exports.rs"));

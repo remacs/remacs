@@ -15,8 +15,4 @@ pub fn selected_frame() -> LispObject {
     unsafe { LispObject::from(current_frame) }
 }
 
-pub extern "C" fn rust_init_syms() {
-    unsafe {
-        defsubr!(Sselected_frame);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

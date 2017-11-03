@@ -527,10 +527,4 @@ fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     digest
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr!(Sbuffer_hash);
-        defsubr!(Smd5);
-        defsubr!(Ssecure_hash);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/crypto_exports.rs"));

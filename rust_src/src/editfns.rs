@@ -291,24 +291,4 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
     copy
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr!(Sbobp);
-        defsubr!(Sbolp);
-        defsubr!(Sbuffer_size);
-        defsubr!(Schar_after);
-        defsubr!(Seobp);
-        defsubr!(Seolp);
-        defsubr!(Sfollowing_char);
-        defsubr!(Sgoto_char);
-        defsubr!(Sinsert_byte);
-        defsubr!(Smark_marker);
-        defsubr!(Spoint);
-        defsubr!(Spoint_max);
-        defsubr!(Spoint_min);
-        defsubr!(Sposition_bytes);
-        defsubr!(Spropertize);
-        defsubr!(Sregion_beginning);
-        defsubr!(Sregion_end);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

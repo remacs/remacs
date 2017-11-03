@@ -387,31 +387,19 @@ fn round2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
     }
 }
 
-pub fn rust_init_syms() {
+// Since these are generated via a macro the build cannot hook them into the
+// system automatically. Do not add more items here unless they are also generated
+// with something like simple_float_op.
+pub fn rust_init_extra_syms() {
     unsafe {
-        defsubr!(Sacos);
-        defsubr!(Sasin);
-        defsubr!(Satan);
-        defsubr!(Sceiling);
-        defsubr!(Scopysign);
-        defsubr!(Scos);
-        defsubr!(Sexp);
-        defsubr!(Sexpt);
-        defsubr!(Sfceiling);
-        defsubr!(Sffloor);
-        defsubr!(Sfloat);
-        defsubr!(Sfloor);
-        defsubr!(Sfrexp);
-        defsubr!(Sfround);
-        defsubr!(Sftruncate);
-        defsubr!(Sisnan);
-        defsubr!(Sldexp);
-        defsubr!(Slog);
-        defsubr!(Slogb);
-        defsubr!(Sround);
-        defsubr!(Ssin);
-        defsubr!(Ssqrt);
-        defsubr!(Stan);
-        defsubr!(Struncate);
+        defsubr(Sacos.as_ptr());
+        defsubr(Sasin.as_ptr());
+        defsubr(Scos.as_ptr());
+        defsubr(Ssin.as_ptr());
+        defsubr(Stan.as_ptr());
+        defsubr(Sexp.as_ptr());
+        defsubr(Ssqrt.as_ptr());
     }
 }
+
+include!(concat!(env!("OUT_DIR"), "/floatfns_exports.rs"));
