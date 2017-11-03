@@ -206,7 +206,8 @@ DEFAULT-BODY, if present, is used as the body of a default method.
 \(fn NAME ARGS [DOC-STRING] [OPTIONS-AND-METHODS...] &rest DEFAULT-BODY)"
   (declare (indent 2) (doc-string 3)
            (debug
-            (&define name cl-lambda-list lambda-doc
+            (&define [&or name ("setf" name :name setf)] listp
+                     lambda-doc
                      [&rest [&or
                              ("declare" &rest sexp)
                              (":argument-precedence-order" &rest sexp)

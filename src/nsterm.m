@@ -8912,9 +8912,19 @@ not_in_argv (NSString *arg)
         }
       last_mouse_offset = kloc;
 
-      if (part != NSScrollerKnob)
-        /* this is a slot click on GNUstep: go straight there */
+      /* if knob, tell emacs a location offset by knob pos
+         (to indicate top of handle) */
+      if (part == NSScrollerKnob)
+        pos = (loc - last_mouse_offset);
+      else
+        /* else this is a slot click on GNUstep: go straight there */
         pos = loc;
+
+      /* If there are buttons in the scroller area, we need to
+         recalculate pos as emacs expects the scroller slot to take up
+         the entire available length.  */
+      if (length != pixel_length)
+        pos = pos * pixel_length / length;
 
       /* send a fake mouse-up to super to preempt modal -trackKnob: mode */
       fake_event = [NSEvent mouseEventWithType: NSEventTypeLeftMouseUp
@@ -8980,6 +8990,13 @@ not_in_argv (NSString *arg)
         }
 
       pos = (loc - last_mouse_offset);
+
+      /* If there are buttons in the scroller area, we need to
+         recalculate pos as emacs expects the scroller slot to take up
+         the entire available length.  */
+      if (length != pixel_length)
+        pos = pos * pixel_length / length;
+
       [self sendScrollEventAtLoc: pos fromEvent: e];
 }
 

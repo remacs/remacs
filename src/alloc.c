@@ -621,6 +621,12 @@ buffer_memory_full (ptrdiff_t nbytes)
 #endif
 }
 
+/* A common multiple of the positive integers A and B.  Ideally this
+   would be the least common multiple, but there's no way to do that
+   as a constant expression in C, so do the best that we can easily do.  */
+#define COMMON_MULTIPLE(a, b) \
+  ((a) % (b) == 0 ? (a) : (b) % (a) == 0 ? (b) : (a) * (b))
+
 #ifndef XMALLOC_OVERRUN_CHECK
 #define XMALLOC_OVERRUN_CHECK_OVERHEAD 0
 #else
@@ -7024,10 +7030,16 @@ sweep_symbols (void)
         {
           if (!sym->s.gcmarkbit)
             {
-              if (sym->s.redirect == SYMBOL_LOCALIZED
-		  /* Already freed?  */
-		  && !EQ (sym->s.function, Vdead))
-                xfree (SYMBOL_BLV (&sym->s));
+              if (sym->s.redirect == SYMBOL_LOCALIZED)
+		{
+                  xfree (SYMBOL_BLV (&sym->s));
+                  /* At every GC we sweep all symbol_blocks and rebuild the
+                     symbol_free_list, so those symbols which stayed unused
+                     between the two will be re-swept.
+                     So we have to make sure we don't re-free this blv next
+                     time we sweep this symbol_block (bug#29066).  */
+                  sym->s.redirect = SYMBOL_PLAINVAL;
+                }
               sym->s.next = symbol_free_list;
               symbol_free_list = &sym->s;
               symbol_free_list->function = Vdead;

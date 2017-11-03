@@ -1375,6 +1375,7 @@ tags, classes and IDs."
               :exit-function
               ,(lambda (string status)
                  (and (eq status 'finished)
+                      (eolp)
                       prop-table
                       (test-completion string prop-table)
                       (not (and sel-table

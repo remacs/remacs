@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
-timestamp='2017-09-26'
+timestamp='2017-11-01'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -640,7 +640,7 @@ case $basic_machine in
 		basic_machine=rs6000-bull
 		os=-bosx
 		;;
-	dpx2* | dpx2*-bull)
+	dpx2*)
 		basic_machine=m68k-bull
 		os=-sysv3
 		;;
@@ -902,7 +902,7 @@ case $basic_machine in
 		basic_machine=v70-nec
 		os=-sysv
 		;;
-	next | m*-next )
+	next | m*-next)
 		basic_machine=m68k-next
 		case $os in
 		    -nextstep* )
@@ -1492,7 +1492,7 @@ case $os in
 	-nova*)
 		os=-rtmk-nova
 		;;
-	-ns2 )
+	-ns2)
 		os=-nextstep2
 		;;
 	-nsk*)
@@ -1694,7 +1694,7 @@ case $basic_machine in
 	m88k-omron*)
 		os=-luna
 		;;
-	*-next )
+	*-next)
 		os=-nextstep
 		;;
 	*-sequent)

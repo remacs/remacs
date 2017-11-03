@@ -134,9 +134,8 @@
 /* The definition of _GL_WARN_ON_USE is copied here.  */
 
 
-/* Get getopt(), optarg, optind, opterr, optopt.
-   But avoid namespace pollution on glibc systems.  */
-#if @GNULIB_UNISTD_H_GETOPT@ && !defined __GLIBC__ && !defined _GL_SYSTEM_GETOPT
+/* Get getopt(), optarg, optind, opterr, optopt.  */
+#if @GNULIB_UNISTD_H_GETOPT@ && !defined _GL_SYSTEM_GETOPT
 # include <getopt-cdefs.h>
 # include <getopt-pfx-core.h>
 #endif

@@ -4336,8 +4336,8 @@
 
 	* lisp/progmodes/cc-mode.el (c-parse-quotes-before-change)
 	(c-parse-quotes-after-change): Rewrite the functions, simplifying
-	considerably, and removing unnecessary optimisations.  Invalidate two caches
-	after manipulating text properties.
+	considerably, and removing unnecessary optimizations.
+	Invalidate two caches after manipulating text properties.
 
 2017-09-03  Alan Mackenzie  <acm@muc.de>
 
@@ -7462,7 +7462,7 @@
 	The error happened when there was a comma inside template delimiters.
 
 	* lisp/progmodes/cc-fonts.el (c-get-fontification-context): In "for"
-	statements, recognise template delimiters containing "," and "&".
+	statements, recognize template delimiters containing "," and "&".
 
 2017-07-27  Michael Albinus  <michael.albinus@gmx.de>
 
@@ -17907,7 +17907,7 @@
 
 	* src/casefiddle.c (struct casing_context, prepare_casing_context): Add
 	titlecase_char_table member.  It’s set to the ‘titlecase’ Unicode
-	property table if capitalisation has been requested.
+	property table if capitalization has been requested.
 	(case_character): Make use of the titlecase_char_table to title-case
 	initial characters when capitalising.
 
@@ -17923,7 +17923,7 @@
 	the logic easier.  This commit introduces no functionality changes.
 
 	* src/casefiddle.c (struct casing_context, prepare_casing_context): New
-	sturcture for saving casing context and function to initialise it.
+	structure for saving casing context and function to initialize it.
 	(case_character): New function which cases character base on provided
 	context.
 	(do_casify_integer, do_casify_multibyte_string,
@@ -21210,7 +21210,7 @@
 
 2017-02-24  Stefan Monnier  <monnier@iro.umontreal.ca>
 
-	Minor redisplay optimisations
+	Minor redisplay optimizations
 
 	* src/frame.c (Ficonify_frame): No need to redisplay everything.
 
@@ -24018,9 +24018,9 @@
 
 2017-01-26  Lars Ingebrigtsen  <larsi@gnus.org>
 
-	(message-do-fcc): Modernise the code slightly.
+	(message-do-fcc): Modernize the code slightly.
 
-	* lisp/gnus/message.el (message-do-fcc): Modernise the code slightly.
+	* lisp/gnus/message.el (message-do-fcc): Modernize the code slightly.
 
 2017-01-26  Lars Ingebrigtsen  <larsi@gnus.org>
 
@@ -26014,7 +26014,7 @@
 
 2016-12-30  Alan Mackenzie  <acm@muc.de>
 
-	CC Mode: Fix the fontification of a spuriously recognised enum member.
+	CC Mode: Fix the fontification of a spuriously recognized enum member.
 
 	The "enum" was in an argument list, but triggered the fontification of a
 	following identifier in the function block as though it were in an enum
@@ -26130,7 +26130,7 @@
 	Partially correct fontification of "(b*3)", and the like, in C++ Mode
 
 	This problem is caused by the fundamental ambiguity in C++ between
-	argument declarations and initialisation clauses.
+	argument declarations and initialization clauses.
 
 	* lisp/progmodes/cc-fonts.el (c-font-lock-declarations): If we have an open
 	paren preceded by an arithmetic operator, we give this the context nil, not
@@ -27358,7 +27358,7 @@
 
 2016-12-13  Reuben Thomas  <rrt@sc3d.org>
 
-	Generalise over-specific documentation
+	Generalize over-specific documentation
 
 	* lisp/textmodes/ispell.el (ispell-personal-dictionary): Rather than
 	document precise personal wordlist filenames for only two supported
@@ -32608,7 +32608,7 @@
 
 	Fix compatibility with macOS 10.12 pmset (bug#24537)
 
-	* lisp/battery.el (battery-pmset): Recognise and ignore battery id if
+	* lisp/battery.el (battery-pmset): Recognize and ignore battery id if
 	present in output.
 
 2016-09-30  Paul Eggert  <eggert@cs.ucla.edu>
@@ -33284,7 +33284,7 @@
 
 2016-09-12  Michal Nazarewicz  <mina86@mina86.com>
 
-	Fix compiler thinking width and height may be unitialised in frame.c
+	Fix compiler thinking width and height may be unitialized in frame.c
 
 	This fixes the following warning:
 
@@ -33300,7 +33300,7 @@
 
 2016-09-12  Michal Nazarewicz  <mina86@mina86.com>
 
-	Fix compiler thinking tmpdir may be unitialised in emacsclient
+	Fix compiler thinking tmpdir may be unitialized in emacsclient
 
 	This fixes the following warning:
 
@@ -34473,7 +34473,7 @@
 	template declaration.
 	(c-inside-bracelist-p): Call c-looking-at-or-maybe-in-bracelist in place of
 	much inline code.
-	(c-looking-at-inexpr-block): Amend so that it won't wrongly recognise an
+	(c-looking-at-inexpr-block): Amend so that it won't wrongly recognize an
 	initialization starting "({" as an in-expression block, by checking for
 	semicolons, as opposed to commas, separating elements inside it.
 	(c-guess-continued-construct): (CASE B-2): Recognize a brace-list-open by
@@ -35939,7 +35939,7 @@
 
 	* doc/misc/ses.texi (Printer functions): Split the node into 5
 	sub-nodes + add some extra documentation.
-	(Various kinds of printer functions): Make an itemisation to
+	(Various kinds of printer functions): Make an itemization to
 	disintguish better the 3 types of printers, give an example of
 	lambda printer definition.
 	(Standard printer functions): Add documentation for ses-prin1
@@ -36049,7 +36049,7 @@
 
 	Fix ‘[[:cc:]]*literal’ regex failing to match ‘literal’ (bug#24020)
 
-	The regex engine tries to optimise Kleene star by avoiding backtracking
+	The regex engine tries to optimize Kleene star by avoiding backtracking
 	when it can detect that star’s operand cannot match what follows it in
 	the pattern.
 
@@ -36063,7 +36063,7 @@
 	engine knows whatever would be put back into the string cannot possibly
 	match literal digit one so no backtracking will be attempted.
 
-	In the regexes of the form ‘[[:CC:]]*X’, the optimisation can be applied
+	In the regexes of the form ‘[[:CC:]]*X’, the optimization can be applied
 	if the character class CC does not match character X.  In the above
 	example, this holds because digit one is not in alpha character class.
 
@@ -36072,7 +36072,7 @@
 	that character classes do not match multibyte characters.  For example,
 	it would incorrectly conclude that [[:alpha:]] doesn’t match ‘ż’.
 
-	This, in turn, led to the aforementioned Kleene star optimisation being
+	This, in turn, led to the aforementioned Kleene star optimization being
 	incorrectly applied in patterns such as ‘[[:graph:]]*☠’ (which should
 	match ‘☠’ but doesn’t as can be tested by executing
 	    (string-match-p "[[:graph:]]*☠" "☠")
@@ -44436,7 +44436,7 @@
 	bd58c13 Improve documentation of focus-related hooks
 	00a4720 Further improve doc string of 'disable-point-adjustment'
 	c582def Further adaptions in file-notify-tests.el for w32notify
-	a1585e1 Don't bug out on localised dates in gnus-icalendar
+	a1585e1 Don't bug out on localized dates in gnus-icalendar
 
 2016-03-03  John Wiegley  <johnw@newartisans.com>
 
@@ -44957,10 +44957,10 @@
 
 2016-02-25  Jan Tatarik  <jan.tatarik@gmail.com>
 
-	Don't use (localised) week days in dates
+	Don't use (localized) week days in dates
 
 	* lisp/gnus/gnus-icalendar.el
-	(gnus-icalendar-event:org-timestamp): Don't use (localised)
+	(gnus-icalendar-event:org-timestamp): Don't use (localized)
 	week days in the dates, because that messes up things later.
 
 2016-02-25  Thierry Volpiatto  <thierry.volpiatto@gmail.com>
@@ -47224,7 +47224,7 @@
 
 2016-02-08  Michal Nazarewicz  <mina86@mina86.com>
 
-	Optimise ‘point in message header’ check
+	Optimize ‘point in message header’ check
 
 	* lisp/gnus/message.el (message-point-in-header-p): Replace two unbound
 	regular expression matches with a single bound string match thus
@@ -48169,7 +48169,7 @@
 	* src/gnutls.c (Fgnutls_mark_process): New function.
 
 	* src/process.c (send_process): Don't write to GnuTLS sockets that
-	haven't been initialised yed.
+	haven't been initialized yed.
 
 	* src/process.h: New slot gnutls_wait_p.
 
@@ -48668,7 +48668,7 @@
 	that as the same name can be used for different locations in different
 	SES sheets ; 2) use `local-variable-if-set-p' rather than `boundp' and
 	`local-variable-p' to check if cell name is already in use in this
-	sheet or needs initialisation.
+	sheet or needs initialization.
 	(ses-relocate-all): Cell value relocation : 1) like for name
 	relocation use the `ses-cell' property rather than comparing actual
 	name to corresponding standard name. 2) Correct bug introduced in

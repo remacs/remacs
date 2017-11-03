@@ -16581,7 +16581,7 @@
 	(characterIndexForPoint:): Adjust return type depending on GNUstep
 	version.
 	(mouseDown:): delta is CGFloat.
-	(updateFrameSize): Remove unised variable f.
+	(updateFrameSize): Remove unused variable f.
 	(initFrameFromEmacs): Move toggleButton inside NS_IMPL_COCOA.
 	Cast float to EmacsCGFloat.
 	(windowWillUseStandardFrame:defaultFrame:): Set maximized_height
@@ -16593,7 +16593,7 @@
 	(setPosition:portion:whole:): por is CGFloat.
 	(getMouseMotionPart:window:x:y:): Add F suffix to float.
 	(mouseDown:): Use CGFloat.
-	(mouseDragged:): Remove unised variable edge.
+	(mouseDragged:): Remove unused variable edge.
 	(EmacsDocument): Implement for NS_IMPL_GNUSTEP.
 
 	* nsterm.h (EmacsCGFloat): Typedef for OSX and GNUstep when the size
