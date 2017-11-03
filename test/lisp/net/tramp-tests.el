@@ -3638,8 +3638,103 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	(ignore-errors (delete-file tmp-name1))
 	(ignore-errors (delete-directory tmp-name2 'recursive))))))
 
+(ert-deftest tramp-test34-find-backup-file-name ()
+  "Check `find-backup-file-name'."
+  (skip-unless (tramp--test-enabled))
+
+  (dolist (quoted (if tramp--test-expensive-test '(nil t) '(nil)))
+    (let ((tmp-name1 (tramp--test-make-temp-name nil quoted))
+	  (tmp-name2 (tramp--test-make-temp-name nil quoted))
+	  ;; These settings are not used by Tramp, so we ignore them.
+	  version-control delete-old-versions
+	  (kept-old-versions (default-toplevel-value 'kept-old-versions))
+	  (kept-new-versions (default-toplevel-value 'kept-new-versions)))
+
+      (unwind-protect
+	  ;; Use default `backup-directory-alist' mechanism.
+	  (let (backup-directory-alist tramp-backup-directory-alist)
+	    (should
+	     (equal
+	      (find-backup-file-name tmp-name1)
+	      (list
+	       (funcall
+		(if quoted 'tramp-compat-file-name-quote 'identity)
+		(expand-file-name
+		 (format "%s~" (file-name-nondirectory tmp-name1))
+		 tramp-test-temporary-file-directory)))))))
+
+      (unwind-protect
+	  ;; Map `backup-directory-alist'.
+	  (let ((backup-directory-alist `(("." . ,tmp-name2)))
+		tramp-backup-directory-alist)
+	    (should
+	     (equal
+	      (find-backup-file-name tmp-name1)
+	      (list
+	       (funcall
+		(if quoted 'tramp-compat-file-name-quote 'identity)
+		(expand-file-name
+		 (format
+		  "%s~"
+		  ;; This is taken from `make-backup-file-name-1'.
+		  (subst-char-in-string
+		   ?/ ?! (replace-regexp-in-string "!" "!!" tmp-name1)))
+		 tmp-name2)))))
+	    ;; The backup directory is created.
+	    (should (file-directory-p tmp-name2)))
+
+	;; Cleanup.
+	(ignore-errors (delete-directory tmp-name2 'recursive)))
+
+      (unwind-protect
+	  ;; Map `tramp-backup-directory-alist'.
+	  (let ((tramp-backup-directory-alist `(("." . ,tmp-name2)))
+		backup-directory-alist)
+	    (should
+	     (equal
+	      (find-backup-file-name tmp-name1)
+	      (list
+	       (funcall
+		(if quoted 'tramp-compat-file-name-quote 'identity)
+		(expand-file-name
+		 (format
+		  "%s~"
+		  ;; This is taken from `make-backup-file-name-1'.
+		  (subst-char-in-string
+		   ?/ ?! (replace-regexp-in-string "!" "!!" tmp-name1)))
+		 tmp-name2)))))
+	    ;; The backup directory is created.
+	    (should (file-directory-p tmp-name2)))
+
+	;; Cleanup.
+	(ignore-errors (delete-directory tmp-name2 'recursive)))
+
+      (unwind-protect
+	  ;; Map `tramp-backup-directory-alist' with local file name.
+	  (let ((tramp-backup-directory-alist
+		 `(("." . ,(file-remote-p tmp-name2 'localname))))
+		backup-directory-alist)
+	    (should
+	     (equal
+	      (find-backup-file-name tmp-name1)
+	      (list
+	       (funcall
+		(if quoted 'tramp-compat-file-name-quote 'identity)
+		(expand-file-name
+		 (format
+		  "%s~"
+		  ;; This is taken from `make-backup-file-name-1'.
+		  (subst-char-in-string
+		   ?/ ?! (replace-regexp-in-string "!" "!!" tmp-name1)))
+		 tmp-name2)))))
+	    ;; The backup directory is created.
+	    (should (file-directory-p tmp-name2)))
+
+	;; Cleanup.
+	(ignore-errors (delete-directory tmp-name2 'recursive))))))
+
 ;; The functions were introduced in Emacs 26.1.
-(ert-deftest tramp-test34-make-nearby-temp-file ()
+(ert-deftest tramp-test35-make-nearby-temp-file ()
   "Check `make-nearby-temp-file' and `temporary-file-directory'."
   (skip-unless (tramp--test-enabled))
   ;; Since Emacs 26.1.
@@ -3678,7 +3773,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 (defun tramp--test-emacs26-p ()
   "Check for Emacs version >= 26.1.
 Some semantics has been changed for there, w/o new functions or
-variables, so we check function Emacs version directly."
+variables, so we check the Emacs version directly."
   (>= emacs-major-version 26))
 
 (defun tramp--test-adb-p ()
@@ -3904,7 +3999,7 @@ This requires restrictions of file name syntax."
 	(ignore-errors (delete-directory tmp-name2 'recursive))))))
 
 (defun tramp--test-special-characters ()
-  "Perform the test in `tramp-test35-special-characters*'."
+  "Perform the test in `tramp-test36-special-characters*'."
   ;; Newlines, slashes and backslashes in file names are not
   ;; supported.  So we don't test.  And we don't test the tab
   ;; character on Windows or Cygwin, because the backslash is
@@ -3947,7 +4042,7 @@ This requires restrictions of file name syntax."
    "{foo}bar{baz}"))
 
 ;; These tests are inspired by Bug#17238.
-(ert-deftest tramp-test35-special-characters ()
+(ert-deftest tramp-test36-special-characters ()
   "Check special characters in file names."
   (skip-unless (tramp--test-enabled))
   (skip-unless (not (tramp--test-rsync-p)))
@@ -3955,7 +4050,7 @@ This requires restrictions of file name syntax."
 
   (tramp--test-special-characters))
 
-(ert-deftest tramp-test35-special-characters-with-stat ()
+(ert-deftest tramp-test36-special-characters-with-stat ()
   "Check special characters in file names.
 Use the `stat' command."
   :tags '(:expensive-test)
@@ -3973,7 +4068,7 @@ Use the `stat' command."
 	  tramp-connection-properties)))
     (tramp--test-special-characters)))
 
-(ert-deftest tramp-test35-special-characters-with-perl ()
+(ert-deftest tramp-test36-special-characters-with-perl ()
   "Check special characters in file names.
 Use the `perl' command."
   :tags '(:expensive-test)
@@ -3994,7 +4089,7 @@ Use the `perl' command."
 	  tramp-connection-properties)))
     (tramp--test-special-characters)))
 
-(ert-deftest tramp-test35-special-characters-with-ls ()
+(ert-deftest tramp-test36-special-characters-with-ls ()
   "Check special characters in file names.
 Use the `ls' command."
   :tags '(:expensive-test)
@@ -4017,7 +4112,7 @@ Use the `ls' command."
     (tramp--test-special-characters)))
 
 (defun tramp--test-utf8 ()
-  "Perform the test in `tramp-test36-utf8*'."
+  "Perform the test in `tramp-test37-utf8*'."
   (let* ((utf8 (if (and (eq system-type 'darwin)
 			(memq 'utf-8-hfs (coding-system-list)))
 		   'utf-8-hfs 'utf-8))
@@ -4032,7 +4127,7 @@ Use the `ls' command."
      "银河系漫游指南系列"
      "Автостопом по гала́ктике")))
 
-(ert-deftest tramp-test36-utf8 ()
+(ert-deftest tramp-test37-utf8 ()
   "Check UTF8 encoding in file names and file contents."
   (skip-unless (tramp--test-enabled))
   (skip-unless (not (tramp--test-docker-p)))
@@ -4042,7 +4137,7 @@ Use the `ls' command."
 
   (tramp--test-utf8))
 
-(ert-deftest tramp-test36-utf8-with-stat ()
+(ert-deftest tramp-test37-utf8-with-stat ()
   "Check UTF8 encoding in file names and file contents.
 Use the `stat' command."
   :tags '(:expensive-test)
@@ -4062,7 +4157,7 @@ Use the `stat' command."
 	  tramp-connection-properties)))
     (tramp--test-utf8)))
 
-(ert-deftest tramp-test36-utf8-with-perl ()
+(ert-deftest tramp-test37-utf8-with-perl ()
   "Check UTF8 encoding in file names and file contents.
 Use the `perl' command."
   :tags '(:expensive-test)
@@ -4085,7 +4180,7 @@ Use the `perl' command."
 	  tramp-connection-properties)))
     (tramp--test-utf8)))
 
-(ert-deftest tramp-test36-utf8-with-ls ()
+(ert-deftest tramp-test37-utf8-with-ls ()
   "Check UTF8 encoding in file names and file contents.
 Use the `ls' command."
   :tags '(:expensive-test)
@@ -4108,7 +4203,7 @@ Use the `ls' command."
 	  tramp-connection-properties)))
     (tramp--test-utf8)))
 
-(ert-deftest tramp-test37-file-system-info ()
+(ert-deftest tramp-test38-file-system-info ()
   "Check that `file-system-info' returns proper values."
   (skip-unless (tramp--test-enabled))
   ;; Since Emacs 27.1.
@@ -4130,7 +4225,7 @@ Use the `ls' command."
   (ert-fail (format "`%s' timed out" (ert-test-name (ert-running-test)))))
 
 ;; This test is inspired by Bug#16928.
-(ert-deftest tramp-test38-asynchronous-requests ()
+(ert-deftest tramp-test39-asynchronous-requests ()
   "Check parallel asynchronous requests.
 Such requests could arrive from timers, process filters and
 process sentinels.  They shall not disturb each other."
@@ -4287,7 +4382,7 @@ process sentinels.  They shall not disturb each other."
         (ignore-errors (cancel-timer timer))
         (ignore-errors (delete-directory tmp-name 'recursive)))))))
 
-(ert-deftest tramp-test39-recursive-load ()
+(ert-deftest tramp-test40-recursive-load ()
   "Check that Tramp does not fail due to recursive load."
   (skip-unless (tramp--test-enabled))
 
@@ -4310,7 +4405,7 @@ process sentinels.  They shall not disturb each other."
 	  (mapconcat 'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument code))))))))
 
-(ert-deftest tramp-test40-remote-load-path ()
+(ert-deftest tramp-test41-remote-load-path ()
   "Check that Tramp autoloads its packages with remote `load-path'."
   ;; `tramp-cleanup-all-connections' is autoloaded from tramp-cmds.el.
   ;; It shall still work, when a remote file name is in the
@@ -4333,11 +4428,36 @@ process sentinels.  They shall not disturb each other."
 	(mapconcat 'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
-(ert-deftest tramp-test41-unload ()
+(ert-deftest tramp-test42-delay-load ()
+  "Check that Tramp is loaded lazily, only when needed."
+  ;; Tramp is neither loaded at Emacs startup, nor when completing a
+  ;; non-Tramp file name like "/foo".  Completing a Tramp-alike file
+  ;; name like "/foo:" autoloads Tramp.
+  (let ((code
+	 "(progn \
+	   (message \"Tramp loaded: %s\" (featurep 'tramp)) \
+	   (file-name-all-completions \"/foo\" \"/\") \
+	   (message \"Tramp loaded: %s\" (featurep 'tramp)) \
+	   (file-name-all-completions \"/foo:\" \"/\") \
+	   (message \"Tramp loaded: %s\" (featurep 'tramp)))"))
+    (should
+     (string-match
+      "Tramp loaded: nil[\n\r]+Tramp loaded: nil[\n\r]+Tramp loaded: t[\n\r]+"
+      (shell-command-to-string
+       (format
+	"%s -batch -Q -L %s --eval %s"
+	(expand-file-name invocation-name invocation-directory)
+	(mapconcat 'shell-quote-argument load-path " -L ")
+	(shell-quote-argument code)))))))
+
+(ert-deftest tramp-test43-unload ()
   "Check that Tramp and its subpackages unload completely.
 Since it unloads Tramp, it shall be the last test to run."
   :tags '(:expensive-test)
   (skip-unless noninteractive)
+  ;; The autoloaded Tramp objects are different since Emacs 26.1.  We
+  ;; cannot test older Emacsen, therefore.
+  (skip-unless (tramp--test-emacs26-p))
 
   (when (featurep 'tramp)
     (unload-feature 'tramp 'force)
@@ -4383,7 +4503,6 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * file-acl
 ;; * file-name-case-insensitive-p
 ;; * file-selinux-context
-;; * find-backup-file-name
 ;; * set-file-acl
 ;; * set-file-selinux-context
 
@@ -4392,7 +4511,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
 ;; * Fix `tramp-test28-interrupt-process', timeout doesn't work reliably.
-;; * Fix Bug#16928 in `tramp-test38-asynchronous-requests'.
+;; * Fix Bug#16928 in `tramp-test39-asynchronous-requests'.
 
 (defun tramp-test-all (&optional interactive)
   "Run all tests for \\[tramp]."

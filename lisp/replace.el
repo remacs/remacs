@@ -28,6 +28,7 @@
 
 ;;; Code:
 
+(require 'text-mode)
 (eval-when-compile (require 'cl-lib))
 
 (defcustom case-replace t

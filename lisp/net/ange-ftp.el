@@ -3479,7 +3479,7 @@ system TYPE.")
               (f2-mt (nth 5 (file-attributes f2))))
           (cond ((null f1-mt) nil)
                 ((null f2-mt) t)
-                (t (> (float-time f1-mt) (float-time f2-mt)))))
+		(t (time-less-p f2-mt f1-mt))))
       (ange-ftp-real-file-newer-than-file-p f1 f2))))
 
 (defun ange-ftp-file-writable-p (file)
@@ -3561,7 +3561,7 @@ Value is (0 0) if the modification time cannot be determined."
         (let ((file-mdtm (ange-ftp-file-modtime name))
               (buf-mdtm (with-current-buffer buf (visited-file-modtime))))
           (or (zerop (car file-mdtm))
-              (<= (float-time file-mdtm) (float-time buf-mdtm))))
+	      (not (time-less-p buf-mdtm file-mdtm))))
       (ange-ftp-real-verify-visited-file-modtime buf))))
 
 (defun ange-ftp-file-size (file &optional ascii-mode)

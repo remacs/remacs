@@ -1046,7 +1046,8 @@ without further confirmation."
 	  (or (not new-modtime)		; nothing to overwrite
 	      (equal desktop-file-modtime new-modtime)
 	      (yes-or-no-p (if desktop-file-modtime
-			       (if (> (float-time new-modtime) (float-time desktop-file-modtime))
+			       (if (time-less-p desktop-file-modtime
+						new-modtime)
 				   "Desktop file is more recent than the one loaded.  Save anyway? "
 				 "Desktop file isn't the one loaded.  Overwrite it? ")
 			     "Current desktop was not loaded from a file.  Overwrite this desktop file? "))

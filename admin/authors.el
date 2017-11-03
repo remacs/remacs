@@ -1321,9 +1321,10 @@ it is found in `authors-fixed-case'."
     (setq author (replace-regexp-in-string "[ \t]+" " " author))
     ;; NB this ignores the first name only case.
     (unless (string-match "[-, \t]" author)
-      (push (format-message "%s:%d: ignored `%s'"
-			    file (1+ (count-lines (point-min) pos)) author)
-	    authors-ignored-names)
+      (or (authors-lax-changelog-p file)
+          (push (format-message "%s:%d: ignored `%s'"
+                                file (1+ (count-lines (point-min) pos)) author)
+                authors-ignored-names))
       (setq author ""))
     (or (car (member author authors-fixed-case))
 	(capitalize author))))

@@ -6804,14 +6804,19 @@ not_in_argv (NSString *arg)
 
   if (! [self isFullscreen])
     {
+      int toolbar_height;
 #ifdef NS_IMPL_GNUSTEP
       // GNUstep does not always update the tool bar height.  Force it.
       if (toolbar && [toolbar isVisible])
           update_frame_tool_bar (emacsframe);
 #endif
 
+      toolbar_height = FRAME_TOOLBAR_HEIGHT (emacsframe);
+      if (toolbar_height < 0)
+        toolbar_height = 35;
+
       extra = FRAME_NS_TITLEBAR_HEIGHT (emacsframe)
-        + FRAME_TOOLBAR_HEIGHT (emacsframe);
+        + toolbar_height;
     }
 
   if (wait_for_tool_bar)
@@ -6858,11 +6863,12 @@ not_in_argv (NSString *arg)
       SET_FRAME_GARBAGED (emacsframe);
       cancel_mouse_face (emacsframe);
 
-      /* The next two lines appear to be setting the frame to the same
-         size as it already is.  Why are they there? */
-      // wr = NSMakeRect (0, 0, neww, newh);
-
-      // [view setFrame: wr];
+      /* The next two lines set the frame to the same size as we've
+         already set above.  We need to do this when we switch back
+         from non-native fullscreen, in other circumstances it appears
+         to be a noop.  (bug#28872) */
+      wr = NSMakeRect (0, 0, neww, newh);
+      [view setFrame: wr];
 
       // to do: consider using [NSNotificationCenter postNotificationName:].
       [self windowDidMove: // Update top/left.

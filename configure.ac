@@ -699,6 +699,12 @@ case "${canonical}" in
     esac
   ;;
 
+  ## QNX Neutrino
+  *-nto-qnx* )
+    opsys=qnxnto
+    CFLAGS="$CFLAGS -D__NO_EXT_QNX"
+  ;;
+
   ## Intel 386 machines where we don't care about the manufacturer.
   i[3456]86-*-* )
     case "${canonical}" in
@@ -1507,6 +1513,8 @@ case "$opsys" in
 
   hpux*) LIBS_SYSTEM="-l:libdld.sl" ;;
 
+  qnxnto) LIBS_SYSTEM="-lsocket" ;;
+
   sol2*) LIBS_SYSTEM="-lsocket -lnsl" ;;
 
   ## Motif needs -lgen.
@@ -2210,7 +2218,8 @@ test "$CANNOT_DUMP" = yes ||
 case "$opsys" in
   ## darwin ld insists on the use of malloc routines in the System framework.
   darwin | mingw32 | nacl | sol2-10) ;;
-  cygwin) hybrid_malloc=yes
+  cygwin | qnxto)
+	  hybrid_malloc=yes
           system_malloc= ;;
   *) test "$ac_cv_func_sbrk" = yes && system_malloc=$emacs_cv_sanitize_address;;
 esac
@@ -4033,9 +4042,8 @@ AC_CACHE_CHECK([for library containing tputs], [emacs_cv_tputs_lib],
 [if test "${opsys}" = "mingw32"; then
   emacs_cv_tputs_lib='none required'
 else
-  # Maybe curses should be tried earlier?
-  # See https://debbugs.gnu.org/9736#35
-  for tputs_library in '' tinfo ncurses terminfo termcap curses; do
+  # curses precedes termcap because of AIX (Bug#9736#35) and OpenIndiana.
+  for tputs_library in '' tinfo ncurses terminfo curses termcap; do
     OLIBS=$LIBS
     if test -z "$tputs_library"; then
       emacs_cv_tputs_lib='none required'
@@ -4054,7 +4062,7 @@ fi])
 AS_CASE(["$emacs_cv_tputs_lib"],
   [no], [AC_MSG_ERROR([The required function 'tputs' was not found in any library.
 The following libraries were tried (in order):
-  libtinfo, libncurses, libterminfo, libtermcap, libcurses
+  libtinfo, libncurses, libterminfo, libcurses, libtermcap
 Please try installing whichever of these libraries is most appropriate
 for your system, together with its header files.
 For example, a libncurses-dev(el) or similar package.])],
@@ -4604,7 +4612,7 @@ case $opsys in
     AC_DEFINE(PTY_TTY_NAME_SPRINTF, [])
     ;;
 
-  gnu | openbsd )
+  gnu | openbsd | qnxnto )
     AC_DEFINE(FIRST_PTY_LETTER, ['p'])
     ;;
 

@@ -649,7 +649,7 @@ Do the right thing if the file has been compressed or zipped."
 	   (attribs-new (and (stringp fullname) (file-attributes fullname)))
 	   (modtime-new (and attribs-new (nth 5 attribs-new))))
       (when (and modtime-old modtime-new
-		 (> (float-time modtime-new) (float-time modtime-old)))
+		 (time-less-p modtime-old modtime-new))
 	(setq Info-index-nodes (remove (assoc (or Info-current-file filename)
 					      Info-index-nodes)
 				       Info-index-nodes))

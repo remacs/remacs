@@ -292,12 +292,17 @@
 			      nil)))))
 	  res))))
 
-  (defun c-make-font-lock-search-form (regexp highlights)
+  (defun c-make-font-lock-search-form (regexp highlights &optional check-point)
     ;; Return a lisp form which will fontify every occurrence of REGEXP
     ;; (a regular expression, NOT a function) between POINT and `limit'
     ;; with HIGHLIGHTS, a list of highlighters as specified on page
-    ;; "Search-based Fontification" in the elisp manual.
-    `(while (re-search-forward ,regexp limit t)
+    ;; "Search-based Fontification" in the elisp manual.  If CHECK-POINT
+    ;; is non-nil, we will check (< (point) limit) in the main loop.
+    `(while
+	 ,(if check-point
+	      `(and (< (point) limit)
+		    (re-search-forward ,regexp limit t))
+	    `(re-search-forward ,regexp limit t))
        (unless (progn
 		 (goto-char (match-beginning 0))
 		 (c-skip-comments-and-strings limit))
@@ -476,7 +481,9 @@
 			,(c-make-font-lock-search-form
 			  regexp highlights)))))
 	     state-stanzas)
-	  ,(c-make-font-lock-search-form (car normal) (cdr normal))
+	  ;; In the next form, check that point hasn't been moved beyond
+	  ;; `limit' in any of the above stanzas.
+	  ,(c-make-font-lock-search-form (car normal) (cdr normal) t)
 	  nil))))
 
 ;  (eval-after-load "edebug" ; 2006-07-09: def-edebug-spec is now in subr.el.
@@ -1062,7 +1069,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
     ;; The following `while' fontifies a single declarator id each time round.
     ;; It loops only when LIST is non-nil.
     (while
-	(and pos (setq decl-res (c-forward-declarator limit)))
+	(and pos (setq decl-res (c-forward-declarator)))
       (setq next-pos (point)
 	    id-start (car decl-res)
 	    id-face (if (and (eq (char-after) ?\()
@@ -1091,7 +1098,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 					       (throw 'is-function nil))
 					      ((not (eq got-type 'maybe))
 					       (throw 'is-function t)))
-					     (c-forward-declarator limit t)
+					     (c-forward-declarator nil t)
 					     (eq (char-after) ?,))
 					 (forward-char)
 					 (c-forward-syntactic-ws))
@@ -1730,7 +1737,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(c-syntactic-skip-backward "^;{}" decl-search-lim)
 	(c-forward-syntactic-ws)
 	(setq in-typedef (looking-at c-typedef-key))
-	(if in-typedef (c-forward-token-2))
+	(if in-typedef (c-forward-over-token-and-ws))
 	(when (and c-opt-block-decls-with-vars-key
 		   (looking-at c-opt-block-decls-with-vars-key))
 	  (goto-char ps-elt)

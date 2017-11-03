@@ -2373,7 +2373,10 @@ specified by `gnus-gmane-group-download-format'."
     (with-temp-file tmpfile
       (url-insert-file-contents
        (format gnus-gmane-group-download-format
-	       group start (+ start range)))
+	       group start (+ start range))
+       t)
+      ;; `url-insert-file-contents' sets this because of the 2nd arg.
+      (setq buffer-file-name nil)
       (write-region (point-min) (point-max) tmpfile)
       (gnus-group-read-ephemeral-group
        (format "nndoc+ephemeral:%s.start-%s.range-%s" group start range)
@@ -2463,13 +2466,11 @@ the bug number, and browsing the URL must return mbox output."
 	    (if (and (not gnus-plugged)
 		     (file-exists-p file))
 		(insert-file-contents file)
-	      (url-insert-file-contents (format mbox-url id)))))
+	      (url-insert-file-contents (format mbox-url id) t))))
 	;; Add the debbugs address so that we can respond to reports easily.
 	(let ((address
 	       (format "%s@%s" (car ids)
-		       (replace-regexp-in-string
-			"/.*$" ""
-			(replace-regexp-in-string "^http://" "" mbox-url)))))
+                       (url-host (url-generic-parse-url mbox-url)))))
 	  (goto-char (point-min))
 	  (while (re-search-forward (concat "^" message-unix-mail-delimiter)
 				    nil t)
@@ -2490,7 +2491,9 @@ the bug number, and browsing the URL must return mbox output."
 		    (insert ", " address))
 		(insert "To: " address "\n")))
 	    (goto-char (point-max))
-	    (widen)))))
+	    (widen)))
+	;; `url-insert-file-contents' sets this because of the 2nd arg.
+	(setq buffer-file-name nil)))
     (gnus-group-read-ephemeral-group
      (format "nndoc+ephemeral:bug#%s"
 	     (mapconcat 'number-to-string ids ","))
@@ -2514,6 +2517,8 @@ the bug number, and browsing the URL must return mbox output."
   (interactive (list (string-to-number
 		      (read-string "Enter bug number: "
 				   (thing-at-point 'word) nil))))
+  (when (stringp ids)
+    (setq ids (string-to-number ids)))
   (unless (listp ids)
     (setq ids (list ids)))
   (gnus-read-ephemeral-bug-group
