@@ -44,7 +44,7 @@ fn provide(feature: LispObject, subfeature: LispObject) -> LispObject {
             Vautoload_queue = Fcons(
                 Fcons(LispObject::from_fixnum(0).to_raw(), globals.f_Vfeatures),
                 Vautoload_queue,
-            )
+            );
         }
     }
     if memq(feature, LispObject::from(unsafe { globals.f_Vfeatures })).is_nil() {
