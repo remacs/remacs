@@ -321,12 +321,6 @@ pub fn recordp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_record())
 }
 
-macro_rules! offset_of {
-    ($ty:ty, $field:ident) => {
-        &(*(0 as *const $ty)).$field as *const _ as usize
-    }
-}
-
 lazy_static! {
     pub static ref HEADER_SIZE: usize = {
         unsafe { offset_of!(::remacs_sys::Lisp_Vector, contents) }
@@ -336,48 +330,4 @@ lazy_static! {
     };
 }
 
-/// Equivalent to PSEUDOVECSIZE in C
-macro_rules! pseudovecsize {
-    ($ty: ty, $field: ident) => {
-        ((offset_of!($ty, $field) - *::vectors::HEADER_SIZE) / *::vectors::WORD_SIZE)
-    }
-}
-
-/// Equivalent to VECSIZE in C
-macro_rules! vecsize {
-    ($ty: ty) => {
-        ((::std::mem::size_of::<$ty>()
-          - *::vectors::HEADER_SIZE + *::vectors::WORD_SIZE - 1) / *::vectors::WORD_SIZE)
-    }
-}
-
-/// Equivalent to `ALLOCATE_PSEUDOVECTOR` in C
-macro_rules! allocate_pseudovector {
-    ($ty: ty, $field: ident, $vectype: expr) => {
-        unsafe { ::remacs_sys::allocate_pseudovector(vecsize!($ty) as ::libc::c_int,
-                                       pseudovecsize!($ty, $field) as ::libc::c_int,
-                                       pseudovecsize!($ty, $field) as ::libc::c_int,
-                                       $vectype) as *mut $ty}
-    }
-}
-
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sarrayp);
-        defsubr(&*Sbool_vector_p);
-        defsubr(&*Sbufferp);
-        defsubr(&*Sbyte_code_function_p);
-        defsubr(&*Schar_table_p);
-        defsubr(&*Scondition_variable_p);
-        defsubr(&*Selt);
-        defsubr(&*Slength);
-        defsubr(&*Smutexp);
-        defsubr(&*Srecordp);
-        defsubr(&*Ssequencep);
-        defsubr(&*Ssort);
-        defsubr(&*Ssubrp);
-        defsubr(&*Sthreadp);
-        defsubr(&*Svector_or_char_table_p);
-        defsubr(&*Svectorp);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/vectors_exports.rs"));

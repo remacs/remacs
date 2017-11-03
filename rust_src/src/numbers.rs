@@ -87,14 +87,4 @@ fn random(limit: LispObject) -> LispObject {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sfloatp);
-        defsubr(&*Sinteger_or_marker_p);
-        defsubr(&*Sintegerp);
-        defsubr(&*Snatnump);
-        defsubr(&*Snumber_or_marker_p);
-        defsubr(&*Snumberp);
-        defsubr(&*Srandom);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/numbers_exports.rs"));

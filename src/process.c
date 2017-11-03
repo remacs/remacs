@@ -392,6 +392,13 @@ pset_stderrproc (struct Lisp_Process *p, Lisp_Object val)
   p->stderrproc = val;
 }
 
+/* Accessors to enable Rust code to get data from the Lisp_Process struct */
+pid_t pget_pid(const struct Lisp_Process *p)
+{
+  return p->pid;
+}
+/* End Rust Accessors */
+
 
 static Lisp_Object
 make_lisp_proc (struct Lisp_Process *p)
@@ -1112,19 +1119,6 @@ If PROCESS has not yet exited or died, return 0.  */)
   if (CONSP (XPROCESS (process)->status))
     return XCAR (XCDR (XPROCESS (process)->status));
   return make_number (0);
-}
-
-DEFUN ("process-id", Fprocess_id, Sprocess_id, 1, 1, 0,
-       doc: /* Return the process id of PROCESS.
-This is the pid of the external process which PROCESS uses or talks to.
-For a network, serial, and pipe connections, this value is nil.  */)
-  (register Lisp_Object process)
-{
-  pid_t pid;
-
-  CHECK_PROCESS (process);
-  pid = XPROCESS (process)->pid;
-  return (pid ? make_fixnum_or_float (pid) : Qnil);
 }
 
 DEFUN ("process-command", Fprocess_command, Sprocess_command, 1, 1, 0,
@@ -7876,7 +7870,6 @@ returns non-`nil'.  */);
   defsubr (&Sdelete_process);
   defsubr (&Sprocess_status);
   defsubr (&Sprocess_exit_status);
-  defsubr (&Sprocess_id);
   defsubr (&Sprocess_tty_name);
   defsubr (&Sprocess_command);
   defsubr (&Sset_process_buffer);

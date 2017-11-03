@@ -821,7 +821,14 @@ pub struct Lisp_Process {
     /// Queue for storing waiting writes.
     pub write_queue: Lisp_Object,
 
-    // TODO: this struct is incomplete.
+    // This struct is incomplete.
+    // To access remaining fields use access functions written in
+    // src/process.c and export them here for use in Rust.
+}
+
+/// Functions to access members of `struct Lisp_Process`.
+extern "C" {
+    pub fn pget_pid(p: *const Lisp_Process) -> libc::pid_t;
 }
 
 #[repr(C)]

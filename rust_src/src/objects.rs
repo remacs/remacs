@@ -61,13 +61,4 @@ fn identity(arg: LispObject) -> LispObject {
     arg
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Seq);
-        defsubr(&*Seql);
-        defsubr(&*Sequal);
-        defsubr(&*Sequal_including_properties);
-        defsubr(&*Sidentity);
-        defsubr(&*Snull);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/objects_exports.rs"));

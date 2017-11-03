@@ -363,24 +363,4 @@ pub fn minibuffer_window(frame: LispObject) -> LispObject {
     LispObject::from(unsafe { fget_minibuffer_window(frame.as_ptr()) })
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sframe_root_window);
-        defsubr(&*Sminibuffer_selected_window);
-        defsubr(&*Sminibuffer_window);
-        defsubr(&*Sselected_window);
-        defsubr(&*Sset_window_combination_limit);
-        defsubr(&*Swindow_buffer);
-        defsubr(&*Swindow_combination_limit);
-        defsubr(&*Swindow_frame);
-        defsubr(&*Swindow_live_p);
-        defsubr(&*Swindow_margins);
-        defsubr(&*Swindow_minibuffer_p);
-        defsubr(&*Swindow_point);
-        defsubr(&*Swindow_start);
-        defsubr(&*Swindow_total_height);
-        defsubr(&*Swindow_total_width);
-        defsubr(&*Swindow_valid_p);
-        defsubr(&*Swindowp);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

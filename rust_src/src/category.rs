@@ -23,9 +23,4 @@ fn category_table() -> LispObject {
     LispObject::from(buffer_ref.category_table)
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Scategory_table);
-        defsubr(&*Scategory_table_p);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/category_exports.rs"));

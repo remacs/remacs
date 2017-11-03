@@ -360,20 +360,4 @@ fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     buffer
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sbuffer_chars_modified_tick);
-        defsubr(&*Sbuffer_file_name);
-        defsubr(&*Sbuffer_live_p);
-        defsubr(&*Sbuffer_modified_p);
-        defsubr(&*Sbuffer_modified_tick);
-        defsubr(&*Sbuffer_name);
-        defsubr(&*Scurrent_buffer);
-        defsubr(&*Sget_buffer);
-        defsubr(&*Soverlay_buffer);
-        defsubr(&*Soverlay_end);
-        defsubr(&*Soverlay_start);
-        defsubr(&*Soverlayp);
-        defsubr(&*Sset_buffer);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
