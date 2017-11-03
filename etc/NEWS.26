@@ -24,12 +24,15 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Installation Changes in Emacs 26.1
 
+---
 ** By default libgnutls is now required when building Emacs.
 Use 'configure --with-gnutls=no' to build even when GnuTLS is missing.
 
+---
 ** GnuTLS version 2.12.2 or later is now required, instead of merely
 version 2.6.6 or later.
 
++++
 ** The new option 'configure --with-mailutils' causes Emacs to rely on
 GNU Mailutils to retrieve email.  It is recommended, and is the
 default if GNU Mailutils is installed.  When --with-mailutils is not
@@ -39,12 +42,14 @@ via insecure channels.  To avoid this problem, use either
 --with-mailutils or --without-pop when configuring; --without-pop
 is the default on platforms other than native MS-Windows.
 
+---
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
 GCC to issue warnings without stopping the build.  This behavior is
 now the default in developer builds.  As before, use
 '--disable-gcc-warnings' to suppress GCC's warnings, and
 '--enable-gcc-warnings' to stop the build if GCC issues warnings.
 
+---
 ** When GCC warnings are enabled, '--enable-check-lisp-object-type' is
 now enabled by default when configuring.
 
@@ -62,6 +67,7 @@ configure option '--disable-libsystemd'.
 (If your Emacs is installed in a non-standard location, you may
 need to copy the emacs.service file to eg ~/.config/systemd/user/)
 
+---
 ** New configure option '--disable-build-details' attempts to build an
 Emacs that is more likely to be reproducible; that is, if you build
 and install Emacs twice, the second Emacs is a copy of the first.
@@ -80,11 +86,13 @@ linked to Little CMS exposes color management functions in Lisp: the
 color metrics 'lcms-cie-de2000' and 'lcms-cam02-ucs', as well as
 functions for conversion to and from CIE CAM02 and CAM02-UCS.
 
+---
 ** The configure option '--with-gameuser' now defaults to 'no',
 as this appears to be the most common configuration in practice.
 When it is 'no', the shared game directory and the auxiliary program
 update-game-score are no longer needed and are not installed.
 
+---
 ** Emacs no longer works on IRIX.  We expect that Emacs users are not
 affected by this, as SGI stopped supporting IRIX in December 2013.
 
@@ -423,18 +431,27 @@ You can enable this by customizing 'mwheel-tilt-scroll-p'.  If you
 want to reverse the direction of the scroll, customize
 'mwheel-flip-direction'.
 
+** Emacsclient changes
+
 +++
-** Emacsclient has a new option '-u' / '--suppress-output'.
+*** Emacsclient has a new option '-u' / '--suppress-output'.
 This option suppresses display of return values from the server
 process.
 
 +++
-** Emacsclient has a new option '-T' / '--tramp'.
+*** Emacsclient has a new option '-T' / '--tramp'.
 This helps with using a local Emacs session as the server for a remote
 emacsclient.  With appropriate setup, one can now set the EDITOR
 environment variable on a remote machine to emacsclient, and
 use the local Emacs to edit remote files via Tramp.  See the node
 "(emacs) emacsclient Options" in the user manual for the details.
+
++++
+*** Emacsclient now accepts command-line options in ALTERNATE_EDITOR
+and '--alternate-editor'. For example, ALTERNATE_EDITOR="emacs -Q -nw".
+Arguments may be quoted "like this", so that for example an absolute
+path containing a space may be specified; quote escaping is not
+supported.
 
 ---
 ** New user option 'dig-program-options' and extended functionality
@@ -488,13 +505,7 @@ line-number display in a window can use the new function
 Users and developers are encouraged to switch to this new feature
 instead.
 
-+++
-** emacsclient now accepts command-line options in ALTERNATE_EDITOR
-and '--alternate-editor'. For example, ALTERNATE_EDITOR="emacs -Q -nw".
-Arguments may be quoted "like this", so that for example an absolute
-path containing a space may be specified; quote escaping is not
-supported.
-
+---
 ** The new user option 'arabic-shaper-ZWNJ-handling' controls how to
 handle ZWNJ in Arabic text rendering.
 
@@ -587,6 +598,7 @@ Negative prefix arg flips the direction of selection.  Also,
 defun are selected unless they are separated from the defun by a blank
 line.
 
+---
 ** New command 'replace-buffer-contents'.
 This command replaces the contents of the accessible portion of the
 current buffer with the contents of the accessible portion of a
@@ -691,6 +703,10 @@ A new option 'ediff-show-ancestor' and a new toggle
 *** Key 'U' is bound to 'Buffer-menu-unmark-all' and key 'M-DEL' is
 bound to 'Buffer-menu-unmark-all-buffers'.
 
++++
+** hideshow mode got four key bindings that are analogous to outline
+mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e'.
+
 ** bs
 
 ---
@@ -719,7 +735,6 @@ method is an NNTP select method.
 added: 'C-c C-s C-m C-m'.
 
 +++
-
 *** In 'message-citation-line-format' the '%Z' format is now the time
 zone name instead of the numeric form.  The '%z' format continues to
 be the numeric form.  The new behavior is compatible with
@@ -834,6 +849,14 @@ code.
 'eshell-input-filter-default', and has a new custom option
 'eshell-input-filter-initial-space' to ignore adding commands prefixed
 with blank space to eshell history.
+
+** EUDC
+
+---
+*** Backward compatibility support for BBDB versions less than 3
+(i.e., BBDB 2.x) is deprecated and will likely be removed in the next
+major release of Emacs.  Users of BBDB 2.x should plan to upgrade to
+BBDB 3.x.
 
 ** eww
 
@@ -982,6 +1005,7 @@ there are now top-level domains added all the time.  Message will no
 longer warn about sending emails to top-level domains it hasn't heard
 about.
 
+---
 *** 'message-beginning-of-line' (bound to 'C-a') understands folded headers.
 In 'visual-line-mode' it will look for the true beginning of a header
 while in non-'visual-line-mode' it will move the point to the indented
@@ -1136,6 +1160,10 @@ contents of the buffer to determine whether it's a C or C++ source
 file.
 
 ---
+** New option 'cpp-message-min-time-interval' to allow user control
+of progress messages in cpp.el.
+
+---
 ** New DNS mode command 'dns-mode-ipv6-to-nibbles' to convert IPv6 addresses
 to a format suitable for reverse lookup zone files.
 
@@ -1188,8 +1216,10 @@ the previous behavior.
 
 * New Modes and Packages in Emacs 26.1
 
+---
 ** New Elisp data-structure library 'radix-tree'.
 
+---
 ** New library 'xdg' with utilities for some XDG standards and specs.
 
 ** HTML
@@ -1199,14 +1229,18 @@ the previous behavior.
 mode for *.html files.  This mode handles indentation,
 fontification, and commenting for embedded JavaScript and CSS.
 
+---
 ** New mode 'conf-toml-mode' is a sub-mode of 'conf-mode', specialized
 for editing TOML files.
 
+---
 ** New mode 'conf-desktop-mode' is a sub-mode of 'conf-unix-mode',
 specialized for editing freedesktop.org desktop entries.
 
+---
 ** New minor mode 'pixel-scroll-mode' provides smooth pixel-level scrolling.
 
+---
 ** New major mode 'less-css-mode' (a minor variant of 'css-mode') for
 editing Less files.
 
@@ -1243,10 +1277,6 @@ binding syntax as 'and-let*'.
 ** 'C-up', 'C-down', 'C-left' and 'C-right' are now defined in term
 mode to send the same escape sequences that xterm does.  This makes
 things like 'forward-word' in readline work.
-
----
-** hideshow mode got four key bindings that are analogous to outline
-mode bindings: 'C-c @ C-a', 'C-c @ C-t', 'C-c @ C-d', and 'C-c @ C-e'.
 
 ---
 ** Customizable variable 'query-replace-from-to-separator'
@@ -1666,7 +1696,7 @@ job of signaling list cycles instead of looping indefinitely.
 
 +++
 ** The new functions 'make-nearby-temp-file' and 'temporary-file-directory'
-can be used for creation of temporary files of remote or mounted directories.
+can be used for creation of temporary files on remote or mounted directories.
 
 +++
 ** On GNU platforms when operating on a local file, 'file-attributes'
@@ -1694,7 +1724,7 @@ operating recursively and when some other process deletes the directory
 or its files before 'delete-directory' gets to them.
 
 +++
-*** New error type 'user-search-failed' like 'search-failed' but
+** New error type 'user-search-failed' like 'search-failed' but
 avoids debugger like 'user-error'.
 
 +++
@@ -1795,6 +1825,11 @@ handle fitting a frame to its buffer individually.
 **** 'drag-internal-border', 'drag-with-header-line',
 'drag-with-mode-line', 'snap-width', 'top-visible' and 'bottom-visible'
 allow to drag and resize frames with the mouse.
+
++++
+**** 'minibuffer' is now set to the default minibuffer window when
+initially specified as nil and is not reset to nil when initially
+specifying a minibuffer window.
 
 *** The new function 'frame-list-z-order' returns a list of all frames
 in Z (stacking) order.
