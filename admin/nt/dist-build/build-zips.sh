@@ -22,11 +22,10 @@ function git_up {
     echo Making git worktree for Emacs $VERSION
     cd $HOME/emacs-build/git/emacs-$MAJOR_VERSION
     git pull
-    git worktree add ../emacs-$BRANCH emacs-$BRANCH
+    git worktree add ../$BRANCH $BRANCH
 
-    cd ../emacs-$BRANCH
+    cd ../$BRANCH
     ./autogen.sh
-
 }
 
 function build_zip {
@@ -42,15 +41,18 @@ function build_zip {
         MSYSTEM=MINGW32
     fi
 
+    ## Clean the install location because we use it twice
+    rm -rf $HOME/emacs-build/install/emacs-$VERSION/$ARCH
     mkdir --parents $HOME/emacs-build/build/emacs-$VERSION/$ARCH
     cd $HOME/emacs-build/build/emacs-$VERSION/$ARCH
 
     export PKG_CONFIG_PATH=$PKG
-    ../../../git/emacs-$BRANCH/configure \
+    ../../../git/$BRANCH/configure \
         --without-dbus \
         --host=$HOST --without-compress-install \
+        $CACHE \
         CFLAGS="-O2 -static -g3"
-    make -j 8 install \
+    make -j 16 install \
          prefix=$HOME/emacs-build/install/emacs-$VERSION/$ARCH
     cd $HOME/emacs-build/install/emacs-$VERSION/$ARCH
     cp $HOME/emacs-build/deps/libXpm/$ARCH/libXpm-noX4.dll bin
@@ -62,17 +64,28 @@ function build_zip {
     mv emacs-$VERSION-$ARCH.zip ~/emacs-upload
 }
 
+function build_installer {
+    ARCH=$1
+    cd $HOME/emacs-build/install/emacs-$VERSION
+    echo Calling makensis in `pwd`
+    cp ../../git/$BRANCH/admin/nt/dist-build/emacs.nsi .
+    makensis -DARCH=$ARCH -DEMACS_VERSION=$ACTUAL_VERSION \
+             -DOUT_VERSION=$VERSION emacs.nsi
+    rm emacs.nsi
+    mv Emacs-$ARCH-$VERSION-installer.exe ~/emacs-upload
+}
 
-##set -o xtrace
 set -o errexit
 
 SNAPSHOT=
+CACHE=
 
+BUILD=1
 BUILD_32=1
 BUILD_64=1
 GIT_UP=0
 
-while getopts "36ghsV:" opt; do
+while getopts "36ghsiV:" opt; do
   case $opt in
     3)
         BUILD_32=1
@@ -89,6 +102,9 @@ while getopts "36ghsV:" opt; do
         BUILD_32=0
         BUILD_64=0
         GIT_UP=1
+        ;;
+    i)
+        BUILD=1
         ;;
     V)
         VERSION=$OPTARG
@@ -111,7 +127,6 @@ done
 
 if [ -z $VERSION ];
 then
-    echo "doing version thing"
     VERSION=`
   sed -n 's/^AC_INIT(GNU Emacs,[	 ]*\([^	 ,)]*\).*/\1/p' < ../../../configure.ac
 `
@@ -124,7 +139,16 @@ then
 fi
 
 MAJOR_VERSION="$(echo $VERSION | cut -d'.' -f1)"
-BRANCH=$VERSION
+
+if [ -z $SNAPSHOT ];
+then
+    BRANCH=emacs-$VERSION
+else
+    BRANCH=master
+    CACHE=-C
+fi
+
+ACTUAL_VERSION=$VERSION
 VERSION=$VERSION$SNAPSHOT
 
 if (($GIT_UP))
@@ -134,12 +158,20 @@ fi
 
 if (($BUILD_64))
 then
-    build_zip x86_64 /mingw64/lib/pkgconfig x86_64-w64-mingw32
+    if (($BUILD))
+    then
+        build_zip x86_64 /mingw64/lib/pkgconfig x86_64-w64-mingw32
+    fi
+    build_installer x86_64
 fi
 
 ## Do the 64 bit build first, because we reset some environment
 ## variables during the 32 bit which will break the build.
 if (($BUILD_32))
 then
-    build_zip i686 /mingw32/lib/pkgconfig i686-w64-mingw32
+    if (($BUILD))
+    then
+        build_zip i686 /mingw32/lib/pkgconfig i686-w64-mingw32
+    fi
+    build_installer i686
 fi
