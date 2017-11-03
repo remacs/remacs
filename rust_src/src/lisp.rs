@@ -21,7 +21,8 @@ use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Obje
 use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframep, Qhash_table_p,
                  Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil, Qnumber_or_marker_p,
                  Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp, Qt, Qthreadp,
-                 Qunbound, Qvectorp, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
+                 Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
+/* use remacs_sys::Qvectorp; Unused */
 use remacs_sys::{circular_list, internal_equal, lispsym, make_float};
 
 use buffers::{LispBufferRef, LispOverlayRef};
@@ -421,6 +422,7 @@ impl LispObject {
         }
     }
 
+    /*
     #[inline]
     pub fn as_vectorlike_or_error(self) -> LispVectorlikeRef {
         if self.is_vectorlike() {
@@ -429,6 +431,7 @@ impl LispObject {
             wrong_type!(Qvectorp, self)
         }
     }
+    */
 
     pub unsafe fn as_vectorlike_unchecked(self) -> LispVectorlikeRef {
         LispVectorlikeRef::new(mem::transmute(self.get_untaggedptr()))
@@ -520,11 +523,13 @@ impl LispObject {
         self.is_cons() || self.is_nil() || self.is_array()
     }
 
+    /*
     pub fn is_window_configuration(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION)
         })
     }
+    */
 
     pub fn is_process(self) -> bool {
         self.as_vectorlike()
@@ -577,10 +582,12 @@ impl LispObject {
             .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
     }
 
+    /*
     pub fn is_frame(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_FRAME))
     }
+    */
 
     pub fn as_frame(self) -> Option<LispFrameRef> {
         self.as_vectorlike().map_or(None, |v| v.as_frame())
@@ -596,10 +603,12 @@ impl LispObject {
             .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_HASH_TABLE))
     }
 
+    /*
     pub fn is_font(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_FONT))
     }
+    */
 
     pub fn as_font(self) -> Option<LispFontRef> {
         self.as_vectorlike()
@@ -625,6 +634,7 @@ impl LispObject {
         }
     }
 
+    /*
     pub fn as_hash_table(&self) -> Option<LispHashTableRef> {
         if self.is_hash_table() {
             Some(LispHashTableRef::new(
@@ -634,6 +644,7 @@ impl LispObject {
             None
         }
     }
+    */
 
     pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
         let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
@@ -870,11 +881,13 @@ impl LispObject {
         }
     }
 
+    /*
     /// If the LispObject is a number (of any kind), get a floating point value for it
     pub fn any_to_float(self) -> Option<EmacsDouble> {
         self.as_float()
             .or_else(|| self.as_fixnum().map(|i| i as EmacsDouble))
     }
+    */
 
     pub fn any_to_float_or_error(self) -> EmacsDouble {
         self.as_float().unwrap_or_else(|| {
@@ -926,6 +939,7 @@ impl LispObject {
         self.is_fixnum() || self.is_float()
     }
 
+    /*
     #[inline]
     pub fn as_number_or_error(self) -> LispNumber {
         if let Some(n) = self.as_fixnum() {
@@ -936,6 +950,7 @@ impl LispObject {
             wrong_type!(Qnumberp, self)
         }
     }
+    */
 
     #[inline]
     pub fn as_number_coerce_marker_or_error(self) -> LispNumber {
@@ -1137,6 +1152,18 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
 
 extern "C" {
     pub fn defsubr(sname: *const Lisp_Subr);
+}
+
+macro_rules! export_lisp_fns {
+    ($($f:ident),+) => {
+        pub fn rust_init_syms() {
+            unsafe {
+                $(
+                    defsubr(&*concat_idents!(S, $f));
+                )+
+            }
+        }
+    }
 }
 
 #[test]

@@ -1,12 +1,12 @@
 //! Functions operating on process.
 
-use remacs_macros::lisp_fn;
-use remacs_sys::{Fmapcar, Lisp_Process, Qcdr, Qlistp, Vprocess_alist};
-
 use buffers::get_buffer;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{assoc, cdr};
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Fmapcar, Lisp_Process, Qcdr, Qlistp, Vprocess_alist};
+use remacs_sys::pget_pid;
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
@@ -63,6 +63,19 @@ fn process_buffer(process: LispObject) -> LispObject {
     process.as_process_or_error().buffer()
 }
 
+/// Return the process id of PROCESS.
+/// This is the pid of the external process which PROCESS uses or talks to.
+/// For a network, serial, and pipe connections, this value is nil.
+#[lisp_fn]
+fn process_id(process: LispObject) -> LispObject {
+    let pid = unsafe { pget_pid(process.as_process_or_error().as_ptr()) };
+    if pid != 0 {
+        LispObject::from_fixnum(pid as EmacsInt)
+    } else {
+        LispObject::constant_nil()
+    }
+}
+
 /// Return the (or a) live process associated with BUFFER.
 /// BUFFER may be a buffer or the name of one.
 /// Return nil if all processes associated with BUFFER have been
@@ -103,14 +116,4 @@ pub fn set_process_plist(process: LispObject, plist: LispObject) -> LispObject {
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr(&*Sget_buffer_process);
-        defsubr(&*Sget_process);
-        defsubr(&*Sprocess_buffer);
-        defsubr(&*Sprocess_list);
-        defsubr(&*Sprocess_name);
-        defsubr(&*Sprocessp);
-        defsubr(&*Sset_process_plist);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
