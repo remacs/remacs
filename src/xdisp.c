@@ -13174,8 +13174,15 @@ hscroll_window_tree (Lisp_Object window)
 
 	  /* If the position of this window's point has explicitly
 	     changed, no more suspend auto hscrolling.  */
-	  if (NILP (Fequal (Fwindow_point (window), Fwindow_old_point (window))))
-	    w->suspend_auto_hscroll = false;
+	  if (w->suspend_auto_hscroll
+	      && NILP (Fequal (Fwindow_point (window),
+			       Fwindow_old_point (window))))
+	    {
+	      w->suspend_auto_hscroll = false;
+	      /* Force thorough redisplay of this window, to show the
+		 effect of disabling hscroll suspension immediately.  */
+	      SET_FRAME_GARBAGED (XFRAME (w->frame));
+	    }
 
 	  /* Remember window point.  */
 	  Fset_marker (w->old_pointm,
