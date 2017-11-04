@@ -131,6 +131,11 @@ bug on OS X 10.8 and later (Bug#28639).
 ** The function 'get-free-disk-space' returns now a non-nil value for
 remote systems, which support this check.
 
++++
+** The function 'make-string' accepts an additional optional argument.
+If the optional third argument is non-nil, 'make-string' will produce
+a multibyte string even if its second argument is an ASCII character.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

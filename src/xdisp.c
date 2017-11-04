@@ -12320,7 +12320,7 @@ build_desired_tool_bar_string (struct frame *f)
   /* Reuse f->desired_tool_bar_string, if possible.  */
   if (size < size_needed || NILP (f->desired_tool_bar_string))
     fset_desired_tool_bar_string
-      (f, Fmake_string (make_number (size_needed), make_number (' ')));
+      (f, Fmake_string (make_number (size_needed), make_number (' '), Qnil));
   else
     {
       AUTO_LIST4 (props, Qdisplay, Qnil, Qmenu_item, Qnil);
@@ -23837,7 +23837,8 @@ store_mode_line_string (const char *string, Lisp_Object lisp_string,
   if (field_width > len)
     {
       field_width -= len;
-      lisp_string = Fmake_string (make_number (field_width), make_number (' '));
+      lisp_string = Fmake_string (make_number (field_width), make_number (' '),
+				  Qnil);
       if (!NILP (props))
 	Fadd_text_properties (make_number (0), make_number (field_width),
 			      props, lisp_string);

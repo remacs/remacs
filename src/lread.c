@@ -2269,7 +2269,7 @@ read0 (Lisp_Object readcharfun)
     return val;
 
   xsignal1 (Qinvalid_read_syntax,
-	    Fmake_string (make_number (1), make_number (c)));
+	    Fmake_string (make_number (1), make_number (c), Qnil));
 }
 
 /* Grow a read buffer BUF that contains OFFSET useful bytes of data,

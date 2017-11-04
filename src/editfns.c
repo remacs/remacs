@@ -3718,7 +3718,7 @@ It returns the number of characters changed.  */)
 		}
 	      else
 		{
-		  string = Fmake_string (make_number (1), val);
+		  string = Fmake_string (make_number (1), val, Qnil);
 		}
 	      replace_range (pos, pos + len, string, 1, 0, 1, 0);
 	      pos_byte += SBYTES (string);
