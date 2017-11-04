@@ -7617,8 +7617,8 @@ on their symbols to be controlled by this variable.  */);
   DEFVAR_LISP ("window-configuration-change-hook",
 	       Vwindow_configuration_change_hook,
 	       doc: /* Functions to call when window configuration changes.
-The buffer-local part is run once per window, with the relevant window
-selected; while the global part is run only once for the modified frame,
+The buffer-local value is run once per window, with the relevant window
+selected; while the global value is run only once for the modified frame,
 with the relevant frame selected.  */);
   Vwindow_configuration_change_hook = Qnil;
 
