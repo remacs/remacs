@@ -1,8 +1,10 @@
 //! Indentation functions
 
-use lisp::LispObject;
 use remacs_macros::lisp_fn;
 use remacs_sys;
+
+use lisp::LispObject;
+use lisp::defsubr;
 
 /// Return the horizontal position of point.
 /// Beginning of line is column 0.
@@ -21,3 +23,5 @@ use remacs_sys;
 pub fn current_column() -> LispObject {
     LispObject::from_natnum(unsafe { remacs_sys::current_column() })
 }
+
+include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));

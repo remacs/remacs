@@ -2,8 +2,8 @@
 extern crate libc;
 
 use std::heap::Alloc;
-use std::heap::Layout;
 use std::heap::AllocErr;
+use std::heap::Layout;
 
 /// To adhere to the rule that all calls to malloc, realloc, and free
 /// be redirected to their `unexec_`-prefixed variants, this crate

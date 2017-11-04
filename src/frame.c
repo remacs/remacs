@@ -83,6 +83,21 @@ fset_minibuffer_window (struct frame *f, Lisp_Object val)
 {
   f->minibuffer_window = val;
 }
+Lisp_Object
+fget_minibuffer_window(const struct frame *f)
+{
+  return f->minibuffer_window;
+}
+Lisp_Object
+fget_root_window(const struct frame *f)
+{
+  return f->root_window;
+}
+struct terminal *
+fget_terminal(const struct frame *f)
+{
+  return f->terminal;
+}
 
 struct frame *
 decode_live_frame (register Lisp_Object frame)
@@ -5468,6 +5483,17 @@ make_monitor_attribute_list (struct MonitorInfo *monitors,
 }
 
 #endif /* HAVE_WINDOW_SYSTEM */
+
+/* Accessors to enable Rust code to get data from the Frame struct */
+int fget_column_width(const struct frame *f)
+{
+  return f->column_width;
+}
+
+int fget_line_height(const struct frame *f)
+{
+  return f->line_height;
+}
 
 
 /***********************************************************************

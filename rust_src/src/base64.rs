@@ -1,15 +1,18 @@
 //! Base64 de- and encoding functions.
 
+use libc::{c_char, c_uchar, ptrdiff_t};
 use std::ptr;
 use std::slice;
-use libc::{c_char, c_uchar, ptrdiff_t};
+
 use base64_crate;
 
-use lisp::LispObject;
-use strings::MIME_LINE_LENGTH;
-use multibyte::{multibyte_char_at, raw_byte_from_codepoint, MAX_5_BYTE_CHAR};
-use remacs_sys::make_unibyte_string;
 use remacs_macros::lisp_fn;
+use remacs_sys::make_unibyte_string;
+
+use lisp::LispObject;
+use lisp::defsubr;
+use multibyte::{multibyte_char_at, raw_byte_from_codepoint, MAX_5_BYTE_CHAR};
+use strings::MIME_LINE_LENGTH;
 
 #[no_mangle]
 pub extern "C" fn base64_encode_1(
@@ -55,8 +58,8 @@ pub extern "C" fn base64_encode_1(
 }
 
 /// Base64-decode the data at FROM of LENGTH bytes into TO.  If MULTIBYTE, the
-/// decoded result should be in multibyte form.  If NCHARS_RETURN is not NULL,
-/// store the number of produced characters in *NCHARS_RETURN.
+/// decoded result should be in multibyte form.  If `NCHARS_RETURN` is not NULL,
+/// store the number of produced characters in `*NCHARS_RETURN`.
 #[no_mangle]
 pub extern "C" fn base64_decode_1(
     from: *const c_char,
@@ -190,3 +193,5 @@ fn base64_decode_string(string: LispObject) -> LispObject {
     }
     unsafe { LispObject::from(make_unibyte_string(decoded, decoded_length)) }
 }
+
+include!(concat!(env!("OUT_DIR"), "/base64_exports.rs"));

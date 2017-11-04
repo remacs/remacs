@@ -1,15 +1,18 @@
 //! Functions operating on float numbers.
 
-use std::mem;
 use libc;
+use std::mem;
 
-use math::ArithOp;
-use lisp::{LispNumber, LispObject};
-use remacs_sys::{build_string, EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, Qarith_error,
-                 Qinteger_or_marker_p, Qnumberp, Qrange_error, MOST_NEGATIVE_FIXNUM,
-                 MOST_POSITIVE_FIXNUM};
-use remacs_sys::libm;
 use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, MOST_NEGATIVE_FIXNUM,
+                 MOST_POSITIVE_FIXNUM};
+use remacs_sys::{Qarith_error, Qinteger_or_marker_p, Qnumberp, Qrange_error};
+use remacs_sys::build_string;
+use remacs_sys::libm;
+
+use lisp::{LispNumber, LispObject};
+use lisp::defsubr;
+use math::ArithOp;
 
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
 /// TODO this is used from C in a few places; remove afterwards.
@@ -383,3 +386,20 @@ fn round2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
         1
     }
 }
+
+// Since these are generated via a macro the build cannot hook them into the
+// system automatically. Do not add more items here unless they are also generated
+// with something like simple_float_op.
+pub fn rust_init_extra_syms() {
+    unsafe {
+        defsubr(&*Sacos);
+        defsubr(&*Sasin);
+        defsubr(&*Scos);
+        defsubr(&*Ssin);
+        defsubr(&*Stan);
+        defsubr(&*Sexp);
+        defsubr(&*Ssqrt);
+    }
+}
+
+include!(concat!(env!("OUT_DIR"), "/floatfns_exports.rs"));

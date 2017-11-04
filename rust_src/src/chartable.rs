@@ -1,8 +1,10 @@
 //! char table related functions
 
-use remacs_sys::Lisp_Char_Table;
 use remacs_macros::lisp_fn;
+use remacs_sys::Lisp_Char_Table;
+
 use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
 
@@ -43,3 +45,5 @@ fn set_char_table_parent(chartable: LispObject, parent: LispObject) -> LispObjec
     curr_table.parent = parent.to_raw();
     parent
 }
+
+include!(concat!(env!("OUT_DIR"), "/chartable_exports.rs"));

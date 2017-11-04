@@ -1,6 +1,10 @@
+//! data helpers
+
 use remacs_macros::lisp_fn;
 use remacs_sys::Qcyclic_function_indirection;
+
 use lisp::LispObject;
+use lisp::defsubr;
 
 /// Find the function at the end of a chain of symbol function indirections.
 
@@ -9,7 +13,7 @@ use lisp::LispObject;
 /// return it.  If there is a cycle in the function chain, signal a
 /// cyclic-function-indirection error.
 ///
-/// This is like Findirect_function, except that it doesn't signal an
+/// This is like `Findirect_function`, except that it doesn't signal an
 /// error if the chain ends up unbound.
 #[no_mangle]
 pub extern "C" fn indirect_function(object: LispObject) -> LispObject {
@@ -49,3 +53,5 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
     }
     return result;
 }
+
+include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

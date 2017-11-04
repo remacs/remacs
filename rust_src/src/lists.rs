@@ -1,8 +1,11 @@
 //! Operations on lists.
 
-use lisp::LispObject;
-use remacs_sys::{globals, EmacsInt, Qlistp, Qplistp};
 use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Qlistp, Qplistp};
+use remacs_sys::globals;
+
+use lisp::LispObject;
+use lisp::defsubr;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
 #[lisp_fn]
@@ -497,3 +500,5 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
         tail = item;
     }
 }
+
+include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));

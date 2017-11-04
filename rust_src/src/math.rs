@@ -1,9 +1,11 @@
 //! Functions doing math on numbers.
 
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
+
 use floatfns;
 use lisp::{LispNumber, LispObject};
-use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
-use remacs_macros::lisp_fn;
+use lisp::defsubr;
 
 /// Return X modulo Y.
 /// The result falls between zero (inclusive) and Y (exclusive).
@@ -412,3 +414,5 @@ fn sub1(number: LispObject) -> LispObject {
 fn lognot(number: LispObject) -> LispObject {
     LispObject::from_fixnum(!number.as_fixnum_or_error())
 }
+
+include!(concat!(env!("OUT_DIR"), "/math_exports.rs"));

@@ -1,3 +1,4 @@
+#![feature(const_size_of)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
 //! This module contains all FFI declarations.
@@ -21,13 +22,10 @@ pub mod libm;
 use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
            size_t, time_t, timespec};
 
+pub type Lisp_Object = EmacsInt;
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 include!(concat!(env!("OUT_DIR"), "/globals.rs"));
-
-pub type Lisp_Object = EmacsInt;
-
-pub const Qnil: Lisp_Object = 0;
 
 pub type char_bits = u32;
 pub const CHAR_ALT: char_bits = 0x0400000;
@@ -823,7 +821,14 @@ pub struct Lisp_Process {
     /// Queue for storing waiting writes.
     pub write_queue: Lisp_Object,
 
-    // TODO: this struct is incomplete.
+    // This struct is incomplete.
+    // To access remaining fields use access functions written in
+    // src/process.c and export them here for use in Rust.
+}
+
+/// Functions to access members of `struct Lisp_Process`.
+extern "C" {
+    pub fn pget_pid(p: *const Lisp_Process) -> libc::pid_t;
 }
 
 #[repr(C)]
@@ -915,7 +920,29 @@ pub struct Lisp_Frame {
     /// most recently buried buffer is first.  For last-buffer.
     pub buried_buffer_list: Lisp_Object,
 
-    // TODO: this struct is incomplete.
+    // This struct is incomplete.
+    // It is difficult, if not impossible, to import the rest of this struct.
+    // 1. #IFDEF logic means the proper number of fields is hard to determine.
+    // 2. Bitfields are compiler dependent. How much padding, where?
+    //    The current count is roughly 50 bits.
+    //
+    // Because of this, access functions are written in src/frame.c and
+    // exported here for use in Rust. This means that instead of
+    // frame.foo the proper method is fget_foo(frame).
+}
+
+#[repr(C)]
+pub struct terminal {
+    pub header: Lisp_Vectorlike_Header,
+}
+
+/// Functions to access members of `struct frame`.
+extern "C" {
+    pub fn fget_column_width(f: *const Lisp_Frame) -> c_int;
+    pub fn fget_line_height(f: *const Lisp_Frame) -> c_int;
+    pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
 }
 
 #[repr(C)]
@@ -946,88 +973,8 @@ pub struct Lisp_Hash_Table {
 
 extern "C" {
     pub static mut globals: emacs_globals;
+    pub static mut current_global_map: Lisp_Object;
     pub static current_thread: *mut thread_state;
-    pub static Qt: Lisp_Object;
-    pub static Qerror: Lisp_Object;
-    pub static Qarith_error: Lisp_Object;
-    pub static Qrange_error: Lisp_Object;
-    pub static Qwrong_type_argument: Lisp_Object;
-    pub static Qargs_out_of_range: Lisp_Object;
-    pub static Qnumber_or_marker_p: Lisp_Object;
-    pub static Qinteger_or_marker_p: Lisp_Object;
-    pub static Qconsp: Lisp_Object;
-    pub static Qnumberp: Lisp_Object;
-    pub static Qintegerp: Lisp_Object;
-    pub static Qfloatp: Lisp_Object;
-    pub static Qstringp: Lisp_Object;
-    pub static Qsymbolp: Lisp_Object;
-    pub static Qlistp: Lisp_Object;
-    pub static Qplistp: Lisp_Object;
-    pub static Qmarkerp: Lisp_Object;
-    pub static Qwholenump: Lisp_Object;
-    pub static Qvectorp: Lisp_Object;
-    pub static Qsequencep: Lisp_Object;
-    pub static Qcharacterp: Lisp_Object;
-    pub static Qchar_table_p: Lisp_Object;
-    pub static Qbufferp: Lisp_Object;
-    pub static Qwindowp: Lisp_Object;
-    pub static Qwindow_live_p: Lisp_Object;
-    pub static Qframep: Lisp_Object;
-    pub static Qframe_live_p: Lisp_Object;
-    pub static Qprocessp: Lisp_Object;
-    pub static Qthreadp: Lisp_Object;
-    pub static Qoverlayp: Lisp_Object;
-    pub static Qminus: Lisp_Object;
-    pub static Qmark_inactive: Lisp_Object;
-
-    pub static Qinteger: Lisp_Object;
-    pub static Qsymbol: Lisp_Object;
-    pub static Qstring: Lisp_Object;
-    pub static Qcons: Lisp_Object;
-    pub static Qmarker: Lisp_Object;
-    pub static Qoverlay: Lisp_Object;
-    pub static Qfinalizer: Lisp_Object;
-    pub static Quser_ptr: Lisp_Object;
-    pub static Qfloat: Lisp_Object;
-    pub static Qwindow_configuration: Lisp_Object;
-    pub static Qprocess: Lisp_Object;
-    pub static Qwindow: Lisp_Object;
-    pub static Qcompiled_function: Lisp_Object;
-    pub static Qbuffer: Lisp_Object;
-    pub static Qframe: Lisp_Object;
-    pub static Qvector: Lisp_Object;
-    pub static Qchar_table: Lisp_Object;
-    pub static Qcategory_table: Lisp_Object;
-    pub static Qbool_vector: Lisp_Object;
-    pub static Qhash_table: Lisp_Object;
-    pub static Qthread: Lisp_Object;
-    pub static Qmutex: Lisp_Object;
-    pub static Qcondition_variable: Lisp_Object;
-    pub static Qsubr: Lisp_Object;
-    pub static Qfont_spec: Lisp_Object;
-    pub static Qfont_entity: Lisp_Object;
-    pub static Qfont_object: Lisp_Object;
-    pub static Qhash_table_p: Lisp_Object;
-    pub static Qhash_table_test: Lisp_Object;
-    pub static Qwrite_region: Lisp_Object;
-    pub static Qbuffer_file_coding_system: Lisp_Object;
-    pub static Qfont_extra_type: Lisp_Object;
-    pub static Qsetting_constant: Lisp_Object;
-    pub static Qcyclic_function_indirection: Lisp_Object;
-    pub static Qcyclic_variable_indirection: Lisp_Object;
-    pub static Qsubfeatures: Lisp_Object;
-    pub static Qunbound: Lisp_Object;
-
-    pub static Qmd5: Lisp_Object;
-    pub static Qsha1: Lisp_Object;
-    pub static Qsha224: Lisp_Object;
-    pub static Qsha256: Lisp_Object;
-    pub static Qsha384: Lisp_Object;
-    pub static Qsha512: Lisp_Object;
-
-    pub static Qraw_text: Lisp_Object;
-    pub static Qcoding_system_error: Lisp_Object;
-    pub static Qcdr: Lisp_Object;
 
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;
@@ -1047,11 +994,15 @@ extern "C" {
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
+    pub fn Flookup_key(
+        keymap: Lisp_Object,
+        key: Lisp_Object,
+        accept_default: Lisp_Object,
+    ) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
     pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
     pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
-
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
@@ -1206,6 +1157,8 @@ extern "C" {
         properties: Lisp_Object,
         object: Lisp_Object,
     ) -> Lisp_Object;
+
+    pub fn find_symbol_value(symbol: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

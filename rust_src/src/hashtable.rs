@@ -1,11 +1,16 @@
-use remacs_macros::lisp_fn;
+//! hashtable support
+
 use libc::c_void;
-use lisp::{ExternalPtr, LispObject};
-use lists::{list, put};
-use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table, EmacsDouble,
-                 EmacsInt, EmacsUint, Faref, Fcopy_sequence, Lisp_Hash_Table, PseudovecType,
-                 Qhash_table_test, CHECK_IMPURE};
 use std::ptr;
+
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Faref, Fcopy_sequence, Lisp_Hash_Table,
+                 PseudovecType, Qhash_table_test, CHECK_IMPURE};
+use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table};
+
+use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
+use lists::{list, put};
 
 pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
@@ -112,8 +117,8 @@ impl LispHashTableRef {
 }
 
 /// An iterator used for iterating over the indices
-/// of the 'key_and_value' vector of a Lisp_Hash_Table.
-/// Equivalent to a 'for (i = 0; i < HASH_TABLE_SIZE(h); ++i)'
+/// of the `key_and_value` vector of a `Lisp_Hash_Table`.
+/// Equivalent to a `for (i = 0; i < HASH_TABLE_SIZE(h); ++i)`
 /// loop in the C layer.
 pub struct HashTableIter<'a> {
     table: &'a LispHashTableRef,
@@ -124,7 +129,7 @@ impl<'a> Iterator for HashTableIter<'a> {
     type Item = isize;
 
     fn next(&mut self) -> Option<isize> {
-        // This is duplicating 'LispHashTableRef::size' to keep inline with the old C code,
+        // This is duplicating `LispHashTableRef::size` to keep inline with the old C code,
         // in which the len of the vector could technically change while iterating. While
         // I don't know if any code actually uses that behavior, I'm going to avoid making
         // this use size to keep it consistent.
@@ -140,7 +145,7 @@ impl<'a> Iterator for HashTableIter<'a> {
 }
 
 /// An iterator used for looping over the keys and values
-/// contained in a Lisp_Hash_Table.
+/// contained in a `Lisp_Hash_Table`.
 pub struct KeyAndValueIter<'a>(HashTableIter<'a>);
 
 impl<'a> Iterator for KeyAndValueIter<'a> {
@@ -318,6 +323,8 @@ fn clrhash(table: LispObject) -> LispObject {
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
 fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
-    let sym = unsafe { LispObject::from(Qhash_table_test) };
+    let sym = LispObject::from(Qhash_table_test);
     put(name, sym, list(&mut [test, hash]))
 }
+
+include!(concat!(env!("OUT_DIR"), "/hashtable_exports.rs"));

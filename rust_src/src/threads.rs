@@ -1,10 +1,13 @@
 //! Threading code.
 
 use std::mem;
-use remacs_sys::{current_thread, thread_state};
+
 use remacs_macros::lisp_fn;
-use lisp::{ExternalPtr, LispObject};
+use remacs_sys::{current_thread, thread_state};
+
 use buffers::LispBufferRef;
+use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
 
 pub type ThreadStateRef = ExternalPtr<thread_state>;
 
@@ -29,3 +32,5 @@ impl ThreadStateRef {
 pub fn thread_name(thread: LispObject) -> LispObject {
     thread.as_thread_or_error().name()
 }
+
+include!(concat!(env!("OUT_DIR"), "/threads_exports.rs"));

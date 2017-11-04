@@ -1,9 +1,15 @@
-use remacs_macros::lisp_fn;
+//! symbols support
+
 use std::mem;
+
+use remacs_macros::lisp_fn;
+use remacs_sys::{Fset, Lisp_Symbol};
+use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
+use remacs_sys::{Symbol_Interned, Symbol_Redirect, Symbol_Trapped_Write};
+use remacs_sys::{find_symbol_value, make_lisp_symbol};
+
 use lisp::{ExternalPtr, LispObject};
-use remacs_sys::{make_lisp_symbol, Fset, Lisp_Symbol, Qcyclic_variable_indirection,
-                 Qsetting_constant, Qunbound, Symbol_Interned, Symbol_Redirect,
-                 Symbol_Trapped_Write};
+use lisp::defsubr;
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
@@ -188,3 +194,18 @@ fn makunbound(symbol: LispObject) -> LispObject {
     }
     symbol
 }
+
+/// Return SYMBOL's value.  Error if that is void.  Note that if
+/// `lexical-binding' is in effect, this returns the global value
+/// outside of any lexical scope.
+#[lisp_fn]
+pub fn symbol_value(symbol: LispObject) -> LispObject {
+    let raw_symbol = symbol.to_raw();
+    let val = unsafe { find_symbol_value(raw_symbol) };
+    if val == LispObject::constant_unbound().to_raw() {
+        xsignal!(Qvoid_variable, symbol);
+    }
+    LispObject::from(val)
+}
+
+include!(concat!(env!("OUT_DIR"), "/symbols_exports.rs"));

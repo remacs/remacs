@@ -1,16 +1,19 @@
 //! Lisp functions pertaining to editing.
 
-use remacs_macros::lisp_fn;
-use lisp::LispObject;
-use util::clip_to_bounds;
-use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both, EmacsInt, Fadd_text_properties,
-                 Fcons, Fcopy_sequence, Finsert_char, Qinteger_or_marker_p, Qmark_inactive, Qnil};
-use threads::ThreadState;
-use buffers::get_buffer;
-use marker::{marker_position, set_point_from_marker};
-use multibyte::raw_byte_codepoint;
 use libc::{c_uchar, ptrdiff_t};
 
+use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Fadd_text_properties, Fcons, Fcopy_sequence, Finsert_char,
+                 Qinteger_or_marker_p, Qmark_inactive, Qnil};
+use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both};
+
+use buffers::get_buffer;
+use lisp::LispObject;
+use lisp::defsubr;
+use marker::{marker_position, set_point_from_marker};
+use multibyte::raw_byte_codepoint;
+use threads::ThreadState;
+use util::clip_to_bounds;
 
 /// Return value of point, as an integer.
 /// Beginning of buffer is position (point-min).
@@ -141,7 +144,7 @@ pub fn point_max() -> LispObject {
 /// Beginning of buffer is position (point-min), end is (point-max).
 ///
 /// The return value is POSITION.
-#[lisp_fn]
+#[lisp_fn(intspec = "NGoto char: ")]
 pub fn goto_char(position: LispObject) -> LispObject {
     if let Some(marker) = position.as_marker() {
         set_point_from_marker(marker);
@@ -202,6 +205,19 @@ pub fn insert_byte(mut byte: LispObject, count: LispObject, inherit: LispObject)
             count.to_raw(),
             inherit.to_raw(),
         ))
+    }
+}
+
+/// Return the character following point, as a number. At the end of
+/// the buffer or accessible region, return 0.
+#[lisp_fn]
+pub fn following_char() -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+
+    if buffer_ref.pt >= buffer_ref.zv {
+        LispObject::from_natnum(0)
+    } else {
+        LispObject::from_natnum(buffer_ref.fetch_char(buffer_ref.pt_byte) as EmacsInt)
     }
 }
 
@@ -274,3 +290,5 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
 
     copy
 }
+
+include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

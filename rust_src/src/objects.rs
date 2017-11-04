@@ -1,9 +1,11 @@
 //! Various functions operating on any object.
 
-use lisp::LispObject;
-use remacs_sys::{internal_equal, EqualKind, Qnil};
 use remacs_macros::lisp_fn;
+use remacs_sys::{EqualKind, Qnil};
+use remacs_sys::internal_equal;
 
+use lisp::LispObject;
+use lisp::defsubr;
 
 /// Return t if OBJECT is nil, and return nil otherwise.
 #[lisp_fn]
@@ -58,3 +60,5 @@ fn equal_including_properties(o1: LispObject, o2: LispObject) -> LispObject {
 fn identity(arg: LispObject) -> LispObject {
     arg
 }
+
+include!(concat!(env!("OUT_DIR"), "/objects_exports.rs"));

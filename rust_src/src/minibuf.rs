@@ -1,9 +1,12 @@
 //! Minibuffer input and completion.
 
 use remacs_macros::lisp_fn;
-use lisp::LispObject;
-use remacs_sys::{minibuf_level, minibuf_window, Vminibuffer_list};
+use remacs_sys::{minibuf_level, minibuf_window};
+use remacs_sys::Vminibuffer_list;
+
 use buffers::{current_buffer, get_buffer};
+use lisp::LispObject;
+use lisp::defsubr;
 use lists::memq;
 
 
@@ -46,3 +49,5 @@ pub fn set_minibuffer_window(window: LispObject) -> LispObject {
 
     window
 }
+
+include!(concat!(env!("OUT_DIR"), "/minibuf_exports.rs"));

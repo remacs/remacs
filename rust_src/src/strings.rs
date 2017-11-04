@@ -4,11 +4,14 @@ use std::ptr;
 
 use libc::{self, c_void};
 
-use lisp::LispObject;
-use multibyte;
-use remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
-                 string_to_multibyte as c_string_to_multibyte, EmacsInt, SYMBOL_NAME};
 use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, SYMBOL_NAME};
+use remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
+                 string_to_multibyte as c_string_to_multibyte};
+
+use lisp::LispObject;
+use lisp::defsubr;
+use multibyte;
 
 pub static MIME_LINE_LENGTH: isize = 76;
 
@@ -151,3 +154,5 @@ fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
 fn multibyte_string_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_string().map_or(false, |s| s.is_multibyte()))
 }
+
+include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));

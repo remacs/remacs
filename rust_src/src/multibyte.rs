@@ -32,13 +32,14 @@
 //! `&str`, and this module regrettably contains adapted copies of
 //! stretches of `std::str` functions.
 
+use libc::{c_char, c_int, c_uchar, c_uint, ptrdiff_t};
 use std::ptr;
 use std::slice;
-use libc::{c_char, c_int, c_uchar, c_uint, ptrdiff_t};
+
+use remacs_sys::{EmacsInt, Lisp_String, CHARACTERBITS, CHAR_CTL, CHAR_MODIFIER_MASK, CHAR_SHIFT};
+use remacs_sys::emacs_abort;
 
 use lisp::ExternalPtr;
-use remacs_sys::{emacs_abort, EmacsInt, Lisp_String, CHARACTERBITS, CHAR_CTL, CHAR_MODIFIER_MASK,
-                 CHAR_SHIFT};
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
 

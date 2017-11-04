@@ -1,6 +1,12 @@
-use lisp::LispObject;
+//! Commands
+
 use remacs_macros::lisp_fn;
-use remacs_sys::{set_point, EmacsInt, Fline_beginning_position};
+use remacs_sys::{EmacsInt, Fline_beginning_position};
+use remacs_sys::set_point;
+
+use lisp::LispObject;
+use lisp::defsubr;
+
 use threads::ThreadState;
 
 /// Return buffer position N characters after (before if N negative) point.
@@ -33,3 +39,5 @@ pub fn beginning_of_line(mut n: LispObject) -> LispObject {
 
     LispObject::constant_nil()
 }
+
+include!(concat!(env!("OUT_DIR"), "/cmds_exports.rs"));

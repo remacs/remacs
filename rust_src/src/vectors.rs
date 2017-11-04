@@ -1,25 +1,27 @@
 //! Functions operating on vector(like)s, and general sequences.
 
+use std::cmp::Ordering;
 use std::mem;
 use std::ptr;
 use std::slice;
-use std::cmp::Ordering;
 
 use libc::ptrdiff_t;
 
-use lisp::{ExternalPtr, LispObject};
-use multibyte::MAX_CHAR;
-use lists::{car, inorder, nthcdr, sort_list};
-use buffers::LispBufferRef;
-use windows::LispWindowRef;
-use frames::LispFrameRef;
-use process::LispProcessRef;
-use chartable::LispCharTableRef;
-use threads::ThreadStateRef;
+use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Faref, Lisp_Bool_Vector, Lisp_Vector, Lisp_Vectorlike, PseudovecType,
                  Qsequencep, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG,
                  PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
-use remacs_macros::lisp_fn;
+
+use buffers::LispBufferRef;
+use chartable::LispCharTableRef;
+use frames::LispFrameRef;
+use lisp::{ExternalPtr, LispObject};
+use lisp::defsubr;
+use lists::{car, inorder, nthcdr, sort_list};
+use multibyte::MAX_CHAR;
+use process::LispProcessRef;
+use threads::ThreadStateRef;
+use windows::LispWindowRef;
 
 pub type LispVectorlikeRef = ExternalPtr<Lisp_Vectorlike>;
 pub type LispVectorRef = ExternalPtr<Lisp_Vector>;
@@ -319,12 +321,6 @@ pub fn recordp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_record())
 }
 
-macro_rules! offset_of {
-    ($ty:ty, $field:ident) => {
-        &(*(0 as *const $ty)).$field as *const _ as usize
-    }
-}
-
 lazy_static! {
     pub static ref HEADER_SIZE: usize = {
         unsafe { offset_of!(::remacs_sys::Lisp_Vector, contents) }
@@ -334,27 +330,4 @@ lazy_static! {
     };
 }
 
-/// Equivalent to PSEUDOVECSIZE in C
-macro_rules! pseudovecsize {
-    ($ty: ty, $field: ident) => {
-        ((offset_of!($ty, $field) - *::vectors::HEADER_SIZE) / *::vectors::WORD_SIZE)
-    }
-}
-
-/// Equivalent to VECSIZE in C
-macro_rules! vecsize {
-    ($ty: ty) => {
-        ((::std::mem::size_of::<$ty>()
-          - *::vectors::HEADER_SIZE + *::vectors::WORD_SIZE - 1) / *::vectors::WORD_SIZE)
-    }
-}
-
-/// Equivalent to `ALLOCATE_PSEUDOVECTOR` in C
-macro_rules! allocate_pseudovector {
-    ($ty: ty, $field: ident, $vectype: expr) => {
-        unsafe { ::remacs_sys::allocate_pseudovector(vecsize!($ty) as ::libc::c_int,
-                                       pseudovecsize!($ty, $field) as ::libc::c_int,
-                                       pseudovecsize!($ty, $field) as ::libc::c_int,
-                                       $vectype) as *mut $ty}
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/vectors_exports.rs"));

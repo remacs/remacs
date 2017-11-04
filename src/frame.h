@@ -695,6 +695,18 @@ fset_desired_tool_bar_string (struct frame *f, Lisp_Object val)
 }
 #endif /* HAVE_WINDOW_SYSTEM && !USE_GTK && !HAVE_NS */
 
+/* Accessors for Rust */
+int
+fget_column_width(const struct frame *f);
+int
+fget_line_height(const struct frame *f);
+Lisp_Object
+fget_minibuffer_window(const struct frame *f);
+Lisp_Object
+fget_root_window(const struct frame *f);
+struct terminal *
+fget_terminal(const struct frame *f);
+
 INLINE double
 NUMVAL (Lisp_Object x)
 {

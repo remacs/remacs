@@ -301,45 +301,6 @@ wset_buffer (struct window *w, Lisp_Object val)
   adjust_window_count (w, 1);
 }
 
-/* Frames and windows.  */
-DEFUN ("window-frame", Fwindow_frame, Swindow_frame, 0, 1, 0,
-       doc: /* Return the frame that window WINDOW is on.
-WINDOW must be a valid window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return decode_valid_window (window)->frame;
-}
-
-DEFUN ("frame-root-window", Fframe_root_window, Sframe_root_window, 0, 1, 0,
-       doc: /* Return the root window of FRAME-OR-WINDOW.
-If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
-With a frame argument, return that frame's root window.
-With a window argument, return the root window of that window's frame.  */)
-  (Lisp_Object frame_or_window)
-{
-  Lisp_Object window;
-
-  if (NILP (frame_or_window))
-    window = SELECTED_FRAME ()->root_window;
-  else if (WINDOW_VALID_P (frame_or_window))
-      window = XFRAME (XWINDOW (frame_or_window)->frame)->root_window;
-  else
-    {
-      CHECK_LIVE_FRAME (frame_or_window);
-      window = XFRAME (frame_or_window)->root_window;
-    }
-
-  return window;
-}
-
-DEFUN ("minibuffer-window", Fminibuffer_window, Sminibuffer_window, 0, 1, 0,
-       doc: /* Return the minibuffer window for frame FRAME.
-If FRAME is omitted or nil, it defaults to the selected frame.  */)
-  (Lisp_Object frame)
-{
-  return FRAME_MINIBUF_WINDOW (decode_live_frame (frame));
-}
-
 /* Don't move this to window.el - this must be a safe routine.  */
 DEFUN ("frame-first-window", Fframe_first_window, Sframe_first_window, 0, 1, 0,
        doc: /* Return the topmost, leftmost live window on FRAME-OR-WINDOW.
@@ -595,42 +556,6 @@ Return nil if WINDOW has no previous sibling.  */)
   return decode_valid_window (window)->prev;
 }
 
-DEFUN ("window-combination-limit", Fwindow_combination_limit, Swindow_combination_limit, 1, 1, 0,
-       doc: /* Return combination limit of window WINDOW.
-WINDOW must be a valid window used in horizontal or vertical combination.
-If the return value is nil, child windows of WINDOW can be recombined with
-WINDOW's siblings.  A return value of t means that child windows of
-WINDOW are never (re-)combined with WINDOW's siblings.  */)
-  (Lisp_Object window)
-{
-  struct window *w;
-
-  CHECK_VALID_WINDOW (window);
-  w = XWINDOW (window);
-  if (WINDOW_LEAF_P (w))
-    error ("Combination limit is meaningful for internal windows only");
-  return w->combination_limit;
-}
-
-DEFUN ("set-window-combination-limit", Fset_window_combination_limit, Sset_window_combination_limit, 2, 2, 0,
-       doc: /* Set combination limit of window WINDOW to LIMIT; return LIMIT.
-WINDOW must be a valid window used in horizontal or vertical combination.
-If LIMIT is nil, child windows of WINDOW can be recombined with WINDOW's
-siblings.  LIMIT t means that child windows of WINDOW are never
-\(re-)combined with WINDOW's siblings.  Other values are reserved for
-future use.  */)
-  (Lisp_Object window, Lisp_Object limit)
-{
-  struct window *w;
-
-  CHECK_VALID_WINDOW (window);
-  w = XWINDOW (window);
-  if (WINDOW_LEAF_P (w))
-    error ("Combination limit is meaningful for internal windows only");
-  wset_combination_limit (w, limit);
-  return limit;
-}
-
 DEFUN ("window-use-time", Fwindow_use_time, Swindow_use_time, 0, 1, 0,
        doc: /* Return the use time of window WINDOW.
 WINDOW must be a live window and defaults to the selected one.
@@ -695,79 +620,6 @@ after that.  */)
 {
   return (make_number
 	  (decode_valid_window (window)->pixel_height_before_size_change));
-}
-
-DEFUN ("window-total-height", Fwindow_total_height, Swindow_total_height, 0, 2, 0,
-       doc: /* Return the height of window WINDOW in lines.
-WINDOW must be a valid window and defaults to the selected one.
-
-The return value includes the heights of WINDOW's mode and header line
-and its bottom divider, if any.  If WINDOW is an internal window, the
-total height is the height of the screen areas spanned by its children.
-
-If WINDOW's pixel height is not an integral multiple of its frame's
-character height, the number of lines occupied by WINDOW is rounded
-internally.  This is done in a way such that, if WINDOW is a parent
-window, the sum of the total heights of all its children internally
-equals the total height of WINDOW.
-
-If the optional argument ROUND is `ceiling', return the smallest integer
-larger than WINDOW's pixel height divided by the character height of
-WINDOW's frame.  ROUND `floor' means to return the largest integer
-smaller than WINDOW's pixel height divided by the character height of
-WINDOW's frame.  Any other value of ROUND means to return the internal
-total height of WINDOW.  */)
-  (Lisp_Object window, Lisp_Object round)
-{
-  struct window *w = decode_valid_window (window);
-
-  if (! EQ (round, Qfloor) && ! EQ (round, Qceiling))
-    return make_number (w->total_lines);
-  else
-    {
-      int unit = FRAME_LINE_HEIGHT (WINDOW_XFRAME (w));
-
-      return make_number (EQ (round, Qceiling)
-			  ? ((w->pixel_height + unit - 1) /unit)
-			  : (w->pixel_height / unit));
-    }
-}
-
-DEFUN ("window-total-width", Fwindow_total_width, Swindow_total_width, 0, 2, 0,
-       doc: /* Return the total width of window WINDOW in columns.
-WINDOW must be a valid window and defaults to the selected one.
-
-The return value includes the widths of WINDOW's fringes, margins,
-scroll bars and its right divider, if any.  If WINDOW is an internal
-window, the total width is the width of the screen areas spanned by its
-children.
-
-If WINDOW's pixel width is not an integral multiple of its frame's
-character width, the number of lines occupied by WINDOW is rounded
-internally.  This is done in a way such that, if WINDOW is a parent
-window, the sum of the total widths of all its children internally
-equals the total width of WINDOW.
-
-If the optional argument ROUND is `ceiling', return the smallest integer
-larger than WINDOW's pixel width divided by the character width of
-WINDOW's frame.  ROUND `floor' means to return the largest integer
-smaller than WINDOW's pixel width divided by the character width of
-WINDOW's frame.  Any other value of ROUND means to return the internal
-total width of WINDOW.  */)
-  (Lisp_Object window, Lisp_Object round)
-{
-  struct window *w = decode_valid_window (window);
-
-  if (! EQ (round, Qfloor) && ! EQ (round, Qceiling))
-    return make_number (w->total_cols);
-  else
-    {
-      int unit = FRAME_COLUMN_WIDTH (WINDOW_XFRAME (w));
-
-      return make_number (EQ (round, Qceiling)
-			  ? ((w->pixel_width + unit - 1) /unit)
-			  : (w->pixel_width / unit));
-    }
 }
 
 DEFUN ("window-new-total", Fwindow_new_total, Swindow_new_total, 0, 1, 0,
@@ -7625,9 +7477,6 @@ Note that this optimization can cause the portion of the buffer
 displayed after a scrolling operation to be somewhat inaccurate.  */);
   Vfast_but_imprecise_scrolling = false;
 
-  defsubr (&Sminibuffer_window);
-  defsubr (&Swindow_frame);
-  defsubr (&Sframe_root_window);
   defsubr (&Sframe_first_window);
   defsubr (&Sframe_selected_window);
   defsubr (&Sset_frame_selected_window);
@@ -7638,15 +7487,11 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_left_child);
   defsubr (&Swindow_next_sibling);
   defsubr (&Swindow_prev_sibling);
-  defsubr (&Swindow_combination_limit);
-  defsubr (&Sset_window_combination_limit);
   defsubr (&Swindow_use_time);
   defsubr (&Swindow_pixel_width);
   defsubr (&Swindow_pixel_height);
   defsubr (&Swindow_pixel_width_before_size_change);
   defsubr (&Swindow_pixel_height_before_size_change);
-  defsubr (&Swindow_total_width);
-  defsubr (&Swindow_total_height);
   defsubr (&Swindow_normal_size);
   defsubr (&Swindow_new_pixel);
   defsubr (&Swindow_new_total);
