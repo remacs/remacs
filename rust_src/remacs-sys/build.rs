@@ -13,6 +13,12 @@ const WIDE_EMACS_INT: bool = true;
 #[cfg(not(feature = "wide-emacs-int"))]
 const WIDE_EMACS_INT: bool = false;
 
+#[cfg(feature = "ns-impl-gnustep")]
+const NS_IMPL_GNUSTEP: bool = true;
+
+#[cfg(not(feature = "ns-impl-gnustep"))]
+const NS_IMPL_GNUSTEP: bool = false;
+
 fn integer_max_constant(len: usize) -> &'static str {
     match len {
         1 => "0x7F_i8",
@@ -85,6 +91,29 @@ fn generate_definitions() {
         max(float_type_item.1, actual_ptr_size)
     ).expect("Write error!");
 
+    // There is no such thing as a libc::c_bool
+    // See https://users.rust-lang.org/t/is-rusts-bool-compatible-with-c99--bool-or-c-bool/3981
+    let bool_types = [
+        ("bool", size_of::<bool>()),
+        ("libc::c_uint", size_of::<libc::c_uint>()),
+    ];
+
+    if !NS_IMPL_GNUSTEP {
+        write!(file, "pub type BoolBF = {};\n", bool_types[0].0).expect("Write error!");
+        write!(
+            file,
+            "pub const EMACS_BOOL_SIZE: EmacsInt = {};\n",
+            bool_types[0].1
+        ).expect("Write error!");
+    } else {
+        write!(file, "pub type BoolBF = {};\n", bool_types[1].0).expect("Write error!");
+        write!(
+            file,
+            "pub const EMACS_BOOL_SIZE: EmacsInt = {};\n",
+            bool_types[1].1
+        ).expect("Write error!");
+    }
+
     let bits = 8; // bits in a byte.
     let gc_type_bits = 3;
     write!(file, "pub const GCTYPEBITS: EmacsInt = {};\n", gc_type_bits).expect("Write error!");
@@ -129,6 +158,7 @@ fn generate_globals() {
                         vname,
                         match vtype {
                             "EMACS_INT" => "EmacsInt",
+                            "bool_bf" => "BoolBF",
                             t => t,
                         }
                     ).expect("Write error!");

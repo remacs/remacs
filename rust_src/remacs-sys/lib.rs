@@ -14,6 +14,7 @@
 //! - `EMACS_FLOAT_SIZE`
 //! - `GCTYPEBITS`
 //! - `USE_LSB_TAG`
+//! - `BoolBF`
 
 extern crate libc;
 
@@ -834,6 +835,12 @@ pub struct Lisp_Process {
 /// Functions to access members of `struct Lisp_Process`.
 extern "C" {
     pub fn pget_pid(p: *const Lisp_Process) -> libc::pid_t;
+    pub fn pget_kill_without_query(p: *const Lisp_Process) -> BoolBF;
+}
+
+/// Functions to set members of `struct Lisp_Process`.
+extern "C" {
+    pub fn pset_kill_without_query(p: *mut Lisp_Process, b: BoolBF);
 }
 
 #[repr(C)]
