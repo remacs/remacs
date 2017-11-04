@@ -5138,6 +5138,11 @@ is scrolled.  It's not designed for that, and such use probably won't
 work.
 @end defvar
 
+@defun run-window-scroll-functions &optional window
+This function calls @code{window-scroll-functions} for the specified
+@var{window}, which defaults to the selected window.
+@end defun
+
 @defvar window-size-change-functions
 This variable holds a list of functions to be called if the size of any
 window changes for any reason.  The functions are called once per
@@ -5167,16 +5172,21 @@ be called again.
 @defvar window-configuration-change-hook
 A normal hook that is run every time the window configuration of a frame
 changes.  Window configuration changes include splitting and deleting
-windows and the display of a different buffer in a window.  Resizing the
+windows, and the display of a different buffer in a window.  Resizing the
 frame or individual windows do not count as configuration changes.  Use
 @code{window-size-change-functions}, see above, when you want to track
 size changes that are not caused by the deletion or creation of windows.
 
-The buffer-local part of this hook is run once for each window on the
+The buffer-local value of this hook is run once for each window on the
 affected frame, with the relevant window selected and its buffer
-current.  The global part is run once for the modified frame, with that
-frame selected.
+current.  The global value of this hook is run once for the modified
+frame, with that frame selected.
 @end defvar
+
+@defun run-window-configuration-change-hook &optional frame
+This function runs @code{window-configuration-change-hook} for the
+specified @var{frame}, which defaults to the selected frame.
+@end defun
 
   In addition, you can use @code{jit-lock-register} to register a Font
 Lock fontification function, which will be called whenever parts of a
