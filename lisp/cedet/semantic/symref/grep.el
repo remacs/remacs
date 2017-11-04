@@ -38,16 +38,22 @@
   (
    )
   "A symref tool implementation using grep.
-This tool uses EDE to find he root of the project, then executes
-find-grep in the project.  The output is parsed for hits
-and those hits returned.")
+This tool uses EDE to find the root of the project, then executes
+find-grep in the project.  The output is parsed for hits and
+those hits returned.")
 
 (defvar semantic-symref-filepattern-alist
   '((c-mode "*.[ch]")
     (c++-mode "*.[chCH]" "*.[ch]pp" "*.cc" "*.hh")
-    (html-mode "*.s?html" "*.php")
+    (html-mode "*.html" "*.shtml" "*.php")
+    (mhtml-mode "*.html" "*.shtml" "*.php") ; FIXME: remove
+                                            ; duplication of
+                                            ; HTML-related patterns.
+                                            ; Maybe they belong in the
+                                            ; major mode definition?
     (ruby-mode "*.r[bu]" "*.rake" "*.gemspec" "*.erb" "*.haml"
                "Rakefile" "Thorfile" "Capfile" "Guardfile" "Vagrantfile")
+    (python-mode "*.py" "*.pyi" "*.pyw")
     (perl-mode "*.pl" "*.PL")
     (cperl-mode "*.pl" "*.PL")
     (lisp-interaction-mode "*.el" "*.ede" ".emacs" "_emacs")
@@ -58,7 +64,7 @@ See find -name man page for format.")
 (defun semantic-symref-derive-find-filepatterns (&optional mode)
   ;; FIXME: This should be moved to grep.el, where it could be used
   ;; for "C-u M-x grep" as well.
-  "Derive a list of file patterns for the current buffer.
+  "Derive a list of file (glob) patterns for the current buffer.
 Looks first in `semantic-symref-filepattern-alist'.  If it is not
 there, it then looks in `auto-mode-alist', and attempts to derive something
 from that.
@@ -78,7 +84,7 @@ Optional argument MODE specifies the `major-mode' to test."
         (error "Customize `semantic-symref-filepattern-alist' for %S"
                major-mode)
       (let ((args `("-name" ,(car pat))))
-        (if (null (cdr args))
+        (if (null (cdr pat))
             args
           `("(" ,@args
             ,@(mapcan (lambda (s) `("-o" "-name" ,s)) pat)
@@ -149,7 +155,7 @@ This shell should support pipe redirect syntax."
                          (oref tool searchfor))
                         (t
                          ;; Can't use the word boundaries: Grep
-                         ;; doesn't always agrees with the language
+                         ;; doesn't always agree with the language
                          ;; syntax on those.
                          (format "\\(^\\|\\W\\)%s\\(\\W\\|$\\)"
                                  (oref tool searchfor)))))
