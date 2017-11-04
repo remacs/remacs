@@ -2188,7 +2188,10 @@ a GDB/MI reply message."
 
 (defun gdbmi-bnf-console-stream-output (c-string)
   "Handler for the console-stream-output GDB/MI output grammar rule."
-  (gdb-console c-string))
+  (gdb-console c-string)
+  ;; We've written to the GUD console, so we should print the prompt
+  ;; after the next result-class or async-class.
+  (setq gdb-first-done-or-error t))
 
 (defun gdbmi-bnf-target-stream-output (_c-string)
   "Handler for the target-stream-output GDB/MI output grammar rule."
