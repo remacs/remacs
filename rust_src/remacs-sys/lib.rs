@@ -973,6 +973,7 @@ pub struct Lisp_Hash_Table {
 
 extern "C" {
     pub static mut globals: emacs_globals;
+    pub static mut current_global_map: Lisp_Object;
     pub static current_thread: *mut thread_state;
 
     pub static lispsym: Lisp_Symbol;
@@ -993,11 +994,15 @@ extern "C" {
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
+    pub fn Flookup_key(
+        keymap: Lisp_Object,
+        key: Lisp_Object,
+        accept_default: Lisp_Object,
+    ) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
     pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
     pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
-
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
