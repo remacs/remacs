@@ -435,6 +435,7 @@ This is run after inserting the character.  */);
   defsubr (&Sforward_char);
   defsubr (&Sbackward_char);
   defsubr (&Sforward_line);
+  defsubr (&Send_of_line);
 
   defsubr (&Sdelete_char);
   defsubr (&Sself_insert_command);
