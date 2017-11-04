@@ -5127,7 +5127,10 @@ redisplaying a window with scrolling.  Displaying a different buffer in
 the window also runs these functions.
 
 This variable is not a normal hook, because each function is called with
-two arguments: the window, and its new display-start position.
+two arguments: the window, and its new display-start position.  At the
+time of the call, the display-start position of the window argument is
+already set to its new value, and the buffer to be displayed in the
+window is already set as the current buffer.
 
 These functions must take care when using @code{window-end}
 (@pxref{Window Start and End}); if you need an up-to-date value, you

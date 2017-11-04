@@ -32569,6 +32569,9 @@ display-start position.
 These functions are called whenever the `window-start' marker is modified,
 either to point into another buffer (e.g. via `set-window-buffer') or another
 place in the same buffer.
+When each function is called, the `window-start' marker of its window
+argument has been already set to the new value, and the buffer which that
+window will display is set to be the current buffer.
 Note that the value of `window-end' is not valid when these functions are
 called.
 
