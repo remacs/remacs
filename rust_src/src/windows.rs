@@ -7,7 +7,7 @@ use remacs_sys::{EmacsInt, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor};
 use remacs_sys::{fget_column_width, fget_line_height, fget_minibuffer_window, fget_root_window,
                  minibuf_level, minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window};
+                 selected_window as current_window, wget_parent};
 
 use editfns::point;
 use frames::{frame_live_or_selected, window_frame_live_or_selected};
@@ -333,6 +333,16 @@ pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject 
     let win = window_valid_or_selected(window);
 
     LispObject::from_natnum(win.total_height(round) as EmacsInt)
+}
+
+/// Return the parent window of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+/// Return nil for a window with no parent (e.g. a root window).
+#[lisp_fn(min = "0")]
+pub fn window_parent(window: LispObject) -> LispObject {
+    LispObject::from(unsafe {
+        wget_parent(window_valid_or_selected(window).as_ptr())
+    })
 }
 
 /// Return the frame that window WINDOW is on.
