@@ -1466,6 +1466,18 @@ this, you can remove the X resource or put this in your init file:
 
   (xterm-remove-modify-other-keys)
 
+** Emacs's xterm-mouse doesn't work well in Evil mode.
+
+Specifically, clicking mouse-1 doesn't work as expected: instead of
+moving point where you click, it highlights the region between the
+line beginning and the click location, and displays error messages
+about unbound keys in the echo area.
+
+To work around this, put this in your .emacs file:
+
+  (with-eval-after-load 'evil-maps
+    (define-key evil-motion-state-map [down-mouse-1] nil))
+
 ** Emacs spontaneously displays "I-search: " at the bottom of the screen.
 
 This means that Control-S/Control-Q (XON/XOFF) "flow control" is being
