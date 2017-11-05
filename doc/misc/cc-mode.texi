@@ -1778,7 +1778,7 @@ Additionally, if a prefix argument is given, push the function name to
 the kill ring.  If there is no current function,
 @code{c-display-defun-name} does nothing.  In Emacs, you can use this
 command in the middle of an interactive search if you set the
-customizable option @code{isearch-allow-scoll} to non-@code{nil}.
+customizable option @code{isearch-allow-scroll} to non-@code{nil}.
 @xref{Not Exiting Isearch,,,emacs, GNU Emacs Manual}.
 
 @item @kbd{C-c C-\} (@code{c-backslash-region})
