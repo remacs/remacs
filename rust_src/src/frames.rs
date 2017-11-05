@@ -1,12 +1,13 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
-use remacs_sys::Qframe_live_p;
-use remacs_sys::fget_terminal;
+use remacs_sys::{fget_output_method, fget_terminal, Fselect_window};
+use remacs_sys::{selected_frame as current_frame, Lisp_Frame, OutputMethod};
+use remacs_sys::{Qframe_live_p, Qns, Qw32, Qx};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -54,6 +55,20 @@ pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
 #[lisp_fn]
 pub fn selected_frame() -> LispObject {
     unsafe { LispObject::from(current_frame) }
+}
+
+/// Return non-nil if OBJECT is a frame which has not been deleted.
+/// Value is nil if OBJECT is not a live frame.  If object is a live
+/// frame, the return value indicates what sort of terminal device it is
+/// displayed on.  See the documentation of `framep' for possible
+/// return values.
+#[lisp_fn]
+fn frame_live_p(object: LispObject) -> LispObject {
+    if object.as_frame().map_or(false, |f| f.is_live()) {
+        LispObject::from(framep(object))
+    } else {
+        LispObject::constant_nil()
+    }
 }
 
 /// Return non-nil if OBJECT is a frame.

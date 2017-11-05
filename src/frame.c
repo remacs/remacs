@@ -247,21 +247,6 @@ set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 
 Lisp_Object Vframe_list;
 
-
-DEFUN ("frame-live-p", Fframe_live_p, Sframe_live_p, 1, 1, 0,
-       doc: /* Return non-nil if OBJECT is a frame which has not been deleted.
-Value is nil if OBJECT is not a live frame.  If object is a live
-frame, the return value indicates what sort of terminal device it is
-displayed on.  See the documentation of `framep' for possible
-return values.  */)
-  (Lisp_Object object)
-{
-  return ((FRAMEP (object)
-	   && FRAME_LIVE_P (XFRAME (object)))
-	  ? Fframep (object)
-	  : Qnil);
-}
-
 DEFUN ("window-system", Fwindow_system, Swindow_system, 0, 1, 0,
        doc: /* The name of the window system that FRAME is displaying through.
 The value is a symbol:
@@ -5464,6 +5449,12 @@ int fget_line_height(const struct frame *f)
   return f->line_height;
 }
 
+enum output_method
+fget_output_method(struct frame *f)
+{
+  return f->output_method;
+}
+
 
 /***********************************************************************
 				Initialization
@@ -5941,7 +5932,6 @@ Gtk+ tooltips are not used) and on Windows.  */);
 
   staticpro (&Vframe_list);
 
-  defsubr (&Sframe_live_p);
   defsubr (&Swindow_system);
   defsubr (&Sframe_windows_min_size);
   defsubr (&Smake_terminal_frame);
