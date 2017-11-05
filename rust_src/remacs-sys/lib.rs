@@ -1187,8 +1187,6 @@ extern "C" {
     ) -> Lisp_Object;
     pub fn Fline_end_position(n: Lisp_Object) -> Lisp_Object;
     pub fn Fselect_window(window: Lisp_Object, norecord: Lisp_Object) -> Lisp_Object;
-    pub fn Fframep(object: Lisp_Object) -> Lisp_Object;
-    // pub fn frame_live_p(object: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

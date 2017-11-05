@@ -16,6 +16,11 @@ impl LispFrameRef {
     pub fn is_live(&self) -> bool {
         unsafe { !fget_terminal(self.as_ptr()).is_null() }
     }
+
+    #[inline]
+    pub fn fset_selected_window(&mut self, window: LispObject) {
+        self.selected_window = window.to_raw();
+    }
 }
 
 pub fn frame_or_selected(object: LispObject) -> LispFrameRef {
@@ -68,6 +73,37 @@ fn frame_live_p(object: LispObject) -> LispObject {
         LispObject::from(framep(object))
     } else {
         LispObject::constant_nil()
+    }
+}
+
+/// Set selected window of FRAME to WINDOW.
+/// FRAME must be a live frame and defaults to the selected one.  If FRAME
+/// is the selected frame, this makes WINDOW the selected window.  Optional
+/// argument NORECORD non-nil means to neither change the order of recently
+/// selected windows nor the buffer list.  WINDOW must denote a live window.
+/// Return WINDOW.
+#[lisp_fn(min = "2")]
+pub fn set_frame_selected_window(
+    frame: LispObject,
+    window: LispObject,
+    norecord: LispObject,
+) -> LispObject {
+    let f = if frame.is_nil() {
+        selected_frame()
+    } else {
+        frame
+    };
+    let mut frame_ref = f.as_live_frame_or_error();
+    let w = window.as_live_window_or_error();
+
+    if !f.eq(w.frame()) {
+        error!("In `set-frame-selected-window', WINDOW is not on FRAME")
+    }
+    if f.eq(selected_frame()) {
+        unsafe { LispObject::from(Fselect_window(window.to_raw(), norecord.to_raw())) }
+    } else {
+        frame_ref.fset_selected_window(window);
+        window
     }
 }
 
