@@ -2305,8 +2305,10 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 ;;;###autoload
 (progn (defun tramp-autoload-file-name-handler (operation &rest args)
   "Load Tramp file name handler, and perform OPERATION."
-  (let ((default-directory temporary-file-directory))
-    (load "tramp" 'noerror 'nomessage))
+  (if tramp-mode
+      (let ((default-directory temporary-file-directory))
+	(load "tramp" 'noerror 'nomessage))
+    (tramp-unload-file-name-handlers))
   (apply operation args)))
 
 ;; `tramp-autoload-file-name-handler' must be registered before
@@ -2422,12 +2424,13 @@ Add operations defined in `HANDLER-alist' to `tramp-file-name-handler'."
       (equal (apply operation args) operation))))
 
 ;;;###autoload
-(defun tramp-unload-file-name-handlers ()
+(progn (defun tramp-unload-file-name-handlers ()
   "Unload Tramp file name handlers from `file-name-handler-alist'."
   (dolist (fnh '(tramp-file-name-handler
-		 tramp-completion-file-name-handler))
+		 tramp-completion-file-name-handler
+		 tramp-autoload-file-name-handler))
     (let ((a1 (rassq fnh file-name-handler-alist)))
-      (setq file-name-handler-alist (delq a1 file-name-handler-alist)))))
+      (setq file-name-handler-alist (delq a1 file-name-handler-alist))))))
 
 (add-hook 'tramp-unload-hook 'tramp-unload-file-name-handlers)
 
