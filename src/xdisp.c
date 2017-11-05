@@ -13179,9 +13179,14 @@ hscroll_window_tree (Lisp_Object window)
 			       Fwindow_old_point (window))))
 	    {
 	      w->suspend_auto_hscroll = false;
-	      /* Force thorough redisplay of this window, to show the
-		 effect of disabling hscroll suspension immediately.  */
-	      SET_FRAME_GARBAGED (XFRAME (w->frame));
+	      /* When hscrolling just the current line, and the rest
+		 of lines were temporarily hscrolled, but no longer
+		 are, force thorough redisplay of this window, to show
+		 the effect of disabling hscroll suspension immediately.  */
+	      if (w->min_hscroll == 0 && w->hscroll > 0
+		  && EQ (Fbuffer_local_value (Qauto_hscroll_mode, w->contents),
+			 Qcurrent_line))
+		SET_FRAME_GARBAGED (XFRAME (w->frame));
 	    }
 
 	  /* Remember window point.  */
