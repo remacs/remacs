@@ -1536,6 +1536,10 @@ and 'gnutls-symmetric-decrypt'.
 See the node "(elisp) GnuTLS Cryptography" in the ELisp manual for details.
 
 +++
+** The function 'gnutls-available-p' now returns a list of capabilities
+supported by the GnuTLS library used by Emacs.
+
++++
 ** Emacs now supports records for user-defined types, via the new
 functions 'make-record', 'record', and 'recordp'.  Records are now
 used internally to represent cl-defstruct and defclass instances, for

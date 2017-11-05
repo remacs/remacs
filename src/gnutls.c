@@ -2422,6 +2422,8 @@ GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
 
 #ifdef HAVE_GNUTLS
 
+  capabilities = Fcons (intern("gnutls"), capabilities);
+
 # ifdef HAVE_GNUTLS3
   capabilities = Fcons (intern("gnutls3"), capabilities);
   capabilities = Fcons (intern("digests"), capabilities);
