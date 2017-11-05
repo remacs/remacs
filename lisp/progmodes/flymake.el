@@ -520,11 +520,12 @@ associated `flymake-category' return DEFAULT."
         (flymake--fringe-overlay-spec
          (overlay-get ov 'bitmap)))
       (default-maybe 'help-echo
-        (lambda (_window _ov pos)
-          (mapconcat
-           #'flymake--diag-text
-           (flymake-diagnostics pos)
-           "\n")))
+        (lambda (window _ov pos)
+          (with-selected-window window
+            (mapconcat
+             #'flymake--diag-text
+             (flymake-diagnostics pos)
+             "\n"))))
       (default-maybe 'severity (warning-numeric-level :error))
       (default-maybe 'priority (+ 100 (overlay-get ov 'severity))))
     ;; Some properties can't be overridden.
@@ -949,7 +950,7 @@ applied."
              (message
               "%s"
               (funcall (overlay-get target 'help-echo)
-                       nil nil (point)))))
+                       (selected-window) target (point)))))
           (interactive
            (user-error "No more Flymake errors%s"
                        (if filter
