@@ -818,7 +818,7 @@ Used in `tramp-make-tramp-file-name'.")
   "Regexp matching delimiter between user and host names.
 Derived from `tramp-postfix-user-format'.")
 
-(defconst tramp-host-regexp "[a-zA-Z0-9_.-]+"
+(defconst tramp-host-regexp "[a-zA-Z0-9_.%-]+"
   "Regexp matching host names.")
 
 (defconst tramp-prefix-ipv6-format-alist
@@ -4631,9 +4631,6 @@ Only works for Bourne-like shells."
 (provide 'tramp)
 
 ;;; TODO:
-
-;; * In Emacs 21, `insert-directory' shows total number of bytes used
-;;   by the files in that directory.  Add this here.
 ;;
 ;; * Avoid screen blanking when hitting `g' in dired.  (Eli Tziperman)
 ;;
