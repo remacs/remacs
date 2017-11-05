@@ -56,4 +56,26 @@ pub fn selected_frame() -> LispObject {
     unsafe { LispObject::from(current_frame) }
 }
 
+/// Return non-nil if OBJECT is a frame.
+/// Value is:
+///   t for a termcap frame (a character-only terminal),
+///  `x' for an Emacs frame that is really an X window,
+///  `w32' for an Emacs frame that is a window on MS-Windows display,
+///  `ns' for an Emacs frame on a GNUstep or Macintosh Cocoa display,
+/// See also `frame-live-p'.
+#[lisp_fn]
+pub fn framep(object: LispObject) -> LispObject {
+    if let Some(frame) = object.as_frame() {
+        match unsafe { fget_output_method(frame.as_ptr()) } {
+            OutputMethod::output_initial => LispObject::constant_t(),
+            OutputMethod::output_termcap => LispObject::constant_t(),
+            OutputMethod::output_x_window => LispObject::from(Qx),
+            OutputMethod::output_w32 => LispObject::from(Qw32),
+            OutputMethod::output_ns => LispObject::from(Qns),
+        }
+    } else {
+        LispObject::constant_nil()
+    }
+}
+
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

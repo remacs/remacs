@@ -524,9 +524,10 @@ impl LispObject {
 
     /*
     pub fn is_window_configuration(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION)
-        })
+        self.as_vectorlike().map_or(
+            false,
+            |v| v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION),
+        )
     }
     */
 

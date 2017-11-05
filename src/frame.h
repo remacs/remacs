@@ -706,6 +706,7 @@ Lisp_Object
 fget_root_window(const struct frame *f);
 struct terminal *
 fget_terminal(const struct frame *f);
+enum output_method fget_output_method(struct frame *f);
 
 INLINE double
 NUMVAL (Lisp_Object x)

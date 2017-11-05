@@ -247,37 +247,6 @@ set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 
 Lisp_Object Vframe_list;
 
-
-DEFUN ("framep", Fframep, Sframep, 1, 1, 0,
-       doc: /* Return non-nil if OBJECT is a frame.
-Value is:
-  t for a termcap frame (a character-only terminal),
- `x' for an Emacs frame that is really an X window,
- `w32' for an Emacs frame that is a window on MS-Windows display,
- `ns' for an Emacs frame on a GNUstep or Macintosh Cocoa display,
- `pc' for a direct-write MS-DOS frame.
-See also `frame-live-p'.  */)
-  (Lisp_Object object)
-{
-  if (!FRAMEP (object))
-    return Qnil;
-  switch (XFRAME (object)->output_method)
-    {
-    case output_initial: /* The initial frame is like a termcap frame. */
-    case output_termcap:
-      return Qt;
-    case output_x_window:
-      return Qx;
-    case output_w32:
-      return Qw32;
-    case output_msdos_raw:
-      return Qpc;
-    case output_ns:
-      return Qns;
-    default:
-      emacs_abort ();
-    }
-}
 
 DEFUN ("frame-live-p", Fframe_live_p, Sframe_live_p, 1, 1, 0,
        doc: /* Return non-nil if OBJECT is a frame which has not been deleted.
@@ -5972,7 +5941,6 @@ Gtk+ tooltips are not used) and on Windows.  */);
 
   staticpro (&Vframe_list);
 
-  defsubr (&Sframep);
   defsubr (&Sframe_live_p);
   defsubr (&Swindow_system);
   defsubr (&Sframe_windows_min_size);
