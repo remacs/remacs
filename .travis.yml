@@ -56,7 +56,7 @@ jobs:
         - TRAVIS_WITH_NO_WINDOW_SYSTEM=1  # So we can tell them apart
         - TRAVIS_ALLOW_FAILURE=1
       script:
-        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --without-gconf --without-gsettings; fi
+        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --without-gconf --without-gsettings
         - make -j 3 && echo '==> Running nowindow tests' && make check
     -
       <<: *NO_WINDOW_SYSTEM_TEST
