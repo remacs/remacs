@@ -1478,6 +1478,10 @@ To work around this, put this in your .emacs file:
   (with-eval-after-load 'evil-maps
     (define-key evil-motion-state-map [down-mouse-1] nil))
 
+This appears to be a bug in Evil.
+See discussions in https://github.com/emacs-evil/evil/issues/960
+and https://debbugs.gnu.org/cgi/bugreport.cgi?bug=29143
+
 ** Emacs spontaneously displays "I-search: " at the bottom of the screen.
 
 This means that Control-S/Control-Q (XON/XOFF) "flow control" is being
