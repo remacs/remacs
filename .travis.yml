@@ -41,6 +41,8 @@ jobs:
     -
       <<: *FULL_TEST
       os: osx
+      env:
+        - export PATH="/usr/local/opt/texinfo/bin:$PATH
       before_script:
         # Travis docs say to avoid brew update, but it works around the incorrect Ruby version
         # https://github.com/travis-ci/travis-ci/issues/8552
@@ -56,7 +58,7 @@ jobs:
         - TRAVIS_WITH_NO_WINDOW_SYSTEM=1  # So we can tell them apart
         - TRAVIS_ALLOW_FAILURE=1
       script:
-        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --without-gconf --without-gsettings
+        - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
         - make -j 3 && echo '==> Running nowindow tests' && make check
     -
       <<: *NO_WINDOW_SYSTEM_TEST
