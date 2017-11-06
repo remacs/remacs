@@ -1272,6 +1272,11 @@ table implementation.  This uses a new bytecode op 'switch', which
 isn't compatible with previous Emacs versions.  This functionality can
 be disabled by setting 'byte-compile-cond-use-jump-table' to nil.
 
++++
+** If 'comment-auto-fill-only-comments' is non-nil, 'auto-fill-function'
+is now called only if either no comment syntax is defined for the
+current buffer or the self-insertion takes place within a comment.
+
 ---
 ** The alist 'ucs-names' is now a hash table.
 
