@@ -1921,7 +1921,7 @@ have an entry @code{t} in the table.
 
 @defopt comment-auto-fill-only-comments
 This variable, if non-@code{nil}, means to fill lines automatically
-within comments only.  More precisley, this means that if a comment
+within comments only.  More precisely, this means that if a comment
 syntax was defined for the current buffer, then self-inserting a
 character outside of a comment will not call @code{auto-fill-function}.
 @end defopt
