@@ -279,23 +279,28 @@ To control which errors are matched, customize the variable
 `compilation-error-regexp-alist'."
   (interactive "P")
   (if (consp arg) (setq reset t arg nil))
-  (when (setq next-error-last-buffer (next-error-find-buffer))
-    ;; we know here that next-error-function is a valid symbol we can funcall
-    (with-current-buffer next-error-last-buffer
-      (funcall next-error-function (prefix-numeric-value arg) reset)
-      (when next-error-recenter
-        (recenter next-error-recenter))
-      (run-hooks 'next-error-hook))))
+  (let ((buffer (next-error-find-buffer)))
+    (when buffer
+      ;; We know here that next-error-function is a valid symbol we can funcall
+      (with-current-buffer buffer
+        (funcall next-error-function (prefix-numeric-value arg) reset)
+        ;; Override possible change of next-error-last-buffer in next-error-function
+        (setq next-error-last-buffer buffer)
+        (when next-error-recenter
+          (recenter next-error-recenter))
+        (run-hooks 'next-error-hook)))))
 
 (defun next-error-internal ()
   "Visit the source code corresponding to the `next-error' message at point."
-  (setq next-error-last-buffer (current-buffer))
-  ;; we know here that next-error-function is a valid symbol we can funcall
-  (with-current-buffer next-error-last-buffer
-    (funcall next-error-function 0 nil)
-    (when next-error-recenter
-      (recenter next-error-recenter))
-    (run-hooks 'next-error-hook)))
+  (let ((buffer (current-buffer)))
+    ;; We know here that next-error-function is a valid symbol we can funcall
+    (with-current-buffer buffer
+      (funcall next-error-function 0 nil)
+      ;; Override possible change of next-error-last-buffer in next-error-function
+      (setq next-error-last-buffer buffer)
+      (when next-error-recenter
+        (recenter next-error-recenter))
+      (run-hooks 'next-error-hook))))
 
 (defalias 'goto-next-locus 'next-error)
 (defalias 'next-match 'next-error)
