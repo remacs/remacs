@@ -1163,6 +1163,17 @@ extern "C" {
     ) -> Lisp_Object;
 
     pub fn find_symbol_value(symbol: Lisp_Object) -> Lisp_Object;
+    pub fn Fpos_visible_in_window_p(
+        pos: Lisp_Object,
+        window: Lisp_Object,
+        partially: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn Fposn_at_x_y(
+        x: Lisp_Object,
+        y: Lisp_Object,
+        frame_or_window: Lisp_Object,
+        whole: Lisp_Object,
+    ) -> Lisp_Object;
     pub fn find_before_next_newline(
         from: ptrdiff_t,
         to: ptrdiff_t,
