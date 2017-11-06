@@ -403,7 +403,7 @@
    (should-error (eval '(and-let* (nil (x 1))) lexical-binding)
                  :type 'setting-constant)
    (should (equal nil (and-let* ((nil) (x 1)))))
-   (should-error (eval (and-let* (2 (x 1))) lexical-binding)
+   (should-error (eval '(and-let* (2 (x 1))) lexical-binding)
                  :type 'wrong-type-argument)
    (should (equal 1 (and-let* ((2) (x 1)))))
    (should (equal 2 (and-let* ((x 1) (2)))))

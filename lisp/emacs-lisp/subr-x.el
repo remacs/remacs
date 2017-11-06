@@ -133,7 +133,7 @@ be of the form (VALUEFORM), which is evaluated and checked for
 nil; i.e. SYMBOL can be omitted if only the test result is of
 interest."
   (declare (indent 2)
-           (debug ((&rest [&or symbolp (symbolp form) (sexp)])
+           (debug ((&rest [&or symbolp (symbolp form) (form)])
                    form body)))
   (if varlist
       `(let* ,(setq varlist (internal--build-bindings varlist))
@@ -156,7 +156,9 @@ VARLIST is the same as in `if-let*'."
   "Bind variables according to VARLIST and conditionally eval BODY.
 Like `when-let*', except if BODY is empty and all the bindings
 are non-nil, then the result is non-nil."
-  (declare (indent 1) (debug when-let*))
+  (declare (indent 1)
+           (debug ((&rest [&or symbolp (symbolp form) (form)])
+                   body)))
   (let (res)
     (if varlist
         `(let* ,(setq varlist (internal--build-bindings varlist))
@@ -168,7 +170,7 @@ are non-nil, then the result is non-nil."
   "Bind variables according to SPEC and eval THEN or ELSE.
 Like `if-let*' except SPEC can have the form (SYMBOL VALUEFORM)."
   (declare (indent 2)
-           (debug ([&or (&rest [&or symbolp (symbolp form) (sexp)])
+           (debug ([&or (&rest [&or symbolp (symbolp form) (form)])
                         (symbolp form)]
                    form body))
            (obsolete "use `if-let*' instead." "26.1"))
