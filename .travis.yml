@@ -42,7 +42,7 @@ jobs:
       <<: *FULL_TEST
       os: osx
       env:
-        - PATH="/usr/local/opt/texinfo/bin:$PATH
+        - PATH="/usr/local/opt/texinfo/bin:$PATH"
       before_script:
         # Travis docs say to avoid brew update, but it works around the incorrect Ruby version
         # https://github.com/travis-ci/travis-ci/issues/8552
