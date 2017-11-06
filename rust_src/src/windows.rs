@@ -101,13 +101,17 @@ impl LispWindowRef {
     }
 }
 
-#[allow(dead_code)] // FIXME: Remove as soon as it is used
-fn window_or_selected(window: LispObject) -> LispWindowRef {
+pub fn window_or_selected_unchecked(window: LispObject) -> LispObject {
     if window.is_nil() {
         selected_window()
     } else {
         window
-    }.as_window_or_error()
+    }
+}
+
+#[allow(dead_code)] // FIXME: Remove as soon as it is used
+fn window_or_selected(window: LispObject) -> LispWindowRef {
+    window_or_selected_unchecked(window).as_window_or_error()
 }
 
 fn window_live_or_selected(window: LispObject) -> LispWindowRef {
