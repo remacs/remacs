@@ -423,6 +423,11 @@ pub struct Lisp_Window {
     pub window_end_bytepos: ptrdiff_t,
 }
 
+extern "C" {
+    pub fn wget_parent(w: *const Lisp_Window) -> Lisp_Object;
+}
+
+
 /// Represents an Emacs buffer. For documentation see struct buffer in
 /// buffer.h.
 #[repr(C)]
@@ -989,7 +994,6 @@ extern "C" {
 
     pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
-    pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
@@ -1124,6 +1128,8 @@ extern "C" {
 
     pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: Lisp_Object);
     pub fn set_point_both(charpos: ptrdiff_t, bytepos: ptrdiff_t);
+    pub fn set_point(charpos: ptrdiff_t);
+    pub fn Fline_beginning_position(n: Lisp_Object) -> Lisp_Object;
     pub fn buf_charpos_to_bytepos(buffer: *const Lisp_Buffer, charpos: ptrdiff_t) -> ptrdiff_t;
 
     pub fn Finsert_char(
@@ -1157,6 +1163,31 @@ extern "C" {
     ) -> Lisp_Object;
 
     pub fn find_symbol_value(symbol: Lisp_Object) -> Lisp_Object;
+    pub fn Fpos_visible_in_window_p(
+        pos: Lisp_Object,
+        window: Lisp_Object,
+        partially: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn Fposn_at_x_y(
+        x: Lisp_Object,
+        y: Lisp_Object,
+        frame_or_window: Lisp_Object,
+        whole: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn find_before_next_newline(
+        from: ptrdiff_t,
+        to: ptrdiff_t,
+        cnt: ptrdiff_t,
+        bytepos: *mut ptrdiff_t,
+    ) -> ptrdiff_t;
+    pub fn Fconstrain_to_field(
+        new_pos: Lisp_Object,
+        old_pos: Lisp_Object,
+        escape_from_edge: Lisp_Object,
+        only_in_line: Lisp_Object,
+        inhibit_capture_property: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn Fline_end_position(n: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

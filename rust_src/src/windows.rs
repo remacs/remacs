@@ -7,7 +7,7 @@ use remacs_sys::{EmacsInt, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor};
 use remacs_sys::{fget_column_width, fget_line_height, fget_minibuffer_window, fget_root_window,
                  minibuf_level, minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window};
+                 selected_window as current_window, wget_parent};
 
 use editfns::point;
 use frames::{frame_live_or_selected, window_frame_live_or_selected};
@@ -101,13 +101,17 @@ impl LispWindowRef {
     }
 }
 
-#[allow(dead_code)] // FIXME: Remove as soon as it is used
-fn window_or_selected(window: LispObject) -> LispWindowRef {
+pub fn window_or_selected_unchecked(window: LispObject) -> LispObject {
     if window.is_nil() {
         selected_window()
     } else {
         window
-    }.as_window_or_error()
+    }
+}
+
+#[allow(dead_code)] // FIXME: Remove as soon as it is used
+fn window_or_selected(window: LispObject) -> LispWindowRef {
+    window_or_selected_unchecked(window).as_window_or_error()
 }
 
 fn window_live_or_selected(window: LispObject) -> LispWindowRef {
@@ -333,6 +337,16 @@ pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject 
     let win = window_valid_or_selected(window);
 
     LispObject::from_natnum(win.total_height(round) as EmacsInt)
+}
+
+/// Return the parent window of window WINDOW.
+/// WINDOW must be a valid window and defaults to the selected one.
+/// Return nil for a window with no parent (e.g. a root window).
+#[lisp_fn(min = "0")]
+pub fn window_parent(window: LispObject) -> LispObject {
+    LispObject::from(unsafe {
+        wget_parent(window_valid_or_selected(window).as_ptr())
+    })
 }
 
 /// Return the frame that window WINDOW is on.
