@@ -45,12 +45,12 @@ pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
     let mut y_coord = y.as_fixnum_or_error();
     let x_coord = x.as_fixnum_or_error();
 
-    /* Point invisible due to hscrolling?  X can be -1 when a
-       newline in a R2L line overflows into the left fringe.  */
+    // Point invisible due to hscrolling?  X can be -1 when a
+    // newline in a R2L line overflows into the left fringe.
     if x_coord < -1 {
         return LispObject::constant_nil();
     }
-    if !aux_info.is_nil() && y_coord < 0 {
+    if aux_info.is_not_nil() && y_coord < 0 {
         let rtop = aux_info
             .as_cons()
             .and_then(|c| Some(c.car()))
