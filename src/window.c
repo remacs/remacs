@@ -6661,7 +6661,7 @@ the return value is nil.  Otherwise the value is t.  */)
 
 	   We have to do this in order to capture the following
 	   scenario: Suppose our frame contains two live windows W1 and
-	   W2 and ‘set-window-configuration’ replaces them by two
+	   W2 and 'set-window-configuration' replaces them by two
 	   windows W3 and W4 that were dead the last time
 	   run_window_size_change_functions was run.  If W3 and W4 have
 	   the same values for their old and new pixel sizes but these
