@@ -204,6 +204,13 @@ This function is intended to be set to `auth-source-debug`."
       (should (equal (plist-get result :port) 512))
       (should (equal (plist-get result :user) "anuser")))))
 
+(ert-deftest auth-source-pass-build-result-passes-full-host-to-find-match ()
+  (let (passed-host)
+    (cl-letf (((symbol-function 'auth-source-pass--find-match)
+               (lambda (host _user) (setq passed-host host))))
+      (auth-source-pass--build-result "https://user@host.com:123" nil nil)
+      (should (equal passed-host "https://user@host.com:123")))))
+
 (ert-deftest auth-source-pass-only-return-entries-that-can-be-open ()
   (cl-letf (((symbol-function 'auth-source-pass-entries)
              (lambda () '("foo.site.com" "bar.site.com" "mail/baz.site.com/scott")))
