@@ -407,6 +407,8 @@ Currently accepted REPORT-KEY arguments are:
 * `:force': value should be a boolean suggesting that Flymake
   consider the report even if it was somehow unexpected.")
 
+(put 'flymake-diagnostic-functions 'safe-local-variable #'null)
+
 (defvar flymake-diagnostic-types-alist
   `((:error
      . ((flymake-category . flymake-error)))
