@@ -206,12 +206,10 @@ This function is intended to be set to `auth-source-debug`."
 
 (ert-deftest auth-source-pass-only-return-entries-that-can-be-open ()
   (cl-letf (((symbol-function 'auth-source-pass-entries)
-             (lambda () '("foo.site.com" "bar.site.com"
-                     "mail/baz.site.com/scott")))
+             (lambda () '("foo.site.com" "bar.site.com" "mail/baz.site.com/scott")))
             ((symbol-function 'auth-source-pass--entry-valid-p)
              ;; only foo.site.com and "mail/baz.site.com/scott" are valid
-             (lambda (entry) (member entry '("foo.site.com"
-                                        "mail/baz.site.com/scott")))))
+             (lambda (entry) (member entry '("foo.site.com" "mail/baz.site.com/scott")))))
     (should (equal (auth-source-pass--find-all-by-entry-name "foo.site.com" "someuser")
                    '("foo.site.com")))
     (should (equal (auth-source-pass--find-all-by-entry-name "bar.site.com" "someuser")
