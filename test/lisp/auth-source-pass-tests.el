@@ -166,11 +166,13 @@ This function is intended to be set to `auth-source-debug`."
                    "host.com"))))
 
 (ert-deftest auth-source-pass-hostname ()
+  (should (equal (auth-source-pass--hostname "https://foo.bar:443") "foo.bar"))
   (should (equal (auth-source-pass--hostname "https://foo.bar") "foo.bar"))
   (should (equal (auth-source-pass--hostname "http://foo.bar") "foo.bar"))
   (should (equal (auth-source-pass--hostname "https://SomeUser@foo.bar") "foo.bar")))
 
 (ert-deftest auth-source-pass-hostname-with-user ()
+  (should (equal (auth-source-pass--hostname-with-user "https://foo.bar:443") "foo.bar"))
   (should (equal (auth-source-pass--hostname-with-user "https://foo.bar") "foo.bar"))
   (should (equal (auth-source-pass--hostname-with-user "http://foo.bar") "foo.bar"))
   (should (equal (auth-source-pass--hostname-with-user "https://SomeUser@foo.bar") "SomeUser@foo.bar")))
