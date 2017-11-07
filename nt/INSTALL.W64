@@ -35,18 +35,6 @@ Run this file to install MSYS2 in your preferred directory, e.g. the default
 C:\msys64 -- this will install MinGW-w64 also.  Note that directory names
 containing spaces may cause problems.
 
-Then you'll need to add the following directories to your Windows PATH
-environment variable:
-
-  c:\msys64\usr\bin;c:\msys64\mingw64\bin
-
-you can do this through Control Panel / System and Security / System /
-Advanced system settings / Environment Variables / Edit path.
-
-Adding these directories to your PATH tells Emacs where to find the DLLs it
-needs to run, and some optional commands like grep and find.  These commands
-will also be available at the Windows console.
-
 ** Download and install the necessary packages
 
 Run c:/msys64/msys2.exe in your MSYS2 directory and you will see a BASH window
@@ -112,11 +100,11 @@ C:\emacs\emacs-24.5:
 ** From the Git repository
 
 To download the Git repository, do something like the following -- this will
-put the Emacs source into C:\emacs\emacs-25:
+put the Emacs source into C:\emacs\emacs-26:
 
   mkdir /c/emacs
   cd /c/emacs
-  git clone git://git.sv.gnu.org/emacs.git emacs-25
+  git clone git://git.sv.gnu.org/emacs.git emacs-26
 
 (We recommend using the command shown on Savannah Emacs project page.)
 
@@ -150,11 +138,10 @@ which 'make install' will use - in this example we set it to C:\emacs\emacs-26.
 If a prefix is not specified the files will be put in the standard Unix
 directories located in your C:\msys64 directory, but this is not recommended.
 
-Note also that we need to disable Imagemagick because Emacs does not yet
-support it on Windows.
+Note also that we need to disable Imagemagick and D-Bus because Emacs
+does not yet support them on Windows.
 
-  PKG_CONFIG_PATH=/mingw64/lib/pkgconfig \
-  ./configure --prefix=/c/emacs/emacs-26 --without-imagemagick
+  ./configure --prefix=/c/emacs/emacs-26 --without-imagemagick --without-dbus
 
 ** Run make
 
@@ -192,6 +179,14 @@ To test it out, run
 
 and if all went well, you will have a new 64-bit version of Emacs.
 
+When running Emacs from outside the mingw64 shell, you will need to
+add c:\msys64\mingw64\bin to your Windows PATH, or copy the needed
+DLLs into Emacs' bin/ directory.  Otherwise features such as TLS which
+depend on those DLLs will be missing.
+
+You can do this through Control Panel / System and Security / System /
+Advanced system settings / Environment Variables / Edit path.
+
 * Make a shortcut
 
 To make a shortcut to run the new Emacs, right click on the location where you
@@ -201,6 +196,51 @@ runemacs.exe in the bin folder of the new Emacs, and give it a name.
 You can set any command line options by right clicking on the resulting
 shortcut, select Properties, then add any options to the Target command,
 e.g. --debug-init.
+
+* Troubleshooting
+
+** Missing mingw64.exe launcher
+
+Older versions of Msys2 may lack the mingw64.exe launcher program.  If
+you have them, running mingw64_shell.bat or "msys2_shell.cmd -mingw64"
+should work instead.
+
+Alternatively, install mingw64.exe with
+
+    pacman -S msys/msys2-launcher-git
+
+** Configure errors
+
+*** Check that mingw64 gcc is accessible
+
+Errors like
+
+    configure: error: Emacs does not support 'x86_64-pc-msys' systems.
+
+or
+
+    checking the compiler's target... configure: error: Impossible to obtain gcc compiler target.
+
+indicate you didn't use the mingw64 launcher, or you didn't install
+gcc.  It's also possible you have something in ~/.bashrc or ~/.profile
+which modifies PATH or MSYSTEM to an unexpected value, preventing gcc
+from being found.  At the mingw64 bash shell, running
+
+    gcc -v
+
+should give output which includes the text
+
+    Target: x86_64-w64-mingw32
+
+*** Check your $PKG_CONFIG_PATH
+
+For a typical MSYS2 install, running
+
+    echo $PKG_CONFIG_PATH
+
+at the mingw64 bash shell should give print a value starting with
+'/mingw64/lib/pkgconfig'.  Incorrect values may prevent configure from
+finding installed libraries.
 
 * Credits
 
