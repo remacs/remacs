@@ -1312,7 +1312,7 @@ Repeated uses step through the possible completions."
 (defvar minibuffer-confirm-exit-commands
   '(completion-at-point minibuffer-complete
     minibuffer-complete-word PC-complete PC-complete-word)
-  "A list of commands which cause an immediately following
+  "List of commands which cause an immediately following
 `minibuffer-complete-and-exit' to ask for extra confirmation.")
 
 (defun minibuffer-complete-and-exit ()
@@ -2979,6 +2979,17 @@ or a symbol, see `completion-pcm--merge-completions'."
       (setq re (replace-match "" t t re 1)))
     re))
 
+(defun completion-pcm--pattern-point-idx (pattern)
+  "Return index of subgroup corresponding to `point' element of PATTERN.
+Return nil if there's no such element."
+  (let ((idx nil)
+        (i 0))
+    (dolist (x pattern)
+      (unless (stringp x)
+        (cl-incf i)
+        (if (eq x 'point) (setq idx i))))
+    idx))
+
 (defun completion-pcm--all-completions (prefix pattern table pred)
   "Find all completions for PATTERN in TABLE obeying PRED.
 PATTERN is as returned by `completion-pcm--string->pattern'."
@@ -3010,7 +3021,8 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
 
 (defun completion-pcm--hilit-commonality (pattern completions)
   (when completions
-    (let* ((re (completion-pcm--pattern->regex pattern '(point)))
+    (let* ((re (completion-pcm--pattern->regex pattern 'group))
+           (point-idx (completion-pcm--pattern-point-idx pattern))
            (case-fold-search completion-ignore-case))
       (mapcar
        (lambda (str)
@@ -3018,8 +3030,16 @@ PATTERN is as returned by `completion-pcm--string->pattern'."
          (setq str (copy-sequence str))
          (unless (string-match re str)
            (error "Internal error: %s does not match %s" re str))
-         (let ((pos (or (match-beginning 1) (match-end 0))))
-           (put-text-property 0 pos
+         (let* ((pos (if point-idx (match-beginning point-idx) (match-end 0)))
+                (md (match-data))
+                (start (pop md))
+                (end (pop md)))
+           (while md
+             (put-text-property start (pop md)
+                                'font-lock-face 'completions-common-part
+                                str)
+             (setq start (pop md)))
+           (put-text-property start end
                               'font-lock-face 'completions-common-part
                               str)
            (if (> (length str) pos)
