@@ -18,8 +18,8 @@ jobs:
     - stage: rustfmt
       os: linux  # No need to run this everywhere
       before_script:
-        - travis_wait rustup install nightly-2017-10-22
-        - rustup default nightly-2017-10-22
+        - travis_wait rustup install $(cat rust_src/rust-toolchain)
+        - rustup default $(cat rust_src/rust-toolchain)
         # rustfmt doesn't know where to look for libraries yet.
         # See https://github.com/rust-lang-nursery/rustfmt/issues/1707#issuecomment-310005652
         - export LD_LIBRARY_PATH=$(rustc --print sysroot)/lib:$LD_LIBRARY_PATH
@@ -35,6 +35,8 @@ jobs:
       os: linux
       before_script:
         - sudo apt install -y texinfo libgif-dev libxpm-dev
+        - travis_wait rustup install $(cat rust_src/rust-toolchain)
+        - rustup default $(cat rust_src/rust-toolchain)
       script:
         - ./autogen.sh && ./configure
         - make -j 3 && echo '==> Running tests' && make check
@@ -56,7 +58,10 @@ jobs:
         # Ensure that we build without warnings.
         - CARGO_FLAGS="--features 'strict'"
         - TRAVIS_WITH_NO_WINDOW_SYSTEM=1  # So we can tell them apart
-        - TRAVIS_ALLOW_FAILURE=1
+        #- TRAVIS_ALLOW_FAILURE=1
+      before_script:
+        - travis_wait rustup install $(cat rust_src/rust-toolchain)
+        - rustup default $(cat rust_src/rust-toolchain)
       script:
         - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
         - make -j 3 && echo '==> Running nowindow tests' && make check
@@ -64,12 +69,14 @@ jobs:
       <<: *NO_WINDOW_SYSTEM_TEST
       os: osx
       before_script:
+        - travis_wait rustup install $(cat rust_src/rust-toolchain)
+        - rustup default $(cat rust_src/rust-toolchain)
         # Travis docs say to avoid brew update, but it works around the incorrect Ruby version
         - brew update
         - brew install gnutls
         - brew install texinfo
-  allow_failures:
-    - env: TRAVIS_ALLOW_FAILURE=1
+  #allow_failures:
+  #  - env: TRAVIS_ALLOW_FAILURE=1
 
 notifications:
   fast_finish: true
