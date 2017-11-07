@@ -1513,16 +1513,16 @@ The following key bindings are currently in effect in the buffer:
   (set (make-local-variable 'bookmark-make-record-function)
        'Man-bookmark-make-record))
 
-(defsubst Man-build-section-alist ()
+(defun Man-build-section-list ()
   "Build the list of manpage sections."
-  (setq Man--sections nil)
+  (setq Man--sections ())
   (goto-char (point-min))
   (let ((case-fold-search nil))
-    (while (re-search-forward Man-heading-regexp (point-max) t)
+    (while (re-search-forward Man-heading-regexp nil t)
       (let ((section (match-string 1)))
         (unless (member section Man--sections)
           (push section Man--sections)))
-      (forward-line 1)))
+      (forward-line)))
   (setq Man--sections (nreverse Man--sections)))
 
 (defsubst Man-build-references-alist ()
@@ -1803,7 +1803,7 @@ Specify which REFERENCE to use; default is based on word at point."
       (widen)
       (goto-char page-start)
       (narrow-to-region page-start page-end)
-      (Man-build-section-alist)
+      (Man-build-section-list)
       (Man-build-references-alist)
       (goto-char (point-min)))))
 

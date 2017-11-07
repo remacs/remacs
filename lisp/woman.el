@@ -1619,7 +1619,7 @@ decompress the file if appropriate.  See the documentation for the
 	      (setq woman-buffer-alist
 		    (cons (cons file-name bufname) woman-buffer-alist)
 		    woman-buffer-number 0)))))
-  (Man-build-section-alist)
+  (Man-build-section-list)
   (Man-build-references-alist)
   (goto-char (point-min)))
 
