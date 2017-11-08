@@ -14,8 +14,8 @@ use std::ops::{Deref, DerefMut};
 use std::slice;
 
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, PseudovecType, CHECK_IMPURE,
-                 INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, SYMBOL_NAME,
-                 USE_LSB_TAG, VALBITS, VALMASK};
+                 INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, USE_LSB_TAG,
+                 VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
                  Lisp_Type};
 use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p, Qframep,
@@ -1110,7 +1110,7 @@ impl Debug for LispObject {
         }
         match ty {
             Lisp_Type::Lisp_Symbol => {
-                let name = LispObject::from(unsafe { SYMBOL_NAME(self.to_raw()) });
+                let name = self.as_symbol_or_error().symbol_name();
                 write!(f, "'{}", display_string(name))?;
             }
             Lisp_Type::Lisp_Cons => {
