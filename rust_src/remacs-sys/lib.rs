@@ -993,6 +993,7 @@ extern "C" {
     pub static Vprocess_alist: Lisp_Object;
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vfeatures: Lisp_Object;
+    pub static mut Vautoload_queue: Lisp_Object;
     pub static minibuf_level: EmacsInt;
     pub static mut minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
@@ -1170,6 +1171,9 @@ extern "C" {
     ) -> Lisp_Object;
 
     pub fn find_symbol_value(symbol: Lisp_Object) -> Lisp_Object;
+
+    pub fn Fmapc(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
+
     pub fn Fpos_visible_in_window_p(
         pos: Lisp_Object,
         window: Lisp_Object,

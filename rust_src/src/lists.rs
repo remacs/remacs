@@ -163,7 +163,7 @@ pub fn member(elt: LispObject, list: LispObject) -> LispObject {
 /// The value is actually the first element of LIST whose car is KEY.
 /// Elements of LIST that are not conses are ignored.
 #[lisp_fn]
-fn assq(key: LispObject, list: LispObject) -> LispObject {
+pub fn assq(key: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
         if let Some(item_cons) = item.as_cons() {
