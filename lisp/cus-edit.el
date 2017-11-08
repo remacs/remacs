@@ -986,7 +986,7 @@ If given a prefix (or a COMMENT argument), also prompt for a comment."
 				       current-prefix-arg))
   (custom-load-symbol variable)
   (custom-push-theme 'theme-value variable 'user 'set (custom-quote value))
-  (funcall (or (get variable 'custom-set) 'set-default) variable value)
+  (funcall (or (get variable 'custom-set) #'set-default) variable value)
   (put variable 'customized-value (list (custom-quote value)))
   (cond ((string= comment "")
  	 (put variable 'variable-comment nil)

@@ -670,8 +670,8 @@ It can have the following values:
   `simplified' -- Ange-FTP like syntax
   `separate'   -- Syntax as defined for XEmacs originally
 
-Do not change the value by `setq', it must be changed only by
-`custom-set-variables'.  See also `tramp-change-syntax'."
+Do not change the value by `setq', it must be changed only via
+Customize.  See also `tramp-change-syntax'."
   :group 'tramp
   :version "26.1"
   :package-version '(Tramp . "2.3.3")
