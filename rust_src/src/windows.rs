@@ -6,8 +6,8 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor};
 use remacs_sys::{fget_column_width, fget_line_height, fget_minibuffer_window, fget_root_window,
-                 minibuf_level, minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, wget_parent, is_minibuffer};
+                 is_minibuffer, minibuf_level, minibuf_selected_window as current_minibuf_window,
+                 selected_window as current_window, wget_parent};
 
 use editfns::point;
 use frames::{frame_live_or_selected, window_frame_live_or_selected};
