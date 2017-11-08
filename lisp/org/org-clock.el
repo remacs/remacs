@@ -487,7 +487,7 @@ to add an effort property.")
                                    "10\\.6\\.[[:digit:]]"
                                    (shell-command-to-string
                                     "sw_vers -productVersion"))
-                                  (<= m -1034058203136))
+                                  (<= m -1034058203135))
                        (ignore-errors (decode-time (list m 0)))))))
 	 (low
 	  (funcall dichotomy
