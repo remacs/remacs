@@ -163,7 +163,7 @@ pub fn member(elt: LispObject, list: LispObject) -> LispObject {
 /// The value is actually the first element of LIST whose car is KEY.
 /// Elements of LIST that are not conses are ignored.
 #[lisp_fn]
-fn assq(key: LispObject, list: LispObject) -> LispObject {
+pub fn assq(key: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
         if let Some(item_cons) = item.as_cons() {
@@ -501,37 +501,4 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
     }
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr!(Sassoc);
-        defsubr!(Sassq);
-        defsubr!(Satom);
-        defsubr!(Scar);
-        defsubr!(Scar_safe);
-        defsubr!(Scdr);
-        defsubr!(Scdr_safe);
-        defsubr!(Sconsp);
-        defsubr!(Sdelq);
-        defsubr!(Sget);
-        defsubr!(Slax_plist_get);
-        defsubr!(Slax_plist_put);
-        defsubr!(Slist);
-        defsubr!(Slistp);
-        defsubr!(Smake_list);
-        defsubr!(Smember);
-        defsubr!(Smemq);
-        defsubr!(Smemql);
-        defsubr!(Snlistp);
-        defsubr!(Snth);
-        defsubr!(Snthcdr);
-        defsubr!(Splist_get);
-        defsubr!(Splist_member);
-        defsubr!(Splist_put);
-        defsubr!(Sput);
-        defsubr!(Srassoc);
-        defsubr!(Srassq);
-        defsubr!(Ssafe_length);
-        defsubr!(Ssetcar);
-        defsubr!(Ssetcdr);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));

@@ -1,12 +1,12 @@
 //! Functions operating on process.
 
-use remacs_macros::lisp_fn;
-use remacs_sys::{Fmapcar, Lisp_Process, Qcdr, Qlistp, Vprocess_alist};
-
 use buffers::get_buffer;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{assoc, cdr};
+use remacs_macros::lisp_fn;
+use remacs_sys::{BoolBF, EmacsInt, Fmapcar, Lisp_Process, Qcdr, Qlistp, Vprocess_alist};
+use remacs_sys::{pget_kill_without_query, pget_pid, pset_kill_without_query};
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
@@ -63,6 +63,19 @@ fn process_buffer(process: LispObject) -> LispObject {
     process.as_process_or_error().buffer()
 }
 
+/// Return the process id of PROCESS.
+/// This is the pid of the external process which PROCESS uses or talks to.
+/// For a network, serial, and pipe connections, this value is nil.
+#[lisp_fn]
+fn process_id(process: LispObject) -> LispObject {
+    let pid = unsafe { pget_pid(process.as_process_or_error().as_ptr()) };
+    if pid != 0 {
+        LispObject::from_fixnum(pid as EmacsInt)
+    } else {
+        LispObject::constant_nil()
+    }
+}
+
 /// Return the (or a) live process associated with BUFFER.
 /// BUFFER may be a buffer or the name of one.
 /// Return nil if all processes associated with BUFFER have been
@@ -103,14 +116,24 @@ pub fn set_process_plist(process: LispObject, plist: LispObject) -> LispObject {
     }
 }
 
-pub fn rust_init_syms() {
+include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
+
+/// Return the current value of query-on-exit flag for PROCESS.
+#[lisp_fn]
+pub fn process_query_on_exit_flag(process: LispObject) -> LispObject {
+    let kwq = unsafe { pget_kill_without_query(process.as_process_or_error().as_ptr()) };
+    LispObject::from_bool(!kwq as BoolBF)
+}
+
+/// Specify if query is needed for PROCESS when Emacs is exited.
+/// If the second argument FLAG is non-nil, Emacs will query the user before
+/// exiting or killing a buffer if PROCESS is running.  This function
+/// returns FLAG.
+#[lisp_fn]
+pub fn set_process_query_on_exit_flag(process: LispObject, flag: LispObject) -> LispObject {
+    let p = process.as_process_or_error().as_mut();
     unsafe {
-        defsubr!(Sget_buffer_process);
-        defsubr!(Sget_process);
-        defsubr!(Sprocess_buffer);
-        defsubr!(Sprocess_list);
-        defsubr!(Sprocess_name);
-        defsubr!(Sprocessp);
-        defsubr!(Sset_process_plist);
+        pset_kill_without_query(p, flag.is_nil());
     }
+    flag
 }

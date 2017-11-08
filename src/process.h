@@ -201,6 +201,12 @@ struct Lisp_Process
     bool_bf gnutls_complete_negotiation_p : 1;
 #endif
 };
+/* Accessors for Rust */
+pid_t
+pget_pid(const struct Lisp_Process *p);
+
+bool_bf
+pget_kill_without_query(const struct Lisp_Process *p);
 
 INLINE bool
 PROCESSP (Lisp_Object a)
@@ -297,6 +303,8 @@ extern Lisp_Object network_interface_info (Lisp_Object);
 extern Lisp_Object remove_slash_colon (Lisp_Object);
 
 extern void update_processes_for_thread_death (Lisp_Object);
+
+void pset_kill_without_query (struct Lisp_Process *p, bool_bf val);
 
 INLINE_HEADER_END
 

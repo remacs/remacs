@@ -76,8 +76,4 @@ pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
         })
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr!(Sfontp);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));

@@ -14,6 +14,7 @@
 //! - `EMACS_FLOAT_SIZE`
 //! - `GCTYPEBITS`
 //! - `USE_LSB_TAG`
+//! - `BoolBF`
 
 extern crate libc;
 
@@ -21,6 +22,10 @@ pub mod libm;
 
 use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
            size_t, time_t, timespec};
+
+// libc refuses to merge pid_t as an alias for c_int in Windows, so we will not use libc::pid_t
+// and alias it ourselves.
+pub type pid_t = libc::c_int;
 
 pub type Lisp_Object = EmacsInt;
 
@@ -407,6 +412,11 @@ pub struct Lisp_Window {
     vscroll: c_int,
     window_end_bytepos: ptrdiff_t,
 }
+
+extern "C" {
+    pub fn wget_parent(w: *const Lisp_Window) -> Lisp_Object;
+}
+
 
 /// Represents an Emacs buffer. For documentation see struct buffer in
 /// buffer.h.
@@ -806,7 +816,20 @@ pub struct Lisp_Process {
     /// Queue for storing waiting writes.
     pub write_queue: Lisp_Object,
 
-    // TODO: this struct is incomplete.
+    // This struct is incomplete.
+    // To access remaining fields use access functions written in
+    // src/process.c and export them here for use in Rust.
+}
+
+/// Functions to access members of `struct Lisp_Process`.
+extern "C" {
+    pub fn pget_pid(p: *const Lisp_Process) -> pid_t;
+    pub fn pget_kill_without_query(p: *const Lisp_Process) -> BoolBF;
+}
+
+/// Functions to set members of `struct Lisp_Process`.
+extern "C" {
+    pub fn pset_kill_without_query(p: *mut Lisp_Process, b: BoolBF);
 }
 
 #[repr(C)]
@@ -909,10 +932,18 @@ pub struct Lisp_Frame {
     // frame.foo the proper method is fget_foo(frame).
 }
 
+#[repr(C)]
+pub struct terminal {
+    pub header: Lisp_Vectorlike_Header,
+}
+
 /// Functions to access members of `struct frame`.
 extern "C" {
     pub fn fget_column_width(f: *const Lisp_Frame) -> c_int;
     pub fn fget_line_height(f: *const Lisp_Frame) -> c_int;
+    pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
 }
 
 #[repr(C)]
@@ -943,6 +974,7 @@ pub struct Lisp_Hash_Table {
 
 extern "C" {
     pub static mut globals: emacs_globals;
+    pub static mut current_global_map: Lisp_Object;
     pub static current_thread: *mut thread_state;
 
     pub static lispsym: Lisp_Symbol;
@@ -950,6 +982,7 @@ extern "C" {
     pub static Vprocess_alist: Lisp_Object;
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vfeatures: Lisp_Object;
+    pub static mut Vautoload_queue: Lisp_Object;
     pub static minibuf_level: EmacsInt;
     pub static mut minibuf_window: Lisp_Object;
     pub static selected_window: Lisp_Object;
@@ -958,16 +991,19 @@ extern "C" {
 
     pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
-    pub fn Fcurrent_buffer() -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
+    pub fn Flookup_key(
+        keymap: Lisp_Object,
+        key: Lisp_Object,
+        accept_default: Lisp_Object,
+    ) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
     pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
     pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
-
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
@@ -1089,6 +1125,8 @@ extern "C" {
 
     pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: Lisp_Object);
     pub fn set_point_both(charpos: ptrdiff_t, bytepos: ptrdiff_t);
+    pub fn set_point(charpos: ptrdiff_t);
+    pub fn Fline_beginning_position(n: Lisp_Object) -> Lisp_Object;
     pub fn buf_charpos_to_bytepos(buffer: *const Lisp_Buffer, charpos: ptrdiff_t) -> ptrdiff_t;
 
     pub fn Finsert_char(
@@ -1128,6 +1166,34 @@ extern "C" {
     pub fn misc_get_ty(any: *const Lisp_Misc_Any) -> u16;
     pub fn is_minibuffer(w: *const Lisp_Window) -> bool;
     pub fn xmalloc(size: size_t) -> *mut c_void;
+
+    pub fn Fmapc(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
+
+    pub fn Fpos_visible_in_window_p(
+        pos: Lisp_Object,
+        window: Lisp_Object,
+        partially: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn Fposn_at_x_y(
+        x: Lisp_Object,
+        y: Lisp_Object,
+        frame_or_window: Lisp_Object,
+        whole: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn find_before_next_newline(
+        from: ptrdiff_t,
+        to: ptrdiff_t,
+        cnt: ptrdiff_t,
+        bytepos: *mut ptrdiff_t,
+    ) -> ptrdiff_t;
+    pub fn Fconstrain_to_field(
+        new_pos: Lisp_Object,
+        old_pos: Lisp_Object,
+        escape_from_edge: Lisp_Object,
+        only_in_line: Lisp_Object,
+        inhibit_capture_property: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn Fline_end_position(n: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

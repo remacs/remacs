@@ -50,10 +50,4 @@ pub fn set_minibuffer_window(window: LispObject) -> LispObject {
     window
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr!(Sactive_minibuffer_window);
-        defsubr!(Sminibufferp);
-        defsubr!(Sset_minibuffer_window);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/minibuf_exports.rs"));

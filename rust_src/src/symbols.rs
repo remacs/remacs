@@ -202,18 +202,4 @@ pub fn symbol_value(symbol: LispObject) -> LispObject {
     LispObject::from(val)
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr!(Sfboundp);
-        defsubr!(Sfmakunbound);
-        defsubr!(Sindirect_variable);
-        defsubr!(Skeywordp);
-        defsubr!(Smakunbound);
-        defsubr!(Ssetplist);
-        defsubr!(Ssymbol_function);
-        defsubr!(Ssymbol_name);
-        defsubr!(Ssymbol_plist);
-        defsubr!(Ssymbol_value);
-        defsubr!(Ssymbolp);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/symbols_exports.rs"));

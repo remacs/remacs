@@ -54,8 +54,4 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
     return result;
 }
 
-pub fn rust_init_syms() {
-    unsafe {
-        defsubr!(Sindirect_function);
-    }
-}
+include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));
