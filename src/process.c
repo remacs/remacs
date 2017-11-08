@@ -397,7 +397,20 @@ pid_t pget_pid(const struct Lisp_Process *p)
 {
   return p->pid;
 }
+
+bool_bf pget_kill_without_query(const struct Lisp_Process *p)
+{
+  return p->kill_without_query;
+}
 /* End Rust Accessors */
+
+/* Setters to enable Rust code to set data in the Lisp_Process struct */
+void
+pset_kill_without_query (struct Lisp_Process *p, bool_bf val)
+{
+  p->kill_without_query = val;
+}
+/* End Rust Setters */
 
 
 static Lisp_Object
@@ -1352,30 +1365,6 @@ This function returns FLAG.  */)
   CHECK_PROCESS (process);
   XPROCESS (process)->inherit_coding_system_flag = !NILP (flag);
   return flag;
-}
-
-DEFUN ("set-process-query-on-exit-flag",
-       Fset_process_query_on_exit_flag, Sset_process_query_on_exit_flag,
-       2, 2, 0,
-       doc: /* Specify if query is needed for PROCESS when Emacs is exited.
-If the second argument FLAG is non-nil, Emacs will query the user before
-exiting or killing a buffer if PROCESS is running.  This function
-returns FLAG.  */)
-  (register Lisp_Object process, Lisp_Object flag)
-{
-  CHECK_PROCESS (process);
-  XPROCESS (process)->kill_without_query = NILP (flag);
-  return flag;
-}
-
-DEFUN ("process-query-on-exit-flag",
-       Fprocess_query_on_exit_flag, Sprocess_query_on_exit_flag,
-       1, 1, 0,
-       doc: /* Return the current value of query-on-exit flag for PROCESS.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return (XPROCESS (process)->kill_without_query ? Qnil : Qt);
 }
 
 DEFUN ("process-contact", Fprocess_contact, Sprocess_contact,
@@ -7882,8 +7871,6 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_thread);
   defsubr (&Sset_process_window_size);
   defsubr (&Sset_process_inherit_coding_system_flag);
-  defsubr (&Sset_process_query_on_exit_flag);
-  defsubr (&Sprocess_query_on_exit_flag);
   defsubr (&Sprocess_contact);
   defsubr (&Sprocess_plist);
   defsubr (&Smake_process);
