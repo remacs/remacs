@@ -1,7 +1,7 @@
 //! Operations on lists.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Qcircular_list, Qlistp, Qplistp};
+use remacs_sys::{EmacsInt, Qcircular_list, Qplistp};
 use remacs_sys::globals;
 
 use lisp::LispObject;
@@ -97,27 +97,21 @@ fn cdr_safe(object: LispObject) -> LispObject {
 /// Take cdr N times on LIST, return the result.
 #[lisp_fn]
 pub fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
-    let num = n.as_fixnum_or_error();
-    let mut tail = list;
-    for _ in 0..num {
-        match tail.as_cons() {
-            None => {
-                if tail.is_not_nil() {
-                    wrong_type!(Qlistp, list)
-                }
-                return tail;
-            }
-            Some(tail_cons) => tail = tail_cons.cdr(),
-        }
+    let mut it = list.iter_tails_safe();
+
+    match it.nth(n.as_fixnum_or_error() as usize) {
+        Some(value) => value.as_obj(),
+        None => it.rest(),
     }
-    tail
 }
 
 /// Return the Nth element of LIST.
 /// N counts from zero.  If LIST is not that long, nil is returned.
 #[lisp_fn]
 fn nth(n: LispObject, list: LispObject) -> LispObject {
-    car(nthcdr(n, list))
+    list.iter_cars()
+        .nth(n.as_fixnum_or_error() as usize)
+        .map_or(LispObject::constant_nil(), |c| c)
 }
 
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
