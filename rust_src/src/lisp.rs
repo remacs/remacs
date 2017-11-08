@@ -18,10 +18,10 @@ use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, PseudovecTy
                  USE_LSB_TAG, VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
                  Lisp_Type};
-use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p, Qframep,
-                 Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
-                 Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
-                 Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
+use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframep, Qhash_table_p,
+                 Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil, Qnumber_or_marker_p,
+                 Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp, Qt, Qthreadp,
+                 Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp, Qframe_live_p};
 use remacs_sys::{circular_list, internal_equal, lispsym, make_float, misc_get_ty};
 
 use buffers::{LispBufferRef, LispOverlayRef};
