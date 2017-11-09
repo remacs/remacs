@@ -1137,7 +1137,8 @@ POS can be a buffer position or a button"
 
 (defun flymake--diagnostics-buffer-entries ()
   (with-current-buffer flymake--diagnostics-buffer-source
-    (cl-loop for diag in (flymake-diagnostics)
+    (cl-loop for diag in
+             (cl-sort (flymake-diagnostics) #'< :key #'flymake-diagnostic-beg)
              for (line . col) =
              (save-excursion
                (goto-char (flymake--diag-beg diag))
