@@ -1824,7 +1824,7 @@ resolve_face_name (Lisp_Object face_name, bool signal_p)
       if (EQ (hare, tortoise))
 	{
 	  if (signal_p)
-	    xsignal1 (Qcircular_list, orig_face);
+	    circular_list (orig_face);
 	  return Qdefault;
 	}
     }
