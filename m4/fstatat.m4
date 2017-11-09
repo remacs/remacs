@@ -20,7 +20,7 @@ AC_DEFUN([gl_FUNC_FSTATAT],
     HAVE_FSTATAT=0
   else
     dnl Test for an AIX 7.1 bug; see
-    dnl <http://lists.gnu.org/archive/html/bug-tar/2011-09/msg00015.html>.
+    dnl <https://lists.gnu.org/archive/html/bug-tar/2011-09/msg00015.html>.
     AC_CACHE_CHECK([whether fstatat (..., 0) works],
       [gl_cv_func_fstatat_zero_flag],
       [AC_RUN_IFELSE(

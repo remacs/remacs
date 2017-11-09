@@ -54,6 +54,8 @@ the character after point.
 * Registers::        How registers are implemented.  Accessing the text or
                        position stored in a register.
 * Transposition::    Swapping two portions of a buffer.
+* Replacing::        Replacing the text of one buffer with the text
+                       of another buffer.
 * Decompression::    Dealing with compressed data.
 * Base 64::          Conversion to or from base 64 encoding.
 * Checksum/Hash::    Computing cryptographic hashes.
@@ -1884,10 +1886,10 @@ prefix or @code{nil}, meaning it has failed to determine a prefix.
 @cindex filling, automatic
 @cindex Auto Fill mode
 
-@c FIXME: I don't think any of the variables below is a/an normal/abnormal hook.
-  Auto Fill mode is a minor mode that fills lines automatically as text
-is inserted.  This section describes the hook used by Auto Fill mode.
-For a description of functions that you can call explicitly to fill and
+Auto Fill mode is a minor mode that fills lines automatically as text is
+inserted.  @xref{Auto Fill,,, emacs, The GNU Emacs Manual}.  This
+section describes some variables used by Auto Fill mode.  For a
+description of functions that you can call explicitly to fill and
 justify existing text, see @ref{Filling}.
 
   Auto Fill mode also enables the functions that change the margins and
@@ -1896,11 +1898,11 @@ justification style to refill portions of the text.  @xref{Margins}.
 @defvar auto-fill-function
 The value of this buffer-local variable should be a function (of no
 arguments) to be called after self-inserting a character from the table
-@code{auto-fill-chars}.  It may be @code{nil}, in which case nothing
-special is done in that case.
+@code{auto-fill-chars}, see below.  It may be @code{nil}, in which case
+nothing special is done in that case.
 
-The value of @code{auto-fill-function} is @code{do-auto-fill} when
-Auto-Fill mode is enabled.  That is a function whose sole purpose is to
+The value of @code{auto-fill-function} is @code{do-auto-fill} when Auto
+Fill mode is enabled.  That is a function whose sole purpose is to
 implement the usual strategy for breaking a line.
 @end defvar
 
@@ -1916,6 +1918,14 @@ A char table of characters which invoke @code{auto-fill-function} when
 self-inserted---space and newline in most language environments.  They
 have an entry @code{t} in the table.
 @end defvar
+
+@defopt comment-auto-fill-only-comments
+This variable, if non-@code{nil}, means to fill lines automatically
+within comments only.  More precisely, this means that if a comment
+syntax was defined for the current buffer, then self-inserting a
+character outside of a comment will not call @code{auto-fill-function}.
+@end defopt
+
 
 @node Sorting
 @section Sorting Text
@@ -4328,6 +4338,28 @@ is non-@code{nil}, @code{transpose-regions} does not do this---it leaves
 all markers unrelocated.
 @end defun
 
+@node Replacing
+@section Replacing Buffer Text
+
+  You can use the following function to replace the text of one buffer
+with the text of another buffer:
+
+@deffn Command replace-buffer-contents source
+This function replaces the accessible portion of the current buffer
+with the accessible portion of the buffer @var{source}.  @var{source}
+may either be a buffer object or the name of a buffer.  When
+@code{replace-buffer-contents} succeeds, the text of the accessible
+portion of the current buffer will be equal to the text of the
+accessible portion of the @var{source} buffer.  This function attempts
+to keep point, markers, text properties, and overlays in the current
+buffer intact.  One potential case where this behavior is useful is
+external code formatting programs: they typically write the
+reformatted text into a temporary buffer or file, and using
+@code{delete-region} and @code{insert-buffer-substring} would destroy
+these properties.  However, the latter combination is typically
+faster.  @xref{Deletion}, and @ref{Insertion}.
+@end deffn
+
 @node Decompression
 @section Dealing With Compressed Data
 
@@ -4512,9 +4544,9 @@ It should be somewhat more efficient on larger buffers than
 @cindex symmetric cipher
 @cindex cipher, symmetric
 
-If compiled with GnuTLS, Emacs offers built-in cryptographic support.
-Following the GnuTLS API terminology, the available tools are digests,
-MACs, symmetric ciphers, and AEAD ciphers.
+  If compiled with GnuTLS, Emacs offers built-in cryptographic
+support.  Following the GnuTLS API terminology, the available tools
+are digests, MACs, symmetric ciphers, and AEAD ciphers.
 
 The terms used herein, such as IV (Initialization Vector), require
 some familiarity with cryptography and will not be defined in detail.
@@ -4532,7 +4564,7 @@ structure of the GnuTLS library.
 @cindex format of gnutls cryptography inputs
 @cindex gnutls cryptography inputs format
 
-The inputs to GnuTLS cryptographic functions can be specified in
+  The inputs to GnuTLS cryptographic functions can be specified in
 several ways, both as primitive Emacs Lisp types or as lists.
 
 The list form is currently similar to how @code{md5} and
@@ -4699,8 +4731,15 @@ IV used.
 @section Parsing HTML and XML
 @cindex parsing html
 
-When Emacs is compiled with libxml2 support, the following functions
-are available to parse HTML or XML text into Lisp object trees.
+  Emacs can be compiled with built-in libxml2 support.
+
+@defun libxml-available-p
+This function returns non-@code{nil} if built-in libxml2 support is
+available in this Emacs session.
+@end defun
+
+When libxml2 support is available, the following functions can be used
+to parse HTML or XML text into Lisp object trees.
 
 @defun libxml-parse-html-region start end &optional base-url discard-comments
 This function parses the text between @var{start} and @var{end} as
@@ -4767,9 +4806,9 @@ about syntax).
 @cindex DOM
 @cindex Document Object Model
 
-The @acronym{DOM} returned by @code{libxml-parse-html-region} (and the
-other @acronym{XML} parsing functions) is a tree structure where each
-node has a node name (called a @dfn{tag}), and optional key/value
+  The @acronym{DOM} returned by @code{libxml-parse-html-region} (and
+the other @acronym{XML} parsing functions) is a tree structure where
+each node has a node name (called a @dfn{tag}), and optional key/value
 @dfn{attribute} list, and then a list of @dfn{child nodes}.  The child
 nodes are either strings or @acronym{DOM} objects.
 

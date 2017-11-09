@@ -265,13 +265,10 @@ properties, it is displayed with the specified faces (@pxref{Faces}).
 The string is also added to the @file{*Messages*} buffer, but without
 text properties (@pxref{Logging Messages}).
 
-The @code{text-quoting-style} variable controls what quotes are
-generated; @xref{Keys in Documentation}.  A call using a format like
-@t{"Missing `%s'"} with grave accents and apostrophes typically
-generates a message like @t{"Missing ‘foo’"} with matching curved
-quotes.  In contrast, a call using a format like @t{"Missing '%s'"}
-with only apostrophes typically generates a message like @t{"Missing
-’foo’"} with only closing curved quotes, an unusual style in English.
+Typically grave accent and apostrophe in the format translate to
+matching curved quotes, e.g., @t{"Missing `%s'"} might result in
+@t{"Missing ‘foo’"}.  @xref{Text Quoting Style}, for how to influence
+or inhibit this translation.
 
 In batch mode, the message is printed to the standard error stream,
 followed by a newline.
@@ -810,7 +807,7 @@ mechanism can change the variable @code{delayed-warnings-hook}:
 
 @defvar delayed-warnings-hook
 This is a normal hook which is run by the Emacs command loop, after
-@code{post-command-hook}, in order to to process and display delayed
+@code{post-command-hook}, in order to process and display delayed
 warnings.
 
 Its default value is a list of two functions:
@@ -2053,13 +2050,17 @@ calculations.
 
 @defun line-number-display-width &optional pixelwise
 This function returns the width used for displaying the line numbers
-in the selected window.  Optional argument @var{pixelwise}, if
-non-@code{nil}, means return the value in pixels; otherwise the value
-is returned in column units of the font defined for the
-@code{line-number} face.  If line numbers are not displayed in the
-selected window, the value is zero.  Use @code{with-selected-window}
-(@pxref{Selecting Windows}) if you need this information about another
-window.
+in the selected window.  If the optional argument @var{pixelwise} is
+the symbol @code{columns}, the return value is a float number of the
+frame's canonical columns; if @var{pixelwise} is @code{t} or any other
+non-@code{nil} value, the value is an integer and is measured in
+pixels.  If @var{pixelwise} is omitted or @code{nil}, the value is the
+integer number of columns of the font defined for the
+@code{line-number} face, and doesn't include the 2 columns used to pad
+the numbers on display.  If line numbers are not displayed in the
+selected window, the value is zero regardless of the value of
+@var{pixelwise}.  Use @code{with-selected-window} (@pxref{Selecting
+Windows}) if you need this information about another window.
 @end defun
 
 
@@ -2884,6 +2885,16 @@ If the text lies within the mode line of the selected window, Emacs
 applies the @code{mode-line} face.  For the mode line of a
 non-selected window, Emacs applies the @code{mode-line-inactive} face.
 For a header line, Emacs applies the @code{header-line} face.
+
+@item
+If the text comes from an overlay string via @code{before-string} or
+@code{after-string} properties (@pxref{Overlay Properties}), or from a
+display string (@pxref{Other Display Specs}), and the string doesn't
+contain a @code{face} or @code{mouse-face} property, but the buffer
+text affected by the overlay/display property does define a face,
+Emacs applies the face attributes of the ``underlying'' buffer text.
+Note that this is so even if the overlay or display string is
+displayed in the display margins (@pxref{Display Margins}).
 
 @item
 If any given attribute has not been specified during the preceding
@@ -4638,7 +4649,7 @@ as an absolute number of pixels.
 
 @smallexample
 @group
-  @var{expr} ::= @var{num} | (@var{num}) | @var{unit} | @var{elem} | @var{pos} | @var{image} | @var{form}
+  @var{expr} ::= @var{num} | (@var{num}) | @var{unit} | @var{elem} | @var{pos} | @var{image} | @var{xwidget} | @var{form}
   @var{num}  ::= @var{integer} | @var{float} | @var{symbol}
   @var{unit} ::= in | mm | cm | width | height
 @end group
@@ -4654,22 +4665,34 @@ as an absolute number of pixels.
   The form @var{num} specifies a fraction of the default frame font
 height or width.  The form @code{(@var{num})} specifies an absolute
 number of pixels.  If @var{num} is a symbol, @var{symbol}, its
-buffer-local variable binding is used.
+buffer-local variable binding is used; that binding can be either a
+number or a cons cell of the forms shown above (including yet another
+cons cell whose @code{car} is a symbol that has a buffer-local
+binding).
 
   The @code{in}, @code{mm}, and @code{cm} units specify the number of
 pixels per inch, millimeter, and centimeter, respectively.  The
 @code{width} and @code{height} units correspond to the default width
-and height of the current face.  An image specification @code{image}
-corresponds to the width or height of the image.
+and height of the current face.  An image specification of the form
+@w{@code{(image . @var{props})}} (@pxref{Image Descriptors})
+corresponds to the width or height of the specified image.  Similarly,
+an xwidget specification of the form @w{@code{(xwidget . @var{props})}}
+stands for the width or height of the specified xwidget.
+@xref{Xwidgets}.
 
   The elements @code{left-fringe}, @code{right-fringe},
 @code{left-margin}, @code{right-margin}, @code{scroll-bar}, and
-@code{text} specify to the width of the corresponding area of the
-window.
+@code{text} specify the width of the corresponding area of the window.
+When the window displays line numbers (@pxref{Size of Displayed
+Text}), the width of the @code{text} area is decreased by the screen
+space taken by the line-number display.
 
   The @code{left}, @code{center}, and @code{right} positions can be
 used with @code{:align-to} to specify a position relative to the left
-edge, center, or right edge of the text area.
+edge, center, or right edge of the text area.  When the window
+displays line numbers, the @code{left} and the @code{center} positions
+are offset to account for the screen space taken by the line-number
+display.
 
   Any of the above window elements (except @code{text}) can also be
 used with @code{:align-to} to specify that the position is relative to
@@ -4685,13 +4708,15 @@ the left-margin, use
 
   If no specific base offset is set for alignment, it is always relative
 to the left edge of the text area.  For example, @samp{:align-to 0} in a
-header-line aligns with the first text column in the text area.
+header-line aligns with the first text column in the text area.  When
+the window displays line numbers, the text is considered to start where
+the space used for line-number display ends.
 
   A value of the form @code{(@var{num} . @var{expr})} stands for the
 product of the values of @var{num} and @var{expr}.  For example,
 @code{(2 . in)} specifies a width of 2 inches, while @code{(0.5 .
 @var{image})} specifies half the width (or height) of the specified
-image.
+@var{image} (which should be given by its image spec).
 
   The form @code{(+ @var{expr} ...)} adds up the value of the
 expressions.  The form @code{(- @var{expr} ...)} negates or subtracts
@@ -4837,6 +4862,13 @@ or an image descriptor.
 certain buffer text, without altering or preventing the display of
 that text, put a @code{before-string} property on the text and put the
 margin display specification on the contents of the before-string.
+
+  Note that if the string to be displayed in the margin doesn't
+specify a face, its face is determined using the same rules and
+priorities as it is for strings displayed in the text area
+(@pxref{Displaying Faces}).  If this results in undesirable
+``leaking'' of faces into the margin, make sure the string has an
+explicit face specified for it.
 
   Before the display margins can display anything, you must give
 them a nonzero width.  The usual way to do that is to set these
@@ -7035,7 +7067,7 @@ window display table nor a buffer display table defined, or when Emacs
 is outputting text to the standard output or error streams.  Although its
 default is typically @code{nil}, in an interactive session if the
 terminal cannot display curved quotes, its default maps curved quotes
-to ASCII approximations.  @xref{Keys in Documentation}.
+to ASCII approximations.  @xref{Text Quoting Style}.
 @end defvar
 
 The @file{disp-table} library defines several functions for changing
@@ -7471,7 +7503,7 @@ and are continued or truncated at the left margin.
 @cindex paragraph-separate, and bidirectional display
   Where exactly paragraphs start and end, for the purpose of the Emacs
 @acronym{UBA} implementation, is determined by the following two
-buffer-local variables (note that that @code{paragraph-start} and
+buffer-local variables (note that @code{paragraph-start} and
 @code{paragraph-separate} have no influence on this).  By default both
 of these variables are @code{nil}, and paragraphs are bounded by empty
 lines, i.e., lines that consist entirely of zero or more whitespace

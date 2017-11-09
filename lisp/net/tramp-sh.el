@@ -613,7 +613,7 @@ use Cwd \"realpath\";
 
 sub myrealpath {
     my ($file) = @_;
-    return realpath($file) if -e $file;
+    return realpath($file) if (-e $file || -l $file);
 }
 
 sub recursive {
@@ -1020,6 +1020,7 @@ of command line.")
     (file-remote-p . tramp-handle-file-remote-p)
     (file-selinux-context . tramp-sh-handle-file-selinux-context)
     (file-symlink-p . tramp-handle-file-symlink-p)
+    (file-system-info . tramp-sh-handle-file-system-info)
     (file-truename . tramp-sh-handle-file-truename)
     (file-writable-p . tramp-sh-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
@@ -1139,12 +1140,7 @@ component is used as the target of the symlink."
 		     (tramp-shell-quote-argument localname)))
 	    (with-current-buffer (tramp-get-connection-buffer v)
 	      (goto-char (point-min))
-	      (setq result (buffer-substring (point-min) (point-at-eol))))
-	    (when (and (file-symlink-p filename)
-		       (string-equal result localname))
-	      (tramp-error
-	       v 'file-error
-	       "Apparent cycle of symbolic links for %s" filename)))
+	      (setq result (buffer-substring (point-min) (point-at-eol)))))
 
 	   ;; Use Perl implementation.
 	   ((and (tramp-get-remote-perl v)
@@ -1198,16 +1194,6 @@ component is used as the target of the symlink."
 			 (setq numchase (1+ numchase))
 			 (when (file-name-absolute-p symlink-target)
 			   (setq result nil))
-			 ;; If the symlink was absolute, we'll get a
-			 ;; string like "/user@host:/some/target";
-			 ;; extract the "/some/target" part from it.
-			 (when (tramp-tramp-file-p symlink-target)
-			   (unless (tramp-equal-remote filename symlink-target)
-			     (tramp-error
-			      v 'file-error
-			      "Symlink target `%s' on wrong host"
-			      symlink-target))
-			   (setq symlink-target localname))
 			 (setq steps
 			       (append
 				(split-string symlink-target "/" 'omit)	steps)))
@@ -1226,6 +1212,13 @@ component is used as the target of the symlink."
 			"/"))
 		(when (string= "" result)
 		  (setq result "/")))))
+
+	  ;; Detect cycle.
+	  (when (and (file-symlink-p filename)
+		     (string-equal result localname))
+	    (tramp-error
+	     v 'file-error
+	     "Apparent cycle of symbolic links for %s" filename))
 	  ;; If the resulting localname looks remote, we must quote it
 	  ;; for security reasons.
 	  (when (or quoted (file-remote-p result))
@@ -1985,7 +1978,7 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
 	  ;; scp or rsync DTRT.
 	  (progn
 	    (when (and (file-directory-p newname)
-		       (not (directory-name-p newname)))
+		       (not (tramp-compat-directory-name-p newname)))
 	      (tramp-error v 'file-already-exists newname))
 	    (setq dirname (directory-file-name (expand-file-name dirname))
 		  newname (directory-file-name (expand-file-name newname)))
@@ -2046,96 +2039,102 @@ of `copy' and `rename'.  FILENAME and NEWNAME must be absolute
 file names."
   (unless (memq op '(copy rename))
     (error "Unknown operation `%s', must be `copy' or `rename'" op))
-  (let ((t1 (tramp-tramp-file-p filename))
-	(t2 (tramp-tramp-file-p newname))
-	(length (tramp-compat-file-attribute-size
-		 (file-attributes (file-truename filename))))
-	(attributes (and preserve-extended-attributes
-			 (apply 'file-extended-attributes (list filename)))))
 
-    (with-parsed-tramp-file-name (if t1 filename newname) nil
-      (when (and (not ok-if-already-exists) (file-exists-p newname))
-	(tramp-error v 'file-already-exists newname))
+  (if (file-directory-p filename)
+      (progn
+	(copy-directory filename newname keep-date t)
+	(when (eq op 'rename) (delete-directory filename 'recursive)))
 
-      (with-tramp-progress-reporter
-	  v 0 (format "%s %s to %s"
-		      (if (eq op 'copy) "Copying" "Renaming")
-		      filename newname)
+    (let ((t1 (tramp-tramp-file-p filename))
+	  (t2 (tramp-tramp-file-p newname))
+	  (length (tramp-compat-file-attribute-size
+		   (file-attributes (file-truename filename))))
+	  (attributes (and preserve-extended-attributes
+			   (apply 'file-extended-attributes (list filename)))))
 
-	(cond
-	 ;; Both are Tramp files.
-	 ((and t1 t2)
-	  (with-parsed-tramp-file-name filename v1
-	    (with-parsed-tramp-file-name newname v2
-	      (cond
-	       ;; Shortcut: if method, host, user are the same for
-	       ;; both files, we invoke `cp' or `mv' on the remote
-	       ;; host directly.
-	       ((tramp-equal-remote filename newname)
-		(tramp-do-copy-or-rename-file-directly
-		 op filename newname
-		 ok-if-already-exists keep-date preserve-uid-gid))
+      (with-parsed-tramp-file-name (if t1 filename newname) nil
+	(when (and (not ok-if-already-exists) (file-exists-p newname))
+	  (tramp-error v 'file-already-exists newname))
 
-	       ;; Try out-of-band operation.
-	       ((and
-		 (tramp-method-out-of-band-p v1 length)
-		 (tramp-method-out-of-band-p v2 length))
-		(tramp-do-copy-or-rename-file-out-of-band
-		 op filename newname keep-date))
+	(with-tramp-progress-reporter
+	    v 0 (format "%s %s to %s"
+			(if (eq op 'copy) "Copying" "Renaming")
+			filename newname)
 
-	       ;; No shortcut was possible.  So we copy the file
-	       ;; first.  If the operation was `rename', we go back
-	       ;; and delete the original file (if the copy was
-	       ;; successful).  The approach is simple-minded: we
-	       ;; create a new buffer, insert the contents of the
-	       ;; source file into it, then write out the buffer to
-	       ;; the target file.  The advantage is that it doesn't
-	       ;; matter which file name handlers are used for the
-	       ;; source and target file.
-	       (t
-		(tramp-do-copy-or-rename-file-via-buffer
-		 op filename newname keep-date))))))
-
-	 ;; One file is a Tramp file, the other one is local.
-	 ((or t1 t2)
 	  (cond
-	   ;; Fast track on local machine.
-	   ((tramp-local-host-p v)
-	    (tramp-do-copy-or-rename-file-directly
-	     op filename newname
-	     ok-if-already-exists keep-date preserve-uid-gid))
+	   ;; Both are Tramp files.
+	   ((and t1 t2)
+	    (with-parsed-tramp-file-name filename v1
+	      (with-parsed-tramp-file-name newname v2
+		(cond
+		 ;; Shortcut: if method, host, user are the same for
+		 ;; both files, we invoke `cp' or `mv' on the remote
+		 ;; host directly.
+		 ((tramp-equal-remote filename newname)
+		  (tramp-do-copy-or-rename-file-directly
+		   op filename newname
+		   ok-if-already-exists keep-date preserve-uid-gid))
 
-	   ;; If the Tramp file has an out-of-band method, the
-	   ;; corresponding copy-program can be invoked.
-	   ((tramp-method-out-of-band-p v length)
-	    (tramp-do-copy-or-rename-file-out-of-band
-	     op filename newname keep-date))
+		 ;; Try out-of-band operation.
+		 ((and
+		   (tramp-method-out-of-band-p v1 length)
+		   (tramp-method-out-of-band-p v2 length))
+		  (tramp-do-copy-or-rename-file-out-of-band
+		   op filename newname keep-date))
 
-	   ;; Use the inline method via a Tramp buffer.
-	   (t (tramp-do-copy-or-rename-file-via-buffer
-	       op filename newname keep-date))))
+		 ;; No shortcut was possible.  So we copy the file
+		 ;; first.  If the operation was `rename', we go back
+		 ;; and delete the original file (if the copy was
+		 ;; successful).  The approach is simple-minded: we
+		 ;; create a new buffer, insert the contents of the
+		 ;; source file into it, then write out the buffer to
+		 ;; the target file.  The advantage is that it doesn't
+		 ;; matter which file name handlers are used for the
+		 ;; source and target file.
+		 (t
+		  (tramp-do-copy-or-rename-file-via-buffer
+		   op filename newname keep-date))))))
 
-	 (t
-	  ;; One of them must be a Tramp file.
-	  (error "Tramp implementation says this cannot happen")))
+	   ;; One file is a Tramp file, the other one is local.
+	   ((or t1 t2)
+	    (cond
+	     ;; Fast track on local machine.
+	     ((tramp-local-host-p v)
+	      (tramp-do-copy-or-rename-file-directly
+	       op filename newname
+	       ok-if-already-exists keep-date preserve-uid-gid))
 
-	;; Handle `preserve-extended-attributes'.  We ignore possible
-	;; errors, because ACL strings could be incompatible.
-	(when attributes
-	  (ignore-errors
-	    (apply 'set-file-extended-attributes (list newname attributes))))
+	     ;; If the Tramp file has an out-of-band method, the
+	     ;; corresponding copy-program can be invoked.
+	     ((tramp-method-out-of-band-p v length)
+	      (tramp-do-copy-or-rename-file-out-of-band
+	       op filename newname keep-date))
 
-	;; In case of `rename', we must flush the cache of the source file.
-	(when (and t1 (eq op 'rename))
-	  (with-parsed-tramp-file-name filename v1
-	    (tramp-flush-file-property v1 (file-name-directory v1-localname))
-	    (tramp-flush-file-property v1 v1-localname)))
+	     ;; Use the inline method via a Tramp buffer.
+	     (t (tramp-do-copy-or-rename-file-via-buffer
+		 op filename newname keep-date))))
 
-	;; When newname did exist, we have wrong cached values.
-	(when t2
-	  (with-parsed-tramp-file-name newname v2
-	    (tramp-flush-file-property v2 (file-name-directory v2-localname))
-	    (tramp-flush-file-property v2 v2-localname)))))))
+	   (t
+	    ;; One of them must be a Tramp file.
+	    (error "Tramp implementation says this cannot happen")))
+
+	  ;; Handle `preserve-extended-attributes'.  We ignore possible
+	  ;; errors, because ACL strings could be incompatible.
+	  (when attributes
+	    (ignore-errors
+	      (apply 'set-file-extended-attributes (list newname attributes))))
+
+	  ;; In case of `rename', we must flush the cache of the source file.
+	  (when (and t1 (eq op 'rename))
+	    (with-parsed-tramp-file-name filename v1
+	      (tramp-flush-file-property v1 (file-name-directory v1-localname))
+	      (tramp-flush-file-property v1 v1-localname)))
+
+	  ;; When newname did exist, we have wrong cached values.
+	  (when t2
+	    (with-parsed-tramp-file-name newname v2
+	      (tramp-flush-file-property v2 (file-name-directory v2-localname))
+	      (tramp-flush-file-property v2 v2-localname))))))))
 
 (defun tramp-do-copy-or-rename-file-via-buffer (op filename newname keep-date)
   "Use an Emacs buffer to copy or rename a file.
@@ -2746,6 +2745,17 @@ The method used must be an out-of-band method."
 	       (file-name-nondirectory filename))
 	     beg 'noerror)
 	    (replace-match (file-relative-name filename) t))
+
+	  ;; Try to insert the amount of free space.
+	  (goto-char (point-min))
+	  ;; First find the line to put it on.
+	  (when (re-search-forward "^\\([[:space:]]*total\\)" nil t)
+	    (let ((available (get-free-disk-space ".")))
+	      (when available
+		;; Replace "total" with "total used", to avoid confusion.
+		(replace-match "\\1 used in directory")
+		(end-of-line)
+		(insert " available " available))))
 
 	  (goto-char (point-max)))))))
 
@@ -3708,6 +3718,30 @@ file-notify events."
 	  (tramp-compat-funcall
 	   'file-notify-handle-event
 	   `(file-notify ,object file-notify-callback)))))))
+
+(defun tramp-sh-handle-file-system-info (filename)
+  "Like `file-system-info' for Tramp files."
+  (ignore-errors
+    (with-parsed-tramp-file-name (expand-file-name filename) nil
+      (when (tramp-get-remote-df v)
+	(tramp-message v 5 "file system info: %s" localname)
+	(tramp-send-command
+	 v (format
+	    "%s --block-size=1 --output=size,used,avail %s"
+	    (tramp-get-remote-df v) (tramp-shell-quote-argument localname)))
+	(with-current-buffer (tramp-get-connection-buffer v)
+	  (goto-char (point-min))
+	  (forward-line)
+	  (when (looking-at
+		 (concat "[[:space:]]*\\([[:digit:]]+\\)"
+			 "[[:space:]]+\\([[:digit:]]+\\)"
+			 "[[:space:]]+\\([[:digit:]]+\\)"))
+	    (list (string-to-number (concat (match-string 1) "e0"))
+		  ;; The second value is the used size.  We need the
+		  ;; free size.
+		  (- (string-to-number (concat (match-string 1) "e0"))
+		     (string-to-number (concat (match-string 2) "e0")))
+		  (string-to-number (concat (match-string 3) "e0")))))))))
 
 ;;; Internal Functions:
 
@@ -5411,6 +5445,17 @@ This command is returned only if `delete-by-moving-to-trash' is non-nil."
 	   (file-remote-p tmpfile 'localname))))
 	(delete-file tmpfile))
       result)))
+
+(defun tramp-get-remote-df (vec)
+  "Determine remote `df' command."
+  (with-tramp-connection-property vec "df"
+    (tramp-message vec 5 "Finding a suitable `df' command")
+    (let ((result (tramp-find-executable vec "df" (tramp-get-remote-path vec))))
+      (and
+       result
+       (tramp-send-command-and-check
+	vec (format "%s --block-size=1 --output=size,used,avail /" result))
+       result))))
 
 (defun tramp-get-remote-gvfs-monitor-dir (vec)
   "Determine remote `gvfs-monitor-dir' command."

@@ -480,7 +480,7 @@ Font for POD headers."
 (defcustom cperl-highlight-variables-indiscriminately nil
   "Non-nil means perform additional highlighting on variables.
 Currently only changes how scalar variables are highlighted.
-Note that that variable is only read at initialization time for
+Note that the variable is only read at initialization time for
 the variable `cperl-font-lock-keywords-2', so changing it after you've
 entered CPerl mode the first time will have no effect."
   :type 'boolean
@@ -1896,7 +1896,9 @@ or as help on variables `cperl-tips', `cperl-problems',
   (if cperl-pod-here-scan
       (or cperl-syntaxify-by-font-lock
        (progn (or cperl-faces-init (cperl-init-faces-weak))
-	      (cperl-find-pods-heres)))))
+	      (cperl-find-pods-heres))))
+  ;; Setup Flymake
+  (add-hook 'flymake-diagnostic-functions 'perl-flymake nil t))
 
 ;; Fix for perldb - make default reasonable
 (defun cperl-db ()
@@ -2314,7 +2316,7 @@ to nil."
 						 nil t)))) ; Only one
 		     (progn
 		       (forward-word-strictly 1)
-		       (setq name (file-name-base)
+		       (setq name (file-name-base (buffer-file-name))
 			     p (point))
 		       (insert " NAME\n\n" name
 			       " - \n\n=head1 SYNOPSIS\n\n\n\n"

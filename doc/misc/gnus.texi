@@ -13216,6 +13216,11 @@ Also @pxref{Formatting Variables}.
 @subsection Server Commands
 @cindex server commands
 
+The following keybinding are available in the server buffer.  Be aware
+that some of the commands will only work on servers that you've added
+through this interface (with @kbd{a}), not with servers you've defined
+in your init files.
+
 @table @kbd
 
 @item v
@@ -18487,7 +18492,7 @@ something along the lines of the following:
 (defun my-article-old-p ()
   "Say whether an article is old."
   (< (time-to-days (date-to-time (mail-header-date gnus-headers)))
-     (- (time-to-days (current-time)) gnus-agent-expire-days)))
+     (- (time-to-days nil) gnus-agent-expire-days)))
 @end lisp
 
 with the predicate then defined as:
@@ -21386,7 +21391,7 @@ correct group name @samp{mail.misc}.
 
 Extra switches may be passed to the namazu search command by setting the
 variable @code{nnir-namazu-additional-switches}.  It is particularly
-important not to pass any any switches to namazu that will change the
+important not to pass any switches to namazu that will change the
 output format.  Good switches to use include @option{--sort},
 @option{--ascending}, @option{--early} and @option{--late}.
 Refer to the Namazu documentation for further

@@ -12320,7 +12320,7 @@ build_desired_tool_bar_string (struct frame *f)
   /* Reuse f->desired_tool_bar_string, if possible.  */
   if (size < size_needed || NILP (f->desired_tool_bar_string))
     fset_desired_tool_bar_string
-      (f, Fmake_string (make_number (size_needed), make_number (' ')));
+      (f, Fmake_string (make_number (size_needed), make_number (' '), Qnil));
   else
     {
       AUTO_LIST4 (props, Qdisplay, Qnil, Qmenu_item, Qnil);
@@ -13174,8 +13174,20 @@ hscroll_window_tree (Lisp_Object window)
 
 	  /* If the position of this window's point has explicitly
 	     changed, no more suspend auto hscrolling.  */
-	  if (NILP (Fequal (Fwindow_point (window), Fwindow_old_point (window))))
-	    w->suspend_auto_hscroll = false;
+	  if (w->suspend_auto_hscroll
+	      && NILP (Fequal (Fwindow_point (window),
+			       Fwindow_old_point (window))))
+	    {
+	      w->suspend_auto_hscroll = false;
+	      /* When hscrolling just the current line, and the rest
+		 of lines were temporarily hscrolled, but no longer
+		 are, force thorough redisplay of this window, to show
+		 the effect of disabling hscroll suspension immediately.  */
+	      if (w->min_hscroll == 0 && w->hscroll > 0
+		  && EQ (Fbuffer_local_value (Qauto_hscroll_mode, w->contents),
+			 Qcurrent_line))
+		SET_FRAME_GARBAGED (XFRAME (w->frame));
+	    }
 
 	  /* Remember window point.  */
 	  Fset_marker (w->old_pointm,
@@ -17036,6 +17048,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	       = try_window_reusing_current_matrix (w)))
 	{
 	  IF_DEBUG (debug_method_add (w, "1"));
+	  clear_glyph_matrix (w->desired_matrix);
 	  if (try_window (window, startp, TRY_WINDOW_CHECK_MARGINS) < 0)
 	    /* -1 means we need to scroll.
 	       0 means we need new matrices, but fonts_changed
@@ -20888,9 +20901,11 @@ maybe_produce_line_number (struct it *it)
 	      && it->w->base_line_pos <= IT_CHARPOS (*it)
 	      /* line-number-mode always displays narrowed line
 		 numbers, so we cannot use its data if the user wants
-		 line numbers that disregard narrowing.  */
+		 line numbers that disregard narrowing, or if the
+		 buffer's narrowing has just changed.  */
 	      && !(display_line_numbers_widen
-		   && (BEG_BYTE != BEGV_BYTE || Z_BYTE != ZV_BYTE)))
+		   && (BEG_BYTE != BEGV_BYTE || Z_BYTE != ZV_BYTE))
+	      && !current_buffer->clip_changed)
 	    {
 	      start_from = CHAR_TO_BYTE (it->w->base_line_pos);
 	      last_line = it->w->base_line_number - 1;
@@ -22395,8 +22410,8 @@ Value is the new character position of point.  */)
 	    row += dir;
 	  else
 	    row -= dir;
-	  if (row < MATRIX_FIRST_TEXT_ROW (w->current_matrix)
-	      || row > MATRIX_BOTTOM_TEXT_ROW (w->current_matrix, w))
+	  if (!(MATRIX_FIRST_TEXT_ROW (w->current_matrix) <= row
+		&& row < MATRIX_BOTTOM_TEXT_ROW (w->current_matrix, w)))
 	    goto simulate_display;
 
 	  if (dir > 0)
@@ -23834,7 +23849,8 @@ store_mode_line_string (const char *string, Lisp_Object lisp_string,
   if (field_width > len)
     {
       field_width -= len;
-      lisp_string = Fmake_string (make_number (field_width), make_number (' '));
+      lisp_string = Fmake_string (make_number (field_width), make_number (' '),
+				  Qnil);
       if (!NILP (props))
 	Fadd_text_properties (make_number (0), make_number (field_width),
 			      props, lisp_string);
@@ -25116,7 +25132,20 @@ else if the text is replaced by an ellipsis.  */)
      '(space :width (+ left-fringe left-margin (- (1))))
      '(space :width (+ left-fringe left-margin (-1)))
 
-*/
+   If ALIGN_TO is NULL, returns the result in *RES.  If ALIGN_TO is
+   non-NULL, the value of *ALIGN_TO is a window-relative pixel
+   coordinate, and *RES is the additional pixel width from that point
+   till the end of the stretch glyph.
+
+   WIDTH_P non-zero means take the width dimension or X coordinate of
+   the object specified by PROP, WIDTH_P zero means take the height
+   dimension or the Y coordinate.  (Therefore, if ALIGN_TO is
+   non-NULL, WIDTH_P should be non-zero.)
+
+   FONT is the font of the face of the surrounding text.
+
+   The return value is non-zero if width or height were successfully
+   calculated, i.e. if PROP is a valid spec.  */
 
 static bool
 calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
@@ -25138,6 +25167,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	{
 	  char *unit = SSDATA (SYMBOL_NAME (prop));
 
+	  /* The UNIT expression, e.g. as part of (NUM . UNIT).  */
 	  if (unit[0] == 'i' && unit[1] == 'n')
 	    pixels = 1.0;
 	  else if (unit[0] == 'm' && unit[1] == 'm')
@@ -25158,10 +25188,12 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	}
 
 #ifdef HAVE_WINDOW_SYSTEM
+      /* 'height': the height of FONT.  */
       if (EQ (prop, Qheight))
 	return OK_PIXELS (font
 			  ? normal_char_height (font, -1)
 			  : FRAME_LINE_HEIGHT (it->f));
+      /* 'width': the width of FONT.  */
       if (EQ (prop, Qwidth))
 	return OK_PIXELS (font
 			  ? FONT_WIDTH (font)
@@ -25171,33 +25203,48 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	return OK_PIXELS (1);
 #endif
 
+      /* 'text': the width or height of the text area.  */
       if (EQ (prop, Qtext))
 	  return OK_PIXELS (width_p
-			    ? window_box_width (it->w, TEXT_AREA)
+			    ? (window_box_width (it->w, TEXT_AREA)
+			       - it->lnum_pixel_width)
 			    : WINDOW_BOX_HEIGHT_NO_MODE_LINE (it->w));
 
+      /* ':align_to'.  First time we compute the value, window
+	 elements are interpreted as the position of the element's
+	 left edge.  */
       if (align_to && *align_to < 0)
 	{
 	  *res = 0;
+	  /* 'left': left edge of the text area.  */
 	  if (EQ (prop, Qleft))
-	    return OK_ALIGN_TO (window_box_left_offset (it->w, TEXT_AREA));
+	    return OK_ALIGN_TO (window_box_left_offset (it->w, TEXT_AREA)
+				+ it->lnum_pixel_width);
+	  /* 'right': right edge of the text area.  */
 	  if (EQ (prop, Qright))
 	    return OK_ALIGN_TO (window_box_right_offset (it->w, TEXT_AREA));
+	  /* 'center': the center of the text area.  */
 	  if (EQ (prop, Qcenter))
 	    return OK_ALIGN_TO (window_box_left_offset (it->w, TEXT_AREA)
+				+ it->lnum_pixel_width
 				+ window_box_width (it->w, TEXT_AREA) / 2);
+	  /* 'left-fringe': left edge of the left fringe.  */
 	  if (EQ (prop, Qleft_fringe))
 	    return OK_ALIGN_TO (WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (it->w)
 				? WINDOW_LEFT_SCROLL_BAR_AREA_WIDTH (it->w)
 				: window_box_right_offset (it->w, LEFT_MARGIN_AREA));
+	  /* 'right-fringe': left edge of the right fringe.  */
 	  if (EQ (prop, Qright_fringe))
 	    return OK_ALIGN_TO (WINDOW_HAS_FRINGES_OUTSIDE_MARGINS (it->w)
 				? window_box_right_offset (it->w, RIGHT_MARGIN_AREA)
 				: window_box_right_offset (it->w, TEXT_AREA));
+	  /* 'left-margin': left edge of the left display margin.  */
 	  if (EQ (prop, Qleft_margin))
 	    return OK_ALIGN_TO (window_box_left_offset (it->w, LEFT_MARGIN_AREA));
+	  /* 'right-margin': left edge of the right display margin.  */
 	  if (EQ (prop, Qright_margin))
 	    return OK_ALIGN_TO (window_box_left_offset (it->w, RIGHT_MARGIN_AREA));
+	  /* 'scroll-bar': left edge of the vertical scroll bar.  */
 	  if (EQ (prop, Qscroll_bar))
 	    return OK_ALIGN_TO (WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT (it->w)
 				? 0
@@ -25208,6 +25255,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	}
       else
 	{
+	  /* Otherwise, the elements stand for their width.  */
 	  if (EQ (prop, Qleft_fringe))
 	    return OK_PIXELS (WINDOW_LEFT_FRINGE_WIDTH (it->w));
 	  if (EQ (prop, Qright_fringe))
@@ -25230,6 +25278,8 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
       int base_unit = (width_p
 		       ? FRAME_COLUMN_WIDTH (it->f)
 		       : FRAME_LINE_HEIGHT (it->f));
+      if (width_p && align_to && *align_to < 0)
+	return OK_PIXELS (XFLOATINT (prop) * base_unit + it->lnum_pixel_width);
       return OK_PIXELS (XFLOATINT (prop) * base_unit);
     }
 
@@ -25241,6 +25291,7 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
       if (SYMBOLP (car))
 	{
 #ifdef HAVE_WINDOW_SYSTEM
+	  /* '(image PROPS...)': width or height of the specified image.  */
 	  if (FRAME_WINDOW_P (it->f)
 	      && valid_image_p (prop))
 	    {
@@ -25249,12 +25300,15 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 
 	      return OK_PIXELS (width_p ? img->width : img->height);
 	    }
+	  /* '(xwidget PROPS...)': dimensions of the specified xwidget.  */
 	  if (FRAME_WINDOW_P (it->f) && valid_xwidget_spec_p (prop))
 	    {
               /* TODO: Don't return dummy size.  */
               return OK_PIXELS (100);
             }
 #endif
+	  /* '(+ EXPR...)' or '(- EXPR...)' add or subtract
+	     recursively calculated values.  */
 	  if (EQ (car, Qplus) || EQ (car, Qminus))
 	    {
 	      bool first = true;
@@ -25282,15 +25336,18 @@ calc_pixel_width_or_height (double *res, struct it *it, Lisp_Object prop,
 	    car = Qnil;
 	}
 
+      /* '(NUM)': absolute number of pixels.  */
       if (NUMBERP (car))
 	{
 	  double fact;
+	  int offset =
+	    width_p && align_to && *align_to < 0 ? it->lnum_pixel_width : 0;
 	  pixels = XFLOATINT (car);
 	  if (NILP (cdr))
-	    return OK_PIXELS (pixels);
+	    return OK_PIXELS (pixels + offset);
 	  if (calc_pixel_width_or_height (&fact, it, cdr,
 					  font, width_p, align_to))
-	    return OK_PIXELS (pixels * fact);
+	    return OK_PIXELS (pixels * fact + offset);
 	  return false;
 	}
 
@@ -32511,6 +32568,9 @@ display-start position.
 These functions are called whenever the `window-start' marker is modified,
 either to point into another buffer (e.g. via `set-window-buffer') or another
 place in the same buffer.
+When each function is called, the `window-start' marker of its window
+argument has been already set to the new value, and the buffer which that
+window will display is set to be the current buffer.
 Note that the value of `window-end' is not valid when these functions are
 called.
 

@@ -604,11 +604,12 @@ new frame."
     (select-frame (make-frame))))
 
 (defvar before-make-frame-hook nil
-  "Functions to run before a frame is created.")
+  "Functions to run before `make-frame' creates a new frame.")
 
 (defvar after-make-frame-functions nil
-  "Functions to run after a frame is created.
-The functions are run with one arg, the newly created frame.")
+  "Functions to run after `make-frame' created a new frame.
+The functions are run with one argument, the newly created
+frame.")
 
 (defvar after-setting-font-hook nil
   "Functions to run after a frame's font has been changed.")
@@ -617,7 +618,7 @@ The functions are run with one arg, the newly created frame.")
 (define-obsolete-function-alias 'new-frame 'make-frame "22.1")
 
 (defvar frame-inherited-parameters '()
-  "Parameters `make-frame' copies from the `selected-frame' to the new frame.")
+  "Parameters `make-frame' copies from the selected to the new frame.")
 
 (defvar x-display-name)
 
@@ -631,9 +632,6 @@ form (NAME . VALUE), for example:
 
  (width . NUMBER)	The frame should be NUMBER characters in width.
  (height . NUMBER)	The frame should be NUMBER text lines high.
-
-You cannot specify either `width' or `height', you must specify
-neither or both.
 
  (minibuffer . t)	The frame should have a minibuffer.
  (minibuffer . nil)	The frame should have no minibuffer.
@@ -650,10 +648,10 @@ neither or both.
 In addition, any parameter specified in `default-frame-alist',
 but not present in PARAMETERS, is applied.
 
-Before creating the frame (via `frame-creation-function-alist'),
-this function runs the hook `before-make-frame-hook'.  After
-creating the frame, it runs the hook `after-make-frame-functions'
-with one arg, the newly created frame.
+Before creating the frame (via `frame-creation-function'), this
+function runs the hook `before-make-frame-hook'.  After creating
+the frame, it runs the hook `after-make-frame-functions' with one
+argument, the newly created frame.
 
 If a display parameter is supplied and a window-system is not,
 guess the window-system from the display.
@@ -894,7 +892,8 @@ Calls `suspend-emacs' if invoked from the controlling tty device,
 
 (defvar frame-name-history nil)
 (defun select-frame-by-name (name)
-  "Select the frame on the current terminal whose name is NAME and raise it.
+  "Select the frame whose name is NAME and raise it.
+Frames on the current terminal are checked first.
 If there is no frame by that name, signal an error."
   (interactive
    (let* ((frame-names-alist (make-frame-names-alist))
@@ -905,11 +904,14 @@ If there is no frame by that name, signal an error."
      (if (= (length input) 0)
 	 (list default)
        (list input))))
-  (let* ((frame-names-alist (make-frame-names-alist))
-	 (frame (cdr (assoc name frame-names-alist))))
-    (if frame
-	(select-frame-set-input-focus frame)
-      (error "There is no frame named `%s'" name))))
+  (select-frame-set-input-focus
+   ;; Prefer frames on the current display.
+   (or (cdr (assoc name (make-frame-names-alist)))
+       (catch 'done
+         (dolist (frame (frame-list))
+           (when (equal (frame-parameter frame 'name) name)
+             (throw 'done frame))))
+       (error "There is no frame named `%s'" name))))
 
 
 ;;;; Background mode.
@@ -1073,7 +1075,7 @@ is given and non-nil, the unwanted frames are iconified instead."
 		 (when mini (setq parms (delq mini parms)))
 		 ;; Leave name in iff it was set explicitly.
 		 ;; This should fix the behavior reported in
-		 ;; http://lists.gnu.org/archive/html/emacs-devel/2007-08/msg01632.html
+		 ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg01632.html
 		 (when (and name (not explicit-name))
 		   (setq parms (delq name parms)))
                  parms))
@@ -2436,7 +2438,11 @@ See also `toggle-frame-maximized'."
 	      (set-frame-parameter nil 'fullscreen fullscreen-restore)
 	    (set-frame-parameter nil 'fullscreen nil)))
       (modify-frame-parameters
-       nil `((fullscreen . fullboth) (fullscreen-restore . ,fullscreen))))))
+       nil `((fullscreen . fullboth) (fullscreen-restore . ,fullscreen))))
+    ;; Manipulating a frame without waiting for the fullscreen
+    ;; animation to complete can cause a crash, or other unexpected
+    ;; behaviour, on macOS (bug#28496).
+    (when (featurep 'cocoa) (sleep-for 0.5))))
 
 ;;;; Key bindings
 

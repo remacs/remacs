@@ -402,7 +402,7 @@ is called as a function to find the defun's beginning."
   "Return non-nil if the point is in an \"emptyish\" line.
 This means a line that consists entirely of comments and/or
 whitespace."
-;; See http://lists.gnu.org/archive/html/help-gnu-emacs/2016-08/msg00141.html
+;; See https://lists.gnu.org/archive/html/help-gnu-emacs/2016-08/msg00141.html
   (save-excursion
     (forward-line 0)
     (< (line-end-position)

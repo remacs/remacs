@@ -123,10 +123,7 @@ This function is called by `org-babel-execute-src-block'."
               (if (listp val)
                   (let ((data-file (org-babel-temp-file "sqlite-data-")))
                     (with-temp-file data-file
-                      (insert (orgtbl-to-csv
-                               val '(:fmt (lambda (el) (if (stringp el)
-                                                      el
-                                                    (format "%S" el)))))))
+                      (insert (orgtbl-to-csv val nil)))
                     data-file)
                 (if (stringp val) val (format "%S" val))))
 	    body)))

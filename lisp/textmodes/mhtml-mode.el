@@ -75,11 +75,11 @@ code();
 
 (defconst mhtml--crucial-variable-prefix
   (regexp-opt '("comment-" "uncomment-" "electric-indent-"
-                "smie-" "forward-sexp-function"))
+                "smie-" "forward-sexp-function" "completion-" "major-mode"))
   "Regexp matching the prefix of \"crucial\" buffer-locals we want to capture.")
 
 (defconst mhtml--variable-prefix
-  (regexp-opt '("font-lock-" "indent-line-function" "major-mode"))
+  (regexp-opt '("font-lock-" "indent-line-function"))
   "Regexp matching the prefix of buffer-locals we want to capture.")
 
 (defun mhtml--construct-submode (mode &rest args)
@@ -149,7 +149,12 @@ code();
 
 (defun mhtml--submode-lighter ()
   "Mode-line lighter indicating the current submode."
-  (let ((submode (get-text-property (point) 'mhtml-submode)))
+  ;; The end of the buffer has no text properties, so in this case
+  ;; back up one character, if possible.
+  (let* ((where (if (and (eobp) (not (bobp)))
+                    (1- (point))
+                  (point)))
+         (submode (get-text-property where 'mhtml-submode)))
     (if submode
         (mhtml--submode-name submode)
       "")))
@@ -288,9 +293,7 @@ can function properly.")
   (unless (bobp)
     (let ((submode (get-text-property (1- (point)) 'mhtml-submode)))
       (if submode
-          ;; Don't search in a comment or string
-          (unless (syntax-ppss-context (syntax-ppss))
-            (mhtml--syntax-propertize-submode submode end))
+          (mhtml--syntax-propertize-submode submode end)
         ;; No submode, so do what sgml-mode does.
         (sgml-syntax-propertize-inside end))))
   (funcall

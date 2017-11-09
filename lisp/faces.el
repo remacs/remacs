@@ -2361,7 +2361,7 @@ If you set `term-file-prefix' to nil, this function does nothing."
 (defface variable-pitch
   '((((type w32))
      ;; This is a workaround for an issue discussed in
-     ;; http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00746.html.
+     ;; https://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00746.html.
      ;; We need (a) the splash screen not to pick up bold-italics variant of
      ;; the font, and (b) still be able to request bold/italic/larger size
      ;; variants in the likes of EWW.
@@ -2483,7 +2483,8 @@ monospaced font, otherwise line numbers will not line up,
 and text lines might move horizontally as you move through
 the buffer."
   :version "26.1"
-  :group 'basic-faces)
+  :group 'basic-faces
+  :group 'display-line-numbers)
 
 (defface line-number-current-line
   '((t :inherit line-number))
@@ -2497,7 +2498,8 @@ the buffer.  Similarly, making this face's font different
 from that of the `line-number' face could produce such
 unwanted effects."
   :version "26.1"
-  :group 'basic-faces)
+  :group 'basic-faces
+  :group 'display-line-numbers)
 
 (defface escape-glyph
   '((((background dark)) :foreground "cyan")

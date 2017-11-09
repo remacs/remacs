@@ -332,7 +332,9 @@ in the list @code{find-file-hook}.
 that is visiting that file---that is, the contents of the file are
 copied into the buffer and the copy is what you edit.  Changes to the
 buffer do not change the file until you @dfn{save} the buffer, which
-means copying the contents of the buffer into the file.
+means copying the contents of the buffer into the file.  Buffers which
+are not visiting a file can still be ``saved'', in a sense, using
+functions in the buffer-local @code{write-contents-functions} hook.
 
 @deffn Command save-buffer &optional backup-option
 This function saves the contents of the current buffer in its visited
@@ -365,8 +367,8 @@ With an argument of 0, unconditionally do @emph{not} make any backup file.
 @anchor{Definition of save-some-buffers}
 This command saves some modified file-visiting buffers.  Normally it
 asks the user about each buffer.  But if @var{save-silently-p} is
-non-@code{nil}, it saves all the file-visiting buffers without querying
-the user.
+non-@code{nil}, it saves all the file-visiting buffers without
+querying the user.
 
 @vindex save-some-buffers-default-predicate
 The optional @var{pred} argument provides a predicate that controls
@@ -1807,7 +1809,9 @@ has these permissions, or a subset of them (@code{write-region} will
 not grant execute permissions even if the default file permissions
 allow execution).  On GNU and other POSIX-like systems, the default
 permissions are given by the bitwise complement of the @samp{umask}
-value.
+value, i.e.@: each bit that is set in the argument @var{mode} will be
+@emph{reset} in the default permissions with which Emacs creates
+files.
 
 The argument @var{mode} should be an integer which specifies the
 permissions, similar to @code{set-file-modes} above.  Only the lowest
@@ -2094,7 +2098,7 @@ Note that the @samp{.~3~} in the two last examples is the backup part,
 not an extension.
 @end defun
 
-@defun file-name-base &optional filename
+@defun file-name-base filename
 This function is the composition of @code{file-name-sans-extension}
 and @code{file-name-nondirectory}.  For example,
 
@@ -2102,8 +2106,6 @@ and @code{file-name-nondirectory}.  For example,
 (file-name-base "/my/home/foo.c")
     @result{} "foo"
 @end example
-
-The @var{filename} argument defaults to @code{buffer-file-name}.
 @end defun
 
 @node Relative File Names
@@ -3118,7 +3120,8 @@ first, before handlers for jobs such as remote file access.
 @code{file-ownership-preserved-p},
 @code{file-readable-p}, @code{file-regular-p},
 @code{file-remote-p}, @code{file-selinux-context},
-@code{file-symlink-p}, @code{file-truename}, @code{file-writable-p},
+@code{file-symlink-p}, @code{file-system-info},
+@code{file-truename}, @code{file-writable-p},
 @code{find-backup-file-name},@*
 @code{get-file-buffer},
 @code{insert-directory},
@@ -3174,7 +3177,8 @@ first, before handlers for jobs such as remote file access.
 @code{file-ownership-pre@discretionary{}{}{}served-p},
 @code{file-readable-p}, @code{file-regular-p},
 @code{file-remote-p}, @code{file-selinux-context},
-@code{file-symlink-p}, @code{file-truename}, @code{file-writable-p},
+@code{file-symlink-p}, @code{file-system-info},
+@code{file-truename}, @code{file-writable-p},
 @code{find-backup-file-name},
 @code{get-file-buffer},
 @code{insert-directory},

@@ -2120,7 +2120,7 @@ completion works."
     (when (semantic-tag-p tag)
       (push-mark)
       (semantic-go-to-tag tag)
-      (switch-to-buffer (current-buffer))
+      (pop-to-buffer-same-window (current-buffer))
       (semantic-momentary-highlight-tag tag)
       (message "%S: %s "
 	       (semantic-tag-class tag)

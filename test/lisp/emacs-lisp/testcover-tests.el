@@ -124,14 +124,12 @@ arguments for `testcover-start'."
             (save-current-buffer
               (set-buffer (find-file-noselect tempfile))
               ;; Fail the test if the debugger tries to become active,
-              ;; which will happen if Testcover's reinstrumentation
-              ;; leaves an edebug-enter in the code. This will also
-              ;; prevent debugging these tests using Edebug.
-              (cl-letf (((symbol-function #'edebug-enter)
+              ;; which can happen if Testcover fails to attach itself
+              ;; correctly. Note that this will prevent debugging
+              ;; these tests using Edebug.
+              (cl-letf (((symbol-function #'edebug-default-enter)
                          (lambda (&rest _args)
-                           (ert-fail
-                            (concat "Debugger invoked during test run "
-                                    "(possible edebug-enter not replaced)")))))
+                           (ert-fail "Debugger invoked during test run"))))
                 (dolist (byte-compile '(t nil))
                   (testcover-tests-unmarkup-region (point-min) (point-max))
                   (unwind-protect

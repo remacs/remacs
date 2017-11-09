@@ -223,6 +223,14 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     (visible-bell display boolean)
 	     (no-redraw-on-reenter display boolean)
 
+             ;; doc.c
+             (text-quoting-style display
+                                 (choice
+                                  (const :tag "Prefer \\=‘curved\\=’ quotes, if possible" nil)
+                                  (const :tag "\\=‘Curved\\=’ quotes" curved)
+                                  (const :tag "\\='Straight\\=' quotes" straight)
+                                  (const :tag "\\=`Grave\\=' quotes (no translation)" grave)))
+
              ;; dosfns.c
 	     (dos-display-scancodes display boolean)
 	     (dos-hyper-key keyboard integer)
@@ -319,6 +327,13 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 					    (const :tag "Always" t)
 					    (repeat (symbol :tag "Parameter")))
 					   "25.1")
+	     (iconify-child-frame frames
+				  (choice
+				   (const :tag "Do nothing" nil)
+                                   (const :tag "Iconify top level frame instead" iconify-top-level)
+                                   (const :tag "Make frame invisible instead" make-invisible)
+                                   (const :tag "Iconify" t))
+				  "26.1")
 	     (tooltip-reuse-hidden-frame tooltip boolean "26.1")
 	     ;; fringe.c
 	     (overflow-newline-into-fringe fringe boolean)

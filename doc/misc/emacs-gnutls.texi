@@ -94,7 +94,11 @@ There's one way to find out if GnuTLS is available, by calling
 Zaretskii) in the same directory as Emacs, you should be OK.
 
 @defun gnutls-available-p
-This function returns @code{t} if GnuTLS is available in this instance of Emacs.
+This function returns non-@code{nil} if GnuTLS is available in this
+instance of Emacs, @code{nil} otherwise.  If GnuTLS is available, the
+value is a list of GnuTLS capabilities supported by the installed
+GnuTLS library, which depends on the library version.  The meaning of
+the capabilities is documented in the doc string of this function.
 @end defun
 
 Oh, but sometimes things go wrong.  Budgets aren't balanced,

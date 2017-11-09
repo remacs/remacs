@@ -206,7 +206,7 @@ If `url-standalone-mode' is non-nil, cached items never expire."
 	   (time-add
 	    cache-time
 	    (seconds-to-time (or expire-time url-cache-expire-time)))
-	   (current-time))))))
+	   nil)))))
 
 (defun url-cache-prune-cache (&optional directory)
   "Remove all expired files from the cache.

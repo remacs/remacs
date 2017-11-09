@@ -34,6 +34,7 @@
 ;;; Code:
 
 (eval-when-compile
+  (require 'cl-lib)
   (require 'subr-x))
 
 
@@ -84,7 +85,7 @@
 
 (defun xdg-thumb-uri (filename)
   "Return the canonical URI for FILENAME.
-If FILENAME has absolute path /foo/bar.jpg, its canonical URI is
+If FILENAME has absolute file name /foo/bar.jpg, its canonical URI is
 file:///foo/bar.jpg"
   (concat "file://" (expand-file-name filename)))
 
@@ -93,8 +94,8 @@ file:///foo/bar.jpg"
   (concat (md5 (xdg-thumb-uri filename)) ".png"))
 
 (defun xdg-thumb-mtime (filename)
-  "Return modification time of FILENAME as integral seconds from the epoch."
-  (floor (float-time (nth 5 (file-attributes filename)))))
+  "Return modification time of FILENAME as an Emacs timestamp."
+  (file-attribute-modification-time (file-attributes filename)))
 
 
 ;; XDG User Directories
@@ -197,8 +198,6 @@ Optional argument GROUP defaults to the string \"Desktop Entry\"."
     (unless (looking-at xdg-desktop-group-regexp)
       (error "Expected group name!  Instead saw: %s"
              (buffer-substring (point) (point-at-eol))))
-    (unless (equal (match-string 1) "Desktop Entry")
-      (error "Wrong first group: %s" (match-string 1)))
     (when group
       (while (and (re-search-forward xdg-desktop-group-regexp nil t)
                   (not (equal (match-string 1) group)))))
@@ -213,6 +212,108 @@ Optional argument GROUP defaults to the string \"Desktop Entry\"."
       (push (replace-regexp-in-string "\0" ";" x) res))
     (when (null (string-match-p "[^[:blank:]]" (car res))) (pop res))
     (nreverse res)))
+
+
+;; MIME apps specification
+;; https://standards.freedesktop.org/mime-apps-spec/mime-apps-spec-1.0.1.html
+
+(defvar xdg-mime-table nil
+  "Table of MIME type to desktop file associations.
+The table is an alist with keys being MIME major types (\"application\",
+\"audio\", etc.), and values being hash tables.  Each hash table has
+MIME subtypes as keys and lists of desktop file absolute filenames.")
+
+(defun xdg-mime-apps-files ()
+  "Return a list of files containing MIME/Desktop associations.
+The list is in order of descending priority: user config, then
+admin config, and finally system cached associations."
+  (let ((xdg-data-dirs (xdg-data-dirs))
+        (desktop (getenv "XDG_CURRENT_DESKTOP"))
+        res)
+    (when desktop
+      (setq desktop (format "%s-mimeapps.list" desktop)))
+    (dolist (name (cons "mimeapps.list" desktop))
+      (push (expand-file-name name (xdg-config-home)) res)
+      (push (expand-file-name (format "applications/%s" name) (xdg-data-home))
+            res)
+      (dolist (dir (xdg-config-dirs))
+        (push (expand-file-name name dir) res))
+      (dolist (dir xdg-data-dirs)
+        (push (expand-file-name (format "applications/%s" name) dir) res)))
+    (dolist (dir xdg-data-dirs)
+      (push (expand-file-name "applications/mimeinfo.cache" dir) res))
+    (nreverse res)))
+
+(defun xdg-mime-collect-associations (mime files)
+  "Return a list of desktop file names associated with MIME.
+The associations are searched in the list of file names FILES,
+which is expected to be ordered by priority as in
+`xdg-mime-apps-files'."
+  (let ((regexp (concat (regexp-quote mime) "=\\([^[:cntrl:]]*\\)$"))
+        res sec defaults added removed cached)
+    (with-temp-buffer
+      (dolist (f (reverse files))
+        (when (file-readable-p f)
+          (insert-file-contents-literally f nil nil nil t)
+          (goto-char (point-min))
+          (let (end)
+            (while (not (or (eobp) end))
+              (if (= (following-char) ?\[)
+                  (progn (setq sec (char-after (1+ (point))))
+                         (forward-line))
+                (if (not (looking-at regexp))
+                    (forward-line)
+                  (dolist (str (xdg-desktop-strings (match-string 1)))
+                    (cl-pushnew str
+                                (cond ((eq sec ?D) defaults)
+                                      ((eq sec ?A) added)
+                                      ((eq sec ?R) removed)
+                                      ((eq sec ?M) cached))
+                                :test #'equal))
+                  (while (and (zerop (forward-line))
+                              (/= (following-char) ?\[)))))))
+          ;; Accumulate results into res
+          (dolist (f cached)
+            (when (not (member f removed)) (cl-pushnew f res :test #'equal)))
+          (dolist (f added)
+            (when (not (member f removed)) (push f res)))
+          (dolist (f removed)
+            (setq res (delete f res)))
+          (dolist (f defaults)
+            (push f res))
+          (setq defaults nil added nil removed nil cached nil))))
+    (delete-dups res)))
+
+(defun xdg-mime-apps (mime)
+  "Return list of desktop files associated with MIME, otherwise nil.
+The list is in order of descending priority, and each element is
+an absolute file name of a readable file.
+Results are cached in `xdg-mime-table'."
+  (pcase-let ((`(,type ,subtype) (split-string mime "/"))
+              (xdg-data-dirs (xdg-data-dirs))
+              (caches (xdg-mime-apps-files))
+              (files ()))
+    (let ((mtim1 (get 'xdg-mime-table 'mtime))
+          (mtim2 (cl-loop for f in caches when (file-readable-p f)
+                          maximize (float-time (nth 5 (file-attributes f))))))
+      ;; If one of the MIME/Desktop cache files has been modified:
+      (when (or (null mtim1) (time-less-p mtim1 mtim2))
+        (setq xdg-mime-table nil)))
+    (when (null (assoc type xdg-mime-table))
+      (push (cons type (make-hash-table :test #'equal)) xdg-mime-table))
+    (if (let ((def (make-symbol "def"))
+              (table (cdr (assoc type xdg-mime-table))))
+          (not (eq (setq files (gethash subtype table def)) def)))
+        files
+      (and files (setq files nil))
+      (let ((dirs (mapcar (lambda (dir) (expand-file-name "applications" dir))
+                          (cons (xdg-data-home) xdg-data-dirs))))
+        ;; Not being particular about desktop IDs
+        (dolist (f (nreverse (xdg-mime-collect-associations mime caches)))
+          (push (locate-file f dirs) files))
+        (when files
+          (put 'xdg-mime-table 'mtime (current-time)))
+        (puthash subtype (delq nil files) (cdr (assoc type xdg-mime-table)))))))
 
 (provide 'xdg)
 

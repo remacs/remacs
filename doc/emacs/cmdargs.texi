@@ -92,7 +92,7 @@ arguments.)
 @itemx --visit=@var{file}
 @cindex visiting files, command-line argument
 @vindex inhibit-startup-buffer-menu
-Visit @var{file} using @code{find-file}.  @xref{Visiting}.
+Visit the specified @var{file}.  @xref{Visiting}.
 
 When Emacs starts up, it displays the startup buffer in one window,
 and the buffer visiting @var{file} in another window
@@ -111,12 +111,12 @@ Buffer Menu for this, change the variable
 
 @item +@var{linenum} @var{file}
 @opindex +@var{linenum}
-Visit @var{file} using @code{find-file}, then go to line number
-@var{linenum} in it.
+Visit the specified @var{file}, then go to line number @var{linenum}
+in it.
 
 @item +@var{linenum}:@var{columnnum} @var{file}
-Visit @var{file} using @code{find-file}, then go to line number
-@var{linenum} and put point at column number @var{columnnum}.
+Visit the specified @var{file}, then go to line number @var{linenum}
+and put point at column number @var{columnnum}.
 
 @item -l @var{file}
 @opindex -l

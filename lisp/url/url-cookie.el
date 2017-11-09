@@ -74,6 +74,55 @@ telling Microsoft that."
   ;; It's completely normal for the cookies file not to exist yet.
   (load (or fname url-cookie-file) t t))
 
+(defun url-cookie-parse-file-netscape (filename &optional long-session)
+  "Load cookies from FILENAME in Netscape/Mozilla format.
+When LONG-SESSION is non-nil, session cookies (expiring at t=0
+i.e. 1970-1-1) are loaded as expiring one year from now instead."
+  (interactive "fLoad Netscape/Mozilla cookie file: ")
+  (let ((n 0))
+    (with-temp-buffer
+      (insert-file-contents-literally filename)
+      (goto-char (point-min))
+      (when (not (looking-at-p "# Netscape HTTP Cookie File\n"))
+	(error (format "File %s doesn't look like a netscape cookie file" filename)))
+      (while (not (eobp))
+	(when (not (looking-at-p (rx bol (* space) "#")))
+	  (let* ((line (buffer-substring (point) (save-excursion (end-of-line) (point))))
+		 (fields (split-string line "\t")))
+	    (cond
+	     ;;((>= 1 (length line) 0)
+	     ;; (message "skipping empty line"))
+	     ((= (length fields) 7)
+	      (let ((dom (nth 0 fields))
+		    ;; (match (nth 1 fields))
+		    (path (nth 2 fields))
+		    (secure (string= (nth 3 fields) "TRUE"))
+		    ;; session cookies (expire time = 0) are supposed
+		    ;; to be removed when the browser is closed, but
+		    ;; the main point of loading external cookie is to
+		    ;; reuse a browser session, so to prevent the
+		    ;; cookie from being detected as expired straight
+		    ;; away, make it expire a year from now
+		    (expires (format-time-string
+			      "%d %b %Y %T [GMT]"
+			      (seconds-to-time
+			       (let ((s (string-to-number (nth 4 fields))))
+				 (if (and (= s 0) long-session)
+				     (seconds-to-time (+ (* 365 24 60 60) (float-time)))
+				   s)))))
+		    (key (nth 5 fields))
+		    (val (nth 6 fields)))
+		(cl-incf n)
+		;;(message "adding <%s>=<%s> exp=<%s> dom=<%s> path=<%s> sec=%S" key val expires dom path secure)
+		(url-cookie-store key val expires dom path secure)
+		))
+	     (t
+	      (message "ignoring malformed cookie line <%s>" line)))))
+	(forward-line))
+      (when (< 0 n)
+	(setq url-cookies-changed-since-last-save t))
+      (message "added %d cookies from file %s" n filename))))
+
 (defun url-cookie-clean-up (&optional secure)
   (let ((var (if secure 'url-cookie-secure-storage 'url-cookie-storage))
 	new new-cookies)
@@ -161,7 +210,7 @@ telling Microsoft that."
   (let ((exp (url-cookie-expires cookie)))
     (and (> (length exp) 0)
 	 (condition-case ()
-	     (> (float-time) (float-time (date-to-time exp)))
+	     (time-less-p nil (date-to-time exp))
 	   (error nil)))))
 
 (defun url-cookie-retrieve (host &optional localpart secure)

@@ -2354,7 +2354,7 @@
 
 ;; The variables math-solve-lhs, math-solve-rhs and math-try-solve-sign
 ;; are local to math-try-solve-for,  but are used by math-try-solve-prod.
-;; (math-solve-lhs and math-solve-rhs are is also local to
+;; (math-solve-lhs and math-solve-rhs are also local to
 ;; math-decompose-poly, but used by math-solve-poly-funny-powers.)
 (defvar math-solve-lhs)
 (defvar math-solve-rhs)

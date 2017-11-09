@@ -6328,7 +6328,7 @@ x_create_tip_frame (struct x_display_info *dpyinfo, Lisp_Object parms)
     }
 
   /* FIXME - can this be done in a similar way to normal frames?
-     http://lists.gnu.org/archive/html/emacs-devel/2007-10/msg00641.html */
+     https://lists.gnu.org/archive/html/emacs-devel/2007-10/msg00641.html */
 
   /* Set the `display-type' frame parameter before setting up faces. */
   {

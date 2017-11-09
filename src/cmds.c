@@ -357,12 +357,13 @@ internal_self_insert (int c, EMACS_INT n)
       int mc = ((NILP (BVAR (current_buffer, enable_multibyte_characters))
 		 && SINGLE_BYTE_CHAR_P (c))
 		? UNIBYTE_TO_CHAR (c) : c);
-      Lisp_Object string = Fmake_string (make_number (n), make_number (mc));
+      Lisp_Object string = Fmake_string (make_number (n), make_number (mc),
+					 Qnil);
 
       if (spaces_to_insert)
 	{
 	  tem = Fmake_string (make_number (spaces_to_insert),
-			      make_number (' '));
+			      make_number (' '), Qnil);
 	  string = concat2 (string, tem);
 	}
 

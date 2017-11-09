@@ -272,7 +272,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 {
   /* `args' will contain the array of arguments to pass to the function.
      `visargs' will contain the same list but in a nicer form, so that if we
-     pass it to `Fformat_message' it will be understandable to a human.  */
+     pass it to Fformat_message it will be understandable to a human.  */
   Lisp_Object *args, *visargs;
   Lisp_Object specs;
   Lisp_Object filter_specs;
@@ -502,10 +502,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
   for (i = 2; *tem; i++)
     {
       visargs[1] = make_string (tem + 1, strcspn (tem + 1, "\n"));
-      if (strchr (SSDATA (visargs[1]), '%'))
-	callint_message = Fformat_message (i - 1, visargs + 1);
-      else
-	callint_message = visargs[1];
+      callint_message = Fformat_message (i - 1, visargs + 1);
 
       switch (*tem)
 	{

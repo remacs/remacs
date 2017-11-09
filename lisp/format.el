@@ -84,7 +84,7 @@
 	   iso-sgml2iso iso-iso2sgml t nil)
     (rot13 ,(purecopy "rot13")
 	   nil
-	   ,(purecopy "tr a-mn-z n-za-m") ,(purecopy "tr a-mn-z n-za-m") t nil)
+	   rot13-region rot13-region t nil)
     (duden ,(purecopy "Duden Ersatzdarstellung")
 	   nil
 	   ,(purecopy "diac") iso-iso2duden t nil)

@@ -949,7 +949,14 @@ file_attributes (int fd, char const *name,
     {
       record_unwind_protect_int (close_file_unwind, namefd);
       if (fstat (namefd, &s) != 0)
-	err = errno;
+	{
+	  err = errno;
+	  /* The Linux kernel before version 3.6 does not support
+	     fstat on O_PATH file descriptors.  Handle this error like
+	     missing support for O_PATH.  */
+	  if (err == EBADF)
+	    err = EINVAL;
+	}
       else
 	{
 	  err = 0;

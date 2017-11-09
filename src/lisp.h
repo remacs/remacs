@@ -215,13 +215,13 @@ extern bool suppress_checking EXTERNALLY_VISIBLE;
 
    USE_LSB_TAG not only requires the least 3 bits of pointers returned by
    malloc to be 0 but also needs to be able to impose a mult-of-8 alignment
-   on the few static Lisp_Objects used: lispsym, all the defsubr, and
-   the two special buffers buffer_defaults and buffer_local_symbols.  */
+   on the few static Lisp_Objects used, all of which are aligned via
+   the GCALIGN macro defined below.  */
 
 enum Lisp_Bits
   {
     /* 2**GCTYPEBITS.  This must be a macro that expands to a literal
-       integer constant, for MSVC.  */
+       integer constant, for older versions of GCC (through at least 4.9).  */
 #define GCALIGNMENT 8
 
     /* Number of bits in a Lisp_Object value, not counting the tag.  */
@@ -264,6 +264,14 @@ DEFINE_GDB_SYMBOL_END (VALMASK)
 error !;
 #endif
 
+/* Use GCALIGNED immediately after the 'struct' keyword to require the
+   struct to have an address that is a multiple of GCALIGNMENT.  This
+   is a no-op if the struct's natural alignment is already a multiple
+   of GCALIGNMENT.  GCALIGNED's implementation uses the 'aligned'
+   attribute instead of 'alignas (GCALIGNMENT)', as the latter would
+   fail if an object's natural alignment exceeds GCALIGNMENT.  The
+   implementation hopes that natural alignment suffices on platforms
+   lacking 'aligned'.  */
 #ifdef HAVE_STRUCT_ATTRIBUTE_ALIGNED
 # define GCALIGNED __attribute__ ((aligned (GCALIGNMENT)))
 #else
@@ -402,9 +410,8 @@ error !;
 #define case_Lisp_Int case Lisp_Int0: case Lisp_Int1
 
 /* Idea stolen from GDB.  Pedantic GCC complains about enum bitfields,
-   MSVC doesn't support them, and xlc and Oracle Studio c99 complain
-   vociferously about them.  */
-#if (defined __STRICT_ANSI__ || defined _MSC_VER || defined __IBMC__ \
+   and xlc and Oracle Studio c99 complain vociferously about them.  */
+#if (defined __STRICT_ANSI__ || defined __IBMC__ \
      || (defined __SUNPRO_C && __STDC__))
 #define ENUM_BF(TYPE) unsigned int
 #else
@@ -474,7 +481,7 @@ enum Lisp_Fwd_Type
 
 /* If you want to define a new Lisp data type, here are some
    instructions.  See the thread at
-   http://lists.gnu.org/archive/html/emacs-devel/2012-10/msg00561.html
+   https://lists.gnu.org/archive/html/emacs-devel/2012-10/msg00561.html
    for more info.
 
    First, there are already a couple of Lisp types that can be used if
@@ -1832,6 +1839,26 @@ verify (offsetof (struct Lisp_Sub_Char_Table, contents)
 	== (offsetof (struct Lisp_Vector, contents)
 	    + SUB_CHAR_TABLE_OFFSET * sizeof (Lisp_Object)));
 
+
+/* Save and restore the instruction and environment pointers,
+   without affecting the signal mask.  */
+
+#ifdef HAVE__SETJMP
+typedef jmp_buf sys_jmp_buf;
+# define sys_setjmp(j) _setjmp (j)
+# define sys_longjmp(j, v) _longjmp (j, v)
+#elif defined HAVE_SIGSETJMP
+typedef sigjmp_buf sys_jmp_buf;
+# define sys_setjmp(j) sigsetjmp (j, 0)
+# define sys_longjmp(j, v) siglongjmp (j, v)
+#else
+/* A platform that uses neither _longjmp nor siglongjmp; assume
+   longjmp does not affect the sigmask.  */
+typedef jmp_buf sys_jmp_buf;
+# define sys_setjmp(j) setjmp (j)
+# define sys_longjmp(j, v) longjmp (j, v)
+#endif
+
 #include "thread.h"
 
 /***********************************************************************
@@ -2884,23 +2911,12 @@ CHECK_NUMBER_CDR (Lisp_Object x)
 
 /* This version of DEFUN declares a function prototype with the right
    arguments, so we can catch errors with maxargs at compile-time.  */
-#ifdef _MSC_VER
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
-   Lisp_Object fnname DEFUN_ARGS_ ## maxargs ;				\
-   static struct Lisp_Subr alignas (GCALIGNMENT) sname =		\
-   { { (PVEC_SUBR << PSEUDOVECTOR_AREA_BITS)				\
-       | (sizeof (struct Lisp_Subr) / sizeof (EMACS_INT)) },		\
-      { (Lisp_Object (__cdecl *)(void))fnname },                        \
-       minargs, maxargs, lname, intspec, 0};				\
-   Lisp_Object fnname
-#else  /* not _MSC_VER */
-#define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
-   static struct Lisp_Subr alignas (GCALIGNMENT) sname =		\
+   static struct GCALIGNED Lisp_Subr sname =				\
      { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS },				\
        { .a ## maxargs = fnname },					\
        minargs, maxargs, lname, intspec, 0};				\
    Lisp_Object fnname
-#endif
 
 /* defsubr (Sname);
    is how we define the symbol for function `name' at start-up time.  */
@@ -2970,25 +2986,6 @@ extern void defvar_kboard (struct Lisp_Kboard_Objfwd *, const char *, int);
     static struct Lisp_Kboard_Objfwd ko_fwd;			\
     defvar_kboard (&ko_fwd, lname, offsetof (KBOARD, vname ## _)); \
   } while (false)
-
-/* Save and restore the instruction and environment pointers,
-   without affecting the signal mask.  */
-
-#ifdef HAVE__SETJMP
-typedef jmp_buf sys_jmp_buf;
-# define sys_setjmp(j) _setjmp (j)
-# define sys_longjmp(j, v) _longjmp (j, v)
-#elif defined HAVE_SIGSETJMP
-typedef sigjmp_buf sys_jmp_buf;
-# define sys_setjmp(j) sigsetjmp (j, 0)
-# define sys_longjmp(j, v) siglongjmp (j, v)
-#else
-/* A platform that uses neither _longjmp nor siglongjmp; assume
-   longjmp does not affect the sigmask.  */
-typedef jmp_buf sys_jmp_buf;
-# define sys_setjmp(j) setjmp (j)
-# define sys_longjmp(j, v) longjmp (j, v)
-#endif
 
 
 /* Elisp uses several stacks:
@@ -4364,9 +4361,9 @@ extern void syms_of_xterm (void);
 extern char *x_get_keysym_name (int);
 #endif /* HAVE_WINDOW_SYSTEM */
 
-#ifdef HAVE_LIBXML2
 /* Defined in xml.c.  */
 extern void syms_of_xml (void);
+#ifdef HAVE_LIBXML2
 extern void xml_cleanup_parser (void);
 #endif
 

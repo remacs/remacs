@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Added by Kevin Gallo */
 
@@ -5847,7 +5847,8 @@ This function is an internal primitive--use `make-frame' instead.  */)
      that are needed to determine window geometry.  */
   x_default_font_parameter (f, parameters);
 
-  x_default_parameter (f, parameters, Qborder_width, make_number (2),
+  /* Default BorderWidth to 0 to match other platforms.  */
+  x_default_parameter (f, parameters, Qborder_width, make_number (0),
 		       "borderWidth", "BorderWidth", RES_TYPE_NUMBER);
 
   /* We recognize either internalBorderWidth or internalBorder
@@ -5862,7 +5863,7 @@ This function is an internal primitive--use `make-frame' instead.  */)
 	parameters = Fcons (Fcons (Qinternal_border_width, value),
 			    parameters);
     }
-  /* Default internalBorderWidth to 0 on Windows to match other programs.  */
+
   x_default_parameter (f, parameters, Qinternal_border_width, make_number (0),
 		       "internalBorderWidth", "InternalBorder", RES_TYPE_NUMBER);
   x_default_parameter (f, parameters, Qright_divider_width, make_number (0),
@@ -9335,6 +9336,17 @@ If the underlying system call fails, value is nil.  */)
   CHECK_STRING (filename);
   filename = Fexpand_file_name (filename, Qnil);
   encoded = ENCODE_FILE (filename);
+
+  /* If the file name has special constructs in it,
+     call the corresponding file handler.  */
+  Lisp_Object handler = Ffind_file_name_handler (encoded, Qfile_system_info);
+  if (!NILP (handler))
+    {
+      value = call2 (handler, Qfile_system_info, encoded);
+      if (CONSP (value) || NILP (value))
+	return value;
+      error ("Invalid handler in `file-name-handler-alist'");
+    }
 
   value = Qnil;
 

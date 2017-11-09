@@ -141,14 +141,14 @@ If this contains a %s, that will be replaced by the matching rule."
      "
 .\\\" You may distribute this file under the terms of the GNU Free
 .\\\" Documentation License.
-.TH " (file-name-base)
+.TH " (file-name-base (buffer-file-name))
      " " (file-name-extension (buffer-file-name))
      " " (format-time-string "%Y-%m-%d ")
      "\n.SH NAME\n"
-     (file-name-base)
+     (file-name-base (buffer-file-name))
      " \\- " str
      "\n.SH SYNOPSIS
-.B " (file-name-base)
+.B " (file-name-base (buffer-file-name))
      "\n"
      _
      "
@@ -211,7 +211,7 @@ If this contains a %s, that will be replaced by the matching rule."
 
 
 \(provide '"
-       (file-name-base)
+       (file-name-base (buffer-file-name))
        ")
 \;;; " (file-name-nondirectory (buffer-file-name)) " ends here\n")
     (("\\.texi\\(nfo\\)?\\'" . "Texinfo file skeleton")
@@ -219,7 +219,7 @@ If this contains a %s, that will be replaced by the matching rule."
      "\\input texinfo   @c -*-texinfo-*-
 @c %**start of header
 @setfilename "
-     (file-name-base) ".info\n"
+     (file-name-base (buffer-file-name)) ".info\n"
       "@settitle " str "
 @c %**end of header
 @copying\n"

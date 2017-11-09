@@ -203,11 +203,13 @@ See Info node `(elisp)Derived Modes' for more details."
 		     parent child docstring syntax abbrev))
 
     `(progn
-       (defvar ,hook nil
-         ,(format "Hook run after entering %s mode.
+       (defvar ,hook nil)
+       (unless (get ',hook 'variable-documentation)
+         (put ',hook 'variable-documentation
+              ,(format "Hook run after entering %s mode.
 No problems result if this variable is not bound.
 `add-hook' automatically binds it.  (This is true for all hook variables.)"
-                  name))
+                       name)))
        (unless (boundp ',map)
 	 (put ',map 'definition-name ',child))
        (with-no-warnings (defvar ,map (make-sparse-keymap)))

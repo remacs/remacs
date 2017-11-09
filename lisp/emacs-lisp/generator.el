@@ -142,8 +142,7 @@ the CPS state machinery.
     `(let ((,dynamic-var ,static-var))
        (unwind-protect ; Update the static shadow after evaluation is done
             ,form
-         (setf ,static-var ,dynamic-var))
-       ,form)))
+         (setf ,static-var ,dynamic-var)))))
 
 (defmacro cps--with-dynamic-binding (dynamic-var static-var &rest body)
   "Evaluate BODY such that generated atomic evaluations run with
@@ -681,7 +680,8 @@ sub-iterator function returns via `iter-end-of-sequence'."
 When called as a function, NAME returns an iterator value that
 encapsulates the state of a computation that produces a sequence
 of values.  Callers can retrieve each value using `iter-next'."
-  (declare (indent defun))
+  (declare (indent defun)
+           (debug (&define name lambda-list lambda-doc def-body)))
   (cl-assert lexical-binding)
   (let* ((parsed-body (macroexp-parse-body body))
          (declarations (car parsed-body))
@@ -693,7 +693,8 @@ of values.  Callers can retrieve each value using `iter-next'."
 (defmacro iter-lambda (arglist &rest body)
   "Return a lambda generator.
 `iter-lambda' is to `iter-defun' as `lambda' is to `defun'."
-  (declare (indent defun))
+  (declare (indent defun)
+           (debug (&define lambda-list lambda-doc def-body)))
   (cl-assert lexical-binding)
   `(lambda ,arglist
      ,(cps-generate-evaluator body)))
@@ -717,7 +718,8 @@ is blocked."
   "Loop over values from an iterator.
 Evaluate BODY with VAR bound to each value from ITERATOR.
 Return the value with which ITERATOR finished iteration."
-  (declare (indent 1))
+  (declare (indent 1)
+           (debug ((symbolp form) body)))
   (let ((done-symbol (cps--gensym "iter-do-iterator-done"))
         (condition-symbol (cps--gensym "iter-do-condition"))
         (it-symbol (cps--gensym "iter-do-iterator"))

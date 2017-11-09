@@ -139,6 +139,7 @@ It is used for TCP/IP devices."
     (file-remote-p . tramp-handle-file-remote-p)
     (file-selinux-context . ignore)
     (file-symlink-p . tramp-handle-file-symlink-p)
+    (file-system-info . tramp-adb-handle-file-system-info)
     (file-truename . tramp-adb-handle-file-truename)
     (file-writable-p . tramp-adb-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
@@ -254,6 +255,30 @@ pass to the OPERATION."
   (eq (tramp-compat-file-attribute-type
        (file-attributes (file-truename filename)))
       t))
+
+(defun tramp-adb-handle-file-system-info (filename)
+  "Like `file-system-info' for Tramp files."
+  (ignore-errors
+    (with-parsed-tramp-file-name (expand-file-name filename) nil
+      (tramp-message v 5 "file system info: %s" localname)
+      (tramp-adb-send-command
+       v (format "df -k %s" (tramp-shell-quote-argument localname)))
+      (with-current-buffer (tramp-get-connection-buffer v)
+	(goto-char (point-min))
+	(forward-line)
+	(when (looking-at
+	       (concat "[[:space:]]*[^[:space:]]+"
+		       "[[:space:]]+\\([[:digit:]]+\\)"
+		       "[[:space:]]+\\([[:digit:]]+\\)"
+		       "[[:space:]]+\\([[:digit:]]+\\)"))
+	  ;; The values are given as 1k numbers, so we must change
+	  ;; them to number of bytes.
+	  (list (* 1024 (string-to-number (concat (match-string 1) "e0")))
+		;; The second value is the used size.  We need the
+		;; free size.
+		(* 1024 (- (string-to-number (concat (match-string 1) "e0"))
+			   (string-to-number (concat (match-string 2) "e0"))))
+		(* 1024 (string-to-number (concat (match-string 3) "e0")))))))))
 
 ;; This is derived from `tramp-sh-handle-file-truename'.  Maybe the
 ;; code could be shared?
@@ -524,11 +549,12 @@ Emacs dired can't find files."
       (let ((par (expand-file-name ".." dir)))
 	(unless (file-directory-p par)
 	  (make-directory par parents))))
-    (tramp-adb-barf-unless-okay
-     v (format "mkdir %s" (tramp-shell-quote-argument localname))
-     "Couldn't make directory %s" dir)
     (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-directory-property v localname)))
+    (tramp-flush-directory-property v localname)
+    (unless (or (tramp-adb-send-command-and-check
+		 v (format "mkdir %s" (tramp-shell-quote-argument localname)))
+		(and parents (file-directory-p dir)))
+      (tramp-error v 'file-error "Couldn't make directory %s" dir))))
 
 (defun tramp-adb-handle-delete-directory (directory &optional recursive _trash)
   "Like `delete-directory' for Tramp files."
@@ -740,7 +766,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 
 		;; Remote newname.
 		(when (and (file-directory-p newname)
-			   (directory-name-p newname))
+			   (tramp-compat-directory-name-p newname))
 		  (setq newname
 			(expand-file-name
 			 (file-name-nondirectory filename) newname)))
@@ -776,38 +802,43 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (setq filename (expand-file-name filename)
 	newname (expand-file-name newname))
 
-  (let ((t1 (tramp-tramp-file-p filename))
-	(t2 (tramp-tramp-file-p newname)))
-    (with-parsed-tramp-file-name (if t1 filename newname) nil
-      (with-tramp-progress-reporter
-	  v 0 (format "Renaming %s to %s" filename newname)
+  (if (file-directory-p filename)
+      (progn
+	(copy-directory filename newname t t)
+	(delete-directory filename 'recursive))
 
-	(if (and t1 t2
-		 (tramp-equal-remote filename newname)
-		 (not (file-directory-p filename)))
-	    (let ((l1 (file-remote-p filename 'localname))
-		  (l2 (file-remote-p newname 'localname)))
-	      (when (and (not ok-if-already-exists)
-			 (file-exists-p newname))
-		(tramp-error v 'file-already-exists newname))
-	      ;; We must also flush the cache of the directory, because
-	      ;; `file-attributes' reads the values from there.
-	      (tramp-flush-file-property v (file-name-directory l1))
-	      (tramp-flush-file-property v l1)
-	      (tramp-flush-file-property v (file-name-directory l2))
-	      (tramp-flush-file-property v l2)
-	      ;; Short track.
-	      (tramp-adb-barf-unless-okay
-	       v (format
-		  "mv -f %s %s"
-		  (tramp-shell-quote-argument l1)
-		  (tramp-shell-quote-argument l2))
-	       "Error renaming %s to %s" filename newname))
+    (let ((t1 (tramp-tramp-file-p filename))
+	  (t2 (tramp-tramp-file-p newname)))
+      (with-parsed-tramp-file-name (if t1 filename newname) nil
+	(with-tramp-progress-reporter
+	    v 0 (format "Renaming %s to %s" filename newname)
 
-	  ;; Rename by copy.
-	  (copy-file
-	   filename newname ok-if-already-exists 'keep-time 'preserve-uid-gid)
-	  (delete-file filename))))))
+	  (if (and t1 t2
+		   (tramp-equal-remote filename newname)
+		   (not (file-directory-p filename)))
+	      (let ((l1 (file-remote-p filename 'localname))
+		    (l2 (file-remote-p newname 'localname)))
+		(when (and (not ok-if-already-exists)
+			   (file-exists-p newname))
+		  (tramp-error v 'file-already-exists newname))
+		;; We must also flush the cache of the directory, because
+		;; `file-attributes' reads the values from there.
+		(tramp-flush-file-property v (file-name-directory l1))
+		(tramp-flush-file-property v l1)
+		(tramp-flush-file-property v (file-name-directory l2))
+		(tramp-flush-file-property v l2)
+		;; Short track.
+		(tramp-adb-barf-unless-okay
+		 v (format
+		    "mv -f %s %s"
+		    (tramp-shell-quote-argument l1)
+		    (tramp-shell-quote-argument l2))
+		 "Error renaming %s to %s" filename newname))
+
+	    ;; Rename by copy.
+	    (copy-file
+	     filename newname ok-if-already-exists 'keep-time 'preserve-uid-gid)
+	    (delete-file filename)))))))
 
 (defun tramp-adb-handle-process-file
   (program &optional infile destination display &rest args)

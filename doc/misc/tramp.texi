@@ -186,7 +186,7 @@ transparency extends to editing, version control, and @code{dired}.
 @value{tramp} can access remote hosts using any number of access
 methods, such as @command{rsh}, @command{rlogin}, @command{telnet},
 and related programs.  If these programs can successfully pass
-@acronym{ASCII]} characters, @value{tramp} can use them.
+@acronym{ASCII} characters, @value{tramp} can use them.
 @value{tramp} does not require or mandate 8-bit clean connections.
 
 @value{tramp}'s most common access method is through @command{ssh}, a
@@ -339,8 +339,8 @@ Another way is to follow the terminal session below:
 
 @example
 @group
-] @strong{cd ~/emacs}
-] @strong{git clone git://git.savannah.gnu.org/tramp.git}
+$ cd ~/emacs
+$ git clone git://git.savannah.gnu.org/tramp.git
 @end group
 @end example
 
@@ -349,8 +349,8 @@ From behind a firewall:
 
 @example
 @group
-] @strong{git config --global http.proxy http://user:pwd@@proxy.server.com:8080}
-] @strong{git clone https://git.savannah.gnu.org/r/tramp.git}
+$ git config --global http.proxy http://user:pwd@@proxy.server.com:8080
+$ git clone https://git.savannah.gnu.org/r/tramp.git
 @end group
 @end example
 
@@ -358,7 +358,7 @@ From behind a firewall:
 @value{tramp} developers:
 
 @example
-] @strong{git clone login@@git.sv.gnu.org:/srv/git/tramp.git}
+$ git clone login@@git.sv.gnu.org:/srv/git/tramp.git
 @end example
 
 @noindent
@@ -370,8 +370,8 @@ To fetch updates from the repository, use git pull:
 
 @example
 @group
-] @strong{cd ~/emacs/tramp}
-] @strong{git pull}
+$ cd ~/emacs/tramp
+$ git pull
 @end group
 @end example
 
@@ -381,8 +381,8 @@ Run @command{autoconf} as follows to generate an up-to-date
 
 @example
 @group
-] @strong{cd ~/emacs/tramp}
-] @strong{autoconf}
+$ cd ~/emacs/tramp
+$ autoconf
 @end group
 @end example
 
@@ -581,10 +581,7 @@ not auto loaded by Emacs.  All examples require @value{tramp} is
 installed and loaded:
 
 @lisp
-@group
-(custom-set-variables
- '(tramp-verbose 6 nil (tramp) "Enable remote command traces"))
-@end group
+(customize-set-variable 'tramp-verbose 6 "Enable remote command traces")
 @end lisp
 
 
@@ -1155,7 +1152,7 @@ option to determine the default method for remote file names that do
 not have one specified.
 
 @lisp
-(custom-set-variables '(tramp-default-method "ssh" nil (tramp)))
+(customize-set-variable 'tramp-default-method "ssh")
 @end lisp
 @end defopt
 
@@ -1242,7 +1239,7 @@ this substitution can be overridden with @option{tramp-default-user}.
 For example:
 
 @lisp
-(custom-set-variables'(tramp-default-user "root" nil (tramp)))
+(customize-set-variable 'tramp-default-user "root")
 @end lisp
 @end defopt
 
@@ -1298,9 +1295,9 @@ follows:
 @lisp
 @group
 (custom-set-variables
- '(tramp-default-method "ssh" nil (tramp))
- '(tramp-default-user "john" nil (tramp))
- '(tramp-default-host "target" nil (tramp)))
+ '(tramp-default-method "ssh")
+ '(tramp-default-user "john")
+ '(tramp-default-host "target"))
 @end group
 @end lisp
 
@@ -1858,21 +1855,20 @@ example below:
 
 @lisp
 @group
-(custom-set-variables
- '(tramp-password-prompt-regexp
-   (concat
-    "^.*"
-    (regexp-opt
-     '("passphrase" "Passphrase"
-       ;; English
-       "password" "Password"
-       ;; Deutsch
-       "passwort" "Passwort"
-       ;; Français
-       "mot de passe" "Mot de passe")
-     t)
-    ".*:\0? *")
-   nil (tramp)))
+(customize-set-variable
+ 'tramp-password-prompt-regexp
+  (concat
+   "^.*"
+   (regexp-opt
+    '("passphrase" "Passphrase"
+      ;; English
+      "password" "Password"
+      ;; Deutsch
+      "passwort" "Passwort"
+      ;; Français
+      "mot de passe" "Mot de passe")
+    t)
+   ".*:\0? *"))
 @end group
 @end lisp
 
@@ -2000,7 +1996,7 @@ fi
 install and execute a listener as follows (see @code{tramp-methods}):
 
 @example
-# nc -l -p 42
+$ nc -l -p 42
 @end example
 
 The above command-line syntax has changed with @command{busybox}
@@ -2175,8 +2171,8 @@ Example:
 @group
 (add-to-list 'backup-directory-alist
              (cons "." "~/.emacs.d/backups/"))
-(custom-set-variables
- '(tramp-backup-directory-alist backup-directory-alist 6 nil (tramp)))
+(customize-set-variable
+ 'tramp-backup-directory-alist backup-directory-alist)
 @end group
 @end lisp
 
@@ -2549,7 +2545,7 @@ For ad-hoc definitions to be saved automatically in
 @option{tramp-save-ad-hoc-proxies} to non-@code{nil}.
 
 @lisp
-(custom-set-variables '(tramp-save-ad-hoc-proxies t nil (tramp)))
+(customize-set-variable 'tramp-save-ad-hoc-proxies t)
 @end lisp
 @end defopt
 
@@ -3043,6 +3039,14 @@ Disable version control to avoid delays:
 @end group
 @end lisp
 
+If this is too radical, because you want to use version control
+remotely, trim @code{vc-handled-backends} to just those you care
+about, for example:
+
+@lisp
+(setq vc-handled-backends '(SVN Git))
+@end lisp
+
 Disable excessive traces.  Set @code{tramp-verbose} to 3 or lower,
 default being 3.  Increase trace levels temporarily when hunting for
 bugs.
@@ -3181,10 +3185,11 @@ which allows you to set the @code{ControlPath} provided the variable
 
 @lisp
 @group
-(setq tramp-ssh-controlmaster-options
-      (concat
-        "-o ControlPath=/tmp/ssh-ControlPath-%%r@@%%h:%%p "
-        "-o ControlMaster=auto -o ControlPersist=yes"))
+(customize-set-variable
+ 'tramp-ssh-controlmaster-options
+ (concat
+   "-o ControlPath=/tmp/ssh-ControlPath-%%r@@%%h:%%p "
+   "-o ControlMaster=auto -o ControlPersist=yes"))
 @end group
 @end lisp
 
@@ -3197,10 +3202,7 @@ behavior, then any changes to @command{ssh} can be suppressed with
 this @code{nil} setting:
 
 @lisp
-@group
-(custom-set-variables
- '(tramp-use-ssh-controlmaster-options nil nil (tramp)))
-@end group
+(customize-set-variable 'tramp-use-ssh-controlmaster-options nil)
 @end lisp
 
 
@@ -3356,8 +3358,8 @@ You can define default methods and user names for hosts,
 @lisp
 @group
 (custom-set-variables
- '(tramp-default-method "ssh" nil (tramp))
- '(tramp-default-user "news" nil (tramp)))
+ '(tramp-default-method "ssh")
+ '(tramp-default-user "news"))
 @end group
 @end lisp
 
@@ -3651,7 +3653,7 @@ disable such features.
 Disable @value{tramp} file name completion:
 
 @lisp
-(custom-set-variables '(ido-enable-tramp-completion nil))
+(customize-set-variable 'ido-enable-tramp-completion nil)
 @end lisp
 
 @item
@@ -3674,15 +3676,16 @@ To keep Ange FTP as default the remote files access package, set this
 in @file{.emacs}:
 
 @lisp
-(custom-set-variables '(tramp-default-method "ftp" nil (tramp)))
+(customize-set-variable 'tramp-default-method "ftp")
 @end lisp
 
 @item
 To disable both @value{tramp} (and Ange FTP), set @code{tramp-mode} to
-@code{nil} in @file{.emacs}.
+@code{nil} in @file{.emacs}.  @strong{Note}, that we don't use
+@code{customize-set-variable}, in order to avoid loading @value{tramp}.
 
 @lisp
-(custom-set-variables '(tramp-mode nil nil (tramp)))
+(setq tramp-mode nil)
 @end lisp
 
 @item
