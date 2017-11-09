@@ -277,10 +277,14 @@ DEFINE_GDB_SYMBOL_END (VALMASK)
 error !;
 #endif
 
-/* Declare an object to have an address that is a multiple of
-   GCALIGNMENT.  This is a no-op if the object's natural alignment is
-   already a multiple of GCALIGNMENT.  alignas is not suitable here,
-   as it fails if the object's natural alignment exceeds GCALIGNMENT.  */
+/* Use GCALIGNED immediately after the 'struct' keyword to require the
+   struct to have an address that is a multiple of GCALIGNMENT.  This
+   is a no-op if the struct's natural alignment is already a multiple
+   of GCALIGNMENT.  GCALIGNED's implementation uses the 'aligned'
+   attribute instead of 'alignas (GCALIGNMENT)', as the latter would
+   fail if an object's natural alignment exceeds GCALIGNMENT.  The
+   implementation hopes that natural alignment suffices on platforms
+   lacking 'aligned'.  */
 #ifdef HAVE_STRUCT_ATTRIBUTE_ALIGNED
 # define GCALIGNED __attribute__ ((aligned (GCALIGNMENT)))
 #else
@@ -2941,7 +2945,7 @@ CHECK_NUMBER_CDR (Lisp_Object x)
 /* This version of DEFUN declares a function prototype with the right
    arguments, so we can catch errors with maxargs at compile-time.  */
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
-   static struct Lisp_Subr GCALIGNED sname =				\
+   static struct GCALIGNED Lisp_Subr sname =				\
      { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS },				\
        { .a ## maxargs = fnname },					\
        minargs, maxargs, lname, intspec, 0};				\
