@@ -334,7 +334,8 @@ region is invalid."
                          (end (or (and sexp-end
                                        (not (= sexp-end beg))
                                        sexp-end)
-                                  (ignore-errors (goto-char (1+ beg)))))
+                                  (and (< (goto-char (1+ beg)) (point-max))
+                                       (point))))
                          (safe-end (or end
                                        (fallback-eol beg))))
                     (cons (if end beg (fallback-bol))
