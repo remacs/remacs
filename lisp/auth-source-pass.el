@@ -52,7 +52,7 @@ See `auth-source-search' for details on SPEC."
 
 (defun auth-source-pass--build-result (host port user)
   "Build auth-source-pass entry matching HOST, PORT and USER."
-  (let ((entry (auth-source-pass--find-match host user)))
+  (let ((entry (auth-source-pass--find-match host user port)))
     (when entry
       (let ((retval (list
                      :host host
@@ -139,26 +139,6 @@ CONTENTS is the contents of a password-store formatted file."
                                     (mapconcat #'identity (cdr pair) ":")))))
                         (cdr lines)))))
 
-(defun auth-source-pass--hostname (host)
-  "Extract hostname from HOST."
-  (let ((url (url-generic-parse-url host)))
-    (or (url-host url) host)))
-
-(defun auth-source-pass--hostname-with-user (host)
-  "Extract hostname and user from HOST."
-  (let* ((url (url-generic-parse-url host))
-         (user (url-user url))
-         (hostname (url-host url)))
-    (cond
-     ((and user hostname) (format "%s@%s" user hostname))
-     (hostname hostname)
-     (t host))))
-
-(defun auth-source-pass--user (host)
-  "Extract user from HOST and return it.
-Return nil if no match was found."
-  (url-user (url-generic-parse-url host)))
-
 (defun auth-source-pass--do-debug (&rest msg)
   "Call `auth-source-do-debug` with MSG and a prefix."
   (apply #'auth-source-do-debug
@@ -230,27 +210,39 @@ matching USER."
          (car matching-entries))
       (_ (auth-source-pass--select-one-entry matching-entries user)))))
 
-(defun auth-source-pass--find-match (host user)
-  "Return a password-store entry name matching HOST and USER.
-If many matches are found, return the first one.  If no match is
-found, return nil."
+(defun auth-source-pass--find-match (host user port)
+  "Return a password-store entry name matching HOST, USER and PORT.
+
+Disambiguate between user provided inside HOST (e.g., user@server.com) and
+inside USER by giving priority to USER.  Same for PORT."
+  (let* ((url (url-generic-parse-url (if (string-match-p ".*://" host)
+                                         host
+                                       (format "https://%s" host)))))
+    (auth-source-pass--find-match-unambiguous
+     (or (url-host url) host)
+     (or user (url-user url))
+     ;; url-port returns 443 (because of the https:// above) by default
+     (or port (number-to-string (url-port url))))))
+
+(defun auth-source-pass--find-match-unambiguous (hostname user port)
+  "Return a password-store entry name matching HOSTNAME, USER and PORT.
+If many matches are found, return the first one.  If no match is found,
+return nil.
+
+HOSTNAME should not contain any username or port number."
   (or
-   (if (auth-source-pass--user host)
-       ;; if HOST contains a user (e.g., "user@host.com"), <HOST>
-       (auth-source-pass--find-one-by-entry-name (auth-source-pass--hostname-with-user host) user)
-     ;; otherwise, if USER is provided, search for <USER>@<HOST>
-     (when (stringp user)
-       (auth-source-pass--find-one-by-entry-name (concat user "@" (auth-source-pass--hostname host)) user)))
-   ;; if that didn't work, search for HOST without its user component, if any
-   (auth-source-pass--find-one-by-entry-name (auth-source-pass--hostname host) user)
-   ;; if that didn't work, search for HOST with user extracted from it
-   (auth-source-pass--find-one-by-entry-name
-    (auth-source-pass--hostname host) (auth-source-pass--user host))
+   (and user port (auth-source-pass--find-one-by-entry-name (format "%s@%s:%s" user hostname port) user))
+   (and user (auth-source-pass--find-one-by-entry-name (format "%s@%s" user hostname) user))
+   (and port (auth-source-pass--find-one-by-entry-name (format "%s:%s" hostname port) nil))
+   (auth-source-pass--find-one-by-entry-name hostname user)
    ;; if that didn't work, remove subdomain: foo.bar.com -> bar.com
-   (let ((components (split-string host "\\.")))
+   (let ((components (split-string hostname "\\.")))
      (when (= (length components) 3)
        ;; start from scratch
-       (auth-source-pass--find-match (mapconcat 'identity (cdr components) ".") user)))))
+       (auth-source-pass--find-match-unambiguous
+        (mapconcat 'identity (cdr components) ".")
+        user
+        port)))))
 
 (provide 'auth-source-pass)
 ;;; auth-source-pass.el ends here
