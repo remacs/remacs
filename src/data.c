@@ -2047,21 +2047,6 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
   return NILP (val) ? make_number (0) : val;
 }
 
-DEFUN ("logcount", Flogcount, Slogcount, 1, 1, 0,
-       doc: /* Return population count of VALUE.
-This is the number of one bits in the two's complement representation
-of VALUE.  If VALUE is negative, return the number of zero bits in the
-representation.  */)
-  (Lisp_Object value)
-{
-  CHECK_NUMBER (value);
-  EMACS_INT v = XINT (value) < 0 ? -1 - XINT (value) : XINT (value);
-  return make_number (EMACS_UINT_WIDTH <= UINT_WIDTH
-		      ? count_one_bits (v)
-		      : EMACS_UINT_WIDTH <= ULONG_WIDTH
-		      ? count_one_bits_l (v)
-		      : count_one_bits_ll (v));
-}
 
 static Lisp_Object
 ash_lsh_impl (Lisp_Object value, Lisp_Object count, bool lsh)
@@ -2660,7 +2645,6 @@ syms_of_data (void)
   defsubr (&Saset);
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);
-  defsubr (&Slogcount);
   defsubr (&Slsh);
   defsubr (&Sash);
   defsubr (&Sbyteorder);

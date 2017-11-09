@@ -2,6 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
+use remacs_lib::rust_count_one_bits;
 
 use floatfns;
 use lisp::{LispNumber, LispObject};
@@ -413,6 +414,19 @@ fn sub1(number: LispObject) -> LispObject {
 #[lisp_fn]
 fn lognot(number: LispObject) -> LispObject {
     LispObject::from_fixnum(!number.as_fixnum_or_error())
+}
+
+/// Return population count of VALUE.
+/// This is the number of one bits in the two's complement representation
+/// of VALUE.  If VALUE is negative, return the number of zero bits in the
+/// representation.
+#[lisp_fn]
+fn logcount(value: LispObject) -> LispObject {
+    let mut val = value.as_fixnum_or_error();
+    if val < 0 {
+        val = -1 - val;
+    }
+    LispObject::from_fixnum(rust_count_one_bits(val as usize) as EmacsInt)
 }
 
 include!(concat!(env!("OUT_DIR"), "/math_exports.rs"));
