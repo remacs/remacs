@@ -177,6 +177,11 @@ General steps (for each step, check for possible errors):
     See the info-gnu-emacs mailing list archives for the form
     of past announcements.  The first pretest announcement, and the
     release announcement, should have more detail.
+    Use the emacs-devel topic 'emacs-announce'.  The best way to do
+    this is to add a header "Keywords: emacs-announce" to your mail.
+    (You can also put it in the Subject, but this is not as good
+    because replies that invariably are not announcements also get
+    sent out as if they were.)
 
 12. After a release, update the Emacs pages as below.
 

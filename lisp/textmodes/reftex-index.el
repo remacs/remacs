@@ -474,7 +474,7 @@ With prefix 3, restrict index to region."
 
   (interactive)
 
-  ;; Ensure access to scanning info and rescan buffer if prefix are is '(4).
+  ;; Ensure access to scanning info and rescan buffer if prefix arg is '(4).
   (let ((current-prefix-arg current-prefix-arg))
     (reftex-ensure-index-support t)
     (reftex-access-scan-info current-prefix-arg))

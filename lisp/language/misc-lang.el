@@ -87,9 +87,7 @@ If the value is `absorb', ZWNJ is absorbed into the previous
 grapheme cluster, and not displayed.
 
 If the value is `as-space', the glyph is displayed by a
-thin (i.e. 1-dot width) space.
-
-Customizing the value takes effect when you start Emacs next time."
+thin (i.e. 1-dot width) space."
   :group 'mule
   :version "26.1"
   :type '(choice

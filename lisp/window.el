@@ -6465,8 +6465,9 @@ If this is an integer, `split-window-sensibly' may split a window
 vertically only if it has at least this many lines.  If this is
 nil, `split-window-sensibly' is not allowed to split a window
 vertically.  If, however, a window is the only window on its
-frame, `split-window-sensibly' may split it vertically
-disregarding the value of this variable."
+frame, or all the other ones are dedicated,
+`split-window-sensibly' may split it vertically disregarding the
+value of this variable."
   :type '(choice (const nil) (integer :tag "lines"))
   :version "23.1"
   :group 'windows)
@@ -6573,15 +6574,27 @@ split."
 	     ;; Split window horizontally.
 	     (with-selected-window window
 	       (split-window-right)))
-	(and (eq window (frame-root-window (window-frame window)))
-	     (not (window-minibuffer-p window))
-	     ;; If WINDOW is the only window on its frame and is not the
-	     ;; minibuffer window, try to split it vertically disregarding
-	     ;; the value of `split-height-threshold'.
-	     (let ((split-height-threshold 0))
-	       (when (window-splittable-p window)
-		 (with-selected-window window
-		   (split-window-below))))))))
+	(and
+         ;; If WINDOW is the only usable window on its frame (it is
+         ;; the only one or, not being the only one, all the other
+         ;; ones are dedicated) and is not the minibuffer window, try
+         ;; to split it vertically disregarding the value of
+         ;; `split-height-threshold'.
+         (let ((frame (window-frame window)))
+           (or
+            (eq window (frame-root-window frame))
+            (catch 'done
+              (walk-window-tree (lambda (w)
+                                  (unless (or (eq w window)
+                                              (window-dedicated-p w))
+                                    (throw 'done nil)))
+                                frame)
+              t)))
+	 (not (window-minibuffer-p window))
+	 (let ((split-height-threshold 0))
+	   (when (window-splittable-p window)
+	     (with-selected-window window
+	       (split-window-below))))))))
 
 (defun window--try-to-split-window (window &optional alist)
   "Try to split WINDOW.

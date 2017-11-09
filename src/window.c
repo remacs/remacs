@@ -6661,7 +6661,7 @@ the return value is nil.  Otherwise the value is t.  */)
 
 	   We have to do this in order to capture the following
 	   scenario: Suppose our frame contains two live windows W1 and
-	   W2 and ‘set-window-configuration’ replaces them by two
+	   W2 and 'set-window-configuration' replaces them by two
 	   windows W3 and W4 that were dead the last time
 	   run_window_size_change_functions was run.  If W3 and W4 have
 	   the same values for their old and new pixel sizes but these
@@ -7617,8 +7617,8 @@ on their symbols to be controlled by this variable.  */);
   DEFVAR_LISP ("window-configuration-change-hook",
 	       Vwindow_configuration_change_hook,
 	       doc: /* Functions to call when window configuration changes.
-The buffer-local part is run once per window, with the relevant window
-selected; while the global part is run only once for the modified frame,
+The buffer-local value is run once per window, with the relevant window
+selected; while the global value is run only once for the modified frame,
 with the relevant frame selected.  */);
   Vwindow_configuration_change_hook = Qnil;
 

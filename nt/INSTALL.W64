@@ -49,13 +49,13 @@ will also be available at the Windows console.
 
 ** Download and install the necessary packages
 
-Run msys2_shell.bat in your MSYS2 directory and you will see a BASH window
+Run c:/msys64/msys2.exe in your MSYS2 directory and you will see a BASH window
 opened.
 
 In the BASH prompt, use the following command to install the necessary
 packages (you can copy and paste it into the shell with Shift + Insert):
 
-  pacman -S base-devel \
+  pacman -S --needed base-devel \
   mingw-w64-x86_64-toolchain \
   mingw-w64-x86_64-xpm-nox \
   mingw-w64-x86_64-libtiff \
@@ -63,7 +63,7 @@ packages (you can copy and paste it into the shell with Shift + Insert):
   mingw-w64-x86_64-libpng \
   mingw-w64-x86_64-libjpeg-turbo \
   mingw-w64-x86_64-librsvg \
-  mingw-w64-x86_64-liblcms2 \
+  mingw-w64-x86_64-lcms2 \
   mingw-w64-x86_64-libxml2 \
   mingw-w64-x86_64-gnutls \
   mingw-w64-x86_64-zlib
@@ -126,7 +126,7 @@ Now you're ready to build and install Emacs with autogen, configure, make,
 and make install.
 
 First we need to switch to the MinGW-w64 environment.  Exit the MSYS2 BASH
-console and run mingw64_shell.bat in the C:\msys64 folder, then cd back to
+console and run mingw64.exe in the C:\msys64 folder, then cd back to
 your Emacs source directory, e.g.:
 
   cd /c/emacs/emacs-26

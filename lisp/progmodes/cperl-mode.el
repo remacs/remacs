@@ -1896,7 +1896,9 @@ or as help on variables `cperl-tips', `cperl-problems',
   (if cperl-pod-here-scan
       (or cperl-syntaxify-by-font-lock
        (progn (or cperl-faces-init (cperl-init-faces-weak))
-	      (cperl-find-pods-heres)))))
+	      (cperl-find-pods-heres))))
+  ;; Setup Flymake
+  (add-hook 'flymake-diagnostic-functions 'perl-flymake nil t))
 
 ;; Fix for perldb - make default reasonable
 (defun cperl-db ()

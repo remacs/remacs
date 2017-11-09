@@ -2290,7 +2290,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 
 	;; Cleanup.
 	(ignore-errors
-	  (delete-directory tmp-name1))))))
+	  (delete-directory tmp-name1 'recursive))))))
 
 (ert-deftest tramp-test17-insert-directory ()
   "Check `insert-directory'."
@@ -4432,23 +4432,27 @@ process sentinels.  They shall not disturb each other."
   "Check that Tramp is loaded lazily, only when needed."
   ;; Tramp is neither loaded at Emacs startup, nor when completing a
   ;; non-Tramp file name like "/foo".  Completing a Tramp-alike file
-  ;; name like "/foo:" autoloads Tramp.
+  ;; name like "/foo:" autoloads Tramp, when `tramp-mode' is t.
   (let ((code
 	 "(progn \
-	   (message \"Tramp loaded: %s\" (featurep 'tramp)) \
+           (setq tramp-mode %s) \
+	   (message \"Tramp loaded: %%s\" (featurep 'tramp)) \
 	   (file-name-all-completions \"/foo\" \"/\") \
-	   (message \"Tramp loaded: %s\" (featurep 'tramp)) \
+	   (message \"Tramp loaded: %%s\" (featurep 'tramp)) \
 	   (file-name-all-completions \"/foo:\" \"/\") \
-	   (message \"Tramp loaded: %s\" (featurep 'tramp)))"))
-    (should
-     (string-match
-      "Tramp loaded: nil[\n\r]+Tramp loaded: nil[\n\r]+Tramp loaded: t[\n\r]+"
-      (shell-command-to-string
-       (format
-	"%s -batch -Q -L %s --eval %s"
-	(expand-file-name invocation-name invocation-directory)
-	(mapconcat 'shell-quote-argument load-path " -L ")
-	(shell-quote-argument code)))))))
+	   (message \"Tramp loaded: %%s\" (featurep 'tramp)))"))
+    (dolist (tm '(t nil))
+      (should
+       (string-match
+	(format
+       "Tramp loaded: nil[\n\r]+Tramp loaded: nil[\n\r]+Tramp loaded: %s[\n\r]+"
+	 tm)
+	(shell-command-to-string
+	 (format
+	  "%s -batch -Q -L %s --eval %s"
+	  (expand-file-name invocation-name invocation-directory)
+	  (mapconcat 'shell-quote-argument load-path " -L ")
+	  (shell-quote-argument (format code tm)))))))))
 
 (ert-deftest tramp-test43-unload ()
   "Check that Tramp and its subpackages unload completely.

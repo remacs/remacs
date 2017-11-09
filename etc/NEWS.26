@@ -1213,6 +1213,16 @@ New user options `term-char-mode-buffer-read-only' and
 are non-nil by default.  Customize these options to nil if you want
 the previous behavior.
 
+** Xref
+
++++
+*** When an *xref* buffer is needed, 'TAB' quits and jumps to an xref.
+
+A new command 'xref-quit-and-goto-xref', bound to 'TAB' in *xref*
+buffers, quits the window before jumping to the destination.  In many
+situations, the intended window configuration is restored, just as if
+the *xref* buffer hadn't been necessary in the first place.
+
 
 * New Modes and Packages in Emacs 26.1
 
@@ -1261,6 +1271,11 @@ similarly but it doesn't prepend a '.'.
 table implementation.  This uses a new bytecode op 'switch', which
 isn't compatible with previous Emacs versions.  This functionality can
 be disabled by setting 'byte-compile-cond-use-jump-table' to nil.
+
++++
+** If 'comment-auto-fill-only-comments' is non-nil, 'auto-fill-function'
+is now called only if either no comment syntax is defined for the
+current buffer or the self-insertion takes place within a comment.
 
 ---
 ** The alist 'ucs-names' is now a hash table.
@@ -1524,6 +1539,10 @@ See the node "(elisp) Checksum/Hash" in the ELisp manual for details.
 'gnutls-hash-digest'; 'gnutls-ciphers' and 'gnutls-symmetric-encrypt'
 and 'gnutls-symmetric-decrypt'.
 See the node "(elisp) GnuTLS Cryptography" in the ELisp manual for details.
+
++++
+** The function 'gnutls-available-p' now returns a list of capabilities
+supported by the GnuTLS library used by Emacs.
 
 +++
 ** Emacs now supports records for user-defined types, via the new

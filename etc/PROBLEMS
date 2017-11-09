@@ -826,6 +826,36 @@ index 45cc554..0cc5e76 100644
 If you can't modify that file directly, copy it to the directory
 ~/.m17n.d/ (create it if it doesn't exist), and apply the patch.
 
+** Emacs running on GNU/Linux system with the m17n library Ver.1.7.1 or the
+earlier version has a problem with rendering Lao script with OpenType font.
+
+The problem can be fixed by installing the newer version of the m17n
+library (if any), or by following this procedure:
+
+1. Locate the file LAOO-OTF.flt installed on your system as part of the
+m17n library.  Usually it is under the directory /usr/share/m17n.
+
+2. Apply the following patch to LAOO-OTF.flt
+
+------------------------------------------------------------
+diff --git a/FLT/LAOO-OTF.flt b/FLT/LAOO-OTF.flt
+index 5504171..431adf8 100644
+--- a/FLT/LAOO-OTF.flt
++++ b/FLT/LAOO-OTF.flt
+@@ -3,7 +3,7 @@
+ ;; See the end for copying conditions.
+
+ (font layouter laoo-otf nil
+-      (font (nil phetsarath\ ot unicode-bmp)))
++      (font (nil nil unicode-bmp :otf=lao\ )))
+
+ ;;; <li> LAOO-OTF.flt
+
+------------------------------------------------------------
+
+If you can't modify that file directly, copy it to the directory
+~/.m17n.d/ (create it if it doesn't exist), and apply the patch.
+
 * Internationalization problems
 
 ** M-{ does not work on a Spanish PC keyboard.
@@ -1461,6 +1491,22 @@ use meta in modified function-keys, which confuses Emacs.  To fix
 this, you can remove the X resource or put this in your init file:
 
   (xterm-remove-modify-other-keys)
+
+** Emacs's xterm-mouse doesn't work well in Evil mode.
+
+Specifically, clicking mouse-1 doesn't work as expected: instead of
+moving point where you click, it highlights the region between the
+line beginning and the click location, and displays error messages
+about unbound keys in the echo area.
+
+To work around this, put this in your .emacs file:
+
+  (with-eval-after-load 'evil-maps
+    (define-key evil-motion-state-map [down-mouse-1] nil))
+
+This appears to be a bug in Evil.
+See discussions in https://github.com/emacs-evil/evil/issues/960
+and https://debbugs.gnu.org/cgi/bugreport.cgi?bug=29143
 
 ** Emacs spontaneously displays "I-search: " at the bottom of the screen.
 

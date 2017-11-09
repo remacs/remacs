@@ -1292,7 +1292,8 @@ file-notify events."
 	    (when (and user domain)
 	      (setq user (concat domain ";" user)))
 	    (url-parse-make-urlobj
-	     method (and user (url-hexify-string user)) nil host
+	     method (and user (url-hexify-string user))
+	     nil (and host (url-hexify-string host))
 	     (if (stringp port) (string-to-number port) port)
 	     (and localname (url-hexify-string localname)) nil nil t))
 	(url-parse-make-urlobj

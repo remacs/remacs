@@ -400,14 +400,22 @@ valid signal handlers.")
           (const   :tag "Unlimited" nil))
   :version "22.1")
 
-(defcustom gdb-non-stop-setting t
-  "When in non-stop mode, stopped threads can be examined while
+(defcustom gdb-non-stop-setting (not (eq system-type 'windows-nt))
+  "If non-nil, GDB sessions are expected to support the non-stop mode.
+When in the non-stop mode, stopped threads can be examined while
 other threads continue to execute.
+
+If this is non-nil, GDB will be sent the \"set non-stop 1\" command,
+and if that results in an error, the non-stop setting will be
+turned off automatically.
+
+On MS-Windows, this is off by default, because MS-Windows targets
+don't support the non-stop mode.
 
 GDB session needs to be restarted for this setting to take effect."
   :type 'boolean
   :group 'gdb-non-stop
-  :version "23.2")
+  :version "26.1")
 
 ;; TODO Some commands can't be called with --all (give a notice about
 ;; it in setting doc)
@@ -2188,7 +2196,10 @@ a GDB/MI reply message."
 
 (defun gdbmi-bnf-console-stream-output (c-string)
   "Handler for the console-stream-output GDB/MI output grammar rule."
-  (gdb-console c-string))
+  (gdb-console c-string)
+  ;; We've written to the GUD console, so we should print the prompt
+  ;; after the next result-class or async-class.
+  (setq gdb-first-done-or-error t))
 
 (defun gdbmi-bnf-target-stream-output (_c-string)
   "Handler for the target-stream-output GDB/MI output grammar rule."

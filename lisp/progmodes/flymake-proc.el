@@ -82,7 +82,7 @@ Overrides `flymake-proc-allowed-file-name-masks'."
     ("\\.xml\\'" flymake-proc-xml-init)
     ("\\.html?\\'" flymake-proc-xml-init)
     ("\\.cs\\'" flymake-proc-simple-make-init)
-    ("\\.p[ml]\\'" flymake-proc-perl-init)
+    ;; ("\\.p[ml]\\'" flymake-proc-perl-init)
     ("\\.php[345]?\\'" flymake-proc-php-init)
     ("\\.h\\'" flymake-proc-master-make-header-init flymake-proc-master-cleanup)
     ("\\.java\\'" flymake-proc-simple-make-java-init flymake-proc-simple-java-cleanup)

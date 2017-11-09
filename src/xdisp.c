@@ -13174,8 +13174,20 @@ hscroll_window_tree (Lisp_Object window)
 
 	  /* If the position of this window's point has explicitly
 	     changed, no more suspend auto hscrolling.  */
-	  if (NILP (Fequal (Fwindow_point (window), Fwindow_old_point (window))))
-	    w->suspend_auto_hscroll = false;
+	  if (w->suspend_auto_hscroll
+	      && NILP (Fequal (Fwindow_point (window),
+			       Fwindow_old_point (window))))
+	    {
+	      w->suspend_auto_hscroll = false;
+	      /* When hscrolling just the current line, and the rest
+		 of lines were temporarily hscrolled, but no longer
+		 are, force thorough redisplay of this window, to show
+		 the effect of disabling hscroll suspension immediately.  */
+	      if (w->min_hscroll == 0 && w->hscroll > 0
+		  && EQ (Fbuffer_local_value (Qauto_hscroll_mode, w->contents),
+			 Qcurrent_line))
+		SET_FRAME_GARBAGED (XFRAME (w->frame));
+	    }
 
 	  /* Remember window point.  */
 	  Fset_marker (w->old_pointm,
@@ -32563,6 +32575,9 @@ display-start position.
 These functions are called whenever the `window-start' marker is modified,
 either to point into another buffer (e.g. via `set-window-buffer') or another
 place in the same buffer.
+When each function is called, the `window-start' marker of its window
+argument has been already set to the new value, and the buffer which that
+window will display is set to be the current buffer.
 Note that the value of `window-end' is not valid when these functions are
 called.
 

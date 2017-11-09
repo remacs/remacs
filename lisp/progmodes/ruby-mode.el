@@ -2253,6 +2253,68 @@ See `font-lock-syntax-table'.")
                (progn (set-match-data value) t))
           (ruby-match-expression-expansion limit)))))
 
+;;; Flymake support
+(defcustom ruby-flymake-command '("ruby" "-w" "-c")
+  "External tool used to check Ruby source code.
+This is a non empty list of strings, the checker tool possibly
+followed by required arguments.  Once launched it will receive
+the Ruby source to be checked as its standard input."
+  :group 'ruby
+  :type '(repeat string))
+
+(defvar-local ruby--flymake-proc nil)
+
+(defun ruby-flymake (report-fn &rest _args)
+  "Ruby backend for Flymake.  Launches
+`ruby-flymake-command' (which see) and passes to its standard
+input the contents of the current buffer. The output of this
+command is analysed for error and warning messages."
+  (unless (executable-find (car ruby-flymake-command))
+    (error "Cannot find a suitable checker"))
+
+  (when (process-live-p ruby--flymake-proc)
+    (kill-process ruby--flymake-proc))
+
+  (let ((source (current-buffer)))
+    (save-restriction
+      (widen)
+      (setq
+       ruby--flymake-proc
+       (make-process
+        :name "ruby-flymake" :noquery t :connection-type 'pipe
+        :buffer (generate-new-buffer " *ruby-flymake*")
+        :command ruby-flymake-command
+        :sentinel
+        (lambda (proc _event)
+          (when (eq 'exit (process-status proc))
+            (unwind-protect
+                (if (with-current-buffer source (eq proc ruby--flymake-proc))
+                    (with-current-buffer (process-buffer proc)
+                      (goto-char (point-min))
+                      (cl-loop
+                       while (search-forward-regexp
+                              "^\\(?:.*.rb\\|-\\):\\([0-9]+\\): \\(.*\\)$"
+                              nil t)
+                       for msg = (match-string 2)
+                       for (beg . end) = (flymake-diag-region
+                                          source
+                                          (string-to-number (match-string 1)))
+                       for type = (if (string-match "^warning" msg)
+                                      :warning
+                                    :error)
+                       collect (flymake-make-diagnostic source
+                                                        beg
+                                                        end
+                                                        type
+                                                        msg)
+                       into diags
+                       finally (funcall report-fn diags)))
+                  (flymake-log :debug "Canceling obsolete check %s"
+                               proc))
+              (kill-buffer (process-buffer proc)))))))
+      (process-send-region ruby--flymake-proc (point-min) (point-max))
+      (process-send-eof ruby--flymake-proc))))
+
 ;;;###autoload
 (define-derived-mode ruby-mode prog-mode "Ruby"
   "Major mode for editing Ruby code."
@@ -2265,6 +2327,7 @@ See `font-lock-syntax-table'.")
 
   (add-hook 'after-save-hook 'ruby-mode-set-encoding nil 'local)
   (add-hook 'electric-indent-functions 'ruby--electric-indent-p nil 'local)
+  (add-hook 'flymake-diagnostic-functions 'ruby-flymake nil 'local)
 
   (setq-local font-lock-defaults '((ruby-font-lock-keywords) nil nil))
   (setq-local font-lock-keywords ruby-font-lock-keywords)
