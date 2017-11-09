@@ -37,8 +37,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#endif	/* subprocesses */
-
 #ifdef HAVE_SETRLIMIT
 # include <sys/resource.h>
 
@@ -47,8 +45,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    which should be restored in child processes.  */
 static struct rlimit nofile_limit;
 #endif
-
-#ifdef subprocesses
 
 /* Are local (unix) sockets supported?  */
 #if defined (HAVE_SYS_UN_H)

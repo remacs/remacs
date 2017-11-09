@@ -794,7 +794,6 @@ unblock_child_signal (sigset_t const *oldset)
   pthread_sigmask (SIG_SETMASK, oldset, 0);
 }
 
-#endif	/* !MSDOS */
 
 /* Block SIGINT.  */
 void
