@@ -16066,8 +16066,10 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp,
 	 since the handling of this_line_start_pos, etc., in redisplay
 	 handles the same cases.  */
       && !EQ (window, minibuf_window)
-      && (FRAME_WINDOW_P (f)
-	  || !overlay_arrow_in_current_buffer_p ()))
+      /* When overlay arrow is shown in current buffer, point movement
+	 is no longer "simple", as it typically causes the overlay
+	 arrow to move as well.  */
+      && !overlay_arrow_in_current_buffer_p ())
     {
       int this_scroll_margin, top_scroll_margin;
       struct glyph_row *row = NULL;
@@ -17698,7 +17700,11 @@ try_window_reusing_current_matrix (struct window *w)
       /* Don't try to reuse the display if windows have been split
 	 or such.  */
       || windows_or_buffers_changed
-      || f->cursor_type_changed)
+      || f->cursor_type_changed
+      /* This function cannot handle buffers where the overlay arrow
+	 is shown on the fringes, because if the arrow position
+	 changes, we cannot just reuse the current matrix.  */
+      || overlay_arrow_in_current_buffer_p ())
     return false;
 
   /* Can't do this if showing trailing whitespace.  */
