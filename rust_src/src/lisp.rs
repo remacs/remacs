@@ -1003,7 +1003,7 @@ impl LispObject {
 
     #[inline]
     pub fn to_string(self) -> String {
-        let mut s = self.as_string().unwrap();
+        let mut s = self.as_string_or_error();
         let slice = unsafe { slice::from_raw_parts(s.data_ptr(), s.len_bytes() as usize) };
         String::from_utf8_lossy(slice).into_owned()
     }
