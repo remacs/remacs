@@ -32,7 +32,7 @@ top_srcdir_abs = $(shell cd @top_srcdir@; pwd -P)
 
 MKDIR_P = @MKDIR_P@
 
-## Emacs.app.
+## Remacs.app.
 ns_appdir = @ns_appdir@
 ## GNUstep: ns_appdir; macOS: ns_appdir/Contents/MacOS
 ns_appbindir = @ns_appbindir@
@@ -44,7 +44,7 @@ ns_check_file = @ns_appdir@/@ns_check_file@
 
 .PHONY: all
 
-all: ${ns_appdir} ${ns_appbindir}/Emacs
+all: ${ns_appdir} ${ns_appbindir}/Remacs
 
 ${ns_check_file} ${ns_appdir}: ${srcdir}/${ns_appsrc} ${ns_appsrc}
 	rm -rf ${ns_appdir}
@@ -59,7 +59,7 @@ ${ns_check_file} ${ns_appdir}: ${srcdir}/${ns_appsrc} ${ns_appsrc}
 ## Don't create ns_appbindir via an order-only prerequisite, because
 ## on GNUstep ns_appbindir and ns_bindir are the same, so
 ## the rule for ns_appbindir would conflict with that for ns_appdir.
-${ns_appbindir}/Emacs: ${ns_appdir} ${ns_check_file} ../src/remacs${EXEEXT}
+${ns_appbindir}/Remacs: ${ns_appdir} ${ns_check_file} ../src/remacs${EXEEXT}
 	${MKDIR_P} ${ns_appbindir}
 	cp -f ../src/remacs${EXEEXT} $@
 
@@ -80,7 +80,7 @@ links: ../src/remacs${EXEEXT}
 	ln -s $(top_srcdir_abs)/lisp ${ns_appdir}/Contents/Resources
 	ln -s $(top_srcdir_abs)/info ${ns_appdir}/Contents/Resources
 	${MKDIR_P} ${ns_appbindir}
-	ln -s $(abs_top_builddir)/src/remacs${EXEEXT} ${ns_appbindir}/Emacs
+	ln -s $(abs_top_builddir)/src/remacs${EXEEXT} ${ns_appbindir}/Remacs
 	ln -s $(abs_top_builddir)/lib-src ${ns_appbindir}/bin
 	ln -s $(abs_top_builddir)/lib-src ${ns_appbindir}/libexec
 	${MKDIR_P} ${ns_appdir}/Contents/Resources/etc
