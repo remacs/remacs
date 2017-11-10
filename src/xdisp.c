@@ -21132,7 +21132,13 @@ should_produce_line_number (struct it *it)
 
 #ifdef HAVE_WINDOW_SYSTEM
   /* Don't display line number in tooltip frames.  */
-  if (FRAMEP (tip_frame) && EQ (WINDOW_FRAME (it->w), tip_frame))
+  if (FRAMEP (tip_frame) && EQ (WINDOW_FRAME (it->w), tip_frame)
+#ifdef USE_GTK
+      /* GTK builds store in tip_frame the frame that shows the tip,
+	 so we need an additional test.  */
+      && !NILP (Fframe_parameter (tip_frame, Qtooltip))
+#endif
+      )
     return false;
 #endif
 
