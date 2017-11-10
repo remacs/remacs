@@ -10726,26 +10726,35 @@ comment at the start of cc-engine.el for more info."
 
 (defun c-looking-at-statement-block ()
   ;; Point is at an opening brace.  If this is a statement block (i.e. the
-  ;; elements in it are terminated by semicolons) return t.  Otherwise, return
-  ;; nil.
+  ;; elements in the block are terminated by semicolons, or the block is
+  ;; empty, or the block contains a keyword) return t.  Otherwise, return nil.
   (let ((here (point)))
     (prog1
 	(if (c-go-list-forward)
 	    (let ((there (point)))
 	      (backward-char)
-	      (c-syntactic-skip-backward
-	       "^;," here t)
+	      (c-syntactic-skip-backward "^;," here t)
 	      (cond
 	       ((eq (char-before) ?\;) t)
 	       ((eq (char-before) ?,) nil)
-	       (t (goto-char here)
-		  (forward-char)
-		  (and (c-syntactic-re-search-forward "{" there t t)
-		       (progn (backward-char)
-			      (c-looking-at-statement-block))))))
+	       (t 			; We're at (1+ here).
+		(cond
+		 ((progn (c-forward-syntactic-ws)
+			 (eq (point) (1- there)))
+		  t)
+		 ((c-syntactic-re-search-forward c-keywords-regexp there t)
+		  t)
+		 ((c-syntactic-re-search-forward "{" there t t)
+		  (backward-char)
+		  (c-looking-at-statement-block))
+		 (t nil)))))
 	  (forward-char)
-	  (and (c-syntactic-re-search-forward "[;,]" nil t t)
-	       (eq (char-before) ?\;)))
+	  (cond
+	   ((c-syntactic-re-search-forward "[;,]" nil t t)
+	    (eq (char-before) ?\;))
+	   ((c-syntactic-re-search-forward c-keywords-regexp nil t t)
+	    t)
+	   (t nil)))
       (goto-char here))))
 
 (defun c-looking-at-inexpr-block (lim containing-sexp &optional check-at-end)
@@ -12534,7 +12543,11 @@ comment at the start of cc-engine.el for more info."
 			    (save-excursion
 			      (goto-char containing-sexp)
 			      (c-looking-at-special-brace-list)))
-		       (c-inside-bracelist-p containing-sexp paren-state t))))
+		       (c-inside-bracelist-p containing-sexp paren-state t)
+		       (save-excursion
+			 (goto-char containing-sexp)
+			 (and (eq (char-after) ?{)
+			      (not (c-looking-at-statement-block)))))))
 	(cond
 
 	 ;; CASE 9A: In the middle of a special brace list opener.
