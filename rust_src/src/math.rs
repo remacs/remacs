@@ -1,8 +1,8 @@
 //! Functions doing math on numbers.
 
+use remacs_lib::rust_count_one_bits;
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
-use remacs_lib::rust_count_one_bits;
 
 use floatfns;
 use lisp::{LispNumber, LispObject};
