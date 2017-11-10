@@ -210,9 +210,8 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
     for &arg in &args[1..] {
         if arithcompare(arg, accum, comparison).is_not_nil() {
             accum = arg;
-        }
-        if accum.as_float().map_or(false, |f| f.is_nan()) {
-            return accum;
+        } else if arg.as_float().map_or(false, |f| f.is_nan()) {
+            return arg;
         }
     }
     // we should return the same object if it's not a marker
