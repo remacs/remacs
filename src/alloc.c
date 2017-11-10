@@ -1760,7 +1760,7 @@ static char const string_overrun_cookie[GC_STRING_OVERRUN_COOKIE_SIZE] =
 
 #ifdef GC_CHECK_STRING_BYTES
 
-#define SDATA_SIZE(NBYTES) FLEXSIZEOF (struct sdata, data, NBYTES)
+#define SDATA_SIZE(NBYTES) FLEXSIZEOF (struct sdata, data, (NBYTES) + 1)
 
 #else /* not GC_CHECK_STRING_BYTES */
 
