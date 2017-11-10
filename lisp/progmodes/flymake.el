@@ -343,7 +343,7 @@ region is invalid."
                 (let* ((beg (fallback-bol))
                        (end (fallback-eol beg)))
                   (cons beg end)))))))
-    (error (flymake-log :warning "Invalid region line=%s col=%s")
+    (error (flymake-log :warning "Invalid region line=%s col=%s" line col)
            nil)))
 
 (defvar flymake-diagnostic-functions nil
