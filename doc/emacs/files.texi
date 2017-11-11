@@ -63,6 +63,9 @@ completing up to a nonexistent file name, Emacs prints
 @samp{[Confirm]} and you must type a second @key{RET} to confirm.
 @xref{Completion Exit}, for details.
 
+Minibuffer history commands offer some special features for reading
+file names, see @ref{Minibuffer History}.
+
 @cindex default directory
 @vindex default-directory
 @vindex insert-default-directory
