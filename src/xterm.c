@@ -997,7 +997,11 @@ x_update_begin (struct frame *f)
 {
 #ifdef USE_CAIRO
   if (! NILP (tip_frame) && XFRAME (tip_frame) == f
-      && ! FRAME_VISIBLE_P (f))
+      && ! FRAME_VISIBLE_P (f)
+#ifdef USE_GTK
+      && !NILP (Fframe_parameter (tip_frame, Qtooltip))
+#endif
+      )
     return;
 
   if (! FRAME_CR_SURFACE (f))
@@ -9960,7 +9964,11 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
       /* Don't change the size of a tip frame; there's no point in
 	 doing it because it's done in Fx_show_tip, and it leads to
 	 problems because the tip frame has no widget.  */
-      if (NILP (tip_frame) || XFRAME (tip_frame) != f)
+      if (NILP (tip_frame) || XFRAME (tip_frame) != f
+#ifdef USE_GTK
+	  || NILP (Fframe_parameter (tip_frame, Qtooltip))
+#endif
+	  )
 	{
 	  adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
 			     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 3,

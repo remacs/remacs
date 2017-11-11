@@ -1472,7 +1472,11 @@ DEFUN ("frame-list", Fframe_list, Sframe_list,
   Lisp_Object frames;
   frames = Fcopy_sequence (Vframe_list);
 #ifdef HAVE_WINDOW_SYSTEM
-  if (FRAMEP (tip_frame))
+  if (FRAMEP (tip_frame)
+#ifdef USE_GTK
+      && !NILP (Fframe_parameter (tip_frame, Qtooltip))
+#endif
+      )
     frames = Fdelq (tip_frame, frames);
 #endif
   return frames;
