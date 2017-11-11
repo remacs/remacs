@@ -334,7 +334,8 @@ region is invalid."
                          (end (or (and sexp-end
                                        (not (= sexp-end beg))
                                        sexp-end)
-                                  (ignore-errors (goto-char (1+ beg)))))
+                                  (and (< (goto-char (1+ beg)) (point-max))
+                                       (point))))
                          (safe-end (or end
                                        (fallback-eol beg))))
                     (cons (if end beg (fallback-bol))
@@ -342,7 +343,8 @@ region is invalid."
                 (let* ((beg (fallback-bol))
                        (end (fallback-eol beg)))
                   (cons beg end)))))))
-    (error (flymake-log :warning "Invalid region line=%s col=%s" line col))))
+    (error (flymake-log :warning "Invalid region line=%s col=%s" line col)
+           nil)))
 
 (defvar flymake-diagnostic-functions nil
   "Special hook of Flymake backends that check a buffer.
@@ -1139,7 +1141,8 @@ POS can be a buffer position or a button"
 
 (defun flymake--diagnostics-buffer-entries ()
   (with-current-buffer flymake--diagnostics-buffer-source
-    (cl-loop for diag in (flymake-diagnostics)
+    (cl-loop for diag in
+             (cl-sort (flymake-diagnostics) #'< :key #'flymake-diagnostic-beg)
              for (line . col) =
              (save-excursion
                (goto-char (flymake--diag-beg diag))

@@ -1615,7 +1615,11 @@ Calls REPORT-FN directly."
             (generate-new-buffer " *checkdoc-temp*")))
       (unwind-protect
           (save-excursion
-            (checkdoc-current-buffer t))
+            ;; checkdoc-current-buffer can error if there are
+            ;; unbalanced parens, for example, but this shouldn't
+            ;; disable the backend (bug#29176).
+            (ignore-errors
+              (checkdoc-current-buffer t)))
         (kill-buffer checkdoc-diagnostic-buffer)))
     (funcall report-fn
              (cl-loop for (text start end _unfixable) in

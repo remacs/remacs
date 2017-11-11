@@ -1240,7 +1240,13 @@ Using it may cause conflicts.  Use it anyway? " owner)))))
 	    ;; disabled when loading the desktop fails with errors,
 	    ;; thus not overwriting the desktop with broken contents.
 	    (setq desktop-autosave-was-enabled
-		  (memq 'desktop-auto-save-set-timer window-configuration-change-hook))
+		  (memq 'desktop-auto-save-set-timer
+                        ;; Use the toplevel value of the hook, in case some
+                        ;; feature makes window-configuration-change-hook
+                        ;; buffer-local, and puts there stuff which
+                        ;; doesn't include our timer.
+                        (default-toplevel-value
+                          'window-configuration-change-hook)))
 	    (desktop-auto-save-disable)
 	    ;; Evaluate desktop buffer and remember when it was modified.
 	    (setq desktop-file-modtime (nth 5 (file-attributes (desktop-full-file-name))))

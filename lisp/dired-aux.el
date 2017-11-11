@@ -2768,9 +2768,9 @@ Intended to be added to `isearch-mode-hook'."
   (remove-hook 'isearch-mode-end-hook 'dired-isearch-filenames-end t))
 
 (defun dired-isearch-filter-filenames (beg end)
-  "Test whether the current search hit is a file name.
-Return non-nil if the text from BEG to END is part of a file
-name (has the text property `dired-filename')."
+  "Test whether some part of the current search match is inside a file name.
+This function returns non-nil if some part of the text between BEG and END
+is part of a file name (i.e., has the text property `dired-filename')."
   (text-property-not-all (min beg end) (max beg end)
 			 'dired-filename nil))
 

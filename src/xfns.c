@@ -4915,7 +4915,11 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       struct frame *f = XFRAME (frame);
 
       if (FRAME_X_P (f) && FRAME_DISPLAY_INFO (f) == dpyinfo
-	  && !EQ (frame, tip_frame))
+	  && !(EQ (frame, tip_frame)
+#ifdef USE_GTK
+	       && !NILP (Fframe_parameter (tip_frame, Qtooltip))
+#endif
+	       ))
 	{
 	  GdkWindow *gwin = gtk_widget_get_window (FRAME_GTK_WIDGET (f));
 
