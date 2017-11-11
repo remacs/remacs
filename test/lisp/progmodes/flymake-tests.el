@@ -333,6 +333,38 @@ SEVERITY-PREDICATE is used to setup
           (should-error (flymake-goto-prev-error nil nil t))
           )))))
 
+(ert-deftest eob-region-and-trailing-newline ()
+  "`flymake-diag-region' at eob with varying trailing newlines."
+  (cl-flet ((diag-region-substring
+             (line col)
+             (pcase-let
+                  ((`(,a . ,b) (flymake-diag-region (current-buffer) line col)))
+                (buffer-substring a b))))
+    (with-temp-buffer
+      (insert "beg\nmmm\nend")
+      (should (equal
+               (diag-region-substring 3 3)
+               "d"))
+      (should (equal
+               (diag-region-substring 3 nil)
+               "end"))
+      (insert "\n")
+      (should (equal
+               (diag-region-substring 4 1)
+               "end"))
+      (should (equal
+               (diag-region-substring 4 nil)
+               "end"))
+      (insert "\n")
+      (should (equal
+               (diag-region-substring 5 1)
+               "\n"))
+      (should (equal
+               (diag-region-substring 5 nil)
+               "\n")))))
+
+
+
 (provide 'flymake-tests)
 
 ;;; flymake.el ends here
