@@ -896,8 +896,15 @@ This overrides the defaults specified in `completion-category-defaults'."
   ;; than from completion-extra-properties) because it may apply only to some
   ;; part of the string (e.g. substitute-in-file-name).
   (let ((requote
-         (when (completion-metadata-get metadata 'completion--unquote-requote)
-           (cl-assert (functionp table))
+         (when (and
+                (completion-metadata-get metadata 'completion--unquote-requote)
+                ;; Sometimes a table's metadata is used on another
+                ;; table (typically that other table is just a list taken
+                ;; from the output of `all-completions' or something equivalent,
+                ;; for progressive refinement).  See bug#28898 and bug#16274.
+                ;; FIXME: Rather than do nothing, we should somehow call
+                ;; the original table, in that case!
+                (functionp table))
            (let ((new (funcall table string point 'completion--unquote)))
              (setq string (pop new))
              (setq table (pop new))
