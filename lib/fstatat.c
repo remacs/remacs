@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #undef __need_system_sys_stat_h
 
-#if HAVE_FSTATAT
+#if HAVE_FSTATAT && HAVE_WORKING_FSTATAT_ZERO_FLAG
 static int
 orig_fstatat (int fd, char const *filename, struct stat *buf, int flags)
 {

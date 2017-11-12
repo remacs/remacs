@@ -1,4 +1,4 @@
-# serial 6
+# serial 7
 # See if we need to provide faccessat replacement.
 
 dnl Copyright (C) 2009-2017 Free Software Foundation, Inc.
@@ -18,10 +18,12 @@ AC_DEFUN([gl_FUNC_FACCESSAT],
   AC_CHECK_FUNCS_ONCE([faccessat])
   if test $ac_cv_func_faccessat = no; then
     HAVE_FACCESSAT=0
+  elif test "$gl_cv_func_lstat_dereferences_slashed_symlink" != yes; then
+    REPLACE_FACCESSAT=1
   fi
 ])
 
-# Prerequisites of lib/faccessat.m4.
+# Prerequisites of lib/faccessat.c.
 AC_DEFUN([gl_PREREQ_FACCESSAT],
 [
   AC_CHECK_FUNCS([access])
