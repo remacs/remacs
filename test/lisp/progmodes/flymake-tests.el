@@ -124,7 +124,10 @@ SEVERITY-PREDICATE is used to setup
   ;; Some versions of ruby fail if HOME doesn't exist (bug#29187).
   (let* ((tempdir (make-temp-file "flymake-tests-ruby" t))
          (process-environment (cons (format "HOME=%s" tempdir)
-                                    process-environment)))
+                                    process-environment))
+         ;; And see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=19657#20
+         ;; for this particular yuckiness
+         (abbreviated-home-dir nil))
     (unwind-protect
         (flymake-tests--with-flymake ("test.rb")
           (flymake-goto-next-error)
