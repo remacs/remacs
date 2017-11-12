@@ -231,7 +231,7 @@ static void x_sync_with_move (struct frame *, int, int, bool);
 static int handle_one_xevent (struct x_display_info *,
 			      const XEvent *, int *,
 			      struct input_event *);
-#if ! (defined USE_X_TOOLKIT || defined USE_MOTIF)
+#if ! (defined USE_X_TOOLKIT || defined USE_MOTIF) && defined USE_GTK
 static int x_dispatch_event (XEvent *, Display *);
 #endif
 static void x_wm_set_window_state (struct frame *, int);
@@ -9047,6 +9047,8 @@ handle_one_xevent (struct x_display_info *dpyinfo,
   return count;
 }
 
+#if defined USE_X_TOOLKIT || defined USE_MOTIF || defined USE_GTK
+
 /* Handles the XEvent EVENT on display DISPLAY.
    This is used for event loops outside the normal event handling,
    i.e. looping while a popup menu or a dialog is posted.
@@ -9065,6 +9067,7 @@ x_dispatch_event (XEvent *event, Display *display)
 
   return finish;
 }
+#endif
 
 /* Read events coming from the X server.
    Return as soon as there are no more events to be read.
