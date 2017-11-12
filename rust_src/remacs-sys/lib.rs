@@ -941,14 +941,6 @@ pub struct terminal {
     pub header: Lisp_Vectorlike_Header,
 }
 
-pub enum OutputMethod {
-    output_initial,
-    output_termcap,
-    output_x_window,
-    output_w32,
-    output_ns,
-}
-
 /// Functions to access members of `struct frame`.
 extern "C" {
     pub fn fget_column_width(f: *const Lisp_Frame) -> c_int;
@@ -956,7 +948,7 @@ extern "C" {
     pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
-    pub fn fget_output_method(f: *const Lisp_Frame) -> OutputMethod;
+    pub fn fget_output_method(f: *const Lisp_Frame) -> u8;
 }
 
 #[repr(C)]

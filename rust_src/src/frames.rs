@@ -2,8 +2,8 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{fget_output_method, fget_terminal, Fselect_window};
-use remacs_sys::{selected_frame as current_frame, Lisp_Frame, OutputMethod};
-use remacs_sys::{Qframe_live_p, Qns, Qw32, Qx};
+use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
+use remacs_sys::{Qframe_live_p, Qns, Qpc, Qw32, Qx};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -118,11 +118,13 @@ pub fn set_frame_selected_window(
 pub fn framep(object: LispObject) -> LispObject {
     if let Some(frame) = object.as_frame() {
         match unsafe { fget_output_method(frame.as_ptr()) } {
-            OutputMethod::output_initial => LispObject::constant_t(),
-            OutputMethod::output_termcap => LispObject::constant_t(),
-            OutputMethod::output_x_window => LispObject::from(Qx),
-            OutputMethod::output_w32 => LispObject::from(Qw32),
-            OutputMethod::output_ns => LispObject::from(Qns),
+            0 => LispObject::constant_t(),
+            1 => LispObject::constant_t(),
+            2 => LispObject::from(Qx),
+            3 => LispObject::from(Qw32),
+            4 => LispObject::from(Qpc),
+            5 => LispObject::from(Qns),
+            _ => panic!("Invalid output method"),
         }
     } else {
         LispObject::constant_nil()
