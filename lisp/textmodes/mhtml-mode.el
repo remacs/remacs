@@ -237,8 +237,8 @@ smallest."
       (cons 'jit-lock-bounds (cons new-beg new-end)))))
 
 (defvar-local mhtml--last-submode nil
-  "Record the last visited submode, so the cursor-sensor function
-can function properly.")
+  "Record the last visited submode.
+This is used by `mhtml--pre-command'.")
 
 (defvar-local mhtml--stashed-crucial-variables nil
   "Alist of stashed values of the crucial variables.")
@@ -359,7 +359,6 @@ can function properly.")
 Code inside a <script> element is indented using the rules from
 `js-mode'; and code inside a <style> element is indented using
 the rules from `css-mode'."
-  (cursor-sensor-mode)
   (setq-local indent-line-function #'mhtml-indent-line)
   (setq-local parse-sexp-lookup-properties t)
   (setq-local syntax-propertize-function #'mhtml-syntax-propertize)
