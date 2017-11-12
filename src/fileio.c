@@ -3049,7 +3049,8 @@ support.  */)
       acl = acl_from_text (SSDATA (acl_string));
       if (acl == NULL)
 	{
-	  report_file_error ("Converting ACL", absname);
+	  if (acl_errno_valid (errno))
+	    report_file_error ("Converting ACL", absname);
 	  return Qnil;
 	}
 
