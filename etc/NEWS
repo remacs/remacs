@@ -1462,6 +1462,17 @@ them through 'format' first.  Even that is discouraged: for ElDoc
 support, you should set 'eldoc-documentation-function' instead of
 calling 'eldoc-message' directly.
 
+---
+** Using '&rest' or '&optional' incorrectly is now an error.
+For example giving '&optional' without a following variable, or
+passing '&optional' multiple times:
+
+    (defun foo (&optional &rest x))
+    (defun bar (&optional &optional x))
+
+Previously, Emacs would just ignore the extra keyword, or give
+incorrect results in certain cases.
+
 
 * Lisp Changes in Emacs 26.1
 

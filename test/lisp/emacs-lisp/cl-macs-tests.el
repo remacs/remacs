@@ -497,4 +497,35 @@ collection clause."
                           vconcat (vector (1+ x)))
                  [2 3 4 5 6])))
 
+
+;;; cl-lib lambda list handling
+
+(ert-deftest cl-macs-bad-arglist ()
+  "Check that `cl-defun' and friends reject weird argument lists.
+See Bug#29165, and similar `eval-tests--bugs-24912-and-24913' in
+eval-tests.el."
+  (dolist (args (cl-mapcan
+                 ;; For every &rest and &optional variant, check also
+                 ;; the same thing with &key and &aux respectively
+                 ;; instead.
+                 (lambda (arglist)
+                   (let ((arglists (list arglist)))
+                     (when (memq '&rest arglist)
+                       (push (cl-subst '&key '&rest arglist) arglists))
+                     (when (memq '&optional arglist)
+                       (push (cl-subst '&aux '&optional arglist) arglists))
+                     arglists))
+                 '((&optional) (&rest) (&optional &rest) (&rest &optional)
+                   (&optional &rest _a) (&optional _a &rest)
+                   (&rest _a &optional) (&rest &optional _a)
+                   (&optional &optional) (&optional &optional _a)
+                   (&optional _a &optional _b)
+                   (&rest &rest) (&rest &rest _a)
+                   (&rest _a &rest _b))))
+    (ert-info ((prin1-to-string args) :prefix "arglist: ")
+      (should-error (eval `(funcall (cl-function (lambda ,args))) t))
+      (should-error (cl--transform-lambda (cons args t)))
+      (let ((byte-compile-debug t))
+        (should-error (eval `(byte-compile (cl-function (lambda ,args))) t))))))
+
 ;;; cl-macs-tests.el ends here
