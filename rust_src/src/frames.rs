@@ -96,7 +96,7 @@ pub fn set_frame_selected_window(
     let mut frame_ref = f.as_live_frame_or_error();
     let w = window.as_live_window_or_error();
 
-    if !f.eq(w.frame()) {
+    if f.ne(w.frame()) {
         error!("In `set-frame-selected-window', WINDOW is not on FRAME")
     }
     if f.eq(selected_frame()) {
