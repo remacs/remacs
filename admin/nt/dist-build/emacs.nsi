@@ -17,6 +17,7 @@ Var StartMenuFolder
 !define MUI_WELCOMEPAGE_TEXT "Welcome to Emacs -- the editor of a lifetime."
 
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${ARCH}\share\emacs\${EMACS_VERSION}\etc\images\splash.bmp"
+!define MUI_ICON "${ARCH}\share\emacs\${EMACS_VERSION}\etc\images\icons\hicolor\scalable\apps\emacs.ico"
 
 !insertmacro MUI_PAGE_WELCOME
 
