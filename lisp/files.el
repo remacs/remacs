@@ -1855,7 +1855,13 @@ The value includes abbreviation according to `directory-abbrev-alist'.")
   "Return a version of FILENAME shortened using `directory-abbrev-alist'.
 This also substitutes \"~\" for the user's home directory (unless the
 home directory is a root directory) and removes automounter prefixes
-\(see the variable `automount-dir-prefix')."
+\(see the variable `automount-dir-prefix').
+
+When this function is first called, it caches the user's home
+directory as a regexp in `abbreviated-home-dir', and reuses it
+afterwards.  Lisp programs that temporarily set the home directory
+to a different value should let-bind `abbreviated-home-dir' for
+the modified home directory to take effect."
   ;; Get rid of the prefixes added by the automounter.
   (save-match-data
     (if (and automount-dir-prefix

@@ -10740,10 +10740,8 @@ comment at the start of cc-engine.el for more info."
 	       (t 			; We're at (1+ here).
 		(cond
 		 ((progn (c-forward-syntactic-ws)
-			 (eq (point) (1- there)))
-		  t)
-		 ((c-syntactic-re-search-forward c-keywords-regexp there t)
-		  t)
+			 (eq (point) (1- there))))
+		 ((c-syntactic-re-search-forward c-keywords-regexp there t))
 		 ((c-syntactic-re-search-forward "{" there t t)
 		  (backward-char)
 		  (c-looking-at-statement-block))
@@ -10752,8 +10750,12 @@ comment at the start of cc-engine.el for more info."
 	  (cond
 	   ((c-syntactic-re-search-forward "[;,]" nil t t)
 	    (eq (char-before) ?\;))
-	   ((c-syntactic-re-search-forward c-keywords-regexp nil t t)
-	    t)
+	   ((progn (c-forward-syntactic-ws)
+		   (eobp)))
+	   ((c-syntactic-re-search-forward c-keywords-regexp nil t t))
+	   ((c-syntactic-re-search-forward "{" nil t t)
+	    (backward-char)
+	    (c-looking-at-statement-block))
 	   (t nil)))
       (goto-char here))))
 

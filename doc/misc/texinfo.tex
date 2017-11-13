@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2017-09-16.10}
+\def\texinfoversion{2017-09-11.18}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -11425,9 +11425,11 @@ directory should work if nowhere else does.}
   %
   \dimen0 = #1\relax
   \advance\dimen0 by \voffset
+  \advance\dimen0 by 1in % reference point for DVI is 1 inch from top of page
   %
   \dimen2 = \hsize
   \advance\dimen2 by \normaloffset
+  \advance\dimen2 by 1in % reference point is 1 inch from left edge of page
   %
   \internalpagesizes{#1}{\hsize}%
                     {\voffset}{\normaloffset}%

@@ -124,7 +124,10 @@ SEVERITY-PREDICATE is used to setup
   ;; Some versions of ruby fail if HOME doesn't exist (bug#29187).
   (let* ((tempdir (make-temp-file "flymake-tests-ruby" t))
          (process-environment (cons (format "HOME=%s" tempdir)
-                                    process-environment)))
+                                    process-environment))
+         ;; And see https://debbugs.gnu.org/cgi/bugreport.cgi?bug=19657#20
+         ;; for this particular yuckiness
+         (abbreviated-home-dir nil))
     (unwind-protect
         (flymake-tests--with-flymake ("test.rb")
           (flymake-goto-next-error)
@@ -332,6 +335,38 @@ SEVERITY-PREDICATE is used to setup
           (should (eq 'flymake-warning (face-at-point))) ; back at consectetur
           (should-error (flymake-goto-prev-error nil nil t))
           )))))
+
+(ert-deftest eob-region-and-trailing-newline ()
+  "`flymake-diag-region' at eob with varying trailing newlines."
+  (cl-flet ((diag-region-substring
+             (line col)
+             (pcase-let
+                  ((`(,a . ,b) (flymake-diag-region (current-buffer) line col)))
+                (buffer-substring a b))))
+    (with-temp-buffer
+      (insert "beg\nmmm\nend")
+      (should (equal
+               (diag-region-substring 3 3)
+               "d"))
+      (should (equal
+               (diag-region-substring 3 nil)
+               "end"))
+      (insert "\n")
+      (should (equal
+               (diag-region-substring 4 1)
+               "end"))
+      (should (equal
+               (diag-region-substring 4 nil)
+               "end"))
+      (insert "\n")
+      (should (equal
+               (diag-region-substring 5 1)
+               "\n"))
+      (should (equal
+               (diag-region-substring 5 nil)
+               "\n")))))
+
+
 
 (provide 'flymake-tests)
 

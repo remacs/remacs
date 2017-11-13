@@ -35,7 +35,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 struct thread_state
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* The buffer in which the last search was performed, or
      Qt if the last search was done in a string;
@@ -230,7 +230,7 @@ typedef struct
 /* A mutex as a lisp object.  */
 struct Lisp_Mutex
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* The name of the mutex, or nil.  */
   Lisp_Object name;
@@ -261,7 +261,7 @@ XMUTEX (Lisp_Object a)
 /* A condition variable as a lisp object.  */
 struct Lisp_CondVar
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* The associated mutex.  */
   Lisp_Object mutex;

@@ -223,7 +223,7 @@ AC_DEFUN([gl_INIT],
   gl_STRING_MODULE_INDICATOR([explicit_bzero])
   AC_REQUIRE([gl_EXTERN_INLINE])
   gl_FUNC_FACCESSAT
-  if test $HAVE_FACCESSAT = 0; then
+  if test $HAVE_FACCESSAT = 0 || test $REPLACE_FACCESSAT = 1; then
     AC_LIBOBJ([faccessat])
     gl_PREREQ_FACCESSAT
   fi
@@ -599,16 +599,16 @@ AC_DEFUN([gl_INIT],
       gl_gnulib_enabled_682e609604ccaac6be382e4ee3a4eaec=true
     fi
   }
-  if test $HAVE_FACCESSAT = 0; then
+  if test $HAVE_FACCESSAT = 0 || test $REPLACE_FACCESSAT = 1; then
     func_gl_gnulib_m4code_260941c0e5dc67ec9e87d1fb321c300b
   fi
-  if test $HAVE_FACCESSAT = 0; then
+  if test $HAVE_FACCESSAT = 0 || test $REPLACE_FACCESSAT = 1; then
     func_gl_gnulib_m4code_dosname
   fi
-  if test $HAVE_FACCESSAT = 0; then
+  if test $HAVE_FACCESSAT = 0 || test $REPLACE_FACCESSAT = 1; then
     func_gl_gnulib_m4code_euidaccess
   fi
-  if test $HAVE_FACCESSAT = 0; then
+  if test $HAVE_FACCESSAT = 0 || test $REPLACE_FACCESSAT = 1; then
     func_gl_gnulib_m4code_03e0aaad4cb89ca757653bd367a6ccb7
   fi
   if test $HAVE_FCNTL = 0 || test $REPLACE_FCNTL = 1; then

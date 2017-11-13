@@ -133,9 +133,9 @@ case_character_impl (struct casing_str_buf *buf,
           struct Lisp_String *str = XSTRING (prop);
           if (STRING_BYTES (str) <= sizeof buf->data)
 	    {
-	      buf->len_chars = str->size;
+	      buf->len_chars = str->u.s.size;
 	      buf->len_bytes = STRING_BYTES (str);
-	      memcpy (buf->data, str->data, buf->len_bytes);
+	      memcpy (buf->data, str->u.s.data, buf->len_bytes);
 	      return 1;
 	    }
         }

@@ -318,7 +318,11 @@ region is invalid."
             (goto-char (point-min))
             (forward-line (1- line))
             (cl-flet ((fallback-bol
-                       () (progn (back-to-indentation) (point)))
+                       ()
+                       (back-to-indentation)
+                       (if (eobp)
+                           (line-beginning-position 0)
+                         (point)))
                       (fallback-eol
                        (beg)
                        (progn
@@ -335,11 +339,11 @@ region is invalid."
                                        (not (= sexp-end beg))
                                        sexp-end)
                                   (and (< (goto-char (1+ beg)) (point-max))
-                                       (point))))
-                         (safe-end (or end
-                                       (fallback-eol beg))))
-                    (cons (if end beg (fallback-bol))
-                          safe-end))
+                                       (point)))))
+                    (if end
+                        (cons beg end)
+                      (cons (setq beg (fallback-bol))
+                            (fallback-eol beg))))
                 (let* ((beg (fallback-bol))
                        (end (fallback-eol beg)))
                   (cons beg end)))))))

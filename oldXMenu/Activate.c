@@ -571,6 +571,7 @@ XMenuActivate(
 						   event.xbutton.window
 						   );
 		if (event_xmp != NULL) continue;
+		FALLTHROUGH;
 	    default:
 		/*
 		 * This is a foreign event.

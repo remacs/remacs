@@ -461,13 +461,25 @@ _GL_WARN_ON_USE (euidaccess, "euidaccess is unportable - "
 
 
 #if @GNULIB_FACCESSAT@
-# if !@HAVE_FACCESSAT@
+# if @REPLACE_FACCESSAT@
+#  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
+#   undef faccessat
+#   define faccessat rpl_faccessat
+#  endif
+_GL_FUNCDECL_RPL (faccessat, int,
+                  (int fd, char const *name, int mode, int flag)
+                  _GL_ARG_NONNULL ((2)));
+_GL_CXXALIAS_RPL (faccessat, int,
+                  (int fd, char const *name, int mode, int flag));
+# else
+#  if !@HAVE_FACCESSAT@
 _GL_FUNCDECL_SYS (faccessat, int,
                   (int fd, char const *file, int mode, int flag)
                   _GL_ARG_NONNULL ((2)));
-# endif
+#  endif
 _GL_CXXALIAS_SYS (faccessat, int,
                   (int fd, char const *file, int mode, int flag));
+# endif
 _GL_CXXALIASWARN (faccessat);
 #elif defined GNULIB_POSIXCHECK
 # undef faccessat

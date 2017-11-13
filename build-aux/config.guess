@@ -2,7 +2,7 @@
 # Attempt to guess a canonical system name.
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
-timestamp='2017-11-01'
+timestamp='2017-11-07'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ Usage: $0 [OPTION]
 
 Output the configuration name of the system \`$me' is run on.
 
-Operation modes:
+Options:
   -h, --help         print this help, then exit
   -t, --time-stamp   print date of last modification, then exit
   -v, --version      print version number, then exit
@@ -243,6 +243,9 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
     *:LibertyBSD:*:*)
 	UNAME_MACHINE_ARCH=`arch | sed 's/^.*BSD\.//'`
 	echo ${UNAME_MACHINE_ARCH}-unknown-libertybsd${UNAME_RELEASE}
+	exit ;;
+    *:MidnightBSD:*:*)
+	echo ${UNAME_MACHINE}-unknown-midnightbsd${UNAME_RELEASE}
 	exit ;;
     *:ekkoBSD:*:*)
 	echo ${UNAME_MACHINE}-unknown-ekkobsd${UNAME_RELEASE}
@@ -479,7 +482,7 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 #endif
 	#if defined (host_mips) && defined (MIPSEB)
 	#if defined (SYSTYPE_SYSV)
-	  printf ("mips-mips-risco0s%ssysv\\n", argv[1]); exit (0);
+	  printf ("mips-mips-riscos%ssysv\\n", argv[1]); exit (0);
 	#endif
 	#if defined (SYSTYPE_SVR4)
 	  printf ("mips-mips-riscos%ssvr4\\n", argv[1]); exit (0);
