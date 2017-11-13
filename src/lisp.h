@@ -796,11 +796,11 @@ struct Lisp_Symbol
 /* Header of vector-like objects.  This documents the layout constraints on
    vectors and pseudovectors (objects of PVEC_xxx subtype).  It also prevents
    compilers from being fooled by Emacs's type punning: XSETPSEUDOVECTOR
-   and PSEUDOVECTORP cast their pointers to struct vectorlike_header *,
+   and PSEUDOVECTORP cast their pointers to union vectorlike_header *,
    because when two such pointers potentially alias, a compiler won't
    incorrectly reorder loads and stores to their size fields.  See
    Bug#8546.  */
-struct vectorlike_header
+union vectorlike_header
   {
     /* The only field contains various pieces of information:
        - The MSB (ARRAY_MARK_FLAG) holds the gcmarkbit.
@@ -1094,10 +1094,10 @@ INLINE bool
 		       | ((restsize) << PSEUDOVECTOR_SIZE_BITS) \
 		       | (lispsize)))
 
-/* The cast to struct vectorlike_header * avoids aliasing issues.  */
+/* The cast to union vectorlike_header * avoids aliasing issues.  */
 #define XSETPSEUDOVECTOR(a, b, code) \
   XSETTYPED_PSEUDOVECTOR (a, b,					\
-			  (((struct vectorlike_header *)	\
+			  (((union vectorlike_header *)	\
 			    XUNTAG (a, Lisp_Vectorlike))	\
 			   ->size),				\
 			  code)
@@ -1399,7 +1399,7 @@ STRING_SET_CHARS (Lisp_Object string, ptrdiff_t newsize)
 
 struct Lisp_Vector
   {
-    struct vectorlike_header header;
+    union vectorlike_header header;
     Lisp_Object contents[FLEXIBLE_ARRAY_MEMBER];
   };
 
@@ -1456,7 +1456,7 @@ PSEUDOVECTOR_TYPE (struct Lisp_Vector *v)
 
 /* Can't be used with PVEC_NORMAL_VECTOR.  */
 INLINE bool
-PSEUDOVECTOR_TYPEP (struct vectorlike_header *a, enum pvec_type code)
+PSEUDOVECTOR_TYPEP (union vectorlike_header *a, enum pvec_type code)
 {
   /* We don't use PSEUDOVECTOR_TYPE here so as to avoid a shift
    * operation when `code' is known.  */
@@ -1472,8 +1472,8 @@ PSEUDOVECTORP (Lisp_Object a, int code)
     return false;
   else
     {
-      /* Converting to struct vectorlike_header * avoids aliasing issues.  */
-      struct vectorlike_header *h = XUNTAG (a, Lisp_Vectorlike);
+      /* Converting to union vectorlike_header * avoids aliasing issues.  */
+      union vectorlike_header *h = XUNTAG (a, Lisp_Vectorlike);
       return PSEUDOVECTOR_TYPEP (h, code);
     }
 }
@@ -1484,7 +1484,7 @@ struct Lisp_Bool_Vector
   {
     /* HEADER.SIZE is the vector's size field.  It doesn't have the real size,
        just the subtype information.  */
-    struct vectorlike_header header;
+    union vectorlike_header header;
     /* This is the size in bits.  */
     EMACS_INT size;
     /* The actual bits, packed into bytes.
@@ -1697,7 +1697,7 @@ struct Lisp_Char_Table
        pseudovector type information.  It holds the size, too.
        The size counts the defalt, parent, purpose, ascii,
        contents, and extras slots.  */
-    struct vectorlike_header header;
+    union vectorlike_header header;
 
     /* This holds a default value,
        which is used whenever the value for a specific character is nil.  */
@@ -1739,7 +1739,7 @@ struct Lisp_Sub_Char_Table
   {
     /* HEADER.SIZE is the vector's size field, which also holds the
        pseudovector type information.  It holds the size, too.  */
-    struct vectorlike_header header;
+    union vectorlike_header header;
 
     /* Depth of this sub char-table.  It should be 1, 2, or 3.  A sub
        char-table of depth 1 contains 16 elements, and each element
@@ -1814,7 +1814,7 @@ CHAR_TABLE_SET (Lisp_Object ct, int idx, Lisp_Object val)
 
 struct Lisp_Subr
   {
-    struct vectorlike_header header;
+    union vectorlike_header header;
     union {
       Lisp_Object (*a0) (void);
       Lisp_Object (*a1) (Lisp_Object);
@@ -2026,7 +2026,7 @@ struct hash_table_test
 struct Lisp_Hash_Table
 {
   /* This is for Lisp; the hash table code does not refer to it.  */
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* Nil if table is non-weak.  Otherwise a symbol describing the
      weakness of the table.  */
@@ -3929,7 +3929,7 @@ typedef emacs_value (*emacs_subr) (emacs_env *, ptrdiff_t,
 
 struct Lisp_Module_Function
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* Fields traced by GC; these must come first.  */
   Lisp_Object documentation;

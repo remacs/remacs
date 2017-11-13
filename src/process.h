@@ -41,7 +41,7 @@ enum { PROCESS_OPEN_FDS = 6 };
 
 struct Lisp_Process
   {
-    struct vectorlike_header header;
+    union vectorlike_header header;
 
     /* Name of subprocess terminal.  */
     Lisp_Object tty_name;

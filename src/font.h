@@ -244,7 +244,7 @@ enum font_property_index
 
 struct font_spec
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
   Lisp_Object props[FONT_SPEC_MAX];
 };
 
@@ -252,7 +252,7 @@ struct font_spec
 
 struct font_entity
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
   Lisp_Object props[FONT_ENTITY_MAX];
 };
 
@@ -265,7 +265,7 @@ struct font_entity
 
 struct font
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* All Lisp_Object components must come first.
      That ensures they are all aligned normally.  */

@@ -887,7 +887,7 @@ extern void x_mark_frame_dirty (struct frame *f);
 struct scroll_bar
 {
   /* These fields are shared by all vectors.  */
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* The window we're a scroll bar for.  */
   Lisp_Object window;

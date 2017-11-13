@@ -504,7 +504,7 @@ struct buffer_text
 
 struct buffer
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* The name of this buffer.  */
   Lisp_Object name_;

@@ -33,7 +33,7 @@ struct window;
 
 struct xwidget
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* Auxiliary data.  */
   Lisp_Object plist;
@@ -62,7 +62,7 @@ struct xwidget
 
 struct xwidget_view
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
   Lisp_Object model;
   Lisp_Object w;
 
