@@ -229,7 +229,7 @@ extern bool suppress_checking EXTERNALLY_VISIBLE;
    USE_LSB_TAG not only requires the least 3 bits of pointers returned by
    malloc to be 0 but also needs to be able to impose a mult-of-8 alignment
    on the few static Lisp_Objects used, all of which are aligned via
-   the GCALIGN macro defined below.  */
+   'char alignas (GCALIGNMENT) gcaligned;' inside a union.  */
 
 enum Lisp_Bits
   {
@@ -275,20 +275,6 @@ DEFINE_GDB_SYMBOL_END (VALMASK)
 # error "USE_LSB_TAG not supported on this platform; please report this." \
 	"Try 'configure --with-wide-int' to work around the problem."
 error !;
-#endif
-
-/* Use GCALIGNED immediately after the 'struct' keyword to require the
-   struct to have an address that is a multiple of GCALIGNMENT.  This
-   is a no-op if the struct's natural alignment is already a multiple
-   of GCALIGNMENT.  GCALIGNED's implementation uses the 'aligned'
-   attribute instead of 'alignas (GCALIGNMENT)', as the latter would
-   fail if an object's natural alignment exceeds GCALIGNMENT.  The
-   implementation hopes that natural alignment suffices on platforms
-   lacking 'aligned'.  */
-#ifdef HAVE_STRUCT_ATTRIBUTE_ALIGNED
-# define GCALIGNED __attribute__ ((aligned (GCALIGNMENT)))
-#else
-# define GCALIGNED /* empty */
 #endif
 
 /* Some operations are so commonly executed that they are implemented
@@ -338,15 +324,17 @@ error !;
 #define lisp_h_MISCP(x) (XTYPE (x) == Lisp_Misc)
 #define lisp_h_NILP(x) EQ (x, Qnil)
 #define lisp_h_SET_SYMBOL_VAL(sym, v) \
-   (eassert ((sym)->redirect == SYMBOL_PLAINVAL), (sym)->val.value = (v))
-#define lisp_h_SYMBOL_CONSTANT_P(sym) (XSYMBOL (sym)->trapped_write == SYMBOL_NOWRITE)
-#define lisp_h_SYMBOL_TRAPPED_WRITE_P(sym) (XSYMBOL (sym)->trapped_write)
+   (eassert ((sym)->u.s.redirect == SYMBOL_PLAINVAL), \
+    (sym)->u.s.val.value = (v))
+#define lisp_h_SYMBOL_CONSTANT_P(sym) \
+   (XSYMBOL (sym)->u.s.trapped_write == SYMBOL_NOWRITE)
+#define lisp_h_SYMBOL_TRAPPED_WRITE_P(sym) (XSYMBOL (sym)->u.s.trapped_write)
 #define lisp_h_SYMBOL_VAL(sym) \
-   (eassert ((sym)->redirect == SYMBOL_PLAINVAL), (sym)->val.value)
+   (eassert ((sym)->u.s.redirect == SYMBOL_PLAINVAL), (sym)->u.s.val.value)
 #define lisp_h_SYMBOLP(x) (XTYPE (x) == Lisp_Symbol)
 #define lisp_h_VECTORLIKEP(x) (XTYPE (x) == Lisp_Vectorlike)
-#define lisp_h_XCAR(c) XCONS (c)->car
-#define lisp_h_XCDR(c) XCONS (c)->u.cdr
+#define lisp_h_XCAR(c) XCONS (c)->u.s.car
+#define lisp_h_XCDR(c) XCONS (c)->u.s.u.cdr
 #define lisp_h_XCONS(a) \
    (eassert (CONSP (a)), (struct Lisp_Cons *) XUNTAG (a, Lisp_Cons))
 #define lisp_h_XHASH(a) XUINT (a)
@@ -677,52 +665,60 @@ enum symbol_trapped_write
 
 struct Lisp_Symbol
 {
-  bool_bf gcmarkbit : 1;
+  union
+  {
+    struct
+    {
+      bool_bf gcmarkbit : 1;
 
-  /* Indicates where the value can be found:
-     0 : it's a plain var, the value is in the `value' field.
-     1 : it's a varalias, the value is really in the `alias' symbol.
-     2 : it's a localized var, the value is in the `blv' object.
-     3 : it's a forwarding variable, the value is in `forward'.  */
-  ENUM_BF (symbol_redirect) redirect : 3;
+      /* Indicates where the value can be found:
+	 0 : it's a plain var, the value is in the `value' field.
+	 1 : it's a varalias, the value is really in the `alias' symbol.
+	 2 : it's a localized var, the value is in the `blv' object.
+	 3 : it's a forwarding variable, the value is in `forward'.  */
+      ENUM_BF (symbol_redirect) redirect : 3;
 
-  /* 0 : normal case, just set the value
-     1 : constant, cannot set, e.g. nil, t, :keywords.
-     2 : trap the write, call watcher functions.  */
-  ENUM_BF (symbol_trapped_write) trapped_write : 2;
+      /* 0 : normal case, just set the value
+	 1 : constant, cannot set, e.g. nil, t, :keywords.
+	 2 : trap the write, call watcher functions.  */
+      ENUM_BF (symbol_trapped_write) trapped_write : 2;
 
-  /* Interned state of the symbol.  This is an enumerator from
-     enum symbol_interned.  */
-  unsigned interned : 2;
+      /* Interned state of the symbol.  This is an enumerator from
+	 enum symbol_interned.  */
+      unsigned interned : 2;
 
-  /* True means that this variable has been explicitly declared
-     special (with `defvar' etc), and shouldn't be lexically bound.  */
-  bool_bf declared_special : 1;
+      /* True means that this variable has been explicitly declared
+	 special (with `defvar' etc), and shouldn't be lexically bound.  */
+      bool_bf declared_special : 1;
 
-  /* True if pointed to from purespace and hence can't be GC'd.  */
-  bool_bf pinned : 1;
+      /* True if pointed to from purespace and hence can't be GC'd.  */
+      bool_bf pinned : 1;
 
-  /* The symbol's name, as a Lisp string.  */
-  Lisp_Object name;
+      /* The symbol's name, as a Lisp string.  */
+      Lisp_Object name;
 
-  /* Value of the symbol or Qunbound if unbound.  Which alternative of the
-     union is used depends on the `redirect' field above.  */
-  union {
-    Lisp_Object value;
-    struct Lisp_Symbol *alias;
-    struct Lisp_Buffer_Local_Value *blv;
-    union Lisp_Fwd *fwd;
-  } val;
+      /* Value of the symbol or Qunbound if unbound.  Which alternative of the
+	 union is used depends on the `redirect' field above.  */
+      union {
+	Lisp_Object value;
+	struct Lisp_Symbol *alias;
+	struct Lisp_Buffer_Local_Value *blv;
+	union Lisp_Fwd *fwd;
+      } val;
 
-  /* Function value of the symbol or Qnil if not fboundp.  */
-  Lisp_Object function;
+      /* Function value of the symbol or Qnil if not fboundp.  */
+      Lisp_Object function;
 
-  /* The symbol's property list.  */
-  Lisp_Object plist;
+      /* The symbol's property list.  */
+      Lisp_Object plist;
 
-  /* Next symbol in obarray bucket, if the symbol is interned.  */
-  struct Lisp_Symbol *next;
+      /* Next symbol in obarray bucket, if the symbol is interned.  */
+      struct Lisp_Symbol *next;
+    } s;
+    char alignas (GCALIGNMENT) gcaligned;
+  } u;
 };
+verify (alignof (struct Lisp_Symbol) % GCALIGNMENT == 0);
 
 /* Declare a Lisp-callable function.  The MAXARGS parameter has the same
    meaning as in the DEFUN macro, and is used to construct a prototype.  */
@@ -802,7 +798,7 @@ struct Lisp_Symbol
    Bug#8546.  */
 union vectorlike_header
   {
-    /* The only field contains various pieces of information:
+    /* The main member contains various pieces of information:
        - The MSB (ARRAY_MARK_FLAG) holds the gcmarkbit.
        - The next bit (PSEUDOVECTOR_FLAG) indicates whether this is a plain
          vector (0) or a pseudovector (1).
@@ -822,7 +818,9 @@ union vectorlike_header
 	 Current layout limits the pseudovectors to 63 PVEC_xxx subtypes,
 	 4095 Lisp_Objects in GC-ed area and 4095 word-sized other slots.  */
     ptrdiff_t size;
+    char alignas (GCALIGNMENT) gcaligned;
   };
+verify (alignof (union vectorlike_header) % GCALIGNMENT == 0);
 
 INLINE bool
 (SYMBOLP) (Lisp_Object x)
@@ -854,7 +852,7 @@ make_lisp_symbol (struct Lisp_Symbol *sym)
 INLINE Lisp_Object
 builtin_lisp_symbol (int index)
 {
-  return make_lisp_symbol (&lispsym[index].s);
+  return make_lisp_symbol (&lispsym[index]);
 }
 
 INLINE void
@@ -1144,20 +1142,28 @@ make_pointer_integer (void *p)
 
 typedef struct interval *INTERVAL;
 
-struct GCALIGNED Lisp_Cons
+struct Lisp_Cons
+{
+  union
   {
-    /* Car of this cons cell.  */
-    Lisp_Object car;
-
-    union
+    struct
     {
-      /* Cdr of this cons cell.  */
-      Lisp_Object cdr;
+      /* Car of this cons cell.  */
+      Lisp_Object car;
 
-      /* Used to chain conses on a free list.  */
-      struct Lisp_Cons *chain;
-    } u;
-  };
+      union
+      {
+	/* Cdr of this cons cell.  */
+	Lisp_Object cdr;
+
+	/* Used to chain conses on a free list.  */
+	struct Lisp_Cons *chain;
+      } u;
+    } s;
+    char alignas (GCALIGNMENT) gcaligned;
+  } u;
+};
+verify (alignof (struct Lisp_Cons) % GCALIGNMENT == 0);
 
 INLINE bool
 (NILP) (Lisp_Object x)
@@ -1193,12 +1199,12 @@ INLINE struct Lisp_Cons *
 INLINE Lisp_Object *
 xcar_addr (Lisp_Object c)
 {
-  return &XCONS (c)->car;
+  return &XCONS (c)->u.s.car;
 }
 INLINE Lisp_Object *
 xcdr_addr (Lisp_Object c)
 {
-  return &XCONS (c)->u.cdr;
+  return &XCONS (c)->u.s.u.cdr;
 }
 
 /* Use these from normal code.  */
@@ -1262,15 +1268,24 @@ CDR_SAFE (Lisp_Object c)
   return CONSP (c) ? XCDR (c) : Qnil;
 }
 
-/* In a string or vector, the sign bit of the `size' is the gc mark bit.  */
+/* In a string or vector, the sign bit of u.s.size is the gc mark bit.  */
 
-struct GCALIGNED Lisp_String
+struct Lisp_String
+{
+  union
   {
-    ptrdiff_t size;
-    ptrdiff_t size_byte;
-    INTERVAL intervals;		/* Text properties in this string.  */
-    unsigned char *data;
-  };
+    struct
+    {
+      ptrdiff_t size;
+      ptrdiff_t size_byte;
+      INTERVAL intervals;	/* Text properties in this string.  */
+      unsigned char *data;
+    } s;
+    struct Lisp_String *next;
+    char alignas (GCALIGNMENT) gcaligned;
+  } u;
+};
+verify (alignof (struct Lisp_String) % GCALIGNMENT == 0);
 
 INLINE bool
 STRINGP (Lisp_Object x)
@@ -1295,7 +1310,7 @@ XSTRING (Lisp_Object a)
 INLINE bool
 STRING_MULTIBYTE (Lisp_Object str)
 {
-  return 0 <= XSTRING (str)->size_byte;
+  return 0 <= XSTRING (str)->u.s.size_byte;
 }
 
 /* An upper bound on the number of bytes in a Lisp string, not
@@ -1317,20 +1332,20 @@ STRING_MULTIBYTE (Lisp_Object str)
 /* Mark STR as a unibyte string.  */
 #define STRING_SET_UNIBYTE(STR)				\
   do {							\
-    if (XSTRING (STR)->size == 0)			\
+    if (XSTRING (STR)->u.s.size == 0)			\
       (STR) = empty_unibyte_string;			\
     else						\
-      XSTRING (STR)->size_byte = -1;			\
+      XSTRING (STR)->u.s.size_byte = -1;		\
   } while (false)
 
 /* Mark STR as a multibyte string.  Assure that STR contains only
    ASCII characters in advance.  */
 #define STRING_SET_MULTIBYTE(STR)			\
   do {							\
-    if (XSTRING (STR)->size == 0)			\
+    if (XSTRING (STR)->u.s.size == 0)			\
       (STR) = empty_multibyte_string;			\
     else						\
-      XSTRING (STR)->size_byte = XSTRING (STR)->size;	\
+      XSTRING (STR)->u.s.size_byte = XSTRING (STR)->u.s.size; \
   } while (false)
 
 /* Convenience functions for dealing with Lisp strings.  */
@@ -1338,7 +1353,7 @@ STRING_MULTIBYTE (Lisp_Object str)
 INLINE unsigned char *
 SDATA (Lisp_Object string)
 {
-  return XSTRING (string)->data;
+  return XSTRING (string)->u.s.data;
 }
 INLINE char *
 SSDATA (Lisp_Object string)
@@ -1359,7 +1374,7 @@ SSET (Lisp_Object string, ptrdiff_t index, unsigned char new)
 INLINE ptrdiff_t
 SCHARS (Lisp_Object string)
 {
-  ptrdiff_t nchars = XSTRING (string)->size;
+  ptrdiff_t nchars = XSTRING (string)->u.s.size;
   eassume (0 <= nchars);
   return nchars;
 }
@@ -1373,7 +1388,7 @@ STRING_BYTES (struct Lisp_String *s)
 #ifdef GC_CHECK_STRING_BYTES
   ptrdiff_t nbytes = string_bytes (s);
 #else
-  ptrdiff_t nbytes = s->size_byte < 0 ? s->size : s->size_byte;
+  ptrdiff_t nbytes = s->u.s.size_byte < 0 ? s->u.s.size : s->u.s.size_byte;
 #endif
   eassume (0 <= nbytes);
   return nbytes;
@@ -1392,7 +1407,7 @@ STRING_SET_CHARS (Lisp_Object string, ptrdiff_t newsize)
   eassert (STRING_MULTIBYTE (string)
 	   ? 0 <= newsize && newsize <= SBYTES (string)
 	   : newsize == SCHARS (string));
-  XSTRING (string)->size = newsize;
+  XSTRING (string)->u.s.size = newsize;
 }
 
 /* A regular vector is just a header plus an array of Lisp_Objects.  */
@@ -1910,20 +1925,20 @@ INLINE Lisp_Object
 INLINE struct Lisp_Symbol *
 SYMBOL_ALIAS (struct Lisp_Symbol *sym)
 {
-  eassume (sym->redirect == SYMBOL_VARALIAS && sym->val.alias);
-  return sym->val.alias;
+  eassume (sym->u.s.redirect == SYMBOL_VARALIAS && sym->u.s.val.alias);
+  return sym->u.s.val.alias;
 }
 INLINE struct Lisp_Buffer_Local_Value *
 SYMBOL_BLV (struct Lisp_Symbol *sym)
 {
-  eassume (sym->redirect == SYMBOL_LOCALIZED && sym->val.blv);
-  return sym->val.blv;
+  eassume (sym->u.s.redirect == SYMBOL_LOCALIZED && sym->u.s.val.blv);
+  return sym->u.s.val.blv;
 }
 INLINE union Lisp_Fwd *
 SYMBOL_FWD (struct Lisp_Symbol *sym)
 {
-  eassume (sym->redirect == SYMBOL_FORWARDED && sym->val.fwd);
-  return sym->val.fwd;
+  eassume (sym->u.s.redirect == SYMBOL_FORWARDED && sym->u.s.val.fwd);
+  return sym->u.s.val.fwd;
 }
 
 INLINE void
@@ -1935,26 +1950,26 @@ INLINE void
 INLINE void
 SET_SYMBOL_ALIAS (struct Lisp_Symbol *sym, struct Lisp_Symbol *v)
 {
-  eassume (sym->redirect == SYMBOL_VARALIAS && v);
-  sym->val.alias = v;
+  eassume (sym->u.s.redirect == SYMBOL_VARALIAS && v);
+  sym->u.s.val.alias = v;
 }
 INLINE void
 SET_SYMBOL_BLV (struct Lisp_Symbol *sym, struct Lisp_Buffer_Local_Value *v)
 {
-  eassume (sym->redirect == SYMBOL_LOCALIZED && v);
-  sym->val.blv = v;
+  eassume (sym->u.s.redirect == SYMBOL_LOCALIZED && v);
+  sym->u.s.val.blv = v;
 }
 INLINE void
 SET_SYMBOL_FWD (struct Lisp_Symbol *sym, union Lisp_Fwd *v)
 {
-  eassume (sym->redirect == SYMBOL_FORWARDED && v);
-  sym->val.fwd = v;
+  eassume (sym->u.s.redirect == SYMBOL_FORWARDED && v);
+  sym->u.s.val.fwd = v;
 }
 
 INLINE Lisp_Object
 SYMBOL_NAME (Lisp_Object sym)
 {
-  return XSYMBOL (sym)->name;
+  return XSYMBOL (sym)->u.s.name;
 }
 
 /* Value is true if SYM is an interned symbol.  */
@@ -1962,7 +1977,7 @@ SYMBOL_NAME (Lisp_Object sym)
 INLINE bool
 SYMBOL_INTERNED_P (Lisp_Object sym)
 {
-  return XSYMBOL (sym)->interned != SYMBOL_UNINTERNED;
+  return XSYMBOL (sym)->u.s.interned != SYMBOL_UNINTERNED;
 }
 
 /* Value is true if SYM is interned in initial_obarray.  */
@@ -1970,7 +1985,7 @@ SYMBOL_INTERNED_P (Lisp_Object sym)
 INLINE bool
 SYMBOL_INTERNED_IN_INITIAL_OBARRAY_P (Lisp_Object sym)
 {
-  return XSYMBOL (sym)->interned == SYMBOL_INTERNED_IN_INITIAL_OBARRAY;
+  return XSYMBOL (sym)->u.s.interned == SYMBOL_INTERNED_IN_INITIAL_OBARRAY;
 }
 
 /* Value is non-zero if symbol cannot be changed through a simple set,
@@ -2948,7 +2963,7 @@ CHECK_NUMBER_CDR (Lisp_Object x)
 #ifdef _MSC_VER
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
    Lisp_Object fnname DEFUN_ARGS_ ## maxargs ;				\
-   static struct GCALIGNED Lisp_Subr sname =				\
+   static struct Lisp_Subr sname =				\
    { { (PVEC_SUBR << PSEUDOVECTOR_AREA_BITS)				\
        | (sizeof (struct Lisp_Subr) / sizeof (EMACS_INT)) },		\
       { (Lisp_Object (__cdecl *)(void))fnname },                        \
@@ -2956,7 +2971,7 @@ CHECK_NUMBER_CDR (Lisp_Object x)
    Lisp_Object fnname
 #else  /* not _MSC_VER */
 #define DEFUN(lname, fnname, sname, minargs, maxargs, intspec, doc)	\
-   static struct GCALIGNED Lisp_Subr sname =				\
+   static struct Lisp_Subr sname =				\
      { { PVEC_SUBR << PSEUDOVECTOR_AREA_BITS },				\
        { .a ## maxargs = fnname },					\
        minargs, maxargs, lname, intspec, 0};				\
@@ -3224,25 +3239,25 @@ set_hash_value_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
 INLINE void
 set_symbol_function (Lisp_Object sym, Lisp_Object function)
 {
-  XSYMBOL (sym)->function = function;
+  XSYMBOL (sym)->u.s.function = function;
 }
 
 INLINE void
 set_symbol_plist (Lisp_Object sym, Lisp_Object plist)
 {
-  XSYMBOL (sym)->plist = plist;
+  XSYMBOL (sym)->u.s.plist = plist;
 }
 
 INLINE void
 set_symbol_next (Lisp_Object sym, struct Lisp_Symbol *next)
 {
-  XSYMBOL (sym)->next = next;
+  XSYMBOL (sym)->u.s.next = next;
 }
 
 INLINE void
 make_symbol_constant (Lisp_Object sym)
 {
-  XSYMBOL (sym)->trapped_write = SYMBOL_NOWRITE;
+  XSYMBOL (sym)->u.s.trapped_write = SYMBOL_NOWRITE;
 }
 
 /* Buffer-local variable access functions.  */
@@ -3267,7 +3282,7 @@ set_overlay_plist (Lisp_Object overlay, Lisp_Object plist)
 INLINE INTERVAL
 string_intervals (Lisp_Object s)
 {
-  return XSTRING (s)->intervals;
+  return XSTRING (s)->u.s.intervals;
 }
 
 /* Set text properties of S to I.  */
@@ -3275,7 +3290,7 @@ string_intervals (Lisp_Object s)
 INLINE void
 set_string_intervals (Lisp_Object s, INTERVAL i)
 {
-  XSTRING (s)->intervals = i;
+  XSTRING (s)->u.s.intervals = i;
 }
 
 /* Set a Lisp slot in TABLE to VAL.  Most code should use this instead
@@ -4600,20 +4615,6 @@ enum { defined_GC_CHECK_STRING_BYTES = true };
 enum { defined_GC_CHECK_STRING_BYTES = false };
 #endif
 
-/* Struct inside unions that are typically no larger and aligned enough.  */
-
-union Aligned_Cons
-{
-  struct Lisp_Cons s;
-  double d; intmax_t i; void *p;
-};
-
-union Aligned_String
-{
-  struct Lisp_String s;
-  double d; intmax_t i; void *p;
-};
-
 /* True for stack-based cons and string implementations, respectively.
    Use stack-based strings only if stack-based cons also works.
    Otherwise, STACK_CONS would create heap-based cons cells that
@@ -4621,18 +4622,16 @@ union Aligned_String
 
 enum
   {
-    USE_STACK_CONS = (USE_STACK_LISP_OBJECTS
-		      && alignof (union Aligned_Cons) % GCALIGNMENT == 0),
+    USE_STACK_CONS = USE_STACK_LISP_OBJECTS,
     USE_STACK_STRING = (USE_STACK_CONS
-			&& !defined_GC_CHECK_STRING_BYTES
-			&& alignof (union Aligned_String) % GCALIGNMENT == 0)
+			&& !defined_GC_CHECK_STRING_BYTES)
   };
 
 /* Auxiliary macros used for auto allocation of Lisp objects.  Please
    use these only in macros like AUTO_CONS that declare a local
    variable whose lifetime will be clear to the programmer.  */
 #define STACK_CONS(a, b) \
-  make_lisp_ptr (&((union Aligned_Cons) { { a, { b } } }).s, Lisp_Cons)
+  make_lisp_ptr (&((struct Lisp_Cons) {{{a, {b}}}}), Lisp_Cons)
 #define AUTO_CONS_EXPR(a, b) \
   (USE_STACK_CONS ? STACK_CONS (a, b) : Fcons (a, b))
 
@@ -4678,7 +4677,7 @@ enum
   Lisp_Object name =							\
     (USE_STACK_STRING							\
      ? (make_lisp_ptr							\
-	((&((union Aligned_String) {{len, -1, 0, (unsigned char *) (str)}}).s), \
+	((&(struct Lisp_String) {{{len, -1, 0, (unsigned char *) (str)}}}), \
 	 Lisp_String))							\
      : make_unibyte_string (str, len))
 

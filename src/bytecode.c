@@ -489,7 +489,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  {
 	    Lisp_Object v1 = vectorp[op], v2;
 	    if (!SYMBOLP (v1)
-		|| XSYMBOL (v1)->redirect != SYMBOL_PLAINVAL
+		|| XSYMBOL (v1)->u.s.redirect != SYMBOL_PLAINVAL
 		|| (v2 = SYMBOL_VAL (XSYMBOL (v1)), EQ (v2, Qunbound)))
 	      v2 = Fsymbol_value (v1);
 	    PUSH (v2);
@@ -558,7 +558,7 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	    /* Inline the most common case.  */
 	    if (SYMBOLP (sym)
 		&& !EQ (val, Qunbound)
-		&& !XSYMBOL (sym)->redirect
+		&& !XSYMBOL (sym)->u.s.redirect
 		&& !SYMBOL_TRAPPED_WRITE_P (sym))
 	      SET_SYMBOL_VAL (XSYMBOL (sym), val);
 	    else

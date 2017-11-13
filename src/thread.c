@@ -26,7 +26,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "syssignal.h"
 
-static struct GCALIGNED thread_state main_thread;
+static struct thread_state main_thread;
 
 struct thread_state *current_thread = &main_thread;
 

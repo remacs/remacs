@@ -1280,8 +1280,8 @@ is used to further constrain the set of candidates.  */)
 		error ("Bad data in guts of obarray");
 	      elt = bucket;
 	      eltstring = elt;
-	      if (XSYMBOL (bucket)->next)
-		XSETSYMBOL (bucket, XSYMBOL (bucket)->next);
+	      if (XSYMBOL (bucket)->u.s.next)
+		XSETSYMBOL (bucket, XSYMBOL (bucket)->u.s.next);
 	      else
 		XSETFASTINT (bucket, 0);
 	    }
@@ -1533,8 +1533,8 @@ with a space are ignored unless STRING itself starts with a space.  */)
 		error ("Bad data in guts of obarray");
 	      elt = bucket;
 	      eltstring = elt;
-	      if (XSYMBOL (bucket)->next)
-		XSETSYMBOL (bucket, XSYMBOL (bucket)->next);
+	      if (XSYMBOL (bucket)->u.s.next)
+		XSETSYMBOL (bucket, XSYMBOL (bucket)->u.s.next);
 	      else
 		XSETFASTINT (bucket, 0);
 	    }
@@ -1754,9 +1754,9 @@ the values STRING, PREDICATE and `lambda'.  */)
 			tem = tail;
 			break;
 		      }
-		    if (XSYMBOL (tail)->next == 0)
+		    if (XSYMBOL (tail)->u.s.next == 0)
 		      break;
-		    XSETSYMBOL (tail, XSYMBOL (tail)->next);
+		    XSETSYMBOL (tail, XSYMBOL (tail)->u.s.next);
 		  }
 	    }
 	}
