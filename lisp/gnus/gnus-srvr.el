@@ -1159,7 +1159,7 @@ Requesting compaction of %s... (this may take a long time)"
       (error "The server under point can't host the Emacs Cloud"))
 
     (when (not (string-equal gnus-cloud-method server))
-      (custom-set-variables '(gnus-cloud-method server))
+      (customize-set-variable 'gnus-cloud-method server)
       ;; Note we can't use `Custom-save' here.
       (when (gnus-yes-or-no-p
              (format "The new cloud host server is %S now. Save it? " server))
