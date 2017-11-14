@@ -948,7 +948,7 @@ extern "C" {
     pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
-    pub fn fget_output_method(f: *const Lisp_Frame) -> u8;
+    pub fn fget_output_method(f: *const Lisp_Frame) -> c_int;
 }
 
 #[repr(C)]

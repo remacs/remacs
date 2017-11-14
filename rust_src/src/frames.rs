@@ -2,12 +2,20 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{fget_output_method, fget_terminal, Fselect_window};
-use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
-use remacs_sys::{Qframe_live_p, Qns, Qpc, Qw32, Qx};
+use remacs_sys::{selected_frame as current_frame, Lisp_Frame, Qns, Qpc, Qt, Qw32, Qx};
+use remacs_sys::Qframe_live_p;
 
+use libc::c_int;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 
+pub type OutputMethod = c_int;
+pub const output_initial: OutputMethod = 0;
+pub const output_termcap: OutputMethod = 1;
+pub const output_x_window: OutputMethod = 2;
+pub const output_w32: OutputMethod = 3;
+pub const output_msdos_raw: OutputMethod = 4;
+pub const output_ns: OutputMethod = 5;
 
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
@@ -93,7 +101,7 @@ pub fn set_frame_selected_window(
     } else {
         frame
     };
-    let mut frame_ref = f.as_live_frame_or_error();
+    let mut frame_ref = frame_live_or_selected(f);
     let w = window.as_live_window_or_error();
 
     if f.ne(w.frame()) {
@@ -117,15 +125,15 @@ pub fn set_frame_selected_window(
 #[lisp_fn]
 pub fn framep(object: LispObject) -> LispObject {
     if let Some(frame) = object.as_frame() {
-        match unsafe { fget_output_method(frame.as_ptr()) } {
-            0 => LispObject::constant_t(),
-            1 => LispObject::constant_t(),
-            2 => LispObject::from(Qx),
-            3 => LispObject::from(Qw32),
-            4 => LispObject::from(Qpc),
-            5 => LispObject::from(Qns),
-            _ => panic!("Invalid output method"),
-        }
+        let output_method = match unsafe { fget_output_method(frame.as_ptr()) } {
+            output_initial | output_termcap => Qt,
+            output_x_window => Qx,
+            output_w32 => Qw32,
+            output_msdos_raw => Qpc,
+            output_ns => Qns,
+            _ => panic!("Invalid frame output_method!"),
+        };
+        LispObject::from(output_method)
     } else {
         LispObject::constant_nil()
     }
