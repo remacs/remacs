@@ -2382,7 +2382,7 @@ is copied instead of being cut."
                (setq event (read-event))
                (or (mouse-movement-p event)
                    ;; Handle `mouse-autoselect-window'.
-                   (eq (car event) 'select-window)))
+                   (eq (car-safe event) 'select-window)))
         (unless value-selection ; initialization
           (delete-overlay mouse-secondary-overlay)
           (setq value-selection (buffer-substring start end))
