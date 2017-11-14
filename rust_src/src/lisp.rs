@@ -627,12 +627,13 @@ impl LispObject {
     */
 
     pub fn as_font(self) -> Option<LispFontRef> {
-        self.as_vectorlike()
-            .map_or(None, |v| if v.is_pseudovector(PseudovecType::PVEC_FONT) {
+        self.as_vectorlike().map_or(None, |v| {
+            if v.is_pseudovector(PseudovecType::PVEC_FONT) {
                 Some(LispFontRef::from_vectorlike(v))
             } else {
                 None
-            })
+            }
+        })
     }
 
     pub fn is_record(self) -> bool {
@@ -1002,12 +1003,13 @@ impl LispObject {
 
     #[inline]
     pub fn as_marker(self) -> Option<LispMarkerRef> {
-        self.as_misc()
-            .and_then(|m| if m.ty == Lisp_Misc_Type::Marker {
+        self.as_misc().and_then(|m| {
+            if m.ty == Lisp_Misc_Type::Marker {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
-            })
+            }
+        })
     }
 
     pub fn as_marker_or_error(self) -> LispMarkerRef {
@@ -1038,12 +1040,13 @@ impl LispObject {
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
-        self.as_misc()
-            .and_then(|m| if m.ty == Lisp_Misc_Type::Overlay {
+        self.as_misc().and_then(|m| {
+            if m.ty == Lisp_Misc_Type::Overlay {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
-            })
+            }
+        })
     }
 
     pub fn as_overlay_or_error(self) -> LispOverlayRef {
