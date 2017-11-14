@@ -2940,7 +2940,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (write-region "foo" nil tmp-name1)
 	    (should (file-exists-p tmp-name1))
 	    (should (file-acl tmp-name1))
-	    (copy-file tmp-name1 tmp-name2)
+	    (copy-file tmp-name1 tmp-name2 nil nil nil 'preserve-permissions)
 	    (should (file-acl tmp-name2))
 	    (should (string-equal (file-acl tmp-name1) (file-acl tmp-name2)))
 	    ;; Different permissions mean different ACLs.
@@ -2966,7 +2966,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (write-region "foo" nil tmp-name1)
 	    (should (file-exists-p tmp-name1))
 	    (should (file-acl tmp-name1))
-	    (copy-file tmp-name1 tmp-name3)
+	    (copy-file tmp-name1 tmp-name3 nil nil nil 'preserve-permissions)
 	    (should (file-acl tmp-name3))
 	    (should (string-equal (file-acl tmp-name1) (file-acl tmp-name3)))
 	    ;; Different permissions mean different ACLs.
@@ -2980,7 +2980,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 
 	    ;; Two files with same ACLs.
 	    (delete-file tmp-name1)
-	    (copy-file tmp-name3 tmp-name1)
+	    (copy-file tmp-name3 tmp-name1 nil nil nil 'preserve-permissions)
 	    (should (file-acl tmp-name1))
 	    (should (string-equal (file-acl tmp-name1) (file-acl tmp-name3)))
 	    ;; Different permissions mean different ACLs.
