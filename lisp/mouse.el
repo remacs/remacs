@@ -2380,7 +2380,9 @@ is copied instead of being cut."
       ;; When event was click instead of drag, skip loop
       (while (progn
                (setq event (read-event))
-               (mouse-movement-p event))
+               (or (mouse-movement-p event)
+                   ;; Handle `mouse-autoselect-window'.
+                   (eq (car event) 'select-window)))
         (unless value-selection ; initialization
           (delete-overlay mouse-secondary-overlay)
           (setq value-selection (buffer-substring start end))
