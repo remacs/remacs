@@ -63,9 +63,8 @@ impl FontExtraType {
 pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
     // For compatibility with the C version, checking that object is a font
     // takes priority over checking that extra_type is well-formed.
-    object
-        .as_font()
-        .map_or(LispObject::constant_nil(), |f| if extra_type.is_nil() {
+    object.as_font().map_or(LispObject::constant_nil(), |f| {
+        if extra_type.is_nil() {
             LispObject::constant_t()
         } else {
             match FontExtraType::from_symbol_or_error(extra_type) {
@@ -73,7 +72,8 @@ pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
                 FontExtraType::Entity => LispObject::from_bool(f.is_font_entity()),
                 FontExtraType::Object => LispObject::from_bool(f.is_font_object()),
             }
-        })
+        }
+    })
 }
 
 include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));
