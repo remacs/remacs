@@ -10,6 +10,8 @@
 (ert-deftest args-from-C-worker-test ()
        "Tests known transmutations."
        (should (equal (remacs-helpers/make-rust-args-from-C-worker "int foo") "foo: c_int"))
+       ;; Ideally this becomes something sensible....
+       (should (equal (remacs-helpers/make-rust-args-from-C-worker "void *foo") "foo: *mut void"))
        (should (equal (remacs-helpers/make-rust-args-from-C-worker "void") ""))
        (should (equal (remacs-helpers/make-rust-args-from-C-worker "register int bar, register char c") "bar: c_int, c: c_char"))
        (should (equal (remacs-helpers/make-rust-args-from-C-worker "struct thing foo") "foo: thing")))
