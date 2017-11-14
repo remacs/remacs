@@ -290,7 +290,7 @@ i.e. 1970-1-1) are loaded as expiring one year from now instead."
 
 (defun url-cookie-handle-set-cookie (str)
   (setq url-cookies-changed-since-last-save t)
-  (let* ((args (url-parse-args str t))
+  (let* ((args (nreverse (url-parse-args str t)))
 	 (case-fold-search t)
 	 (secure (and (assoc-string "secure" args t) t))
 	 (domain (or (cdr-safe (assoc-string "domain" args t))
@@ -298,44 +298,16 @@ i.e. 1970-1-1) are loaded as expiring one year from now instead."
 	 (current-url (url-view-url t))
 	 (trusted url-cookie-trusted-urls)
 	 (untrusted url-cookie-untrusted-urls)
-	 (expires (cdr-safe (assoc-string "expires" args t)))
+	 (max-age (cdr-safe (assoc-string "max-age" args t)))
 	 (localpart (or (cdr-safe (assoc-string "path" args t))
 			(file-name-directory
 			 (url-filename url-current-object))))
-	 (rest nil))
-    (dolist (this args)
-      (or (member (downcase (car this)) '("secure" "domain" "expires" "path"))
-	  (setq rest (cons this rest))))
-
-    ;; Sometimes we get dates that the timezone package cannot handle very
-    ;; gracefully - take care of this here, instead of in url-cookie-expired-p
-    ;; to speed things up.
-    (and expires
-	 (string-match
-	  (concat "^[^,]+, +\\(..\\)-\\(...\\)-\\(..\\) +"
-		  "\\(..:..:..\\) +\\[*\\([^]]+\\)\\]*$")
-	  expires)
-	 (setq expires (concat (match-string 1 expires) " "
-			       (match-string 2 expires) " "
-			       (match-string 3 expires) " "
-			       (match-string 4 expires) " ["
-			       (match-string 5 expires) "]")))
-
-    ;; This one is for older Emacs/XEmacs variants that don't
-    ;; understand this format without tenths of a second in it.
-    ;; Wednesday, 30-Dec-2037 16:00:00 GMT
-    ;;       - vs -
-    ;; Wednesday, 30-Dec-2037 16:00:00.00 GMT
-    (and expires
-	 (string-match
-	  "\\([0-9]+\\)-\\([A-Za-z]+\\)-\\([0-9]+\\)[ \t]+\\([0-9]+:[0-9]+:[0-9]+\\)\\(\\.[0-9]+\\)*[ \t]+\\([-+a-zA-Z0-9]+\\)"
-	  expires)
-	 (setq expires (concat (match-string 1 expires) "-"	; day
-			       (match-string 2 expires) "-"	; month
-			       (match-string 3 expires) " "	; year
-			       (match-string 4 expires) ".00 " ; hour:minutes:seconds
-			       (match-string 6 expires)))) ":" ; timezone
-
+	 (expires nil))
+    (if (and max-age (string-match "\\`-?[0-9]+\\'" max-age))
+	(setq expires (format-time-string "%a %b %d %H:%M:%S %Y GMT"
+					  (time-add nil (read max-age))
+					  t))
+      (setq expires (cdr-safe (assoc-string "expires" args t))))
     (while (consp trusted)
       (if (string-match (car trusted) current-url)
 	  (setq trusted (- (match-end 0) (match-beginning 0)))
@@ -359,8 +331,9 @@ i.e. 1970-1-1) are loaded as expiring one year from now instead."
 	   (not trusted)
 	   (save-window-excursion
 	     (with-output-to-temp-buffer "*Cookie Warning*"
-	       (dolist (x rest)
-                 (princ (format "%s - %s" (car x) (cdr x)))))
+	       (princ (format "%s=\"%s\"\n" (caar args) (cdar args)))
+	       (dolist (x (cdr args))
+		 (princ (format "  %s=\"%s\"\n" (car x) (cdr x)))))
 	     (prog1
 		 (not (funcall url-confirmation-func
 			       (format "Allow %s to set these cookies? "
@@ -371,8 +344,8 @@ i.e. 1970-1-1) are loaded as expiring one year from now instead."
       nil)
      ((url-cookie-host-can-set-p (url-host url-current-object) domain)
       ;; Cookie is accepted by the user, and passes our security checks.
-      (dolist (cur rest)
-	(url-cookie-store (car cur) (cdr cur) expires domain localpart secure)))
+      (url-cookie-store (caar args) (cdar args)
+			expires domain localpart secure))
      (t
       (url-lazy-message "%s tried to set a cookie for domain %s - rejected."
 			(url-host url-current-object) domain)))))

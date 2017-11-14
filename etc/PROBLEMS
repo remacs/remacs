@@ -1113,14 +1113,6 @@ to happen in *.UTF-8 locales; zh_CN.GB2312 and zh_CN.GBK locales, for
 example, work fine.  A bug report has been filed in the Gnome
 bugzilla: http://bugzilla.gnome.org/show_bug.cgi?id=357032
 
-*** Gnome: Emacs's xterm-mouse-mode doesn't work on the Gnome terminal.
-
-A symptom of this bug is that double-clicks insert a control sequence
-into the buffer.  The reason this happens is an apparent
-incompatibility of the Gnome terminal with Xterm, which also affects
-other programs using the Xterm mouse interface.  A problem report has
-been filed.
-
 *** Gnome: GPaste clipboard manager causes erratic behavior of 'yank'
 
 The symptom is that 'kill-line' followed by 'yank' often (but not
@@ -1491,22 +1483,6 @@ use meta in modified function-keys, which confuses Emacs.  To fix
 this, you can remove the X resource or put this in your init file:
 
   (xterm-remove-modify-other-keys)
-
-** Emacs's xterm-mouse doesn't work well in Evil mode.
-
-Specifically, clicking mouse-1 doesn't work as expected: instead of
-moving point where you click, it highlights the region between the
-line beginning and the click location, and displays error messages
-about unbound keys in the echo area.
-
-To work around this, put this in your .emacs file:
-
-  (with-eval-after-load 'evil-maps
-    (define-key evil-motion-state-map [down-mouse-1] nil))
-
-This appears to be a bug in Evil.
-See discussions in https://github.com/emacs-evil/evil/issues/960
-and https://debbugs.gnu.org/cgi/bugreport.cgi?bug=29143
 
 ** Emacs spontaneously displays "I-search: " at the bottom of the screen.
 

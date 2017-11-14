@@ -533,9 +533,7 @@ the list by the special value `tramp-own-remote-path'."
 
 ;;;###tramp-autoload
 (defcustom tramp-remote-process-environment
-  `("ENV=''" "TMOUT=0" "LC_CTYPE=''"
-    ,(format "TERM=%s" tramp-terminal-type)
-    ,(format "INSIDE_EMACS='%s,tramp:%s'" emacs-version tramp-version)
+  '("ENV=''" "TMOUT=0" "LC_CTYPE=''"
     "CDPATH=" "HISTORY=" "MAIL=" "MAILCHECK=" "MAILPATH=" "PAGER=cat"
     "autocorrect=" "correct=")
   "List of environment variables to be set on the remote host.
@@ -544,8 +542,15 @@ Each element should be a string of the form ENVVARNAME=VALUE.  An
 entry ENVVARNAME= disables the corresponding environment variable,
 which might have been set in the init files like ~/.profile.
 
-Special handling is applied to the PATH environment, which should
-not be set here. Instead, it should be set via `tramp-remote-path'."
+Special handling is applied to some environment variables,
+which should not be set here:
+
+The PATH environment variable should be set via `tramp-remote-path'.
+
+The TERM environment variable should be set via `tramp-terminal-type'.
+
+The INSIDE_EMACS environment variable will automatically be set
+based on the TRAMP and Emacs versions, and should not be set here."
   :group 'tramp
   :version "26.1"
   :type '(repeat string)
@@ -3948,9 +3953,17 @@ file exists and nonzero exit status otherwise."
       ;; file clobbering $PS1.  $PROMPT_COMMAND is another way to set
       ;; the prompt in /bin/bash, it must be discarded as well.
       ;; $HISTFILE is set according to `tramp-histfile-override'.
+      ;; $TERM and $INSIDE_EMACS set here to ensure they have the
+      ;; correct values when the shell starts, not just processes
+      ;; run within the shell.  (Which processes include our
+      ;; initial probes to ensure the remote shell is usable.)
       (tramp-send-command
        vec (format
-	    "exec env ENV=%s %s PROMPT_COMMAND='' PS1=%s PS2='' PS3='' %s %s"
+	    (concat
+	     "exec env TERM='%s' INSIDE_EMACS='%s,tramp:%s' "
+	     "ENV=%s %s PROMPT_COMMAND='' PS1=%s PS2='' PS3='' %s %s")
+            tramp-terminal-type
+            emacs-version tramp-version  ; INSIDE_EMACS
             (or (getenv-internal "ENV" tramp-remote-process-environment) "")
 	    (if (stringp tramp-histfile-override)
 		(format "HISTFILE=%s"
