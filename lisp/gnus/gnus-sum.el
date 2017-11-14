@@ -11962,7 +11962,7 @@ Argument REVERSE means reverse order."
   (interactive "P")
   (gnus-summary-sort 'chars reverse))
 
-(defun gnus-summary-sort-by-mark (&optional reverse)
+(defun gnus-summary-sort-by-marks (&optional reverse)
   "Sort the summary buffer by article marks.
 Argument REVERSE means reverse order."
   (interactive "P")
