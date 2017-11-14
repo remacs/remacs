@@ -5,12 +5,26 @@
 
 (require 'dash)
 (require 's)
+(require 'thingatpt)
 
 ;;; Code:
 
 (defun remacs-helpers/ignored-type-part-p (input)
   "Predicate to indicate if INPUT is part of a C type ignored in Rust."
-  (string= input "struct"))
+  (--any? (string= input it) '("enum" "register" "struct")))
+
+(defun remacs-helpers/transmute-type (input)
+  "Replace the C type in INPUT with a Rust type.
+
+If INPUT is not a pair return NIL."
+  (setq known-types '(("char" . "c_char")
+                      ("int" . "c_int")
+                      ("EMACS_INT" . "EmacsInt")))
+  (let ((type (car input))
+        (name (cdr input)))
+    (if name
+        (cons (or (cdr (assoc type known-types)) type) name)
+      nil)))
 
 (defun remacs-helpers/make-rust-args-from-C-worker (input)
   "Transform C function arguments INPUT into Rust style arguments.
@@ -24,6 +38,8 @@ foo: *mut int, b: Bar"
        (s-split ",")
        (-map #'s-trim)
        (--map (-remove 'remacs-helpers/ignored-type-part-p (s-split " " it)))
+       (-map 'remacs-helpers/transmute-type)
+       (-remove 'not)  ;; allow foo(void) -> foo()
        (-map (-lambda ((type name))
                (if (s-starts-with-p "*" name)
                    (format "%s: *mut %s" (s-chop-prefix "*" name) type)
@@ -35,8 +51,8 @@ foo: *mut int, b: Bar"
   (interactive
    (if (use-region-p)
        (list nil (region-beginning) (region-end))
-     (let ((bds (bounds-of-thing-at-point 'paragraph)) )
-       (list nil (car bds) (cdr bds)) ) ) )
+     (let ((bds (bounds-of-thing-at-point 'paragraph)))
+       (list nil (car bds) (cdr bds)))))
 
   (let* ((input (or string (buffer-substring-no-properties from to)))
          (output (remacs-helpers/make-rust-args-from-C-worker input)))
@@ -45,7 +61,7 @@ foo: *mut int, b: Bar"
       (save-excursion
         (delete-region from to)
         (goto-char from)
-        (insert output) )) ) )
+        (insert output)))))
 
 (provide 'remacs-helpers)
 
