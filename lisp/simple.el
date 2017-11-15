@@ -2565,10 +2565,10 @@ Return what remains of the list."
              (setq did-apply t)))
           ;; Element (STRING . POS) means STRING was deleted.
           (`(,(and string (pred stringp)) . ,(and pos (pred integerp)))
-           (when (let ((apos (abs pos)))
-                   (or (< apos (point-min)) (> apos (point-max))))
-             (error "Changes to be undone are outside visible portion of buffer"))
-           (let (valid-marker-adjustments)
+           (let ((valid-marker-adjustments nil)
+                 (apos (abs pos)))
+             (when (or (< apos (point-min)) (> apos (point-max)))
+               (error "Changes to be undone are outside visible portion of buffer"))
              ;; Check that marker adjustments which were recorded
              ;; with the (STRING . POS) record are still valid, ie
              ;; the markers haven't moved.  We check their validity
@@ -2579,7 +2579,7 @@ Return what remains of the list."
                (let* ((marker-adj (pop list))
                       (m (car marker-adj)))
                  (and (eq (marker-buffer m) (current-buffer))
-                      (= pos m)
+                      (= apos m)
                       (push marker-adj valid-marker-adjustments))))
              ;; Insert string and adjust point
              (if (< pos 0)
