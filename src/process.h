@@ -309,3 +309,17 @@ void pset_kill_without_query (struct Lisp_Process *p, bool_bf val);
 INLINE_HEADER_END
 
 #endif /* EMACS_PROCESS_H */
+
+int
+pget_raw_status_new(const struct Lisp_Process *p);
+
+
+Lisp_Object
+get_process (register Lisp_Object name);
+
+void
+update_status (struct Lisp_Process *p);
+
+void
+send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
+	      Lisp_Object object);

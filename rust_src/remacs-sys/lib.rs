@@ -788,6 +788,9 @@ pub struct Lisp_Process {
     /// Plist for programs to keep per-process state information, parameters, etc.
     pub plist: Lisp_Object,
 
+    /// Symbol indicating the type of process: real, network, serial.
+    pub process_type: Lisp_Object,
+
     /// Marker set to end of last buffer-inserted output from this process.
     pub mark: Lisp_Object,
 
@@ -946,6 +949,10 @@ extern "C" {
     pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
 }
 
+extern "C" {
+    pub fn pget_raw_status_new(p: *const Lisp_Process) -> c_int;
+}
+
 #[repr(C)]
 pub struct hash_table_test {
     pub name: Lisp_Object,
@@ -1063,7 +1070,6 @@ extern "C" {
         size_bytes: ptrdiff_t,
     ) -> Lisp_Object;
 
-    pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
     pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const c_void);
     pub fn internal_equal(
         o1: Lisp_Object,
@@ -1074,7 +1080,6 @@ extern "C" {
     ) -> bool;
 
     // These signal an error, therefore are marked as non-returning.
-    pub fn circular_list(tail: Lisp_Object) -> !;
     pub fn nsberror(spec: Lisp_Object) -> !;
 
     pub fn emacs_abort() -> !;
@@ -1194,6 +1199,16 @@ extern "C" {
         inhibit_capture_property: Lisp_Object,
     ) -> Lisp_Object;
     pub fn Fline_end_position(n: Lisp_Object) -> Lisp_Object;
+    pub fn get_process(name: Lisp_Object) -> Lisp_Object;
+    pub fn update_status(p: *const Lisp_Process);
+    pub fn setup_process_coding_systems(process: Lisp_Object);
+    pub fn send_process(
+        process: Lisp_Object,
+        buf: *const c_char,
+        len: ptrdiff_t,
+        object: Lisp_Object,
+    );
+    pub fn STRING_BYTES(s: *const Lisp_String) -> ptrdiff_t;
 }
 
 /// Contains C definitions from the font.h header.

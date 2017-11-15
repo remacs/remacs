@@ -1,7 +1,7 @@
 //! Operations on lists.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Qlistp, Qplistp};
+use remacs_sys::{EmacsInt, Qcircular_list, Qlistp, Qplistp};
 use remacs_sys::globals;
 
 use lisp::LispObject;
@@ -370,7 +370,7 @@ where
 /// use `(setq x (plist-put x prop val))' to be sure to use the new value.
 /// The PLIST is modified by side effects.
 #[lisp_fn]
-fn plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
+pub fn plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
     internal_plist_put(plist, prop, val, LispObject::eq)
 }
 
@@ -499,6 +499,11 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
         }
         tail = item;
     }
+}
+
+#[no_mangle]
+pub fn circular_list(obj: LispObject) -> ! {
+    xsignal!(Qcircular_list, obj);
 }
 
 include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));

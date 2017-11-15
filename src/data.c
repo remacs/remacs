@@ -171,12 +171,6 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
   xsignal3 (Qargs_out_of_range, a1, a2, a3);
 }
 
-void
-circular_list (Lisp_Object list)
-{
-  xsignal1 (Qcircular_list, list);
-}
-
 
 
 /* Data type predicates.  */

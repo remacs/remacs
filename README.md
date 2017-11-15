@@ -143,9 +143,12 @@ more Emacs-y.
 
 1. You will need
    [Rust installed](https://www.rust-lang.org/en-US/install.html). Remacs
-   uses unstable Rust features, so you will need to use nightly.
+   uses unstable Rust features, so you will need to use nightly. The file
+   `rust-toolchain` in the `rust_src` directory will indicate the correct
+   version to install.
 
-        rustup install nightly
+        cd rust_src
+        rustup install `cat rust-toolchain`
         cd /path/to/remacs
         rustup override set nightly
 
