@@ -83,6 +83,11 @@ fset_minibuffer_window (struct frame *f, Lisp_Object val)
 {
   f->minibuffer_window = val;
 }
+int
+fget_internal_border_width(const struct frame *f)
+{
+  return f->internal_border_width;
+}
 Lisp_Object
 fget_minibuffer_window(const struct frame *f)
 {

@@ -1,14 +1,16 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{fget_column_width, fget_line_height, fget_minibuffer_window, fget_output_method,
-                 fget_root_window, fget_terminal, Fselect_window};
-use remacs_sys::{selected_frame as current_frame, Lisp_Frame, Qns, Qpc, Qt, Qw32, Qx};
-use remacs_sys::Qframe_live_p;
+use remacs_sys::{fget_column_width, fget_internal_border_width, fget_line_height,
+                 fget_minibuffer_window, fget_output_method, fget_root_window, fget_terminal,
+                 frame_dimension, Fselect_window};
+use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
+use remacs_sys::{Qframe_live_p, Qns, Qpc, Qt, Qw32, Qx};
 
 use libc::c_int;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use windows::{selected_window, LispWindowRef};
 
 pub type OutputMethod = c_int;
 pub const output_initial: OutputMethod = 0;
@@ -29,6 +31,12 @@ impl LispFrameRef {
     #[inline]
     pub fn column_width(self) -> i32 {
         unsafe { fget_column_width(self.as_ptr()) }
+    }
+
+    // Pixel-width of internal border lines.
+    #[inline]
+    pub fn internal_border_width(self) -> i32 {
+        unsafe { frame_dimension(fget_internal_border_width(self.as_ptr())) }
     }
 
     #[inline]
@@ -85,6 +93,26 @@ pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
             object.as_live_frame_or_error()
         }
     }
+}
+
+/// Get the live frame either from the passed in object directly, from the object
+/// as a window, or by using the selected window when object is nil.
+/// When the object is a window the provided window_action is called.
+pub fn window_frame_live_or_selected_with_action<W: FnMut(LispWindowRef) -> ()>(
+    mut object: LispObject,
+    mut window_action: W,
+) -> LispFrameRef {
+    if object.is_nil() {
+        object = selected_window();
+    }
+
+    if object.is_window() {
+        let w = object.as_live_window_or_error();
+        window_action(w);
+        object = w.frame();
+    }
+
+    object.as_live_frame_or_error()
 }
 
 /// Return the frame that is now selected.

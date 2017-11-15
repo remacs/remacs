@@ -683,24 +683,10 @@ wget_pseudo_window_p(struct window *w);
   (FRAME_INTERNAL_BORDER_WIDTH (WINDOW_XFRAME (W)) \
    + WINDOW_RIGHT_PIXEL_EDGE (W))
 
-/* True if W is a menu bar window.  */
-#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
-#define WINDOW_MENU_BAR_P(W) \
-  (WINDOWP (WINDOW_XFRAME (W)->menu_bar_window) \
-   && (W) == XWINDOW (WINDOW_XFRAME (W)->menu_bar_window))
-#else
-/* No menu bar windows if X toolkit is in use.  */
-#define WINDOW_MENU_BAR_P(W) false
-#endif
-
-/* True if W is a tool bar window.  */
-#if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
-#define WINDOW_TOOL_BAR_P(W) \
-  (WINDOWP (WINDOW_XFRAME (W)->tool_bar_window) \
-   && (W) == XWINDOW (WINDOW_XFRAME (W)->tool_bar_window))
-#else
-#define WINDOW_TOOL_BAR_P(W) false
-#endif
+bool
+WINDOW_MENU_BAR_P(struct window *W);
+bool
+WINDOW_TOOL_BAR_P(struct window *W);
 
 /* Return the frame y-position at which window W starts.  */
 #define WINDOW_TOP_EDGE_Y(W) \

@@ -239,6 +239,31 @@ wget_pseudo_window_p(struct window *w)
   return WINDOW_PSEUDO_P(w);
 }
 
+/* True if W is a menu bar window.  */
+bool
+WINDOW_MENU_BAR_P(struct window *W)
+{
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
+  return (WINDOWP (WINDOW_XFRAME (W)->menu_bar_window)
+          && (W) == XWINDOW (WINDOW_XFRAME (W)->menu_bar_window));
+#else
+/* No menu bar windows if X toolkit is in use.  */
+  return false;
+#endif
+}
+
+/* True if W is a tool bar window.  */
+bool
+WINDOW_TOOL_BAR_P(struct window *W)
+{
+#if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
+  return (WINDOWP (WINDOW_XFRAME (W)->tool_bar_window)
+          && (W) == XWINDOW (WINDOW_XFRAME (W)->tool_bar_window));
+#else
+  return false;
+#endif
+}
+
 /* True if leaf window W doesn't reflect the actual state
    of displayed buffer due to its text or overlays change.  */
 
