@@ -1081,7 +1081,6 @@ extern "C" {
         size_bytes: ptrdiff_t,
     ) -> Lisp_Object;
 
-    pub fn SYMBOL_NAME(s: Lisp_Object) -> Lisp_Object;
     pub fn CHECK_IMPURE(obj: Lisp_Object, ptr: *const c_void);
     pub fn internal_equal(
         o1: Lisp_Object,
