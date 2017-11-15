@@ -23,7 +23,7 @@ pub mod libm;
 use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
            size_t, time_t, timespec};
 
-// libc refuses to merge pid_t as an alias for c_int in Windows, so we will not use libc::pid_t
+// libc prefers not to merge pid_t as an alias for c_int in Windows, so we will not use libc::pid_t
 // and alias it ourselves.
 pub type pid_t = libc::c_int;
 
