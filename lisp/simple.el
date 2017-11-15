@@ -3393,10 +3393,10 @@ The optional second argument OUTPUT-BUFFER, if non-nil,
 says to put the output in some other buffer.
 If OUTPUT-BUFFER is a buffer or buffer name, erase that buffer
 and insert the output there; a non-nil value of
-`shell-command-dont-erase-buffer' prevent to erase the buffer.
-If OUTPUT-BUFFER is not a buffer and not nil, insert the output
-in current buffer after point leaving mark after it.
-This cannot be done asynchronously.
+`shell-command-dont-erase-buffer' prevents the buffer from being
+erased.  If OUTPUT-BUFFER is not a buffer and not nil, insert the
+output in current buffer after point leaving mark after it.  This
+cannot be done asynchronously.
 
 If the command terminates without error, but generates output,
 and you did not specify \"insert it in the current buffer\",
@@ -3404,7 +3404,7 @@ the output can be displayed in the echo area or in its buffer.
 If the output is short enough to display in the echo area
 \(determined by the variable `max-mini-window-height' if
 `resize-mini-windows' is non-nil), it is shown there.
-Otherwise,the buffer containing the output is displayed.
+Otherwise, the buffer containing the output is displayed.
 
 If there is output and an error, and you did not specify \"insert it
 in the current buffer\", a message about the error goes at the end
