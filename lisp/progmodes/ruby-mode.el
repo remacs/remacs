@@ -2268,7 +2268,7 @@ the Ruby source to be checked as its standard input."
   "Ruby backend for Flymake.  Launches
 `ruby-flymake-command' (which see) and passes to its standard
 input the contents of the current buffer. The output of this
-command is analysed for error and warning messages."
+command is analyzed for error and warning messages."
   (unless (executable-find (car ruby-flymake-command))
     (error "Cannot find a suitable checker"))
 

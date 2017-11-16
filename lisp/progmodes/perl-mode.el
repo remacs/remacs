@@ -597,7 +597,7 @@ the Perl source to be checked as its standard input."
   "Perl backend for Flymake.  Launches
 `perl-flymake-command' (which see) and passes to its standard
 input the contents of the current buffer.  The output of this
-command is analysed for error and warning messages."
+command is analyzed for error and warning messages."
   (unless (executable-find (car perl-flymake-command))
     (error "Cannot find a suitable checker"))
 
