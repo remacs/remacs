@@ -1,13 +1,11 @@
 !include MUI2.nsh
-
+!include LogicLib.nsh
+!include x64.nsh
 
 Outfile "Emacs-${ARCH}-${OUT_VERSION}-installer.exe"
 
 
-
-InstallDir "$DESKTOP\Emacs-${EMACS_VERSION}"
 SetCompressor /solid lzma
-
 
 Var StartMenuFolder
 
@@ -35,6 +33,25 @@ Var StartMenuFolder
 
 !insertmacro MUI_LANGUAGE "English"
 Name Emacs-${EMACS_VERSION}
+
+function .onInit
+  ${If} ${RunningX64}
+    ${If} ${ARCH} == "x86_64"
+      StrCpy $INSTDIR "$PROGRAMFILES64\Emacs"
+    ${Else}
+      StrCpy $INSTDIR "$PROGRAMFILES32\Emacs"
+    ${Endif}
+  ${Else}
+    ${If} ${ARCH} == "x86_64"
+      Quit
+    ${Else}
+      StrCpy $INSTDIR "$PROGRAMFILES\Emacs"
+    ${Endif}
+  ${EndIf}
+
+  MessageBox MB_OK "Installdir is $INSTDIR"
+functionend
+
 
 Section
 

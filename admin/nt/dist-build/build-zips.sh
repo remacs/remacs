@@ -69,7 +69,9 @@ function build_installer {
     cd $HOME/emacs-build/install/emacs-$VERSION
     echo Calling makensis in `pwd`
     cp ../../git/$BRANCH/admin/nt/dist-build/emacs.nsi .
-    makensis -DARCH=$ARCH -DEMACS_VERSION=$ACTUAL_VERSION \
+
+    makensis -v4 \
+             -DARCH=$ARCH -DEMACS_VERSION=$ACTUAL_VERSION \
              -DOUT_VERSION=$VERSION emacs.nsi
     rm emacs.nsi
     mv Emacs-$ARCH-$VERSION-installer.exe ~/emacs-upload
@@ -104,7 +106,7 @@ while getopts "36ghsiV:" opt; do
         GIT_UP=1
         ;;
     i)
-        BUILD=1
+        BUILD=0
         ;;
     V)
         VERSION=$OPTARG
@@ -117,6 +119,7 @@ while getopts "36ghsiV:" opt; do
         echo "  -3 32 bit build only"
         echo "  -6 64 bit build only"
         echo "  -g git update and worktree only"
+        echo "  -i build installer only"
         exit 0
         ;;
     \?)
