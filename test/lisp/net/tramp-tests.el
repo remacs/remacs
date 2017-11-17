@@ -2942,14 +2942,23 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should (file-acl tmp-name1))
 	    (copy-file tmp-name1 tmp-name2 nil nil nil 'preserve-permissions)
 	    (should (file-acl tmp-name2))
+            (tramp--test-message
+             "tmp-name1:\n%stmp-name2:\n%s"
+             (file-acl tmp-name1) (file-acl tmp-name2))
 	    (should (string-equal (file-acl tmp-name1) (file-acl tmp-name2)))
 	    ;; Different permissions mean different ACLs.
 	    (set-file-modes tmp-name1 #o777)
 	    (set-file-modes tmp-name2 #o444)
+            (tramp--test-message
+             "tmp-name1:\n%stmp-name2:\n%s"
+             (file-acl tmp-name1) (file-acl tmp-name2))
 	    (should-not
 	     (string-equal (file-acl tmp-name1) (file-acl tmp-name2)))
 	    ;; Copy ACL.
 	    (should (set-file-acl tmp-name2 (file-acl tmp-name1)))
+            (tramp--test-message
+             "tmp-name1:\n%stmp-name2:\n%s"
+             (file-acl tmp-name1) (file-acl tmp-name2))
 	    (should (string-equal (file-acl tmp-name1) (file-acl tmp-name2)))
 	    ;; An invalid ACL does not harm.
 	    (should-not (set-file-acl tmp-name2 "foo")))
@@ -2968,28 +2977,46 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should (file-acl tmp-name1))
 	    (copy-file tmp-name1 tmp-name3 nil nil nil 'preserve-permissions)
 	    (should (file-acl tmp-name3))
+            (tramp--test-message
+             "tmp-name1:\n%stmp-name3:\n%s"
+             (file-acl tmp-name1) (file-acl tmp-name3))
 	    (should (string-equal (file-acl tmp-name1) (file-acl tmp-name3)))
 	    ;; Different permissions mean different ACLs.
 	    (set-file-modes tmp-name1 #o777)
 	    (set-file-modes tmp-name3 #o444)
+            (tramp--test-message
+             "tmp-name1:\n%stmp-name3:\n%s"
+             (file-acl tmp-name1) (file-acl tmp-name3))
 	    (should-not
 	     (string-equal (file-acl tmp-name1) (file-acl tmp-name3)))
 	    ;; Copy ACL.
 	    (set-file-acl tmp-name3 (file-acl tmp-name1))
+            (tramp--test-message
+             "tmp-name1:\n%stmp-name3:\n%s"
+             (file-acl tmp-name1) (file-acl tmp-name3))
 	    (should (string-equal (file-acl tmp-name1) (file-acl tmp-name3)))
 
 	    ;; Two files with same ACLs.
 	    (delete-file tmp-name1)
 	    (copy-file tmp-name3 tmp-name1 nil nil nil 'preserve-permissions)
 	    (should (file-acl tmp-name1))
+            (tramp--test-message
+             "tmp-name1:\n%stmp-name3:\n%s"
+             (file-acl tmp-name1) (file-acl tmp-name3))
 	    (should (string-equal (file-acl tmp-name1) (file-acl tmp-name3)))
 	    ;; Different permissions mean different ACLs.
 	    (set-file-modes tmp-name1 #o777)
 	    (set-file-modes tmp-name3 #o444)
+            (tramp--test-message
+             "tmp-name1:\n%stmp-name3:\n%s"
+             (file-acl tmp-name1) (file-acl tmp-name3))
 	    (should-not
 	     (string-equal (file-acl tmp-name1) (file-acl tmp-name3)))
 	    ;; Copy ACL.
 	    (set-file-acl tmp-name1 (file-acl tmp-name3))
+            (tramp--test-message
+             "tmp-name1:\n%stmp-name3:\n%s"
+             (file-acl tmp-name1) (file-acl tmp-name3))
 	    (should (string-equal (file-acl tmp-name1) (file-acl tmp-name3))))
 
 	;; Cleanup.
