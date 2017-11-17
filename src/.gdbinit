@@ -352,7 +352,7 @@ end
 
 define pcursorx
   set $cp = $arg0
-  printf "y=%d x=%d vpos=%d hpos=%d", $cp->y, $cp->x, $cp->vpos, $cp->hpos
+  printf "y=%d x=%d vpos=%d hpos=%d", $cp.y, $cp.x, $cp.vpos, $cp.hpos
 end
 document pcursorx
 Pretty print a window cursor.
@@ -369,11 +369,11 @@ end
 
 define pwinx
   set $w = $arg0
-  if ($w->mini_p != Qnil)
+  if ($w->mini != 0)
     printf "Mini "
   end
-  printf "Window %d ", $int
-  xgetptr $w->buffer
+  printf "Window %d ", $w->sequence_number
+  xgetptr $w->contents
   set $tem = (struct buffer *) $ptr
   xgetptr $tem->name_
   printf "%s", ((struct Lisp_String *) $ptr)->u.s.data
@@ -381,16 +381,14 @@ define pwinx
   xgetptr $w->start
   set $tem = (struct Lisp_Marker *) $ptr
   printf "start=%d end:", $tem->charpos
-  if ($w->window_end_valid != Qnil)
-    xgetint $w->window_end_pos
-    printf "pos=%d", $int
-    xgetint $w->window_end_vpos
-    printf " vpos=%d", $int
+  if ($w->window_end_valid != 0)
+    printf "pos=%d", $w->window_end_pos
+    printf " vpos=%d", $w->window_end_vpos
   else
     printf "invalid"
   end
   printf " vscroll=%d", $w->vscroll
-  if ($w->force_start != Qnil)
+  if ($w->force_start != 0)
     printf " FORCE_START"
   end
   if ($w->must_be_updated_p)
