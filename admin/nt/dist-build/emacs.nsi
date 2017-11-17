@@ -2,7 +2,7 @@
 !include LogicLib.nsh
 !include x64.nsh
 
-Outfile "Emacs-${ARCH}-${OUT_VERSION}-installer.exe"
+Outfile "emacs-${OUT_VERSION}-${ARCH}-installer.exe"
 
 
 SetCompressor /solid lzma
@@ -49,7 +49,6 @@ function .onInit
       StrCpy $INSTDIR "$PROGRAMFILES\Emacs"
     ${Endif}
   ${EndIf}
-
 functionend
 
 
