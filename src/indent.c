@@ -1959,21 +1959,26 @@ line_number_display_width (struct window *w, int *width, int *pixel_width)
   else
     {
       struct it it;
-      struct text_pos wstart;
+      struct text_pos startpos;
       bool saved_restriction = false;
       ptrdiff_t count = SPECPDL_INDEX ();
-      SET_TEXT_POS_FROM_MARKER (wstart, w->start);
+      SET_TEXT_POS_FROM_MARKER (startpos, w->start);
       void *itdata = bidi_shelve_cache ();
-      /* We must start from window's start point, but it could be
-	 outside the accessible region.  */
-      if (wstart.charpos < BEGV || wstart.charpos > ZV)
+      /* We want to start from window's start point, but it could be
+	 outside the accessible region, in which case we widen the
+	 buffer temporarily.  It could even be beyond the buffer's end
+	 (Org mode's display of source code snippets is known to cause
+	 that), in which case we just punt and start from point instead.  */
+      if (startpos.charpos > Z)
+	SET_TEXT_POS (startpos, PT, PT_BYTE);
+      if (startpos.charpos < BEGV || startpos.charpos > ZV)
 	{
 	  record_unwind_protect (save_restriction_restore,
 				 save_restriction_save ());
 	  Fwiden ();
 	  saved_restriction = true;
 	}
-      start_display (&it, w, wstart);
+      start_display (&it, w, startpos);
       /* The call to move_it_by_lines below will not generate a line
 	 number if the first line shown in the window is hscrolled
 	 such that all of its display elements are out of view.  So we
