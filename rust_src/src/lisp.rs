@@ -14,8 +14,8 @@ use std::ops::{Deref, DerefMut};
 use std::slice;
 
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, PseudovecType, CHECK_IMPURE,
-                 INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, SYMBOL_NAME,
-                 USE_LSB_TAG, VALBITS, VALMASK};
+                 INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, USE_LSB_TAG,
+                 VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
                  Lisp_Type};
 use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p, Qframep,
@@ -627,12 +627,13 @@ impl LispObject {
     */
 
     pub fn as_font(self) -> Option<LispFontRef> {
-        self.as_vectorlike()
-            .map_or(None, |v| if v.is_pseudovector(PseudovecType::PVEC_FONT) {
+        self.as_vectorlike().map_or(None, |v| {
+            if v.is_pseudovector(PseudovecType::PVEC_FONT) {
                 Some(LispFontRef::from_vectorlike(v))
             } else {
                 None
-            })
+            }
+        })
     }
 
     pub fn is_record(self) -> bool {
@@ -1002,12 +1003,13 @@ impl LispObject {
 
     #[inline]
     pub fn as_marker(self) -> Option<LispMarkerRef> {
-        self.as_misc()
-            .and_then(|m| if m.ty == Lisp_Misc_Type::Marker {
+        self.as_misc().and_then(|m| {
+            if m.ty == Lisp_Misc_Type::Marker {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
-            })
+            }
+        })
     }
 
     pub fn as_marker_or_error(self) -> LispMarkerRef {
@@ -1038,12 +1040,13 @@ impl LispObject {
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
-        self.as_misc()
-            .and_then(|m| if m.ty == Lisp_Misc_Type::Overlay {
+        self.as_misc().and_then(|m| {
+            if m.ty == Lisp_Misc_Type::Overlay {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
-            })
+            }
+        })
     }
 
     pub fn as_overlay_or_error(self) -> LispOverlayRef {
@@ -1107,7 +1110,7 @@ impl Debug for LispObject {
         }
         match ty {
             Lisp_Type::Lisp_Symbol => {
-                let name = LispObject::from(unsafe { SYMBOL_NAME(self.to_raw()) });
+                let name = self.as_symbol_or_error().symbol_name();
                 write!(f, "'{}", display_string(name))?;
             }
             Lisp_Type::Lisp_Cons => {

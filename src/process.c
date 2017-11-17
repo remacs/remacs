@@ -666,7 +666,7 @@ clear_waiting_thread_info (void)
 
 static Lisp_Object status_convert (int);
 
-static void
+void
 update_status (struct Lisp_Process *p)
 {
   eassert (p->raw_status_new);
@@ -955,7 +955,7 @@ free_dns_request (Lisp_Object proc)
    Buffers denote the first process in the buffer, and nil denotes the
    current buffer.  */
 
-static Lisp_Object
+Lisp_Object
 get_process (register Lisp_Object name)
 {
   register Lisp_Object proc, obj;
@@ -1074,52 +1074,6 @@ nil, indicating the current buffer's process.  */)
   return Qnil;
 }
 
-DEFUN ("process-status", Fprocess_status, Sprocess_status, 1, 1, 0,
-       doc: /* Return the status of PROCESS.
-The returned value is one of the following symbols:
-run  -- for a process that is running.
-stop -- for a process stopped but continuable.
-exit -- for a process that has exited.
-signal -- for a process that has got a fatal signal.
-open -- for a network stream connection that is open.
-listen -- for a network stream server that is listening.
-closed -- for a network stream connection that is closed.
-connect -- when waiting for a non-blocking connection to complete.
-failed -- when a non-blocking connection has failed.
-nil -- if arg is a process name and no such process exists.
-PROCESS may be a process, a buffer, the name of a process, or
-nil, indicating the current buffer's process.  */)
-  (register Lisp_Object process)
-{
-  register struct Lisp_Process *p;
-  register Lisp_Object status;
-
-  if (STRINGP (process))
-    process = Fget_process (process);
-  else
-    process = get_process (process);
-
-  if (NILP (process))
-    return process;
-
-  p = XPROCESS (process);
-  if (p->raw_status_new)
-    update_status (p);
-  status = p->status;
-  if (CONSP (status))
-    status = XCAR (status);
-  if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
-    {
-      if (EQ (status, Qexit))
-	status = Qclosed;
-      else if (EQ (p->command, Qt))
-	status = Qstop;
-      else if (EQ (status, Qrun))
-	status = Qopen;
-    }
-  return status;
-}
-
 DEFUN ("process-exit-status", Fprocess_exit_status, Sprocess_exit_status,
        1, 1, 0,
        doc: /* Return the exit status of PROCESS or the signal number that killed it.
@@ -1155,26 +1109,6 @@ not the name of the pty that Emacs uses to talk with that terminal.  */)
   CHECK_PROCESS (process);
   return XPROCESS (process)->tty_name;
 }
-
-DEFUN ("set-process-buffer", Fset_process_buffer, Sset_process_buffer,
-       2, 2, 0,
-       doc: /* Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
-Return BUFFER.  */)
-  (register Lisp_Object process, Lisp_Object buffer)
-{
-  struct Lisp_Process *p;
-
-  CHECK_PROCESS (process);
-  if (!NILP (buffer))
-    CHECK_BUFFER (buffer);
-  p = XPROCESS (process);
-  pset_buffer (p, buffer);
-  if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
-    pset_childp (p, Fplist_put (p->childp, QCbuffer, buffer));
-  setup_process_coding_systems (process);
-  return buffer;
-}
-
 
 DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
        1, 1, 0,
@@ -6120,7 +6054,7 @@ write_queue_pop (struct Lisp_Process *p, Lisp_Object *obj,
 
    This function can evaluate Lisp code and can garbage collect.  */
 
-static void
+void
 send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
 	      Lisp_Object object)
 {
@@ -6370,26 +6304,6 @@ set up yet, this function will block until socket setup has completed.  */)
   send_process (proc, (char *) BYTE_POS_ADDR (start_byte),
 		end_byte - start_byte, Fcurrent_buffer ());
 
-  return Qnil;
-}
-
-DEFUN ("process-send-string", Fprocess_send_string, Sprocess_send_string,
-       2, 2, 0,
-       doc: /* Send PROCESS the contents of STRING as input.
-PROCESS may be a process, a buffer, the name of a process or buffer, or
-nil, indicating the current buffer's process.
-If STRING is more than 500 characters long,
-it is sent in several bunches.  This may happen even for shorter strings.
-Output from processes can arrive in between bunches.
-
-If PROCESS is a non-blocking network process that hasn't been fully
-set up yet, this function will block until socket setup has completed.  */)
-  (Lisp_Object process, Lisp_Object string)
-{
-  CHECK_STRING (string);
-  Lisp_Object proc = get_process (process);
-  send_process (proc, SSDATA (string),
-		SBYTES (string), string);
   return Qnil;
 }
 
@@ -7856,11 +7770,9 @@ returns non-`nil'.  */);
   DEFSYM (Qinterrupt_process_functions, "interrupt-process-functions");
 
   defsubr (&Sdelete_process);
-  defsubr (&Sprocess_status);
   defsubr (&Sprocess_exit_status);
   defsubr (&Sprocess_tty_name);
   defsubr (&Sprocess_command);
-  defsubr (&Sset_process_buffer);
   defsubr (&Sprocess_mark);
   defsubr (&Sset_process_filter);
   defsubr (&Sprocess_filter);
@@ -7887,7 +7799,6 @@ returns non-`nil'.  */);
 #endif
   defsubr (&Saccept_process_output);
   defsubr (&Sprocess_send_region);
-  defsubr (&Sprocess_send_string);
   defsubr (&Sinternal_default_interrupt_process);
   defsubr (&Sinterrupt_process);
   defsubr (&Skill_process);
@@ -7941,4 +7852,10 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_inherit_coding_system_flag);
   defsubr (&Slist_system_processes);
   defsubr (&Sprocess_attributes);
+}
+
+int
+pget_raw_status_new(const struct Lisp_Process *p)
+{
+  return p->raw_status_new;
 }
