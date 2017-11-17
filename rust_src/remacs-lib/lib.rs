@@ -21,12 +21,5 @@ pub use math::rust_count_trailing_zero_bits;
 pub use docfile::scan_rust_file;
 
 #[cfg(all(not(test), target_os = "windows"))]
-extern "C" {
-    fn ___chkstk();
-}
-
-#[cfg(all(not(test), target_os = "windows"))]
 #[no_mangle]
-pub unsafe extern "C" fn __chkstk() {
-    ___chkstk();
-}
+pub unsafe extern "C" fn __chkstk() {}

@@ -23,6 +23,10 @@ pub mod libm;
 use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
            size_t, time_t, timespec};
 
+// libc prefers not to merge pid_t as an alias for c_int in Windows, so we will not use libc::pid_t
+// and alias it ourselves.
+pub type pid_t = libc::c_int;
+
 pub type Lisp_Object = EmacsInt;
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
@@ -63,6 +67,22 @@ pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 
 // Max value for the first argument of wait_reading_process_output.
 pub const WAIT_READING_MAX: i64 = std::i64::MAX;
+
+#[cfg(windows)]
+#[repr(C)]
+struct BitfieldPadding {
+    _p1: u16,
+    _p2: u16,
+    _p3: u32,
+    _p4: u32,
+}
+
+#[cfg(not(windows))]
+#[repr(C)]
+struct BitfieldPadding {
+    _p1: u16,
+    _p2: u16,
+}
 
 /// Bit pattern used in the least significant bits of a lisp object,
 /// to denote its type.
@@ -189,39 +209,16 @@ pub struct Lisp_String {
     // TODO: Use correct definition for this.
     //
     // Maybe use rust nightly unions?
-    pub intervals: *mut c_void, // @TODO implement
+    intervals: *mut c_void, // @TODO implement
     pub data: *mut c_char,
 }
 
 #[repr(C)]
 pub union SymbolUnion {
-    pub value: Lisp_Object,
+    value: Lisp_Object,
     pub alias: *mut Lisp_Symbol,
-    pub blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
-    pub fwd: *mut c_void, // @TODO implement Lisp_Fwd
-}
-
-/// Interned state of a symbol.
-#[repr(C)]
-pub enum Symbol_Interned {
-    Uninterned = 0,
-    Interned = 1,
-    InternedInInitialObarray = 2,
-}
-
-#[repr(C)]
-pub enum Symbol_Redirect {
-    PlainVal = 4,
-    VarAlias = 1,
-    Localized = 2,
-    Forwarded = 3,
-}
-
-#[repr(C)]
-pub enum Symbol_Trapped_Write {
-    UntrappedWrite = 0,
-    NoWrite = 1,
-    TrappedWrite = 2,
+    blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
+    fwd: *mut c_void, // @TODO implement Lisp_Fwd
 }
 
 /// This struct has 4 bytes of padding, representing the bitfield that
@@ -229,7 +226,7 @@ pub enum Symbol_Trapped_Write {
 /// used.
 #[repr(C)]
 pub struct Lisp_Symbol {
-    pub symbol_bitfield: u32,
+    _padding: BitfieldPadding,
     pub name: Lisp_Object,
     pub val: SymbolUnion,
     pub function: Lisp_Object,
@@ -288,7 +285,7 @@ pub struct Lisp_Bool_Vector {
 // The enum values are arbitrary, but we'll use large numbers to make it
 // more likely that we'll spot the error if a random word in memory is
 // mistakenly interpreted as a Lisp_Misc.
-#[repr(u16)]
+#[repr(C)]
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Lisp_Misc_Type {
     Free = 0x5eab,
@@ -301,19 +298,13 @@ pub enum Lisp_Misc_Type {
 // Supertype of all Misc types.
 #[repr(C)]
 pub struct Lisp_Misc_Any {
-    pub ty: Lisp_Misc_Type,
-    // This is actually a GC marker bit plus 15 bits of padding, but
-    // we don't care right now.
-    padding: u16,
+    _padding: BitfieldPadding,
 }
 
 // TODO: write a docstring based on the docs in lisp.h.
 #[repr(C)]
 pub struct Lisp_Marker {
-    pub ty: Lisp_Misc_Type,
-    // GC mark bit, 13 bits spacer, needs_adjustment flag,
-    // insertion_type flag.
-    padding: u16,
+    _padding: BitfieldPadding,
     // TODO: define a proper buffer struct.
     pub buffer: *const Lisp_Buffer,
     pub next: *const Lisp_Marker,
@@ -324,9 +315,7 @@ pub struct Lisp_Marker {
 // TODO: write a docstring based on the docs in lisp.h.
 #[repr(C)]
 pub struct Lisp_Overlay {
-    pub ty: Lisp_Misc_Type,
-    // GC mark bit, 16 bits spacer
-    padding: u16,
+    _padding: BitfieldPadding,
     pub next: *const Lisp_Overlay,
     pub start: Lisp_Object,
     pub end: Lisp_Object,
@@ -419,9 +408,9 @@ pub struct Lisp_Window {
     pub window_end_pos: ptrdiff_t,
     pub window_end_vpos: c_int,
     // XXX: in Emacs, a bitfield of 16 booleans
-    pub flags: u16,
-    pub vscroll: c_int,
-    pub window_end_bytepos: ptrdiff_t,
+    flags: u16,
+    vscroll: c_int,
+    window_end_bytepos: ptrdiff_t,
 }
 
 extern "C" {
@@ -536,13 +525,13 @@ pub struct Lisp_Buffer {
     pub bidi_paragraph_cache: *mut c_void,
 
     // XXX in C, bitfield with two bools
-    pub flags: u8,
+    flags: u8,
 
-    pub overlays_before: *mut c_void,
-    pub overlays_after: *mut c_void,
-    pub overlay_center: ptrdiff_t,
+    overlays_before: *mut c_void,
+    overlays_after: *mut c_void,
+    overlay_center: ptrdiff_t,
 
-    pub undo_list: Lisp_Object,
+    undo_list: Lisp_Object,
 }
 
 /// Represents text contents of an Emacs buffer. For documentation see
@@ -573,7 +562,7 @@ pub struct Lisp_Buffer_Text {
     pub markers: *mut Lisp_Marker,
 
     // XXX: in Emacs, a bitfield of 2 booleans
-    pub flags: u8,
+    flags: u8,
 }
 
 /// Represents a floating point value in elisp, or GC bookkeeping for
@@ -837,7 +826,7 @@ pub struct Lisp_Process {
 
 /// Functions to access members of `struct Lisp_Process`.
 extern "C" {
-    pub fn pget_pid(p: *const Lisp_Process) -> libc::pid_t;
+    pub fn pget_pid(p: *const Lisp_Process) -> pid_t;
     pub fn pget_kill_without_query(p: *const Lisp_Process) -> BoolBF;
 }
 
@@ -1176,6 +1165,12 @@ extern "C" {
     ) -> Lisp_Object;
 
     pub fn find_symbol_value(symbol: Lisp_Object) -> Lisp_Object;
+    pub fn symbol_is_interned(symbol: *const Lisp_Symbol) -> bool;
+    pub fn symbol_is_alias(symbol: *const Lisp_Symbol) -> bool;
+    pub fn symbol_is_constant(symbol: *const Lisp_Symbol) -> bool;
+    pub fn misc_get_ty(any: *const Lisp_Misc_Any) -> u16;
+    pub fn is_minibuffer(w: *const Lisp_Window) -> bool;
+    pub fn xmalloc(size: size_t) -> *mut c_void;
 
     pub fn Fmapc(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
 
@@ -1258,4 +1253,29 @@ pub mod font {
     pub const FONT_SPEC_MAX: c_int = FontPropertyIndex::FONT_OBJLIST_INDEX as c_int;
     pub const FONT_ENTITY_MAX: c_int = FontPropertyIndex::FONT_NAME_INDEX as c_int;
     pub const FONT_OBJECT_MAX: c_int = (FontPropertyIndex::FONT_FILE_INDEX as c_int) + 1;
+}
+
+#[cfg(test)]
+macro_rules! offset_of {
+    ($ty:ty, $field:ident) => {
+        unsafe { &(*(0 as *const $ty)).$field as *const _ as usize }
+    }
+}
+
+#[cfg(windows)]
+#[test]
+fn basic_size_and_align() {
+    assert!(::std::mem::size_of::<Lisp_Symbol>() == 56);
+    assert!(::std::mem::size_of::<Lisp_Marker>() == 48);
+    assert!(::std::mem::size_of::<Lisp_Overlay>() == 48);
+    assert!(::std::mem::size_of::<SymbolUnion>() == ::std::mem::size_of::<Lisp_Object>());
+    assert!(offset_of!(Lisp_Symbol, name) == 16);
+    assert!(offset_of!(Lisp_Symbol, next) == 48);
+    assert!(offset_of!(Lisp_Symbol, function) == 32);
+    assert!(offset_of!(Lisp_Marker, buffer) == 16);
+    assert!(offset_of!(Lisp_Overlay, next) == 16);
+    assert!(offset_of!(Lisp_Buffer, bidi_paragraph_cache) == 944);
+
+    assert!(::std::mem::size_of::<ptrdiff_t>() == 8);
+    assert!(::std::isize::MAX == 9223372036854775807);
 }

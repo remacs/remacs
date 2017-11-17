@@ -40,6 +40,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
+// Used by Rust.
+bool is_minibuffer(struct window *);
+
 static ptrdiff_t count_windows (struct window *);
 static ptrdiff_t get_leaf_windows (struct window *, struct window **,
 				   ptrdiff_t);
@@ -7249,6 +7252,12 @@ void
 init_window (void)
 {
   Vwindow_list = Qnil;
+}
+
+bool
+is_minibuffer(struct window *w)
+{
+  return w->mini ? true : false;
 }
 
 void

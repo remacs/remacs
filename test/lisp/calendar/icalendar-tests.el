@@ -466,6 +466,8 @@ END:VEVENT
 
 (ert-deftest icalendar--decode-isodatetime ()
   "Test `icalendar--decode-isodatetime'."
+  ;; Skip for the time being on Remacs.
+  (skip-unless (not (eq system-type 'windows-nt)))
   (let ((tz (getenv "TZ"))
 	result)
     (unwind-protect
