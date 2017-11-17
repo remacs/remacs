@@ -4452,7 +4452,6 @@ process sentinels.  They shall not disturb each other."
   ;; seconds, and we send a SIGUSR1 signal after 300 seconds.
   (with-timeout (300 (tramp--test-timeout-handler))
     (define-key special-event-map [sigusr1] 'tramp--test-timeout-handler)
-    (tramp--test-instrument-test-case (if (getenv "EMACS_HYDRA_CI") 10 0)
     (let* (;; For the watchdog.
 	   (default-directory (expand-file-name temporary-file-directory))
 	   (watchdog
@@ -4500,16 +4499,11 @@ process sentinels.  They shall not disturb each other."
                         (default-directory tmp-name)
                         (file
                          (buffer-name (nth (random (length buffers)) buffers))))
-                    (tramp--test-message
-                     "Start timer %s %s" file (current-time-string))
                     (funcall timer-operation file)
                     ;; Adjust timer if it takes too much time.
                     (when (> (- (float-time) time) timer-repeat)
                       (setq timer-repeat (* 1.5 timer-repeat))
-                      (setf (timer--repeat-delay timer) timer-repeat)
-                      (tramp--test-message "Increase timer %s" timer-repeat))
-                    (tramp--test-message
-                     "Stop timer %s %s" file (current-time-string)))))))
+                      (setf (timer--repeat-delay timer) timer-repeat)))))))
 
             ;; Create temporary buffers.  The number of buffers
             ;; corresponds to the number of processes; it could be
@@ -4556,8 +4550,6 @@ process sentinels.  They shall not disturb each other."
                        (proc (get-buffer-process buf))
                        (file (process-get proc 'foo))
                        (count (process-get proc 'bar)))
-                  (tramp--test-message
-                   "Start action %d %s %s" count buf (current-time-string))
                   ;; Regular operation prior process action.
                   (if (= count 0)
                       (should-not (file-attributes file))
@@ -4571,8 +4563,6 @@ process sentinels.  They shall not disturb each other."
                   (if (= count 2)
                       (should-not (file-attributes file))
                     (should (file-attributes file)))
-                  (tramp--test-message
-                   "Stop action %d %s %s" count buf (current-time-string))
                   (process-put proc 'bar (1+ count))
                   (unless (process-live-p proc)
                     (setq buffers (delq buf buffers))))))
@@ -4580,7 +4570,6 @@ process sentinels.  They shall not disturb each other."
             ;; Checks.  All process output shall exists in the
             ;; respective buffers.  All created files shall be
             ;; deleted.
-            (tramp--test-message "Check %s" (current-time-string))
             (dolist (buf buffers)
               (with-current-buffer buf
                 (should (string-equal (format "%s\n" buf) (buffer-string)))))
@@ -4595,7 +4584,7 @@ process sentinels.  They shall not disturb each other."
           (ignore-errors (delete-process (get-buffer-process buf)))
           (ignore-errors (kill-buffer buf)))
         (ignore-errors (cancel-timer timer))
-        (ignore-errors (delete-directory tmp-name 'recursive)))))))
+        (ignore-errors (delete-directory tmp-name 'recursive))))))
 
 (ert-deftest tramp-test42-recursive-load ()
   "Check that Tramp does not fail due to recursive load."
