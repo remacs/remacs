@@ -415,6 +415,10 @@ pub struct Lisp_Window {
 
 extern "C" {
     pub fn wget_parent(w: *const Lisp_Window) -> Lisp_Object;
+    pub fn wget_pixel_height(w: *const Lisp_Window) -> c_int;
+    pub fn wget_pseudo_window_p(w: *const Lisp_Window) -> bool;
+
+    pub fn window_parameter(w: *const Lisp_Window, parameter: Lisp_Object) -> Lisp_Object;
 }
 
 

@@ -481,6 +481,10 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 
 Lisp_Object
 wget_parent(struct window *w);
+int
+wget_pixel_height(struct window *w);
+bool
+wget_pseudo_window_p(struct window *w);
 
 /* True if W is a minibuffer window.  */
 #define MINI_WINDOW_P(W) ((W)->mini)

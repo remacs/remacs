@@ -4,10 +4,10 @@ use libc::c_int;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Window};
-use remacs_sys::{Qceiling, Qfloor};
-use remacs_sys::{fget_column_width, fget_line_height, fget_minibuffer_window, fget_root_window,
-                 is_minibuffer, minibuf_level, minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, wget_parent};
+use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
+use remacs_sys::{minibuf_level, minibuf_selected_window as current_minibuf_window,
+                 selected_window as current_window, wget_parent, wget_pixel_height,
+                 wget_pseudo_window_p, window_parameter};
 
 use editfns::point;
 use frames::{frame_live_or_selected, window_frame_live_or_selected};
@@ -21,24 +21,29 @@ impl LispWindowRef {
     /// Check if window is a live window (displays a buffer).
     /// This is also sometimes called a "leaf window" in Emacs sources.
     #[inline]
-    pub fn is_live(self) -> bool {
+    pub fn is_live(&self) -> bool {
         LispObject::from(self.contents).is_buffer()
+    }
+
+    #[inline]
+    pub fn is_pseudo(&self) -> bool {
+        unsafe { wget_pseudo_window_p(self.as_ptr()) }
     }
 
     /// A window of any sort, leaf or interior, is "valid" if its
     /// contents slot is non-nil.
     #[inline]
-    pub fn is_valid(self) -> bool {
+    pub fn is_valid(&self) -> bool {
         self.contents().is_not_nil()
     }
 
     #[inline]
-    pub fn point_marker(self) -> LispObject {
+    pub fn point_marker(&self) -> LispObject {
         LispObject::from(self.pointm)
     }
 
     #[inline]
-    pub fn contents(self) -> LispObject {
+    pub fn contents(&self) -> LispObject {
         LispObject::from(self.contents)
     }
 
@@ -48,7 +53,7 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn start_marker(self) -> LispObject {
+    pub fn start_marker(&self) -> LispObject {
         LispObject::from(self.start)
     }
 
@@ -62,6 +67,10 @@ impl LispWindowRef {
         unsafe { is_minibuffer(self.as_ptr()) }
     }
 
+    pub fn pixel_height(&self) -> i32 {
+        unsafe { wget_pixel_height(self.as_ptr()) }
+    }
+
     pub fn total_width(&self, round: LispObject) -> i32 {
         let qfloor = LispObject::from(Qfloor);
         let qceiling = LispObject::from(Qceiling);
@@ -70,7 +79,7 @@ impl LispWindowRef {
             self.total_cols
         } else {
             let frame = self.frame().as_frame_or_error();
-            let unit = unsafe { fget_column_width(frame.as_ptr()) };
+            let unit = frame.column_width();
 
             if round == qceiling {
                 (self.pixel_width + unit - 1) / unit
@@ -88,7 +97,7 @@ impl LispWindowRef {
             self.total_lines
         } else {
             let frame = self.frame().as_frame_or_error();
-            let unit = unsafe { fget_line_height(frame.as_ptr()) };
+            let unit = frame.line_height();
 
             if round == qceiling {
                 (self.pixel_height + unit - 1) / unit
@@ -96,6 +105,53 @@ impl LispWindowRef {
                 self.pixel_height / unit
             }
         }
+    }
+
+    /// True if window wants a mode line and is high enough to
+    /// accommodate it, false otherwise.
+    ///
+    /// Window wants a mode line if it's a leaf window and neither a minibuffer
+    /// nor a pseudo window.  Moreover, its 'window-mode-line-format'
+    /// parameter must not be 'none' and either that parameter or W's
+    /// buffer's 'mode-line-format' value must be non-nil.  Finally, W must
+    /// be higher than its frame's canonical character height.
+    pub fn wants_mode_line(&self) -> bool {
+        let window_mode_line_format = LispObject::from(unsafe {
+            window_parameter(self.as_ptr(), Qmode_line_format)
+        });
+
+        self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
+            && !window_mode_line_format.eq(LispObject::from(Qnone))
+            && (window_mode_line_format.is_not_nil()
+                || LispObject::from(self.contents().as_buffer_or_error().mode_line_format)
+                    .is_not_nil())
+            && self.pixel_height() > self.frame().as_frame_or_error().line_height()
+    }
+
+    /// True if window wants a header line and is high enough to
+    /// accommodate it, false otherwise.
+    ///
+    /// Window wants a header line if it's a leaf window and neither a minibuffer
+    /// nor a pseudo window.  Moreover, its 'window-mode-line-format'
+    /// parameter must not be 'none' and either that parameter or window's
+    /// buffer's 'mode-line-format' value must be non-nil.  Finally, window must
+    /// be higher than its frame's canonical character height and be able to
+    /// accommodate a mode line too if necessary (the mode line prevails).
+    pub fn wants_header_line(&self) -> bool {
+        let window_header_line_format = LispObject::from(unsafe {
+            window_parameter(self.as_ptr(), Qheader_line_format)
+        });
+
+        let mut height = self.frame().as_frame_or_error().line_height();
+        if self.wants_mode_line() {
+            height *= 2;
+        }
+
+        self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
+            && !window_header_line_format.eq(LispObject::from(Qnone))
+            && (window_header_line_format.is_not_nil()
+                || LispObject::from(self.contents().as_buffer_or_error().header_line_format)
+                    .is_not_nil()) && self.pixel_height() > height
     }
 }
 
@@ -364,7 +420,7 @@ pub fn window_frame(window: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
     let frame = window_frame_live_or_selected(frame_or_window);
-    LispObject::from(unsafe { fget_root_window(frame.as_ptr()) })
+    frame.root_window()
 }
 
 /// Return the minibuffer window for frame FRAME.
@@ -372,7 +428,17 @@ pub fn frame_root_window(frame_or_window: LispObject) -> LispObject {
 #[lisp_fn(min = "0")]
 pub fn minibuffer_window(frame: LispObject) -> LispObject {
     let frame = frame_live_or_selected(frame);
-    LispObject::from(unsafe { fget_minibuffer_window(frame.as_ptr()) })
+    frame.minibuffer_window()
+}
+
+#[no_mangle]
+pub fn window_wants_mode_line(window: LispWindowRef) -> bool {
+    window.wants_mode_line()
+}
+
+#[no_mangle]
+pub fn window_wants_header_line(window: LispWindowRef) -> bool {
+    window.wants_header_line()
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

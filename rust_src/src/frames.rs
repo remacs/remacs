@@ -2,8 +2,9 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
+use remacs_sys::{fget_column_width, fget_line_height, fget_minibuffer_window, fget_root_window,
+                 fget_terminal};
 use remacs_sys::Qframe_live_p;
-use remacs_sys::fget_terminal;
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -14,6 +15,26 @@ impl LispFrameRef {
     #[inline]
     pub fn is_live(&self) -> bool {
         unsafe { !fget_terminal(self.as_ptr()).is_null() }
+    }
+
+    #[inline]
+    pub fn column_width(&self) -> i32 {
+        unsafe { fget_column_width(self.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn line_height(&self) -> i32 {
+        unsafe { fget_line_height(self.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn minibuffer_window(&self) -> LispObject {
+        LispObject::from(unsafe { fget_minibuffer_window(self.as_ptr()) })
+    }
+
+    #[inline]
+    pub fn root_window(&self) -> LispObject {
+        LispObject::from(unsafe { fget_root_window(self.as_ptr()) })
     }
 }
 
