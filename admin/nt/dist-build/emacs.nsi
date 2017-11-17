@@ -16,6 +16,7 @@ Var StartMenuFolder
 
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${ARCH}\share\emacs\${EMACS_VERSION}\etc\images\splash.bmp"
 !define MUI_ICON "${ARCH}\share\emacs\${EMACS_VERSION}\etc\images\icons\hicolor\scalable\apps\emacs.ico"
+!define MUI_UNICON "${ARCH}\share\emacs\${EMACS_VERSION}\etc\images\icons\hicolor\scalable\apps\emacs.ico"
 
 !insertmacro MUI_PAGE_WELCOME
 
@@ -49,7 +50,6 @@ function .onInit
     ${Endif}
   ${EndIf}
 
-  MessageBox MB_OK "Installdir is $INSTDIR"
 functionend
 
 
