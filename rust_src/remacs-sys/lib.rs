@@ -1030,6 +1030,7 @@ extern "C" {
         multibyte: bool,
     ) -> Lisp_Object;
     pub fn string_to_multibyte(string: Lisp_Object) -> Lisp_Object;
+    pub fn initial_define_key(keymap: Lisp_Object, key: c_int, defname: *const c_char);
 
     pub fn preferred_coding_system() -> Lisp_Object;
     pub fn Fcoding_system_p(o: Lisp_Object) -> Lisp_Object;

@@ -82,6 +82,11 @@ use alloc_unexecmacosx::OsxUnexecAlloc;
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
+#[no_mangle]
+pub extern "C" fn rust_initial_keys() {
+    cmds::initial_keys();
+}
+
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
