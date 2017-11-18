@@ -868,7 +868,7 @@ This writes out the vector version of this object.  Complex and recursive
 object are discouraged from being written.
   If optional COMMENT is non-nil, include comments when outputting
 this object."
-  (when eieio-print-object-name
+  (when (and comment eieio-print-object-name)
     (princ ";; Object ")
     (princ (eieio-object-name-string this))
     (princ "\n"))
@@ -887,8 +887,8 @@ this object."
     (princ (symbol-name (eieio--class-constructor (eieio-object-class this))))
     (when eieio-print-object-name
       (princ " ")
-      (prin1 (eieio-object-name-string this)))
-    (princ "\n")
+      (prin1 (eieio-object-name-string this))
+      (princ "\n"))
     ;; Loop over all the public slots
     (let ((slots (eieio--class-slots cv))
 	  (eieio-print-depth (1+ eieio-print-depth)))
