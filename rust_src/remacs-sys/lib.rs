@@ -45,6 +45,10 @@ pub type Lisp_Vectorlike_Header = vectorlike_header;
 
 pub const VALBITS: Lisp_Bits = Lisp_Bits_VALBITS;
 pub const INTTYPEBITS: Lisp_Bits = Lisp_Bits_INTTYPEBITS;
+pub const FIXNUM_BITS: Lisp_Bits = Lisp_Bits_FIXNUM_BITS;
+pub const VAL_MAX: EmacsInt = (EMACS_INT_MAX >> (GCTYPEBITS - 1));
+pub const VALMASK: EmacsInt = [VAL_MAX, -(1 << GCTYPEBITS)][USE_LSB_TAG as usize];
+pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (INTTYPEBITS - 1));
 
 // These signal an error, therefore are marked as non-returning.
 extern "C" {
@@ -75,7 +79,6 @@ pub enum EqualKind {
 }
 
 // bindgen apparently misses these, for various reasons
-pub const INTMASK: EmacsInt = (EMACS_INT_MAX >> (Lisp_Bits_INTTYPEBITS as u32 - 1));
 extern "C" {
     // these weren't declared in a header, for example
     pub static Vprocess_alist: Lisp_Object;

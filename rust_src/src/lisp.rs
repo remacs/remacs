@@ -115,7 +115,7 @@ impl LispObject {
     pub fn get_type(self) -> Lisp_Type {
         let raw = self.to_raw() as EmacsUint;
         let res = (if USE_LSB_TAG {
-            raw & (!unsafe { VALMASK } as EmacsUint)
+            raw & (!VALMASK as EmacsUint)
         } else {
             raw >> VALBITS
         }) as u32;
@@ -139,7 +139,7 @@ impl LispObject {
 
     #[inline]
     pub fn get_untaggedptr(self) -> *mut c_void {
-        (self.to_raw() & unsafe { VALMASK }) as intptr_t as *mut c_void
+        (self.to_raw() & VALMASK) as intptr_t as *mut c_void
     }
 }
 

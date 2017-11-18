@@ -138,6 +138,7 @@ fn run_bindgen() {
         .clang_arg("-Demacs")
         .header("wrapper.h")
         .blacklist_type("USE_LSB_TAG")
+        .blacklist_type("VALMASK")
         // this is wallpaper for a bug in bindgen, we don't lose anything by it
         // https://github.com/servo/rust-bindgen/issues/687
         .blacklist_type("BOOL_VECTOR_BITS_PER_CHAR")
