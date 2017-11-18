@@ -22,6 +22,8 @@ use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_l
                  Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
                  Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
+#[cfg(test)]
+use remacs_sys::Lisp_Float__bindgen_ty_1;
 
 use remacs_sys::{internal_equal, lispsym, make_float};
 
@@ -1193,7 +1195,9 @@ fn test_basic_float() {
         .return_result_of(move || {
             // Fake an allocated float by just putting it on the heap and leaking it.
             let boxed = Box::new(Lisp_Float {
-                data: unsafe { mem::transmute(val) },
+                u: Lisp_Float__bindgen_ty_1 {
+                    data: unsafe { mem::transmute(val) },
+                },
             });
             let raw = ExternalPtr::new(Box::into_raw(boxed));
             LispObject::tag_ptr(raw, Lisp_Type::Lisp_Float).to_raw()
