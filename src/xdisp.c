@@ -11510,6 +11510,9 @@ echo_area_display (bool update_frame_p)
   struct frame *sf = SELECTED_FRAME ();
 
   mini_window = FRAME_MINIBUF_WINDOW (sf);
+  if (NILP (mini_window))
+    return;
+
   w = XWINDOW (mini_window);
   f = XFRAME (WINDOW_FRAME (w));
 
