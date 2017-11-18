@@ -1,6 +1,9 @@
 #include "config.h"
-#include "conf_post.h"
 #include "limits.h"
+
+#undef HAVE_X_WINDOWS
+#undef HAVE_X11
+#undef HAVE_WINDOW_SYSTEM
 
 // we want bindgen to include bindings for the same set of functions
 // on all platforms. We must thus take care that functions which are
@@ -65,8 +68,10 @@
 #include "thread.h"
 #include "tparam.h"
 #include "unexec.h"
-#include "widget.h"
-#include "widgetprv.h"
+#ifdef HAVE_X_WINDOWS
+# include "widget.h"
+# include "widgetprv.h"
+# include "xsettings.h"
+#endif
 #include "window.h"
 #include "xgselect.h"
-#include "xsettings.h"
