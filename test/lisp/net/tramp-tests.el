@@ -2671,7 +2671,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should-error
 	     (make-symbolic-link tmp-name1 tmp-name2)
 	     :type 'file-already-exists)
-	    ;; number means interactive case.
+	    ;; A number means interactive case.
 	    (cl-letf (((symbol-function 'yes-or-no-p) 'ignore))
 	      (should-error
 	       (make-symbolic-link tmp-name1 tmp-name2 0)
@@ -2778,6 +2778,15 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should (file-exists-p tmp-name1))
 	    (should (string-equal tmp-name1 (file-truename tmp-name1)))
 	    (make-symbolic-link tmp-name1 tmp-name2)
+	    (should (file-symlink-p tmp-name2))
+	    (should-not (string-equal tmp-name2 (file-truename tmp-name2)))
+	    (should
+	     (string-equal (file-truename tmp-name1) (file-truename tmp-name2)))
+	    (should (file-equal-p tmp-name1 tmp-name2))
+	    ;; Check relative symlink file name.
+	    (delete-file tmp-name2)
+	    (let ((default-directory tramp-test-temporary-file-directory))
+	      (make-symbolic-link (file-name-nondirectory tmp-name1) tmp-name2))
 	    (should (file-symlink-p tmp-name2))
 	    (should-not (string-equal tmp-name2 (file-truename tmp-name2)))
 	    (should
