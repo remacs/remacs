@@ -85,4 +85,4 @@ static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
-pub use functions::{Fcons, Fsignal, lispsym, make_string, make_unibyte_string};
+pub use functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};

@@ -19,7 +19,7 @@ pub static mut lispsym: Lisp_Object = 0;
 extern "C" {
     pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
-    pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) ;
+    pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object);
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
@@ -66,16 +66,11 @@ extern "C" {
         ifrom: &mut ptrdiff_t,
         ito: &mut ptrdiff_t,
     );
-    pub fn string_char_to_byte(string: Lisp_Object, char_index: ptrdiff_t)
-        -> ptrdiff_t;
+    pub fn string_char_to_byte(string: Lisp_Object, char_index: ptrdiff_t) -> ptrdiff_t;
 
     pub fn record_unwind_current_buffer();
     pub fn set_buffer_internal(buffer: *mut Lisp_Buffer);
-    pub fn make_buffer_string(
-        start: ptrdiff_t,
-        end: ptrdiff_t,
-        props: bool,
-    ) -> Lisp_Object;
+    pub fn make_buffer_string(start: ptrdiff_t, end: ptrdiff_t, props: bool) -> Lisp_Object;
 
     pub fn check_obarray(obarray: Lisp_Object) -> Lisp_Object;
     pub fn check_vobarray() -> Lisp_Object;
@@ -101,9 +96,9 @@ extern "C" {
     ) -> bool;
 
     // These signal an error, therefore are marked as non-returning.
-    pub fn nsberror(spec: Lisp_Object) ;
+    pub fn nsberror(spec: Lisp_Object);
 
-    pub fn emacs_abort() ;
+    pub fn emacs_abort();
 
     pub fn base64_encode_1(
         from: *const c_char,
@@ -234,7 +229,7 @@ extern "C" {
 
 macro_rules! mock_float {
     () => { mock_float!(0.0) };
-    
+
     ($f: expr) => {{
         // Fake an allocated float by just putting it on the heap and leaking it.
         let boxed = Box::new(::remacs_sys::Lisp_Float {
@@ -286,4 +281,3 @@ macro_rules! assert_t {
 macro_rules! assert_nil {
     ($arg: expr) => {{ assert!($arg == ::lisp::LispObject::constant_nil()); }};
 }
-

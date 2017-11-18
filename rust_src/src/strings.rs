@@ -146,7 +146,7 @@ include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
 fn test_multibyte_stringp() {
     let string = mock_unibyte_string!();
     assert_nil!(multibyte_string_p(string));
-    
+
     let flt = mock_float!();
     assert_nil!(multibyte_string_p(flt));
 
