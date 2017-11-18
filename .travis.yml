@@ -34,7 +34,7 @@ jobs:
         - CARGO_FLAGS="--features 'strict'"
       os: linux
       before_script:
-        - sudo apt install -y texinfo libgif-dev libxpm-dev
+        - sudo apt install -y texinfo libgif-dev libxpm-dev libxt-dev
         - travis_wait rustup install $(cat rust_src/rust-toolchain)
         - rustup default $(cat rust_src/rust-toolchain)
       script:
