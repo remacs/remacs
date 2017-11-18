@@ -649,9 +649,10 @@ that subcommand."
           "\"\\(\\(.*?\\(\\\\\"\\)?\\)+?\\)\"\\|\\([^ ]+\\)"
           "\\) \\([0-9]+\\) \\([0-9]+\\) *\\([0-9]*\\)"))
 
-(defsubst erc-dcc-unquote-filename (filename)
-  (erc-replace-regexp-in-string "\\\\\\\\" "\\"
-                                (erc-replace-regexp-in-string "\\\\\"" "\"" filename t t) t t))
+(define-inline erc-dcc-unquote-filename (filename)
+  (inline-quote
+   (erc-replace-regexp-in-string "\\\\\\\\" "\\"
+                                 (erc-replace-regexp-in-string "\\\\\"" "\"" ,filename t t) t t)))
 
 (defun erc-dcc-handle-ctcp-send (proc query nick login host to)
   "This is called if a CTCP DCC SEND subcommand is sent to the client.
@@ -780,8 +781,8 @@ unconfirmed."
   :group 'erc-dcc
   :type '(choice (const nil) integer))
 
-(defsubst erc-dcc-get-parent (proc)
-  (plist-get (erc-dcc-member :peer proc) :parent))
+(define-inline erc-dcc-get-parent (proc)
+  (inline-quote (plist-get (erc-dcc-member :peer ,proc) :parent)))
 
 (defun erc-dcc-send-block (proc)
   "Send one block of data.

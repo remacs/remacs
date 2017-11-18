@@ -312,26 +312,26 @@ The last two elements are optional."
 			 (const :tag "Do not try to detect success" nil)))))
 
 
-(defsubst erc-nickserv-alist-sender (network &optional entry)
-  (nth 1 (or entry (assoc network erc-nickserv-alist))))
+(define-inline erc-nickserv-alist-sender (network &optional entry)
+  (inline-quote (nth 1 (or ,entry (assoc ,network erc-nickserv-alist)))))
 
-(defsubst erc-nickserv-alist-regexp (network &optional entry)
-  (nth 2 (or entry (assoc network erc-nickserv-alist))))
+(define-inline erc-nickserv-alist-regexp (network &optional entry)
+  (inline-quote (nth 2 (or ,entry (assoc ,network erc-nickserv-alist)))))
 
-(defsubst erc-nickserv-alist-nickserv (network &optional entry)
-  (nth 3 (or entry (assoc network erc-nickserv-alist))))
+(define-inline erc-nickserv-alist-nickserv (network &optional entry)
+  (inline-quote (nth 3 (or ,entry (assoc ,network erc-nickserv-alist)))))
 
-(defsubst erc-nickserv-alist-ident-keyword (network &optional entry)
-  (nth 4 (or entry (assoc network erc-nickserv-alist))))
+(define-inline erc-nickserv-alist-ident-keyword (network &optional entry)
+  (inline-quote (nth 4 (or ,entry (assoc ,network erc-nickserv-alist)))))
 
-(defsubst erc-nickserv-alist-use-nick-p (network &optional entry)
-  (nth 5 (or entry (assoc network erc-nickserv-alist))))
+(define-inline erc-nickserv-alist-use-nick-p (network &optional entry)
+  (inline-quote (nth 5 (or ,entry (assoc ,network erc-nickserv-alist)))))
 
-(defsubst erc-nickserv-alist-ident-command (network &optional entry)
-  (nth 6 (or entry (assoc network erc-nickserv-alist))))
+(define-inline erc-nickserv-alist-ident-command (network &optional entry)
+  (inline-quote (nth 6 (or ,entry (assoc ,network erc-nickserv-alist)))))
 
-(defsubst erc-nickserv-alist-identified-regexp (network &optional entry)
-  (nth 7 (or entry (assoc network erc-nickserv-alist))))
+(define-inline erc-nickserv-alist-identified-regexp (network &optional entry)
+  (inline-quote (nth 7 (or ,entry (assoc ,network erc-nickserv-alist)))))
 
 ;; Functions:
 

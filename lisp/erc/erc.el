@@ -399,25 +399,26 @@ If no server buffer exists, return nil."
   ;; This is useful for ordered name completion.
   (last-message-time nil))
 
-(defsubst erc-get-channel-user (nick)
+(define-inline erc-get-channel-user (nick)
   "Find the (USER . CHANNEL-DATA) element corresponding to NICK
 in the current buffer's `erc-channel-users' hash table."
-  (gethash (erc-downcase nick) erc-channel-users))
+  (inline-quote (gethash (erc-downcase ,nick) erc-channel-users)))
 
-(defsubst erc-get-server-user (nick)
+(define-inline erc-get-server-user (nick)
   "Find the USER corresponding to NICK in the current server's
 `erc-server-users' hash table."
-  (erc-with-server-buffer
-    (gethash (erc-downcase nick) erc-server-users)))
+  (inline-quote (erc-with-server-buffer
+		  (gethash (erc-downcase ,nick) erc-server-users))))
 
-(defsubst erc-add-server-user (nick user)
+(define-inline erc-add-server-user (nick user)
   "This function is for internal use only.
 
 Adds USER with nickname NICK to the `erc-server-users' hash table."
-  (erc-with-server-buffer
-    (puthash (erc-downcase nick) user erc-server-users)))
+  (inline-quote
+   (erc-with-server-buffer
+     (puthash (erc-downcase ,nick) ,user erc-server-users))))
 
-(defsubst erc-remove-server-user (nick)
+(define-inline erc-remove-server-user (nick)
   "This function is for internal use only.
 
 Removes the user with nickname NICK from the `erc-server-users'
@@ -425,8 +426,9 @@ hash table.  This user is not removed from the
 `erc-channel-users' lists of other buffers.
 
 See also: `erc-remove-user'."
-  (erc-with-server-buffer
-    (remhash (erc-downcase nick) erc-server-users)))
+  (inline-quote
+   (erc-with-server-buffer
+     (remhash (erc-downcase ,nick) erc-server-users))))
 
 (defun erc-change-user-nickname (user new-nick)
   "This function is for internal use only.
@@ -497,45 +499,55 @@ Removes all users in the current channel.  This is called by
              erc-channel-users)
     (clrhash erc-channel-users)))
 
-(defsubst erc-channel-user-owner-p (nick)
+(define-inline erc-channel-user-owner-p (nick)
   "Return non-nil if NICK is an owner of the current channel."
-  (and nick
-       (hash-table-p erc-channel-users)
-       (let ((cdata (erc-get-channel-user nick)))
-         (and cdata (cdr cdata)
-              (erc-channel-user-owner (cdr cdata))))))
+  (inline-letevals (nick)
+    (inline-quote
+     (and ,nick
+	  (hash-table-p erc-channel-users)
+	  (let ((cdata (erc-get-channel-user ,nick)))
+	    (and cdata (cdr cdata)
+		 (erc-channel-user-owner (cdr cdata))))))))
 
-(defsubst erc-channel-user-admin-p (nick)
+(define-inline erc-channel-user-admin-p (nick)
   "Return non-nil if NICK is an admin in the current channel."
-  (and nick
+  (inline-letevals (nick)
+    (inline-quote
+     (and ,nick
        (hash-table-p erc-channel-users)
-       (let ((cdata (erc-get-channel-user nick)))
+       (let ((cdata (erc-get-channel-user ,nick)))
          (and cdata (cdr cdata)
-              (erc-channel-user-admin (cdr cdata))))))
+              (erc-channel-user-admin (cdr cdata))))))))
 
-(defsubst erc-channel-user-op-p (nick)
+(define-inline erc-channel-user-op-p (nick)
   "Return non-nil if NICK is an operator in the current channel."
-  (and nick
+  (inline-letevals (nick)
+    (inline-quote
+     (and ,nick
        (hash-table-p erc-channel-users)
-       (let ((cdata (erc-get-channel-user nick)))
+       (let ((cdata (erc-get-channel-user ,nick)))
          (and cdata (cdr cdata)
-              (erc-channel-user-op (cdr cdata))))))
+              (erc-channel-user-op (cdr cdata))))))))
 
-(defsubst erc-channel-user-halfop-p (nick)
+(define-inline erc-channel-user-halfop-p (nick)
   "Return non-nil if NICK is a half-operator in the current channel."
-  (and nick
+  (inline-letevals (nick)
+    (inline-quote
+     (and ,nick
        (hash-table-p erc-channel-users)
-       (let ((cdata (erc-get-channel-user nick)))
+       (let ((cdata (erc-get-channel-user ,nick)))
          (and cdata (cdr cdata)
-              (erc-channel-user-halfop (cdr cdata))))))
+              (erc-channel-user-halfop (cdr cdata))))))))
 
-(defsubst erc-channel-user-voice-p (nick)
+(define-inline erc-channel-user-voice-p (nick)
   "Return non-nil if NICK has voice in the current channel."
-  (and nick
+  (inline-letevals (nick)
+    (inline-quote
+     (and ,nick
        (hash-table-p erc-channel-users)
-       (let ((cdata (erc-get-channel-user nick)))
+       (let ((cdata (erc-get-channel-user ,nick)))
          (and cdata (cdr cdata)
-              (erc-channel-user-voice (cdr cdata))))))
+              (erc-channel-user-voice (cdr cdata))))))))
 
 (defun erc-get-channel-user-list ()
   "Return a list of users in the current channel.  Each element
@@ -1343,10 +1355,11 @@ capabilities."
     (add-hook hook fun nil t)
     fun))
 
-(defsubst erc-log (string)
+(define-inline erc-log (string)
   "Logs STRING if logging is on (see `erc-log-p')."
-  (when erc-log-p
-    (erc-log-aux string)))
+  (inline-quote
+   (when erc-log-p
+     (erc-log-aux ,string))))
 
 (defun erc-server-buffer ()
   "Return the server buffer for the current buffer's process.
