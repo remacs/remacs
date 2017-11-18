@@ -85,7 +85,7 @@ pub fn marker_buffer(marker: LispObject) -> LispObject {
 
 /// Set PT from MARKER's clipped position.
 pub fn set_point_from_marker(marker: LispMarkerRef) {
-    let cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer();
     let charpos = clip_to_bounds(
         cur_buf.begv,
         marker.charpos_or_error() as EmacsInt,
@@ -95,7 +95,7 @@ pub fn set_point_from_marker(marker: LispMarkerRef) {
     // Don't trust the byte position if the marker belongs to a
     // different buffer.
     if marker.buffer().map_or(false, |b| b != cur_buf) {
-        bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), charpos) };
+        bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), charpos) };
     } else {
         bytepos = clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
     };

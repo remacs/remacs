@@ -21,7 +21,10 @@ fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
     feature.as_symbol_or_error();
     let mut tem = memq(feature, LispObject::from(unsafe { globals.f_Vfeatures }));
     if tem.is_not_nil() && subfeature.is_not_nil() {
-        tem = member(subfeature, get(feature, LispObject::from(Qsubfeatures)));
+        tem = member(
+            subfeature,
+            get(feature, LispObject::from(unsafe { Qsubfeatures })),
+        );
     }
     if tem.is_nil() {
         LispObject::constant_nil()
@@ -53,7 +56,11 @@ fn provide(feature: LispObject, subfeature: LispObject) -> LispObject {
         }
     }
     if subfeature.is_not_nil() {
-        put(feature, LispObject::from(Qsubfeatures), subfeature);
+        put(
+            feature,
+            LispObject::from(unsafe { Qsubfeatures }),
+            subfeature,
+        );
     }
     unsafe {
         globals.f_Vcurrent_load_list = Fcons(

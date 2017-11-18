@@ -69,6 +69,10 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         function::LispFnType::Normal(_) => quote! { #max_args },
         function::LispFnType::Many => quote! { ::lisp::MANY  },
     };
+    let max_args_ident = match function.fntype {
+        function::LispFnType::Normal(n) => quote::Ident::from(format!("a{}", n)),
+        function::LispFnType::Many => quote::Ident::from("aMANY"),
+    };
     let symbol_name = CByteLiteral(&lisp_fn_args.name);
 
     if cfg!(windows) {
@@ -91,15 +95,17 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
             pub static ref #sname: ::lisp::LispSubrRef = {
                 let subr = ::remacs_sys::Lisp_Subr {
                     header: ::remacs_sys::Lisp_Vectorlike_Header {
-                        size: ((::remacs_sys::PseudovecType::PVEC_SUBR as ::libc::ptrdiff_t)
-                               << ::remacs_sys::PSEUDOVECTOR_AREA_BITS) #windows_header,
+                        size: ((::remacs_sys::pvec_type::PVEC_SUBR as isize)
+                            << ::remacs_sys::PSEUDOVECTOR_AREA_BITS) #windows_header,
                     },
-                    function: self::#fname as *const ::libc::c_void,
+                    function: ::remacs_sys::Lisp_Subr__bindgen_ty_1 {
+                        #max_args_ident: Some(self::#fname)
+                    },
                     min_args: #min_args,
                     max_args: #max_args,
                     symbol_name: (#symbol_name).as_ptr() as *const ::libc::c_char,
                     intspec: #intspec,
-                    doc: ::std::ptr::null(),
+                    doc: 0 as ::remacs_sys::EMACS_INT
                 };
 
                 unsafe {

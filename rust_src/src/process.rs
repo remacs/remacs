@@ -5,7 +5,7 @@ use remacs_sys::{BoolBF, EmacsInt, Lisp_Process, QCbuffer, Qcdr, Qclosed, Qexit,
                  Qopen, Qpipe, Qrun, Qserial, Qstop, Vprocess_alist};
 use remacs_sys::{get_process as cget_process, pget_kill_without_query, pget_pid,
                  pget_raw_status_new, pset_kill_without_query, send_process,
-                 setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
+                 setup_process_coding_systems, update_status, Fmapcar};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -155,25 +155,26 @@ pub fn process_status(process: LispObject) -> LispObject {
     if p.is_nil() {
         return p;
     }
-    let p_ref = p.as_process_or_error();
+    let mut p_ref = p.as_process_or_error();
     if unsafe { pget_raw_status_new(p_ref.as_ptr()) } != 0 {
-        unsafe { update_status(p_ref.as_ptr()) };
+        unsafe { update_status(p_ref.as_mut()) };
     }
     let mut status = LispObject::from(p_ref.status);
     if let Some(c) = status.as_cons() {
         status = LispObject::from(c.car());
     };
-    let process_type = LispObject::from(p_ref.process_type);
-    if process_type.eq(LispObject::from(Qnetwork)) || process_type.eq(LispObject::from(Qserial))
-        || process_type.eq(LispObject::from(Qpipe))
+    let process_type = LispObject::from(p_ref.type_);
+    if process_type.eq(LispObject::from(unsafe { Qnetwork }))
+        || process_type.eq(LispObject::from(unsafe { Qserial }))
+        || process_type.eq(LispObject::from(unsafe { Qpipe }))
     {
         let process_command = LispObject::from(p_ref.command);
-        if status.eq(LispObject::from(Qexit)) {
-            status = LispObject::from(Qclosed);
+        if status.eq(LispObject::from(unsafe { Qexit })) {
+            status = LispObject::from(unsafe { Qclosed });
         } else if process_command.eq(LispObject::constant_t()) {
-            status = LispObject::from(Qstop);
-        } else if status.eq(LispObject::from(Qrun)) {
-            status = LispObject::from(Qopen);
+            status = LispObject::from(unsafe { Qstop });
+        } else if status.eq(LispObject::from(unsafe { Qrun })) {
+            status = LispObject::from(unsafe { Qopen });
         }
     }
     status
@@ -188,14 +189,15 @@ fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject {
         buffer.as_buffer_or_error();
     }
     p_ref.set_buffer(buffer);
-    let process_type = LispObject::from(p_ref.process_type);
-    if process_type.eq(LispObject::from(Qnetwork)) || process_type.eq(LispObject::from(Qserial))
-        || process_type.eq(LispObject::from(Qpipe))
+    let process_type = LispObject::from(p_ref.type_);
+    if process_type.eq(LispObject::from(unsafe { Qnetwork }))
+        || process_type.eq(LispObject::from(unsafe { Qserial }))
+        || process_type.eq(LispObject::from(unsafe { Qpipe }))
     {
         let childp = LispObject::from(p_ref.childp);
         p_ref.set_childp(plist_put(
             LispObject::from(childp),
-            LispObject::from(QCbuffer),
+            LispObject::from(unsafe { QCbuffer }),
             buffer,
         ));
     }
@@ -218,8 +220,8 @@ fn process_send_string(process: LispObject, string: LispObject) -> LispObject {
     unsafe {
         send_process(
             cget_process(process.to_raw()),
-            s.data,
-            STRING_BYTES(s.as_ptr()),
+            s.data as *mut ::libc::c_char,
+            s.len_bytes(),
             string.to_raw(),
         )
     };
