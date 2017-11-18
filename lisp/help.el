@@ -728,11 +728,17 @@ with `mouse-movement' events."
 Describe the following key, mouse click, or menu item: "))
                 ((and (pred vectorp) (let `(,key0 . ,_) (aref key 0))
                       (guard (symbolp key0)) (let keyname (symbol-name key0)))
-                 (if no-mouse-movement
-                     (string-match "mouse-movement" keyname)
-                   (and (string-match "\\(mouse\\|down\\|click\\|drag\\)"
-                                      keyname)
-                        (not (sit-for (/ double-click-time 1000.0) t)))))))
+                 (or
+                  (and no-mouse-movement
+                       (string-match "mouse-movement" keyname))
+                  (and (string-match "\\(mouse\\|down\\|click\\|drag\\)"
+                                     keyname)
+                       (progn
+                         ;; Discard events (e.g. <help-echo>) which might
+                         ;; spuriously trigger the `sit-for'.
+                         (sleep-for 0.01)
+                         (while (read-event nil nil 0.01))
+                         (not (sit-for (/ double-click-time 1000.0) t))))))))
           (list
            key
            ;; If KEY is a down-event, read and include the
