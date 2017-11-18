@@ -130,12 +130,15 @@ extern crate bindgen;
 extern crate regex;
 
 fn run_bindgen() {
-    let builder = bindgen::Builder::default()
+    let mut builder = bindgen::Builder::default()
         .rust_target(bindgen::RustTarget::Nightly)
         .generate_comments(true)
         .clang_arg("-I../../src")
-        .clang_arg("-I../../lib")
-        .clang_arg("-Demacs")
+        .clang_arg("-I../../lib");
+    if cfg!(target_os = "windows") {
+        builder = builder.clang_arg("-I../../nt/inc");
+    }
+    builder = builder.clang_arg("-Demacs")
         .header("wrapper.h")
         .blacklist_type("USE_LSB_TAG")
         .blacklist_type("VALMASK")
