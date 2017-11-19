@@ -335,35 +335,35 @@ fn arithcompare_driver(args: &[LispObject], comparison: ArithComparison) -> Lisp
 }
 
 /// Return t if args, all numbers or markers, are equal.
-/// usage: (= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
+/// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "=", min = "1")]
 fn eqlsign(args: &mut [LispObject]) -> LispObject {
     arithcompare_driver(args, ArithComparison::Equal)
 }
 
 /// Return t if each arg (a number or marker), is less than the next arg.
-/// usage: (< NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
+/// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "<", min = "1")]
 fn lss(args: &mut [LispObject]) -> LispObject {
     arithcompare_driver(args, ArithComparison::Less)
 }
 
 /// Return t if each arg (a number or marker) is greater than the next arg.
-/// usage: (> NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
+/// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = ">", min = "1")]
 fn gtr(args: &mut [LispObject]) -> LispObject {
     arithcompare_driver(args, ArithComparison::Grtr)
 }
 
 /// Return t if each arg (a number or marker) is less than or equal to the next.
-/// usage: (<= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
+/// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "<=", min = "1")]
 fn leq(args: &mut [LispObject]) -> LispObject {
     arithcompare_driver(args, ArithComparison::LessOrEqual)
 }
 
 /// Return t if each arg (a number or marker) is greater than or equal to the next.
-/// usage: (>= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
+/// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = ">=", min = "1")]
 fn geq(args: &mut [LispObject]) -> LispObject {
     arithcompare_driver(args, ArithComparison::GrtrOrEqual)
