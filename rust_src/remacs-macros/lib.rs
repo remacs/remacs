@@ -5,20 +5,76 @@ extern crate proc_macro;
 #[macro_use]
 extern crate quote;
 extern crate syn;
-#[macro_use]
-extern crate synom;
+extern crate darling;
 
+use darling::FromMetaItem;
 use proc_macro::TokenStream;
 use std::str::FromStr;
 
-mod lisp_attr;
 mod function;
+use function::Function;
+
+/// Arguments of the lisp_fn attribute.
+#[derive(FromMetaItem, Default)]
+struct LispFnArgsRaw {
+    /// Desired Lisp name of the function.
+    /// If not given, derived as the Rust name with "_" -> "-".
+    #[darling(default)]
+    name: Option<String>,
+    /// Desired C name of the related statics (with F and S appended).
+    /// If not given, same as the Rust name.
+    #[darling(default)]
+    c_name: Option<String>,
+    /// Minimum number of required arguments.
+    /// If not given, all arguments are required for normal functions,
+    /// and no arguments are required for MANY functions.
+    #[darling(default)]
+    min: Option<String>,
+    /// The interactive specification. This may be a normal prompt
+    /// string, such as `"bBuffer: "` or an elisp form as a string.
+    /// If the function is not interactive, this should be None.
+    #[darling(default)]
+    intspec: Option<String>,
+}
+
+impl LispFnArgsRaw {
+    fn convert(self, function: &Function) -> Result<LispFnArgs, String> {
+        Ok(LispFnArgs {
+            name: self.name.unwrap_or_else(|| function.name.to_string().replace("_", "-")),
+            c_name: self.c_name.unwrap_or_else(|| function.name.to_string()),
+            min: if let Some(s) = self.min {
+                s.parse().unwrap()
+            } else {
+                function.fntype.def_min_args()
+            },
+            intspec: self.intspec,
+        })
+    }
+}
+
+struct LispFnArgs {
+    name: String,
+    c_name: String,
+    min: i16,
+    intspec: Option<String>,
+}
 
 #[proc_macro_attribute]
 pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let fn_item = syn::parse_item(&fn_ts.to_string()).unwrap();
     let function = function::parse(&fn_item).unwrap();
-    let lisp_fn_args = lisp_attr::parse(&attr_ts.to_string(), &function).unwrap();
+    let lisp_fn_args = if attr_ts.is_empty() {
+        LispFnArgsRaw::default().convert(&function).unwrap()
+    } else {
+        let s = format!("#[lisp_fn{}]", attr_ts);
+        let parsed = syn::parse_outer_attr(&s)
+            .and_then(|v| LispFnArgsRaw::from_meta_item(&v.value).map_err(|e| e.to_string()))
+            .and_then(|v| v.convert(&function));
+        match parsed {
+            Ok(v) => v,
+            Err(e) => panic!("Invalid lisp_fn attribute ({}): {}", s, e),
+        }
+    };
 
     let mut cargs = quote::Tokens::new();
     let mut rargs = quote::Tokens::new();
