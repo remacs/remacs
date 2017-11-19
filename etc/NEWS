@@ -1155,9 +1155,8 @@ branch-related commands on a keymap bound to 'B'.
 
 ---
 *** Opening a .h file will turn C or C++ mode depending on language used.
-This is done with the help of 'c-or-c++-mode' function which analyses
-contents of the buffer to determine whether it's a C or C++ source
-file.
+This is done with the help of the 'c-or-c++-mode' function, which
+analyzes buffer contents to infer whether it's a C or C++ source file.
 
 ---
 ** New option 'cpp-message-min-time-interval' to allow user control

@@ -1859,7 +1859,7 @@ Key bindings:
 
 ;;;###autoload
 (defun c-or-c++-mode ()
-  "Analyse buffer and enable either C or C++ mode.
+  "Analyze buffer and enable either C or C++ mode.
 
 Some people and projects use .h extension for C++ header files
 which is also the one used for C header files.  This makes
