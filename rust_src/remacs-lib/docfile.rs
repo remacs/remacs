@@ -1,20 +1,20 @@
 //! Extract Rust docstrings from source files for Emacs' DOC file.
-#![allow(dead_code)]
 
 use libc::{c_char, c_int};
 
-use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io::{stdout, BufRead, BufReader, Write};
 use std::mem;
 use std::ptr;
 
-const LISP_OBJECT: c_int = 1;
-const EMACS_INTEGER: c_int = 2;
-const BOOLEAN: c_int = 3;
-const SYMBOL: c_int = 4;
-const FUNCTION: c_int = 5;
+use parse_lisp_fn;
+
+#[allow(dead_code)] const LISP_OBJECT: c_int = 1;
+#[allow(dead_code)] const EMACS_INTEGER: c_int = 2;
+#[allow(dead_code)] const BOOLEAN: c_int = 3;
+#[allow(dead_code)] const SYMBOL: c_int = 4;
+#[allow(dead_code)] const FUNCTION: c_int = 5;
 
 type AddGlobalFn = fn(c_int, *const c_char, c_int, *const c_char) -> *const ();
 
@@ -75,23 +75,6 @@ pub extern "C" fn scan_rust_file(
                 continue;
             }
 
-            // Parse attribute properties to get minimum # of arguments,
-            // and Lisp function name.
-            let mut attr_props = HashMap::new();
-            if attribute.contains('(') {
-                let splitters = ['(', ')'];
-                // Extract part between parens
-                let attr = attribute.split(&splitters[..]).nth(1).unwrap();
-                // Parse key-value pairs
-                for arg in attr.split_terminator(',') {
-                    let mut name_val = arg.split('=');
-                    attr_props.insert(
-                        name_val.next().unwrap().trim(),
-                        name_val.next().unwrap().trim().trim_matches('"'),
-                    );
-                }
-            }
-
             // Read lines until the closing paren
             let mut sig = split.next().unwrap().to_string();
             while !sig.contains(')') {
@@ -99,19 +82,18 @@ pub extern "C" fn scan_rust_file(
             }
             let sig = sig.split(')').next().unwrap();
             let has_many_args = sig.contains("&mut");
+
             // Split arg names and types
             let splitters = [':', ','];
             let args = sig.split_terminator(&splitters[..]).collect::<Vec<_>>();
-            let lisp_name = attr_props
-                .get("name")
-                .map_or_else(|| name.replace("_", "-"), |&name| name.into());
-            let c_name = format!("F{}", attr_props.get("c_name").unwrap_or(&name));
 
             let nargs = args.len() / 2;
-            let minargs = attr_props.get("min").map_or(nargs, |m| m.parse().unwrap());
+            let def_min_args = if has_many_args { 0 } else { nargs as i16 };
+            let attr_props = parse_lisp_fn(&attribute, name, def_min_args).unwrap_or_else(
+                |e| panic!("Invalid #[lisp_fn] macro ({}): {}", attribute, e));
 
             if generate_globals != 0 {
-                let c_name_str = CString::new(c_name).unwrap();
+                let c_name_str = CString::new(format!("F{}", attr_props.c_name)).unwrap();
                 // -1 is MANY
                 // -2 is UNEVALLED
                 let maxargs = if has_many_args { -1 } else { nargs as c_int };
@@ -121,11 +103,10 @@ pub extern "C" fn scan_rust_file(
                 if docstring_usage.is_empty() {
                     docstring_usage.push_str("(fn ");
                     for (i, chunk) in args.chunks(2).enumerate() {
-                        if i == minargs {
-                            docstring_usage.push_str("&optional ");
-                        }
                         if chunk[1].contains("&mut") {
                             docstring_usage.push_str("&rest ");
+                        } else if i == attr_props.min as usize {
+                            docstring_usage.push_str("&optional ");
                         }
                         let argname = chunk[0]
                             .trim()
@@ -143,7 +124,7 @@ pub extern "C" fn scan_rust_file(
                 print!(
                     "\x1f{}{}\n{}\n{}",
                     "F",
-                    lisp_name,
+                    attr_props.name,
                     docstring,
                     docstring_usage
                 );
