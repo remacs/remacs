@@ -313,25 +313,32 @@ The last two elements are optional."
 
 
 (define-inline erc-nickserv-alist-sender (network &optional entry)
-  (inline-quote (nth 1 (or ,entry (assoc ,network erc-nickserv-alist)))))
+  (inline-letevals (network entry)
+    (inline-quote (nth 1 (or ,entry (assoc ,network erc-nickserv-alist))))))
 
 (define-inline erc-nickserv-alist-regexp (network &optional entry)
-  (inline-quote (nth 2 (or ,entry (assoc ,network erc-nickserv-alist)))))
+  (inline-letevals (network entry)
+    (inline-quote (nth 2 (or ,entry (assoc ,network erc-nickserv-alist))))))
 
 (define-inline erc-nickserv-alist-nickserv (network &optional entry)
-  (inline-quote (nth 3 (or ,entry (assoc ,network erc-nickserv-alist)))))
+  (inline-letevals (network entry)
+    (inline-quote (nth 3 (or ,entry (assoc ,network erc-nickserv-alist))))))
 
 (define-inline erc-nickserv-alist-ident-keyword (network &optional entry)
-  (inline-quote (nth 4 (or ,entry (assoc ,network erc-nickserv-alist)))))
+  (inline-letevals (network entry)
+    (inline-quote (nth 4 (or ,entry (assoc ,network erc-nickserv-alist))))))
 
 (define-inline erc-nickserv-alist-use-nick-p (network &optional entry)
-  (inline-quote (nth 5 (or ,entry (assoc ,network erc-nickserv-alist)))))
+  (inline-letevals (network entry)
+    (inline-quote (nth 5 (or ,entry (assoc ,network erc-nickserv-alist))))))
 
 (define-inline erc-nickserv-alist-ident-command (network &optional entry)
-  (inline-quote (nth 6 (or ,entry (assoc ,network erc-nickserv-alist)))))
+  (inline-letevals (network entry)
+    (inline-quote (nth 6 (or ,entry (assoc ,network erc-nickserv-alist))))))
 
 (define-inline erc-nickserv-alist-identified-regexp (network &optional entry)
-  (inline-quote (nth 7 (or ,entry (assoc ,network erc-nickserv-alist)))))
+  (inline-letevals (network entry)
+    (inline-quote (nth 7 (or ,entry (assoc ,network erc-nickserv-alist))))))
 
 ;; Functions:
 
