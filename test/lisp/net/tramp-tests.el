@@ -2986,7 +2986,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Copy ACL.  Since we don't know whether Emacs is built
 	    ;; with local ACL support, we must check it.
 	    (when (set-file-acl tmp-name3 (file-acl tmp-name1))
-               (file-acl tmp-name1) (file-acl tmp-name3))
+              (file-acl tmp-name1) (file-acl tmp-name3)
 	      (should (string-equal (file-acl tmp-name1) (file-acl tmp-name3))))
 
 	    ;; Two files with same ACLs.
