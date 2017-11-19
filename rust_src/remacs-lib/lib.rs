@@ -6,10 +6,17 @@
 extern crate errno;
 extern crate libc;
 extern crate rand;
+#[macro_use]
+extern crate darling;
+extern crate syn;
 
 mod files;
 mod math;
 mod docfile;
+mod attributes;
+
+// Used by remacs-macros
+pub use attributes::parse_lisp_fn;
 
 // Used for creating temporary files in emacs
 pub use files::rust_make_temp;
