@@ -32,6 +32,11 @@ impl LispProcessRef {
     }
 
     #[inline]
+    fn mark(&self) -> LispObject {
+        LispObject::from(self.mark)
+    }
+
+    #[inline]
     fn buffer(&self) -> LispObject {
         LispObject::from(self.buffer)
     }
@@ -139,6 +144,12 @@ pub fn process_tty_name(process: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn process_command(process: LispObject) -> LispObject {
     process.as_process_or_error().command()
+}
+
+/// Return the marker for the end of the last output from PROCESS.
+#[lisp_fn]
+pub fn process_mark(process: LispObject) -> LispObject {
+    process.as_process_or_error().mark()
 }
 
 /// Return a list of all processes that are Emacs sub-processes.
