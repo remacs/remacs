@@ -560,7 +560,7 @@ FILE is the file where FUNCTION was probably defined."
             (setq short rel))))
     short))
 
-(defun help-fns--analyse-function (function)
+(defun help-fns--analyze-function (function)
   ;; FIXME: Document/explain the differences between FUNCTION,
   ;; REAL-FUNCTION, DEF, and REAL-DEF.
   "Return information about FUNCTION.
@@ -602,7 +602,7 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
 (defun help-fns-function-description-header (function)
   "Print a line describing FUNCTION to `standard-output'."
   (pcase-let* ((`(,_real-function ,def ,aliased ,real-def)
-                (help-fns--analyse-function function))
+                (help-fns--analyze-function function))
                (file-name (find-lisp-object-file-name function (if aliased 'defun
                                                                  def)))
                (beg (if (and (or (byte-code-function-p def)
@@ -692,7 +692,7 @@ Returns a list of the form (REAL-FUNCTION DEF ALIASED REAL-DEF)."
   (terpri)(terpri)
 
   (pcase-let* ((`(,real-function ,def ,_aliased ,real-def)
-                (help-fns--analyse-function function))
+                (help-fns--analyze-function function))
                (doc-raw (condition-case nil
                             ;; FIXME: Maybe `documentation' should return nil
                             ;; for invalid functions i.s.o. signaling an error.
