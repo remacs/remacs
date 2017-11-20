@@ -10,11 +10,16 @@ use std::ptr;
 
 use parse_lisp_fn;
 
-#[allow(dead_code)] const LISP_OBJECT: c_int = 1;
-#[allow(dead_code)] const EMACS_INTEGER: c_int = 2;
-#[allow(dead_code)] const BOOLEAN: c_int = 3;
-#[allow(dead_code)] const SYMBOL: c_int = 4;
-#[allow(dead_code)] const FUNCTION: c_int = 5;
+#[allow(dead_code)]
+const LISP_OBJECT: c_int = 1;
+#[allow(dead_code)]
+const EMACS_INTEGER: c_int = 2;
+#[allow(dead_code)]
+const BOOLEAN: c_int = 3;
+#[allow(dead_code)]
+const SYMBOL: c_int = 4;
+#[allow(dead_code)]
+const FUNCTION: c_int = 5;
 
 type AddGlobalFn = fn(c_int, *const c_char, c_int, *const c_char) -> *const ();
 
@@ -89,8 +94,9 @@ pub extern "C" fn scan_rust_file(
 
             let nargs = args.len() / 2;
             let def_min_args = if has_many_args { 0 } else { nargs as i16 };
-            let attr_props = parse_lisp_fn(&attribute, name, def_min_args).unwrap_or_else(
-                |e| panic!("Invalid #[lisp_fn] macro ({}): {}", attribute, e));
+            let attr_props = parse_lisp_fn(&attribute, name, def_min_args).unwrap_or_else(|e| {
+                panic!("Invalid #[lisp_fn] macro ({}): {}", attribute, e)
+            });
 
             if generate_globals != 0 {
                 let c_name_str = CString::new(format!("F{}", attr_props.c_name)).unwrap();

@@ -1,10 +1,10 @@
 #![feature(proc_macro)]
 #![recursion_limit = "128"]
 
-extern crate remacs_lib;
 extern crate proc_macro;
 #[macro_use]
 extern crate quote;
+extern crate remacs_lib;
 extern crate syn;
 
 use proc_macro::TokenStream;
@@ -17,8 +17,10 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let fn_item = syn::parse_item(&fn_ts.to_string()).unwrap();
     let function = function::parse(&fn_item).unwrap();
     let lisp_fn_args = match remacs_lib::parse_lisp_fn(
-        &attr_ts.to_string(), &function.name, function.fntype.def_min_args())
-    {
+        &attr_ts.to_string(),
+        &function.name,
+        function.fntype.def_min_args(),
+    ) {
         Ok(v) => v,
         Err(e) => panic!("Invalid lisp_fn attribute: {}", e),
     };

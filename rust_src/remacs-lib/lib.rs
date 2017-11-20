@@ -3,17 +3,17 @@
 #![allow(private_no_mangle_fns)]
 #![cfg_attr(feature = "strict", deny(warnings))]
 
+#[macro_use]
+extern crate darling;
 extern crate errno;
 extern crate libc;
 extern crate rand;
-#[macro_use]
-extern crate darling;
 extern crate syn;
 
+mod attributes;
+mod docfile;
 mod files;
 mod math;
-mod docfile;
-mod attributes;
 
 // Used by remacs-macros
 pub use attributes::parse_lisp_fn;

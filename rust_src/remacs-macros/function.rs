@@ -13,7 +13,7 @@ impl LispFnType {
     pub fn def_min_args(&self) -> i16 {
         match *self {
             LispFnType::Normal(n) => n,
-            LispFnType::Many => 0
+            LispFnType::Many => 0,
         }
     }
 }
