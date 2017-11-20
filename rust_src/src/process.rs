@@ -27,6 +27,11 @@ impl LispProcessRef {
     }
 
     #[inline]
+    fn command(&self) -> LispObject {
+        LispObject::from(self.command)
+    }
+
+    #[inline]
     fn buffer(&self) -> LispObject {
         LispObject::from(self.buffer)
     }
@@ -124,6 +129,16 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn process_tty_name(process: LispObject) -> LispObject {
     process.as_process_or_error().tty_name()
+}
+
+/// Return the command that was executed to start PROCESS.  This is a
+/// list of strings, the first string being the program executed and
+/// the rest of the strings being the arguments given to it.  For a
+/// network or serial or pipe connection, this is nil (process is
+/// running) or t (process is stopped).
+#[lisp_fn]
+pub fn process_command(process: LispObject) -> LispObject {
+    process.as_process_or_error().command()
 }
 
 /// Return a list of all processes that are Emacs sub-processes.
