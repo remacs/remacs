@@ -81,7 +81,7 @@ function build_installer {
              -DARCH=$ARCH -DEMACS_VERSION=$ACTUAL_VERSION \
              -DOUT_VERSION=$OF_VERSION emacs.nsi
     rm emacs.nsi
-    mv Emacs-$OF_VERSION-$ARCH-installer.exe ~/emacs-upload
+    mv emacs-$OF_VERSION-$ARCH-installer.exe ~/emacs-upload
 }
 
 set -o errexit
@@ -166,8 +166,6 @@ else
     CACHE=-C
     OF_VERSION="$VERSION-`date +%Y-%m-%d`"
 fi
-
-
 
 if (($GIT_UP))
 then
