@@ -47,6 +47,11 @@ impl LispProcessRef {
     }
 
     #[inline]
+    fn plist(&self) -> LispObject {
+        LispObject::from(self.plist)
+    }
+
+    #[inline]
     fn buffer(&self) -> LispObject {
         LispObject::from(self.buffer)
     }
@@ -180,6 +185,12 @@ pub fn process_mark(process: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn process_list() -> LispObject {
     LispObject::from(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
+}
+
+/// Return the plist of PROCESS.
+#[lisp_fn]
+pub fn process_plist(process: LispObject) -> LispObject {
+    process.as_process_or_error().plist()
 }
 
 /// Replace the plist of PROCESS with PLIST.  Return PLIST.

@@ -1298,15 +1298,6 @@ set up yet, this function will block until socket setup has completed.  */)
   return Fplist_get (contact, key);
 }
 
-DEFUN ("process-plist", Fprocess_plist, Sprocess_plist,
-       1, 1, 0,
-       doc: /* Return the plist of PROCESS.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->plist;
-}
-
 #if 0 /* Turned off because we don't currently record this info
 	 in the process.  Perhaps add it.  */
 DEFUN ("process-connection", Fprocess_connection, Sprocess_connection, 1, 1, 0,
@@ -7729,7 +7720,6 @@ returns non-`nil'.  */);
   defsubr (&Sset_process_window_size);
   defsubr (&Sset_process_inherit_coding_system_flag);
   defsubr (&Sprocess_contact);
-  defsubr (&Sprocess_plist);
   defsubr (&Smake_process);
   defsubr (&Smake_pipe_process);
   defsubr (&Sserial_process_configure);
