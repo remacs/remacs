@@ -42,6 +42,11 @@ impl LispProcessRef {
     }
 
     #[inline]
+    fn sentinel(&self) -> LispObject {
+        LispObject::from(self.sentinel)
+    }
+
+    #[inline]
     fn buffer(&self) -> LispObject {
         LispObject::from(self.buffer)
     }
@@ -156,6 +161,13 @@ pub fn process_command(process: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn process_filter(process: LispObject) -> LispObject {
     process.as_process_or_error().filter()
+}
+
+/// Return the sentinel of PROCESS.
+/// See `set-process-sentinel' for more info on sentinels.
+#[lisp_fn]
+pub fn process_sentinel(process: LispObject) -> LispObject {
+    process.as_process_or_error().sentinel()
 }
 
 /// Return the marker for the end of the last output from PROCESS.

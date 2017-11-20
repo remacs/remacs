@@ -1164,16 +1164,6 @@ It gets two arguments: the process, and a string describing the change.  */)
   return sentinel;
 }
 
-DEFUN ("process-sentinel", Fprocess_sentinel, Sprocess_sentinel,
-       1, 1, 0,
-       doc: /* Return the sentinel of PROCESS.
-See `set-process-sentinel' for more info on sentinels.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->sentinel;
-}
-
 DEFUN ("set-process-thread", Fset_process_thread, Sset_process_thread,
        2, 2, 0,
        doc: /* Set the locking thread of PROCESS to be THREAD.
@@ -7734,7 +7724,6 @@ returns non-`nil'.  */);
   defsubr (&Sprocess_exit_status);
   defsubr (&Sset_process_filter);
   defsubr (&Sset_process_sentinel);
-  defsubr (&Sprocess_sentinel);
   defsubr (&Sset_process_thread);
   defsubr (&Sprocess_thread);
   defsubr (&Sset_process_window_size);
