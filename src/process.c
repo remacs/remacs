@@ -1143,16 +1143,6 @@ The string argument is normally a multibyte string, except:
   return filter;
 }
 
-DEFUN ("process-filter", Fprocess_filter, Sprocess_filter,
-       1, 1, 0,
-       doc: /* Return the filter function of PROCESS.
-See `set-process-filter' for more info on filter functions.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->filter;
-}
-
 DEFUN ("set-process-sentinel", Fset_process_sentinel, Sset_process_sentinel,
        2, 2, 0,
        doc: /* Give PROCESS the sentinel SENTINEL; nil for default.
@@ -7743,7 +7733,6 @@ returns non-`nil'.  */);
   defsubr (&Sdelete_process);
   defsubr (&Sprocess_exit_status);
   defsubr (&Sset_process_filter);
-  defsubr (&Sprocess_filter);
   defsubr (&Sset_process_sentinel);
   defsubr (&Sprocess_sentinel);
   defsubr (&Sset_process_thread);

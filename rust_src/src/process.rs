@@ -37,6 +37,11 @@ impl LispProcessRef {
     }
 
     #[inline]
+    fn filter(&self) -> LispObject {
+        LispObject::from(self.filter)
+    }
+
+    #[inline]
     fn buffer(&self) -> LispObject {
         LispObject::from(self.buffer)
     }
@@ -144,6 +149,13 @@ pub fn process_tty_name(process: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn process_command(process: LispObject) -> LispObject {
     process.as_process_or_error().command()
+}
+
+/// Return the filter function of PROCESS.
+/// See `set-process-filter' for more info on filter functions.
+#[lisp_fn]
+pub fn process_filter(process: LispObject) -> LispObject {
+    process.as_process_or_error().filter()
 }
 
 /// Return the marker for the end of the last output from PROCESS.
