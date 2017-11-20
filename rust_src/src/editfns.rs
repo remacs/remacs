@@ -149,9 +149,9 @@ pub fn goto_char(position: LispObject) -> LispObject {
     if let Some(marker) = position.as_marker() {
         set_point_from_marker(marker);
     } else if let Some(num) = position.as_fixnum() {
-        let cur_buf = ThreadState::current_buffer();
+        let mut cur_buf = ThreadState::current_buffer();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
         unsafe { set_point_both(pos, bytepos) };
     } else {
         wrong_type!(Qinteger_or_marker_p, position)
@@ -164,10 +164,10 @@ pub fn goto_char(position: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn position_bytes(position: LispObject) -> LispObject {
     let pos = position.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
-    let cur_buf = ThreadState::current_buffer();
+    let mut cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
-        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
+        let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_mut(), pos) };
         LispObject::from_natnum(bytepos as EmacsInt)
     } else {
         LispObject::constant_nil()
@@ -196,7 +196,7 @@ pub fn insert_byte(mut byte: LispObject, count: LispObject, inherit: LispObject)
         )
     }
     let buf = ThreadState::current_buffer();
-    if b >= 128 && LispObject::from(buf.enable_multibyte_characters).is_not_nil() {
+    if b >= 128 && LispObject::from(buf.enable_multibyte_characters_).is_not_nil() {
         byte = LispObject::from_natnum(raw_byte_codepoint(b as c_uchar) as EmacsInt);
     }
     unsafe {
@@ -226,7 +226,7 @@ pub fn following_char() -> LispObject {
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
 pub fn char_after(mut pos: LispObject) -> LispObject {
-    let buffer_ref = ThreadState::current_buffer();
+    let mut buffer_ref = ThreadState::current_buffer();
     if pos.is_nil() {
         pos = point();
     }
@@ -244,7 +244,7 @@ pub fn char_after(mut pos: LispObject) -> LispObject {
         if p < buffer_ref.begv || p >= buffer_ref.zv() {
             LispObject::constant_nil()
         } else {
-            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_ptr(), p) };
+            let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_mut(), p) };
             LispObject::from_natnum(buffer_ref.fetch_char(pos_byte) as EmacsInt)
         }
     }
@@ -272,7 +272,7 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
 
     // this is a C style Lisp_Object because that is what Fcons expects and returns.
     // Once Fcons is ported to Rust this can be migrated to a LispObject.
-    let mut properties = Qnil;
+    let mut properties = unsafe { Qnil };
 
     while let Some(a) = it.next() {
         let b = it.next().unwrap(); // safe due to the odd check at the beginning

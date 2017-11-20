@@ -31,7 +31,7 @@ fn local_key_binding(keys: LispObject, accept_default: LispObject) -> LispObject
 /// Normally the local keymap is set by the major mode with `use-local-map'.
 #[lisp_fn]
 fn current_local_map() -> LispObject {
-    LispObject::from(ThreadState::current_buffer().keymap)
+    LispObject::from(ThreadState::current_buffer().keymap_)
 }
 
 /// Return the current global keymap.

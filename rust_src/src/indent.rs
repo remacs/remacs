@@ -21,7 +21,7 @@ use lisp::defsubr;
 /// ellipsis.
 #[lisp_fn]
 pub fn current_column() -> LispObject {
-    LispObject::from_natnum(unsafe { remacs_sys::current_column() })
+    LispObject::from_natnum(unsafe { remacs_sys::current_column() } as i64)
 }
 
 include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));

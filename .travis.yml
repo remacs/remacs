@@ -34,7 +34,7 @@ jobs:
         - CARGO_FLAGS="--features 'strict'"
       os: linux
       before_script:
-        - sudo apt install -y texinfo libgif-dev libxpm-dev
+        - sudo apt install -y texinfo libgif-dev libxpm-dev libxt-dev clang-3.9
         - travis_wait rustup install $(cat rust_src/rust-toolchain)
         - rustup default $(cat rust_src/rust-toolchain)
       script:
@@ -62,6 +62,7 @@ jobs:
       before_script:
         - travis_wait rustup install $(cat rust_src/rust-toolchain)
         - rustup default $(cat rust_src/rust-toolchain)
+        - sudo apt install -y texinfo clang-3.9
       script:
         - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
         - make -j 3 && echo '==> Running nowindow tests' && make check
