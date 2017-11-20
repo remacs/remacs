@@ -3070,7 +3070,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should (file-selinux-context tmp-name3))
 	    ;; We cannot expect that copying over file system
 	    ;; boundaries keeps SELinux context.  So we copy it
-	    ;; explicitely.
+	    ;; explicitly.
 	    (should
 	     (set-file-selinux-context
 	      tmp-name3 (file-selinux-context tmp-name1)))
@@ -3104,7 +3104,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (should (file-selinux-context tmp-name1))
 	    ;; We cannot expect that copying over file system
 	    ;; boundaries keeps SELinux context.  So we copy it
-	    ;; explicitely.
+	    ;; explicitly.
 	    (should
 	     (set-file-selinux-context
 	      tmp-name1 (file-selinux-context tmp-name3)))
