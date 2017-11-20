@@ -22,6 +22,11 @@ impl LispProcessRef {
     }
 
     #[inline]
+    fn tty_name(&self) -> LispObject {
+        LispObject::from(self.tty_name)
+    }
+
+    #[inline]
     fn buffer(&self) -> LispObject {
         LispObject::from(self.buffer)
     }
@@ -111,6 +116,14 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
         }
     }
     return LispObject::constant_nil();
+}
+
+/// Return the name of the terminal PROCESS uses, or nil if none.
+/// This is the terminal that the process itself reads and writes on,
+/// not the name of the pty that Emacs uses to talk with that terminal.
+#[lisp_fn]
+pub fn process_tty_name(process: LispObject) -> LispObject {
+    process.as_process_or_error().tty_name()
 }
 
 /// Return a list of all processes that are Emacs sub-processes.

@@ -1100,16 +1100,6 @@ or t (process is stopped).  */)
   return XPROCESS (process)->command;
 }
 
-DEFUN ("process-tty-name", Fprocess_tty_name, Sprocess_tty_name, 1, 1, 0,
-       doc: /* Return the name of the terminal PROCESS uses, or nil if none.
-This is the terminal that the process itself reads and writes on,
-not the name of the pty that Emacs uses to talk with that terminal.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->tty_name;
-}
-
 DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
        1, 1, 0,
        doc: /* Return the marker for the end of the last output from PROCESS.  */)
@@ -7772,7 +7762,6 @@ returns non-`nil'.  */);
 
   defsubr (&Sdelete_process);
   defsubr (&Sprocess_exit_status);
-  defsubr (&Sprocess_tty_name);
   defsubr (&Sprocess_command);
   defsubr (&Sprocess_mark);
   defsubr (&Sset_process_filter);
