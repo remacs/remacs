@@ -1643,175 +1643,185 @@ See also `multi-occur'."
 		(inhibit-field-text-motion t)
 		(headerpt (with-current-buffer out-buf (point))))
 	    (with-current-buffer buf
-	      (or coding
-		  ;; Set CODING only if the current buffer locally
-		  ;; binds buffer-file-coding-system.
-		  (not (local-variable-p 'buffer-file-coding-system))
-		  (setq coding buffer-file-coding-system))
-	      (save-excursion
-		(goto-char (point-min)) ;; begin searching in the buffer
-		(while (not (eobp))
-		  (setq origpt (point))
-		  (when (setq endpt (re-search-forward regexp nil t))
-		    (setq lines (1+ lines)) ;; increment matching lines count
-		    (setq matchbeg (match-beginning 0))
-		    ;; Get beginning of first match line and end of the last.
-		    (save-excursion
-		      (goto-char matchbeg)
-		      (setq begpt (line-beginning-position))
-		      (goto-char endpt)
-		      (setq endpt (line-end-position)))
-		    ;; Sum line numbers up to the first match line.
-		    (setq curr-line (+ curr-line (count-lines origpt begpt)))
-		    (setq marker (make-marker))
-		    (set-marker marker matchbeg)
-		    (setq curstring (occur-engine-line begpt endpt keep-props))
-		    ;; Highlight the matches
-		    (let ((len (length curstring))
-			  (start 0))
-		      ;; Count empty lines that don't use next loop (Bug#22062).
-		      (when (zerop len)
-			(setq matches (1+ matches)))
-		      (while (and (< start len)
-				  (string-match regexp curstring start))
-			(setq matches (1+ matches))
-			(add-text-properties
-			 (match-beginning 0) (match-end 0)
-			 '(occur-match t) curstring)
-			(when match-face
-			  ;; Add `match-face' to faces copied from the buffer.
-			  (add-face-text-property
+              ;; The following binding is for when case-fold-search
+              ;; has a local binding in the original buffer, in which
+              ;; case we cannot bind it globally and let that have
+              ;; effect in every buffer we search.
+              (let ((case-fold-search case-fold))
+	        (or coding
+		    ;; Set CODING only if the current buffer locally
+		    ;; binds buffer-file-coding-system.
+		    (not (local-variable-p 'buffer-file-coding-system))
+		    (setq coding buffer-file-coding-system))
+	        (save-excursion
+		  (goto-char (point-min)) ;; begin searching in the buffer
+		  (while (not (eobp))
+		    (setq origpt (point))
+		    (when (setq endpt (re-search-forward regexp nil t))
+		      (setq lines (1+ lines)) ;; increment matching lines count
+		      (setq matchbeg (match-beginning 0))
+		      ;; Get beginning of first match line and end of the last.
+		      (save-excursion
+		        (goto-char matchbeg)
+		        (setq begpt (line-beginning-position))
+		        (goto-char endpt)
+		        (setq endpt (line-end-position)))
+		      ;; Sum line numbers up to the first match line.
+		      (setq curr-line (+ curr-line (count-lines origpt begpt)))
+		      (setq marker (make-marker))
+		      (set-marker marker matchbeg)
+		      (setq curstring (occur-engine-line begpt endpt keep-props))
+		      ;; Highlight the matches
+		      (let ((len (length curstring))
+			    (start 0))
+		        ;; Count empty lines that don't use next loop (Bug#22062).
+		        (when (zerop len)
+			  (setq matches (1+ matches)))
+		        (while (and (< start len)
+				    (string-match regexp curstring start))
+			  (setq matches (1+ matches))
+			  (add-text-properties
 			   (match-beginning 0) (match-end 0)
-			   match-face nil curstring))
-			;; Avoid infloop (Bug#7593).
-			(let ((end (match-end 0)))
-			  (setq start (if (= start end) (1+ start) end)))))
-		    ;; Generate the string to insert for this match
-		    (let* ((match-prefix
-			    ;; Using 7 digits aligns tabs properly.
-			    (apply #'propertize (format "%7d:" curr-line)
-				   (append
-				    (when prefix-face
-				      `(font-lock-face ,prefix-face))
-				    `(occur-prefix t mouse-face (highlight)
-				      ;; Allow insertion of text at
-				      ;; the end of the prefix (for
-				      ;; Occur Edit mode).
-				      front-sticky t rear-nonsticky t
-				      occur-target ,marker follow-link t
-				      help-echo "mouse-2: go to this occurrence"))))
-			   (match-str
-			    ;; We don't put `mouse-face' on the newline,
-			    ;; because that loses.  And don't put it
-			    ;; on context lines to reduce flicker.
-			    (propertize curstring 'mouse-face (list 'highlight)
-					'occur-target marker
-					'follow-link t
-					'help-echo
-					"mouse-2: go to this occurrence"))
-			   (out-line
-			    (concat
-			     match-prefix
-			     ;; Add non-numeric prefix to all non-first lines
-			     ;; of multi-line matches.
-			     (replace-regexp-in-string
-			      "\n"
-			      (if prefix-face
-				  (propertize "\n       :" 'font-lock-face prefix-face)
-				"\n       :")
-			      match-str)
-			     ;; Add marker at eol, but no mouse props.
-			     (propertize "\n" 'occur-target marker)))
-			   (data
-			    (if (= nlines 0)
-				;; The simple display style
-				out-line
-			      ;; The complex multi-line display style.
-			      (setq ret (occur-context-lines
-					 out-line nlines keep-props begpt endpt
-					 curr-line prev-line prev-after-lines
-					 prefix-face))
-			      ;; Set first elem of the returned list to `data',
-			      ;; and the second elem to `prev-after-lines'.
-			      (setq prev-after-lines (nth 1 ret))
-			      (nth 0 ret))))
-		      ;; Actually insert the match display data
-		      (with-current-buffer out-buf
-                        (when (and list-matching-lines-jump-to-current-line
-                                   (not multi-occur-p)
-                                   (not orig-line-shown-p)
-                                   (>= curr-line orig-line))
-                          (insert
-                           (concat
-                            (propertize
-                             (format "%7d:%s" orig-line orig-line-str)
-                             'face list-matching-lines-current-line-face
-                             'mouse-face 'mode-line-highlight
-                             'help-echo "Current line") "\n"))
-                          (setq orig-line-shown-p t finalpt (point)))
-			(insert data)))
-		    (goto-char endpt))
-		  (if endpt
-		      (progn
-			;; Sum line numbers between first and last match lines.
-			(setq curr-line (+ curr-line (count-lines begpt endpt)
-					   ;; Add 1 for empty last match line since
-					   ;; count-lines returns 1 line less.
-					   (if (and (bolp) (eolp)) 1 0)))
-			;; On to the next match...
-			(forward-line 1))
-		    (goto-char (point-max)))
-		  (setq prev-line (1- curr-line)))
-                ;; Insert original line if haven't done yet.
-                (when (and list-matching-lines-jump-to-current-line
-                           (not multi-occur-p)
-                           (not orig-line-shown-p))
-                  (with-current-buffer out-buf
-                    (insert
-                     (concat
-                      (propertize
-                       (format "%7d:%s" orig-line orig-line-str)
-                       'face list-matching-lines-current-line-face
-                       'mouse-face 'mode-line-highlight
-                       'help-echo "Current line") "\n"))))
-		;; Flush remaining context after-lines.
-		(when prev-after-lines
-		  (with-current-buffer out-buf
-		    (insert (apply #'concat (occur-engine-add-prefix
-					     prev-after-lines prefix-face)))))))
-	    (when (not (zerop lines)) ;; is the count zero?
-	      (setq global-lines (+ global-lines lines)
-		    global-matches (+ global-matches matches))
-	      (with-current-buffer out-buf
-		(goto-char headerpt)
-		(let ((beg (point))
-		      end)
-		  (insert (propertize
-			   (format "%d match%s%s%s in buffer: %s%s\n"
-				   matches (if (= matches 1) "" "es")
-				   ;; Don't display the same number of lines
-				   ;; and matches in case of 1 match per line.
-				   (if (= lines matches)
-				       "" (format " in %d line%s"
-						  lines (if (= lines 1) "" "s")))
-				   ;; Don't display regexp for multi-buffer.
-				   (if (> (length buffers) 1)
-				       "" (occur-regexp-descr regexp))
-				   (buffer-name buf)
-                                   (if in-region-p
-                                       (format " within region: %d-%d"
-                                               occur--region-start
-                                               occur--region-end)
-                                     ""))
-			   'read-only t))
-		  (setq end (point))
-		  (add-text-properties beg end `(occur-title ,buf))
-		  (when title-face
-		    (add-face-text-property beg end title-face))
-                  (goto-char (if finalpt
-                                 (setq occur--final-pos
-                                       (cl-incf finalpt (- end beg)))
-                               (point-min)))))))))
+			   '(occur-match t) curstring)
+			  (when match-face
+			    ;; Add `match-face' to faces copied from the buffer.
+			    (add-face-text-property
+			     (match-beginning 0) (match-end 0)
+			     match-face nil curstring))
+			  ;; Avoid infloop (Bug#7593).
+			  (let ((end (match-end 0)))
+			    (setq start (if (= start end) (1+ start) end)))))
+		      ;; Generate the string to insert for this match
+		      (let* ((match-prefix
+			      ;; Using 7 digits aligns tabs properly.
+			      (apply #'propertize (format "%7d:" curr-line)
+				     (append
+				      (when prefix-face
+				        `(font-lock-face ,prefix-face))
+				      `(occur-prefix t mouse-face (highlight)
+				                     ;; Allow insertion of text
+				                     ;; at the end of the prefix
+				                     ;; (for Occur Edit mode).
+				                     front-sticky t
+                                                     rear-nonsticky t
+				                     occur-target ,marker
+                                                     follow-link t
+				                     help-echo "mouse-2: go to this occurrence"))))
+			     (match-str
+			      ;; We don't put `mouse-face' on the newline,
+			      ;; because that loses.  And don't put it
+			      ;; on context lines to reduce flicker.
+			      (propertize curstring 'mouse-face (list 'highlight)
+					  'occur-target marker
+					  'follow-link t
+					  'help-echo
+					  "mouse-2: go to this occurrence"))
+			     (out-line
+			      (concat
+			       match-prefix
+			       ;; Add non-numeric prefix to all non-first lines
+			       ;; of multi-line matches.
+			       (replace-regexp-in-string
+			        "\n"
+			        (if prefix-face
+				    (propertize
+                                     "\n       :" 'font-lock-face prefix-face)
+				  "\n       :")
+			        match-str)
+			       ;; Add marker at eol, but no mouse props.
+			       (propertize "\n" 'occur-target marker)))
+			     (data
+			      (if (= nlines 0)
+				  ;; The simple display style
+				  out-line
+			        ;; The complex multi-line display style.
+			        (setq ret (occur-context-lines
+					   out-line nlines keep-props begpt
+                                           endpt curr-line prev-line
+                                           prev-after-lines prefix-face))
+			        ;; Set first elem of the returned list to `data',
+			        ;; and the second elem to `prev-after-lines'.
+			        (setq prev-after-lines (nth 1 ret))
+			        (nth 0 ret))))
+		        ;; Actually insert the match display data
+		        (with-current-buffer out-buf
+                          (when (and list-matching-lines-jump-to-current-line
+                                     (not multi-occur-p)
+                                     (not orig-line-shown-p)
+                                     (>= curr-line orig-line))
+                            (insert
+                             (concat
+                              (propertize
+                               (format "%7d:%s" orig-line orig-line-str)
+                               'face list-matching-lines-current-line-face
+                               'mouse-face 'mode-line-highlight
+                               'help-echo "Current line") "\n"))
+                            (setq orig-line-shown-p t finalpt (point)))
+			  (insert data)))
+		      (goto-char endpt))
+		    (if endpt
+		        (progn
+			  ;; Sum line numbers between first and last match lines.
+			  (setq curr-line (+ curr-line (count-lines begpt endpt)
+					     ;; Add 1 for empty last match line
+					     ;; since count-lines returns one
+                                             ;; line less.
+					     (if (and (bolp) (eolp)) 1 0)))
+			  ;; On to the next match...
+			  (forward-line 1))
+		      (goto-char (point-max)))
+		    (setq prev-line (1- curr-line)))
+                  ;; Insert original line if haven't done yet.
+                  (when (and list-matching-lines-jump-to-current-line
+                             (not multi-occur-p)
+                             (not orig-line-shown-p))
+                    (with-current-buffer out-buf
+                      (insert
+                       (concat
+                        (propertize
+                         (format "%7d:%s" orig-line orig-line-str)
+                         'face list-matching-lines-current-line-face
+                         'mouse-face 'mode-line-highlight
+                         'help-echo "Current line") "\n"))))
+		  ;; Flush remaining context after-lines.
+		  (when prev-after-lines
+		    (with-current-buffer out-buf
+		      (insert (apply #'concat (occur-engine-add-prefix
+					       prev-after-lines prefix-face)))))))
+	      (when (not (zerop lines)) ;; is the count zero?
+	        (setq global-lines (+ global-lines lines)
+		      global-matches (+ global-matches matches))
+	        (with-current-buffer out-buf
+		  (goto-char headerpt)
+		  (let ((beg (point))
+		        end)
+		    (insert (propertize
+			     (format "%d match%s%s%s in buffer: %s%s\n"
+				     matches (if (= matches 1) "" "es")
+				     ;; Don't display the same number of lines
+				     ;; and matches in case of 1 match per line.
+				     (if (= lines matches)
+				         "" (format " in %d line%s"
+						    lines
+                                                    (if (= lines 1) "" "s")))
+				     ;; Don't display regexp for multi-buffer.
+				     (if (> (length buffers) 1)
+				         "" (occur-regexp-descr regexp))
+				     (buffer-name buf)
+                                     (if in-region-p
+                                         (format " within region: %d-%d"
+                                                 occur--region-start
+                                                 occur--region-end)
+                                       ""))
+			     'read-only t))
+		    (setq end (point))
+		    (add-text-properties beg end `(occur-title ,buf))
+		    (when title-face
+		      (add-face-text-property beg end title-face))
+                    (goto-char (if finalpt
+                                   (setq occur--final-pos
+                                         (cl-incf finalpt (- end beg)))
+                                 (point-min))))))))))
       ;; Display total match count and regexp for multi-buffer.
       (when (and (not (zerop global-lines)) (> (length buffers) 1))
 	(goto-char (point-min))

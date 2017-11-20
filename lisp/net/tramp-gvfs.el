@@ -992,7 +992,7 @@ If FILE-SYSTEM is non-nil, return file system attributes."
 		    (tramp-file-mode-from-int (string-to-number n))
 		  (format
 		   "%s%s%s%s------"
-		   (if dirp "d" "-")
+		   (if dirp "d" (if res-symlink-target "l" "-"))
 		   (if (equal (cdr (assoc "access::can-read" attributes))
 			      "FALSE")
 		       "-" "r")

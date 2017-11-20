@@ -3207,7 +3207,8 @@ User is always nil."
 			 (if (file-remote-p symlink-target)
 			     (let (file-name-handler-alist)
 			       (tramp-compat-file-name-quote symlink-target))
-			   symlink-target)
+			   (expand-file-name
+			    symlink-target (file-name-directory v2-localname)))
 		       v2-localname)))))
 	   (when (>= numchase numchase-limit)
 	     (tramp-error

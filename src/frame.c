@@ -1920,6 +1920,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 	 See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15025.  */
       FOR_EACH_FRAME (tail, frame1)
 	if (!EQ (frame, frame1)
+	    && NILP (Fframe_parameter (frame1, Qtooltip))
 	    && (FRAME_TERMINAL (XFRAME (frame))
 		== FRAME_TERMINAL (XFRAME (frame1)))
 	    && FRAME_VISIBLE_P (XFRAME (frame1)))
@@ -1930,7 +1931,9 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 	{
 	  FOR_EACH_FRAME (tail, frame1)
 	    {
-	      if (! EQ (frame, frame1) && FRAME_LIVE_P (XFRAME (frame1)))
+	      if (!EQ (frame, frame1)
+		  && FRAME_LIVE_P (XFRAME (frame1))
+		  && NILP (Fframe_parameter (frame1, Qtooltip)))
 		{
 		  /* Do not change a text terminal's top-frame.  */
 		  struct frame *f1 = XFRAME (frame1);
