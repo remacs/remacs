@@ -660,21 +660,25 @@ w32_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
 			      ? face_last->foreground
 			      : FRAME_FOREGROUND_PIXEL (f));
 
-  if (y1 - y0 > x1 - x0 && x1 - x0 > 2)
-    /* Vertical.  */
+  if ((y1 - y0 > x1 - x0) && (x1 - x0 >= 3))
+    /* A vertical divider, at least three pixels wide: Draw first and
+       last pixels differently.  */
     {
       w32_fill_area_abs (f, hdc, color_first, x0, y0, x0 + 1, y1);
       w32_fill_area_abs (f, hdc, color, x0 + 1, y0, x1 - 1, y1);
       w32_fill_area_abs (f, hdc, color_last, x1 - 1, y0, x1, y1);
     }
-  else if (x1 - x0 > y1 - y0 && y1 - y0 > 3)
-    /* Horizontal.  */
+  else if ((x1 - x0 > y1 - y0) && (y1 - y0 >= 3))
+    /* A horizontal divider, at least three pixels high: Draw first and
+       last pixels differently.  */
     {
       w32_fill_area_abs (f, hdc, color_first, x0, y0, x1, y0 + 1);
       w32_fill_area_abs (f, hdc, color, x0, y0 + 1, x1, y1 - 1);
       w32_fill_area_abs (f, hdc, color_last, x0, y1 - 1, x1, y1);
     }
   else
+    /* In any other case do not draw the first and last pixels
+       differently.  */
     w32_fill_area_abs (f, hdc, color, x0, y0, x1, y1);
 
   release_frame_dc (f, hdc);

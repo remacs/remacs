@@ -285,7 +285,7 @@ The return value is undefined.
           def))))
 
 
-;; Redefined in byte-optimize.el.
+;; Redefined in byte-opt.el.
 ;; This is not documented--it's not clear that we should promote it.
 (fset 'inline 'progn)
 
