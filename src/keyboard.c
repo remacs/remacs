@@ -8919,7 +8919,6 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
   ptrdiff_t keys_start;
 
   Lisp_Object current_binding = Qnil;
-  Lisp_Object first_event = Qnil;
 
   /* Index of the first key that has no binding.
      It is useless to try fkey.start larger than that.  */
@@ -9029,6 +9028,7 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 
   starting_buffer = current_buffer;
   first_unbound = bufsize + 1;
+  Lisp_Object first_event = mock_input > 0 ? keybuf[0] : Qnil;
 
   /* Build our list of keymaps.
      If we recognize a function key and replace its escape sequence in
