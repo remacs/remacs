@@ -21,7 +21,7 @@ impl LispWindowRef {
     /// Check if window is a live window (displays a buffer).
     /// This is also sometimes called a "leaf window" in Emacs sources.
     #[inline]
-    pub fn is_live(&self) -> bool {
+    pub fn is_live(self) -> bool {
         LispObject::from(self.contents).is_buffer()
     }
 
@@ -48,22 +48,22 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn frame(self) -> LispObject {
+    pub fn frame(&self) -> LispObject {
         LispObject::from(self.frame)
     }
 
     #[inline]
-    pub fn start_marker(&self) -> LispObject {
+    pub fn start_marker(self) -> LispObject {
         LispObject::from(self.start)
     }
 
     #[inline]
-    pub fn is_internal(self) -> bool {
+    pub fn is_internal(&self) -> bool {
         self.contents().is_window()
     }
 
     #[inline]
-    pub fn is_minibuffer(self) -> bool {
+    pub fn is_minibuffer(&self) -> bool {
         unsafe { is_minibuffer(self.as_ptr()) }
     }
 
@@ -71,7 +71,7 @@ impl LispWindowRef {
         unsafe { wget_pixel_height(self.as_ptr()) }
     }
 
-    pub fn total_width(self, round: LispObject) -> i32 {
+    pub fn total_width(&self, round: LispObject) -> i32 {
         let qfloor = LispObject::from(Qfloor);
         let qceiling = LispObject::from(Qceiling);
 
