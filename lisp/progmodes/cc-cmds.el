@@ -1849,7 +1849,15 @@ with a brace block."
 	  ;; Pick out the defun name, according to the type of defun.
 	  (cond
 	   ;; struct, union, enum, or similar:
-	   ((looking-at c-type-prefix-key)
+	   ((save-excursion
+	      (and
+	       (looking-at c-type-prefix-key)
+	       (consp (c-forward-decl-or-cast-1 (c-point 'bosws) 'top nil))
+	       (or (not (or (eq (char-after) ?{)
+			    (and c-recognize-knr-p
+				 (c-in-knr-argdecl))))
+		   (progn (c-backward-syntactic-ws)
+			  (not (eq (char-before) ?\)))))))
 	    (let ((key-pos (point)))
 	      (c-forward-over-token-and-ws) ; over "struct ".
 	      (cond
@@ -1897,8 +1905,16 @@ with a brace block."
 
 	   (t
 	    ;; Normal function or initializer.
-	    (when (c-syntactic-re-search-forward "[{(]" nil t)
-	      (backward-char)
+	    (when
+		(and
+		 (consp (c-forward-decl-or-cast-1 (c-point 'bosws) 'top nil))
+		 (or (eq (char-after) ?{)
+		     (and c-recognize-knr-p
+			  (c-in-knr-argdecl)))
+		 (progn
+		   (c-backward-syntactic-ws)
+		   (eq (char-before) ?\)))
+		 (c-go-list-backward))
 	      (c-backward-syntactic-ws)
 	      (when (eq (char-before) ?\=) ; struct foo bar = {0, 0} ;
 		(c-backward-token-2)
