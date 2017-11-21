@@ -3,20 +3,15 @@
 #![allow(private_no_mangle_fns)]
 #![cfg_attr(feature = "strict", deny(warnings))]
 
-#[macro_use]
-extern crate darling;
 extern crate errno;
 extern crate libc;
 extern crate rand;
+extern crate remacs_util;
 extern crate syn;
 
-mod attributes;
 mod docfile;
 mod files;
 mod math;
-
-// Used by remacs-macros
-pub use attributes::parse_lisp_fn;
 
 // Used for creating temporary files in emacs
 pub use files::rust_make_temp;

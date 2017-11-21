@@ -8,7 +8,7 @@ use std::io::{stdout, BufRead, BufReader, Write};
 use std::mem;
 use std::ptr;
 
-use parse_lisp_fn;
+use remacs_util::parse_lisp_fn;
 
 #[allow(dead_code)]
 const LISP_OBJECT: c_int = 1;

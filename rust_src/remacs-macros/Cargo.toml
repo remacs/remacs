@@ -10,7 +10,7 @@ proc-macro = true
 [dependencies]
 quote = "0.3"
 syn = { version = "0.11.11", features = ["full"] }
-remacs-lib = { version = "0.1.0", path = "../remacs-lib" }
+remacs-util = { version = "0.1.0", path = "../remacs-util" }
 
 [dev-dependencies]
 syn = { version = "0.11.11", features = ["full"] }

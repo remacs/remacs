@@ -4,7 +4,7 @@
 extern crate proc_macro;
 #[macro_use]
 extern crate quote;
-extern crate remacs_lib;
+extern crate remacs_util;
 extern crate syn;
 
 use proc_macro::TokenStream;
@@ -16,7 +16,7 @@ mod function;
 pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let fn_item = syn::parse_item(&fn_ts.to_string()).unwrap();
     let function = function::parse(&fn_item).unwrap();
-    let lisp_fn_args = match remacs_lib::parse_lisp_fn(
+    let lisp_fn_args = match remacs_util::parse_lisp_fn(
         &attr_ts.to_string(),
         &function.name,
         function.fntype.def_min_args(),
