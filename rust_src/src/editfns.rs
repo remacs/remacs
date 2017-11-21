@@ -106,13 +106,13 @@ fn region_limit(beginningp: bool) -> LispObject {
 
 /// Return the integer value of point or mark, whichever is smaller.
 #[lisp_fn]
-fn region_beginning() -> LispObject {
+pub fn region_beginning() -> LispObject {
     region_limit(true)
 }
 
 /// Return the integer value of point or mark, whichever is larger.
 #[lisp_fn]
-fn region_end() -> LispObject {
+pub fn region_end() -> LispObject {
     region_limit(false)
 }
 
@@ -120,7 +120,7 @@ fn region_end() -> LispObject {
 /// Watch out!  Moving this marker changes the mark position.
 /// If you set the marker not to point anywhere, the buffer will have no mark.
 #[lisp_fn]
-fn mark_marker() -> LispObject {
+pub fn mark_marker() -> LispObject {
     ThreadState::current_buffer().mark()
 }
 

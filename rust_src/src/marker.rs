@@ -53,7 +53,7 @@ impl LispMarkerRef {
 
 /// Return t if OBJECT is a marker (editor pointer).
 #[lisp_fn]
-fn markerp(object: LispObject) -> LispObject {
+pub fn markerp(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_marker())
 }
 

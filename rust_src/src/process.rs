@@ -80,7 +80,7 @@ pub fn processp(object: LispObject) -> LispObject {
 
 /// Return the process named NAME, or nil if there is none.
 #[lisp_fn]
-fn get_process(name: LispObject) -> LispObject {
+pub fn get_process(name: LispObject) -> LispObject {
     if name.is_process() {
         name
     } else {
@@ -97,14 +97,14 @@ fn get_process(name: LispObject) -> LispObject {
 /// This is the name of the program invoked in PROCESS,
 /// possibly modified to make it unique among process names.
 #[lisp_fn]
-fn process_name(process: LispObject) -> LispObject {
+pub fn process_name(process: LispObject) -> LispObject {
     process.as_process_or_error().name()
 }
 
 /// Return the buffer PROCESS is associated with.
 /// The default process filter inserts output from PROCESS into this buffer.
 #[lisp_fn]
-fn process_buffer(process: LispObject) -> LispObject {
+pub fn process_buffer(process: LispObject) -> LispObject {
     process.as_process_or_error().buffer()
 }
 
@@ -112,7 +112,7 @@ fn process_buffer(process: LispObject) -> LispObject {
 /// This is the pid of the external process which PROCESS uses or talks to.
 /// For a network, serial, and pipe connections, this value is nil.
 #[lisp_fn]
-fn process_id(process: LispObject) -> LispObject {
+pub fn process_id(process: LispObject) -> LispObject {
     let pid = unsafe { pget_pid(process.as_process_or_error().as_ptr()) };
     if pid != 0 {
         LispObject::from_fixnum(pid as EmacsInt)
@@ -256,7 +256,7 @@ pub fn process_status(process: LispObject) -> LispObject {
 /// Set buffer associated with PROCESS to BUFFER (a buffer, or nil).
 /// Return BUFFER.
 #[lisp_fn]
-fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject {
+pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject {
     let mut p_ref = process.as_process_or_error();
     if buffer.is_not_nil() {
         buffer.as_buffer_or_error();
@@ -287,7 +287,7 @@ fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject {
 /// If PROCESS is a non-blocking network process that hasn't been fully
 /// set up yet, this function will block until socket setup has completed.
 #[lisp_fn]
-fn process_send_string(process: LispObject, string: LispObject) -> LispObject {
+pub fn process_send_string(process: LispObject, string: LispObject) -> LispObject {
     let s = string.as_string_or_error();
     unsafe {
         send_process(

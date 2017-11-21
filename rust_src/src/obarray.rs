@@ -123,7 +123,7 @@ pub extern "C" fn intern_1(s: *const libc::c_char, len: libc::ptrdiff_t) -> Lisp
 /// A second optional argument specifies the obarray to use;
 /// it defaults to the value of `obarray'.
 #[lisp_fn(min = "1")]
-fn intern_soft(name: LispObject, obarray: LispObject) -> LispObject {
+pub fn intern_soft(name: LispObject, obarray: LispObject) -> LispObject {
     let tem = if obarray.is_nil() {
         LispObarrayRef::constant_obarray().lookup(name)
     } else {
@@ -142,7 +142,7 @@ fn intern_soft(name: LispObject, obarray: LispObject) -> LispObject {
 /// A second optional argument specifies the obarray to use;
 /// it defaults to the value of `obarray'.
 #[lisp_fn(min = "1")]
-fn intern(string: LispObject, obarray: LispObject) -> LispObject {
+pub fn intern(string: LispObject, obarray: LispObject) -> LispObject {
     if obarray.is_nil() {
         LispObarrayRef::constant_obarray().intern(string)
     } else {

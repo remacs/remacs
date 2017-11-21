@@ -110,8 +110,16 @@ where
             },
 
             ParseState::LispFn(name) => {
-                if line.starts_with("pub") || line.starts_with("fn") {
-                    if let Some(func) = name.or_else(|| get_function_name(&line)) {
+                let name = name.or_else(|| get_function_name(&line));
+
+                if line.starts_with("fn") {
+                    panic!(format!(
+                        "{} is not public in {} module.\nlisp_fn functions are meant to be used from within remacs as well as in lisp code.",
+                        name.unwrap_or("<unknown>".to_string()),
+                        modname
+                    ));
+                } else if line.starts_with("pub") {
+                    if let Some(func) = name {
                         write!(out_file, "pub use {}::F{};\n", modname, func)?;
                         exported.push(func);
                     }
@@ -133,12 +141,17 @@ where
         };
     }
 
+    let path: PathBuf = [env_var("OUT_DIR"), [modname, "_exports.rs"].concat()]
+        .iter()
+        .collect();
+
     if exported.is_empty() {
+        if path.exists() {
+            // There are no exported functions. Remove the export file.
+            fs::remove_file(path)?;
+        }
         Ok(false)
     } else {
-        let path: PathBuf = [env_var("OUT_DIR"), [modname, "_exports.rs"].concat()]
-            .iter()
-            .collect();
         let mut exports_file = File::create(path)?;
 
         write!(
