@@ -209,7 +209,7 @@ pub struct Lisp_String {
     // TODO: Use correct definition for this.
     //
     // Maybe use rust nightly unions?
-    intervals: *mut c_void, // @TODO implement
+    pub intervals: *mut c_void, // @TODO implement
     pub data: *mut c_char,
 }
 

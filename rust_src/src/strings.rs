@@ -141,3 +141,40 @@ fn multibyte_string_p(object: LispObject) -> LispObject {
 }
 
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
+
+#[test]
+fn test_multibyte_stringp() {
+    let string = mock_unibyte_string!();
+    assert_nil!(multibyte_string_p(string));
+
+    let flt = mock_float!();
+    assert_nil!(multibyte_string_p(flt));
+
+    let multi = mock_multibyte_string!();
+    assert_t!(multibyte_string_p(multi));
+}
+
+#[test]
+fn already_unibyte() {
+    let single = mock_unibyte_string!();
+    assert!(string_to_unibyte(single) == single);
+}
+
+#[test]
+fn str_equality() {
+    let string1 = mock_unibyte_string!("Hello World");
+    let string2 = mock_unibyte_string!("Hello World");
+    let string3 = mock_unibyte_string!("Goodbye World");
+    assert_t!(string_equal(string1, string2));
+    assert_t!(string_equal(string2, string1));
+    assert_nil!(string_equal(string1, string3));
+    assert_nil!(string_equal(string2, string3));
+}
+
+#[test]
+fn test_stringlessp() {
+    let string = mock_unibyte_string!("Hello World");
+    let string2 = mock_unibyte_string!("World Hello");
+    assert_t!(string_lessp(string, string2));
+    assert_nil!(string_lessp(string2, string));
+}
