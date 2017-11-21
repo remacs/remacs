@@ -1138,11 +1138,6 @@ string is computed dynamically based on 'url-privacy-level'.
 
 ** VC and related modes
 
----
-*** The VC state indicator in the mode line now defaults to more
-colorful faces to make it more obvious to the user what the state is.
-See the 'vc-faces' customization group.
-
 +++
 *** 'vc-dir-mode' now binds 'vc-log-outgoing' to 'O'; and has various
 branch-related commands on a keymap bound to 'B'.
