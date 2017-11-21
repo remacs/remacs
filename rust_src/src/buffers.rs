@@ -23,42 +23,42 @@ pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
     #[inline]
-    pub fn zv(&self) -> ptrdiff_t {
+    pub fn zv(self) -> ptrdiff_t {
         self.zv
     }
 
     #[inline]
-    pub fn pt(&self) -> ptrdiff_t {
+    pub fn pt(self) -> ptrdiff_t {
         self.pt
     }
 
     #[inline]
-    pub fn beg_addr(&self) -> *mut c_uchar {
+    pub fn beg_addr(&mut self) -> *mut c_uchar {
         unsafe { (*self.text).beg }
     }
 
     #[inline]
-    pub fn beg(&self) -> ptrdiff_t {
+    pub fn beg(self) -> ptrdiff_t {
         BEG
     }
 
     #[inline]
-    pub fn beg_byte(&self) -> ptrdiff_t {
+    pub fn beg_byte(self) -> ptrdiff_t {
         BEG_BYTE
     }
 
     #[inline]
-    pub fn gpt_byte(&self) -> ptrdiff_t {
+    pub fn gpt_byte(self) -> ptrdiff_t {
         unsafe { (*self.text).gpt_byte }
     }
 
     #[inline]
-    pub fn gap_size(&self) -> ptrdiff_t {
+    pub fn gap_size(self) -> ptrdiff_t {
         unsafe { (*self.text).gap_size }
     }
 
     #[inline]
-    pub fn gap_end_addr(&self) -> *mut c_uchar {
+    pub fn gap_end_addr(&mut self) -> *mut c_uchar {
         unsafe {
             (*self.text)
                 .beg
@@ -67,7 +67,7 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn z_addr(&self) -> *mut c_uchar {
+    pub fn z_addr(&mut self) -> *mut c_uchar {
         unsafe {
             (*self.text)
                 .beg
@@ -76,45 +76,45 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn z_byte(&self) -> ptrdiff_t {
+    pub fn z_byte(self) -> ptrdiff_t {
         unsafe { (*self.text).z_byte }
     }
 
     #[inline]
-    pub fn z(&self) -> ptrdiff_t {
+    pub fn z(self) -> ptrdiff_t {
         unsafe { (*self.text).z }
     }
 
     /// Number of modifications made to the buffer.
     #[inline]
-    pub fn modifications(&self) -> EmacsInt {
+    pub fn modifications(self) -> EmacsInt {
         unsafe { (*self.text).modiff }
     }
 
     /// Value of `modiff` last time the buffer was saved.
     #[inline]
-    pub fn modifications_since_save(&self) -> EmacsInt {
+    pub fn modifications_since_save(self) -> EmacsInt {
         unsafe { (*self.text).save_modiff }
     }
 
     /// Number of modifications to the buffer's characters.
     #[inline]
-    pub fn char_modifications(&self) -> EmacsInt {
+    pub fn char_modifications(self) -> EmacsInt {
         unsafe { (*self.text).chars_modiff }
     }
 
     #[inline]
-    pub fn mark_active(&self) -> LispObject {
+    pub fn mark_active(self) -> LispObject {
         LispObject::from(self.mark_active)
     }
 
     #[inline]
-    pub fn mark(&self) -> LispObject {
+    pub fn mark(self) -> LispObject {
         LispObject::from(self.mark)
     }
 
     #[inline]
-    pub fn name(&self) -> LispObject {
+    pub fn name(self) -> LispObject {
         LispObject::from(self.name)
     }
 
@@ -125,26 +125,28 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn fetch_byte(&self, n: ptrdiff_t) -> u8 {
+    pub fn fetch_byte(self, n: ptrdiff_t) -> u8 {
         let offset = if n >= self.gpt_byte() {
             self.gap_size()
         } else {
             0
         };
 
-        unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
+        let mut clone = self;
+        unsafe { *(clone.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
     }
 
     #[inline]
-    pub fn fetch_multibyte_char(&self, n: ptrdiff_t) -> c_int {
+    pub fn fetch_multibyte_char(self, n: ptrdiff_t) -> c_int {
         let offset = if n >= self.gpt_byte() && n >= 0 {
             self.gap_size()
         } else {
             0
         };
+        let mut clone = self;
         unsafe {
             string_char(
-                self.beg_addr().offset(offset + n - self.beg_byte()),
+                clone.beg_addr().offset(offset + n - self.beg_byte()),
                 ptr::null_mut(),
                 ptr::null_mut(),
             )
@@ -152,7 +154,7 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn fetch_char(&self, n: ptrdiff_t) -> c_int {
+    pub fn fetch_char(self, n: ptrdiff_t) -> c_int {
         if LispObject::from(self.enable_multibyte_characters).is_not_nil() {
             self.fetch_multibyte_char(n)
         } else {
@@ -163,12 +165,12 @@ impl LispBufferRef {
 
 impl LispOverlayRef {
     #[inline]
-    pub fn start(&self) -> LispObject {
+    pub fn start(self) -> LispObject {
         LispObject::from(self.start)
     }
 
     #[inline]
-    pub fn end(&self) -> LispObject {
+    pub fn end(self) -> LispObject {
         LispObject::from(self.end)
     }
 }
