@@ -18,22 +18,22 @@ impl LispFrameRef {
     }
 
     #[inline]
-    pub fn column_width(&self) -> i32 {
+    pub fn column_width(self) -> i32 {
         unsafe { fget_column_width(self.as_ptr()) }
     }
 
     #[inline]
-    pub fn line_height(&self) -> i32 {
+    pub fn line_height(self) -> i32 {
         unsafe { fget_line_height(self.as_ptr()) }
     }
 
     #[inline]
-    pub fn minibuffer_window(&self) -> LispObject {
+    pub fn minibuffer_window(self) -> LispObject {
         LispObject::from(unsafe { fget_minibuffer_window(self.as_ptr()) })
     }
 
     #[inline]
-    pub fn root_window(&self) -> LispObject {
+    pub fn root_window(self) -> LispObject {
         LispObject::from(unsafe { fget_root_window(self.as_ptr()) })
     }
 }

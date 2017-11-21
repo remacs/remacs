@@ -26,29 +26,29 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn is_pseudo(&self) -> bool {
+    pub fn is_pseudo(self) -> bool {
         unsafe { wget_pseudo_window_p(self.as_ptr()) }
     }
 
     /// A window of any sort, leaf or interior, is "valid" if its
     /// contents slot is non-nil.
     #[inline]
-    pub fn is_valid(&self) -> bool {
+    pub fn is_valid(self) -> bool {
         self.contents().is_not_nil()
     }
 
     #[inline]
-    pub fn point_marker(&self) -> LispObject {
+    pub fn point_marker(self) -> LispObject {
         LispObject::from(self.pointm)
     }
 
     #[inline]
-    pub fn contents(&self) -> LispObject {
+    pub fn contents(self) -> LispObject {
         LispObject::from(self.contents)
     }
 
     #[inline]
-    pub fn frame(&self) -> LispObject {
+    pub fn frame(self) -> LispObject {
         LispObject::from(self.frame)
     }
 
@@ -58,20 +58,20 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn is_internal(&self) -> bool {
+    pub fn is_internal(self) -> bool {
         self.contents().is_window()
     }
 
     #[inline]
-    pub fn is_minibuffer(&self) -> bool {
+    pub fn is_minibuffer(self) -> bool {
         unsafe { is_minibuffer(self.as_ptr()) }
     }
 
-    pub fn pixel_height(&self) -> i32 {
+    pub fn pixel_height(self) -> i32 {
         unsafe { wget_pixel_height(self.as_ptr()) }
     }
 
-    pub fn total_width(&self, round: LispObject) -> i32 {
+    pub fn total_width(self, round: LispObject) -> i32 {
         let qfloor = LispObject::from(Qfloor);
         let qceiling = LispObject::from(Qceiling);
 
@@ -89,7 +89,7 @@ impl LispWindowRef {
         }
     }
 
-    pub fn total_height(&self, round: LispObject) -> i32 {
+    pub fn total_height(self, round: LispObject) -> i32 {
         let qfloor = LispObject::from(Qfloor);
         let qceiling = LispObject::from(Qceiling);
 
@@ -115,7 +115,7 @@ impl LispWindowRef {
     /// parameter must not be 'none' and either that parameter or W's
     /// buffer's 'mode-line-format' value must be non-nil.  Finally, W must
     /// be higher than its frame's canonical character height.
-    pub fn wants_mode_line(&self) -> bool {
+    pub fn wants_mode_line(self) -> bool {
         let window_mode_line_format = LispObject::from(unsafe {
             window_parameter(self.as_ptr(), Qmode_line_format)
         });
@@ -137,7 +137,7 @@ impl LispWindowRef {
     /// buffer's 'mode-line-format' value must be non-nil.  Finally, window must
     /// be higher than its frame's canonical character height and be able to
     /// accommodate a mode line too if necessary (the mode line prevails).
-    pub fn wants_header_line(&self) -> bool {
+    pub fn wants_header_line(self) -> bool {
         let window_header_line_format = LispObject::from(unsafe {
             window_parameter(self.as_ptr(), Qheader_line_format)
         });
