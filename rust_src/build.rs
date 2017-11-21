@@ -114,7 +114,10 @@ where
 
                 if line.starts_with("fn") {
                     panic!(format!(
-                        "{} is not public in {} module.\nlisp_fn functions are meant to be used from within remacs as well as in lisp code.",
+                        "
+{} is not public in {} module.
+lisp_fn functions are meant to be used from within remacs as well as in lisp code.
+",
                         name.unwrap_or("<unknown>".to_string()),
                         modname
                     ));
