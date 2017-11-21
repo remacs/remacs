@@ -286,8 +286,12 @@ The return value is undefined.
 
 
 ;; Redefined in byte-opt.el.
-;; This is not documented--it's not clear that we should promote it.
-(fset 'inline 'progn)
+;; This was undocumented and unused for decades.
+(defalias 'inline 'progn
+  "Like `progn', but when compiled inline top-level function calls in body.
+You don't need this.  (See bytecomp.el commentary for more details.)
+
+\(fn BODY...)")
 
 ;;; Interface to inline functions.
 
