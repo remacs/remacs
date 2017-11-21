@@ -1090,8 +1090,8 @@ pub const MANY: i16 = -2;
 
 /// Internal function to get a displayable string out of a Lisp string.
 fn display_string(obj: LispObject) -> String {
-    let mut s = obj.as_string().unwrap();
-    let slice = unsafe { slice::from_raw_parts(s.data_ptr(), s.len_bytes() as usize) };
+    let s = obj.as_string().unwrap();
+    let slice = unsafe { slice::from_raw_parts(s.const_data_ptr(), s.len_bytes() as usize) };
     String::from_utf8_lossy(slice).into_owned()
 }
 
