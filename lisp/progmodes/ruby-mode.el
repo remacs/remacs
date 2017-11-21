@@ -2348,8 +2348,10 @@ Only takes effect if Rubocop is installed."
          ;; Finding the executable is no guarantee of
          ;; rubocop working, especially in the presence
          ;; of rbenv shims (which cross ruby versions).
-         (unless (zerop (process-exit-status proc))
-           (flymake-log :warning "Rubocop returned non-zero status: %s"
+         (when (eq (process-exit-status proc) 127)
+           ;; Not sure what to do in this case.  Maybe ideally we'd
+           ;; switch back to ruby-flymake-simple.
+           (flymake-log :warning "Rubocop returned status 127: %s"
                         (buffer-string)))
          (goto-char (point-min))
          (cl-loop
