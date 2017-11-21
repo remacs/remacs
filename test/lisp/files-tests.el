@@ -411,5 +411,19 @@ name (Bug#28412)."
     (should (file-directory-p (concat (file-name-as-directory dest2) "a")))
     (delete-directory dir 'recursive)))
 
+(ert-deftest files-test-abbreviated-home-dir ()
+  "Test that changing HOME does not confuse `abbreviate-file-name'.
+See <https://debbugs.gnu.org/19657#20>."
+  (let* ((homedir temporary-file-directory)
+         (process-environment (cons (format "HOME=%s" homedir)
+                                    process-environment))
+         (abbreviated-home-dir nil)
+         (testfile (expand-file-name "foo" homedir))
+         (old (file-truename (abbreviate-file-name testfile)))
+         (process-environment (cons (format "HOME=%s"
+                                            (expand-file-name "bar" homedir))
+                                    process-environment)))
+    (should (equal old (file-truename (abbreviate-file-name testfile))))))
+
 (provide 'files-tests)
 ;;; files-tests.el ends here
