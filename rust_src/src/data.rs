@@ -1,7 +1,7 @@
 //! data helpers
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qcyclic_function_indirection;
+use remacs_sys::{Lisp_Object, Qcyclic_function_indirection};
 
 use lisp::LispObject;
 use lisp::defsubr;
@@ -16,7 +16,12 @@ use lisp::defsubr;
 /// This is like `Findirect_function`, except that it doesn't signal an
 /// error if the chain ends up unbound.
 #[no_mangle]
-pub extern "C" fn indirect_function(object: LispObject) -> LispObject {
+pub extern "C" fn indirect_function(object: Lisp_Object) -> Lisp_Object {
+    let result = indirect_function_1(LispObject::from(object));
+    result.to_raw()
+}
+
+pub fn indirect_function_1(object: LispObject) -> LispObject {
     let mut tortoise = object;
     let mut hare = object;
     loop {
@@ -48,7 +53,7 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
     if let Some(symbol) = result.as_symbol() {
         result = symbol.get_function();
         if result.is_symbol() {
-            result = indirect_function(result)
+            result = indirect_function_1(result)
         }
     }
     return result;
