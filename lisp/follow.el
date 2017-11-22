@@ -416,6 +416,7 @@ This command runs the normal hook `follow-mode-hook'.
 
 Keys specific to Follow mode:
 \\{follow-mode-map}"
+  :lighter follow-mode-line-text
   :keymap follow-mode-map
   (if follow-mode
       (progn
