@@ -5170,7 +5170,7 @@ syms_of_fns (void)
   DEFSYM (Qwidget_type, "widget-type");
 
   DEFVAR_LISP ("overriding-plist-environment", Voverriding_plist_environment,
-               doc: /* An alist overrides the plists of the symbols which it lists.
+               doc: /* An alist that overrides the plists of the symbols which it lists.
 Used by the byte-compiler to apply `define-symbol-prop' during
 compilation.  */);
   Voverriding_plist_environment = Qnil;
