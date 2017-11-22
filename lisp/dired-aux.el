@@ -1014,7 +1014,7 @@ ARGS are command switches passed to PROGRAM.")
   "Control the compression shell command for `dired-do-compress-to'.
 
 Each element is (REGEXP . CMD), where REGEXP is the name of the
-archive to which you want to compress, and CMD the the
+archive to which you want to compress, and CMD is the
 corresponding command.
 
 Within CMD, %i denotes the input file(s), and %o denotes the

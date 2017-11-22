@@ -1020,7 +1020,7 @@ Manual}.
 @cindex Horizontal Scroll Bar mode
   On graphical displays with toolkit support, Emacs may also supply a
 @dfn{horizontal scroll bar} on the bottom of each window.  Clicking
-@kbd{mouse-1} on the that scroll bar's left and right buttons scrolls
+@kbd{mouse-1} on that scroll bar's left and right buttons scrolls
 the window horizontally by one column at a time.  Clicking @kbd{mouse-1}
 on the left or right of the scroll bar's inner box scrolls the window by
 four columns.  Dragging the inner box scrolls the window continuously.
