@@ -1479,10 +1479,6 @@ be a list of the form returned by `event-start' and `event-end'."
 (make-obsolete-variable 'command-debug-status
                         "expect it to be removed in a future version." "25.2")
 
-;; Lisp manual only updated in 22.1.
-(define-obsolete-variable-alias 'executing-macro 'executing-kbd-macro
-  "before 19.34")
-
 (define-obsolete-variable-alias 'x-lost-selection-hooks
   'x-lost-selection-functions "22.1")
 (define-obsolete-variable-alias 'x-sent-selection-hooks
