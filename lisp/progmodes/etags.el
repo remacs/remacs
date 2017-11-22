@@ -274,12 +274,9 @@ buffer-local and set them to nil."
   (run-hook-with-args-until-success 'tags-table-format-functions))
 
 ;;;###autoload
-(defun tags-table-mode ()
+(define-derived-mode tags-table-mode special-mode "Tags Table"
   "Major mode for tags table file buffers."
-  (interactive)
-  (setq major-mode 'tags-table-mode     ;FIXME: Use define-derived-mode.
-        mode-name "Tags Table"
-        buffer-undo-list t)
+  (setq buffer-undo-list t)
   (initialize-new-tags-table))
 
 ;;;###autoload
@@ -2060,7 +2057,7 @@ see the doc of that variable if you want to add names to the list."
 
 (define-derived-mode select-tags-table-mode special-mode "Select Tags Table"
   "Major mode for choosing a current tags table among those already loaded."
-  (setq buffer-read-only t))
+  )
 
 (defun select-tags-table-select (button)
   "Select the tags table named on this line."
