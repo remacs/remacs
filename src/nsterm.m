@@ -8129,8 +8129,6 @@ not_in_argv (NSString *arg)
           emacs_event->kind = DRAG_N_DROP_EVENT;
           XSETINT (emacs_event->x, x);
           XSETINT (emacs_event->y, y);
-          ns_input_file = append2 (ns_input_file,
-                                   build_string ([file UTF8String]));
           emacs_event->modifiers = modifiers;
           emacs_event->arg =  list2 (Qfile, build_string ([file UTF8String]));
           EV_TRAILER (theEvent);
