@@ -5079,6 +5079,8 @@ init_buffer_once (void)
 {
   int idx;
 
+  /* Items flagged permanent get an explicit permanent-local property
+     added in bindings.el, for clarity.  */
   memset (buffer_permanent_local_flags, 0, sizeof buffer_permanent_local_flags);
 
   /* 0 means not a lisp var, -1 means always local, else mask.  */
