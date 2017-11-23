@@ -33,7 +33,7 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn beg_addr(&mut self) -> *mut c_uchar {
+    pub fn beg_addr(self) -> *mut c_uchar {
         unsafe { (*self.text).beg }
     }
 
@@ -58,7 +58,7 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn gap_end_addr(&mut self) -> *mut c_uchar {
+    pub fn gap_end_addr(self) -> *mut c_uchar {
         unsafe {
             (*self.text)
                 .beg
@@ -67,7 +67,7 @@ impl LispBufferRef {
     }
 
     #[inline]
-    pub fn z_addr(&mut self) -> *mut c_uchar {
+    pub fn z_addr(self) -> *mut c_uchar {
         unsafe {
             (*self.text)
                 .beg
@@ -132,8 +132,7 @@ impl LispBufferRef {
             0
         };
 
-        let mut clone = self;
-        unsafe { *(clone.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
+        unsafe { *(self.beg_addr().offset(offset + n - self.beg_byte())) as u8 }
     }
 
     #[inline]
@@ -143,10 +142,10 @@ impl LispBufferRef {
         } else {
             0
         };
-        let mut clone = self;
+
         unsafe {
             string_char(
-                clone.beg_addr().offset(offset + n - self.beg_byte()),
+                self.beg_addr().offset(offset + n - self.beg_byte()),
                 ptr::null_mut(),
                 ptr::null_mut(),
             )
