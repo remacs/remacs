@@ -8516,12 +8516,15 @@ after it has been set up properly in other respects."
 
       ;; Set up other local variables.
       (mapc (lambda (v)
-	      (condition-case ()	;in case var is read-only
+	      (condition-case ()
 		  (if (symbolp v)
 		      (makunbound v)
 		    (set (make-local-variable (car v)) (cdr v)))
-		(error nil)))
+		(setting-constant nil))) ;E.g. for enable-multibyte-characters.
 	    lvars)
+
+      (setq mark-ring (mapcar (lambda (mk) (copy-marker (marker-position mk)))
+                              mark-ring))
 
       ;; Run any hooks (typically set up by the major mode
       ;; for cloning to work properly).
