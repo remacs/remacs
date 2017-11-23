@@ -5,6 +5,10 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, Flookup_key};
 use threads::ThreadState;
 
+#[inline]
+pub fn Ctl(c: char) -> i32 {
+    (c as i32) & 0x1f
+}
 
 /// Return the binding for command KEYS in current local keymap only.
 /// KEYS is a string or vector, a sequence of keystrokes.
@@ -30,13 +34,13 @@ fn local_key_binding(keys: LispObject, accept_default: LispObject) -> LispObject
 /// Return current buffer's local keymap, or nil if it has none.
 /// Normally the local keymap is set by the major mode with `use-local-map'.
 #[lisp_fn]
-fn current_local_map() -> LispObject {
+pub fn current_local_map() -> LispObject {
     LispObject::from(ThreadState::current_buffer().keymap)
 }
 
 /// Return the current global keymap.
 #[lisp_fn]
-fn current_global_map() -> LispObject {
+pub fn current_global_map() -> LispObject {
     unsafe { LispObject::from(_current_global_map) }
 }
 

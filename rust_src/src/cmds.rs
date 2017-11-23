@@ -1,14 +1,81 @@
 //! Commands
 
+use std::ffi::CString;
+
 use remacs_macros::lisp_fn;
-use remacs_sys::{set_point, Fline_beginning_position, Fline_end_position};
+use remacs_sys::{initial_define_key, set_point, Fline_beginning_position, Fline_end_position};
+use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qnil};
 use remacs_sys::EmacsInt;
 
+use keymap::{current_global_map, Ctl};
 use lisp::LispObject;
 use lisp::defsubr;
-
 use threads::ThreadState;
 
+/// Add N to point; or subtract N if FORWARD is false. N defaults to 1.
+/// Validate the new location. Return nil.
+fn move_point(n: LispObject, forward: bool) -> LispObject {
+    // This used to just set point to 'point + n', and then check
+    // to see if it was within boundaries. But now that SET_POINT can
+    // potentially do a lot of stuff (calling entering and exiting
+    // hooks, et cetera), that's not a good approach. So we validate the
+    // proposed position, then set point.
+
+    let mut n = if n.is_nil() {
+        1
+    } else {
+        n.as_fixnum_or_error() as isize
+    };
+
+    if !forward {
+        n = -n;
+    }
+
+    let buffer = ThreadState::current_buffer();
+    let mut signal = Qnil;
+    let mut new_point = buffer.pt() + n;
+
+    if new_point < buffer.begv {
+        new_point = buffer.begv;
+        signal = Qbeginning_of_buffer;
+    } else if new_point > buffer.zv {
+        new_point = buffer.zv;
+        signal = Qend_of_buffer;
+    }
+
+    unsafe { set_point(new_point) };
+    if signal != Qnil {
+        xsignal!(signal);
+    }
+
+    return LispObject::constant_nil();
+}
+
+/// Move point N characters forward (backward if N is negative).
+/// On reaching end or beginning of buffer, stop and signal error.
+/// Interactively, N is the numeric prefix argument.
+/// If N is omitted or nil, move point 1 character forward.
+///
+/// Depending on the bidirectional context, the movement may be to the
+/// right or to the left on the screen.  This is in contrast with
+/// \\[right-char], which see.
+#[lisp_fn(min = "0", intspec = "^p")]
+pub fn forward_char(n: LispObject) -> LispObject {
+    move_point(n, true)
+}
+
+/// Move point N characters backward (forward if N is negative).
+/// On attempt to pass beginning or end of buffer, stop and signal error.
+/// Interactively, N is the numeric prefix argument.
+/// If N is omitted or nil, move point 1 character backward.
+///
+/// Depending on the bidirectional context, the movement may be to the
+/// right or to the left on the screen.  This is in contrast with
+/// \\[left-char], which see.
+#[lisp_fn(min = "0", intspec = "^p")]
+pub fn backward_char(n: LispObject) -> LispObject {
+    move_point(n, false)
+}
 
 /// Return buffer position N characters after (before if N negative) point.
 #[lisp_fn]
@@ -85,6 +152,33 @@ pub fn end_of_line(n: LispObject) -> LispObject {
         }
     }
     LispObject::constant_nil()
+}
+
+pub fn initial_keys() {
+    let global_map = current_global_map().to_raw();
+
+    unsafe {
+        initial_define_key(
+            global_map,
+            Ctl('A'),
+            CString::new("beginning-of-line").unwrap().as_ptr(),
+        );
+        initial_define_key(
+            global_map,
+            Ctl('B'),
+            CString::new("backward-char").unwrap().as_ptr(),
+        );
+        initial_define_key(
+            global_map,
+            Ctl('E'),
+            CString::new("end-of-line").unwrap().as_ptr(),
+        );
+        initial_define_key(
+            global_map,
+            Ctl('F'),
+            CString::new("forward-char").unwrap().as_ptr(),
+        );
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/cmds_exports.rs"));
