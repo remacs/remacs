@@ -5355,6 +5355,9 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
       /* We moved the window start towards BEGV, so PT may be now
 	 in the scroll margin at the bottom.  */
       move_it_to (&it, PT, -1,
+		  /* We subtract WINDOW_HEADER_LINE_HEIGHT because
+		     it.y is relative to the bottom of the header
+		     line, see above.  */
 		  (it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w)
                    - partial_line_height (&it) - this_scroll_margin - 1),
 		  -1,
@@ -5392,11 +5395,14 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 
       /* See if point is on a partially visible line at the end.  */
       if (it.what == IT_EOB)
-	partial_p = it.current_y + it.ascent + it.descent > it.last_visible_y;
+	partial_p =
+	  it.current_y + it.ascent + it.descent
+	  > it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w);
       else
 	{
 	  move_it_by_lines (&it, 1);
-	  partial_p = it.current_y > it.last_visible_y;
+	  partial_p =
+	    it.current_y > it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w);
 	}
 
       if (charpos == PT && !partial_p
@@ -5415,7 +5421,7 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 	    goal_y = this_scroll_margin;
 	  SET_TEXT_POS_FROM_MARKER (start, w->start);
 	  start_display (&it, w, start);
-	  /* It would be wrong to subtract CURRENT_HEADER_LINE_HEIGHT
+	  /* It would be wrong to subtract WINDOW_HEADER_LINE_HEIGHT
 	     here because we called start_display again and did not
 	     alter it.current_y this time.  */
 	  move_it_to (&it, -1, window_scroll_pixel_based_preserve_x,
