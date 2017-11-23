@@ -218,9 +218,6 @@ Returns nil if INPUT is prepended by blank space, otherwise non-nil."
 
 (defun eshell-hist-initialize ()
   "Initialize the history management code for one Eshell buffer."
-  (add-hook 'eshell-expand-input-functions
-	    'eshell-expand-history-references nil t)
-
   (when (eshell-using-module 'eshell-cmpl)
     (add-hook 'pcomplete-try-first-hook
 	      'eshell-complete-history-reference nil t))
