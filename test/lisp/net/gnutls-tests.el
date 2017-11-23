@@ -45,19 +45,19 @@
           (secure-hash-algorithms)))
 
 (defvar gnutls-tests-tested-macs
-  (when (gnutls-available-p)
+  (when (memq 'macs (gnutls-available-p))
     (remove-duplicates
      (append (mapcar 'cdr gnutls-tests-internal-macs-upcased)
              (mapcar 'car (gnutls-macs))))))
 
 (defvar gnutls-tests-tested-digests
-  (when (gnutls-available-p)
+  (when (memq 'digests (gnutls-available-p))
     (remove-duplicates
      (append (mapcar 'cdr gnutls-tests-internal-macs-upcased)
              (mapcar 'car (gnutls-digests))))))
 
 (defvar gnutls-tests-tested-ciphers
-  (when (gnutls-available-p)
+  (when (memq 'ciphers (gnutls-available-p))
     (remove-duplicates
     ; these cause FPEs or SEGVs
      (remove-if (lambda (e) (memq e '(ARCFOUR-128)))
