@@ -3,8 +3,8 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{Fset, Lisp_Symbol};
 use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
-use remacs_sys::{find_symbol_value, make_lisp_symbol, symbol_is_alias, symbol_is_constant,
-                 symbol_is_interned};
+use remacs_sys::{find_symbol_value, make_lisp_symbol};
+use remacs_sys::{symbol_interned, symbol_redirect, symbol_trapped_write};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -33,15 +33,15 @@ impl LispSymbolRef {
     }
 
     pub fn is_interned_in_initial_obarray(&self) -> bool {
-        unsafe { symbol_is_interned(self.as_ptr()) }
+        self.interned() == symbol_interned::SYMBOL_INTERNED_IN_INITIAL_OBARRAY as u32
     }
 
     pub fn is_alias(&self) -> bool {
-        unsafe { symbol_is_alias(self.as_ptr()) }
+        self.redirect() == symbol_redirect::SYMBOL_VARALIAS
     }
 
     pub fn is_constant(&self) -> bool {
-        unsafe { symbol_is_constant(self.as_ptr()) }
+        self.trapped_write() == symbol_trapped_write::SYMBOL_NOWRITE
     }
 
     pub fn get_alias(&self) -> LispSymbolRef {

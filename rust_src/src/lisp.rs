@@ -13,7 +13,7 @@ use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::slice;
 
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, PseudovecType, CHECK_IMPURE,
+use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, CHECK_IMPURE,
                  INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, USE_LSB_TAG,
                  VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
@@ -22,8 +22,10 @@ use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_l
                  Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
                  Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
+#[cfg(test)]
+use remacs_sys::Lisp_Float__bindgen_ty_1;
 
-use remacs_sys::{internal_equal, lispsym, make_float, misc_get_ty};
+use remacs_sys::{internal_equal, lispsym, make_float};
 
 use buffers::{LispBufferRef, LispOverlayRef};
 use chartable::LispCharTableRef;
@@ -66,17 +68,17 @@ pub struct LispObject(Lisp_Object);
 impl LispObject {
     #[inline]
     pub fn constant_unbound() -> LispObject {
-        LispObject::from(Qunbound)
+        LispObject::from(unsafe { Qunbound })
     }
 
     #[inline]
     pub fn constant_t() -> LispObject {
-        LispObject::from(Qt)
+        LispObject::from(unsafe { Qt })
     }
 
     #[inline]
     pub fn constant_nil() -> LispObject {
-        LispObject::from(Qnil)
+        LispObject::from(unsafe { Qnil })
     }
 
     #[inline]
@@ -113,7 +115,7 @@ impl LispObject {
             raw & (!VALMASK as EmacsUint)
         } else {
             raw >> VALBITS
-        }) as u8;
+        }) as u32;
         unsafe { mem::transmute(res) }
     }
 
@@ -446,7 +448,7 @@ impl LispObject {
 impl LispObject {
     pub fn is_thread(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_THREAD))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_THREAD))
     }
 
     pub fn as_thread(self) -> Option<ThreadStateRef> {
@@ -460,27 +462,27 @@ impl LispObject {
 
     pub fn is_mutex(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_MUTEX))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_MUTEX))
     }
 
     pub fn is_condition_variable(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_CONDVAR))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_CONDVAR))
     }
 
     pub fn is_byte_code_function(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_COMPILED))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_COMPILED))
     }
 
     pub fn is_subr(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_SUBR))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_SUBR))
     }
 
     pub fn is_buffer(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_BUFFER))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_BUFFER))
     }
 
     pub fn as_buffer(self) -> Option<LispBufferRef> {
@@ -494,7 +496,7 @@ impl LispObject {
 
     pub fn is_char_table(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_CHAR_TABLE))
     }
 
     pub fn as_char_table(self) -> Option<LispCharTableRef> {
@@ -510,10 +512,8 @@ impl LispObject {
     }
 
     pub fn is_bool_vector(self) -> bool {
-        self.as_vectorlike().map_or(
-            false,
-            |v| v.is_pseudovector(PseudovecType::PVEC_BOOL_VECTOR),
-        )
+        self.as_vectorlike()
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_BOOL_VECTOR))
     }
 
     pub fn is_array(self) -> bool {
@@ -527,14 +527,14 @@ impl LispObject {
     /*
     pub fn is_window_configuration(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION)
+            v.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION)
         })
     }
     */
 
     pub fn is_process(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_PROCESS))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_PROCESS))
     }
 
     pub fn as_process(self) -> Option<LispProcessRef> {
@@ -548,7 +548,7 @@ impl LispObject {
 
     pub fn is_window(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_WINDOW))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_WINDOW))
     }
 
     pub fn as_window(self) -> Option<LispWindowRef> {
@@ -592,7 +592,7 @@ impl LispObject {
     /*
     pub fn is_frame(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_FRAME))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_FRAME))
     }
     */
 
@@ -617,19 +617,19 @@ impl LispObject {
 
     pub fn is_hash_table(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_HASH_TABLE))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_HASH_TABLE))
     }
 
     /*
     pub fn is_font(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_FONT))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_FONT))
     }
     */
 
     pub fn as_font(self) -> Option<LispFontRef> {
         self.as_vectorlike().map_or(None, |v| {
-            if v.is_pseudovector(PseudovecType::PVEC_FONT) {
+            if v.is_pseudovector(pvec_type::PVEC_FONT) {
                 Some(LispFontRef::from_vectorlike(v))
             } else {
                 None
@@ -639,7 +639,7 @@ impl LispObject {
 
     pub fn is_record(self) -> bool {
         self.as_vectorlike()
-            .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_RECORD))
+            .map_or(false, |v| v.is_pseudovector(pvec_type::PVEC_RECORD))
     }
 }
 
@@ -785,7 +785,7 @@ impl LispObject {
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails(self) -> TailsIter {
-        TailsIter::new(self, Some(Qlistp))
+        TailsIter::new(self, Some(unsafe { Qlistp }))
     }
 
     /// Iterate over all tails of self.  If self is not a cons-chain,
@@ -798,7 +798,7 @@ impl LispObject {
     /// of cons cells ending in nil.  Otherwise a wrong-type-argument error
     /// will be signaled.
     pub fn iter_tails_plist(self) -> TailsIter {
-        TailsIter::new(self, Some(Qplistp))
+        TailsIter::new(self, Some(unsafe { Qplistp }))
     }
 }
 
@@ -822,7 +822,7 @@ impl LispCons {
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        LispObject::from(unsafe { (*self._extract()).cdr })
+        LispObject::from(unsafe { (*self._extract()).u.cdr })
     }
 
     /// Set the car of the cons cell.
@@ -835,7 +835,7 @@ impl LispCons {
     /// Set the car of the cons cell.
     pub fn set_cdr(self, n: LispObject) {
         unsafe {
-            (*self._extract()).cdr = n.to_raw();
+            (*self._extract()).u.cdr = n.to_raw();
         }
     }
 
@@ -861,7 +861,7 @@ pub type LispFloatRef = ExternalPtr<Lisp_Float>;
 
 impl LispFloatRef {
     pub fn as_data(&self) -> &EmacsDouble {
-        unsafe { &*(self.data.as_ptr() as *const EmacsDouble) }
+        unsafe { &self.u.data }
     }
 }
 
@@ -983,30 +983,29 @@ impl LispObject {
 
     #[inline]
     pub fn is_nil(self) -> bool {
-        self.to_raw() == Qnil
+        self.to_raw() == unsafe { Qnil }
     }
 
     #[inline]
     pub fn is_not_nil(self) -> bool {
-        self.to_raw() != Qnil
+        self.to_raw() != unsafe { Qnil }
     }
 
     #[inline]
     pub fn is_t(self) -> bool {
-        self.to_raw() == Qt
+        self.to_raw() == unsafe { Qt }
     }
 
     #[inline]
     pub fn is_marker(self) -> bool {
         self.as_misc()
-            .map_or(false, |m| unsafe { misc_get_ty(m.as_ptr()) }
-                == Lisp_Misc_Type::Marker as u16)
+            .map_or(false, |m| m.type_() == Lisp_Misc_Type::Lisp_Misc_Marker)
     }
 
     #[inline]
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         self.as_misc().and_then(|m| {
-            if unsafe { misc_get_ty(m.as_ptr()) } == Lisp_Misc_Type::Marker as u16 {
+            if m.type_() == Lisp_Misc_Type::Lisp_Misc_Marker {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
@@ -1038,13 +1037,12 @@ impl LispObject {
     #[inline]
     pub fn is_overlay(self) -> bool {
         self.as_misc()
-            .map_or(false, |m| unsafe { misc_get_ty(m.as_ptr()) }
-                == Lisp_Misc_Type::Overlay as u16)
+            .map_or(false, |m| m.type_() == Lisp_Misc_Type::Lisp_Misc_Overlay)
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
         self.as_misc().and_then(|m| {
-            if unsafe { misc_get_ty(m.as_ptr()) } == Lisp_Misc_Type::Overlay as u16 {
+            if m.type_() == Lisp_Misc_Type::Lisp_Misc_Overlay {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None

@@ -32,7 +32,9 @@ macro_rules! mock_float {
     ($f: expr) => {{
         // Fake an allocated float by just putting it on the heap and leaking it.
         let boxed = Box::new(::remacs_sys::Lisp_Float {
-            data: unsafe { ::std::mem::transmute($f) },
+            u: ::remacs_sys::Lisp_Float__bindgen_ty_1 {
+                data: unsafe { ::std::mem::transmute(val) },
+            },
         });
         let raw = ::lisp::ExternalPtr::new(Box::into_raw(boxed));
         ::lisp::LispObject::tag_ptr(raw, ::remacs_sys::Lisp_Type::Lisp_Float)

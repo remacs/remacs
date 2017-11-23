@@ -4,8 +4,8 @@ use libc::{c_int, c_uchar, c_void, ptrdiff_t};
 use std::{mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist};
-use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal};
+use remacs_sys::{buffer, EmacsInt, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist};
+use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal_1};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -18,7 +18,7 @@ use threads::ThreadState;
 pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
 
-pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
+pub type LispBufferRef = ExternalPtr<buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
@@ -105,23 +105,23 @@ impl LispBufferRef {
 
     #[inline]
     pub fn mark_active(&self) -> LispObject {
-        LispObject::from(self.mark_active)
+        LispObject::from(self.mark_active_)
     }
 
     #[inline]
     pub fn mark(&self) -> LispObject {
-        LispObject::from(self.mark)
+        LispObject::from(self.mark_)
     }
 
     #[inline]
     pub fn name(&self) -> LispObject {
-        LispObject::from(self.name)
+        LispObject::from(self.name_)
     }
 
     // Check if buffer is live
     #[inline]
     pub fn is_live(self) -> bool {
-        LispObject::from(self.name).is_not_nil()
+        LispObject::from(self.name_).is_not_nil()
     }
 
     #[inline]
@@ -153,7 +153,7 @@ impl LispBufferRef {
 
     #[inline]
     pub fn fetch_char(&self, n: ptrdiff_t) -> c_int {
-        if LispObject::from(self.enable_multibyte_characters).is_not_nil() {
+        if LispObject::from(self.enable_multibyte_characters_).is_not_nil() {
             self.fetch_multibyte_char(n)
         } else {
             self.fetch_byte(n) as c_int
@@ -250,7 +250,7 @@ pub fn buffer_file_name(buffer: LispObject) -> LispObject {
         buffer.as_buffer_or_error()
     };
 
-    LispObject::from(buf.filename)
+    LispObject::from(buf.filename_)
 }
 
 /// Return t if BUFFER was modified since its file was last read or saved.
@@ -266,7 +266,7 @@ pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
 /// Return nil if BUFFER has been killed.
 #[lisp_fn(min = "0")]
 pub fn buffer_name(buffer: LispObject) -> LispObject {
-    LispObject::from(buffer.as_buffer_or_current_buffer().name)
+    LispObject::from(buffer.as_buffer_or_current_buffer().name_)
 }
 
 /// Return BUFFER's tick counter, incremented for each change in text.
@@ -356,7 +356,7 @@ fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     if !buf.is_live() {
         error!("Selecting deleted buffer");
     };
-    unsafe { set_buffer_internal(buf.as_mut()) };
+    unsafe { set_buffer_internal_1(buf.as_mut()) };
     buffer
 }
 

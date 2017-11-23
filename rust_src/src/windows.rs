@@ -3,10 +3,10 @@
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Window};
+use remacs_sys::{window, EmacsInt};
 use remacs_sys::{Qceiling, Qfloor};
 use remacs_sys::{fget_column_width, fget_line_height, fget_minibuffer_window, fget_root_window,
-                 is_minibuffer, minibuf_level, minibuf_selected_window as current_minibuf_window,
+                 minibuf_level, minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window, wget_parent};
 
 use editfns::point;
@@ -15,7 +15,7 @@ use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use marker::marker_position;
 
-pub type LispWindowRef = ExternalPtr<Lisp_Window>;
+pub type LispWindowRef = ExternalPtr<window>;
 
 impl LispWindowRef {
     /// Check if window is a live window (displays a buffer).
@@ -59,12 +59,12 @@ impl LispWindowRef {
 
     #[inline]
     pub fn is_minibuffer(&self) -> bool {
-        unsafe { is_minibuffer(self.as_ptr()) }
+        self.mini()
     }
 
     pub fn total_width(&self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from(Qfloor);
-        let qceiling = LispObject::from(Qceiling);
+        let qfloor = LispObject::from(unsafe { Qfloor });
+        let qceiling = LispObject::from(unsafe { Qceiling });
 
         if !(round == qfloor || round == qceiling) {
             self.total_cols
@@ -81,8 +81,8 @@ impl LispWindowRef {
     }
 
     pub fn total_height(&self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from(Qfloor);
-        let qceiling = LispObject::from(Qceiling);
+        let qfloor = LispObject::from(unsafe { Qfloor });
+        let qceiling = LispObject::from(unsafe { Qceiling });
 
         if !(round == qfloor || round == qceiling) {
             self.total_lines
@@ -343,7 +343,7 @@ pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject 
 #[lisp_fn(min = "0")]
 pub fn window_parent(window: LispObject) -> LispObject {
     LispObject::from(unsafe {
-        wget_parent(window_valid_or_selected(window).as_ptr())
+        wget_parent(window_valid_or_selected(window).as_mut())
     })
 }
 

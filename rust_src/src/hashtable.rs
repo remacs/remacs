@@ -4,9 +4,9 @@ use libc::c_void;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Faref, Fcopy_sequence, Lisp_Hash_Table,
-                 PseudovecType, Qhash_table_test, CHECK_IMPURE};
-use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table};
+use remacs_sys::{pvec_type, EmacsDouble, EmacsInt, EmacsUint, Faref, Fcopy_sequence,
+                 Lisp_Hash_Table, Qhash_table_test, CHECK_IMPURE};
+use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table, Lisp_Object};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -16,8 +16,7 @@ pub type LispHashTableRef = ExternalPtr<Lisp_Hash_Table>;
 
 impl LispHashTableRef {
     pub fn allocate() -> LispHashTableRef {
-        let vec_ptr =
-            allocate_pseudovector!(Lisp_Hash_Table, count, PseudovecType::PVEC_HASH_TABLE);
+        let vec_ptr = allocate_pseudovector!(Lisp_Hash_Table, count, pvec_type::PVEC_HASH_TABLE);
         LispHashTableRef::new(vec_ptr)
     }
 
@@ -77,7 +76,14 @@ impl LispHashTableRef {
 
     #[inline]
     pub fn set_hash_value(self, idx: isize, value: LispObject) {
-        unsafe { gc_aset(self.key_and_value, 2 * idx + 1, value.to_raw()) };
+        //   XVECTOR (array)->contents[idx] = val;
+        unsafe {
+            gc_aset(
+                self.key_and_value as *mut Lisp_Object,
+                2 * idx + 1,
+                value.to_raw(),
+            )
+        };
     }
 
     pub fn lookup(self, key: LispObject, hashptr: *mut EmacsUint) -> isize {
@@ -323,7 +329,7 @@ fn clrhash(table: LispObject) -> LispObject {
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
 fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
-    let sym = LispObject::from(Qhash_table_test);
+    let sym = LispObject::from(unsafe { Qhash_table_test });
     put(name, sym, list(&mut [test, hash]))
 }
 

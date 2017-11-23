@@ -7,8 +7,8 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, MOST_NEGATIVE_FIXNUM,
                  MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Qarith_error, Qinteger_or_marker_p, Qnumberp, Qrange_error};
-use remacs_sys::build_string;
 use remacs_sys::libm;
+use remacs_sys::make_string;
 
 use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
@@ -352,7 +352,7 @@ where
         }
     }
     let errstr = LispObject::from(unsafe {
-        build_string(name.as_ptr() as *const libc::c_char)
+        make_string(name.as_ptr() as *const libc::c_char, name.len() as isize)
     });
     xsignal!(Qrange_error, errstr, arg)
 }

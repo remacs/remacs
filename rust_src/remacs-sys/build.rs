@@ -3,7 +3,7 @@ extern crate libc;
 use std::cmp::max;
 use std::env;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
+use std::io::Write;
 use std::mem::size_of;
 use std::path::PathBuf;
 
@@ -28,13 +28,6 @@ fn integer_max_constant(len: usize) -> &'static str {
         16 => "0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF_i128",
         _ => panic!("nonstandard int size {}", len),
     }
-}
-
-#[derive(Eq, PartialEq)]
-enum ParseState {
-    ReadingGlobals,
-    ReadingSymbols,
-    Complete,
 }
 
 fn generate_definitions() {
@@ -116,7 +109,6 @@ fn generate_definitions() {
 
     let bits = 8; // bits in a byte.
     let gc_type_bits = 3;
-    write!(file, "pub const GCTYPEBITS: EmacsInt = {};\n", gc_type_bits).expect("Write error!");
 
     let uint_max_len = integer_type_item.2 * bits;
     let int_max_len = uint_max_len - 1;
@@ -129,74 +121,68 @@ fn generate_definitions() {
     ).expect("Write error!");
 }
 
-fn generate_globals() {
-    let in_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
-        .join("..")
-        .join("..")
-        .join("src")
-        .join("globals.h");
-    let in_file = BufReader::new(File::open(in_path).expect("Failed to open globals file"));
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("globals.rs");
-    let mut out_file = File::create(out_path).expect("Failed to create definition file");
-    let mut parse_state = ParseState::ReadingGlobals;
-
-    write!(out_file, "#[allow(unused)]\n").expect("Write error!");
-    write!(out_file, "#[repr(C)]\n").expect("Write error!");
-    write!(out_file, "pub struct emacs_globals {{\n").expect("Write error!");
-
-    for line in in_file.lines() {
-        let line = line.expect("Read error!");
-        match parse_state {
-            ParseState::ReadingGlobals => {
-                if line.starts_with("  ") {
-                    let mut parts = line.trim().trim_matches(';').split(' ');
-                    let vtype = parts.next().unwrap();
-                    let vname = parts.next().unwrap();
-                    write!(
-                        out_file,
-                        "    pub {}: {},\n",
-                        vname,
-                        match vtype {
-                            "EMACS_INT" => "EmacsInt",
-                            "bool_bf" => "BoolBF",
-                            t => t,
-                        }
-                    ).expect("Write error!");
-                }
-                if line.starts_with('}') {
-                    write!(out_file, "}}\n").expect("Write error!");
-                    parse_state = ParseState::ReadingSymbols;
-                    continue;
-                }
-            }
-
-            ParseState::ReadingSymbols => {
-                if line.trim().starts_with("#define") {
-                    let mut parts = line.split(' ');
-                    let _ = parts.next().unwrap(); // The #define
-                                                   // Remove the i in iQnil
-                    let (_, symbol_name) = parts.next().unwrap().split_at(1);
-                    let value = parts.next().unwrap();
-                    write!(
-                        out_file,
-                        "pub const {}: Lisp_Object = {} \
-                         * (::std::mem::size_of::<Lisp_Symbol>() as EmacsInt);\n",
-                        symbol_name,
-                        value
-                    ).expect("Write error in reading symbols stage");
-                } else if line.trim().starts_with("_Noreturn") {
-                    parse_state = ParseState::Complete
-                }
-            }
-
-            ParseState::Complete => {
-                break;
-            }
-        };
-    }
-}
-
 fn main() {
     generate_definitions();
-    generate_globals();
+    run_bindgen();
+}
+
+extern crate bindgen;
+extern crate regex;
+
+fn run_bindgen() {
+    let mut builder = bindgen::Builder::default()
+        .rust_target(bindgen::RustTarget::Nightly)
+        .generate_comments(true)
+        .clang_arg("-I../../src")
+        .clang_arg("-I../../lib");
+    if cfg!(target_os = "windows") {
+        builder = builder.clang_arg("-I../../nt/inc");
+    }
+    builder = builder.clang_arg("-Demacs")
+        .header("wrapper.h")
+        .blacklist_type("USE_LSB_TAG")
+        .blacklist_type("VALMASK")
+        // this is wallpaper for a bug in bindgen, we don't lose anything by it
+        // https://github.com/servo/rust-bindgen/issues/687
+        .blacklist_type("BOOL_VECTOR_BITS_PER_CHAR")
+        // this is wallpaper for a function argument that shadows a static of the same name
+        // https://github.com/servo/rust-bindgen/issues/840
+        .blacklist_type("face_change")
+        // these never return, and bindgen doesn't yet detect that, so we will do them manually
+        .blacklist_type("error")
+        .blacklist_type("circular_list")
+        .blacklist_type("wrong_type_argument")
+        .blacklist_type("nsberror")
+        .blacklist_type("emacs_abort")
+        .blacklist_type("Fsignal")
+        .rustified_enum("char_bits")
+        .rustified_enum("Lisp_Type")
+        .rustified_enum("Lisp_Misc_Type")
+        .rustified_enum("pvec_type")
+        .rustified_enum("font_property_index")
+        .rustified_enum("symbol_interned")
+        .rustified_enum("symbol_redirect")
+        .rustified_enum("symbol_trapped_write")
+        .ctypes_prefix("::libc");
+
+    //builder.dump_preprocessed_input()
+    //       .expect("Unable to dump preprocessed bindings");
+    let bindings = builder
+        .rustfmt_bindings(true)
+        .generate()
+        .expect("Unable to generate bindings");
+
+    // https://github.com/servo/rust-bindgen/issues/839
+    let source = bindings.to_string();
+    let re =
+        regex::Regex::new(r"pub use self::gnutls_cipher_algorithm_t as gnutls_cipher_algorithm;");
+    let munged = re.unwrap().replace_all(
+        &source,
+        "// pub use self::gnutls_cipher_algorithm_t as gnutls_cipher_algorithm;",
+    );
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
+    let file = File::create(out_path);
+    file.unwrap()
+        .write_all(munged.into_owned().as_bytes())
+        .unwrap();
 }

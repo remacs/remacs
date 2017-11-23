@@ -34,7 +34,7 @@ fn sleep_for(seconds: LispObject, milliseconds: LispObject) -> LispObject {
                     0,
                     true,
                     LispObject::constant_nil().to_raw(),
-                    ptr::null(),
+                    ptr::null_mut(),
                     0,
                 )
             };

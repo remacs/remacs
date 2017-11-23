@@ -27,6 +27,7 @@ alloc_unexecmacosx = { version = "0.1.0", path = "alloc_unexecmacosx" }
 
 [build-dependencies]
 libc = "0.2"
+bindgen = "0.31.0"
 
 [lib]
 crate-type = ["staticlib"]
