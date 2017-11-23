@@ -10,8 +10,13 @@ proc-macro = true
 [dependencies]
 quote = "0.3"
 syn = { version = "0.11.11", features = ["full"] }
-synom = "0.11.3"
+remacs-util = { version = "0.1.0", path = "../remacs-util" }
 
 [dev-dependencies]
 syn = { version = "0.11.11", features = ["full"] }
-synom = "0.11.3"
+
+[profile.release]
+panic = "abort"
+
+[profile.dev]
+panic = "abort"

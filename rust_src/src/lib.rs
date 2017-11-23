@@ -29,6 +29,7 @@ extern crate remacs_sys;
 extern crate mock_derive;
 
 #[cfg(test)]
+#[macro_use]
 mod functions;
 
 #[macro_use]
@@ -84,4 +85,4 @@ static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
-pub use functions::make_float;
+pub use functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};

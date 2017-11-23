@@ -22,6 +22,36 @@ impl LispProcessRef {
     }
 
     #[inline]
+    fn tty_name(&self) -> LispObject {
+        LispObject::from(self.tty_name)
+    }
+
+    #[inline]
+    fn command(&self) -> LispObject {
+        LispObject::from(self.command)
+    }
+
+    #[inline]
+    fn mark(&self) -> LispObject {
+        LispObject::from(self.mark)
+    }
+
+    #[inline]
+    fn filter(&self) -> LispObject {
+        LispObject::from(self.filter)
+    }
+
+    #[inline]
+    fn sentinel(&self) -> LispObject {
+        LispObject::from(self.sentinel)
+    }
+
+    #[inline]
+    fn plist(&self) -> LispObject {
+        LispObject::from(self.plist)
+    }
+
+    #[inline]
     fn buffer(&self) -> LispObject {
         LispObject::from(self.buffer)
     }
@@ -113,10 +143,54 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
     return LispObject::constant_nil();
 }
 
+/// Return the name of the terminal PROCESS uses, or nil if none.
+/// This is the terminal that the process itself reads and writes on,
+/// not the name of the pty that Emacs uses to talk with that terminal.
+#[lisp_fn]
+pub fn process_tty_name(process: LispObject) -> LispObject {
+    process.as_process_or_error().tty_name()
+}
+
+/// Return the command that was executed to start PROCESS.  This is a
+/// list of strings, the first string being the program executed and
+/// the rest of the strings being the arguments given to it.  For a
+/// network or serial or pipe connection, this is nil (process is
+/// running) or t (process is stopped).
+#[lisp_fn]
+pub fn process_command(process: LispObject) -> LispObject {
+    process.as_process_or_error().command()
+}
+
+/// Return the filter function of PROCESS.
+/// See `set-process-filter' for more info on filter functions.
+#[lisp_fn]
+pub fn process_filter(process: LispObject) -> LispObject {
+    process.as_process_or_error().filter()
+}
+
+/// Return the sentinel of PROCESS.
+/// See `set-process-sentinel' for more info on sentinels.
+#[lisp_fn]
+pub fn process_sentinel(process: LispObject) -> LispObject {
+    process.as_process_or_error().sentinel()
+}
+
+/// Return the marker for the end of the last output from PROCESS.
+#[lisp_fn]
+pub fn process_mark(process: LispObject) -> LispObject {
+    process.as_process_or_error().mark()
+}
+
 /// Return a list of all processes that are Emacs sub-processes.
 #[lisp_fn]
 pub fn process_list() -> LispObject {
     LispObject::from(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
+}
+
+/// Return the plist of PROCESS.
+#[lisp_fn]
+pub fn process_plist(process: LispObject) -> LispObject {
+    process.as_process_or_error().plist()
 }
 
 /// Replace the plist of PROCESS with PLIST.  Return PLIST.

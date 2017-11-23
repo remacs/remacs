@@ -29,7 +29,7 @@ fn sleep_for(seconds: LispObject, milliseconds: LispObject) -> LispObject {
         while !t.tv_sec < 0 && (t.tv_sec > 0 || t.tv_nsec > 0) {
             unsafe {
                 wait_reading_process_output(
-                    cmp::min(t.tv_sec, WAIT_READING_MAX),
+                    cmp::min(t.tv_sec as i64, WAIT_READING_MAX),
                     t.tv_nsec as i32,
                     0,
                     true,

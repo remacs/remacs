@@ -6,10 +6,12 @@
 extern crate errno;
 extern crate libc;
 extern crate rand;
+extern crate remacs_util;
+extern crate syn;
 
+mod docfile;
 mod files;
 mod math;
-mod docfile;
 
 // Used for creating temporary files in emacs
 pub use files::rust_make_temp;

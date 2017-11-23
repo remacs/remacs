@@ -66,5 +66,5 @@ C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-libr
 C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-gnutls"
 C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && ./autogen.sh"
 C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && PKG_CONFIG_PATH=/mingw64/lib/pkgconfig ./configure --without-imagemagick"
-C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && make -j 3 && make check"
+C:\msys64\usr\bin\bash --login -c "cd /c/projects/remacs && make && make check"
 if %ERRORLEVEL% NEQ 0 exit 1
