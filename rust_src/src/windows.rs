@@ -5,7 +5,7 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
-use remacs_sys::{minibuf_level, minibuf_selected_window as current_minibuf_window,
+use remacs_sys::{is_minibuffer, minibuf_level, minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window, wget_parent, wget_pixel_height,
                  wget_pseudo_window_p, window_parameter};
 
