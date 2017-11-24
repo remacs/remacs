@@ -401,9 +401,18 @@ Other major modes are defined by comparison with this one."
 (defvar self-insert-uses-region-functions nil
   "Special hook to tell if `self-insert-command' will use the region.
 It must be called via `run-hook-with-args-until-success' with no arguments.
-Any `post-self-insert-command' which consumes the region should
-register a function on this hook so that things like `delete-selection-mode'
-can refrain from consuming the region.")
+
+If any function on this hook returns a non-nil value, `delete-selection-mode'
+will act on that value (see `delete-selection-helper'), and will
+usually delete the region.  If all the functions on this hook return
+nil, it is an indiction that `self-insert-command' needs the region
+untouched by `delete-selection-mode', and will itself do whatever is
+appropriate with the region.
+Any function on `post-self-insert-hook' which act on the region should
+add a function to this hook so that `delete-selection-mode' could
+refrain from deleting the region before `post-self-insert-hook'
+functions are called.
+This hook is run by `delete-selection-uses-region-p', which see.")
 
 (defvar hard-newline (propertize "\n" 'hard t 'rear-nonsticky '(hard))
   "Propertized string representing a hard newline character.")
