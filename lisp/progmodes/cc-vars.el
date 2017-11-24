@@ -1227,8 +1227,8 @@ As described below, each cons cell in this list has the form:
 
 When a line is indented, CC Mode first determines the syntactic
 context of it by generating a list of symbols called syntactic
-elements.  The global variable `c-syntactic-context' is bound to the
-that list.  Each element in the list is in turn a list where the first
+elements.  The global variable `c-syntactic-context' is bound to that
+list.  Each element in the list is in turn a list where the first
 element is a syntactic symbol which tells what kind of construct the
 indentation point is located within.  More elements in the syntactic
 element lists are optional.  If there is one more and it isn't nil,
