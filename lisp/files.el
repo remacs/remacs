@@ -5881,7 +5881,11 @@ an auto-save file."
       (error "%s is an auto-save file" (abbreviate-file-name file)))
   (let ((file-name (let ((buffer-file-name file))
 		     (make-auto-save-file-name))))
-    (cond ((if (file-exists-p file)
+    (cond ((and (file-exists-p file)
+                (not (file-exists-p file-name)))
+           (error "Auto save file %s does not exist"
+                  (abbreviate-file-name file-name)))
+          ((if (file-exists-p file)
 	       (not (file-newer-than-file-p file-name file))
 	     (not (file-exists-p file-name)))
 	   (error "Auto-save file %s not current"
