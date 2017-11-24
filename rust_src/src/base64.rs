@@ -17,8 +17,9 @@ use strings::MIME_LINE_LENGTH;
 #[no_mangle]
 pub extern "C" fn base64_encode_1(
     from: *const c_char,
+    in_length: ptrdiff_t,
     to: *mut c_char,
-    length: ptrdiff_t,
+    out_length: ptrdiff_t,
     line_break: bool,
     multibyte: bool,
 ) -> ptrdiff_t {
@@ -33,9 +34,10 @@ pub extern "C" fn base64_encode_1(
     } else {
         base64_crate::STANDARD
     };
-    let bytes = unsafe { slice::from_raw_parts(from as *const u8, length as usize) };
+    let bytes = unsafe { slice::from_raw_parts(from as *const u8, in_length as usize) };
+    let mut output = unsafe { slice::from_raw_parts_mut(to as *mut u8, out_length as usize) };
 
-    let output = if multibyte {
+    let encoded_size = if multibyte {
         // Transform non-ASCII characters in multibyte string to Latin1,
         // erroring out for non-Latin1 codepoints, and resolve raw 8-bit bytes.
         let mut input = Vec::with_capacity(bytes.len());
@@ -51,16 +53,13 @@ pub extern "C" fn base64_encode_1(
             }
             i += len;
         }
-        base64_crate::encode_config(&input, config)
+        base64_crate::encode_config_slice(&input, config, &mut output) as ptrdiff_t
     } else {
         // Just encode the raw bytes.
-        base64_crate::encode_config(bytes, config)
+        base64_crate::encode_config_slice(bytes, config, &mut output) as ptrdiff_t
     };
-    let size = output.len();
-    unsafe {
-        ptr::copy_nonoverlapping(output.as_ptr(), to as *mut u8, size);
-    }
-    size as ptrdiff_t
+
+    encoded_size as ptrdiff_t
 }
 
 /// Base64-decode the data at FROM of LENGTH bytes into TO.  If MULTIBYTE, the
@@ -102,24 +101,54 @@ pub extern "C" fn base64_decode_1(
 }
 
 #[test]
-fn test_base64_encode_1() {
+fn test_simple_base64_encode_1() {
     let input = "hello world";
     let mut encoded = [0u8; 20];
 
     let length = base64_encode_1(
         input.as_ptr() as *mut c_char,
-        encoded.as_mut_ptr() as *mut c_char,
         input.as_bytes().len() as ptrdiff_t,
+        encoded.as_mut_ptr() as *mut c_char,
+        encoded.len() as isize,
         false,
         false,
     );
-
     assert!(length != -1);
+
     assert_eq!(b"aGVsbG8gd29ybGQ=", &encoded[..length as usize]);
 }
 
 #[test]
-fn test_base64_decode_1() {
+fn test_linewrap_base64_encode_1() {
+    let input = "Emacs is a widely used tool with a long history, broad platform
+support and strong backward compatibility requirements. The core team
+is understandably cautious in making far-reaching changes.";
+    let mut encoded = [0u8; 500];
+
+    let length = base64_encode_1(
+        input.as_ptr() as *mut c_char,
+        input.as_bytes().len() as ptrdiff_t,
+        (&mut encoded).as_mut_ptr() as *mut c_char,
+        500,
+        true,
+        false,
+    );
+    assert!(length != -1);
+
+    let expected = "RW1hY3MgaXMgYSB3aWRlbHkgdXNlZCB0b29sIHdpdGggYSBsb25nIGhpc3RvcnksIGJyb2FkIHBs
+YXRmb3JtCnN1cHBvcnQgYW5kIHN0cm9uZyBiYWNrd2FyZCBjb21wYXRpYmlsaXR5IHJlcXVpcmVt
+ZW50cy4gVGhlIGNvcmUgdGVhbQppcyB1bmRlcnN0YW5kYWJseSBjYXV0aW91cyBpbiBtYWtpbmcg
+ZmFyLXJlYWNoaW5nIGNoYW5nZXMu"
+        .to_string();
+    assert_eq!(
+        expected,
+        String::from_utf8_lossy(&encoded[..length as usize])
+    );
+    assert_eq!(expected.len(), length as usize);
+}
+
+#[test]
+fn test_simple_base64_decode_1() {
     use std::str;
 
     let input = "aGVsbG8gd29ybGQ=";
@@ -143,6 +172,71 @@ fn test_base64_decode_1() {
     assert_eq!("hello world", answer);
 }
 
+#[test]
+fn test_linewrap_base64_decode_1() {
+    let input1 = "
+WW91IG1heSBlbmNvdW50ZXIgYnVncyBpbiB0aGlzIHJlbGVhc2UuICBJZiB5b3UgZG8sIHBsZWFz
+ZSByZXBvcnQKdGhlbTsgeW91ciBidWcgcmVwb3J0cyBhcmUgdmFsdWFibGUgY29udHJpYnV0aW9u
+cyB0byB0aGUgRlNGLCBzaW5jZQp0aGV5IGFsbG93IHVzIHRvIG5vdGljZSBhbmQgZml4IHByb2Js
+ZW1zIG9uIG1hY2hpbmVzIHdlIGRvbid0IGhhdmUsIG9yCmluIGNvZGUgd2UgZG9uJ3QgdXNlIG9m
+dGVuLiAgUGxlYXNlIHNlbmQgYnVnIHJlcG9ydHMgdG8gdGhlIG1haWxpbmcKbGlzdCBidWctZ251
+LWVtYWNzQGdudS5vcmcuICBJZiBwb3NzaWJsZSwgdXNlIE0teCByZXBvcnQtZW1hY3MtYnVnLgoK
+U2VlIHRoZSAiQnVncyIgc2VjdGlvbiBvZiB0aGUgRW1hY3MgbWFudWFsIGZvciBtb3JlIGluZm9y
+bWF0aW9uIG9uIGhvdwp0byByZXBvcnQgYnVncy4gIChUaGUgZmlsZSAnQlVHUycgaW4gdGhpcyBk
+aXJlY3RvcnkgZXhwbGFpbnMgaG93IHlvdQpjYW4gZmluZCBhbmQgcmVhZCB0aGF0IHNlY3Rpb24g
+dXNpbmcgdGhlIEluZm8gZmlsZXMgdGhhdCBjb21lIHdpdGgKRW1hY3MuKSAgRm9yIGEgbGlzdCBv
+ZiBtYWlsaW5nIGxpc3RzIHJlbGF0ZWQgdG8gRW1hY3MsIHNlZQo8aHR0cHM6Ly9zYXZhbm5haC5n
+bnUub3JnL21haWwvP2dyb3VwPWVtYWNzPi4gIEZvciB0aGUgY29tcGxldGUKbGlzdCBvZiBHTlUg
+bWFpbGluZyBsaXN0cywgc2VlIDxodHRwOi8vbGlzdHMuZ251Lm9yZy8+LgoK";
+
+    let input2 = "
+WW91IG1heSBlbmNvdW50ZXIgYnVncyBpbiB0aGlzIHJlbGVhc2UuICBJZiB5b3UgZG8sIHBsZWFz
+ZSByZXBvcnQKdGhlbTsgeW91ciBidWcgcmVwb3J0cyBhcmUgdmFsdWFibGUgY29udHJpYnV0aW9u
+cyB0byB0aGUgRlNGLCBzaW5jZQp0aGV5IGFsbG93IHVzIHRvIG5vdGljZSBhbmQgZml4IHByb2Js
+ZW1zIG9uIG1hY2hpbmVzIHdlIGRvbid0IGhhdmUsIG9yCmluIGNvZGUgd2UgZG9uJ3QgdXNlIG9m
+dGVuLiAgUGxlYXNlIHNlbmQgYnVnIHJlcG9ydHMgdG8gdGhlIG1haWxpbmcKbGlzdCBidWctZ251
+LWVtYWNzQGdudS5vcmcuICBJZiBwb3NzaWJsZSwgdXNlIE0teCByZXBvcnQtZW1hY3MtYnVnLgoK
+U2VlIHRoZSAiQnVncyIgc2VjdGlvbiBvZiB0aGUgRW1hY3MgbWFudWFsIGZvciBtb3JlIGluZm9y
+bWF0aW9uIG9uIGhvdwp0byByZXBvcnQgYnVncy4gIChUaGUgZmlsZSAnQlVHUycgaW4gdGhpcyBk
+aXJlY3RvcnkgZXhwbGFpbnMgaG93IHlvdQpjYW4gZmluZCBhbmQgcmVhZCB0aGF0IHNlY3Rpb24g
+dXNpbmcgdGhlIEluZm8gZmlsZXMgdGhhdCBjb21lIHdpdGgKRW1hY3MuKSAgRm9yIGEgbGlzdCBv
+ZiBtYWlsaW5nIGxpc3RzIHJlbGF0ZWQgdG8gRW1hY3MsIHNlZQo8aHR0cHM6Ly9zYXZhbm5haC5n
+bnUub3JnL21haWwvP2dyb3VwPWVtYWNzPi4gIEZvciB0aGUgY29tcGxldGUKbGlzdCBvZiBHTlUg
+bWFpbGluZyBsaXN0cywgc2VlIDxodHRwOi8vbGlzdHMuZ251Lm9yZy8+LgoK";
+
+    let mut decoded1: Vec<u8> = Vec::with_capacity(730);
+    let mut decoded2: Vec<u8> = Vec::with_capacity(730);
+
+    let mut n1: isize = 0;
+    let nchars1: *mut isize = &mut n1;
+
+    let mut n2: isize = 0;
+    let nchars2: *mut isize = &mut n2;
+
+    let length1 = base64_decode_1(
+        input1.as_ptr() as *mut c_char,
+        decoded1.as_mut_ptr() as *mut c_char,
+        input1.as_bytes().len() as ptrdiff_t,
+        true,
+        nchars1,
+    );
+
+    let length2 = base64_decode_1(
+        input2.as_ptr() as *mut c_char,
+        decoded2.as_mut_ptr() as *mut c_char,
+        input2.as_bytes().len() as ptrdiff_t,
+        true,
+        nchars2,
+    );
+
+    assert_eq!(length1, length2);
+    assert_eq!(n1, n2);
+    assert_eq!(
+        String::from_utf8(decoded1).unwrap(),
+        String::from_utf8(decoded2).unwrap()
+    );
+}
+
 /// Base64-encode STRING and return the result.
 /// Optional second argument NO-LINE-BREAK means do not break long lines
 /// into shorter lines.
@@ -163,16 +257,12 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
     let encoded = buffer.as_mut_ptr();
     let encoded_length = base64_encode_1(
         string.sdata_ptr(),
-        encoded,
         length,
+        encoded,
+        allength,
         no_line_break.is_nil(),
         string.is_multibyte(),
     );
-
-    if encoded_length > allength {
-        panic!("base64 encoded length is larger then allocated buffer");
-    }
-
     if encoded_length < 0 {
         error!("Multibyte character in data for base64 encoding");
     }
