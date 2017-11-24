@@ -101,7 +101,7 @@ acquire_global_lock (struct thread_state *self)
      signal handler could have called maybe_reacquire_global_lock, in
      which case we are already holding the lock and shouldn't try
      taking it again, or else we will hang forever.  */
-  if (!(self && self->not_holding_lock))
+  if (!(self && !self->not_holding_lock))
     sys_mutex_lock (&global_lock);
   post_acquire_global_lock (self);
 }
