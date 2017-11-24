@@ -435,7 +435,9 @@ dynamically bound value; @pxref{Void Variables}), then @var{value} is
 evaluated and @var{symbol} is set to the result.  But if @var{symbol}
 is not void, @var{value} is not evaluated, and @var{symbol}'s value is
 left unchanged.  If @var{value} is omitted, the value of @var{symbol}
-is not changed in any case.
+is not changed in any case.  Using @code{defvar} with no value is one
+method of suppressing byte compilation warnings, see @ref{Compiler
+Errors}.
 
 If @var{symbol} has a buffer-local binding in the current buffer,
 @code{defvar} acts on the default value, which is buffer-independent,
