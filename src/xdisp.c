@@ -31872,7 +31872,7 @@ x_draw_bottom_divider (struct window *w)
       int x1 = WINDOW_RIGHT_EDGE_X (w);
       int y0 = WINDOW_BOTTOM_EDGE_Y (w) - WINDOW_BOTTOM_DIVIDER_WIDTH (w);
       int y1 = WINDOW_BOTTOM_EDGE_Y (w);
-      struct window *p = !NILP (w->parent) ? XWINDOW (w->parent) : false;
+      struct window *p = !NILP (w->parent) ? XWINDOW (w->parent) : NULL;
 
       /* If W is vertically combined and has a sibling below, don't draw
 	 over any right divider.  */
