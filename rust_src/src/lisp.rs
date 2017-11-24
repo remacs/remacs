@@ -333,7 +333,7 @@ impl LispObject {
     }
 
     #[inline]
-    unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
+    pub unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
         let raw = self.to_raw();
         if !USE_LSB_TAG {
             raw & INTMASK

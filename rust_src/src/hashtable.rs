@@ -5,7 +5,7 @@ use std::ptr;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Faref, Fcopy_sequence, Lisp_Hash_Table,
-                 PseudovecType, Qhash_table_test, CHECK_IMPURE};
+                 PseudovecType, Qhash_table_test, CHECK_IMPURE, INTMASK};
 use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table};
 
 use lisp::{ExternalPtr, LispObject};
@@ -93,24 +93,106 @@ impl LispHashTableRef {
         unsafe { CHECK_IMPURE(object.to_raw(), self.as_ptr() as *mut c_void) };
     }
 
+    /// Remove the entry matching KEY from hash table, if there is one.
     pub fn remove(mut self, key: LispObject) {
-        unsafe { hash_remove_from_table(self.as_mut(), key.to_raw()) };
+        // This is calling a function pointer, if that isn't clear.
+        let hash_code = (self.test.hashfn)(&mut self.test, key.to_raw());
+        debug_assert!((hash_code & !(INTMASK as u64)) == 0);
+        let index = unsafe { self.get_index().as_vector_unchecked() };
+        let len = index.len() as EmacsUint;
+        
+        let start_of_bucket = (hash_code % len) as isize;
+        let mut prev = -1;
+
+        let mut i = self.get_index_slot(start_of_bucket);
+        while 0 <= i {
+            if key.eq(self.get_hash_key(i))
+                || (self.test.cmpfn as *mut c_void != ptr::null_mut()
+                    && hash_code == unsafe {
+                        self.get_hash_hash(i).to_fixnum_unchecked() as EmacsUint }
+                    && (self.test.cmpfn)(&mut self.test,
+                                         key.to_raw(),
+                                         self.get_hash_key(i).to_raw())) {
+                    if prev < 0 {
+                        self.set_index_slot(start_of_bucket, self.get_next_slot(i));
+                    } else {
+                        self.set_next_slot(prev, self.get_next_slot(i));
+                    }
+
+                    self.set_hash_key(i, LispObject::constant_nil());
+                    self.set_hash_value(i, LispObject::constant_nil());
+                    self.set_hash_hash(i, LispObject::constant_nil());
+                    self.set_next_slot(i, self.next_free);
+                    self.next_free = i;
+                    self.count -= 1;
+                    debug_assert!(self.count >= 0);
+                    break;
+                }
+
+            prev = i;
+            i = self.get_next_slot(i);
+        }
     }
+
+    fn get_next_slot(self, idx: isize) -> isize {
+        unsafe { self.get_next()
+                 .as_vector_unchecked()
+                 .get_unchecked(idx)
+                 .to_fixnum_unchecked() as isize
+        }
+    }
+
+    fn set_next_slot(self, idx: isize, value: isize) {
+        unsafe { gc_aset(self.next,
+                         idx,
+                         LispObject::from_fixnum(value as EmacsInt).to_raw())
+        }
+    }
+
+    fn get_index_slot(self, idx: isize) -> isize {
+        unsafe {
+            self.get_index()
+                .as_vector_unchecked()
+                .get_unchecked(idx)
+                .to_fixnum_unchecked() as isize
+        }
+    }
+
+    fn set_index_slot(self, idx: isize, value: isize) {
+        unsafe { gc_aset(self.index,
+                         idx,
+                         LispObject::from_fixnum(value as EmacsInt).to_raw())
+        }
+    }
+
 
     pub fn get_hash_hash(self, idx: isize) -> LispObject {
         let index = LispObject::from_natnum(idx as EmacsInt);
         unsafe { LispObject::from(Faref(self.hash, index.to_raw())) }
     }
 
+    #[inline]
+    pub fn set_hash_hash(self, idx: isize, hash: LispObject) {
+        unsafe { gc_aset(self.hash, idx, hash.to_raw()) };
+    }
+
+    #[inline]
     pub fn get_hash_key(self, idx: isize) -> LispObject {
         let index = LispObject::from_natnum((2 * idx) as EmacsInt);
         unsafe { LispObject::from(Faref(self.key_and_value, index.to_raw())) }
     }
 
+    #[inline]
+    pub fn set_hash_key(self, idx: isize, key: LispObject) {
+        unsafe { gc_aset(self.key_and_value, 2 * idx, key.to_raw()) };
+    }
+
+    #[inline]
     pub fn size(self) -> usize {
         unsafe { self.get_next().as_vector_unchecked().len() }
     }
 
+    #[inline]
     pub fn clear(mut self) {
         unsafe { hash_clear(self.as_mut()) }
     }
@@ -129,12 +211,7 @@ impl<'a> Iterator for HashTableIter<'a> {
     type Item = isize;
 
     fn next(&mut self) -> Option<isize> {
-        // This is duplicating `LispHashTableRef::size` to keep inline with the old C code,
-        // in which the len of the vector could technically change while iterating. While
-        // I don't know if any code actually uses that behavior, I'm going to avoid making
-        // this use size to keep it consistent.
-        let next_vector = unsafe { self.table.get_next().as_vector_unchecked() };
-        if self.current < next_vector.len() {
+        if self.current < self.table.size() {
             let cur = self.current;
             self.current += 1;
             Some(cur as isize)
@@ -185,7 +262,7 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
     let mut table = htable.as_hash_table_or_error();
     let mut new_table = LispHashTableRef::allocate();
     unsafe { new_table.copy(table) };
-    assert_ne!(new_table.as_ptr(), table.as_ptr());
+    debug_assert_ne!(new_table.as_ptr(), table.as_ptr());
 
     let key_and_value = LispObject::from(unsafe {
         Fcopy_sequence(new_table.get_key_and_value().to_raw())
