@@ -40,6 +40,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include TERM_HEADER
 #endif /* HAVE_WINDOW_SYSTEM */
 
+// Used by Rust.
+bool is_minibuffer(struct window *);
+
 static ptrdiff_t count_windows (struct window *);
 static ptrdiff_t get_leaf_windows (struct window *, struct window **,
 				   ptrdiff_t);
@@ -222,6 +225,18 @@ Lisp_Object
 wget_parent(struct window *w)
 {
   return w->parent;
+}
+
+int
+wget_pixel_height(struct window *w)
+{
+  return w->pixel_height;
+}
+
+bool
+wget_pseudo_window_p(struct window *w)
+{
+  return WINDOW_PSEUDO_P(w);
 }
 
 /* True if leaf window W doesn't reflect the actual state
@@ -4633,70 +4648,6 @@ mark_window_cursors_off (struct window *w)
     }
 }
 
-
-/**
- * window_wants_mode_line:
- *
- * Return 1 if window W wants a mode line and is high enough to
- * accommodate it, 0 otherwise.
- *
- * W wants a mode line if it's a leaf window and neither a minibuffer
- * nor a pseudo window.  Moreover, its 'window-mode-line-format'
- * parameter must not be 'none' and either that parameter or W's
- * buffer's 'mode-line-format' value must be non-nil.  Finally, W must
- * be higher than its frame's canonical character height.
- */
-bool
-window_wants_mode_line (struct window *w)
-{
-  Lisp_Object window_mode_line_format =
-    window_parameter (w, Qmode_line_format);
-
-  return ((WINDOW_LEAF_P (w)
-	   && !MINI_WINDOW_P (w)
-	   && !WINDOW_PSEUDO_P (w)
-	   && !EQ (window_mode_line_format, Qnone)
-	   && (!NILP (window_mode_line_format)
-	       || !NILP (BVAR (XBUFFER (WINDOW_BUFFER (w)), mode_line_format)))
-	   && WINDOW_PIXEL_HEIGHT (w) > WINDOW_FRAME_LINE_HEIGHT (w))
-	  ? 1
-	  : 0);
-}
-
-
-/**
- * window_wants_header_line:
- *
- * Return 1 if window W wants a header line and is high enough to
- * accommodate it, 0 otherwise.
- *
- * W wants a header line if it's a leaf window and neither a minibuffer
- * nor a pseudo window.  Moreover, its 'window-mode-line-format'
- * parameter must not be 'none' and either that parameter or W's
- * buffer's 'mode-line-format' value must be non-nil.  Finally, W must
- * be higher than its frame's canonical character height and be able to
- * accommodate a mode line too if necessary (the mode line prevails).
- */
-bool
-window_wants_header_line (struct window *w)
-{
-  Lisp_Object window_header_line_format =
-    window_parameter (w, Qheader_line_format);
-
-  return ((WINDOW_LEAF_P (w)
-	   && !MINI_WINDOW_P (w)
-	   && !WINDOW_PSEUDO_P (w)
-	   && !EQ (window_header_line_format, Qnone)
-	   && (!NILP (window_header_line_format)
-	       || !NILP (BVAR (XBUFFER (WINDOW_BUFFER (w)), header_line_format)))
-	   && (WINDOW_PIXEL_HEIGHT (w)
-	       > (window_wants_mode_line (w)
-		  ? 2 * WINDOW_FRAME_LINE_HEIGHT (w)
-		  : WINDOW_FRAME_LINE_HEIGHT (w))))
-	  ? 1
-	  : 0);
-}
-
 /* Return number of lines of text (not counting mode lines) in W.  */
 
 int
@@ -7249,6 +7200,12 @@ void
 init_window (void)
 {
   Vwindow_list = Qnil;
+}
+
+bool
+is_minibuffer(struct window *w)
+{
+  return w->mini ? true : false;
 }
 
 void

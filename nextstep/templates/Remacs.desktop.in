@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Version=@version@
+Categories=GNUstep
+Name=Remacs
+Comment=Rust port of GNU Emacs for NeXT/Open/GNUstep and macOS
+Icon=emacs.tiff
+Exec=openapp remacs.app
+#TryExec=Emacs.app
+FilePattern=Remacs.app;Remacs

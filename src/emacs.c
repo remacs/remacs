@@ -111,6 +111,8 @@ static const char emacs_version[] = PACKAGE_VERSION;
 static const char emacs_copyright[] = COPYRIGHT;
 static const char emacs_bugreport[] = PACKAGE_BUGREPORT;
 
+extern void rust_initial_keys(void);
+
 /* Empty lisp strings.  To avoid having to build any others.  */
 Lisp_Object empty_unibyte_string, empty_multibyte_string;
 
@@ -1565,6 +1567,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       keys_of_keyboard ();
       keys_of_keymap ();
       keys_of_window ();
+      rust_initial_keys ();
     }
   else
     {

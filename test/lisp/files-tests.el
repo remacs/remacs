@@ -347,6 +347,8 @@ be invoked with the right arguments."
 (ert-deftest files-tests--make-directory ()
   ;; Remacs: skipped on OSX until fixed upstream.
   (skip-unless (not (eq system-type 'darwin)))
+  ;; Skip for the time being on Remacs.
+  (skip-unless (not (eq system-type 'windows-nt)))
   (let* ((dir (make-temp-file "files-mkdir-test" t))
 	 (dirname (file-name-as-directory dir))
 	 (file (concat dirname "file"))

@@ -1088,36 +1088,6 @@ If PROCESS has not yet exited or died, return 0.  */)
   return make_number (0);
 }
 
-DEFUN ("process-command", Fprocess_command, Sprocess_command, 1, 1, 0,
-       doc: /* Return the command that was executed to start PROCESS.
-This is a list of strings, the first string being the program executed
-and the rest of the strings being the arguments given to it.
-For a network or serial or pipe connection, this is nil (process is running)
-or t (process is stopped).  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->command;
-}
-
-DEFUN ("process-tty-name", Fprocess_tty_name, Sprocess_tty_name, 1, 1, 0,
-       doc: /* Return the name of the terminal PROCESS uses, or nil if none.
-This is the terminal that the process itself reads and writes on,
-not the name of the pty that Emacs uses to talk with that terminal.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->tty_name;
-}
-
-DEFUN ("process-mark", Fprocess_mark, Sprocess_mark,
-       1, 1, 0,
-       doc: /* Return the marker for the end of the last output from PROCESS.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->mark;
-}
 
 static void
 set_process_filter_masks (struct Lisp_Process *p)
@@ -1173,16 +1143,6 @@ The string argument is normally a multibyte string, except:
   return filter;
 }
 
-DEFUN ("process-filter", Fprocess_filter, Sprocess_filter,
-       1, 1, 0,
-       doc: /* Return the filter function of PROCESS.
-See `set-process-filter' for more info on filter functions.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->filter;
-}
-
 DEFUN ("set-process-sentinel", Fset_process_sentinel, Sset_process_sentinel,
        2, 2, 0,
        doc: /* Give PROCESS the sentinel SENTINEL; nil for default.
@@ -1202,16 +1162,6 @@ It gets two arguments: the process, and a string describing the change.  */)
   if (NETCONN1_P (p) || SERIALCONN1_P (p) || PIPECONN1_P (p))
     pset_childp (p, Fplist_put (p->childp, QCsentinel, sentinel));
   return sentinel;
-}
-
-DEFUN ("process-sentinel", Fprocess_sentinel, Sprocess_sentinel,
-       1, 1, 0,
-       doc: /* Return the sentinel of PROCESS.
-See `set-process-sentinel' for more info on sentinels.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->sentinel;
 }
 
 DEFUN ("set-process-thread", Fset_process_thread, Sset_process_thread,
@@ -1346,15 +1296,6 @@ set up yet, this function will block until socket setup has completed.  */)
   if (NILP (key) && PIPECONN_P (process))
     return Qt;
   return Fplist_get (contact, key);
-}
-
-DEFUN ("process-plist", Fprocess_plist, Sprocess_plist,
-       1, 1, 0,
-       doc: /* Return the plist of PROCESS.  */)
-  (register Lisp_Object process)
-{
-  CHECK_PROCESS (process);
-  return XPROCESS (process)->plist;
 }
 
 #if 0 /* Turned off because we don't currently record this info
@@ -7771,19 +7712,13 @@ returns non-`nil'.  */);
 
   defsubr (&Sdelete_process);
   defsubr (&Sprocess_exit_status);
-  defsubr (&Sprocess_tty_name);
-  defsubr (&Sprocess_command);
-  defsubr (&Sprocess_mark);
   defsubr (&Sset_process_filter);
-  defsubr (&Sprocess_filter);
   defsubr (&Sset_process_sentinel);
-  defsubr (&Sprocess_sentinel);
   defsubr (&Sset_process_thread);
   defsubr (&Sprocess_thread);
   defsubr (&Sset_process_window_size);
   defsubr (&Sset_process_inherit_coding_system_flag);
   defsubr (&Sprocess_contact);
-  defsubr (&Sprocess_plist);
   defsubr (&Smake_process);
   defsubr (&Smake_pipe_process);
   defsubr (&Sserial_process_configure);

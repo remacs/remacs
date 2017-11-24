@@ -412,7 +412,7 @@ pub fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispO
 
 /// Return a newly created list with specified arguments as elements.
 /// Any number of arguments, even zero arguments, are allowed.
-/// usage: (list &rest OBJECTS)
+/// usage: (fn &rest OBJECTS)
 #[lisp_fn]
 pub fn list(args: &mut [LispObject]) -> LispObject {
     args.iter()

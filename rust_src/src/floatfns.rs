@@ -392,13 +392,13 @@ fn round2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
 // with something like simple_float_op.
 pub fn rust_init_extra_syms() {
     unsafe {
-        defsubr(&*Sacos);
-        defsubr(&*Sasin);
-        defsubr(&*Scos);
-        defsubr(&*Ssin);
-        defsubr(&*Stan);
-        defsubr(&*Sexp);
-        defsubr(&*Ssqrt);
+        defsubr(Sacos.as_ptr());
+        defsubr(Sasin.as_ptr());
+        defsubr(Scos.as_ptr());
+        defsubr(Ssin.as_ptr());
+        defsubr(Stan.as_ptr());
+        defsubr(Sexp.as_ptr());
+        defsubr(Ssqrt.as_ptr());
     }
 }
 

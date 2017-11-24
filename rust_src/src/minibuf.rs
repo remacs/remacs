@@ -29,10 +29,12 @@ pub fn minibufferp(object: LispObject) -> LispObject {
 /// Return the currently active minibuffer window, or nil if none.
 #[lisp_fn]
 fn active_minibuffer_window() -> LispObject {
-    if LispObject::from(unsafe { minibuf_level }).is_nil() {
-        LispObject::constant_nil()
-    } else {
-        LispObject::from(unsafe { minibuf_window })
+    unsafe {
+        if minibuf_level == 0 {
+            LispObject::constant_nil()
+        } else {
+            LispObject::from(minibuf_window)
+        }
     }
 }
 

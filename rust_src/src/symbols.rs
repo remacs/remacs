@@ -1,21 +1,15 @@
 //! symbols support
 
-use std::mem;
-
 use remacs_macros::lisp_fn;
 use remacs_sys::{Fset, Lisp_Symbol};
 use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
-use remacs_sys::{Symbol_Interned, Symbol_Redirect, Symbol_Trapped_Write};
-use remacs_sys::{find_symbol_value, make_lisp_symbol};
+use remacs_sys::{find_symbol_value, make_lisp_symbol, symbol_is_alias, symbol_is_constant,
+                 symbol_is_interned};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
-
-const FLAG_REDIRECT: u32 = 0b1110; // bits 2, 3 and 4
-const FLAG_TRAPPED_WRITE: u32 = 0b11 << 4; // bits 5 and 6
-const FLAG_INTERNED: u32 = 0b11 << 6; // 7 and 8 bits
 
 impl LispSymbolRef {
     pub fn symbol_name(&self) -> LispObject {
@@ -39,20 +33,20 @@ impl LispSymbolRef {
     }
 
     pub fn is_interned_in_initial_obarray(&self) -> bool {
-        self.symbol_bitfield & FLAG_INTERNED
-            == (Symbol_Interned::InternedInInitialObarray as u32) << 6
+        unsafe { symbol_is_interned(self.as_ptr()) }
     }
 
     pub fn is_alias(&self) -> bool {
-        self.symbol_bitfield & FLAG_REDIRECT == (Symbol_Redirect::VarAlias as u32) << 1
+        unsafe { symbol_is_alias(self.as_ptr()) }
     }
 
     pub fn is_constant(&self) -> bool {
-        self.symbol_bitfield & FLAG_TRAPPED_WRITE == (Symbol_Trapped_Write::NoWrite as u32) << 4
+        unsafe { symbol_is_constant(self.as_ptr()) }
     }
 
     pub fn get_alias(&self) -> LispSymbolRef {
-        LispSymbolRef::new(unsafe { mem::transmute(self.val.alias) })
+        debug_assert!(self.is_alias());
+        LispSymbolRef::new(unsafe { self.val.alias })
     }
 
     pub fn as_lisp_obj(mut self) -> LispObject {

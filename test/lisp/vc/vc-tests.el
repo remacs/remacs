@@ -233,7 +233,7 @@ Catch the `vc-not-supported' error."
 (defun vc-test--register (backend)
   "Register and unregister a file.
 This checks also `vc-backend' and `vc-responsible-backend'."
-
+  
   (let ((vc-handled-backends `(,backend))
 	(default-directory
 	  (file-name-as-directory
@@ -610,6 +610,8 @@ This checks also `vc-backend' and `vc-responsible-backend'."
 	     (ert-get-test
 	      ',(intern
 		 (format "vc-test-%s00-create-repo" backend-string))))))
+          ;; Skip for the time being on Remacs.
+          (skip-unless (not (eq system-type 'windows-nt)))
 	  (vc-test--register ',backend))
 
 	(ert-deftest

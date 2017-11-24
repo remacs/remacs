@@ -450,6 +450,8 @@
 
   (ert-deftest ibuffer-filter-inclusion-8 ()
     "Tests inclusion with various filters."
+    ;; Skip for the time being on Remacs.
+    (skip-unless (not (eq system-type 'windows-nt)))
     (require 'ibuf-ext)
     (unwind-protect
         (let ((bufA

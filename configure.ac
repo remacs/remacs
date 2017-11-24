@@ -1865,10 +1865,10 @@ LIBS_GNUSTEP=
 if test "${with_ns}" != no; then
   if test "${opsys}" = darwin; then
      NS_IMPL_COCOA=yes
-     ns_appdir=`pwd`/nextstep/Emacs.app
+     ns_appdir=`pwd`/nextstep/Remacs.app
      ns_appbindir=${ns_appdir}/Contents/MacOS
      ns_appresdir=${ns_appdir}/Contents/Resources
-     ns_appsrc=Cocoa/Emacs.base
+     ns_appsrc=Cocoa/Remacs.base
      ns_fontfile=macfont.o
   elif flags=$( (gnustep-config --objc-flags) 2>/dev/null); then
      NS_IMPL_GNUSTEP=yes
@@ -1922,10 +1922,10 @@ fail;
      fi
   fi
   if test $NS_IMPL_GNUSTEP = yes; then
-     ns_appdir=`pwd`/nextstep/Emacs.app
+     ns_appdir=`pwd`/nextstep/Remacs.app
      ns_appbindir=${ns_appdir}
      ns_appresdir=${ns_appdir}/Resources
-     ns_appsrc=GNUstep/Emacs.base
+     ns_appsrc=GNUstep/Remacs.base
      ns_fontfile=nsfont.o
   fi
 
@@ -5212,7 +5212,6 @@ CARGO_TEST="$CARGO test"
 
 AC_SUBST(CARGO_BUILD)
 AC_SUBST(CARGO_CLEAN)
-AC_SUBST(CARGO_TEST)
 
 AC_ARG_ENABLE(rust-debug,
 [AS_HELP_STRING([--enable-rust-debug],
@@ -5239,6 +5238,9 @@ esac
 if test "${HAVE_W32}" = "yes"; then
     REMACSLIB_NAME="remacs_lib.lib"
     RUST_DEPS="$RUST_DEPS -lws2_32 -luserenv"
+    
+    # Windows fails linking in the 'cargo test' stage, skip for now.
+    CARGO_TEST="true"
 fi
 
 LIB_REMACS="-lremacs $RUST_DEPS"
@@ -5251,6 +5253,7 @@ AC_SUBST(LIB_REMACS)
 AC_SUBST(RUST_DEPS)
 AC_SUBST(REMACSLIB_CFLAGS)
 AC_SUBST(REMACSLIB_NAME)
+AC_SUBST(CARGO_TEST)
 
 if test "${opsys}" = "mingw32"; then
   CPPFLAGS="$CPPFLAGS -DUSE_CRT_DLL=1 -I \${abs_top_srcdir}/nt/inc"
@@ -5496,7 +5499,7 @@ echo
 if test "$HAVE_NS" = "yes"; then
    echo
    AS_ECHO(["You must run \"${MAKE-make} install\" in order to test the built application.
-The installed application will go to nextstep/Emacs.app and can be
+The installed application will go to nextstep/Remacs.app and can be
 run or moved from there."])
    if test "$EN_NS_SELF_CONTAINED" = "yes"; then
       echo "The application will be fully self-contained."
@@ -5525,12 +5528,12 @@ esac
 
 if test "$HAVE_NS" = "yes"; then
   if test "$NS_IMPL_GNUSTEP" = yes; then
-    AC_CONFIG_FILES([nextstep/GNUstep/Emacs.base/Resources/Info-gnustep.plist:nextstep/templates/Info-gnustep.plist.in \
-      nextstep/GNUstep/Emacs.base/Resources/Emacs.desktop:nextstep/templates/Emacs.desktop.in])
+    AC_CONFIG_FILES([nextstep/GNUstep/Remacs.base/Resources/Info-gnustep.plist:nextstep/templates/Info-gnustep.plist.in \
+      nextstep/GNUstep/Remacs.base/Resources/Remacs.desktop:nextstep/templates/Remacs.desktop.in])
     ns_check_file=Resources/Info-gnustep.plist
   else
-    AC_CONFIG_FILES([nextstep/Cocoa/Emacs.base/Contents/Info.plist:nextstep/templates/Info.plist.in \
-      nextstep/Cocoa/Emacs.base/Contents/Resources/English.lproj/InfoPlist.strings:nextstep/templates/InfoPlist.strings.in])
+    AC_CONFIG_FILES([nextstep/Cocoa/Remacs.base/Contents/Info.plist:nextstep/templates/Info.plist.in \
+      nextstep/Cocoa/Remacs.base/Contents/Resources/English.lproj/InfoPlist.strings:nextstep/templates/InfoPlist.strings.in])
     ns_check_file=Contents/Info.plist
   fi
   AC_SUBST(ns_check_file)

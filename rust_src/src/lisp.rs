@@ -22,7 +22,8 @@ use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_l
                  Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
                  Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
-use remacs_sys::{internal_equal, lispsym, make_float};
+
+use remacs_sys::{internal_equal, lispsym, make_float, misc_get_ty};
 
 use buffers::{LispBufferRef, LispOverlayRef};
 use chartable::LispCharTableRef;
@@ -38,9 +39,6 @@ use symbols::LispSymbolRef;
 use threads::ThreadStateRef;
 use vectors::{LispVectorRef, LispVectorlikeRef};
 use windows::LispWindowRef;
-
-#[cfg(test)]
-use functions::ExternCMocks;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
 
@@ -246,6 +244,9 @@ impl<T> PartialEq for ExternalPtr<T> {
         self.as_ptr() != other.as_ptr()
     }
 }
+
+pub type LispSubrRef = ExternalPtr<Lisp_Subr>;
+unsafe impl Sync for LispSubrRef {}
 
 pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
 
@@ -998,13 +999,14 @@ impl LispObject {
     #[inline]
     pub fn is_marker(self) -> bool {
         self.as_misc()
-            .map_or(false, |m| m.ty == Lisp_Misc_Type::Marker)
+            .map_or(false, |m| unsafe { misc_get_ty(m.as_ptr()) }
+                == Lisp_Misc_Type::Marker as u16)
     }
 
     #[inline]
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         self.as_misc().and_then(|m| {
-            if m.ty == Lisp_Misc_Type::Marker {
+            if unsafe { misc_get_ty(m.as_ptr()) } == Lisp_Misc_Type::Marker as u16 {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
@@ -1036,12 +1038,13 @@ impl LispObject {
     #[inline]
     pub fn is_overlay(self) -> bool {
         self.as_misc()
-            .map_or(false, |m| m.ty == Lisp_Misc_Type::Overlay)
+            .map_or(false, |m| unsafe { misc_get_ty(m.as_ptr()) }
+                == Lisp_Misc_Type::Overlay as u16)
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
         self.as_misc().and_then(|m| {
-            if m.ty == Lisp_Misc_Type::Overlay {
+            if unsafe { misc_get_ty(m.as_ptr()) } == Lisp_Misc_Type::Overlay as u16 {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
@@ -1087,8 +1090,8 @@ pub const MANY: i16 = -2;
 
 /// Internal function to get a displayable string out of a Lisp string.
 fn display_string(obj: LispObject) -> String {
-    let mut s = obj.as_string().unwrap();
-    let slice = unsafe { slice::from_raw_parts(s.data_ptr(), s.len_bytes() as usize) };
+    let s = obj.as_string().unwrap();
+    let slice = unsafe { slice::from_raw_parts(s.const_data_ptr(), s.len_bytes() as usize) };
     String::from_utf8_lossy(slice).into_owned()
 }
 
@@ -1176,7 +1179,7 @@ macro_rules! export_lisp_fns {
         pub fn rust_init_syms() {
             unsafe {
                 $(
-                    defsubr(&*concat_idents!(S, $f));
+                    defsubr(concat_idents!(S, $f).as_ptr());
                 )+
             }
         }
@@ -1186,21 +1189,6 @@ macro_rules! export_lisp_fns {
 #[test]
 fn test_basic_float() {
     let val = 8.0;
-    let mock = ExternCMocks::method_make_float()
-        .called_once()
-        .return_result_of(move || {
-            // Fake an allocated float by just putting it on the heap and leaking it.
-            let boxed = Box::new(Lisp_Float {
-                data: unsafe { mem::transmute(val) },
-            });
-            let raw = ExternalPtr::new(Box::into_raw(boxed));
-            LispObject::tag_ptr(raw, Lisp_Type::Lisp_Float).to_raw()
-        });
-
-    ExternCMocks::set_make_float(mock);
-
-    let result = LispObject::from_float(val);
+    let result = mock_float!(val);
     assert!(result.is_float() && result.as_float() == Some(val));
-
-    ExternCMocks::clear_make_float();
 }

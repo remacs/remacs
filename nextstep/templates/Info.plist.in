@@ -572,14 +572,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>Emacs.app/New Buffer Containing Selection</string>
+				<string>Remacs.app/New Buffer Containing Selection</string>
 			</dict>
 			<key>NSMessage</key>
 			<string>requestService</string>
 			<key>NSUserData</key>
 			<string>open-selection</string>
 			<key>NSPortName</key>
-			<string>Emacs</string>
+			<string>Remacs</string>
 			<key>NSSendTypes</key>
 			<array>
 				<string>NSStringPboardType</string>
@@ -589,14 +589,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>Emacs.app/Open Selected File</string>
+				<string>Remacs.app/Open Selected File</string>
 			</dict>
 			<key>NSMessage</key>
 			<string>requestService</string>
 			<key>NSUserData</key>
 			<string>open-file</string>
 			<key>NSPortName</key>
-			<string>Emacs</string>
+			<string>Remacs</string>
 			<key>NSSendTypes</key>
 			<array>
 				<string>NSStringPboardType</string>
@@ -606,14 +606,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>Emacs.app/Email Selection</string>
+				<string>Remacs.app/Email Selection</string>
 			</dict>
 			<key>NSMessage</key>
 			<string>requestService</string>
 			<key>NSUserData</key>
 			<string>mail-selection</string>
 			<key>NSPortName</key>
-			<string>Emacs</string>
+			<string>Remacs</string>
 			<key>NSSendTypes</key>
 			<array>
 				<string>NSStringPboardType</string>
@@ -623,14 +623,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 			<key>NSMenuItem</key>
 			<dict>
 				<key>default</key>
-				<string>Emacs.app/Send Email to Selected Address</string>
+				<string>Remacs.app/Send Email to Selected Address</string>
 			</dict>
 			<key>NSMessage</key>
 			<string>requestService</string>
 			<key>NSUserData</key>
 			<string>mail-to</string>
 			<key>NSPortName</key>
-			<string>Emacs</string>
+			<string>Remacs</string>
 			<key>NSSendTypes</key>
 			<array>
 				<string>NSStringPboardType</string>
@@ -639,17 +639,17 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 	</array>
 
 	<key>CFBundleExecutable</key>
-	<string>Emacs</string>
+	<string>Remacs</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Emacs @version@ @copyright@</string>
+	<string>Remacs @version@ @copyright@</string>
 	<key>CFBundleIconFile</key>
-	<string>Emacs.icns</string>
+	<string>Remacs.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.gnu.Emacs</string>
+	<string>org.gnu.Remacs</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Emacs</string>
+	<string>Remacs</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<!-- This should be the emacs version number. -->
@@ -661,7 +661,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 	<key>CFBundleVersion</key>
 	<string>9.0</string>
 	<key>NSPrincipalClass</key>
-	<string>EmacsApp</string>
+	<string>RemacsApp</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
