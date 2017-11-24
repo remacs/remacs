@@ -23,7 +23,13 @@ pub extern "C" fn base64_encode_1(
     multibyte: bool,
 ) -> ptrdiff_t {
     let config = if line_break {
-        base64_crate::MIME
+        // base64_crate::MIME, but with LF instead of CRLF
+        base64_crate::Config::new(
+            base64_crate::CharacterSet::Standard,
+            true, // pad
+            true, // strip whitespace
+            base64_crate::LineWrap::Wrap(76, base64_crate::LineEnding::LF),
+        )
     } else {
         base64_crate::STANDARD
     };
