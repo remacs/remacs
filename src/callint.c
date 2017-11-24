@@ -357,7 +357,9 @@ invoke it.  If KEYS is omitted or nil, the return value of
       /* Compute the arg values using the user's expression.  */
       specs = Feval (specs,
  		     CONSP (funval) && EQ (Qclosure, XCAR (funval))
-		     ? CAR_SAFE (XCDR (funval)) : Qnil);
+                     ? CAR_SAFE (XCDR (funval))
+                     : COMPILEDP (funval) && INTEGERP (AREF (funval, COMPILED_ARGLIST))
+                     ? Qt : Qnil);
       if (events != num_input_events || !NILP (record_flag))
 	{
 	  /* We should record this command on the command history.  */
