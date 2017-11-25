@@ -6,7 +6,7 @@ use std::ptr;
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Faref, Fcopy_sequence, Lisp_Hash_Table,
                  PseudovecType, Qhash_table_test, CHECK_IMPURE, INTMASK};
-use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table};
+use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -108,8 +108,7 @@ impl LispHashTableRef {
         while 0 <= i {
             if key.eq(self.get_hash_key(i))
                 || (self.test.cmpfn as *mut c_void != ptr::null_mut()
-                    && hash_code == unsafe {
-                        self.get_hash_hash(i).to_fixnum_unchecked() as EmacsUint }
+                    && hash_code == unsafe { self.get_hash_hash(i).as_natnum_unchecked() }
                     && (self.test.cmpfn)(&mut self.test,
                                          key.to_raw(),
                                          self.get_hash_key(i).to_raw())) {
