@@ -843,7 +843,7 @@ SWITCHES and TIME-INDEX give the full switch list and time data."
 	    " "
 	    (ls-lisp-format-time file-attr time-index)
 	    " "
-	    (if (not (memq ?F switches)) ; ls-lisp-classify already did that
+	    (if (not (memq ?F switches)) ; ls-lisp-classify-file already did that
 		(propertize file-name 'dired-filename t)
 	      file-name)
 	    (if (stringp file-type)	; is a symbolic link
