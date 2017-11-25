@@ -2289,8 +2289,10 @@ flags that control whether to collect or render objects."
 				  (<= (car (cdr attr)) width))
 			 (setq result (cdr attr)))))))
 	       result))
-	(let ((result (shr-render-td-1 dom width fill)))
+	(let* ((pt (point))
+               (result (shr-render-td-1 dom width fill)))
 	  (dom-set-attribute dom cache result)
+          (goto-char pt)
 	  result))))
 
 (defun shr-render-td-1 (dom width fill)
