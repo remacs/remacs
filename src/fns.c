@@ -2777,48 +2777,6 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
 }
 
 
-/* Remove the entry matching KEY from hash table H, if there is one.  */
-
-void
-hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
-{
-  EMACS_UINT hash_code = h->test.hashfn (&h->test, key);
-  eassert ((hash_code & ~INTMASK) == 0);
-  ptrdiff_t start_of_bucket = hash_code % ASIZE (h->index);
-  ptrdiff_t prev = -1;
-
-  for (ptrdiff_t i = HASH_INDEX (h, start_of_bucket);
-       0 <= i;
-       i = HASH_NEXT (h, i))
-    {
-      if (EQ (key, HASH_KEY (h, i))
-	  || (h->test.cmpfn
-	      && hash_code == XUINT (HASH_HASH (h, i))
-	      && h->test.cmpfn (&h->test, key, HASH_KEY (h, i))))
-	{
-	  /* Take entry out of collision chain.  */
-	  if (prev < 0)
-	    set_hash_index_slot (h, start_of_bucket, HASH_NEXT (h, i));
-	  else
-	    set_hash_next_slot (h, prev, HASH_NEXT (h, i));
-
-	  /* Clear slots in key_and_value and add the slots to
-	     the free list.  */
-	  set_hash_key_slot (h, i, Qnil);
-	  set_hash_value_slot (h, i, Qnil);
-	  set_hash_hash_slot (h, i, Qnil);
-	  set_hash_next_slot (h, i, h->next_free);
-	  h->next_free = i;
-	  h->count--;
-	  eassert (h->count >= 0);
-	  break;
-	}
-
-      prev = i;
-    }
-}
-
-
 /* Clear hash table H.  */
 
 void
