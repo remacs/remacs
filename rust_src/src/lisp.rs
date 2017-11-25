@@ -460,6 +460,10 @@ impl LispObject {
     pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
         self.as_vectorlike_unchecked().as_vector_unchecked()
     }
+
+    pub unsafe fn aref(self, idx: isize) -> LispObject {
+        self.as_vector_unchecked().get_unchecked(idx)
+    }
 }
 
 impl LispObject {

@@ -4,7 +4,7 @@ use libc::c_void;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Faref, Fcopy_sequence, Lisp_Hash_Table,
+use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Fcopy_sequence, Lisp_Hash_Table,
                  PseudovecType, Qhash_table_test, CHECK_IMPURE, INTMASK};
 use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put};
 
@@ -71,8 +71,7 @@ impl LispHashTableRef {
 
     #[inline]
     pub fn get_hash_value(self, idx: isize) -> LispObject {
-        let index = LispObject::from_natnum((2 * idx + 1) as EmacsInt);
-        unsafe { LispObject::from(Faref(self.key_and_value, index.to_raw())) }
+        unsafe { self.get_key_and_value().aref(2 * idx + 1) }
     }
 
     #[inline]
@@ -135,8 +134,7 @@ impl LispHashTableRef {
 
     fn get_next_slot(self, idx: isize) -> isize {
         unsafe { self.get_next()
-                 .as_vector_unchecked()
-                 .get_unchecked(idx)
+                 .aref(idx)
                  .to_fixnum_unchecked() as isize
         }
     }
@@ -151,8 +149,7 @@ impl LispHashTableRef {
     fn get_index_slot(self, idx: isize) -> isize {
         unsafe {
             self.get_index()
-                .as_vector_unchecked()
-                .get_unchecked(idx)
+                .aref(idx)
                 .to_fixnum_unchecked() as isize
         }
     }
@@ -166,8 +163,7 @@ impl LispHashTableRef {
 
 
     pub fn get_hash_hash(self, idx: isize) -> LispObject {
-        let index = LispObject::from_natnum(idx as EmacsInt);
-        unsafe { LispObject::from(Faref(self.hash, index.to_raw())) }
+        unsafe { self.get_hash().aref(idx) }
     }
 
     #[inline]
@@ -177,8 +173,7 @@ impl LispHashTableRef {
 
     #[inline]
     pub fn get_hash_key(self, idx: isize) -> LispObject {
-        let index = LispObject::from_natnum((2 * idx) as EmacsInt);
-        unsafe { LispObject::from(Faref(self.key_and_value, index.to_raw())) }
+        unsafe { self.get_key_and_value().aref(2 * idx) }
     }
 
     #[inline]
