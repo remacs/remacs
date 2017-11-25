@@ -390,11 +390,30 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn as_natnum_or_error(self) -> EmacsInt {
+    pub fn as_natnum(self) -> Option<EmacsUint> {
         if self.is_natnum() {
-            unsafe { self.to_fixnum_unchecked() }
+            Some(unsafe { self.as_natnum_unchecked() })
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_natnum_or_error(self) -> EmacsUint {
+        if let Some(num) = self.as_natnum() {
+            num
         } else {
             wrong_type!(Qwholenump, self)
+        }
+    }
+
+    #[inline]
+    pub unsafe fn as_natnum_unchecked(self) -> EmacsUint {
+        let raw = self.to_raw() as EmacsUint;
+        if !USE_LSB_TAG {
+            raw & INTMASK as EmacsUint
+        } else {
+            raw >> INTTYPEBITS as EmacsUint
         }
     }
 }
