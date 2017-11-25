@@ -4,8 +4,8 @@ use libc::c_void;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Fcopy_sequence, Lisp_Hash_Table,
-                 PseudovecType, Qhash_table_test, CHECK_IMPURE, INTMASK};
+use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Fcopy_sequence, Lisp_Hash_Table, PseudovecType,
+                 Qhash_table_test, CHECK_IMPURE, INTMASK};
 use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put};
 
 use lisp::{ExternalPtr, LispObject};
@@ -99,33 +99,36 @@ impl LispHashTableRef {
         debug_assert!((hash_code & !(INTMASK as u64)) == 0);
         let index = unsafe { self.get_index().as_vector_unchecked() };
         let len = index.len() as EmacsUint;
-        
+
         let start_of_bucket = (hash_code % len) as isize;
         let mut prev = -1;
 
         let mut i = self.get_index_slot(start_of_bucket);
         while 0 <= i {
             if key.eq(self.get_hash_key(i))
-                || (self.test.cmpfn as *mut c_void != ptr::null_mut()
-                    && hash_code == unsafe { self.get_hash_hash(i).as_natnum_unchecked() }
-                    && (self.test.cmpfn)(&mut self.test,
-                                         key.to_raw(),
-                                         self.get_hash_key(i).to_raw())) {
-                    if prev < 0 {
-                        self.set_index_slot(start_of_bucket, self.get_next_slot(i));
-                    } else {
-                        self.set_next_slot(prev, self.get_next_slot(i));
-                    }
-
-                    self.set_hash_key(i, LispObject::constant_nil());
-                    self.set_hash_value(i, LispObject::constant_nil());
-                    self.set_hash_hash(i, LispObject::constant_nil());
-                    self.set_next_slot(i, self.next_free);
-                    self.next_free = i;
-                    self.count -= 1;
-                    debug_assert!(self.count >= 0);
-                    break;
+                || (self.test.cmpfn as *mut c_void != ptr::null_mut() && hash_code == unsafe {
+                    self.get_hash_hash(i).as_natnum_unchecked()
                 }
+                    && (self.test.cmpfn)(
+                        &mut self.test,
+                        key.to_raw(),
+                        self.get_hash_key(i).to_raw(),
+                    )) {
+                if prev < 0 {
+                    self.set_index_slot(start_of_bucket, self.get_next_slot(i));
+                } else {
+                    self.set_next_slot(prev, self.get_next_slot(i));
+                }
+
+                self.set_hash_key(i, LispObject::constant_nil());
+                self.set_hash_value(i, LispObject::constant_nil());
+                self.set_hash_hash(i, LispObject::constant_nil());
+                self.set_next_slot(i, self.next_free);
+                self.next_free = i;
+                self.count -= 1;
+                debug_assert!(self.count >= 0);
+                break;
+            }
 
             prev = i;
             i = self.get_next_slot(i);
@@ -133,31 +136,30 @@ impl LispHashTableRef {
     }
 
     fn get_next_slot(self, idx: isize) -> isize {
-        unsafe { self.get_next()
-                 .aref(idx)
-                 .to_fixnum_unchecked() as isize
-        }
+        unsafe { self.get_next().aref(idx).to_fixnum_unchecked() as isize }
     }
 
     fn set_next_slot(self, idx: isize, value: isize) {
-        unsafe { gc_aset(self.next,
-                         idx,
-                         LispObject::from_fixnum(value as EmacsInt).to_raw())
+        unsafe {
+            gc_aset(
+                self.next,
+                idx,
+                LispObject::from_fixnum(value as EmacsInt).to_raw(),
+            )
         }
     }
 
     fn get_index_slot(self, idx: isize) -> isize {
-        unsafe {
-            self.get_index()
-                .aref(idx)
-                .to_fixnum_unchecked() as isize
-        }
+        unsafe { self.get_index().aref(idx).to_fixnum_unchecked() as isize }
     }
 
     fn set_index_slot(self, idx: isize, value: isize) {
-        unsafe { gc_aset(self.index,
-                         idx,
-                         LispObject::from_fixnum(value as EmacsInt).to_raw())
+        unsafe {
+            gc_aset(
+                self.index,
+                idx,
+                LispObject::from_fixnum(value as EmacsInt).to_raw(),
+            )
         }
     }
 
