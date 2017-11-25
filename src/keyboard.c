@@ -10755,48 +10755,6 @@ The `posn-' functions access elements of such lists.  */)
   return make_lispy_position (XFRAME (frame_or_window), x, y, 0);
 }
 
-DEFUN ("posn-at-point", Fposn_at_point, Sposn_at_point, 0, 2, 0,
-       doc: /* Return position information for buffer position POS in WINDOW.
-POS defaults to point in WINDOW; WINDOW defaults to the selected window.
-
-Return nil if POS is not visible in WINDOW.  Otherwise,
-the return value is similar to that returned by `event-start' for
-a mouse click at the upper left corner of the glyph corresponding
-to POS:
-   (WINDOW AREA-OR-POS (X . Y) TIMESTAMP OBJECT POS (COL . ROW)
-    IMAGE (DX . DY) (WIDTH . HEIGHT))
-The `posn-' functions access elements of such lists.  */)
-  (Lisp_Object pos, Lisp_Object window)
-{
-  Lisp_Object tem;
-
-  if (NILP (window))
-    window = selected_window;
-
-  tem = Fpos_visible_in_window_p (pos, window, Qt);
-  if (!NILP (tem))
-    {
-      Lisp_Object x = XCAR (tem);
-      Lisp_Object y = XCAR (XCDR (tem));
-      Lisp_Object aux_info = XCDR (XCDR (tem));
-      int y_coord = XINT (y);
-
-      /* Point invisible due to hscrolling?  X can be -1 when a
-	 newline in a R2L line overflows into the left fringe.  */
-      if (XINT (x) < -1)
-	return Qnil;
-      if (!NILP (aux_info) && y_coord < 0)
-	{
-	  int rtop = XINT (XCAR (aux_info));
-
-	  y = make_number (y_coord + rtop);
-	}
-      tem = Fposn_at_x_y (x, y, window, Qnil);
-    }
-
-  return tem;
-}
-
 /* Set up a new kboard object with reasonable initial values.
    TYPE is a window system for which this keyboard is used.  */
 
@@ -11267,7 +11225,6 @@ syms_of_keyboard (void)
   defsubr (&Sset_quit_char);
   defsubr (&Sset_input_mode);
   defsubr (&Scurrent_input_mode);
-  defsubr (&Sposn_at_point);
   defsubr (&Sposn_at_x_y);
 
   DEFVAR_LISP ("last-command-event", last_command_event,

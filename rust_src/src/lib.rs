@@ -29,6 +29,7 @@ extern crate remacs_sys;
 extern crate mock_derive;
 
 #[cfg(test)]
+#[macro_use]
 mod functions;
 
 #[macro_use]
@@ -56,6 +57,7 @@ mod frames;
 mod hashtable;
 mod indent;
 mod interactive;
+mod keyboard;
 mod keymap;
 mod lists;
 mod marker;
@@ -80,7 +82,12 @@ use alloc_unexecmacosx::OsxUnexecAlloc;
 #[global_allocator]
 static ALLOCATOR: OsxUnexecAlloc = OsxUnexecAlloc;
 
+#[no_mangle]
+pub extern "C" fn rust_initial_keys() {
+    cmds::initial_keys();
+}
+
 include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
 
 #[cfg(test)]
-pub use functions::make_float;
+pub use functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};

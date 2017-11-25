@@ -31,69 +31,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 static int internal_self_insert (int, EMACS_INT);
 
-/* Add N to point; or subtract N if FORWARD is false.  N defaults to 1.
-   Validate the new location.  Return nil.  */
-static Lisp_Object
-move_point (Lisp_Object n, bool forward)
-{
-  /* This used to just set point to point + XINT (n), and then check
-     to see if it was within boundaries.  But now that SET_PT can
-     potentially do a lot of stuff (calling entering and exiting
-     hooks, etcetera), that's not a good approach.  So we validate the
-     proposed position, then set point.  */
-
-  EMACS_INT new_point;
-
-  if (NILP (n))
-    XSETFASTINT (n, 1);
-  else
-    CHECK_NUMBER (n);
-
-  new_point = PT + (forward ? XINT (n) : - XINT (n));
-
-  if (new_point < BEGV)
-    {
-      SET_PT (BEGV);
-      xsignal0 (Qbeginning_of_buffer);
-    }
-  if (new_point > ZV)
-    {
-      SET_PT (ZV);
-      xsignal0 (Qend_of_buffer);
-    }
-
-  SET_PT (new_point);
-  return Qnil;
-}
-
-DEFUN ("forward-char", Fforward_char, Sforward_char, 0, 1, "^p",
-       doc: /* Move point N characters forward (backward if N is negative).
-On reaching end or beginning of buffer, stop and signal error.
-Interactively, N is the numeric prefix argument.
-If N is omitted or nil, move point 1 character forward.
-
-Depending on the bidirectional context, the movement may be to the
-right or to the left on the screen.  This is in contrast with
-\\[right-char], which see.  */)
-  (Lisp_Object n)
-{
-  return move_point (n, 1);
-}
-
-DEFUN ("backward-char", Fbackward_char, Sbackward_char, 0, 1, "^p",
-       doc: /* Move point N characters backward (forward if N is negative).
-On attempt to pass beginning or end of buffer, stop and signal error.
-Interactively, N is the numeric prefix argument.
-If N is omitted or nil, move point 1 character backward.
-
-Depending on the bidirectional context, the movement may be to the
-right or to the left on the screen.  This is in contrast with
-\\[left-char], which see.  */)
-  (Lisp_Object n)
-{
-  return move_point (n, 0);
-}
-
 DEFUN ("forward-line", Fforward_line, Sforward_line, 0, 1, "^p",
        doc: /* Move N lines forward (backward if N is negative).
 Precisely, if point is on line I, move to the start of line I + N
@@ -432,8 +369,6 @@ syms_of_cmds (void)
 This is run after inserting the character.  */);
   Vpost_self_insert_hook = Qnil;
 
-  defsubr (&Sforward_char);
-  defsubr (&Sbackward_char);
   defsubr (&Sforward_line);
 
   defsubr (&Sdelete_char);
@@ -450,9 +385,4 @@ keys_of_cmds (void)
     initial_define_key (global_map, n, "self-insert-command");
   for (n = 0240; n < 0400; n++)
     initial_define_key (global_map, n, "self-insert-command");
-
-  initial_define_key (global_map, Ctl ('A'), "beginning-of-line");
-  initial_define_key (global_map, Ctl ('B'), "backward-char");
-  initial_define_key (global_map, Ctl ('E'), "end-of-line");
-  initial_define_key (global_map, Ctl ('F'), "forward-char");
 }

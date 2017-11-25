@@ -1,6 +1,7 @@
 [package]
-name = "remacs-lib"
+name = "remacs-util"
 version = "0.1.0"
+description = "Common utility code linked by other remacs crates."
 
 [dependencies]
 rand = "0.3.15"
@@ -8,11 +9,9 @@ libc = "0.2"
 errno = "0.2.3"
 darling = "0.2"
 syn = { version = "0.11.11", features = ["full"] }
-remacs-util = { version = "0.1.0", path = "../remacs-util" }
 
 [lib]
 path = "lib.rs"
-crate-type = ["staticlib", "rlib"]
 
 [features]
 # Treat warnings as a build error on Travis.

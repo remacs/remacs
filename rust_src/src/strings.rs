@@ -2,12 +2,12 @@
 
 use std::ptr;
 
-use libc::{self, c_void};
+use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, SYMBOL_NAME};
 use remacs_sys::{make_unibyte_string, make_uninit_multibyte_string,
                  string_to_multibyte as c_string_to_multibyte};
+use remacs_sys::EmacsInt;
 
 use lisp::LispObject;
 use lisp::defsubr;
@@ -33,24 +33,13 @@ fn string_bytes(string: LispObject) -> LispObject {
 /// Case is significant, but text properties are ignored.
 /// Symbols are also allowed; their print names are used instead.
 #[lisp_fn]
-pub fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
-    if s1.is_symbol() {
-        s1 = LispObject::from(unsafe { SYMBOL_NAME(s1.to_raw()) });
-    }
-    if s2.is_symbol() {
-        s2 = LispObject::from(unsafe { SYMBOL_NAME(s2.to_raw()) });
-    }
-    let mut s1 = s1.as_string_or_error();
-    let mut s2 = s2.as_string_or_error();
+pub fn string_equal(s1: LispObject, s2: LispObject) -> LispObject {
+    let s1 = LispObject::symbol_or_string_as_string(s1);
+    let s2 = LispObject::symbol_or_string_as_string(s2);
 
     LispObject::from_bool(
-        s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes() && unsafe {
-            libc::memcmp(
-                s1.data_ptr() as *mut c_void,
-                s2.data_ptr() as *mut c_void,
-                s1.len_bytes() as usize,
-            ) == 0
-        },
+        s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes()
+            && s1.as_slice() == s2.as_slice(),
     )
 }
 
@@ -69,19 +58,22 @@ pub fn string_equal(mut s1: LispObject, mut s2: LispObject) -> LispObject {
 /// `string-to-multibyte', use `string-to-multibyte'.
 #[lisp_fn]
 fn string_as_multibyte(string: LispObject) -> LispObject {
-    let mut s = string.as_string_or_error();
+    let s = string.as_string_or_error();
     if s.is_multibyte() {
         return string;
     }
+
     let mut nchars = 0;
     let mut nbytes = 0;
-    multibyte::parse_str_as_multibyte(s.data_ptr(), s.len_bytes(), &mut nchars, &mut nbytes);
-    let new_string =
-        unsafe { make_uninit_multibyte_string(nchars as EmacsInt, nbytes as EmacsInt) };
-    let new_string = LispObject::from(new_string);
+    multibyte::parse_str_as_multibyte(s.const_data_ptr(), s.len_bytes(), &mut nchars, &mut nbytes);
+
+    let new_string = LispObject::from(unsafe {
+        make_uninit_multibyte_string(nchars as EmacsInt, nbytes as EmacsInt)
+    });
+
     let mut new_s = new_string.as_string().unwrap();
     unsafe {
-        ptr::copy_nonoverlapping(s.data_ptr(), new_s.data_ptr(), s.len_bytes() as usize);
+        ptr::copy_nonoverlapping(s.const_data_ptr(), new_s.data_ptr(), s.len_bytes() as usize);
     }
     if nbytes != s.len_bytes() {
         multibyte::str_as_multibyte(new_s.data_ptr(), nbytes, s.len_bytes(), ptr::null_mut());
@@ -135,17 +127,10 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
 /// Case is significant.
 #[lisp_fn]
 fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
-    let lispstr1 = LispObject::symbol_or_string_as_string(string1);
-    let lispstr2 = LispObject::symbol_or_string_as_string(string2);
+    let s1 = LispObject::symbol_or_string_as_string(string1);
+    let s2 = LispObject::symbol_or_string_as_string(string2);
 
-    let zip = lispstr1.chars().zip(lispstr2.chars());
-    for (codept1, codept2) in zip {
-        if codept1 != codept2 {
-            return LispObject::from_bool(codept1 < codept2);
-        }
-    }
-
-    LispObject::from_bool(lispstr1.len_chars() < lispstr2.len_chars())
+    LispObject::from_bool(s1.as_slice() < s2.as_slice())
 }
 
 /// Return t if OBJECT is a multibyte string.
@@ -156,3 +141,40 @@ fn multibyte_string_p(object: LispObject) -> LispObject {
 }
 
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
+
+#[test]
+fn test_multibyte_stringp() {
+    let string = mock_unibyte_string!();
+    assert_nil!(multibyte_string_p(string));
+
+    let flt = mock_float!();
+    assert_nil!(multibyte_string_p(flt));
+
+    let multi = mock_multibyte_string!();
+    assert_t!(multibyte_string_p(multi));
+}
+
+#[test]
+fn already_unibyte() {
+    let single = mock_unibyte_string!();
+    assert!(string_to_unibyte(single) == single);
+}
+
+#[test]
+fn str_equality() {
+    let string1 = mock_unibyte_string!("Hello World");
+    let string2 = mock_unibyte_string!("Hello World");
+    let string3 = mock_unibyte_string!("Goodbye World");
+    assert_t!(string_equal(string1, string2));
+    assert_t!(string_equal(string2, string1));
+    assert_nil!(string_equal(string1, string3));
+    assert_nil!(string_equal(string2, string3));
+}
+
+#[test]
+fn test_stringlessp() {
+    let string = mock_unibyte_string!("Hello World");
+    let string2 = mock_unibyte_string!("World Hello");
+    assert_t!(string_lessp(string, string2));
+    assert_nil!(string_lessp(string2, string));
+}

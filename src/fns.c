@@ -1870,33 +1870,6 @@ advisable.  */)
   return ret;
 }
 
-DEFUN ("provide", Fprovide, Sprovide, 1, 2, 0,
-       doc: /* Announce that FEATURE is a feature of the current Emacs.
-The optional argument SUBFEATURES should be a list of symbols listing
-particular subfeatures supported in this version of FEATURE.  */)
-  (Lisp_Object feature, Lisp_Object subfeatures)
-{
-  register Lisp_Object tem;
-  CHECK_SYMBOL (feature);
-  CHECK_LIST (subfeatures);
-  if (!NILP (Vautoload_queue))
-    Vautoload_queue = Fcons (Fcons (make_number (0), Vfeatures),
-			     Vautoload_queue);
-  tem = Fmemq (feature, Vfeatures);
-  if (NILP (tem))
-    Vfeatures = Fcons (feature, Vfeatures);
-  if (!NILP (subfeatures))
-    Fput (feature, Qsubfeatures, subfeatures);
-  LOADHIST_ATTACH (Fcons (Qprovide, feature));
-
-  /* Run any load-hooks for this file.  */
-  tem = Fassq (feature, Vafter_load_alist);
-  if (CONSP (tem))
-    Fmapc (Qfuncall, XCDR (tem));
-
-  return feature;
-}
-
 /* `require' and its subroutines.  */
 
 /* List of features currently being require'd, innermost first.  */
@@ -2849,6 +2822,9 @@ hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
 /* Clear hash table H.  */
 
 void
+hash_clear (struct Lisp_Hash_Table *);
+
+void
 hash_clear (struct Lisp_Hash_Table *h)
 {
   if (h->count > 0)
@@ -3700,7 +3676,6 @@ this variable.  */);
   defsubr (&Syes_or_no_p);
   defsubr (&Sload_average);
   defsubr (&Srequire);
-  defsubr (&Sprovide);
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);

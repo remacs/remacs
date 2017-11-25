@@ -19,7 +19,7 @@ md5 = "0.3.5"
 base64 = "0.6.0"
 sha1 = "0.2.0"
 sha2 = "0.4.2"
-mock_derive = "0.6.1"
+mock_derive = "0.7.0"
 
 # Only want this local crate as dependency on Mac OS X
 [target.'cfg(target_os = "macos")'.dependencies]

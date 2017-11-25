@@ -1,1 +1,14 @@
-build_script: rem
+version: 1.0.{build}
+os:
+  - Visual Studio 2017
+clone_depth: 1
+platform:
+  - x64
+environment:
+  matrix:
+    - TOOLCHAIN_VERSION: 14.0
+      RUST: nightly
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+build_script: .appveyor.bat

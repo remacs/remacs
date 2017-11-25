@@ -1,7 +1,7 @@
 //! Operations on lists.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Qlistp, Qplistp};
+use remacs_sys::{EmacsInt, Qcircular_list, Qlistp, Qplistp};
 use remacs_sys::globals;
 
 use lisp::LispObject;
@@ -163,7 +163,7 @@ pub fn member(elt: LispObject, list: LispObject) -> LispObject {
 /// The value is actually the first element of LIST whose car is KEY.
 /// Elements of LIST that are not conses are ignored.
 #[lisp_fn]
-fn assq(key: LispObject, list: LispObject) -> LispObject {
+pub fn assq(key: LispObject, list: LispObject) -> LispObject {
     for tail in list.iter_tails() {
         let item = tail.car();
         if let Some(item_cons) = item.as_cons() {
@@ -370,7 +370,7 @@ where
 /// use `(setq x (plist-put x prop val))' to be sure to use the new value.
 /// The PLIST is modified by side effects.
 #[lisp_fn]
-fn plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
+pub fn plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> LispObject {
     internal_plist_put(plist, prop, val, LispObject::eq)
 }
 
@@ -412,7 +412,7 @@ pub fn put(symbol: LispObject, propname: LispObject, value: LispObject) -> LispO
 
 /// Return a newly created list with specified arguments as elements.
 /// Any number of arguments, even zero arguments, are allowed.
-/// usage: (list &rest OBJECTS)
+/// usage: (fn &rest OBJECTS)
 #[lisp_fn]
 pub fn list(args: &mut [LispObject]) -> LispObject {
     args.iter()
@@ -499,6 +499,11 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
         }
         tail = item;
     }
+}
+
+#[no_mangle]
+pub fn circular_list(obj: LispObject) -> ! {
+    xsignal!(Qcircular_list, obj);
 }
 
 include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));
