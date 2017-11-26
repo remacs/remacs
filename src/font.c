@@ -5421,19 +5421,22 @@ gets the repertory information by an opened font and ENCODING.  */);
 	       doc: /*  Vector of valid font weight values.
 Each element has the form:
     [NUMERIC-VALUE SYMBOLIC-NAME ALIAS-NAME ...]
-NUMERIC-VALUE is an integer, and SYMBOLIC-NAME and ALIAS-NAME are symbols. */);
+NUMERIC-VALUE is an integer, and SYMBOLIC-NAME and ALIAS-NAME are symbols.
+This variable cannot be set; trying to do so will signal an error.  */);
   Vfont_weight_table = BUILD_STYLE_TABLE (weight_table);
   make_symbol_constant (intern_c_string ("font-weight-table"));
 
   DEFVAR_LISP_NOPRO ("font-slant-table", Vfont_slant_table,
 	       doc: /*  Vector of font slant symbols vs the corresponding numeric values.
-See `font-weight-table' for the format of the vector. */);
+See `font-weight-table' for the format of the vector.
+This variable cannot be set; trying to do so will signal an error.  */);
   Vfont_slant_table = BUILD_STYLE_TABLE (slant_table);
   make_symbol_constant (intern_c_string ("font-slant-table"));
 
   DEFVAR_LISP_NOPRO ("font-width-table", Vfont_width_table,
 	       doc: /*  Alist of font width symbols vs the corresponding numeric values.
-See `font-weight-table' for the format of the vector. */);
+See `font-weight-table' for the format of the vector.
+This variable cannot be set; trying to do so will signal an error.  */);
   Vfont_width_table = BUILD_STYLE_TABLE (width_table);
   make_symbol_constant (intern_c_string ("font-width-table"));
 

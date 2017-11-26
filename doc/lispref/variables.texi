@@ -139,6 +139,13 @@ Variables}).  A @code{defconst} form serves to inform human readers
 that you do not intend to change the value of a variable, but Emacs
 does not raise an error if you actually change it.
 
+@cindex read-only variables
+A small number of additional symbols are made read-only for various
+practical reasons.  These include @code{enable-multibyte-characters},
+@code{most-positive-fixnum}, @code{most-negative-fixnum}, and a few
+others.  Any attempt to set or bind these also signals a
+@code{setting-constant} error.
+
 @node Local Variables
 @section Local Variables
 @cindex binding local variables
@@ -1355,6 +1362,9 @@ is not current either on entry to or exit from the @code{let}.  This is
 because @code{let} does not distinguish between different kinds of
 bindings; it knows only which variable the binding was made for.
 
+It is an error to make a constant or a read-only variable
+buffer-local.  @xref{Constant Variables}.
+
 If the variable is terminal-local (@pxref{Multiple Terminals}), this
 function signals an error.  Such variables cannot have buffer-local
 bindings as well.
@@ -1393,6 +1403,9 @@ Subsequently calling @code{makunbound} on @var{variable} will result
 in a void buffer-local value and leave the default value unaffected.
 
 The value returned is @var{variable}.
+
+It is an error to make a constant or a read-only variable
+buffer-local.  @xref{Constant Variables}.
 
 @strong{Warning:} Don't assume that you should use
 @code{make-variable-buffer-local} for user-option variables, simply

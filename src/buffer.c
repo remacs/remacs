@@ -5620,6 +5620,8 @@ file I/O and the behavior of various editing commands.
 
 This variable is buffer-local but you cannot set it directly;
 use the function `set-buffer-multibyte' to change a buffer's representation.
+To prevent any attempts to set it or make it buffer-local, Emacs will
+signal an error in those cases.
 See also Info node `(elisp)Text Representations'.  */);
   make_symbol_constant (intern_c_string ("enable-multibyte-characters"));
 
