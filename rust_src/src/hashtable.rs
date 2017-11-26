@@ -4,9 +4,10 @@ use libc::c_void;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Fcopy_sequence, Lisp_Hash_Table, PseudovecType,
-                 Qhash_table_test, CHECK_IMPURE, INTMASK, Qkey, Qvalue, Qkey_or_value, Qkey_and_value, weak_hash_tables, ARRAY_MARK_FLAG};
-use remacs_sys::{gc_aset, gc_asize, survives_gc_p, mark_object, hash_clear, hash_lookup, hash_put};
+use remacs_sys::{weak_hash_tables, EmacsDouble, EmacsInt, EmacsUint, Fcopy_sequence,
+                 Lisp_Hash_Table, PseudovecType, Qhash_table_test, Qkey, Qkey_and_value,
+                 Qkey_or_value, Qvalue, ARRAY_MARK_FLAG, CHECK_IMPURE, INTMASK};
+use remacs_sys::{gc_aset, gc_asize, hash_clear, hash_lookup, hash_put, mark_object, survives_gc_p};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -418,11 +419,11 @@ pub extern "C" fn sweep_weak_table(h: *mut Lisp_Hash_Table, remove_entries_p: bo
             let key_survives = unsafe { survives_gc_p(table.get_hash_key(i).to_raw()) };
             let value_survives = unsafe { survives_gc_p(table.get_hash_value(i).to_raw()) };
             let remove_p = match table.weak {
-                Qkey => { !key_survives },
-                Qvalue => { !value_survives },
-                Qkey_or_value => { !(key_survives || value_survives) },
-                Qkey_and_value => { !(key_survives && value_survives) },
-                _ => { panic!() }
+                Qkey => !key_survives,
+                Qvalue => !value_survives,
+                Qkey_or_value => !(key_survives || value_survives),
+                Qkey_and_value => !(key_survives && value_survives),
+                _ => panic!(),
             };
 
             next = table.get_next_slot(i);
@@ -462,7 +463,6 @@ pub extern "C" fn sweep_weak_table(h: *mut Lisp_Hash_Table, remove_entries_p: bo
 
             i = next;
         }
-
     }
 
     marked
@@ -479,7 +479,7 @@ pub extern "C" fn sweep_weak_hash_tables() {
     // key-weak table B, Z -> Y.  If B comes after A in the list of weak
     // tables, X -> Y might be removed from A, although when looking at B
     // one finds that it shouldn't.
-    
+
     // This may look odd, but this is 'abusing' a Rust while loop to make
     // a 'do-while' loop. All the logic is done in the conditional of the while loop,
     // and the body is just empty.
@@ -490,20 +490,19 @@ pub extern "C" fn sweep_weak_hash_tables() {
         let mut h = LispHashTableRef::new(unsafe { weak_hash_tables });
         while h.as_mut() != ptr::null_mut() {
             if h.header.size & ARRAY_MARK_FLAG != 0 {
-                marked = marked || sweep_weak_table (h.as_mut(), false);
+                marked = marked || sweep_weak_table(h.as_mut(), false);
             }
 
             h = LispHashTableRef::new(h.next_weak);
         }
 
-        
+
         marked
-    }
-    {}
+    } {}
 
     // Remove tables and entries that aren't used.
     let mut table = LispHashTableRef::new(unsafe { weak_hash_tables });
-    let mut used = LispHashTableRef::new(ptr::null_mut());;
+    let mut used = LispHashTableRef::new(ptr::null_mut());
     while table.as_mut() != ptr::null_mut() {
         let next = LispHashTableRef::new(table.next_weak);
 
@@ -518,7 +517,7 @@ pub extern "C" fn sweep_weak_hash_tables() {
             }
         }
 
-        
+
         table = next;
     }
 
