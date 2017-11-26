@@ -5,8 +5,8 @@ use std::ptr;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Fcopy_sequence, Lisp_Hash_Table, PseudovecType,
-                 Qhash_table_test, CHECK_IMPURE, INTMASK};
-use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put};
+                 Qhash_table_test, CHECK_IMPURE, INTMASK, Qkey, Qvalue, Qkey_or_value, Qkey_and_value};
+use remacs_sys::{gc_aset, gc_asize, survives_gc_p, mark_object, hash_clear, hash_lookup, hash_put};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -398,6 +398,74 @@ fn clrhash(table: LispObject) -> LispObject {
 fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
     let sym = LispObject::from(Qhash_table_test);
     put(name, sym, list(&mut [test, hash]))
+}
+
+/// Sweep weak hash table H.  REMOVE_ENTRIES_P means remove
+/// entries from the table that don't survive the current GC.
+/// !REMOVE_ENTRIES_P means mark entries that are in use.  Value is
+/// true if anything was marked.
+#[no_mangle]
+pub extern "C" fn sweep_weak_table(h: *mut Lisp_Hash_Table, remove_entries_p: bool) -> bool {
+    let mut table = LispHashTableRef::new(h);
+    let n = unsafe { gc_asize(table.index) };
+    let mut marked = false;
+
+    for bucket in 0..n {
+        let mut prev = -1;
+        let mut next;
+        let mut i = table.get_index_slot(bucket);
+        while 0 <= i {
+            let key_survives = unsafe { survives_gc_p(table.get_hash_key(i).to_raw()) };
+            let value_survives = unsafe { survives_gc_p(table.get_hash_value(i).to_raw()) };
+            let remove_p = match table.weak {
+                Qkey => { !key_survives },
+                Qvalue => { !value_survives },
+                Qkey_or_value => { !(key_survives || value_survives) },
+                Qkey_and_value => { !(key_survives && value_survives) },
+                _ => { panic!() }
+            };
+
+            next = table.get_next_slot(i);
+
+            if remove_entries_p {
+                if remove_p {
+                    if prev < 0 {
+                        table.set_index_slot(bucket, next);
+                    } else {
+                        table.set_next_slot(prev, next);
+                    }
+
+                    table.set_next_slot(i, table.next_free);
+                    table.next_free = i;
+
+                    table.set_hash_key(i, LispObject::constant_nil());
+                    table.set_hash_value(i, LispObject::constant_nil());
+                    table.set_hash_hash(i, LispObject::constant_nil());
+
+                    table.count -= 1;
+                } else {
+                    prev = i;
+                }
+            } else {
+                if !remove_p {
+                    if !key_survives {
+                        unsafe { mark_object(table.get_hash_key(i).to_raw()) };
+                        marked = true;
+                    }
+
+                    if !value_survives {
+                        unsafe { mark_object(table.get_hash_value(i).to_raw()) };
+                        marked = true;
+                    }
+                }
+            }
+
+            i = next;
+        }
+
+    }
+
+    marked
 }
 
 include!(concat!(env!("OUT_DIR"), "/hashtable_exports.rs"));

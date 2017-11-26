@@ -1132,6 +1132,9 @@ extern "C" {
     pub fn hash_clear(h: *mut Lisp_Hash_Table);
 
     pub fn gc_aset(array: Lisp_Object, idx: ptrdiff_t, val: Lisp_Object);
+    pub fn gc_asize(array: Lisp_Object) -> ptrdiff_t;
+    pub fn survives_gc_p(o: Lisp_Object) -> bool;
+    pub fn mark_object(o: Lisp_Object);
 
     pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: Lisp_Object);
     pub fn set_point_both(charpos: ptrdiff_t, bytepos: ptrdiff_t);
