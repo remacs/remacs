@@ -5,7 +5,7 @@ use std::ptr;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Fcopy_sequence, Lisp_Hash_Table, PseudovecType,
-                 Qhash_table_test, CHECK_IMPURE, INTMASK, Qkey, Qvalue, Qkey_or_value, Qkey_and_value};
+                 Qhash_table_test, CHECK_IMPURE, INTMASK, Qkey, Qvalue, Qkey_or_value, Qkey_and_value, weak_hash_tables, ARRAY_MARK_FLAG};
 use remacs_sys::{gc_aset, gc_asize, survives_gc_p, mark_object, hash_clear, hash_lookup, hash_put};
 
 use lisp::{ExternalPtr, LispObject};
@@ -466,6 +466,63 @@ pub extern "C" fn sweep_weak_table(h: *mut Lisp_Hash_Table, remove_entries_p: bo
     }
 
     marked
+}
+
+/// Remove elements from weak hash tables that don't survive the
+/// current garbage collection.  Remove weak tables that don't survive
+/// from Vweak_hash_tables.  Called from gc_sweep.
+#[no_mangle]
+pub extern "C" fn sweep_weak_hash_tables() {
+    // Mark all keys and values that are in use.  Keep on marking until
+    // there is no more change.  This is necessary for cases like
+    // value-weak table A containing an entry X -> Y, where Y is used in a
+    // key-weak table B, Z -> Y.  If B comes after A in the list of weak
+    // tables, X -> Y might be removed from A, although when looking at B
+    // one finds that it shouldn't.
+    
+    // This may look odd, but this is 'abusing' a Rust while loop to make
+    // a 'do-while' loop. All the logic is done in the conditional of the while loop,
+    // and the body is just empty.
+    let mut marked;
+    while {
+        marked = false;
+
+        let mut h = LispHashTableRef::new(unsafe { weak_hash_tables });
+        while h.as_mut() != ptr::null_mut() {
+            if h.header.size & ARRAY_MARK_FLAG != 0 {
+                marked = marked || sweep_weak_table (h.as_mut(), false);
+            }
+
+            h = LispHashTableRef::new(h.next_weak);
+        }
+
+        
+        marked
+    }
+    {}
+
+    // Remove tables and entries that aren't used.
+    let mut table = LispHashTableRef::new(unsafe { weak_hash_tables });
+    let mut used = LispHashTableRef::new(ptr::null_mut());;
+    while table.as_mut() != ptr::null_mut() {
+        let next = LispHashTableRef::new(table.next_weak);
+
+        if table.header.size & ARRAY_MARK_FLAG != 0 {
+            if table.count > 0 {
+                // TABLE is marked as used.  Sweep its contents.
+                sweep_weak_table(table.as_mut(), true);
+
+                // Add table to the list of used weak hash tables.
+                table.next_weak = used.as_mut();
+                used = table;
+            }
+        }
+
+        
+        table = next;
+    }
+
+    unsafe { weak_hash_tables = used.as_mut() };
 }
 
 include!(concat!(env!("OUT_DIR"), "/hashtable_exports.rs"));
