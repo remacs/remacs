@@ -5625,16 +5625,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		}
 	      else if (nread == -1 && would_block (errno))
 		;
-#ifdef WINDOWSNT
-	      /* FIXME: Is this special case still needed?  */
-	      /* Note that we cannot distinguish between no input
-		 available now and a closed pipe.
-		 With luck, a closed pipe will be accompanied by
-		 subprocess termination and SIGCHLD.  */
-	      else if (nread == 0 && !NETCONN_P (proc) && !SERIALCONN_P (proc)
-		       && !PIPECONN_P (proc))
-		;
-#endif
 #ifdef HAVE_PTYS
 	      /* On some OSs with ptys, when the process on one end of
 		 a pty exits, the other end gets an error reading with
