@@ -3,7 +3,7 @@
 % Load plain if necessary, i.e., if running under initex.
 \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
 %
-\def\texinfoversion{2017-09-11.18}
+\def\texinfoversion{2017-11-17.06}
 %
 % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
 % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -5969,24 +5969,30 @@ end
     % Split the last of the double-column material.
     \savemarks
     \balancecolumns
-    %
+  }%
+  \eject % call the \output just set
+  \ifdim\pagetotal=0pt
     % Having called \balancecolumns once, we do not
     % want to call it again.  Therefore, reset \output to its normal
     % definition right away.
     \global\output = {\onepageout{\pagecontents\PAGE}}%
-  }%
-  \eject
-  \endgroup % started in \begindoublecolumns
-  \restoremarks
-  % Leave the double-column material on the current page, no automatic
-  % page break.
-  \box\balancedcolumns
-  %
-  % \pagegoal was set to the doubled \vsize above, since we restarted
-  % the current page.  We're now back to normal single-column
-  % typesetting, so reset \pagegoal to the normal \vsize.
-  \global\vsize = \txipageheight %
-  \pagegoal = \txipageheight %
+    %
+    \endgroup % started in \begindoublecolumns
+    \restoremarks
+    % Leave the double-column material on the current page, no automatic
+    % page break.
+    \box\balancedcolumns
+    %
+    % \pagegoal was set to the doubled \vsize above, since we restarted
+    % the current page.  We're now back to normal single-column
+    % typesetting, so reset \pagegoal to the normal \vsize.
+    \global\vsize = \txipageheight %
+    \pagegoal = \txipageheight %
+  \else
+    % We had some left-over material.  This might happen when \doublecolumnout
+    % is called in \balancecolumns.  Try again.
+    \expandafter\enddoublecolumns
+  \fi
 }
 \newbox\balancedcolumns
 \setbox\balancedcolumns=\vbox{shouldnt see this}%
@@ -6001,6 +6007,7 @@ end
   \ifdim\dimen@<5\baselineskip
     % Don't split a short final column in two.
     \setbox2=\vbox{}%
+    \global\setbox\balancedcolumns=\vbox{\pagesofar}%
   \else
     \divide\dimen@ by 2 % target to split to
     \dimen@ii = \dimen@
@@ -6016,15 +6023,15 @@ end
       \repeat
     }%
     % Now the left column is in box 1, and the right column in box 3.
+    %
     % Check whether the left column has come out higher than the page itself.  
     % (Note that we have doubled \vsize for the double columns, so
     % the actual height of the page is 0.5\vsize).
     \ifdim2\ht1>\vsize
-      % Just split the last of the double column material roughly in half.
-      \setbox2=\box0
-      \setbox0 = \vsplit2 to \dimen@ii
-      \setbox0=\vbox to \dimen@ii {\unvbox0\vfill}%
-      \setbox2=\vbox to \dimen@ii {\unvbox2\vfill}%
+      % It appears that we have been called upon to balance too much material.
+      % Output some of it with \doublecolumnout, leaving the rest on the page.
+      \setbox\PAGE=\box0
+      \doublecolumnout
     \else
       % Compare the heights of the two columns.
       \ifdim4\ht1>5\ht3
@@ -6037,10 +6044,10 @@ end
         \setbox2=\vbox to\ht1{\unvbox3\unskip}%
         \setbox0=\vbox to\ht1{\unvbox1\unskip}%
       \fi
+      \global\setbox\balancedcolumns=\vbox{\pagesofar}%
     \fi
   \fi
   %
-  \global\setbox\balancedcolumns=\vbox{\pagesofar}%
 }
 \catcode`\@ = \other
 

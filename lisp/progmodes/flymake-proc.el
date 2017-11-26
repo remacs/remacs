@@ -768,7 +768,7 @@ can also be executed interactively independently of
               ;; trying if the directory is read-only (bug#8954).
               (file-writable-p (file-name-directory buffer-file-name))
               (flymake-proc--get-init-function buffer-file-name))))
-        (unless init-f (error "Can find a suitable init function"))
+        (unless init-f (error "Can't find a suitable init function"))
         (flymake-proc--clear-buildfile-cache)
         (flymake-proc--clear-project-include-dirs-cache)
 

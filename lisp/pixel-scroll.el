@@ -261,7 +261,7 @@ unseen line above the first line, respectively, is provided."
      ;; obtain height by (line-pixel-height).  This is based on
      ;; expected response from display engine.  See following
      ;; discussion.
-     ;; https://lists.gnu.org/archive/html/emacs-devel/2017-10/msg00621.html
+     ;; https://lists.gnu.org/r/emacs-devel/2017-10/msg00621.html
      ((equal (count-lines (window-start) (point)) 1)
       (line-pixel-height))
      ;; No char of line is shown and the line is not at the top,

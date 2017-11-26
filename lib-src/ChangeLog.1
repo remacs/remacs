@@ -65,7 +65,7 @@
 
 	Better support for future plugins
 	See the thread containing:
-	https://lists.gnu.org/archive/html/emacs-devel/2015-02/msg00720.html
+	https://lists.gnu.org/r/emacs-devel/2015-02/msg00720.html
 	* make-docfile.c (write_globals): Generate code that #defines
 	Qxxx macros other than Qnil only if DEFINE_NONNIL_Q_SYMBOL_MACROS.
 	Qnil is safe to define even in plugins, since it must be zero for
@@ -329,7 +329,7 @@
 2014-05-26  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Fix rcs2log problems with CVS.  Reported by Glenn Morris in
-	<https://lists.gnu.org/archive/html/emacs-devel/2014-05/msg00277.html>.
+	<https://lists.gnu.org/r/emacs-devel/2014-05/msg00277.html>.
 	Plus, fix some security and filename quoting problems.
 	* rcs2log (logdir): Prefer mktemp if available.
 	(logdir, llogdir): Work even if TMPDIR begins with '-' or has spaces.
@@ -937,13 +937,13 @@
 
 	* movemail.c: Add missing 'defined'.
 	Suggested by Sven Joachim in
-	<https://lists.gnu.org/archive/html/emacs-devel/2012-07/msg00218.html>.
+	<https://lists.gnu.org/r/emacs-devel/2012-07/msg00218.html>.
 
 2012-07-11  Paul Eggert  <eggert@cs.ucla.edu>
 
 	Port 'movemail' again to Solaris and similar hosts.
 	See Susan Cragin's report in
-	<https://lists.gnu.org/archive/html/emacs-devel/2012-07/msg00199.html>.
+	<https://lists.gnu.org/r/emacs-devel/2012-07/msg00199.html>.
 	* movemail.c (xmalloc): Also define if !DISABLE_DIRECT_ACCESS &&
 	!MAIL_USE_MMDF && !MAIL_USE_SYSTEM_LOCK.  Move up, so it doesn't
 	need a forward declaration.
@@ -1212,7 +1212,7 @@
 	Assume less-ancient POSIX support.
 	* update-game-score.c: Include <getopt.h> rather than rolling our
 	own decls for optarg, optind, opterr.  See
-	<https://lists.gnu.org/archive/html/emacs-devel/2011-12/msg00720.html>.
+	<https://lists.gnu.org/r/emacs-devel/2011-12/msg00720.html>.
 
 2012-04-14  Juanma Barranquero  <lekktu@gmail.com>
 
@@ -1271,7 +1271,7 @@
 	instead, treat both -c and -t as always requesting a new "tty" frame,
 	and let server.el decide which kind is actually required.
 	Reported by Uwe Siart <usenet@siart.de> in this thread:
-	https://lists.gnu.org/archive/html/emacs-devel/2011-11/msg00303.html
+	https://lists.gnu.org/r/emacs-devel/2011-11/msg00303.html
 
 2011-11-30  Chong Yidong  <cyd@gnu.org>
 

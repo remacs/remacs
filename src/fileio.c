@@ -1827,7 +1827,8 @@ DEFUN ("copy-file", Fcopy_file, Scopy_file, 2, 6,
        "fCopy file: \nGCopy %s to file: \np\nP",
        doc: /* Copy FILE to NEWNAME.  Both args must be strings.
 If NEWNAME is a directory name, copy FILE to a like-named file under
-NEWNAME.
+NEWNAME.  For NEWNAME to be recognized as a directory name, it should
+end in a slash.
 
 This function always sets the file modes of the output file to match
 the input file.
@@ -2252,7 +2253,8 @@ DEFUN ("rename-file", Frename_file, Srename_file, 2, 3,
        doc: /* Rename FILE as NEWNAME.  Both args must be strings.
 If file has names other than FILE, it continues to have those names.
 If NEWNAME is a directory name, rename FILE to a like-named file under
-NEWNAME.
+NEWNAME.  For NEWNAME to be recognized as a directory name, it should
+end in a slash.
 
 Signal a `file-already-exists' error if a file NEWNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.

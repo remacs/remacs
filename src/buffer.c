@@ -1087,7 +1087,11 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
   else
     {
       char number[sizeof "-999999"];
-      int i = XFASTINT (Frandom (make_number (999999)));
+
+      /* Use XINT instead of XFASTINT to work around GCC bug 80776.  */
+      int i = XINT (Frandom (make_number (1000000)));
+      eassume (0 <= i && i < 1000000);
+
       AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));
       genbase = concat2 (name, lnumber);
       if (NILP (Fget_buffer (genbase)))
@@ -5079,6 +5083,8 @@ init_buffer_once (void)
 {
   int idx;
 
+  /* Items flagged permanent get an explicit permanent-local property
+     added in bindings.el, for clarity.  */
   memset (buffer_permanent_local_flags, 0, sizeof buffer_permanent_local_flags);
 
   /* 0 means not a lisp var, -1 means always local, else mask.  */

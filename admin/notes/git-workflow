@@ -12,7 +12,7 @@ git config --global user.email "fchu@example.com"
 git config --global transfer.fsckObjects true
 
 (See the thread "Recommend these .gitconfig settings for git integrity."
-[https://lists.gnu.org/archive/html/emacs-devel/2016-01/threads.html#01802]
+[https://lists.gnu.org/r/emacs-devel/2016-01/threads.html#01802]
 for more details about why that last line is there.)
 
 Initial setup

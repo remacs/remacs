@@ -7655,10 +7655,11 @@ another window.  In interactive use, if the selected window is
 strongly dedicated to its buffer, the value of the option
 `switch-to-buffer-in-dedicated-window' specifies how to proceed.
 
-If called interactively, read the buffer name using the
-minibuffer.  The variable `confirm-nonexistent-file-or-buffer'
-determines whether to request confirmation before creating a new
-buffer.
+If called interactively, read the buffer name using `read-buffer'.
+The variable `confirm-nonexistent-file-or-buffer' determines
+whether to request confirmation before creating a new buffer.
+See `read-buffer' for features related to input and completion
+of buffer names.
 
 BUFFER-OR-NAME may be a buffer, a string (a buffer name), or nil.
 If BUFFER-OR-NAME is a string that does not identify an existing
@@ -7735,10 +7736,11 @@ Return the buffer switched to."
 BUFFER-OR-NAME may be a buffer, a string (a buffer name), or
 nil.  Return the buffer switched to.
 
-If called interactively, prompt for the buffer name using the
-minibuffer.  The variable `confirm-nonexistent-file-or-buffer'
-determines whether to request confirmation before creating a new
-buffer.
+If called interactively, read the buffer name using `read-buffer'.
+The variable `confirm-nonexistent-file-or-buffer' determines
+whether to request confirmation before creating a new buffer.
+See `read-buffer' for features related to input and completion
+of buffer names.
 
 If BUFFER-OR-NAME is a string and does not identify an existing
 buffer, create a new buffer with that name.  If BUFFER-OR-NAME is
@@ -7759,10 +7761,11 @@ documentation for additional customization information."
 BUFFER-OR-NAME may be a buffer, a string (a buffer name), or
 nil.  Return the buffer switched to.
 
-If called interactively, prompt for the buffer name using the
-minibuffer.  The variable `confirm-nonexistent-file-or-buffer'
-determines whether to request confirmation before creating a new
-buffer.
+If called interactively, read the buffer name using `read-buffer'.
+The variable `confirm-nonexistent-file-or-buffer' determines
+whether to request confirmation before creating a new buffer.
+See `read-buffer' for features related to input and completion
+of buffer names.
 
 If BUFFER-OR-NAME is a string and does not identify an existing
 buffer, create a new buffer with that name.  If BUFFER-OR-NAME is

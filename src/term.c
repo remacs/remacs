@@ -2057,7 +2057,7 @@ TERMINAL does not refer to a text terminal.  */)
 
 /* Declare here rather than in the function, as in the rest of Emacs,
    to work around an HPUX compiler bug (?). See
-   https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00410.html  */
+   https://lists.gnu.org/r/emacs-devel/2007-08/msg00410.html  */
 static int default_max_colors;
 static int default_no_color_video;
 static char *default_orig_pair;

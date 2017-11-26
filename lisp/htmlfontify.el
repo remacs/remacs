@@ -650,7 +650,7 @@ STYLE is the inline CSS stylesheet (or tag referring to an external sheet)."
       var even = false;
 
       // if arguments are provided to specify the colors
-      // of the even & odd rows, then use the them;
+      // of the even & odd rows, then use them;
       // otherwise use the following defaults:
       var evenColor = arguments[1] ? arguments[1] : \"#fff\";
       var oddColor  = arguments[2] ? arguments[2] : \"#ddd\";

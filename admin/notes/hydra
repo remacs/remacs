@@ -11,7 +11,7 @@ https://hydra.nixos.org/jobset/gnu/emacs-trunk
 * It builds Emacs on various platforms.
 Sometimes jobs fail due to hydra problems rather than Emacs problems.
 Eg it seems like the darwin build will never work again.
-https://lists.gnu.org/archive/html/hydra-users/2016-01/msg00000.html
+https://lists.gnu.org/r/hydra-users/2016-01/msg00000.html
 
 * Mail notifications
 In addition to the web interface, Hydra can send notifications by

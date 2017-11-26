@@ -573,8 +573,15 @@ really_call_select (void *arg)
 			   sa->timeout, sa->sigmask);
 
   block_interrupt_signal (&oldset);
-  acquire_global_lock (self);
-  self->not_holding_lock = 0;
+  /* If we were interrupted by C-g while inside sa->func above, the
+     signal handler could have called maybe_reacquire_global_lock, in
+     which case we are already holding the lock and shouldn't try
+     taking it again, or else we will hang forever.  */
+  if (self->not_holding_lock)
+    {
+      acquire_global_lock (self);
+      self->not_holding_lock = 0;
+    }
   restore_signal_mask (&oldset);
 }
 

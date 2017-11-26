@@ -41,6 +41,8 @@ orig_fstatat (int fd, char const *filename, struct stat *buf, int flags)
    above.  */
 #include "sys/stat.h"
 
+#include "stat-time.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -50,6 +52,12 @@ orig_fstatat (int fd, char const *filename, struct stat *buf, int flags)
 # ifndef LSTAT_FOLLOWS_SLASHED_SYMLINK
 #  define LSTAT_FOLLOWS_SLASHED_SYMLINK 0
 # endif
+
+static int
+normal_fstatat (int fd, char const *file, struct stat *st, int flag)
+{
+  return stat_time_normalize (orig_fstatat (fd, file, st, flag), st);
+}
 
 /* fstatat should always follow symbolic links that end in /, but on
    Solaris 9 it doesn't if AT_SYMLINK_NOFOLLOW is specified.
@@ -63,7 +71,7 @@ orig_fstatat (int fd, char const *filename, struct stat *buf, int flags)
 int
 rpl_fstatat (int fd, char const *file, struct stat *st, int flag)
 {
-  int result = orig_fstatat (fd, file, st, flag);
+  int result = normal_fstatat (fd, file, st, flag);
   size_t len;
 
   if (LSTAT_FOLLOWS_SLASHED_SYMLINK || result != 0)
@@ -79,7 +87,7 @@ rpl_fstatat (int fd, char const *file, struct stat *st, int flag)
           errno = ENOTDIR;
           return -1;
         }
-      result = orig_fstatat (fd, file, st, flag & ~AT_SYMLINK_NOFOLLOW);
+      result = normal_fstatat (fd, file, st, flag & ~AT_SYMLINK_NOFOLLOW);
     }
   /* Fix stat behavior.  */
   if (result == 0 && !S_ISDIR (st->st_mode) && file[len - 1] == '/')

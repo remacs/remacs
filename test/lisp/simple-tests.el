@@ -280,7 +280,7 @@
      (undo-auto--boundaries 'test))))
 
 ;; Test for a regression introduced by undo-auto--boundaries changes.
-;; https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg01652.html
+;; https://lists.gnu.org/r/emacs-devel/2015-11/msg01652.html
 (defun undo-test-kill-c-a-then-undo ()
   (with-temp-buffer
     (switch-to-buffer (current-buffer))

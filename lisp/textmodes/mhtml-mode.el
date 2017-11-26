@@ -198,6 +198,12 @@ smallest."
                   (get-text-property orig-end 'mhtml-submode))
         (cl-decf font-lock-end)))
 
+    ;; Also handle the multiline property -- but handle it here, and
+    ;; not via font-lock-extend-region-functions, to avoid the
+    ;; situation where the two extension functions disagree.
+    ;; See bug#29159.
+    (font-lock-extend-region-multiline)
+
     (or (/= font-lock-beg orig-beg)
         (/= font-lock-end orig-end))))
 
@@ -365,8 +371,7 @@ the rules from `css-mode'."
   (setq-local font-lock-fontify-region-function
               #'mhtml--submode-fontify-region)
   (setq-local font-lock-extend-region-functions
-              '(mhtml--extend-font-lock-region
-                font-lock-extend-region-multiline))
+              '(mhtml--extend-font-lock-region))
 
   ;; Attach this to both pre- and post- hooks just in case it ever
   ;; changes a key binding that might be accessed from the menu bar.

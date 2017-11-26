@@ -98,7 +98,8 @@ related commands, use @dfn{permissive completion with confirmation} for
 minibuffer completion: if you type @key{RET} immediately after
 completing up to a nonexistent buffer name, Emacs prints
 @samp{[Confirm]} and you must type a second @key{RET} to submit that
-buffer name.  @xref{Completion Exit}, for details.
+buffer name.  @xref{Completion Exit}, for details.  For other
+completion options and features, see @ref{Completion Options}.
 
   If you specify a buffer that does not exist, @kbd{C-x b} creates a
 new, empty buffer that is not visiting any file, and selects it for

@@ -2254,24 +2254,38 @@ See `font-lock-syntax-table'.")
           (ruby-match-expression-expansion limit)))))
 
 ;;; Flymake support
-(defcustom ruby-flymake-command '("ruby" "-w" "-c")
-  "External tool used to check Ruby source code.
-This is a non empty list of strings, the checker tool possibly
-followed by required arguments.  Once launched it will receive
-the Ruby source to be checked as its standard input."
-  :group 'ruby
-  :type '(repeat string))
-
 (defvar-local ruby--flymake-proc nil)
 
-(defun ruby-flymake (report-fn &rest _args)
-  "Ruby backend for Flymake.  Launches
-`ruby-flymake-command' (which see) and passes to its standard
-input the contents of the current buffer. The output of this
-command is analyzed for error and warning messages."
-  (unless (executable-find (car ruby-flymake-command))
-    (error "Cannot find a suitable checker"))
+(defun ruby-flymake-simple (report-fn &rest _args)
+  "`ruby -wc' backend for Flymake."
+  (unless (executable-find "ruby")
+    (error "Cannot find the ruby executable"))
 
+  (ruby-flymake--helper
+   "ruby-flymake"
+   '("ruby" "-w" "-c")
+   (lambda (_proc source)
+     (goto-char (point-min))
+     (cl-loop
+      while (search-forward-regexp
+             "^\\(?:.*.rb\\|-\\):\\([0-9]+\\): \\(.*\\)$"
+             nil t)
+      for msg = (match-string 2)
+      for (beg . end) = (flymake-diag-region
+                         source
+                         (string-to-number (match-string 1)))
+      for type = (if (string-match "^warning" msg)
+                     :warning
+                   :error)
+      collect (flymake-make-diagnostic source
+                                       beg
+                                       end
+                                       type
+                                       msg)
+      into diags
+      finally (funcall report-fn diags)))))
+
+(defun ruby-flymake--helper (process-name command parser-fn)
   (when (process-live-p ruby--flymake-proc)
     (kill-process ruby--flymake-proc))
 
@@ -2281,39 +2295,96 @@ command is analyzed for error and warning messages."
       (setq
        ruby--flymake-proc
        (make-process
-        :name "ruby-flymake" :noquery t :connection-type 'pipe
-        :buffer (generate-new-buffer " *ruby-flymake*")
-        :command ruby-flymake-command
+        :name process-name :noquery t :connection-type 'pipe
+        :buffer (generate-new-buffer (format " *%s*" process-name))
+        :command command
         :sentinel
         (lambda (proc _event)
           (when (eq 'exit (process-status proc))
             (unwind-protect
                 (if (with-current-buffer source (eq proc ruby--flymake-proc))
                     (with-current-buffer (process-buffer proc)
-                      (goto-char (point-min))
-                      (cl-loop
-                       while (search-forward-regexp
-                              "^\\(?:.*.rb\\|-\\):\\([0-9]+\\): \\(.*\\)$"
-                              nil t)
-                       for msg = (match-string 2)
-                       for (beg . end) = (flymake-diag-region
-                                          source
-                                          (string-to-number (match-string 1)))
-                       for type = (if (string-match "^warning" msg)
-                                      :warning
-                                    :error)
-                       collect (flymake-make-diagnostic source
-                                                        beg
-                                                        end
-                                                        type
-                                                        msg)
-                       into diags
-                       finally (funcall report-fn diags)))
+                      (funcall parser-fn proc source))
                   (flymake-log :debug "Canceling obsolete check %s"
                                proc))
               (kill-buffer (process-buffer proc)))))))
       (process-send-region ruby--flymake-proc (point-min) (point-max))
       (process-send-eof ruby--flymake-proc))))
+
+(defcustom ruby-flymake-use-rubocop-if-available t
+  "Non-nil to use the Rubocop Flymake backend.
+Only takes effect if Rubocop is installed."
+  :type 'boolean
+  :group 'ruby
+  :safe 'booleanp)
+
+(defcustom ruby-rubocop-config ".rubocop.yml"
+  "Configuration file for `ruby-flymake-rubocop'."
+  :type 'string
+  :group 'ruby
+  :safe 'stringp)
+
+(defun ruby-flymake-rubocop (report-fn &rest _args)
+  "Rubocop backend for Flymake."
+  (unless (executable-find "rubocop")
+    (error "Cannot find the rubocop executable"))
+
+  (let ((command (list "rubocop" "--stdin" buffer-file-name "--format" "emacs"
+                       "--cache" "false" ; Work around a bug in old version.
+                       "--display-cop-names"))
+        config-dir)
+    (when buffer-file-name
+      (setq config-dir (locate-dominating-file buffer-file-name
+                                               ruby-rubocop-config))
+      (when config-dir
+        (setq command (append command (list "--config"
+                                            (expand-file-name ruby-rubocop-config
+                                                              config-dir)))))
+
+      (ruby-flymake--helper
+       "rubocop-flymake"
+       command
+       (lambda (proc source)
+         ;; Finding the executable is no guarantee of
+         ;; rubocop working, especially in the presence
+         ;; of rbenv shims (which cross ruby versions).
+         (when (eq (process-exit-status proc) 127)
+           ;; Not sure what to do in this case.  Maybe ideally we'd
+           ;; switch back to ruby-flymake-simple.
+           (flymake-log :warning "Rubocop returned status 127: %s"
+                        (buffer-string)))
+         (goto-char (point-min))
+         (cl-loop
+          while (search-forward-regexp
+                 "^\\(?:.*.rb\\|-\\):\\([0-9]+\\):\\([0-9]+\\): \\(.*\\)$"
+                 nil t)
+          for msg = (match-string 3)
+          for (beg . end) = (flymake-diag-region
+                             source
+                             (string-to-number (match-string 1))
+                             (string-to-number (match-string 2)))
+          for type = (cond
+                      ((string-match "^[EF]: " msg)
+                       :error)
+                      ((string-match "^W: " msg)
+                       :warning)
+                      (t :note))
+          collect (flymake-make-diagnostic source
+                                           beg
+                                           end
+                                           type
+                                           (substring msg 3))
+          into diags
+          finally (funcall report-fn diags)))))))
+
+(defun ruby-flymake-auto (report-fn &rest args)
+  (apply
+   (if (and ruby-flymake-use-rubocop-if-available
+            (executable-find "rubocop"))
+       #'ruby-flymake-rubocop
+     #'ruby-flymake-simple)
+   report-fn
+   args))
 
 ;;;###autoload
 (define-derived-mode ruby-mode prog-mode "Ruby"
@@ -2327,7 +2398,7 @@ command is analyzed for error and warning messages."
 
   (add-hook 'after-save-hook 'ruby-mode-set-encoding nil 'local)
   (add-hook 'electric-indent-functions 'ruby--electric-indent-p nil 'local)
-  (add-hook 'flymake-diagnostic-functions 'ruby-flymake nil 'local)
+  (add-hook 'flymake-diagnostic-functions 'ruby-flymake-auto nil 'local)
 
   (setq-local font-lock-defaults '((ruby-font-lock-keywords) nil nil))
   (setq-local font-lock-keywords ruby-font-lock-keywords)

@@ -5210,7 +5210,7 @@ If the category's done items are visible, this command called
 with a prefix argument only moves point to a higher item, e.g.,
 with point on the first done item and called with prefix 1, it
 moves to the last todo item; but if called with point on the
-first done item without a prefix argument, it moves point the the
+first done item without a prefix argument, it moves point to the
 empty line above the done items separator."
   (let* ((done (todo-done-item-p)))
     (todo-item-start)

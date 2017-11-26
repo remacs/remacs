@@ -286,8 +286,12 @@ The return value is undefined.
 
 
 ;; Redefined in byte-opt.el.
-;; This is not documented--it's not clear that we should promote it.
-(fset 'inline 'progn)
+;; This was undocumented and unused for decades.
+(defalias 'inline 'progn
+  "Like `progn', but when compiled inline top-level function calls in body.
+You don't need this.  (See bytecomp.el commentary for more details.)
+
+\(fn BODY...)")
 
 ;;; Interface to inline functions.
 
@@ -318,6 +322,7 @@ The return value is undefined.
 
 (defmacro defsubst (name arglist &rest body)
   "Define an inline function.  The syntax is just like that of `defun'.
+
 \(fn NAME ARGLIST &optional DOCSTRING DECL &rest BODY)"
   (declare (debug defun) (doc-string 3))
   (or (memq (get name 'byte-optimizer)

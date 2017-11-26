@@ -1859,9 +1859,9 @@ home directory is a root directory) and removes automounter prefixes
 
 When this function is first called, it caches the user's home
 directory as a regexp in `abbreviated-home-dir', and reuses it
-afterwards.  Lisp programs that temporarily set the home directory
-to a different value should let-bind `abbreviated-home-dir' for
-the modified home directory to take effect."
+afterwards (so long as the home directory does not change;
+if you want to permanently change your home directory after having
+started Emacs, set `abbreviated-home-dir' to nil so it will be recalculated)."
   ;; Get rid of the prefixes added by the automounter.
   (save-match-data
     (if (and automount-dir-prefix
@@ -1883,29 +1883,37 @@ the modified home directory to take effect."
       ;; give time for directory-abbrev-alist to be set properly.
       ;; We include a slash at the end, to avoid spurious matches
       ;; such as `/usr/foobar' when the home dir is `/usr/foo'.
-      (or abbreviated-home-dir
-	  (setq abbreviated-home-dir
-		(let ((abbreviated-home-dir "$foo"))
-                  (setq abbreviated-home-dir
-                        (concat "\\`"
-                                (abbreviate-file-name (expand-file-name "~"))
-                                "\\(/\\|\\'\\)"))
-                  ;; Depending on whether default-directory does or
-                  ;; doesn't include non-ASCII characters, the value
-                  ;; of abbreviated-home-dir could be multibyte or
-                  ;; unibyte.  In the latter case, we need to decode
-                  ;; it.  Note that this function is called for the
-                  ;; first time (from startup.el) when
-                  ;; locale-coding-system is already set up.
-                  (if (multibyte-string-p abbreviated-home-dir)
-                      abbreviated-home-dir
-                    (decode-coding-string abbreviated-home-dir
-                                          (if (eq system-type 'windows-nt)
-                                              'utf-8
-                                            locale-coding-system))))))
+      (unless abbreviated-home-dir
+        (put 'abbreviated-home-dir 'home (expand-file-name "~"))
+        (setq abbreviated-home-dir
+              (let ((abbreviated-home-dir "$foo"))
+                (setq abbreviated-home-dir
+                      (concat "\\`"
+                              (abbreviate-file-name
+                               (get 'abbreviated-home-dir 'home))
+                              "\\(/\\|\\'\\)"))
+                ;; Depending on whether default-directory does or
+                ;; doesn't include non-ASCII characters, the value
+                ;; of abbreviated-home-dir could be multibyte or
+                ;; unibyte.  In the latter case, we need to decode
+                ;; it.  Note that this function is called for the
+                ;; first time (from startup.el) when
+                ;; locale-coding-system is already set up.
+                (if (multibyte-string-p abbreviated-home-dir)
+                    abbreviated-home-dir
+                  (decode-coding-string abbreviated-home-dir
+                                        (if (eq system-type 'windows-nt)
+                                            'utf-8
+                                          locale-coding-system))))))
 
       ;; If FILENAME starts with the abbreviated homedir,
+      ;; and ~ hasn't changed since abbreviated-home-dir was set,
       ;; make it start with `~' instead.
+      ;; If ~ has changed, we ignore abbreviated-home-dir rather than
+      ;; invalidating it, on the assumption that a change in HOME
+      ;; is likely temporary (eg for testing).
+      ;; FIXME Is it even worth caching abbreviated-home-dir?
+      ;; Ref: https://debbugs.gnu.org/19657#20
       (if (and (string-match abbreviated-home-dir filename)
 	       ;; If the home dir is just /, don't change it.
 	       (not (and (= (match-end 0) 1)
@@ -1914,7 +1922,9 @@ the modified home directory to take effect."
 	       ;; Novell Netware allows drive letters beyond `Z:'.
 	       (not (and (memq system-type '(ms-dos windows-nt cygwin))
 			 (save-match-data
-			   (string-match "^[a-zA-`]:/$" filename)))))
+			   (string-match "^[a-zA-`]:/$" filename))))
+               (equal (get 'abbreviated-home-dir 'home)
+                      (expand-file-name "~")))
 	  (setq filename
 		(concat "~"
 			(match-string 1 filename)

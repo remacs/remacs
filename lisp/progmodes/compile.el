@@ -1740,7 +1740,7 @@ Returns the compilation buffer created."
 	(setq thisdir default-directory))
       (set-buffer-modified-p nil))
     ;; Pop up the compilation buffer.
-    ;; https://lists.gnu.org/archive/html/emacs-devel/2007-11/msg01638.html
+    ;; https://lists.gnu.org/r/emacs-devel/2007-11/msg01638.html
     (setq outwin (display-buffer outbuf '(nil (allow-no-window . t))))
     (with-current-buffer outbuf
       (let ((process-environment
@@ -2855,7 +2855,7 @@ TRUE-DIRNAME is the `file-truename' of DIRNAME, if given."
 		 ;; The gethash used to not use spec-directory, but
 		 ;; this leads to errors when files in different
 		 ;; directories have the same name:
-		 ;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00463.html
+		 ;; https://lists.gnu.org/r/emacs-devel/2007-08/msg00463.html
 		 (or (gethash (cons filename spec-directory) compilation-locs)
 		     (puthash (cons filename spec-directory)
 			      (compilation--make-file-struct

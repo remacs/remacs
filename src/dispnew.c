@@ -1699,7 +1699,7 @@ required_matrix_height (struct window *w)
 
   if (FRAME_WINDOW_P (f))
     {
-      /* https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
+      /* https://lists.gnu.org/r/emacs-devel/2015-11/msg00194.html  */
       int ch_height = max (FRAME_SMALLEST_FONT_HEIGHT (f), 1);
       int window_pixel_height = window_box_height (w) + eabs (w->vscroll);
 
@@ -1726,7 +1726,7 @@ required_matrix_width (struct window *w)
   struct frame *f = XFRAME (w->frame);
   if (FRAME_WINDOW_P (f))
     {
-      /* https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
+      /* https://lists.gnu.org/r/emacs-devel/2015-11/msg00194.html  */
       int ch_width = max (FRAME_SMALLEST_CHAR_WIDTH (f), 1);
 
       /* Compute number of glyphs needed in a glyph row.  */

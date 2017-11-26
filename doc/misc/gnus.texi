@@ -10976,7 +10976,7 @@ Pull all ticked articles (for the current group) into the summary buffer
 @kindex A D (Summary)
 @findex gnus-summary-enter-digest-group
 If the current article is a collection of other articles (for instance,
-a digest), you might use this command to enter a group based on the that
+a digest), you might use this command to enter a group based on that
 article (@code{gnus-summary-enter-digest-group}).  Gnus will try to
 guess what article type is currently displayed unless you give a prefix
 to this command, which forces a ``digest'' interpretation.  Basically,

@@ -2313,6 +2313,14 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	      (insert-directory tmp-name1 nil)
 	      (goto-char (point-min))
 	      (should (looking-at-p (regexp-quote tmp-name1))))
+	    ;; This has been fixed in Emacs 26.1.  See Bug#29423.
+	    (when (tramp--test-emacs26-p)
+	      (with-temp-buffer
+	        (insert-directory (file-name-as-directory tmp-name1) nil)
+	        (goto-char (point-min))
+	        (should
+                 (looking-at-p
+                  (regexp-quote (file-name-as-directory tmp-name1))))))
 	    (with-temp-buffer
 	      (insert-directory tmp-name1 "-al")
 	      (goto-char (point-min))

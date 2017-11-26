@@ -524,7 +524,7 @@ The @samp{emacs-pretest-bug} mailing list.  This list is no longer
 used, and is mainly of historical interest.  At one time, it was used
 for bug reports in development (i.e., not yet released) versions of
 Emacs.  You can read the archives for 2003 to mid 2007 at
-@url{https://lists.gnu.org/archive/html/emacs-pretest-bug/}.  Nowadays,
+@url{https://lists.gnu.org/r/emacs-pretest-bug/}.  Nowadays,
 it is an alias for @samp{bug-gnu-emacs}.
 
 @item
