@@ -786,7 +786,7 @@ This uses `ffap-file-exists-string', which may try adding suffixes from
     ("\\`~/" . ffap-lcd)		; |~/misc/ffap.el.Z|
     ;; This used to have a blank, but ffap-string-at-point doesn't
     ;; handle blanks.
-    ;; https://lists.gnu.org/archive/html/emacs-devel/2008-01/msg01058.html
+    ;; https://lists.gnu.org/r/emacs-devel/2008-01/msg01058.html
     ("\\`[Rr][Ff][Cc][-#]?\\([0-9]+\\)"	; no $
      . ffap-rfc)			; "100% RFC2100 compliant"
     (dired-mode . ffap-dired)		; maybe in a subdirectory

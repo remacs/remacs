@@ -1497,7 +1497,7 @@ current buffer file unless called with a prefix arg \\[universal-argument]."
         (string (buffer-substring-no-properties beg end))
         line)
     (with-current-buffer inferior-octave-buffer
-      ;; https://lists.gnu.org/archive/html/emacs-devel/2013-10/msg00095.html
+      ;; https://lists.gnu.org/r/emacs-devel/2013-10/msg00095.html
       (compilation-forget-errors)
       (setq inferior-octave-output-list nil)
       (while (not (string-equal string ""))

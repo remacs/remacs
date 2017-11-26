@@ -196,7 +196,7 @@ from which to start."
 ;;; If N suffixes match, we "branch" out into N+1 executions for the
 ;;; length of the longest match.  This means "fix" will match "ﬁx" but
 ;;; not "fⅸ", but it's necessary to keep the regexp size from scaling
-;;; exponentially.  See https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg02562.html
+;;; exponentially.  See https://lists.gnu.org/r/emacs-devel/2015-11/msg02562.html
                        (let ((subs (substring string (1+ i) (+ i 1 max-length))))
                          ;; `i' is still going to inc by 1 below.
                          (setq i (+ i max-length))

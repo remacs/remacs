@@ -924,7 +924,7 @@ or properties are considered."
 			(or (boundp sym) (fboundp sym)
 			    (symbol-plist sym))))))
 	 (PC-not-minibuffer t))
-    ;; https://lists.gnu.org/archive/html/emacs-devel/2007-03/msg01211.html
+    ;; https://lists.gnu.org/r/emacs-devel/2007-03/msg01211.html
     ;;
     ;; This deals with cases like running PC-l-c-s on "M-: (n-f".
     ;; The first call to PC-l-c-s expands this to "(ne-f", and moves

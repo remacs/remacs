@@ -2286,7 +2286,7 @@ The official mailing list for Windows specific help and discussion is
 @url{https://lists.gnu.org/mailman/listinfo/help-emacs-windows,
 help-emacs-windows}.  See that link for information on how to subscribe
 or unsubscribe.  The
-@uref{https://lists.gnu.org/archive/html/help-emacs-windows/, list archives}
+@uref{https://lists.gnu.org/r/help-emacs-windows/, list archives}
 are available online.
 
 @c ------------------------------------------------------------

@@ -86,7 +86,7 @@ Savannah Project Page}.
 
 There is a mailing list for @value{tramp}, available at
 @email{tramp-devel@@gnu.org}, and archived at
-@uref{https://lists.gnu.org/archive/html/tramp-devel/, the
+@uref{https://lists.gnu.org/r/tramp-devel/, the
 @value{tramp} Mail Archive}.
 
 @page

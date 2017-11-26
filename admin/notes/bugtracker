@@ -487,7 +487,7 @@ the bug web-pages.
 
 *** Debian stuff
 
-https://lists.gnu.org/archive/html/emacs-devel/2009-11/msg00440.html
+https://lists.gnu.org/r/emacs-devel/2009-11/msg00440.html
 
 ** Gnus-specific voodoo
 
@@ -510,8 +510,8 @@ reference, you don't need to read these as a user of the system.
 Getting mail from the Emacs bug list into the tracker requires the
 assistance of sysadmin at gnu.org.  The test tracker set-up was, I
 think, [gnu.org #359140]:
-https://lists.gnu.org/archive/html/savannah-hackers/2008-03/msg00074.html
-https://lists.gnu.org/archive/html/savannah-hackers/2008-04/msg00034.html
+https://lists.gnu.org/r/savannah-hackers/2008-03/msg00074.html
+https://lists.gnu.org/r/savannah-hackers/2008-04/msg00034.html
 
 ** The debbugs.gnu.org setup was handled in [gnu.org #510605].
 There are two pieces (replace AT with @ in the following):
@@ -555,7 +555,7 @@ https://savannah.nongnu.org/projects/listhelper
 
 An "X-Debbugs-Envelope-To" header is used to keep track of where the
 mail was actually bound for:
-https://lists.gnu.org/archive/html/emacs-devel/2009-11/msg01211.html
+https://lists.gnu.org/r/emacs-devel/2009-11/msg01211.html
 
 ** Mailing list recipient/sender filters.
 The following mailman filters are useful to stop messages being

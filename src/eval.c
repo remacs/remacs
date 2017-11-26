@@ -616,7 +616,7 @@ The return value is BASE-VARIABLE.  */)
       emacs_abort ();
     }
 
-  /* https://lists.gnu.org/archive/html/emacs-devel/2008-04/msg00834.html
+  /* https://lists.gnu.org/r/emacs-devel/2008-04/msg00834.html
      If n_a is bound, but b_v is not, set the value of b_v to n_a,
      so that old-code that affects n_a before the aliasing is setup
      still works.  */

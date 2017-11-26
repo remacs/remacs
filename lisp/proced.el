@@ -1804,7 +1804,7 @@ supported but discouraged.  It will be removed in a future version of Emacs."
 
   (let (failures)
     ;; Why not always use `signal-process'?  See
-    ;; https://lists.gnu.org/archive/html/emacs-devel/2008-03/msg02955.html
+    ;; https://lists.gnu.org/r/emacs-devel/2008-03/msg02955.html
     (if (functionp proced-signal-function)
         ;; use built-in `signal-process'
         (let ((signal (if (stringp signal)

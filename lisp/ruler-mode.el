@@ -712,7 +712,7 @@ Optional argument PROPS specifies other text properties to apply."
            ;; FIXME: `make-string' returns a unibyte string if it's ASCII-only,
            ;; which prevents further `aset' from inserting non-ASCII chars,
            ;; hence the need for `string-to-multibyte'.
-           ;; https://lists.gnu.org/archive/html/emacs-devel/2017-05/msg00841.html
+           ;; https://lists.gnu.org/r/emacs-devel/2017-05/msg00841.html
            (string-to-multibyte
             ;; Make the part of header-line corresponding to the
             ;; line-number display be blank, not filled with

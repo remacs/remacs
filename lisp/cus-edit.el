@@ -2799,7 +2799,7 @@ If STATE is nil, the value is computed by `custom-variable-state'."
     ;; init-file-user rather than user-init-file.  This is in case
     ;; cus-edit is loaded by something in site-start.el, because
     ;; user-init-file is not set at that stage.
-    ;; https://lists.gnu.org/archive/html/emacs-devel/2007-10/msg00310.html
+    ;; https://lists.gnu.org/r/emacs-devel/2007-10/msg00310.html
     ,@(when (or custom-file init-file-user)
 	'(("Save for Future Sessions" custom-variable-save
 	   (lambda (widget)
