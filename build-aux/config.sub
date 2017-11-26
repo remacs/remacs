@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2017 Free Software Foundation, Inc.
 
-timestamp='2017-11-04'
+timestamp='2017-11-23'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -1545,6 +1545,19 @@ case $os in
 		;;
 	-dicos*)
 		os=-dicos
+		;;
+	-pikeos*)
+		# Until real need of OS specific support for
+		# particular features comes up, bare metal
+		# configurations are quite functional.
+		case $basic_machine in
+		    arm*)
+			os=-eabi
+			;;
+		    *)
+			os=-elf
+			;;
+		esac
 		;;
 	-nacl*)
 		;;
