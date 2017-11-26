@@ -510,13 +510,12 @@ pub extern "C" fn sweep_weak_hash_tables() {
             if table.count > 0 {
                 // TABLE is marked as used.  Sweep its contents.
                 sweep_weak_table(table.as_mut(), true);
-
-                // Add table to the list of used weak hash tables.
-                table.next_weak = used.as_mut();
-                used = table;
             }
-        }
 
+            // Add table to the list of used weak hash tables.
+            table.next_weak = used.as_mut();
+            used = table;
+        }
 
         table = next;
     }
