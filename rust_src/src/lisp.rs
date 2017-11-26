@@ -924,9 +924,7 @@ impl LispObject {
     #[inline]
     pub fn as_string(self) -> Option<LispStringRef> {
         if self.is_string() {
-            Some(LispStringRef::new(
-                unsafe { mem::transmute(self.get_untaggedptr()) },
-            ))
+            Some(unsafe { self.as_string_unchecked() })
         } else {
             None
         }
@@ -934,11 +932,16 @@ impl LispObject {
 
     #[inline]
     pub fn as_string_or_error(self) -> LispStringRef {
-        if self.is_string() {
-            LispStringRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+        if let Some(string) = self.as_string() {
+            string
         } else {
             wrong_type!(Qstringp, self)
         }
+    }
+
+    #[inline]
+    pub unsafe fn as_string_unchecked(self) -> LispStringRef {
+        LispStringRef::new(mem::transmute(self.get_untaggedptr()))
     }
 }
 

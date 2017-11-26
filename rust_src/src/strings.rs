@@ -140,6 +140,18 @@ fn multibyte_string_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_string().map_or(false, |s| s.is_multibyte()))
 }
 
+/// Clear the contents of STRING.
+/// This makes STRING unibyte and may change its length.
+#[lisp_fn]
+fn clear_string(string: LispObject) -> LispObject {
+    let lisp_string = string.as_string_or_error();
+    lisp_string.clear_data();
+    lisp_string.set_num_chars(lisp_string.len_bytes());
+    lisp_string.set_unibyte();
+
+    LispObject::constant_nil()
+}
+
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
 
 #[test]
@@ -177,4 +189,28 @@ fn test_stringlessp() {
     let string2 = mock_unibyte_string!("World Hello");
     assert_t!(string_lessp(string, string2));
     assert_nil!(string_lessp(string2, string));
+}
+
+#[test]
+fn clear_string_unibyte() {
+    let string = mock_unibyte_string!("Hello World");
+
+    clear_string(string);
+    assert_nil!(multibyte_string_p(string));
+    assert!(string_bytes(string) == LispObject::from_natnum(11));
+
+    let empty = vec![0; 11];
+    assert!(string.as_string_or_error().as_slice() == empty.as_slice());
+}
+
+#[test]
+fn clear_string_multibyte() {
+    let string = mock_multibyte_string!("Hello World");
+
+    clear_string(string);
+    assert_nil!(multibyte_string_p(string));
+    assert!(string_bytes(string) == LispObject::from_natnum(11));
+
+    let empty = vec![0; 11];
+    assert!(string.as_string_or_error().as_slice() == empty.as_slice());
 }
