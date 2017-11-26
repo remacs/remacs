@@ -513,7 +513,7 @@ should have point."
 	      (memq frame '(t 0 visible)))
 	 (car
 	  (let ((frames (frames-on-display-list)))
-	    (gnus-remove-if (lambda (win) (not (memq (window-frame win)
+	    (seq-remove (lambda (win) (not (memq (window-frame win)
 						     frames)))
 			    (get-buffer-window-list buffer nil frame)))))
 	(t
