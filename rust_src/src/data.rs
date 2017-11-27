@@ -64,7 +64,7 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
     return result;
 }
 
-/// a symbol representing the type of OBJECT.
+/// Return a symbol representing the type of OBJECT.
 /// The symbol returned names the object's basic type;
 /// for example, (type-of 1) returns `integer'.
 #[lisp_fn]
