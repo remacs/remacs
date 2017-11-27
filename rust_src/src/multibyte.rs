@@ -125,11 +125,11 @@ impl LispStringRef {
     /// It will only set the 'size' variable of the string, if it is safe to do so.
     /// Replaces STRING_SET_CHARS from C.
     pub fn set_num_chars(mut self, newsize: isize) {
-        if self.is_multibyte() {
-            assert!(0 <= newsize && newsize == self.len_bytes());
+        assert!(if self.is_multibyte() {
+            0 <= newsize && newsize == self.len_bytes()
         } else {
-            assert!(newsize == self.len_chars());
-        }
+            newsize == self.len_chars()
+        });
 
         self.size = newsize;
     }
