@@ -1,0 +1,14 @@
+#!/bin/sh
+
+files=$(git status | grep 'both modified:' | cut -f2 -d:)
+
+if [ ! -z "$files" ]; then
+    echo $commit
+    git show $commit
+
+    for i in $files; do
+        emacsclient "$i"
+    done
+fi
+
+git cherry-pick --continue
