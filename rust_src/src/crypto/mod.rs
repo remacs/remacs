@@ -1,4 +1,4 @@
-#![allow(unused)] // XXX unused code belongs into translation of new extract_data_from_object fn
+#![allow(dead_code)] // XXX unused code belongs into translation of new extract_data_from_object fn
 
 use libc;
 use libc::ptrdiff_t;
@@ -502,7 +502,7 @@ pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     if buffer.is_nil() {
         unsafe { nsberror(buffer_or_name.to_raw()) };
     }
-    let mut b = buffer.as_buffer().unwrap();
+    let b = buffer.as_buffer().unwrap();
     let mut ctx = sha1::Sha1::new();
 
     ctx.update(unsafe {
