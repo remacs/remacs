@@ -1055,7 +1055,7 @@ Also see `tramp-file-name-structure'.")
        "\\(-\\|[^/|:]\\{2,\\}\\)"
      ;; At least one character for method.
      "[^/|:]+")
-   ":\\'")
+   ":")
   "Regular expression matching file names handled by Tramp autoload.
 It must match the initial `tramp-syntax' settings.  It should not
 match file names at root of the underlying local file system,
@@ -2323,8 +2323,7 @@ Falls back to normal file name handler if no Tramp file name handler exists."
 		     'tramp-autoload-file-name-handler))
   (put 'tramp-autoload-file-name-handler 'safe-magic t)))
 
-;;;###autoload
-(tramp-register-autoload-file-name-handlers)
+;;;###autoload (tramp-register-autoload-file-name-handlers)
 
 (defun tramp-use-absolute-autoload-file-names ()
   "Change Tramp autoload objects to use absolute file names.
