@@ -1346,10 +1346,8 @@ exec_byte_code (Lisp_Object bytestr, Lisp_Object vector, Lisp_Object maxdepth,
 	  /* Actually this is Bstack_ref with offset 0, but we use Bdup
 	     for that instead.  */
 	  /* CASE (Bstack_ref): */
-	  call3 (Qerror,
-		 build_string ("Invalid byte opcode: op=%s, ptr=%d"),
-		 make_number (op),
-		 make_number (pc - 1 - bytestr_data));
+	  error ("Invalid byte opcode: op=%d, ptr=%"pD"d",
+		 op, pc - 1 - bytestr_data);
 
 	  /* Handy byte-codes for lexical binding.  */
 	CASE (Bstack_ref1):
