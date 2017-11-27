@@ -66,7 +66,7 @@ function build_zip {
     zip -r -9 emacs-$OF_VERSION-$ARCH-no-deps.zip *
     mv emacs-$OF_VERSION-$ARCH-no-deps.zip $HOME/emacs-upload
     rm bin/libXpm-noX4.dll
-    unzip $HOME/emacs-build/deps/emacs-26-$ARCH-deps.zip
+    unzip $HOME/emacs-build/deps/emacs-$MAJOR_VERSION-$ARCH-deps.zip
     zip -r -9 emacs-$OF_VERSION-$ARCH.zip *
     mv emacs-$OF_VERSION-$ARCH.zip ~/emacs-upload
 }

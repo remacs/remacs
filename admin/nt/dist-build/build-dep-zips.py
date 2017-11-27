@@ -26,7 +26,7 @@ import re
 from subprocess import check_output
 
 ## Constants
-EMACS_MAJOR_VERSION="26"
+EMACS_MAJOR_VERSION="27"
 
 
 ## Options
@@ -103,7 +103,8 @@ def gather_deps(deps, arch, directory):
     ## And package them up
     os.chdir(directory)
     print("Zipping: {}".format(arch))
-    check_output_maybe("zip -9r ../../emacs-26-{}-deps.zip *".format(arch),
+    check_output_maybe("zip -9r ../../emacs-{}-{}-deps.zip *"
+                       .format(EMACS_MAJOR_VERSION, arch),
                        shell=True)
     os.chdir("../../")
 
