@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io;
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
+use std::process;
 
 #[derive(Eq, PartialEq)]
 enum ParseState {
@@ -20,7 +21,7 @@ fn ignore(path: &str) -> bool {
 
 fn path_as_str(path: Option<&OsStr>) -> &str {
     path.and_then(|p| p.to_str())
-        .unwrap_or_else(|| panic!(format!("Cannot understand string: {:?}", path)))
+        .unwrap_or_else(|| panic!("Cannot understand string: {:?}", path))
 }
 
 fn get_function_name(line: &str) -> Option<String> {
@@ -31,14 +32,11 @@ fn get_function_name(line: &str) -> Option<String> {
         }
     }
 
-    None
+    panic!("Failed to find function name in: '{}'", line)
 }
 
 fn env_var(name: &str) -> String {
-    match env::var(name) {
-        Ok(value) => value,
-        Err(e) => panic!(format!("Could not find {} in environment: {}", name, e)),
-    }
+    env::var(name).unwrap_or_else(|e| panic!("Could not find {} in environment: {}", name, e))
 }
 
 fn source_file(modname: &str) -> String {
@@ -73,8 +71,10 @@ where
     let mut parse_state = ParseState::Looking;
     let mut exported: Vec<String> = Vec::new();
     let mut has_include = false;
+    let mut lineno = 0;
 
     for line in in_file.lines() {
+        lineno += 1;
         let line = line?;
 
         match parse_state {
@@ -110,22 +110,21 @@ where
             },
 
             ParseState::LispFn(name) => {
-                let name = name.or_else(|| get_function_name(&line));
+                let name = name.or_else(|| get_function_name(&line)).unwrap();
 
                 if line.starts_with("fn") {
-                    panic!(format!(
+                    eprintln!(
                         "
-{} is not public in {} module.
-lisp_fn functions are meant to be used from within remacs as well as in lisp code.
-",
-                        name.unwrap_or("<unknown>".to_string()),
-                        modname
-                    ));
+`{}` is not public in the {} module at line {}.
+lisp_fn functions are meant to be used from Rust as well as in lisp code.",
+                        name,
+                        modname,
+                        lineno,
+                    );
+                    process::exit(1);
                 } else if line.starts_with("pub") {
-                    if let Some(func) = name {
-                        write!(out_file, "pub use {}::F{};\n", modname, func)?;
-                        exported.push(func);
-                    }
+                    write!(out_file, "pub use {}::F{};\n", modname, name)?;
+                    exported.push(name);
                 }
 
                 parse_state = ParseState::Looking;
@@ -133,7 +132,7 @@ lisp_fn functions are meant to be used from within remacs as well as in lisp cod
 
             // export public #[no_mangle] functions
             ParseState::NoMangleFn => {
-                if line.starts_with("pub") {
+                if line.starts_with("pub") && line.contains(" fn ") {
                     if let Some(func) = get_function_name(&line) {
                         write!(out_file, "pub use {}::{};\n", modname, func)?;
                     }
@@ -164,10 +163,11 @@ lisp_fn functions are meant to be used from within remacs as well as in lisp cod
         )?;
 
         if !has_include {
-            panic!(format!(
-                "{} is missing the required include for lisp_fn exports",
+            eprintln!(
+                "{} is missing the required include for lisp_fn exports.",
                 source_file(modname)
-            ));
+            );
+            process::exit(2);
         }
 
         Ok(true)
@@ -248,6 +248,7 @@ fn generate_c_exports() -> Result<(), io::Error> {
 
 fn main() {
     if let Err(e) = generate_c_exports() {
-        panic!(format!("Errors occurred:\n{}", e));
+        eprintln!("Errors occurred:\n{}", e);
+        process::exit(3);
     }
 }
