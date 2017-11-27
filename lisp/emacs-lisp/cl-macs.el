@@ -2098,60 +2098,65 @@ except that it additionally expands symbol macros."
                  (setq exp (cons 'setq args))
                  ;; Don't loop further.
                  nil)))
-            (`(,(or `let `let*) . ,(or `(,bindings . ,body) dontcare))
-             ;; CL's symbol-macrolet treats re-bindings as candidates for
-             ;; expansion (turning the let into a letf if needed), contrary to
-             ;; Common-Lisp where such re-bindings hide the symbol-macro.
-             (let ((letf nil) (found nil) (nbs ()))
-               (dolist (binding bindings)
-                 (let* ((var (if (symbolp binding) binding (car binding)))
-                        (sm (assq var venv)))
-                   (push (if (not (cdr sm))
-                             binding
-                           (let ((nexp (cadr sm)))
-                             (setq found t)
-                             (unless (symbolp nexp) (setq letf t))
-                             (cons nexp (cdr-safe binding))))
-                         nbs)))
-               (when found
-                 (setq exp `(,(if letf
-                                  (if (eq (car exp) 'let) 'cl-letf 'cl-letf*)
-                                (car exp))
-                             ,(nreverse nbs)
-                             ,@body)))))
-            ;; FIXME: The behavior of CL made sense in a dynamically scoped
-            ;; language, but for lexical scoping, Common-Lisp's behavior might
-            ;; make more sense (and indeed, CL behaves like Common-Lisp w.r.t
-            ;; lexical-let), so maybe we should adjust the behavior based on
-            ;; the use of lexical-binding.
+            ;; CL's symbol-macrolet used to treat re-bindings as candidates for
+            ;; expansion (turning the let into a letf if needed), contrary to
+            ;; Common-Lisp where such re-bindings hide the symbol-macro.
+            ;; Not sure if there actually is code out there which depends
+            ;; on this behavior (haven't found any yet).
+            ;; Such code should explicitly use `cl-letf' instead, I think.
+            ;;
             ;; (`(,(or `let `let*) . ,(or `(,bindings . ,body) dontcare))
-            ;;  (let ((nbs ()) (found nil))
+            ;;  (let ((letf nil) (found nil) (nbs ()))
             ;;    (dolist (binding bindings)
             ;;      (let* ((var (if (symbolp binding) binding (car binding)))
-            ;;             (name (symbol-name var))
-            ;;             (val (and found (consp binding) (eq 'let* (car exp))
-            ;;                       (list (macroexpand-all (cadr binding)
-            ;;                                              env)))))
-            ;;        (push (if (assq name env)
-            ;;                  ;; This binding should hide its symbol-macro,
-            ;;                  ;; but given the way macroexpand-all works, we
-            ;;                  ;; can't prevent application of `env' to the
-            ;;                  ;; sub-expressions, so we need to α-rename this
-            ;;                  ;; variable instead.
-            ;;                  (let ((nvar (make-symbol
-            ;;                               (copy-sequence name))))
-            ;;                    (setq found t)
-            ;;                    (push (list name nvar) env)
-            ;;                    (cons nvar (or val (cdr-safe binding))))
-            ;;                (if val (cons var val) binding))
+            ;;             (sm (assq var venv)))
+            ;;        (push (if (not (cdr sm))
+            ;;                  binding
+            ;;                (let ((nexp (cadr sm)))
+            ;;                  (setq found t)
+            ;;                  (unless (symbolp nexp) (setq letf t))
+            ;;                  (cons nexp (cdr-safe binding))))
             ;;              nbs)))
             ;;    (when found
-            ;;      (setq exp `(,(car exp)
+            ;;      (setq exp `(,(if letf
+            ;;                       (if (eq (car exp) 'let) 'cl-letf 'cl-letf*)
+            ;;                     (car exp))
             ;;                  ,(nreverse nbs)
-            ;;                  ,@(macroexp-unprogn
-            ;;                     (macroexpand-all (macroexp-progn body)
-            ;;                                      env)))))
-            ;;    nil))
+            ;;                  ,@body)))))
+            ;;
+            ;; We implement the Common-Lisp behavior, instead (see bug#26073):
+            ;; The behavior of CL made sense in a dynamically scoped
+            ;; language, but nowadays, lexical scoping semantics is more often
+            ;; expected.
+            (`(,(or `let `let*) . ,(or `(,bindings . ,body) dontcare))
+             (let ((nbs ()) (found nil))
+               (dolist (binding bindings)
+                 (let* ((var (if (symbolp binding) binding (car binding)))
+                        (val (and found (consp binding) (eq 'let* (car exp))
+                                  (list (macroexpand-all (cadr binding)
+                                                         env)))))
+                   (push (if (assq var venv)
+                             ;; This binding should hide its symbol-macro,
+                             ;; but given the way macroexpand-all works
+                             ;; (i.e. the `env' we receive as input will be
+                             ;; (re)applied to the code we return), we can't
+                             ;; prevent application of `env' to the
+                             ;; sub-expressions, so we need to α-rename this
+                             ;; variable instead.
+                             (let ((nvar (make-symbol (symbol-name var))))
+                               (setq found t)
+                               (push (list var nvar) venv)
+                               (push (cons :cl-symbol-macros venv) env)
+                               (cons nvar (or val (cdr-safe binding))))
+                           (if val (cons var val) binding))
+                         nbs)))
+               (when found
+                 (setq exp `(,(car exp)
+                             ,(nreverse nbs)
+                             ,@(macroexp-unprogn
+                                (macroexpand-all (macroexp-progn body)
+                                                 env)))))
+               nil))
             )))
     exp))
 
@@ -2435,10 +2440,11 @@ Each PLACE may be a symbol, or any generalized variable allowed by `setf'.
                          (pcase-let ((`(,vold ,_getter ,setter ,_vnew) x))
                            (funcall setter vold)))
                        binds))))
-    (let ((binding (car bindings)))
-      (gv-letplace (getter setter) (car binding)
+    (let* ((binding (car bindings))
+           (place (macroexpand (car binding) macroexpand-all-environment)))
+      (gv-letplace (getter setter) place
         (macroexp-let2 nil vnew (cadr binding)
-          (if (symbolp (car binding))
+          (if (symbolp place)
               ;; Special-case for simple variables.
               (cl--letf (cdr bindings)
                         (cons `(,getter ,(if (cdr binding) vnew getter))
@@ -2465,7 +2471,9 @@ the PLACE is not modified before executing BODY.
   (declare (indent 1) (debug ((&rest [&or (symbolp form)
                                           (gate gv-place &optional form)])
                               body)))
-  (if (and (not (cdr bindings)) (cdar bindings) (symbolp (caar bindings)))
+  (if (and (not (cdr bindings)) (cdar bindings) (symbolp (caar bindings))
+           (not (assq (caar bindings)
+                      (alist-get :cl-symbol-macros macroexpand-all-environment))))
       `(let ,bindings ,@body)
     (cl--letf bindings () () body)))
 
