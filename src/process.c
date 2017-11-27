@@ -3835,7 +3835,6 @@ usage: (make-network-process &rest ARGS)  */)
   Lisp_Object contact;
   struct Lisp_Process *p;
   const char *portstring UNINIT;
-  ptrdiff_t portstringlen ATTRIBUTE_UNUSED;
   char portbuf[INT_BUFSIZE_BOUND (EMACS_INT)];
 #ifdef HAVE_LOCAL_SOCKETS
   struct sockaddr_un address_un;
@@ -3982,6 +3981,8 @@ usage: (make-network-process &rest ARGS)  */)
 
   if (!NILP (host))
     {
+      ptrdiff_t portstringlen ATTRIBUTE_UNUSED;
+
       /* SERVICE can either be a string or int.
 	 Convert to a C string for later use by getaddrinfo.  */
       if (EQ (service, Qt))
@@ -4000,37 +4001,38 @@ usage: (make-network-process &rest ARGS)  */)
 	  portstring = SSDATA (service);
 	  portstringlen = SBYTES (service);
 	}
-    }
 
 #ifdef HAVE_GETADDRINFO_A
-  if (!NILP (host) && !NILP (Fplist_get (contact, QCnowait)))
-    {
-      ptrdiff_t hostlen = SBYTES (host);
-      struct req
-      {
-	struct gaicb gaicb;
-	struct addrinfo hints;
-	char str[FLEXIBLE_ARRAY_MEMBER];
-      } *req = xmalloc (FLEXSIZEOF (struct req, str,
-				    hostlen + 1 + portstringlen + 1));
-      dns_request = &req->gaicb;
-      dns_request->ar_name = req->str;
-      dns_request->ar_service = req->str + hostlen + 1;
-      dns_request->ar_request = &req->hints;
-      dns_request->ar_result = NULL;
-      memset (&req->hints, 0, sizeof req->hints);
-      req->hints.ai_family = family;
-      req->hints.ai_socktype = socktype;
-      strcpy (req->str, SSDATA (host));
-      strcpy (req->str + hostlen + 1, portstring);
+      if (!NILP (Fplist_get (contact, QCnowait)))
+	{
+	  ptrdiff_t hostlen = SBYTES (host);
+	  struct req
+	  {
+	    struct gaicb gaicb;
+	    struct addrinfo hints;
+	    char str[FLEXIBLE_ARRAY_MEMBER];
+	  } *req = xmalloc (FLEXSIZEOF (struct req, str,
+					hostlen + 1 + portstringlen + 1));
+	  dns_request = &req->gaicb;
+	  dns_request->ar_name = req->str;
+	  dns_request->ar_service = req->str + hostlen + 1;
+	  dns_request->ar_request = &req->hints;
+	  dns_request->ar_result = NULL;
+	  memset (&req->hints, 0, sizeof req->hints);
+	  req->hints.ai_family = family;
+	  req->hints.ai_socktype = socktype;
+	  strcpy (req->str, SSDATA (host));
+	  strcpy (req->str + hostlen + 1, portstring);
 
-      int ret = getaddrinfo_a (GAI_NOWAIT, &dns_request, 1, NULL);
-      if (ret)
-	error ("%s/%s getaddrinfo_a error %d", SSDATA (host), portstring, ret);
+	  int ret = getaddrinfo_a (GAI_NOWAIT, &dns_request, 1, NULL);
+	  if (ret)
+	    error ("%s/%s getaddrinfo_a error %d",
+		   SSDATA (host), portstring, ret);
 
-      goto open_socket;
-    }
+	  goto open_socket;
+	}
 #endif /* HAVE_GETADDRINFO_A */
+    }
 
   /* If we have a host, use getaddrinfo to resolve both host and service.
      Otherwise, use getservbyname to lookup the service.  */
