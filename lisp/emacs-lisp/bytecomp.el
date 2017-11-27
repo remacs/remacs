@@ -177,7 +177,7 @@ are found in the same directory is hard-coded in various places in Emacs.)"
 If `byte-compile-dest-file-function' is non-nil, uses that
 function to do the work.  Otherwise, if FILENAME matches
 `emacs-lisp-file-regexp' (by default, files with the extension \".el\"),
-replaces the matching part (and anything after it) with \"\.elc\";
+replaces the matching part (and anything after it) with \".elc\";
 otherwise adds \".elc\"."
   (if byte-compile-dest-file-function
       (funcall byte-compile-dest-file-function filename)
