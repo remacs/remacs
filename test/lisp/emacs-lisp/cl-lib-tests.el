@@ -201,6 +201,10 @@
                     :b :a :a 42)
            '(42 :a))))
 
+(ert-deftest cl-lib-empty-keyargs ()
+  (should-error (funcall (cl-function (lambda (&key) 1))
+                         :b 1)))
+
 (cl-defstruct (mystruct
                (:constructor cl-lib--con-1 (&aux (abc 1)))
                (:constructor cl-lib--con-2 (&optional def) "Constructor docstring."))

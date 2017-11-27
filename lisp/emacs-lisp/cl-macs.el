@@ -555,7 +555,7 @@ its argument list allows full Common Lisp conventions."
     (if (memq '&environment args) (error "&environment used incorrectly"))
     (let ((restarg (memq '&rest args))
 	  (safety (if (cl--compiling-file) cl--optimize-safety 3))
-	  (keys nil)
+	  (keys t)
 	  (laterarg nil) (exactarg nil) minarg)
       (or num (setq num 0))
       (setq restarg (if (listp (cadr restarg))
@@ -610,6 +610,7 @@ its argument list allows full Common Lisp conventions."
                                 (+ ,num (length ,restarg)))))
                   cl--bind-forms)))
       (while (and (eq (car args) '&key) (pop args))
+        (unless (listp keys) (setq keys nil))
 	(while (and args (not (memq (car args) cl--lambda-list-keywords)))
 	  (let ((arg (pop args)))
 	    (or (consp arg) (setq arg (list arg)))
@@ -648,23 +649,32 @@ its argument list allows full Common Lisp conventions."
 					 `'(nil ,(cl--const-expr-val def))
 				       `(list nil ,def))))))))
 	      (push karg keys)))))
-      (setq keys (nreverse keys))
+      (when (consp keys) (setq keys (nreverse keys)))
       (or (and (eq (car args) '&allow-other-keys) (pop args))
-	  (null keys) (= safety 0)
-	  (let* ((var (make-symbol "--cl-keys--"))
-		 (allow '(:allow-other-keys))
-		 (check `(while ,var
-                           (cond
-                            ((memq (car ,var) ',(append keys allow))
-                             (setq ,var (cdr (cdr ,var))))
-                            ((car (cdr (memq (quote ,@allow) ,restarg)))
-                             (setq ,var nil))
-                            (t
-                             (error
-                              ,(format "Keyword argument %%s not one of %s"
-                                       keys)
-                              (car ,var)))))))
-	    (push `(let ((,var ,restarg)) ,check) cl--bind-forms)))
+	  (= safety 0)
+          (cond
+           ((eq keys t) nil)            ;No &keys at all
+           ((null keys)                 ;A &key but no actual keys specified.
+            (push `(when ,restarg
+                     (error ,(format "Keyword argument %%s not one of %s"
+                                     keys)
+                            (car ,restarg)))
+                  cl--bind-forms))
+           (t
+	    (let* ((var (make-symbol "--cl-keys--"))
+		   (allow '(:allow-other-keys))
+		   (check `(while ,var
+                             (cond
+                              ((memq (car ,var) ',(append keys allow))
+                               (setq ,var (cdr (cdr ,var))))
+                              ((car (cdr (memq (quote ,@allow) ,restarg)))
+                               (setq ,var nil))
+                              (t
+                               (error
+                                ,(format "Keyword argument %%s not one of %s"
+                                         keys)
+                                (car ,var)))))))
+	      (push `(let ((,var ,restarg)) ,check) cl--bind-forms)))))
       (cl--do-&aux args)
       nil)))
 
