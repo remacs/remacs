@@ -67,7 +67,7 @@
 ;;
 ;; To be able to verify messages you need to build up trust with
 ;; someone.  Perhaps you trust the CA that issued your certificate, at
-;; least I did, so I export it's certificates from my PKCS#12
+;; least I did, so I export its certificates from my PKCS#12
 ;; certificate with:
 ;;
 ;; $ openssl pkcs12 -in mykey.p12 -cacerts -nodes > cacert.pem
