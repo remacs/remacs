@@ -15,30 +15,17 @@ enum ParseState {
     LispFn(Option<String>),
 }
 
-fn ignore(path: &str) -> bool {
-    path == "" || path.starts_with('.') || path == "lib.rs"
-}
-
+// Transmute &OsStr to &str
 fn path_as_str(path: Option<&OsStr>) -> &str {
     path.and_then(|p| p.to_str())
         .unwrap_or_else(|| panic!("Cannot understand string: {:?}", path))
-}
-
-fn get_function_name(line: &str) -> Option<String> {
-    if let Some(pos) = line.find('(') {
-        if let Some(fnpos) = line.find("fn ") {
-            let name = line[(fnpos + 3)..pos].trim();
-            return Some(name.to_string());
-        }
-    }
-
-    panic!("Failed to find function name in: '{}'", line)
 }
 
 fn env_var(name: &str) -> String {
     env::var(name).unwrap_or_else(|e| panic!("Could not find {} in environment: {}", name, e))
 }
 
+// Determine source file name for a give module.
 fn source_file(modname: &str) -> String {
     let base_path: PathBuf = [&env_var("CARGO_MANIFEST_DIR"), "src", modname]
         .iter()
@@ -55,6 +42,53 @@ fn source_file(modname: &str) -> String {
         path_as_str(file.file_name()).to_string()
     } else {
         modname.to_string()
+    }
+}
+
+// Parse the function name out of a line of source
+fn get_function_name(line: &str) -> Option<String> {
+    if let Some(pos) = line.find('(') {
+        if let Some(fnpos) = line.find("fn ") {
+            let name = line[(fnpos + 3)..pos].trim();
+            return Some(name.to_string());
+        }
+    }
+
+    None
+}
+
+// Determine if a function is exported correctly and return that function's name or None.
+fn export_function(
+    name: Option<String>,
+    line: &str,
+    modname: &str,
+    lineno: u32,
+    msg: &str,
+) -> Option<String> {
+    if let Some(name) = name.or_else(|| get_function_name(&line)) {
+        if line.starts_with("pub ") {
+            Some(name)
+        } else if line.starts_with("fn ") {
+            eprintln!(
+                "
+`{}` is not public in the {} module at line {}.
+{}",
+                name,
+                modname,
+                lineno,
+                msg
+            );
+            process::exit(1);
+        } else {
+            eprintln!(
+                "Unhandled code in the {} module at line {}",
+                modname,
+                lineno
+            );
+            unreachable!();
+        }
+    } else {
+        None
     }
 }
 
@@ -110,21 +144,21 @@ where
             },
 
             ParseState::LispFn(name) => {
-                let name = name.or_else(|| get_function_name(&line)).unwrap();
-
-                if line.starts_with("fn") {
-                    eprintln!(
-                        "
-`{}` is not public in the {} module at line {}.
-lisp_fn functions are meant to be used from Rust as well as in lisp code.",
-                        name,
-                        modname,
-                        lineno,
-                    );
-                    process::exit(1);
-                } else if line.starts_with("pub") {
+                if let Some(name) = export_function(
+                    name.or_else(|| get_function_name(&line)),
+                    &line,
+                    modname,
+                    lineno,
+                    "lisp_fn functions are meant to be used from Rust as well as in lisp code.",
+                ) {
                     write!(out_file, "pub use {}::F{};\n", modname, name)?;
                     exported.push(name);
+                } else {
+                    panic!(
+                        "Failed to find function name in the {} module at line {}",
+                        modname,
+                        lineno
+                    );
                 }
 
                 parse_state = ParseState::Looking;
@@ -132,11 +166,15 @@ lisp_fn functions are meant to be used from Rust as well as in lisp code.",
 
             // export public #[no_mangle] functions
             ParseState::NoMangleFn => {
-                if line.starts_with("pub") && line.contains(" fn ") {
-                    if let Some(func) = get_function_name(&line) {
-                        write!(out_file, "pub use {}::{};\n", modname, func)?;
-                    }
-                }
+                if let Some(name) = export_function(
+                    None,
+                    &line,
+                    modname,
+                    lineno,
+                    "'no_mangle' function must be public.",
+                ) {
+                    write!(out_file, "pub use {}::{};\n", modname, name)?;
+                } // None means not a fn, skip it
 
                 parse_state = ParseState::Looking;
             }
@@ -209,6 +247,11 @@ fn handle_file(mut mod_path: PathBuf, out_file: &File) -> Result<Option<String>,
     }
 
     Ok(None)
+}
+
+// What to ignore when walking the list of files
+fn ignore(path: &str) -> bool {
+    path == "" || path.starts_with('.') || path == "lib.rs"
 }
 
 fn generate_c_exports() -> Result<(), io::Error> {
