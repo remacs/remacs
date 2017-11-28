@@ -1,6 +1,5 @@
 #![allow(dead_code)] // XXX unused code belongs into translation of new extract_data_from_object fn
 
-use libc;
 use libc::ptrdiff_t;
 use md5;
 use sha1;
@@ -44,17 +43,17 @@ static SHA512_DIGEST_LEN: usize = 512 / 8;
 
 fn hash_alg(algorithm: LispObject) -> HashAlg {
     algorithm.as_symbol_or_error();
-    if algorithm.to_raw() == unsafe { Qmd5 } {
+    if algorithm.to_raw() == Qmd5 {
         HashAlg::MD5
-    } else if algorithm.to_raw() == unsafe { Qsha1 } {
+    } else if algorithm.to_raw() == Qsha1 {
         HashAlg::SHA1
-    } else if algorithm.to_raw() == unsafe { Qsha224 } {
+    } else if algorithm.to_raw() == Qsha224 {
         HashAlg::SHA224
-    } else if algorithm.to_raw() == unsafe { Qsha256 } {
+    } else if algorithm.to_raw() == Qsha256 {
         HashAlg::SHA256
-    } else if algorithm.to_raw() == unsafe { Qsha384 } {
+    } else if algorithm.to_raw() == Qsha384 {
         HashAlg::SHA384
-    } else if algorithm.to_raw() == unsafe { Qsha512 } {
+    } else if algorithm.to_raw() == Qsha512 {
         HashAlg::SHA512
     } else {
         let name = symbol_name(algorithm).as_string_or_error();
@@ -66,7 +65,7 @@ fn check_coding_system_or_error(coding_system: LispObject, noerror: LispObject) 
     if LispObject::from(unsafe { Fcoding_system_p(coding_system.to_raw()) }).is_nil() {
         /* Invalid coding system. */
         if noerror.is_not_nil() {
-            LispObject::from(unsafe { Qraw_text })
+            LispObject::from(Qraw_text)
         } else {
             xsignal!(Qcoding_system_error, coding_system);
         }
@@ -82,7 +81,7 @@ fn get_coding_system_for_string(string: LispStringRef, coding_system: LispObject
             /* use default, we can't guess correct value */
             LispObject::from(unsafe { preferred_coding_system() })
         } else {
-            LispObject::from(unsafe { Qraw_text })
+            LispObject::from(Qraw_text)
         }
     } else {
         coding_system
@@ -114,13 +113,13 @@ fn get_coding_system_for_buffer(
     }).is_nil()
     {
         if LispObject::from(buffer.enable_multibyte_characters).is_nil() {
-            return LispObject::from(unsafe { Qraw_text });
+            return LispObject::from(Qraw_text);
         }
     }
     if buffer_file_name(object).is_not_nil() {
         /* Check file-coding-system-alist. */
         let mut args = [
-            unsafe { Qwrite_region },
+            Qwrite_region,
             start.to_raw(),
             end.to_raw(),
             buffer_file_name(object).to_raw(),
@@ -205,7 +204,7 @@ fn get_input_from_buffer(
     start_byte: &mut ptrdiff_t,
     end_byte: &mut ptrdiff_t,
 ) -> LispObject {
-    let mut prev_buffer = ThreadState::current_buffer().as_mut();
+    let prev_buffer = ThreadState::current_buffer().as_mut();
     unsafe { record_unwind_current_buffer() };
     unsafe { set_buffer_internal(buffer.as_mut()) };
     *start_byte = if start.is_nil() {
