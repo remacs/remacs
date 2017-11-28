@@ -454,7 +454,7 @@ Set variables local to the group you are entering.
 If you want to turn threading off in `news.answers', you could put
 `(gnus-show-threads nil)' in the group parameters of that group.
 `gnus-show-threads' will be made into a local variable in the summary
-buffer you enter, and the form nil will be `eval'ed there.
+buffer you enter, and the form nil will be `eval'uated there.
 
 This can also be used as a group-specific hook function, if you'd
 like.  If you want to hear a beep when you enter a group, you could
@@ -535,7 +535,7 @@ These files will not be loaded, even though they would normally be so,
 for some reason or other.")
 
     (eval (sexp :tag "Eval" :value nil) "\
-The value of this entry will be `eval'el.
+The value of this entry will be `eval'uated.
 This element will be ignored when handling global score files.")
 
     (read-only (boolean :tag "Read-only" :value t) "\

@@ -125,7 +125,7 @@ If nil, never start checking buffer automatically like this."
 			"it no longer has any effect." "26.1")
 
 (defcustom flymake-start-on-flymake-mode t
-  "Start syntax check when `flymake-mode'is enabled.
+  "Start syntax check when `flymake-mode' is enabled.
 Specifically, start it when the buffer is actually displayed."
   :type 'boolean)
 

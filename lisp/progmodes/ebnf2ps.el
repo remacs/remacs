@@ -1136,7 +1136,7 @@ Please send all bug fixes and enhancements to
 ;; Thanks to Drew Adams <drew.adams@oracle.com> for suggestions:
 ;;    - `ebnf-arrow-extra-width', `ebnf-arrow-scale',
 ;;	`ebnf-production-name-p', `ebnf-stop-on-error',
-;;	`ebnf-file-suffix-regexp'and `ebnf-special-show-delimiter' variables.
+;;	`ebnf-file-suffix-regexp' and `ebnf-special-show-delimiter' variables.
 ;;    - `ebnf-delete-style', `ebnf-eps-file' and `ebnf-eps-directory'
 ;;	commands.
 ;;    - some docs fix.
