@@ -1,0 +1,3 @@
+#!/bin/sh
+
+(git status | grep 'deleted by us:' | cut -f2 -d: | xargs git rm) && git cherry-pick --continue

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+(cd rust_src && cargo clean)
+make clean
