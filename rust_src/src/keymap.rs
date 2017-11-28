@@ -20,7 +20,7 @@ pub fn Ctl(c: char) -> i32 {
 /// If optional argument ACCEPT-DEFAULT is non-nil, recognize default
 /// bindings; see the description of `lookup-key' for more details about this.
 #[lisp_fn(min = "1")]
-fn local_key_binding(keys: LispObject, accept_default: LispObject) -> LispObject {
+pub fn local_key_binding(keys: LispObject, accept_default: LispObject) -> LispObject {
     let map = current_local_map();
     if map.is_nil() {
         LispObject::constant_nil()

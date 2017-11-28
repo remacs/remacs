@@ -147,7 +147,7 @@ fn test_base64_decode_1() {
 /// Optional second argument NO-LINE-BREAK means do not break long lines
 /// into shorter lines.
 #[lisp_fn(min = "1")]
-fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispObject {
+pub fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispObject {
     let mut string = string.as_string_or_error();
 
     // We need to allocate enough room for the encoded text
@@ -182,7 +182,7 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
 
 /// Base64-decode STRING and return the result.
 #[lisp_fn]
-fn base64_decode_string(string: LispObject) -> LispObject {
+pub fn base64_decode_string(string: LispObject) -> LispObject {
     let mut string = string.as_string_or_error();
 
     let length = string.len_bytes();

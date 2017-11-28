@@ -12,7 +12,7 @@ use lisp::defsubr;
 /// Both X and Y must be numbers or markers.
 /// (fn X Y)
 #[lisp_fn(name = "mod", c_name = "mod")]
-fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
+pub fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
     match (
         x.as_number_coerce_marker_or_error(),
         y.as_number_coerce_marker_or_error(),
@@ -143,7 +143,7 @@ fn arith_driver(code: ArithOp, args: &[LispObject]) -> LispObject {
 /// Return sum of any number of arguments, which are numbers or markers.
 /// usage: (fn &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "+")]
-fn plus(args: &mut [LispObject]) -> LispObject {
+pub fn plus(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Add, args)
 }
 
@@ -152,14 +152,14 @@ fn plus(args: &mut [LispObject]) -> LispObject {
 /// subtracts all but the first from the first.
 /// usage: (fn &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "-")]
-fn minus(args: &mut [LispObject]) -> LispObject {
+pub fn minus(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Sub, args)
 }
 
 /// Return product of any number of arguments, which are numbers or markers.
 /// usage: (fn &rest NUMBER-OR-MARKERS)
 #[lisp_fn(name = "*")]
-fn times(args: &mut [LispObject]) -> LispObject {
+pub fn times(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Mult, args)
 }
 
@@ -169,7 +169,7 @@ fn times(args: &mut [LispObject]) -> LispObject {
 /// The arguments must be numbers or markers.
 /// usage: (fn NUMBER &rest DIVISORS)
 #[lisp_fn(name = "/", min = "1")]
-fn quo(args: &mut [LispObject]) -> LispObject {
+pub fn quo(args: &mut [LispObject]) -> LispObject {
     for argnum in 2..args.len() {
         let arg = args[argnum];
         if arg.is_float() {
@@ -183,7 +183,7 @@ fn quo(args: &mut [LispObject]) -> LispObject {
 /// Arguments may be integers, or markers, converted to integers.
 /// usage: (fn &rest INTS-OR-MARKERS)
 #[lisp_fn]
-fn logand(args: &mut [LispObject]) -> LispObject {
+pub fn logand(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logand, args)
 }
 
@@ -191,7 +191,7 @@ fn logand(args: &mut [LispObject]) -> LispObject {
 /// Arguments may be integers, or markers converted to integers.
 /// usage: (fn &rest INTS-OR-MARKERS)
 #[lisp_fn]
-fn logior(args: &mut [LispObject]) -> LispObject {
+pub fn logior(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logior, args)
 }
 
@@ -199,7 +199,7 @@ fn logior(args: &mut [LispObject]) -> LispObject {
 /// Arguments may be integers, or markers converted to integers.
 /// usage: (fn &rest INTS-OR-MARKERS)
 #[lisp_fn]
-fn logxor(args: &mut [LispObject]) -> LispObject {
+pub fn logxor(args: &mut [LispObject]) -> LispObject {
     arith_driver(ArithOp::Logxor, args)
 }
 
@@ -226,7 +226,7 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
 /// The value is always a number; markers are converted to numbers.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(min = "1")]
-fn max(args: &mut [LispObject]) -> LispObject {
+pub fn max(args: &mut [LispObject]) -> LispObject {
     minmax_driver(args, ArithComparison::Grtr)
 }
 
@@ -234,13 +234,13 @@ fn max(args: &mut [LispObject]) -> LispObject {
 /// The value is always a number; markers are converted to numbers.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(min = "1")]
-fn min(args: &mut [LispObject]) -> LispObject {
+pub fn min(args: &mut [LispObject]) -> LispObject {
     minmax_driver(args, ArithComparison::Less)
 }
 
 /// Return the absolute value of ARG.
 #[lisp_fn]
-fn abs(arg: LispObject) -> LispObject {
+pub fn abs(arg: LispObject) -> LispObject {
     if let Some(f) = arg.as_float() {
         LispObject::from_float(f.abs())
     } else if let Some(n) = arg.as_fixnum() {
@@ -337,48 +337,48 @@ fn arithcompare_driver(args: &[LispObject], comparison: ArithComparison) -> Lisp
 /// Return t if args, all numbers or markers, are equal.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "=", min = "1")]
-fn eqlsign(args: &mut [LispObject]) -> LispObject {
+pub fn eqlsign(args: &mut [LispObject]) -> LispObject {
     arithcompare_driver(args, ArithComparison::Equal)
 }
 
 /// Return t if each arg (a number or marker), is less than the next arg.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "<", min = "1")]
-fn lss(args: &mut [LispObject]) -> LispObject {
+pub fn lss(args: &mut [LispObject]) -> LispObject {
     arithcompare_driver(args, ArithComparison::Less)
 }
 
 /// Return t if each arg (a number or marker) is greater than the next arg.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = ">", min = "1")]
-fn gtr(args: &mut [LispObject]) -> LispObject {
+pub fn gtr(args: &mut [LispObject]) -> LispObject {
     arithcompare_driver(args, ArithComparison::Grtr)
 }
 
 /// Return t if each arg (a number or marker) is less than or equal to the next.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "<=", min = "1")]
-fn leq(args: &mut [LispObject]) -> LispObject {
+pub fn leq(args: &mut [LispObject]) -> LispObject {
     arithcompare_driver(args, ArithComparison::LessOrEqual)
 }
 
 /// Return t if each arg (a number or marker) is greater than or equal to the next.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = ">=", min = "1")]
-fn geq(args: &mut [LispObject]) -> LispObject {
+pub fn geq(args: &mut [LispObject]) -> LispObject {
     arithcompare_driver(args, ArithComparison::GrtrOrEqual)
 }
 
 /// Return t if first arg is not equal to second arg.  Both must be numbers or markers.
 #[lisp_fn(name = "/=")]
-fn neq(num1: LispObject, num2: LispObject) -> LispObject {
+pub fn neq(num1: LispObject, num2: LispObject) -> LispObject {
     arithcompare(num1, num2, ArithComparison::Notequal)
 }
 
 /// Return remainder of X divided by Y.
 /// Both must be integers or markers.
 #[lisp_fn(name = "%")]
-fn rem(x: LispObject, y: LispObject) -> LispObject {
+pub fn rem(x: LispObject, y: LispObject) -> LispObject {
     let x = x.as_fixnum_coerce_marker_or_error();
     let y = y.as_fixnum_coerce_marker_or_error();
 
@@ -392,7 +392,7 @@ fn rem(x: LispObject, y: LispObject) -> LispObject {
 /// Return NUMBER plus one.  NUMBER may be a number or a marker.
 /// Markers are converted to integers.
 #[lisp_fn(name = "1+")]
-fn add1(number: LispObject) -> LispObject {
+pub fn add1(number: LispObject) -> LispObject {
     match number.as_number_coerce_marker_or_error() {
         LispNumber::Fixnum(num) => LispObject::from_fixnum(num + 1),
         LispNumber::Float(num) => LispObject::from_float(num + 1.0),
@@ -402,7 +402,7 @@ fn add1(number: LispObject) -> LispObject {
 /// Return NUMBER minus one.  NUMBER may be a number or a marker.
 /// Markers are converted to integers.
 #[lisp_fn(name = "1-")]
-fn sub1(number: LispObject) -> LispObject {
+pub fn sub1(number: LispObject) -> LispObject {
     match number.as_number_coerce_marker_or_error() {
         LispNumber::Fixnum(num) => LispObject::from_fixnum(num - 1),
         LispNumber::Float(num) => LispObject::from_float(num - 1.0),
@@ -411,7 +411,7 @@ fn sub1(number: LispObject) -> LispObject {
 
 /// Return the bitwise complement of NUMBER.  NUMBER must be an integer.
 #[lisp_fn]
-fn lognot(number: LispObject) -> LispObject {
+pub fn lognot(number: LispObject) -> LispObject {
     LispObject::from_fixnum(!number.as_fixnum_or_error())
 }
 

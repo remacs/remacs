@@ -101,7 +101,7 @@ pub fn float_arith_driver(
 
 /// Return non nil if argument X is a NaN.
 #[lisp_fn]
-fn isnan(x: LispObject) -> LispObject {
+pub fn isnan(x: LispObject) -> LispObject {
     let f = x.as_float_or_error();
     LispObject::from_bool(f.is_nan())
 }
@@ -112,7 +112,7 @@ fn isnan(x: LispObject) -> LispObject {
 /// divided by X, i.e. the angle in radians between the vector (X, Y)
 /// and the x-axis
 #[lisp_fn(min = "1")]
-fn atan(y: LispObject, x: LispObject) -> LispObject {
+pub fn atan(y: LispObject, x: LispObject) -> LispObject {
     let y = y.any_to_float_or_error();
 
     if x.is_nil() {
@@ -126,7 +126,7 @@ fn atan(y: LispObject, x: LispObject) -> LispObject {
 /// Return the natural logarithm of ARG.
 /// If the optional argument BASE is given, return log ARG using that base.
 #[lisp_fn(min = "1")]
-fn log(arg: LispObject, base: LispObject) -> LispObject {
+pub fn log(arg: LispObject, base: LispObject) -> LispObject {
     let d = arg.any_to_float_or_error();
     let res = if base.is_nil() {
         d.ln()
@@ -148,7 +148,7 @@ fn log(arg: LispObject, base: LispObject) -> LispObject {
 /// Return the smallest integer no less than ARG, as a float.
 /// (Round toward +inf.)
 #[lisp_fn]
-fn fceiling(arg: LispObject) -> LispObject {
+pub fn fceiling(arg: LispObject) -> LispObject {
     let d = arg.as_float_or_error();
     LispObject::from_float(d.ceil())
 }
@@ -156,7 +156,7 @@ fn fceiling(arg: LispObject) -> LispObject {
 /// Return the largest integer no greater than ARG, as a float.
 /// (Round toward -inf.)
 #[lisp_fn]
-fn ffloor(arg: LispObject) -> LispObject {
+pub fn ffloor(arg: LispObject) -> LispObject {
     let d = arg.as_float_or_error();
     LispObject::from_float(d.floor())
 }
@@ -164,7 +164,7 @@ fn ffloor(arg: LispObject) -> LispObject {
 /// Truncate a floating point number to an integral float value.
 /// (Round toward zero.)
 #[lisp_fn]
-fn ftruncate(arg: LispObject) -> LispObject {
+pub fn ftruncate(arg: LispObject) -> LispObject {
     let d = arg.as_float_or_error();
     if d > 0.0 {
         LispObject::from_float(d.floor())
@@ -175,7 +175,7 @@ fn ftruncate(arg: LispObject) -> LispObject {
 
 /// Return the floating point number equal to ARG.
 #[lisp_fn]
-fn float(arg: LispObject) -> LispObject {
+pub fn float(arg: LispObject) -> LispObject {
     if arg.is_float() {
         arg
     } else if let Some(n) = arg.as_fixnum() {
@@ -188,7 +188,7 @@ fn float(arg: LispObject) -> LispObject {
 /// Copy sign of X2 to value of X1, and return the result.
 /// Cause an error if X1 or X2 is not a float.
 #[lisp_fn]
-fn copysign(x1: LispObject, x2: LispObject) -> LispObject {
+pub fn copysign(x1: LispObject, x2: LispObject) -> LispObject {
     let f1 = x1.as_float_or_error();
     let f2 = x2.as_float_or_error();
     if libm::signbit(f1) != libm::signbit(f2) {
@@ -208,7 +208,7 @@ fn copysign(x1: LispObject, x2: LispObject) -> LispObject {
 /// The function returns the cons cell (SGNFCAND . EXP).
 /// If X is zero, both parts (SGNFCAND and EXP) are zero.
 #[lisp_fn]
-fn frexp(x: LispObject) -> LispObject {
+pub fn frexp(x: LispObject) -> LispObject {
     let f = x.any_to_float_or_error();
     let (significand, exponent) = libm::frexp(f);
     LispObject::cons(
@@ -220,7 +220,7 @@ fn frexp(x: LispObject) -> LispObject {
 /// Return SGNFCAND * 2**EXPONENT, as a floating point number.
 /// EXPONENT must be an integer.
 #[lisp_fn]
-fn ldexp(sgnfcand: LispObject, exponent: LispObject) -> LispObject {
+pub fn ldexp(sgnfcand: LispObject, exponent: LispObject) -> LispObject {
     let exponent = exponent.as_fixnum_or_error();
     let significand = sgnfcand.any_to_float_or_error();
     let result = libm::ldexp(significand, exponent as libc::c_int);
@@ -229,7 +229,7 @@ fn ldexp(sgnfcand: LispObject, exponent: LispObject) -> LispObject {
 
 /// Return the exponential ARG1 ** ARG2.
 #[lisp_fn]
-fn expt(arg1: LispObject, arg2: LispObject) -> LispObject {
+pub fn expt(arg1: LispObject, arg2: LispObject) -> LispObject {
     if let (Some(x), Some(y)) = (arg1.as_fixnum(), arg2.as_fixnum()) {
         if y >= 0 && y <= u32::max_value() as EmacsInt {
             return LispObject::from_fixnum(x.pow(y as u32));
@@ -243,7 +243,7 @@ fn expt(arg1: LispObject, arg2: LispObject) -> LispObject {
 /// Returns largest integer <= the base 2 log of the magnitude of ARG.
 /// This is the same as the exponent of a float.
 #[lisp_fn]
-fn logb(arg: LispObject) -> LispObject {
+pub fn logb(arg: LispObject) -> LispObject {
     let res = if let Some(n) = arg.as_fixnum() {
         let i = n.abs();
         if i == 0 {
@@ -268,7 +268,7 @@ fn logb(arg: LispObject) -> LispObject {
 
 /// Return the nearest integer to ARG, as a float.
 #[lisp_fn]
-fn fround(arg: LispObject) -> LispObject {
+pub fn fround(arg: LispObject) -> LispObject {
     let d = arg.as_float_or_error();
     LispObject::from_float(libm::rint(d))
 }
@@ -277,7 +277,7 @@ fn fround(arg: LispObject) -> LispObject {
 /// This rounds the value towards +inf.
 /// With optional DIVISOR, return the smallest integer no less than ARG/DIVISOR.
 #[lisp_fn(min = "1")]
-fn ceiling(arg: LispObject, divisor: LispObject) -> LispObject {
+pub fn ceiling(arg: LispObject, divisor: LispObject) -> LispObject {
     rounding_driver(arg, divisor, |x| x.ceil(), ceiling2, "ceiling")
 }
 
@@ -285,7 +285,7 @@ fn ceiling(arg: LispObject, divisor: LispObject) -> LispObject {
 /// This rounds the value towards -inf.
 /// With optional DIVISOR, return the largest integer no greater than ARG/DIVISOR.
 #[lisp_fn(min = "1")]
-fn floor(arg: LispObject, divisor: LispObject) -> LispObject {
+pub fn floor(arg: LispObject, divisor: LispObject) -> LispObject {
     rounding_driver(arg, divisor, |x| x.floor(), floor2, "floor")
 }
 
@@ -297,7 +297,7 @@ fn floor(arg: LispObject, divisor: LispObject) -> LispObject {
 /// your machine.  For example, (round 2.5) can return 3 on some
 /// systems, but 2 on others.
 #[lisp_fn(min = "1")]
-fn round(arg: LispObject, divisor: LispObject) -> LispObject {
+pub fn round(arg: LispObject, divisor: LispObject) -> LispObject {
     rounding_driver(arg, divisor, libm::rint, round2, "round")
 }
 
@@ -305,7 +305,7 @@ fn round(arg: LispObject, divisor: LispObject) -> LispObject {
 /// Rounds ARG toward zero.
 /// With optional DIVISOR, truncate ARG/DIVISOR.
 #[lisp_fn(min = "1")]
-fn truncate(arg: LispObject, divisor: LispObject) -> LispObject {
+pub fn truncate(arg: LispObject, divisor: LispObject) -> LispObject {
     rounding_driver(arg, divisor, |x| x.trunc(), truncate2, "truncate")
 }
 

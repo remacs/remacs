@@ -10,7 +10,7 @@ use multibyte::MAX_CHAR;
 
 /// Return the character of the maximum code.
 #[lisp_fn]
-fn max_char() -> LispObject {
+pub fn max_char() -> LispObject {
     LispObject::from_fixnum(MAX_CHAR as EmacsInt)
 }
 
@@ -20,19 +20,19 @@ fn max_char() -> LispObject {
 /// maximum character code.
 /// usage: (fn OBJECT)
 #[lisp_fn(min = "1")]
-fn characterp(object: LispObject, _ignore: LispObject) -> LispObject {
+pub fn characterp(object: LispObject, _ignore: LispObject) -> LispObject {
     LispObject::from_bool(object.is_character())
 }
 
 /// Return t if OBJECT is a character or a string.
 #[lisp_fn]
-fn char_or_string_p(object: LispObject) -> LispObject {
+pub fn char_or_string_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.is_character() || object.is_string())
 }
 
 /// Convert the byte CH to multibyte character.
 #[lisp_fn]
-fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
+pub fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
     let c = ch.as_character_or_error();
     if c >= 0x100 {
         error!("Not a unibyte character: {}", c);
@@ -43,7 +43,7 @@ fn unibyte_char_to_multibyte(ch: LispObject) -> LispObject {
 /// Convert the multibyte character CH to a byte.
 /// If the multibyte character does not represent a byte, return -1.
 #[lisp_fn]
-fn multibyte_char_to_unibyte(ch: LispObject) -> LispObject {
+pub fn multibyte_char_to_unibyte(ch: LispObject) -> LispObject {
     let c = ch.as_character_or_error();
     if c < 256 {
         // Can't distinguish a byte read from a unibyte buffer from
