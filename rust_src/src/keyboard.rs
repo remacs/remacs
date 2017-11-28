@@ -2,7 +2,7 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{Fpos_visible_in_window_p, Fposn_at_x_y};
-use remacs_sys::{Qnil, Qt};
+use remacs_sys::{Qheader_line, Qhelp_echo, Qmode_line, Qnil, Qt, Qvertical_line};
 
 use lisp::LispObject;
 use lisp::defsubr;
@@ -29,19 +29,10 @@ pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
         return LispObject::constant_nil();
     }
 
-    let x = tem.as_cons()
-        .and_then(|c| Some(c.car()))
-        .unwrap_or_else(|| LispObject::from_fixnum(0));
-    let y = tem.as_cons()
-        .and_then(|c| Some(c.cdr()))
-        .and_then(|c| c.as_cons())
-        .and_then(|c| Some(c.car()))
-        .unwrap_or_else(|| LispObject::from_fixnum(0));
-    let aux_info = tem.as_cons()
-        .and_then(|c| Some(c.cdr()))
-        .and_then(|c| c.as_cons())
-        .and_then(|c| Some(c.cdr()))
-        .unwrap_or_else(|| LispObject::from_fixnum(0));
+    let mut it = tem.iter_cars();
+    let x = it.next().unwrap_or_else(|| LispObject::from_fixnum(0));
+    let y = it.next().unwrap_or_else(|| LispObject::from_fixnum(0));
+
     let mut y_coord = y.as_fixnum_or_error();
     let x_coord = x.as_fixnum_or_error();
 
@@ -50,10 +41,9 @@ pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
     if x_coord < -1 {
         return LispObject::constant_nil();
     }
+    let aux_info = it.rest();
     if aux_info.is_not_nil() && y_coord < 0 {
-        let rtop = aux_info
-            .as_cons()
-            .and_then(|c| Some(c.car()))
+        let rtop = it.next()
             .unwrap_or_else(|| LispObject::from_fixnum(0))
             .as_fixnum_or_error();
 
@@ -68,6 +58,31 @@ pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
             Qnil,
         )
     })
+}
+
+/// Return true if EVENT is a list whose elements are all integers or symbols.
+/// Such a list is not valid as an event,
+/// but it can be a Lucid-style event type list.
+#[no_mangle]
+pub extern "C" fn lucid_event_type_list_p(event: LispObject) -> bool {
+    if !event.is_cons() {
+        return false;
+    }
+
+    let first = event.as_cons_or_error().car();
+    if first.eq(LispObject::from(Qhelp_echo)) || first.eq(LispObject::from(Qvertical_line))
+        || first.eq(LispObject::from(Qmode_line)) || first.eq(LispObject::from(Qheader_line))
+    {
+        return false;
+    }
+
+    let mut it = event.iter_cars_safe();
+
+    if !it.all(|elt| elt.is_fixnum() || elt.is_symbol()) {
+        return false;
+    }
+
+    it.rest().is_nil()
 }
 
 include!(concat!(env!("OUT_DIR"), "/keyboard_exports.rs"));
