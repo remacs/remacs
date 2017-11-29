@@ -172,6 +172,10 @@ are found in the same directory is hard-coded in various places in Emacs.)"
 	(funcall handler 'byte-compiler-base-file-name filename)
       filename)))
 
+;; Sadly automake relies on this misfeature up to at least version 1.15.1.
+(if (fboundp 'byte-compile-dest-file)
+    (or (featurep 'bytecomp)
+        (display-warning 'bytecomp "Redefining `byte-compile-dest-file' is obsolete (as of 23.2); set `byte-compile-dest-file-function' instead."))
 (defun byte-compile-dest-file (filename)
   "Convert an Emacs Lisp source file name to a compiled file name.
 If `byte-compile-dest-file-function' is non-nil, uses that
@@ -186,6 +190,7 @@ otherwise adds \".elc\"."
     (cond ((string-match emacs-lisp-file-regexp filename)
 	   (concat (substring filename 0 (match-beginning 0)) ".elc"))
 	  (t (concat filename ".elc")))))
+)
 
 ;; This can be the 'byte-compile property of any symbol.
 (autoload 'byte-compile-inline-expand "byte-opt")
