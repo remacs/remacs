@@ -22,8 +22,7 @@ use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp,
                  Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
                  Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
-
-use remacs_sys::{internal_equal, lispsym, make_float, misc_get_ty};
+use remacs_sys::{internal_equal, lispsym, make_float, make_lisp_ptr, misc_get_ty};
 
 use buffers::{LispBufferRef, LispOverlayRef};
 use chartable::LispCharTableRef;
@@ -209,16 +208,29 @@ impl<T> Clone for ExternalPtr<T> {
 impl<T> Copy for ExternalPtr<T> {}
 
 impl<T> ExternalPtr<T> {
+    #[inline]
     pub fn new(p: *mut T) -> ExternalPtr<T> {
         ExternalPtr(p)
     }
 
+    #[inline]
     pub fn as_ptr(&self) -> *const T {
         self.0
     }
 
+    #[inline]
     pub fn as_mut(&mut self) -> *mut T {
         self.0
+    }
+
+    #[inline]
+    pub fn as_obj(self) -> LispObject {
+        unsafe {
+            LispObject::from(make_lisp_ptr(
+                self.0 as *mut c_void,
+                Lisp_Type::Lisp_Vectorlike,
+            ))
+        }
     }
 }
 

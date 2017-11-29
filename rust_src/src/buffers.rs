@@ -1,11 +1,11 @@
 //! Functions operating on buffers.
 
-use libc::{c_int, c_uchar, c_void, ptrdiff_t};
+use libc::{c_int, c_uchar, ptrdiff_t};
 use std::{mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist};
-use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Vbuffer_alist};
+use remacs_sys::{nsberror, set_buffer_internal};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -232,12 +232,7 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn current_buffer() -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
-    unsafe {
-        LispObject::from(make_lisp_ptr(
-            buffer_ref.as_ptr() as *mut c_void,
-            Lisp_Type::Lisp_Vectorlike,
-        ))
-    }
+    buffer_ref.as_obj()
 }
 
 /// Return name of file BUFFER is visiting, or nil if none.
