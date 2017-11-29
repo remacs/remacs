@@ -19,7 +19,7 @@
 
 
 function git_up {
-    echo Making git worktree for Emacs $VERSION
+    echo [build] Making git worktree for Emacs $VERSION
     cd $HOME/emacs-build/git/emacs-$MAJOR_VERSION
     git pull
     git worktree add ../$BRANCH $BRANCH
@@ -34,7 +34,7 @@ function build_zip {
     PKG=$2
     HOST=$3
 
-    echo Building Emacs-$VERSION for $ARCH
+    echo [build] Building Emacs-$VERSION for $ARCH
     if [ $ARCH == "i686" ]
     then
         PATH=/mingw32/bin:$PATH
@@ -52,11 +52,12 @@ function build_zip {
     ## time that is not always needed
     if (($CONFIG))
     then
-    ../../../git/$BRANCH/configure \
-        --without-dbus \
-        --host=$HOST --without-compress-install \
-        $CACHE \
-        CFLAGS="-O2 -static -g3"
+        echo [build] Configuring Emacs $ARCH
+        ../../../git/$BRANCH/configure \
+            --without-dbus \
+            --host=$HOST --without-compress-install \
+            $CACHE \
+            CFLAGS="-O2 -static -g3"
     fi
 
     make -j 16 install \
@@ -66,7 +67,18 @@ function build_zip {
     zip -r -9 emacs-$OF_VERSION-$ARCH-no-deps.zip *
     mv emacs-$OF_VERSION-$ARCH-no-deps.zip $HOME/emacs-upload
     rm bin/libXpm-noX4.dll
-    unzip $HOME/emacs-build/deps/emacs-$MAJOR_VERSION-$ARCH-deps.zip
+
+    if [ -z $SNAPSHOT ];
+    then
+        DEPS_FILE=$HOME/emacs-build/deps/emacs-$MAJOR_VERSION-$ARCH-deps.zip
+    else
+        ## Pick the most recent snapshot whatever that is
+        DEPS_FILE=`ls $HOME/emacs-build/deps/emacs-$MAJOR_VERSION-*-$ARCH-deps.zip | tail -n 1`
+    fi
+
+    echo [build] Using $DEPS_FILE
+    unzip $DEPS_FILE
+
     zip -r -9 emacs-$OF_VERSION-$ARCH.zip *
     mv emacs-$OF_VERSION-$ARCH.zip ~/emacs-upload
 }
@@ -74,7 +86,7 @@ function build_zip {
 function build_installer {
     ARCH=$1
     cd $HOME/emacs-build/install/emacs-$VERSION
-    echo Calling makensis in `pwd`
+    echo [build] Calling makensis in `pwd`
     cp ../../git/$BRANCH/admin/nt/dist-build/emacs.nsi .
 
     makensis -v4 \
@@ -148,14 +160,19 @@ fi
 
 if [ -z $VERSION ];
 then
-    echo Cannot determine Emacs version
+    echo [build] Cannot determine Emacs version
     exit 1
 fi
 
 MAJOR_VERSION="$(echo $VERSION | cut -d'.' -f1)"
 
+## ACTUAL VERSION is the version declared by emacs
 ACTUAL_VERSION=$VERSION
+
+## VERSION includes the word snapshot if necessary
 VERSION=$VERSION$SNAPSHOT
+
+## OF version includes the date if we have a snapshot
 OF_VERSION=$VERSION
 
 if [ -z $SNAPSHOT ];

@@ -103,8 +103,8 @@ def gather_deps(deps, arch, directory):
     ## And package them up
     os.chdir(directory)
     print("Zipping: {}".format(arch))
-    check_output_maybe("zip -9r ../../emacs-{}-{}-deps.zip *"
-                       .format(EMACS_MAJOR_VERSION, arch),
+    check_output_maybe("zip -9r ../../emacs-{}-{}{}-deps.zip *"
+                       .format(EMACS_MAJOR_VERSION, DATE, arch),
                        shell=True)
     os.chdir("../../")
 
@@ -168,8 +168,8 @@ def gather_source(deps):
     p.map(download_source,to_download)
 
     print("Zipping")
-    check_output_maybe("zip -9 ../emacs-{}-deps-mingw-w64-src.zip *"
-                       .format(EMACS_MAJOR_VERSION),
+    check_output_maybe("zip -9 ../emacs-{}-{}deps-mingw-w64-src.zip *"
+                       .format(EMACS_MAJOR_VERSION,DATE),
                        shell=True)
 
     os.chdir("..")
@@ -189,13 +189,16 @@ if(os.environ["MSYSTEM"] != "MSYS"):
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("-s", help="snapshot build",
+                    action="store_true")
+
 parser.add_argument("-t", help="32 bit deps only",
                     action="store_true")
 
 parser.add_argument("-f", help="64 bit deps only",
                     action="store_true")
 
-parser.add_argument("-s", help="source code only",
+parser.add_argument("-r", help="source code only",
                     action="store_true")
 
 parser.add_argument("-c", help="clean only",
@@ -205,11 +208,16 @@ parser.add_argument("-d", help="dry run",
                     action="store_true")
 
 args = parser.parse_args()
-do_all=not (args.c or args.s or args.f or args.t)
+do_all=not (args.c or args.r or args.f or args.t)
 
 deps=extract_deps()
 
 DRY_RUN=args.d
+
+if args.s:
+    DATE="{}-".format(check_output(["date", "+%Y-%m-%d"]).decode("utf-8").strip())
+else:
+    DATE=""
 
 if( do_all or args.t ):
     gather_deps(deps,"i686","mingw32")
@@ -217,7 +225,7 @@ if( do_all or args.t ):
 if( do_all or args.f ):
     gather_deps(deps,"x86_64","mingw64")
 
-if( do_all or args.s ):
+if( do_all or args.r ):
     gather_source(deps)
 
 if( args.c ):
