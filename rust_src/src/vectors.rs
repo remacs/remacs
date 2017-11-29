@@ -48,6 +48,13 @@ impl LispVectorlikeRef {
     }
 
     #[inline]
+    pub fn pseudovector_type(self) -> PseudovecType {
+        unsafe {
+            mem::transmute(((self.header.size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS) as i32)
+        }
+    }
+
+    #[inline]
     pub fn is_pseudovector(&self, tp: PseudovecType) -> bool {
         self.header.size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK)
             == (PSEUDOVECTOR_FLAG | ((tp as isize) << PSEUDOVECTOR_AREA_BITS))
