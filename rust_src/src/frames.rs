@@ -97,7 +97,7 @@ pub fn selected_frame() -> LispObject {
 /// displayed on.  See the documentation of `framep' for possible
 /// return values.
 #[lisp_fn]
-fn frame_live_p(object: LispObject) -> LispObject {
+pub fn frame_live_p(object: LispObject) -> LispObject {
     if object.as_frame().map_or(false, |f| f.is_live()) {
         LispObject::from(framep(object))
     } else {

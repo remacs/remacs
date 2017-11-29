@@ -23,7 +23,13 @@ pub extern "C" fn base64_encode_1(
     multibyte: bool,
 ) -> ptrdiff_t {
     let config = if line_break {
-        base64_crate::MIME
+        // base64_crate::MIME, but with LF instead of CRLF
+        base64_crate::Config::new(
+            base64_crate::CharacterSet::Standard,
+            true, // pad
+            true, // strip whitespace
+            base64_crate::LineWrap::Wrap(76, base64_crate::LineEnding::LF),
+        )
     } else {
         base64_crate::STANDARD
     };
@@ -141,7 +147,7 @@ fn test_base64_decode_1() {
 /// Optional second argument NO-LINE-BREAK means do not break long lines
 /// into shorter lines.
 #[lisp_fn(min = "1")]
-fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispObject {
+pub fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispObject {
     let mut string = string.as_string_or_error();
 
     // We need to allocate enough room for the encoded text
@@ -176,7 +182,7 @@ fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispOb
 
 /// Base64-decode STRING and return the result.
 #[lisp_fn]
-fn base64_decode_string(string: LispObject) -> LispObject {
+pub fn base64_decode_string(string: LispObject) -> LispObject {
     let mut string = string.as_string_or_error();
 
     let length = string.len_bytes();

@@ -18,8 +18,8 @@ use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, PseudovecTy
                  VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
                  Lisp_Type};
-use remacs_sys::{Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p, Qframep,
-                 Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
+use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p,
+                 Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
                  Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
 
@@ -441,6 +441,18 @@ impl LispObject {
     pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
         self.as_vectorlike_unchecked().as_vector_unchecked()
     }
+
+    pub fn as_vector_or_string_length(self) -> isize {
+        if let Some(s) = self.as_string() {
+            return s.len_chars();
+        } else if let Some(vl) = self.as_vectorlike() {
+            if let Some(v) = vl.as_vector() {
+                return v.len() as isize;
+            }
+        };
+
+        wrong_type!(Qarrayp, self);
+    }
 }
 
 impl LispObject {
@@ -702,6 +714,12 @@ impl TailsIter {
         }
     }
 
+    pub fn rest(&self) -> LispObject {
+        // This is kind of like Peekable but even when None is returned there
+        // might still be a valid item in self.tail.
+        self.tail
+    }
+
     fn circular(&self) -> Option<LispCons> {
         if self.errsym.is_some() {
             circular_list(self.tail);
@@ -745,6 +763,30 @@ impl Iterator for TailsIter {
                 Some(tail_cons)
             }
         }
+    }
+}
+
+pub struct CarIter {
+    tails: TailsIter,
+}
+
+impl CarIter {
+    pub fn new(list: LispObject, errsym: Option<Lisp_Object>) -> Self {
+        Self {
+            tails: TailsIter::new(list, errsym),
+        }
+    }
+
+    pub fn rest(&self) -> LispObject {
+        self.tails.tail
+    }
+}
+
+impl Iterator for CarIter {
+    type Item = LispObject;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.tails.next().map(|c| c.car())
     }
 }
 
@@ -800,6 +842,17 @@ impl LispObject {
     /// will be signaled.
     pub fn iter_tails_plist(self) -> TailsIter {
         TailsIter::new(self, Some(Qplistp))
+    }
+
+    /// Iterate over the car cells of a list.
+    pub fn iter_cars(self) -> CarIter {
+        CarIter::new(self, Some(Qlistp))
+    }
+
+    /// Iterate over all cars of self. If self is not a cons-chain,
+    /// iteration will stop at the first non-cons without signaling.
+    pub fn iter_cars_safe(self) -> CarIter {
+        CarIter::new(self, None)
     }
 }
 

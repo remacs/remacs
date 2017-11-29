@@ -24,7 +24,7 @@ pub fn stringp(object: LispObject) -> LispObject {
 /// Return the number of bytes in STRING.
 /// If STRING is multibyte, this may be greater than the length of STRING.
 #[lisp_fn]
-fn string_bytes(string: LispObject) -> LispObject {
+pub fn string_bytes(string: LispObject) -> LispObject {
     let string = string.as_string_or_error();
     LispObject::from_natnum(string.len_bytes() as EmacsInt)
 }
@@ -57,7 +57,7 @@ pub fn string_equal(s1: LispObject, s2: LispObject) -> LispObject {
 /// If you're not sure, whether to use `string-as-multibyte' or
 /// `string-to-multibyte', use `string-to-multibyte'.
 #[lisp_fn]
-fn string_as_multibyte(string: LispObject) -> LispObject {
+pub fn string_as_multibyte(string: LispObject) -> LispObject {
     let s = string.as_string_or_error();
     if s.is_multibyte() {
         return string;
@@ -92,7 +92,7 @@ fn string_as_multibyte(string: LispObject) -> LispObject {
 /// utf-8 sequence to an eight-bit character, not just bytes that don't form a
 /// correct sequence.
 #[lisp_fn]
-fn string_to_multibyte(string: LispObject) -> LispObject {
+pub fn string_to_multibyte(string: LispObject) -> LispObject {
     let _ = string.as_string_or_error();
     unsafe { LispObject::from(c_string_to_multibyte(string.to_raw())) }
 }
@@ -104,7 +104,7 @@ fn string_to_multibyte(string: LispObject) -> LispObject {
 /// If STRING contains a non-ASCII, non-`eight-bit' character,
 /// an error is signaled.
 #[lisp_fn]
-fn string_to_unibyte(string: LispObject) -> LispObject {
+pub fn string_to_unibyte(string: LispObject) -> LispObject {
     let lispstr = string.as_string_or_error();
     if lispstr.is_multibyte() {
         let size = lispstr.len_bytes();
@@ -126,7 +126,7 @@ fn string_to_unibyte(string: LispObject) -> LispObject {
 /// Return non-nil if STRING1 is less than STRING2 in lexicographic order.
 /// Case is significant.
 #[lisp_fn]
-fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
+pub fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
     let s1 = LispObject::symbol_or_string_as_string(string1);
     let s2 = LispObject::symbol_or_string_as_string(string2);
 
@@ -136,7 +136,7 @@ fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
 /// Return t if OBJECT is a multibyte string.
 /// Return nil if OBJECT is either a unibyte string, or not a string.
 #[lisp_fn]
-fn multibyte_string_p(object: LispObject) -> LispObject {
+pub fn multibyte_string_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_string().map_or(false, |s| s.is_multibyte()))
 }
 

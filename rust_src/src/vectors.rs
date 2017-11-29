@@ -218,7 +218,7 @@ pub fn elt(sequence: LispObject, n: LispObject) -> LispObject {
 /// SEQ, and should return non-nil if the first element should sort before
 /// the second.
 #[lisp_fn]
-fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
+pub fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
     if seq.is_cons() {
         sort_list(seq, predicate)
     } else if let Some(vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {

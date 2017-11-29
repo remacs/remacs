@@ -2822,9 +2822,6 @@ hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
 /* Clear hash table H.  */
 
 void
-hash_clear (struct Lisp_Hash_Table *);
-
-void
 hash_clear (struct Lisp_Hash_Table *h)
 {
   if (h->count > 0)
