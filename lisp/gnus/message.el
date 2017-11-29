@@ -28,8 +28,7 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'mailheader)
 (require 'gmm-utils)
@@ -2444,7 +2443,7 @@ Return the number of headers removed."
 	      (not (looking-at regexp))
 	    (looking-at regexp))
 	  (progn
-	    (incf number)
+	    (cl-incf number)
 	    (when first
 	      (setq last t))
 	    (delete-region
@@ -2469,10 +2468,10 @@ Return the number of headers removed."
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward regexp nil t)
-	(incf count)))
+	(cl-incf count)))
     (while (> count 1)
       (message-remove-header header nil t)
-      (decf count))))
+      (cl-decf count))))
 
 (defun message-narrow-to-headers ()
   "Narrow the buffer to the head of the message."
@@ -3227,13 +3226,13 @@ or in the synonym headers, defined by `message-header-synonyms'."
   (dolist (header headers)
     (let* ((header-name (symbol-name (car header)))
 	   (new-header (cdr header))
-	   (synonyms (loop for synonym in message-header-synonyms
-			   when (memq (car header) synonym) return synonym))
+	   (synonyms (cl-loop for synonym in message-header-synonyms
+			      when (memq (car header) synonym) return synonym))
 	   (old-header
-	    (loop for synonym in synonyms
-		  for old-header = (mail-fetch-field (symbol-name synonym))
-		  when (and old-header (string-match new-header old-header))
-		  return synonym)))
+	    (cl-loop for synonym in synonyms
+		     for old-header = (mail-fetch-field (symbol-name synonym))
+		     when (and old-header (string-match new-header old-header))
+		     return synonym)))
       (if old-header
 	  (message "already have `%s' in `%s'" new-header old-header)
 	(when (and (message-position-on-field header-name)
@@ -3593,7 +3592,7 @@ text was killed."
   "Create a rot table with offset N."
   (let ((i -1)
 	(table (make-string 256 0)))
-    (while (< (incf i) 256)
+    (while (< (cl-incf i) 256)
       (aset table i i))
     (concat
      (substring table 0 ?A)
@@ -3761,13 +3760,13 @@ To use this automatically, you may add this function to
 		(goto-char (mark t))
 		(insert-before-markers ?\n)
 		(goto-char pt))))
-	  (case message-cite-reply-position
-	    (above
+	  (pcase message-cite-reply-position
+	    ('above
 	     (message-goto-body)
 	     (insert body-text)
 	     (insert (if (bolp) "\n" "\n\n"))
 	     (message-goto-body))
-	    (below
+	    ('below
 	     (message-goto-signature)))
 	  ;; Add a `message-setup-very-last-hook' here?
 	  ;; Add `gnus-article-highlight-citation' here?
@@ -4612,9 +4611,9 @@ This function could be useful in `message-setup-hook'."
 	     (with-current-buffer mailbuf
 	       message-courtesy-message)))
           ;; Let's make sure we encoded all the body.
-          (assert (save-excursion
-                    (goto-char (point-min))
-                    (not (re-search-forward "[^\000-\377]" nil t))))
+          (cl-assert (save-excursion
+                       (goto-char (point-min))
+                       (not (re-search-forward "[^\000-\377]" nil t))))
           (mm-disable-multibyte)
 	  (if (or (not message-send-mail-partially-limit)
 		  (< (buffer-size) message-send-mail-partially-limit)
@@ -4768,7 +4767,7 @@ to find out how to use this."
   (replace-match "\n")
   (run-hooks 'message-send-mail-hook)
   ;; send the message
-  (case
+  (pcase
       (let ((coding-system-for-write message-send-coding-system))
 	(apply
 	 'call-process-region (point-min) (point-max)
@@ -4799,7 +4798,7 @@ to find out how to use this."
     (100 (error "qmail-inject reported permanent failure"))
     (111 (error "qmail-inject reported transient failure"))
     ;; should never happen
-    (t   (error "qmail-inject reported unknown failure"))))
+    (_   (error "qmail-inject reported unknown failure"))))
 
 (defvar mh-previous-window-config)
 
@@ -5322,7 +5321,9 @@ Otherwise, generate and save a value for `canlock-password' first."
    ;; Check for control characters.
    (message-check 'control-chars
      (if (re-search-forward
-	  (string-to-multibyte "[\000-\007\013\015-\032\034-\037\200-\237]")
+	  (eval-when-compile
+            (decode-coding-string "[\000-\007\013\015-\032\034-\037\200-\237]"
+                                  'binary))
 	  nil t)
 	 (y-or-n-p
 	  "The article contains control characters.  Really post? ")
@@ -5849,10 +5850,10 @@ subscribed address (and not the additional To and Cc header contents)."
 				     message-subscribed-address-functions))))
     (save-match-data
       (let ((list
-	     (loop for recipient in recipients
-	       when (loop for regexp in mft-regexps
-		      thereis (string-match regexp recipient))
-	       return recipient)))
+	     (cl-loop for recipient in recipients
+	              when (cl-loop for regexp in mft-regexps
+		                    thereis (string-match regexp recipient))
+	              return recipient)))
 	(when list
 	  (if only-show-subscribed
 	      list
@@ -6201,7 +6202,7 @@ they are."
     (when (> count maxcount)
       (let ((surplus (- count maxcount)))
 	(message-shorten-1 refs cut surplus)
-	(decf count surplus)))
+	(cl-decf count surplus)))
 
     ;; When sending via news, make sure the total folded length will
     ;; be less than 998 characters.  This is to cater to broken INN
@@ -6726,9 +6727,9 @@ The function is called with one parameter, a cons cell ..."
       ;; Gmane renames "To".  Look at "Original-To", too, if it is present in
       ;; message-header-synonyms.
       (setq to (or (message-fetch-field "to")
-		   (and (loop for synonym in message-header-synonyms
-			      when (memq 'Original-To synonym)
-			      return t)
+		   (and (cl-loop for synonym in message-header-synonyms
+			         when (memq 'Original-To synonym)
+			         return t)
 			(message-fetch-field "original-to")))
 	    cc (message-fetch-field "cc")
 	    extra (when message-extra-wide-headers
@@ -8133,11 +8134,12 @@ From headers in the original article."
 	  (message-tokenize-header
 	   (mail-strip-quoted-names
 	    (mapconcat 'message-fetch-reply-field fields ","))))
-	 (email (cond ((functionp message-alternative-emails)
-                       (car (cl-remove-if-not message-alternative-emails emails)))
-                      (t (loop for email in emails
-                               if (string-match-p message-alternative-emails email)
-                               return email)))))
+	 (email
+          (cond ((functionp message-alternative-emails)
+                 (car (cl-remove-if-not message-alternative-emails emails)))
+                (t (cl-loop for email in emails
+                            if (string-match-p message-alternative-emails email)
+                            return email)))))
     (unless (or (not email) (equal email user-mail-address))
       (message-remove-header "From")
       (goto-char (point-max))
