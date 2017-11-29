@@ -253,7 +253,7 @@ See `tramp-actions-before-shell' for more info.")
     (file-readable-p . tramp-handle-file-exists-p)
     (file-regular-p . tramp-handle-file-regular-p)
     (file-remote-p . tramp-handle-file-remote-p)
-    ;; `file-selinux-context' performed by default handler.
+    (file-selinux-context . tramp-handle-file-selinux-context)
     (file-symlink-p . tramp-handle-file-symlink-p)
     (file-system-info . tramp-smb-handle-file-system-info)
     (file-truename . tramp-handle-file-truename)
