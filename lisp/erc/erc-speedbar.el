@@ -361,6 +361,7 @@ The INDENT level is ignored."
 ;;; erc-speedbar.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

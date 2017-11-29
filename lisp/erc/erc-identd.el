@@ -55,7 +55,7 @@ This can be either a string or a number."
 		 (integer :tag "Port number")
 		 (string :tag "Port string")))
 
-;;;###autoload (autoload 'erc-identd-mode "erc-identd")
+;;;###autoload(autoload 'erc-identd-mode "erc-identd")
 (define-erc-module identd nil
   "This mode launches an identd server on port 8113."
   ((add-hook 'erc-connect-pre-hook 'erc-identd-quickstart)
@@ -115,6 +115,7 @@ The default port is specified by `erc-identd-port'."
 ;;; erc-identd.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

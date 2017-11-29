@@ -43,7 +43,7 @@ Used only when auto-truncation is enabled.
   :group 'erc-truncate
   :type 'integer)
 
-;;;###autoload (autoload 'erc-truncate-mode "erc-truncate" nil t)
+;;;###autoload(autoload 'erc-truncate-mode "erc-truncate" nil t)
 (define-erc-module truncate nil
   "Truncate a query buffer if it gets too large.
 This prevents the query buffer from getting too large, which can
@@ -112,6 +112,7 @@ Meant to be used in hooks, like `erc-insert-post-hook'."
 ;;; erc-truncate.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

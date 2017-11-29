@@ -33,7 +33,7 @@
 (require 'erc)
 (require 'flyspell)
 
-;;;###autoload (autoload 'erc-spelling-mode "erc-spelling" nil t)
+;;;###autoload(autoload 'erc-spelling-mode "erc-spelling" nil t)
 (define-erc-module spelling nil
   "Enable flyspell mode in ERC buffers."
   ;; Use erc-connect-pre-hook instead of erc-mode-hook as pre-hook is
@@ -109,3 +109,7 @@ The cadr is the beginning and the caddr is the end."
 (provide 'erc-spelling)
 
 ;;; erc-spelling.el ends here
+
+;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
+;; End:

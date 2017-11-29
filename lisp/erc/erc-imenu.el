@@ -131,6 +131,7 @@ Don't rely on this function, read it first!"
 ;;; erc-imenu.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

@@ -46,7 +46,7 @@
 
 (require 'erc)
 
-;;;###autoload (autoload 'erc-sound-mode "erc-sound")
+;;;###autoload(autoload 'erc-sound-mode "erc-sound")
 (define-erc-module sound ctcp-sound
   "In ERC sound mode, the client will respond to CTCP SOUND requests
 and play sound files as requested."
@@ -145,6 +145,7 @@ See also `play-sound-file'."
 ;;; erc-sound.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

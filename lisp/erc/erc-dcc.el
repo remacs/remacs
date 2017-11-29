@@ -56,7 +56,7 @@
 (require 'erc)
 (eval-when-compile (require 'pcomplete))
 
-;;;###autoload (autoload 'erc-dcc-mode "erc-dcc")
+;;;###autoload(autoload 'erc-dcc-mode "erc-dcc")
 (define-erc-module dcc nil
   "Provide Direct Client-to-Client support for ERC."
   ((add-hook 'erc-server-401-functions 'erc-dcc-no-such-nick))
@@ -1258,5 +1258,6 @@ other client."
 ;;; erc-dcc.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: nil
 ;; End:

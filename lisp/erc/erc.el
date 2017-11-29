@@ -67,6 +67,8 @@
 
 ;;; Code:
 
+(load "erc-loaddefs" nil t)
+
 (eval-when-compile (require 'cl-lib))
 (require 'font-lock)
 (require 'pp)
@@ -1272,7 +1274,7 @@ erc-NAME-enable, and erc-NAME-disable.
 
 Example:
 
-  ;;;###autoload (autoload \\='erc-replace-mode \"erc-replace\")
+  ;;;###autoload(autoload \\='erc-replace-mode \"erc-replace\")
   (define-erc-module replace nil
     \"This mode replaces incoming text according to `erc-replace-alist'.\"
     ((add-hook \\='erc-insert-modify-hook

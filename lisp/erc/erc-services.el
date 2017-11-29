@@ -101,7 +101,7 @@ You can also use \\[erc-nickserv-identify-mode] to change modes."
 	 (when (featurep 'erc-services)
 	   (erc-nickserv-identify-mode val))))
 
-;;;###autoload (autoload 'erc-services-mode "erc-services" nil t)
+;;;###autoload(autoload 'erc-services-mode "erc-services" nil t)
 (define-erc-module services nickserv
   "This mode automates communication with services."
   ((erc-nickserv-identify-mode erc-nickserv-identify-mode))
@@ -453,6 +453,7 @@ When called interactively, read the password using `read-passwd'."
 ;;; erc-services.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

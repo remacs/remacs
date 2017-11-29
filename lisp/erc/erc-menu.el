@@ -107,7 +107,7 @@
   "Internal variable used to keep track of whether we've defined the
 ERC menu yet.")
 
-;;;###autoload (autoload 'erc-menu-mode "erc-menu" nil t)
+;;;###autoload(autoload 'erc-menu-mode "erc-menu" nil t)
 (define-erc-module menu nil
   "Enable a menu in ERC buffers."
   ((unless erc-menu-defined
@@ -148,6 +148,7 @@ ERC menu yet.")
 ;;; erc-menu.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:
