@@ -175,7 +175,9 @@ are found in the same directory is hard-coded in various places in Emacs.)"
 ;; Sadly automake relies on this misfeature up to at least version 1.15.1.
 (if (fboundp 'byte-compile-dest-file)
     (or (featurep 'bytecomp)
-        (display-warning 'bytecomp "Redefining `byte-compile-dest-file' is obsolete (as of 23.2); set `byte-compile-dest-file-function' instead."))
+        (display-warning 'bytecomp (format-message "\
+Changing `byte-compile-dest-file' is obsolete (as of 23.2);
+set `byte-compile-dest-file-function' instead.")))
 (defun byte-compile-dest-file (filename)
   "Convert an Emacs Lisp source file name to a compiled file name.
 If `byte-compile-dest-file-function' is non-nil, uses that
