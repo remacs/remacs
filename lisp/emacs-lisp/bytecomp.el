@@ -144,14 +144,20 @@
 
 (defcustom emacs-lisp-file-regexp "\\.el\\'"
   "Regexp which matches Emacs Lisp source files.
-If you change this, you might want to set `byte-compile-dest-file-function'."
+If you change this, you might want to set `byte-compile-dest-file-function'.
+\(Note that the assumption of a \".elc\" suffix for compiled files
+is hard-coded in various places in Emacs.)"
+  ;; Eg is_elc in Fload.
   :group 'bytecomp
   :type 'regexp)
 
 (defcustom byte-compile-dest-file-function nil
   "Function for the function `byte-compile-dest-file' to call.
 It should take one argument, the name of an Emacs Lisp source
-file name, and return the name of the compiled file."
+file name, and return the name of the compiled file.
+\(Note that the assumption that the source and compiled files
+are found in the same directory is hard-coded in various places in Emacs.)"
+  ;; Eg load-prefer-newer, documentation lookup IIRC.
   :group 'bytecomp
   :type '(choice (const nil) function)
   :version "23.2")
@@ -170,8 +176,9 @@ file name, and return the name of the compiled file."
   "Convert an Emacs Lisp source file name to a compiled file name.
 If `byte-compile-dest-file-function' is non-nil, uses that
 function to do the work.  Otherwise, if FILENAME matches
-`emacs-lisp-file-regexp' (by default, files with the extension `.el'),
-adds `c' to it; otherwise adds `.elc'."
+`emacs-lisp-file-regexp' (by default, files with the extension \".el\"),
+replaces the matching part (and anything after it) with \".elc\";
+otherwise adds \".elc\"."
   (if byte-compile-dest-file-function
       (funcall byte-compile-dest-file-function filename)
     (setq filename (file-name-sans-versions
