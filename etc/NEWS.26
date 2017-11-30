@@ -366,7 +366,7 @@ These local variables will thus not vanish on setting a major mode.
 
 +++
 ** A second dir-local file (.dir-locals-2.el) is now accepted.
-See the variable 'dir-locals-file-2' for more information.
+See the doc string of 'dir-locals-file' for more information.
 
 +++
 ** Connection-local variables can be used to specify local variables

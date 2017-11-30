@@ -4774,7 +4774,7 @@ to find out how to use this."
 	 message-qmail-inject-program nil nil nil
 	 ;; qmail-inject's default behavior is to look for addresses on the
 	 ;; command line; if there're none, it scans the headers.
-	 ;; yes, it does The Right Thing w.r.t. Resent-To and it's kin.
+	 ;; yes, it does The Right Thing w.r.t. Resent-To and its kin.
 	 ;;
 	 ;; in general, ALL of qmail-inject's defaults are perfect for simply
 	 ;; reading a formatted (i. e., at least a To: or Resent-To header)
@@ -4792,7 +4792,7 @@ to find out how to use this."
 	 (if (functionp message-qmail-inject-args)
 	     (funcall message-qmail-inject-args)
 	   message-qmail-inject-args)))
-    ;; qmail-inject doesn't say anything on it's stdout/stderr,
+    ;; qmail-inject doesn't say anything on its stdout/stderr,
     ;; we have to look at the retval instead
     (0 nil)
     (100 (error "qmail-inject reported permanent failure"))

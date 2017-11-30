@@ -1431,7 +1431,9 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 				   nil nil 'grep-history)
 	     nil))
       (t (let* ((regexp (grep-read-regexp))
-		(files (grep-read-files regexp))
+		(files
+                 (mapconcat #'shell-quote-argument
+                            (split-string (grep-read-files regexp)) " "))
 		(dir (read-directory-name "In directory: "
 					  nil default-directory t)))
 	   (list regexp files dir))))))

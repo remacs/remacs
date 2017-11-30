@@ -461,7 +461,7 @@ and so on."
                        optimization - If on, preserve overlay highlighting
                        (cf ediff or goo-font-lock) as well as basic faces.\n
   body-text-only     : Emit only body-text. In concrete terms,
-                       1. Suppress calls to `hfy-page-header'and
+                       1. Suppress calls to `hfy-page-header' and
                           `hfy-page-footer'
                        2. Pretend that `div-wrapper' option above is
                           turned off
