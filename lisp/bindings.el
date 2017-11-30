@@ -699,7 +699,7 @@ okay.  See `mode-line-format'.")
 	buffer-file-format buffer-auto-save-file-format
 	buffer-display-count buffer-display-time
 	enable-multibyte-characters
-	buffer-file-coding-system))
+	buffer-file-coding-system truncate-lines))
 
 ;; We have base64, md5 and sha1 functions built in now.
 (provide 'base64)

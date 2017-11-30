@@ -5134,7 +5134,9 @@ init_buffer_once (void)
   XSETFASTINT (BVAR (&buffer_local_flags, selective_display), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, selective_display_ellipses), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, tab_width), idx); ++idx;
-  XSETFASTINT (BVAR (&buffer_local_flags, truncate_lines), idx); ++idx;
+  XSETFASTINT (BVAR (&buffer_local_flags, truncate_lines), idx);
+  /* Make this one a permanent local.  */
+  buffer_permanent_local_flags[idx++] = 1;
   XSETFASTINT (BVAR (&buffer_local_flags, word_wrap), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, ctl_arrow), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, fill_column), idx); ++idx;
