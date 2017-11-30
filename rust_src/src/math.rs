@@ -420,7 +420,7 @@ pub fn lognot(number: LispObject) -> LispObject {
 /// of VALUE.  If VALUE is negative, return the number of zero bits in the
 /// representation.
 #[lisp_fn]
-fn logcount(value: LispObject) -> LispObject {
+pub fn logcount(value: LispObject) -> LispObject {
     let mut val = value.as_fixnum_or_error();
     if val < 0 {
         val = -1 - val;
