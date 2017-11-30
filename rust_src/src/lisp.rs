@@ -416,7 +416,8 @@ impl LispObject {
 
     #[inline]
     pub fn as_unsigned_or_error(self) -> EmacsUint {
-        self.as_unsigned().unwrap_or_else(|| wrong_type!(Qintegerp, self))
+        self.as_unsigned()
+            .unwrap_or_else(|| wrong_type!(Qintegerp, self))
     }
 
     #[inline]
