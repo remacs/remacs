@@ -124,8 +124,9 @@ impl LispStringRef {
     /// This function does not allocate. It will not change the size of the data allocation.
     /// It will only set the 'size' variable of the string, if it is safe to do so.
     /// Replaces STRING_SET_CHARS from C.
-    pub fn set_num_chars(mut self, newsize: isize) {
-        assert!(if self.is_multibyte() {
+    #[inline]
+    pub unsafe fn set_num_chars(mut self, newsize: isize) {
+        debug_assert!(if self.is_multibyte() {
             0 <= newsize && newsize == self.len_bytes()
         } else {
             newsize == self.len_chars()

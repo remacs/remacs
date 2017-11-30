@@ -146,7 +146,7 @@ fn multibyte_string_p(object: LispObject) -> LispObject {
 fn clear_string(string: LispObject) -> LispObject {
     let lisp_string = string.as_string_or_error();
     lisp_string.clear_data();
-    lisp_string.set_num_chars(lisp_string.len_bytes());
+    unsafe { lisp_string.set_num_chars(lisp_string.len_bytes()); }
     lisp_string.set_unibyte();
 
     LispObject::constant_nil()
