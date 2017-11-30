@@ -1,24 +1,23 @@
 //! Lisp functions for making directory listings.
 
-use std::io;
-use std::ptr;
-use std::ffi::CStr;
 use std::cmp::Ordering;
-
-use std::path::Path;
+use std::ffi::CStr;
 use std::fs;
+use std::io;
 use std::os::unix::fs::MetadataExt;
+use std::path::Path;
+use std::ptr;
 
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fexpand_file_name, Qfile_missing, Qnil, compile_pattern, re_search,
-                 re_pattern_buffer, filemode_string, Ffind_file_name_handler, Qfile_attributes,
-                 Qdirectory_files, Qdirectory_files_and_attributes, decode_file_name};
+use remacs_sys::{compile_pattern, decode_file_name, filemode_string, re_pattern_buffer, re_search,
+                 Fexpand_file_name, Ffind_file_name_handler, Qdirectory_files,
+                 Qdirectory_files_and_attributes, Qfile_attributes, Qfile_missing, Qnil};
 
-use lisp::defsubr;
 use lisp::LispObject;
-use lists::{list, car};
+use lisp::defsubr;
+use lists::{car, list};
 use symbols::symbol_name;
 
 // We keep both a name string and LispObject object because
@@ -54,7 +53,6 @@ fn get_entries(
     attrs: bool,
     id_format: LispObject,
 ) -> io::Result<LispObject> {
-
     let dirS0 = String::from(directory.to_string());
     let dirS1 = dirS0.clone();
     let dirP = Path::new(&dirS0);
@@ -146,10 +144,12 @@ fn get_entries(
     }
 
     if nosort.is_nil() {
-        entries.sort_by(|a, b| if a.name_string < b.name_string {
-            Ordering::Less
-        } else {
-            Ordering::Greater
+        entries.sort_by(|a, b| {
+            if a.name_string < b.name_string {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            }
         });
     }
 
@@ -176,7 +176,6 @@ pub extern "C" fn directory_files_internal(
     attrs: bool,
     id_format: LispObject,
 ) -> LispObject {
-
     //match get_files(directory, full, match_re, nosort, attrs, id_format) {
     match get_entries(directory, full, match_re, nosort, attrs, id_format) {
         Ok(files) => files,
@@ -201,7 +200,6 @@ pub fn directory_files(
     match_re: LispObject,
     nosort: LispObject,
 ) -> LispObject {
-
     let dnexp_raw = unsafe { Fexpand_file_name(directory.to_raw(), Qnil) };
     let dnexp = LispObject::from(dnexp_raw);
 
@@ -247,7 +245,6 @@ pub fn directory_files_and_attributes(
     nosort: LispObject,
     id_format: LispObject,
 ) -> LispObject {
-
     let dnexp_raw = unsafe { Fexpand_file_name(directory.to_raw(), Qnil) };
     let dnexp = LispObject::from(dnexp_raw);
 
@@ -436,11 +433,7 @@ pub fn file_attributes(filename: LispObject, id_format: LispObject) -> LispObjec
                 id_format
             );
         } else {
-            return call!(
-                handler,
-                LispObject::from(Qfile_attributes),
-                fnexp
-            );
+            return call!(handler, LispObject::from(Qfile_attributes), fnexp);
         }
     }
 
