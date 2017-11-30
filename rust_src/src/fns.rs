@@ -17,7 +17,7 @@ use lists::{assq, get, member, memq, put};
 /// looks at the value of the variable `features'.  The optional argument
 /// SUBFEATURE can be used to check a specific subfeature of FEATURE.
 #[lisp_fn(min = "1")]
-fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
+pub fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
     feature.as_symbol_or_error();
     let mut tem = memq(feature, LispObject::from(unsafe { globals.f_Vfeatures }));
     if tem.is_not_nil() && subfeature.is_not_nil() {
@@ -34,7 +34,7 @@ fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
 /// The optional argument SUBFEATURES should be a list of symbols listing
 /// particular subfeatures supported in this version of FEATURE.
 #[lisp_fn(min = "1")]
-fn provide(feature: LispObject, subfeature: LispObject) -> LispObject {
+pub fn provide(feature: LispObject, subfeature: LispObject) -> LispObject {
     feature.as_symbol_or_error();
     if !subfeature.is_list() {
         wrong_type!(Qlistp, subfeature)

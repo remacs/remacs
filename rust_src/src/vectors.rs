@@ -48,6 +48,13 @@ impl LispVectorlikeRef {
     }
 
     #[inline]
+    pub fn pseudovector_type(self) -> PseudovecType {
+        unsafe {
+            mem::transmute(((self.header.size & PVEC_TYPE_MASK) >> PSEUDOVECTOR_AREA_BITS) as i32)
+        }
+    }
+
+    #[inline]
     pub fn is_pseudovector(&self, tp: PseudovecType) -> bool {
         self.header.size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK)
             == (PSEUDOVECTOR_FLAG | ((tp as isize) << PSEUDOVECTOR_AREA_BITS))
@@ -218,7 +225,7 @@ pub fn elt(sequence: LispObject, n: LispObject) -> LispObject {
 /// SEQ, and should return non-nil if the first element should sort before
 /// the second.
 #[lisp_fn]
-fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
+pub fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
     if seq.is_cons() {
         sort_list(seq, predicate)
     } else if let Some(vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {

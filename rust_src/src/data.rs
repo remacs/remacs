@@ -1,7 +1,12 @@
 //! data helpers
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Lisp_Object, Qcyclic_function_indirection};
+use remacs_sys::{Lisp_Misc_Type, Lisp_Object, Lisp_Type, PseudovecType};
+use remacs_sys::{Qbool_vector, Qbuffer, Qchar_table, Qcompiled_function, Qcondition_variable,
+                 Qcons, Qcyclic_function_indirection, Qfinalizer, Qfloat, Qfont, Qfont_entity,
+                 Qfont_object, Qfont_spec, Qframe, Qhash_table, Qinteger, Qmarker,
+                 Qmodule_function, Qmutex, Qnone, Qoverlay, Qprocess, Qstring, Qsubr, Qsymbol,
+                 Qterminal, Qthread, Quser_ptr, Qvector, Qwindow, Qwindow_configuration};
 
 use lisp::LispObject;
 use lisp::defsubr;
@@ -57,6 +62,74 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
         }
     }
     return result;
+}
+
+/// Return a symbol representing the type of OBJECT.
+/// The symbol returned names the object's basic type;
+/// for example, (type-of 1) returns `integer'.
+#[lisp_fn]
+pub fn type_of(object: LispObject) -> LispObject {
+    let ty = match object.get_type() {
+        Lisp_Type::Lisp_Cons => Qcons,
+        Lisp_Type::Lisp_Int0 => Qinteger,
+        Lisp_Type::Lisp_Int1 => Qinteger,
+        Lisp_Type::Lisp_Symbol => Qsymbol,
+        Lisp_Type::Lisp_String => Qstring,
+        Lisp_Type::Lisp_Float => Qfloat,
+        Lisp_Type::Lisp_Misc => {
+            let m = object.as_misc().unwrap();
+            match m.get_type() {
+                Lisp_Misc_Type::Marker => Qmarker,
+                Lisp_Misc_Type::Overlay => Qoverlay,
+                Lisp_Misc_Type::Finalizer => Qfinalizer,
+                Lisp_Misc_Type::UserPtr => Quser_ptr,
+                _ => Qnone,
+            }
+        }
+        Lisp_Type::Lisp_Vectorlike => {
+            let vec = unsafe { object.as_vectorlike_unchecked() };
+            match vec.pseudovector_type() {
+                PseudovecType::PVEC_NORMAL_VECTOR => Qvector,
+                PseudovecType::PVEC_WINDOW_CONFIGURATION => Qwindow_configuration,
+                PseudovecType::PVEC_PROCESS => Qprocess,
+                PseudovecType::PVEC_WINDOW => Qwindow,
+                PseudovecType::PVEC_SUBR => Qsubr,
+                PseudovecType::PVEC_COMPILED => Qcompiled_function,
+                PseudovecType::PVEC_BUFFER => Qbuffer,
+                PseudovecType::PVEC_CHAR_TABLE => Qchar_table,
+                PseudovecType::PVEC_BOOL_VECTOR => Qbool_vector,
+                PseudovecType::PVEC_FRAME => Qframe,
+                PseudovecType::PVEC_HASH_TABLE => Qhash_table,
+                PseudovecType::PVEC_THREAD => Qthread,
+                PseudovecType::PVEC_MUTEX => Qmutex,
+                PseudovecType::PVEC_CONDVAR => Qcondition_variable,
+                PseudovecType::PVEC_TERMINAL => Qterminal,
+                PseudovecType::PVEC_MODULE_FUNCTION => Qmodule_function,
+                PseudovecType::PVEC_FONT => if object.is_font_spec() {
+                    Qfont_spec
+                } else if object.is_font_entity() {
+                    Qfont_entity
+                } else if object.is_font_object() {
+                    Qfont_object
+                } else {
+                    Qfont
+                },
+                PseudovecType::PVEC_RECORD => unsafe {
+                    let vec = object.as_vector_unchecked();
+                    let t = vec.get_unchecked(0);
+                    if t.is_record() {
+                        let v = t.as_vector_unchecked();
+                        if v.len() > 1 {
+                            return v.get_unchecked(1);
+                        }
+                    }
+                    return t;
+                },
+                _ => Qnone,
+            }
+        }
+    };
+    LispObject::from(ty)
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

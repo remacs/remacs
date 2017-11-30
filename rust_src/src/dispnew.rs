@@ -17,7 +17,7 @@ use lisp::defsubr;
 /// additional wait period, in milliseconds; this is for backwards compatibility.
 /// (Not all operating systems support waiting for a fraction of a second.)
 #[lisp_fn(min = "1")]
-fn sleep_for(seconds: LispObject, milliseconds: LispObject) -> LispObject {
+pub fn sleep_for(seconds: LispObject, milliseconds: LispObject) -> LispObject {
     let mut duration = extract_float(seconds.to_raw());
     if milliseconds.is_not_nil() {
         let milliseconds = milliseconds.as_fixnum_or_error() as f64;

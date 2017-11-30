@@ -255,7 +255,7 @@ impl LispHashTableRef {
 /// Return a copy of hash table TABLE.
 /// Keys and values are not copied, only the table itself is.
 #[lisp_fn]
-fn copy_hash_table(htable: LispObject) -> LispObject {
+pub fn copy_hash_table(htable: LispObject) -> LispObject {
     let mut table = htable.as_hash_table_or_error();
     let mut new_table = LispHashTableRef::allocate();
     unsafe { new_table.copy(table) };
@@ -283,7 +283,7 @@ fn copy_hash_table(htable: LispObject) -> LispObject {
 /// Look up KEY in TABLE and return its associated value.
 /// If KEY is not found, return DFLT which defaults to nil.
 #[lisp_fn(min = "2")]
-fn gethash(key: LispObject, table: LispObject, dflt: LispObject) -> LispObject {
+pub fn gethash(key: LispObject, table: LispObject, dflt: LispObject) -> LispObject {
     let hash_table = table.as_hash_table_or_error();
     let idx = hash_table.lookup(key, ptr::null_mut());
 
@@ -298,7 +298,7 @@ fn gethash(key: LispObject, table: LispObject, dflt: LispObject) -> LispObject {
 /// If KEY is already present in table, replace its current value with
 /// VALUE.  In any case, return VALUE.
 #[lisp_fn]
-fn puthash(key: LispObject, value: LispObject, table: LispObject) -> LispObject {
+pub fn puthash(key: LispObject, value: LispObject, table: LispObject) -> LispObject {
     let hash_table = table.as_hash_table_or_error();
     hash_table.check_impure(table);
 
@@ -316,7 +316,7 @@ fn puthash(key: LispObject, value: LispObject, table: LispObject) -> LispObject 
 
 /// Remove KEY from TABLE.
 #[lisp_fn]
-fn remhash(key: LispObject, table: LispObject) -> LispObject {
+pub fn remhash(key: LispObject, table: LispObject) -> LispObject {
     let hash_table = table.as_hash_table_or_error();
     hash_table.check_impure(table);
     hash_table.remove(key);
@@ -328,7 +328,7 @@ fn remhash(key: LispObject, table: LispObject) -> LispObject {
 /// FUNCTION is called with two arguments, KEY and VALUE.
 /// `maphash' always returns nil.
 #[lisp_fn]
-fn maphash(function: LispObject, table: LispObject) -> LispObject {
+pub fn maphash(function: LispObject, table: LispObject) -> LispObject {
     let hash_table = table.as_hash_table_or_error();
     for (key, value) in hash_table.iter() {
         call!(function, key, value);
@@ -339,19 +339,19 @@ fn maphash(function: LispObject, table: LispObject) -> LispObject {
 
 /// Return t if OBJ is a Lisp hash table object.
 #[lisp_fn]
-fn hash_table_p(obj: LispObject) -> LispObject {
+pub fn hash_table_p(obj: LispObject) -> LispObject {
     LispObject::from_bool(obj.is_hash_table())
 }
 
 /// Return the number of elements in TABLE.
 #[lisp_fn]
-fn hash_table_count(table: LispObject) -> LispObject {
+pub fn hash_table_count(table: LispObject) -> LispObject {
     LispObject::from_natnum(table.as_hash_table_or_error().count as EmacsInt)
 }
 
 /// Return the current rehash threshold of TABLE.
 #[lisp_fn]
-fn hash_table_rehash_threshold(table: LispObject) -> LispObject {
+pub fn hash_table_rehash_threshold(table: LispObject) -> LispObject {
     LispObject::from_float(table.as_hash_table_or_error().rehash_threshold as EmacsDouble)
 }
 
@@ -360,25 +360,25 @@ fn hash_table_rehash_threshold(table: LispObject) -> LispObject {
 /// a hash table than can hold as many elements as TABLE holds
 /// without need for resizing.
 #[lisp_fn]
-fn hash_table_size(table: LispObject) -> LispObject {
+pub fn hash_table_size(table: LispObject) -> LispObject {
     LispObject::from_natnum(table.as_hash_table_or_error().size() as EmacsInt)
 }
 
 /// Return the test TABLE uses.
 #[lisp_fn]
-fn hash_table_test(table: LispObject) -> LispObject {
+pub fn hash_table_test(table: LispObject) -> LispObject {
     LispObject::from(table.as_hash_table_or_error().test.name)
 }
 
 /// Return the weakness of TABLE.
 #[lisp_fn]
-fn hash_table_weakness(table: LispObject) -> LispObject {
+pub fn hash_table_weakness(table: LispObject) -> LispObject {
     table.as_hash_table_or_error().get_weak()
 }
 
 /// Clear hash table TABLE and return it.
 #[lisp_fn]
-fn clrhash(table: LispObject) -> LispObject {
+pub fn clrhash(table: LispObject) -> LispObject {
     let hash_table = table.as_hash_table_or_error();
     hash_table.check_impure(table);
     hash_table.clear();
@@ -396,7 +396,7 @@ fn clrhash(table: LispObject) -> LispObject {
 /// It should be the case that if (eq (funcall HASH x1) (funcall HASH x2))
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
-fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
+pub fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
     let sym = LispObject::from(Qhash_table_test);
     put(name, sym, list(&mut [test, hash]))
 }
