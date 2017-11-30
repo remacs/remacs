@@ -108,7 +108,7 @@ impl LispHashTableRef {
         while 0 <= i {
             if key.eq(self.get_hash_key(i))
                 || (self.test.cmpfn as *mut c_void != ptr::null_mut() && hash_code == unsafe {
-                    self.get_hash_hash(i).as_natnum_unchecked()
+                    self.get_hash_hash(i).as_unsigned_unchecked()
                 }
                     && (self.test.cmpfn)(
                         &mut self.test,
@@ -483,28 +483,25 @@ pub extern "C" fn sweep_weak_hash_tables() {
     // This may look odd, but this is 'abusing' a Rust while loop to make
     // a 'do-while' loop. All the logic is done in the conditional of the while loop,
     // and the body is just empty.
-    let mut marked;
-    while {
+    let mut marked = true;
+    while marked {
         marked = false;
 
         let mut h = LispHashTableRef::new(unsafe { weak_hash_tables });
         while h.as_mut() != ptr::null_mut() {
             if h.header.size & ARRAY_MARK_FLAG != 0 {
-                marked = marked || sweep_weak_table(h.as_mut(), false);
+                marked = sweep_weak_table(h.as_mut(), false) || marked;
             }
 
-            h = LispHashTableRef::new(h.next_weak);
+            h = h.get_next_weak();
         }
-
-
-        marked
-    } {}
+    }
 
     // Remove tables and entries that aren't used.
     let mut table = LispHashTableRef::new(unsafe { weak_hash_tables });
     let mut used = LispHashTableRef::new(ptr::null_mut());
     while table.as_mut() != ptr::null_mut() {
-        let next = LispHashTableRef::new(table.next_weak);
+        let next = table.get_next_weak();
 
         if table.header.size & ARRAY_MARK_FLAG != 0 {
             if table.count > 0 {
