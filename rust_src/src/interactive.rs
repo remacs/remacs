@@ -10,7 +10,7 @@ use lisp::defsubr;
 /// A raw prefix argument is what you get from `(interactive "P")'.
 /// Its numeric meaning is what you would get from `(interactive "p")'.
 #[lisp_fn]
-fn prefix_numeric_value(raw: LispObject) -> LispObject {
+pub fn prefix_numeric_value(raw: LispObject) -> LispObject {
     if raw.is_nil() {
         LispObject::from_fixnum(1)
     } else if raw.eq(LispObject::from(Qminus)) {

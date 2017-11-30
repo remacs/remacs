@@ -1192,68 +1192,6 @@ remapping in all currently active keymaps.  */)
   return INTEGERP (command) ? Qnil : command;
 }
 
-/* Value is number if KEY is too long; nil if valid but has no definition.  */
-/* GC is possible in this function.  */
-
-DEFUN ("lookup-key", Flookup_key, Slookup_key, 2, 3, 0,
-       doc: /* In keymap KEYMAP, look up key sequence KEY.  Return the definition.
-A value of nil means undefined.  See doc of `define-key'
-for kinds of definitions.
-
-A number as value means KEY is "too long";
-that is, characters or symbols in it except for the last one
-fail to be a valid sequence of prefix characters in KEYMAP.
-The number is how many characters at the front of KEY
-it takes to reach a non-prefix key.
-
-Normally, `lookup-key' ignores bindings for t, which act as default
-bindings, used when nothing else in the keymap applies; this makes it
-usable as a general function for probing keymaps.  However, if the
-third optional argument ACCEPT-DEFAULT is non-nil, `lookup-key' will
-recognize the default bindings, just as `read-key-sequence' does.  */)
-  (Lisp_Object keymap, Lisp_Object key, Lisp_Object accept_default)
-{
-  ptrdiff_t idx;
-  Lisp_Object cmd;
-  Lisp_Object c;
-  ptrdiff_t length;
-  bool t_ok = !NILP (accept_default);
-
-  keymap = get_keymap (keymap, 1, 1);
-
-  length = CHECK_VECTOR_OR_STRING (key);
-  if (length == 0)
-    return keymap;
-
-  idx = 0;
-  while (1)
-    {
-      c = Faref (key, make_number (idx++));
-
-      if (CONSP (c) && lucid_event_type_list_p (c))
-	c = Fevent_convert_list (c);
-
-      /* Turn the 8th bit of string chars into a meta modifier.  */
-      if (STRINGP (key) && XINT (c) & 0x80 && !STRING_MULTIBYTE (key))
-	XSETINT (c, (XINT (c) | meta_modifier) & ~0x80);
-
-      /* Allow string since binding for `menu-bar-select-buffer'
-	 includes the buffer name in the key sequence.  */
-      if (!INTEGERP (c) && !SYMBOLP (c) && !CONSP (c) && !STRINGP (c))
-	message_with_string ("Key sequence contains invalid event %s", c, 1);
-
-      cmd = access_keymap (keymap, c, t_ok, 0, 1);
-      if (idx == length)
-	return cmd;
-
-      keymap = get_keymap (cmd, 0, 1);
-      if (!CONSP (keymap))
-	return make_number (idx);
-
-      maybe_quit ();
-    }
-}
-
 /* Make KEYMAP define event C as a keymap (i.e., as a prefix).
    Assume that currently it does not define C at all.
    Return the keymap.  */
@@ -3698,7 +3636,6 @@ be preferred.  */);
   defsubr (&Sglobal_key_binding);
   defsubr (&Sminor_mode_key_binding);
   defsubr (&Sdefine_key);
-  defsubr (&Slookup_key);
   defsubr (&Sdefine_prefix_command);
   defsubr (&Suse_global_map);
   defsubr (&Suse_local_map);

@@ -6768,34 +6768,6 @@ parse_solitary_modifier (Lisp_Object symbol)
   return 0;
 }
 
-/* Return true if EVENT is a list whose elements are all integers or symbols.
-   Such a list is not valid as an event,
-   but it can be a Lucid-style event type list.  */
-
-bool
-lucid_event_type_list_p (Lisp_Object object)
-{
-  Lisp_Object tail;
-
-  if (! CONSP (object))
-    return 0;
-
-  if (EQ (XCAR (object), Qhelp_echo)
-      || EQ (XCAR (object), Qvertical_line)
-      || EQ (XCAR (object), Qmode_line)
-      || EQ (XCAR (object), Qheader_line))
-    return 0;
-
-  for (tail = object; CONSP (tail); tail = XCDR (tail))
-    {
-      Lisp_Object elt;
-      elt = XCAR (tail);
-      if (! (INTEGERP (elt) || SYMBOLP (elt)))
-	return 0;
-    }
-
-  return NILP (tail);
-}
 
 /* Return true if terminal input chars are available.
    Also, store the return value into INPUT_PENDING.

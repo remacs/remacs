@@ -696,6 +696,9 @@ fset_desired_tool_bar_string (struct frame *f, Lisp_Object val)
 #endif /* HAVE_WINDOW_SYSTEM && !USE_GTK && !HAVE_NS */
 
 /* Accessors for Rust */
+/* enum output_method */
+int
+fget_output_method(const struct frame *f);
 int
 fget_column_width(const struct frame *f);
 int
@@ -1512,7 +1515,7 @@ FRAME_BOTTOM_DIVIDER_WIDTH (struct frame *f)
 #ifdef HAVE_WINDOW_SYSTEM
 
 /* The class of this X application.  */
-#define EMACS_CLASS "Emacs"
+#define EMACS_CLASS "Remacs"
 
 extern void x_set_scroll_bar_default_width (struct frame *);
 extern void x_set_scroll_bar_default_height (struct frame *);

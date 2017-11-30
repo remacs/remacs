@@ -175,98 +175,6 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 
 /* Data type predicates.  */
 
-DEFUN ("type-of", Ftype_of, Stype_of, 1, 1, 0,
-       doc: /* Return a symbol representing the type of OBJECT.
-The symbol returned names the object's basic type;
-for example, (type-of 1) returns `integer'.  */)
-  (Lisp_Object object)
-{
-  switch (XTYPE (object))
-    {
-    case_Lisp_Int:
-      return Qinteger;
-
-    case Lisp_Symbol:
-      return Qsymbol;
-
-    case Lisp_String:
-      return Qstring;
-
-    case Lisp_Cons:
-      return Qcons;
-
-    case Lisp_Misc:
-      switch (XMISCTYPE (object))
-	{
-	case Lisp_Misc_Marker:
-	  return Qmarker;
-	case Lisp_Misc_Overlay:
-	  return Qoverlay;
-        case Lisp_Misc_Finalizer:
-          return Qfinalizer;
-#ifdef HAVE_MODULES
-	case Lisp_Misc_User_Ptr:
-	  return Quser_ptr;
-#endif
-	default:
-	  emacs_abort ();
-	}
-
-    case Lisp_Vectorlike:
-      switch (PSEUDOVECTOR_TYPE (XVECTOR (object)))
-        {
-        case PVEC_NORMAL_VECTOR: return Qvector;
-        case PVEC_WINDOW_CONFIGURATION: return Qwindow_configuration;
-        case PVEC_PROCESS: return Qprocess;
-        case PVEC_WINDOW: return Qwindow;
-        case PVEC_SUBR: return Qsubr;
-        case PVEC_COMPILED: return Qcompiled_function;
-        case PVEC_BUFFER: return Qbuffer;
-        case PVEC_CHAR_TABLE: return Qchar_table;
-        case PVEC_BOOL_VECTOR: return Qbool_vector;
-        case PVEC_FRAME: return Qframe;
-        case PVEC_HASH_TABLE: return Qhash_table;
-        case PVEC_FONT:
-          if (FONT_SPEC_P (object))
-	    return Qfont_spec;
-          if (FONT_ENTITY_P (object))
-	    return Qfont_entity;
-          if (FONT_OBJECT_P (object))
-	    return Qfont_object;
-          else
-            emacs_abort (); /* return Qfont?  */
-        case PVEC_THREAD: return Qthread;
-        case PVEC_MUTEX: return Qmutex;
-        case PVEC_CONDVAR: return Qcondition_variable;
-        case PVEC_TERMINAL: return Qterminal;
-        case PVEC_RECORD:
-          {
-            Lisp_Object t = AREF (object, 0);
-            if (RECORDP (t) && 1 < PVSIZE (t))
-              /* Return the type name field of the class!  */
-              return AREF (t, 1);
-            else
-              return t;
-          }
-        case PVEC_MODULE_FUNCTION:
-          return Qmodule_function;
-        /* "Impossible" cases.  */
-        case PVEC_XWIDGET:
-        case PVEC_OTHER:
-        case PVEC_XWIDGET_VIEW:
-        case PVEC_SUB_CHAR_TABLE:
-        case PVEC_FREE: ;
-        }
-      emacs_abort ();
-
-    case Lisp_Float:
-      return Qfloat;
-
-    default:
-      emacs_abort ();
-    }
-}
-
 #ifdef HAVE_MODULES
 DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
        doc: /* Return t if OBJECT is a module user pointer.  */)
@@ -2621,7 +2529,6 @@ syms_of_data (void)
   DEFSYM (Qdefalias_fset_function, "defalias-fset-function");
 
   defsubr (&Sinteractive_form);
-  defsubr (&Stype_of);
   defsubr (&Smodule_function_p);
   defsubr (&Sboundp);
   defsubr (&Sfset);
