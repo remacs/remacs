@@ -994,11 +994,6 @@ extern "C" {
     pub static mut current_global_map: Lisp_Object;
     pub static current_thread: *mut thread_state;
 
-    pub static Qfile_missing: Lisp_Object;
-    pub static Qfile_attributes: Lisp_Object;
-    pub static Qdirectory_files: Lisp_Object;
-    pub static Qdirectory_files_and_attributes: Lisp_Object;
-
     pub static lispsym: Lisp_Symbol;
     pub static Vbuffer_alist: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;

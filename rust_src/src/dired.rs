@@ -11,11 +11,12 @@ use std::os::unix::fs::MetadataExt;
 
 use libc;
 
+use remacs_macros::lisp_fn;
 use remacs_sys::{Fexpand_file_name, Qfile_missing, Qnil, compile_pattern, re_search,
                  re_pattern_buffer, filemode_string, Ffind_file_name_handler, Qfile_attributes,
                  Qdirectory_files, Qdirectory_files_and_attributes, decode_file_name};
 
-use remacs_macros::lisp_fn;
+use lisp::defsubr;
 use lisp::LispObject;
 use lists::{list, car};
 use symbols::symbol_name;
@@ -77,7 +78,7 @@ fn get_entries(
         let fname_string_enc = entry.file_name().into_string().unwrap();
         let fname_lo_enc = LispObject::from_str(&fname_string_enc);
         let fname_lo_raw = unsafe { decode_file_name(fname_lo_enc.to_raw()) };
-        let fname_string = LispObject::from_raw(fname_lo_raw).to_string();
+        let fname_string = LispObject::from(fname_lo_raw).to_string();
         let fname_string2 = fname_string.clone();
         let abpath_str = dirS1.clone() + &slash + &fname_string;
         let abpath = LispObject::from_str(&abpath_str);
@@ -194,7 +195,7 @@ pub extern "C" fn directory_files_internal(
 ///  Otherwise, the list returned is sorted with `string-lessp'.
 ///  NOSORT is useful if you plan to sort the result yourself.
 #[lisp_fn(min = "1")]
-fn directory_files(
+pub fn directory_files(
     directory: LispObject,
     full: LispObject,
     match_re: LispObject,
@@ -202,14 +203,14 @@ fn directory_files(
 ) -> LispObject {
 
     let dnexp_raw = unsafe { Fexpand_file_name(directory.to_raw(), Qnil) };
-    let dnexp = LispObject::from_raw(dnexp_raw);
+    let dnexp = LispObject::from(dnexp_raw);
 
     let handler_raw = unsafe { Ffind_file_name_handler(dnexp.to_raw(), Qdirectory_files) };
-    let handler = LispObject::from_raw(handler_raw);
+    let handler = LispObject::from(handler_raw);
     if handler.is_not_nil() {
         return call!(
             handler,
-            LispObject::from_raw(unsafe { Qdirectory_files }),
+            LispObject::from(Qdirectory_files),
             dnexp,
             full,
             match_re,
@@ -239,7 +240,7 @@ fn directory_files(
 /// On MS-Windows, performance depends on `w32-get-true-file-attributes',
 /// which see.
 #[lisp_fn(min = "1")]
-fn directory_files_and_attributes(
+pub fn directory_files_and_attributes(
     directory: LispObject,
     full: LispObject,
     match_re: LispObject,
@@ -248,15 +249,15 @@ fn directory_files_and_attributes(
 ) -> LispObject {
 
     let dnexp_raw = unsafe { Fexpand_file_name(directory.to_raw(), Qnil) };
-    let dnexp = LispObject::from_raw(dnexp_raw);
+    let dnexp = LispObject::from(dnexp_raw);
 
     let handler_raw =
         unsafe { Ffind_file_name_handler(dnexp.to_raw(), Qdirectory_files_and_attributes) };
-    let handler = LispObject::from_raw(handler_raw);
+    let handler = LispObject::from(handler_raw);
     if handler.is_not_nil() {
         return call!(
             handler,
-            LispObject::from_raw(unsafe { Qdirectory_files_and_attributes }),
+            LispObject::from(Qdirectory_files_and_attributes),
             dnexp,
             full,
             match_re,
@@ -358,7 +359,7 @@ fn file_attributes_internal(abpath: LispObject, id_format: LispObject) -> LispOb
 
     // file modes string of 1- letters aka ls -l
     let modestr_raw = unsafe { filemode_string(abpath.to_raw()) };
-    attrs.push(LispObject::from_raw(modestr_raw));
+    attrs.push(LispObject::from(modestr_raw));
 
     // an unspecified value, present only for backward compatibility.
     attrs.push(LispObject::constant_t());
@@ -420,24 +421,24 @@ fn file_attributes_internal(abpath: LispObject, id_format: LispObject) -> LispOb
 /// On some FAT-based filesystems, only the date of last access is recorded,
 /// so last access time will always be midnight of that day.
 #[lisp_fn(min = "1")]
-fn file_attributes(filename: LispObject, id_format: LispObject) -> LispObject {
+pub fn file_attributes(filename: LispObject, id_format: LispObject) -> LispObject {
     let fnexp_raw = unsafe { Fexpand_file_name(filename.to_raw(), Qnil) };
-    let fnexp = LispObject::from_raw(fnexp_raw);
+    let fnexp = LispObject::from(fnexp_raw);
 
     let handler_raw = unsafe { Ffind_file_name_handler(fnexp_raw, Qfile_attributes) };
-    let handler = LispObject::from_raw(handler_raw);
+    let handler = LispObject::from(handler_raw);
     if handler.is_not_nil() {
         if id_format.is_not_nil() {
             return call!(
                 handler,
-                LispObject::from_raw(unsafe { Qfile_attributes }),
+                LispObject::from(Qfile_attributes),
                 fnexp,
                 id_format
             );
         } else {
             return call!(
                 handler,
-                LispObject::from_raw(unsafe { Qfile_attributes }),
+                LispObject::from(Qfile_attributes),
                 fnexp
             );
         }
@@ -449,7 +450,7 @@ fn file_attributes(filename: LispObject, id_format: LispObject) -> LispObject {
 /// Return t if first arg file attributes list is less than second.
 /// Comparison is in lexicographic order and case is significant.  */)
 #[lisp_fn]
-fn file_attributes_lessp(f1: LispObject, f2: LispObject) -> LispObject {
+pub fn file_attributes_lessp(f1: LispObject, f2: LispObject) -> LispObject {
     LispObject::from_bool(car(f1).to_string() < car(f2).to_string())
 }
 
@@ -457,7 +458,7 @@ fn file_attributes_lessp(f1: LispObject, f2: LispObject) -> LispObject {
 /// If we don't know how to determine that on this platform, just
 /// return a list with one element, taken from `user-real-login-name'.  */)
 #[lisp_fn]
-fn system_users() -> LispObject {
+pub fn system_users() -> LispObject {
     let mut done = false;
     let mut unames = Vec::new();
 
@@ -510,3 +511,5 @@ fn c_regex_matchp(recomp: *mut re_pattern_buffer, s: &str) -> bool {
 // Then test new rust code:
 //   (directory-files "/tmp" nil "foo<f9> <right>")
 // and eyeball the result as it should match the file you created.
+
+include!(concat!(env!("OUT_DIR"), "/dired_exports.rs"));
