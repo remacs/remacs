@@ -694,7 +694,7 @@ its argument list allows full Common Lisp conventions."
 (defmacro cl-destructuring-bind (args expr &rest body)
   "Bind the variables in ARGS to the result of EXPR and execute BODY."
   (declare (indent 2)
-           (debug (&define cl-macro-list def-form cl-declarations def-body)))
+           (debug (&define cl-macro-list1 def-form cl-declarations def-body)))
   (let* ((cl--bind-lets nil) (cl--bind-forms nil)
 	 (cl--bind-defs nil) (cl--bind-block 'cl-none) (cl--bind-enquote nil))
     (cl--do-arglist (or args '(&aux)) expr)

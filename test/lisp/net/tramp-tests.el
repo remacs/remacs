@@ -3627,11 +3627,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (skip-unless (tramp--test-enabled))
   ;; We test it only for the mock-up connection; otherwise there might
   ;; be problems with the used ports.
-  (skip-unless
-   (and
-    (eq tramp-syntax 'default)
-    (string-equal
-     "mock" (file-remote-p tramp-test-temporary-file-directory 'method))))
+  (skip-unless (and (eq tramp-syntax 'default)
+                    (tramp--test-mock-p)))
 
   ;; We force a reconnect, in order to have a clean environment.
   (dolist (dir `(,tramp-test-temporary-file-directory
@@ -4040,6 +4037,12 @@ Several special characters do not work properly there."
   (with-parsed-tramp-file-name
       (file-truename tramp-test-temporary-file-directory) nil
     (string-match "^HP-UX" (tramp-get-connection-property v "uname" ""))))
+
+(defun tramp--test-mock-p ()
+  "Check, whether the mock method is used.
+This does not support external Emacs calls."
+  (string-equal
+   "mock" (file-remote-p tramp-test-temporary-file-directory 'method)))
 
 (defun tramp--test-rsync-p ()
   "Check, whether the rsync method is used.
@@ -4496,8 +4499,7 @@ process sentinels.  They shall not disturb each other."
            ;; We must distinguish due to performance reasons.
            (timer-operation
             (cond
-             ((string-equal "mock" (file-remote-p tmp-name 'method))
-              'vc-registered)
+             ((tramp--test-mock-p) 'vc-registered)
              (t 'file-attributes)))
            timer buffers kill-buffer-query-functions)
 
@@ -4615,7 +4617,27 @@ process sentinels.  They shall not disturb each other."
         (ignore-errors (cancel-timer timer))
         (ignore-errors (delete-directory tmp-name 'recursive)))))))
 
-(ert-deftest tramp-test42-recursive-load ()
+(ert-deftest tramp-test42-auto-load ()
+  "Check that Tramp autoloads properly."
+  (skip-unless (tramp--test-enabled))
+  (skip-unless (not (tramp--test-mock-p)))
+
+  (let ((default-directory (expand-file-name temporary-file-directory)))
+    (let ((code
+	   (format
+	    "(message \"Tramp loaded: %%s\" (consp (file-attributes \"%s\")))"
+	    tramp-test-temporary-file-directory)))
+      (should
+       (string-match
+        "Tramp loaded: t[\n\r]+"
+	(shell-command-to-string
+	 (format
+	  "%s -batch -Q -L %s --eval %s"
+	  (expand-file-name invocation-name invocation-directory)
+	  (mapconcat 'shell-quote-argument load-path " -L ")
+	  (shell-quote-argument code))))))))
+
+(ert-deftest tramp-test43-recursive-load ()
   "Check that Tramp does not fail due to recursive load."
   (skip-unless (tramp--test-enabled))
 
@@ -4638,7 +4660,7 @@ process sentinels.  They shall not disturb each other."
 	  (mapconcat 'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument code))))))))
 
-(ert-deftest tramp-test43-remote-load-path ()
+(ert-deftest tramp-test44-remote-load-path ()
   "Check that Tramp autoloads its packages with remote `load-path'."
   ;; `tramp-cleanup-all-connections' is autoloaded from tramp-cmds.el.
   ;; It shall still work, when a remote file name is in the
@@ -4661,7 +4683,7 @@ process sentinels.  They shall not disturb each other."
 	(mapconcat 'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
-(ert-deftest tramp-test44-delay-load ()
+(ert-deftest tramp-test45-delay-load ()
   "Check that Tramp is loaded lazily, only when needed."
   ;; Tramp is neither loaded at Emacs startup, nor when completing a
   ;; non-Tramp file name like "/foo".  Completing a Tramp-alike file
@@ -4688,7 +4710,7 @@ process sentinels.  They shall not disturb each other."
 	  (mapconcat 'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument (format code tm)))))))))
 
-(ert-deftest tramp-test45-unload ()
+(ert-deftest tramp-test46-unload ()
   "Check that Tramp and its subpackages unload completely.
 Since it unloads Tramp, it shall be the last test to run."
   :tags '(:expensive-test)
