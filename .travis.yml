@@ -49,8 +49,8 @@ jobs:
         # Travis docs say to avoid brew update, but this works around the
         # incorrect Ruby version.
         # https://github.com/travis-ci/travis-ci/issues/8552
+        # GNUTLS is now included, no need to explicitly install it.
         - brew update
-        - brew install gnutls
         - brew install texinfo
     - &NO_WINDOW_SYSTEM_TEST
       stage: test
@@ -71,11 +71,6 @@ jobs:
       before_script:
         - travis_wait rustup install $(cat rust_src/rust-toolchain)
         - rustup default $(cat rust_src/rust-toolchain)
-        # Travis docs say to avoid brew update, but it works around the
-        # incorrect Ruby version.
-        - brew update
-        - brew install gnutls
-        - brew install texinfo
 
 notifications:
   fast_finish: true
