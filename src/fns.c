@@ -2130,7 +2130,7 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 
 #define MIME_LINE_LENGTH 76
 
-ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool);
+ptrdiff_t base64_encode_1 (const char *, ptrdiff_t, char *, ptrdiff_t, bool, bool);
 ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
 				  ptrdiff_t *);
 
@@ -2162,8 +2162,9 @@ into shorter lines.  */)
   allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
   encoded = SAFE_ALLOCA (allength);
-  encoded_length = base64_encode_1 ((char *) BYTE_POS_ADDR (ibeg),
-				    encoded, length, NILP (no_line_break),
+  encoded_length = base64_encode_1 ((char *) BYTE_POS_ADDR (ibeg), length,
+                                    encoded, allength,
+                                    NILP (no_line_break),
 				    !NILP (BVAR (current_buffer, enable_multibyte_characters)));
   if (encoded_length > allength)
     emacs_abort ();
