@@ -373,34 +373,6 @@ return the selected window of that frame.  */)
   return window;
 }
 
-DEFUN ("set-frame-selected-window", Fset_frame_selected_window,
-       Sset_frame_selected_window, 2, 3, 0,
-       doc: /* Set selected window of FRAME to WINDOW.
-FRAME must be a live frame and defaults to the selected one.  If FRAME
-is the selected frame, this makes WINDOW the selected window.  Optional
-argument NORECORD non-nil means to neither change the order of recently
-selected windows nor the buffer list.  WINDOW must denote a live window.
-Return WINDOW.  */)
-  (Lisp_Object frame, Lisp_Object window, Lisp_Object norecord)
-{
-  if (NILP (frame))
-    frame = selected_frame;
-
-  CHECK_LIVE_FRAME (frame);
-  CHECK_LIVE_WINDOW (window);
-
-  if (! EQ (frame, WINDOW_FRAME (XWINDOW (window))))
-    error ("In `set-frame-selected-window', WINDOW is not on FRAME");
-
-  if (EQ (frame, selected_frame))
-    return Fselect_window (window, norecord);
-  else
-    {
-      fset_selected_window (XFRAME (frame), window);
-      return window;
-    }
-}
-
 EMACS_INT window_select_count;
 
 /* If select_window is called with inhibit_point_swap true it will
@@ -7433,7 +7405,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
 
   defsubr (&Sframe_first_window);
   defsubr (&Sframe_selected_window);
-  defsubr (&Sset_frame_selected_window);
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
   defsubr (&Swindow_top_child);
