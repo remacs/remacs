@@ -932,7 +932,8 @@ impl LispObject {
 
     #[inline]
     pub fn as_string_or_error(self) -> LispStringRef {
-        self.as_string().unwrap_or_else(|| wrong_type!(Qstringp, self))
+        self.as_string()
+            .unwrap_or_else(|| wrong_type!(Qstringp, self))
     }
 
     #[inline]
