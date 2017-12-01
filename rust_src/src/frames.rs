@@ -1,11 +1,11 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{fget_column_width, fget_internal_border_width, fget_line_height,
+use remacs_sys::{selected_frame as current_frame, BoolBF, Lisp_Frame};
+use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_line_height,
                  fget_minibuffer_window, fget_output_method, fget_root_window, fget_terminal,
-                 frame_dimension, Fselect_window};
-use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
-use remacs_sys::{Qframe_live_p, Qns, Qpc, Qt, Qw32, Qx};
+                 fget_visible, frame_dimension, Fselect_window};
+use remacs_sys::{Qframe_live_p, Qicon, Qns, Qpc, Qt, Qw32, Qx};
 
 use libc::c_int;
 use lisp::{ExternalPtr, LispObject};
@@ -62,6 +62,16 @@ impl LispFrameRef {
     #[inline]
     pub fn set_selected_window(&mut self, window: LispObject) {
         self.selected_window = window.to_raw();
+    }
+
+    #[inline]
+    pub fn is_visible(self) -> bool {
+        unsafe { fget_visible(self.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn is_iconified(self) -> bool {
+        unsafe { LispObject::from_bool(fget_iconified(self.as_ptr()) as BoolBF).is_not_nil() }
     }
 }
 
@@ -211,4 +221,25 @@ pub fn window_system(frame: Option<LispFrameRef>) -> LispObject {
         framep(f)
     }
 }
+
+/// Return t if FRAME is \"visible\" (actually in use for display).
+/// Return the symbol `icon' if FRAME is iconified or \"minimized\".
+/// Return nil if FRAME was made invisible, via `make-frame-invisible'.
+/// On graphical displays, invisible frames are not updated and are
+/// usually not displayed at all, even in a window system's \"taskbar\".
+///
+/// If FRAME is a text terminal frame, this always returns t.
+/// Such frames are always considered visible, whether or not they are
+/// currently being displayed on the terminal.
+#[lisp_fn]
+pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
+    if frame.is_visible() {
+        LispObject::constant_t()
+    } else if frame.is_iconified() {
+        LispObject::from_raw(Qicon)
+    } else {
+        LispObject::constant_nil()
+    }
+}
+
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

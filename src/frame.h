@@ -711,6 +711,10 @@ Lisp_Object
 fget_root_window(const struct frame *f);
 struct terminal *
 fget_terminal(const struct frame *f);
+bool
+fget_visible(const struct frame *f);
+bool_bf
+fget_iconified(const struct frame *f);
 
 INLINE double
 NUMVAL (Lisp_Object x)

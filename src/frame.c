@@ -2457,28 +2457,6 @@ for how to proceed.  */)
   return Qnil;
 }
 
-DEFUN ("frame-visible-p", Fframe_visible_p, Sframe_visible_p,
-       1, 1, 0,
-       doc: /* Return t if FRAME is \"visible\" (actually in use for display).
-Return the symbol `icon' if FRAME is iconified or \"minimized\".
-Return nil if FRAME was made invisible, via `make-frame-invisible'.
-On graphical displays, invisible frames are not updated and are
-usually not displayed at all, even in a window system's \"taskbar\".
-
-If FRAME is a text terminal frame, this always returns t.
-Such frames are always considered visible, whether or not they are
-currently being displayed on the terminal.  */)
-  (Lisp_Object frame)
-{
-  CHECK_LIVE_FRAME (frame);
-
-  if (FRAME_VISIBLE_P (XFRAME (frame)))
-    return Qt;
-  if (FRAME_ICONIFIED_P (XFRAME (frame)))
-    return Qicon;
-  return Qnil;
-}
-
 DEFUN ("visible-frame-list", Fvisible_frame_list, Svisible_frame_list,
        0, 0, 0,
        doc: /* Return a list of all frames now \"visible\" (being updated).  */)
@@ -5454,6 +5432,18 @@ fget_output_method(const struct frame *f)
   return f->output_method;
 }
 
+bool
+fget_visible(const struct frame *f)
+{
+  return f->visible;
+}
+
+bool_bf
+fget_iconified(const struct frame *f)
+{
+  return f->iconified;
+}
+
 
 /***********************************************************************
 				Initialization
@@ -5970,7 +5960,6 @@ iconify the top level frame instead.  */);
   defsubr (&Smake_frame_visible);
   defsubr (&Smake_frame_invisible);
   defsubr (&Siconify_frame);
-  defsubr (&Sframe_visible_p);
   defsubr (&Svisible_frame_list);
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);

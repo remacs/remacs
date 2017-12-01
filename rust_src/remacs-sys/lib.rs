@@ -988,6 +988,8 @@ extern "C" {
     pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
     pub fn fget_output_method(f: *const Lisp_Frame) -> c_int;
+    pub fn fget_visible(f: *const Lisp_Frame) -> bool;
+    pub fn fget_iconified(f: *const Lisp_Frame) -> BoolBF;
 }
 
 extern "C" {
