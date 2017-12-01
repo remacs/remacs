@@ -3858,7 +3858,7 @@ Key bindings:
 \(fn)" t nil)
 
 (autoload 'c-or-c++-mode "cc-mode" "\
-Analyse buffer and enable either C or C++ mode.
+Analyze buffer and enable either C or C++ mode.
 
 Some people and projects use .h extension for C++ header files
 which is also the one used for C header files.  This makes
@@ -9150,11 +9150,15 @@ Toggle edebugging of all forms.
 
 (autoload 'ediff-files "ediff" "\
 Run Ediff on a pair of files, FILE-A and FILE-B.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.
 
 \(fn FILE-A FILE-B &optional STARTUP-HOOKS)" t nil)
 
 (autoload 'ediff-files3 "ediff" "\
 Run Ediff on three files, FILE-A, FILE-B, and FILE-C.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.
 
 \(fn FILE-A FILE-B FILE-C &optional STARTUP-HOOKS)" t nil)
 
@@ -9178,6 +9182,13 @@ If this file is a backup, `ediff' it with its original.
 
 (autoload 'ediff-buffers "ediff" "\
 Run Ediff on a pair of buffers, BUFFER-A and BUFFER-B.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.  JOB-NAME is a
+symbol describing the Ediff job type; it defaults to
+`ediff-buffers', but can also be one of
+`ediff-merge-files-with-ancestor', `ediff-last-dir-ancestor',
+`ediff-last-dir-C', `ediff-buffers3', `ediff-merge-buffers', or
+`ediff-merge-buffers-with-ancestor'.
 
 \(fn BUFFER-A BUFFER-B &optional STARTUP-HOOKS JOB-NAME)" t nil)
 
@@ -9185,6 +9196,13 @@ Run Ediff on a pair of buffers, BUFFER-A and BUFFER-B.
 
 (autoload 'ediff-buffers3 "ediff" "\
 Run Ediff on three buffers, BUFFER-A, BUFFER-B, and BUFFER-C.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.  JOB-NAME is a
+symbol describing the Ediff job type; it defaults to
+`ediff-buffers3', but can also be one of
+`ediff-merge-files-with-ancestor', `ediff-last-dir-ancestor',
+`ediff-last-dir-C', `ediff-buffers', `ediff-merge-buffers', or
+`ediff-merge-buffers-with-ancestor'.
 
 \(fn BUFFER-A BUFFER-B BUFFER-C &optional STARTUP-HOOKS JOB-NAME)" t nil)
 
@@ -9221,6 +9239,7 @@ regular expression; only file names that match the regexp are considered.
 Run Ediff on a pair of directories, DIR1 and DIR2, merging files that have
 the same name in both.  The third argument, REGEXP, is nil or a regular
 expression; only file names that match the regexp are considered.
+MERGE-AUTOSTORE-DIR is the directory in which to store merged files.
 
 \(fn DIR1 DIR2 REGEXP &optional MERGE-AUTOSTORE-DIR)" t nil)
 
@@ -9232,6 +9251,7 @@ Ediff merges files that have identical names in DIR1, DIR2.  If a pair of files
 in DIR1 and DIR2 doesn't have an ancestor in ANCESTOR-DIR, Ediff will merge
 without ancestor.  The fourth argument, REGEXP, is nil or a regular expression;
 only file names that match the regexp are considered.
+MERGE-AUTOSTORE-DIR is the directory in which to store merged files.
 
 \(fn DIR1 DIR2 ANCESTOR-DIR REGEXP &optional MERGE-AUTOSTORE-DIR)" t nil)
 
@@ -9239,6 +9259,7 @@ only file names that match the regexp are considered.
 Run Ediff on a directory, DIR1, merging its files with their revisions.
 The second argument, REGEXP, is a regular expression that filters the file
 names.  Only the files that are under revision control are taken into account.
+MERGE-AUTOSTORE-DIR is the directory in which to store merged files.
 
 \(fn DIR1 REGEXP &optional MERGE-AUTOSTORE-DIR)" t nil)
 
@@ -9248,6 +9269,7 @@ names.  Only the files that are under revision control are taken into account.
 Run Ediff on a directory, DIR1, merging its files with their revisions and ancestors.
 The second argument, REGEXP, is a regular expression that filters the file
 names.  Only the files that are under revision control are taken into account.
+MERGE-AUTOSTORE-DIR is the directory in which to store merged files.
 
 \(fn DIR1 REGEXP &optional MERGE-AUTOSTORE-DIR)" t nil)
 
@@ -9261,6 +9283,8 @@ With prefix argument, DUMB-MODE, or on a non-windowing display, works as
 follows:
 If WIND-A is nil, use selected window.
 If WIND-B is nil, use window next to WIND-A.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.
 
 \(fn DUMB-MODE &optional WIND-A WIND-B STARTUP-HOOKS)" t nil)
 
@@ -9270,23 +9294,31 @@ With prefix argument, DUMB-MODE, or on a non-windowing display, works as
 follows:
 If WIND-A is nil, use selected window.
 If WIND-B is nil, use window next to WIND-A.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.
 
 \(fn DUMB-MODE &optional WIND-A WIND-B STARTUP-HOOKS)" t nil)
 
 (autoload 'ediff-regions-wordwise "ediff" "\
 Run Ediff on a pair of regions in specified buffers.
+BUFFER-A and BUFFER-B are the buffers to be compared.
 Regions (i.e., point and mark) can be set in advance or marked interactively.
 This function is effective only for relatively small regions, up to 200
 lines.  For large regions, use `ediff-regions-linewise'.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.
 
 \(fn BUFFER-A BUFFER-B &optional STARTUP-HOOKS)" t nil)
 
 (autoload 'ediff-regions-linewise "ediff" "\
 Run Ediff on a pair of regions in specified buffers.
+BUFFER-A and BUFFER-B are the buffers to be compared.
 Regions (i.e., point and mark) can be set in advance or marked interactively.
 Each region is enlarged to contain full lines.
 This function is effective for large regions, over 100-200
 lines.  For small regions, use `ediff-regions-wordwise'.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.
 
 \(fn BUFFER-A BUFFER-B &optional STARTUP-HOOKS)" t nil)
 
@@ -9294,11 +9326,20 @@ lines.  For small regions, use `ediff-regions-wordwise'.
 
 (autoload 'ediff-merge-files "ediff" "\
 Merge two files without ancestor.
+FILE-A and FILE-B are the names of the files to be merged.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.  MERGE-BUFFER-FILE
+is the name of the file to be associated with the merge buffer..
 
 \(fn FILE-A FILE-B &optional STARTUP-HOOKS MERGE-BUFFER-FILE)" t nil)
 
 (autoload 'ediff-merge-files-with-ancestor "ediff" "\
 Merge two files with ancestor.
+FILE-A and FILE-B are the names of the files to be merged, and
+FILE-ANCESTOR is the name of the ancestor file.  STARTUP-HOOKS is
+a list of functions that Emacs calls without arguments after
+setting up the Ediff buffers.  MERGE-BUFFER-FILE is the name of
+the file to be associated with the merge buffer.
 
 \(fn FILE-A FILE-B FILE-ANCESTOR &optional STARTUP-HOOKS MERGE-BUFFER-FILE)" t nil)
 
@@ -9306,25 +9347,49 @@ Merge two files with ancestor.
 
 (autoload 'ediff-merge-buffers "ediff" "\
 Merge buffers without ancestor.
+BUFFER-A and BUFFER-B are the buffers to be merged.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.  JOB-NAME is a
+symbol describing the Ediff job type; it defaults to
+`ediff-merge-buffers', but can also be one of
+`ediff-merge-files-with-ancestor', `ediff-last-dir-ancestor',
+`ediff-last-dir-C', `ediff-buffers', `ediff-buffers3', or
+`ediff-merge-buffers-with-ancestor'.  MERGE-BUFFER-FILE is the
+name of the file to be associated with the merge buffer.
 
 \(fn BUFFER-A BUFFER-B &optional STARTUP-HOOKS JOB-NAME MERGE-BUFFER-FILE)" t nil)
 
 (autoload 'ediff-merge-buffers-with-ancestor "ediff" "\
 Merge buffers with ancestor.
+BUFFER-A and BUFFER-B are the buffers to be merged, and
+BUFFER-ANCESTOR is their ancestor.  STARTUP-HOOKS is a list of
+functions that Emacs calls without arguments after setting up the
+Ediff buffers.  JOB-NAME is a symbol describing the Ediff job
+type; it defaults to `ediff-merge-buffers-with-ancestor', but can
+also be one of `ediff-merge-files-with-ancestor',
+`ediff-last-dir-ancestor', `ediff-last-dir-C', `ediff-buffers',
+`ediff-buffers3', or `ediff-merge-buffers'.  MERGE-BUFFER-FILE is
+the name of the file to be associated with the merge buffer.
 
 \(fn BUFFER-A BUFFER-B BUFFER-ANCESTOR &optional STARTUP-HOOKS JOB-NAME MERGE-BUFFER-FILE)" t nil)
 
 (autoload 'ediff-merge-revisions "ediff" "\
 Run Ediff by merging two revisions of a file.
-The file is the optional FILE argument or the file visited by the current
-buffer.
+The file is the optional FILE argument or the file visited by the
+current buffer.  STARTUP-HOOKS is a list of functions that Emacs
+calls without arguments after setting up the Ediff buffers.
+MERGE-BUFFER-FILE is the name of the file to be associated with
+the merge buffer.
 
 \(fn &optional FILE STARTUP-HOOKS MERGE-BUFFER-FILE)" t nil)
 
 (autoload 'ediff-merge-revisions-with-ancestor "ediff" "\
 Run Ediff by merging two revisions of a file with a common ancestor.
-The file is the optional FILE argument or the file visited by the current
-buffer.
+The file is the optional FILE argument or the file visited by the
+current buffer.  STARTUP-HOOKS is a list of functions that Emacs
+calls without arguments after setting up the Ediff buffers.
+MERGE-BUFFER-FILE is the name of the file to be associated with
+the merge buffer.
 
 \(fn &optional FILE STARTUP-HOOKS MERGE-BUFFER-FILE)" t nil)
 
@@ -9332,8 +9397,8 @@ buffer.
 Query for a file name, and then run Ediff by patching that file.
 If optional PATCH-BUF is given, use the patch in that buffer
 and don't ask the user.
-If prefix argument, then: if even argument, assume that the patch is in a
-buffer. If odd -- assume it is in a file.
+If prefix argument ARG, then: if even argument, assume that the
+patch is in a buffer.  If odd -- assume it is in a file.
 
 \(fn &optional ARG PATCH-BUF)" t nil)
 
@@ -9344,7 +9409,7 @@ prompts for the buffer or a file, depending on the answer.
 With ARG=1, assumes the patch is in a file and prompts for the file.
 With ARG=2, assumes the patch is in a buffer and prompts for the buffer.
 PATCH-BUF is an optional argument, which specifies the buffer that contains the
-patch. If not given, the user is prompted according to the prefix argument.
+patch.  If not given, the user is prompted according to the prefix argument.
 
 \(fn &optional ARG PATCH-BUF)" t nil)
 
@@ -9357,6 +9422,8 @@ Run Ediff by comparing versions of a file.
 The file is an optional FILE argument or the file entered at the prompt.
 Default: the file visited by the current buffer.
 Uses `vc.el' or `rcs.el' depending on `ediff-version-control-package'.
+STARTUP-HOOKS is a list of functions that Emacs calls without
+arguments after setting up the Ediff buffers.
 
 \(fn &optional FILE STARTUP-HOOKS)" t nil)
 
@@ -9375,42 +9442,42 @@ With optional NODE, goes to that node.
 \(fn &optional NODE)" t nil)
 
 (autoload 'ediff-files-command "ediff" "\
-
+Call `ediff-files' with the next two command line arguments.
 
 \(fn)" nil nil)
 
 (autoload 'ediff3-files-command "ediff" "\
-
+Call `ediff3-files' with the next three command line arguments.
 
 \(fn)" nil nil)
 
 (autoload 'ediff-merge-command "ediff" "\
-
+Call `ediff-merge-files' with the next two command line arguments.
 
 \(fn)" nil nil)
 
 (autoload 'ediff-merge-with-ancestor-command "ediff" "\
-
+Call `ediff-merge-files-with-ancestor' with the next three command line arguments.
 
 \(fn)" nil nil)
 
 (autoload 'ediff-directories-command "ediff" "\
-
+Call `ediff-directories' with the next three command line arguments.
 
 \(fn)" nil nil)
 
 (autoload 'ediff-directories3-command "ediff" "\
-
+Call `ediff-directories3' with the next four command line arguments.
 
 \(fn)" nil nil)
 
 (autoload 'ediff-merge-directories-command "ediff" "\
-
+Call `ediff-merge-directories' with the next three command line arguments.
 
 \(fn)" nil nil)
 
 (autoload 'ediff-merge-directories-with-ancestor-command "ediff" "\
-
+Call `ediff-merge-directories-with-ancestor' with the next four command line arguments.
 
 \(fn)" nil nil)
 
@@ -10548,7 +10615,7 @@ Otherwise, connect to HOST:PORT as USER and /join CHANNEL.
 ;;; Generated autoloads from erc/erc-autoaway.el
  (autoload 'erc-autoaway-mode "erc-autoaway")
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-autoaway" '("erc-auto" "autoaway")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-autoaway" '("erc-auto")))
 
 ;;;***
 
@@ -10563,7 +10630,7 @@ Otherwise, connect to HOST:PORT as USER and /join CHANNEL.
 ;;; Generated autoloads from erc/erc-button.el
  (autoload 'erc-button-mode "erc-button" nil t)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-button" '("erc-" "button")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-button" '("erc-")))
 
 ;;;***
 
@@ -10571,7 +10638,7 @@ Otherwise, connect to HOST:PORT as USER and /join CHANNEL.
 ;;; Generated autoloads from erc/erc-capab.el
  (autoload 'erc-capab-identify-mode "erc-capab" nil t)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-capab" '("erc-capab-identify-" "capab-identify")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-capab" '("erc-capab-identify-")))
 
 ;;;***
 
@@ -10610,7 +10677,7 @@ that subcommand.
 
 \(fn PROC NICK LOGIN HOST TO QUERY)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-dcc" '("erc-" "pcomplete/erc-mode/" "dcc")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-dcc" '("erc-" "pcomplete/erc-mode/")))
 
 ;;;***
 
@@ -10619,7 +10686,7 @@ that subcommand.
 ;;; Generated autoloads from erc/erc-desktop-notifications.el
 (autoload 'erc-notifications-mode "erc-desktop-notifications" "" t)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-desktop-notifications" '("notifications" "erc-notifications-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-desktop-notifications" '("erc-notifications-")))
 
 ;;;***
 
@@ -10705,7 +10772,7 @@ You can put this on `erc-insert-modify-hook' and/or `erc-send-modify-hook'.
 ;;;### (autoloads nil "erc-goodies" "erc/erc-goodies.el" (0 0 0 0))
 ;;; Generated autoloads from erc/erc-goodies.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-goodies" '("erc-" "unmorse" "scrolltobottom" "smiley" "irccontrols" "noncommands" "keep-place" "move-to-prompt" "readonly")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-goodies" '("erc-")))
 
 ;;;***
 
@@ -10735,7 +10802,7 @@ system.
 
 \(fn &rest IGNORE)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-identd" '("erc-identd-" "identd")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-identd" '("erc-identd-")))
 
 ;;;***
 
@@ -10755,7 +10822,7 @@ system.
 ;;; Generated autoloads from erc/erc-join.el
  (autoload 'erc-autojoin-mode "erc-join" nil t)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-join" '("erc-" "autojoin")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-join" '("erc-")))
 
 ;;;***
 
@@ -10770,7 +10837,7 @@ system.
 ;;; Generated autoloads from erc/erc-list.el
  (autoload 'erc-list-mode "erc-list")
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-list" '("erc-" "list")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-list" '("erc-")))
 
 ;;;***
 
@@ -10801,7 +10868,7 @@ You can save every individual message by putting this function on
 
 \(fn &optional BUFFER)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-log" '("erc-" "log")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-log" '("erc-")))
 
 ;;;***
 
@@ -10849,7 +10916,7 @@ Delete dangerous-host interactively to `erc-dangerous-hosts'.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-match" '("erc-" "match")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-match" '("erc-")))
 
 ;;;***
 
@@ -10857,7 +10924,7 @@ Delete dangerous-host interactively to `erc-dangerous-hosts'.
 ;;; Generated autoloads from erc/erc-menu.el
  (autoload 'erc-menu-mode "erc-menu" nil t)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-menu" '("erc-menu-" "menu")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-menu" '("erc-menu-")))
 
 ;;;***
 
@@ -10871,7 +10938,7 @@ Show who's gone.
 
 \(fn)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-netsplit" '("erc-" "netsplit")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-netsplit" '("erc-")))
 
 ;;;***
 
@@ -10891,7 +10958,7 @@ Interactively select a server to connect to using `erc-server-alist'.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-networks" '("erc-" "networks")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-networks" '("erc-")))
 
 ;;;***
 
@@ -10911,7 +10978,7 @@ with args, toggle notify status of people.
 
 \(fn)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-notify" '("erc-" "notify")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-notify" '("erc-")))
 
 ;;;***
 
@@ -10919,7 +10986,7 @@ with args, toggle notify status of people.
 ;;; Generated autoloads from erc/erc-page.el
  (autoload 'erc-page-mode "erc-page")
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-page" '("erc-" "page")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-page" '("erc-")))
 
 ;;;***
 
@@ -10936,7 +11003,7 @@ with args, toggle notify status of people.
 ;;; Generated autoloads from erc/erc-replace.el
  (autoload 'erc-replace-mode "erc-replace")
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-replace" '("replace" "erc-replace-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-replace" '("erc-replace-")))
 
 ;;;***
 
@@ -10944,7 +11011,7 @@ with args, toggle notify status of people.
 ;;; Generated autoloads from erc/erc-ring.el
  (autoload 'erc-ring-mode "erc-ring" nil t)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-ring" '("erc-" "ring")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-ring" '("erc-")))
 
 ;;;***
 
@@ -10964,7 +11031,7 @@ When called interactively, read the password using `read-passwd'.
 
 \(fn PASSWORD)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-services" '("erc-" "services")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-services" '("erc-")))
 
 ;;;***
 
@@ -10972,7 +11039,7 @@ When called interactively, read the password using `read-passwd'.
 ;;; Generated autoloads from erc/erc-sound.el
  (autoload 'erc-sound-mode "erc-sound")
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-sound" '("erc-" "sound")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-sound" '("erc-")))
 
 ;;;***
 
@@ -10995,7 +11062,7 @@ This will add a speedbar major display mode.
 ;;; Generated autoloads from erc/erc-spelling.el
  (autoload 'erc-spelling-mode "erc-spelling" nil t)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-spelling" '("erc-spelling-" "spelling")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-spelling" '("erc-spelling-")))
 
 ;;;***
 
@@ -11003,7 +11070,7 @@ This will add a speedbar major display mode.
 ;;; Generated autoloads from erc/erc-stamp.el
  (autoload 'erc-timestamp-mode "erc-stamp" nil t)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-stamp" '("erc-" "stamp")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-stamp" '("erc-")))
 
 ;;;***
 
@@ -11031,7 +11098,7 @@ keybindings will not do anything useful.
 \(fn &optional ARG)" t nil)
  (autoload 'erc-track-mode "erc-track" nil t)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-track" '("erc-" "track")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-track" '("erc-")))
 
 ;;;***
 
@@ -11053,7 +11120,7 @@ Meant to be used in hooks, like `erc-insert-post-hook'.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-truncate" '("truncate" "erc-max-buffer-size")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-truncate" '("erc-max-buffer-size")))
 
 ;;;***
 
@@ -11066,7 +11133,7 @@ Add a file to `erc-xdcc-files'.
 
 \(fn FILE)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-xdcc" '("erc-" "xdcc")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-xdcc" '("erc-")))
 
 ;;;***
 
@@ -12691,14 +12758,14 @@ See `find-name-arg' to customize the arguments.
 \(fn DIR PATTERN)" t nil)
 
 (autoload 'find-grep-dired "find-dired" "\
-Find files in DIR matching a regexp REGEXP and start Dired on output.
+Find files in DIR that contain matches for REGEXP and start Dired on output.
 The command run (after changing into DIR) is
 
   find . \\( -type f -exec `grep-program' `find-grep-options' \\
     -e REGEXP {} \\; \\) -ls
 
-where the car of the variable `find-ls-option' specifies what to
-use in place of \"-ls\" as the final argument.
+where the first string in the value of the variable `find-ls-option'
+specifies what to use in place of \"-ls\" as the final argument.
 
 \(fn DIR REGEXP)" t nil)
 
@@ -13590,7 +13657,7 @@ and choose the directory as the fortune-file.
 Minimum set of parameters to filter for live (on-session) framesets.
 DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
 
-(defvar frameset-persistent-filter-alist (nconc '((background-color . frameset-filter-sanitize-color) (buffer-list . :never) (buffer-predicate . :never) (buried-buffer-list . :never) (delete-before . :never) (font . frameset-filter-font-param) (foreground-color . frameset-filter-sanitize-color) (fullscreen . frameset-filter-shelve-param) (GUI:font . frameset-filter-unshelve-param) (GUI:fullscreen . frameset-filter-unshelve-param) (GUI:height . frameset-filter-unshelve-param) (GUI:width . frameset-filter-unshelve-param) (height . frameset-filter-shelve-param) (outer-window-id . :never) (parent-frame . :never) (parent-id . :never) (mouse-wheel-frame . :never) (tty . frameset-filter-tty-to-GUI) (tty-type . frameset-filter-tty-to-GUI) (width . frameset-filter-shelve-param) (window-id . :never) (window-system . :never)) frameset-session-filter-alist) "\
+(defvar frameset-persistent-filter-alist (nconc '((background-color . frameset-filter-sanitize-color) (buffer-list . :never) (buffer-predicate . :never) (buried-buffer-list . :never) (client . :never) (delete-before . :never) (font . frameset-filter-font-param) (foreground-color . frameset-filter-sanitize-color) (fullscreen . frameset-filter-shelve-param) (GUI:font . frameset-filter-unshelve-param) (GUI:fullscreen . frameset-filter-unshelve-param) (GUI:height . frameset-filter-unshelve-param) (GUI:width . frameset-filter-unshelve-param) (height . frameset-filter-shelve-param) (outer-window-id . :never) (parent-frame . :never) (parent-id . :never) (mouse-wheel-frame . :never) (tty . frameset-filter-tty-to-GUI) (tty-type . frameset-filter-tty-to-GUI) (width . frameset-filter-shelve-param) (window-id . :never) (window-system . :never)) frameset-session-filter-alist) "\
 Parameters to filter for persistent framesets.
 DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
 
@@ -15227,7 +15294,9 @@ easily repeat a find command.
 Run grep, searching for REGEXP in FILES in directory DIR.
 The search is limited to file names matching shell pattern FILES.
 FILES may use abbreviations defined in `grep-files-aliases', e.g.
-entering `ch' is equivalent to `*.[ch]'.
+entering `ch' is equivalent to `*.[ch]'.  As whitespace triggers
+completion when entering a pattern, including it requires
+quoting, e.g. `\\[quoted-insert]<space>'.
 
 With \\[universal-argument] prefix, you can edit the constructed shell command line
 before it is executed.
@@ -15245,7 +15314,9 @@ This command shares argument histories with \\[rgrep] and \\[grep].
 Recursively grep for REGEXP in FILES in directory tree rooted at DIR.
 The search is limited to file names matching shell pattern FILES.
 FILES may use abbreviations defined in `grep-files-aliases', e.g.
-entering `ch' is equivalent to `*.[ch]'.
+entering `ch' is equivalent to `*.[ch]'.  As whitespace triggers
+completion when entering a pattern, including it requires
+quoting, e.g. `\\[quoted-insert]<space>'.
 
 With \\[universal-argument] prefix, you can edit the constructed shell command line
 before it is executed.
@@ -17375,7 +17446,7 @@ For details of keybindings, see `ido-find-file'.
 \(fn)" t nil)
 
 (autoload 'ido-find-alternate-file "ido" "\
-Switch to another file and show it in another window.
+Find another file, select its buffer, kill previous buffer.
 The file name is selected interactively by typing a substring.
 For details of keybindings, see `ido-find-file'.
 
@@ -24631,7 +24702,9 @@ Display the full documentation of PACKAGE (a symbol).
 Display a list of packages.
 This first fetches the updated list of packages before
 displaying, unless a prefix argument NO-FETCH is specified.
-The list is displayed in a buffer named `*Packages*'.
+The list is displayed in a buffer named `*Packages*', and
+includes the package's version, availability status, and a
+short description.
 
 \(fn &optional NO-FETCH)" t nil)
 
@@ -25241,6 +25314,14 @@ Global menu used by PCL-CVS.")
 (put 'perl-brace-offset 'safe-local-variable 'integerp)
 (put 'perl-brace-imaginary-offset 'safe-local-variable 'integerp)
 (put 'perl-label-offset 'safe-local-variable 'integerp)
+
+(autoload 'perl-flymake "perl-mode" "\
+Perl backend for Flymake.  Launches
+`perl-flymake-command' (which see) and passes to its standard
+input the contents of the current buffer.  The output of this
+command is analyzed for error and warning messages.
+
+\(fn REPORT-FN &rest ARGS)" nil nil)
 
 (autoload 'perl-mode "perl-mode" "\
 Major mode for editing Perl code.
@@ -26190,7 +26271,11 @@ is not a part of a detectable project either, return a
 (autoload 'project-find-regexp "project" "\
 Find all matches for REGEXP in the current project's roots.
 With \\[universal-argument] prefix, you can specify the directory
-to search in, and the file name pattern to search for.
+to search in, and the file name pattern to search for.  The
+pattern may use abbreviations defined in `grep-files-aliases',
+e.g. entering `ch' is equivalent to `*.[ch]'.  As whitespace
+triggers completion when entering a pattern, including it
+requires quoting, e.g. `\\[quoted-insert]<space>'.
 
 \(fn REGEXP)" t nil)
 
@@ -34407,24 +34492,21 @@ This regexp should match Tramp file names but no other file
 names.  When calling `tramp-register-file-name-handlers', the
 initial value is overwritten by the car of `tramp-file-name-structure'.")
 
-(defconst tramp-autoload-file-name-regexp (concat "\\`/" (if (memq system-type '(cygwin windows-nt)) "\\(-\\|[^/|:]\\{2,\\}\\)" "[^/|:]+") ":\\'") "\
+(defconst tramp-autoload-file-name-regexp (concat "\\`/" (if (memq system-type '(cygwin windows-nt)) "\\(-\\|[^/|:]\\{2,\\}\\)" "[^/|:]+") ":") "\
 Regular expression matching file names handled by Tramp autoload.
 It must match the initial `tramp-syntax' settings.  It should not
 match file names at root of the underlying local file system,
 like \"/sys\" or \"/C:\".")
 
 (defun tramp-autoload-file-name-handler (operation &rest args) "\
-Load Tramp file name handler, and perform OPERATION." (let ((default-directory temporary-file-directory)) (load "tramp" (quote noerror) (quote nomessage))) (apply operation args))
+Load Tramp file name handler, and perform OPERATION." (if tramp-mode (let ((default-directory temporary-file-directory)) (load "tramp" (quote noerror) (quote nomessage))) (tramp-unload-file-name-handlers)) (apply operation args))
 
 (defun tramp-register-autoload-file-name-handlers nil "\
 Add Tramp file name handlers to `file-name-handler-alist' during autoload." (add-to-list (quote file-name-handler-alist) (cons tramp-autoload-file-name-regexp (quote tramp-autoload-file-name-handler))) (put (quote tramp-autoload-file-name-handler) (quote safe-magic) t))
+ (tramp-register-autoload-file-name-handlers)
 
-(tramp-register-autoload-file-name-handlers)
-
-(autoload 'tramp-unload-file-name-handlers "tramp" "\
-Unload Tramp file name handlers from `file-name-handler-alist'.
-
-\(fn)" nil nil)
+(defun tramp-unload-file-name-handlers nil "\
+Unload Tramp file name handlers from `file-name-handler-alist'." (dolist (fnh (quote (tramp-file-name-handler tramp-completion-file-name-handler tramp-autoload-file-name-handler))) (let ((a1 (rassq fnh file-name-handler-alist))) (setq file-name-handler-alist (delq a1 file-name-handler-alist)))))
 
 (defvar tramp-completion-mode nil "\
 If non-nil, external packages signal that they are in file name completion.")
