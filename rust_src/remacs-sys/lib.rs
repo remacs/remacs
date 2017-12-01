@@ -293,6 +293,7 @@ pub enum Lisp_Misc_Type {
     Overlay,
     SaveValue,
     Finalizer,
+    UserPtr,
 }
 
 // Supertype of all Misc types.
@@ -951,6 +952,7 @@ extern "C" {
     pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
+    pub fn fget_output_method(f: *const Lisp_Frame) -> c_int;
 }
 
 extern "C" {
@@ -1006,11 +1008,6 @@ extern "C" {
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
     pub fn Ffind_operation_coding_system(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
-    pub fn Flookup_key(
-        keymap: Lisp_Object,
-        key: Lisp_Object,
-        accept_default: Lisp_Object,
-    ) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
     pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
@@ -1214,6 +1211,22 @@ extern "C" {
         object: Lisp_Object,
     );
     pub fn STRING_BYTES(s: *const Lisp_String) -> ptrdiff_t;
+    pub fn Fevent_convert_list(event_desc: Lisp_Object) -> Lisp_Object;
+    pub fn access_keymap(
+        map: Lisp_Object,
+        idx: Lisp_Object,
+        ok: bool,
+        noinherit: bool,
+        autoload: bool,
+    ) -> Lisp_Object;
+    pub fn get_keymap(
+        object: Lisp_Object,
+        error_if_not_keymap: bool,
+        autoload: bool,
+    ) -> Lisp_Object;
+    pub fn message_with_string(m: *const c_char, string: Lisp_Object, log: bool);
+    pub fn maybe_quit();
+    pub fn Fselect_window(window: Lisp_Object, norecord: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

@@ -274,7 +274,7 @@ pub fn buffer_name(buffer: LispObject) -> LispObject {
 /// text in that buffer is changed.  It wraps around occasionally.
 /// No argument or nil as argument means use current buffer as BUFFER.
 #[lisp_fn(min = "0")]
-fn buffer_modified_tick(buffer: LispObject) -> LispObject {
+pub fn buffer_modified_tick(buffer: LispObject) -> LispObject {
     LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().modifications())
 }
 
@@ -287,20 +287,20 @@ fn buffer_modified_tick(buffer: LispObject) -> LispObject {
 /// between these calls.  No argument or nil as argument means use current
 /// buffer as BUFFER.
 #[lisp_fn(min = "0")]
-fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
+pub fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
     LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().char_modifications())
 }
 
 /// Return the position at which OVERLAY starts.
 #[lisp_fn]
-fn overlay_start(overlay: LispObject) -> LispObject {
+pub fn overlay_start(overlay: LispObject) -> LispObject {
     let marker = overlay.as_overlay_or_error().start();
     marker_position(marker)
 }
 
 /// Return the position at which OVERLAY ends.
 #[lisp_fn]
-fn overlay_end(overlay: LispObject) -> LispObject {
+pub fn overlay_end(overlay: LispObject) -> LispObject {
     let marker = overlay.as_overlay_or_error().end();
     marker_position(marker)
 }
@@ -308,7 +308,7 @@ fn overlay_end(overlay: LispObject) -> LispObject {
 /// Return the buffer OVERLAY belongs to.
 /// Return nil if OVERLAY has been deleted.
 #[lisp_fn]
-fn overlay_buffer(overlay: LispObject) -> LispObject {
+pub fn overlay_buffer(overlay: LispObject) -> LispObject {
     let marker = overlay.as_overlay_or_error().start();
     marker_buffer(marker)
 }
@@ -347,7 +347,7 @@ pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
 /// `pop-to-buffer' to switch buffers permanently.
 /// The return value is the buffer made current.
 #[lisp_fn]
-fn set_buffer(buffer_or_name: LispObject) -> LispObject {
+pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     let buffer = get_buffer(buffer_or_name);
     if buffer.is_nil() {
         unsafe { nsberror(buffer_or_name.to_raw()) }

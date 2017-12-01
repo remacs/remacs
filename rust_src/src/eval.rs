@@ -32,6 +32,16 @@ macro_rules! call {
     }}
 }
 
+macro_rules! message_with_string {
+    ($str:expr, $obj:expr, $should_log:expr) => {
+        unsafe {
+            ::remacs_sys::message_with_string($str.as_ptr() as *const ::libc::c_char,
+                                              $obj.to_raw(),
+                                              $should_log);
+        }
+    }
+}
+
 /// Macro to format an error message.
 /// Replaces error() in the C layer.
 macro_rules! error {
