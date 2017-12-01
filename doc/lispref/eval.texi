@@ -887,10 +887,10 @@ particular elements, like this:
 
 
   Sometimes it is useful to delay the evaluation of an expression, for
-example if you want to avoid to perform a time-consuming calculation
-in the case that it turns out that the result is not needed in the
-future of the program.  Therefore, the @file{thunk} library provides
-the following functions and macros:
+example if you want to avoid performing a time-consuming calculation
+if it turns out that the result is not needed in the future of the
+program.  The @file{thunk} library provides the following functions
+and macros to support such @dfn{deferred evaluation}:
 
 @cindex thunk
 @defmac thunk-delay forms@dots{}
