@@ -4653,41 +4653,25 @@ The function `find-backup-file-name' also uses this."
 	      ;; "/drive_x".
 	      (or (file-name-absolute-p file)
 		  (setq file (expand-file-name file))) ; make defaults explicit
-              (cond
-               ((file-remote-p file)
-                ;; Remove the leading slash, if any, to prevent
-                ;; expand-file-name from adding a drive letter.
-                (and (memq (aref file 0) '(?/ ?\\))
-                     (setq file (substring file 1)))
-	        ;; Replace any invalid file-name characters.
-                (setq file (convert-standard-filename file))
-                ;; Replace slashes to make the file name unique, and
-                ;; prepend backup-directory.
-                (expand-file-name
-	         (subst-char-in-string
-	          ?/ ?!
-	          (replace-regexp-in-string "!" "!!"
-                                            (concat "/" file)))
-	         backup-directory))
-               (t
-	        ;; Replace any invalid file-name characters.
-	        (setq file (expand-file-name (convert-standard-filename file)))
-	        (if (eq (aref file 1) ?:)
-		    (setq file (concat "/"
-				       "drive_"
-				       (char-to-string (downcase (aref file 0)))
-				       (if (eq (aref file 2) ?/)
-					   ""
-				         "/")
-				       (substring file 2))))
-	        ;; Make the name unique by substituting directory
-	        ;; separators.  It may not really be worth bothering about
-	        ;; doubling `!'s in the original name...
-	        (expand-file-name
-	         (subst-char-in-string
-	          ?/ ?!
-	          (replace-regexp-in-string "!" "!!" file))
-	         backup-directory)))))
+	      ;; Replace any invalid file-name characters (for the
+	      ;; case of backing up remote files).
+	      (setq file (expand-file-name (convert-standard-filename file)))
+	      (if (eq (aref file 1) ?:)
+		  (setq file (concat "/"
+				     "drive_"
+				     (char-to-string (downcase (aref file 0)))
+				     (if (eq (aref file 2) ?/)
+					 ""
+				       "/")
+				     (substring file 2)))))
+	    ;; Make the name unique by substituting directory
+	    ;; separators.  It may not really be worth bothering about
+	    ;; doubling `!'s in the original name...
+	    (expand-file-name
+	     (subst-char-in-string
+	      ?/ ?!
+	      (replace-regexp-in-string "!" "!!" file))
+	     backup-directory))
 	(expand-file-name (file-name-nondirectory file)
 			  (file-name-as-directory abs-backup-directory))))))
 
