@@ -146,8 +146,14 @@ endif
 	$(AM_V_ELC)$(emacs) -f batch-byte-compile $<
 
 ## Save logs, and show logs for failed tests.
-WRITE_LOG = $(if $(and ${EMACS_HYDRA_CI}, $(findstring tramp, $@)), |& tee $@, > $@ 2>&1) \
-		|| { STAT=$$?; cat $@; exit $$STAT; }
+WRITE_LOG = > $@ 2>&1 || { STAT=$$?; cat $@; exit $$STAT; }
+ifdef EMACS_HYDRA_CI
+## On Hydra, always show logs for certain problematic tests.
+lisp/emacs-lisp/eieio-tests/eieio-tests.log \
+lisp/net/tramp-tests.log \
+lisp/url/url-tramp-test.log \
+: WRITE_LOG = 2>&1 | tee $@
+endif
 
 ifeq ($(TEST_LOAD_EL), yes)
 testloadfile = $*.el
