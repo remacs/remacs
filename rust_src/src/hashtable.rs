@@ -479,10 +479,6 @@ pub extern "C" fn sweep_weak_hash_tables() {
     // key-weak table B, Z -> Y.  If B comes after A in the list of weak
     // tables, X -> Y might be removed from A, although when looking at B
     // one finds that it shouldn't.
-
-    // This may look odd, but this is 'abusing' a Rust while loop to make
-    // a 'do-while' loop. All the logic is done in the conditional of the while loop,
-    // and the body is just empty.
     let mut marked = true;
     while marked {
         marked = false;
@@ -510,7 +506,7 @@ pub extern "C" fn sweep_weak_hash_tables() {
             }
 
             // Add table to the list of used weak hash tables.
-            table.next_weak = used.as_mut();
+            table.set_next_weak(used);
             used = table;
         }
 
