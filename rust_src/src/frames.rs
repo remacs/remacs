@@ -52,6 +52,7 @@ impl LispFrameRef {
     }
 }
 
+/// Same as the `decode_any_frame` function
 pub fn frame_or_selected(object: LispObject) -> LispFrameRef {
     let frame = if object.is_nil() {
         selected_frame()
@@ -62,6 +63,7 @@ pub fn frame_or_selected(object: LispObject) -> LispFrameRef {
     frame.as_frame_or_error()
 }
 
+/// Same as the `decode_live_frame` function
 pub fn frame_live_or_selected(object: LispObject) -> LispFrameRef {
     let frame = frame_or_selected(object);
 

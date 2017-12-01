@@ -163,11 +163,13 @@ pub fn window_or_selected_unchecked(window: LispObject) -> LispObject {
     }
 }
 
+/// Same as the `decode_any_window` function
 #[allow(dead_code)] // FIXME: Remove as soon as it is used
 fn window_or_selected(window: LispObject) -> LispWindowRef {
     window_or_selected_unchecked(window).as_window_or_error()
 }
 
+/// Same as the `decode_live_window` function
 fn window_live_or_selected(window: LispObject) -> LispWindowRef {
     if window.is_nil() {
         selected_window().as_window_or_error()
@@ -176,6 +178,7 @@ fn window_live_or_selected(window: LispObject) -> LispWindowRef {
     }
 }
 
+/// Same as the `decode_valid_window` function
 fn window_valid_or_selected(window: LispObject) -> LispWindowRef {
     if window.is_nil() {
         selected_window().as_window_or_error()
