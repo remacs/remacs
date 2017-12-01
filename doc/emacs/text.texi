@@ -2807,9 +2807,14 @@ high, the table is 67 characters wide and 16 lines high with 2 columns
 and 3 rows, and a total of 5 cells.
 
 @findex table-insert-sequence
-  @kbd{M-x table-insert-sequence} inserts a string into each cell.
-Each string is a part of a sequence i.e., a series of increasing
-integer numbers.
+  @kbd{M-x table-insert-sequence} traverses the cells of a table
+inserting a sequence of text strings into each cell as it goes.  It
+asks for the base string of the sequence, and then produces the
+sequence by ``incrementing'' the base string, either numerically (if
+the base string ends in numerical characters) or in the
+@acronym{ASCII} order.  In addition to the base string, the command
+prompts for the number of elements in the sequence, the increment, the
+cell interval, and the justification of the text in each cell.
 
 @cindex table for HTML and LaTeX
 @findex table-generate-source
