@@ -1,10 +1,10 @@
 //! Generic frame functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{selected_frame as current_frame, BoolBF, Lisp_Frame};
-use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_line_height,
-                 fget_minibuffer_window, fget_output_method, fget_root_window, fget_terminal,
-                 fget_visible, frame_dimension, Fselect_window};
+use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame};
+use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
+                 fget_line_height, fget_minibuffer_window, fget_output_method, fget_root_window,
+                 fget_terminal, fget_top_pos, fget_visible, frame_dimension, Fcons, Fselect_window};
 use remacs_sys::{Qframe_live_p, Qicon, Qns, Qpc, Qt, Qw32, Qx};
 
 use libc::c_int;
@@ -47,6 +47,16 @@ impl LispFrameRef {
     #[inline]
     pub fn line_height(self) -> i32 {
         unsafe { fget_line_height(self.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn top_pos(self) -> i32 {
+        unsafe { fget_top_pos(self.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn left_pos(self) -> i32 {
+        unsafe { fget_left_pos(self.as_ptr()) }
     }
 
     #[inline]
@@ -239,6 +249,22 @@ pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
         LispObject::from_raw(Qicon)
     } else {
         LispObject::constant_nil()
+    }
+}
+
+/// Return top left corner of FRAME in pixels.
+/// FRAME must be a live frame and defaults to the selected one.  The return
+/// value is a cons (x, y) of the coordinates of the top left corner of
+/// FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
+/// display.
+#[lisp_fn(min = "0")]
+pub fn frame_position(frame: LispObject) -> LispObject {
+    let frame_ref = frame_live_or_selected(frame);
+    unsafe {
+        LispObject::from_raw(Fcons(
+            LispObject::from_fixnum(frame_ref.left_pos() as EmacsInt).to_raw(),
+            LispObject::from_fixnum(frame_ref.top_pos() as EmacsInt).to_raw(),
+        ))
     }
 }
 

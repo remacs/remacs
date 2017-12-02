@@ -715,6 +715,10 @@ bool
 fget_visible(const struct frame *f);
 bool_bf
 fget_iconified(const struct frame *f);
+int
+fget_top_pos(const struct frame *f);
+int
+fget_left_pos(const struct frame *f);
 
 INLINE double
 NUMVAL (Lisp_Object x)

@@ -3297,20 +3297,6 @@ font height.  */)
   return Qnil;
 }
 
-DEFUN ("frame-position", Fframe_position,
-       Sframe_position, 0, 1, 0,
-       doc: /* Return top left corner of FRAME in pixels.
-FRAME must be a live frame and defaults to the selected one.  The return
-value is a cons (x, y) of the coordinates of the top left corner of
-FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
-display.  */)
-     (Lisp_Object frame)
-{
-  register struct frame *f = decode_live_frame (frame);
-
-  return Fcons (make_number (f->left_pos), make_number (f->top_pos));
-}
-
 DEFUN ("set-frame-position", Fset_frame_position,
        Sset_frame_position, 3, 3, 0,
        doc: /* Set position of FRAME to (X, Y).
@@ -5444,6 +5430,19 @@ fget_iconified(const struct frame *f)
   return f->iconified;
 }
 
+int
+fget_top_pos(const struct frame *f)
+{
+  return f->top_pos;
+}
+
+int
+fget_left_pos(const struct frame *f)
+{
+  return f->left_pos;
+}
+
+
 
 /***********************************************************************
 				Initialization
@@ -5990,7 +5989,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sset_frame_height);
   defsubr (&Sset_frame_width);
   defsubr (&Sset_frame_size);
-  defsubr (&Sframe_position);
   defsubr (&Sset_frame_position);
   defsubr (&Sframe_pointer_visible_p);
 
