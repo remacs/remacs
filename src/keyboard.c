@@ -43,6 +43,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "systime.h"
 #include "atimer.h"
 #include "process.h"
+#include "menu.h"
 #include <errno.h>
 
 #ifdef HAVE_PTHREAD
@@ -121,17 +122,12 @@ ptrdiff_t this_command_key_count;
 
 /* This vector is used as a buffer to record the events that were actually read
    by read_key_sequence.  */
-static Lisp_Object raw_keybuf_buffer;
-static int raw_keybuf_count_buffer;
-static Lisp_Object *raw_keybuf = &raw_keybuf_buffer;
-static int *raw_keybuf_count = &raw_keybuf_count_buffer;
+static Lisp_Object raw_keybuf;
+static int raw_keybuf_count;
 
-#define GROW_RAW_KEYBUF(inc)                                            \
-  if (*raw_keybuf_count > ASIZE (*raw_keybuf) - (inc))                  \
-    *raw_keybuf =                                                       \
-      larger_vector (*raw_keybuf,                                       \
-                     (inc) + *raw_keybuf_count - ASIZE (*raw_keybuf),   \
-                     -1)
+#define GROW_RAW_KEYBUF							\
+ if (raw_keybuf_count == ASIZE (raw_keybuf))				\
+   raw_keybuf = larger_vector (raw_keybuf, 1, -1)
 
 /* Number of elements of this_command_keys
    that precede this key sequence.  */
@@ -1370,8 +1366,7 @@ command_loop_1 (void)
       Vthis_command_keys_shift_translated = Qnil;
 
       /* Read next key sequence; i gets its length.  */
-      raw_keybuf_count = &raw_keybuf_count_buffer; /* For safety */
-      raw_keybuf = &raw_keybuf_buffer;             /* Ditto */
+      raw_keybuf_count = 0;
       i = read_key_sequence (keybuf, ARRAYELTS (keybuf),
 			     Qnil, 0, 1, 1, 0);
 
@@ -8460,7 +8455,7 @@ read_char_x_menu_prompt (Lisp_Object map,
       /* Display the menu and get the selection.  */
       Lisp_Object value;
 
-      value = Fx_popup_menu (prev_event, get_keymap (map, 0, 1));
+      value = x_popup_menu_1 (prev_event, get_keymap (map, 0, 1));
       if (CONSP (value))
 	{
 	  Lisp_Object tem;
@@ -8870,6 +8865,11 @@ test_undefined (Lisp_Object binding)
 	      && EQ (Fcommand_remapping (binding, Qnil, Qnil), Qundefined)));
 }
 
+void init_raw_keybuf_count (void)
+{
+  raw_keybuf_count = 0;
+}
+
 /* Read a sequence of keys that ends with a non prefix character,
    storing it in KEYBUF, a buffer of size BUFSIZE.
    Prompt with PROMPT.
@@ -8919,11 +8919,6 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 
   /* How many keys there are in the current key sequence.  */
   int t;
-
-  int *outer_raw_keybuf_count;
-  Lisp_Object *outer_raw_keybuf;
-  int inner_raw_keybuf_count_buffer;
-  Lisp_Object inner_raw_keybuf_buffer = Fmake_vector (make_number (30), Qnil);
 
   /* The length of the echo buffer when we started reading, and
      the length of this_command_keys when we started reading.  */
@@ -8985,7 +8980,11 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
   /* List of events for which a fake prefix key has been generated.  */
   Lisp_Object fake_prefixed_keys = Qnil;
 
-  *raw_keybuf_count = 0;
+  /* raw_keybuf_count is now initialized in (most of) the callers of
+     read_key_sequence.  This is so that in a recursive call (for
+     mouse menus) a spurious initialization doesn't erase the contents
+     of raw_keybuf created by the outer call.  */
+  /* raw_keybuf_count = 0; */
 
   last_nonmenu_event = Qnil;
 
@@ -9157,23 +9156,11 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	  {
 	    KBOARD *interrupted_kboard = current_kboard;
 	    struct frame *interrupted_frame = SELECTED_FRAME ();
-            int i;
-            outer_raw_keybuf_count = raw_keybuf_count;
-            outer_raw_keybuf = raw_keybuf;
-            inner_raw_keybuf_count_buffer = 0;
-            raw_keybuf_count = &inner_raw_keybuf_count_buffer;
-            raw_keybuf = &inner_raw_keybuf_buffer;
 	    /* Calling read_char with COMMANDFLAG = -2 avoids
 	       redisplay in read_char and its subroutines.  */
 	    key = read_char (prevent_redisplay ? -2 : NILP (prompt),
 		             current_binding, last_nonmenu_event,
                              &used_mouse_menu, NULL);
-            raw_keybuf_count = outer_raw_keybuf_count;
-            raw_keybuf = outer_raw_keybuf;
-            GROW_RAW_KEYBUF (inner_raw_keybuf_count_buffer);
-            for (i = 0; i < inner_raw_keybuf_count_buffer; i++)
-              ASET (*raw_keybuf, (*raw_keybuf_count)++,
-                    AREF (inner_raw_keybuf_buffer, i));
 	    if ((INTEGERP (key) && XINT (key) == -2) /* wrong_kboard_jmpbuf */
 		/* When switching to a new tty (with a new keyboard),
 		   read_char returns the new buffer, rather than -2
@@ -9281,9 +9268,9 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	      && XINT (key) == quit_char
 	      && current_buffer != starting_buffer)
 	    {
-	      GROW_RAW_KEYBUF (1);
-	      ASET (*raw_keybuf, *raw_keybuf_count, key);
-	      (*raw_keybuf_count)++;
+	      GROW_RAW_KEYBUF;
+	      ASET (raw_keybuf, raw_keybuf_count, key);
+	      raw_keybuf_count++;
 	      keybuf[t++] = key;
 	      mock_input = t;
 	      Vquit_flag = Qnil;
@@ -9322,9 +9309,9 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 	      current_binding = active_maps (first_event);
 	    }
 
-	  GROW_RAW_KEYBUF (1);
-	  ASET (*raw_keybuf, *raw_keybuf_count, key);
-	  (*raw_keybuf_count)++;
+	  GROW_RAW_KEYBUF;
+	  ASET (raw_keybuf, raw_keybuf_count, key);
+	  raw_keybuf_count++;
 	}
 
       /* Clicks in non-text areas get prefixed by the symbol
@@ -9370,9 +9357,9 @@ read_key_sequence (Lisp_Object *keybuf, int bufsize, Lisp_Object prompt,
 		      && BUFFERP (XWINDOW (window)->contents)
 		      && XBUFFER (XWINDOW (window)->contents) != current_buffer)
 		    {
-		      GROW_RAW_KEYBUF (1);
-                      ASET (*raw_keybuf, *raw_keybuf_count, key);
-		      (*raw_keybuf_count)++;
+		      GROW_RAW_KEYBUF;
+		      ASET (raw_keybuf, raw_keybuf_count, key);
+		      raw_keybuf_count++;
 		      keybuf[t] = key;
 		      mock_input = t + 1;
 
@@ -9865,6 +9852,7 @@ read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
     cancel_hourglass ();
 #endif
 
+  raw_keybuf_count = 0;
   i = read_key_sequence (keybuf, ARRAYELTS (keybuf),
 			 prompt, ! NILP (dont_downcase_last),
 			 ! NILP (can_return_switch_frame), 0, 0);
@@ -10145,7 +10133,7 @@ shows the events before all translations (except for input methods).
 The value is always a vector.  */)
   (void)
 {
-  return Fvector (*raw_keybuf_count, XVECTOR (*raw_keybuf)->contents);
+  return Fvector (raw_keybuf_count, XVECTOR (raw_keybuf)->contents);
 }
 
 DEFUN ("clear-this-command-keys", Fclear_this_command_keys,
@@ -11290,8 +11278,8 @@ syms_of_keyboard (void)
   this_command_keys = Fmake_vector (make_number (40), Qnil);
   staticpro (&this_command_keys);
 
-  raw_keybuf_buffer = Fmake_vector (make_number (30), Qnil);
-  staticpro (raw_keybuf);
+  raw_keybuf = Fmake_vector (make_number (30), Qnil);
+  staticpro (&raw_keybuf);
 
   DEFSYM (Qcommand_execute, "command-execute");
   DEFSYM (Qinternal_echo_keystrokes_prefix, "internal-echo-keystrokes-prefix");
