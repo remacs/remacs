@@ -307,25 +307,47 @@ Returns non-nil if conflicts remain."
             ;; (pop-to-buffer (current-buffer)) (debug 'before-resolve)
             ))
           ;; Try to resolve the conflicts.
-          (cond
-           ;; Generated files.
-           ((member file '("lisp/ldefs-boot.el"))
-            ;; We are in the file's buffer, so names are relative.
-            (call-process "git" nil t nil "reset" "--"
-                          (file-name-nondirectory file))
-            (call-process "git" nil t nil "checkout" "--"
-                          (file-name-nondirectory file))
-            (revert-buffer nil 'noconfirm))
-           (t
-            (goto-char (point-max))
-            (while (re-search-backward smerge-begin-re nil t)
-              (save-excursion
-                (ignore-errors
-                  (smerge-match-conflict)
-                  (smerge-resolve))))
-            ;; (when (derived-mode-p 'change-log-mode)
-            ;;   (pop-to-buffer (current-buffer)) (debug 'after-resolve))
-            (save-buffer)))
+          (let (temp)
+            (cond
+             ((and (equal file "etc/NEWS")
+                   (ignore-errors
+                     (setq temp
+                           (format "NEWS.%s"
+                                   (gitmerge-emacs-version gitmerge--from))))
+                   (file-exists-p temp)
+                   (or noninteractive
+                       (y-or-n-p "Try to fix NEWS conflict? ")))
+              (let ((relfile (file-name-nondirectory file))
+                    (tempfile (make-temp-file "gitmerge")))
+                (unwind-protect
+                    (progn
+                      (call-process "git" nil `(:file ,tempfile) nil "diff"
+                                    (format ":1:%s" file)
+                                    (format ":3:%s" file))
+                      (call-process "git" nil t nil "reset" "--" relfile)
+                      (call-process "git" nil t nil "checkout" "--" relfile)
+                      (revert-buffer nil 'noconfirm)
+                      (call-process "patch" tempfile nil nil temp)
+                      (call-process "git" nil t nil "add" "--" temp))
+                  (delete-file tempfile))))
+             ;; Generated files.
+             ((member file '("lisp/ldefs-boot.el"))
+              ;; We are in the file's buffer, so names are relative.
+              (call-process "git" nil t nil "reset" "--"
+                            (file-name-nondirectory file))
+              (call-process "git" nil t nil "checkout" "--"
+                            (file-name-nondirectory file))
+              (revert-buffer nil 'noconfirm))
+             (t
+              (goto-char (point-max))
+              (while (re-search-backward smerge-begin-re nil t)
+                (save-excursion
+                  (ignore-errors
+                    (smerge-match-conflict)
+                    (smerge-resolve))))
+              ;; (when (derived-mode-p 'change-log-mode)
+              ;;   (pop-to-buffer (current-buffer)) (debug 'after-resolve))
+              (save-buffer))))
           (goto-char (point-min))
           (prog1 (re-search-forward smerge-begin-re nil t)
             (unless exists (kill-buffer))))))))
