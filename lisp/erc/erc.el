@@ -409,16 +409,18 @@ in the current buffer's `erc-channel-users' hash table."
 (define-inline erc-get-server-user (nick)
   "Find the USER corresponding to NICK in the current server's
 `erc-server-users' hash table."
-  (inline-quote (erc-with-server-buffer
-		  (gethash (erc-downcase ,nick) erc-server-users))))
+  (inline-letevals (nick)
+    (inline-quote (erc-with-server-buffer
+		    (gethash (erc-downcase ,nick) erc-server-users)))))
 
 (define-inline erc-add-server-user (nick user)
   "This function is for internal use only.
 
 Adds USER with nickname NICK to the `erc-server-users' hash table."
-  (inline-quote
-   (erc-with-server-buffer
-     (puthash (erc-downcase ,nick) ,user erc-server-users))))
+  (inline-letevals (nick user)
+    (inline-quote
+     (erc-with-server-buffer
+       (puthash (erc-downcase ,nick) ,user erc-server-users)))))
 
 (define-inline erc-remove-server-user (nick)
   "This function is for internal use only.
@@ -428,9 +430,10 @@ hash table.  This user is not removed from the
 `erc-channel-users' lists of other buffers.
 
 See also: `erc-remove-user'."
-  (inline-quote
-   (erc-with-server-buffer
-     (remhash (erc-downcase ,nick) erc-server-users))))
+  (inline-letevals (nick)
+    (inline-quote
+     (erc-with-server-buffer
+       (remhash (erc-downcase ,nick) erc-server-users)))))
 
 (defun erc-change-user-nickname (user new-nick)
   "This function is for internal use only.
