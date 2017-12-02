@@ -4673,15 +4673,15 @@ The function `find-backup-file-name' also uses this."
 				       (if (eq (aref file 2) ?/)
 					   ""
 				         "/")
-				       (substring file 2))))))
-	      ;; Make the name unique by substituting directory
-	      ;; separators.  It may not really be worth bothering about
-	      ;; doubling `!'s in the original name...
-	      (expand-file-name
-	       (subst-char-in-string
-	        ?/ ?!
-	        (replace-regexp-in-string "!" "!!" file))
-	       backup-directory)))
+				       (substring file 2)))))))
+	    ;; Make the name unique by substituting directory
+	    ;; separators.  It may not really be worth bothering about
+	    ;; doubling `!'s in the original name...
+	    (expand-file-name
+	     (subst-char-in-string
+	      ?/ ?!
+	      (replace-regexp-in-string "!" "!!" file))
+	     backup-directory))
 	(expand-file-name (file-name-nondirectory file)
 			  (file-name-as-directory abs-backup-directory))))))
 
