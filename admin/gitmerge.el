@@ -292,9 +292,11 @@ Returns non-nil if conflicts remain."
             ))
           ;; Try to resolve the conflicts.
           (cond
-           ((member file '("configure" "lisp/ldefs-boot.el"
-                           "lisp/emacs-lisp/cl-loaddefs.el"))
+           ;; Generated files.
+           ((member file '("lisp/ldefs-boot.el"))
             ;; We are in the file's buffer, so names are relative.
+            (call-process "git" nil t nil "reset" "--"
+                          (file-name-nondirectory file))
             (call-process "git" nil t nil "checkout" "--"
                           (file-name-nondirectory file))
             (revert-buffer nil 'noconfirm))
