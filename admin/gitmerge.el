@@ -67,8 +67,9 @@ re-?generate\\|bump version\\|from trunk\\|Auto-commit"
   '((t (:strike-through t)))
   "Face for skipped commits.")
 
-(defconst gitmerge-default-branch "origin/emacs-26"
-  "Default for branch that should be merged.")
+(defvar gitmerge-default-branch nil
+  "Default for branch that should be merged.
+If nil, the function `gitmerge-default-branch' guesses.")
 
 (defconst gitmerge-buffer "*gitmerge*"
   "Working buffer for gitmerge.")
@@ -102,6 +103,21 @@ re-?generate\\|bump version\\|from trunk\\|Auto-commit"
 
 (defvar gitmerge--commits nil)
 (defvar gitmerge--from nil)
+
+(defun gitmerge-emacs-version (&optional branch)
+  "Return the major version of Emacs, optionally in BRANCH."
+  (with-temp-buffer
+    (if (not branch)
+        (insert-file-contents "configure.ac")
+      (call-process "git" nil t nil "show" (format "%s:configure.ac" branch))
+      (goto-char (point-min)))
+    (re-search-forward "^AC_INIT([^,]+, \\([0-9]+\\)\\.")
+    (string-to-number (match-string 1))))
+
+(defun gitmerge-default-branch ()
+  "Default for branch that should be merged; eg \"origin/emacs-26\"."
+  (or gitmerge-default-branch
+      (format "origin/emacs-%s" (1- (gitmerge-emacs-version)))))
 
 (defun gitmerge-get-sha1 ()
   "Get SHA1 from commit at point."
@@ -497,7 +513,7 @@ Branch FROM will be prepended to the list."
 	(if (gitmerge-maybe-resume)
 	    'resume
 	  (completing-read "Merge branch: " (gitmerge-get-all-branches)
-			   nil t gitmerge-default-branch))))))
+			   nil t (gitmerge-default-branch)))))))
   (let ((default-directory (vc-git-root default-directory)))
     (if (eq from 'resume)
 	(progn
