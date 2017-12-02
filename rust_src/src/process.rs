@@ -13,7 +13,7 @@ use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 
 use buffers::get_buffer;
-use lists::{assoc, cdr, plist_put};
+use lists::{assoc, car, cdr, plist_put};
 use multibyte::LispStringRef;
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
@@ -61,6 +61,11 @@ impl LispProcessRef {
     #[inline]
     fn buffer(self) -> LispObject {
         LispObject::from_raw(self.buffer)
+    }
+
+    #[inline]
+    fn raw_status_new(&self) -> bool {
+        unsafe { pget_raw_status_new(self.as_ptr()) }
     }
 
     #[inline]
@@ -237,7 +242,7 @@ pub fn process_status(process: LispObject) -> LispObject {
         return p;
     }
     let p_ref = p.as_process_or_error();
-    if unsafe { pget_raw_status_new(p_ref.as_ptr()) } != 0 {
+    if p_ref.raw_status_new() {
         unsafe { update_status(p_ref.as_ptr()) };
     }
     let mut status = LispObject::from_raw(p_ref.status);
@@ -334,6 +339,19 @@ pub fn waiting_for_user_input_p() -> bool {
 #[lisp_fn]
 pub fn process_inherit_coding_system_flag(process: LispProcessRef) -> bool {
     unsafe { pget_process_inherit_coding_system_flag(process.as_ptr()) }
+}
+
+/// Return the exit status of PROCESS or the signal number that killed it.
+/// If PROCESS has not yet exited or died, return 0.
+#[lisp_fn]
+pub fn process_exit_status(process: LispProcessRef) -> LispObject {
+    if process.raw_status_new() {
+        unsafe { update_status(process.as_ptr()) };
+    }
+    let status = LispObject::from_raw(process.status);
+    status
+        .as_cons()
+        .map_or_else(|| LispObject::from_fixnum(0), |cons| car(cons.cdr()))
 }
 
 include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
