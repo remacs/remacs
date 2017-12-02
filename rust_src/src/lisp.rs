@@ -340,7 +340,7 @@ impl LispObject {
     }
 
     #[inline]
-    unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
+    pub unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
         let raw = self.to_raw();
         if !USE_LSB_TAG {
             raw & INTMASK
@@ -404,6 +404,31 @@ impl LispObject {
             wrong_type!(Qwholenump, self)
         }
     }
+
+    #[inline]
+    pub fn as_unsigned(self) -> Option<EmacsUint> {
+        if self.is_fixnum() {
+            Some(unsafe { self.as_unsigned_unchecked() })
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_unsigned_or_error(self) -> EmacsUint {
+        self.as_unsigned()
+            .unwrap_or_else(|| wrong_type!(Qintegerp, self))
+    }
+
+    #[inline]
+    pub unsafe fn as_unsigned_unchecked(self) -> EmacsUint {
+        let raw = self.to_raw() as EmacsUint;
+        if !USE_LSB_TAG {
+            raw & INTMASK as EmacsUint
+        } else {
+            raw >> INTTYPEBITS as EmacsUint
+        }
+    }
 }
 
 // Vectorlike support (LispType == 5)
@@ -447,6 +472,10 @@ impl LispObject {
 
     pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
         self.as_vectorlike_unchecked().as_vector_unchecked()
+    }
+
+    pub unsafe fn aref(self, idx: isize) -> LispObject {
+        self.as_vector_unchecked().get_unchecked(idx)
     }
 
     pub fn as_vector_or_string_length(self) -> isize {

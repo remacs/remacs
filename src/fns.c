@@ -2282,7 +2282,7 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
 
 /* The list of all weak hash tables.  Don't staticpro this one.  */
 
-static struct Lisp_Hash_Table *weak_hash_tables;
+struct Lisp_Hash_Table *weak_hash_tables;
 
 
 /***********************************************************************
@@ -2778,48 +2778,6 @@ hash_put (struct Lisp_Hash_Table *h, Lisp_Object key, Lisp_Object value,
 }
 
 
-/* Remove the entry matching KEY from hash table H, if there is one.  */
-
-void
-hash_remove_from_table (struct Lisp_Hash_Table *h, Lisp_Object key)
-{
-  EMACS_UINT hash_code = h->test.hashfn (&h->test, key);
-  eassert ((hash_code & ~INTMASK) == 0);
-  ptrdiff_t start_of_bucket = hash_code % ASIZE (h->index);
-  ptrdiff_t prev = -1;
-
-  for (ptrdiff_t i = HASH_INDEX (h, start_of_bucket);
-       0 <= i;
-       i = HASH_NEXT (h, i))
-    {
-      if (EQ (key, HASH_KEY (h, i))
-	  || (h->test.cmpfn
-	      && hash_code == XUINT (HASH_HASH (h, i))
-	      && h->test.cmpfn (&h->test, key, HASH_KEY (h, i))))
-	{
-	  /* Take entry out of collision chain.  */
-	  if (prev < 0)
-	    set_hash_index_slot (h, start_of_bucket, HASH_NEXT (h, i));
-	  else
-	    set_hash_next_slot (h, prev, HASH_NEXT (h, i));
-
-	  /* Clear slots in key_and_value and add the slots to
-	     the free list.  */
-	  set_hash_key_slot (h, i, Qnil);
-	  set_hash_value_slot (h, i, Qnil);
-	  set_hash_hash_slot (h, i, Qnil);
-	  set_hash_next_slot (h, i, h->next_free);
-	  h->next_free = i;
-	  h->count--;
-	  eassert (h->count >= 0);
-	  break;
-	}
-
-      prev = i;
-    }
-}
-
-
 /* Clear hash table H.  */
 
 void
@@ -2851,140 +2809,8 @@ hash_clear (struct Lisp_Hash_Table *h)
 			   Weak Hash Tables
  ************************************************************************/
 
-/* Sweep weak hash table H.  REMOVE_ENTRIES_P means remove
-   entries from the table that don't survive the current GC.
-   !REMOVE_ENTRIES_P means mark entries that are in use.  Value is
-   true if anything was marked.  */
-
-static bool
-sweep_weak_table (struct Lisp_Hash_Table *h, bool remove_entries_p)
-{
-  ptrdiff_t n = gc_asize (h->index);
-  bool marked = false;
-
-  for (ptrdiff_t bucket = 0; bucket < n; ++bucket)
-    {
-      /* Follow collision chain, removing entries that
-	 don't survive this garbage collection.  */
-      ptrdiff_t prev = -1;
-      ptrdiff_t next;
-      for (ptrdiff_t i = HASH_INDEX (h, bucket); 0 <= i; i = next)
-	{
-	  bool key_known_to_survive_p = survives_gc_p (HASH_KEY (h, i));
-	  bool value_known_to_survive_p = survives_gc_p (HASH_VALUE (h, i));
-	  bool remove_p;
-
-	  if (EQ (h->weak, Qkey))
-	    remove_p = !key_known_to_survive_p;
-	  else if (EQ (h->weak, Qvalue))
-	    remove_p = !value_known_to_survive_p;
-	  else if (EQ (h->weak, Qkey_or_value))
-	    remove_p = !(key_known_to_survive_p || value_known_to_survive_p);
-	  else if (EQ (h->weak, Qkey_and_value))
-	    remove_p = !(key_known_to_survive_p && value_known_to_survive_p);
-	  else
-	    emacs_abort ();
-
-	  next = HASH_NEXT (h, i);
-
-	  if (remove_entries_p)
-	    {
-	      if (remove_p)
-		{
-		  /* Take out of collision chain.  */
-		  if (prev < 0)
-		    set_hash_index_slot (h, bucket, next);
-		  else
-		    set_hash_next_slot (h, prev, next);
-
-		  /* Add to free list.  */
-		  set_hash_next_slot (h, i, h->next_free);
-		  h->next_free = i;
-
-		  /* Clear key, value, and hash.  */
-		  set_hash_key_slot (h, i, Qnil);
-		  set_hash_value_slot (h, i, Qnil);
-		  set_hash_hash_slot (h, i, Qnil);
-
-		  h->count--;
-		}
-	      else
-		{
-		  prev = i;
-		}
-	    }
-	  else
-	    {
-	      if (!remove_p)
-		{
-		  /* Make sure key and value survive.  */
-		  if (!key_known_to_survive_p)
-		    {
-		      mark_object (HASH_KEY (h, i));
-		      marked = 1;
-		    }
-
-		  if (!value_known_to_survive_p)
-		    {
-		      mark_object (HASH_VALUE (h, i));
-		      marked = 1;
-		    }
-		}
-	    }
-	}
-    }
-
-  return marked;
-}
-
-/* Remove elements from weak hash tables that don't survive the
-   current garbage collection.  Remove weak tables that don't survive
-   from Vweak_hash_tables.  Called from gc_sweep.  */
-
-NO_INLINE /* For better stack traces */
-void
-sweep_weak_hash_tables (void)
-{
-  struct Lisp_Hash_Table *h, *used, *next;
-  bool marked;
-
-  /* Mark all keys and values that are in use.  Keep on marking until
-     there is no more change.  This is necessary for cases like
-     value-weak table A containing an entry X -> Y, where Y is used in a
-     key-weak table B, Z -> Y.  If B comes after A in the list of weak
-     tables, X -> Y might be removed from A, although when looking at B
-     one finds that it shouldn't.  */
-  do
-    {
-      marked = 0;
-      for (h = weak_hash_tables; h; h = h->next_weak)
-	{
-	  if (h->header.size & ARRAY_MARK_FLAG)
-	    marked |= sweep_weak_table (h, 0);
-	}
-    }
-  while (marked);
-
-  /* Remove tables and entries that aren't used.  */
-  for (h = weak_hash_tables, used = NULL; h; h = next)
-    {
-      next = h->next_weak;
-
-      if (h->header.size & ARRAY_MARK_FLAG)
-	{
-	  /* TABLE is marked as used.  Sweep its contents.  */
-	  if (h->count > 0)
-	    sweep_weak_table (h, 1);
-
-	  /* Add table to the list of used weak hash tables.  */
-	  h->next_weak = used;
-	  used = h;
-	}
-    }
-
-  weak_hash_tables = used;
-}
-
+bool sweep_weak_table (struct Lisp_Hash_Table *h, bool remove_entries_p);
+void sweep_weak_hash_tables (void);
 
 
 /***********************************************************************

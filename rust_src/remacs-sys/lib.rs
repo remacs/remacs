@@ -68,6 +68,9 @@ pub const MOST_NEGATIVE_FIXNUM: EmacsInt = (-1 - MOST_POSITIVE_FIXNUM);
 // Max value for the first argument of wait_reading_process_output.
 pub const WAIT_READING_MAX: i64 = std::i64::MAX;
 
+// Specifies the bit for the gc marked flag for vectorlike headers.
+pub const ARRAY_MARK_FLAG: ptrdiff_t = std::isize::MIN;
+
 #[cfg(windows)]
 #[repr(C)]
 struct BitfieldPadding {
@@ -1001,6 +1004,7 @@ extern "C" {
     pub static selected_window: Lisp_Object;
     pub static minibuf_selected_window: Lisp_Object;
     pub static selected_frame: Lisp_Object;
+    pub static mut weak_hash_tables: *mut Lisp_Hash_Table;
 
     pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
@@ -1129,6 +1133,9 @@ extern "C" {
     pub fn hash_clear(h: *mut Lisp_Hash_Table);
 
     pub fn gc_aset(array: Lisp_Object, idx: ptrdiff_t, val: Lisp_Object);
+    pub fn gc_asize(array: Lisp_Object) -> ptrdiff_t;
+    pub fn survives_gc_p(o: Lisp_Object) -> bool;
+    pub fn mark_object(o: Lisp_Object);
 
     pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: Lisp_Object);
     pub fn set_point_both(charpos: ptrdiff_t, bytepos: ptrdiff_t);
