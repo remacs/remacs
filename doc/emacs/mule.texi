@@ -1002,16 +1002,15 @@ its name at the prompt.)
 @vindex sendmail-coding-system
   When you send a mail message (@pxref{Sending Mail}),
 Emacs has four different ways to determine the coding system to use
-for encoding the message text.  It tries the buffer's own value of
+for encoding the message text.  It first tries the buffer's own value of
 @code{buffer-file-coding-system}, if that is non-@code{nil}.
 Otherwise, it uses the value of @code{sendmail-coding-system}, if that
-is non-@code{nil}.  The third way is to use the default coding system
-for new files, which is controlled by your choice of language
-@c i.e., default-sendmail-coding-system
-environment, if that is non-@code{nil}.  If all of these three values
-are @code{nil}, Emacs encodes outgoing mail using the Latin-1 coding
-system.
-@c FIXME?  Where does the Latin-1 default come in?
+is non-@code{nil}.  Thirdly, it uses the value of
+@code{default-sendmail-coding-system}.
+If all of these three values are @code{nil}, Emacs encodes outgoing
+mail using the default coding system for new files (i.e., the
+default value of @code{buffer-file-coding-system}), which is
+controlled by your choice of language environment.
 
 @node Text Coding
 @section Specifying a Coding System for File Text
