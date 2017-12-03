@@ -1,0 +1,37 @@
+#!/bin/bash
+
+##
+## To install simply cd to the top level and run:
+## $ ln -s rust_src/admin/pre-commit .git/hooks/pre-commit
+##
+
+set -eu
+
+check_char='\xE2\x9C\x93'
+cross_char='\xE2\x9D\x8C'
+green='\033[0;32m'
+nc='\033[0m'
+check="$green$check_char$nc"
+cross="$green$cross_char$nc"
+errors=0
+
+GIT_TOPLEVEL=$(git rev-parse --show-toplevel)
+
+echo -n "Checking formatting... "
+diff=$(cd $GIT_TOPLEVEL/rust_src && cargo fmt -- --write-mode diff)
+stripped_diff=$(echo "$diff" | sed -e '/^Diff of/d' -e '/^$/d')
+
+if [ -z "$stripped_diff" ]; then
+	echo -e "$check"
+else
+	echo -e "$cross"
+	echo "$diff"
+	errors=1
+fi
+
+if [ "$errors" != 0 ]; then
+	echo "Failed"
+	exit 1
+else
+	echo "OK"
+fi
