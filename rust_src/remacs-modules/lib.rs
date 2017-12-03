@@ -87,7 +87,7 @@ impl EmacsEnv {
                                  min_args,
                                  max_args,
                                  Some(springboard),
-                                 cstring.as_ptr(),
+                                 cstring.as_ptr() as *mut libc::c_char,
                                  Box::into_raw(boxed) as *mut libc::c_void);
             EmacsValue(result)
         }
@@ -96,7 +96,7 @@ impl EmacsEnv {
     pub fn intern(&mut self, string: &str) -> EmacsValue {
         let cstring = CString::new(string).unwrap();
         let fnptr = self.intern.unwrap();
-        EmacsValue(unsafe { (fnptr)(self.0, cstring.as_ptr()) })
+        EmacsValue(unsafe { (fnptr)(self.0, cstring.as_ptr() as *mut libc::c_char) })
     }
 
     pub fn provide(&mut self, feature: &str) {

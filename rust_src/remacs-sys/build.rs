@@ -198,12 +198,21 @@ fn generate_globals() {
 }
 
 fn generate_module_code() {
-    let builder = bindgen::Builder::default()
+    let mut builder = bindgen::Builder::default()
         .rust_target(bindgen::RustTarget::Nightly)
         .generate_comments(true)
         .header("../../src/emacs-module.h")
         .rustified_enum("emacs_funcall_exit")
         .ctypes_prefix("::libc");
+
+    if cfg!(windows) {
+        builder = builder
+            .clang_arg("-fms-extensions")
+            .clang_arg("-fms-compatibility")
+            .clang_arg("-fms-compatibility-version=19")
+            .clang_arg("-D_MSC_VER=1900")
+            .clang_arg("-D_M_X64")
+    }
 
     let bindings = builder
         .rustfmt_bindings(true)
