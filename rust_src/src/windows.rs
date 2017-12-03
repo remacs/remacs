@@ -592,7 +592,7 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
             if selw == current {
                 return MODE_LINE_FACE_ID;
             } else if minibuf_level > 0 {
-                let minibuf = LispObject::from(current_minibuf_window);
+                let minibuf = LispObject::from_raw(current_minibuf_window);
                 if let Some(minibuf_window) = minibuf.as_window() {
                     if mbw == minibuf_window && scrw == minibuf_window {
                         return MODE_LINE_FACE_ID;
