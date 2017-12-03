@@ -6,6 +6,10 @@ use std::ptr;
 /// The entry point for your module.
 /// For now this need to be #[no_mangle] and extern "C"
 /// Remacs will call this when your module is required.
+/// As a note, Remacs will look for <modname>.so. Cargo likes to name
+/// the produced libs something remacs isn't expecting, so you can either
+/// a) rename the result to <mymod>.so or <mymod>.dll on windows.
+/// b) call (module-load "<cargo name of mymod>")
 #[no_mangle]
 pub extern "C" fn module_init(runtime: EmacsRuntime) -> i32 {
     let mut env = runtime.get_env();
