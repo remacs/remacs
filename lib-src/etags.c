@@ -1521,7 +1521,7 @@ process_file_name (char *file, language *lang)
   fdesc *fdp;
   compressor *compr;
   char *compressed_name, *uncompressed_name;
-  char *ext, *real_name UNINIT, *tmp_name;
+  char *ext, *real_name UNINIT, *tmp_name UNINIT;
   int retval;
 
   canonicalize_filename (file);
@@ -7042,14 +7042,16 @@ etags_mktmp (void)
       errno = temp_errno;
       templt = NULL;
     }
-
 #if defined (DOS_NT)
-  /* The file name will be used in shell redirection, so it needs to have
-     DOS-style backslashes, or else the Windows shell will barf.  */
-  char *p;
-  for (p = templt; *p; p++)
-    if (*p == '/')
-      *p = '\\';
+  else
+    {
+      /* The file name will be used in shell redirection, so it needs to have
+	 DOS-style backslashes, or else the Windows shell will barf.  */
+      char *p;
+      for (p = templt; *p; p++)
+	if (*p == '/')
+	  *p = '\\';
+    }
 #endif
 
   return templt;

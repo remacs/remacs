@@ -266,7 +266,7 @@ specified in ARGS.  When ARGS is omitted, by default the option
 \"12pt,a4paper\" is passed. When ARGS has any other value, then
 no option is passed to the class.
 
-Insert the \"\\usepacakge{geometry}\" directive when ARGS
+Insert the \"\\usepackage{geometry}\" directive when ARGS
 contains the \"landscape\" string."
   (set-buffer (generate-new-buffer cal-tex-buffer))
   (save-match-data

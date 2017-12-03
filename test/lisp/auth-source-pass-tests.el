@@ -128,6 +128,11 @@ This function is intended to be set to `auth-source-debug`."
     (should (equal (auth-source-pass--find-match "foo.bar.com" nil)
                    nil))))
 
+(ert-deftest auth-source-pass-find-match-matching-extracting-user-from-host ()
+  (auth-source-pass--with-store '(("foo.com/bar"))
+    (should (equal (auth-source-pass--find-match "https://bar@foo.com" nil)
+                   "foo.com/bar"))))
+
 (ert-deftest auth-source-pass-search-with-user-first ()
   (auth-source-pass--with-store '(("foo") ("user@foo"))
     (should (equal (auth-source-pass--find-match "foo" "user")

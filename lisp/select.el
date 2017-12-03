@@ -98,7 +98,7 @@ if applicable (i.e. under X11)."
   'select-enable-clipboard "25.1")
 
 (defcustom select-enable-primary nil
-  "Non-nil means cutting and pasting uses the primary selection
+  "Non-nil means cutting and pasting uses the primary selection.
 The existence of a primary selection depends on the underlying GUI you use.
 E.g. it doesn't exist under MS-Windows."
   :type 'boolean

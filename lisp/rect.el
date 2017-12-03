@@ -450,6 +450,10 @@ With a prefix (or a FILL) argument, also fill too short lines."
   "Replace rectangle contents with STRING on each line.
 The length of STRING need not be the same as the rectangle width.
 
+When called interactively and option `rectangle-preview' is
+non-nil, display the result as the user enters the string into
+the minibuffer.
+
 Called from a program, takes three args; START, END and STRING."
   (interactive
    (progn

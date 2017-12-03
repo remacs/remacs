@@ -1197,7 +1197,7 @@ names (@code{set-file-name-coding-system}).
 @end table
 
 @findex set-file-name-coding-system
-@kindex C-x @key{RET} F
+@kindex C-x RET F
 @cindex file names with non-@acronym{ASCII} characters
   The command @kbd{C-x @key{RET} F} (@code{set-file-name-coding-system})
 specifies a coding system to use for encoding file @emph{names}.  It
@@ -1355,7 +1355,7 @@ fontset}, the @dfn{startup fontset} and the @dfn{default fontset}.
 @c FIXME?  The doc of *standard*-fontset-spec says:
 @c "You have the biggest chance to display international characters
 @c with correct glyphs by using the *standard* fontset." (my emphasis)
-@c See http://lists.gnu.org/archive/html/emacs-devel/2012-04/msg00430.html
+@c See https://lists.gnu.org/archive/html/emacs-devel/2012-04/msg00430.html
 The default fontset is most likely to have fonts for a wide variety of
 non-@acronym{ASCII} characters, and is the default fallback for the
 other two fontsets, and if you set a default font rather than fontset.

@@ -725,7 +725,7 @@ this keeps \"UUU\"."
   (let ((i 3))
     (while (or (not (match-end i))
 	       (< (point) (match-beginning i))
-	       (>= (point) (match-end i)))
+	       (> (point) (match-end i)))
       (cl-decf i))
     i))
 
@@ -1094,7 +1094,7 @@ used to replace chars to try and eliminate some spurious differences."
                               ;; also and more importantly because otherwise it
                               ;; may happen that diff doesn't behave like
                               ;; smerge-refine-weight-hack expects it to.
-                              ;; See http://lists.gnu.org/archive/html/emacs-devel/2007-11/msg00401.html
+                              ;; See https://lists.gnu.org/archive/html/emacs-devel/2007-11/msg00401.html
                               "-awd" "-ad")
                           file1 file2))
           ;; Process diff's output.

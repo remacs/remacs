@@ -26,7 +26,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "coding.h"
 #include "syssignal.h"
 
-static struct thread_state main_thread;
+static struct GCALIGNED thread_state main_thread;
 
 struct thread_state *current_thread = &main_thread;
 
@@ -101,14 +101,20 @@ acquire_global_lock (struct thread_state *self)
   post_acquire_global_lock (self);
 }
 
-/* This is called from keyboard.c when it detects that SIGINT
-   interrupted thread_select before the current thread could acquire
-   the lock.  We must acquire the lock to prevent a thread from
-   running without holding the global lock, and to avoid repeated
-   calls to sys_mutex_unlock, which invokes undefined behavior.  */
+/* This is called from keyboard.c when it detects that SIGINT was
+   delivered to the main thread and interrupted thread_select before
+   the main thread could acquire the lock.  We must acquire the lock
+   to prevent a thread from running without holding the global lock,
+   and to avoid repeated calls to sys_mutex_unlock, which invokes
+   undefined behavior.  */
 void
 maybe_reacquire_global_lock (void)
 {
+  /* SIGINT handler is always run on the main thread, see
+     deliver_process_signal, so reflect that in our thread-tracking
+     variables.  */
+  current_thread = &main_thread;
+
   if (current_thread->not_holding_lock)
     {
       struct thread_state *self = current_thread;
@@ -800,7 +806,11 @@ If NAME is given, it must be a string; it names the new thread.  */)
     {
       /* Restore the previous situation.  */
       all_threads = all_threads->next_thread;
+#ifdef THREADS_ENABLED
       error ("Could not start a new thread");
+#else
+      error ("Concurrency is not supported in this configuration");
+#endif
     }
 
   /* FIXME: race here where new thread might not be filled in?  */

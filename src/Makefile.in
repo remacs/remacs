@@ -275,7 +275,7 @@ GNU_OBJC_CFLAGS=$(patsubst -specs=%-hardened-cc1,,@GNU_OBJC_CFLAGS@)
 ## w32xfns.o w32select.o image.o w32uniscribe.o if HAVE_W32, else
 ## empty.
 W32_OBJ=@W32_OBJ@
-## -lkernel32 -luser32 -lgdi32 -lole32 -lcomdlg32 lusp10 -lcomctl32
+## -lkernel32 -luser32 -lusp10 -lgdi32 -lole32 -lcomdlg32 -lcomctl32
 ## --lwinspool if HAVE_W32, else empty.
 W32_LIBS=@W32_LIBS@
 

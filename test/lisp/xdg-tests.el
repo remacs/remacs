@@ -42,9 +42,6 @@
     (should (equal "frobnicate" (gethash "Exec" tab2))))
   (should-error
    (xdg-desktop-read-file
-    (expand-file-name "wrong.desktop" xdg-tests-data-dir)))
-  (should-error
-   (xdg-desktop-read-file
     (expand-file-name "malformed.desktop" xdg-tests-data-dir)))
   (let ((tab (xdg-desktop-read-file
               (expand-file-name "l10n.desktop" xdg-tests-data-dir)))
@@ -67,5 +64,17 @@
   (should (equal (xdg-desktop-strings ";") '("")))
   (should (equal (xdg-desktop-strings " ") nil))
   (should (equal (xdg-desktop-strings "a; ;") '("a" " "))))
+
+(ert-deftest xdg-mime-associations ()
+  "Test reading MIME associations from files."
+  (let* ((apps (expand-file-name "mimeapps.list" xdg-tests-data-dir))
+         (cache (expand-file-name "mimeinfo.cache" xdg-tests-data-dir))
+         (fs (list apps cache)))
+    (should (equal (xdg-mime-collect-associations "x-test/foo" fs)
+                   '("a.desktop" "b.desktop")))
+    (should (equal (xdg-mime-collect-associations "x-test/bar" fs)
+                   '("a.desktop" "c.desktop")))
+    (should (equal (xdg-mime-collect-associations "x-test/baz" fs)
+                   '("a.desktop" "b.desktop" "d.desktop")))))
 
 ;;; xdg-tests.el ends here

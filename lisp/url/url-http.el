@@ -1249,6 +1249,9 @@ The return value of this function is the retrieval buffer."
 	 (nsm-noninteractive (or url-request-noninteractive
 				 (and (boundp 'url-http-noninteractive)
 				      url-http-noninteractive)))
+         ;; The following binding is needed in url-open-stream, which
+         ;; is called from url-http-find-free-connection.
+         (url-current-object url)
          (connection (url-http-find-free-connection (url-host url)
                                                     (url-port url)
                                                     gateway-method))

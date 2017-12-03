@@ -397,9 +397,14 @@
    (should (equal 1 (let ((x 1)) (and-let* (x)))))
    (should (equal nil (and-let* ((x nil)))))
    (should (equal 1 (and-let* ((x 1)))))
-   (should-error (and-let* (nil (x 1))) :type 'setting-constant)
+   ;; The error doesn't trigger when compiled: the compiler will give
+   ;; a warning and then drop the erroneous code.  Therefore, use
+   ;; `eval' to avoid compilation.
+   (should-error (eval '(and-let* (nil (x 1))) lexical-binding)
+                 :type 'setting-constant)
    (should (equal nil (and-let* ((nil) (x 1)))))
-   (should-error (and-let* (2 (x 1))) :type 'wrong-type-argument)
+   (should-error (eval (and-let* (2 (x 1))) lexical-binding)
+                 :type 'wrong-type-argument)
    (should (equal 1 (and-let* ((2) (x 1)))))
    (should (equal 2 (and-let* ((x 1) (2)))))
    (should (equal nil (let ((x nil)) (and-let* (x) x))))

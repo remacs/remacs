@@ -1498,17 +1498,18 @@ extern void *__sbrk (ptrdiff_t increment);
 static void *
 gdefault_morecore (ptrdiff_t increment)
 {
-  void *result;
 #ifdef HYBRID_MALLOC
   if (!DUMPED)
     {
       return bss_sbrk (increment);
     }
 #endif
-  result = (void *) __sbrk (increment);
-  if (result == (void *) -1)
-    return NULL;
-  return result;
+#ifdef HAVE_SBRK
+  void *result = (void *) __sbrk (increment);
+  if (result != (void *) -1)
+    return result;
+#endif
+  return NULL;
 }
 
 void *(*__morecore) (ptrdiff_t) = gdefault_morecore;

@@ -170,7 +170,7 @@ This list represents a \"habit\" for the rest of this module."
     (if pom (goto-char pom))
     (cl-assert (org-is-habit-p (point)))
     (let* ((scheduled (org-get-scheduled-time (point)))
-	   (scheduled-repeat (org-get-repeat org-scheduled-string))
+	   (scheduled-repeat (org-get-repeat (org-entry-get (point) "SCHEDULED")))
 	   (end (org-entry-end-position))
 	   (habit-entry (org-no-properties (nth 4 (org-heading-components))))
 	   closed-dates deadline dr-days sr-days sr-type)
@@ -288,7 +288,7 @@ Habits are assigned colors on the following basis:
 	 (deadline (if scheduled-days
 		       (+ scheduled-days (- d-repeat s-repeat))
 		     (org-habit-deadline habit)))
-	 (m-days (or now-days (time-to-days (current-time)))))
+	 (m-days (or now-days (time-to-days nil))))
     (cond
      ((< m-days scheduled)
       '(org-habit-clear-face . org-habit-clear-future-face))
@@ -406,7 +406,7 @@ current time."
   "Insert consistency graph for any habitual tasks."
   (let ((inhibit-read-only t)
 	(buffer-invisibility-spec '(org-link))
-	(moment (time-subtract (current-time)
+	(moment (time-subtract nil
 			       (list 0 (* 3600 org-extend-today-until) 0))))
     (save-excursion
       (goto-char (if line (point-at-bol) (point-min)))

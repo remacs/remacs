@@ -132,7 +132,7 @@
 ;;
 ;;     'c-not-decl
 ;;       Put on the brace which introduces a brace list and on the commas
-;;       which separate the element within it.
+;;       which separate the elements within it.
 ;;
 ;; 'c-awk-NL-prop
 ;;   Used in AWK mode to mark the various kinds of newlines.  See
@@ -1720,7 +1720,7 @@ comment at the start of cc-engine.el for more info."
 	 `((c-debug-remove-face beg end 'c-debug-is-sws-face)
 	   (c-debug-remove-face beg end 'c-debug-in-sws-face)))))
 
-;; The type of literal position `end' is in in a `before-change-functions'
+;; The type of literal position `end' is in a `before-change-functions'
 ;; function - one of `c', `c++', `pound', or nil (but NOT `string').
 (defvar c-sws-lit-type nil)
 ;; A cons (START . STOP) of the bounds of the comment or CPP construct
@@ -2784,7 +2784,7 @@ comment at the start of cc-engine.el for more info."
 
 	    (setq pos npos)
 	    (setq c-state-nonlit-pos-cache (cons pos c-state-nonlit-pos-cache)))
-	  ;; Add one extra element above HERE so as to to avoid the previous
+	  ;; Add one extra element above HERE so as to avoid the previous
 	  ;; expensive calculation when the next call is close to the current
 	  ;; one.  This is especially useful when inside a large macro.
 	  (when npos
@@ -4297,6 +4297,47 @@ comment at the start of cc-engine.el for more info."
       "\\w\\|\\s_\\|\\s\"\\|\\s|"
     "\\w\\|\\s_\\|\\s\""))
 
+(defun c-forward-over-token-and-ws (&optional balanced)
+  "Move forward over a token and any following whitespace
+Return t if we moved, nil otherwise (i.e. we were at EOB, or a
+non-token or BALANCED is non-nil and we can't move).  If we
+are at syntactic whitespace, move over this in place of a token.
+
+If BALANCED is non-nil move over any balanced parens we are at, and never move
+out of an enclosing paren.
+
+This function differs from `c-forward-token-2' in that it will move forward
+over the final token in a buffer, up to EOB."
+  (let ((jump-syntax (if balanced
+			 c-jump-syntax-balanced
+		       c-jump-syntax-unbalanced))
+	(here (point)))
+    (when
+	(condition-case nil
+	    (cond
+	     ((/= (point)
+		  (progn (c-forward-syntactic-ws) (point)))
+	      ;; If we're at whitespace, count this as the token.
+	      t)
+	     ((eobp) nil)
+	     ((looking-at jump-syntax)
+	      (goto-char (scan-sexps (point) 1))
+	      t)
+	     ((looking-at c-nonsymbol-token-regexp)
+	      (goto-char (match-end 0))
+	      t)
+	     ((save-restriction
+		(widen)
+		(looking-at c-nonsymbol-token-regexp))
+	      nil)
+	     (t
+	      (forward-char)
+	      t))
+	  (error (goto-char here)
+		 nil))
+      (c-forward-syntactic-ws)
+      t)))
+
 (defun c-forward-token-2 (&optional count balanced limit)
   "Move forward by tokens.
 A token is defined as all symbols and identifiers which aren't
@@ -4326,15 +4367,11 @@ comment at the start of cc-engine.el for more info."
   (if (< count 0)
       (- (c-backward-token-2 (- count) balanced limit))
 
-    (let ((jump-syntax (if balanced
-			   c-jump-syntax-balanced
-			 c-jump-syntax-unbalanced))
-	  (last (point))
-	  (prev (point)))
-
-      (if (zerop count)
-	  ;; If count is zero we should jump if in the middle of a token.
-	  (c-end-of-current-token))
+    (let ((here (point))
+	  (last (point)))
+      (when (zerop count)
+	;; If count is zero we should jump if in the middle of a token.
+	(c-end-of-current-token))
 
       (save-restriction
 	(if limit (narrow-to-region (point-min) limit))
@@ -4348,43 +4385,15 @@ comment at the start of cc-engine.el for more info."
 	    ;; Moved out of bounds.  Make sure the returned count isn't zero.
 	    (progn
 	      (if (zerop count) (setq count 1))
-	      (goto-char last))
-
-	  ;; Use `condition-case' to avoid having the limit tests
-	  ;; inside the loop.
-	  (condition-case nil
-	      (while (and
-		      (> count 0)
-		      (progn
-			(setq last (point))
-			(cond ((looking-at jump-syntax)
-			       (goto-char (scan-sexps (point) 1))
-			       t)
-			      ((looking-at c-nonsymbol-token-regexp)
-			       (goto-char (match-end 0))
-			       t)
-			      ;; `c-nonsymbol-token-regexp' above should always
-			      ;; match if there are correct tokens.  Try to
-			      ;; widen to see if the limit was set in the
-			      ;; middle of one, else fall back to treating
-			      ;; the offending thing as a one character token.
-			      ((and limit
-				    (save-restriction
-				      (widen)
-				      (looking-at c-nonsymbol-token-regexp)))
-			       nil)
-			      (t
-			       (forward-char)
-			       t))))
-		(c-forward-syntactic-ws)
-		(setq prev last
-		      count (1- count)))
-	    (error (goto-char last)))
-
-	  (when (eobp)
-	    (goto-char prev)
-	    (setq count (1+ count)))))
-
+	      (goto-char here))
+	  (while (and
+		  (> count 0)
+		  (c-forward-over-token-and-ws balanced)
+		  (not (eobp)))
+	    (setq last (point)
+		  count (1- count)))
+	  (if (eobp)
+	      (goto-char last))))
       count)))
 
 (defun c-backward-token-2 (&optional count balanced limit)
@@ -5180,16 +5189,25 @@ comment at the start of cc-engine.el for more info."
   ;; Get a "safe place" approximately TRY-SIZE characters before START.
   ;; This defsubst doesn't preserve point.
   (let* ((pos (max (- start try-size) (point-min)))
-	 (s (c-state-semi-pp-to-literal pos)))
-    (or (car (cddr s)) pos)))
+	 (s (c-state-semi-pp-to-literal pos))
+	 (cand (or (car (cddr s)) pos)))
+    (if (>= cand (point-min))
+	cand
+      (parse-partial-sexp pos start nil nil (car s) 'syntax-table)
+      (point))))
 
 (defun c-determine-limit (how-far-back &optional start try-size)
-  ;; Return a buffer position HOW-FAR-BACK non-literal characters from START
-  ;; (default point).  This is done by going back further in the buffer then
-  ;; searching forward for literals.  The position found won't be in a
-  ;; literal.  We start searching for the sought position TRY-SIZE (default
-  ;; twice HOW-FAR-BACK) bytes back from START.  This function must be fast.
-  ;; :-)
+  ;; Return a buffer position HOW-FAR-BACK non-literal characters from
+  ;; START (default point).  The starting position, either point or
+  ;; START may not be in a comment or string.
+  ;;
+  ;; The position found will not be before POINT-MIN and won't be in a
+  ;; literal.
+  ;;
+  ;; We start searching for the sought position TRY-SIZE (default
+  ;; twice HOW-FAR-BACK) bytes back from START.
+  ;;
+  ;; This function must be fast.  :-)
   (save-excursion
     (let* ((start (or start (point)))
 	   (try-size (or try-size (* 2 how-far-back)))
@@ -5245,6 +5263,8 @@ comment at the start of cc-engine.el for more info."
 	(+ (car elt) (- count how-far-back)))
        ((eq base (point-min))
 	(point-min))
+       ((> base (- start try-size)) ; Can only happen if we hit point-min.
+	(car elt))
        (t
 	(c-determine-limit (- how-far-back count) base try-size))))))
 
@@ -5403,15 +5423,14 @@ comment at the start of cc-engine.el for more info."
 	(min c-bs-cache-limit pos)))
 
 (defun c-update-brace-stack (stack from to)
-  ;; Give a brace-stack which has the value STACK at position FROM, update it
-  ;; to it's value at position TO, where TO is after (or equal to) FROM.
+  ;; Given a brace-stack which has the value STACK at position FROM, update it
+  ;; to its value at position TO, where TO is after (or equal to) FROM.
   ;; Return a cons of either TO (if it is outside a literal) and this new
   ;; value, or of the next position after TO outside a literal and the new
   ;; value.
   (let (match kwd-sym (prev-match-pos 1)
 	      (s (cdr stack))
-	      (bound-<> (car stack))
-	      )
+	      (bound-<> (car stack)))
     (save-excursion
       (cond
        ((and bound-<> (<= to bound-<>))
@@ -5472,6 +5491,9 @@ comment at the start of cc-engine.el for more info."
 	    (setq s (cdr s))))
 	 ((c-keyword-member kwd-sym 'c-flat-decl-block-kwds)
 	  (push 0 s))))
+      ;; The failing `c-syntactic-re-search-forward' may have left us in the
+      ;; middle of a token, which might be a significant token.  Fix this!
+      (c-beginning-of-current-token)
       (cons (point)
 	    (cons bound-<> s)))))
 
@@ -5647,11 +5669,13 @@ comment at the start of cc-engine.el for more info."
   ;; Call CFD-FUN for each possible spot for a declaration, cast or
   ;; label from the point to CFD-LIMIT.
   ;;
-  ;; CFD-FUN is called with point at the start of the spot.  It's passed two
+  ;; CFD-FUN is called with point at the start of the spot.  It's passed three
   ;; arguments: The first is the end position of the token preceding the spot,
   ;; or 0 for the implicit match at bob.  The second is a flag that is t when
-  ;; the match is inside a macro.  Point should be moved forward by at least
-  ;; one token.
+  ;; the match is inside a macro.  The third is a flag that is t when the
+  ;; match is at "top level", i.e. outside any brace block, or directly inside
+  ;; a class or namespace, etc.  Point should be moved forward by at least one
+  ;; token.
   ;;
   ;; If CFD-FUN adds `c-decl-end' properties somewhere below the current spot,
   ;; it should return non-nil to ensure that the next search will find them.
@@ -6038,6 +6062,8 @@ comment at the start of cc-engine.el for more info."
 		   (setq cfd-macro-end 0)
 		   nil))))		; end of when condition
 
+	(when (> cfd-macro-end 0)
+	  (setq cfd-top-level nil))	; In a macro is "never" at top level.
 	(c-debug-put-decl-spot-faces cfd-match-pos (point))
 	(if (funcall cfd-fun cfd-match-pos (/= cfd-macro-end 0) cfd-top-level)
 	    (setq cfd-prop-match nil))
@@ -6418,7 +6444,8 @@ comment at the start of cc-engine.el for more info."
 			      (not (eq (c-get-char-property (point) 'c-type)
 				       'c-decl-arg-start)))))))
       (or (c-forward-<>-arglist nil)
-	  (c-forward-token-2)))))
+	  (c-forward-over-token-and-ws)
+	  (goto-char c-new-END)))))
 
 
 ;; Functions to handle C++ raw strings.
@@ -7136,7 +7163,7 @@ comment at the start of cc-engine.el for more info."
 			  (let ((c-promote-possible-types t)
 				(c-record-found-types t))
 			    (c-forward-type))
-			(c-forward-token-2))))
+			(c-forward-over-token-and-ws))))
 
 		    (c-forward-syntactic-ws)
 
@@ -8096,12 +8123,14 @@ comment at the start of cc-engine.el for more info."
 	 ;; initializing brace lists.
 	 (let (found)
 	   (while
-	       (and (progn
+	       (and (< (point) limit)
+		    (progn
 		      ;; In the next loop, we keep searching forward whilst
 		      ;; we find ":"s which aren't single colons inside C++
 		      ;; "for" statements.
 		      (while
 			  (and
+			   (< (point) limit)
 			   (setq found
 				 (c-syntactic-re-search-forward
 				  "[;:,]\\|\\s)\\|\\(=\\|\\s(\\)"
@@ -8123,7 +8152,7 @@ comment at the start of cc-engine.el for more info."
 		    (c-go-up-list-forward))
 	     (setq brackets-after-id t))
 	   (when found (backward-char))
-	   t))
+	   (<= (point) limit)))
 	(list id-start id-end brackets-after-id (match-beginning 1) decorated)
 
       (goto-char here)
@@ -8575,7 +8604,13 @@ comment at the start of cc-engine.el for more info."
 		 (looking-at c-noise-macro-with-parens-name-re))
 	    (c-forward-noise-clause))
 
-	   ((looking-at c-type-decl-suffix-key)
+	   ((and (looking-at c-type-decl-suffix-key)
+		 ;; We avoid recognizing foo(bar) or foo() at top level as a
+		 ;; construct here in C, since we want to recognize this as a
+		 ;; typeless function declaration.
+		 (not (and (c-major-mode-is 'c-mode)
+			   (eq context 'top)
+			   (eq (char-after) ?\)))))
 	    (if (eq (char-after) ?\))
 		(when (> paren-depth 0)
 		  (setq paren-depth (1- paren-depth))
@@ -8618,7 +8653,12 @@ comment at the start of cc-engine.el for more info."
 				     (save-excursion
 				       (goto-char after-paren-pos)
 				       (c-forward-syntactic-ws)
-				       (c-forward-type)))))
+				       (or (c-forward-type)
+					   ;; Recognize a top-level typeless
+					   ;; function declaration in C.
+					   (and (c-major-mode-is 'c-mode)
+						(eq context 'top)
+						(eq (char-after) ?\))))))))
 			  (setq pos (c-up-list-forward (point)))
 			  (eq (char-before pos) ?\)))
 		 (c-fdoc-shift-type-backward)
@@ -9035,9 +9075,12 @@ comment at the start of cc-engine.el for more info."
 	 ;; (in at least C++) that anything that can be parsed as a declaration
 	 ;; is a declaration.  Now we're being more defensive and prefer to
 	 ;; highlight things like "foo (bar);" as a declaration only if we're
-	 ;; inside an arglist that contains declarations.
-         ;; CASE 19
-	 (eq context 'decl))))
+	 ;; inside an arglist that contains declarations.  Update (2017-09): We
+	 ;; now recognize a top-level "foo(bar);" as a declaration in C.
+	 ;; CASE 19
+	 (or (eq context 'decl)
+	     (and (c-major-mode-is 'c-mode)
+		  (eq context 'top))))))
 
     ;; The point is now after the type decl expression.
 
@@ -9545,6 +9588,7 @@ Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
   ;; Note to maintainers: this function consumes a great mass of CPU cycles.
   ;; Its use should thus be minimized as far as possible.
+  ;; Consider instead using `c-bs-at-toplevel-p'.
   (let ((paren-state (c-parse-state)))
     (or (not (c-most-enclosing-brace paren-state))
 	(c-search-uplist-for-classkey paren-state))))
@@ -9574,8 +9618,15 @@ comment at the start of cc-engine.el for more info."
      (not (and (c-major-mode-is 'objc-mode)
 	       (c-forward-objc-directive)))
 
+     ;; Don't confuse #if .... defined(foo) for a function arglist.
+     (not (and (looking-at c-cpp-expr-functions-key)
+	       (save-excursion
+		 (save-restriction
+		   (widen)
+		   (c-beginning-of-macro lim)))))
      (setq id-start
 	   (car-safe (c-forward-decl-or-cast-1 (c-point 'bosws) 'top nil)))
+     (numberp id-start)
      (< id-start beg)
 
      ;; There should not be a '=' or ',' between beg and the
@@ -9694,8 +9745,8 @@ comment at the start of cc-engine.el for more info."
 		     ;; identifiers?
 		     (progn
 		       (goto-char before-lparen)
-		       (c-forward-token-2) ; to first token inside parens
 		       (and
+			(c-forward-over-token-and-ws) ; to first token inside parens
 			(setq id-start (c-on-identifier)) ; Must be at least one.
 			(catch 'id-list
 			  (while
@@ -9707,7 +9758,7 @@ comment at the start of cc-engine.el for more info."
 				      ids)
 				(c-forward-syntactic-ws)
 				(eq (char-after) ?\,))
-			    (c-forward-token-2)
+			    (c-forward-over-token-and-ws)
 			    (unless (setq id-start (c-on-identifier))
 			      (throw 'id-list nil)))
 			  (eq (char-after) ?\)))))
@@ -10497,10 +10548,10 @@ comment at the start of cc-engine.el for more info."
 	 ((and after-type-id-pos
 	       (save-excursion
 		 (when (eq (char-after) ?\;)
-		   (c-forward-token-2 1 t))
+		   (c-forward-over-token-and-ws t))
 		 (setq bufpos (point))
 		 (when (looking-at c-opt-<>-sexp-key)
-		   (c-forward-token-2)
+		   (c-forward-over-token-and-ws)
 		   (when (and (eq (char-after) ?<)
 			      (c-get-char-property (point) 'syntax-table))
 		     (c-go-list-forward nil after-type-id-pos)

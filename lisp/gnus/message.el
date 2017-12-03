@@ -49,7 +49,8 @@
 (require 'mm-util)
 (require 'rfc2047)
 (require 'puny)
-(require 'subr-x)			; read-multiple-choice
+(require 'rmc)			; read-multiple-choice
+(eval-when-compile (require 'subr-x))	; when-let*
 
 (autoload 'mailclient-send-it "mailclient")
 
@@ -306,7 +307,7 @@ any confusion."
 (defcustom message-subject-trailing-was-query t
   "What to do with trailing \"(was: <old subject>)\" in subject lines.
 If nil, leave the subject unchanged.  If it is the symbol `ask', query
-the user what do do.  In this case, the subject is matched against
+the user what to do.  In this case, the subject is matched against
 `message-subject-trailing-was-ask-regexp'.  If
 `message-subject-trailing-was-query' is t, always strip the trailing
 old subject.  In this case, `message-subject-trailing-was-regexp' is
@@ -991,7 +992,6 @@ are replaced:
   %F   The first name if present, e.g.: \"John\", else fall
        back to the mail address.
   %L   The last name if present, e.g.: \"Doe\".
-  %Z, %z   The time zone in the numeric form, e.g.:\"+0000\".
 
 All other format specifiers are passed to `format-time-string'
 which is called using the date from the article your replying to, but
@@ -4095,7 +4095,7 @@ Instead, just auto-save the buffer and then bury it."
   "Bury this mail BUFFER."
   ;; Note that this is not quite the same as (bury-buffer buffer),
   ;; since bury-buffer does extra stuff with a nil argument.
-  ;; Eg http://lists.gnu.org/archive/html/emacs-devel/2014-01/msg00539.html
+  ;; Eg https://lists.gnu.org/archive/html/emacs-devel/2014-01/msg00539.html
   (with-current-buffer buffer (bury-buffer))
   (if message-return-action
       (apply (car message-return-action) (cdr message-return-action))))
@@ -4346,7 +4346,7 @@ conformance."
 RECIPIENTS is a mail header.  Return a list of potentially bogus
 addresses.  If none is found, return nil.
 
-An address might be bogus if if there's a matching entry in
+An address might be bogus if there's a matching entry in
 `message-bogus-addresses'."
   ;; FIXME: How about "foo@subdomain", when the MTA adds ".domain.tld"?
   (let (found)
@@ -4390,7 +4390,7 @@ This function could be useful in `message-setup-hook'."
 			  (if (string= encoded bog)
 			      ""
 			    (format " (%s)" encoded))))))
-		 (error "Bogus address"))))))))
+		 (user-error "Bogus address"))))))))
 
 (custom-add-option 'message-setup-hook 'message-check-recipients)
 
@@ -6679,7 +6679,7 @@ is a function used to switch to and display the mail buffer."
 	;; C-h f compose-mail says that headers should be specified as
 	;; (string . value); however all the rest of message expects
 	;; headers to be symbols, not strings (eg message-header-format-alist).
-	;; http://lists.gnu.org/archive/html/emacs-devel/2011-01/msg00337.html
+	;; https://lists.gnu.org/archive/html/emacs-devel/2011-01/msg00337.html
 	;; We need to convert any string input, eg from rmail-start-mail.
 	(dolist (h other-headers other-headers)
 	  (if (stringp (car h)) (setcar h (intern (capitalize (car h)))))))
@@ -8060,8 +8060,12 @@ regexp VARSTR."
 		  (or (null varstr)
 		      (string-match varstr (symbol-name (car local)))))
 	 (ignore-errors
-	   (set (make-local-variable (car local))
-		(cdr local)))))
+	   ;; Cloning message-default-charset could cause an already
+	   ;; encoded text to be encoded again, yielding raw bytes
+	   ;; instead of characters in the message.
+	   (unless (eq 'message-default-charset (car local))
+	     (set (make-local-variable (car local))
+		  (cdr local))))))
      locals)))
 
 ;;;

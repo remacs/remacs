@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Added by Kevin Gallo */
 
@@ -22,13 +22,14 @@ along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "frame.h"
 #include "atimer.h"
 
-/* Stack alignment stuff.  Every CALLBACK function should have the
-   ALIGN_STACK attribute if it manipulates Lisp objects, because
-   Windows x86 32-bit ABI only guarantees 4-byte stack alignment, and
-   that is what we will get when a Windows function calls us.  The
-   ALIGN_STACK attribute forces GCC to emit a preamble code to
-   re-align the stack at function entry.  Further details about this
-   can be found in http://www.peterstock.co.uk/games/mingw_sse/.  */
+/* Stack alignment stuff.  Every CALLBACK and thread function should
+   have the ALIGN_STACK attribute if it manipulates Lisp objects,
+   because Windows x86 32-bit ABI only guarantees 4-byte stack
+   alignment, and that is what we will get when a Windows function
+   calls us.  The ALIGN_STACK attribute forces GCC to emit a preamble
+   code to re-align the stack at function entry.  Further details
+   about this can be found in
+   http://www.peterstock.co.uk/games/mingw_sse/.  */
 #ifdef __GNUC__
 # if USE_STACK_LISP_OBJECTS && !defined _WIN64 && !defined __x86_64__	\
   && __GNUC__ + (__GNUC_MINOR__ > 1) >= 5

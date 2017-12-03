@@ -451,7 +451,7 @@ Typically \"page-%s.png\".")
     (if (and (eq 'pdf doc-view-doc-type)
              (executable-find "pdfinfo"))
         ;; We don't want to revert if the PDF file is corrupted which
-        ;; might happen when it it currently recompiled from a tex
+        ;; might happen when it is currently recompiled from a tex
         ;; file.  (TODO: We'd like to have something like that also
         ;; for other types, at least PS, but I don't know a good way
         ;; to test if a PS file is complete.)

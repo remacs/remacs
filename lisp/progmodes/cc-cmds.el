@@ -1821,7 +1821,6 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
   "Return the name of the current defun, or NIL if there isn't one.
 \"Defun\" here means a function, or other top level construct
 with a brace block."
-  (interactive)
   (c-save-buffer-state
       (beginning-of-defun-function end-of-defun-function
        where pos name-end case-fold-search)
@@ -1852,7 +1851,7 @@ with a brace block."
 	   ;; struct, union, enum, or similar:
 	   ((looking-at c-type-prefix-key)
 	    (let ((key-pos (point)))
-	      (c-forward-token-2 1)	; over "struct ".
+	      (c-forward-over-token-and-ws) ; over "struct ".
 	      (cond
 	       ((looking-at c-symbol-key)	; "struct foo { ..."
 		(buffer-substring-no-properties key-pos (match-end 0)))
@@ -2048,6 +2047,23 @@ with a brace block."
 	      (eq (char-after) ?\{)
 	      (cons (point-min) (point-max))))))))
 
+(defun c-display-defun-name (&optional arg)
+  "Display the name of the current CC mode defun and the position in it.
+With a prefix arg, push the name onto the kill ring too."
+  (interactive "P")
+  (save-restriction
+    (widen)
+    (c-save-buffer-state ((name (c-defun-name))
+			  (limits (c-declaration-limits t))
+			  (point-bol (c-point 'bol)))
+      (when name
+	(message "%s.  Line %s/%s." name
+		 (1+ (count-lines (car limits) point-bol))
+		 (count-lines (car limits) (cdr limits)))
+	(if arg (kill-new name))
+	(sit-for 3 t)))))
+(put 'c-display-defun-name 'isearch-scroll t)
+
 (defun c-mark-function ()
   "Put mark at end of the current top-level declaration or macro, point at beginning.
 If point is not inside any then the closest following one is
@@ -2092,7 +2108,6 @@ function does not require the declaration to contain a brace block."
 
 (defun c-cpp-define-name ()
   "Return the name of the current CPP macro, or NIL if we're not in one."
-  (interactive)
   (let (case-fold-search)
     (save-excursion
       (and c-opt-cpp-macro-define-start

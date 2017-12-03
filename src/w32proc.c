@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.  */
+along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /*
    Drew Bliss                   Oct 14, 1993
@@ -838,7 +838,7 @@ alarm (int seconds)
        updates the status of the read accordingly, and signals the 2nd
        event object, char_avail, on whose handle sys_select is
        waiting.  This tells sys_select that the file descriptor
-       allocated for the subprocess or the the stream is ready to be
+       allocated for the subprocess or the stream is ready to be
        read from.
 
    When the subprocess exits or the network/serial stream is closed,

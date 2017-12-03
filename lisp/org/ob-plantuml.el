@@ -46,6 +46,31 @@
   :version "24.1"
   :type 'string)
 
+(defun org-babel-variable-assignments:plantuml (params)
+  "Return a list of PlantUML statements assigning the block's variables.
+PARAMS is a property list of source block parameters, which may
+contain multiple entries for the key `:var'.  `:var' entries in PARAMS
+are expected to be scalar variables."
+  (mapcar
+   (lambda (pair)
+       (format "!define %s %s"
+	       (car pair)
+	       (replace-regexp-in-string "\"" "" (cdr pair))))
+   (org-babel--get-vars params)))
+
+(defun org-babel-plantuml-make-body (body params)
+  "Return PlantUML input string.
+BODY is the content of the source block and PARAMS is a property list
+of source block parameters.  This function relies on the
+`org-babel-expand-body:generic' function to extract `:var' entries
+from PARAMS and on the `org-babel-variable-assignments:plantuml'
+function to convert variables to PlantUML assignments."
+  (concat
+   "@startuml\n"
+   (org-babel-expand-body:generic
+    body params (org-babel-variable-assignments:plantuml params))
+   "\n@enduml"))
+
 (defun org-babel-execute:plantuml (body params)
   "Execute a block of plantuml code with org-babel.
 This function is called by `org-babel-execute-src-block'."
@@ -54,6 +79,7 @@ This function is called by `org-babel-execute-src-block'."
 	 (cmdline (cdr (assq :cmdline params)))
 	 (in-file (org-babel-temp-file "plantuml-"))
 	 (java (or (cdr (assq :java params)) ""))
+	 (full-body (org-babel-plantuml-make-body body params))
 	 (cmd (if (string= "" org-plantuml-jar-path)
 		  (error "`org-plantuml-jar-path' is not set")
 		(concat "java " java " -jar "
@@ -85,7 +111,7 @@ This function is called by `org-babel-execute-src-block'."
 			(org-babel-process-file-name out-file)))))
     (unless (file-exists-p org-plantuml-jar-path)
       (error "Could not find plantuml.jar at %s" org-plantuml-jar-path))
-    (with-temp-file in-file (insert (concat "@startuml\n" body "\n@enduml")))
+    (with-temp-file in-file (insert full-body))
     (message "%s" cmd) (org-babel-eval cmd "")
     nil)) ;; signal that output has already been written to file
 

@@ -25,7 +25,7 @@ less and less available/popular as you move farther back in time.
 
 @item
 For similar reasons, we've reverted back to building our own version
-of of @command{movemail} that retrieves POP3 mail as clear text via
+of @command{movemail} that retrieves POP3 mail as clear text via
 insecure channels.  As you move back in time, the availability of
 secure alternatives to POP3 will diminish, and we are only keen to
 support that.  We've also removed the @option{--with-mailutils}
@@ -94,7 +94,7 @@ happen.  The variables @code{'attempt-stack-overflow-recovery} and
 @code{attempt-orderly-shutdown-on-fatal-signal} are therefore removed.
 
 @item
-The @code{timer-list} command was removed, as we decided timers are
+The @code{list-timers} command was removed, as we decided timers are
 not user-level feature, and therefore users should not be allowed to
 mess with them.  Ask an Emacs Lisp guru near you for help if you have
 a runaway timer in your session.  (Of course, as you move back in

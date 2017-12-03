@@ -112,37 +112,39 @@ window of another Emacs frame.  @xref{Child Frames}.
 * Display Feature Testing::     Determining the features of a terminal.
 @end menu
 
+
 @node Creating Frames
 @section Creating Frames
 @cindex frame creation
 
 To create a new frame, call the function @code{make-frame}.
 
-@deffn Command make-frame &optional alist
+@deffn Command make-frame &optional parameters
 This function creates and returns a new frame, displaying the current
 buffer.
 
-The @var{alist} argument is an alist that specifies frame parameters
-for the new frame.  @xref{Frame Parameters}.  If you specify the
-@code{terminal} parameter in @var{alist}, the new frame is created on
-that terminal.  Otherwise, if you specify the @code{window-system}
-frame parameter in @var{alist}, that determines whether the frame
-should be displayed on a text terminal or a graphical terminal.
-@xref{Window Systems}.  If neither is specified, the new frame is
-created in the same terminal as the selected frame.
+The @var{parameters} argument is an alist that specifies frame
+parameters for the new frame.  @xref{Frame Parameters}.  If you specify
+the @code{terminal} parameter in @var{parameters}, the new frame is
+created on that terminal.  Otherwise, if you specify the
+@code{window-system} frame parameter in @var{parameters}, that
+determines whether the frame should be displayed on a text terminal or a
+graphical terminal.  @xref{Window Systems}.  If neither is specified,
+the new frame is created in the same terminal as the selected frame.
 
-Any parameters not mentioned in @var{alist} default to the values in
-the alist @code{default-frame-alist} (@pxref{Initial Parameters});
+Any parameters not mentioned in @var{parameters} default to the values
+in the alist @code{default-frame-alist} (@pxref{Initial Parameters});
 parameters not specified there default from the X resources or its
 equivalent on your operating system (@pxref{X Resources,, X Resources,
-emacs, The GNU Emacs Manual}).  After the frame is created, Emacs
-applies any parameters listed in @code{frame-inherited-parameters}
-(see below) and not present in the argument, taking the values from
-the frame that was selected when @code{make-frame} was called.
+emacs, The GNU Emacs Manual}).  After the frame is created, this
+function applies any parameters specified in
+@code{frame-inherited-parameters} (see below) it has no assigned yet,
+taking the values from the frame that was selected when
+@code{make-frame} was called.
 
 Note that on multi-monitor displays (@pxref{Multiple Terminals}), the
 window manager might position the frame differently than specified by
-the positional parameters in @var{alist} (@pxref{Position
+the positional parameters in @var{parameters} (@pxref{Position
 Parameters}).  For example, some window managers have a policy of
 displaying the frame on the monitor that contains the largest part of
 the window (a.k.a.@: the @dfn{dominating} monitor).
@@ -158,19 +160,27 @@ A normal hook run by @code{make-frame} before it creates the frame.
 @end defvar
 
 @defvar after-make-frame-functions
-An abnormal hook run by @code{make-frame} after it creates the frame.
-Each function in @code{after-make-frame-functions} receives one argument, the
-frame just created.
+An abnormal hook run by @code{make-frame} after it created the frame.
+Each function in @code{after-make-frame-functions} receives one
+argument, the frame just created.
 @end defvar
+
+Note that any functions added to these hooks by your initial file are
+usually not run for the initial frame, since Emacs reads the initial
+file only after creating that frame.  However, if the initial frame is
+specified to use a separate minibuffer frame (@pxref{Minibuffers and
+Frames}), the functions will be run for both, the minibuffer-less and
+the minibuffer frame.
 
 @defvar frame-inherited-parameters
 This variable specifies the list of frame parameters that a newly
 created frame inherits from the currently selected frame.  For each
-parameter (a symbol) that is an element in the list and is not present
-in the argument to @code{make-frame}, the function sets the value of
-that parameter in the created frame to its value in the selected
-frame.
+parameter (a symbol) that is an element in this list and has not been
+assigned earlier when processing @code{make-frame}, the function sets
+the value of that parameter in the created frame to its value in the
+selected frame.
 @end defvar
+
 
 @node Multiple Terminals
 @section Multiple Terminals
@@ -1200,6 +1210,13 @@ terminal supports colors, the parameters @code{foreground-color},
 @code{display-type} are also meaningful.  If the terminal supports
 frame transparency, the parameter @code{alpha} is also meaningful.
 
+  By default, frame parameters are saved and restored by the desktop
+library functions (@pxref{Desktop Save Mode}) when the variable
+@code{desktop-restore-frames} is non-@code{nil}.  It's the
+responsibility of applications that their parameters are included in
+@code{frameset-persistent-filter-alist} to avoid that they get
+meaningless or even harmful values in restored sessions.
+
 @menu
 * Parameter Access::       How to change a frame's parameters.
 * Initial Parameters::     Specifying frame parameters when you make a frame.
@@ -1840,8 +1857,14 @@ yes, @code{nil} means no, @code{only} means this frame is just a
 minibuffer.  If the value is a minibuffer window (in some other
 frame), the frame uses that minibuffer.
 
-This frame parameter takes effect when the frame is created, and can
-not be changed afterwards.
+This parameter takes effect when the frame is created.  If specified as
+@code{nil}, Emacs will try to set it to the minibuffer window of
+@code{default-minibuffer-frame} (@pxref{Minibuffers and Frames}).  For
+an existing frame, this parameter can be used exclusively to specify
+another minibuffer window.  It is not allowed to change it from a
+minibuffer window to @code{t} and vice-versa, or from @code{t} to
+@code{nil}.  If the parameter specifies a minibuffer window already,
+setting it to @code{nil} has no effect.
 
 @vindex buffer-predicate, a frame parameter
 @item buffer-predicate
@@ -1861,6 +1884,7 @@ most-recently-selected first.
 @item unsplittable
 If non-@code{nil}, this frame's window is never split automatically.
 @end table
+
 
 @node Frame Interaction Parameters
 @subsubsection Frame Interaction Parameters
@@ -3066,15 +3090,14 @@ as long as the parameter is not changed or reset.  Technically, this
 makes the child frame's window-system window a child window of the
 parent frame's window-system window.
 
-@cindex top-level frame
 @cindex reparent frame
 @cindex nest frame
   The @code{parent-frame} parameter can be changed at any time.  Setting
 it to another frame @dfn{reparents} the child frame.  Setting it to
 another child frame makes the frame a @dfn{nested} child frame.  Setting
-it to @code{nil} restores the frame's status as a @dfn{top-level
-frame}---a frame whose window-system window is a child of its display's
-root window.
+it to @code{nil} restores the frame's status as a top-level frame---a
+frame whose window-system window is a child of its display's root
+window.
 
   Since child frames can be arbitrarily nested, a frame can be both a
 child and a parent frame.  Also, the relative roles of child and parent
@@ -3193,7 +3216,11 @@ a number of other ways as well.  Here we sketch a few of them:
 @item
 The semantics of maximizing and iconifying child frames is highly
 window-system dependent.  As a rule, applications should never invoke
-these operations for child frames.
+these operations on child frames.  By default, invoking
+@code{iconify-frame} on a child frame will try to iconify the top-level
+frame corresponding to that child frame instead.  To obtain a different
+behavior, users may customize the option @code{iconify-child-frame}
+described below.
 
 @item
 Raising, lowering and restacking child frames (@pxref{Raising and
@@ -3248,6 +3275,23 @@ Note also the function @code{window-largest-empty-rectangle}
 frame in the largest empty area of an existing window.  This can be
 useful to avoid that a child frame obscures any text shown in that
 window.
+
+Customizing the following option can be useful to tweak the behavior of
+@code{iconify-frame} for child frames.
+
+@defvar iconify-child-frame
+This option tells Emacs how to proceed when it is asked to iconify a
+child frame.  If it is @code{nil}, @code{iconify-frame} will do nothing
+when invoked on a child frame.  If it is @code{iconify-top-level}, Emacs
+will try to iconify the top-level frame that is the ancestor of this
+child frame instead.  If it is @code{make-invisible}, Emacs will try to
+make this child frame invisible instead of iconifying it.
+
+Any other value means to try iconifying the child frame.  Since such an
+attempt may not be honored by all window managers and can even lead to
+making the child frame unresponsive to user actions, the default is to
+iconify the top level frame instead.
+@end defvar
 
 
 @node Mouse Tracking

@@ -2294,11 +2294,13 @@ string_overflow (void)
   error ("Maximum string size exceeded");
 }
 
-DEFUN ("make-string", Fmake_string, Smake_string, 2, 2, 0,
+DEFUN ("make-string", Fmake_string, Smake_string, 2, 3, 0,
        doc: /* Return a newly created string of length LENGTH, with INIT in each element.
 LENGTH must be an integer.
-INIT must be an integer that represents a character.  */)
-  (Lisp_Object length, Lisp_Object init)
+INIT must be an integer that represents a character.
+If optional argument MULTIBYTE is non-nil, the result will be
+a multibyte string even if INIT is an ASCII character.  */)
+  (Lisp_Object length, Lisp_Object init, Lisp_Object multibyte)
 {
   register Lisp_Object val;
   int c;
@@ -2308,7 +2310,7 @@ INIT must be an integer that represents a character.  */)
   CHECK_CHARACTER (init);
 
   c = XFASTINT (init);
-  if (ASCII_CHAR_P (c))
+  if (ASCII_CHAR_P (c) && NILP (multibyte))
     {
       nbytes = XINT (length);
       val = make_uninit_string (nbytes);
@@ -2884,9 +2886,13 @@ set_next_vector (struct Lisp_Vector *v, struct Lisp_Vector *p)
 
 enum
   {
-    /* Alignment of struct Lisp_Vector objects.  */
-    vector_alignment = COMMON_MULTIPLE (FLEXALIGNOF (struct Lisp_Vector),
-					 GCALIGNMENT),
+    /* Alignment of struct Lisp_Vector objects.  Because pseudovectors
+       can contain any C type, align at least as strictly as
+       max_align_t.  On x86 and x86-64 this can waste up to 8 bytes
+       for typical vectors, since alignof (max_align_t) is 16 but
+       typical vectors need only an alignment of 8.  However, it is
+       not worth the hassle to avoid wasting those bytes.  */
+    vector_alignment = COMMON_MULTIPLE (alignof (max_align_t), GCALIGNMENT),
 
     /* Vector size requests are a multiple of this.  */
     roundup_size = COMMON_MULTIPLE (vector_alignment, word_size)
@@ -3887,7 +3893,7 @@ make_event_array (ptrdiff_t nargs, Lisp_Object *args)
   {
     Lisp_Object result;
 
-    result = Fmake_string (make_number (nargs), make_number (0));
+    result = Fmake_string (make_number (nargs), make_number (0), Qnil);
     for (i = 0; i < nargs; i++)
       {
 	SSET (result, i, XINT (args[i]));
@@ -5863,7 +5869,7 @@ mark_pinned_symbols (void)
    where mark_stack finds values that look like live Lisp objects on
    portions of stack that couldn't possibly contain such live objects.
    For more details of this, see the discussion at
-   http://lists.gnu.org/archive/html/emacs-devel/2014-05/msg00270.html.  */
+   https://lists.gnu.org/archive/html/emacs-devel/2014-05/msg00270.html.  */
 static Lisp_Object
 garbage_collect_1 (void *end)
 {
@@ -6988,7 +6994,15 @@ sweep_symbols (void)
           if (!sym->s.gcmarkbit)
             {
               if (sym->s.redirect == SYMBOL_LOCALIZED)
-                xfree (SYMBOL_BLV (&sym->s));
+		{
+                  xfree (SYMBOL_BLV (&sym->s));
+                  /* At every GC we sweep all symbol_blocks and rebuild the
+                     symbol_free_list, so those symbols which stayed unused
+                     between the two will be re-swept.
+                     So we have to make sure we don't re-free this blv next
+                     time we sweep this symbol_block (bug#29066).  */
+                  sym->s.redirect = SYMBOL_PLAINVAL;
+                }
               sym->s.next = symbol_free_list;
               symbol_free_list = &sym->s;
               symbol_free_list->function = Vdead;

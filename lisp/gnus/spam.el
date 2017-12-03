@@ -628,7 +628,7 @@ order for SpamAssassin to recognize the new registered spam."
   :group 'spam-spamassassin)
 
 (defcustom spam-sa-learn-unregister-switch "--forget"
-  "The switch that sa-learn uses to unregister messages messages."
+  "The switch that sa-learn uses to unregister messages."
   :type 'string
   :group 'spam-spamassassin)
 

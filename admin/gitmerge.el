@@ -67,7 +67,7 @@ re-?generate\\|bump version\\|from trunk\\|Auto-commit"
   '((t (:strike-through t)))
   "Face for skipped commits.")
 
-(defconst gitmerge-default-branch "origin/emacs-25"
+(defconst gitmerge-default-branch "origin/emacs-26"
   "Default for branch that should be merged.")
 
 (defconst gitmerge-buffer "*gitmerge*"
@@ -400,7 +400,7 @@ Throw an user-error if we cannot resolve automatically."
 		    "\n  - You can safely close this Emacs session and do this "
 		    "in a new one."
 		    "\n  - When running gitmerge again, remember that you must "
-		    "that from within the Emacs repo.\n")
+		    "do that from within the Emacs repo.\n")
 	    (pop-to-buffer (current-buffer)))
 	  (user-error "Resolve the conflicts manually"))))))
 

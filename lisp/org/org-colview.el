@@ -94,11 +94,8 @@ in `org-columns-summary-types-default', which see."
 
 ;;; Column View
 
-(defvar org-columns-overlays nil
+(defvar-local org-columns-overlays nil
   "Holds the list of current column overlays.")
-
-(defvar org-columns--time 0.0
-  "Number of seconds since the epoch, as a floating point number.")
 
 (defvar-local org-columns-current-fmt nil
   "Local variable, holds the currently active column format.")
@@ -110,11 +107,14 @@ This is the compiled version of the format.")
 (defvar-local org-columns-current-maxwidths nil
   "Currently active maximum column widths, as a vector.")
 
-(defvar org-columns-begin-marker (make-marker)
+(defvar-local org-columns-begin-marker nil
   "Points to the position where last a column creation command was called.")
 
-(defvar org-columns-top-level-marker (make-marker)
+(defvar-local org-columns-top-level-marker nil
   "Points to the position where current columns region starts.")
+
+(defvar org-columns--time 0.0
+  "Number of seconds since the epoch, as a floating point number.")
 
 (defvar org-columns-map (make-sparse-keymap)
   "The keymap valid in column display.")
@@ -264,7 +264,7 @@ possible to override it with optional argument COMPILED-FMT."
 			     org-agenda-columns-add-appointments-to-effort-sum
 			     (string= p (upcase org-effort-property))
 			     (get-text-property (point) 'duration)
-			     (propertize (org-minutes-to-clocksum-string
+			     (propertize (org-duration-from-minutes
 					  (get-text-property (point) 'duration))
 					 'face 'org-warning))
 			"")))
@@ -458,23 +458,23 @@ for the duration of the command.")
 (defun org-columns-remove-overlays ()
   "Remove all currently active column overlays."
   (interactive)
-  (when (marker-buffer org-columns-begin-marker)
-    (with-current-buffer (marker-buffer org-columns-begin-marker)
-      (when (local-variable-p 'org-previous-header-line-format)
-	(setq header-line-format org-previous-header-line-format)
-	(kill-local-variable 'org-previous-header-line-format)
-	(remove-hook 'post-command-hook 'org-columns-hscroll-title 'local))
-      (move-marker org-columns-begin-marker nil)
-      (move-marker org-columns-top-level-marker nil)
-      (org-with-silent-modifications
-       (mapc 'delete-overlay org-columns-overlays)
-       (setq org-columns-overlays nil)
-       (let ((inhibit-read-only t))
-	 (remove-text-properties (point-min) (point-max) '(read-only t))))
-      (when org-columns-flyspell-was-active
-	(flyspell-mode 1))
-      (when (local-variable-p 'org-colview-initial-truncate-line-value)
-	(setq truncate-lines org-colview-initial-truncate-line-value)))))
+  (when org-columns-overlays
+    (when (local-variable-p 'org-previous-header-line-format)
+      (setq header-line-format org-previous-header-line-format)
+      (kill-local-variable 'org-previous-header-line-format)
+      (remove-hook 'post-command-hook 'org-columns-hscroll-title 'local))
+    (set-marker org-columns-begin-marker nil)
+    (when (markerp org-columns-top-level-marker)
+      (set-marker org-columns-top-level-marker nil))
+    (org-with-silent-modifications
+     (mapc #'delete-overlay org-columns-overlays)
+     (setq org-columns-overlays nil)
+     (let ((inhibit-read-only t))
+       (remove-text-properties (point-min) (point-max) '(read-only t))))
+    (when org-columns-flyspell-was-active
+      (flyspell-mode 1))
+    (when (local-variable-p 'org-colview-initial-truncate-line-value)
+      (setq truncate-lines org-colview-initial-truncate-line-value))))
 
 (defun org-columns-compact-links (s)
   "Replace [[link][desc]] with [desc] or [link]."
@@ -540,7 +540,7 @@ Where possible, use the standard interface for changing this line."
 	 (eol (line-end-position))
 	 (pom (or (get-text-property bol 'org-hd-marker) (point)))
 	 (key (or key (get-char-property (point) 'org-columns-key)))
-	 (org-columns--time (float-time (current-time)))
+	 (org-columns--time (float-time))
 	 (action
 	  (pcase key
 	    ("CLOCKSUM"
@@ -613,20 +613,20 @@ Where possible, use the standard interface for changing this line."
   (let* ((pom (or (org-get-at-bol 'org-marker)
 		  (org-get-at-bol 'org-hd-marker)
 		  (point)))
-	 (key (get-char-property (point) 'org-columns-key))
-	 (key1 (concat key "_ALL"))
-	 (allowed (org-entry-get pom key1 t))
-	 nval)
+	 (key (concat (or (get-char-property (point) 'org-columns-key)
+			  (user-error "No column to edit at point"))
+		      "_ALL"))
+	 (allowed (org-entry-get pom key t))
+	 (new-value (read-string "Allowed: " allowed)))
     ;; FIXME: Cover editing TODO, TAGS etc in-buffer settings.????
     ;; FIXME: Write back to #+PROPERTY setting if that is needed.
-    (setq nval (read-string "Allowed: " allowed))
     (org-entry-put
      (cond ((marker-position org-entry-property-inherited-from)
 	    org-entry-property-inherited-from)
 	   ((marker-position org-columns-top-level-marker)
 	    org-columns-top-level-marker)
 	   (t pom))
-     key1 nval)))
+     key new-value)))
 
 (defun org-columns--call (fun)
   "Call function FUN while preserving heading visibility.
@@ -760,6 +760,8 @@ current specifications.  This function also sets
 (defun org-columns-goto-top-level ()
   "Move to the beginning of the column view area.
 Also sets `org-columns-top-level-marker' to the new position."
+  (unless (markerp org-columns-top-level-marker)
+    (setq org-columns-top-level-marker (make-marker)))
   (goto-char
    (move-marker
     org-columns-top-level-marker
@@ -782,11 +784,13 @@ When COLUMNS-FMT-STRING is non-nil, use it as the column format."
   (interactive "P")
   (org-columns-remove-overlays)
   (when global (goto-char (point-min)))
-  (move-marker org-columns-begin-marker (point))
+  (if (markerp org-columns-begin-marker)
+      (move-marker org-columns-begin-marker (point))
+    (setq org-columns-begin-marker (point-marker)))
   (org-columns-goto-top-level)
   ;; Initialize `org-columns-current-fmt' and
   ;; `org-columns-current-fmt-compiled'.
-  (let ((org-columns--time (float-time (current-time))))
+  (let ((org-columns--time (float-time)))
     (org-columns-get-format columns-fmt-string)
     (unless org-columns-inhibit-recalculation (org-columns-compute-all))
     (save-excursion
@@ -940,29 +944,28 @@ starting the current column display, or in a #+COLUMNS line of
 the current buffer."
   (let ((fmt (org-columns-uncompile-format org-columns-current-fmt-compiled)))
     (setq-local org-columns-current-fmt fmt)
-    (when (marker-position org-columns-top-level-marker)
-      (org-with-wide-buffer
-       (goto-char org-columns-top-level-marker)
-       (if (and (org-at-heading-p) (org-entry-get nil "COLUMNS"))
-	   (org-entry-put nil "COLUMNS" fmt)
-	 (goto-char (point-min))
-	 (let ((case-fold-search t))
-	   ;; Try to replace the first COLUMNS keyword available.
-	   (catch :found
-	     (while (re-search-forward "^[ \t]*#\\+COLUMNS:\\(.*\\)" nil t)
-	       (let ((element (save-match-data (org-element-at-point))))
-		 (when (and (eq (org-element-type element) 'keyword)
-			    (equal (org-element-property :key element)
-				   "COLUMNS"))
-		   (replace-match (concat " " fmt) t t nil 1)
-		   (throw :found nil))))
-	     ;; No COLUMNS keyword in the buffer.  Insert one at the
-	     ;; beginning, right before the first heading, if any.
-	     (goto-char (point-min))
-	     (unless (org-at-heading-p t) (outline-next-heading))
-	     (let ((inhibit-read-only t))
-	       (insert-before-markers "#+COLUMNS: " fmt "\n"))))
-	 (setq-local org-columns-default-format fmt))))))
+    (when org-columns-overlays
+      (org-with-point-at org-columns-top-level-marker
+	(if (and (org-at-heading-p) (org-entry-get nil "COLUMNS"))
+	    (org-entry-put nil "COLUMNS" fmt)
+	  (goto-char (point-min))
+	  (let ((case-fold-search t))
+	    ;; Try to replace the first COLUMNS keyword available.
+	    (catch :found
+	      (while (re-search-forward "^[ \t]*#\\+COLUMNS:\\(.*\\)" nil t)
+		(let ((element (save-match-data (org-element-at-point))))
+		  (when (and (eq (org-element-type element) 'keyword)
+			     (equal (org-element-property :key element)
+				    "COLUMNS"))
+		    (replace-match (concat " " fmt) t t nil 1)
+		    (throw :found nil))))
+	      ;; No COLUMNS keyword in the buffer.  Insert one at the
+	      ;; beginning, right before the first heading, if any.
+	      (goto-char (point-min))
+	      (unless (org-at-heading-p t) (outline-next-heading))
+	      (let ((inhibit-read-only t))
+		(insert-before-markers "#+COLUMNS: " fmt "\n"))))
+	  (setq-local org-columns-default-format fmt))))))
 
 (defun org-columns-update (property)
   "Recompute PROPERTY, and update the columns display for it."
@@ -994,18 +997,17 @@ the current buffer."
 (defun org-columns-redo ()
   "Construct the column display again."
   (interactive)
-  (message "Recomputing columns...")
-  (org-with-wide-buffer
-   (when (marker-position org-columns-begin-marker)
-     (goto-char org-columns-begin-marker))
-   (org-columns-remove-overlays)
-   (if (derived-mode-p 'org-mode)
-       ;; Since we already know the columns format, provide it instead
-       ;; of computing again.
-       (call-interactively #'org-columns org-columns-current-fmt)
-     (org-agenda-redo)
-     (call-interactively #'org-agenda-columns)))
-  (message "Recomputing columns...done"))
+  (when org-columns-overlays
+    (message "Recomputing columns...")
+    (org-with-point-at org-columns-begin-marker
+      (org-columns-remove-overlays)
+      (if (derived-mode-p 'org-mode)
+	  ;; Since we already know the columns format, provide it
+	  ;; instead of computing again.
+	  (call-interactively #'org-columns org-columns-current-fmt)
+	(org-agenda-redo)
+	(call-interactively #'org-agenda-columns)))
+    (message "Recomputing columns...done")))
 
 (defun org-columns-uncompile-format (compiled)
   "Turn the compiled columns format back into a string representation.
@@ -1060,63 +1062,40 @@ This function updates `org-columns-current-fmt-compiled'."
 
 ;;;; Column View Summary
 
-(defconst org-columns--duration-re
-  (concat "[0-9.]+ *" (regexp-opt (mapcar #'car org-effort-durations)))
-  "Regexp matching a duration.")
-
-(defun org-columns--time-to-seconds (s)
-  "Turn time string S into a number of seconds.
-A time is expressed as HH:MM, HH:MM:SS, or with units defined in
-`org-effort-durations'.  Plain numbers are considered as hours."
-  (cond
-   ((string-match-p org-columns--duration-re s)
-    (* 60 (org-duration-string-to-minutes s)))
-   ((string-match "\\`\\([0-9]+\\):\\([0-9]+\\)\\(?::\\([0-9]+\\)\\)?\\'" s)
-    (+ (* 3600 (string-to-number (match-string 1 s)))
-       (* 60 (string-to-number (match-string 2 s)))
-       (if (match-end 3) (string-to-number (match-string 3 s)) 0)))
-   (t (* 3600 (string-to-number s)))))
-
-(defun org-columns--age-to-seconds (s)
-  "Turn age string S into a number of seconds.
+(defun org-columns--age-to-minutes (s)
+  "Turn age string S into a number of minutes.
 An age is either computed from a given time-stamp, or indicated
-as days/hours/minutes/seconds."
+as a canonical duration, i.e., using units defined in
+`org-duration-canonical-units'."
   (cond
    ((string-match-p org-ts-regexp s)
-    (floor
-     (- org-columns--time
-	(float-time (apply #'encode-time (org-parse-time-string s nil t))))))
-   ;; Match own output for computations in upper levels.
-   ((string-match "\\([0-9]+\\)d \\([0-9]+\\)h \\([0-9]+\\)m \\([0-9]+\\)s" s)
-    (+ (* 86400 (string-to-number (match-string 1 s)))
-       (* 3600 (string-to-number (match-string 2 s)))
-       (* 60 (string-to-number (match-string 3 s)))
-       (string-to-number (match-string 4 s))))
+    (/ (- org-columns--time
+	  (float-time (apply #'encode-time (org-parse-time-string s nil t))))
+       60))
+   ((org-duration-p s) (org-duration-to-minutes s t)) ;skip user units
    (t (user-error "Invalid age: %S" s))))
+
+(defun org-columns--format-age (minutes)
+  "Format MINUTES float as an age string."
+  (org-duration-from-minutes minutes
+			     '(("d" . nil) ("h" . nil) ("min" . nil))
+			     t))	;ignore user's custom units
 
 (defun org-columns--summary-apply-times (fun times)
   "Apply FUN to time values TIMES.
-If TIMES contains any time value expressed as a duration, return
-the result as a duration.  If it contains any H:M:S, use that
-format instead.  Otherwise, use H:M format."
-  (let* ((hms-flag nil)
-	 (duration-flag nil)
-	 (seconds
-	  (apply fun
-		 (mapcar
-		  (lambda (time)
-		    (cond
-		     (duration-flag)
-		     ((string-match-p org-columns--duration-re time)
-		      (setq duration-flag t))
-		     (hms-flag)
-		     ((string-match-p "\\`[0-9]+:[0-9]+:[0-9]+\\'" time)
-		      (setq hms-flag t)))
-		    (org-columns--time-to-seconds time))
-		  times))))
-    (cond (duration-flag (org-minutes-to-clocksum-string (/ seconds 60.0)))
-	  (hms-flag (format-seconds "%h:%.2m:%.2s" seconds))
-	  (t (format-seconds "%h:%.2m" seconds)))))
+Return the result as a duration."
+  (org-duration-from-minutes
+   (apply fun
+	  (mapcar (lambda (time)
+		    ;; Unlike to `org-duration-to-minutes' standard
+		    ;; behavior, we want to consider plain numbers as
+		    ;; hours.  As a consequence, we treat them
+		    ;; differently.
+		    (if (string-match-p "\\`[0-9]+\\(?:\\.[0-9]*\\)?\\'" time)
+			(* 60 (string-to-number time))
+		      (org-duration-to-minutes time)))
+		  times))
+   (org-duration-h:mm-only-p times)))
 
 (defun org-columns--compute-spec (spec &optional update)
   "Update tree according to SPEC.
@@ -1203,7 +1182,7 @@ column specification."
   "Compute all columns that have operators defined."
   (org-with-silent-modifications
    (remove-text-properties (point-min) (point-max) '(org-summaries t)))
-  (let ((org-columns--time (float-time (current-time)))
+  (let ((org-columns--time (float-time))
 	seen)
     (dolist (spec org-columns-current-fmt-compiled)
       (let ((property (car spec)))
@@ -1283,21 +1262,18 @@ When PRINTF is non-nil, use it to format the result."
 
 (defun org-columns--summary-min-age (ages _)
   "Compute the minimum time among AGES."
-  (format-seconds
-   "%dd %.2hh %mm %ss"
-   (apply #'min (mapcar #'org-columns--age-to-seconds ages))))
+  (org-columns--format-age
+   (apply #'min (mapcar #'org-columns--age-to-minutes ages))))
 
 (defun org-columns--summary-max-age (ages _)
   "Compute the maximum time among AGES."
-  (format-seconds
-   "%dd %.2hh %mm %ss"
-   (apply #'max (mapcar #'org-columns--age-to-seconds ages))))
+  (org-columns--format-age
+   (apply #'max (mapcar #'org-columns--age-to-minutes ages))))
 
 (defun org-columns--summary-mean-age (ages _)
   "Compute the minimum time among AGES."
-  (format-seconds
-   "%dd %.2hh %mm %ss"
-   (/ (apply #'+ (mapcar #'org-columns--age-to-seconds ages))
+  (org-columns--format-age
+   (/ (apply #'+ (mapcar #'org-columns--age-to-minutes ages))
       (float (length ages)))))
 
 (defun org-columns--summary-estimate (estimates _)
@@ -1515,8 +1491,10 @@ PARAMS is a property list of parameters:
   "Turn on or update column view in the agenda."
   (interactive)
   (org-columns-remove-overlays)
-  (move-marker org-columns-begin-marker (point))
-  (let* ((org-columns--time (float-time (current-time)))
+  (if (markerp org-columns-begin-marker)
+      (move-marker org-columns-begin-marker (point))
+    (setq org-columns-begin-marker (point-marker)))
+  (let* ((org-columns--time (float-time))
 	 (fmt
 	  (cond
 	   ((bound-and-true-p org-agenda-overriding-columns-format))
@@ -1634,26 +1612,23 @@ This will add overlays to the date lines, to show the summary for each day."
 
 (defun org-agenda-colview-compute (fmt)
   "Compute the relevant columns in the contributing source buffers."
-  (let ((files org-agenda-contributing-files)
-	(org-columns-begin-marker (make-marker))
-	(org-columns-top-level-marker (make-marker)))
-    (dolist (f files)
-      (let ((b (find-buffer-visiting f)))
-	(with-current-buffer (or (buffer-base-buffer b) b)
-	  (org-with-wide-buffer
-	   (org-with-silent-modifications
-	    (remove-text-properties (point-min) (point-max) '(org-summaries t)))
-	   (goto-char (point-min))
-	   (org-columns-get-format-and-top-level)
-	   (dolist (spec fmt)
-	     (let ((prop (car spec)))
-	       (cond
-		((equal prop "CLOCKSUM") (org-clock-sum))
-		((equal prop "CLOCKSUM_T") (org-clock-sum-today))
-		((and (nth 3 spec)
-		      (let ((a (assoc prop org-columns-current-fmt-compiled)))
-			(equal (nth 3 a) (nth 3 spec))))
-		 (org-columns-compute prop)))))))))))
+  (dolist (file org-agenda-contributing-files)
+    (let ((b (find-buffer-visiting file)))
+      (with-current-buffer (or (buffer-base-buffer b) b)
+	(org-with-wide-buffer
+	 (org-with-silent-modifications
+	  (remove-text-properties (point-min) (point-max) '(org-summaries t)))
+	 (goto-char (point-min))
+	 (org-columns-get-format-and-top-level)
+	 (dolist (spec fmt)
+	   (let ((prop (car spec)))
+	     (cond
+	      ((equal prop "CLOCKSUM") (org-clock-sum))
+	      ((equal prop "CLOCKSUM_T") (org-clock-sum-today))
+	      ((and (nth 3 spec)
+		    (let ((a (assoc prop org-columns-current-fmt-compiled)))
+		      (equal (nth 3 a) (nth 3 spec))))
+	       (org-columns-compute prop))))))))))
 
 
 (provide 'org-colview)

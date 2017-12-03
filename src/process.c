@@ -3626,7 +3626,7 @@ usage: (make-network-process &rest ARGS)  */)
   Lisp_Object proc;
   Lisp_Object contact;
   struct Lisp_Process *p;
-  const char *portstring;
+  const char *portstring UNINIT;
   ptrdiff_t portstringlen ATTRIBUTE_UNUSED;
   char portbuf[INT_BUFSIZE_BOUND (EMACS_INT)];
 #ifdef HAVE_LOCAL_SOCKETS
@@ -7607,7 +7607,6 @@ syms_of_process (void)
   DEFSYM (Qreal, "real");
   DEFSYM (Qnetwork, "network");
   DEFSYM (Qserial, "serial");
-  DEFSYM (Qpipe, "pipe");
   DEFSYM (QCbuffer, ":buffer");
   DEFSYM (QChost, ":host");
   DEFSYM (QCservice, ":service");

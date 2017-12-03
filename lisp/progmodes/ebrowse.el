@@ -3034,7 +3034,7 @@ the first derived class."
      :help "Show the base class of this class"
      :active t]
     ["Down" ebrowse-switch-member-buffer-to-derived-class
-     :help "Show a derived class class of this class"
+     :help "Show a derived class of this class"
      :active t]
     ["Next Sibling" ebrowse-switch-member-buffer-to-next-sibling-class
      :help "Show the next sibling class"

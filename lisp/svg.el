@@ -157,7 +157,27 @@ otherwise.  IMAGE-TYPE should be a MIME image type, like
    (dom-node
     'text
     `(,@(svg--arguments svg args))
-    text)))
+    (svg--encode-text text))))
+
+(defun svg--encode-text (text)
+  ;; Apparently the SVG renderer needs to have all non-ASCII
+  ;; characters encoded, and only certain special characters.
+  (with-temp-buffer
+    (insert text)
+    (dolist (substitution '(("&" . "&amp;")
+			    ("<" . "&lt;")
+			    (">" . "&gt;")))
+      (goto-char (point-min))
+      (while (search-forward (car substitution) nil t)
+	(replace-match (cdr substitution) t t nil)))
+    (goto-char (point-min))
+    (while (not (eobp))
+      (let ((char (following-char)))
+        (if (< char 128)
+            (forward-char 1)
+          (delete-char 1)
+          (insert "&#" (format "%d" char) ";"))))
+    (buffer-string)))
 
 (defun svg--append (svg node)
   (let ((old (and (dom-attr node 'id)

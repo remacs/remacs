@@ -3628,8 +3628,7 @@ possible values."
 (defun article-lapsed-string (time &optional max-segments)
   ;; If the date is seriously mangled, the timezone functions are
   ;; liable to bug out, so we ignore all errors.
-  (let* ((now (current-time))
-	 (real-time (time-subtract now time))
+  (let* ((real-time (time-subtract nil time))
 	 (real-sec (and real-time
 			(+ (* (float (car real-time)) 65536)
 			   (cadr real-time))))
@@ -6984,6 +6983,7 @@ If given a prefix, show the hidden text instead."
 	(save-excursion
 	  (erase-buffer)
 	  (gnus-kill-all-overlays)
+	  (setq bidi-paragraph-direction nil)
 	  (setq group (or group gnus-newsgroup-name))
 
 	  ;; Using `gnus-request-article' directly will insert the article into
@@ -7091,6 +7091,7 @@ If given a prefix, show the hidden text instead."
 	      (while (not result)
 		(erase-buffer)
 		(gnus-kill-all-overlays)
+		(setq bidi-paragraph-direction nil)
 		(let ((gnus-newsgroup-name group))
 		  (gnus-check-group-server))
 		(cond

@@ -391,8 +391,8 @@ DEFAULT is returned if no priority is given in the headline."
 (defun org-mouse-delete-timestamp ()
   "Deletes the current timestamp as well as the preceding keyword.
 SCHEDULED: or DEADLINE: or ANYTHINGLIKETHIS:"
-  (when (or (org-at-date-range-p) (org-at-timestamp-p))
-    (replace-match "")			; delete the timestamp
+  (when (or (org-at-date-range-p) (org-at-timestamp-p 'lax))
+    (replace-match "")			;delete the timestamp
     (skip-chars-backward " :A-Z")
     (when (looking-at " *[A-Z][A-Z]+:")
       (replace-match ""))))
@@ -516,7 +516,6 @@ SCHEDULED: or DEADLINE: or ANYTHINGLIKETHIS:"
      ["Check Phrase ..." org-occur]
      "--"
      ["Display Agenda" org-agenda-list t]
-     ["Display Timeline" org-timeline t]
      ["Display TODO List" org-todo-list t]
      ("Display Tags"
       ,@(org-mouse-keyword-menu
@@ -715,7 +714,7 @@ This means, between the beginning of line and the point."
 	  (org-tags-sparse-tree nil ,(match-string 1))]
 	 "--"
 	 ,@(org-mouse-tag-menu))))
-     ((org-at-timestamp-p)
+     ((org-at-timestamp-p 'lax)
       (popup-menu
        '(nil
 	 ["Show Day" org-open-at-point t]
@@ -1044,21 +1043,21 @@ This means, between the beginning of line and the point."
 		     org-agenda-undo-list)]
 	 ["Rebuild Buffer" org-agenda-redo t]
 	 ["New Diary Entry"
-	  org-agenda-diary-entry (org-agenda-check-type nil 'agenda 'timeline) t]
+	  org-agenda-diary-entry (org-agenda-check-type nil 'agenda) t]
 	 "--"
 	 ["Goto Today" org-agenda-goto-today
-	  (org-agenda-check-type nil 'agenda 'timeline) t]
+	  (org-agenda-check-type nil 'agenda) t]
 	 ["Display Calendar" org-agenda-goto-calendar
-	  (org-agenda-check-type nil 'agenda 'timeline) t]
+	  (org-agenda-check-type nil 'agenda) t]
 	 ("Calendar Commands"
 	  ["Phases of the Moon" org-agenda-phases-of-moon
-	   (org-agenda-check-type nil 'agenda 'timeline)]
+	   (org-agenda-check-type nil 'agenda)]
 	  ["Sunrise/Sunset" org-agenda-sunrise-sunset
-	   (org-agenda-check-type nil 'agenda 'timeline)]
+	   (org-agenda-check-type nil 'agenda)]
 	  ["Holidays" org-agenda-holidays
-	   (org-agenda-check-type nil 'agenda 'timeline)]
+	   (org-agenda-check-type nil 'agenda)]
 	  ["Convert" org-agenda-convert-date
-	   (org-agenda-check-type nil 'agenda 'timeline)]
+	   (org-agenda-check-type nil 'agenda)]
 	  "--"
 	  ["Create iCalendar file" org-icalendar-combine-agenda-files t])
 	 "--"
@@ -1071,7 +1070,7 @@ This means, between the beginning of line and the point."
 	 "--"
 	 ["Show Logbook entries" org-agenda-log-mode
 	  :style toggle :selected org-agenda-show-log
-	  :active (org-agenda-check-type nil 'agenda 'timeline)]
+	  :active (org-agenda-check-type nil 'agenda)]
 	 ["Include Diary" org-agenda-toggle-diary
 	  :style toggle :selected org-agenda-include-diary
 	  :active (org-agenda-check-type nil 'agenda)]

@@ -995,6 +995,20 @@ when the entire buffer is visible.
   The visual appearance of the scroll bars is controlled by the
 @code{scroll-bar} face.
 
+@cindex vertical border
+  On graphical frames, vertical scroll bars implicitly serve to separate
+side-by-side windows visually.  When vertical scroll bars are disabled,
+Emacs by default separates such windows with the help of a one-pixel
+wide @dfn{vertical border}.  That border occupies the first pixel column
+of the window on the right and may thus overdraw the leftmost pixels of
+any glyph displayed there.  If these pixels convey important
+information, you can make them visible by enabling window dividers, see
+@ref{Window Dividers}.  To replicate the look of vertical borders, set
+the @code{right-divider-width} parameter of frames to one and have the
+@code{window-divider} face inherit from that of @code{vertical-border},
+@ref{Window Dividers,, Window Dividers, elisp, The Emacs Lisp Reference
+Manual}.
+
 @cindex Horizontal Scroll Bar
 @cindex Horizontal Scroll Bar mode
   On graphical displays with toolkit support, Emacs may also supply a
@@ -1053,7 +1067,12 @@ window-divider-mode}.
 customize the options @code{window-divider-default-bottom-width} and
 @code{window-divider-default-right-width}.
 
-   For more details about window dividers see @ref{Window Dividers,,
+  When vertical scroll bars are disabled, dividers can be also useful to
+make the first pixel column of a window visible which would be otherwise
+covered by the vertical border used to separate side-by-side windows
+(@pxref{Scroll Bars}).
+
+For more details about window dividers see @ref{Window Dividers,,
 Window Dividers, elisp, The Emacs Lisp Reference Manual}.
 
 @node Drag and Drop

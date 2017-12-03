@@ -214,8 +214,8 @@ file named by `eshell-aliases-file'.")
 
 (defvar eshell-prevent-alias-expansion nil)
 
-(defun eshell-maybe-replace-by-alias (command args)
-  "If COMMAND has an alias definition, call that instead using ARGS."
+(defun eshell-maybe-replace-by-alias (command _args)
+  "Call COMMAND's alias definition, if it exists."
   (unless (and eshell-prevent-alias-expansion
 	       (member command eshell-prevent-alias-expansion))
     (let ((alias (eshell-lookup-alias command)))
@@ -225,7 +225,7 @@ file named by `eshell-aliases-file'.")
                         (eshell-command-arguments ',eshell-last-arguments)
                         (eshell-prevent-alias-expansion
                          ',(cons command eshell-prevent-alias-expansion)))
-                    ,(eshell-parse-command (nth 1 alias) args)))))))
+                    ,(eshell-parse-command (nth 1 alias))))))))
 
 (defun eshell-alias-completions (name)
   "Find all possible completions for NAME.

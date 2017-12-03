@@ -627,7 +627,7 @@ callback data (if any)."
     ;; Record modified time of gpg-agent socket to restore the Emacs
     ;; frame on text terminal in `epg-wait-for-completion'.
     ;; See
-    ;; <http://lists.gnu.org/archive/html/emacs-devel/2007-02/msg00755.html>
+    ;; <https://lists.gnu.org/archive/html/emacs-devel/2007-02/msg00755.html>
     ;; for more details.
     (when (and agent-info (string-match "\\(.*\\):[0-9]+:[0-9]+" agent-info))
       (setq agent-file (match-string 1 agent-info)
@@ -757,9 +757,8 @@ callback data (if any)."
   ;; Restore Emacs frame on text terminal, when pinentry-curses has terminated.
   (if (with-current-buffer (process-buffer (epg-context-process context))
 	(and epg-agent-file
-	     (> (float-time (or (nth 5 (file-attributes epg-agent-file))
-				'(0 0 0 0)))
-		(float-time epg-agent-mtime))))
+	     (time-less-p epg-agent-mtime
+			  (or (nth 5 (file-attributes epg-agent-file)) 0))))
       (redraw-frame))
   (epg-context-set-result-for
    context 'error

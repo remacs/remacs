@@ -301,12 +301,16 @@ bound to the current value of the filter.
        (defun ,fn-name (qualifier)
 	 ,(or documentation "This filter is not documented.")
 	 (interactive (list ,reader))
-	 (ibuffer-push-filter (cons ',name qualifier))
-	 (message "%s"
-		  (format ,(concat (format "Filter by %s added: " description)
-				   " %s")
-			  qualifier))
-	 (ibuffer-update nil t))
+	 (if (null (ibuffer-push-filter (cons ',name qualifier)))
+	     (message "%s"
+		      (format ,(concat (format "Filter by %s already applied: " description)
+				       " %s")
+			      qualifier))
+           (message "%s"
+		    (format ,(concat (format "Filter by %s added: " description)
+				     " %s")
+			    qualifier))
+	   (ibuffer-update nil t)))
        (push (list ',name ,description
 		   (lambda (buf qualifier)
                      (condition-case nil

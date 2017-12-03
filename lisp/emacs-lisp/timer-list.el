@@ -25,7 +25,7 @@
 ;;; Code:
 
 ;;;###autoload
-(defun timer-list (&optional _ignore-auto _nonconfirm)
+(defun list-timers (&optional _ignore-auto _nonconfirm)
   "List all timers in a buffer."
   (interactive)
   (pop-to-buffer-same-window (get-buffer-create "*timer-list*"))
@@ -67,7 +67,7 @@
   (goto-char (point-min)))
 ;; This command can be destructive if they don't know what they are
 ;; doing.  Kids, don't try this at home!
-;;;###autoload (put 'timer-list 'disabled "Beware: manually canceling timers can ruin your Emacs session.")
+;;;###autoload (put 'list-timers 'disabled "Beware: manually canceling timers can ruin your Emacs session.")
 
 (defvar timer-list-mode-map
   (let ((map (make-sparse-keymap)))
@@ -84,7 +84,7 @@
   (setq bidi-paragraph-direction 'left-to-right)
   (setq truncate-lines t)
   (buffer-disable-undo)
-  (setq-local revert-buffer-function 'timer-list)
+  (setq-local revert-buffer-function #'list-timers)
   (setq buffer-read-only t)
   (setq header-line-format
         (format "%4s %10s %8s %s"

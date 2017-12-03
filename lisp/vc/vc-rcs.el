@@ -177,6 +177,8 @@ For a description of possible values, see `vc-check-master-templates'."
 	  (push (list frel state) result))))
     (funcall update-function result)))
 
+(defun vc-rcs-dir-extra-headers (&rest _ignore))
+
 (defun vc-rcs-working-revision (file)
   "RCS-specific version of `vc-working-revision'."
   (or (and vc-consult-headers
@@ -849,7 +851,7 @@ and CVS."
 
 ;; You might think that this should be distributed with RCS, but
 ;; apparently not.  CVS sometimes provides a version of it.
-;; http://lists.gnu.org/archive/html/emacs-devel/2014-05/msg00288.html
+;; https://lists.gnu.org/archive/html/emacs-devel/2014-05/msg00288.html
 (defvar vc-rcs-rcs2log-program
   (let (exe)
     (cond ((file-executable-p

@@ -16,7 +16,6 @@ HPUX
 DOS_NT		Compiling for either the MS-DOS or native MS-Windows port.
 WINDOWSNT	Compiling the native MS-Windows (W32) port.
 __MINGW32__	Compiling the W32 port with the MinGW or MinGW-w64 ports of GCC.
-_MSC_VER	Compiling the W32 port with the Microsoft C compiler.
 MINGW_W64	Compiling the W32 port with the MinGW-w64 port of GCC.
 DARWIN_OS	Compiling on macOS or pure Darwin (and using s/darwin.h).
 SOLARIS2

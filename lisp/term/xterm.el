@@ -68,7 +68,7 @@ string bytes that can be copied is 3/4 of this value."
   :version "25.1"
   :type 'integer)
 
-(defcustom xterm-set-window-title t
+(defcustom xterm-set-window-title nil
   "Whether Emacs should set window titles to an Emacs frame in an XTerm."
   :version "27.1"
   :type 'boolean)

@@ -398,7 +398,7 @@ the bounds of a possible ill-formed URI (one lacking a scheme)."
 	;; Ensure PT is actually within BOUNDARY. Check the following
 	;; example with point on the beginning of the line:
 	;;
-	;; 3,1406710489,http://gnu.org,0,"0"
+	;; 3,1406710489,https://gnu.org,0,"0"
 	(and (<= url-beg pt end) (cons url-beg end))))))
 
 (put 'url 'thing-at-point 'thing-at-point-url-at-point)

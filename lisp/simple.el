@@ -39,11 +39,11 @@
 
 (defcustom shell-command-dont-erase-buffer nil
   "If non-nil, output buffer is not erased between shell commands.
-Also, a non-nil value set the point in the output buffer
-once the command complete.
-The value `beg-last-out' set point at the beginning of the output,
-`end-last-out' set point at the end of the buffer, `save-point'
-restore the buffer position before the command."
+Also, a non-nil value sets the point in the output buffer
+once the command completes.
+The value `beg-last-out' sets point at the beginning of the output,
+`end-last-out' sets point at the end of the buffer, `save-point'
+restores the buffer position before the command."
   :type '(choice
           (const :tag "Erase buffer" nil)
           (const :tag "Set point to beginning of last output" beg-last-out)
@@ -53,9 +53,10 @@ restore the buffer position before the command."
   :version "26.1")
 
 (defvar shell-command-saved-pos nil
-  "Point position in the output buffer after command complete.
-It is an alist (BUFFER . POS), where BUFFER is the output
-buffer, and POS is the point position in BUFFER once the command finish.
+  "Record of point positions in output buffers after command completion.
+The value is an alist whose elements are of the form (BUFFER . POS),
+where BUFFER is the output buffer, and POS is the point position
+in BUFFER once the command finishes.
 This variable is used when `shell-command-dont-erase-buffer' is non-nil.")
 
 (defcustom idle-update-delay 0.5
@@ -278,23 +279,28 @@ To control which errors are matched, customize the variable
 `compilation-error-regexp-alist'."
   (interactive "P")
   (if (consp arg) (setq reset t arg nil))
-  (when (setq next-error-last-buffer (next-error-find-buffer))
-    ;; we know here that next-error-function is a valid symbol we can funcall
-    (with-current-buffer next-error-last-buffer
-      (funcall next-error-function (prefix-numeric-value arg) reset)
-      (when next-error-recenter
-        (recenter next-error-recenter))
-      (run-hooks 'next-error-hook))))
+  (let ((buffer (next-error-find-buffer)))
+    (when buffer
+      ;; We know here that next-error-function is a valid symbol we can funcall
+      (with-current-buffer buffer
+        (funcall next-error-function (prefix-numeric-value arg) reset)
+        ;; Override possible change of next-error-last-buffer in next-error-function
+        (setq next-error-last-buffer buffer)
+        (when next-error-recenter
+          (recenter next-error-recenter))
+        (run-hooks 'next-error-hook)))))
 
 (defun next-error-internal ()
   "Visit the source code corresponding to the `next-error' message at point."
-  (setq next-error-last-buffer (current-buffer))
-  ;; we know here that next-error-function is a valid symbol we can funcall
-  (with-current-buffer next-error-last-buffer
-    (funcall next-error-function 0 nil)
-    (when next-error-recenter
-      (recenter next-error-recenter))
-    (run-hooks 'next-error-hook)))
+  (let ((buffer (current-buffer)))
+    ;; We know here that next-error-function is a valid symbol we can funcall
+    (with-current-buffer buffer
+      (funcall next-error-function 0 nil)
+      ;; Override possible change of next-error-last-buffer in next-error-function
+      (setq next-error-last-buffer buffer)
+      (when next-error-recenter
+        (recenter next-error-recenter))
+      (run-hooks 'next-error-hook))))
 
 (defalias 'goto-next-locus 'next-error)
 (defalias 'next-match 'next-error)
@@ -434,10 +440,6 @@ A non-nil INTERACTIVE argument means to run the `post-self-insert-hook'."
           ;; Do the rest in post-self-insert-hook, because we want to do it
           ;; *before* other functions on that hook.
           (lambda ()
-            ;; We are not going to insert any newlines if arg is
-            ;; non-positive.
-            (or (and (numberp arg) (<= arg 0))
-                (cl-assert (eq ?\n (char-before))))
             ;; Mark the newline(s) `hard'.
             (if use-hard-newlines
                 (set-hard-newline-properties
@@ -456,25 +458,22 @@ A non-nil INTERACTIVE argument means to run the `post-self-insert-hook'."
             ;; starts a page.
             (or was-page-start
                 (move-to-left-margin nil t)))))
-    (unwind-protect
-        (if (not interactive)
-            ;; FIXME: For non-interactive uses, many calls actually
-            ;; just want (insert "\n"), so maybe we should do just
-            ;; that, so as to avoid the risk of filling or running
-            ;; abbrevs unexpectedly.
-            (let ((post-self-insert-hook (list postproc)))
-              (self-insert-command arg))
-          (unwind-protect
-              (progn
-                (add-hook 'post-self-insert-hook postproc nil t)
-                (self-insert-command arg))
-            ;; We first used let-binding to protect the hook, but that
-            ;; was naive since add-hook affects the symbol-default
-            ;; value of the variable, whereas the let-binding might
-            ;; only protect the buffer-local value.
-            (remove-hook 'post-self-insert-hook postproc t)))
-      (cl-assert (not (member postproc post-self-insert-hook)))
-      (cl-assert (not (member postproc (default-value 'post-self-insert-hook))))))
+    (if (not interactive)
+	;; FIXME: For non-interactive uses, many calls actually
+	;; just want (insert "\n"), so maybe we should do just
+	;; that, so as to avoid the risk of filling or running
+	;; abbrevs unexpectedly.
+	(let ((post-self-insert-hook (list postproc)))
+	  (self-insert-command arg))
+      (unwind-protect
+	  (progn
+	    (add-hook 'post-self-insert-hook postproc nil t)
+	    (self-insert-command arg))
+	;; We first used let-binding to protect the hook, but that
+	;; was naive since add-hook affects the symbol-default
+	;; value of the variable, whereas the let-binding might
+	;; only protect the buffer-local value.
+	(remove-hook 'post-self-insert-hook postproc t))))
   nil)
 
 (defun set-hard-newline-properties (from to)
@@ -1010,7 +1009,7 @@ Called with one argument METHOD.
 If METHOD is `delete-only', then delete the region; the return value
 is undefined.  If METHOD is nil, then return the content as a string.
 If METHOD is `bounds', then return the boundaries of the region
-as a list of the form (START . END).
+as a list of cons cells of the form (START . END).
 If METHOD is anything else, delete the region and return its content
 as a string, after filtering it with `filter-buffer-substring', which
 is called with METHOD as its 3rd argument.")
@@ -3493,10 +3492,11 @@ the use of a shell (with its need to quote arguments)."
 	(save-match-data
 	  (if (string-match "[ \t]*&[ \t]*\\'" command)
 	      ;; Command ending with ampersand means asynchronous.
-	      (let ((buffer (get-buffer-create
-			     (or output-buffer "*Async Shell Command*")))
-		    (directory default-directory)
-		    proc)
+              (let* ((buffer (get-buffer-create
+                              (or output-buffer "*Async Shell Command*")))
+                     (bname (buffer-name buffer))
+                     (directory default-directory)
+                     proc)
 		;; Remove the ampersand.
 		(setq command (substring command 0 (match-beginning 0)))
 		;; Ask the user what to do with already running process.
@@ -3511,30 +3511,24 @@ the use of a shell (with its need to quote arguments)."
 		   ((eq async-shell-command-buffer 'confirm-new-buffer)
 		    ;; If will create a new buffer, query first.
 		    (if (yes-or-no-p "A command is running in the default buffer.  Use a new buffer? ")
-			(setq buffer (generate-new-buffer
-				      (or (and (bufferp output-buffer) (buffer-name output-buffer))
-					  output-buffer "*Async Shell Command*")))
+                        (setq buffer (generate-new-buffer bname))
 		      (error "Shell command in progress")))
 		   ((eq async-shell-command-buffer 'new-buffer)
 		    ;; It will create a new buffer.
-		    (setq buffer (generate-new-buffer
-				  (or (and (bufferp output-buffer) (buffer-name output-buffer))
-				      output-buffer "*Async Shell Command*"))))
+                    (setq buffer (generate-new-buffer bname)))
 		   ((eq async-shell-command-buffer 'confirm-rename-buffer)
 		    ;; If will rename the buffer, query first.
 		    (if (yes-or-no-p "A command is running in the default buffer.  Rename it? ")
 			(progn
 			  (with-current-buffer buffer
 			    (rename-uniquely))
-			  (setq buffer (get-buffer-create
-					(or output-buffer "*Async Shell Command*"))))
+                          (setq buffer (get-buffer-create bname)))
 		      (error "Shell command in progress")))
 		   ((eq async-shell-command-buffer 'rename-buffer)
 		    ;; It will rename the buffer.
 		    (with-current-buffer buffer
 		      (rename-uniquely))
-		    (setq buffer (get-buffer-create
-				  (or output-buffer "*Async Shell Command*"))))))
+                    (setq buffer (get-buffer-create bname)))))
 		(with-current-buffer buffer
                   (shell-command--save-pos-or-erase)
 		  (setq default-directory directory)
@@ -3543,19 +3537,18 @@ the use of a shell (with its need to quote arguments)."
 		  (setq mode-line-process '(":%s"))
 		  (require 'shell) (shell-mode)
 		  (set-process-sentinel proc 'shell-command-sentinel)
-		  ;; Use the comint filter for proper handling of carriage motion
-		  ;; (see `comint-inhibit-carriage-motion'),.
+		  ;; Use the comint filter for proper handling of
+		  ;; carriage motion (see comint-inhibit-carriage-motion).
 		  (set-process-filter proc 'comint-output-filter)
                   (if async-shell-command-display-buffer
                       (display-buffer buffer '(nil (allow-no-window . t)))
                     (add-function :before (process-filter proc)
-                                  `(lambda (process string)
-                                     (when (and (= 0 (buffer-size (process-buffer process)))
-                                                (string= (buffer-name (process-buffer process))
-                                                    ,(or output-buffer "*Async Shell Command*")))
-                                       (display-buffer (process-buffer process))))
-                                  ))
-                  ))
+                                  (lambda (process _string)
+                                    (let ((buf (process-buffer process)))
+                                      (when (and (zerop (buffer-size buf))
+                                                 (string= (buffer-name buf)
+                                                          bname))
+                                        (display-buffer buf))))))))
 	    ;; Otherwise, command is executed synchronously.
 	    (shell-command-on-region (point) (point) command
 				     output-buffer nil error-buffer)))))))
@@ -5480,7 +5473,8 @@ also checks the value of `use-empty-active-region'."
        (progn (cl-assert (mark)) t)))
 
 (defun region-bounds ()
-  "Return the boundaries of the region as a list of (START . END) positions."
+  "Return the boundaries of the region as a pair of positions.
+Value is a list of cons cells of the form (START . END)."
   (funcall region-extract-function 'bounds))
 
 (defun region-noncontiguous-p ()
@@ -5970,7 +5964,7 @@ Used internally by `line-move-visual'.")
   "Non-nil means commands that move by lines ignore invisible newlines.
 When this option is non-nil, \\[next-line], \\[previous-line], \\[move-end-of-line], and \\[move-beginning-of-line] behave
 as if newlines that are invisible didn't exist, and count
-only visible newlines.  Thus, moving across across 2 newlines
+only visible newlines.  Thus, moving across 2 newlines
 one of which is invisible will be counted as a one-line move.
 Also, a non-nil value causes invisible text to be ignored when
 counting columns for the purposes of keeping point in the same
@@ -6130,7 +6124,7 @@ The value is a floating-point number."
 	       (or (null rbot) (= rbot 0)))
 	  nil)
 	 ;; If cursor is not in the bottom scroll margin, and the
-	 ;; current line is is not too tall, move forward.
+	 ;; current line is not too tall, move forward.
 	 ((and (or (null this-height) (<= this-height winh))
 	       vpos
 	       (> vpos 0)
@@ -8819,7 +8813,7 @@ If it does not exist, create and it switch it to `messages-buffer-mode'."
 ;; rms says this should be done by specifying symbols that define
 ;; versions together with bad values.  This is therefore not as
 ;; flexible as it could be.  See the thread:
-;; http://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00300.html
+;; https://lists.gnu.org/archive/html/emacs-devel/2007-08/msg00300.html
 (defconst bad-packages-alist
   ;; Not sure exactly which semantic versions have problems.
   ;; Definitely 2.0pre3, probably all 2.0pre's before this.

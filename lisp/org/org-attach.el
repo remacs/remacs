@@ -42,6 +42,8 @@
 (require 'org-id)
 (require 'vc-git)
 
+(declare-function dired-dwim-target-directory "dired-aux")
+
 (defgroup org-attach nil
   "Options concerning entry attachments in Org mode."
   :tag "Org Attach"
@@ -142,7 +144,7 @@ When set to `query', ask the user instead."
   "Confirmation preference for automatically getting annex files.
 If \\='ask, prompt using `y-or-n-p'.  If t, always get.  If nil, never get."
   :group 'org-attach
-  :package-version '(Org . "9")
+  :package-version '(Org . "9.0")
   :version "26.1"
   :type '(choice
 	  (const :tag "confirm with `y-or-n-p'" ask)
@@ -173,6 +175,7 @@ Shows a list of commands and prompts for another key to execute a command."
 
 a       Select a file and attach it to the task, using `org-attach-method'.
 c/m/l/y Attach a file using copy/move/link/symbolic-link method.
+u       Attach a file from URL (downloading it).
 n       Create a new attachment, as an Emacs buffer.
 z       Synchronize the current task with its attachment
         directory, in case you added attachments yourself.
@@ -186,7 +189,7 @@ d       Delete one attachment, you will be prompted for a file name.
 D       Delete all of a task's attachments.  A safer way is
         to open the directory in dired and delete from there.
 
-s       Set a specific attachment directory for this entry.
+s       Set a specific attachment directory for this entry or reset to default.
 i       Make children of the current entry inherit its attachment directory.")))
 	  (org-fit-window-to-buffer (get-buffer-window "*Org Attach*"))
 	  (message "Select command: [acmlzoOfFdD]")
@@ -202,6 +205,8 @@ i       Make children of the current entry inherit its attachment directory.")))
 	(let ((org-attach-method 'ln)) (call-interactively 'org-attach-attach)))
        ((memq c '(?y ?\C-y))
 	(let ((org-attach-method 'lns)) (call-interactively 'org-attach-attach)))
+       ((memq c '(?u ?\C-u))
+        (let ((org-attach-method 'url)) (call-interactively 'org-attach-url)))
        ((memq c '(?n ?\C-n)) (call-interactively 'org-attach-new))
        ((memq c '(?z ?\C-z)) (call-interactively 'org-attach-sync))
        ((memq c '(?o ?\C-o)) (call-interactively 'org-attach-open))
@@ -270,14 +275,30 @@ Throw an error if we cannot root the directory."
       (buffer-file-name (buffer-base-buffer))
       (error "Need absolute `org-attach-directory' to attach in buffers without filename")))
 
-(defun org-attach-set-directory ()
-  "Set the ATTACH_DIR property of the current entry.
+(defun org-attach-set-directory (&optional arg)
+  "Set the ATTACH_DIR node property and ask to move files there.
 The property defines the directory that is used for attachments
-of the entry."
-  (interactive)
-  (let ((dir (org-entry-get nil "ATTACH_DIR")))
-    (setq dir (read-directory-name "Attachment directory: " dir))
-    (org-entry-put nil "ATTACH_DIR" dir)))
+of the entry.  When called with `\\[universal-argument]', reset \
+the directory to
+the default ID based one."
+  (interactive "P")
+  (let ((old (org-attach-dir))
+        (new
+         (progn
+           (if arg (org-entry-delete nil "ATTACH_DIR")
+             (let ((dir (read-directory-name
+                         "Attachment directory: "
+                         (org-entry-get nil
+                                        "ATTACH_DIR"
+                                        (and org-attach-allow-inheritance t)))))
+               (org-entry-put nil "ATTACH_DIR" dir)))
+           (org-attach-dir t))))
+    (unless (or (string= old new)
+                (not old))
+      (when (yes-or-no-p "Copy over attachments from old directory? ")
+        (copy-directory old new t nil t))
+      (when (yes-or-no-p (concat "Delete " old))
+        (delete-directory old t)))))
 
 (defun org-attach-set-inherit ()
   "Set the ATTACH_DIR_INHERIT property of the current entry.
@@ -363,34 +384,47 @@ Only do this when `org-attach-store-link-p' is non-nil."
 		    (file-name-nondirectory file))
 	      org-stored-links)))
 
+(defun org-attach-url (url)
+  (interactive "MURL of the file to attach: \n")
+  (org-attach-attach url))
+
 (defun org-attach-attach (file &optional visit-dir method)
   "Move/copy/link FILE into the attachment directory of the current task.
 If VISIT-DIR is non-nil, visit the directory with dired.
-METHOD may be `cp', `mv', `ln', or `lns' default taken from
+METHOD may be `cp', `mv', `ln', `lns' or `url' default taken from
 `org-attach-method'."
-  (interactive "fFile to keep as an attachment: \nP")
+  (interactive
+   (list
+    (read-file-name "File to keep as an attachment:"
+                    (or (progn
+                          (require 'dired-aux)
+                          (dired-dwim-target-directory))
+                        default-directory))
+    current-prefix-arg
+    nil))
   (setq method (or method org-attach-method))
   (let ((basename (file-name-nondirectory file)))
     (when (and org-attach-file-list-property (not org-attach-inherited))
       (org-entry-add-to-multivalued-property
        (point) org-attach-file-list-property basename))
     (let* ((attach-dir (org-attach-dir t))
-	   (fname (expand-file-name basename attach-dir)))
+           (fname (expand-file-name basename attach-dir)))
       (cond
-       ((eq method 'mv)	(rename-file file fname))
-       ((eq method 'cp)	(copy-file file fname))
+       ((eq method 'mv) (rename-file file fname))
+       ((eq method 'cp) (copy-file file fname))
        ((eq method 'ln) (add-name-to-file file fname))
-       ((eq method 'lns) (make-symbolic-link file fname)))
+       ((eq method 'lns) (make-symbolic-link file fname))
+       ((eq method 'url) (url-copy-file file fname)))
       (when org-attach-commit
-	(org-attach-commit))
+        (org-attach-commit))
       (org-attach-tag)
       (cond ((eq org-attach-store-link-p 'attached)
-	     (org-attach-store-link fname))
-	    ((eq org-attach-store-link-p t)
-	     (org-attach-store-link file)))
+             (org-attach-store-link fname))
+            ((eq org-attach-store-link-p t)
+             (org-attach-store-link file)))
       (if visit-dir
-	  (dired attach-dir)
-	(message "File \"%s\" is now a task attachment." basename)))))
+          (dired attach-dir)
+        (message "File %S is now a task attachment." basename)))))
 
 (defun org-attach-attach-cp ()
   "Attach a file by copying it."

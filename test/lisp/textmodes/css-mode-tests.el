@@ -80,6 +80,27 @@
    (equal (seq-sort #'string-lessp (css--value-class-lookup 'position))
           '("bottom" "calc()" "center" "left" "right" "top"))))
 
+(ert-deftest css-test-current-defun-name ()
+  (with-temp-buffer
+    (insert "body { top: 0; }")
+    (goto-char 7)
+    (should (equal (css-current-defun-name) "body"))
+    (goto-char 18)
+    (should (equal (css-current-defun-name) "body"))))
+
+(ert-deftest css-test-current-defun-name-nested ()
+  (with-temp-buffer
+    (insert "body > .main a { top: 0; }")
+    (goto-char 20)
+    (should (equal (css-current-defun-name) "body > .main a"))))
+
+(ert-deftest css-test-current-defun-name-complex ()
+  (with-temp-buffer
+    (insert "input[type=submit]:hover { color: red; }")
+    (goto-char 30)
+    (should (equal (css-current-defun-name)
+                   "input[type=submit]:hover"))))
+
 ;;; Completion
 
 (defun css-mode-tests--completions ()

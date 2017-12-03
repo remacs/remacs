@@ -150,8 +150,13 @@ Called with an absolute file name as argument, it returns t to enable backup.")
 (defcustom buffer-offer-save nil
   "Non-nil in a buffer means always offer to save buffer on exit.
 Do so even if the buffer is not visiting a file.
-Automatically local in all buffers."
-  :type 'boolean
+Automatically local in all buffers.
+
+Set to the symbol `always' to offer to save buffer whenever
+`save-some-buffers' is called."
+  :type '(choice (const :tag "Never" nil)
+                 (const :tag "On Emacs exit" t)
+                 (const :tag "Whenever save-some-buffers is called" always))
   :group 'backup)
 (make-variable-buffer-local 'buffer-offer-save)
 (put 'buffer-offer-save 'permanent-local t)
@@ -3942,11 +3947,12 @@ This function returns either:
                   ;; The entry MTIME should match the most recent
                   ;; MTIME among matching files.
                   (and cached-files
-                       (= (float-time (nth 2 dir-elt))
-                          (apply #'max (mapcar (lambda (f)
-                                                 (float-time
-                                                  (nth 5 (file-attributes f))))
-                                               cached-files))))))
+		       (equal (nth 2 dir-elt)
+			      (let ((latest 0))
+				(dolist (f cached-files latest)
+				  (let ((f-time (nth 5 (file-attributes f))))
+				    (if (time-less-p latest f-time)
+					(setq latest f-time)))))))))
             ;; This cache entry is OK.
             dir-elt
           ;; This cache entry is invalid; clear it.
@@ -3968,10 +3974,15 @@ Return the new class name, which is a symbol named DIR."
   (let* ((class-name (intern dir))
          (files (dir-locals--all-files dir))
          (read-circle nil)
-         (success nil)
+	 ;; If there was a problem, use the values we could get but
+	 ;; don't let the cache prevent future reads.
+	 (latest 0) (success 0)
          (variables))
     (with-demoted-errors "Error reading dir-locals: %S"
       (dolist (file files)
+	(let ((file-time (nth 5 (file-attributes file))))
+	  (if (time-less-p latest file-time)
+	    (setq latest file-time)))
         (with-temp-buffer
           (insert-file-contents file)
           (condition-case-unless-debug nil
@@ -3980,18 +3991,9 @@ Return the new class name, which is a symbol named DIR."
                                     variables
                                     (read (current-buffer))))
             (end-of-file nil))))
-      (setq success t))
+      (setq success latest))
     (dir-locals-set-class-variables class-name variables)
-    (dir-locals-set-directory-class
-     dir class-name
-     (seconds-to-time
-      (if success
-          (apply #'max (mapcar (lambda (file)
-                                 (float-time (nth 5 (file-attributes file))))
-                               files))
-        ;; If there was a problem, use the values we could get but
-        ;; don't let the cache prevent future reads.
-        0)))
+    (dir-locals-set-directory-class dir class-name success)
     class-name))
 
 (define-obsolete-function-alias 'dir-locals-read-from-file
@@ -4479,8 +4481,8 @@ extension, the value is \"\"."
             "")))))
 
 (defun file-name-base (&optional filename)
-  "Return the base name of the FILENAME: no directory, no extension.
-FILENAME defaults to `buffer-file-name'."
+  "Return the base name of the FILENAME: no directory, no extension."
+  (declare (advertised-calling-convention (filename) "27.1"))
   (file-name-sans-extension
    (file-name-nondirectory (or filename (buffer-file-name)))))
 
@@ -5190,12 +5192,9 @@ change the additional actions you can take on files."
                     (not (buffer-base-buffer buffer))
                     (or
                      (buffer-file-name buffer)
-                     (and pred
-                          (progn
-                            (set-buffer buffer)
-                            (and buffer-offer-save (> (buffer-size) 0))))
-                     (buffer-local-value
-                      'write-contents-functions buffer))
+                     (with-current-buffer buffer
+                       (or (eq buffer-offer-save 'always)
+                           (and pred buffer-offer-save (> (buffer-size) 0)))))
                     (or (not (functionp pred))
                         (with-current-buffer buffer (funcall pred)))
                     (if arg
@@ -5336,7 +5335,7 @@ instance of such commands."
   "Make directory DIR if it is not already a directory.  Return nil."
   (condition-case err
       (make-directory-internal dir)
-    (file-already-exists
+    (error
      (unless (file-directory-p dir)
        (signal (car err) (cdr err))))))
 
@@ -5372,7 +5371,7 @@ raised."
 	  (while (progn
 		   (setq parent (directory-file-name
 				 (file-name-directory dir)))
-		   (condition-case err
+		   (condition-case ()
 		       (files--ensure-directory dir)
 		     (file-missing
 		      ;; Do not loop if root does not exist (Bug#2309).
@@ -5544,16 +5543,14 @@ into NEWNAME instead."
 	     ;; If NEWNAME is not a directory name, create it;
 	     ;; that is where we will copy the files of DIRECTORY.
 	     (make-directory newname parents))
-	    ;; If NEWNAME is a directory name and COPY-CONTENTS
-	    ;; is nil, copy into NEWNAME/[DIRECTORY-BASENAME].
-	    ((not copy-contents)
-	     (setq newname (concat newname
-			    (file-name-nondirectory directory)))
-	     (and (file-exists-p newname)
-		  (not (file-directory-p newname))
-		  (error "Cannot overwrite non-directory %s with a directory"
-			 newname))
-	     (make-directory newname t)))
+	    ;; NEWNAME is a directory name.  If COPY-CONTENTS is non-nil,
+	    ;; create NEWNAME if it is not already a directory;
+	    ;; otherwise, create NEWNAME/[DIRECTORY-BASENAME].
+	    ((if copy-contents
+		 (or parents (not (file-directory-p newname)))
+	       (setq newname (concat newname
+				     (file-name-nondirectory directory))))
+	     (make-directory (directory-file-name newname) parents)))
 
       ;; Copy recursively.
       (dolist (file
@@ -5565,7 +5562,7 @@ into NEWNAME instead."
 	      (filetype (car (file-attributes file))))
 	  (cond
 	   ((eq filetype t)       ; Directory but not a symlink.
-	    (copy-directory file newname keep-time parents))
+	    (copy-directory file target keep-time parents t))
 	   ((stringp filetype)    ; Symbolic link
 	    (make-symbolic-link filetype target t))
 	   ((copy-file file target t keep-time)))))
@@ -6386,58 +6383,31 @@ if you want to specify options, use `directory-free-space-args'.
 
 A value of nil disables this feature.
 
-If the function `file-system-info' is defined, it is always used in
-preference to the program given by this variable."
+This variable is obsolete; Emacs no longer uses it."
   :type '(choice (string :tag "Program") (const :tag "None" nil))
   :group 'dired)
+(make-obsolete-variable 'directory-free-space-program
+			"ignored, as Emacs uses `file-system-info' instead"
+			"27.1")
 
 (defcustom directory-free-space-args
   (purecopy (if (eq system-type 'darwin) "-k" "-Pk"))
   "Options to use when running `directory-free-space-program'."
   :type 'string
   :group 'dired)
+(make-obsolete-variable 'directory-free-space-args
+			"ignored, as Emacs uses `file-system-info' instead"
+			"27.1")
 
 (defun get-free-disk-space (dir)
   "Return the amount of free space on directory DIR's file system.
 The return value is a string describing the amount of free
 space (normally, the number of free 1KB blocks).
 
-This function calls `file-system-info' if it is available, or
-invokes the program specified by `directory-free-space-program'
-and `directory-free-space-args'.  If the system call or program
-is unsuccessful, or if DIR is a remote directory, this function
-returns nil."
-  (unless (file-remote-p (expand-file-name dir))
-    ;; Try to find the number of free blocks.  Non-Posix systems don't
-    ;; always have df, but might have an equivalent system call.
-    (if (fboundp 'file-system-info)
-	(let ((fsinfo (file-system-info dir)))
-	  (if fsinfo
-	      (format "%.0f" (/ (nth 2 fsinfo) 1024))))
-      (setq dir (expand-file-name dir))
-      (save-match-data
-	(with-temp-buffer
-	  (when (and directory-free-space-program
-		     ;; Avoid failure if the default directory does
-		     ;; not exist (Bug#2631, Bug#3911).
-                     (let ((default-directory
-                             (locate-dominating-file dir 'file-directory-p)))
-                       (eq (process-file directory-free-space-program
-					 nil t nil
-					 directory-free-space-args
-                                         (file-relative-name dir))
-			   0)))
-	    ;; Assume that the "available" column is before the
-	    ;; "capacity" column.  Find the "%" and scan backward.
-	    (goto-char (point-min))
-	    (forward-line 1)
-	    (when (re-search-forward
-		   "[[:space:]]+[^[:space:]]+%[^%]*$"
-		   (line-end-position) t)
-	      (goto-char (match-beginning 0))
-	      (let ((endpt (point)))
-		(skip-chars-backward "^[:space:]")
-		(buffer-substring-no-properties (point) endpt)))))))))
+If DIR's free space cannot be obtained, this function returns nil."
+  (let ((avail (nth 2 (file-system-info dir))))
+    (if avail
+	(format "%.0f" (/ avail 1024)))))
 
 ;; The following expression replaces `dired-move-to-filename-regexp'.
 (defvar directory-listing-before-filename-regexp

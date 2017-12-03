@@ -217,10 +217,29 @@ init_standard_fds (void)
 }
 
 /* Return the current working directory.  The result should be freed
-   with 'free'.  Return NULL on errors.  */
-char *
-emacs_get_current_dir_name (void)
+   with 'free'.  Return NULL (setting errno) on errors.  If the
+   current directory is unreachable, return either NULL or a string
+   beginning with '('.  */
+
+static char *
+get_current_dir_name_or_unreachable (void)
 {
+  /* Use malloc, not xmalloc, since this function can be called before
+     the xmalloc exception machinery is available.  */
+
+  char *pwd;
+
+  /* The maximum size of a directory name, including the terminating null.
+     Leave room so that the caller can append a trailing slash.  */
+  ptrdiff_t dirsize_max = min (PTRDIFF_MAX, SIZE_MAX) - 1;
+
+  /* The maximum size of a buffer for a file name, including the
+     terminating null.  This is bounded by MAXPATHLEN, if available.  */
+  ptrdiff_t bufsize_max = dirsize_max;
+#ifdef MAXPATHLEN
+  bufsize_max = min (bufsize_max, MAXPATHLEN);
+#endif
+
 # if HAVE_GET_CURRENT_DIR_NAME && !BROKEN_GET_CURRENT_DIR_NAME
 #  ifdef HYBRID_MALLOC
   bool use_libc = bss_sbrk_did_unexec;
@@ -228,55 +247,81 @@ emacs_get_current_dir_name (void)
   bool use_libc = true;
 #  endif
   if (use_libc)
-    return get_current_dir_name ();
+    {
+      /* For an unreachable directory, this returns a string that starts
+	 with "(unreachable)"; see Bug#27871.  */
+      pwd = get_current_dir_name ();
+      if (pwd)
+	{
+	  if (strlen (pwd) < dirsize_max)
+	    return pwd;
+	  free (pwd);
+	  errno = ERANGE;
+	}
+      return NULL;
+    }
 # endif
 
-  char *buf;
-  char *pwd = getenv ("PWD");
+  size_t pwdlen;
   struct stat dotstat, pwdstat;
+  pwd = getenv ("PWD");
+
   /* If PWD is accurate, use it instead of calling getcwd.  PWD is
      sometimes a nicer name, and using it may avoid a fatal error if a
      parent directory is searchable but not readable.  */
   if (pwd
-      && (IS_DIRECTORY_SEP (*pwd) || (*pwd && IS_DEVICE_SEP (pwd[1])))
+      && (pwdlen = strlen (pwd)) < bufsize_max
+      && IS_DIRECTORY_SEP (pwd[pwdlen && IS_DEVICE_SEP (pwd[1]) ? 2 : 0])
       && stat (pwd, &pwdstat) == 0
       && stat (".", &dotstat) == 0
       && dotstat.st_ino == pwdstat.st_ino
-      && dotstat.st_dev == pwdstat.st_dev
-#ifdef MAXPATHLEN
-      && strlen (pwd) < MAXPATHLEN
-#endif
-      )
+      && dotstat.st_dev == pwdstat.st_dev)
     {
-      buf = malloc (strlen (pwd) + 1);
+      char *buf = malloc (pwdlen + 1);
       if (!buf)
         return NULL;
-      strcpy (buf, pwd);
+      return memcpy (buf, pwd, pwdlen + 1);
     }
   else
     {
-      size_t buf_size = 1024;
-      buf = malloc (buf_size);
+      ptrdiff_t buf_size = min (bufsize_max, 1024);
+      char *buf = malloc (buf_size);
       if (!buf)
         return NULL;
       for (;;)
         {
           if (getcwd (buf, buf_size) == buf)
-            break;
-          if (errno != ERANGE)
+	    return buf;
+	  int getcwd_errno = errno;
+	  if (getcwd_errno != ERANGE || buf_size == bufsize_max)
             {
-              int tmp_errno = errno;
               free (buf);
-              errno = tmp_errno;
+	      errno = getcwd_errno;
               return NULL;
             }
-          buf_size *= 2;
+	  buf_size = buf_size <= bufsize_max / 2 ? 2 * buf_size : bufsize_max;
           buf = realloc (buf, buf_size);
           if (!buf)
             return NULL;
         }
     }
-  return buf;
+}
+
+/* Return the current working directory.  The result should be freed
+   with 'free'.  Return NULL (setting errno) on errors; an unreachable
+   directory (e.g., its name starts with '(') counts as an error.  */
+
+char *
+emacs_get_current_dir_name (void)
+{
+  char *dir = get_current_dir_name_or_unreachable ();
+  if (dir && *dir == '(')
+    {
+      free (dir);
+      errno = ENOENT;
+      return NULL;
+    }
+  return dir;
 }
 
 
@@ -452,7 +497,7 @@ child_setup_tty (int out)
   s.main.c_oflag |= OPOST;	/* Enable output postprocessing */
   s.main.c_oflag &= ~ONLCR;	/* Disable map of NL to CR-NL on output */
 #ifdef NLDLY
-  /* http://lists.gnu.org/archive/html/emacs-devel/2008-05/msg00406.html
+  /* https://lists.gnu.org/archive/html/emacs-devel/2008-05/msg00406.html
      Some versions of GNU Hurd do not have FFDLY?  */
 #ifdef FFDLY
   s.main.c_oflag &= ~(NLDLY|CRDLY|TABDLY|BSDLY|VTDLY|FFDLY);
@@ -748,6 +793,7 @@ unblock_child_signal (sigset_t const *oldset)
 {
   pthread_sigmask (SIG_SETMASK, oldset, 0);
 }
+
 
 /* Block SIGINT.  */
 void
@@ -2002,7 +2048,7 @@ init_signals (bool dumping)
   thread_fatal_action.sa_flags = process_fatal_action.sa_flags;
 
   /* SIGINT may need special treatment on MS-Windows.  See
-     http://lists.gnu.org/archive/html/emacs-devel/2010-09/msg01062.html
+     https://lists.gnu.org/archive/html/emacs-devel/2010-09/msg01062.html
      Please update the doc of kill-emacs, kill-emacs-hook, and
      NEWS if you change this.  */
 

@@ -89,6 +89,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <acl.h>
 #include <allocator.h>
 #include <careadlinkat.h>
+#include <fsusage.h>
 #include <stat-time.h>
 #include <tempname.h>
 
@@ -117,7 +118,7 @@ static mode_t auto_save_mode_bits;
 static bool auto_save_error_occurred;
 
 /* If VALID_TIMESTAMP_FILE_SYSTEM, then TIMESTAMP_FILE_SYSTEM is the device
-   number of a file system where time stamps were observed to to work.  */
+   number of a file system where time stamps were observed to work.  */
 static bool valid_timestamp_file_system;
 static dev_t timestamp_file_system;
 
@@ -2236,7 +2237,7 @@ This is what happens in interactive use with M-x.  */)
   (Lisp_Object file, Lisp_Object newname, Lisp_Object ok_if_already_exists)
 {
   Lisp_Object handler;
-  Lisp_Object encoded_file, encoded_newname, symlink_target;
+  Lisp_Object encoded_file, encoded_newname;
 
   file = Fexpand_file_name (file, Qnil);
 
@@ -2272,7 +2273,7 @@ This is what happens in interactive use with M-x.  */)
   bool plain_rename = (case_only_rename
 		       || (!NILP (ok_if_already_exists)
 			   && !INTEGERP (ok_if_already_exists)));
-  int rename_errno;
+  int rename_errno UNINIT;
   if (!plain_rename)
     {
       if (renameat_noreplace (AT_FDCWD, SSDATA (encoded_file),
@@ -2310,12 +2311,22 @@ This is what happens in interactive use with M-x.  */)
   if (rename_errno != EXDEV)
     report_file_errno ("Renaming", list2 (file, newname), rename_errno);
 
+  struct stat file_st;
   bool dirp = !NILP (Fdirectory_name_p (file));
+  if (!dirp)
+    {
+      if (lstat (SSDATA (encoded_file), &file_st) != 0)
+	report_file_error ("Renaming", list2 (file, newname));
+      dirp = S_ISDIR (file_st.st_mode) != 0;
+    }
   if (dirp)
     call4 (Qcopy_directory, file, newname, Qt, Qnil);
   else
     {
-      symlink_target = Ffile_symlink_p (file);
+      Lisp_Object symlink_target
+	= (S_ISLNK (file_st.st_mode)
+	   ? emacs_readlinkat (AT_FDCWD, SSDATA (encoded_file))
+	   : Qnil);
       if (!NILP (symlink_target))
 	Fmake_symbolic_link (symlink_target, newname, ok_if_already_exists);
       else
@@ -3094,7 +3105,15 @@ symbolic notation, like the `chmod' command from GNU Coreutils.  */)
 DEFUN ("set-default-file-modes", Fset_default_file_modes, Sset_default_file_modes, 1, 1, 0,
        doc: /* Set the file permission bits for newly created files.
 The argument MODE should be an integer; only the low 9 bits are used.
-This setting is inherited by subprocesses.  */)
+On Posix hosts, this setting is inherited by subprocesses.
+
+This function works by setting the Emacs's file mode creation mask.
+Each bit that is set in the mask means that the corresponding bit
+in the permissions of newly created files will be disabled.
+
+Note that when `write-region' creates a file, it resets the
+execute bit, even if the mask set by this function allows that bit
+by having the corresponding bit in the mask reset.  */)
   (Lisp_Object mode)
 {
   mode_t oldrealmask, oldumask, newumask;
@@ -5746,8 +5765,53 @@ effect except for flushing STREAM's data.  */)
 
   return (set_binary_mode (fileno (fp), binmode) == O_BINARY) ? Qt : Qnil;
 }
+
+#ifndef DOS_NT
 
+/* Yield a Lisp float as close as possible to BLOCKSIZE * BLOCKS, with
+   the result negated if NEGATE.  */
+static Lisp_Object
+blocks_to_bytes (uintmax_t blocksize, uintmax_t blocks, bool negate)
+{
+  /* On typical platforms the following code is accurate to 53 bits,
+     which is close enough.  BLOCKSIZE is invariably a power of 2, so
+     converting it to double does not lose information.  */
+  double bs = blocksize;
+  return make_float (negate ? -bs * -blocks : bs * blocks);
+}
 
+DEFUN ("file-system-info", Ffile_system_info, Sfile_system_info, 1, 1, 0,
+       doc: /* Return storage information about the file system FILENAME is on.
+Value is a list of numbers (TOTAL FREE AVAIL), where TOTAL is the total
+storage of the file system, FREE is the free storage, and AVAIL is the
+storage available to a non-superuser.  All 3 numbers are in bytes.
+If the underlying system call fails, value is nil.  */)
+  (Lisp_Object filename)
+{
+  Lisp_Object encoded = ENCODE_FILE (Fexpand_file_name (filename, Qnil));
+
+  /* If the file name has special constructs in it,
+     call the corresponding file handler.  */
+  Lisp_Object handler = Ffind_file_name_handler (encoded, Qfile_system_info);
+  if (!NILP (handler))
+    {
+      Lisp_Object result = call2 (handler, Qfile_system_info, encoded);
+      if (CONSP (result) || NILP (result))
+	return result;
+      error ("Invalid handler in `file-name-handler-alist'");
+    }
+
+  struct fs_usage u;
+  if (get_fs_usage (SSDATA (encoded), NULL, &u) != 0)
+    return Qnil;
+  return list3 (blocks_to_bytes (u.fsu_blocksize, u.fsu_blocks, false),
+		blocks_to_bytes (u.fsu_blocksize, u.fsu_bfree, false),
+		blocks_to_bytes (u.fsu_blocksize, u.fsu_bavail,
+				 u.fsu_bavail_top_bit_set));
+}
+
+#endif /* !DOS_NT */
+
 void
 init_fileio (void)
 {
@@ -5818,6 +5882,7 @@ syms_of_fileio (void)
   DEFSYM (Qwrite_region, "write-region");
   DEFSYM (Qverify_visited_file_modtime, "verify-visited-file-modtime");
   DEFSYM (Qset_visited_file_modtime, "set-visited-file-modtime");
+  DEFSYM (Qfile_system_info, "file-system-info");
 
   /* The symbol bound to coding-system-for-read when
      insert-file-contents is called for recovering a file.  This is not
@@ -6097,6 +6162,10 @@ This includes interactive calls to `delete-file' and
   defsubr (&Snext_read_file_uses_dialog_p);
 
   defsubr (&Sset_binary_mode);
+
+#ifndef DOS_NT
+  defsubr (&Sfile_system_info);
+#endif
 
 #ifdef HAVE_SYNC
   defsubr (&Sunix_sync);

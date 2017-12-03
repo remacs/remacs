@@ -138,6 +138,24 @@
   :group 'org-bbdb-anniversaries
   :require 'bbdb)
 
+(defcustom org-bbdb-general-anniversary-description-after 7
+  "When to switch anniversary descriptions to a more general format.
+
+Anniversary descriptions include the point in time, when the
+anniversary appears.  This is, in its most general form, just the
+date of the anniversary.  Or more specific terms, like \"today\",
+\"tomorrow\" or \"in n days\" are used to describe the time span.
+
+If the anniversary happens in less than that number of days, the
+specific description is used.  Otherwise, the general one is
+used."
+  :group 'org-bbdb-anniversaries
+  :version "26.1"
+  :package-version '(Org . "9.1")
+  :type  'integer
+  :require 'bbdb
+  :safe #'integerp)
+
 (defcustom org-bbdb-anniversary-format-alist
   '(("birthday" .
      (lambda (name years suffix)
@@ -412,7 +430,25 @@ This is used by Org to re-create the anniversary hash table."
     (mapcar (lambda (i) (calendar-gregorian-from-absolute (+ abs i)))
 	    (number-sequence 0 (1- n)))))
 
-;;;###autoload
+(defun org-bbdb-anniversary-description (agenda-date anniv-date)
+  "Return a string used to incorporate into an agenda anniversary entry.
+The calculation of the anniversary description string is based on
+the difference between the anniversary date, given as ANNIV-DATE,
+and the date on which the entry appears in the agenda, given as
+AGENDA-DATE.  This makes it possible to have different entries
+for the same event depending on if it occurs in the next few days
+or far away in the future."
+  (let ((delta (- (calendar-absolute-from-gregorian anniv-date)
+                  (calendar-absolute-from-gregorian agenda-date))))
+
+    (cond
+     ((= delta 0) " -- today\\&")
+     ((= delta 1) " -- tomorrow\\&")
+     ((< delta org-bbdb-general-anniversary-description-after) (format " -- in %d days\\&" delta))
+     ((pcase-let ((`(,month ,day ,year) anniv-date))
+	(format " -- %d-%02d-%02d\\&" year month day))))))
+
+
 (defun org-bbdb-anniversaries-future (&optional n)
   "Return list of anniversaries for today and the next n-1 days (default n=7)."
   (let ((n (or n 7)))
@@ -425,19 +461,17 @@ must be positive"))
 	  ;; Function to annotate text of each element of l with the
 	  ;; anniversary date d.
 	  (annotate-descriptions
-	   (lambda (d l)
+	   (lambda (agenda-date d l)
 	     (mapcar (lambda (x)
 		       ;; The assumption here is that x is a bbdb link
 		       ;; of the form [[bbdb:name][description]].
 		       ;; This function rather arbitrarily modifies
 		       ;; the description by adding the date to it in
 		       ;; a fixed format.
-		       (string-match "]]" x)
-		       (replace-match (format " -- %d-%02d-%02d\\&"
-					      (nth 2 d)
-					      (nth 0 d)
-					      (nth 1 d))
-				      nil nil x))
+		       (let ((desc (org-bbdb-anniversary-description
+				    agenda-date d)))
+			 (string-match "]]" x)
+			 (replace-match desc nil nil x)))
 		     l))))
       ;; Map a function that generates anniversaries for each date
       ;; over the dates and nconc the results into a single list. When
@@ -447,12 +481,13 @@ must be positive"))
       (apply #'nconc
 	     (mapcar
 	      (lambda (d)
-		(let ((date d))
+		(let ((agenda-date date)
+		      (date d))
 		  ;; Rebind 'date' so that org-bbdb-anniversaries will
 		  ;; be fooled into giving us the list for the given
 		  ;; date and then annotate the descriptions for that
 		  ;; date.
-		  (funcall annotate-descriptions d (org-bbdb-anniversaries))))
+		  (funcall annotate-descriptions agenda-date d (org-bbdb-anniversaries))))
 	      dates)))))
 
 (defun org-bbdb-complete-link ()

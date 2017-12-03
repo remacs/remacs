@@ -1,6 +1,6 @@
 GNU Emacs NEWS -- history of user-visible changes.
 
-Copyright (C) 2014-2017 Free Software Foundation, Inc.
+Copyright (C) 2017 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 Please send Emacs bug reports to bug-gnu-emacs@gnu.org.
@@ -9,9 +9,8 @@ If possible, use M-x report-emacs-bug.
 This file is about changes in Emacs version 27.
 
 See file HISTORY for a list of GNU Emacs versions and release dates.
-See files NEWS.26, NEWS.25, NEWS.24, NEWS.23, NEWS.22, NEWS.21,
-NEWS.20, NEWS.19, NEWS.18, and NEWS.1-17 for changes in older Emacs
-versions.
+See files NEWS.26, NEWS.25, ..., NEWS.18, and NEWS.1-17 for changes
+in older Emacs versions.
 
 You can narrow news to a specific version by calling 'view-emacs-news'
 with a prefix argument or by typing C-u C-h C-n.
@@ -31,16 +30,84 @@ When you add a new item, use the appropriate mark if you are sure it applies,
 
 * Changes in Emacs 27.1
 
+---
+** The new option 'tooltip-resize-echo-area' avoids truncating tooltip text
+on GUI frames when tooltips are displayed in the echo area.  Instead,
+it resizes the echo area as needed to accommodate the full tool-tip
+text.
+
++++
+** New function 'logcount' calculates an integer's Hamming weight.
+
++++
+** New function 'libxml-available-p'.
+This function returns non-nil if libxml support is both compiled in
+and available at run time.  Lisp programs should use this function to
+detect built-in libxml support, instead of testing for that
+indirectly, e.g., by checking that functions like
+'libxml-parse-html-region' return nil.
+
 
 * Editing Changes in Emacs 27.1
+
+---
+** New variable 'x-wait-for-event-timeout'.
+This controls how long Emacs will wait for updates to the graphical
+state to take effect (making a frame visible, for example).
+
++++
+** The new user option 'electric-quote-replace-double' controls
+whether '"' is also replaced in 'electric-quote-mode'.  If non-nil,
+'"' is replaced by a double typographic quote.
 
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** Dired
+
++++
+*** The new user option 'dired-create-destination-dirs' controls whether
+'dired-do-copy' and 'dired-rename-file' should create non-existent
+directories in the destination.
+
+** Ibuffer
+
+---
+*** New filter ibuffer-filter-by-process; bound to '/E'.
+
+** Edebug
+
++++
+*** The runtime behavior of Edebug's instrumentation can be changed
+using the new variables 'edebug-behavior-alist',
+'edebug-after-instrumentation-function' and
+'edebug-new-definition-function'. Edebug's behavior can be changed
+globally or for individual definitions.
+
 ** Enhanced xterm support
 
-*** New variable 'xterm-set-window-title' controls whether Emacs
-sets the XTerm window title.  The default is to set the window title.
+*** New variable 'xterm-set-window-title' controls whether Emacs sets
+the XTerm window title.  This feature is experimental and is disabled
+by default.
+
+** Gamegrid
+
+** ERT
+
++++
+*** New variable 'ert-quiet' allows to make ERT output in batch mode
+less verbose by removing non-essential information.
+
+---
+*** Gamegrid now determines its default glyph size based on display
+dimensions, instead of always using 16 pixels. As a result, Tetris,
+Snake and Pong are more playable on HiDPI displays.
+
+** Filecache
+
+---
+*** Completing filenames in the minibuffer via 'C-TAB' now uses the
+styles as configured by the variable 'completion-styles'.
 
 
 * New Modes and Packages in Emacs 27.1
@@ -48,8 +115,32 @@ sets the XTerm window title.  The default is to set the window title.
 
 * Incompatible Lisp Changes in Emacs 27.1
 
+** The FILENAME argument to 'file-name-base' is now mandatory and no
+longer defaults to 'buffer-file-name'.
+
+---
+** The function 'eldoc-message' now accepts a single argument.
+Programs that called it with multiple arguments before should pass
+them through 'format' first.  Even that is discouraged: for ElDoc
+support, you should set 'eldoc-documentation-function' instead of
+calling 'eldoc-message' directly.
+
 
 * Lisp Changes in Emacs 27.1
+
+---
+** The 'file-system-info' function is now available on all platforms.
+instead of just Microsoft platforms.  This fixes a 'get-free-disk-space'
+bug on OS X 10.8 and later (Bug#28639).
+
+---
+** The function 'get-free-disk-space' returns now a non-nil value for
+remote systems, which support this check.
+
++++
+** The function 'make-string' accepts an additional optional argument.
+If the optional third argument is non-nil, 'make-string' will produce
+a multibyte string even if its second argument is an ASCII character.
 
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems

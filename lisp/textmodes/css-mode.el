@@ -896,7 +896,7 @@ cannot be completed sensibly: `custom-ident',
                      ;; No face.
                      nil)))
     ;; Variables.
-    (,(concat "--" css-ident-re) (0 font-lock-variable-name-face))
+    (,(concat (rx symbol-start) "--" css-ident-re) (0 font-lock-variable-name-face))
     ;; Properties.  Again, we don't limit ourselves to css-property-ids.
     (,(concat "\\(?:[{;]\\|^\\)[ \t]*\\("
               "\\(?:\\(" css-proprietary-nmstart-re "\\)\\|"
@@ -1149,7 +1149,7 @@ This function is intended to be good enough to help SMIE during
 tokenization, but should not be regarded as a reliable function
 for determining whether point is within a selector."
   (save-excursion
-    (re-search-forward "[{};)]" nil t)
+    (re-search-forward "[{};]" nil t)
     (eq (char-before) ?\{)))
 
 (defun css--colon-inside-funcall ()
@@ -1375,6 +1375,7 @@ tags, classes and IDs."
               :exit-function
               ,(lambda (string status)
                  (and (eq status 'finished)
+                      (eolp)
                       prop-table
                       (test-completion string prop-table)
                       (not (and sel-table
@@ -1578,7 +1579,7 @@ to look up will be substituted there."
   (goto-char (point-min))
   (let ((window (get-buffer-window (current-buffer) 'visible)))
     (when window
-      (when (re-search-forward "^Summary" nil 'move)
+      (when (re-search-forward "^\\(Summary\\|Syntax\\)" nil 'move)
         (beginning-of-line)
         (set-window-start window (point))))))
 
@@ -1659,14 +1660,13 @@ on what is seen near point."
       (setq symbol (concat ":" symbol)))
     (let ((url (format css-lookup-url-format symbol))
           (buffer (get-buffer-create "*MDN CSS*")))
-      (save-selected-window
-        ;; Make sure to display the buffer before calling `eww', as
-        ;; that calls `pop-to-buffer-same-window'.
-        (switch-to-buffer-other-window buffer)
-        (with-current-buffer buffer
-          (eww-mode)
-          (add-hook 'eww-after-render-hook #'css--mdn-after-render nil t)
-          (eww url))))))
+      ;; Make sure to display the buffer before calling `eww', as that
+      ;; calls `pop-to-buffer-same-window'.
+      (switch-to-buffer-other-window buffer)
+      (with-current-buffer buffer
+        (eww-mode)
+        (add-hook 'eww-after-render-hook #'css--mdn-after-render nil t)
+        (eww url)))))
 
 (provide 'css-mode)
 ;;; css-mode.el ends here

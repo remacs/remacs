@@ -268,7 +268,7 @@ into a button whose action shows the function's disassembly.")
 Output is further controlled by the variables
 `cl-print-readably', `cl-print-compiled', along with output
 variables for the standard printing functions.  See Info
-node `(elisp)Output Variables'. "
+node `(elisp)Output Variables'."
   (cond
    (cl-print-readably (prin1 object stream))
    ((not print-circle) (cl-print-object object stream))

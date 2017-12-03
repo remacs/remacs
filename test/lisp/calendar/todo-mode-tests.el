@@ -384,7 +384,7 @@ priority and the done item should be the first done item."
 (ert-deftest todo-test-move-item05 ()   ; bug#27609
   "Test moving multiple todo and done items to another category.
 Both types of item should be moved en bloc to the new category,
-and the the top todo item should have the provided priority and
+and the top todo item should have the provided priority and
 the top done item should be the first done item."
   (with-todo-test
    (todo-test--show 1)

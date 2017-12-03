@@ -1,5 +1,6 @@
 //! Functions doing math on numbers.
 
+use remacs_lib::rust_count_one_bits;
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Qarith_error, Qnumberp};
 
@@ -209,9 +210,8 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
     for &arg in &args[1..] {
         if arithcompare(arg, accum, comparison).is_not_nil() {
             accum = arg;
-        }
-        if accum.as_float().map_or(false, |f| f.is_nan()) {
-            return accum;
+        } else if arg.as_float().map_or(false, |f| f.is_nan()) {
+            return arg;
         }
     }
     // we should return the same object if it's not a marker
@@ -413,6 +413,19 @@ pub fn sub1(number: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn lognot(number: LispObject) -> LispObject {
     LispObject::from_fixnum(!number.as_fixnum_or_error())
+}
+
+/// Return population count of VALUE.
+/// This is the number of one bits in the two's complement representation
+/// of VALUE.  If VALUE is negative, return the number of zero bits in the
+/// representation.
+#[lisp_fn]
+pub fn logcount(value: LispObject) -> LispObject {
+    let mut val = value.as_fixnum_or_error();
+    if val < 0 {
+        val = -1 - val;
+    }
+    LispObject::from_fixnum(rust_count_one_bits(val as usize) as EmacsInt)
 }
 
 include!(concat!(env!("OUT_DIR"), "/math_exports.rs"));

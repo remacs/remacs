@@ -66,7 +66,7 @@ struct dim
 
 /* Function prototypes.  */
 
-static void update_frame_line (struct frame *, int);
+static void update_frame_line (struct frame *, int, bool);
 static int required_matrix_height (struct window *);
 static int required_matrix_width (struct window *);
 static void increment_row_positions (struct glyph_row *, ptrdiff_t, ptrdiff_t);
@@ -88,7 +88,7 @@ static void check_matrix_pointers (struct glyph_matrix *,
 static void mirror_line_dance (struct window *, int, int, int *, char *);
 static bool update_window_tree (struct window *, bool);
 static bool update_window (struct window *, bool);
-static bool update_frame_1 (struct frame *, bool, bool, bool);
+static bool update_frame_1 (struct frame *, bool, bool, bool, bool);
 static bool scrolling (struct frame *);
 static void set_window_cursor_after_update (struct window *);
 static void adjust_frame_glyphs_for_window_redisplay (struct frame *);
@@ -1699,7 +1699,7 @@ required_matrix_height (struct window *w)
 
   if (FRAME_WINDOW_P (f))
     {
-      /* http://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
+      /* https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
       int ch_height = max (FRAME_SMALLEST_FONT_HEIGHT (f), 1);
       int window_pixel_height = window_box_height (w) + eabs (w->vscroll);
 
@@ -1726,7 +1726,7 @@ required_matrix_width (struct window *w)
   struct frame *f = XFRAME (w->frame);
   if (FRAME_WINDOW_P (f))
     {
-      /* http://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
+      /* https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
       int ch_width = max (FRAME_SMALLEST_CHAR_WIDTH (f), 1);
 
       /* Compute number of glyphs needed in a glyph row.  */
@@ -3119,7 +3119,7 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
 
       /* Update the display.  */
       update_begin (f);
-      paused_p = update_frame_1 (f, force_p, inhibit_hairy_id_p, 1);
+      paused_p = update_frame_1 (f, force_p, inhibit_hairy_id_p, 1, false);
       update_end (f);
 
       if (FRAME_TERMCAP_P (f))
@@ -3172,7 +3172,7 @@ update_frame_with_menu (struct frame *f, int row, int col)
   cursor_at_point_p = !(row >= 0 && col >= 0);
   /* Force update_frame_1 not to stop due to pending input, and not
      try scrolling.  */
-  paused_p = update_frame_1 (f, 1, 1, cursor_at_point_p);
+  paused_p = update_frame_1 (f, 1, 1, cursor_at_point_p, true);
   /* ROW and COL tell us where in the menu to position the cursor, so
      that screen readers know the active region on the screen.  */
   if (!cursor_at_point_p)
@@ -4472,7 +4472,7 @@ scrolling_window (struct window *w, bool header_line_p)
 
 static bool
 update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p,
-		bool set_cursor_p)
+		bool set_cursor_p, bool updating_menu_p)
 {
   /* Frame matrices to work on.  */
   struct glyph_matrix *current_matrix = f->current_matrix;
@@ -4511,7 +4511,7 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p,
 
   /* Update the individual lines as needed.  Do bottom line first.  */
   if (MATRIX_ROW_ENABLED_P (desired_matrix, desired_matrix->nrows - 1))
-    update_frame_line (f, desired_matrix->nrows - 1);
+    update_frame_line (f, desired_matrix->nrows - 1, updating_menu_p);
 
   /* Now update the rest of the lines.  */
   for (i = 0; i < desired_matrix->nrows - 1 && (force_p || !input_pending); i++)
@@ -4537,7 +4537,7 @@ update_frame_1 (struct frame *f, bool force_p, bool inhibit_id_p,
 	  if (!force_p && (i - 1) % preempt_count == 0)
 	    detect_input_pending_ignore_squeezables ();
 
-	  update_frame_line (f, i);
+	  update_frame_line (f, i, updating_menu_p);
 	}
     }
 
@@ -4773,7 +4773,7 @@ count_match (struct glyph *str1, struct glyph *end1, struct glyph *str2, struct 
 /* Perform a frame-based update on line VPOS in frame FRAME.  */
 
 static void
-update_frame_line (struct frame *f, int vpos)
+update_frame_line (struct frame *f, int vpos, bool updating_menu_p)
 {
   struct glyph *obody, *nbody, *op1, *op2, *np1, *nend;
   int tem;
@@ -4811,6 +4811,12 @@ update_frame_line (struct frame *f, int vpos)
 
   current_row->enabled_p = true;
   current_row->used[TEXT_AREA] = desired_row->used[TEXT_AREA];
+
+  /* For some reason, cursor is sometimes moved behind our back when a
+     frame with a TTY menu is redrawn.  Homing the cursor as below
+     fixes that.  */
+  if (updating_menu_p)
+    cursor_to (f, 0, 0);
 
   /* If desired line is empty, just clear the line.  */
   if (!desired_row->enabled_p)
@@ -5140,6 +5146,29 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
   /* We need to add it.first_visible_x because iterator positions
      include the hscroll. */
   to_x += it.first_visible_x;
+
+  /* If we are hscrolling only the current line, and Y is at the line
+     containing point, augment TO_X with the hscroll amount of the
+     current line.  */
+  if (it.line_wrap == TRUNCATE
+      && EQ (automatic_hscrolling, Qcurrent_line) && IT_CHARPOS (it) < PT)
+    {
+      struct it it2 = it;
+      void *it2data = bidi_shelve_cache ();
+      it2.last_visible_x = 1000000;
+      /* If the line at Y shows point, the call below to
+	 move_it_in_display_line will succeed in reaching point.  */
+      move_it_in_display_line (&it2, PT, -1, MOVE_TO_POS);
+      if (IT_CHARPOS (it2) >= PT)
+	{
+	  to_x += (w->hscroll - w->min_hscroll) * FRAME_COLUMN_WIDTH (it.f);
+	  /* We need to pretend the window is hscrolled, so that
+	     move_it_in_display_line below will DTRT with TO_X.  */
+	  it.first_visible_x += w->hscroll * FRAME_COLUMN_WIDTH (it.f);
+	  it.last_visible_x += w->hscroll * FRAME_COLUMN_WIDTH (it.f);
+	}
+      bidi_unshelve_cache (it2data, 0);
+    }
 
   /* Now move horizontally in the row to the glyph under *X.  Second
      argument is ZV to prevent move_it_in_display_line from matching

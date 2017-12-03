@@ -357,7 +357,7 @@ Examples:
         grandchildren, but completely collapse the final top-level topic.
  (-1 () : 1 0)
 	Close the first topic so only the immediate subtopics are shown,
-        leave the subsequent topics exposed as they are until the second
+        leave the subsequent topics exposed as they are until the
 	second to last topic, which is exposed at least one level, and
         completely close the last topic.
  (-2 : -1 *)
@@ -1687,7 +1687,7 @@ from what it did before, for backwards compatibility.
 MODE is the activation mode - see `allout-auto-activation' for
 valid values."
   (declare (obsolete allout-auto-activation "23.3"))
-  (custom-set-variables (list 'allout-auto-activation (format "%s" mode)))
+  (customize-set-variable 'allout-auto-activation (format "%s" mode))
   (format "%s" mode))
 
 ;;;_  > allout-setup-menubar ()

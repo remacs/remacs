@@ -88,7 +88,7 @@ ms_windows_dup2 (int fd, int desired_fd)
     }
 
   /* Wine 1.0.1 return 0 when desired_fd is negative but not -1:
-     http://bugs.winehq.org/show_bug.cgi?id=21289 */
+     https://bugs.winehq.org/show_bug.cgi?id=21289 */
   if (desired_fd < 0)
     {
       errno = EBADF;

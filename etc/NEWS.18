@@ -1120,7 +1120,7 @@ used as mode elements, and what they do in the display:
 		the symbol's value is processed as a mode element.
 
   list (whose first element is a string or list or cons cell)
-		the elements of the list are treated as as mode elements,
+		the elements of the list are treated as mode elements,
 		so that the output they generate is concatenated,
 
   list (whose car is a symbol)

@@ -1883,7 +1883,7 @@ If TIME is nil, then return the cutoff time for oldness instead."
 	     (setq days (days-to-time days))
 	     ;; Compare the time with the current time.
 	     (if (null time)
-		 (time-subtract (current-time) days)
+		 (time-subtract nil days)
 	       (ignore-errors (time-less-p days (time-since time)))))))))
 
 (declare-function gnus-group-mark-article-read "gnus-group" (group article))

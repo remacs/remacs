@@ -673,7 +673,7 @@ close_emacs_globals (ptrdiff_t num_symbols)
 	   "extern\n"
 	   "#endif\n"
 	   "struct {\n"
-	   "  struct Lisp_Symbol alignas (GCALIGNMENT) s;\n"
+	   "  struct GCALIGNED Lisp_Symbol s;\n"
 	   "} lispsym[%td];\n"),
 	  num_symbols);
 }
