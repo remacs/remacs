@@ -29,3 +29,6 @@ cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff lib.rs
 
 cd "$DIR/rust_src/alloc_unexecmacosx"
 cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff
+
+cd "$DIR/rust_src/remacs-modules"
+cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff
