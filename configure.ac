@@ -3424,7 +3424,9 @@ AC_SUBST(LIBXPM)
 ### Use -ljpeg if available, unless '--with-jpeg=no'.
 HAVE_JPEG=no
 LIBJPEG=
-if test "${with_jpeg}" != "no"; then
+if test "${NS_IMPL_COCOA}" = yes; then
+  : # Cocoa provides its own jpeg support, so do nothing.
+elif test "${with_jpeg}" != "no"; then
   AC_CACHE_CHECK([for jpeglib 6b or later],
     [emacs_cv_jpeglib],
     [OLD_LIBS=$LIBS
@@ -3559,7 +3561,7 @@ HAVE_PNG=no
 LIBPNG=
 PNG_CFLAGS=
 if test "${NS_IMPL_COCOA}" = yes; then
-  : # Nothing to do
+  : # Cocoa provides its own png support, so do nothing.
 elif test "${with_png}" != no; then
   # mingw32 loads the library dynamically.
   if test "$opsys" = mingw32; then
