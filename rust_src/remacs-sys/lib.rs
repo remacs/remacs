@@ -20,7 +20,7 @@ extern crate libc;
 
 pub mod libm;
 
-use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t, off_t, ptrdiff_t,
+use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, off_t, ptrdiff_t,
            size_t, time_t, timespec};
 
 // libc prefers not to merge pid_t as an alias for c_int in Windows, so we will not use libc::pid_t
@@ -31,6 +31,7 @@ pub type Lisp_Object = EmacsInt;
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 include!(concat!(env!("OUT_DIR"), "/globals.rs"));
+include!(concat!(env!("OUT_DIR"), "/modules.rs"));
 
 pub type char_bits = u32;
 pub const CHAR_ALT: char_bits = 0x0400000;

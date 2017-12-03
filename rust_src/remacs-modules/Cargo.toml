@@ -1,0 +1,12 @@
+[package]
+name = "remacs-modules"
+version = "0.1.0"
+authors = ["David DeSimone <djd231@scarletmail.rutgers.edu>"]
+
+[lib]
+path = "lib.rs"
+
+
+[dependencies]
+remacs-sys = { version = "0.1.0", path = "../remacs-sys" }
+libc = "0.2"

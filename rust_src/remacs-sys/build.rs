@@ -1,4 +1,5 @@
 extern crate libc;
+extern crate bindgen;
 
 use std::cmp::max;
 use std::env;
@@ -196,7 +197,30 @@ fn generate_globals() {
     }
 }
 
+fn generate_module_code() {
+    let builder = bindgen::Builder::default()
+        .rust_target(bindgen::RustTarget::Nightly)
+        .generate_comments(true)
+        .header("../../src/emacs-module.h")
+        .rustified_enum("emacs_funcall_exit")
+        .ctypes_prefix("::libc");
+
+    let bindings = builder
+        .rustfmt_bindings(true)
+        .generate()
+        .expect("Unable to generate bindings");
+
+    let source = bindings.to_string();
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("modules.rs");
+    let file = File::create(out_path);
+    file.unwrap()
+        .write_all(source.as_bytes())
+        .unwrap();
+
+}
+
 fn main() {
     generate_definitions();
     generate_globals();
+    generate_module_code();
 }
