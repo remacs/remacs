@@ -1227,6 +1227,8 @@ extern "C" {
     pub fn message_with_string(m: *const c_char, string: Lisp_Object, log: bool);
     pub fn maybe_quit();
     pub fn Fselect_window(window: Lisp_Object, norecord: Lisp_Object) -> Lisp_Object;
+    pub fn Fmake_sparse_keymap(string: Lisp_Object) -> Lisp_Object;
+    pub fn Ffset(symbol: Lisp_Object, definition: Lisp_Object) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.

@@ -2,7 +2,8 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, EmacsInt};
-use remacs_sys::{access_keymap, get_keymap, maybe_quit, Faref, Fevent_convert_list};
+use remacs_sys::{access_keymap, get_keymap, maybe_quit, Faref, Fevent_convert_list, Ffset,
+                 Fmake_sparse_keymap, Fset};
 use remacs_sys::CHAR_META;
 
 use keyboard::lucid_event_type_list_p;
@@ -110,6 +111,32 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
             maybe_quit();
         };
     }
+}
+
+/// Define COMMAND as a prefix command.  COMMAND should be a symbol.
+/// A new sparse keymap is stored as COMMAND's function definition and its
+/// value.
+/// This prepares COMMAND for use as a prefix key's binding.
+/// If a second optional argument MAPVAR is given, it should be a symbol.
+/// The map is then stored as MAPVAR's value instead of as COMMAND's
+/// value; but COMMAND is still defined as a function.
+/// The third optional argument NAME, if given, supplies a menu name
+/// string for the map.  This is required to use the keymap as a menu.
+/// This function returns COMMAND.
+#[lisp_fn(min = "1")]
+pub fn define_prefix_command(
+    command: LispObject,
+    mapvar: LispObject,
+    name: LispObject,
+) -> LispObject {
+    let map = unsafe { LispObject::from(Fmake_sparse_keymap(name.to_raw())) };
+    unsafe { Ffset(command.to_raw(), map.to_raw()) };
+    if mapvar.is_not_nil() {
+        unsafe { Fset(mapvar.to_raw(), map.to_raw()) };
+    } else {
+        unsafe { Fset(command.to_raw(), map.to_raw()) };
+    }
+    command
 }
 
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));
