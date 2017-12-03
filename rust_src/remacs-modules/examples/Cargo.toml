@@ -1,0 +1,10 @@
+[package]
+name = "mymod"
+version = "0.1.0"
+authors = ["David DeSimone <djd231@scarletmail.rutgers.edu>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+remacs-modules = { version = "0.1.0", path = "../../remacs-modules" }
