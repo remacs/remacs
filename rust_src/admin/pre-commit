@@ -5,7 +5,17 @@
 ## $ ln -s rust_src/admin/pre-commit .git/hooks/pre-commit
 ##
 
+STASH_NAME="pre-commit-$(date +%s)"
+
+finish() {
+    [ "$(git stash list --format='%s' | cut -d' ' -f3)" == "$STASH_NAME" ] && git stash pop -q
+}
+
+trap finish EXIT
+
 set -eu
+
+git stash save -q --keep-index $STASH_NAME
 
 check_char='\xE2\x9C\x93'
 cross_char='\xE2\x9D\x8C'
