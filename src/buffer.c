@@ -2045,25 +2045,6 @@ set_buffer_if_live (Lisp_Object buffer)
     set_buffer_internal (XBUFFER (buffer));
 }
 
-DEFUN ("barf-if-buffer-read-only", Fbarf_if_buffer_read_only,
-				   Sbarf_if_buffer_read_only, 0, 1, 0,
-       doc: /* Signal a `buffer-read-only' error if the current buffer is read-only.
-If the text under POSITION (which defaults to point) has the
-`inhibit-read-only' text property set, the error will not be raised.  */)
-  (Lisp_Object position)
-{
-  if (NILP (position))
-    XSETFASTINT (position, PT);
-  else
-    CHECK_NUMBER (position);
-
-  if (!NILP (BVAR (current_buffer, read_only))
-      && NILP (Vinhibit_read_only)
-      && NILP (Fget_text_property (position, Qinhibit_read_only, Qnil)))
-    xsignal1 (Qbuffer_read_only, Fcurrent_buffer ());
-  return Qnil;
-}
-
 DEFUN ("erase-buffer", Ferase_buffer, Serase_buffer, 0, 0, "*",
        doc: /* Delete the entire contents of the current buffer.
 Any narrowing restriction in effect (see `narrow-to-region') is removed,
@@ -6097,7 +6078,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);
-  defsubr (&Sbarf_if_buffer_read_only);
   defsubr (&Serase_buffer);
   defsubr (&Sbuffer_swap_text);
   defsubr (&Sset_buffer_multibyte);
