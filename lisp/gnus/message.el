@@ -1433,7 +1433,7 @@ starting with `not' and followed by regexps."
      (:foreground "MidnightBlue" :bold t))
     (t
      (:bold t :italic t)))
-  "Face used for displaying From headers."
+  "Face used for displaying To headers."
   :group 'message-faces)
 ;; backward-compatibility alias
 (put 'message-header-to-face 'face-alias 'message-header-to)
@@ -1463,7 +1463,7 @@ starting with `not' and followed by regexps."
      (:foreground "navy blue" :bold t))
     (t
      (:bold t)))
-  "Face used for displaying subject headers."
+  "Face used for displaying Subject headers."
   :group 'message-faces)
 ;; backward-compatibility alias
 (put 'message-header-subject-face 'face-alias 'message-header-subject)
@@ -1478,7 +1478,7 @@ starting with `not' and followed by regexps."
      (:foreground "blue4" :bold t :italic t))
     (t
      (:bold t :italic t)))
-  "Face used for displaying newsgroups headers."
+  "Face used for displaying Newsgroups headers."
   :group 'message-faces)
 ;; backward-compatibility alias
 (put 'message-header-newsgroups-face 'face-alias 'message-header-newsgroups)
@@ -1493,7 +1493,7 @@ starting with `not' and followed by regexps."
      (:foreground "steel blue"))
     (t
      (:bold t :italic t)))
-  "Face used for displaying newsgroups headers."
+  "Face used for displaying other headers."
   :group 'message-faces)
 ;; backward-compatibility alias
 (put 'message-header-other-face 'face-alias 'message-header-other)

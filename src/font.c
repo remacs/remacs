@@ -3794,19 +3794,26 @@ font_range (ptrdiff_t pos, ptrdiff_t pos_byte, ptrdiff_t *limit,
   int c;
   Lisp_Object font_object = Qnil;
 
-  if (NILP (string))
+  if (!face)
     {
-      if (! face)
-	{
-	  int face_id;
+      struct frame *f = XFRAME (w->frame);
+      int face_id;
 
-	  face_id = face_at_buffer_position (w, pos, &ignore,
-					     *limit, false, -1);
-	  face = FACE_FROM_ID (XFRAME (w->frame), face_id);
+      if (NILP (string))
+	  face_id = face_at_buffer_position (w, pos, &ignore, *limit,
+					     false, -1);
+      else
+	{
+	  face_id =
+	    NILP (Vface_remapping_alist)
+	    ? DEFAULT_FACE_ID
+	    : lookup_basic_face (f, DEFAULT_FACE_ID);
+
+	  face_id = face_at_string_position (w, string, pos, 0, &ignore,
+					     face_id, false);
 	}
+      face = FACE_FROM_ID (f, face_id);
     }
-  else
-    eassert (face);
 
   while (pos < *limit)
     {

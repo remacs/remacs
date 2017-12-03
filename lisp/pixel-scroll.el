@@ -110,11 +110,11 @@ This is an alternative of `scroll-up'.  Scope moves downward."
                        pixel-resolution-fine-flag
                      (frame-char-height))
                  (pixel-line-height))))
-      (if (pixel-eob-at-top-p)            ; when end-of-the-buffer is close
-          (scroll-up 1)                   ; relay on robust method
-        (while (pixel-point-at-top-p amt) ; prevent too late (multi tries)
-          (vertical-motion 1))            ; move point downward
-        (pixel-scroll-pixel-up amt)))))   ; move scope downward
+      (while (pixel-point-at-top-p amt) ; prevent too late (multi tries)
+        (vertical-motion 1))            ; move point downward
+      (if (pixel-eob-at-top-p)          ; when end-of-the-buffer is close
+          (scroll-up 1)                 ; relay on robust method
+        (pixel-scroll-pixel-up amt))))) ; move scope downward
 
 (defun pixel-scroll-down (&optional arg)
   "Scroll text of selected window down ARG lines.
@@ -127,11 +127,11 @@ This is and alternative of `scroll-down'.  Scope moves upward."
                        pixel-resolution-fine-flag
                      (frame-char-height))
                  (pixel-line-height -1))))
-      (if (or (pixel-bob-at-top-p amt) ; when beginning-of-the-buffer is seen
-              (pixel-eob-at-top-p))    ; for file with a long line
-          (scroll-down 1)              ; relay on robust method
-        (while (pixel-point-at-bottom-p amt) ; prevent too late (multi tries)
-          (vertical-motion -1))
+      (while (pixel-point-at-bottom-p amt) ; prevent too late (multi tries)
+        (vertical-motion -1))              ; move point upward
+      (if (or (pixel-bob-at-top-p amt)     ; when beginning-of-the-buffer is seen
+              (pixel-eob-at-top-p))        ; for file with a long line
+          (scroll-down 1)                  ; relay on robust method
         (pixel-scroll-pixel-down amt)))))
 
 (defun pixel-bob-at-top-p (amt)

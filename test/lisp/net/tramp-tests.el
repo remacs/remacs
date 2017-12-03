@@ -4624,15 +4624,13 @@ process sentinels.  They shall not disturb each other."
         (ignore-errors (cancel-timer timer))
         (ignore-errors (delete-directory tmp-name 'recursive)))))))
 
+;; This test is inspired by Bug#29163.
 (ert-deftest tramp-test42-auto-load ()
   "Check that Tramp autoloads properly."
-  (skip-unless (tramp--test-enabled))
-  (skip-unless (not (tramp--test-mock-p)))
-
   (let ((default-directory (expand-file-name temporary-file-directory))
 	(code
 	 (format
-	  "(message \"Tramp loaded: %%s\" (consp (file-attributes %S)))"
+	  "(message \"Tramp loaded: %%s\" (and (file-remote-p %S) t))"
 	  tramp-test-temporary-file-directory)))
     (should
      (string-match
