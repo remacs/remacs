@@ -207,6 +207,12 @@ wset_combination (struct window *w, bool horflag, Lisp_Object val)
     w->horizontal = horflag;
 }
 
+void
+wset_mode_line_height(struct window *w, int height)
+{
+  w->mode_line_height = height;
+}
+
 static void
 wset_update_mode_line (struct window *w)
 {
@@ -219,6 +225,18 @@ wset_update_mode_line (struct window *w)
     update_mode_lines = 42;
   else
     w->update_mode_line = true;
+}
+
+struct glyph_matrix*
+wget_current_matrix(const struct window *w)
+{
+  return w->current_matrix;
+}
+
+int
+wget_mode_line_height(const struct window *w)
+{
+  return w->mode_line_height;
 }
 
 Lisp_Object

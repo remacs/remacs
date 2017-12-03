@@ -397,6 +397,122 @@ pub struct CursorPos {
     vpos: c_int,
 }
 
+#[repr(C)]
+pub struct glyph {
+    /// Position from which this glyph was drawn.  If `object' below is a
+    /// Lisp string, this is an index into that string.  If it is a
+    /// buffer, this is a position in that buffer.  In addition, some
+    /// special glyphs have special values for this:
+    ///
+    /// glyph standing for newline at end of line    0
+    /// empty space after the end of the line       -1
+    /// overlay arrow on a TTY                      -1
+    /// glyph displaying line number                -1
+    /// glyph at EOB that ends in a newline         -1
+    /// left truncation glyphs:                     -1
+    /// right truncation/continuation glyphs        next buffer position
+    /// glyph standing for newline of an empty line buffer position of newline
+    /// stretch glyph at left edge of R2L lines     buffer position of newline
+    charpos: ptrdiff_t,
+
+    /// Lisp object source of this glyph.  Currently either a buffer or a
+    /// string, if the glyph was produced from characters which came from
+    /// a buffer or a string; or nil if the glyph was inserted by
+    /// redisplay for its own purposes, such as padding, truncation, or
+    /// continuation glyphs, or the overlay-arrow glyphs on TTYs.
+    object: Lisp_Object,
+
+    /// Width in pixels.
+    pixel_width: i16,
+}
+
+#[repr(C)]
+pub struct glyph_pool {
+    // Vector of glyphs allocated from the heap.
+    glyphs: *mut glyph,
+
+    // Allocated size of `glyphs'.
+    nglyphs: ptrdiff_t,
+
+    // Number of rows and columns in a matrix.
+    nrows: c_int,
+    ncolumns: c_int,
+}
+
+#[repr(C)]
+pub struct glyph_matrix {
+    pub pool: *mut glyph_pool,
+    pub rows: *mut glyph_row,
+    pub rows_allocated: ptrdiff_t,
+    pub nrows: c_int,
+    /* more to come */
+}
+
+#[repr(C)]
+pub struct glyph_row {
+    /// Pointers to beginnings of areas.  The end of an area A is found at
+    /// A + 1 in the vector.  The last element of the vector is the end
+    /// of the whole row.
+    ///
+    /// Kludge alert: Even if used[TEXT_AREA] == 0, glyphs[TEXT_AREA][0]'s
+    /// position field is used.  It is -1 if this row does not correspond
+    /// to any text; it is some buffer position if the row corresponds to
+    /// an empty display line that displays a line end.  This is what old
+    /// redisplay used to do.  (Except in code for terminal frames, this
+    /// kludge is no longer used, I believe. --gerd).
+    ///
+    /// See also start, end, displays_text_p and ends_at_zv_p for cleaner
+    /// ways to do it.  The special meaning of positions 0 and -1 will be
+    /// removed some day, so don't use it in new code.
+    glyphs: *mut glyph, // really an array
+
+    /// Number of glyphs actually filled in areas. This could have size
+    /// LAST_AREA, but it's 1 + LAST_AREA to simplify offset calculations.
+    used: *mut i16, // really an array
+
+    /// Hash code. This hash code is available as soon as the row
+    /// is constructed, i.e. after a call to display_line.
+    hash: u32,
+
+    /// Window-relative x and y-position of the top-left corner of this
+    /// row. If y < 0, this means that eabs (y) pixels of the row are
+    /// invisible because it is partially visible at the top of a window.
+    /// If x < 0, this means that eabs (x) pixels of the first glyph of
+    /// the text area of the row are invisible because the glyph is
+    /// partially visible.
+    x: c_int,
+    y: c_int,
+
+    /// Width of the row in pixels without taking face extension at the
+    /// end of the row into account, and without counting truncation
+    /// and continuation glyphs at the end of a row on ttys.
+    pixel_width: c_int,
+
+    /// Logical ascent/height of this line. The value of ascent is zero
+    /// and height is 1 on terminal frames.
+    ascent: c_int,
+    pub height: c_int,
+}
+
+pub type face_id = i32;
+pub const DEFAULT_FACE_ID: face_id = 0;
+pub const MODE_LINE_FACE_ID: face_id = 1;
+pub const MODE_LINE_INACTIVE_FACE_ID: face_id = 2;
+pub const TOOL_BAR_FACE_ID: face_id = 3;
+pub const FRINGE_FACE_ID: face_id = 4;
+pub const HEADER_LINE_FACE_ID: face_id = 5;
+pub const SCROLL_BAR_FACE_ID: face_id = 6;
+pub const BORDER_FACE_ID: face_id = 7;
+pub const CURSOR_FACE_ID: face_id = 8;
+pub const MOUSE_FACE_ID: face_id = 9;
+pub const MENU_FACE_ID: face_id = 10;
+pub const VERTICAL_BORDER_FACE_ID: face_id = 11;
+pub const WINDOW_DIVIDER_FACE_ID: face_id = 12;
+pub const WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID: face_id = 13;
+pub const WINDOW_DIVIDER_LAST_PIXEL_FACE_ID: face_id = 14;
+pub const INTERNAL_BORDER_FACE_ID: face_id = 15;
+pub const BASIC_FACE_ID_SENTINEL: face_id = 16;
+
 /// Represents an Emacs window. For documentation see struct window in
 /// window.h.
 #[repr(C)]
@@ -477,9 +593,13 @@ pub struct Lisp_Window {
 }
 
 extern "C" {
+    pub fn wget_current_matrix(w: *const Lisp_Window) -> *mut glyph_matrix;
+    pub fn wget_mode_line_height(w: *const Lisp_Window) -> c_int;
     pub fn wget_parent(w: *const Lisp_Window) -> Lisp_Object;
     pub fn wget_pixel_height(w: *const Lisp_Window) -> c_int;
     pub fn wget_pseudo_window_p(w: *const Lisp_Window) -> bool;
+
+    pub fn wset_mode_line_height(w: *mut Lisp_Window, height: c_int);
 
     pub fn window_parameter(w: *const Lisp_Window, parameter: Lisp_Object) -> Lisp_Object;
 }
@@ -1065,6 +1185,8 @@ extern "C" {
     pub fn fget_pointer_invisible(f: *const Lisp_Frame) -> BoolBF;
     pub fn fget_top_pos(f: *const Lisp_Frame) -> c_int;
     pub fn fget_left_pos(f: *const Lisp_Frame) -> c_int;
+
+    pub fn estimate_mode_line_height(f: *const Lisp_Frame, face_id: face_id) -> c_int;
 }
 
 extern "C" {
