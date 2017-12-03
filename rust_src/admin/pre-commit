@@ -1,8 +1,9 @@
 #!/bin/bash
 
 ##
-## To install simply cd to the top level and run:
-## $ ln -s rust_src/admin/pre-commit .git/hooks/pre-commit
+## To install:
+## $ cd .git/hooks
+## $ ln -s ../../rust_src/admin/pre-commit pre-commit
 ##
 
 STASH_NAME="pre-commit-$(date +%s)"
