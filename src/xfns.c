@@ -215,8 +215,9 @@ x_real_pos_and_offsets (struct frame *f,
   int win_x = 0, win_y = 0, outer_x = 0, outer_y = 0;
   int real_x = 0, real_y = 0;
   bool had_errors = false;
-  Window win = (FRAME_PARENT_FRAME (f)
-		? FRAME_X_WINDOW (FRAME_PARENT_FRAME (f))
+  struct frame *parent_frame = FRAME_PARENT_FRAME (f);
+  Window win = (parent_frame
+		? FRAME_X_WINDOW (parent_frame)
 		: f->output_data.x->parent_desc);
   struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   long max_len = 400;
@@ -355,8 +356,8 @@ x_real_pos_and_offsets (struct frame *f,
 	outer_geom_cookie = xcb_get_geometry (xcb_conn,
 					      FRAME_OUTER_WINDOW (f));
 
-      if ((dpyinfo->root_window == f->output_data.x->parent_desc)
-	  && !FRAME_PARENT_FRAME (f))
+      if (!parent_frame
+	  && dpyinfo->root_window == f->output_data.x->parent_desc)
 	/* Try _NET_FRAME_EXTENTS if our parent is the root window.  */
 	prop_cookie = xcb_get_property (xcb_conn, 0, win,
 					dpyinfo->Xatom_net_frame_extents,
@@ -470,8 +471,7 @@ x_real_pos_and_offsets (struct frame *f,
 #endif
     }
 
-  if ((dpyinfo->root_window == f->output_data.x->parent_desc)
-      && !FRAME_PARENT_FRAME (f))
+  if (!parent_frame && dpyinfo->root_window == f->output_data.x->parent_desc)
     {
       /* Try _NET_FRAME_EXTENTS if our parent is the root window.  */
 #ifdef USE_XCB
