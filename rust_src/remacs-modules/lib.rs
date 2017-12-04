@@ -5,10 +5,9 @@ use remacs_sys::{emacs_env, emacs_runtime, emacs_value};
 use std::ffi::CString;
 use std::mem;
 use std::ops::{Deref, DerefMut};
+use std::ptr;
 use std::slice;
-//use std::ptr;
-//use std::io::{Error, ErrorKind};
-//use std::ffi::IntoStringError;
+use std::ffi::{IntoStringError, NulError};
 
 #[repr(C)]
 pub struct EmacsRuntime(*mut emacs_runtime);
@@ -19,6 +18,26 @@ pub struct EmacsEnv(*mut emacs_env);
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct EmacsValue(emacs_value);
+
+#[repr(C)]
+#[derive(Debug)]
+pub enum EmacsModuleError {
+    InvalidValue,
+    NulError(NulError),
+    IntoStringError(IntoStringError),
+}
+
+impl From<IntoStringError> for EmacsModuleError {
+    fn from(error: IntoStringError) -> EmacsModuleError {
+        EmacsModuleError::IntoStringError(error)
+    }
+}
+
+impl From<NulError> for EmacsModuleError {
+    fn from(error: NulError) -> EmacsModuleError {
+        EmacsModuleError::NulError(error)
+    }
+}
 
 pub type EmacsInt = ::remacs_sys::EmacsInt;
 pub type FuncallExit = ::remacs_sys::emacs_funcall_exit;
@@ -102,38 +121,40 @@ impl EmacsEnv {
         max_args: isize,
         func: T,
         docstr: &str,
-    ) -> EmacsValue
+    ) -> Result<EmacsValue, EmacsModuleError>
     where
         T: FnMut(&mut EmacsEnv, &mut Vec<EmacsValue>) -> EmacsValue + Sized,
     {
-        unsafe {
-            let fnptr = self.make_function.unwrap();
-            let cstring = CString::new(docstr).unwrap();
-            let boxed = Box::new(UserData {
-                func: Box::new(func),
-            });
-            let result = (fnptr)(
-                self.0,
-                min_args,
-                max_args,
-                Some(springboard),
-                cstring.as_ptr() as *mut libc::c_char,
-                Box::into_raw(boxed) as *mut libc::c_void,
-            );
-            EmacsValue(result)
-        }
+        let cstring = CString::new(docstr)?;
+        let boxed = Box::new(UserData {
+            func: Box::new(func),
+        });
+
+        let result = call!(
+            self,
+            make_function,
+            min_args,
+            max_args,
+            Some(springboard),
+            cstring.as_ptr() as *mut libc::c_char,
+            Box::into_raw(boxed) as *mut libc::c_void
+        );
+
+        Ok(EmacsValue(result))
     }
 
-    pub fn intern(&mut self, string: &str) -> EmacsValue {
-        let cstring = CString::new(string).unwrap();
-        EmacsValue(call!(self, intern, cstring.as_ptr() as *mut libc::c_char))
+    pub fn intern(&mut self, string: &str) -> Result<EmacsValue, EmacsModuleError> {
+        let cstring = CString::new(string)?;
+        Ok(EmacsValue(
+            call!(self, intern, cstring.as_ptr() as *mut libc::c_char),
+        ))
     }
 
-    pub fn provide(&mut self, feature: &str) {
-        let qfeat = self.intern(feature);
-        let qprovide = self.intern("provide");
+    pub fn provide(&mut self, feature: &str) -> Result<EmacsValue, EmacsModuleError> {
+        let qfeat = self.intern(feature)?;
+        let qprovide = self.intern("provide")?;
         let mut args = vec![qfeat];
-        self.funcall(qprovide, &mut args);
+        Ok(self.funcall(qprovide, &mut args))
     }
 
     pub fn funcall(&mut self, fun: EmacsValue, args: &mut Vec<EmacsValue>) -> EmacsValue {
@@ -148,12 +169,12 @@ impl EmacsEnv {
         ))
     }
 
-    pub fn bind(&mut self, name: &str, fun: EmacsValue) {
-        let qset = self.intern("fset");
-        let qsym = self.intern(name);
+    pub fn bind(&mut self, name: &str, fun: EmacsValue) -> Result<EmacsValue, EmacsModuleError> {
+        let qset = self.intern("fset")?;
+        let qsym = self.intern(name)?;
 
         let mut args = vec![qsym, fun];
-        self.funcall(qset, &mut args);
+        Ok(self.funcall(qset, &mut args))
     }
 
     pub fn make_integer(&mut self, num: EmacsInt) -> EmacsValue {
@@ -234,36 +255,64 @@ impl EmacsEnv {
         EmacsValue(call!(self, make_float, value))
     }
 
-    // pub fn copy_string_contents(&self, value: EmacsValue)
-    //                             -> Result<String, > {
-    //     let required_size;
-    //     let result = call!(self,
-    //                        copy_string_contents,
-    //                        value.to_raw(),
-    //                        ptr::null_mut(),
-    //                        &mut required_size);
-    //     // if !result {
-    //     //     return Err(Error::new(ErrorKind::Other, "value is not a proper string"));
-    //     // }
+    pub fn copy_string_contents(&self, value: EmacsValue) -> Result<String, EmacsModuleError> {
+        let mut required_size = 0;
+        let result = call!(
+            self,
+            copy_string_contents,
+            value.to_raw(),
+            ptr::null_mut(),
+            &mut required_size
+        );
 
-    //     let mut buffer: Vec<u8> = Vec::with_capacity(required_size as usize);
-    //     let second_result = call!(self,
-    //                               copy_string_contents,
-    //                               value.to_raw(),
-    //                               buffer.as_mut_ptr() as *mut libc::c_char,
-    //                               &mut required_size);
-    //     // if !second_result {
-    //     //     return Err(Error::new(ErrorKind::Other, "failed to copy string."));
-    //     // }
+        if !result {
+            return Err(EmacsModuleError::InvalidValue);
+        }
 
-    //     CString::new(buffer)?.into_string()?
-    // }
+        let mut buffer: Vec<u8> = Vec::with_capacity(required_size as usize);
+        let second_result = call!(
+            self,
+            copy_string_contents,
+            value.to_raw(),
+            buffer.as_mut_ptr() as *mut libc::c_char,
+            &mut required_size
+        );
 
-    pub fn make_string(&mut self, string: &str) -> EmacsValue {
-        let cstring = CString::new(string).unwrap();
+        if !second_result {
+            return Err(EmacsModuleError::InvalidValue);
+        }
+
+        // The buffer has been filled by the second 'copy_string_contents',
+        // but we need to update the vector's internal len to match. We don't need
+        // the NULL terminator, otherwise CString::new will panic.
+        unsafe { buffer.set_len((required_size - 1) as usize) };
+        let string = CString::new(buffer)?.into_string()?;
+        Ok(string)
+    }
+
+    /// Copy the content of the Lisp string VALUE to BUFFER as an utf8
+    /// null-terminated string.
+    /// SIZE must point to the total size of the buffer.  If BUFFER is
+    /// NULL or if SIZE is not big enough, write the required buffer size
+    /// to SIZE and return true.
+    /// Note that SIZE must include the last null byte (e.g. "abc" needs
+    /// a buffer of size 4).
+    /// Return true if the string was successfully copied.
+    #[allow(unused_unsafe)]
+    pub unsafe fn copy_string_contents_unchecked(
+        &self,
+        value: EmacsValue,
+        buffer: *mut libc::c_char,
+        size: *mut isize,
+    ) -> bool {
+        call!(self, copy_string_contents, value.to_raw(), buffer, size)
+    }
+
+    pub fn make_string(&mut self, string: &str) -> Result<EmacsValue, EmacsModuleError> {
+        let cstring = CString::new(string)?;
         let len = cstring.to_bytes().len() as isize;
         let ptr = cstring.as_ptr() as *mut libc::c_char;
-        EmacsValue(call!(self, make_string, ptr, len))
+        Ok(EmacsValue(call!(self, make_string, ptr, len)))
     }
 
     pub fn vec_get(&self, vec: EmacsValue, i: isize) -> EmacsValue {
@@ -276,6 +325,26 @@ impl EmacsEnv {
 
     pub fn vec_size(&self, vec: EmacsValue) -> isize {
         call!(self, vec_size, vec.to_raw())
+    }
+
+    pub fn make_user_ptr(
+        &mut self,
+        fin: extern "C" fn(*mut libc::c_void),
+        ptr: *mut libc::c_void,
+    ) -> EmacsValue {
+        EmacsValue(call!(self, make_user_ptr, Some(fin), ptr))
+    }
+
+    pub fn get_user_ptr(&mut self, uptr: EmacsValue) -> *mut libc::c_void {
+        call!(self, get_user_ptr, uptr.to_raw())
+    }
+
+    pub fn set_user_ptr(&mut self, uptr: EmacsValue, data: *mut libc::c_void) {
+        call!(self, set_user_ptr, uptr.to_raw(), data);
+    }
+
+    pub fn set_user_finalizer(&mut self, uptr: EmacsValue, fin: extern "C" fn(*mut libc::c_void)) {
+        call!(self, set_user_finalizer, uptr.to_raw(), Some(fin));
     }
 }
 

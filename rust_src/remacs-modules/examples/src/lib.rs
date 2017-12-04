@@ -1,6 +1,6 @@
 extern crate remacs_modules;
 
-use remacs_modules::EmacsRuntime;
+use remacs_modules::{EmacsEnv, EmacsModuleError, EmacsRuntime};
 
 /// The entry point for your module.
 /// For now this need to be #[no_mangle] and extern "C"
@@ -12,16 +12,19 @@ use remacs_modules::EmacsRuntime;
 #[no_mangle]
 pub extern "C" fn module_init(runtime: EmacsRuntime) -> i32 {
     let mut env = runtime.get_env();
+    // If our init function has error'd, return -1, else return 0.
+    init(&mut env).ok().map_or(-1, |_| 0)
+}
+
+fn init(env: &mut EmacsEnv) -> Result<(), EmacsModuleError> {
     let fun = env.make_function(
-        0, // min args
-        0, // max args
-        // Your callback
-        |env, _args| env.make_integer(43),
-        "make a number", // docstring
-    );
+        0,                                 // min args
+        0,                                 // max args
+        |env, _args| env.make_integer(43), // Your callback
+        "Returns the number 43.",          // docstring
+    )?;
 
-    env.bind("mymod-func", fun); // Bind 'mymod-func' to our created function
-    env.provide("mymod"); // provide our library so we can 'require' it
-
-    0 // Success!
+    env.bind("mymod-func", fun)?; // Bind 'mymod-func' to our created function
+    env.provide("mymod")?; // provide our library so we can 'require' it
+    Ok(())
 }
