@@ -3517,13 +3517,13 @@ x_draw_underwave (struct glyph_string *s)
 
   x_get_scale_factor (s->display, &scale_x, &scale_y);
 
-  int wave_height = 3 * scale_y, wave_length = 2 * scale_x, thickness = scale_y;
+  int wave_height = 3 * scale_y, wave_length = 2 * scale_x;
 
 #ifdef USE_CAIRO
   x_draw_horizontal_wave (s->f, s->gc, s->x, s->ybase - wave_height + 3,
 			  s->width, wave_height, wave_length);
 #else  /* not USE_CAIRO */
-  int dx, dy, x0, y0, width, x1, y1, x2, y2, xmax;
+  int dx, dy, x0, y0, width, x1, y1, x2, y2, xmax, thickness = scale_y;;
   bool odd;
   XRectangle wave_clip, string_clip, final_clip;
 
