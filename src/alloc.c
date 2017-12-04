@@ -3317,15 +3317,14 @@ sweep_vectors (void)
 static struct Lisp_Vector *
 allocate_vectorlike (ptrdiff_t len)
 {
-  struct Lisp_Vector *p;
-
-  MALLOC_BLOCK_INPUT;
-
   if (len == 0)
-    p = XVECTOR (zero_vector);
+    return XVECTOR (zero_vector);
   else
     {
       size_t nbytes = header_size + len * word_size;
+      struct Lisp_Vector *p;
+
+      MALLOC_BLOCK_INPUT;
 
 #ifdef DOUG_LEA_MALLOC
       if (!mmap_lisp_allowed_p ())
@@ -3355,11 +3354,11 @@ allocate_vectorlike (ptrdiff_t len)
 
       consing_since_gc += nbytes;
       vector_cells_consed += len;
+
+      MALLOC_UNBLOCK_INPUT;
+
+      return p;
     }
-
-  MALLOC_UNBLOCK_INPUT;
-
-  return p;
 }
 
 
