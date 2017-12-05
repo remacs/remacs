@@ -26,6 +26,9 @@ struct LispFnArgsRaw {
     /// If the function is not interactive, this should be None.
     #[darling(default)]
     intspec: Option<String>,
+    /// Whether unevalled or not.
+    #[darling(default)]
+    unevalled: Option<String>,
 }
 
 impl LispFnArgsRaw {
@@ -44,6 +47,11 @@ impl LispFnArgsRaw {
                 def_min_args
             },
             intspec: self.intspec,
+            unevalled: if let Some(b) = self.unevalled {
+                b.parse().map_err(|_| "invalid \"unevalled\" argument")?
+            } else {
+                false
+            },
         })
     }
 }
@@ -53,6 +61,7 @@ pub struct LispFnArgs {
     pub c_name: String,
     pub min: i16,
     pub intspec: Option<String>,
+    pub unevalled: bool,
 }
 
 pub fn parse_lisp_fn<D>(src: &str, def_name: &D, def_min_args: i16) -> Result<LispFnArgs, String>
