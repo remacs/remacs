@@ -32,3 +32,6 @@ cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff
 
 cd "$DIR/rust_src/remacs-modules"
 cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff
+
+cd "$DIR/rust_src/remacs-modules/examples"
+cargo fmt -- --config-path $RUSTFMT_CONFIG_DIR --write-mode=diff

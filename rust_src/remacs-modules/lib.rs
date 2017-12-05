@@ -2,12 +2,12 @@ extern crate libc;
 extern crate remacs_sys;
 
 use remacs_sys::{emacs_env, emacs_runtime, emacs_value};
+use std::ffi::{IntoStringError, NulError};
 use std::ffi::CString;
 use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::ptr;
 use std::slice;
-use std::ffi::{IntoStringError, NulError};
 
 #[repr(C)]
 pub struct EmacsRuntime(*mut emacs_runtime);

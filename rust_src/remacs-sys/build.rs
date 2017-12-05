@@ -4,9 +4,10 @@ extern crate libc;
 use std::cmp::max;
 use std::env;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Error, ErrorKind, Write};
 use std::mem::size_of;
 use std::path::PathBuf;
+use std::process;
 
 #[cfg(feature = "wide-emacs-int")]
 const WIDE_EMACS_INT: bool = true;
@@ -197,7 +198,7 @@ fn generate_globals() {
     }
 }
 
-fn generate_module_code() {
+fn generate_module_code() -> Result<(), Error> {
     let mut builder = bindgen::Builder::default()
         .rust_target(bindgen::RustTarget::Nightly)
         .generate_comments(true)
@@ -214,19 +215,21 @@ fn generate_module_code() {
             .clang_arg("-D_M_X64")
     }
 
-    let bindings = builder
-        .rustfmt_bindings(true)
-        .generate()
-        .expect("Unable to generate bindings");
+    let bindings = builder.rustfmt_bindings(true).generate().map_err(|_| {
+        Error::new(ErrorKind::Other, "Failed to generate bindings")
+    })?;
 
     let source = bindings.to_string();
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("modules.rs");
-    let file = File::create(out_path);
-    file.unwrap().write_all(source.as_bytes()).unwrap();
+    File::create(out_path)?.write_all(source.as_bytes())?;
+    Ok(())
 }
 
 fn main() {
     generate_definitions();
     generate_globals();
-    generate_module_code();
+    if let Err(e) = generate_module_code() {
+        eprintln!("Error while generating module code:\n {}", e);
+        process::exit(3);
+    }
 }
