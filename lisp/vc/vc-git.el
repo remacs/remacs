@@ -978,7 +978,7 @@ This prompts for a branch to merge from."
              ;; FIXME
              ;; 1) the net result is to call git twice per file.
              ;; 2) v-g-c-f is documented to take a directory.
-             ;; http://lists.gnu.org/archive/html/emacs-devel/2014-01/msg01126.html
+             ;; https://lists.gnu.org/archive/html/emacs-devel/2014-01/msg01126.html
              (vc-git-conflicted-files buffer-file-name)
              (save-excursion
                (goto-char (point-min))
@@ -1035,6 +1035,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (defun vc-git-log-outgoing (buffer remote-location)
   (interactive)
+  (vc-setup-buffer buffer)
   (vc-git-command
    buffer 'async nil
    "log"
@@ -1048,6 +1049,7 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (defun vc-git-log-incoming (buffer remote-location)
   (interactive)
+  (vc-setup-buffer buffer)
   (vc-git-command nil 0 nil "fetch")
   (vc-git-command
    buffer 'async nil

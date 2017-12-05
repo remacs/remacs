@@ -2361,7 +2361,7 @@ If you set `term-file-prefix' to nil, this function does nothing."
 (defface variable-pitch
   '((((type w32))
      ;; This is a workaround for an issue discussed in
-     ;; http://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00746.html.
+     ;; https://lists.gnu.org/archive/html/emacs-devel/2016-04/msg00746.html.
      ;; We need (a) the splash screen not to pick up bold-italics variant of
      ;; the font, and (b) still be able to request bold/italic/larger size
      ;; variants in the likes of EWW.

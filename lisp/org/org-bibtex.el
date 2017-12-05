@@ -237,6 +237,17 @@ a missing title field."
   :version "24.1"
   :type 'boolean)
 
+(defcustom org-bibtex-headline-format-function
+  (lambda (entry) (cdr (assq :title entry)))
+  "Function returning the headline text for `org-bibtex-write'.
+It should take a single argument, the bibtex entry (an alist as
+returned by `org-bibtex-read').  The default value simply returns
+the entry title."
+  :group 'org-bibtex
+  :version "26.1"
+  :package-version '(Org . "9.1")
+  :type 'function)
+
 (defcustom org-bibtex-export-arbitrary-fields nil
   "When converting to bibtex allow fields not defined in `org-bibtex-fields'.
 This only has effect if `org-bibtex-prefix' is defined, so as to
@@ -678,7 +689,7 @@ Return the number of saved entries."
 	 (val (lambda (field) (cdr (assoc field entry))))
 	 (togtag (lambda (tag) (org-toggle-tag tag 'on))))
     (org-insert-heading)
-    (insert (funcall val :title))
+    (insert (funcall org-bibtex-headline-format-function entry))
     (org-bibtex-put "TITLE" (funcall val :title))
     (org-bibtex-put org-bibtex-type-property-name
 		    (downcase (funcall val :type)))

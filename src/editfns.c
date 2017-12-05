@@ -74,7 +74,6 @@ static Lisp_Object format_time_string (char const *, ptrdiff_t, struct timespec,
 static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
-static Lisp_Object styled_format (ptrdiff_t, Lisp_Object *, bool);
 
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
@@ -187,7 +186,8 @@ tzlookup (Lisp_Object zone, bool settz)
 		  if (sec != 0)
 		    prec += 2, numzone = 100 * numzone + sec;
 		}
-	      sprintf (tzbuf, tzbuf_format, prec, numzone,
+	      sprintf (tzbuf, tzbuf_format, prec,
+		       XINT (zone) < 0 ? -numzone : numzone,
 		       &"-"[XINT (zone) < 0], hour, min, sec);
 	      zone_string = tzbuf;
 	    }
@@ -3716,7 +3716,7 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      Lisp_Object val = Fformat_message (nargs, args);
+      Lisp_Object val = styled_format (nargs, args, true, false);
       message3 (val);
       return val;
     }
@@ -3742,7 +3742,7 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      Lisp_Object val = Fformat_message (nargs, args);
+      Lisp_Object val = styled_format (nargs, args, true, false);
       Lisp_Object pane, menu;
 
       pane = list1 (Fcons (build_string ("OK"), Qt));
@@ -3867,7 +3867,7 @@ produced text.
 usage: (format STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  return styled_format (nargs, args, false);
+  return styled_format (nargs, args, false, true);
 }
 
 DEFUN ("format-message", Fformat_message, Sformat_message, 1, MANY, 0,
@@ -3883,13 +3883,16 @@ and right quote replacement characters are specified by
 usage: (format-message STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  return styled_format (nargs, args, true);
+  return styled_format (nargs, args, true, true);
 }
 
-/* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.  */
+/* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.
+   If NEW_RESULT, the result is a new string; otherwise, the result
+   may be one of the arguments.  */
 
-static Lisp_Object
-styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
+Lisp_Object
+styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
+	       bool new_result)
 {
   ptrdiff_t n;		/* The number of the next arg to substitute.  */
   char initial_buffer[4000];
@@ -3918,6 +3921,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
     /* The start and end bytepos in the output string.  */
     ptrdiff_t start, end;
+
+    /* Whether the argument is a newly created string.  */
+    bool_bf new_string : 1;
 
     /* Whether the argument is a string with intervals.  */
     bool_bf intervals : 1;
@@ -4068,7 +4074,10 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	  memset (&discarded[format0 - format_start], 1,
 		  format - format0 - (conversion == '%'));
 	  if (conversion == '%')
-	    goto copy_char;
+	    {
+	      new_result = true;
+	      goto copy_char;
+	    }
 
 	  ++n;
 	  if (! (n < nargs))
@@ -4078,6 +4087,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 	  if (nspec < ispec)
 	    {
 	      spec->argument = args[n];
+	      spec->new_string = false;
 	      spec->intervals = false;
 	      nspec = ispec;
 	    }
@@ -4095,6 +4105,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		{
 		  Lisp_Object noescape = conversion == 'S' ? Qnil : Qt;
 		  spec->argument = arg = Fprin1_to_string (arg, noescape);
+		  spec->new_string = true;
 		  if (STRING_MULTIBYTE (arg) && ! multibyte)
 		    {
 		      multibyte = true;
@@ -4113,6 +4124,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      goto retry;
 		    }
 		  spec->argument = arg = Fchar_to_string (arg);
+		  spec->new_string = true;
 		}
 
 	      if (!EQ (arg, args[n]))
@@ -4135,6 +4147,11 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
 	  if (conversion == 's')
 	    {
+	      if (format == end && format - format_start == 2
+		  && (!new_result || spec->new_string)
+		  && ! string_intervals (args[0]))
+		return arg;
+
 	      /* handle case (precision[n] >= 0) */
 
 	      ptrdiff_t prec = -1;
@@ -4213,6 +4230,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  if (string_intervals (arg))
 		    spec->intervals = arg_intervals = true;
 
+		  new_result = true;
 		  continue;
 		}
 	    }
@@ -4480,6 +4498,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		    }
 		  spec->end = nchars;
 
+		  new_result = true;
 		  continue;
 		}
 	    }
@@ -4498,9 +4517,13 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		}
 	      convsrc = format_char == '`' ? uLSQM : uRSQM;
 	      convbytes = 3;
+	      new_result = true;
 	    }
 	  else if (format_char == '`' && quoting_style == STRAIGHT_QUOTING_STYLE)
-	    convsrc = "'";
+	    {
+	      convsrc = "'";
+	      new_result = true;
+	    }
 	  else
 	    {
 	      /* Copy a single character from format to buf.  */
@@ -4524,6 +4547,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  int c = BYTE8_TO_CHAR (format_char);
 		  convbytes = CHAR_STRING (c, str);
 		  convsrc = (char *) str;
+		  new_result = true;
 		}
 	    }
 
@@ -4569,6 +4593,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 
   if (bufsize < p - buf)
     emacs_abort ();
+
+  if (! new_result)
+    return args[0];
 
   if (maybe_combine_byte)
     nchars = multibyte_chars_in_text ((unsigned char *) buf, p - buf);

@@ -68,10 +68,13 @@ costs.}.  Use two hyphens to separate prefix and name if the symbol is
 not meant to be used by other packages.
 
 Occasionally, for a command name intended for users to use, it is more
-convenient if some words come before the package's name prefix.  And
-constructs that define functions, variables, etc., work better if they
-start with @samp{defun} or @samp{defvar}, so put the name prefix later
-on in the name.
+convenient if some words come before the package's name prefix.  For
+example, it is our convention to have commands that list objects named
+as @samp{list-@var{something}}, e.g., a package called @samp{frob}
+could have a command @samp{list-frobs}, when its other global symbols
+begin with @samp{frob-}.  Also, constructs that define functions,
+variables, etc., work better if they start with @samp{defun} or
+@samp{defvar}, so put the name prefix later on in the name.
 
 This recommendation applies even to names for traditional Lisp
 primitives that are not primitives in Emacs Lisp---such as

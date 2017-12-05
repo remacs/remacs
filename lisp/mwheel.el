@@ -232,6 +232,7 @@ non-Windows systems."
       ;; When the double-mouse-N comes in, a mouse-N has been executed already,
       ;; So by adding things up we get a squaring up (1, 3, 6, 10, 15, ...).
       (setq amt (* amt (event-click-count event))))
+    (when (numberp amt) (setq amt (* amt (event-line-count event))))
     (unwind-protect
 	(let ((button (mwheel-event-button event)))
 	  (cond ((eq button mouse-wheel-down-event)

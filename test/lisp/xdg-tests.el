@@ -42,9 +42,6 @@
     (should (equal "frobnicate" (gethash "Exec" tab2))))
   (should-error
    (xdg-desktop-read-file
-    (expand-file-name "wrong.desktop" xdg-tests-data-dir)))
-  (should-error
-   (xdg-desktop-read-file
     (expand-file-name "malformed.desktop" xdg-tests-data-dir)))
   (let ((tab (xdg-desktop-read-file
               (expand-file-name "l10n.desktop" xdg-tests-data-dir)))

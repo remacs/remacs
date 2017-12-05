@@ -458,11 +458,14 @@
                (funcall create-non-file-buffer "ibuf-test-8a"
                         :mode #'artist-mode))
               (bufB (funcall create-non-file-buffer "*ibuf-test-8b*" :size 32))
-              (bufC (funcall create-file-buffer "ibuf-test8c" :suffix "*"
-                             :size 64))
-              (bufD (funcall create-file-buffer "*ibuf-test8d" :size 128))
-              (bufE (funcall create-file-buffer "*ibuf-test8e" :suffix "*<2>"
-                             :size 16))
+              (bufC (or (memq system-type '(ms-dos windows-nt))
+                        (funcall create-file-buffer "ibuf-test8c" :suffix "*"
+                                 :size 64)))
+              (bufD (or (memq system-type '(ms-dos windows-nt))
+                        (funcall create-file-buffer "*ibuf-test8d" :size 128)))
+              (bufE (or (memq system-type '(ms-dos windows-nt))
+                        (funcall create-file-buffer "*ibuf-test8e"
+                                 :suffix "*<2>" :size 16)))
               (bufF (and (funcall create-non-file-buffer "*ibuf-test8f*")
                          (funcall create-non-file-buffer "*ibuf-test8f*"
                                   :size 8))))
@@ -481,22 +484,28 @@
                                (name . "test.*8b")
                                (size-gt . 31)
                                (not visiting-file)))))
-          (should (ibuffer-included-in-filters-p
-                   bufC '((and (not (starred-name))
-                               (visiting-file)
-                               (name . "8c[^*]*\\*")
-                               (size-lt . 65)))))
-          (should (ibuffer-included-in-filters-p
-                   bufD '((and (not (starred-name))
-                               (visiting-file)
-                               (name . "\\`\\*.*test8d")
-                               (size-lt . 129)
-                               (size-gt . 127)))))
-          (should (ibuffer-included-in-filters-p
-                   bufE '((and (starred-name)
-                               (visiting-file)
-                               (name . "8e.*?\\*<[[:digit:]]+>")
-                               (size-gt . 10)))))
+          ;; MS-DOS and MS-Windows don't allow "*" in file names.
+          (or (memq system-type '(ms-dos windows-nt))
+              (should (ibuffer-included-in-filters-p
+                       bufC '((and (not (starred-name))
+                                   (visiting-file)
+                                   (name . "8c[^*]*\\*")
+                                   (size-lt . 65))))))
+          ;; MS-DOS and MS-Windows don't allow "*" in file names.
+          (or (memq system-type '(ms-dos windows-nt))
+              (should (ibuffer-included-in-filters-p
+                       bufD '((and (not (starred-name))
+                                   (visiting-file)
+                                   (name . "\\`\\*.*test8d")
+                                   (size-lt . 129)
+                                   (size-gt . 127))))))
+          ;; MS-DOS and MS-Windows don't allow "*" in file names.
+          (or (memq system-type '(ms-dos windows-nt))
+              (should (ibuffer-included-in-filters-p
+                       bufE '((and (starred-name)
+                                   (visiting-file)
+                                   (name . "8e.*?\\*<[[:digit:]]+>")
+                                   (size-gt . 10))))))
           (should (ibuffer-included-in-filters-p
                    bufF '((and (starred-name)
                                (not (visiting-file))

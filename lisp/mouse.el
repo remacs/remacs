@@ -1916,6 +1916,34 @@ CLICK position, kill the secondary selection."
 	 (> (length str) 0)
 	 (gui-set-selection 'SECONDARY str))))
 
+(defun secondary-selection-exist-p ()
+  "Return non-nil if the secondary selection exists in the current buffer."
+  (memq mouse-secondary-overlay (overlays-in (point-min) (point-max))))
+
+(defun secondary-selection-to-region ()
+  "Set beginning and end of the region to those of the secondary selection.
+This puts mark and point at the beginning and the end of the
+secondary selection, respectively.  This works when the secondary
+selection exists and the region does not exist in current buffer;
+the secondary selection will be deleted afterward.
+If the region is active, or the secondary selection doesn't exist,
+this function does nothing."
+  (when (and (not (region-active-p))
+             (secondary-selection-exist-p))
+    (let ((beg (overlay-start mouse-secondary-overlay))
+          (end (overlay-end mouse-secondary-overlay)))
+      (push-mark beg t t)
+      (goto-char end))
+    ;; Delete the secondary selection on current buffer.
+    (delete-overlay mouse-secondary-overlay)))
+
+(defun secondary-selection-from-region ()
+  "Set beginning and end of the secondary selection to those of the region.
+When there is no region, this function does nothing."
+  (when (region-active-p) ; Create the secondary selection from the region.
+    (delete-overlay mouse-secondary-overlay) ; Delete the secondary selection even on a different buffer.
+    (move-overlay mouse-secondary-overlay (region-beginning) (region-end))))
+
 
 (defcustom mouse-buffer-menu-maxlen 20
   "Number of buffers in one pane (submenu) of the buffer menu.

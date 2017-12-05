@@ -3870,7 +3870,7 @@ static void
 x_shift_glyphs_for_insert (struct frame *f, int x, int y, int width, int height, int shift_by)
 {
 /* Never called on a GUI frame, see
-   http://lists.gnu.org/archive/html/emacs-devel/2015-05/msg00456.html
+   https://lists.gnu.org/archive/html/emacs-devel/2015-05/msg00456.html
 */
   XCopyArea (FRAME_X_DISPLAY (f), FRAME_X_DRAWABLE (f), FRAME_X_DRAWABLE (f),
 	     f->output_data.x->normal_gc,
@@ -11029,17 +11029,22 @@ x_sync_with_move (struct frame *f, int left, int top, bool fuzzy)
 void
 x_wait_for_event (struct frame *f, int eventtype)
 {
-  int level = interrupt_input_blocked;
+  if (!FLOATP (Vx_wait_for_event_timeout))
+    return;
 
+  int level = interrupt_input_blocked;
   fd_set fds;
   struct timespec tmo, tmo_at, time_now;
   int fd = ConnectionNumber (FRAME_X_DISPLAY (f));
 
   f->wait_event_type = eventtype;
 
-  /* Set timeout to 0.1 second.  Hopefully not noticeable.
-     Maybe it should be configurable.  */
-  tmo = make_timespec (0, 100 * 1000 * 1000);
+  /* Default timeout is 0.1 second.  Hopefully not noticeable.  */
+  double timeout = XFLOAT_DATA (Vx_wait_for_event_timeout);
+  time_t timeout_seconds = (time_t) timeout;
+  tmo = make_timespec
+    (timeout_seconds, (long int) ((timeout - timeout_seconds)
+                                  * 1000 * 1000 * 1000));
   tmo_at = timespec_add (current_timespec (), tmo);
 
   while (f->wait_event_type)
@@ -11365,8 +11370,13 @@ xembed_send_message (struct frame *f, Time t, enum xembed_message msg,
 
 /* Change of visibility.  */
 
-/* This function sends the request to make the frame visible, but may
-   return before it the frame's visibility is changed.  */
+/* This tries to wait until the frame is really visible, depending on
+   the value of Vx_wait_for_event_timeout.
+   However, if the window manager asks the user where to position
+   the frame, this will return before the user finishes doing that.
+   The frame will not actually be visible at that time,
+   but it will become visible later when the window manager
+   finishes with it.  */
 
 void
 x_make_frame_visible (struct frame *f)
@@ -11437,10 +11447,13 @@ x_make_frame_visible (struct frame *f)
      before we do anything else.  We do this loop with input not blocked
      so that incoming events are handled.  */
   {
+    Lisp_Object frame;
     /* This must be before UNBLOCK_INPUT
        since events that arrive in response to the actions above
        will set it when they are handled.  */
     bool previously_visible = f->output_data.x->has_been_visible;
+
+    XSETFRAME (frame, f);
 
     int original_left = f->left_pos;
     int original_top = f->top_pos;
@@ -11488,6 +11501,10 @@ x_make_frame_visible (struct frame *f)
 
 	unblock_input ();
       }
+
+    /* Try to wait for a MapNotify event (that is what tells us when a
+       frame becomes visible).  */
+    x_wait_for_event (f, MapNotify);
   }
 }
 
@@ -12507,7 +12524,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   dpyinfo->xcb_connection = xcb_conn;
 #endif
 
-  /* http://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
+  /* https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
   dpyinfo->smallest_font_height = 1;
   dpyinfo->smallest_char_width = 1;
 
@@ -13282,6 +13299,17 @@ This should be one of the symbols `ctrl', `alt', `hyper', `meta',
 `super'.  For example, `super' means use the Super_L and Super_R
 keysyms.  The default is nil, which is the same as `super'.  */);
   Vx_super_keysym = Qnil;
+
+  DEFVAR_LISP ("x-wait-for-event-timeout", Vx_wait_for_event_timeout,
+    doc: /* How long to wait for X events.
+
+Emacs will wait up to this many seconds to receive X events after
+making changes which affect the state of the graphical interface.
+Under some window managers this can take an indefinite amount of time,
+so it is important to limit the wait.
+
+If set to a non-float value, there will be no wait at all.  */);
+  Vx_wait_for_event_timeout = make_float (0.1);
 
   DEFVAR_LISP ("x-keysym-table", Vx_keysym_table,
     doc: /* Hash table of character codes indexed by X keysym codes.  */);

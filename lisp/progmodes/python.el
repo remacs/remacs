@@ -4271,8 +4271,10 @@ See `python-check-command' for the default."
         import inspect
         try:
             str_type = basestring
+            argspec_function = inspect.getargspec
         except NameError:
             str_type = str
+            argspec_function = inspect.getfullargspec
         if isinstance(obj, str_type):
             obj = eval(obj, globals())
         doc = inspect.getdoc(obj)
@@ -4285,9 +4287,7 @@ See `python-check-command' for the default."
                 target = obj
                 objtype = 'def'
             if target:
-                args = inspect.formatargspec(
-                    *inspect.getargspec(target)
-                )
+                args = inspect.formatargspec(*argspec_function(target))
                 name = obj.__name__
                 doc = '{objtype} {name}{args}'.format(
                     objtype=objtype, name=name, args=args

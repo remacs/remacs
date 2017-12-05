@@ -33,18 +33,15 @@
 
 (require 'org)
 (require 'gnus-util)
-(eval-when-compile (require 'gnus-sum))
 
-;; Declare external functions and variables
+
+;;; Declare external functions and variables
 
 (declare-function message-fetch-field "message" (header &optional not-all))
-(declare-function message-narrow-to-head-1 "message" nil)
-(declare-function gnus-summary-last-subject "gnus-sum" nil)
 (declare-function nnvirtual-map-article "nnvirtual" (article))
 
-;; Customization variables
-
-(defvaralias 'org-usenet-links-prefer-google 'org-gnus-prefer-web-links)
+
+;;; Customization variables
 
 (defcustom org-gnus-prefer-web-links nil
   "If non-nil, `org-store-link' creates web links to Google groups or Gmane.
@@ -54,18 +51,6 @@ negates this setting for the duration of the command."
   :group 'org-link-store
   :type 'boolean)
 
-(defcustom org-gnus-nnimap-query-article-no-from-file nil
-  "If non-nil, `org-gnus-follow-link' will try to translate
-Message-Ids to article numbers by querying the .overview file.
-Normally, this translation is done by querying the IMAP server,
-which is usually very fast.  Unfortunately, some (maybe badly
-configured) IMAP servers don't support this operation quickly.
-So if following a link to a Gnus article takes ages, try setting
-this variable to t."
-  :group 'org-link-store
-  :version "24.1"
-  :type 'boolean)
-
 (defcustom org-gnus-no-server nil
   "Should Gnus be started using `gnus-no-server'?"
   :group 'org-gnus
@@ -73,30 +58,14 @@ this variable to t."
   :package-version '(Org . "8.0")
   :type 'boolean)
 
-;; Install the link type
-(org-link-set-parameters "gnus" :follow #'org-gnus-open :store #'org-gnus-store-link)
+
+;;; Install the link type
 
-;; Implementation
-
-(defun org-gnus-nnimap-cached-article-number (group server message-id)
-  "Return cached article number (uid) of message in GROUP on SERVER.
-MESSAGE-ID is the message-id header field that identifies the
-message.  If the uid is not cached, return nil."
-  (with-temp-buffer
-    (let ((nov (and (fboundp 'nnimap-group-overview-filename)
-		    ;; nnimap-group-overview-filename was removed from
-		    ;; Gnus in September 2010, and therefore should
-		    ;; only be present in Emacs 23.1.
-		    (nnimap-group-overview-filename group server))))
-      (when (and nov (file-exists-p nov))
-	(mm-insert-file-contents nov)
-	(set-buffer-modified-p nil)
-	(goto-char (point-min))
-	(catch 'found
-	  (while (search-forward message-id nil t)
-	    (let ((hdr (split-string (thing-at-point 'line) "\t")))
-	      (if (string= (nth 4 hdr) message-id)
-		  (throw 'found (nth 0 hdr))))))))))
+(org-link-set-parameters "gnus"
+			 :follow #'org-gnus-open
+			 :store #'org-gnus-store-link)
+
+;;; Implementation
 
 (defun org-gnus-group-link (group)
   "Create a link to the Gnus group GROUP.
@@ -139,84 +108,75 @@ If `org-store-link' was called with a prefix arg the meaning of
 
 (defun org-gnus-store-link ()
   "Store a link to a Gnus folder or message."
-  (cond
-   ((eq major-mode 'gnus-group-mode)
-    (let* ((group (cond ((fboundp 'gnus-group-group-name) ; depending on Gnus
-			 (gnus-group-group-name))         ; version
-			((fboundp 'gnus-group-name)
-			 (gnus-group-name))
-			(t "???")))
-	   desc link)
-      (when group
-	(org-store-link-props :type "gnus" :group group)
-	(setq desc (org-gnus-group-link group)
-	      link desc)
-	(org-add-link-props :link link :description desc)
-	link)))
-
-   ((memq major-mode '(gnus-summary-mode gnus-article-mode))
-    (let* ((group gnus-newsgroup-name)
-	   (header (with-current-buffer gnus-summary-buffer
-		     (gnus-summary-article-header)))
-	   (from (mail-header-from header))
-	   (message-id (org-unbracket-string "<" ">" (mail-header-id header)))
-	   (date (org-trim (mail-header-date header)))
-	   (subject (copy-sequence (mail-header-subject header)))
-	   (to (cdr (assq 'To (mail-header-extra header))))
-	   newsgroups x-no-archive desc link)
-      (cl-case  (car (gnus-find-method-for-group gnus-newsgroup-name))
-	(nnvirtual
-	 (setq group (car (nnvirtual-map-article
-			   (gnus-summary-article-number)))))
-	(nnir
-	 (setq group (nnir-article-group (gnus-summary-article-number)))))
-      ;; Remove text properties of subject string to avoid Emacs bug
-      ;; #3506
-      (set-text-properties 0 (length subject) nil subject)
-
-      ;; Fetching an article is an expensive operation; newsgroup and
-      ;; x-no-archive are only needed for web links.
-      (when (org-xor current-prefix-arg org-gnus-prefer-web-links)
-	;; Make sure the original article buffer is up-to-date
-	(save-window-excursion (gnus-summary-select-article))
-	(setq to (or to (gnus-fetch-original-field "To"))
-	      newsgroups (gnus-fetch-original-field "Newsgroups")
-	      x-no-archive (gnus-fetch-original-field "x-no-archive")))
-      (org-store-link-props :type "gnus" :from from :date date :subject subject
-			    :message-id message-id :group group :to to)
-      (setq desc (org-email-link-description)
-	    link (org-gnus-article-link
-		  group	newsgroups message-id x-no-archive))
-      (org-add-link-props :link link :description desc)
-      link))
-   ((eq major-mode 'message-mode)
-    (setq org-store-link-plist nil)  ; reset
-    (save-excursion
-      (save-restriction
-        (message-narrow-to-headers)
-        (and (not (message-fetch-field "Message-ID"))
-             (message-generate-headers '(Message-ID)))
-        (goto-char (point-min))
-        (re-search-forward "^Message-ID: *.*$" nil t)
-        (put-text-property (match-beginning 0) (match-end 0) 'message-deletable nil)
-        (let ((gcc (car (last
-                         (message-unquote-tokens
-                          (message-tokenize-header (mail-fetch-field "gcc" nil t) " ,")))))
-              (id (org-unbracket-string "<" ">" (mail-fetch-field "Message-ID")))
-              (to (mail-fetch-field "To"))
-              (from (mail-fetch-field "From"))
-              (subject (mail-fetch-field "Subject"))
-              desc link
-              newsgroup xarchive)       ; those are always nil for gcc
-          (and (not gcc)
-               (error "Can not create link: No Gcc header found"))
-          (org-store-link-props :type "gnus" :from from :subject subject
-                                :message-id id :group gcc :to to)
-          (setq desc (org-email-link-description)
-                link (org-gnus-article-link
-                      gcc newsgroup id xarchive))
-          (org-add-link-props :link link :description desc)
-          link))))))
+  (pcase major-mode
+    (`gnus-group-mode
+     (let ((group (gnus-group-group-name)))
+       (when group
+	 (org-store-link-props :type "gnus" :group group)
+	 (let ((description (org-gnus-group-link group)))
+	   (org-add-link-props :link description :description description)
+	   description))))
+    ((or `gnus-summary-mode `gnus-article-mode)
+     (let* ((group
+	     (pcase (gnus-find-method-for-group gnus-newsgroup-name)
+	       (`(nnvirtual . ,_)
+		(car (nnvirtual-map-article (gnus-summary-article-number))))
+	       (`(nnir . ,_)
+		(nnir-article-group (gnus-summary-article-number)))
+	       (_ gnus-newsgroup-name)))
+	    (header (with-current-buffer gnus-summary-buffer
+		      (gnus-summary-article-header)))
+	    (from (mail-header-from header))
+	    (message-id (org-unbracket-string "<" ">" (mail-header-id header)))
+	    (date (org-trim (mail-header-date header)))
+	    ;; Remove text properties of subject string to avoid Emacs
+	    ;; bug #3506.
+	    (subject (org-no-properties
+		      (copy-sequence (mail-header-subject header))))
+	    (to (cdr (assq 'To (mail-header-extra header))))
+	    newsgroups x-no-archive)
+       ;; Fetching an article is an expensive operation; newsgroup and
+       ;; x-no-archive are only needed for web links.
+       (when (org-xor current-prefix-arg org-gnus-prefer-web-links)
+	 ;; Make sure the original article buffer is up-to-date.
+	 (save-window-excursion (gnus-summary-select-article))
+	 (setq to (or to (gnus-fetch-original-field "To")))
+	 (setq newsgroups (gnus-fetch-original-field "Newsgroups"))
+	 (setq x-no-archive (gnus-fetch-original-field "x-no-archive")))
+       (org-store-link-props :type "gnus" :from from :date date :subject subject
+			     :message-id message-id :group group :to to)
+       (let ((link (org-gnus-article-link
+		    group newsgroups message-id x-no-archive))
+	     (description (org-email-link-description)))
+	 (org-add-link-props :link link :description description)
+	 link)))
+    (`message-mode
+     (setq org-store-link-plist nil)	;reset
+     (save-excursion
+       (save-restriction
+	 (message-narrow-to-headers)
+	 (unless (message-fetch-field "Message-ID")
+	   (message-generate-headers '(Message-ID)))
+	 (goto-char (point-min))
+	 (re-search-forward "^Message-ID:" nil t)
+	 (put-text-property (line-beginning-position) (line-end-position)
+			    'message-deletable nil)
+	 (let ((gcc (org-last (message-unquote-tokens
+			       (message-tokenize-header
+				(mail-fetch-field "gcc" nil t) " ,"))))
+	       (id (org-unbracket-string "<" ">"
+					 (mail-fetch-field "Message-ID")))
+	       (to (mail-fetch-field "To"))
+	       (from (mail-fetch-field "From"))
+	       (subject (mail-fetch-field "Subject"))
+	       newsgroup xarchive)	;those are always nil for gcc
+	   (unless gcc (error "Can not create link: No Gcc header found"))
+	   (org-store-link-props :type "gnus" :from from :subject subject
+				 :message-id id :group gcc :to to)
+	   (let ((link (org-gnus-article-link gcc newsgroup id xarchive))
+		 (description (org-email-link-description)))
+	     (org-add-link-props :link link :description description)
+	     link)))))))
 
 (defun org-gnus-open-nntp (path)
   "Follow the nntp: link specified by PATH."
@@ -230,64 +190,51 @@ If `org-store-link' was called with a prefix arg the meaning of
 
 (defun org-gnus-open (path)
   "Follow the Gnus message or folder link specified by PATH."
-  (let (group article)
-    (if (not (string-match "\\`\\([^#]+\\)\\(#\\(.*\\)\\)?" path))
-	(error "Error in Gnus link"))
-    (setq group (match-string 1 path)
-	  article (match-string 3 path))
-    (when group
-      (setq group (org-no-properties group)))
-    (when article
-      (setq article (org-no-properties article)))
+  (unless (string-match "\\`\\([^#]+\\)\\(#\\(.*\\)\\)?" path)
+    (error "Error in Gnus link %S" path))
+  (let ((group (match-string-no-properties 1 path))
+	(article (match-string-no-properties 3 path)))
     (org-gnus-follow-link group article)))
 
 (defun org-gnus-follow-link (&optional group article)
   "Follow a Gnus link to GROUP and ARTICLE."
   (require 'gnus)
   (funcall (cdr (assq 'gnus org-link-frame-setup)))
-  (if gnus-other-frame-object (select-frame gnus-other-frame-object))
-  (setq group (org-no-properties group))
-  (setq article (org-no-properties article))
-  (cond ((and group article)
-	 (gnus-activate-group group)
-	 (condition-case nil
-	     (let* ((method (gnus-find-method-for-group group))
-		    (backend (car method))
-		    (server (cadr method)))
-	       (cond
-		((eq backend 'nndoc)
-		 (if (gnus-group-read-group t nil group)
+  (when gnus-other-frame-object (select-frame gnus-other-frame-object))
+  (let ((group (org-no-properties group))
+	(article (org-no-properties article)))
+    (cond
+     ((and group article)
+      (gnus-activate-group group)
+      (condition-case nil
+	  (let ((msg "Couldn't follow Gnus link.  Summary couldn't be opened."))
+	    (pcase (gnus-find-method-for-group group)
+	      (`(nndoc . ,_)
+	       (if (gnus-group-read-group t nil group)
+		   (gnus-summary-goto-article article nil t)
+		 (message msg)))
+	      (_
+	       (let ((articles 1)
+		     group-opened)
+		 (while (and (not group-opened)
+			     ;; Stop on integer overflows.
+			     (> articles 0))
+		   (setq group-opened (gnus-group-read-group articles t group))
+		   (setq articles (if (< articles 16)
+				      (1+ articles)
+				    (* articles 2))))
+		 (if group-opened
 		     (gnus-summary-goto-article article nil t)
-		   (message "Couldn't follow gnus link.  %s"
-			    "The summary couldn't be opened.")))
-		(t
-		 (let ((articles 1)
-		       group-opened)
-		   (when (and (eq backend 'nnimap)
-			      org-gnus-nnimap-query-article-no-from-file)
-		     (setq article
-			   (or (org-gnus-nnimap-cached-article-number
-				(nth 1 (split-string group ":"))
-				server (concat "<" article ">")) article)))
-		   (while (and (not group-opened)
-			       ;; stop on integer overflows
-			       (> articles 0))
-		     (setq group-opened (gnus-group-read-group
-					 articles t group)
-			   articles (if (< articles 16)
-					(1+ articles)
-				      (* articles 2))))
-		   (if group-opened
-		       (gnus-summary-goto-article article nil t)
-		     (message "Couldn't follow gnus link.  %s"
-			      "The summary couldn't be opened."))))))
-	   (quit (message "Couldn't follow gnus link.  %s"
-			  "The linked group is empty."))))
-	(group (gnus-group-jump-to-group group))))
+		   (message msg))))))
+	(quit
+	 (message "Couldn't follow Gnus link.  The linked group is empty."))))
+     (group (gnus-group-jump-to-group group)))))
 
 (defun org-gnus-no-new-news ()
   "Like `\\[gnus]' but doesn't check for new news."
-  (if (not (gnus-alive-p)) (if org-gnus-no-server (gnus-no-server) (gnus))))
+  (cond ((gnus-alive-p) nil)
+	(org-gnus-no-server (gnus-no-server))
+	(t (gnus))))
 
 (provide 'org-gnus)
 

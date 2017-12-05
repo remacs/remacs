@@ -5916,7 +5916,10 @@ make_lispy_event (struct input_event *event)
 				      ASIZE (wheel_syms));
 	}
 
-	if (event->modifiers & (double_modifier | triple_modifier))
+        if (NUMBERP (event->arg))
+          return list4 (head, position, make_number (double_click_count),
+                        event->arg);
+	else if (event->modifiers & (double_modifier | triple_modifier))
 	  return list3 (head, position, make_number (double_click_count));
 	else
 	  return list2 (head, position);

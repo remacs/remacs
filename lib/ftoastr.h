@@ -96,7 +96,7 @@ enum
    DIG digits.  For why the "+ 1" is needed, see "Binary to Decimal
    Conversion" in David Goldberg's paper "What Every Computer
    Scientist Should Know About Floating-Point Arithmetic"
-   <http://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html>.  */
+   <https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html>.  */
 # define _GL_FLOAT_PREC_BOUND(dig) \
    (INT_BITS_STRLEN_BOUND ((dig) * _GL_FLOAT_DIG_BITS_BOUND) + 1)
 
