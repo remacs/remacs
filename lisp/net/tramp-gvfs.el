@@ -416,6 +416,19 @@ Every entry is a list (NAME ADDRESS).")
 (defconst tramp-hal-interface-device "org.freedesktop.Hal.Device"
   "The device interface of the HAL daemon.")
 
+;; "gvfs-<command>" utilities have been deprecated in GVFS 1.31.1.  We
+;; must use "gio <command>" tool instead.
+(defconst tramp-gvfs-gio-mapping
+  '(("gvfs-copy" . "copy")
+    ("gvfs-info" . "info")
+    ("gvfs-ls" . "list")
+    ("gvfs-mkdir" . "mkdir")
+    ("gvfs-monitor-file" . "monitor")
+    ("gvfs-move" . "move")
+    ("gvfs-rm" . "remove")
+    ("gvfs-trash" . "trash"))
+  "List of cons cells, mapping \"gvfs-<command>\" to \"gio <command>\".")
+
 (defconst tramp-gvfs-file-attributes
   '("name"
     "type"
@@ -447,6 +460,18 @@ Every entry is a list (NAME ADDRESS).")
 	  (regexp-opt tramp-gvfs-file-attributes t)
 	  ":[[:blank:]]+\\(.*\\)$")
   "Regexp to parse GVFS file attributes with `gvfs-info'.")
+
+(defconst tramp-gvfs-file-system-attributes
+  '("filesystem::free"
+    "filesystem::size"
+    "filesystem::used")
+  "GVFS file system attributes.")
+
+(defconst tramp-gvfs-file-system-attributes-regexp
+  (concat "^[[:blank:]]*"
+	  (regexp-opt tramp-gvfs-file-system-attributes t)
+	  ":[[:blank:]]+\\(.*\\)$")
+  "Regexp to parse GVFS file system attributes with `gvfs-info'.")
 
 
 ;; New handlers should be added here.
@@ -494,6 +519,7 @@ Every entry is a list (NAME ADDRESS).")
     (file-remote-p . tramp-handle-file-remote-p)
     (file-selinux-context . ignore)
     (file-symlink-p . tramp-handle-file-symlink-p)
+    (file-system-info . tramp-gvfs-handle-file-system-info)
     (file-truename . tramp-handle-file-truename)
     (file-writable-p . tramp-gvfs-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
@@ -825,7 +851,7 @@ file names."
     (let ((last-coding-system-used last-coding-system-used)
 	  result)
       (with-parsed-tramp-file-name directory nil
-	(with-tramp-file-property v localname "directory-gvfs-attributes"
+	(with-tramp-file-property v localname "directory-attributes"
 	  (tramp-message v 5 "directory gvfs attributes: %s" localname)
 	  ;; Send command.
 	  (tramp-gvfs-send-command
@@ -860,23 +886,34 @@ file names."
 	      (forward-line)))
 	  result)))))
 
-(defun tramp-gvfs-get-root-attributes (filename)
-  "Return GVFS attributes association list of FILENAME."
+(defun tramp-gvfs-get-root-attributes (filename &optional file-system)
+  "Return GVFS attributes association list of FILENAME.
+If FILE-SYSTEM is non-nil, return file system attributes."
   (ignore-errors
     ;; Don't modify `last-coding-system-used' by accident.
     (let ((last-coding-system-used last-coding-system-used)
 	  result)
       (with-parsed-tramp-file-name filename nil
-	(with-tramp-file-property v localname "file-gvfs-attributes"
-	  (tramp-message v 5 "file gvfs attributes: %s" localname)
+	(with-tramp-file-property
+	    v localname
+	    (if file-system "file-system-attributes" "file-attributes")
+	  (tramp-message
+	   v 5 "file%s gvfs attributes: %s"
+	   (if file-system " system" "") localname)
 	  ;; Send command.
-	  (tramp-gvfs-send-command
-	   v "gvfs-info" (tramp-gvfs-url-file-name filename))
+	  (if file-system
+	      (tramp-gvfs-send-command
+	       v "gvfs-info" "--filesystem" (tramp-gvfs-url-file-name filename))
+	    (tramp-gvfs-send-command
+	     v "gvfs-info" (tramp-gvfs-url-file-name filename)))
 	  ;; Parse output.
 	  (with-current-buffer (tramp-get-connection-buffer v)
 	    (goto-char (point-min))
 	    (while (re-search-forward
-		    tramp-gvfs-file-attributes-with-gvfs-info-regexp nil t)
+		    (if file-system
+			tramp-gvfs-file-system-attributes-regexp
+		      tramp-gvfs-file-attributes-with-gvfs-info-regexp)
+		    nil t)
 	      (push (cons (match-string 1) (match-string 2)) result))
 	    result))))))
 
@@ -1054,9 +1091,12 @@ file names."
 	     ((memq 'change flags)
 	      '(created changed changes-done-hint moved deleted))
 	     ((memq 'attribute-change flags) '(attribute-changed))))
-	   (p (start-process
-	       "gvfs-monitor-file" (generate-new-buffer " *gvfs-monitor-file*")
-	       "gvfs-monitor-file" (tramp-gvfs-url-file-name file-name))))
+	   (p (apply
+	       'start-process
+	       "gvfs-monitor" (generate-new-buffer " *gvfs-monitor*")
+	       (if (tramp-gvfs-gio-tool-p v)
+		   `("gio" "monitor" ,(tramp-gvfs-url-file-name file-name)))
+	       `("gvfs-monitor-file" (tramp-gvfs-url-file-name file-name)))))
       (if (not (processp p))
 	  (tramp-error
 	   v 'file-notify-error "Monitoring not supported for `%s'" file-name)
@@ -1127,6 +1167,22 @@ file-notify events."
     (with-tramp-file-property v localname "file-readable-p"
       (tramp-check-cached-permissions v ?r))))
 
+(defun tramp-gvfs-handle-file-system-info (filename)
+  "Like `file-system-info' for Tramp files."
+  (setq filename (directory-file-name (expand-file-name filename)))
+  (with-parsed-tramp-file-name filename nil
+    ;; We don't use cached values.
+    (tramp-set-file-property v localname "file-system-attributes" 'undef)
+    (let* ((attr (tramp-gvfs-get-root-attributes filename 'file-system))
+	   (size (cdr (assoc "filesystem::size" attr)))
+	   (used (cdr (assoc "filesystem::used" attr)))
+	   (free (cdr (assoc "filesystem::free" attr))))
+      (when (and (stringp size) (stringp used) (stringp free))
+	(list (string-to-number (concat size "e0"))
+	      (- (string-to-number (concat size "e0"))
+		 (string-to-number (concat used "e0")))
+	      (string-to-number (concat free "e0")))))))
+
 (defun tramp-gvfs-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files."
   (with-parsed-tramp-file-name filename nil
@@ -1150,8 +1206,9 @@ file-notify events."
 	(when (and parents (not (file-directory-p ldir)))
 	  (make-directory ldir parents))
 	;; Just do it.
-	(unless (tramp-gvfs-send-command
-		 v "gvfs-mkdir" (tramp-gvfs-url-file-name dir))
+	(unless (or (tramp-gvfs-send-command
+		     v "gvfs-mkdir" (tramp-gvfs-url-file-name dir))
+		    (and parents (file-directory-p dir)))
 	  (tramp-error v 'file-error "Couldn't make directory %s" dir))))))
 
 (defun tramp-gvfs-handle-rename-file
@@ -1745,10 +1802,16 @@ connection if a previous connection has died for some reason."
       (tramp-gvfs-get-remote-uid vec 'string)
       (tramp-gvfs-get-remote-gid vec 'string))))
 
+(defun tramp-gvfs-gio-tool-p (vec)
+  "Check, whether the gio tool is available."
+  (with-tramp-connection-property vec "gio-tool"
+    (zerop (tramp-call-process vec "gio" nil nil nil "version"))))
+
 (defun tramp-gvfs-send-command (vec command &rest args)
   "Send the COMMAND with its ARGS to connection VEC.
-COMMAND is usually a command from the gvfs-* utilities.
-`call-process' is applied, and it returns t if the return code is zero."
+COMMAND is a command from the gvfs-* utilities.  It is replaced
+by the corresponding gio tool call if available.  `call-process'
+is applied, and it returns t if the return code is zero."
   (let* ((locale (tramp-get-local-locale vec))
 	 (process-environment
 	  (append
@@ -1756,6 +1819,11 @@ COMMAND is usually a command from the gvfs-* utilities.
 	     ,(format "LANGUAGE=%s" locale)
 	     ,(format "LC_ALL=%s" locale))
 	   process-environment)))
+    (when (tramp-gvfs-gio-tool-p vec)
+      ;; Use gio tool.
+      (setq args (cons (cdr (assoc command tramp-gvfs-gio-mapping)) args)
+	    command "gio"))
+
     (with-current-buffer (tramp-get-connection-buffer vec)
       (tramp-gvfs-maybe-open-connection vec)
       (erase-buffer)

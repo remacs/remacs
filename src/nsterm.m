@@ -3715,7 +3715,7 @@ ns_dumpglyphs_image (struct glyph_string *s, NSRect r)
       /* Currently on NS img->mask is always 0. Since
          get_window_cursor_type specifies a hollow box cursor when on
          a non-masked image we never reach this clause. But we put it
-         in in anticipation of better support for image masks on
+         in, in anticipation of better support for image masks on
          NS. */
       tdCol = ns_lookup_indexed_color (NS_FACE_FOREGROUND (face), s->f);
     }
@@ -6892,6 +6892,9 @@ not_in_argv (NSString *arg)
            NSTRACE_ARG_SIZE (frameSize));
   NSTRACE_RECT   ("[sender frame]", [sender frame]);
   NSTRACE_FSTYPE ("fs_state", fs_state);
+
+  if (!FRAME_LIVE_P (emacsframe))
+    return frameSize;
 
   if (fs_state == FULLSCREEN_MAXIMIZED
       && (maximized_width != (int)frameSize.width

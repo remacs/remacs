@@ -164,7 +164,7 @@
 ;;      might be nicer and to that effect a function has been declared
 ;;      further down in the code.  You may wish to auto-load this.
 ;;
-;;      Carsten also writes that that *changing* the prefix after the
+;;      Carsten also writes that *changing* the prefix after the
 ;;      todo list is already established is not as simple as changing
 ;;      the variable - the todo files have to be changed by hand.
 ;;

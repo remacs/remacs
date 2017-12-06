@@ -640,10 +640,14 @@ The type returned can be `comment', `string' or `paren'."
    ((python-rx string-delimiter)
     (0 (ignore (python-syntax-stringify))))))
 
-(defconst python--prettify-symbols-alist
+(defvar python-prettify-symbols-alist
   '(("lambda"  . ?λ)
     ("and" . ?∧)
-    ("or" . ?∨)))
+    ("or" . ?∨))
+  "Value for `prettify-symbols-alist' in `python-mode'.")
+
+(define-obsolete-variable-alias 'python--prettify-symbols-alist
+  'python-prettify-symbols-alist "26.1")
 
 (defsubst python-syntax-count-quotes (quote-char &optional point limit)
   "Count number of quotes around point (max is 3).
@@ -3442,6 +3446,8 @@ def __PYTHON_EL_native_completion_setup():
                 instance.rlcomplete = new_completer
 
         if readline.__doc__ and 'libedit' in readline.__doc__:
+            raise Exception('''libedit based readline is known not to work,
+      see etc/PROBLEMS under \"In Inferior Python mode, input is echoed\".''')
             readline.parse_and_bind('bind ^I rl_complete')
         else:
             readline.parse_and_bind('tab: complete')
@@ -3450,7 +3456,9 @@ def __PYTHON_EL_native_completion_setup():
 
         print ('python.el: native completion setup loaded')
     except:
-        print ('python.el: native completion setup failed')
+        import sys
+        print ('python.el: native completion setup failed, %s: %s'
+               % sys.exc_info()[:2])
 
 __PYTHON_EL_native_completion_setup()" process)
       (when (and

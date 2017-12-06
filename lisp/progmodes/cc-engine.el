@@ -132,7 +132,7 @@
 ;;
 ;;     'c-not-decl
 ;;       Put on the brace which introduces a brace list and on the commas
-;;       which separate the element within it.
+;;       which separate the elements within it.
 ;;
 ;; 'c-awk-NL-prop
 ;;   Used in AWK mode to mark the various kinds of newlines.  See
@@ -5403,15 +5403,14 @@ comment at the start of cc-engine.el for more info."
 	(min c-bs-cache-limit pos)))
 
 (defun c-update-brace-stack (stack from to)
-  ;; Give a brace-stack which has the value STACK at position FROM, update it
-  ;; to it's value at position TO, where TO is after (or equal to) FROM.
+  ;; Given a brace-stack which has the value STACK at position FROM, update it
+  ;; to its value at position TO, where TO is after (or equal to) FROM.
   ;; Return a cons of either TO (if it is outside a literal) and this new
   ;; value, or of the next position after TO outside a literal and the new
   ;; value.
   (let (match kwd-sym (prev-match-pos 1)
 	      (s (cdr stack))
-	      (bound-<> (car stack))
-	      )
+	      (bound-<> (car stack)))
     (save-excursion
       (cond
        ((and bound-<> (<= to bound-<>))
@@ -5472,6 +5471,9 @@ comment at the start of cc-engine.el for more info."
 	    (setq s (cdr s))))
 	 ((c-keyword-member kwd-sym 'c-flat-decl-block-kwds)
 	  (push 0 s))))
+      ;; The failing `c-syntactic-re-search-forward' may have left us in the
+      ;; middle of a token, which might be a significant token.  Fix this!
+      (c-beginning-of-current-token)
       (cons (point)
 	    (cons bound-<> s)))))
 
@@ -5647,11 +5649,13 @@ comment at the start of cc-engine.el for more info."
   ;; Call CFD-FUN for each possible spot for a declaration, cast or
   ;; label from the point to CFD-LIMIT.
   ;;
-  ;; CFD-FUN is called with point at the start of the spot.  It's passed two
+  ;; CFD-FUN is called with point at the start of the spot.  It's passed three
   ;; arguments: The first is the end position of the token preceding the spot,
   ;; or 0 for the implicit match at bob.  The second is a flag that is t when
-  ;; the match is inside a macro.  Point should be moved forward by at least
-  ;; one token.
+  ;; the match is inside a macro.  The third is a flag that is t when the
+  ;; match is at "top level", i.e. outside any brace block, or directly inside
+  ;; a class or namespace, etc.  Point should be moved forward by at least one
+  ;; token.
   ;;
   ;; If CFD-FUN adds `c-decl-end' properties somewhere below the current spot,
   ;; it should return non-nil to ensure that the next search will find them.
@@ -6038,6 +6042,8 @@ comment at the start of cc-engine.el for more info."
 		   (setq cfd-macro-end 0)
 		   nil))))		; end of when condition
 
+	(when (> cfd-macro-end 0)
+	  (setq cfd-top-level nil))	; In a macro is "never" at top level.
 	(c-debug-put-decl-spot-faces cfd-match-pos (point))
 	(if (funcall cfd-fun cfd-match-pos (/= cfd-macro-end 0) cfd-top-level)
 	    (setq cfd-prop-match nil))
@@ -8575,7 +8581,13 @@ comment at the start of cc-engine.el for more info."
 		 (looking-at c-noise-macro-with-parens-name-re))
 	    (c-forward-noise-clause))
 
-	   ((looking-at c-type-decl-suffix-key)
+	   ((and (looking-at c-type-decl-suffix-key)
+		 ;; We avoid recognizing foo(bar) or foo() at top level as a
+		 ;; construct here in C, since we want to recognize this as a
+		 ;; typeless function declaration.
+		 (not (and (c-major-mode-is 'c-mode)
+			   (eq context 'top)
+			   (eq (char-after) ?\)))))
 	    (if (eq (char-after) ?\))
 		(when (> paren-depth 0)
 		  (setq paren-depth (1- paren-depth))
@@ -8618,7 +8630,12 @@ comment at the start of cc-engine.el for more info."
 				     (save-excursion
 				       (goto-char after-paren-pos)
 				       (c-forward-syntactic-ws)
-				       (c-forward-type)))))
+				       (or (c-forward-type)
+					   ;; Recognize a top-level typeless
+					   ;; function declaration in C.
+					   (and (c-major-mode-is 'c-mode)
+						(eq context 'top)
+						(eq (char-after) ?\))))))))
 			  (setq pos (c-up-list-forward (point)))
 			  (eq (char-before pos) ?\)))
 		 (c-fdoc-shift-type-backward)
@@ -9035,9 +9052,12 @@ comment at the start of cc-engine.el for more info."
 	 ;; (in at least C++) that anything that can be parsed as a declaration
 	 ;; is a declaration.  Now we're being more defensive and prefer to
 	 ;; highlight things like "foo (bar);" as a declaration only if we're
-	 ;; inside an arglist that contains declarations.
-         ;; CASE 19
-	 (eq context 'decl))))
+	 ;; inside an arglist that contains declarations.  Update (2017-09): We
+	 ;; now recognize a top-level "foo(bar);" as a declaration in C.
+	 ;; CASE 19
+	 (or (eq context 'decl)
+	     (and (c-major-mode-is 'c-mode)
+		  (eq context 'top))))))
 
     ;; The point is now after the type decl expression.
 
@@ -9545,6 +9565,7 @@ Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
   ;; Note to maintainers: this function consumes a great mass of CPU cycles.
   ;; Its use should thus be minimized as far as possible.
+  ;; Consider instead using `c-bs-at-toplevel-p'.
   (let ((paren-state (c-parse-state)))
     (or (not (c-most-enclosing-brace paren-state))
 	(c-search-uplist-for-classkey paren-state))))
@@ -9574,8 +9595,15 @@ comment at the start of cc-engine.el for more info."
      (not (and (c-major-mode-is 'objc-mode)
 	       (c-forward-objc-directive)))
 
+     ;; Don't confuse #if .... defined(foo) for a function arglist.
+     (not (and (looking-at c-cpp-expr-functions-key)
+	       (save-excursion
+		 (save-restriction
+		   (widen)
+		   (c-beginning-of-macro lim)))))
      (setq id-start
 	   (car-safe (c-forward-decl-or-cast-1 (c-point 'bosws) 'top nil)))
+     (numberp id-start)
      (< id-start beg)
 
      ;; There should not be a '=' or ',' between beg and the

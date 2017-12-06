@@ -101,14 +101,20 @@ acquire_global_lock (struct thread_state *self)
   post_acquire_global_lock (self);
 }
 
-/* This is called from keyboard.c when it detects that SIGINT
-   interrupted thread_select before the current thread could acquire
-   the lock.  We must acquire the lock to prevent a thread from
-   running without holding the global lock, and to avoid repeated
-   calls to sys_mutex_unlock, which invokes undefined behavior.  */
+/* This is called from keyboard.c when it detects that SIGINT was
+   delivered to the main thread and interrupted thread_select before
+   the main thread could acquire the lock.  We must acquire the lock
+   to prevent a thread from running without holding the global lock,
+   and to avoid repeated calls to sys_mutex_unlock, which invokes
+   undefined behavior.  */
 void
 maybe_reacquire_global_lock (void)
 {
+  /* SIGINT handler is always run on the main thread, see
+     deliver_process_signal, so reflect that in our thread-tracking
+     variables.  */
+  current_thread = &main_thread;
+
   if (current_thread->not_holding_lock)
     {
       struct thread_state *self = current_thread;

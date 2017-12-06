@@ -49,7 +49,8 @@
 (require 'mm-util)
 (require 'rfc2047)
 (require 'puny)
-(require 'subr-x)			; read-multiple-choice
+(require 'rmc)			; read-multiple-choice
+(eval-when-compile (require 'subr-x))	; when-let*
 
 (autoload 'mailclient-send-it "mailclient")
 
@@ -306,7 +307,7 @@ any confusion."
 (defcustom message-subject-trailing-was-query t
   "What to do with trailing \"(was: <old subject>)\" in subject lines.
 If nil, leave the subject unchanged.  If it is the symbol `ask', query
-the user what do do.  In this case, the subject is matched against
+the user what to do.  In this case, the subject is matched against
 `message-subject-trailing-was-ask-regexp'.  If
 `message-subject-trailing-was-query' is t, always strip the trailing
 old subject.  In this case, `message-subject-trailing-was-regexp' is
@@ -8059,8 +8060,12 @@ regexp VARSTR."
 		  (or (null varstr)
 		      (string-match varstr (symbol-name (car local)))))
 	 (ignore-errors
-	   (set (make-local-variable (car local))
-		(cdr local)))))
+	   ;; Cloning message-default-charset could cause an already
+	   ;; encoded text to be encoded again, yielding raw bytes
+	   ;; instead of characters in the message.
+	   (unless (eq 'message-default-charset (car local))
+	     (set (make-local-variable (car local))
+		  (cdr local))))))
      locals)))
 
 ;;;

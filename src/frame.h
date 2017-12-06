@@ -447,7 +447,7 @@ struct frame
 
   /* New text height and width for pending size change.  0 if no change
      pending.  These values represent pixels or canonical character units
-     according to the value of new_pixelwise and correlate to the the
+     according to the value of new_pixelwise and correlate to the
      text width/height of the frame.  */
   int new_width, new_height;
 

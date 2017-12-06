@@ -158,6 +158,13 @@ struct thread_state
   bool m_waiting_for_input;
 #define waiting_for_input (current_thread->m_waiting_for_input)
 
+  /* For longjmp to where kbd input is being done.  This is per-thread
+     so that if more than one thread calls read_char, they don't
+     clobber each other's getcjmp, which will cause
+     quit_throw_to_read_char crash due to using a wrong stack.  */
+  sys_jmp_buf m_getcjmp;
+#define getcjmp (current_thread->m_getcjmp)
+
   /* The OS identifier for this thread.  */
   sys_thread_t thread_id;
 

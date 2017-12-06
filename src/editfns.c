@@ -3908,6 +3908,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
      multibyte character of the previous string.  This flag tells if we
      must consider such a situation or not.  */
   bool maybe_combine_byte;
+  Lisp_Object val;
   bool arg_intervals = false;
   USE_SAFE_ALLOCA;
   sa_avail -= sizeof initial_buffer;
@@ -3967,6 +3968,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 
   ptrdiff_t ispec;
   ptrdiff_t nspec = 0;
+
+  /* True if a string needs to be allocated to hold the result.  */
+  bool new_result = false;
 
   /* If we start out planning a unibyte result,
      then discover it has to be multibyte, we jump back to retry.  */
@@ -4148,9 +4152,11 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 	  if (conversion == 's')
 	    {
 	      if (format == end && format - format_start == 2
-		  && (!new_result || spec->new_string)
 		  && ! string_intervals (args[0]))
-		return arg;
+		{
+		  val = arg;
+		  goto return_val;
+		}
 
 	      /* handle case (precision[n] >= 0) */
 
@@ -4595,11 +4601,14 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
     emacs_abort ();
 
   if (! new_result)
-    return args[0];
+    {
+      val = args[0];
+      goto return_val;
+    }
 
   if (maybe_combine_byte)
     nchars = multibyte_chars_in_text ((unsigned char *) buf, p - buf);
-  Lisp_Object val = make_specified_string (buf, nchars, p - buf, multibyte);
+  val = make_specified_string (buf, nchars, p - buf, multibyte);
 
   /* If the format string has text properties, or any of the string
      arguments has text properties, set up text properties of the
@@ -4697,6 +4706,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
 	    }
     }
 
+ return_val:
   /* If we allocated BUF or INFO with malloc, free it too.  */
   SAFE_FREE ();
 

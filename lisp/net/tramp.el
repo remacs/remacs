@@ -1269,14 +1269,14 @@ entry does not exist, return nil."
 ;;;###tramp-autoload
 (defun tramp-tramp-file-p (name)
   "Return t if NAME is a string with Tramp file name syntax."
-  (save-match-data
-    (and (stringp name)
-	 ;; No "/:" and "/c:".  This is not covered by `tramp-file-name-regexp'.
-	 (not (string-match
-	       (if (memq system-type '(cygwin windows-nt))
-		   "^/[[:alpha:]]?:" "^/:")
-	       name))
-	 (string-match tramp-file-name-regexp name))))
+  (and (stringp name)
+       ;; No "/:" and "/c:".  This is not covered by `tramp-file-name-regexp'.
+       (not (string-match-p
+	     (if (memq system-type '(cygwin windows-nt))
+		 "^/[[:alpha:]]?:" "^/:")
+	     name))
+       (string-match-p tramp-file-name-regexp name)
+       t))
 
 (defun tramp-find-method (method user host)
   "Return the right method string to use.
@@ -2079,7 +2079,9 @@ ARGS are the arguments OPERATION has been called with."
 	      substitute-in-file-name unhandled-file-name-directory
 	      vc-registered
 	      ;; Emacs 26+ only.
-	      file-name-case-insensitive-p))
+	      file-name-case-insensitive-p
+	      ;; Emacs 27+ only.
+	      file-system-info))
     (if (file-name-absolute-p (nth 0 args))
 	(nth 0 args)
       default-directory))
