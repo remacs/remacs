@@ -1036,6 +1036,7 @@ of command line.")
     (load . tramp-handle-load)
     (make-auto-save-file-name . tramp-handle-make-auto-save-file-name)
     (make-directory . tramp-sh-handle-make-directory)
+    ;; `make-directory-internal' performed by default handler.
     (make-nearby-temp-file . tramp-handle-make-nearby-temp-file)
     (make-symbolic-link . tramp-sh-handle-make-symbolic-link)
     (process-file . tramp-sh-handle-process-file)
