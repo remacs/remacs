@@ -210,8 +210,10 @@ If NAME is a remote file name, check the local part of NAME."
     (defsubst tramp-compat-file-name-quote (name)
       "Add the quotation prefix \"/:\" to file NAME.
 If NAME is a remote file name, the local part of NAME is quoted."
-      (concat
-       (file-remote-p name) "/:" (or (file-remote-p name 'localname) name))))
+      (if (tramp-compat-file-name-quoted-p name)
+	  name
+	(concat
+	 (file-remote-p name) "/:" (or (file-remote-p name 'localname) name)))))
 
   (if (fboundp 'file-name-unquote)
       (defalias 'tramp-compat-file-name-unquote 'file-name-unquote)
