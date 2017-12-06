@@ -15,6 +15,70 @@ enum ParseState {
     LispFn(Option<String>),
 }
 
+/// Exit with error $code after printing the $fmtstr to stderr
+macro_rules! fail_with_msg {
+    ($code:expr, $modname:expr, $lineno:expr, $($arg:expr),*) => {{
+        eprintln!("In {} on line {}", $modname, $lineno);
+        eprintln!($($arg),*);
+        process::exit($code);
+    }};
+}
+
+struct LintMsg {
+    modname: String,
+    lineno: i32,
+    msg: String,
+}
+
+impl LintMsg {
+    fn new(modname: &str, lineno: i32, msg: String) -> Self {
+        Self {
+            modname: modname.to_string(),
+            lineno: lineno,
+            msg: msg,
+        }
+    }
+
+    fn fail(self, code: i32) -> ! {
+        fail_with_msg!(code, self.modname, self.lineno, "{}", self.msg);
+    }
+}
+
+fn lint_nomangle(line: &str, modname: &str, lineno: i32) -> Result<(), LintMsg> {
+    if !line.starts_with("pub extern \"C\" ") {
+        Err(LintMsg::new(
+            modname,
+            lineno,
+            "'no_mangle' functions exported for C need 'extern \"C\"' too.".to_string(),
+        ))
+    } else if line.contains(": LispObject") || line.contains("-> LispObject") {
+        Err(LintMsg::new(
+            modname,
+            lineno,
+            "functions exported to C must use 'Lisp_Object' not 'LispObject'".to_string(),
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+enum BuildError {
+    IOError(io::Error),
+    Lint(LintMsg),
+}
+
+impl From<io::Error> for BuildError {
+    fn from(e: io::Error) -> Self {
+        BuildError::IOError(e)
+    }
+}
+
+impl From<LintMsg> for BuildError {
+    fn from(e: LintMsg) -> Self {
+        BuildError::Lint(e)
+    }
+}
+
 // Transmute &OsStr to &str
 fn path_as_str(path: Option<&OsStr>) -> &str {
     path.and_then(|p| p.to_str())
@@ -62,23 +126,24 @@ fn export_function(
     name: Option<String>,
     line: &str,
     modname: &str,
-    lineno: u32,
+    lineno: i32,
     msg: &str,
-) -> Option<String> {
+) -> Result<Option<String>, LintMsg> {
     if let Some(name) = name.or_else(|| get_function_name(&line)) {
         if line.starts_with("pub ") {
-            Some(name)
+            Ok(Some(name))
         } else if line.starts_with("fn ") {
-            eprintln!(
-                "
-`{}` is not public in the {} module at line {}.
-{}",
-                name,
+            Err(LintMsg::new(
                 modname,
                 lineno,
-                msg
-            );
-            process::exit(1);
+                format!(
+                    "
+`{}` is not public.
+{}",
+                    name,
+                    msg
+                ),
+            ))
         } else {
             eprintln!(
                 "Unhandled code in the {} module at line {}",
@@ -88,7 +153,7 @@ fn export_function(
             unreachable!();
         }
     } else {
-        None
+        Ok(None)
     }
 }
 
@@ -98,7 +163,7 @@ fn c_exports_for_module<R>(
     modname: &str,
     mut out_file: &File,
     in_file: R,
-) -> Result<bool, io::Error>
+) -> Result<bool, BuildError>
 where
     R: BufRead,
 {
@@ -144,13 +209,15 @@ where
             },
 
             ParseState::LispFn(name) => {
-                if let Some(name) = export_function(
+                let name = export_function(
                     name.or_else(|| get_function_name(&line)),
                     &line,
                     modname,
                     lineno,
                     "lisp_fn functions are meant to be used from Rust as well as in lisp code.",
-                ) {
+                )?;
+
+                if let Some(name) = name {
                     write!(out_file, "pub use {}::F{};\n", modname, name)?;
                     exported.push(name);
                 } else {
@@ -166,13 +233,15 @@ where
 
             // export public #[no_mangle] functions
             ParseState::NoMangleFn => {
-                if let Some(name) = export_function(
+                let name = export_function(
                     None,
                     &line,
                     modname,
                     lineno,
                     "'no_mangle' function must be public.",
-                ) {
+                )?;
+                if let Some(name) = name {
+                    lint_nomangle(&line, modname, lineno)?;
                     write!(out_file, "pub use {}::{};\n", modname, name)?;
                 } // None means not a fn, skip it
 
@@ -201,18 +270,20 @@ where
         )?;
 
         if !has_include {
-            eprintln!(
+            fail_with_msg!(
+                2,
+                modname,
+                lineno,
                 "{} is missing the required include for lisp_fn exports.",
                 source_file(modname)
             );
-            process::exit(2);
         }
 
         Ok(true)
     }
 }
 
-fn handle_file(mut mod_path: PathBuf, out_file: &File) -> Result<Option<String>, io::Error> {
+fn handle_file(mut mod_path: PathBuf, out_file: &File) -> Result<Option<String>, BuildError> {
     let mut name: Option<String> = None;
 
     // in order to parse correctly, determine where the code lives
@@ -234,10 +305,10 @@ fn handle_file(mut mod_path: PathBuf, out_file: &File) -> Result<Option<String>,
         let fp = match File::open(&mod_path) {
             Ok(f) => f,
             Err(e) => {
-                return Err(io::Error::new(
-                    e.kind(),
-                    format!("Failed to open {:?}: {}", mod_path, e),
-                ))
+                return Err(
+                    io::Error::new(e.kind(), format!("Failed to open {:?}: {}", mod_path, e))
+                        .into(),
+                )
             }
         };
 
@@ -254,7 +325,7 @@ fn ignore(path: &str) -> bool {
     path == "" || path.starts_with('.') || path == "lib.rs"
 }
 
-fn generate_c_exports() -> Result<(), io::Error> {
+fn generate_c_exports() -> Result<(), BuildError> {
     let out_path: PathBuf = [&env_var("OUT_DIR"), "c_exports.rs"].iter().collect();
     let mut out_file = File::create(out_path)?;
 
@@ -291,7 +362,14 @@ fn generate_c_exports() -> Result<(), io::Error> {
 
 fn main() {
     if let Err(e) = generate_c_exports() {
-        eprintln!("Errors occurred:\n{}", e);
-        process::exit(3);
+        match e {
+            BuildError::IOError(msg) => {
+                eprintln!("{}", msg);
+                process::exit(3);
+            }
+            BuildError::Lint(msg) => {
+                msg.fail(1);
+            }
+        }
     }
 }
