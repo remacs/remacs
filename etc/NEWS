@@ -115,6 +115,11 @@ are evaluated lazily.
 
 ** Eshell
 
+** Org
+
+*** New major version 9.1
+A detailed changelog can be found in the file ORG-NEWS and the Org manual.
+
 ---
 *** Expansion of history event designators is disabled by default.
 To restore the old behavior, use
