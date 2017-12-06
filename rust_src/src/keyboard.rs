@@ -63,8 +63,7 @@ pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
 /// Return true if EVENT is a list whose elements are all integers or symbols.
 /// Such a list is not valid as an event,
 /// but it can be a Lucid-style event type list.
-#[no_mangle]
-pub extern "C" fn lucid_event_type_list_p(event: LispObject) -> bool {
+pub fn lucid_event_type_list_p(event: LispObject) -> bool {
     if !event.is_cons() {
         return false;
     }

@@ -434,12 +434,10 @@ pub fn minibuffer_window(frame: LispObject) -> LispObject {
     frame.minibuffer_window()
 }
 
-#[no_mangle]
 pub fn window_wants_mode_line(window: LispWindowRef) -> bool {
     window.wants_mode_line()
 }
 
-#[no_mangle]
 pub fn window_wants_header_line(window: LispWindowRef) -> bool {
     window.wants_header_line()
 }

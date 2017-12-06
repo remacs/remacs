@@ -74,6 +74,7 @@ mod threads;
 mod util;
 mod vectors;
 mod windows;
+mod ffi;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;

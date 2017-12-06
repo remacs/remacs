@@ -113,6 +113,7 @@ impl LispBufferRef {
         LispObject::from(self.mark)
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub fn name(&self) -> LispObject {
         LispObject::from(self.name)
