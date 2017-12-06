@@ -381,10 +381,7 @@ direct children of this heading."
 		     (point)
 		     (concat "ARCHIVE_" (upcase (symbol-name item)))
 		     value))))
-	      (widen)
-	      ;; Save and kill the buffer, if it is not the same
-	      ;; buffer.
-	      (unless (eq this-buffer buffer) (save-buffer)))))
+	      (widen))))
 	;; Here we are back in the original buffer.  Everything seems
 	;; to have worked.  So now run hooks, cut the tree and finish
 	;; up.

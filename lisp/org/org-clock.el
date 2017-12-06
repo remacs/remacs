@@ -1467,7 +1467,7 @@ The time is always returned as UTC."
 	  (and (or (not cmt) (equal cmt "auto"))
 	       lr))
       (setq org--msg-extra "showing task time since last repeat.")
-      (and lr (org-time-string-to-time lr t)))
+      (and lr (org-time-string-to-time lr)))
      (t nil))))
 
 (defun org-clock-find-position (find-unclosed)
@@ -1604,9 +1604,9 @@ to, overriding the existing value of `org-clock-out-switch-to-state'."
 	  (insert "--")
 	  (setq te (org-insert-time-stamp (or at-time now) 'with-hm 'inactive))
 	  (setq s (- (float-time
-		      (apply #'encode-time (org-parse-time-string te nil t)))
+		      (apply #'encode-time (org-parse-time-string te)))
 		     (float-time
-		      (apply #'encode-time (org-parse-time-string ts nil t))))
+		      (apply #'encode-time (org-parse-time-string ts))))
 		h (floor (/ s 3600))
 		s (- s (* 3600 h))
 		m (floor (/ s 60))
@@ -1711,8 +1711,8 @@ Optional argument N tells to change by that many units."
 	      (begts (if updatets1 begts1 begts2)))
 	  (setq tdiff
 		(time-subtract
-		 (org-time-string-to-time org-last-changed-timestamp t)
-		 (org-time-string-to-time ts t)))
+		 (org-time-string-to-time org-last-changed-timestamp)
+		 (org-time-string-to-time ts)))
 	  (save-excursion
 	    (goto-char begts)
 	    (org-timestamp-change
@@ -1820,10 +1820,10 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
 	  (lmax 30)
 	  (ltimes (make-vector lmax 0))
 	  (level 0)
-	  (tstart (cond ((stringp tstart) (org-time-string-to-seconds tstart t))
+	  (tstart (cond ((stringp tstart) (org-time-string-to-seconds tstart))
 			((consp tstart) (float-time tstart))
 			(t tstart)))
-	  (tend (cond ((stringp tend) (org-time-string-to-seconds tend t))
+	  (tend (cond ((stringp tend) (org-time-string-to-seconds tend))
 		      ((consp tend) (float-time tend))
 		      (t tend)))
 	  (t1 0)
@@ -1840,11 +1840,10 @@ PROPNAME lets you set a custom text property instead of :org-clock-minutes."
 	   (let* ((ts (float-time
 		       (apply #'encode-time
 			      (save-match-data
-				(org-parse-time-string
-				 (match-string 2) nil t)))))
+				(org-parse-time-string (match-string 2))))))
 		  (te (float-time
 		       (apply #'encode-time
-			      (org-parse-time-string (match-string 3) nil t))))
+			      (org-parse-time-string (match-string 3)))))
 		  (dt (- (if tend (min te tend) te)
 			 (if tstart (max ts tstart) ts))))
 	     (when (> dt 0) (cl-incf t1 (floor (/ dt 60))))))
@@ -2725,7 +2724,9 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
       (setq te (float-time (apply #'encode-time (org-parse-time-string te))))))
     (setq tsb
 	  (if (eq step0 'week)
-	      (- ts (* 86400 (- (nth 6 (decode-time (seconds-to-time ts))) ws)))
+	      (let ((dow (nth 6 (decode-time (seconds-to-time ts)))))
+		(if (< dow ws) ts
+		  (- ts (* 86400 (- dow ws)))))
 	    ts))
     (setq p1 (plist-put p1 :header ""))
     (setq p1 (plist-put p1 :step nil))
@@ -2735,9 +2736,14 @@ LEVEL is an integer.  Indent by two spaces per level above 1."
       (setq p1 (plist-put p1 :tstart (format-time-string
 				      (org-time-stamp-format nil t)
 				      (seconds-to-time (max tsb ts)))))
+      (cl-incf tsb (let ((dow (nth 6 (decode-time (seconds-to-time tsb)))))
+		     (if (or (eq step0 'day)
+			     (= dow ws))
+			 step
+		       (* 86400 (- ws dow)))))
       (setq p1 (plist-put p1 :tend (format-time-string
 				    (org-time-stamp-format nil t)
-				    (seconds-to-time (min te (setq tsb (+ tsb step)))))))
+				    (seconds-to-time (min te tsb)))))
       (insert "\n" (if (eq step0 'day) "Daily report: "
 		     "Weekly report starting on: ")
 	      (plist-get p1 :tstart) "\n")
@@ -2895,9 +2901,9 @@ Otherwise, return nil."
 	  (setq ts (match-string 1)
 		te (match-string 3))
 	  (setq s (- (float-time
-		      (apply #'encode-time (org-parse-time-string te nil t)))
+		      (apply #'encode-time (org-parse-time-string te)))
 		     (float-time
-		      (apply #'encode-time (org-parse-time-string ts nil t))))
+		      (apply #'encode-time (org-parse-time-string ts))))
 		neg (< s 0)
 		s (abs s)
 		h (floor (/ s 3600))
