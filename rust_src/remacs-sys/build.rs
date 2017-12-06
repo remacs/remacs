@@ -136,7 +136,12 @@ fn run_bindgen() {
         .clang_arg("-I../../src")
         .clang_arg("-I../../lib");
     if cfg!(target_os = "windows") {
-        builder = builder.clang_arg("-I../../nt/inc");
+        builder = builder.clang_arg("-I../../nt/inc")
+            .clang_arg("-fms-extensions")
+            .clang_arg("-fms-compatibility")
+            .clang_arg("-fms-compatibility-version=19")
+            .clang_arg("-D_MSC_VER=1900")
+            .clang_arg("-D_M_X64");
     }
     builder = builder.clang_arg("-Demacs")
         .header("wrapper.h")

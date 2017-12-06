@@ -1,8 +1,10 @@
 #include "config.h"
+#include "conf_post.h"
 #include "limits.h"
 
 #undef HAVE_X_WINDOWS
 #undef HAVE_X11
+#undef NS_IMPL_COCOA
 #undef HAVE_WINDOW_SYSTEM
 
 // we want bindgen to include bindings for the same set of functions
@@ -26,8 +28,6 @@
 #include "coding.h"
 #include "commands.h"
 #include "composite.h"
-#include "config.h"
-#include "conf_post.h"
 #include "dispextern.h"
 #include "disptab.h"
 #include "dynlib.h"
