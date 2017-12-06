@@ -1109,7 +1109,10 @@ the size of @var{window} is not preserved.
 @cindex window splitting
 
 This section describes functions for creating a new window by
-@dfn{splitting} an existing one.
+@dfn{splitting} an existing one.  Note that some windows are special in
+the sense that these functions may fail to split them as described here.
+Examples of such windows are side windows (@pxref{Side Windows}) and
+atomic windows (@pxref{Atomic Windows}).
 
 @defun split-window &optional window size side pixelwise
 This function creates a new live window next to the window
