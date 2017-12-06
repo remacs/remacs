@@ -11,7 +11,7 @@ use std::str::FromStr;
 const numname: [(&'static str, c_int); 0] = [];
 
 #[cfg(all(unix, not(target_os = "macos")))]
-const numname: [(&'static str, c_int); 30] = [
+const numname: [(&str, c_int); 30] = [
     ("HUP", libc::SIGHUP),
     ("INT", libc::SIGINT),
     ("QUIT", libc::SIGQUIT),
@@ -85,7 +85,7 @@ pub unsafe extern "C" fn str2sig(signame: *const c_char, signum: *mut c_int) -> 
             *signum = i;
             return 0;
         }
-        Err(_) => for &(name, num) in numname.iter() {
+        Err(_) => for &(name, num) in &numname {
             if name == s {
                 *signum = num;
                 return 0;

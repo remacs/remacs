@@ -85,13 +85,11 @@ pub fn frame_live_or_selected(object: LispObject) -> LispFrameRef {
 pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
     if object.is_nil() {
         selected_frame().as_frame_or_error()
+    } else if let Some(win) = object.as_valid_window() {
+        // the window's frame does not need a live check
+        win.frame().as_frame_or_error()
     } else {
-        if let Some(win) = object.as_valid_window() {
-            // the window's frame does not need a live check
-            win.frame().as_frame_or_error()
-        } else {
-            object.as_live_frame_or_error()
-        }
+        object.as_live_frame_or_error()
     }
 }
 

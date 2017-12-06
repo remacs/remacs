@@ -48,7 +48,7 @@ fn move_point(n: LispObject, forward: bool) -> LispObject {
         xsignal!(signal);
     }
 
-    return LispObject::constant_nil();
+    LispObject::constant_nil()
 }
 
 /// Move point N characters forward (backward if N is negative).
@@ -158,25 +158,29 @@ pub fn initial_keys() {
     let global_map = current_global_map().to_raw();
 
     unsafe {
+        let A = CString::new("beginning-of-line").unwrap();
         initial_define_key(
             global_map,
             Ctl('A'),
-            CString::new("beginning-of-line").unwrap().as_ptr(),
+            A.as_ptr(),
         );
+        let B = CString::new("backward-char").unwrap();
         initial_define_key(
             global_map,
             Ctl('B'),
-            CString::new("backward-char").unwrap().as_ptr(),
+            B.as_ptr(),
         );
+        let E = CString::new("end-of-line").unwrap();
         initial_define_key(
             global_map,
             Ctl('E'),
-            CString::new("end-of-line").unwrap().as_ptr(),
+            E.as_ptr(),
         );
+        let F = CString::new("forward-char").unwrap();
         initial_define_key(
             global_map,
             Ctl('F'),
-            CString::new("forward-char").unwrap().as_ptr(),
+            F.as_ptr(),
         );
     }
 }

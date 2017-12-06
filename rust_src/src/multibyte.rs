@@ -102,7 +102,7 @@ impl LispStringRef {
     }
 
     #[inline]
-    pub fn as_mut_slice(&self) -> &mut [u8] {
+    pub fn as_mut_slice(&mut self) -> &mut [u8] {
         unsafe { slice::from_raw_parts_mut(self.data as *mut u8, self.len_bytes() as usize) }
     }
 
@@ -152,7 +152,7 @@ impl<'a> Iterator for LispStringRefIterator<'a> {
                 codepoint = cp;
                 self.cur += advance;
             } else {
-                codepoint = ref_slice[self.cur] as Codepoint;
+                codepoint = Codepoint::from(ref_slice[self.cur]);
                 self.cur += 1;
             }
 
@@ -206,9 +206,9 @@ pub extern "C" fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdiff_t) -
 #[inline]
 pub fn raw_byte_codepoint(byte: c_uchar) -> Codepoint {
     if byte >= 0x80 {
-        byte as Codepoint + 0x3F_FF00
+        Codepoint::from(byte) + 0x3F_FF00
     } else {
-        byte as Codepoint
+        Codepoint::from(byte)
     }
 }
 
@@ -224,9 +224,9 @@ pub fn raw_byte_from_codepoint(cp: Codepoint) -> c_uchar {
 #[inline]
 pub fn raw_byte_from_codepoint_safe(cp: Codepoint) -> EmacsInt {
     if cp < 0x80 {
-        cp as EmacsInt
+        EmacsInt::from(cp)
     } else if cp > MAX_5_BYTE_CHAR {
-        raw_byte_from_codepoint(cp) as EmacsInt
+        EmacsInt::from(raw_byte_from_codepoint(cp))
     } else {
         -1
     }
@@ -295,20 +295,18 @@ pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
     let mut cp = ch as Codepoint;
     // A non-ASCII character can't reflect modifier bits to the code.
     if (cp & !CHAR_MODIFIER_MASK) >= 0x80 {
-        return cp as EmacsInt;
+        return EmacsInt::from(cp);
     }
     let ascii = (cp & 0x7F) as u8;
     // For Meta, Shift, and Control modifiers, we need special care.
     if cp & CHAR_SHIFT != 0 {
         let unshifted = cp & !CHAR_SHIFT;
         // Shift modifier is valid only with [A-Za-z].
-        if ascii >= b'A' && ascii <= b'Z' {
+        // Shift modifier for control characters and SPC is ignored.
+        if (ascii >= b'A' && ascii <= b'Z') || ascii <= b' ' {
             cp = unshifted;
         } else if ascii >= b'a' && ascii <= b'z' {
             cp = unshifted & !0x20;
-        } else if ascii <= b' ' {
-            // Shift modifier for control characters and SPC is ignored.
-            cp = unshifted;
         }
     }
     // Simulate the code in lread.c.
@@ -324,7 +322,7 @@ pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
             cp &= 0x1F | (!0x7F & !CHAR_CTL);
         }
     }
-    cp as EmacsInt
+    EmacsInt::from(cp)
 }
 
 /// Store multibyte form of character CP at TO.  If CP has modifier bits,
@@ -332,7 +330,7 @@ pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
 #[no_mangle]
 pub extern "C" fn char_string(mut cp: c_uint, to: *mut c_uchar) -> c_int {
     if cp & CHAR_MODIFIER_MASK != 0 {
-        cp = char_resolve_modifier_mask(cp as EmacsInt) as Codepoint;
+        cp = char_resolve_modifier_mask(EmacsInt::from(cp)) as Codepoint;
         cp &= !CHAR_MODIFIER_MASK;
     }
     write_codepoint(
@@ -418,11 +416,11 @@ fn multibyte_length(slice: &[c_uchar], allow_encoded_raw: bool) -> Option<usize>
 /// Same as the `STRING_CHAR_ADVANCE` macro.
 #[inline]
 pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
-    let head = slice[0] as Codepoint;
+    let head = Codepoint::from(slice[0]);
     if head & 0x80 == 0 {
         (head, 1)
     } else if head & 0x20 == 0 {
-        let cp = ((head & 0x1F) << 6) | (slice[1] as Codepoint & 0x3F);
+        let cp = ((head & 0x1F) << 6) | (Codepoint::from(slice[1]) & 0x3F);
         if head < 0xC2 {
             (cp | 0x3F_FF80, 2)
         } else {
@@ -430,23 +428,23 @@ pub fn multibyte_char_at(slice: &[c_uchar]) -> (Codepoint, usize) {
         }
     } else if head & 0x10 == 0 {
         (
-            ((head & 0x0F) << 12) | ((slice[1] as Codepoint & 0x3F) << 6)
-                | (slice[2] as Codepoint & 0x3F),
+            ((head & 0x0F) << 12) | ((Codepoint::from(slice[1]) & 0x3F) << 6)
+                | (Codepoint::from(slice[2]) & 0x3F),
             3,
         )
     } else if head & 0x08 == 0 {
         (
-            ((head & 0x07) << 18) | ((slice[1] as Codepoint & 0x3F) << 12)
-                | ((slice[2] as Codepoint & 0x3F) << 6)
-                | (slice[3] as Codepoint & 0x3F),
+            ((head & 0x07) << 18) | ((Codepoint::from(slice[1]) & 0x3F) << 12)
+                | ((Codepoint::from(slice[2]) & 0x3F) << 6)
+                | (Codepoint::from(slice[3]) & 0x3F),
             4,
         )
     } else {
         // the relevant bytes of "head" are always zero
         (
-            ((slice[1] as Codepoint & 0x3F) << 18) | ((slice[2] as Codepoint & 0x3F) << 12)
-                | ((slice[3] as Codepoint & 0x3F) << 6)
-                | (slice[4] as Codepoint & 0x3F),
+            ((Codepoint::from(slice[1]) & 0x3F) << 18) | ((Codepoint::from(slice[2]) & 0x3F) << 12)
+                | ((Codepoint::from(slice[3]) & 0x3F) << 6)
+                | (Codepoint::from(slice[4]) & 0x3F),
             5,
         )
     }
