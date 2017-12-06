@@ -494,10 +494,9 @@ non-nil, return the full association list to be used by
 		  link)
 		source-name
 		params
-		(org-unescape-code-in-string
-		 (if org-src-preserve-indentation
-		     (org-trim body t)
-		   (org-trim (org-remove-indentation body))))
+		(if org-src-preserve-indentation
+		    (org-trim body t)
+		  (org-trim (org-remove-indentation body)))
 		comment)))
     (if only-this-block
 	(list (cons src-lang (list result)))

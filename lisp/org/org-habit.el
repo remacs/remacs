@@ -288,7 +288,7 @@ Habits are assigned colors on the following basis:
 	 (deadline (if scheduled-days
 		       (+ scheduled-days (- d-repeat s-repeat))
 		     (org-habit-deadline habit)))
-	 (m-days (or now-days (time-to-days nil))))
+	 (m-days (or now-days (time-to-days (current-time)))))
     (cond
      ((< m-days scheduled)
       '(org-habit-clear-face . org-habit-clear-future-face))
@@ -406,7 +406,7 @@ current time."
   "Insert consistency graph for any habitual tasks."
   (let ((inhibit-read-only t)
 	(buffer-invisibility-spec '(org-link))
-	(moment (time-subtract nil
+	(moment (time-subtract (current-time)
 			       (list 0 (* 3600 org-extend-today-until) 0))))
     (save-excursion
       (goto-char (if line (point-at-bol) (point-min)))

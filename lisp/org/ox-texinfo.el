@@ -83,7 +83,8 @@
   :filters-alist
   '((:filter-headline . org-texinfo--filter-section-blank-lines)
     (:filter-parse-tree . org-texinfo--normalize-headlines)
-    (:filter-section . org-texinfo--filter-section-blank-lines))
+    (:filter-section . org-texinfo--filter-section-blank-lines)
+    (:filter-final-output . org-texinfo--untabify))
   :menu-entry
   '(?i "Export to Texinfo"
        ((?t "As TEXI file" org-texinfo-export-to-texinfo)
@@ -405,6 +406,10 @@ If two strings share the same prefix (e.g. \"ISO-8859-1\" and
 
 ;;; Internal Functions
 
+(defun org-texinfo--untabify (s _backend _info)
+  "Remove TAB characters in string S."
+  (replace-regexp-in-string "\t" (make-string tab-width ?\s) s))
+
 (defun org-texinfo--filter-section-blank-lines (headline _backend _info)
   "Filter controlling number of blank lines after a section."
   (replace-regexp-in-string "\n\\(?:\n[ \t]*\\)*\\'" "\n\n" headline))
@@ -499,8 +504,12 @@ export state, as a plist."
    (org-export-create-backend
     :parent 'texinfo
     :transcoders '((footnote-reference . ignore)
-		   (link . (lambda (object c i) c))
-		   (radio-target . (lambda (object c i) c))
+		   (link . (lambda (l c i)
+			     (or c
+				 (org-export-data
+				  (org-element-property :raw-link l)
+				  i))))
+		   (radio-target . (lambda (_r c _i) c))
 		   (target . ignore)))
    info))
 
@@ -519,18 +528,27 @@ strings (e.g., returned by `org-export-get-caption')."
   (let* ((backend
 	  (org-export-create-backend
 	   :parent 'texinfo
-	   :transcoders '((link . (lambda (object c i) c))
-			  (radio-target . (lambda (object c i) c))
+	   :transcoders '((link . (lambda (l c i)
+				    (or c
+					(org-export-data
+					 (org-element-property :raw-link l)
+					 i))))
+			  (radio-target . (lambda (_r c _i) c))
 			  (target . ignore))))
 	 (short-backend
 	  (org-export-create-backend
 	   :parent 'texinfo
-	   :transcoders '((footnote-reference . ignore)
-			  (inline-src-block . ignore)
-			  (link . (lambda (object c i) c))
-			  (radio-target . (lambda (object c i) c))
-			  (target . ignore)
-			  (verbatim . ignore))))
+	   :transcoders
+	   '((footnote-reference . ignore)
+	     (inline-src-block . ignore)
+	     (link . (lambda (l c i)
+		       (or c
+			   (org-export-data
+			    (org-element-property :raw-link l)
+			    i))))
+	     (radio-target . (lambda (_r c _i) c))
+	     (target . ignore)
+	     (verbatim . ignore))))
 	 (short-str
 	  (if (and short caption)
 	      (format "@shortcaption{%s}\n"
@@ -1017,15 +1035,17 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
 
 (defun org-texinfo--@ref (datum description info)
   "Return @ref command for element or object DATUM.
-DESCRIPTION is the name of the section to print, as a string."
+DESCRIPTION is the printed name of the section, as a string, or
+nil."
   (let ((node-name (org-texinfo--get-node datum info))
 	;; Sanitize DESCRIPTION for cross-reference use.  In
-	;; particular, remove colons as they seem to cause (even
-	;; within @asis{...} to the Texinfo reader.
-	(title (replace-regexp-in-string
-		"[ \t]*:+" ""
-		(replace-regexp-in-string "," "@comma{}" description))))
-    (if (equal title node-name)
+	;; particular, remove colons as they seem to cause pain (even
+	;; within @asis{...}) to the Texinfo reader.
+	(title (and description
+		    (replace-regexp-in-string
+		     "[ \t]*:+" ""
+		     (replace-regexp-in-string "," "@comma{}" description)))))
+    (if (or (not title) (equal title node-name))
 	(format "@ref{%s}" node-name)
       (format "@ref{%s, , %s}" node-name title))))
 
@@ -1073,20 +1093,8 @@ INFO is a plist holding contextual information.  See
 			       (org-element-type
 				(org-element-property :parent destination))))))
 	   (let ((headline (org-element-lineage destination '(headline) t)))
-	     (org-texinfo--@ref
-	      headline
-	      (or desc (org-texinfo--sanitize-title
-			(org-element-property :title headline) info))
-	      info)))
-	  (_
-	   (org-texinfo--@ref
-	    destination
-	    (or desc
-		(pcase (org-export-get-ordinal destination info)
-		  ((and (pred integerp) n) (number-to-string n))
-		  ((and (pred consp) n) (mapconcat #'number-to-string n "."))
-		  (_ "???")))		;cannot guess the description
-	    info)))))
+	     (org-texinfo--@ref headline desc info)))
+	  (_ (org-texinfo--@ref destination desc info)))))
      ((string= type "mailto")
       (format "@email{%s}"
 	      (concat (org-texinfo--sanitize-content path)
@@ -1167,19 +1175,19 @@ is an integer, build the menu recursively, down to this depth."
   (cond
    ((not level)
     (org-texinfo--format-entries (org-texinfo--menu-entries scope info) info))
-   ((zerop level) nil)
+   ((zerop level) "\n")
    (t
-    (org-element-normalize-string
-     (mapconcat
-      (lambda (h)
-	(let ((entries (org-texinfo--menu-entries h info)))
-	  (when entries
-	    (concat
-	     (format "%s\n\n%s\n"
-		     (org-export-data (org-export-get-alt-title h info) info)
-		     (org-texinfo--format-entries entries info))
-	     (org-texinfo--build-menu h info (1- level))))))
-      (org-texinfo--menu-entries scope info) "\n")))))
+    (mapconcat
+     (lambda (h)
+       (let ((entries (org-texinfo--menu-entries h info)))
+	 (when entries
+	   (concat
+	    (format "%s\n\n%s\n"
+		    (org-export-data (org-export-get-alt-title h info) info)
+		    (org-texinfo--format-entries entries info))
+	    (org-texinfo--build-menu h info (1- level))))))
+     (org-texinfo--menu-entries scope info)
+     ""))))
 
 (defun org-texinfo--format-entries (entries info)
   "Format all direct menu entries in SCOPE, as a string.
