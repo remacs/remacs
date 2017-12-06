@@ -1801,7 +1801,11 @@ killed."
 	  (setq buffer-file-truename nil)
 	  ;; Likewise for dired buffers.
 	  (setq dired-directory nil)
-	  (find-file filename wildcards))
+          ;; Don't use `find-file' because it may end up using another window
+          ;; in some corner cases, e.g. when the selected window is
+          ;; softly-dedicated.
+	  (let ((newbuf (find-file-noselect filename wildcards)))
+            (switch-to-buffer newbuf)))
       (when (eq obuf (current-buffer))
 	;; This executes if find-file gets an error
 	;; and does not really find anything.
