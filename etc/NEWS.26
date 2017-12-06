@@ -626,7 +626,7 @@ state to take effect (making a frame visible, for example).
 * Changes in Specialized Modes and Packages in Emacs 26.1
 
 ---
-** Emacs 26.1 comes with Org v9.1.2.
+** Emacs 26.1 comes with Org v9.1.4.
 See the file ORG-NEWS for user-visible changes in Org.
 
 ---
