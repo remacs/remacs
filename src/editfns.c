@@ -3716,7 +3716,7 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      Lisp_Object val = styled_format (nargs, args, true, false);
+      Lisp_Object val = styled_format (nargs, args, true);
       message3 (val);
       return val;
     }
@@ -3742,7 +3742,7 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
     }
   else
     {
-      Lisp_Object val = styled_format (nargs, args, true, false);
+      Lisp_Object val = styled_format (nargs, args, true);
       Lisp_Object pane, menu;
 
       pane = list1 (Fcons (build_string ("OK"), Qt));
@@ -3867,7 +3867,7 @@ produced text.
 usage: (format STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  return styled_format (nargs, args, false, true);
+  return styled_format (nargs, args, false);
 }
 
 DEFUN ("format-message", Fformat_message, Sformat_message, 1, MANY, 0,
@@ -3883,16 +3883,13 @@ and right quote replacement characters are specified by
 usage: (format-message STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  return styled_format (nargs, args, true, true);
+  return styled_format (nargs, args, true);
 }
 
-/* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.
-   If NEW_RESULT, the result is a new string; otherwise, the result
-   may be one of the arguments.  */
+/* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.  */
 
 Lisp_Object
-styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message,
-	       bool new_result)
+styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 {
   ptrdiff_t n;		/* The number of the next arg to substitute.  */
   char initial_buffer[4000];

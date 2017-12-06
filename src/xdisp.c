@@ -10194,7 +10194,7 @@ vadd_to_log (char const *format, va_list ap)
   for (ptrdiff_t i = 1; i <= nargs; i++)
     args[i] = va_arg (ap, Lisp_Object);
   Lisp_Object msg = Qnil;
-  msg = styled_format (nargs, args, true, false);
+  msg = styled_format (nargs, args, true);
 
   ptrdiff_t len = SBYTES (msg) + 1;
   USE_SAFE_ALLOCA;
@@ -19526,7 +19526,7 @@ DEFUN ("trace-to-stderr", Ftrace_to_stderr, Strace_to_stderr, 1, MANY, "",
 usage: (trace-to-stderr STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object s = styled_format (nargs, args, false, false);
+  Lisp_Object s = styled_format (nargs, args, false);
   fwrite (SDATA (s), 1, SBYTES (s), stderr);
   return Qnil;
 }
