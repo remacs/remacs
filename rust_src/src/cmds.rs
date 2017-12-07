@@ -159,29 +159,13 @@ pub fn initial_keys() {
 
     unsafe {
         let A = CString::new("beginning-of-line").unwrap();
-        initial_define_key(
-            global_map,
-            Ctl('A'),
-            A.as_ptr(),
-        );
+        initial_define_key(global_map, Ctl('A'), A.as_ptr());
         let B = CString::new("backward-char").unwrap();
-        initial_define_key(
-            global_map,
-            Ctl('B'),
-            B.as_ptr(),
-        );
+        initial_define_key(global_map, Ctl('B'), B.as_ptr());
         let E = CString::new("end-of-line").unwrap();
-        initial_define_key(
-            global_map,
-            Ctl('E'),
-            E.as_ptr(),
-        );
+        initial_define_key(global_map, Ctl('E'), E.as_ptr());
         let F = CString::new("forward-char").unwrap();
-        initial_define_key(
-            global_map,
-            Ctl('F'),
-            F.as_ptr(),
-        );
+        initial_define_key(global_map, Ctl('F'), F.as_ptr());
     }
 }
 

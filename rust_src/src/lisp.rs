@@ -17,7 +17,7 @@ use remacs_sys::{font, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, Pseud
                  CHECK_IMPURE, INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM,
                  USE_LSB_TAG, VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
-                 Lisp_Type, Lisp_Symbol};
+                 Lisp_Symbol, Lisp_Type};
 use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p,
                  Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
@@ -148,7 +148,9 @@ impl LispObject {
     #[inline]
     pub fn as_symbol(self) -> Option<LispSymbolRef> {
         if self.is_symbol() {
-            Some(LispSymbolRef::new(self.symbol_ptr_value() as *mut Lisp_Symbol))
+            Some(LispSymbolRef::new(
+                self.symbol_ptr_value() as *mut Lisp_Symbol,
+            ))
         } else {
             None
         }
