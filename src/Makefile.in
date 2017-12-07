@@ -674,13 +674,14 @@ ${ETAGS}: FORCE
 ctagsfiles1 = $(wildcard ${srcdir}/*.[hc])
 ctagsfiles2 = $(wildcard ${srcdir}/*.m)
 
-## FIXME? In out-of-tree builds, should TAGS be generated in srcdir?
+## In out-of-tree builds, TAGS are generated in the build dir, like
+## other non-bootstrap build products (see Bug#31744).
 
 ## This does not need to depend on ../lisp and ../lwlib TAGS files,
 ## because etags "--include" only includes a pointer to the file,
 ## rather than the file contents.
 TAGS: ${ETAGS} $(ctagsfiles1) $(ctagsfiles2)
-	${ETAGS} --include=../lisp/TAGS --include=$(lwlibdir)/TAGS \
+	$(AM_V_GEN)${ETAGS} --include=../lisp/TAGS --include=$(lwlibdir)/TAGS \
 	  --regex='{c}/[ 	]*DEFVAR_[A-Z_ 	(]+"\([^"]+\)"/\1/' \
 	  --regex='{c}/[ 	]*DEFVAR_[A-Z_ 	(]+"[^"]+",[ 	]\([A-Za-z0-9_]+\)/\1/' \
 	  $(ctagsfiles1) \
