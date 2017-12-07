@@ -1,7 +1,4 @@
-//! Module that is used for FFI exports.
-/// Used for creating #[no_mangle] wrappers around functions defined in the top level rust
-/// crate for remacs. These calls should NOT be used in Rust directly,
-/// it is only for C compat.
+//! Module that is used for FFI exports.These calls should NOT be used in Rust directly.
 use data;
 use keyboard;
 use lisp::LispObject;

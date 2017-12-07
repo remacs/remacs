@@ -50,6 +50,7 @@ mod crypto;
 mod data;
 mod dispnew;
 mod editfns;
+mod ffi;
 mod floatfns;
 mod fns;
 mod fonts;
@@ -74,7 +75,6 @@ mod threads;
 mod util;
 mod vectors;
 mod windows;
-mod ffi;
 
 #[cfg(all(not(test), target_os = "macos"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;
