@@ -997,26 +997,6 @@ is in effect, in which case it is less.  */)
   return build_marker (current_buffer, ZV, ZV_BYTE);
 }
 
-DEFUN ("gap-position", Fgap_position, Sgap_position, 0, 0, 0,
-       doc: /* Return the position of the gap, in the current buffer.
-See also `gap-size'.  */)
-  (void)
-{
-  Lisp_Object temp;
-  XSETFASTINT (temp, GPT);
-  return temp;
-}
-
-DEFUN ("gap-size", Fgap_size, Sgap_size, 0, 0, 0,
-       doc: /* Return the size of the current buffer's gap.
-See also `gap-position'.  */)
-  (void)
-{
-  Lisp_Object temp;
-  XSETFASTINT (temp, GAP_SIZE);
-  return temp;
-}
-
 DEFUN ("byte-to-position", Fbyte_to_position, Sbyte_to_position, 1, 1, 0,
        doc: /* Return the character position for byte position BYTEPOS.
 If BYTEPOS is out of range, the value is nil.  */)
@@ -5211,8 +5191,6 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Spoint_min_marker);
   defsubr (&Spoint_max_marker);
-  defsubr (&Sgap_position);
-  defsubr (&Sgap_size);
   defsubr (&Sbyte_to_position);
 
   defsubr (&Sprevious_char);

@@ -53,6 +53,11 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn gap_position(self) -> ptrdiff_t {
+        unsafe { (*self.text).gpt }
+    }
+
+    #[inline]
     pub fn gap_size(&self) -> ptrdiff_t {
         unsafe { (*self.text).gap_size }
     }
