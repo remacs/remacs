@@ -1,10 +1,11 @@
 //! Module that is used for FFI exports.These calls should NOT be used in Rust directly.
+use remacs_sys::{Lisp_Object, Lisp_Window};
+
 use data;
 use keyboard;
 use lisp::LispObject;
 use lists;
 use math;
-use remacs_sys::{Lisp_Object, Lisp_Window};
 use windows;
 
 #[no_mangle]
