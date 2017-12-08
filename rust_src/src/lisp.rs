@@ -22,8 +22,7 @@ use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp,
                  Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
                  Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
-
-use remacs_sys::{internal_equal, lispsym, make_float, misc_get_ty};
+use remacs_sys::{internal_equal, lispsym, make_float, make_string, misc_get_ty};
 
 use buffers::{LispBufferRef, LispOverlayRef};
 use chartable::LispCharTableRef;
@@ -1016,6 +1015,20 @@ impl LispObject {
         } else {
             wrong_type!(Qstringp, self)
         }
+    }
+
+    #[inline]
+    pub fn from_str(s: &str) -> LispObject {
+        LispObject::from(unsafe {
+            make_string(s.as_ptr() as *const c_char, s.len() as ptrdiff_t)
+        })
+    }
+
+    #[inline]
+    pub fn to_string(self) -> String {
+        let mut s = self.as_string_or_error();
+        let slice = unsafe { slice::from_raw_parts(s.data_ptr(), s.len_bytes() as usize) };
+        String::from_utf8_lossy(slice).into_owned()
     }
 }
 

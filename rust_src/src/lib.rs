@@ -48,6 +48,7 @@ mod chartable;
 mod cmds;
 mod crypto;
 mod data;
+mod dired;
 mod dispnew;
 mod editfns;
 mod ffi;
