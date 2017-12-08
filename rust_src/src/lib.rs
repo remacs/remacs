@@ -50,6 +50,7 @@ mod crypto;
 mod data;
 mod dispnew;
 mod editfns;
+mod ffi;
 mod floatfns;
 mod fns;
 mod fonts;
