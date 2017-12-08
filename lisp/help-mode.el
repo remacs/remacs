@@ -192,20 +192,24 @@ The format is (FUNCTION ARGS...).")
 
 (define-button-type 'help-function-def
   :supertype 'help-xref
-  'help-function (lambda (fun file &optional type)
-		   (require 'find-func)
-		   (when (eq file 'C-source)
-		     (setq file
-			   (help-C-file-name (indirect-function fun) 'fun)))
-		   ;; Don't use find-function-noselect because it follows
-		   ;; aliases (which fails for built-in functions).
-		   (let ((location
-			  (find-function-search-for-symbol fun type file)))
-		     (pop-to-buffer (car location))
-			 (run-hooks 'find-function-after-hook)
-		     (if (cdr location)
-			 (goto-char (cdr location))
-		       (message "Unable to find location in file"))))
+  'help-function (lambda (fun &optional file type)
+                   (or file
+                       (setq file (find-lisp-object-file-name fun type)))
+                   (if (not file)
+                       (message "Unable to find defining file")
+                     (require 'find-func)
+                     (when (eq file 'C-source)
+                       (setq file
+                             (help-C-file-name (indirect-function fun) 'fun)))
+                     ;; Don't use find-function-noselect because it follows
+                     ;; aliases (which fails for built-in functions).
+                     (let ((location
+                            (find-function-search-for-symbol fun type file)))
+                       (pop-to-buffer (car location))
+                       (run-hooks 'find-function-after-hook)
+                       (if (cdr location)
+                           (goto-char (cdr location))
+                         (message "Unable to find location in file")))))
   'help-echo (purecopy "mouse-2, RET: find function's definition"))
 
 (define-button-type 'help-function-cmacro ; FIXME: Obsolete since 24.4.
@@ -495,12 +499,6 @@ that."
                                  (help-xref-button 8 'help-face sym)))
                            ((match-string 6)) ; nothing for `symbol'
                            ((match-string 7)
-                            ;; this used:
-                            ;; #'(lambda (arg)
-                            ;;     (let ((location
-                            ;;            (find-function-noselect arg)))
-                            ;;       (pop-to-buffer (car location))
-                            ;; 	(goto-char (cdr location))))
                             (help-xref-button 8 'help-function-def sym))
                            ((cl-some (lambda (x) (funcall (nth 1 x) sym))
                                      describe-symbol-backends)
