@@ -4623,6 +4623,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  /* Don't use sprintf here, as it might mishandle prec.  */
 		  sprintf_buf[0] = XINT (arg);
 		  sprintf_bytes = prec != 0;
+		  sprintf_buf[sprintf_bytes] = '\0';
 		}
 	      else if (conversion == 'd' || conversion == 'i')
 		{
