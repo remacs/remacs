@@ -45,7 +45,7 @@ impl LintMsg {
 }
 
 fn lint_nomangle(line: &str, modname: &str, lineno: i32) -> Result<(), LintMsg> {
-    if !line.starts_with("pub extern \"C\" ") {
+    if !(line.starts_with("pub extern \"C\" ") || line.starts_with("pub unsafe extern \"C\" ")) {
         Err(LintMsg::new(
             modname,
             lineno,
