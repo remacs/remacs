@@ -280,14 +280,11 @@ for `calendar-current-time-zone'."
                             (car t2-date-sec) t1-utc-diff))
                  (t1-time (/ (cdr t1-date-sec) 60))
                  (t2-time (/ (cdr t2-date-sec) 60)))
-            (cons
-             (/ (min t0-utc-diff t1-utc-diff) 60)
-             (cons
-              (/ (abs (- t0-utc-diff t1-utc-diff)) 60)
-              (if (< t0-utc-diff t1-utc-diff)
-                  (list t0-name t1-name t1-rules t2-rules t1-time t2-time)
-                (list t1-name t0-name t2-rules t1-rules t2-time t1-time)
-                )))))))))
+            (if (nth 7 (decode-time t1))
+                (list (/ t0-utc-diff 60) (/ (- t1-utc-diff t0-utc-diff) 60)
+                      t0-name t1-name t1-rules t2-rules t1-time t2-time)
+              (list (/ t1-utc-diff 60) (/ (- t0-utc-diff t1-utc-diff) 60)
+                    t1-name t0-name t2-rules t1-rules t2-time t1-time))))))))
 
 (defvar calendar-dst-transition-cache nil
   "Internal cal-dst variable storing date of daylight saving time transitions.
