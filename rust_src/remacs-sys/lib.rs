@@ -1257,7 +1257,11 @@ extern "C" {
     pub fn window_box_left_offset(w: *const Lisp_Window, area: glyph_row_area) -> c_int;
     pub fn window_menu_bar_p(w: *const Lisp_Window) -> bool;
     pub fn window_tool_bar_p(w: *const Lisp_Window) -> bool;
-
+    pub fn scan_newline_from_point(
+        count: ptrdiff_t,
+        charpos: *mut ptrdiff_t,
+        bytepos: *mut ptrdiff_t,
+    ) -> ptrdiff_t;
 }
 
 /// Contains C definitions from the font.h header.
