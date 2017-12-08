@@ -4722,11 +4722,19 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		  char src0 = src[0];
 		  int exponent_bytes = 0;
 		  bool signedp = src0 == '-' || src0 == '+' || src0 == ' ';
-		  unsigned char after_sign = src[signedp];
-		  if (zero_flag && 0 <= char_hexdigit (after_sign))
+		  int prefix_bytes = (signedp
+				      + ((src[signedp] == '0'
+					  && (src[signedp + 1] == 'x'
+					      || src[signedp + 1] == 'X'))
+					 ? 2 : 0));
+		  if (zero_flag)
 		    {
-		      leading_zeros += padding;
-		      padding = 0;
+		      unsigned char after_prefix = src[prefix_bytes];
+		      if (0 <= char_hexdigit (after_prefix))
+			{
+			  leading_zeros += padding;
+			  padding = 0;
+			}
 		    }
 
 		  if (excess_precision
@@ -4745,13 +4753,13 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		      nchars += padding;
 		    }
 
-		  *p = src0;
-		  src += signedp;
-		  p += signedp;
+		  memcpy (p, src, prefix_bytes);
+		  p += prefix_bytes;
+		  src += prefix_bytes;
 		  memset (p, '0', leading_zeros);
 		  p += leading_zeros;
 		  int significand_bytes
-		    = sprintf_bytes - signedp - exponent_bytes;
+		    = sprintf_bytes - prefix_bytes - exponent_bytes;
 		  memcpy (p, src, significand_bytes);
                   p += significand_bytes;
 		  src += significand_bytes;

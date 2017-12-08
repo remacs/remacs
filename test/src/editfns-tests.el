@@ -136,6 +136,12 @@
 (ert-deftest format-c-float ()
   (should-error (format "%c" 0.5)))
 
+;;; Test for Bug#29609.
+(ert-deftest format-sharp-0-x ()
+  (should (string-equal (format "%#08x" #x10) "0x000010"))
+  (should (string-equal (format "%#05X" #x10) "0X010"))
+  (should (string-equal (format "%#04x" 0) "0000")))
+
 ;;; Check format-time-string with various TZ settings.
 ;;; Use only POSIX-compatible TZ values, since the tests should work
 ;;; even if tzdb is not in use.
