@@ -683,7 +683,6 @@ file names."
     (let ((t1 (tramp-tramp-file-p filename))
 	  (t2 (tramp-tramp-file-p newname))
 	  (equal-remote (tramp-equal-remote filename newname))
-	  (file-operation (intern (format "%s-file" op)))
 	  (gvfs-operation (if (eq op 'copy) "gvfs-copy" "gvfs-move"))
 	  (msg-operation (if (eq op 'copy) "Copying" "Renaming")))
 
@@ -698,9 +697,11 @@ file names."
 
 	    ;; We cannot copy or rename directly.
 	    (let ((tmpfile (tramp-compat-make-temp-file filename)))
-	      (funcall
-	       file-operation filename tmpfile t keep-date preserve-uid-gid
-	       preserve-extended-attributes)
+	      (if (eq op 'copy)
+		  (copy-file
+		   filename tmpfile t keep-date preserve-uid-gid
+		   preserve-extended-attributes)
+		(rename-file filename tmpfile t))
 	      (rename-file tmpfile newname ok-if-already-exists))
 
 	  ;; Direct action.

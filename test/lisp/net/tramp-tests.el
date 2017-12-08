@@ -2810,7 +2810,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    ;; Symbolic links could look like a remote file name.
 	    ;; They must be quoted then.
 	    (delete-file tmp-name2)
-	    (make-symbolic-link "/penguin:motd:" tmp-name2)
+	    (make-symbolic-link
+	     (funcall
+	      (if quoted 'tramp-compat-file-name-unquote 'identity)
+	      "/penguin:motd:")
+	     tmp-name2)
 	    (should (file-symlink-p tmp-name2))
 	    (should
 	     (string-equal
@@ -4631,6 +4635,10 @@ process sentinels.  They shall not disturb each other."
 
 (ert-deftest tramp-test42-delay-load ()
   "Check that Tramp is loaded lazily, only when needed."
+  ;; The autoloaded Tramp objects are different since Emacs 26.1.  We
+  ;; cannot test older Emacsen, therefore.
+  (skip-unless (tramp--test-emacs26-p))
+
   ;; Tramp is neither loaded at Emacs startup, nor when completing a
   ;; non-Tramp file name like "/foo".  Completing a Tramp-alike file
   ;; name like "/foo:" autoloads Tramp, when `tramp-mode' is t.
@@ -4643,8 +4651,8 @@ process sentinels.  They shall not disturb each other."
 	   (message \"Tramp loaded: %%s\" (featurep 'tramp)) \
 	   (file-name-all-completions \"/foo:\" \"/\") \
 	   (message \"Tramp loaded: %%s\" (featurep 'tramp)))"))
-    ;; Tramp doesn't load when `tramp-mode' is nil since Emacs 26.1.
-    (dolist (tm (if (tramp--test-emacs26-p) '(t nil) '(nil)))
+    ;; Tramp doesn't load when `tramp-mode' is nil.
+    (dolist (tm '(t nil))
       (should
        (string-match
 	(format
@@ -4682,6 +4690,10 @@ process sentinels.  They shall not disturb each other."
 
 (ert-deftest tramp-test42-remote-load-path ()
   "Check that Tramp autoloads its packages with remote `load-path'."
+  ;; The autoloaded Tramp objects are different since Emacs 26.1.  We
+  ;; cannot test older Emacsen, therefore.
+  (skip-unless (tramp--test-emacs26-p))
+
   ;; `tramp-cleanup-all-connections' is autoloaded from tramp-cmds.el.
   ;; It shall still work, when a remote file name is in the
   ;; `load-path'.
@@ -4759,6 +4771,8 @@ Since it unloads Tramp, it shall be the last test to run."
 
 ;; * dired-compress-file
 ;; * dired-uncache
+;; * file-equal-p (partly done in `tramp-test21-file-links')
+;; * file-in-directory-p
 ;; * file-name-case-insensitive-p
 
 ;; * Work on skipped tests.  Make a comment, when it is impossible.
