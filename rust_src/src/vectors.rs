@@ -160,6 +160,7 @@ impl LispVectorRef {
         ptr::read(mem::transmute::<_, *const LispObject>(&self.contents).offset(idx))
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub fn get(&self, idx: ptrdiff_t) -> LispObject {
         assert!(0 <= idx && idx < self.len() as ptrdiff_t);

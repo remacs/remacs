@@ -1139,6 +1139,7 @@ impl LispObject {
         self == other
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub fn ne(self, other: LispObject) -> bool {
         self != other
