@@ -192,27 +192,3 @@ fn test_stringlessp() {
     assert_t!(string_lessp(string, string2));
     assert_nil!(string_lessp(string2, string));
 }
-
-#[test]
-fn clear_string_unibyte() {
-    let string = mock_unibyte_string!("Hello World");
-
-    clear_string(string);
-    assert_nil!(multibyte_string_p(string));
-    assert!(string_bytes(string) == LispObject::from_natnum(11));
-
-    let empty = vec![0; 11];
-    assert!(string.as_string_or_error().as_slice() == empty.as_slice());
-}
-
-#[test]
-fn clear_string_multibyte() {
-    let string = mock_multibyte_string!("Hello World");
-
-    clear_string(string);
-    assert_nil!(multibyte_string_p(string));
-    assert!(string_bytes(string) == LispObject::from_natnum(11));
-
-    let empty = vec![0; 11];
-    assert!(string.as_string_or_error().as_slice() == empty.as_slice());
-}
