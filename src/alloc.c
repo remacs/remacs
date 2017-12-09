@@ -33,6 +33,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "dispextern.h"
 #include "intervals.h"
+#include "ptr-bounds.h"
 #include "puresize.h"
 #include "sheap.h"
 #include "systime.h"
@@ -4564,6 +4565,7 @@ live_string_holding (struct mem_node *m, void *p)
 	 must not be on the free-list.  */
       if (0 <= offset && offset < STRING_BLOCK_SIZE * sizeof b->strings[0])
 	{
+	  cp = ptr_bounds_copy (cp, b);
 	  struct Lisp_String *s = p = cp -= offset % sizeof b->strings[0];
 	  if (s->u.s.data)
 	    return make_lisp_ptr (s, Lisp_String);
@@ -4598,6 +4600,7 @@ live_cons_holding (struct mem_node *m, void *p)
 	  && (b != cons_block
 	      || offset / sizeof b->conses[0] < cons_block_index))
 	{
+	  cp = ptr_bounds_copy (cp, b);
 	  struct Lisp_Cons *s = p = cp -= offset % sizeof b->conses[0];
 	  if (!EQ (s->u.s.car, Vdead))
 	    return make_lisp_ptr (s, Lisp_Cons);
@@ -4633,6 +4636,7 @@ live_symbol_holding (struct mem_node *m, void *p)
 	  && (b != symbol_block
 	      || offset / sizeof b->symbols[0] < symbol_block_index))
 	{
+	  cp = ptr_bounds_copy (cp, b);
 	  struct Lisp_Symbol *s = p = cp -= offset % sizeof b->symbols[0];
 	  if (!EQ (s->u.s.function, Vdead))
 	    return make_lisp_symbol (s);
@@ -4692,6 +4696,7 @@ live_misc_holding (struct mem_node *m, void *p)
 	  && (b != marker_block
 	      || offset / sizeof b->markers[0] < marker_block_index))
 	{
+	  cp = ptr_bounds_copy (cp, b);
 	  union Lisp_Misc *s = p = cp -= offset % sizeof b->markers[0];
 	  if (s->u_any.type != Lisp_Misc_Free)
 	    return make_lisp_ptr (s, Lisp_Misc);
@@ -5955,6 +5960,7 @@ garbage_collect_1 (void *end)
 	      stack_copy = xrealloc (stack_copy, stack_size);
 	      stack_copy_size = stack_size;
 	    }
+	  stack = ptr_bounds_set (stack, stack_size);
 	  no_sanitize_memcpy (stack_copy, stack, stack_size);
 	}
     }
@@ -6848,7 +6854,9 @@ sweep_conses (void)
 
               for (pos = start; pos < stop; pos++)
                 {
-                  if (!CONS_MARKED_P (&cblk->conses[pos]))
+		  struct Lisp_Cons *acons
+		    = ptr_bounds_copy (&cblk->conses[pos], cblk);
+		  if (!CONS_MARKED_P (acons))
                     {
                       this_free++;
                       cblk->conses[pos].u.s.u.chain = cons_free_list;
@@ -6858,7 +6866,7 @@ sweep_conses (void)
                   else
                     {
                       num_used++;
-                      CONS_UNMARK (&cblk->conses[pos]);
+		      CONS_UNMARK (acons);
                     }
                 }
             }
@@ -6901,17 +6909,20 @@ sweep_floats (void)
       register int i;
       int this_free = 0;
       for (i = 0; i < lim; i++)
-        if (!FLOAT_MARKED_P (&fblk->floats[i]))
-          {
-            this_free++;
-            fblk->floats[i].u.chain = float_free_list;
-            float_free_list = &fblk->floats[i];
-          }
-        else
-          {
-            num_used++;
-            FLOAT_UNMARK (&fblk->floats[i]);
-          }
+	{
+	  struct Lisp_Float *afloat = ptr_bounds_copy (&fblk->floats[i], fblk);
+	  if (!FLOAT_MARKED_P (afloat))
+	    {
+	      this_free++;
+	      fblk->floats[i].u.chain = float_free_list;
+	      float_free_list = &fblk->floats[i];
+	    }
+	  else
+	    {
+	      num_used++;
+	      FLOAT_UNMARK (afloat);
+	    }
+	}
       lim = FLOAT_BLOCK_SIZE;
       /* If this block contains only free floats and we have already
          seen more than two blocks worth of free floats then deallocate

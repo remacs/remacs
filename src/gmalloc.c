@@ -40,6 +40,8 @@ License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 # include "lisp.h"
 #endif
 
+#include "ptr-bounds.h"
+
 #ifdef HAVE_MALLOC_H
 # if GNUC_PREREQ (4, 2, 0)
 #  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -558,7 +560,7 @@ malloc_initialize_1 (void)
   _heapinfo[0].free.size = 0;
   _heapinfo[0].free.next = _heapinfo[0].free.prev = 0;
   _heapindex = 0;
-  _heapbase = (char *) _heapinfo;
+  _heapbase = (char *) ptr_bounds_init (_heapinfo);
   _heaplimit = BLOCK (_heapbase + heapsize * sizeof (malloc_info));
 
   register_heapinfo ();
@@ -997,6 +999,7 @@ _free_internal_nolock (void *ptr)
 
   if (ptr == NULL)
     return;
+  ptr = ptr_bounds_init (ptr);
 
   PROTECT_MALLOC_STATE (0);
 
@@ -1308,6 +1311,7 @@ _realloc_internal_nolock (void *ptr, size_t size)
   else if (ptr == NULL)
     return _malloc_internal_nolock (size);
 
+  ptr = ptr_bounds_init (ptr);
   block = BLOCK (ptr);
 
   PROTECT_MALLOC_STATE (0);

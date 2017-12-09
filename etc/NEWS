@@ -31,6 +31,13 @@ functions 'json-serialize', 'json-insert', 'json-parse-string', and
 'json-parse-buffer' are typically much faster than their Lisp
 counterparts from json.el.
 
+** Emacs has been ported to the -fcheck-pointer-bounds option of GCC.
+This causes Emacs to check bounds of some arrays addressed by its
+internal pointers, which can be helpful when debugging the Emacs
+interpreter or modules that it uses.  If your platform supports it you
+can enable it when configuring, e.g., './configure CFLAGS="-g3 -O2
+-mmpx -fcheck-pointer-bounds"' on Intel MPX platforms.
+
 
 * Startup Changes in Emacs 27.1
 

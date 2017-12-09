@@ -379,10 +379,18 @@ typedef EMACS_INT Lisp_Word;
     XIL ((EMACS_INT) (((EMACS_UINT) (n) << INTTYPEBITS) + Lisp_Int0))
 # define lisp_h_XFASTINT(a) XINT (a)
 # define lisp_h_XINT(a) (XLI (a) >> INTTYPEBITS)
-# define lisp_h_XSYMBOL(a) \
+# ifdef __CHKP__
+#  define lisp_h_XSYMBOL(a) \
+    (eassert (SYMBOLP (a)), \
+     (struct Lisp_Symbol *) ((char *) XUNTAG (a, Lisp_Symbol) \
+			     + (intptr_t) lispsym))
+# else
+   /* If !__CHKP__ this is equivalent, and is a bit faster as of GCC 7.  */
+#  define lisp_h_XSYMBOL(a) \
     (eassert (SYMBOLP (a)), \
      (struct Lisp_Symbol *) ((intptr_t) XLI (a) - Lisp_Symbol \
 			     + (char *) lispsym))
+# endif
 # define lisp_h_XTYPE(a) ((enum Lisp_Type) (XLI (a) & ~VALMASK))
 # define lisp_h_XUNTAG(a, type) \
     __builtin_assume_aligned ((char *) XLP (a) - (type), GCALIGNMENT)
@@ -826,10 +834,15 @@ typedef EMACS_UINT Lisp_Word_tag;
 
 /* Declare extern constants for Lisp symbols.  These can be helpful
    when using a debugger like GDB, on older platforms where the debug
-   format does not represent C macros.  */
-#define DEFINE_LISP_SYMBOL(name) \
-  DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name) \
-  DEFINE_GDB_SYMBOL_END (LISPSYM_INITIALLY (name))
+   format does not represent C macros.  However, they are unbounded
+   and would just be asking for trouble if checking pointer bounds.  */
+#ifdef __CHKP__
+# define DEFINE_LISP_SYMBOL(name)
+#else
+# define DEFINE_LISP_SYMBOL(name) \
+   DEFINE_GDB_SYMBOL_BEGIN (Lisp_Object, name) \
+   DEFINE_GDB_SYMBOL_END (LISPSYM_INITIALLY (name))
+#endif
 
 /* The index of the C-defined Lisp symbol SYM.
    This can be used in a static initializer.  */
@@ -889,6 +902,8 @@ INLINE struct Lisp_Symbol *
 {
 #if USE_LSB_TAG
   return lisp_h_XSYMBOL (a);
+#elif defined __CHKP__
+# error "pointer-checking not supported with wide integers"
 #else
   eassert (SYMBOLP (a));
   intptr_t i = (intptr_t) XUNTAG (a, Lisp_Symbol);
@@ -900,8 +915,13 @@ INLINE struct Lisp_Symbol *
 INLINE Lisp_Object
 make_lisp_symbol (struct Lisp_Symbol *sym)
 {
-  intptr_t symoffset = (char *) sym - (char *) lispsym;
-  Lisp_Object a = TAG_PTR (Lisp_Symbol, (char *) symoffset);
+#ifdef __CHKP__
+  char *symoffset = (char *) sym - (intptr_t) lispsym;
+#else
+  /* If !__CHKP__ this is equivalent, and is a bit faster as of GCC 7.  */
+  char *symoffset = (char *) ((char *) sym - (char *) lispsym);
+#endif
+  Lisp_Object a = TAG_PTR (Lisp_Symbol, symoffset);
   eassert (XSYMBOL (a) == sym);
   return a;
 }
