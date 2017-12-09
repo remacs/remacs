@@ -111,16 +111,6 @@ impl LispStringRef {
         unsafe { *self.const_data_ptr().offset(index) }
     }
 
-    /// (Somewhat) Replaces STRING_SET_UNIBYTE in C. That macro has the behavior that
-    /// if your string has size 0, it will replace your string variable with
-    /// 'empty_unibyte_string'. This function does not have that side-effect.
-    #[inline]
-    pub fn set_unibyte(mut self) {
-        if self.size != 0 {
-            self.size_byte = -1;
-        }
-    }
-
     /// This function does not allocate. It will not change the size of the data allocation.
     /// It will only set the 'size' variable of the string, if it is safe to do so.
     /// Replaces STRING_SET_CHARS from C.

@@ -143,13 +143,13 @@ pub fn multibyte_string_p(object: LispObject) -> LispObject {
 /// Clear the contents of STRING.
 /// This makes STRING unibyte and may change its length.
 #[lisp_fn]
-pub fn clear_string(string: LispObject) -> LispObject {
+pub fn clear_string(mut string: LispObject) -> LispObject {
     let lisp_string = string.as_string_or_error();
     lisp_string.clear_data();
     unsafe {
         lisp_string.set_num_chars(lisp_string.len_bytes());
     }
-    lisp_string.set_unibyte();
+    LispObject::set_string_unibyte(&mut string);
 
     LispObject::constant_nil()
 }
