@@ -125,6 +125,12 @@ To restore the old behavior, use
 
 * New Modes and Packages in Emacs 27.1
 
++++
+** The package tramp-archive.el brings file name handler support for
+file archives.  It works on systems which support GVFS, which is
+GNU/Linux, roughly spoken.  See the chapter "(tramp) Archive file
+names" in the Tramp manual for full documentation of these facilities.
+
 
 * Incompatible Lisp Changes in Emacs 27.1
 

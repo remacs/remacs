@@ -54,10 +54,12 @@
 ;; device, if it hasn't been done already.  There might be also some
 ;; few seconds delay in discovering available bluetooth devices.
 
-;; Other possible connection methods are "ftp" and "smb".  When one of
-;; these methods is added to the list, the remote access for that
-;; method is performed via GVFS instead of the native Tramp
-;; implementation.
+;; Other possible connection methods are "ftp", "http", "https" and
+;; "smb".  When one of these methods is added to the list, the remote
+;; access for that method is performed via GVFS instead of the native
+;; Tramp implementation.  However, this is not recommended.  These
+;; methods are listed here for the benefit of file archives, see
+;; tramp-archive.el.
 
 ;; GVFS offers even more connection methods.  The complete list of
 ;; connection methods of the actual GVFS implementation can be
@@ -119,6 +121,8 @@
 			 (const "davs")
 			 (const "ftp")
 			 (const "gdrive")
+			 (const "http")
+			 (const "https")
 			 (const "obex")
 			 (const "sftp")
 			 (const "smb")
@@ -424,6 +428,7 @@ Every entry is a list (NAME ADDRESS).")
     ("gvfs-ls" . "list")
     ("gvfs-mkdir" . "mkdir")
     ("gvfs-monitor-file" . "monitor")
+    ("gvfs-mount" . "mount")
     ("gvfs-move" . "move")
     ("gvfs-rm" . "remove")
     ("gvfs-trash" . "trash"))
@@ -1455,6 +1460,8 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 		    (cadr (assoc "port" (cadr mount-spec)))))
 	     (ssl (tramp-gvfs-dbus-byte-array-to-string
 		   (cadr (assoc "ssl" (cadr mount-spec)))))
+	     (uri (tramp-gvfs-dbus-byte-array-to-string
+		   (cadr (assoc "uri" (cadr mount-spec)))))
 	     (prefix (concat
 		      (tramp-gvfs-dbus-byte-array-to-string
 		       (car mount-spec))
@@ -1469,6 +1476,12 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	  (setq method "davs"))
 	(when (string-equal "google-drive" method)
 	  (setq method "gdrive"))
+	(when (and (string-equal "http" method) (stringp uri))
+	  (setq uri (url-generic-parse-url uri)
+		method (url-type uri)
+		user (url-user uri)
+		host (url-host uri)
+		port (url-portspec uri)))
 	(with-parsed-tramp-file-name
 	    (tramp-make-tramp-file-name method user domain host port "") nil
 	  (tramp-message
@@ -1537,6 +1550,8 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 		     (cadr (assoc "port" (cadr mount-spec)))))
 	      (ssl (tramp-gvfs-dbus-byte-array-to-string
 		    (cadr (assoc "ssl" (cadr mount-spec)))))
+	      (uri (tramp-gvfs-dbus-byte-array-to-string
+		    (cadr (assoc "uri" (cadr mount-spec)))))
 	      (prefix (concat
 		       (tramp-gvfs-dbus-byte-array-to-string
 			(car mount-spec))
@@ -1554,6 +1569,12 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	   (setq method "gdrive"))
 	 (when (and (string-equal "synce" method) (zerop (length user)))
 	   (setq user (or (tramp-file-name-user vec) "")))
+	 (when (and (string-equal "http" method) (stringp uri))
+	   (setq uri (url-generic-parse-url uri)
+		 method (url-type uri)
+		 user (url-user uri)
+		 host (url-host uri)
+		 port (url-portspec uri)))
 	 (when (and
 		(string-equal method (tramp-file-name-method vec))
 		(string-equal user (tramp-file-name-user vec))
@@ -1569,6 +1590,16 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	   (tramp-set-connection-property
 	    vec "default-location" default-location)
 	   (throw 'mounted t)))))))
+
+(defun tramp-gvfs-unmount (vec)
+  "Unmount the object identified by VEC."
+  (let ((vec (copy-tramp-file-name vec)))
+    (setf (tramp-file-name-localname vec) "/"
+	  (tramp-file-name-hop vec) nil)
+    (when (tramp-gvfs-connection-mounted-p vec)
+      (tramp-gvfs-send-command
+       vec "gvfs-mount" "-u"
+       (tramp-gvfs-url-file-name (tramp-make-tramp-file-name vec))))))
 
 (defun tramp-gvfs-mount-spec-entry (key value)
   "Construct a mount-spec entry to be used in a mount_spec.
@@ -1611,7 +1642,14 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
                ((string-equal "gdrive" method)
                 (list (tramp-gvfs-mount-spec-entry "type" "google-drive")
                       (tramp-gvfs-mount-spec-entry "host" host)))
-               (t
+               ((string-match "\\`http" method)
+                (list (tramp-gvfs-mount-spec-entry "type" "http")
+                      (tramp-gvfs-mount-spec-entry
+		       "uri"
+		       (url-recreate-url
+			(url-parse-make-urlobj
+			 method user nil host port "/" nil nil t)))))
+	       (t
                 (list (tramp-gvfs-mount-spec-entry "type" method)
                       (tramp-gvfs-mount-spec-entry "host" host))))
             ,@(when user
@@ -2032,6 +2070,8 @@ They are retrieved from the hal daemon."
 (provide 'tramp-gvfs)
 
 ;;; TODO:
+
+;; * (Customizable) unmount when exiting Emacs.  See tramp-archive.el.
 
 ;; * Host name completion for existing mount points (afp-server,
 ;;   smb-server) or via smb-network.

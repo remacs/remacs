@@ -384,6 +384,8 @@ used to cache connection properties of the local machine."
 	(maphash
 	 (lambda (key value)
 	   (if (and (tramp-file-name-p key) value
+		    (not (string-equal
+			  (tramp-file-name-method key) tramp-archive-method))
 		    (not (tramp-file-name-localname key))
 		    (not (gethash "login-as" value))
 		    (not (gethash "started" value)))

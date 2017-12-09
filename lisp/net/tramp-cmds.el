@@ -143,6 +143,9 @@ This includes password cache, file cache, connection cache, buffers."
   ;; Flush file and connection cache.
   (clrhash tramp-cache-data)
 
+  ;; Cleanup local copies of archives.
+  (tramp-archive-cleanup-hash)
+
   ;; Remove buffers.
   (dolist (name (tramp-list-tramp-buffers))
     (when (bufferp (get-buffer name)) (kill-buffer name))))

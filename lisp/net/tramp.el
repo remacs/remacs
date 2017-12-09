@@ -2064,6 +2064,7 @@ pass to the OPERATION."
 	  `(tramp-file-name-handler
 	    tramp-vc-file-name-handler
 	    tramp-completion-file-name-handler
+	    tramp-archive-file-name-handler
 	    cygwin-mount-name-hook-function
 	    cygwin-mount-map-drive-hook-function
 	    .
@@ -2369,12 +2370,14 @@ remote file names."
   ;; loading of Tramp.
   (dolist (fnh '(tramp-file-name-handler
 		 tramp-completion-file-name-handler
+		 tramp-archive-file-name-handler
 		 tramp-autoload-file-name-handler))
     (let ((a1 (rassq fnh file-name-handler-alist)))
       (setq file-name-handler-alist (delq a1 file-name-handler-alist))))
 
   ;; Add the handlers.  We do not add anything to the `operations'
-  ;; property of `tramp-file-name-handler', this shall be done by the
+  ;; property of `tramp-file-name-handler' and
+  ;; `tramp-archive-file-name-handler', this shall be done by the
   ;; respective foreign handlers.
   (add-to-list 'file-name-handler-alist
 	       (cons tramp-file-name-regexp 'tramp-file-name-handler))
@@ -2387,6 +2390,11 @@ remote file names."
   ;; Mark `operations' the handler is responsible for.
   (put 'tramp-completion-file-name-handler 'operations
        (mapcar 'car tramp-completion-file-name-handler-alist))
+
+  (add-to-list 'file-name-handler-alist
+	       (cons tramp-archive-file-name-regexp
+		     'tramp-archive-file-name-handler))
+  (put 'tramp-archive-file-name-handler 'safe-magic t)
 
   ;; If jka-compr or epa-file are already loaded, move them to the
   ;; front of `file-name-handler-alist'.
@@ -2441,6 +2449,7 @@ Add operations defined in `HANDLER-alist' to `tramp-file-name-handler'."
   "Unload Tramp file name handlers from `file-name-handler-alist'."
   (dolist (fnh '(tramp-file-name-handler
 		 tramp-completion-file-name-handler
+		 tramp-archive-file-name-handler
 		 tramp-autoload-file-name-handler))
     (let ((a1 (rassq fnh file-name-handler-alist)))
       (setq file-name-handler-alist (delq a1 file-name-handler-alist))))))
@@ -3100,10 +3109,6 @@ User is always nil."
 (defun tramp-handle-file-name-completion
   (filename directory &optional predicate)
   "Like `file-name-completion' for Tramp files."
-  (unless (tramp-tramp-file-p directory)
-    (error
-     "tramp-handle-file-name-completion invoked on non-tramp directory `%s'"
-     directory))
   (let (hits-ignored-extensions)
     (or
      (try-completion
