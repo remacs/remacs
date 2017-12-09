@@ -98,10 +98,7 @@ matching entries of `tramp-connection-properties'."
 	  (dolist (elt tramp-connection-properties)
 	    (when (string-match
 		   (or (nth 0 elt) "")
-		   (tramp-make-tramp-file-name
-		    (tramp-file-name-method key) (tramp-file-name-user key)
-		    (tramp-file-name-domain key) (tramp-file-name-host key)
-		    (tramp-file-name-port key) nil))
+		   (tramp-make-tramp-file-name key 'noloc 'nohop))
 	      (tramp-set-connection-property key (nth 1 elt) (nth 2 elt)))))
 	hash)))
 

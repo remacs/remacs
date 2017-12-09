@@ -2362,15 +2362,6 @@ The method used must be an out-of-band method."
 		     (expand-file-name ".." tmpfile) 'recursive)
 		  (delete-file tmpfile)))))
 
-	;; Set variables for computing the prompt for reading password.
-	(setq tramp-current-method (tramp-file-name-method v)
-	      tramp-current-user (or (tramp-file-name-user v)
-				     (tramp-get-connection-property
-				      v "login-as" nil))
-	      tramp-current-domain (tramp-file-name-domain v)
-	      tramp-current-host (tramp-file-name-host v)
-	      tramp-current-port (tramp-file-name-port v))
-
 	;; Check which ones of source and target are Tramp files.
 	(setq source (funcall
 		      (if (and (file-directory-p filename)
@@ -2866,13 +2857,7 @@ the result will be a local, non-Tramp, file name."
 	   ;; We discard hops, if existing, that's why we cannot use
 	   ;; `file-remote-p'.
 	   (prompt (format "PS1=%s %s"
-			   (tramp-make-tramp-file-name
-			    (tramp-file-name-method v)
-			    (tramp-file-name-user v)
-			    (tramp-file-name-domain v)
-			    (tramp-file-name-host v)
-			    (tramp-file-name-port v)
-			    (tramp-file-name-localname v))
+			   (tramp-make-tramp-file-name v nil 'nohop)
 			   tramp-initial-end-of-output))
 	   ;; We use as environment the difference to toplevel
 	   ;; `process-environment'.
@@ -4755,8 +4740,7 @@ connection if a previous connection has died for some reason."
 		(set-process-sentinel p 'tramp-process-sentinel)
 		(process-put p 'adjust-window-size-function 'ignore)
 		(set-process-query-on-exit-flag p nil)
-		(setq tramp-current-connection (cons vec (current-time))
-		      tramp-current-host (system-name))
+		(setq tramp-current-connection (cons vec (current-time)))
 
 		(tramp-message
 		 vec 6 "%s" (mapconcat 'identity (process-command p) " "))
@@ -4810,16 +4794,15 @@ connection if a previous connection has died for some reason."
 
 		    ;; Check, whether there is a restricted shell.
 		    (dolist (elt tramp-restricted-shell-hosts-alist)
-		      (when (string-match elt tramp-current-host)
+		      (when (string-match elt l-host)
 			(setq r-shell t)))
 
-		    ;; Set variables for computing the prompt for
-		    ;; reading password.
-		    (setq tramp-current-method l-method
-			  tramp-current-user   l-user
-			  tramp-current-domain l-domain
-			  tramp-current-host   l-host
-			  tramp-current-port   l-port)
+		    ;; Set password prompt vector.
+		    (tramp-set-connection-property
+		     p "password-vector"
+		     (make-tramp-file-name
+		      :method l-method :user l-user :domain l-domain
+		      :host l-host :port l-port))
 
 		    ;; Add login environment.
 		    (when login-env
@@ -5244,14 +5227,7 @@ Nonexistent directories are removed from spec."
 	(lambda (x)
 	  (and
 	   (stringp x)
-	   (file-directory-p
-	    (tramp-make-tramp-file-name
-	     (tramp-file-name-method vec)
-	     (tramp-file-name-user vec)
-	     (tramp-file-name-domain vec)
-	     (tramp-file-name-host vec)
-	     (tramp-file-name-port vec)
-	     x))
+	   (file-directory-p (tramp-make-tramp-file-name vec x))
 	   x))
 	remote-path)))))
 

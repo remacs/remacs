@@ -429,6 +429,7 @@ Every entry is a list (NAME ADDRESS).")
     ("gvfs-trash" . "trash"))
   "List of cons cells, mapping \"gvfs-<command>\" to \"gio <command>\".")
 
+;; <http://www.pygtk.org/docs/pygobject/gio-constants.html>
 (defconst tramp-gvfs-file-attributes
   '("name"
     "type"
@@ -495,7 +496,7 @@ Every entry is a list (NAME ADDRESS).")
     (file-accessible-directory-p . tramp-handle-file-accessible-directory-p)
     (file-acl . ignore)
     (file-attributes . tramp-gvfs-handle-file-attributes)
-    (file-directory-p . tramp-gvfs-handle-file-directory-p)
+    (file-directory-p . tramp-handle-file-directory-p)
     (file-equal-p . tramp-handle-file-equal-p)
     (file-executable-p . tramp-gvfs-handle-file-executable-p)
     (file-exists-p . tramp-handle-file-exists-p)
@@ -642,7 +643,7 @@ is no information where to trace the message.")
 (defun tramp-gvfs-dbus-event-error (event err)
   "Called when a D-Bus error message arrives, see `dbus-event-error-functions'."
   (when tramp-gvfs-dbus-event-vector
-    (tramp-message tramp-gvfs-dbus-event-vector 10 "%S" event)
+    (tramp-message tramp-gvfs-dbus-event-vector 6 "%S" event)
     (tramp-error tramp-gvfs-dbus-event-vector 'file-error "%s" (cadr err))))
 
 ;; `dbus-event-error-hooks' has been renamed to
@@ -675,6 +676,7 @@ file names."
   (unless (memq op '(copy rename))
     (error "Unknown operation `%s', must be `copy' or `rename'" op))
 
+  (setq filename (file-truename filename))
   (if (file-directory-p filename)
       (progn
 	(copy-directory filename newname keep-date t)
@@ -1043,11 +1045,6 @@ If FILE-SYSTEM is non-nil, return file system attributes."
 	 res-device
 	 )))))
 
-(defun tramp-gvfs-handle-file-directory-p (filename)
-  "Like `file-directory-p' for Tramp files."
-  (eq t (tramp-compat-file-attribute-type
-	 (file-attributes (file-truename filename)))))
-
 (defun tramp-gvfs-handle-file-executable-p (filename)
   "Like `file-executable-p' for Tramp files."
   (with-parsed-tramp-file-name filename nil
@@ -1363,13 +1360,7 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	  (unless (tramp-get-connection-property l "first-password-request" nil)
 	    (tramp-clear-passwd l))
 
-	  ;; Set variables for computing the prompt for reading password.
-	  (setq tramp-current-method l-method
-		tramp-current-user user
-		tramp-current-domain l-domain
-		tramp-current-host l-host
-		tramp-current-port l-port
-		password (tramp-read-passwd
+	  (setq password (tramp-read-passwd
 			  (tramp-get-connection-process l) pw-prompt))
 
 	  ;; Return result.

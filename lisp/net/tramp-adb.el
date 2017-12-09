@@ -114,7 +114,7 @@ It is used for TCP/IP devices."
     (file-accessible-directory-p . tramp-handle-file-accessible-directory-p)
     (file-acl . ignore)
     (file-attributes . tramp-adb-handle-file-attributes)
-    (file-directory-p . tramp-adb-handle-file-directory-p)
+    (file-directory-p . tramp-handle-file-directory-p)
     (file-equal-p . tramp-handle-file-equal-p)
     ;; FIXME: This is too sloppy.
     (file-executable-p . tramp-handle-file-exists-p)
@@ -199,11 +199,13 @@ pass to the OPERATION."
     (with-temp-buffer
       ;; `call-process' does not react on timer under MS Windows.
       ;; That's why we use `start-process'.
+      ;; We don't know yet whether we need a user or host name for the
+      ;; connection vector.  We assume we don't, it will be OK in most
+      ;; of the cases.  Otherwise, there might be an additional trace
+      ;; buffer, which doesn't hurt.
       (let ((p (start-process
 		tramp-adb-program (current-buffer) tramp-adb-program "devices"))
-	    (v (make-tramp-file-name
-		:method tramp-adb-method :user tramp-current-user
-		:host tramp-current-host))
+	    (v (make-tramp-file-name :method tramp-adb-method))
 	    result)
 	(tramp-message v 6 "%s" (mapconcat 'identity (process-command p) " "))
 	(process-put p 'adjust-window-size-function 'ignore)
@@ -245,16 +247,8 @@ pass to the OPERATION."
       ;; be problems with UNC shares or Cygwin mounts.
       (let ((default-directory (tramp-compat-temporary-file-directory)))
 	(tramp-make-tramp-file-name
-	 method user domain host port
-	 (tramp-drop-volume-letter
-	  (tramp-run-real-handler
-	   'expand-file-name (list localname))))))))
-
-(defun tramp-adb-handle-file-directory-p (filename)
-  "Like `file-directory-p' for Tramp files."
-  (eq (tramp-compat-file-attribute-type
-       (file-attributes (file-truename filename)))
-      t))
+	 v (tramp-drop-volume-letter
+	    (tramp-run-real-handler 'expand-file-name (list localname))))))))
 
 (defun tramp-adb-handle-file-system-info (filename)
   "Like `file-system-info' for Tramp files."
@@ -288,7 +282,7 @@ pass to the OPERATION."
    "%s%s"
    (with-parsed-tramp-file-name (expand-file-name filename) nil
      (tramp-make-tramp-file-name
-      method user domain host port
+      v
       (with-tramp-file-property v localname "file-truename"
 	(let ((result nil))			; result steps in reverse order
 	  (tramp-message v 4 "Finding true name for `%s'" filename)
@@ -316,12 +310,10 @@ pass to the OPERATION."
 		    (tramp-compat-file-attribute-type
 		     (file-attributes
 		      (tramp-make-tramp-file-name
-		       method user domain host port
-		       (mapconcat 'identity
-				  (append '("")
-					  (reverse result)
-					  (list thisstep))
-				  "/")))))
+		       v (mapconcat 'identity
+				    (append
+				     '("") (reverse result) (list thisstep))
+				    "/")))))
 	      (cond ((string= "." thisstep)
 		     (tramp-message v 5 "Ignoring step `.'"))
 		    ((string= ".." thisstep)
@@ -861,8 +853,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (setq input (with-parsed-tramp-file-name infile nil localname))
 	  ;; INFILE must be copied to remote host.
 	  (setq input (tramp-make-tramp-temp-file v)
-		tmpinput (tramp-make-tramp-file-name
-			  method user domain host port input))
+		tmpinput (tramp-make-tramp-file-name v input))
 	  (copy-file infile tmpinput t)))
       (when input (setq command (format "%s <%s" command input)))
 
@@ -895,8 +886,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    ;; stderr must be copied to remote host.  The temporary
 	    ;; file must be deleted after execution.
 	    (setq stderr (tramp-make-tramp-temp-file v)
-		  tmpstderr (tramp-make-tramp-file-name
-			     method user domain host port stderr))))
+		  tmpstderr (tramp-make-tramp-file-name v stderr))))
 	 ;; stderr to be discarded.
 	 ((null (cadr destination))
 	  (setq stderr "/dev/null"))))
@@ -1251,10 +1241,6 @@ connection if a previous connection has died for some reason."
 	 (host (tramp-file-name-host vec))
 	 (user (tramp-file-name-user vec))
          (device (tramp-adb-get-device vec)))
-
-    ;; Set variables for proper tracing in `tramp-adb-parse-device-names'.
-    (setq tramp-current-user   (tramp-file-name-user vec)
-	  tramp-current-host   (tramp-file-name-host vec))
 
     ;; Maybe we know already that "su" is not supported.  We cannot
     ;; use a connection property, because we have not checked yet

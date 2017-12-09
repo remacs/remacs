@@ -2877,9 +2877,15 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	  (tramp--test-ignore-make-symbolic-link-error
 	    (make-symbolic-link tmp-name2 tmp-name1)
 	    (should (file-symlink-p tmp-name1))
-	    (make-symbolic-link tmp-name1 tmp-name2)
-	    (should (file-symlink-p tmp-name2))
-	    (should-error (file-truename tmp-name1) :type 'file-error))
+	    (if (tramp-smb-file-name-p tramp-test-temporary-file-directory)
+		;; The symlink command of `smbclient' detects the
+		;; cycle already.
+		(should-error
+		 (make-symbolic-link tmp-name1 tmp-name2)
+		 :type 'file-error)
+	      (make-symbolic-link tmp-name1 tmp-name2)
+	      (should (file-symlink-p tmp-name2))
+	      (should-error (file-truename tmp-name1) :type 'file-error)))
 
 	;; Cleanup.
 	(ignore-errors
