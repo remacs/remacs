@@ -949,6 +949,16 @@ bset_display_count (struct buffer *b, Lisp_Object val)
   b->display_count_ = val;
 }
 INLINE void
+bset_left_margin_cols (struct buffer *b, Lisp_Object val)
+{
+  b->left_margin_cols_ = val;
+}
+INLINE void
+bset_right_margin_cols (struct buffer *b, Lisp_Object val)
+{
+  b->right_margin_cols_ = val;
+}
+INLINE void
 bset_display_time (struct buffer *b, Lisp_Object val)
 {
   b->display_time_ = val;
