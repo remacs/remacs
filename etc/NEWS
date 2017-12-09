@@ -126,9 +126,9 @@ To restore the old behavior, use
 * New Modes and Packages in Emacs 27.1
 
 +++
-** The package tramp-archive.el brings file name handler support for
-file archives.  It works on systems which support GVFS, which is
-GNU/Linux, roughly spoken.  See the chapter "(tramp) Archive file
+** Emacs can now visit files in archives as if they were directories.
+This feature uses Tramp and works only on systems which support GVFS,
+i.e. GNU/Linux, roughly spoken.  See the chapter "(tramp) Archive file
 names" in the Tramp manual for full documentation of these facilities.
 
 
