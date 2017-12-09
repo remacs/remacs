@@ -1514,7 +1514,7 @@
 ;; `ad-return-value' in a piece of after advice. For example:
 ;;
 ;; (defmacro foom (x)
-;;   (` (list (, x))))
+;;   `(list ,x))
 ;; foom
 ;;
 ;; (foom '(a))
@@ -1547,8 +1547,8 @@
 ;; (defadvice foom (after fg-print-x act)
 ;;   "Print the value of X."
 ;;   (setq ad-return-value
-;;         (` (progn (print (, x))
-;;                   (, ad-return-value)))))
+;;         `(progn (print ,x)
+;;                 ,ad-return-value)))
 ;; foom
 ;;
 ;; (macroexpand '(foom '(a)))
