@@ -1727,7 +1727,8 @@ static EMACS_INT total_string_bytes;
    a pointer to the `u.data' member of its sdata structure; the
    structure starts at a constant offset in front of that.  */
 
-#define SDATA_OF_STRING(S) ((sdata *) ((S)->u.s.data - SDATA_DATA_OFFSET))
+#define SDATA_OF_STRING(S) ptr_bounds_init ((sdata *) ((S)->u.s.data \
+						       - SDATA_DATA_OFFSET))
 
 
 #ifdef GC_CHECK_STRING_OVERRUN
@@ -1919,7 +1920,7 @@ allocate_string (void)
 	  /* Every string on a free list should have NULL data pointer.  */
 	  s->u.s.data = NULL;
 	  NEXT_FREE_LISP_STRING (s) = string_free_list;
-	  string_free_list = s;
+	  string_free_list = ptr_bounds_clip (s, sizeof *s);
 	}
 
       total_free_strings += STRING_BLOCK_SIZE;
@@ -2034,7 +2035,7 @@ allocate_string_data (struct Lisp_String *s,
 
   MALLOC_UNBLOCK_INPUT;
 
-  s->u.s.data = SDATA_DATA (data);
+  s->u.s.data = ptr_bounds_clip (SDATA_DATA (data), nbytes + 1);
 #ifdef GC_CHECK_STRING_BYTES
   SDATA_NBYTES (data) = nbytes;
 #endif
@@ -2120,7 +2121,7 @@ sweep_strings (void)
 
 		  /* Put the string on the free-list.  */
 		  NEXT_FREE_LISP_STRING (s) = string_free_list;
-		  string_free_list = s;
+		  string_free_list = ptr_bounds_clip (s, sizeof *s);
 		  ++nfree;
 		}
 	    }
@@ -2128,7 +2129,7 @@ sweep_strings (void)
 	    {
 	      /* S was on the free-list before.  Put it there again.  */
 	      NEXT_FREE_LISP_STRING (s) = string_free_list;
-	      string_free_list = s;
+	      string_free_list = ptr_bounds_clip (s, sizeof *s);
 	      ++nfree;
 	    }
 	}
@@ -2224,9 +2225,9 @@ compact_small_strings (void)
 	      nbytes = s ? STRING_BYTES (s) : SDATA_NBYTES (from);
 	      eassert (nbytes <= LARGE_STRING_BYTES);
 
-	      nbytes = SDATA_SIZE (nbytes);
+	      ptrdiff_t size = SDATA_SIZE (nbytes);
 	      sdata *from_end = (sdata *) ((char *) from
-					   + nbytes + GC_STRING_EXTRA);
+					   + size + GC_STRING_EXTRA);
 
 #ifdef GC_CHECK_STRING_OVERRUN
 	      if (memcmp (string_overrun_cookie,
@@ -2240,22 +2241,23 @@ compact_small_strings (void)
 		{
 		  /* If TB is full, proceed with the next sblock.  */
 		  sdata *to_end = (sdata *) ((char *) to
-					     + nbytes + GC_STRING_EXTRA);
+					     + size + GC_STRING_EXTRA);
 		  if (to_end > tb_end)
 		    {
 		      tb->next_free = to;
 		      tb = tb->next;
 		      tb_end = (sdata *) ((char *) tb + SBLOCK_SIZE);
 		      to = tb->data;
-		      to_end = (sdata *) ((char *) to + nbytes + GC_STRING_EXTRA);
+		      to_end = (sdata *) ((char *) to + size + GC_STRING_EXTRA);
 		    }
 
 		  /* Copy, and update the string's `data' pointer.  */
 		  if (from != to)
 		    {
 		      eassert (tb != b || to < from);
-		      memmove (to, from, nbytes + GC_STRING_EXTRA);
-		      to->string->u.s.data = SDATA_DATA (to);
+		      memmove (to, from, size + GC_STRING_EXTRA);
+		      to->string->u.s.data
+			= ptr_bounds_clip (SDATA_DATA (to), nbytes + 1);
 		    }
 
 		  /* Advance past the sdata we copied to.  */
@@ -3038,6 +3040,7 @@ static EMACS_INT total_vector_slots, total_free_vector_slots;
 static void
 setup_on_free_list (struct Lisp_Vector *v, ptrdiff_t nbytes)
 {
+  v = ptr_bounds_clip (v, nbytes);
   eassume (header_size <= nbytes);
   ptrdiff_t nwords = (nbytes - header_size) / word_size;
   XSETPVECTYPESIZE (v, PVEC_FREE, 0, nwords);
@@ -3347,7 +3350,7 @@ allocate_vectorlike (ptrdiff_t len)
 
       MALLOC_UNBLOCK_INPUT;
 
-      return p;
+      return ptr_bounds_clip (p, nbytes);
     }
 }
 
@@ -5358,7 +5361,7 @@ pure_alloc (size_t size, int type)
   pure_bytes_used = pure_bytes_used_lisp + pure_bytes_used_non_lisp;
 
   if (pure_bytes_used <= pure_size)
-    return result;
+    return ptr_bounds_clip (result, size);
 
   /* Don't allocate a large amount here,
      because it might get mmap'd and then its address
@@ -5443,7 +5446,7 @@ find_string_data_in_pure (const char *data, ptrdiff_t nbytes)
       /* Check the remaining characters.  */
       if (memcmp (data, non_lisp_beg + start, nbytes) == 0)
 	/* Found.  */
-	return non_lisp_beg + start;
+	return ptr_bounds_clip (non_lisp_beg + start, nbytes + 1);
 
       start += last_char_skip;
     }

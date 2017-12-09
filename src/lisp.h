@@ -916,9 +916,14 @@ INLINE Lisp_Object
 make_lisp_symbol (struct Lisp_Symbol *sym)
 {
 #ifdef __CHKP__
-  char *symoffset = (char *) sym - (intptr_t) lispsym;
+  /* Although this should use '__builtin___bnd_narrow_ptr_bounds (sym,
+     sym, sizeof *sym)', that would run afoul of GCC bug 83251
+     <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83251>.  */
+  char *addr = __builtin___bnd_set_ptr_bounds (sym, sizeof *sym);
+  char *symoffset = addr - (intptr_t) lispsym;
 #else
-  /* If !__CHKP__ this is equivalent, and is a bit faster as of GCC 7.  */
+  /* If !__CHKP__, GCC 7 x86-64 generates faster code if lispsym is
+     cast to char * rather than to intptr_t.  */
   char *symoffset = (char *) ((char *) sym - (char *) lispsym);
 #endif
   Lisp_Object a = TAG_PTR (Lisp_Symbol, symoffset);

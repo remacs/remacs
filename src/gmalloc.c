@@ -203,7 +203,8 @@ extern size_t _bytes_free;
 
 /* Internal versions of `malloc', `realloc', and `free'
    used when these functions need to call each other.
-   They are the same but don't call the hooks.  */
+   They are the same but don't call the hooks
+   and don't bound the resulting pointers.  */
 extern void *_malloc_internal (size_t);
 extern void *_realloc_internal (void *, size_t);
 extern void _free_internal (void *);
@@ -921,7 +922,8 @@ malloc (size_t size)
      among multiple threads.  We just leave it for compatibility with
      glibc malloc (i.e., assignments to gmalloc_hook) for now.  */
   hook = gmalloc_hook;
-  return (hook != NULL ? *hook : _malloc_internal) (size);
+  void *result = (hook ? hook : _malloc_internal) (size);
+  return ptr_bounds_clip (result, size);
 }
 
 #if !(defined (_LIBC) || defined (HYBRID_MALLOC))
@@ -1434,7 +1436,8 @@ realloc (void *ptr, size_t size)
     return NULL;
 
   hook = grealloc_hook;
-  return (hook != NULL ? *hook : _realloc_internal) (ptr, size);
+  void *result = (hook ? hook : _realloc_internal) (ptr, size);
+  return ptr_bounds_clip (result, size);
 }
 /* Copyright (C) 1991, 1992, 1994 Free Software Foundation, Inc.
 
@@ -1608,6 +1611,7 @@ aligned_alloc (size_t alignment, size_t size)
 	{
 	  l->exact = result;
 	  result = l->aligned = (char *) result + adj;
+	  result = ptr_bounds_clip (result, size);
 	}
       UNLOCK_ALIGNED_BLOCKS ();
       if (l == NULL)

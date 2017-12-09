@@ -17,6 +17,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
+/* Pointer bounds checking is a no-op unless running on hardware
+   supporting Intel MPX (Intel Skylake or better).  Also, it requires
+   GCC 5 and Linux kernel 3.19, or later.  Configure with
+   CFLAGS='-fcheck-pointer-bounds -mmpx', perhaps with
+   -fchkp-first-field-has-own-bounds thrown in.
+
+   Although pointer bounds checking can help during debugging, it is
+   disabled by default because it hurts performance significantly.
+   The checking does not detect all pointer errors.  For example, a
+   dumped Emacs might not detect a bounds violation of a pointer that
+   was created before Emacs was dumped.  */
+
 #ifndef PTR_BOUNDS_H
 #define PTR_BOUNDS_H
 
@@ -25,6 +37,19 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 /* When not checking pointer bounds, the following macros simply
    return their first argument.  These macros return either void *, or
    the same type as their first argument.  */
+
+INLINE_HEADER_BEGIN
+
+/* Return a copy of P, with bounds narrowed to [P, P + N).  */
+#ifdef __CHKP__
+INLINE void *
+ptr_bounds_clip (void const *p, size_t n)
+{
+  return __builtin___bnd_narrow_ptr_bounds (p, p, n);
+}
+#else
+# define ptr_bounds_clip(p, n) ((void) (size_t) {n}, p)
+#endif
 
 /* Return a copy of P, but with the bounds of Q.  */
 #ifdef __CHKP__
@@ -48,5 +73,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #else
 # define ptr_bounds_set(p, n) ((void) (size_t) {n}, p)
 #endif
+
+INLINE_HEADER_END
 
 #endif /* PTR_BOUNDS_H */

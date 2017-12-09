@@ -56,6 +56,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "composite.h"
 #include "intervals.h"
+#include "ptr-bounds.h"
 #include "character.h"
 #include "buffer.h"
 #include "coding.h"
@@ -4208,9 +4209,9 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
   ptrdiff_t nspec_bound = SCHARS (args[0]) >> 1;
 
   /* Allocate the info and discarded tables.  */
-  ptrdiff_t alloca_size;
-  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &alloca_size)
-      || INT_ADD_WRAPV (formatlen, alloca_size, &alloca_size)
+  ptrdiff_t info_size, alloca_size;
+  if (INT_MULTIPLY_WRAPV (nspec_bound, sizeof *info, &info_size)
+      || INT_ADD_WRAPV (formatlen, info_size, &alloca_size)
       || SIZE_MAX < alloca_size)
     memory_full (SIZE_MAX);
   info = SAFE_ALLOCA (alloca_size);
@@ -4218,6 +4219,8 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
      string was not copied into the output.
      It is 2 if byte I was not the first byte of its character.  */
   char *discarded = (char *) &info[nspec_bound];
+  info = ptr_bounds_clip (info, info_size);
+  discarded = ptr_bounds_clip (discarded, formatlen);
   memset (discarded, 0, formatlen);
 
   /* Try to determine whether the result should be multibyte.
