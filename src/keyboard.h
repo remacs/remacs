@@ -497,6 +497,9 @@ extern const char *const lispy_function_keys[];
 
 extern char const DEV_TTY[];
 
+Lisp_Object
+make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y, Time t);
+
 INLINE_HEADER_END
 
 #endif /* EMACS_KEYBOARD_H */

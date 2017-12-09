@@ -7,7 +7,7 @@ use remacs_sys::{EmacsInt, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 use remacs_sys::{is_minibuffer, minibuf_level, minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window, wget_parent, wget_pixel_height,
-                 wget_pseudo_window_p, window_parameter};
+                 wget_pseudo_window_p, window_menu_bar_p, window_parameter, window_tool_bar_p};
 
 use editfns::point;
 use frames::{frame_live_or_selected, window_frame_live_or_selected};
@@ -67,6 +67,16 @@ impl LispWindowRef {
         unsafe { is_minibuffer(self.as_ptr()) }
     }
 
+    #[inline]
+    pub fn is_menu_bar(self) -> bool {
+        unsafe { window_menu_bar_p(self.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn is_tool_bar(self) -> bool {
+        unsafe { window_tool_bar_p(self.as_ptr()) }
+    }
+
     pub fn pixel_height(self) -> i32 {
         unsafe { wget_pixel_height(self.as_ptr()) }
     }
@@ -105,6 +115,43 @@ impl LispWindowRef {
                 self.pixel_height / unit
             }
         }
+    }
+
+    /// The frame x-position at which the text (or left fringe) in
+    /// window starts. This does not include a left-hand scroll bar
+    /// if any.
+    #[inline]
+    pub fn left_edge_x(self) -> i32 {
+        self.frame().as_frame_or_error().internal_border_width() + self.left_pixel_edge()
+    }
+
+    /// The frame y-position at which the window starts.
+    #[inline]
+    pub fn top_edge_y(self) -> i32 {
+        let mut y = self.top_pixel_edge();
+        if !(self.is_menu_bar() || self.is_tool_bar()) {
+            y += self.frame().as_frame_or_error().internal_border_width();
+        }
+        y
+    }
+
+    /// The pixel value where the text (or left fringe) in window starts.
+    #[inline]
+    pub fn left_pixel_edge(self) -> i32 {
+        self.pixel_left
+    }
+
+    /// The top pixel edge at which the window starts.
+    /// This includes a header line, if any.
+    #[inline]
+    pub fn top_pixel_edge(self) -> i32 {
+        self.pixel_top
+    }
+
+    /// Convert window relative pixel Y to frame pixel coordinates.
+    #[inline]
+    pub fn frame_pixel_y(self, y: i32) -> i32 {
+        y + self.top_edge_y()
     }
 
     /// True if window wants a mode line and is high enough to
