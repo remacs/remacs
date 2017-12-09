@@ -7,7 +7,7 @@ use remacs_sys::{EmacsInt, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 use remacs_sys::{is_minibuffer, minibuf_level, minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window, wget_parent, wget_pixel_height,
-                 wget_pseudo_window_p, window_parameter, WINDOW_MENU_BAR_P, WINDOW_TOOL_BAR_P};
+                 wget_pseudo_window_p, window_menu_bar_p, window_parameter, window_tool_bar_p};
 
 use editfns::point;
 use frames::{frame_live_or_selected, window_frame_live_or_selected};
@@ -69,12 +69,12 @@ impl LispWindowRef {
 
     #[inline]
     pub fn is_menu_bar(self) -> bool {
-        unsafe { WINDOW_MENU_BAR_P(self.as_ptr()) }
+        unsafe { window_menu_bar_p(self.as_ptr()) }
     }
 
     #[inline]
     pub fn is_tool_bar(self) -> bool {
-        unsafe { WINDOW_TOOL_BAR_P(self.as_ptr()) }
+        unsafe { window_tool_bar_p(self.as_ptr()) }
     }
 
     pub fn pixel_height(self) -> i32 {

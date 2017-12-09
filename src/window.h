@@ -684,9 +684,12 @@ wget_pseudo_window_p(struct window *w);
    + WINDOW_RIGHT_PIXEL_EDGE (W))
 
 bool
-WINDOW_MENU_BAR_P(struct window *W);
+window_menu_bar_p(struct window *W);
+#define WINDOW_MENU_BAR_P(W) window_menu_bar_p(W)
+
 bool
-WINDOW_TOOL_BAR_P(struct window *W);
+window_tool_bar_p(struct window *W);
+#define WINDOW_TOOL_BAR_P(W) window_tool_bar_p(W)
 
 /* Return the frame y-position at which window W starts.  */
 #define WINDOW_TOP_EDGE_Y(W) \

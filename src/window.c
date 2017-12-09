@@ -241,7 +241,7 @@ wget_pseudo_window_p(struct window *w)
 
 /* True if W is a menu bar window.  */
 bool
-WINDOW_MENU_BAR_P(struct window *W)
+window_menu_bar_p(struct window *W)
 {
 #if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
   return (WINDOWP (WINDOW_XFRAME (W)->menu_bar_window)
@@ -254,7 +254,7 @@ WINDOW_MENU_BAR_P(struct window *W)
 
 /* True if W is a tool bar window.  */
 bool
-WINDOW_TOOL_BAR_P(struct window *W)
+window_tool_bar_p(struct window *W)
 {
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
   return (WINDOWP (WINDOW_XFRAME (W)->tool_bar_window)
