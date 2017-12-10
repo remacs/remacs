@@ -1896,10 +1896,12 @@ If omitted or nil, that stands for the selected frame's display.  */)
     {
     case NSBackingStoreBuffered:
       return intern ("buffered");
+#if defined (NS_IMPL_GNUSTEP) || MAC_OS_X_VERSION_MIN_REQUIRED < 101300
     case NSBackingStoreRetained:
       return intern ("retained");
     case NSBackingStoreNonretained:
       return intern ("non-retained");
+#endif
     default:
       error ("Strange value for backingType parameter of frame");
     }
@@ -1953,9 +1955,11 @@ If omitted or nil, that stands for the selected frame's display.  */)
     case NSBackingStoreBuffered:
       return Qt;
 
+#if defined (NS_IMPL_GNUSTEP) || MAC_OS_X_VERSION_MIN_REQUIRED < 101300
     case NSBackingStoreRetained:
     case NSBackingStoreNonretained:
       return Qnil;
+#endif
 
     default:
       error ("Strange value for backingType parameter of frame");
