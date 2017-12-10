@@ -239,6 +239,31 @@ wget_pseudo_window_p(struct window *w)
   return WINDOW_PSEUDO_P(w);
 }
 
+/* True if W is a menu bar window.  */
+bool
+window_menu_bar_p(struct window *W)
+{
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
+  return (WINDOWP (WINDOW_XFRAME (W)->menu_bar_window)
+          && (W) == XWINDOW (WINDOW_XFRAME (W)->menu_bar_window));
+#else
+/* No menu bar windows if X toolkit is in use.  */
+  return false;
+#endif
+}
+
+/* True if W is a tool bar window.  */
+bool
+window_tool_bar_p(struct window *W)
+{
+#if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
+  return (WINDOWP (WINDOW_XFRAME (W)->tool_bar_window)
+          && (W) == XWINDOW (WINDOW_XFRAME (W)->tool_bar_window));
+#else
+  return false;
+#endif
+}
+
 /* True if leaf window W doesn't reflect the actual state
    of displayed buffer due to its text or overlays change.  */
 
@@ -371,34 +396,6 @@ return the selected window of that frame.  */)
     }
 
   return window;
-}
-
-DEFUN ("set-frame-selected-window", Fset_frame_selected_window,
-       Sset_frame_selected_window, 2, 3, 0,
-       doc: /* Set selected window of FRAME to WINDOW.
-FRAME must be a live frame and defaults to the selected one.  If FRAME
-is the selected frame, this makes WINDOW the selected window.  Optional
-argument NORECORD non-nil means to neither change the order of recently
-selected windows nor the buffer list.  WINDOW must denote a live window.
-Return WINDOW.  */)
-  (Lisp_Object frame, Lisp_Object window, Lisp_Object norecord)
-{
-  if (NILP (frame))
-    frame = selected_frame;
-
-  CHECK_LIVE_FRAME (frame);
-  CHECK_LIVE_WINDOW (window);
-
-  if (! EQ (frame, WINDOW_FRAME (XWINDOW (window))))
-    error ("In `set-frame-selected-window', WINDOW is not on FRAME");
-
-  if (EQ (frame, selected_frame))
-    return Fselect_window (window, norecord);
-  else
-    {
-      fset_selected_window (XFRAME (frame), window);
-      return window;
-    }
 }
 
 EMACS_INT window_select_count;
@@ -7433,7 +7430,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
 
   defsubr (&Sframe_first_window);
   defsubr (&Sframe_selected_window);
-  defsubr (&Sset_frame_selected_window);
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
   defsubr (&Swindow_top_child);

@@ -293,6 +293,7 @@ pub enum Lisp_Misc_Type {
     Overlay,
     SaveValue,
     Finalizer,
+    UserPtr,
 }
 
 // Supertype of all Misc types.
@@ -421,6 +422,14 @@ extern "C" {
     pub fn window_parameter(w: *const Lisp_Window, parameter: Lisp_Object) -> Lisp_Object;
 }
 
+/// Area in window glyph matrix.  If values are added or removed,
+/// the function mark_glyph_matrix in alloc.c may need to be changed.
+pub type glyph_row_area = i32;
+pub const ANY_AREA: glyph_row_area = -1;
+pub const LEFT_MARGIN_AREA: glyph_row_area = 0;
+pub const TEXT_AREA: glyph_row_area = 1;
+pub const RIGHT_MARGIN_AREA: glyph_row_area = 2;
+pub const LAST_AREA: glyph_row_area = 3;
 
 /// Represents an Emacs buffer. For documentation see struct buffer in
 /// buffer.h.
@@ -939,6 +948,10 @@ pub struct Lisp_Frame {
     // frame.foo the proper method is fget_foo(frame).
 }
 
+extern "C" {
+    pub fn fget_internal_border_width(frame: *const Lisp_Frame) -> c_int;
+}
+
 #[repr(C)]
 pub struct terminal {
     pub header: Lisp_Vectorlike_Header,
@@ -951,6 +964,7 @@ extern "C" {
     pub fn fget_minibuffer_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
+    pub fn fget_output_method(f: *const Lisp_Frame) -> c_int;
 }
 
 extern "C" {
@@ -982,6 +996,8 @@ pub struct Lisp_Hash_Table {
     pub test: hash_table_test,
     pub next_weak: *mut Lisp_Hash_Table,
 }
+
+pub type Time = u32;
 
 extern "C" {
     pub static mut globals: emacs_globals;
@@ -1179,12 +1195,6 @@ extern "C" {
         window: Lisp_Object,
         partially: Lisp_Object,
     ) -> Lisp_Object;
-    pub fn Fposn_at_x_y(
-        x: Lisp_Object,
-        y: Lisp_Object,
-        frame_or_window: Lisp_Object,
-        whole: Lisp_Object,
-    ) -> Lisp_Object;
     pub fn find_before_next_newline(
         from: ptrdiff_t,
         to: ptrdiff_t,
@@ -1224,6 +1234,18 @@ extern "C" {
     ) -> Lisp_Object;
     pub fn message_with_string(m: *const c_char, string: Lisp_Object, log: bool);
     pub fn maybe_quit();
+    pub fn make_lispy_position(
+        f: *const Lisp_Frame,
+        x: Lisp_Object,
+        y: Lisp_Object,
+        t: Time,
+    ) -> Lisp_Object;
+
+    pub fn Fselect_window(window: Lisp_Object, norecord: Lisp_Object) -> Lisp_Object;
+    pub fn frame_dimension(x: c_int) -> c_int;
+    pub fn window_box_left_offset(w: *const Lisp_Window, area: glyph_row_area) -> c_int;
+    pub fn window_menu_bar_p(w: *const Lisp_Window) -> bool;
+    pub fn window_tool_bar_p(w: *const Lisp_Window) -> bool;
 }
 
 /// Contains C definitions from the font.h header.

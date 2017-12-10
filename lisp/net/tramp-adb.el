@@ -740,7 +740,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 
 		;; Remote newname.
 		(when (and (file-directory-p newname)
-			   (directory-name-p newname))
+			   (tramp-compat-directory-name-p newname))
 		  (setq newname
 			(expand-file-name
 			 (file-name-nondirectory filename) newname)))

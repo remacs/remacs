@@ -237,7 +237,8 @@ static char *
 XD_OBJECT_TO_STRING (Lisp_Object object)
 {
   AUTO_STRING (format, "%s");
-  return SSDATA (CALLN (Fformat, format, object));
+  Lisp_Object args[] = { format, object };
+  return SSDATA (styled_format (ARRAYELTS (args), args, false, false));
 }
 
 #define XD_DBUS_VALIDATE_BUS_ADDRESS(bus)				\

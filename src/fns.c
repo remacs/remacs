@@ -319,7 +319,9 @@ usage: (vconcat &rest SEQUENCES)   */)
 DEFUN ("copy-sequence", Fcopy_sequence, Scopy_sequence, 1, 1, 0,
        doc: /* Return a copy of a list, vector, string, char-table or record.
 The elements of a list, vector or record are not copied; they are
-shared with the original.  */)
+shared with the original.
+If the original sequence is empty, this function may return
+the same empty object instead of its copy.  */)
   (Lisp_Object arg)
 {
   if (NILP (arg)) return arg;
@@ -2130,7 +2132,7 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 
 #define MIME_LINE_LENGTH 76
 
-ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool);
+ptrdiff_t base64_encode_1 (const char *, ptrdiff_t, char *, ptrdiff_t, bool, bool);
 ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
 				  ptrdiff_t *);
 
@@ -2162,8 +2164,9 @@ into shorter lines.  */)
   allength += allength / MIME_LINE_LENGTH + 1 + 6;
 
   encoded = SAFE_ALLOCA (allength);
-  encoded_length = base64_encode_1 ((char *) BYTE_POS_ADDR (ibeg),
-				    encoded, length, NILP (no_line_break),
+  encoded_length = base64_encode_1 ((char *) BYTE_POS_ADDR (ibeg), length,
+                                    encoded, allength,
+                                    NILP (no_line_break),
 				    !NILP (BVAR (current_buffer, enable_multibyte_characters)));
   if (encoded_length > allength)
     emacs_abort ();

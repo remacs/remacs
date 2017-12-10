@@ -2438,7 +2438,9 @@ As a special case, if `(PLACE)' is used instead of `(PLACE VALUE)',
 the PLACE is not modified before executing BODY.
 
 \(fn ((PLACE VALUE) ...) BODY...)"
-  (declare (indent 1) (debug ((&rest (gate gv-place &optional form)) body)))
+  (declare (indent 1) (debug ((&rest [&or (symbolp form)
+                                          (gate gv-place &optional form)])
+                              body)))
   (if (and (not (cdr bindings)) (cdar bindings) (symbolp (caar bindings)))
       `(let ,bindings ,@body)
     (cl--letf bindings () () body)))

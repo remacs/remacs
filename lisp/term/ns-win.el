@@ -594,7 +594,7 @@ the last file dropped is selected."
 (declare-function tool-bar-mode "tool-bar" (&optional arg))
 
 ;; Based on a function by David Reitter <dreitter@inf.ed.ac.uk> ;
-;; see http://lists.gnu.org/archive/html/emacs-devel/2005-09/msg00681.html .
+;; see https://lists.gnu.org/archive/html/emacs-devel/2005-09/msg00681.html .
 (defun ns-toggle-toolbar (&optional frame)
   "Switches the tool bar on and off in frame FRAME.
  If FRAME is nil, the change applies to the selected frame."
@@ -736,6 +736,27 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 (global-unset-key [horizontal-scroll-bar drag-mouse-1])
 
 
+;;;; macOS-like defaults for trackpad and mouse wheel scrolling on
+;;;; macOS 10.7+.
+
+;; FIXME: This doesn't look right.  Is there a better way to do this
+;; that keeps customize happy?
+(when (featurep 'cocoa)
+  (let ((appkit-version
+         (progn (string-match "^appkit-\\([^\s-]*\\)" ns-version-string)
+                (string-to-number (match-string 1 ns-version-string)))))
+    ;; Appkit 1138 ~= macOS 10.7.
+    (when (>= appkit-version 1138)
+      (setq mouse-wheel-scroll-amount '(1 ((shift) . 5) ((control))))
+      (put 'mouse-wheel-scroll-amount 'customized-value
+           (list (custom-quote (symbol-value 'mouse-wheel-scroll-amount))))
+
+      (setq mouse-wheel-progressive-speed nil)
+      (put 'mouse-wheel-progressive-speed 'customized-value
+           (list (custom-quote
+                  (symbol-value 'mouse-wheel-progressive-speed)))))))
+
+
 ;;;; Color support.
 
 ;; Functions for color panel + drag
@@ -857,7 +878,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
   ;; Mac OS X Lion introduces PressAndHold, which is unsupported by this port.
   ;; See this thread for more details:
-  ;; http://lists.gnu.org/archive/html/emacs-devel/2011-06/msg00505.html
+  ;; https://lists.gnu.org/archive/html/emacs-devel/2011-06/msg00505.html
   (ns-set-resource nil "ApplePressAndHoldEnabled" "NO")
 
   (x-apply-session-resources)

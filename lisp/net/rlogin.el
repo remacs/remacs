@@ -38,7 +38,7 @@
 
 ;; FIXME?
 ;; Maybe this file should be obsolete.
-;; http://lists.gnu.org/archive/html/emacs-devel/2013-02/msg00517.html
+;; https://lists.gnu.org/archive/html/emacs-devel/2013-02/msg00517.html
 ;; It only adds rlogin-directory-tracking-mode.  Is that useful?
 
 (require 'comint)

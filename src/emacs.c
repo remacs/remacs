@@ -249,7 +249,7 @@ Initialization options:\n\
     "\
 Action options:\n\
 \n\
-FILE                    visit FILE using find-file\n\
+FILE                    visit FILE\n\
 +LINE                   go to line LINE in next FILE\n\
 +LINE:COLUMN            go to line LINE, column COLUMN, in next FILE\n\
 --directory, -L DIR     prepend DIR to load-path (with :DIR, append DIR)\n\
@@ -257,13 +257,13 @@ FILE                    visit FILE using find-file\n\
 --execute EXPR          evaluate Emacs Lisp expression EXPR\n\
 ",
     "\
---file FILE             visit FILE using find-file\n\
---find-file FILE        visit FILE using find-file\n\
+--file FILE             visit FILE\n\
+--find-file FILE        visit FILE\n\
 --funcall, -f FUNC      call Emacs Lisp function FUNC with no arguments\n\
 --insert FILE           insert contents of FILE into current buffer\n\
 --kill                  exit without asking for confirmation\n\
 --load, -l FILE         load Emacs Lisp FILE using the load function\n\
---visit FILE            visit FILE using find-file\n\
+--visit FILE            visit FILE\n\
 \n\
 ",
     "\

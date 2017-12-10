@@ -1548,11 +1548,20 @@ for details.
 @cindex curly quotes
 @cindex curved quotes
 @cindex homoglyph face
+
+Emacs tries to determine if the curved quotes @samp{‘} and @samp{’}
+can be displayed on the current display.  By default, if this seems to
+be so, then Emacs will translate the @acronym{ASCII} quotes (@samp{`}
+and @samp{'}), when they appear in messages and help texts, to these
+curved quotes.  You can influence or inhibit this translation by
+customizing the user option @code{text-quoting-style} (@pxref{Keys in
+Documentation,,, elisp, The Emacs Lisp Reference Manual}).
+
   If the curved quotes @samp{‘}, @samp{’}, @samp{“}, and @samp{”} are
 known to look just like @acronym{ASCII} characters, they are shown
-with the @code{homoglyph} face.  Curved quotes that cannot be
-displayed are shown as their @acronym{ASCII} approximations @samp{`},
-@samp{'}, and @samp{"} with the @code{homoglyph} face.
+with the @code{homoglyph} face.  Curved quotes that are known not to
+be displayable are shown as their @acronym{ASCII} approximations
+@samp{`}, @samp{'}, and @samp{"} with the @code{homoglyph} face.
 
 @node Cursor Display
 @section Displaying the Cursor
@@ -1745,7 +1754,7 @@ invisible parts of text), and lines which wrap to consume more than
 one screen line will be numbered that many times.  The displayed
 numbers are relative, as with @code{relative} value above.  This is
 handy in modes that fold text, such as Outline mode (@pxref{Outline
-Mode}), and need to move by exact number of screen lines.
+Mode}), and when you need to move by exact number of screen lines.
 
 @item anything else
 Any other non-@code{nil} value is treated as @code{t}.
@@ -1756,7 +1765,7 @@ Any other non-@code{nil} value is treated as @code{t}.
 @vindex display-line-numbers-type
 A convenient way of turning on display of line numbers is @w{@kbd{M-x
 display-line-numbers-mode @key{RET}}}.  This mode has a globalized
-variant, @code{global-display-line0numbers-mode}.  The user option
+variant, @code{global-display-line-numbers-mode}.  The user option
 @code{display-line-numbers-type} controls which sub-mode of
 line-number display, described above, will these modes activate.
 
@@ -1777,6 +1786,17 @@ starting at the beginning of the narrowing.  However, if you customize
 the variable @code{display-line-numbers-widen} to a non-@code{nil}
 value, line numbers will disregard any narrowing and will start at the
 first character of the buffer.
+
+@vindex display-line-numbers-width-start
+@vindex display-line-numbers-grow-only
+@vindex display-line-numbers-width
+In selective display mode (@pxref{Selective Display}), and other modes
+that hide many lines from display (such as Outline and Org modes), you
+may wish to customize the variables
+@code{display-line-numbers-width-start} and
+@code{display-line-numbers-grow-only}, or set
+@code{display-line-numbers-width} to a large enough value, to avoid
+occasional miscalculations of space reserved for the line numbers.
 
 @cindex line-number face
 The line numbers are displayed in a special face @code{line-number}.

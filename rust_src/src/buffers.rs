@@ -58,6 +58,11 @@ impl LispBufferRef {
     }
 
     #[inline]
+    pub fn gap_position(self) -> ptrdiff_t {
+        unsafe { (*self.text).gpt }
+    }
+
+    #[inline]
     pub fn gap_end_addr(self) -> *mut c_uchar {
         unsafe {
             (*self.text)
@@ -113,6 +118,7 @@ impl LispBufferRef {
         LispObject::from(self.mark)
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub fn name(self) -> LispObject {
         LispObject::from(self.name)

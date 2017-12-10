@@ -5159,7 +5159,7 @@ static int double_click_count;
 /* X and Y are frame-relative coordinates for a click or wheel event.
    Return a Lisp-style event list.  */
 
-static Lisp_Object
+Lisp_Object
 make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 		     Time t)
 {
@@ -5916,7 +5916,10 @@ make_lispy_event (struct input_event *event)
 				      ASIZE (wheel_syms));
 	}
 
-	if (event->modifiers & (double_modifier | triple_modifier))
+        if (NUMBERP (event->arg))
+          return list4 (head, position, make_number (double_click_count),
+                        event->arg);
+	else if (event->modifiers & (double_modifier | triple_modifier))
 	  return list3 (head, position, make_number (double_click_count));
 	else
 	  return list2 (head, position);
@@ -10686,47 +10689,6 @@ The elements of this list correspond to the arguments of
   return list4 (interrupt, flow, meta, quit);
 }
 
-DEFUN ("posn-at-x-y", Fposn_at_x_y, Sposn_at_x_y, 2, 4, 0,
-       doc: /* Return position information for pixel coordinates X and Y.
-By default, X and Y are relative to text area of the selected window.
-Optional third arg FRAME-OR-WINDOW non-nil specifies frame or window.
-If optional fourth arg WHOLE is non-nil, X is relative to the left
-edge of the window.
-
-The return value is similar to a mouse click position:
-   (WINDOW AREA-OR-POS (X . Y) TIMESTAMP OBJECT POS (COL . ROW)
-    IMAGE (DX . DY) (WIDTH . HEIGHT))
-The `posn-' functions access elements of such lists.  */)
-  (Lisp_Object x, Lisp_Object y, Lisp_Object frame_or_window, Lisp_Object whole)
-{
-  CHECK_NUMBER (x);
-  /* We allow X of -1, for the newline in a R2L line that overflowed
-     into the left fringe.  */
-  if (XINT (x) != -1)
-    CHECK_NATNUM (x);
-  CHECK_NATNUM (y);
-
-  if (NILP (frame_or_window))
-    frame_or_window = selected_window;
-
-  if (WINDOWP (frame_or_window))
-    {
-      struct window *w = decode_live_window (frame_or_window);
-
-      XSETINT (x, (XINT (x)
-		   + WINDOW_LEFT_EDGE_X (w)
-		   + (NILP (whole)
-		      ? window_box_left_offset (w, TEXT_AREA)
-		      : 0)));
-      XSETINT (y, WINDOW_TO_FRAME_PIXEL_Y (w, XINT (y)));
-      frame_or_window = w->frame;
-    }
-
-  CHECK_LIVE_FRAME (frame_or_window);
-
-  return make_lispy_position (XFRAME (frame_or_window), x, y, 0);
-}
-
 /* Set up a new kboard object with reasonable initial values.
    TYPE is a window system for which this keyboard is used.  */
 
@@ -11197,7 +11159,6 @@ syms_of_keyboard (void)
   defsubr (&Sset_quit_char);
   defsubr (&Sset_input_mode);
   defsubr (&Scurrent_input_mode);
-  defsubr (&Sposn_at_x_y);
 
   DEFVAR_LISP ("last-command-event", last_command_event,
 		     doc: /* Last input event that was part of a command.  */);

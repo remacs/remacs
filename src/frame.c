@@ -83,6 +83,11 @@ fset_minibuffer_window (struct frame *f, Lisp_Object val)
 {
   f->minibuffer_window = val;
 }
+int
+fget_internal_border_width(const struct frame *f)
+{
+  return f->internal_border_width;
+}
 Lisp_Object
 fget_minibuffer_window(const struct frame *f)
 {
@@ -246,52 +251,6 @@ set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 }
 
 Lisp_Object Vframe_list;
-
-
-DEFUN ("framep", Fframep, Sframep, 1, 1, 0,
-       doc: /* Return non-nil if OBJECT is a frame.
-Value is:
-  t for a termcap frame (a character-only terminal),
- `x' for an Emacs frame that is really an X window,
- `w32' for an Emacs frame that is a window on MS-Windows display,
- `ns' for an Emacs frame on a GNUstep or Macintosh Cocoa display,
- `pc' for a direct-write MS-DOS frame.
-See also `frame-live-p'.  */)
-  (Lisp_Object object)
-{
-  if (!FRAMEP (object))
-    return Qnil;
-  switch (XFRAME (object)->output_method)
-    {
-    case output_initial: /* The initial frame is like a termcap frame. */
-    case output_termcap:
-      return Qt;
-    case output_x_window:
-      return Qx;
-    case output_w32:
-      return Qw32;
-    case output_msdos_raw:
-      return Qpc;
-    case output_ns:
-      return Qns;
-    default:
-      emacs_abort ();
-    }
-}
-
-DEFUN ("frame-live-p", Fframe_live_p, Sframe_live_p, 1, 1, 0,
-       doc: /* Return non-nil if OBJECT is a frame which has not been deleted.
-Value is nil if OBJECT is not a live frame.  If object is a live
-frame, the return value indicates what sort of terminal device it is
-displayed on.  See the documentation of `framep' for possible
-return values.  */)
-  (Lisp_Object object)
-{
-  return ((FRAMEP (object)
-	   && FRAME_LIVE_P (XFRAME (object)))
-	  ? Fframep (object)
-	  : Qnil);
-}
 
 DEFUN ("window-system", Fwindow_system, Swindow_system, 0, 1, 0,
        doc: /* The name of the window system that FRAME is displaying through.
@@ -1995,7 +1954,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
     /* FIXME: Deleting the terminal crashes emacs because of a GTK
        bug.
-       http://lists.gnu.org/archive/html/emacs-devel/2011-10/msg00363.html */
+       https://lists.gnu.org/archive/html/emacs-devel/2011-10/msg00363.html */
 
     /* Since a similar behavior was observed on the Lucid and Motif
        builds (see Bug#5802, Bug#21509, Bug#23499, Bug#27816), we now
@@ -2485,10 +2444,35 @@ displayed in the terminal.  */)
 DEFUN ("iconify-frame", Ficonify_frame, Siconify_frame,
        0, 1, "",
        doc: /* Make the frame FRAME into an icon.
-If omitted, FRAME defaults to the currently selected frame.  */)
+If omitted, FRAME defaults to the currently selected frame.
+
+If FRAME is a child frame, consult the variable `iconify-child-frame'
+for how to proceed.  */)
   (Lisp_Object frame)
 {
   struct frame *f = decode_live_frame (frame);
+#ifdef HAVE_WINDOW_SYSTEM
+ Lisp_Object parent = f->parent_frame;
+
+  if (!NILP (parent))
+    {
+      if (NILP (iconify_child_frame))
+	/* Do nothing.  */
+	return Qnil;
+      else if (EQ (iconify_child_frame, Qiconify_top_level))
+	{
+	  /* Iconify top level frame instead (the default).  */
+	  Ficonify_frame (parent);
+	  return Qnil;
+	}
+      else if (EQ (iconify_child_frame, Qmake_invisible))
+	{
+	  /* Make frame invisible instead.  */
+	  Fmake_frame_invisible (frame, Qnil);
+	  return Qnil;
+	}
+    }
+#endif /* HAVE_WINDOW_SYSTEM */
 
   /* Don't allow minibuf_window to remain on an iconified frame.  */
   check_minibuf_window (frame, EQ (minibuf_window, selected_window));
@@ -5495,6 +5479,12 @@ int fget_line_height(const struct frame *f)
   return f->line_height;
 }
 
+int
+fget_output_method(const struct frame *f)
+{
+  return f->output_method;
+}
+
 
 /***********************************************************************
 				Initialization
@@ -5667,6 +5657,8 @@ syms_of_frame (void)
   DEFSYM (Qheight_only, "height-only");
   DEFSYM (Qleft_only, "left-only");
   DEFSYM (Qtop_only, "top-only");
+  DEFSYM (Qiconify_top_level, "iconify-top-level");
+  DEFSYM (Qmake_invisible, "make-invisible");
 
   {
     int i;
@@ -5970,10 +5962,23 @@ This variable is effective only with the X toolkit (and there only when
 Gtk+ tooltips are not used) and on Windows.  */);
   tooltip_reuse_hidden_frame = false;
 
+  DEFVAR_LISP ("iconify-child-frame", iconify_child_frame,
+	       doc: /* How to handle iconification of child frames.
+This variable tells Emacs how to proceed when it is asked to iconify a
+child frame.  If it is nil, `iconify-frame' will do nothing when invoked
+on a child frame.  If it is `iconify-top-level', Emacs will try to
+iconify the top level frame associated with this child frame instead.
+If it is `make-invisible', Emacs will try to make this child frame
+invisible instead.
+
+Any other value means to try iconifying the child frame.  Since such an
+attempt is not honored by all window managers and may even lead to
+making the child frame unresponsive to user actions, the default is to
+iconify the top level frame instead.  */);
+  iconify_child_frame = Qiconify_top_level;
+
   staticpro (&Vframe_list);
 
-  defsubr (&Sframep);
-  defsubr (&Sframe_live_p);
   defsubr (&Swindow_system);
   defsubr (&Sframe_windows_min_size);
   defsubr (&Smake_terminal_frame);

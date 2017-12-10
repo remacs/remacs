@@ -13,9 +13,9 @@ use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::slice;
 
-use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, PseudovecType, CHECK_IMPURE,
-                 INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM, USE_LSB_TAG,
-                 VALBITS, VALMASK};
+use remacs_sys::{font, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, PseudovecType,
+                 CHECK_IMPURE, INTMASK, INTTYPEBITS, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM,
+                 USE_LSB_TAG, VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
                  Lisp_Type};
 use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p,
@@ -249,6 +249,13 @@ pub type LispSubrRef = ExternalPtr<Lisp_Subr>;
 unsafe impl Sync for LispSubrRef {}
 
 pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
+
+impl LispMiscRef {
+    #[inline]
+    pub fn get_type(self) -> Lisp_Misc_Type {
+        unsafe { mem::transmute(misc_get_ty(self.as_ptr()) as i32) }
+    }
+}
 
 #[test]
 fn test_lisp_misc_any_size() {
@@ -538,9 +545,10 @@ impl LispObject {
 
     /*
     pub fn is_window_configuration(self) -> bool {
-        self.as_vectorlike().map_or(false, |v| {
-            v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION)
-        })
+        self.as_vectorlike().map_or(
+            false,
+            |v| v.is_pseudovector(PseudovecType::PVEC_WINDOW_CONFIGURATION),
+        )
     }
     */
 
@@ -632,12 +640,10 @@ impl LispObject {
             .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_HASH_TABLE))
     }
 
-    /*
     pub fn is_font(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_FONT))
     }
-    */
 
     pub fn as_font(self) -> Option<LispFontRef> {
         self.as_vectorlike().map_or(None, |v| {
@@ -646,6 +652,24 @@ impl LispObject {
             } else {
                 None
             }
+        })
+    }
+
+    pub fn is_font_entity(self) -> bool {
+        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
+            vec.pseudovector_size() == font::FONT_ENTITY_MAX as i64
+        })
+    }
+
+    pub fn is_font_object(self) -> bool {
+        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
+            vec.pseudovector_size() == font::FONT_OBJECT_MAX as i64
+        })
+    }
+
+    pub fn is_font_spec(self) -> bool {
+        self.is_font() && self.as_vectorlike().map_or(false, |vec| {
+            vec.pseudovector_size() == font::FONT_SPEC_MAX as i64
         })
     }
 
@@ -997,6 +1021,18 @@ impl LispObject {
 
 // Other functions
 
+pub trait IsLispNatnum {
+    fn check_natnum(&self);
+}
+
+impl IsLispNatnum for EmacsInt {
+    fn check_natnum(&self) {
+        if *self < 0 {
+            wrong_type!(Qwholenump, LispObject::from_fixnum(*self));
+        }
+    }
+}
+
 pub enum LispNumber {
     Fixnum(EmacsInt),
     Float(f64),
@@ -1052,14 +1088,13 @@ impl LispObject {
     #[inline]
     pub fn is_marker(self) -> bool {
         self.as_misc()
-            .map_or(false, |m| unsafe { misc_get_ty(m.as_ptr()) }
-                == Lisp_Misc_Type::Marker as u16)
+            .map_or(false, |m| m.get_type() == Lisp_Misc_Type::Marker)
     }
 
     #[inline]
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         self.as_misc().and_then(|m| {
-            if unsafe { misc_get_ty(m.as_ptr()) } == Lisp_Misc_Type::Marker as u16 {
+            if m.get_type() == Lisp_Misc_Type::Marker {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
@@ -1091,13 +1126,12 @@ impl LispObject {
     #[inline]
     pub fn is_overlay(self) -> bool {
         self.as_misc()
-            .map_or(false, |m| unsafe { misc_get_ty(m.as_ptr()) }
-                == Lisp_Misc_Type::Overlay as u16)
+            .map_or(false, |m| m.get_type() == Lisp_Misc_Type::Overlay)
     }
 
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
         self.as_misc().and_then(|m| {
-            if unsafe { misc_get_ty(m.as_ptr()) } == Lisp_Misc_Type::Overlay as u16 {
+            if m.get_type() == Lisp_Misc_Type::Overlay {
                 unsafe { Some(mem::transmute(m)) }
             } else {
                 None
@@ -1115,6 +1149,12 @@ impl LispObject {
     #[inline]
     pub fn eq(self, other: LispObject) -> bool {
         self == other
+    }
+
+    #[allow(dead_code)]
+    #[inline]
+    pub fn ne(self, other: LispObject) -> bool {
+        self != other
     }
 
     #[inline]

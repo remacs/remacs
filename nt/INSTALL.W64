@@ -101,7 +101,7 @@ Savannah Emacs site, https://savannah.gnu.org/projects/emacs.
 
 ** From the FTP site
 
-The Emacs ftp site is located at http://ftp.gnu.org/gnu/emacs/ - download the
+The Emacs ftp site is located at https://ftp.gnu.org/gnu/emacs/ - download the
 version you want to build and put the file into a location like C:\emacs\,
 then uncompress it with tar.  This will put the Emacs source into a folder like
 C:\emacs\emacs-24.5:
@@ -224,4 +224,4 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs. If not, see <http://www.gnu.org/licenses/>.
+along with GNU Emacs. If not, see <https://www.gnu.org/licenses/>.

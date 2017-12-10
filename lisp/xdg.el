@@ -84,7 +84,7 @@
 
 (defun xdg-thumb-uri (filename)
   "Return the canonical URI for FILENAME.
-If FILENAME has absolute path /foo/bar.jpg, its canonical URI is
+If FILENAME has absolute file name /foo/bar.jpg, its canonical URI is
 file:///foo/bar.jpg"
   (concat "file://" (expand-file-name filename)))
 
@@ -197,8 +197,6 @@ Optional argument GROUP defaults to the string \"Desktop Entry\"."
     (unless (looking-at xdg-desktop-group-regexp)
       (error "Expected group name!  Instead saw: %s"
              (buffer-substring (point) (point-at-eol))))
-    (unless (equal (match-string 1) "Desktop Entry")
-      (error "Wrong first group: %s" (match-string 1)))
     (when group
       (while (and (re-search-forward xdg-desktop-group-regexp nil t)
                   (not (equal (match-string 1) group)))))

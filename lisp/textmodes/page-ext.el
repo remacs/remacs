@@ -583,6 +583,7 @@ directory for only the accessible portion of the buffer."
     (with-output-to-temp-buffer pages-directory-buffer
       (with-current-buffer standard-output
         (pages-directory-mode)
+        (setq buffer-read-only nil)
         (insert
          "==== Pages Directory: use `C-c C-c' to go to page under cursor. ====" ?\n)
         (setq pages-buffer pages-target-buffer)
@@ -631,6 +632,7 @@ directory for only the accessible portion of the buffer."
                 )))))
 
       (set-buffer standard-output)
+      (setq buffer-read-only t)
       ;; Put positions in increasing order to go with buffer.
       (setq pages-pos-list (nreverse pages-pos-list))
       (if (called-interactively-p 'interactive)
