@@ -2875,7 +2875,7 @@ HAVE_JSON=no
 JSON_OBJ=
 
 if test "${with_json}" = yes; then
-  EMACS_CHECK_MODULES([JSON], [jansson >= 2.5],
+  EMACS_CHECK_MODULES([JSON], [jansson >= 2.7],
     [HAVE_JSON=yes], [HAVE_JSON=no])
   if test "${HAVE_JSON}" = yes; then
     AC_DEFINE(HAVE_JSON, 1, [Define if using Jansson.])
