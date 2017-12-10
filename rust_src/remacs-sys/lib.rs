@@ -1015,6 +1015,7 @@ extern "C" {
     pub static selected_window: Lisp_Object;
     pub static minibuf_selected_window: Lisp_Object;
     pub static selected_frame: Lisp_Object;
+    pub static empty_unibyte_string: Lisp_Object;
 
     pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;

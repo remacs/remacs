@@ -140,6 +140,20 @@ pub fn multibyte_string_p(object: LispObject) -> LispObject {
     LispObject::from_bool(object.as_string().map_or(false, |s| s.is_multibyte()))
 }
 
+/// Clear the contents of STRING.
+/// This makes STRING unibyte and may change its length.
+#[lisp_fn]
+pub fn clear_string(mut string: LispObject) -> LispObject {
+    let lisp_string = string.as_string_or_error();
+    lisp_string.clear_data();
+    unsafe {
+        lisp_string.set_num_chars(lisp_string.len_bytes());
+    }
+    LispObject::set_string_unibyte(&mut string);
+
+    LispObject::constant_nil()
+}
+
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
 
 #[test]

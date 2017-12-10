@@ -1577,20 +1577,6 @@ ARRAY is a vector, string, char-table, or bool-vector.  */)
   return array;
 }
 
-DEFUN ("clear-string", Fclear_string, Sclear_string,
-       1, 1, 0,
-       doc: /* Clear the contents of STRING.
-This makes STRING unibyte and may change its length.  */)
-  (Lisp_Object string)
-{
-  ptrdiff_t len;
-  CHECK_STRING (string);
-  len = SBYTES (string);
-  memset (SDATA (string), 0, len);
-  STRING_SET_CHARS (string, len);
-  STRING_SET_UNIBYTE (string);
-  return Qnil;
-}
 
 /* ARGSUSED */
 Lisp_Object
@@ -3667,7 +3653,6 @@ this variable.  */);
   defsubr (&Snreverse);
   defsubr (&Sreverse);
   defsubr (&Sfillarray);
-  defsubr (&Sclear_string);
   defsubr (&Snconc);
   defsubr (&Smapcar);
   defsubr (&Smapc);

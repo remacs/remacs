@@ -32,7 +32,7 @@
 //! `&str`, and this module regrettably contains adapted copies of
 //! stretches of `std::str` functions.
 
-use libc::{c_char, c_int, c_uchar, c_uint, ptrdiff_t};
+use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 use std::ptr;
 use std::slice;
 
@@ -109,6 +109,25 @@ impl LispStringRef {
     #[inline]
     pub fn byte_at(&self, index: ptrdiff_t) -> u8 {
         unsafe { *self.const_data_ptr().offset(index) }
+    }
+
+    /// This function does not allocate. It will not change the size of the data allocation.
+    /// It will only set the 'size' variable of the string, if it is safe to do so.
+    /// Replaces STRING_SET_CHARS from C.
+    #[inline]
+    pub unsafe fn set_num_chars(mut self, newsize: isize) {
+        debug_assert!(if self.is_multibyte() {
+            0 <= newsize && newsize == self.len_bytes()
+        } else {
+            newsize == self.len_chars()
+        });
+
+        self.size = newsize;
+    }
+
+    #[inline]
+    pub fn clear_data(self) {
+        unsafe { memset(self.data as *mut c_void, 0, self.len_bytes() as size_t) };
     }
 }
 
