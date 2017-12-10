@@ -91,27 +91,12 @@ fn generate_definitions() {
         max(float_type_item.1, actual_ptr_size)
     ).expect("Write error!");
 
-    // There is no such thing as a libc::c_bool
-    // See https://users.rust-lang.org/t/is-rusts-bool-compatible-with-c99--bool-or-c-bool/3981
-    let bool_types = [
-        ("bool", size_of::<bool>()),
-        ("libc::c_uint", size_of::<libc::c_uint>()),
-    ];
-
-    if !NS_IMPL_GNUSTEP {
-        write!(file, "pub type BoolBF = {};\n", bool_types[0].0).expect("Write error!");
-        write!(
-            file,
-            "pub const EMACS_BOOL_SIZE: EmacsInt = {};\n",
-            bool_types[0].1
-        ).expect("Write error!");
+    if NS_IMPL_GNUSTEP {
+        write!(file, "pub type BoolBF = libc::c_uint;\n").expect("Write error!");
     } else {
-        write!(file, "pub type BoolBF = {};\n", bool_types[1].0).expect("Write error!");
-        write!(
-            file,
-            "pub const EMACS_BOOL_SIZE: EmacsInt = {};\n",
-            bool_types[1].1
-        ).expect("Write error!");
+        // There is no such thing as a libc::cbool
+        // See https://users.rust-lang.org/t/is-rusts-bool-compatible-with-c99--bool-or-c-bool/3981
+        write!(file, "pub type BoolBF = bool;\n").expect("Write error!");
     }
 
     let bits = 8; // bits in a byte.
