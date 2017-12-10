@@ -27,6 +27,7 @@
 (require 'map)
 
 (ert-deftest json-serialize/roundtrip ()
+  (skip-unless (fboundp 'json-serialize))
   (let ((lisp [:null :false t 0 123 -456 3.75 "abcαβγ"])
         (json "[null,false,true,0,123,-456,3.75,\"abcαβγ\"]"))
     (should (equal (json-serialize lisp) json))
@@ -42,6 +43,7 @@
       (should (eobp)))))
 
 (ert-deftest json-serialize/object ()
+  (skip-unless (fboundp 'json-serialize))
   (let ((table (make-hash-table :test #'equal)))
     (puthash "abc" [1 2 t] table)
     (puthash "def" :null table)
@@ -49,6 +51,7 @@
                    "{\"abc\":[1,2,true],\"def\":null}"))))
 
 (ert-deftest json-parse-string/object ()
+  (skip-unless (fboundp 'json-parse-string))
   (let ((actual
          (json-parse-string
           "{ \"abc\" : [1, 2, true], \"def\" : null, \"abc\" : [9, false] }\n")))
@@ -58,6 +61,7 @@
                    '(("abc" . [9 :false]) ("def" . :null))))))
 
 (ert-deftest json-parse-string/string ()
+  (skip-unless (fboundp 'json-parse-string))
   (should-error (json-parse-string "[\"formfeed\f\"]") :type 'json-parse-error)
   (should (equal (json-parse-string "[\"foo \\\"bar\\\"\"]") ["foo \"bar\""]))
   (should (equal (json-parse-string "[\"abcαβγ\"]") ["abcαβγ"]))
@@ -67,18 +71,22 @@
   (should-error (json-parse-string "foo") :type 'json-parse-error))
 
 (ert-deftest json-serialize/string ()
+  (skip-unless (fboundp 'json-serialize))
   (should (equal (json-serialize ["foo"]) "[\"foo\"]"))
   (should (equal (json-serialize ["a\n\fb"]) "[\"a\\n\\fb\"]"))
   (should (equal (json-serialize ["\nasdфыв\u001f\u007ffgh\t"])
                  "[\"\\nasdфыв\\u001F\u007ffgh\\t\"]")))
 
 (ert-deftest json-parse-string/incomplete ()
+  (skip-unless (fboundp 'json-parse-string))
   (should-error (json-parse-string "[123") :type 'json-end-of-file))
 
 (ert-deftest json-parse-string/trailing ()
+  (skip-unless (fboundp 'json-parse-string))
   (should-error (json-parse-string "[123] [456]") :type 'json-trailing-content))
 
 (ert-deftest json-parse-buffer/incomplete ()
+  (skip-unless (fboundp 'json-parse-buffer))
   (with-temp-buffer
     (insert "[123")
     (goto-char 1)
@@ -86,6 +94,7 @@
     (should (bobp))))
 
 (ert-deftest json-parse-buffer/trailing ()
+  (skip-unless (fboundp 'json-parse-buffer))
   (with-temp-buffer
     (insert "[123] [456]")
     (goto-char 1)
