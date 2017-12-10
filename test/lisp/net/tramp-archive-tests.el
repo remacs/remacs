@@ -205,6 +205,7 @@ variables, so we check the Emacs version directly."
   "Check `directory-file-name'.
 This checks also `file-name-as-directory', `file-name-directory',
 `file-name-nondirectory' and `unhandled-file-name-directory'."
+  (skip-unless tramp-gvfs-enabled)
   (should
    (string-equal
     (directory-file-name "/foo.tar/path/to/file") "/foo.tar/path/to/file"))
