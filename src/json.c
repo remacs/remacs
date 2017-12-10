@@ -30,6 +30,126 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "coding.h"
 
+#ifdef WINDOWSNT
+# include <windows.h>
+# include "w32.h"
+
+DEF_DLL_FN (void, json_set_alloc_funcs,
+	    (json_malloc_t malloc_fn, json_free_t free_fn));
+DEF_DLL_FN (void, json_delete, (json_t *json));
+DEF_DLL_FN (json_t *, json_array, (void));
+DEF_DLL_FN (int, json_array_append_new, (json_t *array, json_t *value));
+DEF_DLL_FN (size_t, json_array_size, (const json_t *array));
+DEF_DLL_FN (json_t *, json_object, (void));
+DEF_DLL_FN (int, json_object_set_new,
+	    (json_t *object, const char *key, json_t *value));
+DEF_DLL_FN (json_t *, json_null, (void));
+DEF_DLL_FN (json_t *, json_true, (void));
+DEF_DLL_FN (json_t *, json_false, (void));
+DEF_DLL_FN (json_t *, json_integer, (json_int_t value));
+DEF_DLL_FN (json_t *, json_real, (double value));
+DEF_DLL_FN (json_t *, json_stringn, (const char *value, size_t len));
+DEF_DLL_FN (char *, json_dumps, (const json_t *json, size_t flags));
+DEF_DLL_FN (int, json_dump_callback,
+	    (const json_t *json, json_dump_callback_t callback, void *data,
+	     size_t flags));
+DEF_DLL_FN (json_int_t, json_integer_value, (const json_t *integer));
+DEF_DLL_FN (double, json_real_value, (const json_t *real));
+DEF_DLL_FN (const char *, json_string_value, (const json_t *string));
+DEF_DLL_FN (size_t, json_string_length, (const json_t *string));
+DEF_DLL_FN (json_t *, json_array_get, (const json_t *array, size_t index));
+DEF_DLL_FN (size_t, json_object_size, (const json_t *object));
+DEF_DLL_FN (const char *, json_object_iter_key, (void *iter));
+DEF_DLL_FN (void *, json_object_iter, (json_t *object));
+DEF_DLL_FN (json_t *, json_object_iter_value, (void *iter));
+DEF_DLL_FN (void *, json_object_key_to_iter, (const char *key));
+DEF_DLL_FN (void *, json_object_iter_next, (json_t *object, void *iter));
+DEF_DLL_FN (json_t *, json_loads,
+	    (const char *input, size_t flags, json_error_t *error));
+DEF_DLL_FN (json_t *, json_load_callback,
+	    (json_load_callback_t callback, void *data, size_t flags,
+	     json_error_t *error));
+
+/* This is called by json_decref, which is an inline function.  */
+void json_delete(json_t *json)
+{
+  fn_json_delete (json);
+}
+
+static bool json_initialized;
+
+static bool
+init_json_functions (void)
+{
+  HMODULE library = w32_delayed_load (Qjson);
+
+  if (!library)
+    return false;
+
+  LOAD_DLL_FN (library, json_set_alloc_funcs);
+  LOAD_DLL_FN (library, json_delete);
+  LOAD_DLL_FN (library, json_array);
+  LOAD_DLL_FN (library, json_array_append_new);
+  LOAD_DLL_FN (library, json_array_size);
+  LOAD_DLL_FN (library, json_object);
+  LOAD_DLL_FN (library, json_object_set_new);
+  LOAD_DLL_FN (library, json_null);
+  LOAD_DLL_FN (library, json_true);
+  LOAD_DLL_FN (library, json_false);
+  LOAD_DLL_FN (library, json_integer);
+  LOAD_DLL_FN (library, json_real);
+  LOAD_DLL_FN (library, json_stringn);
+  LOAD_DLL_FN (library, json_dumps);
+  LOAD_DLL_FN (library, json_dump_callback);
+  LOAD_DLL_FN (library, json_integer_value);
+  LOAD_DLL_FN (library, json_real_value);
+  LOAD_DLL_FN (library, json_string_value);
+  LOAD_DLL_FN (library, json_string_length);
+  LOAD_DLL_FN (library, json_array_get);
+  LOAD_DLL_FN (library, json_object_size);
+  LOAD_DLL_FN (library, json_object_iter_key);
+  LOAD_DLL_FN (library, json_object_iter);
+  LOAD_DLL_FN (library, json_object_iter_value);
+  LOAD_DLL_FN (library, json_object_key_to_iter);
+  LOAD_DLL_FN (library, json_object_iter_next);
+  LOAD_DLL_FN (library, json_loads);
+  LOAD_DLL_FN (library, json_load_callback);
+
+  init_json ();
+
+  return true;
+}
+
+#define json_set_alloc_funcs fn_json_set_alloc_funcs
+#define json_array fn_json_array
+#define json_array_append_new fn_json_array_append_new
+#define json_array_size fn_json_array_size
+#define json_object fn_json_object
+#define json_object_set_new fn_json_object_set_new
+#define json_null fn_json_null
+#define json_true fn_json_true
+#define json_false fn_json_false
+#define json_integer fn_json_integer
+#define json_real fn_json_real
+#define json_stringn fn_json_stringn
+#define json_dumps fn_json_dumps
+#define json_dump_callback fn_json_dump_callback
+#define json_integer_value fn_json_integer_value
+#define json_real_value fn_json_real_value
+#define json_string_value fn_json_string_value
+#define json_string_length fn_json_string_length
+#define json_array_get fn_json_array_get
+#define json_object_size fn_json_object_size
+#define json_object_iter_key fn_json_object_iter_key
+#define json_object_iter fn_json_object_iter
+#define json_object_iter_value fn_json_object_iter_value
+#define json_object_key_to_iter fn_json_object_key_to_iter
+#define json_object_iter_next fn_json_object_iter_next
+#define json_loads fn_json_loads
+#define json_load_callback fn_json_load_callback
+
+#endif	/* WINDOWSNT */
+
 /* We install a custom allocator so that we can avoid objects larger
    than PTRDIFF_MAX.  Such objects wouldn’t play well with the rest of
    Emacs’s codebase, which generally uses ptrdiff_t for sizes and
@@ -277,6 +397,21 @@ each object.  */)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
 
+#ifdef WINDOWSNT
+  if (!json_initialized)
+    {
+      Lisp_Object status;
+      json_initialized = init_json_functions ();
+      status = json_initialized ? Qt : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qjson, status), Vlibrary_cache);
+    }
+  if (!json_initialized)
+    {
+      message1 ("jansson library not found");
+      return Qnil;
+    }
+#endif
+
   json_t *json = lisp_to_json_toplevel (object);
   record_unwind_protect_ptr (json_release_object, json);
 
@@ -339,6 +474,21 @@ OBJECT.  */)
   (Lisp_Object object)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
+
+#ifdef WINDOWSNT
+  if (!json_initialized)
+    {
+      Lisp_Object status;
+      json_initialized = init_json_functions ();
+      status = json_initialized ? Qt : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qjson, status), Vlibrary_cache);
+    }
+  if (!json_initialized)
+    {
+      message1 ("jansson library not found");
+      return Qnil;
+    }
+#endif
 
   json_t *json = lisp_to_json (object);
   record_unwind_protect_ptr (json_release_object, json);
@@ -439,6 +589,22 @@ an error of type `json-parse-error' is signaled.  */)
   (Lisp_Object string)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
+
+#ifdef WINDOWSNT
+  if (!json_initialized)
+    {
+      Lisp_Object status;
+      json_initialized = init_json_functions ();
+      status = json_initialized ? Qt : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qjson, status), Vlibrary_cache);
+    }
+  if (!json_initialized)
+    {
+      message1 ("jansson library not found");
+      return Qnil;
+    }
+#endif
+
   Lisp_Object encoded = json_encode (string);
   check_string_without_embedded_nulls (encoded);
 
@@ -492,6 +658,21 @@ not moved.  */)
   (void)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
+
+#ifdef WINDOWSNT
+  if (!json_initialized)
+    {
+      Lisp_Object status;
+      json_initialized = init_json_functions ();
+      status = json_initialized ? Qt : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qjson, status), Vlibrary_cache);
+    }
+  if (!json_initialized)
+    {
+      message1 ("jansson library not found");
+      return Qnil;
+    }
+#endif
 
   ptrdiff_t point = PT_BYTE;
   struct json_read_buffer_data data = {.point = point};

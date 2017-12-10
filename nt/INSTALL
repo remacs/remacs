@@ -806,6 +806,13 @@ build will run on Windows 9X and newer systems).
   Prebuilt binaries of lcms2 DLL (for 32-bit builds of Emacs) are
   available from the ezwinports site and from the MSYS2 project.
 
+* Optional support for JSON
+
+  Emacs can provide built-in support for JSON parsing and
+  serialization using the libjansson library.  Prebuilt binaries of
+  the libjansson DLL (for 32-bit builds of Emacs) are available from
+  the ezwinports site and from the MSYS2 project.
+
 
 This file is part of GNU Emacs.
 

@@ -2881,6 +2881,11 @@ if test "${with_json}" = yes; then
     AC_DEFINE(HAVE_JSON, 1, [Define if using Jansson.])
     JSON_OBJ=json.o
   fi
+
+  # Windows loads libjansson dynamically
+  if test "${opsys}" = "mingw32"; then
+    JSON_LIBS=
+  fi
 fi
 
 AC_SUBST(JSON_LIBS)
