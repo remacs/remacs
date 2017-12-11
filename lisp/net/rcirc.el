@@ -585,7 +585,7 @@ If ARG is non-nil, instead prompt for connection parameters."
 
       (setq-local rcirc-connection-info
 		  (list server port nick user-name full-name startup-channels
-			password encryption))
+			password encryption server-alias))
       (setq-local rcirc-process process)
       (setq-local rcirc-server server)
       (setq-local rcirc-server-name
