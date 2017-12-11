@@ -657,19 +657,19 @@ impl LispObject {
 
     pub fn is_font_entity(self) -> bool {
         self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_ENTITY_MAX as i64
+            vec.pseudovector_size() == font::FONT_ENTITY_MAX as EmacsInt
         })
     }
 
     pub fn is_font_object(self) -> bool {
         self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_OBJECT_MAX as i64
+            vec.pseudovector_size() == font::FONT_OBJECT_MAX as EmacsInt
         })
     }
 
     pub fn is_font_spec(self) -> bool {
         self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_SPEC_MAX as i64
+            vec.pseudovector_size() == font::FONT_SPEC_MAX as EmacsInt
         })
     }
 
