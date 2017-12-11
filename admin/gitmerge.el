@@ -316,7 +316,11 @@ Returns non-nil if conflicts remain."
                                    (gitmerge-emacs-version gitmerge--from))))
                    (file-exists-p temp)
                    (or noninteractive
-                       (y-or-n-p "Try to fix NEWS conflict? ")))
+                       (and
+                        (y-or-n-p "Try to fix NEWS conflict? ")
+                        ;; FIXME
+                        (y-or-n-p "This is buggy, really try? ")
+                        )))
               (let ((relfile (file-name-nondirectory file))
                     (tempfile (make-temp-file "gitmerge")))
                 (unwind-protect
