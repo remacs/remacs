@@ -1,14 +1,14 @@
-[[package]]
-name = "libc"
-version = "0.2.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
+[root]
 name = "remacs-sys"
 version = "0.1.0"
 dependencies = [
  "libc 0.2.23 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "libc"
+version = "0.2.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [metadata]
 "checksum libc 0.2.23 (registry+https://github.com/rust-lang/crates.io-index)" = "e7eb6b826bfc1fdea7935d46556250d1799b7fe2d9f7951071f4291710665e3e"
