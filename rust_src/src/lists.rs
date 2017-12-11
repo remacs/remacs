@@ -10,7 +10,7 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Object};
 use remacs_sys::{Fconcat, Fnconc};
 use remacs_sys::{Qcircular_list, Qlistp, Qplistp, Qsequencep};
-use remacs_sys::globals;
+use remacs_sys::{empty_unibyte_string, globals};
 
 use lisp::LispObject;
 use lisp::defsubr;
@@ -556,6 +556,10 @@ fn mapcar1<T: iter::FromIterator<LispObject>>(seq: LispObject, func: LispObject)
 #[lisp_fn]
 pub fn mapconcat(function: LispObject, sequence: LispObject, separator: LispObject) -> LispObject {
     let mapped: Vec<_> = mapcar1(sequence, function);
+    if mapped.is_empty() {
+        return LispObject::from(unsafe { empty_unibyte_string });
+    }
+
     let mut with_sep: Vec<_> = mapped
         .into_iter()
         .map(LispObject::to_raw)
