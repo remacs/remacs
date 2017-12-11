@@ -70,9 +70,13 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     let rname = function.name;
     let min_args = lisp_fn_args.min;
     let mut windows_header = quote!{};
-    let max_args = match function.fntype {
-        function::LispFnType::Normal(_) => quote! { #max_args },
-        function::LispFnType::Many => quote! { ::lisp::MANY  },
+    let max_args = if lisp_fn_args.unevalled {
+        quote! { -1 }
+    } else {
+        match function.fntype {
+            function::LispFnType::Normal(_) => quote! { #max_args },
+            function::LispFnType::Many => quote! { ::lisp::MANY  },
+        }
     };
     let symbol_name = CByteLiteral(&lisp_fn_args.name);
 
