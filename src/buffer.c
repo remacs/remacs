@@ -4155,20 +4155,6 @@ However, the overlays you get are the real objects that the buffer uses.  */)
 
   return Fcons (Fnreverse (before), Fnreverse (after));
 }
-
-DEFUN ("overlay-recenter", Foverlay_recenter, Soverlay_recenter, 1, 1, 0,
-       doc: /* Recenter the overlays of the current buffer around position POS.
-That makes overlay lookup faster for positions near POS (but perhaps slower
-for positions far away from POS).  */)
-  (Lisp_Object pos)
-{
-  ptrdiff_t p;
-  CHECK_NUMBER_COERCE_MARKER (pos);
-
-  p = clip_to_bounds (PTRDIFF_MIN, XINT (pos), PTRDIFF_MAX);
-  recenter_overlay_lists (current_buffer, p);
-  return Qnil;
-}
 
 DEFUN ("overlay-get", Foverlay_get, Soverlay_get, 2, 2, 0,
        doc: /* Get the property of overlay OVERLAY with property name PROP.  */)
@@ -6112,7 +6098,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Soverlays_in);
   defsubr (&Snext_overlay_change);
   defsubr (&Sprevious_overlay_change);
-  defsubr (&Soverlay_recenter);
   defsubr (&Soverlay_lists);
   defsubr (&Soverlay_get);
   defsubr (&Soverlay_put);

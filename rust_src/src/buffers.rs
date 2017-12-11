@@ -5,7 +5,7 @@ use std::{mem, ptr};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist};
-use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal};
+use remacs_sys::{make_lisp_ptr, nsberror, recenter_overlay_lists, set_buffer_internal};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -14,6 +14,7 @@ use marker::{marker_buffer, marker_position};
 use multibyte::string_char;
 use strings::string_equal;
 use threads::ThreadState;
+use util::clip_to_bounds;
 
 pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
@@ -310,6 +311,20 @@ pub fn overlay_start(overlay: LispObject) -> LispObject {
 pub fn overlay_end(overlay: LispObject) -> LispObject {
     let marker = overlay.as_overlay_or_error().end();
     marker_position(marker)
+}
+
+/// Recenter the overlays of the current buffer around position POS.
+/// That makes overlay lookup faster for positions near POS (but perhaps slower
+/// for positions far away from POS).
+#[lisp_fn]
+pub fn overlay_recenter(pos: LispObject) -> LispObject {
+    let p: ptrdiff_t = clip_to_bounds(
+        ptrdiff_t::min_value(),
+        pos.as_fixnum_coerce_marker_or_error(),
+        ptrdiff_t::max_value(),
+    );
+    unsafe { recenter_overlay_lists(ThreadState::current_buffer().as_mut(), p) };
+    LispObject::constant_nil()
 }
 
 /// Return the buffer OVERLAY belongs to.
