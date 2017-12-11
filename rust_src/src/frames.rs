@@ -24,7 +24,7 @@ pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
     #[inline]
-    pub fn is_live(&self) -> bool {
+    pub fn is_live(self) -> bool {
         unsafe { !fget_terminal(self.as_ptr()).is_null() }
     }
 
