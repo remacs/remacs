@@ -1037,6 +1037,7 @@ extern "C" {
     pub fn Flocal_variable_p(variable: Lisp_Object, buffer: Lisp_Object) -> Lisp_Object;
     pub fn Ffuncall(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
+    pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
     pub fn Fconcat(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
     pub fn Fnconc(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
 
