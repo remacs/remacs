@@ -1194,7 +1194,8 @@ static const char *re_error_msgid[] =
     gettext_noop ("Premature end of regular expression"), /* REG_EEND */
     gettext_noop ("Regular expression too big"), /* REG_ESIZE */
     gettext_noop ("Unmatched ) or \\)"), /* REG_ERPAREN */
-    gettext_noop ("Range striding over charsets") /* REG_ERANGEX  */
+    gettext_noop ("Range striding over charsets"), /* REG_ERANGEX  */
+    gettext_noop ("Invalid content of \\{\\}, repetitions too big") /* REG_ESIZEBR  */
   };
 
 /* Whether to allocate memory during matching.  */
@@ -1915,7 +1916,7 @@ struct range_table_work_area
 	    if (num < 0)						\
 	      num = 0;							\
 	    if (RE_DUP_MAX / 10 - (RE_DUP_MAX % 10 < c - '0') < num)	\
-	      FREE_STACK_RETURN (REG_BADBR);				\
+	      FREE_STACK_RETURN (REG_ESIZEBR);				\
 	    num = num * 10 + c - '0';					\
 	    if (p == pend)						\
 	      FREE_STACK_RETURN (REG_EBRACE);				\

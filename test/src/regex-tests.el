@@ -677,4 +677,10 @@ This evaluates the PTESTS test cases from glibc."
 This evaluates the TESTS test cases from glibc."
   (should-not (regex-tests-TESTS)))
 
+(ert-deftest regex-repeat-limit ()
+  "Test the #xFFFF repeat limit."
+  (should (string-match "\\`x\\{65535\\}" (make-string 65535 ?x)))
+  (should-not (string-match "\\`x\\{65535\\}" (make-string 65534 ?x)))
+  (should-error (string-match "\\`x\\{65536\\}" "X") :type 'invalid-regexp))
+
 ;;; regex-tests.el ends here

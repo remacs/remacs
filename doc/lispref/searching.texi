@@ -642,10 +642,10 @@ is omitted, the minimum is 0; if @var{n} is omitted, there is no
 maximum.  For both forms, @var{m} and @var{n}, if specified, may be no
 larger than
 @ifnottex
-2**15 @minus{} 1
+2**16 @minus{} 1
 @end ifnottex
 @tex
-@math{2^{15}-1}
+@math{2^{16}-1}
 @end tex
 .
 

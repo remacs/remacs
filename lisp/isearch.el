@@ -2858,7 +2858,7 @@ Optional third argument, if t, means if fail just return nil (no error).
      (setq isearch-error (car (cdr lossage)))
      (cond
       ((string-match
-	"\\`Premature \\|\\`Unmatched \\|\\`Invalid "
+	"\\`Premature \\|\\`Unmatched "
 	isearch-error)
        (setq isearch-error "incomplete input"))
       ((and (not isearch-regexp)

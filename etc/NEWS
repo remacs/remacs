@@ -80,6 +80,13 @@ indirectly, e.g., by checking that functions like
 It blocks line breaking after a one-letter word, also in the case when
 this word is preceded by a non-space, but non-alphanumeric character.
 
++++
+** The limit on repetitions in regexps has been raised to 2^16-1.
+It was previously limited to 2^15-1.  For example, the following
+regular expression was previously invalid, but is now accepted:
+
+   x\{32768\}
+
 
 * Editing Changes in Emacs 27.1
 
