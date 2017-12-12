@@ -3869,7 +3869,6 @@ If one hasn't been set, or if it's stale, prompt for a new one."
   (setq-local prettify-symbols-alist js--prettify-symbols-alist)
 
   (setq-local parse-sexp-ignore-comments t)
-  (setq-local parse-sexp-lookup-properties t)
   (setq-local which-func-imenu-joiner-function #'js--which-func-joiner)
 
   ;; Comments
