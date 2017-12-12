@@ -1877,7 +1877,7 @@ running their FOO-mode-hook."
     ;; Normal case, just run the hook as before plus any delayed hooks.
     (setq hooks (nconc (nreverse delayed-mode-hooks) hooks))
     (and syntax-propertize-function
-         (not (buffer-local-p 'parse-sexp-lookup-properties))
+         (not (local-variable-p 'parse-sexp-lookup-properties))
          ;; `syntax-propertize' sets `parse-sexp-lookup-properties' for us, but
          ;; in order for the sexp primitives to automatically call
          ;; `syntax-propertize' we need `parse-sexp-lookup-properties' to be
