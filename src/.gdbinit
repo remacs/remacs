@@ -1321,19 +1321,26 @@ if hasattr(gdb, 'printing'):
       Lisp_Int0 = 2
       Lisp_Int1 = 6 if USE_LSB_TAG else 3
 
-      # Unpack the Lisp value from its containing structure, if necessary.
       val = self.val
       basic_type = gdb.types.get_basic_type (val.type)
+
+      # Unpack VAL from its containing structure, if necessary.
       if (basic_type.code == gdb.TYPE_CODE_STRUCT
           and gdb.types.has_field (basic_type, "i")):
         val = val["i"]
 
+      # Convert VAL to a Python integer.  Convert by hand, as this is
+      # simpler and works regardless of whether VAL is a pointer or
+      # integer.  Also, val.cast (gdb.lookup.type ("EMACS_UINT"))
+      # would have problems with GDB 7.12.1; see
+      # <http://patchwork.sourceware.org/patch/11557/>.
+      ival = int (val)
+
       # For nil, yield "XIL(0)", which is easier to read than "XIL(0x0)".
-      if not val:
+      if not ival:
         return "XIL(0)"
 
       # Extract the integer representation of the value and its Lisp type.
-      ival = int(val)
       itype = ival >> (0 if USE_LSB_TAG else VALBITS)
       itype = itype & ((1 << GCTYPEBITS) - 1)
 
@@ -1352,8 +1359,7 @@ if hasattr(gdb, 'printing'):
       # integers even when Lisp_Object is an integer.
       # Perhaps some day the pretty-printing could be fancier.
       # Prefer the unsigned representation to negative values, converting
-      # by hand as val.cast(gdb.lookup_type("EMACS_UINT") does not work in
-      # GDB 7.12.1; see <http://patchwork.sourceware.org/patch/11557/>.
+      # by hand as val.cast does not work in GDB 7.12.1 as noted above.
       if ival < 0:
         ival = ival + (1 << EMACS_INT_WIDTH)
       return "XIL(0x%x)" % ival

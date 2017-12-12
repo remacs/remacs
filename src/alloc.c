@@ -502,30 +502,20 @@ pointer_align (void *ptr, int alignment)
   return (void *) ROUNDUP ((uintptr_t) ptr, alignment);
 }
 
-/* Extract the pointer hidden within A, if A is not a symbol.
-   If A is a symbol, extract the hidden pointer's offset from lispsym,
-   converted to void *.  */
+/* Extract the pointer hidden within O.  Define this as a function, as
+   functions are cleaner and can be used in debuggers.  Also, define
+   it as a macro if being compiled with GCC without optimization, for
+   performance in that case.  macro_XPNTR is private to this section
+   of code.  */
 
-#define macro_XPNTR_OR_SYMBOL_OFFSET(a) \
-  ((void *) (intptr_t) (USE_LSB_TAG ? XLI (a) - XTYPE (a) : XLI (a) & VALMASK))
+#define macro_XPNTR(o)                                                 \
+  ((void *) \
+   (SYMBOLP (o)							       \
+    ? ((char *) lispsym						       \
+       - ((EMACS_UINT) Lisp_Symbol << (USE_LSB_TAG ? 0 : VALBITS))     \
+       + XLI (o))						       \
+    : (char *) XLP (o) - (XLI (o) & ~VALMASK)))
 
-/* Extract the pointer hidden within A.  */
-
-#define macro_XPNTR(a) \
-  ((void *) ((intptr_t) XPNTR_OR_SYMBOL_OFFSET (a) \
-	     + (SYMBOLP (a) ? (char *) lispsym : NULL)))
-
-/* For pointer access, define XPNTR and XPNTR_OR_SYMBOL_OFFSET as
-   functions, as functions are cleaner and can be used in debuggers.
-   Also, define them as macros if being compiled with GCC without
-   optimization, for performance in that case.  The macro_* names are
-   private to this section of code.  */
-
-static ATTRIBUTE_UNUSED void *
-XPNTR_OR_SYMBOL_OFFSET (Lisp_Object a)
-{
-  return macro_XPNTR_OR_SYMBOL_OFFSET (a);
-}
 static ATTRIBUTE_UNUSED void *
 XPNTR (Lisp_Object a)
 {
@@ -533,7 +523,6 @@ XPNTR (Lisp_Object a)
 }
 
 #if DEFINE_KEY_OPS_AS_MACROS
-# define XPNTR_OR_SYMBOL_OFFSET(a) macro_XPNTR_OR_SYMBOL_OFFSET (a)
 # define XPNTR(a) macro_XPNTR (a)
 #endif
 
@@ -5605,7 +5594,7 @@ static Lisp_Object
 purecopy (Lisp_Object obj)
 {
   if (INTEGERP (obj)
-      || (! SYMBOLP (obj) && PURE_P (XPNTR_OR_SYMBOL_OFFSET (obj)))
+      || (! SYMBOLP (obj) && PURE_P (XPNTR (obj)))
       || SUBRP (obj))
     return obj;    /* Already pure.  */
 

@@ -277,6 +277,18 @@ DEFINE_GDB_SYMBOL_END (VALMASK)
 error !;
 #endif
 
+/* Lisp_Word is a scalar word suitable for holding a tagged pointer or
+   integer.  Usually it is a pointer to a deliberately-incomplete type
+   'union Lisp_X'.  However, it is EMACS_INT when Lisp_Objects and
+   pointers differ in width.  */
+
+#define LISP_WORDS_ARE_POINTERS (EMACS_INT_MAX == INTPTR_MAX)
+#if LISP_WORDS_ARE_POINTERS
+typedef union Lisp_X *Lisp_Word;
+#else
+typedef EMACS_INT Lisp_Word;
+#endif
+
 /* Some operations are so commonly executed that they are implemented
    as macros, not functions, because otherwise runtime performance would
    suffer too much when compiling with GCC without optimization.
@@ -302,16 +314,37 @@ error !;
    functions, once "gcc -Og" (new to GCC 4.8) works well enough for
    Emacs developers.  Maybe in the year 2020.  See Bug#11935.
 
-   Commentary for these macros can be found near their corresponding
-   functions, below.  */
+   For the macros that have corresponding functions (defined later),
+   see these functions for commentary.  */
 
-#if CHECK_LISP_OBJECT_TYPE
-# define lisp_h_XLI(o) ((o).i)
-# define lisp_h_XIL(i) ((Lisp_Object) { i })
+/* Convert among the various Lisp-related types: I for EMACS_INT, L
+   for Lisp_Object, P for void *.  */
+#if !CHECK_LISP_OBJECT_TYPE
+# if LISP_WORDS_ARE_POINTERS
+#  define lisp_h_XLI(o) ((EMACS_INT) (o))
+#  define lisp_h_XIL(i) ((Lisp_Object) (i))
+#  define lisp_h_XLP(o) ((void *) (o))
+#  define lisp_h_XPL(p) ((Lisp_Object) (p))
+# else
+#  define lisp_h_XLI(o) (o)
+#  define lisp_h_XIL(i) (i)
+#  define lisp_h_XLP(o) ((void *) (uintptr_t) (o))
+#  define lisp_h_XPL(p) ((Lisp_Object) (uintptr_t) (p))
+# endif
 #else
-# define lisp_h_XLI(o) (o)
-# define lisp_h_XIL(i) (i)
+# if LISP_WORDS_ARE_POINTERS
+#  define lisp_h_XLI(o) ((EMACS_INT) (o).i)
+#  define lisp_h_XIL(i) ((Lisp_Object) {(Lisp_Word) (i)})
+#  define lisp_h_XLP(o) ((void *) (o).i)
+#  define lisp_h_XPL(p) lisp_h_XIL (p)
+# else
+#  define lisp_h_XLI(o) ((o).i)
+#  define lisp_h_XIL(i) ((Lisp_Object) {i})
+#  define lisp_h_XLP(o) ((void *) (uintptr_t) (o).i)
+#  define lisp_h_XPL(p) ((Lisp_Object) {(uintptr_t) (p)})
+# endif
 #endif
+
 #define lisp_h_CHECK_NUMBER(x) CHECK_TYPE (INTEGERP (x), Qintegerp, x)
 #define lisp_h_CHECK_SYMBOL(x) CHECK_TYPE (SYMBOLP (x), Qsymbolp, x)
 #define lisp_h_CHECK_TYPE(ok, predicate, x) \
@@ -352,8 +385,7 @@ error !;
 			     + (char *) lispsym))
 # define lisp_h_XTYPE(a) ((enum Lisp_Type) (XLI (a) & ~VALMASK))
 # define lisp_h_XUNTAG(a, type) \
-    __builtin_assume_aligned ((void *) (intptr_t) (XLI (a) - (type)), \
-			      GCALIGNMENT)
+    __builtin_assume_aligned ((char *) XLP (a) - (type), GCALIGNMENT)
 #endif
 
 /* When compiling via gcc -O0, define the key operations as macros, as
@@ -370,6 +402,8 @@ error !;
 #if DEFINE_KEY_OPS_AS_MACROS
 # define XLI(o) lisp_h_XLI (o)
 # define XIL(i) lisp_h_XIL (i)
+# define XLP(o) lisp_h_XLP (o)
+# define XPL(p) lisp_h_XPL (p)
 # define CHECK_NUMBER(x) lisp_h_CHECK_NUMBER (x)
 # define CHECK_SYMBOL(x) lisp_h_CHECK_SYMBOL (x)
 # define CHECK_TYPE(ok, predicate, x) lisp_h_CHECK_TYPE (ok, predicate, x)
@@ -543,22 +577,24 @@ enum Lisp_Fwd_Type
    your object -- this way, the same object could be used to represent
    several disparate C structures.  */
 
+
+/* A Lisp_Object is a tagged pointer or integer.  Ordinarily it is a
+   Lisp_Word.  However, if CHECK_LISP_OBJECT_TYPE, it is a wrapper
+   around Lisp_Word, to help catch thinkos like 'Lisp_Object x = 0;'.
+
+   LISP_INITIALLY (W) initializes a Lisp object with a tagged value
+   that is a Lisp_Word W.  It can be used in a static initializer.  */
+
 #ifdef CHECK_LISP_OBJECT_TYPE
-
-typedef struct Lisp_Object { EMACS_INT i; } Lisp_Object;
-
-#define LISP_INITIALLY(i) {i}
-
-#undef CHECK_LISP_OBJECT_TYPE
+typedef struct Lisp_Object { Lisp_Word i; } Lisp_Object;
+# define LISP_INITIALLY(w) {w}
+# undef CHECK_LISP_OBJECT_TYPE
 enum CHECK_LISP_OBJECT_TYPE { CHECK_LISP_OBJECT_TYPE = true };
-#else /* CHECK_LISP_OBJECT_TYPE */
-
-/* If a struct type is not wanted, define Lisp_Object as just a number.  */
-
-typedef EMACS_INT Lisp_Object;
-#define LISP_INITIALLY(i) (i)
+#else
+typedef Lisp_Word Lisp_Object;
+# define LISP_INITIALLY(w) (w)
 enum CHECK_LISP_OBJECT_TYPE { CHECK_LISP_OBJECT_TYPE = false };
-#endif /* CHECK_LISP_OBJECT_TYPE */
+#endif
 
 /* Forward declarations.  */
 
@@ -590,8 +626,10 @@ extern double extract_float (Lisp_Object);
 
 /* Low-level conversion and type checking.  */
 
-/* Convert a Lisp_Object to the corresponding EMACS_INT and vice versa.
-   At the machine level, these operations are no-ops.  */
+/* Convert among various types use to implement Lisp_Object.  At the
+   machine level, these operations may widen or narrow their arguments
+   if pointers differ in width from EMACS_INT; otherwise they are
+   no-ops.  */
 
 INLINE EMACS_INT
 (XLI) (Lisp_Object o)
@@ -603,6 +641,18 @@ INLINE Lisp_Object
 (XIL) (EMACS_INT i)
 {
   return lisp_h_XIL (i);
+}
+
+INLINE void *
+(XLP) (Lisp_Object o)
+{
+  return lisp_h_XLP (o);
+}
+
+INLINE Lisp_Object
+(XPL) (void *p)
+{
+  return lisp_h_XPL (p);
 }
 
 /* Extract A's type.  */
@@ -632,8 +682,9 @@ INLINE void *
 #if USE_LSB_TAG
   return lisp_h_XUNTAG (a, type);
 #else
-  intptr_t i = USE_LSB_TAG ? XLI (a) - type : XLI (a) & VALMASK;
-  return (void *) i;
+  EMACS_UINT utype = type;
+  char *p = XLP (a);
+  return p - (utype << (USE_LSB_TAG ? 0 : VALBITS));
 #endif
 }
 
@@ -744,28 +795,34 @@ verify (alignof (struct Lisp_Symbol) % GCALIGNMENT == 0);
 #define DEFUN_ARGS_8	(Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object, \
 			 Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object)
 
-/* Yield a signed integer that contains TAG along with PTR.
+/* Typedefs useful for implementing TAG_PTR.  untagged_ptr represents
+   a pointer before tagging, and Lisp_Word_tag contains a
+   possibly-shifted tag to be added to an untagged_ptr to convert it
+   to a Lisp_Word.  */
+#if LISP_WORDS_ARE_POINTERS
+/* untagged_ptr is a pointer so that the compiler knows that TAG_PTR
+   yields a pointer; this can help with gcc -fcheck-pointer-bounds.
+   It is char * so that adding a tag uses simple machine addition.  */
+typedef char *untagged_ptr;
+typedef uintptr_t Lisp_Word_tag;
+#else
+/* untagged_ptr is an unsigned integer instead of a pointer, so that
+   it can be added to the possibly-wider Lisp_Word_tag type without
+   losing information.  */
+typedef uintptr_t untagged_ptr;
+typedef EMACS_UINT Lisp_Word_tag;
+#endif
 
-   Sign-extend pointers when USE_LSB_TAG (this simplifies emacs-module.c),
-   and zero-extend otherwise (that’s a bit faster here).
-   Sign extension matters only when EMACS_INT is wider than a pointer.  */
+/* An initializer for a Lisp_Object that contains TAG along with PTR.  */
 #define TAG_PTR(tag, ptr) \
-  (USE_LSB_TAG \
-   ? (intptr_t) (ptr) + (tag) \
-   : (EMACS_INT) (((EMACS_UINT) (tag) << VALBITS) + (uintptr_t) (ptr)))
-
-/* Yield an integer that contains a symbol tag along with OFFSET.
-   OFFSET should be the offset in bytes from 'lispsym' to the symbol.  */
-#define TAG_SYMOFFSET(offset) TAG_PTR (Lisp_Symbol, offset)
-
-/* XLI_BUILTIN_LISPSYM (iQwhatever) is equivalent to
-   XLI (builtin_lisp_symbol (Qwhatever)),
-   except the former expands to an integer constant expression.  */
-#define XLI_BUILTIN_LISPSYM(iname) TAG_SYMOFFSET ((iname) * sizeof *lispsym)
+  LISP_INITIALLY ((Lisp_Word) \
+		  ((untagged_ptr) (ptr) \
+		   + ((Lisp_Word_tag) (tag) << (USE_LSB_TAG ? 0 : VALBITS))))
 
 /* LISPSYM_INITIALLY (Qfoo) is equivalent to Qfoo except it is
    designed for use as an initializer, even for a constant initializer.  */
-#define LISPSYM_INITIALLY(name) LISP_INITIALLY (XLI_BUILTIN_LISPSYM (i##name))
+#define LISPSYM_INITIALLY(name) \
+  TAG_PTR (Lisp_Symbol, (char *) (intptr_t) ((i##name) * sizeof *lispsym))
 
 /* Declare extern constants for Lisp symbols.  These can be helpful
    when using a debugger like GDB, on older platforms where the debug
@@ -843,7 +900,8 @@ INLINE struct Lisp_Symbol *
 INLINE Lisp_Object
 make_lisp_symbol (struct Lisp_Symbol *sym)
 {
-  Lisp_Object a = XIL (TAG_SYMOFFSET ((char *) sym - (char *) lispsym));
+  intptr_t symoffset = (char *) sym - (char *) lispsym;
+  Lisp_Object a = TAG_PTR (Lisp_Symbol, (char *) symoffset);
   eassert (XSYMBOL (a) == sym);
   return a;
 }
@@ -1061,7 +1119,7 @@ clip_to_bounds (ptrdiff_t lower, EMACS_INT num, ptrdiff_t upper)
 INLINE Lisp_Object
 make_lisp_ptr (void *ptr, enum Lisp_Type type)
 {
-  Lisp_Object a = XIL (TAG_PTR (type, ptr));
+  Lisp_Object a = TAG_PTR (type, ptr);
   eassert (XTYPE (a) == type && XUNTAG (a, type) == ptr);
   return a;
 }
@@ -1132,7 +1190,7 @@ XINTPTR (Lisp_Object a)
 INLINE Lisp_Object
 make_pointer_integer (void *p)
 {
-  Lisp_Object a = XIL (TAG_PTR (Lisp_Int0, p));
+  Lisp_Object a = TAG_PTR (Lisp_Int0, p);
   eassert (INTEGERP (a) && XINTPTR (a) == p);
   return a;
 }
@@ -1644,8 +1702,10 @@ gc_aset (Lisp_Object array, ptrdiff_t idx, Lisp_Object val)
 
 /* True, since Qnil's representation is zero.  Every place in the code
    that assumes Qnil is zero should verify (NIL_IS_ZERO), to make it easy
-   to find such assumptions later if we change Qnil to be nonzero.  */
-enum { NIL_IS_ZERO = XLI_BUILTIN_LISPSYM (iQnil) == 0 };
+   to find such assumptions later if we change Qnil to be nonzero.
+   Test iQnil and Lisp_Symbol instead of Qnil directly, since the latter
+   is not suitable for use in an integer constant expression.  */
+enum { NIL_IS_ZERO = iQnil == 0 && Lisp_Symbol == 0 };
 
 /* Clear the object addressed by P, with size NBYTES, so that all its
    bytes are zero and all its Lisp values are nil.  */

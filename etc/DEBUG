@@ -140,9 +140,10 @@ If you attached the debugger to a running Emacs, type "continue" into
 the *gud-emacs* buffer and press RET.
 
 Many variables you will encounter while debugging are Lisp objects.
-These are displayed as integer values (or structures, if you used the
-"--enable-check-lisp-object-type" option at configure time) that are
-hard to interpret, especially if they represent long lists.  You can
+These are normally displayed as opaque pointers or integers that are
+hard to interpret, especially if they represent long lists.
+(They are instead displayed as structures containing these opaque
+values, if --enable-check-lisp-object-type is in effect.)  You can
 use the 'pp' command to display them in their Lisp form.  That command
 displays its output on the standard error stream, which you
 can redirect to a file using "M-x redirect-debugging-output".
