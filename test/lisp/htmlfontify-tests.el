@@ -36,7 +36,7 @@ available (Bug#25468)."
   (should (equal (let ((process-environment
                         (cons "SHELL=/does/not/exist" process-environment)))
                    (call-process
-                    (expand-file-name (invocation-name) (invocation-directory))
+                    (expand-file-name invocation-name invocation-directory)
                     nil nil nil
                     "--quick" "--batch"
                     (concat "--load=" (locate-library "htmlfontify"))))

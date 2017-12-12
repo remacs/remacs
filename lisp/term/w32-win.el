@@ -66,7 +66,7 @@
 ;; ../startup.el.
 
 ;; (if (not (eq window-system 'w32))
-;;     (error "%s: Loading w32-win.el but not compiled for w32" (invocation-name)))
+;;     (error "%s: Loading w32-win.el but not compiled for w32" invocation-name))
 
 (eval-when-compile (require 'cl-lib))
 (require 'frame)
@@ -310,7 +310,7 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
       (setq x-resource-name
             ;; Change any . or * characters in x-resource-name to hyphens,
             ;; so as not to choke when we use it in X resource queries.
-            (replace-regexp-in-string "[.*]" "-" (invocation-name))))
+            (replace-regexp-in-string "[.*]" "-" invocation-name)))
 
   (x-open-connection "w32" x-command-line-resources
                      ;; Exit with a fatal error if this fails and we

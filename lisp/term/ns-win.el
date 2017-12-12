@@ -42,7 +42,7 @@
 (eval-when-compile (require 'cl-lib))
 (or (featurep 'ns)
     (error "%s: Loading ns-win.el but not compiled for GNUstep/macOS"
-           (invocation-name)))
+           invocation-name))
 
 ;; Documentation-purposes only: actually loaded in loadup.el.
 (require 'frame)
