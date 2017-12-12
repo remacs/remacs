@@ -142,7 +142,7 @@ If nil, a faster, but more primitive, buffer is used instead."
        ["Offline" gnus-server-offline-server t]
        ["Deny" gnus-server-deny-server t]
        ["Toggle Cloud Sync for this server" gnus-server-toggle-cloud-server t]
-       ["Toggle Cloud Sync Host" gnus-server-toggle-cloud-method-server t]
+       ["Toggle Cloud Sync Host" gnus-server-set-cloud-method-server t]
        "---"
        ["Open All" gnus-server-open-all-servers t]
        ["Close All" gnus-server-close-all-servers t]
@@ -189,7 +189,7 @@ If nil, a faster, but more primitive, buffer is used instead."
     "z" gnus-server-compact-server
 
     "i" gnus-server-toggle-cloud-server
-    "I" gnus-server-toggle-cloud-method-server
+    "I" gnus-server-set-cloud-method-server
 
     "\C-c\C-i" gnus-info-find-node
     "\C-c\C-b" gnus-bug))
@@ -1129,7 +1129,7 @@ Requesting compaction of %s... (this may take a long time)"
 	(and original (gnus-kill-buffer original))))))
 
 (defun gnus-server-toggle-cloud-server ()
-  "Make the server under point be replicated in the Emacs Cloud."
+  "Toggle whether the server under point is replicated in the Emacs Cloud."
   (interactive)
   (let ((server (gnus-server-server-name)))
     (unless server
@@ -1149,7 +1149,7 @@ Requesting compaction of %s... (this may take a long time)"
 		      "Replication of %s in the cloud will stop")
 		  server)))
 
-(defun gnus-server-toggle-cloud-method-server ()
+(defun gnus-server-set-cloud-method-server ()
   "Set the server under point to host the Emacs Cloud."
   (interactive)
   (let ((server (gnus-server-server-name)))
