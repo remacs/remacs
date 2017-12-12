@@ -460,26 +460,21 @@ If you can break memory safety by passing a valid value to a function,
 then it should be marked as `unsafe`. For example:
 
 ``` rust
-// This function is unsafe because it's dereferencing the car
-// of a cons cell. If `object` is not a cons cell, we'll dereference
-// an invalid pointer.
-unsafe fn XCAR(object: LispObject) -> LispObject {
-    (*XCONS(object)).car
-}
+impl LispObject {
+    // This function is unsafe because it's accessing a raw pointer
+    // without doing any checking. We assume the current value is a
+    // pointer to a string.
+    unsafe fn as_string_unchecked(self) -> LispStringRef {
+        LispStringRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+    }
 
-// This function is safe because it preserves the contract
-// of XCAR: it only passes valid cons cells. We just use
-// unsafe blocks instead.
-fn car(object: LispObject) -> LispObject {
-    if CONSP(object) {
-        unsafe {
-            XCAR(object)
-        }
-    } else if NILP(object) {
-        Qnil
-    } else {
-        unsafe {
-            wrong_type_argument(Qlistp, object)
+    // This function is safe because it verifies that the pointer is
+    // tagged as a string.
+    fn as_string_or_error(self) -> LispStringRef {
+        if self.is_string() {
+            unsafe { self.as_string_unchecked() }
+        } else {
+            wrong_type!(Qstringp, self)
         }
     }
 }
