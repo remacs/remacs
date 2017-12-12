@@ -1727,7 +1727,7 @@ static EMACS_INT total_string_bytes;
    a pointer to the `u.data' member of its sdata structure; the
    structure starts at a constant offset in front of that.  */
 
-#define SDATA_OF_STRING(S) ptr_bounds_init ((sdata *) ((S)->u.s.data \
+#define SDATA_OF_STRING(S) ((sdata *) ptr_bounds_init ((S)->u.s.data \
 						       - SDATA_DATA_OFFSET))
 
 
