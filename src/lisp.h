@@ -902,12 +902,15 @@ INLINE struct Lisp_Symbol *
 {
 #if USE_LSB_TAG
   return lisp_h_XSYMBOL (a);
-#elif defined __CHKP__
-# error "pointer-checking not supported with wide integers"
 #else
   eassert (SYMBOLP (a));
   intptr_t i = (intptr_t) XUNTAG (a, Lisp_Symbol);
   void *p = (char *) lispsym + i;
+# ifdef __CHKP__
+  /* Bypass pointer checking.  Although this could be improved it is
+     probably not worth the trouble.  */
+  p = __builtin___bnd_set_ptr_bounds (p, sizeof (struct Lisp_Symbol));
+# endif
   return p;
 #endif
 }
@@ -916,9 +919,11 @@ INLINE Lisp_Object
 make_lisp_symbol (struct Lisp_Symbol *sym)
 {
 #ifdef __CHKP__
-  /* Although this should use '__builtin___bnd_narrow_ptr_bounds (sym,
-     sym, sizeof *sym)', that would run afoul of GCC bug 83251
-     <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83251>.  */
+  /* Although '__builtin___bnd_narrow_ptr_bounds (sym, sym, sizeof *sym)'
+     should be more efficient, it runs afoul of GCC bug 83251
+     <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83251>.
+     Also, attempting to call __builtin___bnd_chk_ptr_bounds (sym, sizeof *sym)
+     here seems to trigger a GCC bug, as yet undiagnosed.  */
   char *addr = __builtin___bnd_set_ptr_bounds (sym, sizeof *sym);
   char *symoffset = addr - (intptr_t) lispsym;
 #else
