@@ -2948,8 +2948,8 @@ User is always nil."
 			  localname)))))
 	  (tramp-error v 'file-already-exists newname)
 	(delete-file newname)))
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-file-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
     (copy-file
      filename newname 'ok-if-already-exists 'keep-time
      'preserve-uid-gid 'preserve-permissions)))
@@ -2993,7 +2993,7 @@ User is always nil."
   "Like `dired-uncache' for Tramp files."
   (with-parsed-tramp-file-name
       (if (file-directory-p dir) dir (file-name-directory dir)) nil
-    (tramp-flush-directory-property v localname)))
+    (tramp-flush-directory-properties v localname)))
 
 (defun tramp-handle-file-accessible-directory-p (filename)
   "Like `file-accessible-directory-p' for Tramp files."

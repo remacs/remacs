@@ -745,13 +745,13 @@ file names."
 
 	  (when (and t1 (eq op 'rename))
 	    (with-parsed-tramp-file-name filename nil
-	      (tramp-flush-file-property v (file-name-directory localname))
-	      (tramp-flush-file-property v localname)))
+	      (tramp-flush-file-properties v (file-name-directory localname))
+	      (tramp-flush-file-properties v localname)))
 
 	  (when t2
 	    (with-parsed-tramp-file-name newname nil
-	      (tramp-flush-file-property v (file-name-directory localname))
-	      (tramp-flush-file-property v localname))))))))
+	      (tramp-flush-file-properties v (file-name-directory localname))
+	      (tramp-flush-file-properties v localname))))))))
 
 (defun tramp-gvfs-handle-copy-file
   (filename newname &optional ok-if-already-exists keep-date
@@ -785,8 +785,8 @@ file names."
 	(tramp-error
 	 v 'file-error "Couldn't delete non-empty %s" directory)))
 
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-directory-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-directory-properties v localname)
     (unless
 	(tramp-gvfs-send-command
 	 v (if (and trash delete-by-moving-to-trash) "gvfs-trash" "gvfs-rm")
@@ -800,8 +800,8 @@ file names."
 (defun tramp-gvfs-handle-delete-file (filename &optional trash)
   "Like `delete-file' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-file-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
     (unless
 	(tramp-gvfs-send-command
 	 v (if (and trash delete-by-moving-to-trash) "gvfs-trash" "gvfs-rm")
@@ -1180,7 +1180,7 @@ file-notify events."
   (setq filename (directory-file-name (expand-file-name filename)))
   (with-parsed-tramp-file-name filename nil
     ;; We don't use cached values.
-    (tramp-set-file-property v localname "file-system-attributes" 'undef)
+    (tramp-flush-file-property v localname "file-system-attributes")
     (let* ((attr (tramp-gvfs-get-root-attributes filename 'file-system))
 	   (size (cdr (assoc "filesystem::size" attr)))
 	   (used (cdr (assoc "filesystem::used" attr)))
@@ -1205,8 +1205,8 @@ file-notify events."
   "Like `make-directory' for Tramp files."
   (setq dir (directory-file-name (expand-file-name dir)))
   (with-parsed-tramp-file-name dir nil
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-directory-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-directory-properties v localname)
     (save-match-data
       (let ((ldir (file-name-directory dir)))
 	;; Make missing directory parts.  "gvfs-mkdir -p ..." does not
@@ -1262,8 +1262,8 @@ file-notify events."
 	 (tramp-error
 	  v 'file-error "Couldn't write region to `%s'" filename))))
 
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-file-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
 
     ;; Set file modification time.
     (when (or (eq visit t) (stringp visit))
@@ -1487,9 +1487,9 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	  (tramp-message
 	   v 6 "%s %s"
 	   signal-name (tramp-gvfs-stringify-dbus-message mount-info))
-	  (tramp-set-file-property v "/" "list-mounts" 'undef)
+	  (tramp-flush-file-property v "/" "list-mounts")
 	  (if (string-equal (downcase signal-name) "unmounted")
-	      (tramp-flush-file-property v "/")
+	      (tramp-flush-file-properties v "/")
 	    ;; Set prefix, mountpoint and location.
 	    (unless (string-equal prefix "/")
 	      (tramp-set-file-property v "/" "prefix" prefix))
@@ -1865,7 +1865,7 @@ is applied, and it returns t if the return code is zero."
       (erase-buffer)
       (or (zerop (apply 'tramp-call-process vec command nil t nil args))
 	  ;; Remove information about mounted connection.
-	  (and (tramp-flush-file-property vec "/") nil)))))
+	  (and (tramp-flush-file-properties vec "/") nil)))))
 
 
 ;; D-Bus BLUEZ functions.

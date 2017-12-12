@@ -104,13 +104,13 @@ When called interactively, a Tramp connection has to be selected."
     (when keep-password (setq tramp-current-connection nil))
 
     ;; Flush file cache.
-    (tramp-flush-directory-property vec "")
+    (tramp-flush-directory-properties vec "")
 
     ;; Flush connection cache.
     (when (processp (tramp-get-connection-process vec))
-      (tramp-flush-connection-property (tramp-get-connection-process vec))
+      (tramp-flush-connection-properties (tramp-get-connection-process vec))
       (delete-process (tramp-get-connection-process vec)))
-    (tramp-flush-connection-property vec)
+    (tramp-flush-connection-properties vec)
 
     ;; Remove buffers.
     (dolist

@@ -166,7 +166,22 @@ Returns VALUE."
     value))
 
 ;;;###tramp-autoload
-(defun tramp-flush-file-property (key file)
+(defun tramp-flush-file-property (key file property)
+  "Remove PROPERTY of FILE in the cache context of KEY."
+  ;; Unify localname.  Remove hop from `tramp-file-name' structure.
+  (setq file (tramp-compat-file-name-unquote file)
+	key (copy-tramp-file-name key))
+  (setf (tramp-file-name-localname key)
+	(tramp-run-real-handler 'directory-file-name (list file))
+	(tramp-file-name-hop key) nil)
+  (remhash property (tramp-get-hash-table key))
+  (tramp-message key 8 "%s %s" file property)
+  (when (>= tramp-verbose 10)
+    (let ((var (intern (concat "tramp-cache-set-count-" property))))
+      (makunbound var))))
+
+;;;###tramp-autoload
+(defun tramp-flush-file-properties (key file)
   "Remove all properties of FILE in the cache context of KEY."
   (let* ((file (tramp-run-real-handler
 		'directory-file-name (list file)))
@@ -181,10 +196,10 @@ Returns VALUE."
     ;; Remove file properties of symlinks.
     (when (and (stringp truename)
 	       (not (string-equal file (directory-file-name truename))))
-      (tramp-flush-file-property key truename))))
+      (tramp-flush-file-properties key truename))))
 
 ;;;###tramp-autoload
-(defun tramp-flush-directory-property (key directory)
+(defun tramp-flush-directory-properties (key directory)
   "Remove all properties of DIRECTORY in the cache context of KEY.
 Remove also properties of all files in subdirectories."
   (setq directory (tramp-compat-file-name-unquote directory))
@@ -203,7 +218,7 @@ Remove also properties of all files in subdirectories."
     ;; Remove file properties of symlinks.
     (when (and (stringp truename)
 	       (not (string-equal directory (directory-file-name truename))))
-      (tramp-flush-directory-property key truename))))
+      (tramp-flush-directory-properties key truename))))
 
 ;; Reverting or killing a buffer should also flush file properties.
 ;; They could have been changed outside Tramp.  In eshell, "ls" would
@@ -222,7 +237,7 @@ This is suppressed for temporary buffers."
 	    (tramp-verbose 0))
 	(when (tramp-tramp-file-p bfn)
 	  (with-parsed-tramp-file-name bfn nil
-	    (tramp-flush-file-property v localname)))))))
+	    (tramp-flush-file-properties v localname)))))))
 
 (add-hook 'before-revert-hook 'tramp-flush-file-function)
 (add-hook 'eshell-pre-command-hook 'tramp-flush-file-function)
@@ -291,7 +306,24 @@ used to cache connection properties of the local machine."
   (not (eq (tramp-get-connection-property key property 'undef) 'undef)))
 
 ;;;###tramp-autoload
-(defun tramp-flush-connection-property (key)
+(defun tramp-flush-connection-property (key property)
+  "Remove the named PROPERTY of a connection identified by KEY.
+KEY identifies the connection, it is either a process or a
+`tramp-file-name' structure.  A special case is nil, which is
+used to cache connection properties of the local machine.
+PROPERTY is set persistent when KEY is a `tramp-file-name' structure."
+  ;; Unify key by removing localname and hop from `tramp-file-name'
+  ;; structure.  Work with a copy in order to avoid side effects.
+  (when (tramp-file-name-p key)
+    (setq key (copy-tramp-file-name key))
+    (setf (tramp-file-name-localname key) nil
+	  (tramp-file-name-hop key) nil))
+  (remhash property (tramp-get-hash-table key))
+  (setq tramp-cache-data-changed t)
+  (tramp-message key 7 "%s" property))
+
+;;;###tramp-autoload
+(defun tramp-flush-connection-properties (key)
   "Remove all properties identified by KEY.
 KEY identifies the connection, it is either a process or a
 `tramp-file-name' structure.  A special case is nil, which is

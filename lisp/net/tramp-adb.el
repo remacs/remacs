@@ -541,8 +541,8 @@ Emacs dired can't find files."
       (let ((par (expand-file-name ".." dir)))
 	(unless (file-directory-p par)
 	  (make-directory par parents))))
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-directory-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-directory-properties v localname)
     (unless (or (tramp-adb-send-command-and-check
 		 v (format "mkdir %s" (tramp-shell-quote-argument localname)))
 		(and parents (file-directory-p dir)))
@@ -552,11 +552,11 @@ Emacs dired can't find files."
   "Like `delete-directory' for Tramp files."
   (setq directory (expand-file-name directory))
   (with-parsed-tramp-file-name (file-truename directory) nil
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-directory-property v localname))
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-directory-properties v localname))
   (with-parsed-tramp-file-name directory nil
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-directory-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-directory-properties v localname)
     (tramp-adb-barf-unless-okay
      v (format "%s %s"
 	       (if recursive "rm -r" "rmdir")
@@ -567,8 +567,8 @@ Emacs dired can't find files."
   "Like `delete-file' for Tramp files."
   (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-file-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
     (tramp-adb-barf-unless-okay
      v (format "rm %s" (tramp-shell-quote-argument localname))
      "Couldn't delete %s" filename)))
@@ -661,8 +661,8 @@ But handle the case, if the \"test\" command is not available."
 
     ;; We must also flush the cache of the directory, because
     ;; `file-attributes' reads the values from there.
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-file-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
     (let* ((curbuf (current-buffer))
 	   (tmpfile (tramp-compat-make-temp-file filename)))
       (when (and append (file-exists-p filename))
@@ -692,15 +692,15 @@ But handle the case, if the \"test\" command is not available."
 (defun tramp-adb-handle-set-file-modes (filename mode)
   "Like `set-file-modes' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-file-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
     (tramp-adb-send-command-and-check v (format "chmod %o %s" mode localname))))
 
 (defun tramp-adb-handle-set-file-times (filename &optional time)
   "Like `set-file-times' for Tramp files."
   (with-parsed-tramp-file-name filename nil
-    (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-file-property v localname)
+    (tramp-flush-file-properties v (file-name-directory localname))
+    (tramp-flush-file-properties v localname)
     (let ((time (if (or (null time) (equal time '(0 0)))
 		    (current-time)
 		  time)))
@@ -736,8 +736,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		;; We must also flush the cache of the directory,
 		;; because `file-attributes' reads the values from
 		;; there.
-		(tramp-flush-file-property v (file-name-directory l2))
-		(tramp-flush-file-property v l2)
+		(tramp-flush-file-properties v (file-name-directory l2))
+		(tramp-flush-file-properties v l2)
 		;; Short track.
 		(tramp-adb-barf-unless-okay
 		 v (format
@@ -771,8 +771,9 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		  ;; We must also flush the cache of the directory,
 		  ;; because `file-attributes' reads the values from
 		  ;; there.
-		  (tramp-flush-file-property v (file-name-directory localname))
-		  (tramp-flush-file-property v localname)
+		  (tramp-flush-file-properties
+		   v (file-name-directory localname))
+		  (tramp-flush-file-properties v localname)
 		  (when (tramp-adb-execute-adb-command
 			 v "push"
 			 (tramp-compat-file-name-unquote filename)
@@ -815,10 +816,10 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		  (tramp-error v 'file-already-exists newname))
 		;; We must also flush the cache of the directory, because
 		;; `file-attributes' reads the values from there.
-		(tramp-flush-file-property v (file-name-directory l1))
-		(tramp-flush-file-property v l1)
-		(tramp-flush-file-property v (file-name-directory l2))
-		(tramp-flush-file-property v l2)
+		(tramp-flush-file-properties v (file-name-directory l1))
+		(tramp-flush-file-properties v l1)
+		(tramp-flush-file-properties v (file-name-directory l2))
+		(tramp-flush-file-properties v l2)
 		;; Short track.
 		(tramp-adb-barf-unless-okay
 		 v (format
@@ -930,7 +931,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
       (when tmpinput (delete-file tmpinput))
 
       (unless process-file-side-effects
-        (tramp-flush-directory-property v ""))
+        (tramp-flush-directory-properties v ""))
 
       ;; Return exit status.
       (if (equal ret -1)
@@ -1087,8 +1088,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		(set-process-buffer (tramp-get-connection-process v) nil)
 		(kill-buffer (current-buffer)))
 	    (set-buffer-modified-p bmp))
-	  (tramp-set-connection-property v "process-name" nil)
-	  (tramp-set-connection-property v "process-buffer" nil))))))
+	  (tramp-flush-connection-property v "process-name")
+	  (tramp-flush-connection-property v "process-buffer"))))))
 
 (defun tramp-adb-get-device (vec)
   "Return full host name from VEC to be used in shell execution.
@@ -1097,7 +1098,7 @@ E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
   ;; Sometimes this is called before there is a connection process
   ;; yet.  In order to work with the connection cache, we flush all
   ;; unwanted entries first.
-  (tramp-flush-connection-property nil)
+  (tramp-flush-connection-properties nil)
   (with-tramp-connection-property (tramp-get-connection-process vec) "device"
     (let* ((host (tramp-file-name-host vec))
 	   (port (tramp-file-name-port-or-default vec))
@@ -1310,7 +1311,7 @@ connection if a previous connection has died for some reason."
 	      (tramp-adb-send-command vec (format "su %s" user))
 	      (unless (tramp-adb-send-command-and-check vec nil)
 		(delete-process p)
-		(tramp-set-file-property vec "" "su-command-p" nil)
+		(tramp-flush-file-property vec "" "su-command-p")
 		(tramp-error
 		 vec 'file-error "Cannot switch to user `%s'" user)))
 
