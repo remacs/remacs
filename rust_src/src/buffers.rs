@@ -5,7 +5,7 @@ use std::{mem, ptr};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist};
-use remacs_sys::{make_lisp_ptr, nsberror, recenter_overlay_lists, set_buffer_internal};
+use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -323,7 +323,7 @@ pub fn overlay_recenter(pos: LispObject) -> LispObject {
         pos.as_fixnum_coerce_marker_or_error(),
         ptrdiff_t::max_value(),
     );
-    unsafe { recenter_overlay_lists(ThreadState::current_buffer().as_mut(), p) };
+    unsafe { recenter_overlay_lists(ThreadState::current_buffer(), p) };
     LispObject::constant_nil()
 }
 
@@ -333,6 +333,57 @@ pub fn overlay_recenter(pos: LispObject) -> LispObject {
 pub fn overlay_buffer(overlay: LispObject) -> LispObject {
     let marker = overlay.as_overlay_or_error().start();
     marker_buffer(marker)
+}
+
+pub fn recenter_overlay_lists(mut buf: LispBufferRef, pos: ptrdiff_t) {
+    // let mut overlay: LispObject;
+    let (mut prev, mut tail, mut next): (
+        Option<LispOverlayRef>,
+        LispOverlayRef,
+        Option<LispOverlayRef>,
+    ) = (
+        None,
+        LispOverlayRef::new((*buf).overlays_before as *mut Lisp_Overlay),
+        None,
+    );
+    loop {
+        if tail.as_ptr() as ptrdiff_t == 0 {
+            break;
+        }
+        let (beg, end, curNext) = (tail.start(), tail.end(), tail.next);
+        if end.as_fixnum_coerce_marker_or_error() as ptrdiff_t > pos {
+            let begPtr = beg.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
+
+            match prev {
+                Some(mut tailPtr) => tailPtr.next = curNext,
+                None => set_buffer_overlays_before(buf, curNext),
+            }
+
+            loop {
+                let (mut other_prev, mut other): (
+                    Option<LispOverlayRef>,
+                    LispOverlayRef,
+                ) = (
+                    None,
+                    LispOverlayRef::new((*buf).overlays_after as *mut Lisp_Overlay),
+                );
+            }
+        }
+        // TODO: check loop changes
+        prev = Some(tail);
+        tail = next.unwrap()
+    }
+    (*buf).overlay_center = pos
+}
+
+#[inline]
+fn set_buffer_overlays_before(mut buf: LispBufferRef, overlay: *const Lisp_Overlay) {
+    (*buf).overlays_before = overlay as *mut c_void
+}
+
+#[inline]
+fn set_buffer_overlays_after(mut buf: LispBufferRef, overlay: *const Lisp_Overlay) {
+    (*buf).overlays_after = overlay as *mut c_void
 }
 
 #[no_mangle]

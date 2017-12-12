@@ -546,9 +546,9 @@ pub struct Lisp_Buffer {
     // XXX in C, bitfield with two bools
     flags: u8,
 
-    overlays_before: *mut c_void,
-    overlays_after: *mut c_void,
-    overlay_center: ptrdiff_t,
+    pub overlays_before: *mut c_void,
+    pub overlays_after: *mut c_void,
+    pub overlay_center: ptrdiff_t,
 
     undo_list: Lisp_Object,
 }
