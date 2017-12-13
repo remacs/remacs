@@ -339,12 +339,18 @@ is called as a function to find the defun's beginning."
 
    ((or defun-prompt-regexp open-paren-in-column-0-is-defun-start)
     (and (< arg 0) (not (eobp)) (forward-char 1))
-    (and (re-search-backward (if defun-prompt-regexp
-				 (concat (if open-paren-in-column-0-is-defun-start
-					     "^\\s(\\|" "")
-					 "\\(?:" defun-prompt-regexp "\\)\\s(")
-			       "^\\s(")
-			     nil 'move arg)
+    (and (let (found)
+           (while
+               (and (setq found
+                          (re-search-backward
+                           (if defun-prompt-regexp
+			       (concat (if open-paren-in-column-0-is-defun-start
+					   "^\\s(\\|" "")
+				       "\\(?:" defun-prompt-regexp "\\)\\s(")
+			     "^\\s(")
+			                      nil 'move arg))
+                    (nth 8 (syntax-ppss))))
+           found)
 	 (progn (goto-char (1- (match-end 0)))
                 t)))
 
