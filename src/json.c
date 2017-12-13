@@ -367,12 +367,48 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp, json_t **json)
       clear_unwind_protect (count);
       return unbind_to (count, Qnil);
     }
+  else if (NILP (lisp))
+    {
+      *json = json_check (json_object ());
+      return Qnil;
+    }
+  else if (CONSP (lisp))
+    {
+      Lisp_Object tail = lisp;
+      *json = json_check (json_object ());
+      ptrdiff_t count = SPECPDL_INDEX ();
+      record_unwind_protect_ptr (json_release_object, *json);
+      FOR_EACH_TAIL (tail)
+        {
+          Lisp_Object pair = XCAR (tail);
+          CHECK_CONS (pair);
+          Lisp_Object key_symbol = XCAR (pair);
+          Lisp_Object value = XCDR (pair);
+          CHECK_SYMBOL (key_symbol);
+          Lisp_Object key = SYMBOL_NAME (key_symbol);
+          /* We can't specify the length, so the string must be
+             null-terminated.  */
+          check_string_without_embedded_nulls (key);
+          const char *key_str = SSDATA (key);
+          /* Only add element if key is not already present.  */
+          if (json_object_get (*json, key_str) == NULL)
+            {
+              int status
+                = json_object_set_new (*json, key_str, lisp_to_json (value));
+              if (status == -1)
+                json_out_of_memory ();
+            }
+        }
+      CHECK_LIST_END (tail, lisp);
+      clear_unwind_protect (count);
+      return unbind_to (count, Qnil);
+    }
   wrong_type_argument (Qjson_value_p, lisp);
 }
 
 /* Convert LISP to a toplevel JSON object (array or object).  Signal
-   an error of type `wrong-type-argument' if LISP is not a vector or
-   hashtable.  */
+   an error of type `wrong-type-argument' if LISP is not a vector,
+   hashtable, or alist.  */
 
 static json_t *
 lisp_to_json_toplevel (Lisp_Object lisp)
@@ -413,19 +449,20 @@ lisp_to_json (Lisp_Object lisp)
       return json_check (json_stringn (SSDATA (encoded), SBYTES (encoded)));
     }
 
-  /* LISP now must be a vector or hashtable.  */
+  /* LISP now must be a vector, hashtable, or alist.  */
   return lisp_to_json_toplevel (lisp);
 }
 
 DEFUN ("json-serialize", Fjson_serialize, Sjson_serialize, 1, 1, NULL,
        doc: /* Return the JSON representation of OBJECT as a string.
-OBJECT must be a vector or hashtable, and its elements can recursively
-contain `:null', `:false', t, numbers, strings, or other vectors and
-hashtables.  `:null', `:false', and t will be converted to JSON null,
-false, and true values, respectively.  Vectors will be converted to
-JSON arrays, and hashtables to JSON objects.  Hashtable keys must be
-strings without embedded null characters and must be unique within
-each object.  */)
+OBJECT must be a vector, hashtable, or alist, and its elements can
+recursively contain `:null', `:false', t, numbers, strings, or other
+vectors hashtables, and alist.  `:null', `:false', and t will be
+converted to JSON null, false, and true values, respectively.  Vectors
+will be converted to JSON arrays, and hashtables and alists to JSON
+objects.  Hashtable keys must be strings without embedded null
+characters and must be unique within each object.  Alist keys must be
+symbols; if a key is duplicate, the first instance is used.  */)
   (Lisp_Object object)
 {
   ptrdiff_t count = SPECPDL_INDEX ();

@@ -4929,14 +4929,16 @@ represented using Lisp vectors.
 
 @item
 JSON has only one map type, the object.  JSON objects are represented
-using Lisp hashtables or alists.
+using Lisp hashtables or alists.  When an alist contains several
+elements with the same key, Emacs uses only the first element for
+serialization, in accordance with the behavior of @code{assq}.
 
 @end itemize
 
 @noindent
-Note that @code{nil} represents the empty JSON object, @code{@{@}},
-not @code{null}, @code{false}, or an empty array, all of which are
-different JSON values.
+Note that @code{nil} is a valid alist and represents the empty JSON
+object, @code{@{@}}, not @code{null}, @code{false}, or an empty array,
+all of which are different JSON values.
 
   If some Lisp object can't be represented in JSON, the serialization
 functions will signal an error of type @code{wrong-type-argument}.
