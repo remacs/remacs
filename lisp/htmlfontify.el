@@ -426,7 +426,7 @@ Some valid class specification elements are:\n
   (type       lucid)
 Multiple values for a tag may be combined, to indicate that any one or more
 of these values in the specification key constitutes a match, eg:\n
-((class color grayscale) (type tty)) would match any of:\n
+\((class color grayscale) (type tty)) would match any of:\n
   ((class color))
   ((class grayscale))
   ((class color grayscale))

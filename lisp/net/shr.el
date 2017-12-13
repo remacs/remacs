@@ -149,7 +149,7 @@ cid: URL as the argument.")
   "Alist of tag/function pairs used to alter how shr renders certain tags.
 For instance, eww uses this to alter rendering of title, forms
 and other things:
-((title . eww-tag-title)
+\((title . eww-tag-title)
  (form . eww-tag-form)
  ...)")
 
