@@ -203,6 +203,7 @@ if and why this commit should be skipped."
     ;; `gitmerge-skip-regexp' or are marked by --cherry-mark.
     (with-temp-buffer
       (call-process "git" nil t nil "log" "--cherry-mark" "--left-only"
+		    "--no-decorate"
 		    (concat from "..." (car (vc-git-branches))))
       (goto-char (point-max))
       (while (re-search-backward "^commit \\(.+\\) \\([0-9a-f]+\\).*" nil t)
