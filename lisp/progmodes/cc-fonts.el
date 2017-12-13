@@ -1251,6 +1251,17 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; Got a cached hit in some other type of arglist.
 	  (type
 	   (cons 'arglist t))
+	  ;; We're at a C++ uniform initialization.
+	  ((and (c-major-mode-is 'c++-mode)
+		(eq (char-before match-pos) ?\()
+		(save-excursion
+		  (goto-char match-pos)
+		  (and
+		   (zerop (c-backward-token-2 2))
+		   (looking-at c-identifier-start)
+		   (c-got-face-at (point)
+				  '(font-lock-variable-name-face)))))
+	   (cons 'not-decl nil))
 	  ((and not-front-decl
 	   ;; The point is within the range of a previously
 	   ;; encountered type decl expression, so the arglist
@@ -1589,7 +1600,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    (setq max-type-decl-end (point))))
 		(goto-char start-pos)
 		(c-font-lock-single-decl limit decl-or-cast match-pos
-					 context toplev))
+					 context
+					 (or toplev (nth 4 decl-or-cast))))
 
 	       (t t))))
 

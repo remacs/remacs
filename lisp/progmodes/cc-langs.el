@@ -2355,6 +2355,16 @@ construct it's part of continues."
   t    nil
   (c c++ objc) '("extern"))
 
+(c-lang-defconst c-make-top-level-kwds
+  "Keywords which make declarations they introduce be handled as top-level."
+  t    nil
+  (c c++ objc) '("extern"))
+
+(c-lang-defconst c-make-top-level-key
+  ;; A regexp which matches any `c-make-top-level-kwds' keyword.
+  t (c-make-keywords-re t (c-lang-const c-make-top-level-kwds)))
+(c-lang-defvar c-make-top-level-key (c-lang-const c-make-top-level-key))
+
 (c-lang-defconst c-type-list-kwds
   "Keywords that may be followed by a comma separated list of type
 identifiers, where each optionally can be prefixed by keywords.  (Can
