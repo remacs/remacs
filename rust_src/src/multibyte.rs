@@ -62,7 +62,7 @@ pub const MAX_MULTIBYTE_LENGTH: usize = 5;
 
 impl LispStringRef {
     /// Return the string's len in bytes.
-    pub fn len_bytes(&self) -> ptrdiff_t {
+    pub fn len_bytes(self) -> ptrdiff_t {
         if self.size_byte < 0 {
             self.size
         } else {
@@ -72,11 +72,11 @@ impl LispStringRef {
 
     /// Return the string's length in characters.  Differs from
     /// `len_bytes` for multibyte strings.
-    pub fn len_chars(&self) -> ptrdiff_t {
+    pub fn len_chars(self) -> ptrdiff_t {
         self.size
     }
 
-    pub fn is_multibyte(&self) -> bool {
+    pub fn is_multibyte(self) -> bool {
         self.size_byte >= 0
     }
 
@@ -107,7 +107,7 @@ impl LispStringRef {
     }
 
     #[inline]
-    pub fn byte_at(&self, index: ptrdiff_t) -> u8 {
+    pub fn byte_at(self, index: ptrdiff_t) -> u8 {
         unsafe { *self.const_data_ptr().offset(index) }
     }
 

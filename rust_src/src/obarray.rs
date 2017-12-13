@@ -48,7 +48,7 @@ impl LispObarrayRef {
     ///
     /// This is makes use of the C function `intern_driver`. It uses LEN as both
     /// the byte and char length, i.e. S is treated as a unibyte string.
-    pub fn intern_cstring(&mut self, s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
+    pub fn intern_cstring(self, s: *const libc::c_char, len: libc::ptrdiff_t) -> LispObject {
         let tem = self.lookup_cstring(s, len);
         if tem.is_symbol() {
             tem
@@ -90,7 +90,7 @@ impl LispObarrayRef {
     ///
     /// This is makes use of the C function `intern_driver`. It is capable of
     /// handling multibyte strings, unlike `intern_cstring`.
-    pub fn intern(&mut self, string: LispObject) -> LispObject {
+    pub fn intern(self, string: LispObject) -> LispObject {
         let tem = self.lookup(string);
         if tem.is_symbol() {
             tem

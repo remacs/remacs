@@ -12,15 +12,15 @@ use lisp::defsubr;
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
 impl LispSymbolRef {
-    pub fn symbol_name(&self) -> LispObject {
+    pub fn symbol_name(self) -> LispObject {
         LispObject::from(self.name)
     }
 
-    pub fn get_function(&self) -> LispObject {
+    pub fn get_function(self) -> LispObject {
         LispObject::from(self.function)
     }
 
-    pub fn get_plist(&self) -> LispObject {
+    pub fn get_plist(self) -> LispObject {
         LispObject::from(self.plist)
     }
 
@@ -32,19 +32,19 @@ impl LispSymbolRef {
         self.function = function.to_raw();
     }
 
-    pub fn is_interned_in_initial_obarray(&self) -> bool {
+    pub fn is_interned_in_initial_obarray(self) -> bool {
         unsafe { symbol_is_interned(self.as_ptr()) }
     }
 
-    pub fn is_alias(&self) -> bool {
+    pub fn is_alias(self) -> bool {
         unsafe { symbol_is_alias(self.as_ptr()) }
     }
 
-    pub fn is_constant(&self) -> bool {
+    pub fn is_constant(self) -> bool {
         unsafe { symbol_is_constant(self.as_ptr()) }
     }
 
-    pub fn get_alias(&self) -> LispSymbolRef {
+    pub fn get_alias(self) -> LispSymbolRef {
         debug_assert!(self.is_alias());
         LispSymbolRef::new(unsafe { self.val.alias })
     }

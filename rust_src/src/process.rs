@@ -17,42 +17,42 @@ pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
 impl LispProcessRef {
     #[inline]
-    fn name(&self) -> LispObject {
+    fn name(self) -> LispObject {
         LispObject::from(self.name)
     }
 
     #[inline]
-    fn tty_name(&self) -> LispObject {
+    fn tty_name(self) -> LispObject {
         LispObject::from(self.tty_name)
     }
 
     #[inline]
-    fn command(&self) -> LispObject {
+    fn command(self) -> LispObject {
         LispObject::from(self.command)
     }
 
     #[inline]
-    fn mark(&self) -> LispObject {
+    fn mark(self) -> LispObject {
         LispObject::from(self.mark)
     }
 
     #[inline]
-    fn filter(&self) -> LispObject {
+    fn filter(self) -> LispObject {
         LispObject::from(self.filter)
     }
 
     #[inline]
-    fn sentinel(&self) -> LispObject {
+    fn sentinel(self) -> LispObject {
         LispObject::from(self.sentinel)
     }
 
     #[inline]
-    fn plist(&self) -> LispObject {
+    fn plist(self) -> LispObject {
         LispObject::from(self.plist)
     }
 
     #[inline]
-    fn buffer(&self) -> LispObject {
+    fn buffer(self) -> LispObject {
         LispObject::from(self.buffer)
     }
 

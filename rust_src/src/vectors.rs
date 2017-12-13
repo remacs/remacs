@@ -29,7 +29,7 @@ pub type LispBoolVecRef = ExternalPtr<Lisp_Bool_Vector>;
 
 impl LispVectorlikeRef {
     #[inline]
-    pub fn is_vector(&self) -> bool {
+    pub fn is_vector(self) -> bool {
         self.header.size & PSEUDOVECTOR_FLAG == 0
     }
 
@@ -55,13 +55,13 @@ impl LispVectorlikeRef {
     }
 
     #[inline]
-    pub fn is_pseudovector(&self, tp: PseudovecType) -> bool {
+    pub fn is_pseudovector(self, tp: PseudovecType) -> bool {
         self.header.size & (PSEUDOVECTOR_FLAG | PVEC_TYPE_MASK)
             == (PSEUDOVECTOR_FLAG | ((tp as isize) << PSEUDOVECTOR_AREA_BITS))
     }
 
     #[inline]
-    pub fn pseudovector_size(&self) -> EmacsInt {
+    pub fn pseudovector_size(self) -> EmacsInt {
         (self.header.size & PSEUDOVECTOR_SIZE_MASK) as EmacsInt
     }
 
@@ -131,7 +131,7 @@ impl LispVectorlikeRef {
 
 impl LispVectorRef {
     #[inline]
-    pub fn len(&self) -> usize {
+    pub fn len(self) -> usize {
         self.header.size as usize
     }
 
@@ -156,20 +156,20 @@ impl LispVectorRef {
     }
 
     #[inline]
-    pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
+    pub unsafe fn get_unchecked(self, idx: ptrdiff_t) -> LispObject {
         ptr::read(mem::transmute::<_, *const LispObject>(&self.contents).offset(idx))
     }
 
     #[allow(dead_code)]
     #[inline]
-    pub fn get(&self, idx: ptrdiff_t) -> LispObject {
+    pub fn get(self, idx: ptrdiff_t) -> LispObject {
         assert!(0 <= idx && idx < self.len() as ptrdiff_t);
         unsafe { self.get_unchecked(idx) }
     }
 }
 
 impl LispBoolVecRef {
-    pub fn len(&self) -> usize {
+    pub fn len(self) -> usize {
         self.size as usize
     }
 }

@@ -48,7 +48,7 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn frame(&self) -> LispObject {
+    pub fn frame(self) -> LispObject {
         LispObject::from(self.frame)
     }
 
@@ -58,12 +58,12 @@ impl LispWindowRef {
     }
 
     #[inline]
-    pub fn is_internal(&self) -> bool {
+    pub fn is_internal(self) -> bool {
         self.contents().is_window()
     }
 
     #[inline]
-    pub fn is_minibuffer(&self) -> bool {
+    pub fn is_minibuffer(self) -> bool {
         unsafe { is_minibuffer(self.as_ptr()) }
     }
 
@@ -81,7 +81,7 @@ impl LispWindowRef {
         unsafe { wget_pixel_height(self.as_ptr()) }
     }
 
-    pub fn total_width(&self, round: LispObject) -> i32 {
+    pub fn total_width(self, round: LispObject) -> i32 {
         let qfloor = LispObject::from(Qfloor);
         let qceiling = LispObject::from(Qceiling);
 
