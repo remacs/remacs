@@ -176,7 +176,7 @@ impl LispObject {
     }
 
     #[inline]
-    fn symbol_ptr_value(&self) -> EmacsInt {
+    fn symbol_ptr_value(self) -> EmacsInt {
         let ptr_value = if USE_LSB_TAG {
             self.to_raw() as EmacsInt
         } else {
@@ -680,25 +680,13 @@ impl LispObject {
 }
 
 impl LispObject {
-    pub fn as_hash_table_or_error(&self) -> LispHashTableRef {
+    pub fn as_hash_table_or_error(self) -> LispHashTableRef {
         if self.is_hash_table() {
             LispHashTableRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
         } else {
-            wrong_type!(Qhash_table_p, *self);
+            wrong_type!(Qhash_table_p, self);
         }
     }
-
-    /*
-    pub fn as_hash_table(&self) -> Option<LispHashTableRef> {
-        if self.is_hash_table() {
-            Some(LispHashTableRef::new(
-                unsafe { mem::transmute(self.get_untaggedptr()) },
-            ))
-        } else {
-            None
-        }
-    }
-    */
 
     pub fn from_hash_table(hashtable: LispHashTableRef) -> LispObject {
         let object = LispObject::tag_ptr(hashtable, Lisp_Type::Lisp_Vectorlike);
@@ -1039,13 +1027,13 @@ impl LispObject {
 // Other functions
 
 pub trait IsLispNatnum {
-    fn check_natnum(&self);
+    fn check_natnum(self);
 }
 
 impl IsLispNatnum for EmacsInt {
-    fn check_natnum(&self) {
-        if *self < 0 {
-            wrong_type!(Qwholenump, LispObject::from_fixnum(*self));
+    fn check_natnum(self) {
+        if self < 0 {
+            wrong_type!(Qwholenump, LispObject::from_fixnum(self));
         }
     }
 }
