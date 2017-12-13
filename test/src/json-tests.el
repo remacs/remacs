@@ -54,13 +54,15 @@
 
 (ert-deftest json-parse-string/object ()
   (skip-unless (fboundp 'json-parse-string))
-  (let ((actual
-         (json-parse-string
-          "{ \"abc\" : [1, 2, true], \"def\" : null, \"abc\" : [9, false] }\n")))
-    (should (hash-table-p actual))
-    (should (equal (hash-table-count actual) 2))
-    (should (equal (cl-sort (map-pairs actual) #'string< :key #'car)
-                   '(("abc" . [9 :false]) ("def" . :null))))))
+  (let ((input
+         "{ \"abc\" : [1, 2, true], \"def\" : null, \"abc\" : [9, false] }\n"))
+    (let ((actual (json-parse-string input)))
+      (should (hash-table-p actual))
+      (should (equal (hash-table-count actual) 2))
+      (should (equal (cl-sort (map-pairs actual) #'string< :key #'car)
+                     '(("abc" . [9 :false]) ("def" . :null)))))
+    (should (equal (json-parse-string input :object-type 'alist)
+                   '((abc . [9 :false]) (def . :null))))))
 
 (ert-deftest json-parse-string/string ()
   (skip-unless (fboundp 'json-parse-string))

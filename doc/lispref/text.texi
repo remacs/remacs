@@ -4965,14 +4965,13 @@ represented using Lisp vectors.
 
 @item
 JSON has only one map type, the object.  JSON objects are represented
-using Lisp hashtables.
+using Lisp hashtables or alists.
 
 @end itemize
 
 @noindent
-Note that @code{nil} doesn't represent any JSON values: this is to
-avoid confusion, because @code{nil} could either represent
-@code{null}, @code{false}, or an empty array, all of which are
+Note that @code{nil} represents the empty JSON object, @code{@{@}},
+not @code{null}, @code{false}, or an empty array, all of which are
 different JSON values.
 
   If some Lisp object can't be represented in JSON, the serialization
@@ -4995,8 +4994,13 @@ The parsing functions will signal the following errors:
 
   Only top-level values (arrays and objects) can be serialized to
 JSON.  The subobjects within these top-level values can be of any
-type.  Likewise, the parsing functions will only return vectors and
-hashtables.
+type.  Likewise, the parsing functions will only return vectors,
+hashtables, and alists.
+
+  The parsing functions accept keyword arguments.  Currently only one
+keyword argument, @code{:object-type}, is recognized; its value can be
+either @code{hash-table} to parse JSON objects as hashtables with
+string keys (the default) or @code{alist} to parse them as alists.
 
 @defun json-serialize object
 This function returns a new Lisp string which contains the JSON
@@ -5008,12 +5012,12 @@ This function inserts the JSON representation of @var{object} into the
 current buffer before point.
 @end defun
 
-@defun json-parse-string string
+@defun json-parse-string string &key (object-type @code{hash-table})
 This function parses the JSON value in @var{string}, which must be a
 Lisp string.
 @end defun
 
-@defun json-parse-buffer
+@defun json-parse-buffer &key (object-type @code{hash-table})
 This function reads the next JSON value from the current buffer,
 starting at point.  It moves point to the position immediately after
 the value if a value could be read and converted to Lisp; otherwise it
