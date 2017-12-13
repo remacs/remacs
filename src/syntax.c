@@ -605,6 +605,26 @@ find_defun_start (ptrdiff_t pos, ptrdiff_t pos_byte)
       && MODIFF == find_start_modiff)
     return find_start_value;
 
+  if (!NILP (Vcomment_use_syntax_ppss))
+    {
+      EMACS_INT modiffs = CHARS_MODIFF;
+      Lisp_Object ppss = call1 (Qsyntax_ppss, make_number (pos));
+      if (modiffs != CHARS_MODIFF)
+	error ("syntax-ppss modified the buffer!");
+      TEMP_SET_PT_BOTH (opoint, opoint_byte);
+      Lisp_Object boc = Fnth (make_number (8), ppss);
+      if (NUMBERP (boc))
+        {
+          find_start_value = XINT (boc);
+          find_start_value_byte = CHAR_TO_BYTE (find_start_value);
+        }
+      else
+        {
+          find_start_value = pos;
+          find_start_value_byte = pos_byte;
+        }
+      goto found;
+    }
   if (!open_paren_in_column_0_is_defun_start)
     {
       find_start_value = BEGV;
@@ -874,6 +894,7 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 	case Sopen:
 	  /* Assume a defun-start point is outside of strings.  */
 	  if (open_paren_in_column_0_is_defun_start
+              && NILP (Vcomment_use_syntax_ppss)
 	      && (from == stop
 		  || (temp_byte = dec_bytepos (from_byte),
 		      FETCH_CHAR (temp_byte) == '\n')))
@@ -3689,6 +3710,11 @@ void
 syms_of_syntax (void)
 {
   DEFSYM (Qsyntax_table_p, "syntax-table-p");
+  DEFSYM (Qsyntax_ppss, "syntax-ppss");
+  DEFVAR_LISP ("comment-use-syntax-ppss",
+	       Vcomment_use_syntax_ppss,
+	       doc: /* Non-nil means `forward-comment' can use `syntax-ppss' internally.  */);
+  Vcomment_use_syntax_ppss = Qt;
 
   staticpro (&Vsyntax_code_object);
 
