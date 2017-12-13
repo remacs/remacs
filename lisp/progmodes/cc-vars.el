@@ -1669,7 +1669,7 @@ this implicitly by reinitializing C/C++/Objc Mode on any buffer)."
 which optionally have arguments in parentheses, and which expand to nothing.
 These are recognized by CC Mode only in declarations."
   :version "26.1"
-  :type '(regexp :tag "List of names (possibly empty)" string)
+  :type '(repeat :tag "List of names (possibly empty)" string)
   :group 'c)
 (put 'c-noise-macro-with-parens-names 'safe-local-variable #'c-string-list-p)
 

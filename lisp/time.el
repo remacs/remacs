@@ -173,7 +173,9 @@ If the value is t instead of an alist, use the value of
 `legacy-style-world-list' otherwise."
 
   :group 'display-time
-  :type '(repeat (list string string))
+  :type '(choice (const :tag "Default" t)
+                 (repeat :tag "List of zones and labels"
+                         (list (string :tag "Zone") (string :tag "Label"))))
   :version "23.1")
 
 (defun time--display-world-list ()

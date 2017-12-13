@@ -5195,7 +5195,9 @@ Before and after saving the buffer, this function runs
 This allows you to stop `save-some-buffers' from asking
 about certain files that you'd usually rather not save."
   :group 'auto-save
-  :type 'function
+  ;; FIXME nil should not be a valid option, let alone the default,
+  ;; eg so that add-function can be used.
+  :type '(choice (const :tag "Default" nil) function)
   :version "26.1")
 
 (defun save-some-buffers (&optional arg pred)

@@ -527,7 +527,7 @@ each invocation of the saving commands."
   "If non-nil, show the cursor in the Article buffer even when not selected."
   :version "25.1"
   :group 'gnus-article
-  :type 'bool)
+  :type 'boolean)
 
 (defcustom gnus-saved-headers gnus-visible-headers
   "Headers to keep if `gnus-save-all-headers' is nil.
