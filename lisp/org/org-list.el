@@ -149,7 +149,7 @@
 (declare-function org-remove-indentation "org" (code &optional n))
 (declare-function org-show-subtree "org" ())
 (declare-function org-sort-remove-invisible "org" (S))
-(declare-function org-time-string-to-seconds "org" (s))
+(declare-function org-time-string-to-seconds "org" (s &optional zone))
 (declare-function org-timer-hms-to-secs "org-timer" (hms))
 (declare-function org-timer-item "org-timer" (&optional arg))
 (declare-function org-trim "org" (s &optional keep-lead))
@@ -2250,6 +2250,7 @@ If CHECKBOX is non-nil, add a checkbox next to the bullet.
 
 Return t when things worked, nil when we are not in an item, or
 item is invisible."
+  (interactive "P")
   (let ((itemp (org-in-item-p))
 	(pos (point)))
     ;; If cursor isn't is a list or if list is invisible, return nil.
@@ -3324,23 +3325,28 @@ Valid parameters are:
 
   Strings to start or end a list item, and to start a list item
   with a counter.  They can also be set to a function returning
-  a string or nil, which will be called with the depth of the
-  item, counting from 1.
+  a string or nil, which will be called with two arguments: the
+  type of list and the depth of the item, counting from 1.
 
 :icount
 
   Strings to start a list item with a counter.  It can also be
   set to a function returning a string or nil, which will be
-  called with two arguments: the depth of the item, counting from
-  1, and the counter.  Its value, when non-nil, has precedence
-  over `:istart'.
+  called with three arguments: the type of list, the depth of the
+  item, counting from 1, and the counter.  Its value, when
+  non-nil, has precedence over `:istart'.
 
 :isep
 
   String used to separate items.  It can also be set to
   a function returning a string or nil, which will be called with
-  the depth of the items, counting from 1.  It always start on
-  a new line.
+  two arguments: the type of list and the depth of the item,
+  counting from 1.  It always start on a new line.
+
+:ifmt
+
+  Function to be applied to the contents of every item.  It is
+  called with two arguments: the type of list and the contents.
 
 :cbon, :cboff, :cbtrans
 
@@ -3471,6 +3477,7 @@ PARAMS is a plist used to tweak the behavior of the transcoder."
 	(iend (plist-get params :iend))
 	(isep (plist-get params :isep))
 	(icount (plist-get params :icount))
+	(ifmt (plist-get params :ifmt))
 	(cboff (plist-get params :cboff))
 	(cbon  (plist-get params :cbon))
 	(cbtrans (plist-get params :cbtrans))
@@ -3484,9 +3491,9 @@ PARAMS is a plist used to tweak the behavior of the transcoder."
 	     (tag (org-element-property :tag item))
 	     (depth (org-list--depth item))
 	     (separator (and (org-export-get-next-element item info)
-			     (org-list--generic-eval isep depth)))
-	     (closing (pcase (org-list--generic-eval iend depth)
-			((or `nil `"") "\n")
+			     (org-list--generic-eval isep type depth)))
+	     (closing (pcase (org-list--generic-eval iend type depth)
+			((or `nil "") "\n")
 			((and (guard separator) s)
 			 (if (equal (substring s -1) "\n") s (concat s "\n")))
 			(s s))))
@@ -3503,10 +3510,10 @@ PARAMS is a plist used to tweak the behavior of the transcoder."
 	;; Build output.
 	(concat
 	 (let ((c (org-element-property :counter item)))
-	   (if c (org-list--generic-eval icount depth c)
-	     (org-list--generic-eval istart depth)))
+	   (if (and c icount) (org-list--generic-eval icount type depth c)
+	     (org-list--generic-eval istart type depth)))
 	 (let ((body
-		(if (or istart iend icount cbon cboff cbtrans (not backend)
+		(if (or istart iend icount ifmt cbon cboff cbtrans (not backend)
 			(and (eq type 'descriptive)
 			     (or dtstart dtend ddstart ddend)))
 		    (concat
@@ -3522,7 +3529,11 @@ PARAMS is a plist used to tweak the behavior of the transcoder."
 				    (org-element-interpret-data tag))
 				  dtend))
 		     (and tag ddstart)
-		     (if (= (length contents) 0) "" (substring contents 0 -1))
+		     (let ((contents
+			    (if (= (length contents) 0) ""
+			      (substring contents 0 -1))))
+		       (if ifmt (org-list--generic-eval ifmt type contents)
+			 contents))
 		     (and tag ddend))
 		  (org-export-with-backend backend item contents info))))
 	   ;; Remove final newline.
@@ -3555,6 +3566,25 @@ PARAMS is a property list with overruling parameters for
   (require 'ox-texinfo)
   (org-list-to-generic list (org-combine-plists '(:backend texinfo) params)))
 
+(defun org-list-to-org (list &optional params)
+  "Convert LIST into an Org plain list.
+LIST is as returned by `org-list-parse-list'.  PARAMS is a property list
+with overruling parameters for `org-list-to-generic'."
+  (let* ((make-item
+	  (lambda (type _depth &optional c)
+	    (concat (if (eq type 'ordered) "1. " "- ")
+		    (and c (format "[@%d] " c)))))
+	 (defaults
+	   (list :istart make-item
+		 :icount make-item
+		 :ifmt (lambda (_type contents)
+			 (replace-regexp-in-string "\n" "\n  " contents))
+		 :dtend " :: "
+		 :cbon "[X] "
+		 :cboff "[ ] "
+		 :cbtrans "[-] ")))
+    (org-list-to-generic list (org-combine-plists defaults params))))
+
 (defun org-list-to-subtree (list &optional params)
   "Convert LIST into an Org subtree.
 LIST is as returned by `org-list-to-lisp'.  PARAMS is a property
@@ -3566,7 +3596,7 @@ list with overruling parameters for `org-list-to-generic'."
 			   (org-previous-line-empty-p)))))
 	 (level (org-reduced-level (or (org-current-level) 0)))
 	 (make-stars
-	  (lambda (depth)
+	  (lambda (_type depth &optional _count)
 	    ;; Return the string for the heading, depending on DEPTH
 	    ;; of current sub-list.
 	    (let ((oddeven-level (+ level depth)))

@@ -29,7 +29,7 @@ impl LispHashTableRef {
         self.next_weak = other.as_ptr() as *mut Lisp_Hash_Table;
     }
 
-    pub fn get_next_weak(&self) -> LispHashTableRef {
+    pub fn get_next_weak(self) -> LispHashTableRef {
         LispHashTableRef::new(self.next_weak)
     }
 
@@ -37,7 +37,7 @@ impl LispHashTableRef {
         self.hash = hash.to_raw();
     }
 
-    pub fn get_hash(&self) -> LispObject {
+    pub fn get_hash(self) -> LispObject {
         LispObject::from(self.hash)
     }
 
@@ -45,7 +45,7 @@ impl LispHashTableRef {
         self.next = next.to_raw();
     }
 
-    pub fn get_next(&self) -> LispObject {
+    pub fn get_next(self) -> LispObject {
         LispObject::from(self.next)
     }
 
@@ -53,11 +53,11 @@ impl LispHashTableRef {
         self.index = index.to_raw();
     }
 
-    pub fn get_index(&self) -> LispObject {
+    pub fn get_index(self) -> LispObject {
         LispObject::from(self.index)
     }
 
-    pub fn get_key_and_value(&self) -> LispObject {
+    pub fn get_key_and_value(self) -> LispObject {
         LispObject::from(self.key_and_value)
     }
 
@@ -65,7 +65,7 @@ impl LispHashTableRef {
         self.key_and_value = key_and_value.to_raw();
     }
 
-    pub fn get_weak(&self) -> LispObject {
+    pub fn get_weak(self) -> LispObject {
         LispObject::from(self.weak)
     }
 
@@ -165,6 +165,8 @@ impl<'a> Iterator for KeyAndValueIter<'a> {
     }
 }
 
+// The references are necessary to satisfy the lifetime requirements.
+// Otherwise, the iterator would contain a copy which might no longer be valid.
 impl LispHashTableRef {
     pub fn indices(&self) -> HashTableIter {
         HashTableIter {

@@ -540,7 +540,7 @@ to the variable 'locate-dominating-stop-dir-regexp'.  For example, if
 the problem relates to "/smb/.dir-locals.el", set that variable
 to a new value where you replace "net\\|afs" with "net\\|afs\\|smb".
 (The default value already matches common auto-mount prefixes.)
-See http://lists.gnu.org/archive/html/help-gnu-emacs/2015-02/msg00461.html .
+See https://lists.gnu.org/archive/html/help-gnu-emacs/2015-02/msg00461.html .
 
 *** Attempting to visit remote files via ange-ftp fails.
 
@@ -689,7 +689,7 @@ On some systems, there exists a font that is actually named Monospace,
 which takes over the virtual font.  This is considered an operating
 system bug; see
 
-http://lists.gnu.org/archive/html/emacs-devel/2008-10/msg00696.html
+https://lists.gnu.org/archive/html/emacs-devel/2008-10/msg00696.html
 
 If you encounter this problem, set the default font to a specific font
 in your .Xresources or initialization file.  For instance, you can put
@@ -1067,7 +1067,7 @@ during such resizing attempts (i3, IceWM).
 See also https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15700,
 https://debbugs.gnu.org/cgi/bugreport.cgi?bug=22000,
 https://debbugs.gnu.org/cgi/bugreport.cgi?bug=22898 and
-http://lists.gnu.org/archive/html/emacs-devel/2016-07/msg00154.html.
+https://lists.gnu.org/archive/html/emacs-devel/2016-07/msg00154.html.
 
 *** Metacity: Resizing Emacs or ALT-Tab causes X to be unresponsive.
 
@@ -2033,6 +2033,19 @@ Definitions" to make them defined.
 We list bugs in current versions here.  See also the section on legacy
 systems.
 
+*** On Solaris 10, Emacs crashes during the build process.
+This was reported for Emacs 25.2 on i386-pc-solaris2.10 with Sun
+Studio 12 (Sun C 5.9) and with Oracle Developer Studio 12.6 (Sun C
+5.15), and intermittently for sparc-sun-solaris2.10 with Oracle
+Developer Studio 12.5 (Sun C 5.14).  Disabling compiler optimization
+seems to fix the bug, as does upgrading the Solaris 10 operating
+system to Update 11.  The cause of the bug is unknown: it may be that
+Emacs's archaic memory-allocation scheme is not compatible with
+slightly-older versions of Solaris and/or Oracle Studio, or it may be
+something else.  Since the cause is not known, possibly the bug is
+still present in newer versions of Emacs, Oracle Studio, and/or
+Solaris.  See Bug#26638.
+
 *** On Solaris, C-x doesn't get through to Emacs when you use the console.
 
 This is a Solaris feature (at least on Intel x86 cpus).  Type C-r
@@ -2602,7 +2615,7 @@ This is a consequence of a change to src/dired.c on 2010-07-27.  The
 issue is that Cygwin 1.5.19 did not have d_ino in 'struct dirent'.
 See
 
-  http://lists.gnu.org/archive/html/emacs-devel/2010-07/msg01266.html
+  https://lists.gnu.org/archive/html/emacs-devel/2010-07/msg01266.html
 
 *** Building the native MS-Windows port fails due to unresolved externals
 
@@ -2703,7 +2716,7 @@ Errors and warnings can look like this:
 This happens when paths using backslashes are passed to the compiler or
 linker (via -I and possibly other compiler flags); when these paths are
 included in source code, the backslashes are interpreted as escape sequences.
-See http://lists.gnu.org/archive/html/emacs-devel/2010-07/msg00995.html
+See https://lists.gnu.org/archive/html/emacs-devel/2010-07/msg00995.html
 
 The fix is to use forward slashes in all paths passed to the compiler.
 

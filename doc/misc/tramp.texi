@@ -3043,6 +3043,14 @@ Disable version control to avoid delays:
 @end group
 @end lisp
 
+If this is too radical, because you want to use version control
+remotely, trim @code{vc-handled-backends} to just those you care
+about, for example:
+
+@lisp
+(setq vc-handled-backends '(SVN Git))
+@end lisp
+
 Disable excessive traces.  Set @code{tramp-verbose} to 3 or lower,
 default being 3.  Increase trace levels temporarily when hunting for
 bugs.

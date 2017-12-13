@@ -2,8 +2,8 @@
    cross-compilers like MinGW.
 
    This is derived from sqlite3 sources.
-   http://www.sqlite.org/cvstrac/rlog?f=sqlite/src/os_win.c
-   http://www.sqlite.org/copyright.html
+   https://www.sqlite.org/src/finfo?name=src/os_win.c
+   https://www.sqlite.org/copyright.html
 
    Written by Richard W.M. Jones <rjones.at.redhat.com>
 

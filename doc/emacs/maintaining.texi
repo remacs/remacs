@@ -1050,13 +1050,14 @@ increase the number of revisions shown in an existing
 entries} or @samp{Show unlimited entries} buttons at the end of the
 buffer.  However, RCS, SCCS, and CVS do not support this feature.
 
+@kindex C-x v h
 @findex vc-region-history
 A useful variant of examining changes is provided by the command
-@kbd{vc-region-history}, which shows a @file{*VC-history*} buffer with
-the history of changes to the region of the current file between point
-and the mark (@pxref{Mark}).  The history of changes includes the
-commit log messages and also the changes themselves in the Diff
-format.
+@kbd{vc-region-history} (by default bound to @kbd{C-x v h}), which shows
+a @file{*VC-history*} buffer with the history of changes to the region
+of the current file between point and the mark (@pxref{Mark}).  The
+history of changes includes the commit log messages and also the
+changes themselves in the Diff format.
 
 Invoke this command after marking the region of the current file in
 whose changes you are interested.  In the @file{*VC-history*} buffer
@@ -1918,8 +1919,8 @@ without displaying the references.
 
 @node Identifier Search
 @subsubsection Searching and Replacing with Identifiers
-@cindex search and replace in multiple files
-@cindex multiple-file search and replace
+@cindex search and replace in multiple source files
+@cindex multiple source file search and replace
 
   The commands in this section perform various search and replace
 operations either on identifiers themselves or on files that reference

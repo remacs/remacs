@@ -471,7 +471,7 @@ get_section_info (file_data *p_infile)
 }
 
 /* Format to print a DWORD_PTR value.  */
-#ifdef MINGW_W64
+#if defined MINGW_W64 && defined _WIN64
 # define pDWP  "16llx"
 #else
 # define pDWP  "08lx"

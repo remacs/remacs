@@ -94,7 +94,7 @@ happen.  The variables @code{'attempt-stack-overflow-recovery} and
 @code{attempt-orderly-shutdown-on-fatal-signal} are therefore removed.
 
 @item
-The @code{timer-list} command was removed, as we decided timers are
+The @code{list-timers} command was removed, as we decided timers are
 not user-level feature, and therefore users should not be allowed to
 mess with them.  Ask an Emacs Lisp guru near you for help if you have
 a runaway timer in your session.  (Of course, as you move back in

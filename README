@@ -2,7 +2,7 @@ Copyright (C) 2001-2017 Free Software Foundation, Inc.
 See the end of the file for license conditions.
 
 
-This directory tree holds version 27.0.50 of GNU Emacs, the extensible,
+This directory tree holds version 26.0.60 of GNU Emacs, the extensible,
 customizable, self-documenting real-time display editor.
 
 The file INSTALL in this directory says how to build and install GNU
@@ -29,7 +29,7 @@ to report bugs.  (The file 'BUGS' in this directory explains how you
 can find and read that section using the Info files that come with
 Emacs.)  For a list of mailing lists related to Emacs, see
 <https://savannah.gnu.org/mail/?group=emacs>.  For the complete
-list of GNU mailing lists, see <http://lists.gnu.org/>.
+list of GNU mailing lists, see <https://lists.gnu.org/>.
 
 The 'etc' subdirectory contains several other files, named in capital
 letters, which you might consider looking at when installing GNU

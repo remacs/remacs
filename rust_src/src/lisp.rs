@@ -23,7 +23,7 @@ use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
                  Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
 
-use remacs_sys::{internal_equal, lispsym, make_float, misc_get_ty};
+use remacs_sys::{empty_unibyte_string, internal_equal, lispsym, make_float, misc_get_ty};
 
 use buffers::{LispBufferRef, LispOverlayRef};
 use chartable::LispCharTableRef;
@@ -657,19 +657,19 @@ impl LispObject {
 
     pub fn is_font_entity(self) -> bool {
         self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_ENTITY_MAX as i64
+            vec.pseudovector_size() == font::FONT_ENTITY_MAX as EmacsInt
         })
     }
 
     pub fn is_font_object(self) -> bool {
         self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_OBJECT_MAX as i64
+            vec.pseudovector_size() == font::FONT_OBJECT_MAX as EmacsInt
         })
     }
 
     pub fn is_font_spec(self) -> bool {
         self.is_font() && self.as_vectorlike().map_or(false, |vec| {
-            vec.pseudovector_size() == font::FONT_SPEC_MAX as i64
+            vec.pseudovector_size() == font::FONT_SPEC_MAX as EmacsInt
         })
     }
 
@@ -1001,9 +1001,7 @@ impl LispObject {
     #[inline]
     pub fn as_string(self) -> Option<LispStringRef> {
         if self.is_string() {
-            Some(LispStringRef::new(
-                unsafe { mem::transmute(self.get_untaggedptr()) },
-            ))
+            Some(unsafe { self.as_string_unchecked() })
         } else {
             None
         }
@@ -1011,15 +1009,46 @@ impl LispObject {
 
     #[inline]
     pub fn as_string_or_error(self) -> LispStringRef {
-        if self.is_string() {
-            LispStringRef::new(unsafe { mem::transmute(self.get_untaggedptr()) })
+        self.as_string()
+            .unwrap_or_else(|| wrong_type!(Qstringp, self))
+    }
+
+    #[inline]
+    pub unsafe fn as_string_unchecked(self) -> LispStringRef {
+        LispStringRef::new(mem::transmute(self.get_untaggedptr()))
+    }
+
+    #[inline]
+    pub fn empty_unibyte_string() -> LispObject {
+        LispObject::from(unsafe { empty_unibyte_string })
+    }
+
+    /// Replaces STRING_SET_UNIBYTE in C. If your string has size 0,
+    /// it will replace your string variable with 'empty_unibyte_string'.
+    #[inline]
+    pub fn set_string_unibyte(lstring: &mut LispObject) {
+        let mut string = lstring.as_string_or_error();
+        if string.size == 0 {
+            *lstring = Self::empty_unibyte_string();
         } else {
-            wrong_type!(Qstringp, self)
+            string.size_byte = -1;
         }
     }
 }
 
 // Other functions
+
+pub trait IsLispNatnum {
+    fn check_natnum(&self);
+}
+
+impl IsLispNatnum for EmacsInt {
+    fn check_natnum(&self) {
+        if *self < 0 {
+            wrong_type!(Qwholenump, LispObject::from_fixnum(*self));
+        }
+    }
+}
 
 pub enum LispNumber {
     Fixnum(EmacsInt),
@@ -1139,6 +1168,7 @@ impl LispObject {
         self == other
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub fn ne(self, other: LispObject) -> bool {
         self != other

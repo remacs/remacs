@@ -38,19 +38,18 @@
 
 (defvar org-src-preserve-indentation)
 
-(defcustom org-export-babel-evaluate t
-  "Switch controlling code evaluation during export.
+(defcustom org-export-use-babel t
+  "Switch controlling code evaluation and header processing during export.
 When set to nil no code will be evaluated as part of the export
-process and no header arguments will be obeyed.  When set to
-`inline-only', only inline code blocks will be executed.  Users
-who wish to avoid evaluating code on export should use the header
-argument `:eval never-export'."
+process and no header arguments will be obeyed.  Users who wish
+to avoid evaluating code on export should use the header argument
+`:eval never-export'."
   :group 'org-babel
   :version "24.1"
   :type '(choice (const :tag "Never" nil)
-		 (const :tag "Only inline code" inline-only)
-		 (const :tag "Always" t)))
-(put 'org-export-babel-evaluate 'safe-local-variable #'null)
+		 (const :tag "Always" t))
+  :safe #'null)
+
 
 (defmacro org-babel-exp--at-source (&rest body)
   "Evaluate BODY at the source of the Babel block at point.
@@ -128,12 +127,10 @@ this template."
 (defun org-babel-exp-process-buffer ()
   "Execute all Babel blocks in current buffer."
   (interactive)
-  (when org-export-babel-evaluate
+  (when org-export-use-babel
     (save-window-excursion
       (let ((case-fold-search t)
-	    (regexp (if (eq org-export-babel-evaluate 'inline-only)
-			"\\(call\\|src\\)_"
-		      "\\(call\\|src\\)_\\|^[ \t]*#\\+\\(BEGIN_SRC\\|CALL:\\)"))
+	    (regexp "\\(call\\|src\\)_\\|^[ \t]*#\\+\\(BEGIN_SRC\\|CALL:\\)")
 	    ;; Get a pristine copy of current buffer so Babel
 	    ;; references are properly resolved and source block
 	    ;; context is preserved.

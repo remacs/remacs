@@ -341,13 +341,10 @@ Org mode, i.e. with \"=>\" as ellipsis."
   :type 'boolean)
 
 (defcustom org-ascii-table-use-ascii-art nil
-  "Non-nil means table.el tables are turned into ascii-art.
-
+  "Non-nil means \"table.el\" tables are turned into ASCII art.
 It only makes sense when export charset is `utf-8'.  It is nil by
-default since it requires ascii-art-to-unicode.el package.  You
-can download it here:
-
-  http://gnuvola.org/software/j/aa2u/ascii-art-to-unicode.el."
+default since it requires \"ascii-art-to-unicode.el\" package,
+available through, e.g., GNU ELPA."
   :group 'org-export-ascii
   :version "24.4"
   :package-version '(Org . "8.0")
@@ -404,7 +401,7 @@ The function must accept nine parameters:
 The function should return either the string to be exported or
 nil to ignore the inline task."
   :group 'org-export-ascii
-  :version "24.4"
+  :version "26.1"
   :package-version '(Org . "8.3")
   :type 'function)
 

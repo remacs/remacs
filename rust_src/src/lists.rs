@@ -457,7 +457,6 @@ pub fn inorder(pred: LispObject, a: LispObject, b: LispObject) -> bool {
 }
 
 /// Merge step of linked-list sorting.
-#[no_mangle]
 pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispObject {
     let mut tail = LispObject::constant_nil();
     let mut value = LispObject::constant_nil();
@@ -495,7 +494,6 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
     }
 }
 
-#[no_mangle]
 pub fn circular_list(obj: LispObject) -> ! {
     xsignal!(Qcircular_list, obj);
 }

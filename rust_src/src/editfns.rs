@@ -77,6 +77,21 @@ pub fn eolp() -> LispObject {
     )
 }
 
+/// Return the position of the gap, in the current buffer.
+/// See also `gap-size'.
+#[lisp_fn]
+pub fn gap_position() -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+    LispObject::from_natnum(buffer_ref.gap_position() as EmacsInt)
+}
+
+/// Return the size of the current buffer's gap.
+/// See also `gap-position'.
+#[lisp_fn]
+pub fn gap_size() -> LispObject {
+    let buffer_ref = ThreadState::current_buffer();
+    LispObject::from_natnum(buffer_ref.gap_size() as EmacsInt)
+}
 /// Return the start or end position of the region.
 /// BEGINNINGP means return the start.
 /// If there is no region active, signal an error.

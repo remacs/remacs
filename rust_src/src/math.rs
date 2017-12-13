@@ -209,9 +209,8 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
     for &arg in &args[1..] {
         if arithcompare(arg, accum, comparison).is_not_nil() {
             accum = arg;
-        }
-        if accum.as_float().map_or(false, |f| f.is_nan()) {
-            return accum;
+        } else if arg.as_float().map_or(false, |f| f.is_nan()) {
+            return arg;
         }
     }
     // we should return the same object if it's not a marker
@@ -261,12 +260,7 @@ pub enum ArithComparison {
     GrtrOrEqual,
 }
 
-#[no_mangle]
-pub extern "C" fn arithcompare(
-    obj1: LispObject,
-    obj2: LispObject,
-    comparison: ArithComparison,
-) -> LispObject {
+pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithComparison) -> LispObject {
     // If either arg is floating point, set F1 and F2 to the 'double'
     // approximations of the two arguments, and set FNEQ if floating-point
     // comparison reports that F1 is not equal to F2, possibly because F1

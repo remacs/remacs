@@ -319,7 +319,9 @@ usage: (vconcat &rest SEQUENCES)   */)
 DEFUN ("copy-sequence", Fcopy_sequence, Scopy_sequence, 1, 1, 0,
        doc: /* Return a copy of a list, vector, string, char-table or record.
 The elements of a list, vector or record are not copied; they are
-shared with the original.  */)
+shared with the original.
+If the original sequence is empty, this function may return
+the same empty object instead of its copy.  */)
   (Lisp_Object arg)
 {
   if (NILP (arg)) return arg;
@@ -1575,20 +1577,6 @@ ARRAY is a vector, string, char-table, or bool-vector.  */)
   return array;
 }
 
-DEFUN ("clear-string", Fclear_string, Sclear_string,
-       1, 1, 0,
-       doc: /* Clear the contents of STRING.
-This makes STRING unibyte and may change its length.  */)
-  (Lisp_Object string)
-{
-  ptrdiff_t len;
-  CHECK_STRING (string);
-  len = SBYTES (string);
-  memset (SDATA (string), 0, len);
-  STRING_SET_CHARS (string, len);
-  STRING_SET_UNIBYTE (string);
-  return Qnil;
-}
 
 /* ARGSUSED */
 Lisp_Object
@@ -3665,7 +3653,6 @@ this variable.  */);
   defsubr (&Snreverse);
   defsubr (&Sreverse);
   defsubr (&Sfillarray);
-  defsubr (&Sclear_string);
   defsubr (&Snconc);
   defsubr (&Smapcar);
   defsubr (&Smapc);

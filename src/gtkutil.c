@@ -585,12 +585,11 @@ xg_check_special_colors (struct frame *f,
     if (get_fg)
       gtk_style_context_get_color (gsty, state, &col);
     else
-#if GTK_CHECK_VERSION (3, 16, 0)
-      /* We can't get here.  */
-      emacs_abort ();
-#else
+      /* FIXME: gtk_style_context_get_background_color is deprecated
+         in GTK+ 3.16.  New versions of GTK+ don’t use the concept of
+         a single background color any more, so we shouldn’t query for
+         it.  */
       gtk_style_context_get_background_color (gsty, state, &col);
-#endif
 
     unsigned short
       r = col.red * 65535,
@@ -1238,7 +1237,10 @@ xg_create_frame_widgets (struct frame *f)
      with regular X drawing primitives, so from a GTK/GDK point of
      view, the widget is totally blank.  When an expose comes, this
      will make the widget blank, and then Emacs redraws it.  This flickers
-     a lot, so we turn off double buffering.  */
+     a lot, so we turn off double buffering.
+     FIXME: gtk_widget_set_double_buffered is deprecated and might stop
+     working in the future.  We need to migrate away from combining
+     X and GTK+ drawing to a pure GTK+ build.  */
   gtk_widget_set_double_buffered (wfixed, FALSE);
 #endif
 
@@ -1384,7 +1386,7 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
 
   /* Don't set size hints during initialization; that apparently leads
      to a race condition.  See the thread at
-     http://lists.gnu.org/archive/html/emacs-devel/2008-10/msg00033.html  */
+     https://lists.gnu.org/archive/html/emacs-devel/2008-10/msg00033.html  */
   if (NILP (Vafter_init_time)
       || !FRAME_GTK_OUTER_WIDGET (f)
       || FRAME_PARENT_FRAME (f))

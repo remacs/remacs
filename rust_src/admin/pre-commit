@@ -1,0 +1,42 @@
+#!/bin/bash
+
+##
+## To install:
+## $ cd .git/hooks
+## $ ln -s ../../rust_src/admin/pre-commit pre-commit
+##
+
+STASH_NAME="pre-commit-$(date +%s)"
+
+finish() {
+    [ "$(git stash list --format='%s' | cut -d' ' -f3)" == "$STASH_NAME" ] && git stash pop -q
+}
+
+trap finish EXIT
+
+set -eu
+
+git stash save -q --keep-index $STASH_NAME
+
+errors=0
+
+GIT_TOPLEVEL=$(git rev-parse --show-toplevel)
+
+echo -n "Checking formatting... "
+diff=$(cd $GIT_TOPLEVEL/rust_src && cargo fmt -- --write-mode diff)
+stripped_diff=$(echo "$diff" | sed -e '/^Diff of/d' -e '/^$/d')
+
+if [ -z "$stripped_diff" ]; then
+	echo -e "success."
+else
+	echo -e "FAIL!"
+	echo "$diff"
+	errors=1
+fi
+
+if [ "$errors" != 0 ]; then
+	echo "Failed"
+	exit 1
+else
+	echo "OK"
+fi

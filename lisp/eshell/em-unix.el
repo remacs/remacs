@@ -961,7 +961,7 @@ Show wall-clock time elapsed during execution of COMMAND.")
      ;; after setting
      (throw 'eshell-replace-command
 	    (eshell-parse-command (car time-args)
-;;; http://lists.gnu.org/archive/html/bug-gnu-emacs/2007-08/msg00205.html
+;;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2007-08/msg00205.html
 				  (eshell-stringify-list
 				   (eshell-flatten-list (cdr time-args))))))))
 

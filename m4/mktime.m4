@@ -1,4 +1,4 @@
-# serial 29
+# serial 30
 dnl Copyright (C) 2002-2003, 2005-2007, 2009-2017 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
@@ -53,6 +53,10 @@ AC_DEFUN([gl_FUNC_MKTIME_WORKS],
 
 #if HAVE_DECL_ALARM
 # include <signal.h>
+#endif
+
+#ifndef TIME_T_IS_SIGNED
+# define TIME_T_IS_SIGNED 0
 #endif
 
 /* Work around redefinition to rpl_putenv by other config tests.  */

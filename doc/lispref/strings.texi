@@ -824,18 +824,16 @@ to the produced string representations of the argument @var{objects}.
 @end defun
 
 @defun format-message string &rest objects
-@cindex curved quotes
-@cindex curly quotes
+@cindex curved quotes, in formatted messages
+@cindex curly quotes, in formatted messages
 This function acts like @code{format}, except it also converts any
 grave accents (@t{`}) and apostrophes (@t{'}) in @var{string} as per the
 value of @code{text-quoting-style}.
 
-A format that quotes with grave accents and apostrophes @t{`like
-this'} typically generates curved quotes @t{‘like this’}.  In
-contrast, a format that quotes with only apostrophes @t{'like this'}
-typically generates two closing curved quotes @t{’like this’}, an
-unusual style in English.  @xref{Keys in Documentation}, for how the
-@code{text-quoting-style} variable affects generated quotes.
+Typically grave accent and apostrophe in the format translate to
+matching curved quotes, e.g., @t{"Missing `%s'"} might result in
+@t{"Missing ‘foo’"}.  @xref{Text Quoting Style}, for how to influence
+or inhibit this translation.
 @end defun
 
 @cindex @samp{%} in format

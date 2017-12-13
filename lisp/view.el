@@ -982,7 +982,7 @@ for highlighting the match that is found."
 ;; This is the dumb approach, looking at each line.  The original
 ;; version of this function looked like it might have been trying to
 ;; do something clever, but not succeeding:
-;; http://lists.gnu.org/archive/html/bug-gnu-emacs/2007-09/msg00073.html
+;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2007-09/msg00073.html
 (defun view-search-no-match-lines (times regexp)
   "Search for the TIMESth occurrence of a line with no match for REGEXP.
 If such a line is found, return non-nil and set the match-data to that line.

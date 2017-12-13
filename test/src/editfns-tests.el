@@ -166,6 +166,14 @@
     (should (string-equal
              (format-time-string format look '(-28800 "PST"))
              "1972-06-30 15:59:59.999 -0800 (PST)"))
+    ;; Negative UTC offset, as a Lisp integer.
+    (should (string-equal
+             (format-time-string format look -28800)
+             ;; MS-Windows build replaces unrecognizable TZ values,
+             ;; such as "-08", with "ZZZ".
+             (if (eq system-type 'windows-nt)
+                 "1972-06-30 15:59:59.999 -0800 (ZZZ)"
+               "1972-06-30 15:59:59.999 -0800 (-08)")))
     ;; Positive UTC offset that is not an hour multiple, as a string.
     (should (string-equal
              (format-time-string format look "IST-5:30")

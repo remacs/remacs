@@ -1,13 +1,14 @@
 //* Random utility Lisp functions.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fcons, Fmapc, Qfuncall, Qlistp, Qprovide, Qsubfeatures, Vautoload_queue};
+use remacs_sys::{Fcons, Fmapc, Vautoload_queue};
+use remacs_sys::{Qfuncall, Qlistp, Qprovide, Qquote, Qsubfeatures, Qwrong_number_of_arguments};
 use remacs_sys::globals;
 
 use lisp::LispObject;
 use lisp::defsubr;
 use lists::{assq, get, member, memq, put};
-
+use vectors::length;
 
 /// Return t if FEATURE is present in this Emacs.
 ///
@@ -68,6 +69,31 @@ pub fn provide(feature: LispObject, subfeature: LispObject) -> LispObject {
         }
     }
     feature
+}
+
+/// Return the argument, without evaluating it.  `(quote x)' yields `x'.
+/// Warning: `quote' does not construct its return value, but just returns
+/// the value that was pre-constructed by the Lisp reader (see info node
+/// `(elisp)Printed Representation').
+/// This means that \\='(a . b) is not identical to (cons \\='a \\='b): the former
+/// does not cons.  Quoting should be reserved for constants that will
+/// never be modified by side-effects, unless you like self-modifying code.
+/// See the common pitfall in info node `(elisp)Rearrangement' for an example
+/// of unexpected results when a quoted object is modified.
+/// usage: (quote ARG)
+#[lisp_fn(unevalled = "true")]
+pub fn quote(args: LispObject) -> LispObject {
+    let cons = args.as_cons_or_error();
+
+    if cons.cdr().is_not_nil() {
+        xsignal!(
+            Qwrong_number_of_arguments,
+            LispObject::from(Qquote),
+            length(args)
+        );
+    }
+
+    cons.car()
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

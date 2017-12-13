@@ -152,7 +152,7 @@
 /* When also using extern inline, suppress the use of static inline in
    standard headers of problematic Apple configurations, as Libc at
    least through Libc-825.26 (2013-04-09) mishandles it; see, e.g.,
-   <http://lists.gnu.org/archive/html/bug-gnulib/2012-12/msg00023.html>.
+   <https://lists.gnu.org/archive/html/bug-gnulib/2012-12/msg00023.html>.
    Perhaps Apple will fix this some day.  */
 #if (defined _GL_EXTERN_INLINE_IN_USE && defined __APPLE__ \
      && defined __GNUC__ && defined __STDC__)
@@ -610,7 +610,7 @@ _GL_CXXALIAS_SYS (fwrite, size_t,
                   (const void *ptr, size_t s, size_t n, FILE *stream));
 
 /* Work around bug 11959 when fortifying glibc 2.4 through 2.15
-   <http://sources.redhat.com/bugzilla/show_bug.cgi?id=11959>,
+   <https://sourceware.org/bugzilla/show_bug.cgi?id=11959>,
    which sometimes causes an unwanted diagnostic for fwrite calls.
    This affects only function declaration attributes under certain
    versions of gcc and clang, and is not needed for C++.  */

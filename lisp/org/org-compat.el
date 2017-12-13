@@ -35,8 +35,10 @@
 (declare-function org-at-table.el-p "org" (&optional table-type))
 (declare-function org-element-at-point "org-element" ())
 (declare-function org-element-type "org-element" (element))
+(declare-function org-end-of-subtree "org" (&optional invisible-ok to-heading))
 (declare-function org-link-set-parameters "org" (type &rest rest))
 (declare-function org-table-end (&optional table-type))
+(declare-function outline-next-heading "outline" ())
 (declare-function table--at-cell-p "table" (position &optional object at-column))
 
 (defvar org-table-any-border-regexp)
@@ -44,9 +46,8 @@
 (defvar org-table-tab-recognizes-table.el)
 (defvar org-table1-hline-regexp)
 
-;; As of Emacs 25.1, `outline-mode' functions are under the 'outline-'
-;; prefix, `find-tag' is replaced with `xref-find-definition' and
-;; `x-get-selection' with `gui-get-selection'.
+;;; Emacs < 25.1 compatibility
+
 (when (< emacs-major-version 25)
   (defalias 'outline-hide-entry 'hide-entry)
   (defalias 'outline-hide-sublevels 'hide-sublevels)
@@ -65,6 +66,48 @@
   (if (< emacs-major-version 25)
       (decode-time time)
     (decode-time time zone)))
+
+(unless (fboundp 'directory-name-p)
+  (defun directory-name-p (name)
+    "Return non-nil if NAME ends with a directory separator character."
+    (let ((len (length name))
+	  (lastc ?.))
+      (if (> len 0)
+	  (setq lastc (aref name (1- len))))
+      (or (= lastc ?/)
+	  (and (memq system-type '(windows-nt ms-dos))
+	       (= lastc ?\\))))))
+
+(unless (fboundp 'directory-files-recursively)
+  (defun directory-files-recursively (dir regexp &optional include-directories)
+    "Return list of all files under DIR that have file names matching REGEXP.
+This function works recursively.  Files are returned in \"depth first\"
+order, and files from each directory are sorted in alphabetical order.
+Each file name appears in the returned list in its absolute form.
+Optional argument INCLUDE-DIRECTORIES non-nil means also include in the
+output directories whose names match REGEXP."
+    (let ((result nil)
+	  (files nil)
+	  ;; When DIR is "/", remote file names like "/method:" could
+	  ;; also be offered.  We shall suppress them.
+	  (tramp-mode (and tramp-mode (file-remote-p (expand-file-name dir)))))
+      (dolist (file (sort (file-name-all-completions "" dir)
+			  'string<))
+	(unless (member file '("./" "../"))
+	  (if (directory-name-p file)
+	      (let* ((leaf (substring file 0 (1- (length file))))
+		     (full-file (expand-file-name leaf dir)))
+		;; Don't follow symlinks to other directories.
+		(unless (file-symlink-p full-file)
+		  (setq result
+			(nconc result (directory-files-recursively
+				       full-file regexp include-directories))))
+		(when (and include-directories
+			   (string-match regexp leaf))
+		  (setq result (nconc result (list full-file)))))
+	    (when (string-match regexp file)
+	      (push (expand-file-name file dir) files)))))
+      (nconc result (nreverse files)))))
 
 
 ;;; Obsolete aliases (remove them after the next major release).
@@ -89,7 +132,7 @@
 (defmacro org-re (s)
   "Replace posix classes in regular expression S."
   (declare (debug (form))
-	   (obsolete "you can safely remove it." "Org 9.0"))
+           (obsolete "you can safely remove it." "Org 9.0"))
   s)
 
 ;;;; Functions from cl-lib that Org used to have its own implementation of.
@@ -107,8 +150,8 @@
 Counting starts at 1."
   (cl-subseq list (1- start) end))
 (make-obsolete 'org-sublist
-	       "use cl-subseq (note the 0-based counting)."
-	       "Org 9.0")
+               "use cl-subseq (note the 0-based counting)."
+               "Org 9.0")
 
 
 ;;;; Functions available since Emacs 24.3
@@ -126,25 +169,15 @@ Counting starts at 1."
 ;;;; Functions and variables from previous releases now obsolete.
 (define-obsolete-function-alias 'org-element-remove-indentation
   'org-remove-indentation "Org 9.0")
-(define-obsolete-variable-alias 'org-hierarchical-checkbox-statistics
-  'org-checkbox-hierarchical-statistics "Org 8.0")
-(define-obsolete-variable-alias 'org-description-max-indent
-  'org-list-description-max-indent "Org 8.0")
 (define-obsolete-variable-alias 'org-latex-create-formula-image-program
   'org-preview-latex-default-process "Org 9.0")
 (define-obsolete-variable-alias 'org-latex-preview-ltxpng-directory
- 'org-preview-latex-image-directory "Org 9.0")
+  'org-preview-latex-image-directory "Org 9.0")
 (define-obsolete-function-alias 'org-table-p 'org-at-table-p "Org 9.0")
 (define-obsolete-function-alias 'org-on-heading-p 'org-at-heading-p "Org 9.0")
 (define-obsolete-function-alias 'org-at-regexp-p 'org-in-regexp "Org 8.3")
-(define-obsolete-function-alias 'org-speed-command-default-hook
-  'org-speed-command-activate "Org 8.0")
-(define-obsolete-function-alias 'org-babel-speed-command-hook
-  'org-babel-speed-command-activate "Org 8.0")
 (define-obsolete-function-alias 'org-image-file-name-regexp
   'image-file-name-regexp "Org 9.0")
-(define-obsolete-function-alias 'org-get-legal-level
-  'org-get-valid-level "Org 7.8")
 (define-obsolete-function-alias 'org-completing-read-no-i
   'completing-read "Org 9.0")
 (define-obsolete-function-alias 'org-icompleting-read
@@ -156,47 +189,27 @@ Counting starts at 1."
   'org-agenda-ignore-properties "Org 9.0")
 (define-obsolete-function-alias 'org-preview-latex-fragment
   'org-toggle-latex-fragment "Org 8.3")
-(define-obsolete-function-alias 'org-display-inline-modification-hook
-  'org-display-inline-remove-overlay "Org 8.0")
 (define-obsolete-function-alias 'org-export-get-genealogy
   'org-element-lineage "Org 9.0")
 (define-obsolete-variable-alias 'org-latex-with-hyperref
   'org-latex-hyperref-template "Org 9.0")
-(define-obsolete-variable-alias 'org-link-to-org-use-id
-  'org-id-link-to-org-use-id "Org 8.0")
 (define-obsolete-variable-alias 'hfy-optimisations 'hfy-optimizations "Org 9.0")
-(define-obsolete-variable-alias 'org-clock-modeline-total
-  'org-clock-mode-line-total "Org 8.0")
-(define-obsolete-function-alias 'org-protocol-unhex-compound
-  'org-link-unescape-compound "Org 7.8")
-(define-obsolete-function-alias 'org-protocol-unhex-string
-  'org-link-unescape "Org 7.8")
-(define-obsolete-function-alias 'org-protocol-unhex-single-byte-sequence
-  'org-link-unescape-single-byte-sequence "Org 7.8")
 (define-obsolete-variable-alias 'org-export-htmlized-org-css-url
   'org-org-htmlized-css-url "Org 8.2")
-(define-obsolete-variable-alias 'org-alphabetical-lists
-  'org-list-allow-alphabetical "Org 8.0")
 (define-obsolete-function-alias 'org-list-parse-list 'org-list-to-lisp "Org 9.0")
-(define-obsolete-variable-alias 'org-agenda-menu-two-column
-  'org-agenda-menu-two-columns "Org 8.0")
-(define-obsolete-variable-alias 'org-finalize-agenda-hook
-  'org-agenda-finalize-hook "Org 8.0")
-(make-obsolete-variable 'org-agenda-ndays 'org-agenda-span "Org 7.8")
-(define-obsolete-function-alias 'org-agenda-post-command-hook
-  'org-agenda-update-agenda-type "Org 8.0")
 (define-obsolete-function-alias 'org-agenda-todayp
   'org-agenda-today-p "Org 9.0")
 (define-obsolete-function-alias 'org-babel-examplize-region
   'org-babel-examplify-region "Org 9.0")
+(define-obsolete-variable-alias 'org-babel-capitalize-example-region-markers
+  'org-babel-uppercase-example-markers "Org 9.1")
+
 (define-obsolete-function-alias 'org-babel-trim 'org-trim "Org 9.0")
-(define-obsolete-variable-alias 'org-html-style-include-scripts
-  'org-html-head-include-scripts "Org 8.0")
-(define-obsolete-variable-alias 'org-html-style-include-default
-  'org-html-head-include-default-style "Org 8.0")
 (define-obsolete-variable-alias 'org-html-style 'org-html-head "24.4")
 (define-obsolete-function-alias 'org-insert-columns-dblock
   'org-columns-insert-dblock "Org 9.0")
+(define-obsolete-variable-alias 'org-export-babel-evaluate
+  'org-export-use-babel "Org 9.1")
 (define-obsolete-function-alias 'org-activate-bracket-links
   'org-activate-links "Org 9.0")
 (define-obsolete-function-alias 'org-activate-plain-links 'ignore "Org 9.0")
@@ -207,18 +220,8 @@ Counting starts at 1."
   (save-match-data
     (eq 'fixed-width (org-element-type (org-element-at-point)))))
 (make-obsolete 'org-in-fixed-width-region-p
-	       "use `org-element' library"
-	       "Org 9.0")
-
-(defcustom org-read-date-minibuffer-setup-hook nil
-  "Hook to be used to set up keys for the date/time interface.
-Add key definitions to `minibuffer-local-map', which will be a
-temporary copy."
-  :group 'org-time
-  :type 'hook)
-(make-obsolete-variable
- 'org-read-date-minibuffer-setup-hook
- "set `org-read-date-minibuffer-local-map' instead." "Org 8.0")
+               "use `org-element' library"
+               "Org 9.0")
 
 (defun org-compatible-face (inherits specs)
   "Make a compatible face specification.
@@ -267,26 +270,23 @@ See `org-link-parameters' for documentation on the other parameters."
   (when (and org-table-tab-recognizes-table.el (org-at-table.el-p))
     (beginning-of-line)
     (unless (or (looking-at org-table-dataline-regexp)
-		(not (looking-at org-table1-hline-regexp)))
+                (not (looking-at org-table1-hline-regexp)))
       (forward-line)
       (when (looking-at org-table-any-border-regexp)
-	(forward-line -2)))
+        (forward-line -2)))
     (if (re-search-forward "|" (org-table-end t) t)
-	(progn
-	  (require 'table)
-	  (if (table--at-cell-p (point)) t
-	    (message "recognizing table.el table...")
-	    (table-recognize-table)
-	    (message "recognizing table.el table...done")))
+        (progn
+          (require 'table)
+          (if (table--at-cell-p (point)) t
+            (message "recognizing table.el table...")
+            (table-recognize-table)
+            (message "recognizing table.el table...done")))
       (error "This should not happen"))))
 
 ;; Not used by Org core since commit 6d1e3082, Feb 2010.
 (make-obsolete 'org-table-recognize-table.el
-	       "please notify the org mailing list if you use this function."
-	       "Org 9.0")
-
-(define-obsolete-function-alias
-  'org-minutes-to-hh:mm-string 'org-minutes-to-clocksum-string "Org 8.0")
+               "please notify the org mailing list if you use this function."
+               "Org 9.0")
 
 (defun org-remove-angle-brackets (s)
   (org-unbracket-string "<" ">" s))
@@ -296,8 +296,90 @@ See `org-link-parameters' for documentation on the other parameters."
   (org-unbracket-string "\"" "\"" s))
 (make-obsolete 'org-remove-double-quotes 'org-unbracket-string "Org 9.0")
 
+(defcustom org-publish-sitemap-file-entry-format "%t"
+  "Format string for site-map file entry.
+You could use brackets to delimit on what part the link will be.
+
+%t is the title.
+%a is the author.
+%d is the date formatted using `org-publish-sitemap-date-format'."
+  :group 'org-export-publish
+  :type 'string)
+(make-obsolete-variable
+ 'org-publish-sitemap-file-entry-format
+ "set `:sitemap-format-entry' in `org-publish-project-alist' instead."
+ "Org 9.1")
+
+(defvar org-agenda-skip-regexp)
+(defun org-agenda-skip-entry-when-regexp-matches ()
+  "Check if the current entry contains match for `org-agenda-skip-regexp'.
+If yes, it returns the end position of this entry, causing agenda commands
+to skip the entry but continuing the search in the subtree.  This is a
+function that can be put into `org-agenda-skip-function' for the duration
+of a command."
+  (declare (obsolete "use `org-agenda-skip-if' instead." "Org 9.1"))
+  (let ((end (save-excursion (org-end-of-subtree t)))
+	skip)
+    (save-excursion
+      (setq skip (re-search-forward org-agenda-skip-regexp end t)))
+    (and skip end)))
+
+(defun org-agenda-skip-subtree-when-regexp-matches ()
+  "Check if the current subtree contains match for `org-agenda-skip-regexp'.
+If yes, it returns the end position of this tree, causing agenda commands
+to skip this subtree.  This is a function that can be put into
+`org-agenda-skip-function' for the duration of a command."
+  (declare (obsolete "use `org-agenda-skip-if' instead." "Org 9.1"))
+  (let ((end (save-excursion (org-end-of-subtree t)))
+	skip)
+    (save-excursion
+      (setq skip (re-search-forward org-agenda-skip-regexp end t)))
+    (and skip end)))
+
+(defun org-agenda-skip-entry-when-regexp-matches-in-subtree ()
+  "Check if the current subtree contains match for `org-agenda-skip-regexp'.
+If yes, it returns the end position of the current entry (NOT the tree),
+causing agenda commands to skip the entry but continuing the search in
+the subtree.  This is a function that can be put into
+`org-agenda-skip-function' for the duration of a command.  An important
+use of this function is for the stuck project list."
+  (declare (obsolete "use `org-agenda-skip-if' instead." "Org 9.1"))
+  (let ((end (save-excursion (org-end-of-subtree t)))
+	(entry-end (save-excursion (outline-next-heading) (1- (point))))
+	skip)
+    (save-excursion
+      (setq skip (re-search-forward org-agenda-skip-regexp end t)))
+    (and skip entry-end)))
+
+(define-obsolete-function-alias 'org-minutes-to-clocksum-string
+  'org-duration-from-minutes "Org 9.1")
+
+(define-obsolete-function-alias 'org-hh:mm-string-to-minutes
+  'org-duration-to-minutes "Org 9.1")
+
+(define-obsolete-function-alias 'org-duration-string-to-minutes
+  'org-duration-to-minutes "Org 9.1")
+
+(make-obsolete-variable 'org-time-clocksum-format
+  "set `org-duration-format' instead." "Org 9.1")
+
+(make-obsolete-variable 'org-time-clocksum-use-fractional
+  "set `org-duration-format' instead." "Org 9.1")
+
+(make-obsolete-variable 'org-time-clocksum-fractional-format
+  "set `org-duration-format' instead." "Org 9.1")
+
+(make-obsolete-variable 'org-time-clocksum-use-effort-durations
+  "set `org-duration-units' instead." "Org 9.1")
+
 (define-obsolete-function-alias 'org-babel-number-p
   'org-babel--string-to-number "Org 9.0")
+
+(define-obsolete-variable-alias 'org-usenet-links-prefer-google
+  'org-gnus-prefer-web-links "Org 9.1")
+
+(define-obsolete-variable-alias 'org-texinfo-def-table-markup
+  'org-texinfo-table-default-markup "Org 9.1")
 
 ;;; The function was made obsolete by commit 65399674d5 of 2013-02-22.
 ;;; This make-obsolete call was added 2016-09-01.
@@ -306,7 +388,6 @@ See `org-link-parameters' for documentation on the other parameters."
 	       "Org 9.0")
 
 
-
 ;;;; Obsolete link types
 
 (eval-after-load 'org
@@ -320,40 +401,40 @@ See `org-link-parameters' for documentation on the other parameters."
 
 (defun org-version-check (version feature level)
   (let* ((v1 (mapcar 'string-to-number (split-string version "[.]")))
-	 (v2 (mapcar 'string-to-number (split-string emacs-version "[.]")))
-	 (rmaj (or (nth 0 v1) 99))
-	 (rmin (or (nth 1 v1) 99))
-	 (rbld (or (nth 2 v1) 99))
-	 (maj (or (nth 0 v2) 0))
-	 (min (or (nth 1 v2) 0))
-	 (bld (or (nth 2 v2) 0)))
+         (v2 (mapcar 'string-to-number (split-string emacs-version "[.]")))
+         (rmaj (or (nth 0 v1) 99))
+         (rmin (or (nth 1 v1) 99))
+         (rbld (or (nth 2 v1) 99))
+         (maj (or (nth 0 v2) 0))
+         (min (or (nth 1 v2) 0))
+         (bld (or (nth 2 v2) 0)))
     (if (or (< maj rmaj)
-	    (and (= maj rmaj)
-		 (< min rmin))
-	    (and (= maj rmaj)
-		 (= min rmin)
-		 (< bld rbld)))
-	(if (eq level :predicate)
-	    ;; just return if we have the version
-	    nil
-	  (let ((msg (format "Emacs %s or greater is recommended for %s"
-			     version feature)))
-	    (display-warning 'org msg level)
-	    t))
+            (and (= maj rmaj)
+                 (< min rmin))
+            (and (= maj rmaj)
+                 (= min rmin)
+                 (< bld rbld)))
+        (if (eq level :predicate)
+            ;; just return if we have the version
+            nil
+          (let ((msg (format "Emacs %s or greater is recommended for %s"
+                             version feature)))
+            (display-warning 'org msg level)
+            t))
       t)))
 
 (defun org-get-x-clipboard (value)
   "Get the value of the X or Windows clipboard."
   (cond ((and (eq window-system 'x)
-	      (fboundp 'gui-get-selection)) ;Silence byte-compiler.
-	 (org-no-properties
-	  (ignore-errors
-	    (or (gui-get-selection value 'UTF8_STRING)
-		(gui-get-selection value 'COMPOUND_TEXT)
-		(gui-get-selection value 'STRING)
-		(gui-get-selection value 'TEXT)))))
-	((and (eq window-system 'w32) (fboundp 'w32-get-clipboard-data))
-	 (w32-get-clipboard-data))))
+              (fboundp 'gui-get-selection)) ;Silence byte-compiler.
+         (org-no-properties
+          (ignore-errors
+            (or (gui-get-selection value 'UTF8_STRING)
+                (gui-get-selection value 'COMPOUND_TEXT)
+                (gui-get-selection value 'STRING)
+                (gui-get-selection value 'TEXT)))))
+        ((and (eq window-system 'w32) (fboundp 'w32-get-clipboard-data))
+         (w32-get-clipboard-data))))
 
 (defun org-add-props (string plist &rest props)
   "Add text properties to entire string, from beginning to end.
@@ -365,20 +446,20 @@ that will be added to PLIST.  Returns the string that was modified."
 (put 'org-add-props 'lisp-indent-function 2)
 
 (defun org-fit-window-to-buffer (&optional window max-height min-height
-					   shrink-only)
+                                           shrink-only)
   "Fit WINDOW to the buffer, but only if it is not a side-by-side window.
 WINDOW defaults to the selected window.  MAX-HEIGHT and MIN-HEIGHT are
 passed through to `fit-window-to-buffer'.  If SHRINK-ONLY is set, call
 `shrink-window-if-larger-than-buffer' instead, the height limit is
 ignored in this case."
   (cond ((if (fboundp 'window-full-width-p)
-	     (not (window-full-width-p window))
-	   ;; do nothing if another window would suffer
-	   (> (frame-width) (window-width window))))
-	((and (fboundp 'fit-window-to-buffer) (not shrink-only))
-	 (fit-window-to-buffer window max-height min-height))
-	((fboundp 'shrink-window-if-larger-than-buffer)
-	 (shrink-window-if-larger-than-buffer window)))
+             (not (window-full-width-p window))
+           ;; do nothing if another window would suffer
+           (> (frame-width) (window-width window))))
+        ((and (fboundp 'fit-window-to-buffer) (not shrink-only))
+         (fit-window-to-buffer window max-height min-height))
+        ((fboundp 'shrink-window-if-larger-than-buffer)
+         (shrink-window-if-larger-than-buffer window)))
   (or window (selected-window)))
 
 ;; `set-transient-map' is only in Emacs >= 24.4
@@ -400,7 +481,7 @@ Unlike to `use-region-p', this function also checks
 
 (defun org-cursor-to-region-beginning ()
   (when (and (org-region-active-p)
-	     (> (point) (region-beginning)))
+             (> (point) (region-beginning)))
     (exchange-point-and-mark)))
 
 ;;; Invisibility compatibility
@@ -410,8 +491,8 @@ Unlike to `use-region-p', this function also checks
   (if (fboundp 'remove-from-invisibility-spec)
       (remove-from-invisibility-spec arg)
     (if (consp buffer-invisibility-spec)
-	(setq buffer-invisibility-spec
-	      (delete arg buffer-invisibility-spec)))))
+        (setq buffer-invisibility-spec
+              (delete arg buffer-invisibility-spec)))))
 
 (defun org-in-invisibility-spec-p (arg)
   "Is ARG a member of `buffer-invisibility-spec'?"
@@ -422,9 +503,9 @@ Unlike to `use-region-p', this function also checks
   "Move to column COLUMN.
 Pass COLUMN and FORCE to `move-to-column'."
   (let ((buffer-invisibility-spec
-	 (if (listp buffer-invisibility-spec)
-	     (remove '(org-filtered) buffer-invisibility-spec)
-	   buffer-invisibility-spec)))
+         (if (listp buffer-invisibility-spec)
+             (remove '(org-filtered) buffer-invisibility-spec)
+           buffer-invisibility-spec)))
     (move-to-column column force)))
 
 (defmacro org-find-library-dir (library)
@@ -436,12 +517,12 @@ Pass COLUMN and FORCE to `move-to-column'."
     (while (string-match "\n" s start)
       (setq start (match-end 0) n (1+ n)))
     (if (and (> (length s) 0) (= (aref s (1- (length s))) ?\n))
-	(setq n (1- n)))
+        (setq n (1- n)))
     n))
 
 (defun org-kill-new (string &rest args)
   (remove-text-properties 0 (length string) '(line-prefix t wrap-prefix t)
-			  string)
+                          string)
   (apply 'kill-new string args))
 
 ;; `font-lock-ensure' is only available from 24.4.50 on
@@ -465,7 +546,7 @@ Let-bind some variables to nil around BODY to achieve the desired
 effect, which variables to use depends on the Emacs version."
   (if (org-version-check "24.2.50" "" :predicate)
       `(let (pop-up-frames display-buffer-alist)
-	 ,@body)
+         ,@body)
     `(let (pop-up-frames special-display-buffer-names special-display-regexps special-display-function)
        ,@body)))
 
@@ -473,19 +554,19 @@ effect, which variables to use depends on the Emacs version."
 (defmacro org-check-version ()
   "Try very hard to provide sensible version strings."
   (let* ((org-dir        (org-find-library-dir "org"))
-	 (org-version.el (concat org-dir "org-version.el"))
-	 (org-fixup.el   (concat org-dir "../mk/org-fixup.el")))
+         (org-version.el (concat org-dir "org-version.el"))
+         (org-fixup.el   (concat org-dir "../mk/org-fixup.el")))
     (if (require 'org-version org-version.el 'noerror)
-	'(progn
-	   (autoload 'org-release     "org-version.el")
-	   (autoload 'org-git-version "org-version.el"))
+        '(progn
+           (autoload 'org-release     "org-version.el")
+           (autoload 'org-git-version "org-version.el"))
       (if (require 'org-fixup org-fixup.el 'noerror)
-	  '(org-fixup)
-	;; provide fallback definitions and complain
-	(warn "Could not define org version correctly.  Check installation!")
-	'(progn
-	   (defun org-release () "N/A")
-	   (defun org-git-version () "N/A !!check installation!!"))))))
+          '(org-fixup)
+        ;; provide fallback definitions and complain
+        (warn "Could not define org version correctly.  Check installation!")
+        '(progn
+           (defun org-release () "N/A")
+           (defun org-git-version () "N/A !!check installation!!"))))))
 
 (defmacro org-with-silent-modifications (&rest body)
   (if (fboundp 'with-silent-modifications)
@@ -501,7 +582,7 @@ an error is signaled without being caught by a `condition-case'.
 Implements `define-error' for older emacsen."
   (if (fboundp 'define-error) (define-error name message)
     (put name 'error-conditions
-	 (copy-sequence (cons name (get 'error 'error-conditions))))))
+         (copy-sequence (cons name (get 'error 'error-conditions))))))
 
 (unless (fboundp 'string-suffix-p)
   ;; From Emacs subr.el.
@@ -511,8 +592,8 @@ If IGNORE-CASE is non-nil, the comparison is done without paying
 attention to case differences."
     (let ((start-pos (- (length string) (length suffix))))
       (and (>= start-pos 0)
-	   (eq t (compare-strings suffix nil nil
-				  string start-pos nil ignore-case))))))
+           (eq t (compare-strings suffix nil nil
+                                  string start-pos nil ignore-case))))))
 
 (provide 'org-compat)
 
