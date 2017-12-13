@@ -4536,10 +4536,10 @@ EVALD, FUNC, ARGS, FLAGS are as in `mapbacktrace'."
   (princ (if (plist-get flags :debug-on-exit) "* " "  "))
   (cond
    ((and evald (not debugger-stack-frame-as-list))
-    (prin1 func)
-    (if args (prin1 args) (princ "()")))
+    (cl-prin1 func)
+    (if args (cl-prin1 args) (princ "()")))
    (t
-    (prin1 (cons func args))))
+    (cl-prin1 (cons func args))))
   (princ "\n"))
 
 (defun backtrace ()
