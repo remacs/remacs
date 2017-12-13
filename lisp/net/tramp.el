@@ -4547,14 +4547,14 @@ Only works for Bourne-like shells."
 	 'tramp-send-command
 	 (tramp-get-connection-property proc "vector" nil)
 	 (format "kill -2 %d" pid))
-	;; Wait, until the process has disappeared.
-	(with-timeout
-	    (1 (tramp-error proc 'error "Process %s did not interrupt" proc))
+	;; Wait, until the process has disappeared.  If it doesn't,
+	;; fall back to the default implementation.
+	(with-timeout (1 (ignore))
 	  (while (process-live-p proc)
 	    ;; We cannot run `tramp-accept-process-output', it blocks timers.
-	    (accept-process-output proc 0.1)))
-	;; Report success.
-	proc))))
+	    (accept-process-output proc 0.1))
+	  ;; Report success.
+	  proc)))))
 
 ;; `interrupt-process-functions' exists since Emacs 26.1.
 (when (boundp 'interrupt-process-functions)

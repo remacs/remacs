@@ -1147,10 +1147,14 @@ given from DEFAULT-SPEC."
 (defun fontset-name-p (fontset)
   "Return non-nil if FONTSET is valid as fontset name.
 A valid fontset name should conform to XLFD (X Logical Font Description)
-with \"fontset\" in `<CHARSET_REGISTRY>' field."
-  (and (string-match xlfd-tight-regexp fontset)
-       (string= (match-string (1+ xlfd-regexp-registry-subnum) fontset)
-		"fontset")))
+with \"fontset-SOMETHING\" in `<CHARSET_REGISTRY>' field.
+A fontset alias name recorded in `fontset-alias-alist' is also a valid
+fontset name."
+  (or (and (string-match xlfd-tight-regexp fontset)
+           (let ((registry
+                  (match-string (1+ xlfd-regexp-registry-subnum) fontset)))
+             (= 0 (string-match "\\`fontset-" registry))))
+      (consp (rassoc fontset fontset-alias-alist))))
 
 (declare-function fontset-list "fontset.c" ())
 

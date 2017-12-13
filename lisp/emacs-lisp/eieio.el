@@ -926,6 +926,25 @@ this object."
 	 (object-write thing))
 	((consp thing)
 	 (eieio-list-prin1 thing))
+	((hash-table-p thing)
+         (let ((copy (copy-hash-table thing)))
+	   (maphash
+	    (lambda (key val)
+	      (setf (gethash key copy)
+		    (read
+		     (with-output-to-string
+		       (eieio-override-prin1 val)))))
+	    copy)
+	   (prin1 copy)))
+	((vectorp thing)
+         (let ((copy (copy-sequence thing)))
+	  (dotimes (i (length copy))
+	    (aset copy i
+		  (read
+		   (with-output-to-string
+		     (eieio-override-prin1
+		      (aref copy i))))))
+	  (prin1 copy)))
 	((eieio--class-p thing)
 	 (princ (eieio--class-print-name thing)))
 	(t (prin1 thing))))

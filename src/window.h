@@ -370,7 +370,8 @@ struct window
     bool_bf must_be_updated_p : 1;
 
     /* Flag indicating that this window is not a real one.
-       Currently only used for menu bar windows of frames.  */
+       Currently only used for menu bar windows, for tool bar windows,
+       and for tooltips.  */
     bool_bf pseudo_window_p : 1;
 
     /* True means fringes are drawn outside display margins.

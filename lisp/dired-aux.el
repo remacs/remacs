@@ -974,8 +974,8 @@ command with a prefix argument (the value does not matter)."
     ;; "tar -zxf" isn't used because it's not available on the
     ;; Solaris10 version of tar. Solaris10 becomes obsolete in 2021.
     ;; Same thing on AIX 7.1.
-    ("\\.tar\\.gz\\'" "" "gzip -dc %i | tar -xv")
-    ("\\.tgz\\'" "" "gzip -dc %i | tar -xv")
+    ("\\.tar\\.gz\\'" "" "gzip -dc %i | tar -xf -")
+    ("\\.tgz\\'" "" "gzip -dc %i | tar -xf -")
     ("\\.gz\\'" "" "gunzip")
     ("\\.Z\\'" "" "uncompress")
     ;; For .z, try gunzip.  It might be an old gzip file,
@@ -990,7 +990,7 @@ command with a prefix argument (the value does not matter)."
     ;; This item controls naming for compression.
     ("\\.tar\\'" ".tgz" nil)
     ;; This item controls the compression of directories
-    (":" ".tar.gz" "tar -c %i | gzip -c9 > %o"))
+    (":" ".tar.gz" "tar -cf - %i | gzip -c9 > %o"))
   "Control changes in file name suffixes for compression and uncompression.
 Each element specifies one transformation rule, and has the form:
   (REGEXP NEW-SUFFIX PROGRAM)
@@ -1007,9 +1007,9 @@ Otherwise, the rule is a compression rule, and compression is done with gzip.
 ARGS are command switches passed to PROGRAM.")
 
 (defvar dired-compress-files-alist
-  '(("\\.tar\\.gz\\'" . "tar -c %i | gzip -c9 > %o")
-    ("\\.tar\\.bz2\\'" . "tar -c %i | bzip2 -c9 > %o")
-    ("\\.tar\\.xz\\'" . "tar -c %i | xz -c9 > %o")
+  '(("\\.tar\\.gz\\'" . "tar -cf - %i | gzip -c9 > %o")
+    ("\\.tar\\.bz2\\'" . "tar -cf - %i | bzip2 -c9 > %o")
+    ("\\.tar\\.xz\\'" . "tar -cf - %i | xz -c9 > %o")
     ("\\.zip\\'" . "zip %o -r --filesync %i"))
   "Control the compression shell command for `dired-do-compress-to'.
 

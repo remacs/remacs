@@ -315,7 +315,8 @@ batch mode.  @xref{Initial Options}, for a description of batch mode.)
 any of them, whenever it offers to save all files (for @kbd{C-x s} or
 @kbd{C-x C-c}).  It saves them in the file specified by
 @code{abbrev-file-name}.  This feature can be inhibited by setting the
-variable @code{save-abbrevs} to @code{nil}.
+variable @code{save-abbrevs} to @code{nil}; setting it to
+@code{silently} will save the abbrevs automatically without asking.
 
 @findex insert-abbrevs
 @findex define-abbrevs
