@@ -193,8 +193,12 @@ define test_template
   ## otherwise.  Although this heuristic does not identify all the
   ## dependencies, it is better than nothing.
   ifeq (,$(patsubst %-tests,,$(1))$(findstring -tests/,$(1)))
+    ifeq (,$(patsubst rust_src/%,,$(1)))
+    $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1)).rs
+    else
     $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1))$(if \
 					$(patsubst src/%,,$(patsubst lib-src/%,,$(1))),.el,.c)
+    endif
   endif
 
   ## Short aliases that always re-run the tests, with no logging.
