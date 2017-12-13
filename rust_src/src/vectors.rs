@@ -15,7 +15,7 @@ use remacs_sys::{EmacsInt, Faref, Lisp_Bool_Vector, Lisp_Vector, Lisp_Vectorlike
 use buffers::LispBufferRef;
 use chartable::LispCharTableRef;
 use frames::LispFrameRef;
-use lisp::{ExternalPtr, LispObject};
+use lisp::{ExternalPtr, LispObject, LispSubrRef};
 use lisp::defsubr;
 use lists::{car, inorder, nthcdr, sort_list};
 use multibyte::MAX_CHAR;
@@ -77,6 +77,15 @@ impl LispVectorlikeRef {
     #[inline]
     pub fn as_buffer(&self) -> Option<LispBufferRef> {
         if self.is_pseudovector(PseudovecType::PVEC_BUFFER) {
+            Some(unsafe { mem::transmute(*self) })
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_subr(&self) -> Option<LispSubrRef> {
+        if self.is_pseudovector(PseudovecType::PVEC_SUBR) {
             Some(unsafe { mem::transmute(*self) })
         } else {
             None

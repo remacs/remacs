@@ -109,6 +109,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                     symbol_name: (#symbol_name).as_ptr() as *const ::libc::c_char,
                     intspec: #intspec,
                     doc: ::std::ptr::null(),
+                    lang: ::remacs_sys::Lisp_Subr_Lang_Rust,
                 };
 
                 unsafe {
