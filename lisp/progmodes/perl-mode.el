@@ -587,6 +587,7 @@ create a new comment."
 This is a non empty list of strings, the checker tool possibly
 followed by required arguments.  Once launched it will receive
 the Perl source to be checked as its standard input."
+  :version "26.1"
   :group 'perl
   :type '(repeat string))
 

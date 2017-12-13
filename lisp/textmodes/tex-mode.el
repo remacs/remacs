@@ -266,12 +266,14 @@ measured relative to that of the normal text."
 
 (defcustom tex-chktex-program "chktex"
   "ChkTeX executable to use for linting TeX files."
+  :version "26.1"
   :type 'string
   :link '(url-link "man:chktex(1)")
   :group 'tex-flymake)
 
 (defcustom tex-chktex-extra-flags nil
   "Extra command line flags for `tex-chktex-program'."
+  :version "26.1"
   :type '(repeat string)
   :group 'tex-flymake)
 

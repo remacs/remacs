@@ -78,6 +78,7 @@
 
 (defgroup less-css nil
   "Less CSS mode."
+  :version "26.1"
   :prefix "less-css-"
   :group 'css)
 

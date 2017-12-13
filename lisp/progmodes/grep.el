@@ -162,6 +162,7 @@ Customize or call the function `grep-apply-setting'."
 (defcustom grep-use-null-filename-separator 'auto-detect
   "If non-nil, use `grep's `--null' option.
 This is done to disambiguate file names in `grep's output."
+  :version "26.1"
   :type '(choice (const :tag "Do Not Use `--null'" nil)
                  (const :tag "Use `--null'" t)
                  (other :tag "Not Set" auto-detect))

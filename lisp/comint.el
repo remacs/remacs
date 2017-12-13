@@ -290,6 +290,7 @@ If `after-input', point will be positioned after the input typed
 by the user, but before the rest of the history entry that has
 been inserted.  If `end-of-line', point will be positioned at the
 end of the current logical (not visual) line after insertion."
+  :version "26.1"
   :type '(radio (const :tag "Stay after input" after-input)
                 (const :tag "Move to end of line" end-of-line))
   :group 'comint)
