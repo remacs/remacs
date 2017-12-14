@@ -7,7 +7,6 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, MOST_NEGATIVE_FIXNUM,
                  MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Qarith_error, Qinteger_or_marker_p, Qnumberp, Qrange_error};
-use remacs_sys::build_string;
 use remacs_sys::libm;
 
 use lisp::{LispNumber, LispObject};
@@ -334,9 +333,8 @@ where
             return ir;
         }
     }
-    let errstr =
-        LispObject::from_raw(unsafe { build_string(name.as_ptr() as *const libc::c_char) });
-    xsignal!(Qrange_error, errstr, arg)
+
+    xsignal!(Qrange_error, LispObject::from(name), arg)
 }
 
 fn ceiling2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
