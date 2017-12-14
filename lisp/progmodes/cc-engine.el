@@ -7572,8 +7572,8 @@ comment at the start of cc-engine.el for more info."
 
     ;; Skip leading type modifiers.  If any are found we know it's a
     ;; prefix of a type.
-    (when c-opt-type-modifier-key ; e.g. "const" "volatile", but NOT "typedef"
-      (while (looking-at c-opt-type-modifier-key)
+    (when c-opt-type-modifier-prefix-key ; e.g. "const" "volatile", but NOT "typedef"
+      (while (looking-at c-opt-type-modifier-prefix-key)
 	(goto-char (match-end 1))
 	(c-forward-syntactic-ws)
 	(setq res 'prefix)))
