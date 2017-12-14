@@ -1243,10 +1243,15 @@ extern "C" {
     ) -> Lisp_Object;
 
     pub fn Fselect_window(window: Lisp_Object, norecord: Lisp_Object) -> Lisp_Object;
+
+    pub fn Fmake_sparse_keymap(string: Lisp_Object) -> Lisp_Object;
+    pub fn Ffset(symbol: Lisp_Object, definition: Lisp_Object) -> Lisp_Object;
+
     pub fn frame_dimension(x: c_int) -> c_int;
     pub fn window_box_left_offset(w: *const Lisp_Window, area: glyph_row_area) -> c_int;
     pub fn window_menu_bar_p(w: *const Lisp_Window) -> bool;
     pub fn window_tool_bar_p(w: *const Lisp_Window) -> bool;
+
 }
 
 /// Contains C definitions from the font.h header.
