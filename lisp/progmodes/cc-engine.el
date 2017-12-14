@@ -10440,7 +10440,7 @@ comment at the start of cc-engine.el for more info."
 		c-decl-block-key))
 	  (braceassignp 'dontknow)
 	  inexpr-brace-list bufpos macro-start res pos after-type-id-pos
-	  in-paren)
+	  in-paren parens-before-brace)
 
       (setq res (c-backward-token-2 1 t lim))
       ;; Checks to do only on the first sexp before the brace.
@@ -10458,6 +10458,9 @@ comment at the start of cc-engine.el for more info."
 		((and (looking-at c-symbol-start)
 		      (not (looking-at c-keywords-regexp)))
 		 (setq after-type-id-pos (point)))
+		((eq (char-after) ?\()
+		 (setq parens-before-brace t)
+		 nil)
 		(t nil))
 	       (save-excursion
 		 (cond
@@ -10505,6 +10508,14 @@ comment at the start of cc-engine.el for more info."
 	       (eq (char-before) ?\()))
 	;; Single identifier between '(' and '{'.  We have a bracelist.
 	(cons after-type-id-pos 'in-paren))
+
+       ;; Are we at the parens of a C++ lambda expression?
+       ((and parens-before-brace
+	     (save-excursion
+	       (and
+		(zerop (c-backward-token-2 1 t lim))
+		(c-looking-at-c++-lambda-capture-list))))
+	nil)			     ; a lambda expression isn't a brace list.
 
        (t
 	(goto-char pos)
