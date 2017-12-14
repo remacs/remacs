@@ -112,7 +112,7 @@ fn get_coding_system_for_buffer(
         )
     }).is_nil()) && LispObject::from(buffer.enable_multibyte_characters).is_nil()
     {
-        return LispObject::from(unsafe { Qraw_text });
+        return LispObject::from(Qraw_text);
     }
     if buffer_file_name(object).is_not_nil() {
         /* Check file-coding-system-alist. */

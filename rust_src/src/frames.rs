@@ -95,7 +95,7 @@ pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
 
 /// Get the live frame either from the passed in object directly, from the object
 /// as a window, or by using the selected window when object is nil.
-/// When the object is a window the provided window_action is called.
+/// When the object is a window the provided `window_action` is called.
 pub fn window_frame_live_or_selected_with_action<W: FnMut(LispWindowRef) -> ()>(
     mut object: LispObject,
     mut window_action: W,
