@@ -151,8 +151,8 @@ init_json_functions (void)
 #endif	/* WINDOWSNT */
 
 /* We install a custom allocator so that we can avoid objects larger
-   than PTRDIFF_MAX.  Such objects wouldn’t play well with the rest of
-   Emacs’s codebase, which generally uses ptrdiff_t for sizes and
+   than PTRDIFF_MAX.  Such objects wouldn't play well with the rest of
+   Emacs's codebase, which generally uses ptrdiff_t for sizes and
    indices.  The other functions in this file also generally assume
    that size_t values never exceed PTRDIFF_MAX.  */
 
@@ -324,7 +324,7 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp, json_t **json)
         if (!NILP (HASH_HASH (h, i)))
           {
             Lisp_Object key = json_encode (HASH_KEY (h, i));
-            /* We can’t specify the length, so the string must be
+            /* We can't specify the length, so the string must be
                null-terminated.  */
             check_string_without_embedded_nulls (key);
             int status = json_object_set_new (*json, SSDATA (key),
@@ -565,7 +565,7 @@ json_to_lisp (json_t *json)
             Lisp_Object key = json_build_string (key_str);
             EMACS_UINT hash;
             ptrdiff_t i = hash_lookup (h, key, &hash);
-            /* Keys in JSON objects are unique, so the key can’t be
+            /* Keys in JSON objects are unique, so the key can't be
                present yet.  */
             eassert (i < 0);
             hash_put (h, key, json_to_lisp (value), hash);
@@ -574,7 +574,7 @@ json_to_lisp (json_t *json)
         return result;
       }
     }
-  /* Can’t get here.  */
+  /* Can't get here.  */
   emacs_abort ();
 }
 
@@ -696,7 +696,7 @@ not moved.  */)
   return unbind_to (count, lisp);
 }
 
-/* Simplified version of ‘define-error’ that works with pure
+/* Simplified version of 'define-error' that works with pure
    objects.  */
 
 static void
