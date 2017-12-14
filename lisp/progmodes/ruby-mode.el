@@ -1364,7 +1364,6 @@ delimiter."
                                              "\\)\\>")))
                     (eq (ruby-deep-indent-paren-p t) 'space)
                     (not (bobp)))
-                   (widen)
                    (goto-char (or begin parse-start))
                    (skip-syntax-forward " ")
                    (current-column))
