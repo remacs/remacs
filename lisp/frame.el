@@ -800,7 +800,7 @@ the user during startup."
 	(nreverse frame-initial-geometry-arguments))
   (cdr param-list))
 
-(declare-function x-focus-frame "frame.c" (frame))
+(declare-function x-focus-frame "frame.c" (frame &optional noactivate))
 
 (defun select-frame-set-input-focus (frame &optional norecord)
   "Select FRAME, raise it, and set input focus, if possible.
@@ -1484,7 +1484,7 @@ FRAME."
 
 (declare-function w32-mouse-absolute-pixel-position "w32fns.c")
 (declare-function x-mouse-absolute-pixel-position "xfns.c")
-(declare-function ns-mouse-absolute-pixel-position "nsfns.c")
+(declare-function ns-mouse-absolute-pixel-position "nsfns.m")
 
 (defun mouse-absolute-pixel-position ()
   "Return absolute position of mouse cursor in pixels.
