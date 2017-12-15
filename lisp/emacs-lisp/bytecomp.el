@@ -2486,6 +2486,12 @@ list that represents a doc string reference.
     (mapc 'byte-compile-file-form (cdr form))
     nil))
 
+;; Automatically evaluate define-obsolete-function-alias etc at top-level.
+(put 'make-obsolete 'byte-hunk-handler 'byte-compile-file-form-make-obsolete)
+(defun byte-compile-file-form-make-obsolete (form)
+  (prog1 (byte-compile-keep-pending form)
+    (apply 'make-obsolete (mapcar 'eval (cdr form)))))
+
 ;; This handler is not necessary, but it makes the output from dont-compile
 ;; and similar macros cleaner.
 (put 'eval 'byte-hunk-handler 'byte-compile-file-form-eval)
