@@ -1607,6 +1607,8 @@ next_frame (Lisp_Object frame, Lisp_Object minibuf)
   Lisp_Object f, tail;
   int passed = 0;
 
+  eassume (CONSP (Vframe_list));
+
   while (passed < 2)
     FOR_EACH_FRAME (tail, f)
       {
@@ -1628,6 +1630,8 @@ static Lisp_Object
 prev_frame (Lisp_Object frame, Lisp_Object minibuf)
 {
   Lisp_Object f, tail, prev = Qnil;
+
+  eassume (CONSP (Vframe_list));
 
   FOR_EACH_FRAME (tail, f)
     {
@@ -1914,6 +1918,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   if (f == sf)
     {
       Lisp_Object tail;
+      eassume (CONSP (Vframe_list));
 
       /* Look for another visible frame on the same terminal.
 	 Do not call next_frame here because it may loop forever.
@@ -2058,7 +2063,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
   /* If we've deleted the last_nonminibuf_frame, then try to find
      another one.  */
-  if (f == last_nonminibuf_frame && !NILP (Vframe_list))
+  if (f == last_nonminibuf_frame)
     {
       last_nonminibuf_frame = 0;
 
@@ -2076,7 +2081,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
   /* If there's no other frame on the same kboard, get out of
      single-kboard state if we're in it for this kboard.  */
-  if (kb != NULL && !NILP (Vframe_list))
+  if (kb != NULL)
     {
       /* Some frame we found on the same kboard, or nil if there are none.  */
       Lisp_Object frame_on_same_kboard = Qnil;
@@ -2093,9 +2098,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   /* If we've deleted this keyboard's default_minibuffer_frame, try to
      find another one.  Prefer minibuffer-only frames, but also notice
      frames with other windows.  */
-  if (kb != NULL
-      && EQ (frame, KVAR (kb, Vdefault_minibuffer_frame))
-      && !NILP (Vframe_list))
+  if (kb != NULL && EQ (frame, KVAR (kb, Vdefault_minibuffer_frame)))
     {
       /* The last frame we saw with a minibuffer, minibuffer-only or not.  */
       Lisp_Object frame_with_minibuf = Qnil;
