@@ -619,7 +619,8 @@ Return nil if there is nothing appropriate in the buffer near point."
 	      beg end)
 	  (cond
 	   ((and (memq (get-char-property (point) 'face)
-			 '(custom-variable-tag custom-variable-tag-face))
+			 '(custom-variable-tag custom-variable-obsolete
+			   custom-variable-tag-face))
 		   (setq beg (previous-single-char-property-change
 			      (point) 'face nil (line-beginning-position)))
 		   (setq end (next-single-char-property-change
