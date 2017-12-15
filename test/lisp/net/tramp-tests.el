@@ -3637,6 +3637,8 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 (ert-deftest tramp-test32-environment-variables-and-port-numbers ()
   "Check that two connections with separate ports are different."
   (skip-unless (tramp--test-enabled))
+  ;; Bug#29712.
+  (skip-unless (not (eq system-type 'darwin)))
   ;; We test it only for the mock-up connection; otherwise there might
   ;; be problems with the used ports.
   (skip-unless (and (eq tramp-syntax 'default)
