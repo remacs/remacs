@@ -5055,10 +5055,10 @@ DEFUN ("font-info", Ffont_info, Sfont_info, 1, 2, 0,
        doc: /* Return information about a font named NAME on frame FRAME.
 If FRAME is omitted or nil, use the selected frame.
 
-The returned value is a vector:
+The returned value is a vector of 14 elements:
   [ OPENED-NAME FULL-NAME SIZE HEIGHT BASELINE-OFFSET RELATIVE-COMPOSE
     DEFAULT-ASCENT MAX-WIDTH ASCENT DESCENT SPACE-WIDTH AVERAGE-WIDTH
-    CAPABILITY ]
+    FILENAME CAPABILITY ]
 where
   OPENED-NAME is the name used for opening the font,
   FULL-NAME is the full name of the font,
@@ -5068,12 +5068,12 @@ where
   RELATIVE-COMPOSE and DEFAULT-ASCENT are the numbers controlling
     how to compose characters,
   MAX-WIDTH is the maximum advance width of the font,
-  ASCENT, DESCENT, SPACE-WIDTH, AVERAGE-WIDTH are metrics of the font
-    in pixels,
+  ASCENT, DESCENT, SPACE-WIDTH, and AVERAGE-WIDTH are metrics of
+    the font in pixels,
   FILENAME is the font file name, a string (or nil if the font backend
     doesn't provide a file name).
   CAPABILITY is a list whose first element is a symbol representing the
-    font format, one of x, opentype, truetype, type1, pcf, or bdf.
+    font format, one of `x', `opentype', `truetype', `type1', `pcf', or `bdf'.
     The remaining elements describe the details of the font capabilities,
     as follows:
 
