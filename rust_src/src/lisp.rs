@@ -20,8 +20,9 @@ use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Obje
                  Lisp_Type};
 use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p,
                  Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
-                 Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsymbolp,
-                 Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp};
+                 Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsubrp,
+                 Qsymbolp, Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p,
+                 Qwindowp};
 
 use remacs_sys::{empty_unibyte_string, internal_equal, lispsym, make_float, misc_get_ty};
 
@@ -495,6 +496,14 @@ impl LispObject {
     pub fn is_subr(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_SUBR))
+    }
+
+    pub fn as_subr(self) -> Option<LispSubrRef> {
+        self.as_vectorlike().map_or(None, |v| v.as_subr())
+    }
+
+    pub fn as_subr_or_error(self) -> LispSubrRef {
+        self.as_subr().unwrap_or_else(|| wrong_type!(Qsubrp, self))
     }
 
     pub fn is_buffer(self) -> bool {

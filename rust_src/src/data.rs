@@ -1,12 +1,16 @@
 //! data helpers
 
+use std::ffi::CString;
+
 use remacs_macros::lisp_fn;
 use remacs_sys::{Lisp_Misc_Type, Lisp_Type, PseudovecType};
+use remacs_sys::{Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
 use remacs_sys::{Qbool_vector, Qbuffer, Qchar_table, Qcompiled_function, Qcondition_variable,
                  Qcons, Qcyclic_function_indirection, Qfinalizer, Qfloat, Qfont, Qfont_entity,
                  Qfont_object, Qfont_spec, Qframe, Qhash_table, Qinteger, Qmarker,
                  Qmodule_function, Qmutex, Qnone, Qoverlay, Qprocess, Qstring, Qsubr, Qsymbol,
                  Qterminal, Qthread, Quser_ptr, Qvector, Qwindow, Qwindow_configuration};
+use remacs_sys::build_string;
 
 use lisp::LispObject;
 use lisp::defsubr;
@@ -124,6 +128,20 @@ pub fn type_of(object: LispObject) -> LispObject {
         }
     };
     LispObject::from(ty)
+}
+
+#[lisp_fn]
+pub fn subr_lang(subr: LispObject) -> LispObject {
+    let subr = subr.as_subr_or_error();
+    if subr.lang == Lisp_Subr_Lang_C {
+        LispObject::from(unsafe { build_string(CString::new("C").unwrap().as_ptr()) })
+    } else if subr.lang == Lisp_Subr_Lang_Rust {
+        LispObject::from(unsafe {
+            build_string(CString::new("Rust").unwrap().as_ptr())
+        })
+    } else {
+        unreachable!()
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

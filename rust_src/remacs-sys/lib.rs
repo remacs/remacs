@@ -159,6 +159,10 @@ pub enum TextCursorKinds {
 
 pub type bits_word = size_t;
 
+pub type Lisp_Subr_Lang = c_int;
+pub const Lisp_Subr_Lang_C: Lisp_Subr_Lang = 0;
+pub const Lisp_Subr_Lang_Rust: Lisp_Subr_Lang = 1;
+
 /// Representation of an Emacs Lisp function symbol.
 #[repr(C)]
 pub struct Lisp_Subr {
@@ -191,6 +195,8 @@ pub struct Lisp_Subr {
     // https://github.com/Wilfred/remacs/commit/c5461d03a411ff5c6f43885a0a9030e8a94bbc2e
     /// The docstring of the Emacs Lisp function.
     pub doc: *const c_char,
+
+    pub lang: c_int,
 }
 
 // In order to use `lazy_static!` with LispSubr, it must be Sync. Raw
