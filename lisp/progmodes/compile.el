@@ -1746,13 +1746,7 @@ Returns the compilation buffer created."
       (let ((process-environment
 	     (append
 	      compilation-environment
-	      (if (if (boundp 'system-uses-terminfo);`If' for compiler warning.
-		      system-uses-terminfo)
-		  (list "TERM=dumb" "TERMCAP="
-			(format "COLUMNS=%d" (window-width)))
-		(list "TERM=emacs"
-		      (format "TERMCAP=emacs:co#%d:tc=unknown:"
-			      (window-width))))
+              (comint-term-environment)
 	      (list (format "INSIDE_EMACS=%s,compile" emacs-version))
 	      (copy-sequence process-environment))))
 	(set (make-local-variable 'compilation-arguments)

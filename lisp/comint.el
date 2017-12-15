@@ -459,6 +459,11 @@ executed once when the buffer is created."
   :type 'hook
   :group 'comint)
 
+(defcustom comint-terminfo-terminal "dumb"
+  "Value to use for TERM when the system uses terminfo."
+  :type 'string
+  :group 'comint)
+
 (defvar comint-mode-map
   (let ((map (make-sparse-keymap)))
     ;; Keys:
@@ -817,19 +822,7 @@ series of processes in the same Comint buffer.  The hook
 (defun comint-exec-1 (name buffer command switches)
   (let ((process-environment
 	 (nconc
-	  ;; If using termcap, we specify `emacs' as the terminal type
-	  ;; because that lets us specify a width.
-	  ;; If using terminfo, we specify `dumb' because that is
-	  ;; a defined terminal type.  `emacs' is not a defined terminal type
-	  ;; and there is no way for us to define it here.
-	  ;; Some programs that use terminfo get very confused
-	  ;; if TERM is not a valid terminal type.
-	  ;; ;; There is similar code in compile.el.
-	  (if (and (boundp 'system-uses-terminfo) system-uses-terminfo)
-	      (list "TERM=dumb" "TERMCAP="
-		    (format "COLUMNS=%d" (window-width)))
-	    (list "TERM=emacs"
-		  (format "TERMCAP=emacs:co#%d:tc=unknown:" (window-width))))
+          (comint-term-environment)
 	  (list (format "INSIDE_EMACS=%s,comint" emacs-version))
 	  process-environment))
 	(default-directory
@@ -857,6 +850,22 @@ series of processes in the same Comint buffer.  The hook
     (if changed
 	(set-process-coding-system proc decoding encoding))
     proc))
+
+(defun comint-term-environment ()
+  "Return an environment variable list for terminal configuration."
+  ;; If using termcap, we specify `emacs' as the terminal type
+  ;; because that lets us specify a width.
+  ;; If using terminfo, we default to `dumb' because that is
+  ;; a defined terminal type.  `emacs' is not a defined terminal type
+  ;; and there is no way for us to define it here.
+  ;; Some programs that use terminfo get very confused
+  ;; if TERM is not a valid terminal type.
+  (if (and (boundp 'system-uses-terminfo) system-uses-terminfo)
+      (list (format "TERM=%s" comint-terminfo-terminal)
+            "TERMCAP="
+            (format "COLUMNS=%d" (window-width)))
+    (list "TERM=emacs"
+          (format "TERMCAP=emacs:co#%d:tc=unknown:" (window-width)))))
 
 (defun comint-nonblank-p (str)
   "Return non-nil if STR contains non-whitespace syntax."
