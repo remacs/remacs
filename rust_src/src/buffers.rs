@@ -169,6 +169,20 @@ impl LispBufferRef {
     }
 }
 
+
+pub struct LispOverlayRefIter(LispOverlayRef);
+
+impl Iterator for LispOverlayRefIter {
+    type Item = LispOverlayRef;
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = LispOverlayRef::new((*self).0.next as *mut Lisp_Overlay);
+        if next.as_ptr().is_null() {
+            return None;
+        }
+        Some(next)
+    }
+}
+
 impl LispOverlayRef {
     #[inline]
     pub fn start(self) -> LispObject {
@@ -178,6 +192,10 @@ impl LispOverlayRef {
     #[inline]
     pub fn end(self) -> LispObject {
         LispObject::from(self.end)
+    }
+
+    pub fn iter(self) -> LispOverlayRefIter {
+        LispOverlayRefIter(self)
     }
 }
 
@@ -336,43 +354,23 @@ pub fn overlay_buffer(overlay: LispObject) -> LispObject {
 }
 
 pub fn recenter_overlay_lists(mut buf: LispBufferRef, pos: ptrdiff_t) {
-    // let mut overlay: LispObject;
-    let (mut prev, mut tail, mut next): (
-        Option<LispOverlayRef>,
-        LispOverlayRef,
-        Option<LispOverlayRef>,
-    ) = (
-        None,
-        LispOverlayRef::new((*buf).overlays_before as *mut Lisp_Overlay),
-        None,
-    );
-    loop {
-        if tail.as_ptr() as ptrdiff_t == 0 {
-            break;
-        }
-        let (beg, end, curNext) = (tail.start(), tail.end(), tail.next);
-        if end.as_fixnum_coerce_marker_or_error() as ptrdiff_t > pos {
-            let begPtr = beg.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
+    let before = LispOverlayRef::new((*buf).overlays_before as *mut Lisp_Overlay);
+    let start: (Option<LispOverlayRef>, Option<LispOverlayRef>) = (None, Some(before));
+    let toMove: Option<(Option<LispOverlayRef>, Option<LispOverlayRef>)> = before
+        .iter()
+        .scan(start, |pair, current: LispOverlayRef| {
+            Some((pair.1, Some(current)))
+        })
+        .find(|pair| {
+            (pair.1).unwrap().end().as_fixnum_coerce_marker_or_error() as ptrdiff_t > pos
+        });
 
-            match prev {
-                Some(mut tailPtr) => tailPtr.next = curNext,
-                None => set_buffer_overlays_before(buf, curNext),
-            }
-
-            loop {
-                let (mut other_prev, mut other): (
-                    Option<LispOverlayRef>,
-                    LispOverlayRef,
-                ) = (
-                    None,
-                    LispOverlayRef::new((*buf).overlays_after as *mut Lisp_Overlay),
-                );
-            }
-        }
-        // TODO: check loop changes
-        prev = Some(tail);
-        tail = next.unwrap()
+    match toMove {
+        Some((Some(mut prev), Some(next))) => prev.next = next.as_ptr(),
+        Some((None, Some(next))) => set_buffer_overlays_before(buf, next.as_ptr()),
+        _ => panic!("Unexpected value for toMove"),
     }
+
     (*buf).overlay_center = pos
 }
 
