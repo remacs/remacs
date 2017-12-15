@@ -462,7 +462,8 @@ executed once when the buffer is created."
 (defcustom comint-terminfo-terminal "dumb"
   "Value to use for TERM when the system uses terminfo."
   :type 'string
-  :group 'comint)
+  :group 'comint
+  :version "26.1")
 
 (defvar comint-mode-map
   (let ((map (make-sparse-keymap)))
