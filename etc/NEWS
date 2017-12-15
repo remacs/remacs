@@ -431,6 +431,9 @@ You can enable this by customizing 'mwheel-tilt-scroll-p'.  If you
 want to reverse the direction of the scroll, customize
 'mwheel-flip-direction'.
 
++++
+** The default GnuTLS priority string now includes %DUMBFW.
+
 ** Emacsclient changes
 
 +++
