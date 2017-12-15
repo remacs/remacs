@@ -1191,12 +1191,12 @@ repeating the command will highlight other two parts."
     (smerge-refine-regions (match-beginning n1) (match-end n1)
                          (match-beginning n2)  (match-end n2)
                          (if smerge-use-changed-face
-			     '((smerge . refine) (face . smerge-refined-change)))
+			     '((smerge . refine) (font-lock-face . smerge-refined-change)))
 			 nil
 			 (unless smerge-use-changed-face
-			   '((smerge . refine) (face . smerge-refined-removed)))
+			   '((smerge . refine) (font-lock-face . smerge-refined-removed)))
 			 (unless smerge-use-changed-face
-			   '((smerge . refine) (face . smerge-refined-added))))))
+			   '((smerge . refine) (font-lock-face . smerge-refined-added))))))
 
 (defun smerge-swap ()
   "Swap the \"Upper\" and the \"Lower\" chunks.
