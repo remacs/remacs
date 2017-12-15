@@ -1014,9 +1014,10 @@ Inherits `shell-mode-map' with a few additions.")
 ;; This is a) ugly, and b) cheating, but this was the last
 ;; remaining warning from byte-compiling all of Emacs...
 (eval-when-compile
-  (setq byte-compile-function-environment
-	(delq (assq 'tex-mode byte-compile-function-environment)
-	      byte-compile-function-environment)))
+  (if (boundp 'byte-compile-function-environment)
+      (setq byte-compile-function-environment
+            (delq (assq 'tex-mode byte-compile-function-environment)
+                  byte-compile-function-environment))))
 
 ;;;###autoload
 (defun tex-mode ()
