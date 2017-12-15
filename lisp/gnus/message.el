@@ -1436,9 +1436,8 @@ starting with `not' and followed by regexps."
      (:bold t :italic t)))
   "Face used for displaying To headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-to-face 'face-alias 'message-header-to)
-(put 'message-header-to-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-to-face
+  'message-header-to "22.1")
 
 (defface message-header-cc
   '((((class color)
@@ -1451,9 +1450,8 @@ starting with `not' and followed by regexps."
      (:bold t)))
   "Face used for displaying Cc headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-cc-face 'face-alias 'message-header-cc)
-(put 'message-header-cc-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-cc-face
+  'message-header-cc "22.1")
 
 (defface message-header-subject
   '((((class color)
@@ -1466,9 +1464,8 @@ starting with `not' and followed by regexps."
      (:bold t)))
   "Face used for displaying Subject headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-subject-face 'face-alias 'message-header-subject)
-(put 'message-header-subject-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-subject-face
+  'message-header-subject "22.1")
 
 (defface message-header-newsgroups
   '((((class color)
@@ -1481,9 +1478,8 @@ starting with `not' and followed by regexps."
      (:bold t :italic t)))
   "Face used for displaying Newsgroups headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-newsgroups-face 'face-alias 'message-header-newsgroups)
-(put 'message-header-newsgroups-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-newsgroups-face
+  'message-header-newsgroups "22.1")
 
 (defface message-header-other
   '((((class color)
@@ -1496,9 +1492,8 @@ starting with `not' and followed by regexps."
      (:bold t :italic t)))
   "Face used for displaying other headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-other-face 'face-alias 'message-header-other)
-(put 'message-header-other-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-other-face
+  'message-header-other "22.1")
 
 (defface message-header-name
   '((((class color)
@@ -1511,9 +1506,8 @@ starting with `not' and followed by regexps."
      (:bold t)))
   "Face used for displaying header names."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-name-face 'face-alias 'message-header-name)
-(put 'message-header-name-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-name-face
+  'message-header-name "22.1")
 
 (defface message-header-xheader
   '((((class color)
@@ -1526,9 +1520,8 @@ starting with `not' and followed by regexps."
      (:bold t)))
   "Face used for displaying X-Header headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-xheader-face 'face-alias 'message-header-xheader)
-(put 'message-header-xheader-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-xheader-face
+  'message-header-xheader "22.1")
 
 (defface message-separator
   '((((class color)
@@ -1541,9 +1534,8 @@ starting with `not' and followed by regexps."
      (:bold t)))
   "Face used for displaying the separator."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-separator-face 'face-alias 'message-separator)
-(put 'message-separator-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-separator-face
+  'message-separator "22.1")
 
 (defface message-cited-text
   '((((class color)
@@ -1556,9 +1548,8 @@ starting with `not' and followed by regexps."
      (:bold t)))
   "Face used for displaying cited text names."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-cited-text-face 'face-alias 'message-cited-text)
-(put 'message-cited-text-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-cited-text-face
+  'message-cited-text "22.1")
 
 (defface message-mml
   '((((class color)
@@ -1571,9 +1562,8 @@ starting with `not' and followed by regexps."
      (:bold t)))
   "Face used for displaying MML."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-mml-face 'face-alias 'message-mml)
-(put 'message-mml-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-mml-face
+  'message-mml "22.1")
 
 (defun message-font-lock-make-header-matcher (regexp)
   (let ((form
