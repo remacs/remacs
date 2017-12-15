@@ -2058,7 +2058,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
   /* If we've deleted the last_nonminibuf_frame, then try to find
      another one.  */
-  if (f == last_nonminibuf_frame)
+  if (f == last_nonminibuf_frame && !NILP (Vframe_list))
     {
       last_nonminibuf_frame = 0;
 
@@ -2076,7 +2076,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
   /* If there's no other frame on the same kboard, get out of
      single-kboard state if we're in it for this kboard.  */
-  if (kb != NULL)
+  if (kb != NULL && !NILP (Vframe_list))
     {
       /* Some frame we found on the same kboard, or nil if there are none.  */
       Lisp_Object frame_on_same_kboard = Qnil;
@@ -2093,7 +2093,9 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   /* If we've deleted this keyboard's default_minibuffer_frame, try to
      find another one.  Prefer minibuffer-only frames, but also notice
      frames with other windows.  */
-  if (kb != NULL && EQ (frame, KVAR (kb, Vdefault_minibuffer_frame)))
+  if (kb != NULL
+      && EQ (frame, KVAR (kb, Vdefault_minibuffer_frame))
+      && !NILP (Vframe_list))
     {
       /* The last frame we saw with a minibuffer, minibuffer-only or not.  */
       Lisp_Object frame_with_minibuf = Qnil;
