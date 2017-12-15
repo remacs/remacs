@@ -2493,7 +2493,17 @@ This function is intended to be added to `auto-coding-functions'."
 	    (let* ((match (match-string 1))
 		   (sym (intern (downcase match))))
 	      (if (coding-system-p sym)
-		  sym
+                  ;; If the encoding tag is UTF-8 and the buffer's
+                  ;; encoding is one of the variants of UTF-8, use the
+                  ;; buffer's encoding.  This allows, e.g., saving an
+                  ;; XML file as UTF-8 with BOM when the tag says UTF-8.
+                  (let ((sym-type (coding-system-type sym))
+                        (bfcs-type
+                         (coding-system-type buffer-file-coding-system)))
+                    (if (and (coding-system-equal 'utf-8 sym-type)
+                             (coding-system-equal 'utf-8 bfcs-type))
+                        buffer-file-coding-system
+		      sym))
 		(message "Warning: unknown coding system \"%s\"" match)
 		nil))
           ;; Files without an encoding tag should be UTF-8. But users
@@ -2506,7 +2516,8 @@ This function is intended to be added to `auto-coding-functions'."
                    (coding-system-base
                     (detect-coding-region (point-min) size t)))))
             ;; Pure ASCII always comes back as undecided.
-            (if (memq detected '(utf-8 undecided))
+            (if (memq detected
+                      '(utf-8 'utf-8-with-signature 'utf-8-hfs undecided))
                 'utf-8
               (warn "File contents detected as %s.
   Consider adding an encoding attribute to the xml declaration,
