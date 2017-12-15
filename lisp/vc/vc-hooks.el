@@ -34,9 +34,9 @@
 
 ;; Faces
 
-(defgroup vc-state-faces nil
+(defgroup vc-faces nil
   "Faces used in the mode line by the VC state indicator."
-  :group 'vc-faces
+  :group 'vc
   :group 'mode-line
   :version "25.1")
 
