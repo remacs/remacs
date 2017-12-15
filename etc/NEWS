@@ -433,6 +433,8 @@ want to reverse the direction of the scroll, customize
 
 +++
 ** The default GnuTLS priority string now includes %DUMBFW.
+This is to avoid bad behavior in some firewalls, which causes the
+connection to be closed by the remote host.
 
 ** Emacsclient changes
 
