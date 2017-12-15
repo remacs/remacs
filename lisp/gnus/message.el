@@ -1428,12 +1428,12 @@ starting with `not' and followed by regexps."
 (defface message-header-to
   '((((class color)
       (background dark))
-     (:foreground "DarkOliveGreen1" :bold t))
+     :foreground "DarkOliveGreen1" :bold t)
     (((class color)
       (background light))
-     (:foreground "MidnightBlue" :bold t))
+     :foreground "MidnightBlue" :bold t)
     (t
-     (:bold t :italic t)))
+     :bold t :italic t))
   "Face used for displaying To headers."
   :group 'message-faces)
 (define-obsolete-face-alias 'message-header-to-face
@@ -1442,12 +1442,12 @@ starting with `not' and followed by regexps."
 (defface message-header-cc
   '((((class color)
       (background dark))
-     (:foreground "chartreuse1" :bold t))
+     :foreground "chartreuse1" :bold t)
     (((class color)
       (background light))
-     (:foreground "MidnightBlue"))
+     :foreground "MidnightBlue")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying Cc headers."
   :group 'message-faces)
 (define-obsolete-face-alias 'message-header-cc-face
@@ -1456,12 +1456,12 @@ starting with `not' and followed by regexps."
 (defface message-header-subject
   '((((class color)
       (background dark))
-     (:foreground "OliveDrab1"))
+     :foreground "OliveDrab1")
     (((class color)
       (background light))
-     (:foreground "navy blue" :bold t))
+     :foreground "navy blue" :bold t)
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying Subject headers."
   :group 'message-faces)
 (define-obsolete-face-alias 'message-header-subject-face
@@ -1470,12 +1470,12 @@ starting with `not' and followed by regexps."
 (defface message-header-newsgroups
   '((((class color)
       (background dark))
-     (:foreground "yellow" :bold t :italic t))
+     :foreground "yellow" :bold t :italic t)
     (((class color)
       (background light))
-     (:foreground "blue4" :bold t :italic t))
+     :foreground "blue4" :bold t :italic t)
     (t
-     (:bold t :italic t)))
+     :bold t :italic t))
   "Face used for displaying Newsgroups headers."
   :group 'message-faces)
 (define-obsolete-face-alias 'message-header-newsgroups-face
@@ -1484,12 +1484,12 @@ starting with `not' and followed by regexps."
 (defface message-header-other
   '((((class color)
       (background dark))
-     (:foreground "VioletRed1"))
+     :foreground "VioletRed1")
     (((class color)
       (background light))
-     (:foreground "steel blue"))
+     :foreground "steel blue")
     (t
-     (:bold t :italic t)))
+     :bold t :italic t))
   "Face used for displaying other headers."
   :group 'message-faces)
 (define-obsolete-face-alias 'message-header-other-face
@@ -1498,12 +1498,12 @@ starting with `not' and followed by regexps."
 (defface message-header-name
   '((((class color)
       (background dark))
-     (:foreground "green"))
+     :foreground "green")
     (((class color)
       (background light))
-     (:foreground "cornflower blue"))
+     :foreground "cornflower blue")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying header names."
   :group 'message-faces)
 (define-obsolete-face-alias 'message-header-name-face
@@ -1512,12 +1512,12 @@ starting with `not' and followed by regexps."
 (defface message-header-xheader
   '((((class color)
       (background dark))
-     (:foreground "DeepSkyBlue1"))
+     :foreground "DeepSkyBlue1")
     (((class color)
       (background light))
-     (:foreground "blue"))
+     :foreground "blue")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying X-Header headers."
   :group 'message-faces)
 (define-obsolete-face-alias 'message-header-xheader-face
@@ -1526,12 +1526,12 @@ starting with `not' and followed by regexps."
 (defface message-separator
   '((((class color)
       (background dark))
-     (:foreground "LightSkyBlue1"))
+     :foreground "LightSkyBlue1")
     (((class color)
       (background light))
-     (:foreground "brown"))
+     :foreground "brown")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying the separator."
   :group 'message-faces)
 (define-obsolete-face-alias 'message-separator-face
@@ -1540,12 +1540,12 @@ starting with `not' and followed by regexps."
 (defface message-cited-text
   '((((class color)
       (background dark))
-     (:foreground "LightPink1"))
+     :foreground "LightPink1")
     (((class color)
       (background light))
-     (:foreground "red"))
+     :foreground "red")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying cited text names."
   :group 'message-faces)
 (define-obsolete-face-alias 'message-cited-text-face
@@ -1554,12 +1554,12 @@ starting with `not' and followed by regexps."
 (defface message-mml
   '((((class color)
       (background dark))
-     (:foreground "MediumSpringGreen"))
+     :foreground "MediumSpringGreen")
     (((class color)
       (background light))
-     (:foreground "ForestGreen"))
+     :foreground "ForestGreen")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying MML."
   :group 'message-faces)
 (define-obsolete-face-alias 'message-mml-face
