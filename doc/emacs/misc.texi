@@ -1397,9 +1397,10 @@ directory stack if they are not already on it
 underlying shell, of course.
 
 @vindex comint-terminfo-terminal
+@vindex TERM, environment variable, in sub-shell
 Comint mode sets the @env{TERM} environment variable to a safe default
 value, but this value disables some useful features.  For example,
-color is disabled for applications that use @env{TERM} to determine if
+color is disabled in applications that use @env{TERM} to determine if
 color is supported.  Therefore, Emacs provides an option
 @code{comint-terminfo-terminal}, which you can set to a terminal that
 is present in your system's terminfo database, in order to take

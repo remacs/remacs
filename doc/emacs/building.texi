@@ -303,6 +303,11 @@ And here's how to do it in csh:
 if ($?prompt) set prompt = @dots{}
 @end example
 
+@vindex TERM, environment variable, in compilation mode
+  If you want to customize the value of the @env{TERM} environment
+variable passed to the compilation subshell, customize the variable
+@code{comint-terminfo-terminal} (@pxref{Shell Options}).
+
   Emacs does not expect a compiler process to launch asynchronous
 subprocesses; if it does, and they keep running after the main
 compiler process has terminated, Emacs may kill them or their output
