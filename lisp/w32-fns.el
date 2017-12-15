@@ -31,13 +31,13 @@
 
 ;;;; Function keys
 
-(declare-function set-message-beep "w32fns.c" (sound))
 (declare-function w32-get-locale-info "w32proc.c" (lcid &optional longform))
 (declare-function w32-get-valid-locale-ids "w32proc.c" ())
 
-;; Map all versions of a filename (8.3, longname, mixed case) to the
-;; same buffer.
-(setq find-file-visit-truename t)
+(if (eq system-type 'windows-nt)
+    ;; Map all versions of a filename (8.3, longname, mixed case) to the
+    ;; same buffer.
+    (setq find-file-visit-truename t))
 
 (defun w32-shell-name ()
   "Return the name of the shell being used."
@@ -242,7 +242,8 @@ This function is provided for backward compatibility, since
 (defvaralias 'w32-system-coding-system 'locale-coding-system)
 
 ;; Set to a system sound if you want a fancy bell.
-(set-message-beep nil)
+(if (fboundp 'set-message-beep)         ; w32fns.c
+    (set-message-beep nil))
 
 (defvar w32-charset-info-alist)         ; w32font.c
 
@@ -259,47 +260,48 @@ bit output with no translation."
   (add-to-list 'w32-charset-info-alist
                (cons xlfd-charset (cons windows-charset codepage))))
 
-;; The last charset we add becomes the "preferred" charset for the return
-;; value from w32-select-font etc, so list the most important charsets last.
-(w32-add-charset-info "iso8859-14" 'w32-charset-ansi  28604)
-(w32-add-charset-info "iso8859-15" 'w32-charset-ansi  28605)
-;; The following two are included for pattern matching.
-(w32-add-charset-info "jisx0201" 'w32-charset-shiftjis 932)
-(w32-add-charset-info "jisx0208" 'w32-charset-shiftjis 932)
-(w32-add-charset-info "jisx0201-latin" 'w32-charset-shiftjis 932)
-(w32-add-charset-info "jisx0201-katakana" 'w32-charset-shiftjis 932)
-(w32-add-charset-info "ksc5601.1989" 'w32-charset-hangeul 949)
-(w32-add-charset-info "big5" 'w32-charset-chinesebig5 950)
-(w32-add-charset-info "gb2312.1980" 'w32-charset-gb2312 936)
-(w32-add-charset-info "ms-symbol" 'w32-charset-symbol nil)
-(w32-add-charset-info "ms-oem" 'w32-charset-oem 437)
-(w32-add-charset-info "ms-oemlatin" 'w32-charset-oem 850)
-(w32-add-charset-info "iso8859-2" 'w32-charset-easteurope 28592)
-(w32-add-charset-info "iso8859-3" 'w32-charset-turkish 28593)
-(w32-add-charset-info "iso8859-4" 'w32-charset-baltic 28594)
-(w32-add-charset-info "iso8859-6" 'w32-charset-arabic 28596)
-(w32-add-charset-info "iso8859-7" 'w32-charset-greek 28597)
-(w32-add-charset-info "iso8859-8" 'w32-charset-hebrew 1255)
-(w32-add-charset-info "iso8859-9" 'w32-charset-turkish 1254)
-(w32-add-charset-info "iso8859-13" 'w32-charset-baltic 1257)
-(w32-add-charset-info "koi8-r" 'w32-charset-russian 20866)
-(w32-add-charset-info "iso8859-5" 'w32-charset-russian 28595)
-(w32-add-charset-info "tis620-2533" 'w32-charset-thai 874)
-(w32-add-charset-info "windows-1258" 'w32-charset-vietnamese 1258)
-(w32-add-charset-info "ksc5601.1992" 'w32-charset-johab 1361)
-(w32-add-charset-info "mac-roman" 'w32-charset-mac 10000)
-(w32-add-charset-info "iso10646-1" 'w32-charset-default t)
+(when (boundp 'w32-charset-info-alist)
+  ;; The last charset we add becomes the "preferred" charset for the return
+  ;; value from w32-select-font etc, so list the most important charsets last.
+  (w32-add-charset-info "iso8859-14" 'w32-charset-ansi  28604)
+  (w32-add-charset-info "iso8859-15" 'w32-charset-ansi  28605)
+  ;; The following two are included for pattern matching.
+  (w32-add-charset-info "jisx0201" 'w32-charset-shiftjis 932)
+  (w32-add-charset-info "jisx0208" 'w32-charset-shiftjis 932)
+  (w32-add-charset-info "jisx0201-latin" 'w32-charset-shiftjis 932)
+  (w32-add-charset-info "jisx0201-katakana" 'w32-charset-shiftjis 932)
+  (w32-add-charset-info "ksc5601.1989" 'w32-charset-hangeul 949)
+  (w32-add-charset-info "big5" 'w32-charset-chinesebig5 950)
+  (w32-add-charset-info "gb2312.1980" 'w32-charset-gb2312 936)
+  (w32-add-charset-info "ms-symbol" 'w32-charset-symbol nil)
+  (w32-add-charset-info "ms-oem" 'w32-charset-oem 437)
+  (w32-add-charset-info "ms-oemlatin" 'w32-charset-oem 850)
+  (w32-add-charset-info "iso8859-2" 'w32-charset-easteurope 28592)
+  (w32-add-charset-info "iso8859-3" 'w32-charset-turkish 28593)
+  (w32-add-charset-info "iso8859-4" 'w32-charset-baltic 28594)
+  (w32-add-charset-info "iso8859-6" 'w32-charset-arabic 28596)
+  (w32-add-charset-info "iso8859-7" 'w32-charset-greek 28597)
+  (w32-add-charset-info "iso8859-8" 'w32-charset-hebrew 1255)
+  (w32-add-charset-info "iso8859-9" 'w32-charset-turkish 1254)
+  (w32-add-charset-info "iso8859-13" 'w32-charset-baltic 1257)
+  (w32-add-charset-info "koi8-r" 'w32-charset-russian 20866)
+  (w32-add-charset-info "iso8859-5" 'w32-charset-russian 28595)
+  (w32-add-charset-info "tis620-2533" 'w32-charset-thai 874)
+  (w32-add-charset-info "windows-1258" 'w32-charset-vietnamese 1258)
+  (w32-add-charset-info "ksc5601.1992" 'w32-charset-johab 1361)
+  (w32-add-charset-info "mac-roman" 'w32-charset-mac 10000)
+  (w32-add-charset-info "iso10646-1" 'w32-charset-default t)
 
-;;   ;; If Unicode Windows charset is not defined, use ansi fonts.
-;;   (w32-add-charset-info "iso10646-1" 'w32-charset-ansi t))
+  ;;   ;; If Unicode Windows charset is not defined, use ansi fonts.
+  ;;   (w32-add-charset-info "iso10646-1" 'w32-charset-ansi t))
 
-;; Preferred names
-(w32-add-charset-info "big5-0" 'w32-charset-chinesebig5 950)
-(w32-add-charset-info "gb2312.1980-0" 'w32-charset-gb2312 936)
-(w32-add-charset-info "jisx0208-sjis" 'w32-charset-shiftjis 932)
-(w32-add-charset-info "ksc5601.1987-0" 'w32-charset-hangeul 949)
-(w32-add-charset-info "tis620-0" 'w32-charset-thai 874)
-(w32-add-charset-info "iso8859-1" 'w32-charset-ansi 1252)
+  ;; Preferred names
+  (w32-add-charset-info "big5-0" 'w32-charset-chinesebig5 950)
+  (w32-add-charset-info "gb2312.1980-0" 'w32-charset-gb2312 936)
+  (w32-add-charset-info "jisx0208-sjis" 'w32-charset-shiftjis 932)
+  (w32-add-charset-info "ksc5601.1987-0" 'w32-charset-hangeul 949)
+  (w32-add-charset-info "tis620-0" 'w32-charset-thai 874)
+  (w32-add-charset-info "iso8859-1" 'w32-charset-ansi 1252))
 
 
 ;;;; Support for build process
