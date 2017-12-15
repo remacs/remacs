@@ -895,7 +895,7 @@ and macros to support such @dfn{deferred evaluation}:
 @cindex thunk
 @defmac thunk-delay forms@dots{}
 Return a @dfn{thunk} for evaluating the @var{forms}.  A thunk is a
-closure (@pxref{Closures}) that inherits the lexical enviroment of the
+closure (@pxref{Closures}) that inherits the lexical environment of the
 @code{thunk-delay} call.  Using this macro requires
 @code{lexical-binding}.
 @end defmac

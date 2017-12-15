@@ -184,7 +184,7 @@ It must be supported by libarchive(3).")
     ;; `byte-compiler-base-file-name' performed by default handler.
     ;; `copy-directory' performed by default handler.
     (copy-file . tramp-archive-handle-copy-file)
-    (delete-directorye . tramp-archive-handle-not-implemented)
+    (delete-directory . tramp-archive-handle-not-implemented)
     (delete-file . tramp-archive-handle-not-implemented)
     ;; `diff-latest-backup-file' performed by default handler.
     (directory-file-name . tramp-archive-handle-directory-file-name)
