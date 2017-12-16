@@ -77,6 +77,13 @@ whether '"' is also replaced in 'electric-quote-mode'.  If non-nil,
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** CSS mode
+
+---
+*** A new command 'css-cycle-color-format' for cycling between color
+formats (e.g. "black" => "#000000" => "rgb(0, 0, 0)") has been added,
+bound to 'C-c C-f'.
+
 ** Dired
 
 +++
