@@ -745,6 +745,8 @@ The relationships recorded for each frame are
 - `delete-before' via `frameset--delete-before'
 - `parent-frame' via `frameset--parent-frame'
 - `mouse-wheel-frame' via `frameset--mouse-wheel-frame'
+- `text-pixel-width' via `frameset--text-pixel-width'
+- `text-pixel-height' via `frameset--text-pixel-height'
 
 Internal use only."
   ;; Record frames with their own minibuffer
@@ -791,7 +793,23 @@ Internal use only."
              'frameset--mini
              (cons nil
                    (and mb-frame
-                        (frameset-frame-id mb-frame))))))))))
+                        (frameset-frame-id mb-frame)))))))))
+  ;; Now store text-pixel width and height if it differs from the calculated
+  ;; width and height and the frame is not fullscreen.
+  (dolist (frame frame-list)
+    (unless (frame-parameter frame 'fullscreen)
+      (unless (eq (* (frame-parameter frame 'width)
+                     (frame-char-width frame))
+                  (frame-text-width frame))
+        (set-frame-parameter
+         frame 'frameset--text-pixel-width
+         (frame-text-width frame)))
+      (unless (eq (* (frame-parameter frame 'height)
+                     (frame-char-height frame))
+                  (frame-text-height frame))
+        (set-frame-parameter
+         frame 'frameset--text-pixel-height
+         (frame-text-height frame))))))
 
 ;;;###autoload
 (cl-defun frameset-save (frame-list
@@ -1001,6 +1019,14 @@ Internal use only."
 	 (filtered-cfg (frameset-filter-params parameters filters nil))
 	 (display (cdr (assq 'display filtered-cfg))) ;; post-filtering
 	 alt-cfg frame)
+
+    ;; Use text-pixels for height and width, if available.
+    (let ((text-pixel-width (cdr (assq 'frameset--text-pixel-width parameters)))
+          (text-pixel-height (cdr (assq 'frameset--text-pixel-height parameters))))
+      (when text-pixel-width
+        (setf (alist-get 'width filtered-cfg) (cons 'text-pixels text-pixel-width)))
+      (when text-pixel-height
+        (setf (alist-get 'height filtered-cfg) (cons 'text-pixels text-pixel-height))))
 
     (when fullscreen
       ;; Currently Emacs has the limitation that it does not record the size
