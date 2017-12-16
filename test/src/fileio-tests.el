@@ -29,7 +29,8 @@
 
 (defun fileio-tests--symlink-failure ()
   (let* ((dir (make-temp-file "fileio" t))
-         (link (expand-file-name "link" dir)))
+         (link (expand-file-name "link" dir))
+         (file-name-coding-system 'utf-8-hfs-unix))
     (unwind-protect
         (let (failure
               (char 0))
