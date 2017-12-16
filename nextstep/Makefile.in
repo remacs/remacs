@@ -107,4 +107,7 @@ distclean: clean
 
 bootstrap-clean maintainer-clean: distclean
 
+icons:
+	(cd Cocoa/Remacs.base/Contents/Resources && iconutil -c icns Emacs.iconset)
+
 ### Makefile.in ends here
