@@ -1035,6 +1035,11 @@ extern "C" {
     pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
+    pub fn make_string_from_bytes(
+        contents: *const c_char,
+        nchars: ptrdiff_t,
+        nbytes: ptrdiff_t,
+    ) -> Lisp_Object;
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
     pub fn make_lisp_symbol(ptr: *mut Lisp_Symbol) -> Lisp_Object;
     pub fn build_string(s: *const c_char) -> Lisp_Object;

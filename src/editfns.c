@@ -318,51 +318,6 @@ init_editfns (bool dumping)
 #endif
 }
 
-DEFUN ("char-to-string", Fchar_to_string, Schar_to_string, 1, 1, 0,
-       doc: /* Convert arg CHAR to a string containing that character.
-usage: (char-to-string CHAR)  */)
-  (Lisp_Object character)
-{
-  int c, len;
-  unsigned char str[MAX_MULTIBYTE_LENGTH];
-
-  CHECK_CHARACTER (character);
-  c = XFASTINT (character);
-
-  len = CHAR_STRING (c, str);
-  return make_string_from_bytes ((char *) str, 1, len);
-}
-
-DEFUN ("byte-to-string", Fbyte_to_string, Sbyte_to_string, 1, 1, 0,
-       doc: /* Convert arg BYTE to a unibyte string containing that byte.  */)
-  (Lisp_Object byte)
-{
-  unsigned char b;
-  CHECK_NUMBER (byte);
-  if (XINT (byte) < 0 || XINT (byte) > 255)
-    error ("Invalid byte");
-  b = XINT (byte);
-  return make_string_from_bytes ((char *) &b, 1, 1);
-}
-
-DEFUN ("string-to-char", Fstring_to_char, Sstring_to_char, 1, 1, 0,
-       doc: /* Return the first character in STRING.  */)
-  (register Lisp_Object string)
-{
-  register Lisp_Object val;
-  CHECK_STRING (string);
-  if (SCHARS (string))
-    {
-      if (STRING_MULTIBYTE (string))
-	XSETFASTINT (val, STRING_CHAR (SDATA (string)));
-      else
-	XSETFASTINT (val, SREF (string, 0));
-    }
-  else
-    XSETFASTINT (val, 0);
-  return val;
-}
-
 DEFUN ("point-marker", Fpoint_marker, Spoint_marker, 0, 0, 0,
        doc: /* Return value of point, as a marker object.  */)
   (void)
@@ -5160,9 +5115,6 @@ functions if all the text being accessed has this property.  */);
 	       doc: /* The release of the operating system Emacs is running on.  */);
 
   defsubr (&Schar_equal);
-  defsubr (&Sstring_to_char);
-  defsubr (&Schar_to_string);
-  defsubr (&Sbyte_to_string);
   defsubr (&Sbuffer_substring);
   defsubr (&Sbuffer_substring_no_properties);
   defsubr (&Sbuffer_string);
