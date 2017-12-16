@@ -1037,9 +1037,7 @@ This recognizes CSS-color-4 extensions."
 STR is the incoming CSS hex color.
 This function simply drops any transparency."
   ;; Either #RGB or #RRGGBB, drop the "A" or "AA".
-  (if (> (length str) 5)
-      (substring str 0 7)
-    (substring str 0 4)))
+  (substring str 0 (if (> (length str) 5) 7 4)))
 
 (defun css--named-color (start-point str)
   "Check whether STR, seen at point, is CSS named color.
