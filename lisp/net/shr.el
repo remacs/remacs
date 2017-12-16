@@ -591,9 +591,14 @@ size, and full-buffer size."
 (defun shr-string-pixel-width (string)
   (if (not shr-use-fonts)
       (length string)
-    (with-temp-buffer
-      (insert string)
-      (shr-pixel-column))))
+    ;; Save and restore point across with-temp-buffer, since
+    ;; shr-pixel-column uses save-window-excursion, which can reset
+    ;; point to 1.
+    (let ((pt (point)))
+      (with-temp-buffer
+        (insert string)
+        (shr-pixel-column))
+      (goto-char pt))))
 
 (defsubst shr--translate-insertion-chars ()
   ;; Remove soft hyphens.
