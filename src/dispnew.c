@@ -2260,9 +2260,8 @@ check_glyph_memory (void)
   Lisp_Object tail, frame;
 
   /* Free glyph memory for all frames.  */
-  if (!NILP (Vframe_list))
-    FOR_EACH_FRAME (tail, frame)
-      free_glyphs (XFRAME (frame));
+  FOR_EACH_FRAME (tail, frame)
+    free_glyphs (XFRAME (frame));
 
 #if defined GLYPH_DEBUG && defined ENABLE_CHECKING
   /* Check that nothing is left allocated.  */
