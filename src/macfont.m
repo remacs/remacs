@@ -1441,8 +1441,6 @@ macfont_get_glyph_for_character (struct font *font, UTF32Char c)
           CGGlyph *glyphs;
           int i, len;
           int nrows;
-          dispatch_queue_t queue;
-          dispatch_group_t group = NULL;
           int nkeys;
 
           if (row != 0)
