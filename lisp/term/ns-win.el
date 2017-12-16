@@ -354,7 +354,7 @@ See `ns-insert-working-text'."
   ;; Used prior to Emacs 25.
   (define-coding-system-alias 'utf-8-nfd 'utf-8-hfs)
 
-  (set-file-name-coding-system 'utf-8-hfs))
+  (set-file-name-coding-system 'utf-8-hfs-unix))
 
 ;;;; Inter-app communications support.
 
