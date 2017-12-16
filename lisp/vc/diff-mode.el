@@ -2005,9 +2005,6 @@ For use in `add-log-current-defun-function'."
     (replace-match (cdr (assq (char-before) '((?+ . "-") (?> . "<"))))))
   )
 
-(declare-function smerge-refine-subst "smerge-mode"
-                  (beg1 end1 beg2 end2 props-c &optional preproc props-r props-a))
-
 (defun diff--forward-while-leading-char (char bound)
   "Move point until reaching a line not starting with CHAR.
 Return new point, if it was moved."
@@ -2049,13 +2046,13 @@ Return new point, if it was moved."
                           (diff--forward-while-leading-char ?+ end)
                           (progn (diff--forward-while-leading-char ?\\ end)
                                  (setq end-add (point))))
-                 (smerge-refine-subst beg-del beg-add beg-add end-add
+                 (smerge-refine-regions beg-del beg-add beg-add end-add
                                       nil 'diff-refine-preproc props-r props-a)))))
           (`context
            (let* ((middle (save-excursion (re-search-forward "^---")))
                   (other middle))
              (while (re-search-forward "^\\(?:!.*\n\\)+" middle t)
-               (smerge-refine-subst (match-beginning 0) (match-end 0)
+               (smerge-refine-regions (match-beginning 0) (match-end 0)
                                     (save-excursion
                                       (goto-char other)
                                       (re-search-forward "^\\(?:!.*\n\\)+" end)
@@ -2070,7 +2067,7 @@ Return new point, if it was moved."
            (let ((beg1 (1+ (point))))
              (when (re-search-forward "^---.*\n" end t)
                ;; It's a combined add&remove, so there's something to do.
-               (smerge-refine-subst beg1 (match-beginning 0)
+               (smerge-refine-regions beg1 (match-beginning 0)
                                     (match-end 0) end
                                     nil 'diff-refine-preproc props-r props-a)))))))))
 

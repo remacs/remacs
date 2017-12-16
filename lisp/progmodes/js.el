@@ -477,6 +477,7 @@ This applies to function movement, marking, and so on."
 
 (defcustom js-indent-align-list-continuation t
   "Align continuation of non-empty ([{ lines in `js-mode'."
+  :version "26.1"
   :type 'boolean
   :group 'js)
 

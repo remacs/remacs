@@ -5165,6 +5165,7 @@ This is a non empty list of strings, the checker tool possibly followed by
 required arguments.  Once launched it will receive the Python source to be
 checked as its standard input.
 To use `flake8' you would set this to (\"flake8\" \"-\")."
+  :version "26.1"
   :group 'python-flymake
   :type '(repeat string))
 
@@ -5186,6 +5187,7 @@ MESSAGE'th gives the message text itself.
 If COLUMN or TYPE are nil or that index didn't match, that
 information is not present on the matched line and a default will
 be used."
+  :version "26.1"
   :group 'python-flymake
   :type '(list regexp
                (integer :tag "Line's index")
@@ -5209,6 +5211,7 @@ For example, when using `flake8' a possible configuration could be:
    (\"^[EW][0-9]+\" . :note))
 
 By default messages are considered errors."
+  :version "26.1"
   :group 'python-flymake
   :type `(alist :key-type (regexp)
                 :value-type (symbol)))

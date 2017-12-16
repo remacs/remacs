@@ -1481,7 +1481,7 @@ SYMBOL is the variable being changed.
 NEWVAL is the value it will be changed to.
 OPERATION is a symbol representing the kind of change, one of: `set',
 `let', `unlet', `makunbound', and `defvaralias'.
-WHERE is a buffer if the buffer-local value of the variable being
+WHERE is a buffer if the buffer-local value of the variable is being
 changed, nil otherwise.
 
 All writes to aliases of SYMBOL will call WATCH-FUNCTION too.  */)

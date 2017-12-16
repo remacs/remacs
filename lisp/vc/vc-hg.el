@@ -278,7 +278,7 @@ within the repository.
 
 If no list entry produces a useful revision, return `nil'."
   :type '(repeat (choice
-                  (const :tag "Active bookmark" 'bookmark)
+                  (const :tag "Active bookmark" builtin-active-bookmark)
                   (string :tag "Hg template")
                   (function :tag "Custom")))
   :version "26.1"

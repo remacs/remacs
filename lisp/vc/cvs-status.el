@@ -33,11 +33,6 @@
 
 ;;;
 
-(defgroup cvs-status nil
-  "Major mode for browsing `cvs status' output."
-  :group 'pcl-cvs
-  :prefix "cvs-status-")
-
 (easy-mmode-defmap cvs-status-mode-map
   '(("n"	. next-line)
     ("p"	. previous-line)

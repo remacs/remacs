@@ -64,9 +64,12 @@ considered to be running if the newsticker timer list is not empty."
   "Aggregator for RSS and Atom feeds."
   :group 'applications)
 
+;; Hard-coding URLs like this is a recipe for propagating obsolete info.
 (defconst newsticker--raw-url-list-defaults
-  '(("CNET News.com"
-     "http://export.cnet.com/export/feeds/news/rss/1,11176,,00.xml")
+  '(
+    ;; 2017/12: no response.
+;;;    ("CNET News.com"
+;;;     "http://export.cnet.com/export/feeds/news/rss/1,11176,,00.xml")
     ("Debian Security Advisories"
     "http://www.debian.org/security/dsa.en.rdf")
     ("Debian Security Advisories - Long format"
@@ -76,23 +79,24 @@ considered to be running if the newsticker timer list is not empty."
     nil
     3600)
     ("LWN (Linux Weekly News)"
-    "http://lwn.net/headlines/rss")
-    ("NY Times: Technology"
-    "http://partners.userland.com/nytRss/technology.xml")
-    ("NY Times"
-    "http://partners.userland.com/nytRss/nytHomepage.xml")
+    "https://lwn.net/headlines/rss")
+    ;; Not updated since 2010.
+;;;    ("NY Times: Technology"
+;;;    "http://www.nytimes.com/services/xml/rss/userland/Technology.xml")
+;;;    ("NY Times"
+;;;    "http://www.nytimes.com/services/xml/rss/userland/HomePage.xml")
     ("Quote of the day"
-    "http://www.quotationspage.com/data/qotd.rss"
+    "http://feeds.feedburner.com/quotationspage/qotd"
     "07:00"
     86400)
     ("The Register"
-    "http://www.theregister.co.uk/tonys/slashdot.rdf")
+    "https://www.theregister.co.uk/headlines.rss")
     ("slashdot"
-    "http://slashdot.org/index.rss"
+    "http://rss.slashdot.org/Slashdot/slashdot"
     nil
     3600)                        ;/. will ban you if under 3600 seconds!
     ("Wired News"
-    "http://www.wired.com/news_drop/netcenter/netcenter.rdf")
+    "https://www.wired.com/feed/rss")
     ("Heise News (german)"
     "http://www.heise.de/newsticker/heise.rdf")
     ("Tagesschau (german)"
@@ -158,7 +162,7 @@ value effective."
 
 (defcustom newsticker-url-list-defaults
  '(("Emacs Wiki"
-    "http://www.emacswiki.org/cgi-bin/wiki.pl?action=rss"
+    "https://www.emacswiki.org/emacs?action=rss"
     nil
     3600))
   "A customizable list of news feeds to select from.

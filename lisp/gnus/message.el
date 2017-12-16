@@ -1427,152 +1427,142 @@ starting with `not' and followed by regexps."
 (defface message-header-to
   '((((class color)
       (background dark))
-     (:foreground "DarkOliveGreen1" :bold t))
+     :foreground "DarkOliveGreen1" :bold t)
     (((class color)
       (background light))
-     (:foreground "MidnightBlue" :bold t))
+     :foreground "MidnightBlue" :bold t)
     (t
-     (:bold t :italic t)))
+     :bold t :italic t))
   "Face used for displaying To headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-to-face 'face-alias 'message-header-to)
-(put 'message-header-to-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-to-face
+  'message-header-to "22.1")
 
 (defface message-header-cc
   '((((class color)
       (background dark))
-     (:foreground "chartreuse1" :bold t))
+     :foreground "chartreuse1" :bold t)
     (((class color)
       (background light))
-     (:foreground "MidnightBlue"))
+     :foreground "MidnightBlue")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying Cc headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-cc-face 'face-alias 'message-header-cc)
-(put 'message-header-cc-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-cc-face
+  'message-header-cc "22.1")
 
 (defface message-header-subject
   '((((class color)
       (background dark))
-     (:foreground "OliveDrab1"))
+     :foreground "OliveDrab1")
     (((class color)
       (background light))
-     (:foreground "navy blue" :bold t))
+     :foreground "navy blue" :bold t)
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying Subject headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-subject-face 'face-alias 'message-header-subject)
-(put 'message-header-subject-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-subject-face
+  'message-header-subject "22.1")
 
 (defface message-header-newsgroups
   '((((class color)
       (background dark))
-     (:foreground "yellow" :bold t :italic t))
+     :foreground "yellow" :bold t :italic t)
     (((class color)
       (background light))
-     (:foreground "blue4" :bold t :italic t))
+     :foreground "blue4" :bold t :italic t)
     (t
-     (:bold t :italic t)))
+     :bold t :italic t))
   "Face used for displaying Newsgroups headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-newsgroups-face 'face-alias 'message-header-newsgroups)
-(put 'message-header-newsgroups-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-newsgroups-face
+  'message-header-newsgroups "22.1")
 
 (defface message-header-other
   '((((class color)
       (background dark))
-     (:foreground "VioletRed1"))
+     :foreground "VioletRed1")
     (((class color)
       (background light))
-     (:foreground "steel blue"))
+     :foreground "steel blue")
     (t
-     (:bold t :italic t)))
+     :bold t :italic t))
   "Face used for displaying other headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-other-face 'face-alias 'message-header-other)
-(put 'message-header-other-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-other-face
+  'message-header-other "22.1")
 
 (defface message-header-name
   '((((class color)
       (background dark))
-     (:foreground "green"))
+     :foreground "green")
     (((class color)
       (background light))
-     (:foreground "cornflower blue"))
+     :foreground "cornflower blue")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying header names."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-name-face 'face-alias 'message-header-name)
-(put 'message-header-name-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-name-face
+  'message-header-name "22.1")
 
 (defface message-header-xheader
   '((((class color)
       (background dark))
-     (:foreground "DeepSkyBlue1"))
+     :foreground "DeepSkyBlue1")
     (((class color)
       (background light))
-     (:foreground "blue"))
+     :foreground "blue")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying X-Header headers."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-header-xheader-face 'face-alias 'message-header-xheader)
-(put 'message-header-xheader-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-header-xheader-face
+  'message-header-xheader "22.1")
 
 (defface message-separator
   '((((class color)
       (background dark))
-     (:foreground "LightSkyBlue1"))
+     :foreground "LightSkyBlue1")
     (((class color)
       (background light))
-     (:foreground "brown"))
+     :foreground "brown")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying the separator."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-separator-face 'face-alias 'message-separator)
-(put 'message-separator-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-separator-face
+  'message-separator "22.1")
 
 (defface message-cited-text
   '((((class color)
       (background dark))
-     (:foreground "LightPink1"))
+     :foreground "LightPink1")
     (((class color)
       (background light))
-     (:foreground "red"))
+     :foreground "red")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying cited text names."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-cited-text-face 'face-alias 'message-cited-text)
-(put 'message-cited-text-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-cited-text-face
+  'message-cited-text "22.1")
 
 (defface message-mml
   '((((class color)
       (background dark))
-     (:foreground "MediumSpringGreen"))
+     :foreground "MediumSpringGreen")
     (((class color)
       (background light))
-     (:foreground "ForestGreen"))
+     :foreground "ForestGreen")
     (t
-     (:bold t)))
+     :bold t))
   "Face used for displaying MML."
   :group 'message-faces)
-;; backward-compatibility alias
-(put 'message-mml-face 'face-alias 'message-mml)
-(put 'message-mml-face 'obsolete-face "22.1")
+(define-obsolete-face-alias 'message-mml-face
+  'message-mml "22.1")
 
 (defun message-font-lock-make-header-matcher (regexp)
   (let ((form

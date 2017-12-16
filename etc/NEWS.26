@@ -431,6 +431,11 @@ You can enable this by customizing 'mwheel-tilt-scroll-p'.  If you
 want to reverse the direction of the scroll, customize
 'mwheel-flip-direction'.
 
++++
+** The default GnuTLS priority string now includes %DUMBFW.
+This is to avoid bad behavior in some firewalls, which causes the
+connection to be closed by the remote host.
+
 ** Emacsclient changes
 
 +++
@@ -806,6 +811,13 @@ whose content matches a regexp; bound to '% g'.
 ---
 *** New user option 'comint-move-point-for-matching-input' to control
 where to place point after 'C-c M-r' and 'C-c M-s'.
+
++++
+*** New user option 'comint-terminfo-terminal'.
+This option allows control of the value of the TERM environment
+variable Emacs puts into the environment of the Comint mode and its
+derivatives, such as Shell mode and Compilation Shell minor-mode.  The
+default is "dumb", for compatibility with previous behavior.
 
 ** Compilation mode
 
@@ -1461,6 +1473,17 @@ Programs that called it with multiple arguments before should pass
 them through 'format' first.  Even that is discouraged: for ElDoc
 support, you should set 'eldoc-documentation-function' instead of
 calling 'eldoc-message' directly.
+
+---
+** Using '&rest' or '&optional' incorrectly is now an error.
+For example giving '&optional' without a following variable, or
+passing '&optional' multiple times:
+
+    (defun foo (&optional &rest x))
+    (defun bar (&optional &optional x))
+
+Previously, Emacs would just ignore the extra keyword, or give
+incorrect results in certain cases.
 
 
 * Lisp Changes in Emacs 26.1

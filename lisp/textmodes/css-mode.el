@@ -1037,7 +1037,7 @@ This recognizes CSS-color-4 extensions."
 STR is the incoming CSS hex color.
 This function simply drops any transparency."
   ;; Either #RGB or #RRGGBB, drop the "A" or "AA".
-  (if (> (length str) 4)
+  (if (> (length str) 5)
       (substring str 0 7)
     (substring str 0 4)))
 

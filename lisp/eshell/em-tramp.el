@@ -32,6 +32,8 @@
   (require 'eshell)
   (require 'tramp))
 
+;; There are no items in this custom group, but eshell modules (ab)use
+;; custom groups.
 ;;;###autoload
 (progn
  (defgroup eshell-tramp nil

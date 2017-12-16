@@ -2314,12 +2314,14 @@ See `font-lock-syntax-table'.")
 (defcustom ruby-flymake-use-rubocop-if-available t
   "Non-nil to use the Rubocop Flymake backend.
 Only takes effect if Rubocop is installed."
+  :version "26.1"
   :type 'boolean
   :group 'ruby
   :safe 'booleanp)
 
 (defcustom ruby-rubocop-config ".rubocop.yml"
   "Configuration file for `ruby-flymake-rubocop'."
+  :version "26.1"
   :type 'string
   :group 'ruby
   :safe 'stringp)

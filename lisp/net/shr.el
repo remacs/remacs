@@ -149,7 +149,7 @@ cid: URL as the argument.")
   "Alist of tag/function pairs used to alter how shr renders certain tags.
 For instance, eww uses this to alter rendering of title, forms
 and other things:
-((title . eww-tag-title)
+\((title . eww-tag-title)
  (form . eww-tag-form)
  ...)")
 
@@ -591,9 +591,14 @@ size, and full-buffer size."
 (defun shr-string-pixel-width (string)
   (if (not shr-use-fonts)
       (length string)
-    (with-temp-buffer
-      (insert string)
-      (shr-pixel-column))))
+    ;; Save and restore point across with-temp-buffer, since
+    ;; shr-pixel-column uses save-window-excursion, which can reset
+    ;; point to 1.
+    (let ((pt (point)))
+      (with-temp-buffer
+        (insert string)
+        (shr-pixel-column))
+      (goto-char pt))))
 
 (defsubst shr--translate-insertion-chars ()
   ;; Remove soft hyphens.

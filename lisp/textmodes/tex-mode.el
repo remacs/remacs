@@ -266,12 +266,14 @@ measured relative to that of the normal text."
 
 (defcustom tex-chktex-program "chktex"
   "ChkTeX executable to use for linting TeX files."
+  :version "26.1"
   :type 'string
   :link '(url-link "man:chktex(1)")
   :group 'tex-flymake)
 
 (defcustom tex-chktex-extra-flags nil
   "Extra command line flags for `tex-chktex-program'."
+  :version "26.1"
   :type '(repeat string)
   :group 'tex-flymake)
 
@@ -1012,9 +1014,10 @@ Inherits `shell-mode-map' with a few additions.")
 ;; This is a) ugly, and b) cheating, but this was the last
 ;; remaining warning from byte-compiling all of Emacs...
 (eval-when-compile
-  (setq byte-compile-function-environment
-	(delq (assq 'tex-mode byte-compile-function-environment)
-	      byte-compile-function-environment)))
+  (if (boundp 'byte-compile-function-environment)
+      (setq byte-compile-function-environment
+            (delq (assq 'tex-mode byte-compile-function-environment)
+                  byte-compile-function-environment))))
 
 ;;;###autoload
 (defun tex-mode ()

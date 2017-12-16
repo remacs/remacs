@@ -25087,19 +25087,25 @@ invisible_prop (Lisp_Object propval, Lisp_Object list)
 }
 
 DEFUN ("invisible-p", Finvisible_p, Sinvisible_p, 1, 1, 0,
-       doc: /* Non-nil if the property makes the text invisible.
-POS-OR-PROP can be a marker or number, in which case it is taken to be
-a position in the current buffer and the value of the `invisible' property
-is checked; or it can be some other value, which is then presumed to be the
-value of the `invisible' property of the text of interest.
-The non-nil value returned can be t for truly invisible text or something
-else if the text is replaced by an ellipsis.  */)
-  (Lisp_Object pos_or_prop)
+       doc: /* Non-nil if text properties at POS cause text there to be currently invisible.
+POS should be a marker or a buffer position; the value of the `invisible'
+property at that position in the current buffer is examined.
+POS can also be the actual value of the `invisible' text or overlay
+property of the text of interest, in which case the value itself is
+examined.
+
+The non-nil value returned can be t for currently invisible text that is
+entirely hidden on display, or some other non-nil, non-t value if the
+text is replaced by an ellipsis.
+
+Note that whether text with `invisible' property is actually hidden on
+display may depend on `buffer-invisibility-spec', which see.  */)
+  (Lisp_Object pos)
 {
   Lisp_Object prop
-    = (NATNUMP (pos_or_prop) || MARKERP (pos_or_prop)
-       ? Fget_char_property (pos_or_prop, Qinvisible, Qnil)
-       : pos_or_prop);
+    = (NATNUMP (pos) || MARKERP (pos)
+       ? Fget_char_property (pos, Qinvisible, Qnil)
+       : pos);
   int invis = TEXT_PROP_MEANS_INVISIBLE (prop);
   return (invis == 0 ? Qnil
 	  : invis == 1 ? Qt

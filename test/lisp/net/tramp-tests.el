@@ -3671,7 +3671,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		 (format "%s=%d" envvar port)
 		 tramp-remote-process-environment)))
 	  (should
-	   (string-equal
+	   (string-match
 	    (number-to-string port)
 	    (shell-command-to-string (format "echo -n $%s" envvar))))))
 

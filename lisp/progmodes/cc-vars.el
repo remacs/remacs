@@ -1641,8 +1641,9 @@ In the fontification engine, it is sometimes impossible to determine
 whether a construct is a declaration or an expression.  This happens
 particularly in C++, due to ambiguities in the language.  When such a
 construct is like \"foo * bar\" or \"foo &bar\", and this variable is non-nil
-(the default), the construct will be fontified as a declaration if there is
+\(the default), the construct will be fontified as a declaration if there is
 white space either before or after the operator, but not both."
+  :version "26.1"
   :type 'boolean
   :group 'c)
 
@@ -1658,6 +1659,7 @@ identifiers.
 If you change this variable's value, call the function
 `c-make-noise-macro-regexps' to set the necessary internal variables (or do
 this implicitly by reinitializing C/C++/Objc Mode on any buffer)."
+  :version "26.1"
   :type '(repeat :tag "List of names" string)
   :group 'c)
 (put 'c-noise-macro-names 'safe-local-variable #'c-string-list-p)
@@ -1666,7 +1668,8 @@ this implicitly by reinitializing C/C++/Objc Mode on any buffer)."
   "A list of names of macros \(or compiler extensions like \"__attribute__\")
 which optionally have arguments in parentheses, and which expand to nothing.
 These are recognized by CC Mode only in declarations."
-  :type '(regexp :tag "List of names (possibly empty)" string)
+  :version "26.1"
+  :type '(repeat :tag "List of names (possibly empty)" string)
   :group 'c)
 (put 'c-noise-macro-with-parens-names 'safe-local-variable #'c-string-list-p)
 

@@ -99,6 +99,7 @@ When selecting a viewer for a given MIME type, the first viewer
 in this list with a matching MIME-TYPE and successful TEST is
 selected.  Only if none matches, the standard `mailcap-mime-data'
 is consulted."
+  :version "26.1"
   :type '(repeat
 	  (list
 	   (choice (function :tag "Function or mode")

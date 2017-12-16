@@ -1925,15 +1925,31 @@ on one of the `*-decl-kwds' lists."
   t (c-make-keywords-re t (c-lang-const c-type-prefix-kwds)))
 (c-lang-defvar c-type-prefix-key (c-lang-const c-type-prefix-key))
 
-(c-lang-defconst c-type-modifier-kwds
-  "Type modifier keywords.  These can occur almost anywhere in types
-but they don't build a type of themselves.  Unlike the keywords on
-`c-primitive-type-kwds', they are fontified with the keyword face and
-not the type face."
+(c-lang-defconst c-type-modifier-prefix-kwds
+  "Type modifier keywords which can appear in front of a type.  These can
+also occur almost anywhere in types but they don't build a type of
+themselves.  Unlike the keywords on `c-primitive-type-kwds', they are
+fontified with the keyword face and not the type face."
   t    nil
   c    '("const" "restrict" "volatile")
-  c++  '("const" "noexcept" "volatile" "throw")
+  c++  '("const" "noexcept" "volatile")
   objc '("const" "volatile"))
+
+(c-lang-defconst c-opt-type-modifier-prefix-key
+  ;; Adorned regexp matching `c-type-modifier-prefix-kwds', or nil in
+  ;; languages without such keywords.
+  t (and (c-lang-const c-type-modifier-prefix-kwds)
+	 (c-make-keywords-re t (c-lang-const c-type-modifier-prefix-kwds))))
+(c-lang-defvar c-opt-type-modifier-prefix-key
+	       (c-lang-const c-opt-type-modifier-prefix-key))
+
+(c-lang-defconst c-type-modifier-kwds
+  "Type modifier keywords.  These can occur almost anywhere in types except
+at the start, but they don't build a type of themselves.  Unlike the keywords
+on `c-primitive-type-kwds', they are fontified with the keyword face and not
+the type face."
+  t (c-lang-const c-type-modifier-prefix-kwds)
+  c++ (append (c-lang-const c-type-modifier-prefix-kwds) '("throw")))
 
 (c-lang-defconst c-opt-type-modifier-key
   ;; Adorned regexp matching `c-type-modifier-kwds', or nil in
@@ -2354,6 +2370,16 @@ declarations."
 construct it's part of continues."
   t    nil
   (c c++ objc) '("extern"))
+
+(c-lang-defconst c-make-top-level-kwds
+  "Keywords which make declarations they introduce be handled as top-level."
+  t    nil
+  (c c++ objc) '("extern"))
+
+(c-lang-defconst c-make-top-level-key
+  ;; A regexp which matches any `c-make-top-level-kwds' keyword.
+  t (c-make-keywords-re t (c-lang-const c-make-top-level-kwds)))
+(c-lang-defvar c-make-top-level-key (c-lang-const c-make-top-level-key))
 
 (c-lang-defconst c-type-list-kwds
   "Keywords that may be followed by a comma separated list of type

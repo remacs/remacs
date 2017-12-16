@@ -527,7 +527,7 @@ each invocation of the saving commands."
   "If non-nil, show the cursor in the Article buffer even when not selected."
   :version "25.1"
   :group 'gnus-article
-  :type 'bool)
+  :type 'boolean)
 
 (defcustom gnus-saved-headers gnus-visible-headers
   "Headers to keep if `gnus-save-all-headers' is nil.
@@ -6711,8 +6711,7 @@ not have a face in `gnus-article-boring-faces'."
 	  (member keys nosave-but-article)
 	  (member keys nosave-in-article))
       (let (func)
-	(save-window-excursion
-	  (pop-to-buffer gnus-article-current-summary)
+	(with-current-buffer gnus-article-current-summary
 	  ;; We disable the pick minor mode commands.
 	  (let (gnus-pick-mode)
 	    (setq func (key-binding keys t))))

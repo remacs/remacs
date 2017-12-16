@@ -217,7 +217,7 @@ For the meaning of the rest of the parameters, see `gnutls-boot-parameters'."
 
 TYPE is `gnutls-x509pki' (default) or `gnutls-anon'.  Use nil for the default.
 HOSTNAME is the remote hostname.  It must be a valid string.
-PRIORITY-STRING is as per the GnuTLS docs, default is \"NORMAL\".
+PRIORITY-STRING is as per the GnuTLS docs, default is based on \"NORMAL\".
 TRUSTFILES is a list of CA bundles.  It defaults to `gnutls-trustfiles'.
 CRLFILES is a list of CRL files.
 KEYLIST is an alist of (client key file, client cert file) pairs.
@@ -265,11 +265,11 @@ defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
         (priority-string (or priority-string
                              (cond
                               ((eq type 'gnutls-anon)
-                               "NORMAL:+ANON-DH:!ARCFOUR-128")
+                               "NORMAL:+ANON-DH:!ARCFOUR-128:%DUMBFW")
                               ((eq type 'gnutls-x509pki)
                                (if gnutls-algorithm-priority
                                    (upcase gnutls-algorithm-priority)
-                                 "NORMAL")))))
+                                 "NORMAL:%DUMBFW")))))
         (verify-error (or verify-error
                           ;; this uses the value of `gnutls-verify-error'
                           (cond

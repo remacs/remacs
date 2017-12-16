@@ -127,6 +127,7 @@ If nil, never start checking buffer automatically like this."
 (defcustom flymake-start-on-flymake-mode t
   "Start syntax check when `flymake-mode' is enabled.
 Specifically, start it when the buffer is actually displayed."
+  :version "26.1"
   :type 'boolean)
 
 (define-obsolete-variable-alias 'flymake-start-syntax-check-on-find-file
@@ -141,6 +142,7 @@ Specifically, start it when the buffer is actually displayed."
 
 (defcustom flymake-wrap-around t
   "If non-nil, moving to errors wraps around buffer boundaries."
+  :version "26.1"
   :type 'boolean)
 
 (when (fboundp 'define-fringe-bitmap)

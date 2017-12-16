@@ -764,14 +764,14 @@ mode is experimental."
   :version "24.1"  ; rev670
   :group 'verilog-mode-actions
   :type 'boolean)
-(put 'verilog-auto-declare-nettype 'safe-local-variable `stringp)
+(put 'verilog-auto-declare-nettype 'safe-local-variable 'stringp)
 
 (defcustom verilog-auto-wire-comment t
   "Non-nil indicates to insert to/from comments with `verilog-auto-wire' etc."
   :version "25.1"
   :group 'verilog-mode-actions
   :type 'boolean)
-(put 'verilog-auto-wire-comment 'safe-local-variable `verilog-booleanp)
+(put 'verilog-auto-wire-comment 'safe-local-variable 'verilog-booleanp)
 
 (defcustom verilog-auto-wire-type nil
   "Non-nil specifies the data type to use with `verilog-auto-wire' etc.
@@ -781,8 +781,8 @@ this is generally only appropriate when making a non-SystemVerilog wrapper
 containing SystemVerilog cells."
   :version "24.1"  ; rev673
   :group 'verilog-mode-actions
-  :type 'string)
-(put 'verilog-auto-wire-type 'safe-local-variable `stringp)
+  :type '(choice (const nil) string))
+(put 'verilog-auto-wire-type 'safe-local-variable 'stringp)
 
 (defcustom verilog-auto-endcomments t
   "Non-nil means insert a comment /* ... */ after `end's.

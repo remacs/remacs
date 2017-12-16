@@ -51,6 +51,7 @@
 
 (defcustom gnus-cloud-storage-method (if (featurep 'epg) 'epg 'base64-gzip)
   "Storage method for cloud data, defaults to EPG if that's available."
+  :version "26.1"
   :group 'gnus-cloud
   :type '(radio (const :tag "No encoding" nil)
                 (const :tag "Base64" base64)
@@ -59,6 +60,7 @@
 
 (defcustom gnus-cloud-interactive t
   "Whether Gnus Cloud changes should be confirmed."
+  :version "26.1"
   :group 'gnus-cloud
   :type 'boolean)
 

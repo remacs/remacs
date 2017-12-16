@@ -29,6 +29,8 @@
   (require 'pcomplete))
 (require 'compile)
 
+;; There are no items in this custom group, but eshell modules (ab)use
+;; custom groups.
 ;;;###autoload
 (progn
 (defgroup eshell-xtra nil

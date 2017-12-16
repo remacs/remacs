@@ -350,7 +350,7 @@ If ASK is nil, perform replace without asking user for confirmation.
 
 Returns (count . response) cons where count is number of string
 replacements done and response is one of symbols: t (all right), nil
-(quit), force (replace without further questions)."
+\(quit), force (replace without further questions)."
   (save-excursion
     (goto-char beg)
     (let ((regexp tildify-pattern)
