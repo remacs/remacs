@@ -3051,7 +3051,7 @@ We'll assume copying front-sticky properties doesn't make sense, either.
 
 This advice also includes some SES-specific code because otherwise it's too
 hard to override how mouse-1 works."
-  (when (> beg end)
+  (when (and beg end (> beg end))
     (let ((temp beg))
       (setq beg end
 	    end temp)))
