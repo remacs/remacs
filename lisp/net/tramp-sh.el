@@ -2473,7 +2473,9 @@ The method used must be an out-of-band method."
 	      ;; The default directory must be remote.
 	      (let ((default-directory
 		      (file-name-directory (if t1 filename newname)))
-		    (process-environment (copy-sequence process-environment)))
+		    (process-environment (copy-sequence process-environment))
+		    ;; We do not want to run timers.
+		    timer-list timer-idle-list)
 		;; Set the transfer process properties.
 		(tramp-set-connection-property
 		 v "process-name" (buffer-name (current-buffer)))
@@ -2894,7 +2896,9 @@ the result will be a local, non-Tramp, file name."
 	   ;; We do not want to raise an error when
 	   ;; `start-file-process' has been started several times in
 	   ;; `eshell' and friends.
-	   (tramp-current-connection nil)
+	   tramp-current-connection
+	   ;; We do not want to run timers.
+	   timer-list timer-idle-list
 	   p)
 
       (while (get-process name1)

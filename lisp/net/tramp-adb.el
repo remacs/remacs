@@ -1037,7 +1037,9 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 	    (or (null program) tramp-process-connection-type))
 	   (bmp (and (buffer-live-p buffer) (buffer-modified-p buffer)))
 	   (name1 name)
-	   (i 0))
+	   (i 0)
+	   ;; We do not want to run timers.
+	   timer-list timer-idle-list)
 
       (while (get-process name1)
 	;; NAME must be unique as process name.

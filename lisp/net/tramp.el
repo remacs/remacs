@@ -3833,7 +3833,9 @@ connection buffer."
 This is needed in order to hide `last-coding-system-used', which is set
 for process communication also."
   (with-current-buffer (process-buffer proc)
-    (let (buffer-read-only last-coding-system-used)
+    (let (buffer-read-only last-coding-system-used
+	  ;; We do not want to run timers.
+	  timer-list timer-idle-list)
       ;; Under Windows XP, `accept-process-output' doesn't return
       ;; sometimes.  So we add an additional timeout.  JUST-THIS-ONE
       ;; is set due to Bug#12145.  It is an integer, in order to avoid
