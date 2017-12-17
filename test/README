@@ -50,6 +50,12 @@ nicer backtraces.  To run the compiled version of a test use
 
     make TEST_LOAD_EL=no ...
 
+The tests are run in batch mode by default; sometimes it's useful to
+get precisely the same environment but run in interactive mode for
+debugging.  To do that, use
+
+    make TEST_INTERACTIVE=yes ...
+
 
 (Also, see etc/compilation.txt for compilation mode font lock tests.)
 
