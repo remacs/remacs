@@ -2451,7 +2451,7 @@ the `buffer-name'."
 Optional argument TIMEOUT is the timeout argument to
 `accept-process-output' calls.  Optional argument REGEXP
 overrides the regexp to match the end of output, defaults to
-`comint-prompt-regexp.'.  Returns non-nil when output was
+`comint-prompt-regexp'.  Returns non-nil when output was
 properly captured.
 
 This utility is useful in situations where the output may be
@@ -2469,7 +2469,7 @@ banner and the initial prompt are received separately."
           (throw 'found t))))))
 
 (defun python-shell-comint-end-of-output-p (output)
-  "Return non-nil if OUTPUT is ends with input prompt."
+  "Return non-nil if OUTPUT ends with input prompt."
   (string-match
    ;; XXX: It seems on macOS an extra carriage return is attached
    ;; at the end of output, this handles that too.
@@ -2674,10 +2674,9 @@ With argument MSG show activation/deactivation message."
   "Hook run upon first (non-pdb) shell prompt detection.
 This is the place for shell setup functions that need to wait for
 output.  Since the first prompt is ensured, this helps the
-current process to not hang waiting for output by safeguarding
-interactive actions can be performed.  This is useful to safely
-attach setup code for long-running processes that eventually
-provide a shell."
+current process to not hang while waiting.  This is useful to
+safely attach setup code for long-running processes that
+eventually provide a shell."
   :version "25.1"
   :type 'hook
   :group 'python)
@@ -4826,7 +4825,7 @@ With optional argument LINE-NUMBER, check that line instead."
         (point-marker)))))
 
 (defun python-info-beginning-of-backslash (&optional line-number)
-  "Return the point where the backslashed line start.
+  "Return the point where the backslashed line starts.
 Optional argument LINE-NUMBER forces the line number to check against."
   (save-excursion
     (save-restriction
