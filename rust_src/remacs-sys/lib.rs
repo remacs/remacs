@@ -1026,6 +1026,16 @@ pub struct Lisp_Hash_Table {
 
 pub type Time = u32;
 
+/// A Lisp time (HI LO US PS), sans the cons cells.
+#[repr(C)]
+#[derive(Default)]
+pub struct lisp_time {
+    pub hi: EmacsInt,
+    pub lo: c_int,
+    pub us: c_int,
+    pub ps: c_int,
+}
+
 extern "C" {
     pub static mut globals: emacs_globals;
     pub static mut current_global_map: Lisp_Object;
@@ -1200,7 +1210,6 @@ extern "C" {
     ) -> c_int;
 
     pub fn dtotimespec(sec: c_double) -> timespec;
-    pub fn current_timespec() -> timespec;
     pub fn timespec_sub(a: timespec, b: timespec) -> timespec;
     pub fn timespec_add(a: timespec, b: timespec) -> timespec;
 

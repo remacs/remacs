@@ -9,6 +9,7 @@ errno = "0.2.3"
 darling = "0.2"
 syn = { version = "0.11.11", features = ["full"] }
 remacs-util = { version = "0.1.0", path = "../remacs-util" }
+time = "0.1"
 
 [lib]
 path = "lib.rs"
