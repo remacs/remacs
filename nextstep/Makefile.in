@@ -107,4 +107,10 @@ distclean: clean
 
 bootstrap-clean maintainer-clean: distclean
 
+mac_icons:
+	(cd Cocoa/Remacs.base/Contents/Resources && iconutil -c icns Emacs.iconset)
+
+gnustep_icons:
+	(cd GNUstep/Remacs.base/Resources && convert -resize 64x64 ../../../../etc/images/icons/hicolor/scalable/apps/emacs.svg emacs.tiff)
+
 ### Makefile.in ends here
