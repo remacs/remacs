@@ -285,7 +285,7 @@ No problems result if this variable is not bound.
          (run-mode-hooks ',hook)
          ,@(when after-hook
              `((if delay-mode-hooks
-                   (push ',after-hook delayed-after-hook-forms)
+                   (push (lambda () ,after-hook) delayed-after-hook-functions)
                  ,after-hook)))))))
 
 ;; PUBLIC: find the ultimate class of a derived mode.

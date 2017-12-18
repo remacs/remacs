@@ -1844,10 +1844,10 @@ if it is empty or a duplicate."
 (make-variable-buffer-local 'delayed-mode-hooks)
 (put 'delay-mode-hooks 'permanent-local t)
 
-(defvar delayed-after-hook-forms nil
+(defvar delayed-after-hook-functions nil
   "List of delayed :after-hook forms waiting to be run.
 These forms come from `define-derived-mode'.")
-(make-variable-buffer-local 'delayed-after-hook-forms)
+(make-variable-buffer-local 'delayed-after-hook-functions)
 
 (defvar change-major-mode-after-body-hook nil
   "Normal hook run in major mode functions, before the mode hooks.")
@@ -1865,7 +1865,7 @@ just adds the HOOKS to the list `delayed-mode-hooks'.
 Otherwise, runs hooks in the sequence: `change-major-mode-after-body-hook',
 `delayed-mode-hooks' (in reverse order), HOOKS, then runs
 `hack-local-variables', runs the hook `after-change-major-mode-hook', and
-finally evaluates the forms in `delayed-after-hook-forms' (see
+finally evaluates the functions in `delayed-after-hook-functions' (see
 `define-derived-mode').
 
 Major mode functions should use this instead of `run-hooks' when
@@ -1882,9 +1882,9 @@ running their FOO-mode-hook."
         (with-demoted-errors "File local-variables error: %s"
           (hack-local-variables 'no-mode)))
     (run-hooks 'after-change-major-mode-hook)
-    (dolist (form (nreverse delayed-after-hook-forms))
-      (eval form))
-    (setq delayed-after-hook-forms nil)))
+    (dolist (fun (nreverse delayed-after-hook-functions))
+      (funcall fun))
+    (setq delayed-after-hook-functions nil)))
 
 (defmacro delay-mode-hooks (&rest body)
   "Execute BODY, but delay any `run-mode-hooks'.
