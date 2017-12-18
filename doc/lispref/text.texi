@@ -2396,9 +2396,9 @@ text at point (@pxref{Completion in Buffers}).
 syntax belongs to a different major mode.  Examples include
 @dfn{literate programming} source files that combine documentation and
 snippets of source code, Yacc/Bison programs that include snippets of
-plain C code, etc.  To correctly indent the embedded chunks, the primary
+Python or JS code, etc.  To correctly indent the embedded chunks, the primary
 mode needs to delegate the indentation to another mode's indentation
-engine (e.g., call @code{c-indent-defun} for C code or
+engine (e.g., call @code{js-indent-line} for JS code or
 @code{python-indent-line} for Python), while providing it with some
 context to guide the indentation.  Major modes, for their part, should
 avoid calling @code{widen} in their indentation code and obey
