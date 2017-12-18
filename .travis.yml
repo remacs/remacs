@@ -40,7 +40,7 @@ jobs:
       script:
         - ./autogen.sh && ./configure
         - make -j 3 && echo '==> Running tests' && make check
-    -
+    - 
       <<: *FULL_TEST
       os: osx
       env:
