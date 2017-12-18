@@ -312,7 +312,6 @@ cause the current test to fail."
 (kmacro-tests-deftest kmacro-tests-end-and-call-macro-mouse ()
   "Commands to end and call macro work under various conditions.
 This is a regression test for Bug#24992."
-  (:expected-result :failed)
   (cl-letf (((symbol-function #'mouse-set-point) #'ignore))
     ;; First, try it with no macro to record.
     (setq kmacro-tests-macros '(""))
