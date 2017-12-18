@@ -415,6 +415,8 @@ each object.  */)
   json_t *json = lisp_to_json_toplevel (object);
   record_unwind_protect_ptr (json_release_object, json);
 
+  /* If desired, we might want to add the following flags:
+     JSON_DECODE_ANY, JSON_ALLOW_NUL.  */
   char *string = json_dumps (json, JSON_COMPACT);
   if (string == NULL)
     json_out_of_memory ();
@@ -494,6 +496,8 @@ OBJECT.  */)
   record_unwind_protect_ptr (json_release_object, json);
 
   struct json_insert_data data;
+  /* If desired, we might want to add the following flags:
+     JSON_DECODE_ANY, JSON_ALLOW_NUL.  */
   int status
     = json_dump_callback (json, json_insert_callback, &data, JSON_COMPACT);
   if (status == -1)
