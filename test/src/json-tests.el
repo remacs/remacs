@@ -28,8 +28,10 @@
 
 (ert-deftest json-serialize/roundtrip ()
   (skip-unless (fboundp 'json-serialize))
-  (let ((lisp [:null :false t 0 123 -456 3.75 "abcαβγ"])
-        (json "[null,false,true,0,123,-456,3.75,\"abcαβγ\"]"))
+  ;; The noncharacter U+FFFF should be passed through,
+  ;; cf. https://www.unicode.org/faq/private_use.html#noncharacters.
+  (let ((lisp [:null :false t 0 123 -456 3.75 "abc\uFFFFαβγ𝔸𝐁𝖢\"\\"])
+        (json "[null,false,true,0,123,-456,3.75,\"abc\uFFFFαβγ𝔸𝐁𝖢\\\"\\\\\"]"))
     (should (equal (json-serialize lisp) json))
     (with-temp-buffer
       (json-insert lisp)
@@ -75,7 +77,22 @@
   (should (equal (json-serialize ["foo"]) "[\"foo\"]"))
   (should (equal (json-serialize ["a\n\fb"]) "[\"a\\n\\fb\"]"))
   (should (equal (json-serialize ["\nasdфыв\u001f\u007ffgh\t"])
-                 "[\"\\nasdфыв\\u001F\u007ffgh\\t\"]")))
+                 "[\"\\nasdфыв\\u001F\u007ffgh\\t\"]"))
+  (should (equal (json-serialize ["a\0b"]) "[\"a\\u0000b\"]")))
+
+(ert-deftest json-serialize/invalid-unicode ()
+  (skip-unless (fboundp 'json-serialize))
+  ;; FIXME: "out of memory" is the wrong error signal, but we don't
+  ;; currently distinguish between error types when serializing.
+  (should-error (json-serialize ["a\uDBBBb"]) :type 'json-out-of-memory)
+  (should-error (json-serialize (vector (string ?a #x110000 ?b)))
+                :type 'json-out-of-memory)
+  (should-error (json-serialize ["a\xCCb"] :type 'json-out-of-memory)))
+
+(ert-deftest json-parse-string/null ()
+  (skip-unless (fboundp 'json-parse-string))
+  ;; FIXME: Reconsider whether this is the right behavior.
+  (should-error (json-parse-string "[a\\u0000b]") :type 'json-parse-error))
 
 (ert-deftest json-parse-string/incomplete ()
   (skip-unless (fboundp 'json-parse-string))
