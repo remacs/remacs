@@ -900,10 +900,9 @@ AC_ARG_ENABLE([gcc-warnings],
 
 AC_ARG_ENABLE([check-lisp-object-type],
   [AS_HELP_STRING([--enable-check-lisp-object-type],
-     [Enable compile-time checks for the Lisp_Object data type,
-      which can catch some bugs during development.
-      The default is "no" if --enable-gcc-warnings is "no".])])
-if test "${enable_check_lisp_object_type-$gl_gcc_warnings}" != "no"; then
+     [Enable compile time checks for the Lisp_Object data type,
+      which can catch some bugs during development.])])
+if test "$enable_check_lisp_object_type" = yes; then
   AC_DEFINE([CHECK_LISP_OBJECT_TYPE], 1,
     [Define to enable compile-time checks for the Lisp_Object data type.])
 fi

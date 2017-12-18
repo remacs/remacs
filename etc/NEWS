@@ -38,6 +38,13 @@ interpreter or modules that it uses.  If your platform supports it you
 can enable it when configuring, e.g., './configure CFLAGS="-g3 -O2
 -mmpx -fcheck-pointer-bounds"' on Intel MPX platforms.
 
+** Emacs now normally uses a pointer type instead of an integer type
+for the fundamental word in the Emacs Lisp interpreter, to help
+catch typos and support -fcheck-pointer-bounds.  The 'configure'
+option --enable-check-lisp-object-type is therefore no longer as
+useful and so is no longer enabled by default in developer builds,
+to reduce differences between developer and production builds.
+
 
 * Startup Changes in Emacs 27.1
 
