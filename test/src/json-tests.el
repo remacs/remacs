@@ -52,6 +52,14 @@
     (should (equal (json-serialize table)
                    "{\"abc\":[1,2,true],\"def\":null}"))))
 
+(ert-deftest json-serialize/object-with-duplicate-keys ()
+  (skip-unless (fboundp 'json-serialize))
+  (let ((table (make-hash-table :test #'eq)))
+    (puthash (copy-sequence "abc") [1 2 t] table)
+    (puthash (copy-sequence "abc") :null table)
+    (should (equal (hash-table-count table) 2))
+    (should-error (json-serialize table) :type 'wrong-type-argument)))
+
 (ert-deftest json-parse-string/object ()
   (skip-unless (fboundp 'json-parse-string))
   (let ((input

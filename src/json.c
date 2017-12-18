@@ -352,7 +352,12 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp, json_t **json)
             /* We can't specify the length, so the string must be
                null-terminated.  */
             check_string_without_embedded_nulls (key);
-            int status = json_object_set_new (*json, SSDATA (key),
+            const char *key_str = SSDATA (key);
+            /* Reject duplicate keys.  These are possible if the hash
+               table test is not `equal'.  */
+            if (json_object_get (*json, key_str) != NULL)
+              wrong_type_argument (Qjson_value_p, lisp);
+            int status = json_object_set_new (*json, key_str,
                                               lisp_to_json (HASH_VALUE (h, i)));
             if (status == -1)
               /* FIXME: A failure here might also indicate that the
