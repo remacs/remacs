@@ -208,6 +208,7 @@ json_has_suffix (const char *string, const char *suffix)
 static Lisp_Object
 json_make_string (const char *data, ptrdiff_t size)
 {
+  /* FIXME: Raise an error if DATA is not a UTF-8 string.  */
   return code_convert_string (make_specified_string (data, -1, size, false),
                               Qutf_8_unix, Qt, false, true, true);
 }
@@ -219,6 +220,7 @@ json_make_string (const char *data, ptrdiff_t size)
 static Lisp_Object
 json_build_string (const char *data)
 {
+  /* FIXME: Raise an error if DATA is not a UTF-8 string.  */
   return json_make_string (data, strlen (data));
 }
 
@@ -230,6 +232,8 @@ json_build_string (const char *data)
 static Lisp_Object
 json_encode (Lisp_Object string)
 {
+  /* FIXME: Raise an error if STRING is not a scalar value
+     sequence.  */
   return code_convert_string (string, Qutf_8_unix, Qt, true, true, true);
 }
 
@@ -330,6 +334,8 @@ lisp_to_json_toplevel_1 (Lisp_Object lisp, json_t **json)
             int status = json_object_set_new (*json, SSDATA (key),
                                               lisp_to_json (HASH_VALUE (h, i)));
             if (status == -1)
+              /* FIXME: A failure here might also indicate that the
+                 key is not a valid Unicode string.  */
               json_out_of_memory ();
           }
       clear_unwind_protect (count);
@@ -376,6 +382,8 @@ lisp_to_json (Lisp_Object lisp)
   else if (STRINGP (lisp))
     {
       Lisp_Object encoded = json_encode (lisp);
+      /* FIXME: We might throw an out-of-memory error here if the
+         string is not valid Unicode.  */
       return json_check (json_stringn (SSDATA (encoded), SBYTES (encoded)));
     }
 
