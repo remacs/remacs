@@ -249,15 +249,24 @@ static _Noreturn void
 json_parse_error (const json_error_t *error)
 {
   Lisp_Object symbol;
-  /* FIXME: Upstream Jansson should have a way to return error codes
-     without parsing the error messages.  See
-     https://github.com/akheron/jansson/issues/352.  */
+#if JANSSON_VERSION_HEX >= 0x020B00
+  switch (json_error_code (error))
+    {
+    case json_error_premature_end_of_input:
+      symbol = Qjson_end_of_file;
+    case json_error_end_of_input_expected:
+      symbol = Qjson_trailing_content;
+    default:
+      symbol = Qjson_parse_error;
+    }
+#else
   if (json_has_suffix (error->text, "expected near end of file"))
     symbol = Qjson_end_of_file;
   else if (json_has_prefix (error->text, "end of file expected"))
     symbol = Qjson_trailing_content;
   else
     symbol = Qjson_parse_error;
+#endif
   xsignal (symbol,
            list5 (json_build_string (error->text),
                   json_build_string (error->source), make_natnum (error->line),
