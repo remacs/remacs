@@ -376,8 +376,7 @@ lisp_to_json (Lisp_Object lisp)
   else if (STRINGP (lisp))
     {
       Lisp_Object encoded = json_encode (lisp);
-      ptrdiff_t size = SBYTES (encoded);
-      return json_check (json_stringn (SSDATA (encoded), size));
+      return json_check (json_stringn (SSDATA (encoded), SBYTES (encoded)));
     }
 
   /* LISP now must be a vector or hashtable.  */
