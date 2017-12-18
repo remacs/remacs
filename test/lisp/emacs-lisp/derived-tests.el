@@ -1,4 +1,4 @@
-;;; gv-tests.el --- tests for gv.el  -*- lexical-binding: t; -*-
+;;; derived-tests.el --- tests for derived.el  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017 Free Software Foundation, Inc.
 
@@ -20,7 +20,6 @@
 ;;; Code:
 
 (require 'ert)
-(eval-when-compile (require 'cl-lib))
 
 (define-derived-mode derived-tests--parent-mode prog-mode "P"
   :after-hook
@@ -41,4 +40,4 @@
       (derived-tests--child-mode)
       (should (equal (buffer-string) "PB CB MH AFP=S AFC=S ")))))
 
-;;; gv-tests.el ends here
+;;; derived-tests.el ends here
