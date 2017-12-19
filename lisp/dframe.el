@@ -288,6 +288,7 @@ CREATE-HOOK is a hook to run after creating a frame."
 	(set frame-var nil))
     ;; Set this as our currently attached frame
     (setq dframe-attached-frame (selected-frame))
+    (run-hooks 'dframe-setup-hook)
     (run-hooks popup-hook)
     ;; Updated the buffer passed in to contain all the hacks needed
     ;; to make it work well in a dedicated window.
@@ -543,16 +544,21 @@ CACHE-VAR and BUFFER-VAR are symbols as in `dframe-frame-mode'."
       )))
 
 ;;; Special frame event proxies
-;;
-(if (boundp 'special-event-map)
-    (progn
-      (define-key special-event-map [make-frame-visible]
-	'dframe-handle-make-frame-visible)
-      (define-key special-event-map [iconify-frame]
-	'dframe-handle-iconify-frame)
-      (define-key special-event-map [delete-frame]
-	'dframe-handle-delete-frame))
-  )
+(defvar dframe-setup-hook nil
+  "Used for setting frame special event bindings.")
+
+(defun dframe-set-special-events ()
+  (define-key special-event-map [make-frame-visible]
+    'dframe-handle-make-frame-visible)
+  (define-key special-event-map [iconify-frame]
+    'dframe-handle-iconify-frame)
+  (define-key special-event-map [delete-frame]
+    'dframe-handle-delete-frame)
+  ;; Only need to run once.
+  (remove-hook 'dframe-setup-hook #'dframe-set-special-events))
+
+(when (boundp 'special-event-map)
+  (add-hook 'dframe-setup-hook #'dframe-set-special-events))
 
 (defvar dframe-make-frame-visible-function nil
   "Function used when a dframe controlled frame is de-iconified.
