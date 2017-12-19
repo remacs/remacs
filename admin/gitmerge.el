@@ -198,6 +198,7 @@ Will detect a default set of skipped revision by looking at
 cherry mark and search for `gitmerge-skip-regexp'.  The result is
 a list with entries of the form (SHA1 . SKIP), where SKIP denotes
 if and why this commit should be skipped."
+  (message "Finding missing commits...")
   (let (commits)
     ;; Go through the log and remember all commits that match
     ;; `gitmerge-skip-regexp' or are marked by --cherry-mark.
@@ -220,6 +221,7 @@ if and why this commit should be skipped."
 		(when (re-search-forward gitmerge-skip-regexp nil t)
 		  (setcdr (car commits) "R"))))))
 	(delete-region (point) (point-max))))
+    (message "Finding missing commits...done")
     (nreverse commits)))
 
 (defun gitmerge-setup-log-buffer (commits from)
@@ -474,7 +476,7 @@ If so, add no longer conflicted files and commit."
 	       (not (gitmerge-repo-clean)))
       (user-error "Repository is not clean"))
     (when statusexist
-      (if (not (y-or-n-p "Resume merge? "))
+      (if (or noninteractive (not (y-or-n-p "Resume merge? ")))
 	  (progn
 	    (delete-file gitmerge-status-file)
 	    ;; No resume.
@@ -540,8 +542,12 @@ Branch FROM will be prepended to the list."
        (list
 	(if (gitmerge-maybe-resume)
 	    'resume
-	  (completing-read "Merge branch: " (gitmerge-get-all-branches)
-			   nil t (gitmerge-default-branch)))))))
+	  (if noninteractive
+	      (or (pop command-line-args-left)
+		  (gitmerge-default-branch))
+	    (completing-read "Merge branch: "
+			     (gitmerge-get-all-branches)
+			     nil t (gitmerge-default-branch))))))))
   (let ((default-directory (vc-git-root default-directory)))
     (if (eq from 'resume)
 	(progn
@@ -563,7 +569,8 @@ Branch FROM will be prepended to the list."
 		"(C) Detected backport (cherry-mark), (R) Log matches "
 		"regexp, (M) Manually picked\n\n")
 	(gitmerge-mode)
-	(pop-to-buffer (current-buffer))))))
+	(pop-to-buffer (current-buffer))
+	(if noninteractive (gitmerge-start-merge))))))
 
 (defun gitmerge-start-merge ()
   (interactive)
