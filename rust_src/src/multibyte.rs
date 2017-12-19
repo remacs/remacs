@@ -36,10 +36,10 @@ use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 use std::ptr;
 use std::slice;
 
-use remacs_sys::{EmacsInt, Lisp_String, CHARACTERBITS, CHAR_CTL, CHAR_MODIFIER_MASK, CHAR_SHIFT};
+use remacs_sys::{EmacsInt, Lisp_String, CHARACTERBITS, CHAR_CTL, CHAR_MODIFIER_MASK, CHAR_SHIFT, Lisp_Type};
 use remacs_sys::emacs_abort;
 
-use lisp::ExternalPtr;
+use lisp::{ExternalPtr, LispObject};
 
 pub type LispStringRef = ExternalPtr<Lisp_String>;
 
@@ -61,6 +61,10 @@ pub const MAX_MULTIBYTE_LENGTH: usize = 5;
 
 
 impl LispStringRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_String)
+    }
+
     /// Return the string's len in bytes.
     pub fn len_bytes(self) -> ptrdiff_t {
         if self.size_byte < 0 {

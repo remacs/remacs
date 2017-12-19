@@ -101,8 +101,7 @@ pub fn float_arith_driver(
 
 /// Return non nil if argument X is a NaN.
 #[lisp_fn]
-pub fn isnan(x: LispObject) -> LispObject {
-    let f = x.as_float_or_error();
+pub fn isnan(f: EmacsDouble) -> LispObject {
     LispObject::from_bool(f.is_nan())
 }
 
@@ -188,13 +187,11 @@ pub fn float(arg: LispObject) -> LispObject {
 /// Copy sign of X2 to value of X1, and return the result.
 /// Cause an error if X1 or X2 is not a float.
 #[lisp_fn]
-pub fn copysign(x1: LispObject, x2: LispObject) -> LispObject {
-    let f1 = x1.as_float_or_error();
-    let f2 = x2.as_float_or_error();
-    if libm::signbit(f1) != libm::signbit(f2) {
-        LispObject::from_float(-f1)
+pub fn copysign(x1: EmacsDouble, x2: EmacsDouble) -> LispObject {
+    if libm::signbit(x1) != libm::signbit(x2) {
+        LispObject::from_float(-x1)
     } else {
-        x1
+        LispObject::from_float(x1)
     }
 }
 
@@ -220,8 +217,7 @@ pub fn frexp(x: LispObject) -> LispObject {
 /// Return SGNFCAND * 2**EXPONENT, as a floating point number.
 /// EXPONENT must be an integer.
 #[lisp_fn]
-pub fn ldexp(sgnfcand: LispObject, exponent: LispObject) -> LispObject {
-    let exponent = exponent.as_fixnum_or_error();
+pub fn ldexp(sgnfcand: LispObject, exponent: EmacsInt) -> LispObject {
     let significand = sgnfcand.any_to_float_or_error();
     let result = libm::ldexp(significand, exponent as libc::c_int);
     LispObject::from_float(result)

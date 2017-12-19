@@ -7,7 +7,7 @@ use remacs_sys::{access_keymap, get_keymap, maybe_quit, Faref, Fevent_convert_li
 use remacs_sys::CHAR_META;
 
 use keyboard::lucid_event_type_list_p;
-use lisp::{defsubr, LispObject};
+use lisp::{defsubr, LispObject, LispCons};
 use threads::ThreadState;
 
 #[inline]
@@ -77,7 +77,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
         });
         idx += 1;
 
-        if c.is_cons() && lucid_event_type_list_p(c) {
+        if c.is_cons() && lucid_event_type_list_p(Option::<LispCons>::from(c)) {
             c = LispObject::from(unsafe { Fevent_convert_list(c.to_raw()) });
         }
 

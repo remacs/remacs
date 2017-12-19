@@ -21,7 +21,7 @@ use buffers::{buffer_file_name, current_buffer, get_buffer, LispBufferRef};
 use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
 use multibyte::LispStringRef;
-use symbols::{fboundp, symbol_name};
+use symbols::{LispSymbolRef, fboundp, symbol_name};
 use threads::ThreadState;
 
 #[derive(Clone, Copy)]
@@ -56,7 +56,7 @@ fn hash_alg(algorithm: LispObject) -> HashAlg {
     } else if algorithm.to_raw() == Qsha512 {
         HashAlg::SHA512
     } else {
-        let name = symbol_name(algorithm).as_string_or_error();
+        let name = symbol_name(LispSymbolRef::from(algorithm)).as_string_or_error();
         error!("Invalid algorithm arg: {:?}\0", &name.as_slice());
     }
 }
@@ -135,7 +135,7 @@ fn get_coding_system_for_buffer(
         return LispObject::from(buffer.buffer_file_coding_system);
     }
     let sscsf = LispObject::from(unsafe { globals.f_Vselect_safe_coding_system_function });
-    if fboundp(sscsf).is_not_nil() {
+    if fboundp(LispSymbolRef::from(sscsf)).is_not_nil() {
         /* Confirm that VAL can surely encode the current region. */
         return call!(
             sscsf,

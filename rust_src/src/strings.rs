@@ -12,6 +12,7 @@ use remacs_sys::EmacsInt;
 use lisp::LispObject;
 use lisp::defsubr;
 use multibyte;
+use multibyte::{LispStringRef};
 
 pub static MIME_LINE_LENGTH: isize = 76;
 
@@ -24,8 +25,7 @@ pub fn stringp(object: LispObject) -> LispObject {
 /// Return the number of bytes in STRING.
 /// If STRING is multibyte, this may be greater than the length of STRING.
 #[lisp_fn]
-pub fn string_bytes(string: LispObject) -> LispObject {
-    let string = string.as_string_or_error();
+pub fn string_bytes(string: LispStringRef) -> LispObject {
     LispObject::from_natnum(string.len_bytes() as EmacsInt)
 }
 
@@ -57,15 +57,14 @@ pub fn string_equal(s1: LispObject, s2: LispObject) -> LispObject {
 /// If you're not sure, whether to use `string-as-multibyte' or
 /// `string-to-multibyte', use `string-to-multibyte'.
 #[lisp_fn]
-pub fn string_as_multibyte(string: LispObject) -> LispObject {
-    let s = string.as_string_or_error();
-    if s.is_multibyte() {
-        return string;
+pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
+    if string.is_multibyte() {
+        return string.as_lisp_obj();
     }
 
     let mut nchars = 0;
     let mut nbytes = 0;
-    multibyte::parse_str_as_multibyte(s.const_data_ptr(), s.len_bytes(), &mut nchars, &mut nbytes);
+    multibyte::parse_str_as_multibyte(string.const_data_ptr(), string.len_bytes(), &mut nchars, &mut nbytes);
 
     let new_string = LispObject::from(unsafe {
         make_uninit_multibyte_string(nchars as EmacsInt, nbytes as EmacsInt)
@@ -73,10 +72,10 @@ pub fn string_as_multibyte(string: LispObject) -> LispObject {
 
     let mut new_s = new_string.as_string().unwrap();
     unsafe {
-        ptr::copy_nonoverlapping(s.const_data_ptr(), new_s.data_ptr(), s.len_bytes() as usize);
+        ptr::copy_nonoverlapping(string.const_data_ptr(), new_s.data_ptr(), string.len_bytes() as usize);
     }
-    if nbytes != s.len_bytes() {
-        multibyte::str_as_multibyte(new_s.data_ptr(), nbytes, s.len_bytes(), ptr::null_mut());
+    if nbytes != string.len_bytes() {
+        multibyte::str_as_multibyte(new_s.data_ptr(), nbytes, string.len_bytes(), ptr::null_mut());
     }
     new_string
 }
@@ -92,9 +91,8 @@ pub fn string_as_multibyte(string: LispObject) -> LispObject {
 /// utf-8 sequence to an eight-bit character, not just bytes that don't form a
 /// correct sequence.
 #[lisp_fn]
-pub fn string_to_multibyte(string: LispObject) -> LispObject {
-    let _ = string.as_string_or_error();
-    unsafe { LispObject::from(c_string_to_multibyte(string.to_raw())) }
+pub fn string_to_multibyte(string: LispStringRef) -> LispObject {
+    unsafe { LispObject::from(c_string_to_multibyte(string.as_lisp_obj().to_raw())) }
 }
 
 /// Return a unibyte string with the same individual chars as STRING.
@@ -104,13 +102,12 @@ pub fn string_to_multibyte(string: LispObject) -> LispObject {
 /// If STRING contains a non-ASCII, non-`eight-bit' character,
 /// an error is signaled.
 #[lisp_fn]
-pub fn string_to_unibyte(string: LispObject) -> LispObject {
-    let lispstr = string.as_string_or_error();
-    if lispstr.is_multibyte() {
-        let size = lispstr.len_bytes();
+pub fn string_to_unibyte(string: LispStringRef) -> LispObject {
+    if string.is_multibyte() {
+        let size = string.len_bytes();
         let mut buffer: Vec<libc::c_uchar> = Vec::with_capacity(size as usize);
         let converted_size =
-            multibyte::str_to_unibyte(lispstr.const_data_ptr(), buffer.as_mut_ptr(), size);
+            multibyte::str_to_unibyte(string.const_data_ptr(), buffer.as_mut_ptr(), size);
 
         if converted_size < size {
             error!("Can't convert {}th character to unibyte", converted_size);
@@ -119,7 +116,7 @@ pub fn string_to_unibyte(string: LispObject) -> LispObject {
         let raw_ptr = unsafe { make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size) };
         LispObject::from(raw_ptr)
     } else {
-        string
+        string.as_lisp_obj()
     }
 }
 
@@ -143,11 +140,10 @@ pub fn multibyte_string_p(object: LispObject) -> LispObject {
 /// Clear the contents of STRING.
 /// This makes STRING unibyte and may change its length.
 #[lisp_fn]
-pub fn clear_string(mut string: LispObject) -> LispObject {
-    let lisp_string = string.as_string_or_error();
-    lisp_string.clear_data();
+pub fn clear_string(mut string: LispStringRef) -> LispObject {
+    string.clear_data();
     unsafe {
-        lisp_string.set_num_chars(lisp_string.len_bytes());
+        string.set_num_chars(string.len_bytes());
     }
     LispObject::set_string_unibyte(&mut string);
 
@@ -171,7 +167,7 @@ fn test_multibyte_stringp() {
 #[test]
 fn already_unibyte() {
     let single = mock_unibyte_string!();
-    assert!(string_to_unibyte(single) == single);
+    assert!(string_to_unibyte(LispStringRef::from(single)) == single);
 }
 
 #[test]

@@ -12,7 +12,7 @@ use remacs_sys::{Qbool_vector, Qbuffer, Qchar_table, Qcompiled_function, Qcondit
                  Qterminal, Qthread, Quser_ptr, Qvector, Qwindow, Qwindow_configuration};
 use remacs_sys::build_string;
 
-use lisp::LispObject;
+use lisp::{LispObject, LispSubrRef};
 use lisp::defsubr;
 
 /// Find the function at the end of a chain of symbol function indirections.
@@ -131,8 +131,7 @@ pub fn type_of(object: LispObject) -> LispObject {
 }
 
 #[lisp_fn]
-pub fn subr_lang(subr: LispObject) -> LispObject {
-    let subr = subr.as_subr_or_error();
+pub fn subr_lang(subr: LispSubrRef) -> LispObject {
     if subr.lang == Lisp_Subr_Lang_C {
         LispObject::from(unsafe { build_string(CString::new("C").unwrap().as_ptr()) })
     } else if subr.lang == Lisp_Subr_Lang_Rust {

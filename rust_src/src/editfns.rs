@@ -201,22 +201,23 @@ pub fn position_bytes(position: LispObject) -> LispObject {
 /// The optional third arg INHERIT, if non-nil, says to inherit text properties
 /// from adjoining text, if those properties are sticky.
 #[lisp_fn(min = "2")]
-pub fn insert_byte(mut byte: LispObject, count: LispObject, inherit: LispObject) -> LispObject {
-    let b = byte.as_fixnum_or_error();
-    if b < 0 || b > 255 {
+pub fn insert_byte(byte: EmacsInt, count: LispObject, inherit: LispObject) -> LispObject {
+    if byte < 0 || byte > 255 {
         args_out_of_range!(
-            byte,
+            LispObject::from_fixnum(byte),
             LispObject::from_fixnum(0),
             LispObject::from_fixnum(255)
         )
     }
     let buf = ThreadState::current_buffer();
-    if b >= 128 && LispObject::from(buf.enable_multibyte_characters).is_not_nil() {
-        byte = LispObject::from_natnum(raw_byte_codepoint(b as c_uchar) as EmacsInt);
-    }
+    let toinsert = if byte >= 128 && LispObject::from(buf.enable_multibyte_characters).is_not_nil() {
+                       raw_byte_codepoint(byte as c_uchar) as EmacsInt
+                   } else {
+                       byte
+                   };
     unsafe {
         LispObject::from(Finsert_char(
-            byte.to_raw(),
+            LispObject::from_natnum(toinsert).to_raw(),
             count.to_raw(),
             inherit.to_raw(),
         ))

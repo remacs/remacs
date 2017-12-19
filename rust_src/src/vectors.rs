@@ -220,9 +220,8 @@ pub fn length(sequence: LispObject) -> LispObject {
 /// Return element of SEQUENCE at index N.
 #[lisp_fn]
 pub fn elt(sequence: LispObject, n: LispObject) -> LispObject {
-    n.as_natnum_or_error();
     if sequence.is_cons() || sequence.is_nil() {
-        car(nthcdr(n, sequence))
+        car(nthcdr(n.as_natnum_or_error(), sequence))
     } else if sequence.is_array() {
         LispObject::from(unsafe { Faref(sequence.to_raw(), n.to_raw()) })
     } else {

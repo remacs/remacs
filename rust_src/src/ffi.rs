@@ -3,7 +3,7 @@ use remacs_sys::{Lisp_Object, Lisp_Window};
 
 use data;
 use keyboard;
-use lisp::LispObject;
+use lisp::{LispObject, LispCons};
 use lists;
 use math;
 use windows;
@@ -41,7 +41,7 @@ pub extern "C" fn arithcompare(
 
 #[no_mangle]
 pub extern "C" fn lucid_event_type_list_p(event: Lisp_Object) -> bool {
-    keyboard::lucid_event_type_list_p(LispObject::from(event))
+    keyboard::lucid_event_type_list_p(Option::<LispCons>::from(LispObject::from(event)))
 }
 
 #[no_mangle]

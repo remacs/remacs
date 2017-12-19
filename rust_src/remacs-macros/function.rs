@@ -1,3 +1,4 @@
+extern crate quote;
 use syn;
 
 type Result<T> = ::std::result::Result<T, &'static str>;
@@ -26,7 +27,7 @@ pub struct Function {
     pub fntype: LispFnType,
 
     /// The function header
-    pub args: Vec<syn::Ident>,
+    pub args: Vec<(syn::Ident, quote::Tokens)>,
 }
 
 pub fn parse(item: &syn::Item) -> Result<Function> {
@@ -46,7 +47,7 @@ pub fn parse(item: &syn::Item) -> Result<Function> {
 
             let args = decl.inputs
                 .iter()
-                .map(get_fn_arg_ident)
+                .map(get_fn_arg_ident_ty)
                 .collect::<Result<_>>()?;
 
             Ok(Function {
@@ -83,10 +84,14 @@ fn is_rust_abi(abi: &Option<syn::Abi>) -> bool {
     }
 }
 
-fn get_fn_arg_ident(fn_arg: &syn::FnArg) -> Result<syn::Ident> {
+fn get_fn_arg_ident_ty(fn_arg: &syn::FnArg) -> Result<(syn::Ident, quote::Tokens)> {
     match *fn_arg {
-        syn::FnArg::Captured(ref pat, _) => match *pat {
-            syn::Pat::Ident(_, ref ident, _) => Ok(ident.clone()),
+        syn::FnArg::Captured(ref pat, syn::Ty::Path(_, ref path)) => match *pat {
+            syn::Pat::Ident(_, ref ident, _) => Ok((ident.clone(), mangle_path(path))),
+            _ => Err("invalid function argument"),
+        },
+        syn::FnArg::Captured(ref pat, ref ty) => match *pat {
+            syn::Pat::Ident(_, ref ident, _) => Ok((ident.clone(), quote! { #ty })),
             _ => Err("invalid function argument"),
         },
         _ => Err("invalid function argument"),
@@ -102,13 +107,11 @@ fn parse_function_type(fndecl: &syn::FnDecl) -> Result<LispFnType> {
                     ArgType::LispObject => {}
                     ArgType::LispObjectSlice => {
                         if fndecl.inputs.len() != 1 {
-                            return Err("`LispObject` and `[LispObject]` cannot be mixed");
+                            return Err("`[LispObject]` cannot be mixed in with other types");
                         }
                         return Ok(LispFnType::Many);
                     }
-                    ArgType::Other => {
-                        return Err("lisp functions should only have `LispObject` args");
-                    }
+                    ArgType::Other => { }
                 }
             }
             _ => return Err("lisp functions cannot have `self` arguments"),
@@ -164,4 +167,11 @@ fn is_lisp_object(path: &syn::Path) -> bool {
     let str_path = format!("{}", quote!(#path));
     str_path == "LispObject" || str_path == "lisp :: LispObject"
         || str_path == ":: lisp :: LispObject"
+}
+
+// hack
+fn mangle_path(path: &syn::Path) -> quote::Tokens {
+    let str_path = quote!(#path).to_string();
+    let mangled = syn::parse_path(str_path.replacen("<", ":: <", 1).as_str()).unwrap();
+    quote! { #mangled }
 }

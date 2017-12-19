@@ -93,8 +93,8 @@ pub fn symbolp(object: LispObject) -> LispObject {
 
 /// Return SYMBOL's name, a string.
 #[lisp_fn]
-pub fn symbol_name(symbol: LispObject) -> LispObject {
-    symbol.as_symbol_or_error().symbol_name()
+pub fn symbol_name(symbol: LispSymbolRef) -> LispObject {
+    symbol.symbol_name()
 }
 
 
@@ -105,27 +105,26 @@ pub fn symbol_name(symbol: LispObject) -> LispObject {
 
 /// Return t if SYMBOL's function definition is not void.
 #[lisp_fn]
-pub fn fboundp(symbol: LispObject) -> LispObject {
-    let symbol = symbol.as_symbol_or_error();
+pub fn fboundp(symbol: LispSymbolRef) -> LispObject {
     LispObject::from_bool(symbol.get_function().is_not_nil())
 }
 
 /// Return SYMBOL's function definition, or nil if that is void.
 #[lisp_fn]
-pub fn symbol_function(symbol: LispObject) -> LispObject {
-    symbol.as_symbol_or_error().get_function()
+pub fn symbol_function(symbol: LispSymbolRef) -> LispObject {
+    symbol.get_function()
 }
 
 /// Return SYMBOL's property list.
 #[lisp_fn]
-pub fn symbol_plist(symbol: LispObject) -> LispObject {
-    symbol.as_symbol_or_error().get_plist()
+pub fn symbol_plist(symbol: LispSymbolRef) -> LispObject {
+    symbol.get_plist()
 }
 
 /// Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
 #[lisp_fn]
-pub fn setplist(symbol: LispObject, newplist: LispObject) -> LispObject {
-    symbol.as_symbol_or_error().set_plist(newplist);
+pub fn setplist(mut symbol: LispSymbolRef, newplist: LispObject) -> LispObject {
+    symbol.set_plist(newplist);
     newplist
 }
 
