@@ -169,7 +169,8 @@ get fancy, the default and simplest configuration is:
 ;;; use pass (@file{~/.password-store})
 ;;; (@pxref{The Unix password store})
 (setq auth-sources '(password-store))
-;;; JSON data in format [{ "machine": "SERVER", "login": "USER", "password": "PASSWORD" }...]
+;;; JSON data in format [@{ "machine": "SERVER",
+;;; "login": "USER", "password": "PASSWORD" @}...]
 (setq auth-sources '("~/.authinfo.json.gpg"))
 @end lisp
 
@@ -242,7 +243,8 @@ that sort of thing. Just point to a JSON file with entries like this:
 
 @example
 [
- { "machine": "yourmachine.com", "port": "http", "login": "testuser", "password": "testpass" }
+ @{ "machine": "yourmachine.com", "port": "http",
+    "login": "testuser", "password": "testpass" @}
 ]
 @end example
 
