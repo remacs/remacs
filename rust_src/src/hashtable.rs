@@ -188,9 +188,8 @@ pub fn copy_hash_table(mut table: LispHashTableRef) -> LispObject {
     unsafe { new_table.copy(table) };
     assert_ne!(new_table.as_ptr(), table.as_ptr());
 
-    let key_and_value = LispObject::from(unsafe {
-        Fcopy_sequence(new_table.get_key_and_value().to_raw())
-    });
+    let key_and_value =
+        LispObject::from(unsafe { Fcopy_sequence(new_table.get_key_and_value().to_raw()) });
     let hash = LispObject::from(unsafe { Fcopy_sequence(new_table.get_hash().to_raw()) });
     let next = LispObject::from(unsafe { Fcopy_sequence(new_table.get_next().to_raw()) });
     let index = LispObject::from(unsafe { Fcopy_sequence(new_table.get_index().to_raw()) });

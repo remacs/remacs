@@ -97,7 +97,6 @@ pub fn symbol_name(symbol: LispSymbolRef) -> LispObject {
     symbol.symbol_name()
 }
 
-
 /* It has been previously suggested to make this function an alias for
    symbol-function, but upon discussion at Bug#23957, there is a risk
    breaking backward compatibility, as some users of fboundp may
@@ -139,7 +138,6 @@ pub fn fmakunbound(symbol: LispObject) -> LispObject {
     sym.set_function(LispObject::constant_nil());
     symbol
 }
-
 
 // Define this in Rust to avoid unnecessarily consing up the symbol
 // name.

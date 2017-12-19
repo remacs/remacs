@@ -9,7 +9,6 @@ use lisp::LispObject;
 use lisp::defsubr;
 use lists::memq;
 
-
 /// Return t if BUFFER is a minibuffer.
 /// No argument or nil as argument means use current buffer as BUFFER.
 /// BUFFER can be a buffer or a buffer name.

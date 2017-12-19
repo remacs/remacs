@@ -8,7 +8,7 @@ use remacs_sys::{make_lispy_position, window_box_left_offset};
 use remacs_sys::Fpos_visible_in_window_p;
 
 use frames::window_frame_live_or_selected_with_action;
-use lisp::{IsLispNatnum, LispObject, LispCons};
+use lisp::{IsLispNatnum, LispCons, LispObject};
 use lisp::defsubr;
 use windows::window_or_selected_unchecked;
 
@@ -110,24 +110,23 @@ pub fn posn_at_x_y(
 /// Such a list is not valid as an event,
 /// but it can be a Lucid-style event type list.
 pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
-    event.map_or(false,
-                 |event| {
-                     let first = event.car();
-                     if first.eq(LispObject::from(Qhelp_echo)) || first.eq(LispObject::from(Qvertical_line))
-                         || first.eq(LispObject::from(Qmode_line)) || first.eq(LispObject::from(Qheader_line))
-                     {
-                         return false;
-                     }
-                 
-                     let mut it = event.as_obj().iter_cars_safe();
-                 
-                     if !it.all(|elt| elt.is_fixnum() || elt.is_symbol()) {
-                         return false;
-                     }
-                 
-                     it.rest().is_nil()
-                 }
-    )
+    event.map_or(false, |event| {
+        let first = event.car();
+        if first.eq(LispObject::from(Qhelp_echo)) || first.eq(LispObject::from(Qvertical_line))
+            || first.eq(LispObject::from(Qmode_line))
+            || first.eq(LispObject::from(Qheader_line))
+        {
+            return false;
+        }
+
+        let mut it = event.as_obj().iter_cars_safe();
+
+        if !it.all(|elt| elt.is_fixnum() || elt.is_symbol()) {
+            return false;
+        }
+
+        it.rest().is_nil()
+    })
 }
 
 include!(concat!(env!("OUT_DIR"), "/keyboard_exports.rs"));

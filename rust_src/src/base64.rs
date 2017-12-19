@@ -11,7 +11,7 @@ use remacs_sys::make_unibyte_string;
 
 use lisp::LispObject;
 use lisp::defsubr;
-use multibyte::{LispStringRef, multibyte_char_at, raw_byte_from_codepoint, MAX_5_BYTE_CHAR};
+use multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR};
 use strings::MIME_LINE_LENGTH;
 
 #[no_mangle]
@@ -35,7 +35,8 @@ pub extern "C" fn base64_encode_1(
         base64_crate::STANDARD
     };
     let bytes = unsafe { slice::from_raw_parts(from as *const u8, in_length as usize) };
-    let mut output = unsafe { slice::from_raw_parts_mut(to as *mut u8, out_length as usize) };
+    let mut output =
+        unsafe { slice::from_raw_parts_mut(to as *mut u8, out_length as usize) };
 
     let encoded_size = if multibyte {
         // Transform non-ASCII characters in multibyte string to Latin1,

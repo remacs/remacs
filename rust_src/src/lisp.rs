@@ -156,9 +156,8 @@ impl LispObject {
     #[inline]
     pub fn as_symbol(self) -> Option<LispSymbolRef> {
         if self.is_symbol() {
-            Some(LispSymbolRef::new(
-                self.symbol_ptr_value() as *mut Lisp_Symbol,
-            ))
+            Some(LispSymbolRef::new(self.symbol_ptr_value()
+                as *mut Lisp_Symbol))
         } else {
             None
         }
@@ -452,9 +451,9 @@ impl LispObject {
     #[inline]
     pub fn as_vectorlike(self) -> Option<LispVectorlikeRef> {
         if self.is_vectorlike() {
-            Some(LispVectorlikeRef::new(
-                unsafe { mem::transmute(self.get_untaggedptr()) },
-            ))
+            Some(LispVectorlikeRef::new(unsafe {
+                mem::transmute(self.get_untaggedptr())
+            }))
         } else {
             None
         }
@@ -567,10 +566,9 @@ impl LispObject {
     }
 
     pub fn is_bool_vector(self) -> bool {
-        self.as_vectorlike().map_or(
-            false,
-            |v| v.is_pseudovector(PseudovecType::PVEC_BOOL_VECTOR),
-        )
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_BOOL_VECTOR)
+        })
     }
 
     pub fn is_array(self) -> bool {

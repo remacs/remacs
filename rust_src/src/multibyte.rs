@@ -36,7 +36,8 @@ use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 use std::ptr;
 use std::slice;
 
-use remacs_sys::{EmacsInt, Lisp_String, CHARACTERBITS, CHAR_CTL, CHAR_MODIFIER_MASK, CHAR_SHIFT, Lisp_Type};
+use remacs_sys::{EmacsInt, Lisp_String, Lisp_Type, CHARACTERBITS, CHAR_CTL, CHAR_MODIFIER_MASK,
+                 CHAR_SHIFT};
 use remacs_sys::emacs_abort;
 
 use lisp::{ExternalPtr, LispObject};
@@ -58,7 +59,6 @@ pub const MAX_5_BYTE_CHAR: Codepoint = 0x3F_FF7F;
 
 /// Maximum length of a single encoded codepoint
 pub const MAX_MULTIBYTE_LENGTH: usize = 5;
-
 
 impl LispStringRef {
     pub fn as_lisp_obj(self) -> LispObject {
@@ -481,7 +481,8 @@ pub extern "C" fn multibyte_chars_in_text(ptr: *const c_uchar, nbytes: ptrdiff_t
     let mut chars = 0;
     // TODO: make this an iterator?
     while idx < len {
-        idx += multibyte_length(&slice[idx..], true).unwrap_or_else(|| unsafe { emacs_abort() });
+        idx += multibyte_length(&slice[idx..], true)
+            .unwrap_or_else(|| unsafe { emacs_abort() });
         chars += 1;
     }
     chars as ptrdiff_t

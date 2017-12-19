@@ -210,11 +210,12 @@ pub fn insert_byte(byte: EmacsInt, count: LispObject, inherit: LispObject) -> Li
         )
     }
     let buf = ThreadState::current_buffer();
-    let toinsert = if byte >= 128 && LispObject::from(buf.enable_multibyte_characters).is_not_nil() {
-                       raw_byte_codepoint(byte as c_uchar) as EmacsInt
-                   } else {
-                       byte
-                   };
+    let toinsert = if byte >= 128 && LispObject::from(buf.enable_multibyte_characters).is_not_nil()
+    {
+        raw_byte_codepoint(byte as c_uchar) as EmacsInt
+    } else {
+        byte
+    };
     unsafe {
         LispObject::from(Finsert_char(
             LispObject::from_natnum(toinsert).to_raw(),

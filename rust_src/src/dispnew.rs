@@ -3,8 +3,8 @@
 use std::{cmp, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, EmacsDouble, current_timespec, dtotimespec, timespec_add, timespec_sub,
-                 wait_reading_process_output};
+use remacs_sys::{current_timespec, dtotimespec, timespec_add, timespec_sub,
+                 wait_reading_process_output, EmacsDouble, EmacsInt};
 use remacs_sys::WAIT_READING_MAX;
 
 use lisp::LispObject;

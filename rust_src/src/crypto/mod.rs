@@ -21,7 +21,7 @@ use buffers::{buffer_file_name, current_buffer, get_buffer, LispBufferRef};
 use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
 use multibyte::LispStringRef;
-use symbols::{LispSymbolRef, fboundp, symbol_name};
+use symbols::{fboundp, symbol_name, LispSymbolRef};
 use threads::ThreadState;
 
 #[derive(Clone, Copy)]
@@ -122,9 +122,8 @@ fn get_coding_system_for_buffer(
             end.to_raw(),
             buffer_file_name(object).to_raw(),
         ];
-        let val = LispObject::from(unsafe {
-            Ffind_operation_coding_system(4, args.as_mut_ptr())
-        });
+        let val =
+            LispObject::from(unsafe { Ffind_operation_coding_system(4, args.as_mut_ptr()) });
         if val.is_cons() && val.as_cons_or_error().cdr().is_not_nil() {
             return val.as_cons_or_error().cdr();
         }
@@ -227,7 +226,8 @@ fn get_input_from_buffer(
     if !(buffer.begv <= *start_byte && *end_byte <= buffer.zv) {
         args_out_of_range!(start, end);
     }
-    let string = LispObject::from(unsafe { make_buffer_string(*start_byte, *end_byte, false) });
+    let string =
+        LispObject::from(unsafe { make_buffer_string(*start_byte, *end_byte, false) });
     unsafe { set_buffer_internal(prev_buffer) };
     // TODO: this needs to be std::mem::size_of<specbinding>()
     unsafe { (*current_thread).m_specpdl_ptr = (*current_thread).m_specpdl_ptr.offset(-40) };
@@ -386,7 +386,8 @@ fn _secure_hash(
     let spec = list!(object, start, end, coding_system, noerror);
     let mut start_byte: ptrdiff_t = 0;
     let mut end_byte: ptrdiff_t = 0;
-    let input = unsafe { extract_data_from_object(spec.to_raw(), &mut start_byte, &mut end_byte) };
+    let input =
+        unsafe { extract_data_from_object(spec.to_raw(), &mut start_byte, &mut end_byte) };
 
     if input.is_null() {
         error!("secure_hash: failed to extract data from object, aborting!");
@@ -515,7 +516,8 @@ pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     }
 
     let formatted = ctx.digest().to_string();
-    let digest = LispObject::from(unsafe { make_uninit_string(formatted.len() as EmacsInt) });
+    let digest =
+        LispObject::from(unsafe { make_uninit_string(formatted.len() as EmacsInt) });
     digest
         .as_string()
         .unwrap()

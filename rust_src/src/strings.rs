@@ -12,7 +12,7 @@ use remacs_sys::EmacsInt;
 use lisp::LispObject;
 use lisp::defsubr;
 use multibyte;
-use multibyte::{LispStringRef};
+use multibyte::LispStringRef;
 
 pub static MIME_LINE_LENGTH: isize = 76;
 
@@ -64,7 +64,12 @@ pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
 
     let mut nchars = 0;
     let mut nbytes = 0;
-    multibyte::parse_str_as_multibyte(string.const_data_ptr(), string.len_bytes(), &mut nchars, &mut nbytes);
+    multibyte::parse_str_as_multibyte(
+        string.const_data_ptr(),
+        string.len_bytes(),
+        &mut nchars,
+        &mut nbytes,
+    );
 
     let new_string = LispObject::from(unsafe {
         make_uninit_multibyte_string(nchars as EmacsInt, nbytes as EmacsInt)
@@ -72,10 +77,19 @@ pub fn string_as_multibyte(string: LispStringRef) -> LispObject {
 
     let mut new_s = new_string.as_string().unwrap();
     unsafe {
-        ptr::copy_nonoverlapping(string.const_data_ptr(), new_s.data_ptr(), string.len_bytes() as usize);
+        ptr::copy_nonoverlapping(
+            string.const_data_ptr(),
+            new_s.data_ptr(),
+            string.len_bytes() as usize,
+        );
     }
     if nbytes != string.len_bytes() {
-        multibyte::str_as_multibyte(new_s.data_ptr(), nbytes, string.len_bytes(), ptr::null_mut());
+        multibyte::str_as_multibyte(
+            new_s.data_ptr(),
+            nbytes,
+            string.len_bytes(),
+            ptr::null_mut(),
+        );
     }
     new_string
 }
@@ -113,7 +127,8 @@ pub fn string_to_unibyte(string: LispStringRef) -> LispObject {
             error!("Can't convert {}th character to unibyte", converted_size);
         }
 
-        let raw_ptr = unsafe { make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size) };
+        let raw_ptr =
+            unsafe { make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size) };
         LispObject::from(raw_ptr)
     } else {
         string.as_lisp_obj()

@@ -7,7 +7,7 @@ use remacs_sys::{access_keymap, get_keymap, maybe_quit, Faref, Fevent_convert_li
 use remacs_sys::CHAR_META;
 
 use keyboard::lucid_event_type_list_p;
-use lisp::{defsubr, LispObject, LispCons};
+use lisp::{defsubr, LispCons, LispObject};
 use threads::ThreadState;
 
 #[inline]

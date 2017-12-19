@@ -5,7 +5,7 @@ use remacs_sys::{Fcons, Fmapc, Vautoload_queue};
 use remacs_sys::{Qfuncall, Qlistp, Qprovide, Qquote, Qsubfeatures, Qwrong_number_of_arguments};
 use remacs_sys::globals;
 
-use lisp::{LispObject, LispCons};
+use lisp::{LispCons, LispObject};
 use lisp::defsubr;
 use lists::{assq, get, member, memq, put};
 use symbols::LispSymbolRef;
@@ -20,7 +20,10 @@ use vectors::length;
 /// SUBFEATURE can be used to check a specific subfeature of FEATURE.
 #[lisp_fn(min = "1")]
 pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
-    let mut tem = memq(feature.as_lisp_obj(), LispObject::from(unsafe { globals.f_Vfeatures }));
+    let mut tem = memq(
+        feature.as_lisp_obj(),
+        LispObject::from(unsafe { globals.f_Vfeatures }),
+    );
     if tem.is_not_nil() && subfeature.is_not_nil() {
         tem = member(subfeature, get(feature, LispObject::from(Qsubfeatures)));
     }
@@ -47,13 +50,21 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
             );
         }
     }
-    if memq(feature.as_lisp_obj(), LispObject::from(unsafe { globals.f_Vfeatures })).is_nil() {
+    if memq(
+        feature.as_lisp_obj(),
+        LispObject::from(unsafe { globals.f_Vfeatures }),
+    ).is_nil()
+    {
         unsafe {
             globals.f_Vfeatures = Fcons(feature.as_lisp_obj().to_raw(), globals.f_Vfeatures);
         }
     }
     if subfeature.is_not_nil() {
-        put(feature.as_lisp_obj(), LispObject::from(Qsubfeatures), subfeature);
+        put(
+            feature.as_lisp_obj(),
+            LispObject::from(Qsubfeatures),
+            subfeature,
+        );
     }
     unsafe {
         globals.f_Vcurrent_load_list = Fcons(
@@ -63,7 +74,11 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(feature.as_lisp_obj(), LispObject::from(globals.f_Vafter_load_alist)).as_cons() {
+        if let Some(c) = assq(
+            feature.as_lisp_obj(),
+            LispObject::from(globals.f_Vafter_load_alist),
+        ).as_cons()
+        {
             Fmapc(Qfuncall, c.cdr().to_raw());
         }
     }
