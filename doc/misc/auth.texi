@@ -86,7 +86,7 @@ password (known as the secret).
 
 Similarly, the auth-source library supports multiple storage backend,
 currently either the classic ``netrc'' backend, examples of which you
-can see later in this document, the Secret Service API, and pass, the
+can see later in this document, JSON files, the Secret Service API, and pass, the
 standard unix password manager.  This is done with EIEIO-based
 backends and you can write your own if you want.
 
@@ -169,6 +169,8 @@ get fancy, the default and simplest configuration is:
 ;;; use pass (@file{~/.password-store})
 ;;; (@pxref{The Unix password store})
 (setq auth-sources '(password-store))
+;;; JSON data in format [{ "machine": "SERVER", "login": "USER", "password": "PASSWORD" }...]
+(setq auth-sources '("~/.authinfo.json.gpg"))
 @end lisp
 
 By adding multiple entries to @code{auth-sources} with a particular
@@ -234,6 +236,15 @@ Note that the port denotes the Tramp connection method.  When you
 don't use a port entry, you match any Tramp method, as explained
 earlier.  Since Tramp has about 88 connection methods, this may be
 necessary if you have an unusual (see earlier comment on those) setup.
+
+The netrc format is directly translated into JSON, if you are into
+that sort of thing. Just point to a JSON file with entries like this:
+
+@example
+[
+ { "machine": "yourmachine.com", "port": "http", "login": "testuser", "password": "testpass" }
+]
+@end example
 
 @node Multiple GMail accounts with Gnus
 @chapter Multiple GMail accounts with Gnus
