@@ -341,7 +341,7 @@ pub fn overlay_recenter(pos: LispObject) -> LispObject {
         pos.as_fixnum_coerce_marker_or_error(),
         ptrdiff_t::max_value(),
     );
-    unsafe { recenter_overlay_lists(ThreadState::current_buffer(), p) };
+    recenter_overlay_lists(ThreadState::current_buffer(), p);
     LispObject::constant_nil()
 }
 
@@ -354,21 +354,89 @@ pub fn overlay_buffer(overlay: LispObject) -> LispObject {
 }
 
 pub fn recenter_overlay_lists(mut buf: LispBufferRef, pos: ptrdiff_t) {
-    let before = LispOverlayRef::new((*buf).overlays_before as *mut Lisp_Overlay);
-    let start: (Option<LispOverlayRef>, Option<LispOverlayRef>) = (None, Some(before));
-    let toMove: Option<(Option<LispOverlayRef>, Option<LispOverlayRef>)> = before
-        .iter()
-        .scan(start, |pair, current: LispOverlayRef| {
-            Some((pair.1, Some(current)))
-        })
-        .find(|pair| {
-            (pair.1).unwrap().end().as_fixnum_coerce_marker_or_error() as ptrdiff_t > pos
-        });
+    let mut tail = LispOverlayRef::new((*buf).overlays_before as *mut Lisp_Overlay);
+    let mut maybePrev: Option<LispOverlayRef> = None;
+    while !tail.as_ptr().is_null() {
+        if tail.end().as_fixnum_coerce_marker_or_error() as ptrdiff_t > pos {
+            let wherePtr = tail.start().as_fixnum_coerce_marker_or_error();
+            match maybePrev {
+                Some(mut prev) => prev.next = tail.next,
+                None => set_buffer_overlays_before(buf, tail.next),
+            }
 
-    match toMove {
-        Some((Some(mut prev), Some(next))) => prev.next = next.as_ptr(),
-        Some((None, Some(next))) => set_buffer_overlays_before(buf, next.as_ptr()),
-        _ => panic!("Unexpected value for toMove"),
+            let overlaysAfter = LispOverlayRef::new((*buf).overlays_after as *mut Lisp_Overlay);
+            let start: (Option<LispOverlayRef>, Option<LispOverlayRef>) =
+                (None, Some(overlaysAfter));
+            let toMoveAfter: Option<(Option<LispOverlayRef>, Option<LispOverlayRef>)> =
+                overlaysAfter
+                    .iter()
+                    .scan(start, |pair, current: LispOverlayRef| {
+                        Some((pair.1, Some(current)))
+                    })
+                    .find(|pair| {
+                        (pair.1).unwrap().start().as_fixnum_coerce_marker_or_error() >= wherePtr
+                    });
+
+            match toMoveAfter {
+                Some((maybeOtherPrev, Some(other))) => {
+                    tail.next = other.as_ptr();
+                    match maybeOtherPrev {
+                        Some(mut other_prev) => other_prev.next = tail.as_ptr(),
+                        None => set_buffer_overlays_after(buf, tail.as_ptr()),
+                    }
+                }
+                _ => panic!("Unexpected value for toMoveAfter"),
+            }
+            tail = maybePrev.map_or(LispOverlayRef::new(ptr::null_mut()), |mut prev| {
+                LispOverlayRef::new(prev.as_mut())
+            });
+        } else {
+            break;
+        }
+        maybePrev = Some(tail);
+        tail = LispOverlayRef::new(tail.next as *mut Lisp_Overlay);
+    }
+
+    maybePrev = None;
+    tail = LispOverlayRef::new((*buf).overlays_after as *mut Lisp_Overlay);
+    while !tail.as_ptr().is_null() {
+        if tail.start().as_fixnum_coerce_marker_or_error() as ptrdiff_t > pos {
+            break;
+        }
+        let wherePtr = tail.end().as_fixnum_coerce_marker_or_error();
+        if wherePtr as ptrdiff_t <= pos {
+            match maybePrev {
+                Some(mut prev) => prev.next = tail.next,
+                None => set_buffer_overlays_after(buf, tail.next),
+            }
+            let overlaysBefore = LispOverlayRef::new((*buf).overlays_before as *mut Lisp_Overlay);
+            let start: (Option<LispOverlayRef>, Option<LispOverlayRef>) =
+                (None, Some(overlaysBefore));
+            let toMoveBefore: Option<(Option<LispOverlayRef>, Option<LispOverlayRef>)> =
+                overlaysBefore
+                    .iter()
+                    .scan(start, |pair, current: LispOverlayRef| {
+                        Some((pair.1, Some(current)))
+                    })
+                    .find(|pair| {
+                        (pair.1).unwrap().end().as_fixnum_coerce_marker_or_error() <= wherePtr
+                    });
+            match toMoveBefore {
+                Some((maybeOtherPrev, Some(other))) => {
+                    tail.next = other.as_ptr();
+                    match maybeOtherPrev {
+                        Some(mut other_prev) => other_prev.next = tail.as_ptr(),
+                        None => set_buffer_overlays_before(buf, tail.as_ptr()),
+                    }
+                }
+                _ => panic!("Unexpected value for toMoveBefore"),
+            }
+            tail = maybePrev.map_or(LispOverlayRef::new(ptr::null_mut()), |mut prev| {
+                LispOverlayRef::new(prev.as_mut())
+            });
+        }
+        maybePrev = Some(tail);
+        tail = LispOverlayRef::new(tail.next as *mut Lisp_Overlay);
     }
 
     (*buf).overlay_center = pos
