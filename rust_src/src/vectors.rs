@@ -8,9 +8,9 @@ use std::slice;
 use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Faref, Lisp_Bool_Vector, Lisp_Vector, Lisp_Vectorlike, PseudovecType,
-                 Qsequencep, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG,
-                 PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
+use remacs_sys::{EmacsInt, Faref, Lisp_Bool_Vector, Lisp_Object, Lisp_Vector, Lisp_Vectorlike,
+                 PseudovecType, Qsequencep, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS,
+                 PSEUDOVECTOR_FLAG, PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
 
 use buffers::LispBufferRef;
 use chartable::LispCharTableRef;
@@ -148,25 +148,26 @@ impl LispVectorRef {
     pub fn as_slice(&self) -> &[LispObject] {
         unsafe {
             slice::from_raw_parts(
-                mem::transmute::<_, *const LispObject>(&self.contents),
+                &self.contents as *const [Lisp_Object; 1] as *const LispObject,
                 self.len(),
             )
         }
     }
 
     #[inline]
-    pub fn as_mut_slice(&self) -> &mut [LispObject] {
+    pub fn as_mut_slice(&mut self) -> &mut [LispObject] {
         unsafe {
             slice::from_raw_parts_mut(
-                mem::transmute::<_, *mut LispObject>(&self.contents),
+                &mut self.contents as *mut [Lisp_Object; 1] as *mut LispObject,
                 self.len(),
             )
         }
     }
 
     #[inline]
-    pub unsafe fn get_unchecked(self, idx: ptrdiff_t) -> LispObject {
-        ptr::read(mem::transmute::<_, *const LispObject>(&self.contents).offset(idx))
+    pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
+        let tmp = &self.contents as *const [Lisp_Object; 1] as *const LispObject;
+        ptr::read(tmp.offset(idx))
     }
 
     #[allow(dead_code)]
@@ -204,7 +205,7 @@ pub fn length(sequence: LispObject) -> LispObject {
         {
             return LispObject::from_natnum(vl.pseudovector_size());
         }
-    } else if let Some(_) = sequence.as_cons() {
+    } else if sequence.is_cons() {
         let len = sequence.iter_tails().count();
         if len > MOST_POSITIVE_FIXNUM as usize {
             error!("List too long");
@@ -238,7 +239,7 @@ pub fn elt(sequence: LispObject, n: LispObject) -> LispObject {
 pub fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
     if seq.is_cons() {
         sort_list(seq, predicate)
-    } else if let Some(vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {
+    } else if let Some(mut vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {
         vec.as_mut_slice().sort_by(|&a, &b| {
             // XXX: since the `sort' predicate is a two-outcome comparison
             // Less/!Less, and slice::sort_by() uses Greater/!Greater

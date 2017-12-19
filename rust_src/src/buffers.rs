@@ -163,7 +163,7 @@ impl LispBufferRef {
         if LispObject::from(self.enable_multibyte_characters).is_not_nil() {
             self.fetch_multibyte_char(n)
         } else {
-            self.fetch_byte(n) as c_int
+            c_int::from(self.fetch_byte(n))
         }
     }
 }
