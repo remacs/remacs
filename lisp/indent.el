@@ -142,13 +142,11 @@ prefix argument is ignored."
 	  (old-indent (current-indentation)))
 
       ;; Indent the line.
-      (or (not (eq (funcall indent-line-function) 'noindent))
+      (or (not (eq (indent--funcall-widened indent-line-function) 'noindent))
           (indent--default-inside-comment)
           (when (or (<= (current-column) (current-indentation))
                     (not (eq tab-always-indent 'complete)))
-            (save-restriction
-              (widen)
-              (funcall (default-value 'indent-line-function)))))
+            (indent--funcall-widened (default-value 'indent-line-function))))
 
       (cond
        ;; If the text was already indented right, try completion.
@@ -169,6 +167,11 @@ prefix argument is ignored."
             (when (and (not (zerop indentation-change))
                        (< (point) end-marker))
               (indent-rigidly (point) end-marker indentation-change))))))))))
+
+(defun indent--funcall-widened (func)
+  (save-restriction
+    (widen)
+    (funcall func)))
 
 (defun insert-tab (&optional arg)
   (let ((count (prefix-numeric-value arg)))
