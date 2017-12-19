@@ -63,6 +63,9 @@ bump version\\|Auto-commit"))
   "Regexp matching logs of revisions that might be skipped.
 `gitmerge-missing' will ask you if it should skip any matches.")
 
+(defvar gitmerge-minimum-missing 10
+  "Minimum number of missing commits to consider merging in batch mode.")
+
 (defvar gitmerge-status-file (expand-file-name "gitmerge-status"
 					       user-emacs-directory)
   "File where missing commits will be saved between sessions.")
@@ -567,6 +570,12 @@ Branch FROM will be prepended to the list."
       (setq gitmerge--from from)
       (when (null gitmerge--commits)
 	(user-error "Nothing to merge"))
+      (and noninteractive
+	   gitmerge-minimum-missing
+	   (< (length gitmerge--commits) gitmerge-minimum-missing)
+	   (user-error "Number of missing commits (%s) is less than %s"
+		       (length gitmerge--commits)
+		       gitmerge-minimum-missing))
       (with-current-buffer
 	  (gitmerge-setup-log-buffer gitmerge--commits gitmerge--from)
 	(goto-char (point-min))
