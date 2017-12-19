@@ -1155,3 +1155,13 @@ check-declare:
 	  exit 1; \
 	fi
 	$(MAKE) -C lisp $@
+
+.PHONY: gitmerge
+
+GITMERGE_EMACS = ./src/emacs${EXEEXT}
+GITMERGE_NMIN = 10
+
+gitmerge:
+	${GITMERGE_EMACS} -batch --no-site-file --no-site-lisp \
+	  -l ${srcdir}/admin/gitmerge.el \
+	  --eval '(setq gitmerge-minimum-missing ${GITMERGE_NMIN})' -f gitmerge
