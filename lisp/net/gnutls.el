@@ -261,33 +261,37 @@ here's a recent version of the list.
 
 It must be omitted, a number, or nil; if omitted or nil it
 defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
-  (let ((trustfiles (or trustfiles (gnutls-trustfiles)))
-        (priority-string (or priority-string
-                             (cond
-                              ((eq type 'gnutls-anon)
-                               "NORMAL:+ANON-DH:!ARCFOUR-128:%DUMBFW")
-                              ((eq type 'gnutls-x509pki)
-                               (if gnutls-algorithm-priority
-                                   (upcase gnutls-algorithm-priority)
-                                 "NORMAL:%DUMBFW")))))
-        (verify-error (or verify-error
-                          ;; this uses the value of `gnutls-verify-error'
-                          (cond
-                           ;; if t, pass it on
-                           ((eq gnutls-verify-error t)
-                            t)
-                           ;; if a list, look for hostname matches
-                           ((listp gnutls-verify-error)
-                            (apply 'append
-                                   (mapcar
-                                    (lambda (check)
-                                      (when (string-match (nth 0 check)
-                                                          hostname)
-                                        (nth 1 check)))
-                                    gnutls-verify-error)))
-                           ;; else it's nil
-                           (t nil))))
-        (min-prime-bits (or min-prime-bits gnutls-min-prime-bits)))
+  (let* ((trustfiles (or trustfiles (gnutls-trustfiles)))
+         (maybe-dumbfw (if (memq 'ClientHello\ Padding (gnutls-available-p))
+                           ":%DUMBFW"
+                         ""))
+         (priority-string (or priority-string
+                              (cond
+                               ((eq type 'gnutls-anon)
+                                (concat "NORMAL:+ANON-DH:!ARCFOUR-128"
+                                        maybe-dumbfw))
+                               ((eq type 'gnutls-x509pki)
+                                (if gnutls-algorithm-priority
+                                    (upcase gnutls-algorithm-priority)
+                                  (concat "NORMAL" maybe-dumbfw))))))
+         (verify-error (or verify-error
+                           ;; this uses the value of `gnutls-verify-error'
+                           (cond
+                            ;; if t, pass it on
+                            ((eq gnutls-verify-error t)
+                             t)
+                            ;; if a list, look for hostname matches
+                            ((listp gnutls-verify-error)
+                             (apply 'append
+                                    (mapcar
+                                     (lambda (check)
+                                       (when (string-match (nth 0 check)
+                                                           hostname)
+                                         (nth 1 check)))
+                                     gnutls-verify-error)))
+                            ;; else it's nil
+                            (t nil))))
+         (min-prime-bits (or min-prime-bits gnutls-min-prime-bits)))
 
     (when verify-hostname-error
       (push :hostname verify-error))
