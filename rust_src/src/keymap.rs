@@ -77,7 +77,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
         });
         idx += 1;
 
-        if c.is_cons() && lucid_event_type_list_p(Option::<LispCons>::from(c)) {
+        if c.is_cons() && lucid_event_type_list_p(c.as_cons_or_error()) {
             c = LispObject::from(unsafe { Fevent_convert_list(c.to_raw()) });
         }
 

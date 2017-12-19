@@ -275,8 +275,8 @@ fn numberp(object: LispObject) -> LispObject {
 }
 ```
 
-Additinally, `lisp_fn` can automatically translate LispObjects pass in
-as arguments into the native Rust types:
+Additinally, `lisp_fn` can automatically translate LispObjects passed
+in as arguments into native Rust types:
 
 ``` rust
 // This function takes a double, and can also take an integer.
