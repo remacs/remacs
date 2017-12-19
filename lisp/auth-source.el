@@ -379,24 +379,38 @@ soon as a function returns non-nil.")
   ;; take just a file name use it as a netrc/plist file
   ;; matching any user, host, and protocol
   (when (stringp entry)
-    (setq entry `(:source ,entry)))
-  (cond
-   ;; a file name with parameters
-   ((stringp (plist-get entry :source))
-    (if (equal (file-name-extension (plist-get entry :source)) "plist")
+    (setq entry (list :source entry)))
+  (let* ((source (plist-get entry :source))
+         (source-without-gpg
+          (if (and (stringp source)
+                   (equal (file-name-extension source) "gpg"))
+              (file-name-sans-extension source)
+            (or source "")))
+         (extension (or (file-name-extension source-without-gpg)
+                        "")))
+    (when (stringp source)
+      (cond
+       ((equal extension "plist")
         (auth-source-backend
-         (plist-get entry :source)
-         :source (plist-get entry :source)
+         source
+         :source source
          :type 'plstore
          :search-function #'auth-source-plstore-search
          :create-function #'auth-source-plstore-create
-         :data (plstore-open (plist-get entry :source)))
-      (auth-source-backend
-       (plist-get entry :source)
-       :source (plist-get entry :source)
-       :type 'netrc
-       :search-function #'auth-source-netrc-search
-       :create-function #'auth-source-netrc-create)))))
+         :data (plstore-open source)))
+       ((member-ignore-case extension '("json"))
+        (auth-source-backend
+         source
+         :source source
+         :type 'json
+         :search-function #'auth-source-json-search))
+       (t
+        (auth-source-backend
+         source
+         :source source
+         :type 'netrc
+         :search-function #'auth-source-netrc-search
+         :create-function #'auth-source-netrc-create))))))
 
 ;; Note this function should be last in the parser functions, so we add it first
 (add-hook 'auth-source-backend-parser-functions 'auth-source-backends-parser-file)
@@ -1966,6 +1980,77 @@ entries for git.gnus.org:
     (if (y-or-n-p (format "Save auth info to file %s? "
                           (plstore-get-file (oref backend data))))
         (plstore-save (oref backend data)))))
+
+;;; Backend specific parsing: JSON backend
+;;; (auth-source-search :max 1 :machine "imap.gmail.com")
+;;; (auth-source-search :max 1 :host '("my-gmail" "imap.gmail.com") :port '(993 "imaps" "imap" "993" "143") :user nil :require '(:user :secret))
+
+(defun auth-source-json-check (host user port require item)
+  (and item
+       (auth-source-search-collection
+        (or host t)
+        (or
+         (plist-get item :machine)
+         (plist-get item :host)
+         t))
+       (auth-source-search-collection
+        (or user t)
+        (or
+         (plist-get item :login)
+         (plist-get item :account)
+         (plist-get item :user)
+         t))
+       (auth-source-search-collection
+        (or port t)
+        (or
+         (plist-get item :port)
+         (plist-get item :protocol)
+         t))
+       (or
+        ;; the required list of keys is nil, or
+        (null require)
+        ;; every element of require is in
+        (cl-loop for req in require
+                 always (plist-get item req)))))
+
+(cl-defun auth-source-json-search (&rest spec
+                                    &key backend require create
+                                    type max host user port
+                                    &allow-other-keys)
+  "Given a property list SPEC, return search matches from the :backend.
+See `auth-source-search' for details on SPEC."
+  ;; just in case, check that the type is correct (null or same as the backend)
+  (cl-assert (or (null type) (eq type (oref backend type)))
+             t "Invalid JSON search: %s %s")
+
+  ;; Hide the secrets early to avoid accidental exposure.
+  (let* ((jdata
+          (mapcar (lambda (entry)
+                    (let (ret)
+                      (while entry
+                        (let* ((item (pop entry))
+                               (k (auth-source--symbol-keyword (car item)))
+                               (v (cdr item)))
+                          (setq k (cond ((memq k '(:machine)) :host)
+                                        ((memq k '(:login :account)) :user)
+                                        ((memq k '(:protocol)) :port)
+                                        ((memq k '(:password)) :secret)
+                                        (t k)))
+                          ;; send back the secret in a function (lexical binding)
+                          (when (eq k :secret)
+                            (setq v (let ((lexv v))
+                                      (lambda () lexv))))
+                          (setq ret (plist-put ret k v))))
+                      ret))
+                  (json-read-file (oref backend source))))
+         (max (or max 5000))       ; sanity check: default to stop at 5K
+         all)
+    (dolist (item jdata)
+      (when (and item
+                 (> max (length all))
+                 (auth-source-json-check host user port require item))
+        (push item all)))
+    (nreverse all)))
 
 ;;; older API
 
