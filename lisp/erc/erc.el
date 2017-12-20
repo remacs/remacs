@@ -36,7 +36,7 @@
 
 ;; For more information, see the following URLs:
 ;; * https://sv.gnu.org/projects/erc/
-;; * http://www.emacswiki.org/cgi-bin/wiki/ERC
+;; * https://www.emacswiki.org/emacs/ERC
 
 
 
@@ -75,12 +75,12 @@
 (require 'erc-compat)
 
 (defvar erc-official-location
-  "https://emacswiki.org/cgi-bin/wiki/ERC (mailing list: erc-discuss@gnu.org)"
+  "https://www.emacswiki.org/emacs/ERC (mailing list: erc-discuss@gnu.org)"
   "Location of the ERC client on the Internet.")
 
 (defgroup erc nil
   "Emacs Internet Relay Chat client."
-  :link '(url-link "http://www.emacswiki.org/cgi-bin/wiki/ERC")
+  :link '(url-link "https://www.emacswiki.org/emacs/ERC")
   :link '(custom-manual "(erc) Top")
   :prefix "erc-"
   :group 'applications)
