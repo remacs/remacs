@@ -105,10 +105,34 @@ impl LispObject {
     }
 }
 
+impl<T> From<Option<T>> for LispObject
+where
+    LispObject: From<T>,
+{
+    #[inline]
+    fn from(v: Option<T>) -> Self {
+        match v {
+            None => LispObject::constant_nil(),
+            Some(v) => LispObject::from(v),
+        }
+    }
+}
+
 impl From<LispObject> for bool {
     #[inline]
     fn from(o: LispObject) -> Self {
         o.is_not_nil()
+    }
+}
+
+impl From<bool> for LispObject {
+    #[inline]
+    fn from(v: bool) -> Self {
+        if v {
+            LispObject::constant_t()
+        } else {
+            LispObject::constant_nil()
+        }
     }
 }
 
@@ -197,6 +221,13 @@ impl From<LispObject> for LispSymbolRef {
     #[inline]
     fn from(o: LispObject) -> Self {
         o.as_symbol_or_error()
+    }
+}
+
+impl From<LispSymbolRef> for LispObject {
+    #[inline]
+    fn from(s: LispSymbolRef) -> Self {
+        s.as_lisp_obj()
     }
 }
 
@@ -430,6 +461,13 @@ impl From<LispObject> for Option<EmacsInt> {
         } else {
             Some(o.as_fixnum_or_error())
         }
+    }
+}
+
+impl From<EmacsInt> for LispObject {
+    #[inline]
+    fn from(v: EmacsInt) -> Self {
+        LispObject::from_fixnum(v)
     }
 }
 
@@ -772,6 +810,13 @@ impl From<LispObject> for LispHashTableRef {
     }
 }
 
+impl From<LispHashTableRef> for LispObject {
+    #[inline]
+    fn from(h: LispHashTableRef) -> Self {
+        LispObject::from_hash_table(h)
+    }
+}
+
 // Cons support (LispType == 6 | 3)
 
 /// From `FOR_EACH_TAIL_INTERNAL` in `lisp.h`
@@ -1076,6 +1121,24 @@ impl From<LispObject> for EmacsDouble {
     }
 }
 
+impl From<LispObject> for Option<EmacsDouble> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            None
+        } else {
+            Some(o.any_to_float_or_error())
+        }
+    }
+}
+
+impl From<EmacsDouble> for LispObject {
+    #[inline]
+    fn from(v: EmacsDouble) -> Self {
+        LispObject::from_float(v)
+    }
+}
+
 // String support (LispType == 4)
 
 impl LispObject {
@@ -1125,6 +1188,13 @@ impl From<LispObject> for LispStringRef {
     #[inline]
     fn from(o: LispObject) -> Self {
         o.as_string_or_error()
+    }
+}
+
+impl From<LispStringRef> for LispObject {
+    #[inline]
+    fn from(s: LispStringRef) -> Self {
+        s.as_lisp_obj()
     }
 }
 

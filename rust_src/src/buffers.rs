@@ -210,7 +210,7 @@ pub fn buffer_live_p(object: LispObject) -> LispObject {
 /// (which ignores text properties), and don't ever quit.
 fn assoc_ignore_text_properties(key: LispObject, list: LispObject) -> LispObject {
     let result = list.iter_tails_safe()
-        .find(|&item| string_equal(car(item.car()), key).is_not_nil());
+        .find(|&item| string_equal(car(item.car()), key));
     if let Some(elt) = result {
         elt.car()
     } else {

@@ -18,8 +18,8 @@ pub static MIME_LINE_LENGTH: isize = 76;
 
 /// Return t if OBJECT is a string.
 #[lisp_fn]
-pub fn stringp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_string())
+pub fn stringp(object: LispObject) -> bool {
+    object.is_string()
 }
 
 /// Return the number of bytes in STRING.
@@ -33,14 +33,12 @@ pub fn string_bytes(string: LispStringRef) -> LispObject {
 /// Case is significant, but text properties are ignored.
 /// Symbols are also allowed; their print names are used instead.
 #[lisp_fn]
-pub fn string_equal(s1: LispObject, s2: LispObject) -> LispObject {
+pub fn string_equal(s1: LispObject, s2: LispObject) -> bool {
     let s1 = LispObject::symbol_or_string_as_string(s1);
     let s2 = LispObject::symbol_or_string_as_string(s2);
 
-    LispObject::from_bool(
-        s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes()
-            && s1.as_slice() == s2.as_slice(),
-    )
+    s1.len_chars() == s2.len_chars() && s1.len_bytes() == s2.len_bytes()
+        && s1.as_slice() == s2.as_slice()
 }
 
 /// Return a multibyte string with the same individual bytes as STRING.
@@ -137,18 +135,18 @@ pub fn string_to_unibyte(string: LispStringRef) -> LispObject {
 /// Return non-nil if STRING1 is less than STRING2 in lexicographic order.
 /// Case is significant.
 #[lisp_fn]
-pub fn string_lessp(string1: LispObject, string2: LispObject) -> LispObject {
+pub fn string_lessp(string1: LispObject, string2: LispObject) -> bool {
     let s1 = LispObject::symbol_or_string_as_string(string1);
     let s2 = LispObject::symbol_or_string_as_string(string2);
 
-    LispObject::from_bool(s1.as_slice() < s2.as_slice())
+    s1.as_slice() < s2.as_slice()
 }
 
 /// Return t if OBJECT is a multibyte string.
 /// Return nil if OBJECT is either a unibyte string, or not a string.
 #[lisp_fn]
-pub fn multibyte_string_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.as_string().map_or(false, |s| s.is_multibyte()))
+pub fn multibyte_string_p(object: LispObject) -> bool {
+    object.as_string().map_or(false, |s| s.is_multibyte())
 }
 
 /// Clear the contents of STRING.
@@ -169,13 +167,13 @@ include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
 #[test]
 fn test_multibyte_stringp() {
     let string = mock_unibyte_string!();
-    assert_nil!(multibyte_string_p(string));
+    assert!(!multibyte_string_p(string));
 
     let flt = mock_float!();
-    assert_nil!(multibyte_string_p(flt));
+    assert!(!multibyte_string_p(flt));
 
     let multi = mock_multibyte_string!();
-    assert_t!(multibyte_string_p(multi));
+    assert!(multibyte_string_p(multi));
 }
 
 #[test]
@@ -189,16 +187,16 @@ fn str_equality() {
     let string1 = mock_unibyte_string!("Hello World");
     let string2 = mock_unibyte_string!("Hello World");
     let string3 = mock_unibyte_string!("Goodbye World");
-    assert_t!(string_equal(string1, string2));
-    assert_t!(string_equal(string2, string1));
-    assert_nil!(string_equal(string1, string3));
-    assert_nil!(string_equal(string2, string3));
+    assert!(string_equal(string1, string2));
+    assert!(string_equal(string2, string1));
+    assert!(!string_equal(string1, string3));
+    assert!(!string_equal(string2, string3));
 }
 
 #[test]
 fn test_stringlessp() {
     let string = mock_unibyte_string!("Hello World");
     let string2 = mock_unibyte_string!("World Hello");
-    assert_t!(string_lessp(string, string2));
-    assert_nil!(string_lessp(string2, string));
+    assert!(string_lessp(string, string2));
+    assert!(!string_lessp(string2, string));
 }

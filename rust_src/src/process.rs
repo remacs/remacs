@@ -113,12 +113,12 @@ pub fn process_buffer(process: LispObject) -> LispObject {
 /// This is the pid of the external process which PROCESS uses or talks to.
 /// For a network, serial, and pipe connections, this value is nil.
 #[lisp_fn]
-pub fn process_id(process: LispObject) -> LispObject {
+pub fn process_id(process: LispObject) -> Option<EmacsInt> {
     let pid = unsafe { pget_pid(process.as_process_or_error().as_ptr()) };
     if pid != 0 {
-        LispObject::from_fixnum(pid as EmacsInt)
+        Some(pid as EmacsInt)
     } else {
-        LispObject::constant_nil()
+        None
     }
 }
 
@@ -270,11 +270,7 @@ pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject
         || process_type.eq(LispObject::from_raw(Qpipe))
     {
         let childp = LispObject::from_raw(p_ref.childp);
-        p_ref.set_childp(plist_put(
-            childp,
-            LispObject::from_raw(QCbuffer),
-            buffer,
-        ));
+        p_ref.set_childp(plist_put(childp, LispObject::from_raw(QCbuffer), buffer));
     }
     unsafe { setup_process_coding_systems(process.to_raw()) };
     buffer

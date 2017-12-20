@@ -1,7 +1,7 @@
 //! Call a Lisp function interactively.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qminus;
+use remacs_sys::{EmacsInt, Qminus};
 
 use lisp::LispObject;
 use lisp::defsubr;
@@ -10,17 +10,17 @@ use lisp::defsubr;
 /// A raw prefix argument is what you get from `(interactive "P")'.
 /// Its numeric meaning is what you would get from `(interactive "p")'.
 #[lisp_fn]
-pub fn prefix_numeric_value(raw: LispObject) -> LispObject {
+pub fn prefix_numeric_value(raw: LispObject) -> EmacsInt {
     if raw.is_nil() {
-        LispObject::from_fixnum(1)
+        1
     } else if raw.eq(LispObject::from_raw(Qminus)) {
-        LispObject::from_fixnum(-1)
+        -1
     } else if raw.is_integer() {
-        raw
+        raw.as_fixnum_or_error()
     } else if let Some(number) = raw.as_cons().map_or(None, |v| v.car().as_fixnum()) {
-        LispObject::from_fixnum(number)
+        number
     } else {
-        LispObject::from_fixnum(1)
+        1
     }
 }
 

@@ -79,9 +79,9 @@ pub fn backward_char(n: LispObject) -> LispObject {
 
 /// Return buffer position N characters after (before if N negative) point.
 #[lisp_fn]
-pub fn forward_point(n: EmacsInt) -> LispObject {
+pub fn forward_point(n: EmacsInt) -> EmacsInt {
     let pt = ThreadState::current_buffer().pt();
-    LispObject::from_fixnum(n + pt as EmacsInt)
+    n + pt as EmacsInt
 }
 
 /// Move point to beginning of current line (in the logical order).
