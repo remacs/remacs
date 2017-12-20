@@ -254,10 +254,13 @@ json_parse_error (const json_error_t *error)
     {
     case json_error_premature_end_of_input:
       symbol = Qjson_end_of_file;
+      break;
     case json_error_end_of_input_expected:
       symbol = Qjson_trailing_content;
+      break;
     default:
       symbol = Qjson_parse_error;
+      break;
     }
 #else
   if (json_has_suffix (error->text, "expected near end of file"))
