@@ -25,7 +25,7 @@ macro_rules! call {
     ($func:expr, $($arg:expr),*) => {{
         let mut argsarray = [$func.to_raw(), $($arg.to_raw()),*];
         unsafe {
-            LispObject::from(
+            LispObject::from_raw(
                 ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
             )
         }
@@ -50,7 +50,7 @@ macro_rules! error {
             ::remacs_sys::make_string($str.as_ptr() as *const ::libc::c_char,
                                       $str.len() as ::libc::ptrdiff_t)
         };
-        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from(strobj));
+        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
     }};
     ($fmtstr:expr, $($arg:expr),*) => {{
         let formatted = format!($fmtstr, $($arg),*);
@@ -58,14 +58,14 @@ macro_rules! error {
             ::remacs_sys::make_string(formatted.as_ptr() as *const ::libc::c_char,
                                       formatted.len() as ::libc::ptrdiff_t)
         };
-        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from(strobj));
+        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
     }};
 }
 
 /// Macro to format a "wrong argument type" error message.
 macro_rules! wrong_type {
     ($pred:expr, $arg:expr) => {
-        xsignal!(::remacs_sys::Qwrong_type_argument, LispObject::from($pred), $arg);
+        xsignal!(::remacs_sys::Qwrong_type_argument, LispObject::from_raw($pred), $arg);
     };
 }
 

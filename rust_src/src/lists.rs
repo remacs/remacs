@@ -389,7 +389,7 @@ pub fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> Li
 /// This is the last value stored with `(put SYMBOL PROPNAME VALUE)'.
 #[lisp_fn]
 pub fn get(symbol: LispSymbolRef, propname: LispObject) -> LispObject {
-    let plist_env = LispObject::from(unsafe { globals.f_Voverriding_plist_environment });
+    let plist_env = LispObject::from_raw(unsafe { globals.f_Voverriding_plist_environment });
     let propval = plist_get(cdr(assq(symbol.as_lisp_obj(), plist_env)), propname);
     if propval.is_not_nil() {
         propval

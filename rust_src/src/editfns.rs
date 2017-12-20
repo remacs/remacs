@@ -97,8 +97,8 @@ pub fn gap_size() -> LispObject {
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> LispObject {
     let current_buf = ThreadState::current_buffer();
-    if LispObject::from(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil()
-        && LispObject::from(unsafe { globals.f_Vmark_even_if_inactive }).is_nil()
+    if LispObject::from_raw(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil()
+        && LispObject::from_raw(unsafe { globals.f_Vmark_even_if_inactive }).is_nil()
         && current_buf.mark_active().is_nil()
     {
         xsignal!(Qmark_inactive);
@@ -210,14 +210,14 @@ pub fn insert_byte(byte: EmacsInt, count: LispObject, inherit: LispObject) -> Li
         )
     }
     let buf = ThreadState::current_buffer();
-    let toinsert = if byte >= 128 && LispObject::from(buf.enable_multibyte_characters).is_not_nil()
-    {
-        raw_byte_codepoint(byte as c_uchar) as EmacsInt
-    } else {
-        byte
-    };
+    let toinsert =
+        if byte >= 128 && LispObject::from_raw(buf.enable_multibyte_characters).is_not_nil() {
+            raw_byte_codepoint(byte as c_uchar) as EmacsInt
+        } else {
+            byte
+        };
     unsafe {
-        LispObject::from(Finsert_char(
+        LispObject::from_raw(Finsert_char(
             LispObject::from_natnum(toinsert).to_raw(),
             count.to_raw(),
             inherit.to_raw(),
@@ -285,7 +285,7 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
     let first = it.next().unwrap();
     let orig_string = first.as_string_or_error();
 
-    let copy = LispObject::from(unsafe { Fcopy_sequence(first.to_raw()) });
+    let copy = LispObject::from_raw(unsafe { Fcopy_sequence(first.to_raw()) });
 
     // this is a C style Lisp_Object because that is what Fcons expects and returns.
     // Once Fcons is ported to Rust this can be migrated to a LispObject.

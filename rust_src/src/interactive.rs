@@ -13,7 +13,7 @@ use lisp::defsubr;
 pub fn prefix_numeric_value(raw: LispObject) -> LispObject {
     if raw.is_nil() {
         LispObject::from_fixnum(1)
-    } else if raw.eq(LispObject::from(Qminus)) {
+    } else if raw.eq(LispObject::from_raw(Qminus)) {
         LispObject::from_fixnum(-1)
     } else if raw.is_integer() {
         raw

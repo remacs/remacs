@@ -18,7 +18,7 @@ use math::ArithOp;
 /// TODO this is used from C in a few places; remove afterwards.
 #[no_mangle]
 pub extern "C" fn extract_float(f: Lisp_Object) -> EmacsDouble {
-    let f = LispObject::from(f);
+    let f = LispObject::from_raw(f);
     f.any_to_float_or_error()
 }
 
@@ -348,7 +348,7 @@ where
         }
     }
     let errstr =
-        LispObject::from(unsafe { build_string(name.as_ptr() as *const libc::c_char) });
+        LispObject::from_raw(unsafe { build_string(name.as_ptr() as *const libc::c_char) });
     xsignal!(Qrange_error, errstr, arg)
 }
 

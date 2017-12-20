@@ -34,13 +34,13 @@ pub fn local_key_binding(keys: LispObject, accept_default: LispObject) -> LispOb
 /// Normally the local keymap is set by the major mode with `use-local-map'.
 #[lisp_fn]
 pub fn current_local_map() -> LispObject {
-    LispObject::from(ThreadState::current_buffer().keymap)
+    LispObject::from_raw(ThreadState::current_buffer().keymap)
 }
 
 /// Return the current global keymap.
 #[lisp_fn]
 pub fn current_global_map() -> LispObject {
-    unsafe { LispObject::from(_current_global_map) }
+    unsafe { LispObject::from_raw(_current_global_map) }
 }
 
 // Value is number if KEY is too long; nil if valid but has no definition.
@@ -67,18 +67,18 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
     let mut keymap = unsafe { get_keymap(keymap.to_raw(), true, true) };
     let length = key.as_vector_or_string_length() as EmacsInt;
     if length == 0 {
-        return LispObject::from(keymap);
+        return LispObject::from_raw(keymap);
     }
 
     let mut idx = 0;
     loop {
-        let mut c = LispObject::from(unsafe {
+        let mut c = LispObject::from_raw(unsafe {
             Faref(key.to_raw(), LispObject::from_fixnum(idx).to_raw())
         });
         idx += 1;
 
         if c.is_cons() && lucid_event_type_list_p(c.as_cons()) {
-            c = LispObject::from(unsafe { Fevent_convert_list(c.to_raw()) });
+            c = LispObject::from_raw(unsafe { Fevent_convert_list(c.to_raw()) });
         }
 
         // Turn the 8th bit of string chars into a meta modifier.
@@ -99,11 +99,11 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
 
         let cmd = unsafe { access_keymap(keymap, c.to_raw(), ok, false, true) };
         if idx == length {
-            return LispObject::from(cmd);
+            return LispObject::from_raw(cmd);
         }
 
         keymap = unsafe { get_keymap(cmd, false, true) };
-        if !LispObject::from(keymap).is_cons() {
+        if !LispObject::from_raw(keymap).is_cons() {
             return LispObject::from_natnum(idx);
         }
 
@@ -129,7 +129,7 @@ pub fn define_prefix_command(
     mapvar: LispObject,
     name: LispObject,
 ) -> LispObject {
-    let map = unsafe { LispObject::from(Fmake_sparse_keymap(name.to_raw())) };
+    let map = unsafe { LispObject::from_raw(Fmake_sparse_keymap(name.to_raw())) };
     unsafe { Ffset(command.to_raw(), map.to_raw()) };
     if mapvar.is_not_nil() {
         unsafe { Fset(mapvar.to_raw(), map.to_raw()) };

@@ -26,7 +26,7 @@ use windows::window_or_selected_unchecked;
 pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
     let window = window_or_selected_unchecked(window);
 
-    let tem = LispObject::from(unsafe {
+    let tem = LispObject::from_raw(unsafe {
         Fpos_visible_in_window_p(pos.to_raw(), window.to_raw(), Qt)
     });
     if tem.is_nil() {
@@ -96,7 +96,7 @@ pub fn posn_at_x_y(
         y = w.frame_pixel_y(y);
     });
 
-    LispObject::from(unsafe {
+    LispObject::from_raw(unsafe {
         make_lispy_position(
             frame.as_ptr(),
             LispObject::from_fixnum(x as EmacsInt).to_raw(),
@@ -112,9 +112,10 @@ pub fn posn_at_x_y(
 pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
     event.map_or(false, |event| {
         let first = event.car();
-        if first.eq(LispObject::from(Qhelp_echo)) || first.eq(LispObject::from(Qvertical_line))
-            || first.eq(LispObject::from(Qmode_line))
-            || first.eq(LispObject::from(Qheader_line))
+        if first.eq(LispObject::from_raw(Qhelp_echo))
+            || first.eq(LispObject::from_raw(Qvertical_line))
+            || first.eq(LispObject::from_raw(Qmode_line))
+            || first.eq(LispObject::from_raw(Qheader_line))
         {
             return false;
         }

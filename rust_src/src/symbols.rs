@@ -13,15 +13,15 @@ pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
 impl LispSymbolRef {
     pub fn symbol_name(self) -> LispObject {
-        LispObject::from(self.name)
+        LispObject::from_raw(self.name)
     }
 
     pub fn get_function(self) -> LispObject {
-        LispObject::from(self.function)
+        LispObject::from_raw(self.function)
     }
 
     pub fn get_plist(self) -> LispObject {
-        LispObject::from(self.plist)
+        LispObject::from_raw(self.plist)
     }
 
     pub fn set_plist(&mut self, plist: LispObject) {
@@ -50,7 +50,7 @@ impl LispSymbolRef {
     }
 
     pub fn as_lisp_obj(mut self) -> LispObject {
-        LispObject::from(unsafe { make_lisp_symbol(self.as_mut()) })
+        LispObject::from_raw(unsafe { make_lisp_symbol(self.as_mut()) })
     }
 
     /// Return the symbol holding SYMBOL's value.  Signal
@@ -196,7 +196,7 @@ pub fn symbol_value(symbol: LispObject) -> LispObject {
     if val == LispObject::constant_unbound().to_raw() {
         xsignal!(Qvoid_variable, symbol);
     }
-    LispObject::from(val)
+    LispObject::from_raw(val)
 }
 
 include!(concat!(env!("OUT_DIR"), "/symbols_exports.rs"));

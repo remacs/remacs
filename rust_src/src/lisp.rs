@@ -67,17 +67,17 @@ pub struct LispObject(Lisp_Object);
 impl LispObject {
     #[inline]
     pub fn constant_unbound() -> LispObject {
-        LispObject::from(Qunbound)
+        LispObject::from_raw(Qunbound)
     }
 
     #[inline]
     pub fn constant_t() -> LispObject {
-        LispObject::from(Qt)
+        LispObject::from_raw(Qt)
     }
 
     #[inline]
     pub fn constant_nil() -> LispObject {
-        LispObject::from(Qnil)
+        LispObject::from_raw(Qnil)
     }
 
     #[inline]
@@ -91,19 +91,17 @@ impl LispObject {
 
     #[inline]
     pub fn from_float(v: EmacsDouble) -> LispObject {
-        LispObject::from(unsafe { make_float(v) })
+        LispObject::from_raw(unsafe { make_float(v) })
+    }
+
+    #[inline]
+    pub fn from_raw(i: EmacsInt) -> LispObject {
+        LispObject(i)
     }
 
     #[inline]
     pub fn to_raw(self) -> EmacsInt {
         self.0
-    }
-}
-
-impl From<EmacsInt> for LispObject {
-    #[inline]
-    fn from(i: EmacsInt) -> Self {
-        LispObject(i)
     }
 }
 
@@ -137,7 +135,7 @@ impl LispObject {
             ((tag << VALBITS) + ptr) as EmacsInt
         };
 
-        LispObject::from(res)
+        LispObject::from_raw(res)
     }
 
     #[inline]
@@ -318,7 +316,7 @@ impl LispObject {
         } else {
             (n & INTMASK) as EmacsUint + ((Lisp_Type::Lisp_Int0 as EmacsUint) << VALBITS)
         };
-        LispObject::from(o as EmacsInt)
+        LispObject::from_raw(o as EmacsInt)
     }
 
     /// Convert a positive integer into its LispObject representation.
@@ -879,7 +877,7 @@ impl Iterator for CarIter {
 impl LispObject {
     #[inline]
     pub fn cons(car: LispObject, cdr: LispObject) -> Self {
-        unsafe { LispObject::from(Fcons(car.to_raw(), cdr.to_raw())) }
+        unsafe { LispObject::from_raw(Fcons(car.to_raw(), cdr.to_raw())) }
     }
 
     #[inline]
@@ -975,12 +973,12 @@ impl LispCons {
 
     /// Return the car (first cell).
     pub fn car(self) -> LispObject {
-        LispObject::from(unsafe { (*self._extract()).car })
+        LispObject::from_raw(unsafe { (*self._extract()).car })
     }
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        LispObject::from(unsafe { (*self._extract()).cdr })
+        LispObject::from_raw(unsafe { (*self._extract()).cdr })
     }
 
     /// Set the car of the cons cell.
@@ -1108,7 +1106,7 @@ impl LispObject {
 
     #[inline]
     pub fn empty_unibyte_string() -> LispStringRef {
-        LispStringRef::from(LispObject::from(unsafe { empty_unibyte_string }))
+        LispStringRef::from(LispObject::from_raw(unsafe { empty_unibyte_string }))
     }
 
     /// Replaces STRING_SET_UNIBYTE in C. If your string has size 0,

@@ -22,10 +22,10 @@ use vectors::length;
 pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     let mut tem = memq(
         feature.as_lisp_obj(),
-        LispObject::from(unsafe { globals.f_Vfeatures }),
+        LispObject::from_raw(unsafe { globals.f_Vfeatures }),
     );
     if tem.is_not_nil() && subfeature.is_not_nil() {
-        tem = member(subfeature, get(feature, LispObject::from(Qsubfeatures)));
+        tem = member(subfeature, get(feature, LispObject::from_raw(Qsubfeatures)));
     }
     if tem.is_nil() {
         LispObject::constant_nil()
@@ -43,7 +43,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
         wrong_type!(Qlistp, subfeature)
     }
     unsafe {
-        if LispObject::from(Vautoload_queue).is_not_nil() {
+        if LispObject::from_raw(Vautoload_queue).is_not_nil() {
             Vautoload_queue = Fcons(
                 Fcons(LispObject::from_fixnum(0).to_raw(), globals.f_Vfeatures),
                 Vautoload_queue,
@@ -52,7 +52,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     }
     if memq(
         feature.as_lisp_obj(),
-        LispObject::from(unsafe { globals.f_Vfeatures }),
+        LispObject::from_raw(unsafe { globals.f_Vfeatures }),
     ).is_nil()
     {
         unsafe {
@@ -62,7 +62,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     if subfeature.is_not_nil() {
         put(
             feature.as_lisp_obj(),
-            LispObject::from(Qsubfeatures),
+            LispObject::from_raw(Qsubfeatures),
             subfeature,
         );
     }
@@ -76,7 +76,7 @@ pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     unsafe {
         if let Some(c) = assq(
             feature.as_lisp_obj(),
-            LispObject::from(globals.f_Vafter_load_alist),
+            LispObject::from_raw(globals.f_Vafter_load_alist),
         ).as_cons()
         {
             Fmapc(Qfuncall, c.cdr().to_raw());
@@ -100,7 +100,7 @@ pub fn quote(args: LispCons) -> LispObject {
     if args.cdr().is_not_nil() {
         xsignal!(
             Qwrong_number_of_arguments,
-            LispObject::from(Qquote),
+            LispObject::from_raw(Qquote),
             length(args.as_obj())
         );
     }

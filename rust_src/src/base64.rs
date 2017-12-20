@@ -266,7 +266,7 @@ pub fn base64_encode_string(mut string: LispStringRef, no_line_break: bool) -> L
         error!("Multibyte character in data for base64 encoding");
     }
 
-    unsafe { LispObject::from(make_unibyte_string(encoded, encoded_length)) }
+    unsafe { LispObject::from_raw(make_unibyte_string(encoded, encoded_length)) }
 }
 
 /// Base64-decode STRING and return the result.
@@ -284,7 +284,7 @@ pub fn base64_decode_string(mut string: LispStringRef) -> LispObject {
     } else if decoded_length < 0 {
         error!("Invalid base64 data");
     }
-    unsafe { LispObject::from(make_unibyte_string(decoded, decoded_length)) }
+    unsafe { LispObject::from_raw(make_unibyte_string(decoded, decoded_length)) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/base64_exports.rs"));

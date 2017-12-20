@@ -22,7 +22,7 @@ impl ThreadState {
 impl ThreadStateRef {
     #[inline]
     pub fn name(self) -> LispObject {
-        LispObject::from(self.name)
+        LispObject::from_raw(self.name)
     }
 }
 
