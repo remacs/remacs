@@ -289,11 +289,25 @@ pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> LispOb
 }
 ```
 
+Similarly, `lisp_fn` can automatically translate the return type:
+
+``` rust
+#[lisp_fn(min = "1")]
+pub fn atan(y: EmacsDouble, x: Option<EmacsDouble>) -> EmacsDouble {
+    match x {
+        None => y.atan(),
+        Some(x) => y.atan2(x)
+    }
+}
+```
+
 The automatic translation signals a Lisp argument-type error if it
 sees an argument of the wrong type, so LispObjects are still the
 correct choice for functions which can handle disperate argument types
 (such as one that takes either a buffer object or a string containing
-a buffer name), or doesn't want to signal an error.
+a buffer name), or doesn't want to signal an error. Similarly,
+LispObject is still the correct choice of return type for functions
+which may return different types in different calls.
 
 Due to an issue with procedural macros (#263) `lisp_fn` will make all warnings
 and errors appear to be on its line instead of on the real line of Rust code.
