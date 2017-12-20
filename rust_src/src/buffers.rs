@@ -175,10 +175,10 @@ pub struct LispOverlayRefIter(LispOverlayRef);
 impl Iterator for LispOverlayRefIter {
     type Item = LispOverlayRef;
     fn next(&mut self) -> Option<Self::Item> {
-        let next = LispOverlayRef::new((*self).0.next as *mut Lisp_Overlay);
-        if next.as_ptr().is_null() {
+        if (*self).0.as_ptr().is_null() {
             return None;
         }
+        let next = LispOverlayRef::new((*self).0.next as *mut Lisp_Overlay);
         Some(next)
     }
 }
@@ -385,7 +385,7 @@ pub fn recenter_overlay_lists(mut buf: LispBufferRef, pos: ptrdiff_t) {
                         None => set_buffer_overlays_after(buf, tail.as_ptr()),
                     }
                 }
-                _ => panic!("Unexpected value for toMoveAfter"),
+                _ => {}
             }
             tail = maybePrev.map_or(LispOverlayRef::new(ptr::null_mut()), |mut prev| {
                 LispOverlayRef::new(prev.as_mut())
@@ -394,7 +394,11 @@ pub fn recenter_overlay_lists(mut buf: LispBufferRef, pos: ptrdiff_t) {
             break;
         }
         maybePrev = Some(tail);
-        tail = LispOverlayRef::new(tail.next as *mut Lisp_Overlay);
+        tail = if tail.next.is_null() {
+            LispOverlayRef::new(ptr::null_mut())
+        } else {
+            LispOverlayRef::new(tail.next as *mut Lisp_Overlay)
+        }
     }
 
     maybePrev = None;
@@ -429,14 +433,18 @@ pub fn recenter_overlay_lists(mut buf: LispBufferRef, pos: ptrdiff_t) {
                         None => set_buffer_overlays_before(buf, tail.as_ptr()),
                     }
                 }
-                _ => panic!("Unexpected value for toMoveBefore"),
+                _ => {}
             }
             tail = maybePrev.map_or(LispOverlayRef::new(ptr::null_mut()), |mut prev| {
                 LispOverlayRef::new(prev.as_mut())
             });
         }
         maybePrev = Some(tail);
-        tail = LispOverlayRef::new(tail.next as *mut Lisp_Overlay);
+        tail = if tail.next.is_null() {
+            LispOverlayRef::new(ptr::null_mut())
+        } else {
+            LispOverlayRef::new(tail.next as *mut Lisp_Overlay)
+        }
     }
 
     (*buf).overlay_center = pos
