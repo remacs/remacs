@@ -1,4 +1,3 @@
-extern crate quote;
 use syn;
 
 type Result<T> = ::std::result::Result<T, &'static str>;
@@ -27,7 +26,7 @@ pub struct Function {
     pub fntype: LispFnType,
 
     /// The function header
-    pub args: Vec<(syn::Ident, quote::Tokens)>,
+    pub args: Vec<syn::Ident>,
 }
 
 pub fn parse(item: &syn::Item) -> Result<Function> {
@@ -84,14 +83,10 @@ fn is_rust_abi(abi: &Option<syn::Abi>) -> bool {
     }
 }
 
-fn get_fn_arg_ident_ty(fn_arg: &syn::FnArg) -> Result<(syn::Ident, quote::Tokens)> {
+fn get_fn_arg_ident_ty(fn_arg: &syn::FnArg) -> Result<syn::Ident> {
     match *fn_arg {
-        syn::FnArg::Captured(ref pat, syn::Ty::Path(_, ref path)) => match *pat {
-            syn::Pat::Ident(_, ref ident, _) => Ok((ident.clone(), mangle_path(path))),
-            _ => Err("invalid function argument"),
-        },
-        syn::FnArg::Captured(ref pat, ref ty) => match *pat {
-            syn::Pat::Ident(_, ref ident, _) => Ok((ident.clone(), quote! { #ty })),
+        syn::FnArg::Captured(ref pat, _) => match *pat {
+            syn::Pat::Ident(_, ref ident, _) => Ok(ident.clone()),
             _ => Err("invalid function argument"),
         },
         _ => Err("invalid function argument"),
@@ -167,11 +162,4 @@ fn is_lisp_object(path: &syn::Path) -> bool {
     let str_path = format!("{}", quote!(#path));
     str_path == "LispObject" || str_path == "lisp :: LispObject"
         || str_path == ":: lisp :: LispObject"
-}
-
-// hack
-fn mangle_path(path: &syn::Path) -> quote::Tokens {
-    let str_path = quote!(#path).to_string();
-    let mangled = syn::parse_path(str_path.replacen("<", ":: <", 1).as_str()).unwrap();
-    quote! { #mangled }
 }

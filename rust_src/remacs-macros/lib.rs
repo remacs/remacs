@@ -37,11 +37,11 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     };
 
     match function.fntype {
-        function::LispFnType::Normal(_) => for (ident, ty) in function.args {
+        function::LispFnType::Normal(_) => for ident in function.args {
             let arg = quote! { #ident: ::remacs_sys::Lisp_Object, };
             cargs.append(arg);
 
-            let arg = quote! { #ty::from(::lisp::LispObject::from(#ident)), };
+            let arg = quote! { ::lisp::LispObject::from(#ident).into(), };
             rargs.append(arg);
         },
         function::LispFnType::Many => {
