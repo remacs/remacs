@@ -1109,7 +1109,7 @@ environments or ANTLR programs with embedded Python code.
 
 A major mode can provide indentation context for a sub-mode.  To
 support this, modes should use 'prog-first-column' instead of a
-literal zero and never call 'widen' in their indentation functions.
+literal zero and avoid calling 'widen' in their indentation functions.
 See the node "(elisp) Mode-Specific Indent" in the ELisp manual for
 more details.
 
