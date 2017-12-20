@@ -30,6 +30,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "coding.h"
 
+#define JSON_HAS_ERROR_CODE (JANSSON_VERSION_HEX >= 0x020B00)
+
 #ifdef WINDOWSNT
 # include <windows.h>
 # include "w32.h"
@@ -179,6 +181,8 @@ init_json (void)
   json_set_alloc_funcs (json_malloc, json_free);
 }
 
+#if !JSON_HAS_ERROR_CODE
+
 /* Return whether STRING starts with PREFIX.  */
 
 static bool
@@ -199,6 +203,8 @@ json_has_suffix (const char *string, const char *suffix)
   return string_len >= suffix_len
     && memcmp (string + string_len - suffix_len, suffix, suffix_len) == 0;
 }
+
+#endif
 
 /* Create a multibyte Lisp string from the UTF-8 string in
    [DATA, DATA + SIZE).  If the range [DATA, DATA + SIZE) does not
@@ -249,7 +255,7 @@ static _Noreturn void
 json_parse_error (const json_error_t *error)
 {
   Lisp_Object symbol;
-#if JANSSON_VERSION_HEX >= 0x020B00
+#if JSON_HAS_ERROR_CODE
   switch (json_error_code (error))
     {
     case json_error_premature_end_of_input:
