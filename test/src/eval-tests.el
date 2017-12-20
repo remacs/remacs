@@ -28,14 +28,14 @@
 (require 'ert)
 
 (ert-deftest eval-tests--bug24673 ()
-  "Checks that Bug#24673 has been fixed."
+  "Check that Bug#24673 has been fixed."
   ;; This should not crash.
   (should-error (funcall '(closure)) :type 'invalid-function))
 
 (defvar byte-compile-debug)
 
 (ert-deftest eval-tests--bugs-24912-and-24913 ()
-  "Checks that Emacs doesn’t accept weird argument lists.
+  "Check that Emacs doesn't accept weird argument lists.
 Bug#24912 and Bug#24913."
   (dolist (args '((&optional) (&rest) (&optional &rest) (&rest &optional)
                   (&optional &rest a) (&optional a &rest)

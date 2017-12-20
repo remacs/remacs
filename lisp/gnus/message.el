@@ -6245,14 +6245,14 @@ they are."
 (declare-function beginning-of-visual-line "simple" (&optional n))
 
 (defun message-beginning-of-header (handle-folded)
-  "Move point to beginning of header’s value.
+  "Move point to beginning of header's value.
 
 When point is at the first header line, moves it after the colon
 and spaces separating header name and header value.
 
 When point is in a continuation line of a folded header (i.e. the
 line starts with a space), the behavior depends on HANDLE-FOLDED
-argument.  If it’s nil, function moves the point to the start of
+argument.  If it's nil, function moves the point to the start of
 the header continuation; otherwise, function locates the
 beginning of the header and moves point past the colon as is the
 case of single-line headers.
@@ -6260,7 +6260,7 @@ case of single-line headers.
 No check whether point is inside of a header or body of the
 message is performed.
 
-Returns point or nil if beginning of header’s value could not be
+Returns point or nil if beginning of header's value could not be
 found.  In the latter case, the point is still moved to the
 beginning of line (possibly after attempting to move it to the
 beginning of a folded header)."
