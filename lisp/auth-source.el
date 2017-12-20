@@ -39,6 +39,7 @@
 
 ;;; Code:
 
+(require 'json)
 (require 'password-cache)
 
 (eval-when-compile (require 'cl-lib))
@@ -2015,7 +2016,7 @@ entries for git.gnus.org:
                  always (plist-get item req)))))
 
 (cl-defun auth-source-json-search (&rest spec
-                                    &key backend require create
+                                    &key backend require
                                     type max host user port
                                     &allow-other-keys)
   "Given a property list SPEC, return search matches from the :backend.
