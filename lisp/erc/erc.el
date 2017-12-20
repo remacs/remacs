@@ -6244,11 +6244,11 @@ This should be a string with substitution variables recognized by
   :group 'erc-mode-line-and-header
   :type 'string)
 
-(defun erc-shorten-server-name (server-name)
-  "Shorten SERVER-NAME according to `erc-common-server-suffixes'."
-  (if (stringp server-name)
+(defun erc-shorten-server-name (server)
+  "Shorten SERVER name according to `erc-common-server-suffixes'."
+  (if (stringp server)
       (with-temp-buffer
-        (insert server-name)
+        (insert server)
         (let ((alist erc-common-server-suffixes))
           (while alist
             (goto-char (point-min))
