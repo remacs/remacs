@@ -53,8 +53,8 @@
   "When non-nil, provides context for indenting embedded code chunks.
 
 There are languages where part of the code is actually written in
-a sub language, e.g., a Yacc/Bison or ANTLR grammar also consists
-of plain C code.  This variable enables the primary mode of the
+a sub language, e.g., a Yacc/Bison or ANTLR grammar can also include
+JS or Python code.  This variable enables the primary mode of the
 main language to use the indentation engine of the sub-mode for
 lines in code chunks written in the sub-mode's language.
 
