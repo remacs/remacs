@@ -251,7 +251,7 @@ pub fn make_char_multibyte(cp: Codepoint) -> Codepoint {
 
 /// Same as the `CHAR_STRING` macro.
 #[inline]
-fn write_codepoint(to: &mut [c_uchar], cp: Codepoint) -> usize {
+pub fn write_codepoint(to: &mut [c_uchar], cp: Codepoint) -> usize {
     if cp <= MAX_1_BYTE_CHAR {
         to[0] = cp as c_uchar;
         1
