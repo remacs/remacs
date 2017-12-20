@@ -122,8 +122,6 @@
   "Running scripts at startup and with /LOAD"
   :group 'erc)
 
-(require 'erc-backend)
-
 ;; compatibility with older ERC releases
 
 (define-obsolete-variable-alias 'erc-announced-server-name
@@ -134,6 +132,8 @@
 
 (define-obsolete-function-alias 'erc-send-command
   'erc-server-send "ERC 5.1")
+
+(require 'erc-backend)
 
 ;; tunable connection and authentication parameters
 

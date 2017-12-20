@@ -725,11 +725,17 @@ It makes underscores and dots word constituent chars.")
 
 ;;; Indentation
 
+(define-obsolete-variable-alias
+  'python-indent 'python-indent-offset "24.3")
+
 (defcustom python-indent-offset 4
   "Default indentation offset for Python."
   :group 'python
   :type 'integer
   :safe 'integerp)
+
+(define-obsolete-variable-alias
+  'python-guess-indent 'python-indent-guess-indent-offset "24.3")
 
 (defcustom python-indent-guess-indent-offset t
   "Non-nil tells Python mode to guess `python-indent-offset' value."
@@ -749,12 +755,6 @@ It makes underscores and dots word constituent chars.")
   "Commands that might trigger a `python-indent-line' call."
   :type '(repeat symbol)
   :group 'python)
-
-(define-obsolete-variable-alias
-  'python-indent 'python-indent-offset "24.3")
-
-(define-obsolete-variable-alias
-  'python-guess-indent 'python-indent-guess-indent-offset "24.3")
 
 (defvar python-indent-current-level 0
   "Deprecated var available for compatibility.")
@@ -2042,6 +2042,9 @@ executed through tramp connections."
   :type '(repeat string)
   :group 'python)
 
+(define-obsolete-variable-alias
+  'python-shell-virtualenv-path 'python-shell-virtualenv-root "25.1")
+
 (defcustom python-shell-virtualenv-root nil
   "Path to virtualenv root.
 This variable, when set to a string, makes the environment to be
@@ -2049,9 +2052,6 @@ modified such that shells are started within the specified
 virtualenv."
   :type '(choice (const nil) string)
   :group 'python)
-
-(define-obsolete-variable-alias
-  'python-shell-virtualenv-path 'python-shell-virtualenv-root "25.1")
 
 (defcustom python-shell-setup-codes nil
   "List of code run by `python-shell-send-setup-codes'."
@@ -3289,14 +3289,6 @@ def __PYTHON_EL_get_completions(text):
   :type 'string
   :group 'python)
 
-(defcustom python-shell-completion-string-code
-  "';'.join(__PYTHON_EL_get_completions('''%s'''))"
-  "Python code used to get a string of completions separated by semicolons.
-The string passed to the function is the current python name or
-the full statement in the case of imports."
-  :type 'string
-  :group 'python)
-
 (define-obsolete-variable-alias
   'python-shell-completion-module-string-code
   'python-shell-completion-string-code
@@ -3308,6 +3300,14 @@ the full statement in the case of imports."
   'python-shell-completion-string-code
   "25.1"
   "Completion string code must work for (i)pdb.")
+
+(defcustom python-shell-completion-string-code
+  "';'.join(__PYTHON_EL_get_completions('''%s'''))"
+  "Python code used to get a string of completions separated by semicolons.
+The string passed to the function is the current python name or
+the full statement in the case of imports."
+  :type 'string
+  :group 'python)
 
 (defcustom python-shell-completion-native-disabled-interpreters
   ;; PyPy's readline cannot handle some escape sequences yet.  Native
@@ -4040,6 +4040,9 @@ JUSTIFY should be used (if applicable) as in `fill-paragraph'."
 
 ;;; Skeletons
 
+(define-obsolete-variable-alias
+  'python-use-skeletons 'python-skeleton-autoinsert "24.3")
+
 (defcustom python-skeleton-autoinsert nil
   "Non-nil means template skeletons will be automagically inserted.
 This happens when pressing \"if<SPACE>\", for example, to prompt for
@@ -4047,9 +4050,6 @@ the if condition."
   :type 'boolean
   :group 'python
   :safe 'booleanp)
-
-(define-obsolete-variable-alias
-  'python-use-skeletons 'python-skeleton-autoinsert "24.3")
 
 (defvar python-skeleton-available '()
   "Internal list of available skeletons.")
