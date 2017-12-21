@@ -518,13 +518,13 @@ parameters \(point-min) and \(point-max).")
   (c objc) '(c-depropertize-new-text
 	     c-parse-quotes-after-change
 	     c-extend-font-lock-region-for-macros
-	     c-neutralize-syntax-in-and-mark-CPP
+	     c-neutralize-syntax-in-CPP
 	     c-change-expand-fl-region)
   c++ '(c-depropertize-new-text
 	c-parse-quotes-after-change
 	c-extend-font-lock-region-for-macros
 	c-after-change-re-mark-raw-strings
-	c-neutralize-syntax-in-and-mark-CPP
+	c-neutralize-syntax-in-CPP
 	c-restore-<>-properties
 	c-change-expand-fl-region)
   java '(c-depropertize-new-text
