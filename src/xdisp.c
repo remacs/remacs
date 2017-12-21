@@ -20280,6 +20280,7 @@ extend_face_to_end_of_line (struct it *it)
 	      /* term.c:produce_glyphs advances it->current_x only for
 		 TEXT_AREA.  */
 	      it->current_x += it->pixel_width;
+	      ++it->glyph_row->used[LEFT_MARGIN_AREA];
 	    }
 
 	  it->current_x = saved_x;
@@ -20317,6 +20318,7 @@ extend_face_to_end_of_line (struct it *it)
 	    {
 	      PRODUCE_GLYPHS (it);
 	      it->current_x += it->pixel_width;
+	      ++it->glyph_row->used[RIGHT_MARGIN_AREA];
 	    }
 
 	  it->area = TEXT_AREA;
