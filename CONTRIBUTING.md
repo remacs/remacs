@@ -19,19 +19,36 @@ Thank you for contributing to Remacs!
   You can learn the exact version we use at any time by looking at the
   .travis.yml file.
 * Add docstrings to your Rust functions `/// This function does ...`
-* _Really_ great PRs include tests. It is not always possible to
-  write unit tests for Rust code if it needs to also call C code. We
-  do have a mocking library available to help with this. See
-  `rust_src/src/strings.rs` for examples. Don't worry if it's not
-  possible to write tests for your code yet (this is common). Another
-  possibility is to write tests in elisp that exercise your code.
-  Write the tests first. This has the advantage of showing that the
-  tests work when the code is C and continues to work once ported
-  to Rust. The elisp tests have file names based on the Emacs source
-  they are testing. So if you are porting code from `src/keyboard.c`
-  which has an equivalent Rust file `rust_src/src/keyboard.rs` so
-  your elisp tests would belong in
-  `test/rust_src/src/keyboard-tests.el`.
+* _Really_ great PRs include tests. See
+  [Writing Tests](#writing-tests) for more information.
+
+## Writing tests
+
+It is not always possible to write unit tests for Remacs's Rust
+code. We do have a mocking library available to help if it needs to
+call C code with this. See `rust_src/src/strings.rs` for examples. But
+mocking may not cover all situations. Don't worry if it's not possible
+to write unit tests for your Rust code yet (this is common).
+
+What you can do is write functional tests in elisp.  The elisp tests
+have file names based on the Emacs source they are testing. So if you
+are porting code from `src/keyboard.c` the companion tests would be
+found in `test/src/keyboard-tests.el`.  Look there first and then the
+rest of the test files to see if the function you plan to port is
+already covered. If not, it is a good idea to write tests first before
+you begin porting C code. This gives you the advantage of starting
+with a known quantity. If the tests fail while the code is still
+written in C you know you likely have a bug in your test. If the test
+works after you have ported the code to Rust you have good reason to
+believe the port is complete.
+
+Once the code is ported to Rust, the tests should be associated with
+the Rust code by placing them in
+`test/rust_src/src/filename-tests.el`. To continue the example above
+if you ported a function from keyboard.c to keyboard.rs the tests
+would belong in `test/rust_src/src/keyboard-tests.el`. If you wrote
+the tests in `test/src/` while porting just copy the code over to the
+equivalent file in `test/rust_src/src` before submitting the PR.
 
 ## Getting your PRs merged
 
