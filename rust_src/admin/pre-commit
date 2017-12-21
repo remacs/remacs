@@ -22,6 +22,19 @@ errors=0
 
 GIT_TOPLEVEL=$(git rev-parse --show-toplevel)
 
+EXPECTED_RUSTFMT_VERSION=$(grep 'rustfmt --version' .travis.yml | awk -F'=~' '{print $2}' | cut -f2 -d' ' | sed -e 's/"//g')
+INSTALLED_RUSTFMT_VERSION=$(cd $GIT_TOPLEVEL/rust_src && rustfmt --version | cut -f1 -d-)
+
+if [ ! -z "$EXPECTED_RUSTFMT_VERSION" ]; then
+    if [ -z "$INSTALLED_RUSTFMT_VERSION" ]; then
+        echo "WARNING: No rustfmt-nightly installed, cannot perform check."
+        exit 1
+    elif [ "$EXPECTED_RUSTFMT_VERSION" != "$INSTALLED_RUSTFMT_VERSION" ]; then
+        echo "Error: rustfmt version does not match"
+        exit 1
+    fi
+fi
+
 echo -n "Checking formatting... "
 diff=$(cd $GIT_TOPLEVEL/rust_src && cargo fmt -- --write-mode diff)
 stripped_diff=$(echo "$diff" | sed -e '/^Diff of/d' -e '/^$/d')
