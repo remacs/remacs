@@ -275,7 +275,7 @@ fn numberp(object: LispObject) -> LispObject {
 }
 ```
 
-Additinally, `lisp_fn` can automatically translate LispObjects passed
+Additionally, `lisp_fn` can automatically translate LispObjects passed
 in as arguments into native Rust types:
 
 ``` rust
@@ -302,12 +302,13 @@ pub fn atan(y: EmacsDouble, x: Option<EmacsDouble>) -> EmacsDouble {
 ```
 
 The automatic translation signals a Lisp argument-type error if it
-sees an argument of the wrong type, so LispObjects are still the
-correct choice for functions which can handle disperate argument types
-(such as one that takes either a buffer object or a string containing
-a buffer name), or doesn't want to signal an error. Similarly,
-LispObject is still the correct choice of return type for functions
-which may return different types in different calls.
+sees an argument of the wrong type. LispObjects are therefore still
+the correct choice for functions which can handle disparate argument
+types (such as one that takes either a buffer object or a string
+containing a buffer name), or doesn't want to signal an
+error. Similarly, LispObject is still the correct choice of return
+type for functions which may return different types in different
+calls.
 
 Due to an issue with procedural macros (#263) `lisp_fn` will make all warnings
 and errors appear to be on its line instead of on the real line of Rust code.

@@ -56,7 +56,7 @@ fn hash_alg(algorithm: LispObject) -> HashAlg {
     } else if algorithm.to_raw() == Qsha512 {
         HashAlg::SHA512
     } else {
-        let name = symbol_name(LispSymbolRef::from(algorithm)).as_string_or_error();
+        let name = symbol_name(algorithm.as_symbol_or_error()).as_string_or_error();
         error!("Invalid algorithm arg: {:?}\0", &name.as_slice());
     }
 }
@@ -137,7 +137,7 @@ fn get_coding_system_for_buffer(
     }
     let sscsf =
         LispObject::from_raw(unsafe { globals.f_Vselect_safe_coding_system_function });
-    if fboundp(LispSymbolRef::from(sscsf)).is_not_nil() {
+    if fboundp(sscsf.as_symbol_or_error()).is_not_nil() {
         /* Confirm that VAL can surely encode the current region. */
         return call!(
             sscsf,
