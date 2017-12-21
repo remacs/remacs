@@ -2670,8 +2670,8 @@ need for `pike-font-lock-extra-types'.")
   ;; This function might do hidden buffer changes.
 
   (let (comment-beg region-beg)
-    (if (eq (get-text-property (point) 'face)
-	    'font-lock-comment-face)
+    (if (memq (get-text-property (point) 'face)
+	      '(font-lock-comment-face font-lock-comment-delimiter-face))
 	;; Handle the case when the fontified region starts inside a
 	;; comment.
 	(let ((start (c-literal-start)))
@@ -2691,8 +2691,15 @@ need for `pike-font-lock-extra-types'.")
 		     (or (not (c-got-face-at comment-beg
 					     c-literal-faces))
 			 (and (/= comment-beg (point-min))
+			      ;; Cheap check which is unreliable (the previous
+			      ;; character could be the end of a previous
+			      ;; comment).
 			      (c-got-face-at (1- comment-beg)
-					     c-literal-faces))))
+					     c-literal-faces)
+			      ;; Expensive reliable check.
+			      (save-excursion
+				(goto-char comment-beg)
+				(c-in-literal)))))
 	      (setq comment-beg nil))
 	    (setq region-beg comment-beg))
 
