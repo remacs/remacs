@@ -36,7 +36,7 @@
 
 ;; For more information, see the following URLs:
 ;; * https://sv.gnu.org/projects/erc/
-;; * http://www.emacswiki.org/cgi-bin/wiki/ERC
+;; * https://www.emacswiki.org/emacs/ERC
 
 
 
@@ -77,12 +77,12 @@
 (require 'erc-compat)
 
 (defvar erc-official-location
-  "https://emacswiki.org/cgi-bin/wiki/ERC (mailing list: erc-discuss@gnu.org)"
+  "https://www.emacswiki.org/emacs/ERC (mailing list: erc-discuss@gnu.org)"
   "Location of the ERC client on the Internet.")
 
 (defgroup erc nil
   "Emacs Internet Relay Chat client."
-  :link '(url-link "http://www.emacswiki.org/cgi-bin/wiki/ERC")
+  :link '(url-link "https://www.emacswiki.org/emacs/ERC")
   :link '(custom-manual "(erc) Top")
   :prefix "erc-"
   :group 'applications)
@@ -124,8 +124,6 @@
   "Running scripts at startup and with /LOAD"
   :group 'erc)
 
-(require 'erc-backend)
-
 ;; compatibility with older ERC releases
 
 (define-obsolete-variable-alias 'erc-announced-server-name
@@ -136,6 +134,8 @@
 
 (define-obsolete-function-alias 'erc-send-command
   'erc-server-send "ERC 5.1")
+
+(require 'erc-backend)
 
 ;; tunable connection and authentication parameters
 
@@ -6260,11 +6260,11 @@ This should be a string with substitution variables recognized by
   :group 'erc-mode-line-and-header
   :type 'string)
 
-(defun erc-shorten-server-name (server-name)
-  "Shorten SERVER-NAME according to `erc-common-server-suffixes'."
-  (if (stringp server-name)
+(defun erc-shorten-server-name (server)
+  "Shorten SERVER name according to `erc-common-server-suffixes'."
+  (if (stringp server)
       (with-temp-buffer
-        (insert server-name)
+        (insert server)
         (let ((alist erc-common-server-suffixes))
           (while alist
             (goto-char (point-min))

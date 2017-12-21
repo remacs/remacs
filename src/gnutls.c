@@ -46,6 +46,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define HAVE_GNUTLS_MAC_GET_NONCE_SIZE
 #endif
 
+#if GNUTLS_VERSION_NUMBER >= 0x030501
+# define HAVE_GNUTLS_EXT_GET_NAME
+#endif
+
+#if GNUTLS_VERSION_NUMBER >= 0x030205
+# define HAVE_GNUTLS_EXT__DUMBFW
+#endif
+
 #ifdef HAVE_GNUTLS
 
 # ifdef WINDOWSNT
@@ -237,6 +245,9 @@ DEF_DLL_FN (int, gnutls_hash_get_len, (gnutls_digest_algorithm_t));
 DEF_DLL_FN (int, gnutls_hash, (gnutls_hash_hd_t, const void *, size_t));
 DEF_DLL_FN (void, gnutls_hash_deinit, (gnutls_hash_hd_t, void *));
 DEF_DLL_FN (void, gnutls_hash_output, (gnutls_hash_hd_t, void *));
+#   ifdef HAVE_GNUTLS_EXT_GET_NAME
+DEF_DLL_FN (const char *, gnutls_ext_get_name, (unsigned int));
+#   endif
 #  endif	 /* HAVE_GNUTLS3 */
 
 
@@ -356,6 +367,9 @@ init_gnutls_functions (void)
   LOAD_DLL_FN (library, gnutls_hash);
   LOAD_DLL_FN (library, gnutls_hash_deinit);
   LOAD_DLL_FN (library, gnutls_hash_output);
+#   ifdef HAVE_GNUTLS_EXT_GET_NAME
+  LOAD_DLL_FN (library, gnutls_ext_get_name);
+#   endif
 #  endif	 /* HAVE_GNUTLS3 */
 
   max_log_level = global_gnutls_log_level;
@@ -469,7 +483,11 @@ init_gnutls_functions (void)
 #  define gnutls_hash fn_gnutls_hash
 #  define gnutls_hash_deinit fn_gnutls_hash_deinit
 #  define gnutls_hash_output fn_gnutls_hash_output
+#   ifdef HAVE_GNUTLS_EXT_GET_NAME
+#    define gnutls_ext_get_name fn_gnutls_ext_get_name
+#   endif
 #  endif	 /* HAVE_GNUTLS3 */
+
 
 /* This wrapper is called from fns.c, which doesn't know about the
    LOAD_DLL_FN stuff above.  */
@@ -2425,6 +2443,18 @@ Any GnuTLS extension with ID up to 100
 
 #ifdef HAVE_GNUTLS
 
+# ifdef WINDOWSNT
+  Lisp_Object found = Fassq (Qgnutls, Vlibrary_cache);
+  if (CONSP (found))
+    return XCDR (found);
+
+  /* Load the GnuTLS DLL and find exported functions.  The external
+     library cache is updated after the capabilities have been
+     determined.  */
+  if (!init_gnutls_functions ())
+    return Qnil;
+# endif /* WINDOWSNT */
+
   capabilities = Fcons (intern("gnutls"), capabilities);
 
 # ifdef HAVE_GNUTLS3
@@ -2437,8 +2467,8 @@ Any GnuTLS extension with ID up to 100
 #  endif
 
   capabilities = Fcons (intern("macs"), capabilities);
-# endif	  /* HAVE_GNUTLS3 */
 
+#  ifdef HAVE_GNUTLS_EXT_GET_NAME
   for (unsigned int ext=0; ext < 100; ext++)
     {
       const char* name = gnutls_ext_get_name(ext);
@@ -2447,18 +2477,15 @@ Any GnuTLS extension with ID up to 100
           capabilities = Fcons (intern(name), capabilities);
         }
     }
+#  endif
+# endif	  /* HAVE_GNUTLS3 */
+
+#  ifdef HAVE_GNUTLS_EXT__DUMBFW
+  capabilities = Fcons (intern("ClientHello Padding"), capabilities);
+#  endif
 
 # ifdef WINDOWSNT
-  Lisp_Object found = Fassq (Qgnutls, Vlibrary_cache);
-  if (CONSP (found))
-    return XCDR (found);
-  else
-    {
-      Lisp_Object status;
-      status = init_gnutls_functions () ? capabilities : Qnil;
-      Vlibrary_cache = Fcons (Fcons (Qgnutls, status), Vlibrary_cache);
-      return status;
-    }
+  Vlibrary_cache = Fcons (Fcons (Qgnutls, capabilities), Vlibrary_cache);
 # endif /* WINDOWSNT */
 #endif	/* HAVE_GNUTLS */
 

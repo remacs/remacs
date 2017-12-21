@@ -1253,7 +1253,7 @@ function directly; use `byte-compile-warn' or
 (defun byte-compile-report-error (error-info &optional fill)
   "Report Lisp error in compilation.
 ERROR-INFO is the error data, in the form of either (ERROR-SYMBOL . DATA)
-or STRING.  If FILL is non-nil, set ‘warning-fill-prefix’ to four spaces
+or STRING.  If FILL is non-nil, set `warning-fill-prefix' to four spaces
 when printing the error message."
   (setq byte-compiler-error-flag t)
   (byte-compile-log-warning

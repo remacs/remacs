@@ -287,10 +287,6 @@
 ;;; 24.x Compat
 
 
-(unless (fboundp 'prog-widen)
-  (defun prog-widen ()
-    (widen)))
-
 (unless (fboundp 'prog-first-column)
   (defun prog-first-column ()
     0))
@@ -725,11 +721,17 @@ It makes underscores and dots word constituent chars.")
 
 ;;; Indentation
 
+(define-obsolete-variable-alias
+  'python-indent 'python-indent-offset "24.3")
+
 (defcustom python-indent-offset 4
   "Default indentation offset for Python."
   :group 'python
   :type 'integer
   :safe 'integerp)
+
+(define-obsolete-variable-alias
+  'python-guess-indent 'python-indent-guess-indent-offset "24.3")
 
 (defcustom python-indent-guess-indent-offset t
   "Non-nil tells Python mode to guess `python-indent-offset' value."
@@ -749,12 +751,6 @@ It makes underscores and dots word constituent chars.")
   "Commands that might trigger a `python-indent-line' call."
   :type '(repeat symbol)
   :group 'python)
-
-(define-obsolete-variable-alias
-  'python-indent 'python-indent-offset "24.3")
-
-(define-obsolete-variable-alias
-  'python-guess-indent 'python-indent-guess-indent-offset "24.3")
 
 (defvar python-indent-current-level 0
   "Deprecated var available for compatibility.")
@@ -785,7 +781,7 @@ work on `python-indent-calculate-indentation' instead."
   (interactive)
   (save-excursion
     (save-restriction
-      (prog-widen)
+      (widen)
       (goto-char (point-min))
       (let ((block-end))
         (while (and (not block-end)
@@ -883,8 +879,6 @@ keyword
 :at-dedenter-block-start
  - Point is on a line starting a dedenter block.
  - START is the position where the dedenter block starts."
-  (save-restriction
-    (prog-widen)
     (let ((ppss (save-excursion
                   (beginning-of-line)
                   (syntax-ppss))))
@@ -1022,7 +1016,7 @@ keyword
                       (looking-at (python-rx block-ender)))
                     :after-block-end)
                    (t :after-line))
-             (point)))))))))
+             (point))))))))
 
 (defun python-indent--calculate-indentation ()
   "Internal implementation of `python-indent-calculate-indentation'.
@@ -1030,8 +1024,6 @@ May return an integer for the maximum possible indentation at
 current context or a list of integers.  The latter case is only
 happening for :at-dedenter-block-start context since the
 possibilities can be narrowed to specific indentation points."
-  (save-restriction
-    (prog-widen)
     (save-excursion
       (pcase (python-indent-context)
         (`(:no-indent . ,_) (prog-first-column)) ; usually 0
@@ -1081,7 +1073,7 @@ possibilities can be narrowed to specific indentation points."
         (`(,(or :inside-paren-newline-start-from-block) . ,start)
          ;; Add two indentation levels to make the suite stand out.
          (goto-char start)
-         (+ (current-indentation) (* python-indent-offset 2)))))))
+         (+ (current-indentation) (* python-indent-offset 2))))))
 
 (defun python-indent--calculate-levels (indentation)
   "Calculate levels list given INDENTATION.
@@ -2042,6 +2034,9 @@ executed through tramp connections."
   :type '(repeat string)
   :group 'python)
 
+(define-obsolete-variable-alias
+  'python-shell-virtualenv-path 'python-shell-virtualenv-root "25.1")
+
 (defcustom python-shell-virtualenv-root nil
   "Path to virtualenv root.
 This variable, when set to a string, makes the environment to be
@@ -2049,9 +2044,6 @@ modified such that shells are started within the specified
 virtualenv."
   :type '(choice (const nil) string)
   :group 'python)
-
-(define-obsolete-variable-alias
-  'python-shell-virtualenv-path 'python-shell-virtualenv-root "25.1")
 
 (defcustom python-shell-setup-codes nil
   "List of code run by `python-shell-send-setup-codes'."
@@ -3289,14 +3281,6 @@ def __PYTHON_EL_get_completions(text):
   :type 'string
   :group 'python)
 
-(defcustom python-shell-completion-string-code
-  "';'.join(__PYTHON_EL_get_completions('''%s'''))"
-  "Python code used to get a string of completions separated by semicolons.
-The string passed to the function is the current python name or
-the full statement in the case of imports."
-  :type 'string
-  :group 'python)
-
 (define-obsolete-variable-alias
   'python-shell-completion-module-string-code
   'python-shell-completion-string-code
@@ -3308,6 +3292,14 @@ the full statement in the case of imports."
   'python-shell-completion-string-code
   "25.1"
   "Completion string code must work for (i)pdb.")
+
+(defcustom python-shell-completion-string-code
+  "';'.join(__PYTHON_EL_get_completions('''%s'''))"
+  "Python code used to get a string of completions separated by semicolons.
+The string passed to the function is the current python name or
+the full statement in the case of imports."
+  :type 'string
+  :group 'python)
 
 (defcustom python-shell-completion-native-disabled-interpreters
   ;; PyPy's readline cannot handle some escape sequences yet.  Native
@@ -4040,6 +4032,9 @@ JUSTIFY should be used (if applicable) as in `fill-paragraph'."
 
 ;;; Skeletons
 
+(define-obsolete-variable-alias
+  'python-use-skeletons 'python-skeleton-autoinsert "24.3")
+
 (defcustom python-skeleton-autoinsert nil
   "Non-nil means template skeletons will be automagically inserted.
 This happens when pressing \"if<SPACE>\", for example, to prompt for
@@ -4047,9 +4042,6 @@ the if condition."
   :type 'boolean
   :group 'python
   :safe 'booleanp)
-
-(define-obsolete-variable-alias
-  'python-use-skeletons 'python-skeleton-autoinsert "24.3")
 
 (defvar python-skeleton-available '()
   "Internal list of available skeletons.")
@@ -4593,7 +4585,7 @@ Optional argument INCLUDE-TYPE indicates to include the type of the defun.
 This function can be used as the value of `add-log-current-defun-function'
 since it returns nil if point is not inside a defun."
   (save-restriction
-    (prog-widen)
+    (widen)
     (save-excursion
       (end-of-line 1)
       (let ((names)
@@ -4791,12 +4783,10 @@ likely an invalid python file."
   "Message the first line of the block the current statement closes."
   (let ((point (python-info-dedenter-opening-block-position)))
     (when point
-      (save-restriction
-        (prog-widen)
         (message "Closes %s" (save-excursion
                                (goto-char point)
                                (buffer-substring
-                                (point) (line-end-position))))))))
+                                (point) (line-end-position)))))))
 
 (defun python-info-dedenter-statement-p ()
   "Return point if current statement is a dedenter.
@@ -4812,8 +4802,6 @@ statement."
   "Return non-nil if current line ends with backslash.
 With optional argument LINE-NUMBER, check that line instead."
   (save-excursion
-    (save-restriction
-      (prog-widen)
       (when line-number
         (python-util-goto-line line-number))
       (while (and (not (eobp))
@@ -4822,14 +4810,12 @@ With optional argument LINE-NUMBER, check that line instead."
                   (not (equal (char-before (point)) ?\\)))
         (forward-line 1))
       (when (equal (char-before) ?\\)
-        (point-marker)))))
+        (point-marker))))
 
 (defun python-info-beginning-of-backslash (&optional line-number)
   "Return the point where the backslashed line starts.
 Optional argument LINE-NUMBER forces the line number to check against."
   (save-excursion
-    (save-restriction
-      (prog-widen)
       (when line-number
         (python-util-goto-line line-number))
       (when (python-info-line-ends-backslash-p)
@@ -4838,15 +4824,13 @@ Optional argument LINE-NUMBER forces the line number to check against."
                  (python-syntax-context 'paren))
           (forward-line -1))
         (back-to-indentation)
-        (point-marker)))))
+        (point-marker))))
 
 (defun python-info-continuation-line-p ()
   "Check if current line is continuation of another.
 When current line is continuation of another return the point
 where the continued line ends."
   (save-excursion
-    (save-restriction
-      (prog-widen)
       (let* ((context-type (progn
                              (back-to-indentation)
                              (python-syntax-context-type)))
@@ -4872,7 +4856,7 @@ where the continued line ends."
                (python-util-forward-comment -1)
                (when (and (equal (1- line-start) (line-number-at-pos))
                           (python-info-line-ends-backslash-p))
-                 (point-marker))))))))
+                 (point-marker)))))))
 
 (defun python-info-block-continuation-line-p ()
   "Return non-nil if current line is a continuation of a block."

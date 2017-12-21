@@ -4825,6 +4825,8 @@ If several parents are listed, go to the first of them."
 	       (parent (downcase (widget-get  button :tag))))
 	  (customize-group parent)))))
 
+(define-obsolete-variable-alias 'custom-mode-hook 'Custom-mode-hook "23.1")
+
 (defcustom Custom-mode-hook nil
   "Hook called when entering Custom mode."
   :type 'hook
@@ -4853,7 +4855,6 @@ If several parents are listed, go to the first of them."
     (setq-local widget-link-suffix ""))
   (setq show-trailing-whitespace nil))
 
-(define-obsolete-variable-alias 'custom-mode-hook 'Custom-mode-hook "23.1")
 (define-derived-mode Custom-mode nil "Custom"
   "Major mode for editing customization buffers.
 

@@ -231,10 +231,9 @@ must evaluate to a regular expression string."
                                   (point) (point-max))))))))
 
 (ert-deftest module--test-assertions--load-non-live-object ()
-  "Check that -module-assertions verify that non-live objects
-aren’t accessed."
+  "Check that -module-assertions verify that non-live objects aren't accessed."
   (skip-unless (file-executable-p mod-test-emacs))
-  ;; This doesn’t yet cause undefined behavior.
+  ;; This doesn't yet cause undefined behavior.
   (should (eq (mod-test-invalid-store) 123))
   (module--test-assertion (rx "Emacs value not found in "
                               (+ digit) " values of "

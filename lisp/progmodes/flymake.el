@@ -124,14 +124,14 @@ If nil, never start checking buffer automatically like this."
 (make-obsolete-variable 'flymake-gui-warnings-enabled
 			"it no longer has any effect." "26.1")
 
+(define-obsolete-variable-alias 'flymake-start-syntax-check-on-find-file
+  'flymake-start-on-flymake-mode "26.1")
+
 (defcustom flymake-start-on-flymake-mode t
   "Start syntax check when `flymake-mode' is enabled.
 Specifically, start it when the buffer is actually displayed."
   :version "26.1"
   :type 'boolean)
-
-(define-obsolete-variable-alias 'flymake-start-syntax-check-on-find-file
-  'flymake-start-on-flymake-mode "26.1")
 
 (defcustom flymake-log-level -1
   "Obsolete and ignored variable."

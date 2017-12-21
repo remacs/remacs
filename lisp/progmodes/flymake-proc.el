@@ -45,10 +45,16 @@
 
 (require 'flymake)
 
+(define-obsolete-variable-alias 'flymake-compilation-prevents-syntax-check
+  'flymake-proc-compilation-prevents-syntax-check "26.1")
+
 (defcustom flymake-proc-compilation-prevents-syntax-check t
   "If non-nil, don't start syntax check if compilation is running."
   :group 'flymake
   :type 'boolean)
+
+(define-obsolete-variable-alias 'flymake-xml-program
+  'flymake-proc-xml-program "26.1")
 
 (defcustom flymake-proc-xml-program
   (if (executable-find "xmlstarlet") "xmlstarlet" "xml")
@@ -57,10 +63,16 @@
   :group 'flymake
   :version "24.4")
 
+(define-obsolete-variable-alias 'flymake-master-file-dirs
+  'flymake-proc-master-file-dirs "26.1")
+
 (defcustom flymake-proc-master-file-dirs '("." "./src" "./UnitTest")
   "Dirs where to look for master files."
   :group 'flymake
   :type '(repeat (string)))
+
+(define-obsolete-variable-alias 'flymake-master-file-count-limit
+  'flymake-proc-master-file-count-limit "26.1")
 
 (defcustom flymake-proc-master-file-count-limit 32
   "Max number of master files to check."
@@ -73,6 +85,9 @@ Overrides `flymake-proc-allowed-file-name-masks'."
   :group 'flymake
   :type '(repeat (regexp))
   :version "27.1")
+
+(define-obsolete-variable-alias 'flymake-allowed-file-name-masks
+  'flymake-proc-allowed-file-name-masks "26.1")
 
 (defcustom flymake-proc-allowed-file-name-masks
   '(("\\.\\(?:c\\(?:pp\\|xx\\|\\+\\+\\)?\\|CC\\)\\'"
@@ -1133,76 +1148,62 @@ Use CREATE-TEMP-F for creating temp copy."
 
 ;;;;
 
-(progn
-  (define-obsolete-variable-alias 'flymake-compilation-prevents-syntax-check
-    'flymake-proc-compilation-prevents-syntax-check "26.1")
-  (define-obsolete-variable-alias 'flymake-xml-program
-    'flymake-proc-xml-program "26.1")
-  (define-obsolete-variable-alias 'flymake-master-file-dirs
-    'flymake-proc-master-file-dirs "26.1")
-  (define-obsolete-variable-alias 'flymake-master-file-count-limit
-    'flymake-proc-master-file-count-limit "26.1"
-    "Max number of master files to check.")
-  (define-obsolete-variable-alias 'flymake-allowed-file-name-masks
-    'flymake-proc-allowed-file-name-masks "26.1")
-  (define-obsolete-variable-alias 'flymake-check-file-limit
-    'flymake-proc-check-file-limit "26.1")
-  (define-obsolete-function-alias 'flymake-reformat-err-line-patterns-from-compile-el
-    'flymake-proc-reformat-err-line-patterns-from-compile-el "26.1")
-  (define-obsolete-variable-alias 'flymake-err-line-patterns
-    'flymake-proc-err-line-patterns "26.1")
-  (define-obsolete-function-alias 'flymake-parse-line
-    'flymake-proc-parse-line "26.1")
-  (define-obsolete-function-alias 'flymake-get-include-dirs
-    'flymake-proc-get-include-dirs "26.1")
-  (define-obsolete-function-alias 'flymake-stop-all-syntax-checks
-    'flymake-proc-stop-all-syntax-checks "26.1")
-  (define-obsolete-function-alias 'flymake-compile
-    'flymake-proc-compile "26.1")
-  (define-obsolete-function-alias 'flymake-create-temp-inplace
-    'flymake-proc-create-temp-inplace "26.1")
-  (define-obsolete-function-alias 'flymake-create-temp-with-folder-structure
-    'flymake-proc-create-temp-with-folder-structure "26.1")
-  (define-obsolete-function-alias 'flymake-init-create-temp-buffer-copy
-    'flymake-proc-init-create-temp-buffer-copy "26.1")
-  (define-obsolete-function-alias 'flymake-simple-cleanup
-    'flymake-proc-simple-cleanup "26.1")
-  (define-obsolete-function-alias 'flymake-get-real-file-name
-    'flymake-proc-get-real-file-name "26.1")
-  (define-obsolete-function-alias 'flymake-master-cleanup
-    'flymake-proc-master-cleanup "26.1")
-  (define-obsolete-function-alias 'flymake-get-make-cmdline
-    'flymake-proc-get-make-cmdline "26.1")
-  (define-obsolete-function-alias 'flymake-get-ant-cmdline
-    'flymake-proc-get-ant-cmdline "26.1")
-  (define-obsolete-function-alias 'flymake-simple-make-init-impl
-    'flymake-proc-simple-make-init-impl "26.1")
-  (define-obsolete-function-alias 'flymake-simple-make-init
-    'flymake-proc-simple-make-init "26.1")
-  (define-obsolete-function-alias 'flymake-master-make-init
-    'flymake-proc-master-make-init "26.1")
-  (define-obsolete-function-alias 'flymake-find-make-buildfile
-    'flymake-proc--find-make-buildfile "26.1")
-  (define-obsolete-function-alias 'flymake-master-make-header-init
-    'flymake-proc-master-make-header-init "26.1")
-  (define-obsolete-function-alias 'flymake-simple-make-java-init
-    'flymake-proc-simple-make-java-init "26.1")
-  (define-obsolete-function-alias 'flymake-simple-ant-java-init
-    'flymake-proc-simple-ant-java-init "26.1")
-  (define-obsolete-function-alias 'flymake-simple-java-cleanup
-    'flymake-proc-simple-java-cleanup "26.1")
-  (define-obsolete-function-alias 'flymake-perl-init
-    'flymake-proc-perl-init "26.1")
-  (define-obsolete-function-alias 'flymake-php-init
-    'flymake-proc-php-init "26.1")
-  (define-obsolete-function-alias 'flymake-simple-tex-init
-    'flymake-proc-simple-tex-init "26.1")
-  (define-obsolete-function-alias 'flymake-master-tex-init
-    'flymake-proc-master-tex-init "26.1")
-  (define-obsolete-function-alias 'flymake-xml-init
-    'flymake-proc-xml-init "26.1"))
-
-
+(define-obsolete-variable-alias 'flymake-check-file-limit
+  'flymake-proc-check-file-limit "26.1")
+(define-obsolete-function-alias 'flymake-reformat-err-line-patterns-from-compile-el
+  'flymake-proc-reformat-err-line-patterns-from-compile-el "26.1")
+(define-obsolete-variable-alias 'flymake-err-line-patterns
+  'flymake-proc-err-line-patterns "26.1")
+(define-obsolete-function-alias 'flymake-parse-line
+  'flymake-proc-parse-line "26.1")
+(define-obsolete-function-alias 'flymake-get-include-dirs
+  'flymake-proc-get-include-dirs "26.1")
+(define-obsolete-function-alias 'flymake-stop-all-syntax-checks
+  'flymake-proc-stop-all-syntax-checks "26.1")
+(define-obsolete-function-alias 'flymake-compile
+  'flymake-proc-compile "26.1")
+(define-obsolete-function-alias 'flymake-create-temp-inplace
+  'flymake-proc-create-temp-inplace "26.1")
+(define-obsolete-function-alias 'flymake-create-temp-with-folder-structure
+  'flymake-proc-create-temp-with-folder-structure "26.1")
+(define-obsolete-function-alias 'flymake-init-create-temp-buffer-copy
+  'flymake-proc-init-create-temp-buffer-copy "26.1")
+(define-obsolete-function-alias 'flymake-simple-cleanup
+  'flymake-proc-simple-cleanup "26.1")
+(define-obsolete-function-alias 'flymake-get-real-file-name
+  'flymake-proc-get-real-file-name "26.1")
+(define-obsolete-function-alias 'flymake-master-cleanup
+  'flymake-proc-master-cleanup "26.1")
+(define-obsolete-function-alias 'flymake-get-make-cmdline
+  'flymake-proc-get-make-cmdline "26.1")
+(define-obsolete-function-alias 'flymake-get-ant-cmdline
+  'flymake-proc-get-ant-cmdline "26.1")
+(define-obsolete-function-alias 'flymake-simple-make-init-impl
+  'flymake-proc-simple-make-init-impl "26.1")
+(define-obsolete-function-alias 'flymake-simple-make-init
+  'flymake-proc-simple-make-init "26.1")
+(define-obsolete-function-alias 'flymake-master-make-init
+  'flymake-proc-master-make-init "26.1")
+(define-obsolete-function-alias 'flymake-find-make-buildfile
+  'flymake-proc--find-make-buildfile "26.1")
+(define-obsolete-function-alias 'flymake-master-make-header-init
+  'flymake-proc-master-make-header-init "26.1")
+(define-obsolete-function-alias 'flymake-simple-make-java-init
+  'flymake-proc-simple-make-java-init "26.1")
+(define-obsolete-function-alias 'flymake-simple-ant-java-init
+  'flymake-proc-simple-ant-java-init "26.1")
+(define-obsolete-function-alias 'flymake-simple-java-cleanup
+  'flymake-proc-simple-java-cleanup "26.1")
+(define-obsolete-function-alias 'flymake-perl-init
+  'flymake-proc-perl-init "26.1")
+(define-obsolete-function-alias 'flymake-php-init
+  'flymake-proc-php-init "26.1")
+(define-obsolete-function-alias 'flymake-simple-tex-init
+  'flymake-proc-simple-tex-init "26.1")
+(define-obsolete-function-alias 'flymake-master-tex-init
+  'flymake-proc-master-tex-init "26.1")
+(define-obsolete-function-alias 'flymake-xml-init
+  'flymake-proc-xml-init "26.1")
 
 (provide 'flymake-proc)
 ;;; flymake-proc.el ends here

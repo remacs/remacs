@@ -1119,11 +1119,11 @@ This allows better indentation support in modes that support multiple
 programming languages in the same buffer, like literate programming
 environments or ANTLR programs with embedded Python code.
 
-A major mode can provide indentation context for a sub-mode through
-the 'prog-indentation-context' variable.  To support this, modes that
-provide indentation should use 'prog-widen' instead of 'widen' and
-'prog-first-column' instead of a literal zero.  See the node
-"(elisp) Mode-Specific Indent" in the ELisp manual for more details.
+A major mode can provide indentation context for a sub-mode.  To
+support this, modes should use 'prog-first-column' instead of a
+literal zero and avoid calling 'widen' in their indentation functions.
+See the node "(elisp) Mode-Specific Indent" in the ELisp manual for
+more details.
 
 ** ERC
 
