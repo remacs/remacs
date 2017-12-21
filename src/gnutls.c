@@ -50,6 +50,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 # define HAVE_GNUTLS_EXT_GET_NAME
 #endif
 
+#if GNUTLS_VERSION_NUMBER >= 0x030205
+# define HAVE_GNUTLS_EXT__DUMBFW
+#endif
+
 #ifdef HAVE_GNUTLS
 
 # ifdef WINDOWSNT
@@ -2475,6 +2479,10 @@ Any GnuTLS extension with ID up to 100
     }
 #  endif
 # endif	  /* HAVE_GNUTLS3 */
+
+#  ifdef HAVE_GNUTLS_EXT__DUMBFW
+  capabilities = Fcons (intern("ClientHello Padding"), capabilities);
+#  endif
 
 # ifdef WINDOWSNT
   Vlibrary_cache = Fcons (Fcons (Qgnutls, capabilities), Vlibrary_cache);
