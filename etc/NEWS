@@ -190,6 +190,10 @@ calling 'eldoc-message' directly.
 ** Old-style backquotes now generate an error.  They have been
 generating warnings for a decade.
 
+** Defining a Common Lisp structure using 'cl-defstruct' or
+'cl-struct-define' whose name clashes with a builtin type (e.g.,
+'integer' or 'hash-table') now signals an error.
+
 
 * Lisp Changes in Emacs 27.1
 

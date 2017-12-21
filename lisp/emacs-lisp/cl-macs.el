@@ -43,6 +43,7 @@
 
 ;;; Code:
 
+(require 'cl-generic)
 (require 'cl-lib)
 (require 'macroexp)
 ;; `gv' is required here because cl-macs can be loaded before loaddefs.el.
@@ -2663,6 +2664,9 @@ non-nil value, that slot cannot be set via `setf'.
 	 (forms nil)
          (docstring (if (stringp (car descs)) (pop descs)))
 	 pred-form pred-check)
+    ;; Can't use `cl-check-type' yet.
+    (unless (cl--struct-name-p name)
+      (signal 'wrong-type-argument (list 'cl-struct-name-p name 'name)))
     (setq descs (cons '(cl-tag-slot)
 		      (mapcar (function (lambda (x) (if (consp x) x (list x))))
 			      descs)))
