@@ -3899,7 +3899,7 @@ xg_update_scrollbar_pos (struct frame *f,
       top /= scale;
       left /= scale;
       height /= scale;
-      left -= (scale - 1) * ((width / scale) >> 1);
+      width /= scale;
 
       /* Clear out old position.  */
       int oldx = -1, oldy = -1, oldw, oldh;
@@ -3975,6 +3975,12 @@ xg_update_horizontal_scrollbar_pos (struct frame *f,
       GtkWidget *wfixed = f->output_data.x->edit_widget;
       GtkWidget *wparent = gtk_widget_get_parent (wscroll);
       gint msl;
+      int scale = xg_get_scale (f);
+
+      top /= scale;
+      left /= scale;
+      height /= scale;
+      width /= scale;
 
       /* Clear out old position.  */
       int oldx = -1, oldy = -1, oldw, oldh;

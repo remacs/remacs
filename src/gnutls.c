@@ -2415,7 +2415,10 @@ GnuTLS 3 or higher      : the list will contain `gnutls3'.
 GnuTLS MACs             : the list will contain `macs'.
 GnuTLS digests          : the list will contain `digests'.
 GnuTLS symmetric ciphers: the list will contain `ciphers'.
-GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
+GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.
+%DUMBFW                 : the list will contain `ClientHello\ Padding'.
+Any GnuTLS extension with ID up to 100
+                        : the list will contain its name.  */)
   (void)
 {
   Lisp_Object capabilities = Qnil;
@@ -2435,6 +2438,15 @@ GnuTLS AEAD ciphers     : the list will contain `AEAD-ciphers'.  */)
 
   capabilities = Fcons (intern("macs"), capabilities);
 # endif	  /* HAVE_GNUTLS3 */
+
+  for (unsigned int ext=0; ext < 100; ext++)
+    {
+      const char* name = gnutls_ext_get_name(ext);
+      if (name != NULL)
+        {
+          capabilities = Fcons (intern(name), capabilities);
+        }
+    }
 
 # ifdef WINDOWSNT
   Lisp_Object found = Fassq (Qgnutls, Vlibrary_cache);

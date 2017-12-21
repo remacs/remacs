@@ -2345,10 +2345,10 @@ choose a font."
 
 ;; Drag and drop support.
 (defcustom mouse-drag-and-drop-region nil
-  "If non-nil, dragging the mouse drags the region, if that exists.
-If the value is a modifier, such as `control' or `shift' or `meta',
-then if that modifier key is pressed when dropping the region, region
-text is copied instead of being cut."
+  "If non-nil, dragging the mouse drags the region, if it exists.
+If the value is a modifier, such as `control' or `shift' or
+`meta', then if that modifier key is pressed when dropping the
+region, text is copied instead of being cut."
   :type `(choice
           (const :tag "Disable dragging the region" nil)
           ,@(mapcar
@@ -2361,6 +2361,45 @@ text is copied instead of being cut."
   :version "26.1"
   :group 'mouse)
 
+(defcustom mouse-drag-and-drop-region-cut-when-buffers-differ nil
+  "If non-nil, cut text also when source and destination buffers differ.
+If this option is nil, `mouse-drag-and-drop-region' will leave
+the text in the source buffer alone when dropping it in a
+different buffer.  If this is non-nil, it will cut the text just
+as it does when dropping text in the source buffer."
+  :type 'boolean
+  :version "26.1"
+  :group 'mouse)
+
+(defcustom mouse-drag-and-drop-region-show-tooltip 256
+  "If non-nil, text is shown by a tooltip in a graphic display.
+If this option is nil, `mouse-drag-and-drop-region' does not show
+tooltips.  If this is t, it shows the entire text dragged in a
+tooltip.  If this is an integer (as with the default value of
+256), it will show that many characters of the dragged text in
+a tooltip."
+  :type 'integer
+  :version "26.1"
+  :group 'mouse)
+
+(defcustom mouse-drag-and-drop-region-show-cursor t
+  "If non-nil, move point with mouse cursor during dragging.
+If this is nil, `mouse-drag-and-drop-region' leaves point alone.
+Otherwise, it will move point together with the mouse cursor and,
+in addition, temporarily highlight the original region with the
+`mouse-drag-and-drop-region' face."
+  :type 'boolean
+  :version "26.1"
+  :group 'mouse)
+
+(defface mouse-drag-and-drop-region '((t :inherit region))
+  "Face to highlight original text during dragging.
+This face is used by `mouse-drag-and-drop-region' to temporarily
+highlight the original region when
+`mouse-drag-and-drop-region-show-cursor' is non-nil."
+  :version "26.1"
+  :group 'mouse)
+
 (defun mouse-drag-and-drop-region (event)
   "Move text in the region to point where mouse is dragged to.
 The transportation of text is also referred as `drag and drop'.
@@ -2369,66 +2408,246 @@ modifier key was pressed when dropping, and the value of the
 variable `mouse-drag-and-drop-region' is that modifier, the text
 is copied instead of being cut."
   (interactive "e")
-  (require 'tooltip)
-  (let ((start (region-beginning))
-        (end (region-end))
-        (point (point))
-        (buffer (current-buffer))
-        (window (selected-window))
-        value-selection)
-    (track-mouse
-      ;; When event was click instead of drag, skip loop
-      (while (progn
-               (setq event (read-event))
-               (or (mouse-movement-p event)
-                   ;; Handle `mouse-autoselect-window'.
-                   (eq (car-safe event) 'select-window)))
-        (unless value-selection ; initialization
-          (delete-overlay mouse-secondary-overlay)
-          (setq value-selection (buffer-substring start end))
-          (move-overlay mouse-secondary-overlay start end)) ; (deactivate-mark)
-        (ignore-errors (deactivate-mark) ; care existing region in other window
-                       (mouse-set-point event)
-                       (tooltip-show value-selection)))
-      (tooltip-hide))
-    ;; Do not modify buffer under mouse when "event was click",
-    ;;                                       "drag negligible", or
-    ;;                                       "drag to read-only".
-    (if (or (equal (mouse-posn-property (event-end event) 'face) 'region) ; "event was click"
-            (member 'secondary-selection ; "drag negligible"
-                    (mapcar (lambda (xxx) (overlay-get xxx 'face))
-                            (overlays-at (posn-point (event-end event)))))
-            buffer-read-only)
-        ;; Do not modify buffer under mouse.
+  (let* ((mouse-button (event-basic-type last-input-event))
+         (mouse-drag-and-drop-region-show-tooltip
+          (when (and mouse-drag-and-drop-region-show-tooltip
+                     (display-multi-frame-p)
+                     (require 'tooltip))
+            mouse-drag-and-drop-region-show-tooltip))
+         (start (region-beginning))
+         (end (region-end))
+         (point (point))
+         (buffer (current-buffer))
+         (window (selected-window))
+         (text-from-read-only buffer-read-only)
+         (mouse-drag-and-drop-overlay (make-overlay start end))
+         point-to-paste
+         point-to-paste-read-only
+         window-to-paste
+         buffer-to-paste
+         cursor-in-text-area
+         no-modifier-on-drop
+         drag-but-negligible
+         clicked
+         value-selection    ; This remains nil when event was "click".
+         text-tooltip
+         states
+         window-exempt)
+
+    ;; STATES stores for each window on this frame its start and point
+    ;; positions so we can restore them on all windows but for the one
+    ;; where the drop occurs.  For inter-frame drags we'll have to do
+    ;; this for all windows on all visible frames.  In addition we save
+    ;; also the cursor type for the window's buffer so we can restore it
+    ;; in case we modified it.
+    ;; https://lists.gnu.org/archive/html/emacs-devel/2017-12/msg00090.html
+    (walk-window-tree
+     (lambda (window)
+       (setq states
+             (cons
+              (list
+               window
+               (copy-marker (window-start window))
+               (copy-marker (window-point window))
+               (with-current-buffer (window-buffer window)
+                 cursor-type))
+              states))))
+
+    (ignore-errors
+      (track-mouse
+        ;; When event was "click" instead of "drag", skip loop.
+        (while (progn
+                 (setq event (read-key))      ; read-event or read-key
+                 (or (mouse-movement-p event)
+                     ;; Handle `mouse-autoselect-window'.
+                     (eq (car-safe event) 'select-window)))
+          ;; Obtain the dragged text in region.  When the loop was
+          ;; skipped, value-selection remains nil.
+          (unless value-selection
+            (setq value-selection (buffer-substring start end))
+            (when mouse-drag-and-drop-region-show-tooltip
+              (let ((text-size mouse-drag-and-drop-region-show-tooltip))
+                (setq text-tooltip
+                      (if (and (integerp text-size)
+                               (> (length value-selection) text-size))
+                          (concat
+                           (substring value-selection 0 (/ text-size 2))
+                           "\n...\n"
+                           (substring value-selection (- (/ text-size 2)) -1))
+                        value-selection))))
+
+            ;; Check if selected text is read-only.
+            (setq text-from-read-only (or text-from-read-only
+                                          (get-text-property start 'read-only)
+                                          (not (equal
+                                                (next-single-char-property-change
+                                                 start 'read-only nil end)
+                                                end)))))
+          (setq window-to-paste (posn-window (event-end event)))
+          (setq point-to-paste (posn-point (event-end event)))
+          ;; Set nil when target buffer is minibuffer.
+          (setq buffer-to-paste (let (buf)
+                                  (when (windowp window-to-paste)
+                                    (setq buf (window-buffer window-to-paste))
+                                    (when (not (minibufferp buf))
+                                      buf))))
+          (setq cursor-in-text-area (and window-to-paste
+                                         point-to-paste
+                                         buffer-to-paste))
+
+          (when cursor-in-text-area
+            ;; Check if point under mouse is read-only.
+            (save-window-excursion
+              (select-window window-to-paste)
+              (setq point-to-paste-read-only
+                    (or buffer-read-only
+                        (get-text-property point-to-paste 'read-only))))
+
+            ;; Check if "drag but negligible".  Operation "drag but
+            ;; negligible" is defined as drag-and-drop the text to
+            ;; the original region.  When modifier is pressed, the
+            ;; text will be inserted to inside of the original
+            ;; region.
+            (setq drag-but-negligible
+                  (and (eq (overlay-buffer mouse-drag-and-drop-overlay)
+                           buffer-to-paste)
+                       (< (overlay-start mouse-drag-and-drop-overlay)
+                          point-to-paste)
+                       (< point-to-paste
+                          (overlay-end mouse-drag-and-drop-overlay)))))
+
+          ;; Show a tooltip.
+          (if mouse-drag-and-drop-region-show-tooltip
+              (tooltip-show text-tooltip)
+            (tooltip-hide))
+
+          ;; Show cursor and highlight the original region.
+          (when mouse-drag-and-drop-region-show-cursor
+            ;; Modify cursor even when point is out of frame.
+            (setq cursor-type (cond
+                               ((not cursor-in-text-area)
+                                nil)
+                               ((or point-to-paste-read-only
+                                    drag-but-negligible)
+                                'hollow)
+                               (t
+                                'bar)))
+            (when cursor-in-text-area
+              (overlay-put mouse-drag-and-drop-overlay
+                           'face 'mouse-drag-and-drop-region)
+              (deactivate-mark)     ; Maintain region in other window.
+              (mouse-set-point event)))))
+
+      ;; Hide a tooltip.
+      (when mouse-drag-and-drop-region-show-tooltip (tooltip-hide))
+
+      ;; Check if modifier was pressed on drop.
+      (setq no-modifier-on-drop
+            (not (member mouse-drag-and-drop-region (event-modifiers event))))
+
+      ;; Check if event was "click".
+      (setq clicked (not value-selection))
+
+      ;; Restore status on drag to outside of text-area or non-mouse input.
+      (when (or (not cursor-in-text-area)
+                (not (equal (event-basic-type event) mouse-button)))
+        (setq drag-but-negligible t
+              no-modifier-on-drop t))
+
+      ;; Do not modify any buffers when event is "click",
+      ;; "drag but negligible", or "drag to read-only".
+      (let* ((mouse-drag-and-drop-region-cut-when-buffers-differ
+              (if no-modifier-on-drop
+                  mouse-drag-and-drop-region-cut-when-buffers-differ
+                (not mouse-drag-and-drop-region-cut-when-buffers-differ)))
+             (wanna-paste-to-same-buffer (equal buffer-to-paste buffer))
+             (wanna-cut-on-same-buffer (and wanna-paste-to-same-buffer
+                                            no-modifier-on-drop))
+             (wanna-cut-on-other-buffer
+              (and (not wanna-paste-to-same-buffer)
+                   mouse-drag-and-drop-region-cut-when-buffers-differ))
+             (cannot-paste (or point-to-paste-read-only
+                               (when (or wanna-cut-on-same-buffer
+                                         wanna-cut-on-other-buffer)
+                                 text-from-read-only))))
+
         (cond
-         ;; "drag negligible" or "drag to read-only", restore region.
-         (value-selection
-          (select-window window) ; In case miss drag to other window
+         ;; Move point within region.
+         (clicked
+          (deactivate-mark)
+          (mouse-set-point event))
+         ;; Undo operation. Set back the original text as region.
+         ((or (and drag-but-negligible
+                   no-modifier-on-drop)
+              cannot-paste)
+          ;; Inform user either source or destination buffer cannot be modified.
+          (when (and (not drag-but-negligible)
+                     cannot-paste)
+            (message "Buffer is read-only"))
+
+          ;; Select source window back and restore region.
+          ;; (set-window-point window point)
+          (select-window window)
           (goto-char point)
           (setq deactivate-mark nil)
           (activate-mark))
-         ;; "event was click"
+         ;; Modify buffers.
          (t
-          (deactivate-mark)
-          (mouse-set-point event)))
-      ;; Modify buffer under mouse by inserting text.
-      (push-mark)
-      (insert value-selection)
-      (when (not (equal (mark) (point))) ; on success insert
-        (setq deactivate-mark nil)
-        (activate-mark)) ; have region on destination
-      ;; Take care of initial region on source.
-      (if (equal (current-buffer) buffer) ; when same buffer
-          (let (deactivate-mark) ; remove text
-            (unless (member mouse-drag-and-drop-region (event-modifiers event))
-              (kill-region (overlay-start mouse-secondary-overlay)
-                           (overlay-end mouse-secondary-overlay))))
-        (let ((window1 (selected-window))) ; when beyond buffer
-          (select-window window)
-          (goto-char point) ; restore point on source window
-          (activate-mark) ; restore region
-          (select-window window1))))
-    (delete-overlay mouse-secondary-overlay)))
+          ;; * DESTINATION BUFFER::
+          ;; Insert the text to destination buffer under mouse.
+          (select-window window-to-paste)
+          (setq window-exempt window-to-paste)
+          (goto-char point-to-paste)
+          (push-mark)
+          (insert value-selection)
+          ;; On success, set the text as region on destination buffer.
+          (when (not (equal (mark) (point)))
+            (setq deactivate-mark nil)
+            (activate-mark))
+
+          ;; * SOURCE BUFFER::
+          ;; Set back the original text as region or delete the original
+          ;; text, on source buffer.
+          (if wanna-paste-to-same-buffer
+              ;; When source buffer and destination buffer are the same,
+              ;; remove the original text.
+              (when no-modifier-on-drop
+                (let (deactivate-mark)
+                  (delete-region (overlay-start mouse-drag-and-drop-overlay)
+                                 (overlay-end mouse-drag-and-drop-overlay))))
+            ;; When source buffer and destination buffer are different,
+            ;; keep (set back the original text as region) or remove the
+            ;; original text.
+            (select-window window) ; Select window with source buffer.
+            (goto-char point) ; Move point to the original text on source buffer.
+
+            (if mouse-drag-and-drop-region-cut-when-buffers-differ
+                ;; Remove the dragged text from source buffer like
+                ;; operation `cut'.
+                (delete-region (overlay-start mouse-drag-and-drop-overlay)
+                               (overlay-end mouse-drag-and-drop-overlay))
+              ;; Set back the dragged text as region on source buffer
+              ;; like operation `copy'.
+              (activate-mark))
+            (select-window window-to-paste))))))
+
+    ;; Clean up.
+    (delete-overlay mouse-drag-and-drop-overlay)
+
+    ;; Restore old states but for the window where the drop
+    ;; occurred. Restore cursor types for all windows.
+    (dolist (state states)
+      (let ((window (car state)))
+        (when (and window-exempt
+                   (not (eq window window-exempt)))
+          (set-window-start window (nth 1 state) 'noforce)
+          (set-marker (nth 1 state) nil)
+          ;; If window is selected, the following automatically sets
+          ;; point for that window's buffer.
+          (set-window-point window (nth 2 state))
+          (set-marker (nth 2 state) nil))
+        (with-current-buffer (window-buffer window)
+          (setq cursor-type (nth 3 state)))))))
 
 
 ;;; Bindings for mouse commands.
