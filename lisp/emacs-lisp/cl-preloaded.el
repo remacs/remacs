@@ -50,6 +50,37 @@
         (apply #'error string (append sargs args))
       (signal 'cl-assertion-failed `(,form ,@sargs)))))
 
+(defconst cl--typeof-types
+  ;; Hand made from the source code of `type-of'.
+  '((integer number number-or-marker atom)
+    (symbol atom) (string array sequence atom)
+    (cons list sequence)
+    ;; Markers aren't `numberp', yet they are accepted wherever integers are
+    ;; accepted, pretty much.
+    (marker number-or-marker atom)
+    (overlay atom) (float number atom) (window-configuration atom)
+    (process atom) (window atom) (subr atom) (compiled-function function atom)
+    (buffer atom) (char-table array sequence atom)
+    (bool-vector array sequence atom)
+    (frame atom) (hash-table atom) (terminal atom)
+    (thread atom) (mutex atom) (condvar atom)
+    (font-spec atom) (font-entity atom) (font-object atom)
+    (vector array sequence atom)
+    ;; Plus, really hand made:
+    (null symbol list sequence atom))
+  "Alist of supertypes.
+Each element has the form (TYPE . SUPERTYPES) where TYPE is one of
+the symbols returned by `type-of', and SUPERTYPES is the list of its
+supertypes from the most specific to least specific.")
+
+(defconst cl--all-builtin-types
+  (delete-dups (copy-sequence (apply #'append cl--typeof-types))))
+
+(defun cl--struct-name-p (name)
+  "Return t if NAME is a valid structure name for `cl-defstruct'."
+  (and name (symbolp name) (not (keywordp name))
+       (not (memq name cl--all-builtin-types))))
+
 ;; When we load this (compiled) file during pre-loading, the cl--struct-class
 ;; code below will need to access the `cl-struct' info, since it's considered
 ;; already as its parent (because `cl-struct' was defined while the file was
@@ -110,6 +141,7 @@
 ;;;###autoload
 (defun cl-struct-define (name docstring parent type named slots children-sym
                               tag print)
+  (cl-check-type name cl--struct-name)
   (unless type
     ;; Legacy defstruct, using tagged vectors.  Enable backward compatibility.
     (cl-old-struct-compat-mode 1))
