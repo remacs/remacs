@@ -394,7 +394,7 @@ pub fn recenter_overlay_lists(mut buf: LispBufferRef, pos: ptrdiff_t) {
             break;
         }
         maybePrev = Some(tail);
-        tail = if tail.next.is_null() {
+        tail = if tail.as_ptr().is_null() {
             LispOverlayRef::new(ptr::null_mut())
         } else {
             LispOverlayRef::new(tail.next as *mut Lisp_Overlay)
@@ -440,7 +440,7 @@ pub fn recenter_overlay_lists(mut buf: LispBufferRef, pos: ptrdiff_t) {
             });
         }
         maybePrev = Some(tail);
-        tail = if tail.next.is_null() {
+        tail = if tail.as_ptr().is_null() {
             LispOverlayRef::new(ptr::null_mut())
         } else {
             LispOverlayRef::new(tail.next as *mut Lisp_Overlay)
