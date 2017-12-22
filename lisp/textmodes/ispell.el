@@ -712,10 +712,10 @@ Otherwise returns the library directory name, if that is defined."
 	  (error "%s exited with %s %s" ispell-program-name
 		 (if (stringp status) "signal" "code") status))
 
-      ;; Get relevant version strings. Only xx.yy.... format works well
+      ;; Get relevant version strings.
       (let (case-fold-search)
 	(setq ispell-program-version
-	      (and (search-forward-regexp "\\([0-9]+\\.[0-9\\.]+\\)" nil t)
+	      (and (search-forward-regexp "\\([0-9]+\\.[0-9.]+\\)" nil t)
 		   (match-string 1)))
 
 	;; Make sure these variables are (re-)initialized to the default value
@@ -725,19 +725,23 @@ Otherwise returns the library directory name, if that is defined."
 
 	(goto-char (point-min))
 	(or (setq ispell-really-aspell
-		  (and (search-forward-regexp
-			"(but really Aspell \\([0-9]+\\.[0-9\\.-]+\\)?)" nil t)
-		       (match-string 1)))
+		  (and
+                   (search-forward-regexp
+                    "(but really Aspell \\([0-9]+\\.[0-9.]+\\([-._+ ]?[a-zA-Z0-9]+\\)?\\)?)"
+                    nil t)
+		   (match-string 1)))
 	    (setq ispell-really-hunspell
-		  (and (search-forward-regexp
-			"(but really Hunspell \\([0-9]+\\.[0-9\\.-]+\\)?)"
-                        nil t)
-		       (match-string 1)))
+		  (and
+                   (search-forward-regexp
+		    "(but really Hunspell \\([0-9]+\\.[0-9.]+\\([-._+ ]?[a-zA-Z0-9]+\\)?\\)?)"
+                    nil t)
+		   (match-string 1)))
             (setq ispell-really-enchant
-		  (and (search-forward-regexp
-			"(but really Enchant \\([0-9]+\\.[0-9\\.-]+\\)?)"
-                        nil t)
-		       (match-string 1)))))
+		  (and
+                   (search-forward-regexp
+		    "(but really Enchant \\([0-9]+\\.[0-9.]+\\([-._+ ]?[a-zA-Z0-9]+\\)?\\)?)"
+                    nil t)
+		   (match-string 1)))))
 
       (let* ((aspell8-minver   "0.60")
              (ispell-minver    "3.1.12")

@@ -118,6 +118,7 @@ srcs = \
   $(srcdir)/package.texi \
   $(srcdir)/positions.texi \
   $(srcdir)/processes.texi \
+  $(srcdir)/records.texi \
   $(srcdir)/searching.texi \
   $(srcdir)/sequences.texi \
   $(srcdir)/streams.texi \

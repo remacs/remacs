@@ -20274,12 +20274,14 @@ extend_face_to_end_of_line (struct it *it)
 	  it->area = LEFT_MARGIN_AREA;
 	  it->face_id = default_face->id;
 	  while (it->glyph_row->used[LEFT_MARGIN_AREA]
-		 < WINDOW_LEFT_MARGIN_WIDTH (it->w))
+		 < WINDOW_LEFT_MARGIN_WIDTH (it->w)
+		 && g < it->glyph_row->glyphs[TEXT_AREA])
 	    {
 	      PRODUCE_GLYPHS (it);
 	      /* term.c:produce_glyphs advances it->current_x only for
 		 TEXT_AREA.  */
 	      it->current_x += it->pixel_width;
+	      g++;
 	    }
 
 	  it->current_x = saved_x;
@@ -20313,10 +20315,12 @@ extend_face_to_end_of_line (struct it *it)
 	  it->area = RIGHT_MARGIN_AREA;
 	  it->face_id = default_face->id;
 	  while (it->glyph_row->used[RIGHT_MARGIN_AREA]
-		 < WINDOW_RIGHT_MARGIN_WIDTH (it->w))
+		 < WINDOW_RIGHT_MARGIN_WIDTH (it->w)
+		 && g < it->glyph_row->glyphs[LAST_AREA])
 	    {
 	      PRODUCE_GLYPHS (it);
 	      it->current_x += it->pixel_width;
+	      g++;
 	    }
 
 	  it->area = TEXT_AREA;

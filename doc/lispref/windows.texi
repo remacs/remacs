@@ -125,11 +125,13 @@ including for the case where @var{object} is a deleted window.
 as @dfn{selected within the frame}.  For the selected frame, that
 window is called the @dfn{selected window}---the one in which most
 editing takes place, and in which the cursor for selected windows
-appears (@pxref{Cursor Parameters}).  The selected window's buffer is
-usually also the current buffer, except when @code{set-buffer} has
-been used (@pxref{Current Buffer}).  As for non-selected frames, the
-window selected within the frame becomes the selected window if the
-frame is ever selected.  @xref{Selecting Windows}.
+appears (@pxref{Cursor Parameters}).  Keyboard input that inserts or
+deletes text is also normally directed to this window.   The selected
+window's buffer is usually also the current buffer, except when
+@code{set-buffer} has been used (@pxref{Current Buffer}).  As for
+non-selected frames, the window selected within the frame becomes the
+selected window if the frame is ever selected.  @xref{Selecting
+Windows}.
 
 @defun selected-window
 This function returns the selected window (which is always a live
@@ -1726,7 +1728,7 @@ windows.
 
 @defun select-window window &optional norecord
 This function makes @var{window} the selected window and the window
-selected within its frame (@pxref{Basic Windows}) and selects that
+selected within its frame (@pxref{Basic Windows}), and selects that
 frame.  It also makes @var{window}'s buffer (@pxref{Buffers and
 Windows}) current and sets that buffer's value of @code{point} to the
 value of @code{window-point} (@pxref{Window Point}) in @var{window}.
@@ -1743,6 +1745,11 @@ next time.  If @var{norecord} is non-@code{nil}, such updates are
 usually not performed.  If, however, @var{norecord} equals the special
 symbol @code{mark-for-redisplay}, the additional actions mentioned above
 are omitted but @var{window} will be nevertheless updated.
+
+Note that sometimes selecting a window is not enough to show it, or
+make its frame the top-most frame on display: you may also need to
+raise the frame or make sure input focus is directed to that frame.
+@xref{Input Focus}.
 @end defun
 
 @cindex select window hook
@@ -3059,7 +3066,7 @@ This function handles @var{window} and its buffer after quitting.  The
 optional argument @var{window} must be a live window and defaults to
 the selected one. The function's behavior is determined by the four
 elements of the @code{quit-restore} window parameter (@pxref{Window
-Parameters}), which is set to nil afterwards.
+Parameters}), which is set to @code{nil} afterwards.
 
 The window is deleted entirely if: 1) the first element of the
 @code{quit-restore} parameter is one of 'window or 'frame, 2) the
@@ -3126,7 +3133,7 @@ possible to set it manually, using the following code for displaying
 @end group
 @end example
 
-Setting the window history to nil ensures that a future call to
+Setting the window history to @code{nil} ensures that a future call to
 @code{quit-window} can delete the window altogether.
 
 @end defun

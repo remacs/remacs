@@ -366,9 +366,7 @@ Proceeds from `י' to `כ', from `צ' to `ק'. After `ת', rolls over to `א'."
   "Styles of footnote tags available.
 By default, Arabic numbers, English letters, Roman Numerals,
 Latin and Unicode superscript characters, and Hebrew numerals
-are available.
-See footnote-han.el, footnote-greek.el and footnote-hebrew.el for more
-exciting styles.")
+are available.")
 
 (defcustom footnote-style 'numeric
   "Default style used for footnoting.

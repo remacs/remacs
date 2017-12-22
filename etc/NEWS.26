@@ -256,15 +256,19 @@ whether the output buffer of an asynchronous command is shown
 immediately, or only when there is output.
 
 +++
-** The new user option 'mouse-select-region-move-to-beginning'
-controls the position of point when double-clicking mouse-1 on the end
-of a parenthetical grouping or string-delimiter: the default value nil
-keeps point at the end of the region, setting it to non-nil moves
-point to the beginning of the region.
+** New user option 'mouse-select-region-move-to-beginning'.
+This option controls the position of point when double-clicking
+mouse-1 on the end of a parenthetical grouping or string-delimiter:
+the default value nil keeps point at the end of the region, setting it
+to non-nil moves point to the beginning of the region.
 
 +++
-** The new user option 'mouse-drag-and-drop-region' allows to drag the
-entire region of text to another place or another buffer.
+** New user option 'mouse-drag-and-drop-region'.
+This option allows to drag the entire region of text to another place
+or another buffer.  Its behavior is customizable via the new options
+'mouse-drag-and-drop-region-cut-when-buffers-differ',
+'mouse-drag-and-drop-region-show-tooltip', and
+'mouse-drag-and-drop-region-show-cursor'.
 
 +++
 ** The new user option 'confirm-kill-processes' allows the user to
@@ -1485,6 +1489,19 @@ passing '&optional' multiple times:
 Previously, Emacs would just ignore the extra keyword, or give
 incorrect results in certain cases.
 
+---
+** The pinentry.el library has been removed.
+That package (and the corresponding change in GnuPG and pinentry)
+was intended to provide a way to input passphrase through Emacs with
+GnuPG 2.0.  However, the change to support that was only implemented
+in GnuPG >= 2.1 and didn't get backported to GnuPG 2.0.  And with
+GnuPG 2.1 and later, pinentry.el is not needed at all.  So the
+library was useless, and we removed it.  GnuPG 2.0 is no longer
+supported by the upstream project.
+
+To adapt to the change, you may need to set 'epa-pinentry-mode' to the
+symbol 'loopback'.
+
 
 * Lisp Changes in Emacs 26.1
 
@@ -1566,6 +1583,10 @@ supported by the GnuTLS library used by Emacs.
 functions 'make-record', 'record', and 'recordp'.  Records are now
 used internally to represent cl-defstruct and defclass instances, for
 example.
+
+If your program defines new record types, you should use
+package-naming conventions for naming those types.  This is so any
+potential conflicts with other types are avoided.
 
 +++
 ** 'save-some-buffers' now uses 'save-some-buffers-default-predicate'

@@ -238,8 +238,8 @@
 ;; `c-macro-cache'.
 (defvar c-macro-cache-no-comment nil)
 (make-variable-buffer-local 'c-macro-cache-no-comment)
-;; Either nil, or the last character of the macro currently represented by
-;; `c-macro-cache' which isn't in a comment. */
+;; Either nil, or the position of a comment which is open at the end of the
+;; macro represented by `c-macro-cache'.
 
 (defun c-invalidate-macro-cache (beg _end)
   ;; Called from a before-change function.  If the change region is before or
@@ -382,8 +382,9 @@ comment at the start of cc-engine.el for more info."
     (point)))
 
 (defun c-no-comment-end-of-macro ()
-  ;; Go to the end of a CPP directive, or a pos just before which isn't in a
-  ;; comment.  For this purpose, open strings are ignored.
+  ;; Go to the start of the comment which is open at the end of the current
+  ;; CPP directive, or to the end of that directive.  For this purpose, open
+  ;; strings are ignored.
   ;;
   ;; This function must only be called from the beginning of a CPP construct.
   ;;
@@ -401,7 +402,7 @@ comment at the start of cc-engine.el for more info."
 	(setq s (parse-partial-sexp here there)))
       (when (and (nth 4 s)
 		 (not (eq (nth 7 s) 'syntax-table))) ; no pseudo comments.
-	(goto-char (1- (nth 8 s))))
+	(goto-char (nth 8 s)))
       (setq c-macro-cache-no-comment (point)))
     (point)))
 
@@ -3862,14 +3863,7 @@ comment at the start of cc-engine.el for more info."
   (if (eval-when-compile (memq 'category-properties c-emacs-features))
       ;; Emacs
       (c-with-<->-as-parens-suppressed
-       (if (and c-state-old-cpp-beg
-		(< c-state-old-cpp-beg here))
-	   (c-with-all-but-one-cpps-commented-out
-	    c-state-old-cpp-beg
-	    c-state-old-cpp-end
-	    (c-invalidate-state-cache-1 here))
-	 (c-with-cpps-commented-out
-	  (c-invalidate-state-cache-1 here))))
+       (c-invalidate-state-cache-1 here))
     ;; XEmacs
     (c-invalidate-state-cache-1 here)))
 
@@ -3902,12 +3896,7 @@ comment at the start of cc-engine.el for more info."
 	(if (eval-when-compile (memq 'category-properties c-emacs-features))
 	    ;; Emacs
 	    (c-with-<->-as-parens-suppressed
-	     (if (and here-cpp-beg (> here-cpp-end here-cpp-beg))
-		 (c-with-all-but-one-cpps-commented-out
-		  here-cpp-beg here-cpp-end
-		  (c-parse-state-1))
-	       (c-with-cpps-commented-out
-		(c-parse-state-1))))
+	     (c-parse-state-1))
 	  ;; XEmacs
 	  (c-parse-state-1))
       (setq c-state-old-cpp-beg

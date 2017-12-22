@@ -2282,7 +2282,8 @@ because this is not portable.  Always use
 @code{file-name-as-directory}.
 
   To avoid the issues mentioned above, or if the @var{dirname} value
-might be nil (for example, from an element of @code{load-path}), use:
+might be @code{nil} (for example, from an element of @code{load-path}),
+use:
 
 @example
 (expand-file-name @var{relfile} @var{dirname})
