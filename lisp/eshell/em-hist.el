@@ -581,21 +581,30 @@ See also `eshell-read-history'."
 
 (defun eshell-expand-history-references (beg end)
   "Parse and expand any history references in current input."
-  (let ((result (eshell-hist-parse-arguments beg end)))
+  (let ((result (eshell-hist-parse-arguments beg end))
+	(full-line (buffer-substring-no-properties beg end)))
     (when result
       (let ((textargs (nreverse (nth 0 result)))
 	    (posb (nreverse (nth 1 result)))
-	    (pose (nreverse (nth 2 result))))
+	    (pose (nreverse (nth 2 result)))
+	    (full-line-subst (eshell-history-substitution full-line)))
 	(save-excursion
-	  (while textargs
-	    (let ((str (eshell-history-reference (car textargs))))
-	      (unless (eq str (car textargs))
-		(goto-char (car posb))
-		(insert-and-inherit str)
-		(delete-char (- (car pose) (car posb)))))
-	    (setq textargs (cdr textargs)
-		  posb (cdr posb)
-		  pose (cdr pose))))))))
+	  (if full-line-subst
+	      ;; Found a ^foo^bar substitution
+	      (progn
+		(goto-char beg)
+		(insert-and-inherit full-line-subst)
+		(delete-char (- end beg)))
+	    ;; Try to expand other substitutions
+	    (while textargs
+	      (let ((str (eshell-history-reference (car textargs))))
+		(unless (eq str (car textargs))
+		  (goto-char (car posb))
+		  (insert-and-inherit str)
+		  (delete-char (- (car pose) (car posb)))))
+	      (setq textargs (cdr textargs)
+		    posb (cdr posb)
+		    pose (cdr pose)))))))))
 
 (defvar pcomplete-stub)
 (defvar pcomplete-last-completion-raw)
@@ -630,20 +639,31 @@ See also `eshell-read-history'."
 		   (setq history (cdr history)))
 		 (cdr fhist)))))))
 
+(defun eshell-history-substitution (line)
+  "Expand quick hist substitutions formatted as ^foo^bar^.
+Returns nil if string does not match quick substitution format,
+and acts like !!:s/foo/bar/ otherwise."
+  ;; `^string1^string2^'
+  ;;      Quick Substitution.  Repeat the last command, replacing
+  ;;      STRING1 with STRING2.  Equivalent to `!!:s/string1/string2/'
+  (when (and (eshell-using-module 'eshell-pred)
+	     (string-match
+	      "^\\^\\([^^]+\\)\\^\\([^^]+\\)\\(?:\\^\\(.*\\)\\)?$"
+	      line))
+    ;; Save trailing match as `eshell-history-reference' runs string-match.
+    (let ((matched-end (match-string 3 line)))
+      (concat
+       (eshell-history-reference
+	(format "!!:s/%s/%s/"
+		(match-string 1 line)
+		(match-string 2 line)))
+       matched-end))))
+
 (defun eshell-history-reference (reference)
   "Expand directory stack REFERENCE.
 The syntax used here was taken from the Bash info manual.
 Returns the resultant reference, or the same string REFERENCE if none
 matched."
-  ;; `^string1^string2^'
-  ;;      Quick Substitution.  Repeat the last command, replacing
-  ;;      STRING1 with STRING2.  Equivalent to `!!:s/string1/string2/'
-  (if (and (eshell-using-module 'eshell-pred)
-	   (string-match "\\^\\([^^]+\\)\\^\\([^^]+\\)\\^?\\s-*$"
-			 reference))
-      (setq reference (format "!!:s/%s/%s/"
-			      (match-string 1 reference)
-			      (match-string 2 reference))))
   ;; `!'
   ;;      Start a history substitution, except when followed by a
   ;;      space, tab, the end of the line, = or (.

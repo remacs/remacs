@@ -545,7 +545,8 @@ that `ls -l' will show in the first column of its display. "
 	  (function
 	   (lambda (str)
 	     (if (string-match ,match str)
-		 (setq str (replace-match ,replace t nil str)))
+		 (setq str (replace-match ,replace t nil str))
+	       (error (concat str ": substitution failed")))
 	     str)) lst)))))
 
 (defun eshell-include-members (&optional invert-p)
