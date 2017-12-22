@@ -321,9 +321,7 @@ Use Unicode characters for footnoting."
     (unicode Footnote-unicode ,footnote-unicode-regexp))
   "Styles of footnote tags available.
 By default only boring Arabic numbers, English letters and Roman Numerals
-are available.
-See footnote-han.el, footnote-greek.el and footnote-hebrew.el for more
-exciting styles.")
+are available.")
 
 (defcustom footnote-style 'numeric
   "Default style used for footnoting.
