@@ -1489,6 +1489,19 @@ passing '&optional' multiple times:
 Previously, Emacs would just ignore the extra keyword, or give
 incorrect results in certain cases.
 
+---
+** The pinentry.el library has been removed.
+That package (and the corresponding change in GnuPG and pinentry)
+was intended to provide a way to input passphrase through Emacs with
+GnuPG 2.0.  However, the change to support that was only implemented
+in GnuPG >= 2.1 and didn't get backported to GnuPG 2.0.  And with
+GnuPG 2.1 and later, pinentry.el is not needed at all.  So the
+library was useless, and we removed it.  GnuPG 2.0 is no longer
+supported by the upstream project.
+
+To adapt to the change, you may need to set 'epa-pinentry-mode' to the
+symbol 'loopback'.
+
 
 * Lisp Changes in Emacs 26.1
 
