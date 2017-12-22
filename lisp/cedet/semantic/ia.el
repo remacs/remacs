@@ -252,7 +252,7 @@ Completion options are calculated with `semantic-analyze-possible-completions'."
 ;;;###autoload
 (defun semantic-ia-show-variants (point)
   "Display a list of all variants for the symbol under POINT."
-  (interactive "P")
+  (interactive "d")
   (let* ((ctxt (semantic-analyze-current-context point))
 	 (comp nil))
 
