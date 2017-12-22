@@ -50,7 +50,7 @@ screen is corrupted.
 
 @defun redraw-frame &optional frame
 This function clears and redisplays frame @var{frame}.  If @var{frame}
-is omitted or nil, it redraws the selected frame.
+is omitted or @code{nil}, it redraws the selected frame.
 @end defun
 
   Even more powerful is @code{redraw-display}:
@@ -1994,7 +1994,7 @@ defaults to the selected one.
 If the optional argument @var{first} is an integer, it denotes the index
 (starting with 0) of the first line of @var{window}'s glyph matrix to be
 returned.  Note that if @var{window} has a header line, the line with
-index 0 is that header line.  If @var{first} is nil, the first line to
+index 0 is that header line.  If @var{first} is @code{nil}, the first line to
 be considered is determined by the value of the optional argument
 @var{body}: If @var{body} is non-@code{nil}, this means to start with
 the first line of @var{window}'s body, skipping any header line, if
@@ -2003,7 +2003,7 @@ present.  Otherwise, this function will start with the first line of
 
 If the optional argument @var{last} is an integer, it denotes the index
 of the last line of @var{window}'s glyph matrix that shall be returned.
-If @var{last} is nil, the last line to be considered is determined by
+If @var{last} is @code{nil}, the last line to be considered is determined by
 the value of @var{body}: If @var{body} is non-@code{nil}, this means to
 use the last line of @var{window}'s body, omitting @var{window}'s mode
 line, if present.  Otherwise, this means to use the last line of

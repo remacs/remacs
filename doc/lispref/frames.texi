@@ -1569,7 +1569,7 @@ window-system window in the stacking (Z-) order of the frame's display.
 
 If this is @code{above}, the frame's window-system window is displayed
 above all other window-system windows that do not have the @code{above}
-property set.  If this is nil, the frame's window is displayed below all
+property set.  If this is @code{nil}, the frame's window is displayed below all
 windows that have the @code{above} property set and above all windows
 that have the @code{below} property set.  If this is @code{below}, the
 frame's window is displayed below all windows that do not have the
@@ -1898,7 +1898,7 @@ These parameters supply forms of interactions between different frames.
 @item parent-frame
 If non-@code{nil}, this means that this frame is a child frame
 (@pxref{Child Frames}), and this parameter specifies its parent frame.
-If nil, this means that this frame is a normal, top-level frame.
+If @code{nil}, this means that this frame is a normal, top-level frame.
 
 @vindex delete-before, a frame parameter
 @item delete-before
@@ -2120,7 +2120,7 @@ this parameter.
 If non-@code{nil}, this frame's window-system window is drawn without
 decorations, like the title, minimize/maximize boxes and external
 borders.  This usually means that the window cannot be dragged, resized,
-iconified, maximized or deleted with the mouse.  If nil, the frame's
+iconified, maximized or deleted with the mouse.  If @code{nil}, the frame's
 window is usually drawn with all the elements listed above unless their
 display has been suspended via window manager settings.
 
