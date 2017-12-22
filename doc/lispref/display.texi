@@ -5543,7 +5543,8 @@ inserts an image with a circle:
 @lisp
 (let ((svg (svg-create 400 400 :stroke-width 10)))
   (svg-gradient svg "gradient1" 'linear '((0 . "red") (100 . "blue")))
-  (svg-circle svg 200 200 100 :gradient "gradient1" :stroke-color "green")
+  (svg-circle svg 200 200 100 :gradient "gradient1"
+                  :stroke-color "green")
   (insert-image (svg-image svg)))
 @end lisp
 

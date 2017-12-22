@@ -1716,7 +1716,8 @@ file as, for example
 
 @example
 (setq default-frame-alist
-    '((fullscreen . fullboth) (fullscreen-restore . fullheight)))
+    '((fullscreen . fullboth)
+      (fullscreen-restore . fullheight)))
 @end example
 
 This will give a new frame full height after typing in it @key{F11} for

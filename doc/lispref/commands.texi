@@ -2634,9 +2634,9 @@ The return value is the matching value from @var{choices}.
 @lisp
 (read-multiple-choice
  "Continue connecting?"
- '((?a "always" "Accept this certificate this session and for all future sessions.")
-   (?s "session only" "Accept this certificate this session only.")
-   (?n "no" "Refuse to use this certificate, and close the connection.")))
+ '((?a "always" "Accept certificate for this and future sessions.")
+   (?s "session only" "Accept certificate this session only.")
+   (?n "no" "Refuse to use certificate, close connection.")))
 @end lisp
 
 The @code{read-multiple-choice-face} face is used to highlight the
