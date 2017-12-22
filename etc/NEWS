@@ -1584,6 +1584,10 @@ functions 'make-record', 'record', and 'recordp'.  Records are now
 used internally to represent cl-defstruct and defclass instances, for
 example.
 
+If your program defines new record types, you should use
+package-naming conventions for naming those types.  This is so any
+potential conflicts with other types are avoided.
+
 +++
 ** 'save-some-buffers' now uses 'save-some-buffers-default-predicate'
 to decide which buffers to ask about, if the PRED argument is nil.
