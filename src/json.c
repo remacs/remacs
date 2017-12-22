@@ -208,25 +208,28 @@ json_has_suffix (const char *string, const char *suffix)
 
 /* Create a multibyte Lisp string from the UTF-8 string in
    [DATA, DATA + SIZE).  If the range [DATA, DATA + SIZE) does not
-   contain a valid UTF-8 string, an unspecified string is
-   returned.  */
+   contain a valid UTF-8 string, an unspecified string is returned.
+   Note that all callers below either pass only value UTF-8 strings or
+   use this function for formatting error messages; in the latter case
+   correctness isn't critical.  */
 
 static Lisp_Object
 json_make_string (const char *data, ptrdiff_t size)
 {
-  /* FIXME: Raise an error if DATA is not a UTF-8 string.  */
   return code_convert_string (make_specified_string (data, -1, size, false),
                               Qutf_8_unix, Qt, false, true, true);
 }
 
 /* Create a multibyte Lisp string from the null-terminated UTF-8
    string beginning at DATA.  If the string is not a valid UTF-8
-   string, an unspecified string is returned.  */
+   string, an unspecified string is returned.  Note that all callers
+   below either pass only value UTF-8 strings or use this function for
+   formatting error messages; in the latter case correctness isn't
+   critical.  */
 
 static Lisp_Object
 json_build_string (const char *data)
 {
-  /* FIXME: Raise an error if DATA is not a UTF-8 string.  */
   return json_make_string (data, strlen (data));
 }
 
