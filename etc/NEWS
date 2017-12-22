@@ -77,9 +77,12 @@ This controls how long Emacs will wait for updates to the graphical
 state to take effect (making a frame visible, for example).
 
 +++
-** The new user option 'electric-quote-replace-double' controls
-whether '"' is also replaced in 'electric-quote-mode'.  If non-nil,
-'"' is replaced by a double typographic quote.
+** New user option 'electric-quote-replace-double'.
+This option controls whether '"' is replaced in 'electric-quote-mode',
+in addition to other quote characters.  If non-nil, ASCII double-quote
+characters that quote text "like this" are replaced by double
+typographic quotes, “like this”, in text modes, and in comments and
+strings in non-text modes.
 
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
