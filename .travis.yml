@@ -52,6 +52,8 @@ jobs:
         # GNUTLS is now included, no need to explicitly install it.
         - brew update
         - brew install texinfo
+        - travis_wait rustup install $(cat rust_src/rust-toolchain)
+        - rustup default $(cat rust_src/rust-toolchain)
     - &NO_WINDOW_SYSTEM_TEST
       stage: test
       os: linux
