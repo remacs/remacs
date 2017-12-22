@@ -310,6 +310,48 @@ Use Unicode characters for footnoting."
       (push (aref footnote-unicode-string modulus) result))
     (apply #'string result)))
 
+;; Hebrew
+
+(defconst footnote-hebrew-numeric-regex "[אבגדהוזחטיכלמנסעפצקרשת']+")
+; (defconst footnote-hebrew-numeric-regex "\\([אבגדהוזחט]'\\)?\\(ת\\)?\\(ת\\)?\\([קרשת]\\)?\\([טיכלמנסעפצ]\\)?\\([אבגדהוזחט]\\)?")
+
+(defconst footnote-hebrew-numeric
+  '(
+    ("א" "ב" "ג" "ד" "ה" "ו" "ז" "ח" "ט")
+    ("י" "כ" "ל" "מ" "נ" "ס" "ע" "פ" "צ")
+    ("ק" "ר" "ש" "ת" "תק" "תר"" תש" "תת" "תתק")))
+
+(defun Footnote-hebrew-numeric (n)
+  "Supports 9999 footnotes, then rolls over."
+  (let* ((n (+ (mod n 10000) (/ n 10000)))
+         (thousands (/ n 1000))
+         (hundreds (/ (mod n 1000) 100))
+         (tens (/ (mod n 100) 10))
+         (units (mod n 10))
+         (special (if (not (= tens 1)) nil
+                    (or (when (= units 5) "טו")
+                        (when (= units 6) "טז")))))
+    (concat
+     (when (/= 0 thousands)
+       (concat (nth (1- thousands) (nth 0 footnote-hebrew-numeric)) "'"))
+     (when (/= 0 hundreds)
+       (nth (1- hundreds) (nth 2 footnote-hebrew-numeric)))
+     (if special special
+      (concat
+        (when (/= 0 tens) (nth (1- tens) (nth 1 footnote-hebrew-numeric)))
+        (when (/= 0 units) (nth (1- units) (nth 0 footnote-hebrew-numeric))))))))
+
+(defconst footnote-hebrew-symbolic-regex "[אבגדהוזחטיכלמנסעפצקרשת]")
+
+(defconst footnote-hebrew-symbolic
+  '(
+    "א" "ב" "ג" "ד" "ה" "ו" "ז" "ח" "ט" "י" "כ" "ל" "מ" "נ" "ס" "ע" "פ" "צ" "ק" "ר" "ש" "ת"))
+
+(defun Footnote-hebrew-symbolic (n)
+  "Only 22 elements, per the style of eg. 'פירוש שפתי חכמים על רש״י'.
+Proceeds from `י' to `כ', from `צ' to `ק'. After `ת', rolls over to `א'."
+  (nth (mod (1- n) 22) footnote-hebrew-symbolic))
+
 ;;; list of all footnote styles
 (defvar footnote-style-alist
   `((numeric Footnote-numeric ,footnote-numeric-regexp)
@@ -318,9 +360,12 @@ Use Unicode characters for footnoting."
     (roman-lower Footnote-roman-lower ,footnote-roman-lower-regexp)
     (roman-upper Footnote-roman-upper ,footnote-roman-upper-regexp)
     (latin Footnote-latin ,footnote-latin-regexp)
-    (unicode Footnote-unicode ,footnote-unicode-regexp))
+    (unicode Footnote-unicode ,footnote-unicode-regexp)
+    (hebrew-numeric Footnote-hebrew-numeric ,footnote-hebrew-numeric-regex)
+    (hebrew-symbolic Footnote-hebrew-symbolic ,footnote-hebrew-symbolic-regex))
   "Styles of footnote tags available.
-By default only boring Arabic numbers, English letters and Roman Numerals
+By default, Arabic numbers, English letters, Roman Numerals,
+Latin and Unicode superscript characters, and Hebrew numerals
 are available.
 See footnote-han.el, footnote-greek.el and footnote-hebrew.el for more
 exciting styles.")
@@ -334,6 +379,8 @@ roman-lower == i, ii, iii, iv, v, ...
 roman-upper == I, II, III, IV, V, ...
 latin == ¹ ² ³ º ª § ¶
 unicode == ¹, ², ³, ...
+hebrew-numeric == א, ב, ..., יא, ..., תקא...
+hebrew-symbolic == א, ב, ..., י, כ, ..., צ, ק, ..., ת, א
 See also variables `footnote-start-tag' and `footnote-end-tag'.
 
 Note: some characters in the unicode style may not show up
