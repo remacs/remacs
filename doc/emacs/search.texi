@@ -1746,12 +1746,13 @@ prompt, you can reuse search strings from previous incremental
 searches.  The text that matched is highlighted using the @code{match}
 face.  A numeric argument @var{n} specifies that @var{n} lines of
 context are to be displayed before and after each matching line.
+
 The default number of context lines is specified by the variable
-@code{list-matching-lines-default-context-lines}.
-When @code{list-matching-lines-jump-to-current-line} is non-nil,
-the current line is shown highlighted with face
-@code{list-matching-lines-current-line-face} and the point is set
-at the first match after such line.
+@code{list-matching-lines-default-context-lines}.  When
+@code{list-matching-lines-jump-to-current-line} is non-@code{nil} the
+current line is shown highlighted with face
+@code{list-matching-lines-current-line-face} and the point is set at
+the first match after such line.
 
 You can also run @kbd{M-s o} when an incremental search is active;
 this uses the current search string.

@@ -394,10 +394,11 @@ match will be highlighted, instead of the entire source line.
   The @command{grep} commands will offer to save buffers before
 running.  This is controlled by the @code{grep-save-buffers} variable.
 The possible values are either @code{nil} (don't save), @code{ask}
-(ask before saving), a function which will be used as a predicate (and
-is called with the file name as the parameter and should return
-non-nil if the buffer is to be saved), and any other non-@code{nil}
-value means that all buffers should be saved without asking.
+(ask before saving), or a function which will be used as a predicate
+(and is called with the file name as the parameter and should return
+non-@code{nil} if the buffer is to be saved).  Any other
+non-@code{nil} value means that all buffers should be saved without
+asking.
 
 @findex grep-find
 @findex find-grep

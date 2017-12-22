@@ -243,9 +243,9 @@ location of point.  Double-clicking on the end of a parenthetical
 grouping or end string-delimiter keeps point at the end of the region
 by default, so the beginning of the region will not be visible if it
 is above the top of the window; setting the user option
-@code{mouse-select-region-move-to-beginning} to non-nil changes this
-to move point to the beginning of the region, scrolling the display
-backward if necessary.
+@code{mouse-select-region-move-to-beginning} to non-@code{nil} changes
+this to move point to the beginning of the region, scrolling the
+display backward if necessary.
 
 @item Double-Drag-mouse-1
 Select the text you drag across, in the form of whole words.
@@ -1094,18 +1094,6 @@ file on a Dired buffer moves or copies the file (according to the
 conventions of the application it came from) into the directory
 displayed in that buffer.
 
-@vindex mouse-drag-and-drop-region
-  Emacs can also optionally drag the region of text by mouse into
-another portion of this or another buffer.  To enable that, customize
-the variable @code{mouse-drag-and-drop-region} to a non-nil value.
-Normally, the text is moved, i.e. cut and pasted, when the destination
-is the same buffer as the origin; dropping the region on another
-buffer copies the text instead.  If the value of this variable names a
-modifier key, such as @samp{shift} or @samp{control} or @samp{alt},
-then pressing that modifier key when dropping the text will copy it
-instead of cutting it, even if you drop on the same buffer as the one
-from which the text came.
-
 @vindex dnd-open-file-other-window
   Dropping a file normally visits it in the window you drop it on.  If
 you prefer to visit the file in a new window in such cases, customize
@@ -1113,6 +1101,19 @@ the variable @code{dnd-open-file-other-window}.
 
   The XDND and Motif drag and drop protocols, and the old KDE 1.x
 protocol, are currently supported.
+
+@vindex mouse-drag-and-drop-region
+  Emacs can also optionally drag the region with the mouse into
+another portion of this or another buffer.  To enable that, customize
+the variable @code{mouse-drag-and-drop-region} to a non-@code{nil}
+value.  Normally, the text is moved, i.e. cut and pasted, when the
+destination is the same buffer as the origin; dropping the region on
+another buffer copies the text instead.  If the value of this variable
+names a modifier key, such as @samp{shift}, @samp{control} or
+@samp{alt}, then pressing that modifier key when dropping the text
+will copy it instead of cutting it, even if you drop on the same
+buffer as the one from which the text came.
+
 
 @node Menu Bars
 @section Menu Bars

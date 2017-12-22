@@ -3059,7 +3059,7 @@ This function handles @var{window} and its buffer after quitting.  The
 optional argument @var{window} must be a live window and defaults to
 the selected one. The function's behavior is determined by the four
 elements of the @code{quit-restore} window parameter (@pxref{Window
-Parameters}), which is set to nil afterwards.
+Parameters}), which is set to @code{nil} afterwards.
 
 The window is deleted entirely if: 1) the first element of the
 @code{quit-restore} parameter is one of 'window or 'frame, 2) the
@@ -3126,7 +3126,7 @@ possible to set it manually, using the following code for displaying
 @end group
 @end example
 
-Setting the window history to nil ensures that a future call to
+Setting the window history to @code{nil} ensures that a future call to
 @code{quit-window} can delete the window altogether.
 
 @end defun
