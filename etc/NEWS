@@ -256,18 +256,18 @@ whether the output buffer of an asynchronous command is shown
 immediately, or only when there is output.
 
 +++
-** The new user option 'mouse-select-region-move-to-beginning'
-controls the position of point when double-clicking mouse-1 on the end
-of a parenthetical grouping or string-delimiter: the default value nil
-keeps point at the end of the region, setting it to non-nil moves
-point to the beginning of the region.
+** New user option 'mouse-select-region-move-to-beginning'.
+This option controls the position of point when double-clicking
+mouse-1 on the end of a parenthetical grouping or string-delimiter:
+the default value nil keeps point at the end of the region, setting it
+to non-nil moves point to the beginning of the region.
 
 +++
-** The new user option 'mouse-drag-and-drop-region' allows to drag the
-entire region of text to another place or another buffer.  Its
-behavior is customizable via the new options
+** New user option 'mouse-drag-and-drop-region'.
+This option allows to drag the entire region of text to another place
+or another buffer.  Its behavior is customizable via the new options
 'mouse-drag-and-drop-region-cut-when-buffers-differ',
-'mouse-drag-and-drop-region-show-tooltip' and
+'mouse-drag-and-drop-region-show-tooltip', and
 'mouse-drag-and-drop-region-show-cursor'.
 
 +++

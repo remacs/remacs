@@ -1114,6 +1114,9 @@ names a modifier key, such as @samp{shift}, @samp{control} or
 will copy it instead of cutting it, even if you drop on the same
 buffer as the one from which the text came.
 
+@vindex mouse-drag-and-drop-region-cut-when-buffers-differ
+@vindex mouse-drag-and-drop-region-show-tooltip
+@vindex mouse-drag-and-drop-region-show-cursor
 In order to cut text even when source and destination buffers differ,
 set the option
 @code{mouse-drag-and-drop-region-cut-when-buffers-differ} to a
