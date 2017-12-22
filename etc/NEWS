@@ -264,7 +264,11 @@ point to the beginning of the region.
 
 +++
 ** The new user option 'mouse-drag-and-drop-region' allows to drag the
-entire region of text to another place or another buffer.
+entire region of text to another place or another buffer.  Its
+behavior is customizable via the new options
+'mouse-drag-and-drop-region-cut-when-buffers-differ',
+'mouse-drag-and-drop-region-show-tooltip' and
+'mouse-drag-and-drop-region-show-cursor'.
 
 +++
 ** The new user option 'confirm-kill-processes' allows the user to

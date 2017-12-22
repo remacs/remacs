@@ -1114,6 +1114,15 @@ names a modifier key, such as @samp{shift}, @samp{control} or
 will copy it instead of cutting it, even if you drop on the same
 buffer as the one from which the text came.
 
+In order to cut text even when source and destination buffers differ,
+set the option
+@code{mouse-drag-and-drop-region-cut-when-buffers-differ} to a
+non-@code{nil} value.  By default, on a graphic display the selected
+text is shown in a tooltip and point moves together with the mouse
+cursor during dragging.  To suppress such behavior, set the options
+@code{mouse-drag-and-drop-region-show-tooltip} and/or
+@code{mouse-drag-and-drop-region-show-cursor} to @code{nil}.
+
 
 @node Menu Bars
 @section Menu Bars
