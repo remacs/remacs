@@ -89,7 +89,7 @@
   (should-error (json-serialize ["a\uDBBBb"]) :type 'json-out-of-memory)
   (should-error (json-serialize (vector (string ?a #x110000 ?b)))
                 :type 'json-out-of-memory)
-  (should-error (json-serialize ["a\xCCb"] :type 'json-out-of-memory)))
+  (should-error (json-serialize ["u\xCCv"]) :type 'json-out-of-memory))
 
 (ert-deftest json-parse-string/null ()
   (skip-unless (fboundp 'json-parse-string))
