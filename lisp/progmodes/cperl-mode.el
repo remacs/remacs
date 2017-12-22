@@ -1060,35 +1060,42 @@ versions of Emacs."
 (eval-when-compile
   (mapc #'require '(imenu easymenu etags timer man info)))
 
-(define-abbrev-table 'cperl-mode-abbrev-table
-  ;; FIXME: Use a separate abbrev table for that, enabled conditionally,
-  ;; as we did with python-mode-skeleton-abbrev-table!
-  (when (cperl-val 'cperl-electric-keywords)
-    '(
-      ("if" "if" cperl-electric-keyword :system t)
-      ("elsif" "elsif" cperl-electric-keyword :system t)
-      ("while" "while" cperl-electric-keyword :system t)
-      ("until" "until" cperl-electric-keyword :system t)
-      ("unless" "unless" cperl-electric-keyword :system t)
-      ("else" "else" cperl-electric-else :system t)
-      ("continue" "continue" cperl-electric-else :system t)
-      ("for" "for" cperl-electric-keyword :system t)
-      ("foreach" "foreach" cperl-electric-keyword :system t)
-      ("formy" "formy" cperl-electric-keyword :system t)
-      ("foreachmy" "foreachmy" cperl-electric-keyword :system t)
-      ("do" "do" cperl-electric-keyword :system t)
-      ("=pod" "=pod" cperl-electric-pod :system t)
-      ("=begin" "=begin" cperl-electric-pod 0 :system t)
-      ("=over" "=over" cperl-electric-pod :system t)
-      ("=head1" "=head1" cperl-electric-pod :system t)
-      ("=head2" "=head2" cperl-electric-pod :system t)
-      ("pod" "pod" cperl-electric-pod :system t)
-      ("over" "over" cperl-electric-pod :system t)
-      ("head1" "head1" cperl-electric-pod :system t)
-      ("head2" "head2" cperl-electric-pod :system t)))
-  "Abbrev table in use in CPerl mode buffers.")
+(define-abbrev-table 'cperl-mode-electric-keywords-abbrev-table
+  (mapcar (lambda (x)
+            (let ((name (car x))
+                  (fun (cadr x)))
+              (list name name fun :system t)))
+          '(("if" cperl-electric-keyword)
+            ("elsif" cperl-electric-keyword)
+            ("while" cperl-electric-keyword)
+            ("until" cperl-electric-keyword)
+            ("unless" cperl-electric-keyword)
+            ("else" cperl-electric-else)
+            ("continue" cperl-electric-else)
+            ("for" cperl-electric-keyword)
+            ("foreach" cperl-electric-keyword)
+            ("formy" cperl-electric-keyword)
+            ("foreachmy" cperl-electric-keyword)
+            ("do" cperl-electric-keyword)
+            ("=pod" cperl-electric-pod)
+            ("=begin" cperl-electric-pod t)
+            ("=over" cperl-electric-pod)
+            ("=head1" cperl-electric-pod)
+            ("=head2" cperl-electric-pod)
+            ("pod" cperl-electric-pod)
+            ("over" cperl-electric-pod)
+            ("head1" cperl-electric-pod)
+            ("head2" cperl-electric-pod)))
+  "Abbrev table for electric keywords.  Controlled by `cperl-electric-keywords'."
+  :case-fixed t
+  :enable-function (lambda () (cperl-val 'cperl-electric-keywords)))
+
+(define-abbrev-table 'cperl-mode-abbrev-table ()
+  "Abbrev table in use in CPerl mode buffers."
+  :parents (list cperl-mode-electric-keywords-abbrev-table))
 
 (when (boundp 'edit-var-mode-alist)
+  ;; FIXME: What package uses this?
   (add-to-list 'edit-var-mode-alist '(perl-mode (regexp . "^cperl-"))))
 
 (defvar cperl-mode-map
