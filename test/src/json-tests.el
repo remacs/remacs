@@ -87,8 +87,7 @@
   ;; FIXME: "out of memory" is the wrong error signal, but we don't
   ;; currently distinguish between error types when serializing.
   (should-error (json-serialize ["a\uDBBBb"]) :type 'json-out-of-memory)
-  (should-error (json-serialize (vector (string ?a #x110000 ?b)))
-                :type 'json-out-of-memory)
+  (should-error (json-serialize ["u\x110000v"]) :type 'json-out-of-memory)
   (should-error (json-serialize ["u\xCCv"]) :type 'json-out-of-memory))
 
 (ert-deftest json-parse-string/null ()
