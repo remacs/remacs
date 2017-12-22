@@ -88,12 +88,34 @@
   ;; currently distinguish between error types when serializing.
   (should-error (json-serialize ["a\uDBBBb"]) :type 'json-out-of-memory)
   (should-error (json-serialize ["u\x110000v"]) :type 'json-out-of-memory)
+  (should-error (json-serialize ["u\x3FFFFFv"]) :type 'json-out-of-memory)
   (should-error (json-serialize ["u\xCCv"]) :type 'json-out-of-memory))
 
 (ert-deftest json-parse-string/null ()
   (skip-unless (fboundp 'json-parse-string))
+  (should-error (json-parse-string "\x00") :type 'wrong-type-argument)
   ;; FIXME: Reconsider whether this is the right behavior.
   (should-error (json-parse-string "[a\\u0000b]") :type 'json-parse-error))
+
+(ert-deftest json-parse-string/invalid-unicode ()
+  "Some examples from
+https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt."
+  (skip-unless (fboundp 'json-parse-string))
+  ;; Invalid UTF-8 code unit sequences.
+  (should-error (json-parse-string "[\"\x80\"]") :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\xBF\"]") :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\xFE\"]") :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\xC0\xAF\"]") :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\xC0\x80\"]") :type 'json-parse-error)
+  ;; Surrogates.
+  (should-error (json-parse-string "[\"\uDB7F\"]")
+                :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\xED\xAD\xBF\"]")
+                :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\uDB7F\uDFFF\"]")
+                :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\xED\xAD\xBF\xED\xBF\xBF\"]")
+                :type 'json-parse-error))
 
 (ert-deftest json-parse-string/incomplete ()
   (skip-unless (fboundp 'json-parse-string))
