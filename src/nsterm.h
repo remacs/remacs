@@ -585,6 +585,8 @@ typedef id instancetype;
   }
 - (instancetype) init;
 - (void) setText: (char *)text;
+- (void) setBackgroundColor: (NSColor *)col;
+- (void) setForegroundColor: (NSColor *)col;
 - (void) showAtX: (int)x Y: (int)y for: (int)seconds;
 - (void) hide;
 - (BOOL) isActive;

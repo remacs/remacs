@@ -2873,6 +2873,8 @@ Text larger than the specified size is clipped.  */)
   struct frame *f;
   char *str;
   NSSize size;
+  NSColor *color;
+  Lisp_Object t;
 
   specbind (Qinhibit_redisplay, Qt);
 
@@ -2899,6 +2901,14 @@ Text larger than the specified size is clipped.  */)
     ns_tooltip = [[EmacsTooltip alloc] init];
   else
     Fx_hide_tip ();
+
+  t = x_get_arg (NULL, parms, Qbackground_color, NULL, NULL, RES_TYPE_STRING);
+  if (ns_lisp_to_color (t, &color) == 0)
+    [ns_tooltip setBackgroundColor: color];
+
+  t = x_get_arg (NULL, parms, Qforeground_color, NULL, NULL, RES_TYPE_STRING);
+  if (ns_lisp_to_color (t, &color) == 0)
+    [ns_tooltip setForegroundColor: color];
 
   [ns_tooltip setText: str];
   size = [ns_tooltip frame].size;

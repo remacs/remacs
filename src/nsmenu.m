@@ -1364,6 +1364,16 @@ update_frame_tool_bar (struct frame *f)
   [textField setFrame: r];
 }
 
+- (void) setBackgroundColor: (NSColor *)col
+{
+  [textField setBackgroundColor: col];
+}
+
+- (void) setForegroundColor: (NSColor *)col
+{
+  [textField setTextColor: col];
+}
+
 - (void) showAtX: (int)x Y: (int)y for: (int)seconds
 {
   NSRect wr = [win frame];
