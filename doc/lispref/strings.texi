@@ -1197,6 +1197,7 @@ a character, functions are unable to perform proper substitution and
 result may differ compared to treating a one-character string.  For
 example:
 
+@ifnottex
 @example
 @group
 (upcase "ﬁ")  ; note: single character, ligature "fi"
@@ -1207,6 +1208,19 @@ example:
      @result{} 64257  ; i.e. ?ﬁ
 @end group
 @end example
+@end ifnottex
+@iftex
+@example
+@group
+(upcase "fi")  ; note: single character, ligature "fi"
+     @result{} "FI"
+@end group
+@group
+(upcase ?fi)
+     @result{} 64257  ; i.e. ?fi
+@end group
+@end example
+@end iftex
 
   To avoid this, a character must first be converted into a string,
 using @code{string} function, before being passed to one of the casing
