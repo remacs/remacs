@@ -5,13 +5,13 @@ use libc::{c_uchar, ptrdiff_t};
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Fadd_text_properties, Fcons, Fcopy_sequence, Finsert_char,
                  Qinteger_or_marker_p, Qmark_inactive, Qnil};
-use remacs_sys::{buf_charpos_to_bytepos, globals, set_point_both};
+use remacs_sys::{buf_charpos_to_bytepos, globals, make_string_from_bytes, set_point_both};
 
 use buffers::get_buffer;
 use lisp::LispObject;
 use lisp::defsubr;
 use marker::{marker_position, set_point_from_marker};
-use multibyte::raw_byte_codepoint;
+use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, MAX_MULTIBYTE_LENGTH};
 use threads::ThreadState;
 use util::clip_to_bounds;
 
@@ -306,6 +306,48 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
     };
 
     copy
+}
+
+/// Convert arg CHAR to a string containing that character.
+/// usage: (char-to-string CHAR)
+#[lisp_fn]
+pub fn char_to_string(character: LispObject) -> LispObject {
+    let c = character.as_character_or_error();
+    let mut buffer = [0_u8; MAX_MULTIBYTE_LENGTH];
+    let len = write_codepoint(&mut buffer[..], c);
+
+    LispObject::from(unsafe {
+        make_string_from_bytes(buffer.as_ptr() as *const i8, 1, len as isize)
+    })
+}
+
+/// Convert arg BYTE to a unibyte string containing that byte.
+#[lisp_fn]
+pub fn byte_to_string(byte: LispObject) -> LispObject {
+    let b = byte.as_fixnum_or_error();
+    if b < 0 || b > 255 {
+        error!("Invalid byte");
+    }
+    let b = b as i8;
+
+    LispObject::from(unsafe { make_string_from_bytes(&b as *const i8, 1, 1) })
+}
+
+/// Return the first character in STRING.
+#[lisp_fn]
+pub fn string_to_char(string: LispObject) -> LispObject {
+    let string = string.as_string_or_error();
+
+    if string.len_chars() > 0 {
+        if string.is_multibyte() {
+            let (cp, _) = multibyte_char_at(string.as_slice());
+            LispObject::from_natnum(EmacsInt::from(cp))
+        } else {
+            LispObject::from_natnum(EmacsInt::from(string.byte_at(0)))
+        }
+    } else {
+        LispObject::from_natnum(0)
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
