@@ -316,7 +316,7 @@ pub fn char_to_string(character: LispObject) -> LispObject {
     let mut buffer = [0_u8; MAX_MULTIBYTE_LENGTH];
     let len = write_codepoint(&mut buffer[..], c);
 
-    LispObject::from(unsafe {
+    LispObject::from_raw(unsafe {
         make_string_from_bytes(buffer.as_ptr() as *const i8, 1, len as isize)
     })
 }
@@ -330,7 +330,7 @@ pub fn byte_to_string(byte: LispObject) -> LispObject {
     }
     let b = b as i8;
 
-    LispObject::from(unsafe { make_string_from_bytes(&b as *const i8, 1, 1) })
+    LispObject::from_raw(unsafe { make_string_from_bytes(&b as *const i8, 1, 1) })
 }
 
 /// Return the first character in STRING.
