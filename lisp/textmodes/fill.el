@@ -128,10 +128,11 @@ if it would act as a paragraph-starter on the second line."
   :type 'regexp
   :group 'fill)
 
-(defcustom adaptive-fill-function nil
-  "Function to call to choose a fill prefix for a paragraph, or nil.
-A nil value means the function has not determined the fill prefix."
-  :type '(choice (const nil) function)
+(defcustom adaptive-fill-function #'ignore
+  "Function to call to choose a fill prefix for a paragraph.
+A nil return value means the function has not determined the fill prefix."
+  :version "27.1"
+  :type 'function
   :group 'fill)
 
 (defvar fill-indent-according-to-mode nil ;Screws up CC-mode's filling tricks.
