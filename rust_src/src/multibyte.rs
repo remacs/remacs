@@ -481,8 +481,7 @@ pub extern "C" fn multibyte_chars_in_text(ptr: *const c_uchar, nbytes: ptrdiff_t
     let mut chars = 0;
     // TODO: make this an iterator?
     while idx < len {
-        idx += multibyte_length(&slice[idx..], true)
-            .unwrap_or_else(|| unsafe { emacs_abort() });
+        idx += multibyte_length(&slice[idx..], true).unwrap_or_else(|| unsafe { emacs_abort() });
         chars += 1;
     }
     chars as ptrdiff_t

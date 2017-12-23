@@ -35,8 +35,7 @@ pub extern "C" fn base64_encode_1(
         base64_crate::STANDARD
     };
     let bytes = unsafe { slice::from_raw_parts(from as *const u8, in_length as usize) };
-    let mut output =
-        unsafe { slice::from_raw_parts_mut(to as *mut u8, out_length as usize) };
+    let mut output = unsafe { slice::from_raw_parts_mut(to as *mut u8, out_length as usize) };
 
     let encoded_size = if multibyte {
         // Transform non-ASCII characters in multibyte string to Latin1,

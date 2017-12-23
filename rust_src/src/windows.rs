@@ -448,7 +448,9 @@ pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject 
 /// Return nil for a window with no parent (e.g. a root window).
 #[lisp_fn(min = "0")]
 pub fn window_parent(window: LispObject) -> LispObject {
-    LispObject::from_raw(unsafe { wget_parent(window_valid_or_selected(window).as_ptr()) })
+    LispObject::from_raw(unsafe {
+        wget_parent(window_valid_or_selected(window).as_ptr())
+    })
 }
 
 /// Return the frame that window WINDOW is on.

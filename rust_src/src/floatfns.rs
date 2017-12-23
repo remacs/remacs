@@ -122,15 +122,13 @@ pub fn atan(y: EmacsDouble, x: Option<EmacsDouble>) -> EmacsDouble {
 pub fn log(arg: EmacsDouble, base: Option<EmacsDouble>) -> EmacsDouble {
     match base {
         None => arg.ln(),
-        Some(base) => {
-            if base == 10.0 {
-                arg.log10()
-            } else if base == 2.0 {
-                arg.log2()
-            } else {
-                arg.log(base)
-            }
-        }
+        Some(base) => if base == 10.0 {
+            arg.log10()
+        } else if base == 2.0 {
+            arg.log2()
+        } else {
+            arg.log(base)
+        },
     }
 }
 
@@ -336,8 +334,9 @@ where
             return LispObject::from_fixnum(ir);
         }
     }
-    let errstr =
-        LispObject::from_raw(unsafe { build_string(name.as_ptr() as *const libc::c_char) });
+    let errstr = LispObject::from_raw(unsafe {
+        build_string(name.as_ptr() as *const libc::c_char)
+    });
     xsignal!(Qrange_error, errstr, arg)
 }
 

@@ -135,8 +135,7 @@ fn get_coding_system_for_buffer(
            default value of buffer-file-coding-system. */
         return LispObject::from_raw(buffer.buffer_file_coding_system);
     }
-    let sscsf =
-        LispObject::from_raw(unsafe { globals.f_Vselect_safe_coding_system_function });
+    let sscsf = LispObject::from_raw(unsafe { globals.f_Vselect_safe_coding_system_function });
     if fboundp(sscsf.as_symbol_or_error()).is_not_nil() {
         /* Confirm that VAL can surely encode the current region. */
         return call!(
@@ -229,8 +228,7 @@ fn get_input_from_buffer(
     if !(buffer.begv <= *start_byte && *end_byte <= buffer.zv) {
         args_out_of_range!(start, end);
     }
-    let string =
-        LispObject::from_raw(unsafe { make_buffer_string(*start_byte, *end_byte, false) });
+    let string = LispObject::from_raw(unsafe { make_buffer_string(*start_byte, *end_byte, false) });
     unsafe { set_buffer_internal(prev_buffer) };
     // TODO: this needs to be std::mem::size_of<specbinding>()
     unsafe { (*current_thread).m_specpdl_ptr = (*current_thread).m_specpdl_ptr.offset(-40) };
@@ -389,8 +387,7 @@ fn _secure_hash(
     let spec = list!(object, start, end, coding_system, noerror);
     let mut start_byte: ptrdiff_t = 0;
     let mut end_byte: ptrdiff_t = 0;
-    let input =
-        unsafe { extract_data_from_object(spec.to_raw(), &mut start_byte, &mut end_byte) };
+    let input = unsafe { extract_data_from_object(spec.to_raw(), &mut start_byte, &mut end_byte) };
 
     if input.is_null() {
         error!("secure_hash: failed to extract data from object, aborting!");
@@ -418,8 +415,7 @@ fn _secure_hash(
     } else {
         digest_size as EmacsInt
     };
-    let digest =
-        LispObject::from_raw(unsafe { make_uninit_string(buffer_size as EmacsInt) });
+    let digest = LispObject::from_raw(unsafe { make_uninit_string(buffer_size as EmacsInt) });
     let mut digest_str = digest.as_string_or_error();
     hash_func(input_slice, digest_str.as_mut_slice());
     if binary.is_nil() {
@@ -520,8 +516,7 @@ pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     }
 
     let formatted = ctx.digest().to_string();
-    let digest =
-        LispObject::from_raw(unsafe { make_uninit_string(formatted.len() as EmacsInt) });
+    let digest = LispObject::from_raw(unsafe { make_uninit_string(formatted.len() as EmacsInt) });
     digest
         .as_string()
         .unwrap()

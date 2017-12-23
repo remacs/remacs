@@ -124,8 +124,7 @@ pub fn string_to_unibyte(string: LispStringRef) -> LispObject {
             error!("Can't convert {}th character to unibyte", converted_size);
         }
 
-        let raw_ptr =
-            unsafe { make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size) };
+        let raw_ptr = unsafe { make_unibyte_string(buffer.as_ptr() as *const libc::c_char, size) };
         LispObject::from_raw(raw_ptr)
     } else {
         string.as_lisp_obj()
