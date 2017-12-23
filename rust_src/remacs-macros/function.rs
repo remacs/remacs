@@ -106,7 +106,7 @@ fn parse_function_type(fndecl: &syn::FnDecl) -> Result<LispFnType> {
                         }
                         return Ok(LispFnType::Many);
                     }
-                    ArgType::Other => { }
+                    ArgType::Other => {}
                 }
             }
             _ => return Err("lisp functions cannot have `self` arguments"),
