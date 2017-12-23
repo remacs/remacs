@@ -717,7 +717,7 @@ with `mouse-movement' events."
         (cursor-in-echo-area t)
         saved-yank-menu)
     (unwind-protect
-        (let (key down-ev)
+        (let (key keys down-ev discarded-up)
           ;; If yank-menu is empty, populate it temporarily, so that
           ;; "Select and Paste" menu can generate a complete event.
           (when (null (cdr yank-menu))
@@ -731,6 +731,7 @@ Describe the following key, mouse click, or menu item: "))
                  (or
                   (and no-mouse-movement
                        (string-match "mouse-movement" keyname))
+                  (progn (push key keys) nil)
                   (and (string-match "\\(mouse\\|down\\|click\\|drag\\)"
                                      keyname)
                        (progn
@@ -739,13 +740,31 @@ Describe the following key, mouse click, or menu item: "))
                          (sleep-for 0.01)
                          (while (read-event nil nil 0.01))
                          (not (sit-for (/ double-click-time 1000.0) t))))))))
+          ;; When we have a sequence of mouse events, discard the most
+          ;; recent ones till we find one with a binding.
+          (let ((keys-1 keys))
+            (while (and keys-1
+                        (not (key-binding (car keys-1))))
+              ;; If we discard the last event, and this was a mouse
+              ;; up, remember this.
+              (if (and (eq keys-1 keys)
+                       (vectorp (car keys-1))
+                       (let* ((last-idx (1- (length (car keys-1))))
+                              (last (aref (car keys-1) last-idx)))
+                         (and (eventp last)
+                              (memq 'click (event-modifiers last)))))
+                  (setq discarded-up t))
+              (setq keys-1 (cdr keys-1)))
+            (if keys-1
+                (setq key (car keys-1))))
           (list
            key
            ;; If KEY is a down-event, read and include the
            ;; corresponding up-event.  Note that there are also
            ;; down-events on scroll bars and mode lines: the actual
            ;; event then is in the second element of the vector.
-           (and (vectorp key)
+           (and (not discarded-up) ; Don't attempt to ignore the up-event twice.
+                (vectorp key)
                 (let ((last-idx (1- (length key))))
                   (and (eventp (aref key last-idx))
                        (memq 'down (event-modifiers (aref key last-idx)))))
