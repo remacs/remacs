@@ -21,7 +21,7 @@ use buffers::{buffer_file_name, current_buffer, get_buffer, LispBufferRef};
 use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
 use multibyte::LispStringRef;
-use symbols::{fboundp, symbol_name, LispSymbolRef};
+use symbols::{fboundp, symbol_name};
 use threads::ThreadState;
 
 #[derive(Clone, Copy)]

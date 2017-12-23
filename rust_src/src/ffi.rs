@@ -3,7 +3,7 @@ use remacs_sys::{Lisp_Object, Lisp_Window};
 
 use data;
 use keyboard;
-use lisp::{LispCons, LispObject};
+use lisp::LispObject;
 use lists;
 use math;
 use windows;
