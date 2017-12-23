@@ -156,12 +156,20 @@ has no effect on buffers already displaying footnotes."
   :type 'string
   :group 'footnote)
 
-(defcustom footnote-signature-separator (if (boundp 'message-signature-separator)
-					    message-signature-separator
-					  "^-- $")
+(defcustom footnote-signature-separator
+  (if (boundp 'message-signature-separator)
+      message-signature-separator
+    "^-- $")
   "Regexp used by Footnote mode to recognize signatures."
   :type 'regexp
   :group 'footnote)
+
+(defcustom footnote-align-to-fn-text t
+  "If non-nil, align footnote text lines.
+If nil, footnote text lines are to be aligned flush left with left side
+of the footnote number.  If non-nil footnote text lines are to be aligned
+with the first character of footnote text."
+  :type  'boolean)
 
 ;;; Private variables
 
@@ -179,6 +187,8 @@ has no effect on buffers already displaying footnotes."
 
 (defvar footnote-mouse-highlight 'highlight
   "Text property name to enable mouse over highlight.")
+
+(defvar footnote-mode)
 
 ;;; Default styles
 ;;; NUMERIC
@@ -675,6 +685,22 @@ Return nil if the cursor is not over a footnote."
   (or (get-text-property (point) 'footnote-number)
       (Footnote-text-under-cursor)))
 
+(defun Footnote--calc-fn-alignment-column ()
+  "Calculate the left alignment for footnote text."
+  ;; FIXME: Maybe it would be better to go to the footnote's beginning and
+  ;; see at which column it starts.
+  (+ footnote-body-tag-spacing
+     (string-width
+      (concat footnote-start-tag  footnote-end-tag
+              (Footnote-index-to-string
+               (caar (last footnote-text-marker-alist)))))))
+
+(defun Footnote--fill-prefix-string ()
+  "Return the fill prefix to be used by footnote mode."
+  ;; TODO: Prefix to this value other prefix strings, such as those
+  ;; designating a comment line, a message response, or a boxquote.
+  (make-string (Footnote--calc-fn-alignment-column) ?\s))
+
 (defun Footnote--point-in-body-p ()
   "Return non-nil if point is in the buffer text area,
 i.e. before the beginning of the footnote area."
@@ -688,12 +714,12 @@ instead, if applicable."
   (cond
    ;; FIXME: Shouldn't we use `Footnote--get-area-point-max' instead?
    ((not footnote-text-marker-alist) (point-max))
-   ((not before-tag) (cdr (first footnote-text-marker-alist)))
+   ((not before-tag) (cdr (car footnote-text-marker-alist)))
    ((string-equal footnote-section-tag "")
-    (cdr (first footnote-text-marker-alist)))
+    (cdr (car footnote-text-marker-alist)))
    (t
     (save-excursion
-      (goto-char (cdr (first footnote-text-marker-alist)))
+      (goto-char (cdr (car footnote-text-marker-alist)))
       (if (re-search-backward (concat "^" footnote-section-tag-regexp) nil t)
           (match-beginning 0)
         (message "Footnote section tag not found!")
@@ -713,7 +739,7 @@ instead, if applicable."
         ;; function, and repeat.
         ;;
         ;; TODO: integrate sanity checks at reasonable operational points.
-        (cdr (first footnote-text-marker-alist)))))))
+        (cdr (car footnote-text-marker-alist)))))))
 
 (defun Footnote--get-area-point-max ()
   "Return the end of footnote area.
@@ -721,6 +747,18 @@ This is either `point-max' or the start of a `.signature' string, as
 defined by variable `footnote-signature-separator'. If there is no
 footnote area, returns `point-max'."
   (save-excursion (Footnote-goto-char-point-max)))
+
+(defun Footnote--adaptive-fill-function (orig-fun)
+  (or
+   (and
+    footnote-mode
+    footnote-align-to-fn-text
+    (Footnote-text-under-cursor)
+    ;; (not (Footnote--point-in-body-p))
+    ;; (< (point) (Footnote--signature-area-start-point))
+    (Footnote--fill-prefix-string))
+   ;; If not within a footnote's text, fallback to the default.
+   (funcall orig-fun)))
 
 ;;; User functions
 
@@ -913,6 +951,12 @@ play around with the following keys:
   :lighter    footnote-mode-line-string
   :keymap     footnote-minor-mode-map
   ;; (filladapt-mode t)
+  (unless adaptive-fill-function
+    ;; nil and `ignore' have the same semantics for adaptive-fill-function,
+    ;; but only `ignore' behaves correctly with add/remove-function.
+    (setq adaptive-fill-function #'ignore))
+  (remove-function (local 'adaptive-fill-function)
+                   #'Footnote--adaptive-fill-function)
   (when footnote-mode
     ;; (Footnote-setup-keybindings)
     (make-local-variable 'footnote-style)
@@ -922,6 +966,9 @@ play around with the following keys:
     (make-local-variable 'footnote-section-tag-regexp)
     (make-local-variable 'footnote-start-tag)
     (make-local-variable 'footnote-end-tag)
+    (make-local-variable 'adaptive-fill-function)
+    (add-function :around (local 'adaptive-fill-function)
+                  #'Footnote--adaptive-fill-function)
 
     ;; filladapt is an XEmacs package which AFAIK has never been ported
     ;; to Emacs.

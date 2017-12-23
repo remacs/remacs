@@ -87,6 +87,11 @@ strings in non-text modes.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** Footnote-mode
+*** Support Hebrew-style footnotes
+*** Footnote text lines are now aligned.
+Can be controlled via the new variable 'footnote-align-to-fn-text'.
+
 ** CSS mode
 
 ---
