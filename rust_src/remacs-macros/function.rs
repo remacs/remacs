@@ -46,7 +46,7 @@ pub fn parse(item: &syn::Item) -> Result<Function> {
 
             let args = decl.inputs
                 .iter()
-                .map(get_fn_arg_ident)
+                .map(get_fn_arg_ident_ty)
                 .collect::<Result<_>>()?;
 
             Ok(Function {
@@ -83,7 +83,7 @@ fn is_rust_abi(abi: &Option<syn::Abi>) -> bool {
     }
 }
 
-fn get_fn_arg_ident(fn_arg: &syn::FnArg) -> Result<syn::Ident> {
+fn get_fn_arg_ident_ty(fn_arg: &syn::FnArg) -> Result<syn::Ident> {
     match *fn_arg {
         syn::FnArg::Captured(ref pat, _) => match *pat {
             syn::Pat::Ident(_, ref ident, _) => Ok(ident.clone()),
@@ -102,13 +102,11 @@ fn parse_function_type(fndecl: &syn::FnDecl) -> Result<LispFnType> {
                     ArgType::LispObject => {}
                     ArgType::LispObjectSlice => {
                         if fndecl.inputs.len() != 1 {
-                            return Err("`LispObject` and `[LispObject]` cannot be mixed");
+                            return Err("`[LispObject]` cannot be mixed in with other types");
                         }
                         return Ok(LispFnType::Many);
                     }
-                    ArgType::Other => {
-                        return Err("lisp functions should only have `LispObject` args");
-                    }
+                    ArgType::Other => {}
                 }
             }
             _ => return Err("lisp functions cannot have `self` arguments"),

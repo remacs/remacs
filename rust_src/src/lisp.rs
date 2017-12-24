@@ -67,17 +67,17 @@ pub struct LispObject(Lisp_Object);
 impl LispObject {
     #[inline]
     pub fn constant_unbound() -> LispObject {
-        LispObject::from(Qunbound)
+        LispObject::from_raw(Qunbound)
     }
 
     #[inline]
     pub fn constant_t() -> LispObject {
-        LispObject::from(Qt)
+        LispObject::from_raw(Qt)
     }
 
     #[inline]
     pub fn constant_nil() -> LispObject {
-        LispObject::from(Qnil)
+        LispObject::from_raw(Qnil)
     }
 
     #[inline]
@@ -91,7 +91,12 @@ impl LispObject {
 
     #[inline]
     pub fn from_float(v: EmacsDouble) -> LispObject {
-        LispObject::from(unsafe { make_float(v) })
+        LispObject::from_raw(unsafe { make_float(v) })
+    }
+
+    #[inline]
+    pub fn from_raw(i: EmacsInt) -> LispObject {
+        LispObject(i)
     }
 
     #[inline]
@@ -100,10 +105,34 @@ impl LispObject {
     }
 }
 
-impl From<EmacsInt> for LispObject {
+impl<T> From<Option<T>> for LispObject
+where
+    LispObject: From<T>,
+{
     #[inline]
-    fn from(i: EmacsInt) -> Self {
-        LispObject(i)
+    fn from(v: Option<T>) -> Self {
+        match v {
+            None => LispObject::constant_nil(),
+            Some(v) => LispObject::from(v),
+        }
+    }
+}
+
+impl From<LispObject> for bool {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.is_not_nil()
+    }
+}
+
+impl From<bool> for LispObject {
+    #[inline]
+    fn from(v: bool) -> Self {
+        if v {
+            LispObject::constant_t()
+        } else {
+            LispObject::constant_nil()
+        }
     }
 }
 
@@ -130,7 +159,7 @@ impl LispObject {
             ((tag << VALBITS) + ptr) as EmacsInt
         };
 
-        LispObject::from(res)
+        LispObject::from_raw(res)
     }
 
     #[inline]
@@ -186,6 +215,20 @@ impl LispObject {
 
         let lispsym_offset = unsafe { &lispsym as *const _ as EmacsInt };
         ptr_value + lispsym_offset
+    }
+}
+
+impl From<LispObject> for LispSymbolRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_symbol_or_error()
+    }
+}
+
+impl From<LispSymbolRef> for LispObject {
+    #[inline]
+    fn from(s: LispSymbolRef) -> Self {
+        s.as_lisp_obj()
     }
 }
 
@@ -305,7 +348,7 @@ impl LispObject {
         } else {
             (n & INTMASK) as EmacsUint + ((Lisp_Type::Lisp_Int0 as EmacsUint) << VALBITS)
         };
-        LispObject::from(o as EmacsInt)
+        LispObject::from_raw(o as EmacsInt)
     }
 
     /// Convert a positive integer into its LispObject representation.
@@ -401,6 +444,31 @@ impl LispObject {
         } else {
             wrong_type!(Qwholenump, self)
         }
+    }
+}
+
+impl From<LispObject> for EmacsInt {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_fixnum_or_error()
+    }
+}
+
+impl From<LispObject> for Option<EmacsInt> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            None
+        } else {
+            Some(o.as_fixnum_or_error())
+        }
+    }
+}
+
+impl From<EmacsInt> for LispObject {
+    #[inline]
+    fn from(v: EmacsInt) -> Self {
+        LispObject::from_fixnum(v)
     }
 }
 
@@ -685,6 +753,38 @@ impl LispObject {
     }
 }
 
+impl From<LispObject> for LispSubrRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_subr_or_error()
+    }
+}
+
+impl From<LispObject> for LispBufferRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_buffer_or_error()
+    }
+}
+
+impl From<LispObject> for Option<LispBufferRef> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        if o.is_buffer() {
+            Some(o.as_buffer_or_error())
+        } else {
+            None
+        }
+    }
+}
+
+impl From<LispObject> for ThreadStateRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_thread_or_error()
+    }
+}
+
 impl LispObject {
     pub fn as_hash_table_or_error(self) -> LispHashTableRef {
         if self.is_hash_table() {
@@ -702,6 +802,20 @@ impl LispObject {
 
         debug_assert!(object.is_hash_table());
         object
+    }
+}
+
+impl From<LispObject> for LispHashTableRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_hash_table_or_error()
+    }
+}
+
+impl From<LispHashTableRef> for LispObject {
+    #[inline]
+    fn from(h: LispHashTableRef) -> Self {
+        LispObject::from_hash_table(h)
     }
 }
 
@@ -810,7 +924,7 @@ impl Iterator for CarIter {
 impl LispObject {
     #[inline]
     pub fn cons(car: LispObject, cdr: LispObject) -> Self {
-        unsafe { LispObject::from(Fcons(car.to_raw(), cdr.to_raw())) }
+        unsafe { LispObject::from_raw(Fcons(car.to_raw(), cdr.to_raw())) }
     }
 
     #[inline]
@@ -873,6 +987,24 @@ impl LispObject {
     }
 }
 
+impl From<LispObject> for LispCons {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_cons_or_error()
+    }
+}
+
+impl From<LispObject> for Option<LispCons> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        if o.is_list() {
+            Some(o.as_cons_or_error())
+        } else {
+            None
+        }
+    }
+}
+
 /// A newtype for objects we know are conses.
 #[derive(Clone, Copy)]
 pub struct LispCons(LispObject);
@@ -888,12 +1020,12 @@ impl LispCons {
 
     /// Return the car (first cell).
     pub fn car(self) -> LispObject {
-        LispObject::from(unsafe { (*self._extract()).car })
+        LispObject::from_raw(unsafe { (*self._extract()).car })
     }
 
     /// Return the cdr (second cell).
     pub fn cdr(self) -> LispObject {
-        LispObject::from(unsafe { (*self._extract()).cdr })
+        LispObject::from_raw(unsafe { (*self._extract()).cdr })
     }
 
     /// Set the car of the cons cell.
@@ -984,6 +1116,31 @@ impl LispObject {
     }
 }
 
+impl From<LispObject> for EmacsDouble {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.any_to_float_or_error()
+    }
+}
+
+impl From<LispObject> for Option<EmacsDouble> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            None
+        } else {
+            Some(o.any_to_float_or_error())
+        }
+    }
+}
+
+impl From<EmacsDouble> for LispObject {
+    #[inline]
+    fn from(v: EmacsDouble) -> Self {
+        LispObject::from_float(v)
+    }
+}
+
 // String support (LispType == 4)
 
 impl LispObject {
@@ -1013,20 +1170,33 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn empty_unibyte_string() -> LispObject {
-        LispObject::from(unsafe { empty_unibyte_string })
+    pub fn empty_unibyte_string() -> LispStringRef {
+        LispStringRef::from(LispObject::from_raw(unsafe { empty_unibyte_string }))
     }
 
     /// Replaces STRING_SET_UNIBYTE in C. If your string has size 0,
     /// it will replace your string variable with 'empty_unibyte_string'.
     #[inline]
-    pub fn set_string_unibyte(lstring: &mut LispObject) {
-        let mut string = lstring.as_string_or_error();
+    pub fn set_string_unibyte(string: &mut LispStringRef) {
         if string.size == 0 {
-            *lstring = Self::empty_unibyte_string();
+            *string = Self::empty_unibyte_string();
         } else {
             string.size_byte = -1;
         }
+    }
+}
+
+impl From<LispObject> for LispStringRef {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_string_or_error()
+    }
+}
+
+impl From<LispStringRef> for LispObject {
+    #[inline]
+    fn from(s: LispStringRef) -> Self {
+        s.as_lisp_obj()
     }
 }
 

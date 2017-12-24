@@ -4,10 +4,9 @@ use std::{cmp, ptr};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_timespec, dtotimespec, timespec_add, timespec_sub,
-                 wait_reading_process_output};
+                 wait_reading_process_output, EmacsDouble, EmacsInt};
 use remacs_sys::WAIT_READING_MAX;
 
-use floatfns::extract_float;
 use lisp::LispObject;
 use lisp::defsubr;
 
@@ -17,12 +16,8 @@ use lisp::defsubr;
 /// additional wait period, in milliseconds; this is for backwards compatibility.
 /// (Not all operating systems support waiting for a fraction of a second.)
 #[lisp_fn(min = "1")]
-pub fn sleep_for(seconds: LispObject, milliseconds: LispObject) -> LispObject {
-    let mut duration = extract_float(seconds.to_raw());
-    if milliseconds.is_not_nil() {
-        let milliseconds = milliseconds.as_fixnum_or_error() as f64;
-        duration += milliseconds / 1000.0;
-    }
+pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> LispObject {
+    let duration = seconds + (milliseconds.unwrap_or(0) as f64 / 1000.0);
     if duration > 0.0 {
         let mut t = unsafe { dtotimespec(duration) };
         let tend = unsafe { timespec_add(current_timespec(), t) };

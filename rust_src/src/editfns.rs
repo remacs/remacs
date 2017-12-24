@@ -97,8 +97,8 @@ pub fn gap_size() -> LispObject {
 /// If there is no region active, signal an error.
 fn region_limit(beginningp: bool) -> LispObject {
     let current_buf = ThreadState::current_buffer();
-    if LispObject::from(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil()
-        && LispObject::from(unsafe { globals.f_Vmark_even_if_inactive }).is_nil()
+    if LispObject::from_raw(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil()
+        && LispObject::from_raw(unsafe { globals.f_Vmark_even_if_inactive }).is_nil()
         && current_buf.mark_active().is_nil()
     {
         xsignal!(Qmark_inactive);
@@ -201,22 +201,24 @@ pub fn position_bytes(position: LispObject) -> LispObject {
 /// The optional third arg INHERIT, if non-nil, says to inherit text properties
 /// from adjoining text, if those properties are sticky.
 #[lisp_fn(min = "2")]
-pub fn insert_byte(mut byte: LispObject, count: LispObject, inherit: LispObject) -> LispObject {
-    let b = byte.as_fixnum_or_error();
-    if b < 0 || b > 255 {
+pub fn insert_byte(byte: EmacsInt, count: LispObject, inherit: LispObject) -> LispObject {
+    if byte < 0 || byte > 255 {
         args_out_of_range!(
-            byte,
+            LispObject::from_fixnum(byte),
             LispObject::from_fixnum(0),
             LispObject::from_fixnum(255)
         )
     }
     let buf = ThreadState::current_buffer();
-    if b >= 128 && LispObject::from(buf.enable_multibyte_characters).is_not_nil() {
-        byte = LispObject::from_natnum(raw_byte_codepoint(b as c_uchar) as EmacsInt);
-    }
+    let toinsert =
+        if byte >= 128 && LispObject::from_raw(buf.enable_multibyte_characters).is_not_nil() {
+            raw_byte_codepoint(byte as c_uchar) as EmacsInt
+        } else {
+            byte
+        };
     unsafe {
-        LispObject::from(Finsert_char(
-            byte.to_raw(),
+        LispObject::from_raw(Finsert_char(
+            LispObject::from_natnum(toinsert).to_raw(),
             count.to_raw(),
             inherit.to_raw(),
         ))
@@ -283,7 +285,7 @@ pub fn propertize(args: &mut [LispObject]) -> LispObject {
     let first = it.next().unwrap();
     let orig_string = first.as_string_or_error();
 
-    let copy = LispObject::from(unsafe { Fcopy_sequence(first.to_raw()) });
+    let copy = LispObject::from_raw(unsafe { Fcopy_sequence(first.to_raw()) });
 
     // this is a C style Lisp_Object because that is what Fcons expects and returns.
     // Once Fcons is ported to Rust this can be migrated to a LispObject.
@@ -314,7 +316,7 @@ pub fn char_to_string(character: LispObject) -> LispObject {
     let mut buffer = [0_u8; MAX_MULTIBYTE_LENGTH];
     let len = write_codepoint(&mut buffer[..], c);
 
-    LispObject::from(unsafe {
+    LispObject::from_raw(unsafe {
         make_string_from_bytes(buffer.as_ptr() as *const i8, 1, len as isize)
     })
 }
@@ -328,7 +330,7 @@ pub fn byte_to_string(byte: LispObject) -> LispObject {
     }
     let b = b as i8;
 
-    LispObject::from(unsafe { make_string_from_bytes(&b as *const i8, 1, 1) })
+    LispObject::from_raw(unsafe { make_string_from_bytes(&b as *const i8, 1, 1) })
 }
 
 /// Return the first character in STRING.

@@ -8,7 +8,7 @@ use remacs_sys::{make_lispy_position, window_box_left_offset};
 use remacs_sys::Fpos_visible_in_window_p;
 
 use frames::window_frame_live_or_selected_with_action;
-use lisp::{IsLispNatnum, LispObject};
+use lisp::{IsLispNatnum, LispCons, LispObject};
 use lisp::defsubr;
 use windows::window_or_selected_unchecked;
 
@@ -26,7 +26,7 @@ use windows::window_or_selected_unchecked;
 pub fn posn_at_point(pos: LispObject, window: LispObject) -> LispObject {
     let window = window_or_selected_unchecked(window);
 
-    let tem = LispObject::from(unsafe {
+    let tem = LispObject::from_raw(unsafe {
         Fpos_visible_in_window_p(pos.to_raw(), window.to_raw(), Qt)
     });
     if tem.is_nil() {
@@ -96,7 +96,7 @@ pub fn posn_at_x_y(
         y = w.frame_pixel_y(y);
     });
 
-    LispObject::from(unsafe {
+    LispObject::from_raw(unsafe {
         make_lispy_position(
             frame.as_ptr(),
             LispObject::from_fixnum(x as EmacsInt).to_raw(),
@@ -109,25 +109,25 @@ pub fn posn_at_x_y(
 /// Return true if EVENT is a list whose elements are all integers or symbols.
 /// Such a list is not valid as an event,
 /// but it can be a Lucid-style event type list.
-pub fn lucid_event_type_list_p(event: LispObject) -> bool {
-    if !event.is_cons() {
-        return false;
-    }
+pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
+    event.map_or(false, |event| {
+        let first = event.car();
+        if first.eq(LispObject::from_raw(Qhelp_echo))
+            || first.eq(LispObject::from_raw(Qvertical_line))
+            || first.eq(LispObject::from_raw(Qmode_line))
+            || first.eq(LispObject::from_raw(Qheader_line))
+        {
+            return false;
+        }
 
-    let first = event.as_cons_or_error().car();
-    if first.eq(LispObject::from(Qhelp_echo)) || first.eq(LispObject::from(Qvertical_line))
-        || first.eq(LispObject::from(Qmode_line)) || first.eq(LispObject::from(Qheader_line))
-    {
-        return false;
-    }
+        let mut it = event.as_obj().iter_cars_safe();
 
-    let mut it = event.iter_cars_safe();
+        if !it.all(|elt| elt.is_fixnum() || elt.is_symbol()) {
+            return false;
+        }
 
-    if !it.all(|elt| elt.is_fixnum() || elt.is_symbol()) {
-        return false;
-    }
-
-    it.rest().is_nil()
+        it.rest().is_nil()
+    })
 }
 
 include!(concat!(env!("OUT_DIR"), "/keyboard_exports.rs"));

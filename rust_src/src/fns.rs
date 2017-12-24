@@ -5,9 +5,10 @@ use remacs_sys::{Fcons, Fmapc, Vautoload_queue};
 use remacs_sys::{Qfuncall, Qlistp, Qprovide, Qquote, Qsubfeatures, Qwrong_number_of_arguments};
 use remacs_sys::globals;
 
-use lisp::LispObject;
+use lisp::{LispCons, LispObject};
 use lisp::defsubr;
 use lists::{assq, get, member, memq, put};
+use symbols::LispSymbolRef;
 use vectors::length;
 
 /// Return t if FEATURE is present in this Emacs.
@@ -18,11 +19,13 @@ use vectors::length;
 /// looks at the value of the variable `features'.  The optional argument
 /// SUBFEATURE can be used to check a specific subfeature of FEATURE.
 #[lisp_fn(min = "1")]
-pub fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
-    feature.as_symbol_or_error();
-    let mut tem = memq(feature, LispObject::from(unsafe { globals.f_Vfeatures }));
+pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
+    let mut tem = memq(
+        feature.as_lisp_obj(),
+        LispObject::from_raw(unsafe { globals.f_Vfeatures }),
+    );
     if tem.is_not_nil() && subfeature.is_not_nil() {
-        tem = member(subfeature, get(feature, LispObject::from(Qsubfeatures)));
+        tem = member(subfeature, get(feature, LispObject::from_raw(Qsubfeatures)));
     }
     if tem.is_nil() {
         LispObject::constant_nil()
@@ -35,40 +38,51 @@ pub fn featurep(feature: LispObject, subfeature: LispObject) -> LispObject {
 /// The optional argument SUBFEATURES should be a list of symbols listing
 /// particular subfeatures supported in this version of FEATURE.
 #[lisp_fn(min = "1")]
-pub fn provide(feature: LispObject, subfeature: LispObject) -> LispObject {
-    feature.as_symbol_or_error();
+pub fn provide(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     if !subfeature.is_list() {
         wrong_type!(Qlistp, subfeature)
     }
     unsafe {
-        if LispObject::from(Vautoload_queue).is_not_nil() {
+        if LispObject::from_raw(Vautoload_queue).is_not_nil() {
             Vautoload_queue = Fcons(
                 Fcons(LispObject::from_fixnum(0).to_raw(), globals.f_Vfeatures),
                 Vautoload_queue,
             );
         }
     }
-    if memq(feature, LispObject::from(unsafe { globals.f_Vfeatures })).is_nil() {
+    if memq(
+        feature.as_lisp_obj(),
+        LispObject::from_raw(unsafe { globals.f_Vfeatures }),
+    ).is_nil()
+    {
         unsafe {
-            globals.f_Vfeatures = Fcons(feature.to_raw(), globals.f_Vfeatures);
+            globals.f_Vfeatures = Fcons(feature.as_lisp_obj().to_raw(), globals.f_Vfeatures);
         }
     }
     if subfeature.is_not_nil() {
-        put(feature, LispObject::from(Qsubfeatures), subfeature);
+        put(
+            feature.as_lisp_obj(),
+            LispObject::from_raw(Qsubfeatures),
+            subfeature,
+        );
     }
     unsafe {
         globals.f_Vcurrent_load_list = Fcons(
-            Fcons(Qprovide, feature.to_raw()),
+            Fcons(Qprovide, feature.as_lisp_obj().to_raw()),
             globals.f_Vcurrent_load_list,
         );
     }
     // Run any load-hooks for this file.
     unsafe {
-        if let Some(c) = assq(feature, LispObject::from(globals.f_Vafter_load_alist)).as_cons() {
+        if let Some(c) = assq(
+            feature.as_lisp_obj(),
+            LispObject::from_raw(globals.f_Vafter_load_alist),
+        ).as_cons()
+        {
             Fmapc(Qfuncall, c.cdr().to_raw());
         }
     }
-    feature
+    feature.as_lisp_obj()
 }
 
 /// Return the argument, without evaluating it.  `(quote x)' yields `x'.
@@ -82,18 +96,16 @@ pub fn provide(feature: LispObject, subfeature: LispObject) -> LispObject {
 /// of unexpected results when a quoted object is modified.
 /// usage: (quote ARG)
 #[lisp_fn(unevalled = "true")]
-pub fn quote(args: LispObject) -> LispObject {
-    let cons = args.as_cons_or_error();
-
-    if cons.cdr().is_not_nil() {
+pub fn quote(args: LispCons) -> LispObject {
+    if args.cdr().is_not_nil() {
         xsignal!(
             Qwrong_number_of_arguments,
-            LispObject::from(Qquote),
-            length(args)
+            LispObject::from_raw(Qquote),
+            length(args.as_obj())
         );
     }
 
-    cons.car()
+    args.car()
 }
 
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

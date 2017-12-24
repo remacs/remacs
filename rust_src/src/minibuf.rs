@@ -9,7 +9,6 @@ use lisp::LispObject;
 use lisp::defsubr;
 use lists::memq;
 
-
 /// Return t if BUFFER is a minibuffer.
 /// No argument or nil as argument means use current buffer as BUFFER.
 /// BUFFER can be a buffer or a buffer name.
@@ -23,7 +22,9 @@ pub fn minibufferp(object: LispObject) -> LispObject {
         object.as_buffer_or_error();
         object
     };
-    LispObject::from_bool(memq(buffer, LispObject::from(unsafe { Vminibuffer_list })).is_not_nil())
+    LispObject::from_bool(
+        memq(buffer, LispObject::from_raw(unsafe { Vminibuffer_list })).is_not_nil(),
+    )
 }
 
 /// Return the currently active minibuffer window, or nil if none.
@@ -33,7 +34,7 @@ pub fn active_minibuffer_window() -> LispObject {
         if minibuf_level == 0 {
             LispObject::constant_nil()
         } else {
-            LispObject::from(minibuf_window)
+            LispObject::from_raw(minibuf_window)
         }
     }
 }

@@ -46,12 +46,12 @@ impl LispFrameRef {
 
     #[inline]
     pub fn minibuffer_window(self) -> LispObject {
-        LispObject::from(unsafe { fget_minibuffer_window(self.as_ptr()) })
+        LispObject::from_raw(unsafe { fget_minibuffer_window(self.as_ptr()) })
     }
 
     #[inline]
     pub fn root_window(self) -> LispObject {
-        LispObject::from(unsafe { fget_root_window(self.as_ptr()) })
+        LispObject::from_raw(unsafe { fget_root_window(self.as_ptr()) })
     }
 
     #[inline]
@@ -116,7 +116,7 @@ pub fn window_frame_live_or_selected_with_action<W: FnMut(LispWindowRef) -> ()>(
 /// Return the frame that is now selected.
 #[lisp_fn]
 pub fn selected_frame() -> LispObject {
-    unsafe { LispObject::from(current_frame) }
+    unsafe { LispObject::from_raw(current_frame) }
 }
 
 /// Return non-nil if OBJECT is a frame which has not been deleted.
@@ -127,7 +127,7 @@ pub fn selected_frame() -> LispObject {
 #[lisp_fn]
 pub fn frame_live_p(object: LispObject) -> LispObject {
     if object.as_frame().map_or(false, |f| f.is_live()) {
-        LispObject::from(framep(object))
+        framep(object)
     } else {
         LispObject::constant_nil()
     }
@@ -152,7 +152,7 @@ pub fn set_frame_selected_window(
         error!("In `set-frame-selected-window', WINDOW is not on FRAME")
     }
     if frame_ref == selected_frame().as_frame().unwrap() {
-        unsafe { LispObject::from(Fselect_window(window.to_raw(), norecord.to_raw())) }
+        unsafe { LispObject::from_raw(Fselect_window(window.to_raw(), norecord.to_raw())) }
     } else {
         frame_ref.set_selected_window(window);
         window
@@ -177,7 +177,7 @@ pub fn framep(object: LispObject) -> LispObject {
             output_ns => Qns,
             _ => panic!("Invalid frame output_method!"),
         };
-        LispObject::from(output_method)
+        LispObject::from_raw(output_method)
     } else {
         LispObject::constant_nil()
     }

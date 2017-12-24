@@ -6,6 +6,7 @@ use remacs_sys::globals;
 
 use lisp::LispObject;
 use lisp::defsubr;
+use symbols::LispSymbolRef;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
 #[lisp_fn]
@@ -96,10 +97,10 @@ pub fn cdr_safe(object: LispObject) -> LispObject {
 
 /// Take cdr N times on LIST, return the result.
 #[lisp_fn]
-pub fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
+pub fn nthcdr(n: EmacsInt, list: LispObject) -> LispObject {
     let mut it = list.iter_tails_safe();
 
-    match it.nth(n.as_fixnum_or_error() as usize) {
+    match it.nth(n as usize) {
         Some(value) => value.as_obj(),
         None => it.rest(),
     }
@@ -108,9 +109,9 @@ pub fn nthcdr(n: LispObject, list: LispObject) -> LispObject {
 /// Return the Nth element of LIST.
 /// N counts from zero.  If LIST is not that long, nil is returned.
 #[lisp_fn]
-pub fn nth(n: LispObject, list: LispObject) -> LispObject {
+pub fn nth(n: EmacsInt, list: LispObject) -> LispObject {
     list.iter_cars()
-        .nth(n.as_fixnum_or_error() as usize)
+        .nth(n as usize)
         .map_or(LispObject::constant_nil(), |c| c)
 }
 
@@ -383,14 +384,13 @@ pub fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> Li
 /// Return the value of SYMBOL's PROPNAME property.
 /// This is the last value stored with `(put SYMBOL PROPNAME VALUE)'.
 #[lisp_fn]
-pub fn get(symbol: LispObject, propname: LispObject) -> LispObject {
-    let sym = symbol.as_symbol_or_error();
-    let plist_env = LispObject::from(unsafe { globals.f_Voverriding_plist_environment });
-    let propval = plist_get(cdr(assq(symbol, plist_env)), propname);
+pub fn get(symbol: LispSymbolRef, propname: LispObject) -> LispObject {
+    let plist_env = LispObject::from_raw(unsafe { globals.f_Voverriding_plist_environment });
+    let propval = plist_get(cdr(assq(symbol.as_lisp_obj(), plist_env)), propname);
     if propval.is_not_nil() {
         propval
     } else {
-        plist_get(sym.get_plist(), propname)
+        plist_get(symbol.get_plist(), propname)
     }
 }
 
@@ -442,7 +442,7 @@ pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
         return list;
     }
 
-    let item = nthcdr(LispObject::from_fixnum((length / 2 - 1) as EmacsInt), list);
+    let item = nthcdr((length / 2 - 1) as EmacsInt, list);
     let back = cdr(item);
     setcdr(item, LispObject::constant_nil());
 

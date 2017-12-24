@@ -22,15 +22,15 @@ impl ThreadState {
 impl ThreadStateRef {
     #[inline]
     pub fn name(self) -> LispObject {
-        LispObject::from(self.name)
+        LispObject::from_raw(self.name)
     }
 }
 
 /// Return the name of the THREAD.
 /// The name is the same object that was passed to `make-thread'.
 #[lisp_fn]
-pub fn thread_name(thread: LispObject) -> LispObject {
-    thread.as_thread_or_error().name()
+pub fn thread_name(thread: ThreadStateRef) -> LispObject {
+    thread.name()
 }
 
 include!(concat!(env!("OUT_DIR"), "/threads_exports.rs"));

@@ -13,7 +13,6 @@ lazy_static! {
     static ref RNG: Mutex<StdRng> = Mutex::new(StdRng::new().unwrap());
 }
 
-
 /// Return t if OBJECT is a floating point number.
 #[lisp_fn]
 pub fn floatp(object: LispObject) -> LispObject {

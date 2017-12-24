@@ -38,7 +38,7 @@ impl LispHashTableRef {
     }
 
     pub fn get_hash(self) -> LispObject {
-        LispObject::from(self.hash)
+        LispObject::from_raw(self.hash)
     }
 
     pub fn set_next(&mut self, next: LispObject) {
@@ -46,7 +46,7 @@ impl LispHashTableRef {
     }
 
     pub fn get_next(self) -> LispObject {
-        LispObject::from(self.next)
+        LispObject::from_raw(self.next)
     }
 
     pub fn set_index(&mut self, index: LispObject) {
@@ -54,11 +54,11 @@ impl LispHashTableRef {
     }
 
     pub fn get_index(self) -> LispObject {
-        LispObject::from(self.index)
+        LispObject::from_raw(self.index)
     }
 
     pub fn get_key_and_value(self) -> LispObject {
-        LispObject::from(self.key_and_value)
+        LispObject::from_raw(self.key_and_value)
     }
 
     pub fn set_key_and_value(&mut self, key_and_value: LispObject) {
@@ -66,13 +66,13 @@ impl LispHashTableRef {
     }
 
     pub fn get_weak(self) -> LispObject {
-        LispObject::from(self.weak)
+        LispObject::from_raw(self.weak)
     }
 
     #[inline]
     pub fn get_hash_value(self, idx: isize) -> LispObject {
         let index = LispObject::from_natnum((2 * idx + 1) as EmacsInt);
-        unsafe { LispObject::from(Faref(self.key_and_value, index.to_raw())) }
+        unsafe { LispObject::from_raw(Faref(self.key_and_value, index.to_raw())) }
     }
 
     #[inline]
@@ -99,12 +99,12 @@ impl LispHashTableRef {
 
     pub fn get_hash_hash(self, idx: isize) -> LispObject {
         let index = LispObject::from_natnum(idx as EmacsInt);
-        unsafe { LispObject::from(Faref(self.hash, index.to_raw())) }
+        unsafe { LispObject::from_raw(Faref(self.hash, index.to_raw())) }
     }
 
     pub fn get_hash_key(self, idx: isize) -> LispObject {
         let index = LispObject::from_natnum((2 * idx) as EmacsInt);
-        unsafe { LispObject::from(Faref(self.key_and_value, index.to_raw())) }
+        unsafe { LispObject::from_raw(Faref(self.key_and_value, index.to_raw())) }
     }
 
     pub fn size(self) -> usize {
@@ -183,18 +183,17 @@ impl LispHashTableRef {
 /// Return a copy of hash table TABLE.
 /// Keys and values are not copied, only the table itself is.
 #[lisp_fn]
-pub fn copy_hash_table(htable: LispObject) -> LispObject {
-    let mut table = htable.as_hash_table_or_error();
+pub fn copy_hash_table(mut table: LispHashTableRef) -> LispObject {
     let mut new_table = LispHashTableRef::allocate();
     unsafe { new_table.copy(table) };
     assert_ne!(new_table.as_ptr(), table.as_ptr());
 
-    let key_and_value = LispObject::from(unsafe {
+    let key_and_value = LispObject::from_raw(unsafe {
         Fcopy_sequence(new_table.get_key_and_value().to_raw())
     });
-    let hash = LispObject::from(unsafe { Fcopy_sequence(new_table.get_hash().to_raw()) });
-    let next = LispObject::from(unsafe { Fcopy_sequence(new_table.get_next().to_raw()) });
-    let index = LispObject::from(unsafe { Fcopy_sequence(new_table.get_index().to_raw()) });
+    let hash = LispObject::from_raw(unsafe { Fcopy_sequence(new_table.get_hash().to_raw()) });
+    let next = LispObject::from_raw(unsafe { Fcopy_sequence(new_table.get_next().to_raw()) });
+    let index = LispObject::from_raw(unsafe { Fcopy_sequence(new_table.get_index().to_raw()) });
     new_table.set_key_and_value(key_and_value);
     new_table.set_hash(hash);
     new_table.set_next(next);
@@ -211,8 +210,7 @@ pub fn copy_hash_table(htable: LispObject) -> LispObject {
 /// Look up KEY in TABLE and return its associated value.
 /// If KEY is not found, return DFLT which defaults to nil.
 #[lisp_fn(min = "2")]
-pub fn gethash(key: LispObject, table: LispObject, dflt: LispObject) -> LispObject {
-    let hash_table = table.as_hash_table_or_error();
+pub fn gethash(key: LispObject, hash_table: LispHashTableRef, dflt: LispObject) -> LispObject {
     let idx = hash_table.lookup(key, ptr::null_mut());
 
     if idx >= 0 {
@@ -226,9 +224,8 @@ pub fn gethash(key: LispObject, table: LispObject, dflt: LispObject) -> LispObje
 /// If KEY is already present in table, replace its current value with
 /// VALUE.  In any case, return VALUE.
 #[lisp_fn]
-pub fn puthash(key: LispObject, value: LispObject, table: LispObject) -> LispObject {
-    let hash_table = table.as_hash_table_or_error();
-    hash_table.check_impure(table);
+pub fn puthash(key: LispObject, value: LispObject, hash_table: LispHashTableRef) -> LispObject {
+    hash_table.check_impure(LispObject::from_hash_table(hash_table));
 
     let mut hash: EmacsUint = 0;
     let idx = hash_table.lookup(key, &mut hash);
@@ -244,9 +241,8 @@ pub fn puthash(key: LispObject, value: LispObject, table: LispObject) -> LispObj
 
 /// Remove KEY from TABLE.
 #[lisp_fn]
-pub fn remhash(key: LispObject, table: LispObject) -> LispObject {
-    let hash_table = table.as_hash_table_or_error();
-    hash_table.check_impure(table);
+pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> LispObject {
+    hash_table.check_impure(LispObject::from_hash_table(hash_table));
     hash_table.remove(key);
 
     LispObject::constant_nil()
@@ -256,8 +252,7 @@ pub fn remhash(key: LispObject, table: LispObject) -> LispObject {
 /// FUNCTION is called with two arguments, KEY and VALUE.
 /// `maphash' always returns nil.
 #[lisp_fn]
-pub fn maphash(function: LispObject, table: LispObject) -> LispObject {
-    let hash_table = table.as_hash_table_or_error();
+pub fn maphash(function: LispObject, hash_table: LispHashTableRef) -> LispObject {
     for (key, value) in hash_table.iter() {
         call!(function, key, value);
     }
@@ -273,14 +268,14 @@ pub fn hash_table_p(obj: LispObject) -> LispObject {
 
 /// Return the number of elements in TABLE.
 #[lisp_fn]
-pub fn hash_table_count(table: LispObject) -> LispObject {
-    LispObject::from_natnum(table.as_hash_table_or_error().count as EmacsInt)
+pub fn hash_table_count(table: LispHashTableRef) -> LispObject {
+    LispObject::from_natnum(table.count as EmacsInt)
 }
 
 /// Return the current rehash threshold of TABLE.
 #[lisp_fn]
-pub fn hash_table_rehash_threshold(table: LispObject) -> LispObject {
-    LispObject::from_float(table.as_hash_table_or_error().rehash_threshold as EmacsDouble)
+pub fn hash_table_rehash_threshold(table: LispHashTableRef) -> LispObject {
+    LispObject::from_float(table.rehash_threshold as EmacsDouble)
 }
 
 /// Return the size of TABLE.
@@ -288,29 +283,28 @@ pub fn hash_table_rehash_threshold(table: LispObject) -> LispObject {
 /// a hash table than can hold as many elements as TABLE holds
 /// without need for resizing.
 #[lisp_fn]
-pub fn hash_table_size(table: LispObject) -> LispObject {
-    LispObject::from_natnum(table.as_hash_table_or_error().size() as EmacsInt)
+pub fn hash_table_size(table: LispHashTableRef) -> LispObject {
+    LispObject::from_natnum(table.size() as EmacsInt)
 }
 
 /// Return the test TABLE uses.
 #[lisp_fn]
-pub fn hash_table_test(table: LispObject) -> LispObject {
-    LispObject::from(table.as_hash_table_or_error().test.name)
+pub fn hash_table_test(table: LispHashTableRef) -> LispObject {
+    LispObject::from_raw(table.test.name)
 }
 
 /// Return the weakness of TABLE.
 #[lisp_fn]
-pub fn hash_table_weakness(table: LispObject) -> LispObject {
-    table.as_hash_table_or_error().get_weak()
+pub fn hash_table_weakness(table: LispHashTableRef) -> LispObject {
+    table.get_weak()
 }
 
 /// Clear hash table TABLE and return it.
 #[lisp_fn]
-pub fn clrhash(table: LispObject) -> LispObject {
-    let hash_table = table.as_hash_table_or_error();
-    hash_table.check_impure(table);
+pub fn clrhash(hash_table: LispHashTableRef) -> LispObject {
+    hash_table.check_impure(LispObject::from_hash_table(hash_table));
     hash_table.clear();
-    table
+    LispObject::from_hash_table(hash_table)
 }
 
 /// Define a new hash table test with name NAME, a symbol.
@@ -325,7 +319,7 @@ pub fn clrhash(table: LispObject) -> LispObject {
 /// returns nil, then (funcall TEST x1 x2) also returns nil.
 #[lisp_fn]
 pub fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObject) -> LispObject {
-    let sym = LispObject::from(Qhash_table_test);
+    let sym = LispObject::from_raw(Qhash_table_test);
     put(name, sym, list(&mut [test, hash]))
 }
 

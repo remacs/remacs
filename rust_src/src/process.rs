@@ -12,48 +12,49 @@ use lisp::defsubr;
 
 use buffers::get_buffer;
 use lists::{assoc, cdr, plist_put};
+use multibyte::LispStringRef;
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
 impl LispProcessRef {
     #[inline]
     fn name(self) -> LispObject {
-        LispObject::from(self.name)
+        LispObject::from_raw(self.name)
     }
 
     #[inline]
     fn tty_name(self) -> LispObject {
-        LispObject::from(self.tty_name)
+        LispObject::from_raw(self.tty_name)
     }
 
     #[inline]
     fn command(self) -> LispObject {
-        LispObject::from(self.command)
+        LispObject::from_raw(self.command)
     }
 
     #[inline]
     fn mark(self) -> LispObject {
-        LispObject::from(self.mark)
+        LispObject::from_raw(self.mark)
     }
 
     #[inline]
     fn filter(self) -> LispObject {
-        LispObject::from(self.filter)
+        LispObject::from_raw(self.filter)
     }
 
     #[inline]
     fn sentinel(self) -> LispObject {
-        LispObject::from(self.sentinel)
+        LispObject::from_raw(self.sentinel)
     }
 
     #[inline]
     fn plist(self) -> LispObject {
-        LispObject::from(self.plist)
+        LispObject::from_raw(self.plist)
     }
 
     #[inline]
     fn buffer(self) -> LispObject {
-        LispObject::from(self.buffer)
+        LispObject::from_raw(self.buffer)
     }
 
     #[inline]
@@ -87,7 +88,7 @@ pub fn get_process(name: LispObject) -> LispObject {
         name.as_string_or_error();
         cdr(assoc(
             name,
-            LispObject::from(unsafe { Vprocess_alist }),
+            LispObject::from_raw(unsafe { Vprocess_alist }),
             LispObject::constant_nil(),
         ))
     }
@@ -112,12 +113,12 @@ pub fn process_buffer(process: LispObject) -> LispObject {
 /// This is the pid of the external process which PROCESS uses or talks to.
 /// For a network, serial, and pipe connections, this value is nil.
 #[lisp_fn]
-pub fn process_id(process: LispObject) -> LispObject {
+pub fn process_id(process: LispObject) -> Option<EmacsInt> {
     let pid = unsafe { pget_pid(process.as_process_or_error().as_ptr()) };
     if pid != 0 {
-        LispObject::from_fixnum(pid as EmacsInt)
+        Some(pid as EmacsInt)
     } else {
-        LispObject::constant_nil()
+        None
     }
 }
 
@@ -134,7 +135,7 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
     if buf.is_nil() {
         return LispObject::constant_nil();
     }
-    for tail in LispObject::from(unsafe { Vprocess_alist }).iter_tails() {
+    for tail in LispObject::from_raw(unsafe { Vprocess_alist }).iter_tails() {
         let p = tail.car().as_cons().unwrap().cdr();
         if buf.eq(p.as_process().unwrap().buffer()) {
             return p;
@@ -184,7 +185,7 @@ pub fn process_mark(process: LispObject) -> LispObject {
 /// Return a list of all processes that are Emacs sub-processes.
 #[lisp_fn]
 pub fn process_list() -> LispObject {
-    LispObject::from(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
+    LispObject::from_raw(unsafe { Fmapcar(Qcdr, Vprocess_alist) })
 }
 
 /// Return the plist of PROCESS.
@@ -224,7 +225,7 @@ pub fn process_status(process: LispObject) -> LispObject {
     let p = if process.is_string() {
         get_process(process)
     } else {
-        LispObject::from(unsafe { cget_process(process.to_raw()) })
+        LispObject::from_raw(unsafe { cget_process(process.to_raw()) })
     };
     if p.is_nil() {
         return p;
@@ -233,21 +234,22 @@ pub fn process_status(process: LispObject) -> LispObject {
     if unsafe { pget_raw_status_new(p_ref.as_ptr()) } != 0 {
         unsafe { update_status(p_ref.as_ptr()) };
     }
-    let mut status = LispObject::from(p_ref.status);
+    let mut status = LispObject::from_raw(p_ref.status);
     if let Some(c) = status.as_cons() {
-        status = LispObject::from(c.car());
+        status = c.car();
     };
-    let process_type = LispObject::from(p_ref.process_type);
-    if process_type.eq(LispObject::from(Qnetwork)) || process_type.eq(LispObject::from(Qserial))
-        || process_type.eq(LispObject::from(Qpipe))
+    let process_type = LispObject::from_raw(p_ref.process_type);
+    if process_type.eq(LispObject::from_raw(Qnetwork))
+        || process_type.eq(LispObject::from_raw(Qserial))
+        || process_type.eq(LispObject::from_raw(Qpipe))
     {
-        let process_command = LispObject::from(p_ref.command);
-        if status.eq(LispObject::from(Qexit)) {
-            status = LispObject::from(Qclosed);
+        let process_command = LispObject::from_raw(p_ref.command);
+        if status.eq(LispObject::from_raw(Qexit)) {
+            status = LispObject::from_raw(Qclosed);
         } else if process_command.eq(LispObject::constant_t()) {
-            status = LispObject::from(Qstop);
-        } else if status.eq(LispObject::from(Qrun)) {
-            status = LispObject::from(Qopen);
+            status = LispObject::from_raw(Qstop);
+        } else if status.eq(LispObject::from_raw(Qrun)) {
+            status = LispObject::from_raw(Qopen);
         }
     }
     status
@@ -262,16 +264,13 @@ pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject
         buffer.as_buffer_or_error();
     }
     p_ref.set_buffer(buffer);
-    let process_type = LispObject::from(p_ref.process_type);
-    if process_type.eq(LispObject::from(Qnetwork)) || process_type.eq(LispObject::from(Qserial))
-        || process_type.eq(LispObject::from(Qpipe))
+    let process_type = LispObject::from_raw(p_ref.process_type);
+    if process_type.eq(LispObject::from_raw(Qnetwork))
+        || process_type.eq(LispObject::from_raw(Qserial))
+        || process_type.eq(LispObject::from_raw(Qpipe))
     {
-        let childp = LispObject::from(p_ref.childp);
-        p_ref.set_childp(plist_put(
-            LispObject::from(childp),
-            LispObject::from(QCbuffer),
-            buffer,
-        ));
+        let childp = LispObject::from_raw(p_ref.childp);
+        p_ref.set_childp(plist_put(childp, LispObject::from_raw(QCbuffer), buffer));
     }
     unsafe { setup_process_coding_systems(process.to_raw()) };
     buffer
@@ -287,14 +286,13 @@ pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject
 /// If PROCESS is a non-blocking network process that hasn't been fully
 /// set up yet, this function will block until socket setup has completed.
 #[lisp_fn]
-pub fn process_send_string(process: LispObject, string: LispObject) -> LispObject {
-    let s = string.as_string_or_error();
+pub fn process_send_string(process: LispObject, string: LispStringRef) -> LispObject {
     unsafe {
         send_process(
             cget_process(process.to_raw()),
-            s.data,
-            STRING_BYTES(s.as_ptr()),
-            string.to_raw(),
+            string.data,
+            STRING_BYTES(string.as_ptr()),
+            string.as_lisp_obj().to_raw(),
         )
     };
     LispObject::constant_nil()

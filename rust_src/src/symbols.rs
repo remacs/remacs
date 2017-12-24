@@ -13,15 +13,15 @@ pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
 
 impl LispSymbolRef {
     pub fn symbol_name(self) -> LispObject {
-        LispObject::from(self.name)
+        LispObject::from_raw(self.name)
     }
 
     pub fn get_function(self) -> LispObject {
-        LispObject::from(self.function)
+        LispObject::from_raw(self.function)
     }
 
     pub fn get_plist(self) -> LispObject {
-        LispObject::from(self.plist)
+        LispObject::from_raw(self.plist)
     }
 
     pub fn set_plist(&mut self, plist: LispObject) {
@@ -50,7 +50,7 @@ impl LispSymbolRef {
     }
 
     pub fn as_lisp_obj(mut self) -> LispObject {
-        LispObject::from(unsafe { make_lisp_symbol(self.as_mut()) })
+        LispObject::from_raw(unsafe { make_lisp_symbol(self.as_mut()) })
     }
 
     /// Return the symbol holding SYMBOL's value.  Signal
@@ -93,10 +93,9 @@ pub fn symbolp(object: LispObject) -> LispObject {
 
 /// Return SYMBOL's name, a string.
 #[lisp_fn]
-pub fn symbol_name(symbol: LispObject) -> LispObject {
-    symbol.as_symbol_or_error().symbol_name()
+pub fn symbol_name(symbol: LispSymbolRef) -> LispObject {
+    symbol.symbol_name()
 }
-
 
 /* It has been previously suggested to make this function an alias for
    symbol-function, but upon discussion at Bug#23957, there is a risk
@@ -105,27 +104,26 @@ pub fn symbol_name(symbol: LispObject) -> LispObject {
 
 /// Return t if SYMBOL's function definition is not void.
 #[lisp_fn]
-pub fn fboundp(symbol: LispObject) -> LispObject {
-    let symbol = symbol.as_symbol_or_error();
+pub fn fboundp(symbol: LispSymbolRef) -> LispObject {
     LispObject::from_bool(symbol.get_function().is_not_nil())
 }
 
 /// Return SYMBOL's function definition, or nil if that is void.
 #[lisp_fn]
-pub fn symbol_function(symbol: LispObject) -> LispObject {
-    symbol.as_symbol_or_error().get_function()
+pub fn symbol_function(symbol: LispSymbolRef) -> LispObject {
+    symbol.get_function()
 }
 
 /// Return SYMBOL's property list.
 #[lisp_fn]
-pub fn symbol_plist(symbol: LispObject) -> LispObject {
-    symbol.as_symbol_or_error().get_plist()
+pub fn symbol_plist(symbol: LispSymbolRef) -> LispObject {
+    symbol.get_plist()
 }
 
 /// Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.
 #[lisp_fn]
-pub fn setplist(symbol: LispObject, newplist: LispObject) -> LispObject {
-    symbol.as_symbol_or_error().set_plist(newplist);
+pub fn setplist(mut symbol: LispSymbolRef, newplist: LispObject) -> LispObject {
+    symbol.set_plist(newplist);
     newplist
 }
 
@@ -140,7 +138,6 @@ pub fn fmakunbound(symbol: LispObject) -> LispObject {
     sym.set_function(LispObject::constant_nil());
     symbol
 }
-
 
 // Define this in Rust to avoid unnecessarily consing up the symbol
 // name.
@@ -199,7 +196,7 @@ pub fn symbol_value(symbol: LispObject) -> LispObject {
     if val == LispObject::constant_unbound().to_raw() {
         xsignal!(Qvoid_variable, symbol);
     }
-    LispObject::from(val)
+    LispObject::from_raw(val)
 }
 
 include!(concat!(env!("OUT_DIR"), "/symbols_exports.rs"));

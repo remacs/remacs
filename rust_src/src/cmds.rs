@@ -79,9 +79,9 @@ pub fn backward_char(n: LispObject) -> LispObject {
 
 /// Return buffer position N characters after (before if N negative) point.
 #[lisp_fn]
-pub fn forward_point(n: LispObject) -> LispObject {
+pub fn forward_point(n: EmacsInt) -> EmacsInt {
     let pt = ThreadState::current_buffer().pt();
-    LispObject::from_fixnum(n.as_fixnum_or_error() + pt as EmacsInt)
+    n + pt as EmacsInt
 }
 
 /// Move point to beginning of current line (in the logical order).
@@ -101,7 +101,7 @@ pub fn beginning_of_line(mut n: LispObject) -> LispObject {
     }
 
     unsafe {
-        let pos = LispObject::from(Fline_beginning_position(n.to_raw()));
+        let pos = LispObject::from_raw(Fline_beginning_position(n.to_raw()));
         set_point(pos.as_fixnum_or_error() as isize);
     };
 
@@ -131,7 +131,7 @@ pub fn end_of_line(n: LispObject) -> LispObject {
     let cur_buf = ThreadState::current_buffer();
     loop {
         newpos = unsafe {
-            LispObject::from(Fline_end_position(num.to_raw())).as_fixnum_or_error() as isize
+            LispObject::from_raw(Fline_end_position(num.to_raw())).as_fixnum_or_error() as isize
         };
         unsafe { set_point(newpos) };
         pt = cur_buf.pt();

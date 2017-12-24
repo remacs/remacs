@@ -22,7 +22,7 @@ impl LispWindowRef {
     /// This is also sometimes called a "leaf window" in Emacs sources.
     #[inline]
     pub fn is_live(self) -> bool {
-        LispObject::from(self.contents).is_buffer()
+        LispObject::from_raw(self.contents).is_buffer()
     }
 
     #[inline]
@@ -39,22 +39,22 @@ impl LispWindowRef {
 
     #[inline]
     pub fn point_marker(self) -> LispObject {
-        LispObject::from(self.pointm)
+        LispObject::from_raw(self.pointm)
     }
 
     #[inline]
     pub fn contents(self) -> LispObject {
-        LispObject::from(self.contents)
+        LispObject::from_raw(self.contents)
     }
 
     #[inline]
     pub fn frame(self) -> LispObject {
-        LispObject::from(self.frame)
+        LispObject::from_raw(self.frame)
     }
 
     #[inline]
     pub fn start_marker(self) -> LispObject {
-        LispObject::from(self.start)
+        LispObject::from_raw(self.start)
     }
 
     #[inline]
@@ -82,8 +82,8 @@ impl LispWindowRef {
     }
 
     pub fn total_width(self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from(Qfloor);
-        let qceiling = LispObject::from(Qceiling);
+        let qfloor = LispObject::from_raw(Qfloor);
+        let qceiling = LispObject::from_raw(Qceiling);
 
         if !(round == qfloor || round == qceiling) {
             self.total_cols
@@ -100,8 +100,8 @@ impl LispWindowRef {
     }
 
     pub fn total_height(self, round: LispObject) -> i32 {
-        let qfloor = LispObject::from(Qfloor);
-        let qceiling = LispObject::from(Qceiling);
+        let qfloor = LispObject::from_raw(Qfloor);
+        let qceiling = LispObject::from_raw(Qceiling);
 
         if !(round == qfloor || round == qceiling) {
             self.total_lines
@@ -163,14 +163,14 @@ impl LispWindowRef {
     /// buffer's 'mode-line-format' value must be non-nil.  Finally, W must
     /// be higher than its frame's canonical character height.
     pub fn wants_mode_line(self) -> bool {
-        let window_mode_line_format = LispObject::from(unsafe {
+        let window_mode_line_format = LispObject::from_raw(unsafe {
             window_parameter(self.as_ptr(), Qmode_line_format)
         });
 
         self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
-            && !window_mode_line_format.eq(LispObject::from(Qnone))
+            && !window_mode_line_format.eq(LispObject::from_raw(Qnone))
             && (window_mode_line_format.is_not_nil()
-                || LispObject::from(self.contents().as_buffer_or_error().mode_line_format)
+                || LispObject::from_raw(self.contents().as_buffer_or_error().mode_line_format)
                     .is_not_nil())
             && self.pixel_height() > self.frame().as_frame_or_error().line_height()
     }
@@ -185,7 +185,7 @@ impl LispWindowRef {
     /// be higher than its frame's canonical character height and be able to
     /// accommodate a mode line too if necessary (the mode line prevails).
     pub fn wants_header_line(self) -> bool {
-        let window_header_line_format = LispObject::from(unsafe {
+        let window_header_line_format = LispObject::from_raw(unsafe {
             window_parameter(self.as_ptr(), Qheader_line_format)
         });
 
@@ -195,9 +195,9 @@ impl LispWindowRef {
         }
 
         self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
-            && !window_header_line_format.eq(LispObject::from(Qnone))
+            && !window_header_line_format.eq(LispObject::from_raw(Qnone))
             && (window_header_line_format.is_not_nil()
-                || LispObject::from(self.contents().as_buffer_or_error().header_line_format)
+                || LispObject::from_raw(self.contents().as_buffer_or_error().header_line_format)
                     .is_not_nil()) && self.pixel_height() > height
     }
 }
@@ -274,7 +274,7 @@ pub fn window_point(window: LispObject) -> LispObject {
 /// selected windows appears and to which many commands apply.
 #[lisp_fn]
 pub fn selected_window() -> LispObject {
-    unsafe { LispObject::from(current_window) }
+    unsafe { LispObject::from_raw(current_window) }
 }
 
 /// Return the buffer displayed in window WINDOW.
@@ -351,7 +351,7 @@ pub fn window_combination_limit(window: LispObject) -> LispObject {
         error!("Combination limit is meaningful for internal windows only");
     }
 
-    LispObject::from(w.combination_limit)
+    LispObject::from_raw(w.combination_limit)
 }
 
 /// Set combination limit of window WINDOW to LIMIT; return LIMIT.
@@ -378,7 +378,7 @@ pub fn set_window_combination_limit(window: LispObject, limit: LispObject) -> Li
 #[lisp_fn]
 pub fn minibuffer_selected_window() -> LispObject {
     let level = unsafe { minibuf_level };
-    let current_minibuf = unsafe { LispObject::from(current_minibuf_window) };
+    let current_minibuf = unsafe { LispObject::from_raw(current_minibuf_window) };
     if level > 0 && selected_window().as_window_or_error().is_minibuffer()
         && current_minibuf.as_window().unwrap().is_live()
     {
@@ -448,7 +448,7 @@ pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject 
 /// Return nil for a window with no parent (e.g. a root window).
 #[lisp_fn(min = "0")]
 pub fn window_parent(window: LispObject) -> LispObject {
-    LispObject::from(unsafe {
+    LispObject::from_raw(unsafe {
         wget_parent(window_valid_or_selected(window).as_ptr())
     })
 }

@@ -11,7 +11,7 @@ use threads::ThreadState;
 #[lisp_fn]
 pub fn category_table_p(arg: LispObject) -> LispObject {
     LispObject::from_bool(arg.as_char_table().map_or(false, |table| {
-        LispObject::from(table.purpose).eq(LispObject::from(Qcategory_table))
+        LispObject::from_raw(table.purpose).eq(LispObject::from_raw(Qcategory_table))
     }))
 }
 
@@ -20,7 +20,7 @@ pub fn category_table_p(arg: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn category_table() -> LispObject {
     let buffer_ref = ThreadState::current_buffer();
-    LispObject::from(buffer_ref.category_table)
+    LispObject::from_raw(buffer_ref.category_table)
 }
 
 include!(concat!(env!("OUT_DIR"), "/category_exports.rs"));

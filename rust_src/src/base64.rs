@@ -11,7 +11,7 @@ use remacs_sys::make_unibyte_string;
 
 use lisp::LispObject;
 use lisp::defsubr;
-use multibyte::{multibyte_char_at, raw_byte_from_codepoint, MAX_5_BYTE_CHAR};
+use multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR};
 use strings::MIME_LINE_LENGTH;
 
 #[no_mangle]
@@ -241,9 +241,7 @@ bWFpbGluZyBsaXN0cywgc2VlIDxodHRwOi8vbGlzdHMuZ251Lm9yZy8+LgoK";
 /// Optional second argument NO-LINE-BREAK means do not break long lines
 /// into shorter lines.
 #[lisp_fn(min = "1")]
-pub fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> LispObject {
-    let mut string = string.as_string_or_error();
-
+pub fn base64_encode_string(mut string: LispStringRef, no_line_break: bool) -> LispObject {
     // We need to allocate enough room for the encoded text
     // We will need 33 1/3% more space, plus a newline every 76 characters(MIME_LINE_LENGTH)
     // and then round up
@@ -260,21 +258,19 @@ pub fn base64_encode_string(string: LispObject, no_line_break: LispObject) -> Li
         length,
         encoded,
         allength,
-        no_line_break.is_nil(),
+        no_line_break,
         string.is_multibyte(),
     );
     if encoded_length < 0 {
         error!("Multibyte character in data for base64 encoding");
     }
 
-    unsafe { LispObject::from(make_unibyte_string(encoded, encoded_length)) }
+    unsafe { LispObject::from_raw(make_unibyte_string(encoded, encoded_length)) }
 }
 
 /// Base64-decode STRING and return the result.
 #[lisp_fn]
-pub fn base64_decode_string(string: LispObject) -> LispObject {
-    let mut string = string.as_string_or_error();
-
+pub fn base64_decode_string(mut string: LispStringRef) -> LispObject {
     let length = string.len_bytes();
     let mut buffer: Vec<c_char> = Vec::with_capacity(length as usize);
 
@@ -287,7 +283,7 @@ pub fn base64_decode_string(string: LispObject) -> LispObject {
     } else if decoded_length < 0 {
         error!("Invalid base64 data");
     }
-    unsafe { LispObject::from(make_unibyte_string(decoded, decoded_length)) }
+    unsafe { LispObject::from_raw(make_unibyte_string(decoded, decoded_length)) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/base64_exports.rs"));
