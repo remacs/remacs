@@ -79,9 +79,7 @@ where
             format!("#[lisp_fn{}]", src)
         };
         syn::parse_outer_attr(&src)
-            .and_then(|v| {
-                LispFnArgsRaw::from_meta_item(&v.value).map_err(|e| e.to_string())
-            })
+            .and_then(|v| LispFnArgsRaw::from_meta_item(&v.value).map_err(|e| e.to_string()))
             .and_then(|v| v.convert(def_name, def_min_args))
     }
 }

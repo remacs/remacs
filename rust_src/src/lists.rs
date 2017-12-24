@@ -84,7 +84,9 @@ pub fn cdr(list: LispObject) -> LispObject {
 pub fn car_safe(object: LispObject) -> LispObject {
     object
         .as_cons()
-        .map_or(LispObject::constant_nil(), |cons| cons.car())
+        .map_or(LispObject::constant_nil(), |cons| {
+            cons.car()
+        })
 }
 
 /// Return the cdr of OBJECT if it is a cons cell, or else nil.
@@ -92,7 +94,9 @@ pub fn car_safe(object: LispObject) -> LispObject {
 pub fn cdr_safe(object: LispObject) -> LispObject {
     object
         .as_cons()
-        .map_or(LispObject::constant_nil(), |cons| cons.cdr())
+        .map_or(LispObject::constant_nil(), |cons| {
+            cons.cdr()
+        })
 }
 
 /// Take cdr N times on LIST, return the result.

@@ -123,9 +123,8 @@ fn get_coding_system_for_buffer(
             end.to_raw(),
             buffer_file_name(object).to_raw(),
         ];
-        let val = LispObject::from_raw(unsafe {
-            Ffind_operation_coding_system(4, args.as_mut_ptr())
-        });
+        let val =
+            LispObject::from_raw(unsafe { Ffind_operation_coding_system(4, args.as_mut_ptr()) });
         if val.is_cons() && val.as_cons_or_error().cdr().is_not_nil() {
             return val.as_cons_or_error().cdr();
         }

@@ -23,7 +23,6 @@ const FUNCTION: c_int = 5;
 
 type AddGlobalFn = fn(c_int, *const c_char, c_int, *const c_char) -> *const ();
 
-
 #[no_mangle]
 pub extern "C" fn scan_rust_file(
     filename: *const c_char,
@@ -94,9 +93,8 @@ pub extern "C" fn scan_rust_file(
 
             let nargs = args.len() / 2;
             let def_min_args = if has_many_args { 0 } else { nargs as i16 };
-            let attr_props = parse_lisp_fn(&attribute, name, def_min_args).unwrap_or_else(|e| {
-                panic!("Invalid #[lisp_fn] macro ({}): {}", attribute, e)
-            });
+            let attr_props = parse_lisp_fn(&attribute, name, def_min_args)
+                .unwrap_or_else(|e| panic!("Invalid #[lisp_fn] macro ({}): {}", attribute, e));
 
             if generate_globals != 0 {
                 let c_name_str = CString::new(format!("F{}", attr_props.c_name)).unwrap();
@@ -129,10 +127,7 @@ pub extern "C" fn scan_rust_file(
                 // Print contents for docfile to stdout
                 print!(
                     "\x1f{}{}\n{}\n{}",
-                    "F",
-                    attr_props.name,
-                    docstring,
-                    docstring_usage
+                    "F", attr_props.name, docstring, docstring_usage
                 );
             }
         }

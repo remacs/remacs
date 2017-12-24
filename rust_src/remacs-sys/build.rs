@@ -166,8 +166,7 @@ fn generate_globals() {
                         out_file,
                         "pub const {}: Lisp_Object = {} \
                          * (::std::mem::size_of::<Lisp_Symbol>() as EmacsInt);\n",
-                        symbol_name,
-                        value
+                        symbol_name, value
                     ).expect("Write error in reading symbols stage");
                 } else if line.trim().starts_with("_Noreturn") {
                     parse_state = ParseState::Complete
