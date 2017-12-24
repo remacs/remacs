@@ -6283,10 +6283,17 @@ not_in_argv (NSString *arg)
          by doCommandBySelector: deleteBackward: */
 - (void)insertText: (id)aString
 {
-  NSString *s = aString;
-  NSUInteger len = [s length];
+  NSString *s;
+  NSUInteger len;
 
   NSTRACE ("[EmacsView insertText:]");
+
+  if ([aString isKindOfClass:[NSAttributedString class]])
+    s = [aString string];
+  else
+    s = aString;
+
+  len = [s length];
 
   if (NS_KEYLOG)
     NSLog (@"insertText '%@'\tlen = %lu", aString, (unsigned long) len);

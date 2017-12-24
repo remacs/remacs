@@ -3135,6 +3135,19 @@ position (0, 0) of the selected frame's terminal. */)
                            (pt.y - screen.frame.origin.y)));
 }
 
+DEFUN ("ns-show-character-palette",
+       Fns_show_character_palette,
+       Sns_show_character_palette, 0, 0, 0,
+       doc: /* Show the macOS character palette.  */)
+       (void)
+{
+  struct frame *f = SELECTED_FRAME ();
+  EmacsView *view = FRAME_NS_VIEW (f);
+  [NSApp orderFrontCharacterPalette:view];
+
+  return Qnil;
+}
+
 /* ==========================================================================
 
     Class implementations
@@ -3326,6 +3339,7 @@ be used as the image of the icon representing the frame.  */);
   defsubr (&Sns_frame_restack);
   defsubr (&Sns_set_mouse_absolute_pixel_position);
   defsubr (&Sns_mouse_absolute_pixel_position);
+  defsubr (&Sns_show_character_palette);
   defsubr (&Sx_display_mm_width);
   defsubr (&Sx_display_mm_height);
   defsubr (&Sx_display_screens);
