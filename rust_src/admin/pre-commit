@@ -14,7 +14,7 @@ finish() {
 
 trap finish EXIT
 
-set -eu
+set -u
 
 git stash save -q --keep-index $STASH_NAME
 
