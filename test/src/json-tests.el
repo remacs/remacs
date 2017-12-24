@@ -92,7 +92,9 @@
   (should (equal (json-parse-string "[\"\\nasd\\u0444\\u044b\\u0432fgh\\t\"]")
                  ["\nasdфывfgh\t"]))
   (should (equal (json-parse-string "[\"\\uD834\\uDD1E\"]") ["\U0001D11E"]))
-  (should-error (json-parse-string "foo") :type 'json-parse-error))
+  (should-error (json-parse-string "foo") :type 'json-parse-error)
+  ;; FIXME: Is this the right behavior?
+  (should (equal (json-parse-string "[\"\u00C4\xC3\x84\"]") ["\u00C4\u00C4"])))
 
 (ert-deftest json-serialize/string ()
   (skip-unless (fboundp 'json-serialize))
@@ -100,7 +102,9 @@
   (should (equal (json-serialize ["a\n\fb"]) "[\"a\\n\\fb\"]"))
   (should (equal (json-serialize ["\nasdфыв\u001f\u007ffgh\t"])
                  "[\"\\nasdфыв\\u001F\u007ffgh\\t\"]"))
-  (should (equal (json-serialize ["a\0b"]) "[\"a\\u0000b\"]")))
+  (should (equal (json-serialize ["a\0b"]) "[\"a\\u0000b\"]"))
+  ;; FIXME: Is this the right behavior?
+  (should (equal (json-serialize ["\u00C4\xC3\x84"]) "[\"\u00C4\u00C4\"]")))
 
 (ert-deftest json-serialize/invalid-unicode ()
   (skip-unless (fboundp 'json-serialize))
@@ -109,7 +113,8 @@
   (should-error (json-serialize ["a\uDBBBb"]) :type 'json-out-of-memory)
   (should-error (json-serialize ["u\x110000v"]) :type 'json-out-of-memory)
   (should-error (json-serialize ["u\x3FFFFFv"]) :type 'json-out-of-memory)
-  (should-error (json-serialize ["u\xCCv"]) :type 'json-out-of-memory))
+  (should-error (json-serialize ["u\xCCv"]) :type 'json-out-of-memory)
+  (should-error (json-serialize ["u\u00C4\xCCv"]) :type 'json-out-of-memory))
 
 (ert-deftest json-parse-string/null ()
   (skip-unless (fboundp 'json-parse-string))
@@ -119,22 +124,33 @@
 
 (ert-deftest json-parse-string/invalid-unicode ()
   "Some examples from
-https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt."
+https://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt.
+Test with both unibyte and multibyte strings."
   (skip-unless (fboundp 'json-parse-string))
   ;; Invalid UTF-8 code unit sequences.
   (should-error (json-parse-string "[\"\x80\"]") :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\u00C4\x80\"]") :type 'json-parse-error)
   (should-error (json-parse-string "[\"\xBF\"]") :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\u00C4\xBF\"]") :type 'json-parse-error)
   (should-error (json-parse-string "[\"\xFE\"]") :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\u00C4\xFE\"]") :type 'json-parse-error)
   (should-error (json-parse-string "[\"\xC0\xAF\"]") :type 'json-parse-error)
-  (should-error (json-parse-string "[\"\xC0\x80\"]") :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\u00C4\xC0\xAF\"]")
+                :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\u00C4\xC0\x80\"]")
+                :type 'json-parse-error)
   ;; Surrogates.
   (should-error (json-parse-string "[\"\uDB7F\"]")
                 :type 'json-parse-error)
   (should-error (json-parse-string "[\"\xED\xAD\xBF\"]")
                 :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\u00C4\xED\xAD\xBF\"]")
+                :type 'json-parse-error)
   (should-error (json-parse-string "[\"\uDB7F\uDFFF\"]")
                 :type 'json-parse-error)
   (should-error (json-parse-string "[\"\xED\xAD\xBF\xED\xBF\xBF\"]")
+                :type 'json-parse-error)
+  (should-error (json-parse-string "[\"\u00C4\xED\xAD\xBF\xED\xBF\xBF\"]")
                 :type 'json-parse-error))
 
 (ert-deftest json-parse-string/incomplete ()
