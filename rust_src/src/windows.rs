@@ -163,9 +163,8 @@ impl LispWindowRef {
     /// buffer's 'mode-line-format' value must be non-nil.  Finally, W must
     /// be higher than its frame's canonical character height.
     pub fn wants_mode_line(self) -> bool {
-        let window_mode_line_format = LispObject::from_raw(unsafe {
-            window_parameter(self.as_ptr(), Qmode_line_format)
-        });
+        let window_mode_line_format =
+            LispObject::from_raw(unsafe { window_parameter(self.as_ptr(), Qmode_line_format) });
 
         self.is_live() && !self.is_minibuffer() && !self.is_pseudo()
             && !window_mode_line_format.eq(LispObject::from_raw(Qnone))
@@ -185,9 +184,8 @@ impl LispWindowRef {
     /// be higher than its frame's canonical character height and be able to
     /// accommodate a mode line too if necessary (the mode line prevails).
     pub fn wants_header_line(self) -> bool {
-        let window_header_line_format = LispObject::from_raw(unsafe {
-            window_parameter(self.as_ptr(), Qheader_line_format)
-        });
+        let window_header_line_format =
+            LispObject::from_raw(unsafe { window_parameter(self.as_ptr(), Qheader_line_format) });
 
         let mut height = self.frame().as_frame_or_error().line_height();
         if self.wants_mode_line() {
@@ -448,9 +446,7 @@ pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject 
 /// Return nil for a window with no parent (e.g. a root window).
 #[lisp_fn(min = "0")]
 pub fn window_parent(window: LispObject) -> LispObject {
-    LispObject::from_raw(unsafe {
-        wget_parent(window_valid_or_selected(window).as_ptr())
-    })
+    LispObject::from_raw(unsafe { wget_parent(window_valid_or_selected(window).as_ptr()) })
 }
 
 /// Return the frame that window WINDOW is on.

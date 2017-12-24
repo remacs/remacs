@@ -140,15 +140,13 @@ fn export_function(
                     "
 `{}` is not public.
 {}",
-                    name,
-                    msg
+                    name, msg
                 ),
             ))
         } else {
             eprintln!(
                 "Unhandled code in the {} module at line {}",
-                modname,
-                lineno
+                modname, lineno
             );
             unreachable!();
         }
@@ -223,8 +221,7 @@ where
                 } else {
                     panic!(
                         "Failed to find function name in the {} module at line {}",
-                        modname,
-                        lineno
+                        modname, lineno
                     );
                 }
 
@@ -305,10 +302,10 @@ fn handle_file(mut mod_path: PathBuf, out_file: &File) -> Result<Option<String>,
         let fp = match File::open(&mod_path) {
             Ok(f) => f,
             Err(e) => {
-                return Err(
-                    io::Error::new(e.kind(), format!("Failed to open {:?}: {}", mod_path, e))
-                        .into(),
-                )
+                return Err(io::Error::new(
+                    e.kind(),
+                    format!("Failed to open {:?}: {}", mod_path, e),
+                ).into())
             }
         };
 

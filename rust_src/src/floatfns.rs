@@ -334,9 +334,8 @@ where
             return LispObject::from_fixnum(ir);
         }
     }
-    let errstr = LispObject::from_raw(unsafe {
-        build_string(name.as_ptr() as *const libc::c_char)
-    });
+    let errstr =
+        LispObject::from_raw(unsafe { build_string(name.as_ptr() as *const libc::c_char) });
     xsignal!(Qrange_error, errstr, arg)
 }
 

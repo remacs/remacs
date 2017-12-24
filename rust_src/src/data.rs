@@ -135,9 +135,7 @@ pub fn subr_lang(subr: LispSubrRef) -> LispObject {
     if subr.lang == Lisp_Subr_Lang_C {
         LispObject::from_raw(unsafe { build_string(CString::new("C").unwrap().as_ptr()) })
     } else if subr.lang == Lisp_Subr_Lang_Rust {
-        LispObject::from_raw(unsafe {
-            build_string(CString::new("Rust").unwrap().as_ptr())
-        })
+        LispObject::from_raw(unsafe { build_string(CString::new("Rust").unwrap().as_ptr()) })
     } else {
         unreachable!()
     }
