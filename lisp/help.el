@@ -739,7 +739,11 @@ Describe the following key, mouse click, or menu item: "))
                          ;; spuriously trigger the `sit-for'.
                          (sleep-for 0.01)
                          (while (read-event nil nil 0.01))
-                         (not (sit-for (/ double-click-time 1000.0) t))))))))
+                         (not (sit-for
+                               (if (numberp double-click-time)
+                                   (/ double-click-time 1000.0)
+                                 3.0)
+                               t))))))))
           ;; When we have a sequence of mouse events, discard the most
           ;; recent ones till we find one with a binding.
           (let ((keys-1 keys))
@@ -787,6 +791,28 @@ Describe the following key, mouse click, or menu item: "))
       (when saved-yank-menu
         (setq yank-menu (copy-sequence saved-yank-menu))
         (fset 'yank-menu (cons 'keymap yank-menu))))))
+
+(defun help-downify-mouse-event-type (base)
+  "Add \"down-\" to BASE if it is not already there.
+BASE is a symbol, a mouse event type.  If the modification is done,
+return the new symbol.  Otherwise return nil."
+  (let ((base-s (symbol-name base)))
+    ;; Note: the order of the components in the following string is
+    ;; determined by `apply_modifiers_uncached' in src/keyboard.c.
+    (string-match "\\(A-\\)?\
+\\(C-\\)?\
+\\(H-\\)?\
+\\(M-\\)?\
+\\(S-\\)?\
+\\(s-\\)?\
+\\(double-\\)?\
+\\(triple-\\)?\
+\\(up-\\)?\
+\\(\\(down-\\)?\\)\
+\\(drag-\\)?" base-s)
+    (when (and (null (match-beginning 11)) ; "down-"
+               (null (match-beginning 12))) ; "drag-"
+      (intern (replace-match "down-" t t base-s 10)) )))
 
 (defun describe-key (&optional key untranslated up-event)
   "Display documentation of the function invoked by KEY.
@@ -847,6 +873,25 @@ temporarily enables it to allow getting help on disabled items and buttons."
             (princ (format " (found in %s)" key-locus))))
         (princ ", which is ")
 	(describe-function-1 defn)
+        (when (vectorp key)
+          (let* ((last (1- (length key)))
+                 (elt (aref key last))
+                 (elt-1 (copy-sequence elt))
+                 key-1 down-event-type)
+            (when (and (listp elt-1)
+                       (symbolp (car elt-1))
+                       (setq down-event-type (help-downify-mouse-event-type
+                                              (car elt-1))))
+              (setcar elt-1 down-event-type)
+              (setq key-1 (vector elt-1))
+              (when (key-binding key-1)
+                (princ (format "
+
+For documentation of the corresponding mouse down event <%s>,
+click and hold the mouse button longer than %s second(s)."
+                               down-event-type (if (numberp double-click-time)
+                                                   (/ double-click-time 1000.0)
+                                                 3)))))))
 	(when up-event
 	  (unless (or (null defn-up)
 		      (integerp defn-up)
