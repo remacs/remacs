@@ -2483,7 +2483,8 @@ monospaced font, otherwise line numbers will not line up,
 and text lines might move horizontally as you move through
 the buffer."
   :version "26.1"
-  :group 'basic-faces)
+  :group 'basic-faces
+  :group 'display-line-numbers)
 
 (defface line-number-current-line
   '((t :inherit line-number))
@@ -2497,7 +2498,8 @@ the buffer.  Similarly, making this face's font different
 from that of the `line-number' face could produce such
 unwanted effects."
   :version "26.1"
-  :group 'basic-faces)
+  :group 'basic-faces
+  :group 'display-line-numbers)
 
 (defface escape-glyph
   '((((background dark)) :foreground "cyan")

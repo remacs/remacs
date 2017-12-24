@@ -141,7 +141,7 @@ This shall used dynamically bound only.")
 
 (defmacro tramp--test-instrument-test-case (verbose &rest body)
   "Run BODY with `tramp-verbose' equal VERBOSE.
-Print the the content of the Tramp debug buffer, if BODY does not
+Print the content of the Tramp debug buffer, if BODY does not
 eval properly in `should' or `should-not'.  `should-error' is not
 handled properly.  BODY shall not contain a timeout."
   (declare (indent 1) (debug (natnump body)))
@@ -2106,7 +2106,10 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	    (should-error (make-directory tmp-name2) :type 'file-error)
 	    (make-directory tmp-name2 'parents)
 	    (should (file-directory-p tmp-name2))
-	    (should (file-accessible-directory-p tmp-name2)))
+	    (should (file-accessible-directory-p tmp-name2))
+	    ;; If PARENTS is non-nil, `make-directory' shall not
+	    ;; signal an error when DIR exists already.
+	    (make-directory tmp-name2 'parents))
 
 	;; Cleanup.
 	(ignore-errors (delete-directory tmp-name1 'recursive))))))
@@ -3441,7 +3444,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		    (fboundp 'connection-local-set-profiles)))
 
   ;; `connection-local-set-profile-variables' and
-  ;; `connection-local-set-profiles' exists since Emacs 26.  We don't
+  ;; `connection-local-set-profiles' exist since Emacs 26.  We don't
   ;; want to see compiler warnings for older Emacsen.
   (let ((default-directory tramp-test-temporary-file-directory)
 	explicit-shell-file-name kill-buffer-query-functions)
@@ -4111,12 +4114,29 @@ Use the `ls' command."
 	  tramp-connection-properties)))
     (tramp--test-utf8)))
 
+(ert-deftest tramp-test37-file-system-info ()
+  "Check that `file-system-info' returns proper values."
+  (skip-unless (tramp--test-enabled))
+  ;; Since Emacs 27.1.
+  (skip-unless (fboundp 'file-system-info))
+
+  ;; `file-system-info' exists since Emacs 27.  We don't
+  ;; want to see compiler warnings for older Emacsen.
+  (let ((fsi (with-no-warnings
+	       (file-system-info tramp-test-temporary-file-directory))))
+    (skip-unless fsi)
+    (should (and (consp fsi)
+		 (= (length fsi) 3)
+		 (numberp (nth 0 fsi))
+		 (numberp (nth 1 fsi))
+		 (numberp (nth 2 fsi))))))
+
 (defun tramp--test-timeout-handler ()
   (interactive)
   (ert-fail (format "`%s' timed out" (ert-test-name (ert-running-test)))))
 
 ;; This test is inspired by Bug#16928.
-(ert-deftest tramp-test37-asynchronous-requests ()
+(ert-deftest tramp-test38-asynchronous-requests ()
   "Check parallel asynchronous requests.
 Such requests could arrive from timers, process filters and
 process sentinels.  They shall not disturb each other."
@@ -4273,7 +4293,7 @@ process sentinels.  They shall not disturb each other."
         (ignore-errors (cancel-timer timer))
         (ignore-errors (delete-directory tmp-name 'recursive)))))))
 
-(ert-deftest tramp-test38-recursive-load ()
+(ert-deftest tramp-test39-recursive-load ()
   "Check that Tramp does not fail due to recursive load."
   (skip-unless (tramp--test-enabled))
 
@@ -4296,7 +4316,7 @@ process sentinels.  They shall not disturb each other."
 	  (mapconcat 'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument code))))))))
 
-(ert-deftest tramp-test39-remote-load-path ()
+(ert-deftest tramp-test40-remote-load-path ()
   "Check that Tramp autoloads its packages with remote `load-path'."
   ;; `tramp-cleanup-all-connections' is autoloaded from tramp-cmds.el.
   ;; It shall still work, when a remote file name is in the
@@ -4319,7 +4339,7 @@ process sentinels.  They shall not disturb each other."
 	(mapconcat 'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
-(ert-deftest tramp-test40-unload ()
+(ert-deftest tramp-test41-unload ()
   "Check that Tramp and its subpackages unload completely.
 Since it unloads Tramp, it shall be the last test to run."
   :tags '(:expensive-test)
@@ -4377,7 +4397,7 @@ Since it unloads Tramp, it shall be the last test to run."
 ;; * Fix `tramp-test05-expand-file-name-relative' in `expand-file-name'.
 ;; * Fix `tramp-test06-directory-file-name' for `ftp'.
 ;; * Fix `tramp-test27-start-file-process' on MS Windows (`process-send-eof'?).
-;; * Fix Bug#16928 in `tramp-test37-asynchronous-requests'.
+;; * Fix Bug#16928 in `tramp-test38-asynchronous-requests'.
 
 (defun tramp-test-all (&optional interactive)
   "Run all tests for \\[tramp]."

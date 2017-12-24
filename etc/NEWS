@@ -36,8 +36,9 @@ GNU Mailutils to retrieve email.  It is recommended, and is the
 default if GNU Mailutils is installed.  When --with-mailutils is not
 in effect, the Emacs build procedure by default continues to build and
 install a limited 'movemail' substitute that retrieves POP3 email only
-via insecure channels; to avoid this problem, use either
---with-mailutils or --without-pop when configuring.
+via insecure channels.  To avoid this problem, use either
+--with-mailutils or --without-pop when configuring; --without-pop
+is the default on platforms other than native MS-Windows.
 
 ** The new option 'configure --enable-gcc-warnings=warn-only' causes
 GCC to issue warnings without stopping the build.  This behavior is
@@ -465,6 +466,9 @@ and --alternate-editor. For example, ALTERNATE_EDITOR="emacs -Q -nw".
 Arguments may be quoted "like this", so that for example an absolute
 path containing a space may be specified; quote escaping is not
 supported.
+
+** The new user option 'arabic-shaper-ZWNJ-handling' controls how to
+handle ZWNJ in Arabic text rendering.
 
 
 * Editing Changes in Emacs 26.1
@@ -983,7 +987,7 @@ See the 'vc-faces' customization group.
 *** 'vc-dir-mode' now binds 'vc-log-outgoing' to 'O'; and has various
 branch-related commands on a keymap bound to 'B'.
 
----
++++
 *** 'vc-region-history' is now bound to 'C-x v h', replacing the older
 'vc-insert-headers' binding.
 
@@ -1209,6 +1213,15 @@ that of decreasing priority, if the 2nd argument of the function is
 non-nil, but the code returned the list in the increasing order of
 priority instead.  Now the code does what the documentation says it
 should do.
+
++++
+** 'format' now avoids allocating a new string in more cases.
+'format' was previously documented to return a newly-allocated string,
+but this documentation was not correct, as (eq x (format x)) returned
+t when x was the empty string.  'format' is no longer documented to
+return a newly-allocated string, and the implementation now takes
+advantage of the doc change to avoid making copies of strings in
+common cases like (format "foo") and (format "%s" "foo").
 
 ---
 ** The function 'eldoc-message' now accepts a single argument.
@@ -1691,6 +1704,10 @@ The new functions 'secondary-selection-to-region' and
 'secondary-selection-from-region' let you set the beginning and the
 end of the region from those of the secondary selection and vise
 versa.
+
+** New function 'lgstring-remove-glyph' can be used to modify a
+gstring returned by the underlying layout engine (e.g. m17n-flt,
+uniscribe).
 
 
 * Changes in Emacs 26.1 on Non-Free Operating Systems

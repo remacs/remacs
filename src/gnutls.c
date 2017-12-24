@@ -2472,7 +2472,6 @@ syms_of_gnutls (void)
   DEFSYM (QCcipher_blocksize, ":cipher-blocksize");
   DEFSYM (QCcipher_keysize, ":cipher-keysize");
   DEFSYM (QCcipher_tagsize, ":cipher-tagsize");
-  DEFSYM (QCcipher_keysize, ":cipher-keysize");
   DEFSYM (QCcipher_ivsize, ":cipher-ivsize");
 
   DEFSYM (QCmac_algorithm_id, ":mac-algorithm-id");

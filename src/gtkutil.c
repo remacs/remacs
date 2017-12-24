@@ -585,11 +585,18 @@ xg_check_special_colors (struct frame *f,
     if (get_fg)
       gtk_style_context_get_color (gsty, state, &col);
     else
-      /* FIXME: gtk_style_context_get_background_color is deprecated
-         in GTK+ 3.16.  New versions of GTK+ don’t use the concept of
-         a single background color any more, so we shouldn’t query for
-         it.  */
-      gtk_style_context_get_background_color (gsty, state, &col);
+      {
+        GdkRGBA *c;
+        /* FIXME: Retrieving the background color is deprecated in
+           GTK+ 3.16.  New versions of GTK+ don’t use the concept of a
+           single background color any more, so we shouldn’t query for
+           it.  */
+        gtk_style_context_get (gsty, state,
+                               GTK_STYLE_PROPERTY_BACKGROUND_COLOR, &c,
+                               NULL);
+        col = *c;
+        gdk_rgba_free (c);
+      }
 
     unsigned short
       r = col.red * 65535,

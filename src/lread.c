@@ -4803,7 +4803,7 @@ to the specified file name if a suffix is allowed or required.  */);
 			  build_pure_c_string (".el"));
 #endif
   DEFVAR_LISP ("module-file-suffix", Vmodule_file_suffix,
-	       doc: /* Suffix of loadable module file, or nil of modules are not supported.  */);
+	       doc: /* Suffix of loadable module file, or nil if modules are not supported.  */);
 #ifdef HAVE_MODULES
   Vmodule_file_suffix = build_pure_c_string (MODULES_SUFFIX);
 #else

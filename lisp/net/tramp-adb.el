@@ -139,6 +139,7 @@ It is used for TCP/IP devices."
     (file-remote-p . tramp-handle-file-remote-p)
     (file-selinux-context . ignore)
     (file-symlink-p . tramp-handle-file-symlink-p)
+    (file-system-info . tramp-adb-handle-file-system-info)
     (file-truename . tramp-adb-handle-file-truename)
     (file-writable-p . tramp-adb-handle-file-writable-p)
     (find-backup-file-name . tramp-handle-find-backup-file-name)
@@ -254,6 +255,30 @@ pass to the OPERATION."
   (eq (tramp-compat-file-attribute-type
        (file-attributes (file-truename filename)))
       t))
+
+(defun tramp-adb-handle-file-system-info (filename)
+  "Like `file-system-info' for Tramp files."
+  (ignore-errors
+    (with-parsed-tramp-file-name (expand-file-name filename) nil
+      (tramp-message v 5 "file system info: %s" localname)
+      (tramp-adb-send-command
+       v (format "df -k %s" (tramp-shell-quote-argument localname)))
+      (with-current-buffer (tramp-get-connection-buffer v)
+	(goto-char (point-min))
+	(forward-line)
+	(when (looking-at
+	       (concat "[[:space:]]*[^[:space:]]+"
+		       "[[:space:]]+\\([[:digit:]]+\\)"
+		       "[[:space:]]+\\([[:digit:]]+\\)"
+		       "[[:space:]]+\\([[:digit:]]+\\)"))
+	  ;; The values are given as 1k numbers, so we must change
+	  ;; them to number of bytes.
+	  (list (* 1024 (string-to-number (concat (match-string 1) "e0")))
+		;; The second value is the used size.  We need the
+		;; free size.
+		(* 1024 (- (string-to-number (concat (match-string 1) "e0"))
+			   (string-to-number (concat (match-string 2) "e0"))))
+		(* 1024 (string-to-number (concat (match-string 3) "e0")))))))))
 
 ;; This is derived from `tramp-sh-handle-file-truename'.  Maybe the
 ;; code could be shared?
@@ -524,11 +549,12 @@ Emacs dired can't find files."
       (let ((par (expand-file-name ".." dir)))
 	(unless (file-directory-p par)
 	  (make-directory par parents))))
-    (tramp-adb-barf-unless-okay
-     v (format "mkdir %s" (tramp-shell-quote-argument localname))
-     "Couldn't make directory %s" dir)
     (tramp-flush-file-property v (file-name-directory localname))
-    (tramp-flush-directory-property v localname)))
+    (tramp-flush-directory-property v localname)
+    (unless (or (tramp-adb-send-command-and-check
+		 v (format "mkdir %s" (tramp-shell-quote-argument localname)))
+		(and parents (file-directory-p dir)))
+      (tramp-error v 'file-error "Couldn't make directory %s" dir))))
 
 (defun tramp-adb-handle-delete-directory (directory &optional recursive _trash)
   "Like `delete-directory' for Tramp files."

@@ -2472,7 +2472,7 @@ for how to proceed.  */)
 	  return Qnil;
 	}
     }
-#endif /* HAVE_WINDOW_SYSTEM */
+#endif	/* HAVE_WINDOW_SYSTEM */
 
   /* Don't allow minibuf_window to remain on an iconified frame.  */
   check_minibuf_window (frame, EQ (minibuf_window, selected_window));

@@ -5883,7 +5883,7 @@ and is the visited file's modification time, as of that time.  If the
 modification time of the most recent save is different, this entry is
 obsolete.
 
-An entry (t . 0) means means the buffer was previously unmodified but
+An entry (t . 0) means the buffer was previously unmodified but
 its time stamp was unknown because it was not associated with a file.
 An entry (t . -1) is similar, except that it means the buffer's visited
 file did not exist.

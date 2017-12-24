@@ -118,7 +118,7 @@ been added between the last two retrievals."
 
 (defcustom newsticker-hide-obsolete-items-in-echo-area
   t
-  "Decides whether to show obsolete items items in the ticker.
+  "Decides whether to show obsolete items in the ticker.
 If t the echo area will not show obsolete items.  See also
 `newsticker-hide-old-items-in-echo-area'."
   :type 'boolean

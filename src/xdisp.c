@@ -10194,7 +10194,7 @@ vadd_to_log (char const *format, va_list ap)
   for (ptrdiff_t i = 1; i <= nargs; i++)
     args[i] = va_arg (ap, Lisp_Object);
   Lisp_Object msg = Qnil;
-  msg = styled_format (nargs, args, true, false);
+  msg = styled_format (nargs, args, true);
 
   ptrdiff_t len = SBYTES (msg) + 1;
   USE_SAFE_ALLOCA;
@@ -17036,6 +17036,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	       = try_window_reusing_current_matrix (w)))
 	{
 	  IF_DEBUG (debug_method_add (w, "1"));
+	  clear_glyph_matrix (w->desired_matrix);
 	  if (try_window (window, startp, TRY_WINDOW_CHECK_MARGINS) < 0)
 	    /* -1 means we need to scroll.
 	       0 means we need new matrices, but fonts_changed
@@ -19525,7 +19526,7 @@ DEFUN ("trace-to-stderr", Ftrace_to_stderr, Strace_to_stderr, 1, MANY, "",
 usage: (trace-to-stderr STRING &rest OBJECTS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
-  Lisp_Object s = styled_format (nargs, args, false, false);
+  Lisp_Object s = styled_format (nargs, args, false);
   fwrite (SDATA (s), 1, SBYTES (s), stderr);
   return Qnil;
 }

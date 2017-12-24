@@ -114,7 +114,7 @@ When nil, the first star is not shown."
 (defcustom org-inlinetask-default-state nil
   "Non-nil means make inline tasks have a TODO keyword initially.
 This should be the state `org-inlinetask-insert-task' should use by
-default, or nil of no state should be assigned."
+default, or nil if no state should be assigned."
   :group 'org-inlinetask
   :version "24.1"
   :type '(choice

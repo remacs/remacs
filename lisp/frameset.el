@@ -638,7 +638,7 @@ see `frameset-filter-alist'."
 When switching from a GUI frame to a tty frame, behave
 as `frameset-filter-shelve-param' does."
   (or saving
-      (if (frameset-switch-to-gui-p parameters)
+      (if (frameset-switch-to-tty-p parameters)
           (frameset-filter-shelve-param current filtered parameters saving
                                         prefix))))
 

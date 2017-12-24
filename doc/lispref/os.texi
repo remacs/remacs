@@ -222,7 +222,7 @@ If it is @code{t}, it selects the @file{*scratch*} buffer.
 @c called from two places.  If displaying a startup screen, they are
 @c called in command-line-1 before the startup screen is shown.
 @c inhibit-startup-hooks is then set and window-setup-hook set to nil.
-@c If not displaying a startup screen, they are are called in
+@c If not displaying a startup screen, they are called in
 @c normal-top-level.
 @c FIXME?  So it seems they can be called before or after the
 @c daemon/session restore step?
