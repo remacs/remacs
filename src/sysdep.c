@@ -1671,7 +1671,7 @@ emacs_sigaction_init (struct sigaction *action, signal_handler_t handler)
 }
 
 #ifdef FORWARD_SIGNAL_TO_MAIN_THREAD
-pthread_t main_thread_id;
+static pthread_t main_thread_id;
 #endif
 
 /* SIG has arrived at the current process.  Deliver it to the main
