@@ -22,13 +22,17 @@ are also often useful for editing programs.
 the file contains ordinary text, use Text mode, which customizes Emacs
 in small ways for the syntactic conventions of text.  Outline mode
 provides special commands for operating on text with an outline
-structure.  Org mode extends Outline mode and turn Emacs into a
-full-fledged organizer: you can manage TODO lists, store notes and
-publish them in many formats.
+structure.  @xref{Outline Mode}.
 
-@iftex
-@xref{Outline Mode}.
-@end iftex
+  Org mode extends Outline mode and turns Emacs into a full-fledged
+organizer: you can manage TODO lists, store notes and publish them in
+many formats.
+@ifinfo
+@xref{Top, The Org Manual,,org, The Org Manual}.
+@end ifinfo
+@ifnotinfo
+See the Org Info manual, which is distributed with Emacs.
+@end ifnotinfo
 
 @cindex nXML mode
 @cindex mode, XML
@@ -324,6 +328,12 @@ that start a new paragraph and are contained in it must match only
 in Fundamental mode, @code{paragraph-start} is @w{@code{"\f\\|[
 \t]*$"}}, and @code{paragraph-separate} is @w{@code{"[ \t\f]*$"}}.
 
+  Note that @code{paragraph-start} and @code{paragraph-separate} are
+matched against the text at the left margin, which is not necessarily
+the beginning of the line, so these regexps should not use @samp{^} as
+an anchor, to ensure that the paragraph functions will work equally
+within a region of text indented by a margin setting.
+
 @node Pages
 @section Pages
 
@@ -479,8 +489,8 @@ text.
 @cindex mode, Auto Fill
 
   @dfn{Auto Fill} mode is a buffer-local minor mode (@pxref{Minor
-Modes}) in which lines are broken automatically when they become too
-wide.  Breaking happens only when you type a @key{SPC} or @key{RET}.
+Modes}) in which lines are broken automatically at spaces when the
+line becomes too wide.
 
 @table @kbd
 @item M-x auto-fill-mode
@@ -492,14 +502,12 @@ In Auto Fill mode, break lines when appropriate.
 
 @findex auto-fill-mode
   The mode command @kbd{M-x auto-fill-mode} toggles Auto Fill mode in
-the current buffer.  With a positive numeric argument, it enables Auto
-Fill mode, and with a negative argument it disables it.  If
-@code{auto-fill-mode} is called from Lisp with an omitted or
-@code{nil} argument, it enables Auto Fill mode.  To enable Auto Fill
-mode automatically in certain major modes, add @code{auto-fill-mode}
-to the mode hooks (@pxref{Major Modes}).  When Auto Fill mode is
-enabled, the mode indicator @samp{Fill} appears in the mode line
-(@pxref{Mode Line}).
+the current buffer.  Like any other minor mode, with a positive
+numeric argument, it enables Auto Fill mode, and with a negative
+argument it disables it.  To enable Auto Fill mode automatically in
+certain major modes, add @code{auto-fill-mode} to the mode hooks
+(@pxref{Major Modes}).  When Auto Fill mode is enabled, the mode
+indicator @samp{Fill} appears in the mode line (@pxref{Mode Line}).
 
   Auto Fill mode breaks lines automatically at spaces whenever they
 get longer than the desired width.  This line breaking occurs only
