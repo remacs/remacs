@@ -1384,7 +1384,7 @@ The return value of this function is the retrieval buffer."
                (error "error: %s" e)))
           (error "error: gnutls support needed!")))
        (t
-        (message "error response: %d" url-http-response-status)
+        (url-http-debug "error response: %d" url-http-response-status)
         (url-http-activate-callback))))))
 
 (defun url-http-async-sentinel (proc why)
