@@ -60,6 +60,7 @@ DEF_DLL_FN (double, json_real_value, (const json_t *real));
 DEF_DLL_FN (const char *, json_string_value, (const json_t *string));
 DEF_DLL_FN (size_t, json_string_length, (const json_t *string));
 DEF_DLL_FN (json_t *, json_array_get, (const json_t *array, size_t index));
+DEF_DLL_FN (json_t *, json_object_get, (const json_t *object, const char *key));
 DEF_DLL_FN (size_t, json_object_size, (const json_t *object));
 DEF_DLL_FN (const char *, json_object_iter_key, (void *iter));
 DEF_DLL_FN (void *, json_object_iter, (json_t *object));
@@ -108,6 +109,7 @@ init_json_functions (void)
   LOAD_DLL_FN (library, json_string_value);
   LOAD_DLL_FN (library, json_string_length);
   LOAD_DLL_FN (library, json_array_get);
+  LOAD_DLL_FN (library, json_object_get);
   LOAD_DLL_FN (library, json_object_size);
   LOAD_DLL_FN (library, json_object_iter_key);
   LOAD_DLL_FN (library, json_object_iter);
@@ -141,6 +143,7 @@ init_json_functions (void)
 #define json_string_value fn_json_string_value
 #define json_string_length fn_json_string_length
 #define json_array_get fn_json_array_get
+#define json_object_get fn_json_object_get
 #define json_object_size fn_json_object_size
 #define json_object_iter_key fn_json_object_iter_key
 #define json_object_iter fn_json_object_iter
