@@ -1045,42 +1045,36 @@ forward to heading lines.
 
 @table @kbd
 @item C-c C-n
+@findex outline-next-visible-heading
+@kindex C-c C-n @r{(Outline mode)}
 Move point to the next visible heading line
 (@code{outline-next-visible-heading}).
 @item C-c C-p
+@findex outline-previous-visible-heading
+@kindex C-c C-p @r{(Outline mode)}
 Move point to the previous visible heading line
 (@code{outline-previous-visible-heading}).
 @item C-c C-f
+@findex outline-forward-same-level
+@kindex C-c C-f @r{(Outline mode)}
 Move point to the next visible heading line at the same level
 as the one point is on (@code{outline-forward-same-level}).
 @item C-c C-b
+@findex outline-backward-same-level
+@kindex C-c C-b @r{(Outline mode)}
 Move point to the previous visible heading line at the same level
 (@code{outline-backward-same-level}).
 @item C-c C-u
+@findex outline-up-heading
+@kindex C-c C-u @r{(Outline mode)}
 Move point up to a lower-level (more inclusive) visible heading line
 (@code{outline-up-heading}).
 @end table
 
-@findex outline-next-visible-heading
-@findex outline-previous-visible-heading
-@kindex C-c C-n @r{(Outline mode)}
-@kindex C-c C-p @r{(Outline mode)}
-  @kbd{C-c C-n} (@code{outline-next-visible-heading}) moves down to
-the next heading line.  @kbd{C-c C-p}
-(@code{outline-previous-visible-heading}) moves similarly backward.
-Both accept numeric arguments as repeat counts.
-
-@findex outline-up-heading
-@findex outline-forward-same-level
-@findex outline-backward-same-level
-@kindex C-c C-f @r{(Outline mode)}
-@kindex C-c C-b @r{(Outline mode)}
-@kindex C-c C-u @r{(Outline mode)}
-  @kbd{C-c C-f} (@code{outline-forward-same-level}) and @kbd{C-c C-b}
-(@code{outline-backward-same-level}) move from one heading line to
-another visible heading at the same depth in the outline.  @kbd{C-c
-C-u} (@code{outline-up-heading}) moves backward to another heading
-that is less deeply nested.
+  All of the above commands accept numeric arguments as repeat counts.
+For example, @kbd{C-c C-f}, when given an argument, moves forward that
+many visible heading lines on the same level, and @kbd{C-c C-u} with
+an argument moves out of that many nested levels.
 
 @node Outline Visibility
 @subsection Outline Visibility Commands
