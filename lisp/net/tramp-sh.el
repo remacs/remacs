@@ -4738,14 +4738,16 @@ connection if a previous connection has died for some reason."
 			   (if tramp-encoding-command-interactive
 			       (list tramp-encoding-shell
 				     tramp-encoding-command-interactive)
-			     (list tramp-encoding-shell))))))
+			     (list tramp-encoding-shell)))))
+		     current-host)
 
-		;; Set sentinel and query flag.
+		;; Set sentinel and query flag.  Initialize variables.
 		(tramp-set-connection-property p "vector" vec)
 		(set-process-sentinel p 'tramp-process-sentinel)
 		(process-put p 'adjust-window-size-function 'ignore)
 		(set-process-query-on-exit-flag p nil)
-		(setq tramp-current-connection (cons vec (current-time)))
+		(setq tramp-current-connection (cons vec (current-time))
+		      current-host (system-name))
 
 		(tramp-message
 		 vec 6 "%s" (mapconcat 'identity (process-command p) " "))
@@ -4799,8 +4801,9 @@ connection if a previous connection has died for some reason."
 
 		    ;; Check, whether there is a restricted shell.
 		    (dolist (elt tramp-restricted-shell-hosts-alist)
-		      (when (string-match elt l-host)
+		      (when (string-match elt current-host)
 			(setq r-shell t)))
+		    (setq current-host l-host)
 
 		    ;; Set password prompt vector.
 		    (tramp-set-connection-property
