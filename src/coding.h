@@ -662,6 +662,30 @@ struct coding_system
 /* Note that this encodes utf-8, not utf-8-emacs, so it's not a no-op.  */
 #define ENCODE_UTF_8(str) code_convert_string_norecord (str, Qutf_8, true)
 
+/* Return true if VAL is a high surrogate.  VAL must be a 16-bit code
+   unit.  */
+
+#define UTF_16_HIGH_SURROGATE_P(val) \
+  (((val) & 0xFC00) == 0xD800)
+
+/* Return true if VAL is a low surrogate.  VAL must be a 16-bit code
+   unit.  */
+
+#define UTF_16_LOW_SURROGATE_P(val) \
+  (((val) & 0xFC00) == 0xDC00)
+
+/* Return the Unicode code point for the given UTF-16 surrogates.  */
+
+INLINE int
+surrogates_to_codepoint (int low, int high)
+{
+  eassert (0 <= low && low <= 0xFFFF);
+  eassert (0 <= high && high <= 0xFFFF);
+  eassert (UTF_16_LOW_SURROGATE_P (low));
+  eassert (UTF_16_HIGH_SURROGATE_P (high));
+  return 0x10000 + (low - 0xDC00) + ((high - 0xD800) * 0x400);
+}
+
 /* Extern declarations.  */
 extern Lisp_Object code_conversion_save (bool, bool);
 extern bool encode_coding_utf_8 (struct coding_system *);

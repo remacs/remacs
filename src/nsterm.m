@@ -6283,14 +6283,13 @@ not_in_argv (NSString *arg)
          by doCommandBySelector: deleteBackward: */
 - (void)insertText: (id)aString
 {
-  int code;
-  int len = [(NSString *)aString length];
-  int i;
+  NSString *s = aString;
+  NSUInteger len = [s length];
 
   NSTRACE ("[EmacsView insertText:]");
 
   if (NS_KEYLOG)
-    NSLog (@"insertText '%@'\tlen = %d", aString, len);
+    NSLog (@"insertText '%@'\tlen = %lu", aString, (unsigned long) len);
   processingCompose = NO;
 
   if (!emacs_event)
@@ -6300,10 +6299,24 @@ not_in_argv (NSString *arg)
   if (workingText != nil)
     [self deleteWorkingText];
 
+  /* It might be preferable to use getCharacters:range: below,
+     cf. https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/CocoaPerformance/Articles/StringDrawing.html#//apple_ref/doc/uid/TP40001445-112378.
+     However, we probably can't use SAFE_NALLOCA here because it might
+     exit nonlocally.  */
+
   /* now insert the string as keystrokes */
-  for (i =0; i<len; i++)
+  for (NSUInteger i = 0; i < len; i++)
     {
-      code = [aString characterAtIndex: i];
+      NSUInteger code = [s characterAtIndex:i];
+      if (UTF_16_HIGH_SURROGATE_P (code) && i < len - 1)
+        {
+          unichar low = [s characterAtIndex:i + 1];
+          if (UTF_16_LOW_SURROGATE_P (low))
+            {
+              code = surrogates_to_codepoint (low, code);
+              ++i;
+            }
+        }
       /* TODO: still need this? */
       if (code == 0x2DC)
         code = '~'; /* 0x7E */

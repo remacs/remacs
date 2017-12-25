@@ -1515,13 +1515,6 @@ encode_coding_utf_8 (struct coding_system *coding)
 /* See the above "GENERAL NOTES on `detect_coding_XXX ()' functions".
    Return true if a text is encoded in one of UTF-16 based coding systems.  */
 
-#define UTF_16_HIGH_SURROGATE_P(val) \
-  (((val) & 0xFC00) == 0xD800)
-
-#define UTF_16_LOW_SURROGATE_P(val) \
-  (((val) & 0xFC00) == 0xDC00)
-
-
 static bool
 detect_coding_utf_16 (struct coding_system *coding,
 		      struct coding_detection_info *detect_info)
