@@ -26197,7 +26197,10 @@ marks, so you have to do it locally.
 
 The Gnus Cloud package stores the marks, plus any files you choose, on
 an IMAP server in a special folder. It's like a
-DropTorrentSyncBoxOakTree(TM).
+DropTorrentSyncBoxOakTree(TM).@footnote{The name ``Gnus Cloud''
+parodizes but otherwise has little to do with ``cloud computing'', a
+@url{https://www.gnu.org/philosophy/words-to-avoid.html#CloudComputing,
+misleading term normally best avoided}.}
 
 @menu
 * Gnus Cloud Setup::
