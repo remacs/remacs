@@ -24,6 +24,11 @@ impl ThreadStateRef {
     pub fn name(self) -> LispObject {
         LispObject::from_raw(self.name)
     }
+
+    #[inline]
+    pub fn is_alive(self) -> bool {
+        !self.m_specpdl.is_null()
+    }
 }
 
 /// Return the name of the THREAD.
@@ -31,6 +36,12 @@ impl ThreadStateRef {
 #[lisp_fn]
 pub fn thread_name(thread: ThreadStateRef) -> LispObject {
     thread.name()
+}
+
+/// Return t if THREAD is alive, or nil if it has exited.
+#[lisp_fn]
+pub fn thread_alive_p(thread: LispObject) -> bool {
+    thread.as_thread_or_error().is_alive()
 }
 
 include!(concat!(env!("OUT_DIR"), "/threads_exports.rs"));
