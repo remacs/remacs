@@ -1037,6 +1037,13 @@ located and whether GnuPG's option '--homedir' is used or not.
 ---
 *** Deleting a package no longer respects 'delete-by-moving-to-trash'.
 
+** Python
+
++++
+*** The new variable 'python-indent-def-block-scale' has been added.
+It controls the depth of indentation of arguments inside multi-line
+function signatures.
+
 ** Tramp
 
 +++
