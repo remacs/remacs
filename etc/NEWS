@@ -210,6 +210,11 @@ a multibyte string even if its second argument is an ASCII character.
 'json-insert', 'json-parse-string', and 'json-parse-buffer'.  These
 are implemented in C using the Jansson library.
 
+---
+** The new function `mailcap-file-name-to-mime-type' has been added.
+It's a simple convenience function for looking up MIME types based on
+file name extensions.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
