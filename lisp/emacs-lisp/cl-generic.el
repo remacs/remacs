@@ -808,22 +808,26 @@ methods.")
   ;; able to preload cl-generic without also preloading the byte-compiler,
   ;; So we use `eval-when-compile' so as not keep it available longer than
   ;; strictly needed.
-(defmacro cl--generic-prefill-dispatchers (arg-or-context specializer)
+(defmacro cl--generic-prefill-dispatchers (arg-or-context &rest specializers)
   (unless (integerp arg-or-context)
     (setq arg-or-context `(&context . ,arg-or-context)))
   (unless (fboundp 'cl--generic-get-dispatcher)
     (require 'cl-generic))
   (let ((fun (cl--generic-get-dispatcher
-              `(,arg-or-context ,@(cl-generic-generalizers specializer)
-                                ,cl--generic-t-generalizer))))
+              `(,arg-or-context
+                ,@(apply #'append
+                         (mapcar #'cl-generic-generalizers specializers))
+                ,cl--generic-t-generalizer))))
     ;; Recompute dispatch at run-time, since the generalizers may be slightly
     ;; different (e.g. byte-compiled rather than interpreted).
     ;; FIXME: There is a risk that the run-time generalizer is not equivalent
     ;; to the compile-time one, in which case `fun' may not be correct
     ;; any more!
-    `(let ((dispatch `(,',arg-or-context
-                       ,@(cl-generic-generalizers ',specializer)
-                       ,cl--generic-t-generalizer)))
+    `(let ((dispatch
+            `(,',arg-or-context
+              ,@(apply #'append
+                       (mapcar #'cl-generic-generalizers ',specializers))
+              ,cl--generic-t-generalizer)))
        ;; (message "Prefilling for %S with \n%S" dispatch ',fun)
        (puthash dispatch ',fun cl--generic-dispatchers)))))
 
@@ -1205,6 +1209,7 @@ See the full list and their hierarchy in `cl--generic-typeof-types'."
    (cl-call-next-method)))
 
 (cl--generic-prefill-dispatchers 0 integer)
+(cl--generic-prefill-dispatchers 0 cl--generic-generalizer integer)
 
 ;;; Dispatch on major mode.
 
