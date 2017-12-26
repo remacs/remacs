@@ -1,4 +1,4 @@
-;;; footnote.el --- footnote support for message mode
+;;; footnote.el --- footnote support for message mode  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1997, 2000-2017 Free Software Foundation, Inc.
 
@@ -546,7 +546,7 @@ styles."
 	  string 'footnote-number arg footnote-mouse-highlight t)
        (propertize string 'footnote-number arg)))))
 
-(defun footnote--renumber (from to pointer-alist text-alist)
+(defun footnote--renumber (_from to pointer-alist text-alist)
   "Renumber a single footnote."
   (let* ((posn-list (cdr pointer-alist)))
     (setcar pointer-alist to)
@@ -782,14 +782,14 @@ footnote area, returns `point-max'."
 	(setq i (1+ i)))
       rc)))
 
-(defun footnote-add-footnote (&optional arg)
+(defun footnote-add-footnote ()
   "Add a numbered footnote.
 The number the footnote receives is dependent upon the relative location
 of any other previously existing footnotes.
 If the variable `footnote-narrow-to-footnotes-when-editing' is set,
 the buffer is narrowed to the footnote body.  The restriction is removed
 by using `footnote-back-to-message'."
-  (interactive "*P")
+  (interactive "*")
   (let ((num
          (if footnote-text-marker-alist
              (if (< (point) (cl-cadar (last footnote-pointer-marker-alist)))
@@ -869,9 +869,9 @@ delete the footnote with that number."
 	    (when (looking-back "\n\n" (- (point) 2))
 	      (kill-line -1))))))))
 
-(defun footnote-renumber-footnotes (&optional arg)
+(defun footnote-renumber-footnotes ()
   "Renumber footnotes, starting from 1."
-  (interactive "*P")
+  (interactive "*")
   (save-excursion
     (let ((i 0)
 	  (notes (length footnote-pointer-marker-alist))
@@ -905,12 +905,12 @@ specified, jump to the text of that footnote."
      (t
       (error "I don't see a footnote here")))))
 
-(defun footnote-back-to-message (&optional arg)
+(defun footnote-back-to-message ()
   "Move cursor back to footnote referent.
 If the cursor is not over the text of a footnote, point is not changed.
 If the buffer was narrowed due to `footnote-narrow-to-footnotes-when-editing'
 being set it is automatically widened."
-  (interactive "P")
+  (interactive)
   (let ((note (footnote--text-under-cursor)))
     (when note
       (when footnote-narrow-to-footnotes-when-editing
