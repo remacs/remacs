@@ -245,7 +245,8 @@ Wrapping around the alphabet implies successive repetitions of letters."
     (50 . "l") (100 . "c") (500 . "d") (1000 . "m"))
   "List of roman numerals with their values.")
 
-(defconst footnote-roman-lower-regexp "[ivxlcdm]+"
+(defconst footnote-roman-lower-regexp
+  (concat "[" (mapconcat #'cdr footnote-roman-lower-list "") "]+")
   "Regexp of roman numerals.")
 
 (defun footnote--roman-lower (n)
@@ -254,11 +255,11 @@ Wrapping around the alphabet implies successive repetitions of letters."
 
 ;;; ROMAN UPPER
 (defconst footnote-roman-upper-list
-  '((1 . "I") (5 . "V") (10 . "X")
-    (50 . "L") (100 . "C") (500 . "D") (1000 . "M"))
+  (mapcar (lambda (x) (cons (car x) (upcase (cdr x))))
+          footnote-roman-lower-list)
   "List of roman numerals with their values.")
 
-(defconst footnote-roman-upper-regexp "[IVXLCDM]+"
+(defconst footnote-roman-upper-regexp (upcase footnote-roman-lower-regexp)
   "Regexp of roman numerals.  Not complete")
 
 (defun footnote--roman-upper (n)
@@ -355,14 +356,15 @@ Use Unicode characters for footnoting."
 
 ;; Hebrew
 
-(defconst footnote-hebrew-numeric-regex "[אבגדהוזחטיכלמנסעפצקרשת']+")
-; (defconst footnote-hebrew-numeric-regex "\\([אבגדהוזחט]'\\)?\\(ת\\)?\\(ת\\)?\\([קרשת]\\)?\\([טיכלמנסעפצ]\\)?\\([אבגדהוזחט]\\)?")
-
 (defconst footnote-hebrew-numeric
   '(
     ("א" "ב" "ג" "ד" "ה" "ו" "ז" "ח" "ט")
     ("י" "כ" "ל" "מ" "נ" "ס" "ע" "פ" "צ")
-    ("ק" "ר" "ש" "ת" "תק" "תר"" תש" "תת" "תתק")))
+    ("ק" "ר" "ש" "ת" "תק" "תר" "תש" "תת" "תתק")))
+
+(defconst footnote-hebrew-numeric-regex
+  (concat "[" (apply #'concat (apply #'append footnote-hebrew-numeric)) "']+"))
+;; (defconst footnote-hebrew-numeric-regex "\\([אבגדהוזחט]'\\)?\\(ת\\)?\\(ת\\)?\\([קרשת]\\)?\\([טיכלמנסעפצ]\\)?\\([אבגדהוזחט]\\)?")
 
 (defun footnote--hebrew-numeric (n)
   "Supports 9999 footnotes, then rolls over."
@@ -371,24 +373,26 @@ Use Unicode characters for footnoting."
          (hundreds (/ (mod n 1000) 100))
          (tens (/ (mod n 100) 10))
          (units (mod n 10))
-         (special (if (not (= tens 1)) nil
-                    (or (when (= units 5) "טו")
-                        (when (= units 6) "טז")))))
+         (special (cond
+                   ((not (= tens 1)) nil)
+                   ((= units 5) "טו")
+                   ((= units 6) "טז"))))
     (concat
      (when (/= 0 thousands)
        (concat (nth (1- thousands) (nth 0 footnote-hebrew-numeric)) "'"))
      (when (/= 0 hundreds)
        (nth (1- hundreds) (nth 2 footnote-hebrew-numeric)))
-     (if special special
-      (concat
-        (when (/= 0 tens) (nth (1- tens) (nth 1 footnote-hebrew-numeric)))
-        (when (/= 0 units) (nth (1- units) (nth 0 footnote-hebrew-numeric))))))))
-
-(defconst footnote-hebrew-symbolic-regex "[אבגדהוזחטיכלמנסעפצקרשת]")
+     (or special
+         (concat
+          (when (/= 0 tens) (nth (1- tens) (nth 1 footnote-hebrew-numeric)))
+          (when (/= 0 units) (nth (1- units) (nth 0 footnote-hebrew-numeric))))))))
 
 (defconst footnote-hebrew-symbolic
   '(
     "א" "ב" "ג" "ד" "ה" "ו" "ז" "ח" "ט" "י" "כ" "ל" "מ" "נ" "ס" "ע" "פ" "צ" "ק" "ר" "ש" "ת"))
+
+(defconst footnote-hebrew-symbolic-regex
+  (concat "[" (apply #'concat footnote-hebrew-symbolic) "]"))
 
 (defun footnote--hebrew-symbolic (n)
   "Only 22 elements, per the style of eg. 'פירוש שפתי חכמים על רש״י'.
@@ -409,7 +413,11 @@ Proceeds from `י' to `כ', from `צ' to `ק'. After `ת', rolls over to `א'."
   "Styles of footnote tags available.
 By default, Arabic numbers, English letters, Roman Numerals,
 Latin and Unicode superscript characters, and Hebrew numerals
-are available.")
+are available.
+Each element of the list should be of the form (NAME FUNCTION REGEXP)
+where NAME is a symbol, FUNCTION takes a footnote number and
+returns the corresponding representation in that style as a string,
+and REGEXP should be a regexp that matches any output of FUNCTION.")
 
 (defcustom footnote-style 'numeric
   "Default style used for footnoting.
