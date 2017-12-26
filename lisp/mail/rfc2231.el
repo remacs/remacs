@@ -1,4 +1,4 @@
-;;; rfc2231.el --- Functions for decoding rfc2231 headers
+;;; rfc2231.el --- Functions for decoding rfc2231 headers  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
 
@@ -22,7 +22,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
 (require 'ietf-drums)
 (require 'rfc2047)
 (autoload 'mm-encode-body "mm-bodies")

@@ -1,4 +1,4 @@
-;;; flow-fill.el --- interpret RFC2646 "flowed" text
+;;; flow-fill.el --- interpret RFC2646 "flowed" text  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
@@ -49,7 +49,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
 
 (defcustom fill-flowed-display-column 'fill-column
   "Column beyond which format=flowed lines are wrapped, when displayed.

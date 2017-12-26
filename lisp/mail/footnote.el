@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1997, 2000-2017 Free Software Foundation, Inc.
 
-;; Author: Steven L Baur <steve@xemacs.org> (1997-)
+;; Author: Steven L Baur <steve@xemacs.org> (1997-2011)
 ;;         Boruch Baum <boruch_baum@gmx.com> (2017-)
 ;; Keywords: mail, news
 ;; Version: 0.19

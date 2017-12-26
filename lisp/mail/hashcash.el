@@ -1,4 +1,4 @@
-;;; hashcash.el --- Add hashcash payments to email
+;;; hashcash.el --- Add hashcash payments to email  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2003-2005, 2007-2017 Free Software Foundation, Inc.
 
@@ -47,7 +47,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))	; for case
+(eval-when-compile (require 'cl-lib))
 
 (defgroup hashcash nil
   "Hashcash configuration."
@@ -139,12 +139,12 @@ For example, you may want to set this to (\"-Z2\") to reduce header length."
 (defun hashcash-token-substring ()
   (save-excursion
     (let ((token ""))
-      (loop
+      (cl-loop
 	(setq token
 	  (concat token (buffer-substring (point) (hashcash-point-at-eol))))
 	(goto-char (hashcash-point-at-eol))
 	(forward-char 1)
-	(unless (looking-at "[ \t]") (return token))
+	(unless (looking-at "[ \t]") (cl-return token))
 	(while (looking-at "[ \t]") (forward-char 1))))))
 
 (defun hashcash-payment-required (addr)
@@ -298,7 +298,7 @@ BUFFER defaults to the current buffer."
   (let* ((split (split-string token ":"))
 	 (key (if (< (hashcash-version token) 1.2)
 		  (nth 1 split)
-		  (case (string-to-number (nth 0 split))
+		  (pcase (string-to-number (nth 0 split))
 		    (0 (nth 2 split))
 		    (1 (nth 3 split))))))
     (cond ((null resource)

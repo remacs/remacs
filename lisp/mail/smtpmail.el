@@ -941,7 +941,7 @@ Returns an error if the server cannot be contacted."
 
   (if (and (multibyte-string-p data)
 	   smtpmail-code-conv-from)
-      (setq data (string-as-multibyte
+      (setq data (string-as-multibyte   ;FIXME: ???
 		  (encode-coding-string data smtpmail-code-conv-from))))
 
   (if smtpmail-debug-info
