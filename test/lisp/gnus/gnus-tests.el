@@ -26,8 +26,6 @@
 
 ;;; Code:
 ;; registry.el is required by gnus-registry.el but this way we're explicit.
-(eval-when-compile (require 'cl))
-
 (require 'registry)
 (require 'gnus-registry)
 
