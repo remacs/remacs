@@ -1,11 +1,12 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{BoolBF, EmacsInt, Lisp_Process, QCbuffer, Qcdr, Qclosed, Qexit, Qlistp, Qnetwork,
-                 Qopen, Qpipe, Qrun, Qserial, Qstop, Vprocess_alist};
+use remacs_sys::{BoolBF, EmacsInt, Lisp_Process, Vprocess_alist};
 use remacs_sys::{get_process as cget_process, pget_kill_without_query, pget_pid,
                  pget_raw_status_new, pset_kill_without_query, send_process,
                  setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
+use remacs_sys::{QCbuffer, Qcdr, Qclosed, Qexit, Qlistp, Qnetwork, Qopen, Qpipe, Qrun, Qserial,
+                 Qstop};
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
