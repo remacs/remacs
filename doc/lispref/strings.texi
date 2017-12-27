@@ -1212,12 +1212,12 @@ example:
 @iftex
 @example
 @group
-(upcase "fi")  ; note: single character, ligature "fi"
+(upcase "@r{fi}")  ; note: single character, ligature "fi"
      @result{} "FI"
 @end group
 @group
-(upcase ?fi)
-     @result{} 64257  ; i.e. ?fi
+(upcase ?@r{fi})
+     @result{} 64257  ; i.e. ?@r{fi}
 @end group
 @end example
 @end iftex
