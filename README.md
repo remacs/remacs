@@ -164,6 +164,12 @@ more Emacs-y.
 
     On macOS, you'll need libxml2 (via `xcode-select --install`) and
     gnutls (via `brew install gnutls`).
+    
+    On macOS, the default `makeinfo` command in outdated, you'll need 
+    to update it (via `brew install texinfo`). To use the installed
+    version of `makeinfo` instead of the built in (`/usr/bin/makeinfo`)
+    one, you'll need to make sure `/usr/local/bin` is before `/usr/bin`
+    in `PATH`.
 
 #### Dockerized development environment
 
