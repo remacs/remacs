@@ -281,12 +281,10 @@ No problems result if this variable is not bound.
 					; Splice in the body (if any).
 	  ,@body
 	  )
-	 ;; Run the hooks, if any.
-         (run-mode-hooks ',hook)
-         ,@(when after-hook
-             `((if delay-mode-hooks
-                   (push (lambda () ,after-hook) delayed-after-hook-functions)
-                 ,after-hook)))))))
+	 ,@(when after-hook
+	     `((push (lambda () ,after-hook) delayed-after-hook-functions)))
+	 ;; Run the hooks (and delayed-after-hook-functions), if any.
+	 (run-mode-hooks ',hook)))))
 
 ;; PUBLIC: find the ultimate class of a derived mode.
 
