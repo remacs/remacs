@@ -22,6 +22,10 @@
 
 ;;; Commentary:
 
+;; The name gnus-cloud parodizes but otherwise has little to do with
+;; "cloud computing", a misleading term normally best avoided.  See:
+;; https://www.gnu.org/philosophy/words-to-avoid.html#CloudComputing
+
 ;;; Code:
 
 (eval-when-compile (require 'cl))

@@ -22,13 +22,17 @@ are also often useful for editing programs.
 the file contains ordinary text, use Text mode, which customizes Emacs
 in small ways for the syntactic conventions of text.  Outline mode
 provides special commands for operating on text with an outline
-structure.  Org mode extends Outline mode and turn Emacs into a
-full-fledged organizer: you can manage TODO lists, store notes and
-publish them in many formats.
+structure.  @xref{Outline Mode}.
 
-@iftex
-@xref{Outline Mode}.
-@end iftex
+  Org mode extends Outline mode and turns Emacs into a full-fledged
+organizer: you can manage TODO lists, store notes and publish them in
+many formats.
+@ifinfo
+@xref{Top, The Org Manual,,org, The Org Manual}.
+@end ifinfo
+@ifnotinfo
+See the Org Info manual, which is distributed with Emacs.
+@end ifnotinfo
 
 @cindex nXML mode
 @cindex mode, XML
@@ -324,6 +328,12 @@ that start a new paragraph and are contained in it must match only
 in Fundamental mode, @code{paragraph-start} is @w{@code{"\f\\|[
 \t]*$"}}, and @code{paragraph-separate} is @w{@code{"[ \t\f]*$"}}.
 
+  Note that @code{paragraph-start} and @code{paragraph-separate} are
+matched against the text at the left margin, which is not necessarily
+the beginning of the line, so these regexps should not use @samp{^} as
+an anchor, to ensure that the paragraph functions will work equally
+within a region of text indented by a margin setting.
+
 @node Pages
 @section Pages
 
@@ -414,22 +424,31 @@ beginning of a line.
 @cindex curved quotes
 @cindex guillemets
 @findex electric-quote-mode
+@c The funny quoting below is to make the printed version look
+@c correct.  FIXME.
   One common way to quote is the typewriter convention, which quotes
 using straight apostrophes @t{'like this'} or double-quotes @t{"like
 this"}.  Another common way is the curved quote convention, which uses
-left and right single or double quotation marks @t{‘like this’} or
-@t{“like this”}.  In text files, typewriter quotes are simple and
+left and right single or double quotation marks `@t{like this}' or
+``@t{like this}''@footnote{
+The curved single quote characters are U+2018 LEFT SINGLE QUOTATION
+MARK and U+2018 RIGHT SINGLE QUOTATION MARK; the curved double quotes
+are U+201C LEFT DOUBLE QUOTATION MARK and U+201D RIGHT DOUBLE
+QUOTATION MARK.  On text terminals which cannot display these
+characters, the Info reader might show them as the typewriter ASCII
+quote characters.
+}.  In text files, typewriter quotes are simple and
 portable; curved quotes are less ambiguous and typically look nicer.
 
 @vindex electric-quote-chars
   Electric Quote mode makes it easier to type curved quotes.  As you
-type characters it optionally converts @t{`} to @t{‘}, @t{'} to @t{’},
-@t{``} to @t{“}, and @t{''} to @t{”}.  It's possible to change the
+type characters it optionally converts @t{`} to ‘, @t{'} to ',
+@t{``} to ``, and @t{''} to ''.  It's possible to change the
 default quotes listed above, by customizing the variable
 @code{electric-quote-chars}, a list of four characters, where the
 items correspond to the left single quote, the right single quote, the
 left double quote and the right double quote, respectively, whose
-default value is @code{'(?‘ ?’ ?“ ?”)}.
+default value is @code{'(?@r{`} ?@r{'} ?@r{``} ?@r{''})}.
 
 @vindex electric-quote-paragraph
 @vindex electric-quote-comment
@@ -450,13 +469,14 @@ curved double quote depending on context: @t{“} at the beginning of
 the buffer or after a line break, whitespace, opening parenthesis, or
 quote character, and @t{”} otherwise.
 
-  Electric Quote mode is disabled by default.  To toggle it, type
-@kbd{M-x electric-quote-mode}.  To toggle it in a single buffer, use
-@kbd{M-x electric-quote-local-mode}.  To suppress it for a single use,
+  Electric Quote mode is disabled by default.  To toggle it in a
+single buffer, use @kbd{M-x electric-quote-local-mode}.
+To toggle it globally, type
+@kbd{M-x electric-quote-mode}.  To suppress it for a single use,
 type @kbd{C-q `} or @kbd{C-q '} instead of @kbd{`} or @kbd{'}.  To
 insert a curved quote even when Electric Quote is disabled or
 inactive, you can type @kbd{C-x 8 [} for @t{‘}, @kbd{C-x 8 ]} for
-@t{’}, @kbd{C-x 8 @{} for @t{“}, and @kbd{C-x 8 @}} for @t{”}.
+@t{’}, @kbd{C-x 8 @{} for ``, and @kbd{C-x 8 @}} for ''.
 @xref{Inserting Text}.  Note that the value of
 @code{electric-quote-chars} does not affect these keybindings, they
 are not keybindings of @code{electric-quote-mode} but bound in
@@ -485,8 +505,8 @@ text.
 @cindex mode, Auto Fill
 
   @dfn{Auto Fill} mode is a buffer-local minor mode (@pxref{Minor
-Modes}) in which lines are broken automatically when they become too
-wide.  Breaking happens only when you type a @key{SPC} or @key{RET}.
+Modes}) in which lines are broken automatically at spaces when the
+line becomes too wide.
 
 @table @kbd
 @item M-x auto-fill-mode
@@ -498,14 +518,12 @@ In Auto Fill mode, break lines when appropriate.
 
 @findex auto-fill-mode
   The mode command @kbd{M-x auto-fill-mode} toggles Auto Fill mode in
-the current buffer.  With a positive numeric argument, it enables Auto
-Fill mode, and with a negative argument it disables it.  If
-@code{auto-fill-mode} is called from Lisp with an omitted or
-@code{nil} argument, it enables Auto Fill mode.  To enable Auto Fill
-mode automatically in certain major modes, add @code{auto-fill-mode}
-to the mode hooks (@pxref{Major Modes}).  When Auto Fill mode is
-enabled, the mode indicator @samp{Fill} appears in the mode line
-(@pxref{Mode Line}).
+the current buffer.  Like any other minor mode, with a positive
+numeric argument, it enables Auto Fill mode, and with a negative
+argument it disables it.  To enable Auto Fill mode automatically in
+certain major modes, add @code{auto-fill-mode} to the mode hooks
+(@pxref{Major Modes}).  When Auto Fill mode is enabled, the mode
+indicator @samp{Fill} appears in the mode line (@pxref{Mode Line}).
 
   Auto Fill mode breaks lines automatically at spaces whenever they
 get longer than the desired width.  This line breaking occurs only
@@ -1043,42 +1061,36 @@ forward to heading lines.
 
 @table @kbd
 @item C-c C-n
+@findex outline-next-visible-heading
+@kindex C-c C-n @r{(Outline mode)}
 Move point to the next visible heading line
 (@code{outline-next-visible-heading}).
 @item C-c C-p
+@findex outline-previous-visible-heading
+@kindex C-c C-p @r{(Outline mode)}
 Move point to the previous visible heading line
 (@code{outline-previous-visible-heading}).
 @item C-c C-f
+@findex outline-forward-same-level
+@kindex C-c C-f @r{(Outline mode)}
 Move point to the next visible heading line at the same level
 as the one point is on (@code{outline-forward-same-level}).
 @item C-c C-b
+@findex outline-backward-same-level
+@kindex C-c C-b @r{(Outline mode)}
 Move point to the previous visible heading line at the same level
 (@code{outline-backward-same-level}).
 @item C-c C-u
+@findex outline-up-heading
+@kindex C-c C-u @r{(Outline mode)}
 Move point up to a lower-level (more inclusive) visible heading line
 (@code{outline-up-heading}).
 @end table
 
-@findex outline-next-visible-heading
-@findex outline-previous-visible-heading
-@kindex C-c C-n @r{(Outline mode)}
-@kindex C-c C-p @r{(Outline mode)}
-  @kbd{C-c C-n} (@code{outline-next-visible-heading}) moves down to
-the next heading line.  @kbd{C-c C-p}
-(@code{outline-previous-visible-heading}) moves similarly backward.
-Both accept numeric arguments as repeat counts.
-
-@findex outline-up-heading
-@findex outline-forward-same-level
-@findex outline-backward-same-level
-@kindex C-c C-f @r{(Outline mode)}
-@kindex C-c C-b @r{(Outline mode)}
-@kindex C-c C-u @r{(Outline mode)}
-  @kbd{C-c C-f} (@code{outline-forward-same-level}) and @kbd{C-c C-b}
-(@code{outline-backward-same-level}) move from one heading line to
-another visible heading at the same depth in the outline.  @kbd{C-c
-C-u} (@code{outline-up-heading}) moves backward to another heading
-that is less deeply nested.
+  All of the above commands accept numeric arguments as repeat counts.
+For example, @kbd{C-c C-f}, when given an argument, moves forward that
+many visible heading lines on the same level, and @kbd{C-c C-u} with
+an argument moves out of that many nested levels.
 
 @node Outline Visibility
 @subsection Outline Visibility Commands

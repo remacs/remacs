@@ -47,7 +47,13 @@ explained in the corresponding sections.
 @subsection Auto Reverting the Buffer Menu
 
 If auto-reverting of non-file buffers is enabled, the Buffer Menu
-(@pxref{Several Buffers}) automatically reverts every
+@iftex
+(@pxref{Several Buffers,,, emacs, the Emacs Manual})
+@end iftex
+@ifnottex
+(@pxref{Several Buffers})
+@end ifnottex
+automatically reverts every
 @code{auto-revert-interval} seconds, whether there is a need for it or
 not.  (It would probably take longer to check whether there is a need
 than to actually revert.)

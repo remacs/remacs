@@ -3478,8 +3478,8 @@ See also `with-temp-file' and `with-output-to-string'."
 
 (defmacro with-silent-modifications (&rest body)
   "Execute BODY, pretending it does not modify the buffer.
-This macro is Typically used around modifications of
-text-properties which do not really affect the buffer's content.
+This macro is typically used around modifications of
+text properties which do not really affect the buffer's content.
 If BODY performs real modifications to the buffer's text, other
 than cosmetic ones, undo data may become corrupted.
 

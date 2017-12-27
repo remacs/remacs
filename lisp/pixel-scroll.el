@@ -110,11 +110,11 @@ This is an alternative of `scroll-up'.  Scope moves downward."
                        pixel-resolution-fine-flag
                      (frame-char-height))
                  (pixel-line-height))))
-      (while (pixel-point-at-top-p amt) ; prevent too late (multi tries)
-        (vertical-motion 1))            ; move point downward
-      (if (pixel-eob-at-top-p)          ; when end-of-the-buffer is close
-          (scroll-up 1)                 ; relay on robust method
-        (pixel-scroll-pixel-up amt))))) ; move scope downward
+      (if (pixel-eob-at-top-p)            ; when end-of-the-buffer is close
+          (scroll-up 1)                   ; relay on robust method
+        (while (pixel-point-at-top-p amt) ; prevent too late (multi tries)
+          (vertical-motion 1))            ; move point downward
+        (pixel-scroll-pixel-up amt)))))   ; move scope downward
 
 (defun pixel-scroll-down (&optional arg)
   "Scroll text of selected window down ARG lines.

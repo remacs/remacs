@@ -1634,7 +1634,7 @@ argument @var{b} is given, the result of this operation is stored into
 @end defun
 
 @defun bool-vector-subsetp a b
-Return @code{t} if every @code{t} value in @var{a} is also t in
+Return @code{t} if every @code{t} value in @var{a} is also @code{t} in
 @var{b}, @code{nil} otherwise.  All arguments should be bool vectors of the
 same length.
 @end defun

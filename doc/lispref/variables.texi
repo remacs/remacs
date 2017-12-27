@@ -825,7 +825,7 @@ This function arranges for @var{watch-function} to be called whenever
 @var{operation} is a symbol representing the kind of change, one of:
 `set', `let', `unlet', `makunbound', and `defvaralias'.
 @var{where} is a buffer if the buffer-local value of the variable is
-being changed, nil otherwise.
+being changed, @code{nil} otherwise.
 @end defun
 
 @defun remove-variable-watch symbol watch-function
@@ -2061,7 +2061,7 @@ identifying a connection and the application using this connection.
 Property names might be @code{:application}, @code{:protocol},
 @code{:user} and @code{:machine}.  The property value of
 @code{:application} is a symbol, all other property values are
-strings.  All properties are optional; if @var{criteria} is nil, it
+strings.  All properties are optional; if @var{criteria} is @code{nil}, it
 always applies.  Example:
 
 @example
@@ -2079,7 +2079,7 @@ always applies.  Example:
 @end group
 @end example
 
-  If @var{criteria} is nil, it applies for all remote connections.
+  If @var{criteria} is @code{nil}, it applies for all remote connections.
 Therefore, the example above would be equivalent to
 
 @example

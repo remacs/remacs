@@ -3391,7 +3391,8 @@ producing the frame layout sketched above.
 @example
 @group
 (defvar parameters
-  '(window-parameters . ((no-other-window . t) (no-delete-other-windows . t))))
+  '(window-parameters . ((no-other-window . t)
+                         (no-delete-other-windows . t))))
 
 (setq fit-window-to-buffer-horizontally t)
 (setq window-resize-pixelwise t)
@@ -3404,10 +3405,13 @@ producing the frame layout sketched above.
    ("\\*Tags List\\*" display-buffer-in-side-window
     (side . right) (slot . 0) (window-width . fit-window-to-buffer)
     (preserve-size . (t . nil)) ,parameters)
-   ("\\*\\(?:help\\|grep\\|Completions\\)\\*" display-buffer-in-side-window
-    (side . bottom) (slot . -1) (preserve-size . (nil . t)) ,parameters)
+   ("\\*\\(?:help\\|grep\\|Completions\\)\\*"
+    display-buffer-in-side-window
+    (side . bottom) (slot . -1) (preserve-size . (nil . t))
+    ,parameters)
    ("\\*\\(?:shell\\|compilation\\)\\*" display-buffer-in-side-window
-    (side . bottom) (slot . 1) (preserve-size . (nil . t)) ,parameters)))
+    (side . bottom) (slot . 1) (preserve-size . (nil . t))
+    ,parameters)))
 @end group
 @end example
 
