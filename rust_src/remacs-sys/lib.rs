@@ -1012,6 +1012,7 @@ extern "C" {
     pub static Vprocess_alist: Lisp_Object;
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vfeatures: Lisp_Object;
+    pub static Vinhibit_read_only: Lisp_Object;
     pub static mut Vautoload_queue: Lisp_Object;
     pub static minibuf_level: EmacsInt;
     pub static mut minibuf_window: Lisp_Object;
@@ -1259,6 +1260,12 @@ extern "C" {
     pub fn window_box_left_offset(w: *const Lisp_Window, area: glyph_row_area) -> c_int;
     pub fn window_menu_bar_p(w: *const Lisp_Window) -> bool;
     pub fn window_tool_bar_p(w: *const Lisp_Window) -> bool;
+
+    pub fn Fget_text_property(
+        position: Lisp_Object,
+        prop: Lisp_Object,
+        object: Lisp_Object,
+    ) -> Lisp_Object;
 
 }
 
