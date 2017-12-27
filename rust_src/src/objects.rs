@@ -1,7 +1,8 @@
 //! Various functions operating on any object.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EqualKind, Qnil};
+use remacs_sys::EqualKind;
+use remacs_sys::Qnil;
 use remacs_sys::internal_equal;
 
 use lisp::LispObject;
