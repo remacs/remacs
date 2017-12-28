@@ -1,4 +1,4 @@
-;;; ange-ftp.el --- transparent FTP support for GNU Emacs
+;;; ange-ftp.el --- transparent FTP support for GNU Emacs  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1989-1996, 1998, 2000-2017 Free Software Foundation,
 ;; Inc.
@@ -1168,7 +1168,7 @@ only return the directory part of FILE."
   (ange-ftp-parse-netrc)
   (catch 'found-one
     (maphash
-     (lambda (host val)
+     (lambda (host _val)
        (if (ange-ftp-lookup-passwd host user) (throw 'found-one host)))
      ange-ftp-user-hashtable)
     (save-match-data
@@ -1399,14 +1399,14 @@ only return the directory part of FILE."
   (save-match-data
     (let (res)
       (maphash
-       (lambda (key value)
+       (lambda (key _value)
 	 (if (string-match "\\`[^/]*\\(/\\).*\\'" key)
 	     (let ((host (substring key 0 (match-beginning 1)))
 		   (user (substring key (match-end 1))))
 	       (push (concat user "@" host ":") res))))
        ange-ftp-passwd-hashtable)
       (maphash
-       (lambda (host user) (push (concat host ":") res))
+       (lambda (host _user) (push (concat host ":") res))
        ange-ftp-user-hashtable)
       (or res (list nil)))))
 
@@ -1684,7 +1684,7 @@ good, skip, fatal, or unknown."
 				ange-ftp-process-result
 				ange-ftp-process-result-line)))))))
 
-(defun ange-ftp-process-sentinel (proc str)
+(defun ange-ftp-process-sentinel (proc _str)
   "When FTP process changes state, nuke all file-entries in cache."
   (let ((name (process-name proc)))
     (when (string-match "\\*ftp \\([^@]+\\)@\\([^*]+\\)\\*" name)
@@ -1733,7 +1733,7 @@ good, skip, fatal, or unknown."
 (defvar ange-ftp-gwp-running t)
 (defvar ange-ftp-gwp-status nil)
 
-(defun ange-ftp-gwp-sentinel (proc str)
+(defun ange-ftp-gwp-sentinel (_proc _str)
   (setq ange-ftp-gwp-running nil))
 
 (defun ange-ftp-gwp-filter (proc str)
@@ -3445,9 +3445,9 @@ system TYPE.")
 	(let ((part (ange-ftp-get-file-part file))
 	      (files (ange-ftp-get-files (file-name-directory file))))
 	  (if (ange-ftp-hash-entry-exists-p part files)
-	      (let ((host (nth 0 parsed))
-		    (user (nth 1 parsed))
-		    (name (nth 2 parsed))
+	      (let (;; (host (nth 0 parsed))
+		    ;; (user (nth 1 parsed))
+		    ;; (name (nth 2 parsed))
 		    (dirp (gethash part files))
 		    (inode (gethash file ange-ftp-inodes-hashtable)))
 		(unless inode
@@ -3833,7 +3833,7 @@ so return the size on the remote host exactly. See RFC 3659."
     (ange-ftp-call-cont cont result line)))
 
 (defun ange-ftp-copy-file (filename newname &optional ok-if-already-exists
-				    keep-date preserve-uid-gid
+				    keep-date _preserve-uid-gid
 				    _preserve-selinux-context)
   (interactive "fCopy file: \nFCopy %s to file: \np")
   (ange-ftp-copy-file-internal filename
@@ -5207,7 +5207,7 @@ Other orders of $ and _ seem to all work just fine.")
 				      ";\\([0-9]+\\)$"))
 		      (version 0))
 		  (maphash
-		   (lambda (name val)
+		   (lambda (name _val)
 		     (and (string-match regexp name)
 			  (setq version
 				(max version
