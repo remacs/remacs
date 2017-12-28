@@ -1320,7 +1320,12 @@ menu bar menus and the frame title.  */)
 DEFUN ("set-buffer-modified-p", Fset_buffer_modified_p, Sset_buffer_modified_p,
        1, 1, 0,
        doc: /* Mark current buffer as modified or unmodified according to FLAG.
-A non-nil FLAG means mark the buffer modified.  */)
+A non-nil FLAG means mark the buffer modified.
+In addition, this function unconditionally forces redisplay of the
+mode lines of the windows that display the current buffer, and also
+locks or unlocks the file visited by the buffer, depending on whether
+the function's argument is non-nil, but only if both `buffer-file-name'
+and `buffer-file-truename' are non-nil.  */)
   (Lisp_Object flag)
 {
   Frestore_buffer_modified_p (flag);
@@ -1341,7 +1346,10 @@ A non-nil FLAG means mark the buffer modified.  */)
 
 DEFUN ("restore-buffer-modified-p", Frestore_buffer_modified_p,
        Srestore_buffer_modified_p, 1, 1, 0,
-       doc: /* Like `set-buffer-modified-p', with a difference concerning redisplay.
+       doc: /* Like `set-buffer-modified-p', but doesn't redisplay buffer's mode line.
+This function also locks and unlocks the file visited by the buffer,
+if both `buffer-file-truename' and `buffer-file-name' are non-nil.
+
 It is not ensured that mode lines will be updated to show the modified
 state of the current buffer.  Use with care.  */)
   (Lisp_Object flag)
