@@ -1354,7 +1354,6 @@ It is not ensured that mode lines will be updated to show the modified
 state of the current buffer.  Use with care.  */)
   (Lisp_Object flag)
 {
-  Lisp_Object fn;
 
   /* If buffer becoming modified, lock the file.
      If buffer becoming unmodified, unlock the file.  */
@@ -1363,15 +1362,18 @@ state of the current buffer.  Use with care.  */)
     ? current_buffer->base_buffer
     : current_buffer;
 
-  fn = BVAR (b, file_truename);
-  /* Test buffer-file-name so that binding it to nil is effective.  */
-  if (!NILP (fn) && ! NILP (BVAR (b, filename)))
+  if (!inhibit_modification_hooks)
     {
-      bool already = SAVE_MODIFF < MODIFF;
-      if (!already && !NILP (flag))
-	lock_file (fn);
-      else if (already && NILP (flag))
-	unlock_file (fn);
+      Lisp_Object fn = BVAR (b, file_truename);
+      /* Test buffer-file-name so that binding it to nil is effective.  */
+      if (!NILP (fn) && ! NILP (BVAR (b, filename)))
+        {
+          bool already = SAVE_MODIFF < MODIFF;
+          if (!already && !NILP (flag))
+	    lock_file (fn);
+          else if (already && NILP (flag))
+	    unlock_file (fn);
+        }
     }
 
   /* Here we have a problem.  SAVE_MODIFF is used here to encode
