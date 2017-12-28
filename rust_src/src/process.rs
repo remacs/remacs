@@ -75,8 +75,8 @@ impl LispProcessRef {
 
 /// Return t if OBJECT is a process.
 #[lisp_fn]
-pub fn processp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_process())
+pub fn processp(object: LispObject) -> bool {
+    object.is_process()
 }
 
 /// Return the process named NAME, or nil if there is none.
@@ -286,7 +286,7 @@ pub fn set_process_buffer(process: LispObject, buffer: LispObject) -> LispObject
 /// If PROCESS is a non-blocking network process that hasn't been fully
 /// set up yet, this function will block until socket setup has completed.
 #[lisp_fn]
-pub fn process_send_string(process: LispObject, string: LispStringRef) -> LispObject {
+pub fn process_send_string(process: LispObject, string: LispStringRef) -> () {
     unsafe {
         send_process(
             cget_process(process.to_raw()),
@@ -295,14 +295,13 @@ pub fn process_send_string(process: LispObject, string: LispStringRef) -> LispOb
             string.as_lisp_obj().to_raw(),
         )
     };
-    LispObject::constant_nil()
 }
 
 /// Return the current value of query-on-exit flag for PROCESS.
 #[lisp_fn]
-pub fn process_query_on_exit_flag(process: LispObject) -> LispObject {
+pub fn process_query_on_exit_flag(process: LispObject) -> bool {
     let kwq = unsafe { pget_kill_without_query(process.as_process_or_error().as_ptr()) };
-    LispObject::from_bool(!kwq as BoolBF)
+    !kwq as BoolBF
 }
 
 /// Specify if query is needed for PROCESS when Emacs is exited.

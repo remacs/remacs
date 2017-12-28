@@ -40,7 +40,7 @@ pub extern "C" fn arithcompare(
         LispObject::from_raw(obj2),
         comparison,
     );
-    result.to_raw()
+    LispObject::from(result).to_raw()
 }
 
 #[no_mangle]

@@ -1,6 +1,7 @@
 //! Functions operating on windows.
 
 use libc::c_int;
+use std::mem;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Window};
@@ -18,6 +19,10 @@ use marker::marker_position;
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
 impl LispWindowRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        unsafe { mem::transmute(self.as_ptr()) }
+    }
+
     /// Check if window is a live window (displays a buffer).
     /// This is also sometimes called a "leaf window" in Emacs sources.
     #[inline]
@@ -234,8 +239,8 @@ fn window_valid_or_selected(window: LispObject) -> LispWindowRef {
 
 /// Return t if OBJECT is a window and nil otherwise.
 #[lisp_fn]
-pub fn windowp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_window())
+pub fn windowp(object: LispObject) -> bool {
+    object.is_window()
 }
 
 /// Return t if OBJECT is a live window and nil otherwise.
@@ -243,8 +248,8 @@ pub fn windowp(object: LispObject) -> LispObject {
 /// A live window is a window that displays a buffer.
 /// Internal windows and deleted windows are not live.
 #[lisp_fn]
-pub fn window_live_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.as_window().map_or(false, |m| m.is_live()))
+pub fn window_live_p(object: LispObject) -> bool {
+    object.as_window().map_or(false, |m| m.is_live())
 }
 
 /// Return current value of point in WINDOW.
@@ -258,12 +263,12 @@ pub fn window_live_p(object: LispObject) -> LispObject {
 /// correct to return the top-level value of `point', outside of any
 /// `save-excursion' forms.  But that is hard to define.
 #[lisp_fn(min = "0")]
-pub fn window_point(window: LispObject) -> LispObject {
+pub fn window_point(window: LispObject) -> Option<EmacsInt> {
     let win = window_live_or_selected(window);
     if win == selected_window().as_window_or_error() {
-        point()
+        Some(point())
     } else {
-        marker_position(win.point_marker())
+        marker_position(win.point_marker().into())
     }
 }
 
@@ -292,25 +297,25 @@ pub fn window_buffer(window: LispObject) -> LispObject {
 /// A valid window is either a window that displays a buffer or an internal
 /// window.  Windows that have been deleted are not valid.
 #[lisp_fn]
-pub fn window_valid_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.as_window().map_or(false, |w| w.is_valid()))
+pub fn window_valid_p(object: LispObject) -> bool {
+    object.as_window().map_or(false, |w| w.is_valid())
 }
 
 /// Return position at which display currently starts in WINDOW.
 /// WINDOW must be a live window and defaults to the selected one.
 /// This is updated by redisplay or by calling `set-window-start'.
 #[lisp_fn(min = "0")]
-pub fn window_start(window: LispObject) -> LispObject {
+pub fn window_start(window: LispObject) -> Option<EmacsInt> {
     let win = window_live_or_selected(window);
-    marker_position(win.start_marker())
+    marker_position(win.start_marker().into())
 }
 
 /// Return non-nil if WINDOW is a minibuffer window.
 /// WINDOW must be a valid window and defaults to the selected one.
 #[lisp_fn(min = "0")]
-pub fn window_minibuffer_p(window: LispObject) -> LispObject {
+pub fn window_minibuffer_p(window: LispObject) -> bool {
     let win = window_valid_or_selected(window);
-    LispObject::from_bool(win.is_minibuffer())
+    win.is_minibuffer()
 }
 
 /// Get width of marginal areas of window WINDOW.
@@ -342,14 +347,12 @@ pub fn window_margins(window: LispObject) -> LispObject {
 /// WINDOW's siblings.  A return value of t means that child windows of
 /// WINDOW are never (re-)combined with WINDOW's siblings.
 #[lisp_fn]
-pub fn window_combination_limit(window: LispObject) -> LispObject {
-    let w = window.as_window_or_error();
-
-    if !w.is_internal() {
+pub fn window_combination_limit(window: LispWindowRef) -> LispObject {
+    if !window.is_internal() {
         error!("Combination limit is meaningful for internal windows only");
     }
 
-    LispObject::from_raw(w.combination_limit)
+    LispObject::from_raw(window.combination_limit)
 }
 
 /// Set combination limit of window WINDOW to LIMIT; return LIMIT.
@@ -359,14 +362,12 @@ pub fn window_combination_limit(window: LispObject) -> LispObject {
 /// (re-)combined with WINDOW's siblings.  Other values are reserved for
 /// future use.
 #[lisp_fn]
-pub fn set_window_combination_limit(window: LispObject, limit: LispObject) -> LispObject {
-    let mut w = window.as_window_or_error();
-
-    if !w.is_internal() {
+pub fn set_window_combination_limit(mut window: LispWindowRef, limit: LispObject) -> LispObject {
+    if !window.is_internal() {
         error!("Combination limit is meaningful for internal windows only");
     }
 
-    w.combination_limit = limit.to_raw();
+    window.combination_limit = limit.to_raw();
 
     limit
 }

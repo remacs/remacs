@@ -18,9 +18,9 @@ use util::clip_to_bounds;
 /// Return value of point, as an integer.
 /// Beginning of buffer is position (point-min).
 #[lisp_fn]
-pub fn point() -> LispObject {
+pub fn point() -> EmacsInt {
     let buffer_ref = ThreadState::current_buffer();
-    LispObject::from_natnum(buffer_ref.pt as EmacsInt)
+    buffer_ref.pt as EmacsInt
 }
 
 /// Return the number of characters in the current buffer.
@@ -33,69 +33,65 @@ pub fn point() -> LispObject {
 /// in some other BUFFER, use
 /// `(with-current-buffer BUFFER (- (point-max) (point-min)))'.
 #[lisp_fn(min = "0")]
-pub fn buffer_size(buffer: LispObject) -> LispObject {
+pub fn buffer_size(buffer: LispObject) -> EmacsInt {
     let buffer_ref = if buffer.is_not_nil() {
         get_buffer(buffer).as_buffer_or_error()
     } else {
         ThreadState::current_buffer()
     };
-    LispObject::from_natnum((buffer_ref.z() - buffer_ref.beg()) as EmacsInt)
+    (buffer_ref.z() - buffer_ref.beg()) as EmacsInt
 }
 
 /// Return t if point is at the end of the buffer.
 /// If the buffer is narrowed, this means the end of the narrowed part.
 #[lisp_fn]
-pub fn eobp() -> LispObject {
+pub fn eobp() -> bool {
     let buffer_ref = ThreadState::current_buffer();
-    LispObject::from_bool(buffer_ref.zv() == buffer_ref.pt)
+    buffer_ref.zv() == buffer_ref.pt
 }
 
 /// Return t if point is at the beginning of the buffer.  If the
 /// buffer is narrowed, this means the beginning of the narrowed part.
 #[lisp_fn]
-pub fn bobp() -> LispObject {
+pub fn bobp() -> bool {
     let buffer_ref = ThreadState::current_buffer();
-    LispObject::from_bool(buffer_ref.pt == buffer_ref.begv)
+    buffer_ref.pt == buffer_ref.begv
 }
 
 /// Return t if point is at the beginning of a line.
 #[lisp_fn]
-pub fn bolp() -> LispObject {
+pub fn bolp() -> bool {
     let buffer_ref = ThreadState::current_buffer();
-    LispObject::from_bool(
-        buffer_ref.pt == buffer_ref.begv || buffer_ref.fetch_byte(buffer_ref.pt_byte - 1) == b'\n',
-    )
+    buffer_ref.pt == buffer_ref.begv || buffer_ref.fetch_byte(buffer_ref.pt_byte - 1) == b'\n'
 }
 
 /// Return t if point is at the end of a line.
 /// `End of a line' includes point being at the end of the buffer.
 #[lisp_fn]
-pub fn eolp() -> LispObject {
+pub fn eolp() -> bool {
     let buffer_ref = ThreadState::current_buffer();
-    LispObject::from_bool(
-        buffer_ref.pt == buffer_ref.zv() || buffer_ref.fetch_byte(buffer_ref.pt_byte) == b'\n',
-    )
+    buffer_ref.pt == buffer_ref.zv() || buffer_ref.fetch_byte(buffer_ref.pt_byte) == b'\n'
 }
 
 /// Return the position of the gap, in the current buffer.
 /// See also `gap-size'.
 #[lisp_fn]
-pub fn gap_position() -> LispObject {
+pub fn gap_position() -> EmacsInt {
     let buffer_ref = ThreadState::current_buffer();
-    LispObject::from_natnum(buffer_ref.gap_position() as EmacsInt)
+    buffer_ref.gap_position() as EmacsInt
 }
 
 /// Return the size of the current buffer's gap.
 /// See also `gap-position'.
 #[lisp_fn]
-pub fn gap_size() -> LispObject {
+pub fn gap_size() -> EmacsInt {
     let buffer_ref = ThreadState::current_buffer();
-    LispObject::from_natnum(buffer_ref.gap_size() as EmacsInt)
+    buffer_ref.gap_size() as EmacsInt
 }
 /// Return the start or end position of the region.
 /// BEGINNINGP means return the start.
 /// If there is no region active, signal an error.
-fn region_limit(beginningp: bool) -> LispObject {
+fn region_limit(beginningp: bool) -> EmacsInt {
     let current_buf = ThreadState::current_buffer();
     if LispObject::from_raw(unsafe { globals.f_Vtransient_mark_mode }).is_not_nil()
         && LispObject::from_raw(unsafe { globals.f_Vmark_even_if_inactive }).is_nil()
@@ -104,30 +100,26 @@ fn region_limit(beginningp: bool) -> LispObject {
         xsignal!(Qmark_inactive);
     }
 
-    let m = marker_position(current_buf.mark());
-    if m.is_nil() {
-        error!("The mark is not set now, so there is no region");
-    }
+    let m = marker_position(current_buf.mark().into());
+    let num = m.unwrap_or_else(|| error!("The mark is not set now, so there is no region"));
 
-    let num = m.as_fixnum_or_error();
     // Clip to the current narrowing (bug#11770)
     if ((current_buf.pt as EmacsInt) < num) == beginningp {
-        LispObject::from_fixnum(current_buf.pt as EmacsInt)
+        current_buf.pt as EmacsInt
     } else {
-        LispObject::from_fixnum(clip_to_bounds(current_buf.begv, num, current_buf.zv)
-            as EmacsInt)
+        clip_to_bounds(current_buf.begv, num, current_buf.zv) as EmacsInt
     }
 }
 
 /// Return the integer value of point or mark, whichever is smaller.
 #[lisp_fn]
-pub fn region_beginning() -> LispObject {
+pub fn region_beginning() -> EmacsInt {
     region_limit(true)
 }
 
 /// Return the integer value of point or mark, whichever is larger.
 #[lisp_fn]
-pub fn region_end() -> LispObject {
+pub fn region_end() -> EmacsInt {
     region_limit(false)
 }
 
@@ -143,16 +135,16 @@ pub fn mark_marker() -> LispObject {
 /// buffer.  This is 1, unless narrowing (a buffer restriction) is in
 /// effect.
 #[lisp_fn]
-pub fn point_min() -> LispObject {
-    LispObject::from_natnum(ThreadState::current_buffer().begv as EmacsInt)
+pub fn point_min() -> EmacsInt {
+    ThreadState::current_buffer().begv as EmacsInt
 }
 
 /// Return the maximum permissible value of point in the current
 /// buffer.  This is (1+ (buffer-size)), unless narrowing (a buffer
 /// restriction) is in effect, in which case it is less.
 #[lisp_fn]
-pub fn point_max() -> LispObject {
-    LispObject::from_natnum(ThreadState::current_buffer().zv() as EmacsInt)
+pub fn point_max() -> EmacsInt {
+    ThreadState::current_buffer().zv() as EmacsInt
 }
 
 /// Set point to POSITION, a number or marker.
@@ -177,15 +169,15 @@ pub fn goto_char(position: LispObject) -> LispObject {
 /// Return the byte position for character position POSITION.
 /// If POSITION is out of range, the value is nil.
 #[lisp_fn]
-pub fn position_bytes(position: LispObject) -> LispObject {
+pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
     let pos = position.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
     let cur_buf = ThreadState::current_buffer();
 
     if pos >= cur_buf.begv && pos <= cur_buf.zv {
         let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
-        LispObject::from_natnum(bytepos as EmacsInt)
+        Some(bytepos as EmacsInt)
     } else {
-        LispObject::constant_nil()
+        None
     }
 }
 
@@ -228,13 +220,13 @@ pub fn insert_byte(byte: EmacsInt, count: LispObject, inherit: LispObject) -> Li
 /// Return the character following point, as a number. At the end of
 /// the buffer or accessible region, return 0.
 #[lisp_fn]
-pub fn following_char() -> LispObject {
+pub fn following_char() -> EmacsInt {
     let buffer_ref = ThreadState::current_buffer();
 
     if buffer_ref.pt >= buffer_ref.zv {
-        LispObject::from_natnum(0)
+        0
     } else {
-        LispObject::from_natnum(buffer_ref.fetch_char(buffer_ref.pt_byte) as EmacsInt)
+        buffer_ref.fetch_char(buffer_ref.pt_byte) as EmacsInt
     }
 }
 
@@ -242,27 +234,27 @@ pub fn following_char() -> LispObject {
 /// POS is an integer or a marker and defaults to point.
 /// If POS is out of range, the value is nil.
 #[lisp_fn(min = "0")]
-pub fn char_after(mut pos: LispObject) -> LispObject {
+pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
     let buffer_ref = ThreadState::current_buffer();
     if pos.is_nil() {
-        pos = point();
+        pos = LispObject::from(point());
     }
     if pos.is_marker() {
         let pos_byte = pos.as_marker().unwrap().bytepos_or_error();
         // Note that this considers the position in the current buffer,
         // even if the marker is from another buffer.
         if pos_byte < buffer_ref.begv_byte || pos_byte >= buffer_ref.zv_byte {
-            LispObject::constant_nil()
+            None
         } else {
-            LispObject::from_natnum(buffer_ref.fetch_char(pos_byte) as EmacsInt)
+            Some(buffer_ref.fetch_char(pos_byte) as EmacsInt)
         }
     } else {
         let p = pos.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
         if p < buffer_ref.begv || p >= buffer_ref.zv() {
-            LispObject::constant_nil()
+            None
         } else {
             let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_ptr(), p) };
-            LispObject::from_natnum(buffer_ref.fetch_char(pos_byte) as EmacsInt)
+            Some(buffer_ref.fetch_char(pos_byte) as EmacsInt)
         }
     }
 }
@@ -335,18 +327,18 @@ pub fn byte_to_string(byte: LispObject) -> LispObject {
 
 /// Return the first character in STRING.
 #[lisp_fn]
-pub fn string_to_char(string: LispObject) -> LispObject {
+pub fn string_to_char(string: LispObject) -> EmacsInt {
     let string = string.as_string_or_error();
 
     if string.len_chars() > 0 {
         if string.is_multibyte() {
             let (cp, _) = multibyte_char_at(string.as_slice());
-            LispObject::from_natnum(EmacsInt::from(cp))
+            EmacsInt::from(cp)
         } else {
-            LispObject::from_natnum(EmacsInt::from(string.byte_at(0)))
+            EmacsInt::from(string.byte_at(0))
         }
     } else {
-        LispObject::from_natnum(0)
+        0
     }
 }
 

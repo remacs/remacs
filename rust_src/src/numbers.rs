@@ -15,38 +15,38 @@ lazy_static! {
 
 /// Return t if OBJECT is a floating point number.
 #[lisp_fn]
-pub fn floatp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_float())
+pub fn floatp(object: LispObject) -> bool {
+    object.is_float()
 }
 
 /// Return t if OBJECT is an integer.
 #[lisp_fn]
-pub fn integerp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_integer())
+pub fn integerp(object: LispObject) -> bool {
+    object.is_integer()
 }
 
 /// Return t if OBJECT is an integer or a marker (editor pointer).
 #[lisp_fn]
-pub fn integer_or_marker_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_marker() || object.is_integer())
+pub fn integer_or_marker_p(object: LispObject) -> bool {
+    object.is_marker() || object.is_integer()
 }
 
 /// Return t if OBJECT is a non-negative integer.
 #[lisp_fn]
-pub fn natnump(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_natnum())
+pub fn natnump(object: LispObject) -> bool {
+    object.is_natnum()
 }
 
 /// Return t if OBJECT is a number (floating point or integer).
 #[lisp_fn]
-pub fn numberp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_number())
+pub fn numberp(object: LispObject) -> bool {
+    object.is_number()
 }
 
 /// Return t if OBJECT is a number or a marker (editor pointer).
 #[lisp_fn]
-pub fn number_or_marker_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_number() || object.is_marker())
+pub fn number_or_marker_p(object: LispObject) -> bool {
+    object.is_number() || object.is_marker()
 }
 
 /// Return a pseudo-random number.
@@ -60,6 +60,8 @@ pub fn number_or_marker_p(object: LispObject) -> LispObject {
 /// Other values of LIMIT are ignored.
 ///
 /// See Info node `(elisp)Random Numbers' for more details.
+// NOTE(db48x): does not return an EmacsInt, because it relies on the
+// truncating behavior of from_fixnum_truncated.
 #[lisp_fn(min = "0")]
 pub fn random(limit: LispObject) -> LispObject {
     let mut rng = RNG.lock().unwrap();

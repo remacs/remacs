@@ -89,8 +89,8 @@ impl LispHashTableRef {
         unsafe { hash_put(self.as_mut(), key.to_raw(), value.to_raw(), hash) }
     }
 
-    pub fn check_impure(self, object: LispObject) {
-        unsafe { CHECK_IMPURE(object.to_raw(), self.as_ptr() as *mut c_void) };
+    pub fn check_impure(self, object: LispHashTableRef) {
+        unsafe { CHECK_IMPURE(LispObject::from(object).to_raw(), self.as_ptr() as *mut c_void) };
     }
 
     pub fn remove(mut self, key: LispObject) {
@@ -183,7 +183,7 @@ impl LispHashTableRef {
 /// Return a copy of hash table TABLE.
 /// Keys and values are not copied, only the table itself is.
 #[lisp_fn]
-pub fn copy_hash_table(mut table: LispHashTableRef) -> LispObject {
+pub fn copy_hash_table(mut table: LispHashTableRef) -> LispHashTableRef {
     let mut new_table = LispHashTableRef::allocate();
     unsafe { new_table.copy(table) };
     assert_ne!(new_table.as_ptr(), table.as_ptr());
@@ -203,7 +203,7 @@ pub fn copy_hash_table(mut table: LispHashTableRef) -> LispObject {
         table.set_next_weak(new_table);
     }
 
-    LispObject::from_hash_table(new_table)
+    new_table
 }
 
 /// Look up KEY in TABLE and return its associated value.
@@ -224,7 +224,7 @@ pub fn gethash(key: LispObject, hash_table: LispHashTableRef, dflt: LispObject) 
 /// VALUE.  In any case, return VALUE.
 #[lisp_fn]
 pub fn puthash(key: LispObject, value: LispObject, hash_table: LispHashTableRef) -> LispObject {
-    hash_table.check_impure(LispObject::from_hash_table(hash_table));
+    hash_table.check_impure(hash_table);
 
     let mut hash: EmacsUint = 0;
     let idx = hash_table.lookup(key, &mut hash);
@@ -240,41 +240,37 @@ pub fn puthash(key: LispObject, value: LispObject, hash_table: LispHashTableRef)
 
 /// Remove KEY from TABLE.
 #[lisp_fn]
-pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> LispObject {
-    hash_table.check_impure(LispObject::from_hash_table(hash_table));
+pub fn remhash(key: LispObject, hash_table: LispHashTableRef) -> () {
+    hash_table.check_impure(hash_table);
     hash_table.remove(key);
-
-    LispObject::constant_nil()
 }
 
 /// Call FUNCTION for all entries in hash table TABLE.
 /// FUNCTION is called with two arguments, KEY and VALUE.
 /// `maphash' always returns nil.
 #[lisp_fn]
-pub fn maphash(function: LispObject, hash_table: LispHashTableRef) -> LispObject {
+pub fn maphash(function: LispObject, hash_table: LispHashTableRef) -> () {
     for (key, value) in hash_table.iter() {
         call!(function, key, value);
     }
-
-    LispObject::constant_nil()
 }
 
 /// Return t if OBJ is a Lisp hash table object.
 #[lisp_fn]
-pub fn hash_table_p(obj: LispObject) -> LispObject {
-    LispObject::from_bool(obj.is_hash_table())
+pub fn hash_table_p(obj: LispObject) -> bool {
+    obj.is_hash_table()
 }
 
 /// Return the number of elements in TABLE.
 #[lisp_fn]
-pub fn hash_table_count(table: LispHashTableRef) -> LispObject {
-    LispObject::from_natnum(table.count as EmacsInt)
+pub fn hash_table_count(table: LispHashTableRef) -> EmacsInt {
+    table.count as EmacsInt
 }
 
 /// Return the current rehash threshold of TABLE.
 #[lisp_fn]
-pub fn hash_table_rehash_threshold(table: LispHashTableRef) -> LispObject {
-    LispObject::from_float(table.rehash_threshold as EmacsDouble)
+pub fn hash_table_rehash_threshold(table: LispHashTableRef) -> EmacsDouble {
+    table.rehash_threshold as EmacsDouble
 }
 
 /// Return the size of TABLE.
@@ -282,8 +278,8 @@ pub fn hash_table_rehash_threshold(table: LispHashTableRef) -> LispObject {
 /// a hash table than can hold as many elements as TABLE holds
 /// without need for resizing.
 #[lisp_fn]
-pub fn hash_table_size(table: LispHashTableRef) -> LispObject {
-    LispObject::from_natnum(table.size() as EmacsInt)
+pub fn hash_table_size(table: LispHashTableRef) -> EmacsInt {
+    table.size() as EmacsInt
 }
 
 /// Return the test TABLE uses.
@@ -300,10 +296,10 @@ pub fn hash_table_weakness(table: LispHashTableRef) -> LispObject {
 
 /// Clear hash table TABLE and return it.
 #[lisp_fn]
-pub fn clrhash(hash_table: LispHashTableRef) -> LispObject {
-    hash_table.check_impure(LispObject::from_hash_table(hash_table));
+pub fn clrhash(hash_table: LispHashTableRef) -> LispHashTableRef {
+    hash_table.check_impure(hash_table);
     hash_table.clear();
-    LispObject::from_hash_table(hash_table)
+    hash_table
 }
 
 /// Define a new hash table test with name NAME, a symbol.

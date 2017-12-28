@@ -1,9 +1,9 @@
 //! Indentation functions
 
 use remacs_macros::lisp_fn;
+use remacs_sys::EmacsInt;
 use remacs_sys;
 
-use lisp::LispObject;
 use lisp::defsubr;
 
 /// Return the horizontal position of point.
@@ -20,8 +20,8 @@ use lisp::defsubr;
 /// `buffer-invisibility-spec' specifies that it is replaced by an
 /// ellipsis.
 #[lisp_fn]
-pub fn current_column() -> LispObject {
-    LispObject::from_natnum(unsafe { remacs_sys::current_column() })
+pub fn current_column() -> EmacsInt {
+    unsafe { remacs_sys::current_column() }
 }
 
 include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));

@@ -87,8 +87,8 @@ pub unsafe extern "C" fn indirect_variable(symbol: *mut Lisp_Symbol) -> *mut Lis
 
 /// Return t if OBJECT is a symbol.
 #[lisp_fn]
-pub fn symbolp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_symbol())
+pub fn symbolp(object: LispObject) -> bool {
+    object.is_symbol()
 }
 
 /// Return SYMBOL's name, a string.
@@ -104,8 +104,8 @@ pub fn symbol_name(symbol: LispSymbolRef) -> LispObject {
 
 /// Return t if SYMBOL's function definition is not void.
 #[lisp_fn]
-pub fn fboundp(symbol: LispSymbolRef) -> LispObject {
-    LispObject::from_bool(symbol.get_function().is_not_nil())
+pub fn fboundp(symbol: LispSymbolRef) -> bool {
+    symbol.get_function().is_not_nil()
 }
 
 /// Return SYMBOL's function definition, or nil if that is void.
@@ -130,13 +130,13 @@ pub fn setplist(mut symbol: LispSymbolRef, newplist: LispObject) -> LispObject {
 /// Make SYMBOL's function definition be nil.
 /// Return SYMBOL.
 #[lisp_fn]
-pub fn fmakunbound(symbol: LispObject) -> LispObject {
+pub fn fmakunbound(symbol: LispObject) -> LispSymbolRef {
     let mut sym = symbol.as_symbol_or_error();
     if symbol.is_nil() || symbol.is_t() {
         xsignal!(Qsetting_constant, symbol);
     }
     sym.set_function(LispObject::constant_nil());
-    symbol
+    sym
 }
 
 // Define this in Rust to avoid unnecessarily consing up the symbol
@@ -146,12 +146,12 @@ pub fn fmakunbound(symbol: LispObject) -> LispObject {
 /// This means that it is a symbol with a print name beginning with `:'
 /// interned in the initial obarray.
 #[lisp_fn]
-pub fn keywordp(object: LispObject) -> LispObject {
+pub fn keywordp(object: LispObject) -> bool {
     if let Some(sym) = object.as_symbol() {
         let name = sym.symbol_name().as_string_or_error();
-        LispObject::from_bool(name.byte_at(0) == b':' && sym.is_interned_in_initial_obarray())
+        name.byte_at(0) == b':' && sym.is_interned_in_initial_obarray()
     } else {
-        LispObject::constant_nil()
+        false
     }
 }
 
@@ -175,7 +175,7 @@ pub fn indirect_variable_lisp(object: LispObject) -> LispObject {
 /// Make SYMBOL's value be void.
 /// Return SYMBOL.
 #[lisp_fn]
-pub fn makunbound(symbol: LispObject) -> LispObject {
+pub fn makunbound(symbol: LispObject) -> LispSymbolRef {
     let sym = symbol.as_symbol_or_error();
     if sym.is_constant() {
         xsignal!(Qsetting_constant, symbol);
@@ -183,7 +183,7 @@ pub fn makunbound(symbol: LispObject) -> LispObject {
     unsafe {
         Fset(symbol.to_raw(), Qunbound);
     }
-    symbol
+    sym
 }
 
 /// Return SYMBOL's value.  Error if that is void.  Note that if

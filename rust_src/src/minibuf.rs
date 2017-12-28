@@ -13,7 +13,7 @@ use lists::memq;
 /// No argument or nil as argument means use current buffer as BUFFER.
 /// BUFFER can be a buffer or a buffer name.
 #[lisp_fn(min = "0")]
-pub fn minibufferp(object: LispObject) -> LispObject {
+pub fn minibufferp(object: LispObject) -> bool {
     let buffer = if object.is_nil() {
         current_buffer()
     } else if object.is_string() {
@@ -22,9 +22,7 @@ pub fn minibufferp(object: LispObject) -> LispObject {
         object.as_buffer_or_error();
         object
     };
-    LispObject::from_bool(
-        memq(buffer, LispObject::from_raw(unsafe { Vminibuffer_list })).is_not_nil(),
-    )
+    memq(buffer, LispObject::from_raw(unsafe { Vminibuffer_list })).is_not_nil()
 }
 
 /// Return the currently active minibuffer window, or nil if none.

@@ -23,7 +23,7 @@ pub extern "C" fn extract_float(f: Lisp_Object) -> EmacsDouble {
 }
 
 /// Calculate the modulus of two elisp floats.
-pub fn fmod_float(mut f1: f64, f2: f64) -> LispObject {
+pub fn fmod_float(mut f1: f64, f2: f64) -> EmacsDouble {
     f1 %= f2;
 
     // Ensure that the remainder has the correct sign.
@@ -31,7 +31,7 @@ pub fn fmod_float(mut f1: f64, f2: f64) -> LispObject {
         f1 += f2;
     }
 
-    LispObject::from_float(f1)
+    f1
 }
 
 macro_rules! simple_float_op {
@@ -60,7 +60,7 @@ pub fn float_arith_driver(
     argstart: usize,
     code: ArithOp,
     args: &[LispObject],
-) -> LispObject {
+) -> EmacsDouble {
     for (i, &val) in args[argstart..].iter().enumerate() {
         let argnum = argstart + i;
         let next = match val.as_number_coerce_marker_or_error() {
@@ -94,13 +94,13 @@ pub fn float_arith_driver(
             }
         }
     }
-    LispObject::from_float(accum)
+    accum
 }
 
 /// Return non nil if argument X is a NaN.
 #[lisp_fn]
-pub fn isnan(f: EmacsDouble) -> LispObject {
-    LispObject::from_bool(f.is_nan())
+pub fn isnan(f: EmacsDouble) -> bool {
+    f.is_nan()
 }
 
 /// Return the inverse tangent of the arguments.
@@ -226,7 +226,7 @@ pub fn expt(arg1: LispObject, arg2: LispObject) -> LispObject {
 /// Returns largest integer <= the base 2 log of the magnitude of ARG.
 /// This is the same as the exponent of a float.
 #[lisp_fn]
-pub fn logb(arg: LispObject) -> LispObject {
+pub fn logb(arg: LispObject) -> EmacsInt {
     let res = if let Some(n) = arg.as_fixnum() {
         let i = n.abs();
         if i == 0 {
@@ -246,7 +246,7 @@ pub fn logb(arg: LispObject) -> LispObject {
     } else {
         wrong_type!(Qnumberp, arg)
     };
-    LispObject::from_fixnum(res)
+    res
 }
 
 /// Return the nearest integer to ARG, as a float.
@@ -260,7 +260,7 @@ pub fn fround(arg: LispObject) -> EmacsDouble {
 /// This rounds the value towards +inf.
 /// With optional DIVISOR, return the smallest integer no less than ARG/DIVISOR.
 #[lisp_fn(min = "1")]
-pub fn ceiling(arg: LispObject, divisor: LispObject) -> LispObject {
+pub fn ceiling(arg: LispObject, divisor: LispObject) -> EmacsInt {
     rounding_driver(arg, divisor, |x| x.ceil(), ceiling2, "ceiling")
 }
 
@@ -268,7 +268,7 @@ pub fn ceiling(arg: LispObject, divisor: LispObject) -> LispObject {
 /// This rounds the value towards -inf.
 /// With optional DIVISOR, return the largest integer no greater than ARG/DIVISOR.
 #[lisp_fn(min = "1")]
-pub fn floor(arg: LispObject, divisor: LispObject) -> LispObject {
+pub fn floor(arg: LispObject, divisor: LispObject) -> EmacsInt {
     rounding_driver(arg, divisor, |x| x.floor(), floor2, "floor")
 }
 
@@ -280,7 +280,7 @@ pub fn floor(arg: LispObject, divisor: LispObject) -> LispObject {
 /// your machine.  For example, (round 2.5) can return 3 on some
 /// systems, but 2 on others.
 #[lisp_fn(min = "1")]
-pub fn round(arg: LispObject, divisor: LispObject) -> LispObject {
+pub fn round(arg: LispObject, divisor: LispObject) -> EmacsInt {
     rounding_driver(arg, divisor, libm::rint, round2, "round")
 }
 
@@ -288,7 +288,7 @@ pub fn round(arg: LispObject, divisor: LispObject) -> LispObject {
 /// Rounds ARG toward zero.
 /// With optional DIVISOR, truncate ARG/DIVISOR.
 #[lisp_fn(min = "1")]
-pub fn truncate(arg: LispObject, divisor: LispObject) -> LispObject {
+pub fn truncate(arg: LispObject, divisor: LispObject) -> EmacsInt {
     rounding_driver(arg, divisor, |x| x.trunc(), truncate2, "truncate")
 }
 
@@ -298,14 +298,14 @@ fn rounding_driver<F>(
     double_round: F,
     int_round2: fn(EmacsInt, EmacsInt) -> EmacsInt,
     name: &str,
-) -> LispObject
+) -> EmacsInt
 where
     F: Fn(f64) -> f64,
 {
     let d;
     if divisor.is_nil() {
         if arg.is_fixnum() {
-            return arg;
+            return arg.as_fixnum().unwrap();
         } else if let Some(f) = arg.as_float() {
             d = f;
         } else {
@@ -316,7 +316,7 @@ where
             if div == 0 {
                 xsignal!(Qarith_error);
             }
-            return LispObject::from_fixnum(int_round2(arg, div));
+            return int_round2(arg, div);
         }
         let arg = arg.any_to_float_or_error();
         let div = divisor.any_to_float_or_error();
@@ -331,7 +331,7 @@ where
     if dr.abs() < (2 * (MOST_POSITIVE_FIXNUM + 1)) as f64 {
         let ir = dr as EmacsInt;
         if !LispObject::fixnum_overflow(ir) {
-            return LispObject::from_fixnum(ir);
+            return ir;
         }
     }
     let errstr =

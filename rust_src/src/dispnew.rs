@@ -16,7 +16,7 @@ use lisp::defsubr;
 /// additional wait period, in milliseconds; this is for backwards compatibility.
 /// (Not all operating systems support waiting for a fraction of a second.)
 #[lisp_fn(min = "1")]
-pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> LispObject {
+pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> () {
     let duration = seconds + (milliseconds.unwrap_or(0) as f64 / 1000.0);
     if duration > 0.0 {
         let mut t = unsafe { dtotimespec(duration) };
@@ -36,7 +36,6 @@ pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> LispOb
             t = unsafe { timespec_sub(tend, current_timespec()) };
         }
     }
-    LispObject::constant_nil()
 }
 
 include!(concat!(env!("OUT_DIR"), "/dispnew_exports.rs"));

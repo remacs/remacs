@@ -25,8 +25,8 @@ pub fn stringp(object: LispObject) -> bool {
 /// Return the number of bytes in STRING.
 /// If STRING is multibyte, this may be greater than the length of STRING.
 #[lisp_fn]
-pub fn string_bytes(string: LispStringRef) -> LispObject {
-    LispObject::from_natnum(string.len_bytes() as EmacsInt)
+pub fn string_bytes(string: LispStringRef) -> EmacsInt {
+    string.len_bytes() as EmacsInt
 }
 
 /// Return t if two strings have identical contents.
@@ -151,14 +151,12 @@ pub fn multibyte_string_p(object: LispObject) -> bool {
 /// Clear the contents of STRING.
 /// This makes STRING unibyte and may change its length.
 #[lisp_fn]
-pub fn clear_string(mut string: LispStringRef) -> LispObject {
+pub fn clear_string(mut string: LispStringRef) -> () {
     string.clear_data();
     unsafe {
         string.set_num_chars(string.len_bytes());
     }
     LispObject::set_string_unibyte(&mut string);
-
-    LispObject::constant_nil()
 }
 
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));

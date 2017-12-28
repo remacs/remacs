@@ -195,15 +195,15 @@ impl LispObject {
 
 /// Return t if OBJECT is an overlay.
 #[lisp_fn]
-pub fn overlayp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_overlay())
+pub fn overlayp(object: LispObject) -> bool {
+    object.is_overlay()
 }
 
 /// Return non-nil if OBJECT is a buffer which has not been killed.
 /// Value is nil if OBJECT is not a buffer or if it has been killed.
 #[lisp_fn]
-pub fn buffer_live_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.as_buffer().map_or(false, |m| m.is_live()))
+pub fn buffer_live_p(object: LispObject) -> bool {
+    object.as_buffer().map_or(false, |m| m.is_live())
 }
 
 /// Like Fassoc, but use `Fstring_equal` to compare
@@ -263,9 +263,9 @@ pub fn buffer_file_name(buffer: LispObject) -> LispObject {
 /// Return t if BUFFER was modified since its file was last read or saved.
 /// No argument or nil as argument means use current buffer as BUFFER.
 #[lisp_fn(min = "0")]
-pub fn buffer_modified_p(buffer: LispObject) -> LispObject {
+pub fn buffer_modified_p(buffer: LispObject) -> bool {
     let buf = buffer.as_buffer_or_current_buffer();
-    LispObject::from_bool(buf.modifications_since_save() < buf.modifications())
+    buf.modifications_since_save() < buf.modifications()
 }
 
 /// Return the name of BUFFER, as a string.
@@ -281,8 +281,8 @@ pub fn buffer_name(buffer: LispObject) -> LispObject {
 /// text in that buffer is changed.  It wraps around occasionally.
 /// No argument or nil as argument means use current buffer as BUFFER.
 #[lisp_fn(min = "0")]
-pub fn buffer_modified_tick(buffer: LispObject) -> LispObject {
-    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().modifications())
+pub fn buffer_modified_tick(buffer: LispObject) -> EmacsInt {
+    buffer.as_buffer_or_current_buffer().modifications()
 }
 
 /// Return BUFFER's character-change tick counter.
@@ -294,22 +294,22 @@ pub fn buffer_modified_tick(buffer: LispObject) -> LispObject {
 /// between these calls.  No argument or nil as argument means use current
 /// buffer as BUFFER.
 #[lisp_fn(min = "0")]
-pub fn buffer_chars_modified_tick(buffer: LispObject) -> LispObject {
-    LispObject::from_fixnum(buffer.as_buffer_or_current_buffer().char_modifications())
+pub fn buffer_chars_modified_tick(buffer: LispObject) -> EmacsInt {
+    buffer.as_buffer_or_current_buffer().char_modifications()
 }
 
 /// Return the position at which OVERLAY starts.
 #[lisp_fn]
-pub fn overlay_start(overlay: LispObject) -> LispObject {
+pub fn overlay_start(overlay: LispObject) -> Option<EmacsInt> {
     let marker = overlay.as_overlay_or_error().start();
-    marker_position(marker)
+    marker_position(marker.into())
 }
 
 /// Return the position at which OVERLAY ends.
 #[lisp_fn]
-pub fn overlay_end(overlay: LispObject) -> LispObject {
+pub fn overlay_end(overlay: LispObject) -> Option<EmacsInt> {
     let marker = overlay.as_overlay_or_error().end();
-    marker_position(marker)
+    marker_position(marker.into())
 }
 
 /// Return the buffer OVERLAY belongs to.

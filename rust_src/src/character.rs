@@ -20,14 +20,14 @@ pub fn max_char() -> LispObject {
 /// maximum character code.
 /// usage: (fn OBJECT)
 #[lisp_fn(min = "1")]
-pub fn characterp(object: LispObject, _ignore: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_character())
+pub fn characterp(object: LispObject, _ignore: LispObject) -> bool {
+    object.is_character()
 }
 
 /// Return t if OBJECT is a character or a string.
 #[lisp_fn]
-pub fn char_or_string_p(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_character() || object.is_string())
+pub fn char_or_string_p(object: LispObject) -> bool {
+    object.is_character() || object.is_string()
 }
 
 /// Convert the byte CH to multibyte character.

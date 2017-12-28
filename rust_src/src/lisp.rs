@@ -118,6 +118,13 @@ where
     }
 }
 
+impl From<()> for LispObject
+{
+    fn from(_v: ()) -> Self {
+        LispObject::constant_nil()
+    }
+}
+
 impl From<LispObject> for bool {
     #[inline]
     fn from(o: LispObject) -> Self {
@@ -751,6 +758,36 @@ impl LispObject {
     }
 }
 
+impl From<LispObject> for LispWindowRef {
+    fn from(o: LispObject) -> Self {
+        o.as_window_or_error()
+    }
+}
+
+impl From<LispWindowRef> for LispObject {
+    fn from(w: LispWindowRef) -> Self {
+        w.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for LispCharTableRef {
+    fn from(o: LispObject) -> Self {
+        o.as_char_table_or_error()
+    }
+}
+
+impl From<LispObject> for Option<LispCharTableRef> {
+    fn from(o: LispObject) -> Self {
+        o.as_char_table()
+    }
+}
+
+impl From<LispCharTableRef> for LispObject {
+    fn from(ct: LispCharTableRef) -> Self {
+        ct.as_lisp_obj()
+    }
+}
+
 impl From<LispObject> for LispSubrRef {
     #[inline]
     fn from(o: LispObject) -> Self {
@@ -1353,6 +1390,18 @@ impl LispObject {
     #[inline]
     pub fn equal_no_quit(self, other: LispObject) -> bool {
         unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::NoQuit, 0, Qnil) }
+    }
+}
+
+impl From<LispObject> for LispMarkerRef {
+    fn from(o: LispObject) -> LispMarkerRef {
+        o.as_marker_or_error()
+    }
+}
+
+impl From<LispObject> for Option<LispMarkerRef> {
+    fn from(o: LispObject) -> Option<LispMarkerRef> {
+        o.as_marker()
     }
 }
 

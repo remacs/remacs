@@ -53,17 +53,17 @@ impl LispMarkerRef {
 
 /// Return t if OBJECT is a marker (editor pointer).
 #[lisp_fn]
-pub fn markerp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_marker())
+pub fn markerp(object: LispObject) -> bool {
+    object.is_marker()
 }
 
 /// Return the position of MARKER, or nil if it points nowhere.
 #[lisp_fn]
-pub fn marker_position(marker: LispObject) -> LispObject {
-    let pos = marker.as_marker_or_error().charpos();
-    match pos {
-        Some(p) => LispObject::from_natnum(p as EmacsInt),
-        None => LispObject::constant_nil(),
+pub fn marker_position(marker: LispMarkerRef) -> Option<EmacsInt> {
+    if let Some(p) = marker.charpos() {
+        Some(p as EmacsInt)
+    } else {
+        None
     }
 }
 

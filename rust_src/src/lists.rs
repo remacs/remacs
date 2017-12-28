@@ -10,27 +10,27 @@ use symbols::LispSymbolRef;
 
 /// Return t if OBJECT is not a cons cell.  This includes nil.
 #[lisp_fn]
-pub fn atom(object: LispObject) -> LispObject {
-    LispObject::from_bool(!object.is_cons())
+pub fn atom(object: LispObject) -> bool {
+    !object.is_cons()
 }
 
 /// Return t if OBJECT is a cons cell.
 #[lisp_fn]
-pub fn consp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_cons())
+pub fn consp(object: LispObject) -> bool {
+    object.is_cons()
 }
 
 /// Return t if OBJECT is a list, that is, a cons cell or nil.
 /// Otherwise, return nil.
 #[lisp_fn]
-pub fn listp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_cons() || object.is_nil())
+pub fn listp(object: LispObject) -> bool {
+    object.is_cons() || object.is_nil()
 }
 
 /// Return t if OBJECT is not a list.  Lists include nil.
 #[lisp_fn]
-pub fn nlistp(object: LispObject) -> LispObject {
-    LispObject::from_bool(!(object.is_cons() || object.is_nil()))
+pub fn nlistp(object: LispObject) -> bool {
+    !(object.is_cons() || object.is_nil())
 }
 
 /// Set the car of CELL to be NEWCAR. Returns NEWCAR.

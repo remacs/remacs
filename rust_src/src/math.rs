@@ -31,9 +31,9 @@ pub fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
 
             LispObject::from_fixnum(i1)
         }
-        (LispNumber::Fixnum(i1), LispNumber::Float(f2)) => floatfns::fmod_float(i1 as f64, f2),
-        (LispNumber::Float(f1), LispNumber::Fixnum(i2)) => floatfns::fmod_float(f1, i2 as f64),
-        (LispNumber::Float(f1), LispNumber::Float(f2)) => floatfns::fmod_float(f1, f2),
+        (LispNumber::Fixnum(i1), LispNumber::Float(f2)) => LispObject::from(floatfns::fmod_float(i1 as f64, f2)),
+        (LispNumber::Float(f1), LispNumber::Fixnum(i2)) => LispObject::from(floatfns::fmod_float(f1, i2 as f64)),
+        (LispNumber::Float(f1), LispNumber::Float(f2)) => LispObject::from(floatfns::fmod_float(f1, f2)),
     }
 }
 
@@ -76,7 +76,7 @@ fn arith_driver(code: ArithOp, args: &[LispObject]) -> LispObject {
 
         match val.as_number_coerce_marker_or_error() {
             LispNumber::Float(_) => {
-                return floatfns::float_arith_driver(ok_accum as f64, ok_args, code, args);
+                return LispObject::from(floatfns::float_arith_driver(ok_accum as f64, ok_args, code, args));
             }
             LispNumber::Fixnum(next) => {
                 match code {
@@ -173,7 +173,7 @@ pub fn quo(args: &mut [LispObject]) -> LispObject {
     for argnum in 2..args.len() {
         let arg = args[argnum];
         if arg.is_float() {
-            return floatfns::float_arith_driver(0.0, 0, ArithOp::Div, args);
+            return LispObject::from(floatfns::float_arith_driver(0.0, 0, ArithOp::Div, args));
         }
     }
     arith_driver(ArithOp::Div, args)
@@ -207,7 +207,7 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
     assert!(!args.is_empty());
     let mut accum = args[0];
     for &arg in &args[1..] {
-        if arithcompare(arg, accum, comparison).is_not_nil() {
+        if arithcompare(arg, accum, comparison) {
             accum = arg;
         } else if arg.as_float().map_or(false, |f| f.is_nan()) {
             return arg;
@@ -260,7 +260,7 @@ pub enum ArithComparison {
     GrtrOrEqual,
 }
 
-pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithComparison) -> LispObject {
+pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithComparison) -> bool {
     // If either arg is floating point, set F1 and F2 to the 'double'
     // approximations of the two arguments, and set FNEQ if floating-point
     // comparison reports that F1 is not equal to F2, possibly because F1
@@ -318,54 +318,52 @@ pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithCompari
         },
     };
 
-    LispObject::from_bool(result)
+    result
 }
 
-fn arithcompare_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject {
-    LispObject::from_bool(
-        args.windows(2)
-            .all(|i| arithcompare(i[0], i[1], comparison).is_not_nil()),
-    )
+fn arithcompare_driver(args: &[LispObject], comparison: ArithComparison) -> bool {
+    args.windows(2)
+        .all(|i| arithcompare(i[0], i[1], comparison))
 }
 
 /// Return t if args, all numbers or markers, are equal.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "=", min = "1")]
-pub fn eqlsign(args: &mut [LispObject]) -> LispObject {
+pub fn eqlsign(args: &mut [LispObject]) -> bool {
     arithcompare_driver(args, ArithComparison::Equal)
 }
 
 /// Return t if each arg (a number or marker), is less than the next arg.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "<", min = "1")]
-pub fn lss(args: &mut [LispObject]) -> LispObject {
+pub fn lss(args: &mut [LispObject]) -> bool {
     arithcompare_driver(args, ArithComparison::Less)
 }
 
 /// Return t if each arg (a number or marker) is greater than the next arg.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = ">", min = "1")]
-pub fn gtr(args: &mut [LispObject]) -> LispObject {
+pub fn gtr(args: &mut [LispObject]) -> bool {
     arithcompare_driver(args, ArithComparison::Grtr)
 }
 
 /// Return t if each arg (a number or marker) is less than or equal to the next.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = "<=", min = "1")]
-pub fn leq(args: &mut [LispObject]) -> LispObject {
+pub fn leq(args: &mut [LispObject]) -> bool {
     arithcompare_driver(args, ArithComparison::LessOrEqual)
 }
 
 /// Return t if each arg (a number or marker) is greater than or equal to the next.
 /// usage: (fn NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)
 #[lisp_fn(name = ">=", min = "1")]
-pub fn geq(args: &mut [LispObject]) -> LispObject {
+pub fn geq(args: &mut [LispObject]) -> bool {
     arithcompare_driver(args, ArithComparison::GrtrOrEqual)
 }
 
 /// Return t if first arg is not equal to second arg.  Both must be numbers or markers.
 #[lisp_fn(name = "/=")]
-pub fn neq(num1: LispObject, num2: LispObject) -> LispObject {
+pub fn neq(num1: LispObject, num2: LispObject) -> bool {
     arithcompare(num1, num2, ArithComparison::Notequal)
 }
 

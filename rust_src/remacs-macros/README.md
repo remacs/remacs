@@ -85,7 +85,7 @@ structure `Snumberp`, plus the function only takes one argument
 ```rust
 /// Return t if OBJECT is a number (floating point or integer).
 #[lisp_fn]
-fn numberp(object: LispObject) -> LispObject {
-    LispObject::from_bool(object.is_number())
+fn numberp(object: LispObject) -> bool {
+    object.is_number()
 }
 ```

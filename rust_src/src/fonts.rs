@@ -60,17 +60,17 @@ impl FontExtraType {
 /// which kind of font it is.  It must be one of `font-spec', `font-entity',
 /// `font-object'.
 #[lisp_fn(min = "1")]
-pub fn fontp(object: LispObject, extra_type: LispObject) -> LispObject {
+pub fn fontp(object: LispObject, extra_type: LispObject) -> bool {
     // For compatibility with the C version, checking that object is a font
     // takes priority over checking that extra_type is well-formed.
-    object.as_font().map_or(LispObject::constant_nil(), |f| {
+    object.as_font().map_or(false, |f| {
         if extra_type.is_nil() {
-            LispObject::constant_t()
+            true
         } else {
             match FontExtraType::from_symbol_or_error(extra_type) {
-                FontExtraType::Spec => LispObject::from_bool(f.is_font_spec()),
-                FontExtraType::Entity => LispObject::from_bool(f.is_font_entity()),
-                FontExtraType::Object => LispObject::from_bool(f.is_font_object()),
+                FontExtraType::Spec => f.is_font_spec(),
+                FontExtraType::Entity => f.is_font_entity(),
+                FontExtraType::Object => f.is_font_object(),
             }
         }
     })

@@ -19,7 +19,7 @@ use vectors::length;
 /// looks at the value of the variable `features'.  The optional argument
 /// SUBFEATURE can be used to check a specific subfeature of FEATURE.
 #[lisp_fn(min = "1")]
-pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
+pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> bool {
     let mut tem = memq(
         feature.as_lisp_obj(),
         LispObject::from_raw(unsafe { globals.f_Vfeatures }),
@@ -27,11 +27,7 @@ pub fn featurep(feature: LispSymbolRef, subfeature: LispObject) -> LispObject {
     if tem.is_not_nil() && subfeature.is_not_nil() {
         tem = member(subfeature, get(feature, LispObject::from_raw(Qsubfeatures)));
     }
-    if tem.is_nil() {
-        LispObject::constant_nil()
-    } else {
-        LispObject::constant_t()
-    }
+    tem.is_not_nil()
 }
 
 /// Announce that FEATURE is a feature of the current Emacs.
