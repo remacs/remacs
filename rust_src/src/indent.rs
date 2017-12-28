@@ -1,8 +1,8 @@
 //! Indentation functions
 
 use remacs_macros::lisp_fn;
-use remacs_sys::EmacsInt;
 use remacs_sys;
+use remacs_sys::EmacsInt;
 
 use lisp::defsubr;
 

@@ -31,9 +31,15 @@ pub fn lisp_mod(x: LispObject, y: LispObject) -> LispObject {
 
             LispObject::from_fixnum(i1)
         }
-        (LispNumber::Fixnum(i1), LispNumber::Float(f2)) => LispObject::from(floatfns::fmod_float(i1 as f64, f2)),
-        (LispNumber::Float(f1), LispNumber::Fixnum(i2)) => LispObject::from(floatfns::fmod_float(f1, i2 as f64)),
-        (LispNumber::Float(f1), LispNumber::Float(f2)) => LispObject::from(floatfns::fmod_float(f1, f2)),
+        (LispNumber::Fixnum(i1), LispNumber::Float(f2)) => {
+            LispObject::from(floatfns::fmod_float(i1 as f64, f2))
+        }
+        (LispNumber::Float(f1), LispNumber::Fixnum(i2)) => {
+            LispObject::from(floatfns::fmod_float(f1, i2 as f64))
+        }
+        (LispNumber::Float(f1), LispNumber::Float(f2)) => {
+            LispObject::from(floatfns::fmod_float(f1, f2))
+        }
     }
 }
 
@@ -76,7 +82,12 @@ fn arith_driver(code: ArithOp, args: &[LispObject]) -> LispObject {
 
         match val.as_number_coerce_marker_or_error() {
             LispNumber::Float(_) => {
-                return LispObject::from(floatfns::float_arith_driver(ok_accum as f64, ok_args, code, args));
+                return LispObject::from(floatfns::float_arith_driver(
+                    ok_accum as f64,
+                    ok_args,
+                    code,
+                    args,
+                ));
             }
             LispNumber::Fixnum(next) => {
                 match code {

@@ -118,8 +118,7 @@ where
     }
 }
 
-impl From<()> for LispObject
-{
+impl From<()> for LispObject {
     fn from(_v: ()) -> Self {
         LispObject::constant_nil()
     }

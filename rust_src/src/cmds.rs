@@ -122,7 +122,8 @@ pub fn end_of_line(n: Option<EmacsInt>) -> () {
     let cur_buf = ThreadState::current_buffer();
     loop {
         newpos = unsafe {
-            LispObject::from_raw(Fline_end_position(LispObject::from_fixnum(num).to_raw())).as_fixnum_or_error() as isize
+            LispObject::from_raw(Fline_end_position(LispObject::from_fixnum(num).to_raw()))
+                .as_fixnum_or_error() as isize
         };
         unsafe { set_point(newpos) };
         pt = cur_buf.pt();

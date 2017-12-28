@@ -90,7 +90,12 @@ impl LispHashTableRef {
     }
 
     pub fn check_impure(self, object: LispHashTableRef) {
-        unsafe { CHECK_IMPURE(LispObject::from(object).to_raw(), self.as_ptr() as *mut c_void) };
+        unsafe {
+            CHECK_IMPURE(
+                LispObject::from(object).to_raw(),
+                self.as_ptr() as *mut c_void,
+            )
+        };
     }
 
     pub fn remove(mut self, key: LispObject) {

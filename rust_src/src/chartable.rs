@@ -34,7 +34,10 @@ pub fn char_table_parent(chartable: LispCharTableRef) -> Option<LispCharTableRef
 /// Set the parent char-table of CHARTABLE to PARENT.
 /// Return PARENT.  PARENT must be either nil or another char-table.
 #[lisp_fn]
-pub fn set_char_table_parent(mut chartable: LispCharTableRef, parent: Option<LispCharTableRef>) -> () {
+pub fn set_char_table_parent(
+    mut chartable: LispCharTableRef,
+    parent: Option<LispCharTableRef>,
+) -> () {
     let mut temp = parent;
     while temp.is_some() {
         if let Some(p) = temp {
