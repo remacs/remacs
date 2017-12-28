@@ -1266,9 +1266,13 @@ For example: ((1 . cn-gb-2312) (2 . big5))."
   :type 'boolean
   :group 'gnus-summary-marks)
 
-(defcustom gnus-alter-articles-to-read-function nil
-  "Function to be called to alter the list of articles to be selected."
-  :type '(choice (const nil) function)
+(defcustom gnus-alter-articles-to-read-function
+  (lambda (_group article-list) article-list)
+  "Function to be called to alter the list of articles to be selected.
+This option defaults to a lambda form that simply returns the
+list of articles unchanged.  Use `add-function' to set one or
+more custom filter functions."
+  :type 'function
   :group 'gnus-summary)
 
 (defcustom gnus-orphan-score nil
@@ -5914,7 +5918,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
 	  (setq articles (nthcdr (- number select) articles))))
       (setq gnus-newsgroup-unselected
 	    (gnus-sorted-difference gnus-newsgroup-unreads articles))
-      (when gnus-alter-articles-to-read-function
+      (when (functionp gnus-alter-articles-to-read-function)
 	(setq articles
 	      (sort
 	       (funcall gnus-alter-articles-to-read-function
