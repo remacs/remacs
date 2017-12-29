@@ -188,7 +188,8 @@ support, you should set 'eldoc-documentation-function' instead of
 calling 'eldoc-message' directly.
 
 ** Old-style backquotes now generate an error.  They have been
-generating warnings for a decade.
+generating warnings for a decade.  To interpret old-style backquotes
+as new-style, bind the new variable 'force-new-style-backquotes' to t.
 
 
 * Lisp Changes in Emacs 27.1

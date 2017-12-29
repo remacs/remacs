@@ -147,10 +147,10 @@ static ptrdiff_t prev_saved_doc_string_length;
 /* This is the file position that string came from.  */
 static file_offset prev_saved_doc_string_position;
 
-/* True means inside a new-style backquote
-   with no surrounding parentheses.
-   Fread initializes this to false, so we need not specbind it
-   or worry about what happens to it when there is an error.  */
+/* True means inside a new-style backquote with no surrounding
+   parentheses.  Fread initializes this to the value of
+   `force_new_style_backquotes', so we need not specbind it or worry
+   about what happens to it when there is an error.  */
 static bool new_backquote_flag;
 
 /* A list of file names for files being loaded in Fload.  Used to
@@ -2187,7 +2187,7 @@ read_internal_start (Lisp_Object stream, Lisp_Object start, Lisp_Object end)
   Lisp_Object retval;
 
   readchar_count = 0;
-  new_backquote_flag = 0;
+  new_backquote_flag = force_new_style_backquotes;
   /* We can get called from readevalloop which may have set these
      already.  */
   if (! HASH_TABLE_P (read_objects_map)
@@ -5005,6 +5005,17 @@ newest.
 Note that if you customize this, obviously it will not affect files
 that are loaded before your customizations are read!  */);
   load_prefer_newer = 0;
+
+  DEFVAR_BOOL ("force-new-style-backquotes", force_new_style_backquotes,
+               doc: /* Non-nil means to always use the current syntax for backquotes.
+If nil, `load' and `read' raise errors when encountering some
+old-style variants of backquote and comma.  If non-nil, these
+constructs are always interpreted as described in the Info node
+`(elisp)Backquotes', even if that interpretation is incompatible with
+previous versions of Emacs.  Setting this variable to non-nil makes
+Emacs compatible with the behavior planned for Emacs 28.  In Emacs 28,
+this variable will become obsolete.  */);
+  force_new_style_backquotes = false;
 
   /* Vsource_directory was initialized in init_lread.  */
 
