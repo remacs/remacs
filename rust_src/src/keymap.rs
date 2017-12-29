@@ -1,10 +1,10 @@
 //! Keymap support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{current_global_map as _current_global_map, EmacsInt};
+use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
 use remacs_sys::{access_keymap, get_keymap, maybe_quit, Faref, Fevent_convert_list, Ffset,
-                 Fmake_sparse_keymap, Fset};
-use remacs_sys::CHAR_META;
+                 Fpurecopy, Fset};
+use remacs_sys::Qkeymap;
 
 use keyboard::lucid_event_type_list_p;
 use lisp::{defsubr, LispObject};
@@ -129,7 +129,7 @@ pub fn define_prefix_command(
     mapvar: LispObject,
     name: LispObject,
 ) -> LispObject {
-    let map = unsafe { LispObject::from_raw(Fmake_sparse_keymap(name.to_raw())) };
+    let map = make_sparse_keymap(name);
     unsafe { Ffset(command.to_raw(), map.to_raw()) };
     if mapvar.is_not_nil() {
         unsafe { Fset(mapvar.to_raw(), map.to_raw()) };
@@ -137,6 +137,27 @@ pub fn define_prefix_command(
         unsafe { Fset(command.to_raw(), map.to_raw()) };
     }
     command
+}
+
+/// Construct and return a new sparse keymap.
+/// Its car is `keymap' and its cdr is an alist of (CHAR . DEFINITION),
+/// which binds the character CHAR to DEFINITION, or (SYMBOL . DEFINITION),
+/// which binds the function key or mouse event SYMBOL to DEFINITION.
+/// Initially the alist is nil.
+///
+/// The optional arg STRING supplies a menu name for the keymap
+/// in case you use it as a menu with `x-popup-menu'.
+#[lisp_fn(min = "0")]
+pub fn make_sparse_keymap(string: LispObject) -> LispObject {
+    if string.is_not_nil() {
+        let mut s = string;
+        if LispObject::from_raw(unsafe { globals.f_Vpurify_flag }).is_not_nil() {
+            s = unsafe { LispObject::from_raw(Fpurecopy(string.to_raw())) };
+        }
+        list!(LispObject::from_raw(Qkeymap), s)
+    } else {
+        list!(LispObject::from_raw(Qkeymap))
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));
