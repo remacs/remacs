@@ -3,7 +3,8 @@
 use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{initial_define_key, set_point, Fline_beginning_position, Fline_end_position};
+use remacs_sys::{initial_define_key, scan_newline_from_point, set_point, set_point_both,
+                 Fline_beginning_position, Fline_end_position};
 use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qnil};
 use remacs_sys::EmacsInt;
 
@@ -143,6 +144,50 @@ pub fn end_of_line(n: Option<EmacsInt>) -> () {
             break;
         }
     }
+}
+
+/// Move N lines forward (backward if N is negative).
+/// Precisely, if point is on line I, move to the start of line I + N
+/// ("start of line" in the logical order).
+/// If there isn't room, go as far as possible (no error).
+///
+/// Returns the count of lines left to move.  If moving forward,
+/// that is N minus number of lines moved; if backward, N plus number
+/// moved.
+///
+/// Exception: With positive N, a non-empty line at the end of the
+/// buffer, or of its accessible portion, counts as one line
+/// successfully moved (for the return value).  This means that the
+/// function will move point to the end of such a line and will count
+/// it as a line moved across, even though there is no next line to
+/// go to its beginning.
+#[lisp_fn(min = "0", intspec = "^p")]
+pub fn forward_line(n: LispObject) -> LispObject {
+    let cur_buf = ThreadState::current_buffer();
+
+    let opoint = cur_buf.pt();
+
+    let count: isize = if n.is_nil() {
+        1
+    } else {
+        n.as_fixnum_or_error() as isize
+    };
+
+    let (mut pos, mut pos_byte) = (0, 0);
+
+    let mut shortage = unsafe { scan_newline_from_point(count, &mut pos, &mut pos_byte) };
+
+    unsafe { set_point_both(pos, pos_byte) };
+
+    if shortage > 0
+        && (count <= 0
+            || (cur_buf.zv() > cur_buf.begv && cur_buf.pt() != opoint
+                && (cur_buf.fetch_byte(cur_buf.pt_byte - 1) != '\n' as u8)))
+    {
+        shortage -= 1
+    };
+
+    LispObject::from_fixnum(if count <= 0 { -shortage } else { shortage } as EmacsInt)
 }
 
 pub fn initial_keys() {

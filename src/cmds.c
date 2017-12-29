@@ -31,48 +31,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 static int internal_self_insert (int, EMACS_INT);
 
-DEFUN ("forward-line", Fforward_line, Sforward_line, 0, 1, "^p",
-       doc: /* Move N lines forward (backward if N is negative).
-Precisely, if point is on line I, move to the start of line I + N
-\("start of line" in the logical order).
-If there isn't room, go as far as possible (no error).
-
-Returns the count of lines left to move.  If moving forward,
-that is N minus number of lines moved; if backward, N plus number
-moved.
-
-Exception: With positive N, a non-empty line at the end of the
-buffer, or of its accessible portion, counts as one line
-successfully moved (for the return value).  This means that the
-function will move point to the end of such a line and will count
-it as a line moved across, even though there is no next line to
-go to its beginning.  */)
-  (Lisp_Object n)
-{
-  ptrdiff_t opoint = PT, pos, pos_byte, shortage, count;
-
-  if (NILP (n))
-    count = 1;
-  else
-    {
-      CHECK_NUMBER (n);
-      count = XINT (n);
-    }
-
-  shortage = scan_newline_from_point (count, &pos, &pos_byte);
-
-  SET_PT_BOTH (pos, pos_byte);
-
-  if (shortage > 0
-      && (count <= 0
-	  || (ZV > BEGV
-	      && PT != opoint
-	      && (FETCH_BYTE (PT_BYTE - 1) != '\n'))))
-    shortage--;
-
-  return make_number (count <= 0 ? - shortage : shortage);
-}
-
 DEFUN ("delete-char", Fdelete_char, Sdelete_char, 1, 2, "p\nP",
        doc: /* Delete the following N characters (previous if N is negative).
 Optional second arg KILLFLAG non-nil means kill instead (save in kill ring).
@@ -368,8 +326,6 @@ syms_of_cmds (void)
 	       doc: /* Hook run at the end of `self-insert-command'.
 This is run after inserting the character.  */);
   Vpost_self_insert_hook = Qnil;
-
-  defsubr (&Sforward_line);
 
   defsubr (&Sdelete_char);
   defsubr (&Sself_insert_command);
