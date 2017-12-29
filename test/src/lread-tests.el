@@ -183,8 +183,7 @@ literals (Bug#20852)."
 
 (ert-deftest lread-tests--force-new-style-backquotes ()
   (let ((data (should-error (read "(` (a b))"))))
-    (should (equal (cdr data)
-                   '("Loading `nil': old-style backquotes detected!"))))
+    (should (equal (cdr data) '("Old-style backquotes detected!"))))
   (should (equal (let ((force-new-style-backquotes t))
                    (read "(` (a b))"))
                  '(`(a b)))))

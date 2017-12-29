@@ -1006,8 +1006,16 @@ load_error_handler (Lisp_Object data)
 static _Noreturn void
 load_error_old_style_backquotes (void)
 {
-  AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
-  xsignal1 (Qerror, CALLN (Fformat_message, format, Vload_file_name));
+  if (NILP (Vload_file_name))
+    {
+      AUTO_STRING (message, "Old-style backquotes detected!");
+      xsignal1 (Qerror, message);
+    }
+  else
+    {
+      AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
+      xsignal1 (Qerror, CALLN (Fformat_message, format, Vload_file_name));
+    }
 }
 
 static void
