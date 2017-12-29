@@ -13,10 +13,9 @@ use mock_derive::mock;
 use remacs_sys::*;
 
 // The linker needs the symbol "lispsym" to exist, since certain
-// codepaths in test COULD lead to it's usage. However, currently no
-// codepaths do, and so we just fake it's exsistence to satisfy the linker.
+// codepaths lead to it's usage.
 #[no_mangle]
-pub static mut lispsym: Lisp_Object = 0;
+pub static mut lispsym: EmacsInt = 0;
 
 #[mock]
 extern "C" {

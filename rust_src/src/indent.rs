@@ -21,7 +21,8 @@ use lisp::defsubr;
 /// ellipsis.
 #[lisp_fn]
 pub fn current_column() -> EmacsInt {
-    unsafe { remacs_sys::current_column() }
+    let column = unsafe { remacs_sys::current_column() };
+    column as EmacsInt
 }
 
 include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));
