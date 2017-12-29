@@ -162,32 +162,32 @@ pub fn end_of_line(n: Option<EmacsInt>) -> () {
 /// it as a line moved across, even though there is no next line to
 /// go to its beginning.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn forward_line(n: LispObject) -> LispObject {
+pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
+    let count: isize = n.unwrap_or(1) as isize;
+
     let cur_buf = ThreadState::current_buffer();
-
     let opoint = cur_buf.pt();
-
-    let count: isize = if n.is_nil() {
-        1
-    } else {
-        n.as_fixnum_or_error() as isize
-    };
 
     let (mut pos, mut pos_byte) = (0, 0);
 
-    let mut shortage = unsafe { scan_newline_from_point(count, &mut pos, &mut pos_byte) };
+    let mut shortage: EmacsInt =
+        unsafe { scan_newline_from_point(count, &mut pos, &mut pos_byte) as EmacsInt };
 
     unsafe { set_point_both(pos, pos_byte) };
 
     if shortage > 0
         && (count <= 0
             || (cur_buf.zv() > cur_buf.begv && cur_buf.pt() != opoint
-                && (cur_buf.fetch_byte(cur_buf.pt_byte - 1) != '\n' as u8)))
+                && cur_buf.fetch_byte(cur_buf.pt_byte - 1) != '\n' as u8))
     {
         shortage -= 1
-    };
+    }
 
-    LispObject::from_fixnum(if count <= 0 { -shortage } else { shortage } as EmacsInt)
+    if count <= 0 {
+        -shortage
+    } else {
+        shortage
+    }
 }
 
 pub fn initial_keys() {
