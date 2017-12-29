@@ -1,0 +1,20 @@
+---
+arch: x86_64
+distro: fedora:latest
+base_config: |
+    RUN yum install -y \
+        git \
+        gcc gcc-c++ \
+        kernel-devel \
+        make \
+        automake \
+        ncurses-devel \
+        giflib-devel \
+        libjpeg-turbo-devel \
+        libtiff-devel \
+        gtk3-devel \
+        libxml2-devel \
+        libXpm-devel \
+        gnutls-devel \
+        curl \
+        texinfo

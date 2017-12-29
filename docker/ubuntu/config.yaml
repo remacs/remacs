@@ -1,0 +1,17 @@
+---
+arch: x86_64
+distro: ubuntu:xenial
+base_config: |
+    RUN apt-get update && apt-get install -y \
+        automake \
+        build-essential \
+        curl \
+        libgif-dev \
+        libgnutls-dev \
+        libgtk-3-dev \
+        libjpeg-dev \
+        libncurses5-dev \
+        libtiff-dev \
+        libxml2-dev \
+        libxpm-dev \
+        texinfo
