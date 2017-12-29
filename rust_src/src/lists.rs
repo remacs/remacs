@@ -557,7 +557,7 @@ fn mapcar1<T: iter::FromIterator<LispObject>>(seq: LispObject, func: LispObject)
 pub fn mapconcat(function: LispObject, sequence: LispObject, separator: LispObject) -> LispObject {
     let mapped: Vec<_> = mapcar1(sequence, function);
     if mapped.is_empty() {
-        return LispObject::from(unsafe { empty_unibyte_string });
+        return LispObject::from_raw(unsafe { empty_unibyte_string });
     }
 
     let mut with_sep: Vec<_> = mapped
@@ -565,7 +565,7 @@ pub fn mapconcat(function: LispObject, sequence: LispObject, separator: LispObje
         .map(LispObject::to_raw)
         .intersperse(separator.to_raw())
         .collect();
-    unsafe { LispObject::from(Fconcat(with_sep.len() as ptrdiff_t, with_sep.as_mut_ptr())) }
+    unsafe { LispObject::from_raw(Fconcat(with_sep.len() as ptrdiff_t, with_sep.as_mut_ptr())) }
 }
 
 /// Apply FUNCTION to each element of SEQUENCE, and make a list of the results.
@@ -594,7 +594,7 @@ pub fn mapcan(function: LispObject, sequence: LispObject) -> LispObject {
     let mut mapped: Vec<_> = mapcar1(sequence, function);
     unsafe {
         let raw_slice = mem::transmute::<&mut [LispObject], &mut [Lisp_Object]>(&mut mapped);
-        LispObject::from(Fnconc(raw_slice.len() as ptrdiff_t, raw_slice.as_mut_ptr()))
+        LispObject::from_raw(Fnconc(raw_slice.len() as ptrdiff_t, raw_slice.as_mut_ptr()))
     }
 }
 

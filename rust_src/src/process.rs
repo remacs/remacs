@@ -187,8 +187,8 @@ pub fn process_mark(process: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn process_list() -> LispObject {
     mapcar(
-        LispObject::from(Qcdr),
-        LispObject::from(unsafe { Vprocess_alist }),
+        LispObject::from_raw(Qcdr),
+        LispObject::from_raw(unsafe { Vprocess_alist }),
     )
 }
 
