@@ -8,9 +8,11 @@ use std::slice;
 use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Faref, Lisp_Bool_Vector, Lisp_Object, Lisp_Vector, Lisp_Vectorlike,
-                 PseudovecType, Qsequencep, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS,
-                 PSEUDOVECTOR_FLAG, PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
+use remacs_sys::{EmacsInt, Lisp_Bool_Vector, Lisp_Object, Lisp_Vector, Lisp_Vectorlike,
+                 PseudovecType, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG,
+                 PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
+use remacs_sys::Faref;
+use remacs_sys::Qsequencep;
 
 use buffers::LispBufferRef;
 use chartable::LispCharTableRef;

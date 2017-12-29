@@ -1,10 +1,10 @@
 //! symbols support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fset, Lisp_Symbol};
-use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
 use remacs_sys::{find_symbol_value, make_lisp_symbol, symbol_is_alias, symbol_is_constant,
-                 symbol_is_interned};
+                 symbol_is_interned, Fset};
+use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
+use remacs_sys::Lisp_Symbol;
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
