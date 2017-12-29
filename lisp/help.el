@@ -876,7 +876,7 @@ temporarily enables it to allow getting help on disabled items and buttons."
         (when (vectorp key)
           (let* ((last (1- (length key)))
                  (elt (aref key last))
-                 (elt-1 (copy-sequence elt))
+                 (elt-1 (if (listp elt) (copy-sequence elt) elt))
                  key-1 down-event-type)
             (when (and (listp elt-1)
                        (symbolp (car elt-1))
