@@ -409,10 +409,10 @@ pub fn minibuffer_selected_window() -> LispObject {
 /// WINDOW's frame.  Any other value of ROUND means to return the internal
 /// total width of WINDOW.
 #[lisp_fn(min = "0")]
-pub fn window_total_width(window: LispObject, round: LispObject) -> LispObject {
+pub fn window_total_width(window: LispObject, round: LispObject) -> EmacsInt {
     let win = window_valid_or_selected(window);
 
-    LispObject::from_natnum(win.total_width(round) as EmacsInt)
+    win.total_width(round) as EmacsInt
 }
 
 /// Return the height of window WINDOW in lines.
