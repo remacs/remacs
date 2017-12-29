@@ -144,7 +144,7 @@ b} commands get the window and/or frame to display in.
 file, can also be used to switch to an existing file-visiting buffer.
 @xref{Visiting}.
 
-@findex goto-line
+@findex goto-line@r{, with an argument}
   @kbd{C-u M-g M-g}, that is @code{goto-line} with a plain prefix
 argument, reads a number @var{n} using the minibuffer, selects the
 most recently selected buffer other than the current buffer in another
@@ -454,7 +454,7 @@ Toggle the buffer's read-only status
 
 @item t
 @findex Buffer-menu-visit-tags-table
-@kindex % @r{(Buffer Menu)}
+@kindex t @r{(Buffer Menu)}
 Visit the buffer as a tags table
 (@code{Buffer-menu-visit-tags-table}).  @xref{Select Tags Table}.
 @end table

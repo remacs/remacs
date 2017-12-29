@@ -17,7 +17,6 @@ also considered.
 
 @node Quitting
 @section Quitting and Aborting
-@cindex quitting
 
 @table @kbd
 @item C-g

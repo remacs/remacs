@@ -310,13 +310,12 @@ option does this too, but other options like @samp{-q} do not.
 
 @item --no-site-lisp
 @opindex --no-site-lisp
-@cindex @file{site-start.el} file, not loading
+@cindex @file{site-lisp} files, not loading
 Do not include the @file{site-lisp} directories in @code{load-path}
 (@pxref{Init File}).  The @samp{-Q} option does this too.
 
 @item --no-splash
 @opindex --no-splash
-@vindex inhibit-startup-screen
 @cindex splash screen
 @cindex startup message
 Do not display a startup screen.  You can also achieve this effect by

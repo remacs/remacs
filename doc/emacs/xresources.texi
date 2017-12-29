@@ -217,7 +217,7 @@ Width of the internal frame border, in pixels.
 Additional space between lines, in pixels.
 
 @item @code{menuBar} (class @code{MenuBar})
-@cindex menu bar
+@cindex menu bar (X resource)
 If the value of this resource is @samp{off} or @samp{false} or
 @samp{0}, Emacs disables Menu Bar mode at startup (@pxref{Menu Bars}).
 
@@ -251,7 +251,7 @@ Gamma correction for colors, equivalent to the frame parameter
 @code{screen-gamma}.
 
 @item @code{scrollBar} (class @code{ScrollBar})
-@cindex tool bar
+@cindex scroll bar
 If the value of this resource is @samp{off} or @samp{false} or
 @samp{0}, Emacs disables Scroll Bar mode at startup (@pxref{Scroll Bars}).
 
@@ -636,7 +636,7 @@ widget "*" style "my_style"
 
 @node GTK Names in Emacs
 @appendixsubsec GTK Widget Names in Emacs
-@cindex GTK widget names
+@cindex GTK widget names in Emacs
 @cindex GTK widget classes
 
   The GTK+ widgets used by an Emacs frame are listed below:

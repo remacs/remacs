@@ -7,7 +7,6 @@
 @cindex Package
 @cindex Emacs Lisp package archive
 @cindex Package archive
-@cindex Emacs Lisp package
 
 Emacs includes a facility that lets you easily download and install
 @dfn{packages} that implement additional features.  Each package is a
@@ -18,7 +17,6 @@ as an Info manual.
 with a list of all packages.  You can install or uninstall packages
 via this buffer.  @xref{Package Menu}.
 
-@findex describe-package
   The command @kbd{C-h P} (@code{describe-package}) prompts for the
 name of a package, and displays a help buffer describing the
 attributes of the package and the features that it implements.

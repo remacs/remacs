@@ -66,9 +66,8 @@ completing up to a nonexistent file name, Emacs prints
 Minibuffer history commands offer some special features for reading
 file names, see @ref{Minibuffer History}.
 
-@cindex default directory
+@cindex default directory, of a buffer
 @vindex default-directory
-@vindex insert-default-directory
   Each buffer has a @dfn{default directory}, stored in the
 buffer-local variable @code{default-directory}.  Whenever Emacs reads
 a file name using the minibuffer, it usually inserts the default
@@ -482,7 +481,6 @@ by simultaneous editing and requires your immediate attention.
 @subsection Backup Files
 @cindex backup file
 @vindex make-backup-files
-@vindex vc-make-backup-files
 
   On most operating systems, rewriting a file automatically destroys all
 record of what the file used to contain.  Thus, saving a file from Emacs
@@ -939,10 +937,10 @@ revert it automatically if it has changed---provided the buffer itself
 is not modified.  (If you have edited the text, it would be wrong to
 discard your changes.)
 
-@cindex Global Auto-Revert mode
-@cindex mode, Global Auto-Revert
-@cindex Auto-Revert mode
-@cindex mode, Auto-Revert
+@cindex Global Auto Revert mode
+@cindex mode, Global Auto Revert
+@cindex Auto Revert mode
+@cindex mode, Auto Revert
 @findex global-auto-revert-mode
 @findex auto-revert-mode
 @findex auto-revert-tail-mode
@@ -1765,13 +1763,6 @@ requires the appropriate uncompression program.
 
 @cindex Archive mode
 @cindex mode, archive
-@cindex @code{arc}
-@cindex @code{jar}
-@cindex @code{rar}
-@cindex @code{zip}
-@cindex @code{lzh}
-@cindex @code{zoo}
-@cindex @code{7z}
 @pindex arc
 @pindex jar
 @pindex zip
@@ -2071,7 +2062,7 @@ but Emacs should not).  To disable ImageMagick entirely, change
 @code{imagemagick-types-inhibit} to @code{t}.
 
 @findex thumbs-mode
-@findex mode, thumbs
+@cindex mode, Thumbs
   The Image-Dired package can also be used to view images as
 thumbnails.  @xref{Image-Dired}.
 

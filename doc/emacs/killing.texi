@@ -200,8 +200,6 @@ key sequence @kbd{C-S-backspace}.
 
 @node Other Kill Commands
 @subsection Other Kill Commands
-@findex kill-region
-@kindex C-w
 
 @table @kbd
 @item C-w

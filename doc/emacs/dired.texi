@@ -122,7 +122,7 @@ use the @samp{--dired} option.
 frame.
 
 @kindex q @r{(Dired)}
-@findex quit-window
+@findex quit-window@r{, in Dired buffers}
   Typing @kbd{q} (@code{quit-window}) buries the Dired buffer, and
 deletes its window if the window was created just for that buffer.
 
@@ -246,7 +246,7 @@ directory you are asked for confirmation; if you answer @code{all},
 then all the remaining directories will be deleted without more
 questions.
 
-@vindex delete-by-moving-to-trash
+@vindex delete-by-moving-to-trash@r{, and Dired}
   If you change the variable @code{delete-by-moving-to-trash} to
 @code{t}, the above deletion commands will move the affected files or
 directories into the operating system's Trash, instead of deleting
@@ -757,7 +757,6 @@ marked file is compressed into its own archive.
 
 @findex dired-do-compress-to
 @kindex c @r{(Dired)}
-@cindex compressing files (in Dired)
 @item c
 Compress the specified files (@code{dired-do-compress-to}) into a
 single archive anywhere on the file system. The compression algorithm

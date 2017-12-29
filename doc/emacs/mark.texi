@@ -131,7 +131,6 @@ mouse button (@kbd{mouse-3}) sets the mark at point and then moves
 point to where you clicked.  @xref{Mouse Commands}, for a more
 detailed description of these mouse commands.
 
-@cindex shift-selection
   Finally, you can set the mark by holding down the shift key while
 typing certain cursor motion commands (such as @kbd{S-@key{RIGHT}},
 @kbd{S-C-f}, @kbd{S-C-n}, etc.).  This is called @dfn{shift-selection}.
@@ -139,7 +138,7 @@ It sets the mark at point before moving point, but only if there is no
 active mark set via shift-selection.  The mark set by mouse commands
 and by shift-selection behaves slightly differently from the usual
 mark: any subsequent unshifted cursor motion command deactivates it
-automatically.  For details, @xref{Shift Selection}.
+automatically.  For details, see @ref{Shift Selection}.
 
   Many commands that insert text, such as @kbd{C-y} (@code{yank}), set
 the mark at the other end of the inserted text, without activating it.
@@ -147,7 +146,7 @@ This lets you easily return to that position (@pxref{Mark Ring}).  You
 can tell that a command does this when it shows @samp{Mark set} in the
 echo area.
 
-@cindex primary selection
+@cindex primary selection, when active region changes
   Under X, every time the active region changes, Emacs saves the text
 in the region to the @dfn{primary selection}.  This lets you insert
 that text into other X applications with @kbd{mouse-2} clicks.
@@ -447,7 +446,7 @@ using @kbd{C-@key{SPC} C-@key{SPC}} or @kbd{C-u C-x C-x}.
 
 @table @kbd
 @item C-@key{SPC} C-@key{SPC}
-@kindex C-SPC C-SPC
+@kindex C-SPC C-SPC@r{, disabling Transient Mark}
 Set the mark at point (like plain @kbd{C-@key{SPC}}) and enable
 Transient Mark mode just once, until the mark is deactivated.  (This
 is not really a separate command; you are using the @kbd{C-@key{SPC}}

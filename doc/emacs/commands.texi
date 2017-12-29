@@ -21,8 +21,6 @@ input.
 @cindex keyboard input
 @cindex character set (keyboard)
 @cindex @acronym{ASCII}
-@cindex C-
-@cindex Control
 
   GNU Emacs is primarily designed for use with the keyboard.  While it
 is possible to use the mouse to issue editing commands through the

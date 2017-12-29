@@ -10,24 +10,9 @@
 @cindex multibyte characters
 @cindex encoding of characters
 
-@cindex Arabic
-@cindex Bengali
-@cindex Chinese
-@cindex Cyrillic
 @cindex Han
 @cindex Hindi
-@cindex Ethiopic
-@cindex Georgian
-@cindex Greek
 @cindex Hangul
-@cindex Hebrew
-@cindex Hindi
-@cindex IPA
-@cindex Japanese
-@cindex Korean
-@cindex Latin
-@cindex Thai
-@cindex Vietnamese
   Emacs supports a wide variety of international character sets,
 including European and Vietnamese variants of the Latin alphabet, as
 well as Arabic scripts, Brahmic scripts (for languages such as
@@ -149,8 +134,8 @@ language, which make it easier to type characters in the script.
   The prefix key @kbd{C-x @key{RET}} is used for commands that pertain
 to multibyte characters, coding systems, and input methods.
 
-@kindex C-x =
-@findex what-cursor-position
+@kindex C-x =@r{, and international characters}
+@findex what-cursor-position@r{, and international characters}
   The command @kbd{C-x =} (@code{what-cursor-position}) shows
 information about the character at point.  In addition to the
 character position, which was described in @ref{Position Info}, this
@@ -277,7 +262,7 @@ Supported language environments include:
 @c To work around, we group the language environments together, so
 @c that the blank that separates them triggers refill.
 @quotation
-@cindex ASCII
+@cindex ASCII (language environment)
 @cindex Arabic
 ASCII, Arabic,
 @cindex Belarusian
@@ -1692,7 +1677,6 @@ Meta to be converted to @key{ESC} and still be able type 8-bit
 characters present directly on the keyboard or using @key{Compose} or
 @key{AltGr} keys.  @xref{User Input}.
 
-@kindex C-x 8
 @cindex @code{iso-transl} library
 @cindex compose character
 @cindex dead character

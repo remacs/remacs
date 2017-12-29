@@ -109,8 +109,8 @@ just like digits.  Case is ignored.
 @cindex Unicode characters, inserting
 @cindex insert Unicode character
 @cindex characters, inserting by name or code-point
-@cindex curly quotes
-@cindex curved quotes
+@cindex curly quotes, inserting
+@cindex curved quotes, inserting
   A few common Unicode characters can be inserted via a command
 starting with @kbd{C-x 8}.  For example, @kbd{C-x 8 [} inserts @t{‘}
 which is Unicode code-point @code{U+2018} LEFT SINGLE QUOTATION MARK,
@@ -118,8 +118,8 @@ sometimes called a left single ``curved quote'' or ``curly quote''.
 Similarly, @kbd{C-x 8 ]}, @kbd{C-x 8 @{} and @kbd{C-x 8 @}} insert the
 curved quotes @t{’}, @t{“} and @t{”}, respectively.  Also, a working
 Alt key acts like @kbd{C-x 8}; e.g., @kbd{A-[} acts like @kbd{C-x 8 [}
-and inserts @t{‘}.  To see which characters have @kbd{C-x 8}
-shorthands, type @kbd{C-x 8 C-h}.
+and inserts `.  To see which characters have @kbd{C-x 8} shorthands,
+type @kbd{C-x 8 C-h}.
 
   Alternatively, you can use the command @kbd{C-x 8 @key{RET}}
 (@code{insert-char}).  This prompts for the Unicode name or code-point
@@ -242,9 +242,7 @@ Move to the beginning of the line (@code{move-beginning-of-line}).
 Move to the end of the line (@code{move-end-of-line}).
 
 @item M-f
-@kindex M-f
-@findex forward-word
-Move forward one word (@code{forward-word}).
+Move forward one word (@code{forward-word}).  @xref{Words}.
 
 @item C-@key{RIGHT}
 @itemx M-@key{RIGHT}
@@ -256,9 +254,7 @@ moves @emph{backward} by one word if the current paragraph is
 right-to-left.  @xref{Bidirectional Editing}.
 
 @item M-b
-@kindex M-b
-@findex backward-word
-Move backward one word (@code{backward-word}).
+Move backward one word (@code{backward-word}).  @xref{Words}.
 
 @item C-@key{LEFT}
 @itemx M-@key{LEFT}
@@ -590,7 +586,6 @@ earlier, @kbd{C-n} (@code{next-line}) and @kbd{C-p}
 (@code{previous-line}) are special exceptions: they move point down
 and up, respectively, by one screen line (@pxref{Moving Point}).
 
-@cindex truncation
 @cindex line truncation, and fringes
   Emacs can optionally @dfn{truncate} long logical lines instead of
 continuing them.  This means that every logical line occupies a single
@@ -607,7 +602,6 @@ before they get too long, by inserting newlines.  If you prefer, you
 can make Emacs insert a newline automatically when a line gets too
 long, by using Auto Fill mode.  @xref{Filling}.
 
-@cindex word wrap
   Sometimes, you may need to edit files containing many long logical
 lines, and it may not be practical to break them all up by adding
 newlines.  In that case, you can use Visual Line mode, which enables

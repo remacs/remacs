@@ -119,7 +119,7 @@ moves to the same day in the previous week.
 @kindex C-x ] @r{(Calendar mode)}
 @findex calendar-forward-year
 @kindex C-x [ @r{(Calendar mode)}
-@findex calendar-forward-year
+@findex calendar-backward-year
   The commands for motion by months and years work like those for
 weeks, but move a larger distance.  The month commands @kbd{M-@}} and
 @kbd{M-@{} move forward or backward by an entire month.  The year
@@ -369,7 +369,7 @@ various page elements, header styles) via a stylesheet @file{cal.css} in
 the directory containing the HTML files (see the value of the variable
 @code{cal-html-css-default} for relevant style settings).
 
-@kindex t @r{(Calendar mode)}
+@kindex H @r{(Calendar mode)}
 @table @kbd
 @item H m
 Generate a one-month calendar (@code{cal-html-cursor-month}).
@@ -725,7 +725,7 @@ cycle, and to install a 10-day week in a rationalization measure similar to
 the metric system.  The French government officially abandoned this
 calendar at the end of 1805.
 
-@cindex Mayan calendar
+@cindex Mayan calendars
   The Maya of Central America used three separate, overlapping calendar
 systems, the @emph{long count}, the @emph{tzolkin}, and the @emph{haab}.
 Emacs knows about all three of these calendars.  Experts dispute the
@@ -847,7 +847,6 @@ other than Mayan; for the Mayan calendar, see the following section.
 
 @kindex g @var{char} @r{(Calendar mode)}
 @findex calendar-iso-goto-date
-@findex calendar-iso-goto-week
 @findex calendar-julian-goto-date
 @findex calendar-astro-goto-day-number
 @findex calendar-bahai-goto-date

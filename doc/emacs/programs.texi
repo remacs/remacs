@@ -107,7 +107,7 @@ deletes backward treating each tab as if it were the equivalent number
 of spaces, so that you can delete one column of indentation without
 worrying whether the whitespace consists of spaces or tabs.
 
-@cindex mode hook
+@cindex mode hook, and major modes
 @vindex c-mode-hook
 @vindex lisp-mode-hook
 @vindex emacs-lisp-mode-hook
@@ -375,9 +375,7 @@ Insert a newline, then adjust indentation of following line
 @end table
 
 @kindex TAB @r{(programming modes)}
-@findex c-indent-command
 @findex indent-line-function
-@findex indent-for-tab-command
   The basic indentation command is @key{TAB}
 (@code{indent-for-tab-command}), which was documented in
 @ref{Indentation}.  In programming language modes, @key{TAB} indents
@@ -711,9 +709,7 @@ argument moves the previous balanced expression backwards across those
 before it.  An argument of zero, rather than doing nothing, transposes
 the balanced expressions ending at or after point and the mark.
 
-@kindex C-M-@@
 @kindex C-M-SPC
-@findex mark-sexp
   To operate on balanced expressions with a command which acts on the
 region, type @kbd{C-M-@key{SPC}} (@code{mark-sexp}).  This sets the
 mark where @kbd{C-M-f} would move to.  While the mark is active, each
@@ -1169,9 +1165,7 @@ use in your program.
 @node Info Lookup
 @subsection Info Documentation Lookup
 
-@findex info-lookup-symbol
 @findex info-lookup-file
-@kindex C-h S
   For major modes that apply to languages which have documentation in
 Info, you can use @kbd{C-h S} (@code{info-lookup-symbol}) to view the
 Info documentation for a symbol used in the program.  You specify the
@@ -1309,7 +1303,6 @@ count as blocks.
 @findex hs-show-block
 @findex hs-show-region
 @findex hs-hide-level
-@findex hs-minor-mode
 @kindex C-c @@ C-h
 @kindex C-c @@ C-s
 @kindex C-c @@ C-M-h
@@ -1374,7 +1367,7 @@ for switching graphical windows, so you should type @kbd{C-M-i} or
 @kbd{@key{ESC} @key{TAB}} instead.
 
 @cindex tags-based completion
-@findex completion-at-point
+@findex completion-at-point@r{, in programming language modes}
 @cindex Lisp symbol completion
 @cindex completion (Lisp symbols)
   In most programming language modes, @kbd{C-M-i} (or
@@ -1406,7 +1399,7 @@ using case distinctions.)  Emacs has various features to make it easier
 to deal with such symbols.
 
 @cindex Glasses mode
-@findex mode, Glasses
+@cindex mode, Glasses
   Glasses mode is a buffer-local minor mode that makes it easier to read
 such symbols, by altering how they are displayed.  By default, it
 displays extra underscores between each lower-case letter and the

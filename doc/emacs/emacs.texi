@@ -235,9 +235,9 @@ Appendices
 Indexes (each index contains a large menu)
 * Key Index::           An item for each standard Emacs key sequence.
 * Option Index::        An item for every command-line option.
-* Command Index::       An item for each command name.
-* Variable Index::      An item for each documented variable.
-* Concept Index::       An item for each concept.
+* Command Index::       An item for each standard command name.
+* Variable Index::      An item for each variable documented in this manual.
+* Concept Index::       An item for concepts and other general subjects.
 
 @c Do NOT modify the following 3 lines!  They must have this form to
 @c be correctly identified by 'texinfo-multiple-files-update'.  In

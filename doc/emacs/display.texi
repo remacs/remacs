@@ -1545,8 +1545,8 @@ characters more prominent on display.  @xref{Glyphless Chars,,
 Glyphless Character Display, elisp, The Emacs Lisp Reference Manual},
 for details.
 
-@cindex curly quotes
-@cindex curved quotes
+@cindex curly quotes, and terminal capabilities
+@cindex curved quotes, and terminal capabilities
 @cindex homoglyph face
 
 Emacs tries to determine if the curved quotes @samp{‘} and @samp{’}
@@ -1576,7 +1576,6 @@ cursor, and switches to it when you start or resume Emacs.  If the
 variable @code{visible-cursor} is @code{nil} when Emacs starts or
 resumes, it uses the normal cursor.
 
-@cindex cursor face
 @vindex cursor-type
   On a graphical display, many more properties of the text cursor can
 be altered.  To customize its color, change the @code{:background}
@@ -1645,7 +1644,7 @@ global-hl-line-mode} enables or disables the same mode globally.
 @section Line Truncation
 
 @cindex truncation
-@cindex line truncation, and fringes
+@cindex line truncation
   As an alternative to continuation (@pxref{Continuation Lines}),
 Emacs can display long lines by @dfn{truncation}.  This means that all
 the characters that do not fit in the width of the screen or window do

@@ -679,7 +679,7 @@ edit the variable values or face attributes in the same way as in a
 normal customization buffer.  To remove a face or variable from the
 theme, uncheck the checkbox next to its name.
 
-@vindex custom-theme-directory
+@vindex custom-theme-directory@r{, saving theme files}
   After specifying the Custom theme's faces and variables, type
 @kbd{C-x C-s} (@code{custom-theme-write}) or use the buffer's
 @samp{[Save Theme]} button.  This saves the theme file, named
@@ -915,7 +915,7 @@ customize the indentation of C code:
 @end example
 
 @cindex Prog mode
-@cindex program editing
+@cindex modes for editing programs
   Major mode hooks also apply to other major modes @dfn{derived} from
 the original mode (@pxref{Derived Modes,,, elisp, The Emacs Lisp
 Reference Manual}).  For instance, HTML mode is derived from Text mode
@@ -1775,7 +1775,7 @@ and @kbd{C-c p} in Texinfo mode:
 
 @node Modifier Keys
 @subsection Modifier Keys
-@cindex modifier keys
+@cindex modifier keys, and key rebinding
 
   The default key bindings in Emacs are set up so that modified
 alphabetical characters are case-insensitive.  In other words,
@@ -1915,7 +1915,7 @@ because the terminal sends the same character in both cases.
 @cindex click events
 @cindex drag events
 @cindex down events
-@cindex button down events
+@cindex button-down events
 
   Emacs uses Lisp symbols to designate mouse buttons, too.  The ordinary
 mouse events in Emacs are @dfn{click} events; these happen when you
@@ -2285,7 +2285,7 @@ buffer's local value, which is probably not what you want to do in an
 init file.
 
 @item
-@vindex user-mail-address
+@vindex user-mail-address@r{, in init file}
 Specify your own email address, if Emacs can't figure it out correctly.
 
 @example

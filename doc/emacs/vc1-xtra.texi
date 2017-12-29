@@ -236,7 +236,9 @@ relevant information into the version header.
 an exception, when using RCS, Emacs uses the version header, if there
 is one, to determine the file version, since it is often more reliable
 than the RCS master file.  To inhibit using the version header this
-way, change the variable @code{vc-consult-headers} to @code{nil}.
+way, change the variable @code{vc-consult-headers} to @code{nil}.  VC
+then always uses the file permissions (if it is supposed to trust
+them), or else checks the master file.
 
 @findex vc-insert-headers
 @vindex vc-@var{backend}-header
@@ -340,7 +342,6 @@ the master file can only tell you @emph{if} there's any lock on the
 file, but not whether your work file really contains that locked
 version.
 
-@vindex vc-consult-headers
   You can tell VC not to use version headers to determine the file
 status by setting @code{vc-consult-headers} to @code{nil}.  VC then
 always uses the file permissions (if it is supposed to trust them), or
@@ -359,7 +360,6 @@ operations in the variable @code{vc-cvs-global-switches}.  These
 switches are inserted immediately after the @code{cvs} command, before
 the name of the operation to invoke.
 
-@vindex vc-stay-local
 @vindex vc-cvs-stay-local
 @cindex remote repositories (CVS)
   When using a CVS repository on a remote machine, VC can try keeping

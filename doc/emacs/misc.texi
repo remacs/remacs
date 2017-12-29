@@ -151,12 +151,12 @@ List all subscribed and unsubscribed groups, but not killed or zombie
 groups.
 
 @kindex A k @r{(Gnus Group mode)}
-@findex gnus-group-list-all-groups
+@findex gnus-group-list-killed
 @item A k
 List killed groups.
 
 @kindex A z @r{(Gnus Group mode)}
-@findex gnus-group-list-all-groups
+@findex gnus-group-list-zombies
 @item A z
 List zombie groups.
 
@@ -183,13 +183,11 @@ Move point to the previous group containing unread articles.
 
 @kindex n @r{(Gnus Group mode)}
 @findex gnus-group-next-unread-group
-@findex gnus-summary-next-unread-article
 @item n
 Move point to the next unread group.
 
 @kindex p @r{(Gnus Group mode)}
 @findex gnus-group-prev-unread-group
-@findex gnus-summary-prev-unread-article
 @item p
 Move point to the previous unread group.
 
@@ -206,7 +204,7 @@ Update your Gnus settings, and quit Gnus.
 
 @table @kbd
 @kindex SPC @r{(Gnus Summary mode)}
-@findex gnus-group-read-group
+@findex gnus-summary-next-page
 @item @key{SPC}
 If there is no article selected, select the article on the current
 line and display its article buffer.  Otherwise, try scrolling the
@@ -222,13 +220,11 @@ Thus, you can read through all articles by repeatedly typing
 Scroll the text of the article backwards.
 
 @kindex n @r{(Gnus Summary mode)}
-@findex gnus-group-next-unread-group
 @findex gnus-summary-next-unread-article
 @item n
 Select the next unread article.
 
 @kindex p @r{(Gnus Summary mode)}
-@findex gnus-group-prev-unread-group
 @findex gnus-summary-prev-unread-article
 @item p
 Select the previous unread article.
@@ -412,7 +408,6 @@ is a hard requirement.  For DVI files, @code{dvipdf} or @code{dvipdfm}
 is needed.  For OpenDocument and Microsoft Office documents, the
 @code{unoconv} tool is needed.}, and displaying those images.
 
-@findex doc-view-toggle-display
 @findex doc-view-toggle-display
 @cindex doc-view-minor-mode
   When you visit a document file that can be displayed with DocView
@@ -875,7 +870,7 @@ in the shell buffer to submit the current line as input.
 
 @item @key{TAB}
 @kindex TAB @r{(Shell mode)}
-@findex completion-at-point
+@findex completion-at-point@r{, in Shell Mode}
 @cindex shell completion
 Complete the command name or file name before point in the shell
 buffer (@code{completion-at-point}).  This uses the usual Emacs

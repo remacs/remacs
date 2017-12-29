@@ -396,7 +396,6 @@ messages for later sending.  See the commentary section in the file
 @file{feedmail.el} for details.
 @end table
 
-@vindex sendmail-coding-system
   When you send a message containing non-@acronym{ASCII} characters,
 they need to be encoded with a coding system (@pxref{Coding Systems}).
 Usually the coding system is specified automatically by your chosen
@@ -405,7 +404,7 @@ explicitly specify the coding system for outgoing mail by setting the
 variable @code{sendmail-coding-system} (@pxref{Recognize Coding}).  If
 the coding system thus determined does not handle the characters in a
 particular message, Emacs asks you to select the coding system to use,
-showing a list of possible coding systems.
+showing a list of possible coding systems.  @xref{Output Coding}.
 
 @node Header Editing
 @subsection Mail Header Editing

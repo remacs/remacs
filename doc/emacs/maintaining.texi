@@ -1207,7 +1207,6 @@ status.
 
 @ifnottex
 @vindex vc-stay-local
-@vindex vc-cvs-stay-local
   On CVS and Subversion, the @code{vc-dir} command normally contacts
 the repository, which may be on a remote machine, to check for
 updates.  If you change the variable @code{vc-stay-local} or
@@ -1906,7 +1905,6 @@ Display the reference on the current line in the other window
 @findex xref-quit-and-goto-xref
 Display the reference on the current line and bury the @file{*xref*}
 buffer (@code{xref-quit-and-goto-xref}).
-@findex xref-query-replace-in-results
 @item r @var{pattern} @key{RET} @var{replacement} @key{RET}
 Perform interactive query-replace on references that match
 @var{pattern} (@code{xref-query-replace-in-results}), replacing
@@ -2032,7 +2030,6 @@ Display a list of the identifiers defined in the program file
 Visit files recorded in the selected tags table.
 @end table
 
-@cindex completion (symbol names)
   In most programming language modes, you can type @kbd{C-M-i} or
 @kbd{M-@key{TAB}} (@code{completion-at-point}) to complete the symbol
 at point.  Some modes provide specialized completion for this command

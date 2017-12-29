@@ -149,7 +149,6 @@ message line is added at the end.
   @xref{Display Custom}, for options that control how Emacs uses the
 echo area.
 
-@cindex minibuffer
   The echo area is also used to display the @dfn{minibuffer}, a
 special window where you can input arguments to commands, such as the
 name of a file to be edited.  When the minibuffer is in use, the text
