@@ -4,12 +4,9 @@ use libc::{c_int, c_uchar, c_void, ptrdiff_t};
 use std::{mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{globals, EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type,
-                 Vbuffer_alist};
-use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal, Fget_text_property};
-use remacs_sys::{Qbuffer_read_only, Qinhibit_read_only, Qnil};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist};
+use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal};
 
-use editfns::point;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{car, cdr};
@@ -125,11 +122,6 @@ impl LispBufferRef {
     #[inline]
     pub fn name(self) -> LispObject {
         LispObject::from_raw(self.name)
-    }
-
-    #[inline]
-    pub fn is_read_only(&self) -> bool {
-        LispObject::from(self.read_only).is_not_nil()
     }
 
     // Check if buffer is live
@@ -373,28 +365,6 @@ pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     };
     unsafe { set_buffer_internal(buf.as_mut()) };
     buffer
-}
-
-/// Signal a `buffer-read-only' error if the current buffer is read-only.
-/// If the text under POSITION (which defaults to point) has the
-/// `inhibit-read-only' text property set, the error will not be raised.
-#[lisp_fn(min = "0")]
-pub fn barf_if_buffer_read_only(position: LispObject) -> LispObject {
-    let position = if position.is_nil() { point() } else { position };
-    position.as_natnum_or_error();
-
-    if ThreadState::current_buffer().is_read_only() && unsafe {
-        LispObject::from(globals.f_Vinhibit_read_only).is_nil()
-    } && unsafe {
-        LispObject::from(Fget_text_property(
-            position.to_raw(),
-            Qinhibit_read_only,
-            Qnil,
-        )).is_nil()
-    } {
-        xsignal!(Qbuffer_read_only, current_buffer())
-    }
-    LispObject::constant_nil()
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
