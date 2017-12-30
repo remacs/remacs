@@ -2717,10 +2717,10 @@ If `default-directory' is remote, full file names are adapted accordingly."
               (insert "]"))))))
     (goto-char (point-min))
     (insert "{")
-    (let ((re (concat "\\([[:alnum:]-_]+\\)=\\({\\|\\[\\|\"\"\\|"
-                      gdb--string-regexp "\\)")))
+    (let ((re (concat "\\([[:alnum:]-_]+\\)=")))
       (while (re-search-forward re nil t)
-        (replace-match "\"\\1\":\\2" nil nil)))
+        (replace-match "\"\\1\":" nil nil)
+        (if (eq (char-after) ?\") (forward-sexp) (forward-char))))
     (goto-char (point-max))
     (insert "}")))
 
