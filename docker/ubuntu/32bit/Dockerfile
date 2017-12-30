@@ -1,4 +1,6 @@
 FROM ioft/i386-ubuntu_core
+
+ENTRYPOINT ["linux32", "--"]
 RUN echo '#!/bin/sh' > /usr/sbin/policy-rc.d \
     && echo 'exit 101' >> /usr/sbin/policy-rc.d \
     && chmod +x /usr/sbin/policy-rc.d \
@@ -33,9 +35,10 @@ RUN apt-get update && apt-get install -y \
     libxpm-dev \
     texinfo
 
+
 ENV PATH "/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-RUN curl https://sh.rustup.rs -o rustup.sh && sh rustup.sh --default-toolchain nightly -y && rustup default nightly
-# overwrite this with 'CMD []' in a dependent Dockerfile
-CMD ["/bin/bash"]
-ENTRYPOINT ["linux32", "--"]
+RUN curl https://sh.rustup.rs -o rustup.sh && \
+    sh rustup.sh --default-host i686-unknown-linux-gnu --default-toolchain nightly-2017-12-23 -y && \
+    rustup default nightly-2017-12-23
+
