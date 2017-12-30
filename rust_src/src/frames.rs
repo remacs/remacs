@@ -10,6 +10,7 @@ use remacs_sys::{Qframe_live_p, Qns, Qpc, Qt, Qw32, Qx};
 use libc::c_int;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use std::mem;
 use windows::{selected_window, LispWindowRef};
 
 pub type OutputMethod = c_int;
@@ -23,6 +24,10 @@ pub const output_ns: OutputMethod = 5;
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        unsafe { mem::transmute(self.as_ptr()) }
+    }
+
     #[inline]
     pub fn is_live(self) -> bool {
         unsafe { !fget_terminal(self.as_ptr()).is_null() }
@@ -183,4 +188,27 @@ pub fn framep(object: LispObject) -> LispObject {
     }
 }
 
+/// The name of the window system that FRAME is displaying through.
+/// The value is a symbol:
+///  nil for a termcap frame (a character-only terminal),
+///  `x' for an Emacs frame that is really an X window,
+///  `w32' for an Emacs frame that is a window on MS-Windows display,
+///  `ns' for an Emacs frame on a GNUstep or Macintosh Cocoa display,
+///  `pc' for a direct-write MS-DOS frame.
+///
+/// FRAME defaults to the currently selected frame.
+///
+/// Use of this function as a predicate is deprecated.  Instead,
+/// use `display-graphic-p' or any of the other `display-*-p'
+/// predicates which report frame's specific UI-related capabilities.
+#[lisp_fn(min = "0")]
+pub fn window_system(frame: Option<LispFrameRef>) -> LispObject {
+    let f = frame.map_or(selected_frame(), |f| f.as_lisp_obj());
+
+    if framep(f).is_t() {
+        LispObject::constant_nil()
+    } else {
+        framep(f)
+    }
+}
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));

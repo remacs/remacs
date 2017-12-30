@@ -252,37 +252,6 @@ set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 
 Lisp_Object Vframe_list;
 
-DEFUN ("window-system", Fwindow_system, Swindow_system, 0, 1, 0,
-       doc: /* The name of the window system that FRAME is displaying through.
-The value is a symbol:
- nil for a termcap frame (a character-only terminal),
- `x' for an Emacs frame that is really an X window,
- `w32' for an Emacs frame that is a window on MS-Windows display,
- `ns' for an Emacs frame on a GNUstep or Macintosh Cocoa display,
- `pc' for a direct-write MS-DOS frame.
-
-FRAME defaults to the currently selected frame.
-
-Use of this function as a predicate is deprecated.  Instead,
-use `display-graphic-p' or any of the other `display-*-p'
-predicates which report frame's specific UI-related capabilities.  */)
-  (Lisp_Object frame)
-{
-  Lisp_Object type;
-  if (NILP (frame))
-    frame = selected_frame;
-
-  type = Fframep (frame);
-
-  if (NILP (type))
-    wrong_type_argument (Qframep, frame);
-
-  if (EQ (type, Qt))
-    return Qnil;
-  else
-    return type;
-}
-
 /* Placeholder used by temacs -nw before window.el is loaded.  */
 DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
        Sframe_windows_min_size, 4, 4, 0,
@@ -5979,7 +5948,6 @@ iconify the top level frame instead.  */);
 
   staticpro (&Vframe_list);
 
-  defsubr (&Swindow_system);
   defsubr (&Sframe_windows_min_size);
   defsubr (&Smake_terminal_frame);
   defsubr (&Shandle_switch_frame);
