@@ -1,7 +1,5 @@
 //! data helpers
 
-use std::ffi::CString;
-
 use remacs_macros::lisp_fn;
 use remacs_sys::{Lisp_Misc_Type, Lisp_Type, PseudovecType};
 use remacs_sys::{Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
@@ -10,7 +8,6 @@ use remacs_sys::{Qbool_vector, Qbuffer, Qchar_table, Qcompiled_function, Qcondit
                  Qfont_object, Qfont_spec, Qframe, Qhash_table, Qinteger, Qmarker,
                  Qmodule_function, Qmutex, Qnone, Qoverlay, Qprocess, Qstring, Qsubr, Qsymbol,
                  Qterminal, Qthread, Quser_ptr, Qvector, Qwindow, Qwindow_configuration};
-use remacs_sys::build_string;
 
 use lisp::{LispObject, LispSubrRef};
 use lisp::defsubr;
@@ -133,9 +130,9 @@ pub fn type_of(object: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn subr_lang(subr: LispSubrRef) -> LispObject {
     if subr.lang == Lisp_Subr_Lang_C {
-        LispObject::from_raw(unsafe { build_string(CString::new("C").unwrap().as_ptr()) })
+        LispObject::from("C")
     } else if subr.lang == Lisp_Subr_Lang_Rust {
-        LispObject::from_raw(unsafe { build_string(CString::new("Rust").unwrap().as_ptr()) })
+        LispObject::from("Rust")
     } else {
         unreachable!()
     }
