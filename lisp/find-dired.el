@@ -295,7 +295,7 @@ specifies what to use in place of \"-ls\" as the final argument."
 		    (l-opt (and (consp find-ls-option)
 				(string-match "l" (cdr find-ls-option))))
 		    (ls-regexp (concat "^ +[^ \t\r\n]+\\( +[^ \t\r\n]+\\) +"
-				       "[^ \t\r\n]+ +[^ \t\r\n]+\\( +[0-9]+\\)")))
+				       "[^ \t\r\n]+ +[^ \t\r\n]+\\( +[^[:space:]]+\\)")))
 		(goto-char beg)
 		(insert string)
 		(goto-char beg)
