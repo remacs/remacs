@@ -188,7 +188,7 @@ wset_vertical_scroll_bar_type (struct window *w, Lisp_Object val)
   w->vertical_scroll_bar_type = val;
 }
 
-static void
+void
 wset_window_parameters (struct window *w, Lisp_Object val)
 {
   w->window_parameters = val;
@@ -1919,25 +1919,6 @@ WINDOW can be any window and defaults to the selected one.  */)
   struct window *w = decode_any_window (window);
 
   return window_parameter (w, parameter);
-}
-
-DEFUN ("set-window-parameter", Fset_window_parameter,
-       Sset_window_parameter, 3, 3, 0,
-       doc: /* Set WINDOW's value of PARAMETER to VALUE.
-WINDOW can be any window and defaults to the selected one.
-Return VALUE.  */)
-  (Lisp_Object window, Lisp_Object parameter, Lisp_Object value)
-{
-  register struct window *w = decode_any_window (window);
-  Lisp_Object old_alist_elt;
-
-  old_alist_elt = Fassq (parameter, w->window_parameters);
-  if (NILP (old_alist_elt))
-    wset_window_parameters
-      (w, Fcons (Fcons (parameter, value), w->window_parameters));
-  else
-    Fsetcdr (old_alist_elt, value);
-  return value;
 }
 
 struct Lisp_Char_Table *
@@ -7504,7 +7485,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_next_buffers);
   defsubr (&Swindow_parameters);
   defsubr (&Swindow_parameter);
-  defsubr (&Sset_window_parameter);
 }
 
 void
@@ -7516,4 +7496,13 @@ keys_of_window (void)
   initial_define_key (global_map, Ctl ('V'), "scroll-up-command");
   initial_define_key (meta_map, Ctl ('V'), "scroll-other-window");
   initial_define_key (meta_map, 'v', "scroll-down-command");
+}
+
+
+/* Accessors to enable Rust code to get data from the Lisp_Process struct */
+
+Lisp_Object
+wget_window_parameters(const struct window *w)
+{
+  return w->window_parameters;
 }

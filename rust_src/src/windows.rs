@@ -5,15 +5,17 @@ use std::mem;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 use remacs_sys::{is_minibuffer, minibuf_level, minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window, wget_parent, wget_pixel_height,
-                 wget_pseudo_window_p, window_menu_bar_p, window_parameter, window_tool_bar_p};
+                 wget_pseudo_window_p, wget_window_parameters, window_menu_bar_p,
+                 window_parameter, window_tool_bar_p, wset_window_parameters, Fcons};
+use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 
 use editfns::point;
 use frames::{frame_live_or_selected, window_frame_live_or_selected};
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use lists::{assq, setcdr};
 use marker::marker_position;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
@@ -492,6 +494,31 @@ pub fn window_wants_mode_line(window: LispWindowRef) -> bool {
 
 pub fn window_wants_header_line(window: LispWindowRef) -> bool {
     window.wants_header_line()
+}
+
+/// Set WINDOW's value of PARAMETER to VALUE.
+/// WINDOW can be any window and defaults to the selected one.
+/// Return VALUE.
+#[lisp_fn]
+pub fn set_window_parameter(
+    window: LispObject,
+    parameter: LispObject,
+    value: LispObject,
+) -> LispObject {
+    let w = window_or_selected(window);
+    let w_params = unsafe { wget_window_parameters(w.as_ptr()) };
+    let old_alist_elt = assq(parameter, LispObject::from_raw(w_params));
+    if old_alist_elt.is_nil() {
+        unsafe {
+            wset_window_parameters(
+                w.as_ptr(),
+                Fcons(Fcons(parameter.to_raw(), value.to_raw()), w_params),
+            )
+        }
+    } else {
+        setcdr(old_alist_elt, value);
+    }
+    value
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
