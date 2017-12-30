@@ -27,7 +27,27 @@ use libc::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_void, intmax_t,
 // and alias it ourselves.
 pub type pid_t = libc::c_int;
 
-pub type Lisp_Object = EmacsInt;
+#[repr(C)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct Lisp_Object(EmacsInt);
+
+impl Lisp_Object {
+    pub fn from_C(n: EmacsInt) -> Lisp_Object {
+        Lisp_Object(n)
+    }
+
+    pub fn from_C_unsigned(n: EmacsUint) -> Lisp_Object {
+        Self::from_C(n as EmacsInt)
+    }
+
+    pub fn to_C(self) -> EmacsInt {
+        self.0
+    }
+
+    pub fn to_C_unsigned(self) -> EmacsUint {
+        self.0 as EmacsUint
+    }
+}
 
 include!(concat!(env!("OUT_DIR"), "/definitions.rs"));
 include!(concat!(env!("OUT_DIR"), "/globals.rs"));
@@ -1180,7 +1200,7 @@ extern "C" {
     pub fn timespec_sub(a: timespec, b: timespec) -> timespec;
     pub fn timespec_add(a: timespec, b: timespec) -> timespec;
 
-    pub fn current_column() -> Lisp_Object;
+    pub fn current_column() -> ptrdiff_t;
 
     pub fn Fadd_text_properties(
         start: Lisp_Object,
