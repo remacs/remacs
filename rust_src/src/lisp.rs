@@ -24,8 +24,8 @@ use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsubrp,
                  Qsymbolp, Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p,
                  Qwindowp};
-use remacs_sys::build_string;
-use remacs_sys::{empty_unibyte_string, internal_equal, lispsym, make_float, misc_get_ty};
+use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, make_float,
+                 misc_get_ty};
 
 use buffers::{LispBufferRef, LispOverlayRef};
 use chartable::LispCharTableRef;
@@ -144,7 +144,7 @@ impl From<bool> for LispObject {
 }
 
 /// Copies a Rust str into a new Lisp string
-impl<'a> From<& 'a str> for LispObject {
+impl<'a> From<&'a str> for LispObject {
     #[inline]
     fn from(s: &str) -> Self {
         LispObject(unsafe { build_string(CString::new(s).unwrap().as_ptr()) })
