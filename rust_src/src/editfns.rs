@@ -333,7 +333,7 @@ pub fn string_to_char(string: LispObject) -> EmacsInt {
     if string.len_chars() > 0 {
         if string.is_multibyte() {
             let (cp, _) = multibyte_char_at(string.as_slice());
-            EmacsInt::from(cp)
+            cp as EmacsInt
         } else {
             EmacsInt::from(string.byte_at(0))
         }
