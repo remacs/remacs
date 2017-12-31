@@ -246,6 +246,12 @@ impl From<LispSymbolRef> for LispObject {
     }
 }
 
+impl From<LispObject> for Option<LispSymbolRef> {
+    fn from(o: LispObject) -> Option<LispSymbolRef> {
+        o.as_symbol()
+    }
+}
+
 // Misc support (LispType == Lisp_Misc == 1)
 
 // Lisp_Misc is a union. Now we don't really care about its variants except the
@@ -696,12 +702,10 @@ impl LispObject {
             .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
     }
 
-    /*
     pub fn is_frame(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_FRAME))
     }
-    */
 
     pub fn as_frame(self) -> Option<LispFrameRef> {
         self.as_vectorlike().and_then(|v| v.as_frame())
@@ -775,6 +779,29 @@ impl From<LispObject> for LispWindowRef {
 impl From<LispWindowRef> for LispObject {
     fn from(w: LispWindowRef) -> Self {
         w.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for LispFrameRef {
+    fn from(o: LispObject) -> Self {
+        o.as_frame_or_error()
+    }
+}
+
+impl From<LispFrameRef> for LispObject {
+    fn from(f: LispFrameRef) -> Self {
+        f.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispFrameRef> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        if o.is_frame() {
+            Some(o.as_frame_or_error())
+        } else {
+            None
+        }
     }
 }
 

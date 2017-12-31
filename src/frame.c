@@ -252,37 +252,6 @@ set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 
 Lisp_Object Vframe_list;
 
-DEFUN ("window-system", Fwindow_system, Swindow_system, 0, 1, 0,
-       doc: /* The name of the window system that FRAME is displaying through.
-The value is a symbol:
- nil for a termcap frame (a character-only terminal),
- `x' for an Emacs frame that is really an X window,
- `w32' for an Emacs frame that is a window on MS-Windows display,
- `ns' for an Emacs frame on a GNUstep or Macintosh Cocoa display,
- `pc' for a direct-write MS-DOS frame.
-
-FRAME defaults to the currently selected frame.
-
-Use of this function as a predicate is deprecated.  Instead,
-use `display-graphic-p' or any of the other `display-*-p'
-predicates which report frame's specific UI-related capabilities.  */)
-  (Lisp_Object frame)
-{
-  Lisp_Object type;
-  if (NILP (frame))
-    frame = selected_frame;
-
-  type = Fframep (frame);
-
-  if (NILP (type))
-    wrong_type_argument (Qframep, frame);
-
-  if (EQ (type, Qt))
-    return Qnil;
-  else
-    return type;
-}
-
 /* Placeholder used by temacs -nw before window.el is loaded.  */
 DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
        Sframe_windows_min_size, 4, 4, 0,
@@ -2488,28 +2457,6 @@ for how to proceed.  */)
   return Qnil;
 }
 
-DEFUN ("frame-visible-p", Fframe_visible_p, Sframe_visible_p,
-       1, 1, 0,
-       doc: /* Return t if FRAME is \"visible\" (actually in use for display).
-Return the symbol `icon' if FRAME is iconified or \"minimized\".
-Return nil if FRAME was made invisible, via `make-frame-invisible'.
-On graphical displays, invisible frames are not updated and are
-usually not displayed at all, even in a window system's \"taskbar\".
-
-If FRAME is a text terminal frame, this always returns t.
-Such frames are always considered visible, whether or not they are
-currently being displayed on the terminal.  */)
-  (Lisp_Object frame)
-{
-  CHECK_LIVE_FRAME (frame);
-
-  if (FRAME_VISIBLE_P (XFRAME (frame)))
-    return Qt;
-  if (FRAME_ICONIFIED_P (XFRAME (frame)))
-    return Qicon;
-  return Qnil;
-}
-
 DEFUN ("visible-frame-list", Fvisible_frame_list, Svisible_frame_list,
        0, 0, 0,
        doc: /* Return a list of all frames now \"visible\" (being updated).  */)
@@ -3348,20 +3295,6 @@ font height.  */)
   adjust_frame_size (f, pixel_width, pixel_height, 1, 0, Qsize);
 
   return Qnil;
-}
-
-DEFUN ("frame-position", Fframe_position,
-       Sframe_position, 0, 1, 0,
-       doc: /* Return top left corner of FRAME in pixels.
-FRAME must be a live frame and defaults to the selected one.  The return
-value is a cons (x, y) of the coordinates of the top left corner of
-FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
-display.  */)
-     (Lisp_Object frame)
-{
-  register struct frame *f = decode_live_frame (frame);
-
-  return Fcons (make_number (f->left_pos), make_number (f->top_pos));
 }
 
 DEFUN ("set-frame-position", Fset_frame_position,
@@ -5485,6 +5418,31 @@ fget_output_method(const struct frame *f)
   return f->output_method;
 }
 
+bool
+fget_visible(const struct frame *f)
+{
+  return f->visible;
+}
+
+bool_bf
+fget_iconified(const struct frame *f)
+{
+  return f->iconified;
+}
+
+int
+fget_top_pos(const struct frame *f)
+{
+  return f->top_pos;
+}
+
+int
+fget_left_pos(const struct frame *f)
+{
+  return f->left_pos;
+}
+
+
 
 /***********************************************************************
 				Initialization
@@ -5979,7 +5937,6 @@ iconify the top level frame instead.  */);
 
   staticpro (&Vframe_list);
 
-  defsubr (&Swindow_system);
   defsubr (&Sframe_windows_min_size);
   defsubr (&Smake_terminal_frame);
   defsubr (&Shandle_switch_frame);
@@ -6002,7 +5959,6 @@ iconify the top level frame instead.  */);
   defsubr (&Smake_frame_visible);
   defsubr (&Smake_frame_invisible);
   defsubr (&Siconify_frame);
-  defsubr (&Sframe_visible_p);
   defsubr (&Svisible_frame_list);
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);
@@ -6033,7 +5989,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sset_frame_height);
   defsubr (&Sset_frame_width);
   defsubr (&Sset_frame_size);
-  defsubr (&Sframe_position);
   defsubr (&Sset_frame_position);
   defsubr (&Sframe_pointer_visible_p);
 
