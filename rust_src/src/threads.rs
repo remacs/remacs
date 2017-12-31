@@ -40,8 +40,8 @@ pub fn thread_name(thread: ThreadStateRef) -> LispObject {
 
 /// Return t if THREAD is alive, or nil if it has exited.
 #[lisp_fn]
-pub fn thread_alive_p(thread: LispObject) -> bool {
-    thread.as_thread_or_error().is_alive()
+pub fn thread_alive_p(thread: ThreadStateRef) -> bool {
+    thread.is_alive()
 }
 
 include!(concat!(env!("OUT_DIR"), "/threads_exports.rs"));

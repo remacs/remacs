@@ -1,11 +1,11 @@
 //! marker support
 
-use libc::{c_void, ptrdiff_t};
+use libc::ptrdiff_t;
 use std::mem;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Marker, Lisp_Type};
-use remacs_sys::{buf_charpos_to_bytepos, make_lisp_ptr, set_point_both};
+use remacs_sys::{EmacsInt, Lisp_Marker};
+use remacs_sys::{buf_charpos_to_bytepos, set_point_both};
 
 use buffers::LispBufferRef;
 use lisp::{ExternalPtr, LispObject};
@@ -16,6 +16,10 @@ use util::clip_to_bounds;
 pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
 
 impl LispMarkerRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        unsafe { mem::transmute(self.as_ptr()) }
+    }
+
     pub fn charpos(self) -> Option<ptrdiff_t> {
         if self.buffer.is_null() {
             None
@@ -70,17 +74,8 @@ pub fn marker_position(marker: LispMarkerRef) -> Option<EmacsInt> {
 /// Return the buffer that MARKER points into, or nil if none.
 /// Returns nil if MARKER points into a dead buffer.
 #[lisp_fn]
-pub fn marker_buffer(marker: LispObject) -> LispObject {
-    let buf = marker.as_marker_or_error().buffer();
-    match buf {
-        Some(b) => unsafe {
-            LispObject::from_raw(make_lisp_ptr(
-                b.as_ptr() as *mut c_void,
-                Lisp_Type::Lisp_Vectorlike,
-            ))
-        },
-        None => LispObject::constant_nil(),
-    }
+pub fn marker_buffer(marker: LispMarkerRef) -> Option<LispBufferRef> {
+    marker.buffer()
 }
 
 /// Set PT from MARKER's clipped position.
