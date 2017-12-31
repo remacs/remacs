@@ -11,6 +11,7 @@ use libc::c_int;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use std::mem;
+use symbols::LispSymbolRef;
 use windows::{selected_window, LispWindowRef};
 
 pub type OutputMethod = c_int;
@@ -81,7 +82,7 @@ impl LispFrameRef {
 
     #[inline]
     pub fn is_iconified(self) -> bool {
-        unsafe { LispObject::from_bool(fget_iconified(self.as_ptr()) as BoolBF).is_not_nil() }
+        unsafe { fget_iconified(self.as_ptr()) as BoolBF }
     }
 }
 
@@ -222,13 +223,14 @@ pub fn framep(object: LispObject) -> LispObject {
 /// use `display-graphic-p' or any of the other `display-*-p'
 /// predicates which report frame's specific UI-related capabilities.
 #[lisp_fn(min = "0")]
-pub fn window_system(frame: Option<LispFrameRef>) -> LispObject {
+pub fn window_system(frame: Option<LispFrameRef>) -> Option<LispSymbolRef> {
     let f = frame.map_or(selected_frame(), |f| f.as_lisp_obj());
+    let window_system = framep(f);
 
-    if framep(f).is_t() {
-        LispObject::constant_nil()
+    if window_system.is_t() {
+        None
     } else {
-        framep(f)
+        window_system.as_symbol()
     }
 }
 

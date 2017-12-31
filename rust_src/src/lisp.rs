@@ -246,6 +246,12 @@ impl From<LispSymbolRef> for LispObject {
     }
 }
 
+impl From<LispObject> for Option<LispSymbolRef> {
+    fn from(o: LispObject) -> Option<LispSymbolRef> {
+        o.as_symbol()
+    }
+}
+
 // Misc support (LispType == Lisp_Misc == 1)
 
 // Lisp_Misc is a union. Now we don't really care about its variants except the
