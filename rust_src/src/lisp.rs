@@ -1334,7 +1334,7 @@ impl LispObject {
     /// Nonzero iff X is a character.
     pub fn is_character(self) -> bool {
         self.as_fixnum()
-            .map_or(false, |i| 0 <= i && i <= EmacsInt::from(MAX_CHAR))
+            .map_or(false, |i| 0 <= i && i <= (MAX_CHAR as EmacsInt))
     }
 
     /// Check if Lisp object is a character or not and return the codepoint
