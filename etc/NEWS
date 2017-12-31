@@ -1502,6 +1502,15 @@ supported by the upstream project.
 To adapt to the change, you may need to set 'epa-pinentry-mode' to the
 symbol 'loopback'.
 
+Note that previously, it was said that passphrase input through
+minibuffer would be much less secure than other graphical pinentry
+programs.  However, these days the difference is insignificant: the
+'read-password' function sufficiently protects input from leakage to
+message logs.  Emacs still doesn't use secure memory to protect
+passphrases, but it was also removed from other pinentry programs as
+the attack is unrealistic on modern computer systems which don't
+utilize swap memory usually.
+
 
 * Lisp Changes in Emacs 26.1
 
