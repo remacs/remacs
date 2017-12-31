@@ -735,6 +735,13 @@ baz\"\""
   :bindings '((electric-quote-replace-double . t))
   :test-in-comments nil :test-in-strings nil)
 
+(define-electric-pair-test electric-quote-replace-double-no-context-single
+  " " "-'" :expected-string " ’" :expected-point 3
+  :modes '(text-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t))
+  :test-in-comments nil :test-in-strings nil)
+
 ;; Simulate ‘markdown-mode’: it sets both ‘comment-start’ and
 ;; ‘comment-use-syntax’, but derives from ‘text-mode’.
 (define-electric-pair-test electric-quote-markdown-in-text
