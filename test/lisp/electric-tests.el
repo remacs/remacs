@@ -742,6 +742,24 @@ baz\"\""
   :bindings '((electric-quote-replace-double . t))
   :test-in-comments nil :test-in-strings nil)
 
+(define-electric-pair-test electric-quote-replace-double-escaped-open
+  "foo \\" "-----\"" :expected-string "foo \\“"
+  :expected-point 7 :modes '(emacs-lisp-mode c-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t)
+              (electric-quote-comment . t)
+              (electric-quote-string . t))
+  :test-in-comments t :test-in-strings t :test-in-code nil)
+
+(define-electric-pair-test electric-quote-replace-double-escaped-close
+  "foo \\“foo\\" "----------\"" :expected-string "foo \\“foo\\”"
+  :expected-point 12 :modes '(emacs-lisp-mode c-mode)
+  :fixture-fn #'electric-quote-local-mode
+  :bindings '((electric-quote-replace-double . t)
+              (electric-quote-comment . t)
+              (electric-quote-string . t))
+  :test-in-comments t :test-in-strings t :test-in-code nil)
+
 ;; Simulate ‘markdown-mode’: it sets both ‘comment-start’ and
 ;; ‘comment-use-syntax’, but derives from ‘text-mode’.
 (define-electric-pair-test electric-quote-markdown-in-text

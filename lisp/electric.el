@@ -505,6 +505,7 @@ This requotes when a quoting key is typed."
                                  (eq last-command-event ?\")))
                         (save-excursion
                           (backward-char)
+                          (skip-syntax-backward "\\")
                           (or (bobp) (bolp)
                               (memq (char-before) (list q< q<<))
                               (memq (char-syntax (char-before))
