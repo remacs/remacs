@@ -673,12 +673,6 @@ verify_bytepos (ptrdiff_t charpos)
 
 #endif /* MARKER_DEBUG */
 
-void
-syms_of_marker (void)
-{
-  defsubr (&Sbuffer_has_markers_at);
-}
-
 /* Accessors to enable Rust code to get data from the Lisp_Marker struct */
 
 bool_bf
@@ -691,4 +685,10 @@ void
 mset_insertion_type(struct Lisp_Marker *m, bool_bf val)
 {
   m->insertion_type = val;
+}
+
+void
+syms_of_marker (void)
+{
+  defsubr (&Sbuffer_has_markers_at);
 }
