@@ -1,5 +1,9 @@
 //! Generic frame functions.
 
+use std::mem;
+
+use libc::c_int;
+
 use remacs_macros::lisp_fn;
 use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
@@ -7,10 +11,8 @@ use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, 
                  fget_terminal, fget_top_pos, fget_visible, frame_dimension, Fcons, Fselect_window};
 use remacs_sys::{Qframe_live_p, Qicon, Qns, Qpc, Qt, Qw32, Qx};
 
-use libc::c_int;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
-use std::mem;
 use symbols::LispSymbolRef;
 use windows::{selected_window, LispWindowRef};
 
