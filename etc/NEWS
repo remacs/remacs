@@ -247,6 +247,12 @@ case does not match.
 for abbrevs that have them.
 
 +++
+** 'insert-abbrev-table-description' skips empty tables.
+'insert-abbrev-table-description' skips inserting empty tables when
+inserting non-readable tables.  By extension, this makes
+'write-abbrev-file' skip writing empty tables.
+
++++
 ** The new functions and commands 'text-property-search-forward' and
 'text-property-search-backward' have been added.  These provide an
 interface that's more like functions like @code{search-forward}.
