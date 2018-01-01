@@ -6860,8 +6860,7 @@ a non-positive integer, and enable the mode otherwise
 
 When Delete Selection mode is enabled, typed text replaces the selection
 if the selection is active.  Otherwise, typed text is just inserted at
-point regardless of any selection.  Also, commands that normally delete
-just one character will delete the entire selection instead.
+point regardless of any selection.
 
 See `delete-selection-helper' and `delete-selection-pre-hook' for
 information on adapting behavior of commands in Delete Selection mode.
@@ -9581,9 +9580,10 @@ To change the default, set the variable `ediff-use-toolbar-p', which see.
 (autoload 'edit-kbd-macro "edmacro" "\
 Edit a keyboard macro.
 At the prompt, type any key sequence which is bound to a keyboard macro.
-Or, type `C-x e' or RET to edit the last keyboard macro, `C-h l' to edit
-the last 300 keystrokes as a keyboard macro, or `\\[execute-extended-command]' to edit a macro by
-its command name.
+Or, type `\\[kmacro-end-and-call-macro]' or RET to edit the last
+keyboard macro, `\\[view-lossage]' to edit the last 300
+keystrokes as a keyboard macro, or `\\[execute-extended-command]'
+to edit a macro by its command name.
 With a prefix argument, format the macro in a more concise way.
 
 \(fn KEYS &optional PREFIX FINISH-HOOK STORE-HOOK)" t nil)
@@ -12670,7 +12670,7 @@ whose elements are of the form (VAR . VALUE).
 
 When a connection to a remote server is opened, the server's
 connection profiles are found.  A server may be assigned a
-connection profile using `connection-local-set-profile'.  Then
+connection profile using `connection-local-set-profiles'.  Then
 variables are set in the server's process buffer according to the
 VARIABLES list of the connection profile.  The list is processed
 in order.
@@ -18653,7 +18653,10 @@ For example, invoke \"emacs -batch -f batch-info-validate $info/ ~/*.info\"
 ;;; Generated autoloads from emacs-lisp/inline.el
 
 (autoload 'define-inline "inline" "\
+Define an inline function NAME with arguments ARGS and body in BODY.
 
+This is like `defmacro', but has several advantages.
+See Info node `(elisp)Defining Functions' for more details.
 
 \(fn NAME ARGS &rest BODY)" nil t)
 
@@ -25456,25 +25459,6 @@ they are not by default assigned to keys.
 (defalias 'edit-picture 'picture-mode)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "picture" '("picture-")))
-
-;;;***
-
-;;;### (autoloads nil "pinentry" "net/pinentry.el" (0 0 0 0))
-;;; Generated autoloads from net/pinentry.el
-(push (purecopy '(pinentry 0 1)) package--builtin-versions)
-
-(autoload 'pinentry-start "pinentry" "\
-Start a Pinentry service.
-
-Once the environment is properly set, subsequent invocations of
-the gpg command will interact with Emacs for passphrase input.
-
-If the optional QUIET argument is non-nil, messages at startup
-will not be shown.
-
-\(fn &optional QUIET)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "pinentry" '("pinentry-")))
 
 ;;;***
 
@@ -38288,7 +38272,7 @@ or call the function `winner-mode'.")
 Toggle Winner mode on or off.
 With a prefix argument ARG, enable Winner mode if ARG is
 positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil, and toggle it if ARG is ‘toggle’.
+the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'.
 
 Winner mode is a global minor mode that records the changes in
 the window configuration (i.e. how the frames are partitioned
