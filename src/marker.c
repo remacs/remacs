@@ -430,7 +430,7 @@ live_buffer (Lisp_Object buffer)
 /* Internal function to set MARKER in BUFFER at POSITION.  Non-zero
    RESTRICTED means limit the POSITION by the visible part of BUFFER.  */
 
-static Lisp_Object
+Lisp_Object
 set_marker_internal (Lisp_Object marker, Lisp_Object position,
 		     Lisp_Object buffer, bool restricted)
 {
@@ -490,16 +490,6 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
       attach_marker (m, b, charpos, bytepos);
     }
   return marker;
-}
-
-DEFUN ("set-marker", Fset_marker, Sset_marker, 2, 3, 0,
-       doc: /* Position MARKER before character number POSITION in BUFFER.
-If BUFFER is omitted or nil, it defaults to the current buffer.  If
-POSITION is nil, makes marker point nowhere so it no longer slows down
-editing in any buffer.  Returns MARKER.  */)
-  (Lisp_Object marker, Lisp_Object position, Lisp_Object buffer)
-{
-  return set_marker_internal (marker, position, buffer, 0);
 }
 
 /* Like the above, but won't let the position be outside the visible part.  */
@@ -730,9 +720,15 @@ verify_bytepos (ptrdiff_t charpos)
 void
 syms_of_marker (void)
 {
-  defsubr (&Sset_marker);
   defsubr (&Scopy_marker);
   defsubr (&Smarker_insertion_type);
   defsubr (&Sset_marker_insertion_type);
   defsubr (&Sbuffer_has_markers_at);
+}
+
+
+bool_bf
+mget_insertion_type(const struct Lisp_Marker *m)
+{
+  return m->insertion_type;
 }

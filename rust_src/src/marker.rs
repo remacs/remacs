@@ -4,8 +4,8 @@ use libc::{c_void, ptrdiff_t};
 use std::mem;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Marker, Lisp_Type};
-use remacs_sys::{buf_charpos_to_bytepos, make_lisp_ptr, set_point_both};
+use remacs_sys::{BoolBF, EmacsInt, Lisp_Marker, Lisp_Type};
+use remacs_sys::{buf_charpos_to_bytepos, make_lisp_ptr, mget_insertion_type, set_point_both};
 
 use buffers::LispBufferRef;
 use lisp::{ExternalPtr, LispObject};
@@ -42,12 +42,16 @@ impl LispMarkerRef {
     }
 
     pub fn buffer(self) -> Option<LispBufferRef> {
-        let buf = self.buffer;
-        if buf.is_null() {
+        if self.buffer.is_null() {
             None
         } else {
-            Some(unsafe { mem::transmute(buf) })
+            Some(unsafe { mem::transmute(self.buffer) })
         }
+    }
+
+    #[inline]
+    pub fn insertion_type(self) -> bool {
+        unsafe { mget_insertion_type(self.as_ptr()) as BoolBF }
     }
 }
 
@@ -100,6 +104,29 @@ pub fn set_point_from_marker(marker: LispMarkerRef) {
         bytepos = clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
     };
     unsafe { set_point_both(charpos, bytepos) };
+}
+
+// /// Return insertion type of MARKER: t if it stays after inserted text.
+// /// The value nil means the marker stays before text inserted there.
+// #[lisp_fn]
+// pub fn marker_insertion_type(marker: LispMarkerRef) -> bool {
+//     marker.insertion_type()
+// }
+
+/// Position MARKER before character number POSITION in BUFFER.
+/// If BUFFER is omitted or nil, it defaults to the current buffer.  If
+/// POSITION is nil, makes marker point nowhere so it no longer slows down
+/// editing in any buffer.  Returns MARKER.
+#[lisp_fn(min = "2")]
+pub fn set_marker(marker: LispObject, position: LispObject, buffer: LispObject) -> LispObject {
+    unsafe {
+        LispObject::from_raw(set_marker_internal(
+            marker.to_raw(),
+            position.to_raw(),
+            buffer.to_raw(),
+            false,
+        ))
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/marker_exports.rs"));
