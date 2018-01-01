@@ -1317,6 +1317,13 @@ extern "C" {
         object: Lisp_Object,
     ) -> Lisp_Object;
 
+    pub fn set_marker_internal(
+        marker: Lisp_Object,
+        position: Lisp_Object,
+        buffer: Lisp_Object,
+        restricted: bool,
+    ) -> Lisp_Object;
+    pub fn Fmake_marker() -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
