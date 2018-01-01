@@ -139,4 +139,31 @@ pub fn set_marker(marker: LispObject, position: LispObject, buffer: LispObject) 
     }
 }
 
+/// Return a new marker pointing at the same place as MARKER.
+/// If argument is a number, makes a new marker pointing
+/// at that position in the current buffer.
+/// If MARKER is not specified, the new marker does not point anywhere.
+/// The optional argument ITYPE specifies the insertion type of the new marker;
+/// see `marker-insertion-type'.
+#[lisp_fn(min = "0")]
+pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
+    if marker.is_not_nil() {
+        marker.as_fixnum_coerce_marker_or_error();
+    }
+    let new = unsafe { LispObject::from_raw(Fmake_marker()) };
+    let buffer_or_nil = if marker.is_marker() {
+        marker_buffer(marker)
+    } else {
+        LispObject::constant_nil()
+    };
+    set_marker(new, marker, buffer_or_nil);
+    unsafe {
+        mset_insertion_type(
+            new.as_marker().unwrap().as_mut(),
+            itype.is_not_nil() as BoolBF,
+        )
+    };
+    new
+}
+
 include!(concat!(env!("OUT_DIR"), "/marker_exports.rs"));

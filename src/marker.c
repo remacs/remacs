@@ -620,26 +620,6 @@ marker_byte_position (Lisp_Object marker)
   return m->bytepos;
 }
 
-DEFUN ("copy-marker", Fcopy_marker, Scopy_marker, 0, 2, 0,
-       doc: /* Return a new marker pointing at the same place as MARKER.
-If argument is a number, makes a new marker pointing
-at that position in the current buffer.
-If MARKER is not specified, the new marker does not point anywhere.
-The optional argument TYPE specifies the insertion type of the new marker;
-see `marker-insertion-type'.  */)
-  (register Lisp_Object marker, Lisp_Object type)
-{
-  register Lisp_Object new;
-
-  if (!NILP (marker))
-  CHECK_TYPE (INTEGERP (marker) || MARKERP (marker), Qinteger_or_marker_p, marker);
-
-  new = Fmake_marker ();
-  Fset_marker (new, marker,
-	       (MARKERP (marker) ? Fmarker_buffer (marker) : Qnil));
-  XMARKER (new)->insertion_type = !NILP (type);
-  return new;
-}
 DEFUN ("buffer-has-markers-at", Fbuffer_has_markers_at, Sbuffer_has_markers_at,
        1, 1, 0,
        doc: /* Return t if there are markers pointing at POSITION in the current buffer.  */)
@@ -696,7 +676,6 @@ verify_bytepos (ptrdiff_t charpos)
 void
 syms_of_marker (void)
 {
-  defsubr (&Scopy_marker);
   defsubr (&Sbuffer_has_markers_at);
 }
 
