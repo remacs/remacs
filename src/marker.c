@@ -641,16 +641,6 @@ see `marker-insertion-type'.  */)
   return new;
 }
 
-DEFUN ("marker-insertion-type", Fmarker_insertion_type,
-       Smarker_insertion_type, 1, 1, 0,
-       doc: /* Return insertion type of MARKER: t if it stays after inserted text.
-The value nil means the marker stays before text inserted there.  */)
-  (register Lisp_Object marker)
-{
-  CHECK_MARKER (marker);
-  return XMARKER (marker)->insertion_type ? Qt : Qnil;
-}
-
 DEFUN ("set-marker-insertion-type", Fset_marker_insertion_type,
        Sset_marker_insertion_type, 2, 2, 0,
        doc: /* Set the insertion-type of MARKER to TYPE.
@@ -721,14 +711,20 @@ void
 syms_of_marker (void)
 {
   defsubr (&Scopy_marker);
-  defsubr (&Smarker_insertion_type);
   defsubr (&Sset_marker_insertion_type);
   defsubr (&Sbuffer_has_markers_at);
 }
 
+/* Accessors to enable Rust code to get data from the Lisp_Marker struct */
 
 bool_bf
 mget_insertion_type(const struct Lisp_Marker *m)
 {
   return m->insertion_type;
+}
+
+void
+mset_insertion_type(struct Lisp_Marker *m, bool_bf val)
+{
+  m->insertion_type = val;
 }

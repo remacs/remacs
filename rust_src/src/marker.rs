@@ -106,12 +106,12 @@ pub fn set_point_from_marker(marker: LispMarkerRef) {
     unsafe { set_point_both(charpos, bytepos) };
 }
 
-// /// Return insertion type of MARKER: t if it stays after inserted text.
-// /// The value nil means the marker stays before text inserted there.
-// #[lisp_fn]
-// pub fn marker_insertion_type(marker: LispMarkerRef) -> bool {
-//     marker.insertion_type()
-// }
+/// Return insertion type of MARKER: t if it stays after inserted text.
+/// The value nil means the marker stays before text inserted there.
+#[lisp_fn]
+pub fn marker_insertion_type(marker: LispMarkerRef) -> bool {
+    marker.insertion_type()
+}
 
 /// Position MARKER before character number POSITION in BUFFER.
 /// If BUFFER is omitted or nil, it defaults to the current buffer.  If
