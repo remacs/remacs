@@ -808,42 +808,6 @@ This function does not move point.  */)
 			      Qt, Qnil);
 }
 
-DEFUN ("line-end-position", Fline_end_position, Sline_end_position, 0, 1, 0,
-       doc: /* Return the character position of the last character on the current line.
-With argument N not nil or 1, move forward N - 1 lines first.
-If scan reaches end of buffer, return that position.
-
-This function ignores text display directionality; it returns the
-position of the last character in logical order, i.e. the largest
-character position on the line.
-
-This function constrains the returned position to the current field
-unless that would be on a different line than the original,
-unconstrained result.  If N is nil or 1, and a rear-sticky field ends
-at point, the scan stops as soon as it starts.  To ignore field
-boundaries bind `inhibit-field-text-motion' to t.
-
-This function does not move point.  */)
-  (Lisp_Object n)
-{
-  ptrdiff_t clipped_n;
-  ptrdiff_t end_pos;
-  ptrdiff_t orig = PT;
-
-  if (NILP (n))
-    XSETFASTINT (n, 1);
-  else
-    CHECK_NUMBER (n);
-
-  clipped_n = clip_to_bounds (PTRDIFF_MIN + 1, XINT (n), PTRDIFF_MAX);
-  end_pos = find_before_next_newline (orig, 0, clipped_n - (clipped_n <= 0),
-				      NULL);
-
-  /* Return END_POS constrained to the current input field.  */
-  return Fconstrain_to_field (make_number (end_pos), make_number (orig),
-			      Qnil, Qt, Qnil);
-}
-
 /* Save current buffer state for `save-excursion' special form.
    We (ab)use Lisp_Misc_Save_Value to allow explicit free and so
    offload some work from GC.  */
@@ -5136,7 +5100,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sconstrain_to_field);
 
   defsubr (&Sline_beginning_position);
-  defsubr (&Sline_end_position);
 
   defsubr (&Ssave_excursion);
   defsubr (&Ssave_current_buffer);
