@@ -122,6 +122,11 @@ characters that quote text "like this" are replaced by double
 typographic quotes, “like this”, in text modes, and in comments in
 non-text modes.
 
+---
+** 'write-abbrev-file' now includes special properties.
+'write-abbrev-file' now writes special properties like ':case-fixed'
+for abbrevs that have them.
+
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
