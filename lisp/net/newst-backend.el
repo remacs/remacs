@@ -1,6 +1,6 @@
 ;;; newst-backend.el --- Retrieval backend for newsticker.
 
-;; Copyright (C) 2003-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
 ;; Author:      Ulf Jasper <ulf.jasper@web.de>
 ;; Filename:    newst-backend.el

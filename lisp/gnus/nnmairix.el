@@ -1,6 +1,6 @@
 ;;; nnmairix.el --- Mairix back end for Gnus, the Emacs newsreader
 
-;; Copyright (C) 2007-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
 ;; Author: David Engster <dengste@eml.cc>
 ;; Keywords: mail searching

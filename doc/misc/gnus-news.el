@@ -1,5 +1,5 @@
 ;;; gnus-news.el --- a hack to create GNUS-NEWS from texinfo source
-;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
 ;; Author: Reiner Steib  <Reiner.Steib@gmx.de>
 ;; Keywords: tools

@@ -1,6 +1,6 @@
 ;;; term.el --- general command interpreter in a window stuff
 
-;; Copyright (C) 1988, 1990, 1992, 1994-1995, 2001-2017 Free Software
+;; Copyright (C) 1988, 1990, 1992, 1994-1995, 2001-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Per Bothner <per@bothner.com>

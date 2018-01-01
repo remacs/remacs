@@ -1,6 +1,6 @@
 ;;; diff-mode.el --- a mode for viewing/editing context diffs -*- lexical-binding: t -*-
 
-;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: convenience patch diff vc
