@@ -4,8 +4,8 @@ use libc::ptrdiff_t;
 use std::mem;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{BoolBF, EmacsInt, Lisp_Marker};
-use remacs_sys::{buf_charpos_to_bytepos, mget_insertion_type, mset_insertion_type,
+use remacs_sys::{BoolBF, EmacsInt, Lisp_Marker, Lisp_Type};
+use remacs_sys::{buf_charpos_to_bytepos, make_lisp_ptr, mget_insertion_type, mset_insertion_type,
                  set_marker_internal, set_point_both, Fmake_marker};
 
 use buffers::LispBufferRef;
