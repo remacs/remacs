@@ -1,6 +1,6 @@
 #! /bin/sh
 # Configuration validation subroutine script.
-#   Copyright 1992-2018 Free Software Foundation, Inc.
+#   Copyright 1992-2017 Free Software Foundation, Inc.
 
 timestamp='2017-11-23'
 
