@@ -5,7 +5,8 @@ use std::mem;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{BoolBF, EmacsInt, Lisp_Marker, Lisp_Type};
-use remacs_sys::{buf_charpos_to_bytepos, make_lisp_ptr, mget_insertion_type, set_point_both};
+use remacs_sys::{buf_charpos_to_bytepos, make_lisp_ptr, mget_insertion_type, mset_insertion_type,
+                 set_marker_internal, set_point_both, Fmake_marker};
 
 use buffers::LispBufferRef;
 use lisp::{ExternalPtr, LispObject};
@@ -111,6 +112,15 @@ pub fn set_point_from_marker(marker: LispMarkerRef) {
 #[lisp_fn]
 pub fn marker_insertion_type(marker: LispMarkerRef) -> bool {
     marker.insertion_type()
+}
+
+/// Set the insertion-type of MARKER to TYPE.
+/// If ITYPE is non-nil, it means the marker advances when you insert text at it.
+/// If ITYPE is nil, it means the marker stays behind when you insert text at it.
+#[lisp_fn]
+pub fn set_marker_insertion_type(mut marker: LispMarkerRef, itype: LispObject) -> LispObject {
+    unsafe { mset_insertion_type(marker.as_mut(), itype.is_not_nil() as BoolBF) };
+    itype
 }
 
 /// Position MARKER before character number POSITION in BUFFER.

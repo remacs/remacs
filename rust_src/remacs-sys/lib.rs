@@ -341,6 +341,7 @@ pub struct Lisp_Marker {
 
 extern "C" {
     pub fn mget_insertion_type(marker: *const Lisp_Marker) -> BoolBF;
+    pub fn mset_insertion_type(marker: *const Lisp_Marker, val: BoolBF);
 }
 
 // TODO: write a docstring based on the docs in lisp.h.

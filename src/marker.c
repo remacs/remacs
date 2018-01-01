@@ -640,20 +640,6 @@ see `marker-insertion-type'.  */)
   XMARKER (new)->insertion_type = !NILP (type);
   return new;
 }
-
-DEFUN ("set-marker-insertion-type", Fset_marker_insertion_type,
-       Sset_marker_insertion_type, 2, 2, 0,
-       doc: /* Set the insertion-type of MARKER to TYPE.
-If TYPE is t, it means the marker advances when you insert text at it.
-If TYPE is nil, it means the marker stays behind when you insert text at it.  */)
-  (Lisp_Object marker, Lisp_Object type)
-{
-  CHECK_MARKER (marker);
-
-  XMARKER (marker)->insertion_type = ! NILP (type);
-  return type;
-}
-
 DEFUN ("buffer-has-markers-at", Fbuffer_has_markers_at, Sbuffer_has_markers_at,
        1, 1, 0,
        doc: /* Return t if there are markers pointing at POSITION in the current buffer.  */)
@@ -711,7 +697,6 @@ void
 syms_of_marker (void)
 {
   defsubr (&Scopy_marker);
-  defsubr (&Sset_marker_insertion_type);
   defsubr (&Sbuffer_has_markers_at);
 }
 

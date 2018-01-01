@@ -2182,6 +2182,8 @@ struct Lisp_Marker
 bool_bf
 mget_insertion_type(const struct Lisp_Marker *m);
 
+void
+mset_insertion_type(struct Lisp_Marker *m, bool_bf val);
 
 /* End Rust Accessors */
 
