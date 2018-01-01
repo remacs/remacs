@@ -1,6 +1,6 @@
 @c -*- coding: utf-8 -*-
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Minibuffer
@@ -260,7 +260,7 @@ Completion}.
 @node Completion Example
 @subsection Completion Example
 
-@kindex TAB @r{(completion)}
+@kindex TAB @r{(completion example)}
   A simple example may help here.  @kbd{M-x} uses the minibuffer to
 read the name of a command, so completion works by matching the
 minibuffer text against the names of existing Emacs commands.  Suppose
@@ -298,7 +298,6 @@ when completion is allowed.
 
 @table @kbd
 @item @key{TAB}
-@findex minibuffer-complete
 Complete the text in the minibuffer as much as possible; if unable to
 complete, display a list of possible completions
 (@code{minibuffer-complete}).

@@ -1,8 +1,8 @@
 #! /bin/sh
 # Attempt to guess a canonical system name.
-#   Copyright 1992-2017 Free Software Foundation, Inc.
+#   Copyright 1992-2018 Free Software Foundation, Inc.
 
-timestamp='2017-11-07'
+timestamp='2017-12-17'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -265,6 +265,9 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
     *:Redox:*:*)
 	echo ${UNAME_MACHINE}-unknown-redox
 	exit ;;
+    mips:OSF1:*.*)
+        echo mips-dec-osf1
+        exit ;;
     alpha:OSF1:*:*)
 	case $UNAME_RELEASE in
 	*4.0)

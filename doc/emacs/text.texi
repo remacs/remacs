@@ -1,6 +1,6 @@
 @c -*- coding: utf-8 -*-
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Text
@@ -34,10 +34,6 @@ many formats.
 See the Org Info manual, which is distributed with Emacs.
 @end ifnotinfo
 
-@cindex nXML mode
-@cindex mode, XML
-@cindex mode, nXML
-@findex nxml-mode
   Emacs has other major modes for text which contains embedded
 commands, such as @TeX{} and @LaTeX{} (@pxref{TeX Mode}); HTML and
 SGML (@pxref{HTML Mode}); XML
@@ -160,7 +156,6 @@ the words do not move.  For example, @w{@samp{FOO, BAR}} transposes into
 more on transposition.
 
 @kindex M-@@
-@findex mark-word
   To operate on words with an operation which acts on the region, use
 the command @kbd{M-@@} (@code{mark-word}).  This command sets the mark
 where @kbd{M-f} would move to.  @xref{Marking Objects}, for more
@@ -1348,8 +1343,8 @@ automatically by putting the following in your init file:
 @section Org Mode
 @cindex organizer
 @cindex planner
-@findex Org mode
-@findex mode, Org
+@cindex Org mode
+@cindex mode, Org
 
 @findex org-mode
   Org mode is a variant of Outline mode for using Emacs as an
@@ -2013,6 +2008,7 @@ used as a cheap preview (@code{sgml-tags-invisible}).
 
 @cindex nXML mode
 @cindex mode, nXML
+@cindex mode, XML
 @findex nxml-mode
 @cindex XML schema
   The major mode for editing XML documents is called nXML mode.  This

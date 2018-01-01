@@ -1,6 +1,6 @@
 ;;; cal-dst.el --- calendar functions for daylight saving rules  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1993-1996, 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1996, 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: Paul Eggert <eggert@twinsun.com>
 ;;         Edward M. Reingold <reingold@cs.uiuc.edu>

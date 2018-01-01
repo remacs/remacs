@@ -27,7 +27,7 @@ This is the @cite{GNU Emacs Manual},
 @end ifnottex
 updated for Emacs version @value{EMACSVER}.
 
-Copyright @copyright{} 1985--1987, 1993--2017 Free Software Foundation, Inc.
+Copyright @copyright{} 1985--1987, 1993--2018 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -235,9 +235,9 @@ Appendices
 Indexes (each index contains a large menu)
 * Key Index::           An item for each standard Emacs key sequence.
 * Option Index::        An item for every command-line option.
-* Command Index::       An item for each command name.
-* Variable Index::      An item for each documented variable.
-* Concept Index::       An item for each concept.
+* Command Index::       An item for each standard command name.
+* Variable Index::      An item for each variable documented in this manual.
+* Concept Index::       An item for concepts and other general subjects.
 
 @c Do NOT modify the following 3 lines!  They must have this form to
 @c be correctly identified by 'texinfo-multiple-files-update'.  In

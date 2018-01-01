@@ -1,6 +1,6 @@
 /* Minibuffer input and completion.
 
-Copyright (C) 1985-1986, 1993-2017 Free Software Foundation, Inc.
+Copyright (C) 1985-1986, 1993-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -2022,7 +2022,7 @@ controls the behavior, rather than this variable.  */);
   DEFVAR_BOOL ("enable-recursive-minibuffers", enable_recursive_minibuffers,
 	       doc: /* Non-nil means to allow minibuffer commands while in the minibuffer.
 This variable makes a difference whenever the minibuffer window is active.
-Also see `minibuffer-depth-indicator-mode', which may be handy if this
+Also see `minibuffer-depth-indicate-mode', which may be handy if this
 variable is non-nil. */);
   enable_recursive_minibuffers = 0;
 
