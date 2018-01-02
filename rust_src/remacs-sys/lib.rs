@@ -1288,6 +1288,11 @@ extern "C" {
         charpos: *mut ptrdiff_t,
         bytepos: *mut ptrdiff_t,
     ) -> ptrdiff_t;
+    pub fn Fget_text_property(
+        position: Lisp_Object,
+        prop: Lisp_Object,
+        object: Lisp_Object,
+    ) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
