@@ -382,10 +382,7 @@ pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
 /// `inhibit-read-only' text property set, the error will not be raised.
 #[lisp_fn(min = "0")]
 pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
-    let pos = match position {
-        None => point(),
-        Some(n) => n,
-    };
+    let pos = position.unwrap_or_else(point());
 
     let inhibit_read_only: bool =
         unsafe { LispObject::from_raw(globals.f_Vinhibit_read_only).into() };
