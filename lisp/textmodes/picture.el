@@ -338,8 +338,9 @@ always moves to the beginning of a line."
         (newline lines-left))))
 
 (defun picture-open-line (arg)
-  "Insert an empty line after the current line.
-With positive argument insert that many lines."
+  "Insert ARG empty lines after the current line.
+ARG must be positive.
+Interactively, ARG is the numeric argument, and defaults to 1."
   (interactive "p")
   (save-excursion
    (end-of-line)
