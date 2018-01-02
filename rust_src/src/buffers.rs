@@ -22,6 +22,15 @@ pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        unsafe {
+            LispObject::from_raw(make_lisp_ptr(
+                self.as_ptr() as *mut c_void,
+                Lisp_Type::Lisp_Vectorlike,
+            ))
+        }
+    }
+
     #[inline]
     pub fn zv(self) -> ptrdiff_t {
         self.zv
@@ -169,6 +178,10 @@ impl LispBufferRef {
 }
 
 impl LispOverlayRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        unsafe { mem::transmute(self.as_ptr()) }
+    }
+
     #[inline]
     pub fn start(self) -> LispObject {
         LispObject::from_raw(self.start)
@@ -238,13 +251,7 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
 /// Return the current buffer as a Lisp object.
 #[lisp_fn]
 pub fn current_buffer() -> LispObject {
-    let buffer_ref = ThreadState::current_buffer();
-    unsafe {
-        LispObject::from_raw(make_lisp_ptr(
-            buffer_ref.as_ptr() as *mut c_void,
-            Lisp_Type::Lisp_Vectorlike,
-        ))
-    }
+    ThreadState::current_buffer().as_lisp_obj()
 }
 
 /// Return name of file BUFFER is visiting, or nil if none.
@@ -300,24 +307,21 @@ pub fn buffer_chars_modified_tick(buffer: LispObject) -> EmacsInt {
 
 /// Return the position at which OVERLAY starts.
 #[lisp_fn]
-pub fn overlay_start(overlay: LispObject) -> Option<EmacsInt> {
-    let marker = overlay.as_overlay_or_error().start();
-    marker_position(marker.into())
+pub fn overlay_start(overlay: LispOverlayRef) -> Option<EmacsInt> {
+    marker_position(overlay.start().into())
 }
 
 /// Return the position at which OVERLAY ends.
 #[lisp_fn]
-pub fn overlay_end(overlay: LispObject) -> Option<EmacsInt> {
-    let marker = overlay.as_overlay_or_error().end();
-    marker_position(marker.into())
+pub fn overlay_end(overlay: LispOverlayRef) -> Option<EmacsInt> {
+    marker_position(overlay.end().into())
 }
 
 /// Return the buffer OVERLAY belongs to.
 /// Return nil if OVERLAY has been deleted.
 #[lisp_fn]
-pub fn overlay_buffer(overlay: LispObject) -> LispObject {
-    let marker = overlay.as_overlay_or_error().start();
-    marker_buffer(marker)
+pub fn overlay_buffer(overlay: LispOverlayRef) -> Option<LispBufferRef> {
+    marker_buffer(overlay.start().into())
 }
 
 #[no_mangle]

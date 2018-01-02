@@ -11,7 +11,8 @@ use buffers::get_buffer;
 use lisp::LispObject;
 use lisp::defsubr;
 use marker::{marker_position, set_point_from_marker};
-use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, MAX_MULTIBYTE_LENGTH};
+use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, LispStringRef,
+                MAX_MULTIBYTE_LENGTH};
 use threads::ThreadState;
 use util::clip_to_bounds;
 
@@ -327,9 +328,7 @@ pub fn byte_to_string(byte: LispObject) -> LispObject {
 
 /// Return the first character in STRING.
 #[lisp_fn]
-pub fn string_to_char(string: LispObject) -> EmacsInt {
-    let string = string.as_string_or_error();
-
+pub fn string_to_char(string: LispStringRef) -> EmacsInt {
     if string.len_chars() > 0 {
         if string.is_multibyte() {
             let (cp, _) = multibyte_char_at(string.as_slice());
