@@ -1246,10 +1246,10 @@ This specializer requires the argument be @code{eql} to the given
 @item (head @var{object})
 The argument must be a cons cell whose @code{car} is @code{eql} to
 @var{object}.
-@item @var{struct-tag}
-The argument must be an instance of a class named @var{struct-tag}
+@item @var{struct-type}
+The argument must be an instance of a class named @var{struct-type}
 defined with @code{cl-defstruct} (@pxref{Structures,,, cl, Common Lisp
-Extensions for GNU Emacs Lisp}), or of one of its parent classes.
+Extensions for GNU Emacs Lisp}), or of one of its child classes.
 @end table
 
 Method definitions can make use of a new argument-list keyword,
