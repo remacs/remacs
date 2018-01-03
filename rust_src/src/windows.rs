@@ -4,7 +4,7 @@ use libc::c_int;
 use std::mem;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Window};
+use remacs_sys::{EmacsInt, Lisp_Type, Lisp_Window};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
 use remacs_sys::{is_minibuffer, minibuf_level, minibuf_selected_window as current_minibuf_window,
                  selected_window as current_window, wget_parent, wget_pixel_height,
@@ -20,7 +20,7 @@ pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
 impl LispWindowRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(self.as_ptr()) }
+        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)) }
     }
 
     /// Check if window is a live window (displays a buffer).
