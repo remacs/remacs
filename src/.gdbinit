@@ -49,7 +49,7 @@ define xgetptr
   else
     set $bugfix = $arg0
   end
-  set $ptr = $bugfix & VALMASK
+  set $ptr = (EMACS_INT) $bugfix & VALMASK
 end
 
 define xgetint
@@ -58,7 +58,7 @@ define xgetint
   else
     set $bugfix = $arg0
   end
-  set $int = $bugfix << (USE_LSB_TAG ? 0 : INTTYPEBITS) >> INTTYPEBITS
+  set $int = (EMACS_INT) $bugfix << (USE_LSB_TAG ? 0 : INTTYPEBITS) >> INTTYPEBITS
 end
 
 define xgettype
@@ -67,7 +67,7 @@ define xgettype
   else
     set $bugfix = $arg0
   end
-  set $type = (enum Lisp_Type) (USE_LSB_TAG ? $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
+  set $type = (enum Lisp_Type) (USE_LSB_TAG ? (EMACS_INT) $bugfix & (1 << GCTYPEBITS) - 1 : (EMACS_UINT) $bugfix >> VALBITS)
 end
 
 define xgetsym
