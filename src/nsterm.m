@@ -1736,7 +1736,6 @@ x_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
 {
   NSView *view = FRAME_NS_VIEW (f);
   NSArray *screens = [NSScreen screens];
-  NSScreen *fscreen = [screens objectAtIndex: 0];
   NSScreen *screen = [[view window] screen];
 
   NSTRACE ("x_set_offset");
@@ -1746,26 +1745,41 @@ x_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
   f->left_pos = xoff;
   f->top_pos = yoff;
 
-  if (view != nil && screen && fscreen)
+  if (view != nil)
     {
-      f->left_pos = f->size_hint_flags & XNegative
-        ? [screen visibleFrame].size.width + f->left_pos - FRAME_PIXEL_WIDTH (f)
-        : f->left_pos;
-      /* We use visibleFrame here to take menu bar into account.
-	 Ideally we should also adjust left/top with visibleFrame.origin.  */
+      if (FRAME_PARENT_FRAME (f) == NULL && screen)
+        {
+          f->left_pos = f->size_hint_flags & XNegative
+            ? [screen visibleFrame].size.width + f->left_pos - FRAME_PIXEL_WIDTH (f)
+            : f->left_pos;
+          /* We use visibleFrame here to take menu bar into account.
+             Ideally we should also adjust left/top with visibleFrame.origin.  */
 
-      f->top_pos = f->size_hint_flags & YNegative
-        ? ([screen visibleFrame].size.height + f->top_pos
-           - FRAME_PIXEL_HEIGHT (f) - FRAME_NS_TITLEBAR_HEIGHT (f)
-           - FRAME_TOOLBAR_HEIGHT (f))
-        : f->top_pos;
+          f->top_pos = f->size_hint_flags & YNegative
+            ? ([screen visibleFrame].size.height + f->top_pos
+               - FRAME_PIXEL_HEIGHT (f) - FRAME_NS_TITLEBAR_HEIGHT (f)
+               - FRAME_TOOLBAR_HEIGHT (f))
+            : f->top_pos;
 #ifdef NS_IMPL_GNUSTEP
-      if (FRAME_PARENT_FRAME (f) == NULL)
-	{
 	  if (f->left_pos < 100)
 	    f->left_pos = 100;  /* don't overlap menu */
-	}
 #endif
+        }
+      else if (FRAME_PARENT_FRAME (f) != NULL)
+        {
+          struct frame *parent = FRAME_PARENT_FRAME (f);
+
+          /* On X negative values for child frames always result in
+             positioning relative to the bottom right corner of the
+             parent frame.  */
+          if (f->left_pos < 0)
+            f->left_pos = FRAME_PIXEL_WIDTH (parent) - FRAME_PIXEL_WIDTH (f) + f->left_pos;
+
+          if (f->top_pos < 0)
+            f->top_pos = FRAME_PIXEL_HEIGHT (parent) + FRAME_TOOLBAR_HEIGHT (parent)
+              - FRAME_PIXEL_HEIGHT (f) + f->top_pos;
+        }
+
       /* Constrain the setFrameTopLeftPoint so we don't move behind the
          menu bar.  */
       NSPoint pt = NSMakePoint (SCREENMAXBOUND (f->left_pos
