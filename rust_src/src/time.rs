@@ -349,7 +349,7 @@ pub fn current_time() -> LispObject {
 /// Return the current time, as a float number of seconds since the
 /// epoch.  If TIME is given, it is the time to convert to float
 /// instead of the current time.  The argument should have the form
-/// \(HIGH LOW) or (HIGH LOW USEC) or (HIGH LOW USEC PSEC).  Thus, you
+/// (HIGH LOW) or (HIGH LOW USEC) or (HIGH LOW USEC PSEC).  Thus, you
 /// can use times from `current-time' and from `file-attributes'.
 /// TIME can also have the form (HIGH . LOW), but this is considered
 /// obsolete.
