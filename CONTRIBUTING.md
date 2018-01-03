@@ -15,9 +15,11 @@ Thank you for contributing to Remacs!
 * Check for Rust compiler warnings, as CI won't go green if there
   are warnings.
 * Format your code with
-  [rustfmt-nightly](https://github.com/rust-lang-nursery/rustfmt).
-  You can learn the exact version we use at any time by looking at the
-  .travis.yml file.
+  [rustfmt](https://github.com/rust-lang-nursery/rustfmt). Make sure
+  you have the correct version by using rustup (it will use the
+  correct version based on our [toolchain
+  file](https://github.com/rust-lang-nursery/rustup.rs#the-toolchain-file))
+  and running `rustup component add rustfmt-preview`
 * Add docstrings to your Rust functions `/// This function does ...`
 * _Really_ great PRs include tests. See
   [Writing Tests](#writing-tests) for more information.
