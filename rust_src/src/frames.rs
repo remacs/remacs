@@ -5,7 +5,7 @@ use std::mem;
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame};
+use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method, fget_root_window,
                  fget_terminal, fget_top_pos, fget_visible, frame_dimension, Fcons, Fselect_window};
@@ -28,7 +28,7 @@ pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(self.as_ptr()) }
+        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)) }
     }
 
     #[inline]
