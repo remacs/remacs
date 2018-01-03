@@ -294,10 +294,10 @@ pub extern "C" fn lisp_to_timespec(t: lisp_time) -> c_timespec {
 /// Signal an error if SPECIFIED_TIME does not represent a time.
 #[no_mangle]
 pub extern "C" fn lisp_time_struct(specified_time: Lisp_Object, plen: *mut c_int) -> lisp_time {
-    let mut high = 0;
-    let mut low = 0;
-    let mut usec = 0;
-    let mut psec = 0;
+    let mut high = Lisp_Object::from_C(0);
+    let mut low = Lisp_Object::from_C(0);
+    let mut usec = Lisp_Object::from_C(0);
+    let mut psec = Lisp_Object::from_C(0);
 
     let len = disassemble_lisp_time(specified_time, &mut high, &mut low, &mut usec, &mut psec);
     if len == 0 {
@@ -359,10 +359,10 @@ pub fn current_time() -> LispObject {
 /// or (if you need time as a string) `format-time-string'.
 #[lisp_fn(min = "0")]
 pub fn float_time(time: LispObject) -> LispObject {
-    let mut high = 0;
-    let mut low = 0;
-    let mut usec = 0;
-    let mut psec = 0;
+    let mut high = Lisp_Object::from_C(0);
+    let mut low = Lisp_Object::from_C(0);
+    let mut usec = Lisp_Object::from_C(0);
+    let mut psec = Lisp_Object::from_C(0);
 
     let mut t = 0.0;
 
