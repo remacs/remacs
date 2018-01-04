@@ -4,8 +4,8 @@ use libc::ptrdiff_t;
 use std::mem;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{BoolBF, EmacsInt, Lisp_Marker, Lisp_Type};
-use remacs_sys::{buf_charpos_to_bytepos, make_lisp_ptr, mget_insertion_type, mset_insertion_type,
+use remacs_sys::{BoolBF, EmacsInt, Lisp_Marker};
+use remacs_sys::{buf_charpos_to_bytepos, mget_insertion_type, mset_insertion_type,
                  set_marker_internal, set_point_both, Fmake_marker};
 
 use buffers::LispBufferRef;
@@ -146,11 +146,11 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
         marker.as_fixnum_coerce_marker_or_error();
     }
     let new = unsafe { LispObject::from_raw(Fmake_marker()) };
-    let buffer_or_nil = if marker.is_marker() {
-        marker_buffer(marker)
-    } else {
-        LispObject::constant_nil()
-    };
+    let buffer_or_nil = marker
+        .as_marker()
+        .and_then(|m| m.buffer())
+        .map_or(LispObject::constant_nil(), |b| b.as_lisp_obj());
+
     set_marker(new, marker, buffer_or_nil);
     unsafe {
         mset_insertion_type(
