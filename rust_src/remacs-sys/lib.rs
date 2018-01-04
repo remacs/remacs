@@ -339,6 +339,11 @@ pub struct Lisp_Marker {
     pub bytepos: ptrdiff_t,
 }
 
+extern "C" {
+    pub fn mget_insertion_type(marker: *const Lisp_Marker) -> BoolBF;
+    pub fn mset_insertion_type(marker: *const Lisp_Marker, val: BoolBF);
+}
+
 // TODO: write a docstring based on the docs in lisp.h.
 #[repr(C)]
 pub struct Lisp_Overlay {
@@ -1287,11 +1292,21 @@ extern "C" {
         charpos: *mut ptrdiff_t,
         bytepos: *mut ptrdiff_t,
     ) -> ptrdiff_t;
+
+    pub fn set_marker_internal(
+        marker: Lisp_Object,
+        position: Lisp_Object,
+        buffer: Lisp_Object,
+        restricted: bool,
+    ) -> Lisp_Object;
+    pub fn Fmake_marker() -> Lisp_Object;
+
     pub fn Fget_text_property(
         position: Lisp_Object,
         prop: Lisp_Object,
         object: Lisp_Object,
     ) -> Lisp_Object;
+
 }
 
 /// Contains C definitions from the font.h header.

@@ -430,7 +430,7 @@ live_buffer (Lisp_Object buffer)
 /* Internal function to set MARKER in BUFFER at POSITION.  Non-zero
    RESTRICTED means limit the POSITION by the visible part of BUFFER.  */
 
-static Lisp_Object
+Lisp_Object
 set_marker_internal (Lisp_Object marker, Lisp_Object position,
 		     Lisp_Object buffer, bool restricted)
 {
@@ -490,16 +490,6 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
       attach_marker (m, b, charpos, bytepos);
     }
   return marker;
-}
-
-DEFUN ("set-marker", Fset_marker, Sset_marker, 2, 3, 0,
-       doc: /* Position MARKER before character number POSITION in BUFFER.
-If BUFFER is omitted or nil, it defaults to the current buffer.  If
-POSITION is nil, makes marker point nowhere so it no longer slows down
-editing in any buffer.  Returns MARKER.  */)
-  (Lisp_Object marker, Lisp_Object position, Lisp_Object buffer)
-{
-  return set_marker_internal (marker, position, buffer, 0);
 }
 
 /* Like the above, but won't let the position be outside the visible part.  */
@@ -630,50 +620,6 @@ marker_byte_position (Lisp_Object marker)
   return m->bytepos;
 }
 
-DEFUN ("copy-marker", Fcopy_marker, Scopy_marker, 0, 2, 0,
-       doc: /* Return a new marker pointing at the same place as MARKER.
-If argument is a number, makes a new marker pointing
-at that position in the current buffer.
-If MARKER is not specified, the new marker does not point anywhere.
-The optional argument TYPE specifies the insertion type of the new marker;
-see `marker-insertion-type'.  */)
-  (register Lisp_Object marker, Lisp_Object type)
-{
-  register Lisp_Object new;
-
-  if (!NILP (marker))
-  CHECK_TYPE (INTEGERP (marker) || MARKERP (marker), Qinteger_or_marker_p, marker);
-
-  new = Fmake_marker ();
-  Fset_marker (new, marker,
-	       (MARKERP (marker) ? Fmarker_buffer (marker) : Qnil));
-  XMARKER (new)->insertion_type = !NILP (type);
-  return new;
-}
-
-DEFUN ("marker-insertion-type", Fmarker_insertion_type,
-       Smarker_insertion_type, 1, 1, 0,
-       doc: /* Return insertion type of MARKER: t if it stays after inserted text.
-The value nil means the marker stays before text inserted there.  */)
-  (register Lisp_Object marker)
-{
-  CHECK_MARKER (marker);
-  return XMARKER (marker)->insertion_type ? Qt : Qnil;
-}
-
-DEFUN ("set-marker-insertion-type", Fset_marker_insertion_type,
-       Sset_marker_insertion_type, 2, 2, 0,
-       doc: /* Set the insertion-type of MARKER to TYPE.
-If TYPE is t, it means the marker advances when you insert text at it.
-If TYPE is nil, it means the marker stays behind when you insert text at it.  */)
-  (Lisp_Object marker, Lisp_Object type)
-{
-  CHECK_MARKER (marker);
-
-  XMARKER (marker)->insertion_type = ! NILP (type);
-  return type;
-}
-
 DEFUN ("buffer-has-markers-at", Fbuffer_has_markers_at, Sbuffer_has_markers_at,
        1, 1, 0,
        doc: /* Return t if there are markers pointing at POSITION in the current buffer.  */)
@@ -730,9 +676,19 @@ verify_bytepos (ptrdiff_t charpos)
 void
 syms_of_marker (void)
 {
-  defsubr (&Sset_marker);
-  defsubr (&Scopy_marker);
-  defsubr (&Smarker_insertion_type);
-  defsubr (&Sset_marker_insertion_type);
   defsubr (&Sbuffer_has_markers_at);
+}
+
+/* Accessors to enable Rust code to get data from the Lisp_Marker struct */
+
+bool_bf
+mget_insertion_type(const struct Lisp_Marker *m)
+{
+  return m->insertion_type;
+}
+
+void
+mset_insertion_type(struct Lisp_Marker *m, bool_bf val)
+{
+  m->insertion_type = val;
 }

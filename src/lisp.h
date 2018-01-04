@@ -2177,6 +2177,16 @@ struct Lisp_Marker
   ptrdiff_t bytepos;
 };
 
+/* Accessors to enable Rust code to get data from the Lisp_Marker struct */
+
+bool_bf
+mget_insertion_type(const struct Lisp_Marker *m);
+
+void
+mset_insertion_type(struct Lisp_Marker *m, bool_bf val);
+
+/* End Rust Accessors */
+
 /* START and END are markers in the overlay's buffer, and
    PLIST is the overlay's property list.  */
 struct Lisp_Overlay
