@@ -200,7 +200,7 @@ errors go through there.  If you are only interested in errors that
 would fire the Lisp debugger, breaking at 'maybe_call_debugger' is
 useful.
 
-Another technique for get control to the debugger is to put a
+Another technique for getting control to the debugger is to put a
 breakpoint in some rarely used function.  One such convenient function
 is Fredraw_display, which you can invoke at will interactively with
 "M-x redraw-display RET".
