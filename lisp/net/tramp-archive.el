@@ -531,12 +531,12 @@ offered."
    (tramp-archive-gvfs-file-name file) noerror nomessage nosuffix must-suffix))
 
 (defun tramp-archive-handle-temporary-file-directory ()
-  "Like `temporary-file-directory' for Tramp files."
+  "Like `temporary-file-directory' for file archives."
   ;; If the default directory, the file archive, is located on a
   ;; mounted directory, it is returned as it.  Not what we want.
   (with-parsed-tramp-archive-file-name default-directory nil
     (let ((default-directory (file-name-directory archive)))
-      (temporary-file-directory))))
+      (tramp-compat-temporary-file-directory))))
 
 (defun tramp-archive-handle-not-implemented (operation &rest args)
   "Generic handler for operations not implemented for file archives."
