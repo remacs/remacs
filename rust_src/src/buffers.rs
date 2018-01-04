@@ -5,8 +5,10 @@ use std::{mem, ptr};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist};
-use remacs_sys::{make_lisp_ptr, nsberror, set_buffer_internal};
+use remacs_sys::{globals, make_lisp_ptr, nsberror, set_buffer_internal, Fget_text_property};
+use remacs_sys::{Qbuffer_read_only, Qinhibit_read_only, Qnil};
 
+use editfns::point;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{car, cdr};
@@ -22,6 +24,19 @@ pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        unsafe {
+            LispObject::from_raw(make_lisp_ptr(
+                self.as_ptr() as *mut c_void,
+                Lisp_Type::Lisp_Vectorlike,
+            ))
+        }
+    }
+
+    pub fn is_read_only(&self) -> bool {
+        LispObject::from_raw(self.read_only).into()
+    }
+
     #[inline]
     pub fn zv(self) -> ptrdiff_t {
         self.zv
@@ -169,6 +184,10 @@ impl LispBufferRef {
 }
 
 impl LispOverlayRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        unsafe { mem::transmute(self.as_ptr()) }
+    }
+
     #[inline]
     pub fn start(self) -> LispObject {
         LispObject::from_raw(self.start)
@@ -238,13 +257,7 @@ pub fn get_buffer(buffer_or_name: LispObject) -> LispObject {
 /// Return the current buffer as a Lisp object.
 #[lisp_fn]
 pub fn current_buffer() -> LispObject {
-    let buffer_ref = ThreadState::current_buffer();
-    unsafe {
-        LispObject::from_raw(make_lisp_ptr(
-            buffer_ref.as_ptr() as *mut c_void,
-            Lisp_Type::Lisp_Vectorlike,
-        ))
-    }
+    ThreadState::current_buffer().as_lisp_obj()
 }
 
 /// Return name of file BUFFER is visiting, or nil if none.
@@ -300,24 +313,21 @@ pub fn buffer_chars_modified_tick(buffer: LispObject) -> EmacsInt {
 
 /// Return the position at which OVERLAY starts.
 #[lisp_fn]
-pub fn overlay_start(overlay: LispObject) -> Option<EmacsInt> {
-    let marker = overlay.as_overlay_or_error().start();
-    marker_position(marker.into())
+pub fn overlay_start(overlay: LispOverlayRef) -> Option<EmacsInt> {
+    marker_position(overlay.start().into())
 }
 
 /// Return the position at which OVERLAY ends.
 #[lisp_fn]
-pub fn overlay_end(overlay: LispObject) -> Option<EmacsInt> {
-    let marker = overlay.as_overlay_or_error().end();
-    marker_position(marker.into())
+pub fn overlay_end(overlay: LispOverlayRef) -> Option<EmacsInt> {
+    marker_position(overlay.end().into())
 }
 
 /// Return the buffer OVERLAY belongs to.
 /// Return nil if OVERLAY has been deleted.
 #[lisp_fn]
-pub fn overlay_buffer(overlay: LispObject) -> LispObject {
-    let marker = overlay.as_overlay_or_error().start();
-    marker_buffer(marker)
+pub fn overlay_buffer(overlay: LispOverlayRef) -> Option<LispBufferRef> {
+    marker_buffer(overlay.start().into())
 }
 
 #[no_mangle]
@@ -365,6 +375,24 @@ pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     };
     unsafe { set_buffer_internal(buf.as_mut()) };
     buffer
+}
+
+/// Signal a `buffer-read-only' error if the current buffer is read-only.
+/// If the text under POSITION (which defaults to point) has the
+/// `inhibit-read-only' text property set, the error will not be raised.
+#[lisp_fn(min = "0")]
+pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
+    let pos = position.unwrap_or_else(|| point());
+
+    let inhibit_read_only: bool =
+        unsafe { LispObject::from_raw(globals.f_Vinhibit_read_only).into() };
+    let prop = LispObject::from_raw(unsafe {
+        Fget_text_property(LispObject::from(pos).to_raw(), Qinhibit_read_only, Qnil)
+    });
+
+    if ThreadState::current_buffer().is_read_only() && !inhibit_read_only && prop.is_nil() {
+        xsignal!(Qbuffer_read_only, current_buffer())
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

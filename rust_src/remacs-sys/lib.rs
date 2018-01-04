@@ -993,6 +993,10 @@ extern "C" {
     pub fn fget_root_window(f: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_terminal(f: *const Lisp_Frame) -> *const terminal;
     pub fn fget_output_method(f: *const Lisp_Frame) -> c_int;
+    pub fn fget_visible(f: *const Lisp_Frame) -> bool;
+    pub fn fget_iconified(f: *const Lisp_Frame) -> BoolBF;
+    pub fn fget_top_pos(f: *const Lisp_Frame) -> c_int;
+    pub fn fget_left_pos(f: *const Lisp_Frame) -> c_int;
 }
 
 extern "C" {
@@ -1277,7 +1281,6 @@ extern "C" {
 
     pub fn Fselect_window(window: Lisp_Object, norecord: Lisp_Object) -> Lisp_Object;
 
-    pub fn Fmake_sparse_keymap(string: Lisp_Object) -> Lisp_Object;
     pub fn Ffset(symbol: Lisp_Object, definition: Lisp_Object) -> Lisp_Object;
 
     pub fn frame_dimension(x: c_int) -> c_int;
@@ -1297,6 +1300,13 @@ extern "C" {
         restricted: bool,
     ) -> Lisp_Object;
     pub fn Fmake_marker() -> Lisp_Object;
+
+    pub fn Fget_text_property(
+        position: Lisp_Object,
+        prop: Lisp_Object,
+        object: Lisp_Object,
+    ) -> Lisp_Object;
+
 }
 
 /// Contains C definitions from the font.h header.

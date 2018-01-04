@@ -1,15 +1,19 @@
 //! Generic frame functions.
 
-use remacs_macros::lisp_fn;
-use remacs_sys::{fget_column_width, fget_internal_border_width, fget_line_height,
-                 fget_minibuffer_window, fget_output_method, fget_root_window, fget_terminal,
-                 frame_dimension, Fselect_window};
-use remacs_sys::{selected_frame as current_frame, Lisp_Frame};
-use remacs_sys::{Qframe_live_p, Qns, Qpc, Qt, Qw32, Qx};
+use std::mem;
 
 use libc::c_int;
+
+use remacs_macros::lisp_fn;
+use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type};
+use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
+                 fget_line_height, fget_minibuffer_window, fget_output_method, fget_root_window,
+                 fget_terminal, fget_top_pos, fget_visible, frame_dimension, Fcons, Fselect_window};
+use remacs_sys::{Qframe_live_p, Qicon, Qns, Qpc, Qt, Qw32, Qx};
+
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
+use symbols::LispSymbolRef;
 use windows::{selected_window, LispWindowRef};
 
 pub type OutputMethod = c_int;
@@ -23,6 +27,10 @@ pub const output_ns: OutputMethod = 5;
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)) }
+    }
+
     #[inline]
     pub fn is_live(self) -> bool {
         unsafe { !fget_terminal(self.as_ptr()).is_null() }
@@ -45,6 +53,16 @@ impl LispFrameRef {
     }
 
     #[inline]
+    pub fn top_pos(self) -> i32 {
+        unsafe { fget_top_pos(self.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn left_pos(self) -> i32 {
+        unsafe { fget_left_pos(self.as_ptr()) }
+    }
+
+    #[inline]
     pub fn minibuffer_window(self) -> LispObject {
         LispObject::from_raw(unsafe { fget_minibuffer_window(self.as_ptr()) })
     }
@@ -57,6 +75,16 @@ impl LispFrameRef {
     #[inline]
     pub fn set_selected_window(&mut self, window: LispObject) {
         self.selected_window = window.to_raw();
+    }
+
+    #[inline]
+    pub fn is_visible(self) -> bool {
+        unsafe { fget_visible(self.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn is_iconified(self) -> bool {
+        unsafe { fget_iconified(self.as_ptr()) as BoolBF }
     }
 }
 
@@ -180,6 +208,67 @@ pub fn framep(object: LispObject) -> LispObject {
         LispObject::from_raw(output_method)
     } else {
         LispObject::constant_nil()
+    }
+}
+
+/// The name of the window system that FRAME is displaying through.
+/// The value is a symbol:
+///  nil for a termcap frame (a character-only terminal),
+///  `x' for an Emacs frame that is really an X window,
+///  `w32' for an Emacs frame that is a window on MS-Windows display,
+///  `ns' for an Emacs frame on a GNUstep or Macintosh Cocoa display,
+///  `pc' for a direct-write MS-DOS frame.
+///
+/// FRAME defaults to the currently selected frame.
+///
+/// Use of this function as a predicate is deprecated.  Instead,
+/// use `display-graphic-p' or any of the other `display-*-p'
+/// predicates which report frame's specific UI-related capabilities.
+#[lisp_fn(min = "0")]
+pub fn window_system(frame: Option<LispFrameRef>) -> Option<LispSymbolRef> {
+    let f = frame.map_or(selected_frame(), |f| f.as_lisp_obj());
+    let window_system = framep(f);
+
+    if window_system.is_t() {
+        None
+    } else {
+        window_system.as_symbol()
+    }
+}
+
+/// Return t if FRAME is \"visible\" (actually in use for display).
+/// Return the symbol `icon' if FRAME is iconified or \"minimized\".
+/// Return nil if FRAME was made invisible, via `make-frame-invisible'.
+/// On graphical displays, invisible frames are not updated and are
+/// usually not displayed at all, even in a window system's \"taskbar\".
+///
+/// If FRAME is a text terminal frame, this always returns t.
+/// Such frames are always considered visible, whether or not they are
+/// currently being displayed on the terminal.
+#[lisp_fn]
+pub fn frame_visible_p(frame: LispFrameRef) -> LispObject {
+    if frame.is_visible() {
+        LispObject::constant_t()
+    } else if frame.is_iconified() {
+        LispObject::from_raw(Qicon)
+    } else {
+        LispObject::constant_nil()
+    }
+}
+
+/// Return top left corner of FRAME in pixels.
+/// FRAME must be a live frame and defaults to the selected one.  The return
+/// value is a cons (x, y) of the coordinates of the top left corner of
+/// FRAME's outer frame, in pixels relative to an origin (0, 0) of FRAME's
+/// display.
+#[lisp_fn(min = "0")]
+pub fn frame_position(frame: LispObject) -> LispObject {
+    let frame_ref = frame_live_or_selected(frame);
+    unsafe {
+        LispObject::from_raw(Fcons(
+            LispObject::from_fixnum(frame_ref.left_pos() as EmacsInt).to_raw(),
+            LispObject::from_fixnum(frame_ref.top_pos() as EmacsInt).to_raw(),
+        ))
     }
 }
 

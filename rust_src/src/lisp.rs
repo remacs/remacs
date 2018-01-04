@@ -246,6 +246,12 @@ impl From<LispSymbolRef> for LispObject {
     }
 }
 
+impl From<LispObject> for Option<LispSymbolRef> {
+    fn from(o: LispObject) -> Option<LispSymbolRef> {
+        o.as_symbol()
+    }
+}
+
 // Misc support (LispType == Lisp_Misc == 1)
 
 // Lisp_Misc is a union. Now we don't really care about its variants except the
@@ -696,12 +702,10 @@ impl LispObject {
             .unwrap_or_else(|| wrong_type!(Qwindow_valid_p, self))
     }
 
-    /*
     pub fn is_frame(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_FRAME))
     }
-    */
 
     pub fn as_frame(self) -> Option<LispFrameRef> {
         self.as_vectorlike().and_then(|v| v.as_frame())
@@ -778,6 +782,29 @@ impl From<LispWindowRef> for LispObject {
     }
 }
 
+impl From<LispObject> for LispFrameRef {
+    fn from(o: LispObject) -> Self {
+        o.as_frame_or_error()
+    }
+}
+
+impl From<LispFrameRef> for LispObject {
+    fn from(f: LispFrameRef) -> Self {
+        f.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispFrameRef> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        if o.is_frame() {
+            Some(o.as_frame_or_error())
+        } else {
+            None
+        }
+    }
+}
+
 impl From<LispObject> for LispCharTableRef {
     fn from(o: LispObject) -> Self {
         o.as_char_table_or_error()
@@ -807,6 +834,12 @@ impl From<LispObject> for LispBufferRef {
     #[inline]
     fn from(o: LispObject) -> Self {
         o.as_buffer_or_error()
+    }
+}
+
+impl From<LispBufferRef> for LispObject {
+    fn from(b: LispBufferRef) -> Self {
+        b.as_lisp_obj()
     }
 }
 
@@ -1334,7 +1367,7 @@ impl LispObject {
     /// Nonzero iff X is a character.
     pub fn is_character(self) -> bool {
         self.as_fixnum()
-            .map_or(false, |i| 0 <= i && i <= EmacsInt::from(MAX_CHAR))
+            .map_or(false, |i| 0 <= i && i <= (MAX_CHAR as EmacsInt))
     }
 
     /// Check if Lisp object is a character or not and return the codepoint
@@ -1407,9 +1440,51 @@ impl From<LispObject> for LispMarkerRef {
     }
 }
 
+impl From<LispMarkerRef> for LispObject {
+    fn from(m: LispMarkerRef) -> Self {
+        m.as_lisp_obj()
+    }
+}
+
 impl From<LispObject> for Option<LispMarkerRef> {
     fn from(o: LispObject) -> Option<LispMarkerRef> {
         o.as_marker()
+    }
+}
+
+impl From<LispObject> for LispOverlayRef {
+    fn from(o: LispObject) -> LispOverlayRef {
+        o.as_overlay_or_error()
+    }
+}
+
+impl From<LispOverlayRef> for LispObject {
+    fn from(o: LispOverlayRef) -> Self {
+        o.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispOverlayRef> {
+    fn from(o: LispObject) -> Option<LispOverlayRef> {
+        o.as_overlay()
+    }
+}
+
+impl From<LispObject> for LispProcessRef {
+    fn from(o: LispObject) -> LispProcessRef {
+        o.as_process_or_error()
+    }
+}
+
+impl From<LispProcessRef> for LispObject {
+    fn from(p: LispProcessRef) -> Self {
+        p.as_lisp_obj()
+    }
+}
+
+impl From<LispObject> for Option<LispProcessRef> {
+    fn from(o: LispObject) -> Option<LispProcessRef> {
+        o.as_process()
     }
 }
 

@@ -1,0 +1,9 @@
+FROM {{distro}}
+
+{{base_config}}
+
+ENV PATH "/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+RUN curl https://sh.rustup.rs -o rustup.sh && \
+    sh rustup.sh --default-host {{arch}}-unknown-linux-gnu --default-toolchain {{rust_version}} -y && \
+    rustup default {{rust_version}}

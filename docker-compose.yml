@@ -2,7 +2,9 @@ version: '2'
 
 services:
   remacs:
-    build: .
+    build:
+      context: .
+      dockerfile: docker/ubuntu/Dockerfile
     image: remacs-build:latest
     working_dir: ${PWD}
     tty: true
