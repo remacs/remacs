@@ -43,6 +43,7 @@
 
 (require 'dired)
 (require 'ert)
+(require 'ert-x)
 (require 'tramp)
 (require 'vc)
 (require 'vc-bzr)
@@ -1865,6 +1866,23 @@ This checks also `file-name-as-directory', `file-name-directory',
 	    (with-temp-buffer
 	      (insert-file-contents tmp-name)
 	      (should (string-equal (buffer-string) "34")))
+
+	    ;; Check message.
+	    ;; Macro `ert-with-message-capture' was introduced in Emacs 26.1.
+	    (with-no-warnings (when (symbol-plist 'ert-with-message-capture)
+	      (let ((tramp-message-show-message t))
+		(dolist (noninteractive '(nil t))
+		  (dolist (visit '(nil t "string" no-message))
+		    (ert-with-message-capture tramp--test-messages
+		      (write-region "foo" nil tmp-name nil visit)
+		      ;; We must check the last line.  There could be
+		      ;; other messages from the progress reporter.
+		      (should
+		       (string-match
+			(if (and (null noninteractive)
+				 (or (eq visit t) (null visit) (stringp visit)))
+			    (format "^Wrote %s\n\\'" tmp-name) "^\\'")
+			tramp--test-messages))))))))
 
 	    ;; Do not overwrite if excluded.
 	    (cl-letf (((symbol-function 'y-or-n-p) (lambda (_prompt) t)))

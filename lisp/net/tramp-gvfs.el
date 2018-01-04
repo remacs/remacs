@@ -71,7 +71,7 @@
 ;;   'car
 ;;   (dbus-call-method
 ;;    :session tramp-gvfs-service-daemon tramp-gvfs-path-mounttracker
-;;    tramp-gvfs-interface-mounttracker "listMountableInfo")))
+;;    tramp-gvfs-interface-mounttracker "ListMountableInfo")))
 
 ;; Note that all other connection methods are not tested, beside the
 ;; ones offered for customization in `tramp-gvfs-methods'.  If you
@@ -1272,7 +1272,8 @@ file-notify events."
 	(file-attributes filename))))
 
     ;; The end.
-    (when (or (eq visit t) (null visit) (stringp visit))
+    (when (and (null noninteractive)
+	       (or (eq visit t) (null visit) (stringp visit)))
       (tramp-message v 0 "Wrote %s" filename))
     (run-hooks 'tramp-handle-write-region-hook)))
 
