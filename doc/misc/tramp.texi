@@ -531,24 +531,33 @@ of the local file name is the share exported by the remote host,
 @cindex dav method
 @cindex davs method
 
-On systems, which have installed the virtual file system for the Gnome
-Desktop (GVFS), its offered methods could be used by @value{tramp}.
-Examples are @file{@trampfn{sftp,user@@host,/path/to/file}},
+On systems, which have installed the virtual file system for the
+@acronym{GNOME} Desktop (GVFS), its offered methods could be used by
+@value{tramp}.  Examples are
+@file{@trampfn{sftp,user@@host,/path/to/file}},
 @file{@trampfn{afp,user@@host,/path/to/file}} (accessing Apple's AFP
 file system), @file{@trampfn{dav,user@@host,/path/to/file}} and
 @file{@trampfn{davs,user@@host,/path/to/file}} (for WebDAV shares).
 
 
-@anchor{Quick Start Guide: Google Drive}
-@section Using Google Drive
+@anchor{Quick Start Guide: GNOME Online Accounts based methods}
+@section Using @acronym{GNOME} Online Accounts based methods
+@cindex @acronym{GNOME} Online Accounts
 @cindex method gdrive
 @cindex gdrive method
 @cindex google drive
+@cindex method owncloud
+@cindex owncloud method
+@cindex nextcloud
 
-Another GVFS-based method allows to access a Google Drive file system.
-The file name syntax is here always
-@file{@trampfn{gdrive,john.doe@@gmail.com,/path/to/file}}.
-@samp{john.doe@@gmail.com} stands here for your Google Drive account.
+GVFS-based methods include also @acronym{GNOME} Online Accounts, which
+support the @option{Files} service.  These are the Google Drive file
+system, and the OwnCloud/NextCloud file system.  The file name syntax
+is here always
+@file{@trampfn{gdrive,john.doe@@gmail.com,/path/to/file}}
+(@samp{john.doe@@gmail.com} stands here for your Google Drive
+account), or @file{@trampfn{owncloud,user@@host#8081,/path/to/file}}
+(@samp{8081} stands for the port number) for OwnCloud/NextCloud files.
 
 
 @anchor{Quick Start Guide: Android}
@@ -1061,7 +1070,7 @@ numbers are not applicable to Android devices connected through USB@.
 @cindex gvfs based methods
 @cindex dbus
 
-GVFS is the virtual file system for the Gnome Desktop,
+GVFS is the virtual file system for the @acronym{GNOME} Desktop,
 @uref{https://en.wikipedia.org/wiki/GVFS}.  Remote files on GVFS are
 mounted locally through FUSE and @value{tramp} uses this locally
 mounted directory internally.
@@ -1114,6 +1123,18 @@ directory have the same @code{display-name}, such a situation must be avoided.
 OBEX is an FTP-like access protocol for cell phones and similar simple
 devices.  @value{tramp} supports OBEX over Bluetooth.
 
+@item @option{owncloud}
+@cindex @acronym{GNOME} Online Accounts
+@cindex method owncloud
+@cindex owncloud method
+@cindex nextcloud
+
+As the name indicates, the method @option{owncloud} allows you to
+access OwnCloud or NextCloud hosted files and directories.  Like the
+@option{gdrive} method, your credentials must be populated in your
+@command{Online Accounts} application outside Emacs. The method
+supports port numbers.
+
 @item @option{sftp}
 @cindex method sftp
 @cindex sftp method
@@ -1135,11 +1156,11 @@ requires the SYNCE-GVFS plugin.
 @defopt tramp-gvfs-methods
 This user option is a list of external methods for GVFS@.  By default,
 this list includes @option{afp}, @option{dav}, @option{davs},
-@option{gdrive}, @option{obex}, @option{sftp} and @option{synce}.
-Other methods to include are @option{ftp}, @option{http},
-@option{https} and @option{smb}.  These methods are not intended to be
-used directly as GVFS based method.  Instead, they are added here for
-the benefit of @ref{Archive file names}.
+@option{gdrive}, @option{obex}, @option{owncloud}, @option{sftp} and
+@option{synce}.  Other methods to include are @option{ftp},
+@option{http}, @option{https} and @option{smb}.  These methods are not
+intended to be used directly as GVFS based method.  Instead, they are
+added here for the benefit of @ref{Archive file names}.
 @end defopt
 
 
@@ -2928,8 +2949,8 @@ that remote connection.
 
 @value{tramp} offers also transparent access to files inside file
 archives.  This is possible only on machines which have installed the
-virtual file system for the Gnome Desktop (GVFS), @ref{GVFS based
-methods}.  Internally, file archives are mounted via the GVFS
+virtual file system for the @acronym{GNOME} Desktop (GVFS), @ref{GVFS
+based methods}.  Internally, file archives are mounted via the GVFS
 @option{archive} method.
 
 A file archive is a regular file of kind @file{/path/to/dir/file.EXT}.

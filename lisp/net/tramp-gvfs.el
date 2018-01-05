@@ -49,10 +49,14 @@
 
 ;; The custom option `tramp-gvfs-methods' contains the list of
 ;; supported connection methods.  Per default, these are "afp", "dav",
-;; "davs", "gdrive", "obex", "sftp" and "synce".  Note that with
-;; "obex" it might be necessary to pair with the other bluetooth
-;; device, if it hasn't been done already.  There might be also some
-;; few seconds delay in discovering available bluetooth devices.
+;; "davs", "gdrive", "obex", "owncloud", "sftp" and "synce".  Note
+;; that with "obex" it might be necessary to pair with the other
+;; bluetooth device, if it hasn't been done already.  There might be
+;; also some few seconds delay in discovering available bluetooth
+;; devices.
+
+;; "gdrive" and "owncloud" connection methods require a respective
+;; account in GNOME Online Accounts, with enabled "Files" service.
 
 ;; Other possible connection methods are "ftp", "http", "https" and
 ;; "smb".  When one of these methods is added to the list, the remote
@@ -112,7 +116,7 @@
 
 ;;;###tramp-autoload
 (defcustom tramp-gvfs-methods
-  '("afp" "dav" "davs" "gdrive" "obex" "sftp" "synce")
+  '("afp" "dav" "davs" "gdrive" "obex" "owncloud" "sftp" "synce")
   "List of methods for remote files, accessed with GVFS."
   :group 'tramp
   :version "26.1"
@@ -124,10 +128,19 @@
 			 (const "http")
 			 (const "https")
 			 (const "obex")
+			 (const "owncloud")
 			 (const "sftp")
 			 (const "smb")
 			 (const "synce")))
   :require 'tramp)
+
+(defconst tramp-goa-methods '("gdrive" "owncloud")
+  "List of methods which require registration at GNOME Online Accounts.")
+
+;; Remove GNOME Online Accounts if not supported.
+(unless (member tramp-goa-service (dbus-list-known-names :session))
+  (dolist (method tramp-goa-methods)
+    (setq tramp-gvfs-methods (delete method tramp-gvfs-methods))))
 
 ;; Add defaults for `tramp-default-user-alist' and `tramp-default-host-alist'.
 ;;;###tramp-autoload
@@ -292,6 +305,162 @@ It has been changed in GVFS 1.14.")
 
 (defconst tramp-gvfs-password-anonymous-supported 16
   "Operation supports anonymous users.")
+
+;; For the time being, we just need org.goa.Account and org.goa.Files
+;; interfaces.  We document the other ones, just in case.
+
+;;;###tramp-autoload
+(defconst tramp-goa-service "org.gnome.OnlineAccounts"
+  "The well known name of the GNOME Online Accounts service.")
+
+(defconst tramp-goa-path "/org/gnome/OnlineAccounts"
+  "The object path of the GNOME Online Accounts.")
+
+(defconst tramp-goa-path-accounts (concat tramp-goa-path "/Accounts")
+  "The object path of the GNOME Online Accounts accounts.")
+
+(defconst tramp-goa-interface-documents "org.gnome.OnlineAccounts.Documents"
+  "The documents interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.Documents'>
+;; </interface>
+
+(defconst tramp-goa-interface-printers "org.gnome.OnlineAccounts.Printers"
+  "The printers interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.Printers'>
+;; </interface>
+
+(defconst tramp-goa-interface-files "org.gnome.OnlineAccounts.Files"
+  "The files interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.Files'>
+;;   <property type='b' name='AcceptSslErrors' access='read'/>
+;;   <property type='s' name='Uri' access='read'/>
+;; </interface>
+
+(defconst tramp-goa-interface-contacts "org.gnome.OnlineAccounts.Contacts"
+  "The contacts interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.Contacts'>
+;;   <property type='b' name='AcceptSslErrors' access='read'/>
+;;   <property type='s' name='Uri' access='read'/>
+;; </interface>
+
+(defconst tramp-goa-interface-calendar "org.gnome.OnlineAccounts.Calendar"
+  "The calendar interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.Calendar'>
+;;   <property type='b' name='AcceptSslErrors' access='read'/>
+;;   <property type='s' name='Uri' access='read'/>
+;; </interface>
+
+(defconst tramp-goa-interface-oauth2based "org.gnome.OnlineAccounts.OAuth2Based"
+  "The oauth2based interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.OAuth2Based'>
+;;   <method name='GetAccessToken'>
+;;     <arg type='s' name='access_token' direction='out'/>
+;;     <arg type='i' name='expires_in' direction='out'/>
+;;   </method>
+;;   <property type='s' name='ClientId' access='read'/>
+;;   <property type='s' name='ClientSecret' access='read'/>
+;; </interface>
+
+(defconst tramp-goa-interface-account "org.gnome.OnlineAccounts.Account"
+  "The account interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.Account'>
+;;   <method name='Remove'/>
+;;   <method name='EnsureCredentials'>
+;;     <arg type='i' name='expires_in' direction='out'/>
+;;   </method>
+;;   <property type='s' name='ProviderType' access='read'/>
+;;   <property type='s' name='ProviderName' access='read'/>
+;;   <property type='s' name='ProviderIcon' access='read'/>
+;;   <property type='s' name='Id' access='read'/>
+;;   <property type='b' name='IsLocked' access='read'/>
+;;   <property type='b' name='IsTemporary' access='readwrite'/>
+;;   <property type='b' name='AttentionNeeded' access='read'/>
+;;   <property type='s' name='Identity' access='read'/>
+;;   <property type='s' name='PresentationIdentity' access='read'/>
+;;   <property type='b' name='MailDisabled' access='readwrite'/>
+;;   <property type='b' name='CalendarDisabled' access='readwrite'/>
+;;   <property type='b' name='ContactsDisabled' access='readwrite'/>
+;;   <property type='b' name='ChatDisabled' access='readwrite'/>
+;;   <property type='b' name='DocumentsDisabled' access='readwrite'/>
+;;   <property type='b' name='MapsDisabled' access='readwrite'/>
+;;   <property type='b' name='MusicDisabled' access='readwrite'/>
+;;   <property type='b' name='PrintersDisabled' access='readwrite'/>
+;;   <property type='b' name='PhotosDisabled' access='readwrite'/>
+;;   <property type='b' name='FilesDisabled' access='readwrite'/>
+;;   <property type='b' name='TicketingDisabled' access='readwrite'/>
+;;   <property type='b' name='TodoDisabled' access='readwrite'/>
+;;   <property type='b' name='ReadLaterDisabled' access='readwrite'/>
+;; </interface>
+
+(defconst tramp-goa-identity-regexp
+  (concat "^" "\\(" tramp-user-regexp "\\)?"
+	  "@" "\\(" tramp-host-regexp "\\)?"
+	  "\\(?:" ":""\\(" tramp-port-regexp "\\)" "\\)?")
+  "Regexp matching GNOME Online Accounts \"PresentationIdentity\" property.")
+
+(defconst tramp-goa-interface-mail "org.gnome.OnlineAccounts.Mail"
+  "The mail interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.Mail'>
+;;   <property type='s' name='EmailAddress' access='read'/>
+;;   <property type='s' name='Name' access='read'/>
+;;   <property type='b' name='ImapSupported' access='read'/>
+;;   <property type='b' name='ImapAcceptSslErrors' access='read'/>
+;;   <property type='s' name='ImapHost' access='read'/>
+;;   <property type='b' name='ImapUseSsl' access='read'/>
+;;   <property type='b' name='ImapUseTls' access='read'/>
+;;   <property type='s' name='ImapUserName' access='read'/>
+;;   <property type='b' name='SmtpSupported' access='read'/>
+;;   <property type='b' name='SmtpAcceptSslErrors' access='read'/>
+;;   <property type='s' name='SmtpHost' access='read'/>
+;;   <property type='b' name='SmtpUseAuth' access='read'/>
+;;   <property type='b' name='SmtpAuthLogin' access='read'/>
+;;   <property type='b' name='SmtpAuthPlain' access='read'/>
+;;   <property type='b' name='SmtpAuthXoauth2' access='read'/>
+;;   <property type='b' name='SmtpUseSsl' access='read'/>
+;;   <property type='b' name='SmtpUseTls' access='read'/>
+;;   <property type='s' name='SmtpUserName' access='read'/>
+;; </interface>
+
+(defconst tramp-goa-interface-chat "org.gnome.OnlineAccounts.Chat"
+  "The chat interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.Chat'>
+;; </interface>
+
+(defconst tramp-goa-interface-photos "org.gnome.OnlineAccounts.Photos"
+  "The photos interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.Photos'>
+;; </interface>
+
+(defconst tramp-goa-path-manager (concat tramp-goa-path "/Manager")
+  "The object path of the GNOME Online Accounts manager.")
+
+(defconst tramp-goa-interface-documents "org.gnome.OnlineAccounts.Manager"
+  "The manager interface of the GNOME Online Accounts.")
+
+;; <interface name='org.gnome.OnlineAccounts.Manager'>
+;;   <method name='AddAccount'>
+;;     <arg type='s' name='provider' direction='in'/>
+;;     <arg type='s' name='identity' direction='in'/>
+;;     <arg type='s' name='presentation_identity' direction='in'/>
+;;     <arg type='a{sv}' name='credentials' direction='in'/>
+;;     <arg type='a{ss}' name='details' direction='in'/>
+;;     <arg type='o' name='account_object_path' direction='out'/>
+;;   </method>
+;; </interface>
+
+;; The basic structure for GNOME Online Accounts.  We use a list :type,
+;; in order to be compatible with Emacs 24 and 25.
+(cl-defstruct (tramp-goa-name (:type list) :named) method user host port)
 
 (defconst tramp-bluez-service "org.bluez"
   "The well known name of the BLUEZ service.")
@@ -479,6 +648,13 @@ Every entry is a list (NAME ADDRESS).")
 	  ":[[:blank:]]+\\(.*\\)$")
   "Regexp to parse GVFS file system attributes with `gvfs-info'.")
 
+(defconst tramp-gvfs-owncloud-default-prefix "/remote.php/webdav"
+  "Default prefix for owncloud / nextcloud methods.")
+
+(defconst tramp-gvfs-owncloud-default-prefix-regexp
+  (concat (regexp-quote tramp-gvfs-owncloud-default-prefix) "$")
+  "Regexp of default prefix for owncloud / nextcloud methods.")
+
 
 ;; New handlers should be added here.
 ;;;###tramp-autoload
@@ -610,11 +786,23 @@ Return nil for null BYTE-ARRAY."
   (cond
    ((and (consp message) (characterp (car message)))
     (format "%S" (tramp-gvfs-dbus-byte-array-to-string message)))
+   ((and (consp message) (not (consp (cdr message))))
+    (cons (tramp-gvfs-stringify-dbus-message (car message))
+	  (tramp-gvfs-stringify-dbus-message (cdr message))))
    ((consp message)
     (mapcar 'tramp-gvfs-stringify-dbus-message message))
    ((stringp message)
     (format "%S" message))
    (t message)))
+
+(defun tramp-dbus-function (vec func args)
+  "Apply a D-Bus function FUNC from dbus.el.
+The call will be traced by Tramp with trace level 6."
+  (let (result)
+    (tramp-message vec 6 "%s" (cons func args))
+    (setq result (apply func args))
+    (tramp-message vec 6 "%s" result(tramp-gvfs-stringify-dbus-message result))
+    result))
 
 (defmacro with-tramp-dbus-call-method
   (vec synchronous bus service path interface method &rest args)
@@ -624,21 +812,33 @@ If SYNCHRONOUS is non-nil, the call is synchronously.  Otherwise,
 it is an asynchronous call, with `ignore' as callback function.
 
 The other arguments have the same meaning as with `dbus-call-method'
-or `dbus-call-method-asynchronously'.  Additionally, the call
-will be traced by Tramp with trace level 6."
+or `dbus-call-method-asynchronously'."
   `(let ((func (if ,synchronous
 		   'dbus-call-method 'dbus-call-method-asynchronously))
 	 (args (append (list ,bus ,service ,path ,interface ,method)
-		       (if ,synchronous (list ,@args) (list 'ignore ,@args))))
-	 result)
-     (tramp-message ,vec 6 "%s %s" func args)
-     (setq result (apply func args))
-     (tramp-message ,vec 6 "%s" (tramp-gvfs-stringify-dbus-message result))
-     result))
+		       (if ,synchronous (list ,@args) (list 'ignore ,@args)))))
+     (tramp-dbus-function ,vec func args)))
 
 (put 'with-tramp-dbus-call-method 'lisp-indent-function 2)
 (put 'with-tramp-dbus-call-method 'edebug-form-spec '(form symbolp body))
 (font-lock-add-keywords 'emacs-lisp-mode '("\\<with-tramp-dbus-call-method\\>"))
+
+(defmacro with-tramp-dbus-get-all-properties
+  (vec bus service path interface)
+  "Return all properties of INTERFACE.
+The call will be traced by Tramp with trace level 6."
+     ;; Check, that interface exists at object path.  Retrieve properties.
+  `(when (member
+	  ,interface
+	  (tramp-dbus-function
+	   ,vec 'dbus-introspect-get-interface-names
+	   (list ,bus ,service ,path)))
+     (tramp-dbus-function
+      ,vec 'dbus-get-all-properties (list ,bus ,service ,path ,interface))))
+
+(put 'with-tramp-dbus-get-all-properties 'lisp-indent-function 1)
+(put 'with-tramp-dbus-get-all-properties 'edebug-form-spec '(form symbolp body))
+(font-lock-add-keywords 'emacs-lisp-mode '("\\<with-tramp-dbus-get-all-properties\\>"))
 
 (defvar tramp-gvfs-dbus-event-vector nil
   "Current Tramp file name to be used, as vector.
@@ -1293,6 +1493,10 @@ file-notify events."
 	  (with-parsed-tramp-file-name filename nil
 	    (when (string-equal "gdrive" method)
 	      (setq method "google-drive"))
+	    (when (string-equal "owncloud" method)
+	      (setq method "davs"
+		    localname
+		    (concat (tramp-gvfs-get-remote-prefix v) localname)))
 	    (when (and user domain)
 	      (setq user (concat domain ";" user)))
 	    (url-parse-make-urlobj
@@ -1316,24 +1520,6 @@ file-notify events."
   "Retrieve file name from D-Bus OBJECT-PATH."
   (dbus-unescape-from-identifier
    (replace-regexp-in-string "^.*/\\([^/]+\\)$" "\\1" object-path)))
-
-(defun tramp-bluez-address (device)
-  "Return bluetooth device address from a given bluetooth DEVICE name."
-  (when (stringp device)
-    (if (string-match tramp-ipv6-regexp device)
-	(match-string 0 device)
-      (cadr (assoc device (tramp-bluez-list-devices))))))
-
-(defun tramp-bluez-device (address)
-  "Return bluetooth device name from a given bluetooth device ADDRESS.
-ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
-  (when (stringp address)
-    (while (string-match "[][]" address)
-      (setq address (replace-match "" t t address)))
-    (let (result)
-      (dolist (item (tramp-bluez-list-devices) result)
-	(when (string-match address (cadr item))
-	  (setq result (car item)))))))
 
 
 ;; D-Bus GVFS functions.
@@ -1405,7 +1591,7 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 		       (tramp-get-connection-process v) message
 		     ;; In theory, there can be several choices.
 		     ;; Until now, there is only the question whether
-		     ;; to accept an unknown host signature.
+		     ;; to accept an unknown host signature or certificate.
 		     (with-temp-buffer
 		       ;; Preserve message for `progress-reporter'.
 		       (with-temp-message ""
@@ -1446,6 +1632,7 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
       (while (stringp (car elt)) (setq elt (cdr elt)))
       (let* ((fuse-mountpoint (tramp-gvfs-dbus-byte-array-to-string (cadr elt)))
 	     (mount-spec (cl-caddr elt))
+	     (prefix (tramp-gvfs-dbus-byte-array-to-string (car mount-spec)))
 	     (default-location (tramp-gvfs-dbus-byte-array-to-string
 				(cl-cadddr elt)))
 	     (method (tramp-gvfs-dbus-byte-array-to-string
@@ -1462,19 +1649,17 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	     (ssl (tramp-gvfs-dbus-byte-array-to-string
 		   (cadr (assoc "ssl" (cadr mount-spec)))))
 	     (uri (tramp-gvfs-dbus-byte-array-to-string
-		   (cadr (assoc "uri" (cadr mount-spec)))))
-	     (prefix (concat
-		      (tramp-gvfs-dbus-byte-array-to-string
-		       (car mount-spec))
-		      (tramp-gvfs-dbus-byte-array-to-string
-		       (or (cadr (assoc "share" (cadr mount-spec)))
-			   (cadr (assoc "volume" (cadr mount-spec))))))))
+		   (cadr (assoc "uri" (cadr mount-spec))))))
 	(when (string-match "^\\(afp\\|smb\\)" method)
 	  (setq method (match-string 1 method)))
 	(when (string-equal "obex" method)
 	  (setq host (tramp-bluez-device host)))
 	(when (and (string-equal "dav" method) (string-equal "true" ssl))
 	  (setq method "davs"))
+	(when (and (string-equal "davs" method)
+		   (string-match
+		    tramp-gvfs-owncloud-default-prefix-regexp prefix))
+	  (setq method "owncloud"))
 	(when (string-equal "google-drive" method)
 	  (setq method "gdrive"))
 	(when (and (string-equal "http" method) (stringp uri))
@@ -1491,9 +1676,7 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 	  (tramp-flush-file-property v "/" "list-mounts")
 	  (if (string-equal (downcase signal-name) "unmounted")
 	      (tramp-flush-file-properties v "/")
-	    ;; Set prefix, mountpoint and location.
-	    (unless (string-equal prefix "/")
-	      (tramp-set-file-property v "/" "prefix" prefix))
+	    ;; Set mountpoint and location.
 	    (tramp-set-file-property v "/" "fuse-mountpoint" fuse-mountpoint)
 	    (tramp-set-connection-property
 	     v "default-location" default-location)))))))
@@ -1536,6 +1719,7 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
        (let* ((fuse-mountpoint (tramp-gvfs-dbus-byte-array-to-string
 				(cadr elt)))
 	      (mount-spec (cl-caddr elt))
+	      (prefix (tramp-gvfs-dbus-byte-array-to-string (car mount-spec)))
 	      (default-location (tramp-gvfs-dbus-byte-array-to-string
 				 (cl-cadddr elt)))
 	      (method (tramp-gvfs-dbus-byte-array-to-string
@@ -1553,19 +1737,20 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 		    (cadr (assoc "ssl" (cadr mount-spec)))))
 	      (uri (tramp-gvfs-dbus-byte-array-to-string
 		    (cadr (assoc "uri" (cadr mount-spec)))))
-	      (prefix (concat
-		       (tramp-gvfs-dbus-byte-array-to-string
-			(car mount-spec))
-		       (tramp-gvfs-dbus-byte-array-to-string
-			(or
-			 (cadr (assoc "share" (cadr mount-spec)))
-			 (cadr (assoc "volume" (cadr mount-spec))))))))
+	      (share (tramp-gvfs-dbus-byte-array-to-string
+		      (or
+		       (cadr (assoc "share" (cadr mount-spec)))
+		       (cadr (assoc "volume" (cadr mount-spec)))))))
 	 (when (string-match "^\\(afp\\|smb\\)" method)
 	   (setq method (match-string 1 method)))
 	 (when (string-equal "obex" method)
 	   (setq host (tramp-bluez-device host)))
 	 (when (and (string-equal "dav" method) (string-equal "true" ssl))
 	   (setq method "davs"))
+	 (when (and (string-equal "davs" method)
+		    (string-match
+		     tramp-gvfs-owncloud-default-prefix-regexp prefix))
+	   (setq method "owncloud"))
 	 (when (string-equal "google-drive" method)
 	   (setq method "gdrive"))
 	 (when (and (string-equal "synce" method) (zerop (length user)))
@@ -1582,11 +1767,9 @@ ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
 		(string-equal domain (tramp-file-name-domain vec))
 		(string-equal host (tramp-file-name-host vec))
 		(string-equal port (tramp-file-name-port vec))
-		(string-match (concat "^" (regexp-quote prefix))
+		(string-match (concat "^/" (regexp-quote (or share "")))
 			      (tramp-file-name-unquote-localname vec)))
-	   ;; Set prefix, mountpoint and location.
-	   (unless (string-equal prefix "/")
-	     (tramp-set-file-property vec "/" "prefix" prefix))
+	   ;; Set mountpoint and location.
 	   (tramp-set-file-property vec "/" "fuse-mountpoint" fuse-mountpoint)
 	   (tramp-set-connection-property
 	    vec "default-location" default-location)
@@ -1620,7 +1803,7 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
 	 (localname (tramp-file-name-unquote-localname vec))
 	 (share (when (string-match "^/?\\([^/]+\\)" localname)
 		  (match-string 1 localname)))
-	 (ssl (if (string-match "^davs" method) "true" "false"))
+	 (ssl (if (string-match "^davs\\|^owncloud" method) "true" "false"))
 	 (mount-spec
           `(:array
             ,@(cond
@@ -1632,7 +1815,7 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
                 (list (tramp-gvfs-mount-spec-entry "type" method)
                       (tramp-gvfs-mount-spec-entry
                        "host" (concat "[" (tramp-bluez-address host) "]"))))
-               ((string-match "\\`dav" method)
+               ((string-match "^dav\\|^owncloud" method)
                 (list (tramp-gvfs-mount-spec-entry "type" "dav")
                       (tramp-gvfs-mount-spec-entry "host" host)
                       (tramp-gvfs-mount-spec-entry "ssl" ssl)))
@@ -1643,7 +1826,7 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
                ((string-equal "gdrive" method)
                 (list (tramp-gvfs-mount-spec-entry "type" "google-drive")
                       (tramp-gvfs-mount-spec-entry "host" host)))
-               ((string-match "\\`http" method)
+               ((string-match "^http" method)
                 (list (tramp-gvfs-mount-spec-entry "type" "http")
                       (tramp-gvfs-mount-spec-entry
 		       "uri"
@@ -1660,10 +1843,10 @@ It was \"a(say)\", but has changed to \"a{sv})\"."
             ,@(when port
                 (list (tramp-gvfs-mount-spec-entry "port" port)))))
 	 (mount-pref
-          (if (and (string-match "\\`dav" method)
+          (if (and (string-match "^dav" method)
                    (string-match "^/?[^/]+" localname))
               (match-string 0 localname)
-            "/")))
+	    (tramp-gvfs-get-remote-prefix vec))))
 
     ;; Return.
     `(:struct ,(tramp-gvfs-dbus-string-to-byte-array mount-pref) ,mount-spec)))
@@ -1715,6 +1898,21 @@ ID-FORMAT valid values are `string' and `integer'."
 (defvar tramp-gvfs-get-remote-uid-gid-in-progress nil
   "Indication, that remote uid and gid determination is in progress.")
 
+(defun tramp-gvfs-get-remote-prefix (vec)
+  "The prefix of the remote connection VEC.
+This is relevant for GNOME Online Accounts."
+  (with-tramp-connection-property vec "prefix"
+    ;; Ensure that GNOME Online Accounts are cached.
+    (when (member (tramp-file-name-method vec) tramp-goa-methods)
+      (tramp-get-goa-accounts vec))
+    (tramp-get-connection-property
+     (make-tramp-goa-name
+      :method (tramp-file-name-method vec)
+      :user (tramp-file-name-user vec)
+      :host (tramp-file-name-host vec)
+      :port (tramp-file-name-port vec))
+     "prefix" "/")))
+
 (defun tramp-gvfs-maybe-open-connection (vec)
   "Maybe open a connection VEC.
 Does not do anything if a connection is already open, but re-opens the
@@ -1731,6 +1929,7 @@ connection if a previous connection has died for some reason."
 	      :name (tramp-buffer-name vec)
 	      :buffer (tramp-get-connection-buffer vec)
 	      :server t :host 'local :service t :noquery t)))
+      (tramp-set-connection-property p "vector" vec)
       (set-process-query-on-exit-flag p nil)))
 
   (unless (tramp-gvfs-connection-mounted-p vec)
@@ -1869,7 +2068,80 @@ is applied, and it returns t if the return code is zero."
 	  (and (tramp-flush-file-properties vec "/") nil)))))
 
 
+;; D-Bus GNOME Online Accounts functions.
+
+(defun tramp-get-goa-accounts (vec)
+  "Retrieve GNOME Online Accounts, and cache them.
+The hash key is a `tramp-goa-name' structure.  The value is an
+alist of the properties of `tramp-goa-interface-account' and
+`tramp-goa-interface-files' of the corresponding GNOME online
+account.  Additionally, a property \"prefix\" is added.
+VEC is used only for traces."
+  (dolist
+      (object-path
+       (mapcar
+	'car
+	(tramp-dbus-function
+	 vec 'dbus-get-all-managed-objects
+	 `(:session ,tramp-goa-service ,tramp-goa-path))))
+    (let* ((account-properties
+	    (with-tramp-dbus-get-all-properties vec
+	      :session tramp-goa-service object-path
+	      tramp-goa-interface-account))
+	   (files-properties
+	    (with-tramp-dbus-get-all-properties vec
+	      :session tramp-goa-service object-path
+	      tramp-goa-interface-files))
+	   (identity
+	    (or (cdr (assoc "PresentationIdentity" account-properties)) ""))
+	   key)
+      ;; Only accounts which matter.
+      (when (and
+	     (not (cdr (assoc "FilesDisabled" account-properties)))
+	     (member
+	      (cdr (assoc "ProviderType" account-properties))
+	      '("google" "owncloud"))
+	     (string-match tramp-goa-identity-regexp identity))
+	(setq key (make-tramp-goa-name
+		   :method (cdr (assoc "ProviderType" account-properties))
+		   :user (match-string 1 identity)
+		   :host (match-string 2 identity)
+		   :port (match-string 3 identity)))
+	(when (string-equal (tramp-goa-name-method key) "google")
+	  (setf (tramp-goa-name-method key) "gdrive"))
+	;; Cache all properties.
+	(dolist (prop (nconc account-properties files-properties))
+	  (tramp-set-connection-property key (car prop) (cdr prop)))
+	;; Cache "prefix".
+	(tramp-message
+	 vec 10 "%s prefix %s" key
+	 (tramp-set-connection-property
+	  key "prefix"
+	  (directory-file-name
+	   (url-filename
+	    (url-generic-parse-url
+	     (tramp-get-connection-property key "Uri" "file:///"))))))))))
+
+
 ;; D-Bus BLUEZ functions.
+
+(defun tramp-bluez-address (device)
+  "Return bluetooth device address from a given bluetooth DEVICE name."
+  (when (stringp device)
+    (if (string-match tramp-ipv6-regexp device)
+	(match-string 0 device)
+      (cadr (assoc device (tramp-bluez-list-devices))))))
+
+(defun tramp-bluez-device (address)
+  "Return bluetooth device name from a given bluetooth device ADDRESS.
+ADDRESS can have the form \"xx:xx:xx:xx:xx:xx\" or \"[xx:xx:xx:xx:xx:xx]\"."
+  (when (stringp address)
+    (while (string-match "[][]" address)
+      (setq address (replace-match "" t t address)))
+    (let (result)
+      (dolist (item (tramp-bluez-list-devices) result)
+	(when (string-match address (cadr item))
+	  (setq result (car item)))))))
 
 (defun tramp-bluez-list-devices ()
   "Return all discovered bluetooth devices as list.
