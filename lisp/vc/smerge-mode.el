@@ -1019,7 +1019,7 @@ chars to try and eliminate some spurious differences."
                   (setq s short)))
               (dotimes (_i (1- len)) (insert s)))))))
     (unless (bolp) (error "Smerge refine internal error"))
-    (let ((coding-system-for-write 'emacs-internal))
+    (let ((coding-system-for-write 'utf-8-emacs-unix))
       (write-region (point-min) (point-max) file nil 'nomessage))))
 
 (defun smerge--refine-highlight-change (beg match-num1 match-num2 props)
@@ -1084,7 +1084,9 @@ used to replace chars to try and eliminate some spurious differences."
     ;; Call diff on those files.
     (unwind-protect
         (with-temp-buffer
-          (let ((coding-system-for-read 'emacs-internal))
+          ;; Allow decoding the EOL format, as on MS-Windows the Diff
+          ;; utility might produce CR-LF EOLs.
+          (let ((coding-system-for-read 'utf-8-emacs))
             (call-process diff-command nil t nil
                           (if (and smerge-refine-ignore-whitespace
                                    (not smerge-refine-weight-hack))
