@@ -916,6 +916,14 @@ layout by typing @kbd{M-x gdb-restore-windows}.  To toggle
 between the many windows layout and a simple layout with just the GUD
 interaction buffer and a source file, type @kbd{M-x gdb-many-windows}.
 
+  If you have an elaborate window setup, and don't want
+@code{gdb-many-windows} to disrupt that, it is better to invoke
+@kbd{M-x gdb} in a separate frame to begin with, then the arrangement
+of windows on your original frame will not be affected.  A separate
+frame for GDB sessions can come in especially handy if you work on a
+text-mode terminal, where the screen estate for windows could be at a
+premium.
+
   You may also specify additional GDB-related buffers to display,
 either in the same frame or a different one.  Select the buffers you
 want by typing @code{M-x gdb-display-@var{buffertype}-buffer} or
