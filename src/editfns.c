@@ -5293,8 +5293,7 @@ Transposing beyond buffer boundaries is an error.  */)
         {
 	  USE_SAFE_ALLOCA;
 
-          modify_text (start1, end1);
-          modify_text (start2, end2);
+          modify_text (start1, end2);
           record_change (start1, len1);
           record_change (start2, len2);
           tmp_interval1 = copy_intervals (cur_intv, start1, len1);
