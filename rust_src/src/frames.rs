@@ -279,4 +279,4 @@ pub fn frame_position(frame: LispObject) -> LispObject {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
+include!("frames_exports.rs");

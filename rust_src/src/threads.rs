@@ -44,4 +44,4 @@ pub fn thread_alive_p(thread: ThreadStateRef) -> bool {
     thread.is_alive()
 }
 
-include!(concat!(env!("OUT_DIR"), "/threads_exports.rs"));
+include!("threads_exports.rs");

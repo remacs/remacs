@@ -341,4 +341,4 @@ pub fn string_to_char(string: LispStringRef) -> EmacsInt {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
+include!("editfns_exports.rs");

@@ -54,4 +54,4 @@ pub fn multibyte_char_to_unibyte(ch: LispObject) -> LispObject {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/character_exports.rs"));
+include!("character_exports.rs");

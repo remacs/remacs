@@ -24,4 +24,4 @@ pub fn prefix_numeric_value(raw: LispObject) -> EmacsInt {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/interactive_exports.rs"));
+include!("interactive_exports.rs");

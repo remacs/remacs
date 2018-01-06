@@ -161,4 +161,4 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
     new
 }
 
-include!(concat!(env!("OUT_DIR"), "/marker_exports.rs"));
+include!("marker_exports.rs");

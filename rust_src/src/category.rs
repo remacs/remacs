@@ -23,4 +23,4 @@ pub fn category_table() -> LispObject {
     LispObject::from_raw(buffer_ref.category_table)
 }
 
-include!(concat!(env!("OUT_DIR"), "/category_exports.rs"));
+include!("category_exports.rs");

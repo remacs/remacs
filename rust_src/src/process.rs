@@ -322,4 +322,4 @@ pub fn set_process_query_on_exit_flag(mut process: LispProcessRef, flag: LispObj
     flag
 }
 
-include!(concat!(env!("OUT_DIR"), "/process_exports.rs"));
+include!("process_exports.rs");

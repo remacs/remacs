@@ -160,4 +160,4 @@ pub fn make_sparse_keymap(string: LispObject) -> LispObject {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));
+include!("keymap_exports.rs");

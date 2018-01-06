@@ -349,4 +349,4 @@ lazy_static! {
     };
 }
 
-include!(concat!(env!("OUT_DIR"), "/vectors_exports.rs"));
+include!("vectors_exports.rs");

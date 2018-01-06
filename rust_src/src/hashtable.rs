@@ -324,4 +324,4 @@ pub fn define_hash_table_test(name: LispObject, test: LispObject, hash: LispObje
     put(name, sym, list(&mut [test, hash]))
 }
 
-include!(concat!(env!("OUT_DIR"), "/hashtable_exports.rs"));
+include!("hashtable_exports.rs");

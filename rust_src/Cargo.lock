@@ -184,12 +184,15 @@ dependencies = [
  "libc 0.2.33 (registry+https://github.com/rust-lang/crates.io-index)",
  "md5 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "mock_derive 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "quote 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "remacs-lib 0.1.0",
  "remacs-macros 0.1.0",
  "remacs-sys 0.1.0",
+ "remacs-util 0.1.0",
  "sha1 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.11.11 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

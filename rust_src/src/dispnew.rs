@@ -38,4 +38,4 @@ pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) -> () {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/dispnew_exports.rs"));
+include!("dispnew_exports.rs");

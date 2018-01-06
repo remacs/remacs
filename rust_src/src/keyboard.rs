@@ -130,4 +130,4 @@ pub fn lucid_event_type_list_p(event: Option<LispCons>) -> bool {
     })
 }
 
-include!(concat!(env!("OUT_DIR"), "/keyboard_exports.rs"));
+include!("keyboard_exports.rs");
