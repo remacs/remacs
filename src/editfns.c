@@ -1036,7 +1036,7 @@ If you only want to save the current buffer but not point,
 then just use `save-current-buffer', or even `with-current-buffer'.
 
 Before Emacs 25.1, `save-excursion' used to save the mark state.
-To save the marker state as well as the point and buffer, use
+To save the mark state as well as point and the current buffer, use
 `save-mark-and-excursion'.
 
 usage: (save-excursion &rest BODY)  */)
