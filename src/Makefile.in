@@ -170,7 +170,7 @@ NOTIFY_LIBS = @NOTIFY_LIBS@
 
 ## -ltermcap, or -lncurses, or -lcurses, or "".
 LIBS_TERMCAP=@LIBS_TERMCAP@
-## terminfo.o if TERMINFO, else tparam.o.
+## terminfo.o if TERMINFO, else (on MS-DOS only: termcap.o +) tparam.o.
 TERMCAP_OBJ=@TERMCAP_OBJ@
 
 LIBXMU=@LIBXMU@
