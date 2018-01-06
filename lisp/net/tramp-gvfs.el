@@ -114,6 +114,16 @@
 (eval-when-compile
   (require 'custom))
 
+;; We don't call `dbus-ping', because this would load dbus.el.
+(defconst tramp-gvfs-enabled
+  (ignore-errors
+    (and (featurep 'dbusbind)
+	 (tramp-compat-funcall 'dbus-get-unique-name :system)
+	 (tramp-compat-funcall 'dbus-get-unique-name :session)
+	 (or (tramp-compat-process-running-p "gvfs-fuse-daemon")
+	     (tramp-compat-process-running-p "gvfsd-fuse"))))
+  "Non-nil when GVFS is available.")
+
 ;;;###tramp-autoload
 (defcustom tramp-gvfs-methods
   '("afp" "dav" "davs" "gdrive" "obex" "owncloud" "sftp" "synce")
@@ -137,8 +147,9 @@
 (defconst tramp-goa-methods '("gdrive" "owncloud")
   "List of methods which require registration at GNOME Online Accounts.")
 
-;; Remove GNOME Online Accounts if not supported.
-(unless (member tramp-goa-service (dbus-list-known-names :session))
+;; Remove GNOME Online Accounts methods if not supported.
+(unless (and tramp-gvfs-enabled
+	     (member tramp-goa-service (dbus-list-known-names :session)))
   (dolist (method tramp-goa-methods)
     (setq tramp-gvfs-methods (delete method tramp-gvfs-methods))))
 
@@ -174,16 +185,6 @@
 
 (defconst tramp-gvfs-service-daemon "org.gtk.vfs.Daemon"
   "The well known name of the GVFS daemon.")
-
-;; We don't call `dbus-ping', because this would load dbus.el.
-(defconst tramp-gvfs-enabled
-  (ignore-errors
-    (and (featurep 'dbusbind)
-	 (tramp-compat-funcall 'dbus-get-unique-name :system)
-	 (tramp-compat-funcall 'dbus-get-unique-name :session)
-	 (or (tramp-compat-process-running-p "gvfs-fuse-daemon")
-	     (tramp-compat-process-running-p "gvfsd-fuse"))))
-  "Non-nil when GVFS is available.")
 
 (defconst tramp-gvfs-path-mounttracker "/org/gtk/vfs/mounttracker"
   "The object path of the GVFS daemon.")
@@ -1975,7 +1976,8 @@ connection if a previous connection has died for some reason."
 	 tramp-gvfs-interface-mountoperation "AskPassword"
 	 'tramp-gvfs-handler-askpassword)
 
-	;; There could be a callback of "askQuestion" when adding fingerprint.
+	;; There could be a callback of "askQuestion" when adding
+	;; fingerprints or checking certificates.
 	(dbus-register-method
 	 :session dbus-service-emacs object-path
 	 tramp-gvfs-interface-mountoperation "askQuestion"
