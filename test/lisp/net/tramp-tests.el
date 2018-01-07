@@ -2760,9 +2760,11 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (file-symlink-p tmp-name2)))
 	    ;; `tmp-name3' is a local file name.  Therefore, the link
 	    ;; target remains unchanged, even if quoted.
-	    (make-symbolic-link tmp-name1 tmp-name3)
-	    (should
-	     (string-equal tmp-name1 (file-symlink-p tmp-name3)))
+	    ;; `make-symbolic-link' might not be permitted on w32 systems.
+	    (unless (tramp--test-windows-nt)
+	      (make-symbolic-link tmp-name1 tmp-name3)
+	      (should
+	       (string-equal tmp-name1 (file-symlink-p tmp-name3))))
 	    ;; Check directory as newname.
 	    (make-directory tmp-name4)
 	    (should-error
@@ -2864,15 +2866,17 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	      (tramp-compat-file-name-quote
 	       (concat (file-remote-p tmp-name2) "/penguin:motd:"))))
 	    ;; `tmp-name3' is a local file name.
-	    (make-symbolic-link tmp-name1 tmp-name3)
-	    (should (file-symlink-p tmp-name3))
-            (should-not (string-equal tmp-name3 (file-truename tmp-name3)))
-	    ;; `file-truename' returns a quoted file name for `tmp-name3'.
-	    ;; We must unquote it.
-	    (should
-	     (string-equal
-	      (tramp-compat-file-name-unquote (file-truename tmp-name1))
-	      (tramp-compat-file-name-unquote (file-truename tmp-name3)))))
+	    ;; `make-symbolic-link' might not be permitted on w32 systems.
+	    (unless (tramp--test-windows-nt)
+	      (make-symbolic-link tmp-name1 tmp-name3)
+	      (should (file-symlink-p tmp-name3))
+              (should-not (string-equal tmp-name3 (file-truename tmp-name3)))
+	      ;; `file-truename' returns a quoted file name for `tmp-name3'.
+	      ;; We must unquote it.
+	      (should
+	       (string-equal
+		(tramp-compat-file-name-unquote (file-truename tmp-name1))
+		(tramp-compat-file-name-unquote (file-truename tmp-name3))))))
 
 	;; Cleanup.
 	(ignore-errors
@@ -3961,9 +3965,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		(expand-file-name
 		 (format
 		  "%s~"
-		  ;; This is taken from `make-backup-file-name-1'.
+		  ;; This is taken from `make-backup-file-name-1'.  We
+		  ;; call `convert-standard-filename', because on MS
+		  ;; Windows the (local) colons must be replaced by
+		  ;; exclamation marks.
 		  (subst-char-in-string
-		   ?/ ?! (replace-regexp-in-string "!" "!!" tmp-name1)))
+		   ?/ ?!
+		   (replace-regexp-in-string
+		    "!" "!!" (convert-standard-filename tmp-name1))))
 		 tmp-name2)))))
 	    ;; The backup directory is created.
 	    (should (file-directory-p tmp-name2)))
@@ -3984,9 +3993,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		(expand-file-name
 		 (format
 		  "%s~"
-		  ;; This is taken from `make-backup-file-name-1'.
+		  ;; This is taken from `make-backup-file-name-1'.  We
+		  ;; call `convert-standard-filename', because on MS
+		  ;; Windows the (local) colons must be replaced by
+		  ;; exclamation marks.
 		  (subst-char-in-string
-		   ?/ ?! (replace-regexp-in-string "!" "!!" tmp-name1)))
+		   ?/ ?!
+		   (replace-regexp-in-string
+		    "!" "!!" (convert-standard-filename tmp-name1))))
 		 tmp-name2)))))
 	    ;; The backup directory is created.
 	    (should (file-directory-p tmp-name2)))
@@ -4008,9 +4022,14 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		(expand-file-name
 		 (format
 		  "%s~"
-		  ;; This is taken from `make-backup-file-name-1'.
+		  ;; This is taken from `make-backup-file-name-1'.  We
+		  ;; call `convert-standard-filename', because on MS
+		  ;; Windows the (local) colons must be replaced by
+		  ;; exclamation marks.
 		  (subst-char-in-string
-		   ?/ ?! (replace-regexp-in-string "!" "!!" tmp-name1)))
+		   ?/ ?!
+		   (replace-regexp-in-string
+		    "!" "!!" (convert-standard-filename tmp-name1))))
 		 tmp-name2)))))
 	    ;; The backup directory is created.
 	    (should (file-directory-p tmp-name2)))
@@ -4115,6 +4134,10 @@ This does not support special file names."
   (eq
    (tramp-find-foreign-file-name-handler tramp-test-temporary-file-directory)
    'tramp-sh-file-name-handler))
+
+(defun tramp--test-windows-nt ()
+  "Check, whether the locale host runs MS Windows."
+  (eq system-type 'windows-nt))
 
 (defun tramp--test-windows-nt-and-batch ()
   "Check, whether the locale host runs MS Windows in batch mode.
@@ -4706,7 +4729,8 @@ process sentinels.  They shall not disturb each other."
       (shell-command-to-string
        (format
 	"%s -batch -Q -L %s --eval %s"
-	(expand-file-name invocation-name invocation-directory)
+	(shell-quote-argument
+	 (expand-file-name invocation-name invocation-directory))
 	(mapconcat 'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
@@ -4738,7 +4762,8 @@ process sentinels.  They shall not disturb each other."
 	(shell-command-to-string
 	 (format
 	  "%s -batch -Q -L %s --eval %s"
-	  (expand-file-name invocation-name invocation-directory)
+	  (shell-quote-argument
+	   (expand-file-name invocation-name invocation-directory))
 	  (mapconcat 'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument (format code tm)))))))))
 
@@ -4761,7 +4786,8 @@ process sentinels.  They shall not disturb each other."
 	(shell-command-to-string
 	 (format
 	  "%s -batch -Q -L %s --eval %s"
-	  (expand-file-name invocation-name invocation-directory)
+	  (shell-quote-argument
+	   (expand-file-name invocation-name invocation-directory))
 	  (mapconcat 'shell-quote-argument load-path " -L ")
 	  (shell-quote-argument code))))))))
 
@@ -4788,7 +4814,8 @@ process sentinels.  They shall not disturb each other."
       (shell-command-to-string
        (format
 	"%s -batch -Q -L %s -l tramp-sh --eval %s"
-	(expand-file-name invocation-name invocation-directory)
+	(shell-quote-argument
+	 (expand-file-name invocation-name invocation-directory))
 	(mapconcat 'shell-quote-argument load-path " -L ")
 	(shell-quote-argument code)))))))
 
