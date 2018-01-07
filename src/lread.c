@@ -1007,10 +1007,7 @@ static _Noreturn void
 load_error_old_style_backquotes (void)
 {
   if (NILP (Vload_file_name))
-    {
-      AUTO_STRING (message, "Old-style backquotes detected!");
-      xsignal1 (Qerror, message);
-    }
+    xsignal1 (Qerror, build_string ("Old-style backquotes detected!"));
   else
     {
       AUTO_STRING (format, "Loading `%s': old-style backquotes detected!");
