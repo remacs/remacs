@@ -540,8 +540,7 @@ literals (Bug#20852)."
       (let* ((byte-compile-dest-file-function (lambda (_) destination))
              (byte-compile-debug t)
              (err (should-error (byte-compile-file source))))
-        (should (equal (cdr err)
-                       '("Loading `nil': old-style backquotes detected!")))))))
+        (should (equal (cdr err) '("Old-style backquotes detected!")))))))
 
 
 (ert-deftest bytecomp-tests-function-put ()
