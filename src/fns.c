@@ -3319,6 +3319,7 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
      and delete the old.  (Insert first in order to preserve markers.)  */
   TEMP_SET_PT_BOTH (XFASTINT (beg), ibeg);
   insert_1_both (decoded, inserted_chars, decoded_length, 0, 1, 0);
+  signal_after_change (XFASTINT (beg), 0, inserted_chars);
   SAFE_FREE ();
 
   /* Delete the original text.  */
