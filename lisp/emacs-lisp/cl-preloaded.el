@@ -36,7 +36,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl-generic))
 (eval-when-compile (require 'cl-lib))
 (eval-when-compile (require 'cl-macs))  ;For cl--struct-class.
 
@@ -50,12 +49,6 @@
     (if string
         (apply #'error string (append sargs args))
       (signal 'cl-assertion-failed `(,form ,@sargs)))))
-
-(defun cl--struct-name-p (name)
-  "Return t if NAME is a valid structure name for `cl-defstruct'."
-  (and name (symbolp name) (not (keywordp name))
-       (not (memq name (eval-when-compile cl--generic-all-builtin-types)))
-       t))
 
 ;; When we load this (compiled) file during pre-loading, the cl--struct-class
 ;; code below will need to access the `cl-struct' info, since it's considered
@@ -117,7 +110,6 @@
 ;;;###autoload
 (defun cl-struct-define (name docstring parent type named slots children-sym
                               tag print)
-  (cl-check-type name cl--struct-name)
   (unless type
     ;; Legacy defstruct, using tagged vectors.  Enable backward compatibility.
     (cl-old-struct-compat-mode 1))

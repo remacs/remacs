@@ -497,13 +497,4 @@ collection clause."
                           vconcat (vector (1+ x)))
                  [2 3 4 5 6])))
 
-
-(ert-deftest cl-defstruct/builtin-type ()
-  (should-error
-   (macroexpand '(cl-defstruct hash-table))
-   :type 'wrong-type-argument)
-  (should-error
-   (macroexpand '(cl-defstruct (hash-table (:predicate hash-table-p))))
-   :type 'wrong-type-argument))
-
 ;;; cl-macs-tests.el ends here
