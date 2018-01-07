@@ -1145,7 +1145,8 @@ Entry to this mode runs the hooks on `term-mode-hook'."
                 (lambda (size)
                   (when size
                     (term-reset-size (cdr size) (car size)))
-                  size))
+                  size)
+                '((name . term-maybe-reset-size)))
 
   (add-hook 'read-only-mode-hook #'term-line-mode-buffer-read-only-update nil t)
 
