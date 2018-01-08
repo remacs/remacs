@@ -73,6 +73,17 @@ This function is intended to be set to `auth-source-debug`."
            (auth-source-pass--debug-log nil))
        ,@body)))
 
+(ert-deftest auth-source-pass-any-host ()
+  (auth-source-pass--with-store '(("foo" ("port" . "foo-port") ("host" . "foo-user"))
+                                  ("bar"))
+    (should-not (auth-source-pass-search :host t))))
+
+(ert-deftest auth-source-pass-undefined-host ()
+  (auth-source-pass--with-store '(("foo" ("port" . "foo-port") ("host" . "foo-user"))
+                                  ("bar"))
+    (should-not (auth-source-pass-search :host nil))))
+
+
 (ert-deftest auth-source-pass-find-match-matching-at-entry-name ()
   (auth-source-pass--with-store '(("foo"))
     (should (equal (auth-source-pass--find-match "foo" nil nil)
