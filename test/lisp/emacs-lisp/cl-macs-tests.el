@@ -497,4 +497,12 @@ collection clause."
                           vconcat (vector (1+ x)))
                  [2 3 4 5 6])))
 
+
+(ert-deftest cl-macs-loop-for-as-equals-and ()
+  "Test for https://debbugs.gnu.org/29799 ."
+  (let ((arr (make-vector 3 0)))
+    (should (equal '((0 0) (1 1) (2 2))
+                   (cl-loop for k below 3 for x = k and z = (elt arr k)
+                            collect (list k x))))))
+
 ;;; cl-macs-tests.el ends here
