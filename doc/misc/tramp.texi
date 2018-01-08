@@ -2828,6 +2828,10 @@ warning, which can be ignored:
 &"warning: GDB: Failed to set controlling terminal: Operation not permitted\n"
 @end example
 
+@noindent
+As consequence, there will be restrictions in I/O of the process to be
+debugged.
+
 Relative file names are based on the remote default directory.  When
 @file{myprog.pl} exists in @file{@trampfn{ssh,host,/home/user}}, valid
 calls include:
