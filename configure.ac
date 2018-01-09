@@ -1269,10 +1269,10 @@ AC_SUBST([PAXCTL_notdumped])
 
 # Makeinfo on macOS is ancient, check whether there is a more recent
 # version installed by Homebrew.
-AC_CHECK_PROG(HAVE_BREW, [brew], [yes])
-if test -n "$HAVE_BREW"; then
+AC_CHECK_PROGS(BREW, [brew])
+if test -n "$BREW"; then
   AC_PATH_PROG([MAKEINFO], [makeinfo], [],
-    [`brew --prefix texinfo 2>/dev/null`/bin$PATH_SEPARATOR$PATH])
+    [`$BREW --prefix texinfo 2>/dev/null`/bin$PATH_SEPARATOR$PATH])
 fi
 
 ## Require makeinfo >= 4.13 (last of the 4.x series) to build the manuals.
@@ -2535,6 +2535,12 @@ fi
 HAVE_IMAGEMAGICK=no
 if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}" = "yes"; then
   if test "${with_imagemagick}" != "no"; then
+    if test -n "$BREW"; then
+      # Homebrew doesn't link ImageMagick 6 by default, so make sure
+      # pkgconfig can find it.
+      export PKG_CONFIG_PATH="$PKG_CONFIG_PATH$PATH_SEPARATOR`$BREW --prefix imagemagick@6 2>/dev/null`/lib/pkgconfig"
+    fi
+
     ## 6.3.5 is the earliest version known to work; see Bug#17339.
     ## 6.8.2 makes Emacs crash; see Bug#13867.
     ## 7 and later have not been ported to; See Bug#25967.
