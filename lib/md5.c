@@ -469,3 +469,10 @@ md5_process_block (const void *buffer, size_t len, struct md5_ctx *ctx)
   ctx->D = D;
 }
 #endif
+
+/*
+ * Hey Emacs!
+ * Local Variables:
+ * coding: utf-8
+ * End:
+ */

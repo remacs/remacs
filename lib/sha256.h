@@ -101,3 +101,10 @@ extern int sha224_stream (FILE *stream, void *resblock);
 # endif
 
 #endif
+
+/*
+ * Hey Emacs!
+ * Local Variables:
+ * coding: utf-8
+ * End:
+ */

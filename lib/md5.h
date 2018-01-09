@@ -133,3 +133,10 @@ extern int __md5_stream (FILE *stream, void *resblock) __THROW;
 # endif
 
 #endif /* md5.h */
+
+/*
+ * Hey Emacs!
+ * Local Variables:
+ * coding: utf-8
+ * End:
+ */
