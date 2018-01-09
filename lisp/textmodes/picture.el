@@ -338,8 +338,9 @@ always moves to the beginning of a line."
         (newline lines-left))))
 
 (defun picture-open-line (arg)
-  "Insert an empty line after the current line.
-With positive argument insert that many lines."
+  "Insert ARG empty lines after the current line.
+ARG must be positive.
+Interactively, ARG is the numeric argument, and defaults to 1."
   (interactive "p")
   (save-excursion
    (end-of-line)
@@ -788,8 +789,9 @@ they are not by default assigned to keys."
 
 (defun picture-mode-exit (&optional nostrip)
   "Undo `picture-mode' and return to previous major mode.
-With no argument, strip whitespace from end of every line in Picture buffer;
-  otherwise, just return to previous mode.
+With NOSTRIP omitted or nil, strip whitespace from end of every line
+  in Picture buffer; otherwise, just return to previous mode.
+Interactively, NOSTRIP is the prefix argument, and defaults to nil.
 Runs `picture-mode-exit-hook' at the end."
   (interactive "P")
   (if (not (eq major-mode 'picture-mode))

@@ -1045,6 +1045,19 @@ commands show above to make them modifier keys.
 Note that if you have Alt keys but no Meta keys, Emacs translates Alt
 into Meta.  This is because of the great importance of Meta in Emacs.
 
+*** Emacs hangs or crashes when a large portion of text is selected or killed.
+
+This is caused by a bug in the clipboard management applets (it has
+been observed in 'klipper' and 'clipit'), which periodically request
+the X clipboard contents from applications.  After a while, Emacs may
+print a message:
+
+  Timed out waiting for property-notify event
+
+A workaround is to not use 'klipper'/'clipit'.  Upgrading 'klipper' to
+the one coming with KDE 3.3 or later might solve the problem; if it
+doesn't, set 'select-active-regions' to 'only' or nil.
+
 ** Window-manager and toolkit-related problems
 
 *** Emacs built with GTK+ toolkit produces corrupted display on HiDPI screen
@@ -1148,19 +1161,6 @@ present or commented out:
 It is also reported that a bug in the gtk-engines-qt engine can cause this if
 Emacs is compiled with Gtk+.
 The bug is fixed in version 0.7 or newer of gtk-engines-qt.
-
-*** KDE: Emacs hangs on KDE when a large portion of text is killed.
-
-This is caused by a bug in the KDE applet 'klipper' which periodically
-requests the X clipboard contents from applications.  Early versions
-of klipper don't implement the ICCCM protocol for large selections,
-which leads to Emacs being flooded with selection requests.  After a
-while, Emacs may print a message:
-
-  Timed out waiting for property-notify event
-
-A workaround is to not use 'klipper'.  Upgrading 'klipper' to the one
-coming with KDE 3.3 or later also solves the problem.
 
 *** KDE / Plasma 5: Emacs exhausts memory and needs to be killed
 

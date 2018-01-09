@@ -643,14 +643,23 @@ x_activate_menubar (struct frame *f)
 
       keyEq = [self parseKeyEquiv: wv->key];
 #ifdef NS_IMPL_COCOA
-      /* macOS just ignores modifier strings longer than one character */
+      /* macOS mangles modifier strings longer than one character.  */
       if (keyEquivModMask == 0)
-        title = [title stringByAppendingFormat: @" (%@)", keyEq];
+        {
+          title = [title stringByAppendingFormat: @" (%@)", keyEq];
+          item = [self addItemWithTitle: (NSString *)title
+                                 action: @selector (menuDown:)
+                          keyEquivalent: @""];
+        }
+      else
+        {
 #endif
-
-      item = [self addItemWithTitle: (NSString *)title
-                             action: @selector (menuDown:)
-                      keyEquivalent: keyEq];
+          item = [self addItemWithTitle: (NSString *)title
+                                 action: @selector (menuDown:)
+                          keyEquivalent: keyEq];
+#ifdef NS_IMPL_COCOA
+        }
+#endif
       [item setKeyEquivalentModifierMask: keyEquivModMask];
 
       [item setEnabled: wv->enabled];
