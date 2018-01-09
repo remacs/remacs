@@ -577,3 +577,10 @@ sha256_process_block (const void *buffer, size_t len, struct sha256_ctx *ctx)
     }
 }
 #endif
+
+/*
+ * Hey Emacs!
+ * Local Variables:
+ * coding: utf-8
+ * End:
+ */

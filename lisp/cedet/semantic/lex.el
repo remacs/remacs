@@ -471,6 +471,7 @@ PROPERTY set."
 ;;; Lexical Analyzer framework settings
 ;;
 
+;; FIXME change to non-obsolete default.
 (defvar semantic-lex-analyzer 'semantic-flex
   "The lexical analyzer used for a given buffer.
 See `semantic-lex' for documentation.
@@ -1856,7 +1857,7 @@ end of the return token will be larger than END.  To truly restrict
 scanning, use `narrow-to-region'.
 The last argument, LENGTH specifies that `semantic-flex' should only
 return LENGTH tokens."
-  (message "`semantic-flex' is an obsolete function.  Use `define-lex' to create lexers.")
+  (declare (obsolete define-lex "23.2"))
   (if (not semantic-flex-keywords-obarray)
       (setq semantic-flex-keywords-obarray [ nil ]))
   (let ((ts nil)

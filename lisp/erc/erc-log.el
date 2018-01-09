@@ -321,12 +321,13 @@ If BUFFER is nil, the value of `current-buffer' is used.
 Logging is enabled if `erc-log-channels-directory' is non-nil, the directory
 is writable (it will be created as necessary) and
 `erc-enable-logging' returns a non-nil value."
+  (or buffer (setq buffer (current-buffer)))
   (and erc-log-channels-directory
        (or (functionp erc-log-channels-directory)
 	   (erc-directory-writable-p erc-log-channels-directory))
        (if (functionp erc-enable-logging)
-	   (funcall erc-enable-logging (or buffer (current-buffer)))
-	 erc-enable-logging)))
+	   (funcall erc-enable-logging buffer)
+	 (buffer-local-value 'erc-enable-logging buffer))))
 
 (defun erc-log-standardize-name (filename)
   "Make FILENAME safe to use as the name of an ERC log.

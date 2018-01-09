@@ -56,12 +56,15 @@ If neither t nor nil, ask user for confirmation."
   :type 'integer
   :group 'epa)
 
+;; In the doc string below, we say "symbol `error'" to avoid producing
+;; a hyperlink for `error' the function.
 (defcustom epa-pinentry-mode nil
   "The pinentry mode.
 
 GnuPG 2.1 or later has an option to control the behavior of
-Pinentry invocation.  Possible modes are: `ask', `cancel',
-`error', and `loopback'.  See the GnuPG manual for the meanings.
+Pinentry invocation.  The value should be the symbol `error',
+`ask', `cancel', or `loopback'.  See the GnuPG manual for the
+meanings.
 
 In epa commands, a particularly useful mode is `loopback', which
 redirects all Pinentry queries to the caller, so Emacs can query
