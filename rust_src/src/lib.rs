@@ -72,6 +72,7 @@ mod process;
 mod strings;
 mod symbols;
 mod threads;
+mod time;
 mod util;
 mod vectors;
 mod windows;
