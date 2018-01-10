@@ -151,8 +151,10 @@ See also `diary-comment-start'."
   :group 'diary)
 
 (defcustom diary-hook nil
-  "List of functions called after the display of the diary.
-Used for example by the appointment package - see `appt-activate'."
+  "Hook run after displaying the diary.
+Used for example by the appointment package - see `appt-activate'.
+The variables `number' and `original-date' are dynamically bound around
+the call."
   :type 'hook
   :group 'diary)
 
@@ -779,10 +781,10 @@ After preparing the initial list, hooks run in this order:
   `diary-hook' runs last, after the diary is displayed.
       This is used e.g. by `appt-check'.
 
-Functions called by these hooks may use the variables ORIGINAL-DATE
-and NUMBER, which are the arguments with which this function was called.
-Note that hook functions should _not_ use DATE, but ORIGINAL-DATE.
-\(Sexp diary entries may use DATE - see `diary-list-sexp-entries'.)
+Functions called by these hooks may use the variables `original-date'
+and `number', which are the arguments with which this function was called.
+Note that hook functions should _not_ use `date', but `original-date'.
+\(Sexp diary entries may use `date' - see `diary-list-sexp-entries'.)
 
 This function displays the list using `diary-display-function', unless
 LIST-ONLY is non-nil, in which case it just returns the list."
@@ -872,7 +874,9 @@ LIST-ONLY is non-nil, in which case it just returns the list."
                                   (copy-sequence
                                    (car display-buffer-fallback-action))))))
                       (funcall diary-display-function)))
-                  (run-hooks 'diary-hook)))))
+                  (calendar-dlet* ((number number)
+                                   (original-date original-date))
+                    (run-hooks 'diary-hook))))))
         (and temp-buff (buffer-name temp-buff) (kill-buffer temp-buff)))
       (or d-incp (message "Preparing diary...done"))
       diary-entries-list)))
