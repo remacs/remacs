@@ -63,6 +63,7 @@
       (format "/mock::%s" temporary-file-directory)))
   "Temporary directory for Tramp tests.")
 
+(defvar file-notify--test-tmpdir nil)
 (defvar file-notify--test-tmpfile nil)
 (defvar file-notify--test-tmpfile1 nil)
 (defvar file-notify--test-desc nil)
@@ -153,6 +154,8 @@ Return nil when any other file notification watch is still active."
         (delete-directory file-notify--test-tmpfile1 'recursive)
       (delete-file file-notify--test-tmpfile1)))
   (ignore-errors
+    (delete-directory file-notify--test-tmpdir 'recursive))
+  (ignore-errors
     (when (file-remote-p temporary-file-directory)
       (tramp-cleanup-connection
        (tramp-dissect-file-name temporary-file-directory) nil 'keep-password)))
@@ -160,7 +163,8 @@ Return nil when any other file notification watch is still active."
   (when (hash-table-p file-notify-descriptors)
     (clrhash file-notify-descriptors))
 
-  (setq file-notify--test-tmpfile nil
+  (setq file-notify--test-tmpdir nil
+        file-notify--test-tmpfile nil
         file-notify--test-tmpfile1 nil
         file-notify--test-desc nil
         file-notify--test-desc1 nil
@@ -274,6 +278,17 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
 (file-notify--deftest-remote file-notify-test00-availability
   "Test availability of `file-notify' for remote files.")
 
+(defun file-notify--test-make-temp-name ()
+  "Create a temporary file name for test."
+  (unless (stringp file-notify--test-tmpdir)
+    (setq file-notify--test-tmpdir
+          (expand-file-name
+           (make-temp-name "file-notify-test") temporary-file-directory)))
+  (unless (file-directory-p file-notify--test-tmpdir)
+    (make-directory file-notify--test-tmpdir))
+  (expand-file-name
+   (make-temp-name "file-notify-test") file-notify--test-tmpdir))
+
 (ert-deftest file-notify-test01-add-watch ()
   "Check `file-notify-add-watch'."
   (skip-unless (file-notify--test-local-enabled))
@@ -289,17 +304,17 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
         (should
          (setq file-notify--test-desc
                (file-notify-add-watch
-                temporary-file-directory '(change) #'ignore)))
+                file-notify--test-tmpdir '(change) #'ignore)))
         (file-notify-rm-watch file-notify--test-desc)
         (should
          (setq file-notify--test-desc
                (file-notify-add-watch
-                temporary-file-directory '(attribute-change) #'ignore)))
+                file-notify--test-tmpdir '(attribute-change) #'ignore)))
         (file-notify-rm-watch file-notify--test-desc)
         (should
          (setq file-notify--test-desc
                (file-notify-add-watch
-                temporary-file-directory '(change attribute-change) #'ignore)))
+                file-notify--test-tmpdir '(change attribute-change) #'ignore)))
         (file-notify-rm-watch file-notify--test-desc)
 
         ;; File monitors like kqueue insist, that the watched file
@@ -325,11 +340,11 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
                 '(wrong-type-argument 1)))
         (should
          (equal (should-error
-                 (file-notify-add-watch temporary-file-directory 2 3))
+                 (file-notify-add-watch file-notify--test-tmpdir 2 3))
                 '(wrong-type-argument 2)))
         (should
          (equal (should-error
-                 (file-notify-add-watch temporary-file-directory '(change) 3))
+                 (file-notify-add-watch file-notify--test-tmpdir '(change) 3))
                 '(wrong-type-argument 3)))
         ;; The upper directory of a file must exist.
         (should
@@ -348,11 +363,6 @@ This returns only for the local case and gfilenotify; otherwise it is nil.
 
 (file-notify--deftest-remote file-notify-test01-add-watch
   "Check `file-notify-add-watch' for remote files.")
-
-(defun file-notify--test-make-temp-name ()
-  "Create a temporary file name for test."
-  (expand-file-name
-   (make-temp-name "file-notify-test") temporary-file-directory))
 
 ;; This test is inspired by Bug#26126 and Bug#26127.
 (ert-deftest file-notify-test02-rm-watch ()
@@ -612,13 +622,13 @@ delivered."
         ;; Check file creation, change and deletion when watching a
         ;; directory.  There must be a `stopped' event when deleting
         ;; the directory.
-	(let ((temporary-file-directory
+        (let ((file-notify--test-tmpdir
 	       (make-temp-file "file-notify-test-parent" t)))
 	  (should
 	   (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
 		 file-notify--test-desc
 		 (file-notify-add-watch
-		  temporary-file-directory
+		  file-notify--test-tmpdir
 		  '(change) #'file-notify--test-event-handler)))
 	  (file-notify--test-with-events
 	      (cond
@@ -643,18 +653,18 @@ delivered."
 	    (write-region
 	     "any text" nil file-notify--test-tmpfile nil 'no-message)
 	    (file-notify--test-read-event)
-            (delete-directory temporary-file-directory 'recursive))
+            (delete-directory file-notify--test-tmpdir 'recursive))
           (file-notify-rm-watch file-notify--test-desc))
 
         ;; Check copy of files inside a directory.
-	(let ((temporary-file-directory
+        (let ((file-notify--test-tmpdir
 	       (make-temp-file "file-notify-test-parent" t)))
 	  (should
 	   (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
 		 file-notify--test-tmpfile1 (file-notify--test-make-temp-name)
 		 file-notify--test-desc
 		 (file-notify-add-watch
-		  temporary-file-directory
+		  file-notify--test-tmpdir
 		  '(change) #'file-notify--test-event-handler)))
 	  (file-notify--test-with-events
 	      (cond
@@ -689,18 +699,18 @@ delivered."
 	    (file-notify--test-read-event)
 	    (set-file-times file-notify--test-tmpfile '(0 0))
 	    (file-notify--test-read-event)
-            (delete-directory temporary-file-directory 'recursive))
+            (delete-directory file-notify--test-tmpdir 'recursive))
           (file-notify-rm-watch file-notify--test-desc))
 
         ;; Check rename of files inside a directory.
-	(let ((temporary-file-directory
+        (let ((file-notify--test-tmpdir
 	       (make-temp-file "file-notify-test-parent" t)))
 	  (should
 	   (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
 		 file-notify--test-tmpfile1 (file-notify--test-make-temp-name)
 		 file-notify--test-desc
 		 (file-notify-add-watch
-		  temporary-file-directory
+		  file-notify--test-tmpdir
 		  '(change) #'file-notify--test-event-handler)))
 	  (file-notify--test-with-events
 	      (cond
@@ -729,7 +739,7 @@ delivered."
 	    (rename-file file-notify--test-tmpfile file-notify--test-tmpfile1)
 	    ;; After the rename, we won't get events anymore.
 	    (file-notify--test-read-event)
-            (delete-directory temporary-file-directory 'recursive))
+            (delete-directory file-notify--test-tmpdir 'recursive))
           (file-notify-rm-watch file-notify--test-desc))
 
         ;; Check attribute change.  Does not work for cygwin.
@@ -930,13 +940,13 @@ delivered."
     (file-notify--test-cleanup))
 
   (unwind-protect
-      (let ((temporary-file-directory
+      (let ((file-notify--test-tmpdir
 	     (make-temp-file "file-notify-test-parent" t)))
 	(should
 	 (setq file-notify--test-tmpfile (file-notify--test-make-temp-name)
 	       file-notify--test-desc
 	       (file-notify-add-watch
-		temporary-file-directory
+		file-notify--test-tmpdir
 		'(change) #'file-notify--test-event-handler)))
 	(should (file-notify-valid-p file-notify--test-desc))
 	(file-notify--test-with-events
@@ -961,7 +971,7 @@ delivered."
 	 (write-region
 	  "any text" nil file-notify--test-tmpfile nil 'no-message)
 	 (file-notify--test-read-event)
-	 (delete-directory temporary-file-directory t))
+	 (delete-directory file-notify--test-tmpdir 'recursive))
 	;; After deleting the parent directory, the descriptor must
 	;; not be valid anymore.
 	(should-not (file-notify-valid-p file-notify--test-desc))
@@ -1207,7 +1217,7 @@ the file watch."
   ;; A file to be watched.
   (should
    (setq file-notify--test-tmpfile1
-         (let ((temporary-file-directory file-notify--test-tmpfile))
+         (let ((file-notify--test-tmpdir file-notify--test-tmpfile))
            (file-notify--test-make-temp-name))))
   (write-region "any text" nil file-notify--test-tmpfile1 nil 'no-message)
   (unwind-protect
@@ -1268,7 +1278,7 @@ the file watch."
               (if (zerop (mod i 2))
                   (write-region
                    "any text" nil file-notify--test-tmpfile1 t 'no-message)
-                (let ((temporary-file-directory file-notify--test-tmpfile))
+                (let ((file-notify--test-tmpdir file-notify--test-tmpfile))
                   (write-region
                    "any text" nil
                    (file-notify--test-make-temp-name) nil 'no-message))))))
@@ -1334,7 +1344,7 @@ the file watch."
    (setq file-notify--test-tmpfile
 	 (make-temp-file "file-notify-test-parent" t)))
   (unwind-protect
-      (let ((temporary-file-directory file-notify--test-tmpfile)
+      (let ((file-notify--test-tmpdir file-notify--test-tmpfile)
 	    descs)
 	(should-error
 	 (while t
