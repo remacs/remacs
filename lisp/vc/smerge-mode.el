@@ -104,7 +104,6 @@ Used in `smerge-diff-base-upper' and related functions."
     (((class color))
      :foreground "yellow"))
   "Face for the base code.")
-(define-obsolete-face-alias 'smerge-base-face 'smerge-base "22.1")
 (defvar smerge-base-face 'smerge-base)
 
 (defface smerge-markers
@@ -113,7 +112,6 @@ Used in `smerge-diff-base-upper' and related functions."
     (((background dark))
      (:background "grey30")))
   "Face for the conflict markers.")
-(define-obsolete-face-alias 'smerge-markers-face 'smerge-markers "22.1")
 (defvar smerge-markers-face 'smerge-markers)
 
 (defface smerge-refined-changed
