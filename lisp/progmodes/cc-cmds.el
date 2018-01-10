@@ -4737,7 +4737,7 @@ If a fill prefix is specified, it overrides all the above."
 (defalias 'c-comment-line-break-function 'c-indent-new-comment-line)
 (make-obsolete 'c-comment-line-break-function 'c-indent-new-comment-line "21.1")
 
-;; advice for indent-new-comment-line for older Emacsen
+;; Advice for Emacsen older than 21.1 (!), released 2001/10
 (unless (boundp 'comment-line-break-function)
   (defvar c-inside-line-break-advice nil)
   (defadvice indent-new-comment-line (around c-line-break-advice
