@@ -893,8 +893,8 @@ Subclasses to override slot attributes.")
   (list newname 2))
 
 (ert-deftest eieio-test-37-obsolete-name-in-constructor ()
-  ;; FIXME repeated intermittent failures on hydra (bug#24503)
-  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
+  ;; FIXME repeated intermittent failures on hydra and elsewhere (bug#24503).
+  :tags '(:unstable)
   (should (equal (eieio--testing "toto") '("toto" 2))))
 
 (ert-deftest eieio-autoload ()

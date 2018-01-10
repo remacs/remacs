@@ -125,8 +125,9 @@ test_module_dir := $(srcdir)/data/emacs-module
 
 all: check
 
-SELECTOR_DEFAULT = (quote (not (tag :expensive-test)))
-SELECTOR_EXPENSIVE = nil
+SELECTOR_DEFAULT = (quote (not (or (tag :expensive-test) (tag :unstable))))
+SELECTOR_EXPENSIVE = (quote (not (tag :unstable)))
+SELECTOR_ALL = nil
 ifdef SELECTOR
 SELECTOR_ACTUAL=$(SELECTOR)
 else ifndef MAKECMDGOALS
@@ -240,6 +241,11 @@ check: mostlyclean check-no-automated-subdir
 .PHONY: check-expensive
 check-expensive: mostlyclean check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_EXPENSIVE}"
+
+## Run all tests, regardless of tag.
+.PHONY: check-all
+check-all: mostlyclean check-no-automated-subdir
+	@${MAKE} check-doit SELECTOR="${SELECTOR_ALL}"
 
 ## Re-run all tests which are outdated. A test is outdated if its
 ## logfile is out-of-date with either the test file, or the source
