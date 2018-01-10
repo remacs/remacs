@@ -1042,22 +1042,24 @@ pub struct lisp_time {
 }
 
 extern "C" {
-    pub static mut globals: emacs_globals;
     pub static mut current_global_map: Lisp_Object;
     pub static current_thread: *mut thread_state;
-
-    pub static lispsym: Lisp_Symbol;
-    pub static Vbuffer_alist: Lisp_Object;
-    pub static Vprocess_alist: Lisp_Object;
-    pub static Vminibuffer_list: Lisp_Object;
-    pub static Vfeatures: Lisp_Object;
-    pub static mut Vautoload_queue: Lisp_Object;
-    pub static minibuf_level: EmacsInt;
-    pub static mut minibuf_window: Lisp_Object;
-    pub static selected_window: Lisp_Object;
-    pub static minibuf_selected_window: Lisp_Object;
-    pub static selected_frame: Lisp_Object;
     pub static empty_unibyte_string: Lisp_Object;
+    pub static fatal_error_in_progress: bool;
+    pub static mut globals: emacs_globals;
+    pub static initial_obarray: Lisp_Object;
+    pub static lispsym: Lisp_Symbol;
+    pub static minibuf_level: EmacsInt;
+    pub static minibuf_selected_window: Lisp_Object;
+    pub static mut minibuf_window: Lisp_Object;
+    pub static selected_frame: Lisp_Object;
+    pub static selected_window: Lisp_Object;
+
+    pub static mut Vautoload_queue: Lisp_Object;
+    pub static Vbuffer_alist: Lisp_Object;
+    pub static Vfeatures: Lisp_Object;
+    pub static Vminibuffer_list: Lisp_Object;
+    pub static Vprocess_alist: Lisp_Object;
 
     pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
@@ -1076,6 +1078,8 @@ extern "C" {
         nchars: ptrdiff_t,
         nbytes: ptrdiff_t,
     ) -> Lisp_Object;
+    pub fn make_pure_c_string(data: *const c_char, nchars: ptrdiff_t) -> Lisp_Object;
+
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
     pub fn make_lisp_symbol(ptr: *mut Lisp_Symbol) -> Lisp_Object;
     pub fn build_string(s: *const c_char) -> Lisp_Object;
@@ -1120,13 +1124,7 @@ extern "C" {
         props: bool,
     ) -> Lisp_Object;
 
-    pub fn check_obarray(obarray: Lisp_Object) -> Lisp_Object;
-    pub fn check_vobarray() -> Lisp_Object;
-    pub fn intern_driver(
-        string: Lisp_Object,
-        obarray: Lisp_Object,
-        index: Lisp_Object,
-    ) -> Lisp_Object;
+    pub fn intern_sym(sym: Lisp_Object, obarray: Lisp_Object, index: Lisp_Object) -> Lisp_Object;
     pub fn oblookup(
         obarray: Lisp_Object,
         s: *const c_char,
@@ -1227,6 +1225,7 @@ extern "C" {
         object: Lisp_Object,
     ) -> Lisp_Object;
 
+    pub fn Fmake_symbol(name: Lisp_Object) -> Lisp_Object;
     pub fn find_symbol_value(symbol: Lisp_Object) -> Lisp_Object;
     pub fn symbol_is_interned(symbol: *const Lisp_Symbol) -> bool;
     pub fn symbol_is_alias(symbol: *const Lisp_Symbol) -> bool;

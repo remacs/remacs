@@ -76,6 +76,28 @@ impl LispSymbolRef {
 
         hare
     }
+
+    pub fn iter(self) -> LispSymbolIter {
+        LispSymbolIter { current: self }
+    }
+}
+
+pub struct LispSymbolIter {
+    current: LispSymbolRef,
+}
+
+impl Iterator for LispSymbolIter {
+    type Item = LispSymbolRef;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current.is_null() {
+            None
+        } else {
+            let sym = self.current;
+            self.current = LispSymbolRef::new(sym.next);
+            Some(sym)
+        }
+    }
 }
 
 // Wrapper around LispSymbolRef::get_indirect_variable()
