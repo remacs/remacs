@@ -246,8 +246,6 @@ This definition is the heart of the calendar!")
 
 (autoload 'holiday-in-range "holidays")
 
-(define-obsolete-function-alias 'cal-tex-list-holidays 'holiday-in-range "24.3")
-
 (autoload 'diary-list-entries "diary-lib")
 
 (defun cal-tex-list-diary-entries (d1 d2)

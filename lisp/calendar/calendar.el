@@ -1786,10 +1786,7 @@ For a complete description, see the info node `Calendar/Diary'.
   ;; so let's make sure they're always set.  Most likely, this will be reset
   ;; soon in calendar-generate, but better safe than sorry.
   (unless (boundp 'displayed-month) (setq displayed-month 1))
-  (unless (boundp 'displayed-year)  (setq displayed-year  2001))
-  (if (bound-and-true-p calendar-font-lock-keywords)
-      (set (make-local-variable 'font-lock-defaults)
-           '(calendar-font-lock-keywords t))))
+  (unless (boundp 'displayed-year)  (setq displayed-year  2001)))
 
 (defun calendar-string-spread (strings char length)
   "Concatenate list of STRINGS separated with copies of CHAR to fill LENGTH.
@@ -2306,13 +2303,6 @@ Negative years are interpreted as years BC; -1 being 1 BC, and so on."
   (if (< yr2 0) (setq yr2 (1+ yr2)))
   (+ (* 12 (- yr2 yr1))
      (- mon2 mon1)))
-
-(defvar calendar-font-lock-keywords nil
-  "Default keywords to highlight in Calendar mode.")
-
-(make-obsolete-variable 'calendar-font-lock-keywords
-                        "set font-lock keywords in `calendar-mode-hook', \
-or customize calendar faces." "24.4")
 
 (defun calendar-day-name (date &optional abbrev absolute)
   "Return a string with the name of the day of the week of DATE.
