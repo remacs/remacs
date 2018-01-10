@@ -138,4 +138,4 @@ pub fn subr_lang(subr: LispSubrRef) -> LispObject {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));
+include!("data_exports.rs");

@@ -56,4 +56,4 @@ pub fn set_char_table_parent(
     //parent
 }
 
-include!(concat!(env!("OUT_DIR"), "/chartable_exports.rs"));
+include!("chartable_exports.rs");

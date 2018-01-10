@@ -62,4 +62,4 @@ pub fn identity(arg: LispObject) -> LispObject {
     arg
 }
 
-include!(concat!(env!("OUT_DIR"), "/objects_exports.rs"));
+include!("objects_exports.rs");

@@ -395,4 +395,4 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
+include!("buffers_exports.rs");

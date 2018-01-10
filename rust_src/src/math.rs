@@ -418,4 +418,4 @@ pub fn lognot(number: EmacsInt) -> EmacsInt {
     !number
 }
 
-include!(concat!(env!("OUT_DIR"), "/math_exports.rs"));
+include!("math_exports.rs");

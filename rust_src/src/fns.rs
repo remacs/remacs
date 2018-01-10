@@ -104,4 +104,4 @@ pub fn quote(args: LispCons) -> LispObject {
     args.car()
 }
 
-include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));
+include!("fns_exports.rs");

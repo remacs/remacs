@@ -76,4 +76,4 @@ pub fn fontp(object: LispObject, extra_type: LispObject) -> bool {
     })
 }
 
-include!(concat!(env!("OUT_DIR"), "/fonts_exports.rs"));
+include!("fonts_exports.rs");

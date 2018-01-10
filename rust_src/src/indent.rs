@@ -25,4 +25,4 @@ pub fn current_column() -> EmacsInt {
     column as EmacsInt
 }
 
-include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));
+include!("indent_exports.rs");

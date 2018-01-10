@@ -152,4 +152,4 @@ pub fn intern(string: LispObject, obarray: LispObject) -> LispObject {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/obarray_exports.rs"));
+include!("obarray_exports.rs");

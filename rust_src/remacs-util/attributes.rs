@@ -56,6 +56,7 @@ impl LispFnArgsRaw {
     }
 }
 
+#[derive(Clone)]
 pub struct LispFnArgs {
     pub name: String,
     pub c_name: String,

@@ -89,7 +89,7 @@ pub extern "C" fn rust_initial_keys() {
     cmds::initial_keys();
 }
 
-include!(concat!(env!("OUT_DIR"), "/c_exports.rs"));
+include!("lib_exports.rs");
 
 #[cfg(test)]
 pub use functions::{lispsym, make_string, make_unibyte_string, Fcons, Fsignal};

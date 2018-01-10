@@ -159,7 +159,7 @@ pub fn clear_string(mut string: LispStringRef) -> () {
     LispObject::set_string_unibyte(&mut string);
 }
 
-include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));
+include!("strings_exports.rs");
 
 #[test]
 fn test_multibyte_stringp() {

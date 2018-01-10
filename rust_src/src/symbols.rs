@@ -199,4 +199,4 @@ pub fn symbol_value(symbol: LispObject) -> LispObject {
     LispObject::from_raw(val)
 }
 
-include!(concat!(env!("OUT_DIR"), "/symbols_exports.rs"));
+include!("symbols_exports.rs");

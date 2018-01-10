@@ -88,4 +88,4 @@ pub fn random(limit: LispObject) -> LispObject {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/numbers_exports.rs"));
+include!("numbers_exports.rs");

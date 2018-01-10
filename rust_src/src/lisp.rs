@@ -1488,10 +1488,6 @@ impl From<LispObject> for Option<LispProcessRef> {
     }
 }
 
-/// Used to denote functions that have no limit on the maximum number
-/// of arguments.
-pub const MANY: i16 = -2;
-
 /// Internal function to get a displayable string out of a Lisp string.
 fn display_string(obj: LispObject) -> String {
     let s = obj.as_string().unwrap();

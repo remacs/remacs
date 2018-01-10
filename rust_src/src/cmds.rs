@@ -205,4 +205,4 @@ pub fn initial_keys() {
     }
 }
 
-include!(concat!(env!("OUT_DIR"), "/cmds_exports.rs"));
+include!("cmds_exports.rs");

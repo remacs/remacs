@@ -502,4 +502,4 @@ pub fn circular_list(obj: LispObject) -> ! {
     xsignal!(Qcircular_list, obj);
 }
 
-include!(concat!(env!("OUT_DIR"), "/lists_exports.rs"));
+include!("lists_exports.rs");

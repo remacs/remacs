@@ -524,4 +524,4 @@ pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     digest
 }
 
-include!(concat!(env!("OUT_DIR"), "/crypto_exports.rs"));
+include!("crypto_exports.rs");

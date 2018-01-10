@@ -286,4 +286,4 @@ pub fn base64_decode_string(mut string: LispStringRef) -> LispObject {
     unsafe { LispObject::from_raw(make_unibyte_string(decoded, decoded_length)) }
 }
 
-include!(concat!(env!("OUT_DIR"), "/base64_exports.rs"));
+include!("base64_exports.rs");

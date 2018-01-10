@@ -486,4 +486,4 @@ pub fn window_wants_header_line(window: LispWindowRef) -> bool {
     window.wants_header_line()
 }
 
-include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
+include!("windows_exports.rs");

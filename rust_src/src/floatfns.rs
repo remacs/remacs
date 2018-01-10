@@ -33,25 +33,49 @@ pub fn fmod_float(mut f1: f64, f2: f64) -> EmacsDouble {
     f1
 }
 
-macro_rules! simple_float_op {
-    ($lisp_name:expr, $float_func:ident, $lisp_docs:expr) => {
-        #[doc = $lisp_docs]
-        #[lisp_fn(name = $lisp_name, c_name = $lisp_name)]
-        fn $float_func(arg: EmacsDouble) -> EmacsDouble {
-            arg.$float_func()
-        }
-    }
+/// "Return the inverse cosine of ARG."
+#[lisp_fn]
+pub fn acos(arg: EmacsDouble) -> EmacsDouble {
+    arg.acos()
 }
 
-simple_float_op!("acos", acos, "Return the inverse cosine of ARG.");
-simple_float_op!("asin", asin, "Return the inverse sine of ARG.");
-// atan is special, defined later
-simple_float_op!("cos", cos, "Return the cosine of ARG.");
-simple_float_op!("sin", sin, "Return the sine of ARG.");
-simple_float_op!("tan", tan, "Return the tangent of ARG.");
+/// "Return the inverse sine of ARG."
+#[lisp_fn]
+pub fn asin(arg: EmacsDouble) -> EmacsDouble {
+    arg.asin()
+}
 
-simple_float_op!("exp", exp, "Return the exponential base e of ARG.");
-simple_float_op!("sqrt", sqrt, "Return the square root of ARG.");
+// atan is special, defined later
+
+/// "Return the cosine of ARG."
+#[lisp_fn]
+pub fn cos(arg: EmacsDouble) -> EmacsDouble {
+    arg.cos()
+}
+
+/// "Return the sine of ARG."
+#[lisp_fn]
+pub fn sin(arg: EmacsDouble) -> EmacsDouble {
+    arg.sin()
+}
+
+/// "Return the tangent of ARG."
+#[lisp_fn]
+pub fn tan(arg: EmacsDouble) -> EmacsDouble {
+    arg.tan()
+}
+
+/// "Return the exponential base e of ARG."
+#[lisp_fn]
+pub fn exp(arg: EmacsDouble) -> EmacsDouble {
+    arg.exp()
+}
+
+/// "Return the square root of ARG."
+#[lisp_fn]
+pub fn sqrt(arg: EmacsDouble) -> EmacsDouble {
+    arg.sqrt()
+}
 
 /// Driver for standard arithmetic operations on floats.
 pub fn float_arith_driver(
@@ -367,19 +391,4 @@ fn round2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
     }
 }
 
-// Since these are generated via a macro the build cannot hook them into the
-// system automatically. Do not add more items here unless they are also generated
-// with something like simple_float_op.
-pub fn rust_init_extra_syms() {
-    unsafe {
-        defsubr(Sacos.as_ptr());
-        defsubr(Sasin.as_ptr());
-        defsubr(Scos.as_ptr());
-        defsubr(Ssin.as_ptr());
-        defsubr(Stan.as_ptr());
-        defsubr(Sexp.as_ptr());
-        defsubr(Ssqrt.as_ptr());
-    }
-}
-
-include!(concat!(env!("OUT_DIR"), "/floatfns_exports.rs"));
+include!("floatfns_exports.rs");
