@@ -2142,10 +2142,13 @@ to function definitions by giving the @samp{--declarations} option to
 @item
 In C++ code, in addition to all the tag constructs of C code, member
 functions are also recognized; member variables are also recognized,
-unless you use the @samp{--no-members} option.  Tags for variables and
-functions in classes are named @samp{@var{class}::@var{variable}} and
-@samp{@var{class}::@var{function}}.  @code{operator} definitions have
-tag names like @samp{operator+}.
+unless you use the @samp{--no-members} option.  @code{operator}
+definitions have tag names like @samp{operator+}.  If you specify the
+@samp{--class-qualify} option, tags for variables and functions in
+classes are named @samp{@var{class}::@var{variable}} and
+@samp{@var{class}::@var{function}}.  By default, class methods and
+members are not class-qualified, which allows to identify their names in
+the sources more accurately.
 
 @item
 In Java code, tags include all the constructs recognized in C++, plus
@@ -2324,7 +2327,9 @@ The @command{etags} program reads the specified files, and writes a tags
 table named @file{TAGS} in the current working directory.  You can
 optionally specify a different file name for the tags table by using the
 @samp{--output=@var{file}} option; specifying @file{-} as a file name
-prints the tags table to standard output.
+prints the tags table to standard output.  You can also append the
+newly created tags table to an existing file by using the @samp{--append}
+option.
 
   If the specified files don't exist, @command{etags} looks for
 compressed versions of them and uncompresses them to read them.  Under
@@ -2381,15 +2386,25 @@ input, by typing a dash in place of the file names, like this:
 find . -name "*.[chCH]" -print | etags -
 @end smallexample
 
-  @command{etags} recognizes the language used in an input file based
-on its file name and contents.  You can specify the language
-explicitly with the @samp{--language=@var{name}} option.  You can
-intermix these options with file names; each one applies to the file
-names that follow it.  Specify @samp{--language=auto} to tell
-@command{etags} to resume guessing the language from the file names
-and file contents.  Specify @samp{--language=none} to turn off
-language-specific processing entirely; then @command{etags} recognizes
-tags by regexp matching alone (@pxref{Etags Regexps}).
+  @command{etags} recognizes the language used in an input file based on
+its file name and contents.  It first tries to match the file's name and
+extension to the ones commonly used with certain languages.  Some
+languages have interpreters with known names (e.g., @command{perl} for
+Perl or @command{pl} for Prolog), so @command{etags} next looks for an
+interpreter specification of the form @samp{#!@var{interp}} on the first
+line of an input file, and matches that against known interpreters.  If
+none of that works, or if you want to override the automatic detection of
+the language, you can specify the language explicitly with the
+@samp{--language=@var{name}} option.  You can intermix these options with
+file names; each one applies to the file names that follow it.  Specify
+@samp{--language=auto} to tell @command{etags} to resume guessing the
+language from the file names and file contents.  Specify
+@samp{--language=none} to turn off language-specific processing entirely;
+then @command{etags} recognizes tags by regexp matching alone
+(@pxref{Etags Regexps}).  This comes in handy when an input file uses a
+language not yet supported by @command{etags}, and you want to avoid
+having @command{etags} fall back on Fortran and C as the default
+languages.
 
   The option @samp{--parse-stdin=@var{file}} is mostly useful when
 calling @command{etags} from programs.  It can be used (only once) in
