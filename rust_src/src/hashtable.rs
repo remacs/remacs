@@ -5,10 +5,11 @@ use std::ptr;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Hash_Table, PseudovecType, CHECK_IMPURE};
-use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table, Faref,
+use remacs_sys::{gc_aset, hash_clear, hash_lookup, hash_put, hash_remove_from_table,
                  Fcopy_sequence};
 use remacs_sys::Qhash_table_test;
 
+use data::aref;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{list, put};
@@ -72,8 +73,10 @@ impl LispHashTableRef {
 
     #[inline]
     pub fn get_hash_value(self, idx: isize) -> LispObject {
-        let index = LispObject::from_natnum((2 * idx + 1) as EmacsInt);
-        unsafe { LispObject::from_raw(Faref(self.key_and_value, index.to_raw())) }
+        aref(
+            LispObject::from_raw(self.key_and_value),
+            (2 * idx + 1) as EmacsInt,
+        )
     }
 
     #[inline]
@@ -104,13 +107,14 @@ impl LispHashTableRef {
     }
 
     pub fn get_hash_hash(self, idx: isize) -> LispObject {
-        let index = LispObject::from_natnum(idx as EmacsInt);
-        unsafe { LispObject::from_raw(Faref(self.hash, index.to_raw())) }
+        aref(LispObject::from_raw(self.hash), idx as EmacsInt)
     }
 
     pub fn get_hash_key(self, idx: isize) -> LispObject {
-        let index = LispObject::from_natnum((2 * idx) as EmacsInt);
-        unsafe { LispObject::from_raw(Faref(self.key_and_value, index.to_raw())) }
+        aref(
+            LispObject::from_raw(self.key_and_value),
+            (2 * idx) as EmacsInt,
+        )
     }
 
     pub fn size(self) -> usize {

@@ -60,7 +60,7 @@ static const int chartab_bits[4] =
 typedef Lisp_Object (*uniprop_decoder_t) (Lisp_Object, Lisp_Object);
 typedef Lisp_Object (*uniprop_encoder_t) (Lisp_Object, Lisp_Object);
 
-static Lisp_Object uniprop_table_uncompress (Lisp_Object, int);
+Lisp_Object uniprop_table_uncompress (Lisp_Object, int);
 static uniprop_decoder_t uniprop_get_decoder (Lisp_Object);
 
 /* 1 iff TABLE is a uniprop table.  */
@@ -220,6 +220,7 @@ sub_char_table_ref (Lisp_Object table, int c, bool is_uniprop)
     val = uniprop_table_uncompress (table, idx);
   if (SUB_CHAR_TABLE_P (val))
     val = sub_char_table_ref (val, c, is_uniprop);
+
   return val;
 }
 
@@ -247,6 +248,7 @@ char_table_ref (Lisp_Object table, int c)
       if (NILP (val) && CHAR_TABLE_P (tbl->parent))
 	val = char_table_ref (tbl->parent, c);
     }
+
   return val;
 }
 
@@ -1057,7 +1059,7 @@ map_char_table_for_charset (void (*c_function) (Lisp_Object, Lisp_Object),
 
 /* Uncompress the IDXth element of sub-char-table TABLE.  */
 
-static Lisp_Object
+Lisp_Object
 uniprop_table_uncompress (Lisp_Object table, int idx)
 {
   Lisp_Object val = XSUB_CHAR_TABLE (table)->contents[idx];

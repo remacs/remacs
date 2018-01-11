@@ -28,7 +28,7 @@ use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, ma
                  misc_get_ty};
 
 use buffers::{LispBufferRef, LispOverlayRef};
-use chartable::LispCharTableRef;
+use chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
 use fonts::LispFontRef;
 use frames::LispFrameRef;
 use hashtable::LispHashTableRef;
@@ -39,7 +39,7 @@ use obarray::{check_obarray, LispObarrayRef};
 use process::LispProcessRef;
 use symbols::LispSymbolRef;
 use threads::ThreadStateRef;
-use vectors::{LispVectorRef, LispVectorlikeRef};
+use vectors::{LispBoolVecRef, LispVectorRef, LispVectorlikeRef};
 use windows::LispWindowRef;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -558,6 +558,18 @@ impl From<usize> for LispObject {
     }
 }
 
+impl From<u64> for LispObject {
+    fn from(v: u64) -> Self {
+        LispObject::from_fixnum(v as EmacsInt)
+    }
+}
+
+impl From<isize> for LispObject {
+    fn from(v: isize) -> Self {
+        LispObject::from_fixnum(v as EmacsInt)
+    }
+}
+
 // Vectorlike support (LispType == 5)
 
 impl LispObject {
@@ -597,9 +609,12 @@ impl LispObject {
         LispVectorlikeRef::new(mem::transmute(self.get_untaggedptr()))
     }
 
+    pub fn as_vector(self) -> Option<LispVectorRef> {
+        self.as_vectorlike().and_then(|v| v.as_vector())
+    }
+
     pub fn as_vector_or_error(self) -> LispVectorRef {
-        self.as_vectorlike()
-            .and_then(|v| v.as_vector())
+        self.as_vector()
             .unwrap_or_else(|| wrong_type!(Qvectorp, self))
     }
 
@@ -694,10 +709,23 @@ impl LispObject {
         }
     }
 
+    pub fn as_sub_char_table(self) -> Option<LispSubCharTableRef> {
+        self.as_vectorlike().and_then(|v| v.as_sub_char_table())
+    }
+
+    pub fn as_sub_char_table_ascii(self) -> Option<LispSubCharTableAsciiRef> {
+        self.as_vectorlike()
+            .and_then(|v| v.as_sub_char_table_ascii())
+    }
+
     pub fn is_bool_vector(self) -> bool {
         self.as_vectorlike().map_or(false, |v| {
             v.is_pseudovector(PseudovecType::PVEC_BOOL_VECTOR)
         })
+    }
+
+    pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
+        self.as_vectorlike().and_then(|v| v.as_bool_vector())
     }
 
     pub fn is_array(self) -> bool {

@@ -2,10 +2,11 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
-use remacs_sys::{access_keymap, get_keymap, maybe_quit, Faref, Fevent_convert_list, Ffset,
-                 Fpurecopy, Fset};
+use remacs_sys::{access_keymap, get_keymap, maybe_quit, Fevent_convert_list, Ffset, Fpurecopy,
+                 Fset};
 use remacs_sys::Qkeymap;
 
+use data::aref;
 use keyboard::lucid_event_type_list_p;
 use lisp::{defsubr, LispObject};
 use threads::ThreadState;
@@ -72,9 +73,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
 
     let mut idx = 0;
     loop {
-        let mut c = LispObject::from_raw(unsafe {
-            Faref(key.to_raw(), LispObject::from_fixnum(idx).to_raw())
-        });
+        let mut c = aref(key, idx);
         idx += 1;
 
         if c.is_cons() && lucid_event_type_list_p(c.as_cons()) {

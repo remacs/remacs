@@ -1615,59 +1615,6 @@ selected frame's terminal device).  */)
 }
 #endif
 
-/* Extract and set vector and string elements.  */
-
-DEFUN ("aref", Faref, Saref, 2, 2, 0,
-       doc: /* Return the element of ARG at index IDX.
-ARG may be a vector, a string, a char-table, a bool-vector, a record,
-or a byte-code object.  IDX starts at 0.  */)
-  (register Lisp_Object array, Lisp_Object idx)
-{
-  register EMACS_INT idxval;
-
-  CHECK_NUMBER (idx);
-  idxval = XINT (idx);
-  if (STRINGP (array))
-    {
-      int c;
-      ptrdiff_t idxval_byte;
-
-      if (idxval < 0 || idxval >= SCHARS (array))
-	args_out_of_range (array, idx);
-      if (! STRING_MULTIBYTE (array))
-	return make_number ((unsigned char) SREF (array, idxval));
-      idxval_byte = string_char_to_byte (array, idxval);
-
-      c = STRING_CHAR (SDATA (array) + idxval_byte);
-      return make_number (c);
-    }
-  else if (BOOL_VECTOR_P (array))
-    {
-      if (idxval < 0 || idxval >= bool_vector_size (array))
-	args_out_of_range (array, idx);
-      return bool_vector_ref (array, idxval);
-    }
-  else if (CHAR_TABLE_P (array))
-    {
-      CHECK_CHARACTER (idx);
-      return CHAR_TABLE_REF (array, idxval);
-    }
-  else
-    {
-      ptrdiff_t size = 0;
-      if (VECTORP (array))
-	size = ASIZE (array);
-      else if (COMPILEDP (array) || RECORDP (array))
-	size = PVSIZE (array);
-      else
-	wrong_type_argument (Qarrayp, array);
-
-      if (idxval < 0 || idxval >= size)
-	args_out_of_range (array, idx);
-      return AREF (array, idxval);
-    }
-}
-
 DEFUN ("aset", Faset, Saset, 3, 3, 0,
        doc: /* Store into the element of ARRAY at index IDX the value NEWELT.
 Return NEWELT.  ARRAY may be a vector, a string, a char-table or a
@@ -2548,7 +2495,6 @@ syms_of_data (void)
   defsubr (&Sterminal_local_value);
   defsubr (&Sset_terminal_local_value);
 #endif
-  defsubr (&Saref);
   defsubr (&Saset);
   defsubr (&Snumber_to_string);
   defsubr (&Sstring_to_number);

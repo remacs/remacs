@@ -8,14 +8,14 @@ use std::slice;
 use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Bool_Vector, Lisp_Object, Lisp_Vector, Lisp_Vectorlike,
+use remacs_sys::{EmacsInt, EmacsUint, Lisp_Bool_Vector, Lisp_Object, Lisp_Vector, Lisp_Vectorlike,
                  PseudovecType, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG,
                  PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
-use remacs_sys::Faref;
 use remacs_sys::Qsequencep;
 
 use buffers::LispBufferRef;
-use chartable::LispCharTableRef;
+use chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef};
+use data::aref;
 use frames::LispFrameRef;
 use lisp::{ExternalPtr, LispObject, LispSubrRef};
 use lisp::defsubr;
@@ -138,6 +138,22 @@ impl LispVectorlikeRef {
             None
         }
     }
+
+    pub fn as_sub_char_table(&self) -> Option<LispSubCharTableRef> {
+        if self.is_pseudovector(PseudovecType::PVEC_SUB_CHAR_TABLE) {
+            Some(unsafe { mem::transmute(*self) })
+        } else {
+            None
+        }
+    }
+
+    pub fn as_sub_char_table_ascii(&self) -> Option<LispSubCharTableAsciiRef> {
+        if self.is_pseudovector(PseudovecType::PVEC_SUB_CHAR_TABLE) {
+            Some(unsafe { mem::transmute(*self) })
+        } else {
+            None
+        }
+    }
 }
 
 impl LispVectorRef {
@@ -225,9 +241,47 @@ impl DoubleEndedIterator for LispVectorIter {
     }
 }
 
+const BOOL_VECTOR_BITS_PER_CHAR: usize = 8;
+
 impl LispBoolVecRef {
+    pub unsafe fn get_unchecked(self, idx: usize) -> bool {
+        let tmp: *const u8 = mem::transmute(&self._data);
+        let val: u8 = *tmp.offset((idx / BOOL_VECTOR_BITS_PER_CHAR) as isize);
+
+        (val & (1 << (idx % BOOL_VECTOR_BITS_PER_CHAR))) != 0
+    }
+
     pub fn len(self) -> usize {
         self.size as usize
+    }
+
+    pub fn iter(self) -> LispBoolVecRefIter {
+        LispBoolVecRefIter::new(self)
+    }
+}
+
+pub struct LispBoolVecRefIter {
+    v: LispBoolVecRef,
+    idx: usize,
+}
+
+impl LispBoolVecRefIter {
+    pub fn new(v: LispBoolVecRef) -> Self {
+        Self { v, idx: 0 }
+    }
+}
+
+impl Iterator for LispBoolVecRefIter {
+    type Item = bool;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx < self.v.len() {
+            let b = unsafe { self.v.get_unchecked(self.idx) };
+            self.idx += 1;
+            Some(b)
+        } else {
+            None
+        }
     }
 }
 
@@ -266,11 +320,11 @@ pub fn length(sequence: LispObject) -> LispObject {
 
 /// Return element of SEQUENCE at index N.
 #[lisp_fn]
-pub fn elt(sequence: LispObject, n: LispObject) -> LispObject {
+pub fn elt(sequence: LispObject, n: EmacsUint) -> LispObject {
     if sequence.is_cons() || sequence.is_nil() {
-        car(nthcdr(n.as_natnum_or_error(), sequence))
+        car(nthcdr(n, sequence))
     } else if sequence.is_array() {
-        LispObject::from_raw(unsafe { Faref(sequence.to_raw(), n.to_raw()) })
+        aref(sequence, n as EmacsInt)
     } else {
         wrong_type!(Qsequencep, sequence);
     }

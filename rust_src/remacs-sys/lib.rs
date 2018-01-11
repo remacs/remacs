@@ -765,14 +765,14 @@ extern "C" {
 
 /// Lisp_Char_Table
 #[repr(C)]
-#[allow(dead_code)]
-enum ChartabSize {
+pub enum ChartabSize {
     Bits0 = 6,
     Bits1 = 4,
     Bits2 = 5,
     Bits3 = 7,
 }
 
+/// Lisp_Char_Table
 #[repr(C)]
 pub struct Lisp_Char_Table {
     /// HEADER.SIZE is the vector's size field, which also holds the
@@ -803,6 +803,31 @@ pub struct Lisp_Char_Table {
     /// These hold additional data.  It is a vector.
     // actually any number of items
     pub extras: [Lisp_Object; 1],
+}
+
+#[repr(C)]
+pub struct Lisp_Sub_Char_Table {
+    /// HEADER.SIZE is the vector's size field, which also holds the
+    /// pseudovector type information.  It holds the size, too.
+    pub header: Lisp_Vectorlike_Header,
+
+    /// Depth of this sub char-table.  It should be 1, 2, or 3.  A sub
+    /// char-table of depth 1 contains 16 elements, and each element
+    /// covers 4096 (128*32) characters.  A sub char-table of depth 2
+    /// contains 32 elements, and each element covers 128 characters.  A
+    /// sub char-table of depth 3 contains 128 elements, and each element
+    /// is for one character.
+    pub depth: libc::c_int,
+
+    /// Minimum character covered by the sub char-table.
+    pub min_char: libc::c_int,
+
+    /// Use set_sub_char_table_contents to set this.
+    pub contents: [Lisp_Object; 1],
+}
+
+extern "C" {
+    pub fn uniprop_table_uncompress(table: Lisp_Object, idx: libc::c_int) -> Lisp_Object;
 }
 
 #[repr(C)]
