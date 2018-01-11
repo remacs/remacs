@@ -543,16 +543,18 @@ If no window is at the desired location, an error is signaled."
 ;; probably want to use different bindings in that case.
 
 ;;;###autoload
-(defun windmove-default-keybindings (&optional modifier)
+(defun windmove-default-keybindings (&optional modifiers)
   "Set up keybindings for `windmove'.
-Keybindings are of the form MODIFIER-{left,right,up,down}.
-Default MODIFIER is `shift'."
+Keybindings are of the form MODIFIERS-{left,right,up,down},
+where MODIFIERS is either a list of modifiers or a single modifier.
+Default value of MODIFIERS is `shift'."
   (interactive)
-  (unless modifier (setq modifier 'shift))
-  (global-set-key (vector (list modifier 'left))  'windmove-left)
-  (global-set-key (vector (list modifier 'right)) 'windmove-right)
-  (global-set-key (vector (list modifier 'up))    'windmove-up)
-  (global-set-key (vector (list modifier 'down))  'windmove-down))
+  (unless modifiers (setq modifiers 'shift))
+  (unless (listp modifiers) (setq modifiers (list modifiers)))
+  (global-set-key (vector (append modifiers '(left)))  'windmove-left)
+  (global-set-key (vector (append modifiers '(right))) 'windmove-right)
+  (global-set-key (vector (append modifiers '(up)))    'windmove-up)
+  (global-set-key (vector (append modifiers '(down)))  'windmove-down))
 
 
 (provide 'windmove)
