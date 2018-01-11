@@ -88,6 +88,10 @@ strings in non-text modes.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** Smtpmail
+Authentication mechanisms can be added via external packages, by
+defining new cl-defmethod of smtpmail-try-auth-method.
+
 ** Footnote-mode
 *** Support Hebrew-style footnotes
 *** Footnote text lines are now aligned.
