@@ -3441,7 +3441,8 @@ Message buffers and is not meant to be called directly."
 (defun message-do-auto-fill ()
   "Like `do-auto-fill', but don't fill in message header."
   (unless (message-point-in-header-p)
-    (do-auto-fill)))
+    (let ((paragraph-separate (default-value 'paragraph-separate)))
+      (do-auto-fill))))
 
 (defun message-insert-signature (&optional force)
   "Insert a signature.  See documentation for variable `message-signature'."
