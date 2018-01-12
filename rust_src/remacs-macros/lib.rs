@@ -8,7 +8,6 @@ extern crate remacs_util;
 extern crate syn;
 
 use proc_macro::TokenStream;
-use std::str::FromStr;
 
 mod function;
 
@@ -122,11 +121,13 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                 }
             };
         }
-
-        #fn_item
     };
 
-    TokenStream::from_str(tokens.as_str()).unwrap()
+    // we could put #fn_item into the quoted code above, but doing so
+    // drops all of the line numbers on the floor and causes the
+    // compiler to attribute any errors in the function to the macro
+    // invocation instead.
+    vec![tokens.parse().unwrap(), fn_ts].into_iter().collect()
 }
 
 struct CByteLiteral<'a>(&'a str);
