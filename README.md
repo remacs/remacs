@@ -315,11 +315,6 @@ error. Similarly, LispObject is still the correct choice of return
 type for functions which may return different types in different
 calls.
 
-Due to an issue with procedural macros (#263) `lisp_fn` will make all warnings
-and errors appear to be on its line instead of on the real line of Rust code.
-The easy work around is to comment out `lisp_fn` until the compile succeeds
-then enable it to do a final build and begin testing.
-
 The elisp name of the function is derived from the Rust name, with
 underscores replaced by hyphens.  If that is not possible (like for
 the function `+`), you can give an elisp name as an argument to
