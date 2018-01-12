@@ -1,4 +1,7 @@
 ---
+sudo: required
+dist: trusty
+group: deprecated-2017Q4
 language: rust
 cache:
   cargo: true
