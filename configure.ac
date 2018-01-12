@@ -2084,7 +2084,7 @@ if test "${HAVE_W32}" = "yes"; then
   AC_CHECK_TOOL(WINDRES, [windres],
                 [AC_MSG_ERROR([No resource compiler found.])])
   W32_OBJ="w32fns.o w32menu.o w32reg.o w32font.o w32term.o"
-  W32_OBJ="$W32_OBJ w32xfns.o w32select.o w32uniscribe.o"
+  W32_OBJ="$W32_OBJ w32xfns.o w32select.o w32uniscribe.o w32cygwinx.o"
   EMACSRES="emacs.res"
   case "$canonical" in
     x86_64-*-*) EMACS_MANIFEST="emacs-x64.manifest" ;;
@@ -2119,6 +2119,12 @@ if test "${HAVE_W32}" = "yes"; then
     XARGS_LIMIT="-s 10000"
   fi
 fi
+
+if test "${HAVE_W32}" = "no" && test "${opsys}" = "cygwin"; then
+  W32_LIBS="-lkernel32"
+  W32_OBJ="w32cygwinx.o"
+fi
+
 AC_SUBST(W32_OBJ)
 AC_SUBST(W32_LIBS)
 AC_SUBST(EMACSRES)

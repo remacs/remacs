@@ -230,6 +230,10 @@ file name extensions.
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 
+---
+** Battery status is now supported in all Cygwin builds.
+Previously it was supported only in the Cygwin-w32 build.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.

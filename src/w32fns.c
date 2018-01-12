@@ -9213,115 +9213,6 @@ The coordinates X and Y are interpreted in pixels relative to a position
   return Qnil;
 }
 
-DEFUN ("w32-battery-status", Fw32_battery_status, Sw32_battery_status, 0, 0, 0,
-       doc: /* Get power status information from Windows system.
-
-The following %-sequences are provided:
-%L AC line status (verbose)
-%B Battery status (verbose)
-%b Battery status, empty means high, `-' means low,
-   `!' means critical, and `+' means charging
-%p Battery load percentage
-%s Remaining time (to charge or discharge) in seconds
-%m Remaining time (to charge or discharge) in minutes
-%h Remaining time (to charge or discharge) in hours
-%t Remaining time (to charge or discharge) in the form `h:min'  */)
-  (void)
-{
-  Lisp_Object status = Qnil;
-
-  SYSTEM_POWER_STATUS system_status;
-  if (GetSystemPowerStatus (&system_status))
-    {
-      Lisp_Object line_status, battery_status, battery_status_symbol;
-      Lisp_Object load_percentage, seconds, minutes, hours, remain;
-
-      long seconds_left = (long) system_status.BatteryLifeTime;
-
-      if (system_status.ACLineStatus == 0)
-	line_status = build_string ("off-line");
-      else if (system_status.ACLineStatus == 1)
-	line_status = build_string ("on-line");
-      else
-	line_status = build_string ("N/A");
-
-      if (system_status.BatteryFlag & 128)
-	{
-	  battery_status = build_string ("N/A");
-	  battery_status_symbol = empty_unibyte_string;
-	}
-      else if (system_status.BatteryFlag & 8)
-	{
-	  battery_status = build_string ("charging");
-	  battery_status_symbol = build_string ("+");
-	  if (system_status.BatteryFullLifeTime != -1L)
-	    seconds_left = system_status.BatteryFullLifeTime - seconds_left;
-	}
-      else if (system_status.BatteryFlag & 4)
-	{
-	  battery_status = build_string ("critical");
-	  battery_status_symbol = build_string ("!");
-	}
-      else if (system_status.BatteryFlag & 2)
-	{
-	  battery_status = build_string ("low");
-	  battery_status_symbol = build_string ("-");
-	}
-      else if (system_status.BatteryFlag & 1)
-	{
-	  battery_status = build_string ("high");
-	  battery_status_symbol = empty_unibyte_string;
-	}
-      else
-	{
-	  battery_status = build_string ("medium");
-	  battery_status_symbol = empty_unibyte_string;
-	}
-
-      if (system_status.BatteryLifePercent > 100)
-	load_percentage = build_string ("N/A");
-      else
-	{
-	  char buffer[16];
-	  snprintf (buffer, 16, "%d", system_status.BatteryLifePercent);
-	  load_percentage = build_string (buffer);
-	}
-
-      if (seconds_left < 0)
-	seconds = minutes = hours = remain = build_string ("N/A");
-      else
-	{
-	  long m;
-	  double h;
-	  char buffer[16];
-	  snprintf (buffer, 16, "%ld", seconds_left);
-	  seconds = build_string (buffer);
-
-	  m = seconds_left / 60;
-	  snprintf (buffer, 16, "%ld", m);
-	  minutes = build_string (buffer);
-
-	  h = seconds_left / 3600.0;
-	  snprintf (buffer, 16, "%3.1f", h);
-	  hours = build_string (buffer);
-
-	  snprintf (buffer, 16, "%ld:%02ld", m / 60, m % 60);
-	  remain = build_string (buffer);
-	}
-
-      status = listn (CONSTYPE_HEAP, 8,
-		      Fcons (make_number ('L'), line_status),
-		      Fcons (make_number ('B'), battery_status),
-		      Fcons (make_number ('b'), battery_status_symbol),
-		      Fcons (make_number ('p'), load_percentage),
-		      Fcons (make_number ('s'), seconds),
-		      Fcons (make_number ('m'), minutes),
-		      Fcons (make_number ('h'), hours),
-		      Fcons (make_number ('t'), remain));
-    }
-  return status;
-}
-
 
 #ifdef WINDOWSNT
 typedef BOOL (WINAPI *GetDiskFreeSpaceExW_Proc)
@@ -10786,7 +10677,6 @@ tip frame.  */);
   defsubr (&Sw32_reconstruct_hot_key);
   defsubr (&Sw32_toggle_lock_key);
   defsubr (&Sw32_window_exists_p);
-  defsubr (&Sw32_battery_status);
   defsubr (&Sw32__menu_bar_in_use);
 #if defined WINDOWSNT && !defined HAVE_DBUS
   defsubr (&Sw32_notification_notify);

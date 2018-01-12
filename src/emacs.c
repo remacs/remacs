@@ -1566,6 +1566,10 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
       syms_of_fontset ();
 #endif /* HAVE_NTGUI */
 
+#if defined HAVE_NTGUI || defined CYGWIN
+      syms_of_w32cygwinx ();
+#endif
+
 #if defined WINDOWSNT || defined HAVE_NTGUI
       syms_of_w32select ();
 #endif

@@ -4482,6 +4482,11 @@ extern void syms_of_gfilenotify (void);
 extern void syms_of_w32notify (void);
 #endif
 
+#if defined HAVE_NTGUI || defined CYGWIN
+/* Defined in w32cygwinx.c.  */
+extern void syms_of_w32cygwinx (void);
+#endif
+
 /* Defined in xfaces.c.  */
 extern Lisp_Object Vface_alternative_font_family_alist;
 extern Lisp_Object Vface_alternative_font_registry_alist;
