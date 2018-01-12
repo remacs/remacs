@@ -127,6 +127,9 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
     // drops all of the line numbers on the floor and causes the
     // compiler to attribute any errors in the function to the macro
     // invocation instead.
+    // Note: TokenStream has a FromIterator trait impl that converts
+    // an iterator over Token{Stream,Tree,Node}s into a single
+    // TokenStream; collect() calls that impl for us.
     vec![tokens.parse().unwrap(), fn_ts].into_iter().collect()
 }
 
