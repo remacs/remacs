@@ -2857,7 +2857,7 @@ find the one you select (@code{ffap-menu}).
 @end table
 
 @node Amusements
-@section Other Amusements
+@section Games and Other Amusements
 @cindex boredom
 
 @findex animate-birthday-present
