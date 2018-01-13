@@ -293,7 +293,9 @@
                   ("rgb(255, 255, 255)" "white")
                   ("rgb(255, 255, 240)" "ivory")
                   ("rgb(18, 52, 86)" "#123456")
-                  ("rgba(18, 52, 86, 0.5)" "#12345680")))
+                  ("rgba(18, 52, 86, 0.5)" "#12345680")
+                  ("rgba(18, 52, 86, 50%)" "#12345680")
+                  ("rgba(50%, 50%, 50%, 50%)" "#80808080")))
     (with-temp-buffer
       (css-mode)
       (insert (nth 0 item))
@@ -330,11 +332,11 @@
 (ert-deftest css-test-rgb-parser ()
   (with-temp-buffer
     (css-mode)
-    (dolist (input '("255, 0, 127"
-                     "255, /* comment */ 0, 127"
-                     "255 0 127"
-                     "255, 0, 127, 0.75"
-                     "255 0 127 / 0.75"
+    (dolist (input '("255, 0, 128"
+                     "255, /* comment */ 0, 128"
+                     "255 0 128"
+                     "255, 0, 128, 0.75"
+                     "255 0 128 / 0.75"
                      "100%, 0%, 50%"
                      "100%, 0%, 50%, 0.115"
                      "100% 0% 50%"
@@ -342,7 +344,7 @@
       (erase-buffer)
       (save-excursion
         (insert input ")"))
-      (should (equal (css--rgb-color) "#ff007f")))))
+      (should (equal (css--rgb-color) "#ff0080")))))
 
 (ert-deftest css-test-hsl-parser ()
   (with-temp-buffer

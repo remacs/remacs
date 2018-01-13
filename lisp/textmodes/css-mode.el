@@ -954,11 +954,11 @@ the returned hex string."
       (let* ((is-percent (match-beginning 1))
 	     (str (match-string (if is-percent 1 2)))
 	     (number (string-to-number str)))
-	(when is-percent
-	  (setq number (* 255 (/ number 100.0))))
-        (if (and include-alpha (= iter 3))
-            (push (round (* number 255)) result)
-          (push (min (max 0 (truncate number)) 255) result))
+	(if is-percent
+	    (setq number (* 255 (/ number 100.0)))
+          (when (and include-alpha (= iter 3))
+            (setq number (* number 255))))
+        (push (min (max 0 (round number)) 255) result)
 	(goto-char (match-end 0))
 	(css--color-skip-blanks)
 	(cl-incf iter)
