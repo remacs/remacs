@@ -20,6 +20,16 @@ alter its internal state.
 You can use Edebug, a source-level debugger for Emacs Lisp.
 
 @item
+@cindex tracing Lisp programs
+You can trace the execution of functions involved in the problem using
+the tracing facilities provided by the @file{trace.el} package.  This
+package provides the functions @code{trace-function-foreground} and
+@code{trace-function-background} for tracing function calls, and
+@code{trace-values} for adding values of select variables to the
+trace.  For the details, see the documentation of these facilities in
+@file{trace.el}.
+
+@item
 If a syntactic problem is preventing Lisp from even reading the
 program, you can locate it using Lisp editing commands.
 
