@@ -3736,7 +3736,7 @@ kbd_buffer_events_waiting (void)
 /* Clear input event EVENT.  */
 
 static void
-clear_event (union buffered_input_event *event)
+clear_event (struct input_event *event)
 {
   event->kind = NO_EVENT;
 }
@@ -3894,65 +3894,6 @@ kbd_buffer_get_event (KBOARD **kbp,
 	}
         break;
 
-#if defined (HAVE_NS)
-      case NS_TEXT_EVENT:
-        {
-          if (event->ie.code == KEY_NS_PUT_WORKING_TEXT)
-            obj = list1 (intern ("ns-put-working-text"));
-          else
-            obj = list1 (intern ("ns-unput-working-text"));
-	  kbd_fetch_ptr = event + 1;
-          if (used_mouse_menu)
-            *used_mouse_menu = true;
-        }
-        break;
-#endif
-
-#if defined (HAVE_X11) || defined (HAVE_NTGUI) \
-    || defined (HAVE_NS)
-      case DELETE_WINDOW_EVENT:
-	{
-	  /* Make an event (delete-frame (FRAME)).  */
-	  obj = list2 (Qdelete_frame, list1 (event->ie.frame_or_window));
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
-#endif
-
-#ifdef HAVE_NTGUI
-      case END_SESSION_EVENT:
-	{
-	  /* Make an event (end-session).  */
-	  obj = list1 (Qend_session);
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
-#endif
-
-#if defined (HAVE_X11) || defined (HAVE_NTGUI) \
-    || defined (HAVE_NS)
-      case ICONIFY_EVENT:
-	{
-	  /* Make an event (iconify-frame (FRAME)).  */
-	  obj = list2 (Qiconify_frame, list1 (event->ie.frame_or_window));
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
-      case DEICONIFY_EVENT:
-	{
-	  /* Make an event (make-frame-visible (FRAME)).  */
-	  obj = list2 (Qmake_frame_visible, list1 (event->ie.frame_or_window));
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
-#endif
-      case BUFFER_SWITCH_EVENT:
-	{
-	  /* The value doesn't matter here; only the type is tested.  */
-	  XSETBUFFER (obj, current_buffer);
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
 #if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI) \
     || defined (HAVE_NS) || defined (USE_GTK)
       case MENU_BAR_ACTIVATE_EVENT:
@@ -3964,148 +3905,40 @@ kbd_buffer_get_event (KBOARD **kbp,
 	}
         break;
 #endif
+#if defined (HAVE_NS)
+      case NS_TEXT_EVENT:
+#endif
 #ifdef HAVE_NTGUI
+      case END_SESSION_EVENT:
       case LANGUAGE_CHANGE_EVENT:
-	{
-	  /* Make an event (language-change FRAME CODEPAGE LANGUAGE-ID).  */
-	  obj = list4 (Qlanguage_change,
-		       event->ie.frame_or_window,
-		       make_number (event->ie.code),
-		       make_number (event->ie.modifiers));
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
+#endif
+#if defined (HAVE_X11) || defined (HAVE_NTGUI) || defined (HAVE_NS)
+      case DELETE_WINDOW_EVENT:
+      case ICONIFY_EVENT:
+      case DEICONIFY_EVENT:
+      case MOVE_FRAME_EVENT:
 #endif
 #ifdef USE_FILE_NOTIFY
       case FILE_NOTIFY_EVENT:
-	{
-#ifdef HAVE_W32NOTIFY
-	  /* Make an event (file-notify (DESCRIPTOR ACTION FILE) CALLBACK).  */
-	  obj = list3 (Qfile_notify, event->ie.arg, event->ie.frame_or_window);
-#else
-          obj = make_lispy_event (&event->ie);
 #endif
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
-#endif /* USE_FILE_NOTIFY */
-      case SAVE_SESSION_EVENT:
-        {
-          obj = list2 (Qsave_session, event->ie.arg);
-	  kbd_fetch_ptr = event + 1;
-        }
-        break;
-      /* Just discard these, by returning nil.
-	 With MULTI_KBOARD, these events are used as placeholders
-	 when we need to randomly delete events from the queue.
-	 (They shouldn't otherwise be found in the buffer,
-	 but on some machines it appears they do show up
-	 even without MULTI_KBOARD.)  */
-      /* On Windows NT/9X, NO_EVENT is used to delete extraneous
-         mouse events during a popup-menu call.  */
-      case NO_EVENT:
-	kbd_fetch_ptr = event + 1;
-        break;
-      case HELP_EVENT:
-	{
-	  Lisp_Object object, position, help, frame, window;
-
-	  frame = event->ie.frame_or_window;
-	  object = event->ie.arg;
-	  position = make_number (Time_to_position (event->ie.timestamp));
-	  window = event->ie.x;
-	  help = event->ie.y;
-	  clear_event (event);
-
-	  kbd_fetch_ptr = event + 1;
-	  if (!WINDOWP (window))
-	    window = Qnil;
-	  obj = Fcons (Qhelp_echo,
-		       list5 (frame, help, window, object, position));
-	}
-        break;
-      case FOCUS_IN_EVENT:
-	{
-	  /* Notification of a FocusIn event.  The frame receiving the
-	     focus is in event->frame_or_window.  Generate a
-	     switch-frame event if necessary.  */
-	  Lisp_Object frame, focus;
-
-          frame = event->ie.frame_or_window;
-          focus = FRAME_FOCUS_FRAME (XFRAME (frame));
-          if (FRAMEP (focus))
-            frame = focus;
-
-          if (
-#ifdef HAVE_X11
-              ! NILP (event->ie.arg)
-              &&
-#endif
-              !EQ (frame, internal_last_event_frame)
-              && !EQ (frame, selected_frame))
-            obj = make_lispy_switch_frame (frame);
-          else
-            obj = make_lispy_focus_in (frame);
-
-          internal_last_event_frame = frame;
-          kbd_fetch_ptr = event + 1;
-        }
-        break;
-      case FOCUS_OUT_EVENT:
-        {
-#ifdef HAVE_WINDOW_SYSTEM
-
-          Display_Info *di;
-          Lisp_Object frame = event->ie.frame_or_window;
-          bool focused = false;
-
-          for (di = x_display_list; di && ! focused; di = di->next)
-            focused = di->x_highlight_frame != 0;
-
-          if (!focused)
-	    obj = make_lispy_focus_out (frame);
-
-#endif /* HAVE_WINDOW_SYSTEM */
-
-          kbd_fetch_ptr = event + 1;
-        }
-        break;
 #ifdef HAVE_DBUS
       case DBUS_EVENT:
-	{
-	  obj = make_lispy_event (&event->ie);
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
-#endif
-#if defined (HAVE_X11) || defined (HAVE_NTGUI) || defined (HAVE_NS)
-      case MOVE_FRAME_EVENT:
-	{
-	  /* Make an event (move-frame (FRAME)).  */
-	  obj = list2 (Qmove_frame, list1 (event->ie.frame_or_window));
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
 #endif
 #ifdef HAVE_XWIDGETS
       case XWIDGET_EVENT:
-	{
-	  obj = make_lispy_event (&event->ie);
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
 #endif
+      case BUFFER_SWITCH_EVENT:
+      case SAVE_SESSION_EVENT:
+      case NO_EVENT:
+      case HELP_EVENT:
+      case FOCUS_IN_EVENT:
       case CONFIG_CHANGED_EVENT:
-	{
-	  obj = make_lispy_event (&event->ie);
-	  kbd_fetch_ptr = event + 1;
-	}
-        break;
+      case FOCUS_OUT_EVENT:
       case SELECT_WINDOW_EVENT:
-	{
-	  obj = list2 (Qselect_window, list1 (event->ie.frame_or_window));
-	  kbd_fetch_ptr = event + 1;
-	}
+        {
+          obj = make_lispy_event (&event->ie);
+          kbd_fetch_ptr = event + 1;
+        }
         break;
       default:
 	{
@@ -4157,7 +3990,7 @@ kbd_buffer_get_event (KBOARD **kbp,
 #endif
 
 	      /* Wipe out this event, to catch bugs.  */
-	      clear_event (event);
+	      clear_event (&event->ie);
 	      kbd_fetch_ptr = event + 1;
 	    }
 	}
@@ -5471,7 +5304,101 @@ make_lispy_event (struct input_event *event)
 
   switch (event->kind)
     {
-      /* A simple keystroke.  */
+#if defined (HAVE_X11) || defined (HAVE_NTGUI) || defined (HAVE_NS)
+    case DELETE_WINDOW_EVENT:
+      /* Make an event (delete-frame (FRAME)).  */
+      return list2 (Qdelete_frame, list1 (event->frame_or_window));
+
+    case ICONIFY_EVENT:
+      /* Make an event (iconify-frame (FRAME)).  */
+      return list2 (Qiconify_frame, list1 (event->frame_or_window));
+
+    case DEICONIFY_EVENT:
+      /* Make an event (make-frame-visible (FRAME)).  */
+      return list2 (Qmake_frame_visible, list1 (event->frame_or_window));
+
+    case MOVE_FRAME_EVENT:
+      /* Make an event (move-frame (FRAME)).  */
+      return list2 (Qmove_frame, list1 (event->frame_or_window));
+#endif
+
+    case BUFFER_SWITCH_EVENT:
+      {
+	/* The value doesn't matter here; only the type is tested.  */
+	Lisp_Object obj;
+        XSETBUFFER (obj, current_buffer);
+        return obj;
+      }
+
+    /* Just discard these, by returning nil.
+       With MULTI_KBOARD, these events are used as placeholders
+       when we need to randomly delete events from the queue.
+       (They shouldn't otherwise be found in the buffer,
+       but on some machines it appears they do show up
+       even without MULTI_KBOARD.)  */
+    /* On Windows NT/9X, NO_EVENT is used to delete extraneous
+       mouse events during a popup-menu call.  */
+    case NO_EVENT:
+      return Qnil;
+
+    case HELP_EVENT:
+      {
+	Lisp_Object frame = event->frame_or_window;
+	Lisp_Object object = event->arg;
+	Lisp_Object position
+          = make_number (Time_to_position (event->timestamp));
+	Lisp_Object window = event->x;
+	Lisp_Object help = event->y;
+	clear_event (event);
+
+	if (!WINDOWP (window))
+	  window = Qnil;
+	return Fcons (Qhelp_echo,
+		      list5 (frame, help, window, object, position));
+      }
+
+    case FOCUS_IN_EVENT:
+      {
+	/* Notification of a FocusIn event.  The frame receiving the
+	   focus is in event->frame_or_window.  Generate a
+	   switch-frame event if necessary.  */
+
+        Lisp_Object frame = event->frame_or_window;
+        Lisp_Object focus = FRAME_FOCUS_FRAME (XFRAME (frame));
+        if (FRAMEP (focus))
+          frame = focus;
+        bool switching
+          = (
+#ifdef HAVE_X11
+            ! NILP (event->arg)
+            &&
+#endif
+            !EQ (frame, internal_last_event_frame)
+            && !EQ (frame, selected_frame));
+        internal_last_event_frame = frame;
+
+        return (switching ? make_lispy_switch_frame (frame)
+                : make_lispy_focus_in (frame));
+      }
+
+    case FOCUS_OUT_EVENT:
+      {
+#ifdef HAVE_WINDOW_SYSTEM
+
+        Display_Info *di;
+        Lisp_Object frame = event->frame_or_window;
+        bool focused = false;
+
+        for (di = x_display_list; di && ! focused; di = di->next)
+          focused = di->x_highlight_frame != 0;
+
+        return focused ? Qnil
+               : make_lispy_focus_out (frame);
+
+#endif /* HAVE_WINDOW_SYSTEM */
+      }
+
+    /* A simple keystroke.  */
     case ASCII_KEYSTROKE_EVENT:
     case MULTIBYTE_CHAR_KEYSTROKE_EVENT:
       {
@@ -5535,6 +5462,13 @@ make_lispy_event (struct input_event *event)
       }
 
 #ifdef HAVE_NS
+    case NS_TEXT_EVENT:
+      if (used_mouse_menu)
+        *used_mouse_menu = true;
+      return list1 (intern (event->code == KEY_NS_PUT_WORKING_TEXT
+                            ? "ns-put-working-text"
+                            : "ns-unput-working-text"));
+
       /* NS_NONKEY_EVENTs are just like NON_ASCII_KEYSTROKE_EVENTs,
 	 except that they are non-key events (last-nonmenu-event is nil).  */
     case NS_NONKEY_EVENT:
@@ -5597,6 +5531,17 @@ make_lispy_event (struct input_event *event)
 				  PTRDIFF_MAX);
 
 #ifdef HAVE_NTGUI
+    case END_SESSION_EVENT:
+      /* Make an event (end-session).  */
+      return list1 (Qend_session);
+
+    case LANGUAGE_CHANGE_EVENT:
+      /* Make an event (language-change FRAME CODEPAGE LANGUAGE-ID).  */
+      return list4 (Qlanguage_change,
+		    event->frame_or_window,
+		    make_number (event->code),
+		    make_number (event->modifiers));
+
     case MULTIMEDIA_KEY_EVENT:
       if (event->code < ARRAYELTS (lispy_multimedia_keys)
           && event->code > 0 && lispy_multimedia_keys[event->code])
@@ -6090,7 +6035,7 @@ make_lispy_event (struct input_event *event)
       }
 
     case SAVE_SESSION_EVENT:
-      return Qsave_session;
+      return list2 (Qsave_session, event->arg);
 
 #ifdef HAVE_DBUS
     case DBUS_EVENT:
@@ -6106,12 +6051,15 @@ make_lispy_event (struct input_event *event)
       }
 #endif
 
-#if defined HAVE_INOTIFY || defined HAVE_KQUEUE || defined HAVE_GFILENOTIFY
+#ifdef USE_FILE_NOTIFY
     case FILE_NOTIFY_EVENT:
-      {
-        return Fcons (Qfile_notify, event->arg);
-      }
-#endif /* HAVE_INOTIFY || HAVE_KQUEUE || HAVE_GFILENOTIFY */
+#ifdef HAVE_W32NOTIFY
+      /* Make an event (file-notify (DESCRIPTOR ACTION FILE) CALLBACK).  */
+      return list3 (Qfile_notify, event->arg, event->frame_or_window);
+#else
+      return Fcons (Qfile_notify, event->arg);
+#endif
+#endif /* USE_FILE_NOTIFY */
 
     case CONFIG_CHANGED_EVENT:
 	return list3 (Qconfig_changed_event,
@@ -10337,7 +10285,7 @@ stuff_buffered_input (Lisp_Object stuffstring)
       if (kbd_fetch_ptr->kind == ASCII_KEYSTROKE_EVENT)
 	stuff_char (kbd_fetch_ptr->ie.code);
 
-      clear_event (kbd_fetch_ptr);
+      clear_event (&kbd_fetch_ptr->ie);
     }
 
   input_pending = false;
