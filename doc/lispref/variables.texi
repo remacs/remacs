@@ -1816,9 +1816,10 @@ property value.
 @code{safe-local-variable} property by adding the arguments
 @code{:safe @var{function}} to @code{defcustom} (@pxref{Variable
 Definitions}).  However, a safety predicate defined using @code{:safe}
-will only be known once the byte-compiler is loaded.  As an
-alternative, you can use the autoload cookie (@pxref{Autoload}) to
-assign the option its safety predicate, like this:
+will only be known once the package that contains the @code{defcustom}
+is loaded, which is often too late.  As an alternative, you can use
+the autoload cookie (@pxref{Autoload}) to assign the option its safety
+predicate, like this:
 
 @lisp
 ;;;###autoload (put '@var{var} 'safe-local-variable '@var{pred})
