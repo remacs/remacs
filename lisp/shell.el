@@ -727,8 +727,8 @@ Otherwise, one argument `-i' is passed to the shell.
                (null explicit-shell-file-name)
                (null (getenv "ESHELL")))
           (set (make-local-variable 'explicit-shell-file-name)
-               (expand-file-name
-                (file-local-name
+               (file-local-name
+		(expand-file-name
                  (read-file-name
                   "Remote shell path: " default-directory shell-file-name
                   t shell-file-name)))))))
