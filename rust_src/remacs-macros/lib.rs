@@ -6,8 +6,10 @@ extern crate proc_macro;
 extern crate quote;
 extern crate remacs_util;
 extern crate syn;
+extern crate regex;
 
 use proc_macro::TokenStream;
+use regex::Regex;
 
 mod function;
 
@@ -137,7 +139,9 @@ struct CByteLiteral<'a>(&'a str);
 
 impl<'a> quote::ToTokens for CByteLiteral<'a> {
     fn to_tokens(&self, tokens: &mut quote::Tokens) {
-        tokens.append(&format!(r#"b"{}\0""#, self.0));
+        let re = Regex::new(r#"["\\]"#).unwrap();
+        let s = re.replace_all(self.0, |caps: &regex::Captures| { format!("\\x{:x}", u32::from(caps[0].chars().next().unwrap())) });
+        tokens.append(&format!(r#"b"{}\0""#, s));
     }
 }
 
