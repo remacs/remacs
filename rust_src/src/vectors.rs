@@ -172,11 +172,56 @@ impl LispVectorRef {
         ptr::read(tmp.offset(idx))
     }
 
-    #[allow(dead_code)]
     #[inline]
     pub fn get(self, idx: ptrdiff_t) -> LispObject {
         assert!(0 <= idx && idx < self.len() as ptrdiff_t);
         unsafe { self.get_unchecked(idx) }
+    }
+
+    pub fn iter(self) -> LispVectorIter {
+        LispVectorIter::new(self)
+    }
+}
+
+pub struct LispVectorIter {
+    data: LispVectorRef,
+    idx: isize,
+    rev: isize,
+}
+
+impl LispVectorIter {
+    fn new(v: LispVectorRef) -> Self {
+        Self {
+            data: v,
+            idx: 0,
+            rev: (v.len() as isize) - 1,
+        }
+    }
+}
+
+impl Iterator for LispVectorIter {
+    type Item = LispObject;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx < self.rev {
+            let n = self.idx;
+            self.idx += 1;
+            Some(unsafe { self.data.get_unchecked(n) })
+        } else {
+            None
+        }
+    }
+}
+
+impl DoubleEndedIterator for LispVectorIter {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if self.rev >= self.idx {
+            let n = self.rev;
+            self.rev -= 1;
+            Some(unsafe { self.data.get_unchecked(n) })
+        } else {
+            None
+        }
     }
 }
 

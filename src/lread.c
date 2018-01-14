@@ -4009,42 +4009,15 @@ read_list (bool flag, Lisp_Object readcharfun)
     }
 }
 
-static Lisp_Object initial_obarray;
+Lisp_Object initial_obarray;
 
 /* `oblookup' stores the bucket number here, for the sake of Funintern.  */
 
 static size_t oblookup_last_bucket_number;
 
-/* Get an error if OBARRAY is not an obarray.
-   If it is one, return it.  */
-
-Lisp_Object
-check_obarray (Lisp_Object obarray)
-{
-  /* We don't want to signal a wrong-type-argument error when we are
-     shutting down due to a fatal error, and we don't want to hit
-     assertions in VECTORP and ASIZE if the fatal error was during GC.  */
-  if (!fatal_error_in_progress
-      && (!VECTORP (obarray) || ASIZE (obarray) == 0))
-    {
-      /* If Vobarray is now invalid, force it to be valid.  */
-      if (EQ (Vobarray, obarray)) Vobarray = initial_obarray;
-      wrong_type_argument (Qvectorp, obarray);
-    }
-  return obarray;
-}
-
-/* Like check_obarray, but for the global Vobarray. */
-
-Lisp_Object
-check_vobarray(void)
-{
-  return check_obarray (Vobarray);
-}
-
 /* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
-static Lisp_Object
+Lisp_Object
 intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
 {
   Lisp_Object *ptr;
@@ -4064,33 +4037,6 @@ intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
   set_symbol_next (sym, SYMBOLP (*ptr) ? XSYMBOL (*ptr) : NULL);
   *ptr = sym;
   return sym;
-}
-
-/* Intern a symbol with name STRING in OBARRAY using bucket INDEX.  */
-
-Lisp_Object
-intern_driver (Lisp_Object string, Lisp_Object obarray, Lisp_Object index)
-{
-  return intern_sym (Fmake_symbol (string), obarray, index);
-}
-
-/* Intern the C string STR: return a symbol with that name,
-   interned in the current obarray.  */
-
-Lisp_Object
-intern_c_string_1 (const char *str, ptrdiff_t len)
-{
-  Lisp_Object obarray = check_obarray (Vobarray);
-  Lisp_Object tem = oblookup (obarray, str, len, len);
-
-  if (!SYMBOLP (tem))
-    {
-      /* Creating a non-pure string from a string literal not implemented yet.
-	 We could just use make_string here and live with the extra copy.  */
-      eassert (!NILP (Vpurify_flag));
-      tem = intern_driver (make_pure_c_string (str, len), obarray, tem);
-    }
-  return tem;
 }
 
 static void
@@ -4224,44 +4170,6 @@ oblookup (Lisp_Object obarray, register const char *ptr, ptrdiff_t size, ptrdiff
   return tem;
 }
 
-void
-map_obarray (Lisp_Object obarray, void (*fn) (Lisp_Object, Lisp_Object), Lisp_Object arg)
-{
-  ptrdiff_t i;
-  register Lisp_Object tail;
-  CHECK_VECTOR (obarray);
-  for (i = ASIZE (obarray) - 1; i >= 0; i--)
-    {
-      tail = AREF (obarray, i);
-      if (SYMBOLP (tail))
-	while (1)
-	  {
-	    (*fn) (tail, arg);
-	    if (XSYMBOL (tail)->next == 0)
-	      break;
-	    XSETSYMBOL (tail, XSYMBOL (tail)->next);
-	  }
-    }
-}
-
-static void
-mapatoms_1 (Lisp_Object sym, Lisp_Object function)
-{
-  call1 (function, sym);
-}
-
-DEFUN ("mapatoms", Fmapatoms, Smapatoms, 1, 2, 0,
-       doc: /* Call FUNCTION on every symbol in OBARRAY.
-OBARRAY defaults to the value of `obarray'.  */)
-  (Lisp_Object function, Lisp_Object obarray)
-{
-  if (NILP (obarray)) obarray = Vobarray;
-  obarray = check_obarray (obarray);
-
-  map_obarray (obarray, mapatoms_1, function);
-  return Qnil;
-}
-
 #define OBARRAY_SIZE 15121
 
 void
@@ -4726,7 +4634,6 @@ syms_of_lread (void)
   defsubr (&Sread_char_exclusive);
   defsubr (&Sread_event);
   defsubr (&Sget_file_char);
-  defsubr (&Smapatoms);
   defsubr (&Slocate_file_internal);
 
   DEFVAR_LISP ("obarray", Vobarray,

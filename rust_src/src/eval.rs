@@ -32,6 +32,17 @@ macro_rules! call {
     }}
 }
 
+macro_rules! call_raw {
+    ($func:expr, $($arg:expr),*) => {{
+        let mut argsarray = [$func, $($arg),*];
+        unsafe {
+            LispObject::from_raw(
+                ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
+            )
+        }
+    }}
+}
+
 macro_rules! message_with_string {
     ($str:expr, $obj:expr, $should_log:expr) => {
         unsafe {

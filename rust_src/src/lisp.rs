@@ -3,7 +3,7 @@
 //! This module contains Rust definitions whose C equivalents live in
 //! lisp.h.
 
-use libc::{c_char, c_void, intptr_t, ptrdiff_t, uintptr_t};
+use libc::{c_void, intptr_t, uintptr_t};
 use std::ffi::CString;
 
 #[cfg(test)]
@@ -22,8 +22,8 @@ use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Obje
 use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p,
                  Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
                  Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsubrp,
-                 Qsymbolp, Qt, Qthreadp, Qunbound, Qwholenump, Qwindow_live_p, Qwindow_valid_p,
-                 Qwindowp};
+                 Qsymbolp, Qt, Qthreadp, Qunbound, Qvectorp, Qwholenump, Qwindow_live_p,
+                 Qwindow_valid_p, Qwindowp};
 use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, make_float,
                  misc_get_ty};
 
@@ -35,7 +35,7 @@ use hashtable::LispHashTableRef;
 use lists::circular_list;
 use marker::LispMarkerRef;
 use multibyte::{Codepoint, LispStringRef, MAX_CHAR};
-use obarray::LispObarrayRef;
+use obarray::{check_obarray, LispObarrayRef};
 use process::LispProcessRef;
 use symbols::LispSymbolRef;
 use threads::ThreadStateRef;
@@ -183,6 +183,29 @@ impl LispObject {
     }
 }
 
+// Obarray support
+impl LispObject {
+    pub fn as_obarray_or_error(self) -> LispObarrayRef {
+        LispObarrayRef::new(LispObject::from_raw(check_obarray(self.to_raw())))
+    }
+}
+
+impl From<LispObject> for LispObarrayRef {
+    fn from(o: LispObject) -> LispObarrayRef {
+        o.as_obarray_or_error()
+    }
+}
+
+impl From<LispObject> for Option<LispObarrayRef> {
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            None
+        } else {
+            Some(o.as_obarray_or_error())
+        }
+    }
+}
+
 // Symbol support (LispType == Lisp_Symbol == 0)
 impl LispObject {
     #[inline]
@@ -276,6 +299,10 @@ impl<T> Clone for ExternalPtr<T> {
 impl<T> ExternalPtr<T> {
     pub fn new(p: *mut T) -> ExternalPtr<T> {
         ExternalPtr(p)
+    }
+
+    pub fn is_null(self) -> bool {
+        self.0.is_null()
     }
 
     pub fn as_ptr(&self) -> *const T {
@@ -529,6 +556,12 @@ impl LispObject {
 
     pub unsafe fn as_vectorlike_unchecked(self) -> LispVectorlikeRef {
         LispVectorlikeRef::new(mem::transmute(self.get_untaggedptr()))
+    }
+
+    pub fn as_vector_or_error(self) -> LispVectorRef {
+        self.as_vectorlike()
+            .and_then(|v| v.as_vector())
+            .unwrap_or_else(|| wrong_type!(Qvectorp, self))
     }
 
     pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
@@ -1570,13 +1603,6 @@ impl Debug for LispObject {
         }
         Ok(())
     }
-}
-
-/// Intern (e.g. create a symbol from) a string.
-pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
-    let s = string.as_ref();
-    LispObarrayRef::constant_obarray()
-        .intern_cstring(s.as_ptr() as *const c_char, s.len() as ptrdiff_t)
 }
 
 extern "C" {
