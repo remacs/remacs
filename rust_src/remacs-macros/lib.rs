@@ -1,13 +1,14 @@
 #![feature(proc_macro)]
 #![recursion_limit = "128"]
 
+#[macro_use]
+extern crate lazy_static;
 extern crate proc_macro;
 #[macro_use]
 extern crate quote;
 extern crate regex;
 extern crate remacs_util;
 extern crate syn;
-#[macro_use] extern crate lazy_static;
 
 use proc_macro::TokenStream;
 use regex::Regex;
