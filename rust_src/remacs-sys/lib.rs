@@ -1209,11 +1209,9 @@ extern "C" {
     pub fn set_point(charpos: ptrdiff_t);
     pub fn buf_charpos_to_bytepos(buffer: *const Lisp_Buffer, charpos: ptrdiff_t) -> ptrdiff_t;
 
-    pub fn Finsert_char(
-        character: Lisp_Object,
-        count: Lisp_Object,
-        inherit: Lisp_Object,
-    ) -> Lisp_Object;
+    pub fn insert(string: *const c_char, nbytes: ptrdiff_t) -> Lisp_Object;
+    pub fn insert_and_inherit(string: *const c_char, nbytes: ptrdiff_t) -> Lisp_Object;
+    pub fn buffer_overflow();
 
     pub fn wait_reading_process_output(
         time_limit: intmax_t,

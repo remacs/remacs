@@ -3,20 +3,20 @@
 use std::ptr;
 
 use libc::{c_uchar, ptrdiff_t};
+use std;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property,
-                 Finsert_char};
+use remacs_sys::{EmacsInt, Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
 use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
-use remacs_sys::{buf_charpos_to_bytepos, find_before_next_newline, find_field, find_newline,
-                 globals, make_string_from_bytes, scan_newline_from_point, set_point,
-                 set_point_both};
+use remacs_sys::{buf_charpos_to_bytepos, buffer_overflow, find_before_next_newline, find_field,
+                 find_newline, globals, insert, insert_and_inherit, make_string_from_bytes,
+                 maybe_quit, scan_newline_from_point, set_point, set_point_both};
 
-use buffers::get_buffer;
+use buffers::{get_buffer, BUF_BYTES_MAX};
 use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
 use marker::{marker_position, set_point_from_marker};
-use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, LispStringRef,
+use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, Codepoint, LispStringRef,
                 MAX_MULTIBYTE_LENGTH};
 use textprop::get_char_property;
 use threads::ThreadState;
@@ -200,7 +200,7 @@ pub fn position_bytes(position: LispObject) -> Option<EmacsInt> {
 /// The optional third arg INHERIT, if non-nil, says to inherit text properties
 /// from adjoining text, if those properties are sticky.
 #[lisp_fn(min = "2")]
-pub fn insert_byte(byte: EmacsInt, count: LispObject, inherit: LispObject) -> LispObject {
+pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
     if byte < 0 || byte > 255 {
         args_out_of_range!(
             LispObject::from_fixnum(byte),
@@ -215,12 +215,70 @@ pub fn insert_byte(byte: EmacsInt, count: LispObject, inherit: LispObject) -> Li
         } else {
             byte
         };
-    unsafe {
-        LispObject::from_raw(Finsert_char(
-            LispObject::from_natnum(toinsert).to_raw(),
-            count.to_raw(),
-            inherit.to_raw(),
-        ))
+    insert_char(toinsert as Codepoint, count, inherit);
+}
+
+/// Insert COUNT copies of CHARACTER.
+/// Interactively, prompt for CHARACTER.  You can specify CHARACTER in one
+/// of these ways:
+///
+///  - As its Unicode character name, e.g. \"LATIN SMALL LETTER A\".
+///    Completion is available; if you type a substring of the name
+///    preceded by an asterisk `*', Emacs shows all names which include
+///    that substring, not necessarily at the beginning of the name.
+///
+///  - As a hexadecimal code point, e.g. 263A.  Note that code points in
+///    Emacs are equivalent to Unicode up to 10FFFF (which is the limit of
+///    the Unicode code space).
+///
+///  - As a code point with a radix specified with #, e.g. #o21430
+///    (octal), #x2318 (hex), or #10r8984 (decimal).
+///
+/// If called interactively, COUNT is given by the prefix argument.  If
+/// omitted or nil, it defaults to 1.
+///
+/// Inserting the character(s) relocates point and before-insertion
+/// markers in the same ways as the function `insert'.
+///
+/// The optional third argument INHERIT, if non-nil, says to inherit text
+/// properties from adjoining text, if those properties are sticky.  If
+/// called interactively, INHERIT is t.
+#[lisp_fn(min = "1", intspec = "(list (read-char-by-name \"Insert character (Unicode name or hex): \") (prefix-numeric-value current-prefix-arg) t))")]
+pub fn insert_char(character: Codepoint, count: Option<EmacsInt>, inherit: bool) {
+    let count = count.unwrap_or(1);
+    if count <= 0 {
+        return;
+    }
+
+    let mut str = [0_u8; MAX_MULTIBYTE_LENGTH];
+    let len = write_codepoint(&mut str[..], character);
+
+    if BUF_BYTES_MAX / (len as isize) < (count as isize) {
+        unsafe { buffer_overflow() };
+    }
+    let mut n: ptrdiff_t = (count * (len as EmacsInt)) as ptrdiff_t;
+    // 4000 bytes is a magic number chosen deep in the past for unknown reasons
+    const BUFSIZE: usize = 4000;
+    let mut buffer = [0_i8; BUFSIZE];
+    // bufferlen is the number of bytes used when filling the buffer
+    // with as many copies of str as possible, without overflowing it.
+    let bufferlen: ptrdiff_t = std::cmp::min(n, (BUFSIZE - (BUFSIZE % len)) as isize);
+    for i in 0..bufferlen {
+        buffer[i as usize] = str[(i % len as isize) as usize] as i8;
+    }
+    while n > bufferlen {
+        unsafe { maybe_quit() };
+        if inherit {
+            unsafe { insert_and_inherit(buffer.as_ptr(), bufferlen) };
+        } else {
+            unsafe { insert(buffer.as_ptr(), bufferlen) };
+        }
+        n -= bufferlen;
+    }
+    if inherit {
+        unsafe { insert_and_inherit(buffer.as_ptr(), n) };
+    } else {
+        unsafe { insert(buffer.as_ptr(), n) };
     }
 }
 
