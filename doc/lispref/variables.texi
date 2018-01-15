@@ -1827,7 +1827,8 @@ predicate, like this:
 
 @noindent
 The safe value definitions specified with @code{autoload} are copied
-into the @file{loaddefs.el} file, and are known to Emacs since the
+into the package's autoloads file (@file{loaddefs.el} for most
+packages bundled with Emacs), and are known to Emacs since the
 beginning of a session.
 
 @defopt safe-local-variable-values
