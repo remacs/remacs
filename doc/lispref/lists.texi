@@ -1141,7 +1141,7 @@ each time you run it!  Here is what happens:
 
 @group
 (symbol-function 'add-foo)
-     @result{} (lambda (x) (nconc (quote (foo)) x))
+     @result{} (lambda (x) (nconc '(foo) x))
 @end group
 
 @group
@@ -1159,7 +1159,7 @@ each time you run it!  Here is what happens:
 
 @group
 (symbol-function 'add-foo)
-     @result{} (lambda (x) (nconc (quote (foo 1 2 3 4) x)))
+     @result{} (lambda (x) (nconc '(foo 1 2 3 4) x))
 @end group
 @end smallexample
 @end defun

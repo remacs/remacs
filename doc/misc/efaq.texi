@@ -3652,7 +3652,7 @@ to bind the key is in the kill ring, and can be yanked into your
 command are required.  For example,
 
 @lisp
-(global-set-key (quote [f1]) (quote help-for-help))
+(global-set-key [f1] 'help-for-help)
 @end lisp
 
 @noindent
@@ -3663,7 +3663,7 @@ For example, in TeX mode, a local binding might be
 @lisp
 (add-hook 'tex-mode-hook
   (lambda ()
-   (local-set-key (quote [f1]) (quote help-for-help))))
+   (local-set-key [f1] 'help-for-help)))
 @end lisp
 
 

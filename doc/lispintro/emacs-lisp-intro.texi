@@ -2095,7 +2095,7 @@ You will create and enter a @file{*Backtrace*} buffer that says:
 Debugger entered--Lisp error:
          (wrong-type-argument number-or-marker-p hello)
   +(2 hello)
-  eval((+ 2 (quote hello)))
+  eval((+ 2 'hello))
   eval-last-sexp-1(nil)
   eval-last-sexp(nil)
   call-interactively(eval-last-sexp)
@@ -16740,7 +16740,7 @@ It will look like this:
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
- '(text-mode-hook (quote (turn-on-auto-fill text-mode-hook-identify))))
+ '(text-mode-hook '(turn-on-auto-fill text-mode-hook-identify)))
 @end group
 @end smallexample
 

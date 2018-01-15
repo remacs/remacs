@@ -18173,7 +18173,7 @@ Suggested Org crypt settings in Emacs init file:
 @lisp
 (require 'org-crypt)
 (org-crypt-use-before-save-magic)
-(setq org-tags-exclude-from-inheritance (quote ("crypt")))
+(setq org-tags-exclude-from-inheritance '("crypt"))
 
 (setq org-crypt-key nil)
   ;; GPG key to use for encryption

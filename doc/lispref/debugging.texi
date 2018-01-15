@@ -646,7 +646,7 @@ forms are elided.
   (list ...computing arguments...)
 @end group
   (progn ...)
-  eval((progn (1+ var) (list (quote testing) (backtrace))))
+  eval((progn (1+ var) (list 'testing (backtrace))))
   (setq ...)
   (save-excursion ...)
   (let ...)
@@ -677,7 +677,7 @@ example would look as follows:
   (list ...computing arguments...)
 @end group
   (progn ...)
-  (eval (progn (1+ var) (list (quote testing) (backtrace))))
+  (eval (progn (1+ var) (list 'testing (backtrace))))
   (setq ...)
   (save-excursion ...)
   (let ...)

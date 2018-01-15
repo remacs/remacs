@@ -815,7 +815,7 @@ regardless of which frames they were displayed on.
 @group
 ;; @r{Note that the name of the minibuffer}
 ;;   @r{begins with a space!}
-(mapcar (function buffer-name) (buffer-list))
+(mapcar #'buffer-name (buffer-list))
     @result{} ("buffers.texi" " *Minibuf-1*"
         "buffer.c" "*Help*" "TAGS")
 @end group
