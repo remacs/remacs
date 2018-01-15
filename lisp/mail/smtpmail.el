@@ -683,7 +683,9 @@ Returns an error if the server cannot be contacted."
 	    (setq buffer-undo-list t)
 	    (erase-buffer))
 
-	  ;; open the connection to the server
+	  ;; Open the connection to the server.
+          ;; FIXME: Should we use raw-text-dos coding system to handle the r\n
+          ;; for us?
 	  (let ((coding-system-for-read 'binary)
 		(coding-system-for-write 'binary))
 	    (setq result
@@ -720,9 +722,8 @@ Returns an error if the server cannot be contacted."
 	      (throw 'done (format "Connection not allowed: %s" greeting))))
 
 	  (with-current-buffer process-buffer
-	    (set-buffer-process-coding-system 'raw-text-unix 'raw-text-unix)
-	    (make-local-variable 'smtpmail-read-point)
-	    (setq smtpmail-read-point (point-min))
+            (set-process-coding-system process 'raw-text-unix 'raw-text-unix)
+	    (setq-local smtpmail-read-point (point-min))
 
 	    (let* ((capabilities (plist-get (cdr result) :capabilities))
 		   (code (smtpmail-response-code capabilities)))
@@ -945,8 +946,7 @@ Returns an error if the server cannot be contacted."
 
   (if (and (multibyte-string-p data)
 	   smtpmail-code-conv-from)
-      (setq data (string-as-multibyte   ;FIXME: ???
-		  (encode-coding-string data smtpmail-code-conv-from))))
+      (setq data (encode-coding-string data smtpmail-code-conv-from)))
 
   (if smtpmail-debug-info
       (insert data "\r\n"))
