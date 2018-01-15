@@ -908,7 +908,8 @@ Subclasses to override slot attributes.")
 (eieio-test-dump-trace)
 
 (ert-deftest eieio-test-37-obsolete-name-in-constructor ()
-  ;; FIXME repeated intermittent failures on hydra (bug#24503)
+  ;; FIXME repeated intermittent failures on hydra and elsewhere (bug#24503).
+  :tags '(:unstable)
   (with-current-buffer "*trace-output*"
     (erase-buffer))
   (unwind-protect

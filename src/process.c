@@ -1686,6 +1686,8 @@ usage: (make-process &rest ARGS)  */)
   if (!NILP (program))
     CHECK_STRING (program);
 
+  bool query_on_exit = NILP (Fplist_get (contact, QCnoquery));
+
   stderrproc = Qnil;
   xstderr = Fplist_get (contact, QCstderr);
   if (PROCESSP (xstderr))
@@ -1701,7 +1703,9 @@ usage: (make-process &rest ARGS)  */)
 			  QCname,
 			  concat2 (name, build_string (" stderr")),
 			  QCbuffer,
-			  Fget_buffer_create (xstderr));
+			  Fget_buffer_create (xstderr),
+			  QCnoquery,
+			  query_on_exit ? Qnil : Qt);
     }
 
   proc = make_process (name);
@@ -1715,7 +1719,7 @@ usage: (make-process &rest ARGS)  */)
   pset_filter (XPROCESS (proc), Fplist_get (contact, QCfilter));
   pset_command (XPROCESS (proc), Fcopy_sequence (command));
 
-  if (tem = Fplist_get (contact, QCnoquery), !NILP (tem))
+  if (!query_on_exit)
     XPROCESS (proc)->kill_without_query = 1;
   if (tem = Fplist_get (contact, QCstop), !NILP (tem))
     pset_command (XPROCESS (proc), Qt);

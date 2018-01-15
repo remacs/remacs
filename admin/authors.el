@@ -130,6 +130,7 @@ files.")
     ("Agustín Martín" "Agustin Martin" "Agustín Martín Domingo")
     ("Martin Lorentzon" "Martin Lorentzson")
     ("Matt Swift" "Matthew Swift")
+    (nil "Max")
     ("Maxime Edouard Robert Froumentin" "Max Froumentin")
     ("Michael R. Mauger" "Michael Mauger")
     ("Michael D. Ernst" "Michael Ernst")
@@ -840,7 +841,8 @@ Changes to files in this list are not listed.")
     "lisp/obsolete/sym-comp.el"
     "library-of-babel.org"
     "flymake-elisp.el"
-    "flymake-ui.el")
+    "flymake-ui.el"
+    "pinentry.el")
   "File names which are valid, but no longer exist (or cannot be found)
 in the repository.")
 
