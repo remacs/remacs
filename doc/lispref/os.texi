@@ -3001,10 +3001,10 @@ issues involved, rather than to be a security checklist.
 @table @asis
 @item File local variables
 @cindex file local variables
-A file that Emacs visits can contain variable settings that affects
+A file that Emacs visits can contain variable settings that affect
 the buffer visiting that file; @xref{File Local Variables}.
 Similarly, a directory can specify local variable values common to all
-files in that directory; @xref{Directory Local Variables}.  Although
+files in that directory; see @ref{Directory Local Variables}.  Although
 Emacs takes some effort to protect against misuse of these variables,
 a security hole can be created merely by a package setting
 @code{safe-local-variable} too optimistically, a problem that is all

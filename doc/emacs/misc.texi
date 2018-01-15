@@ -21,7 +21,7 @@ hyperlinks, and various diversions and amusements.
 @end ifnottex
 
 @node Gnus
-@section Gnus
+@section Email and Usenet News with Gnus
 @cindex Gnus
 @cindex Usenet news
 @cindex newsreader
@@ -586,40 +586,6 @@ associated with the current buffer, type @kbd{K}
 (@code{doc-view-kill-proc}).  The command @kbd{k}
 (@code{doc-view-kill-proc-and-buffer}) kills the converter process and
 the DocView buffer.
-
-@node EWW
-@section Web Browsing with EWW
-
-@findex eww
-@findex eww-open-file
-  @dfn{EWW}, the Emacs Web Wowser, is a web browser package for Emacs.
-It allows browsing URLs within an Emacs buffer.  The command @kbd{M-x
-eww} will open a URL or search the web.  You can open a file
-using the command @kbd{M-x eww-open-file}.  You can use EWW as the
-web browser for @code{browse-url}, @pxref{Browse-URL}.  For full
-details, @pxref{Top, EWW,, eww, The Emacs Web Wowser Manual}.
-
-@node Embedded WebKit Widgets
-@section Embedded WebKit Widgets
-@cindex xwidget
-@cindex webkit widgets
-@cindex embedded widgets
-
-@findex xwidget-webkit-browse-url
-@findex xwidget-webkit-mode
-@cindex Xwidget-WebKit mode
-  If Emacs was compiled with the appropriate support packages, it is
-able to show browser widgets in its buffers.  The command @kbd{M-x
-xwidget-webkit-browse-url} asks for a URL to display in the browser
-widget.  The URL normally defaults to the URL at or before point, but
-if there is an active region (@pxref{Mark}), the default URL comes
-from the region instead, after removing any whitespace from it.  The
-command then creates a new buffer with the embedded browser showing
-the specified URL.  The buffer is put in the Xwidget-WebKit mode
-(similar to Image mode, @pxref{File Conveniences}), which provides
-one-key commands for scrolling the widget, changing its size, and
-reloading it.  Type @w{@kbd{C-h b}} in that buffer to see the key
-bindings.
 
 @node Shell
 @section Running Shell Commands from Emacs
@@ -1745,7 +1711,9 @@ graphical frame, or one in a text terminal (@pxref{Frames}).  You
 can then select that frame to begin editing.
 
   If there is no Emacs server, the @command{emacsclient} program halts
-with an error message.  If the Emacs process has no existing
+with an error message (you can prevent this from happening by using
+the @samp{--alternate-editor=""} option to @command{emacsclient},
+@pxref{emacsclient Options}).  If the Emacs process has no existing
 frame---which can happen if it was started as a daemon (@pxref{Emacs
 Server})---then Emacs opens a frame on the terminal in which you
 called @command{emacsclient}.
@@ -2702,16 +2670,52 @@ key bindings.
 
 
 @node Hyperlinking
-@section Hyperlinking and Navigation Features
+@section Hyperlinking and Web Navigation Features
 
   The following subsections describe convenience features for handling
 URLs and other types of links occurring in Emacs buffer text.
 
 @menu
+* EWW::                         A web browser in Emacs.
+* Embedded WebKit Widgets::     Embedding browser widgets in Emacs buffers.
 * Browse-URL::                  Following URLs.
 * Goto Address mode::           Activating URLs.
 * FFAP::                        Finding files etc. at point.
 @end menu
+
+@node EWW
+@subsection Web Browsing with EWW
+
+@findex eww
+@findex eww-open-file
+  @dfn{EWW}, the Emacs Web Wowser, is a web browser package for Emacs.
+It allows browsing URLs within an Emacs buffer.  The command @kbd{M-x
+eww} will open a URL or search the web.  You can open a file
+using the command @kbd{M-x eww-open-file}.  You can use EWW as the
+web browser for @code{browse-url}, @pxref{Browse-URL}.  For full
+details, @pxref{Top, EWW,, eww, The Emacs Web Wowser Manual}.
+
+@node Embedded WebKit Widgets
+@subsection Embedded WebKit Widgets
+@cindex xwidget
+@cindex webkit widgets
+@cindex embedded widgets
+
+@findex xwidget-webkit-browse-url
+@findex xwidget-webkit-mode
+@cindex Xwidget-WebKit mode
+  If Emacs was compiled with the appropriate support packages, it is
+able to show browser widgets in its buffers.  The command @kbd{M-x
+xwidget-webkit-browse-url} asks for a URL to display in the browser
+widget.  The URL normally defaults to the URL at or before point, but
+if there is an active region (@pxref{Mark}), the default URL comes
+from the region instead, after removing any whitespace from it.  The
+command then creates a new buffer with the embedded browser showing
+the specified URL.  The buffer is put in the Xwidget-WebKit mode
+(similar to Image mode, @pxref{File Conveniences}), which provides
+one-key commands for scrolling the widget, changing its size, and
+reloading it.  Type @w{@kbd{C-h b}} in that buffer to see the key
+bindings.
 
 @node Browse-URL
 @subsection  Following URLs
@@ -2853,7 +2857,7 @@ find the one you select (@code{ffap-menu}).
 @end table
 
 @node Amusements
-@section Other Amusements
+@section Games and Other Amusements
 @cindex boredom
 
 @findex animate-birthday-present

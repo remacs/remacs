@@ -1811,10 +1811,24 @@ variables have @code{safe-local-variable} properties; these include
 For boolean-valued variables that are safe, use @code{booleanp} as the
 property value.
 
+@cindex autoload cookie, and safe values of variable
   When defining a user option using @code{defcustom}, you can set its
 @code{safe-local-variable} property by adding the arguments
 @code{:safe @var{function}} to @code{defcustom} (@pxref{Variable
-Definitions}).
+Definitions}).  However, a safety predicate defined using @code{:safe}
+will only be known once the package that contains the @code{defcustom}
+is loaded, which is often too late.  As an alternative, you can use
+the autoload cookie (@pxref{Autoload}) to assign the option its safety
+predicate, like this:
+
+@lisp
+;;;###autoload (put '@var{var} 'safe-local-variable '@var{pred})
+@end lisp
+
+@noindent
+The safe value definitions specified with @code{autoload} are copied
+into the @file{loaddefs.el} file, and are known to Emacs since the
+beginning of a session.
 
 @defopt safe-local-variable-values
 This variable provides another way to mark some variable values as
