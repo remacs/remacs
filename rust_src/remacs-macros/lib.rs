@@ -1,13 +1,17 @@
 #![feature(proc_macro)]
 #![recursion_limit = "128"]
 
+#[macro_use]
+extern crate lazy_static;
 extern crate proc_macro;
 #[macro_use]
 extern crate quote;
+extern crate regex;
 extern crate remacs_util;
 extern crate syn;
 
 use proc_macro::TokenStream;
+use regex::Regex;
 
 mod function;
 
@@ -137,7 +141,13 @@ struct CByteLiteral<'a>(&'a str);
 
 impl<'a> quote::ToTokens for CByteLiteral<'a> {
     fn to_tokens(&self, tokens: &mut quote::Tokens) {
-        tokens.append(&format!(r#"b"{}\0""#, self.0));
+        lazy_static! {
+            static ref RE: Regex = Regex::new(r#"["\\]"#).unwrap();
+        }
+        let s = RE.replace_all(self.0, |caps: &regex::Captures| {
+            format!("\\x{:x}", u32::from(caps[0].chars().next().unwrap()))
+        });
+        tokens.append(&format!(r#"b"{}\0""#, s));
     }
 }
 
