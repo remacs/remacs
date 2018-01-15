@@ -436,15 +436,26 @@ nonempty, then flushes the buffer."
 
       (goto-char pmark)
       (unless error-type
-        (condition-case nil
+        (condition-case err
             ;; Self-referential objects cause loops in the printer, so
             ;; trap quits here. May as well do errors, too
             (unless for-effect
-              (setq output (concat output (pp-to-string result)
-				   (let ((str (eval-expression-print-format result)))
-				     (if str (propertize str 'font-lock-face 'shadow))))))
-          (error (setq error-type "IELM Error")
-                 (setq result "Error during pretty-printing (bug in pp)"))
+              (let* ((ielmbuf (current-buffer))
+                     (aux (let ((str (eval-expression-print-format result)))
+			    (if str (propertize str 'font-lock-face 'shadow)))))
+                (setq output (with-temp-buffer
+                               (let ((tmpbuf (current-buffer)))
+                                 ;; Use print settings (e.g. print-circle,
+                                 ;; print-gensym, etc...) from the
+                                 ;; right buffer!
+                                 (with-current-buffer ielmbuf
+                                   (cl-prin1 result tmpbuf))
+                                 (pp-buffer)
+                                 (concat (buffer-string) aux))))))
+          (error
+           (setq error-type "IELM Error")
+           (setq result (format "Error during pretty-printing (bug in pp): %S"
+                                err)))
           (quit  (setq error-type "IELM Error")
                  (setq result "Quit during pretty-printing"))))
       (if error-type
