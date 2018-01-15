@@ -448,8 +448,13 @@ Throw an user-error if we cannot resolve automatically."
 	    (erase-buffer)
 	    (insert "For the following files, conflicts could\n"
 		    "not be resolved automatically:\n\n")
-	    (call-process "git" nil t nil
-			  "diff" "--name-only" "--diff-filter=U")
+	    (let ((conflicts
+		   (with-temp-buffer
+		     (call-process "git" nil t nil
+				   "diff" "--name-only" "--diff-filter=U")
+		     (buffer-string))))
+	      (insert conflicts)
+	      (if noninteractive (message "Conflicts in:\n%s" conflicts)))
 	    (insert "\nResolve the conflicts manually, then run gitmerge again."
 		    "\nNote:\n  - You don't have to add resolved files or "
 		    "commit the merge yourself (but you can)."
