@@ -1193,7 +1193,6 @@ extern "C" {
     pub fn hash_remove_from_table(h: *mut Lisp_Hash_Table, key: Lisp_Object);
     pub fn set_point_both(charpos: ptrdiff_t, bytepos: ptrdiff_t);
     pub fn set_point(charpos: ptrdiff_t);
-    pub fn Fline_beginning_position(n: Lisp_Object) -> Lisp_Object;
     pub fn buf_charpos_to_bytepos(buffer: *const Lisp_Buffer, charpos: ptrdiff_t) -> ptrdiff_t;
 
     pub fn Finsert_char(
@@ -1247,14 +1246,6 @@ extern "C" {
         cnt: ptrdiff_t,
         bytepos: *mut ptrdiff_t,
     ) -> ptrdiff_t;
-    pub fn Fconstrain_to_field(
-        new_pos: Lisp_Object,
-        old_pos: Lisp_Object,
-        escape_from_edge: Lisp_Object,
-        only_in_line: Lisp_Object,
-        inhibit_capture_property: Lisp_Object,
-    ) -> Lisp_Object;
-    pub fn Fline_end_position(n: Lisp_Object) -> Lisp_Object;
     pub fn get_process(name: Lisp_Object) -> Lisp_Object;
     pub fn update_status(p: *const Lisp_Process);
     pub fn setup_process_coding_systems(process: Lisp_Object);
@@ -1309,10 +1300,41 @@ extern "C" {
     ) -> Lisp_Object;
     pub fn Fmake_marker() -> Lisp_Object;
 
+    pub fn find_field(
+        pos: Lisp_Object,
+        merge_at_boundary: Lisp_Object,
+        beg_limit: Lisp_Object,
+        beg: *mut ptrdiff_t,
+        end_limit: Lisp_Object,
+        end: *mut ptrdiff_t,
+    );
+    pub fn find_newline(
+        start: ptrdiff_t,
+        start_byte: ptrdiff_t,
+        end: ptrdiff_t,
+        end_byte: ptrdiff_t,
+        count: ptrdiff_t,
+        shortage: *mut ptrdiff_t,
+        bytepos: *mut ptrdiff_t,
+        allow_quit: bool,
+    ) -> ptrdiff_t;
+
+    pub fn Fget_pos_property(
+        position: Lisp_Object,
+        prop: Lisp_Object,
+        object: Lisp_Object,
+    ) -> Lisp_Object;
     pub fn Fget_text_property(
         position: Lisp_Object,
         prop: Lisp_Object,
         object: Lisp_Object,
+    ) -> Lisp_Object;
+
+    pub fn get_char_property_and_overlay(
+        position: Lisp_Object,
+        prop: Lisp_Object,
+        object: Lisp_Object,
+        overlay: *mut Lisp_Object,
     ) -> Lisp_Object;
 
 }

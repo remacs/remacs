@@ -1,7 +1,8 @@
 //! Operations on lists.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Qcircular_list, Qplistp};
+use remacs_sys::{EmacsInt, EmacsUint};
+use remacs_sys::{Qcircular_list, Qplistp};
 use remacs_sys::globals;
 
 use lisp::LispObject;
@@ -101,7 +102,7 @@ pub fn cdr_safe(object: LispObject) -> LispObject {
 
 /// Take cdr N times on LIST, return the result.
 #[lisp_fn]
-pub fn nthcdr(n: EmacsInt, list: LispObject) -> LispObject {
+pub fn nthcdr(n: EmacsUint, list: LispObject) -> LispObject {
     let mut it = list.iter_tails_safe();
 
     match it.nth(n as usize) {
@@ -441,12 +442,12 @@ pub fn safe_length(list: LispObject) -> LispObject {
 // Used by sort() in vectors.rs.
 
 pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
-    let length = list.iter_tails().count();
+    let length: EmacsUint = list.iter_tails().count() as EmacsUint;
     if length < 2 {
         return list;
     }
 
-    let item = nthcdr((length / 2 - 1) as EmacsInt, list);
+    let item = nthcdr(length / 2 - 1, list);
     let back = cdr(item);
     setcdr(item, LispObject::constant_nil());
 

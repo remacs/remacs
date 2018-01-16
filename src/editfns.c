@@ -75,6 +75,11 @@ static long int tm_gmtoff (struct tm *);
 static int tm_diff (struct tm *, struct tm *);
 static void update_buffer_properties (ptrdiff_t, ptrdiff_t);
 
+void
+find_field (Lisp_Object pos, Lisp_Object merge_at_boundary,
+	    Lisp_Object beg_limit,
+	    ptrdiff_t *beg, Lisp_Object end_limit, ptrdiff_t *end);
+
 #ifndef HAVE_TM_GMTOFF
 # define HAVE_TM_GMTOFF false
 #endif
@@ -483,7 +488,7 @@ at POSITION.  */)
    Either BEG or END may be 0, in which case the corresponding value
    is not stored.  */
 
-static void
+void
 find_field (Lisp_Object pos, Lisp_Object merge_at_boundary,
 	    Lisp_Object beg_limit,
 	    ptrdiff_t *beg, Lisp_Object end_limit, ptrdiff_t *end)
@@ -631,219 +636,7 @@ If POS is nil, the value of point is used for POS.  */)
   return make_buffer_string (beg, end, 0);
 }
 
-DEFUN ("field-beginning", Ffield_beginning, Sfield_beginning, 0, 3, 0,
-       doc: /* Return the beginning of the field surrounding POS.
-A field is a region of text with the same `field' property.
-If POS is nil, the value of point is used for POS.
-If ESCAPE-FROM-EDGE is non-nil and POS is at the beginning of its
-field, then the beginning of the *previous* field is returned.
-If LIMIT is non-nil, it is a buffer position; if the beginning of the field
-is before LIMIT, then LIMIT will be returned instead.  */)
-  (Lisp_Object pos, Lisp_Object escape_from_edge, Lisp_Object limit)
-{
-  ptrdiff_t beg;
-  find_field (pos, escape_from_edge, limit, &beg, Qnil, 0);
-  return make_number (beg);
-}
-
-DEFUN ("field-end", Ffield_end, Sfield_end, 0, 3, 0,
-       doc: /* Return the end of the field surrounding POS.
-A field is a region of text with the same `field' property.
-If POS is nil, the value of point is used for POS.
-If ESCAPE-FROM-EDGE is non-nil and POS is at the end of its field,
-then the end of the *following* field is returned.
-If LIMIT is non-nil, it is a buffer position; if the end of the field
-is after LIMIT, then LIMIT will be returned instead.  */)
-  (Lisp_Object pos, Lisp_Object escape_from_edge, Lisp_Object limit)
-{
-  ptrdiff_t end;
-  find_field (pos, escape_from_edge, Qnil, 0, limit, &end);
-  return make_number (end);
-}
-
-DEFUN ("constrain-to-field", Fconstrain_to_field, Sconstrain_to_field, 2, 5, 0,
-       doc: /* Return the position closest to NEW-POS that is in the same field as OLD-POS.
-A field is a region of text with the same `field' property.
-
-If NEW-POS is nil, then use the current point instead, and move point
-to the resulting constrained position, in addition to returning that
-position.
-
-If OLD-POS is at the boundary of two fields, then the allowable
-positions for NEW-POS depends on the value of the optional argument
-ESCAPE-FROM-EDGE: If ESCAPE-FROM-EDGE is nil, then NEW-POS is
-constrained to the field that has the same `field' char-property
-as any new characters inserted at OLD-POS, whereas if ESCAPE-FROM-EDGE
-is non-nil, NEW-POS is constrained to the union of the two adjacent
-fields.  Additionally, if two fields are separated by another field with
-the special value `boundary', then any point within this special field is
-also considered to be `on the boundary'.
-
-If the optional argument ONLY-IN-LINE is non-nil and constraining
-NEW-POS would move it to a different line, NEW-POS is returned
-unconstrained.  This is useful for commands that move by line, like
-\\[next-line] or \\[beginning-of-line], which should generally respect field boundaries
-only in the case where they can still move to the right line.
-
-If the optional argument INHIBIT-CAPTURE-PROPERTY is non-nil, and OLD-POS has
-a non-nil property of that name, then any field boundaries are ignored.
-
-Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.  */)
-  (Lisp_Object new_pos, Lisp_Object old_pos, Lisp_Object escape_from_edge,
-   Lisp_Object only_in_line, Lisp_Object inhibit_capture_property)
-{
-  /* If non-zero, then the original point, before re-positioning.  */
-  ptrdiff_t orig_point = 0;
-  bool fwd;
-  Lisp_Object prev_old, prev_new;
-
-  if (NILP (new_pos))
-    /* Use the current point, and afterwards, set it.  */
-    {
-      orig_point = PT;
-      XSETFASTINT (new_pos, PT);
-    }
-
-  CHECK_NUMBER_COERCE_MARKER (new_pos);
-  CHECK_NUMBER_COERCE_MARKER (old_pos);
-
-  fwd = (XINT (new_pos) > XINT (old_pos));
-
-  prev_old = make_number (XINT (old_pos) - 1);
-  prev_new = make_number (XINT (new_pos) - 1);
-
-  if (NILP (Vinhibit_field_text_motion)
-      && !EQ (new_pos, old_pos)
-      && (!NILP (Fget_char_property (new_pos, Qfield, Qnil))
-          || !NILP (Fget_char_property (old_pos, Qfield, Qnil))
-          /* To recognize field boundaries, we must also look at the
-             previous positions; we could use `Fget_pos_property'
-             instead, but in itself that would fail inside non-sticky
-             fields (like comint prompts).  */
-          || (XFASTINT (new_pos) > BEGV
-              && !NILP (Fget_char_property (prev_new, Qfield, Qnil)))
-          || (XFASTINT (old_pos) > BEGV
-              && !NILP (Fget_char_property (prev_old, Qfield, Qnil))))
-      && (NILP (inhibit_capture_property)
-          /* Field boundaries are again a problem; but now we must
-             decide the case exactly, so we need to call
-             `get_pos_property' as well.  */
-          || (NILP (Fget_pos_property (old_pos, inhibit_capture_property, Qnil))
-              && (XFASTINT (old_pos) <= BEGV
-                  || NILP (Fget_char_property
-			   (old_pos, inhibit_capture_property, Qnil))
-                  || NILP (Fget_char_property
-			   (prev_old, inhibit_capture_property, Qnil))))))
-    /* It is possible that NEW_POS is not within the same field as
-       OLD_POS; try to move NEW_POS so that it is.  */
-    {
-      ptrdiff_t shortage;
-      Lisp_Object field_bound;
-
-      if (fwd)
-	field_bound = Ffield_end (old_pos, escape_from_edge, new_pos);
-      else
-	field_bound = Ffield_beginning (old_pos, escape_from_edge, new_pos);
-
-      if (/* See if ESCAPE_FROM_EDGE caused FIELD_BOUND to jump to the
-             other side of NEW_POS, which would mean that NEW_POS is
-             already acceptable, and it's not necessary to constrain it
-             to FIELD_BOUND.  */
-	  ((XFASTINT (field_bound) < XFASTINT (new_pos)) ? fwd : !fwd)
-	  /* NEW_POS should be constrained, but only if either
-	     ONLY_IN_LINE is nil (in which case any constraint is OK),
-	     or NEW_POS and FIELD_BOUND are on the same line (in which
-	     case the constraint is OK even if ONLY_IN_LINE is non-nil).  */
-	  && (NILP (only_in_line)
-	      /* This is the ONLY_IN_LINE case, check that NEW_POS and
-		 FIELD_BOUND are on the same line by seeing whether
-		 there's an intervening newline or not.  */
-	      || (find_newline (XFASTINT (new_pos), -1,
-				XFASTINT (field_bound), -1,
-				fwd ? -1 : 1, &shortage, NULL, 1),
-		  shortage != 0)))
-	/* Constrain NEW_POS to FIELD_BOUND.  */
-	new_pos = field_bound;
-
-      if (orig_point && XFASTINT (new_pos) != orig_point)
-	/* The NEW_POS argument was originally nil, so automatically set PT. */
-	SET_PT (XFASTINT (new_pos));
-    }
-
-  return new_pos;
-}
-
 
-DEFUN ("line-beginning-position",
-       Fline_beginning_position, Sline_beginning_position, 0, 1, 0,
-       doc: /* Return the character position of the first character on the current line.
-With optional argument N, scan forward N - 1 lines first.
-If the scan reaches the end of the buffer, return that position.
-
-This function ignores text display directionality; it returns the
-position of the first character in logical order, i.e. the smallest
-character position on the line.
-
-This function constrains the returned position to the current field
-unless that position would be on a different line than the original,
-unconstrained result.  If N is nil or 1, and a front-sticky field
-starts at point, the scan stops as soon as it starts.  To ignore field
-boundaries, bind `inhibit-field-text-motion' to t.
-
-This function does not move point.  */)
-  (Lisp_Object n)
-{
-  ptrdiff_t charpos, bytepos;
-
-  if (NILP (n))
-    XSETFASTINT (n, 1);
-  else
-    CHECK_NUMBER (n);
-
-  scan_newline_from_point (XINT (n) - 1, &charpos, &bytepos);
-
-  /* Return END constrained to the current input field.  */
-  return Fconstrain_to_field (make_number (charpos), make_number (PT),
-			      XINT (n) != 1 ? Qt : Qnil,
-			      Qt, Qnil);
-}
-
-DEFUN ("line-end-position", Fline_end_position, Sline_end_position, 0, 1, 0,
-       doc: /* Return the character position of the last character on the current line.
-With argument N not nil or 1, move forward N - 1 lines first.
-If scan reaches end of buffer, return that position.
-
-This function ignores text display directionality; it returns the
-position of the last character in logical order, i.e. the largest
-character position on the line.
-
-This function constrains the returned position to the current field
-unless that would be on a different line than the original,
-unconstrained result.  If N is nil or 1, and a rear-sticky field ends
-at point, the scan stops as soon as it starts.  To ignore field
-boundaries bind `inhibit-field-text-motion' to t.
-
-This function does not move point.  */)
-  (Lisp_Object n)
-{
-  ptrdiff_t clipped_n;
-  ptrdiff_t end_pos;
-  ptrdiff_t orig = PT;
-
-  if (NILP (n))
-    XSETFASTINT (n, 1);
-  else
-    CHECK_NUMBER (n);
-
-  clipped_n = clip_to_bounds (PTRDIFF_MIN + 1, XINT (n), PTRDIFF_MAX);
-  end_pos = find_before_next_newline (orig, 0, clipped_n - (clipped_n <= 0),
-				      NULL);
-
-  /* Return END_POS constrained to the current input field.  */
-  return Fconstrain_to_field (make_number (end_pos), make_number (orig),
-			      Qnil, Qt, Qnil);
-}
-
 /* Save current buffer state for `save-excursion' special form.
    We (ab)use Lisp_Misc_Save_Value to allow explicit free and so
    offload some work from GC.  */
@@ -4872,15 +4665,9 @@ functions if all the text being accessed has this property.  */);
   /* A special value for Qfield properties.  */
   DEFSYM (Qboundary, "boundary");
 
-  defsubr (&Sfield_beginning);
-  defsubr (&Sfield_end);
   defsubr (&Sfield_string);
   defsubr (&Sfield_string_no_properties);
   defsubr (&Sdelete_field);
-  defsubr (&Sconstrain_to_field);
-
-  defsubr (&Sline_beginning_position);
-  defsubr (&Sline_end_position);
 
   defsubr (&Ssave_excursion);
   defsubr (&Ssave_current_buffer);

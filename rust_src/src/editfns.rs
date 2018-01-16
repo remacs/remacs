@@ -1,18 +1,24 @@
 //! Lisp functions pertaining to editing.
 
+use std::ptr;
+
 use libc::{c_uchar, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Fadd_text_properties, Fcons, Fcopy_sequence, Finsert_char,
-                 Qinteger_or_marker_p, Qmark_inactive, Qnil};
-use remacs_sys::{buf_charpos_to_bytepos, globals, make_string_from_bytes, set_point_both};
+use remacs_sys::{EmacsInt, Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property,
+                 Finsert_char};
+use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
+use remacs_sys::{buf_charpos_to_bytepos, find_before_next_newline, find_field, find_newline,
+                 globals, make_string_from_bytes, scan_newline_from_point, set_point,
+                 set_point_both};
 
 use buffers::get_buffer;
-use lisp::LispObject;
+use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
 use marker::{marker_position, set_point_from_marker};
 use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, LispStringRef,
                 MAX_MULTIBYTE_LENGTH};
+use textprop::get_char_property;
 use threads::ThreadState;
 use util::clip_to_bounds;
 
@@ -339,6 +345,244 @@ pub fn string_to_char(string: LispStringRef) -> EmacsInt {
     } else {
         0
     }
+}
+
+#[lisp_fn(min = "0")]
+pub fn line_beginning_position(n: Option<EmacsInt>) -> EmacsInt {
+    let mut charpos: isize = 0;
+
+    let n = n.unwrap_or(1) as isize;
+
+    unsafe { scan_newline_from_point(n - 1, &mut charpos, ptr::null_mut()) };
+
+    // Return END constrained to the current input field.
+    constrain_to_field(
+        Some(LispNumber::Fixnum(charpos as EmacsInt)),
+        LispNumber::Fixnum(point() as EmacsInt),
+        n != 1,
+        true,
+        LispObject::constant_nil(),
+    )
+}
+
+#[lisp_fn(min = "0")]
+pub fn line_end_position(n: Option<EmacsInt>) -> EmacsInt {
+    let orig = point();
+
+    let n = n.unwrap_or(1);
+
+    let clipped_n = clip_to_bounds(ptrdiff_t::min_value() + 1, n, ptrdiff_t::max_value());
+    let end_pos = unsafe {
+        find_before_next_newline(
+            orig as isize,
+            0,
+            clipped_n - (if clipped_n <= 0 { 1 } else { 0 }),
+            ptr::null_mut(),
+        )
+    };
+
+    // Return END constrained to the current input field.
+    constrain_to_field(
+        Some(LispNumber::Fixnum(end_pos as EmacsInt)),
+        LispNumber::Fixnum(orig),
+        n != 1,
+        true,
+        LispObject::constant_nil(),
+    )
+}
+
+#[lisp_fn(min = "0")]
+pub fn field_beginning(
+    pos: Option<EmacsInt>,
+    escape_from_edge: bool,
+    limit: Option<EmacsInt>,
+) -> EmacsInt {
+    let mut beg = 0;
+    unsafe {
+        find_field(
+            LispObject::from(pos).to_raw(),
+            LispObject::from(escape_from_edge).to_raw(),
+            LispObject::from(limit).to_raw(),
+            &mut beg,
+            Qnil,
+            ptr::null_mut(),
+        );
+    }
+
+    beg as EmacsInt
+}
+
+#[lisp_fn(min = "0")]
+pub fn field_end(
+    pos: Option<EmacsInt>,
+    escape_from_edge: bool,
+    limit: Option<EmacsInt>,
+) -> EmacsInt {
+    let mut end = 0;
+    unsafe {
+        find_field(
+            LispObject::from(pos).to_raw(),
+            LispObject::from(escape_from_edge).to_raw(),
+            Qnil,
+            ptr::null_mut(),
+            LispObject::from(limit).to_raw(),
+            &mut end,
+        );
+    }
+
+    end as EmacsInt
+}
+
+/// Return the position closest to NEW-POS that is in the same field as OLD-POS.
+/// A field is a region of text with the same `field' property.
+///
+/// If NEW-POS is nil, then use the current point instead, and move point
+/// to the resulting constrained position, in addition to returning that
+/// position.
+///
+/// If OLD-POS is at the boundary of two fields, then the allowable
+/// positions for NEW-POS depends on the value of the optional argument
+/// ESCAPE-FROM-EDGE: If ESCAPE-FROM-EDGE is nil, then NEW-POS is
+/// constrained to the field that has the same `field' char-property
+/// as any new characters inserted at OLD-POS, whereas if ESCAPE-FROM-EDGE
+/// is non-nil, NEW-POS is constrained to the union of the two adjacent
+/// fields.  Additionally, if two fields are separated by another field with
+/// the special value `boundary', then any point within this special field is
+/// also considered to be `on the boundary'.
+///
+/// If the optional argument ONLY-IN-LINE is non-nil and constraining
+/// NEW-POS would move it to a different line, NEW-POS is returned
+/// unconstrained.  This is useful for commands that move by line, like
+/// \\[next-line] or \\[beginning-of-line], which should generally respect field boundaries
+/// only in the case where they can still move to the right line.
+///
+/// If the optional argument INHIBIT-CAPTURE-PROPERTY is non-nil, and OLD-POS has
+/// a non-nil property of that name, then any field boundaries are ignored.
+///
+/// Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.
+#[lisp_fn(min = "2")]
+pub fn constrain_to_field(
+    new_pos: Option<LispNumber>,
+    old_pos: LispNumber,
+    escape_from_edge: bool,
+    only_in_line: bool,
+    inhibit_capture_property: LispObject,
+) -> EmacsInt {
+    let (mut new_pos, orig_point) = match new_pos {
+        None => {
+            let tmp = point();
+            (tmp, tmp)
+        }
+        Some(pos) => (pos.to_fixnum(), 0),
+    };
+
+    let old_pos = old_pos.to_fixnum();
+
+    let fwd = new_pos > old_pos;
+
+    let prev_old = old_pos - 1;
+    let prev_new = new_pos - 1;
+    let begv = ThreadState::current_buffer().begv as EmacsInt;
+
+    if unsafe { globals.f_Vinhibit_field_text_motion == Qnil } && new_pos != old_pos
+        && (get_char_property(
+            new_pos,
+            LispObject::from_raw(Qfield),
+            LispObject::constant_nil()).is_not_nil()
+            || get_char_property(
+                old_pos,
+                LispObject::from_raw(Qfield),
+                LispObject::constant_nil()).is_not_nil()
+            // To recognize field boundaries, we must also look at the
+            // previous positions; we could use `Fget_pos_property'
+            // instead, but in itself that would fail inside non-sticky
+            // fields (like comint prompts).
+            || (new_pos > begv
+                && get_char_property(
+                    prev_new,
+                    LispObject::from_raw(Qfield),
+                    LispObject::constant_nil()).is_not_nil())
+            || (old_pos > begv
+                && get_char_property(
+                    prev_old,
+                    LispObject::from_raw(Qfield),
+                    LispObject::constant_nil(),
+                ).is_not_nil()))
+        && (inhibit_capture_property.is_nil()
+            // Field boundaries are again a problem; but now we must
+            // decide the case exactly, so we need to call
+            // `get_pos_property' as well.
+            || (unsafe {
+                Fget_pos_property(
+                    LispObject::from(old_pos).to_raw(),
+                    inhibit_capture_property.to_raw(),
+                    Qnil) == Qnil
+            }
+                && (old_pos <= begv
+                    || get_char_property(
+                        old_pos,
+                        inhibit_capture_property,
+                        LispObject::constant_nil()).is_nil()
+                    || get_char_property(
+                        prev_old,
+                        inhibit_capture_property,
+                        LispObject::constant_nil()).is_nil())))
+    // It is possible that NEW_POS is not within the same field as
+    // OLD_POS; try to move NEW_POS so that it is.
+    {
+        let field_bound = if fwd {
+            field_end(Some(old_pos), escape_from_edge, Some(new_pos))
+        } else {
+            field_beginning(Some(old_pos), escape_from_edge, Some(new_pos))
+        };
+
+        let should_constrain = if field_bound < new_pos { fwd } else { !fwd };
+
+        // See if ESCAPE_FROM_EDGE caused FIELD_BOUND to jump to the
+        // other side of NEW_POS, which would mean that NEW_POS is
+        // already acceptable, and it's not necessary to constrain it
+        // to FIELD_BOUND.
+        if should_constrain {
+            // NEW_POS should be constrained, but only if either
+            // ONLY_IN_LINE is nil (in which case any constraint is OK),
+            // or NEW_POS and FIELD_BOUND are on the same line (in which
+            // case the constraint is OK even if ONLY_IN_LINE is non-nil).
+            if !only_in_line {
+                // Constrain NEW_POS to FIELD_BOUND.
+                new_pos = field_bound;
+            } else {
+                // This is the ONLY_IN_LINE case, check that NEW_POS and
+                // FIELD_BOUND are on the same line by seeing whether
+                // there's an intervening newline or not.
+                let mut shortage = 0;
+                unsafe {
+                    find_newline(
+                        new_pos as isize,
+                        -1,
+                        field_bound as isize,
+                        -1,
+                        if fwd { -1 } else { 1 },
+                        &mut shortage,
+                        ptr::null_mut(),
+                        true,
+                    );
+                }
+                if shortage != 0 {
+                    // Constrain NEW_POS to FIELD_BOUND.
+                    new_pos = field_bound;
+                }
+            }
+        }
+
+        if orig_point != 0 && new_pos != orig_point {
+            // The NEW_POS argument was originally nil, so automatically set PT.
+            unsafe {
+                set_point(new_pos as isize);
+            }
+        }
+    }
+
+    new_pos
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));

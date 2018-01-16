@@ -71,6 +71,7 @@ mod objects;
 mod process;
 mod strings;
 mod symbols;
+mod textprop;
 mod threads;
 mod time;
 mod util;
