@@ -8605,6 +8605,7 @@ comment at the start of cc-engine.el for more info."
 		 ;; construct here in C, since we want to recognize this as a
 		 ;; typeless function declaration.
 		 (not (and (c-major-mode-is 'c-mode)
+			   (not got-prefix)
 			   (or (eq context 'top) make-top)
 			   (eq (char-after) ?\)))))
 	    (if (eq (char-after) ?\))
@@ -8634,31 +8635,39 @@ comment at the start of cc-engine.el for more info."
 	    ;; (con|de)structors in C++ and `c-typeless-decl-kwds'
 	    ;; style declarations.  That isn't applicable in an
 	    ;; arglist context, though.
-	    (when (and (= paren-depth 1)
-			  (not got-prefix-before-parens)
-			  (not (eq at-type t))
-			  (or backup-at-type
-			      maybe-typeless
-			      backup-maybe-typeless
-			      (when c-recognize-typeless-decls
-				(and (memq context '(nil top))
-				     ;; Deal with C++11's "copy-initialization"
-				     ;; where we have <type>(<constant>), by
-				     ;; contrasting with a typeless
-				     ;; <name>(<type><parameter>, ...).
-				     (save-excursion
-				       (goto-char after-paren-pos)
-				       (c-forward-syntactic-ws)
-				       (or (c-forward-type)
-					   ;; Recognize a top-level typeless
-					   ;; function declaration in C.
-					   (and (c-major-mode-is 'c-mode)
-						(or (eq context 'top) make-top)
-						(eq (char-after) ?\))))))))
-			  (setq pos (c-up-list-forward (point)))
-			  (eq (char-before pos) ?\)))
+	    (when (and (> paren-depth 0)
+		       (not got-prefix-before-parens)
+		       (not (eq at-type t))
+		       (or backup-at-type
+			   maybe-typeless
+			   backup-maybe-typeless
+			   (when c-recognize-typeless-decls
+			     (and (memq context '(nil top))
+				  ;; Deal with C++11's "copy-initialization"
+				  ;; where we have <type>(<constant>), by
+				  ;; contrasting with a typeless
+				  ;; <name>(<type><parameter>, ...).
+				  (save-excursion
+				    (goto-char after-paren-pos)
+				    (c-forward-syntactic-ws)
+				    (or (c-forward-type)
+					;; Recognize a top-level typeless
+					;; function declaration in C.
+					(and (c-major-mode-is 'c-mode)
+					     (or (eq context 'top) make-top)
+					     (eq (char-after) ?\))))))))
+		       (let ((pd paren-depth))
+			 (setq pos (point))
+			 (catch 'pd
+			   (while (> pd 0)
+			     (setq pos (c-up-list-forward pos))
+			     (when (or (null pos)
+				       (not (eq (char-before pos) ?\))))
+			       (throw 'pd nil))
+			     (goto-char pos)
+			     (setq pd (1- pd)))
+			   t)))
 		 (c-fdoc-shift-type-backward)
-		 (goto-char pos)
 		 t)))
 
 	(c-forward-syntactic-ws))
