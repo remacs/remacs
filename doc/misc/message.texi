@@ -1485,6 +1485,9 @@ choose one of these completions, use the @kbd{M-n} command to move
 down to the list.  Use @kbd{M-n} and @kbd{M-p} to move down and up the
 list, and @kbd{RET} to choose a completion.
 
+The @code{ecomplete-sort-predicate} variable controls how
+@code{ecomplete} matches are sorted.
+
 @node Spelling
 @section Spelling
 @cindex spelling

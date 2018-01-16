@@ -230,6 +230,10 @@ are implemented in C using the Jansson library.
 It's a simple convenience function for looking up MIME types based on
 file name extensions.
 
++++
+** The ecomplete sorting has changed to a decay-based algorithm.  This
+can be controlled by the new `ecomplete-sort-predicate' variable.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

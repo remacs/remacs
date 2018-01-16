@@ -70,6 +70,19 @@
   :type '(symbol :tag "Coding system")
   :group 'ecomplete)
 
+(defcustom ecomplete-sort-predicate 'ecomplete-decay
+  "Predicate to use when sorting matched.
+The predicate is called with two parameters that represent the
+completion.  Each parameter is a list where the first element is
+the times the completion has been used, the second is the
+timestamp of the most recent usage, and the third item is the
+string that was matched."
+  :type '(radio (function-item :tag "Sort by usage and newness" ecomplete-decay)
+		(function-item :tag "Sort by times used" ecomplete-usage)
+		(function-item :tag "Sort by newness" ecomplete-newness)
+		(function :tag "Other"))
+  :group 'ecomplete)
+
 ;;; Internal variables.
 
 (defvar ecomplete-database nil)
@@ -122,8 +135,7 @@
 	   (loop for (key count time text) in elems
 		 when (string-match match text)
 		 collect (list count time text))
-	   (lambda (l1 l2)
-	     (> (car l1) (car l2))))))
+           ecomplete-sort-predicate)))
     (when (> (length candidates) 10)
       (setcdr (nthcdr 10 candidates) nil))
     (unless (zerop (length candidates))
@@ -188,6 +200,21 @@ matches."
 	  (put-text-property (point) (1+ (point)) 'face 'highlight))
 	(forward-char 1)))
     (buffer-string)))
+
+(defun ecomplete-usage (l1 l2)
+  (> (car l1) (car l2)))
+
+(defun ecomplete-newness (l1 l2)
+  (> (cadr l1) (cadr l2)))
+
+(defun ecomplete-decay (l1 l2)
+  (> (ecomplete-decay-1 l1) (ecomplete-decay-1 l2)))
+
+(defun ecomplete-decay-1 (elem)
+  ;; We subtract 5% from the item for each week it hasn't been used.
+  (/ (car elem)
+     (expt 1.05 (/ (- (float-time) (cadr elem))
+                   (* 7 24 60 60)))))
 
 (provide 'ecomplete)
 
