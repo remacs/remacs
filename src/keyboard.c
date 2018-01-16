@@ -3907,6 +3907,9 @@ kbd_buffer_get_event (KBOARD **kbp,
 #endif
 #if defined (HAVE_NS)
       case NS_TEXT_EVENT:
+	if (used_mouse_menu)
+	  *used_mouse_menu = true;
+	FALLTHROUGH;
 #endif
 #ifdef HAVE_NTGUI
       case END_SESSION_EVENT:
@@ -5463,8 +5466,6 @@ make_lispy_event (struct input_event *event)
 
 #ifdef HAVE_NS
     case NS_TEXT_EVENT:
-      if (used_mouse_menu)
-        *used_mouse_menu = true;
       return list1 (intern (event->code == KEY_NS_PUT_WORKING_TEXT
                             ? "ns-put-working-text"
                             : "ns-unput-working-text"));
