@@ -22,6 +22,35 @@
 
 ;;; Commentary:
 
+;; ecomplete stores matches in a file that looks like this:
+;;
+;; ((mail
+;;  ("larsi@gnus.org" 38154 1516109510 "Lars Ingebrigtsen <larsi@gnus.org>")
+;;  ("kfogel@red-bean.com" 10 1516065455 "Karl Fogel <kfogel@red-bean.com>")
+;;  ...
+;;  ))
+;;
+;; That is, it's an alist map where the key is the "type" of match (so
+;; that you can have one list of things for `mail' and one for, say,
+;; `twitter').  In each of these sections you then have a list where
+;; each item is on the form
+;;
+;; (KEY TIMES-USED LAST-TIME-USED STRING)
+;;
+;; If you call `ecomplete-display-matches', it will then display all
+;; items that match STRING.  KEY is unique and is used to identify the
+;; item, and is used for updates.  For instance, if given the above
+;; data, you call
+;;
+;; (ecomplete-add-item "larsi@gnus.org" 'mail "Lars Magne Ingebrigtsen <larsi@gnus.org>")
+;;
+;; the "larsi@gnus.org" entry will then be updated with that new STRING.
+
+;; The interface functions are `ecomplete-add-item' and
+;; `ecomplete-display-matches', while `ecomplete-setup' should be
+;; called to read the .ecompleterc file, and `ecomplete-save' are
+;; called to save the file.
+
 ;;; Code:
 
 (eval-when-compile
@@ -47,6 +76,7 @@
 
 ;;;###autoload
 (defun ecomplete-setup ()
+  "Read the .ecompleterc file."
   (when (file-exists-p ecomplete-database-file)
     (with-temp-buffer
       (let ((coding-system-for-read ecomplete-database-file-coding-system))
@@ -54,6 +84,7 @@
 	(setq ecomplete-database (read (current-buffer)))))))
 
 (defun ecomplete-add-item (type key text)
+  "Add item TEXT of TYPE to the database, using KEY as the identifier."
   (let ((elems (assq type ecomplete-database))
 	(now (string-to-number (format-time-string "%s")))
 	entry)
@@ -64,9 +95,11 @@
       (nconc elems (list (list key 1 now text))))))
 
 (defun ecomplete-get-item (type key)
+  "Return the text for the item identified by KEY of the required TYPE."
   (assoc key (cdr (assq type ecomplete-database))))
 
 (defun ecomplete-save ()
+  "Write the .ecompleterc file."
   (with-temp-buffer
     (let ((coding-system-for-write ecomplete-database-file-coding-system))
       (insert "(")
@@ -105,6 +138,9 @@
 	(buffer-string)))))
 
 (defun ecomplete-display-matches (type word &optional choose)
+  "Display the top-rated elements TYPE that match WORD.
+If CHOOSE, allow the user to choose interactively between the
+matches."
   (let* ((matches (ecomplete-get-matches type word))
 	 (line 0)
 	 (max-lines (when matches (- (length (split-string matches "\n")) 2)))
