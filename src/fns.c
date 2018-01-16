@@ -2116,11 +2116,12 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 /* base64 encode/decode functions (RFC 2045).
    Based on code from GNU recode. */
 
-#define MIME_LINE_LENGTH 76
-
 ptrdiff_t base64_encode_1 (const char *, ptrdiff_t, char *, ptrdiff_t, bool, bool);
-ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
-				  ptrdiff_t *);
+ptrdiff_t base64_decode_1 (const char *, ptrdiff_t, char *, ptrdiff_t, bool,
+                           ptrdiff_t *);
+ptrdiff_t pad_base64_size(ptrdiff_t len);
+ptrdiff_t compute_decode_size(ptrdiff_t len);
+ptrdiff_t compute_encode_size(ptrdiff_t len);
 
 DEFUN ("base64-encode-region", Fbase64_encode_region, Sbase64_encode_region,
        2, 3, "r",
@@ -2146,16 +2147,13 @@ into shorter lines.  */)
      We need 33 1/3% more space, plus a newline every 76
      characters, and then we round up. */
   length = iend - ibeg;
-  allength = length + length/3 + 1;
-  allength += allength / MIME_LINE_LENGTH + 1 + 6;
+  allength = pad_base64_size(compute_encode_size(length));
 
   encoded = SAFE_ALLOCA (allength);
   encoded_length = base64_encode_1 ((char *) BYTE_POS_ADDR (ibeg), length,
                                     encoded, allength,
                                     NILP (no_line_break),
 				    !NILP (BVAR (current_buffer, enable_multibyte_characters)));
-  if (encoded_length > allength)
-    emacs_abort ();
 
   if (encoded_length < 0)
     {
@@ -2208,15 +2206,13 @@ If the region can't be decoded, signal an error and don't modify the buffer.  */
   /* We need to allocate enough room for decoding the text.  If we are
      working on a multibyte buffer, each decoded code may occupy at
      most two bytes.  */
-  allength = multibyte ? length * 2 : length;
+  allength = compute_decode_size(multibyte ? length * 2 : length);
   decoded = SAFE_ALLOCA (allength);
 
   move_gap_both (XFASTINT (beg), ibeg);
-  decoded_length = base64_decode_1 ((char *) BYTE_POS_ADDR (ibeg),
-				    decoded, length,
+  decoded_length = base64_decode_1 ((char *) BYTE_POS_ADDR (ibeg), length,
+				    decoded, allength,
 				    multibyte, &inserted_chars);
-  if (decoded_length > allength)
-    emacs_abort ();
 
   if (decoded_length < 0)
     {

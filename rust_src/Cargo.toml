@@ -16,7 +16,7 @@ remacs-macros = { version = "0.1.0", path = "remacs-macros" }
 libc = "0.2"
 rand = "0.3.15"
 md5 = "0.3.5"
-base64 = "0.8.0"
+base64 = "0.9"
 sha1 = "0.2.0"
 sha2 = "0.4.2"
 mock_derive = "0.7.0"

@@ -1,6 +1,6 @@
 //! Base64 de- and encoding functions.
 
-use libc::{c_char, c_uchar, ptrdiff_t};
+use libc::{c_char, c_uchar};
 use std::ptr;
 use std::slice;
 
@@ -17,12 +17,12 @@ use strings::MIME_LINE_LENGTH;
 #[no_mangle]
 pub extern "C" fn base64_encode_1(
     from: *const c_char,
-    in_length: ptrdiff_t,
+    in_length: usize,
     to: *mut c_char,
-    out_length: ptrdiff_t,
+    out_length: usize,
     line_break: bool,
     multibyte: bool,
-) -> ptrdiff_t {
+) -> isize {
     let config = if line_break {
         // base64_crate::MIME, but with LF instead of CRLF
         base64_crate::Config::new(
@@ -53,13 +53,13 @@ pub extern "C" fn base64_encode_1(
             }
             i += len;
         }
-        base64_crate::encode_config_slice(&input, config, &mut output) as ptrdiff_t
+        base64_crate::encode_config_slice(&input, config, &mut output)
     } else {
         // Just encode the raw bytes.
-        base64_crate::encode_config_slice(bytes, config, &mut output) as ptrdiff_t
+        base64_crate::encode_config_slice(bytes, config, &mut output)
     };
 
-    encoded_size as ptrdiff_t
+    encoded_size as isize
 }
 
 /// Base64-decode the data at FROM of LENGTH bytes into TO.  If MULTIBYTE, the
@@ -68,32 +68,37 @@ pub extern "C" fn base64_encode_1(
 #[no_mangle]
 pub extern "C" fn base64_decode_1(
     from: *const c_char,
+    length: usize,
     to: *mut c_char,
-    length: ptrdiff_t,
+    out_length: usize,
     multibyte: bool,
-    nchars_return: *mut ptrdiff_t,
-) -> ptrdiff_t {
+    nchars_return: *mut isize,
+) -> isize {
     let encoded = unsafe { slice::from_raw_parts(from as *const u8, length as usize) };
+    let decoded = unsafe { slice::from_raw_parts_mut(to as *mut u8, out_length as usize) };
 
     // Use the MIME config to allow embedded newlines.
-    if let Ok(decoded) = base64_crate::decode_config(encoded, base64_crate::MIME) {
+    if let Ok(decoded_length) =
+        base64_crate::decode_config_slice(encoded, base64_crate::MIME, decoded)
+    {
         if !nchars_return.is_null() {
             unsafe {
-                *nchars_return = decoded.len() as ptrdiff_t;
+                *nchars_return = decoded_length as isize;
             }
         }
         if multibyte {
             // Decode non-ASCII bytes into UTF-8 pairs.
-            let s: String = decoded.iter().map(|&byte| byte as char).collect();
+            let s: String = decoded[..decoded_length]
+                .iter()
+                .map(|&byte| byte as char)
+                .collect();
+            let s_len = s.len();
             unsafe {
-                ptr::copy_nonoverlapping(s.as_ptr(), to as *mut u8, s.len());
+                ptr::copy_nonoverlapping(s.as_ptr(), to as *mut u8, s_len);
             }
-            s.len() as ptrdiff_t
+            s.len() as isize
         } else {
-            unsafe {
-                ptr::copy_nonoverlapping(decoded.as_ptr(), to as *mut u8, decoded.len());
-            }
-            decoded.len() as ptrdiff_t
+            decoded_length as isize
         }
     } else {
         -1
@@ -107,9 +112,9 @@ fn test_simple_base64_encode_1() {
 
     let length = base64_encode_1(
         input.as_ptr() as *mut c_char,
-        input.as_bytes().len() as ptrdiff_t,
+        input.as_bytes().len(),
         encoded.as_mut_ptr() as *mut c_char,
-        encoded.len() as isize,
+        encoded.len(),
         false,
         false,
     );
@@ -127,7 +132,7 @@ is understandably cautious in making far-reaching changes.";
 
     let length = base64_encode_1(
         input.as_ptr() as *mut c_char,
-        input.as_bytes().len() as ptrdiff_t,
+        input.as_bytes().len(),
         (&mut encoded).as_mut_ptr() as *mut c_char,
         500,
         true,
@@ -147,29 +152,121 @@ ZmFyLXJlYWNoaW5nIGNoYW5nZXMu"
     assert_eq!(expected.len(), length as usize);
 }
 
+#[no_mangle]
+pub extern "C" fn compute_decode_size(len: usize) -> usize {
+    ((len + 3) / 4) * 3
+}
+
+#[no_mangle]
+pub extern "C" fn compute_encode_size(len: usize) -> usize {
+    ((len * 4) / 3) + 4
+}
+
+#[no_mangle]
+pub extern "C" fn pad_base64_size(len: usize) -> usize {
+    len + (len / (MIME_LINE_LENGTH as usize)) + 1 + 6
+}
+
+#[test]
+fn test_compute_decode_size() {
+    assert_eq!(3, compute_decode_size(1));
+    assert_eq!(3, compute_decode_size(2));
+    assert_eq!(3, compute_decode_size(3));
+    assert_eq!(3, compute_decode_size(4));
+    assert_eq!(6, compute_decode_size(5));
+    assert_eq!(6, compute_decode_size(6));
+    assert_eq!(6, compute_decode_size(7));
+    assert_eq!(6, compute_decode_size(8));
+}
+
+#[test]
+fn test_compute_encode_size() {
+    assert_eq!(5, compute_encode_size(1));
+    assert_eq!(6, compute_encode_size(2));
+    assert_eq!(8, compute_encode_size(3));
+    assert_eq!(9, compute_encode_size(4));
+    assert_eq!(10, compute_encode_size(5));
+    assert_eq!(12, compute_encode_size(6));
+    assert_eq!(13, compute_encode_size(7));
+    assert_eq!(14, compute_encode_size(8));
+}
+
+#[test]
+fn test_pad_base64_size() {
+    assert_eq!(8, pad_base64_size(1));
+    assert_eq!(9, pad_base64_size(2));
+    assert_eq!(10, pad_base64_size(3));
+    assert_eq!(11, pad_base64_size(4));
+    assert_eq!(12, pad_base64_size(5));
+    assert_eq!(13, pad_base64_size(6));
+    assert_eq!(14, pad_base64_size(7));
+    assert_eq!(15, pad_base64_size(8));
+    assert_eq!(84, pad_base64_size(76));
+}
+
 #[test]
 fn test_simple_base64_decode_1() {
-    use std::str;
-
     let input = "aGVsbG8gd29ybGQ=";
-    let mut decoded = [0u8; 20];
-
-    let mut n: isize = 0;
-    let nchars: *mut isize = &mut n;
+    let clear = "hello world";
+    let mut n = 0;
+    let mut decoded: Vec<u8> = Vec::new();
+    decoded.resize(compute_decode_size(input.len()), 0);
 
     let length = base64_decode_1(
         input.as_ptr() as *mut c_char,
+        input.as_bytes().len(),
         decoded.as_mut_ptr() as *mut c_char,
-        input.as_bytes().len() as ptrdiff_t,
+        decoded.len(),
         true,
-        nchars,
+        &mut n,
     );
-    assert!(length != -1);
+    unsafe { decoded.set_len(length as usize) };
 
-    let answer = str::from_utf8(&decoded[..length as usize]).unwrap();
+    assert_eq!(clear.len(), length as usize);
+    assert_eq!(clear, String::from_utf8(decoded).unwrap());
+}
 
-    assert_eq!(n, length);
-    assert_eq!("hello world", answer);
+#[test]
+fn test_multibyte_base64_decode_1() {
+    let input = "RG9icv0gZGVu";
+
+    let clear = "Dobrý den"; // Czech
+    let mut n = 0;
+    let mut decoded: Vec<u8> = Vec::new();
+    decoded.resize(compute_decode_size(input.len()), 0);
+
+    let length = base64_decode_1(
+        input.as_ptr() as *mut c_char,
+        input.as_bytes().len(),
+        decoded.as_mut_ptr() as *mut c_char,
+        decoded.len(),
+        true,
+        &mut n,
+    );
+    unsafe { decoded.set_len(length as usize) };
+
+    assert_eq!(clear.len(), length as usize);
+    assert_eq!(clear, String::from_utf8(decoded).unwrap());
+
+    // Now run again, but disable multibyte
+
+    let clear = b"Dobr\xFD den"; // Czech
+    n = 0;
+    decoded = Vec::new();
+    decoded.resize(compute_decode_size(input.len()), 0);
+
+    let length = base64_decode_1(
+        input.as_ptr() as *mut c_char,
+        input.as_bytes().len(),
+        decoded.as_mut_ptr() as *mut c_char,
+        decoded.len(),
+        false,
+        &mut n,
+    );
+    unsafe { decoded.set_len(length as usize) };
+
+    assert_eq!(clear.len(), length as usize);
+    assert_eq!(clear, &decoded[..]);
 }
 
 #[test]
@@ -215,16 +312,18 @@ bWFpbGluZyBsaXN0cywgc2VlIDxodHRwOi8vbGlzdHMuZ251Lm9yZy8+LgoK";
 
     let length1 = base64_decode_1(
         input1.as_ptr() as *mut c_char,
+        input1.as_bytes().len(),
         decoded1.as_mut_ptr() as *mut c_char,
-        input1.as_bytes().len() as ptrdiff_t,
+        decoded1.capacity(),
         true,
         nchars1,
     );
 
     let length2 = base64_decode_1(
         input2.as_ptr() as *mut c_char,
+        input2.as_bytes().len(),
         decoded2.as_mut_ptr() as *mut c_char,
-        input2.as_bytes().len() as ptrdiff_t,
+        decoded2.capacity(),
         true,
         nchars2,
     );
@@ -243,11 +342,8 @@ bWFpbGluZyBsaXN0cywgc2VlIDxodHRwOi8vbGlzdHMuZ251Lm9yZy8+LgoK";
 #[lisp_fn(min = "1")]
 pub fn base64_encode_string(mut string: LispStringRef, no_line_break: bool) -> LispObject {
     // We need to allocate enough room for the encoded text
-    // We will need 33 1/3% more space, plus a newline every 76 characters(MIME_LINE_LENGTH)
-    // and then round up
-    let length = string.len_bytes();
-    let mut allength: ptrdiff_t = length + length / 3 + 1;
-    allength += allength / MIME_LINE_LENGTH + 1 + 6;
+    let length = string.len_bytes() as usize;
+    let allength = pad_base64_size(compute_encode_size(length));
 
     // This function uses SAFE_ALLOCA in the c layer, however I cannot find an equivalent
     // for rust. Instead, we will use a Vec to store the temporary char buffer.
@@ -271,19 +367,26 @@ pub fn base64_encode_string(mut string: LispStringRef, no_line_break: bool) -> L
 /// Base64-decode STRING and return the result.
 #[lisp_fn]
 pub fn base64_decode_string(mut string: LispStringRef) -> LispObject {
-    let length = string.len_bytes();
-    let mut buffer: Vec<c_char> = Vec::with_capacity(length as usize);
+    let length = compute_decode_size(string.len_bytes() as usize);
+    let mut buffer: Vec<c_char> = Vec::with_capacity(length);
 
     let decoded = buffer.as_mut_ptr();
-    let decoded_length =
-        base64_decode_1(string.sdata_ptr(), decoded, length, false, ptr::null_mut());
+    let decoded_length = base64_decode_1(
+        string.sdata_ptr(),
+        string.len_bytes() as usize,
+        decoded,
+        length,
+        false,
+        ptr::null_mut(),
+    );
 
-    if decoded_length > length {
-        panic!("Decoded length is above length");
-    } else if decoded_length < 0 {
+    if decoded_length < 0 {
         error!("Invalid base64 data");
     }
-    unsafe { LispObject::from_raw(make_unibyte_string(decoded, decoded_length)) }
+    unsafe {
+        buffer.set_len(decoded_length as usize);
+        LispObject::from_raw(make_unibyte_string(decoded, decoded_length))
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/base64_exports.rs"));
