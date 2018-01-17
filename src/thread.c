@@ -1022,6 +1022,14 @@ main_thread_p (void *ptr)
   return ptr == &main_thread;
 }
 
+bool
+in_current_thread (void)
+{
+  if (current_thread == NULL)
+    return false;
+  return sys_thread_equal (sys_thread_self (), current_thread->thread_id);
+}
+
 void
 init_threads_once (void)
 {

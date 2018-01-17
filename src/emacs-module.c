@@ -805,18 +805,6 @@ module_function_arity (const struct Lisp_Module_Function *const function)
 
 /* Helper functions.  */
 
-static bool
-in_current_thread (void)
-{
-  if (current_thread == NULL)
-    return false;
-#ifdef HAVE_PTHREAD
-  return pthread_equal (pthread_self (), current_thread->thread_id);
-#elif defined WINDOWSNT
-  return GetCurrentThreadId () == current_thread->thread_id;
-#endif
-}
-
 static void
 module_assert_thread (void)
 {

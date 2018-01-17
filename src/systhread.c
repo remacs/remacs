@@ -74,6 +74,12 @@ sys_thread_self (void)
   return 0;
 }
 
+bool
+sys_thread_equal (sys_thread_t t, sys_thread_t u)
+{
+  return t == u;
+}
+
 int
 sys_thread_create (sys_thread_t *t, const char *name,
 		   thread_creation_function *func, void *datum)
@@ -153,6 +159,12 @@ sys_thread_t
 sys_thread_self (void)
 {
   return pthread_self ();
+}
+
+bool
+sys_thread_equal (sys_thread_t t, sys_thread_t u)
+{
+  return pthread_equal (t, u);
 }
 
 int
@@ -321,6 +333,12 @@ sys_thread_t
 sys_thread_self (void)
 {
   return (sys_thread_t) GetCurrentThreadId ();
+}
+
+bool
+sys_thread_equal (sys_thread_t t, sys_thread_t u)
+{
+  return t == u;
 }
 
 static thread_creation_function *thread_start_address;
