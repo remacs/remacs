@@ -33,7 +33,7 @@ extern crate mock_derive;
 mod functions;
 
 #[macro_use]
-mod eval;
+mod eval_macros;
 #[macro_use]
 mod lisp;
 #[macro_use]
@@ -50,6 +50,7 @@ mod crypto;
 mod data;
 mod dispnew;
 mod editfns;
+mod eval;
 mod ffi;
 mod floatfns;
 mod fns;
