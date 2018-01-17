@@ -347,6 +347,21 @@ pub fn string_to_char(string: LispStringRef) -> EmacsInt {
     }
 }
 
+/// Return the character position of the first character on the current line.
+/// With optional argument N, scan forward N - 1 lines first.
+/// If the scan reaches the end of the buffer, return that position.
+///
+/// This function ignores text display directionality; it returns the
+/// position of the first character in logical order, i.e. the smallest
+/// character position on the line.
+///
+/// This function constrains the returned position to the current field
+/// unless that position would be on a different line than the original,
+/// unconstrained result.  If N is nil or 1, and a front-sticky field
+/// starts at point, the scan stops as soon as it starts.  To ignore field
+/// boundaries, bind `inhibit-field-text-motion' to t.
+///
+/// This function does not move point.
 #[lisp_fn(min = "0")]
 pub fn line_beginning_position(n: Option<EmacsInt>) -> EmacsInt {
     let mut charpos: isize = 0;
@@ -365,6 +380,21 @@ pub fn line_beginning_position(n: Option<EmacsInt>) -> EmacsInt {
     )
 }
 
+/// Return the character position of the last character on the current line.
+/// With argument N not nil or 1, move forward N - 1 lines first.
+/// If scan reaches end of buffer, return that position.
+///
+/// This function ignores text display directionality; it returns the
+/// position of the last character in logical order, i.e. the largest
+/// character position on the line.
+///
+/// This function constrains the returned position to the current field
+/// unless that would be on a different line than the original,
+/// unconstrained result.  If N is nil or 1, and a rear-sticky field ends
+/// at point, the scan stops as soon as it starts.  To ignore field
+/// boundaries bind `inhibit-field-text-motion' to t.
+///
+/// This function does not move point.
 #[lisp_fn(min = "0")]
 pub fn line_end_position(n: Option<EmacsInt>) -> EmacsInt {
     let orig = point();
@@ -391,6 +421,13 @@ pub fn line_end_position(n: Option<EmacsInt>) -> EmacsInt {
     )
 }
 
+/// Return the beginning of the field surrounding POS.
+/// A field is a region of text with the same `field' property.
+/// If POS is nil, the value of point is used for POS.
+/// If ESCAPE-FROM-EDGE is non-nil and POS is at the beginning of its
+/// field, then the beginning of the *previous* field is returned.
+/// If LIMIT is non-nil, it is a buffer position; if the beginning of the field
+/// is before LIMIT, then LIMIT will be returned instead.
 #[lisp_fn(min = "0")]
 pub fn field_beginning(
     pos: Option<EmacsInt>,
@@ -412,6 +449,13 @@ pub fn field_beginning(
     beg as EmacsInt
 }
 
+/// Return the end of the field surrounding POS.
+/// A field is a region of text with the same `field' property.
+/// If POS is nil, the value of point is used for POS.
+/// If ESCAPE-FROM-EDGE is non-nil and POS is at the end of its field,
+/// then the end of the *following* field is returned.
+/// If LIMIT is non-nil, it is a buffer position; if the end of the field
+/// is after LIMIT, then LIMIT will be returned instead.
 #[lisp_fn(min = "0")]
 pub fn field_end(
     pos: Option<EmacsInt>,
