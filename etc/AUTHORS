@@ -2816,6 +2816,8 @@ Lambda Coder: changed tramp.texi
 
 Lara Rios: co-wrote cal-menu.el
 
+Lars Balker Rasmussen: changed gnus-art.el gnus-agent.el message.el
+
 Lars Brinkhoff: changed records.texi fns.c lread.c data.c elisp.texi
   lisp.h objects.texi print.c alloc-colors.c alloc-tests.el alloc.c
   building.texi chartab.c cl-extra.el cl-generic.el cl-lib-tests.el
@@ -2854,6 +2856,8 @@ and changed gnus.texi process.c gnus-ems.el subr.el gnutls.c gnus-cite.el
   pop3.el smtpmail.el display.texi files.el url-http.el gnus-xmas.el
   simple.el auth-source.el image.c proto-stream.el gnutls.el dired.el
   image.el text.texi nnrss.el and 322 other files
+
+Lars Rasmusson: changed ebrowse.c
 
 Lasse Rasinen: changed gnus-start.el
 
@@ -3991,9 +3995,8 @@ Randal Schwartz: wrote pp.el
 
 Ransom Williams: changed files.el
 
-Rasmus Pank Roulund: changed ox-latex.el gnus-art.el
-  gnus-notifications.el org.el ange-ftp.el ebrowse.c gnus-agent.el
-  gnus-fun.el gnus-icalendar.el gnus-sum.el gnus.texi ido.el message.el
+Rasmus Pank Roulund: changed ox-latex.el gnus-notifications.el org.el
+  ange-ftp.el gnus-fun.el gnus-icalendar.el gnus-sum.el gnus.texi ido.el
   message.texi ob-C.el org-entities.el org-src.el org.texi ox-html.el
   ox.el vc-git.el
 
