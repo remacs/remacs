@@ -1254,7 +1254,7 @@ extern "C" {
         only_in_line: Lisp_Object,
         inhibit_capture_property: Lisp_Object,
     ) -> Lisp_Object;
-    pub fn Fline_end_position(n: Lisp_Object) -> Lisp_Object;
+
     pub fn get_process(name: Lisp_Object) -> Lisp_Object;
     pub fn update_status(p: *const Lisp_Process);
     pub fn setup_process_coding_systems(process: Lisp_Object);

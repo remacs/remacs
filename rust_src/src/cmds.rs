@@ -4,10 +4,11 @@ use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{initial_define_key, scan_newline_from_point, set_point, set_point_both,
-                 Fline_beginning_position, Fline_end_position};
+                 Fline_beginning_position};
 use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qnil};
 use remacs_sys::EmacsInt;
 
+use editfns::line_end_position;
 use keymap::{current_global_map, Ctl};
 use lisp::LispObject;
 use lisp::defsubr;
@@ -116,16 +117,12 @@ pub fn beginning_of_line(mut n: LispObject) -> () {
 /// not move.  To ignore field boundaries bind `inhibit-field-text-motion'
 /// to t.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn end_of_line(n: Option<EmacsInt>) -> () {
-    let mut num = n.unwrap_or(1);
+pub fn end_of_line(mut n: Option<EmacsInt>) -> () {
     let mut newpos: isize;
     let mut pt: isize;
     let cur_buf = ThreadState::current_buffer();
     loop {
-        newpos = unsafe {
-            LispObject::from_raw(Fline_end_position(LispObject::from_fixnum(num).to_raw()))
-                .as_fixnum_or_error() as isize
-        };
+        newpos = line_end_position(n).as_fixnum_or_error() as isize;
         unsafe { set_point(newpos) };
         pt = cur_buf.pt();
         if pt > newpos && cur_buf.fetch_char(pt - 1) == '\n' as i32 {
@@ -139,7 +136,7 @@ pub fn end_of_line(n: Option<EmacsInt>) -> () {
             // If we skipped something intangible
             // and now we're not really at eol,
             // keep going.
-            num = 1
+            n = None;
         } else {
             break;
         }

@@ -1,11 +1,14 @@
 //! Lisp functions pertaining to editing.
 
 use libc::{c_uchar, ptrdiff_t};
+use std::{isize, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Fadd_text_properties, Fcons, Fcopy_sequence, Finsert_char,
-                 Qinteger_or_marker_p, Qmark_inactive, Qnil};
-use remacs_sys::{buf_charpos_to_bytepos, globals, make_string_from_bytes, set_point_both};
+use remacs_sys::{globals, EmacsInt};
+use remacs_sys::{buf_charpos_to_bytepos, find_before_next_newline, make_string_from_bytes,
+                 set_point_both, Fadd_text_properties, Fcons, Fconstrain_to_field, Fcopy_sequence,
+                 Finsert_char};
+use remacs_sys::{Qinteger_or_marker_p, Qmark_inactive, Qnil, Qt};
 
 use buffers::get_buffer;
 use lisp::LispObject;
@@ -338,6 +341,42 @@ pub fn string_to_char(string: LispStringRef) -> EmacsInt {
         }
     } else {
         0
+    }
+}
+
+/// Return the character position of the last character on the current line.
+/// With argument N not nil or 1, move forward N - 1 lines first.
+/// If scan reaches end of buffer, return that position.
+///
+/// This function ignores text display directionality; it returns the
+/// position of the last character in logical order, i.e. the largest
+/// character position on the line.
+///
+/// This function constrains the returned position to the current field
+/// unless that would be on a different line than the original,
+/// unconstrained result.  If N is nil or 1, and a rear-sticky field ends
+/// at point, the scan stops as soon as it starts.  To ignore field
+/// boundaries bind `inhibit-field-text-motion' to t.
+///
+/// This function does not move point.
+#[lisp_fn(min = "0")]
+pub fn line_end_position(n: Option<EmacsInt>) -> LispObject {
+    let origin = ThreadState::current_buffer().pt();
+
+    let clipped_n = clip_to_bounds(isize::MIN + 1, n.unwrap_or(1), isize::MAX);
+    let cnt: isize = if clipped_n <= 0 { 1 } else { 0 };
+    let end_pos =
+        unsafe { find_before_next_newline(origin, 0 as isize, clipped_n - cnt, ptr::null_mut()) };
+
+    unsafe {
+        // Return END_POS constrained to the current input field.
+        LispObject::from_raw(Fconstrain_to_field(
+            LispObject::from_fixnum(end_pos as EmacsInt).to_raw(),
+            LispObject::from_fixnum(origin as EmacsInt).to_raw(),
+            Qnil,
+            Qt,
+            Qnil,
+        ))
     }
 }
 
