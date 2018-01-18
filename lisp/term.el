@@ -1,4 +1,4 @@
-;;; term.el --- general command interpreter in a window stuff
+;;; term.el --- general command interpreter in a window stuff -*- lexical-binding: t -*-
 
 ;; Copyright (C) 1988, 1990, 1992, 1994-1995, 2001-2018 Free Software
 ;; Foundation, Inc.
@@ -101,12 +101,8 @@
 ;;             ----------------------------------------
 ;;
 ;;
-;;  ANSI colorization should work well, I've decided to limit the interpreter
-;; to five outstanding commands (like ESC [ 01;04;32;41;07m.
-;;  You shouldn't need more, if you do, tell me and I'll increase it.  It's
-;; so easy you could do it yourself...
-;;
-;;  Blink, is not supported.  Currently it's mapped as bold.
+;;  ANSI colorization should work well.  Blink, is not supported.
+;;  Currently it's mapped as bold.
 ;;
 ;;             ----------------------------------------
 ;;
@@ -392,21 +388,14 @@ contains saved term-home-marker from original sub-buffer.")
   "Current vertical row (relative to home-marker) or nil if unknown.")
 (defvar term-insert-mode nil)
 (defvar term-vertical-motion)
-(defvar term-terminal-state 0
-  "State of the terminal emulator:
-state 0: Normal state
-state 1: Last character was a graphic in the last column.
+(defvar term-do-line-wrapping nil
+  "Last character was a graphic in the last column.
 If next char is graphic, first move one column right
 \(and line warp) before displaying it.
-This emulates (more or less) the behavior of xterm.
-state 2: seen ESC
-state 3: seen ESC [ (or ESC [ ?)
-state 4: term-terminal-parameter contains pending output.")
+This emulates (more or less) the behavior of xterm.")
 (defvar term-kill-echo-list nil
   "A queue of strings whose echo we want suppressed.")
-(defvar term-terminal-parameter)
 (defvar term-terminal-undecoded-bytes nil)
-(defvar term-terminal-previous-parameter)
 (defvar term-current-face 'term)
 (defvar term-scroll-start 0 "Top-most line (inclusive) of scrolling region.")
 (defvar term-scroll-end) ; Number of line (zero-based) after scrolling region.
@@ -750,12 +739,6 @@ Buffer local variable.")
 (defvar term-ansi-current-reverse nil)
 (defvar term-ansi-current-invisible nil)
 
-;; Four should be enough, if you want more, just add. -mm
-(defvar term-terminal-more-parameters 0)
-(defvar term-terminal-previous-parameter-2 -1)
-(defvar term-terminal-previous-parameter-3 -1)
-(defvar term-terminal-previous-parameter-4 -1)
-
 ;;; Faces
 (defvar ansi-term-color-vector
   [term
@@ -1089,15 +1072,9 @@ Entry to this mode runs the hooks on `term-mode-hook'."
   (make-local-variable 'term-ansi-current-reverse)
   (make-local-variable 'term-ansi-current-invisible)
 
-  (make-local-variable 'term-terminal-parameter)
   (make-local-variable 'term-terminal-undecoded-bytes)
-  (make-local-variable 'term-terminal-previous-parameter)
-  (make-local-variable 'term-terminal-previous-parameter-2)
-  (make-local-variable 'term-terminal-previous-parameter-3)
-  (make-local-variable 'term-terminal-previous-parameter-4)
-  (make-local-variable 'term-terminal-more-parameters)
 
-  (make-local-variable 'term-terminal-state)
+  (make-local-variable 'term-do-line-wrapping)
   (make-local-variable 'term-kill-echo-list)
   (make-local-variable 'term-start-line-column)
   (make-local-variable 'term-current-column)
@@ -2658,10 +2635,8 @@ See `term-prompt-regexp'."
   (cond (term-current-column)
 	((setq term-current-column (current-column)))))
 
-;; Move DELTA column right (or left if delta < 0 limiting at column 0).
-
-(defun term-move-columns (delta)
-  (setq term-current-column (max 0 (+ (term-current-column) delta)))
+(defun term-move-to-column (column)
+  (setq term-current-column column)
   (let ((point-at-eol (line-end-position)))
     (move-to-column term-current-column t)
     ;; If move-to-column extends the current line it will use the face
@@ -2669,6 +2644,11 @@ See `term-prompt-regexp'."
     ;; to default.
     (when (> (point) point-at-eol)
       (put-text-property point-at-eol (point) 'font-lock-face 'default))))
+
+;; Move DELTA column right (or left if delta < 0 limiting at column 0).
+(defun term-move-columns (delta)
+  (term-move-to-column
+   (max 0 (+ (term-current-column) delta))))
 
 ;; Insert COUNT copies of CHAR in the default face.
 (defun term-insert-char (char count)
@@ -2761,26 +2741,41 @@ See `term-prompt-regexp'."
 ;; This is the standard process filter for term buffers.
 ;; It emulates (most of the features of) a VT100/ANSI-style terminal.
 
+;; References:
+;; [ctlseqs]: http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+;; [ECMA-48]: http://www.ecma-international.org/publications/standards/Ecma-048.htm
+;; [vt100]: https://vt100.net/docs/vt100-ug/chapter3.html
+
+(defconst term-control-seq-regexp
+  (concat
+   ;; A control character,
+   "\\(?:[\r\n\000\007\t\b\016\017]\\|"
+   ;; some Emacs specific control sequences, implemented by
+   ;; `term-command-hook',
+   "\032[^\n]+\r?\n\\|"
+   ;; a C1 escape coded character (see [ECMA-48] section 5.3 "Elements
+   ;; of the C1 set"),
+   "\e\\(?:[DM78c]\\|"
+   ;; another Emacs specific control sequence,
+   "AnSiT[^\n]+\r?\n\\|"
+   ;; or an escape sequence (section 5.4 "Control Sequences"),
+   "\\[\\([\x30-\x3F]*\\)[\x20-\x2F]*[\x40-\x7E]\\)\\)")
+  "Regexp matching control sequences handled by term.el.")
+
+(defconst term-control-seq-prefix-regexp
+  "[\032\e]")
+
 (defun term-emulate-terminal (proc str)
   (with-current-buffer (process-buffer proc)
-    (let* ((i 0) char funny
-	   count       ; number of decoded chars in substring
-	   count-bytes ; number of bytes
+    (let* ((i 0) funny
 	   decoded-substring
-	   save-point save-marker old-point temp win
+	   save-point save-marker win
 	   (inhibit-read-only t)
 	   (buffer-undo-list t)
 	   (selected (selected-window))
 	   last-win
-           handled-ansi-message
 	   (str-length (length str)))
       (save-selected-window
-
-        (let ((newstr (term-handle-ansi-terminal-messages str)))
-          (unless (eq str newstr)
-	    (setq handled-ansi-message t
-		  str newstr)))
-        (setq str-length (length str))
 
 	(when (marker-buffer term-pending-delete-marker)
 	  ;; Delete text following term-pending-delete-marker.
@@ -2811,298 +2806,214 @@ See `term-prompt-regexp'."
             (setq str (concat term-terminal-undecoded-bytes str))
             (setq str-length (length str))
             (setq term-terminal-undecoded-bytes nil))
-	  (cond ((eq term-terminal-state 4) ;; Have saved pending output.
-		 (setq str (concat term-terminal-parameter str))
-		 (setq term-terminal-parameter nil)
-		 (setq str-length (length str))
-		 (setq term-terminal-state 0)))
 
-	  (while (< i str-length)
-	    (setq char (aref str i))
-	    (cond ((< term-terminal-state 2)
-		   ;; Look for prefix of regular chars
-		   (setq funny
-			 (string-match "[\r\n\000\007\033\t\b\032\016\017]"
-				       str i))
-		   (when (not funny) (setq funny str-length))
-		   (cond ((> funny i)
-			  (cond ((eq term-terminal-state 1)
-				 ;; We are in state 1, we need to wrap
-				 ;; around.  Go to the beginning of
-				 ;; the next line and switch to state
-				 ;; 0.
-				 (term-down 1 t)
-				 (term-move-columns (- (term-current-column)))
-				 (setq term-terminal-state 0)))
-			  ;; Decode the string before counting
-			  ;; characters, to avoid garbling of certain
-			  ;; multibyte characters (bug#1006).
-			  (setq decoded-substring
-				(decode-coding-string
-				 (substring str i funny)
-				 locale-coding-system))
-			  (setq count (length decoded-substring))
-                          ;; Check for multibyte characters that ends
-                          ;; before end of string, and save it for
-                          ;; next time.
-                          (when (= funny str-length)
-                            (let ((partial 0))
-                              (while (eq (char-charset (aref decoded-substring
-                                                             (- count 1 partial)))
-                                         'eight-bit)
-                                (cl-incf partial))
-                              (when (> partial 0)
-                                (setq term-terminal-undecoded-bytes
-                                      (substring decoded-substring (- partial)))
-                                (setq decoded-substring
-                                      (substring decoded-substring 0 (- partial)))
-                                (cl-decf str-length partial)
-                                (cl-decf count partial)
-                                (cl-decf funny partial))))
-			  (setq temp (- (+ (term-horizontal-column) count)
-					term-width))
-			  (cond ((or term-suppress-hard-newline (<= temp 0)))
-				;; All count chars fit in line.
-				((> count temp) ;; Some chars fit.
-				 ;; This iteration, handle only what fits.
-				 (setq count (- count temp))
-				 (setq count-bytes
-				       (length
-					(encode-coding-string
-					 (substring decoded-substring 0 count)
-					 'binary)))
-				 (setq temp 0)
-				 (setq funny (+ count-bytes i)))
-				((or (not (or term-pager-count
-					      term-scroll-with-delete))
-				     (>  (term-handle-scroll 1) 0))
-				 (term-adjust-current-row-cache 1)
-				 (setq count (min count term-width))
-				 (setq count-bytes
-				       (length
-					(encode-coding-string
-					 (substring decoded-substring 0 count)
-					 'binary)))
-				 (setq funny (+ count-bytes i))
-				 (setq term-start-line-column
-				       term-current-column))
-				(t ;; Doing PAGER processing.
-				 (setq count 0 funny i)
-				 (setq term-current-column nil)
-				 (setq term-start-line-column nil)))
-			  (setq old-point (point))
+          (while (< i str-length)
+            (setq funny (string-match term-control-seq-regexp str i))
+            (let ((ctl-params (and funny (match-string 1 str)))
+                  (ctl-params-end (and funny (match-end 1)))
+                  (ctl-end (if funny (match-end 0)
+                             (setq funny (string-match term-control-seq-prefix-regexp str i))
+                             (if funny
+                                 (setq term-terminal-undecoded-bytes
+                                       (substring str funny))
+                               (setq funny str-length))
+                             ;; The control sequence ends somewhere
+                             ;; past the end of this string.
+                             (1+ str-length))))
+              (when (> funny i)
+                (when term-do-line-wrapping
+                  (term-down 1 t)
+                  (term-move-to-column 0)
+                  (setq term-do-line-wrapping nil))
+                ;; Handle non-control data.  Decode the string before
+                ;; counting characters, to avoid garbling of certain
+                ;; multibyte characters (bug#1006).
+                (setq decoded-substring
+                      (decode-coding-string
+                       (substring str i funny)
+                       locale-coding-system t))
+                ;; Check for multibyte characters that ends
+                ;; before end of string, and save it for
+                ;; next time.
+                (when (= funny str-length)
+                  (let ((partial 0)
+                        (count (length decoded-substring)))
+                    (while (eq (char-charset (aref decoded-substring
+                                                   (- count 1 partial)))
+                               'eight-bit)
+                      (cl-incf partial))
+                    (when (> partial 0)
+                      (setq term-terminal-undecoded-bytes
+                            (substring decoded-substring (- partial)))
+                      (setq decoded-substring
+                            (substring decoded-substring 0 (- partial)))
+                      (cl-decf str-length partial)
+                      (cl-decf funny partial))))
 
-			  ;; Insert a string, check how many columns
-			  ;; we moved, then delete that many columns
-			  ;; following point if not eob nor insert-mode.
-			  (let ((old-column (current-column))
-				columns pos)
-			    (insert (decode-coding-string (substring str i funny) locale-coding-system))
-			    (setq term-current-column (current-column)
-				  columns (- term-current-column old-column))
-			    (when (not (or (eobp) term-insert-mode))
-			      (setq pos (point))
-			      (term-move-columns columns)
-			      (delete-region pos (point)))
-			    ;; In insert mode if the current line
-			    ;; has become too long it needs to be
-			    ;; chopped off.
-			    (when term-insert-mode
-			      (setq pos (point))
-			      (end-of-line)
-			      (when (> (current-column) term-width)
-				(delete-region (- (point) (- (current-column) term-width))
-					       (point)))
-			      (goto-char pos)))
-			  (setq term-current-column nil)
+                ;; Insert a string, check how many columns
+                ;; we moved, then delete that many columns
+                ;; following point if not eob nor insert-mode.
+                (let ((old-column (term-horizontal-column))
+                      (old-point (point))
+                      columns)
+                  (unless term-suppress-hard-newline
+                    (while (> (+ (length decoded-substring) old-column)
+                              term-width)
+                      (insert (substring decoded-substring 0
+                                         (- term-width old-column)))
+                      ;; Since we've enough text to fill the whole line,
+                      ;; delete previous text regardless of
+                      ;; `term-insert-mode's value.
+                      (delete-region (point) (line-end-position))
+                      (term-down 1 t)
+                      (term-move-columns (- (term-current-column)))
+                      (setq decoded-substring
+                            (substring decoded-substring (- term-width old-column)))
+                      (setq old-column 0)))
+                  (insert decoded-substring)
+                  (setq term-current-column (current-column)
+                        columns (- term-current-column old-column))
+                  (when (not (or (eobp) term-insert-mode))
+                    (let ((pos (point)))
+                      (term-move-columns columns)
+                      (delete-region pos (point))))
+                  ;; In insert mode if the current line
+                  ;; has become too long it needs to be
+                  ;; chopped off.
+                  (when term-insert-mode
+                    (let ((pos (point)))
+                      (end-of-line)
+                      (when (> (current-column) term-width)
+                        (delete-region (- (point) (- (current-column) term-width))
+                                       (point)))
+                      (goto-char pos)))
 
-			  (put-text-property old-point (point)
-					     'font-lock-face term-current-face)
-			  ;; If the last char was written in last column,
-			  ;; back up one column, but remember we did so.
-			  ;; Thus we emulate xterm/vt100-style line-wrapping.
-			  (cond ((eq temp 0)
-				 (term-move-columns -1)
-				 (setq term-terminal-state 1)))
-			  (setq i (1- funny)))
-			 ((and (setq term-terminal-state 0)
-			       (eq char ?\^I)) ; TAB (terminfo: ht)
-			  (setq count (term-current-column))
-			  ;; The line cannot exceed term-width. TAB at
-			  ;; the end of a line should not cause wrapping.
-			  (setq count (min term-width
-					   (+ count 8 (- (mod count 8)))))
-			  (if (> term-width count)
-			      (progn
-				(term-move-columns
-				 (- count (term-current-column)))
-				(setq term-current-column count))
-			    (when (> term-width (term-current-column))
-			      (term-move-columns
-			       (1- (- term-width (term-current-column)))))
-			    (when (= term-width (term-current-column))
-			      (term-move-columns -1))))
-			 ((eq char ?\r)  ;; (terminfo: cr)
-			  (term-vertical-motion 0)
-			  (setq term-current-column term-start-line-column))
-			 ((eq char ?\n)  ;; (terminfo: cud1, ind)
-			  (unless (and term-kill-echo-list
-				       (term-check-kill-echo-list))
-			    (term-down 1 t)))
-			 ((eq char ?\b)  ;; (terminfo: cub1)
-			  (term-move-columns -1))
-			 ((eq char ?\033) ; Escape
-			  (setq term-terminal-state 2))
-			 ((eq char 0))	       ; NUL: Do nothing
-			 ((eq char ?\016))     ; Shift Out - ignored
-			 ((eq char ?\017))     ; Shift In - ignored
-			 ((eq char ?\^G) ;; (terminfo: bel)
-			  (beep t))
-			 ((eq char ?\032)
-			  (let ((end (string-match "\r?\n" str i)))
-			    (if end
-                                (progn
-                                  (unless handled-ansi-message
-                                    (funcall term-command-hook
-                                             (decode-coding-string
-                                              (substring str (1+ i) end)
-                                              locale-coding-system)))
-                                  (setq i (1- (match-end 0))))
-			      (setq term-terminal-parameter (substring str i))
-			      (setq term-terminal-state 4)
-			      (setq i str-length))))
-			 (t   ; insert char FIXME: Should never happen
-			  (term-move-columns 1)
-			  (backward-delete-char 1)
-			  (insert char))))
-		  ((eq term-terminal-state 2)	  ; Seen Esc
-		   (cond ((eq char ?\133)	  ;; ?\133 = ?[
-
-                          ;; Some modifications to cope with multiple
-                          ;; settings like ^[[01;32;43m -mm
-                          ;; Note that now the init value of
-                          ;; term-terminal-previous-parameter has been
-                          ;; changed to -1
-
-			  (setq term-terminal-parameter 0)
-			  (setq term-terminal-previous-parameter -1)
-			  (setq term-terminal-previous-parameter-2 -1)
-			  (setq term-terminal-previous-parameter-3 -1)
-			  (setq term-terminal-previous-parameter-4 -1)
-			  (setq term-terminal-more-parameters 0)
-			  (setq term-terminal-state 3))
-			 ((eq char ?D) ;; scroll forward
-			  (term-handle-deferred-scroll)
-			  (term-down 1 t)
-			  (setq term-terminal-state 0))
-			 ;; ((eq char ?E) ;; (terminfo: nw), not used for
-			 ;; 	       ;; now, but this is a working
-			 ;; 	       ;; implementation
-			 ;;  (term-down 1)
-			 ;;  (term-goto term-current-row 0)
-			 ;;  (setq term-terminal-state 0))
-			 ((eq char ?M) ;; scroll reversed (terminfo: ri)
-			  (if (or (< (term-current-row) term-scroll-start)
-				  (>= (1- (term-current-row))
-				      term-scroll-start))
-			      ;; Scrolling up will not move outside
-			      ;; the scroll region.
-			      (term-down -1)
-			    ;; Scrolling the scroll region is needed.
-			    (term-down -1 t))
-			  (setq term-terminal-state 0))
-			 ((eq char ?7) ;; Save cursor (terminfo: sc)
-			  (term-handle-deferred-scroll)
-			  (setq term-saved-cursor
-				(list (term-current-row)
-				      (term-horizontal-column)
-				      term-ansi-current-bg-color
-				      term-ansi-current-bold
-				      term-ansi-current-color
-				      term-ansi-current-invisible
-				      term-ansi-current-reverse
-				      term-ansi-current-underline
-				      term-current-face)
-				)
-			  (setq term-terminal-state 0))
-			 ((eq char ?8) ;; Restore cursor (terminfo: rc)
-			  (when term-saved-cursor
-			    (term-goto (nth 0 term-saved-cursor)
-				       (nth 1 term-saved-cursor))
-			    (setq term-ansi-current-bg-color
-				  (nth 2 term-saved-cursor)
-				  term-ansi-current-bold
-				  (nth 3 term-saved-cursor)
-				  term-ansi-current-color
-				  (nth 4 term-saved-cursor)
-				  term-ansi-current-invisible
-				  (nth 5 term-saved-cursor)
-				  term-ansi-current-reverse
-				  (nth 6 term-saved-cursor)
-				  term-ansi-current-underline
-				  (nth 7 term-saved-cursor)
-				  term-current-face
-				  (nth 8 term-saved-cursor)))
-			  (setq term-terminal-state 0))
-			 ((eq char ?c) ;; \Ec - Reset (terminfo: rs1)
-			  ;; This is used by the "clear" program.
-			  (setq term-terminal-state 0)
-			  (term-reset-terminal))
-			 ;; The \E#8 reset sequence for xterm. We
-			 ;; probably don't need to handle it, but this
-			 ;; is the code to parse it.
-			 ;; ((eq char ?#)
-			 ;;  (when (eq (aref str (1+ i)) ?8)
-			 ;;    (setq i (1+ i))
-			 ;;    (setq term-scroll-start 0)
-			 ;;    (setq term-scroll-end term-height)
-			 ;;    (setq term-terminal-state 0)))
-			 ((setq term-terminal-state 0))))
-		  ((eq term-terminal-state 3) ; Seen Esc [
-		   (cond ((and (>= char ?0) (<= char ?9))
-			  (setq term-terminal-parameter
-				(+ (* 10 term-terminal-parameter) (- char ?0))))
-			 ((eq char ?\;)
-                          ;; Some modifications to cope with multiple
-                          ;; settings like ^[[01;32;43m -mm
-			  (setq term-terminal-more-parameters 1)
-			  (setq term-terminal-previous-parameter-4
-				term-terminal-previous-parameter-3)
-			  (setq term-terminal-previous-parameter-3
-				term-terminal-previous-parameter-2)
-			  (setq term-terminal-previous-parameter-2
-				term-terminal-previous-parameter)
-			  (setq term-terminal-previous-parameter
-				term-terminal-parameter)
-			  (setq term-terminal-parameter 0))
-			 ((eq char ??)) ; Ignore ?
-			 (t
-			  (term-handle-ansi-escape proc char)
-			  (setq term-terminal-more-parameters 0)
-			  (setq term-terminal-previous-parameter-4 -1)
-			  (setq term-terminal-previous-parameter-3 -1)
-			  (setq term-terminal-previous-parameter-2 -1)
-			  (setq term-terminal-previous-parameter -1)
-			  (setq term-terminal-state 0)))))
-	    (when (term-handling-pager)
-	      ;; Finish stuff to get ready to handle PAGER.
-	      (if (> (% (current-column) term-width) 0)
-		  (setq term-terminal-parameter
-			(substring str i))
-		;; We're at column 0.  Goto end of buffer; to compensate,
-		;; prepend a ?\r for later.  This looks more consistent.
-		(if (zerop i)
-		    (setq term-terminal-parameter
-			  (concat "\r" (substring str i)))
-		  (setq term-terminal-parameter (substring str (1- i)))
-		  (aset term-terminal-parameter 0 ?\r))
-		(goto-char (point-max)))
-	      (setq term-terminal-state 4)
-	      (make-local-variable 'term-pager-old-filter)
-	      (setq term-pager-old-filter (process-filter proc))
-	      (set-process-filter proc term-pager-filter)
-	      (setq i str-length))
-	    (setq i (1+ i))))
+                  (put-text-property old-point (point)
+                                     'font-lock-face term-current-face))
+                ;; If the last char was written in last column,
+                ;; back up one column, but remember we did so.
+                ;; Thus we emulate xterm/vt100-style line-wrapping.
+                (cond ((eq (term-current-column) term-width)
+                       (term-move-columns -1)
+                       (setq term-do-line-wrapping t)))
+                (setq term-current-column nil)
+                (setq i funny))
+              (pcase-exhaustive (and (<= ctl-end str-length) (aref str i))
+                (?\t ;; TAB (terminfo: ht)
+                 ;; The line cannot exceed term-width. TAB at
+                 ;; the end of a line should not cause wrapping.
+                 (let ((col (term-current-column)))
+                   (term-move-to-column
+                    (min (1- term-width)
+                         (+ col 8 (- (mod col 8)))))))
+                (?\r ;; (terminfo: cr)
+                 (term-vertical-motion 0)
+                 (setq term-current-column term-start-line-column))
+                (?\n ;; (terminfo: cud1, ind)
+                 (unless (and term-kill-echo-list
+                              (term-check-kill-echo-list))
+                   (term-down 1 t)))
+                (?\b ;; (terminfo: cub1)
+                 (term-move-columns -1))
+                (?\C-g                  ;; (terminfo: bel)
+                 (beep t))
+                (?\032 ; Emacs specific control sequence.
+                 (funcall term-command-hook
+                          (decode-coding-string
+                           (substring str (1+ i)
+                                      (- ctl-end
+                                         (if (eq (aref str (- ctl-end 2)) ?\r)
+                                             2 1)))
+                           locale-coding-system t)))
+                (?\e
+                 (pcase (aref str (1+ i))
+                   (?\[
+                    ;; We only handle control sequences with a single
+                    ;; "Final" byte (see [ECMA-48] section 5.4).
+                    (when (eq ctl-params-end (1- ctl-end))
+                      (term-handle-ansi-escape
+                       proc
+                       (mapcar ;; We don't distinguish empty params
+                               ;; from 0 (according to [ECMA-48] we
+                               ;; should, but all commands we support
+                               ;; default to 0 values anyway).
+                        #'string-to-number
+                        (split-string ctl-params ";"))
+                       (aref str (1- ctl-end)))))
+                   (?D ;; Scroll forward (apparently not documented in
+                       ;; [ECMA-48], [ctlseqs] mentions it as C1
+                       ;; character "Index" though).
+                    (term-handle-deferred-scroll)
+                    (term-down 1 t))
+                   (?M ;; Scroll reversed (terminfo: ri, ECMA-48
+                       ;; "Reverse Linefeed").
+                    (if (or (< (term-current-row) term-scroll-start)
+                            (>= (1- (term-current-row))
+                                term-scroll-start))
+                        ;; Scrolling up will not move outside
+                        ;; the scroll region.
+                        (term-down -1)
+                      ;; Scrolling the scroll region is needed.
+                      (term-down -1 t)))
+                   (?7 ;; Save cursor (terminfo: sc, not in [ECMA-48],
+                       ;; [ctlseqs] has it as "DECSC").
+                    (term-handle-deferred-scroll)
+                    (setq term-saved-cursor
+                          (list (term-current-row)
+                                (term-horizontal-column)
+                                term-ansi-current-bg-color
+                                term-ansi-current-bold
+                                term-ansi-current-color
+                                term-ansi-current-invisible
+                                term-ansi-current-reverse
+                                term-ansi-current-underline
+                                term-current-face)))
+                   (?8 ;; Restore cursor (terminfo: rc, [ctlseqs]
+                       ;; "DECRC").
+                    (when term-saved-cursor
+                      (term-goto (nth 0 term-saved-cursor)
+                                 (nth 1 term-saved-cursor))
+                      (setq term-ansi-current-bg-color
+                            (nth 2 term-saved-cursor)
+                            term-ansi-current-bold
+                            (nth 3 term-saved-cursor)
+                            term-ansi-current-color
+                            (nth 4 term-saved-cursor)
+                            term-ansi-current-invisible
+                            (nth 5 term-saved-cursor)
+                            term-ansi-current-reverse
+                            (nth 6 term-saved-cursor)
+                            term-ansi-current-underline
+                            (nth 7 term-saved-cursor)
+                            term-current-face
+                            (nth 8 term-saved-cursor))))
+                   (?c ;; \Ec - Reset (terminfo: rs1, [ctlseqs] "RIS").
+                    ;; This is used by the "clear" program.
+                    (term-reset-terminal))
+                   (?A ;; An \eAnSiT sequence (Emacs specific).
+                    (term-handle-ansi-terminal-messages
+                     (substring str i ctl-end)))))
+                ;; Ignore NUL, Shift Out, Shift In.
+                ((or ?\0 #xE #xF 'nil) nil))
+              (if (term-handling-pager)
+                  (progn
+                    ;; Finish stuff to get ready to handle PAGER.
+                    (if (> (% (current-column) term-width) 0)
+                        (setq term-terminal-undecoded-bytes
+                              (substring str i))
+                      ;; We're at column 0.  Goto end of buffer; to compensate,
+                      ;; prepend a ?\r for later.  This looks more consistent.
+                      (if (zerop i)
+                          (setq term-terminal-undecoded-bytes
+                                (concat "\r" (substring str i)))
+                        (setq term-terminal-undecoded-bytes (substring str (1- i)))
+                        (aset term-terminal-undecoded-bytes 0 ?\r))
+                      (goto-char (point-max)))
+                    (make-local-variable 'term-pager-old-filter)
+                    (setq term-pager-old-filter (process-filter proc))
+                    (set-process-filter proc term-pager-filter)
+                    (setq i str-length))
+                (setq i ctl-end)))))
 
 	(when (>= (term-current-row) term-height)
 	  (term-handle-deferred-scroll))
@@ -3333,87 +3244,83 @@ option is enabled.  See `term-set-goto-process-mark'."
 ;; Handle a character assuming (eq terminal-state 2) -
 ;; i.e. we have previously seen Escape followed by ?[.
 
-(defun term-handle-ansi-escape (proc char)
+(defun term-handle-ansi-escape (proc params char)
   (cond
    ((or (eq char ?H)  ;; cursor motion (terminfo: cup,home)
 	;; (eq char ?f) ;; xterm seems to handle this sequence too, not
 	;; needed for now
 	)
-    (when (<= term-terminal-parameter 0)
-      (setq term-terminal-parameter 1))
-    (when (<= term-terminal-previous-parameter 0)
-      (setq term-terminal-previous-parameter 1))
-    (when (> term-terminal-previous-parameter term-height)
-      (setq term-terminal-previous-parameter term-height))
-    (when (> term-terminal-parameter term-width)
-      (setq term-terminal-parameter term-width))
     (term-goto
-     (1- term-terminal-previous-parameter)
-     (1- term-terminal-parameter)))
+     (1- (max 1 (min (or (nth 0 params) 0) term-height)))
+     (1- (max 1 (min (or (nth 1 params) 0) term-width)))))
    ;; \E[A - cursor up (terminfo: cuu, cuu1)
    ((eq char ?A)
     (term-handle-deferred-scroll)
-    (let ((tcr (term-current-row)))
+    (let ((tcr (term-current-row))
+          (scroll-amount (car params)))
       (term-down
-       (if (< (- tcr term-terminal-parameter) term-scroll-start)
+       (if (< (- tcr scroll-amount) term-scroll-start)
 	   ;; If the amount to move is before scroll start, move
 	   ;; to scroll start.
 	   (- term-scroll-start tcr)
-	 (if (>= term-terminal-parameter tcr)
+         (if (>= scroll-amount tcr)
 	     (- tcr)
-	   (- (max 1 term-terminal-parameter)))) t)))
+           (- (max 1 scroll-amount))))
+       t)))
    ;; \E[B - cursor down (terminfo: cud)
    ((eq char ?B)
-    (let ((tcr (term-current-row)))
+    (let ((tcr (term-current-row))
+          (scroll-amount (car params)))
       (unless (= tcr (1- term-scroll-end))
 	(term-down
-	 (if (> (+ tcr term-terminal-parameter) term-scroll-end)
+         (if (> (+ tcr scroll-amount) term-scroll-end)
 	     (- term-scroll-end 1 tcr)
-	   (max 1 term-terminal-parameter)) t))))
+           (max 1 scroll-amount))
+         t))))
    ;; \E[C - cursor right (terminfo: cuf, cuf1)
    ((eq char ?C)
     (term-move-columns
      (max 1
-	  (if (>= (+ term-terminal-parameter (term-current-column)) term-width)
+          (if (>= (+ (car params) (term-current-column)) term-width)
 	      (- term-width (term-current-column)  1)
-	    term-terminal-parameter))))
+            (car params)))))
    ;; \E[D - cursor left (terminfo: cub)
    ((eq char ?D)
-    (term-move-columns (- (max 1 term-terminal-parameter))))
+    (term-move-columns (- (max 1 (car params)))))
    ;; \E[G - cursor motion to absolute column (terminfo: hpa)
    ((eq char ?G)
-    (term-move-columns (- (max 0 (min term-width term-terminal-parameter))
+    (term-move-columns (- (max 0 (min term-width (car params)))
                           (term-current-column))))
    ;; \E[J - clear to end of screen (terminfo: ed, clear)
    ((eq char ?J)
-    (term-erase-in-display term-terminal-parameter))
+    (term-erase-in-display (car params)))
    ;; \E[K - clear to end of line (terminfo: el, el1)
    ((eq char ?K)
-    (term-erase-in-line term-terminal-parameter))
+    (term-erase-in-line (car params)))
    ;; \E[L - insert lines (terminfo: il, il1)
    ((eq char ?L)
-    (term-insert-lines (max 1 term-terminal-parameter)))
+    (term-insert-lines (max 1 (car params))))
    ;; \E[M - delete lines (terminfo: dl, dl1)
    ((eq char ?M)
-    (term-delete-lines (max 1 term-terminal-parameter)))
+    (term-delete-lines (max 1 (car params))))
    ;; \E[P - delete chars (terminfo: dch, dch1)
    ((eq char ?P)
-    (term-delete-chars (max 1 term-terminal-parameter)))
+    (term-delete-chars (max 1 (car params))))
    ;; \E[@ - insert spaces (terminfo: ich)
    ((eq char ?@)
-    (term-insert-spaces (max 1 term-terminal-parameter)))
+    (term-insert-spaces (max 1 (car params))))
    ;; \E[?h - DEC Private Mode Set
    ((eq char ?h)
-    (cond ((eq term-terminal-parameter 4)  ;; (terminfo: smir)
+    (cond ((eq (car params) 4)  ;; (terminfo: smir)
 	   (setq term-insert-mode t))
-	  ;; ((eq term-terminal-parameter 47) ;; (terminfo: smcup)
+	  ;; ((eq (car params) 47) ;; (terminfo: smcup)
 	  ;; (term-switch-to-alternate-sub-buffer t))
 	  ))
    ;; \E[?l - DEC Private Mode Reset
    ((eq char ?l)
-    (cond ((eq term-terminal-parameter 4)  ;; (terminfo: rmir)
+    (cond ((eq (car params) 4)  ;; (terminfo: rmir)
 	   (setq term-insert-mode nil))
-	  ;; ((eq term-terminal-parameter 47) ;; (terminfo: rmcup)
+          ;; ((eq (car params) 47) ;; (terminfo: rmcup)
 	  ;; (term-switch-to-alternate-sub-buffer nil))
 	  ))
 
@@ -3421,15 +3328,7 @@ option is enabled.  See `term-set-goto-process-mark'."
    ;; \E[m - Set/reset modes, set bg/fg
    ;;(terminfo: smso,rmso,smul,rmul,rev,bold,sgr0,invis,op,setab,setaf)
    ((eq char ?m)
-    (when (= term-terminal-more-parameters 1)
-      (when (>= term-terminal-previous-parameter-4 0)
-	(term-handle-colors-array term-terminal-previous-parameter-4))
-      (when (>= term-terminal-previous-parameter-3 0)
-	(term-handle-colors-array term-terminal-previous-parameter-3))
-      (when (>= term-terminal-previous-parameter-2 0)
-	(term-handle-colors-array term-terminal-previous-parameter-2))
-      (term-handle-colors-array term-terminal-previous-parameter))
-    (term-handle-colors-array term-terminal-parameter))
+    (mapc #'term-handle-colors-array params))
 
    ;; \E[6n - Report cursor position (terminfo: u7)
    ((eq char ?n)
@@ -3442,8 +3341,8 @@ option is enabled.  See `term-set-goto-process-mark'."
    ;; \E[r - Set scrolling region (terminfo: csr)
    ((eq char ?r)
     (term-set-scroll-region
-     (1- term-terminal-previous-parameter)
-     (1- term-terminal-parameter)))
+     (1- (or (nth 0 params) 0))
+     (1- (or (nth 1 params) 0))))
    (t)))
 
 (defun term-set-scroll-region (top bottom)
@@ -3631,7 +3530,7 @@ The top-most line is line 0."
 
 (defun term-pager-discard ()
   (interactive)
-  (setq term-terminal-parameter "")
+  (setq term-terminal-undecoded-bytes "")
   (interrupt-process nil t)
   (term-pager-continue term-height))
 
@@ -3809,7 +3708,7 @@ all pending output has been dealt with."))
 If KIND is 0, erase from (point) to (point-max);
 if KIND is 1, erase from home to point; else erase from home to point-max."
   (term-handle-deferred-scroll)
-  (cond ((eq term-terminal-parameter 0)
+  (cond ((eq kind 0)
 	 (let ((need-unwrap (bolp)))
 	   (delete-region (point) (point-max))
 	   (when need-unwrap (term-unwrap-line))))
