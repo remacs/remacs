@@ -53,7 +53,8 @@
             (insert (file-name-nondirectory ignored-dir))
             (write-region nil nil (expand-file-name ".bzrignore" bzrdir)
                           nil 'silent))
-          (call-process vc-bzr-program nil nil nil "init")
+          (skip-unless (eq 0            ; some internal bzr error
+                           (call-process vc-bzr-program nil nil nil "init")))
           (call-process vc-bzr-program nil nil nil "add")
           (call-process vc-bzr-program nil nil nil "commit" "-m" "Commit 1")
           (with-temp-buffer
@@ -84,7 +85,8 @@
                                     process-environment)))
     (unwind-protect
         (progn
-          (call-process vc-bzr-program nil nil nil "init")
+          (skip-unless (eq 0            ; some internal bzr error
+                           (call-process vc-bzr-program nil nil nil "init")))
           (make-directory subdir)
           (with-temp-buffer
             (insert "text")
