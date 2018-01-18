@@ -55,5 +55,5 @@ located in the same directory as the feature.  Hence, the lisp file
 directory called ~test/lisp/progmodes/flymake-resources~.
 
 No guidance is given for the organization of resource files inside the
-~-resource~ directory; files can be organized at the author's
+~-resources~ directory; files can be organized at the author's
 discretion.
