@@ -817,6 +817,8 @@ extern struct window *w32_system_caret_window;
 extern int w32_system_caret_hdr_height;
 extern int w32_system_caret_mode_height;
 
+extern Window tip_window;
+
 #ifdef _MSC_VER
 #ifndef EnumSystemLocales
 /* MSVC headers define these only for _WIN32_WINNT >= 0x0500.  */

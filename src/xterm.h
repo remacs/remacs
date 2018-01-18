@@ -503,6 +503,8 @@ extern bool x_display_ok (const char *);
 
 extern void select_visual (struct x_display_info *);
 
+extern Window tip_window;
+
 /* Each X frame object points to its own struct x_output object
    in the output_data.x field.  The x_output structure contains
    the information that is specific to X windows.  */

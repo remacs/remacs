@@ -58,6 +58,12 @@ on GUI frames when tooltips are displayed in the echo area.  Instead,
 it resizes the echo area as needed to accommodate the full tool-tip
 text.
 
+---
+** Show modeline tooltips only if the corresponding action applies.
+Customize the option 'mode-line-default-help-echo' to restore the old
+behavior where the tooltip text is also shown when the corresponding
+action does not apply.
+
 +++
 ** New function 'logcount' calculates an integer's Hamming weight.
 

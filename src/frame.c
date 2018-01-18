@@ -832,6 +832,7 @@ make_frame (bool mini_p)
   f->no_focus_on_map = false;
   f->no_accept_focus = false;
   f->z_group = z_group_none;
+  f->tooltip = false;
 #if ! defined (USE_GTK) && ! defined (HAVE_NS)
   f->last_tool_bar_item = -1;
 #endif
@@ -1467,20 +1468,21 @@ DEFUN ("selected-frame", Fselected_frame, Sselected_frame, 0, 0, 0,
 
 DEFUN ("frame-list", Fframe_list, Sframe_list,
        0, 0, 0,
-       doc: /* Return a list of all live frames.  */)
+       doc: /* Return a list of all live frames.
+The return value does not include any tooltip frame.  */)
   (void)
 {
-  Lisp_Object frames;
-  frames = Fcopy_sequence (Vframe_list);
 #ifdef HAVE_WINDOW_SYSTEM
-  if (FRAMEP (tip_frame)
-#ifdef USE_GTK
-      && !NILP (Fframe_parameter (tip_frame, Qtooltip))
-#endif
-      )
-    frames = Fdelq (tip_frame, frames);
-#endif
-  return frames;
+  Lisp_Object list = Qnil, tail, frame;
+
+  FOR_EACH_FRAME (tail, frame)
+    if (!FRAME_TOOLTIP_P (XFRAME (frame)))
+      list = Fcons (frame, list);
+  /* Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.  */
+  return Fnreverse (list);
+#else /* !HAVE_WINDOW_SYSTEM */
+  return Fcopy_sequence (Vframe_list);
+#endif /* HAVE_WINDOW_SYSTEM */
 }
 
 DEFUN ("frame-parent", Fframe_parent, Sframe_parent,
@@ -1711,7 +1713,8 @@ DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
  * other_frames:
  *
  * Return true if there exists at least one visible or iconified frame
- * but F.  Return false otherwise.
+ * but F.  Tooltip frames do not qualify as candidates.  Return false
+ * if no such frame exists.
  *
  * INVISIBLE true means we are called from make_frame_invisible where
  * such a frame must be visible or iconified.  INVISIBLE nil means we
@@ -1725,7 +1728,6 @@ static bool
 other_frames (struct frame *f, bool invisible, bool force)
 {
   Lisp_Object frames, frame, frame1;
-  struct frame *f1;
   Lisp_Object minibuffer_window = FRAME_MINIBUF_WINDOW (f);
 
   XSETFRAME (frame, f);
@@ -1735,7 +1737,8 @@ other_frames (struct frame *f, bool invisible, bool force)
 
   FOR_EACH_FRAME (frames, frame1)
     {
-      f1 = XFRAME (frame1);
+      struct frame *f1 = XFRAME (frame1);
+
       if (f != f1)
 	{
 	  /* Verify that we can still talk to the frame's X window, and
@@ -1744,7 +1747,7 @@ other_frames (struct frame *f, bool invisible, bool force)
 	  if (FRAME_WINDOW_P (f1))
 	    x_sync (f1);
 #endif
-	  if (NILP (Fframe_parameter (frame1, Qtooltip))
+	  if (!FRAME_TOOLTIP_P (f1)
 	      /* Tooltips and child frames count neither for
 		 invisibility nor for deletions.  */
 	      && !FRAME_PARENT_FRAME (f1)
@@ -1877,7 +1880,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 	}
     }
 
-  is_tooltip_frame = !NILP (Fframe_parameter (frame, Qtooltip));
+  is_tooltip_frame = FRAME_TOOLTIP_P (f);
 
   /* Run `delete-frame-functions' unless FORCE is `noelisp' or
      frame is a tooltip.  FORCE is set to `noelisp' when handling
@@ -1925,27 +1928,31 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 	 Do not call next_frame here because it may loop forever.
 	 See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15025.  */
       FOR_EACH_FRAME (tail, frame1)
-	if (!EQ (frame, frame1)
-	    && NILP (Fframe_parameter (frame1, Qtooltip))
-	    && (FRAME_TERMINAL (XFRAME (frame))
-		== FRAME_TERMINAL (XFRAME (frame1)))
-	    && FRAME_VISIBLE_P (XFRAME (frame1)))
-         break;
+	{
+	  struct frame *f1 = XFRAME (frame1);
+
+	  if (!EQ (frame, frame1)
+	      && !FRAME_TOOLTIP_P (f1)
+	      && FRAME_TERMINAL (f) == FRAME_TERMINAL (f1)
+	      && FRAME_VISIBLE_P (f1))
+	    break;
+	}
 
       /* If there is none, find *some* other frame.  */
       if (NILP (frame1) || EQ (frame1, frame))
 	{
 	  FOR_EACH_FRAME (tail, frame1)
 	    {
+	      struct frame *f1 = XFRAME (frame1);
+
 	      if (!EQ (frame, frame1)
-		  && FRAME_LIVE_P (XFRAME (frame1))
-		  && NILP (Fframe_parameter (frame1, Qtooltip)))
+		  && FRAME_LIVE_P (f1)
+		  && !FRAME_TOOLTIP_P (f1))
 		{
-		  /* Do not change a text terminal's top-frame.  */
-		  struct frame *f1 = XFRAME (frame1);
 		  if (FRAME_TERMCAP_P (f1) || FRAME_MSDOS_P (f1))
 		    {
 		      Lisp_Object top_frame = FRAME_TTY (f1)->top_frame;
+
 		      if (!EQ (top_frame, frame))
 			frame1 = top_frame;
 		    }

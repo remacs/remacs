@@ -2753,10 +2753,6 @@ If omitted or nil, that stands for the selected frame's display.  */)
   return make_number (1 << min (dpyinfo->n_planes, 24));
 }
 
-
-/* Unused dummy def needed for compatibility. */
-Lisp_Object tip_frame;
-
 /* TODO: move to xdisp or similar */
 static void
 compute_tip_xy (struct frame *f,
