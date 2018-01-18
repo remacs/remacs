@@ -1482,8 +1482,9 @@ If you're using @code{ecomplete}, all addresses from @code{To} and
 @code{Cc} headers, @code{ecomplete} will check out the values stored
 there and ``electrically'' say what completions are possible.  To
 choose one of these completions, use the @kbd{M-n} command to move
-down to the list.  Use @kbd{M-n} and @kbd{M-p} to move down and up the
-list, and @kbd{RET} to choose a completion.
+down to the list.  Use @kbd{@key{DOWN}} or @kbd{M-n} and
+@kbd{@key{UP}} or @kbd{M-p} to move down and up the list, and
+@kbd{@key{RET}} to choose a completion.
 
 The @code{ecomplete-sort-predicate} variable controls how
 @code{ecomplete} matches are sorted.
