@@ -12554,11 +12554,7 @@ comment at the start of cc-engine.el for more info."
 			    (save-excursion
 			      (goto-char containing-sexp)
 			      (c-looking-at-special-brace-list)))
-		       (c-inside-bracelist-p containing-sexp paren-state t)
-		       (save-excursion
-			 (goto-char containing-sexp)
-			 (and (eq (char-after) ?{)
-			      (not (c-looking-at-statement-block)))))))
+		       (c-inside-bracelist-p containing-sexp paren-state t))))
 	(cond
 
 	 ;; CASE 9A: In the middle of a special brace list opener.
