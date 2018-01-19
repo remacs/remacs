@@ -33,13 +33,13 @@ killing many different types of syntactic units.
 @cindex cutting text
 @cindex deletion
   Most commands which erase text from the buffer save it in the kill
-ring.  These are known as @dfn{kill} commands, and their names
-normally contain the word @samp{kill} (e.g., @code{kill-line}).  The
-kill ring stores several recent kills, not just the last one, so
-killing is a very safe operation: you don't have to worry much about
-losing text that you previously killed.  The kill ring is shared by
-all buffers, so text that is killed in one buffer can be yanked into
-another buffer.
+ring (@pxref{Kill Ring}).  These are known as @dfn{kill} commands, and
+their names normally contain the word @samp{kill} (e.g.,
+@code{kill-line}).  The kill ring stores several recent kills, not
+just the last one, so killing is a very safe operation: you don't have
+to worry much about losing text that you previously killed.  The kill
+ring is shared by all buffers, so text that is killed in one buffer
+can be yanked into another buffer.
 
   When you use @kbd{C-/} (@code{undo}) to undo a kill command
 (@pxref{Undo}), that brings the killed text back into the buffer, but
