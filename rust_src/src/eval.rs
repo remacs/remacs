@@ -1,14 +1,16 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Qnil, Qsetq, Qt, Qwrong_number_of_arguments};
+use remacs_sys::{Fcons, Fset};
+use remacs_sys::{QCdocumentation, Qclosure, Qfunction, Qlambda, Qnil, Qsetq, Qt,
+                 Qwrong_number_of_arguments};
 use remacs_sys::{eval_sub, globals};
-use remacs_sys::Fset;
 use remacs_sys::Lisp_Object;
 
 use lisp::LispObject;
 use lisp::defsubr;
-use lists::assq;
+use lists::{assq, car};
+use vectors::length;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *   NOTE!!! Every function that can call EVAL must protect its args   *
@@ -185,5 +187,59 @@ pub fn setq(args: LispObject) -> LispObject {
     val
 }
 def_lisp_sym!(Qsetq, "setq");
+
+/// Like `quote', but preferred for objects which are functions.
+/// In byte compilation, `function' causes its argument to be compiled.
+/// `quote' cannot do that.
+/// usage: (function ARG)
+#[lisp_fn(min = "1", unevalled = "true")]
+pub fn function(args: LispObject) -> LispObject {
+    let cell = args.as_cons_or_error();
+    let (quoted, tail) = cell.as_tuple();
+
+    if tail.is_not_nil() {
+        xsignal!(
+            Qwrong_number_of_arguments,
+            LispObject::from_raw(Qfunction),
+            length(args)
+        );
+    }
+
+    if unsafe { globals.f_Vinternal_interpreter_environment != Qnil } {
+        if let Some(cell) = quoted.as_cons() {
+            let (first, mut cdr) = cell.as_tuple();
+            if first.eq_raw(Qlambda) {
+                let tmp = cdr.as_cons()
+                    .and_then(|c| c.cdr().as_cons())
+                    .and_then(|c| c.car().as_cons());
+                if let Some(cell) = tmp {
+                    let (typ, tail) = cell.as_tuple();
+                    if typ.eq_raw(QCdocumentation) {
+                        let docstring =
+                            LispObject::from_raw(unsafe { eval_sub(car(tail).to_raw()) });
+                        docstring.as_string_or_error();
+                        let (a, b) = cdr.as_cons().unwrap().as_tuple();
+                        cdr = LispObject::from_raw(unsafe {
+                            Fcons(
+                                a.to_raw(),
+                                Fcons(docstring.to_raw(), b.as_cons().unwrap().cdr().to_raw()),
+                            )
+                        });
+                    }
+                }
+
+                return LispObject::from_raw(unsafe {
+                    Fcons(
+                        Qclosure,
+                        Fcons(globals.f_Vinternal_interpreter_environment, cdr.to_raw()),
+                    )
+                });
+            }
+        }
+    }
+
+    quoted
+}
+def_lisp_sym!(Qfunction, "function");
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
