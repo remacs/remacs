@@ -14,7 +14,9 @@
   (should (eq (or t) t))
   (should (eq (or nil) nil))
   (should (eq (or nil t) t))
-  (should (eq (or t nil) t)))
+  (should (eq (or t nil) t))
+  (should (eq (or 1 2) 1))
+  (should (eq (or 1 2 (error "Not evaluated!")) 1)))
 
 (ert-deftest eval-tests--and-base ()
   "Check (and) base cases"
@@ -23,7 +25,9 @@
   (should (eq (and nil) nil))
   (should (eq (and nil t) nil))
   (should (eq (and t nil) nil))
-  (should (eq (and t t) t)))
+  (should (eq (and t t) t))
+  (should (eq (and 1 2) 2))
+  (should (eq (and 1 nil (error "Not evaluated!")) nil)))
 
 (ert-deftest eval-tests--if-base ()
   "Check (if) base cases"
@@ -31,7 +35,9 @@
   (should (eq (if t 'a) 'a))
   (should (eq (if t 'a 'b) 'a))
   (should (eq (if nil 'a) nil))
-  (should (eq (if nil 'a 'b) 'b)))
+  (should (eq (if nil 'a 'b) 'b))
+  (should (eq (if t 'a (error "Not evaluated!")) 'a))
+  (should (eq (if nil (error "Not evaluated!") 'a) 'a)))
 
 (ert-deftest eval-tests--if-dot-string ()
   "Check that Emacs rejects (if . \"string\")."
@@ -45,12 +51,16 @@
   "Check (cond) base cases"
   (should (eq (cond) nil))
   (should (eq (cond (t)) t))
+  (should (eq (cond (1 2 3)) 3))
   (should (eq (cond (nil)
                     (t))
               t))
   (should (eq (cond (t)
                     (nil))
-              t)))
+              t))
+  (should (eq (cond (nil (error "Not evaluated!"))
+                    (t 1))
+              1)))
 
 (ert-deftest eval-tests--mutating-cond ()
   "Check that Emacs doesn't crash on a cond clause that mutates during eval."
