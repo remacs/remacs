@@ -1137,6 +1137,10 @@ impl LispCons {
         LispObject::from_raw(unsafe { (*self._extract()).cdr })
     }
 
+    pub fn as_tuple(self) -> (LispObject, LispObject) {
+        (self.car(), self.cdr())
+    }
+
     /// Set the car of the cons cell.
     pub fn set_car(self, n: LispObject) {
         unsafe {

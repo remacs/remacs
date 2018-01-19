@@ -2,10 +2,16 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{Qnil, Qt};
+use remacs_sys::Lisp_Object;
 use remacs_sys::eval_sub;
 
 use lisp::LispObject;
 use lisp::defsubr;
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *   NOTE!!! Every function that can call EVAL must protect its args   *
+ *   and temporaries from garbage collection while it needs them.      *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /// Eval args until one of them yields non-nil, then return that value.
 /// The remaining args are not evalled at all.
@@ -77,8 +83,9 @@ pub fn cond(args: LispObject) -> LispObject {
         let cell = clause.as_cons_or_error();
         val = unsafe { eval_sub(cell.car().to_raw()) };
         if val != Qnil {
-            if cell.cdr().is_not_nil() {
-                val = progn(cell.cdr()).to_raw();
+            let tail = cell.cdr();
+            if tail.is_not_nil() {
+                val = progn(tail).to_raw();
             }
             break;
         }
@@ -95,6 +102,37 @@ pub fn progn(body: LispObject) -> LispObject {
         .map(|form| unsafe { eval_sub(form.to_raw()) })
         .last()
         .map_or_else(|| LispObject::constant_nil(), LispObject::from_raw)
+}
+
+/// Evaluate BODY sequentially, discarding its value.
+#[no_mangle]
+pub extern "C" fn prog_ignore(body: Lisp_Object) {
+    progn(LispObject::from_raw(body));
+}
+
+/// Eval FIRST and BODY sequentially; return value from FIRST.
+/// The value of FIRST is saved during the evaluation of the remaining args,
+/// whose values are discarded.
+/// usage: (prog1 FIRST BODY...)
+#[lisp_fn(min = "1", unevalled = "true")]
+pub fn prog1(args: LispObject) -> LispObject {
+    let (first, body) = args.as_cons_or_error().as_tuple();
+
+    let val = unsafe { eval_sub(first.to_raw()) };
+    progn(body);
+    LispObject::from_raw(val)
+}
+
+/// Eval FORM1, FORM2 and BODY sequentially; return value from FORM2.
+/// The value of FORM2 is saved during the evaluation of the
+/// remaining args, whose values are discarded.
+/// usage: (prog2 FORM1 FORM2 BODY...)
+#[lisp_fn(min = "2", unevalled = "true")]
+pub fn prog2(args: LispObject) -> LispObject {
+    let (form1, tail) = args.as_cons_or_error().as_tuple();
+
+    unsafe { eval_sub(form1.to_raw()) };
+    prog1(tail)
 }
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
