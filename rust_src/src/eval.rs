@@ -1,7 +1,7 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
-use remacs_sys::Qnil;
+use remacs_sys::{Qnil, Qt};
 use remacs_sys::eval_sub;
 
 use lisp::LispObject;
@@ -31,7 +31,7 @@ pub fn or(args: LispObject) -> LispObject {
 /// usage: (and CONDITIONS...)
 #[lisp_fn(min = "0", unevalled = "true")]
 pub fn and(args: LispObject) -> LispObject {
-    let mut val = Qnil;
+    let mut val = Qt;
 
     for elt in args.iter_cars_safe() {
         val = unsafe { eval_sub(elt.to_raw()) };
@@ -53,10 +53,10 @@ pub fn lisp_if(args: LispObject) -> LispObject {
     let cell = args.as_cons_or_error();
     let cond = unsafe { eval_sub(cell.car().to_raw()) };
 
-    if cond == Qnil {
-        progn(cell.cdr().as_cons_or_error().cdr())
-    } else {
+    if cond != Qnil {
         LispObject::from_raw(unsafe { eval_sub(cell.cdr().as_cons_or_error().car().to_raw()) })
+    } else {
+        progn(cell.cdr().as_cons_or_error().cdr())
     }
 }
 
