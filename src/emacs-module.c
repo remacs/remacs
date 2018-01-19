@@ -574,7 +574,7 @@ module_make_string (emacs_env *env, const char *str, ptrdiff_t length)
   if (! (0 <= length && length <= STRING_BYTES_BOUND))
     xsignal0 (Qoverflow_error);
   /* FIXME: AUTO_STRING_WITH_LEN requires STR to be null-terminated,
-     but we shouldn’t require that.  */
+     but we shouldn't require that.  */
   AUTO_STRING_WITH_LEN (lstr, str, length);
   return lisp_to_value (env,
                         code_convert_string_norecord (lstr, Qutf_8, false));

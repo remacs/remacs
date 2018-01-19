@@ -580,8 +580,8 @@ xg_check_special_colors (struct frame *f,
       {
         GdkRGBA *c;
         /* FIXME: Retrieving the background color is deprecated in
-           GTK+ 3.16.  New versions of GTK+ don’t use the concept of a
-           single background color any more, so we shouldn’t query for
+           GTK+ 3.16.  New versions of GTK+ don't use the concept of a
+           single background color any more, so we shouldn't query for
            it.  */
         gtk_style_context_get (gsty, state,
                                GTK_STYLE_PROPERTY_BACKGROUND_COLOR, &c,

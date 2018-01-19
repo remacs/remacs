@@ -389,7 +389,7 @@ webkit_javascript_finished_cb (GObject      *webview,
     /* Register an xwidget event here, which then runs the callback.
        This ensures that the callback runs in sync with the Emacs
        event loop.  */
-    /* FIXME: This might lead to disaster if LISP_CALLBACK’s object
+    /* FIXME: This might lead to disaster if LISP_CALLBACK's object
        was garbage collected before now.  See the FIXME in
        Fxwidget_webkit_execute_script.  */
     store_xwidget_js_callback_event (xw, XIL ((intptr_t) lisp_callback),

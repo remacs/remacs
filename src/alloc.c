@@ -5124,7 +5124,7 @@ typedef union
 #endif
 
 /* Set *P to the address of the top of the stack.  This must be a
-   macro, not a function, so that it is executed in the caller’s
+   macro, not a function, so that it is executed in the caller's
    environment.  It is not inside a do-while so that its storage
    survives the macro.  Callers should be declared NO_INLINE.  */
 #ifdef HAVE___BUILTIN_UNWIND_INIT
