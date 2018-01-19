@@ -1933,15 +1933,15 @@ The value is non-nil if there were no errors, nil if errors."
 		       ;; parallel bootstrap), it does not risk getting a
 		       ;; half-finished file.  (Bug#4196)
 		       (tempfile
-                        ;; If target-file is relative and includes
-                        ;; leading directories, make-temp-file will
-                        ;; assume those leading directories exist
-                        ;; under temporary-file-directory, which might
-                        ;; not be true.  So strip leading directories
-                        ;; from relative file names before calling
-                        ;; make-temp-file.
                         (if (file-name-absolute-p target-file)
                             (make-temp-file target-file)
+                          ;; If target-file is relative and includes
+                          ;; leading directories, make-temp-file will
+                          ;; assume those leading directories exist
+                          ;; under temporary-file-directory, which might
+                          ;; not be true.  So strip leading directories
+                          ;; from relative file names before calling
+                          ;; make-temp-file.
                           (make-temp-file
                            (file-name-nondirectory target-file))))
 		       (default-modes (default-file-modes))
