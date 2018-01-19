@@ -1,4 +1,4 @@
-;;; calendar.el --- calendar functions
+;;; calendar.el --- calendar functions  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1988-1995, 1997, 2000-2018 Free Software Foundation,
 ;; Inc.
@@ -403,7 +403,7 @@ redisplays the diary for whatever date the cursor is moved to."
 (defcustom calendar-date-echo-text
   "mouse-2: general menu\nmouse-3: menu for this date"
   "String displayed when the cursor is over a date in the calendar.
-Can be either a fixed string, or a lisp expression that returns one.
+Can be either a fixed string, or a Lisp expression that returns one.
 When this expression is evaluated, DAY, MONTH, and YEAR are
 integers appropriate to the relevant date.  For example, to
 display the ISO date:
@@ -497,8 +497,8 @@ Then redraw the calendar, if necessary."
 (defcustom calendar-left-margin 5
   "Empty space to the left of the first month in the calendar."
   :group 'calendar
-  :initialize 'custom-initialize-default
-  :set 'calendar-set-layout-variable
+  :initialize #'custom-initialize-default
+  :set #'calendar-set-layout-variable
   :type 'integer
   :version "23.1")
 
@@ -508,7 +508,7 @@ Then redraw the calendar, if necessary."
 (defcustom calendar-intermonth-spacing 4
   "Space between months in the calendar.  Minimum value is 1."
   :group 'calendar
-  :initialize 'custom-initialize-default
+  :initialize #'custom-initialize-default
   :set (lambda (sym val)
          (calendar-set-layout-variable sym val 1))
   :type 'integer
@@ -517,7 +517,7 @@ Then redraw the calendar, if necessary."
 ;; FIXME calendar-month-column-width?
 (defcustom calendar-column-width 3
   "Width of each day column in the calendar.  Minimum value is 3."
-  :initialize 'custom-initialize-default
+  :initialize #'custom-initialize-default
   :set (lambda (sym val)
          (calendar-set-layout-variable sym val 3))
   :type 'integer
@@ -537,7 +537,7 @@ WIDTH defaults to `calendar-day-header-width'."
   "Width of the day column headers in the calendar.
 Must be at least one less than `calendar-column-width'."
   :group 'calendar
-  :initialize 'custom-initialize-default
+  :initialize #'custom-initialize-default
   :set (lambda (sym val)
          (or (calendar-customized-p 'calendar-day-header-array)
              (setq calendar-day-header-array
@@ -550,7 +550,7 @@ Must be at least one less than `calendar-column-width'."
 (defcustom calendar-day-digit-width 2
   "Width of the day digits in the calendar.  Minimum value is 2."
   :group 'calendar
-  :initialize 'custom-initialize-default
+  :initialize #'custom-initialize-default
   :set (lambda (sym val)
          (calendar-set-layout-variable sym val 2))
   :type 'integer
@@ -574,8 +574,8 @@ See `calendar-intermonth-text'."
 
 (defcustom calendar-intermonth-text nil
   "Text to display in the space to the left of each calendar month.
-Can be nil, a fixed string, or a lisp expression that returns a string.
-When the expression is evaluated, the variables DAY, MONTH and YEAR
+Can be nil, a fixed string, or a Lisp expression that returns a string.
+When the expression is evaluated, the variables `day', `month' and `year'
 are integers appropriate for the first day in each week.
 Will be truncated to the smaller of `calendar-left-margin' and
 `calendar-intermonth-spacing'.  The last character is forced to be a space.
@@ -746,7 +746,7 @@ calendar package is already loaded).  Rather, use either
                  (const european :tag "Day/Month/Year")
                  (const iso      :tag "Year/Month/Day"))
   :initialize 'custom-initialize-default
-  :set (lambda (symbol value)
+  :set (lambda (_symbol value)
          (calendar-set-date-style value))
   :group 'calendar)
 
@@ -971,7 +971,7 @@ Normally you should not customize this, but `calendar-month-header'."
          calendar-european-month-header)
         (t calendar-american-month-header))
   "Expression to evaluate to return the calendar month headings.
-When this expression is evaluated, the variables MONTH and YEAR are
+When this expression is evaluated, the variables `month' and `year' are
 integers appropriate to the relevant month.  The result is padded
 to the width of `calendar-month-digit-width'.
 
@@ -1136,7 +1136,7 @@ MON defaults to `displayed-month'.  YR defaults to `displayed-year'."
 (defmacro calendar-in-read-only-buffer (buffer &rest body)
   "Switch to BUFFER and execute the forms in BODY.
 First creates or erases BUFFER as needed.  Leaves BUFFER read-only,
-with disabled undo.  Leaves point at point-min, displays BUFFER."
+with disabled undo.  Leaves point at `point-min', displays BUFFER."
   (declare (indent 1) (debug t))
   `(progn
      (set-buffer (get-buffer-create ,buffer))
@@ -1388,7 +1388,7 @@ Optional integers MON and YR are used instead of today's date."
   (let* ((inhibit-read-only t)
          (today (calendar-current-date))
          (month (calendar-extract-month today))
-         (day (calendar-extract-day today))
+         ;; (day (calendar-extract-day today))
          (year (calendar-extract-year today))
          (today-visible (or (not mon)
                             (<= (abs (calendar-interval mon yr month year)) 1)))
@@ -1490,8 +1490,9 @@ line."
    (goto-char (point-min))
    (calendar-move-to-column indent)
    (insert
-    (calendar-string-spread (list calendar-month-header)
-                            ?\s calendar-month-digit-width))
+    (calendar-dlet* ((month month) (year year))
+      (calendar-string-spread (list calendar-month-header)
+                              ?\s calendar-month-digit-width)))
    (calendar-ensure-newline)
    (calendar-insert-at-column indent calendar-intermonth-header trunc)
    ;; Use the first N characters of each day to head the columns.
@@ -1506,7 +1507,8 @@ line."
        calendar-day-header-width nil ?\s)
       (make-string (- calendar-column-width calendar-day-header-width) ?\s)))
    (calendar-ensure-newline)
-   (calendar-insert-at-column indent calendar-intermonth-text trunc)
+   (calendar-dlet* ((day day) (month month) (year year))
+     (calendar-insert-at-column indent calendar-intermonth-text trunc))
    ;; Add blank days before the first of the month.
    (insert (make-string (* blank-days calendar-column-width) ?\s))
    ;; Put in the days of the month.
@@ -1526,7 +1528,8 @@ line."
                 (/= day last))
        (calendar-ensure-newline)
        (setq day (1+ day))              ; first day of next week
-       (calendar-insert-at-column indent calendar-intermonth-text trunc)))))
+       (calendar-dlet* ((day day) (month month) (year year))
+         (calendar-insert-at-column indent calendar-intermonth-text trunc))))))
 
 (defun calendar-redraw ()
   "Redraw the calendar display, if `calendar-buffer' is live."
@@ -1790,18 +1793,18 @@ For a complete description, see the info node `Calendar/Diary'.
 
 (defun calendar-string-spread (strings char length)
   "Concatenate list of STRINGS separated with copies of CHAR to fill LENGTH.
-The effect is like mapconcat but the separating pieces are as balanced as
+The effect is like `mapconcat' but the separating pieces are as balanced as
 possible.  Each item of STRINGS is evaluated before concatenation so it can
 actually be an expression that evaluates to a string.  If LENGTH is too short,
 the STRINGS are just concatenated and the result truncated."
-;; The algorithm is based on equation (3.25) on page 85 of Concrete
-;; Mathematics by Ronald L. Graham, Donald E. Knuth, and Oren Patashnik,
-;; Addison-Wesley, Reading, MA, 1989.
-  (let* ((strings (mapcar 'eval
+  ;; The algorithm is based on equation (3.25) on page 85 of Concrete
+  ;; Mathematics by Ronald L. Graham, Donald E. Knuth, and Oren Patashnik,
+  ;; Addison-Wesley, Reading, MA, 1989.
+  (let* ((strings (mapcar #'eval
                           (if (< (length strings) 2)
                               (append (list "") strings (list ""))
                             strings)))
-         (n (- length (string-width (apply 'concat strings))))
+         (n (- length (string-width (apply #'concat strings))))
          (m (* (1- (length strings)) (char-width char)))
          (s (car strings))
          (strings (cdr strings))
@@ -1818,17 +1821,18 @@ the STRINGS are just concatenated and the result truncated."
   (if (and calendar-mode-line-format
            (bufferp (get-buffer calendar-buffer)))
       (with-current-buffer calendar-buffer
-        (let ((start (- calendar-left-margin 2))
-              (date (condition-case nil
-                        (calendar-cursor-to-nearest-date)
-                      (error (calendar-current-date)))))
-          (setq mode-line-format
-                (concat (make-string (max 0 (+ start
-                                               (- (car (window-inside-edges))
-                                                  (car (window-edges))))) ?\s)
-                        (calendar-string-spread
-                         (mapcar 'eval calendar-mode-line-format)
-                         ?\s (- calendar-right-margin (1- start))))))
+        (let ((start (- calendar-left-margin 2)))
+          (calendar-dlet* ((date (condition-case nil
+                                     (calendar-cursor-to-nearest-date)
+                                   (error (calendar-current-date)))))
+            (setq mode-line-format
+                  (concat (make-string (max 0 (+ start
+                                                 (- (car (window-inside-edges))
+                                                    (car (window-edges)))))
+                                       ?\s)
+                          (calendar-string-spread
+                           calendar-mode-line-format
+                           ?\s (- calendar-right-margin (1- start)))))))
         (force-mode-line-update))))
 
 (defun calendar-buffer-list ()
@@ -2060,11 +2064,11 @@ is a string to insert in the minibuffer before reading."
 Each abbreviation is no longer than MAXLEN (default `calendar-abbrev-length')
 characters."
   (or maxlen (setq maxlen calendar-abbrev-length))
-  (apply 'vector (mapcar
-                  (lambda (f)
-                    ;; TODO? truncate-string-to-width?
-                    (substring f 0 (min maxlen (length f))))
-                  full)))
+  (apply #'vector (mapcar
+                   (lambda (f)
+                     ;; TODO? truncate-string-to-width?
+                     (substring f 0 (min maxlen (length f))))
+                   full)))
 
 (defcustom calendar-day-name-array
   ["Sunday" "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday"]
@@ -2282,7 +2286,7 @@ If optional NODAY is t, does not ask for day, but just returns
          (month (cdr (assoc-string
                        (completing-read
                         "Month name: "
-                        (mapcar 'list (append month-array nil))
+                        (mapcar #'list (append month-array nil))
                         nil t)
                       (calendar-make-alist month-array 1) t)))
          (last (calendar-last-day-of-month month year)))
@@ -2343,7 +2347,7 @@ interpreted as BC; -1 being 1 BC, and so on."
   (setq calendar-mark-holidays-flag nil
         calendar-mark-diary-entries-flag nil)
   (with-current-buffer calendar-buffer
-    (mapc 'delete-overlay (overlays-in (point-min) (point-max)))))
+    (mapc #'delete-overlay (overlays-in (point-min) (point-max)))))
 
 (defun calendar-date-is-visible-p (date)
   "Return non-nil if DATE is valid and is visible in the calendar window."
@@ -2446,7 +2450,7 @@ ATTRLIST is a list with elements of the form :face face :foreground color."
       (make-face temp-face)
       (copy-face face temp-face)
       ;; Apply the font aspects.
-      (apply 'set-face-attribute temp-face nil (nreverse faceinfo))
+      (apply #'set-face-attribute temp-face nil (nreverse faceinfo))
       temp-face)))
 
 (defun calendar-mark-visible-date (date &optional mark)
@@ -2518,13 +2522,14 @@ and day names to be abbreviated as specified by
 `calendar-month-abbrev-array' and `calendar-day-abbrev-array',
 respectively.  An optional parameter NODAYNAME, when t, omits the
 name of the day of the week."
-  (let* ((dayname (unless nodayname (calendar-day-name date abbreviate)))
-         (month (calendar-extract-month date))
+  (let ((month (calendar-extract-month date)))
+    (calendar-dlet*
+        ((dayname (unless nodayname (calendar-day-name date abbreviate)))
          (monthname (calendar-month-name month abbreviate))
          (day (number-to-string (calendar-extract-day date)))
          (month (number-to-string month))
          (year (number-to-string (calendar-extract-year date))))
-    (mapconcat 'eval calendar-date-display-form "")))
+      (mapconcat #'eval calendar-date-display-form ""))))
 
 (defun calendar-dayname-on-or-before (dayname date)
   "Return the absolute date of the DAYNAME on or before absolute DATE.
@@ -2627,11 +2632,11 @@ If called by a mouse-event, pops up a menu with the result."
          selection)
     (if (mouse-event-p event)
         (and (setq selection (cal-menu-x-popup-menu event title
-                               (mapcar 'list others)))
+                               (mapcar #'list others)))
              (call-interactively selection))
       (calendar-in-read-only-buffer calendar-other-calendars-buffer
         (calendar-set-mode-line title)
-        (insert (mapconcat 'identity others "\n"))))))
+        (insert (mapconcat #'identity others "\n"))))))
 
 (defun calendar-print-day-of-year ()
   "Show day number in year/days remaining in year for date under the cursor."

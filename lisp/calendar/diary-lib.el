@@ -740,7 +740,7 @@ Or to `diary-mark-entries'.")
 
 (defvar diary-saved-point)              ; bound in diary-list-entries
 (defvar diary-including)
-(defvar date-string)                    ; bound in diary-list-entries
+(defvar diary--date-string)                    ; bound in diary-list-entries
 
 (defun diary-list-entries (date number &optional list-only)
   "Create and display a buffer containing the relevant lines in `diary-file'.
@@ -794,7 +794,7 @@ LIST-ONLY is non-nil, in which case it just returns the list."
                    diary-number-of-entries)))
   (when (> number 0)
     (let* ((original-date date)    ; save for possible use in the hooks
-           (date-string (calendar-date-string date))
+           (diary--date-string (calendar-date-string date))
            (diary-buffer (find-buffer-visiting diary-file))
            ;; Dynamically bound in diary-include-files.
            (d-incp (and (boundp 'diary-including) diary-including))
@@ -952,7 +952,7 @@ Returns a cons (NOENTRIES . HOLIDAY-STRING)."
     (let* ((holiday-list (if diary-show-holidays-flag
                              (calendar-check-holidays original-date)))
            (hol-string (format "%s%s%s"
-                               date-string
+                               diary--date-string
                                (if holiday-list ": " "")
                                (mapconcat #'identity holiday-list "; ")))
            (msg (format "No diary entries for %s" hol-string))
@@ -970,9 +970,10 @@ Returns a cons (NOENTRIES . HOLIDAY-STRING)."
             (message "%s" msg)
           ;; holiday-list which is too wide for a message gets a buffer.
           (calendar-in-read-only-buffer holiday-buffer
-            (calendar-set-mode-line (format "Holidays for %s" date-string))
+            (calendar-set-mode-line (format "Holidays for %s"
+                                            diary--date-string))
             (insert (mapconcat #'identity holiday-list "\n")))
-          (message "No diary entries for %s" date-string)))
+          (message "No diary entries for %s" diary--date-string)))
       (cons noentries hol-string)))
 
 
@@ -1126,7 +1127,7 @@ This is an option for `diary-display-function'."
       (if (eq major-mode 'diary-fancy-display-mode)
           (run-hooks 'diary-fancy-display-mode-hook)
         (diary-fancy-display-mode))
-      (calendar-set-mode-line date-string))))
+      (calendar-set-mode-line diary--date-string))))
 
 ;; FIXME modernize?
 (defun diary-print-entries ()
@@ -1668,7 +1669,7 @@ Sexp diary entries must be prefaced by a `diary-sexp-entry-symbol'
 
                   %%(SEXP) ENTRY
 
-Both ENTRY and DATE are available when the SEXP is evaluated.  If
+Both `entry' and `date' are available when the SEXP is evaluated.  If
 the SEXP returns nil, the diary entry does not apply.  If it
 returns a non-nil value, ENTRY will be taken to apply to DATE; if
 the value is a string, that string will be the diary entry in the
