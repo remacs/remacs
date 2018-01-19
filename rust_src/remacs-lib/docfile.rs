@@ -1,6 +1,7 @@
 //! Extract Rust docstrings from source files for Emacs' DOC file.
 
 use libc::{c_char, c_int};
+use regex::Regex;
 
 use std::ffi::{CStr, CString};
 use std::fs::File;
@@ -63,9 +64,7 @@ pub extern "C" fn scan_rust_file(
 
         if line.starts_with("#[lisp_fn") {
             attribute = line.to_owned();
-        }
-
-        if line.starts_with("pub fn ") || line.starts_with("fn ") {
+        } else if line.starts_with("pub fn ") || line.starts_with("fn ") {
             if attribute.is_empty() {
                 // Not a #[lisp_fn]
                 continue;
@@ -130,6 +129,14 @@ pub extern "C" fn scan_rust_file(
                     "F", attr_props.name, docstring, docstring_usage
                 );
             }
+        } else if line.starts_with("def_lisp_sym!(") {
+            lazy_static! {
+                static ref RE: Regex = Regex::new(r#"def_lisp_sym!\((.+),\s+"(.+)"\);"#).unwrap();
+            }
+            let caps = RE.captures(line).unwrap();
+            let name = CString::new(&caps[1]).unwrap();
+            let value = CString::new(&caps[2]).unwrap();
+            add_global(SYMBOL, name.as_ptr(), 0, value.as_ptr());
         }
     }
     stdout().flush().unwrap();
