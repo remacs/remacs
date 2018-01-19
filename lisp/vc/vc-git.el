@@ -183,6 +183,10 @@ Should be consistent with the Git config value i18n.logOutputEncoding."
 ;; History of Git commands.
 (defvar vc-git-history nil)
 
+;; Clear up the cache to force vc-call to check again and discover
+;; new functions when we reload this file.
+(put 'Git 'vc-functions nil)
+
 ;;; BACKEND PROPERTIES
 
 (defun vc-git-revision-granularity () 'repository)

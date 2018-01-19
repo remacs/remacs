@@ -175,6 +175,10 @@ highlighting the Log View buffer."
   :version "24.5")
 
 
+;; Clear up the cache to force vc-call to check again and discover
+;; new functions when we reload this file.
+(put 'Hg 'vc-functions nil)
+
 ;;; Properties of the backend
 
 (defvar vc-hg-history nil)
