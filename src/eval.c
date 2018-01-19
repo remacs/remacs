@@ -352,44 +352,6 @@ do_debug_on_call (Lisp_Object code, ptrdiff_t count)
    and temporaries from garbage collection while it needs them.
    The definition of `For' shows what you have to do.  */
 
-DEFUN ("function", Ffunction, Sfunction, 1, UNEVALLED, 0,
-       doc: /* Like `quote', but preferred for objects which are functions.
-In byte compilation, `function' causes its argument to be compiled.
-`quote' cannot do that.
-usage: (function ARG)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object quoted = XCAR (args);
-
-  if (!NILP (XCDR (args)))
-    xsignal2 (Qwrong_number_of_arguments, Qfunction, Flength (args));
-
-  if (!NILP (Vinternal_interpreter_environment)
-      && CONSP (quoted)
-      && EQ (XCAR (quoted), Qlambda))
-    { /* This is a lambda expression within a lexical environment;
-	 return an interpreted closure instead of a simple lambda.  */
-      Lisp_Object cdr = XCDR (quoted);
-      Lisp_Object tmp = cdr;
-      if (CONSP (tmp)
-	  && (tmp = XCDR (tmp), CONSP (tmp))
-	  && (tmp = XCAR (tmp), CONSP (tmp))
-	  && (EQ (QCdocumentation, XCAR (tmp))))
-	{ /* Handle the special (:documentation <form>) to build the docstring
-	     dynamically.  */
-	  Lisp_Object docstring = eval_sub (Fcar (XCDR (tmp)));
-	  CHECK_STRING (docstring);
-	  cdr = Fcons (XCAR (cdr), Fcons (docstring, XCDR (XCDR (cdr))));
-	}
-      return Fcons (Qclosure, Fcons (Vinternal_interpreter_environment,
-				     cdr));
-    }
-  else
-    /* Simply quote the argument.  */
-    return quoted;
-}
-
-
 DEFUN ("defvaralias", Fdefvaralias, Sdefvaralias, 2, 3, 0,
        doc: /* Make NEW-ALIAS a variable alias for symbol BASE-VARIABLE.
 Aliased variables always have the same value; setting one sets the other.
@@ -3873,7 +3835,6 @@ alist of active lexical bindings.  */);
 
   inhibit_lisp_code = Qnil;
 
-  defsubr (&Sfunction);
   defsubr (&Sdefault_toplevel_value);
   defsubr (&Sset_default_toplevel_value);
   defsubr (&Sdefvar);
