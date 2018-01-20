@@ -191,34 +191,30 @@ Returns the number of actions taken."
 				  (funcall actor elt)
 				  (setq actions (1+ actions))))))
 			 ((eq def 'help)
-			  (with-output-to-temp-buffer "*Help*"
+                          (with-help-window (help-buffer)
 			    (princ
-			     (let ((object (if help (nth 0 help) "object"))
-				   (objects (if help (nth 1 help) "objects"))
-				   (action (if help (nth 2 help) "act on")))
+                             (let ((object  (or (nth 0 help) "object"))
+                                   (objects (or (nth 1 help) "objects"))
+                                   (action  (or (nth 2 help) "act on")))
 			       (concat
-				(format-message "\
+                                (format-message
+                                 "\
 Type SPC or `y' to %s the current %s;
 DEL or `n' to skip the current %s;
-RET or `q' to give up on the %s (skip all remaining %s);
+RET or `q' to skip the current and all remaining %s;
 C-g to quit (cancel the whole command);
 ! to %s all remaining %s;\n"
-					action object object action objects action
-					objects)
-				(mapconcat (function
-					    (lambda (elt)
-					      (format "%s to %s"
-						      (single-key-description
-						       (nth 0 elt))
-						      (nth 2 elt))))
+                                 action object object objects action objects)
+                                (mapconcat (lambda (elt)
+                                             (format "%s to %s;\n"
+                                                     (single-key-description
+                                                      (nth 0 elt))
+                                                     (nth 2 elt)))
 					   action-alist
-					   ";\n")
-				(if action-alist ";\n")
-				(format "or . (period) to %s \
-the current %s and exit."
-					action object))))
-			    (with-current-buffer standard-output
-			      (help-mode)))
+                                           "")
+                                (format
+                                 "or . (period) to %s the current %s and exit."
+                                 action object)))))
 
 			  (funcall try-again))
 			 ((and (symbolp def) (commandp def))
