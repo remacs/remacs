@@ -2932,7 +2932,7 @@ for parsing BibTeX keys.  If parsing fails, try to set this variable to nil."
               (if verbose
                   (bibtex-progress-message 'done))
               ;; successful operation --> return `bibtex-reference-keys'
-              (setq bibtex-reference-keys ref-keys)))))))
+              (setq bibtex-reference-keys (nreverse ref-keys))))))))
 
 (defun bibtex-parse-strings (&optional add abortable)
   "Set `bibtex-strings' to the string definitions in the whole buffer.
