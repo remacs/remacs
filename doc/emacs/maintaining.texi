@@ -1206,11 +1206,9 @@ file.  RCS and SCCS show the name of the user locking a file as its
 status.
 
 @ifnottex
-@vindex vc-stay-local
-  On CVS and Subversion, the @code{vc-dir} command normally contacts
-the repository, which may be on a remote machine, to check for
-updates.  If you change the variable @code{vc-stay-local} or
-@code{vc-cvs-stay-local} (for CVS) to @code{nil} (@pxref{CVS
+  On CVS, the @code{vc-dir} command normally contacts the repository,
+which may be on a remote machine, to check for updates.  If you change
+the variable @code{vc-cvs-stay-local} to @code{nil} (@pxref{CVS
 Options}), then Emacs avoids contacting a remote repository when
 generating the VC Directory buffer (it will still contact it when
 necessary, e.g., when doing a commit).  This may be desirable if you
