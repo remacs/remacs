@@ -462,14 +462,14 @@ command (@pxref{Browse-URL}).
 @findex backward-button
   In a help buffer, @key{TAB} (@code{forward-button}) moves point
 forward to the next hyperlink, while @kbd{S-@key{TAB}}
-(@code{backward-button}) point back to the previous hyperlink.  These
-commands act cyclically; for instance, typing @key{TAB} at the last
-hyperlink moves back to the first hyperlink.
+(@code{backward-button}) moves point back to the previous hyperlink.
+These commands act cyclically; for instance, typing @key{TAB} at the
+last hyperlink moves back to the first hyperlink.
 
   To view all documentation about any symbol in the text, move point
-to there and type @kbd{C-c C-c} (@code{help-follow-symbol}).  This
-shows all available documentation about the symbol---as a variable,
-function and/or face.
+to the symbol and type @kbd{C-c C-c} (@code{help-follow-symbol}).
+This shows all available documentation about the symbol---as a
+variable, function and/or face.
 
 @node Package Keywords
 @section Keyword Search for Packages
@@ -495,8 +495,8 @@ buffer (@pxref{Package Menu}).
 package (@pxref{Packages}, and displays a help buffer describing the
 attributes of the package and the features that it implements.  The
 buffer lists the keywords that relate to the package in the form of
-buttons.  Click on a button to see other packages related to that
-keyword.
+buttons.  Click on a button with @kbd{mouse-1} or @kbd{mouse-2} to see
+the list of other packages related to that keyword.
 
 @node Language Help
 @section Help for International Language Support

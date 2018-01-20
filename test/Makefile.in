@@ -31,6 +31,7 @@
 SHELL = @SHELL@
 
 srcdir = @srcdir@
+abs_top_srcdir=@abs_top_srcdir@
 VPATH = $(srcdir)
 
 FIND_DELETE = @FIND_DELETE@
