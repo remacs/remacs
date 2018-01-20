@@ -59,24 +59,11 @@ Bug#24912 and Bug#24913."
         (should-error (,form ,arg) :type 'wrong-type-argument))
      t)))
 
-(ert-deftest eval-tests--if-dot-string ()
-  "Check that Emacs rejects (if . \"string\")."
-  (should-error (eval '(if . "abc")) :type 'wrong-type-argument)
-  (let ((if-tail (list '(setcdr if-tail "abc") t)))
-    (should-error (eval (cons 'if if-tail))))
-  (let ((if-tail (list '(progn (setcdr if-tail "abc") nil) t)))
-    (should-error (eval (cons 'if if-tail)))))
-
 (ert-deftest eval-tests--let-with-circular-defs ()
   "Check that Emacs reports an error for (let VARS ...) when VARS is circular."
   (let ((vars (list 'v)))
     (setcdr vars vars)
     (dolist (let-sym '(let let*))
       (should-error (eval (list let-sym vars))))))
-
-(ert-deftest eval-tests--mutating-cond ()
-  "Check that Emacs doesn't crash on a cond clause that mutates during eval."
-  (let ((clauses (list '((progn (setcdr clauses "ouch") nil)))))
-    (should-error (eval (cons 'cond clauses)))))
 
 ;;; eval-tests.el ends here

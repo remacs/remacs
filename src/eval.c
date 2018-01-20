@@ -352,112 +352,6 @@ do_debug_on_call (Lisp_Object code, ptrdiff_t count)
    and temporaries from garbage collection while it needs them.
    The definition of `For' shows what you have to do.  */
 
-DEFUN ("or", For, Sor, 0, UNEVALLED, 0,
-       doc: /* Eval args until one of them yields non-nil, then return that value.
-The remaining args are not evalled at all.
-If all args return nil, return nil.
-usage: (or CONDITIONS...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object val = Qnil;
-
-  while (CONSP (args))
-    {
-      Lisp_Object arg = XCAR (args);
-      args = XCDR (args);
-      val = eval_sub (arg);
-      if (!NILP (val))
-	break;
-    }
-
-  return val;
-}
-
-DEFUN ("and", Fand, Sand, 0, UNEVALLED, 0,
-       doc: /* Eval args until one of them yields nil, then return nil.
-The remaining args are not evalled at all.
-If no arg yields nil, return the last arg's value.
-usage: (and CONDITIONS...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object val = Qt;
-
-  while (CONSP (args))
-    {
-      Lisp_Object arg = XCAR (args);
-      args = XCDR (args);
-      val = eval_sub (arg);
-      if (NILP (val))
-	break;
-    }
-
-  return val;
-}
-
-DEFUN ("if", Fif, Sif, 2, UNEVALLED, 0,
-       doc: /* If COND yields non-nil, do THEN, else do ELSE...
-Returns the value of THEN or the value of the last of the ELSE's.
-THEN must be one expression, but ELSE... can be zero or more expressions.
-If COND yields nil, and there are no ELSE's, the value is nil.
-usage: (if COND THEN ELSE...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object cond;
-
-  cond = eval_sub (XCAR (args));
-
-  if (!NILP (cond))
-    return eval_sub (Fcar (XCDR (args)));
-  return Fprogn (Fcdr (XCDR (args)));
-}
-
-DEFUN ("cond", Fcond, Scond, 0, UNEVALLED, 0,
-       doc: /* Try each clause until one succeeds.
-Each clause looks like (CONDITION BODY...).  CONDITION is evaluated
-and, if the value is non-nil, this clause succeeds:
-then the expressions in BODY are evaluated and the last one's
-value is the value of the cond-form.
-If a clause has one element, as in (CONDITION), then the cond-form
-returns CONDITION's value, if that is non-nil.
-If no clause succeeds, cond returns nil.
-usage: (cond CLAUSES...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object val = args;
-
-  while (CONSP (args))
-    {
-      Lisp_Object clause = XCAR (args);
-      val = eval_sub (Fcar (clause));
-      if (!NILP (val))
-	{
-	  if (!NILP (XCDR (clause)))
-	    val = Fprogn (XCDR (clause));
-	  break;
-	}
-      args = XCDR (args);
-    }
-
-  return val;
-}
-
-DEFUN ("progn", Fprogn, Sprogn, 0, UNEVALLED, 0,
-       doc: /* Eval BODY forms sequentially and return value of last one.
-usage: (progn BODY...)  */)
-  (Lisp_Object body)
-{
-  Lisp_Object val = Qnil;
-
-  while (CONSP (body))
-    {
-      Lisp_Object form = XCAR (body);
-      body = XCDR (body);
-      val = eval_sub (form);
-    }
-
-  return val;
-}
-
 /* Evaluate BODY sequentially, discarding its value.  */
 
 void
@@ -4047,11 +3941,6 @@ alist of active lexical bindings.  */);
 
   inhibit_lisp_code = Qnil;
 
-  defsubr (&Sor);
-  defsubr (&Sand);
-  defsubr (&Sif);
-  defsubr (&Scond);
-  defsubr (&Sprogn);
   defsubr (&Sprog1);
   defsubr (&Sprog2);
   defsubr (&Ssetq);

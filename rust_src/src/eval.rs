@@ -1,91 +1,100 @@
-//! Generic Lisp eval functions and macros.
+//! Generic Lisp eval functions
 
-/// Macro to generate an error with a list from any number of arguments.
-/// Replaces xsignal0, etc. in the C layer.
-///
-/// Like `Fsignal`, but never returns. Can be used for any error
-/// except `Qquit`, which can return from `Fsignal`. See the elisp docstring
-/// for `signal` for an explanation of the arguments.
-macro_rules! xsignal {
-    ($symbol:expr) => {
-        unsafe {
-            ::remacs_sys::Fsignal($symbol, ::remacs_sys::Qnil);
+use remacs_macros::lisp_fn;
+use remacs_sys::{Qnil, Qt};
+use remacs_sys::eval_sub;
+
+use lisp::LispObject;
+use lisp::defsubr;
+
+/// Eval args until one of them yields non-nil, then return that value.
+/// The remaining args are not evalled at all.
+/// If all args return nil, return nil.
+/// usage: (or CONDITIONS...)
+#[lisp_fn(min = "0", unevalled = "true")]
+pub fn or(args: LispObject) -> LispObject {
+    let mut val = Qnil;
+
+    for elt in args.iter_cars_safe() {
+        val = unsafe { eval_sub(elt.to_raw()) };
+        if val != Qnil {
+            break;
         }
-    };
-    ($symbol:expr, $($tt:tt)+) => {
-        unsafe {
-            ::remacs_sys::Fsignal($symbol, list!($($tt)+).to_raw());
-        }
-    };
+    }
+
+    LispObject::from_raw(val)
 }
 
-/// Macro to call Lisp functions with any number of arguments.
-/// Replaces CALLN, call1, etc. in the C layer.
-macro_rules! call {
-    ($func:expr, $($arg:expr),*) => {{
-        let mut argsarray = [$func.to_raw(), $($arg.to_raw()),*];
-        unsafe {
-            LispObject::from_raw(
-                ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
-            )
+/// Eval args until one of them yields nil, then return nil.
+/// The remaining args are not evalled at all.
+/// If no arg yields nil, return the last arg's value.
+/// usage: (and CONDITIONS...)
+#[lisp_fn(min = "0", unevalled = "true")]
+pub fn and(args: LispObject) -> LispObject {
+    let mut val = Qt;
+
+    for elt in args.iter_cars_safe() {
+        val = unsafe { eval_sub(elt.to_raw()) };
+        if val == Qnil {
+            break;
         }
-    }}
+    }
+
+    LispObject::from_raw(val)
 }
 
-macro_rules! call_raw {
-    ($func:expr, $($arg:expr),*) => {{
-        let mut argsarray = [$func, $($arg),*];
-        unsafe {
-            LispObject::from_raw(
-                ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
-            )
-        }
-    }}
-}
+/// If COND yields non-nil, do THEN, else do ELSE...
+/// Returns the value of THEN or the value of the last of the ELSE's.
+/// THEN must be one expression, but ELSE... can be zero or more expressions.
+/// If COND yields nil, and there are no ELSE's, the value is nil.
+/// usage: (if COND THEN ELSE...)
+#[lisp_fn(name = "if", c_name = "if", min = "2", unevalled = "true")]
+pub fn lisp_if(args: LispObject) -> LispObject {
+    let cell = args.as_cons_or_error();
+    let cond = unsafe { eval_sub(cell.car().to_raw()) };
 
-macro_rules! message_with_string {
-    ($str:expr, $obj:expr, $should_log:expr) => {
-        unsafe {
-            ::remacs_sys::message_with_string($str.as_ptr() as *const ::libc::c_char,
-                                              $obj.to_raw(),
-                                              $should_log);
-        }
+    if cond != Qnil {
+        LispObject::from_raw(unsafe { eval_sub(cell.cdr().as_cons_or_error().car().to_raw()) })
+    } else {
+        progn(cell.cdr().as_cons_or_error().cdr())
     }
 }
 
-/// Macro to format an error message.
-/// Replaces error() in the C layer.
-macro_rules! error {
-    ($str:expr) => {{
-        let strobj = unsafe {
-            ::remacs_sys::make_string($str.as_ptr() as *const ::libc::c_char,
-                                      $str.len() as ::libc::ptrdiff_t)
-        };
-        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
-    }};
-    ($fmtstr:expr, $($arg:expr),*) => {{
-        let formatted = format!($fmtstr, $($arg),*);
-        let strobj = unsafe {
-            ::remacs_sys::make_string(formatted.as_ptr() as *const ::libc::c_char,
-                                      formatted.len() as ::libc::ptrdiff_t)
-        };
-        xsignal!(::remacs_sys::Qerror, $crate::lisp::LispObject::from_raw(strobj));
-    }};
+/// Try each clause until one succeeds.
+/// Each clause looks like (CONDITION BODY...).  CONDITION is evaluated
+/// and, if the value is non-nil, this clause succeeds:
+/// then the expressions in BODY are evaluated and the last one's
+/// value is the value of the cond-form.
+/// If a clause has one element, as in (CONDITION), then the cond-form
+/// returns CONDITION's value, if that is non-nil.
+/// If no clause succeeds, cond returns nil.
+/// usage: (cond CLAUSES...)
+#[lisp_fn(min = "0", unevalled = "true")]
+pub fn cond(args: LispObject) -> LispObject {
+    let mut val = Qnil;
+
+    for clause in args.iter_cars_safe() {
+        let cell = clause.as_cons_or_error();
+        val = unsafe { eval_sub(cell.car().to_raw()) };
+        if val != Qnil {
+            if cell.cdr().is_not_nil() {
+                val = progn(cell.cdr()).to_raw();
+            }
+            break;
+        }
+    }
+
+    LispObject::from_raw(val)
 }
 
-/// Macro to format a "wrong argument type" error message.
-macro_rules! wrong_type {
-    ($pred:expr, $arg:expr) => {
-        xsignal!(::remacs_sys::Qwrong_type_argument, LispObject::from_raw($pred), $arg);
-    };
+/// Eval BODY forms sequentially and return value of last one.
+/// usage: (progn BODY...)
+#[lisp_fn(min = "0", unevalled = "true")]
+pub fn progn(body: LispObject) -> LispObject {
+    body.iter_cars_safe()
+        .map(|form| unsafe { eval_sub(form.to_raw()) })
+        .last()
+        .map_or_else(|| LispObject::constant_nil(), LispObject::from_raw)
 }
 
-macro_rules! args_out_of_range {
-    ($($tt:tt)+) => { xsignal!(::remacs_sys::Qargs_out_of_range, $($tt)+); };
-}
-
-macro_rules! list {
-    ($arg:expr, $($tt:tt)+) => { $crate::lisp::LispObject::cons($arg, list!($($tt)+)) };
-    ($arg:expr) => { $crate::lisp::LispObject::cons($arg, list!()) };
-    () => { $crate::lisp::LispObject::constant_nil() };
-}
+include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
