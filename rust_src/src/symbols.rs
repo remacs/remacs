@@ -1,7 +1,8 @@
 //! symbols support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{find_symbol_value, make_lisp_symbol, symbol_is_alias, symbol_is_constant,
+use remacs_sys::{find_symbol_value, get_symbol_declared_special, make_lisp_symbol,
+                 set_symbol_declared_special, symbol_is_alias, symbol_is_constant,
                  symbol_is_interned, Fset};
 use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
 use remacs_sys::Lisp_Symbol;
@@ -47,6 +48,14 @@ impl LispSymbolRef {
     pub fn get_alias(self) -> LispSymbolRef {
         debug_assert!(self.is_alias());
         LispSymbolRef::new(unsafe { self.val.alias })
+    }
+
+    pub fn get_declared_special(self) -> bool {
+        unsafe { get_symbol_declared_special(self.as_ptr()) }
+    }
+
+    pub fn set_declared_special(mut self, value: bool) {
+        unsafe { set_symbol_declared_special(self.as_mut(), value) };
     }
 
     pub fn as_lisp_obj(mut self) -> LispObject {
