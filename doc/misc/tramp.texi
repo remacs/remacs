@@ -467,10 +467,10 @@ this case it is written as @code{host#port}.
 
 @anchor{Quick Start Guide: @option{ssh} and @option{plink} methods}
 @section Using @option{ssh} and @option{plink}
-@cindex method ssh
-@cindex ssh method
-@cindex method plink
-@cindex plink method
+@cindex method @option{ssh}
+@cindex @option{ssh} method
+@cindex method @option{plink}
+@cindex @option{plink} method
 
 If your local host runs an SSH client, and the remote host runs an SSH
 server, the most simple remote file name is
@@ -486,12 +486,12 @@ an @command{ssh} server:
 
 @anchor{Quick Start Guide: @option{su}, @option{sudo} and @option{sg} methods}
 @section Using @option{su}, @option{sudo} and @option{sg}
-@cindex method su
-@cindex su method
-@cindex method sudo
-@cindex sudo method
-@cindex method sg
-@cindex sg method
+@cindex method @option{su}
+@cindex @option{su} method
+@cindex method @option{sudo}
+@cindex @option{sudo} method
+@cindex method @option{sg}
+@cindex @option{sg} method
 
 Sometimes, it is necessary to work on your local host under different
 permissions.  For this, you could use the @option{su} or @option{sudo}
@@ -506,10 +506,10 @@ must be used here as user name.  The default host name is the same.
 
 @anchor{Quick Start Guide: @option{smb} method}
 @section Using @command{smbclient}
-@cindex method smb
-@cindex smb method
-@cindex ms windows (with smb method)
-@cindex smbclient
+@cindex method @option{smb}
+@cindex @option{smb} method
+@cindex ms windows (with @option{smb} method)
+@cindex @command{smbclient}
 
 In order to access a remote MS Windows host or Samba server, the
 @command{smbclient} client is used.  The remote file name syntax is
@@ -522,14 +522,14 @@ of the local file name is the share exported by the remote host,
 @section Using GVFS-based methods
 @cindex methods, gvfs
 @cindex gvfs based methods
-@cindex method sftp
-@cindex sftp method
-@cindex method afp
-@cindex afp method
-@cindex method dav
-@cindex method davs
-@cindex dav method
-@cindex davs method
+@cindex method @option{sftp}
+@cindex @option{sftp} method
+@cindex method @option{afp}
+@cindex @option{afp} method
+@cindex method @option{dav}
+@cindex method @option{davs}
+@cindex @option{dav} method
+@cindex @option{davs} method
 
 On systems, which have installed the virtual file system for the
 @acronym{GNOME} Desktop (GVFS), its offered methods could be used by
@@ -543,11 +543,11 @@ file system), @file{@trampfn{dav,user@@host,/path/to/file}} and
 @anchor{Quick Start Guide: GNOME Online Accounts based methods}
 @section Using @acronym{GNOME} Online Accounts based methods
 @cindex @acronym{GNOME} Online Accounts
-@cindex method gdrive
-@cindex gdrive method
+@cindex method @option{gdrive}
+@cindex @option{gdrive} method
 @cindex google drive
-@cindex method owncloud
-@cindex owncloud method
+@cindex method @option{owncloud}
+@cindex @option{owncloud} method
 @cindex nextcloud
 
 GVFS-based methods include also @acronym{GNOME} Online Accounts, which
@@ -562,8 +562,8 @@ account), or @file{@trampfn{owncloud,user@@host#8081,/path/to/file}}
 
 @anchor{Quick Start Guide: Android}
 @section Using Android
-@cindex method adb
-@cindex adb method
+@cindex method @option{adb}
+@cindex @option{adb} method
 @cindex android
 
 An Android device, which is connected via USB to your local host, can
@@ -667,8 +667,8 @@ Inline methods can work in situations where an external transfer
 program is unavailable.  Inline methods also work when transferring
 files between different @emph{user identities} on the same host.
 
-@cindex uuencode
-@cindex mimencode
+@cindex @command{uuencode}
+@cindex @command{mimencode}
 @cindex base-64 encoding
 
 @value{tramp} checks the remote host for the availability and
@@ -688,15 +688,15 @@ such optimization.
 
 @table @asis
 @item @option{rsh}
-@cindex method rsh
-@cindex rsh method
+@cindex method @option{rsh}
+@cindex @option{rsh} method
 
 @command{rsh} is an option for connecting to hosts within local
 networks since @command{rsh} is not as secure as other methods.
 
 @item @option{ssh}
-@cindex method ssh
-@cindex ssh method
+@cindex method @option{ssh}
+@cindex @option{ssh} method
 
 @command{ssh} is a more secure option than others to connect to a
 remote host.
@@ -707,15 +707,15 @@ host name, a hash sign, then a port number).  It is the same as passing
 @samp{-p 42} to the @command{ssh} command.
 
 @item @option{telnet}
-@cindex method telnet
-@cindex telnet method
+@cindex method @option{telnet}
+@cindex @option{telnet} method
 
 Connecting to a remote host with @command{telnet} is as insecure
 as the @option{rsh} method.
 
 @item @option{su}
-@cindex method su
-@cindex su method
+@cindex method @option{su}
+@cindex @option{su} method
 
 Instead of connecting to a remote host, @command{su} program allows
 editing as another user.  The host can be either @samp{localhost} or
@@ -723,21 +723,21 @@ the host returned by the function @command{(system-name)}.  See
 @ref{Multi-hops} for an exception to this behavior.
 
 @item @option{sudo}
-@cindex method sudo
-@cindex sudo method
+@cindex method @option{sudo}
+@cindex @option{sudo} method
 
 Similar to @option{su} method, @option{sudo} uses @command{sudo}.
 @command{sudo} must have sufficient rights to start a shell.
 
 @item @option{doas}
-@cindex method doas
-@cindex doas method
+@cindex method @option{doas}
+@cindex @option{doas} method
 
 This method is used on OpenBSD like the @command{sudo} command.
 
 @item @option{sg}
-@cindex method sg
-@cindex sg method
+@cindex method @option{sg}
+@cindex @option{sg} method
 
 The @command{sg} program allows editing as different group.  The host
 can be either @samp{localhost} or the host returned by the function
@@ -746,8 +746,8 @@ denotes a group name.  See @ref{Multi-hops} for an exception to this
 behavior.
 
 @item @option{sshx}
-@cindex method sshx
-@cindex sshx method
+@cindex method @option{sshx}
+@cindex @option{sshx} method
 
 Works like @option{ssh} but without the extra authentication prompts.
 @option{sshx} uses @samp{ssh -t -t @var{host} -l @var{user} /bin/sh}
@@ -767,23 +767,23 @@ missing shell prompts that confuses @value{tramp}.
 @option{sshx} supports the @samp{-p} argument.
 
 @item @option{krlogin}
-@cindex method krlogin
-@cindex krlogin method
-@cindex kerberos (with krlogin method)
+@cindex method @option{krlogin}
+@cindex @option{krlogin} method
+@cindex kerberos (with @option{krlogin} method)
 
 This method is also similar to @option{ssh}.  It uses the
 @command{krlogin -x} command only for remote host login.
 
 @item @option{ksu}
-@cindex method ksu
-@cindex ksu method
-@cindex kerberos (with ksu method)
+@cindex method @option{ksu}
+@cindex @option{ksu} method
+@cindex kerberos (with @option{ksu} method)
 
 This is another method from the Kerberos suite.  It behaves like @option{su}.
 
 @item @option{plink}
-@cindex method plink
-@cindex plink method
+@cindex method @option{plink}
+@cindex @option{plink} method
 
 @option{plink} method is for MS Windows users with the PuTTY
 implementation of SSH@.  It uses @samp{plink -ssh} to log in to the
@@ -795,8 +795,8 @@ session.
 @option{plink} method supports the @samp{-P} argument.
 
 @item @option{plinkx}
-@cindex method plinkx
-@cindex plinkx method
+@cindex method @option{plinkx}
+@cindex @option{plinkx} method
 
 Another method using PuTTY on MS Windows with session names instead of
 host names.  @option{plinkx} calls @samp{plink -load @var{session}
@@ -826,10 +826,9 @@ methods.
 
 @table @asis
 @item @option{rcp}
-@cindex method rcp
-@cindex rcp method
-@cindex rcp (with rcp method)
-@cindex rsh (with rcp method)
+@cindex method @option{rcp}
+@cindex @option{rcp} method
+@cindex @command{rsh} (with @option{rcp} method)
 
 This method uses the @command{rsh} and @command{rcp} commands to
 connect to the remote host and transfer files.  This is the fastest
@@ -839,10 +838,9 @@ The alternative method @option{remcp} uses the @command{remsh} and
 @command{rcp} commands.
 
 @item @option{scp}
-@cindex method scp
-@cindex scp method
-@cindex scp (with scp method)
-@cindex ssh (with scp method)
+@cindex method @option{scp}
+@cindex @option{scp} method
+@cindex @command{ssh} (with @option{scp} method)
 
 Using a combination of @command{ssh} to connect and @command{scp} to
 transfer is the most secure.  While the performance is good, it is
@@ -856,10 +854,9 @@ argument list to @command{ssh}, and @samp{-P 42} in the argument list
 to @command{scp}.
 
 @item @option{rsync}
-@cindex method rsync
-@cindex rsync method
-@cindex rsync (with rsync method)
-@cindex ssh (with rsync method)
+@cindex method @option{rsync}
+@cindex @option{rsync} method
+@cindex @command{ssh} (with @option{rsync} method)
 
 @command{ssh} command to connect in combination with @command{rsync}
 command to transfer is similar to the @option{scp} method.
@@ -871,10 +868,9 @@ is lost if the file exists only on one side of the connection.
 This method supports the @samp{-p} argument.
 
 @item @option{scpx}
-@cindex method scpx
-@cindex scpx method
-@cindex scp (with scpx method)
-@cindex ssh (with scpx method)
+@cindex method @option{scpx}
+@cindex @option{scpx} method
+@cindex @command{ssh} (with @option{scpx} method)
 
 @option{scpx} is useful to avoid login shell questions.  It is similar
 in performance to @option{scp}.  @option{scpx} uses @samp{ssh -t -t
@@ -888,16 +884,14 @@ This method supports the @samp{-p} argument.
 
 @item @option{pscp}
 @item @option{psftp}
-@cindex method pscp
-@cindex pscp method
-@cindex pscp (with pscp method)
-@cindex plink (with pscp method)
-@cindex putty (with pscp method)
-@cindex method psftp
-@cindex psftp method
-@cindex pscp (with psftp method)
-@cindex plink (with psftp method)
-@cindex putty (with psftp method)
+@cindex method @option{pscp}
+@cindex @option{pscp} method
+@cindex @command{plink} (with @option{pscp} method)
+@cindex @command{putty} (with @option{pscp} method)
+@cindex method @option{psftp}
+@cindex @option{psftp} method
+@cindex @command{plink} (with @option{psftp} method)
+@cindex @command{putty} (with @option{psftp} method)
 
 These methods are similar to @option{scp} or @option{sftp}, but they
 use the @command{plink} command to connect to the remote host, and
@@ -910,10 +904,9 @@ session.
 These methods support the @samp{-P} argument.
 
 @item @option{fcp}
-@cindex method fcp
-@cindex fcp method
-@cindex fsh (with fcp method)
-@cindex fcp (with fcp method)
+@cindex method @option{fcp}
+@cindex @option{fcp} method
+@cindex @command{fsh} (with @option{fcp} method)
 
 This method is similar to @option{scp}, but uses @command{fsh} to
 connect and @command{fcp} to transfer files.  @command{fsh/fcp}, a
@@ -925,18 +918,17 @@ benefits.
 The command used for this connection is: @samp{fsh @var{host} -l
 @var{user} /bin/sh -i}
 
-@cindex method fsh
-@cindex fsh method
+@cindex method @option{fsh}
+@cindex @option{fsh} method
 
 @option{fsh} has no inline method since the multiplexing it offers is
 not useful for @value{tramp}.  @command{fsh} connects to remote host
 and @value{tramp} keeps that one connection open.
 
 @item @option{nc}
-@cindex method nc
-@cindex nc method
-@cindex nc (with nc method)
-@cindex telnet (with nc method)
+@cindex method @option{nc}
+@cindex @option{nc} method
+@cindex @command{telnet} (with @option{nc} method)
 
 Using @command{telnet} to connect and @command{nc} to transfer files
 is sometimes the only combination suitable for accessing routers or
@@ -945,18 +937,18 @@ such as the @command{busybox} and do not host any other encode or
 decode programs.
 
 @item @option{ftp}
-@cindex method ftp
-@cindex ftp method
+@cindex method @option{ftp}
+@cindex @option{ftp} method
 
 When @value{tramp} uses @option{ftp}, it forwards requests to whatever
 ftp program is specified by Ange FTP.  This external program must be
 capable of servicing requests from @value{tramp}.
 
 @item @option{smb}
-@cindex method smb
-@cindex smb method
-@cindex ms windows (with smb method)
-@cindex smbclient
+@cindex method @option{smb}
+@cindex @option{smb} method
+@cindex ms windows (with @option{smb} method)
+@cindex @command{smbclient}
 
 This non-native @value{tramp} method connects via the Server Message
 Block (SMB) networking protocol to hosts running file servers that are
@@ -1027,9 +1019,9 @@ can.
 
 
 @item @option{adb}
-@cindex method adb
-@cindex adb method
-@cindex android (with adb method)
+@cindex method @option{adb}
+@cindex @option{adb} method
+@cindex android (with @option{adb} method)
 
 This method uses Android Debug Bridge program for accessing Android
 devices.  The Android Debug Bridge must be installed locally for
@@ -1081,8 +1073,8 @@ D-Bus, dbus}.
 
 @table @asis
 @item @option{afp}
-@cindex method afp
-@cindex afp method
+@cindex method @option{afp}
+@cindex @option{afp} method
 
 This method is for connecting to remote hosts with the Apple Filing
 Protocol for accessing files on macOS volumes.  @value{tramp} access
@@ -1091,18 +1083,18 @@ syntax requires a leading volume (share) name, for example:
 
 @item @option{dav}
 @item @option{davs}
-@cindex method dav
-@cindex method davs
-@cindex dav method
-@cindex davs method
+@cindex method @option{dav}
+@cindex method @option{davs}
+@cindex @option{dav} method
+@cindex @option{davs} method
 
 @option{dav} method provides access to WebDAV files and directories
 based on standard protocols, such as HTTP@.  @option{davs} does the same
 but with SSL encryption.  Both methods support the port numbers.
 
 @item @option{gdrive}
-@cindex method gdrive
-@cindex gdrive method
+@cindex method @option{gdrive}
+@cindex @option{gdrive} method
 @cindex google drive
 
 Via the @option{gdrive} method it is possible to access your Google
@@ -1117,16 +1109,16 @@ could produce unexpected behavior in case two files in the same
 directory have the same @code{display-name}, such a situation must be avoided.
 
 @item @option{obex}
-@cindex method obex
-@cindex obex method
+@cindex method @option{obex}
+@cindex @option{obex} method
 
 OBEX is an FTP-like access protocol for cell phones and similar simple
 devices.  @value{tramp} supports OBEX over Bluetooth.
 
 @item @option{owncloud}
 @cindex @acronym{GNOME} Online Accounts
-@cindex method owncloud
-@cindex owncloud method
+@cindex method @option{owncloud}
+@cindex @option{owncloud} method
 @cindex nextcloud
 
 As the name indicates, the method @option{owncloud} allows you to
@@ -1136,16 +1128,16 @@ access OwnCloud or NextCloud hosted files and directories.  Like the
 supports port numbers.
 
 @item @option{sftp}
-@cindex method sftp
-@cindex sftp method
+@cindex method @option{sftp}
+@cindex @option{sftp} method
 
 This method uses @command{sftp} in order to securely access remote
 hosts.  @command{sftp} is a more secure option for connecting to hosts
 that for security reasons refuse @command{ssh} connections.
 
 @item @option{synce}
-@cindex method synce
-@cindex synce method
+@cindex method @option{synce}
+@cindex @option{synce} method
 
 @option{synce} method allows connecting to MS Windows Mobile devices.
 It uses GVFS for mounting remote files and directories via FUSE and
@@ -1902,8 +1894,8 @@ Similar localization may be necessary for handling wrong password
 prompts, for which @value{tramp} uses @option{tramp-wrong-passwd-regexp}.
 
 @item @command{tset} and other questions
-@cindex unix command tset
-@cindex tset unix command
+@cindex unix command @command{tset}
+@cindex @command{tset} unix command
 @vindex tramp-terminal-type
 
 To suppress inappropriate prompts for terminal type, @value{tramp}
@@ -2015,8 +2007,8 @@ fi
 @end ifinfo
 
 @item @command{busybox} / @command{nc}
-@cindex unix command nc
-@cindex nc unix command
+@cindex unix command @command{nc}
+@cindex @command{nc} unix command
 
 @value{tramp}'s @option{nc} method uses the @command{nc} command to
 install and execute a listener as follows (see @code{tramp-methods}):
@@ -2232,8 +2224,8 @@ to direct all auto saves to that location.
 
 This section is incomplete.  Please share your solutions.
 
-@cindex method sshx with cygwin
-@cindex sshx method with cygwin
+@cindex method @option{sshx} with cygwin
+@cindex @option{sshx} method with cygwin
 
 Cygwin's @command{ssh} works only with a Cygwin version of Emacs.  To
 check for compatibility: type @kbd{M-x eshell}, and start @kbd{ssh
@@ -2254,8 +2246,8 @@ On @uref{https://www.emacswiki.org/emacs/SshWithNTEmacs, the Emacs
 Wiki} it is explained how to use the helper program @code{fakecygpty}
 to fix this problem.
 
-@cindex method scpx with cygwin
-@cindex scpx method with cygwin
+@cindex method @option{scpx} with cygwin
+@cindex @option{scpx} method with cygwin
 
 When using the @option{scpx} access method, Emacs may call
 @command{scp} with MS Windows file naming, such as @code{c:/foo}.  But
@@ -2267,7 +2259,7 @@ A workaround: write a wrapper script for @option{scp} to convert
 Windows file names to Cygwin file names.
 
 @cindex cygwin and ssh-agent
-@cindex SSH_AUTH_SOCK and emacs on ms windows
+@cindex @env{SSH_AUTH_SOCK} and emacs on ms windows
 
 When using the @command{ssh-agent} on MS Windows for password-less
 interaction, @option{ssh} methods depend on the environment variable
@@ -2579,8 +2571,8 @@ For ad-hoc definitions to be saved automatically in
 
 @node Remote processes
 @section Integration with other Emacs packages
-@cindex compile
-@cindex recompile
+@cindex @code{compile}
+@cindex @code{recompile}
 
 @value{tramp} supports starting new running processes on the remote
 host for discovering remote file names.  Emacs packages on the remote
@@ -2715,7 +2707,7 @@ local host.
 
 
 @subsection Running @code{shell} on a remote host
-@cindex shell
+@cindex @code{shell}
 
 Set @option{explicit-shell-file-name} to the appropriate shell name
 when using @value{tramp} between two hosts with different operating
@@ -2763,7 +2755,7 @@ different remote hosts.
 
 
 @subsection Running @code{shell-command} on a remote host
-@cindex shell-command
+@cindex @code{shell-command}
 
 @code{shell-command} executes commands synchronously or asynchronously
 on remote hosts and displays output in buffers on the local
@@ -2783,7 +2775,7 @@ host.  Example:
 
 
 @subsection Running @code{eshell} on a remote host
-@cindex eshell
+@cindex @code{eshell}
 
 @value{tramp} is integrated into @file{eshell.el}, which enables
 interactive eshell sessions on remote hosts at the command prompt.
@@ -2829,9 +2821,9 @@ uid=0(root) gid=0(root) groups=0(root)
 
 @anchor{Running a debugger on a remote host}
 @subsection Running a debugger on a remote host
-@cindex gud
-@cindex gdb
-@cindex perldb
+@cindex @file{gud.el}
+@cindex @code{gdb}
+@cindex @code{perldb}
 
 @file{gud.el} provides a unified interface to symbolic debuggers
 @ifinfo
@@ -2878,8 +2870,8 @@ relative or absolute paths, but not remote paths.
 
 
 @subsection Running remote processes on MS Windows hosts
-@cindex winexe
-@cindex powershell
+@cindex @command{winexe}
+@cindex @command{powershell}
 
 @command{winexe} runs processes on a remote MS Windows host, and
 @value{tramp} can use it for @code{process-file} and
@@ -2986,122 +2978,122 @@ file names.  Accepted suffixes are listed in the constant
 @itemize
 @item @samp{.7z} ---
 7-Zip archives
-@cindex 7z, file archive suffix
-@cindex file archive suffix 7z
+@cindex @file{7z} file archive suffix
+@cindex file archive suffix @file{7z}
 
 @item @samp{.apk} ---
 Android package kits
-@cindex apk, file archive suffix
-@cindex file archive suffix apk
+@cindex @file{apk} file archive suffix
+@cindex file archive suffix @file{apk}
 
 @item @samp{.ar} ---
 UNIX archiver formats
-@cindex ar, file archive suffix
-@cindex file archive suffix ar
+@cindex @file{ar} file archive suffix
+@cindex file archive suffix @file{ar}
 
 @item @samp{.cab}, @samp{.CAB} ---
 Microsoft Windows cabinets
-@cindex cab, file archive suffix
-@cindex CAB, file archive suffix
-@cindex file archive suffix cab
-@cindex file archive suffix CAB
+@cindex @file{cab} file archive suffix
+@cindex @file{CAB} file archive suffix
+@cindex file archive suffix @file{cab}
+@cindex file archive suffix @file{CAB}
 
 @item @samp{.cpio} ---
 CPIO archives
-@cindex cpio, file archive suffix
-@cindex file archive suffix cpio
+@cindex @file{cpio} file archive suffix
+@cindex file archive suffix @file{cpio}
 
 @item @samp{.deb} ---
 Debian packages
-@cindex deb, file archive suffix
-@cindex file archive suffix deb
+@cindex @file{deb} file archive suffix
+@cindex file archive suffix @file{deb}
 
 @item @samp{.depot} ---
 HP-UX SD depots
-@cindex depot, file archive suffix
-@cindex file archive suffix depot
+@cindex @file{depot} file archive suffix
+@cindex file archive suffix @file{depot}
 
 @item @samp{.exe} ---
 Self extracting Microsoft Windows EXE files
-@cindex exe, file archive suffix
-@cindex file archive suffix exe
+@cindex @file{exe} file archive suffix
+@cindex file archive suffix @file{exe}
 
 @item @samp{.iso} ---
 ISO 9660 images
-@cindex iso, file archive suffix
-@cindex file archive suffix iso
+@cindex @file{iso} file archive suffix
+@cindex file archive suffix @file{iso}
 
 @item @samp{.jar} ---
 Java archives
-@cindex jar, file archive suffix
-@cindex file archive suffix jar
+@cindex @file{jar} file archive suffix
+@cindex file archive suffix @file{jar}
 
 @item @samp{.lzh}, @samp{LZH} ---
 Microsoft Windows compressed LHA archives
-@cindex lzh, file archive suffix
-@cindex LZH, file archive suffix
-@cindex file archive suffix lzh
-@cindex file archive suffix LZH
+@cindex @file{lzh} file archive suffix
+@cindex @file{LZH} file archive suffix
+@cindex file archive suffix @file{lzh}
+@cindex file archive suffix @file{LZH}
 
 @item @samp{.mtree} ---
 BSD mtree format
-@cindex mtree, file archive suffix
-@cindex file archive suffix mtree
+@cindex @file{mtree} file archive suffix
+@cindex file archive suffix @file{mtree}
 
 @item @samp{.pax} ---
 Posix archives
-@cindex pax, file archive suffix
-@cindex file archive suffix pax
+@cindex @file{pax} file archive suffix
+@cindex file archive suffix @file{pax}
 
 @item @samp{.rar} ---
 RAR archives
-@cindex rar, file archive suffix
-@cindex file archive suffix rar
+@cindex @file{rar} file archive suffix
+@cindex file archive suffix @file{rar}
 
 @item @samp{.rpm} ---
 Red Hat packages
-@cindex rpm, file archive suffix
-@cindex file archive suffix rpm
+@cindex @file{rpm} file archive suffix
+@cindex file archive suffix @file{rpm}
 
 @item @samp{.shar} ---
 Shell archives
-@cindex shar, file archive suffix
-@cindex file archive suffix shar
+@cindex @file{shar} file archive suffix
+@cindex file archive suffix @file{shar}
 
 @item @samp{.tar}, @samp{tbz}, @samp{tgz}, @samp{tlz}, @samp{txz} ---
 (Compressed) tape archives
-@cindex tar, file archive suffix
-@cindex tbz, file archive suffix
-@cindex tgz, file archive suffix
-@cindex tlz, file archive suffix
-@cindex txz, file archive suffix
-@cindex file archive suffix tar
-@cindex file archive suffix tbz
-@cindex file archive suffix tgz
-@cindex file archive suffix tlz
-@cindex file archive suffix txz
+@cindex @file{tar} file archive suffix
+@cindex @file{tbz} file archive suffix
+@cindex @file{tgz} file archive suffix
+@cindex @file{tlz} file archive suffix
+@cindex @file{txz} file archive suffix
+@cindex file archive suffix @file{tar}
+@cindex file archive suffix @file{tbz}
+@cindex file archive suffix @file{tgz}
+@cindex file archive suffix @file{tlz}
+@cindex file archive suffix @file{txz}
 
 @item @samp{.warc} ---
 Web archives
-@cindex warc, file archive suffix
-@cindex file archive suffix warc
+@cindex @file{warc} file archive suffix
+@cindex file archive suffix @file{warc}
 
 @item @samp{.xar} ---
 macOS XAR archives
-@cindex xar, file archive suffix
-@cindex file archive suffix xar
+@cindex @file{xar} file archive suffix
+@cindex file archive suffix @file{xar}
 
 @item @samp{.xps} ---
 Open XML Paper Specification (OpenXPS) documents
-@cindex xps, file archive suffix
-@cindex file archive suffix xps
+@cindex @file{xps} file archive suffix
+@cindex file archive suffix @file{xps}
 
 @item @samp{.zip}, @samp{.ZIP} ---
 ZIP archives
-@cindex zip, file archive suffix
-@cindex ZIP, file archive suffix
-@cindex file archive suffix zip
-@cindex file archive suffix ZIP
+@cindex @file{zip} file archive suffix
+@cindex @file{ZIP} file archive suffix
+@cindex file archive suffix @file{zip}
+@cindex file archive suffix @file{ZIP}
 @end itemize
 
 @vindex tramp-archive-compression-suffixes
