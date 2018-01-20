@@ -384,7 +384,7 @@ nonempty, then flushes the buffer."
                 (set-match-data ielm-match-data)
                 (save-excursion
                   (with-temp-buffer
-                    (condition-case err
+                    (condition-case-unless-debug err
                         (unwind-protect
                             ;; The next let form creates default
                             ;; bindings for *, ** and ***.  But
@@ -527,9 +527,6 @@ causes output to be directed to the ielm buffer.
 `standard-output' is restored after evaluation unless explicitly
 set to a different value during evaluation.  You can use (princ
 VALUE) or (pp VALUE) to write to the ielm buffer.
-
-Expressions evaluated by IELM are not subject to `debug-on-quit' or
-`debug-on-error'.
 
 The behavior of IELM may be customized with the following variables:
 * To stop beeping on error, set `ielm-noisy' to nil.
