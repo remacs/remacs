@@ -3196,6 +3196,18 @@ set_hash_value_slot (struct Lisp_Hash_Table *h, ptrdiff_t idx, Lisp_Object val)
 /* Use these functions to set Lisp_Object
    or pointer slots of struct Lisp_Symbol.  */
 
+INLINE bool
+get_symbol_declared_special(const struct Lisp_Symbol *sym)
+{
+  return sym->declared_special;
+}
+
+INLINE void
+set_symbol_declared_special(struct Lisp_Symbol *sym, bool value)
+{
+  sym->declared_special = value;
+}
+
 INLINE void
 set_symbol_function (Lisp_Object sym, Lisp_Object function)
 {
@@ -3770,8 +3782,7 @@ extern Lisp_Object oblookup (Lisp_Object, const char *, ptrdiff_t, ptrdiff_t);
 INLINE void
 LOADHIST_ATTACH (Lisp_Object x)
 {
-  if (initialized)
-    Vcurrent_load_list = Fcons (x, Vcurrent_load_list);
+  return loadhist_attach (x);
 }
 extern int openp (Lisp_Object, Lisp_Object, Lisp_Object,
                   Lisp_Object *, Lisp_Object, bool);

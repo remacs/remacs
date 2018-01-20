@@ -118,4 +118,14 @@
                                (+ val a)))
                    (function (lambda (a) "Add 1 to A" (+ val a)))))))
 
+(ert-deftest eval-tests--special-variable ()
+  "Check support for special variables."
+  (defvar eval-tests-var1 nil)
+  (should (eq (special-variable-p eval-tests-var1) t))
+  (internal-make-var-non-special 'eval-tests-var1)
+  (should (eq (special-variable-p 'eval-tests-var1) nil))
+
+  (let ((eval-tests-var2 nil))
+    (should (eq (special-variable-p 'eval-tests-var2) nil))))
+
 ;;; eval-tests.el ends here

@@ -2,10 +2,10 @@
 use libc;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{intern_sym, make_pure_c_string, make_unibyte_string, oblookup, Fmake_symbol,
-                 Fpurecopy};
-use remacs_sys::{globals, Lisp_Object};
-use remacs_sys::{fatal_error_in_progress, initial_obarray};
+use remacs_sys::{Fcons, Fmake_symbol, Fpurecopy};
+use remacs_sys::{fatal_error_in_progress, globals, initial_obarray, initialized, intern_sym,
+                 make_pure_c_string, make_unibyte_string, oblookup};
+use remacs_sys::Lisp_Object;
 use remacs_sys::Qvectorp;
 
 use lisp::LispObject;
@@ -76,6 +76,15 @@ pub fn intern<T: AsRef<str>>(string: T) -> LispObject {
         s.as_ptr() as *const libc::c_char,
         s.len() as libc::ptrdiff_t,
     ))
+}
+
+#[no_mangle]
+pub extern "C" fn loadhist_attach(x: Lisp_Object) {
+    unsafe {
+        if initialized {
+            globals.f_Vcurrent_load_list = Fcons(x, globals.f_Vcurrent_load_list);
+        }
+    }
 }
 
 /// Get an error if OBARRAY is not an obarray.
