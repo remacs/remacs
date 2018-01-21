@@ -10525,6 +10525,17 @@ comment at the start of cc-engine.el for more info."
 		((and class-key
 		      (looking-at class-key))
 		 (setq braceassignp nil))
+		((and c-has-compound-literals
+		      (looking-at c-return-key))
+		 (setq braceassignp t)
+		 nil)
+		((and c-has-compound-literals
+		      (eq (char-after) ?,))
+		 (save-excursion
+		   (when (and (c-go-up-list-backward nil lim)
+			      (eq (char-after) ?\())
+		     (setq braceassignp t)
+		     nil)))
 		((eq (char-after) ?=)
 		 ;; We've seen a =, but must check earlier tokens so
 		 ;; that it isn't something that should be ignored.
@@ -10563,9 +10574,14 @@ comment at the start of cc-engine.el for more info."
 				     ))))
 			   nil)
 			  (t t))))))
-	  (if (and (eq braceassignp 'dontknow)
-		   (/= (c-backward-token-2 1 t lim) 0))
-	      (setq braceassignp nil)))
+	  (when (and (eq braceassignp 'dontknow)
+		     (/= (c-backward-token-2 1 t lim) 0))
+	    (if (save-excursion
+		  (and c-has-compound-literals
+		       (eq (c-backward-token-2 1 nil lim) 0)
+		       (eq (char-after) ?\()))
+		(setq braceassignp t)
+	      (setq braceassignp nil))))
 
 	(cond
 	 (braceassignp
@@ -10930,7 +10946,7 @@ comment at the start of cc-engine.el for more info."
 			   (c-on-identifier)))
 		    (and c-special-brace-lists
 			 (c-looking-at-special-brace-list))
-		    (and (c-major-mode-is 'c++-mode)
+		    (and c-has-compound-literals
 			 (save-excursion
 			   (goto-char block-follows)
 			   (not (c-looking-at-statement-block)))))
@@ -12437,6 +12453,11 @@ comment at the start of cc-engine.el for more info."
 	 ;; in-expression block or brace list.  C.f. cases 4, 16A
 	 ;; and 17E.
 	 ((and (eq char-after-ip ?{)
+	       (or (not (eq (char-after containing-sexp) ?\())
+		   (save-excursion
+		     (and c-opt-inexpr-brace-list-key
+			  (eq (c-beginning-of-statement-1 lim t nil t) 'same)
+			  (looking-at c-opt-inexpr-brace-list-key))))
 	       (progn
 		 (setq placeholder (c-inside-bracelist-p (point)
 							 paren-state

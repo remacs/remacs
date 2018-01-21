@@ -617,6 +617,12 @@ EOL terminated statements."
   c++ t)
 (c-lang-defvar c-has-quoted-numbers (c-lang-const c-has-quoted-numbers))
 
+(c-lang-defconst c-has-compound-literals
+  "Whether literal initializers {...} are used other than in initializations."
+  t nil
+  (c c++) t)
+(c-lang-defvar c-has-compound-literals (c-lang-const c-has-compound-literals))
+
 (c-lang-defconst c-modified-constant
   "Regexp that matches a “modified” constant literal such as \"L\\='a\\='\",
 a “long character”.  In particular, this recognizes forms of constant
