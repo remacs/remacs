@@ -2049,16 +2049,13 @@ After the process output mark, sends all text from the process mark to
 point as input to the process.  Before the process output mark, calls value
 of variable `term-get-old-input' to retrieve old input, copies it to the
 process mark, and sends it.  A terminal newline is also inserted into the
-buffer and sent to the process.  The list of function names contained in the
-value of `term-input-filter-functions' is called on the input before sending
-it.  The input is entered into the input history ring, if the value of variable
-`term-input-filter' returns non-nil when called on the input.
+buffer and sent to the process.  The functions in `term-input-filter-functions'
+are called on the input before sending it.
 
-Any history reference may be expanded depending on the value of the variable
-`term-input-autoexpand'.  The list of function names contained in the value
-of `term-input-filter-functions' is called on the input before sending it.
 The input is entered into the input history ring, if the value of variable
-`term-input-filter' returns non-nil when called on the input.
+`term-input-filter' returns non-nil when called on the input.  Any history
+reference may be expanded depending on the value of the variable
+`term-input-autoexpand'.
 
 If variable `term-eol-on-send' is non-nil, then point is moved to the
 end of line before sending the input.
