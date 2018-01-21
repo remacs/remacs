@@ -240,6 +240,9 @@ file name extensions.
 ** The ecomplete sorting has changed to a decay-based algorithm.  This
 can be controlled by the new `ecomplete-sort-predicate' variable.
 
+** The new function 'read-answer' accepts either long or short answers
+depending on the new customizable variable 'read-answer-short'.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

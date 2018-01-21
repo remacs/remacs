@@ -2997,37 +2997,6 @@ Any other value means to ask for each directory."
 ;; Match anything but `.' and `..'.
 (defvar dired-re-no-dot "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")
 
-(defconst dired-delete-help
-  "Type:
-`yes' to delete recursively the current directory,
-`no' to skip to next,
-`all' to delete all remaining directories with no more questions,
-`quit' to exit,
-`help' to show this help message.")
-
-(defun dired--yes-no-all-quit-help (prompt &optional help-msg)
-  "Ask a question with valid answers: yes, no, all, quit, help.
-PROMPT must end with '? ', for instance, 'Delete it? '.
-If optional arg HELP-MSG is non-nil, then is a message to show when
-the user answers 'help'.  Otherwise, default to `dired-delete-help'."
-  (let ((valid-answers (list "yes" "no" "all" "quit"))
-        (answer "")
-        (input-fn (lambda ()
-                    (read-string
-	             (format "%s [yes, no, all, quit, help] " prompt)))))
-    (setq answer (funcall input-fn))
-    (when (string= answer "help")
-      (with-help-window "*Help*"
-        (with-current-buffer "*Help*"
-          (insert (or help-msg dired-delete-help)))))
-    (while (not (member answer valid-answers))
-      (unless (string= answer "help")
-        (beep)
-        (message "Please answer `yes' or `no' or `all' or `quit'")
-        (sleep-for 2))
-      (setq answer (funcall input-fn)))
-    answer))
-
 ;; Delete file, possibly delete a directory and all its files.
 ;; This function is useful outside of dired.  One could change its name
 ;; to e.g. recursive-delete-file and put it somewhere else.
@@ -3057,11 +3026,17 @@ TRASH non-nil means to trash the file instead of deleting, provided
 				    "trash"
 				  "delete")
 				(dired-make-relative file))))
-                   (pcase (dired--yes-no-all-quit-help prompt) ; Prompt user.
+                   (pcase (read-answer
+                           prompt
+                           '(("yes"  ?y "delete recursively the current directory")
+                             ("no"   ?n "skip to next")
+                             ("all"  ?! "delete all remaining directories with no more questions")
+                             ("quit" ?q "exit")))
                      ('"all" (setq recursive 'always dired-recursive-deletes recursive))
                      ('"yes" (if (eq recursive 'top) (setq recursive 'always)))
                      ('"no" (setq recursive nil))
-                     ('"quit" (keyboard-quit)))))
+                     ('"quit" (keyboard-quit))
+                     (_ (keyboard-quit))))) ; catch all unknown answers
              (setq recursive nil)) ; Empty dir or recursive is nil.
            (delete-directory file recursive trash))))
 
