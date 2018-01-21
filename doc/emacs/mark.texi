@@ -135,10 +135,11 @@ detailed description of these mouse commands.
 typing certain cursor motion commands (such as @kbd{S-@key{RIGHT}},
 @kbd{S-C-f}, @kbd{S-C-n}, etc.).  This is called @dfn{shift-selection}.
 It sets the mark at point before moving point, but only if there is no
-active mark set via shift-selection.  The mark set by mouse commands
-and by shift-selection behaves slightly differently from the usual
-mark: any subsequent unshifted cursor motion command deactivates it
-automatically.  For details, see @ref{Shift Selection}.
+active mark set via a previous shift-selection or mouse commands.  The
+mark set by mouse commands and by shift-selection behaves slightly
+differently from the usual mark: any subsequent unshifted cursor motion
+command deactivates it automatically.  For details, see @ref{Shift
+Selection}.
 
   Many commands that insert text, such as @kbd{C-y} (@code{yank}), set
 the mark at the other end of the inserted text, without activating it.
@@ -161,7 +162,7 @@ object such as a word, list, paragraph or page:
 
 @table @kbd
 @item M-@@
-Set mark after end of next word (@code{mark-word}).  This does not
+Set mark at the end of the next word (@code{mark-word}).  This does not
 move point.
 @item C-M-@@
 Set mark after end of following balanced expression
