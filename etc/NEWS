@@ -110,6 +110,12 @@ be removed prior using the changed 'shadow-*' commands.
 
 * Lisp Changes in Emacs 26.2
 
+** The new function 'read-answer' accepts either long or short answers
+depending on the new customizable variable 'read-answer-short'.
+
+** New function 'assoc-delete-all'.
+Like 'assq-delete-all', but uses 'equal' for comparison.
+
 
 * Changes in Emacs 26.2 on Non-Free Operating Systems
 
