@@ -2043,13 +2043,13 @@ This doesn't recover lost files, it just undoes changes in the buffer itself."
       (if copy (delete-file copy))
       (goto-char (point-min))
       (re-search-forward "^\\(\s+=+\s?+\\)+\n")
-      (while (looking-at (concat "^\s+[0-9.]+\s+-+\s+"   ; Flags
-                                 "\\([0-9-]+\\)\s+"      ; Size
-                                 "\\([0-9.%]+\\)\s+"     ; Ratio
-                                 "\\([0-9a-zA-Z]+\\)\s+" ; Mode
-                                 "\\([0-9-]+\\)\s+"      ; Date
-                                 "\\([0-9:]+\\)\s+"      ; Time
-                                 "\\(.*\\)\n"            ; Name
+      (while (looking-at (concat "^\s+[0-9.]+\s+D?-+\s+"   ; Flags
+                                 "\\([0-9-]+\\)\s+"        ; Size
+                                 "\\([-0-9.%]+\\|-+\\)\s+" ; Ratio
+                                 "\\([0-9a-zA-Z]+\\)\s+"   ; Mode
+                                 "\\([0-9-]+\\)\s+"        ; Date
+                                 "\\([0-9:]+\\)\s+"        ; Time
+                                 "\\(.*\\)\n"              ; Name
                                  ))
         (goto-char (match-end 0))
         (let ((name (match-string 6))
