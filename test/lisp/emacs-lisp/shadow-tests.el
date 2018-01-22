@@ -33,7 +33,7 @@
 
 (ert-deftest shadow-case-insensitive ()
   "Test shadowing for case insensitive filenames."
-  ;; Override `file-name-case-insentive-p' so we test the same thing
+  ;; Override `file-name-case-insensitive-p' so we test the same thing
   ;; regardless of what file system we're running on.
   (cl-letf (((symbol-function 'file-name-case-insensitive-p) (lambda (_f) t)))
     (should (equal (list (expand-file-name "p1/foo" shadow-tests-data-directory)

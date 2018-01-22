@@ -452,7 +452,7 @@ displays, you can use the mouse to kill Emacs or switch to another
 program.
 
   On MS-DOS, you must type @kbd{C-@key{Break}} (twice) to cause
-emergency escape---but there are cases where it won't work, when
+emergency escape---but there are cases where it won't work, when a
 system call hangs or when Emacs is stuck in a tight loop in C code.
 
 @node Bugs
@@ -1225,8 +1225,7 @@ check if existing bug reports are fixed in newer versions of Emacs
 @url{https://debbugs.gnu.org/cgi/pkgreport.cgi?which=pkg&data=emacs}.
 
 @item
-fix existing bug reports
-@url{https://debbugs.gnu.org/cgi/pkgreport.cgi?which=pkg&data=emacs}.
+fix existing bug reports.
 
 @item
 @c etc/TODO not in WWW_GNU_ORG

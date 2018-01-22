@@ -927,18 +927,24 @@ Store them in the capture property list."
 	   (_ (error "Cannot find target ID \"%s\"" id))))
 	(`(file+headline ,path ,headline)
 	 (set-buffer (org-capture-target-buffer path))
+	 ;; Org expects the target file to be in Org mode, otherwise
+	 ;; it throws an error.  However, the default notes files
+	 ;; should work out of the box.  In this case, we switch it to
+	 ;; Org mode.
 	 (unless (derived-mode-p 'org-mode)
-	   (error "Target buffer \"%s\" for file+headline not in Org mode"
-		  (current-buffer)))
+	   (org-display-warning
+	    (format "Capture requirement: switching buffer %S to Org mode"
+		    (current-buffer)))
+	   (org-mode))
 	 (org-capture-put-target-region-and-position)
 	 (widen)
 	 (goto-char (point-min))
 	 (if (re-search-forward (format org-complex-heading-regexp-format
 					(regexp-quote headline))
 				nil t)
-	     (goto-char (line-beginning-position))
+	     (beginning-of-line)
 	   (goto-char (point-max))
-	   (or (bolp) (insert "\n"))
+	   (unless (bolp) (insert "\n"))
 	   (insert "* " headline "\n")
 	   (beginning-of-line 0)))
 	(`(file+olp ,path . ,outline-path)

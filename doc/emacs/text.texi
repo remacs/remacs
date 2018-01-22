@@ -381,12 +381,13 @@ at the end).
   @kbd{C-x C-p C-w} is a handy way to kill a page to move it
 elsewhere.  If you move to another page delimiter with @kbd{C-x [} and
 @kbd{C-x ]}, then yank the killed page, all the pages will be properly
-delimited once again.  The reason @kbd{C-x C-p} includes only the
-following page delimiter in the region is to ensure that.
+delimited once again.  Making sure this works as expected is the
+reason @kbd{C-x C-p} includes only the following page delimiter in the
+region.
 
   A numeric argument to @kbd{C-x C-p} specifies which page to go to,
-relative to the current one.  Zero means the current page, one
-the next page, and @minus{}1 the previous one.
+relative to the current one.  Zero means the current page, one means
+the next page, and @minus{}1 means the previous one.
 
 @kindex C-x l
 @findex count-lines-page
