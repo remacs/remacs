@@ -884,8 +884,8 @@ delivered."
             ;; Stop file notification.  Autorevert shall still work via polling.
 	    (file-notify-rm-watch auto-revert-notify-watch-descriptor)
 	    (file-notify--wait-for-events
-	     timeout (null auto-revert-use-notify))
-	    (should-not auto-revert-use-notify)
+	     timeout (null auto-revert-notify-watch-descriptor))
+	    (should auto-revert-use-notify)
 	    (should-not auto-revert-notify-watch-descriptor)
 
 	    ;; Modify file.  We wait for two seconds, in order to
@@ -902,7 +902,10 @@ delivered."
                (string-match
                 (format-message "Reverting buffer `%s'." (buffer-name buf))
                 captured-messages))
-              (should (string-match "foo bla" (buffer-string)))))
+              (should (string-match "foo bla" (buffer-string))))
+
+            ;; Stop autorevert, in order to cleanup descriptor.
+            (auto-revert-mode -1))
 
           ;; The environment shall be cleaned up.
           (file-notify--test-cleanup-p))

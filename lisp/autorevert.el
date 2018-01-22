@@ -803,7 +803,8 @@ the timer when no buffers need to be checked."
       ;; Check if we should cancel the timer.
       (when (and (not global-auto-revert-mode)
 		 (null auto-revert-buffer-list))
-	(cancel-timer auto-revert-timer)
+        (if (timerp auto-revert-timer)
+	    (cancel-timer auto-revert-timer))
 	(setq auto-revert-timer nil)))))
 
 
