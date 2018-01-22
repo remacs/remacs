@@ -1735,7 +1735,6 @@ x_set_offset (struct frame *f, int xoff, int yoff, int change_grav)
    -------------------------------------------------------------------------- */
 {
   NSView *view = FRAME_NS_VIEW (f);
-  NSArray *screens = [NSScreen screens];
   NSScreen *screen = [[view window] screen];
 
   NSTRACE ("x_set_offset");
