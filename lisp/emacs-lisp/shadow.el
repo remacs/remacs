@@ -78,7 +78,7 @@ See the documentation for `list-load-path-shadows' for further information."
 	shadows				; List of shadowings, to be returned.
 	files				; File names ever seen, with dirs.
 	dir				; The dir being currently scanned.
-        dir-case-insensitive            ; `file-name-case-insentive-p' for dir.
+        dir-case-insensitive            ; `file-name-case-insensitive-p' of dir.
 	curr-files			; This dir's Emacs Lisp files.
 	orig-dir			; Where the file was first seen.
 	files-seen-this-dir		; Files seen so far in this dir.
