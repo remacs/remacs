@@ -3699,7 +3699,9 @@ the communication channel used for export, as a plist."
 		    :translate-alist all-transcoders
 		    :exported-data (make-hash-table :test #'eq :size 401)))))
 	;; `:internal-references' are shared across back-ends.
-	(prog1 (funcall transcoder data contents new-info)
+	(prog1 (if (eq type 'plain-text)
+		   (funcall transcoder data new-info)
+		 (funcall transcoder data contents new-info))
 	  (plist-put info :internal-references
 		     (plist-get new-info :internal-references)))))))
 

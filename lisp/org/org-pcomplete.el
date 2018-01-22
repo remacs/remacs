@@ -41,11 +41,6 @@
 
 ;;;; Customization variables
 
-(defgroup org-complete nil
-  "Outline-based notes management and organizer."
-  :tag "Org"
-  :group 'org)
-
 (defvar org-drawer-regexp)
 (defvar org-property-re)
 (defvar org-current-tag-alist)
