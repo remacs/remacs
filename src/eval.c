@@ -352,37 +352,6 @@ do_debug_on_call (Lisp_Object code, ptrdiff_t count)
    and temporaries from garbage collection while it needs them.
    The definition of `For' shows what you have to do.  */
 
-/* Evaluate BODY sequentially, discarding its value.  */
-
-void
-prog_ignore (Lisp_Object body)
-{
-  Fprogn (body);
-}
-
-DEFUN ("prog1", Fprog1, Sprog1, 1, UNEVALLED, 0,
-       doc: /* Eval FIRST and BODY sequentially; return value from FIRST.
-The value of FIRST is saved during the evaluation of the remaining args,
-whose values are discarded.
-usage: (prog1 FIRST BODY...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object val = eval_sub (XCAR (args));
-  prog_ignore (XCDR (args));
-  return val;
-}
-
-DEFUN ("prog2", Fprog2, Sprog2, 2, UNEVALLED, 0,
-       doc: /* Eval FORM1, FORM2 and BODY sequentially; return value from FORM2.
-The value of FORM2 is saved during the evaluation of the
-remaining args, whose values are discarded.
-usage: (prog2 FORM1 FORM2 BODY...)  */)
-  (Lisp_Object args)
-{
-  eval_sub (XCAR (args));
-  return Fprog1 (XCDR (args));
-}
-
 DEFUN ("setq", Fsetq, Ssetq, 0, UNEVALLED, 0,
        doc: /* Set each SYM to the value of its VAL.
 The symbols SYM are variables; they are literal (not evaluated).
@@ -3941,8 +3910,6 @@ alist of active lexical bindings.  */);
 
   inhibit_lisp_code = Qnil;
 
-  defsubr (&Sprog1);
-  defsubr (&Sprog2);
   defsubr (&Ssetq);
   defsubr (&Sfunction);
   defsubr (&Sdefault_toplevel_value);

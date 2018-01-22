@@ -74,4 +74,16 @@
   (should (eq (progn nil t) t))
   (should (eq (progn t nil) nil)))
 
+(ert-deftest eval-tests--prog1-base ()
+  "Check (prog1) base cases"
+  (should (eq (prog1 1 2) 1))
+  (should (eq (prog1 nil 2) nil))
+  (should-error (eval '(prog1 . (1 (error "Must be evaluated")))) :type 'error))
+
+(ert-deftest eval-tests--prog2-base ()
+  "Check (prog2) base cases"
+  (should (eq (prog2 1 2 3) 2))
+  (should (eq (prog2 nil 2 3) 2))
+  (should-error (eval '(prog2 . (1 2 (error "Must be evaluated")))) :type 'error))
+
 ;;; eval-tests.el ends here
