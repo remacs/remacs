@@ -349,7 +349,7 @@ This variable is regarded as obsolete, and will be removed soon."
   "Default user to use for specific method/host pairs.
 This is an alist of items (METHOD HOST USER).  The first matching item
 specifies the user to use for a file name which does not specify a
-user.  METHOD and USER are regular expressions or nil, which is
+user.  METHOD and HOST are regular expressions or nil, which is
 interpreted as a regular expression which always matches.  If no entry
 matches, the variable `tramp-default-user' takes effect.
 
@@ -373,7 +373,7 @@ Useful for su and sudo methods mostly."
   "Default host to use for specific method/user pairs.
 This is an alist of items (METHOD USER HOST).  The first matching item
 specifies the host to use for a file name which does not specify a
-host.  METHOD and HOST are regular expressions or nil, which is
+host.  METHOD and USER are regular expressions or nil, which is
 interpreted as a regular expression which always matches.  If no entry
 matches, the variable `tramp-default-host' takes effect.
 
