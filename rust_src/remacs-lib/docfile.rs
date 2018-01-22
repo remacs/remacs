@@ -131,7 +131,7 @@ pub extern "C" fn scan_rust_file(
             }
         } else if line.starts_with("def_lisp_sym!(") {
             lazy_static! {
-                static ref RE: Regex = Regex::new(r#"def_lisp_sym!\((.+),\s+"(.+)"\);"#).unwrap();
+                static ref RE: Regex = Regex::new(r#"def_lisp_sym!\((.+?),\s+"(.+?)"\);"#).unwrap();
             }
             let caps = RE.captures(line).unwrap();
             let name = CString::new(&caps[1]).unwrap();
