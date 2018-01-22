@@ -759,6 +759,10 @@ pub struct thread_state {
     // next_thread.
 }
 
+extern "C" {
+    pub fn SPECPDL_INDEX() -> ptrdiff_t;
+}
+
 /// Lisp_Char_Table
 #[repr(C)]
 #[allow(dead_code)]
@@ -1324,6 +1328,9 @@ extern "C" {
         prop: Lisp_Object,
         object: Lisp_Object,
     ) -> Lisp_Object;
+
+    pub fn specbind(symbol: Lisp_Object, value: Lisp_Object);
+    pub fn unbind_to(count: ptrdiff_t, value: Lisp_Object) -> Lisp_Object;
 
 }
 

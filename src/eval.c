@@ -557,65 +557,6 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
 }
 
 
-DEFUN ("let*", FletX, SletX, 1, UNEVALLED, 0,
-       doc: /* Bind variables according to VARLIST then eval BODY.
-The value of the last form in BODY is returned.
-Each element of VARLIST is a symbol (which is bound to nil)
-or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
-Each VALUEFORM can refer to the symbols already bound by this VARLIST.
-usage: (let* VARLIST BODY...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object var, val, elt, lexenv;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  lexenv = Vinternal_interpreter_environment;
-
-  Lisp_Object varlist = XCAR (args);
-  while (CONSP (varlist))
-    {
-      maybe_quit ();
-
-      elt = XCAR (varlist);
-      varlist = XCDR (varlist);
-      if (SYMBOLP (elt))
-	{
-	  var = elt;
-	  val = Qnil;
-	}
-      else
-	{
-	  var = Fcar (elt);
-	  if (! NILP (Fcdr (XCDR (elt))))
-	    signal_error ("`let' bindings can have only one value-form", elt);
-	  val = eval_sub (Fcar (XCDR (elt)));
-	}
-
-      if (!NILP (lexenv) && SYMBOLP (var)
-	  && !XSYMBOL (var)->declared_special
-	  && NILP (Fmemq (var, Vinternal_interpreter_environment)))
-	/* Lexically bind VAR by adding it to the interpreter's binding
-	   alist.  */
-	{
-	  Lisp_Object newenv
-	    = Fcons (Fcons (var, val), Vinternal_interpreter_environment);
-	  if (EQ (Vinternal_interpreter_environment, lexenv))
-	    /* Save the old lexical environment on the specpdl stack,
-	       but only for the first lexical binding, since we'll never
-	       need to revert to one of the intermediate ones.  */
-	    specbind (Qinternal_interpreter_environment, newenv);
-	  else
-	    Vinternal_interpreter_environment = newenv;
-	}
-      else
-	specbind (var, val);
-    }
-  CHECK_LIST_END (varlist, XCAR (args));
-
-  val = Fprogn (XCDR (args));
-  return unbind_to (count, val);
-}
-
 DEFUN ("let", Flet, Slet, 1, UNEVALLED, 0,
        doc: /* Bind variables according to VARLIST then eval BODY.
 The value of the last form in BODY is returned.
@@ -3775,7 +3716,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
   defsubr (&Slet);
-  defsubr (&SletX);
   defsubr (&Swhile);
   defsubr (&Smacroexpand);
   defsubr (&Scatch);
