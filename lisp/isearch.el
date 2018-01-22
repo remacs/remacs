@@ -1233,6 +1233,8 @@ If this is set inside code wrapped by the macro
 (define-obsolete-variable-alias 'isearch-new-word
   'isearch-new-regexp-function "25.1")
 
+(defvar isearch-suspended nil)
+
 (defmacro with-isearch-suspended (&rest body)
   "Exit Isearch mode, run BODY, and reinvoke the pending search.
 You can update the global isearch variables by setting new values to
@@ -1299,6 +1301,8 @@ You can update the global isearch variables by setting new values to
 	       isearch-original-minibuffer-message-timeout)
 	      old-point old-other-end)
 
+          (setq isearch-suspended t)
+
 	  ;; Actually terminate isearching until editing is done.
 	  ;; This is so that the user can do anything without failure,
 	  ;; like switch buffers and start another isearch, and return.
@@ -1312,6 +1316,8 @@ You can update the global isearch variables by setting new values to
 
 	  (unwind-protect
 	      (progn ,@body)
+
+            (setq isearch-suspended nil)
 
 	    ;; Always resume isearching by restarting it.
 	    (isearch-mode isearch-forward
@@ -1374,6 +1380,7 @@ You can update the global isearch variables by setting new values to
 		  (message "")))))
 
     (quit  ; handle abort-recursive-edit
+     (setq isearch-suspended nil)
      (isearch-abort)  ;; outside of let to restore outside global values
      )))
 
