@@ -118,6 +118,38 @@
                                (+ val a)))
                    (function (lambda (a) "Add 1 to A" (+ val a)))))))
 
+(ert-deftest eval-tests--let-base ()
+  "Check (let) base cases"
+  (should-error (let ((a 1)
+                      (b 2)
+                      (c a)) ;; Error, cannot use a previous binding
+                  (+ a b c)) :type 'void-variable)
+  (should (eq (let ((a 1)
+                    (b 2))
+                (+ a b))
+              3))
+  (defvar foo 1)
+  (should (eq (let ((a (+ foo 1))
+                    (b 2))
+                (+ a b))
+              4)))
+
+(ert-deftest eval-tests--let*-base ()
+  "Check (let*) base cases"
+  (should (eq 4 (let* ((a 1)
+                       (b 2)
+                       (c a)) ;; OK
+                  (+ a b c))))
+  (should (eq (let* ((a 1)
+                     (b (+ a 4)))
+                (+ a b))
+              6))
+  (defvar foo 1)
+  (should (eq (let* ((a (+ foo 1))
+                     (b 2))
+                (+ a b))
+              4)))
+
 (ert-deftest eval-tests--special-variable ()
   "Check support for special variables."
   (defvar eval-tests-var1 nil)
@@ -127,5 +159,21 @@
 
   (let ((eval-tests-var2 nil))
     (should (eq (special-variable-p 'eval-tests-var2) nil))))
+
+(dolist (form '(let let*))
+  (dolist (arg '(1 "a" [a]))
+    (eval
+     `(ert-deftest ,(intern (format "eval-tests--%s--%s" form (type-of arg))) ()
+        ,(format "Check that the first argument of `%s' cannot be a %s"
+                 form (type-of arg))
+        (should-error (,form ,arg) :type 'wrong-type-argument))
+     t)))
+
+(ert-deftest eval-tests--let-with-circular-defs ()
+  "Check that Emacs reports an error for (let VARS ...) when VARS is circular."
+  (let ((vars (list 'v)))
+    (setcdr vars vars)
+    (dolist (let-sym '(let let*))
+      (should-error (eval (list let-sym vars))))))
 
 ;;; eval-tests.el ends here

@@ -557,135 +557,6 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
 }
 
 
-DEFUN ("let*", FletX, SletX, 1, UNEVALLED, 0,
-       doc: /* Bind variables according to VARLIST then eval BODY.
-The value of the last form in BODY is returned.
-Each element of VARLIST is a symbol (which is bound to nil)
-or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
-Each VALUEFORM can refer to the symbols already bound by this VARLIST.
-usage: (let* VARLIST BODY...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object var, val, elt, lexenv;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  lexenv = Vinternal_interpreter_environment;
-
-  Lisp_Object varlist = XCAR (args);
-  while (CONSP (varlist))
-    {
-      maybe_quit ();
-
-      elt = XCAR (varlist);
-      varlist = XCDR (varlist);
-      if (SYMBOLP (elt))
-	{
-	  var = elt;
-	  val = Qnil;
-	}
-      else
-	{
-	  var = Fcar (elt);
-	  if (! NILP (Fcdr (XCDR (elt))))
-	    signal_error ("`let' bindings can have only one value-form", elt);
-	  val = eval_sub (Fcar (XCDR (elt)));
-	}
-
-      if (!NILP (lexenv) && SYMBOLP (var)
-	  && !XSYMBOL (var)->declared_special
-	  && NILP (Fmemq (var, Vinternal_interpreter_environment)))
-	/* Lexically bind VAR by adding it to the interpreter's binding
-	   alist.  */
-	{
-	  Lisp_Object newenv
-	    = Fcons (Fcons (var, val), Vinternal_interpreter_environment);
-	  if (EQ (Vinternal_interpreter_environment, lexenv))
-	    /* Save the old lexical environment on the specpdl stack,
-	       but only for the first lexical binding, since we'll never
-	       need to revert to one of the intermediate ones.  */
-	    specbind (Qinternal_interpreter_environment, newenv);
-	  else
-	    Vinternal_interpreter_environment = newenv;
-	}
-      else
-	specbind (var, val);
-    }
-  CHECK_LIST_END (varlist, XCAR (args));
-
-  val = Fprogn (XCDR (args));
-  return unbind_to (count, val);
-}
-
-DEFUN ("let", Flet, Slet, 1, UNEVALLED, 0,
-       doc: /* Bind variables according to VARLIST then eval BODY.
-The value of the last form in BODY is returned.
-Each element of VARLIST is a symbol (which is bound to nil)
-or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
-All the VALUEFORMs are evalled before any symbols are bound.
-usage: (let VARLIST BODY...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object *temps, tem, lexenv;
-  Lisp_Object elt, varlist;
-  ptrdiff_t count = SPECPDL_INDEX ();
-  ptrdiff_t argnum;
-  USE_SAFE_ALLOCA;
-
-  varlist = XCAR (args);
-  CHECK_LIST (varlist);
-
-  /* Make space to hold the values to give the bound variables.  */
-  EMACS_INT varlist_len = XFASTINT (Flength (varlist));
-  SAFE_ALLOCA_LISP (temps, varlist_len);
-  ptrdiff_t nvars = varlist_len;
-
-  /* Compute the values and store them in `temps'.  */
-
-  for (argnum = 0; argnum < nvars && CONSP (varlist); argnum++)
-    {
-      maybe_quit ();
-      elt = XCAR (varlist);
-      varlist = XCDR (varlist);
-      if (SYMBOLP (elt))
-	temps[argnum] = Qnil;
-      else if (! NILP (Fcdr (Fcdr (elt))))
-	signal_error ("`let' bindings can have only one value-form", elt);
-      else
-	temps[argnum] = eval_sub (Fcar (Fcdr (elt)));
-    }
-  nvars = argnum;
-
-  lexenv = Vinternal_interpreter_environment;
-
-  varlist = XCAR (args);
-  for (argnum = 0; argnum < nvars && CONSP (varlist); argnum++)
-    {
-      Lisp_Object var;
-
-      elt = XCAR (varlist);
-      varlist = XCDR (varlist);
-      var = SYMBOLP (elt) ? elt : Fcar (elt);
-      tem = temps[argnum];
-
-      if (!NILP (lexenv) && SYMBOLP (var)
-	  && !XSYMBOL (var)->declared_special
-	  && NILP (Fmemq (var, Vinternal_interpreter_environment)))
-	/* Lexically bind VAR by adding it to the lexenv alist.  */
-	lexenv = Fcons (Fcons (var, tem), lexenv);
-      else
-	/* Dynamically bind VAR.  */
-	specbind (var, tem);
-    }
-
-  if (!EQ (lexenv, Vinternal_interpreter_environment))
-    /* Instantiate a new lexical environment.  */
-    specbind (Qinternal_interpreter_environment, lexenv);
-
-  elt = Fprogn (XCDR (args));
-  SAFE_FREE ();
-  return unbind_to (count, elt);
-}
-
 DEFUN ("while", Fwhile, Swhile, 1, UNEVALLED, 0,
        doc: /* If TEST yields non-nil, eval BODY... and repeat.
 The order of execution is thus TEST, BODY, TEST, BODY and so on
@@ -3774,8 +3645,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sdefvar);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
-  defsubr (&Slet);
-  defsubr (&SletX);
   defsubr (&Swhile);
   defsubr (&Smacroexpand);
   defsubr (&Scatch);

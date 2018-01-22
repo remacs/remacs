@@ -2,8 +2,10 @@
 
 use std::mem;
 
+use libc;
+
 use remacs_macros::lisp_fn;
-use remacs_sys::{current_thread, thread_state};
+use remacs_sys::{current_thread, thread_state, SPECPDL_INDEX};
 
 use buffers::LispBufferRef;
 use lisp::{ExternalPtr, LispObject};
@@ -29,6 +31,13 @@ impl ThreadStateRef {
     pub fn is_alive(self) -> bool {
         !self.m_specpdl.is_null()
     }
+}
+
+// FIXME: The right thing to do is start indexing thread.m_specpdl as
+// an array instead of depending on C style pointer math.
+pub fn c_specpdl_index() -> libc::ptrdiff_t {
+    // ThreadStateRef::new(unsafe { current_thread }).specpdl_index()
+    unsafe { SPECPDL_INDEX() }
 }
 
 /// Return the name of the THREAD.
