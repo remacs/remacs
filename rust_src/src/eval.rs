@@ -209,12 +209,18 @@ pub fn function(args: LispObject) -> LispObject {
         if let Some(cell) = quoted.as_cons() {
             let (first, mut cdr) = cell.as_tuple();
             if first.eq_raw(Qlambda) {
+                // This is a lambda expression within a lexical environment;
+                // return an interpreted closure instead of a simple lambda.
+
                 let tmp = cdr.as_cons()
                     .and_then(|c| c.cdr().as_cons())
                     .and_then(|c| c.car().as_cons());
                 if let Some(cell) = tmp {
                     let (typ, tail) = cell.as_tuple();
                     if typ.eq_raw(QCdocumentation) {
+                        // Handle the special (:documentation <form>) to build the docstring
+                        // dynamically.
+
                         let docstring =
                             LispObject::from_raw(unsafe { eval_sub(car(tail).to_raw()) });
                         docstring.as_string_or_error();
@@ -238,6 +244,7 @@ pub fn function(args: LispObject) -> LispObject {
         }
     }
 
+    // Simply quote the argument.
     quoted
 }
 def_lisp_sym!(Qfunction, "function");
