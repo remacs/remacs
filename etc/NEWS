@@ -94,6 +94,13 @@ non-text modes.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+** Ecomplete
+*** The ecomplete sorting has changed to a decay-based algorithm.
+This can be controlled by the new `ecomplete-sort-predicate' variable.
+
+*** The 'ecompleterc' file is now placed in ~/.emacs.d/ecompleterc by default
+Of course it will still find it if you have it in ~/.ecompleterc
+
 ** Smtpmail
 Authentication mechanisms can be added via external packages, by
 defining new cl-defmethod of smtpmail-try-auth-method.
@@ -237,9 +244,6 @@ It's a simple convenience function for looking up MIME types based on
 file name extensions.
 
 +++
-** The ecomplete sorting has changed to a decay-based algorithm.  This
-can be controlled by the new `ecomplete-sort-predicate' variable.
-
 ** The new function 'read-answer' accepts either long or short answers
 depending on the new customizable variable 'read-answer-short'.
 

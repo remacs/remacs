@@ -1,4 +1,4 @@
-;;; ecomplete.el --- electric completion of addresses and the like
+;;; ecomplete.el --- electric completion of addresses and the like  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2006-2018 Free Software Foundation, Inc.
 
@@ -53,22 +53,20 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (defgroup ecomplete nil
   "Electric completion of email addresses and the like."
   :group 'mail)
 
-(defcustom ecomplete-database-file "~/.ecompleterc"
+(defcustom ecomplete-database-file
+  (locate-user-emacs-file "ecompleterc" "~/.ecompleterc")
   "The name of the file to store the ecomplete data."
-  :group 'ecomplete
   :type 'file)
 
 (defcustom ecomplete-database-file-coding-system 'iso-2022-7bit
   "Coding system used for writing the ecomplete database file."
-  :type '(symbol :tag "Coding system")
-  :group 'ecomplete)
+  :type '(symbol :tag "Coding system"))
 
 (defcustom ecomplete-sort-predicate 'ecomplete-decay
   "Predicate to use when sorting matched.
@@ -80,8 +78,7 @@ string that was matched."
   :type '(radio (function-item :tag "Sort by usage and newness" ecomplete-decay)
 		(function-item :tag "Sort by times used" ecomplete-usage)
 		(function-item :tag "Sort by newness" ecomplete-newness)
-		(function :tag "Other"))
-  :group 'ecomplete)
+		(function :tag "Other")))
 
 ;;; Internal variables.
 
@@ -116,13 +113,13 @@ string that was matched."
   (with-temp-buffer
     (let ((coding-system-for-write ecomplete-database-file-coding-system))
       (insert "(")
-      (loop for (type . elems) in ecomplete-database
-	    do
-	    (insert (format "(%s\n" type))
-	    (dolist (entry elems)
-	      (prin1 entry (current-buffer))
-	      (insert "\n"))
-	    (insert ")\n"))
+      (cl-loop for (type . elems) in ecomplete-database
+	       do
+	       (insert (format "(%s\n" type))
+	       (dolist (entry elems)
+	         (prin1 entry (current-buffer))
+	         (insert "\n"))
+	       (insert ")\n"))
       (insert ")")
       (write-region (point-min) (point-max)
 		    ecomplete-database-file nil 'silent))))
@@ -132,9 +129,9 @@ string that was matched."
 	 (match (regexp-quote match))
 	 (candidates
 	  (sort
-	   (loop for (key count time text) in elems
-		 when (string-match match text)
-		 collect (list count time text))
+	   (cl-loop for (_key count time text) in elems
+		    when (string-match match text)
+		    collect (list count time text))
            ecomplete-sort-predicate)))
     (when (> (length candidates) 10)
       (setcdr (nthcdr 10 candidates) nil))
@@ -183,9 +180,7 @@ matches."
 			(lookup-key local-map command))
 	      (apply (key-binding command) nil)
 	      (setq highlight (ecomplete-highlight-match-line matches line))))
-	  (if selected
-	      (message selected)
-	    (message "Abort"))
+	  (message (or selected "Abort"))
 	  selected)))))
 
 (defun ecomplete-highlight-match-line (matches line)
@@ -217,6 +212,31 @@ matches."
   (/ (car elem)
      (expt 1.05 (/ (- (float-time) (cadr elem))
                    (* 7 24 60 60)))))
+
+;; `ecomplete-get-matches' uses substring matching, so also use the `substring'
+;; style by default.
+(add-to-list 'completion-category-defaults
+             '(ecomplete (styles basic substring)))
+
+(defun ecomplete-completion-table (type)
+  "Return a completion-table suitable for TYPE."
+  (lambda (string pred action)
+    (pcase action
+      (`(boundaries . ,_) nil)
+      ('metadata `(metadata (category . ecomplete)
+                            (display-sort-function . ,#'identity)
+                            (cycle-sort-function . ,#'identity)))
+      (_
+       (let* ((elems (cdr (assq type ecomplete-database)))
+	      (candidates
+	       (mapcar (lambda (x) (nth 2 x))
+                       (sort
+	                (cl-loop for x in elems
+		                 when (string-prefix-p string (nth 3 x)
+                                                       completion-ignore-case)
+		                 collect (cdr x))
+                        ecomplete-sort-predicate))))
+         (complete-with-action action candidates string pred))))))
 
 (provide 'ecomplete)
 
