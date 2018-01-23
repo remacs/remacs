@@ -49,21 +49,4 @@ Bug#24912 and Bug#24913."
     (let ((byte-compile-debug t))
       (should-error (eval `(byte-compile (lambda ,args)) t)))))
 
-
-(dolist (form '(let let*))
-  (dolist (arg '(1 "a" [a]))
-    (eval
-     `(ert-deftest ,(intern (format "eval-tests--%s--%s" form (type-of arg))) ()
-        ,(format "Check that the first argument of `%s' cannot be a %s"
-                 form (type-of arg))
-        (should-error (,form ,arg) :type 'wrong-type-argument))
-     t)))
-
-(ert-deftest eval-tests--let-with-circular-defs ()
-  "Check that Emacs reports an error for (let VARS ...) when VARS is circular."
-  (let ((vars (list 'v)))
-    (setcdr vars vars)
-    (dolist (let-sym '(let let*))
-      (should-error (eval (list let-sym vars))))))
-
 ;;; eval-tests.el ends here

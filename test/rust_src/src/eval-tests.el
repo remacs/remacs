@@ -99,4 +99,49 @@
                    (setq c nil)))
                 nil)))))
 
+(ert-deftest eval-tests--function-base ()
+  "Check (function) base cases"
+  (should-error (function 1 2) :type 'wrong-number-of-arguments)
+  (should (eq (function a) (quote a)))
+  (should (equal (function (1 2 3))
+                 (quote (1 2 3))))
+  (should (equal (function (lambda (a) "Add 1 to A" (+ 1 a)))
+                 (lambda (a) "Add 1 to A" (+ 1 a))))
+  ;; First, ensure lexical bindings are active
+  (should (equal (let ((x nil)
+                       (f (let ((x t)) (lambda () x))))
+                   (funcall f))
+                 t))
+  ;; Now test (:documentation) form for dynamic docs.
+  (let ((val 1))
+    (should (equal (function (lambda (a) (:documentation (format "Add %d to A" val))
+                               (+ val a)))
+                   (function (lambda (a) "Add 1 to A" (+ val a)))))))
+
+(ert-deftest eval-tests--special-variable ()
+  "Check support for special variables."
+  (defvar eval-tests-var1 nil)
+  (should (eq (special-variable-p eval-tests-var1) t))
+  (internal-make-var-non-special 'eval-tests-var1)
+  (should (eq (special-variable-p 'eval-tests-var1) nil))
+
+  (let ((eval-tests-var2 nil))
+    (should (eq (special-variable-p 'eval-tests-var2) nil))))
+
+(dolist (form '(let let*))
+  (dolist (arg '(1 "a" [a]))
+    (eval
+     `(ert-deftest ,(intern (format "eval-tests--%s--%s" form (type-of arg))) ()
+        ,(format "Check that the first argument of `%s' cannot be a %s"
+                 form (type-of arg))
+        (should-error (,form ,arg) :type 'wrong-type-argument))
+     t)))
+
+(ert-deftest eval-tests--let-with-circular-defs ()
+  "Check that Emacs reports an error for (let VARS ...) when VARS is circular."
+  (let ((vars (list 'v)))
+    (setcdr vars vars)
+    (dolist (let-sym '(let let*))
+      (should-error (eval (list let-sym vars))))))
+
 ;;; eval-tests.el ends here

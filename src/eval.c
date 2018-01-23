@@ -352,44 +352,6 @@ do_debug_on_call (Lisp_Object code, ptrdiff_t count)
    and temporaries from garbage collection while it needs them.
    The definition of `For' shows what you have to do.  */
 
-DEFUN ("function", Ffunction, Sfunction, 1, UNEVALLED, 0,
-       doc: /* Like `quote', but preferred for objects which are functions.
-In byte compilation, `function' causes its argument to be compiled.
-`quote' cannot do that.
-usage: (function ARG)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object quoted = XCAR (args);
-
-  if (!NILP (XCDR (args)))
-    xsignal2 (Qwrong_number_of_arguments, Qfunction, Flength (args));
-
-  if (!NILP (Vinternal_interpreter_environment)
-      && CONSP (quoted)
-      && EQ (XCAR (quoted), Qlambda))
-    { /* This is a lambda expression within a lexical environment;
-	 return an interpreted closure instead of a simple lambda.  */
-      Lisp_Object cdr = XCDR (quoted);
-      Lisp_Object tmp = cdr;
-      if (CONSP (tmp)
-	  && (tmp = XCDR (tmp), CONSP (tmp))
-	  && (tmp = XCAR (tmp), CONSP (tmp))
-	  && (EQ (QCdocumentation, XCAR (tmp))))
-	{ /* Handle the special (:documentation <form>) to build the docstring
-	     dynamically.  */
-	  Lisp_Object docstring = eval_sub (Fcar (XCDR (tmp)));
-	  CHECK_STRING (docstring);
-	  cdr = Fcons (XCAR (cdr), Fcons (docstring, XCDR (XCDR (cdr))));
-	}
-      return Fcons (Qclosure, Fcons (Vinternal_interpreter_environment,
-				     cdr));
-    }
-  else
-    /* Simply quote the argument.  */
-    return quoted;
-}
-
-
 DEFUN ("defvaralias", Fdefvaralias, Sdefvaralias, 2, 3, 0,
        doc: /* Make NEW-ALIAS a variable alias for symbol BASE-VARIABLE.
 Aliased variables always have the same value; setting one sets the other.
@@ -594,122 +556,7 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
   return sym;
 }
 
-DEFUN ("defconst", Fdefconst, Sdefconst, 2, UNEVALLED, 0,
-       doc: /* Define SYMBOL as a constant variable.
-This declares that neither programs nor users should ever change the
-value.  This constancy is not actually enforced by Emacs Lisp, but
-SYMBOL is marked as a special variable so that it is never lexically
-bound.
-
-The `defconst' form always sets the value of SYMBOL to the result of
-evalling INITVALUE.  If SYMBOL is buffer-local, its default value is
-what is set; buffer-local values are not affected.  If SYMBOL has a
-local binding, then this form sets the local binding's value.
-However, you should normally not make local bindings for variables
-defined with this form.
-
-The optional DOCSTRING specifies the variable's documentation string.
-usage: (defconst SYMBOL INITVALUE [DOCSTRING])  */)
-  (Lisp_Object args)
-{
-  Lisp_Object sym, tem;
-
-  sym = XCAR (args);
-  Lisp_Object docstring = Qnil;
-  if (!NILP (XCDR (XCDR (args))))
-    {
-      if (!NILP (XCDR (XCDR (XCDR (args)))))
-	error ("Too many arguments");
-      docstring = XCAR (XCDR (XCDR (args)));
-    }
-
-  tem = eval_sub (XCAR (XCDR (args)));
-  if (!NILP (Vpurify_flag))
-    tem = Fpurecopy (tem);
-  Fset_default (sym, tem);
-  XSYMBOL (sym)->declared_special = 1;
-  if (!NILP (docstring))
-    {
-      if (!NILP (Vpurify_flag))
-	docstring = Fpurecopy (docstring);
-      Fput (sym, Qvariable_documentation, docstring);
-    }
-  Fput (sym, Qrisky_local_variable, Qt);
-  LOADHIST_ATTACH (sym);
-  return sym;
-}
-
-/* Make SYMBOL lexically scoped.  */
-DEFUN ("internal-make-var-non-special", Fmake_var_non_special,
-       Smake_var_non_special, 1, 1, 0,
-       doc: /* Internal function.  */)
-     (Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  XSYMBOL (symbol)->declared_special = 0;
-  return Qnil;
-}
-
 
-DEFUN ("let*", FletX, SletX, 1, UNEVALLED, 0,
-       doc: /* Bind variables according to VARLIST then eval BODY.
-The value of the last form in BODY is returned.
-Each element of VARLIST is a symbol (which is bound to nil)
-or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
-Each VALUEFORM can refer to the symbols already bound by this VARLIST.
-usage: (let* VARLIST BODY...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object var, val, elt, lexenv;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  lexenv = Vinternal_interpreter_environment;
-
-  Lisp_Object varlist = XCAR (args);
-  while (CONSP (varlist))
-    {
-      maybe_quit ();
-
-      elt = XCAR (varlist);
-      varlist = XCDR (varlist);
-      if (SYMBOLP (elt))
-	{
-	  var = elt;
-	  val = Qnil;
-	}
-      else
-	{
-	  var = Fcar (elt);
-	  if (! NILP (Fcdr (XCDR (elt))))
-	    signal_error ("`let' bindings can have only one value-form", elt);
-	  val = eval_sub (Fcar (XCDR (elt)));
-	}
-
-      if (!NILP (lexenv) && SYMBOLP (var)
-	  && !XSYMBOL (var)->declared_special
-	  && NILP (Fmemq (var, Vinternal_interpreter_environment)))
-	/* Lexically bind VAR by adding it to the interpreter's binding
-	   alist.  */
-	{
-	  Lisp_Object newenv
-	    = Fcons (Fcons (var, val), Vinternal_interpreter_environment);
-	  if (EQ (Vinternal_interpreter_environment, lexenv))
-	    /* Save the old lexical environment on the specpdl stack,
-	       but only for the first lexical binding, since we'll never
-	       need to revert to one of the intermediate ones.  */
-	    specbind (Qinternal_interpreter_environment, newenv);
-	  else
-	    Vinternal_interpreter_environment = newenv;
-	}
-      else
-	specbind (var, val);
-    }
-  CHECK_LIST_END (varlist, XCAR (args));
-
-  val = Fprogn (XCDR (args));
-  return unbind_to (count, val);
-}
-
 DEFUN ("let", Flet, Slet, 1, UNEVALLED, 0,
        doc: /* Bind variables according to VARLIST then eval BODY.
 The value of the last form in BODY is returned.
@@ -3348,16 +3195,6 @@ unbind_for_thread_switch (struct thread_state *thr)
     }
 }
 
-DEFUN ("special-variable-p", Fspecial_variable_p, Sspecial_variable_p, 1, 1, 0,
-       doc: /* Return non-nil if SYMBOL's global binding has been declared special.
-A special variable is one that will be bound dynamically, even in a
-context where binding is lexical by default.  */)
-  (Lisp_Object symbol)
-{
-   CHECK_SYMBOL (symbol);
-   return XSYMBOL (symbol)->declared_special ? Qt : Qnil;
-}
-
 
 static union specbinding *
 get_backtrace_starting_at (Lisp_Object base)
@@ -3873,16 +3710,12 @@ alist of active lexical bindings.  */);
 
   inhibit_lisp_code = Qnil;
 
-  defsubr (&Sfunction);
   defsubr (&Sdefault_toplevel_value);
   defsubr (&Sset_default_toplevel_value);
   defsubr (&Sdefvar);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
-  defsubr (&Sdefconst);
-  defsubr (&Smake_var_non_special);
   defsubr (&Slet);
-  defsubr (&SletX);
   defsubr (&Swhile);
   defsubr (&Smacroexpand);
   defsubr (&Scatch);
@@ -3909,6 +3742,5 @@ alist of active lexical bindings.  */);
   defsubr (&Sbacktrace_frame_internal);
   defsubr (&Sbacktrace_eval);
   defsubr (&Sbacktrace__locals);
-  defsubr (&Sspecial_variable_p);
   defsubr (&Sfunctionp);
 }

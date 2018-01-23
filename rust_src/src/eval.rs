@@ -1,14 +1,20 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Qnil, Qsetq, Qt, Qwrong_number_of_arguments};
-use remacs_sys::{eval_sub, globals};
-use remacs_sys::Fset;
+use remacs_sys::{Fcons, Fpurecopy, Fset, Fset_default};
+use remacs_sys::{QCdocumentation, Qclosure, Qerror, Qfunction, Qinternal_interpreter_environment,
+                 Qlambda, Qnil, Qrisky_local_variable, Qsetq, Qt, Qvariable_documentation,
+                 Qwrong_number_of_arguments};
+use remacs_sys::{build_string, eval_sub, globals, maybe_quit, specbind, unbind_to};
 use remacs_sys::Lisp_Object;
 
-use lisp::LispObject;
+use lisp::{LispCons, LispObject};
 use lisp::defsubr;
-use lists::assq;
+use lists::{assq, car, cdr, memq, put};
+use obarray::loadhist_attach;
+use symbols::LispSymbolRef;
+use threads::c_specpdl_index;
+use vectors::length;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *   NOTE!!! Every function that can call EVAL must protect its args   *
@@ -185,5 +191,229 @@ pub fn setq(args: LispObject) -> LispObject {
     val
 }
 def_lisp_sym!(Qsetq, "setq");
+
+/// Like `quote', but preferred for objects which are functions.
+/// In byte compilation, `function' causes its argument to be compiled.
+/// `quote' cannot do that.
+/// usage: (function ARG)
+#[lisp_fn(min = "1", unevalled = "true")]
+pub fn function(args: LispObject) -> LispObject {
+    let cell = args.as_cons_or_error();
+    let (quoted, tail) = cell.as_tuple();
+
+    if tail.is_not_nil() {
+        xsignal!(
+            Qwrong_number_of_arguments,
+            LispObject::from_raw(Qfunction),
+            length(args)
+        );
+    }
+
+    if unsafe { globals.f_Vinternal_interpreter_environment != Qnil } {
+        if let Some(cell) = quoted.as_cons() {
+            let (first, mut cdr) = cell.as_tuple();
+            if first.eq_raw(Qlambda) {
+                let tmp = cdr.as_cons()
+                    .and_then(|c| c.cdr().as_cons())
+                    .and_then(|c| c.car().as_cons());
+                if let Some(cell) = tmp {
+                    let (typ, tail) = cell.as_tuple();
+                    if typ.eq_raw(QCdocumentation) {
+                        let docstring =
+                            LispObject::from_raw(unsafe { eval_sub(car(tail).to_raw()) });
+                        docstring.as_string_or_error();
+                        let (a, b) = cdr.as_cons().unwrap().as_tuple();
+                        cdr = LispObject::from_raw(unsafe {
+                            Fcons(
+                                a.to_raw(),
+                                Fcons(docstring.to_raw(), b.as_cons().unwrap().cdr().to_raw()),
+                            )
+                        });
+                    }
+                }
+
+                return LispObject::from_raw(unsafe {
+                    Fcons(
+                        Qclosure,
+                        Fcons(globals.f_Vinternal_interpreter_environment, cdr.to_raw()),
+                    )
+                });
+            }
+        }
+    }
+
+    quoted
+}
+def_lisp_sym!(Qfunction, "function");
+
+// Make SYMBOL lexically scoped.
+/// Internal function
+#[lisp_fn(name = "internal-make-var-non-special")]
+pub fn make_var_non_special(symbol: LispSymbolRef) -> bool {
+    symbol.set_declared_special(false);
+    true
+}
+
+/// Return non-nil if SYMBOL's global binding has been declared special.
+/// A special variable is one that will be bound dynamically, even in a
+/// context where binding is lexical by default.
+#[lisp_fn]
+pub fn special_variable_p(symbol: LispSymbolRef) -> bool {
+    symbol.get_declared_special()
+}
+
+/// Define SYMBOL as a constant variable.
+/// This declares that neither programs nor users should ever change the
+/// value.  This constancy is not actually enforced by Emacs Lisp, but
+/// SYMBOL is marked as a special variable so that it is never lexically
+/// bound.
+///
+/// The `defconst' form always sets the value of SYMBOL to the result of
+/// evalling INITVALUE.  If SYMBOL is buffer-local, its default value is
+/// what is set; buffer-local values are not affected.  If SYMBOL has a
+/// local binding, then this form sets the local binding's value.
+/// However, you should normally not make local bindings for variables
+/// defined with this form.
+///
+/// The optional DOCSTRING specifies the variable's documentation string.
+/// usage: (defconst SYMBOL INITVALUE [DOCSTRING])
+#[lisp_fn(min = "2", unevalled = "true")]
+pub fn defconst(args: LispObject) -> LispSymbolRef {
+    let (sym, tail) = args.as_cons_or_error().as_tuple();
+
+    let mut docstring = LispObject::constant_nil();
+    if cdr(tail).is_not_nil() {
+        if cdr(cdr(tail)).is_not_nil() {
+            error!("Too many arguments");
+        }
+
+        docstring = car(cdr(tail));
+    }
+
+    let mut tem = unsafe { eval_sub(car(cdr(args)).to_raw()) };
+    if unsafe { globals.f_Vpurify_flag } != Qnil {
+        tem = unsafe { Fpurecopy(tem) };
+    }
+    unsafe { Fset_default(sym.to_raw(), tem) };
+    let sym_ref = sym.as_symbol_or_error();
+    sym_ref.set_declared_special(true);
+    if docstring.is_not_nil() {
+        if unsafe { globals.f_Vpurify_flag } != Qnil {
+            docstring = LispObject::from_raw(unsafe { Fpurecopy(docstring.to_raw()) });
+        }
+
+        put(
+            sym,
+            LispObject::from_raw(Qvariable_documentation),
+            docstring,
+        );
+    }
+
+    put(
+        sym,
+        LispObject::from_raw(Qrisky_local_variable),
+        LispObject::constant_t(),
+    );
+    loadhist_attach(sym.to_raw());
+
+    sym_ref
+}
+
+/// Bind variables according to VARLIST then eval BODY.
+/// The value of the last form in BODY is returned.
+/// Each element of VARLIST is a symbol (which is bound to nil)
+/// or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
+/// Each VALUEFORM can refer to the symbols already bound by this VARLIST.
+/// usage: (let* VARLIST BODY...)
+#[lisp_fn(name = "let*", min = "1", unevalled = "true")]
+pub fn letX(args: LispCons) -> LispObject {
+    let count = c_specpdl_index();
+
+    let lexenv = unsafe { globals.f_Vinternal_interpreter_environment };
+
+    let (varlist, body) = args.as_tuple();
+
+    for elt in varlist.iter_cars() {
+        unsafe { maybe_quit() };
+
+        let (var, val) = if elt.is_symbol() {
+            (elt, Qnil)
+        } else {
+            let (front, tail) = elt.as_cons_or_error().as_tuple();
+            let (to_eval, tail) = if tail.is_nil() {
+                (LispObject::constant_nil(), tail)
+            } else {
+                tail.as_cons_or_error().as_tuple()
+            };
+
+            if tail.is_nil() {
+                (front, unsafe { eval_sub(to_eval.to_raw()) })
+            } else {
+                signal_error("`let' bindings can have only one value-form", elt);
+            }
+        };
+
+        let mut bound = false;
+
+        if lexenv != Qnil {
+            if let Some(sym) = var.as_symbol() {
+                if !sym.get_declared_special() {
+                    bound = memq(
+                        var,
+                        LispObject::from_raw(unsafe {
+                            globals.f_Vinternal_interpreter_environment
+                        }),
+                    ).is_not_nil();
+
+                    if !bound {
+                        // Lexically bind VAR by adding it to the interpreter's binding alist.
+
+                        unsafe {
+                            let newenv = Fcons(
+                                Fcons(var.to_raw(), val),
+                                globals.f_Vinternal_interpreter_environment,
+                            );
+
+                            if globals.f_Vinternal_interpreter_environment == lexenv {
+                                // Save the old lexical environment on the specpdl stack,
+                                // but only for the first lexical binding, since we'll never
+                                // need to revert to one of the intermediate ones.
+                                specbind(Qinternal_interpreter_environment, newenv);
+                            } else {
+                                globals.f_Vinternal_interpreter_environment = newenv;
+                            }
+                        }
+
+                        bound = true;
+                    }
+                }
+            }
+        }
+
+        // handles both lexenv is nil and the question of already lexically bound
+        if !bound {
+            unsafe { specbind(var.to_raw(), val) };
+        }
+    }
+
+    // The symbols are bound. Now evaluate the body
+    let val = progn(body);
+    LispObject::from_raw(unsafe { unbind_to(count, val.to_raw()) })
+}
+
+/// Signal `error' with message MSG, and additional arg ARG.
+/// If ARG is not a genuine list, make it a one-element list.
+fn signal_error(msg: &str, arg: LispObject) -> ! {
+    let it = arg.iter_tails_safe();
+    let arg = match it.last() {
+        None => list!(arg),
+        Some(_) => arg,
+    };
+
+    xsignal!(
+        Qerror,
+        LispObject::from_raw(Fcons(build_string(msg.as_ptr() as *const i8), arg.to_raw()))
+    );
+}
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

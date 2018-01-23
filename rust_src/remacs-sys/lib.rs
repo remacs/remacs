@@ -260,6 +260,12 @@ pub struct Lisp_Symbol {
     pub next: *mut Lisp_Symbol,
 }
 
+extern "C" {
+    pub fn get_symbol_declared_special(sym: *const Lisp_Symbol) -> bool;
+
+    pub fn set_symbol_declared_special(sym: *mut Lisp_Symbol, value: bool);
+}
+
 /* The only field contains various pieces of information:
 - The MSB (ARRAY_MARK_FLAG) holds the gcmarkbit.
 - The next bit (PSEUDOVECTOR_FLAG) indicates whether this is a plain
@@ -753,6 +759,10 @@ pub struct thread_state {
     // next_thread.
 }
 
+extern "C" {
+    pub fn SPECPDL_INDEX() -> ptrdiff_t;
+}
+
 /// Lisp_Char_Table
 #[repr(C)]
 #[allow(dead_code)]
@@ -1042,6 +1052,7 @@ pub struct lisp_time {
 }
 
 extern "C" {
+    pub static initialized: bool;
     pub static mut current_global_map: Lisp_Object;
     pub static current_thread: *mut thread_state;
     pub static empty_unibyte_string: Lisp_Object;
@@ -1071,6 +1082,7 @@ extern "C" {
     pub fn Fpurecopy(string: Lisp_Object) -> Lisp_Object;
     pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
     pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
+    pub fn Fset_default(symbol: Lisp_Object, value: Lisp_Object) -> Lisp_Object;
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_string_from_bytes(
@@ -1316,6 +1328,9 @@ extern "C" {
         prop: Lisp_Object,
         object: Lisp_Object,
     ) -> Lisp_Object;
+
+    pub fn specbind(symbol: Lisp_Object, value: Lisp_Object);
+    pub fn unbind_to(count: ptrdiff_t, value: Lisp_Object) -> Lisp_Object;
 
 }
 
