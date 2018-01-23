@@ -2549,8 +2549,6 @@ To be used in the ERT results buffer."
 (defun ert-describe-test (test-or-test-name)
   "Display the documentation for TEST-OR-TEST-NAME (a symbol or ert-test)."
   (interactive (list (ert-read-test-name-at-point "Describe test")))
-  (when (< emacs-major-version 24)
-    (user-error "Requires Emacs 24 or later"))
   (let (test-name
         test-definition)
     (cl-etypecase test-or-test-name
@@ -2587,7 +2585,9 @@ To be used in the ERT results buffer."
             (insert (substitute-command-keys
                      (or (ert-test-documentation test-definition)
                          "It is not documented."))
-                    "\n")))))))
+                    "\n")
+            ;; For describe-symbol-backends.
+            (buffer-string)))))))
 
 (defun ert-results-describe-test-at-point ()
   "Display the documentation of the test at point.
@@ -2598,6 +2598,11 @@ To be used in the ERT results buffer."
 
 
 ;;; Actions on load/unload.
+
+(require 'help-mode)
+(add-to-list 'describe-symbol-backends
+             `("ERT test" ,#'ert-test-boundp
+               ,(lambda (s _b _f) (ert-describe-test s))))
 
 (add-to-list 'find-function-regexp-alist '(ert--test . ert--find-test-regexp))
 (add-to-list 'minor-mode-alist '(ert--current-run-stats
@@ -2613,7 +2618,7 @@ To be used in the ERT results buffer."
                          'ert--activate-font-lock-keywords)
   nil)
 
-(defvar ert-unload-hook '())
+(defvar ert-unload-hook ())
 (add-hook 'ert-unload-hook #'ert--unload-function)
 
 
