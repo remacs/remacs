@@ -35,4 +35,12 @@
       (cdr data)
       '("Invalid control letter `\u00FF' (#o377, #x00ff) in interactive calling string")))))
 
+(ert-deftest call-interactively/embedded-nulls ()
+  "Check that Bug#30005 is fixed."
+  (should (equal (let ((unread-command-events '(?a ?b)))
+                   (call-interactively (lambda (a b)
+                                         (interactive "ka\0a: \nkb: ")
+                                         (list a b))))
+                 '("a" "b"))))
+
 ;;; callint-tests.el ends here
