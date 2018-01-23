@@ -63,17 +63,17 @@ BODY forms will be executed after point has been repositioned."
   "Check that the definition location can be found for C functions.
 If the function being tested is ported to Rust, this test will need to be updated."
   (find-func-tests-set-up-point-for-buf "eval.c"
-    (let* ((result (find-function-search-for-symbol 'setq nil "src/eval.c"))
+    (let* ((result (find-function-search-for-symbol 'cons nil "src/alloc.c"))
            (buffer (car result))
            (location (cdr result)))
 
-      (should (equal "eval.c" (buffer-name buffer)))
+      (should (equal "alloc.c" (buffer-name buffer)))
       (should (numberp location))
 
       (with-current-buffer buffer
         (goto-char location)
         (let ((line (buffer-substring-no-properties (point) (line-end-position))))
-          (should (string-match-p (rx bol "DEFUN" (* space) "(\"setq\"") line)))))))
+          (should (string-match-p (rx bol "DEFUN" (* space) "(\"cons\"") line)))))))
 
 (ert-deftest find-func-tests-finds-function-def-in-lisp-source-file ()
   "Check that the definition location can be found for lisp functions."

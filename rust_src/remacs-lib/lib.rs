@@ -4,8 +4,11 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 
 extern crate errno;
+#[macro_use]
+extern crate lazy_static;
 extern crate libc;
 extern crate rand;
+extern crate regex;
 extern crate remacs_util;
 extern crate syn;
 extern crate time as time_crate;

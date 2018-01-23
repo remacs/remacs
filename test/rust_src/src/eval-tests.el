@@ -86,4 +86,17 @@
   (should (eq (prog2 nil 2 3) 2))
   (should-error (eval '(prog2 . (1 2 (error "Must be evaluated")))) :type 'error))
 
+(ert-deftest eval-tests--setq-base ()
+  "Check (setq) base cases"
+  (should-error (eval '(setq . (a))) :type 'wrong-number-of-arguments)
+  (should-error (eval '(setq . ((a 1 b)))) :type 'wrong-number-of-arguments)
+  (should (eq (setq a 1) 1))
+  (should (eq (setq a 1
+                    b 2)
+                2))
+  (eval '(lambda ()  ;; Validate lexical bindings
+    (should (eq ((let ((c t))
+                   (setq c nil)))
+                nil)))))
+
 ;;; eval-tests.el ends here

@@ -352,42 +352,6 @@ do_debug_on_call (Lisp_Object code, ptrdiff_t count)
    and temporaries from garbage collection while it needs them.
    The definition of `For' shows what you have to do.  */
 
-DEFUN ("setq", Fsetq, Ssetq, 0, UNEVALLED, 0,
-       doc: /* Set each SYM to the value of its VAL.
-The symbols SYM are variables; they are literal (not evaluated).
-The values VAL are expressions; they are evaluated.
-Thus, (setq x (1+ y)) sets `x' to the value of `(1+ y)'.
-The second VAL is not computed until after the first SYM is set, and so on;
-each VAL can use the new value of variables set earlier in the `setq'.
-The return value of the `setq' form is the value of the last VAL.
-usage: (setq [SYM VAL]...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object val = args, tail = args;
-
-  for (EMACS_INT nargs = 0; CONSP (tail); nargs += 2)
-    {
-      Lisp_Object sym = XCAR (tail), lex_binding;
-      tail = XCDR (tail);
-      if (!CONSP (tail))
-	xsignal2 (Qwrong_number_of_arguments, Qsetq, make_number (nargs + 1));
-      Lisp_Object arg = XCAR (tail);
-      tail = XCDR (tail);
-      val = eval_sub (arg);
-      /* Like for eval_sub, we do not check declared_special here since
-	 it's been done when let-binding.  */
-      if (!NILP (Vinternal_interpreter_environment) /* Mere optimization!  */
-	  && SYMBOLP (sym)
-	  && !NILP (lex_binding
-		    = Fassq (sym, Vinternal_interpreter_environment)))
-	XSETCDR (lex_binding, val); /* SYM is lexically bound.  */
-      else
-	Fset (sym, val);	/* SYM is dynamically bound.  */
-    }
-
-  return val;
-}
-
 DEFUN ("function", Ffunction, Sfunction, 1, UNEVALLED, 0,
        doc: /* Like `quote', but preferred for objects which are functions.
 In byte compilation, `function' causes its argument to be compiled.
@@ -3795,7 +3759,6 @@ To prevent this happening, set `quit-flag' to nil
 before making `inhibit-quit' nil.  */);
   Vinhibit_quit = Qnil;
 
-  DEFSYM (Qsetq, "setq");
   DEFSYM (Qinhibit_quit, "inhibit-quit");
   DEFSYM (Qautoload, "autoload");
   DEFSYM (Qinhibit_debugger, "inhibit-debugger");
@@ -3910,7 +3873,6 @@ alist of active lexical bindings.  */);
 
   inhibit_lisp_code = Qnil;
 
-  defsubr (&Ssetq);
   defsubr (&Sfunction);
   defsubr (&Sdefault_toplevel_value);
   defsubr (&Sset_default_toplevel_value);

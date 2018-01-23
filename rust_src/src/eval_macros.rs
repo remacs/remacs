@@ -89,3 +89,7 @@ macro_rules! list {
     ($arg:expr) => { $crate::lisp::LispObject::cons($arg, list!()) };
     () => { $crate::lisp::LispObject::constant_nil() };
 }
+
+macro_rules! def_lisp_sym {
+    ($name:expr, $value:expr) => {};
+}

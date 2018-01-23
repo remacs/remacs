@@ -1,12 +1,14 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Qnil, Qt};
+use remacs_sys::{Qnil, Qsetq, Qt, Qwrong_number_of_arguments};
+use remacs_sys::{eval_sub, globals};
+use remacs_sys::Fset;
 use remacs_sys::Lisp_Object;
-use remacs_sys::eval_sub;
 
 use lisp::LispObject;
 use lisp::defsubr;
+use lists::assq;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *   NOTE!!! Every function that can call EVAL must protect its args   *
@@ -134,5 +136,54 @@ pub fn prog2(args: LispObject) -> LispObject {
     unsafe { eval_sub(form1.to_raw()) };
     prog1(tail)
 }
+
+/// Set each SYM to the value of its VAL.
+/// The symbols SYM are variables; they are literal (not evaluated).
+/// The values VAL are expressions; they are evaluated.
+/// Thus, (setq x (1+ y)) sets `x' to the value of `(1+ y)'.
+/// The second VAL is not computed until after the first SYM is set, and so on;
+/// each VAL can use the new value of variables set earlier in the `setq'.
+/// The return value of the `setq' form is the value of the last VAL.
+/// usage: (setq [SYM VAL]...)
+#[lisp_fn(min = "0", unevalled = "true")]
+pub fn setq(args: LispObject) -> LispObject {
+    let mut val = args;
+
+    let mut it = args.iter_cars().enumerate();
+    while let Some((nargs, sym)) = it.next() {
+        let (_, arg) = it.next().unwrap_or_else(|| {
+            xsignal!(
+                Qwrong_number_of_arguments,
+                LispObject::from_raw(Qsetq),
+                LispObject::from(nargs + 1)
+            );
+        });
+
+        val = LispObject::from_raw(unsafe { eval_sub(arg.to_raw()) });
+
+        let mut lexical = false;
+
+        // Like for eval_sub, we do not check declared_special here since
+        // it's been done when let-binding.
+        // N.B. the check against nil is a mere optimization!
+        if unsafe { globals.f_Vinternal_interpreter_environment != Qnil } && sym.is_symbol() {
+            let binding = assq(
+                sym,
+                LispObject::from_raw(unsafe { globals.f_Vinternal_interpreter_environment }),
+            );
+            if let Some(binding) = binding.as_cons() {
+                lexical = true;
+                binding.set_cdr(val); /* SYM is lexically bound. */
+            }
+        }
+
+        if !lexical {
+            unsafe { Fset(sym.to_raw(), val.to_raw()) }; /* SYM is dynamically bound. */
+        }
+    }
+
+    val
+}
+def_lisp_sym!(Qsetq, "setq");
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
