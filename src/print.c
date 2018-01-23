@@ -1971,7 +1971,8 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 		    || c == ';' || c == '#' || c == '(' || c == ')'
 		    || c == ',' || c == '.' || c == '`'
 		    || c == '[' || c == ']' || c == '?' || c <= 040
-		    || confusing)
+                    || confusing
+		    || (i == 1 && confusable_symbol_character_p (c)))
 		  {
 		    printchar ('\\', printcharfun);
 		    confusing = false;

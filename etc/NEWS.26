@@ -1377,11 +1377,6 @@ second argument instead of its first.
 renamed to 'lread--old-style-backquotes'.  No user code should use
 this variable.
 
----
-** To avoid confusion caused by "smart quotes", the reader no longer
-accepts Lisp symbols which begin with the following quotation
-characters: ‘’‛“”‟〞＂＇, unless they are escaped with backslash.
-
 +++
 ** 'default-file-name-coding-system' now defaults to a coding system
 that does not process CRLF.  For example, it defaults to 'utf-8-unix'

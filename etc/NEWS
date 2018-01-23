@@ -229,6 +229,15 @@ as new-style, bind the new variable 'force-new-style-backquotes' to t.
 ** 'print-quoted' now defaults to t, so if you want to see
 (quote x) instead of 'x you will have to bind it to nil where applicable.
 
+** To avoid confusion caused by "smart quotes", the reader signals an
+error when reading Lisp symbols which begin with one of the following
+quotation characters: ‘’‛“”‟〞＂＇.  A symbol beginning with such a
+character can be written by escaping the quotation character with a
+backslash.  For example:
+
+    (read "‘smart") => (invalid-read-syntax "strange quote" "‘")
+    (read "\\‘smart") == (intern "‘smart")
+
 ** Internal parsing commands now use syntax-ppss and disregard
 open-paren-in-column-0-is-defun-start.  This affects mostly things like
 forward-comment, scan-sexps, and forward-sexp when parsing backward.

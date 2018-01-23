@@ -1050,6 +1050,32 @@ blankp (int c)
   return XINT (category) == UNICODE_CATEGORY_Zs; /* separator, space */
 }
 
+
+/* Return true for characters that would read as symbol characters,
+   but graphically may be confused with some kind of punctuation.  We
+   require an escaping backslash, when such characters begin a
+   symbol.  */
+bool
+confusable_symbol_character_p (int ch)
+{
+  switch (ch)
+    {
+    case 0x2018: /* LEFT SINGLE QUOTATION MARK */
+    case 0x2019: /* RIGHT SINGLE QUOTATION MARK */
+    case 0x201B: /* SINGLE HIGH-REVERSED-9 QUOTATION MARK */
+    case 0x201C: /* LEFT DOUBLE QUOTATION MARK */
+    case 0x201D: /* RIGHT DOUBLE QUOTATION MARK */
+    case 0x201F: /* DOUBLE HIGH-REVERSED-9 QUOTATION MARK */
+    case 0x301E: /* DOUBLE PRIME QUOTATION MARK */
+    case 0xFF02: /* FULLWIDTH QUOTATION MARK */
+    case 0xFF07: /* FULLWIDTH APOSTROPHE */
+      return true;
+
+    default:
+      return false;
+    }
+}
+
 signed char HEXDIGIT_CONST hexdigit[UCHAR_MAX + 1] =
   {
 #if HEXDIGIT_IS_CONST
