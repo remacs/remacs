@@ -176,4 +176,16 @@
     (dolist (let-sym '(let let*))
       (should-error (eval (list let-sym vars))))))
 
+(ert-deftest eval-tests--while-base ()
+  "Check (while) base cases"
+  (let ((x 0))
+    (while nil (setq x (+ x 1)))
+    ;; verify the while loop did not execute
+    (should (eq x 0))
+
+    ;; Now check that loop does execute
+    (while (< x 5)
+      (setq x (+ x 1)))
+    (should (eq x 5))))
+
 ;;; eval-tests.el ends here

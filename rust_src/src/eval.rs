@@ -473,6 +473,23 @@ pub fn lisp_let(args: LispCons) -> LispObject {
     LispObject::from_raw(unsafe { unbind_to(count, val) })
 }
 
+/// If TEST yields non-nil, eval BODY... and repeat.
+/// The order of execution is thus TEST, BODY, TEST, BODY and so on
+/// until TEST returns nil.
+/// usage: (while TEST BODY...)
+#[lisp_fn(name = "while", c_name = "while", min = "1", unevalled = "true")]
+pub fn lisp_while(args: LispCons) -> LispObject {
+    let (test, body) = args.as_tuple();
+
+    while unsafe { eval_sub(test.to_raw()) } != Qnil {
+        unsafe { maybe_quit() };
+
+        progn(body);
+    }
+
+    LispObject::constant_nil()
+}
+
 /// Signal `error' with message MSG, and additional arg ARG.
 /// If ARG is not a genuine list, make it a one-element list.
 fn signal_error(msg: &str, arg: LispObject) -> ! {
