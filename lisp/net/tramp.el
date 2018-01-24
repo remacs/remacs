@@ -56,6 +56,7 @@
 ;;; Code:
 
 (require 'tramp-compat)
+(require 'trampver)
 
 ;; Pacify byte-compiler.
 (require 'cl-lib)

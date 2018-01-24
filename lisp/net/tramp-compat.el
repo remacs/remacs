@@ -40,7 +40,6 @@
 (require 'timer)
 (require 'ucs-normalize)
 
-(require 'trampver)
 (require 'tramp-loaddefs)
 
 ;; For not existing functions, obsolete functions, or functions with a
