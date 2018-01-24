@@ -10310,7 +10310,9 @@ void
 x_set_offset (struct frame *f, register int xoff, register int yoff, int change_gravity)
 {
   int modified_top, modified_left;
+#ifdef USE_GTK
   int scale = xg_get_scale (f);
+#endif
 
   if (change_gravity > 0)
     {
