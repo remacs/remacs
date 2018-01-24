@@ -1,9 +1,9 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fcons, Fpurecopy, Fset, Fset_default};
+use remacs_sys::{Fapply, Fautoload_do_load, Fcons, Ffuncall, Fpurecopy, Fset, Fset_default};
 use remacs_sys::{QCdocumentation, Qclosure, Qerror, Qfunction, Qinternal_interpreter_environment,
-                 Qlambda, Qnil, Qrisky_local_variable, Qsetq, Qt, Qvariable_documentation,
+                 Qlambda, Qmacro, Qnil, Qrisky_local_variable, Qsetq, Qt, Qvariable_documentation,
                  Qwrong_number_of_arguments};
 use remacs_sys::{build_string, eval_sub, globals, maybe_quit, specbind, unbind_to};
 use remacs_sys::Lisp_Object;
@@ -488,6 +488,86 @@ pub fn lisp_while(args: LispCons) -> LispObject {
     }
 
     LispObject::constant_nil()
+}
+
+/// Return result of expanding macros at top level of FORM.
+/// If FORM is not a macro call, it is returned unchanged.
+/// Otherwise, the macro is expanded and the expansion is considered
+/// in place of FORM.  When a non-macro-call results, it is returned.
+///
+/// The second optional arg ENVIRONMENT specifies an environment of macro
+/// definitions to shadow the loaded ones for use in file byte-compilation.
+#[lisp_fn(min = "1")]
+pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject {
+    while let Some(form_cell) = form.as_cons() {
+        // Come back here each time we expand a macro call,
+        // in case it expands into another macro call.
+
+        // Set SYM, give DEF and TEM right values in case SYM is not a symbol.
+        let (mut sym, body) = form_cell.as_tuple();
+        let mut def = sym;
+        let mut tem = LispObject::constant_nil();
+
+        // Trace symbols aliases to other symbols
+        // until we get a symbol that is not an alias.
+        while let Some(sym_ref) = def.as_symbol() {
+            unsafe { maybe_quit() };
+            sym = def;
+            tem = assq(sym, environment);
+            if tem.is_nil() {
+                def = LispObject::from_raw(sym_ref.function);
+                if def.is_not_nil() {
+                    continue;
+                }
+            }
+            break;
+        }
+
+        // Right now TEM is the result from SYM in ENVIRONMENT,
+        // and if TEM is nil then DEF is SYM's function definition.
+        let expander = if tem.is_nil() {
+            // SYM is not mentioned in ENVIRONMENT.
+            // Look at its function definition.
+            def = LispObject::from_raw(unsafe {
+                Fautoload_do_load(def.to_raw(), sym.to_raw(), Qmacro)
+            });
+            if let Some(cell) = def.as_cons() {
+                let func = cell.car();
+                if !func.eq_raw(Qmacro) {
+                    break;
+                }
+                cell.cdr()
+            } else {
+                // Not defined or definition not suitable.
+                break;
+            }
+        } else {
+            let next = tem.as_cons_or_error().cdr();
+            if next.is_nil() {
+                break;
+            }
+            next
+        };
+
+        let newform = apply1(expander.to_raw(), body.to_raw());
+        if form.eq_raw(newform) {
+            break;
+        } else {
+            form = LispObject::from_raw(newform);
+        }
+    }
+
+    form
+}
+
+/// Apply fn to arg.
+#[no_mangle]
+pub extern "C" fn apply1(mut func: Lisp_Object, arg: Lisp_Object) -> Lisp_Object {
+    if arg == Qnil {
+        unsafe { Ffuncall(1, &mut func) }
+    } else {
+        callN_raw!(Fapply, func, arg).to_raw()
+    }
 }
 
 /// Signal `error' with message MSG, and additional arg ARG.
