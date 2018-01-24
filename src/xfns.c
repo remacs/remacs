@@ -4940,6 +4940,7 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       gint width_mm = -1, height_mm = -1;
       GdkRectangle rec, work;
       struct MonitorInfo *mi = &monitors[i];
+      int scale;
 
 #if GTK_CHECK_VERSION (3, 22, 0)
       GdkMonitor *monitor = gdk_display_get_monitor (gdpy, i);
@@ -4985,6 +4986,16 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
       }
 #endif
 
+      /* GTK returns scaled sizes for the workareas.  */
+#if GTK_CHECK_VERSION (3, 22, 0)
+      scale = gdk_monitor_get_scale_factor (monitor);
+#else
+      scale = gdk_screen_get_monitor_scale_factor (gscreen, i);
+#endif
+      rec.width *= scale;
+      rec.height *= scale;
+      work.width *= scale;
+      work.height *= scale;
 
       mi->geom.x = rec.x;
       mi->geom.y = rec.y;
