@@ -181,10 +181,13 @@ echo "Tests finished ok"
 
 
 ## In case someone else pushed while we were working.
-echo "Checking for remote changes..."
-git fetch || die "fetch error"
+#echo "Checking for remote changes..."
+#git fetch || die "fetch error"
+## NB If there were remote changes, this would rewrite the release
+## branch commits, which is not what we want.
+## Ref eg http://lists.gnu.org/r/emacs-devel/2014-12/msg01435.html
 ## git >= 1.8.5 has "pull --rebase=preserve"
-git rebase --preserve-merges || die "rebase error"
+#git rebase --preserve-merges || die "rebase error"
 
 
 echo "Pushing..."
