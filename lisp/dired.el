@@ -3094,7 +3094,7 @@ non-empty directories is allowed."
 	 (dired-recursive-deletes dired-recursive-deletes)
 	 (trashing (and trash delete-by-moving-to-trash)))
     ;; canonicalize file list for pop up
-    (setq files (nreverse (mapcar #'dired-make-relative files)))
+    (setq files (mapcar #'dired-make-relative files))
     (if (dired-mark-pop-up
 	 " *Deletions*" 'delete files dired-deletion-confirmer
 	 (format "%s %s "
