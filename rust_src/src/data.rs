@@ -2,16 +2,21 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Misc_Type, Lisp_Type, PseudovecType};
+use remacs_sys::{Fcons, Ffset, Fpurecopy};
 use remacs_sys::{Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
-use remacs_sys::{Qargs_out_of_range, Qarrayp, Qbool_vector, Qbuffer, Qchar_table,
+use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, Qchar_table,
                  Qcompiled_function, Qcondition_variable, Qcons, Qcyclic_function_indirection,
-                 Qfinalizer, Qfloat, Qfont, Qfont_entity, Qfont_object, Qfont_spec, Qframe,
-                 Qhash_table, Qinteger, Qmarker, Qmodule_function, Qmutex, Qnone, Qoverlay,
-                 Qprocess, Qstring, Qsubr, Qsymbol, Qterminal, Qthread, Quser_ptr, Qvector,
-                 Qwindow, Qwindow_configuration};
+                 Qdefalias_fset_function, Qdefun, Qfinalizer, Qfloat, Qfont, Qfont_entity,
+                 Qfont_object, Qfont_spec, Qframe, Qfunction_documentation, Qhash_table, Qinteger,
+                 Qmarker, Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qstring,
+                 Qsubr, Qsymbol, Qt, Qterminal, Qthread, Quser_ptr, Qvector, Qwindow,
+                 Qwindow_configuration};
+use remacs_sys::{get_keymap, globals};
 
 use lisp::{LispObject, LispSubrRef};
-use lisp::defsubr;
+use lisp::{defsubr, is_autoload};
+use lists::{get, put};
+use obarray::loadhist_attach;
 
 /// Find the function at the end of a chain of symbol function indirections.
 
@@ -180,6 +185,63 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
     } else {
         wrong_type!(Qarrayp, array);
     }
+}
+
+/// Set SYMBOL's function definition to DEFINITION.
+/// Associates the function with the current load file, if any.
+/// The optional third argument DOCSTRING specifies the documentation string
+/// for SYMBOL; if it is omitted or nil, SYMBOL uses the documentation string
+/// determined by DEFINITION.
+///
+/// Internally, this normally uses `fset', but if SYMBOL has a
+/// `defalias-fset-function' property, the associated value is used instead.
+///
+/// The return value is undefined.
+#[lisp_fn(min = "2")]
+pub fn defalias(sym: LispObject, mut definition: LispObject, docstring: LispObject) -> LispObject {
+    let symbol = sym.as_symbol_or_error();
+
+    unsafe {
+        if globals.f_Vpurify_flag != Qnil
+            // If `definition' is a keymap, immutable (and copying) is wrong.
+            && get_keymap(definition.to_raw(), false, false) == Qnil
+        {
+            definition = LispObject::from_raw(Fpurecopy(definition.to_raw()));
+        }
+    }
+
+    let autoload = is_autoload(definition);
+    if unsafe { globals.f_Vpurify_flag == Qnil } || !autoload {
+        // Only add autoload entries after dumping, because the ones before are
+        // not useful and else we get loads of them from the loaddefs.el.
+
+        if is_autoload(LispObject::from_raw(symbol.function)) {
+            // Remember that the function was already an autoload.
+            loadhist_attach(unsafe { Fcons(Qt, sym.to_raw()) });
+        }
+        loadhist_attach(unsafe { Fcons(if autoload { Qautoload } else { Qdefun }, sym.to_raw()) });
+    }
+
+    // Handle automatic advice activation.
+    let hook = get(symbol, LispObject::from_raw(Qdefalias_fset_function));
+    if hook.is_not_nil() {
+        call!(hook, sym, definition);
+    } else {
+        unsafe { Ffset(sym.to_raw(), definition.to_raw()) };
+    }
+
+    if docstring.is_not_nil() {
+        put(
+            sym,
+            LispObject::from_raw(Qfunction_documentation),
+            docstring,
+        );
+    }
+
+    // We used to return `definition', but now that `defun' and `defmacro' expand
+    // to a call to `defalias', we return `symbol' for backward compatibility
+    // (bug#11686).
+    sym
 }
 
 include!(concat!(env!("OUT_DIR"), "/data_exports.rs"));

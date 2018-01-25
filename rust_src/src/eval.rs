@@ -10,10 +10,11 @@ use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinter
 use remacs_sys::{build_string, eval_sub, globals, maybe_quit, specbind, unbind_to};
 use remacs_sys::COMPILED_INTERACTIVE;
 
-use data::indirect_function;
+use data::{defalias, indirect_function};
 use lisp::{LispCons, LispObject};
-use lisp::defsubr;
+use lisp::{defsubr, is_autoload};
 use lists::{assq, car, cdr, get, memq, put};
+use multibyte::LispStringRef;
 use obarray::loadhist_attach;
 use symbols::{symbol_function, LispSymbolRef};
 use threads::c_specpdl_index;
@@ -656,5 +657,54 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
 }
 
 def_lisp_sym!(Qcommandp, "commandp");
+
+/// Define FUNCTION to autoload from FILE.
+/// FUNCTION is a symbol; FILE is a file name string to pass to `load'.
+/// Third arg DOCSTRING is documentation for the function.
+/// Fourth arg INTERACTIVE if non-nil says function can be called interactively.
+/// Fifth arg TYPE indicates the type of the object:
+///    nil or omitted says FUNCTION is a function,
+///    `keymap' says FUNCTION is really a keymap, and
+///    `macro' or t says FUNCTION is really a macro.
+/// Third through fifth args give info about the real definition.
+/// They default to nil.
+/// If FUNCTION is already defined other than as an autoload,
+/// this does nothing and returns nil.
+#[lisp_fn(min = "2")]
+pub fn autoload(
+    function: LispSymbolRef,
+    file: LispStringRef,
+    mut docstring: LispObject,
+    interactive: LispObject,
+    ty: LispObject,
+) -> LispObject {
+    // If function is defined and not as an autoload, don't override.
+    if function.function != Qnil && !is_autoload(LispObject::from_raw(function.function)) {
+        return LispObject::constant_nil();
+    }
+
+    if unsafe { globals.f_Vpurify_flag != Qnil } && docstring.eq(LispObject::from_fixnum(0)) {
+        // `read1' in lread.c has found the docstring starting with "\
+        // and assumed the docstring will be provided by Snarf-documentation, so it
+        // passed us 0 instead.  But that leads to accidental sharing in purecopy's
+        // hash-consing, so we use a (hopefully) unique integer instead.
+        docstring =
+            LispObject::from_fixnum(unsafe { function.as_lisp_obj().to_fixnum_unchecked() });
+    }
+
+    defalias(
+        function.as_lisp_obj(),
+        list!(
+            LispObject::from_raw(Qautoload),
+            file.as_lisp_obj(),
+            docstring,
+            interactive,
+            ty
+        ),
+        LispObject::constant_nil(),
+    )
+}
+
+def_lisp_sym!(Qautoload, "autoload");
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

@@ -19,11 +19,11 @@ use remacs_sys::{font, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, Pseud
                  USE_LSB_TAG, VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
                  Lisp_Symbol, Lisp_Type};
-use remacs_sys::{Qarrayp, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp, Qframe_live_p,
-                 Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp, Qmarkerp, Qnil,
-                 Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp, Qstringp, Qsubrp,
-                 Qsymbolp, Qt, Qthreadp, Qunbound, Qvectorp, Qwholenump, Qwindow_live_p,
-                 Qwindow_valid_p, Qwindowp};
+use remacs_sys::{Qarrayp, Qautoload, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp,
+                 Qframe_live_p, Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp,
+                 Qmarkerp, Qnil, Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp,
+                 Qstringp, Qsubrp, Qsymbolp, Qt, Qthreadp, Qunbound, Qvectorp, Qwholenump,
+                 Qwindow_live_p, Qwindow_valid_p, Qwindowp};
 use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, make_float,
                  misc_get_ty};
 
@@ -443,7 +443,7 @@ impl LispObject {
     }
 
     #[inline]
-    unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
+    pub unsafe fn to_fixnum_unchecked(self) -> EmacsInt {
         let raw = self.to_raw().to_C();
         if !USE_LSB_TAG {
             raw & INTMASK
@@ -1228,6 +1228,12 @@ impl LispCons {
             CHECK_IMPURE(self.0.to_raw(), self._extract() as *const c_void);
         }
     }
+}
+
+pub fn is_autoload(function: LispObject) -> bool {
+    function
+        .as_cons()
+        .map_or(false, |cell| cell.car().eq_raw(Qautoload))
 }
 
 // Float support (LispType == Lisp_Float == 7 )
