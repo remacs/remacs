@@ -806,7 +806,7 @@ is visible (and the real data of the buffer is hidden).
 Optional argument SHUT-UP, if non-nil, means don't print messages
 when parsing the archive."
   (widen)
-  (let ((buffer-file-truename nil) ; avoid changing dir mtime by lock_file
+  (let ((create-lockfiles nil) ; avoid changing dir mtime by lock_file
 	(inhibit-read-only t))
     (setq archive-proper-file-start (copy-marker (point-min) t))
     (set (make-local-variable 'change-major-mode-hook) 'archive-desummarize)
@@ -1063,7 +1063,9 @@ using `make-temp-file', and the generated name is returned."
 		      ;; We read an archive member by no-conversion at
 		      ;; first, then decode appropriately by calling
 		      ;; archive-set-buffer-as-visiting-file later.
-		      (coding-system-for-read 'no-conversion))
+		      (coding-system-for-read 'no-conversion)
+		      ;; Avoid changing dir mtime by lock_file
+		      (create-lockfiles nil))
 		  (condition-case err
 		      (if (fboundp extractor)
 			  (funcall extractor archive ename)
