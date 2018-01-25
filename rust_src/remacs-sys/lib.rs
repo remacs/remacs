@@ -166,6 +166,14 @@ pub enum PseudovecType {
     PVEC_FONT, /* Should be last because it's used for range checking.  */
 }
 
+pub type Lisp_Compiled = u32;
+pub const COMPILED_ARGLIST: Lisp_Compiled = 0;
+pub const COMPILED_BYTECODE: Lisp_Compiled = 1;
+pub const COMPILED_CONSTANTS: Lisp_Compiled = 2;
+pub const COMPILED_STACK_DEPTH: Lisp_Compiled = 3;
+pub const COMPILED_DOC_STRING: Lisp_Compiled = 4;
+pub const COMPILED_INTERACTIVE: Lisp_Compiled = 5;
+
 #[repr(C)]
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum TextCursorKinds {
