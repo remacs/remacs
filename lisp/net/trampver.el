@@ -56,9 +56,8 @@
 (let ((x (if (>= emacs-major-version 24)
     "ok"
   (format "Tramp 2.4.0-pre is not fit for %s"
-	  (when (string-match "^.*$" (emacs-version))
-	    (match-string 0 (emacs-version)))))))
-  (unless (string-match "\\`ok\\'" x) (error "%s" x)))
+	  (replace-regexp-in-string "\n" "" (emacs-version))))))
+  (unless (string-equal "ok" x) (error "%s" x)))
 
 ;; Tramp versions integrated into Emacs.
 (add-to-list
