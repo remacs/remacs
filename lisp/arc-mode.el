@@ -748,8 +748,7 @@ archive.
 	    (or file-name-coding-system
 		default-file-name-coding-system
 		locale-coding-system))
-      (if (default-value 'enable-multibyte-characters)
-	  (set-buffer-multibyte 'to))
+      (set-buffer-multibyte 'to)
       (archive-summarize nil)
       (setq buffer-read-only t)
       (when (and archive-visit-single-files

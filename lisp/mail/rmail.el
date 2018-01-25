@@ -1331,8 +1331,7 @@ Instead, these commands are available:
   (let ((finding-rmail-file (not (eq major-mode 'rmail-mode))))
     (rmail-mode-2)
     (when (and finding-rmail-file
-	       (null coding-system-for-read)
-	       (default-value 'enable-multibyte-characters))
+	       (null coding-system-for-read))
       (let ((rmail-enable-multibyte t))
 	(rmail-require-mime-maybe)
 	(rmail-convert-file-maybe)
@@ -1759,7 +1758,7 @@ not be a new one).  It returns non-nil if it got any new messages."
   (or (eq buffer-undo-list t)
       (setq buffer-undo-list nil))
   (let ((all-files (if file-name (list file-name) rmail-inbox-list))
-	(rmail-enable-multibyte (default-value 'enable-multibyte-characters))
+	(rmail-enable-multibyte t)
 	found)
     (unwind-protect
 	(progn

@@ -2712,8 +2712,7 @@ Initialize the process filter to @var{filter}.
 
 @item :filter-multibyte @var{multibyte}
 If @var{multibyte} is non-@code{nil}, strings given to the process
-filter are multibyte, otherwise they are unibyte.  The default is the
-default value of @code{enable-multibyte-characters}.
+filter are multibyte, otherwise they are unibyte.  The default is @code{t}.
 
 @item :sentinel @var{sentinel}
 Initialize the process sentinel to @var{sentinel}.

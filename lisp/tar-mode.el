@@ -265,11 +265,10 @@ write-date, checksum, link-type, and link-name."
           (setq name (concat (substring string tar-prefix-offset
                                         (1- (match-end 0)))
                              "/" name)))
-        (if (default-value 'enable-multibyte-characters)
-            (setq name
-                  (decode-coding-string name coding)
-                  linkname
-                  (decode-coding-string linkname coding)))
+        (setq name
+              (decode-coding-string name coding)
+              linkname
+              (decode-coding-string linkname coding))
         (if (and (null link-p) (string-match "/\\'" name))
             (setq link-p 5))            ; directory
 
@@ -907,8 +906,7 @@ tar-file's buffer."
         (if (or (not coding)
                 (eq (coding-system-type coding) 'undecided))
             (setq coding (detect-coding-region start end t)))
-        (if (and (default-value 'enable-multibyte-characters)
-                 (coding-system-get coding :for-unibyte))
+        (if (coding-system-get coding :for-unibyte)
             (with-current-buffer buffer
               (set-buffer-multibyte nil)))
         (widen)

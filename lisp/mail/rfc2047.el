@@ -290,8 +290,7 @@ Should be called narrowed to the head of the message."
 		(let ((rfc2047-encoding-type 'mime))
 		  (rfc2047-encode-region (point) (point-max))))
 	       ((eq method 'default)
-		(if (and (default-value 'enable-multibyte-characters)
-			 mail-parse-charset)
+		(if mail-parse-charset
 		    (encode-coding-region (point) (point-max)
 					  mail-parse-charset)))
 	       ;; We get this when CC'ing messages to newsgroups with
@@ -305,18 +304,17 @@ Should be called narrowed to the head of the message."
 	       ;; in accordance with changes elsewhere.
 	       ((null method)
 		(rfc2047-encode-region (point) (point-max)))
-;;;	       ((null method)
-;;;		(if (or (message-options-get
-;;;			 'rfc2047-encode-message-header-encode-any)
-;;;			(message-options-set
-;;;			 'rfc2047-encode-message-header-encode-any
-;;;			 (y-or-n-p
-;;;			  "Some texts are not encoded. Encode anyway?")))
-;;;		    (rfc2047-encode-region (point-min) (point-max))
-;;;		  (error "Cannot send unencoded text")))
+	       ;; ((null method)
+	       ;;  (if (or (message-options-get
+	       ;;  	 'rfc2047-encode-message-header-encode-any)
+	       ;;  	(message-options-set
+	       ;;  	 'rfc2047-encode-message-header-encode-any
+	       ;;  	 (y-or-n-p
+	       ;;  	  "Some texts are not encoded. Encode anyway?")))
+	       ;;      (rfc2047-encode-region (point-min) (point-max))
+	       ;;    (error "Cannot send unencoded text")))
 	       ((mm-coding-system-p method)
-		(when (default-value 'enable-multibyte-characters)
-		  (encode-coding-region (point) (point-max) method)))
+		(encode-coding-region (point) (point-max) method))
 	       ;; Hm.
 	       (t)))
 	    (goto-char (point-max))))))))

@@ -1379,11 +1379,7 @@ mail status in mode line"))
       ;; It is better not to use backquote here,
       ;; because that makes a bootstrapping problem
       ;; if you need to recompile all the Lisp files using interpreted code.
-      `(menu-item "Multilingual Environment" ,mule-menu-keymap
-                  ;; Most of the MULE menu actually does make sense in
-                  ;; unibyte mode, e.g. language selection.
-                  ;; :visible '(default-value 'enable-multibyte-characters)
-                  ))
+      `(menu-item "Multilingual Environment" ,mule-menu-keymap))
     ;;(setq menu-bar-final-items (cons 'mule menu-bar-final-items))
     ;;(bindings--define-key menu [preferences]
     ;;  `(menu-item "Preferences" ,menu-bar-preferences-menu
@@ -1697,18 +1693,14 @@ mail status in mode line"))
 
     (bindings--define-key menu [mule-diag]
       '(menu-item "Show All of Mule Status" mule-diag
-                  :visible (default-value 'enable-multibyte-characters)
                   :help "Display multilingual environment settings"))
     (bindings--define-key menu [describe-coding-system-briefly]
       '(menu-item "Describe Coding System (Briefly)"
-                  describe-current-coding-system-briefly
-                  :visible (default-value 'enable-multibyte-characters)))
+                  describe-current-coding-system-briefly))
     (bindings--define-key menu [describe-coding-system]
-      '(menu-item "Describe Coding System..." describe-coding-system
-                  :visible (default-value 'enable-multibyte-characters)))
+      '(menu-item "Describe Coding System..." describe-coding-system))
     (bindings--define-key menu [describe-input-method]
       '(menu-item "Describe Input Method..." describe-input-method
-                  :visible (default-value 'enable-multibyte-characters)
                   :help "Keyboard layout for specific input method"))
     (bindings--define-key menu [describe-language-environment]
       `(menu-item "Describe Language Environment"

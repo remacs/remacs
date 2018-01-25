@@ -126,22 +126,16 @@ You should set this to t when using a non-system shell.\n\n"))))
   ;; (and some programs ported from Unix require it) but most will
   ;; produce DOS line endings on output.
   (setq default-process-coding-system
-	(if (default-value 'enable-multibyte-characters)
-	    '(undecided-dos . undecided-unix)
-	  '(raw-text-dos . raw-text-unix)))
+	'(undecided-dos . undecided-unix))
   ;; Make cmdproxy default to using DOS line endings for input,
   ;; because some Windows programs (including command.com) require it.
   (add-to-list 'process-coding-system-alist
-	       `("[cC][mM][dD][pP][rR][oO][xX][yY]"
-		 . ,(if (default-value 'enable-multibyte-characters)
-			'(undecided-dos . undecided-dos)
-		      '(raw-text-dos . raw-text-dos))))
+	       '("[cC][mM][dD][pP][rR][oO][xX][yY]"
+		 . (undecided-dos . undecided-dos)))
   ;; plink needs DOS input when entering the password.
   (add-to-list 'process-coding-system-alist
-	       `("[pP][lL][iI][nN][kK]"
-		 . ,(if (default-value 'enable-multibyte-characters)
-			'(undecided-dos . undecided-dos)
-		      '(raw-text-dos . raw-text-dos)))))
+	       '("[pP][lL][iI][nN][kK]"
+		 . (undecided-dos . undecided-dos))))
 (define-obsolete-function-alias 'set-default-process-coding-system
   #'w32-set-default-process-coding-system "26.1")
 (add-hook 'before-init-hook #'w32-set-default-process-coding-system)
