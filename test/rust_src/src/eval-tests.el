@@ -99,4 +99,23 @@
                    (setq c nil)))
                 nil)))))
 
+(ert-deftest eval-tests--function-base ()
+  "Check (function) base cases"
+  (should-error (function 1 2) :type 'wrong-number-of-arguments)
+  (should (eq (function a) (quote a)))
+  (should (equal (function (1 2 3))
+                 (quote (1 2 3))))
+  (should (equal (function (lambda (a) "Add 1 to A" (+ 1 a)))
+                 (lambda (a) "Add 1 to A" (+ 1 a))))
+  ;; First, ensure lexical bindings are active
+  (should (equal (let ((x nil)
+                       (f (let ((x t)) (lambda () x))))
+                   (funcall f))
+                 t))
+  ;; Now test (:documentation) form for dynamic docs.
+  (let ((val 1))
+    (should (equal (function (lambda (a) (:documentation (format "Add %d to A" val))
+                               (+ val a)))
+                   (function (lambda (a) "Add 1 to A" (+ val a)))))))
+
 ;;; eval-tests.el ends here

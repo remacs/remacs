@@ -1483,6 +1483,10 @@ impl LispObject {
         self == other
     }
 
+    pub fn eq_raw(self, other: Lisp_Object) -> bool {
+        self.to_raw() == other
+    }
+
     #[allow(dead_code)]
     #[inline]
     pub fn ne(self, other: LispObject) -> bool {

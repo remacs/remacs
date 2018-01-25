@@ -4922,7 +4922,6 @@ that are loaded before your customizations are read!  */);
 
   DEFSYM (Qinhibit_file_name_operation, "inhibit-file-name-operation");
   DEFSYM (Qascii_character, "ascii-character");
-  DEFSYM (Qfunction, "function");
   DEFSYM (Qload, "load");
   DEFSYM (Qload_file_name, "load-file-name");
   DEFSYM (Qeval_buffer_list, "eval-buffer-list");
