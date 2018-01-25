@@ -3,11 +3,11 @@
 use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{initial_define_key, scan_newline_from_point, set_point, set_point_both,
-                 Fline_beginning_position, Fline_end_position};
 use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qnil};
+use remacs_sys::{initial_define_key, scan_newline_from_point, set_point, set_point_both};
 use remacs_sys::EmacsInt;
 
+use editfns::{line_beginning_position, line_end_position};
 use keymap::{current_global_map, Ctl};
 use lisp::LispObject;
 use lisp::defsubr;
@@ -94,15 +94,12 @@ pub fn forward_point(n: EmacsInt) -> EmacsInt {
 /// instead.  For instance, `(forward-line 0)' does the same thing as
 /// `(beginning-of-line)', except that it ignores field boundaries.
 #[lisp_fn(min = "0", intspec = "^p")]
-pub fn beginning_of_line(mut n: LispObject) -> () {
-    if n.is_nil() {
-        n = LispObject::from_fixnum(1);
-    }
+pub fn beginning_of_line(n: Option<EmacsInt>) -> () {
+    let pos = line_beginning_position(n);
 
     unsafe {
-        let pos = LispObject::from_raw(Fline_beginning_position(n.to_raw()));
-        set_point(pos.as_fixnum_or_error() as isize);
-    };
+        set_point(pos as isize);
+    }
 }
 
 /// Move point to end of current line (in the logical order).
@@ -122,10 +119,7 @@ pub fn end_of_line(n: Option<EmacsInt>) -> () {
     let mut pt: isize;
     let cur_buf = ThreadState::current_buffer();
     loop {
-        newpos = unsafe {
-            LispObject::from_raw(Fline_end_position(LispObject::from_fixnum(num).to_raw()))
-                .as_fixnum_or_error() as isize
-        };
+        newpos = line_end_position(Some(num)) as isize;
         unsafe { set_point(newpos) };
         pt = cur_buf.pt();
         if pt > newpos && cur_buf.fetch_char(pt - 1) == '\n' as i32 {

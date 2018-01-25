@@ -485,9 +485,9 @@ impl LispObject {
     }
 
     #[inline]
-    pub fn as_natnum_or_error(self) -> EmacsInt {
+    pub fn as_natnum_or_error(self) -> EmacsUint {
         if self.is_natnum() {
-            unsafe { self.to_fixnum_unchecked() }
+            unsafe { self.to_fixnum_unchecked() as EmacsUint }
         } else {
             wrong_type!(Qwholenump, self)
         }
@@ -508,6 +508,24 @@ impl From<LispObject> for Option<EmacsInt> {
             None
         } else {
             Some(o.as_fixnum_or_error())
+        }
+    }
+}
+
+impl From<LispObject> for EmacsUint {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        o.as_natnum_or_error()
+    }
+}
+
+impl From<LispObject> for Option<EmacsUint> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            None
+        } else {
+            Some(o.as_natnum_or_error())
         }
     }
 }
@@ -1338,6 +1356,15 @@ pub enum LispNumber {
     Float(f64),
 }
 
+impl LispNumber {
+    pub fn to_fixnum(self) -> EmacsInt {
+        match self {
+            LispNumber::Fixnum(v) => v,
+            LispNumber::Float(v) => v as EmacsInt,
+        }
+    }
+}
+
 impl LispObject {
     #[inline]
     pub fn is_number(self) -> bool {
@@ -1357,17 +1384,22 @@ impl LispObject {
     }
     */
 
+    pub fn as_number_coerce_marker(self) -> Option<LispNumber> {
+        if let Some(n) = self.as_fixnum() {
+            Some(LispNumber::Fixnum(n))
+        } else if let Some(f) = self.as_float() {
+            Some(LispNumber::Float(f))
+        } else if let Some(m) = self.as_marker() {
+            Some(LispNumber::Fixnum(m.charpos_or_error() as EmacsInt))
+        } else {
+            None
+        }
+    }
+
     #[inline]
     pub fn as_number_coerce_marker_or_error(self) -> LispNumber {
-        if let Some(n) = self.as_fixnum() {
-            LispNumber::Fixnum(n)
-        } else if let Some(f) = self.as_float() {
-            LispNumber::Float(f)
-        } else if let Some(m) = self.as_marker() {
-            LispNumber::Fixnum(m.charpos_or_error() as EmacsInt)
-        } else {
-            wrong_type!(Qnumber_or_marker_p, self)
-        }
+        self.as_number_coerce_marker()
+            .unwrap_or_else(|| wrong_type!(Qnumber_or_marker_p, self))
     }
 
     #[inline]
@@ -1474,6 +1506,18 @@ impl LispObject {
     #[inline]
     pub fn equal_no_quit(self, other: LispObject) -> bool {
         unsafe { internal_equal(self.to_raw(), other.to_raw(), EqualKind::NoQuit, 0, Qnil) }
+    }
+}
+
+impl From<LispObject> for LispNumber {
+    fn from(o: LispObject) -> Self {
+        o.as_number_coerce_marker_or_error()
+    }
+}
+
+impl From<LispObject> for Option<LispNumber> {
+    fn from(o: LispObject) -> Self {
+        o.as_number_coerce_marker()
     }
 }
 

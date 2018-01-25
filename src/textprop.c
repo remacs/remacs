@@ -658,20 +658,6 @@ get_char_property_and_overlay (Lisp_Object position, register Lisp_Object prop, 
   return Fget_text_property (position, prop, object);
 }
 
-DEFUN ("get-char-property", Fget_char_property, Sget_char_property, 2, 3, 0,
-       doc: /* Return the value of POSITION's property PROP, in OBJECT.
-Both overlay properties and text properties are checked.
-OBJECT is optional and defaults to the current buffer.
-If POSITION is at the end of OBJECT, the value is nil.
-If OBJECT is a buffer, then overlay properties are considered as well as
-text properties.
-If OBJECT is a window, then that window's buffer is used, but window-specific
-overlays are considered only if they are associated with OBJECT.  */)
-  (Lisp_Object position, Lisp_Object prop, Lisp_Object object)
-{
-  return get_char_property_and_overlay (position, prop, object, 0);
-}
-
 DEFUN ("get-char-property-and-overlay", Fget_char_property_and_overlay,
        Sget_char_property_and_overlay, 2, 3, 0,
        doc: /* Like `get-char-property', but with extra overlay information.
@@ -2367,7 +2353,6 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
 
   defsubr (&Stext_properties_at);
   defsubr (&Sget_text_property);
-  defsubr (&Sget_char_property);
   defsubr (&Sget_char_property_and_overlay);
   defsubr (&Snext_char_property_change);
   defsubr (&Sprevious_char_property_change);
