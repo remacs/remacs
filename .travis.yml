@@ -36,19 +36,19 @@ jobs:
       script:
         - ./autogen.sh && ./configure
         - make -j 3 && echo '==> Running tests' && make check
-    - 
-      <<: *FULL_TEST
-      os: osx
-      env:
-        - PATH="/usr/local/opt/texinfo/bin:$PATH"
-      before_script:
-        # Travis docs say to avoid brew update, but this works around the
-        # incorrect Ruby version.
-        # https://github.com/travis-ci/travis-ci/issues/8552
-        # GNUTLS is now included, no need to explicitly install it.
-        - brew update
-        - brew install texinfo
-        - travis_wait rustup install $(cat rust-toolchain)
+    # - 
+    #   <<: *FULL_TEST
+    #   os: osx
+    #   env:
+    #     - PATH="/usr/local/opt/texinfo/bin:$PATH"
+    #   before_script:
+    #     # Travis docs say to avoid brew update, but this works around the
+    #     # incorrect Ruby version.
+    #     # https://github.com/travis-ci/travis-ci/issues/8552
+    #     # GNUTLS is now included, no need to explicitly install it.
+    #     - brew update
+    #     - brew install texinfo
+    #     - travis_wait rustup install $(cat rust-toolchain)
     - &NO_WINDOW_SYSTEM_TEST
       stage: test
       os: linux
@@ -61,11 +61,11 @@ jobs:
       script:
         - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
         - make -j 3 && echo '==> Running nowindow tests' && make check
-    -
-      <<: *NO_WINDOW_SYSTEM_TEST
-      os: osx
-      before_script:
-        - travis_wait rustup install $(cat rust-toolchain)
+    # -
+    #   <<: *NO_WINDOW_SYSTEM_TEST
+    #   os: osx
+    #   before_script:
+    #     - travis_wait rustup install $(cat rust-toolchain)
 
 notifications:
   fast_finish: true
