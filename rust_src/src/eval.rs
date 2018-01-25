@@ -251,7 +251,7 @@ pub fn function(args: LispObject) -> LispObject {
 }
 def_lisp_sym!(Qfunction, "function");
 
-// Make SYMBOL lexically scoped.
+/// Make SYMBOL lexically scoped.
 /// Internal function
 #[lisp_fn(name = "internal-make-var-non-special")]
 pub fn make_var_non_special(symbol: LispSymbolRef) -> bool {
