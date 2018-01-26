@@ -188,4 +188,13 @@
       (setq x (+ x 1)))
     (should (eq x 5))))
 
+(ert-deftest eval-tests--macroexpand-base ()
+  "Check (macroexpand) base cases"
+  (should (equal (macroexpand '(1+ 2))
+                 '(1+ 2)))
+  (should (equal (macroexpand '(when x (when y z)))
+                 '(if x (progn (when y z)))))
+  (should (equal (macroexpand 'x)
+                 'x)))
+
 ;;; eval-tests.el ends here
