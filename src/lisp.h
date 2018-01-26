@@ -548,6 +548,10 @@ extern void char_table_set (Lisp_Object, int, Lisp_Object);
 /* Defined in data.c.  */
 extern _Noreturn void wrong_type_argument (Lisp_Object, Lisp_Object);
 
+/* Defined in marker.c.  */
+extern Lisp_Object
+set_marker_internal (Lisp_Object marker, Lisp_Object position,
+		     Lisp_Object buffer, bool restricted);
 
 #ifdef CANNOT_DUMP
 enum { might_dump = false };
