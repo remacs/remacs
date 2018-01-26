@@ -557,26 +557,6 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
 }
 
 
-DEFUN ("while", Fwhile, Swhile, 1, UNEVALLED, 0,
-       doc: /* If TEST yields non-nil, eval BODY... and repeat.
-The order of execution is thus TEST, BODY, TEST, BODY and so on
-until TEST returns nil.
-usage: (while TEST BODY...)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object test, body;
-
-  test = XCAR (args);
-  body = XCDR (args);
-  while (!NILP (eval_sub (test)))
-    {
-      maybe_quit ();
-      prog_ignore (body);
-    }
-
-  return Qnil;
-}
-
 DEFUN ("macroexpand", Fmacroexpand, Smacroexpand, 1, 2, 0,
        doc: /* Return result of expanding macros at top level of FORM.
 If FORM is not a macro call, it is returned unchanged.
@@ -3645,7 +3625,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sdefvar);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
-  defsubr (&Swhile);
   defsubr (&Smacroexpand);
   defsubr (&Scatch);
   defsubr (&Sthrow);
