@@ -25,8 +25,7 @@
 
 (eval-and-compile
   (defconst mod-test-file
-    (substitute-in-file-name
-     "$EMACS_TEST_DIRECTORY/data/emacs-module/mod-test")
+    (expand-file-name "../test/data/emacs-module/mod-test" invocation-directory)
     "File name of the module test file."))
 
 (require 'mod-test mod-test-file)

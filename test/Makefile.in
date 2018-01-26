@@ -120,7 +120,7 @@ emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) \
  EMACS_TEST_DIRECTORY=$(abspath $(srcdir)) \
  $(GDB) "$(EMACS)" $(MODULES_EMACSOPT) $(EMACSOPT)
 
-test_module_dir := $(srcdir)/data/emacs-module
+test_module_dir := data/emacs-module
 
 .PHONY: all check
 
@@ -223,12 +223,13 @@ else
 FPIC_CFLAGS = -fPIC
 endif
 
-MODULE_CFLAGS = -I$(srcdir)/../src $(FPIC_CFLAGS) $(PROFILING_CFLAGS) \
+MODULE_CFLAGS = -I../src $(FPIC_CFLAGS) $(PROFILING_CFLAGS) \
   $(WARN_CFLAGS) $(WERROR_CFLAGS) $(CFLAGS)
 
 test_module = $(test_module_dir)/mod-test${SO}
 src/emacs-module-tests.log: $(test_module)
 $(test_module): $(test_module:${SO}=.c) $(srcdir)/../src/emacs-module.h
+	$(AM_V_at)${MKDIR_P} $(dir $@)
 	$(AM_V_CCLD)$(CC) -shared $(CPPFLAGS) $(MODULE_CFLAGS) $(LDFLAGS) \
 	  -o $@ $<
 endif
