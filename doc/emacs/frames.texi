@@ -98,7 +98,7 @@ invoked by clicking with the left mouse button, @kbd{mouse-1}, in the
 text area of a window.  This moves point to the position where you
 clicked.  If that window was not the selected window, it becomes the
 selected window.  You can also activate a region by double-clicking
-mouse-1 (@pxref{Word and Line Mouse}).
+@kbd{mouse-1} (@pxref{Word and Line Mouse}).
 
 @vindex x-mouse-click-focus-ignore-position
   Normally, if the frame you clicked in was not the selected frame, it
@@ -998,7 +998,9 @@ when the entire buffer is visible.
 
 @cindex scroll-bar face
   The visual appearance of the scroll bars is controlled by the
-@code{scroll-bar} face.
+@code{scroll-bar} face.  (Some toolkits, such as GTK and MS-Windows,
+ignore this face; the scroll-bar appearance there can only be
+customized system-wide, for GTK @pxref{GTK resources}).
 
 @cindex vertical border
   On graphical frames, vertical scroll bars implicitly serve to separate
@@ -1073,7 +1075,7 @@ customize the options @code{window-divider-default-bottom-width} and
 @code{window-divider-default-right-width}.
 
   When vertical scroll bars are disabled, dividers can be also useful to
-make the first pixel column of a window visible which would be otherwise
+make the first pixel column of a window visible, which would be otherwise
 covered by the vertical border used to separate side-by-side windows
 (@pxref{Scroll Bars}).
 
