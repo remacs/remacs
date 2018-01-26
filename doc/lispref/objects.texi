@@ -2208,9 +2208,8 @@ text properties---it compares only the characters in the strings.
 @xref{Text Properties}.  Use @code{equal-including-properties} to also
 compare text properties.  For technical reasons, a unibyte string and
 a multibyte string are @code{equal} if and only if they contain the
-same sequence of character codes and all these codes are either in the
-range 0 through 127 (@acronym{ASCII}) or 160 through 255
-(@code{eight-bit-graphic}).  (@pxref{Text Representations}).
+same sequence of character codes and all these codes are in the range
+0 through 127 (@acronym{ASCII}).
 
 @example
 @group
