@@ -61,7 +61,7 @@
 (fset 'cl--make-slot-desc
       ;; To break circularity, we pre-define the slot constructor by hand.
       ;; It's redefined a bit further down as part of the cl-defstruct of
-      ;; cl--slot-descriptor.
+      ;; cl-slot-descriptor.
       ;; BEWARE: Obviously, it's important to keep the two in sync!
       (lambda (name &optional initform type props)
         (record 'cl-slot-descriptor
@@ -194,7 +194,7 @@
   (name nil :type symbol)               ;The type name.
   (docstring nil :type string)
   (parents nil :type (list-of cl--class)) ;The included struct.
-  (slots nil :type (vector cl--slot-descriptor))
+  (slots nil :type (vector cl-slot-descriptor))
   (index-table nil :type hash-table)
   (tag nil :type symbol) ;Placed in cl-tag-slot.  Holds the struct-class object.
   (type nil :type (memq (vector list)))
