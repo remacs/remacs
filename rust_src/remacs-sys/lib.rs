@@ -1350,6 +1350,12 @@ extern "C" {
     ) -> Lisp_Object;
     pub fn specbind(symbol: Lisp_Object, value: Lisp_Object);
     pub fn unbind_to(count: ptrdiff_t, value: Lisp_Object) -> Lisp_Object;
+    pub fn Fautoload_do_load(
+        fundef: Lisp_Object,
+        funname: Lisp_Object,
+        macro_only: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn Fapply(nargs: ptrdiff_t, args: *const Lisp_Object) -> Lisp_Object;
 
 }
 

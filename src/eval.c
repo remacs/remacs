@@ -557,74 +557,6 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
 }
 
 
-DEFUN ("macroexpand", Fmacroexpand, Smacroexpand, 1, 2, 0,
-       doc: /* Return result of expanding macros at top level of FORM.
-If FORM is not a macro call, it is returned unchanged.
-Otherwise, the macro is expanded and the expansion is considered
-in place of FORM.  When a non-macro-call results, it is returned.
-
-The second optional arg ENVIRONMENT specifies an environment of macro
-definitions to shadow the loaded ones for use in file byte-compilation.  */)
-  (Lisp_Object form, Lisp_Object environment)
-{
-  /* With cleanups from Hallvard Furuseth.  */
-  register Lisp_Object expander, sym, def, tem;
-
-  while (1)
-    {
-      /* Come back here each time we expand a macro call,
-	 in case it expands into another macro call.  */
-      if (!CONSP (form))
-	break;
-      /* Set SYM, give DEF and TEM right values in case SYM is not a symbol. */
-      def = sym = XCAR (form);
-      tem = Qnil;
-      /* Trace symbols aliases to other symbols
-	 until we get a symbol that is not an alias.  */
-      while (SYMBOLP (def))
-	{
-	  maybe_quit ();
-	  sym = def;
-	  tem = Fassq (sym, environment);
-	  if (NILP (tem))
-	    {
-	      def = XSYMBOL (sym)->function;
-	      if (!NILP (def))
-		continue;
-	    }
-	  break;
-	}
-      /* Right now TEM is the result from SYM in ENVIRONMENT,
-	 and if TEM is nil then DEF is SYM's function definition.  */
-      if (NILP (tem))
-	{
-	  /* SYM is not mentioned in ENVIRONMENT.
-	     Look at its function definition.  */
-	  def = Fautoload_do_load (def, sym, Qmacro);
-	  if (!CONSP (def))
-	    /* Not defined or definition not suitable.  */
-	    break;
-	  if (!EQ (XCAR (def), Qmacro))
-	    break;
-	  else expander = XCDR (def);
-	}
-      else
-	{
-	  expander = XCDR (tem);
-	  if (NILP (expander))
-	    break;
-	}
-      {
-	Lisp_Object newform = apply1 (expander, XCDR (form));
-	if (EQ (form, newform))
-	  break;
-	else
-	  form = newform;
-      }
-    }
-  return form;
-}
-
 DEFUN ("catch", Fcatch, Scatch, 1, UNEVALLED, 0,
        doc: /* Eval BODY allowing nonlocal exits using `throw'.
 TAG is evalled to get the tag to use; it must not be nil.
@@ -2161,13 +2093,6 @@ run_hook_with_args_2 (Lisp_Object hook, Lisp_Object arg1, Lisp_Object arg2)
   CALLN (Frun_hook_with_args, hook, arg1, arg2);
 }
 
-/* Apply fn to arg.  */
-Lisp_Object
-apply1 (Lisp_Object fn, Lisp_Object arg)
-{
-  return NILP (arg) ? Ffuncall (1, &fn) : CALLN (Fapply, fn, arg);
-}
-
 /* Call function fn on no arguments.  */
 Lisp_Object
 call0 (Lisp_Object fn)
@@ -3625,7 +3550,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sdefvar);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
-  defsubr (&Smacroexpand);
   defsubr (&Scatch);
   defsubr (&Sthrow);
   defsubr (&Sunwind_protect);
