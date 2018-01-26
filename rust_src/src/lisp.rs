@@ -143,6 +143,21 @@ impl From<bool> for LispObject {
     }
 }
 
+impl From<LispObject> for u32 {
+    fn from(o: LispObject) -> Self {
+        o.as_fixnum_or_error() as u32
+    }
+}
+
+impl From<LispObject> for Option<u32> {
+    fn from(o: LispObject) -> Self {
+        match o.as_fixnum() {
+            None => None,
+            Some(n) => Some(n as u32),
+        }
+    }
+}
+
 /// Copies a Rust str into a new Lisp string
 impl<'a> From<&'a str> for LispObject {
     #[inline]

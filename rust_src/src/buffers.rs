@@ -1,10 +1,11 @@
 //! Functions operating on buffers.
 
-use libc::{c_int, c_uchar, c_void, ptrdiff_t};
-use std::{mem, ptr};
+use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
+use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+                 MOST_POSITIVE_FIXNUM};
 use remacs_sys::{globals, make_lisp_ptr, nsberror, set_buffer_internal, Fget_text_property};
 use remacs_sys::{Qbuffer_read_only, Qinhibit_read_only, Qnil};
 
@@ -19,6 +20,38 @@ use threads::ThreadState;
 
 pub const BEG: ptrdiff_t = 1;
 pub const BEG_BYTE: ptrdiff_t = 1;
+
+/// Maximum number of bytes in a buffer.
+/// A buffer cannot contain more bytes than a 1-origin fixnum can
+/// represent, nor can it be so large that C pointer arithmetic stops
+/// working. The ptrdiff_t cast ensures that this is signed, not unsigned.
+//const fn buf_bytes_max() -> ptrdiff_t {
+//    const mpf: ptrdiff_t = (MOST_POSITIVE_FIXNUM - 1) as ptrdiff_t;
+//    const eimv: ptrdiff_t = EmacsInt::max_value() as ptrdiff_t;
+//    const pdmv: ptrdiff_t = libc::ptrdiff_t::max_value();
+//    const arith_max: ptrdiff_t = if eimv <= pdmv {
+//        eimv
+//    } else {
+//        pdmv
+//    };
+//    if mpf as ptrdiff_t <= arith_max {
+//        mpf
+//    } else {
+//        arith_max
+//    }
+//}
+// TODO(db48x): use the nicer implementation above once const functions can have conditionals in them
+const fn buf_bytes_max() -> ptrdiff_t {
+    const p: [ptrdiff_t; 2] = [
+        EmacsInt::max_value() as ptrdiff_t,
+        libc::ptrdiff_t::max_value(),
+    ];
+    const arith_max: ptrdiff_t =
+        p[((p[1] - p[0]) >> ((8 * std::mem::size_of::<ptrdiff_t>()) - 1)) as usize];
+    const q: [ptrdiff_t; 2] = [(MOST_POSITIVE_FIXNUM - 1) as ptrdiff_t, arith_max];
+    q[((q[1] - q[0]) >> ((8 * std::mem::size_of::<ptrdiff_t>()) - 1)) as usize]
+}
+pub const BUF_BYTES_MAX: ptrdiff_t = buf_bytes_max();
 
 pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;

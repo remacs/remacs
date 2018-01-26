@@ -1886,78 +1886,6 @@ usage: (insert-before-markers-and-inherit &rest ARGS)  */)
   return Qnil;
 }
 
-DEFUN ("insert-char", Finsert_char, Sinsert_char, 1, 3,
-       "(list (read-char-by-name \"Insert character (Unicode name or hex): \")\
-              (prefix-numeric-value current-prefix-arg)\
-              t))",
-       doc: /* Insert COUNT copies of CHARACTER.
-Interactively, prompt for CHARACTER.  You can specify CHARACTER in one
-of these ways:
-
- - As its Unicode character name, e.g. \"LATIN SMALL LETTER A\".
-   Completion is available; if you type a substring of the name
-   preceded by an asterisk `*', Emacs shows all names which include
-   that substring, not necessarily at the beginning of the name.
-
- - As a hexadecimal code point, e.g. 263A.  Note that code points in
-   Emacs are equivalent to Unicode up to 10FFFF (which is the limit of
-   the Unicode code space).
-
- - As a code point with a radix specified with #, e.g. #o21430
-   (octal), #x2318 (hex), or #10r8984 (decimal).
-
-If called interactively, COUNT is given by the prefix argument.  If
-omitted or nil, it defaults to 1.
-
-Inserting the character(s) relocates point and before-insertion
-markers in the same ways as the function `insert'.
-
-The optional third argument INHERIT, if non-nil, says to inherit text
-properties from adjoining text, if those properties are sticky.  If
-called interactively, INHERIT is t.  */)
-  (Lisp_Object character, Lisp_Object count, Lisp_Object inherit)
-{
-  int i, stringlen;
-  register ptrdiff_t n;
-  int c, len;
-  unsigned char str[MAX_MULTIBYTE_LENGTH];
-  char string[4000];
-
-  CHECK_CHARACTER (character);
-  if (NILP (count))
-    XSETFASTINT (count, 1);
-  CHECK_NUMBER (count);
-  c = XFASTINT (character);
-
-  if (!NILP (BVAR (current_buffer, enable_multibyte_characters)))
-    len = CHAR_STRING (c, str);
-  else
-    str[0] = c, len = 1;
-  if (XINT (count) <= 0)
-    return Qnil;
-  if (BUF_BYTES_MAX / len < XINT (count))
-    buffer_overflow ();
-  n = XINT (count) * len;
-  stringlen = min (n, sizeof string - sizeof string % len);
-  for (i = 0; i < stringlen; i++)
-    string[i] = str[i % len];
-  while (n > stringlen)
-    {
-      maybe_quit ();
-      if (!NILP (inherit))
-	insert_and_inherit (string, stringlen);
-      else
-	insert (string, stringlen);
-      n -= stringlen;
-    }
-  if (!NILP (inherit))
-    insert_and_inherit (string, n);
-  else
-    insert (string, n);
-  return Qnil;
-}
-
-
 /* Making strings from buffer contents.  */
 
 /* Return a Lisp_String containing the text of the current buffer from
@@ -4682,7 +4610,6 @@ functions if all the text being accessed has this property.  */);
   defsubr (&Sinsert_before_markers);
   defsubr (&Sinsert_and_inherit);
   defsubr (&Sinsert_and_inherit_before_markers);
-  defsubr (&Sinsert_char);
 
   defsubr (&Suser_login_name);
   defsubr (&Suser_real_login_name);
