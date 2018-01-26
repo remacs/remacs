@@ -949,11 +949,12 @@ that.
 
   On graphical displays, there is a @dfn{vertical scroll bar} on the
 side of each Emacs window.  Clicking @kbd{mouse-1} on the scroll bar's
-up and down buttons scrolls the window by one line at a time.  Clicking
-@kbd{mouse-1} above or below the scroll bar's inner box scrolls the
-window by nearly the entire height of the window, like @kbd{M-v} and
-@kbd{C-v} respectively (@pxref{Moving Point}).  Dragging the inner box
-scrolls continuously.
+up and down buttons scrolls the window by one line at a time (but some
+toolkits allow you to customize the scroll bars to not have those
+buttons).  Clicking @kbd{mouse-1} above or below the scroll bar's
+inner box scrolls the window by nearly the entire height of the
+window, like @kbd{M-v} and @kbd{C-v} respectively (@pxref{Moving
+Point}).  Dragging the inner box scrolls continuously.
 
   If Emacs is compiled on the X Window System without X toolkit
 support, the scroll bar behaves differently.  Clicking @kbd{mouse-1}
@@ -1020,10 +1021,12 @@ Manual}.
 @cindex Horizontal Scroll Bar mode
   On graphical displays with toolkit support, Emacs may also supply a
 @dfn{horizontal scroll bar} on the bottom of each window.  Clicking
-@kbd{mouse-1} on that scroll bar's left and right buttons scrolls
-the window horizontally by one column at a time.  Clicking @kbd{mouse-1}
-on the left or right of the scroll bar's inner box scrolls the window by
-four columns.  Dragging the inner box scrolls the window continuously.
+@kbd{mouse-1} on that scroll bar's left and right buttons scrolls the
+window horizontally by one column at a time.  (Note that some toolkits
+allow customizations of the scroll bar that cause these buttons not to
+be shown.)  Clicking @kbd{mouse-1} on the left or right of the scroll
+bar's inner box scrolls the window by four columns.  Dragging the
+inner box scrolls the window continuously.
 
   Note that such horizontal scrolling can make the window's position of
 point disappear on the left or the right.  Typing a character to insert
