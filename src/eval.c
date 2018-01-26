@@ -556,62 +556,6 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
   return sym;
 }
 
-DEFUN ("defconst", Fdefconst, Sdefconst, 2, UNEVALLED, 0,
-       doc: /* Define SYMBOL as a constant variable.
-This declares that neither programs nor users should ever change the
-value.  This constancy is not actually enforced by Emacs Lisp, but
-SYMBOL is marked as a special variable so that it is never lexically
-bound.
-
-The `defconst' form always sets the value of SYMBOL to the result of
-evalling INITVALUE.  If SYMBOL is buffer-local, its default value is
-what is set; buffer-local values are not affected.  If SYMBOL has a
-local binding, then this form sets the local binding's value.
-However, you should normally not make local bindings for variables
-defined with this form.
-
-The optional DOCSTRING specifies the variable's documentation string.
-usage: (defconst SYMBOL INITVALUE [DOCSTRING])  */)
-  (Lisp_Object args)
-{
-  Lisp_Object sym, tem;
-
-  sym = XCAR (args);
-  Lisp_Object docstring = Qnil;
-  if (!NILP (XCDR (XCDR (args))))
-    {
-      if (!NILP (XCDR (XCDR (XCDR (args)))))
-	error ("Too many arguments");
-      docstring = XCAR (XCDR (XCDR (args)));
-    }
-
-  tem = eval_sub (XCAR (XCDR (args)));
-  if (!NILP (Vpurify_flag))
-    tem = Fpurecopy (tem);
-  Fset_default (sym, tem);
-  XSYMBOL (sym)->declared_special = 1;
-  if (!NILP (docstring))
-    {
-      if (!NILP (Vpurify_flag))
-	docstring = Fpurecopy (docstring);
-      Fput (sym, Qvariable_documentation, docstring);
-    }
-  Fput (sym, Qrisky_local_variable, Qt);
-  LOADHIST_ATTACH (sym);
-  return sym;
-}
-
-/* Make SYMBOL lexically scoped.  */
-DEFUN ("internal-make-var-non-special", Fmake_var_non_special,
-       Smake_var_non_special, 1, 1, 0,
-       doc: /* Internal function.  */)
-     (Lisp_Object symbol)
-{
-  CHECK_SYMBOL (symbol);
-  XSYMBOL (symbol)->declared_special = 0;
-  return Qnil;
-}
-
 
 DEFUN ("let*", FletX, SletX, 1, UNEVALLED, 0,
        doc: /* Bind variables according to VARLIST then eval BODY.
@@ -3310,16 +3254,6 @@ unbind_for_thread_switch (struct thread_state *thr)
     }
 }
 
-DEFUN ("special-variable-p", Fspecial_variable_p, Sspecial_variable_p, 1, 1, 0,
-       doc: /* Return non-nil if SYMBOL's global binding has been declared special.
-A special variable is one that will be bound dynamically, even in a
-context where binding is lexical by default.  */)
-  (Lisp_Object symbol)
-{
-   CHECK_SYMBOL (symbol);
-   return XSYMBOL (symbol)->declared_special ? Qt : Qnil;
-}
-
 
 static union specbinding *
 get_backtrace_starting_at (Lisp_Object base)
@@ -3840,8 +3774,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sdefvar);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
-  defsubr (&Sdefconst);
-  defsubr (&Smake_var_non_special);
   defsubr (&Slet);
   defsubr (&SletX);
   defsubr (&Swhile);
@@ -3870,6 +3802,5 @@ alist of active lexical bindings.  */);
   defsubr (&Sbacktrace_frame_internal);
   defsubr (&Sbacktrace_eval);
   defsubr (&Sbacktrace__locals);
-  defsubr (&Sspecial_variable_p);
   defsubr (&Sfunctionp);
 }

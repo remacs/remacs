@@ -1,15 +1,17 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Fcons, Fset};
-use remacs_sys::{QCdocumentation, Qclosure, Qfunction, Qlambda, Qnil, Qsetq, Qt,
-                 Qwrong_number_of_arguments};
+use remacs_sys::{Fcons, Fpurecopy, Fset, Fset_default};
+use remacs_sys::{QCdocumentation, Qclosure, Qfunction, Qlambda, Qnil, Qrisky_local_variable,
+                 Qsetq, Qt, Qvariable_documentation, Qwrong_number_of_arguments};
 use remacs_sys::{eval_sub, globals};
 use remacs_sys::Lisp_Object;
 
 use lisp::LispObject;
 use lisp::defsubr;
-use lists::{assq, car};
+use lists::{assq, car, cdr, put};
+use obarray::loadhist_attach;
+use symbols::LispSymbolRef;
 use vectors::length;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -248,5 +250,78 @@ pub fn function(args: LispObject) -> LispObject {
     quoted
 }
 def_lisp_sym!(Qfunction, "function");
+
+/// Make SYMBOL lexically scoped.
+/// Internal function
+#[lisp_fn(name = "internal-make-var-non-special")]
+pub fn make_var_non_special(symbol: LispSymbolRef) -> bool {
+    symbol.set_declared_special(false);
+    true
+}
+
+/// Return non-nil if SYMBOL's global binding has been declared special.
+/// A special variable is one that will be bound dynamically, even in a
+/// context where binding is lexical by default.
+#[lisp_fn]
+pub fn special_variable_p(symbol: LispSymbolRef) -> bool {
+    symbol.get_declared_special()
+}
+
+/// Define SYMBOL as a constant variable.
+/// This declares that neither programs nor users should ever change the
+/// value.  This constancy is not actually enforced by Emacs Lisp, but
+/// SYMBOL is marked as a special variable so that it is never lexically
+/// bound.
+///
+/// The `defconst' form always sets the value of SYMBOL to the result of
+/// evalling INITVALUE.  If SYMBOL is buffer-local, its default value is
+/// what is set; buffer-local values are not affected.  If SYMBOL has a
+/// local binding, then this form sets the local binding's value.
+/// However, you should normally not make local bindings for variables
+/// defined with this form.
+///
+/// The optional DOCSTRING specifies the variable's documentation string.
+/// usage: (defconst SYMBOL INITVALUE [DOCSTRING])
+#[lisp_fn(min = "2", unevalled = "true")]
+pub fn defconst(args: LispObject) -> LispSymbolRef {
+    let (sym, tail) = args.as_cons_or_error().as_tuple();
+
+    let mut docstring = LispObject::constant_nil();
+    if cdr(tail).is_not_nil() {
+        if cdr(cdr(tail)).is_not_nil() {
+            error!("Too many arguments");
+        }
+
+        docstring = car(cdr(tail));
+    }
+
+    let mut tem = unsafe { eval_sub(car(cdr(args)).to_raw()) };
+    if unsafe { globals.f_Vpurify_flag } != Qnil {
+        tem = unsafe { Fpurecopy(tem) };
+    }
+    unsafe { Fset_default(sym.to_raw(), tem) };
+    let sym_ref = sym.as_symbol_or_error();
+    sym_ref.set_declared_special(true);
+    if docstring.is_not_nil() {
+        if unsafe { globals.f_Vpurify_flag } != Qnil {
+            docstring = LispObject::from_raw(unsafe { Fpurecopy(docstring.to_raw()) });
+        }
+
+        put(
+            sym,
+            LispObject::from_raw(Qvariable_documentation),
+            docstring,
+        );
+    }
+
+    put(
+        sym,
+        LispObject::from_raw(Qrisky_local_variable),
+        LispObject::constant_t(),
+    );
+    loadhist_attach(sym.to_raw());
+
+    sym_ref
+}
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));
