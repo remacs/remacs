@@ -468,8 +468,8 @@ last hyperlink moves back to the first hyperlink.
 
   To view all documentation about any symbol in the text, move point
 to the symbol and type @kbd{C-c C-c} (@code{help-follow-symbol}).
-This shows all available documentation about the symbol---as a
-variable, function and/or face.
+This shows the documentation for all the meanings of the symbol---as a
+variable, as a function, and/or as a face.
 
 @node Package Keywords
 @section Keyword Search for Packages

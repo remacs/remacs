@@ -99,6 +99,7 @@
 		(eq ?\; (aref mediatype 0)))
 	  (setq mediatype (concat "text/plain" mediatype))))
       (set-buffer (generate-new-buffer " *url-data*"))
+      (require 'mm-util)
       (mm-disable-multibyte)
       (insert (format "Content-Length: %d\n" (length data))
 	      "Content-Type: " mediatype "\n"

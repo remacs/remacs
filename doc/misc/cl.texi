@@ -4395,7 +4395,7 @@ is expanded at compile-time to the Lisp form
 @end example
 
 @noindent
-which is the most efficient ways of doing this operation
+which is the most efficient way of doing this operation
 in Lisp.  Thus, there is no performance penalty for using the more
 readable @code{cl-incf} form in your compiled code.
 

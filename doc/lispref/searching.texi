@@ -639,7 +639,15 @@ and nothing else.  @samp{c[ad]\@{3\@}r} matches string such as
 is a more general postfix operator that specifies repetition with a
 minimum of @var{m} repeats and a maximum of @var{n} repeats.  If @var{m}
 is omitted, the minimum is 0; if @var{n} is omitted, there is no
-maximum.
+maximum.  For both forms, @var{m} and @var{n}, if specified, may be no
+larger than
+@ifnottex
+2**15 @minus{} 1
+@end ifnottex
+@tex
+@math{2^{15}-1}
+@end tex
+.
 
 For example, @samp{c[ad]\@{1,2\@}r} matches the strings @samp{car},
 @samp{cdr}, @samp{caar}, @samp{cadr}, @samp{cdar}, and @samp{cddr}, and
