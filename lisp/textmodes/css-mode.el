@@ -1215,7 +1215,8 @@ for determining whether point is within a selector."
   (pcase (cons kind token)
     (`(:elem . basic) css-indent-offset)
     (`(:elem . arg) 0)
-    (`(:list-intro . ,(or `";" `"")) t) ;"" stands for BOB (bug#15467).
+    ;; "" stands for BOB (bug#15467).
+    (`(:list-intro . ,(or `";" `"" `":-property")) t)
     (`(:before . "{")
      (when (or (smie-rule-hanging-p) (smie-rule-bolp))
        (smie-backward-sexp ";")
