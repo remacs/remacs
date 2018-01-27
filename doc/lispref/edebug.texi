@@ -209,16 +209,26 @@ session, it runs the hook @code{edebug-setup-hook}, then sets it to
 @code{nil}.  You can use this to load Edebug specifications
 associated with a package you are using, but only when you use Edebug.
 
+@cindex edebug, failure to instrument
+  If Edebug detects a syntax error while instrumenting, it leaves point
+at the erroneous code and signals an @code{invalid-read-syntax} error.
+@c FIXME?  I can't see that it "leaves point at the erroneous code".
+Example:
+
+@example
+@error{} Invalid read syntax: "Expected lambda expression"
+@end example
+
+  One potential reason for such a failure to instrument is that some
+macro definitions are not yet known to Emacs.  To work around this,
+load the file which defines the function you are about to instrument.
+
 @findex eval-expression @r{(Edebug)}
   To remove instrumentation from a definition, simply re-evaluate its
 definition in a way that does not instrument.  There are two ways of
 evaluating forms that never instrument them: from a file with
 @code{load}, and from the minibuffer with @code{eval-expression}
 (@kbd{M-:}).
-
-  If Edebug detects a syntax error while instrumenting, it leaves point
-at the erroneous code and signals an @code{invalid-read-syntax} error.
-@c FIXME?  I can't see that it "leaves point at the erroneous code".
 
   @xref{Edebug Eval}, for other evaluation functions available
 inside of Edebug.
