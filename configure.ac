@@ -3303,6 +3303,11 @@ if test "${HAVE_X11}" = "yes"; then
 	    AC_DEFINE(HAVE_OTF_GET_VARIATION_GLYPHS, 1,
 		      [Define to 1 if libotf has OTF_get_variation_glyphs.])
 	  fi
+	  EMACS_CHECK_MODULES([OTFOK], [libotf >= 0.9.16])
+	  if test "$HAVE_OTFOK" != "yes"; then
+	    AC_DEFINE(HAVE_OTF_KANNADA_BUG, 1,
+[Define to 1 if libotf is affected by https://debbugs.gnu.org/28110.])
+	  fi
 	fi
       fi
     dnl FIXME should there be an error if HAVE_FREETYPE != yes?

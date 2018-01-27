@@ -6526,7 +6526,12 @@ other font of the appropriate family and registry is available.  */);
 	       doc: /* List of ignored fonts.
 Each element is a regular expression that matches names of fonts to
 ignore.  */);
+#ifdef HAVE_OTF_KANNADA_BUG
+  /* https://debbugs.gnu.org/30193  */
+  Vface_ignored_fonts = list1 (build_string ("Noto Serif Kannada"));
+#else
   Vface_ignored_fonts = Qnil;
+#endif
 
   DEFVAR_LISP ("face-remapping-alist", Vface_remapping_alist,
 	       doc: /* Alist of face remappings.
