@@ -125,15 +125,18 @@ corresponding to the mode line clicked."
 ;;; Mode line contents
 
 (defun mode-line-default-help-echo (window)
-  "Return default help echo text for WINDOW's mode-line."
+  "Return default help echo text for WINDOW's mode line."
   (let* ((frame (window-frame window))
          (line-1a
           ;; Show text to select window only if the window is not
           ;; selected.
           (not (eq window (frame-selected-window frame))))
          (line-1b
-          ;; Show text to drag modeline if and only if it can be done.
-          (or (window-in-direction 'below window)
+          ;; Show text to drag mode line if either the window is not
+          ;; at the bottom of its frame or the minibuffer window of
+          ;; this frame can be resized.  This matches a corresponding
+          ;; check in `mouse-drag-mode-line'.
+          (or (not (window-at-side-p window 'bottom))
               (let ((mini-window (minibuffer-window frame)))
                 (and (eq frame (window-frame mini-window))
                      (or (minibuffer-window-active-p mini-window)
@@ -166,7 +169,7 @@ corresponding to the mode line clicked."
 If the value is a string, it specifies the tooltip or echo area
 message to display when the mouse is moved over the mode line.
 If the value is a function, call that function with one argument
-- the window whose mode-line to display.  If the text at the
+- the window whose mode line to display.  If the text at the
 mouse position has a `help-echo' text property, that overrides
 this variable."
   :type '(choice
