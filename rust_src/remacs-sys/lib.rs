@@ -1097,7 +1097,6 @@ extern "C" {
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
 
-    pub fn Faref(array: Lisp_Object, idx: Lisp_Object) -> Lisp_Object;
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
