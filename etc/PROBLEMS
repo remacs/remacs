@@ -478,6 +478,21 @@ The solution was to upgrade Semantic to version 2.0pre4 (distributed
 with CEDET 1.0pre4) or later.  Note that Emacs includes Semantic since
 23.2, and this issue does not apply to the included version.
 
+*** Display artifacts on GUI frames on X-based systems.
+
+This is known to be caused by using double-buffering (which is enabled
+by default in Emacs 26 and later).  The artifacts typically appear
+after commands that cause Emacs to scroll the display.
+
+You can disable double-buffering by evaluating the following form:
+
+  (modify-all-frames-parameters '((inhibit-double-buffering . t)))
+
+To make this permanent, add it to your ~/.emacs init file.
+
+Note that disabling double-buffering will cause flickering of the
+display in some situations.
+
 *** Self-documentation messages are garbled.
 
 This means that the file 'etc/DOC' doesn't properly correspond
