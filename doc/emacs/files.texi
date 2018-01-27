@@ -738,7 +738,7 @@ survive a crash even if @code{fsync} works properly.
   The @code{write-region-inhibit-fsync} variable controls whether
 Emacs invokes @code{fsync} after saving a file.  The variable's
 default value is @code{nil} when Emacs is interactive, and @code{t}
-when Emacs runs in batch mode.
+when Emacs runs in batch mode (@pxref{Initial Options, batch mode}).
 
   Emacs never uses @code{fsync} when writing auto-save files, as these
 files might lose data anyway.

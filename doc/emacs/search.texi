@@ -1911,4 +1911,4 @@ window Emacs pops up for displaying the search results; the default is
 that displays the buffer where you start searching, but if the value
 of @code{search-slow-window-lines} is negative, that means to put the
 window at the top and give it the number of lines that is the absolute
-value of that value.
+value of @code{search-slow-window-lines}.
