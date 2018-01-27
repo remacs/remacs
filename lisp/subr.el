@@ -3019,10 +3019,9 @@ remove properties specified by `yank-excluded-properties'."
                           run-start prop nil end)))
             (funcall fun value run-start run-end)
             (setq run-start run-end)))))
-    (with-silent-modifications
-      (if (eq yank-excluded-properties t)
-          (set-text-properties start end nil)
-        (remove-list-of-text-properties start end yank-excluded-properties)))))
+    (if (eq yank-excluded-properties t)
+        (set-text-properties start end nil)
+      (remove-list-of-text-properties start end yank-excluded-properties))))
 
 (defvar yank-undo-function)
 
