@@ -8452,7 +8452,7 @@ of WINDOW.
 Optional argument LEFT, if non-nil, means to return values suitable for
 buffers displaying right to left text."
   ;; Process lines as returned by ‘window-lines-pixel-dimensions’.
-  ;; STACK is a stack that contains rows that have to be processed yet.
+  ;; STACK is a stack that contains rows that have yet to be processed.
   (let* ((window (window-normalize-window window t))
 	 (disjoint (and (consp count) (cdr count)))
 	 (count (or (and (numberp count) count)
