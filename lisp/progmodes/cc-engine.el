@@ -1124,7 +1124,16 @@ comment at the start of cc-engine.el for more info."
 			   (not (c-looking-at-inexpr-block lim nil t))
 			   (save-excursion
 			     (c-backward-token-2 1 t nil)
-			     (not (looking-at "=\\([^=]\\|$\\)"))))
+			     (not (looking-at "=\\([^=]\\|$\\)")))
+			   (or
+			    (not c-opt-block-decls-with-vars-key)
+			    (save-excursion
+			      (c-backward-token-2 1 t nil)
+			      (if (and (looking-at c-symbol-start)
+				       (not (looking-at c-keywords-regexp)))
+				  (c-backward-token-2 1 t nil))
+			      (not (looking-at
+				    c-opt-block-decls-with-vars-key)))))
 			  (save-excursion
 			    (c-forward-sexp) (point)))
 			 ;; Just gone back over some paren block?
