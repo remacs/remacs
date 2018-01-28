@@ -164,6 +164,8 @@ static int read_emacs_mule_char (int, int (*) (int, Lisp_Object),
 static void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
                           Lisp_Object, Lisp_Object,
                           Lisp_Object, Lisp_Object);
+
+static void build_load_history (Lisp_Object, bool);
 
 /* Functions that read one byte from the current source READCHARFUN
    or unreads one byte.  If the integer argument C is -1, it returns
@@ -1246,8 +1248,9 @@ Return t if the file exists and loads successfully.  */)
     }
 
 #ifdef HAVE_MODULES
-  if (suffix_p (found, MODULES_SUFFIX))
-    return unbind_to (count, Fmodule_load (found));
+  bool is_module = suffix_p (found, MODULES_SUFFIX);
+#else
+  bool is_module = false;
 #endif
 
   /* Check if we're stuck in a recursive load cycle.
@@ -1348,7 +1351,7 @@ Return t if the file exists and loads successfully.  */)
             } /* !load_prefer_newer */
 	}
     }
-  else
+  else if (!is_module)
     {
       /* We are loading a source file (*.el).  */
       if (!NILP (Vload_source_file_function))
@@ -1375,7 +1378,7 @@ Return t if the file exists and loads successfully.  */)
       stream = NULL;
       errno = EINVAL;
     }
-  else
+  else if (!is_module)
     {
 #ifdef WINDOWSNT
       emacs_close (fd);
@@ -1386,9 +1389,23 @@ Return t if the file exists and loads successfully.  */)
       stream = fdopen (fd, fmode);
 #endif
     }
-  if (! stream)
-    report_file_error ("Opening stdio stream", file);
-  set_unwind_protect_ptr (fd_index, close_infile_unwind, stream);
+
+  if (is_module)
+    {
+      /* `module-load' uses the file name, so we can close the stream
+         now.  */
+      if (fd >= 0)
+        {
+          emacs_close (fd);
+          clear_unwind_protect (fd_index);
+        }
+    }
+  else
+    {
+      if (! stream)
+        report_file_error ("Opening stdio stream", file);
+      set_unwind_protect_ptr (fd_index, close_infile_unwind, stream);
+    }
 
   if (! NILP (Vpurify_flag))
     Vpreloaded_file_list = Fcons (Fpurecopy (file), Vpreloaded_file_list);
@@ -1398,6 +1415,8 @@ Return t if the file exists and loads successfully.  */)
       if (!safe_p)
 	message_with_string ("Loading %s (compiled; note unsafe, not compiled in Emacs)...",
 		 file, 1);
+      else if (is_module)
+        message_with_string ("Loading %s (module)...", file, 1);
       else if (!compiled)
 	message_with_string ("Loading %s (source)...", file, 1);
       else if (newer)
@@ -1411,24 +1430,39 @@ Return t if the file exists and loads successfully.  */)
   specbind (Qinhibit_file_name_operation, Qnil);
   specbind (Qload_in_progress, Qt);
 
-  struct infile input;
-  input.stream = stream;
-  input.lookahead = 0;
-  infile = &input;
-
-  if (lisp_file_lexically_bound_p (Qget_file_char))
-    Fset (Qlexical_binding, Qt);
-
-  if (! version || version >= 22)
-    readevalloop (Qget_file_char, &input, hist_file_name,
-		  0, Qnil, Qnil, Qnil, Qnil);
+  if (is_module)
+    {
+#ifdef HAVE_MODULES
+      specbind (Qcurrent_load_list, Qnil);
+      LOADHIST_ATTACH (found);
+      Fmodule_load (found);
+      build_load_history (found, true);
+#else
+      /* This cannot happen.  */
+      emacs_abort ();
+#endif
+    }
   else
     {
-      /* We can't handle a file which was compiled with
-	 byte-compile-dynamic by older version of Emacs.  */
-      specbind (Qload_force_doc_strings, Qt);
-      readevalloop (Qget_emacs_mule_file_char, &input, hist_file_name,
-		    0, Qnil, Qnil, Qnil, Qnil);
+      struct infile input;
+      input.stream = stream;
+      input.lookahead = 0;
+      infile = &input;
+
+      if (lisp_file_lexically_bound_p (Qget_file_char))
+        Fset (Qlexical_binding, Qt);
+
+      if (! version || version >= 22)
+        readevalloop (Qget_file_char, &input, hist_file_name,
+                      0, Qnil, Qnil, Qnil, Qnil);
+      else
+        {
+          /* We can't handle a file which was compiled with
+             byte-compile-dynamic by older version of Emacs.  */
+          specbind (Qload_force_doc_strings, Qt);
+          readevalloop (Qget_emacs_mule_file_char, &input, hist_file_name,
+                        0, Qnil, Qnil, Qnil, Qnil);
+        }
     }
   unbind_to (count, Qnil);
 
@@ -1449,6 +1483,8 @@ Return t if the file exists and loads successfully.  */)
       if (!safe_p)
 	message_with_string ("Loading %s (compiled; note unsafe, not compiled in Emacs)...done",
 		 file, 1);
+      else if (is_module)
+        message_with_string ("Loading %s (module)...done", file, 1);
       else if (!compiled)
 	message_with_string ("Loading %s (source)...done", file, 1);
       else if (newer)

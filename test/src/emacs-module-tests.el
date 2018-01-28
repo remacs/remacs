@@ -17,6 +17,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
+(require 'cl-lib)
 (require 'ert)
 (require 'help-fns)
 
@@ -267,13 +268,21 @@ during garbage collection."
   (with-temp-buffer
     (let ((standard-output (current-buffer)))
       (describe-function-1 #'mod-test-sum)
-      (should (equal (buffer-substring-no-properties 1 (point-max))
-                     ;; FIXME: This should print the actual module
-                     ;; filename.
-                     "a module function in `src/emacs-module-tests.el'.
+      (should (equal
+               (buffer-substring-no-properties 1 (point-max))
+               (format "a module function in `data/emacs-module/mod-test%s'.
 
 (mod-test-sum a b)
 
-Return A + B")))))
+Return A + B"
+                       module-file-suffix))))))
+
+(ert-deftest module/load-history ()
+  "Check that Bug#30164 is fixed."
+  (load mod-test-file)
+  (cl-destructuring-bind (file &rest entries) (car load-history)
+    (should (equal (file-name-sans-extension file) mod-test-file))
+    (should (member '(provide . mod-test) entries))
+    (should (member '(defun . mod-test-sum) entries))))
 
 ;;; emacs-module-tests.el ends here
