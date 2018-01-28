@@ -8963,7 +8963,7 @@ Otherwise, it calls `upcase-word', with prefix argument passed to it
 to upcase ARG words."
   (interactive "*p")
   (if (use-region-p)
-      (upcase-region (region-beginning) (region-end))
+      (upcase-region (region-beginning) (region-end) (region-noncontiguous-p))
     (upcase-word arg)))
 
 (defun downcase-dwim (arg)
@@ -8973,7 +8973,7 @@ Otherwise, it calls `downcase-word', with prefix argument passed to it
 to downcase ARG words."
   (interactive "*p")
   (if (use-region-p)
-      (downcase-region (region-beginning) (region-end))
+      (downcase-region (region-beginning) (region-end) (region-noncontiguous-p))
     (downcase-word arg)))
 
 (defun capitalize-dwim (arg)
