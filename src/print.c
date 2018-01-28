@@ -2371,10 +2371,10 @@ I.e., (quote foo) prints as \\='foo, (function foo) as #\\='foo.  */);
   DEFVAR_LISP ("print-gensym", Vprint_gensym,
 	       doc: /* Non-nil means print uninterned symbols so they will read as uninterned.
 I.e., the value of (make-symbol \"foobar\") prints as #:foobar.
-When the uninterned symbol appears within a recursive data structure,
-and the symbol appears more than once, in addition use the #N# and #N=
-constructs as needed, so that multiple references to the same symbol are
-shared once again when the text is read back.  */);
+When the uninterned symbol appears multiple times within the printed
+expression, and `print-circle' is non-nil, in addition use the #N#
+and #N= constructs as needed, so that multiple references to the same
+symbol are shared once again when the text is read back.  */);
   Vprint_gensym = Qnil;
 
   DEFVAR_LISP ("print-circle", Vprint_circle,
