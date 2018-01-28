@@ -18,6 +18,7 @@
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 (require 'ert)
+(require 'help-fns)
 
 (defconst mod-test-emacs
   (expand-file-name invocation-name invocation-directory)
@@ -260,5 +261,18 @@ during garbage collection."
   (module--test-assertion
       (rx "Module function called during garbage collection\n")
     (mod-test-invalid-finalizer)))
+
+(ert-deftest module/describe-function-1 ()
+  "Check that Bug#30163 is fixed."
+  (with-temp-buffer
+    (let ((standard-output (current-buffer)))
+      (describe-function-1 #'mod-test-sum)
+      (should (equal (buffer-substring-no-properties 1 (point-max))
+                     ;; FIXME: This should print the filename.
+                     "a module function.
+
+(mod-test-sum a b)
+
+Return A + B")))))
 
 ;;; emacs-module-tests.el ends here
