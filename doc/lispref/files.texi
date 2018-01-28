@@ -1541,6 +1541,16 @@ argument.  If @var{predicate} is @code{nil} or omitted,
 @xref{Kinds of Files}, for other useful predicates, e.g.,
 @code{file-executable-p} and @code{file-directory-p}.
 
+This function will normally skip directories, so if you want it to
+find directories, make sure the @var{predicate} function returns
+@code{dir-ok} for them.  For example:
+
+@example
+(locate-file "html" '("/var/www" "/srv") nil
+             (lambda (f) (if (file-directory-p f) 'dir-ok)))
+@end example
+
+
 For compatibility, @var{predicate} can also be one of the symbols
 @code{executable}, @code{readable}, @code{writable}, @code{exists}, or
 a list of one or more of these symbols.
