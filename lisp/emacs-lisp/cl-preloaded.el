@@ -60,12 +60,14 @@
     (marker number-or-marker atom)
     (overlay atom) (float number atom) (window-configuration atom)
     (process atom) (window atom) (subr atom) (compiled-function function atom)
+    (module-function function atom)
     (buffer atom) (char-table array sequence atom)
     (bool-vector array sequence atom)
     (frame atom) (hash-table atom) (terminal atom)
     (thread atom) (mutex atom) (condvar atom)
     (font-spec atom) (font-entity atom) (font-object atom)
     (vector array sequence atom)
+    (user-ptr atom)
     ;; Plus, really hand made:
     (null symbol list sequence atom))
   "Alist of supertypes.

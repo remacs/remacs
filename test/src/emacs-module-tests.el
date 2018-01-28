@@ -30,6 +30,14 @@
 
 (require 'mod-test mod-test-file)
 
+(cl-defgeneric emacs-module-tests--generic (_))
+
+(cl-defmethod emacs-module-tests--generic ((_ module-function))
+  'module-function)
+
+(cl-defmethod emacs-module-tests--generic ((_ user-ptr))
+  'user-ptr)
+
 ;;
 ;; Basic tests.
 ;;
@@ -74,6 +82,7 @@ changes."
     (should (module-function-p func))
     (should (functionp func))
     (should (equal (type-of func) 'module-function))
+    (should (eq (emacs-module-tests--generic func) 'module-function))
     (should (string-match-p
              (rx bos "#<module function "
                  (or "Fmod_test_sum"
@@ -149,6 +158,7 @@ changes."
          (r (mod-test-userptr-get v)))
 
     (should (eq (type-of v) 'user-ptr))
+    (should (eq (emacs-module-tests--generic v) 'user-ptr))
     (should (integerp r))
     (should (= r n))))
 
