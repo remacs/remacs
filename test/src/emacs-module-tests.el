@@ -72,6 +72,7 @@ This test needs to be changed whenever the implementation
 changes."
   (let ((func (symbol-function #'mod-test-sum)))
     (should (module-function-p func))
+    (should (functionp func))
     (should (equal (type-of func) 'module-function))
     (should (string-match-p
              (rx bos "#<module function "
