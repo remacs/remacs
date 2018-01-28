@@ -5209,7 +5209,8 @@ view the differences using `diff-buffer-with-file'.
 This command first saves any buffers where `buffer-save-without-query' is
 non-nil, without asking.
 
-Optional argument (the prefix) non-nil means save all with no questions.
+Optional argument ARG (interactively, prefix argument) non-nil means save
+all with no questions.
 Optional second argument PRED determines which buffers are considered:
 If PRED is nil, all the file-visiting buffers are considered.
 If PRED is t, then certain non-file buffers will also be considered.
