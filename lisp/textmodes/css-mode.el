@@ -1413,6 +1413,15 @@ should not be mixed with those in color.el."
           (apply-partially #'make-list (if six-digits 2 4))
           (seq-partition (seq-drop hex 1) (if six-digits 2 1)))))))
 
+(defun css--format-hex (hex)
+  "Format a CSS hex color by shortening it if possible."
+  (let ((parts (seq-partition (seq-drop hex 1) 2)))
+    (if (and (>= (length hex) 6)
+             (seq-every-p (lambda (p) (eq (elt p 0) (elt p 1))) parts))
+        (apply #'string
+               (cons ?# (mapcar (lambda (p) (elt p 0)) parts)))
+      hex)))
+
 (defun css--named-color-to-hex ()
   "Convert named CSS color at point to hex format.
 Return non-nil if a conversion was made.
@@ -1426,7 +1435,7 @@ should not be mixed with those in color.el."
     (when (member (word-at-point) (mapcar #'car css--color-map))
       (looking-at css--colors-regexp)
       (let ((color (css--compute-color (point) (match-string 0))))
-        (replace-match color))
+        (replace-match (css--format-hex color)))
       t)))
 
 (defun css--format-rgba-alpha (alpha)
@@ -1490,7 +1499,9 @@ should not be mixed with those in color.el."
           (kill-sexp)
           (let ((named-color (seq-find (lambda (x) (equal (cdr x) color))
                                        css--color-map)))
-            (insert (if named-color (car named-color) color)))
+            (insert (if named-color
+                        (car named-color)
+                      (css--format-hex color))))
           t)))))
 
 (defun css-cycle-color-format ()
