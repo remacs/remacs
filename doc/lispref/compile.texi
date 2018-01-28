@@ -527,7 +527,7 @@ string for details.
 @vindex byte-compile-error-on-warn
   Sometimes you may wish the byte-compiler warnings to be reported
 using @code{error}.  If so, set @code{byte-compile-error-on-warn} to a
-non-nil value.
+non-@code{nil} value.
 
 @node Byte-Code Objects
 @section Byte-Code Function Objects

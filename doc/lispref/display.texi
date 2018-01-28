@@ -1980,7 +1980,7 @@ height of both, if present, in the return value.
 whole and does not care about the size of individual lines.  The
 following function does.
 
-@defun window-lines-pixel-dimensions &optional window first last body inverse
+@defun window-lines-pixel-dimensions &optional window first last body inverse left
 This function calculates the pixel dimensions of each line displayed in
 the specified @var{window}.  It does so by walking @var{window}'s
 current glyph matrix---a matrix storing the glyph (@pxref{Glyphs}) of
@@ -2775,15 +2775,15 @@ This sets the @code{:slant} attribute of @var{face} to @var{normal} if
 @var{italic-p} is @code{nil}, and to @var{italic} otherwise.
 @end defun
 
-@defun set-face-underline face underline &optional frame
+@deffn Command set-face-underline face underline &optional frame
 This sets the @code{:underline} attribute of @var{face} to
 @var{underline}.
-@end defun
+@end deffn
 
-@defun set-face-inverse-video face inverse-video-p &optional frame
+@deffn Command set-face-inverse-video face inverse-video-p &optional frame
 This sets the @code{:inverse-video} attribute of @var{face} to
 @var{inverse-video-p}.
-@end defun
+@end deffn
 
 @deffn Command invert-face face &optional frame
 This swaps the foreground and background colors of face @var{face}.
@@ -7362,7 +7362,7 @@ have their own frame parameters (@pxref{Frame Parameters}).  Unlike
 other frames, the default parameters for tooltip frames are stored in a
 special variable.
 
-@defvar tooltip-frame-parameters
+@defopt tooltip-frame-parameters
 This customizable option holds the default frame parameters used for
 displaying tooltips.  Any font and color parameters are ignored, and the
 corresponding attributes of the @code{tooltip} face are used instead.
@@ -7372,7 +7372,7 @@ absolute frame-relative coordinates where the tooltip should be shown.
 variables described in @ref{Tooltips,,, emacs, The GNU Emacs Manual}.)
 Note that the @code{left} and @code{top} parameters, if present,
 override the values of mouse-relative offsets.
-@end defvar
+@end defopt
 
 @vindex tooltip@r{ face}
 The @code{tooltip} face determines the appearance of text shown in
@@ -7547,7 +7547,7 @@ for its paragraphs.  For example, buffers containing program source
 code should force all paragraphs to be displayed left-to-right.  You
 can use following variable to do this:
 
-@defvar bidi-paragraph-direction
+@defopt bidi-paragraph-direction
 If the value of this buffer-local variable is the symbol
 @code{right-to-left} or @code{left-to-right}, all paragraphs in the
 buffer are assumed to have that specified direction.  Any other value
@@ -7558,7 +7558,7 @@ the base direction of each paragraph from its contents.
 Modes for program source code should set this to @code{left-to-right}.
 Prog mode does this by default, so modes derived from Prog mode do not
 need to set this explicitly (@pxref{Basic Major Modes}).
-@end defvar
+@end defopt
 
 @defun current-bidi-paragraph-direction &optional buffer
 This function returns the paragraph direction at point in the named

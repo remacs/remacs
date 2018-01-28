@@ -926,8 +926,8 @@ premium.
 
   You may also specify additional GDB-related buffers to display,
 either in the same frame or a different one.  Select the buffers you
-want by typing @code{M-x gdb-display-@var{buffertype}-buffer} or
-@code{M-x gdb-frame-@var{buffertype}-buffer}, where @var{buffertype}
+want by typing @kbd{M-x gdb-display-@var{buffertype}-buffer} or
+@kbd{M-x gdb-frame-@var{buffertype}-buffer}, where @var{buffertype}
 is the relevant buffer type, such as @samp{breakpoints}.  You can do
 the same with the menu bar, with the @samp{GDB-Windows} and
 @samp{GDB-Frames} sub-menus of the @samp{GUD} menu.

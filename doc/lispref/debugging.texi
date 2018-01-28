@@ -619,7 +619,7 @@ was called.  The convention for arguments is detailed in the description
 of @code{debug} (@pxref{Invoking the Debugger}).
 @end defvar
 
-@deffn Command backtrace
+@defun backtrace
 @cindex run time stack
 @cindex call stack
 This function prints a trace of Lisp function calls currently active.
@@ -669,9 +669,9 @@ forms are elided.
 ----------- Buffer: backtrace-output ------------
 @end group
 @end smallexample
-@end deffn
+@end defun
 
-@defvar debugger-stack-frame-as-list
+@defopt debugger-stack-frame-as-list
 If this variable is non-@code{nil}, every stack frame of the backtrace
 is displayed as a list.  This aims at improving the backtrace
 readability at the cost of special forms no longer being visually
@@ -700,7 +700,7 @@ example would look as follows:
 ----------- Buffer: backtrace-output ------------
 @end group
 @end smallexample
-@end defvar
+@end defopt
 
 @defvar debug-on-next-call
 @cindex @code{eval}, and debugging

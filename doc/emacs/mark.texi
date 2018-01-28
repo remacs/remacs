@@ -273,7 +273,7 @@ active.  If you change the value to @code{kill}, these commands
 @vindex mark-even-if-inactive
   Other commands always operate on the region, and have no default
 behavior.  Such commands usually have the word @code{region} in their
-names, like @kbd{C-w} (@code{kill-region}) and @code{C-x C-u}
+names, like @kbd{C-w} (@code{kill-region}) and @kbd{C-x C-u}
 (@code{upcase-region}).  If the mark is inactive, they operate on the
 @dfn{inactive region}---that is, on the text between point and the
 position at which the mark was last set (@pxref{Mark Ring}).  To

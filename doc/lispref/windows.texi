@@ -4701,7 +4701,7 @@ managers that give focus to a frame (and thus trigger its subsequent
 selection) whenever the mouse pointer enters its window-system window
 (@pxref{Input Focus}).
 
-@defvar mouse-autoselect-window
+@defopt mouse-autoselect-window
 If this variable is non-@code{nil}, Emacs will try to automatically
 select the window under the mouse pointer.  The following values are
 meaningful:
@@ -4729,7 +4729,7 @@ mode line of a window conceptually should not cause its auto-selection.
 
 Mouse auto-selection selects the minibuffer window only if it is active,
 and never deselects the active minibuffer window.
-@end defvar
+@end defopt
 
 Mouse auto-selection can be used to emulate a focus follows mouse policy
 for child frames (@pxref{Child Frames}) which usually are not tracked by
