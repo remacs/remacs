@@ -595,7 +595,7 @@ MODE should be an integer which is a file mode value."
         (progress-reporter-done progress-reporter)
       (message "Warning: premature EOF parsing tar file"))
     (goto-char (point-min))
-    (let ((buffer-file-truename nil) ; avoid changing dir mtime by lock_file
+    (let ((create-lockfiles nil) ; avoid changing dir mtime by lock_file
 	  (inhibit-read-only t)
           (total-summaries
            (mapconcat 'tar-header-block-summarize tar-parse-info "\n")))
