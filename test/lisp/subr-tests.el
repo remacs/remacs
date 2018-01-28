@@ -26,7 +26,6 @@
 ;;
 
 ;;; Code:
-
 (require 'ert)
 (eval-when-compile (require 'cl-lib))
 
@@ -306,6 +305,25 @@ cf. Bug#25477."
                  "g0"))
   (should (eq (string-to-char (symbol-name (gensym))) ?g))
   (should (eq (string-to-char (symbol-name (gensym "X"))) ?X)))
+
+(ert-deftest subr-tests--assq-delete-all ()
+  "Test `assq-delete-all' behavior."
+  (cl-flet ((new-list-fn
+             ()
+             (list (cons 'a 1) (cons 'b 2) (cons 'c 3) 'd (cons "foo" "bar"))))
+    (should (equal (cdr (new-list-fn)) (assq-delete-all 'a (new-list-fn))))
+    (should (equal (new-list-fn) (assq-delete-all 'd (new-list-fn))))
+    (should (equal (new-list-fn) (assq-delete-all "foo" (new-list-fn))))))
+
+(ert-deftest subr-tests--assoc-delete-all ()
+  "Test `assoc-delete-all' behavior."
+  (cl-flet ((new-list-fn
+             ()
+             (list (cons 'a 1) (cons 'b 2) (cons 'c 3) 'd (cons "foo" "bar"))))
+    (should (equal (cdr (new-list-fn)) (assoc-delete-all 'a (new-list-fn))))
+    (should (equal (new-list-fn) (assoc-delete-all 'd (new-list-fn))))
+    (should (equal (butlast (new-list-fn))
+                   (assoc-delete-all "foo" (new-list-fn))))))
 
 (provide 'subr-tests)
 ;;; subr-tests.el ends here

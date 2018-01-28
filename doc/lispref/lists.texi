@@ -1733,6 +1733,14 @@ alist
 @end example
 @end defun
 
+@defun assoc-delete-all key alist &optional test
+This function is like @code{assq-delete-all} except that it accepts
+an optional argument @var{test}, a predicate function to compare the
+keys in @var{alist}. If omitted or @code{nil}, @var{test} defaults to
+@code{equal}.  As @code{assq-delete-all}, this function often modifies
+the original list structure of @var{alist}.
+@end defun
+
 @defun rassq-delete-all value alist
 This function deletes from @var{alist} all the elements whose @sc{cdr}
 is @code{eq} to @var{value}.  It returns the shortened alist, and
