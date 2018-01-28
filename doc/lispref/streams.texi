@@ -503,7 +503,7 @@ in reverse order.
 @end group
 
 @group
-(print "This is the output" 'eat-output)
+(print "This is the output" #'eat-output)
      @result{} "This is the output"
 @end group
 
@@ -529,6 +529,22 @@ Now we can put the output in the proper order by reversing the list:
 @noindent
 Calling @code{concat} converts the list to a string so you can see its
 contents more clearly.
+
+@cindex @code{stderr} stream, use for debugging
+@anchor{external-debugging-output}
+@defun external-debugging-output character
+This function can be useful as an output stream when debugging.  It
+writes @var{character} to the standard error stream.
+
+For example
+@example
+@group
+(print "This is the output" #'external-debugging-output)
+@print{} This is the output
+@result{} "This is the output"
+@end group
+@end example
+@end defun
 
 @node Output Functions
 @section Output Functions
@@ -570,8 +586,9 @@ operation:
 @end example
 
   In the functions below, @var{stream} stands for an output stream.
-(See the previous section for a description of output streams.)  If
-@var{stream} is @code{nil} or omitted, it defaults to the value of
+(See the previous section for a description of output streams.  Also
+@xref{external-debugging-output}, a useful stream value for debugging.)
+If @var{stream} is @code{nil} or omitted, it defaults to the value of
 @code{standard-output}.
 
 @defun print object &optional stream
