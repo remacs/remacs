@@ -1458,7 +1458,7 @@ should not be mixed with those in color.el."
          (if-let* ((alpha (css--hex-alpha hex))
                    (a (css--format-rgba-alpha
                        (/ (string-to-number alpha 16)
-                          (float (expt 16 (length alpha)))))))
+                          (float (- (expt 16 (length alpha)) 1))))))
              (format "rgba(%d, %d, %d, %s)" r g b a)
            (format "rgb(%d, %d, %d)" r g b))
          t))

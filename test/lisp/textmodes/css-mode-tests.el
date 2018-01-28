@@ -281,7 +281,9 @@
                   ("#fff" "rgb(255, 255, 255)")
                   ("#ffffff" "rgb(255, 255, 255)")
                   ("#ffffff80" "rgba(255, 255, 255, 0.5)")
-                  ("#fff8" "rgba(255, 255, 255, 0.5)")))
+                  ("#fff0" "rgba(255, 255, 255, 0)")
+                  ("#fff8" "rgba(255, 255, 255, 0.53)")
+                  ("#ffff" "rgba(255, 255, 255, 1)")))
     (with-temp-buffer
       (css-mode)
       (insert (nth 0 item))
