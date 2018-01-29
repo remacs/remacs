@@ -29128,7 +29128,7 @@ the X window system or MS-Windows, Calc will configure GNUPLOT for you
 automatically.  If you have GNUPLOT 3.0 or later and you are using a
 Unix or GNU system without X, Calc will configure GNUPLOT to display
 graphs using simple character graphics that will work on any
-Posix-compatible terminal.
+POSIX-compatible terminal.
 
 @menu
 * Basic Graphics::

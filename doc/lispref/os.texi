@@ -257,7 +257,7 @@ options were specified.
 
 @item
 If a daemon was requested, it calls @code{server-start}.
-(On Posix systems, if a background daemon was requested, it then
+(On POSIX systems, if a background daemon was requested, it then
 detaches from the controlling terminal.)  @xref{Emacs
 Server,,, emacs, The GNU Emacs Manual}.
 
@@ -888,7 +888,7 @@ IBM's AIX.
 Berkeley BSD and its variants.
 
 @item cygwin
-Cygwin, a Posix layer on top of MS-Windows.
+Cygwin, a POSIX layer on top of MS-Windows.
 
 @item darwin
 Darwin (macOS).
@@ -1325,13 +1325,13 @@ omitted or @code{nil}, the conversion uses Emacs's default time zone.
 If it is @code{t}, the conversion uses Universal Time.  If it is
 @code{wall}, the conversion uses the system wall clock time.  If it is
 a string, the conversion uses the time zone rule equivalent to setting
-@env{TZ} to that string.  If it is an integer @var{offset}, the
-conversion uses a fixed time zone with the given offset and a numeric
-abbreviation on POSIX-compatible platforms and an unspecified abbreviation
-on MS-Windows.  If it is a list (@var{offset} @var{abbr}), where
+@env{TZ} to that string.  If it is a list (@var{offset} @var{abbr}), where
 @var{offset} is an integer number of seconds east of Universal Time
 and @var{abbr} is a string, the conversion uses a fixed time zone with
-the given offset and abbreviation.
+the given offset and abbreviation.  An integer @var{offset} is treated
+as if it were (@var{offset} @var{abbr}), where @var{abbr} is a numeric
+abbreviation on POSIX-compatible platforms and is unspecified on
+MS-Windows.
 
 @defun current-time-zone &optional time zone
 @cindex time zone, current
@@ -1488,6 +1488,7 @@ This is a synonym for @samp{%x %X}.
 @item %C
 This stands for the century, that is, the year divided by 100,
 truncated toward zero.
+The default field width is 2.
 @item %d
 This stands for the day of month, zero-padded.
 @item %D
@@ -2398,7 +2399,7 @@ Emacs is restarted by the session manager.
 
 Emacs is able to send @dfn{notifications} on systems that support the
 freedesktop.org Desktop Notifications Specification and on MS-Windows.
-In order to use this functionality on Posix hosts, Emacs must have
+In order to use this functionality on POSIX hosts, Emacs must have
 been compiled with D-Bus support, and the @code{notifications} library
 must be loaded.  @xref{Top, , D-Bus,dbus,D-Bus integration in Emacs}.
 The following function is supported when D-Bus support is available:
