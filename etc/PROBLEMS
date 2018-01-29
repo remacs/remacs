@@ -241,12 +241,33 @@ before starting Emacs, or run Emacs as root.
 
 ** Emacs crashes when you try to view a file with complex characters.
 
-For example, the etc/HELLO file (as shown by C-h h).
-The message "symbol lookup error: /usr/bin/emacs: undefined symbol: OTF_open"
-is shown in the terminal from which you launched Emacs.
-This problem only happens when you use a graphical display (ie not
-with -nw) and compiled Emacs with the "libotf" library for complex
-text handling.
+One possible reason for this could be a bug in the libotf or the
+libm17n-flt/m17n-db libraries Emacs uses for displaying complex
+scripts.  Make sure you have the latest versions of these libraries
+installed.  If the problem still persists with the latest released
+versions of these libraries, you can try building these libraries from
+their CVS repository:
+
+  cvs -z3 -d:pserver:anonymous@cvs.savannah.nongnu.org:/sources/m17n co libotf
+  cvs -z3 -d:pserver:anonymous@cvs.savannah.nongnu.org:/sources/m17n co m17n-db
+  cvs -z3 -d:pserver:anonymous@cvs.savannah.nongnu.org:/sources/m17n co m17n-lib
+
+One known problem that causes such crashes is with using Noto Serif
+Kannada fonts.  To work around that, force Emacs not to select these
+fonts, by adding the following to your ~/.emacs init file:
+
+  (push "Noto Serif Kannada" face-ignored-fonts)
+
+You can try this interactively in a running Emacs session like this:
+
+  M-: (push "Noto Serif Kannada" face-ignored-fonts) RET
+
+Another set of problems is caused by an incompatible libotf library.
+In this case, displaying the etc/HELLO file (as shown by C-h h)
+triggers the following message to be shown in the terminal from which
+you launched Emacs:
+
+  symbol lookup error: /usr/bin/emacs: undefined symbol: OTF_open
 
 This problem occurs because unfortunately there are two libraries
 called "libotf".  One is the library for handling OpenType fonts,
@@ -456,6 +477,21 @@ This was a known problem with some old versions of the Semantic package.
 The solution was to upgrade Semantic to version 2.0pre4 (distributed
 with CEDET 1.0pre4) or later.  Note that Emacs includes Semantic since
 23.2, and this issue does not apply to the included version.
+
+*** Display artifacts on GUI frames on X-based systems.
+
+This is known to be caused by using double-buffering (which is enabled
+by default in Emacs 26 and later).  The artifacts typically appear
+after commands that cause Emacs to scroll the display.
+
+You can disable double-buffering by evaluating the following form:
+
+  (modify-all-frames-parameters '((inhibit-double-buffering . t)))
+
+To make this permanent, add it to your ~/.emacs init file.
+
+Note that disabling double-buffering will cause flickering of the
+display in some situations.
 
 *** Self-documentation messages are garbled.
 

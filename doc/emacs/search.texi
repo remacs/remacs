@@ -776,16 +776,16 @@ Search}.
 @cindex regular expression
 @cindex regexp
 
-  This manual describes regular expression features that users
-typically use.  @xref{Regular Expressions,,, elisp, The Emacs Lisp
-Reference Manual}, for additional features used mainly in Lisp
-programs.
+  This section (and this manual in general) describes regular
+expression features that users typically use.  @xref{Regular
+Expressions,,, elisp, The Emacs Lisp Reference Manual}, for additional
+features used mainly in Lisp programs.
 
   Regular expressions have a syntax in which a few characters are
 special constructs and the rest are @dfn{ordinary}.  An ordinary
 character matches that same character and nothing else.  The special
 characters are @samp{$^.*+?[\}.  The character @samp{]} is special if
-it ends a character alternative (see later).  The character @samp{-}
+it ends a character alternative (see below).  The character @samp{-}
 is special inside a character alternative.  Any other character
 appearing in a regular expression is ordinary, unless a @samp{\}
 precedes it.  (When you use regular expressions in a Lisp program,
@@ -803,11 +803,11 @@ of ``the same string'', rather than an exception.)
   Any two regular expressions @var{a} and @var{b} can be concatenated.
 The result is a regular expression which matches a string if @var{a}
 matches some amount of the beginning of that string and @var{b}
-matches the rest of the string.  For example, concatenating the
-regular expressions @samp{f} and @samp{o} gives the regular expression
-@samp{fo}, which matches only the string @samp{fo}.  Still trivial.
-To do something nontrivial, you need to use one of the special
-characters.  Here is a list of them.
+matches the rest of the string.  As a trivial example, concatenating
+the regular expressions @samp{f} and @samp{o} gives the regular
+expression @samp{fo}, which matches only the string @samp{fo}.  To do
+something less trivial, you need to use one of the special characters.
+Here is a list of them.
 
 @table @asis
 @item @kbd{.}@: @r{(Period)}
@@ -1025,13 +1025,13 @@ To record a matched substring for future reference.
 
 This last application is not a consequence of the idea of a
 parenthetical grouping; it is a separate feature that is assigned as a
-second meaning to the same @samp{\( @dots{} \)} construct.  In practice
+second meaning to the same @w{@samp{\( @dots{} \)}} construct.  In practice
 there is usually no conflict between the two meanings; when there is
-a conflict, you can use a shy group.
+a conflict, you can use a shy group, described below.
 
 @item \(?: @dots{} \)
 @cindex shy group, in regexp
-specifies a shy group that does not record the matched substring;
+specifies a @dfn{shy group} that does not record the matched substring;
 you can't refer back to it with @samp{\@var{d}} (see below).  This is
 useful in mechanically combining regular expressions, so that you can
 add groups for syntactic purposes without interfering with the
@@ -1908,7 +1908,7 @@ which Emacs will use this display mode.  The variable
 @code{search-slow-window-lines} controls the number of lines in the
 window Emacs pops up for displaying the search results; the default is
 1 line.  Normally, this window will pop up at the bottom of the window
-that displays the buffer where you start searching, bit if the value
+that displays the buffer where you start searching, but if the value
 of @code{search-slow-window-lines} is negative, that means to put the
 window at the top and give it the number of lines that is the absolute
-value of that value.
+value of @code{search-slow-window-lines}.

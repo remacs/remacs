@@ -738,7 +738,7 @@ survive a crash even if @code{fsync} works properly.
   The @code{write-region-inhibit-fsync} variable controls whether
 Emacs invokes @code{fsync} after saving a file.  The variable's
 default value is @code{nil} when Emacs is interactive, and @code{t}
-when Emacs runs in batch mode.
+when Emacs runs in batch mode (@pxref{Initial Options, batch mode}).
 
   Emacs never uses @code{fsync} when writing auto-save files, as these
 files might lose data anyway.
@@ -824,6 +824,25 @@ diff-buffer-with-file} command.  @xref{Comparing Files}.
 @cindex file shadows
 @findex shadow-initialize
 
+  You can arrange to keep identical @dfn{shadow} copies of certain
+files in more than one place---possibly on different machines.  To do
+this, first you must set up a @dfn{shadow file group}, which is a set
+of identically-named files shared between a list of sites.  The file
+group is permanent and applies to further Emacs sessions as well as
+the current one.  Once the group is set up, every time you exit Emacs,
+it will copy the file you edited to the other files in its group.  You
+can also do the copying without exiting Emacs, by typing @w{@kbd{M-x
+shadow-copy-files}}.
+
+@cindex shadow cluster
+A @dfn{shadow cluster} is a group of hosts that share directories, so
+that copying to or from one of them is sufficient to update the file
+on all of them.  Each shadow cluster has a name, and specifies the
+network address of a primary host (the one we copy files to), and a
+regular expression that matches the host names of all the other hosts
+in the cluster.  You can define a shadow cluster with @w{@kbd{M-x
+shadow-define-cluster}}.
+
 @table @kbd
 @item M-x shadow-initialize
 Set up file shadowing.
@@ -839,32 +858,15 @@ Copy all pending shadow files.
 Cancel the instruction to shadow some files.
 @end table
 
-You can arrange to keep identical @dfn{shadow} copies of certain files
-in more than one place---possibly on different machines.  To do this,
-first you must set up a @dfn{shadow file group}, which is a set of
-identically-named files shared between a list of sites.  The file
-group is permanent and applies to further Emacs sessions as well as
-the current one.  Once the group is set up, every time you exit Emacs,
-it will copy the file you edited to the other files in its group.  You
-can also do the copying without exiting Emacs, by typing @kbd{M-x
-shadow-copy-files}.
-
-To set up a shadow file group, use @kbd{M-x
-shadow-define-literal-group} or @kbd{M-x shadow-define-regexp-group}.
-See their documentation strings for further information.
+To set up a shadow file group, use @w{@kbd{M-x
+shadow-define-literal-group}} or @w{@kbd{M-x
+shadow-define-regexp-group}}.  See their documentation strings for
+further information.
 
 Before copying a file to its shadows, Emacs asks for confirmation.
 You can answer ``no'' to bypass copying of this file, this time.  If
 you want to cancel the shadowing permanently for a certain file, use
-@kbd{M-x shadow-cancel} to eliminate or change the shadow file group.
-
-A @dfn{shadow cluster} is a group of hosts that share directories, so
-that copying to or from one of them is sufficient to update the file
-on all of them.  Each shadow cluster has a name, and specifies the
-network address of a primary host (the one we copy files to), and a
-regular expression that matches the host names of all the other hosts
-in the cluster.  You can define a shadow cluster with @kbd{M-x
-shadow-define-cluster}.
+@w{@kbd{M-x shadow-cancel}} to eliminate or change the shadow file group.
 
 @node Time Stamps
 @subsection Updating Time Stamps Automatically
