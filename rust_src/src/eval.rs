@@ -1,18 +1,21 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Lisp_Object, PseudovecType};
 use remacs_sys::{Fapply, Fautoload_do_load, Fcons, Ffuncall, Fpurecopy, Fset, Fset_default};
-use remacs_sys::{QCdocumentation, Qclosure, Qerror, Qfunction, Qinternal_interpreter_environment,
-                 Qlambda, Qmacro, Qnil, Qrisky_local_variable, Qsetq, Qt, Qvariable_documentation,
+use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinteractive,
+                 Qinteractive_form, Qinternal_interpreter_environment, Qlambda, Qmacro, Qnil,
+                 Qrisky_local_variable, Qsetq, Qt, Qvariable_documentation,
                  Qwrong_number_of_arguments};
 use remacs_sys::{build_string, eval_sub, globals, maybe_quit, specbind, unbind_to};
-use remacs_sys::Lisp_Object;
+use remacs_sys::COMPILED_INTERACTIVE;
 
+use data::indirect_function;
 use lisp::{LispCons, LispObject};
 use lisp::defsubr;
-use lists::{assq, car, cdr, memq, put};
+use lists::{assq, car, cdr, get, memq, put};
 use obarray::loadhist_attach;
-use symbols::LispSymbolRef;
+use symbols::{symbol_function, LispSymbolRef};
 use threads::c_specpdl_index;
 use vectors::length;
 
@@ -584,5 +587,74 @@ fn signal_error(msg: &str, arg: LispObject) -> ! {
         LispObject::from_raw(Fcons(build_string(msg.as_ptr() as *const i8), arg.to_raw()))
     );
 }
+
+/// Non-nil if FUNCTION makes provisions for interactive calling.
+/// This means it contains a description for how to read arguments to give it.
+/// The value is nil for an invalid function or a symbol with no function
+/// definition.
+///
+/// Interactively callable functions include strings and vectors (treated
+/// as keyboard macros), lambda-expressions that contain a top-level call
+/// to `interactive', autoload definitions made by `autoload' with non-nil
+/// fourth argument, and some of the built-in functions of Lisp.
+///
+/// Also, a symbol satisfies `commandp' if its function definition does so.
+///
+/// If the optional argument FOR-CALL-INTERACTIVELY is non-nil,
+/// then strings and vectors are not accepted.
+#[lisp_fn(min = "1")]
+pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
+    let mut has_interactive_prop = false;
+
+    let mut fun = indirect_function(function); // Check cycles.
+    if fun.is_nil() {
+        return false;
+    }
+
+    // Check an `interactive-form' property if present, analogous to the
+    // function-documentation property.
+    while let Some(sym) = fun.as_symbol() {
+        let tmp = get(sym, LispObject::from_raw(Qinteractive_form));
+        if tmp.is_not_nil() {
+            has_interactive_prop = true;
+        }
+        fun = symbol_function(sym);
+    }
+
+    if let Some(subr) = fun.as_subr() {
+        // Emacs primitives are interactive if their DEFUN specifies an
+        // interactive spec.
+        return !subr.intspec.is_null() || has_interactive_prop;
+    } else if fun.is_string() || fun.is_vector() {
+        // Strings and vectors are keyboard macros.
+        // This check has to occur before the vectorlike check or vectors
+        // will be identified incorrectly.
+        return !for_call_interactively;
+    } else if let Some(vl) = fun.as_vectorlike() {
+        // Bytecode objects are interactive if they are long enough to
+        // have an element whose index is COMPILED_INTERACTIVE, which is
+        // where the interactive spec is stored.
+        return (vl.is_pseudovector(PseudovecType::PVEC_COMPILED)
+            && vl.pseudovector_size() > (COMPILED_INTERACTIVE as EmacsInt))
+            || has_interactive_prop;
+    } else if let Some(cell) = fun.as_cons() {
+        // Lists may represent commands.
+        let funcar = cell.car();
+        if funcar.eq_raw(Qclosure) {
+            let bound = assq(LispObject::from_raw(Qinteractive), cdr(cdr(cell.cdr())));
+            return bound.is_not_nil() || has_interactive_prop;
+        } else if funcar.eq_raw(Qlambda) {
+            let bound = assq(LispObject::from_raw(Qinteractive), cdr(cell.cdr()));
+            return bound.is_not_nil() || has_interactive_prop;
+        } else if funcar.eq_raw(Qautoload) {
+            let value = car(cdr(cdr(cell.cdr())));
+            return value.is_not_nil() || has_interactive_prop;
+        }
+    }
+
+    false
+}
+
+def_lisp_sym!(Qcommandp, "commandp");
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

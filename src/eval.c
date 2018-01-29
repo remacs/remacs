@@ -1343,74 +1343,6 @@ error (const char *m, ...)
   verror (m, ap);
 }
 
-DEFUN ("commandp", Fcommandp, Scommandp, 1, 2, 0,
-       doc: /* Non-nil if FUNCTION makes provisions for interactive calling.
-This means it contains a description for how to read arguments to give it.
-The value is nil for an invalid function or a symbol with no function
-definition.
-
-Interactively callable functions include strings and vectors (treated
-as keyboard macros), lambda-expressions that contain a top-level call
-to `interactive', autoload definitions made by `autoload' with non-nil
-fourth argument, and some of the built-in functions of Lisp.
-
-Also, a symbol satisfies `commandp' if its function definition does so.
-
-If the optional argument FOR-CALL-INTERACTIVELY is non-nil,
-then strings and vectors are not accepted.  */)
-  (Lisp_Object function, Lisp_Object for_call_interactively)
-{
-  register Lisp_Object fun;
-  register Lisp_Object funcar;
-  Lisp_Object if_prop = Qnil;
-
-  fun = function;
-
-  fun = indirect_function (fun); /* Check cycles.  */
-  if (NILP (fun))
-    return Qnil;
-
-  /* Check an `interactive-form' property if present, analogous to the
-     function-documentation property.  */
-  fun = function;
-  while (SYMBOLP (fun))
-    {
-      Lisp_Object tmp = Fget (fun, Qinteractive_form);
-      if (!NILP (tmp))
-	if_prop = Qt;
-      fun = Fsymbol_function (fun);
-    }
-
-  /* Emacs primitives are interactive if their DEFUN specifies an
-     interactive spec.  */
-  if (SUBRP (fun))
-    return XSUBR (fun)->intspec ? Qt : if_prop;
-
-  /* Bytecode objects are interactive if they are long enough to
-     have an element whose index is COMPILED_INTERACTIVE, which is
-     where the interactive spec is stored.  */
-  else if (COMPILEDP (fun))
-    return (PVSIZE (fun) > COMPILED_INTERACTIVE ? Qt : if_prop);
-
-  /* Strings and vectors are keyboard macros.  */
-  if (STRINGP (fun) || VECTORP (fun))
-    return (NILP (for_call_interactively) ? Qt : Qnil);
-
-  /* Lists may represent commands.  */
-  if (!CONSP (fun))
-    return Qnil;
-  funcar = XCAR (fun);
-  if (EQ (funcar, Qclosure))
-    return (!NILP (Fassq (Qinteractive, Fcdr (Fcdr (XCDR (fun)))))
-	    ? Qt : if_prop);
-  else if (EQ (funcar, Qlambda))
-    return !NILP (Fassq (Qinteractive, Fcdr (XCDR (fun)))) ? Qt : if_prop;
-  else if (EQ (funcar, Qautoload))
-    return !NILP (Fcar (Fcdr (Fcdr (XCDR (fun))))) ? Qt : if_prop;
-  else
-    return Qnil;
-}
-
 DEFUN ("autoload", Fautoload, Sautoload, 2, 5, 0,
        doc: /* Define FUNCTION to autoload from FILE.
 FUNCTION is a symbol; FILE is a file name string to pass to `load'.
@@ -3441,7 +3373,6 @@ before making `inhibit-quit' nil.  */);
   DEFSYM (Qexit, "exit");
 
   DEFSYM (Qinteractive, "interactive");
-  DEFSYM (Qcommandp, "commandp");
   DEFSYM (Qand_rest, "&rest");
   DEFSYM (Qand_optional, "&optional");
   DEFSYM (Qclosure, "closure");
@@ -3555,7 +3486,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sunwind_protect);
   defsubr (&Scondition_case);
   defsubr (&Ssignal);
-  defsubr (&Scommandp);
   defsubr (&Sautoload);
   defsubr (&Sautoload_do_load);
   defsubr (&Seval);

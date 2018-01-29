@@ -197,4 +197,31 @@
   (should (equal (macroexpand 'x)
                  'x)))
 
+(ert-deftest eval-tests--commandp-base ()
+  "Check (commandp) base cases"
+  (should (not (commandp 'commandp)))
+  (should (commandp 'query-replace))
+  (should (commandp "query-replace"))
+  (should (commandp "C-x b"))
+  (should (not (commandp "query-replace" t)))
+  (should (commandp [32 91]))
+  (should (not (commandp [32 91] t)))
+  (let* ((foo 'query-replace)
+         (bar foo)
+         (baz bar))
+    (should (commandp baz)))
+  (should (not (commandp (defun blah ()
+                      (+ 1 2)))))
+  (should (commandp (defun blah ()
+                      (interactive)
+                      (+ 1 2))))
+  (should (not (commandp (lambda ()
+                           (+ 1 2)))))
+  (should (commandp (lambda ()
+                      (interactive)
+                      (+ 1 2))))
+  ;; Vectorlike but not valid
+  (should (not (commandp (selected-window))))
+  (should (not (commandp (selected-window) t))))
+
 ;;; eval-tests.el ends here
