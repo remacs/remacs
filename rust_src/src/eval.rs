@@ -604,7 +604,7 @@ fn signal_error(msg: &str, arg: LispObject) -> ! {
 /// then strings and vectors are not accepted.
 #[lisp_fn(min = "1")]
 pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
-    let mut if_prop = false;
+    let mut has_interactive_prop = false;
 
     let mut fun = indirect_function(function); // Check cycles.
     if fun.is_nil() {
@@ -616,7 +616,7 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
     while let Some(sym) = fun.as_symbol() {
         let tmp = get(sym, LispObject::from_raw(Qinteractive_form));
         if tmp.is_not_nil() {
-            if_prop = true;
+            has_interactive_prop = true;
         }
         fun = symbol_function(sym);
     }
@@ -624,11 +624,7 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
     if let Some(subr) = fun.as_subr() {
         // Emacs primitives are interactive if their DEFUN specifies an
         // interactive spec.
-        if !subr.intspec.is_null() {
-            return true;
-        } else {
-            return if_prop;
-        };
+        return !subr.intspec.is_null() || has_interactive_prop;
     } else if fun.is_string() || fun.is_vector() {
         // Strings and vectors are keyboard macros.
         // This check has to occur before the vectorlike check or vectors
@@ -638,37 +634,21 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
         // Bytecode objects are interactive if they are long enough to
         // have an element whose index is COMPILED_INTERACTIVE, which is
         // where the interactive spec is stored.
-        if vl.is_pseudovector(PseudovecType::PVEC_COMPILED)
-            && vl.pseudovector_size() > (COMPILED_INTERACTIVE as EmacsInt)
-        {
-            return true;
-        } else {
-            return if_prop;
-        }
+        return (vl.is_pseudovector(PseudovecType::PVEC_COMPILED)
+            && vl.pseudovector_size() > (COMPILED_INTERACTIVE as EmacsInt))
+            || has_interactive_prop;
     } else if let Some(cell) = fun.as_cons() {
         // Lists may represent commands.
         let funcar = cell.car();
         if funcar.eq_raw(Qclosure) {
-            let found = assq(LispObject::from_raw(Qinteractive), cdr(cdr(cell.cdr())));
-            if found.is_not_nil() {
-                return true;
-            } else {
-                return if_prop;
-            };
+            let bound = assq(LispObject::from_raw(Qinteractive), cdr(cdr(cell.cdr())));
+            return bound.is_not_nil() || has_interactive_prop;
         } else if funcar.eq_raw(Qlambda) {
-            let found = assq(LispObject::from_raw(Qinteractive), cdr(cell.cdr()));
-            if found.is_not_nil() {
-                return true;
-            } else {
-                return if_prop;
-            }
+            let bound = assq(LispObject::from_raw(Qinteractive), cdr(cell.cdr()));
+            return bound.is_not_nil() || has_interactive_prop;
         } else if funcar.eq_raw(Qautoload) {
             let value = car(cdr(cdr(cell.cdr())));
-            if value.is_not_nil() {
-                return true;
-            } else {
-                return if_prop;
-            }
+            return value.is_not_nil() || has_interactive_prop;
         }
     }
 

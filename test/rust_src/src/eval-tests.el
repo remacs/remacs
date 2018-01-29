@@ -219,6 +219,9 @@
                            (+ 1 2)))))
   (should (commandp (lambda ()
                       (interactive)
-                      (+ 1 2)))))
+                      (+ 1 2))))
+  ;; Vectorlike but not valid
+  (should (not (commandp (selected-window))))
+  (should (not (commandp (selected-window) t))))
 
 ;;; eval-tests.el ends here
