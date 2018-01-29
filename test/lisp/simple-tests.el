@@ -511,5 +511,30 @@ See Bug#21722."
     (do-auto-fill)
     (should (string-equal (buffer-string) "foo bar"))))
 
+(ert-deftest simple-tests-async-shell-command-30280 ()
+  "Test for https://debbugs.gnu.org/30280 ."
+  :expected-result :failed
+  (let* ((async-shell-command-buffer 'new-buffer)
+         (async-shell-command-display-buffer nil)
+         (str "*Async Shell Command*")
+         (buffers-name
+          (cl-loop repeat 2
+                   collect (buffer-name
+                            (generate-new-buffer str))))
+         (inhibit-message t))
+    (mapc #'kill-buffer buffers-name)
+    (async-shell-command
+     (format "%s -Q -batch -eval '(progn (sleep-for 3600) (message \"foo\"))'"
+             invocation-name))
+    (async-shell-command
+     (format "%s -Q -batch -eval '(progn (sleep-for 1) (message \"bar\"))'"
+             invocation-name))
+    (let ((buffers (mapcar #'get-buffer buffers-name))
+          (processes (mapcar #'get-buffer-process buffers-name)))
+      (unwind-protect
+          (should (memq (cadr buffers) (mapcar #'window-buffer (window-list))))
+        (mapc #'delete-process processes)
+        (mapc #'kill-buffer buffers)))))
+
 (provide 'simple-test)
 ;;; simple-test.el ends here
