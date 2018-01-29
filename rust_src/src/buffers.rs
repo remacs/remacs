@@ -400,7 +400,7 @@ pub extern "C" fn validate_region(b: *mut Lisp_Object, e: *mut Lisp_Object) {
 pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
     let buffer = get_buffer(buffer_or_name);
     if buffer.is_nil() {
-        unsafe { nsberror(buffer_or_name.to_raw()) }
+        nsberror(buffer_or_name.to_raw())
     };
     let mut buf = buffer.as_buffer_or_error();
     if !buf.is_live() {
@@ -425,6 +425,17 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
 
     if ThreadState::current_buffer().is_read_only() && !inhibit_read_only && prop.is_nil() {
         xsignal!(Qbuffer_read_only, current_buffer())
+    }
+}
+
+/// No such buffer error.
+#[no_mangle]
+pub extern "C" fn nsberror(spec: Lisp_Object) -> ! {
+    let spec = LispObject::from_raw(spec);
+    if let Some(s) = spec.as_string() {
+        error!("No buffer named {}", s);
+    } else {
+        error!("Invalid buffer argument");
     }
 }
 
