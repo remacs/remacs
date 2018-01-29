@@ -608,8 +608,8 @@ newlines.  In that case, you can use Visual Line mode, which enables
 @dfn{word wrapping}: instead of wrapping long lines exactly at the
 right window edge, Emacs wraps them at the word boundaries (i.e.,
 space or tab characters) nearest to the right window edge.  Visual
-Line mode also redefines editing commands such as @code{C-a},
-@code{C-n}, and @code{C-k} to operate on screen lines rather than
+Line mode also redefines editing commands such as @kbd{C-a},
+@kbd{C-n}, and @kbd{C-k} to operate on screen lines rather than
 logical lines.  @xref{Visual Line Mode}.
 
 @node Position Info

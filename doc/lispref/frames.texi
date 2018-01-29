@@ -2201,13 +2201,13 @@ The @code{cursor-type} frame parameter may be overridden by the
 variables @code{cursor-type} and
 @code{cursor-in-non-selected-windows}:
 
-@defvar cursor-type
+@defopt cursor-type
 This buffer-local variable controls how the cursor looks in a selected
 window showing the buffer.  If its value is @code{t}, that means to
 use the cursor specified by the @code{cursor-type} frame parameter.
 Otherwise, the value should be one of the cursor types listed above,
 and it overrides the @code{cursor-type} frame parameter.
-@end defvar
+@end defopt
 
 @defopt cursor-in-non-selected-windows
 This buffer-local variable controls how the cursor looks in a window
@@ -2725,7 +2725,7 @@ Ideally, the function described next should focus a frame without also
 raising it above other frames.  Unfortunately, many window-systems or
 window managers may refuse to comply.
 
-@defun x-focus-frame &optional frame noactivate
+@defun x-focus-frame frame &optional noactivate
 This function gives @var{frame} the focus of the X server without
 necessarily raising it.  @var{frame} @code{nil} means use the selected
 frame.  Under X, the optional argument @var{noactivate}, if
@@ -3261,13 +3261,12 @@ exists, @var{frame} is considered a child frame of that frame.
 This function returns @code{nil} if @var{frame} has no parent frame.
 @end defun
 
-@defun frame-ancestor-p &optional ancestor descendant
+@defun frame-ancestor-p ancestor descendant
 This functions returns non-@code{nil} if @var{ancestor} is an ancestor
 of @var{descendant}.  @var{ancestor} is an ancestor of @var{descendant}
 when it is either @var{descendant}'s parent frame or it is an ancestor
 of @var{descendant}'s parent frame.  Both, @var{ancestor} and
-@var{descendant} must specify live frames and default to the selected
-frame.
+@var{descendant} must specify live frames.
 @end defun
 
 Note also the function @code{window-largest-empty-rectangle}
@@ -3279,7 +3278,7 @@ window.
 Customizing the following option can be useful to tweak the behavior of
 @code{iconify-frame} for child frames.
 
-@defvar iconify-child-frame
+@defopt iconify-child-frame
 This option tells Emacs how to proceed when it is asked to iconify a
 child frame.  If it is @code{nil}, @code{iconify-frame} will do nothing
 when invoked on a child frame.  If it is @code{iconify-top-level}, Emacs
@@ -3291,7 +3290,7 @@ Any other value means to try iconifying the child frame.  Since such an
 attempt may not be honored by all window managers and can even lead to
 making the child frame unresponsive to user actions, the default is to
 iconify the top level frame instead.
-@end defvar
+@end defopt
 
 
 @node Mouse Tracking

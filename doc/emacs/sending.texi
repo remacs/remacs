@@ -676,8 +676,8 @@ such as MIME support.  Another available mode is MH-E
 
 @vindex mail-user-agent
   You can choose any of these @dfn{mail user agents} as your preferred
-method for editing and sending mail.  The commands @code{C-x m},
-@code{C-x 4 m} and @code{C-x 5 m} use whichever agent you have
+method for editing and sending mail.  The commands @kbd{C-x m},
+@kbd{C-x 4 m} and @kbd{C-x 5 m} use whichever agent you have
 specified; so do various other parts of Emacs that send mail, such as
 the bug reporter (@pxref{Bugs}).  To specify a mail user agent,
 customize the variable @code{mail-user-agent}.  Currently, legitimate

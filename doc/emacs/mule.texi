@@ -124,7 +124,7 @@ can insert characters that your keyboard does not support, using
 @kbd{C-x 8 @key{RET}} (@code{insert-char}).  @xref{Inserting Text}.
 Shorthands are available for some common characters; for example, you
 can insert a left single quotation mark @t{‘} by typing @kbd{C-x 8
-[}, or in Electric Quote mode often by simply typing @kbd{`}.
+[}, or in Electric Quote mode, usually by simply typing @kbd{`}.
 @xref{Quotation Marks}.  Emacs also supports
 various @dfn{input methods}, typically one for each script or
 language, which make it easier to type characters in the script.
@@ -379,7 +379,7 @@ least---the way Emacs decodes non-@acronym{ASCII} characters sent by your keyboa
   If you modify the @env{LC_ALL}, @env{LC_CTYPE}, or @env{LANG}
 environment variables while running Emacs (by using @kbd{M-x setenv}),
 you may want to invoke the @code{set-locale-environment}
-function afterwards to readjust the language environment from the new
+command afterwards to readjust the language environment from the new
 locale.
 
 @vindex locale-preferred-coding-systems
@@ -477,7 +477,7 @@ display the next row or the previous row.
 
     Type @kbd{C-f} and @kbd{C-b} to move forward and backward among
 the alternatives in the current row.  As you do this, Emacs highlights
-the current alternative with a special color; type @code{C-@key{SPC}}
+the current alternative with a special color; type @kbd{C-@key{SPC}}
 to select the current alternative and use it as input.  The
 alternatives in the row are also numbered; the number appears before
 the alternative.  Typing a number selects the associated alternative
@@ -508,11 +508,10 @@ entering the separate letter and accent.  For example, @kbd{o ^ ^} gives
 you the two characters @samp{o^}.  Another way is to type another letter
 after the @kbd{o}---something that won't combine with that---and
 immediately delete it.  For example, you could type @kbd{o o @key{DEL}
-^} to get separate @samp{o} and @samp{^}.
-
-  Another method, more general but not quite as easy to type, is to use
-@kbd{C-\ C-\} between two characters to stop them from combining.  This
-is the command @kbd{C-\} (@code{toggle-input-method}) used twice.
+^} to get separate @samp{o} and @samp{^}.  Another method, more
+general but not quite as easy to type, is to use @kbd{C-\ C-\} between
+two characters to stop them from combining.  This is the command
+@kbd{C-\} (@code{toggle-input-method}) used twice.
 @ifnottex
 @xref{Select Input Method}.
 @end ifnottex
@@ -1377,7 +1376,7 @@ hex code or thin space or an empty box instead.  (@xref{Text Display, ,
 glyphless characters}, for details.)
 
 @node Defining Fontsets
-@section Defining fontsets
+@section Defining Fontsets
 
 @vindex standard-fontset-spec
 @vindex w32-standard-fontset-spec
@@ -1408,8 +1407,8 @@ created automatically.  Their names have @samp{bold} instead of
 @acronym{ASCII} font that you specify with the @samp{Font} resource or
 the @samp{-fn} argument, or the default font that Emacs found when it
 started.  This is the @dfn{startup fontset} and its name is
-@code{fontset-startup}.  It does this by replacing the
-@var{charset_registry} field with @samp{fontset}, and replacing
+@code{fontset-startup}.  Emacs generates this fontset by replacing the
+@var{charset_registry} field with @samp{fontset}, and replacing the
 @var{charset_encoding} field with @samp{startup}, then using the
 resulting string to specify a fontset.
 
@@ -1455,14 +1454,15 @@ The resource value should have this form:
 @end smallexample
 
 @noindent
-@var{fontpattern} should have the form of a standard X font name (see
-the previous fontset-startup example), except
-for the last two fields.  They should have the form
-@samp{fontset-@var{alias}}.
+where @var{fontpattern} should have the form of a standard X font name
+(see the previous fontset-startup example), except for the last two
+fields.  They should have the form @samp{fontset-@var{alias}}.
 
-  The fontset has two names, one long and one short.  The long name is
-@var{fontpattern}.  The short name is @samp{fontset-@var{alias}}.  You
-can refer to the fontset by either name.
+  Each fontset has two names, one long and one short.  The long name
+is  @var{fontpattern}.  The short name is @samp{fontset-@var{alias}},
+the last 2 fields of the long name (e.g., @samp{fontset-startup} for
+the  fontset automatically created at startup).  You can refer to the
+fontset by either name.
 
   The construct @samp{@var{charset}:@var{font}} specifies which font to
 use (in this fontset) for one particular character set.  Here,
@@ -1478,7 +1478,7 @@ that describe the character set.  For the @acronym{ASCII} character font,
   In addition, when several consecutive fields are wildcards, Emacs
 collapses them into a single wildcard.  This is to prevent use of
 auto-scaled fonts.  Fonts made by scaling larger fonts are not usable
-for editing, and scaling a smaller font is not also useful, because it is
+for editing, and scaling a smaller font is also not useful, because it is
 better to use the smaller font in its own size, which is what Emacs
 does.
 
@@ -1547,7 +1547,7 @@ used.  Some examples are:
 (set-fontset-font "fontset-default" 'iso-8859-3
                   "Liberation Mono")
 
-;; Prefer a big5 font for han characters
+;; Prefer a big5 font for han characters.
 (set-fontset-font "fontset-default"
                   'han (font-spec :registry "big5")
                   nil 'prepend)
@@ -1658,24 +1658,25 @@ characters:
 @cindex 8-bit input
 @item
 You can use an input method for the selected language environment.
-@xref{Input Methods}.  When you use an input method in a unibyte buffer,
-the non-@acronym{ASCII} character you specify with it is converted to unibyte.
+@xref{Input Methods}.  When you use an input method in a unibyte
+buffer, the non-@acronym{ASCII} character you specify with it is
+converted to unibyte.
 
 @item
 If your keyboard can generate character codes 128 (decimal) and up,
-representing non-@acronym{ASCII} characters, you can type those character codes
-directly.
+representing non-@acronym{ASCII} characters, you can type those
+character codes directly.
 
 On a graphical display, you should not need to do anything special to
 use these keys; they should simply work.  On a text terminal, you
-should use the command @code{M-x set-keyboard-coding-system} or customize the
-variable @code{keyboard-coding-system} to specify which coding system
-your keyboard uses (@pxref{Terminal Coding}).  Enabling this feature
-will probably require you to use @key{ESC} to type Meta characters;
-however, on a console terminal or in @code{xterm}, you can arrange for
-Meta to be converted to @key{ESC} and still be able type 8-bit
-characters present directly on the keyboard or using @key{Compose} or
-@key{AltGr} keys.  @xref{User Input}.
+should use the command @kbd{M-x set-keyboard-coding-system} or
+customize the variable @code{keyboard-coding-system} to specify which
+coding system your keyboard uses (@pxref{Terminal Coding}).  Enabling
+this feature will probably require you to use @key{ESC} to type Meta
+characters; however, on a console terminal or in @code{xterm}, you can
+arrange for Meta to be converted to @key{ESC} and still be able to
+type 8-bit characters present directly on the keyboard or using
+@key{Compose} or @key{AltGr} keys.  @xref{User Input}.
 
 @cindex @code{iso-transl} library
 @cindex compose character

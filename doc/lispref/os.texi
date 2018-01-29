@@ -699,7 +699,7 @@ inadvertently can lose a lot of work, the
 you have buffers that need saving or subprocesses that are running.
 It also runs the abnormal hook @code{kill-emacs-query-functions}:
 
-@defvar kill-emacs-query-functions
+@defopt kill-emacs-query-functions
 When @code{save-buffers-kill-terminal} is killing Emacs, it calls the
 functions in this hook, after asking the standard questions and before
 calling @code{kill-emacs}.  The functions are called in order of
@@ -708,7 +708,7 @@ confirmation from the user.  If any of them returns @code{nil},
 @code{save-buffers-kill-emacs} does not kill Emacs, and does not run
 the remaining functions in this hook.  Calling @code{kill-emacs}
 directly does not run this hook.
-@end defvar
+@end defopt
 
 @node Suspending Emacs
 @subsection Suspending Emacs

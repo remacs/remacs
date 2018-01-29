@@ -434,8 +434,8 @@ by typing @kbd{C-c C-c} you switch to the fallback mode.  With another
 also be displayed from within DocView mode by typing @kbd{C-c C-t}
 (@code{doc-view-open-text}).
 
-  You can explicitly enable DocView mode with the command @code{M-x
-doc-view-mode}.  You can toggle DocView minor mode with @code{M-x
+  You can explicitly enable DocView mode with the command @kbd{M-x
+doc-view-mode}.  You can toggle DocView minor mode with @kbd{M-x
 doc-view-minor-mode}.
 
   When DocView mode starts, it displays a welcome screen and begins
@@ -576,7 +576,7 @@ including its entire margins.
   For efficiency, DocView caches the images produced by @command{gs}.
 The name of this directory is given by the variable
 @code{doc-view-cache-directory}.  You can clear the cache directory by
-typing @code{M-x doc-view-clear-cache}.
+typing @kbd{M-x doc-view-clear-cache}.
 
 @findex doc-view-kill-proc
 @findex doc-view-kill-proc-and-buffer
