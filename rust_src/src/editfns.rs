@@ -6,11 +6,12 @@ use libc::{c_uchar, ptrdiff_t};
 use std;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
+use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
 use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
 use remacs_sys::{buf_charpos_to_bytepos, buffer_overflow, find_before_next_newline, find_field,
                  find_newline, globals, insert, insert_and_inherit, make_string_from_bytes,
                  maybe_quit, scan_newline_from_point, set_point, set_point_both};
+use remacs_sys::EmacsInt;
 
 use buffers::{get_buffer, BUF_BYTES_MAX};
 use lisp::{LispNumber, LispObject};
@@ -95,6 +96,7 @@ pub fn gap_size() -> EmacsInt {
     let buffer_ref = ThreadState::current_buffer();
     buffer_ref.gap_size() as EmacsInt
 }
+
 /// Return the start or end position of the region.
 /// BEGINNINGP means return the start.
 /// If there is no region active, signal an error.
