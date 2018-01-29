@@ -204,6 +204,8 @@
   (should (commandp "query-replace"))
   (should (commandp "C-x b"))
   (should (not (commandp "query-replace" t)))
+  (should (commandp [32 91]))
+  (should (not (commandp [32 91] t)))
   (let* ((foo 'query-replace)
          (bar foo)
          (baz bar))

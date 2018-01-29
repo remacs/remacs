@@ -1,8 +1,8 @@
 //! Generic Lisp eval functions
 
 use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, Lisp_Object, PseudovecType};
 use remacs_sys::{Fapply, Fautoload_do_load, Fcons, Ffuncall, Fpurecopy, Fset, Fset_default};
-use remacs_sys::{Lisp_Object, PseudovecType};
 use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinteractive,
                  Qinteractive_form, Qinternal_interpreter_environment, Qlambda, Qmacro, Qnil,
                  Qrisky_local_variable, Qsetq, Qt, Qvariable_documentation,
@@ -629,20 +629,22 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
         } else {
             return if_prop;
         };
+    } else if fun.is_string() || fun.is_vector() {
+        // Strings and vectors are keyboard macros.
+        // This check has to occur before the vectorlike check or vectors
+        // will be identified incorrectly.
+        return !for_call_interactively;
     } else if let Some(vl) = fun.as_vectorlike() {
         // Bytecode objects are interactive if they are long enough to
         // have an element whose index is COMPILED_INTERACTIVE, which is
         // where the interactive spec is stored.
         if vl.is_pseudovector(PseudovecType::PVEC_COMPILED)
-            && vl.pseudovector_size() > (COMPILED_INTERACTIVE as i64)
+            && vl.pseudovector_size() > (COMPILED_INTERACTIVE as EmacsInt)
         {
             return true;
         } else {
             return if_prop;
         }
-    } else if fun.is_string() || fun.is_vector() {
-        // Strings and vectors are keyboard macros.
-        return !for_call_interactively;
     } else if let Some(cell) = fun.as_cons() {
         // Lists may represent commands.
         let funcar = cell.car();
