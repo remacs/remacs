@@ -2586,7 +2586,7 @@ is nil and `use-dialog-box' is non-nil."
 ;;; Atomic change groups.
 
 (defmacro atomic-change-group (&rest body)
-  "Perform BODY as an atomic change group.
+  "Like `progn' but perform BODY as an atomic change group.
 This means that if BODY exits abnormally,
 all of its changes to the current buffer are undone.
 This works regardless of whether undo is enabled in the buffer.
@@ -2609,8 +2609,8 @@ user can undo the change normally."
 	     ;; it enables undo if that was disabled; we need
 	     ;; to make sure that it gets disabled again.
 	     (activate-change-group ,handle)
-	     ,@body
-	     (setq ,success t))
+	     (prog1 ,(macroexp-progn body)
+	       (setq ,success t)))
 	 ;; Either of these functions will disable undo
 	 ;; if it was disabled before.
 	 (if ,success
