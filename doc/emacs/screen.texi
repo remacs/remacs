@@ -228,8 +228,8 @@ modified, it shows two stars (@samp{**}).  For a read-only buffer, it
 shows @samp{%*} if the buffer is modified, and @samp{%%} otherwise.
 
   The character after @var{ch} is normally a dash (@samp{-}).
-However, if the default-directory for the current buffer is on a
-remote machine (@pxref{File Names}), @samp{@@} is displayed instead.
+However, if @code{default-directory} (@pxref{File Names}) for the
+current buffer is on a remote machine, @samp{@@} is displayed instead.
 
   @var{fr} gives the selected frame name (@pxref{Frames}).  It appears
 only on text terminals.  The initial frame's name is @samp{F1}.
@@ -296,10 +296,10 @@ at the end of a menu item means that the command will prompt you for
 further input before it actually does anything.
 
   Some of the commands in the menu bar have ordinary key bindings as
-well; if so, a key binding is shown in parentheses after the item
-itself.  To view the full command name and documentation for a menu
-item, type @kbd{C-h k}, and then select the menu bar with the mouse in
-the usual way (@pxref{Key Help}).
+well; if so, a key binding is shown after the item itself.  To view
+the full command name and documentation for a menu item, type
+@kbd{C-h k}, and then select the menu bar with the mouse in the usual
+way (@pxref{Key Help}).
 
 @kindex F10
 @findex menu-bar-open

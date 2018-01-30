@@ -975,7 +975,7 @@ variable @code{scroll-bar-mode}.  Its value should be either
 @code{right} (put scroll bars on the right side of windows), @code{left}
 (put them on the left), or @code{nil} (disable vertical scroll bars).
 By default, Emacs puts scroll bars on the right if it was compiled with
-GTK+ support on the X Window System, and on MS-Windows or Mac OS; Emacs
+GTK+ support on the X Window System, and on MS-Windows or macOS; Emacs
 puts scroll bars on the left if compiled on the X Window System without
 GTK+ support (following the old convention for X applications).
 
