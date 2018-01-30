@@ -129,7 +129,7 @@ window.  @xref{emacsclient Options}.
 @cindex text and binary files on MS-DOS/MS-Windows
 
   GNU Emacs uses newline characters to separate text lines.  This is the
-convention used on GNU, Unix, and other Posix-compliant systems.
+convention used on GNU, Unix, and other POSIX-compliant systems.
 
 @cindex end-of-line conversion on MS-DOS/MS-Windows
   By contrast, MS-DOS and MS-Windows normally use carriage-return linefeed,
@@ -770,7 +770,7 @@ more details.
   Printing commands, such as @code{lpr-buffer} (@pxref{Printing}) and
 @code{ps-print-buffer} (@pxref{PostScript}) work in MS-DOS and
 MS-Windows by sending the output to one of the printer ports, if a
-Posix-style @code{lpr} program is unavailable.  The same Emacs
+POSIX-style @code{lpr} program is unavailable.  The same Emacs
 variables control printing on all systems, but in some cases they have
 different default values on MS-DOS and MS-Windows.
 

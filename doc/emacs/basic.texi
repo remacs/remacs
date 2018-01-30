@@ -131,12 +131,6 @@ Unicode), or a number with a specified radix, e.g., @code{#o23072}
 Manual}.  The command then inserts the corresponding character into
 the buffer.
 
-  In some contexts, if you type a quotation using grave accent and
-apostrophe @t{`like this'}, it is converted to a form @t{‘like this’}
-using single quotation marks.  Similarly, typing a quotation @t{``like
-this''} using double grave accent and apostrophe converts it to a form
-@t{“like this”} using double quotation marks.  @xref{Quotation Marks}.
-
   For example, the following all insert the same character:
 
 @example
@@ -150,6 +144,13 @@ this''} using double grave accent and apostrophe converts it to a form
 
   A numeric argument to @kbd{C-q} or @kbd{C-x 8 ...} specifies
 how many copies of the character to insert (@pxref{Arguments}).
+
+  In addition, in some contexts, if you type a quotation using grave
+accent and apostrophe @t{`like this'}, it is converted to a form
+@t{‘like this’} using single quotation marks, even without @kbd{C-x 8}
+commands.  Similarly, typing a quotation @t{``like this''} using
+double grave accent and apostrophe converts it to a form @t{“like
+this”} using double quotation marks.  @xref{Quotation Marks}.
 
 @node Moving Point
 @section Changing the Location of Point
@@ -710,6 +711,9 @@ Char: C (67, #o103, #x43) point=252 of 889 (28%) <231-599> column=0
 where the two extra numbers give the smallest and largest character
 position that point is allowed to assume.  The characters between
 those two positions are the accessible ones.  @xref{Narrowing}.
+
+  Related, but different feature is @code{display-line-numbers-mode}
+(@pxref{Display Custom}).
 
 @node Arguments
 @section Numeric Arguments

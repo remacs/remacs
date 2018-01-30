@@ -1207,13 +1207,13 @@ using the internal Emacs representation.
 @cindex file-name encoding, MS-Windows
 @vindex w32-unicode-filenames
   When Emacs runs on MS-Windows versions that are descendants of the
-NT family (Windows 2000, XP, Vista, Windows 7, and Windows 8), the
-value of @code{file-name-coding-system} is largely ignored, as Emacs
-by default uses APIs that allow passing Unicode file names directly.
-By contrast, on Windows 9X, file names are encoded using
-@code{file-name-coding-system}, which should be set to the codepage
-(@pxref{Coding Systems, codepage}) pertinent for the current system
-locale.  The value of the variable @code{w32-unicode-filenames}
+NT family (Windows 2000, XP, Vista, Windows 7, and all the later
+versions), the value of @code{file-name-coding-system} is largely
+ignored, as Emacs by default uses APIs that allow passing Unicode file
+names directly.  By contrast, on Windows 9X, file names are encoded
+using @code{file-name-coding-system}, which should be set to the
+codepage (@pxref{Coding Systems, codepage}) pertinent for the current
+system locale.  The value of the variable @code{w32-unicode-filenames}
 controls whether Emacs uses the Unicode APIs when it calls OS
 functions that accept file names.  This variable is set by the startup
 code to @code{nil} on Windows 9X, and to @code{t} on newer versions of
@@ -1570,9 +1570,9 @@ used.  Some examples are:
 unpleasant results for characters for which they are used, and you may
 wish to instruct Emacs to completely ignore them while searching for a
 suitable font required to display a character.  You can do that by
-adding the offending fonts to the value of @code{face-ignored-fonts}
-variable, which is a list.  Here's an example to put in your
-@file{~/.emacs}:
+adding the offending fonts to the value of the variable
+@code{face-ignored-fonts}, which is a list.  Here's an example to put
+in your @file{~/.emacs}:
 
 @example
 (add-to-list 'face-ignored-fonts "Some Bad Font")
@@ -1673,10 +1673,10 @@ should use the command @kbd{M-x set-keyboard-coding-system} or
 customize the variable @code{keyboard-coding-system} to specify which
 coding system your keyboard uses (@pxref{Terminal Coding}).  Enabling
 this feature will probably require you to use @key{ESC} to type Meta
-characters; however, on a console terminal or in @code{xterm}, you can
-arrange for Meta to be converted to @key{ESC} and still be able to
-type 8-bit characters present directly on the keyboard or using
-@key{Compose} or @key{AltGr} keys.  @xref{User Input}.
+characters; however, on a console terminal or a terminal emulator such
+as @code{xterm}, you can arrange for Meta to be converted to @key{ESC}
+and still be able to type 8-bit characters present directly on the
+keyboard or using @key{Compose} or @key{AltGr} keys.  @xref{User Input}.
 
 @cindex @code{iso-transl} library
 @cindex compose character
@@ -1777,13 +1777,13 @@ for editing bidirectional text.
 @dfn{logical} (or @dfn{reading}) order: the buffer or string position
 of the first character you read precedes that of the next character.
 Reordering of bidirectional text into the @dfn{visual} order happens
-at display time.  As result, character positions no longer increase
+at display time.  As a result, character positions no longer increase
 monotonically with their positions on display.  Emacs implements the
 Unicode Bidirectional Algorithm (UBA) described in the Unicode
 Standard Annex #9, for reordering of bidirectional text for display.
 It deviates from the UBA only in how continuation lines are displayed
 when text direction is opposite to the base paragraph direction,
-e.g. when a long line of English text appears in a right-to-left
+e.g., when a long line of English text appears in a right-to-left
 paragraph.
 
 @vindex bidi-display-reordering
@@ -1835,12 +1835,13 @@ thin blank characters; on text terminals they display as blanks.
 
   Because characters are reordered for display, Emacs commands that
 operate in the logical order or on stretches of buffer positions may
-produce unusual effects.  For example, @kbd{C-f} and @kbd{C-b}
-commands move point in the logical order, so the cursor will sometimes
-jump when point traverses reordered bidirectional text.  Similarly, a
-highlighted region covering a contiguous range of character positions
-may look discontinuous if the region spans reordered text.  This is
-normal and similar to the behavior of other programs that support
-bidirectional text.  If you set @code{visual-order-cursor-movement} to
-a non-@code{nil} value, cursor motion by the arrow keys follows the
-visual order on screen (@pxref{Moving Point, visual-order movement}).
+produce unusual effects.  For example, the commands @kbd{C-f} and
+@kbd{C-b} move point in the logical order, so the cursor will
+sometimes jump when point traverses reordered bidirectional text.
+Similarly, a highlighted region covering a contiguous range of
+character positions may look discontinuous if the region spans
+reordered text.  This is normal and similar to the behavior of other
+programs that support bidirectional text.  If you set
+@code{visual-order-cursor-movement} to a non-@code{nil} value, cursor
+motion by the arrow keys follows the visual order on screen
+(@pxref{Moving Point, visual-order movement}).

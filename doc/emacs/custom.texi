@@ -127,7 +127,7 @@ brings up the customization buffer for that group.
 @kindex S-TAB @r{(customization buffer)}
 @findex widget-forward
 @findex widget-backward
-  In the customizable buffer, you can type @key{TAB}
+  In the customization buffer, you can type @key{TAB}
 (@code{widget-forward}) to move forward to the next button or editable
 field.  @kbd{S-@key{TAB}} (@code{widget-backward}) moves back to the
 previous button or editable field.

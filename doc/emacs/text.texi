@@ -101,7 +101,7 @@ Kill up to the end of a word (@code{kill-word}).
 @item M-@key{DEL}
 Kill back to the beginning of a word (@code{backward-kill-word}).
 @item M-@@
-Mark the end of the next word (@code{mark-word}).
+Set mark at the end of the next word (@code{mark-word}).
 @item M-t
 Transpose two words or drag a word across others
 (@code{transpose-words}).

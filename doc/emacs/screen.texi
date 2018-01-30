@@ -18,7 +18,7 @@ frames if you wish (@pxref{Frames}).
   Each frame consists of several distinct regions.  At the top of the
 frame is a @dfn{menu bar}, which allows you to access commands via a
 series of menus.  On a graphical display, directly below the menu bar
-is a @dfn{tool bar}, a row of icons that perform editing commands if
+is a @dfn{tool bar}, a row of icons that perform editing commands when
 you click on them.  At the very bottom of the frame is an @dfn{echo
 area}, where informative messages are displayed and where you enter
 information when Emacs asks for it.

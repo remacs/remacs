@@ -1170,14 +1170,14 @@ Sometimes file names or their parts need to be compared as strings, in
 which case it's important to know whether the underlying filesystem is
 case-insensitive.  This function returns @code{t} if file
 @var{filename} is on a case-insensitive filesystem.  It always returns
-@code{t} on MS-DOS and MS-Windows.  On Cygwin and Mac OS X,
+@code{t} on MS-DOS and MS-Windows.  On Cygwin and macOS,
 filesystems may or may not be case-insensitive, and the function tries
 to determine case-sensitivity by a runtime test.  If the test is
 inconclusive, the function returns @code{t} on Cygwin and @code{nil}
-on Mac OS X.
+on macOS.
 
 Currently this function always returns @code{nil} on platforms other
-than MS-DOS, MS-Windows, Cygwin, and Mac OS X.  It does not detect
+than MS-DOS, MS-Windows, Cygwin, and macOS.  It does not detect
 case-insensitivity of mounted filesystems, such as Samba shares or
 NFS-mounted Windows volumes.  On remote hosts, it assumes @code{t} for
 the @samp{smb} method.  For all other connection methods, runtime
@@ -1297,9 +1297,10 @@ The file's @acronym{GID}, likewise (@code{file-attribute-group-id}).
 The time of last access, as a list of four integers
 @code{(@var{sec-high} @var{sec-low} @var{microsec} @var{picosec})}
 (@code{file-attribute-access-time}).  (This is similar to the value of
-@code{current-time}; see @ref{Time of Day}.)  Note that on some
+@code{current-time}; see @ref{Time of Day}.)  The value is truncated
+to that of the filesystem's timestamp resolution; for example, on some
 FAT-based filesystems, only the date of last access is recorded, so
-this time will always hold the midnight of the day of last access.
+this time will always hold the midnight of the day of the last access.
 
 @cindex modification time of file
 @item

@@ -1345,7 +1345,7 @@ for documentation.  @xref{GNU Free Documentation License}.}.
 @xref{Copying}.
 
 One way to get a copy of GNU Emacs is from someone else who has it.
-You need not ask for our permission to do so, or tell any one else;
+You need not ask for our permission to do so, or tell anyone else;
 just copy it.  If you have access to the Internet, you can get the
 latest distribution version of GNU Emacs by anonymous FTP; see
 @url{https://www.gnu.org/software/emacs} on our website for more
@@ -1361,7 +1361,7 @@ when you get it, not just free for the manufacturer.
 
 If you find GNU Emacs useful, please @strong{send a donation} to the
 Free Software Foundation to support our work.  Donations to the Free
-Software Foundation are tax deductible in the US@.  If you use GNU Emacs
+Software Foundation are tax-deductible in the US@.  If you use GNU Emacs
 at your workplace, please suggest that the company make a donation.
 To donate, see @url{https://my.fsf.org/donate/}.
 For other ways in which you can help, see

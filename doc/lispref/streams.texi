@@ -344,7 +344,7 @@ When reading or writing from the standard input/output streams of the
 Emacs process in batch mode, it is sometimes required to make sure any
 arbitrary binary data will be read/written verbatim, and/or that no
 translation of newlines to or from CR-LF pairs is performed.  This
-issue does not exist on Posix hosts, only on MS-Windows and MS-DOS@.
+issue does not exist on POSIX hosts, only on MS-Windows and MS-DOS@.
 The following function allows you to control the I/O mode of any
 standard stream of the Emacs process.
 
@@ -354,7 +354,7 @@ non-@code{nil}, switch to binary mode, otherwise switch to text mode.
 The value of @var{stream} can be one of @code{stdin}, @code{stdout},
 or @code{stderr}.  This function flushes any pending output data of
 @var{stream} as a side effect, and returns the previous value of I/O
-mode for @var{stream}.  On Posix hosts, it always returns a
+mode for @var{stream}.  On POSIX hosts, it always returns a
 non-@code{nil} value and does nothing except flushing pending output.
 @end defun
 
@@ -707,7 +707,7 @@ indent and fill the object to make it more readable for humans.
 
 If you need to use binary I/O in batch mode, e.g., use the functions
 described in this section to write out arbitrary binary data or avoid
-conversion of newlines on non-Posix hosts, see @ref{Input Functions,
+conversion of newlines on non-POSIX hosts, see @ref{Input Functions,
 set-binary-mode}.
 
 @node Output Variables
