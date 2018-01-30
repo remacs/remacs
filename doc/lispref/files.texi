@@ -1299,7 +1299,8 @@ The time of last access, as a list of four integers
 (@code{file-attribute-access-time}).  (This is similar to the value of
 @code{current-time}; see @ref{Time of Day}.)  The value is truncated
 to that of the filesystem's timestamp resolution; for example, on some
-FAT-based filesystems, only the date of last access is recorded.
+FAT-based filesystems, only the date of last access is recorded, so
+this time will always hold the midnight of the day of the last access.
 
 @cindex modification time of file
 @item
