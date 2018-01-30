@@ -32,9 +32,11 @@
 //! `&str`, and this module regrettably contains adapted copies of
 //! stretches of `std::str` functions.
 
-use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
+use std::fmt;
 use std::ptr;
 use std::slice;
+
+use libc::{c_char, c_int, c_uchar, c_uint, c_void, memset, ptrdiff_t, size_t};
 
 use remacs_sys::{EmacsInt, Lisp_String, Lisp_Type, CHARACTERBITS, CHAR_CTL, CHAR_MODIFIER_MASK,
                  CHAR_SHIFT};
@@ -132,6 +134,14 @@ impl LispStringRef {
     #[inline]
     pub fn clear_data(self) {
         unsafe { memset(self.data as *mut c_void, 0, self.len_bytes() as size_t) };
+    }
+}
+
+impl fmt::Display for LispStringRef {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let slice =
+            unsafe { slice::from_raw_parts(self.const_data_ptr(), self.len_bytes() as usize) };
+        write!(f, "{}", String::from_utf8_lossy(slice).into_owned())
     }
 }
 

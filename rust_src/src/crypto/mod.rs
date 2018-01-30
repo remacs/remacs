@@ -8,7 +8,7 @@ use std;
 use std::slice;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{make_specified_string, make_uninit_string, nsberror, EmacsInt};
+use remacs_sys::{make_specified_string, make_uninit_string, EmacsInt};
 use remacs_sys::{code_convert_string, extract_data_from_object, preferred_coding_system,
                  string_char_to_byte, validate_subarray, Fcoding_system_p};
 use remacs_sys::{globals, Ffind_operation_coding_system, Flocal_variable_p};
@@ -17,7 +17,7 @@ use remacs_sys::{Qbuffer_file_coding_system, Qcoding_system_error, Qmd5, Qraw_te
 use remacs_sys::{current_thread, make_buffer_string, record_unwind_current_buffer,
                  set_buffer_internal};
 
-use buffers::{buffer_file_name, current_buffer, get_buffer, LispBufferRef};
+use buffers::{buffer_file_name, current_buffer, get_buffer, nsberror, LispBufferRef};
 use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
 use multibyte::LispStringRef;
@@ -497,7 +497,7 @@ pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
     };
 
     if buffer.is_nil() {
-        unsafe { nsberror(buffer_or_name.to_raw()) };
+        nsberror(buffer_or_name.to_raw());
     }
     let b = buffer.as_buffer().unwrap();
     let mut ctx = sha1::Sha1::new();

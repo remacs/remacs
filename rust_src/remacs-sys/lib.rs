@@ -1187,9 +1187,6 @@ extern "C" {
         ht: Lisp_Object,
     ) -> bool;
 
-    // These signal an error, therefore are marked as non-returning.
-    pub fn nsberror(spec: Lisp_Object) -> !;
-
     pub fn emacs_abort() -> !;
 
     pub fn base64_encode_1(
