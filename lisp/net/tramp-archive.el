@@ -315,26 +315,23 @@ name is kept in slot `hop'"
     (unless (tramp-archive-file-name-p name)
       (tramp-compat-user-error nil "Not an archive file name: \"%s\"" name))
     ;; The `string-match' happened in `tramp-archive-file-name-p'.
-    (let ((archive (match-string 1 name))
-	  (localname (match-string 2 name))
-	  (tramp-verbose 0)
-	  vec copy)
-
-      (setq archive (file-truename archive))
+    (let* ((localname (match-string 2 name))
+	   (archive (file-truename (match-string 1 name)))
+	   (vec (make-tramp-file-name
+		 :method tramp-archive-method :hop archive)))
 
       (cond
        ;; The value is already in the hash table.
-       ((setq vec (car (gethash archive tramp-archive-hash))))
+       ((gethash archive tramp-archive-hash)
+	(setq vec (car (gethash archive tramp-archive-hash))))
 
        ;; File archives inside file archives.
        ((tramp-archive-file-name-p archive)
 	(let ((archive
 	       (tramp-make-tramp-file-name
 		(tramp-archive-dissect-file-name archive) nil 'noarchive)))
-	  (setq vec
-		(make-tramp-file-name
-		 :method tramp-archive-method :hop archive
-		 :host (url-hexify-string (tramp-gvfs-url-file-name archive)))))
+	  (setf (tramp-file-name-host vec)
+		(url-hexify-string (tramp-gvfs-url-file-name archive))))
 	(puthash archive (list vec) tramp-archive-hash))
 
        ;; http://...
@@ -347,34 +344,29 @@ name is kept in slot `hop'"
 		 (url-type (url-generic-parse-url archive))
 		 url-tramp-protocols))
 	       (archive (url-tramp-convert-url-to-tramp archive)))
-	  (setq vec
-		(make-tramp-file-name
-		 :method tramp-archive-method :hop archive
-		 :host (url-hexify-string (tramp-gvfs-url-file-name archive)))))
-	  (puthash archive (list vec) tramp-archive-hash))
+	  (setf (tramp-file-name-host vec)
+		(url-hexify-string (tramp-gvfs-url-file-name archive))))
+	(puthash archive (list vec) tramp-archive-hash))
 
        ;; GVFS supported schemes.
        ((or (tramp-gvfs-file-name-p archive)
 	    (not (file-remote-p archive)))
-	(setq vec
-	      (make-tramp-file-name
-	       :method tramp-archive-method :hop archive
-	       :host (url-hexify-string (tramp-gvfs-url-file-name archive))))
+	(setf (tramp-file-name-host vec)
+	      (url-hexify-string (tramp-gvfs-url-file-name archive)))
 	(puthash archive (list vec) tramp-archive-hash))
 
        ;; Anything else.  Here we call `file-local-copy', which we
        ;; have avoided so far.
-       (t (let ((inhibit-file-name-operation 'file-local-copy)
-		(inhibit-file-name-handlers
-		 (cons 'jka-compr-handler inhibit-file-name-handlers)))
-	    (setq copy (file-local-copy archive)
-		  vec
-		  (make-tramp-file-name
-		   :method tramp-archive-method :hop archive
-		   :host (url-hexify-string (tramp-gvfs-url-file-name copy)))))
-	  (puthash archive (cons vec copy) tramp-archive-hash)))
+       (t (let* ((inhibit-file-name-operation 'file-local-copy)
+		 (inhibit-file-name-handlers
+		  (cons 'jka-compr-handler inhibit-file-name-handlers))
+		 (copy (file-local-copy archive)))
+	    (setf (tramp-file-name-host vec)
+		  (url-hexify-string (tramp-gvfs-url-file-name copy)))
+	    (puthash archive (cons vec copy) tramp-archive-hash))))
 
-      ;; So far, `vec' handles just the mount point.  Add `localname'.
+      ;; So far, `vec' handles just the mount point.  Add `localname',
+      ;; which shouldn't be pushed to the hash.
       (setf (tramp-file-name-localname vec) localname)
       vec)))
 

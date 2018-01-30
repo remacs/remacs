@@ -186,11 +186,7 @@ variables, so we check the Emacs version directly."
 	      (file-name-nondirectory tramp-archive-test-file-archive)))))
 	  (should-not port)
 	  (should (string-equal localname "/bar"))
-	  ;; The `archive' component is now already a Tramp file name.
-	  (should
-	   (string-equal
-	    archive
-	    (tramp-archive-gvfs-file-name tramp-archive-test-file-archive))))
+	  (should (string-equal archive tramp-archive-test-file-archive)))
 
       ;; Cleanup.
       (tramp-archive-cleanup-hash))))
