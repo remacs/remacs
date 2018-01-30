@@ -58,8 +58,8 @@ addition to mouse drags."
 
 With the default setting, an ordinary Mouse-1 click on a link
 performs the same action as Mouse-2 on that link, while a longer
-Mouse-1 click \(hold down the Mouse-1 button for more than 450
-milliseconds) performs the original Mouse-1 binding \(which
+Mouse-1 click (hold down the Mouse-1 button for more than 450
+milliseconds) performs the original Mouse-1 binding (which
 typically sets point where you click the mouse).
 
 If value is an integer, the time elapsed between pressing and
@@ -96,55 +96,55 @@ point at the click position."
   :version "22.1"
   :group 'mouse)
 
+(defvar mouse--last-down nil)
+
 (defun mouse--down-1-maybe-follows-link (&optional _prompt)
+  (when mouse-1-click-follows-link
+    (setq mouse--last-down (cons (car-safe last-input-event) (float-time))))
+  nil)
+
+(defun mouse--click-1-maybe-follows-link (&optional _prompt)
   "Turn `mouse-1' events into `mouse-2' events if follows-link.
-Expects to be bound to `down-mouse-1' in `key-translation-map'."
-  (when (and mouse-1-click-follows-link
-             (eq (if (eq mouse-1-click-follows-link 'double)
-                     'double-down-mouse-1 'down-mouse-1)
-                 (car-safe last-input-event)))
-    (let ((action (mouse-on-link-p (event-start last-input-event))))
-      (when (and action
-                 (or mouse-1-click-in-non-selected-windows
-                     (eq (selected-window)
-                         (posn-window (event-start last-input-event)))))
-        (let ((timedout
-               (sit-for (if (numberp mouse-1-click-follows-link)
-                            (/ (abs mouse-1-click-follows-link) 1000.0)
-                          0))))
-          (if (if (and (numberp mouse-1-click-follows-link)
-                       (>= mouse-1-click-follows-link 0))
-                  timedout (not timedout))
-              nil
-            ;; Use read-key so it works for xterm-mouse-mode!
-            (let ((event (read-key)))
-              (if (eq (car-safe event)
-                      (if (eq mouse-1-click-follows-link 'double)
-                          'double-mouse-1 'mouse-1))
-                  (progn
-                    ;; Turn the mouse-1 into a mouse-2 to follow links,
-                    ;; but only if ‘mouse-on-link-p’ hasn’t returned a
-                    ;; string or vector (see its docstring).
-                    (if (or (stringp action) (vectorp action))
-                        (push (aref action 0) unread-command-events)
-                      (let ((newup (if (eq mouse-1-click-follows-link 'double)
-                                       'double-mouse-2 'mouse-2)))
-                        ;; If mouse-2 has never been done by the user, it
-                        ;; doesn't have the necessary property to be
-                        ;; interpreted correctly.
-                        (unless (get newup 'event-kind)
-                          (put newup 'event-kind (get (car event) 'event-kind)))
-                        (push (cons newup (cdr event)) unread-command-events)))
-                    ;; Don't change the down event, only the up-event
-                    ;; (bug#18212).
-                    nil)
-                (push event unread-command-events)
-                nil))))))))
+Expects to be bound to `(double-)mouse-1' in `key-translation-map'."
+  (and mouse--last-down
+       (pcase mouse-1-click-follows-link
+         ('nil nil)
+         ('double (eq 'double-mouse-1 (car-safe last-input-event)))
+         (_ (and (eq 'mouse-1 (car-safe last-input-event))
+                 (or (not (numberp mouse-1-click-follows-link))
+                     (funcall (if (< mouse-1-click-follows-link 0) #'> #'<)
+                              (- (float-time) (cdr mouse--last-down))
+                              (/ (abs mouse-1-click-follows-link) 1000.0))))))
+       (eq (car mouse--last-down)
+           (event-convert-list (list 'down (car-safe last-input-event))))
+       (let* ((action (mouse-on-link-p (event-start last-input-event))))
+         (when (and action
+                    (or mouse-1-click-in-non-selected-windows
+                        (eq (selected-window)
+                            (posn-window (event-start last-input-event)))))
+           ;; Turn the mouse-1 into a mouse-2 to follow links,
+           ;; but only if ‘mouse-on-link-p’ hasn’t returned a
+           ;; string or vector (see its docstring).
+           (if (arrayp action)
+               (vector (aref action 0))
+             (let ((newup (if (eq mouse-1-click-follows-link 'double)
+                              'double-mouse-2 'mouse-2)))
+               ;; If mouse-2 has never been done by the user, it
+               ;; doesn't have the necessary property to be
+               ;; interpreted correctly.
+               (unless (get newup 'event-kind)
+                 (put newup 'event-kind
+                      (get (car last-input-event) 'event-kind)))
+               (vector (cons newup (cdr last-input-event)))))))))
 
 (define-key key-translation-map [down-mouse-1]
   #'mouse--down-1-maybe-follows-link)
 (define-key key-translation-map [double-down-mouse-1]
   #'mouse--down-1-maybe-follows-link)
+(define-key key-translation-map [mouse-1]
+  #'mouse--click-1-maybe-follows-link)
+(define-key key-translation-map [double-mouse-1]
+  #'mouse--click-1-maybe-follows-link)
 
 
 ;; Provide a mode-specific menu on a mouse button.
@@ -1144,19 +1144,15 @@ The resulting value determine whether POS is inside a link:
 is a non-nil `mouse-face' property at POS.  Return t in this case.
 
 - If the value is a function, FUNC, POS is inside a link if
-the call \(FUNC POS) returns non-nil.  Return the return value
-from that call.  Arg is \(posn-point POS) if POS is a mouse event.
+the call (FUNC POS) returns non-nil.  Return the return value
+from that call.  Arg is (posn-point POS) if POS is a mouse event.
 
 - Otherwise, return the value itself.
 
 The return value is interpreted as follows:
 
-- If it is a string, the mouse-1 event is translated into the
-first character of the string, i.e. the action of the mouse-1
-click is the local or global binding of that character.
-
-- If it is a vector, the mouse-1 event is translated into the
-first element of that vector, i.e. the action of the mouse-1
+- If it is an array, the mouse-1 event is translated into the
+first element of that array, i.e. the action of the mouse-1
 click is the local or global binding of that event.
 
 - Otherwise, the mouse-1 event is translated into a mouse-2 event
