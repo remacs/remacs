@@ -279,7 +279,10 @@ the mode line of every window.  @xref{Recursive Edit}.
   You can change the appearance of the mode line as well as the format
 of its contents.  @xref{Optional Mode Line}.  In addition, the mode
 line is mouse-sensitive; clicking on different parts of the mode line
-performs various commands.  @xref{Mode Line Mouse}.
+performs various commands.  @xref{Mode Line Mouse}.  Also, hovering
+the mouse pointer above mouse-sensitive portions of the mode line
+shows tooltips (@pxref{Tooltips}) with information about commands you
+can invoke by clicking on the mode line.
 
 @node Menu Bar
 @section The Menu Bar
