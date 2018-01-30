@@ -1,7 +1,7 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{BoolBF, EmacsInt, Lisp_Process, Vprocess_alist};
+use remacs_sys::{EmacsInt, Lisp_Process, Vprocess_alist};
 use remacs_sys::{get_process as cget_process, pget_kill_without_query, pget_pid,
                  pget_raw_status_new, pset_kill_without_query, send_process,
                  setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
@@ -306,8 +306,7 @@ pub fn process_send_string(process: LispObject, string: LispStringRef) -> () {
 /// Return the current value of query-on-exit flag for PROCESS.
 #[lisp_fn]
 pub fn process_query_on_exit_flag(process: LispProcessRef) -> bool {
-    let kwq = unsafe { pget_kill_without_query(process.as_ptr()) };
-    !kwq as BoolBF
+    unsafe { !pget_kill_without_query(process.as_ptr()) }
 }
 
 /// Specify if query is needed for PROCESS when Emacs is exited.
