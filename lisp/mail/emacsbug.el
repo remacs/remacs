@@ -116,6 +116,71 @@ This requires either the macOS \"open\" command, or the freedesktop
 			   (concat "mailto:" to)))
 	(error "Subject, To or body not found")))))
 
+(defun report-emacs-bug--os-description ()
+  "Return a string describing the operating system, or nil."
+  (cond ((eq system-type 'darwin)
+         (let (os)
+           (with-temp-buffer
+             (when (eq 0 (ignore-errors
+                           (call-process "sw_vers" nil '(t nil) nil)))
+               (dolist (s '("ProductName" "ProductVersion"))
+                 (goto-char (point-min))
+                 (if (re-search-forward (format "^%s\\s-*:\\s-+\\(.*\\)$" s)
+                                        nil t)
+                     (setq os (concat os " " (match-string 1)))))))
+           os))
+        ;; TODO include other branches here.
+        ;; MS Windows: systeminfo ?
+        ;; Cygwin, *BSD, etc: ?
+        (t
+         (or (let ((file "/etc/os-release"))
+               (and (file-readable-p file)
+                    (with-temp-buffer
+                      (insert-file-contents file)
+                      (if (re-search-forward
+                           "^\\sw*PRETTY_NAME=\"?\\(.+?\\)\"?$" nil t)
+                          (match-string 1)
+                        (let (os)
+                          (when (re-search-forward
+                                 "^\\sw*NAME=\"?\\(.+?\\)\"?$" nil t)
+                            (setq os (match-string 1))
+                            (if (re-search-forward
+                                 "^\\sw*VERSION=\"?\\(.+?\\)\"?$" nil t)
+                                (setq os (concat os " " (match-string 1))))
+                            os))))))
+             (with-temp-buffer
+               (when (eq 0 (ignore-errors
+                             (call-process "lsb_release" nil '(t nil)
+                                           nil "-d")))
+                 (goto-char (point-min))
+                 (if (looking-at "^\\sw+:\\s-+")
+                     (goto-char (match-end 0)))
+                 (buffer-substring (point) (line-end-position))))
+             (let ((file "/etc/lsb-release"))
+               (and (file-readable-p file)
+                    (with-temp-buffer
+                      (insert-file-contents file)
+                      (if (re-search-forward
+                           "^\\sw*DISTRIB_DESCRIPTION=\"?\\(.*release.*?\\)\"?$" nil t)
+                          (match-string 1)))))
+             (catch 'found
+               (dolist (f (append (file-expand-wildcards "/etc/*-release")
+                                  '("/etc/debian_version")))
+                 (and (not (member (file-name-nondirectory f)
+                                   '("lsb-release" "os-release")))
+                      (file-readable-p f)
+                      (with-temp-buffer
+                        (insert-file-contents f)
+                        (if (not (zerop (buffer-size)))
+                            (throw 'found
+                                   (format "%s%s"
+                                           (if (equal (file-name-nondirectory f)
+                                                      "debian_version")
+                                               "Debian " "")
+                                           (buffer-substring
+                                            (line-beginning-position)
+                                            (line-end-position)))))))))))))
+
 ;; It's the default mail mode, so it seems OK to use its features.
 (autoload 'message-bogus-recipient-p "message")
 (autoload 'message-make-address "message")
@@ -232,30 +297,7 @@ usually do not have translators for other languages.\n\n")))
                     "', version "
 		    (mapconcat 'number-to-string (x-server-version) ".") "\n")
 	  (error t)))
-    (let (os)
-      ;; Maybe this should be factored out in a standalone function,
-      ;; eg emacs-os-description.
-      (cond ((eq system-type 'darwin)
-             (with-temp-buffer
-               (when (eq 0 (ignore-errors
-                             (call-process "sw_vers" nil '(t nil) nil)))
-                 (dolist (s '("ProductName" "ProductVersion"))
-                   (goto-char (point-min))
-                   (if (re-search-forward (format "^%s\\s-*:\\s-+\\(.*\\)$" s)
-                                          nil t)
-                       (setq os (concat os " " (match-string 1))))))))
-            ;; TODO include other branches here.
-            ;; MS Windows: systeminfo ?
-            ;; Cygwin, *BSD, etc: ?
-            (t
-             (with-temp-buffer
-               (when (eq 0 (ignore-errors
-                             (call-process "lsb_release" nil '(t nil)
-                                           nil "-d")))
-                 (goto-char (point-min))
-                 (if (looking-at "^\\sw+:\\s-+")
-                     (goto-char (match-end 0)))
-                 (setq os (buffer-substring (point) (line-end-position)))))))
+    (let ((os (ignore-errors (report-emacs-bug--os-description))))
       (if (stringp os)
           (insert "System Description: " os "\n\n")))
     (let ((message-buf (get-buffer "*Messages*")))
