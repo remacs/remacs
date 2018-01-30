@@ -6,7 +6,7 @@ use std::{self, mem, ptr};
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
                  MOST_POSITIVE_FIXNUM};
-use remacs_sys::{globals, make_lisp_ptr, nsberror, set_buffer_internal, Fget_text_property};
+use remacs_sys::{globals, make_lisp_ptr, set_buffer_internal, Fget_text_property};
 use remacs_sys::{Qbuffer_read_only, Qinhibit_read_only, Qnil};
 
 use editfns::point;

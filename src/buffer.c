@@ -368,13 +368,6 @@ bset_zv_marker (struct buffer *b, Lisp_Object val)
   b->zv_marker_ = val;
 }
 
-void
-nsberror (Lisp_Object spec)
-{
-  if (STRINGP (spec))
-    error ("No buffer named %s", SDATA (spec));
-  error ("Invalid buffer argument");
-}
 
 DEFUN ("buffer-list", Fbuffer_list, Sbuffer_list, 0, 1, 0,
        doc: /* Return a list of all existing live buffers.
