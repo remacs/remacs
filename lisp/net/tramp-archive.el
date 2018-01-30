@@ -301,84 +301,10 @@ pass to the OPERATION."
        t))
 
 (defvar tramp-archive-hash (make-hash-table :test 'equal)
-  "Hash table for archive local copies.")
-
-(defun tramp-archive-local-copy (archive)
-  "Return copy of ARCHIVE, usable by GVFS.
-ARCHIVE is the archive component of an archive file name."
-  (setq archive (file-truename archive))
-  (let ((tramp-verbose 0))
-    (with-tramp-connection-property
-	;; This is just an auxiliary VEC for caching properties.
-	(make-tramp-file-name :method tramp-archive-method :host archive)
-	"archive"
-      (cond
-       ;; File archives inside file archives.
-       ((tramp-archive-file-name-p archive)
-	(let ((archive
-	       (tramp-make-tramp-file-name
-		(tramp-archive-dissect-file-name archive) nil 'noarchive)))
-	  ;; We call `file-attributes' in order to mount the archive.
-	  (file-attributes archive)
-	  (puthash archive nil tramp-archive-hash)
-	  archive))
-       ;; http://...
-       ((and url-handler-mode
-	     tramp-compat-use-url-tramp-p
-             (string-match url-handler-regexp archive)
-	     (string-match "https?" (url-type (url-generic-parse-url archive))))
-	(let* ((url-tramp-protocols
-		(cons
-		 (url-type (url-generic-parse-url archive))
-		 url-tramp-protocols))
-	       (archive (url-tramp-convert-url-to-tramp archive)))
-	  (puthash archive nil tramp-archive-hash)
-	  archive))
-       ;; GVFS supported schemes.
-       ((or (tramp-gvfs-file-name-p archive)
-	    (not (file-remote-p archive)))
-	(puthash archive nil tramp-archive-hash)
-	archive)
-       ;; Anything else.  Here we call `file-local-copy', which we
-       ;; have avoided so far.
-       (t (let ((inhibit-file-name-operation 'file-local-copy)
-		(inhibit-file-name-handlers
-		 (cons 'jka-compr-handler inhibit-file-name-handlers))
-		result)
-	    (or (and (setq result (gethash archive tramp-archive-hash nil))
-		     (file-readable-p result))
-		(puthash
-		 archive
-		 (setq result (file-local-copy archive))
-		 tramp-archive-hash))
-	    result))))))
-
-;;;###tramp-autoload
-(defun tramp-archive-cleanup-hash ()
-  "Remove local copies of archives, used by GVFS."
-  (maphash
-   (lambda (key value)
-     ;; Unmount local copy.
-     (ignore-errors
-       (let ((tramp-gvfs-methods tramp-archive-all-gvfs-methods)
-	     (file-archive (file-name-as-directory key)))
-	 (tramp-message
-	  (and (tramp-tramp-file-p key) (tramp-dissect-file-name key)) 3
-	  "Unmounting %s" file-archive)
-	 (tramp-gvfs-unmount
-	  (tramp-dissect-file-name
-	   (tramp-archive-gvfs-file-name file-archive)))))
-     ;; Delete local copy.
-     (ignore-errors (when value (delete-file value)))
-     (remhash key tramp-archive-hash))
-   tramp-archive-hash)
-  (clrhash tramp-archive-hash))
-
-(add-hook 'kill-emacs-hook 'tramp-archive-cleanup-hash)
-(add-hook 'tramp-archive-unload-hook
-	  (lambda ()
-	    (remove-hook 'kill-emacs-hook
-			 'tramp-archive-cleanup-hash)))
+  "Hash table for archive local copies.
+The hash key is the archive name.  The value is a cons of the
+used `tramp-file-name' structure for tramp-gvfs, and the file
+name of a local copy, if any.")
 
 (defun tramp-archive-dissect-file-name (name)
   "Return a `tramp-file-name' structure.
@@ -391,12 +317,87 @@ name is kept in slot `hop'"
     ;; The `string-match' happened in `tramp-archive-file-name-p'.
     (let ((archive (match-string 1 name))
 	  (localname (match-string 2 name))
-	  (tramp-verbose 0))
-      (make-tramp-file-name
-       :method tramp-archive-method :user nil :domain nil :host
-       (url-hexify-string
-	(tramp-gvfs-url-file-name (tramp-archive-local-copy archive)))
-       :port nil :localname localname :hop archive))))
+	  (tramp-verbose 0)
+	  vec copy)
+
+      (setq archive (file-truename archive))
+
+      (cond
+       ;; The value is already in the hash table.
+       ((setq vec (car (gethash archive tramp-archive-hash))))
+
+       ;; File archives inside file archives.
+       ((tramp-archive-file-name-p archive)
+	(let ((archive
+	       (tramp-make-tramp-file-name
+		(tramp-archive-dissect-file-name archive) nil 'noarchive)))
+	  (setq vec
+		(make-tramp-file-name
+		 :method tramp-archive-method :hop archive
+		 :host (url-hexify-string (tramp-gvfs-url-file-name archive)))))
+	(puthash archive (list vec) tramp-archive-hash))
+
+       ;; http://...
+       ((and url-handler-mode
+	     tramp-compat-use-url-tramp-p
+             (string-match url-handler-regexp archive)
+	     (string-match "https?" (url-type (url-generic-parse-url archive))))
+	(let* ((url-tramp-protocols
+		(cons
+		 (url-type (url-generic-parse-url archive))
+		 url-tramp-protocols))
+	       (archive (url-tramp-convert-url-to-tramp archive)))
+	  (setq vec
+		(make-tramp-file-name
+		 :method tramp-archive-method :hop archive
+		 :host (url-hexify-string (tramp-gvfs-url-file-name archive)))))
+	  (puthash archive (list vec) tramp-archive-hash))
+
+       ;; GVFS supported schemes.
+       ((or (tramp-gvfs-file-name-p archive)
+	    (not (file-remote-p archive)))
+	(setq vec
+	      (make-tramp-file-name
+	       :method tramp-archive-method :hop archive
+	       :host (url-hexify-string (tramp-gvfs-url-file-name archive))))
+	(puthash archive (list vec) tramp-archive-hash))
+
+       ;; Anything else.  Here we call `file-local-copy', which we
+       ;; have avoided so far.
+       (t (let ((inhibit-file-name-operation 'file-local-copy)
+		(inhibit-file-name-handlers
+		 (cons 'jka-compr-handler inhibit-file-name-handlers)))
+	    (setq copy (file-local-copy archive)
+		  vec
+		  (make-tramp-file-name
+		   :method tramp-archive-method :hop archive
+		   :host (url-hexify-string (tramp-gvfs-url-file-name copy)))))
+	  (puthash archive (cons vec copy) tramp-archive-hash)))
+
+      ;; So far, `vec' handles just the mount point.  Add `localname'.
+      (setf (tramp-file-name-localname vec) localname)
+      vec)))
+
+;;;###tramp-autoload
+(defun tramp-archive-cleanup-hash ()
+  "Remove local copies of archives, used by GVFS."
+  (maphash
+   (lambda (key value)
+     ;; Unmount local copy.
+     (ignore-errors
+       (tramp-message (car value) 3 "Unmounting %s" (or (cdr value) key))
+       (tramp-gvfs-unmount (car value)))
+     ;; Delete local copy.
+     (ignore-errors (delete-file (cdr value)))
+     (remhash key tramp-archive-hash))
+   tramp-archive-hash)
+  (clrhash tramp-archive-hash))
+
+(add-hook 'kill-emacs-hook 'tramp-archive-cleanup-hash)
+(add-hook 'tramp-archive-unload-hook
+	  (lambda ()
+	    (remove-hook 'kill-emacs-hook
+			 'tramp-archive-cleanup-hash)))
 
 (defsubst tramp-file-name-archive (vec)
   "Extract the archive file name from VEC.

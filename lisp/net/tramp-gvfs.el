@@ -1778,13 +1778,16 @@ file-notify events."
 
 (defun tramp-gvfs-unmount (vec)
   "Unmount the object identified by VEC."
-  (let ((vec (copy-tramp-file-name vec)))
-    (setf (tramp-file-name-localname vec) "/"
-	  (tramp-file-name-hop vec) nil)
-    (when (tramp-gvfs-connection-mounted-p vec)
-      (tramp-gvfs-send-command
-       vec "gvfs-mount" "-u"
-       (tramp-gvfs-url-file-name (tramp-make-tramp-file-name vec))))))
+  (setf (tramp-file-name-localname vec) "/"
+	(tramp-file-name-hop vec) nil)
+  (when (tramp-gvfs-connection-mounted-p vec)
+    (tramp-gvfs-send-command
+     vec "gvfs-mount" "-u"
+     (tramp-gvfs-url-file-name (tramp-make-tramp-file-name vec))))
+  (while (tramp-gvfs-connection-mounted-p vec)
+    (read-event nil nil 0.1))
+  (tramp-flush-connection-properties vec)
+  (tramp-flush-connection-properties (tramp-get-connection-process vec)))
 
 (defun tramp-gvfs-mount-spec-entry (key value)
   "Construct a mount-spec entry to be used in a mount_spec.
