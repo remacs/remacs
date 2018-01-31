@@ -1181,6 +1181,12 @@ impl From<LispObject> for Option<LispCons> {
     }
 }
 
+impl From<LispCons> for LispObject {
+    fn from(c: LispCons) -> Self {
+        c.as_obj()
+    }
+}
+
 /// A newtype for objects we know are conses.
 #[derive(Clone, Copy)]
 pub struct LispCons(LispObject);

@@ -1,11 +1,11 @@
 //! Operations on lists.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, EmacsUint};
 use remacs_sys::{Qcircular_list, Qplistp};
+use remacs_sys::EmacsUint;
 use remacs_sys::globals;
 
-use lisp::LispObject;
+use lisp::{LispCons, LispObject};
 use lisp::defsubr;
 use symbols::LispSymbolRef;
 
@@ -36,8 +36,7 @@ pub fn nlistp(object: LispObject) -> bool {
 
 /// Set the car of CELL to be NEWCAR. Returns NEWCAR.
 #[lisp_fn]
-pub fn setcar(cell: LispObject, newcar: LispObject) -> LispObject {
-    let cell = cell.as_cons_or_error();
+pub fn setcar(cell: LispCons, newcar: LispObject) -> LispObject {
     cell.check_impure();
     cell.set_car(newcar);
     newcar
@@ -45,8 +44,7 @@ pub fn setcar(cell: LispObject, newcar: LispObject) -> LispObject {
 
 /// Set the cdr of CELL to be NEWCDR.  Returns NEWCDR.
 #[lisp_fn]
-pub fn setcdr(cell: LispObject, newcdr: LispObject) -> LispObject {
-    let cell = cell.as_cons_or_error();
+pub fn setcdr(cell: LispCons, newcdr: LispObject) -> LispObject {
     cell.check_impure();
     cell.set_cdr(newcdr);
     newcdr
@@ -114,22 +112,24 @@ pub fn nthcdr(n: EmacsUint, list: LispObject) -> LispObject {
 /// Return the Nth element of LIST.
 /// N counts from zero.  If LIST is not that long, nil is returned.
 #[lisp_fn]
-pub fn nth(n: EmacsInt, list: LispObject) -> LispObject {
+pub fn nth(n: EmacsUint, list: LispObject) -> LispObject {
     list.iter_cars()
         .nth(n as usize)
-        .map_or(LispObject::constant_nil(), |c| c)
+        .unwrap_or(LispObject::constant_nil())
+}
+
+fn lookup_member<CmpFunc>(elt: LispObject, list: LispObject, cmp: CmpFunc) -> LispObject
+where
+    CmpFunc: Fn(LispObject, LispObject) -> bool,
+{
+    list.iter_tails().find(|item| cmp(elt, item.car())).into()
 }
 
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `eq'.
 /// The value is actually the tail of LIST whose car is ELT.
 #[lisp_fn]
 pub fn memq(elt: LispObject, list: LispObject) -> LispObject {
-    for tail in list.iter_tails() {
-        if elt.eq(tail.car()) {
-            return tail.as_obj();
-        }
-    }
-    LispObject::constant_nil()
+    lookup_member(elt, list, LispObject::eq)
 }
 
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `eql'.
@@ -139,24 +139,26 @@ pub fn memql(elt: LispObject, list: LispObject) -> LispObject {
     if !elt.is_float() {
         return memq(elt, list);
     }
-    for tail in list.iter_tails() {
-        if elt.eql(tail.car()) {
-            return tail.as_obj();
-        }
-    }
-    LispObject::constant_nil()
+    lookup_member(elt, list, LispObject::eql)
 }
 
 /// Return non-nil if ELT is an element of LIST.  Comparison done with `equal'.
 /// The value is actually the tail of LIST whose car is ELT.
 #[lisp_fn]
 pub fn member(elt: LispObject, list: LispObject) -> LispObject {
-    for tail in list.iter_tails() {
-        if elt.equal(tail.car()) {
-            return tail.as_obj();
-        }
-    }
-    LispObject::constant_nil()
+    lookup_member(elt, list, LispObject::equal)
+}
+
+fn assoc_impl<CmpFunc>(key: LispObject, list: LispObject, cmp: CmpFunc) -> LispObject
+where
+    CmpFunc: Fn(LispObject, LispObject) -> bool,
+{
+    list.iter_cars()
+        .find(|item| {
+            item.as_cons()
+                .map_or_else(|| false, |cons| cmp(key, cons.car()))
+        })
+        .unwrap_or_else(LispObject::constant_nil)
 }
 
 /// Return non-nil if KEY is `eq' to the car of an element of LIST.
@@ -164,15 +166,7 @@ pub fn member(elt: LispObject, list: LispObject) -> LispObject {
 /// Elements of LIST that are not conses are ignored.
 #[lisp_fn]
 pub fn assq(key: LispObject, list: LispObject) -> LispObject {
-    for tail in list.iter_tails() {
-        let item = tail.car();
-        if let Some(item_cons) = item.as_cons() {
-            if key.eq(item_cons.car()) {
-                return item;
-            }
-        }
-    }
-    LispObject::constant_nil()
+    assoc_impl(key, list, LispObject::eq)
 }
 
 /// Return non-nil if KEY is equal to the car of an element of LIST.
@@ -181,35 +175,30 @@ pub fn assq(key: LispObject, list: LispObject) -> LispObject {
 /// Equality is defined by TESTFN is non-nil or by `equal' if nil.
 #[lisp_fn(min = "2")]
 pub fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObject {
-    for tail in list.iter_tails() {
-        let item = tail.car();
-        if let Some(item_cons) = item.as_cons() {
-            let is_equal = if testfn.is_nil() {
-                key.eq(item_cons.car()) || key.equal(item_cons.car())
-            } else {
-                call!(testfn, key, item_cons.car()).is_not_nil()
-            };
-            if is_equal {
-                return item;
-            }
-        }
+    if testfn.is_nil() {
+        assoc_impl(key, list, |k, item| k.eq(item) || k.equal(item))
+    } else {
+        assoc_impl(key, list, |k, item| call!(testfn, k, item).is_not_nil())
     }
-    LispObject::constant_nil()
+}
+
+fn rassoc_impl<CmpFunc>(key: LispObject, list: LispObject, cmp: CmpFunc) -> LispObject
+where
+    CmpFunc: Fn(LispObject, LispObject) -> bool,
+{
+    list.iter_cars()
+        .find(|item| {
+            item.as_cons()
+                .map_or_else(|| false, |cons| cmp(key, cons.cdr()))
+        })
+        .unwrap_or_else(LispObject::constant_nil)
 }
 
 /// Return non-nil if KEY is `eq' to the cdr of an element of LIST.
 /// The value is actually the first element of LIST whose cdr is KEY.
 #[lisp_fn]
 pub fn rassq(key: LispObject, list: LispObject) -> LispObject {
-    for tail in list.iter_tails() {
-        let item = tail.car();
-        if let Some(item_cons) = item.as_cons() {
-            if key.eq(item_cons.cdr()) {
-                return item;
-            }
-        }
-    }
-    LispObject::constant_nil()
+    rassoc_impl(key, list, LispObject::eq)
 }
 
 /// Return non-nil if KEY is `equal' to the cdr of an element of LIST.
@@ -217,15 +206,7 @@ pub fn rassq(key: LispObject, list: LispObject) -> LispObject {
 /// (fn KEY LIST)
 #[lisp_fn]
 pub fn rassoc(key: LispObject, list: LispObject) -> LispObject {
-    for tail in list.iter_tails() {
-        let item = tail.car();
-        if let Some(item_cons) = item.as_cons() {
-            if key.eq(item_cons.cdr()) || key.equal(item_cons.cdr()) {
-                return item;
-            }
-        }
-    }
-    LispObject::constant_nil()
+    rassoc_impl(key, list, |k, item| k.eq(item) || k.equal(item))
 }
 
 /// Delete members of LIST which are `eq' to ELT, and return the result.
@@ -238,22 +219,22 @@ pub fn rassoc(key: LispObject, list: LispObject) -> LispObject {
 /// the value of a list `foo'.  See also `remq', which does not modify the
 /// argument.
 #[lisp_fn]
-pub fn delq(elt: LispObject, mut list: LispObject) -> LispObject {
-    let mut prev = LispObject::constant_nil();
-    for tail in list.iter_tails() {
-        let item = tail.car();
+pub fn delq(elt: LispObject, list: LispObject) -> LispObject {
+    let mut prev = None;
+    list.iter_tails().fold(list, |remaining, tail| {
+        let (item, rest) = tail.as_tuple();
         if elt.eq(item) {
-            let rest = tail.cdr();
-            if prev.is_nil() {
-                list = rest;
+            if let Some(cons) = prev {
+                setcdr(cons, rest);
             } else {
-                setcdr(prev, rest);
+                return rest;
             }
         } else {
-            prev = tail.as_obj();
+            prev = Some(tail);
         }
-    }
-    list
+
+        remaining
+    })
 }
 
 /// Extract a value from a property list.
@@ -423,8 +404,7 @@ pub fn list(args: &mut [LispObject]) -> LispObject {
 
 /// Return a newly created list of length LENGTH, with each element being INIT.
 #[lisp_fn]
-pub fn make_list(length: LispObject, init: LispObject) -> LispObject {
-    let length = length.as_natnum_or_error();
+pub fn make_list(length: EmacsUint, init: LispObject) -> LispObject {
     (0..length).fold(LispObject::constant_nil(), |list, _| {
         LispObject::cons(init, list)
     })
@@ -435,21 +415,21 @@ pub fn make_list(length: LispObject, init: LispObject) -> LispObject {
 /// it returns 0.  If LIST is circular, it returns a finite value
 /// which is at least the number of distinct elements.
 #[lisp_fn]
-pub fn safe_length(list: LispObject) -> LispObject {
-    LispObject::int_or_float_from_fixnum(list.iter_tails_safe().count() as EmacsInt)
+pub fn safe_length(list: LispObject) -> usize {
+    list.iter_tails_safe().count()
 }
 
 // Used by sort() in vectors.rs.
 
 pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
-    let length: EmacsUint = list.iter_tails().count() as EmacsUint;
+    let length = safe_length(list) as EmacsUint;
     if length < 2 {
         return list;
     }
 
     let item = nthcdr(length / 2 - 1, list);
     let back = cdr(item);
-    setcdr(item, LispObject::constant_nil());
+    setcdr(item.as_cons_or_error(), LispObject::constant_nil());
 
     let front = sort_list(list, pred);
     let back = sort_list(back, pred);
@@ -463,23 +443,25 @@ pub fn inorder(pred: LispObject, a: LispObject, b: LispObject) -> bool {
 
 /// Merge step of linked-list sorting.
 pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispObject {
-    let mut tail = LispObject::constant_nil();
+    let mut tail = None;
     let mut value = LispObject::constant_nil();
 
     loop {
         if l1.is_nil() {
-            if tail.is_nil() {
+            if let Some(cons) = tail {
+                setcdr(cons, l2);
+                return value;
+            } else {
                 return l2;
             }
-            setcdr(tail, l2);
-            return value;
         }
         if l2.is_nil() {
-            if tail.is_nil() {
+            if let Some(cons) = tail {
+                setcdr(cons, l1);
+                return value;
+            } else {
                 return l1;
             }
-            setcdr(tail, l1);
-            return value;
         }
 
         let item;
@@ -490,12 +472,12 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
             item = l2;
             l2 = cdr(l2);
         }
-        if tail.is_nil() {
-            value = item;
+        if let Some(cons) = tail {
+            setcdr(cons, item);
         } else {
-            setcdr(tail, item);
+            value = item;
         }
-        tail = item;
+        tail = item.as_cons();
     }
 }
 
