@@ -4599,7 +4599,7 @@ first character in the group of consecutive characters that have the
 same @code{display} property.  The space width is the pixel width of
 that character, multiplied by @var{factor}.  (On text-mode terminals,
 the ``pixel width'' of a character is usually 1, but it could be more
-for TABs and double-width CJK characters.)
+for @key{TAB}s and double-width CJK characters.)
 
 @item :align-to @var{hpos}
 Specifies that the space should be wide enough to reach @var{hpos}.

@@ -1675,8 +1675,8 @@ line.  In particular, @kbd{C-g} simply exits the @code{query-replace}.
 
   To restart a @code{query-replace} once it is exited, use @kbd{C-x
 @key{ESC} @key{ESC}}, which repeats the @code{query-replace} because it
-used the minibuffer to read its arguments.  @xref{Repetition, C-x ESC
-ESC}.
+used the minibuffer to read its arguments.  @xref{Repetition, C-x @key{ESC}
+@key{ESC}}.
 
 @cindex invisible text, and query-replace
   The option @code{search-invisible} determines how @code{query-replace}

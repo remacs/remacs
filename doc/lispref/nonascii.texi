@@ -1776,7 +1776,7 @@ affect it.
 Binding @code{coding-system-for-write} to a non-@code{nil} value
 prevents output primitives from calling the function specified by
 @code{select-safe-coding-system-function} (@pxref{User-Chosen Coding
-Systems}).  This is because @kbd{C-x RET c}
+Systems}).  This is because @kbd{C-x @key{RET} c}
 (@code{universal-coding-system-argument}) works by binding
 @code{coding-system-for-write}, and Emacs should obey user selection.
 If a Lisp program binds @code{coding-system-for-write} to a value that

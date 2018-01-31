@@ -1899,7 +1899,7 @@ Move to the previous reference and display it in the other window
 @findex xref-show-location-at-point
 Display the reference on the current line in the other window
 (@code{xref-show-location-at-point}).
-@item TAB
+@item @key{TAB}
 @findex xref-quit-and-goto-xref
 Display the reference on the current line and bury the @file{*xref*}
 buffer (@code{xref-quit-and-goto-xref}).
