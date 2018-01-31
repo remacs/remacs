@@ -27,8 +27,7 @@
 ## and then push it.
 ## Intended usage:
 ## Have a dedicated git directory just for this.
-## Have a cron job that does a hard reset (to clean up after any
-## previous failures), then a git pull, then calls this script with -p.
+## Have a cron job that calls this script with -r -p.
 
 die ()                 # write error to stderr and exit
 {
@@ -51,15 +50,16 @@ cd ../
 usage ()
 {
     cat 1>&2 <<EOF
-Usage: ${PN} [-b] [-e emacs] [-n nmin] [-p] [-t] [-- make-flags]
+Usage: ${PN} [-b] [-e emacs] [-n nmin] [-p] [-r] [-t] [-- make-flags]
 Merge the Emacs release branch to master.
 Passes any non-option args to make (eg -- -j2).
 Options:
 -e: Emacs executable to use for the initial merge (default $emacs)
--n: Minimum number of commits to try merging (default $nmin)
+-n: minimum number of commits to try merging (default $nmin)
 -b: try to build after merging
 -t: try to check after building
 -p: if merge, build, check all succeed, push when finished (caution!)
+-r: start by doing a hard reset (caution!) and pull
 EOF
     exit 1
 }
@@ -73,8 +73,9 @@ build=
 test=
 push=
 quiet=
+reset=
 
-while getopts ":hbe:n:pqt" option ; do
+while getopts ":hbe:n:pqrt" option ; do
     case $option in
         (h) usage ;;
 
@@ -87,6 +88,8 @@ while getopts ":hbe:n:pqt" option ; do
         (p) push=1 ;;
 
         (q) quiet=1 ;;
+
+        (r) reset=1 ;;
 
         (t) test=1 ;;
 
@@ -118,6 +121,15 @@ trap "rm -f $tempfile 2> /dev/null" EXIT
 [ -e Makefile ] && [ "$build" ] && {
     echo "Cleaning..."
     make maintainer-clean >& /dev/null
+}
+
+
+[ "$reset" ] && {
+    echo "Resetting..."
+    git reset --hard origin/master || die "reset error"
+
+    echo "Pulling..."
+    git pull --ff-only || die "pull error"
 }
 
 
