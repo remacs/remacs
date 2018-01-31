@@ -18,11 +18,11 @@
 @cindex starting Emacs
 
   The usual way to invoke Emacs is with the shell command
-@command{emacs}.  From a terminal window running a Unix shell in the X
-Window System, you can run Emacs in the background with @command{emacs
-&}; this way, Emacs won't tie up the terminal window, so you can use
-it to run other shell commands.  (For comparable methods of starting
-Emacs on MS-Windows, see @ref{Windows Startup}.)
+@command{emacs}.  From a terminal window running a Unix shell, you can
+run Emacs in the background with @command{emacs &}; this way, Emacs
+won't tie up the terminal window, so you can use it to run other shell
+commands.  (For comparable methods of starting Emacs on MS-Windows,
+see @ref{Windows Startup}.)
 
 @cindex startup screen
   When Emacs starts up, the initial frame displays a special buffer

@@ -32526,8 +32526,8 @@ A value of zero means always recenter point if it moves off screen.  */);
 
   DEFVAR_INT ("scroll-margin", scroll_margin,
     doc: /* Number of lines of margin at the top and bottom of a window.
-Recenter the window whenever point gets within this many lines
-of the top or bottom of the window.  */);
+Trigger automatic scrolling whenever point gets within this many lines
+of the top or bottom of the window (see info node `Auto Scrolling').  */);
   scroll_margin = 0;
 
   DEFVAR_LISP ("maximum-scroll-margin", Vmaximum_scroll_margin,

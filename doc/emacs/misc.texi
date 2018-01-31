@@ -1729,7 +1729,7 @@ different virtual terminals, and switch to the Emacs server's virtual
 terminal after calling @command{emacsclient}; or (ii) call
 @command{emacsclient} from within the Emacs server itself, using Shell
 mode (@pxref{Interactive Shell}) or Term mode (@pxref{Term Mode});
-@code{emacsclient} blocks only the subshell under Emacs, and you can
+@command{emacsclient} blocks only the subshell under Emacs, and you can
 still use Emacs to edit the file.
 
 @kindex C-x #
@@ -1794,13 +1794,13 @@ listed below:
 @table @samp
 @item -a @var{command}
 @itemx --alternate-editor=@var{command}
-Specify a shell command to run if @code{emacsclient} fails to contact Emacs.
-This is useful when running @code{emacsclient} in a script.
-The command may include arguments, which may be quoted "like this".
-Currently, escaping of quotes is not supported.
+Specify a shell command to run if @command{emacsclient} fails to
+contact Emacs.  This is useful when running @code{emacsclient} in a
+script.  The command may include arguments, which may be quoted "like
+this".  Currently, escaping of quotes is not supported.
 
 As a special exception, if @var{command} is the empty string, then
-@code{emacsclient} starts Emacs in daemon mode (as @command{emacs
+@command{emacsclient} starts Emacs in daemon mode (as @samp{emacs
 --daemon}) and then tries connecting again.
 
 @cindex @env{ALTERNATE_EDITOR} environment variable
