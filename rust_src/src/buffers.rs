@@ -1,12 +1,12 @@
 //! Functions operating on buffers.
 
-use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
+use libc::{self, c_int, c_uchar, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
                  MOST_POSITIVE_FIXNUM};
-use remacs_sys::{globals, make_lisp_ptr, set_buffer_internal, Fget_text_property};
+use remacs_sys::{globals, set_buffer_internal, Fget_text_property};
 use remacs_sys::{Qbuffer_read_only, Qinhibit_read_only, Qnil};
 
 use editfns::point;
@@ -58,12 +58,7 @@ pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe {
-            LispObject::from_raw(make_lisp_ptr(
-                self.as_ptr() as *mut c_void,
-                Lisp_Type::Lisp_Vectorlike,
-            ))
-        }
+        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)) }
     }
 
     pub fn is_read_only(&self) -> bool {
