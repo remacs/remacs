@@ -46,6 +46,11 @@
   (file-name-as-directory tramp-archive-test-file-archive)
   "The test archive.")
 
+(defconst tramp-archive-test-directory
+  (file-truename
+   (expand-file-name "foo.iso" tramp-archive-test-resource-directory))
+  "A directory file name, which looks like an archive.")
+
 (setq password-cache-expiry nil
       tramp-verbose 0
       tramp-cache-read-persistent-data t ;; For auth-sources.
@@ -94,14 +99,51 @@ variables, so we check the Emacs version directly."
   "Check archive file name syntax."
   (should-not (tramp-archive-file-name-p tramp-archive-test-file-archive))
   (should (tramp-archive-file-name-p tramp-archive-test-archive))
+  (should
+   (string-equal
+    (tramp-archive-file-name-archive tramp-archive-test-archive)
+    tramp-archive-test-file-archive))
+  (should
+   (string-equal
+    (tramp-archive-file-name-localname tramp-archive-test-archive) "/"))
   (should (tramp-archive-file-name-p (concat tramp-archive-test-archive "foo")))
   (should
+   (string-equal
+    (tramp-archive-file-name-localname
+     (concat tramp-archive-test-archive "foo"))
+    "/foo"))
+  (should
    (tramp-archive-file-name-p (concat tramp-archive-test-archive "foo/bar")))
+  (should
+   (string-equal
+    (tramp-archive-file-name-localname
+     (concat tramp-archive-test-archive "foo/bar"))
+    "/foo/bar"))
   ;; A file archive inside a file archive.
   (should
    (tramp-archive-file-name-p (concat tramp-archive-test-archive "baz.tar")))
   (should
-   (tramp-archive-file-name-p (concat tramp-archive-test-archive "baz.tar/"))))
+   (string-equal
+    (tramp-archive-file-name-archive
+     (concat tramp-archive-test-archive "baz.tar"))
+    tramp-archive-test-file-archive))
+  (should
+   (string-equal
+    (tramp-archive-file-name-localname
+     (concat tramp-archive-test-archive "baz.tar"))
+    "/baz.tar"))
+  (should
+   (tramp-archive-file-name-p (concat tramp-archive-test-archive "baz.tar/")))
+  (should
+   (string-equal
+    (tramp-archive-file-name-archive
+     (concat tramp-archive-test-archive "baz.tar/"))
+    (concat tramp-archive-test-archive "baz.tar")))
+  (should
+   (string-equal
+    (tramp-archive-file-name-localname
+     (concat tramp-archive-test-archive "baz.tar/"))
+    "/")))
 
 (ert-deftest tramp-archive-test02-file-name-dissect ()
   "Check archive file name components."
@@ -204,6 +246,21 @@ variables, so we check the Emacs version directly."
   ;; `expand-file-name' does not care file archive boundaries.
   (should (string-equal (expand-file-name "/foo.tar/./file") "/foo.tar/file"))
   (should (string-equal (expand-file-name "/foo.tar/../file") "/file")))
+
+;; This test is inspired by Bug#30293.
+(ert-deftest tramp-archive-test05-expand-file-name-non-archive-directory ()
+  "Check existing directories with archive file name syntax.
+They shall still be supported"
+  (should (file-directory-p tramp-archive-test-directory))
+  ;; `tramp-archive-file-name-p' tests only for file name syntax.  It
+  ;; doesn't test, whether it is really a file archive.
+  (should
+   (tramp-archive-file-name-p
+    (file-name-as-directory tramp-archive-test-directory)))
+  (should
+   (file-directory-p (file-name-as-directory tramp-archive-test-directory)))
+  (should
+   (file-exists-p (expand-file-name "foo" tramp-archive-test-directory))))
 
 (ert-deftest tramp-archive-test06-directory-file-name ()
   "Check `directory-file-name'.

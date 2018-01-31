@@ -253,21 +253,33 @@ It must be supported by libarchive(3).")
   "Alist of handler functions for GVFS archive method.
 Operations not mentioned here will be handled by the default Emacs primitives.")
 
+(defsubst tramp-archive-file-name-for-operation (operation &rest args)
+  "Like `tramp-file-name-for-operation', but for archive file name syntax."
+  (cl-letf (((symbol-function 'tramp-tramp-file-p) 'tramp-archive-file-name-p))
+    (apply 'tramp-file-name-for-operation operation args)))
+
 ;;;###tramp-autoload
 (defun tramp-archive-file-name-handler (operation &rest args)
   "Invoke the GVFS archive related OPERATION.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
-  (unless tramp-gvfs-enabled
-    (tramp-compat-user-error nil "Package `tramp-archive' not supported"))
-  (let ((tramp-methods (cons `(,tramp-archive-method) tramp-methods))
-	(tramp-gvfs-methods tramp-archive-all-gvfs-methods)
-	(fn (assoc operation tramp-archive-file-name-handler-alist)))
-    (when (eq (cdr fn) 'tramp-archive-handle-not-implemented)
-      (setq args (cons operation args)))
-    (if fn
-	(save-match-data (apply (cdr fn) args))
-      (tramp-run-real-handler operation args))))
+  (let* ((filename (apply 'tramp-archive-file-name-for-operation
+			  operation args))
+	 (archive (tramp-archive-file-name-archive filename)))
+    ;; The file archive could be a directory, see Bug#30293.
+    (if (file-directory-p archive)
+	(tramp-run-real-handler operation args)
+      ;; Now run the handler.
+      (unless tramp-gvfs-enabled
+	(tramp-compat-user-error nil "Package `tramp-archive' not supported"))
+      (let ((tramp-methods (cons `(,tramp-archive-method) tramp-methods))
+	    (tramp-gvfs-methods tramp-archive-all-gvfs-methods)
+	    (fn (assoc operation tramp-archive-file-name-handler-alist)))
+	(when (eq (cdr fn) 'tramp-archive-handle-not-implemented)
+	  (setq args (cons operation args)))
+	(if fn
+	    (save-match-data (apply (cdr fn) args))
+	  (tramp-run-real-handler operation args))))))
 
 ;; Mark `operations' the handler is responsible for.
 (put 'tramp-archive-file-name-handler 'operations
@@ -300,6 +312,16 @@ pass to the OPERATION."
        (string-match tramp-archive-file-name-regexp name)
        t))
 
+(defun tramp-archive-file-name-archive (name)
+  "Return archive part of NAME."
+  (and (tramp-archive-file-name-p name)
+       (match-string 1 name)))
+
+(defun tramp-archive-file-name-localname (name)
+  "Return localname part of NAME."
+  (and (tramp-archive-file-name-p name)
+       (match-string 2 name)))
+
 (defvar tramp-archive-hash (make-hash-table :test 'equal)
   "Hash table for archive local copies.
 The hash key is the archive name.  The value is a cons of the
@@ -314,9 +336,8 @@ name is kept in slot `hop'"
   (save-match-data
     (unless (tramp-archive-file-name-p name)
       (tramp-compat-user-error nil "Not an archive file name: \"%s\"" name))
-    ;; The `string-match' happened in `tramp-archive-file-name-p'.
-    (let* ((localname (match-string 2 name))
-	   (archive (file-truename (match-string 1 name)))
+    (let* ((localname (tramp-archive-file-name-localname name))
+	   (archive (file-truename (tramp-archive-file-name-archive name)))
 	   (vec (make-tramp-file-name
 		 :method tramp-archive-method :hop archive)))
 
@@ -535,7 +556,7 @@ offered."
   "Generic handler for operations not implemented for file archives."
   (let ((v (ignore-errors
 	     (tramp-archive-dissect-file-name
-	      (apply 'tramp-file-name-for-operation operation args)))))
+	      (apply 'tramp-archive-file-name-for-operation operation args)))))
     (tramp-message v 10 "%s" (cons operation args))
     (tramp-error
      v 'file-error
