@@ -58,8 +58,8 @@ compile}.  This reads a shell command line using the minibuffer, and
 then executes the command by running a shell as a subprocess (or
 @dfn{inferior process}) of Emacs.  The output is inserted in a buffer
 named @file{*compilation*}.  The current buffer's default directory is
-used as the working directory for the execution of the command;
-normally, therefore, compilation takes place in this directory.
+used as the working directory for the execution of the command, so by
+default compilation takes place in that directory.
 
 @vindex compile-command
   The default compilation command is @samp{make -k}, which is usually

@@ -159,7 +159,8 @@ the most recent macro, type @kbd{C-x e}
 defining a macro, the macro is terminated and executed immediately.
 Immediately after typing @kbd{C-x e}, you can type @key{e} repeatedly
 to immediately repeat the macro one or more times.  You can also give
-@kbd{C-x e} a repeat argument, just like @key{F4}.
+@kbd{C-x e} a repeat argument, just like @key{F4} (when it is used to
+execute a macro).
 
   @kbd{C-x )} can be given a repeat count as an argument.  This means
 to repeat the macro right after defining it.  The macro definition

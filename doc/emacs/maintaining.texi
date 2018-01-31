@@ -112,7 +112,7 @@ control operations.
 
   Some uncommon or intricate version control operations, such as
 altering repository settings, are not supported in VC@.  You should
-perform such tasks outside Emacs, e.g., via the command line.
+perform such tasks outside VC, e.g., via the command line.
 
   This section provides a general overview of version control, and
 describes the version control systems that VC supports.  You can skip
@@ -130,7 +130,7 @@ you want to use.
 @end menu
 
 @node Why Version Control?
-@subsubsection Understanding the problems it addresses
+@subsubsection Understanding the Problems it Addresses
 
   Version control systems provide you with three important
 capabilities:
@@ -147,10 +147,10 @@ detected and resolved.
 
 @item
 @dfn{History}: the ability to attach historical data to your data,
-such as explanatory comments about the intention behind each change to
-it.  Even for a programmer working solo, change histories are an
-important aid to memory; for a multi-person project, they are a
-vitally important form of communication among developers.
+such as explanatory comments about the intention behind each change.
+Even for a programmer working solo, change histories are an important
+aid to memory; for a multi-person project, they are a vitally
+important form of communication among developers.
 @end itemize
 
 @node Version Control Systems
@@ -272,7 +272,7 @@ or changeset-based; and centralized or decentralized.  VC handles all
 these modes of operation, but it cannot hide the differences.
 
 @node VCS Merging
-@subsubsection Merge-based vs lock-based Version Control
+@subsubsection Merge-based vs Lock-based Version Control
 
   A version control system typically has some mechanism to coordinate
 between users who want to change the same file.  There are two ways to

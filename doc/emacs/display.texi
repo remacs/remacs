@@ -957,7 +957,7 @@ mode for all buffers, use @kbd{M-x global-hi-lock-mode} or place
 
   Hi Lock mode works like Font Lock mode (@pxref{Font Lock}), except
 that you specify explicitly the regular expressions to highlight.  You
-control them with the commands described below.  (The key bindings
+can control them with the following commands.  (The key bindings
 below that begin with @kbd{C-x w} are deprecated in favor of the
 global @kbd{M-s h} bindings, and will be removed in some future Emacs
 version.)
@@ -1087,11 +1087,11 @@ mode's symbol is a member of the list @code{hi-lock-exclude-modes}.
   On graphical displays, each Emacs window normally has narrow
 @dfn{fringes} on the left and right edges.  The fringes are used to
 display symbols that provide information about the text in the window.
-You can type @kbd{M-x fringe-mode} to disable the fringes, or modify
-their width.  This command affects fringes in all frames; to modify
-fringes on the selected frame only, use @kbd{M-x set-fringe-style}.
-You can make your changes to the fringes permanent by customizing the
-variable @code{fringe-mode}.
+You can type @kbd{M-x fringe-mode} to toggle display of the fringes or
+to modify their width.  This command affects fringes in all frames; to
+modify fringes on the selected frame only, use @kbd{M-x
+set-fringe-style}.  You can make your changes to the fringes permanent
+by customizing the variable @code{fringe-mode}.
 
   The most common use of the fringes is to indicate a continuation
 line (@pxref{Continuation Lines}).  When one line of text is split

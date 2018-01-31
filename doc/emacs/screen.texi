@@ -309,12 +309,13 @@ way (@pxref{Key Help}).
 @cindex menu bar access using keyboard
   Instead of using the mouse, you can also invoke the first menu bar
 item by pressing @key{F10} (to run the command @code{menu-bar-open}).
-You can then navigate the menus with the arrow keys.  To activate a
-selected menu item, press @key{RET}; to cancel menu navigation, press
-@kbd{C-g} or @kbd{@key{ESC} @key{ESC} @key{ESC}}.  (However, note that
-when Emacs was built with a GUI toolkit, the menus are drawn and
-controlled by the toolkit, and the key sequences to cancel menu
-navigation might be different from the above description.)
+You can then navigate the menus with the arrow keys or with @kbd{C-b},
+@kbd{C-f} (left/right), @kbd{C-p}, and @kbd{C-n} (up/down).  To
+activate a selected menu item, press @key{RET}; to cancel menu
+navigation, press @kbd{C-g} or @kbd{@key{ESC} @key{ESC} @key{ESC}}.
+(However, note that when Emacs was built with a GUI toolkit, the menus
+are drawn and controlled by the toolkit, and the key sequences to
+cancel menu navigation might be different from the above description.)
 
 @kindex M-`
 @findex tmm-menubar

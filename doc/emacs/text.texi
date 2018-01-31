@@ -274,8 +274,9 @@ Put point and mark around this or next paragraph (@code{mark-paragraph}).
 @findex backward-paragraph
 @findex forward-paragraph
   @kbd{M-@{} (@code{backward-paragraph}) moves to the beginning of the
-current or previous paragraph (see below for the definition of a
-paragraph).  @kbd{M-@}} (@code{forward-paragraph}) moves to the end of
+current or previous paragraph, depending on where point is when the
+command is invoked (see below for the definition of a paragraph).
+@kbd{M-@}} (@code{forward-paragraph}) similarly moves to the end of
 the current or next paragraph.  If there is a blank line before the
 paragraph, @kbd{M-@{} moves to the blank line.
 
