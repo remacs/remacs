@@ -338,8 +338,8 @@ The functions @code{window-next-sibling} and
 and previous window, respectively, in the cyclic ordering of windows
 (@pxref{Cyclic Window Ordering}).
 
-  You can use the following functions to find the first live window on a
-frame and the window nearest to a given window.
+  The following functions can be useful to locate a window within its
+frame.
 
 @defun frame-first-window &optional frame-or-window
 This function returns the live window at the upper left corner of the
@@ -349,6 +349,20 @@ to the selected frame.  If @var{frame-or-window} specifies a window,
 this function returns the first window on that window's frame.  Under
 the assumption that the frame from our canonical example is selected
 @code{(frame-first-window)} returns @var{W2}.
+@end defun
+
+@defun window-at-side-p &optional window side
+This function returns @code{t} if @var{window} is located at
+@var{side} of its containing frame.  The argument @var{window} must be
+a valid window and defaults to the selected one.  The argument
+@var{side} can be any of the symbols @code{left}, @code{top},
+@code{right} or @code{bottom}.  The default value @code{nil} is
+handled like @code{bottom}.
+
+Note that this function disregards the minibuffer window
+(@pxref{Minibuffer Windows}).  Hence, with @var{side} equal to
+@code{bottom} it may return @code{t} also when the minibuffer window
+appears right below @var{window}.
 @end defun
 
 @cindex window in direction
@@ -385,7 +399,12 @@ the minibuffer window if and only if it is currently active.  If
 window even when it's not active.  However, if @var{wrap} is
 non-@code{nil}, it always acts as if @var{mini} were @code{nil}.
 
-If it doesn't find a suitable window, this function returns @code{nil}.
+If it doesn't find a suitable window, this function returns
+@code{nil}.
+
+Don't use this function to check whether there is @emph{no} window in
+@var{direction}.  Calling @code{window-at-side-p} described above is a
+much more efficient way to do that.
 @end defun
 
 The following function allows the entire window tree of a frame to be
