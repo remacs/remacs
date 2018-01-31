@@ -29,6 +29,16 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 INLINE_HEADER_BEGIN
 
+
+/* Accessors for Rust */
+
+struct Lisp_Overlay*
+bget_overlays_before(const struct buffer *b);
+
+struct Lisp_Overlay*
+bget_overlays_after(const struct buffer *b);
+
+
 /* Accessing the parameters of the current buffer.  */
 
 /* These macros come in pairs, one for the char position

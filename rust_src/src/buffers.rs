@@ -1,12 +1,13 @@
 //! Functions operating on buffers.
 
-use libc::{self, c_int, c_uchar, ptrdiff_t};
+use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
-                 MOST_POSITIVE_FIXNUM};
-use remacs_sys::{globals, set_buffer_internal, Fget_text_property};
+use remacs_sys::{EmacsInt, Fcons, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type,
+                 Vbuffer_alist, MOST_POSITIVE_FIXNUM};
+use remacs_sys::{bget_overlays_after, bget_overlays_before, globals, set_buffer_internal,
+                 Fget_text_property, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qinhibit_read_only, Qnil};
 
 use editfns::point;
@@ -209,11 +210,25 @@ impl LispBufferRef {
             c_int::from(self.fetch_byte(n))
         }
     }
+
+    #[inline]
+    pub fn overlays_before(&self) -> Option<LispOverlayRef> {
+        LispOverlayRef::from_ptr(unsafe { bget_overlays_before(self.as_ptr()) })
+    }
+
+    #[inline]
+    pub fn overlays_after(&self) -> Option<LispOverlayRef> {
+        LispOverlayRef::from_ptr(unsafe { bget_overlays_after(self.as_ptr()) })
+    }
 }
 
 impl LispOverlayRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(self.as_ptr()) }
+        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Misc)) }
+    }
+
+    pub fn from_ptr(ptr: *mut c_void) -> Option<LispOverlayRef> {
+        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
 
     #[inline]
@@ -224,6 +239,31 @@ impl LispOverlayRef {
     #[inline]
     pub fn end(self) -> LispObject {
         LispObject::from_raw(self.end)
+    }
+
+    pub fn iter(self) -> LispOverlayIter {
+        LispOverlayIter {
+            current: Some(self),
+        }
+    }
+}
+
+pub struct LispOverlayIter {
+    current: Option<LispOverlayRef>,
+}
+
+impl Iterator for LispOverlayIter {
+    type Item = LispOverlayRef;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let c = self.current;
+        match c {
+            None => None,
+            Some(o) => {
+                self.current = LispOverlayRef::from_ptr(o.next as *mut c_void);
+                c
+            }
+        }
     }
 }
 
@@ -434,4 +474,30 @@ pub extern "C" fn nsberror(spec: Lisp_Object) -> ! {
     }
 }
 
+/// These functions are for debugging overlays.
+
+/// Return a pair of lists giving all the overlays of the current buffer.
+/// The car has all the overlays before the overlay center;
+/// the cdr has all the overlays after the overlay center.
+/// Recentering overlays moves overlays between these lists.
+/// The lists you get are copies, so that changing them has no effect.
+/// However, the overlays you get are the real objects that the buffer uses.
+#[lisp_fn]
+pub fn overlay_lists() -> LispObject {
+    let list_overlays = |ol: LispOverlayRef| -> LispObject {
+        let ol_list = ol.iter().fold(Qnil, |accum, n| unsafe {
+            Fcons(n.as_lisp_obj().to_raw(), accum)
+        });
+        LispObject::from_raw(ol_list)
+    };
+
+    let cur_buf = ThreadState::current_buffer();
+    let before = cur_buf
+        .overlays_before()
+        .map_or_else(|| LispObject::constant_nil(), &list_overlays);
+    let after = cur_buf
+        .overlays_after()
+        .map_or_else(|| LispObject::constant_nil(), &list_overlays);
+    unsafe { LispObject::from_raw(Fcons(Fnreverse(before.to_raw()), Fnreverse(after.to_raw()))) }
+}
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

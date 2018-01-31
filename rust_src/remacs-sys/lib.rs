@@ -592,6 +592,11 @@ pub struct Lisp_Buffer {
     undo_list: Lisp_Object,
 }
 
+extern "C" {
+    pub fn bget_overlays_before(b: *const Lisp_Buffer) -> *mut c_void;
+    pub fn bget_overlays_after(b: *const Lisp_Buffer) -> *mut c_void;
+}
+
 /// Represents text contents of an Emacs buffer. For documentation see
 /// struct buffer_text in buffer.h.
 #[repr(C)]
@@ -1387,8 +1392,12 @@ extern "C" {
         macro_only: Lisp_Object,
     ) -> Lisp_Object;
     pub fn Fapply(nargs: ptrdiff_t, args: *const Lisp_Object) -> Lisp_Object;
+
     pub fn wset_window_parameters(w: *const Lisp_Window, val: Lisp_Object);
     pub fn wget_window_parameters(w: *const Lisp_Window) -> Lisp_Object;
+
+    pub fn Fnreverse(seq: Lisp_Object) -> Lisp_Object;
+
 }
 
 /// Contains C definitions from the font.h header.
