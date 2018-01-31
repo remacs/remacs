@@ -1,5 +1,5 @@
 #!/bin/bash
-### automerge - merge the Emacs release branch to master
+### automerge - automatically merge the Emacs release branch to master
 
 ## Copyright (C) 2018 Free Software Foundation, Inc.
 
@@ -23,7 +23,12 @@
 ### Commentary:
 
 ## Automatically merge the Emacs release branch to master.
-## No warranty, etc.
+## If the merge succeeds, optionally build and test the results,
+## and then push it.
+## Intended usage:
+## Have a dedicated git directory just for this.
+## Have a cron job that does a hard reset (to clean up after any
+## previous failures), then a git pull, then calls this script with -p.
 
 die ()                 # write error to stderr and exit
 {
@@ -116,23 +121,35 @@ trap "rm -f $tempfile 2> /dev/null" EXIT
 }
 
 
-echo "Merging..."
+rev=$(git rev-parse HEAD)
 
-if $emacs --batch -Q -l ./admin/gitmerge.el \
-       --eval "(setq gitmerge-minimum-missing $nmin)" -f gitmerge \
-       >| $tempfile 2>&1; then
-    echo "merged ok"
+[ $(git rev-parse @{u}) = $rev ] || die "Local state does not match origin"
 
-else
-    grep -qE "Nothing to merge|Number of missing commits" $tempfile && {
-        echo "Fewer than $nmin commits to merge"
-        exit 0
-    }
 
-    cat "$tempfile" 1>&2
+merge ()
+{
+    echo "Merging..."
 
-    die "merge error"
-fi
+    if $emacs --batch -Q -l ./admin/gitmerge.el \
+              --eval "(setq gitmerge-minimum-missing $nmin)" -f gitmerge \
+              >| $tempfile 2>&1; then
+        echo "merged ok"
+        return 0
+
+    else
+        grep -qE "Nothing to merge|Number of missing commits" $tempfile && {
+            echo "Fewer than $nmin commits to merge"
+            exit 0
+        }
+
+        cat "$tempfile" 1>&2
+
+        die "merge error"
+    fi
+}
+
+
+merge
 
 
 [ "$build" ] || exit 0
@@ -181,14 +198,28 @@ echo "Tests finished ok"
 
 
 ## In case someone else pushed while we were working.
-#echo "Checking for remote changes..."
-#git fetch || die "fetch error"
-## NB If there were remote changes, this would rewrite the release
-## branch commits, which is not what we want.
-## Ref eg http://lists.gnu.org/r/emacs-devel/2014-12/msg01435.html
-## git >= 1.8.5 has "pull --rebase=preserve"
-#git rebase --preserve-merges || die "rebase error"
+echo "Checking for remote changes..."
+git fetch || die "fetch error"
 
+[ $(git rev-parse @{u}) = $rev ] || {
+
+    echo "Upstream has changed"
+
+    ## Rebasing would be incorrect, since it would rewrite the
+    ## (already published) release branch commits.
+    ## Ref eg http://lists.gnu.org/r/emacs-devel/2014-12/msg01435.html
+    ## Instead, we throw away what we just did, and do the merge again.
+    echo "Resetting..."
+    git reset --hard $rev
+
+    echo "Pulling..."
+    git pull --ff-only || die "pull error"
+
+    merge
+
+    ## If the merge finished ok again, we don't bother doing a second
+    ## build and test.
+}
 
 echo "Pushing..."
 git push || die "push error"
