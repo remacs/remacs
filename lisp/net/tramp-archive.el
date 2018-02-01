@@ -258,6 +258,18 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
   (cl-letf (((symbol-function 'tramp-tramp-file-p) 'tramp-archive-file-name-p))
     (apply 'tramp-file-name-for-operation operation args)))
 
+(defun tramp-archive-run-real-handler (operation args)
+  "Invoke normal file name handler for OPERATION.
+First arg specifies the OPERATION, second arg is a list of arguments to
+pass to the OPERATION."
+  (let* ((inhibit-file-name-handlers
+	  `(tramp-archive-file-name-handler
+	    .
+	    ,(and (eq inhibit-file-name-operation operation)
+		  inhibit-file-name-handlers)))
+	 (inhibit-file-name-operation operation))
+    (apply operation args)))
+
 ;;;###tramp-autoload
 (defun tramp-archive-file-name-handler (operation &rest args)
   "Invoke the GVFS archive related OPERATION.
@@ -267,8 +279,9 @@ pass to the OPERATION."
 			  operation args))
 	 (archive (tramp-archive-file-name-archive filename)))
     ;; The file archive could be a directory, see Bug#30293.
-    (if (file-directory-p archive)
-	(tramp-run-real-handler operation args)
+    (if (and archive
+	     (tramp-archive-run-real-handler 'file-directory-p (list archive)))
+	(tramp-archive-run-real-handler operation args)
       ;; Now run the handler.
       (unless tramp-gvfs-enabled
 	(tramp-compat-user-error nil "Package `tramp-archive' not supported"))
@@ -279,7 +292,7 @@ pass to the OPERATION."
 	  (setq args (cons operation args)))
 	(if fn
 	    (save-match-data (apply (cdr fn) args))
-	  (tramp-run-real-handler operation args))))))
+	  (tramp-archive-run-real-handler operation args))))))
 
 ;; Mark `operations' the handler is responsible for.
 (put 'tramp-archive-file-name-handler 'operations
