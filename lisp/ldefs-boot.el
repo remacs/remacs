@@ -8767,7 +8767,7 @@ With prefix arg NOCONFIRM, execute current line as-is without editing.
 ;;; Generated autoloads from ecomplete.el
 
 (autoload 'ecomplete-setup "ecomplete" "\
-
+Read the .ecompleterc file.
 
 \(fn)" nil nil)
 
@@ -13657,7 +13657,7 @@ and choose the directory as the fortune-file.
 Minimum set of parameters to filter for live (on-session) framesets.
 DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
 
-(defvar frameset-persistent-filter-alist (nconc '((background-color . frameset-filter-sanitize-color) (buffer-list . :never) (buffer-predicate . :never) (buried-buffer-list . :never) (client . :never) (delete-before . :never) (font . frameset-filter-font-param) (foreground-color . frameset-filter-sanitize-color) (fullscreen . frameset-filter-shelve-param) (GUI:font . frameset-filter-unshelve-param) (GUI:fullscreen . frameset-filter-unshelve-param) (GUI:height . frameset-filter-unshelve-param) (GUI:width . frameset-filter-unshelve-param) (height . frameset-filter-shelve-param) (outer-window-id . :never) (parent-frame . :never) (parent-id . :never) (mouse-wheel-frame . :never) (tty . frameset-filter-tty-to-GUI) (tty-type . frameset-filter-tty-to-GUI) (width . frameset-filter-shelve-param) (window-id . :never) (window-system . :never)) frameset-session-filter-alist) "\
+(defvar frameset-persistent-filter-alist (nconc '((background-color . frameset-filter-sanitize-color) (buffer-list . :never) (buffer-predicate . :never) (buried-buffer-list . :never) (client . :never) (delete-before . :never) (font . frameset-filter-font-param) (foreground-color . frameset-filter-sanitize-color) (frameset--text-pixel-height . :save) (frameset--text-pixel-width . :save) (fullscreen . frameset-filter-shelve-param) (GUI:font . frameset-filter-unshelve-param) (GUI:fullscreen . frameset-filter-unshelve-param) (GUI:height . frameset-filter-unshelve-param) (GUI:width . frameset-filter-unshelve-param) (height . frameset-filter-shelve-param) (outer-window-id . :never) (parent-frame . :never) (parent-id . :never) (mouse-wheel-frame . :never) (tty . frameset-filter-tty-to-GUI) (tty-type . frameset-filter-tty-to-GUI) (width . frameset-filter-shelve-param) (window-id . :never) (window-system . :never)) frameset-session-filter-alist) "\
 Parameters to filter for persistent framesets.
 DO NOT MODIFY.  See `frameset-filter-alist' for a full description.")
 
@@ -24440,7 +24440,7 @@ Inserted by installing Org mode or when a release is made.
 \(fn)" nil nil)
 
 (autoload 'org-git-version "org-version" "\
-The Git version of org-mode.
+The Git version of Org mode.
 Inserted by installing Org or when a release is made.
 
 \(fn)" nil nil)
@@ -28638,7 +28638,11 @@ CHAR
      matches 0 through 9, a through f and A through F.
 
 `blank'
-     matches space and tab only.
+     matches horizontal whitespace, as defined by Annex C of the
+     Unicode Technical Standard #18.  In particular, it matches
+     spaces, tabs, and other characters whose Unicode
+     `general-category' property indicates they are spacing
+     separators.
 
 `graphic', `graph'
      matches graphic characters--everything except whitespace, ASCII
@@ -33032,6 +33036,8 @@ commands to use in that buffer.
 
 (autoload 'ansi-term "term" "\
 Start a terminal-emulator in a new buffer.
+This is almost the same as `term' apart from always creating a new buffer,
+and `C-x' being marked as a `term-escape-char'. 
 
 \(fn PROGRAM &optional NEW-BUFFER-NAME)" t nil)
 
