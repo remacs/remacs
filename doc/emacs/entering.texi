@@ -19,8 +19,8 @@
 
   The usual way to invoke Emacs is with the shell command
 @command{emacs}.  From a terminal window running a Unix shell, you can
-run Emacs in the background with @command{emacs &}; this way, Emacs
-won't tie up the terminal window, so you can use it to run other shell
+run Emacs in the background with @kbd{emacs &}; this way, Emacs won't
+tie up the terminal window, so you can use it to run other shell
 commands.  (For comparable methods of starting Emacs on MS-Windows,
 see @ref{Windows Startup}.)
 
