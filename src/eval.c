@@ -1343,40 +1343,6 @@ error (const char *m, ...)
   verror (m, ap);
 }
 
-DEFUN ("autoload", Fautoload, Sautoload, 2, 5, 0,
-       doc: /* Define FUNCTION to autoload from FILE.
-FUNCTION is a symbol; FILE is a file name string to pass to `load'.
-Third arg DOCSTRING is documentation for the function.
-Fourth arg INTERACTIVE if non-nil says function can be called interactively.
-Fifth arg TYPE indicates the type of the object:
-   nil or omitted says FUNCTION is a function,
-   `keymap' says FUNCTION is really a keymap, and
-   `macro' or t says FUNCTION is really a macro.
-Third through fifth args give info about the real definition.
-They default to nil.
-If FUNCTION is already defined other than as an autoload,
-this does nothing and returns nil.  */)
-  (Lisp_Object function, Lisp_Object file, Lisp_Object docstring, Lisp_Object interactive, Lisp_Object type)
-{
-  CHECK_SYMBOL (function);
-  CHECK_STRING (file);
-
-  /* If function is defined and not as an autoload, don't override.  */
-  if (!NILP (XSYMBOL (function)->function)
-      && !AUTOLOADP (XSYMBOL (function)->function))
-    return Qnil;
-
-  if (!NILP (Vpurify_flag) && EQ (docstring, make_number (0)))
-    /* `read1' in lread.c has found the docstring starting with "\
-       and assumed the docstring will be provided by Snarf-documentation, so it
-       passed us 0 instead.  But that leads to accidental sharing in purecopy's
-       hash-consing, so we use a (hopefully) unique integer instead.  */
-    docstring = make_number (XHASH (function));
-  return Fdefalias (function,
-		    list5 (Qautoload, file, docstring, interactive, type),
-		    Qnil);
-}
-
 void
 un_autoload (Lisp_Object oldqueue)
 {
@@ -3364,7 +3330,6 @@ before making `inhibit-quit' nil.  */);
   Vinhibit_quit = Qnil;
 
   DEFSYM (Qinhibit_quit, "inhibit-quit");
-  DEFSYM (Qautoload, "autoload");
   DEFSYM (Qinhibit_debugger, "inhibit-debugger");
   DEFSYM (Qmacro, "macro");
 
@@ -3486,7 +3451,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sunwind_protect);
   defsubr (&Scondition_case);
   defsubr (&Ssignal);
-  defsubr (&Sautoload);
   defsubr (&Sautoload_do_load);
   defsubr (&Seval);
   defsubr (&Sapply);

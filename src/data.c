@@ -265,54 +265,6 @@ DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
   return definition;
 }
 
-DEFUN ("defalias", Fdefalias, Sdefalias, 2, 3, 0,
-       doc: /* Set SYMBOL's function definition to DEFINITION.
-Associates the function with the current load file, if any.
-The optional third argument DOCSTRING specifies the documentation string
-for SYMBOL; if it is omitted or nil, SYMBOL uses the documentation string
-determined by DEFINITION.
-
-Internally, this normally uses `fset', but if SYMBOL has a
-`defalias-fset-function' property, the associated value is used instead.
-
-The return value is undefined.  */)
-  (register Lisp_Object symbol, Lisp_Object definition, Lisp_Object docstring)
-{
-  CHECK_SYMBOL (symbol);
-  if (!NILP (Vpurify_flag)
-      /* If `definition' is a keymap, immutable (and copying) is wrong.  */
-      && !KEYMAPP (definition))
-    definition = Fpurecopy (definition);
-
-  {
-    bool autoload = AUTOLOADP (definition);
-    if (NILP (Vpurify_flag) || !autoload)
-      { /* Only add autoload entries after dumping, because the ones before are
-	   not useful and else we get loads of them from the loaddefs.el.  */
-
-	if (AUTOLOADP (XSYMBOL (symbol)->function))
-	  /* Remember that the function was already an autoload.  */
-	  LOADHIST_ATTACH (Fcons (Qt, symbol));
-	LOADHIST_ATTACH (Fcons (autoload ? Qautoload : Qdefun, symbol));
-      }
-  }
-
-  { /* Handle automatic advice activation.  */
-    Lisp_Object hook = Fget (symbol, Qdefalias_fset_function);
-    if (!NILP (hook))
-      call2 (hook, symbol, definition);
-    else
-      Ffset (symbol, definition);
-  }
-
-  if (!NILP (docstring))
-    Fput (symbol, Qfunction_documentation, docstring);
-  /* We used to return `definition', but now that `defun' and `defmacro' expand
-     to a call to `defalias', we return `symbol' for backward compatibility
-     (bug#11686).  */
-  return symbol;
-}
-
 DEFUN ("subr-arity", Fsubr_arity, Ssubr_arity, 1, 1, 0,
        doc: /* Return minimum and maximum number of args allowed for SUBR.
 SUBR must be a built-in function.
@@ -2479,7 +2431,6 @@ syms_of_data (void)
   defsubr (&Smodule_function_p);
   defsubr (&Sboundp);
   defsubr (&Sfset);
-  defsubr (&Sdefalias);
   defsubr (&Sset);
   defsubr (&Sdefault_boundp);
   defsubr (&Sdefault_value);
