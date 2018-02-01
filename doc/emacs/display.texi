@@ -1259,9 +1259,9 @@ Highlight empty lines.
 @item big-indent
 @vindex whitespace-big-indent-regexp
 Highlight too-deep indentation.  By default any sequence of at least 4
-consecutive @key{TAB} characters or 32 consecutive @key{SPC}
-characters is highlighted.  To change that, customize the regular
-expression @code{whitespace-big-indent-regexp}.
+consecutive TAB characters or 32 consecutive SPC characters is
+highlighted.  To change that, customize the regular expression
+@code{whitespace-big-indent-regexp}.
 
 @item space-mark
 Draw space and non-breaking characters with a special glyph.
