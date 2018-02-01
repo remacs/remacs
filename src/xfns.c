@@ -6064,7 +6064,7 @@ static void compute_tip_xy (struct frame *, Lisp_Object, Lisp_Object,
 			    Lisp_Object, int, int, int *, int *);
 
 /* The frame of the currently visible tooltip.  */
-Lisp_Object tip_frame;
+static Lisp_Object tip_frame;
 
 /* The window-system window corresponding to the frame of the
    currently visible tooltip.  */
@@ -6072,16 +6072,16 @@ Window tip_window;
 
 /* A timer that hides or deletes the currently visible tooltip when it
    fires.  */
-Lisp_Object tip_timer;
+static Lisp_Object tip_timer;
 
 /* STRING argument of last `x-show-tip' call.  */
-Lisp_Object tip_last_string;
+static Lisp_Object tip_last_string;
 
 /* FRAME argument of last `x-show-tip' call.  */
-Lisp_Object tip_last_frame;
+static Lisp_Object tip_last_frame;
 
 /* PARMS argument of last `x-show-tip' call.  */
-Lisp_Object tip_last_parms;
+static Lisp_Object tip_last_parms;
 
 
 static void
