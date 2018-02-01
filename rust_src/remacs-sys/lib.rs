@@ -1105,6 +1105,9 @@ extern "C" {
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
 
+    // Use LispObject::tag_ptr instead of make_lisp_ptr
+    pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
+
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
     pub fn Fcopy_sequence(seq: Lisp_Object) -> Lisp_Object;
@@ -1124,7 +1127,6 @@ extern "C" {
     ) -> Lisp_Object;
     pub fn make_pure_c_string(data: *const c_char, nchars: ptrdiff_t) -> Lisp_Object;
 
-    pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
     pub fn make_lisp_symbol(ptr: *mut Lisp_Symbol) -> Lisp_Object;
     pub fn build_string(s: *const c_char) -> Lisp_Object;
     pub fn make_unibyte_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
