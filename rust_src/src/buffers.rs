@@ -15,7 +15,7 @@ use editfns::point;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{car, cdr, Flist, Fmember};
-use marker::{marker_buffer, marker_position};
+use marker::{marker_buffer, marker_position, LispMarkerRef};
 use multibyte::string_char;
 use strings::string_equal;
 use threads::ThreadState;
@@ -151,6 +151,11 @@ impl LispBufferRef {
     #[inline]
     pub fn char_modifications(self) -> EmacsInt {
         unsafe { (*self.text).chars_modiff }
+    }
+
+    #[inline]
+    pub fn markers(self) -> Option<LispMarkerRef> {
+        unsafe { (*self.text).markers.as_ref().map(|m| mem::transmute(m)) }
     }
 
     #[inline]

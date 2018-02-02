@@ -1,6 +1,6 @@
 //! marker support
 
-use libc::ptrdiff_t;
+use libc::{c_void, ptrdiff_t};
 use std::mem;
 
 use remacs_macros::lisp_fn;
@@ -19,6 +19,10 @@ pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
 impl LispMarkerRef {
     pub fn as_lisp_obj(self) -> LispObject {
         unsafe { mem::transmute(self.as_ptr()) }
+    }
+
+    pub fn from_ptr(ptr: *mut c_void) -> Option<LispMarkerRef> {
+        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
 
     pub fn charpos(self) -> Option<ptrdiff_t> {
@@ -57,6 +61,31 @@ impl LispMarkerRef {
     #[inline]
     pub fn insertion_type(self) -> bool {
         unsafe { mget_insertion_type(self.as_ptr()) as BoolBF }
+    }
+
+    pub fn iter(self) -> LispMarkerIter {
+        LispMarkerIter {
+            current: Some(self),
+        }
+    }
+}
+
+pub struct LispMarkerIter {
+    current: Option<LispMarkerRef>,
+}
+
+impl Iterator for LispMarkerIter {
+    type Item = LispMarkerRef;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let c = self.current;
+        match c {
+            None => None,
+            Some(m) => {
+                self.current = LispMarkerRef::from_ptr(m.next as *mut c_void);
+                c
+            }
+        }
     }
 }
 
@@ -159,6 +188,22 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
         )
     };
     new
+}
+
+/// Return t if there are markers pointing at POSITION in the current buffer.
+#[lisp_fn]
+pub fn buffer_has_markers_at(position: EmacsInt) -> bool {
+    let cur_buf = ThreadState::current_buffer();
+    let position = clip_to_bounds(cur_buf.begv, position, cur_buf.zv);
+
+    if let Some(marker) = cur_buf.markers() {
+        for m in marker.iter() {
+            if m.charpos().map_or(false, |p| p == position) {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 include!(concat!(env!("OUT_DIR"), "/marker_exports.rs"));
