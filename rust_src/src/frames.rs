@@ -7,8 +7,9 @@ use libc::c_int;
 use remacs_macros::lisp_fn;
 use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
-                 fget_line_height, fget_minibuffer_window, fget_output_method, fget_root_window,
-                 fget_terminal, fget_top_pos, fget_visible, frame_dimension, Fcons, Fselect_window, fget_pointer_invisible};
+                 fget_line_height, fget_minibuffer_window, fget_output_method,
+                 fget_pointer_invisible, fget_root_window, fget_terminal, fget_top_pos,
+                 fget_visible, frame_dimension, Fcons, Fselect_window};
 use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qns, Qpc, Qt, Qw32, Qx};
 
 use lisp::{ExternalPtr, LispObject};
