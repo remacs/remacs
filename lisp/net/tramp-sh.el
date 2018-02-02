@@ -4464,13 +4464,14 @@ Goes through the list `tramp-inline-compress-commands'."
 	      (zerop
 	       (tramp-call-local-coding-command
 		(format
+		 "echo %s | %s | %s" magic
 		 ;; Windows shells need the program file name after
 		 ;; the pipe symbol be quoted if they use forward
 		 ;; slashes as directory separators.
-		 (if (memq system-type '(windows-nt))
-		     "echo %s | \"%s\" | \"%s\""
-		   "echo %s | %s | %s")
-		 magic compress decompress)
+		 (mapconcat
+		  'shell-quote-argument (split-string compress) " ")
+		 (mapconcat
+		  'shell-quote-argument (split-string decompress) " "))
 		nil nil))
 	    (throw 'next nil))
 	  (tramp-message
