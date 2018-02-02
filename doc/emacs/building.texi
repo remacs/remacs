@@ -209,14 +209,13 @@ through errors in the opposite direction.
 act on the errors or matches listed in @file{*compilation*} and
 @file{*grep*} buffers; they also know how to iterate through error or
 match lists produced by other commands, such as @kbd{M-x occur}
-(@pxref{Other Repeating Search}).  If you are already in a buffer
-containing error messages or matches, those are the ones that are
-iterated through; otherwise, Emacs looks for a buffer containing error
-messages or matches amongst the windows of the selected frame, then
-for one that @code{next-error} or @code{previous-error} previously
-iterated through, and finally amongst all other buffers.  If the
-buffer chosen for iterating through is not currently displayed in a
-window, it will be displayed.
+(@pxref{Other Repeating Search}).  If the current buffer contains
+error messages or matches, these commands will iterate through them;
+otherwise, Emacs looks for a buffer containing error messages or
+matches amongst the windows of the selected frame, then for any buffer
+that @code{next-error} or @code{previous-error} previously visited,
+and finally all other buffers.  Any buffer these commands iterate
+through that is not currently displayed in a window will be displayed.
 
 @vindex compilation-skip-threshold
   By default, the @code{next-error} and @code{previous-error} commands

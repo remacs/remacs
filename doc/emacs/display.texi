@@ -108,9 +108,9 @@ point unchanged, so that the text and point move up or down together.
   By default, these commands signal an error (by beeping or flashing
 the screen) if no more scrolling is possible, because the window has
 reached the beginning or end of the buffer.  If you change the
-variable @code{scroll-error-top-bottom} to @code{t}, the command moves
-point to the farthest possible position.  If point is already there,
-the command signals an error.
+variable @code{scroll-error-top-bottom} to @code{t}, these commands
+move point to the farthest possible position.  If point is already
+there, the commands signal an error.
 
 @vindex scroll-preserve-screen-position
 @cindex @code{scroll-command} property
@@ -270,7 +270,7 @@ parts of the window height from the bottom window edge.  Thus, larger
 view.  The default value, @code{nil}, is equivalent to 0.5.
 
   Likewise, @code{scroll-down-aggressively} is used when point goes
-above the bottom window edge (i.e., scrolling backward).  The value
+above the top window edge (i.e., scrolling backward).  The value
 specifies how far point should be from the top margin of the window
 after scrolling.  Thus, as with @code{scroll-up-aggressively}, a
 larger value is more aggressive.
@@ -330,8 +330,8 @@ scrolling away from that edge.
 scroll the window when point gets too close to the edge.  Zero, the
 default value, means to center point horizontally within the window.
 A positive integer value specifies the number of columns to scroll by.
-A floating-point number specifies the fraction of the window's width
-to scroll by.
+A floating-point number (whose value should be between 0 and 1)
+specifies the fraction of the window's width to scroll by.
 
   You can also perform explicit horizontal scrolling with the
 following commands:
@@ -1767,6 +1767,11 @@ convenient way to turn on display of line numbers.  This mode has a globalized
 variant, @code{global-display-line-numbers-mode}.  The user option
 @code{display-line-numbers-type} controls which sub-mode of
 line-number display, described above, will these modes activate.
+
+@noindent
+Note that line numbers are not displayed in the minibuffer and in the
+tooltips, even if you turn on @code{display-line-numbers-mode}
+globally.
 
 @vindex display-line-numbers-current-absolute
 When Emacs displays relative line numbers, you can control the number
