@@ -2,11 +2,12 @@
 
 use libc::{c_void, ptrdiff_t};
 use std::mem;
+use std::ptr;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{BoolBF, EmacsInt, Lisp_Marker};
+use remacs_sys::{BoolBF, EmacsInt, Lisp_Buffer, Lisp_Marker};
 use remacs_sys::{buf_charpos_to_bytepos, mget_insertion_type, mset_insertion_type,
-                 set_marker_internal, set_point_both, Fmake_marker};
+                 set_marker_internal, set_point_both, unchain_marker, Fmake_marker};
 
 use buffers::LispBufferRef;
 use lisp::{ExternalPtr, LispObject};
@@ -204,6 +205,41 @@ pub fn buffer_has_markers_at(position: EmacsInt) -> bool {
         }
     }
     false
+}
+
+/// Change M so it points to B at CHARPOS and BYTEPOS.
+#[no_mangle]
+pub extern "C" fn attach_marker(
+    marker: *mut Lisp_Marker,
+    buffer: *mut Lisp_Buffer,
+    charpos: ptrdiff_t,
+    bytepos: ptrdiff_t,
+) {
+    unsafe {
+        let mut buffer_ref = LispBufferRef::from_ptr(buffer as *mut c_void)
+            .unwrap_or_else(|| panic!("Invalid buffer reference."));
+
+        // In a single-byte buffer, two positions must be equal.
+        // Otherwise, every character is at least one byte.
+        if buffer_ref.z() == buffer_ref.z_byte() {
+            assert!(charpos == bytepos);
+        } else {
+            assert!(charpos <= bytepos);
+        }
+
+        let mut marker_ref = LispMarkerRef::from_ptr(marker as *mut c_void)
+            .unwrap_or_else(|| panic!("Invalid marker reference."));
+
+        marker_ref.charpos = charpos;
+        marker_ref.bytepos = bytepos;
+
+        if marker_ref.buffer().map_or(true, |b| b != buffer_ref) {
+            unchain_marker(marker);
+            marker_ref.buffer = buffer;
+            marker_ref.next = buffer_ref.markers().map_or(ptr::null(), |m| m.as_ptr());
+            (*buffer_ref.text).markers = marker;
+        }
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/marker_exports.rs"));

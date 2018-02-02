@@ -63,6 +63,10 @@ impl LispBufferRef {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
+    pub fn from_ptr(ptr: *mut c_void) -> Option<LispBufferRef> {
+        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
+    }
+
     pub fn is_read_only(&self) -> bool {
         LispObject::from_raw(self.read_only).into()
     }
