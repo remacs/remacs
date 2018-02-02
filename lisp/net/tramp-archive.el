@@ -287,6 +287,9 @@ pass to the OPERATION."
 	(tramp-compat-user-error nil "Package `tramp-archive' not supported"))
       (let ((tramp-methods (cons `(,tramp-archive-method) tramp-methods))
 	    (tramp-gvfs-methods tramp-archive-all-gvfs-methods)
+	    ;; Set uid and gid.  gvfsd-archive could do it, but it doesn't.
+	    (tramp-unknown-id-integer (user-uid))
+	    (tramp-unknown-id-string (user-login-name))
 	    (fn (assoc operation tramp-archive-file-name-handler-alist)))
 	(when (eq (cdr fn) 'tramp-archive-handle-not-implemented)
 	  (setq args (cons operation args)))
@@ -583,9 +586,11 @@ offered."
 
 ;;; TODO:
 
-;; * See, whether we could retrieve better file attributes like uid,
-;;   gid, permissions.
+;; * Check, whether we could retrieve better file attributes like uid,
+;;   gid, permissions.  See gvfsbackendarchive.c
+;;   (archive_file_set_info_from_entry), where it is commented out.
 ;;
 ;; * Implement write access, when possible.
+;;   https://bugzilla.gnome.org/show_bug.cgi?id=589617
 
 ;;; tramp-archive.el ends here
