@@ -8,7 +8,7 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{selected_frame as current_frame, BoolBF, EmacsInt, Lisp_Frame, Lisp_Type};
 use remacs_sys::{fget_column_width, fget_iconified, fget_internal_border_width, fget_left_pos,
                  fget_line_height, fget_minibuffer_window, fget_output_method, fget_root_window,
-                 fget_terminal, fget_top_pos, fget_visible, frame_dimension, Fcons, Fselect_window};
+                 fget_terminal, fget_top_pos, fget_visible, frame_dimension, Fcons, Fselect_window, fget_pointer_invisible};
 use remacs_sys::{Qframe_live_p, Qframep, Qicon, Qns, Qpc, Qt, Qw32, Qx};
 
 use lisp::{ExternalPtr, LispObject};
@@ -84,6 +84,11 @@ impl LispFrameRef {
     #[inline]
     pub fn is_iconified(self) -> bool {
         unsafe { fget_iconified(self.as_ptr()) as BoolBF }
+    }
+
+    #[inline]
+    pub fn pointer_invisible(self) -> bool {
+        unsafe { fget_pointer_invisible(self.as_ptr()) as BoolBF }
     }
 }
 
@@ -276,6 +281,19 @@ pub fn frame_position(frame: LispObject) -> LispObject {
             LispObject::from_fixnum(frame_ref.left_pos() as EmacsInt).to_raw(),
             LispObject::from_fixnum(frame_ref.top_pos() as EmacsInt).to_raw(),
         ))
+    }
+}
+
+/// Returns t if the mouse pointer displayed on FRAME is visible.
+/// Otherwise it returns nil. FRAME omitted or nil means the selected frame.
+/// This is useful when `make-pointer-invisible` is set
+#[lisp_fn(min = "0")]
+pub fn frame_pointer_visible_p(frame: LispObject) -> LispObject {
+    let frame_ref = frame_or_selected(frame);
+    if frame_ref.pointer_invisible() {
+        LispObject::constant_nil()
+    } else {
+        LispObject::constant_t()
     }
 }
 
