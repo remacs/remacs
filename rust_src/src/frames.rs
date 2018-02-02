@@ -89,7 +89,7 @@ impl LispFrameRef {
 
     #[inline]
     pub fn pointer_invisible(self) -> bool {
-        unsafe { fget_pointer_invisible(self.as_ptr()) as BoolBF }
+        unsafe { fget_pointer_invisible(self.as_ptr()) }
     }
 }
 
@@ -289,13 +289,9 @@ pub fn frame_position(frame: LispObject) -> LispObject {
 /// Otherwise it returns nil. FRAME omitted or nil means the selected frame.
 /// This is useful when `make-pointer-invisible` is set
 #[lisp_fn(min = "0")]
-pub fn frame_pointer_visible_p(frame: LispObject) -> LispObject {
+pub fn frame_pointer_visible_p(frame: LispObject) -> bool {
     let frame_ref = frame_or_selected(frame);
-    if frame_ref.pointer_invisible() {
-        LispObject::constant_nil()
-    } else {
-        LispObject::constant_t()
-    }
+    !frame_ref.pointer_invisible()
 }
 
 include!(concat!(env!("OUT_DIR"), "/frames_exports.rs"));
