@@ -1587,7 +1587,7 @@ with Emacs.
 @menu
 * Motion in C::                 Commands to move by C statements, etc.
 * Electric C::                  Colon and other chars can automatically reindent.
-* Hungry Delete::               A more powerful DEL command.
+* Hungry Delete::               A more powerful @key{DEL} command.
 * Other C Commands::            Filling comments, viewing expansion of macros,
                                 and other neat features.
 @end menu
