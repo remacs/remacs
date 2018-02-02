@@ -268,8 +268,9 @@ during garbage collection."
     (let ((standard-output (current-buffer)))
       (describe-function-1 #'mod-test-sum)
       (should (equal (buffer-substring-no-properties 1 (point-max))
-                     ;; FIXME: This should print the filename.
-                     "a module function.
+                     ;; FIXME: This should print the actual module
+                     ;; filename.
+                     "a module function in `src/emacs-module-tests.el'.
 
 (mod-test-sum a b)
 
