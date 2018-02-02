@@ -70,3 +70,5 @@ jobs:
 notifications:
   fast_finish: true
   email: false
+  allow_failures:
+    - os: osx
