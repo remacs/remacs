@@ -57,9 +57,9 @@ the minibuffer (since typing @key{RET} would no longer submit that
 default).  If you ever bring back the original minibuffer text, the
 prompt again shows the default.  Furthermore, if you change the
 variable @code{minibuffer-eldef-shorten-default} to a non-@code{nil}
-value, the default argument is displayed as @samp{[@var{default}]}
-instead of @samp{(default @var{default})}, saving some screen space.
-To enable this minor mode, type @kbd{M-x
+value, the default argument is displayed as @samp{[@var{default-arg}]}
+instead of @samp{(default @var{default-arg})}, saving some screen
+space.  To enable this minor mode, type @kbd{M-x
 minibuffer-electric-default-mode}.
 
   Since the minibuffer appears in the echo area, it can conflict with
@@ -224,7 +224,7 @@ set the variable @code{enable-recursive-minibuffers} to @code{t}.
   When not active, the minibuffer is in @code{minibuffer-inactive-mode},
 and clicking @kbd{mouse-1} there shows the @file{*Messages*} buffer.
 If you use a dedicated frame for minibuffers, Emacs also recognizes
-certain keys there, for example @kbd{n} to make a new frame.
+certain keys there, for example, @kbd{n} to make a new frame.
 
 @node Completion
 @section Completion

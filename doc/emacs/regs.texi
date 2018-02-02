@@ -9,8 +9,8 @@
   Emacs @dfn{registers} are compartments where you can save text,
 rectangles, positions, and other things for later use.  Once you save
 text or a rectangle in a register, you can copy it into the buffer
-once, or many times; once you save a position in a register, you can
-jump back to that position once, or many times.
+once or many times; once you save a position in a register, you can
+jump back to that position once or many times.
 
   Each register has a name that consists of a single character, which
 we will denote by @var{r}; @var{r} can be a letter (such as @samp{a})

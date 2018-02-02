@@ -286,11 +286,14 @@ arguments.
 @findex beginning-of-buffer
 Move to the top of the buffer (@code{beginning-of-buffer}).  With
 numeric argument @var{n}, move to @var{n}/10 of the way from the top.
+On graphical displays, @kbd{C-@key{HOME}} does the same.
 
 @item M->
 @kindex M->
+@kindex C-@key{END}
 @findex end-of-buffer
-Move to the end of the buffer (@code{end-of-buffer}).
+Move to the end of the buffer (@code{end-of-buffer}).  On graphical
+displays, @kbd{C-@key{END}} does the same.
 
 @item C-v
 @itemx @key{PageDown}
@@ -401,9 +404,12 @@ Delete the character after point (@code{delete-char}).
 
 @item C-k
 Kill to the end of the line (@code{kill-line}).
+
 @item M-d
 Kill forward to the end of the next word (@code{kill-word}).
+
 @item M-@key{DEL}
+@itemx M-@key{BACKSPACE}
 Kill back to the beginning of the previous word
 (@code{backward-kill-word}).
 @end table
@@ -448,12 +454,11 @@ commands.
 
 @table @kbd
 @item C-/
-Undo one entry of the undo records---usually, one command worth
-(@code{undo}).
-
-@item C-x u
+@itemx C-x u
 @itemx C-_
-The same.
+Undo one entry of the undo records---usually, one command worth
+(@code{undo}).  (The first key might be unavailable on text-mode
+displays.)
 @end table
 
   Emacs records a list of changes made in the buffer text, so you can
@@ -655,7 +660,7 @@ Toggle automatic display of the size of the buffer.
 @cindex cursor location
 @cindex point location
   @kbd{M-x what-line} displays the current line number in the echo
-area.  This command is usually redundant, because the current line
+area.  This command is usually redundant because the current line
 number is shown in the mode line (@pxref{Mode Line}).  However, if you
 narrow the buffer, the mode line shows the line number relative to
 the accessible portion (@pxref{Narrowing}).  By contrast,
@@ -800,7 +805,7 @@ fills text; with an argument, it justifies the text as well.
 commands, it is enough to specify the argument with a single
 @kbd{C-u}.
 
-  Some commands use the value of the argument as a repeat count, but
+  Some commands use the value of the argument as a repeat count but
 do something special when there is no argument.  For example, the
 command @kbd{C-k} (@code{kill-line}) with argument @var{n} kills
 @var{n} lines, including their terminating newlines.  But @kbd{C-k}
@@ -822,6 +827,9 @@ such arguments before the command, and to distinguish them from
 minibuffer arguments (@pxref{Minibuffer}), which are entered after
 invoking the command.
 
+  On graphical displays, @kbd{C-0}, @kbd{C-1}, etc.@ act the same as
+@kbd{M-0}, @kbd{M-1}, etc.
+
 @node Repeating
 @section Repeating a Command
 @cindex repeating a command
@@ -842,7 +850,7 @@ that were used before; it does not read new arguments each time.
 
   To repeat the command more than once, type additional @kbd{z}'s: each
 @kbd{z} repeats the command one more time.  Repetition ends when you
-type a character other than @kbd{z}, or press a mouse button.
+type a character other than @kbd{z} or press a mouse button.
 
   For example, suppose you type @kbd{C-u 2 0 C-d} to delete 20
 characters.  You can repeat that command (including its argument) three

@@ -2098,7 +2098,7 @@ to verify that using @code{defun} actually has performance problems.
   After an inline function is defined, its inline expansion can be
 performed later on in the same file, just like macros.
 
-  It's possible to use @code{defsubst} to define a macro to expand
+  It's possible to use @code{defmacro} to define a macro to expand
 into the same code that an inline function would execute
 (@pxref{Macros}).  But the macro would be limited to direct use in
 expressions---a macro cannot be called with @code{apply},

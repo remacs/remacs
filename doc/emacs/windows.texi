@@ -174,9 +174,9 @@ After the rightmost and bottommost window, it goes back to the one at
 the upper left corner.  A numeric argument means to move several steps
 in the cyclic order of windows.  A negative argument moves around the
 cycle in the opposite order.  When the minibuffer is active, the
-minibuffer is the last window in the cycle; you can switch from the
-minibuffer window to one of the other windows, and later switch back and
-finish supplying the minibuffer argument that is requested.
+minibuffer window is the last window in the cycle; you can switch from
+the minibuffer window to one of the other windows, and later switch
+back and finish supplying the minibuffer argument that is requested.
 @xref{Minibuffer Edit}.
 
 @kindex C-M-v
