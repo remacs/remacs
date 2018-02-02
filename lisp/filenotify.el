@@ -307,15 +307,12 @@ FILE is the name of the file whose event is being reported."
   (unless (functionp callback)
     (signal 'wrong-type-argument `(,callback)))
 
-  (let* ((quoted (file-name-quoted-p file))
-         (file (file-name-unquote file))
-         (file-name-handler-alist (if quoted nil file-name-handler-alist))
-         (handler (find-file-name-handler file 'file-notify-add-watch))
-	 (dir (directory-file-name
-	       (if (file-directory-p file)
-		   file
-		 (file-name-directory file))))
-         desc func l-flags)
+  (let ((handler (find-file-name-handler file 'file-notify-add-watch))
+	(dir (directory-file-name
+	      (if (file-directory-p file)
+		  file
+		(file-name-directory file))))
+        desc func l-flags)
 
     (unless (file-directory-p dir)
       (signal 'file-notify-error `("Directory does not exist" ,dir)))
@@ -365,6 +362,10 @@ FILE is the name of the file whose event is being reported."
                   ;; monitor.  So we must watch the file itself.
                   func (if (eq file-notify--library 'kqueue) file dir)
                   l-flags 'file-notify-callback)))
+
+    ;; We do not want to enter quoted file names into the hash.
+    (setq file (file-name-unquote file)
+          dir  (file-name-unquote dir))
 
     ;; Modify `file-notify-descriptors'.
     (let ((watch (file-notify--watch-make

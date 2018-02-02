@@ -268,7 +268,14 @@ be $HOME."
     (should (file-name-quoted-p (file-name-quote temporary-file-directory)))
     (should (equal temporary-file-directory
                    (file-name-unquote
-                    (file-name-quote temporary-file-directory))))))
+                    (file-name-quote temporary-file-directory))))
+    ;; It does not hurt to quote/unquote a file several times.
+    (should (equal (file-name-quote temporary-file-directory)
+                   (file-name-quote
+                    (file-name-quote temporary-file-directory))))
+    (should (equal (file-name-unquote temporary-file-directory)
+                   (file-name-unquote
+                    (file-name-unquote temporary-file-directory))))))
 
 (ert-deftest files-tests--file-name-non-special--subprocess ()
   "Check that Bug#25949 is fixed."
