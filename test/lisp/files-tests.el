@@ -139,18 +139,16 @@ form.")
 
 (ert-deftest files-test-local-variables ()
   "Test the file-local variables implementation."
-  (unwind-protect
-      (progn
-	(defadvice hack-local-variables-confirm (around files-test activate)
-	  (setq files-test-result 'query)
-	  nil)
-	(dolist (test files-test-local-variable-data)
-	  (let ((str (concat "text\n\n;; Local Variables:\n;; "
-			     (mapconcat 'identity (car test) "\n;; ")
-			     "\n;; End:\n")))
-	    (dolist (subtest (cdr test))
-	      (should (file-test--do-local-variables-test str subtest))))))
-    (ad-disable-advice 'hack-local-variables-confirm 'around 'files-test)))
+  (cl-letf (((symbol-function 'hack-local-variables-confirm)
+             (lambda (&rest _)
+               (setq files-test-result 'query)
+               nil)))
+    (dolist (test files-test-local-variable-data)
+      (let ((str (concat "text\n\n;; Local Variables:\n;; "
+                         (mapconcat 'identity (car test) "\n;; ")
+                         "\n;; End:\n")))
+        (dolist (subtest (cdr test))
+          (should (file-test--do-local-variables-test str subtest)))))))
 
 (defvar files-test-bug-18141-file
   (expand-file-name "data/files-bug18141.el.gz" (getenv "EMACS_TEST_DIRECTORY"))

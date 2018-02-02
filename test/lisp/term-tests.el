@@ -42,21 +42,13 @@
     ;; control chunking, and we don't have to worry about wrestling
     ;; with stty settings.
     (let ((proc (get-buffer-process (current-buffer))))
-      (unwind-protect
-          (prog2 (if (consp input)
-                     (mapc (lambda (input) (term-emulate-terminal proc input)) input)
-                   (term-emulate-terminal proc input))
-              (if return-var (buffer-local-value return-var (current-buffer))
-                (buffer-substring-no-properties (point-min) (point-max)))
-            ;; End the process to avoid query on buffer kill.
-            (process-send-eof proc)
-            (accept-process-output proc))
-        ;; Make extra sure we don't get stuck in case we hit some
-        ;; error before sending eof.
-        (when (process-live-p proc)
-          (kill-process proc)
-          ;; Let Emacs update process status.
-          (accept-process-output proc))))))
+      ;; Don't get stuck when we close the buffer.
+      (set-process-query-on-exit-flag proc nil)
+      (if (consp input)
+                (mapc (lambda (input) (term-emulate-terminal proc input)) input)
+              (term-emulate-terminal proc input))
+      (if return-var (buffer-local-value return-var (current-buffer))
+        (buffer-substring-no-properties (point-min) (point-max))))))
 
 (ert-deftest term-simple-lines ()
   (let ((str "\
