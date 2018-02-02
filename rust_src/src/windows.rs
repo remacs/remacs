@@ -478,6 +478,14 @@ pub fn minibuffer_window(frame: LispObject) -> LispObject {
     frame.minibuffer_window()
 }
 
+/// Return the display-table that WINDOW is using.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_display_table(window: LispObject) -> LispObject {
+    let win = window_live_or_selected(window);
+    LispObject::from_raw(win.display_table)
+}
+
 pub fn window_wants_mode_line(window: LispWindowRef) -> bool {
     window.wants_mode_line()
 }

@@ -1940,20 +1940,6 @@ Return VALUE.  */)
   return value;
 }
 
-DEFUN ("window-display-table", Fwindow_display_table, Swindow_display_table,
-       0, 1, 0,
-       doc: /* Return the display-table that WINDOW is using.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return decode_live_window (window)->display_table;
-}
-
-/* Get the display table for use on window W.  This is either W's
-   display table or W's buffer's display table.  Ignore the specified
-   tables if they are not valid; if no valid table is specified,
-   return 0.  */
-
 struct Lisp_Char_Table *
 window_display_table (struct window *w)
 {
@@ -7475,7 +7461,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_dedicated_p);
   defsubr (&Swindow_lines_pixel_dimensions);
   defsubr (&Sset_window_dedicated_p);
-  defsubr (&Swindow_display_table);
   defsubr (&Sset_window_display_table);
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
