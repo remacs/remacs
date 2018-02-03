@@ -1702,7 +1702,7 @@ openp (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
 				      AT_EACCESS)
 			   == 0)
 		    {
-		      if (file_directory_p (pfn))
+		      if (file_directory_p (encoded_fn))
 			last_errno = EISDIR;
 		      else
 			fd = 1;
