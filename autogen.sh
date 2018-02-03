@@ -85,7 +85,7 @@ check_version ()
     ## /bin/sh should always define the "command" builtin, but for
     ## some odd reason sometimes it does not on hydra.nixos.org.
     ## /bin/sh = "BusyBox v1.27.2", "built-in shell (ash)". ?
-    if command -v command > /dev/null; then
+    if command -v command > /dev/null 2>&1; then
         command -v $uprog > /dev/null || return 1
     else
         $uprog --version > /dev/null 2>&1 || return 1
