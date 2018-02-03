@@ -3547,14 +3547,20 @@ the use of a shell (with its need to quote arguments)."
 		  ;; carriage motion (see comint-inhibit-carriage-motion).
 		  (set-process-filter proc 'comint-output-filter)
                   (if async-shell-command-display-buffer
+                      ;; Display buffer immediately.
                       (display-buffer buffer '(nil (allow-no-window . t)))
-                    (add-function :before (process-filter proc)
-                                  (lambda (process _string)
-                                    (let ((buf (process-buffer process)))
-                                      (when (and (zerop (buffer-size buf))
-                                                 (string= (buffer-name buf)
-                                                          bname))
-                                        (display-buffer buf))))))))
+                    ;; Defer displaying buffer until first process output.
+                    ;; Use disposable named advice so that the buffer is
+                    ;; displayed at most once per process lifetime.
+                    (let ((nonce (make-symbol "nonce")))
+                      (add-function :before (process-filter proc)
+                                    (lambda (proc _string)
+                                      (let ((buf (process-buffer proc)))
+                                        (when (buffer-live-p buf)
+                                          (remove-function (process-filter proc)
+                                                           nonce)
+                                          (display-buffer buf))))
+                                    `((name . ,nonce)))))))
 	    ;; Otherwise, command is executed synchronously.
 	    (shell-command-on-region (point) (point) command
 				     output-buffer nil error-buffer)))))))
