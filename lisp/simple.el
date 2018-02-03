@@ -3351,15 +3351,15 @@ to execute it asynchronously.
 The output appears in the buffer `*Async Shell Command*'.
 That buffer is in shell mode.
 
-You can configure `async-shell-command-buffer' to specify what to do in
-case when `*Async Shell Command*' buffer is already taken by another
+You can configure `async-shell-command-buffer' to specify what to do
+when the `*Async Shell Command*' buffer is already taken by another
 running shell command.  To run COMMAND without displaying the output
 in a window you can configure `display-buffer-alist' to use the action
 `display-buffer-no-window' for the buffer `*Async Shell Command*'.
 
 In Elisp, you will often be better served by calling `start-process'
-directly, since it offers more control and does not impose the use of a
-shell (with its need to quote arguments)."
+directly, since it offers more control and does not impose the use of
+a shell (with its need to quote arguments)."
   (interactive
    (list
     (read-shell-command "Async shell command: " nil nil
@@ -3428,8 +3428,8 @@ In an interactive call, the variable `shell-command-default-error-buffer'
 specifies the value of ERROR-BUFFER.
 
 In Elisp, you will often be better served by calling `call-process' or
-`start-process' directly, since it offers more control and does not impose
-the use of a shell (with its need to quote arguments)."
+`start-process' directly, since they offer more control and do not
+impose the use of a shell (with its need to quote arguments)."
 
   (interactive
    (list
