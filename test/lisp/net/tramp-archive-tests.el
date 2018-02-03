@@ -779,7 +779,7 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
     (delete-directory tmp-file)
     (should-not (file-exists-p tmp-file))))
 
-(ert-deftest tramp-archive-test40-archive-file-system-info ()
+(ert-deftest tramp-archive-test40-file-system-info ()
   "Check that `file-system-info' returns proper values."
   (skip-unless tramp-gvfs-enabled)
   ;; Since Emacs 27.1.
@@ -795,6 +795,56 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
 		 ;; FREE and AVAIL are always 0.
 		 (zerop (nth 1 fsi))
 		 (zerop (nth 2 fsi))))))
+
+(ert-deftest tramp-archive-test42-auto-load ()
+  "Check that `tramp-archive' autoloads properly."
+  (skip-unless tramp-gvfs-enabled)
+
+  (let ((default-directory (expand-file-name temporary-file-directory))
+	(code
+	 (format
+	  "(message \"Tramp loaded: %%s\" (and (file-exists-p %S) t))"
+	  tramp-archive-test-archive)))
+    (should
+     (string-match
+      "Tramp loaded: t[\n\r]+"
+      (shell-command-to-string
+       (format
+	"%s -batch -Q -L %s --eval %s"
+	(shell-quote-argument
+	 (expand-file-name invocation-name invocation-directory))
+	(mapconcat 'shell-quote-argument load-path " -L ")
+	(shell-quote-argument code)))))))
+
+(ert-deftest tramp-archive-test42-delay-load ()
+  "Check that `tramp-archive' is loaded lazily, only when needed."
+  (skip-unless tramp-gvfs-enabled)
+
+  ;; Tramp is neither loaded at Emacs startup, nor when completing a
+  ;; non archive file name like "/foo".  Completing an archive file
+  ;; name like "/foo.tar/" autoloads Tramp, when `tramp-mode' is t.
+  (let ((default-directory (expand-file-name temporary-file-directory))
+	(code
+         (format
+	  "(progn \
+	    (message \"Tramp loaded: %%s\" (featurep 'tramp-archive)) \
+	    (file-name-all-completions %S \"/\") \
+	    (message \"Tramp loaded: %%s\" (featurep 'tramp-archive)) \
+	    (file-name-all-completions %S \"/\") \
+	    (message \"Tramp loaded: %%s\" (featurep 'tramp-archive)))"
+	  tramp-archive-test-file-archive
+	  tramp-archive-test-archive)))
+    ;; Tramp doesn't load when `tramp-mode' is nil.
+    (should
+     (string-match
+      "Tramp loaded: nil[\n\r]+Tramp loaded: nil[\n\r]+Tramp loaded: t[\n\r]+"
+      (shell-command-to-string
+       (format
+	"%s -batch -Q -L %s --eval %s"
+	(shell-quote-argument
+	 (expand-file-name invocation-name invocation-directory))
+	(mapconcat 'shell-quote-argument load-path " -L ")
+	(shell-quote-argument code)))))))
 
 (ert-deftest tramp-archive-test99-libarchive-tests ()
   "Run tests of libarchive test files."

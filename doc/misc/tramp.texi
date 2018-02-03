@@ -3117,15 +3117,14 @@ similar @samp{/scp:user@@host:...}.  See the constant
 @code{tramp-archive-all-gvfs-methods} for a complete list of
 @code{tramp-gvfs} supported method names.
 
-If @value{tramp} is loaded and @code{url-handler-mode} is enabled,
-archives could be visited via URLs, like
+If @code{url-handler-mode} is enabled, archives could be visited via
+URLs, like
 @file{https://ftp.gnu.org/gnu/tramp/tramp-2.3.2.tar.gz/INSTALL}.  This
 allows complex file operations like
 
 @lisp
 @group
 (progn
-  (require 'tramp)
   (url-handler-mode 1)
   (ediff-directories
    "https://ftp.gnu.org/gnu/tramp/tramp-2.3.1.tar.gz/tramp-2.3.1"
@@ -3137,8 +3136,10 @@ It is even possible to access file archives in file archives, as
 
 @lisp
 @group
-(find-file
- "http://ftp.debian.org/debian/pool/main/c/coreutils/coreutils_8.28-1_amd64.deb/control.tar.gz/control")
+(progn
+  (url-handler-mode 1)
+  (find-file
+   "http://ftp.debian.org/debian/pool/main/c/coreutils/coreutils_8.28-1_amd64.deb/control.tar.gz/control"))
 @end group
 @end lisp
 
