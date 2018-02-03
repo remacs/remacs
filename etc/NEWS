@@ -958,7 +958,7 @@ the function 'image-dired-setup-dired-keybindings'.
 ---
 *** Thumbnail generation is now asynchronous.
 The number of concurrent processes is limited by the variable
-'image-dired-thumb-job-limit'.
+'image-dired-queue-active-limit'.
 
 ---
 *** 'image-dired-thumbnail-storage' has a new option 'standard-large'
