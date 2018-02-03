@@ -137,12 +137,6 @@ if $do_autoconf; then
 
   if $do_check; then
 
-    if test -n "$NIX_STORE"; then
-      echo "DEBUG:"
-      strings /bin/sh
-      echo "DEBUG"
-    fi
-
     echo 'Checking whether you have the necessary tools...
 (Read INSTALL.REPO for more details on building Emacs)'
 
