@@ -34,26 +34,41 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    in xdisp.c is the only entry into the inner redisplay code.
 
    The following diagram shows how redisplay code is invoked.  As you
-   can see, Lisp calls redisplay and vice versa.  Under window systems
-   like X, some portions of the redisplay code are also called
-   asynchronously during mouse movement or expose events.  It is very
-   important that these code parts do NOT use the C library (malloc,
-   free) because many C libraries under Unix are not reentrant.  They
-   may also NOT call functions of the Lisp interpreter which could
-   change the interpreter's state.  If you don't follow these rules,
-   you will encounter bugs which are very hard to explain.
+   can see, Lisp calls redisplay and vice versa.
+
+   Under window systems like X, some portions of the redisplay code
+   are also called asynchronously, due to mouse movement or expose
+   events.  "Asynchronously" in this context means that any C function
+   which calls maybe_quit or process_pending_signals could enter
+   redisplay via expose_frame and/or note_mouse_highlight, if X events
+   were recently reported to Emacs about mouse movements or frame(s)
+   that were exposed.  And such redisplay could invoke the Lisp
+   interpreter, e.g. via the :eval forms in mode-line-format, and as
+   result the global state could change.  It is therefore very
+   important that C functions which might cause such "asynchronous"
+   redisplay, but cannot tolerate the results, use
+   block_input/unblock_input around code fragments which assume that
+   global Lisp state doesn't change.  If you don't follow this rule,
+   you will encounter bugs which are very hard to explain.  One place
+   that needs to take such precautions is timer_check, some of whose
+   code cannot tolerate changes in timer alists while it processes
+   timers.
 
    +--------------+   redisplay     +----------------+
    | Lisp machine |---------------->| Redisplay code |<--+
    +--------------+   (xdisp.c)     +----------------+   |
 	  ^				     |		 |
 	  +----------------------------------+           |
-	    Don't use this path when called		 |
-	    asynchronously!				 |
-                                                         |
-                           expose_window (asynchronous)  |
-                                                         |
-			           X expose events  -----+
+	    Block input to prevent this when             |
+	    called asynchronously!			 |
+							 |
+		    note_mouse_highlight (asynchronous)	 |
+							 |
+				    X mouse events  -----+
+							 |
+			    expose_frame (asynchronous)	 |
+							 |
+				   X expose events  -----+
 
    What does redisplay do?  Obviously, it has to figure out somehow what
    has been changed since the last time the display has been updated,
