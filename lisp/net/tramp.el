@@ -2401,10 +2401,11 @@ remote file names."
   (put 'tramp-completion-file-name-handler 'operations
        (mapcar 'car tramp-completion-file-name-handler-alist))
 
-  (add-to-list 'file-name-handler-alist
-	       (cons tramp-archive-file-name-regexp
-		     'tramp-archive-file-name-handler))
-  (put 'tramp-archive-file-name-handler 'safe-magic t)
+  (when (bound-and-true-p tramp-archive-enabled)
+    (add-to-list 'file-name-handler-alist
+	         (cons tramp-archive-file-name-regexp
+		       'tramp-archive-file-name-handler))
+    (put 'tramp-archive-file-name-handler 'safe-magic t))
 
   ;; If jka-compr or epa-file are already loaded, move them to the
   ;; front of `file-name-handler-alist'.

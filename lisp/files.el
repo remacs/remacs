@@ -963,7 +963,8 @@ the function needs to examine, starting with FILE."
                     (null file)
                     (string-match locate-dominating-stop-dir-regexp file)))
       (setq try (if (stringp name)
-                    (file-exists-p (expand-file-name name file))
+                    (and (file-directory-p file)
+                         (file-exists-p (expand-file-name name file)))
                   (funcall name file)))
       (cond (try (setq root file))
             ((equal file (setq file (file-name-directory
