@@ -1435,7 +1435,11 @@ also updated whenever the diary file (or a file it includes; see
 @ifnottex
 @ref{Fancy Diary Display})
 @end ifnottex
-is saved.
+is saved.  If you use the Org Mode and keep appointments in your Org
+agenda files, you can add those appointments to the list using the
+@code{org-agenda-to-appt} command.  @xref{Weekly/daily agenda,
+Appointment reminders,,org, The Org Manual}, for more about that
+command.
 
 @findex appt-add
 @findex appt-delete
@@ -1581,10 +1585,13 @@ variables' values are 120.
 @cindex time intervals, summing
 @cindex summing time intervals
 @cindex timeclock
+@cindex clocking time
 
   The timeclock package adds up time intervals, so you can (for
 instance) keep track of how much time you spend working on particular
-projects.
+projects.  (A more advanced alternative is to use the Org Mode's
+facilities for clocking time, @pxref{Clocking work time,,,org, The Org
+Manual}).
 
 @findex timeclock-in
 @findex timeclock-out

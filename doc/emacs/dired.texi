@@ -727,8 +727,8 @@ this.)
 
 @vindex dired-chown-program
 The variable @code{dired-chown-program} specifies the name of the
-program to use to do the work (different systems put @command{chown}
-in different places).
+program to use to do the work.  (This variable is necessary because
+different systems put @command{chown} in different places).
 
 @findex dired-do-touch
 @kindex T @r{(Dired)}
@@ -898,7 +898,7 @@ treat it specially.
 Otherwise, if the command string contains @samp{?} surrounded by
 whitespace or @samp{`?`}, Emacs runs the shell command once
 @emph{for each file}, substituting the current file name for @samp{?}
-and @samp{`?`} each time.  You can use both @samp{?} or @samp{`?`} more
+and @samp{`?`} each time.  You can use both @samp{?} and @samp{`?`} more
 than once in the command; the same file name replaces each occurrence.
 If you mix them with @samp{*} the command signals an error.
 
@@ -1391,7 +1391,7 @@ display the next image.  Typing @key{DEL}
 the previous thumbnail and displays that instead.
 
 @vindex image-dired-external-viewer
-  To view and the image in its original size, either provide a prefix
+  To view the image in its original size, either provide a prefix
 argument (@kbd{C-u}) before pressing @key{RET}, or type
 @kbd{C-@key{RET}} (@code{image-dired-thumbnail-display-external}) to
 display the image in an external viewer.  You must first configure
@@ -1426,7 +1426,8 @@ a comment from Dired (@code{image-dired-dired-comment-files}).
   Image-Dired also provides simple image manipulation.  In the
 thumbnail buffer, type @kbd{L} to rotate the original image 90 degrees
 anti clockwise, and @kbd{R} to rotate it 90 degrees clockwise.  This
-rotation is lossless, and uses an external utility called JpegTRAN.
+rotation is lossless, and uses an external utility called
+@command{jpegtran}, which you need to install first.
 
 @node Misc Dired Features
 @section Other Dired Features
