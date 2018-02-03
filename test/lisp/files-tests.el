@@ -351,7 +351,8 @@ be invoked with the right arguments."
   (declare (indent 1) (debug ((symbolp symbolp &optional form) body)))
   (cl-check-type name symbol)
   (cl-check-type non-special-name symbol)
-  `(let* ((,name (make-temp-file "files-tests" ,dir-flag))
+  `(let* ((temporary-file-directory (file-truename temporary-file-directory))
+          (,name (make-temp-file "files-tests" ,dir-flag))
           (,non-special-name (file-name-quote ,name)))
      (unwind-protect
          (progn ,@body)
