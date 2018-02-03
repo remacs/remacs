@@ -119,6 +119,12 @@ second slash in the pair.  In the example above,
 the terminal allows it.  (To disable this dimming, turn off File Name
 Shadow mode with the command @kbd{M-x file-name-shadow-mode}.)
 
+  When completing remote file names (@pxref{Remote Files}), a double
+slash behaves slightly differently: it causes Emacs to ignore only the
+file-name part, leaving the rest (method, host and username, etc.)
+intact.  Typing three slashes in a row ignores everything in remote
+file names.  @xref{File name completion,,, tramp, The Tramp Manual}.
+
 @cindex home directory shorthand
   Emacs interprets @file{~/} as your home directory.  Thus,
 @file{~/foo/bar.txt} specifies a file named @file{bar.txt}, inside a
