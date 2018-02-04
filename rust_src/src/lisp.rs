@@ -231,8 +231,7 @@ impl LispObject {
     #[inline]
     pub fn as_symbol(self) -> Option<LispSymbolRef> {
         if self.is_symbol() {
-            Some(LispSymbolRef::new(self.symbol_ptr_value()
-                as *mut Lisp_Symbol))
+            Some(LispSymbolRef::new(self.symbol_ptr_value() as *mut Lisp_Symbol))
         } else {
             None
         }

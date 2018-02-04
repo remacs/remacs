@@ -509,7 +509,7 @@ pub fn buffer_hash(buffer_or_name: LispObject) -> LispObject {
         ctx.update(unsafe {
             slice::from_raw_parts(
                 b.gap_end_addr(),
-                (b.z_addr() as usize - b.gap_end_addr() as usize),
+                b.z_addr() as usize - b.gap_end_addr() as usize,
             )
         });
     }
