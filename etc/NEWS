@@ -1169,6 +1169,9 @@ branch-related commands on a keymap bound to 'B'.
 *** 'vc-region-history' is now bound to 'C-x v h', replacing the older
 'vc-insert-headers' binding.
 
+*** New user option 'vc-git-print-log-follow' to follow renames in Git logs
+for a single file.
+
 ** CC mode
 
 ---
