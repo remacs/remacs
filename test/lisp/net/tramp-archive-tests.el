@@ -808,21 +808,29 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
   ;; Autoloading tramp-archive works since Emacs 27.1.
   (skip-unless (tramp-archive--test-emacs27-p))
 
+  ;; tramp-archive is neither loaded at Emacs startup, nor when
+  ;; loading a file like "/ssh::" (which loads Tramp).
   (let ((default-directory (expand-file-name temporary-file-directory))
 	(code
+	 "(progn \
+	    (message \"tramp-archive loaded: %%s %%s\" \
+              (featurep 'tramp) (featurep 'tramp-archive)) \
+	    (file-attributes %S \"/\") \
+	    (message \"tramp-archive loaded: %%s %%s\" \
+              (featurep 'tramp) (featurep 'tramp-archive)))"))
+    (dolist (file `("/ssh::foo" ,(concat tramp-archive-test-archive "foo")))
+      (should
+       (string-match
+	(format
+	 "tramp-archive loaded: nil nil[[:ascii:]]+tramp-archive loaded: t %s"
+	 (tramp-archive-file-name-p file))
+	(shell-command-to-string
 	 (format
-	  "(message \"Tramp loaded: %%s\" (and (file-exists-p %S) t))"
-	  tramp-archive-test-archive)))
-    (should
-     (string-match
-      "Tramp loaded: t[\n\r]+"
-      (shell-command-to-string
-       (format
-	"%s -batch -Q -L %s --eval %s"
-	(shell-quote-argument
-	 (expand-file-name invocation-name invocation-directory))
-	(mapconcat 'shell-quote-argument load-path " -L ")
-	(shell-quote-argument code)))))))
+	  "%s -batch -Q -L %s --eval %s"
+	  (shell-quote-argument
+	   (expand-file-name invocation-name invocation-directory))
+	  (mapconcat 'shell-quote-argument load-path " -L ")
+	  (shell-quote-argument (format code file)))))))))
 
 (ert-deftest tramp-archive-test42-delay-load ()
   "Check that `tramp-archive' is loaded lazily, only when needed."
@@ -836,18 +844,21 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
   (let ((default-directory (expand-file-name temporary-file-directory))
 	(code
 	 "(progn \
-          (setq tramp-archive-enabled %s) \
-	  (message \"Tramp loaded: %%s\" (featurep 'tramp-archive)) \
-	  (find-file %S \"/\") \
-	  (message \"Tramp loaded: %%s\" (featurep 'tramp-archive)) \
-	  (file-attributes %S \"/\") \
-	  (message \"Tramp loaded: %%s\" (featurep 'tramp-archive)))"))
+            (setq tramp-archive-enabled %s) \
+	    (message \"tramp-archive loaded: %%s\" \
+              (featurep 'tramp-archive)) \
+	    (file-attributes %S \"/\") \
+	    (message \"tramp-archive loaded: %%s\" \
+              (featurep 'tramp-archive)) \
+	    (file-attributes %S \"/\") \
+	    (message \"tramp-archive loaded: %%s\" \
+              (featurep 'tramp-archive)))"))
     ;; tramp-archive doesn't load when `tramp-archive-enabled' is nil.
     (dolist (tae '(t nil))
       (should
        (string-match
 	(format
-    "Tramp loaded: nil[[:ascii:]]+Tramp loaded: nil[[:ascii:]]+Tramp loaded: %s"
+	 "tramp-archive loaded: nil[[:ascii:]]+tramp-archive loaded: nil[[:ascii:]]+tramp-archive loaded: %s"
 	 tae)
         (shell-command-to-string
          (format

@@ -116,8 +116,9 @@
 ;; would load Tramp. So we make a cheaper check.
 ;;;###autoload
 (defvar tramp-archive-enabled (featurep 'dbusbind)
-  "Non-nil when GVFS is available.")
+  "Non-nil when file archive support is available.")
 
+;; After loading tramp-gvfs.el, we know it better.
 (setq tramp-archive-enabled tramp-gvfs-enabled)
 
 ;; <https://github.com/libarchive/libarchive/wiki/LibarchiveFormats>
@@ -175,6 +176,9 @@ It must be supported by libarchive(3).")
     "\\)" ;; \1
     "\\(" "/" ".*" "\\)" "\\'"))) ;; \2
 
+;; In older Emacsen (prior 27.1), `tramp-archive-autoload-file-name-regexp'
+;; is not autoloaded.  So we cannot expect it to be known in
+;; tramp-loaddefs.el. But it exists, when tramp-archive.el is loaded.
 ;;;###tramp-autoload
 (defconst tramp-archive-file-name-regexp
   (ignore-errors (tramp-archive-autoload-file-name-regexp))
@@ -266,7 +270,7 @@ It must be supported by libarchive(3).")
     (vc-registered . ignore)
     (verify-visited-file-modtime . tramp-handle-verify-visited-file-modtime)
     (write-region . tramp-archive-handle-not-implemented))
-  "Alist of handler functions for GVFS archive method.
+  "Alist of handler functions for file archive method.
 Operations not mentioned here will be handled by the default Emacs primitives.")
 
 (defsubst tramp-archive-file-name-for-operation (operation &rest args)
@@ -288,7 +292,7 @@ pass to the OPERATION."
 
 ;;;###tramp-autoload
 (defun tramp-archive-file-name-handler (operation &rest args)
-  "Invoke the GVFS archive related OPERATION.
+  "Invoke the file archive related OPERATION.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (let* ((filename (apply 'tramp-archive-file-name-for-operation
@@ -323,8 +327,16 @@ pass to the OPERATION."
     (put 'tramp-archive-file-name-handler 'safe-magic t))))
 
 ;;;###autoload
-(add-hook 'after-init-hook 'tramp-register-archive-file-name-handler)
+(progn
+  (add-hook 'after-init-hook 'tramp-register-archive-file-name-handler)
+  (add-hook
+   'tramp-archive-unload-hook
+   (lambda ()
+     (remove-hook
+      'after-init-hook 'tramp-register-archive-file-name-handler))))
 
+;; In older Emacsen (prior 27.1), the autoload above does not exist.
+;; So we call it again; it doesn't hurt.
 (tramp-register-archive-file-name-handler)
 
 ;; Mark `operations' the handler is responsible for.
@@ -342,12 +354,6 @@ pass to the OPERATION."
      (lambda ()
        (remove-hook
 	'url-handler-mode-hook 'tramp-register-file-name-handlers)))))
-
-;; Debug.
-;(trace-function-background 'tramp-archive-file-name-handler)
-;(trace-function-background 'tramp-gvfs-file-name-handler)
-;(trace-function-background 'tramp-file-name-archive)
-;(trace-function-background 'tramp-archive-dissect-file-name)
 
 
 ;; File name conversions.
@@ -374,6 +380,10 @@ The hash key is the archive name.  The value is a cons of the
 used `tramp-file-name' structure for tramp-gvfs, and the file
 name of a local copy, if any.")
 
+(defsubst tramp-archive-gvfs-host (archive)
+  "Return host name of ARCHIVE as used in GVFS for mounting"
+  (url-hexify-string (tramp-gvfs-url-file-name archive)))
+
 (defun tramp-archive-dissect-file-name (name)
   "Return a `tramp-file-name' structure.
 The structure consists of the `tramp-archive-method' method, the
@@ -397,8 +407,7 @@ name is kept in slot `hop'"
 	(let ((archive
 	       (tramp-make-tramp-file-name
 		(tramp-archive-dissect-file-name archive) nil 'noarchive)))
-	  (setf (tramp-file-name-host vec)
-		(url-hexify-string (tramp-gvfs-url-file-name archive))))
+	  (setf (tramp-file-name-host vec) (tramp-archive-gvfs-host archive)))
 	(puthash archive (list vec) tramp-archive-hash))
 
        ;; http://...
@@ -411,15 +420,13 @@ name is kept in slot `hop'"
 		 (url-type (url-generic-parse-url archive))
 		 url-tramp-protocols))
 	       (archive (url-tramp-convert-url-to-tramp archive)))
-	  (setf (tramp-file-name-host vec)
-		(url-hexify-string (tramp-gvfs-url-file-name archive))))
+	  (setf (tramp-file-name-host vec) (tramp-archive-gvfs-host archive)))
 	(puthash archive (list vec) tramp-archive-hash))
 
        ;; GVFS supported schemes.
        ((or (tramp-gvfs-file-name-p archive)
 	    (not (file-remote-p archive)))
-	(setf (tramp-file-name-host vec)
-	      (url-hexify-string (tramp-gvfs-url-file-name archive)))
+	(setf (tramp-file-name-host vec) (tramp-archive-gvfs-host archive))
 	(puthash archive (list vec) tramp-archive-hash))
 
        ;; Anything else.  Here we call `file-local-copy', which we
@@ -428,8 +435,7 @@ name is kept in slot `hop'"
 		 (inhibit-file-name-handlers
 		  (cons 'jka-compr-handler inhibit-file-name-handlers))
 		 (copy (file-local-copy archive)))
-	    (setf (tramp-file-name-host vec)
-		  (url-hexify-string (tramp-gvfs-url-file-name copy)))
+	    (setf (tramp-file-name-host vec) (tramp-archive-gvfs-host copy))
 	    (puthash archive (cons vec copy) tramp-archive-hash))))
 
       ;; So far, `vec' handles just the mount point.  Add `localname',
