@@ -101,13 +101,13 @@ displayed file is the last one specified on the command line; the
 other files are visited but their buffers are not shown.
 
 If the startup buffer is disabled (@pxref{Entering Emacs}), then
-@var{file} is visited in a single window if one file argument was
-supplied; with two file arguments, Emacs displays the files in two
-different windows; with more than two file argument, Emacs displays
-the last file specified in one window, plus a Buffer Menu in a
-different window (@pxref{Several Buffers}).  To inhibit using the
-Buffer Menu for this, change the variable
-@code{inhibit-startup-buffer-menu} to @code{t}.
+starting Emacs with one file argument displays the buffer visiting
+@var{file} in a single window.  With two file arguments, Emacs
+displays the files in two different windows.  With more than two file
+argument, Emacs displays the last file specified in one window, plus
+another window with a Buffer Menu showing all the other files
+(@pxref{Several Buffers}).  To inhibit using the Buffer Menu for this,
+change the variable @code{inhibit-startup-buffer-menu} to @code{t}.
 
 @item +@var{linenum} @var{file}
 @opindex +@var{linenum}

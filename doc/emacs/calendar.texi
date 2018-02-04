@@ -41,8 +41,6 @@ For more advanced topics,
 * Lunar Phases::        Displaying phases of the moon.
 * Other Calendars::     Converting dates to other calendar systems.
 * Diary::               Displaying events from your diary.
-* Appointments::        Reminders when it's time to do something.
-* Importing Diary::     Converting diary events to/from other formats.
 * Daylight Saving::     How to specify when daylight saving time is active.
 * Time Intervals::      Keeping track of time intervals.
 @ifnottex
@@ -936,6 +934,8 @@ entries.
 * Date Formats::           Various ways you can specify dates.
 * Adding to Diary::        Commands to create diary entries.
 * Special Diary Entries::  Anniversaries, blocks of dates, cyclic entries, etc.
+* Appointments::           Reminders when it's time to do something.
+* Importing Diary::        Converting diary events to/from other formats.
 @end menu
 
 @node Format of Diary File
@@ -1363,7 +1363,7 @@ can perform arbitrary computations to determine when they apply.
 @end ifnottex
 
 @node Appointments
-@section Appointments
+@subsection Appointments
 @cindex appointment notification
 
 @vindex appt-display-format
@@ -1450,7 +1450,7 @@ list without affecting your diary file.  You delete entries from the
 appointment list with @kbd{M-x appt-delete}.
 
 @node Importing Diary
-@section Importing and Exporting Diary Entries
+@subsection Importing and Exporting Diary Entries
 
   You can transfer diary entries between Emacs diary files and a
 variety of other formats.

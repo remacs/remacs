@@ -773,10 +773,10 @@ you type the required password, press @key{RET} to submit it.  To
 prevent others from seeing your password, every character you type is
 displayed as a dot (@samp{.}) instead of its usual form.
 
-  Most of the features and commands associated with the minibuffer can
-@emph{not} be used when entering a password.  There is no history or
-completion, and you cannot change windows or perform any other action
-with Emacs until you have submitted the password.
+  Most of the features and commands associated with the minibuffer
+@emph{cannot} be used when entering a password.  There is no history
+or completion, and you cannot change windows or perform any other
+action with Emacs until you have submitted the password.
 
   While you are typing the password, you may press @key{DEL} to delete
 backwards, removing the last character entered.  @kbd{C-u} deletes

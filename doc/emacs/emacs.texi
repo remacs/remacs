@@ -954,8 +954,6 @@ The Calendar and the Diary
 * Lunar Phases::        Displaying phases of the moon.
 * Other Calendars::     Converting dates to other calendar systems.
 * Diary::               Displaying events from your diary.
-* Appointments::        Reminders when it's time to do something.
-* Importing Diary::     Converting diary events to/from other formats.
 * Daylight Saving::     How to specify when daylight saving time is active.
 * Time Intervals::      Keeping track of time intervals.
 @ifnottex
@@ -983,6 +981,8 @@ The Diary
 * Date Formats::           Various ways you can specify dates.
 * Adding to Diary::        Commands to create diary entries.
 * Special Diary Entries::  Anniversaries, blocks of dates, cyclic entries, etc.
+* Appointments::           Reminders when it's time to do something.
+* Importing Diary::        Converting diary events to/from other formats.
 
 @ifnottex
 More advanced features of the Calendar and Diary

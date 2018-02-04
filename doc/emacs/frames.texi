@@ -994,7 +994,7 @@ variable @code{scroll-bar-adjust-thumb-portion} to control
 when the end of the buffer is visible.  If its value is
 non-@code{nil}, the scroll bar can be dragged downwards even if the
 end of the buffer is shown; if @code{nil}, the thumb will be at the
-bottom when the end of the buffer is shown.  You can not over-scroll
+bottom when the end of the buffer is shown.  You cannot over-scroll
 when the entire buffer is visible.
 
 @cindex scroll-bar face
