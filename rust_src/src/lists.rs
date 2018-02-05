@@ -1,8 +1,8 @@
 //! Operations on lists.
 
 use remacs_macros::lisp_fn;
+use remacs_sys::{EmacsInt, EmacsUint};
 use remacs_sys::{Qcircular_list, Qplistp};
-use remacs_sys::EmacsUint;
 use remacs_sys::globals;
 
 use lisp::{LispCons, LispObject};
@@ -100,22 +100,30 @@ pub fn cdr_safe(object: LispObject) -> LispObject {
 
 /// Take cdr N times on LIST, return the result.
 #[lisp_fn]
-pub fn nthcdr(n: EmacsUint, list: LispObject) -> LispObject {
-    let mut it = list.iter_tails_safe();
+pub fn nthcdr(n: EmacsInt, list: LispObject) -> LispObject {
+    if n < 0 {
+        list
+    } else {
+        let mut it = list.iter_tails_safe();
 
-    match it.nth(n as usize) {
-        Some(value) => value.as_obj(),
-        None => it.rest(),
+        match it.nth(n as usize) {
+            Some(value) => value.as_obj(),
+            None => it.rest(),
+        }
     }
 }
 
 /// Return the Nth element of LIST.
 /// N counts from zero.  If LIST is not that long, nil is returned.
 #[lisp_fn]
-pub fn nth(n: EmacsUint, list: LispObject) -> LispObject {
-    list.iter_cars()
-        .nth(n as usize)
-        .unwrap_or(LispObject::constant_nil())
+pub fn nth(n: EmacsInt, list: LispObject) -> LispObject {
+    if n < 0 {
+        car(list)
+    } else {
+        list.iter_cars_safe()
+            .nth(n as usize)
+            .unwrap_or(LispObject::constant_nil())
+    }
 }
 
 fn lookup_member<CmpFunc>(elt: LispObject, list: LispObject, cmp: CmpFunc) -> LispObject
@@ -422,7 +430,7 @@ pub fn safe_length(list: LispObject) -> usize {
 // Used by sort() in vectors.rs.
 
 pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
-    let length = safe_length(list) as EmacsUint;
+    let length = safe_length(list) as EmacsInt;
     if length < 2 {
         return list;
     }

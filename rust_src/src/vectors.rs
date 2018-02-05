@@ -8,7 +8,7 @@ use std::slice;
 use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, EmacsUint, Lisp_Bool_Vector, Lisp_Object, Lisp_Vector, Lisp_Vectorlike,
+use remacs_sys::{EmacsInt, Lisp_Bool_Vector, Lisp_Object, Lisp_Vector, Lisp_Vectorlike,
                  PseudovecType, MOST_POSITIVE_FIXNUM, PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG,
                  PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
 use remacs_sys::Qsequencep;
@@ -19,7 +19,7 @@ use data::aref;
 use frames::LispFrameRef;
 use lisp::{ExternalPtr, LispObject, LispSubrRef};
 use lisp::defsubr;
-use lists::{car, inorder, nthcdr, sort_list};
+use lists::{inorder, nth, sort_list};
 use multibyte::MAX_CHAR;
 use process::LispProcessRef;
 use threads::ThreadStateRef;
@@ -320,11 +320,11 @@ pub fn length(sequence: LispObject) -> LispObject {
 
 /// Return element of SEQUENCE at index N.
 #[lisp_fn]
-pub fn elt(sequence: LispObject, n: EmacsUint) -> LispObject {
+pub fn elt(sequence: LispObject, n: EmacsInt) -> LispObject {
     if sequence.is_cons() || sequence.is_nil() {
-        car(nthcdr(n, sequence))
+        nth(n, sequence)
     } else if sequence.is_array() {
-        aref(sequence, n as EmacsInt)
+        aref(sequence, n)
     } else {
         wrong_type!(Qsequencep, sequence);
     }
