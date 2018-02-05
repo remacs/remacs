@@ -2509,7 +2509,7 @@ Example:
      @print{} @trampfn{ssh,melancholia,/etc}
 
 @kbd{C-x C-f @trampfn{ssh,melancholia,//etc} @key{TAB}}
-     @print{} /etc
+     @print{} @trampfn{ssh,melancholia,/etc}
 
 @kbd{C-x C-f @trampfn{ssh,melancholia,/usr/local/bin///etc} @key{TAB}}
      @print{} /etc

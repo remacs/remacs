@@ -3554,17 +3554,19 @@ support symbolic links."
     ;; First, we must replace environment variables.
     (setq filename (tramp-replace-environment-variables filename))
     (with-parsed-tramp-file-name filename nil
-      ;; Ignore in LOCALNAME everything before "//" or "/~".
-      (when (and (stringp localname) (string-match ".+?/\\(/\\|~\\)" localname))
-	(setq filename
-	      (concat (file-remote-p filename)
-		      (replace-match "\\1" nil nil localname)))
-	;; "/m:h:~" does not work for completion.  We use "/m:h:~/".
-	(when (string-match "~$" filename)
-	  (setq filename (concat filename "/"))))
       ;; We do not want to replace environment variables, again.
       (let (process-environment)
-	(tramp-run-real-handler 'substitute-in-file-name (list filename))))))
+	;; Ignore in LOCALNAME everything before "//" or "/~".
+	(when (stringp localname)
+	  (if (string-match "//\\(/\\|~\\)" localname)
+	      (setq filename (substitute-in-file-name localname))
+	    (setq filename
+		  (concat (file-remote-p filename)
+			  (substitute-in-file-name localname))))))
+      ;; "/m:h:~" does not work for completion.  We use "/m:h:~/".
+      (if (string-match "~$" filename)
+	  (concat filename "/")
+	filename))))
 
 (defun tramp-handle-set-visited-file-modtime (&optional time-list)
   "Like `set-visited-file-modtime' for Tramp files."
