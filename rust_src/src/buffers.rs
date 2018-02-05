@@ -25,7 +25,7 @@ pub const BEG_BYTE: ptrdiff_t = 1;
 /// Maximum number of bytes in a buffer.
 /// A buffer cannot contain more bytes than a 1-origin fixnum can
 /// represent, nor can it be so large that C pointer arithmetic stops
-/// working. The ptrdiff_t cast ensures that this is signed, not unsigned.
+/// working. The `ptrdiff_t` cast ensures that this is signed, not unsigned.
 //const fn buf_bytes_max() -> ptrdiff_t {
 //    const mpf: ptrdiff_t = (MOST_POSITIVE_FIXNUM - 1) as ptrdiff_t;
 //    const eimv: ptrdiff_t = EmacsInt::max_value() as ptrdiff_t;
@@ -59,7 +59,7 @@ pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 
 impl LispBufferRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)) }
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
     pub fn is_read_only(&self) -> bool {
@@ -450,7 +450,7 @@ pub fn set_buffer(buffer_or_name: LispObject) -> LispObject {
 /// `inhibit-read-only' text property set, the error will not be raised.
 #[lisp_fn(min = "0")]
 pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) -> () {
-    let pos = position.unwrap_or_else(|| point());
+    let pos = position.unwrap_or_else(point);
 
     let inhibit_read_only: bool =
         unsafe { LispObject::from_raw(globals.f_Vinhibit_read_only).into() };

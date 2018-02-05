@@ -172,7 +172,7 @@ pub fn forward_line(n: Option<EmacsInt>) -> EmacsInt {
     if shortage > 0
         && (count <= 0
             || (cur_buf.zv() > cur_buf.begv && cur_buf.pt() != opoint
-                && cur_buf.fetch_byte(cur_buf.pt_byte - 1) != '\n' as u8))
+                && cur_buf.fetch_byte(cur_buf.pt_byte - 1) != b'\n'))
     {
         shortage -= 1
     }

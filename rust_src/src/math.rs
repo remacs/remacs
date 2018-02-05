@@ -304,7 +304,7 @@ pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithCompari
     };
     let fneq = f1 != f2;
 
-    let result = match comparison {
+    match comparison {
         ArithComparison::Equal => !fneq && i1 == i2,
         ArithComparison::Notequal => fneq || i1 != i2,
         ArithComparison::Less => if fneq {
@@ -327,9 +327,7 @@ pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithCompari
         } else {
             i1 >= i2
         },
-    };
-
-    result
+    }
 }
 
 fn arithcompare_driver(args: &[LispObject], comparison: ArithComparison) -> bool {

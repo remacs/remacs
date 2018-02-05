@@ -245,7 +245,7 @@ const BOOL_VECTOR_BITS_PER_CHAR: usize = 8;
 
 impl LispBoolVecRef {
     pub unsafe fn get_unchecked(self, idx: usize) -> bool {
-        let tmp: *const u8 = mem::transmute(&self._data);
+        let tmp: *const u8 = &self._data as *const [usize; 1] as *const u8;
         let val: u8 = *tmp.offset((idx / BOOL_VECTOR_BITS_PER_CHAR) as isize);
 
         (val & (1 << (idx % BOOL_VECTOR_BITS_PER_CHAR))) != 0
@@ -293,29 +293,32 @@ impl Iterator for LispBoolVecRefIter {
 #[lisp_fn]
 pub fn length(sequence: LispObject) -> LispObject {
     if let Some(s) = sequence.as_string() {
-        return LispObject::from_natnum(s.len_chars() as EmacsInt);
+        LispObject::from_natnum(s.len_chars() as EmacsInt)
     } else if let Some(vl) = sequence.as_vectorlike() {
         if let Some(v) = vl.as_vector() {
-            return LispObject::from_natnum(v.len() as EmacsInt);
+            LispObject::from_natnum(v.len() as EmacsInt)
         } else if let Some(bv) = vl.as_bool_vector() {
-            return LispObject::from_natnum(bv.len() as EmacsInt);
+            LispObject::from_natnum(bv.len() as EmacsInt)
         } else if vl.is_pseudovector(PseudovecType::PVEC_CHAR_TABLE) {
-            return LispObject::from_natnum(MAX_CHAR as EmacsInt);
+            LispObject::from_natnum(EmacsInt::from(MAX_CHAR))
         } else if vl.is_pseudovector(PseudovecType::PVEC_COMPILED)
             || vl.is_pseudovector(PseudovecType::PVEC_RECORD)
         {
-            return LispObject::from_natnum(vl.pseudovector_size());
+            LispObject::from_natnum(vl.pseudovector_size())
+        } else {
+            wrong_type!(Qsequencep, sequence);
         }
     } else if sequence.is_cons() {
         let len = sequence.iter_tails().count();
         if len > MOST_POSITIVE_FIXNUM as usize {
             error!("List too long");
         }
-        return LispObject::from_natnum(len as EmacsInt);
+        LispObject::from_natnum(len as EmacsInt)
     } else if sequence.is_nil() {
-        return LispObject::from_natnum(0);
+        LispObject::from_natnum(0)
+    } else {
+        wrong_type!(Qsequencep, sequence);
     }
-    wrong_type!(Qsequencep, sequence)
 }
 
 /// Return element of SEQUENCE at index N.

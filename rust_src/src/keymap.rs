@@ -85,7 +85,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
             if let Some(x) = c.as_fixnum() {
                 let x = x as u32;
                 if x & 0x80 != 0 && !k.is_multibyte() {
-                    c = LispObject::from_fixnum(((x | CHAR_META) & !0x80) as EmacsInt);
+                    c = LispObject::from_fixnum(EmacsInt::from((x | CHAR_META) & !0x80));
                 }
             }
         }
@@ -149,10 +149,11 @@ pub fn define_prefix_command(
 #[lisp_fn(min = "0")]
 pub fn make_sparse_keymap(string: LispObject) -> LispObject {
     if string.is_not_nil() {
-        let mut s = string;
-        if LispObject::from_raw(unsafe { globals.f_Vpurify_flag }).is_not_nil() {
-            s = unsafe { LispObject::from_raw(Fpurecopy(string.to_raw())) };
-        }
+        let s = if LispObject::from_raw(unsafe { globals.f_Vpurify_flag }).is_not_nil() {
+            unsafe { LispObject::from_raw(Fpurecopy(string.to_raw())) }
+        } else {
+            string
+        };
         list!(LispObject::from_raw(Qkeymap), s)
     } else {
         list!(LispObject::from_raw(Qkeymap))

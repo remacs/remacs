@@ -12,7 +12,6 @@ use remacs_sys::uniprop_table_uncompress;
 
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
-use std::mem;
 
 pub type LispCharTableRef = ExternalPtr<Lisp_Char_Table>;
 pub type LispSubCharTableRef = ExternalPtr<Lisp_Sub_Char_Table>;
@@ -49,7 +48,7 @@ fn uniprop_compressed_form_p(obj: LispObject) -> bool {
 
 impl LispCharTableRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)) }
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
     pub fn is_uniprop(self) -> bool {
@@ -97,7 +96,7 @@ impl LispCharTableRef {
 
 impl LispSubCharTableAsciiRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(LispObject::tag_ptr(self.0, Lisp_Type::Lisp_Vectorlike)) }
+        LispObject::tag_ptr(self.0, Lisp_Type::Lisp_Vectorlike)
     }
 
     fn _get(self, idx: isize) -> LispObject {
@@ -112,7 +111,7 @@ impl LispSubCharTableAsciiRef {
 
 impl LispSubCharTableRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)) }
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
     fn _get(self, idx: isize) -> LispObject {

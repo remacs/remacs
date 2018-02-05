@@ -280,7 +280,7 @@ pub fn hash_table_count(table: LispHashTableRef) -> EmacsInt {
 /// Return the current rehash threshold of TABLE.
 #[lisp_fn]
 pub fn hash_table_rehash_threshold(table: LispHashTableRef) -> EmacsDouble {
-    table.rehash_threshold as EmacsDouble
+    EmacsDouble::from(table.rehash_threshold)
 }
 
 /// Return the size of TABLE.

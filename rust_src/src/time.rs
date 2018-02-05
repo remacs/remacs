@@ -34,8 +34,8 @@ pub extern "C" fn lo_time(t: time_t) -> i32 {
 }
 
 /// Make a Lisp list that represents the Emacs time T.  T may be an
-/// invalid time, with a slightly negative tv_nsec value such as
-/// UNKNOWN_MODTIME_NSECS; in that case, the Lisp list contains a
+/// invalid time, with a slightly negative `tv_nsec` value such as
+/// `UNKNOWN_MODTIME_NSECS`; in that case, the Lisp list contains a
 /// correspondingly negative picosecond count.
 #[no_mangle]
 pub extern "C" fn make_lisp_time(t: c_timespec) -> Lisp_Object {
@@ -45,18 +45,17 @@ pub extern "C" fn make_lisp_time(t: c_timespec) -> Lisp_Object {
 fn make_lisp_time_1(t: c_timespec) -> LispObject {
     let s = t.tv_sec;
     let ns = t.tv_nsec;
-    let result = list(&mut [
+    list(&mut [
         LispObject::from_fixnum(hi_time(s)),
         LispObject::from_fixnum(EmacsInt::from(lo_time(s))),
-        LispObject::from_fixnum(EmacsInt::from(ns / 1000)),
-        LispObject::from_fixnum(EmacsInt::from(ns % 1000 * 1000)),
-    ]);
-    result
+        LispObject::from_fixnum(ns / 1_000),
+        LispObject::from_fixnum(ns % 1_000 * 1_000),
+    ])
 }
 
-/// Decode a Lisp list SPECIFIED_TIME that represents a time.
-/// Set *PHIGH, *PLOW, *PUSEC, *PPSEC to its parts; do not check their values.
-/// Return 2, 3, or 4 to indicate the effective length of SPECIFIED_TIME
+/// Decode a Lisp list `SPECIFIED_TIME` that represents a time.
+/// Set `*PHIGH`, `*PLOW`, `*PUSEC`, `*PPSEC` to its parts; do not check their values.
+/// Return 2, 3, or 4 to indicate the effective length of `SPECIFIED_TIME`
 /// if successful, 0 if unsuccessful.
 #[no_mangle]
 pub extern "C" fn disassemble_lisp_time(
@@ -186,22 +185,22 @@ pub extern "C" fn decode_time_components(
 
     // Normalize out-of-range lower-order components by carrying
     // each overflow into the next higher-order component.
-    if ps % 1000000 < 0 {
-        us += ps / 1000000 - 1;
+    if ps % 1_000_000 < 0 {
+        us += ps / 1_000_000 - 1;
     }
-    if us % 1000000 < 0 {
-        lo += us / 1000000 - 1;
+    if us % 1_000_000 < 0 {
+        lo += us / 1_000_000 - 1;
     }
     hi += lo >> LO_TIME_BITS;
-    if ps % 1000000 < 0 {
-        ps = ps % 1000000 + 1000000 * 1;
+    if ps % 1_000_000 < 0 {
+        ps = ps % 1_000_000 + 1_000_000;
     } else {
-        ps = ps % 1000000;
+        ps %= 1_000_000;
     }
-    if us % 1000000 < 0 {
-        us = us % 1000000 + 1000000 * 1;
+    if us % 1_000_000 < 0 {
+        us = us % 1_000_000 + 1_000_000;
     } else {
-        us = us % 1000000;
+        us %= 1_000_000;
     }
     lo &= (1 << LO_TIME_BITS) - 1;
 
@@ -220,8 +219,8 @@ pub extern "C" fn decode_time_components(
     if !dresult.is_null() {
         let dhi = hi as f64;
         unsafe {
-            *dresult = ((us as f64) * 1e6 + ps as f64) / 1e12 + (lo as f64)
-                + dhi * (1 << LO_TIME_BITS) as f64;
+            *dresult = (us as f64 * 1e6 + ps as f64) / 1e12 + (lo as f64)
+                + dhi * f64::from(1 << LO_TIME_BITS);
         }
     }
 
@@ -243,16 +242,16 @@ fn decode_float_time(t: f64, result: *mut lisp_time) -> bool {
     let mut lo = t_sans_hi as c_int;
     let fracps = (t_sans_hi - f64::from(lo)) * 1e12;
     let mut us = (fracps / 1e6) as c_int;
-    let mut ps = (fracps - (us as f64) * 1e6) as c_int;
+    let mut ps = (fracps - f64::from(us) * 1e6) as c_int;
 
     if ps < 0 {
         us -= 1;
-        ps += 1000000;
+        ps += 1_000_000;
     }
 
     if us < 0 {
         lo -= 1;
-        us += 1000000;
+        us += 1_000_000;
     }
 
     if lo < 0 {
@@ -288,10 +287,10 @@ pub extern "C" fn lisp_to_timespec(t: lisp_time) -> c_timespec {
     }
 }
 
-/// Decode a Lisp list SPECIFIED_TIME that represents a time.
-/// Store its effective length into *PLEN.
-/// If SPECIFIED_TIME is nil, use the current time.
-/// Signal an error if SPECIFIED_TIME does not represent a time.
+/// Decode a Lisp list `SPECIFIED_TIME` that represents a time.
+/// Store its effective length into `*PLEN`.
+/// If `SPECIFIED_TIME` is nil, use the current time.
+/// Signal an error if `SPECIFIED_TIME` does not represent a time.
 #[no_mangle]
 pub extern "C" fn lisp_time_struct(specified_time: Lisp_Object, plen: *mut c_int) -> lisp_time {
     let mut high = Lisp_Object::from_C(0);
@@ -316,7 +315,7 @@ pub extern "C" fn lisp_time_struct(specified_time: Lisp_Object, plen: *mut c_int
     t
 }
 
-/// Check a return value compatible with that of decode_time_components.
+/// Check a return value compatible with that of `decode_time_components`.
 fn check_time_validity(validity: i32) {
     if validity <= 0 {
         if validity < 0 {

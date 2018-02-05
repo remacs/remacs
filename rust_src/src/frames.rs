@@ -1,7 +1,5 @@
 //! Generic frame functions.
 
-use std::mem;
-
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
@@ -28,7 +26,7 @@ pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)) }
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
     #[inline]
@@ -216,7 +214,7 @@ pub fn set_frame_selected_window(
 pub fn framep(object: LispObject) -> LispObject {
     object
         .as_frame()
-        .map_or(LispObject::constant_nil(), |frame| framep_1(frame))
+        .map_or_else(LispObject::constant_nil, framep_1)
 }
 
 fn framep_1(frame: LispFrameRef) -> LispObject {
@@ -290,8 +288,8 @@ pub fn frame_position(frame: LispObject) -> LispObject {
     let frame_ref = frame_live_or_selected(frame);
     unsafe {
         LispObject::from_raw(Fcons(
-            LispObject::from_fixnum(frame_ref.left_pos() as EmacsInt).to_raw(),
-            LispObject::from_fixnum(frame_ref.top_pos() as EmacsInt).to_raw(),
+            LispObject::from_fixnum(EmacsInt::from(frame_ref.left_pos())).to_raw(),
+            LispObject::from_fixnum(EmacsInt::from(frame_ref.top_pos())).to_raw(),
         ))
     }
 }
