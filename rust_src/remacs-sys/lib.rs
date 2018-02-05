@@ -1387,7 +1387,8 @@ extern "C" {
         macro_only: Lisp_Object,
     ) -> Lisp_Object;
     pub fn Fapply(nargs: ptrdiff_t, args: *const Lisp_Object) -> Lisp_Object;
-
+    pub fn wset_window_parameters(w: *const Lisp_Window, val: Lisp_Object);
+    pub fn wget_window_parameters(w: *const Lisp_Window) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
