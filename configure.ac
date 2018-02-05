@@ -3514,23 +3514,20 @@ fi
 AC_SUBST(LIBJPEG)
 
 HAVE_LCMS2=no
-LIBLCMS2=
+LCMS2_CFLAGS=
+LCMS2_LIBS=
 if test "${with_lcms2}" != "no"; then
-  OLIBS=$LIBS
-  AC_SEARCH_LIBS([cmsCreateTransform], [lcms2], [HAVE_LCMS2=yes])
-  LIBS=$OLIBS
-  case $ac_cv_search_cmsCreateTransform in
-    -*) LIBLCMS2=$ac_cv_search_cmsCreateTransform ;;
-  esac
+  EMACS_CHECK_MODULES([LCMS2], [lcms2])
 fi
 if test "${HAVE_LCMS2}" = "yes"; then
   AC_DEFINE([HAVE_LCMS2], 1, [Define to 1 if you have the lcms2 library (-llcms2).])
   ### mingw32 doesn't use -llcms2, since it loads the library dynamically.
   if test "${opsys}" = "mingw32"; then
-     LIBLCMS2=
+     LCMS2_LIBS=
   fi
 fi
-AC_SUBST(LIBLCMS2)
+AC_SUBST(LCMS2_CFLAGS)
+AC_SUBST(LCMS2_LIBS)
 
 HAVE_ZLIB=no
 LIBZ=
