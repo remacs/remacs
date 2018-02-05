@@ -5322,16 +5322,6 @@ frame_make_pointer_visible (struct frame *f)
     }
 }
 
-DEFUN ("frame-pointer-visible-p", Fframe_pointer_visible_p,
-       Sframe_pointer_visible_p, 0, 1, 0,
-       doc: /* Return t if the mouse pointer displayed on FRAME is visible.
-Otherwise it returns nil.  FRAME omitted or nil means the
-selected frame.  This is useful when `make-pointer-invisible' is set.  */)
-  (Lisp_Object frame)
-{
-  return decode_any_frame (frame)->pointer_invisible ? Qnil : Qt;
-}
-
 
 
 /***********************************************************************
@@ -5422,6 +5412,12 @@ bool
 fget_visible(const struct frame *f)
 {
   return f->visible;
+}
+
+bool
+fget_pointer_invisible(const struct frame *f)
+{
+  return f->pointer_invisible;
 }
 
 bool_bf
@@ -5990,7 +5986,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sset_frame_width);
   defsubr (&Sset_frame_size);
   defsubr (&Sset_frame_position);
-  defsubr (&Sframe_pointer_visible_p);
 
 #ifdef HAVE_WINDOW_SYSTEM
   defsubr (&Sx_get_resource);

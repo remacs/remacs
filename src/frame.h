@@ -715,6 +715,8 @@ bool
 fget_visible(const struct frame *f);
 bool_bf
 fget_iconified(const struct frame *f);
+bool
+fget_pointer_invisible(const struct frame *f);
 int
 fget_top_pos(const struct frame *f);
 int
