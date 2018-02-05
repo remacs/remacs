@@ -168,6 +168,17 @@ pub fn frame_live_p(object: LispObject) -> LispObject {
     LispObject::constant_nil()
 }
 
+/// Return the selected window of FRAME-OR-WINDOW.
+/// If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
+/// Else if FRAME-OR-WINDOW denotes a valid window, return the selected
+/// window of that window's frame.  If FRAME-OR-WINDOW denotes a live frame,
+/// return the selected window of that frame.
+#[lisp_fn(min = "0")]
+pub fn frame_selected_window(frame_or_window: LispObject) -> LispObject {
+    let frame = window_frame_live_or_selected(frame_or_window);
+    LispObject::from_raw(frame.selected_window)
+}
+
 /// Set selected window of FRAME to WINDOW.
 /// FRAME must be a live frame and defaults to the selected one.  If FRAME
 /// is the selected frame, this makes WINDOW the selected window.  Optional

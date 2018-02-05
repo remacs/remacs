@@ -374,30 +374,6 @@ the first window of that frame.  */)
   return window;
 }
 
-DEFUN ("frame-selected-window", Fframe_selected_window,
-       Sframe_selected_window, 0, 1, 0,
-       doc: /* Return the selected window of FRAME-OR-WINDOW.
-If omitted, FRAME-OR-WINDOW defaults to the currently selected frame.
-Else if FRAME-OR-WINDOW denotes a valid window, return the selected
-window of that window's frame.  If FRAME-OR-WINDOW denotes a live frame,
-return the selected window of that frame.  */)
-  (Lisp_Object frame_or_window)
-{
-  Lisp_Object window;
-
-  if (NILP (frame_or_window))
-    window = SELECTED_FRAME ()->selected_window;
-  else if (WINDOW_VALID_P (frame_or_window))
-    window = XFRAME (WINDOW_FRAME (XWINDOW (frame_or_window)))->selected_window;
-  else
-    {
-      CHECK_LIVE_FRAME (frame_or_window);
-      window = XFRAME (frame_or_window)->selected_window;
-    }
-
-  return window;
-}
-
 EMACS_INT window_select_count;
 
 /* If select_window is called with inhibit_point_swap true it will
@@ -7396,7 +7372,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   Vfast_but_imprecise_scrolling = false;
 
   defsubr (&Sframe_first_window);
-  defsubr (&Sframe_selected_window);
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
   defsubr (&Swindow_top_child);
