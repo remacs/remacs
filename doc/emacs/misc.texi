@@ -791,7 +791,8 @@ the variable @code{explicit-shell-file-name}.  If this is @code{nil}
 exists.  Otherwise, it usually uses the variable
 @code{shell-file-name} (@pxref{Single Shell}); but if the default
 directory is remote (@pxref{Remote Files}), it prompts you for the
-shell file name.
+shell file name.  @xref{Minibuffer File}, for hints how to type remote
+file names effectively.
 
   Emacs sends the new shell the contents of the file
 @file{~/.emacs_@var{shellname}} as input, if it exists, where

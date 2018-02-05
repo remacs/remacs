@@ -3356,15 +3356,15 @@ to execute it asynchronously.
 The output appears in the buffer `*Async Shell Command*'.
 That buffer is in shell mode.
 
-You can configure `async-shell-command-buffer' to specify what to do in
-case when `*Async Shell Command*' buffer is already taken by another
+You can configure `async-shell-command-buffer' to specify what to do
+when the `*Async Shell Command*' buffer is already taken by another
 running shell command.  To run COMMAND without displaying the output
 in a window you can configure `display-buffer-alist' to use the action
 `display-buffer-no-window' for the buffer `*Async Shell Command*'.
 
 In Elisp, you will often be better served by calling `start-process'
-directly, since it offers more control and does not impose the use of a
-shell (with its need to quote arguments)."
+directly, since it offers more control and does not impose the use of
+a shell (with its need to quote arguments)."
   (interactive
    (list
     (read-shell-command "Async shell command: " nil nil
@@ -3433,8 +3433,8 @@ In an interactive call, the variable `shell-command-default-error-buffer'
 specifies the value of ERROR-BUFFER.
 
 In Elisp, you will often be better served by calling `call-process' or
-`start-process' directly, since it offers more control and does not impose
-the use of a shell (with its need to quote arguments)."
+`start-process' directly, since they offer more control and do not
+impose the use of a shell (with its need to quote arguments)."
 
   (interactive
    (list
@@ -3552,14 +3552,20 @@ the use of a shell (with its need to quote arguments)."
 		  ;; carriage motion (see comint-inhibit-carriage-motion).
 		  (set-process-filter proc 'comint-output-filter)
                   (if async-shell-command-display-buffer
+                      ;; Display buffer immediately.
                       (display-buffer buffer '(nil (allow-no-window . t)))
-                    (add-function :before (process-filter proc)
-                                  (lambda (process _string)
-                                    (let ((buf (process-buffer process)))
-                                      (when (and (zerop (buffer-size buf))
-                                                 (string= (buffer-name buf)
-                                                          bname))
-                                        (display-buffer buf))))))))
+                    ;; Defer displaying buffer until first process output.
+                    ;; Use disposable named advice so that the buffer is
+                    ;; displayed at most once per process lifetime.
+                    (let ((nonce (make-symbol "nonce")))
+                      (add-function :before (process-filter proc)
+                                    (lambda (proc _string)
+                                      (let ((buf (process-buffer proc)))
+                                        (when (buffer-live-p buf)
+                                          (remove-function (process-filter proc)
+                                                           nonce)
+                                          (display-buffer buf))))
+                                    `((name . ,nonce)))))))
 	    ;; Otherwise, command is executed synchronously.
 	    (shell-command-on-region (point) (point) command
 				     output-buffer nil error-buffer)))))))
