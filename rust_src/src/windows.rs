@@ -516,7 +516,7 @@ pub fn set_window_parameter(
             )
         }
     } else {
-        setcdr(old_alist_elt, value);
+        setcdr(old_alist_elt.as_cons_or_error(), value);
     }
     value
 }
