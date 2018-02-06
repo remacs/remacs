@@ -1387,7 +1387,7 @@ invoke `occur'."
 ;; Region limits when `occur' applies on a region.
 (defvar occur--region-start nil)
 (defvar occur--region-end nil)
-(defvar occur--matches-threshold nil)
+(defvar occur--region-start-line nil)
 (defvar occur--orig-line nil)
 (defvar occur--final-pos nil)
 
@@ -1441,13 +1441,15 @@ is not modified."
       (or end (setq end (point-max))))
     (let ((occur--region-start start)
           (occur--region-end end)
-          (occur--matches-threshold
+          (occur--region-start-line
            (and in-region-p
                 (line-number-at-pos (min start end))))
           (occur--orig-line
            (line-number-at-pos (point))))
       (save-excursion ; If no matches `occur-1' doesn't restore the point.
-        (and in-region-p (narrow-to-region start end))
+        (and in-region-p (narrow-to-region
+                          (save-excursion (goto-char start) (line-beginning-position))
+                          (save-excursion (goto-char end) (line-end-position))))
         (occur-1 regexp nlines (list (current-buffer)))
         (and in-region-p (widen))))))
 
@@ -1621,7 +1623,7 @@ See also `multi-occur'."
 	  (let ((lines 0)               ;; count of matching lines
 		(matches 0)             ;; count of matches
 		(curr-line              ;; line count
-                 (or occur--matches-threshold 1))
+		 (or occur--region-start-line 1))
 		(orig-line occur--orig-line)
 		(orig-line-shown-p)
 		(prev-line nil)         ;; line number of prev match endpt
@@ -1754,7 +1756,7 @@ See also `multi-occur'."
 				(setq orig-line-shown-p t)
 				(save-excursion
 				  (goto-char (point-min))
-				  (forward-line (1- orig-line))
+				  (forward-line (- orig-line (or occur--region-start-line 1)))
 				  (occur-engine-line (line-beginning-position)
 						     (line-end-position) keep-props)))))
 		        ;; Actually insert the match display data
@@ -1792,7 +1794,7 @@ See also `multi-occur'."
 		    (let ((orig-line-str
 			   (save-excursion
 			     (goto-char (point-min))
-			     (forward-line (1- orig-line))
+			     (forward-line (- orig-line (or occur--region-start-line 1)))
 			     (occur-engine-line (line-beginning-position)
 						(line-end-position) keep-props))))
 		      (add-face-text-property
