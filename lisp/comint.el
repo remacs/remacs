@@ -1448,10 +1448,17 @@ If nil, Isearch operates on the whole comint buffer."
 (defun comint-history-isearch-setup ()
   "Set up a comint for using Isearch to search the input history.
 Intended to be added to `isearch-mode-hook' in `comint-mode'."
-  (when (or (eq comint-history-isearch t)
-	    (and (eq comint-history-isearch 'dwim)
-		 ;; Point is at command line.
-		 (comint-after-pmark-p)))
+  (when (and (get-buffer-process (current-buffer))
+	     (or (eq comint-history-isearch t)
+		 (and (eq comint-history-isearch 'dwim)
+		      ;; Point is at command line.
+		      (comint-after-pmark-p)
+		      ;; Prompt is not empty like in Async Shell Command buffers
+		      (not (eq (save-excursion
+				 (goto-char (comint-line-beginning-position))
+				 (forward-line 0)
+				 (point))
+			       (comint-line-beginning-position))))))
     (setq isearch-message-prefix-add "history ")
     (setq-local isearch-search-fun-function
                 #'comint-history-isearch-search)
