@@ -589,8 +589,8 @@ variable by the command `isearch-toggle-lax-whitespace'.")
 (defvar isearch-cmds nil
   "Stack of search status elements.
 Each element is an `isearch--state' struct where the slots are
- [STRING MESSAGE POINT SUCCESS FORWARD OTHER-END WORD
-  ERROR WRAPPED BARRIER CASE-FOLD-SEARCH]")
+ [STRING MESSAGE POINT SUCCESS FORWARD OTHER-END WORD/REGEXP-FUNCTION
+  ERROR WRAPPED BARRIER CASE-FOLD-SEARCH POP-FUN]")
 
 (defvar isearch-string "")  ; The current search string.
 (defvar isearch-message "") ; text-char-description version of isearch-string

@@ -25940,9 +25940,9 @@
 2015-08-19  Artur Malabarba  <bruce.connor.am@gmail.com>
 
 	* lisp/isearch.el (isearch-search-fun-default): Revert a5bdb87
-	Remove usage of `isearch-lax-whitespace' inside the `iearch-word'
+	Remove usage of `isearch-lax-whitespace' inside the `isearch-word'
 	clause of `isearch-search-fun-default'.  That lax variable does not
-	refer to lax-whitespacing.  Related to (bug#21777).
+	refer to lax-whitespacing.  Related to (bug#21277).
 	This reverts commit a5bdb872edb9f031fe041faf9a8c0be432e5f64c.
 	* lisp/character-fold.el (character-fold-search): Set to nil.
 	Default to nil for now, until someone implements proper
@@ -29096,7 +29096,7 @@
 	* lisp/isearch.el: Move character-folding code to
 	character-fold.el
 	(isearch-toggle-character-fold): New command.
-	(isearch-mode-map): Bind it to "\M-sf".
+	(isearch-mode-map): Bind it to "\M-s'".
 	(isearch-mode): Check value of `character-fold-search'.
 
 2015-06-24  Stefan Monnier  <monnier@iro.umontreal.ca>

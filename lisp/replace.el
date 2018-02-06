@@ -39,7 +39,7 @@
 (defcustom replace-char-fold nil
   "Non-nil means replacement commands should do character folding in matches.
 This means, for instance, that \\=' will match a large variety of
-unicode quotes.
+Unicode quotes.
 This variable affects `query-replace' and `replace-string', but not
 `replace-regexp'."
   :type 'boolean
@@ -1638,11 +1638,11 @@ See also `multi-occur'."
 		(inhibit-field-text-motion t)
 		(headerpt (with-current-buffer out-buf (point))))
 	    (with-current-buffer buf
-              ;; The following binding is for when case-fold-search
-              ;; has a local binding in the original buffer, in which
-              ;; case we cannot bind it globally and let that have
-              ;; effect in every buffer we search.
-              (let ((case-fold-search case-fold))
+	      ;; The following binding is for when case-fold-search
+	      ;; has a local binding in the original buffer, in which
+	      ;; case we cannot bind it globally and let that have
+	      ;; effect in every buffer we search.
+	      (let ((case-fold-search case-fold))
 	        (or coding
 		    ;; Set CODING only if the current buffer locally
 		    ;; binds buffer-file-coding-system.
@@ -1708,9 +1708,9 @@ See also `multi-occur'."
 				                     ;; at the end of the prefix
 				                     ;; (for Occur Edit mode).
 				                     front-sticky t
-                                                     rear-nonsticky t
-				                     occur-target ,marker
-                                                     follow-link t
+						     rear-nonsticky t
+						     occur-target ,marker
+						     follow-link t
 				                     help-echo "mouse-2: go to this occurrence"))))
 			     (match-str
 			      ;; We don't put `mouse-face' on the newline,
@@ -1730,7 +1730,7 @@ See also `multi-occur'."
 			        "\n"
 			        (if prefix-face
 				    (propertize
-                                     "\n       :" 'font-lock-face prefix-face)
+				     "\n       :" 'font-lock-face prefix-face)
 				  "\n       :")
 			        match-str)
 			       ;; Add marker at eol, but no mouse props.
@@ -1777,7 +1777,7 @@ See also `multi-occur'."
 			  (setq curr-line (+ curr-line (count-lines begpt endpt)
 					     ;; Add 1 for empty last match line
 					     ;; since count-lines returns one
-                                             ;; line less.
+					     ;; line less.
 					     (if (and (bolp) (eolp)) 1 0)))
 			  ;; On to the next match...
 			  (forward-line 1))
@@ -1820,16 +1820,16 @@ See also `multi-occur'."
 				     (if (= lines matches)
 				         "" (format " in %d line%s"
 						    lines
-                                                    (if (= lines 1) "" "s")))
+						    (if (= lines 1) "" "s")))
 				     ;; Don't display regexp for multi-buffer.
 				     (if (> (length buffers) 1)
 				         "" (occur-regexp-descr regexp))
 				     (buffer-name buf)
-                                     (if in-region-p
-                                         (format " within region: %d-%d"
-                                                 occur--region-start
-                                                 occur--region-end)
-                                       ""))
+				     (if in-region-p
+					 (format " within region: %d-%d"
+						 occur--region-start
+						 occur--region-end)
+				       ""))
 			     'read-only t))
 		    (setq end (point))
 		    (add-text-properties beg end `(occur-title ,buf))
@@ -2220,9 +2220,9 @@ It is called with three arguments, as if it were
   ;; used after `recursive-edit' might override them.
   (let* ((isearch-regexp regexp-flag)
 	 (isearch-regexp-function (or delimited-flag
-                           (and replace-char-fold
-                                (not regexp-flag)
-                                #'char-fold-to-regexp)))
+				      (and replace-char-fold
+					   (not regexp-flag)
+					   #'char-fold-to-regexp)))
 	 (isearch-lax-whitespace
 	  replace-lax-whitespace)
 	 (isearch-regexp-lax-whitespace
