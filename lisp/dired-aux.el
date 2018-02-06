@@ -301,7 +301,7 @@ List has a form of (file-name full-file-name (attribute-list))."
   ;; PROGRAM is the program used to change the attribute.
   ;; OP-SYMBOL is the type of operation (for use in `dired-mark-pop-up').
   ;; ARG describes which files to use, as in `dired-get-marked-files'.
-  (let* ((files (dired-get-marked-files t arg))
+  (let* ((files (dired-get-marked-files t arg nil nil t))
 	 ;; The source of default file attributes is the file at point.
 	 (default-file (dired-get-filename t t))
 	 (default (when default-file
@@ -361,7 +361,7 @@ Symbolic modes like `g+w' are allowed.
 Type M-n to pull the file attributes of the file at point
 into the minibuffer."
   (interactive "P")
-  (let* ((files (dired-get-marked-files t arg))
+  (let* ((files (dired-get-marked-files t arg nil nil t))
 	 ;; The source of default file attributes is the file at point.
 	 (default-file (dired-get-filename t t))
 	 (modestr (when default-file
@@ -476,7 +476,7 @@ Uses the shell command coming from variables `lpr-command' and
 `lpr-switches' as default."
   (interactive "P")
   (require 'lpr)
-  (let* ((file-list (dired-get-marked-files t arg))
+  (let* ((file-list (dired-get-marked-files t arg nil nil t))
 	 (lpr-switches
 	  (if (and (stringp printer-name)
 		   (string< "" printer-name))
@@ -666,7 +666,7 @@ In shell syntax this means separating the individual commands with `;'.
 
 The output appears in the buffer `*Async Shell Command*'."
   (interactive
-   (let ((files (dired-get-marked-files t current-prefix-arg)))
+   (let ((files (dired-get-marked-files t current-prefix-arg nil nil t)))
      (list
       ;; Want to give feedback whether this file or marked files are used:
       (dired-read-shell-command "& on %s: " current-prefix-arg files)
@@ -727,7 +727,7 @@ can be produced by `dired-get-marked-files', for example."
 ;;Functions dired-run-shell-command and dired-shell-stuff-it do the
 ;;actual work and can be redefined for customization.
   (interactive
-   (let ((files (dired-get-marked-files t current-prefix-arg)))
+   (let ((files (dired-get-marked-files t current-prefix-arg nil nil t)))
      (list
       ;; Want to give feedback whether this file or marked files are used:
       (dired-read-shell-command "! on %s: " current-prefix-arg files)
@@ -1030,7 +1030,7 @@ Prompt for the archive file name.
 Choose the archiving command based on the archive file-name extension
 and `dired-compress-files-alist'."
   (interactive)
-  (let* ((in-files (dired-get-marked-files))
+  (let* ((in-files (dired-get-marked-files nil nil nil nil t))
          (out-file (expand-file-name (read-file-name "Compress to: ")))
          (rule (cl-find-if
                 (lambda (x)
@@ -1153,7 +1153,7 @@ Return nil if no change in files."
       ;; Pass t for DISTINGUISH-ONE-MARKED so that a single file which
       ;; is marked pops up a window.  That will help the user see
       ;; it isn't the current line file.
-      (let ((files (dired-get-marked-files t arg nil t))
+      (let ((files (dired-get-marked-files t arg nil t t))
 	    (string (if (eq op-symbol 'compress) "Compress or uncompress"
 		      (capitalize (symbol-name op-symbol)))))
 	(dired-mark-pop-up nil op-symbol files #'y-or-n-p
@@ -1845,7 +1845,7 @@ Optional arg HOW-TO determines how to treat the target.
       The rest of into-dir are optional arguments.
    For any other return value, TARGET is treated as a directory."
   (or op1 (setq op1 operation))
-  (let* ((fn-list (dired-get-marked-files nil arg))
+  (let* ((fn-list (dired-get-marked-files nil arg nil nil t))
 	 (rfn-list (mapcar #'dired-make-relative fn-list))
 	 (dired-one-file	; fluid variable inside dired-create-files
 	  (and (consp fn-list) (null (cdr fn-list)) (car fn-list)))
@@ -2799,14 +2799,14 @@ is part of a file name (i.e., has the text property `dired-filename')."
   "Search for a string through all marked files using Isearch."
   (interactive)
   (multi-isearch-files
-   (dired-get-marked-files nil nil 'dired-nondirectory-p)))
+   (dired-get-marked-files nil nil 'dired-nondirectory-p nil t)))
 
 ;;;###autoload
 (defun dired-do-isearch-regexp ()
   "Search for a regexp through all marked files using Isearch."
   (interactive)
   (multi-isearch-files-regexp
-   (dired-get-marked-files nil nil 'dired-nondirectory-p)))
+   (dired-get-marked-files nil nil 'dired-nondirectory-p nil t)))
 
 ;;;###autoload
 (defun dired-do-search (regexp)
@@ -2827,7 +2827,7 @@ with the command \\[tags-loop-continue]."
 	  (query-replace-read-args
 	   "Query replace regexp in marked files" t t)))
      (list (nth 0 common) (nth 1 common) (nth 2 common))))
-  (dolist (file (dired-get-marked-files nil nil 'dired-nondirectory-p))
+  (dolist (file (dired-get-marked-files nil nil 'dired-nondirectory-p nil t))
     (let ((buffer (get-file-buffer file)))
       (if (and buffer (with-current-buffer buffer
 			buffer-read-only))
@@ -2851,7 +2851,7 @@ REGEXP should use constructs supported by your local `grep' command."
   (require 'grep)
   (defvar grep-find-ignored-files)
   (defvar grep-find-ignored-directories)
-  (let* ((files (dired-get-marked-files))
+  (let* ((files (dired-get-marked-files nil nil nil nil t))
          (ignores (nconc (mapcar
                           (lambda (s) (concat s "/"))
                           grep-find-ignored-directories)
