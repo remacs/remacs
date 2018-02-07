@@ -16,7 +16,7 @@ use lisp::{defsubr, is_autoload};
 use lists::{assq, car, cdr, get, memq, put};
 use multibyte::LispStringRef;
 use obarray::loadhist_attach;
-use symbols::{symbol_function, LispSymbolRef};
+use symbols::{fboundp, symbol_function, LispSymbolRef};
 use threads::c_specpdl_index;
 use vectors::length;
 
@@ -706,5 +706,51 @@ pub fn autoload(
 }
 
 def_lisp_sym!(Qautoload, "autoload");
+
+/// Non-nil if OBJECT is a function.
+#[lisp_fn(name = "functionp", c_name = "functionp")]
+pub fn functionp_lisp(object: LispObject) -> bool {
+    FUNCTIONP(object.to_raw())
+}
+
+#[no_mangle]
+pub extern "C" fn FUNCTIONP(object: Lisp_Object) -> bool {
+    let mut obj = LispObject::from_raw(object);
+
+    if let Some(sym) = obj.as_symbol() {
+        if fboundp(sym) {
+            obj = sym.get_indirect_function();
+
+            if let Some(cons) = obj.as_cons() {
+                if cons.car().eq_raw(Qautoload) {
+                    // Autoloaded symbols are functions, except if they load
+                    // macros or keymaps.
+                    let mut it = obj.iter_tails_safe();
+                    for _ in 0..4 {
+                        if let None = it.next() {
+                            break;
+                        }
+                    }
+
+                    return match it.rest().as_cons() {
+                        None => true,
+                        Some(c) => c.car().is_nil(),
+                    };
+                }
+            }
+        }
+    }
+
+    if let Some(subr) = obj.as_subr() {
+        !subr.is_unevalled()
+    } else if obj.is_byte_code_function() || obj.is_module_function() {
+        true
+    } else if let Some(cons) = obj.as_cons() {
+        let car = cons.car();
+        car.eq_raw(Qlambda) || car.eq_raw(Qclosure)
+    } else {
+        false
+    }
+}
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

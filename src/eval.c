@@ -2069,46 +2069,6 @@ call8 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3,
   return CALLN (Ffuncall, fn, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
 }
 
-DEFUN ("functionp", Ffunctionp, Sfunctionp, 1, 1, 0,
-       doc: /* Non-nil if OBJECT is a function.  */)
-     (Lisp_Object object)
-{
-  if (FUNCTIONP (object))
-    return Qt;
-  return Qnil;
-}
-
-bool
-FUNCTIONP (Lisp_Object object)
-{
-  if (SYMBOLP (object) && !NILP (Ffboundp (object)))
-    {
-      object = Findirect_function (object, Qt);
-
-      if (CONSP (object) && EQ (XCAR (object), Qautoload))
-	{
-	  /* Autoloaded symbols are functions, except if they load
-	     macros or keymaps.  */
-	  for (int i = 0; i < 4 && CONSP (object); i++)
-	    object = XCDR (object);
-
-	  return ! (CONSP (object) && !NILP (XCAR (object)));
-	}
-    }
-
-  if (SUBRP (object))
-    return XSUBR (object)->max_args != UNEVALLED;
-  else if (COMPILEDP (object) || MODULE_FUNCTIONP (object))
-    return true;
-  else if (CONSP (object))
-    {
-      Lisp_Object car = XCAR (object);
-      return EQ (car, Qlambda) || EQ (car, Qclosure);
-    }
-  else
-    return false;
-}
-
 DEFUN ("funcall", Ffuncall, Sfuncall, 1, MANY, 0,
        doc: /* Call first argument as a function, passing remaining arguments to it.
 Return the value that function returns.
@@ -3468,5 +3428,4 @@ alist of active lexical bindings.  */);
   defsubr (&Sbacktrace_frame_internal);
   defsubr (&Sbacktrace_eval);
   defsubr (&Sbacktrace__locals);
-  defsubr (&Sfunctionp);
 }

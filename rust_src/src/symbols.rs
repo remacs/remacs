@@ -7,6 +7,7 @@ use remacs_sys::{find_symbol_value, get_symbol_declared_special, make_lisp_symbo
 use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
 use remacs_sys::Lisp_Symbol;
 
+use data::indirect_function;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 
@@ -84,6 +85,15 @@ impl LispSymbolRef {
         }
 
         hare
+    }
+
+    pub fn get_indirect_function(self) -> LispObject {
+        let obj = self.get_function();
+
+        match obj.as_symbol() {
+            None => obj,
+            Some(_) => indirect_function(obj),
+        }
     }
 
     pub fn iter(self) -> LispSymbolIter {
