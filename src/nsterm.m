@@ -352,31 +352,56 @@ static CGPoint menu_mouse_point;
 #define NSRightCommandKeyMask   (0x000010 | NSEventModifierFlagCommand)
 #define NSLeftAlternateKeyMask  (0x000020 | NSEventModifierFlagOption)
 #define NSRightAlternateKeyMask (0x000040 | NSEventModifierFlagOption)
-#define EV_MODIFIERS2(flags)                          \
-    (((flags & NSEventModifierFlagHelp) ?           \
-           hyper_modifier : 0)                        \
-     | (!EQ (ns_right_alternate_modifier, Qleft) && \
-        ((flags & NSRightAlternateKeyMask) \
-         == NSRightAlternateKeyMask) ? \
-           parse_solitary_modifier (ns_right_alternate_modifier) : 0) \
-     | ((flags & NSEventModifierFlagOption) ?                 \
-           parse_solitary_modifier (ns_alternate_modifier) : 0)   \
-     | ((flags & NSEventModifierFlagShift) ?     \
-           shift_modifier : 0)                        \
-     | (!EQ (ns_right_control_modifier, Qleft) && \
-        ((flags & NSRightControlKeyMask) \
-         == NSRightControlKeyMask) ? \
-           parse_solitary_modifier (ns_right_control_modifier) : 0) \
-     | ((flags & NSEventModifierFlagControl) ?      \
-           parse_solitary_modifier (ns_control_modifier) : 0)     \
-     | ((flags & NS_FUNCTION_KEY_MASK) ?  \
-           parse_solitary_modifier (ns_function_modifier) : 0)    \
-     | (!EQ (ns_right_command_modifier, Qleft) && \
-        ((flags & NSRightCommandKeyMask) \
-         == NSRightCommandKeyMask) ? \
-           parse_solitary_modifier (ns_right_command_modifier) : 0) \
-     | ((flags & NSEventModifierFlagCommand) ?      \
-           parse_solitary_modifier (ns_command_modifier):0))
+
+static unsigned int
+ev_modifiers_helper (unsigned int flags, unsigned int left_mask,
+                     unsigned int right_mask, unsigned int either_mask,
+                     Lisp_Object left_modifier, Lisp_Object right_modifier)
+{
+  unsigned int modifiers = 0;
+
+  if (flags & either_mask)
+    {
+      BOOL left_key = (flags & left_mask) == left_mask;
+      BOOL right_key = (flags & right_mask) == right_mask
+        && ! EQ (right_modifier, Qleft);
+
+      if (right_key)
+        modifiers |= parse_solitary_modifier (right_modifier);
+
+      /* GNUstep (and possibly macOS in certain circumstances) doesn't
+         differentiate between the left and right keys, so if we can't
+         identify which key it is, we use the left key setting.  */
+      if (left_key || ! right_key)
+        modifiers |= parse_solitary_modifier (left_modifier);
+    }
+
+  return modifiers;
+}
+
+#define EV_MODIFIERS2(flags)                                            \
+  (((flags & NSEventModifierFlagHelp) ?                                 \
+    hyper_modifier : 0)                                                 \
+   | ((flags & NSEventModifierFlagShift) ?                              \
+      shift_modifier : 0)                                               \
+   | ((flags & NS_FUNCTION_KEY_MASK) ?                                  \
+      parse_solitary_modifier (ns_function_modifier) : 0)               \
+   | ev_modifiers_helper (flags, NSLeftControlKeyMask,                  \
+                          NSRightControlKeyMask,                        \
+                          NSEventModifierFlagControl,                   \
+                          ns_control_modifier,                          \
+                          ns_right_control_modifier)                    \
+   | ev_modifiers_helper (flags, NSLeftCommandKeyMask,                  \
+                          NSRightCommandKeyMask,                        \
+                          NSEventModifierFlagCommand,                   \
+                          ns_command_modifier,                          \
+                          ns_right_command_modifier)                    \
+   | ev_modifiers_helper (flags, NSLeftAlternateKeyMask,                \
+                          NSRightAlternateKeyMask,                      \
+                          NSEventModifierFlagOption,                    \
+                          ns_alternate_modifier,                        \
+                          ns_right_alternate_modifier))
+
 #define EV_MODIFIERS(e) EV_MODIFIERS2 ([e modifierFlags])
 
 #define EV_UDMODIFIERS(e)                                      \
@@ -6158,15 +6183,6 @@ not_in_argv (NSString *arg)
             code = fnKeysym;
         }
 
-      /* are there modifiers? */
-      emacs_event->modifiers = 0;
-
-      if (flags & NSEventModifierFlagHelp)
-          emacs_event->modifiers |= hyper_modifier;
-
-      if (flags & NSEventModifierFlagShift)
-        emacs_event->modifiers |= shift_modifier;
-
       /* The ⌘ and ⌥ modifiers can be either shift-like (for alternate
          character input) or control-like (as command prefix).  If we
          have only shift-like modifiers, then we should use the
@@ -6183,8 +6199,16 @@ not_in_argv (NSString *arg)
          modifier keys, which returns 0 for shift-like modifiers.
          Therefore its return value is the set of control-like
          modifiers.  */
-      unsigned int control_modifiers = EV_MODIFIERS2 (flags);
-      emacs_event->modifiers |= control_modifiers;
+      emacs_event->modifiers = EV_MODIFIERS2 (flags);
+
+      /* Function keys (such as the F-keys, arrow keys, etc.) set
+         modifiers as though the fn key has been pressed when it
+         hasn't.  Also some combinations of fn and a function key
+         return a different key than was pressed (e.g. fn-<left> gives
+         <home>).  We need to unset the fn modifier in these cases.
+         FIXME: Can we avoid setting it in the first place.  */
+      if (fnKeysym && (flags & NS_FUNCTION_KEY_MASK))
+        emacs_event->modifiers ^= parse_solitary_modifier (ns_function_modifier);
 
       if (NS_KEYLOG)
         fprintf (stderr, "keyDown: code =%x\tfnKey =%x\tflags = %x\tmods = %x\n",
