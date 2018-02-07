@@ -542,13 +542,13 @@ been changed in the repository, offer to update it.
   These rules also apply when you use RCS in its non-locking mode,
 except that changes are not automatically merged from the repository.
 Nothing informs you if another user has committed changes in the same
-file since you began editing it; when you commit your revision, his
-changes are removed (however, they remain in the repository and are
-thus not irrevocably lost).  Therefore, you must verify that the
-current revision is unchanged before committing your changes.  In
-addition, locking is possible with RCS even in this mode: @kbd{C-x v
-v} with an unmodified file locks the file, just as it does with RCS in
-its normal locking mode (@pxref{VC With A Locking VCS}).
+file since you began editing it; when you commit your revision, that
+other user's changes are removed (however, they remain in the
+repository and are thus not irrevocably lost).  Therefore, you must
+verify that the current revision is unchanged before committing your
+changes.  In addition, locking is possible with RCS even in this mode:
+@kbd{C-x v v} with an unmodified file locks the file, just as it does
+with RCS in its normal locking mode (@pxref{VC With A Locking VCS}).
 
 @node VC With A Locking VCS
 @subsubsection Basic Version Control with Locking

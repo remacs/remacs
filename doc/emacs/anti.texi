@@ -47,7 +47,7 @@ development will make that unnecessary.
 
 @item
 The @option{--fg-daemon} is gone, leaving only @option{--daemon}.  No
-need to procrastinate on the dilemma whether you do or don't want the
+need to procrastinate on the dilemma whether you do or do not want the
 new shiny ``headless Emacs'' thingy.  Hail, simplicity!
 
 @item
@@ -71,10 +71,10 @@ The double-buffering feature of Emacs display on X has been removed.
 We decided that its complexity and a few random surprising
 side-effects aren't justified by the gains, even though those gains
 were hailed in some quarters.  Yes, Emacs 25.2 will flicker in some
-use cases, but we are sure Emacs users will be able to suck it, a they
-have been doing for years.  Since this feature is gone, we've also
-removed the @code{inhibit-double-buffering} frame parameter, which is
-now unnecessary.
+use cases, but we are sure Emacs users will be able to suck it, as
+they have been doing for years.  Since this feature is gone, we've
+also removed the @code{inhibit-double-buffering} frame parameter,
+which is now unnecessary.
 
 @item
 Non-breaking hyphens and ASCII characters displayed instead of

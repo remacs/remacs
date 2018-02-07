@@ -41,10 +41,11 @@ corresponding long form.
 type.  However, you don't have to spell out the whole option name; any
 unambiguous abbreviation is enough.  When a long option takes an
 argument, you can use either a space or an equal sign to separate the
-option name and the argument.  Thus, you can write either
-@samp{--display sugar-bombs:0.0} or @samp{--display=sugar-bombs:0.0}.
-We recommend an equal sign because it makes the relationship clearer,
-and the tables below always show an equal sign.
+option name and the argument.  Thus, for the option @samp{--display},
+you can write either @samp{--display sugar-bombs:0.0} or
+@samp{--display=sugar-bombs:0.0}.  We recommend an equal sign because
+it makes the relationship clearer, and the tables below always show an
+equal sign.
 
 @cindex initial options (command line)
 @cindex action options (command line)
@@ -104,7 +105,7 @@ If the startup buffer is disabled (@pxref{Entering Emacs}), then
 starting Emacs with one file argument displays the buffer visiting
 @var{file} in a single window.  With two file arguments, Emacs
 displays the files in two different windows.  With more than two file
-argument, Emacs displays the last file specified in one window, plus
+arguments, Emacs displays the last file specified in one window, plus
 another window with a Buffer Menu showing all the other files
 (@pxref{Several Buffers}).  To inhibit using the Buffer Menu for this,
 change the variable @code{inhibit-startup-buffer-menu} to @code{t}.
@@ -326,7 +327,7 @@ in your initialization file (@pxref{Entering Emacs}).
 @opindex -Q
 @itemx --quick
 @opindex --quick
-Start emacs with minimum customizations.  This is similar to using @samp{-q},
+Start Emacs with minimum customizations.  This is similar to using @samp{-q},
 @samp{--no-site-file}, @samp{--no-site-lisp}, and @samp{--no-splash}
 together.  This also stops Emacs from processing X resources by
 setting @code{inhibit-x-resources} to @code{t} (@pxref{Resources}).
@@ -337,7 +338,7 @@ setting @code{inhibit-x-resources} to @code{t} (@pxref{Resources}).
 @opindex --daemon
 @itemx --bg-daemon[=@var{name}]
 @itemx --fg-daemon[=@var{name}]
-Start Emacs as a daemon---after Emacs starts up, it starts the Emacs
+Start Emacs as a daemon: after Emacs starts up, it starts the Emacs
 server without opening any frames.
 (Optionally, you can specify an explicit @var{name} for the server.)
 You can then use the @command{emacsclient} command to connect to Emacs
@@ -753,9 +754,10 @@ name under @file{/Software/GNU/Emacs}; first in the
 there, in the @file{HKEY_LOCAL_MACHINE} section.  Finally, if Emacs
 still cannot determine the values, compiled-in defaults are used.
 
-In addition to the environment variables above, you can also add many
-of the settings which on X belong in the @file{.Xdefaults} file
-(@pxref{X Resources}) to the @file{/Software/GNU/Emacs} registry key.
+In addition to the environment variables above, you can also add
+settings to the @file{/Software/GNU/Emacs} registry key to specify X
+resources (@pxref{X Resources}).  Most of the settings you can specify
+in your @file{.Xdefaults} file can be set from that registry key.
 
 @node Display X
 @appendixsec Specifying the Display Name
@@ -886,7 +888,7 @@ Specify the color for the mouse cursor when the mouse is in the Emacs window.
 @itemx --reverse-video
 @opindex --reverse-video
 @cindex reverse video, command-line argument
-Reverse video---swap the foreground and background colors.
+Reverse video: swap the foreground and background colors.
 @item --color=@var{mode}
 @opindex --color
 @cindex standard colors on a character terminal
@@ -1023,11 +1025,12 @@ width.  If you start with an @samp{x} followed by an integer, Emacs
 interprets it as the height.  Thus, @samp{81} specifies just the
 width; @samp{x45} specifies just the height.
 
-  If you start with @samp{+} or @samp{-}, that introduces an offset,
-which means both sizes are omitted.  Thus, @samp{-3} specifies the
-@var{xoffset} only.  (If you give just one offset, it is always
-@var{xoffset}.)  @samp{+3-3} specifies both the @var{xoffset} and the
-@var{yoffset}, placing the frame near the bottom left of the screen.
+  If you start the geometry with @samp{+} or @samp{-}, that introduces
+an offset, which means both sizes are omitted.  Thus, @samp{-3}
+specifies the @var{xoffset} only.  (If you give just one offset, it is
+always @var{xoffset}.)  @samp{+3-3} specifies both the @var{xoffset}
+and the @var{yoffset}, placing the frame near the bottom left of the
+screen.
 
   You can specify a default for any or all of the fields in your X
 resource file (@pxref{Resources}), and then override selected fields

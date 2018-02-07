@@ -607,15 +607,16 @@ to recompile and restart the program.
 @vindex gud-tooltip-echo-area
   GUD Tooltip mode is a global minor mode that adds tooltip support to
 GUD@.  To toggle this mode, type @kbd{M-x gud-tooltip-mode}.  It is
-disabled by default.  If enabled, you can move the mouse cursor over a
+disabled by default.  If enabled, you can move the mouse pointer over a
 variable, a function, or a macro (collectively called
 @dfn{identifiers}) to show their values in tooltips
-(@pxref{Tooltips}).  Alternatively, mark an identifier or an
-expression by dragging the mouse over it, then leave the mouse in the
-marked area to have the value of the expression displayed in a
-tooltip.  The GUD Tooltip mode takes effect in the GUD interaction
-buffer, and in all source buffers with major modes listed in the
-variable @code{gud-tooltip-modes}.  If the variable
+(@pxref{Tooltips}).  If just placing the mouse pointer over an
+expression doesn't show the value of the expression you had in mind,
+you can tell Emacs more explicitly what expression to evaluate by
+dragging the mouse over the expression, then leaving the mouse inside
+the marked area.  The GUD Tooltip mode takes effect in the GUD
+interaction buffer, and in all source buffers with major modes listed
+in the variable @code{gud-tooltip-modes}.  If the variable
 @code{gud-tooltip-echo-area} is non-@code{nil}, or if you turned off
 the tooltip mode, values are shown in the echo area instead of a
 tooltip.

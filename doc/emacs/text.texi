@@ -1498,29 +1498,27 @@ This is an example.
 @findex doctex-mode
 @findex bibtex-mode
 
-  Emacs provides special major modes for editing files written in
-@TeX{} and its related formats.  @TeX{} is a powerful text formatter
-written by Donald Knuth; like GNU Emacs, it is free software.
-@LaTeX{} is a simplified input format for @TeX{}, implemented using
-@TeX{} macros.  Doc@TeX{} is a special file format in which the
-@LaTeX{} sources are written, combining sources with documentation.
-Sli@TeX{} is an obsolete special form of @LaTeX{}.@footnote{It has
-been replaced by the @samp{slides} document class, which comes with
-@LaTeX{}.}
+  @TeX{} is a powerful text formatter written by Donald Knuth; like
+GNU Emacs, it is free software.  The @TeX{} format has several
+variants, including @LaTeX{}, a simplified input format for @TeX{};
+Doc@TeX{}, a special file format in which the @LaTeX{} sources are
+written, combining sources with documentation; and Sli@TeX{}, an
+obsolete special form of @LaTeX{}@footnote{
+It has been replaced by the @samp{slides} document class, which comes
+with @LaTeX{}.}.
 
 @vindex tex-default-mode
-  @TeX{} mode has four variants: Plain @TeX{} mode, @LaTeX{} mode,
-Doc@TeX{} mode, and Sli@TeX{} mode.  These distinct major modes differ
-only slightly, and are designed for editing the four different
-formats.  Emacs selects the appropriate mode by looking at the
-contents of the buffer.  (This is done by the @code{tex-mode} command,
-which is normally called automatically when you visit a @TeX{}-like
-file.  @xref{Choosing Modes}.)  If the contents are insufficient to
-determine this, Emacs chooses the mode specified by the variable
-@code{tex-default-mode}; its default value is @code{latex-mode}.  If
-Emacs does not guess right, you can select the correct variant of
-@TeX{} mode using the command @kbd{M-x plain-tex-mode}, @kbd{M-x
-latex-mode}, @kbd{M-x slitex-mode}, or @kbd{doctex-mode}.
+  Emacs provides a @TeX{} major mode for each of these variants: Plain
+@TeX{} mode, @LaTeX{} mode, Doc@TeX{} mode, and Sli@TeX{} mode.  Emacs
+selects the appropriate mode by looking at the contents of the buffer.
+(This is done by the @code{tex-mode} command, which is normally called
+automatically when you visit a @TeX{}-like file.  @xref{Choosing
+Modes}.)  If the contents are insufficient to determine this, Emacs
+chooses the mode specified by the variable @code{tex-default-mode};
+its default value is @code{latex-mode}.  If Emacs does not guess
+right, you can select the correct variant of @TeX{} mode using the
+command @kbd{M-x plain-tex-mode}, @kbd{M-x latex-mode}, @kbd{M-x
+slitex-mode}, or @kbd{doctex-mode}.
 
   The following sections document the features of @TeX{} mode and its
 variants.  There are several other @TeX{}-related Emacs packages,
@@ -1618,7 +1616,9 @@ to keep braces balanced at all times, rather than inserting them
 singly.  Use @kbd{C-c @{} (@code{tex-insert-braces}) to insert a pair of
 braces.  It leaves point between the two braces so you can insert the
 text that belongs inside.  Afterward, use the command @kbd{C-c @}}
-(@code{up-list}) to move forward past the close brace.
+(@code{up-list}) to move forward past the close brace.  You can also
+invoke @kbd{C-c @{} after marking some text: then the command encloses
+the marked text in braces.
 
 @findex tex-validate-region
 @findex tex-terminate-paragraph

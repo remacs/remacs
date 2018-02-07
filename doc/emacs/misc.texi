@@ -413,8 +413,8 @@ is needed.  For OpenDocument and Microsoft Office documents, the
   When you visit a document file that can be displayed with DocView
 mode, Emacs automatically uses DocView mode @footnote{The needed
 external tools for the document type must be available, and Emacs must
-be running in a graphical frame and have PNG image support.  If any of
-these requirements is not fulfilled, Emacs falls back to another major
+be running in a graphical frame and have PNG image support.  If these
+requirements is not fulfilled, Emacs falls back to another major
 mode.}.  As an exception, when you visit a PostScript file, Emacs
 switches to PS mode, a major mode for editing PostScript files as
 text; however, it also enables DocView minor mode, so you can type

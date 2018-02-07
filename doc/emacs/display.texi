@@ -991,16 +991,15 @@ expressions to highlight in different ways.
 @kindex M-s h u
 @kindex C-x w r
 @findex unhighlight-regexp
-Unhighlight @var{regexp} (@code{unhighlight-regexp}).
-
-If you invoke this from the menu, you select the expression to
-unhighlight from a list.  If you invoke this from the keyboard, you
-use the minibuffer.  It will show the most recently added regular
-expression; use @kbd{M-n} to show the next older expression and
-@kbd{M-p} to select the next newer expression.  (You can also type the
-expression by hand, with completion.)  When the expression you want to
-unhighlight appears in the minibuffer, press @kbd{@key{RET}} to exit
-the minibuffer and unhighlight it.
+Unhighlight @var{regexp} (@code{unhighlight-regexp}).  If you invoke
+this from the menu, you select the expression to unhighlight from a
+list.  If you invoke this from the keyboard, you use the minibuffer.
+It will show the most recently added regular expression; use @kbd{M-n}
+to show the next older expression and @kbd{M-p} to select the next
+newer expression.  (You can also type the expression by hand, with
+completion.)  When the expression you want to unhighlight appears in
+the minibuffer, press @kbd{@key{RET}} to exit the minibuffer and
+unhighlight it.
 
 @item M-s h l @var{regexp} @key{RET} @var{face} @key{RET}
 @itemx C-x w l @var{regexp} @key{RET} @var{face} @key{RET}
@@ -1393,13 +1392,13 @@ the option @code{display-time-mode}.  The information added to the mode
 line looks like this:
 
 @example
-@var{hh}:@var{mm}pm @var{l.ll}
+@var{hh}:@var{mm}PM @var{l.ll}
 @end example
 
 @noindent
 @vindex display-time-24hr-format
 Here @var{hh} and @var{mm} are the hour and minute, followed always by
-@samp{am} or @samp{pm}.  @var{l.ll} is the average number, collected
+@samp{AM} or @samp{PM}.  @var{l.ll} is the average number, collected
 for the last few minutes, of processes in the whole system that were
 either running or ready to run (i.e., were waiting for an available
 processor).  (Some fields may be missing if your operating system
