@@ -1250,6 +1250,7 @@ extern "C" {
     pub static Vbuffer_alist: Lisp_Object;
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
+    pub static Vrun_hooks: Lisp_Object;
 
     pub fn staticpro(varaddress: *const Lisp_Object);
 
@@ -1549,6 +1550,8 @@ extern "C" {
     pub fn unchain_marker(marker: *mut Lisp_Marker);
     pub fn del_range(from: ptrdiff_t, to: ptrdiff_t);
     pub fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: ptrdiff_t) -> ptrdiff_t;
+    pub fn Fdefault_value(symbol: Lisp_Object) -> Lisp_Object;
+
 }
 
 /// Contains C definitions from the font.h header.

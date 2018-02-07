@@ -2,15 +2,16 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Object, PseudovecType};
-use remacs_sys::{Fapply, Fcons, Ffset, Ffuncall, Fload, Fpurecopy, Fset, Fset_default};
+use remacs_sys::{Fapply, Fcons, Fdefault_value, Ffset, Ffuncall, Fload, Fpurecopy, Fset,
+                 Fset_default};
 use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinteractive,
                  Qinteractive_form, Qinternal_interpreter_environment, Qlambda, Qmacro, Qnil,
-                 Qrisky_local_variable, Qsetq, Qt, Qvariable_documentation,
+                 Qrisky_local_variable, Qsetq, Qt, Qunbound, Qvariable_documentation,
                  Qwrong_number_of_arguments};
-use remacs_sys::{build_string, eval_sub, globals, maybe_quit, record_unwind_protect,
-                 record_unwind_save_match_data, specbind, unbind_to};
+use remacs_sys::{Vautoload_queue, Vrun_hooks};
+use remacs_sys::{build_string, eval_sub, find_symbol_value, globals, maybe_quit,
+                 record_unwind_protect, record_unwind_save_match_data, specbind, unbind_to};
 use remacs_sys::COMPILED_INTERACTIVE;
-use remacs_sys::Vautoload_queue;
 
 use data::{defalias, indirect_function, indirect_function_lisp};
 use lisp::{LispCons, LispObject};
@@ -857,6 +858,117 @@ pub fn autoload_do_load(
         } else {
             fun
         }
+    }
+}
+
+/// Run each hook in HOOKS.
+/// Each argument should be a symbol, a hook variable.
+/// These symbols are processed in the order specified.
+/// If a hook symbol has a non-nil value, that value may be a function
+/// or a list of functions to be called to run the hook.
+/// If the value is a function, it is called with no arguments.
+/// If it is a list, the elements are called, in order, with no arguments.
+///
+/// Major modes should not use this function directly to run their mode
+/// hook; they should use `run-mode-hooks' instead.
+///
+/// Do not use `make-local-variable' to make a hook variable buffer-local.
+/// Instead, use `add-hook' and specify t for the LOCAL argument.
+/// usage: (run-hooks &rest HOOKS)
+#[lisp_fn]
+pub fn run_hooks(args: &mut [LispObject]) -> () {
+    for item in args {
+        run_hook(item.to_raw());
+    }
+}
+
+/// Run HOOK with the specified arguments ARGS.
+/// HOOK should be a symbol, a hook variable.  The value of HOOK
+/// may be nil, a function, or a list of functions.  Call each
+/// function in order with arguments ARGS.  The final return value
+/// is unspecified.
+///
+/// Do not use `make-local-variable' to make a hook variable buffer-local.
+/// Instead, use `add-hook' and specify t for the LOCAL argument.
+/// usage: (run-hook-with-args HOOK &rest ARGS)
+#[lisp_fn]
+pub fn run_hook_with_args(args: &mut [LispObject]) -> LispObject {
+    run_hook_with_args_internal(args, funcall_nil)
+}
+
+fn funcall_nil(args: &mut [LispObject]) -> LispObject {
+    let mut obj_array: Vec<Lisp_Object> = args.iter().map(|o| o.to_raw()).collect();
+    unsafe { Ffuncall(obj_array.len() as isize, obj_array.as_mut_ptr()) };
+    LispObject::constant_nil()
+}
+
+/// Run the hook HOOK, giving each function no args.
+#[no_mangle]
+pub extern "C" fn run_hook(hook: Lisp_Object) -> () {
+    run_hook_with_args(&mut [LispObject::from_raw(hook)]);
+}
+
+/// ARGS[0] should be a hook symbol.
+/// Call each of the functions in the hook value, passing each of them
+/// as arguments all the rest of ARGS (all NARGS - 1 elements).
+/// FUNCALL specifies how to call each function on the hook.
+fn run_hook_with_args_internal(
+    args: &mut [LispObject],
+    func: fn(&mut [LispObject]) -> LispObject,
+) -> LispObject {
+    // If we are dying or still initializing,
+    // don't do anything -- it would probably crash if we tried.
+    if unsafe { Vrun_hooks == Qnil } {
+        return LispObject::constant_nil();
+    }
+
+    let mut ret = LispObject::constant_nil();
+    let sym = args[0];
+    let val = LispObject::from_raw(unsafe { find_symbol_value(sym.to_raw()) });
+
+    if val.eq_raw(Qunbound) || val.is_nil() {
+        LispObject::constant_nil()
+    } else if !val.is_cons() || val.is_module_function() {
+        args[0] = val;
+        func(args)
+    } else {
+        for item in val.iter_cars_safe() {
+            if ret.is_not_nil() {
+                break;
+            }
+
+            if item.eq_raw(Qt) {
+                // t indicates this hook has a local binding;
+                // it means to run the global binding too.
+                let global_vals = LispObject::from_raw(unsafe { Fdefault_value(sym.to_raw()) });
+                if global_vals.is_nil() {
+                    continue;
+                }
+
+                if !global_vals.is_cons() || car(global_vals).eq_raw(Qlambda) {
+                    args[0] = global_vals;
+                    ret = func(args);
+                } else {
+                    for gval in global_vals.iter_cars_safe() {
+                        if ret.is_not_nil() {
+                            break;
+                        }
+
+                        args[0] = gval;
+                        // In a global value, t should not occur. If it does, we
+                        // must ignore it to avoid an endless loop.
+                        if !args[0].eq_raw(Qt) {
+                            ret = func(args);
+                        }
+                    }
+                }
+            } else {
+                args[0] = item;
+                ret = func(args);
+            }
+        }
+
+        ret
     }
 }
 
