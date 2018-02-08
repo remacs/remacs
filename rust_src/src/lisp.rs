@@ -350,6 +350,12 @@ impl<T> PartialEq for ExternalPtr<T> {
 pub type LispSubrRef = ExternalPtr<Lisp_Subr>;
 unsafe impl Sync for LispSubrRef {}
 
+impl LispSubrRef {
+    pub fn is_unevalled(self) -> bool {
+        !self.0.is_null() && unsafe { (*self.0).max_args == -1 }
+    }
+}
+
 pub type LispMiscRef = ExternalPtr<Lisp_Misc_Any>;
 
 impl LispMiscRef {
@@ -662,6 +668,12 @@ impl LispObject {
     pub fn is_byte_code_function(self) -> bool {
         self.as_vectorlike()
             .map_or(false, |v| v.is_pseudovector(PseudovecType::PVEC_COMPILED))
+    }
+
+    pub fn is_module_function(self) -> bool {
+        self.as_vectorlike().map_or(false, |v| {
+            v.is_pseudovector(PseudovecType::PVEC_MODULE_FUNCTION)
+        })
     }
 
     pub fn is_subr(self) -> bool {
