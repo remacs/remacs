@@ -1365,74 +1365,6 @@ un_autoload (Lisp_Object oldqueue)
     }
 }
 
-/* Load an autoloaded function.
-   FUNNAME is the symbol which is the function's name.
-   FUNDEF is the autoload definition (a list).  */
-
-DEFUN ("autoload-do-load", Fautoload_do_load, Sautoload_do_load, 1, 3, 0,
-       doc: /* Load FUNDEF which should be an autoload.
-If non-nil, FUNNAME should be the symbol whose function value is FUNDEF,
-in which case the function returns the new autoloaded function value.
-If equal to `macro', MACRO-ONLY specifies that FUNDEF should only be loaded if
-it defines a macro.  */)
-  (Lisp_Object fundef, Lisp_Object funname, Lisp_Object macro_only)
-{
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  if (!CONSP (fundef) || !EQ (Qautoload, XCAR (fundef)))
-    return fundef;
-
-  if (EQ (macro_only, Qmacro))
-    {
-      Lisp_Object kind = Fnth (make_number (4), fundef);
-      if (! (EQ (kind, Qt) || EQ (kind, Qmacro)))
-	return fundef;
-    }
-
-  /* This is to make sure that loadup.el gives a clear picture
-     of what files are preloaded and when.  */
-  if (! NILP (Vpurify_flag))
-    error ("Attempt to autoload %s while preparing to dump",
-	   SDATA (SYMBOL_NAME (funname)));
-
-  CHECK_SYMBOL (funname);
-
-  /* Preserve the match data.  */
-  record_unwind_save_match_data ();
-
-  /* If autoloading gets an error (which includes the error of failing
-     to define the function being called), we use Vautoload_queue
-     to undo function definitions and `provide' calls made by
-     the function.  We do this in the specific case of autoloading
-     because autoloading is not an explicit request "load this file",
-     but rather a request to "call this function".
-
-     The value saved here is to be restored into Vautoload_queue.  */
-  record_unwind_protect (un_autoload, Vautoload_queue);
-  Vautoload_queue = Qt;
-  /* If `macro_only', assume this autoload to be a "best-effort",
-     so don't signal an error if autoloading fails.  */
-  Fload (Fcar (Fcdr (fundef)), macro_only, Qt, Qnil, Qt);
-
-  /* Once loading finishes, don't undo it.  */
-  Vautoload_queue = Qt;
-  unbind_to (count, Qnil);
-
-  if (NILP (funname))
-    return Qnil;
-  else
-    {
-      Lisp_Object fun = Findirect_function (funname, Qnil);
-
-      if (!NILP (Fequal (fun, fundef)))
-	error ("Autoloading file %s failed to define function %s",
-	       SDATA (Fcar (Fcar (Vload_history))),
-	       SDATA (SYMBOL_NAME (funname)));
-      else
-	return fun;
-    }
-}
-
 
 DEFUN ("eval", Feval, Seval, 1, 2, 0,
        doc: /* Evaluate FORM and return its value.
@@ -3411,7 +3343,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sunwind_protect);
   defsubr (&Scondition_case);
   defsubr (&Ssignal);
-  defsubr (&Sautoload_do_load);
   defsubr (&Seval);
   defsubr (&Sapply);
   defsubr (&Sfuncall);

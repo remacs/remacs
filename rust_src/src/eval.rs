@@ -2,20 +2,23 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Object, PseudovecType};
-use remacs_sys::{Fapply, Fautoload_do_load, Fcons, Ffuncall, Fpurecopy, Fset, Fset_default};
+use remacs_sys::{Fapply, Fcons, Ffuncall, Fload, Fpurecopy, Fset, Fset_default};
 use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinteractive,
                  Qinteractive_form, Qinternal_interpreter_environment, Qlambda, Qmacro, Qnil,
                  Qrisky_local_variable, Qsetq, Qt, Qvariable_documentation,
                  Qwrong_number_of_arguments};
-use remacs_sys::{build_string, eval_sub, globals, maybe_quit, specbind, unbind_to};
+use remacs_sys::{build_string, eval_sub, globals, maybe_quit, record_unwind_protect,
+                 record_unwind_save_match_data, specbind, un_autoload, unbind_to};
 use remacs_sys::COMPILED_INTERACTIVE;
+use remacs_sys::Vautoload_queue;
 
-use data::{defalias, indirect_function};
+use data::{defalias, indirect_function, indirect_function_lisp};
 use lisp::{LispCons, LispObject};
 use lisp::{defsubr, is_autoload};
-use lists::{assq, car, cdr, get, memq, put};
+use lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr};
 use multibyte::LispStringRef;
 use obarray::loadhist_attach;
+use objects::equal;
 use symbols::{fboundp, symbol_function, LispSymbolRef};
 use threads::c_specpdl_index;
 use vectors::length;
@@ -532,9 +535,7 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
         let expander = if tem.is_nil() {
             // SYM is not mentioned in ENVIRONMENT.
             // Look at its function definition.
-            def = LispObject::from_raw(unsafe {
-                Fautoload_do_load(def.to_raw(), sym.to_raw(), Qmacro)
-            });
+            def = autoload_do_load(def, sym, LispObject::from_raw(Qmacro));
             if let Some(cell) = def.as_cons() {
                 let func = cell.car();
                 if !func.eq_raw(Qmacro) {
@@ -750,6 +751,94 @@ pub extern "C" fn FUNCTIONP(object: Lisp_Object) -> bool {
         car.eq_raw(Qlambda) || car.eq_raw(Qclosure)
     } else {
         false
+    }
+}
+
+// Load an autoloaded function.
+// FUNNAME is the symbol which is the function's name.
+// FUNDEF is the autoload definition (a list).
+
+/// Load FUNDEF which should be an autoload.
+/// If non-nil, FUNNAME should be the symbol whose function value is FUNDEF,
+/// in which case the function returns the new autoloaded function value.
+/// If equal to `macro', MACRO-ONLY specifies that FUNDEF should only be loaded if
+/// it defines a macro.
+#[lisp_fn(min = "1")]
+pub fn autoload_do_load(
+    fundef: LispObject,
+    funname: LispObject,
+    macro_only: LispObject,
+) -> LispObject {
+    let count = c_specpdl_index();
+
+    if !(fundef.is_cons() && car(fundef).eq_raw(Qautoload)) {
+        return fundef;
+    }
+
+    if macro_only.eq_raw(Qmacro) {
+        let kind = nth(4, fundef);
+        if !(kind.eq_raw(Qt) || kind.eq_raw(Qmacro)) {
+            return fundef;
+        }
+    }
+
+    let sym = funname.as_symbol_or_error();
+
+    unsafe {
+        // This is to make sure that loadup.el gives a clear picture
+        // of what files are preloaded and when.
+        if globals.f_Vpurify_flag != Qnil {
+            error!(
+                "Attempt to autoload {} while preparing to dump",
+                sym.symbol_name().as_string_or_error()
+            );
+        }
+
+        // Preserve the match data.
+        record_unwind_save_match_data();
+
+        // If autoloading gets an error (which includes the error of failing
+        // to define the function being called), we use Vautoload_queue
+        // to undo function definitions and `provide' calls made by
+        // the function.  We do this in the specific case of autoloading
+        // because autoloading is not an explicit request "load this file",
+        // but rather a request to "call this function".
+        //
+        // The value saved here is to be restored into Vautoload_queue.
+
+        record_unwind_protect(un_autoload, Vautoload_queue);
+        Vautoload_queue = Qt;
+        // If `macro_only', assume this autoload to be a "best-effort",
+        // so don't signal an error if autoloading fails.
+        Fload(
+            Fcar(Fcdr(fundef.to_raw())),
+            macro_only.to_raw(),
+            Qt,
+            Qnil,
+            Qt,
+        );
+
+        // Once loading finishes, don't undo it.
+        Vautoload_queue = Qt;
+        unbind_to(count, Qnil);
+    }
+
+    if funname.is_nil() {
+        LispObject::constant_nil()
+    } else {
+        let fun = indirect_function_lisp(funname, LispObject::constant_nil());
+
+        if equal(fun, fundef) {
+            error!(
+                "Autoloading file {} failed to define function {}",
+                car(car(LispObject::from_raw(unsafe {
+                    globals.f_Vload_history
+                }))).as_string_or_error(),
+                sym.symbol_name().as_string_or_error()
+            );
+        } else {
+            fun
+        }
     }
 }
 
