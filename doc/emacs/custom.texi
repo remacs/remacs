@@ -1859,7 +1859,7 @@ key.
   Many keyboards have a numeric keypad on the right hand side.
 The numeric keys in the keypad double up as cursor motion keys,
 toggled by a key labeled @samp{Num Lock}.  By default, Emacs
-translates these keys to the corresponding keys in the main keyboard.
+translates these keys to the corresponding keys on the main keyboard.
 For example, when @samp{Num Lock} is on, the key labeled @samp{8} on
 the numeric keypad produces @code{kp-8}, which is translated to
 @kbd{8}; when @samp{Num Lock} is off, the same key produces
