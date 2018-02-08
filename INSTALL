@@ -12,7 +12,7 @@ checkout (rather than a release), also read the file INSTALL.REPO.
 
 BASIC INSTALLATION
 
-On most Unix systems, you build Emacs by first running the 'configure'
+On most Unix systems, you build (R)Emacs by first running the 'configure'
 shell script.  This attempts to deduce the correct values for
 various system-dependent variables and features, and find the
 directories where certain system headers and libraries are kept.
@@ -32,6 +32,12 @@ you might need to use various non-default options, and maybe perform
 some of the steps manually.  The more detailed description in the other
 sections of this guide will help you do that, so please refer to those
 sections if you need to.
+
+  0. Before you start: Remacs uses cargo for its build process. if you
+     build as an unpriviledged user and then install as an
+     administrator cargo will rebuild remacs. Make sure you have the
+     right nightly version, as found in the file './rust-toolchain',
+     installed for both users.
 
   1. Unpacking the Emacs 25 release requires about 200 MB of free
   disk space.  Building Emacs uses about another 200 MB of space.
