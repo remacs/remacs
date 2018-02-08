@@ -6,6 +6,7 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 #![feature(global_allocator)]
 #![feature(concat_idents)]
+#![feature(stmt_expr_attributes)]
 
 #[macro_use]
 extern crate lazy_static;
