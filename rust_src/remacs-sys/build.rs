@@ -164,7 +164,7 @@ fn generate_globals() {
                     let value = parts.next().unwrap();
                     write!(
                         out_file,
-                        "pub static {}: Lisp_Object = Lisp_Object( \
+                        "pub const {}: Lisp_Object = Lisp_Object( \
                          {} * (::std::mem::size_of::<Lisp_Symbol>() as EmacsInt));\n",
                         symbol_name, value
                     ).expect("Write error in reading symbols stage");
