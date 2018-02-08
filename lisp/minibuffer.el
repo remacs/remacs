@@ -729,7 +729,8 @@ If ARGS are provided, then pass MESSAGE through `format-message'."
 
 (defun minibuffer-completion-contents ()
   "Return the user input in a minibuffer before point as a string.
-In Emacs-22, that was what completion commands operated on."
+In Emacs 22, that was what completion commands operated on.
+If the current buffer is not a minibuffer, return everything before point."
   (declare (obsolete nil "24.4"))
   (buffer-substring (minibuffer-prompt-end) (point)))
 
