@@ -482,7 +482,6 @@ Auto Reverting Non-File Buffers
 
 * Auto Reverting the Buffer Menu:: Auto Revert of the Buffer Menu.
 * Auto Reverting Dired::           Auto Revert of Dired buffers.
-* Supporting additional buffers::  How to add more Auto Revert support.
 @end ifnottex
 
 Auto-Saving: Protection Against Disasters

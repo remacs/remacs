@@ -3042,7 +3042,9 @@ with @samp{-}, or might contain shell metacharacters like @samp{;}.
 Although functions like @code{shell-quote-argument} can help avoid
 this sort of problem, they are not panaceas; for example, on a POSIX
 platform @code{shell-quote-argument} quotes shell metacharacters but
-not leading @samp{-}.  @xref{Shell Arguments}.  Typically it is safer
+not leading @samp{-}.  On MS-Windows, quoting for @samp{%} assumes
+none of the environment variables have @samp{^} in their name.
+@xref{Shell Arguments}.  Typically it is safer
 to use @code{call-process} than a subshell.  @xref{Synchronous
 Processes}.  And it is safer yet to use builtin Emacs functions; for
 example, use @code{(rename-file "@var{a}" "@var{b}" t)} instead of

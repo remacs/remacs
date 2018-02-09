@@ -78,7 +78,6 @@ the undo command.
 previous undo commands, use @kbd{M-x undo-only}.  This is like
 @code{undo}, but will not redo changes you have just undone.
 
-@c What about @kbd{M-x revert-buffer}? --xfq
   If you notice that a buffer has been modified accidentally, the
 easiest way to recover is to type @kbd{C-/} repeatedly until the stars
 disappear from the front of the mode line (@pxref{Mode Line}).
@@ -89,6 +88,10 @@ changed the buffer deliberately, type @kbd{C-/} once.  When you see
 the last change you made undone, you will see whether it was an
 intentional change.  If it was an accident, leave it undone.  If it
 was deliberate, redo the change as described above.
+
+Alternatively, you can discard all the changes since the buffer was
+last visited or saved with @kbd{M-x revert-buffer}
+(@pxref{Reverting}).
 
 @cindex selective undo
 @kindex C-u C-/
@@ -216,7 +219,7 @@ Convert last word to lower case with capital initial.
 @kindex M-@t{-} M-u
 @kindex M-@t{-} M-c
   A very common error is to type words in the wrong case.  Because of this,
-the word case-conversion commands @kbd{M-l}, @kbd{M-u} and @kbd{M-c} have a
+the word case-conversion commands @kbd{M-l}, @kbd{M-u}, and @kbd{M-c} have a
 special feature when used with a negative argument: they do not move the
 cursor.  As soon as you see you have mistyped the last word, you can simply
 case-convert it and go on typing.  @xref{Case}.
@@ -231,7 +234,7 @@ case-convert it and go on typing.  @xref{Case}.
 single word or of a portion of a buffer.  These commands only work if
 a spelling checker program, one of Hunspell, Aspell, Ispell or
 Enchant, is installed.  These programs are not part of Emacs, but one
-of them is usually installed in GNU/Linux and other free operating
+of them is usually installed on GNU/Linux and other free operating
 systems.
 @ifnottex
 @xref{Top, Aspell,, aspell, The Aspell Manual}.

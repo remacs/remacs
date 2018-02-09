@@ -18,8 +18,8 @@ does not support versions before macOS 10.6.
 @samp{Nextstep} internally, instead of ``Cocoa'' or ``macOS''; for
 instance, most of the commands and variables described in this section
 begin with @samp{ns-}, which is short for @samp{Nextstep}.  NeXTstep
-was an application interface released by NeXT Inc during the 1980s, of
-which Cocoa is a direct descendant.  Apart from Cocoa, there is
+was an application interface released by NeXT Inc.@: during the 1980s,
+of which Cocoa is a direct descendant.  Apart from Cocoa, there is
 another NeXTstep-style system: GNUstep, which is free software.  As of
 this writing, Emacs GNUstep support is alpha status (@pxref{GNUstep
 Support}), but we hope to improve it in the future.

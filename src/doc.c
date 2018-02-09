@@ -1023,8 +1023,8 @@ syms_of_doc (void)
                doc: /* Style to use for single quotes in help and messages.
 Its value should be a symbol.  It works by substituting certain single
 quotes for grave accent and apostrophe.  This is done in help output
-and in functions like `message' and `format-message'.  It is not done
-in `format'.
+\(but not for display of Info manuals) and in functions like `message'
+and `format-message'.  It is not done in `format'.
 
 `curve' means quote with curved single quotes ‘like this’.
 `straight' means quote with straight apostrophes \\='like this\\='.

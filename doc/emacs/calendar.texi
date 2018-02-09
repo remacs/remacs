@@ -12,7 +12,7 @@ planned or past events.  It also has facilities for managing your
 appointments, and keeping track of how much time you spend working on
 certain projects.
 
-  To enter the calendar, type @kbd{M-x calendar}; this displays a
+  To enter the calendar, type @kbd{M-x calendar}.  This displays a
 three-month calendar centered on the current month, with point on the
 current date.  With a numeric argument, as in @kbd{C-u M-x calendar}, it
 prompts you for the month and year to be the center of the three-month
@@ -126,10 +126,11 @@ whole year.
 
   The easiest way to remember these commands is to consider months and
 years analogous to paragraphs and pages of text, respectively.  But
-the commands themselves are not quite analogous.  The ordinary Emacs
-paragraph commands move to the beginning or end of a paragraph,
-whereas these month and year commands move by an entire month or an
-entire year, keeping the same date within the month or year.
+the calendar movement commands themselves do not quite parallel those
+for movement through text: the ordinary Emacs paragraph commands move
+to the beginning or end of a paragraph, whereas these month and year
+commands move by an entire month or an entire year, keeping the same
+date within the month or year.
 
   All these commands accept a numeric argument as a repeat count.
 For convenience, the digit keys and the minus sign specify numeric

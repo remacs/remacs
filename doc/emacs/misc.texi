@@ -413,8 +413,8 @@ is needed.  For OpenDocument and Microsoft Office documents, the
   When you visit a document file that can be displayed with DocView
 mode, Emacs automatically uses DocView mode @footnote{The needed
 external tools for the document type must be available, and Emacs must
-be running in a graphical frame and have PNG image support.  If any of
-these requirements is not fulfilled, Emacs falls back to another major
+be running in a graphical frame and have PNG image support.  If these
+requirements is not fulfilled, Emacs falls back to another major
 mode.}.  As an exception, when you visit a PostScript file, Emacs
 switches to PS mode, a major mode for editing PostScript files as
 text; however, it also enables DocView minor mode, so you can type
@@ -1212,7 +1212,7 @@ buffer after it has been sent.
 @subsubsection Shell History References
 @cindex history reference
 
-  Various shells including csh and bash support @dfn{history
+  Various shells, including csh and bash, support @dfn{history
 references} that begin with @samp{!} and @samp{^}.  Shell mode
 recognizes these constructs, and can perform the history substitution
 for you.
@@ -1406,8 +1406,8 @@ by the faces @code{term-color-black}, @code{term-color-red},
 @code{term-color-underline}, and @code{term-color-bold}.
 @xref{Faces}.
 
-  You can also Term mode to communicate with a device connected to a
-serial port.  @xref{Serial Terminal}.
+  You can also use Term mode to communicate with a device connected to
+a serial port.  @xref{Serial Terminal}.
 
   The file name used to load the subshell is determined the same way
 as for Shell mode.  To make multiple terminal emulators, rename the
@@ -1427,12 +1427,8 @@ and later.
 @cindex Term mode
 @cindex mode, Term
 
-  The terminal emulator uses Term mode, which has two input modes.  In
-line mode, Term basically acts like Shell mode (@pxref{Shell Mode}).
-In char mode, each character is sent directly to the subshell, except
-for the Term escape character, normally @kbd{C-c}.
-
-  To switch between line and char mode, use these commands:
+  To switch between line and char mode in Term mode, use these
+commands:
 
 @table @kbd
 @kindex C-c C-j @r{(Term mode)}
@@ -1720,8 +1716,8 @@ Server})---then Emacs opens a frame on the terminal in which you
 called @command{emacsclient}.
 
   You can also force @command{emacsclient} to open a new frame on a
-graphical display, or on a text terminal, using the @samp{-c} and
-@samp{-t} options.  @xref{emacsclient Options}.
+graphical display using the @samp{-c} option, or on a text terminal
+using the @samp{-t} option.  @xref{emacsclient Options}.
 
   If you are running on a single text terminal, you can switch between
 @command{emacsclient}'s shell and the Emacs server using one of two

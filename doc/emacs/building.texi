@@ -384,6 +384,10 @@ grep -nH -e foo *.el | grep bar | grep toto
 can find the corresponding lines in the original files using @w{@kbd{C-x
 `}}, @key{RET}, and so forth, just like compilation errors.
 
+  As with compilation commands (@pxref{Compilation}), while the grep
+command runs, the mode line is updated to show the number of matches
+that have been seen so far.
+
   Some grep programs accept a @samp{--color} option to output special
 markers around matches for the purpose of highlighting.  You can make
 use of this feature by setting @code{grep-highlight-matches} to
@@ -607,15 +611,16 @@ to recompile and restart the program.
 @vindex gud-tooltip-echo-area
   GUD Tooltip mode is a global minor mode that adds tooltip support to
 GUD@.  To toggle this mode, type @kbd{M-x gud-tooltip-mode}.  It is
-disabled by default.  If enabled, you can move the mouse cursor over a
+disabled by default.  If enabled, you can move the mouse pointer over a
 variable, a function, or a macro (collectively called
 @dfn{identifiers}) to show their values in tooltips
-(@pxref{Tooltips}).  Alternatively, mark an identifier or an
-expression by dragging the mouse over it, then leave the mouse in the
-marked area to have the value of the expression displayed in a
-tooltip.  The GUD Tooltip mode takes effect in the GUD interaction
-buffer, and in all source buffers with major modes listed in the
-variable @code{gud-tooltip-modes}.  If the variable
+(@pxref{Tooltips}).  If just placing the mouse pointer over an
+expression doesn't show the value of the expression you had in mind,
+you can tell Emacs more explicitly what expression to evaluate by
+dragging the mouse over the expression, then leaving the mouse inside
+the marked area.  The GUD Tooltip mode takes effect in the GUD
+interaction buffer, and in all source buffers with major modes listed
+in the variable @code{gud-tooltip-modes}.  If the variable
 @code{gud-tooltip-echo-area} is non-@code{nil}, or if you turned off
 the tooltip mode, values are shown in the echo area instead of a
 tooltip.
@@ -1217,9 +1222,9 @@ edit its value.
 @vindex gdb-delete-out-of-scope
   If the variable @code{gdb-delete-out-of-scope} is non-@code{nil}
 (the default value), Emacs automatically deletes watch expressions
-which go out of scope.  Sometimes, when re-entering the same function,
-it may be useful to set this value to @code{nil} so that you don't
-need to recreate the watch expression.
+which go out of scope.  Sometimes, when your program re-enters the
+same function many times, it may be useful to set this value to
+@code{nil} so that you don't need to recreate the watch expression.
 
 @vindex gdb-use-colon-colon-notation
   If the variable @code{gdb-use-colon-colon-notation} is
@@ -1284,7 +1289,7 @@ execution control commands.
 value), interruption and continuation commands apply to all threads,
 so you can halt or continue all your threads with one command using
 @code{gud-stop-subjob} and @code{gud-cont}, respectively.  The
-@samp{Go} button is shown on the toolbar when at least one thread is
+@samp{Go} button is shown on the tool bar when at least one thread is
 stopped, whereas @samp{Stop} button is shown when at least one thread
 is running.
 
@@ -1292,8 +1297,8 @@ is running.
 
 When @code{gdb-gud-control-all-threads} is @code{nil}, only the
 current thread is stopped/continued.  @samp{Go} and @samp{Stop}
-buttons on the GUD toolbar are shown depending on the state of current
-thread.
+buttons on the GUD tool bar are shown depending on the state of
+current thread.
 @end table
 
 You can change the current value of @code{gdb-gud-control-all-threads}
