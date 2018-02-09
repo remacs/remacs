@@ -581,10 +581,20 @@ struct frame
 
 /* Most code should use these functions to set Lisp fields in struct frame.  */
 
+INLINE Lisp_Object
+fget_buffer_list (struct frame *f)
+{
+  return f->buffer_list;
+}
 INLINE void
 fset_buffer_list (struct frame *f, Lisp_Object val)
 {
   f->buffer_list = val;
+}
+INLINE Lisp_Object
+fget_buried_buffer_list (struct frame *f)
+{
+  return f->buried_buffer_list;
 }
 INLINE void
 fset_buried_buffer_list (struct frame *f, Lisp_Object val)

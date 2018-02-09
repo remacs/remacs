@@ -4,16 +4,17 @@ use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Fcons, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type,
-                 Vbuffer_alist, MOST_POSITIVE_FIXNUM};
-use remacs_sys::{bget_overlays_after, bget_overlays_before, globals, set_buffer_internal,
-                 Fget_text_property, Fnreverse};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+                 MOST_POSITIVE_FIXNUM};
+use remacs_sys::{Fcons, Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qinhibit_read_only, Qnil};
+use remacs_sys::{bget_overlays_after, bget_overlays_before, fget_buffer_list,
+                 fget_buried_buffer_list, globals, set_buffer_internal};
 
 use editfns::point;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
-use lists::{car, cdr};
+use lists::{car, cdr, Flist, Fmember};
 use marker::{marker_buffer, marker_position};
 use multibyte::string_char;
 use strings::string_equal;
@@ -277,6 +278,38 @@ impl LispObject {
         } else {
             self.as_buffer_or_error()
         }
+    }
+}
+
+/// Return a list of all existing live buffers.
+/// If the optional arg FRAME is a frame, we return the buffer list in the
+/// proper order for that frame: the buffers show in FRAME come first,
+/// followed by the rest of the buffers.
+#[lisp_fn(min = "0")]
+pub fn buffer_list(frame: LispObject) -> LispObject {
+    let mut buffers: Vec<Lisp_Object> = LispObject::from_raw(unsafe { Vbuffer_alist })
+        .iter_cars_safe()
+        .map(|o| cdr(o).to_raw())
+        .collect();
+
+    match frame.as_frame() {
+        None => LispObject::from_raw(Flist(buffers.len() as isize, buffers.as_mut_ptr())),
+
+        Some(frame) => unsafe {
+            let framelist = Fcopy_sequence(fget_buffer_list(frame.as_ptr()));
+            let prevlist = Fnreverse(Fcopy_sequence(fget_buried_buffer_list(frame.as_ptr())));
+
+            // Remove any buffer that duplicates one in
+            // FRAMELIST or PREVLIST.
+            buffers.retain(|e| Fmember(*e, framelist) == Qnil || Fmember(*e, prevlist) == Qnil);
+
+            callN_raw!(
+                Fnconc,
+                framelist,
+                Flist(buffers.len() as isize, buffers.as_mut_ptr()),
+                prevlist
+            )
+        },
     }
 }
 
