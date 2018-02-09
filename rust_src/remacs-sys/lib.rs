@@ -1043,6 +1043,7 @@ extern "C" {
     pub fn fget_output_method(f: *const Lisp_Frame) -> c_int;
     pub fn fget_visible(f: *const Lisp_Frame) -> bool;
     pub fn fget_iconified(f: *const Lisp_Frame) -> BoolBF;
+    pub fn fget_pointer_invisible(f: *const Lisp_Frame) -> BoolBF;
     pub fn fget_top_pos(f: *const Lisp_Frame) -> c_int;
     pub fn fget_left_pos(f: *const Lisp_Frame) -> c_int;
 }
@@ -1386,11 +1387,6 @@ extern "C" {
     ) -> Lisp_Object;
     pub fn specbind(symbol: Lisp_Object, value: Lisp_Object);
     pub fn unbind_to(count: ptrdiff_t, value: Lisp_Object) -> Lisp_Object;
-    pub fn Fautoload_do_load(
-        fundef: Lisp_Object,
-        funname: Lisp_Object,
-        macro_only: Lisp_Object,
-    ) -> Lisp_Object;
     pub fn Fapply(nargs: ptrdiff_t, args: *const Lisp_Object) -> Lisp_Object;
 
     pub fn wset_window_parameters(w: *const Lisp_Window, val: Lisp_Object);
@@ -1398,6 +1394,16 @@ extern "C" {
 
     pub fn Fnreverse(seq: Lisp_Object) -> Lisp_Object;
 
+    pub fn Fload(
+        file: Lisp_Object,
+        noerror: Lisp_Object,
+        nomessage: Lisp_Object,
+        nosuffix: Lisp_Object,
+        must_suffix: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn record_unwind_protect(function: unsafe extern "C" fn(Lisp_Object), arg: Lisp_Object);
+    pub fn record_unwind_save_match_data();
+    pub fn un_autoload(oldqueue: Lisp_Object);
 }
 
 /// Contains C definitions from the font.h header.

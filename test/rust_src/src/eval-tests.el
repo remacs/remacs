@@ -224,4 +224,16 @@
   (should (not (commandp (selected-window))))
   (should (not (commandp (selected-window) t))))
 
+(ert-deftest eval-tests--functionp-base ()
+  (should-not (functionp t))
+  (should-not (functionp nil))
+  (should-not (functionp 1))
+  (should-not (functionp 'a))
+  (should-not (functionp '(a b)))
+  (should-not (functionp 'or)) ; unevalled
+  (should (functionp 'functionp))
+  (should (functionp (lambda () nil)))
+  (let ((f (lambda () nil)))
+    (should (functionp f))))
+
 ;;; eval-tests.el ends here
