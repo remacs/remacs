@@ -1,5 +1,12 @@
 //! Generic Lisp eval macros.
 
+/*
+ * N.B. Wherever unsafe occurs in this file the line should be preceded
+ * by `#[allow(unused_unsafe)]`. This allows the macro to be called
+ * from within an `unsafe` block without the compiler complaining that
+ * the unsafe is not used.
+ */
+
 /// Macro to generate an error with a list from any number of arguments.
 /// Replaces xsignal0, etc. in the C layer.
 ///
