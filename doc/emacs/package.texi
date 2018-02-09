@@ -77,7 +77,7 @@ A short description of the package.
 
 @noindent
 The @code{list-packages} command accesses the network, to retrieve the
-list of available packages from the package archive server.  If the
+list of available packages from package archive servers.  If the
 network is unavailable, it falls back on the most recently retrieved
 list.
 
@@ -199,7 +199,7 @@ A valid signature is not a cast-iron
 guarantee that a package is not malicious, so you should still
 exercise caution.  Package archives should provide instructions
 on how you can obtain their public key.  One way is to download the
-key from a server such as @url{http://pgp.mit.edu/}.
+key from a server such as @url{https://pgp.mit.edu/}.
 Use @kbd{M-x package-import-keyring} to import the key into Emacs.
 Emacs stores package keys in the directory specified by the variable
 @code{package-gnupghome-dir}, by default in the @file{gnupg}
@@ -219,7 +219,7 @@ package that is not signed.  If you use some archives that do not sign
 their packages, you can add them to the list @code{package-unsigned-archives}.
 
   For more information on cryptographic keys and signing,
-@pxref{Top,, Top, gnupg, The GNU Privacy Guard Manual}.
+@pxref{Top,, GnuPG, gnupg, The GNU Privacy Guard Manual}.
 Emacs comes with an interface to GNU Privacy Guard,
 @pxref{Top,, EasyPG, epa, Emacs EasyPG Assistant Manual}.
 
