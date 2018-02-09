@@ -1302,10 +1302,14 @@ default).
 @vindex directory-free-space-program
 @vindex directory-free-space-args
   In verbose directory listings, Emacs adds information about the
-amount of free space on the disk that contains the directory.  To do
-this, it runs the program specified by
-@code{directory-free-space-program} with arguments
-@code{directory-free-space-args}.
+amount of free space on the disk that contains the directory.  You can
+customize how this is done for local filesystems via the variables
+@code{directory-free-space-program} and
+@code{directory-free-space-args}: the former specifies what program to
+run (default: @command{df}), the latter which arguments to pass to
+that program (default is system-dependent).  (On MS-Windows and
+MS-DOS, these two variables are ignored, and an internal Emacs
+implementation of the same functionality is used instead.)
 
   The command @kbd{M-x delete-directory} prompts for a directory's name
 using the minibuffer, and deletes the directory if it is empty.  If
