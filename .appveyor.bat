@@ -58,7 +58,13 @@ rustc --version
 cargo --version
 
 set MSYSTEM=MINGW64
-C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm base-devel mingw-w64-x86_64-toolchain"
+REM stale catgets package
+C:\msys64\usr\bin\bash --login -c "pacman -Rns --noconfirm catgets"
+REM Update the package database
+C:\msys64\usr\bin\bash --login -c "pacman -Syy"
+REM Now install needed packages
+C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm base-devel"
+C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-toolchain"
 C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-xpm-nox mingw-w64-x86_64-libtiff"
 C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-giflib mingw-w64-x86_64-jbigkit"
 C:\msys64\usr\bin\bash --login -c "pacman -Syu --noconfirm mingw-w64-x86_64-libpng mingw-w64-x86_64-libjpeg-turbo"
