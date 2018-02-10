@@ -1418,7 +1418,7 @@ impl IsLispNatnum for EmacsInt {
     }
 }
 
-#[derive(Clone,Copy)]
+#[derive(Clone, Copy)]
 pub enum LispNumber {
     Fixnum(EmacsInt),
     Float(f64),

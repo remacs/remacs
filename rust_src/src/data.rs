@@ -66,7 +66,7 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
 pub fn type_of(object: LispObject) -> LispObject {
     let ty = match object.get_type() {
         Lisp_Type::Lisp_Cons => Qcons,
-        Lisp_Type::Lisp_Int0|Lisp_Type::Lisp_Int1 => Qinteger,
+        Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => Qinteger,
         Lisp_Type::Lisp_Symbol => Qsymbol,
         Lisp_Type::Lisp_String => Qstring,
         Lisp_Type::Lisp_Float => Qfloat,

@@ -48,8 +48,8 @@ fn make_lisp_time_1(t: c_timespec) -> LispObject {
     list(&mut [
         LispObject::from_fixnum(hi_time(s)),
         LispObject::from_fixnum(EmacsInt::from(lo_time(s))),
-        LispObject::from_fixnum(ns / 1_000),
-        LispObject::from_fixnum(ns % 1_000 * 1_000),
+        LispObject::from_fixnum((ns / 1_000) as EmacsInt),
+        LispObject::from_fixnum((ns % 1_000 * 1_000) as EmacsInt),
     ])
 }
 
