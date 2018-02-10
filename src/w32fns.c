@@ -6930,7 +6930,7 @@ Lisp_Object tip_timer;
 /* STRING argument of last `x-show-tip' call.  */
 Lisp_Object tip_last_string;
 
-/* FRAME argument of last `x-show-tip' call.  */
+/* Normalized FRAME argument of last `x-show-tip' call.  */
 Lisp_Object tip_last_frame;
 
 /* PARMS argument of last `x-show-tip' call.  */
@@ -7373,7 +7373,11 @@ Text larger than the specified size is clipped.  */)
   specbind (Qinhibit_redisplay, Qt);
 
   CHECK_STRING (string);
+
+  if (NILP (frame))
+    frame = selected_frame;
   decode_window_system_frame (frame);
+
   if (NILP (timeout))
     timeout = make_number (5);
   else
@@ -7508,7 +7512,7 @@ Text larger than the specified size is clipped.  */)
 	parms = Fcons (Fcons (Qbackground_color, build_string ("lightyellow")),
 		       parms);
 
-      /* Create a frame for the tooltip, and record it in the global
+      /* Create a frame for the tooltip and record it in the global
 	 variable tip_frame.  */
       struct frame *f;		/* The value is unused.  */
       if (NILP (tip_frame = x_create_tip_frame (FRAME_DISPLAY_INFO (f), parms)))
