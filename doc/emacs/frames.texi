@@ -642,7 +642,7 @@ Monospace-12:weight=bold:slant=italic
 
 For a more detailed description of Fontconfig patterns, see the
 Fontconfig manual, which is distributed with Fontconfig and available
-online at @url{http://fontconfig.org/fontconfig-user.html}.
+online at @url{https://fontconfig.org/fontconfig-user.html}.
 
 @cindex GTK font pattern
   The second way to specify a font is to use a @dfn{GTK font pattern}.
