@@ -160,6 +160,11 @@ right away when you press down on a mouse button.  @xref{Mouse Buttons}.
 @item Byte Compilation
 @xref{Glossary---Compilation}.
 
+@item c.f.
+@itemx cf.
+Short for ``confer'' in Latin, which means ``compare with'' or
+``compare to''.
+
 @anchor{Glossary---C-}
 @item @kbd{C-}
 @kbd{C-} in the name of a character is an abbreviation for Control.
@@ -440,6 +445,9 @@ tell it to.  @xref{Bugs}.
 @c TODO?  Not really appropriate for the user manual I think.
 @c Dynamic Binding
 
+@item e.g.
+Short for ``exempli gratia'' in Latin, which means ``for example''.
+
 @item Echo Area
 The echo area is the bottom line of the screen, used for echoing the
 arguments to commands, for asking questions, and showing brief messages
@@ -498,6 +506,9 @@ keyboards lacking a @key{META} key.  Unlike the @key{META} key (which,
 like the @key{SHIFT} key, is held down while another character is
 typed), you press the @key{ESC} key as you would press a letter key, and
 it applies to the next character you type.
+
+@item etc.
+Short for ``et cetera'' in Latin, which means ``and so on''.
 
 @item Expression
 @xref{Glossary---Balanced Expression}.
@@ -708,6 +719,9 @@ Hyper is the name of a modifier bit that a keyboard input character may
 have.  To make a character Hyper, type it while holding down the
 @key{Hyper} key.  Such characters are given names that start with
 @kbd{Hyper-} (usually written @kbd{H-} for short).  @xref{User Input}.
+
+@item i.e.
+Short for ``id est'' in Latin, which means ``that is''.
 
 @item Iff
 ``Iff'' means ``if and only if''.  This terminology comes from
@@ -1081,6 +1095,9 @@ is called prompting.  Emacs prompts always appear in the echo area
 read an argument (@pxref{Minibuffer}); the echoing that happens when
 you pause in the middle of typing a multi-character key sequence is also
 a kind of prompting (@pxref{Echo Area}).
+
+@item q.v.
+Short for ``quod vide'' in Latin, which means ``which see''.
 
 @item Query-Replace
 Query-replace is an interactive string replacement feature provided by
