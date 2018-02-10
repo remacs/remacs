@@ -4104,32 +4104,6 @@ the value is (point-min).  */)
 
 /* These functions are for debugging overlays.  */
 
-DEFUN ("overlay-lists", Foverlay_lists, Soverlay_lists, 0, 0, 0,
-       doc: /* Return a pair of lists giving all the overlays of the current buffer.
-The car has all the overlays before the overlay center;
-the cdr has all the overlays after the overlay center.
-Recentering overlays moves overlays between these lists.
-The lists you get are copies, so that changing them has no effect.
-However, the overlays you get are the real objects that the buffer uses.  */)
-  (void)
-{
-  struct Lisp_Overlay *ol;
-  Lisp_Object before = Qnil, after = Qnil, tmp;
-
-  for (ol = current_buffer->overlays_before; ol; ol = ol->next)
-    {
-      XSETMISC (tmp, ol);
-      before = Fcons (tmp, before);
-    }
-  for (ol = current_buffer->overlays_after; ol; ol = ol->next)
-    {
-      XSETMISC (tmp, ol);
-      after = Fcons (tmp, after);
-    }
-
-  return Fcons (Fnreverse (before), Fnreverse (after));
-}
-
 DEFUN ("overlay-recenter", Foverlay_recenter, Soverlay_recenter, 1, 1, 0,
        doc: /* Recenter the overlays of the current buffer around position POS.
 That makes overlay lookup faster for positions near POS (but perhaps slower
@@ -6086,7 +6060,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Snext_overlay_change);
   defsubr (&Sprevious_overlay_change);
   defsubr (&Soverlay_recenter);
-  defsubr (&Soverlay_lists);
   defsubr (&Soverlay_get);
   defsubr (&Soverlay_put);
   defsubr (&Srestore_buffer_modified_p);
@@ -6099,4 +6072,19 @@ keys_of_buffer (void)
 {
   initial_define_key (control_x_map, 'b', "switch-to-buffer");
   initial_define_key (control_x_map, 'k', "kill-buffer");
+}
+
+
+/* Accessors for Rust */
+
+struct Lisp_Overlay*
+bget_overlays_before(const struct buffer *b)
+{
+  return b->overlays_before;
+}
+
+struct Lisp_Overlay*
+bget_overlays_after(const struct buffer *b)
+{
+  return b->overlays_after;
 }
