@@ -1496,32 +1496,41 @@ direct color mode is used.  The capability strings are expected to
 take one 24-bit pixel value as argument and transform the pixel to a
 string that can be used to send 24-bit colors to the terminal.
 
-There aren't yet any standard terminal type definitions that would
-support the capabilities, but Emacs can be invoked with a custom
-definition as shown below.
+Standard terminal definitions don't support these capabilities and
+therefore custom definition is needed.
 
 @example
-$ cat terminfo-24bit.src
+$ cat terminfo-custom.src
 
-# Use colon separators.
-xterm-24bit|xterm with 24-bit direct color mode,
+xterm-emacs|xterm with 24-bit direct color mode for Emacs,
   use=xterm-256color,
-  setb24=\E[48:2:%p1%@{65536@}%/%d:%p1%@{256@}%/%@{255@}%&%d:%p1%@{255@}%&%dm,
-  setf24=\E[38:2:%p1%@{65536@}%/%d:%p1%@{256@}%/%@{255@}%&%d:%p1%@{255@}%&%dm,
-# Use semicolon separators.
-xterm-24bits|xterm with 24-bit direct color mode,
-  use=xterm-256color,
-  setb24=\E[48;2;%p1%@{65536@}%/%d;%p1%@{256@}%/%@{255@}%&%d;%p1%@{255@}%&%dm,
-  setf24=\E[38;2;%p1%@{65536@}%/%d;%p1%@{256@}%/%@{255@}%&%d;%p1%@{255@}%&%dm,
+  setb24=\E[48\:2\:\:%p1%@{65536@}%/%d\:%p1%@{256@}%/%@{255@}%&%d\:%p1%@{255@}%&%dm,
+  setf24=\E[38\:2\:\:%p1%@{65536@}%/%d\:%p1%@{256@}%/%@{255@}%&%d\:%p1%@{255@}%&%dm,
 
-$ tic -x -o ~/.terminfo terminfo-24bit.src
+$ tic -x -o ~/.terminfo terminfo-custom.src
 
-$ TERM=xterm-24bit emacs -nw
+$ TERM=xterm-emacs emacs -nw
 @end example
 
-Currently there's no standard way to determine whether a terminal
-supports direct color mode.  If such standard arises later on, support
-for @samp{setb24} and @samp{setf24} may be removed.
+Emacs 27.1 and later support Terminfo capability @samp{RGB} for
+detecting 24-bit direct color mode.  Multiple standard terminal
+definitions support this capability.
+
+@example
+$ TERM=xterm-direct infocmp | grep seta[bf]
+
+  setab=\E[%?%p1%@{8@}%<%t4%p1%d%e48\:2\:\:%p1%@{65536@}%/%d\:%p1%@{256@}%/%@{255@}%&%d\:%p1%@{255@}%&%d%;m,
+  setaf=\E[%?%p1%@{8@}%<%t3%p1%d%e38\:2\:\:%p1%@{65536@}%/%d\:%p1%@{256@}%/%@{255@}%&%d\:%p1%@{255@}%&%d%;m,
+
+$ TERM=xterm-direct emacs -nw
+@end example
+
+Terminals with @samp{RGB} capability treat pixels #000001 - #000007 as
+indexed colors to maintain backward compatibility with applications
+that are unaware of direct color mode.  Therefore the seven darkest
+blue shades may not be available.  If this is a problem, you can
+always use custom terminal definition with @samp{setb24} and
+@samp{setf24}.
 
 @node Debugging a customization file
 @section How do I debug a @file{.emacs} file?
