@@ -14,6 +14,7 @@ use remacs_sys::{buf_charpos_to_bytepos, buffer_overflow, find_before_next_newli
 use remacs_sys::EmacsInt;
 
 use buffers::{get_buffer, BUF_BYTES_MAX};
+use character::dec_pos;
 use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
 use marker::{marker_position, set_point_from_marker};
@@ -295,6 +296,24 @@ pub fn following_char() -> EmacsInt {
     } else {
         buffer_ref.fetch_char(buffer_ref.pt_byte) as EmacsInt
     }
+}
+
+/// Return the character preceding point, as a number. At the
+/// beginning of the buffer or accessible region, return 0.
+#[lisp_fn(c_name = "previous_char")]
+pub fn preceding_char() -> EmacsInt {
+    let buffer_ref = ThreadState::current_buffer();
+
+    if buffer_ref.pt <= buffer_ref.begv {
+        return EmacsInt::from(0);
+    }
+
+    let pos = if buffer_ref.enable_multibyte_characters != Qnil {
+        unsafe { dec_pos(buffer_ref.pt_byte) }
+    } else {
+        buffer_ref.pt_byte - 1
+    };
+    EmacsInt::from(buffer_ref.fetch_char(pos))
 }
 
 /// Return character in current buffer at position POS.
