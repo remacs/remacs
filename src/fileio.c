@@ -2697,7 +2697,7 @@ See `file-symlink-p' to distinguish symlinks.  */)
 bool
 file_directory_p (Lisp_Object file)
 {
-#ifdef WINDOWSNT
+#ifdef DOS_NT
   /* This is cheaper than 'stat'.  */
   return faccessat (AT_FDCWD, SSDATA (file), D_OK, AT_EACCESS) == 0;
 #else
