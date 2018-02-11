@@ -3556,11 +3556,6 @@ Fall back to normal file name handler if no Tramp handler exists."
 	 ;; Default file name handlers, we don't care.
 	 (t (tramp-run-real-handler operation args)))))))
 
-(defconst tramp-gio-events
-  '("attribute-changed" "changed" "changes-done-hint"
-    "created" "deleted" "moved" "pre-unmount" "unmounted")
-  "List of events \"gio monitor\" could send.")
-
 (defun tramp-sh-handle-file-notify-add-watch (file-name flags _callback)
   "Like `file-notify-add-watch' for Tramp files."
   (setq file-name (expand-file-name file-name))
@@ -3665,13 +3660,12 @@ Fall back to normal file name handler if no Tramp handler exists."
     (when (string-match "Monitoring not supported\\|No locations given" string)
       (delete-process proc))
 
-    (while
-        (string-match
-	 (concat "^[^:]+:"
-		 "[[:space:]]\\([^:]+\\):"
-		 "[[:space:]]"  (regexp-opt tramp-gio-events t)
-		 "\\([[:space:]]\\([^:]+\\)\\)?$")
-	 string)
+    (while (string-match
+	    (concat "^[^:]+:"
+		    "[[:space:]]\\([^:]+\\):"
+		    "[[:space:]]"  (regexp-opt tramp-gio-events t)
+		    "\\([[:space:]]\\([^:]+\\)\\)?$")
+	    string)
 
       (let* ((file (match-string 1 string))
 	     (file1 (match-string 4 string))
@@ -3762,12 +3756,11 @@ file-notify events."
     (tramp-message proc 6 "%S\n%s" proc string)
     (dolist (line (split-string string "[\n\r]+" 'omit))
       ;; Check, whether there is a problem.
-      (unless
-	  (string-match
-	   (concat "^[^[:blank:]]+"
-		   "[[:blank:]]+\\([^[:blank:]]+\\)+"
-		   "\\([[:blank:]]+\\([^\n\r]+\\)\\)?")
-	   line)
+      (unless (string-match
+	       (concat "^[^[:blank:]]+"
+		       "[[:blank:]]+\\([^[:blank:]]+\\)+"
+		       "\\([[:blank:]]+\\([^\n\r]+\\)\\)?")
+	       line)
 	(tramp-error proc 'file-notify-error "%s" line))
 
       (let ((object

@@ -3623,10 +3623,16 @@ of."
 	   ;; only if that agrees with the buffer's record.
 	   (t (equal mt '(-1 65535)))))))))
 
+;; This is used in tramp-gvfs.el and tramp-sh.el.
+(defconst tramp-gio-events
+  '("attribute-changed" "changed" "changes-done-hint"
+    "created" "deleted" "moved" "pre-unmount" "unmounted")
+  "List of events \"gio monitor\" could send.")
+
+;; This is the default handler.  tramp-gvfs.el and tramp-sh.el have
+;; their own one.
 (defun tramp-handle-file-notify-add-watch (filename _flags _callback)
   "Like `file-notify-add-watch' for Tramp files."
-  ;; This is the default handler.  tramp-gvfs.el and tramp-sh.el have
-  ;; their own one.
   (setq filename (expand-file-name filename))
   (with-parsed-tramp-file-name filename nil
     (tramp-error

@@ -387,7 +387,7 @@ name of a local copy, if any.")
 (defun tramp-archive-dissect-file-name (name)
   "Return a `tramp-file-name' structure.
 The structure consists of the `tramp-archive-method' method, the
-hexlified archive name as host, and the localname.  The archive
+hexified archive name as host, and the localname.  The archive
 name is kept in slot `hop'"
   (save-match-data
     (unless (tramp-archive-file-name-p name)
