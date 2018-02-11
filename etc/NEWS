@@ -289,6 +289,11 @@ Previously it was supported only in the Cygwin-w32 build.
 ** Emacs now handles key combinations involving the macOS "command"
 and "option" modifier keys more correctly.
 
+** The special handling of `frame-title-format' on NS where setting it
+to `t' would enable the macOS proxy icon has been replaced with a
+separate variable, `ns-use-proxy-icon'. `frame-title-format' will now
+work as on other platforms.
+
 
 ----------------------------------------------------------------------
 This file is part of GNU Emacs.

@@ -809,8 +809,8 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 
 
 ;; Set some options to be as Nextstep-like as possible.
-(setq frame-title-format t
-      icon-title-format t)
+(setq frame-title-format "%b"
+      icon-title-format "%b")
 
 
 (defvar ns-initialized nil

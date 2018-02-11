@@ -61,7 +61,6 @@ static int as_status;
 static ptrdiff_t image_cache_refcount;
 
 static struct ns_display_info *ns_display_info_for_name (Lisp_Object);
-static void ns_set_name_as_filename (struct frame *);
 
 /* ==========================================================================
 
@@ -483,17 +482,10 @@ x_implicitly_set_name (struct frame *f, Lisp_Object arg, Lisp_Object oldval)
 {
   NSTRACE ("x_implicitly_set_name");
 
-  Lisp_Object frame_title = buffer_local_value
-    (Qframe_title_format, XWINDOW (f->selected_window)->contents);
-  Lisp_Object icon_title = buffer_local_value
-    (Qicon_title_format, XWINDOW (f->selected_window)->contents);
+  if (! NILP (ns_use_proxy_icon))
+    ns_set_represented_filename (f);
 
-  /* Deal with NS specific format t.  */
-  if (FRAME_NS_P (f) && ((FRAME_ICONIFIED_P (f) && EQ (icon_title, Qt))
-                         || EQ (frame_title, Qt)))
-    ns_set_name_as_filename (f);
-  else
-    ns_set_name (f, arg, 0);
+  ns_set_name (f, arg, 0);
 }
 
 
@@ -519,78 +511,6 @@ x_set_title (struct frame *f, Lisp_Object name, Lisp_Object old_name)
 
   ns_set_name_internal (f, name);
 }
-
-
-static void
-ns_set_name_as_filename (struct frame *f)
-{
-  NSView *view;
-  Lisp_Object name, filename;
-  Lisp_Object buf = XWINDOW (f->selected_window)->contents;
-  const char *title;
-  NSAutoreleasePool *pool;
-  Lisp_Object encoded_name, encoded_filename;
-  NSString *str;
-  NSTRACE ("ns_set_name_as_filename");
-
-  if (f->explicit_name || ! NILP (f->title))
-    return;
-
-  block_input ();
-  pool = [[NSAutoreleasePool alloc] init];
-  filename = BVAR (XBUFFER (buf), filename);
-  name = BVAR (XBUFFER (buf), name);
-
-  if (NILP (name))
-    {
-      if (! NILP (filename))
-        name = Ffile_name_nondirectory (filename);
-      else
-        name = build_string ([ns_app_name UTF8String]);
-    }
-
-  encoded_name = ENCODE_UTF_8 (name);
-
-  view = FRAME_NS_VIEW (f);
-
-  title = FRAME_ICONIFIED_P (f) ? [[[view window] miniwindowTitle] UTF8String]
-                                : [[[view window] title] UTF8String];
-
-  if (title && (! strcmp (title, SSDATA (encoded_name))))
-    {
-      [pool release];
-      unblock_input ();
-      return;
-    }
-
-  str = [NSString stringWithUTF8String: SSDATA (encoded_name)];
-  if (str == nil) str = @"Bad coding";
-
-  if (FRAME_ICONIFIED_P (f))
-    [[view window] setMiniwindowTitle: str];
-  else
-    {
-      NSString *fstr;
-
-      if (! NILP (filename))
-        {
-          encoded_filename = ENCODE_UTF_8 (filename);
-
-          fstr = [NSString stringWithUTF8String: SSDATA (encoded_filename)];
-          if (fstr == nil) fstr = @"";
-        }
-      else
-        fstr = @"";
-
-      ns_set_represented_filename (fstr, f);
-      [[view window] setTitle: str];
-      fset_name (f, name);
-    }
-
-  [pool release];
-  unblock_input ();
-}
-
 
 void
 ns_set_doc_edited (void)
@@ -3310,6 +3230,11 @@ be used as the image of the icon representing the frame.  */);
   DEFVAR_LISP ("ns-version-string", Vns_version_string,
                doc: /* Toolkit version for NS Windowing.  */);
   Vns_version_string = ns_appkit_version_str ();
+
+  DEFVAR_BOOL ("ns-use-proxy-icon", ns_use_proxy_icon,
+               doc: /* When non-nil display a proxy icon in the titlebar.
+Default is t.  */);
+  ns_use_proxy_icon = Qt;
 
   defsubr (&Sns_read_file_name);
   defsubr (&Sns_get_resource);

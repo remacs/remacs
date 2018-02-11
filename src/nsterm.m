@@ -444,10 +444,38 @@ static void ns_judge_scroll_bars (struct frame *f);
    ========================================================================== */
 
 void
-ns_set_represented_filename (NSString *fstr, struct frame *f)
+ns_set_represented_filename (struct frame *f)
 {
+  NSView *view;
+  Lisp_Object filename, encoded_filename;
+  Lisp_Object buf = XWINDOW (f->selected_window)->contents;
+  NSAutoreleasePool *pool;
+  NSString *fstr;
+
+  NSTRACE ("ns_set_represented_filename");
+
+  if (f->explicit_name || ! NILP (f->title))
+    return;
+
+  block_input ();
+  pool = [[NSAutoreleasePool alloc] init];
+  filename = BVAR (XBUFFER (buf), filename);
+
+  if (! NILP (filename))
+    {
+      encoded_filename = ENCODE_UTF_8 (filename);
+
+      fstr = [NSString stringWithUTF8String: SSDATA (encoded_filename)];
+      if (fstr == nil) fstr = @"";
+    }
+  else
+    fstr = @"";
+
   represented_filename = [fstr retain];
   represented_frame = f;
+
+  [pool release];
+  unblock_input ();
 }
 
 void
