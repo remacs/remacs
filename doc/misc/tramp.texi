@@ -2596,6 +2596,7 @@ upon first connection.  Alternatively, use an absolute path or extend
 @end group
 @end lisp
 
+@vindex tramp-remote-process-environment
 Customize user option @option{tramp-remote-process-environment} to
 suit the remote program's environment for the remote host.
 @option{tramp-remote-process-environment} is a list of strings
@@ -2641,11 +2642,13 @@ this.  You could overwrite this behavior by evaluating
 @end group
 @end lisp
 
-@value{tramp} does not use the defaults specified in
-@code{process-environment} for running @code{process-file} or
-@code{start-file-process} on remote hosts.  When values from
-@code{process-environment} are needed for remote processes, then set
-them as follows:
+In addition to @option{tramp-remote-process-environment}, you can set
+environment variables for invidivual remote process calls by
+let-binding @code{process-environment}.  @value{tramp} will apply any
+entries which are not present in the global default value of
+@code{process-environment} (overriding
+@option{tramp-remote-process-environment} settings, if they conflict).
+For example:
 
 @lisp
 @group
@@ -2654,8 +2657,10 @@ them as follows:
 @end group
 @end lisp
 
-This works only for environment variables not already set in the
-@code{process-environment}.
+Let-binding in this way works regardless of whether the process to be
+called is local or remote, since @value{tramp} would add just the
+@env{HGPLAIN} setting and local processes would take whole value of
+@code{process-environment} along with the new value of @env{HGPLAIN}.
 
 For integrating other Emacs packages so @value{tramp} can execute
 remotely, please file a bug report.  @xref{Bug Reports}.
