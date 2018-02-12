@@ -8023,7 +8023,7 @@ init_process_emacs (int sockfd)
 	sockname = conv_sockaddr_to_lisp (&sa.sa, salen);
     }
 # endif
-  Vinternal__external_sockname = sockname;
+  Vinternal_daemon_sockname = sockname;
 
   max_desc = -1;
   memset (fd_callback_info, 0, sizeof (fd_callback_info));
@@ -8217,9 +8217,9 @@ These functions are called in the order of the list, until one of them
 returns non-`nil'.  */);
   Vinterrupt_process_functions = list1 (Qinternal_default_interrupt_process);
 
-  DEFVAR_LISP ("internal--external-sockname", Vinternal__external_sockname,
+  DEFVAR_LISP ("internal-daemon-sockname", Vinternal_daemon_sockname,
 	       doc: /* Name of external socket passed to Emacs, or nil if none.  */);
-  Vinternal__external_sockname = Qnil;
+  Vinternal_daemon_sockname = Qnil;
 
   DEFSYM (Qinternal_default_interrupt_process,
 	  "internal-default-interrupt-process");

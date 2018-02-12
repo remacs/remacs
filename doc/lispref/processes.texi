@@ -2862,9 +2862,9 @@ non-@code{nil} if that particular network option is supported by
 @node Misc Network
 @section Misc Network Facilities
 
-  These additional functions are useful for creating and operating
-on network connections.  Note that they are supported only on some
-systems.
+  These additional functions and variables are useful for creating and
+operating on network connections.  Note that they are supported only
+on some systems.
 
 @defun network-interface-list
 This function returns a list describing the network interfaces
@@ -2912,6 +2912,17 @@ If the vector does not include the port number, @var{p}, or if
 @var{omit-port} is non-@code{nil}, the result does not include the
 @code{:@var{p}} suffix.
 @end defun
+
+@defvar internal--daemon-sockname
+This variable is set to the full path of the socket that has been
+passed to Emacs during socket activation.  This is then used to update
+the @code{server-name} and @code{server-socket-dir} variables to
+reflect the name and path of the socket that was used to launch the
+Emacs daemon process.
+
+If Emacs wasn't started with socket activation, the value of this
+variable is @code{nil}.
+@end defvar
 
 @node Serial Ports
 @section Communicating with Serial Ports
