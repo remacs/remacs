@@ -251,15 +251,15 @@ This means that the server should not kill the buffer when you say you
 are done with it in the server.")
 (make-variable-buffer-local 'server-existing-buffer)
 
-(defvar server-external-socket-initialised nil
+(defvar server--external-socket-initialized nil
   "When an external socket is passed into Emacs, we need to call
-`server-start' in order to initialise the connection.  This flag
-prevents multiple initialisations when an external socket has
+`server-start' in order to initialize the connection.  This flag
+prevents multiple initializations when an external socket has
 been consumed.")
 
 (defcustom server-name
-  (if (get-external-sockname)
-      (file-name-nondirectory (get-external-sockname))
+  (if internal--external-sockname
+      (file-name-nondirectory internal--external-sockname)
     "server")
   "The name of the Emacs server, if this Emacs process creates one.
 The command `server-start' makes use of this.  It should not be
@@ -271,8 +271,8 @@ changed while a server is running."
 ;; We do not use `temporary-file-directory' here, because emacsclient
 ;; does not read the init file.
 (defvar server-socket-dir
-  (if (get-external-sockname)
-      (file-name-directory (get-external-sockname))
+  (if internal--external-sockname
+      (file-name-directory internal--external-sockname)
     (and (featurep 'make-network-process '(:family local))
          (format "%s/emacs%d" (or (getenv "TMPDIR") "/tmp") (user-uid))))
   "The directory in which to place the server socket.
@@ -628,15 +628,15 @@ To force-start a server, do \\[server-force-delete] and then
       (when server-process
 	;; kill it dead!
 	(ignore-errors (delete-process server-process)))
-      ;; Check to see if an uninitialised external socket has been
+      ;; Check to see if an uninitialized external socket has been
       ;; passed in, if that is the case, skip checking
       ;; `server-running-p' as this will return the wrong result.
-      (if (and (get-external-sockname)
-               (not server-external-socket-initialised))
-          (setq server-external-socket-initialised t)
+      (if (and internal--external-sockname
+               (not server--external-socket-initialized))
+          (setq server--external-socket-initialized t)
         ;; Delete the socket files made by previous server invocations.
         (if (not (eq t (server-running-p server-name)))
-           ;; Remove any leftover socket or authentication file
+           ;; Remove any leftover socket or authentication file.
            (ignore-errors
              (let (delete-by-moving-to-trash)
                (delete-file server-file)))

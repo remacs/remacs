@@ -60,7 +60,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifdef HAVE_LIBSYSTEMD
 # include <systemd/sd-daemon.h>
 # include <sys/socket.h>
-# include <sys/un.h>
 #endif
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -1003,7 +1002,6 @@ main (int argc, char **argv)
 
 
   int sockfd = -1;
-  char *sockname = NULL;
 
   if (argmatch (argv, argc, "-fg-daemon", "--fg-daemon", 10, NULL, &skip_args)
       || argmatch (argv, argc, "-fg-daemon", "--fg-daemon", 10, &dname_arg, &skip_args))
@@ -1063,16 +1061,8 @@ main (int argc, char **argv)
 		  "Try 'Accept=false' in the Emacs socket unit file.\n"));
       else if (systemd_socket == 1
 	       && (0 < sd_is_socket (SD_LISTEN_FDS_START,
-				    AF_UNIX, SOCK_STREAM, 1)))
-	{
-	  struct sockaddr_un sockaddr;
-	  socklen_t sockaddr_sz = sizeof(sockaddr);
-
-	  sockfd = SD_LISTEN_FDS_START;
-
-	  if (!getsockname(sockfd, &sockaddr, &sockaddr_sz))
-	    sockname = strdup(sockaddr.sun_path);
-	}
+				     AF_UNSPEC, SOCK_STREAM, 1)))
+	sockfd = SD_LISTEN_FDS_START;
 #endif /* HAVE_LIBSYSTEMD */
 
 #ifdef USE_GTK
@@ -1670,7 +1660,7 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
   /* This can create a thread that may call getenv, so it must follow
      all calls to putenv and setenv.  Also, this sets up
      add_keyboard_wait_descriptor, which init_display uses.  */
-  init_process_emacs (sockfd, sockname);
+  init_process_emacs (sockfd);
 
   init_keyboard ();	/* This too must precede init_sys_modes.  */
   if (!noninteractive)
