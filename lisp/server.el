@@ -258,8 +258,8 @@ prevents multiple initializations when an external socket has
 been consumed.")
 
 (defcustom server-name
-  (if internal-daemon-sockname
-      (file-name-nondirectory internal-daemon-sockname)
+  (if internal--daemon-sockname
+      (file-name-nondirectory internal--daemon-sockname)
     "server")
   "The name of the Emacs server, if this Emacs process creates one.
 The command `server-start' makes use of this.  It should not be
@@ -271,8 +271,8 @@ changed while a server is running."
 ;; We do not use `temporary-file-directory' here, because emacsclient
 ;; does not read the init file.
 (defvar server-socket-dir
-  (if internal-daemon-sockname
-      (file-name-directory internal-daemon-sockname)
+  (if internal--daemon-sockname
+      (file-name-directory internal--daemon-sockname)
     (and (featurep 'make-network-process '(:family local))
          (format "%s/emacs%d" (or (getenv "TMPDIR") "/tmp") (user-uid))))
   "The directory in which to place the server socket.
@@ -631,7 +631,7 @@ To force-start a server, do \\[server-force-delete] and then
       ;; Check to see if an uninitialized external socket has been
       ;; passed in, if that is the case, skip checking
       ;; `server-running-p' as this will return the wrong result.
-      (if (and internal-daemon-sockname
+      (if (and internal--daemon-sockname
                (not server--external-socket-initialized))
           (setq server--external-socket-initialized t)
         ;; Delete the socket files made by previous server invocations.
