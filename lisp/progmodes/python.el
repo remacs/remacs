@@ -1474,7 +1474,7 @@ nested definitions."
 (defun python-nav-beginning-of-statement ()
   "Move to start of current statement."
   (interactive "^")
-  (back-to-indentation)
+  (forward-line 0)
   (let* ((ppss (syntax-ppss))
          (context-point
           (or
@@ -1489,6 +1489,7 @@ nested definitions."
              (python-info-line-ends-backslash-p))
            (forward-line -1)
            (python-nav-beginning-of-statement))))
+  (back-to-indentation)
   (point-marker))
 
 (defun python-nav-end-of-statement (&optional noend)
