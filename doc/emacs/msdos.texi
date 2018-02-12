@@ -575,7 +575,7 @@ keys (it converts lower-case characters to their upper-case
 variants).  However, if you set the variable
 @code{w32-capslock-is-shiftlock} to a non-@code{nil} value, the
 @key{CapsLock} key will affect non-character keys as well, as if you
-pressed the @key{Shift} key while typing the non-character key.
+pressed the @key{SHIFT} key while typing the non-character key.
 
 @vindex w32-enable-caps-lock
   If the variable @code{w32-enable-caps-lock} is set to a @code{nil}

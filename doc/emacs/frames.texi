@@ -312,7 +312,7 @@ button.
 @node Menu Mouse Clicks
 @section Mouse Clicks for Menus
 
-  Several mouse clicks with the @key{CTRL} and @key{SHIFT} modifiers
+  Several mouse clicks with the @key{Ctrl} and @key{SHIFT} modifiers
 bring up menus.
 
 @table @kbd
