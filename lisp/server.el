@@ -251,8 +251,16 @@ This means that the server should not kill the buffer when you say you
 are done with it in the server.")
 (make-variable-buffer-local 'server-existing-buffer)
 
-;;;###autoload
-(defcustom server-name "server"
+(defvar server-external-socket-initialised nil
+  "When an external socket is passed into Emacs, we need to call
+`server-start' in order to initialise the connection.  This flag
+prevents multiple initialisations when an external socket has
+been consumed.")
+
+(defcustom server-name
+  (if (get-external-sockname)
+      (file-name-nondirectory (get-external-sockname))
+    "server")
   "The name of the Emacs server, if this Emacs process creates one.
 The command `server-start' makes use of this.  It should not be
 changed while a server is running."
@@ -263,8 +271,10 @@ changed while a server is running."
 ;; We do not use `temporary-file-directory' here, because emacsclient
 ;; does not read the init file.
 (defvar server-socket-dir
-  (and (featurep 'make-network-process '(:family local))
-       (format "%s/emacs%d" (or (getenv "TMPDIR") "/tmp") (user-uid)))
+  (if (get-external-sockname)
+      (file-name-directory (get-external-sockname))
+    (and (featurep 'make-network-process '(:family local))
+         (format "%s/emacs%d" (or (getenv "TMPDIR") "/tmp") (user-uid))))
   "The directory in which to place the server socket.
 If local sockets are not supported, this is nil.")
 
@@ -618,23 +628,29 @@ To force-start a server, do \\[server-force-delete] and then
       (when server-process
 	;; kill it dead!
 	(ignore-errors (delete-process server-process)))
-      ;; Delete the socket files made by previous server invocations.
-      (if (not (eq t (server-running-p server-name)))
-	  ;; Remove any leftover socket or authentication file
-	  (ignore-errors
-	    (let (delete-by-moving-to-trash)
-	      (delete-file server-file)))
-	(setq server-mode nil) ;; already set by the minor mode code
-	(display-warning
-	 'server
-	 (concat "Unable to start the Emacs server.\n"
-		 (format "There is an existing Emacs server, named %S.\n"
-			 server-name)
-		 (substitute-command-keys
-                  "To start the server in this Emacs process, stop the existing
+      ;; Check to see if an uninitialised external socket has been
+      ;; passed in, if that is the case, skip checking
+      ;; `server-running-p' as this will return the wrong result.
+      (if (and (get-external-sockname)
+               (not server-external-socket-initialised))
+          (setq server-external-socket-initialised t)
+        ;; Delete the socket files made by previous server invocations.
+        (if (not (eq t (server-running-p server-name)))
+           ;; Remove any leftover socket or authentication file
+           (ignore-errors
+             (let (delete-by-moving-to-trash)
+               (delete-file server-file)))
+         (setq server-mode nil) ;; already set by the minor mode code
+         (display-warning
+          'server
+          (concat "Unable to start the Emacs server.\n"
+                  (format "There is an existing Emacs server, named %S.\n"
+                          server-name)
+                  (substitute-command-keys
+                    "To start the server in this Emacs process, stop the existing
 server or call `\\[server-force-delete]' to forcibly disconnect it."))
-	 :warning)
-	(setq leave-dead t))
+          :warning)
+         (setq leave-dead t)))
       ;; If this Emacs already had a server, clear out associated status.
       (while server-clients
 	(server-delete-client (car server-clients)))
