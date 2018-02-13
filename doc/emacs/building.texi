@@ -1410,12 +1410,13 @@ Loading,,, elisp, the Emacs Lisp Reference Manual}.
 @code{load-path}.  Its value should be a list of directories
 (strings).  These directories are searched, in the specified order, by
 the @kbd{M-x load-library} command, the lower-level @code{load}
-function, and other Emacs functions that find Emacs Lisp libraries.  A
-list entry in @code{load-path} can also have the special value
+function, and other Emacs functions that find Emacs Lisp libraries.
+An entry in @code{load-path} can also have the special value
 @code{nil}, which stands for the current default directory, but it is
-almost always a bad idea to use this.  (If you find yourself wishing
-that @code{nil} were in the list, most likely what you really want is
-to use @kbd{M-x load-file}.)
+almost always a bad idea to use this, because its meaning will depend
+on the buffer that is current when @code{load-path} is used by Emacs.
+(If you find yourself wishing that @code{nil} were in the list, most
+likely what you really want is to use @kbd{M-x load-file}.)
 
   The default value of @code{load-path} is a list of directories where
 the Lisp code for Emacs itself is stored.  If you have libraries of
