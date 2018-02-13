@@ -38,6 +38,24 @@ pub fn current_local_map() -> LispObject {
     LispObject::from_raw(ThreadState::current_buffer().keymap)
 }
 
+/// Return the binding for command KEYS in current global keymap only.
+/// KEYS is a string or vector, a sequence of keystrokes.
+/// The binding is probably a symbol with a function definition.
+/// This function's return values are the same as those of `lookup-key'
+/// (which see).
+///
+/// If optional argument ACCEPT-DEFAULT is non-nil, recognize default
+/// bindings; see the description of `lookup-key' for more details about this.
+#[lisp_fn(min = "1")]
+pub fn global_key_binding(keys: LispObject, accept_default: LispObject) -> LispObject {
+    let map = current_global_map();
+    if map.is_nil() {
+        LispObject::constant_nil()
+    } else {
+        lookup_key(map, keys, accept_default)
+    }
+}
+
 /// Return the current global keymap.
 #[lisp_fn]
 pub fn current_global_map() -> LispObject {
