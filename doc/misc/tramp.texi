@@ -670,6 +670,7 @@ In case both @command{mimencode} and @command{uuencode} are
 unavailable, @value{tramp} first transfers a small Perl program to the
 remote host, and then tries that program for encoding and decoding.
 
+@vindex tramp-inline-compress-start-size
 To increase transfer speeds for large text files, use compression
 before encoding.  The user option
 @option{tramp-inline-compress-start-size} specifies the file size for
@@ -1020,6 +1021,7 @@ can.
 @cindex adb method
 @cindex android (with adb method)
 
+@vindex tramp-adb-program
 This method uses Android Debug Bridge program for accessing Android
 devices.  The Android Debug Bridge must be installed locally for
 @value{tramp} to work.  Some GNU/Linux distributions provide Android
@@ -1028,6 +1030,7 @@ is installed as part of the Android SDK@.  @value{tramp} finds the
 @command{adb} program either via the @env{PATH} environment variable
 or the absolute path set in the user option @option{tramp-adb-program}.
 
+@vindex tramp-adb-connect-if-not-connected
 @value{tramp} connects to Android devices with @option{adb} only when
 the user option @option{tramp-adb-connect-if-not-connected} is not
 @code{nil}.  Otherwise, the connection must be established outside
@@ -1678,6 +1681,7 @@ Set @code{password-cache} to @code{nil} to disable password caching.
 @cindex caching
 @vindex tramp-persistency-file-name
 
+@vindex tramp-persistency-file-name
 For faster initial connection times, @value{tramp} stores previous
 connection properties in a file specified by the user option
 @option{tramp-persistency-file-name}.
@@ -1880,6 +1884,7 @@ prompts, for which @value{tramp} uses @option{tramp-wrong-passwd-regexp}.
 @cindex tset unix command
 @vindex tramp-terminal-type
 
+@vindex tramp-terminal-type
 To suppress inappropriate prompts for terminal type, @value{tramp}
 sets the @env{TERM} to @code{dumb} before the remote login process
 begins via the user option @option{tramp-terminal-type}.  This will
@@ -2153,6 +2158,8 @@ Disabling backups can be targeted to just the @option{su} and
 @end group
 @end lisp
 
+@vindex backup-directory-alist
+@vindex tramp-backup-directory-alist
 Another option is to create better backup file naming with user and
 host names prefixed to the file name.  For example, transforming
 @file{/etc/secretfile} to
@@ -2186,6 +2193,7 @@ The backup file name of
 @file{@trampfn{su,root@@localhost,~/.emacs.d/backups/![su!root@@localhost]!etc!secretfile~}}
 @end ifset
 
+@vindex auto-save-file-name-transforms
 Just as for backup files, similar issues of file naming affect
 auto-saving @value{tramp} files.  Auto-saved files are saved in the
 directory specified by the user option
@@ -2197,6 +2205,7 @@ compiled.  Reset such values to a valid directory.
 Set @option{auto-save-file-name-transforms} to @code{nil} to save
 auto-saved files to the same directory as the original file.
 
+@vindex tramp-auto-save-directory
 Alternatively, set the user option @option{tramp-auto-save-directory}
 to direct all auto saves to that location.
 
@@ -3284,6 +3293,7 @@ the following code in @file{~/.emacs} file.
 How to get a Visual Warning when working with @samp{root} privileges?
 Host indication in the mode line?
 
+@vindex tramp-theme-face-remapping-alist
 Install @file{tramp-theme} from GNU ELPA via Emacs' Package Manager.
 Enable it via @kbd{M-x load-theme @key{RET} tramp}.  Further
 customization is explained in user option
@@ -3311,10 +3321,11 @@ then set them with a hook as follows:
 @item
 Why is @file{~/.sh_history} file on the remote host growing?
 
+@vindex tramp-histfile-override
 Due to the remote shell saving tilde expansions triggered by
 @value{tramp}, the history file is probably growing rapidly.
 @value{tramp} can suppress this behaviour with the user option
-@code{tramp-histfile-override}.  When set to @code{t}, environment
+@option{tramp-histfile-override}.  When set to @code{t}, environment
 variable @env{HISTFILE} is unset, and environment variables
 @env{HISTFILESIZE} @env{HISTSIZE} are set to 0.
 
