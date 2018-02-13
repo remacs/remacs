@@ -3,6 +3,10 @@
 Copyright (C) 1986, 1988, 1993-1994, 1996, 1999-2018 Free Software
 Foundation, Inc.
 
+Author: Jon Arnold
+	Roman Budzianowski
+	Robert Krawitz
+
 This file is part of GNU Emacs.
 
 GNU Emacs is free software: you can redistribute it and/or modify
@@ -19,9 +23,6 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* X pop-up deck-of-cards menu facility for GNU Emacs.
- *
- * Written by Jon Arnold and Roman Budzianowski
- * Mods and rewrite by Robert Krawitz
  *
  */
 

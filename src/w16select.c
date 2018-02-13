@@ -2,6 +2,8 @@
 
 Copyright (C) 1996-1997, 2001-2018 Free Software Foundation, Inc.
 
+Author: Dale P. Smith <dpsm@en.com>
+
 This file is part of GNU Emacs.
 
 GNU Emacs is free software: you can redistribute it and/or modify
@@ -22,7 +24,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    "old" (character-mode) application access to Dynamic Data Exchange,
    menus, and the Windows clipboard.  */
 
-/* Written by Dale P. Smith <dpsm@en.com>  */
 /* Adapted to DJGPP by Eli Zaretskii <eliz@gnu.org>  */
 
 #ifdef MSDOS

@@ -2,6 +2,9 @@
 
 Copyright (C) 1993-1994, 2001-2018 Free Software Foundation, Inc.
 
+Author: Kevin Gallo
+	Benjamin Riefenstahl
+
 This file is part of GNU Emacs.
 
 GNU Emacs is free software: you can redistribute it and/or modify
@@ -16,9 +19,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
-
-/* Written by Kevin Gallo, Benjamin Riefenstahl */
-
 
 /*
  * Notes on usage of selection-coding-system and
