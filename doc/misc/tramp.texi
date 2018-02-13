@@ -2652,9 +2652,9 @@ this.  You could overwrite this behavior by evaluating
 @end lisp
 
 In addition to @option{tramp-remote-process-environment}, you can set
-environment variables for invidivual remote process calls by
-let-binding @code{process-environment}.  @value{tramp} will apply any
-entries which are not present in the global default value of
+environment variables for individual remote process calls by
+let-binding @code{process-environment}.  @value{tramp} applies any
+entries not present in the global default value of
 @code{process-environment} (overriding
 @option{tramp-remote-process-environment} settings, if they conflict).
 For example:
