@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
 #![feature(const_size_of)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 
@@ -1025,6 +1027,8 @@ pub struct Lisp_Frame {
 }
 
 extern "C" {
+    pub fn fget_buffer_list(frame: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fget_buried_buffer_list(frame: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_internal_border_width(frame: *const Lisp_Frame) -> c_int;
 }
 
@@ -1404,6 +1408,9 @@ extern "C" {
     pub fn record_unwind_protect(function: unsafe extern "C" fn(Lisp_Object), arg: Lisp_Object);
     pub fn record_unwind_save_match_data();
     pub fn un_autoload(oldqueue: Lisp_Object);
+
+    pub fn Fnconc(nargs: ptrdiff_t, args: *const Lisp_Object) -> Lisp_Object;
+
 }
 
 /// Contains C definitions from the font.h header.

@@ -13,6 +13,7 @@ remacs-lib = { version = "0.1.0", path = "remacs-lib/" }
 remacs-macros = { version = "0.1.0", path = "remacs-macros" }
 remacs-sys = { version = "0.1.0", path = "remacs-sys/" }
 base64 = "0.9"
+clippy = { version = "*", optional = true }
 lazy_static = "0.2.2"
 libc = "0.2"
 md5 = "0.3.5"

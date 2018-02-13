@@ -181,7 +181,7 @@ pub extern "C" fn intern_driver(
 /// it defaults to the value of `obarray'.
 #[lisp_fn(min = "1")]
 pub fn intern_soft(name: LispObject, obarray: Option<LispObarrayRef>) -> LispObject {
-    let obarray = obarray.unwrap_or_else(|| LispObarrayRef::global());
+    let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
     let tem = obarray.lookup(name);
 
     if tem.is_integer() || (name.is_symbol() && !name.eq(tem)) {
@@ -197,7 +197,7 @@ pub fn intern_soft(name: LispObject, obarray: Option<LispObarrayRef>) -> LispObj
 /// it defaults to the value of `obarray'.
 #[lisp_fn(name = "intern", c_name = "intern", min = "1")]
 pub fn lisp_intern(string: LispObject, obarray: Option<LispObarrayRef>) -> LispObject {
-    let obarray = obarray.unwrap_or_else(|| LispObarrayRef::global());
+    let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
     obarray.intern(string)
 }
 
@@ -209,7 +209,7 @@ extern "C" fn mapatoms_1(sym: Lisp_Object, function: Lisp_Object) {
 /// OBARRAY defaults to the value of `obarray'.
 #[lisp_fn(min = "1")]
 pub fn mapatoms(function: LispObject, obarray: Option<LispObarrayRef>) -> () {
-    let obarray = obarray.unwrap_or_else(|| LispObarrayRef::global());
+    let obarray = obarray.unwrap_or_else(LispObarrayRef::global);
 
     map_obarray(
         obarray.as_lisp_obj().to_raw(),

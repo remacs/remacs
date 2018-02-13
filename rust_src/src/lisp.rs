@@ -162,7 +162,8 @@ impl From<LispObject> for Option<u32> {
 impl<'a> From<&'a str> for LispObject {
     #[inline]
     fn from(s: &str) -> Self {
-        LispObject(unsafe { build_string(CString::new(s).unwrap().as_ptr()) })
+        let cs = CString::new(s).unwrap();
+        LispObject(unsafe { build_string(cs.as_ptr()) })
     }
 }
 
@@ -652,7 +653,7 @@ impl LispObject {
 
     pub fn as_thread_or_error(self) -> ThreadStateRef {
         self.as_thread()
-            .unwrap_or_else(|| wrong_type!(Qthreadp.into(), self))
+            .unwrap_or_else(|| wrong_type!(Qthreadp, self))
     }
 
     pub fn is_mutex(self) -> bool {
@@ -682,7 +683,7 @@ impl LispObject {
     }
 
     pub fn as_subr(self) -> Option<LispSubrRef> {
-        self.as_vectorlike().map_or(None, |v| v.as_subr())
+        self.as_vectorlike().and_then(|v| v.as_subr())
     }
 
     pub fn as_subr_or_error(self) -> LispSubrRef {
@@ -1417,14 +1418,15 @@ impl IsLispNatnum for EmacsInt {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum LispNumber {
     Fixnum(EmacsInt),
     Float(f64),
 }
 
 impl LispNumber {
-    pub fn to_fixnum(self) -> EmacsInt {
-        match self {
+    pub fn to_fixnum(&self) -> EmacsInt {
+        match *self {
             LispNumber::Fixnum(v) => v,
             LispNumber::Float(v) => v as EmacsInt,
         }
@@ -1508,7 +1510,7 @@ impl LispObject {
     /// Nonzero iff X is a character.
     pub fn is_character(self) -> bool {
         self.as_fixnum()
-            .map_or(false, |i| 0 <= i && i <= (MAX_CHAR as EmacsInt))
+            .map_or(false, |i| 0 <= i && i <= EmacsInt::from(MAX_CHAR))
     }
 
     /// Check if Lisp object is a character or not and return the codepoint

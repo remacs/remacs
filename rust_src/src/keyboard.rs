@@ -99,8 +99,8 @@ pub fn posn_at_x_y(
     LispObject::from_raw(unsafe {
         make_lispy_position(
             frame.as_ptr(),
-            LispObject::from_fixnum(x as EmacsInt).to_raw(),
-            LispObject::from_natnum(y as EmacsInt).to_raw(),
+            LispObject::from_fixnum(EmacsInt::from(x)).to_raw(),
+            LispObject::from_natnum(EmacsInt::from(y)).to_raw(),
             0,
         )
     })

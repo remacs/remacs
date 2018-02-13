@@ -122,7 +122,7 @@ pub fn process_buffer(process: LispProcessRef) -> LispObject {
 pub fn process_id(process: LispObject) -> Option<EmacsInt> {
     let pid = unsafe { pget_pid(process.as_process_or_error().as_ptr()) };
     if pid != 0 {
-        Some(pid as EmacsInt)
+        Some(EmacsInt::from(pid))
     } else {
         None
     }
@@ -147,7 +147,7 @@ pub fn get_buffer_process(buffer: LispObject) -> LispObject {
             return p;
         }
     }
-    return LispObject::constant_nil();
+    LispObject::constant_nil()
 }
 
 /// Return the name of the terminal PROCESS uses, or nil if none.

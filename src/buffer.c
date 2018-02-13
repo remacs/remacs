@@ -369,45 +369,6 @@ bset_zv_marker (struct buffer *b, Lisp_Object val)
 }
 
 
-DEFUN ("buffer-list", Fbuffer_list, Sbuffer_list, 0, 1, 0,
-       doc: /* Return a list of all existing live buffers.
-If the optional arg FRAME is a frame, we return the buffer list in the
-proper order for that frame: the buffers show in FRAME come first,
-followed by the rest of the buffers.  */)
-  (Lisp_Object frame)
-{
-  Lisp_Object general;
-  general = Fmapcar (Qcdr, Vbuffer_alist);
-
-  if (FRAMEP (frame))
-    {
-      Lisp_Object framelist, prevlist, tail;
-
-      framelist = Fcopy_sequence (XFRAME (frame)->buffer_list);
-      prevlist = Fnreverse (Fcopy_sequence
-			    (XFRAME (frame)->buried_buffer_list));
-
-      /* Remove from GENERAL any buffer that duplicates one in
-         FRAMELIST or PREVLIST.  */
-      tail = framelist;
-      while (CONSP (tail))
-	{
-	  general = Fdelq (XCAR (tail), general);
-	  tail = XCDR (tail);
-	}
-      tail = prevlist;
-      while (CONSP (tail))
-	{
-	  general = Fdelq (XCAR (tail), general);
-	  tail = XCDR (tail);
-	}
-
-      return CALLN (Fnconc, framelist, general, prevlist);
-    }
-  else
-    return general;
-}
-
 DEFUN ("get-file-buffer", Fget_file_buffer, Sget_file_buffer, 1, 1, 0,
        doc: /* Return the buffer visiting file FILENAME (a string).
 The buffer's `buffer-file-name' must match exactly the expansion of FILENAME.
@@ -6029,7 +5990,6 @@ Functions running this hook are, `get-buffer-create',
   Vbuffer_list_update_hook = Qnil;
   DEFSYM (Qbuffer_list_update_hook, "buffer-list-update-hook");
 
-  defsubr (&Sbuffer_list);
   defsubr (&Sget_file_buffer);
   defsubr (&Sget_buffer_create);
   defsubr (&Smake_indirect_buffer);

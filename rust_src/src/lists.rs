@@ -122,7 +122,7 @@ pub fn nth(n: EmacsInt, list: LispObject) -> LispObject {
     } else {
         list.iter_cars_safe()
             .nth(n as usize)
-            .unwrap_or(LispObject::constant_nil())
+            .unwrap_or_else(LispObject::constant_nil)
     }
 }
 
