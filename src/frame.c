@@ -317,7 +317,7 @@ predicates which report frame's specific UI-related capabilities.  */)
 /* Placeholder used by temacs -nw before window.el is loaded.  */
 DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
        Sframe_windows_min_size, 4, 4, 0,
-       doc: /* */
+       doc: /* SKIP: real doc in window.el.  */
        attributes: const)
      (Lisp_Object frame, Lisp_Object horizontal,
       Lisp_Object ignore, Lisp_Object pixelwise)
