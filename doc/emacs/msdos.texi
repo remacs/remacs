@@ -430,9 +430,9 @@ names, which might cause misalignment of columns in Dired display.
   The Windows equivalent of @code{HOME} is the @dfn{user-specific
 application data directory}.  The actual location depends on the
 Windows version; typical values are @file{C:\Documents and
-Settings\@var{username}\Application Data} on Windows 2000/XP/2K3,
-@file{C:\Users\@var{username}\AppData\Roaming} on Windows
-Vista/7/2008, and either @file{C:\WINDOWS\Application Data} or
+Settings\@var{username}\Application Data} on Windows 2000 up to XP,
+@file{C:\Users\@var{username}\AppData\Roaming} on Windows Vista and
+later, and either @file{C:\WINDOWS\Application Data} or
 @file{C:\WINDOWS\Profiles\@var{username}\Application Data} on Windows
 9X/ME@.  If this directory does not exist or cannot be accessed, Emacs
 falls back to @file{C:\} as the default value of @code{HOME}.
@@ -575,7 +575,7 @@ keys (it converts lower-case characters to their upper-case
 variants).  However, if you set the variable
 @code{w32-capslock-is-shiftlock} to a non-@code{nil} value, the
 @key{CapsLock} key will affect non-character keys as well, as if you
-pressed the @key{Shift} key while typing the non-character key.
+pressed the @key{SHIFT} key while typing the non-character key.
 
 @vindex w32-enable-caps-lock
   If the variable @code{w32-enable-caps-lock} is set to a @code{nil}
