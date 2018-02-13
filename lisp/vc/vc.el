@@ -996,7 +996,9 @@ Within directories, only files already under version control are noticed."
 	((derived-mode-p 'diff-mode)     diff-vc-backend)
         ;; Maybe we could even use comint-mode rather than shell-mode?
 	((derived-mode-p 'dired-mode 'shell-mode 'compilation-mode)
-	 (vc-responsible-backend default-directory))
+	 (condition-case nil
+             (vc-responsible-backend default-directory)
+           (error nil)))
 	(vc-mode (vc-backend buffer-file-name))))
 
 (declare-function vc-dir-current-file "vc-dir" ())
