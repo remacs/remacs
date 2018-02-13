@@ -238,7 +238,7 @@ pub fn raw_byte_from_codepoint(cp: Codepoint) -> c_uchar {
 #[inline]
 pub fn raw_byte_from_codepoint_safe(cp: Codepoint) -> EmacsInt {
     if cp < 0x80 {
-        cp as EmacsInt
+        EmacsInt::from(cp)
     } else if cp > MAX_5_BYTE_CHAR {
         EmacsInt::from(raw_byte_from_codepoint(cp))
     } else {
@@ -309,7 +309,7 @@ pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
     let mut cp = ch as Codepoint;
     // A non-ASCII character can't reflect modifier bits to the code.
     if (cp & !CHAR_MODIFIER_MASK) >= 0x80 {
-        return cp as EmacsInt;
+        return EmacsInt::from(cp);
     }
     let ascii = (cp & 0x7F) as u8;
     // For Meta, Shift, and Control modifiers, we need special care.
@@ -336,7 +336,7 @@ pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
             cp &= 0x1F | (!0x7F & !CHAR_CTL);
         }
     }
-    cp as EmacsInt
+    EmacsInt::from(cp)
 }
 
 /// Store multibyte form of character CP at TO.  If CP has modifier bits,
@@ -344,7 +344,7 @@ pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
 #[no_mangle]
 pub extern "C" fn char_string(mut cp: c_uint, to: *mut c_uchar) -> c_int {
     if cp & CHAR_MODIFIER_MASK != 0 {
-        cp = char_resolve_modifier_mask(cp as EmacsInt) as Codepoint;
+        cp = char_resolve_modifier_mask(EmacsInt::from(cp)) as Codepoint;
         cp &= !CHAR_MODIFIER_MASK;
     }
     write_codepoint(

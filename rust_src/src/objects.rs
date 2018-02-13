@@ -44,7 +44,7 @@ pub fn equal(o1: LispObject, o2: LispObject) -> bool {
 /// of strings.  (`equal' ignores text properties.)
 #[lisp_fn]
 pub fn equal_including_properties(o1: LispObject, o2: LispObject) -> bool {
-    let res = unsafe {
+    unsafe {
         internal_equal(
             o1.to_raw(),
             o2.to_raw(),
@@ -52,8 +52,7 @@ pub fn equal_including_properties(o1: LispObject, o2: LispObject) -> bool {
             0,
             Qnil,
         )
-    };
-    res
+    }
 }
 
 /// Return the argument unchanged.

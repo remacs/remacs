@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
 #![feature(proc_macro)]
 #![recursion_limit = "128"]
 

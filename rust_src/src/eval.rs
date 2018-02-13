@@ -116,7 +116,7 @@ pub fn progn(body: LispObject) -> LispObject {
     body.iter_cars_safe()
         .map(|form| unsafe { eval_sub(form.to_raw()) })
         .last()
-        .map_or_else(|| LispObject::constant_nil(), LispObject::from_raw)
+        .map_or_else(LispObject::constant_nil, LispObject::from_raw)
 }
 
 /// Evaluate BODY sequentially, discarding its value.
@@ -295,14 +295,15 @@ pub fn special_variable_p(symbol: LispSymbolRef) -> bool {
 pub fn defconst(args: LispObject) -> LispSymbolRef {
     let (sym, tail) = args.as_cons_or_error().as_tuple();
 
-    let mut docstring = LispObject::constant_nil();
-    if cdr(tail).is_not_nil() {
+    let mut docstring = if cdr(tail).is_not_nil() {
         if cdr(cdr(tail)).is_not_nil() {
             error!("Too many arguments");
         }
 
-        docstring = car(cdr(tail));
-    }
+        car(cdr(tail))
+    } else {
+        LispObject::constant_nil()
+    };
 
     let mut tem = unsafe { eval_sub(car(cdr(args)).to_raw()) };
     if unsafe { globals.f_Vpurify_flag } != Qnil {
@@ -637,7 +638,7 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
         // have an element whose index is COMPILED_INTERACTIVE, which is
         // where the interactive spec is stored.
         return (vl.is_pseudovector(PseudovecType::PVEC_COMPILED)
-            && vl.pseudovector_size() > (COMPILED_INTERACTIVE as EmacsInt))
+            && vl.pseudovector_size() > EmacsInt::from(COMPILED_INTERACTIVE))
             || has_interactive_prop;
     } else if let Some(cell) = fun.as_cons() {
         // Lists may represent commands.
@@ -728,7 +729,7 @@ pub extern "C" fn FUNCTIONP(object: Lisp_Object) -> bool {
                     // macros or keymaps.
                     let mut it = obj.iter_tails_safe();
                     for _ in 0..4 {
-                        if let None = it.next() {
+                        if it.next().is_none() {
                             break;
                         }
                     }

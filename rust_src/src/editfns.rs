@@ -214,7 +214,7 @@ pub fn insert_byte(byte: EmacsInt, count: Option<EmacsInt>, inherit: bool) {
     let buf = ThreadState::current_buffer();
     let toinsert =
         if byte >= 128 && LispObject::from_raw(buf.enable_multibyte_characters).is_not_nil() {
-            raw_byte_codepoint(byte as c_uchar) as EmacsInt
+            EmacsInt::from(raw_byte_codepoint(byte as c_uchar))
         } else {
             byte
         };
@@ -294,7 +294,7 @@ pub fn following_char() -> EmacsInt {
     if buffer_ref.pt >= buffer_ref.zv {
         0
     } else {
-        buffer_ref.fetch_char(buffer_ref.pt_byte) as EmacsInt
+        EmacsInt::from(buffer_ref.fetch_char(buffer_ref.pt_byte))
     }
 }
 
@@ -332,7 +332,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
         if pos_byte < buffer_ref.begv_byte || pos_byte >= buffer_ref.zv_byte {
             None
         } else {
-            Some(buffer_ref.fetch_char(pos_byte) as EmacsInt)
+            Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     } else {
         let p = pos.as_fixnum_coerce_marker_or_error() as ptrdiff_t;
@@ -340,7 +340,7 @@ pub fn char_after(mut pos: LispObject) -> Option<EmacsInt> {
             None
         } else {
             let pos_byte = unsafe { buf_charpos_to_bytepos(buffer_ref.as_ptr(), p) };
-            Some(buffer_ref.fetch_char(pos_byte) as EmacsInt)
+            Some(EmacsInt::from(buffer_ref.fetch_char(pos_byte)))
         }
     }
 }
@@ -417,7 +417,7 @@ pub fn string_to_char(string: LispStringRef) -> EmacsInt {
     if string.len_chars() > 0 {
         if string.is_multibyte() {
             let (cp, _) = multibyte_char_at(string.as_slice());
-            cp as EmacsInt
+            EmacsInt::from(cp)
         } else {
             EmacsInt::from(string.byte_at(0))
         }

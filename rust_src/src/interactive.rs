@@ -17,7 +17,7 @@ pub fn prefix_numeric_value(raw: LispObject) -> EmacsInt {
         -1
     } else if raw.is_integer() {
         raw.as_fixnum_or_error()
-    } else if let Some(number) = raw.as_cons().map_or(None, |v| v.car().as_fixnum()) {
+    } else if let Some(number) = raw.as_cons().and_then(|v| v.car().as_fixnum()) {
         number
     } else {
         1

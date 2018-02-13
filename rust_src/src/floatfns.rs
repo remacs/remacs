@@ -198,7 +198,7 @@ pub fn frexp(x: EmacsDouble) -> LispObject {
     let (significand, exponent) = libm::frexp(x);
     LispObject::cons(
         LispObject::from_float(significand),
-        LispObject::from_fixnum(exponent as EmacsInt),
+        LispObject::from_fixnum(EmacsInt::from(exponent)),
     )
 }
 
@@ -213,7 +213,7 @@ pub fn ldexp(significand: EmacsDouble, exponent: EmacsInt) -> EmacsDouble {
 #[lisp_fn]
 pub fn expt(arg1: LispObject, arg2: LispObject) -> LispObject {
     if let (Some(x), Some(y)) = (arg1.as_fixnum(), arg2.as_fixnum()) {
-        if y >= 0 && y <= u32::max_value() as EmacsInt {
+        if y >= 0 && y <= EmacsInt::from(u32::max_value()) {
             return LispObject::from_fixnum(x.pow(y as u32));
         }
     }
@@ -226,26 +226,25 @@ pub fn expt(arg1: LispObject, arg2: LispObject) -> LispObject {
 /// This is the same as the exponent of a float.
 #[lisp_fn]
 pub fn logb(arg: LispObject) -> EmacsInt {
-    let res = if let Some(n) = arg.as_fixnum() {
+    if let Some(n) = arg.as_fixnum() {
         let i = n.abs();
         if i == 0 {
             MOST_NEGATIVE_FIXNUM
         } else {
-            (mem::size_of::<EmacsUint>() * 8) as EmacsInt - 1 - i.leading_zeros() as EmacsInt
+            (mem::size_of::<EmacsUint>() * 8) as EmacsInt - 1 - EmacsInt::from(i.leading_zeros())
         }
     } else if let Some(f) = arg.as_float() {
         if f == 0.0 {
             MOST_NEGATIVE_FIXNUM
         } else if f.is_finite() {
             let (_, exp) = libm::frexp(f);
-            exp as EmacsInt - 1
+            EmacsInt::from(exp) - 1
         } else {
             MOST_POSITIVE_FIXNUM
         }
     } else {
         wrong_type!(Qnumberp, arg)
-    };
-    res
+    }
 }
 
 /// Return the nearest integer to ARG, as a float.

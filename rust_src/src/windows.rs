@@ -1,7 +1,6 @@
 //! Functions operating on windows.
 
 use libc::c_int;
-use std::mem;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Type, Lisp_Window};
@@ -22,7 +21,7 @@ pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
 impl LispWindowRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)) }
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
     /// Check if window is a live window (displays a buffer).
@@ -330,7 +329,7 @@ pub fn window_minibuffer_p(window: LispObject) -> bool {
 pub fn window_margins(window: LispObject) -> LispObject {
     fn margin_as_object(margin: c_int) -> LispObject {
         if margin != 0 {
-            LispObject::from_fixnum(margin as EmacsInt)
+            LispObject::from_fixnum(EmacsInt::from(margin))
         } else {
             LispObject::constant_nil()
         }
@@ -414,7 +413,7 @@ pub fn minibuffer_selected_window() -> LispObject {
 pub fn window_total_width(window: LispObject, round: LispObject) -> EmacsInt {
     let win = window_valid_or_selected(window);
 
-    win.total_width(round) as EmacsInt
+    EmacsInt::from(win.total_width(round))
 }
 
 /// Return the height of window WINDOW in lines.
@@ -441,7 +440,7 @@ pub fn window_total_width(window: LispObject, round: LispObject) -> EmacsInt {
 pub fn window_total_height(window: LispObject, round: LispObject) -> LispObject {
     let win = window_valid_or_selected(window);
 
-    LispObject::from_natnum(win.total_height(round) as EmacsInt)
+    LispObject::from_natnum(EmacsInt::from(win.total_height(round)))
 }
 
 /// Return the parent window of window WINDOW.

@@ -66,8 +66,7 @@ pub fn indirect_function_lisp(object: LispObject, _noerror: LispObject) -> LispO
 pub fn type_of(object: LispObject) -> LispObject {
     let ty = match object.get_type() {
         Lisp_Type::Lisp_Cons => Qcons,
-        Lisp_Type::Lisp_Int0 => Qinteger,
-        Lisp_Type::Lisp_Int1 => Qinteger,
+        Lisp_Type::Lisp_Int0 | Lisp_Type::Lisp_Int1 => Qinteger,
         Lisp_Type::Lisp_Symbol => Qsymbol,
         Lisp_Type::Lisp_String => Qstring,
         Lisp_Type::Lisp_Float => Qfloat,
@@ -154,7 +153,7 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
             None => {
                 xsignal!(Qargs_out_of_range, array, idx.into());
             }
-            Some((_, cp)) => (cp as EmacsInt).into(),
+            Some((_, cp)) => EmacsInt::from(cp).into(),
         }
     } else if let Some(bv) = array.as_bool_vector() {
         if idx_u >= bv.len() {
