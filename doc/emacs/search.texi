@@ -1,3 +1,4 @@
+@c -*- coding: utf-8 -*-
 @c This is part of the Emacs manual.
 @c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
@@ -902,7 +903,8 @@ starting and ending characters with a @samp{-} between them.  Thus,
 @samp{[a-z]} matches any lower-case @acronym{ASCII} letter.  Ranges may be
 intermixed freely with individual characters, as in @samp{[a-z$%.]},
 which matches any lower-case @acronym{ASCII} letter or @samp{$}, @samp{%} or
-period.
+period.  As another example, @samp{[α-ωί]} matches all lower-case
+Greek letters.
 
 You can also include certain special @dfn{character classes} in a
 character set.  A @samp{[:} and balancing @samp{:]} enclose a
