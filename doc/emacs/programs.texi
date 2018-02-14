@@ -999,13 +999,13 @@ the line is blank (i.e., empty or containing only whitespace
 characters), the comment is indented to the same position where
 @kbd{@key{TAB}} would indent to (@pxref{Basic Indent}).  If the line
 is non-blank, the comment is placed after the last non-whitespace
-character on the line; normally, Emacs tries putting it at the column
-specified by the variable @code{comment-column} (@pxref{Options for
-Comments}), but if the line already extends past that column, it puts
-the comment at some suitable position, usually separated from the
-non-comment text by at least one space.  In each case, Emacs places
-point after the comment's starting delimiter, so that you can start
-typing the comment text right away.
+character on the line.  Emacs tries to fit the comment between the
+columns specified by the variables @code{comment-column} and
+@code{comment-fill-column} (@pxref{Options for Comments}), if
+possible.  Otherwise, it will choose some other suitable position,
+usually separated from the non-comment text by at least one space.  In
+each case, Emacs places point after the comment's starting delimiter,
+so that you can start typing the comment text right away.
 
   You can also use @kbd{M-;} to align an existing comment.  If a line
 already contains the comment-start string, @kbd{M-;} realigns it to
@@ -1098,13 +1098,16 @@ comment.  Enable the @code{comment-close-slash} clean-up for this.
 @subsection Options Controlling Comments
 
 @vindex comment-column
+@vindex comment-fill-column
 @kindex C-x ;
 @findex comment-set-column
   As mentioned in @ref{Comment Commands}, when the @kbd{M-j} command
-adds a comment to a line, it tries to place the comment at the column
-specified by the buffer-local variable @code{comment-column}.  You can
-set either the local value or the default value of this buffer-local
-variable in the usual way (@pxref{Locals}).  Alternatively, you can
+adds a comment to a line, it tries to place the comment between the
+columns specified by the buffer-local variables @code{comment-column}
+and @code{comment-fill-column} (or if that is @code{nil}, then the
+value of @code{fill-column}, @pxref{Fill Commands}).  You can set
+either the local value or the default value of these buffer-local
+variables in the usual way (@pxref{Locals}).  Alternatively, you can
 type @kbd{C-x ;} (@code{comment-set-column}) to set the value of
 @code{comment-column} in the current buffer to the column where point
 is currently located.  @kbd{C-u C-x ;} sets the comment column to
