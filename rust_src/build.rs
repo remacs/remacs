@@ -140,6 +140,10 @@ impl<'a> ModuleParser<'a> {
             let line = next?;
             self.lineno += 1;
 
+            if line.starts_with(' ') {
+                continue;
+            }
+
             if line.starts_with("declare_GC_protected_static!") {
                 let var = self.parse_gc_protected_static(&line)?;
                 mod_data.protected_statics.push(var);
