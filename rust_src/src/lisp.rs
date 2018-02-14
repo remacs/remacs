@@ -1747,6 +1747,19 @@ macro_rules! export_lisp_fns {
     }
 }
 
+#[allow(unused_macros)]
+macro_rules! protect_statics_from_GC {
+    ($($f:ident),+) => {
+        pub fn rust_static_syms() {
+            unsafe {
+                $(
+                    ::remacs_sys::staticpro(&$f);
+                )+
+            }
+        }
+    }
+}
+
 #[test]
 fn test_basic_float() {
     let val = 8.0;
