@@ -73,23 +73,27 @@ mode for the C programming language is @code{c-mode}.
 @cindex Python mode
 @cindex Ruby mode
 @cindex Simula mode
+@cindex Verilog mode
 @cindex VHDL mode
 @cindex M4 mode
 @cindex Shell-script mode
+@cindex Scheme mode
 @cindex OPascal mode
 @cindex PostScript mode
 @cindex Conf mode
 @cindex DNS mode
 @cindex Javascript mode
+@cindex Awk mode
   Emacs has programming language modes for Lisp, Scheme, the
 Scheme-based DSSSL expression language, Ada, ASM, AWK, C, C++,
 Fortran, Icon, IDL (CORBA), IDLWAVE, Java, Javascript, Metafont
-(@TeX{}'s companion for font creation), Modula2, Object Pascal, Objective-C,
-Octave, Pascal, Perl, Pike, PostScript, Prolog, Python, Ruby, Simula, Tcl,
-and VHDL@.  An alternative mode for Perl is called CPerl mode.  Modes are
-also available for the scripting languages of the common GNU and Unix
-shells, and MS-DOS/MS-Windows @samp{BAT} files, and for makefiles,
-DNS master files, and various sorts of configuration files.
+(@TeX{}'s companion for font creation), Modula2, Object Pascal,
+Objective-C, Octave, Pascal, Perl, Pike, PostScript, Prolog, Python,
+Ruby, Simula, SQL, Tcl, Verilog, and VHDL@.  An alternative mode for
+Perl is called CPerl mode.  Modes are also available for the scripting
+languages of the common GNU and Unix shells, and MS-DOS/MS-Windows
+@samp{BAT} files, and for makefiles, DNS master files, and various
+sorts of configuration files.
 
   Ideally, Emacs should have a major mode for each programming
 language that you might want to edit.  If it doesn't have a mode for
@@ -100,12 +104,13 @@ distributed with Emacs (@pxref{Packages}); or you can contribute one.
 @findex backward-delete-char-untabify
   In most programming languages, indentation should vary from line to
 line to illustrate the structure of the program.  Therefore, in most
-programming language modes, typing @key{TAB} updates the indentation
-of the current line (@pxref{Program Indent}).  Furthermore, @key{DEL}
-is usually bound to @code{backward-delete-char-untabify}, which
-deletes backward treating each tab as if it were the equivalent number
-of spaces, so that you can delete one column of indentation without
-worrying whether the whitespace consists of spaces or tabs.
+programming language modes, typing @kbd{@key{TAB}} updates the
+indentation of the current line (@pxref{Program Indent}).
+Furthermore, @kbd{@key{DEL}} is usually bound to
+@code{backward-delete-char-untabify}, which deletes backward treating
+each tab as if it were the equivalent number of spaces, so that you
+can delete one column of indentation without worrying whether the
+whitespace consists of spaces or tabs.
 
 @cindex mode hook, and major modes
 @vindex c-mode-hook
@@ -122,13 +127,14 @@ For instance, entering C mode runs the hooks @code{prog-mode-hook} and
 @ifnottex
   Separate manuals are available for the modes for Ada (@pxref{Top,,
 Ada Mode, ada-mode, Ada Mode}), C/C++/Objective C/Java/Corba
-IDL/Pike/AWK (@pxref{Top, , CC Mode, ccmode, CC Mode}), and IDLWAVE
-(@pxref{Top,, IDLWAVE, idlwave, IDLWAVE User Manual}).
+IDL/Pike/AWK (@pxref{Top, , CC Mode, ccmode, CC Mode}), Octave, VHDL,
+and IDLWAVE (@pxref{Top,, IDLWAVE, idlwave, IDLWAVE User Manual}).
 @end ifnottex
 @iftex
   The Emacs distribution contains Info manuals for the major modes for
-Ada, C/C++/Objective C/Java/Corba IDL/Pike/AWK, and IDLWAVE@.  For
-Fortran mode, @pxref{Fortran,,, emacs-xtra, Specialized Emacs Features}.
+Ada, C/C++/Objective C/Java/Corba IDL/Pike/AWK, Octave, VHDL, and
+IDLWAVE@.  For Fortran mode, @pxref{Fortran,,, emacs-xtra, Specialized
+Emacs Features}.
 @end iftex
 
 @node Defuns
@@ -362,6 +368,7 @@ language modes.
 @cindex pretty-printer
   Emacs also provides a Lisp pretty-printer in the @code{pp} package,
 which reformats Lisp objects with nice-looking indentation.
+@xref{Output Functions, pp,, elisp, The Emacs Lisp Reference Manual}.
 
 @node Basic Indent
 @subsection Basic Program Indentation Commands
@@ -376,16 +383,18 @@ Insert a newline, then adjust indentation of following line
 
 @kindex TAB @r{(programming modes)}
 @findex indent-line-function
-  The basic indentation command is @key{TAB}
+  The basic indentation command is @kbd{@key{TAB}}
 (@code{indent-for-tab-command}), which was documented in
-@ref{Indentation}.  In programming language modes, @key{TAB} indents
-the current line, based on the indentation and syntactic content of
-the preceding lines; if the region is active, @key{TAB} indents each
-line within the region, not just the current line.
+@ref{Indentation}.  In programming language modes, @kbd{@key{TAB}}
+indents the current line, based on the indentation and syntactic
+content of the preceding lines; if the region is active,
+@kbd{@key{TAB}} indents each line within the region, not just the
+current line.
 
-  The command @key{RET} (@code{newline}), which was documented in
-@ref{Inserting Text}, does the same as @kbd{C-j} followed by
-@key{TAB}: it inserts a new line, then adjusts the line's indentation.
+  The command @kbd{@key{RET}} (@code{newline}), which was documented
+in @ref{Inserting Text}, does the same as @kbd{C-j} followed by
+@kbd{@key{TAB}}: it inserts a new line, then adjusts the line's
+indentation.
 
   When indenting a line that starts within a parenthetical grouping,
 Emacs usually places the start of the line under the preceding line
@@ -406,7 +415,7 @@ Paren}.
 
   Sometimes, you may want to reindent several lines of code at a time.
 One way to do this is to use the mark; when the mark is active and the
-region is non-empty, @key{TAB} indents every line in the region.
+region is non-empty, @kbd{@key{TAB}} indents every line in the region.
 Alternatively, the command @kbd{C-M-\} (@code{indent-region}) indents
 every line in the region, whether or not the mark is active
 (@pxref{Indentation Commands}).
@@ -434,19 +443,19 @@ grouping, without affecting its overall indentation (i.e., the
 indentation of the line where the grouping starts).  The function that
 @kbd{C-M-q} runs depends on the major mode; it is
 @code{indent-pp-sexp} in Lisp mode, @code{c-indent-exp} in C mode,
-etc.  To correct the overall indentation as well, type @key{TAB}
+etc.  To correct the overall indentation as well, type @kbd{@key{TAB}}
 first.
 
 @kindex C-u TAB
   If you like the relative indentation within a grouping but not the
 indentation of its first line, move point to that first line and type
 @kbd{C-u @key{TAB}}.  In Lisp, C, and some other major modes,
-@key{TAB} with a numeric argument reindents the current line as usual,
-then reindents by the same amount all the lines in the parenthetical
-grouping starting on the current line.  It is clever, though, and does
-not alter lines that start inside strings.  Neither does it alter C
-preprocessor lines when in C mode, but it does reindent any
-continuation lines that may be attached to them.
+@kbd{@key{TAB}} with a numeric argument reindents the current line as
+usual, then reindents by the same amount all the lines in the
+parenthetical grouping starting on the current line.  It is clever,
+though, and does not alter lines that start inside strings.  Neither
+does it alter C preprocessor lines when in C mode, but it does
+reindent any continuation lines that may be attached to them.
 
 @findex indent-code-rigidly
   The command @kbd{M-x indent-code-rigidly} rigidly shifts all the
@@ -488,7 +497,7 @@ expression.
   You can override the standard pattern in various ways for individual
 functions, according to the @code{lisp-indent-function} property of
 the function name.  This is normally done for macro definitions, using
-the @code{declare} construct.  @xref{Defining Macros,,, elisp, the
+the @code{declare} construct.  @xref{Defining Macros,,, elisp, The
 Emacs Lisp Reference Manual}.
 
 @node C Indent
@@ -496,7 +505,7 @@ Emacs Lisp Reference Manual}.
 
   Here are special features for indentation in C mode and related modes:
 
-@table @code
+@table @kbd
 @item C-c C-q
 @kindex C-c C-q @r{(C mode)}
 @findex c-indent-defun
@@ -919,8 +928,8 @@ comments.  For example, in Lisp code, comments starting with two
 semicolons are indented as if they were lines of code, while those
 starting with three semicolons are supposed to be aligned to the left
 margin and are often used for sectioning purposes.  Emacs understand
-these conventions; for instance, typing @key{TAB} on a comment line
-will indent the comment to the appropriate position.
+these conventions; for instance, typing @kbd{@key{TAB}} on a comment
+line will indent the comment to the appropriate position.
 
 @example
 ;; This function is just an example.
@@ -956,7 +965,7 @@ Kill comment on current line (@code{comment-kill}).
 Set comment column (@code{comment-set-column}).
 @item @kbd{C-M-j}
 @itemx @kbd{M-j}
-Like @key{RET} followed by inserting and aligning a comment
+Like @kbd{@key{RET}} followed by inserting and aligning a comment
 (@code{comment-indent-new-line}).  @xref{Multi-Line Comments}.
 @item @kbd{M-x comment-region}
 @itemx @kbd{C-c C-c} (in C-like modes)
@@ -986,8 +995,8 @@ negative argument @var{-n} removes @var{n} delimiters.
 current line, @kbd{M-;} adds a new comment to the current line.  If
 the line is blank (i.e., empty or containing only whitespace
 characters), the comment is indented to the same position where
-@key{TAB} would indent to (@pxref{Basic Indent}).  If the line is
-non-blank, the comment is placed after the last non-whitespace
+@kbd{@key{TAB}} would indent to (@pxref{Basic Indent}).  If the line
+is non-blank, the comment is placed after the last non-whitespace
 character on the line; normally, Emacs tries putting it at the column
 specified by the variable @code{comment-column} (@pxref{Options for
 Comments}), but if the line already extends past that column, it puts
