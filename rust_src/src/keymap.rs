@@ -38,6 +38,20 @@ pub fn current_local_map() -> LispObject {
     LispObject::from_raw(ThreadState::current_buffer().keymap)
 }
 
+/// Select KEYMAP as the local keymap.
+/// If KEYMAP is nil, that means no local keymap.
+#[lisp_fn]
+pub fn use_local_map(mut keymap: LispObject) -> () {
+    if !keymap.is_nil() {
+        keymap = unsafe {
+            let map = get_keymap(keymap.to_raw(), true, true);
+            LispObject::from_raw(map)
+        }
+    }
+
+    ThreadState::current_buffer().keymap = keymap.to_raw();
+}
+
 /// Return the binding for command KEYS in current global keymap only.
 /// KEYS is a string or vector, a sequence of keystrokes.
 /// The binding is probably a symbol with a function definition.
@@ -60,6 +74,14 @@ pub fn global_key_binding(keys: LispObject, accept_default: LispObject) -> LispO
 #[lisp_fn]
 pub fn current_global_map() -> LispObject {
     unsafe { LispObject::from_raw(_current_global_map) }
+}
+
+/// Select KEYMAP as the global keymap.
+#[lisp_fn]
+pub fn use_global_map(keymap: LispObject) -> () {
+    unsafe {
+        _current_global_map = get_keymap(keymap.to_raw(), true, true);
+    }
 }
 
 // Value is number if KEY is too long; nil if valid but has no definition.

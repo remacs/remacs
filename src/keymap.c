@@ -1630,29 +1630,6 @@ bindings; see the description of `lookup-key' for more details about this.  */)
   return Flist (j, maps);
 }
 
-DEFUN ("use-global-map", Fuse_global_map, Suse_global_map, 1, 1, 0,
-       doc: /* Select KEYMAP as the global keymap.  */)
-  (Lisp_Object keymap)
-{
-  keymap = get_keymap (keymap, 1, 1);
-  current_global_map = keymap;
-
-  return Qnil;
-}
-
-DEFUN ("use-local-map", Fuse_local_map, Suse_local_map, 1, 1, 0,
-       doc: /* Select KEYMAP as the local keymap.
-If KEYMAP is nil, that means no local keymap.  */)
-  (Lisp_Object keymap)
-{
-  if (!NILP (keymap))
-    keymap = get_keymap (keymap, 1, 1);
-
-  bset_keymap (current_buffer, keymap);
-
-  return Qnil;
-}
-
 DEFUN ("current-minor-mode-maps", Fcurrent_minor_mode_maps, Scurrent_minor_mode_maps, 0, 0, 0,
        doc: /* Return a list of keymaps for the minor modes of the current buffer.  */)
   (void)
@@ -3575,8 +3552,6 @@ be preferred.  */);
   defsubr (&Skey_binding);
   defsubr (&Sminor_mode_key_binding);
   defsubr (&Sdefine_key);
-  defsubr (&Suse_global_map);
-  defsubr (&Suse_local_map);
   defsubr (&Scurrent_minor_mode_maps);
   defsubr (&Scurrent_active_maps);
   defsubr (&Saccessible_keymaps);
