@@ -1033,7 +1033,8 @@ the system default antialiasing.
 @node Windows Misc
 @section Miscellaneous Windows-specific features
 
-  This section describes miscellaneous Windows-specific features.
+  This section describes Windows-specific features that don't fit
+anywhere else.
 
 @vindex w32-use-visible-system-caret
 @cindex screen reader software, MS-Windows
