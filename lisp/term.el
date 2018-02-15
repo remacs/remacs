@@ -347,6 +347,7 @@
 (eval-when-compile (require 'cl-lib))
 (require 'ring)
 (require 'ehelp)
+(require 'comint) ; Password regexp.
 
 (declare-function ring-empty-p "ring" (ring))
 (declare-function ring-ref "ring" (ring index))
@@ -2283,12 +2284,10 @@ applications."
 (defun term-send-invisible (str &optional proc)
   "Read a string without echoing.
 Then send it to the process running in the current buffer.  A new-line
-is additionally sent.  String is not saved on term input history list.
-Security bug: your string can still be temporarily recovered with
-\\[view-lossage]."
+is additionally sent.  String is not saved on term input history list."
   (interactive "P") ; Defeat snooping via C-x esc
   (when (not (stringp str))
-    (setq str (term-read-noecho "Non-echoed text: " t)))
+    (setq str (read-passwd "Non-echoed text: ")))
   (when (not proc)
     (setq proc (get-buffer-process (current-buffer))))
   (if (not proc) (error "Current buffer has no process")
@@ -2296,6 +2295,16 @@ Security bug: your string can still be temporarily recovered with
 				     (cons str nil)))
     (term-send-string proc str)
     (term-send-string proc "\n")))
+
+;; TODO: Maybe combine this with `comint-watch-for-password-prompt'.
+(defun term-watch-for-password-prompt (string)
+  "Prompt in the minibuffer for password and send without echoing.
+Checks if STRING contains a password prompt as defined by
+`comint-password-prompt-regexp'."
+  (when (term-in-line-mode)
+    (when (let ((case-fold-search t))
+            (string-match comint-password-prompt-regexp string))
+      (term-send-invisible (read-passwd string)))))
 
 
 ;;; Low-level process communication
@@ -3152,6 +3161,8 @@ See `term-prompt-regexp'."
 	  (term-handle-deferred-scroll))
 
 	(set-marker (process-mark proc) (point))
+        (when (stringp decoded-substring)
+          (term-watch-for-password-prompt decoded-substring))
 	(when save-point
 	  (goto-char save-point)
 	  (set-marker save-point nil))
