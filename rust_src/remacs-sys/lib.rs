@@ -1115,6 +1115,8 @@ extern "C" {
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
 
+    pub fn staticpro(varaddress: *const Lisp_Object);
+
     // Use LispObject::tag_ptr instead of make_lisp_ptr
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
 

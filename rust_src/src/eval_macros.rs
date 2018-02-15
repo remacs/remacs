@@ -119,3 +119,10 @@ macro_rules! list {
 macro_rules! def_lisp_sym {
     ($name:expr, $value:expr) => {};
 }
+
+#[allow(unused_macros)]
+macro_rules! declare_GC_protected_static {
+    ($var: ident, $value: expr) => {
+        static mut $var: Lisp_Object = $value;
+    }
+}
