@@ -27,7 +27,10 @@ sha2 = "0.4.2"
 alloc_unexecmacosx = { version = "0.1.0", path = "alloc_unexecmacosx" }
 
 [build-dependencies]
+clippy = { version = "*", optional = true }
+lazy_static = "0.2.2"
 libc = "0.2"
+regex = "0.2"
 
 [lib]
 crate-type = ["staticlib"]
