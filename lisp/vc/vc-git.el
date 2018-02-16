@@ -243,8 +243,11 @@ Should be consistent with the Git config value i18n.logOutputEncoding."
              (vc-git--run-command-string nil "version")))
         (setq vc-git--program-version
               (if (and version-string
-                       (string-match "git version \\([0-9.]+\\)$"
-                                     version-string))
+                       ;; Git for Windows appends ".windows.N" to the
+                       ;; numerical version reported by Git.
+                       (string-match
+                        "git version \\([0-9.]+\\)\\(\.windows.[0-9]+\\)?$"
+                        version-string))
                   (match-string 1 version-string)
                 "0")))))
 

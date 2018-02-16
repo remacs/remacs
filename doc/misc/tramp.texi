@@ -1,18 +1,16 @@
 \input texinfo   @c -*- mode: texinfo; coding: utf-8 -*-
 @setfilename ../../info/tramp.info
 @c %**start of header
-@settitle TRAMP User Manual
 @include docstyle.texi
+@c In the Tramp repository, the version number is auto-frobbed from
+@c configure.ac, so you should edit that file and run
+@c "autoconf && ./configure" to change the version number.
+@include trampver.texi
+@settitle @value{tramp} @value{trampver} User Manual
 @c %**end of header
 
 @c This is *so* much nicer :)
 @footnotestyle end
-
-@c In the Tramp repository, the version number is auto-frobbed from
-@c configure.ac, so you should edit that file and run
-@c "autoconf && ./configure" to change the version number.
-
-@include trampver.texi
 
 @c Macro for formatting a file name according to the respective
 @c syntax.  Macro arguments should not have any leading or trailing
@@ -48,7 +46,7 @@ copy and modify this GNU manual.''
 @end direntry
 
 @titlepage
-@title @value{tramp} version @value{trampver} User Manual
+@title @value{tramp} @value{trampver} User Manual
 @author by Daniel Pittman
 @author based on documentation by Kai Großjohann
 @end titlepage
@@ -57,9 +55,9 @@ copy and modify this GNU manual.''
 
 
 @node Top, Overview, (dir), (dir)
-@top @value{tramp} version @value{trampver} User Manual
+@top @value{tramp} @value{trampver} User Manual
 
-This file documents @value{tramp} version @value{trampver}, a remote file
+This file documents @value{tramp} @value{trampver}, a remote file
 editing package for Emacs.
 
 @value{tramp} stands for ``Transparent Remote (file) Access, Multiple
@@ -320,7 +318,7 @@ behind the scenes when you open a file with @value{tramp}.
 @chapter Obtaining @value{tramp}
 @cindex obtaining @value{tramp}
 
-@value{tramp} is included as part of Emacs (since Emacs version 22.1).
+@value{tramp} is included as part of Emacs (since Emacs 22.1).
 
 @value{tramp} is also freely packaged for download on the Internet at
 @uref{https://ftp.gnu.org/gnu/tramp/}.
@@ -1462,8 +1460,8 @@ server.
 
 Both ssh and PuTTY support such proxy settings, using an HTTP tunnel
 via the @command{CONNECT} command (conforming to RFC 2616, 2817
-specifications).  Proxy servers using HTTP version 1.1 or later
-protocol support this command.
+specifications).  Proxy servers using HTTP 1.1 or later protocol
+support this command.
 
 @subsection Tunneling with ssh
 
@@ -1501,6 +1499,7 @@ proxy server @samp{proxy.your.domain} on port 3128.
 @cindex using non-standard methods
 @cindex create your own methods
 
+@vindex tramp-methods
 The @code{tramp-methods} variable currently has an exhaustive list of
 predefined methods.  Any part of this list can be modified with more
 suitable settings.  Refer to the Lisp documentation of that variable,
@@ -1511,8 +1510,8 @@ accessible with @kbd{C-h v tramp-methods @key{RET}}.
 @section Selecting config files for user/host name completion
 @cindex customizing completion
 @cindex selecting config files
-@vindex tramp-completion-function-alist
 
+@vindex tramp-completion-function-alist
 @code{tramp-completion-function-alist} uses predefined files for user
 and host name completion (@pxref{File name completion}).  For each
 method, it keeps a set of configuration files and a function that can
@@ -1650,8 +1649,8 @@ the need.
 
 @anchor{Using an authentication file}
 @subsection Using an authentication file
-@vindex auth-sources
 
+@vindex auth-sources
 The package @file{auth-source.el}, originally developed for No Gnus,
 reads passwords from different sources, @xref{Help for users, ,
 auth-source, auth}.  The default authentication file is
@@ -1697,7 +1696,6 @@ Set @code{password-cache} to @code{nil} to disable password caching.
 @node Connection caching
 @section Reusing connection related information
 @cindex caching
-@vindex tramp-persistency-file-name
 
 @vindex tramp-persistency-file-name
 For faster initial connection times, @value{tramp} stores previous
@@ -1721,11 +1719,11 @@ connection related information for that host and creates a new entry.
 
 @node Predefined connection information
 @section Setting own connection related information
-@vindex tramp-connection-properties
 
 For more precise customization, parameters specified by
 @code{tramp-methods} can be overwritten manually.
 
+@vindex tramp-connection-properties
 Set @option{tramp-connection-properties} to manually override
 @code{tramp-methods}.  Properties in this list are in the form
 @code{(@var{regexp} @var{property} @var{value})}.  @var{regexp}
@@ -1900,7 +1898,6 @@ prompts, for which @value{tramp} uses @option{tramp-wrong-passwd-regexp}.
 @item @command{tset} and other questions
 @cindex unix command @command{tset}
 @cindex @command{tset} unix command
-@vindex tramp-terminal-type
 
 @vindex tramp-terminal-type
 To suppress inappropriate prompts for terminal type, @value{tramp}
@@ -1981,9 +1978,9 @@ shell-specific config files.  For example, bash can use
 
 @value{tramp} redefines the remote shell prompt internally for robust
 parsing.  This redefinition affects the looks of a prompt in an
-interactive remote shell through commands, such as @kbd{M-x
-shell}.  Such prompts, however, can be reset to something more readable
-and recognizable using these @value{tramp} variables.
+interactive remote shell through commands, such as @kbd{M-x shell
+@key{RET}}.  Such prompts, however, can be reset to something more
+readable and recognizable using these @value{tramp} variables.
 
 @value{tramp} sets the @env{INSIDE_EMACS} variable in the startup
 script file @file{~/.emacs_SHELLNAME}.
@@ -2096,8 +2093,8 @@ directory for temporary files:
 
 @item
 Open a remote connection with the command @kbd{C-x C-f
-@trampfn{ssh,192.168.0.26#2222,}}, where @command{sshd} is listening
-on port @samp{2222}.
+@trampfn{ssh,192.168.0.26#2222,} @key{RET}}, where @command{sshd} is
+listening on port @samp{2222}.
 
 To add a corresponding entry to the @file{~/.ssh/config} file
 (recommended), use this:
@@ -2124,7 +2121,7 @@ the previous example, fix the connection properties as follows:
 
 @noindent
 Open a remote connection with a more concise command @kbd{C-x C-f
-@trampfn{ssh,android,}}.
+@trampfn{ssh,android,} @key{RET}}.
 @end itemize
 
 
@@ -2132,8 +2129,8 @@ Open a remote connection with a more concise command @kbd{C-x C-f
 @section Auto-save and Backup configuration
 @cindex auto-save
 @cindex backup
-@vindex backup-directory-alist
 
+@vindex backup-directory-alist
 To avoid @value{tramp} from saving backup files owned by @samp{root}
 to locations accessible to others, default backup settings in
 @option{backup-directory-alist} have to be altered.
@@ -2176,7 +2173,6 @@ Disabling backups can be targeted to just the @option{su} and
 @end group
 @end lisp
 
-@vindex backup-directory-alist
 @vindex tramp-backup-directory-alist
 Another option is to create better backup file naming with user and
 host names prefixed to the file name.  For example, transforming
@@ -2237,8 +2233,9 @@ This section is incomplete.  Please share your solutions.
 @cindex @option{sshx} method with cygwin
 
 Cygwin's @command{ssh} works only with a Cygwin version of Emacs.  To
-check for compatibility: type @kbd{M-x eshell}, and start @kbd{ssh
-test.host}.  Incompatibilities trigger this message:
+check for compatibility: type @kbd{M-x eshell @key{RET}}, and start
+@kbd{ssh test.host @key{RET}}.  Incompatibilities trigger this
+message:
 
 @example
 Pseudo-terminal will not be allocated because stdin is not a terminal.
@@ -2555,8 +2552,8 @@ remote host name and file name.  For example, hopping over a single
 proxy @samp{bird@@bastion} to a remote file on @samp{you@@remotehost}:
 
 @example
-@c @kbd{C-x C-f @trampfn{ssh@value{postfixhop}bird@@bastion|ssh,you,remotehost,/path}}
-@kbd{C-x C-f @value{prefix}ssh@value{postfixhop}bird@@bastion|ssh@value{postfixhop}you@@remotehost@value{postfix}/path}
+@c @kbd{C-x C-f @trampfn{ssh@value{postfixhop}bird@@bastion|ssh,you,remotehost,/path} @key{RET}}
+@kbd{C-x C-f @value{prefix}ssh@value{postfixhop}bird@@bastion|ssh@value{postfixhop}you@@remotehost@value{postfix}/path @key{RET}}
 @end example
 
 Proxies can take patterns @code{%h} or @code{%u}.
@@ -2671,9 +2668,9 @@ this.  You could overwrite this behavior by evaluating
 @end lisp
 
 In addition to @option{tramp-remote-process-environment}, you can set
-environment variables for invidivual remote process calls by
-let-binding @code{process-environment}.  @value{tramp} will apply any
-entries which are not present in the global default value of
+environment variables for individual remote process calls by
+let-binding @code{process-environment}.  @value{tramp} applies any
+entries not present in the global default value of
 @code{process-environment} (overriding
 @option{tramp-remote-process-environment} settings, if they conflict).
 For example:
@@ -2778,14 +2775,15 @@ host.  Example:
 @example
 @group
 @kbd{C-x C-f @trampfn{sudo,,} @key{RET}}
-@kbd{M-! tail -f /var/log/syslog.log & @key{RET}}
+@kbd{M-& tail -f /var/log/syslog.log @key{RET}}
 @end group
 @end example
 
 @command{tail} command outputs continuously to the local buffer,
 @file{*Async Shell Command*}
 
-@kbd{M-x auto-revert-tail-mode} runs similarly showing continuous output.
+@kbd{M-x auto-revert-tail-mode @key{RET}} runs similarly showing
+continuous output.
 
 
 @subsection Running @code{eshell} on a remote host
@@ -2794,8 +2792,8 @@ host.  Example:
 @value{tramp} is integrated into @file{eshell.el}, which enables
 interactive eshell sessions on remote hosts at the command prompt.
 You must add the module @code{em-tramp} to @code{eshell-modules-list}.
-Here's a sample interaction after opening @kbd{M-x eshell} on a remote
-host:
+Here's a sample interaction after opening @kbd{M-x eshell @key{RET}}
+on a remote host:
 
 @example
 @group
@@ -2876,7 +2874,7 @@ calls include:
 @end group
 @end example
 
-Just the local part of a remote file name, such as @kbd{perl -d
+Just the local part of a remote file name, such as @command{perl -d
 /home/user/myprog.pl}, is not possible.
 
 Arguments of the program to be debugged must be literal, can take
@@ -2896,8 +2894,8 @@ command.  Powershell V2.0 on the remote host is required to run
 processes triggered from @value{tramp}.
 
 @option{explicit-shell-file-name} and @option{explicit-*-args} have to
-be set properly so @kbd{M-x shell} can open a proper remote shell on a
-MS Windows host.  To open @command{cmd}, set it as follows:
+be set properly so @kbd{M-x shell @key{RET}} can open a proper remote
+shell on a MS Windows host.  To open @command{cmd}, set it as follows:
 
 @lisp
 @group
@@ -3189,9 +3187,9 @@ Before sending a bug report, run the test suite first @ref{Testing}.
 Check if the bug or problem is already addressed in @xref{Frequently
 Asked Questions}.
 
-Run @kbd{M-x tramp-bug} to generate a buffer with details of the
-system along with the details of the @value{tramp}
-installation.  Please include these details with the bug report.
+Run @kbd{M-x tramp-bug @key{RET}} to generate a buffer with details of
+the system along with the details of the @value{tramp} installation.
+Please include these details with the bug report.
 
 The bug report must describe in as excruciating detail as possible the
 steps required to reproduce the problem.  These details must include
@@ -3317,7 +3315,7 @@ put the cursor at the top of the buffer, and then apply the following
 expression:
 
 @example
-@kbd{M-: (re-search-forward (concat tramp-shell-prompt-pattern "$"))}
+@kbd{M-: (re-search-forward (concat tramp-shell-prompt-pattern "$")) @key{RET}}
 @end example
 
 If the cursor has not moved to the prompt at the bottom of the buffer,
@@ -3521,9 +3519,10 @@ the following code in @file{~/.emacs} file.
 How to get a Visual Warning when working with @samp{root} privileges?
 Host indication in the mode line?
 
+@cindex @value{tramp} theme
 @vindex tramp-theme-face-remapping-alist
 Install @file{tramp-theme} from GNU ELPA via Emacs' Package Manager.
-Enable it via @kbd{M-x load-theme @key{RET} tramp}.  Further
+Enable it via @kbd{M-x load-theme @key{RET} tramp @key{RET}}.  Further
 customization is explained in user option
 @option{tramp-theme-face-remapping-alist}.
 
@@ -3598,6 +3597,24 @@ is @file{@trampfn{ssh,news@@news.my.domain,/opt/news/etc}}, then:
 @enumerate
 
 @item
+Use simplified syntax:
+
+If you always apply the default method (@pxref{Default Method}), you
+could use the simplified @value{tramp} syntax (@pxref{Change file name
+syntax}):
+
+@lisp
+@group
+(customize-set-variable 'tramp-default-method "ssh")
+(tramp-change-syntax 'simplified)
+@end group
+@end lisp
+
+The reduced typing: @kbd{C-x C-f
+@code{@value{prefix}news@@news.my.domain@value{postfix}/opt/news/etc}
+@key{RET}}.
+
+@item
 Use default values for method name and user name:
 
 You can define default methods and user names for hosts,
@@ -3611,11 +3628,12 @@ You can define default methods and user names for hosts,
 @end group
 @end lisp
 
-The reduced typing: @kbd{C-x C-f @trampfn{-,news.my.domain,/opt/news/etc}}.
+The reduced typing: @kbd{C-x C-f
+@trampfn{-,news.my.domain,/opt/news/etc} @key{RET}}.
 
 @strong{Note} that there are some useful shortcuts already.  Accessing
 your local host as @samp{root} user, is possible just by @kbd{C-x C-f
-@trampfn{su,,}}.
+@trampfn{su,,} @key{RET}}.
 
 @item
 Use configuration options of the access method:
@@ -3632,7 +3650,7 @@ Host xy
 @end group
 @end example
 
-The reduced typing: @kbd{C-x C-f @trampfn{ssh,xy,/opt/news/etc}}.
+The reduced typing: @kbd{C-x C-f @trampfn{ssh,xy,/opt/news/etc} @key{RET}}.
 
 Depending on the number of files in the directories, host names
 completion can further reduce key strokes: @kbd{C-x C-f
@@ -3800,8 +3818,8 @@ Load @file{bbdb} in Emacs:
 @end group
 @end lisp
 
-Create a BBDB entry with @kbd{M-x bbdb-create-ftp-site}.  Then specify
-a method and user name where needed.  Examples:
+Create a BBDB entry with @kbd{M-x bbdb-create-ftp-site @key{RET}}.
+Then specify a method and user name where needed.  Examples:
 
 @example
 @group
@@ -3937,8 +3955,8 @@ To disable both @value{tramp} (and Ange FTP), set @code{tramp-mode} to
 @end lisp
 
 @item
-To unload @value{tramp}, type @kbd{M-x tramp-unload-tramp}.  Unloading
-@value{tramp} resets Ange FTP plugins also.
+To unload @value{tramp}, type @kbd{M-x tramp-unload-tramp @key{RET}}.
+Unloading @value{tramp} resets Ange FTP plugins also.
 @end itemize
 @end itemize
 
