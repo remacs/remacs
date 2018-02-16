@@ -26,9 +26,8 @@ pub fn Ctl(c: char) -> i32 {
 /// The optional arg STRING supplies a menu name for the keymap
 /// in case you use it as a menu with `x-popup-menu'.
 #[lisp_fn(min = "0")]
-pub fn make_keymap(string: Option<LispObject>) -> LispObject {
+pub fn make_keymap(string: LispObject) -> LispObject {
     let tail: LispObject;
-    let string = string.unwrap_or(LispObject::constant_nil());
     if !string.is_nil() {
         tail = LispObject::from_raw(unsafe { list1(string.to_raw()) });
     } else {
@@ -37,6 +36,23 @@ pub fn make_keymap(string: Option<LispObject>) -> LispObject {
 
     let char_table = unsafe { Fmake_char_table(Qkeymap, LispObject::constant_nil().to_raw()) };
     LispObject::from_raw(unsafe { Fcons(Qkeymap, Fcons(char_table, tail.to_raw())) })
+}
+
+/// Return t if OBJECT is a keymap.
+///
+/// A keymap is a list (keymap . ALIST),
+/// or a symbol whose function definition is itself a keymap.
+/// ALIST elements look like (CHAR . DEFN) or (SYMBOL . DEFN);
+/// a vector of densely packed bindings for small character codes
+/// is also allowed as an element.
+#[lisp_fn]
+pub fn keymapp(object: LispObject) -> LispObject {
+    let map = unsafe { LispObject::from_raw(get_keymap(object.to_raw(), false, false)) };
+    if map.is_nil() {
+        LispObject::constant_nil()
+    } else {
+        LispObject::constant_t()
+    }
 }
 
 /// Return the binding for command KEYS in current local keymap only.

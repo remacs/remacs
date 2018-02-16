@@ -126,19 +126,6 @@ initial_define_lispy_key (Lisp_Object keymap, const char *keyname, const char *d
   store_in_keymap (keymap, intern_c_string (keyname), intern_c_string (defname));
 }
 
-DEFUN ("keymapp", Fkeymapp, Skeymapp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a keymap.
-
-A keymap is a list (keymap . ALIST),
-or a symbol whose function definition is itself a keymap.
-ALIST elements look like (CHAR . DEFN) or (SYMBOL . DEFN);
-a vector of densely packed bindings for small character codes
-is also allowed as an element.  */)
-  (Lisp_Object object)
-{
-  return (KEYMAPP (object) ? Qt : Qnil);
-}
-
 DEFUN ("keymap-prompt", Fkeymap_prompt, Skeymap_prompt, 1, 1, 0,
        doc: /* Return the prompt-string of a keymap MAP.
 If non-nil, the prompt is shown in the echo-area
@@ -3518,7 +3505,6 @@ be preferred.  */);
   staticpro (&where_is_cache);
   staticpro (&where_is_cache_keymaps);
 
-  defsubr (&Skeymapp);
   defsubr (&Skeymap_parent);
   defsubr (&Skeymap_prompt);
   defsubr (&Sset_keymap_parent);
