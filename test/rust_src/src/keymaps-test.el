@@ -16,6 +16,7 @@
                             ;; C-c C-z
                             (26 . emacs-version))))
         (backup-keymap (current-global-map)))
+    (should-error (use-global-map nil))
     (use-global-map sample-keymap)
     (should (equal (current-global-map) '(keymap (3 keymap (26 . emacs-version)))))
     (use-global-map backup-keymap)))
