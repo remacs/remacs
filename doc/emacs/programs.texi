@@ -1463,7 +1463,7 @@ the menu item named @samp{Source Code Parsers (Semantic)} in the
 
    When Semantic mode is enabled, Emacs automatically attempts to
 parse each file you visit.  Currently, Semantic understands C, C++,
-Javascript, Java, HTML, Make, Python, Scheme, SRecode, and Texinfo.
+HTML, Java, Javascript, Make, Python, Scheme, SRecode, and Texinfo.
 Within each parsed buffer, the following commands are available:
 
 @table @kbd
