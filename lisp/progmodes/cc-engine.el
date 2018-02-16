@@ -3295,7 +3295,7 @@ comment at the start of cc-engine.el for more info."
 			     (point)
 			   here)))
 	pa+1		      ; pos just after an opening PAren (or brace).
-	(ren+1 from)	      ; usually a pos just after an closing paREN etc.
+	(ren+1 from)	      ; usually a pos just after a closing paREN etc.
 			      ; Is actually the pos. to scan for a (/{/[ from,
 			      ; which sometimes is after a silly )/}/].
 	paren+1		      ; Pos after some opening or closing paren.
