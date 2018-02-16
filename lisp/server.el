@@ -1092,7 +1092,8 @@ The following commands are accepted by the client:
 		tty-type   ; string.
 		files
 		filepos
-		args-left)
+		args-left
+                create-frame-func)
 	    ;; Remove this line from STRING.
 	    (setq string (substring string (match-end 0)))
 	    (setq args-left
@@ -1244,28 +1245,29 @@ The following commands are accepted by the client:
 		 (or files commands)
 		 (setq use-current-frame t))
 
-	    (setq frame
-		  (cond
-		   ((and use-current-frame
-			 (or (eq use-current-frame 'always)
-			     ;; We can't use the Emacs daemon's
-			     ;; terminal frame.
-			     (not (and (daemonp)
-				       (null (cdr (frame-list)))
-				       (eq (selected-frame)
-					   terminal-frame)))))
-		    (setq tty-name nil tty-type nil)
-		    (if display (server-select-display display)))
-		   ((or (and (eq system-type 'windows-nt)
-			     (daemonp)
-			     (setq display "w32"))
-		        (eq tty-name 'window-system))
-		    (server-create-window-system-frame display nowait proc
-						       parent-id
-						       frame-parameters))
-		   ;; When resuming on a tty, tty-name is nil.
-		   (tty-name
-		    (server-create-tty-frame tty-name tty-type proc))))
+	    (setq create-frame-func
+                  (lambda ()
+		    (cond
+		     ((and use-current-frame
+			   (or (eq use-current-frame 'always)
+			       ;; We can't use the Emacs daemon's
+			       ;; terminal frame.
+			       (not (and (daemonp)
+				         (null (cdr (frame-list)))
+				         (eq (selected-frame)
+					     terminal-frame)))))
+		      (setq tty-name nil tty-type nil)
+		      (if display (server-select-display display)))
+		     ((or (and (eq system-type 'windows-nt)
+			       (daemonp)
+			       (setq display "w32"))
+		          (eq tty-name 'window-system))
+		      (server-create-window-system-frame display nowait proc
+						    parent-id
+						    frame-parameters))
+		     ;; When resuming on a tty, tty-name is nil.
+		     (tty-name
+		      (server-create-tty-frame tty-name tty-type proc)))))
 
             (process-put
              proc 'continuation
@@ -1277,7 +1279,7 @@ The following commands are accepted by the client:
                          (if (and dir (file-directory-p dir))
                              dir default-directory)))
                    (server-execute proc files nowait commands
-                                   dontkill frame tty-name)))))
+                                   dontkill create-frame-func tty-name)))))
 
             (when (or frame files)
               (server-goto-toplevel proc))
@@ -1286,7 +1288,7 @@ The following commands are accepted by the client:
     ;; condition-case
     (error (server-return-error proc err))))
 
-(defun server-execute (proc files nowait commands dontkill frame tty-name)
+(defun server-execute (proc files nowait commands dontkill create-frame-func tty-name)
   ;; This is run from timers and process-filters, i.e. "asynchronously".
   ;; But w.r.t the user, this is not really asynchronous since the timer
   ;; is run after 0s and the process-filter is run in response to the
@@ -1296,21 +1298,29 @@ The following commands are accepted by the client:
   ;; including code that needs to wait.
   (with-local-quit
     (condition-case err
-        (let ((buffers (server-visit-files files proc nowait)))
-          (mapc 'funcall (nreverse commands))
+        (let* ((buffers (server-visit-files files proc nowait))
+               ;; If we were told only to open a new client, obey
+               ;; `initial-buffer-choice' if it specifies a file
+               ;; or a function.
+               (initial-buffer (unless (or files commands)
+                                 (let ((buf
+                                        (cond ((stringp initial-buffer-choice)
+                                               (find-file-noselect initial-buffer-choice))
+                                              ((functionp initial-buffer-choice)
+                                               (funcall initial-buffer-choice)))))
+                                   (if (buffer-live-p buf) buf (get-buffer-create "*scratch*")))))
+               ;; Set current buffer so that newly created tty frames
+               ;; show the correct buffer initially.
+               (frame (with-current-buffer (or (car buffers)
+                                               initial-buffer
+                                               (current-buffer))
+                        (prog1
+                            (funcall create-frame-func)
+                          ;; Switch to initial buffer in case the frame was reused.
+                          (when initial-buffer
+                            (switch-to-buffer initial-buffer 'norecord))))))
 
-	  ;; If we were told only to open a new client, obey
-	  ;; `initial-buffer-choice' if it specifies a file
-          ;; or a function.
-          (unless (or files commands)
-            (let ((buf
-                   (cond ((stringp initial-buffer-choice)
-			  (find-file-noselect initial-buffer-choice))
-			 ((functionp initial-buffer-choice)
-			  (funcall initial-buffer-choice)))))
-	      (switch-to-buffer
-	       (if (buffer-live-p buf) buf (get-buffer-create "*scratch*"))
-	       'norecord)))
+          (mapc 'funcall (nreverse commands))
 
           ;; Delete the client if necessary.
           (cond
