@@ -1115,10 +1115,28 @@ extern "C" {
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
 
+    pub fn list1(arg1: Lisp_Object) -> Lisp_Object;
+    pub fn list2(arg1: Lisp_Object, arg2: Lisp_Object) -> Lisp_Object;
+    pub fn list3(arg1: Lisp_Object, arg2: Lisp_Object, arg3: Lisp_Object) -> Lisp_Object;
+    pub fn list4(
+        arg1: Lisp_Object,
+        arg2: Lisp_Object,
+        arg3: Lisp_Object,
+        arg4: Lisp_Object,
+    ) -> Lisp_Object;
+    pub fn list5(
+        arg1: Lisp_Object,
+        arg2: Lisp_Object,
+        arg3: Lisp_Object,
+        arg4: Lisp_Object,
+        arg5: Lisp_Object,
+    ) -> Lisp_Object;
+
     pub fn staticpro(varaddress: *const Lisp_Object);
 
     // Use LispObject::tag_ptr instead of make_lisp_ptr
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
+    pub fn Fmake_char_table(purpose: Lisp_Object, init: Lisp_Object) -> Lisp_Object;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;

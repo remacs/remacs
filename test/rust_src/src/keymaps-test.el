@@ -1,5 +1,12 @@
 (require 'ert)
 
+(ert-deftest keymap-makee-tests ()
+  (should (equal (make-keymap) '(keymap
+                                 #^[nil nil keymap nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil])))
+  
+  (should (equal (make-keymap "menu-name") '(keymap
+                                 #^[nil nil keymap nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil] "menu-name"))))
+
 (ert-deftest keymap-local-tests ()
   (let ((sample-keymap '(keymap
                          (3 keymap

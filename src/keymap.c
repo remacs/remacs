@@ -106,28 +106,6 @@ CHECK_VECTOR_OR_CHAR_TABLE (Lisp_Object x)
   CHECK_TYPE (VECTORP (x) || CHAR_TABLE_P (x), Qvector_or_char_table_p, x);
 }
 
-/* Keymap object support - constructors and predicates.			*/
-
-DEFUN ("make-keymap", Fmake_keymap, Smake_keymap, 0, 1, 0,
-       doc: /* Construct and return a new keymap, of the form (keymap CHARTABLE . ALIST).
-CHARTABLE is a char-table that holds the bindings for all characters
-without modifiers.  All entries in it are initially nil, meaning
-"command undefined".  ALIST is an assoc-list which holds bindings for
-function keys, mouse events, and any other things that appear in the
-input stream.  Initially, ALIST is nil.
-
-The optional arg STRING supplies a menu name for the keymap
-in case you use it as a menu with `x-popup-menu'.  */)
-  (Lisp_Object string)
-{
-  Lisp_Object tail;
-  if (!NILP (string))
-    tail = list1 (string);
-  else
-    tail = Qnil;
-  return Fcons (Qkeymap,
-		Fcons (Fmake_char_table (Qkeymap, Qnil), tail));
-}
 
 /* This function is used for installing the standard key bindings
    at initialization time.
@@ -3544,7 +3522,6 @@ be preferred.  */);
   defsubr (&Skeymap_parent);
   defsubr (&Skeymap_prompt);
   defsubr (&Sset_keymap_parent);
-  defsubr (&Smake_keymap);
   defsubr (&Smap_keymap_internal);
   defsubr (&Smap_keymap);
   defsubr (&Scopy_keymap);

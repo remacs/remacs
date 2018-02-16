@@ -2,8 +2,8 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
-use remacs_sys::{access_keymap, get_keymap, maybe_quit, Fevent_convert_list, Ffset, Fpurecopy,
-                 Fset};
+use remacs_sys::{access_keymap, get_keymap, maybe_quit, Fcons, Fevent_convert_list, Ffset,
+                 Fmake_char_table, Fpurecopy, Fset, list1};
 use remacs_sys::Qkeymap;
 
 use data::aref;
@@ -14,6 +14,29 @@ use threads::ThreadState;
 #[inline]
 pub fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
+}
+
+/// Construct and return a new keymap, of the form (keymap CHARTABLE . ALIST).
+/// CHARTABLE is a char-table that holds the bindings for all characters
+/// without modifiers.  All entries in it are initially nil, meaning
+/// "command undefined".  ALIST is an assoc-list which holds bindings for
+/// function keys, mouse events, and any other things that appear in the
+/// input stream.  Initially, ALIST is nil.
+///
+/// The optional arg STRING supplies a menu name for the keymap
+/// in case you use it as a menu with `x-popup-menu'.
+#[lisp_fn(min = "0")]
+pub fn make_keymap(string: Option<LispObject>) -> LispObject {
+    let tail: LispObject;
+    let string = string.unwrap_or(LispObject::constant_nil());
+    if !string.is_nil() {
+        tail = LispObject::from_raw(unsafe { list1(string.to_raw()) });
+    } else {
+        tail = LispObject::constant_nil();
+    }
+
+    let char_table = unsafe { Fmake_char_table(Qkeymap, LispObject::constant_nil().to_raw()) };
+    LispObject::from_raw(unsafe { Fcons(Qkeymap, Fcons(char_table, tail.to_raw())) })
 }
 
 /// Return the binding for command KEYS in current local keymap only.
