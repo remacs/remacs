@@ -10327,7 +10327,7 @@ comment at the start of cc-engine.el for more info."
       b-pos)))
 
 (defun c-backward-typed-enum-colon ()
-  ;; We're at a "{" which might be the opening brace of a enum which is
+  ;; We're at a "{" which might be the opening brace of an enum which is
   ;; strongly typed (by a ":" followed by a type).  If this is the case, leave
   ;; point before the colon and return t.  Otherwise leave point unchanged and return nil.
   ;; Match data will be clobbered.

@@ -191,7 +191,7 @@ standard keyword from the @code{finder-known-keywords} list.
 as explained in @ref{Packaging Basics}.  In the above example, a magic
 comment autoloads @code{superfrobnicator-mode}.
 
-  @xref{Package Archives}, for a explanation of how to add a
+  @xref{Package Archives}, for an explanation of how to add a
 single-file package to a package archive.
 
 @node Multi-file Packages

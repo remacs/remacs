@@ -252,7 +252,7 @@ decode_coding_XXXX (struct coding_system *coding)
   CODING_RESULT_XXX indicating how the encoding finished.
 
   DST_BYTES zero means that source area and destination area are
-  overlapped, which means that we can produce a encoded text until it
+  overlapped, which means that we can produce an encoded text until it
   reaches at the head of not-yet-encoded source text.
 
   Below is a template of these functions.  */

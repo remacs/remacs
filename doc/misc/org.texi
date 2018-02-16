@@ -12991,7 +12991,7 @@ of these examples works:
 
 @subsubheading Embedding clickable images
 For clickable images, provide a link whose description is another link to an
-image file.  For example, to embed a image @file{org-mode-unicorn.png} which
+image file.  For example, to embed an image @file{org-mode-unicorn.png} which
 when clicked jumps to @uref{http://Orgmode.org} website, do the following
 
 @example
