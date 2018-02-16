@@ -2203,7 +2203,7 @@ In Ada, the same name can be used for different kinds of entity
 (e.g., for a procedure and for a function).  Also, for things like
 packages, procedures and functions, there is the spec (i.e., the
 interface) and the body (i.e., the implementation).  To make it
-easier to pick the definition you want, Ada tag name have suffixes
+easier to pick the definition you want, Ada tag names have suffixes
 indicating the type of entity:
 
 @table @samp
