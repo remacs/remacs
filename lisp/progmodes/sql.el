@@ -4225,7 +4225,7 @@ the call to \\[sql-product-interactive] with
                (symbolp product)) product)
          (t sql-product)))              ; Default to sql-product
 
-  ;; If we have a product and it has a interactive mode
+  ;; If we have a product and it has an interactive mode
   (if product
       (when (sql-get-product-feature product :sqli-comint-func)
         ;; If no new name specified, try to pop to an active SQL

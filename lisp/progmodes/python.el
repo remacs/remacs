@@ -422,7 +422,7 @@
       (string-delimiter . ,(rx (and
                                 ;; Match even number of backslashes.
                                 (or (not (any ?\\ ?\' ?\")) point
-                                    ;; Quotes might be preceded by a escaped quote.
+                                    ;; Quotes might be preceded by an escaped quote.
                                     (and (or (not (any ?\\)) point) ?\\
                                          (* ?\\ ?\\) (any ?\' ?\")))
                                 (* ?\\ ?\\)
@@ -925,7 +925,7 @@ keyword
                 (back-to-indentation)
                 (python-syntax-closing-paren-p))
               (cons :inside-paren-at-closing-nested-paren start))
-             ;; This line starts from a opening block in its own line.
+             ;; This line starts from an opening block in its own line.
              ((save-excursion
                 (goto-char start)
                 (when (and
@@ -1641,7 +1641,7 @@ ARG move forward only one sexp, else move backwards."
 
 (defun python-nav--lisp-forward-sexp-safe (&optional arg)
   "Safe version of standard `forward-sexp'.
-When at end of sexp (i.e. looking at a opening/closing paren)
+When at end of sexp (i.e. looking at an opening/closing paren)
 skips it instead of throwing an error.  With positive ARG move
 forward only one sexp, else move backwards."
   (let* ((arg (if (or (not arg) (> arg 0)) 1 -1))
