@@ -2774,7 +2774,7 @@ local variable."
 
     ;; Our start must be between them
     (goto-char last)
-    ;; Find an beginning-of-stmt that's not in a comment
+    ;; Find a beginning-of-stmt that's not in a comment
     (while (and (re-search-forward regexp next t 1)
                 (nth 7 (syntax-ppss)))
       (goto-char (match-end 0)))

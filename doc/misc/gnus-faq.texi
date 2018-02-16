@@ -1449,7 +1449,7 @@ all those email addresses?
 
 @subsubheading Answer
 
-There's an very basic solution for this, mail aliases.
+There's a very basic solution for this, mail aliases.
 You can store your mail addresses in a ~/.mailrc file using a simple
 alias syntax:
 
