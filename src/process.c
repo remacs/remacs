@@ -5006,6 +5006,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   struct timespec got_output_end_time = invalid_timespec ();
   enum { MINIMUM = -1, TIMEOUT, INFINITY } wait;
   int got_some_output = -1;
+  uintmax_t prev_wait_proc_nbytes_read = wait_proc ? wait_proc->nbytes_read : 0;
 #if defined HAVE_GETADDRINFO_A || defined HAVE_GNUTLS
   bool retry_for_async;
 #endif
@@ -5460,6 +5461,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       if (nfds == 0)
 	{
           /* Exit the main loop if we've passed the requested timeout,
+             or have read some bytes from our wait_proc (either directly
+             in this call or indirectly through timers / process filters),
              or aren't skipping processes and got some output and
              haven't lowered our timeout due to timers or SIGIO and
              have waited a long amount of time due to repeated
@@ -5467,7 +5470,9 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  struct timespec huge_timespec
 	    = make_timespec (TYPE_MAXIMUM (time_t), 2 * TIMESPEC_RESOLUTION);
 	  struct timespec cmp_time = huge_timespec;
-	  if (wait < TIMEOUT)
+	  if (wait < TIMEOUT
+              || (wait_proc
+                  && wait_proc->nbytes_read != prev_wait_proc_nbytes_read))
 	    break;
 	  if (wait == TIMEOUT)
 	    cmp_time = end_time;
@@ -5772,6 +5777,15 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       maybe_quit ();
     }
 
+  /* Timers and/or process filters that we have run could have themselves called
+     `accept-process-output' (and by that indirectly this function), thus
+     possibly reading some (or all) output of wait_proc without us noticing it.
+     This could potentially lead to an endless wait (dealt with earlier in the
+     function) and/or a wrong return value (dealt with here).  */
+  if (wait_proc && wait_proc->nbytes_read != prev_wait_proc_nbytes_read)
+    got_some_output = min (INT_MAX, (wait_proc->nbytes_read
+                                     - prev_wait_proc_nbytes_read));
+
   return got_some_output;
 }
 
@@ -5889,6 +5903,9 @@ read_process_output (Lisp_Object proc, int channel)
 	return nbytes;
       coding->mode |= CODING_MODE_LAST_BLOCK;
     }
+
+  /* Ignore carryover, it's been added by a previous iteration already.  */
+  p->nbytes_read += nbytes;
 
   /* Now set NBYTES how many bytes we must decode.  */
   nbytes += carryover;
