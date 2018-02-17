@@ -659,11 +659,10 @@ Author: J. R. Hacker <jrh@@example.com>
 
 @noindent
 Apart from the @samp{Author} header, Emacs recognizes the headers
-@samp{Date} (a manually-specified commit time) and @samp{Fixes} (a
-reference to a bug fixed by the change).  Not all version control
-systems recognize all headers: Bazaar recognizes all three headers,
-while Git, Mercurial, and Monotone recognize only @samp{Author} and
-@samp{Date}.  If you specify a header for a system that does not
+@samp{Summary} (a one-line summary of the changeset), @samp{Date} (a
+manually-specified commit time), and @samp{Fixes} (a reference to a
+bug fixed by the change).  Not all version control systems recognize
+all headers.  If you specify a header for a system that does not
 support it, the header is treated as part of the log entry.
 
 @kindex C-c C-f @r{(Log Edit mode)}
