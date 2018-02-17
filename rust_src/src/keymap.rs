@@ -3,7 +3,8 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
 use remacs_sys::{access_keymap, get_keymap, maybe_quit, Fcons, Fevent_convert_list, Ffset,
-                 Fmake_char_table, Fpurecopy, Fset, Qkeymap, Qnil};
+                 Fmake_char_table, Fpurecopy, Fset};
+use remacs_sys::{Qkeymap, Qnil};
 
 use data::aref;
 use keyboard::lucid_event_type_list_p;
