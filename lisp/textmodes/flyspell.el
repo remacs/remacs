@@ -2000,7 +2000,7 @@ that position."
                             (let ((new-word replace))
                               (if (not (equal new-word (car poss)))
                                   (progn
-                                    ;; the save the current replacements
+                                    ;; then save the current replacements
                                     (setq flyspell-auto-correct-region
                                           (cons start (length new-word)))
                                     (let ((l replacements))
