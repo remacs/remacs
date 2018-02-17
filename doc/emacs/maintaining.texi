@@ -2621,13 +2621,13 @@ current list, it is used @emph{as well as} the others.
 @example
 @group
 (setq tags-table-list
-      '("~/emacs.d/init.el" "/usr/local/lib/emacs/src"))
+      '("~/.emacs.d" "/usr/local/lib/emacs/src"))
 @end group
 @end example
 
 @noindent
 This tells the tags commands to look at the @file{TAGS} files in your
-@file{~/emacs} directory and in the @file{/usr/local/lib/emacs/src}
+@file{~/.emacs.d} directory and in the @file{/usr/local/lib/emacs/src}
 directory.  The order depends on which file you are in and which tags
 table mentions that file.
 
