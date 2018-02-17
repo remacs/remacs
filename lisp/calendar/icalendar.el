@@ -1048,12 +1048,10 @@ written into the buffer `*icalendar-errors*'."
   (interactive "r
 FExport diary data into iCalendar file: ")
   (let ((result "")
-        (start 0)
         (entry-main "")
         (entry-rest "")
 	(entry-full "")
         (header "")
-        (contents-n-summary)
         (contents)
         (alarm)
         (found-error nil)
@@ -1073,7 +1071,8 @@ FExport diary data into iCalendar file: ")
               ;; possibly ignore hidden entries beginning with "&"
               (if icalendar-export-hidden-diary-entries
                   "^\\([^ \t\n#].+\\)\\(\\(\n[ \t].*\\)*\\)"
-                "^\\([^ \t\n&#].+\\)\\(\\(\n[ \t].*\\)*\\)") max t)
+                "^\\([^ \t\n&#].+\\)\\(\\(\n[ \t].*\\)*\\)")
+              max t)
         (setq entry-main (match-string 1))
         (if (match-beginning 2)
             (setq entry-rest (match-string 2))
@@ -1095,7 +1094,7 @@ FExport diary data into iCalendar file: ")
                             (loc (cdr (assoc 'loc other-elements)))
                             (org (cdr (assoc 'org other-elements)))
                             (sta (cdr (assoc 'sta other-elements)))
-                            (sum (cdr (assoc 'sum other-elements)))
+                            ;; (sum (cdr (assoc 'sum other-elements)))
                             (url (cdr (assoc 'url other-elements)))
                             (uid (cdr (assoc 'uid other-elements))))
                         (if cla
@@ -1202,7 +1201,7 @@ Returns an alist."
              (p-uid (or (string-match "%U" icalendar-import-format) -1))
              (p-list (sort (list p-cla p-des p-loc p-org p-sta p-sum p-url p-uid) '<))
 	     (ct 0)
-             pos-cla pos-des pos-loc pos-org pos-sta pos-sum pos-url pos-uid)
+             pos-cla pos-des pos-loc pos-org pos-sta pos-url pos-uid) ;pos-sum
         (dotimes (i (length p-list))
 	  ;; Use 'ct' to keep track of current position in list
           (cond ((and (>= p-cla 0) (= (nth i p-list) p-cla))
@@ -1222,7 +1221,8 @@ Returns an alist."
                  (setq pos-sta (* 2 ct)))
                 ((and (>= p-sum 0) (= (nth i p-list) p-sum))
 		 (setq ct (+ ct 1))
-                 (setq pos-sum (* 2 ct)))
+                 ;; (setq pos-sum (* 2 ct))
+                 )
                 ((and (>= p-url 0) (= (nth i p-list) p-url))
 		 (setq ct (+ ct 1))
                  (setq pos-url (* 2 ct)))
@@ -1254,11 +1254,11 @@ Returns an alist."
 			   (icalendar--rris "%s" "\\(.*?\\)" s nil t)
                         "\\'"))
         (if (string-match s summary-and-rest)
-            (let (cla des loc org sta sum url uid)
-              (if (and pos-sum (match-beginning pos-sum))
-                  (setq sum (substring summary-and-rest
-                                       (match-beginning pos-sum)
-                                       (match-end pos-sum))))
+            (let (cla des loc org sta url uid) ;; sum
+              ;; (if (and pos-sum (match-beginning pos-sum))
+              ;;     (setq sum (substring summary-and-rest
+              ;;                          (match-beginning pos-sum)
+              ;;                          (match-end pos-sum))))
               (if (and pos-cla (match-beginning pos-cla))
                   (setq cla (substring summary-and-rest
                                        (match-beginning pos-cla)
@@ -1763,8 +1763,8 @@ entries.  ENTRY-MAIN is the first line of the diary entry."
                  ;;BUT remove today if `diary-float'
                  ;;expression does not hold true for today:
                  (when
-                     (null (let ((date (calendar-current-date))
-                                 (entry entry-main))
+                     (null (calendar-dlet* ((date (calendar-current-date))
+                                            (entry entry-main))
                              (diary-float month dayname n)))
                    (concat
                     "\nEXDATE;VALUE=DATE:"
@@ -2164,7 +2164,7 @@ written into the buffer `*icalendar-errors*'."
              (rdate
               (icalendar--dmsg "rdate event")
               (setq diary-string "")
-              (mapc (lambda (datestring)
+              (mapc (lambda (_datestring)
 		      (setq diary-string
 			    (concat diary-string
 				    (format "......"))))
@@ -2174,14 +2174,14 @@ written into the buffer `*icalendar-errors*'."
              ((not (string= start-d end-d))
               (setq diary-string
                     (icalendar--convert-non-recurring-all-day-to-diary
-                     e start-d end-1-d))
+                     start-d end-1-d))
               (setq event-ok t))
              ;; not all-day
              ((and start-t (or (not end-t)
                                (not (string= start-t end-t))))
               (setq diary-string
                     (icalendar--convert-non-recurring-not-all-day-to-diary
-                     e dtstart-dec dtend-dec start-t end-t))
+                     dtstart-dec start-t end-t))
               (setq event-ok t))
              ;; all-day event
              (t
@@ -2467,7 +2467,7 @@ END-T is the event's end time in diary format."
                        e 'EXRULE))))
     result))
 
-(defun icalendar--convert-non-recurring-all-day-to-diary (event start-d end-d)
+(defun icalendar--convert-non-recurring-all-day-to-diary (start-d end-d)
   "Convert non-recurring iCalendar EVENT to diary format.
 
 DTSTART is the decoded DTSTART property of E.
@@ -2476,14 +2476,12 @@ Argument END-D gives the last day."
   (icalendar--dmsg "non-recurring all-day event")
   (format "%%%%(and (diary-block %s %s))" start-d end-d))
 
-(defun icalendar--convert-non-recurring-not-all-day-to-diary (event dtstart-dec
-                                                                    dtend-dec
-                                                                    start-t
-                                                                    end-t)
+(defun icalendar--convert-non-recurring-not-all-day-to-diary (dtstart-dec
+                                                              start-t
+                                                              end-t)
   "Convert recurring icalendar EVENT to diary format.
 
 DTSTART-DEC is the decoded DTSTART property of E.
-DTEND-DEC is the decoded DTEND property of E.
 START-T is the event's start time in diary format.
 END-T is the event's end time in diary format."
   (icalendar--dmsg "not all day event")
