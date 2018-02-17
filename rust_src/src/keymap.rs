@@ -27,7 +27,7 @@ pub fn Ctl(c: char) -> i32 {
 #[lisp_fn(min = "0")]
 pub fn make_keymap(string: LispObject) -> LispObject {
     let tail: LispObject = if !string.is_nil() {
-        list!(string, LispObject::constant_nil())
+        list!(string)
     } else {
         LispObject::constant_nil()
     };
