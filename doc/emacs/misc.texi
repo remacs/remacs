@@ -2434,6 +2434,11 @@ To disable this, set @code{desktop-restore-frames} to @code{nil}.
 (See that variable's documentation for some related options
 that you can customize to fine-tune this behavior.)
 
+@vindex desktop-files-not-to-save
+Information about buffers visiting remote files is not saved by
+default.  Customize the variable @code{desktop-files-not-to-save} to
+change this.
+
 @vindex frameset-filter-alist
    When the desktop restores the frame and window configuration, it
 uses the recorded values of frame parameters, disregarding any
