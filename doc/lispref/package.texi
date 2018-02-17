@@ -130,7 +130,7 @@ In most cases, you should not need to call @code{package-initialize},
 as this is done automatically during startup.  Simply make sure to put
 any code that should run before @code{package-initialize} in the early
 init file, and any code that should run after it in the primary init
-file (@xref{Init File,,, emacs, The GNU Emacs Manual}).
+file (@pxref{Init File,,, emacs, The GNU Emacs Manual}).
 @end deffn
 
 @node Simple Packages
