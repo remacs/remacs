@@ -918,6 +918,7 @@ be cleaner to combine them.
 @section Profiling
 @cindex profiling
 @cindex profile
+@cindex performance analysis
 @cindex measuring resource usage
 @cindex memory usage
 
