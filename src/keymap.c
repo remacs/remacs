@@ -106,28 +106,6 @@ CHECK_VECTOR_OR_CHAR_TABLE (Lisp_Object x)
   CHECK_TYPE (VECTORP (x) || CHAR_TABLE_P (x), Qvector_or_char_table_p, x);
 }
 
-/* Keymap object support - constructors and predicates.			*/
-
-DEFUN ("make-keymap", Fmake_keymap, Smake_keymap, 0, 1, 0,
-       doc: /* Construct and return a new keymap, of the form (keymap CHARTABLE . ALIST).
-CHARTABLE is a char-table that holds the bindings for all characters
-without modifiers.  All entries in it are initially nil, meaning
-"command undefined".  ALIST is an assoc-list which holds bindings for
-function keys, mouse events, and any other things that appear in the
-input stream.  Initially, ALIST is nil.
-
-The optional arg STRING supplies a menu name for the keymap
-in case you use it as a menu with `x-popup-menu'.  */)
-  (Lisp_Object string)
-{
-  Lisp_Object tail;
-  if (!NILP (string))
-    tail = list1 (string);
-  else
-    tail = Qnil;
-  return Fcons (Qkeymap,
-		Fcons (Fmake_char_table (Qkeymap, Qnil), tail));
-}
 
 /* This function is used for installing the standard key bindings
    at initialization time.
@@ -146,19 +124,6 @@ void
 initial_define_lispy_key (Lisp_Object keymap, const char *keyname, const char *defname)
 {
   store_in_keymap (keymap, intern_c_string (keyname), intern_c_string (defname));
-}
-
-DEFUN ("keymapp", Fkeymapp, Skeymapp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a keymap.
-
-A keymap is a list (keymap . ALIST),
-or a symbol whose function definition is itself a keymap.
-ALIST elements look like (CHAR . DEFN) or (SYMBOL . DEFN);
-a vector of densely packed bindings for small character codes
-is also allowed as an element.  */)
-  (Lisp_Object object)
-{
-  return (KEYMAPP (object) ? Qt : Qnil);
 }
 
 DEFUN ("keymap-prompt", Fkeymap_prompt, Skeymap_prompt, 1, 1, 0,
@@ -3540,11 +3505,9 @@ be preferred.  */);
   staticpro (&where_is_cache);
   staticpro (&where_is_cache_keymaps);
 
-  defsubr (&Skeymapp);
   defsubr (&Skeymap_parent);
   defsubr (&Skeymap_prompt);
   defsubr (&Sset_keymap_parent);
-  defsubr (&Smake_keymap);
   defsubr (&Smap_keymap_internal);
   defsubr (&Smap_keymap);
   defsubr (&Scopy_keymap);

@@ -2,9 +2,9 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
-use remacs_sys::{access_keymap, get_keymap, maybe_quit, Fevent_convert_list, Ffset, Fpurecopy,
-                 Fset};
-use remacs_sys::Qkeymap;
+use remacs_sys::{access_keymap, get_keymap, maybe_quit, Fcons, Fevent_convert_list, Ffset,
+                 Fmake_char_table, Fpurecopy, Fset};
+use remacs_sys::{Qkeymap, Qnil};
 
 use data::aref;
 use keyboard::lucid_event_type_list_p;
@@ -14,6 +14,40 @@ use threads::ThreadState;
 #[inline]
 pub fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
+}
+
+/// Construct and return a new keymap, of the form (keymap CHARTABLE . ALIST).
+/// CHARTABLE is a char-table that holds the bindings for all characters
+/// without modifiers.  All entries in it are initially nil, meaning
+/// "command undefined".  ALIST is an assoc-list which holds bindings for
+/// function keys, mouse events, and any other things that appear in the
+/// input stream.  Initially, ALIST is nil.
+///
+/// The optional arg STRING supplies a menu name for the keymap
+/// in case you use it as a menu with `x-popup-menu'.
+#[lisp_fn(min = "0")]
+pub fn make_keymap(string: LispObject) -> LispObject {
+    let tail: LispObject = if !string.is_nil() {
+        list!(string)
+    } else {
+        LispObject::constant_nil()
+    };
+
+    let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
+    LispObject::from_raw(unsafe { Fcons(Qkeymap, Fcons(char_table, tail.to_raw())) })
+}
+
+/// Return t if OBJECT is a keymap.
+///
+/// A keymap is a list (keymap . ALIST),
+/// or a symbol whose function definition is itself a keymap.
+/// ALIST elements look like (CHAR . DEFN) or (SYMBOL . DEFN);
+/// a vector of densely packed bindings for small character codes
+/// is also allowed as an element.
+#[lisp_fn]
+pub fn keymapp(object: LispObject) -> bool {
+    let map = unsafe { LispObject::from_raw(get_keymap(object.to_raw(), false, false)) };
+    map.is_not_nil()
 }
 
 /// Return the binding for command KEYS in current local keymap only.

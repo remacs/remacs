@@ -1119,6 +1119,7 @@ extern "C" {
 
     // Use LispObject::tag_ptr instead of make_lisp_ptr
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
+    pub fn Fmake_char_table(purpose: Lisp_Object, init: Lisp_Object) -> Lisp_Object;
 
     pub fn Fcons(car: Lisp_Object, cdr: Lisp_Object) -> Lisp_Object;
     pub fn Fsignal(error_symbol: Lisp_Object, data: Lisp_Object) -> !;
