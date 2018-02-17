@@ -312,6 +312,12 @@ see `tty-setup-hook'.")
 Currently this applies to: `emacs-startup-hook', `term-setup-hook',
 and `window-setup-hook'.")
 
+(defvar early-init-file nil
+  "File name, including directory, of user's early init file.
+See `user-init-file'.  The only difference is that
+`early-init-file' is not set during the course of evaluating the
+early init file.")
+
 (defvar keyboard-type nil
   "The brand of keyboard you are using.
 This variable is used to define the proper function and keypad
@@ -870,6 +876,103 @@ If STYLE is nil, display appropriately for the terminal."
           (when standard-display-table
             (aset standard-display-table char nil)))))))
 
+(defun load-user-init-file
+    (filename-function &optional alternate-filename-function load-defaults)
+  "Load a user init-file.
+FILENAME-FUNCTION is called with no arguments and should return
+the name of the init-file to load.  If this file cannot be
+loaded, and ALTERNATE-FILENAME-FUNCTION is non-nil, then it is
+called with no arguments and should return the name of an
+alternate init-file to load.  If LOAD-DEFAULTS is non-nil, then
+load default.el after the init-file.
+
+This function sets `user-init-file' to the name of the loaded
+init-file, or to a default value if loading is not possible."
+  (let ((debug-on-error-from-init-file nil)
+        (debug-on-error-should-be-set nil)
+        (debug-on-error-initial
+         (if (eq init-file-debug t)
+             'startup
+           init-file-debug)))
+    (let ((debug-on-error debug-on-error-initial)
+          ;; We create an anonymous function here so that we can call
+          ;; it in different contexts depending on the value of
+          ;; `debug-on-error'.
+          (read-init-file
+           (lambda ()
+             (when init-file-user
+               (let ((init-file-name (funcall filename-function)))
+
+                 ;; If `user-init-file' is t, then `load' will store
+                 ;; the name of the file that it loads into
+                 ;; `user-init-file'.
+                 (setq user-init-file t)
+                 (load init-file-name 'noerror 'nomessage)
+
+                 (when (and (eq user-init-file t) alternate-filename-function)
+                   (load (funcall alternate-filename-function)
+                         'noerror 'nomessage))
+
+                 ;; If we did not find the user's init file, set
+                 ;; user-init-file conclusively.  Don't let it be
+                 ;; set from default.el.
+                 (when (eq user-init-file t)
+                   (setq user-init-file init-file-name)))
+
+               ;; If we loaded a compiled file, set `user-init-file' to
+               ;; the source version if that exists.
+               (when (equal (file-name-extension user-init-file)
+                            "elc")
+                 (let* ((source (file-name-sans-extension user-init-file))
+                        (alt (concat source ".el")))
+                   (setq source (cond ((file-exists-p alt) alt)
+                                      ((file-exists-p source) source)
+                                      (t nil)))
+                   (when source
+                     (when (file-newer-than-file-p source user-init-file)
+                       (message "Warning: %s is newer than %s"
+                                source user-init-file)
+                       (sit-for 1))
+                     (setq user-init-file source))))
+
+               (when load-defaults
+
+                 ;; Prevent default.el from changing the value of
+                 ;; `inhibit-startup-screen'.
+                 (let ((inhibit-startup-screen nil))
+                   (load "default" 'noerror 'nomessage)))))))
+      ;; Now call our anonymous function.
+      (if init-file-debug
+          ;; Do this without a `condition-case' if the user wants to
+          ;; debug.
+          (funcall read-init-file)
+        (condition-case error
+            (funcall read-init-file)
+          (error
+           (display-warning
+            'initialization
+            (format-message "\
+An error occurred while loading `%s':\n\n%s%s%s\n\n\
+To ensure normal operation, you should investigate and remove the
+cause of the error in your initialization file.  Start Emacs with
+the `--debug-init' option to view a complete error backtrace."
+                            user-init-file
+                            (get (car error) 'error-message)
+                            (if (cdr error) ": " "")
+                            (mapconcat (lambda (s) (prin1-to-string s t))
+                                       (cdr error) ", "))
+            :warning)
+           (setq init-file-had-error t))))
+
+      ;; If we can tell that the init file altered debug-on-error,
+      ;; arrange to preserve the value that it set up.
+      (or (eq debug-on-error debug-on-error-initial)
+          (setq debug-on-error-should-be-set t
+                debug-on-error-from-init-file debug-on-error)))
+
+    (when debug-on-error-should-be-set
+      (setq debug-on-error debug-on-error-from-init-file))))
+
 (defun command-line ()
   "A subroutine of `normal-top-level'.
 Amongst another things, it parses the command-line arguments."
@@ -1021,6 +1124,69 @@ please check its value")
     (and command-line-args
          (setcdr command-line-args args)))
 
+  ;; Warn for invalid user name.
+  (when init-file-user
+    (if (string-match "[~/:\n]" init-file-user)
+        (display-warning 'initialization
+                         (format "Invalid user name %s"
+                                 init-file-user)
+                         :error)
+      (if (file-directory-p (expand-file-name
+                             ;; We don't support ~USER on MS-Windows
+                             ;; and MS-DOS except for the current
+                             ;; user, and always load .emacs from
+                             ;; the current user's home directory
+                             ;; (see below).  So always check "~",
+                             ;; even if invoked with "-u USER", or
+                             ;; if $USER or $LOGNAME are set to
+                             ;; something different.
+                             (if (memq system-type '(windows-nt ms-dos))
+                                 "~"
+                               (concat "~" init-file-user))))
+          nil
+        (display-warning 'initialization
+                         (format "User %s has no home directory"
+                                 (if (equal init-file-user "")
+                                     (user-real-login-name)
+                                   init-file-user))
+                         :error))))
+
+  ;; Load the early init file, if found.
+  (load-user-init-file
+   (lambda ()
+     (expand-file-name
+      "early-init"
+      (file-name-as-directory
+       (concat "~" init-file-user "/.emacs.d")))))
+  (setq early-init-file user-init-file)
+
+  ;; If any package directory exists, initialize the package system.
+  (and user-init-file
+       package-enable-at-startup
+       (catch 'package-dir-found
+	 (let (dirs)
+	   (if (boundp 'package-directory-list)
+	       (setq dirs package-directory-list)
+	     (dolist (f load-path)
+	       (and (stringp f)
+		    (equal (file-name-nondirectory f) "site-lisp")
+		    (push (expand-file-name "elpa" f) dirs))))
+	   (push (if (boundp 'package-user-dir)
+		     package-user-dir
+		   (locate-user-emacs-file "elpa"))
+		 dirs)
+	   (dolist (dir dirs)
+	     (when (file-directory-p dir)
+	       (dolist (subdir (directory-files dir))
+		 (when (let ((subdir (expand-file-name subdir dir)))
+                         (and (file-directory-p subdir)
+                              (file-exists-p
+                               (expand-file-name
+                                (package--description-file subdir)
+                                subdir))))
+		   (throw 'package-dir-found t)))))))
+       (package-initialize))
+
   ;; Make sure window system's init file was loaded in loadup.el if
   ;; using a window system.
   ;; Initialize the window-system only after processing the command-line
@@ -1128,153 +1294,47 @@ please check its value")
     ;; the startup screen.
     (setq inhibit-startup-screen nil)
 
-    ;; Warn for invalid user name.
-    (when init-file-user
-      (if (string-match "[~/:\n]" init-file-user)
-	  (display-warning 'initialization
-			   (format "Invalid user name %s"
-				   init-file-user)
-			   :error)
-	(if (file-directory-p (expand-file-name
-			       ;; We don't support ~USER on MS-Windows
-			       ;; and MS-DOS except for the current
-			       ;; user, and always load .emacs from
-			       ;; the current user's home directory
-			       ;; (see below).  So always check "~",
-			       ;; even if invoked with "-u USER", or
-			       ;; if $USER or $LOGNAME are set to
-			       ;; something different.
-			       (if (memq system-type '(windows-nt ms-dos))
-				   "~"
-				 (concat "~" init-file-user))))
-	    nil
-	  (display-warning 'initialization
-			   (format "User %s has no home directory"
-				   (if (equal init-file-user "")
-				       (user-real-login-name)
-				     init-file-user))
-			   :error))))
-
     ;; Load that user's init file, or the default one, or none.
-    (let (debug-on-error-from-init-file
-	  debug-on-error-should-be-set
-	  (debug-on-error-initial
-	   (if (eq init-file-debug t) 'startup init-file-debug)))
-      (let ((debug-on-error debug-on-error-initial)
-	    ;; This function actually reads the init files.
-	    (inner
-	     (function
-	      (lambda ()
-		(if init-file-user
-		    (let ((user-init-file-1
-			   (cond
-			     ((eq system-type 'ms-dos)
-			      (concat "~" init-file-user "/_emacs"))
-			     ((not (eq system-type 'windows-nt))
-			      (concat "~" init-file-user "/.emacs"))
-			     ;; Else deal with the Windows situation
-			     ((directory-files "~" nil "^\\.emacs\\(\\.elc?\\)?$")
-			      ;; Prefer .emacs on Windows.
-			      "~/.emacs")
-			     ((directory-files "~" nil "^_emacs\\(\\.elc?\\)?$")
-			      ;; Also support _emacs for compatibility, but warn about it.
-			      (push `(initialization
-				      ,(format-message
-					"`_emacs' init file is deprecated, please use `.emacs'"))
-				    delayed-warnings-list)
-			      "~/_emacs")
-			     (t ;; But default to .emacs if _emacs does not exist.
-			      "~/.emacs"))))
-		      ;; This tells `load' to store the file name found
-		      ;; into user-init-file.
-		      (setq user-init-file t)
-		      (load user-init-file-1 t t)
+    (load-user-init-file
+     (lambda ()
+       (cond
+        ((eq system-type 'ms-dos)
+         (concat "~" init-file-user "/_emacs"))
+        ((not (eq system-type 'windows-nt))
+         (concat "~" init-file-user "/.emacs"))
+        ;; Else deal with the Windows situation.
+        ((directory-files "~" nil "^\\.emacs\\(\\.elc?\\)?$")
+         ;; Prefer .emacs on Windows.
+         "~/.emacs")
+        ((directory-files "~" nil "^_emacs\\(\\.elc?\\)?$")
+         ;; Also support _emacs for compatibility, but warn about it.
+         (push `(initialization
+                 ,(format-message
+                   "`_emacs' init file is deprecated, please use `.emacs'"))
+               delayed-warnings-list)
+         "~/_emacs")
+        (t ;; But default to .emacs if _emacs does not exist.
+         "~/.emacs")))
+     (lambda ()
+       (expand-file-name
+        "init"
+        (file-name-as-directory
+         (concat "~" init-file-user "/.emacs.d"))))
+     (not inhibit-default-init))
 
-		      (when (eq user-init-file t)
-			;; If we did not find ~/.emacs, try
-			;; ~/.emacs.d/init.el.
-			(let ((otherfile
-			       (expand-file-name
-				"init"
-				(file-name-as-directory
-				 (concat "~" init-file-user "/.emacs.d")))))
-			  (load otherfile t t)
+    (when (and deactivate-mark transient-mark-mode)
+      (with-current-buffer (window-buffer)
+        (deactivate-mark)))
 
-			  ;; If we did not find the user's init file,
-			  ;; set user-init-file conclusively.
-			  ;; Don't let it be set from default.el.
-			  (when (eq user-init-file t)
-			    (setq user-init-file user-init-file-1))))
+    ;; If the user has a file of abbrevs, read it (unless -batch).
+    (when (and (not noninteractive)
+               (file-exists-p abbrev-file-name)
+               (file-readable-p abbrev-file-name))
+      (quietly-read-abbrev-file abbrev-file-name))
 
-		      ;; If we loaded a compiled file, set
-		      ;; `user-init-file' to the source version if that
-		      ;; exists.
-		      (when (and user-init-file
-				 (equal (file-name-extension user-init-file)
-					"elc"))
-			(let* ((source (file-name-sans-extension user-init-file))
-			       (alt (concat source ".el")))
-			  (setq source (cond ((file-exists-p alt) alt)
-					     ((file-exists-p source) source)
-					     (t nil)))
-			  (when source
-			    (when (file-newer-than-file-p source user-init-file)
-			      (message "Warning: %s is newer than %s"
-				       source user-init-file)
-			      (sit-for 1))
-			    (setq user-init-file source))))
-
-		      (unless inhibit-default-init
-                        (let ((inhibit-startup-screen nil))
-                          ;; Users are supposed to be told their rights.
-                          ;; (Plus how to get help and how to undo.)
-                          ;; Don't you dare turn this off for anyone
-                          ;; except yourself.
-                          (load "default" t t)))))))))
-	(if init-file-debug
-	    ;; Do this without a condition-case if the user wants to debug.
-	    (funcall inner)
-	  (condition-case error
-	      (progn
-		(funcall inner)
-		(setq init-file-had-error nil))
-	    (error
-	     (display-warning
-	      'initialization
-	      (format-message "\
-An error occurred while loading `%s':\n\n%s%s%s\n\n\
-To ensure normal operation, you should investigate and remove the
-cause of the error in your initialization file.  Start Emacs with
-the `--debug-init' option to view a complete error backtrace."
-		      user-init-file
-		      (get (car error) 'error-message)
-		      (if (cdr error) ": " "")
-		      (mapconcat (lambda (s) (prin1-to-string s t))
-				 (cdr error) ", "))
-	      :warning)
-	     (setq init-file-had-error t))))
-
-      (if (and deactivate-mark transient-mark-mode)
-	    (with-current-buffer (window-buffer)
-	      (deactivate-mark)))
-
-	;; If the user has a file of abbrevs, read it (unless -batch).
-	(when (and (not noninteractive)
-		   (file-exists-p abbrev-file-name)
-		   (file-readable-p abbrev-file-name))
-	    (quietly-read-abbrev-file abbrev-file-name))
-
-	;; If the abbrevs came entirely from the init file or the
-	;; abbrevs file, they do not need saving.
-	(setq abbrevs-changed nil)
-
-	;; If we can tell that the init file altered debug-on-error,
-	;; arrange to preserve the value that it set up.
-	(or (eq debug-on-error debug-on-error-initial)
-	    (setq debug-on-error-should-be-set t
-		  debug-on-error-from-init-file debug-on-error)))
-      (if debug-on-error-should-be-set
-	  (setq debug-on-error debug-on-error-from-init-file)))
+    ;; If the abbrevs came entirely from the init file or the
+    ;; abbrevs file, they do not need saving.
+    (setq abbrevs-changed nil)
 
     ;; Do this here in case the init file sets mail-host-address.
     (and mail-host-address
@@ -1295,33 +1355,6 @@ the `--debug-init' option to view a complete error backtrace."
     (unless (and (eq scalable-fonts-allowed old-scalable-fonts-allowed)
 		 (eq face-ignored-fonts old-face-ignored-fonts))
       (clear-face-cache)))
-
-  ;; If any package directory exists, initialize the package system.
-  (and user-init-file
-       package-enable-at-startup
-       (catch 'package-dir-found
-	 (let (dirs)
-	   (if (boundp 'package-directory-list)
-	       (setq dirs package-directory-list)
-	     (dolist (f load-path)
-	       (and (stringp f)
-		    (equal (file-name-nondirectory f) "site-lisp")
-		    (push (expand-file-name "elpa" f) dirs))))
-	   (push (if (boundp 'package-user-dir)
-		     package-user-dir
-		   (locate-user-emacs-file "elpa"))
-		 dirs)
-	   (dolist (dir dirs)
-	     (when (file-directory-p dir)
-	       (dolist (subdir (directory-files dir))
-		 (when (let ((subdir (expand-file-name subdir dir)))
-                         (and (file-directory-p subdir)
-                              (file-exists-p
-                               (expand-file-name
-                                (package--description-file subdir)
-                                subdir))))
-		   (throw 'package-dir-found t)))))))
-       (package-initialize))
 
   (setq after-init-time (current-time))
   ;; Display any accumulated warnings after all functions in
