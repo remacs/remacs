@@ -168,10 +168,10 @@ position.
 the user option @code{open-paren-in-column-0-is-defun-start} to
 @code{nil}.  If this option is set to @code{t} (the default), commands
 seeking the start of a defun will stop at opening parentheses or
-braces at column zero.  When it is @code{nil}, defuns are found by
-searching for parens or braces at the outermost level.  Since
-low-level Emacs routines no longer depend on this convention, you
-usually won't need to change
+braces at column zero which aren't in a comment or string.  When it is
+@code{nil}, defuns are found by searching for parens or braces at the
+outermost level.  Since low-level Emacs routines no longer depend on
+this convention, you usually won't need to change
 @code{open-paren-in-column-0-is-defun-start} from its default.
 
 @node Moving by Defuns
