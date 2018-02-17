@@ -1412,7 +1412,7 @@ extern "C" {
     pub fn un_autoload(oldqueue: Lisp_Object);
 
     pub fn Fnconc(nargs: ptrdiff_t, args: *const Lisp_Object) -> Lisp_Object;
-
+    pub fn unchain_marker(marker: *mut Lisp_Marker);
 }
 
 /// Contains C definitions from the font.h header.
