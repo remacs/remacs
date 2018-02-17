@@ -753,7 +753,7 @@ privileges, you have several options:
 Info files don't actually need to be installed before being used.
 You can use a prefix argument for the @code{info} command and specify
 the name of the Info file in the minibuffer.  This goes to the node
-named @samp{Top} in that file.  For example, to view a Info file named
+named @samp{Top} in that file.  For example, to view an Info file named
 @file{@var{info-file}} in your home directory, you can type this:
 
 @example
@@ -3419,7 +3419,7 @@ version of Emacs, and see @ref{Current GNU distributions}, for a list of
 archive sites that make GNU software available.
 
 @node Finding a package with particular functionality
-@section How do I find a Emacs Lisp package that does XXX?
+@section How do I find an Emacs Lisp package that does XXX?
 @cindex Package, finding
 @cindex Finding an Emacs Lisp package
 @cindex Functionality, finding a particular package
