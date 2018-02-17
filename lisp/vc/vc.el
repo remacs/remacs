@@ -2415,7 +2415,10 @@ When called interactively with a prefix argument, prompt for REMOTE-LOCATION."
 
 ;;;###autoload
 (defun vc-region-history (from to)
-  "Show the history of the region FROM..TO."
+  "Show the history of the region between FROM and TO.
+
+If called interactively, show the history between point and
+mark."
   (interactive "r")
   (let* ((lfrom (line-number-at-pos from))
          (lto   (line-number-at-pos (1- to)))
