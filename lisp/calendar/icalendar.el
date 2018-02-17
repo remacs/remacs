@@ -1975,13 +1975,13 @@ P")
     (icalendar-import-buffer diary-filename t non-marking)))
 
 ;;;###autoload
-(defun icalendar-import-buffer (&optional diary-file do-not-ask
+(defun icalendar-import-buffer (&optional diary-filename do-not-ask
                                           non-marking)
   "Extract iCalendar events from current buffer.
 
 This function searches the current buffer for the first iCalendar
 object, reads it and adds all VEVENT elements to the diary
-DIARY-FILE.
+DIARY-FILENAME.
 
 It will ask for each appointment whether to add it to the diary
 unless DO-NOT-ASK is non-nil.  When called interactively,
@@ -2011,10 +2011,10 @@ buffer `*icalendar-errors*'."
           (message "Converting iCalendar...")
           (setq ical-errors (icalendar--convert-ical-to-diary
                              ical-contents
-                             diary-file do-not-ask non-marking))
-          (when diary-file
+                             diary-filename do-not-ask non-marking))
+          (when diary-filename
             ;; save the diary file if it is visited already
-            (let ((b (find-buffer-visiting diary-file)))
+            (let ((b (find-buffer-visiting diary-filename)))
               (when b
                 (save-current-buffer
                   (set-buffer b)
@@ -2066,12 +2066,12 @@ buffer `*icalendar-errors*'."
 	  conversion-list)
     string)))
 
-(defun icalendar--convert-ical-to-diary (ical-list diary-file
+(defun icalendar--convert-ical-to-diary (ical-list diary-filename
                                                    &optional do-not-ask
                                                    non-marking)
   "Convert iCalendar data to an Emacs diary file.
 Import VEVENTS from the iCalendar object ICAL-LIST and saves them to a
-DIARY-FILE.  If DO-NOT-ASK is nil the user is asked for each event
+DIARY-FILENAME.  If DO-NOT-ASK is nil the user is asked for each event
 whether to actually import it.  NON-MARKING determines whether diary
 events are created as non-marking.
 This function attempts to return t if something goes wrong.  In this
@@ -2199,8 +2199,8 @@ written into the buffer `*icalendar-errors*'."
                   (if do-not-ask (setq summary nil))
                   ;; add entry to diary and store actual name of diary
                   ;; file (in case it was nil)
-                  (setq diary-file
-                        (icalendar--add-diary-entry diary-string diary-file
+                  (setq diary-filename
+                        (icalendar--add-diary-entry diary-string diary-filename
                                                     non-marking summary)))
               ;; event was not ok
               (setq found-error t)
@@ -2217,8 +2217,8 @@ written into the buffer `*icalendar-errors*'."
          (message "%s" error-string))))
 
     ;; insert final newline
-    (if diary-file
-        (let ((b (find-buffer-visiting diary-file)))
+    (if diary-filename
+        (let ((b (find-buffer-visiting diary-filename)))
           (when b
             (save-current-buffer
               (set-buffer b)
@@ -2498,9 +2498,9 @@ END-T is the event's end time in diary format."
                   dtstart-dec "/")
                  start-t))))
 
-(defun icalendar--add-diary-entry (string diary-file non-marking
+(defun icalendar--add-diary-entry (string diary-filename non-marking
                                           &optional summary)
-  "Add STRING to the diary file DIARY-FILE.
+  "Add STRING to the diary file DIARY-FILENAME.
 STRING must be a properly formatted valid diary entry.  NON-MARKING
 determines whether diary events are created as non-marking.  If
 SUMMARY is not nil it must be a string that gives the summary of the
@@ -2513,21 +2513,21 @@ the entry."
       (setq non-marking
             (y-or-n-p (format "Make appointment non-marking? "))))
     (save-window-excursion
-      (unless diary-file
-        (setq diary-file
+      (unless diary-filename
+        (setq diary-filename
               (read-file-name "Add appointment to this diary file: ")))
       ;; Note: diary-make-entry will add a trailing blank char.... :(
       (funcall (if (fboundp 'diary-make-entry)
                    'diary-make-entry
                  'make-diary-entry)
-               string non-marking diary-file)))
+               string non-marking diary-filename)))
   ;; Würgaround to remove the trailing blank char
-  (with-current-buffer (find-file diary-file)
+  (with-current-buffer (find-file diary-filename)
     (goto-char (point-max))
     (if (= (char-before) ? )
         (delete-char -1)))
-  ;; return diary-file in case it has been changed interactively
-  diary-file)
+  ;; return diary-filename in case it has been changed interactively
+  diary-filename)
 
 ;; ======================================================================
 ;; Examples
