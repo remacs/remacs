@@ -3730,12 +3730,7 @@ extern Lisp_Object *stack_base;
 extern EMACS_INT consing_since_gc;
 extern EMACS_INT gc_relative_threshold;
 extern EMACS_INT memory_full_cons_threshold;
-extern Lisp_Object list1 (Lisp_Object);
-extern Lisp_Object list2 (Lisp_Object, Lisp_Object);
-extern Lisp_Object list3 (Lisp_Object, Lisp_Object, Lisp_Object);
-extern Lisp_Object list4 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object);
-extern Lisp_Object list5 (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object,
-			  Lisp_Object);
+
 enum constype {CONSTYPE_HEAP, CONSTYPE_PURE};
 extern Lisp_Object listn (enum constype, ptrdiff_t, Lisp_Object, ...);
 

@@ -3,8 +3,7 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
 use remacs_sys::{access_keymap, get_keymap, maybe_quit, Fcons, Fevent_convert_list, Ffset,
-                 Fmake_char_table, Fpurecopy, Fset, list1};
-use remacs_sys::Qkeymap;
+                 Fmake_char_table, Fpurecopy, Fset, Qkeymap, Qnil};
 
 use data::aref;
 use keyboard::lucid_event_type_list_p;
@@ -27,14 +26,13 @@ pub fn Ctl(c: char) -> i32 {
 /// in case you use it as a menu with `x-popup-menu'.
 #[lisp_fn(min = "0")]
 pub fn make_keymap(string: LispObject) -> LispObject {
-    let tail: LispObject;
-    if !string.is_nil() {
-        tail = LispObject::from_raw(unsafe { list1(string.to_raw()) });
+    let tail: LispObject = if !string.is_nil() {
+        list!(string, LispObject::constant_nil())
     } else {
-        tail = LispObject::constant_nil();
-    }
+        LispObject::constant_nil()
+    };
 
-    let char_table = unsafe { Fmake_char_table(Qkeymap, LispObject::constant_nil().to_raw()) };
+    let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
     LispObject::from_raw(unsafe { Fcons(Qkeymap, Fcons(char_table, tail.to_raw())) })
 }
 
@@ -46,13 +44,9 @@ pub fn make_keymap(string: LispObject) -> LispObject {
 /// a vector of densely packed bindings for small character codes
 /// is also allowed as an element.
 #[lisp_fn]
-pub fn keymapp(object: LispObject) -> LispObject {
+pub fn keymapp(object: LispObject) -> bool {
     let map = unsafe { LispObject::from_raw(get_keymap(object.to_raw(), false, false)) };
-    if map.is_nil() {
-        LispObject::constant_nil()
-    } else {
-        LispObject::constant_t()
-    }
+    map.is_not_nil()
 }
 
 /// Return the binding for command KEYS in current local keymap only.
