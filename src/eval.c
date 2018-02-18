@@ -1343,29 +1343,6 @@ error (const char *m, ...)
   verror (m, ap);
 }
 
-void
-un_autoload (Lisp_Object oldqueue)
-{
-  Lisp_Object queue, first, second;
-
-  /* Queue to unwind is current value of Vautoload_queue.
-     oldqueue is the shadowed value to leave in Vautoload_queue.  */
-  queue = Vautoload_queue;
-  Vautoload_queue = oldqueue;
-  while (CONSP (queue))
-    {
-      first = XCAR (queue);
-      second = Fcdr (first);
-      first = Fcar (first);
-      if (EQ (first, make_number (0)))
-	Vfeatures = second;
-      else
-	Ffset (first, second);
-      queue = XCDR (queue);
-    }
-}
-
-
 DEFUN ("eval", Feval, Seval, 1, 2, 0,
        doc: /* Evaluate FORM and return its value.
 If LEXICAL is t, evaluate using lexical scoping.

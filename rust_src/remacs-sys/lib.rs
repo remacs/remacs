@@ -1111,7 +1111,6 @@ extern "C" {
 
     pub static mut Vautoload_queue: Lisp_Object;
     pub static Vbuffer_alist: Lisp_Object;
-    pub static Vfeatures: Lisp_Object;
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
 
