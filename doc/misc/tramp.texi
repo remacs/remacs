@@ -1898,7 +1898,6 @@ prompts, for which @value{tramp} uses @option{tramp-wrong-passwd-regexp}.
 @item @command{tset} and other questions
 @cindex unix command @command{tset}
 @cindex @command{tset} unix command
-@vindex tramp-terminal-type
 
 @vindex tramp-terminal-type
 To suppress inappropriate prompts for terminal type, @value{tramp}
