@@ -1,5 +1,14 @@
 (require 'ert)
 
+(ert-deftest keymap-prompt-tests ()
+  (let ((sample-keymap '(keymap
+                         (3 keymap
+                            ;; C-c C-z
+                            (26 . emacs-version)))))
+    (should (string= (keymap-prompt (make-keymap "test-prompt")) "test-prompt"))
+    (should (eq (keymap-prompt (make-keymap)) nil))
+    (should (eq (keymap-prompt sample-keymap)) nil)))
+
 (ert-deftest keymap-make-tests ()
   (should (equal (make-keymap) '(keymap
                                  #^[nil nil keymap nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil])))
