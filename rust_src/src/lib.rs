@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
+#![cfg_attr(feature = "clippy", allow(not_unsafe_ptr_arg_deref, wrong_self_convention))]
 #![feature(const_fn)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]

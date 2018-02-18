@@ -234,7 +234,7 @@ impl LispBufferRef {
 
 impl LispOverlayRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(LispObject::tag_ptr(self, Lisp_Type::Lisp_Misc)) }
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Misc)
     }
 
     pub fn from_ptr(ptr: *mut c_void) -> Option<LispOverlayRef> {
@@ -536,10 +536,10 @@ pub fn overlay_lists() -> LispObject {
     let cur_buf = ThreadState::current_buffer();
     let before = cur_buf
         .overlays_before()
-        .map_or_else(|| LispObject::constant_nil(), &list_overlays);
+        .map_or_else(LispObject::constant_nil, &list_overlays);
     let after = cur_buf
         .overlays_after()
-        .map_or_else(|| LispObject::constant_nil(), &list_overlays);
+        .map_or_else(LispObject::constant_nil, &list_overlays);
     unsafe { LispObject::from_raw(Fcons(Fnreverse(before.to_raw()), Fnreverse(after.to_raw()))) }
 }
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
