@@ -2,13 +2,13 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Object, PseudovecType};
-use remacs_sys::{Fapply, Fcons, Ffuncall, Fload, Fpurecopy, Fset, Fset_default};
+use remacs_sys::{Fapply, Fcons, Ffset, Ffuncall, Fload, Fpurecopy, Fset, Fset_default};
 use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinteractive,
                  Qinteractive_form, Qinternal_interpreter_environment, Qlambda, Qmacro, Qnil,
                  Qrisky_local_variable, Qsetq, Qt, Qvariable_documentation,
                  Qwrong_number_of_arguments};
 use remacs_sys::{build_string, eval_sub, globals, maybe_quit, record_unwind_protect,
-                 record_unwind_save_match_data, specbind, un_autoload, unbind_to};
+                 record_unwind_save_match_data, specbind, unbind_to};
 use remacs_sys::COMPILED_INTERACTIVE;
 use remacs_sys::Vautoload_queue;
 
@@ -752,6 +752,23 @@ pub extern "C" fn FUNCTIONP(object: Lisp_Object) -> bool {
         car.eq_raw(Qlambda) || car.eq_raw(Qclosure)
     } else {
         false
+    }
+}
+
+pub unsafe extern "C" fn un_autoload(oldqueue: Lisp_Object) {
+    // Queue to unwind is current value of Vautoload_queue.
+    // oldqueue is the shadowed value to leave in Vautoload_queue.
+    let queue = Vautoload_queue;
+    Vautoload_queue = oldqueue;
+
+    for first in LispObject::from_raw(queue).iter_cars_safe() {
+        let (first, second) = first.as_cons_or_error().as_tuple();
+
+        if first.eq(LispObject::from_fixnum(0)) {
+            globals.f_Vfeatures = second.to_raw();
+        } else {
+            Ffset(first.to_raw(), second.to_raw());
+        }
     }
 }
 

@@ -15,7 +15,7 @@ use editfns::point;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{car, cdr, Flist, Fmember};
-use marker::{marker_buffer, marker_position};
+use marker::{marker_buffer, marker_position, LispMarkerRef};
 use multibyte::string_char;
 use strings::string_equal;
 use threads::ThreadState;
@@ -61,6 +61,10 @@ pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
 impl LispBufferRef {
     pub fn as_lisp_obj(self) -> LispObject {
         LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+    }
+
+    pub fn from_ptr(ptr: *mut c_void) -> Option<LispBufferRef> {
+        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
     }
 
     pub fn is_read_only(&self) -> bool {
@@ -151,6 +155,11 @@ impl LispBufferRef {
     #[inline]
     pub fn char_modifications(self) -> EmacsInt {
         unsafe { (*self.text).chars_modiff }
+    }
+
+    #[inline]
+    pub fn markers(self) -> Option<LispMarkerRef> {
+        unsafe { (*self.text).markers.as_ref().map(|m| mem::transmute(m)) }
     }
 
     #[inline]

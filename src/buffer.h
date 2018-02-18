@@ -265,6 +265,10 @@ extern void temp_set_point_both (struct buffer *,
 extern void set_point_from_marker (Lisp_Object);
 extern void enlarge_buffer_text (struct buffer *, ptrdiff_t);
 
+extern void
+attach_marker (struct Lisp_Marker *m, struct buffer *b,
+	       ptrdiff_t charpos, ptrdiff_t bytepos);
+
 
 /* Macros for setting the BEGV, ZV or PT of a given buffer.
 

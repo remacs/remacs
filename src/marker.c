@@ -391,31 +391,6 @@ buf_bytepos_to_charpos (struct buffer *b, ptrdiff_t bytepos)
 
 /* Operations on markers. */
 
-/* Change M so it points to B at CHARPOS and BYTEPOS.  */
-
-static void
-attach_marker (struct Lisp_Marker *m, struct buffer *b,
-	       ptrdiff_t charpos, ptrdiff_t bytepos)
-{
-  /* In a single-byte buffer, two positions must be equal.
-     Otherwise, every character is at least one byte.  */
-  if (BUF_Z (b) == BUF_Z_BYTE (b))
-    eassert (charpos == bytepos);
-  else
-    eassert (charpos <= bytepos);
-
-  m->charpos = charpos;
-  m->bytepos = bytepos;
-
-  if (m->buffer != b)
-    {
-      unchain_marker (m);
-      m->buffer = b;
-      m->next = BUF_MARKERS (b);
-      BUF_MARKERS (b) = m;
-    }
-}
-
 /* If BUFFER is nil, return current buffer pointer.  Next, check
    whether BUFFER is a buffer object and return buffer pointer
    corresponding to BUFFER if BUFFER is live, or NULL otherwise.  */
@@ -620,23 +595,6 @@ marker_byte_position (Lisp_Object marker)
   return m->bytepos;
 }
 
-DEFUN ("buffer-has-markers-at", Fbuffer_has_markers_at, Sbuffer_has_markers_at,
-       1, 1, 0,
-       doc: /* Return t if there are markers pointing at POSITION in the current buffer.  */)
-  (Lisp_Object position)
-{
-  register struct Lisp_Marker *tail;
-  register ptrdiff_t charpos;
-
-  charpos = clip_to_bounds (BEG, XINT (position), Z);
-
-  for (tail = BUF_MARKERS (current_buffer); tail; tail = tail->next)
-    if (tail->charpos == charpos)
-      return Qt;
-
-  return Qnil;
-}
-
 #ifdef MARKER_DEBUG
 
 /* For debugging -- count the markers in buffer BUF.  */
@@ -673,11 +631,6 @@ verify_bytepos (ptrdiff_t charpos)
 
 #endif /* MARKER_DEBUG */
 
-void
-syms_of_marker (void)
-{
-  defsubr (&Sbuffer_has_markers_at);
-}
 
 /* Accessors to enable Rust code to get data from the Lisp_Marker struct */
 

@@ -1858,125 +1858,6 @@ advisable.  */)
   return ret;
 }
 
-/* `require' and its subroutines.  */
-
-/* List of features currently being require'd, innermost first.  */
-
-static Lisp_Object require_nesting_list;
-
-static void
-require_unwind (Lisp_Object old_value)
-{
-  require_nesting_list = old_value;
-}
-
-DEFUN ("require", Frequire, Srequire, 1, 3, 0,
-       doc: /* If feature FEATURE is not loaded, load it from FILENAME.
-If FEATURE is not a member of the list `features', then the feature is
-not loaded; so load the file FILENAME.
-
-If FILENAME is omitted, the printname of FEATURE is used as the file
-name, and `load' will try to load this name appended with the suffix
-`.elc', `.el', or the system-dependent suffix for dynamic module
-files, in that order.  The name without appended suffix will not be
-used.  See `get-load-suffixes' for the complete list of suffixes.
-
-The directories in `load-path' are searched when trying to find the
-file name.
-
-If the optional third argument NOERROR is non-nil, then return nil if
-the file is not found instead of signaling an error.  Normally the
-return value is FEATURE.
-
-The normal messages at start and end of loading FILENAME are
-suppressed.  */)
-  (Lisp_Object feature, Lisp_Object filename, Lisp_Object noerror)
-{
-  Lisp_Object tem;
-  bool from_file = load_in_progress;
-
-  CHECK_SYMBOL (feature);
-
-  /* Record the presence of `require' in this file
-     even if the feature specified is already loaded.
-     But not more than once in any file,
-     and not when we aren't loading or reading from a file.  */
-  if (!from_file)
-    for (tem = Vcurrent_load_list; CONSP (tem); tem = XCDR (tem))
-      if (NILP (XCDR (tem)) && STRINGP (XCAR (tem)))
-	from_file = 1;
-
-  if (from_file)
-    {
-      tem = Fcons (Qrequire, feature);
-      if (NILP (Fmember (tem, Vcurrent_load_list)))
-	LOADHIST_ATTACH (tem);
-    }
-  tem = Fmemq (feature, Vfeatures);
-
-  if (NILP (tem))
-    {
-      ptrdiff_t count = SPECPDL_INDEX ();
-      int nesting = 0;
-
-      /* This is to make sure that loadup.el gives a clear picture
-	 of what files are preloaded and when.  */
-      if (! NILP (Vpurify_flag))
-	error ("(require %s) while preparing to dump",
-	       SDATA (SYMBOL_NAME (feature)));
-
-      /* A certain amount of recursive `require' is legitimate,
-	 but if we require the same feature recursively 3 times,
-	 signal an error.  */
-      tem = require_nesting_list;
-      while (! NILP (tem))
-	{
-	  if (! NILP (Fequal (feature, XCAR (tem))))
-	    nesting++;
-	  tem = XCDR (tem);
-	}
-      if (nesting > 3)
-	error ("Recursive `require' for feature `%s'",
-	       SDATA (SYMBOL_NAME (feature)));
-
-      /* Update the list for any nested `require's that occur.  */
-      record_unwind_protect (require_unwind, require_nesting_list);
-      require_nesting_list = Fcons (feature, require_nesting_list);
-
-      /* Value saved here is to be restored into Vautoload_queue */
-      record_unwind_protect (un_autoload, Vautoload_queue);
-      Vautoload_queue = Qt;
-
-      /* Load the file.  */
-      tem = Fload (NILP (filename) ? Fsymbol_name (feature) : filename,
-		   noerror, Qt, Qnil, (NILP (filename) ? Qt : Qnil));
-
-      /* If load failed entirely, return nil.  */
-      if (NILP (tem))
-	return unbind_to (count, Qnil);
-
-      tem = Fmemq (feature, Vfeatures);
-      if (NILP (tem))
-        {
-          unsigned char *tem2 = SDATA (SYMBOL_NAME (feature));
-          Lisp_Object tem3 = Fcar (Fcar (Vload_history));
-
-          if (NILP (tem3))
-            error ("Required feature `%s' was not provided", tem2);
-          else
-            /* Cf autoload-do-load.  */
-            error ("Loading file %s failed to provide feature `%s'",
-                   SDATA (tem3), tem2);
-        }
-
-      /* Once loading finishes, don't undo it.  */
-      Vautoload_queue = Qt;
-      feature = unbind_to (count, feature);
-    }
-
-  return feature;
-}
-
 /* Primitives for work of the "widget" library.
    In an ideal world, this section would not have been necessary.
    However, lisp function calls being as slow as they are, it turns
@@ -3576,7 +3457,6 @@ syms_of_fns (void)
 
   DEFSYM (Qstring_lessp, "string-lessp");
   DEFSYM (Qprovide, "provide");
-  DEFSYM (Qrequire, "require");
   DEFSYM (Qyes_or_no_p_history, "yes-or-no-p-history");
   DEFSYM (Qcursor_in_echo_area, "cursor-in-echo-area");
   DEFSYM (Qwidget_type, "widget-type");
@@ -3590,9 +3470,6 @@ compilation.  */);
 
   staticpro (&string_char_byte_cache_string);
   string_char_byte_cache_string = Qnil;
-
-  require_nesting_list = Qnil;
-  staticpro (&require_nesting_list);
 
   Fset (Qyes_or_no_p_history, Qnil);
 
@@ -3656,7 +3533,6 @@ this variable.  */);
   defsubr (&Smapconcat);
   defsubr (&Syes_or_no_p);
   defsubr (&Sload_average);
-  defsubr (&Srequire);
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);

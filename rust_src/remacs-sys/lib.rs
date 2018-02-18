@@ -1111,7 +1111,6 @@ extern "C" {
 
     pub static mut Vautoload_queue: Lisp_Object;
     pub static Vbuffer_alist: Lisp_Object;
-    pub static Vfeatures: Lisp_Object;
     pub static Vminibuffer_list: Lisp_Object;
     pub static Vprocess_alist: Lisp_Object;
 
@@ -1413,7 +1412,7 @@ extern "C" {
     pub fn un_autoload(oldqueue: Lisp_Object);
 
     pub fn Fnconc(nargs: ptrdiff_t, args: *const Lisp_Object) -> Lisp_Object;
-
+    pub fn unchain_marker(marker: *mut Lisp_Marker);
 }
 
 /// Contains C definitions from the font.h header.
