@@ -123,15 +123,17 @@ the remaining command-line args are in the variable `command-line-args-left'.")
 (defvar command-line-args-left nil
   "List of command-line args not yet processed.")
 
-(defvaralias 'argv 'command-line-args-left
-  "List of command-line args not yet processed.
-This is a convenience alias, so that one can write \(pop argv)
+(with-no-warnings
+  (defvaralias 'argv 'command-line-args-left
+    "List of command-line args not yet processed.
+This is a convenience alias, so that one can write (pop argv)
 inside of --eval command line arguments in order to access
-following arguments.")
+following arguments."))
 (internal-make-var-non-special 'argv)
 
-(defvar argi nil
-  "Current command-line argument.")
+(with-no-warnings
+  (defvar argi nil
+    "Current command-line argument."))
 (internal-make-var-non-special 'argi)
 
 (defvar command-line-functions nil    ;; lrs 7/31/89
@@ -894,75 +896,64 @@ init-file, or to a default value if loading is not possible."
          (if (eq init-file-debug t)
              'startup
            init-file-debug)))
-    (let ((debug-on-error debug-on-error-initial)
-          ;; We create an anonymous function here so that we can call
-          ;; it in different contexts depending on the value of
-          ;; `debug-on-error'.
-          (read-init-file
-           (lambda ()
-             (when init-file-user
-               (let ((init-file-name (funcall filename-function)))
+    (let ((debug-on-error debug-on-error-initial))
+      (condition-case-unless-debug error
+          (when init-file-user
+            (let ((init-file-name (funcall filename-function)))
 
-                 ;; If `user-init-file' is t, then `load' will store
-                 ;; the name of the file that it loads into
-                 ;; `user-init-file'.
-                 (setq user-init-file t)
-                 (load init-file-name 'noerror 'nomessage)
+              ;; If `user-init-file' is t, then `load' will store
+              ;; the name of the file that it loads into
+              ;; `user-init-file'.
+              (setq user-init-file t)
+              (load init-file-name 'noerror 'nomessage)
 
-                 (when (and (eq user-init-file t) alternate-filename-function)
-                   (load (funcall alternate-filename-function)
-                         'noerror 'nomessage))
+              (when (and (eq user-init-file t) alternate-filename-function)
+                (load (funcall alternate-filename-function)
+                      'noerror 'nomessage))
 
-                 ;; If we did not find the user's init file, set
-                 ;; user-init-file conclusively.  Don't let it be
-                 ;; set from default.el.
-                 (when (eq user-init-file t)
-                   (setq user-init-file init-file-name)))
+              ;; If we did not find the user's init file, set
+              ;; user-init-file conclusively.  Don't let it be
+              ;; set from default.el.
+              (when (eq user-init-file t)
+                (setq user-init-file init-file-name)))
 
-               ;; If we loaded a compiled file, set `user-init-file' to
-               ;; the source version if that exists.
-               (when (equal (file-name-extension user-init-file)
-                            "elc")
-                 (let* ((source (file-name-sans-extension user-init-file))
-                        (alt (concat source ".el")))
-                   (setq source (cond ((file-exists-p alt) alt)
-                                      ((file-exists-p source) source)
-                                      (t nil)))
-                   (when source
-                     (when (file-newer-than-file-p source user-init-file)
-                       (message "Warning: %s is newer than %s"
-                                source user-init-file)
-                       (sit-for 1))
-                     (setq user-init-file source))))
+            ;; If we loaded a compiled file, set `user-init-file' to
+            ;; the source version if that exists.
+            (when (equal (file-name-extension user-init-file)
+                         "elc")
+              (let* ((source (file-name-sans-extension user-init-file))
+                     (alt (concat source ".el")))
+                (setq source (cond ((file-exists-p alt) alt)
+                                   ((file-exists-p source) source)
+                                   (t nil)))
+                (when source
+                  (when (file-newer-than-file-p source user-init-file)
+                    (message "Warning: %s is newer than %s"
+                             source user-init-file)
+                    (sit-for 1))
+                  (setq user-init-file source))))
 
-               (when load-defaults
+            (when load-defaults
 
-                 ;; Prevent default.el from changing the value of
-                 ;; `inhibit-startup-screen'.
-                 (let ((inhibit-startup-screen nil))
-                   (load "default" 'noerror 'nomessage)))))))
-      ;; Now call our anonymous function.
-      (if init-file-debug
-          ;; Do this without a `condition-case' if the user wants to
-          ;; debug.
-          (funcall read-init-file)
-        (condition-case error
-            (funcall read-init-file)
-          (error
-           (display-warning
-            'initialization
-            (format-message "\
+              ;; Prevent default.el from changing the value of
+              ;; `inhibit-startup-screen'.
+              (let ((inhibit-startup-screen nil))
+                (load "default" 'noerror 'nomessage))))
+        (error
+         (display-warning
+          'initialization
+          (format-message "\
 An error occurred while loading `%s':\n\n%s%s%s\n\n\
 To ensure normal operation, you should investigate and remove the
 cause of the error in your initialization file.  Start Emacs with
 the `--debug-init' option to view a complete error backtrace."
-                            user-init-file
-                            (get (car error) 'error-message)
-                            (if (cdr error) ": " "")
-                            (mapconcat (lambda (s) (prin1-to-string s t))
-                                       (cdr error) ", "))
-            :warning)
-           (setq init-file-had-error t))))
+                          user-init-file
+                          (get (car error) 'error-message)
+                          (if (cdr error) ": " "")
+                          (mapconcat (lambda (s) (prin1-to-string s t))
+                                     (cdr error) ", "))
+          :warning)
+         (setq init-file-had-error t)))
 
       ;; If we can tell that the init file altered debug-on-error,
       ;; arrange to preserve the value that it set up.
