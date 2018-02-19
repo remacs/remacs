@@ -1,7 +1,9 @@
 //! Functions operating on float numbers.
+#![cfg_attr(feature = "clippy", allow(float_cmp))]
+
+use std::mem;
 
 use libc;
-use std::mem;
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsDouble, EmacsInt, EmacsUint, Lisp_Object, MOST_NEGATIVE_FIXNUM,

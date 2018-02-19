@@ -1,10 +1,9 @@
 //! Base64 de- and encoding functions.
-
-use libc::{c_char, c_uchar};
 use std::ptr;
 use std::slice;
 
 use base64_crate;
+use libc::{c_char, c_uchar};
 
 use remacs_macros::lisp_fn;
 use remacs_sys::make_unibyte_string;
