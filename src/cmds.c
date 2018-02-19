@@ -31,48 +31,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 static int internal_self_insert (int, EMACS_INT);
 
-DEFUN ("delete-char", Fdelete_char, Sdelete_char, 1, 2, "p\nP",
-       doc: /* Delete the following N characters (previous if N is negative).
-Optional second arg KILLFLAG non-nil means kill instead (save in kill ring).
-Interactively, N is the prefix arg, and KILLFLAG is set if
-N was explicitly specified.
-
-The command `delete-forward-char' is preferable for interactive use, e.g.
-because it respects values of `delete-active-region' and `overwrite-mode'.  */)
-  (Lisp_Object n, Lisp_Object killflag)
-{
-  EMACS_INT pos;
-
-  CHECK_NUMBER (n);
-
-  if (eabs (XINT (n)) < 2)
-    call0 (Qundo_auto_amalgamate);
-
-  pos = PT + XINT (n);
-  if (NILP (killflag))
-    {
-      if (XINT (n) < 0)
-	{
-	  if (pos < BEGV)
-	    xsignal0 (Qbeginning_of_buffer);
-	  else
-	    del_range (pos, PT);
-	}
-      else
-	{
-	  if (pos > ZV)
-	    xsignal0 (Qend_of_buffer);
-	  else
-	    del_range (PT, pos);
-	}
-    }
-  else
-    {
-      call1 (Qkill_forward_chars, n);
-    }
-  return Qnil;
-}
-
 /* Note that there's code in command_loop_1 which typically avoids
    calling this.  */
 DEFUN ("self-insert-command", Fself_insert_command, Sself_insert_command, 1, 1, "p",
@@ -327,7 +285,6 @@ syms_of_cmds (void)
 This is run after inserting the character.  */);
   Vpost_self_insert_hook = Qnil;
 
-  defsubr (&Sdelete_char);
   defsubr (&Sself_insert_command);
 }
 

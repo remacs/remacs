@@ -1413,6 +1413,8 @@ extern "C" {
 
     pub fn Fnconc(nargs: ptrdiff_t, args: *const Lisp_Object) -> Lisp_Object;
     pub fn unchain_marker(marker: *mut Lisp_Marker);
+    pub fn del_range(from: ptrdiff_t, to: ptrdiff_t);
+
 }
 
 /// Contains C definitions from the font.h header.
