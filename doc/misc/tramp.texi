@@ -3095,6 +3095,11 @@ macOS XAR archives
 @cindex @file{xar} file archive suffix
 @cindex file archive suffix @file{xar}
 
+@item @samp{.xpi} ---
+XPInstall Mozilla addons
+@cindex @file{xpi} file archive suffix
+@cindex file archive suffix @file{xpi}
+
 @item @samp{.xps} ---
 Open XML Paper Specification (OpenXPS) documents
 @cindex @file{xps} file archive suffix
