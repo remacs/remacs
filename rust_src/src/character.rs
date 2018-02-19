@@ -15,7 +15,7 @@ pub fn char_read_p(byte: c_uchar) -> bool {
     (byte & 0xC0) != 0x80
 }
 
-/// Decrement the buffer byte position POS_BYTE of the current buffer
+/// Decrement the buffer byte position `POS_BYTE` of the current buffer
 /// to the previous character boundary. No range checking of POS.
 ///
 /// Can be used instead of the `DEC_POS` macro.

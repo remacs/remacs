@@ -398,6 +398,7 @@ pub extern "C" fn str_to_multibyte(
 }
 
 /// Same as `MULTIBYTE_LENGTH` macro in C.
+#[cfg_attr(feature = "clippy", allow(if_same_then_else))]
 fn multibyte_length(slice: &[c_uchar], allow_encoded_raw: bool) -> Option<usize> {
     let len = slice.len();
     if len < 1 {
