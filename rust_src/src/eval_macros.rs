@@ -51,6 +51,13 @@ macro_rules! call_raw {
                 ::remacs_sys::Ffuncall(argsarray.len() as ::libc::ptrdiff_t, argsarray.as_mut_ptr())
             )
         }
+    }};
+    ($func:expr) => {{
+        #[allow(unused_unsafe)]
+        unsafe {
+            LispObject::from_raw(::remacs_sys::Ffuncall(1, &mut $func)
+            )
+        }
     }}
 }
 

@@ -3,8 +3,9 @@
 use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qnil};
-use remacs_sys::{initial_define_key, scan_newline_from_point, set_point, set_point_both};
+use remacs_sys::{Qbeginning_of_buffer, Qend_of_buffer, Qkill_forward_chars, Qnil,
+                 Qundo_auto_amalgamate};
+use remacs_sys::{del_range, initial_define_key, scan_newline_from_point, set_point, set_point_both};
 use remacs_sys::EmacsInt;
 
 use editfns::{line_beginning_position, line_end_position};
@@ -196,6 +197,40 @@ pub fn initial_keys() {
         initial_define_key(global_map, Ctl('E'), E.as_ptr());
         let F = CString::new("forward-char").unwrap();
         initial_define_key(global_map, Ctl('F'), F.as_ptr());
+    }
+}
+
+/// Delete the following N characters (previous if N is negative).
+/// Optional second arg KILLFLAG non-nil means kill instead (save in kill ring).
+/// Interactively, N is the prefix arg, and KILLFLAG is set if
+/// N was explicitly specified.
+///
+/// The command `delete-forward-char' is preferable for interactive use, e.g.
+/// because it respects values of `delete-active-region' and `overwrite-mode'.
+#[lisp_fn(min = "1", intspec = "p\nP")]
+pub fn delete_char(n: EmacsInt, killflag: bool) -> () {
+    if n.abs() < 2 {
+        call_raw!(Qundo_auto_amalgamate);
+    }
+
+    let buffer = ThreadState::current_buffer();
+    let pos = buffer.pt() + n as isize;
+    if !killflag {
+        if n < 0 {
+            if pos < buffer.begv {
+                xsignal!(Qbeginning_of_buffer);
+            } else {
+                unsafe { del_range(pos, buffer.pt()) };
+            }
+        } else {
+            if pos > buffer.zv {
+                xsignal!(Qend_of_buffer);
+            } else {
+                unsafe { del_range(buffer.pt(), pos) };
+            }
+        }
+    } else {
+        call_raw!(Qkill_forward_chars, LispObject::from(n).to_raw());
     }
 }
 
