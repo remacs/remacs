@@ -1932,7 +1932,6 @@ cycles through the possible corrections of the current word.
 
 See `flyspell-get-word' for details of how this finds the word to
 spell-check."
-ix last change.
   (interactive)
   ;; If we are not in the construct where flyspell should be active,
   ;; invoke the original binding of M-TAB, if that was recorded.
