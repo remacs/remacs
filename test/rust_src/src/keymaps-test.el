@@ -1,5 +1,41 @@
 (require 'ert)
 
+(ert-deftest keymap-parent-tests ()
+  (let ((sample-keymap-with-parent '(keymap
+                         (3 keymap
+                            ;; C-c C-z
+                            (26 . run-lisp))
+                         (27 keymap
+                             ;; C-M-x, treated as <ESC> C-x
+                             (24 . lisp-send-defun))
+                         ;; This part is inherited from lisp-mode-shared-map.
+                         keymap
+                         ;; <DEL>
+                         (127 . backward-delete-char-untabify)
+                         (27 keymap
+                             ;; C-M-q, treated as <ESC> C-q
+                             (17 . indent-sexp))))
+        (sample-keymap '(keymap
+                         (3 keymap
+                            ;; C-c C-z
+                            (26 . emacs-version)))))
+    (should (equal (keymap-parent sample-keymap-with-parent) '(keymap (127 . backward-delete-char-untabify)
+                                                          (27 keymap
+                                                              (17 . indent-sexp)))))
+    (should-not (keymap-parent sample-keymap))
+    (should-error (keymap-parent nil))
+    (should-error (keymap-parent "test"))))
+
+(ert-deftest keymap-prompt-tests ()
+  (let ((sample-keymap '(keymap
+                         (3 keymap
+                            ;; C-c C-z
+                            (26 . emacs-version)))))
+    (should-not (keymap-prompt nil))
+    (should (string= (keymap-prompt (make-keymap "test-prompt")) "test-prompt"))
+    (should-not (keymap-prompt (make-keymap)))
+    (should-not (keymap-prompt sample-keymap))))
+
 (ert-deftest keymap-make-tests ()
   (should (equal (make-keymap) '(keymap
                                  #^[nil nil keymap nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil])))
