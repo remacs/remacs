@@ -2583,5 +2583,5 @@ you can customize variables that affect the initialization process,
 such as @code{package-enable-at-startup} and @code{package-load-list}.
 @xref{Package Installation}.
 
-  For more information on the early init file, @pxref{Early Init
-File,,, elisp, The Emacs Lisp Reference Manual}.
+  For more information on the early init file, @pxref{Init File,,,
+elisp, The Emacs Lisp Reference Manual}.
