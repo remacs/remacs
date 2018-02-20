@@ -3579,7 +3579,7 @@ Viper customization file.  @xref{Viper Specials}, for details.
 Minibuffer can be edited similarly to Insert state, and you can switch
 between Insert/Replace/Vi states at will.
 Some users prefer plain Emacs feel in the minibuffer.  To this end, set
-@var{viper-vi-style-in-minibuffer} to @code{nil}.
+@code{viper-vi-style-in-minibuffer} to @code{nil}.
 
 @cindex Insert state
 
@@ -4063,15 +4063,15 @@ Edit <count> file, or edit files.  The count comes from @kbd{:args}.
 Like @kbd{:n}, but the meaning of the variable
 @var{ex-cycle-other-window} is reversed.
 @item :b
-Switch to another buffer.  If @var{ex-cycle-other-window} is @code{t},
+Switch to another buffer.  If @code{ex-cycle-other-window} is @code{t},
 switch in another window.  Buffer completion is supported.
-The variable @var{viper-read-buffer-function} controls which function is
+The variable @code{viper-read-buffer-function} controls which function is
 actually used to read the buffer name. The default is @code{read-buffer},
 but better alternatives are also available in Emacs (e.g.,
 @code{ido-read-buffer}).
 @vindex @var{viper-read-buffer-function}
 @item :B
-Like @kbd{:b}, but the meaning of @var{ex-cycle-other-window} is reversed.
+Like @kbd{:b}, but the meaning of code{ex-cycle-other-window} is reversed.
 @item :<address>r <name>
 Read the file <name> into the buffer after the line <address>.
 @item v, V, C-v
