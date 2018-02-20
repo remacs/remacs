@@ -1123,7 +1123,7 @@ Return t if the file exists and loads successfully.  */)
   (Lisp_Object file, Lisp_Object noerror, Lisp_Object nomessage,
    Lisp_Object nosuffix, Lisp_Object must_suffix)
 {
-  FILE *stream;
+  FILE *stream UNINIT;
   int fd;
   int fd_index UNINIT;
   ptrdiff_t count = SPECPDL_INDEX ();
