@@ -56,21 +56,18 @@ pub fn keymapp(object: LispObject) -> bool {
 #[lisp_fn]
 pub fn keymap_prompt(map: LispObject) -> LispObject {
     let map = unsafe { LispObject::from_raw(get_keymap(map.to_raw(), false, false)) };
-    let mut result = LispObject::constant_nil();
     for elt in map.iter_cars_safe() {
         let mut tem = elt;
         if tem.is_string() {
-            result = tem;
-            break;
+            return tem;
         } else if keymapp(tem) {
             tem = keymap_prompt(tem);
             if tem.is_not_nil() {
-                result = tem;
-                break;
+                return tem;
             }
         }
     }
-    result
+    LispObject::constant_nil()
 }
 
 /// Return the binding for command KEYS in current local keymap only.
