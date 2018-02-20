@@ -15179,7 +15179,7 @@ All new mail files will get this file mode.  The default is @code{#o600}.
 @item mail-source-movemail-program
 @vindex mail-source-movemail-program
 If non-@code{nil}, name of program for fetching new mail.  If
-@code{nil}, @code{movemail} in @var{exec-directory}.
+@code{nil}, @code{movemail} in @code{exec-directory}.
 
 @end table
 
