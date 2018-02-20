@@ -222,12 +222,10 @@ pub fn delete_char(n: EmacsInt, killflag: bool) -> () {
             } else {
                 unsafe { del_range(pos, buffer.pt()) };
             }
+        } else if pos > buffer.zv {
+            xsignal!(Qend_of_buffer);
         } else {
-            if pos > buffer.zv {
-                xsignal!(Qend_of_buffer);
-            } else {
-                unsafe { del_range(buffer.pt(), pos) };
-            }
+            unsafe { del_range(buffer.pt(), pos) };
         }
     } else {
         call_raw!(Qkill_forward_chars, LispObject::from(n).to_raw());

@@ -140,32 +140,22 @@ unsafe extern "C" fn require_unwind(old_value: Lisp_Object) {
 /// suppressed.
 #[lisp_fn(min = "1")]
 pub fn require(feature: LispObject, filename: LispObject, noerror: LispObject) -> LispObject {
-    let mut from_file = unsafe { globals.f_load_in_progress };
-
     let feature_sym = feature.as_symbol_or_error();
+    let current_load_list = LispObject::from_raw(unsafe { globals.f_Vcurrent_load_list });
 
     // Record the presence of `require' in this file
     // even if the feature specified is already loaded.
     // But not more than once in any file,
     // and not when we aren't loading or reading from a file.
-    if !from_file {
-        if LispObject::from_raw(unsafe { globals.f_Vcurrent_load_list })
-            .iter_tails_safe()
-            .any(|tail| {
-                let (first, rest) = tail.as_tuple();
-                rest.is_nil() && first.is_string()
-            }) {
-            from_file = true;
-        }
-    }
+    let from_file = unsafe { globals.f_load_in_progress }
+        || current_load_list
+            .iter_cars_safe()
+            .last()
+            .map_or(false, |elt| elt.is_string());
 
     if from_file {
         let tem = LispObject::cons(LispObject::from_raw(Qrequire), feature);
-        if member(
-            tem,
-            LispObject::from_raw(unsafe { globals.f_Vcurrent_load_list }),
-        ).is_nil()
-        {
+        if member(tem, current_load_list).is_nil() {
             loadhist_attach(tem.to_raw());
         }
     }
