@@ -5,9 +5,10 @@
                          (3 keymap
                             ;; C-c C-z
                             (26 . emacs-version)))))
+    (should-not (keymap-prompt nil))
     (should (string= (keymap-prompt (make-keymap "test-prompt")) "test-prompt"))
-    (should (eq (keymap-prompt (make-keymap)) nil))
-    (should (eq (keymap-prompt sample-keymap)) nil)))
+    (should-not (keymap-prompt (make-keymap)))
+    (should-not (keymap-prompt sample-keymap))))
 
 (ert-deftest keymap-make-tests ()
   (should (equal (make-keymap) '(keymap

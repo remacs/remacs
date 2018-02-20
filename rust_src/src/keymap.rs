@@ -50,6 +50,29 @@ pub fn keymapp(object: LispObject) -> bool {
     map.is_not_nil()
 }
 
+/// Return the prompt-string of a keymap MAP.
+/// If non-nil, the prompt is shown in the echo-area
+/// when reading a key-sequence to be looked-up in this keymap.
+#[lisp_fn]
+pub fn keymap_prompt(map: LispObject) -> LispObject {
+    let map = unsafe { LispObject::from_raw(get_keymap(map.to_raw(), false, false)) };
+    let mut result = LispObject::constant_nil();
+    for elt in map.iter_cars_safe() {
+        let mut tem = elt;
+        if tem.is_string() {
+            result = tem;
+            break;
+        } else if keymapp(tem) {
+            tem = keymap_prompt(tem);
+            if tem.is_not_nil() {
+                result = tem;
+                break;
+            }
+        }
+    }
+    result
+}
+
 /// Return the binding for command KEYS in current local keymap only.
 /// KEYS is a string or vector, a sequence of keystrokes.
 /// The binding is probably a symbol with a function definition.
