@@ -126,29 +126,6 @@ initial_define_lispy_key (Lisp_Object keymap, const char *keyname, const char *d
   store_in_keymap (keymap, intern_c_string (keyname), intern_c_string (defname));
 }
 
-DEFUN ("keymap-prompt", Fkeymap_prompt, Skeymap_prompt, 1, 1, 0,
-       doc: /* Return the prompt-string of a keymap MAP.
-If non-nil, the prompt is shown in the echo-area
-when reading a key-sequence to be looked-up in this keymap.  */)
-  (Lisp_Object map)
-{
-  map = get_keymap (map, 0, 0);
-  while (CONSP (map))
-    {
-      Lisp_Object tem = XCAR (map);
-      if (STRINGP (tem))
-	return tem;
-      else if (KEYMAPP (tem))
-	{
-	  tem = Fkeymap_prompt (tem);
-	  if (!NILP (tem))
-	    return tem;
-	}
-      map = XCDR (map);
-    }
-  return Qnil;
-}
-
 /* Check that OBJECT is a keymap (after dereferencing through any
    symbols).  If it is, return it.
 
@@ -3475,8 +3452,6 @@ be preferred.  */);
   where_is_cache = Qnil;
   staticpro (&where_is_cache);
   staticpro (&where_is_cache_keymaps);
-
-  defsubr (&Skeymap_prompt);
   defsubr (&Sset_keymap_parent);
   defsubr (&Smap_keymap_internal);
   defsubr (&Smap_keymap);

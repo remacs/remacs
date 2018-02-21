@@ -2,8 +2,9 @@
 
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
-use remacs_sys::{access_keymap, get_keymap, maybe_quit, Fcons, Fevent_convert_list, Ffset,
-                 Fmake_char_table, Fpurecopy, Fset};
+use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
+use remacs_sys::{access_keymap, get_keymap, maybe_quit};
+
 use remacs_sys::{Qkeymap, Qnil};
 use remacs_sys::Lisp_Object;
 
@@ -76,6 +77,26 @@ fn keymap_parent_internal(keymap: LispObject, autoload: bool) -> LispObject {
 #[lisp_fn(name = "keymap-parent")]
 pub fn keymap_parent_lisp(keymap: LispObject) -> LispObject {
     keymap_parent_internal(keymap, true)
+}
+
+/// Return the prompt-string of a keymap MAP.
+/// If non-nil, the prompt is shown in the echo-area
+/// when reading a key-sequence to be looked-up in this keymap.
+#[lisp_fn]
+pub fn keymap_prompt(map: LispObject) -> LispObject {
+    let map = unsafe { LispObject::from_raw(get_keymap(map.to_raw(), false, false)) };
+    for elt in map.iter_cars_safe() {
+        let mut tem = elt;
+        if tem.is_string() {
+            return tem;
+        } else if keymapp(tem) {
+            tem = keymap_prompt(tem);
+            if tem.is_not_nil() {
+                return tem;
+            }
+        }
+    }
+    LispObject::constant_nil()
 }
 
 /// Return the binding for command KEYS in current local keymap only.

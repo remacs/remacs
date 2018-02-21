@@ -184,9 +184,9 @@ impl LispWindowRef {
     /// accommodate it, false otherwise.
     ///
     /// Window wants a header line if it's a leaf window and neither a minibuffer
-    /// nor a pseudo window.  Moreover, its 'window-mode-line-format'
+    /// nor a pseudo window.  Moreover, its 'window-header-line-format'
     /// parameter must not be 'none' and either that parameter or window's
-    /// buffer's 'mode-line-format' value must be non-nil.  Finally, window must
+    /// buffer's 'header-line-format' value must be non-nil.  Finally, window must
     /// be higher than its frame's canonical character height and be able to
     /// accommodate a mode line too if necessary (the mode line prevails).
     pub fn wants_header_line(self) -> bool {
