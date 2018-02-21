@@ -203,6 +203,13 @@ styles as configured by the variable 'completion-styles'.
 These macros are analogue to 'let' and 'let*', but create bindings that
 are evaluated lazily.
 
+** next-error
+
+*** New customizable variable next-error-find-buffer-function
+defines the logic of finding a next-error capable buffer.
+It has an option to use a single such buffer on selected frame, or
+by default use the last buffer that navigated to the current buffer.
+
 ** Eshell
 
 ---
