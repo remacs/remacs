@@ -117,7 +117,7 @@ second slash in the pair.  In the example above,
 @file{/u2/emacs/src/} is ignored, so the argument you supplied is
 @file{/etc/termcap}.  The ignored part of the file name is dimmed if
 the terminal allows it.  (To disable this dimming, turn off File Name
-Shadow mode with the command @kbd{M-x file-name-shadow-mode}.)
+Shadow mode with the command @w{@kbd{M-x file-name-shadow-mode}}.)
 
   When completing remote file names (@pxref{Remote Files}), a double
 slash behaves slightly differently: it causes Emacs to ignore only the
@@ -747,7 +747,7 @@ it by typing @key{RET}.
 @vindex isearch-resume-in-command-history
   Incremental search does not, strictly speaking, use the minibuffer.
 Therefore, although it behaves like a complex command, it normally
-does not appear in the history list for @kbd{C-x @key{ESC} @key{ESC}}.
+does not appear in the history list for @w{@kbd{C-x @key{ESC} @key{ESC}}}.
 You can make incremental search commands appear in the history by
 setting @code{isearch-resume-in-command-history} to a non-@code{nil}
 value.  @xref{Incremental Search}.
