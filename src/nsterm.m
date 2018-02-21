@@ -9468,7 +9468,12 @@ This variable is ignored on macOS < 10.7 and GNUstep.  Default is t.  */);
 
   DEFVAR_BOOL ("x-underline-at-descent-line",
 	       x_underline_at_descent_line,
-     doc: /* SKIP: real doc in xterm.c.  */);
+     doc: /* Non-nil means to draw the underline at the same place as the descent line.
+(If `line-spacing' is in effect, that moves the underline lower by
+that many pixels.)
+A value of nil means to draw the underline according to the value of the
+variable `x-use-underline-position-properties', which is usually at the
+baseline level.  The default value is nil.  */);
   x_underline_at_descent_line = 0;
 
   /* Tell Emacs about this window system.  */
