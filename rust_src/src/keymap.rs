@@ -71,6 +71,13 @@ fn keymap_parent_internal(keymap: LispObject, autoload: bool) -> LispObject {
     LispObject::from_raw(unsafe { get_keymap(list.to_raw(), false, autoload) })
 }
 
+/// Return the parent keymap of KEYMAP.
+/// If KEYMAP has no parent, return nil.
+#[lisp_fn(name = "keymap-parent")]
+pub fn keymap_parent_lisp(keymap: LispObject) -> LispObject {
+    keymap_parent_internal(keymap, true)
+}
+
 /// Return the binding for command KEYS in current local keymap only.
 /// KEYS is a string or vector, a sequence of keystrokes.
 /// The binding is probably a symbol with a function definition.

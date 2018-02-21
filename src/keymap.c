@@ -214,14 +214,6 @@ get_keymap (Lisp_Object object, bool error_if_not_keymap, bool autoload)
 }
 
 
-DEFUN ("keymap-parent", Fkeymap_parent, Skeymap_parent, 1, 1, 0,
-       doc: /* Return the parent keymap of KEYMAP.
-If KEYMAP has no parent, return nil.  */)
-  (Lisp_Object keymap)
-{
-  return keymap_parent (keymap, 1);
-}
-
 /* Check whether MAP is one of MAPS parents.  */
 static bool
 keymap_memberp (Lisp_Object map, Lisp_Object maps)
@@ -3484,7 +3476,6 @@ be preferred.  */);
   staticpro (&where_is_cache);
   staticpro (&where_is_cache_keymaps);
 
-  defsubr (&Skeymap_parent);
   defsubr (&Skeymap_prompt);
   defsubr (&Sset_keymap_parent);
   defsubr (&Smap_keymap_internal);
