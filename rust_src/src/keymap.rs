@@ -48,13 +48,27 @@ pub fn make_keymap(string: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn keymapp(object: LispObject) -> bool {
     let map = unsafe { LispObject::from_raw(get_keymap(object.to_raw(), false, false)) };
-    let _test = keymap_parent(object.to_raw(), true);
     map.is_not_nil()
 }
 
+/// Return the parent map of KEYMAP, or nil if it has none.
+/// We assume that KEYMAP is a valid keymap.
 #[no_mangle]
-pub extern "C" fn keymap_parent(keymap: Lisp_Object, _autoload: bool) -> Lisp_Object {
-    keymap
+pub extern "C" fn keymap_parent(keymap: Lisp_Object, autoload: bool) -> Lisp_Object {
+    let map = keymap_parent_internal(LispObject::from_raw(keymap), autoload);
+    map.to_raw()
+}
+
+fn keymap_parent_internal(keymap: LispObject, autoload: bool) -> LispObject {
+    let mut list = LispObject::constant_nil();
+    let map = unsafe { LispObject::from_raw(get_keymap(keymap.to_raw(), true, autoload)) };
+    for elt in map.iter_tails_safe() {
+        list = elt.cdr();
+        if keymapp(list) {
+            return list;
+        }
+    }
+    LispObject::from_raw(unsafe { get_keymap(list.to_raw(), false, autoload) })
 }
 
 /// Return the binding for command KEYS in current local keymap only.
