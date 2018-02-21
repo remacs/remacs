@@ -167,14 +167,14 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
         if idx_u >= v.len() {
             xsignal!(Qargs_out_of_range, array, idx.into());
         }
-        v.get(idx as isize)
+        v.get(idx as usize)
     } else if array.is_byte_code_function() || array.is_record() {
         let vl = array.as_vectorlike().unwrap();
         if idx >= vl.pseudovector_size() {
             xsignal!(Qargs_out_of_range, array, idx.into());
         }
         let v = unsafe { vl.as_vector_unchecked() };
-        v.get(idx as isize)
+        v.get(idx as usize)
     } else {
         wrong_type!(Qarrayp, array);
     }

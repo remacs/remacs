@@ -314,12 +314,21 @@ pub struct Lisp_Vector {
     pub contents: [Lisp_Object; 1],
 }
 
+// No C equivalent.  Generic type for a vectorlike with one or more
+// LispObject slots after the header.
+#[repr(C)]
+pub struct Lisp_Vectorlike_With_Slots {
+    pub header: Lisp_Vectorlike_Header,
+    // actually any number of items... not sure how to express this
+    pub contents: [Lisp_Object; 1],
+}
+
 #[repr(C)]
 pub struct Lisp_Bool_Vector {
     pub _header: Lisp_Vectorlike_Header,
     pub size: EmacsInt,
     // actually any number of items again
-    pub _data: [bits_word; 1],
+    pub data: [bits_word; 1],
 }
 
 // This is the set of data types that share a common structure.
@@ -1130,6 +1139,9 @@ extern "C" {
     pub fn Fmapcar(function: Lisp_Object, sequence: Lisp_Object) -> Lisp_Object;
     pub fn Fset(symbol: Lisp_Object, newval: Lisp_Object) -> Lisp_Object;
     pub fn Fset_default(symbol: Lisp_Object, value: Lisp_Object) -> Lisp_Object;
+    pub fn Fconcat(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
+    pub fn Fnconc(nargs: ptrdiff_t, args: *mut Lisp_Object) -> Lisp_Object;
+
     pub fn make_float(float_value: c_double) -> Lisp_Object;
     pub fn make_string(s: *const c_char, length: ptrdiff_t) -> Lisp_Object;
     pub fn make_string_from_bytes(
@@ -1411,7 +1423,6 @@ extern "C" {
     pub fn record_unwind_save_match_data();
     pub fn un_autoload(oldqueue: Lisp_Object);
 
-    pub fn Fnconc(nargs: ptrdiff_t, args: *const Lisp_Object) -> Lisp_Object;
     pub fn unchain_marker(marker: *mut Lisp_Marker);
     pub fn del_range(from: ptrdiff_t, to: ptrdiff_t);
 
