@@ -734,6 +734,8 @@ This function is called from `compilation-filter-hook'."
 	     (grep-use-null-device ,grep-use-null-device)
 	     (grep-find-command ,grep-find-command)
 	     (grep-find-template ,grep-find-template)
+	     (grep-use-null-filename-separator
+	      ,grep-use-null-filename-separator)
 	     (grep-find-use-xargs ,grep-find-use-xargs)
 	     (grep-highlight-matches ,grep-highlight-matches))))))
 
