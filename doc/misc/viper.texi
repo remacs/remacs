@@ -4071,7 +4071,7 @@ but better alternatives are also available in Emacs (e.g.,
 @code{ido-read-buffer}).
 @vindex @var{viper-read-buffer-function}
 @item :B
-Like @kbd{:b}, but the meaning of code{ex-cycle-other-window} is reversed.
+Like @kbd{:b}, but the meaning of @code{ex-cycle-other-window} is reversed.
 @item :<address>r <name>
 Read the file <name> into the buffer after the line <address>.
 @item v, V, C-v
