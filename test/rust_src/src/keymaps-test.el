@@ -19,10 +19,15 @@
                          (3 keymap
                             ;; C-c C-z
                             (26 . emacs-version)))))
+    (should (equal (keymap-parent '(keymap keymap
+                                           (17 . indent-sexp))) '(keymap
+                                                                  (17 . indent-sexp))))
     (should (equal (keymap-parent sample-keymap-with-parent) '(keymap (127 . backward-delete-char-untabify)
                                                           (27 keymap
                                                               (17 . indent-sexp)))))
+    (should-not (keymap-parent '(keymap ())))
     (should-not (keymap-parent sample-keymap))
+    (should-error (keymap-parent '()))
     (should-error (keymap-parent nil))
     (should-error (keymap-parent "test"))))
 
