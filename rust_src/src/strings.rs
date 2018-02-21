@@ -156,7 +156,7 @@ pub fn clear_string(mut string: LispStringRef) -> () {
     unsafe {
         string.set_num_chars(string.len_bytes());
     }
-    LispObject::set_string_unibyte(&mut string);
+    string.mark_as_unibyte();
 }
 
 include!(concat!(env!("OUT_DIR"), "/strings_exports.rs"));

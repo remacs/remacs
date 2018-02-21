@@ -8,7 +8,7 @@ use std::slice;
 use libc::ptrdiff_t;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Bool_Vector, Lisp_Vector, Lisp_Vectorlike,
+use remacs_sys::{EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
                  Lisp_Vectorlike_With_Slots, PseudovecType, MOST_POSITIVE_FIXNUM,
                  PSEUDOVECTOR_AREA_BITS, PSEUDOVECTOR_FLAG, PSEUDOVECTOR_SIZE_MASK, PVEC_TYPE_MASK};
 use remacs_sys::Qsequencep;
@@ -164,6 +164,14 @@ impl LispVectorlikeRef {
             None
         }
     }
+
+    pub fn as_record(&self) -> Option<LispVectorlikeSlotsRef> {
+        if self.is_pseudovector(PseudovecType::PVEC_RECORD) {
+            Some(unsafe { mem::transmute(*self) })
+        } else {
+            None
+        }
+    }
 }
 
 macro_rules! impl_vectorlike_ref {
@@ -172,6 +180,10 @@ macro_rules! impl_vectorlike_ref {
             #[inline]
             pub fn len(&self) -> usize {
                 (self.header.size & $size_mask) as usize
+            }
+
+            pub fn as_lisp_obj(self) -> LispObject {
+                LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
             }
 
             #[inline]
@@ -195,6 +207,12 @@ macro_rules! impl_vectorlike_ref {
             }
 
             #[inline]
+            pub fn get(&self, idx: usize) -> LispObject {
+                assert!(idx < self.len());
+                unsafe { self.get_unchecked(idx as ptrdiff_t) }
+            }
+
+            #[inline]
             pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
                 ptr::read(
                     mem::transmute::<_, *const LispObject>(&self.contents).offset(idx),
@@ -202,23 +220,25 @@ macro_rules! impl_vectorlike_ref {
             }
 
             #[inline]
+            pub fn set(&mut self, idx: usize, item: LispObject) {
+                assert!(idx < self.len());
+                unsafe { self.set_unchecked(idx as ptrdiff_t, item) };
+            }
+
+            pub fn set_checked(&mut self, idx: isize, item: LispObject) {
+                if idx < 0 || idx >= self.len() as isize {
+                    args_out_of_range!(self.as_lisp_obj(), LispObject::from(idx));
+                }
+
+                unsafe { self.set_unchecked(idx as ptrdiff_t, item) };
+            }
+
+            #[inline]
             pub unsafe fn set_unchecked(&self, idx: ptrdiff_t, item: LispObject) {
                 ptr::write(
                     mem::transmute::<_, *mut LispObject>(&self.contents).offset(idx),
                     item,
-                )
-            }
-
-            #[inline]
-            pub fn get(&self, idx: usize) -> LispObject {
-                assert!(idx < self.len());
-                unsafe { self.get_unchecked(idx as ptrdiff_t) }
-            }
-
-            #[inline]
-            pub fn set(&mut self, idx: usize, item: LispObject) {
-                assert!(idx < self.len());
-                unsafe { self.set_unchecked(idx as ptrdiff_t, item) }
+                );
             }
 
             pub fn iter<'a>(&'a self) -> $itertype<'a> {
@@ -282,6 +302,10 @@ impl_vectorlike_ref! { LispVectorRef, LispVecIterator, ptrdiff_t::max_value() }
 impl_vectorlike_ref! { LispVectorlikeSlotsRef, LispVecSlotsIterator, PSEUDOVECTOR_SIZE_MASK }
 
 impl LispBoolVecRef {
+    pub fn as_lisp_obj(self) -> LispObject {
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
+    }
+
     #[inline]
     pub unsafe fn as_byte_ptr(&self) -> *const u8 {
         mem::transmute::<_, *const u8>(&self.data)
@@ -313,15 +337,25 @@ impl LispBoolVecRef {
         LispObject::from_bool(self.get_bit(idx))
     }
 
-    #[allow(dead_code)]
-    #[inline]
-    pub fn set_bit(&self, idx: usize, b: bool) {
+    pub fn set(&self, idx: usize, b: bool) {
         assert!(idx < self.len());
-        let limbp = unsafe { self.as_mut_byte_ptr().offset(idx as isize / 8) };
+        unsafe { self.set_unchecked(idx, b) }
+    }
+
+    pub fn set_checked(&self, idx: isize, b: bool) {
+        if idx < 0 || idx >= self.len() as isize {
+            args_out_of_range!(self.as_lisp_obj(), LispObject::from(idx));
+        }
+
+        unsafe { self.set_unchecked(idx as usize, b) }
+    }
+
+    pub unsafe fn set_unchecked(&self, idx: usize, b: bool) {
+        let limbp = self.as_mut_byte_ptr().offset(idx as isize / 8);
         if b {
-            unsafe { *limbp |= 1 << (idx % 8) }
+            *limbp |= 1 << (idx % 8)
         } else {
-            unsafe { *limbp &= !(1 << (idx % 8)) }
+            *limbp &= !(1 << (idx % 8))
         }
     }
 

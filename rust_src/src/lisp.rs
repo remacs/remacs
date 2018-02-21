@@ -1382,17 +1382,6 @@ impl LispObject {
     pub fn empty_unibyte_string() -> LispStringRef {
         LispStringRef::from(LispObject::from_raw(unsafe { empty_unibyte_string }))
     }
-
-    /// Replaces STRING_SET_UNIBYTE in C. If your string has size 0,
-    /// it will replace your string variable with 'empty_unibyte_string'.
-    #[inline]
-    pub fn set_string_unibyte(string: &mut LispStringRef) {
-        if string.size == 0 {
-            *string = Self::empty_unibyte_string();
-        } else {
-            string.size_byte = -1;
-        }
-    }
 }
 
 impl From<LispObject> for LispStringRef {

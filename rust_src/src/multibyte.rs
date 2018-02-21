@@ -135,6 +135,31 @@ impl LispStringRef {
     pub fn clear_data(self) {
         unsafe { memset(self.data as *mut c_void, 0, self.len_bytes() as size_t) };
     }
+
+    /// Replaces STRING_SET_UNIBYTE in C. If your string has size 0,
+    /// it will replace your string variable with 'empty_unibyte_string'.
+    #[inline]
+    pub fn mark_as_unibyte(&mut self) {
+        if self.size == 0 {
+            *self = LispObject::empty_unibyte_string();
+        } else {
+            self.size_byte = -1;
+        }
+    }
+
+    /// Mark STR as a multibyte string.  Assure that STR contains only
+    /// ASCII characters in advance.
+    pub fn mark_as_multibyte(&mut self) {
+        if self.size == 0 {
+            *self = LispObject::empty_unibyte_string();
+        } else {
+            self.size_byte = self.size;
+        }
+    }
+
+    pub fn set_byte(&mut self, idx: ptrdiff_t, elt: c_uchar) {
+        unsafe { ptr::write(self.data_ptr().offset(idx), elt) };
+    }
 }
 
 impl fmt::Display for LispStringRef {
@@ -180,7 +205,7 @@ impl<'a> Iterator for LispStringRefIterator<'a> {
 impl<'a> Iterator for LispStringRefCharIterator<'a> {
     type Item = Codepoint;
 
-    fn next(&mut self) -> Option<Codepoint> {
+    fn next(&mut self) -> Option<Self::Item> {
         self.0.next().map(|result| result.1)
     }
 }
@@ -200,6 +225,14 @@ impl LispStringRef {
     }
 }
 
+pub fn is_ascii(c: Codepoint) -> bool {
+    c < 0x80
+}
+
+pub fn is_single_byte_char(c: Codepoint) -> bool {
+    c < 0x100
+}
+
 fn string_overflow() -> ! {
     error!("Maximum string size exceeded")
 }
@@ -211,7 +244,11 @@ fn string_overflow() -> ! {
 pub extern "C" fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdiff_t) -> ptrdiff_t {
     let slice = unsafe { slice::from_raw_parts(ptr, len as usize) };
     slice.iter().fold(0, |total, &byte| {
-        let n = if byte < 0x80 { 1 } else { 2 };
+        let n = if is_ascii(Codepoint::from(byte)) {
+            1
+        } else {
+            2
+        };
         total.checked_add(n).unwrap_or_else(|| string_overflow())
     })
 }
@@ -219,10 +256,10 @@ pub extern "C" fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdiff_t) -
 /// Same as the `BYTE8_TO_CHAR` macro.
 #[inline]
 pub fn raw_byte_codepoint(byte: c_uchar) -> Codepoint {
-    if byte >= 0x80 {
-        Codepoint::from(byte) + 0x3F_FF00
-    } else {
+    if is_ascii(Codepoint::from(byte)) {
         Codepoint::from(byte)
+    } else {
+        Codepoint::from(byte) + 0x3F_FF00
     }
 }
 
@@ -237,7 +274,7 @@ pub fn raw_byte_from_codepoint(cp: Codepoint) -> c_uchar {
 /// or -1 if CP doesn't correspond to a byte.
 #[inline]
 pub fn raw_byte_from_codepoint_safe(cp: Codepoint) -> EmacsInt {
-    if cp < 0x80 {
+    if is_ascii(cp) {
         EmacsInt::from(cp)
     } else if cp > MAX_5_BYTE_CHAR {
         EmacsInt::from(raw_byte_from_codepoint(cp))
@@ -249,7 +286,7 @@ pub fn raw_byte_from_codepoint_safe(cp: Codepoint) -> EmacsInt {
 /// `UNIBYTE_TO_CHAR` macro
 #[inline]
 pub fn unibyte_to_char(cp: Codepoint) -> Codepoint {
-    if cp < 0x80 {
+    if is_ascii(cp) {
         cp
     } else {
         raw_byte_codepoint(cp as c_uchar)
@@ -308,7 +345,7 @@ pub fn write_codepoint(to: &mut [c_uchar], cp: Codepoint) -> usize {
 pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
     let mut cp = ch as Codepoint;
     // A non-ASCII character can't reflect modifier bits to the code.
-    if (cp & !CHAR_MODIFIER_MASK) >= 0x80 {
+    if !is_ascii(cp & !CHAR_MODIFIER_MASK) {
         return EmacsInt::from(cp);
     }
     let ascii = (cp & 0x7F) as u8;
@@ -369,7 +406,7 @@ pub extern "C" fn str_to_multibyte(
     // first, search ASCII-only prefix that we can skip processing
     let mut start = 0;
     for (idx, &byte) in slice.iter().enumerate() {
-        if byte >= 0x80 {
+        if !is_ascii(Codepoint::from(byte)) {
             start = idx;
             break;
         }
@@ -689,7 +726,7 @@ pub extern "C" fn str_to_unibyte(
         srcslice = &srcslice[cplen..];
         dstslice[i as usize] = if cp > MAX_5_BYTE_CHAR {
             raw_byte_from_codepoint(cp)
-        } else if cp >= 0x80 {
+        } else if !is_ascii(cp) {
             return i;
         } else {
             cp as c_uchar
