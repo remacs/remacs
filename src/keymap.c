@@ -3452,6 +3452,7 @@ be preferred.  */);
   where_is_cache = Qnil;
   staticpro (&where_is_cache);
   staticpro (&where_is_cache_keymaps);
+  
   defsubr (&Sset_keymap_parent);
   defsubr (&Smap_keymap_internal);
   defsubr (&Smap_keymap);

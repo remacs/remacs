@@ -3,9 +3,8 @@
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
-use remacs_sys::{access_keymap, get_keymap, maybe_quit};
-
 use remacs_sys::{Qkeymap, Qnil};
+use remacs_sys::{access_keymap, get_keymap, maybe_quit};
 use remacs_sys::Lisp_Object;
 
 use data::aref;
@@ -56,27 +55,22 @@ pub fn keymapp(object: LispObject) -> bool {
 /// We assume that KEYMAP is a valid keymap.
 #[no_mangle]
 pub extern "C" fn keymap_parent(keymap: Lisp_Object, autoload: bool) -> Lisp_Object {
-    let map = keymap_parent_internal(LispObject::from_raw(keymap), autoload);
-    map.to_raw()
-}
-
-fn keymap_parent_internal(keymap: LispObject, autoload: bool) -> LispObject {
-    let mut list = LispObject::constant_nil();
-    let map = unsafe { LispObject::from_raw(get_keymap(keymap.to_raw(), true, autoload)) };
-    for elt in map.iter_tails_safe() {
-        list = elt.cdr();
-        if keymapp(list) {
-            return list;
-        }
+    let map = unsafe { LispObject::from_raw(get_keymap(keymap, true, autoload)) };
+    let result = map.iter_tails_safe().find(|&elt| keymapp(elt.cdr()));
+    if let Some(elt) = result {
+        elt.cdr().to_raw()
+    } else if let Some(last) = map.iter_tails_safe().last() {
+        unsafe { get_keymap(last.cdr().to_raw(), false, autoload) }
+    } else {
+        Qnil
     }
-    LispObject::from_raw(unsafe { get_keymap(list.to_raw(), false, autoload) })
 }
 
 /// Return the parent keymap of KEYMAP.
 /// If KEYMAP has no parent, return nil.
 #[lisp_fn(name = "keymap-parent")]
 pub fn keymap_parent_lisp(keymap: LispObject) -> LispObject {
-    keymap_parent_internal(keymap, true)
+    LispObject::from_raw(keymap_parent(keymap.to_raw(), true))
 }
 
 /// Return the prompt-string of a keymap MAP.
