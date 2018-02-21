@@ -5,6 +5,7 @@ use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, C
 use remacs_sys::{access_keymap, get_keymap, maybe_quit, Fcons, Fevent_convert_list, Ffset,
                  Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qkeymap, Qnil};
+use remacs_sys::Lisp_Object;
 
 use data::aref;
 use keyboard::lucid_event_type_list_p;
@@ -47,7 +48,13 @@ pub fn make_keymap(string: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn keymapp(object: LispObject) -> bool {
     let map = unsafe { LispObject::from_raw(get_keymap(object.to_raw(), false, false)) };
+    let _test = keymap_parent(object.to_raw(), true);
     map.is_not_nil()
+}
+
+#[no_mangle]
+pub extern "C" fn keymap_parent(keymap: Lisp_Object, _autoload: bool) -> Lisp_Object {
+    keymap
 }
 
 /// Return the binding for command KEYS in current local keymap only.

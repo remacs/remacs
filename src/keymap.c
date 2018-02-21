@@ -216,24 +216,24 @@ get_keymap (Lisp_Object object, bool error_if_not_keymap, bool autoload)
 /* Return the parent map of KEYMAP, or nil if it has none.
    We assume that KEYMAP is a valid keymap.  */
 
-static Lisp_Object
-keymap_parent (Lisp_Object keymap, bool autoload)
-{
-  Lisp_Object list;
+/* static Lisp_Object */
+/* keymap_parent (Lisp_Object keymap, bool autoload) */
+/* { */
+/*   Lisp_Object list; */
 
-  keymap = get_keymap (keymap, 1, autoload);
+/*   keymap = get_keymap (keymap, 1, autoload); */
 
-  /* Skip past the initial element `keymap'.  */
-  list = XCDR (keymap);
-  for (; CONSP (list); list = XCDR (list))
-    {
-      /* See if there is another `keymap'.  */
-      if (KEYMAPP (list))
-	return list;
-    }
+/*   /\* Skip past the initial element `keymap'.  *\/ */
+/*   list = XCDR (keymap); */
+/*   for (; CONSP (list); list = XCDR (list)) */
+/*     { */
+/*       /\* See if there is another `keymap'.  *\/ */
+/*       if (KEYMAPP (list)) */
+/* 	return list; */
+/*     } */
 
-  return get_keymap (list, 0, autoload);
-}
+/*   return get_keymap (list, 0, autoload); */
+/* } */
 
 DEFUN ("keymap-parent", Fkeymap_parent, Skeymap_parent, 1, 1, 0,
        doc: /* Return the parent keymap of KEYMAP.
