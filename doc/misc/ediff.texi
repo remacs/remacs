@@ -1924,7 +1924,7 @@ versions only permit @option{-b}, which (usually) assumes the
 extension @file{.orig}.  Yet others force you to use
 @option{-z@var{extension}}.
 
-Both @code{ediff-backup-extension} and @var{ediff-backup-specs} must
+Both @code{ediff-backup-extension} and @code{ediff-backup-specs} must
 be properly set.  If your patch program takes the option @option{-b},
 but not @option{-b @var{extension}}, the variable
 @code{ediff-backup-extension} must still be set so Ediff will know

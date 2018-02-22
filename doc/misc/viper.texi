@@ -4061,7 +4061,7 @@ List files not shown anywhere with counts for next
 Edit <count> file, or edit files.  The count comes from @kbd{:args}.
 @item :N [count] [+<cmd>] [<files>]
 Like @kbd{:n}, but the meaning of the variable
-@var{ex-cycle-other-window} is reversed.
+@code{ex-cycle-other-window} is reversed.
 @item :b
 Switch to another buffer.  If @code{ex-cycle-other-window} is @code{t},
 switch in another window.  Buffer completion is supported.
@@ -4069,7 +4069,7 @@ The variable @code{viper-read-buffer-function} controls which function is
 actually used to read the buffer name. The default is @code{read-buffer},
 but better alternatives are also available in Emacs (e.g.,
 @code{ido-read-buffer}).
-@vindex @var{viper-read-buffer-function}
+@vindex @code{viper-read-buffer-function}
 @item :B
 Like @kbd{:b}, but the meaning of @code{ex-cycle-other-window} is reversed.
 @item :<address>r <name>
