@@ -1,5 +1,21 @@
 (require 'ert)
 
+(ert-deftest keymap-set-keymap-parent-tests ()
+  (let ((sample-keymap '(keymap
+                         (3 keymap
+                            ;; C-c C-z
+                            (26 . emacs-version))))
+        (map (make-sparse-keymap)))
+    
+    (should (equal (set-keymap-parent map sample-keymap) sample-keymap))
+    (should (equal map '(keymap keymap (3 keymap (26 . emacs-version)))))
+
+    (should-error (set-keymap-parent (set-keymap-parent map sample-keymap) sample-keymap)))
+
+  (let ((map (make-sparse-keymap)))
+    (should-not (set-keymap-parent map nil))
+    (should (equal map '(keymap)))))
+
 (ert-deftest keymap-parent-tests ()
   (let ((sample-keymap-with-parent '(keymap
                          (3 keymap
