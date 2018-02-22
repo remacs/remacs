@@ -160,6 +160,14 @@ bound to 'C-c C-f'.
 'dired-do-copy' and 'dired-rename-file' should create non-existent
 directories in the destination.
 
+** Help
+
+*** 'C-h l' (view-lossage) now displays last keystrokes and commands
+in the same format as the edit buffer of edit-last-kbd-macro.
+This makes possible to copy the lines from the buffer generated
+by 'view-lossage', yank them to the buffer "*Edit Macro*" created by
+'edit-last-kbd-macro', and save the macro by 'C-c C-c'.
+
 ** Ibuffer
 
 ---
