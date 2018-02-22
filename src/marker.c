@@ -391,17 +391,6 @@ buf_bytepos_to_charpos (struct buffer *b, ptrdiff_t bytepos)
 
 /* Operations on markers. */
 
-/* If BUFFER is nil, return current buffer pointer.  Next, check
-   whether BUFFER is a buffer object and return buffer pointer
-   corresponding to BUFFER if BUFFER is live, or NULL otherwise.  */
-
-static struct buffer *
-live_buffer (Lisp_Object buffer)
-{
-  struct buffer *b = decode_buffer (buffer);
-  return BUFFER_LIVE_P (b) ? b : NULL;
-}
-
 /* Internal function to set MARKER in BUFFER at POSITION.  Non-zero
    RESTRICTED means limit the POSITION by the visible part of BUFFER.  */
 
@@ -467,59 +456,6 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
   return marker;
 }
 
-/* Like the above, but won't let the position be outside the visible part.  */
-
-Lisp_Object
-set_marker_restricted (Lisp_Object marker, Lisp_Object position,
-		       Lisp_Object buffer)
-{
-  return set_marker_internal (marker, position, buffer, 1);
-}
-
-/* Set the position of MARKER, specifying both the
-   character position and the corresponding byte position.  */
-
-Lisp_Object
-set_marker_both (Lisp_Object marker, Lisp_Object buffer,
-		 ptrdiff_t charpos, ptrdiff_t bytepos)
-{
-  register struct Lisp_Marker *m;
-  register struct buffer *b = live_buffer (buffer);
-
-  CHECK_MARKER (marker);
-  m = XMARKER (marker);
-
-  if (b)
-    attach_marker (m, b, charpos, bytepos);
-  else
-    unchain_marker (m);
-  return marker;
-}
-
-/* Like the above, but won't let the position be outside the visible part.  */
-
-Lisp_Object
-set_marker_restricted_both (Lisp_Object marker, Lisp_Object buffer,
-			    ptrdiff_t charpos, ptrdiff_t bytepos)
-{
-  register struct Lisp_Marker *m;
-  register struct buffer *b = live_buffer (buffer);
-
-  CHECK_MARKER (marker);
-  m = XMARKER (marker);
-
-  if (b)
-    {
-      attach_marker
-	(m, b,
-	 clip_to_bounds (BUF_BEGV (b), charpos, BUF_ZV (b)),
-	 clip_to_bounds (BUF_BEGV_BYTE (b), bytepos, BUF_ZV_BYTE (b)));
-    }
-  else
-    unchain_marker (m);
-  return marker;
-}
-
 /* Remove MARKER from the chain of whatever buffer it is in,
    leaving it points to nowhere.  This is called during garbage
    collection, so we must be careful to ignore and preserve
@@ -563,38 +499,6 @@ unchain_marker (register struct Lisp_Marker *marker)
     }
 }
 
-/* Return the char position of marker MARKER, as a C integer.  */
-
-ptrdiff_t
-marker_position (Lisp_Object marker)
-{
-  register struct Lisp_Marker *m = XMARKER (marker);
-  register struct buffer *buf = m->buffer;
-
-  if (!buf)
-    error ("Marker does not point anywhere");
-
-  eassert (BUF_BEG (buf) <= m->charpos && m->charpos <= BUF_Z (buf));
-
-  return m->charpos;
-}
-
-/* Return the byte position of marker MARKER, as a C integer.  */
-
-ptrdiff_t
-marker_byte_position (Lisp_Object marker)
-{
-  register struct Lisp_Marker *m = XMARKER (marker);
-  register struct buffer *buf = m->buffer;
-
-  if (!buf)
-    error ("Marker does not point anywhere");
-
-  eassert (BUF_BEG_BYTE (buf) <= m->bytepos && m->bytepos <= BUF_Z_BYTE (buf));
-
-  return m->bytepos;
-}
-
 #ifdef MARKER_DEBUG
 
 /* For debugging -- count the markers in buffer BUF.  */
@@ -645,3 +549,35 @@ mset_insertion_type(struct Lisp_Marker *m, bool_bf val)
 {
   m->insertion_type = val;
 }
+
+struct Lisp_Marker*
+mget_next_marker (struct Lisp_Marker *m) {
+  return m->next;
+}
+
+void
+mset_next_marker (struct Lisp_Marker *m, struct Lisp_Marker *n) {
+  m->next = n;
+}
+
+struct buffer*
+mget_buffer (struct Lisp_Marker *m) {
+  return m->buffer;
+}
+
+void
+mset_buffer(struct Lisp_Marker *m, struct buffer *b)
+{
+  m->buffer = b;
+}
+
+ptrdiff_t
+mget_charpos (struct Lisp_Marker *m) {
+  return m->charpos;
+}
+
+ptrdiff_t
+mget_bytepos (struct Lisp_Marker *m) {
+  return m->bytepos;
+}
+

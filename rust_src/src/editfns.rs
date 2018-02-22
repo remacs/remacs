@@ -17,7 +17,7 @@ use buffers::{get_buffer, BUF_BYTES_MAX};
 use character::dec_pos;
 use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
-use marker::{marker_position, set_point_from_marker};
+use marker::{marker_position_lisp, set_point_from_marker};
 use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, Codepoint, LispStringRef,
                 MAX_MULTIBYTE_LENGTH};
 use textprop::get_char_property;
@@ -110,7 +110,7 @@ fn region_limit(beginningp: bool) -> EmacsInt {
         xsignal!(Qmark_inactive);
     }
 
-    let m = marker_position(current_buf.mark().into());
+    let m = marker_position_lisp(current_buf.mark().into());
     let num = m.unwrap_or_else(|| error!("The mark is not set now, so there is no region"));
 
     // Clip to the current narrowing (bug#11770)
@@ -163,8 +163,8 @@ pub fn point_max() -> EmacsInt {
 /// The return value is POSITION.
 #[lisp_fn(intspec = "NGoto char: ")]
 pub fn goto_char(position: LispObject) -> LispObject {
-    if let Some(marker) = position.as_marker() {
-        set_point_from_marker(marker);
+    if position.is_marker() {
+        set_point_from_marker(position.to_raw());
     } else if let Some(num) = position.as_fixnum() {
         let cur_buf = ThreadState::current_buffer();
         let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);

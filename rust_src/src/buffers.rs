@@ -15,7 +15,7 @@ use editfns::point;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{car, cdr, Flist, Fmember};
-use marker::{marker_buffer, marker_position, LispMarkerRef};
+use marker::{marker_buffer, marker_position_lisp, LispMarkerRef};
 use multibyte::string_char;
 use strings::string_equal;
 use threads::ThreadState;
@@ -424,13 +424,13 @@ pub fn buffer_chars_modified_tick(buffer: LispObject) -> EmacsInt {
 /// Return the position at which OVERLAY starts.
 #[lisp_fn]
 pub fn overlay_start(overlay: LispOverlayRef) -> Option<EmacsInt> {
-    marker_position(overlay.start().into())
+    marker_position_lisp(overlay.start().into())
 }
 
 /// Return the position at which OVERLAY ends.
 #[lisp_fn]
 pub fn overlay_end(overlay: LispOverlayRef) -> Option<EmacsInt> {
-    marker_position(overlay.end().into())
+    marker_position_lisp(overlay.end().into())
 }
 
 /// Return the buffer OVERLAY belongs to.

@@ -699,6 +699,11 @@ impl LispObject {
         self.as_vectorlike().and_then(|v| v.as_buffer())
     }
 
+    pub fn as_live_buffer(self) -> Option<LispBufferRef> {
+        self.as_buffer()
+            .and_then(|b| if b.is_live() { Some(b) } else { None })
+    }
+
     pub fn as_buffer_or_error(self) -> LispBufferRef {
         self.as_buffer()
             .unwrap_or_else(|| wrong_type!(Qbufferp, self))

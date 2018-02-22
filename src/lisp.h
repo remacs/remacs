@@ -2183,11 +2183,32 @@ struct Lisp_Marker
 
 /* Accessors to enable Rust code to get data from the Lisp_Marker struct */
 
+struct buffer *
+live_buffer (Lisp_Object buffer);
+
 bool_bf
 mget_insertion_type(const struct Lisp_Marker *m);
 
 void
 mset_insertion_type(struct Lisp_Marker *m, bool_bf val);
+
+struct Lisp_Marker*
+mget_next_marker (struct Lisp_Marker *m);
+
+void
+mset_next_marker(struct Lisp_Marker *m, struct Lisp_Marker *n);
+
+struct buffer*
+mget_buffer (struct Lisp_Marker *m);
+
+void
+mset_buffer(struct Lisp_Marker *m, struct buffer *b);
+
+ptrdiff_t
+mget_charpos (struct Lisp_Marker *m);
+
+ptrdiff_t
+mget_bytepos (struct Lisp_Marker *m);
 
 /* End Rust Accessors */
 
