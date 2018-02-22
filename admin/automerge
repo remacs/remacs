@@ -213,7 +213,8 @@ echo "Build finished ok"
 
 echo "Testing..."
 
-make "$@" check || die "check error"
+## We just want a fast pass/fail, we don't want to debug.
+make "$@" check TEST_LOAD_EL=no || die "check error"
 
 echo "Tests finished ok"
 
