@@ -182,6 +182,13 @@ by default.
 
 ** Gamegrid
 
+** grep
+
+*** rgrep, lgrep and zrgrep now hide part of the command line
+that contains a list of ignored directories and files.
+Clicking on the button with ellipsis unhides the truncated part.
+This truncation can be disabled by the new option 'grep-find-hide'.
+
 ** ERT
 
 +++

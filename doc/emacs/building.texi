@@ -434,6 +434,12 @@ the variable @code{grep-files-aliases}.
 @kbd{M-x rgrep}.  The default value includes the data directories used
 by various version control systems.
 
+@vindex grep-find-hide
+  The boolean option @code{grep-find-hide} controls shortening of the
+displayed command line by hiding the part containing ignored
+directories and files.  The hidden part can be revealed by clicking on
+the button with ellipsis.
+
 @node Flymake
 @section Finding Syntax Errors On The Fly
 @cindex checking syntax
