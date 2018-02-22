@@ -22,7 +22,7 @@ use multibyte::{multibyte_char_at, raw_byte_codepoint, write_codepoint, Codepoin
                 MAX_MULTIBYTE_LENGTH};
 use textprop::get_char_property;
 use threads::ThreadState;
-use util::clip_to_bounds;
+use util::{clip_to_bounds, current_buffer_bounds};
 
 /// Return value of point, as an integer.
 /// Beginning of buffer is position (point-min).
@@ -117,7 +117,8 @@ fn region_limit(beginningp: bool) -> EmacsInt {
     if ((current_buf.pt as EmacsInt) < num) == beginningp {
         current_buf.pt as EmacsInt
     } else {
-        clip_to_bounds(current_buf.begv, num, current_buf.zv) as EmacsInt
+        let (beg, end) = current_buffer_bounds(false, false);
+        clip_to_bounds(beg, num, end) as EmacsInt
     }
 }
 
@@ -167,7 +168,9 @@ pub fn goto_char(position: LispObject) -> LispObject {
         set_point_from_marker(marker);
     } else if let Some(num) = position.as_fixnum() {
         let cur_buf = ThreadState::current_buffer();
-        let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
+        let (beg, end) = current_buffer_bounds(false, false);
+
+        let pos = clip_to_bounds(beg, num, end);
         let bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), pos) };
         unsafe { set_point_both(pos, bytepos) };
     } else {
