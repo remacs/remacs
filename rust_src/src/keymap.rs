@@ -73,6 +73,20 @@ pub fn keymap_parent_lisp(keymap: LispObject) -> LispObject {
     LispObject::from_raw(keymap_parent(keymap.to_raw(), true))
 }
 
+/// Check whether MAP is one of MAPS parents.
+#[no_mangle]
+pub extern "C" fn keymap_memberp(map: Lisp_Object, maps: Lisp_Object) -> bool {
+    let map = LispObject::from_raw(map);
+    let mut maps = LispObject::from_raw(maps);
+    if map.is_nil() {
+        return false;
+    }
+    while keymapp(maps) && map != maps {
+        maps = LispObject::from_raw(keymap_parent(maps.to_raw(), false));
+    }
+    map == maps
+}
+
 /// Return the prompt-string of a keymap MAP.
 /// If non-nil, the prompt is shown in the echo-area
 /// when reading a key-sequence to be looked-up in this keymap.

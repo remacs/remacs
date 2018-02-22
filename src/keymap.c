@@ -193,7 +193,7 @@ get_keymap (Lisp_Object object, bool error_if_not_keymap, bool autoload)
 
 /* Check whether MAP is one of MAPS parents.  */
 static bool
-keymap_memberp (Lisp_Object map, Lisp_Object maps)
+keymap_memberp2 (Lisp_Object map, Lisp_Object maps)
 {
   if (NILP (map)) return 0;
   while (KEYMAPP (maps) && !EQ (map, maps))
