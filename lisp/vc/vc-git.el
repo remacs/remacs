@@ -1569,7 +1569,14 @@ The difference to vc-do-command is that this function always invokes
          (or coding-system-for-read vc-git-log-output-coding-system))
 	(coding-system-for-write
          (or coding-system-for-write vc-git-commits-coding-system))
-        (process-environment (cons "GIT_DIR" process-environment)))
+        (process-environment
+         (append
+          `("GIT_DIR"
+            ;; Avoid repository locking during background operations
+            ;; (bug#21559).
+            ,@(when revert-buffer-in-progress-p
+                '("GIT_OPTIONAL_LOCKS=0")))
+          process-environment)))
     (apply 'vc-do-command (or buffer "*vc*") okstatus vc-git-program
 	   ;; https://debbugs.gnu.org/16897
 	   (unless (and (not (cdr-safe file-or-list))
