@@ -5,9 +5,9 @@
 ;; Author: Damien Cassou <damien@cassou.me>,
 ;;         Nicolas Petton <nicolas@petton.fr>
 ;; Version: 2.0.0
-;; Package-Requires: ((emacs "24.4")
+;; Package-Requires: ((emacs "25"))
+;; Url: https://github.com/DamienCassou/auth-password-store
 ;; Created: 07 Jun 2015
-;; Keywords: pass password-store auth-source username password login
 
 ;; This file is part of GNU Emacs.
 
