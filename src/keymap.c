@@ -75,16 +75,17 @@ Lisp_Object control_x_map;	/* The keymap used for globally bound
 				   bindings when spaces are not encouraged
 				   in the minibuf.  */
 
+/* Hash table used to cache a reverse-map to speed up calls to where-is.  */
+Lisp_Object where_is_cache;
+
+/* Which keymaps are reverse-stored in the cache.  */
+Lisp_Object where_is_cache_keymaps;
+
 /* Alist of elements like (DEL . "\d").  */
 static Lisp_Object exclude_keys;
 
 /* Pre-allocated 2-element vector for Fcommand_remapping to use.  */
 static Lisp_Object command_remapping_vector;
-
-/* Hash table used to cache a reverse-map to speed up calls to where-is.  */
-static Lisp_Object where_is_cache;
-/* Which keymaps are reverse-stored in the cache.  */
-static Lisp_Object where_is_cache_keymaps;
 
 static Lisp_Object store_in_keymap (Lisp_Object, Lisp_Object, Lisp_Object);
 
@@ -188,57 +189,6 @@ get_keymap (Lisp_Object object, bool error_if_not_keymap, bool autoload)
   if (error_if_not_keymap)
     wrong_type_argument (Qkeymapp, object);
   return Qnil;
-}
-
-
-/* Check whether MAP is one of MAPS parents.  */
-static bool
-keymap_memberp2 (Lisp_Object map, Lisp_Object maps)
-{
-  if (NILP (map)) return 0;
-  while (KEYMAPP (maps) && !EQ (map, maps))
-    maps = keymap_parent (maps, 0);
-  return (EQ (map, maps));
-}
-
-/* Set the parent keymap of MAP to PARENT.  */
-
-DEFUN ("set-keymap-parent", Fset_keymap_parent, Sset_keymap_parent, 2, 2, 0,
-       doc: /* Modify KEYMAP to set its parent map to PARENT.
-Return PARENT.  PARENT should be nil or another keymap.  */)
-  (Lisp_Object keymap, Lisp_Object parent)
-{
-  Lisp_Object list, prev;
-
-  /* Flush any reverse-map cache.  */
-  where_is_cache = Qnil; where_is_cache_keymaps = Qt;
-
-  keymap = get_keymap (keymap, 1, 1);
-
-  if (!NILP (parent))
-    {
-      parent = get_keymap (parent, 1, 0);
-
-      /* Check for cycles.  */
-      if (keymap_memberp (keymap, parent))
-	error ("Cyclic keymap inheritance");
-    }
-
-  /* Skip past the initial element `keymap'.  */
-  prev = keymap;
-  while (1)
-    {
-      list = XCDR (prev);
-      /* If there is a parent keymap here, replace it.
-	 If we came to the end, add the parent in PREV.  */
-      if (!CONSP (list) || KEYMAPP (list))
-	{
-	  CHECK_IMPURE (prev, XCONS (prev));
-	  XSETCDR (prev, parent);
-	  return parent;
-	}
-      prev = list;
-    }
 }
 
 
@@ -3452,8 +3402,7 @@ be preferred.  */);
   where_is_cache = Qnil;
   staticpro (&where_is_cache);
   staticpro (&where_is_cache_keymaps);
-  
-  defsubr (&Sset_keymap_parent);
+
   defsubr (&Smap_keymap_internal);
   defsubr (&Smap_keymap);
   defsubr (&Scopy_keymap);

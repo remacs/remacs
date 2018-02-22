@@ -1097,6 +1097,8 @@ pub struct lisp_time {
 extern "C" {
     pub static initialized: bool;
     pub static mut current_global_map: Lisp_Object;
+    pub static mut where_is_cache: Lisp_Object;
+    pub static mut where_is_cache_keymaps: Lisp_Object;
     pub static current_thread: *mut thread_state;
     pub static empty_unibyte_string: Lisp_Object;
     pub static fatal_error_in_progress: bool;

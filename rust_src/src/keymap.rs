@@ -1,11 +1,11 @@
 //! Keymap support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
+use remacs_sys::{current_global_map as _current_global_map, globals, where_is_cache,
+                 where_is_cache_keymaps, EmacsInt, Lisp_Object, CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
-use remacs_sys::{Qkeymap, Qnil};
+use remacs_sys::{Qkeymap, Qnil, Qt};
 use remacs_sys::{access_keymap, get_keymap, maybe_quit};
-use remacs_sys::Lisp_Object;
 
 use data::aref;
 use keyboard::lucid_event_type_list_p;
@@ -85,6 +85,45 @@ pub extern "C" fn keymap_memberp(map: Lisp_Object, maps: Lisp_Object) -> bool {
         maps = LispObject::from_raw(keymap_parent(maps.to_raw(), false));
     }
     map == maps
+}
+
+/// Modify KEYMAP to set its parent map to PARENT.
+/// Return PARENT.  PARENT should be nil or another keymap.
+#[lisp_fn]
+pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
+    let mut list;
+    let mut prev;
+    let mut parent = parent;
+
+    // Flush any reverse-map cache
+    unsafe {
+        where_is_cache = Qnil;
+        where_is_cache_keymaps = Qt;
+    }
+
+    let keymap = unsafe { LispObject::from_raw(get_keymap(keymap.to_raw(), true, true)) };
+    if parent.is_not_nil() {
+        parent = unsafe { LispObject::from_raw(get_keymap(parent.to_raw(), true, false)) };
+
+        // Check for cycles
+        if keymap_memberp(keymap.to_raw(), parent.to_raw()) {
+            error!("Cyclic keymap inheritance");
+        }
+    }
+
+    // Skip past the initial element 'keymap'.
+    prev = keymap.as_cons_or_error();
+    loop {
+        list = prev.cdr();
+        // If there is a parent keymap here, replace it.
+        // If we came to the end, add the parent in PREV.
+        if !list.is_cons() || keymapp(list) {
+            prev.check_impure();
+            prev.set_cdr(parent);
+            return parent;
+        }
+        prev = list.as_cons_or_error();
+    }
 }
 
 /// Return the prompt-string of a keymap MAP.
