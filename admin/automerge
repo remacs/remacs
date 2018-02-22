@@ -161,10 +161,8 @@ merge ()
         return 0
 
     else
-        grep -qE "Nothing to merge|Number of missing commits" $tempfile && {
-            echo "Fewer than $nmin commits to merge"
+        grep -E "Nothing to merge|Number of missing commits" $tempfile && \
             exit 0
-        }
 
         cat "$tempfile" 1>&2
 
