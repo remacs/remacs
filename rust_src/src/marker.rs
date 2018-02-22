@@ -13,7 +13,7 @@ use buffers::LispBufferRef;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use threads::ThreadState;
-use util::clip_to_bounds;
+use util::{clip_to_bounds, current_buffer_bounds};
 
 pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
 
@@ -115,19 +115,18 @@ pub fn marker_buffer(marker: LispMarkerRef) -> Option<LispBufferRef> {
 
 /// Set PT from MARKER's clipped position.
 pub fn set_point_from_marker(marker: LispMarkerRef) {
+    let (beg, end) = current_buffer_bounds(false, true);
+    let charpos = clip_to_bounds(beg, marker.charpos_or_error() as EmacsInt, end);
+
     let cur_buf = ThreadState::current_buffer();
-    let charpos = clip_to_bounds(
-        cur_buf.begv,
-        marker.charpos_or_error() as EmacsInt,
-        cur_buf.zv,
-    );
     let mut bytepos = marker.bytepos_or_error();
     // Don't trust the byte position if the marker belongs to a
     // different buffer.
     if marker.buffer().map_or(false, |b| b != cur_buf) {
         bytepos = unsafe { buf_charpos_to_bytepos(cur_buf.as_ptr(), charpos) };
     } else {
-        bytepos = clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
+        let (beg, end) = current_buffer_bounds(true, true);
+        bytepos = clip_to_bounds(beg, bytepos as EmacsInt, end);
     };
     unsafe { set_point_both(charpos, bytepos) };
 }
@@ -195,7 +194,8 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn buffer_has_markers_at(position: EmacsInt) -> bool {
     let cur_buf = ThreadState::current_buffer();
-    let position = clip_to_bounds(cur_buf.begv, position, cur_buf.zv);
+    let (beg, end) = current_buffer_bounds(false, true);
+    let position = clip_to_bounds(beg, position, end);
 
     if let Some(marker) = cur_buf.markers() {
         for m in marker.iter() {
