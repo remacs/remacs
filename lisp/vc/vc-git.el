@@ -868,6 +868,8 @@ It is based on `log-edit-mode', and has Git-specific extensions.")
 
 ;; To be called via vc-pull from vc.el, which requires vc-dispatcher.
 (declare-function vc-compilation-mode "vc-dispatcher" (backend))
+(defvar compilation-directory)
+(defvar compilation-arguments)
 
 (defun vc-git--pushpull (command prompt extra-args)
   "Run COMMAND (a string; either push or pull) on the current Git branch.
@@ -1410,6 +1412,7 @@ This requires git 1.8.4 or later, for the \"-L\" option of \"git log\"."
 (declare-function grep-read-files "grep" (regexp))
 (declare-function grep-expand-template "grep"
                  (template &optional regexp files dir excl))
+(defvar compilation-environment)
 
 ;; Derived from `lgrep'.
 (defun vc-git-grep (regexp &optional files dir)
