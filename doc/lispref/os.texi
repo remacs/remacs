@@ -1457,7 +1457,8 @@ on others, years as early as 1901 do work.
 @cindex formatting time values
 
   These functions convert time values to text in a string, and vice versa.
-Time values are lists of two to four integers (@pxref{Time of Day}).
+Time values include @code{nil}, numbers, and lists of two to four
+integers (@pxref{Time of Day}).
 
 @defun date-to-time string
 This function parses the time-string @var{string} and returns the
