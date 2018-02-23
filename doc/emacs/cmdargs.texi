@@ -913,7 +913,7 @@ colored display.
 Turn on the color support unconditionally, and use color commands
 specified by the ANSI escape sequences for the 8 standard colors.
 @item @var{num}
-Use color mode for @var{num} colors.  If @var{num} is -1, turn off
+Use color mode for @var{num} colors.  If @var{num} is @minus{}1, turn off
 color support (equivalent to @samp{never}); if it is 0, use the
 default color support for this terminal (equivalent to @samp{auto});
 otherwise use an appropriate standard mode for @var{num} colors.

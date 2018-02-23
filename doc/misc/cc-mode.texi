@@ -693,7 +693,7 @@ that begins at the line's left margin.
 @item
 When it's @code{nil}, the command indents the line by an extra
 @code{c-basic-offset} columns.  A prefix argument acts as a
-multiplier.  A bare prefix (@kbd{C-u @key{TAB}}) is equivalent to -1,
+multiplier.  A bare prefix (@kbd{C-u @key{TAB}}) is equivalent to @minus{}1,
 removing @code{c-basic-offset} columns from the indentation.
 @end itemize
 
