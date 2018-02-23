@@ -1,7 +1,7 @@
 //! Functions operating on process.
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Process, Vprocess_alist};
+use remacs_sys::{EmacsInt, Lisp_Process, Lisp_Type, Vprocess_alist};
 use remacs_sys::{get_process as cget_process, pget_kill_without_query, pget_pid,
                  pget_raw_status_new, pset_kill_without_query, send_process,
                  setup_process_coding_systems, update_status, Fmapcar, STRING_BYTES};
@@ -14,13 +14,12 @@ use lisp::defsubr;
 use buffers::get_buffer;
 use lists::{assoc, cdr, plist_put};
 use multibyte::LispStringRef;
-use std::mem;
 
 pub type LispProcessRef = ExternalPtr<Lisp_Process>;
 
 impl LispProcessRef {
     pub fn as_lisp_obj(self) -> LispObject {
-        unsafe { mem::transmute(self.as_ptr()) }
+        LispObject::tag_ptr(self, Lisp_Type::Lisp_Vectorlike)
     }
 
     #[inline]
