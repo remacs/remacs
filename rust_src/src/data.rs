@@ -146,6 +146,7 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
         xsignal!(Qargs_out_of_range, array, idx.into());
     }
 
+    let idx_i = idx as isize;
     let idx_u = idx as usize;
 
     if let Some(s) = array.as_string() {
@@ -160,21 +161,21 @@ pub fn aref(array: LispObject, idx: EmacsInt) -> LispObject {
             xsignal!(Qargs_out_of_range, array, idx.into());
         }
 
-        LispObject::from(unsafe { bv.get_unchecked(idx_u) })
+        unsafe { bv.get_unchecked(idx_u) }
     } else if let Some(ct) = array.as_char_table() {
         ct.get(idx as isize)
     } else if let Some(v) = array.as_vector() {
         if idx_u >= v.len() {
             xsignal!(Qargs_out_of_range, array, idx.into());
         }
-        v.get(idx as isize)
+        unsafe { v.get_unchecked(idx_i) }
     } else if array.is_byte_code_function() || array.is_record() {
         let vl = array.as_vectorlike().unwrap();
         if idx >= vl.pseudovector_size() {
             xsignal!(Qargs_out_of_range, array, idx.into());
         }
         let v = unsafe { vl.as_vector_unchecked() };
-        v.get(idx as isize)
+        unsafe { v.get_unchecked(idx_i) }
     } else {
         wrong_type!(Qarrayp, array);
     }
