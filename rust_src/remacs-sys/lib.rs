@@ -358,6 +358,12 @@ pub struct Lisp_Marker {
 extern "C" {
     pub fn mget_insertion_type(marker: *const Lisp_Marker) -> BoolBF;
     pub fn mset_insertion_type(marker: *const Lisp_Marker, val: BoolBF);
+    pub fn mget_next_marker(marker: *const Lisp_Marker) -> *const Lisp_Marker;
+    pub fn mset_next_marker(marker: *const Lisp_Marker, next: *const Lisp_Marker);
+    pub fn mget_buffer(marker: *const Lisp_Marker) -> *const Lisp_Buffer;
+    pub fn mset_buffer(m: *const Lisp_Marker, b: *mut Lisp_Buffer);
+    pub fn mget_charpos(m: *const Lisp_Marker) -> ptrdiff_t;
+    pub fn mget_bytepos(m: *const Lisp_Marker) -> ptrdiff_t;
 }
 
 // TODO: write a docstring based on the docs in lisp.h.

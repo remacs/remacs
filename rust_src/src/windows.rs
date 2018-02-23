@@ -15,7 +15,7 @@ use frames::{frame_live_or_selected, window_frame_live_or_selected};
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{assq, setcdr};
-use marker::marker_position;
+use marker::marker_position_lisp;
 
 pub type LispWindowRef = ExternalPtr<Lisp_Window>;
 
@@ -269,7 +269,7 @@ pub fn window_point(window: LispObject) -> Option<EmacsInt> {
     if win == selected_window().as_window_or_error() {
         Some(point())
     } else {
-        marker_position(win.point_marker().into())
+        marker_position_lisp(win.point_marker().into())
     }
 }
 
@@ -308,7 +308,7 @@ pub fn window_valid_p(object: LispObject) -> bool {
 #[lisp_fn(min = "0")]
 pub fn window_start(window: LispObject) -> Option<EmacsInt> {
     let win = window_live_or_selected(window);
-    marker_position(win.start_marker().into())
+    marker_position_lisp(win.start_marker().into())
 }
 
 /// Return non-nil if WINDOW is a minibuffer window.
