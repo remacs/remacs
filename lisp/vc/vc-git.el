@@ -102,8 +102,7 @@
 (eval-when-compile
   (require 'cl-lib)
   (require 'vc)
-  (require 'vc-dir)
-  (require 'grep))
+  (require 'vc-dir))
 
 (defgroup vc-git nil
   "VC Git backend."
