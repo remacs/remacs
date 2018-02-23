@@ -91,16 +91,13 @@ pub extern "C" fn keymap_memberp(map: Lisp_Object, maps: Lisp_Object) -> bool {
 /// Return PARENT.  PARENT should be nil or another keymap.
 #[lisp_fn]
 pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
-    let mut list;
-    let mut prev;
-    let mut parent = parent;
-
     // Flush any reverse-map cache
     unsafe {
         where_is_cache = Qnil;
         where_is_cache_keymaps = Qt;
     }
 
+    let mut parent = parent;
     let keymap = unsafe { LispObject::from_raw(get_keymap(keymap.to_raw(), true, true)) };
     if parent.is_not_nil() {
         parent = unsafe { LispObject::from_raw(get_keymap(parent.to_raw(), true, false)) };
@@ -112,7 +109,8 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
     }
 
     // Skip past the initial element 'keymap'.
-    prev = keymap.as_cons_or_error();
+    let mut prev = keymap.as_cons_or_error();
+    let mut list;
     loop {
         list = prev.cdr();
         // If there is a parent keymap here, replace it.
