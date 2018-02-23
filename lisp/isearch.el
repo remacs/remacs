@@ -2091,6 +2091,12 @@ If optional ARG is non-nil, pull in the next ARG characters."
   (isearch-yank-internal (lambda () (forward-char arg) (point))))
 
 (defun isearch--yank-char-or-syntax (syntax-list fn)
+||||||| parent of b7542b2a0a... Remove unnecessary explicit subword-mode use from isearch
+(declare-function subword-forward "subword" (&optional arg))
+(defun isearch-yank-word-or-char ()
+  "Pull next character, subword or word from buffer into search string.
+Subword is used when `subword-mode' is activated. "
+  (interactive)
   (isearch-yank-internal
    (lambda ()
      (if (or (memq (char-syntax (or (char-after) 0)) syntax-list)
