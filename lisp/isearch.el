@@ -2089,19 +2089,14 @@ If optional ARG is non-nil, pull in the next ARG characters."
   (interactive "p")
   (isearch-yank-internal (lambda () (forward-char arg) (point))))
 
-(declare-function subword-forward "subword" (&optional arg))
 (defun isearch-yank-word-or-char ()
-  "Pull next character, subword or word from buffer into search string.
-Subword is used when `subword-mode' is activated. "
+  "Pull next character or word from buffer into search string."
   (interactive)
   (isearch-yank-internal
    (lambda ()
      (if (or (= (char-syntax (or (char-after) 0)) ?w)
              (= (char-syntax (or (char-after (1+ (point))) 0)) ?w))
-	 (if (or (and (boundp 'subword-mode) subword-mode)
-		 (and (boundp 'superword-mode) superword-mode))
-	     (subword-forward 1)
-	   (forward-word 1))
+	 (forward-word 1)
        (forward-char 1))
      (point))))
 
