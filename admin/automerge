@@ -141,7 +141,7 @@ trap "rm -f $tempfile 2> /dev/null" EXIT
     git reset --hard origin/master || die "reset error"
 
     echo "Pulling..."
-    git pull --ff-only || die "pull error"
+    git pull -q --ff-only || die "pull error"
 }
 
 
