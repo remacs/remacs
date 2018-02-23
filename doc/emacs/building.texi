@@ -435,10 +435,13 @@ the variable @code{grep-files-aliases}.
 by various version control systems.
 
 @vindex grep-find-hide
-  The boolean option @code{grep-find-hide} controls shortening of the
-displayed command line by hiding the part containing ignored
-directories and files.  The hidden part can be revealed by clicking on
-the button with ellipsis.
+  By default, the shell commands constructed for @code{lgrep},
+@code{rgrep}, and @code{zgrep} are abbreviated for display by
+concealing the part that contains a long list of files and directories
+to ignore.  You can reveal the concealed part by clicking on the
+button with ellipsis, which represents them.  To disable this
+abbreviation of the shell commands, customize the option
+@code{grep-find-hide} to a @code{nil} value.
 
 @node Flymake
 @section Finding Syntax Errors On The Fly

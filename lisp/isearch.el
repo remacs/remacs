@@ -2106,7 +2106,7 @@ If optional ARG is non-nil, pull in the next ARG characters."
   (isearch--yank-char-or-syntax '(?w) 'forward-word))
 
 (defun isearch-yank-symbol-or-char ()
-  "Pull next character or word from buffer into search string."
+  "Pull next character or symbol from buffer into search string."
   (interactive)
   (isearch--yank-char-or-syntax '(?w ?_) 'forward-symbol))
 

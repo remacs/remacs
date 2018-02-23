@@ -234,7 +234,7 @@ of whether to copy a character or a word is heuristic.)
   @kbd{C-M-w} (@code{isearch-yank-symbol-or-char}) appends the next
 character or symbol at point to the search string.  This is an easy way
 to search for another occurrence of the symbol at point.  (The decision
-of whether to copy a character or a word is heuristic.)
+of whether to copy a character or a symbol is heuristic.)
 
 @kindex M-s C-e @r{(Incremental search)}
 @findex isearch-yank-line
