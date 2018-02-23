@@ -1301,7 +1301,7 @@ or rounding errors occur.
 @section Time Zone Rules
 @cindex time zone rules
 
-@vindex TZ, environment variable
+@vindex TZ@r{, environment variable}
 The default time zone is determined by the @env{TZ} environment
 variable.  @xref{System Environment}.  For example, you can tell Emacs
 to default to Universal Time with @code{(setenv "TZ" "UTC0")}.  If

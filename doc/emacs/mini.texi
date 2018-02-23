@@ -469,7 +469,7 @@ text in the minibuffer before point.  Furthermore, if there is any
 text in the minibuffer after point, the rest of the completion
 alternative must contain that text as a substring.
 
-@findex partial completion
+@findex partial-completion
 @item partial-completion
 This aggressive completion style divides the minibuffer text into
 words separated by hyphens or spaces, and completes each word
