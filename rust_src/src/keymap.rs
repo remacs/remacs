@@ -111,17 +111,24 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
     // Skip past the initial element 'keymap'.
     let mut prev = keymap.as_cons_or_error();
     let mut list;
+
     loop {
         list = prev.cdr();
+
         // If there is a parent keymap here, replace it.
         // If we came to the end, add the parent in PREV.
-        if !list.is_cons() || keymapp(list) {
-            prev.check_impure();
-            prev.set_cdr(parent);
-            return parent;
+        match list.as_cons() {
+            None => break,
+            Some(cons) => if keymapp(list) {
+                break;
+            } else {
+                prev = cons;
+            },
         }
-        prev = list.as_cons_or_error();
     }
+    prev.check_impure();
+    prev.set_cdr(parent);
+    parent
 }
 
 /// Return the prompt-string of a keymap MAP.
