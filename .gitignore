@@ -48,6 +48,9 @@ src/config.h
 src/epaths.h
 src/emacs-module.h
 
+# Miscellaneous build stuf
+build-aux/
+
 # C-level sources built by 'make'.
 lib/alloca.h
 lib/byteswap.h
@@ -112,6 +115,9 @@ lisp/subdirs.el
 
 # Dependencies.
 deps/
+lib/.deps
+src/stamp-h.in
+src/stamp-h1
 
 # Logs and temporaries.
 *.log
