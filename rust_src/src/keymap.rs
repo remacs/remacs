@@ -81,10 +81,10 @@ pub extern "C" fn keymap_memberp(map: Lisp_Object, maps: Lisp_Object) -> bool {
     if map.is_nil() {
         return false;
     }
-    while keymapp(maps) && map != maps {
+    while keymapp(maps) && map.ne(maps) {
         maps = LispObject::from_raw(keymap_parent(maps.to_raw(), false));
     }
-    map == maps
+    map.eq(maps)
 }
 
 /// Modify KEYMAP to set its parent map to PARENT.
