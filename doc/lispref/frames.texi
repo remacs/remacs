@@ -2277,7 +2277,7 @@ specifies the color mode to use on a text terminal.  The value can be
 either a symbol or a number.  A number specifies the number of colors
 to use (and, indirectly, what commands to issue to produce each
 color).  For example, @code{(tty-color-mode . 8)} specifies use of the
-ANSI escape sequences for 8 standard text colors.  A value of -1 turns
+ANSI escape sequences for 8 standard text colors.  A value of @minus{}1 turns
 off color support.
 
 If the parameter's value is a symbol, it specifies a number through
