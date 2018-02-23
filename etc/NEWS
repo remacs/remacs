@@ -109,6 +109,11 @@ regular expression was previously invalid, but is now accepted:
 
 * Editing Changes in Emacs 27.1
 
++++
+** New isearch bindings.
+'C-M-w' in isearch changed from isearch-del-char to the new function
+isearch-yank-symbol-or-char. isearch-del-char is now bound to 'C-M-d'.
+
 ---
 ** New variable 'x-wait-for-event-timeout'.
 This controls how long Emacs will wait for updates to the graphical
