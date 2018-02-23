@@ -640,7 +640,7 @@ A non-@code{nil} value means that @samp{-q} is passed to @code{gzip}
 overriding a verbose option in the @env{GZIP} environment variable.
 
 @item dired-guess-shell-znew-switches nil
-@vindex dired-guess-shell-znew-switches nil
+@vindex dired-guess-shell-znew-switches
 @cindex @code{znew}
 Default: @code{nil}
 
@@ -649,7 +649,7 @@ A string of switches passed to @code{znew}.  An example is
 smaller than the @file{.gz} file.
 
 @item dired-shell-command-history nil
-@vindex dired-shell-command-history nil
+@vindex dired-shell-command-history
 
 History list for commands that read dired-shell commands.
 @end table
