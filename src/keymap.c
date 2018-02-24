@@ -56,7 +56,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "window.h"
 
 /* Actually allocate storage for these variables.  */
-
 Lisp_Object current_global_map;	/* Current global keymap.  */
 
 Lisp_Object global_map;		/* Default global key bindings.  */
@@ -74,12 +73,6 @@ Lisp_Object control_x_map;	/* The keymap used for globally bound
 				/* The keymap used by the minibuf for local
 				   bindings when spaces are not encouraged
 				   in the minibuf.  */
-
-/* Hash table used to cache a reverse-map to speed up calls to where-is.  */
-Lisp_Object where_is_cache;
-
-/* Which keymaps are reverse-stored in the cache.  */
-Lisp_Object where_is_cache_keymaps;
 
 /* Alist of elements like (DEL . "\d").  */
 static Lisp_Object exclude_keys;
@@ -584,8 +577,8 @@ static Lisp_Object
 store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
 {
   /* Flush any reverse-map cache.  */
-  where_is_cache = Qnil;
-  where_is_cache_keymaps = Qt;
+  set_where_is_cache(Qnil);
+  set_where_is_cache_keymaps(Qt);
 
   if (EQ (idx, Qkeymap))
     error ("`keymap' is reserved for embedded parent maps");
@@ -2098,23 +2091,23 @@ where_is_internal (Lisp_Object definition, Lisp_Object keymaps,
   if (nomenus && !noindirect)
     {
       /* Check heuristic-consistency of the cache.  */
-      if (NILP (Fequal (keymaps, where_is_cache_keymaps)))
-	where_is_cache = Qnil;
+      if (NILP (Fequal (keymaps, get_where_is_cache_keymaps())))
+	set_where_is_cache(Qnil);
 
-      if (NILP (where_is_cache))
+      if (NILP (get_where_is_cache()))
 	{
 	  /* We need to create the cache.  */
-	  where_is_cache = Fmake_hash_table (0, NULL);
-	  where_is_cache_keymaps = Qt;
+	  set_where_is_cache(Fmake_hash_table (0, NULL));
+	  set_where_is_cache_keymaps(Qt);
 	}
       else
 	/* We can reuse the cache.  */
-	return Fgethash (definition, where_is_cache, Qnil);
+	return Fgethash (definition, get_where_is_cache(), Qnil);
     }
   else
     /* Kill the cache so that where_is_internal_1 doesn't think
        we're filling it up.  */
-    where_is_cache = Qnil;
+    set_where_is_cache(Qnil);
 
   found = keymaps;
   while (CONSP (found))
@@ -2168,10 +2161,10 @@ where_is_internal (Lisp_Object definition, Lisp_Object keymaps,
     { /* Remember for which keymaps this cache was built.
 	 We do it here (late) because we want to keep where_is_cache_keymaps
 	 set to t while the cache isn't fully filled.  */
-      where_is_cache_keymaps = keymaps;
+      set_where_is_cache_keymaps(keymaps);
       /* During cache-filling, data.sequences is not filled by
 	 where_is_internal_1.  */
-      return Fgethash (definition, where_is_cache, Qnil);
+      return Fgethash (definition, get_where_is_cache(), Qnil);
     }
   else
     return data.sequences;
@@ -2386,7 +2379,7 @@ where_is_internal_1 (Lisp_Object key, Lisp_Object binding, Lisp_Object args, voi
   /* End this iteration if this element does not match
      the target.  */
 
-  if (!(!NILP (where_is_cache)	/* everything "matches" during cache-fill.  */
+  if (!(!NILP (get_where_is_cache())	/* everything "matches" during cache-fill.  */
 	|| EQ (binding, definition)
 	|| (CONSP (definition) && !NILP (Fequal (binding, definition)))))
     /* Doesn't match.  */
@@ -2405,10 +2398,10 @@ where_is_internal_1 (Lisp_Object key, Lisp_Object binding, Lisp_Object args, voi
       sequence = append_key (this, key);
     }
 
-  if (!NILP (where_is_cache))
+  if (!NILP (get_where_is_cache()))
     {
-      Lisp_Object sequences = Fgethash (binding, where_is_cache, Qnil);
-      Fputhash (binding, Fcons (sequence, sequences), where_is_cache);
+      Lisp_Object sequences = Fgethash (binding, get_where_is_cache(), Qnil);
+      Fputhash (binding, Fcons (sequence, sequences), get_where_is_cache());
     }
   else
     d->sequences = Fcons (sequence, d->sequences);

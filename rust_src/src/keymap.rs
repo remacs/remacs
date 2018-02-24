@@ -17,6 +17,40 @@ pub fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
 }
 
+/// Hash table used to cache a reverse-map to speed up calls to where-is.
+declare_GC_protected_static!(where_is_cache, Qnil);
+
+/// Allows the C code to get the value of `where_is_cache`
+#[no_mangle]
+pub extern "C" fn get_where_is_cache() -> Lisp_Object {
+    unsafe { where_is_cache }
+}
+
+/// Allows the C code to set the value of `where_is_cache`
+#[no_mangle]
+pub extern "C" fn set_where_is_cache(val: Lisp_Object) -> () {
+    unsafe {
+        where_is_cache = val;
+    }
+}
+
+/// Which keymaps are reverse-stored in the cache.
+declare_GC_protected_static!(where_is_cache_keymaps, Qt);
+
+/// Allows the C code to get the value of `where_is_cache_keymaps`
+#[no_mangle]
+pub extern "C" fn get_where_is_cache_keymaps() -> Lisp_Object {
+    unsafe { where_is_cache_keymaps }
+}
+
+/// Allows the C code to set the value of `where_is_cache_keymaps`
+#[no_mangle]
+pub extern "C" fn set_where_is_cache_keymaps(val: Lisp_Object) -> () {
+    unsafe {
+        where_is_cache_keymaps = val;
+    }
+}
+
 /// Construct and return a new keymap, of the form (keymap CHARTABLE . ALIST).
 /// CHARTABLE is a char-table that holds the bindings for all characters
 /// without modifiers.  All entries in it are initially nil, meaning
@@ -87,16 +121,13 @@ pub extern "C" fn keymap_memberp(map: Lisp_Object, maps: Lisp_Object) -> bool {
     map.eq(maps)
 }
 
-declare_GC_protected_static!(where_is_cache, Qnil);
-declare_GC_protected_static!(where_is_cache_keymaps, Qt);
-
 /// Modify KEYMAP to set its parent map to PARENT.
 /// Return PARENT.  PARENT should be nil or another keymap.
 #[lisp_fn]
 pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
     // Flush any reverse-map cache
     unsafe {
-        where_is_cache = Qnil;
+        set_where_is_cache(Qnil);
         where_is_cache_keymaps = Qt;
     }
 
