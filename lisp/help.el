@@ -455,6 +455,8 @@ is specified by the variable `message-log-max'."
 
 (defun view-lossage ()
   "Display last few input keystrokes and the commands run.
+For convenience this uses the same format as
+`edit-last-kbd-macro'.
 
 To record all your input, use `open-dribble-file'."
   (interactive)
