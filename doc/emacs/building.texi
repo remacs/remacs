@@ -302,7 +302,7 @@ And here's how to do it in csh:
 if ($?prompt) set prompt = @dots{}
 @end example
 
-@vindex TERM, environment variable, in compilation mode
+@vindex TERM@r{, environment variable, in compilation mode}
   If you want to customize the value of the @env{TERM} environment
 variable passed to the compilation subshell, customize the variable
 @code{comint-terminfo-terminal} (@pxref{Shell Options}).
