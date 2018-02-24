@@ -3398,11 +3398,6 @@ be preferred.  */);
   command_remapping_vector = Fmake_vector (make_number (2), Qremap);
   staticpro (&command_remapping_vector);
 
-  where_is_cache_keymaps = Qt;
-  where_is_cache = Qnil;
-  staticpro (&where_is_cache);
-  staticpro (&where_is_cache_keymaps);
-
   defsubr (&Smap_keymap_internal);
   defsubr (&Smap_keymap);
   defsubr (&Scopy_keymap);

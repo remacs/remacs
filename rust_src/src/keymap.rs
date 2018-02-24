@@ -1,8 +1,8 @@
 //! Keymap support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{current_global_map as _current_global_map, globals, where_is_cache,
-                 where_is_cache_keymaps, EmacsInt, Lisp_Object, CHAR_META};
+use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, Lisp_Object,
+                 CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qkeymap, Qnil, Qt};
 use remacs_sys::{access_keymap, get_keymap, maybe_quit};
@@ -86,6 +86,9 @@ pub extern "C" fn keymap_memberp(map: Lisp_Object, maps: Lisp_Object) -> bool {
     }
     map.eq(maps)
 }
+
+declare_GC_protected_static!(where_is_cache, Qnil);
+declare_GC_protected_static!(where_is_cache_keymaps, Qt);
 
 /// Modify KEYMAP to set its parent map to PARENT.
 /// Return PARENT.  PARENT should be nil or another keymap.
