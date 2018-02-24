@@ -2101,9 +2101,9 @@ Emacs 21 and XEmacs. For more information, see
 @uref{http://quimby.gnus.org/circus/face/}.}.
 
 @cindex @command{uncompface}
-@cindex Emacs, packages, x-face
+@cindex Emacs, packages, @samp{x-face}
 @cindex Unix commands, @command{uncompface}
-@cindex x-face package
+@cindex @samp{x-face} package
 @vindex mh-show-xface
 
 Next is the traditional @samp{X-Face:} header field@footnote{The
@@ -2306,8 +2306,8 @@ System: type @kbd{M-! xterm -e mhshow @var{message-number}}. You can
 leave out the @samp{xterm -e} if you use @command{mhlist} or
 @command{mhstore}.}.
 
-@cindex Emacs, packages, mm-decode
-@cindex mm-decode package
+@cindex Emacs, packages, @samp{mm-decode}
+@cindex @samp{mm-decode} package
 @findex mh-toggle-mh-decode-mime-flag
 @kindex ; (semicolon)
 @vindex mh-decode-mime-flag
@@ -2904,8 +2904,8 @@ Another related function is the command @kbd{P F}
 faces and not. When faces are enabled, the printed message will look
 very similar to the message in the MH-Show buffer.
 
-@cindex ps-print package
-@cindex Emacs, packages, ps-print
+@cindex @samp{ps-print} package
+@cindex Emacs, packages, @samp{ps-print}
 
 MH-E uses the @samp{ps-print} package to do the printing, so you can
 customize the printing further by going to the @samp{ps-print}
@@ -4997,8 +4997,8 @@ You can also turn on the @code{mh-delete-yanked-msg-window-flag}
 option to delete the window containing the original message after
 yanking it to make more room on your screen for your reply.
 
-@cindex Emacs, packages, supercite
-@cindex supercite package
+@cindex Emacs, packages, @samp{supercite}
+@cindex @samp{supercite} package
 @kindex r
 @vindex mail-citation-hook
 @vindex mh-yank-behavior
@@ -5061,8 +5061,8 @@ and it should leave point and mark around the modified citation text
 for the next hook function. The standard prefix
 @code{mh-ins-buf-prefix} is not added if this hook is set.
 
-@cindex Emacs, packages, trivial-cite
-@cindex trivial-cite package
+@cindex Emacs, packages, @samp{trivial-cite}
+@cindex @samp{trivial-cite} package
 @vindex mh-yank-behavior
 
 For example, if you use the hook function
@@ -5499,7 +5499,7 @@ LyogWFBNICovCnN0YXRpYyBjaGFyICogc2V0aWF0aG9tZV94cG1bXSA9IHsKIjQ1IDQ1IDc2N
 @end cartouche
 @i{MH-E @sc{mime} draft ready to send}
 
-@cindex undo effects of mh-mml-to-mime
+@cindex undo effects of @code{mh-mml-to-mime}
 
 This action can be undone by running @kbd{C-_} (@code{undo}).
 
@@ -5507,7 +5507,7 @@ This action can be undone by running @kbd{C-_} (@code{undo}).
 @cindex @command{mhn}
 @cindex MH commands, @command{mhbuild}
 @cindex MH commands, @command{mhn}
-@cindex undo effects of mh-mh-to-mime
+@cindex undo effects of @code{mh-mh-to-mime}
 @findex mh-mh-to-mime
 @findex mh-mh-to-mime-undo
 @kindex C-c C-e
