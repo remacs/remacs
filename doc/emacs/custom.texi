@@ -1417,6 +1417,14 @@ commands, and @dfn{keymaps}, which record key bindings.  It also
 explains how to customize key bindings, which is done by editing your
 init file (@pxref{Init Rebinding}).
 
+  Since most modes define their own key bindings, activating a mode
+might override your custom key bindings.  A small number of keys are
+reserved for user-defined bindings, and should not be used by modes,
+so key bindings using those keys are safer in this regard.  The
+reserved key sequences are those consisting of @kbd{C-c} followed by a
+letter (either upper or lower case), and function keys @key{F5}
+through @key{F9} without modifiers (@pxref{Modifier Keys}).
+
 @menu
 * Keymaps::             Generalities.  The global keymap.
 * Prefix Keymaps::      Keymaps for prefix keys.
