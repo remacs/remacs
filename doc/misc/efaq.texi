@@ -201,7 +201,7 @@ Also, on very few keyboards does @kbd{C-?} generate @acronym{ASCII} code 127.
 @section What does @file{M-x @var{command}} mean?
 @cindex Extended commands
 @cindex Commands, extended
-@cindex M-x, meaning of
+@cindex @kbd{M-x}, meaning of
 
 @kbd{M-x @var{command}} means type @kbd{M-x}, then type the name of the
 command, then type @key{RET}.  (@xref{Basic keys}, if you're not sure

@@ -322,7 +322,7 @@ the minibuffer when you hit @kbd{TAB}.
 @chapter  Customizing Indentation
 @cindex   Customizing Indentation
 
-@cindex vhdl-set-offset
+@cindex @code{vhdl-set-offset}
 @cindex set-offset (vhdl-)
 The @code{vhdl-offsets-alist} variable is where you customize all your
 indentations.  You simply need to decide what additional offset you want
@@ -334,7 +334,7 @@ pre-defined styles will suit your needs, but if not, this section will
 describe how to set up basic editing configurations.  @xref{Styles}, for
 an explanation of how to set up named styles.
 
-@cindex vhdl-basic-offset
+@cindex @code{vhdl-basic-offset}
 @cindex basic-offset (vhdl-)
 As mentioned previously, the variable @code{vhdl-offsets-alist} is an
 association list between syntactic symbols and the offsets to be applied

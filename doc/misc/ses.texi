@@ -1282,10 +1282,10 @@ avoid virus warnings, each function used in a formula needs
 
 @node Uses of defadvice in @acronym{SES}
 @section Uses of defadvice in @acronym{SES}
-@cindex defadvice
-@cindex undo-more
-@cindex copy-region-as-kill
-@cindex yank
+@findex defadvice
+@findex undo-more
+@findex copy-region-as-kill
+@findex yank
 
 @table @code
 @item undo-more

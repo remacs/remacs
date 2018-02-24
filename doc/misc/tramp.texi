@@ -2558,8 +2558,8 @@ For ad-hoc definitions to be saved automatically in
 
 @node Remote processes
 @section Integration with other Emacs packages
-@cindex compile
-@cindex recompile
+@cindex @code{compile}
+@cindex @code{recompile}
 
 @value{tramp} supports starting new running processes on the remote
 host for discovering remote file names.  Emacs packages on the remote
@@ -2699,7 +2699,7 @@ local host.
 
 
 @subsection Running @code{shell} on a remote host
-@cindex shell
+@cindex @code{shell}
 
 Set @option{explicit-shell-file-name} to the appropriate shell name
 when using @value{tramp} between two hosts with different operating
@@ -2747,7 +2747,7 @@ different remote hosts.
 
 
 @subsection Running @code{shell-command} on a remote host
-@cindex shell-command
+@cindex @code{shell-command}
 
 @code{shell-command} executes commands synchronously or asynchronously
 on remote hosts and displays output in buffers on the local
@@ -2768,7 +2768,7 @@ continuous output.
 
 
 @subsection Running @code{eshell} on a remote host
-@cindex eshell
+@cindex @code{eshell}
 
 @value{tramp} is integrated into @file{eshell.el}, which enables
 interactive eshell sessions on remote hosts at the command prompt.
@@ -2814,9 +2814,9 @@ uid=0(root) gid=0(root) groups=0(root)
 
 @anchor{Running a debugger on a remote host}
 @subsection Running a debugger on a remote host
-@cindex gud
-@cindex gdb
-@cindex perldb
+@cindex @code{gud}
+@cindex @code{gdb}
+@cindex @code{perldb}
 
 @file{gud.el} provides a unified interface to symbolic debuggers
 @ifinfo
@@ -2863,8 +2863,8 @@ relative or absolute paths, but not remote paths.
 
 
 @subsection Running remote processes on MS Windows hosts
-@cindex winexe
-@cindex powershell
+@cindex @command{winexe}
+@cindex @command{powershell}
 
 @command{winexe} runs processes on a remote MS Windows host, and
 @value{tramp} can use it for @code{process-file} and

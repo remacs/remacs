@@ -2165,7 +2165,7 @@ text properties.
 @cindex soft newline
 @cindex newlines, hard and soft
 
-@cindex use-hard-newlines
+@findex use-hard-newlines
   In Enriched mode, Emacs distinguishes between two different kinds of
 newlines, @dfn{hard} newlines and @dfn{soft} newlines.  You can also
 enable or disable this feature in other buffers, by typing @kbd{M-x

@@ -356,9 +356,9 @@ Customizing Macros
 
 @cindex BOCM
 @cindex history
-@cindex awk-mode.el
-@cindex c-mode.el
-@cindex c++-mode.el
+@cindex @file{awk-mode.el}
+@cindex @file{c-mode.el}
+@cindex @file{c++-mode.el}
 
 Welcome to @ccmode{}, a GNU Emacs mode for editing files containing C,
 C++, Objective-C, Java, CORBA IDL (and the variants CORBA PSDL and

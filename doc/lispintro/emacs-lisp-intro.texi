@@ -5882,7 +5882,7 @@ find and use again and again.
 @node New insert-buffer
 @subsection New Body for @code{insert-buffer}
 @findex insert-buffer@r{, new version body}
-@cindex new version body for insert-buffer
+@cindex new version body for @code{insert-buffer}
 
 The body in the GNU Emacs 22 version is more confusing than the original.
 

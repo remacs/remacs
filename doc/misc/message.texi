@@ -1222,7 +1222,7 @@ according to two different standards, namely @acronym{PGP} or
 @node Passphrase caching
 @subsection Passphrase caching
 
-@cindex gpg-agent
+@cindex @command{gpg-agent}
 Message with EasyPG internally calls GnuPG (the @command{gpg} or
 @command{gpgsm} command) to perform
 data encryption, and in certain cases (decrypting or signing for
