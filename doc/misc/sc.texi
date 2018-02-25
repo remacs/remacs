@@ -685,7 +685,7 @@ Set the preferred reference header (i.e.,
 @code{sc-preferred-header-style}) to the currently displayed header.
 
 @item @code{sc-eref-exit} (@kbd{C-j}, @key{RET}, and @key{ESC C-c})
-@kindex RET
+@kindex @key{RET}
 @kindex C-j
 @kindex q
 @findex sc-eref-exit

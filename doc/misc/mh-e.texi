@@ -461,8 +461,8 @@ filling paragraphs. A mark can be set with @kbd{C-@@} (or
 @cindex file completion
 @cindex folder completion
 @cindex minibuffer
-@kindex SPC
-@kindex TAB
+@kindex @key{SPC}
+@kindex @key{TAB}
 
 The @dfn{minibuffer} is the bottom line of the Emacs window, where all
 prompting and multiple-character input is directed. You can use
@@ -692,7 +692,6 @@ get the big picture, and then you can read the manual as you wish.
 @cindex modes, MH-Letter
 @cindex sending mail
 @findex mh-smail
-@kindex M-x mh-smail
 
 Let's start our tour by sending ourselves a message which we can later
 read and process. Enter @kbd{M-x mh-smail} to invoke the MH-E program
@@ -762,7 +761,6 @@ message. Type @kbd{C-c C-c} now. That's all there is to it!
 @cindex modes, MH-Folder
 @cindex reading mail
 @findex mh-rmail
-@kindex M-x mh-rmail
 
 To read the mail you've just sent yourself, enter @kbd{M-x mh-rmail}.
 This incorporates the new mail and puts the output from
@@ -777,7 +775,6 @@ major mode is MH-Folder.
 
 @findex mh-rmail
 @kindex F r
-@kindex M-x mh-rmail
 
 @sp 1
 @center @strong{NOTE}
@@ -935,7 +932,6 @@ command.
 
 @findex mh-smail
 @kindex m
-@kindex M-x mh-smail
 
 If you want to send another message you can use @kbd{m} instead of
 @kbd{M-x mh-smail}. So go ahead, send some mail to your friends!
@@ -970,7 +966,6 @@ perform any refiles and deletes that you did there.
 @findex mh-rmail
 @kindex C-x b
 @kindex C-x k
-@kindex M-x mh-rmail
 @kindex q
 
 If you don't want to leave Emacs, you can type @kbd{q} to bury (hide)
@@ -1228,7 +1223,7 @@ Many commands that operate on individual messages, such as
 @code{mh-forward} or @code{mh-refile-msg} take a @code{RANGE}
 argument. This argument can be used in several ways.
 
-@kindex C-u, with ranges
+@kindex C-u@r{, with ranges}
 
 If you provide the prefix argument @kbd{C-u} to these commands, then
 you will be prompted for the message range. This can be any valid MH
@@ -1552,7 +1547,6 @@ the message numbers from outside of MH-E.
 @findex mh-rmail
 @kindex F r
 @kindex F v
-@kindex M-x mh-rmail
 
 The MH-E entry point for reading mail is @kbd{M-x mh-rmail}. This
 command incorporates your mail and creates a buffer called
@@ -1599,20 +1593,20 @@ Display message (@code{mh-show}).
 @c -------------------------
 @cindex @samp{Message > Show Message with Header} menu item
 @cindex menu item, @samp{Message > Show Message with Header}
-@kindex , (comma)
+@kindex , @r{(comma)}
 @findex mh-header-display
 @item , (comma)
 Display message with all header fields (@code{mh-header-display}).
 @c -------------------------
 @cindex @samp{Message > Show Message with Preferred Alternative} menu item
 @cindex menu item, @samp{Message > Show Message with Preferred Alternative}
-@kindex : (colon)
+@kindex : @r{(colon)}
 @findex mh-show-preferred-alternative
 @item : (colon)
 Display message with the default preferred alternative
 (@code{mh-show-preferred-alternative}).
 @c -------------------------
-@kindex ; (semicolon)
+@kindex ; @r{(semicolon)}
 @findex mh-toggle-mh-decode-mime-flag
 @item ; (semicolon)
 Toggle the value of @code{mh-decode-mime-flag}
@@ -2017,8 +2011,8 @@ detail in the following sections.
 @findex mh-previous-page
 @findex mh-show
 @findex mh-show-mouse
-@kindex , (comma)
-@kindex . (period)
+@kindex , @r{(comma)}
+@kindex . @r{(period)}
 @kindex @key{BS}
 @kindex @key{RET}
 @kindex @key{SPC}
@@ -2309,7 +2303,7 @@ leave out the @samp{xterm -e} if you use @command{mhlist} or
 @cindex Emacs, packages, @samp{mm-decode}
 @cindex @samp{mm-decode} package
 @findex mh-toggle-mh-decode-mime-flag
-@kindex ; (semicolon)
+@kindex ; @r{(semicolon)}
 @vindex mh-decode-mime-flag
 
 MH-E can handle attachments as well if the Gnus @samp{mm-decode}
@@ -2490,7 +2484,7 @@ the option @code{mm-discouraged-alternatives}, and add
 @samp{text/html}. The next best alternative, if any, will be shown.
 
 @findex mh-show-preferred-alternative
-@kindex : (colon)
+@kindex : @r{(colon)}
 
 Occasionally, though, you might want to see the preferred alternative.
 The command @kbd{:} (@code{mh-show-preferred-alternative}) displays
@@ -3859,7 +3853,6 @@ moving my cursor to @samp{out} and using the command @kbd{R}
 
 @cindex sending mail
 @findex mh-smail
-@kindex M-x mh-smail
 
 You can send a mail message in several ways. You can call @kbd{M-x
 mh-smail} directly, or from the command line like this:
@@ -4027,8 +4020,6 @@ more detail in the following sections.
 @cindex sending mail
 @findex mh-smail
 @findex mh-smail-other-window
-@kindex M-x mh-smail
-@kindex M-x mh-smail-other-window
 
 Outside of an MH-Folder buffer, you must call either @kbd{M-x
 mh-smail} or @kbd{M-x mh-smail-other-window} to compose a new message.
@@ -4401,7 +4392,7 @@ Perform completion or insert space (@code{mh-letter-complete-or-space}).
 Perform completion on header field or word preceding point
 (@code{mh-letter-complete}).
 @c -------------------------
-@kindex , (comma)
+@kindex , @r{(comma)}
 @findex mh-letter-confirm-address
 @item , (comma)
 Flash alias expansion (@code{mh-letter-confirm-address}).
@@ -4842,7 +4833,7 @@ take point to the last field from anywhere in the body.
 @findex mh-letter-complete
 @findex mh-letter-complete-or-space
 @findex mh-letter-confirm-address
-@kindex , (comma)
+@kindex , @r{(comma)}
 @kindex @key{SPC}
 @kindex M-@key{TAB}
 @vindex mh-alias-flash-on-comma
@@ -5934,7 +5925,6 @@ executed to generate the password file. For example, use @samp{ypcat
 passwd} to obtain the NIS password file.
 
 @findex mh-alias-reload
-@kindex M-x mh-alias-reload
 @vindex mh-alias-reloaded-hook
 
 Since aliases are updated frequently, MH-E reloads aliases
@@ -5950,7 +5940,6 @@ listed in your @samp{Aliasfile:} profile component. MH-E provides
 other methods for maintaining your alias file(s).
 
 @findex mh-alias-add-alias
-@kindex M-x mh-alias-add-alias
 
 You can use the @kbd{M-x mh-alias-add-alias} command which will prompt
 you for the alias and address that you would like to add. If the alias
@@ -5985,9 +5974,6 @@ Using prefixes instead of postfixes helps you explore aliases during
 completion. If you forget the name of an old dive buddy, you can enter
 @samp{div} and then @key{SPC} to get a listing of all your dive buddies.
 
-@kindex M-x mh-alias-add-address-under-point
-@kindex M-x mh-alias-grab-from-field
-
 An alias for the sender of the current message is added automatically
 by clicking on the @samp{Grab From alias} tool bar button or by running
 the @kbd{M-x mh-alias-grab-from-field} command. Aliases for other
@@ -6021,7 +6007,6 @@ more appropriate.
 
 @cindex regular expressions, @code{mh-alias-apropos}
 @findex mh-alias-apropos
-@kindex M-x mh-alias-apropos
 
 If you can't quite remember an alias, you can use @kbd{M-x
 mh-alias-apropos} to show all aliases or addresses that match a
@@ -6281,7 +6266,6 @@ containing the value for the field is given.
 @cindex speedbar
 @findex mh-visit-folder
 @kindex F v
-@kindex M-x speedbar
 @kindex mouse-2
 
 You can also use the speedbar
@@ -7514,7 +7498,6 @@ Mail}).
 @cindex sequence, @samp{cur}
 @cindex sequence, @samp{tick}
 @findex mh-update-sequences
-@kindex M-x mh-update-sequences
 @kindex q
 @kindex x
 @vindex mh-tick-seq
@@ -8001,7 +7984,6 @@ system.
 @cindex MH-E version
 @cindex @file{*MH-E Info*}
 @cindex version
-@kindex M-x mh-version
 
 One command worth noting is @kbd{M-x mh-version}. You can compare the
 version this command prints to the latest release (@pxref{Getting
@@ -8716,7 +8698,6 @@ I also point out some additional sources of information.
 
 @cindex bugs
 @cindex SourceForge
-@kindex M-x mh-version
 
 Bug reports should be filed at
 @uref{https://sourceforge.net/p/mh-e/bugs/, SourceForge}. You need to
@@ -8792,7 +8773,6 @@ instead.
 @cindex news
 @cindex @samp{MH-E-NEWS}
 @cindex @samp{README}
-@kindex M-x mh-version
 
 After you download and extract the MH-E tarball, read the
 @file{README} file and @file{MH-E-NEWS}. These correspond to the

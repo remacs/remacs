@@ -129,7 +129,7 @@ sessions.
   The following commands are available in the Gnus group buffer:
 
 @table @kbd
-@kindex SPC @r{(Gnus Group mode)}
+@kindex @key{SPC} @r{(Gnus Group mode)}
 @findex gnus-group-read-group
 @item @key{SPC}
 Switch to the summary buffer for the group on the current line.
@@ -177,7 +177,7 @@ Kill the group on the current line.  Killed groups are not recorded in
 the @file{.newsrc} file, and they are not shown in the @kbd{l} or
 @kbd{L} listings.
 
-@kindex DEL @r{(Gnus Group mode)}
+@kindex @key{DEL} @r{(Gnus Group mode)}
 @item @key{DEL}
 Move point to the previous group containing unread articles.
 
@@ -203,7 +203,7 @@ Update your Gnus settings, and quit Gnus.
   The following commands are available in the Gnus summary buffer:
 
 @table @kbd
-@kindex SPC @r{(Gnus Summary mode)}
+@kindex @key{SPC} @r{(Gnus Summary mode)}
 @findex gnus-summary-next-page
 @item @key{SPC}
 If there is no article selected, select the article on the current
@@ -214,7 +214,7 @@ buffer, select the next unread article.
 Thus, you can read through all articles by repeatedly typing
 @key{SPC}.
 
-@kindex DEL @r{(Gnus Summary mode)}
+@kindex @key{DEL} @r{(Gnus Summary mode)}
 @findex gnus-summary-prev-page
 @item @key{DEL}
 Scroll the text of the article backwards.
@@ -481,8 +481,8 @@ page, type @kbd{p}, @key{prior} or @kbd{C-x [}
 
 @findex doc-view-scroll-up-or-next-page
 @findex doc-view-scroll-down-or-previous-page
-@kindex SPC @r{(DocView mode)}
-@kindex DEL @r{(DocView mode)}
+@kindex @key{SPC} @r{(DocView mode)}
+@kindex @key{DEL} @r{(DocView mode)}
   @key{SPC} (@code{doc-view-scroll-up-or-next-page}) is a convenient
 way to advance through the document.  It scrolls within the current
 page or advances to the next.  @key{DEL} moves backwards in a similar
@@ -826,7 +826,7 @@ commands:
 
 @table @kbd
 @item @key{RET}
-@kindex RET @r{(Shell mode)}
+@kindex @key{RET} @r{(Shell mode)}
 @findex comint-send-input
 Send the current line as input to the subshell
 (@code{comint-send-input}).  Any shell prompt at the beginning of the
@@ -836,7 +836,7 @@ interactive shell.  However, you can also invoke @key{RET} elsewhere
 in the shell buffer to submit the current line as input.
 
 @item @key{TAB}
-@kindex TAB @r{(Shell mode)}
+@kindex @key{TAB} @r{(Shell mode)}
 @findex completion-at-point@r{, in Shell Mode}
 @cindex shell completion
 Complete the command name or file name before point in the shell
@@ -1182,7 +1182,7 @@ Move point to the previous prompt (@code{comint-previous-prompt}).
 @item C-c C-n
 Move point to the following prompt (@code{comint-next-prompt}).
 
-@kindex C-c RET @r{(Shell mode)}
+@kindex C-c @key{RET} @r{(Shell mode)}
 @findex comint-copy-old-input
 @item C-c @key{RET}
 Copy the input command at point, inserting the copy at the end of the
@@ -2796,7 +2796,7 @@ the package commentary by typing @kbd{C-h P browse-url @key{RET}}.
 Activate URLs and e-mail addresses in the current buffer.
 @end table
 
-@kindex C-c RET @r{(Goto Address mode)}
+@kindex C-c @key{RET} @r{(Goto Address mode)}
 @findex goto-address-at-point
   You can make Emacs mark out URLs specially in the current buffer, by
 typing @kbd{M-x goto-address-mode}.  When this buffer-local minor mode

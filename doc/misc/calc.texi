@@ -10906,27 +10906,27 @@ degrees, minutes, and seconds.
 @ignore
 @mindex @null
 @end ignore
-@kindex ' (HMS forms)
+@kindex ' @r{(HMS forms)}
 @ignore
 @mindex @null
 @end ignore
-@kindex " (HMS forms)
+@kindex " @r{(HMS forms)}
 @ignore
 @mindex @null
 @end ignore
-@kindex h (HMS forms)
+@kindex h @r{(HMS forms)}
 @ignore
 @mindex @null
 @end ignore
-@kindex o (HMS forms)
+@kindex o @r{(HMS forms)}
 @ignore
 @mindex @null
 @end ignore
-@kindex m (HMS forms)
+@kindex m @r{(HMS forms)}
 @ignore
 @mindex @null
 @end ignore
-@kindex s (HMS forms)
+@kindex s @r{(HMS forms)}
 The default format for HMS values is
 @samp{@var{hours}@@ @var{mins}' @var{secs}"}.  During entry, the letters
 @samp{h} (for ``hours'') or
@@ -11125,7 +11125,7 @@ integers but this is not required.
 @ignore
 @mindex M
 @end ignore
-@kindex M (modulo forms)
+@kindex M @r{(modulo forms)}
 @ignore
 @mindex mod
 @end ignore
@@ -11280,7 +11280,7 @@ would indeed have been negligible.
 @ignore
 @mindex p
 @end ignore
-@kindex p (error forms)
+@kindex p @r{(error forms)}
 @tindex +/-
 To enter an error form during regular numeric entry, use the @kbd{p}
 (``plus-or-minus'') key to type the @samp{+/-} symbol.  (If you try actually
@@ -16682,8 +16682,8 @@ or matrix argument, these functions operate element-wise.
 @ignore
 @mindex v p
 @end ignore
-@kindex v p (complex)
-@kindex V p (complex)
+@kindex v p @r{(complex)}
+@kindex V p @r{(complex)}
 @pindex calc-pack
 The @kbd{v p} (@code{calc-pack}) command can pack the top two numbers on
 the stack into a composite object such as a complex number.  With
@@ -16694,8 +16694,8 @@ with an argument of @mathit{-2}, it produces a polar complex number.
 @ignore
 @mindex v u
 @end ignore
-@kindex v u (complex)
-@kindex V u (complex)
+@kindex v u @r{(complex)}
+@kindex V u @r{(complex)}
 @pindex calc-unpack
 The @kbd{v u} (@code{calc-unpack}) command takes the complex number
 (or other composite object) on the top of the stack and unpacks it
@@ -20234,7 +20234,7 @@ the conjugate transpose of its argument, i.e., @samp{conj(trn(x))}.
 @ignore
 @mindex A
 @end ignore
-@kindex A (vectors)
+@kindex A @r{(vectors)}
 @pindex calc-abs (vectors)
 @ignore
 @mindex abs
@@ -20280,7 +20280,7 @@ exactly three elements.
 @ignore
 @mindex &
 @end ignore
-@kindex & (matrices)
+@kindex & @r{(matrices)}
 @pindex calc-inv (matrices)
 @ignore
 @mindex inv
