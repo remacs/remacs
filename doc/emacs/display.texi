@@ -765,7 +765,7 @@ This face determines the color of tool bar icons.  @xref{Tool Bars}.
 This face determines the colors and font of Emacs's menus.  @xref{Menu
 Bars}.
 @item tty-menu-enabled-face
-@cindex faces for @code{text-mode} menus
+@cindex faces for text-mode menus
 @cindex TTY menu faces
 This face is used to display enabled menu items on text-mode
 terminals.
