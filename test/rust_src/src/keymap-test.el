@@ -1,6 +1,6 @@
 (require 'ert)
 
-(ert-deftest keymap-set-keymap-parent-tests ()
+(ert-deftest keymap-tests--set-keymap-parent ()
   (let ((sample-keymap '(keymap
                          (3 keymap
                             ;; C-c C-z
@@ -16,7 +16,7 @@
     (should-not (set-keymap-parent map nil))
     (should (equal map '(keymap)))))
 
-(ert-deftest keymap-parent-tests ()
+(ert-deftest keymap-tests--keymap-parent ()
   (let ((sample-keymap-with-parent '(keymap
                          (3 keymap
                             ;; C-c C-z
@@ -47,7 +47,7 @@
     (should-error (keymap-parent nil))
     (should-error (keymap-parent "test"))))
 
-(ert-deftest keymap-prompt-tests ()
+(ert-deftest keymap-tests--keymap-prompt ()
   (let ((sample-keymap '(keymap
                          (3 keymap
                             ;; C-c C-z
@@ -57,20 +57,20 @@
     (should-not (keymap-prompt (make-keymap)))
     (should-not (keymap-prompt sample-keymap))))
 
-(ert-deftest keymap-make-tests ()
+(ert-deftest keymap-tests--make-keymap ()
   (should (equal (make-keymap) '(keymap
                                  #^[nil nil keymap nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil])))
   
   (should (equal (make-keymap "menu-name") '(keymap
                                              #^[nil nil keymap nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil] "menu-name"))))
 
-(ert-deftest keymap-keymapp-tests ()
+(ert-deftest keymap-tests--keymapp ()
   (should (keymapp (make-keymap)))
   (should (keymapp '(keymap)))
   (should-not (keymapp '(test-map)))
   (should-not (keymapp nil)))
 
-(ert-deftest keymap-local-tests ()
+(ert-deftest keymap-tests--use-local-map ()
   (let ((sample-keymap '(keymap
                          (3 keymap
                             ;; C-c C-z
@@ -82,7 +82,7 @@
     (use-local-map sample-keymap)
     (should (equal (current-local-map) '(keymap (3 keymap (26 . emacs-version)))))))
 
-(ert-deftest keymap-global-tests ()
+(ert-deftest keymap-tests--use-global-map ()
   (let ((sample-keymap '(keymap
                          (3 keymap
                             ;; C-c C-z
