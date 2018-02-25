@@ -28,7 +28,7 @@ pub extern "C" fn get_where_is_cache() -> Lisp_Object {
 
 /// Allows the C code to set the value of `where_is_cache`
 #[no_mangle]
-pub extern "C" fn set_where_is_cache(val: Lisp_Object) -> () {
+pub extern "C" fn set_where_is_cache(val: Lisp_Object) {
     unsafe {
         where_is_cache = val;
     }
@@ -45,7 +45,7 @@ pub extern "C" fn get_where_is_cache_keymaps() -> Lisp_Object {
 
 /// Allows the C code to set the value of `where_is_cache_keymaps`
 #[no_mangle]
-pub extern "C" fn set_where_is_cache_keymaps(val: Lisp_Object) -> () {
+pub extern "C" fn set_where_is_cache_keymaps(val: Lisp_Object) {
     unsafe {
         where_is_cache_keymaps = val;
     }
@@ -90,19 +90,19 @@ pub fn keymapp(object: LispObject) -> bool {
 #[no_mangle]
 pub extern "C" fn keymap_parent(keymap: Lisp_Object, autoload: bool) -> Lisp_Object {
     let map = unsafe { LispObject::from_raw(get_keymap(keymap, true, autoload)) };
-    let result = map.iter_tails_safe().find(|&elt| keymapp(elt.cdr()));
-    if let Some(elt) = result {
-        elt.cdr().to_raw()
-    } else if let Some(last) = map.iter_tails_safe().last() {
-        unsafe { get_keymap(last.cdr().to_raw(), false, autoload) }
-    } else {
-        Qnil
+    let mut current = LispObject::constant_nil();
+    for elt in map.iter_tails_safe() {
+        current = elt.cdr();
+        if keymapp(current) {
+            return current.to_raw();
+        }
     }
+    unsafe { get_keymap(current.to_raw(), false, autoload) }
 }
 
 /// Return the parent keymap of KEYMAP.
 /// If KEYMAP has no parent, return nil.
-#[lisp_fn(name = "keymap-parent")]
+#[lisp_fn(name = "keymap-parent", c_name = "keymap_parent")]
 pub fn keymap_parent_lisp(keymap: LispObject) -> LispObject {
     LispObject::from_raw(keymap_parent(keymap.to_raw(), true))
 }
@@ -127,7 +127,7 @@ pub extern "C" fn keymap_memberp(map: Lisp_Object, maps: Lisp_Object) -> bool {
 pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
     // Flush any reverse-map cache
     unsafe {
-        set_where_is_cache(Qnil);
+        where_is_cache = Qnil;
         where_is_cache_keymaps = Qt;
     }
 
