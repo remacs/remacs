@@ -226,9 +226,9 @@ Jump to the last record (@code{forms-last-record}).  This command also
 recalculates the number of records in the data file.
 
 @findex forms-next-field
-@kindex TAB
+@kindex @key{TAB}
 @item @key{TAB}
-@kindex C-c TAB
+@kindex C-c @key{TAB}
 @itemx C-c @key{TAB}
 Jump to the next field in the current record (@code{forms-next-field}).
 With a numeric argument @var{n}, jump forward @var{n} fields.  If this command
@@ -334,25 +334,25 @@ The following function key definitions are set up in Forms mode
 (whether read-only or not):
 
 @table @kbd
-@kindex next
-@item next
+@kindex @key{NEXT}
+@item @key{NEXT}
 forms-next-record
 
-@kindex prior
-@item prior
+@kindex @key{PRIOR}
+@item @key{PRIOR}
 forms-prev-record
 
-@kindex begin
-@item begin
+@kindex @key{BEGIN}
+@item @key{BEGIN}
 forms-first-record
 
-@kindex end
-@item end
+@kindex @key{END}
+@item @key{END}
 forms-last-record
 
-@kindex S-Tab
+@kindex S-@key{TAB}
 @findex forms-prev-field
-@item S-Tab
+@item S-@key{TAB}
 forms-prev-field
 @end table
 

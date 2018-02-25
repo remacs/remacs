@@ -1136,7 +1136,7 @@ accessing a functionality.  Org mode often uses the same key for different
 functions, depending on context.  The command that is bound to such keys has
 a generic name, like @code{org-metaright}.  In the manual we will, wherever
 possible, give the function that is internally called by the generic command.
-For example, in the chapter on document structure, @kbd{M-@key{right}} will
+For example, in the chapter on document structure, @kbd{M-@key{RIGHT}} will
 be listed to call @code{org-do-demote}, while in the chapter on tables, it
 will be listed to call @code{org-table-move-column-right}.  If you prefer,
 you can compile the manual without the command names by unsetting the flag
@@ -1392,7 +1392,7 @@ you can use the following keys to find your destination:
 @vindex org-goto-auto-isearch
 @example
 @key{TAB}         @r{Cycle visibility.}
-@key{down} / @key{up}   @r{Next/previous visible headline.}
+@key{DOWN} / @key{UP}   @r{Next/previous visible headline.}
 @key{RET}         @r{Select this location.}
 @kbd{/}           @r{Do a Sparse-tree search}
 @r{The following keys work if you turn off @code{org-goto-auto-isearch}}
@@ -1453,18 +1453,18 @@ In a new entry with no text yet, the first @key{TAB} demotes the entry to
 become a child of the previous one.  The next @key{TAB} makes it a parent,
 and so on, all the way to top level.  Yet another @key{TAB}, and you are back
 to the initial level.
-@orgcmd{M-@key{left},org-do-promote}
+@orgcmd{M-@key{LEFT},org-do-promote}
 Promote current heading by one level.
-@orgcmd{M-@key{right},org-do-demote}
+@orgcmd{M-@key{RIGHT},org-do-demote}
 Demote current heading by one level.
-@orgcmd{M-S-@key{left},org-promote-subtree}
+@orgcmd{M-S-@key{LEFT},org-promote-subtree}
 Promote the current subtree by one level.
-@orgcmd{M-S-@key{right},org-demote-subtree}
+@orgcmd{M-S-@key{RIGHT},org-demote-subtree}
 Demote the current subtree by one level.
-@orgcmd{M-@key{up},org-move-subtree-up}
+@orgcmd{M-@key{UP},org-move-subtree-up}
 Move subtree up (swap with previous subtree of same
 level).
-@orgcmd{M-@key{down},org-move-subtree-down}
+@orgcmd{M-@key{DOWN},org-move-subtree-down}
 Move subtree down (swap with next subtree of same level).
 @orgcmd{M-h,org-mark-element}
 Mark the element at point.  Hitting repeatedly will mark subsequent elements
@@ -1733,7 +1733,7 @@ one.
 @kindex M-S-@key{RET}
 @item M-S-@key{RET}
 Insert a new item with a checkbox (@pxref{Checkboxes}).
-@kindex S-@key{down}
+@kindex S-@key{DOWN}
 @item S-up
 @itemx S-down
 @cindex shift-selection-mode
@@ -1743,25 +1743,25 @@ Jump to the previous/next item in the current list@footnote{If you want to
 cycle around items that way, you may customize
 @code{org-list-use-circular-motion}.}, but only if
 @code{org-support-shift-select} is off.  If not, you can still use paragraph
-jumping commands like @kbd{C-@key{up}} and @kbd{C-@key{down}} to quite
+jumping commands like @kbd{C-@key{UP}} and @kbd{C-@key{DOWN}} to quite
 similar effect.
-@kindex M-@key{up}
-@kindex M-@key{down}
+@kindex M-@key{UP}
+@kindex M-@key{DOWN}
 @item M-up
 @itemx M-down
 Move the item including subitems up/down@footnote{See
 @code{org-list-use-circular-motion} for a cyclic behavior.} (swap with
 previous/next item of same indentation).  If the list is ordered, renumbering
 is automatic.
-@kindex M-@key{left}
-@kindex M-@key{right}
+@kindex M-@key{LEFT}
+@kindex M-@key{RIGHT}
 @item M-left
 @itemx M-right
 Decrease/increase the indentation of an item, leaving children alone.
-@kindex M-S-@key{left}
-@kindex M-S-@key{right}
-@item M-S-@key{left}
-@itemx M-S-@key{right}
+@kindex M-S-@key{LEFT}
+@kindex M-S-@key{RIGHT}
+@item M-S-@key{LEFT}
+@itemx M-S-@key{RIGHT}
 Decrease/increase the indentation of the item, including subitems.
 Initially, the item tree is selected based on current indentation.  When
 these commands are executed several times in direct succession, the initially
@@ -1799,9 +1799,9 @@ its location).  @xref{Structure editing}, for a detailed explanation.
 Turn the whole plain list into a subtree of the current heading.  Checkboxes
 (@pxref{Checkboxes}) will become TODO (resp. DONE) keywords when unchecked
 (resp. checked).
-@kindex S-@key{left}
-@kindex S-@key{right}
-@item S-left/right
+@kindex S-@key{LEFT}
+@kindex S-@key{RIGHT}
+@item S-@key{LEFT}/@key{RIGHT}
 @vindex org-support-shift-select
 This command also cycles bullet styles when the cursor in on the bullet or
 anywhere in an item line, details depending on
@@ -2155,22 +2155,22 @@ Move to beginning of the current table field, or on to the previous field.
 Move to end of the current table field, or on to the next field.
 
 @tsubheading{Column and row editing}
-@orgcmdkkcc{M-@key{left},M-@key{right},org-table-move-column-left,org-table-move-column-right}
+@orgcmdkkcc{M-@key{LEFT},M-@key{RIGHT},org-table-move-column-left,org-table-move-column-right}
 Move the current column left/right.
 @c
-@orgcmd{M-S-@key{left},org-table-delete-column}
+@orgcmd{M-S-@key{LEFT},org-table-delete-column}
 Kill the current column.
 @c
-@orgcmd{M-S-@key{right},org-table-insert-column}
+@orgcmd{M-S-@key{RIGHT},org-table-insert-column}
 Insert a new column to the left of the cursor position.
 @c
-@orgcmdkkcc{M-@key{up},M-@key{down},org-table-move-row-up,org-table-move-row-down}
+@orgcmdkkcc{M-@key{UP},M-@key{DOWN},org-table-move-row-up,org-table-move-row-down}
 Move the current row up/down.
 @c
-@orgcmd{M-S-@key{up},org-table-kill-row}
+@orgcmd{M-S-@key{UP},org-table-kill-row}
 Kill the current row or horizontal line.
 @c
-@orgcmd{M-S-@key{down},org-table-insert-row}
+@orgcmd{M-S-@key{DOWN},org-table-insert-row}
 Insert a new row above the current row.  With a prefix argument, the line is
 created below the current one.
 @c
@@ -3014,22 +3014,22 @@ formula, @key{TAB} re-indents just like in Emacs Lisp mode.
 Complete Lisp symbols, just like in Emacs Lisp mode.@footnote{Many desktops
 intercept @kbd{M-@key{TAB}} to switch windows.  Use @kbd{C-M-i} or
 @kbd{@key{ESC} @key{TAB}} instead for completion (@pxref{Completion}).}
-@kindex S-@key{up}
-@kindex S-@key{down}
-@kindex S-@key{left}
-@kindex S-@key{right}
+@kindex S-@key{UP}
+@kindex S-@key{DOWN}
+@kindex S-@key{LEFT}
+@kindex S-@key{RIGHT}
 @findex org-table-fedit-ref-up
 @findex org-table-fedit-ref-down
 @findex org-table-fedit-ref-left
 @findex org-table-fedit-ref-right
-@item S-@key{up}/@key{down}/@key{left}/@key{right}
+@item S-@key{UP}/@key{DOWN}/@key{LEFT}/@key{RIGHT}
 Shift the reference at point.  For example, if the reference is
-@code{B3} and you press @kbd{S-@key{right}}, it will become @code{C3}.
+@code{B3} and you press @kbd{S-@key{RIGHT}}, it will become @code{C3}.
 This also works for relative references and for hline references.
-@orgcmdkkcc{M-S-@key{up},M-S-@key{down},org-table-fedit-line-up,org-table-fedit-line-down}
+@orgcmdkkcc{M-S-@key{UP},M-S-@key{DOWN},org-table-fedit-line-up,org-table-fedit-line-down}
 Move the test line for column formulas in the Org buffer up and
 down.
-@orgcmdkkcc{M-@key{up},M-@key{down},org-table-fedit-scroll-down,org-table-fedit-scroll-up}
+@orgcmdkkcc{M-@key{UP},M-@key{DOWN},org-table-fedit-scroll-down,org-table-fedit-scroll-up}
 Scroll the window displaying the table.
 @kindex C-c @}
 @findex org-table-toggle-coordinate-overlays
@@ -3710,7 +3710,7 @@ becomes the default description.
 @b{Inserting stored links}@*
 All links stored during the
 current session are part of the history for this prompt, so you can access
-them with @key{up} and @key{down} (or @kbd{M-p/n}).
+them with @key{UP} and @key{DOWN} (or @kbd{M-p/n}).
 
 @b{Completion support}@* Completion with @key{TAB} will help you to insert
 valid link prefixes like @samp{https:}, including the prefixes
@@ -4043,9 +4043,9 @@ completion; otherwise force cycling through TODO states with no prompt.  When
 @code{org-use-fast-todo-selection} is set to @code{prefix}, use the fast
 selection interface.
 
-@kindex S-@key{right}
-@kindex S-@key{left}
-@item S-@key{right} @ @r{/} @ S-@key{left}
+@kindex S-@key{RIGHT}
+@kindex S-@key{LEFT}
+@item S-@key{RIGHT} @ @r{/} @ S-@key{LEFT}
 @vindex org-treat-S-cursor-todo-selection-as-state-change
 Select the following/preceding TODO state, similar to cycling.  Useful
 mostly if more than two TODO states are possible (@pxref{TODO
@@ -4126,7 +4126,7 @@ With this setup, the command @kbd{C-c C-t} will cycle an entry from TODO
 to FEEDBACK, then to VERIFY, and finally to DONE and DELEGATED@.  You may
 also use a numeric prefix argument to quickly select a specific state.  For
 example @kbd{C-3 C-c C-t} will change the state immediately to VERIFY@.
-Or you can use @kbd{S-@key{left}} to go backward through the sequence.  If you
+Or you can use @kbd{S-@key{LEFT}} to go backward through the sequence.  If you
 define many keywords, you can use in-buffer completion
 (@pxref{Completion}) or even a special one-key selection scheme
 (@pxref{Fast access to TODO states}) to insert these words into the
@@ -4192,23 +4192,23 @@ select the correct sequence.  Besides the obvious ways like typing a
 keyword or using completion, you may also apply the following commands:
 
 @table @kbd
-@kindex C-S-@key{right}
-@kindex C-S-@key{left}
+@kindex C-S-@key{RIGHT}
+@kindex C-S-@key{LEFT}
 @kindex C-u C-u C-c C-t
 @item C-u C-u C-c C-t
-@itemx C-S-@key{right}
-@itemx C-S-@key{left}
+@itemx C-S-@key{RIGHT}
+@itemx C-S-@key{LEFT}
 These keys jump from one TODO subset to the next.  In the above example,
-@kbd{C-u C-u C-c C-t} or @kbd{C-S-@key{right}} would jump from @code{TODO} or
+@kbd{C-u C-u C-c C-t} or @kbd{C-S-@key{RIGHT}} would jump from @code{TODO} or
 @code{DONE} to @code{REPORT}, and any of the words in the second row to
 @code{CANCELED}.  Note that the @kbd{C-S-} key binding conflict with
 @code{shift-selection-mode} (@pxref{Conflicts}).
-@kindex S-@key{right}
-@kindex S-@key{left}
-@item S-@key{right}
-@itemx S-@key{left}
-@kbd{S-@key{left}} and @kbd{S-@key{right}} and walk through @emph{all}
-keywords from all sets, so for example @kbd{S-@key{right}} would switch
+@kindex S-@key{RIGHT}
+@kindex S-@key{LEFT}
+@item S-@key{RIGHT}
+@itemx S-@key{LEFT}
+@kbd{S-@key{LEFT}} and @kbd{S-@key{RIGHT}} and walk through @emph{all}
+keywords from all sets, so for example @kbd{S-@key{RIGHT}} would switch
 from @code{DONE} to @code{REPORT} in the example above.  See also
 @ref{Conflicts}, for a discussion of the interaction with
 @code{shift-selection-mode}.
@@ -4644,7 +4644,7 @@ items.
 
 @table @kbd
 @item @kbd{C-c ,}
-@kindex @kbd{C-c ,}
+@kindex C-c ,
 @findex org-priority
 Set the priority of the current headline (@command{org-priority}).  The
 command prompts for a priority character @samp{A}, @samp{B} or @samp{C}.
@@ -4652,7 +4652,7 @@ When you press @key{SPC} instead, the priority cookie is removed from the
 headline.  The priorities can also be changed ``remotely'' from the agenda
 buffer with the @kbd{,} command (@pxref{Agenda commands}).
 @c
-@orgcmdkkcc{S-@key{up},S-@key{down},org-priority-up,org-priority-down}
+@orgcmdkkcc{S-@key{UP},S-@key{DOWN},org-priority-up,org-priority-down}
 @vindex org-priority-start-cycle-with-default
 Increase/decrease priority of current headline@footnote{See also the option
 @code{org-priority-start-cycle-with-default}.}.  Note that these keys are
@@ -5395,7 +5395,7 @@ With the cursor in a property drawer, this executes property commands.
 @orgcmd{C-c C-c s,org-set-property}
 Set a property in the current entry.  Both the property and the value
 can be inserted using completion.
-@orgcmdkkcc{S-@key{right},S-@key{left},org-property-next-allowed-value,org-property-previous-allowed-value}
+@orgcmdkkcc{S-@key{RIGHT},S-@key{LEFT},org-property-next-allowed-value,org-property-previous-allowed-value}
 Switch property at point to the next/previous allowed value.
 @orgcmd{C-c C-c d,org-delete-property}
 Remove a property from the current entry.
@@ -5725,17 +5725,17 @@ Same as @kbd{r}.
 @orgcmd{q,org-columns-quit}
 Exit column view.
 @tsubheading{Editing values}
-@item @key{left} @key{right} @key{up} @key{down}
+@item @key{LEFT} @key{RIGHT} @key{UP} @key{DOWN}
 Move through the column view from field to field.
-@kindex S-@key{left}
-@kindex S-@key{right}
-@item  S-@key{left}/@key{right}
+@kindex S-@key{LEFT}
+@kindex S-@key{RIGHT}
+@item  S-@key{LEFT}/@key{RIGHT}
 Switch to the next/previous allowed value of the field.  For this, you
 have to have specified allowed values for a property.
 @item 1..9,0
 Directly select the Nth allowed value, @kbd{0} selects the 10th value.
 @orgcmdkkcc{n,p,org-columns-next-allowed-value,org-columns-previous-allowed-value}
-Same as @kbd{S-@key{left}/@key{right}}
+Same as @kbd{S-@key{LEFT}/@key{RIGHT}}
 @orgcmd{e,org-columns-edit-value}
 Edit the property at point.  For the special properties, this will
 invoke the same interface that you normally use to change that
@@ -5754,9 +5754,9 @@ current column view.
 @tsubheading{Modifying the table structure}
 @orgcmdkkcc{<,>,org-columns-narrow,org-columns-widen}
 Make the column narrower/wider by one character.
-@orgcmd{S-M-@key{right},org-columns-new}
+@orgcmd{S-M-@key{RIGHT},org-columns-new}
 Insert a new column, to the left of the current column.
-@orgcmd{S-M-@key{left},org-columns-delete}
+@orgcmd{S-M-@key{LEFT},org-columns-delete}
 Delete the current column.
 @end table
 
@@ -6010,11 +6010,11 @@ instead.
 Access the agenda for the date given by the timestamp or -range at
 point (@pxref{Weekly/daily agenda}).
 @c
-@orgcmdkkcc{S-@key{left},S-@key{right},org-timestamp-down-day,org-timestamp-up-day}
+@orgcmdkkcc{S-@key{LEFT},S-@key{RIGHT},org-timestamp-down-day,org-timestamp-up-day}
 Change date at cursor by one day.  These key bindings conflict with
 shift-selection and related modes (@pxref{Conflicts}).
 @c
-@orgcmdkkcc{S-@key{up},S-@key{down},org-timestamp-up,org-timestamp-down-down}
+@orgcmdkkcc{S-@key{UP},S-@key{DOWN},org-timestamp-up,org-timestamp-down-down}
 Change the item under the cursor in a timestamp.  The cursor can be on a
 year, month, day, hour or minute.  When the timestamp contains a time range
 like @samp{15:30-16:30}, modifying the first time will also shift the second,
@@ -6138,25 +6138,25 @@ from the minibuffer:
 @kindex M-v
 @kindex C-v
 @kindex mouse-1
-@kindex S-@key{right}
-@kindex S-@key{left}
-@kindex S-@key{down}
-@kindex S-@key{up}
-@kindex M-S-@key{right}
-@kindex M-S-@key{left}
+@kindex S-@key{RIGHT}
+@kindex S-@key{LEFT}
+@kindex S-@key{DOWN}
+@kindex S-@key{UP}
+@kindex M-S-@key{RIGHT}
+@kindex M-S-@key{LEFT}
 @kindex @key{RET}
-@kindex M-S-@key{down}
-@kindex M-S-@key{up}
+@kindex M-S-@key{DOWN}
+@kindex M-S-@key{UP}
 
 @example
 @key{RET}              @r{Choose date at cursor in calendar.}
 mouse-1            @r{Select date by clicking on it.}
-S-@key{right}/@key{left}   @r{One day forward/backward.}
-S-@key{down}/@key{up}      @r{One week forward/backward.}
-M-S-@key{right}/@key{left} @r{One month forward/backward.}
+S-@key{RIGHT}/@key{LEFT}   @r{One day forward/backward.}
+S-@key{DOWN}/@key{UP}      @r{One week forward/backward.}
+M-S-@key{RIGHT}/@key{LEFT} @r{One month forward/backward.}
 > / <              @r{Scroll calendar forward/backward by one month.}
 M-v / C-v          @r{Scroll calendar forward/backward by 3 months.}
-M-S-@key{down}/@key{up}    @r{Scroll calendar forward/backward by one year.}
+M-S-@key{DOWN}/@key{UP}    @r{Scroll calendar forward/backward by one year.}
 @end example
 
 @vindex org-read-date-display-live
@@ -6196,10 +6196,10 @@ following consequences:
 You cannot place the cursor onto a timestamp anymore, only before or
 after.
 @item
-The @kbd{S-@key{up}/@key{down}} keys can no longer be used to adjust
+The @kbd{S-@key{UP}/@key{DOWN}} keys can no longer be used to adjust
 each component of a timestamp.  If the cursor is at the beginning of
-the stamp, @kbd{S-@key{up}/@key{down}} will change the stamp by one day,
-just like @kbd{S-@key{left}/@key{right}}.  At the end of the stamp, the
+the stamp, @kbd{S-@key{UP}/@key{DOWN}} will change the stamp by one day,
+just like @kbd{S-@key{LEFT}/@key{RIGHT}}.  At the end of the stamp, the
 time will be changed by one minute.
 @item
 If the timestamp contains a range of clock times or a repeater, these
@@ -6555,7 +6555,7 @@ clock duration keeps the same.
 @orgcmd{S-M-@key{up/down},org-timestamp-up/down}
 On @code{CLOCK} log lines, increase/decrease the timestamp at point and
 the one of the previous (or the next clock) timestamp by the same duration.
-For example, if you hit @kbd{S-M-@key{up}} to increase a clocked-out timestamp
+For example, if you hit @kbd{S-M-@key{UP}} to increase a clocked-out timestamp
 by five minutes, then the clocked-in timestamp of the next clock will be
 increased by five minutes.
 @orgcmd{C-c C-t,org-todo}
@@ -6606,7 +6606,7 @@ Update dynamic block at point.
 @orgkey{C-u C-c C-x C-u}
 Update all dynamic blocks (@pxref{Dynamic blocks}).  This is useful if
 you have several clock table blocks in a buffer.
-@orgcmdkxkc{S-@key{left},S-@key{right},org-clocktable-try-shift}
+@orgcmdkxkc{S-@key{LEFT},S-@key{RIGHT},org-clocktable-try-shift}
 Shift the current @code{:block} interval and update the table.  The cursor
 needs to be in the @code{#+BEGIN: clocktable} line for this command.  If
 @code{:block} is @code{today}, it will be shifted to @code{today-1} etc.
@@ -6656,7 +6656,7 @@ be selected:
              thismonth, lastmonth, thismonth-@var{N}  @r{a relative month}
              thisyear, lastyear, thisyear-@var{N}     @r{a relative year}
              untilnow
-             @r{Use @kbd{S-@key{left}/@key{right}} keys to shift the time interval.}
+             @r{Use @kbd{S-@key{LEFT}/@key{RIGHT}} keys to shift the time interval.}
 :tstart      @r{A time string specifying when to start considering times.}
              @r{Relative times like @code{"<-2w>"} can also be used.  See}
              @r{@ref{Matching tags and properties} for relative time syntax.}
@@ -6862,7 +6862,7 @@ In particular if you want to use this setup also in the agenda, a global
 setup may be advised.
 
 The way to assign estimates to individual items is then to switch to column
-mode, and to use @kbd{S-@key{right}} and @kbd{S-@key{left}} to change the
+mode, and to use @kbd{S-@key{RIGHT}} and @kbd{S-@key{LEFT}} to change the
 value.  The values you enter will immediately be summed up in the hierarchy.
 In the column next to it, any clocked time will be displayed.
 
@@ -8022,7 +8022,6 @@ Remove current file from the list of agenda files.
 @orgcmd{C-',org-cycle-agenda-files}
 @itemx C-,
 Cycle through agenda file list, visiting one file after the other.
-@kindex M-x org-iswitchb
 @item M-x org-iswitchb RET
 Command to use an @code{iswitchb}-like interface to switch to and between Org
 buffers.
@@ -8950,9 +8949,9 @@ the other commands, the cursor needs to be in the desired line.
 @tsubheading{Motion}
 @cindex motion commands in agenda
 @orgcmd{n,org-agenda-next-line}
-Next line (same as @key{down} and @kbd{C-n}).
+Next line (same as @key{DOWN} and @kbd{C-n}).
 @orgcmd{p,org-agenda-previous-line}
-Previous line (same as @key{up} and @kbd{C-p}).
+Previous line (same as @key{UP} and @kbd{C-p}).
 @orgcmd{N,org-agenda-next-item}
 Next item: same as next line, but only consider items.
 @orgcmd{P,org-agenda-previous-item}
@@ -9103,8 +9102,8 @@ Toggle the time grid on and off.  See also the variables
 @c
 @orgcmd{r,org-agenda-redo}
 Recreate the agenda buffer, for example to reflect the changes after
-modification of the timestamps of items with @kbd{S-@key{left}} and
-@kbd{S-@key{right}}.  When the buffer is the global TODO list, a prefix
+modification of the timestamps of items with @kbd{S-@key{LEFT}} and
+@kbd{S-@key{RIGHT}}.  When the buffer is the global TODO list, a prefix
 argument is interpreted to create a selective list for a specific TODO
 keyword.
 @orgcmd{g,org-agenda-redo}
@@ -9168,8 +9167,8 @@ both in the agenda buffer and in the remote buffer.
 Change the TODO state of the item, both in the agenda and in the
 original org file.
 @c
-@orgcmd{C-S-@key{right},org-agenda-todo-nextset}
-@orgcmd{C-S-@key{left},org-agenda-todo-previousset}
+@orgcmd{C-S-@key{RIGHT},org-agenda-todo-nextset}
+@orgcmd{C-S-@key{LEFT},org-agenda-todo-previousset}
 Switch to the next/previous set of TODO keywords.
 @c
 @orgcmd{C-k,org-agenda-kill}
@@ -9219,12 +9218,12 @@ the priority cookie is removed from the entry.
 @orgcmd{P,org-agenda-show-priority}
 Display weighted priority of current item.
 @c
-@orgcmdkkc{+,S-@key{up},org-agenda-priority-up}
+@orgcmdkkc{+,S-@key{UP},org-agenda-priority-up}
 Increase the priority of the current item.  The priority is changed in
 the original buffer, but the agenda is not resorted.  Use the @kbd{r}
 key for this.
 @c
-@orgcmdkkc{-,S-@key{down},org-agenda-priority-down}
+@orgcmdkkc{-,S-@key{DOWN},org-agenda-priority-down}
 Decrease the priority of the current item.
 @c
 @orgcmdkkc{z,C-c C-z,org-agenda-add-note}
@@ -9242,19 +9241,19 @@ Schedule this item.  With prefix arg remove the scheduling timestamp
 @orgcmd{C-c C-d,org-agenda-deadline}
 Set a deadline for this item.  With prefix arg remove the deadline.
 @c
-@orgcmd{S-@key{right},org-agenda-do-date-later}
+@orgcmd{S-@key{RIGHT},org-agenda-do-date-later}
 Change the timestamp associated with the current line by one day into the
 future.  If the date is in the past, the first call to this command will move
 it to today.@*
 With a numeric prefix argument, change it by that many days.  For example,
-@kbd{3 6 5 S-@key{right}} will change it by a year.  With a @kbd{C-u} prefix,
+@kbd{3 6 5 S-@key{RIGHT}} will change it by a year.  With a @kbd{C-u} prefix,
 change the time by one hour.  If you immediately repeat the command, it will
 continue to change hours even without the prefix arg.  With a double @kbd{C-u
 C-u} prefix, do the same for changing minutes.@*
 The stamp is changed in the original Org file, but the change is not directly
 reflected in the agenda buffer.  Use @kbd{r} or @kbd{g} to update the buffer.
 @c
-@orgcmd{S-@key{left},org-agenda-do-date-earlier}
+@orgcmd{S-@key{LEFT},org-agenda-do-date-earlier}
 Change the timestamp associated with the current line by one day
 into the past.
 @c
@@ -17128,10 +17127,10 @@ Active key bindings in code blocks:
 @item @kbd{C-c C-c} @tab @code{org-babel-execute-src-block}
 @kindex C-c C-o
 @item @kbd{C-c C-o} @tab @code{org-babel-open-src-block-result}
-@kindex M-up
-@item @kbd{M-@key{up}}    @tab @code{org-babel-load-in-session}
-@kindex M-down
-@item @kbd{M-@key{down}}  @tab @code{org-babel-switch-to-session}
+@kindex M-@key{UP}
+@item @kbd{M-@key{UP}}    @tab @code{org-babel-load-in-session}
+@kindex M-@key{DOWN}
+@item @kbd{M-@key{DOWN}}  @tab @code{org-babel-switch-to-session}
 @end multitable
 
 Active key bindings in Org mode buffer:
@@ -17930,23 +17929,23 @@ normal @kbd{S-@key{cursor}} for editing timestamp might be better with
 @multitable @columnfractions 0.15 0.2 0.1 0.2
 @item @b{Default} @tab @b{Alternative 1} @tab @b{Speed key} @tab @b{Alternative 2}
 @item @kbd{S-@key{TAB}}     @tab @kbd{C-u @key{TAB}}       @tab @kbd{C} @tab
-@item @kbd{M-@key{left}}    @tab @kbd{C-c C-x l}           @tab @kbd{l} @tab @kbd{@key{Esc} @key{left}}
-@item @kbd{M-S-@key{left}}  @tab @kbd{C-c C-x L}           @tab @kbd{L} @tab
-@item @kbd{M-@key{right}}   @tab @kbd{C-c C-x r}           @tab @kbd{r} @tab @kbd{@key{Esc} @key{right}}
-@item @kbd{M-S-@key{right}} @tab @kbd{C-c C-x R}           @tab @kbd{R} @tab
-@item @kbd{M-@key{up}}      @tab @kbd{C-c C-x u}           @tab @kbd{ } @tab @kbd{@key{Esc} @key{up}}
-@item @kbd{M-S-@key{up}}    @tab @kbd{C-c C-x U}           @tab @kbd{U} @tab
-@item @kbd{M-@key{down}}    @tab @kbd{C-c C-x d}           @tab @kbd{ } @tab @kbd{@key{Esc} @key{down}}
-@item @kbd{M-S-@key{down}}  @tab @kbd{C-c C-x D}           @tab @kbd{D} @tab
+@item @kbd{M-@key{LEFT}}    @tab @kbd{C-c C-x l}           @tab @kbd{l} @tab @kbd{@key{Esc} @key{LEFT}}
+@item @kbd{M-S-@key{LEFT}}  @tab @kbd{C-c C-x L}           @tab @kbd{L} @tab
+@item @kbd{M-@key{RIGHT}}   @tab @kbd{C-c C-x r}           @tab @kbd{r} @tab @kbd{@key{Esc} @key{RIGHT}}
+@item @kbd{M-S-@key{RIGHT}} @tab @kbd{C-c C-x R}           @tab @kbd{R} @tab
+@item @kbd{M-@key{UP}}      @tab @kbd{C-c C-x u}           @tab @kbd{ } @tab @kbd{@key{Esc} @key{UP}}
+@item @kbd{M-S-@key{UP}}    @tab @kbd{C-c C-x U}           @tab @kbd{U} @tab
+@item @kbd{M-@key{DOWN}}    @tab @kbd{C-c C-x d}           @tab @kbd{ } @tab @kbd{@key{Esc} @key{DOWN}}
+@item @kbd{M-S-@key{DOWN}}  @tab @kbd{C-c C-x D}           @tab @kbd{D} @tab
 @item @kbd{S-@key{RET}}     @tab @kbd{C-c C-x c}           @tab @kbd{ } @tab
 @item @kbd{M-@key{RET}}     @tab @kbd{C-c C-x m}           @tab @kbd{ } @tab @kbd{@key{Esc} @key{RET}}
 @item @kbd{M-S-@key{RET}}   @tab @kbd{C-c C-x M}           @tab @kbd{ } @tab
-@item @kbd{S-@key{left}}    @tab @kbd{C-c @key{left}}      @tab @kbd{ } @tab
-@item @kbd{S-@key{right}}   @tab @kbd{C-c @key{right}}     @tab @kbd{ } @tab
-@item @kbd{S-@key{up}}      @tab @kbd{C-c @key{up}}        @tab @kbd{ } @tab
-@item @kbd{S-@key{down}}    @tab @kbd{C-c @key{down}}      @tab @kbd{ } @tab
-@item @kbd{C-S-@key{left}}  @tab @kbd{C-c C-x @key{left}}  @tab @kbd{ } @tab
-@item @kbd{C-S-@key{right}} @tab @kbd{C-c C-x @key{right}} @tab @kbd{ } @tab
+@item @kbd{S-@key{LEFT}}    @tab @kbd{C-c @key{LEFT}}      @tab @kbd{ } @tab
+@item @kbd{S-@key{RIGHT}}   @tab @kbd{C-c @key{RIGHT}}     @tab @kbd{ } @tab
+@item @kbd{S-@key{UP}}      @tab @kbd{C-c @key{UP}}        @tab @kbd{ } @tab
+@item @kbd{S-@key{DOWN}}    @tab @kbd{C-c @key{DOWN}}      @tab @kbd{ } @tab
+@item @kbd{C-S-@key{LEFT}}  @tab @kbd{C-c C-x @key{LEFT}}  @tab @kbd{ } @tab
+@item @kbd{C-S-@key{RIGHT}} @tab @kbd{C-c C-x @key{RIGHT}} @tab @kbd{ } @tab
 @end multitable
 
 

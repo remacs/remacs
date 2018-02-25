@@ -4,12 +4,11 @@
 @c See file emacs.texi for copying conditions.
 @node Help
 @chapter Help
-@kindex Help
 @cindex help
 @cindex self-documentation
 @findex help-command
 @kindex C-h
-@kindex F1
+@kindex @key{F1}
 
 @kindex C-h C-h
 @findex help-for-help
@@ -432,7 +431,7 @@ Go back to the previous help topic (@code{help-go-back}).
 @findex help-follow
 @findex help-go-back
 @findex help-go-forward
-@kindex RET @r{(Help mode)}
+@kindex @key{RET} @r{(Help mode)}
 @kindex C-c C-b @r{(Help mode)}
 @kindex l @r{(Help mode)}
 @kindex C-c C-f @r{(Help mode)}
@@ -456,9 +455,9 @@ code definitions, and URLs (web pages).  The first two are opened in
 Emacs, and the third using a web browser via the @code{browse-url}
 command (@pxref{Browse-URL}).
 
-@kindex TAB @r{(Help mode)}
+@kindex @key{TAB} @r{(Help mode)}
 @findex forward-button
-@kindex S-TAB @r{(Help mode)}
+@kindex S-@key{TAB} @r{(Help mode)}
 @findex backward-button
   In a help buffer, @key{TAB} (@code{forward-button}) moves point
 forward to the next hyperlink, while @kbd{S-@key{TAB}}

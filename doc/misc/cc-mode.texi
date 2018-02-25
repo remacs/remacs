@@ -671,7 +671,7 @@ These commands indent code:
 
 @table @asis
 @item @kbd{@key{TAB}} (@code{c-indent-command})
-@kindex TAB
+@kindex @key{TAB}
 @findex c-indent-command
 @findex indent-command @r{(c-)}
 This command indents the current line.  That is all you need to know
@@ -920,8 +920,8 @@ must be in column zero.  See @ref{Defuns,,,@emacsman{},
 
 @item @kbd{C-M-a} (AWK Mode) (@code{c-awk-beginning-of-defun})
 @itemx @kbd{C-M-e} (AWK Mode) (@code{c-awk-end-of-defun})
-@kindex C-M-a (AWK Mode)
-@kindex C-M-e (AWK Mode)
+@kindex C-M-a @r{(AWK Mode)}
+@kindex C-M-e @r{(AWK Mode)}
 @findex c-awk-beginning-of-defun
 @findex awk-beginning-of-defun @r{(c-)}
 @findex c-awk-end-of-defun
@@ -1518,10 +1518,10 @@ deletion.
 
 @table @asis
 @item @kbd{@key{DEL}} (@code{c-electric-backspace})
-@kindex DEL
+@kindex @key{DEL}
 @findex c-electric-backspace
 @findex electric-backspace @r{(c-)}
-This command is run by default when you hit the @kbd{DEL} key.  When
+This command is run by default when you hit the @kbd{@key{DEL}} key.  When
 hungry delete mode is enabled, it deletes any amount of whitespace in
 the backwards direction.  Otherwise, or when used with a prefix
 argument or in a literal (@pxref{Auto-newlines}), the command just
@@ -1567,10 +1567,10 @@ rather than using the minor mode toggling.
 
 @table @asis
 @item @kbd{C-c C-@key{DEL}}, or @kbd{C-c @key{DEL}} (@code{c-hungry-delete-backwards})@footnote{This command was formerly known as @code{c-hungry-backspace}.}
-@kindex C-c C-<backspace>
-@kindex C-c <backspace>
-@kindex C-c C-DEL
-@kindex C-c DEL
+@kindex C-c C-@key{Backspace}
+@kindex C-c @key{Backspace}
+@kindex C-c C-@key{DEL}
+@kindex C-c @key{DEL}
 @findex c-hungry-delete-backwards
 @findex hungry-delete-backwards @r{(c-)}
 Delete any amount of whitespace in the backwards direction (regardless
@@ -1581,21 +1581,21 @@ a character terminal.
 
 @item @kbd{C-c C-d}, @kbd{C-c C-@key{DELETE}}, or @kbd{C-c @key{DELETE}} (@code{c-hungry-delete-forward})
 @kindex C-c C-d
-@kindex C-c C-<DELETE>
-@kindex C-c <DELETE>
+@kindex C-c C-@key{Delete}
+@kindex C-c @key{Delete}
 @findex c-hungry-delete-forward
 @findex hungry-delete-forward @r{(c-)}
 Delete any amount of whitespace in the forward direction (regardless
 whether hungry-delete mode is enabled or not).  This command is bound
-to both @kbd{C-c C-@key{DELETE}} and @kbd{C-c @key{DELETE}} for the
+to both @kbd{C-c C-@key{Delete}} and @kbd{C-c @key{Delete}} for the
 same reason as for @key{DEL} above.
 @end table
 @end table
 
-@kindex <delete>
-@kindex <backspace>
+@kindex @key{Delete}
+@kindex @key{Backspace}
 
-When we talk about @kbd{@key{DEL}}, and @kbd{@key{DELETE}} above, we
+When we talk about @kbd{@key{DEL}}, and @kbd{@key{Delete}} above, we
 actually do so without connecting them to the physical keys commonly
 known as @key{Backspace} and @key{Delete}.  The default bindings to
 those two keys depends on the flavor of (X)Emacs you are using.
@@ -7248,15 +7248,15 @@ early on:
 Set the variable @code{c-basic-offset}.  @xref{Getting Started}.
 
 @item
-@kindex RET
+@kindex @key{RET}
 @kindex C-j
-@emph{Why does/doesn't the @kbd{RET} key indent the new line?}
+@emph{Why does/doesn't the @kbd{@key{RET}} key indent the new line?}
 
 Emacs's convention used to be that @kbd{RET} just adds a newline, and that
 @kbd{C-j} adds a newline and indents it.  In Emacs-24.4, this convention was
 reversed.
 
-If you use an older Emacs and you want @kbd{RET} do this
+If you use an older Emacs and you want @kbd{@key{RET}} do this
 too, add this to your @code{c-initialization-hook}:
 
 @example

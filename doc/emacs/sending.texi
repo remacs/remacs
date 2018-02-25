@@ -461,7 +461,7 @@ just after the header separator line---that is, to the beginning of
 the body.
 
 @findex message-tab
-@kindex TAB @r{(Message mode)}
+@kindex @key{TAB} @r{(Message mode)}
   While editing a header field that contains addresses, such as
 @samp{To:}, @samp{Cc:} and @samp{Bcc:}, you can complete an address by
 typing @key{TAB} (@code{message-tab}).  This attempts to insert the

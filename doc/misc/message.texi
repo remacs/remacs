@@ -707,14 +707,12 @@ This means that if the recipient supports RFC 2298 she might send you a
 notification that she received the message.
 
 @item M-x message-insert-importance-high
-@kindex M-x message-insert-importance-high
 @findex message-insert-importance-high
 @cindex Importance
 Insert an @samp{Importance} header with a value of @samp{high},
 deleting headers if necessary.
 
 @item M-x message-insert-importance-low
-@kindex M-x message-insert-importance-low
 @findex message-insert-importance-low
 @cindex Importance
 Insert an @samp{Importance} header with a value of @samp{low}, deleting
@@ -1379,8 +1377,8 @@ end of the message (@code{message-kill-to-signature}).
 Delete all text in the body of the message that is outside the region
 (@code{message-delete-not-region}).
 
-@item M-RET
-@kindex M-RET
+@item M-@key{RET}
+@kindex M-@key{RET}
 @findex message-newline-and-reformat
 Insert four newlines, and then reformat if inside quoted text.
 
@@ -1390,7 +1388,7 @@ Here's an example:
 > This is some quoted text.  And here's more quoted text.
 @end example
 
-If point is before @samp{And} and you press @kbd{M-RET}, you'll get:
+If point is before @samp{And} and you press @kbd{M-@key{RET}}, you'll get:
 
 @example
 > This is some quoted text.
@@ -1408,12 +1406,12 @@ If point is before @samp{And} and you press @kbd{M-RET}, you'll get:
 Rename the buffer (@code{message-rename-buffer}).  If given a prefix,
 prompt for a new buffer name.
 
-@item TAB
-@kindex TAB
+@item @key{TAB}
+@kindex @key{TAB}
 @findex message-tab
 @vindex message-tab-body-function
 If @code{message-tab-body-function} is non-@code{nil}, execute the
-function it specifies.  Otherwise use the function bound to @kbd{TAB} in
+function it specifies.  Otherwise use the function bound to @key{TAB} in
 @code{text-mode-map} or @code{global-map}.
 
 @end table

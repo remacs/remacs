@@ -479,14 +479,14 @@ cycles through all the frames on your terminal.
 @findex delete-other-frames
 Delete all frames on the current terminal, except the selected one.
 
-@item M-<F10>
-@kindex M-<F10>
+@item M-@key{F10}
+@kindex M-@key{F10}
 @findex toggle-frame-maximized
 Toggle the maximization state of the current frame.  When a frame is
 maximized, it fills the screen.
 
-@item <F11>
-@kindex <F11>
+@item @key{F11>}
+@kindex @key{F11}
 @findex toggle-frame-fullscreen
 Toggle full-screen mode for the current frame.  (The difference
 between full-screen and maximized is normally that the former

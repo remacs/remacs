@@ -311,9 +311,9 @@ You can tell that there is more that is not visible because you
 can see the text @samp{Top} rather than @samp{All} near the bottom of
 the screen.
 
-@kindex SPC @r{(Info mode)}
-@kindex DEL @r{(Info mode)}
-@kindex BACKSPACE @r{(Info mode)}
+@kindex @key{SPC} @r{(Info mode)}
+@kindex @key{DEL} @r{(Info mode)}
+@kindex @key{BACKSPACE} @r{(Info mode)}
 @findex Info-scroll-up
 @findex Info-scroll-down
   The @key{SPC}, @key{BACKSPACE} (or @key{DEL})@footnote{The key which
@@ -363,8 +363,8 @@ the menu, one by one.  Once you reach the end of a node, and have seen
 all of its subnodes, @key{SPC} takes you to the next node or to the
 parent's next node.
 
-@kindex PAGEUP @r{(Info mode)}
-@kindex PAGEDOWN @r{(Info mode)}
+@kindex @key{PAGEUP} @r{(Info mode)}
+@kindex @key{PAGEDOWN} @r{(Info mode)}
   Many keyboards nowadays have two scroll keys labeled @samp{PageUp}
 and @samp{PageDown} (or maybe @samp{Prior} and @samp{Next}).  If your
 keyboard has these keys, you can use them to move forward and backward

@@ -328,7 +328,7 @@ date.
 (@code{calendar-redraw}) to redraw it.  (This can only happen if you use
 non-Calendar-mode editing commands.)
 
-@kindex SPC @r{(Calendar mode)}
+@kindex @key{SPC} @r{(Calendar mode)}
   In Calendar mode, you can use @key{SPC} (@code{scroll-other-window})
 and @key{DEL} (@code{scroll-other-window-down}) to scroll the other
 window (if there is one) up or down, respectively.  This is handy when
