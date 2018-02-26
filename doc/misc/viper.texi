@@ -1083,7 +1083,7 @@ remembered (This is called ``learn mode'' in some editors.)
 where @samp{register} is any character from @samp{a} through @samp{z}.  Then
 you can execute this macro using @kbd{@@register}.  It is, of course,
 possible to yank some text into a register and execute it using
-@kbd{@@register}.  Typing @kbd{@@@@}, @kbd{@@RET}, or @kbd{@@C-j} will
+@kbd{@@register}.  Typing @kbd{@@@@}, @kbd{@@@key{RET}}, or @kbd{@@C-j} will
 execute the last macro that was executed using @kbd{@@register}.
 
 Viper will automatically lowercase the register, so that pressing the

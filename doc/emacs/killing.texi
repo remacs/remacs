@@ -857,7 +857,7 @@ region is active.
 
 Unlike the standard region, the region-rectangle can have its corners
 extended past the end of buffer, or inside stretches of white space
-that point normally cannot enter, like the TAB.
+that point normally cannot enter, like the @key{TAB}.
 
 @findex rectangle-exchange-point-and-mark
 @findex exchange-point-and-mark@r{, in rectangle-mark-mode}
