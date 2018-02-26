@@ -577,9 +577,9 @@ for the latest information on Emacs version and package compatibility
 
 @deffn Command c-version
 @findex version @r{(c-)}
-You can find out what version of @ccmode{} you are using by visiting a C
-file and entering @kbd{M-x c-version RET}.  You should see this message in
-the echo area:
+You can find out what version of @ccmode{} you are using by visiting a
+C file and entering @kbd{M-x c-version @key{RET}}.  You should see
+this message in the echo area:
 
 @example
 Using CC Mode version 5.XX
@@ -1708,7 +1708,7 @@ nomenclature and treat them as separate words:
 @item     @kbd{M-b}   @tab @code{backward-word}      @tab @code{c-backward-subword}
 @item     @kbd{M-@@}  @tab @code{mark-word}          @tab @code{c-mark-subword}
 @item     @kbd{M-d}   @tab @code{kill-word}          @tab @code{c-kill-subword}
-@item     @kbd{M-DEL} @tab @code{backward-kill-word} @tab @code{c-backward-kill-subword}
+@item     @kbd{M-@key{DEL}} @tab @code{backward-kill-word} @tab @code{c-backward-kill-subword}
 @item     @kbd{M-t}   @tab @code{transpose-words}    @tab @code{c-transpose-subwords}
 @item     @kbd{M-c}   @tab @code{capitalize-word}    @tab @code{c-capitalize-subword}
 @item     @kbd{M-u}   @tab @code{upcase-word}        @tab @code{c-upcase-subword}

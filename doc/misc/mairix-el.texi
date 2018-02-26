@@ -169,13 +169,13 @@ the updates incrementally and hence is very fast.
 
 First, put @code{mairix.el} in your Emacs search path and put
 @code{(require 'mairix)} into your @file{.emacs} file.  Then, use
-@kbd{M-x customize-group mairix RET} to set your preferences for
-mairix.el.  The most important items are @emph{Mairix File Path},
-@emph{Mairix Search File} and @emph{Mairix Mail Program}.  The latter
-specifies which mail program should be used to display the mairix search
-results.  Currently, RMail, Gnus with mbox files, and VM are supported.
-If you use Gnus with maildir or mh, use the native Gnus back end
-nnmairix instead.
+@kbd{M-x customize-group @key{RET} mairix @key{RET}} to set your
+preferences for mairix.el.  The most important items are @emph{Mairix
+File Path}, @emph{Mairix Search File} and @emph{Mairix Mail Program}.
+The latter specifies which mail program should be used to display the
+mairix search results.  Currently, RMail, Gnus with mbox files, and VM
+are supported.  If you use Gnus with maildir or mh, use the native
+Gnus back end nnmairix instead.
 
 If you use another Emacs mail program which is not yet supported by
 mairix.el, it is pretty easy to integrate it.  @xref{Extending},

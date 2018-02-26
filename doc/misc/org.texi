@@ -749,7 +749,7 @@ Specific header arguments
 
 Miscellaneous
 
-* Completion::                  M-TAB guesses completions
+* Completion::                  M-@key{TAB} guesses completions
 * Easy templates::              Quick insertion of structural elements
 * Speed keys::                  Electric commands at the beginning of a headline
 * Code evaluation security::    Org mode files evaluate inline code
@@ -884,7 +884,8 @@ We @b{strongly recommend} to stick to a single installation method.
 @subsubheading Using Emacs packaging system
 
 Recent Emacs distributions include a packaging system which lets you install
-Elisp libraries.  You can install Org with @kbd{M-x package-install RET org}.
+Elisp libraries.  You can install Org with @kbd{M-x package-install @key{RET}
+org}.
 
 @noindent @b{Important}: you need to do this in a session where no @code{.org} file has
 been visited, i.e., where no Org built-in function have been loaded.
@@ -1013,10 +1014,10 @@ version of Org available---if you are running an outdated version, it is
 quite possible that the bug has been fixed already.  If the bug persists,
 prepare a report and provide as much information as possible, including the
 version information of Emacs (@kbd{M-x emacs-version @key{RET}}) and Org
-(@kbd{M-x org-version RET}), as well as the Org related setup in the Emacs
-init file.  The easiest way to do this is to use the command
+(@kbd{M-x org-version @key{RET}}), as well as the Org related setup in the
+Emacs init file.  The easiest way to do this is to use the command
 @example
-@kbd{M-x org-submit-bug-report RET}
+@kbd{M-x org-submit-bug-report @key{RET}}
 @end example
 @noindent which will put all this information into an Emacs mail buffer so
 that you only need to add your description.  If you are not sending the Email
@@ -1076,7 +1077,7 @@ Reload uncompiled versions of all Org mode Lisp files.  The backtrace
 contains much more information if it is produced with uncompiled code.
 To do this, use
 @example
-@kbd{C-u M-x org-reload RET}
+@kbd{C-u M-x org-reload @key{RET}}
 @end example
 @noindent
 or select @code{Org -> Refresh/Reload -> Reload Org uncompiled} from the
@@ -1875,7 +1876,7 @@ export output.  Property drawers are not affected by this variable: configure
 Org mode uses begin...end blocks for various purposes from including source
 code examples (@pxref{Literal examples}) to capturing time logging
 information (@pxref{Clocking work time}).  These blocks can be folded and
-unfolded by pressing TAB in the begin line.  You can also get all blocks
+unfolded by pressing @key{TAB} in the begin line.  You can also get all blocks
 folded at startup by configuring the option @code{org-hide-block-startup}
 or on a per-file basis by using
 
@@ -1999,7 +2000,7 @@ a separate window.  The window can be closed by pressing @kbd{C-c '}.
 If you like the intuitive way the Org mode structure editing and list
 formatting works, you might want to use these commands in other modes like
 Text mode or Mail mode as well.  The minor mode @code{orgstruct-mode} makes
-this possible.   Toggle the mode with @kbd{M-x orgstruct-mode RET}, or
+this possible.   Toggle the mode with @kbd{M-x orgstruct-mode @key{RET}}, or
 turn it on by default, for example in Message mode, with one of:
 
 @lisp
@@ -2040,7 +2041,7 @@ file falls into one of the categories above.
 To explore the abstract structure of an Org buffer, run this in a buffer:
 
 @lisp
-M-: (org-element-parse-buffer) RET
+M-: (org-element-parse-buffer) @key{RET}
 @end lisp
 
 It will output a list containing the buffer's content represented as an
@@ -2134,10 +2135,10 @@ table.  But it is easier just to start typing, like
 @orgcmd{C-c C-c,org-table-align}
 Re-align the table and don't move to another field.
 @c
-@orgcmd{C-c SPC,org-table-blank-field}
+@orgcmd{C-c @key{SPC},org-table-blank-field}
 Blank the field at point.
 @c
-@orgcmd{TAB,org-table-next-field}
+@orgcmd{@key{TAB},org-table-next-field}
 Re-align the table, move to the next field.  Creates a new row if
 necessary.
 @c
@@ -2252,7 +2253,7 @@ window follow the cursor through the table and always show the current
 field.  The follow mode exits automatically when the cursor leaves the table,
 or when you repeat this command with @kbd{C-u C-u C-c `}.
 @c
-@item M-x org-table-import RET
+@item M-x org-table-import @key{RET}
 Import a file as a table.  The table should be TAB or whitespace
 separated.  Use, for example, to import a spreadsheet table or data
 from a database, because these programs generally can write
@@ -2265,7 +2266,7 @@ Tables can also be imported by pasting tabular text into the Org
 buffer, selecting the pasted text with @kbd{C-x C-x} and then using the
 @kbd{C-c |} command (see above under @i{Creation and conversion}).
 @c
-@item M-x org-table-export RET
+@item M-x org-table-export @key{RET}
 @findex org-table-export
 @vindex org-table-export-default-format
 Export the table, by default as a TAB-separated file.  Use for data
@@ -2390,11 +2391,11 @@ every vertical line you would like to have:
 @cindex Orgtbl mode
 @cindex minor mode for tables
 
-If you like the intuitive way the Org table editor works, you
-might also want to use it in other modes like Text mode or Mail mode.
-The minor mode Orgtbl mode makes this possible.  You can always toggle
-the mode with @kbd{M-x orgtbl-mode RET}.  To turn it on by default, for
-example in Message mode, use
+If you like the intuitive way the Org table editor works, you might also want
+to use it in other modes like Text mode or Mail mode.  The minor mode Orgtbl
+mode makes this possible.  You can always toggle the mode with @kbd{M-x
+orgtbl-mode @key{RET}}.  To turn it on by default, for example in Message
+mode, use
 
 @lisp
 (add-hook 'message-mode-hook 'turn-on-orgtbl)
@@ -3133,10 +3134,10 @@ hline are left alone, assuming that these are part of the table header.
 Iterate the table by recomputing it until no further changes occur.
 This may be necessary if some computed fields use the value of other
 fields that are computed @i{later} in the calculation sequence.
-@item M-x org-table-recalculate-buffer-tables RET
+@item M-x org-table-recalculate-buffer-tables @key{RET}
 @findex org-table-recalculate-buffer-tables
 Recompute all tables in the current buffer.
-@item M-x org-table-iterate-buffer-tables RET
+@item M-x org-table-iterate-buffer-tables @key{RET}
 @findex org-table-iterate-buffer-tables
 Iterate all tables in the current buffer, in order to converge table-to-table
 dependencies.
@@ -4231,8 +4232,8 @@ each keyword, in parentheses@footnote{All characters are allowed except
 @end lisp
 
 @vindex org-fast-tag-selection-include-todo
-If you then press @kbd{C-c C-t} followed by the selection key, the entry
-will be switched to this state.  @kbd{SPC} can be used to remove any TODO
+If you then press @kbd{C-c C-t} followed by the selection key, the entry will
+be switched to this state.  @kbd{@key{SPC}} can be used to remove any TODO
 keyword from an entry.@footnote{Check also the option
 @code{org-fast-tag-selection-include-todo}, it allows you to change the TODO
 state through the tags interface (@pxref{Setting tags}), in case you like to
@@ -4421,7 +4422,7 @@ Then each time you turn an entry from a TODO (not-done) state into any of the
 DONE states, a line @samp{CLOSED: [timestamp]} will be inserted just after
 the headline.  If you turn the entry back into a TODO item through further
 state cycling, that line will be removed again.  If you turn the entry back
-to a non-TODO state (by pressing @key{C-c C-t SPC} for example), that line
+to a non-TODO state (by pressing @key{C-c C-t @key{SPC}} for example), that line
 will also be removed, unless you set @code{org-closed-keep-when-no-todo} to
 non-@code{nil}.  If you want to record a note along with the timestamp,
 use@footnote{The corresponding in-buffer setting is: @code{#+STARTUP:
@@ -4451,8 +4452,8 @@ headline as an itemized list, newest first@footnote{See the option
 want to get the notes out of the way into a drawer (@pxref{Drawers}).
 Customize @code{org-log-into-drawer} to get this behavior---the recommended
 drawer for this is called @code{LOGBOOK}@footnote{Note that the
-@code{LOGBOOK} drawer is unfolded when pressing @key{SPC} in the agenda to
-show an entry---use @key{C-u SPC} to keep it folded here}.  You can also
+@code{LOGBOOK} drawer is unfolded when pressing @kbd{@key{SPC}} in the agenda to
+show an entry---use @kbd{C-u @key{SPC}} to keep it folded here}.  You can also
 overrule the setting of this variable for a subtree by setting a
 @code{LOG_INTO_DRAWER} property.
 
@@ -5385,7 +5386,7 @@ in the current file will be offered as possible completions.
 @orgcmd{C-c C-x p,org-set-property}
 Set a property.  This prompts for a property name and a value.  If
 necessary, the property drawer is created as well.
-@item C-u M-x org-insert-drawer RET
+@item C-u M-x org-insert-drawer @key{RET}
 @cindex @code{org-insert-drawer}
 Insert a property drawer into the current entry.  The drawer will be
 inserted early in the entry, but after the lines with planning
@@ -5792,7 +5793,7 @@ global    @r{make a global view, including all headings in the file}
           @r{run column view at the top of this file}
 "@var{ID}"      @r{call column view in the tree that has an @code{:ID:}}
           @r{property with the value @i{label}.  You can use}
-          @r{@kbd{M-x org-id-copy RET} to create a globally unique @code{ID} for}
+          @r{@kbd{M-x org-id-copy @key{RET}} to create a globally unique @code{ID} for}
           @r{the current entry and copy it to the kill-ring.}
 @end example
 @item :hlines
@@ -6806,7 +6807,8 @@ identical to dealing with away time due to idleness; it is just happening due
 to a recovery event rather than a set amount of idle time.
 
 You can also check all the files visited by your Org agenda for dangling
-clocks at any time using @kbd{M-x org-resolve-clocks RET} (or @kbd{C-c C-x C-z}).
+clocks at any time using @kbd{M-x org-resolve-clocks @key{RET}} (or @kbd{C-c
+C-x C-z}).
 
 @subsubheading Continuous clocking
 @cindex continuous clocking
@@ -6966,7 +6968,7 @@ If your configuration depends on @file{org-remember.el}, you need to update
 it and use the setup described below.  To convert your
 @code{org-remember-templates}, run the command
 @example
-@kbd{M-x org-capture-import-remember-templates RET}
+@kbd{M-x org-capture-import-remember-templates @key{RET}}
 @end example
 @noindent and then customize the new variable with @kbd{M-x
 customize-variable org-capture-templates}, check the result, and save the
@@ -7910,7 +7912,7 @@ To do this, each subtree is checked for open TODO entries.  If none are
 found, the command offers to set the ARCHIVE tag for the child.  If the
 cursor is @emph{not} on a headline when this command is invoked, the
 level 1 trees will be checked.
-@orgcmd{C-@kbd{TAB},org-force-cycle-archived}
+@orgcmd{C-@key{TAB},org-force-cycle-archived}
 Cycle a tree even if it is tagged with ARCHIVE.
 @orgcmd{C-c C-x A,org-archive-to-archive-sibling}
 Move the current entry to the @emph{Archive Sibling}.  This is a sibling of
@@ -8022,7 +8024,7 @@ Remove current file from the list of agenda files.
 @orgcmd{C-',org-cycle-agenda-files}
 @itemx C-,
 Cycle through agenda file list, visiting one file after the other.
-@item M-x org-iswitchb RET
+@item M-x org-iswitchb @key{RET}
 Command to use an @code{iswitchb}-like interface to switch to and between Org
 buffers.
 @end table
@@ -8788,12 +8790,13 @@ excluding the next tag.
 Org also supports automatic, context-aware tag filtering.  If the variable
 @code{org-agenda-auto-exclude-function} is set to a user-defined function,
 that function can decide which tags should be excluded from the agenda
-automatically.  Once this is set, the @kbd{/} command then accepts @kbd{RET}
-as a sub-option key and runs the auto exclusion logic.  For example, let's
-say you use a @code{Net} tag to identify tasks which need network access, an
-@code{Errand} tag for errands in town, and a @code{Call} tag for making phone
-calls.  You could auto-exclude these tags based on the availability of the
-Internet, and outside of business hours, with something like this:
+automatically.  Once this is set, the @kbd{/} command then accepts
+@kbd{@key{RET}} as a sub-option key and runs the auto exclusion logic.  For
+example, let's say you use a @code{Net} tag to identify tasks which need
+network access, an @code{Errand} tag for errands in town, and a @code{Call}
+tag for making phone calls.  You could auto-exclude these tags based on the
+availability of the Internet, and outside of business hours, with something
+like this:
 
 @smalllisp
 @group
@@ -9004,7 +9007,7 @@ Delete other windows.
 @xorgcmd{v t,org-agenda-fortnight-view}
 @xorgcmd{v m,org-agenda-month-view}
 @xorgcmd{v y,org-agenda-year-view}
-@xorgcmd{v SPC,org-agenda-reset-view}
+@xorgcmd{v @key{SPC},org-agenda-reset-view}
 @vindex org-agenda-span
 Switch to day/week/month/year view.  When switching to day or week view, this
 setting becomes the default for subsequent agenda refreshes.  Since month and
@@ -9423,7 +9426,7 @@ calendars.
 @orgcmd{H,org-agenda-holidays}
 Show holidays for three months around the cursor date.
 
-@item M-x org-icalendar-combine-agenda-files RET
+@item M-x org-icalendar-combine-agenda-files @key{RET}
 Export a single iCalendar file containing entries from all agenda files.
 This is a globally available command, and also available in the agenda menu.
 
@@ -10407,14 +10410,14 @@ To disable it, simply use
 
 CD@LaTeX{} mode is a minor mode that is normally used in combination with a
 major @LaTeX{} mode like AUC@TeX{} in order to speed-up insertion of
-environments and math templates.  Inside Org mode, you can make use of
-some of the features of CD@LaTeX{} mode.  You need to install
-@file{cdlatex.el} and @file{texmathp.el} (the latter comes also with
-AUC@TeX{}) from @url{https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex}.
-Don't use CD@LaTeX{} mode itself under Org mode, but use the light
-version @code{org-cdlatex-mode} that comes as part of Org mode.  Turn it
-on for the current buffer with @kbd{M-x org-cdlatex-mode RET}, or for all
-Org files with
+environments and math templates.  Inside Org mode, you can make use of some
+of the features of CD@LaTeX{} mode.  You need to install @file{cdlatex.el}
+and @file{texmathp.el} (the latter comes also with AUC@TeX{}) from
+@url{https://staff.fnwi.uva.nl/c.dominik/Tools/cdlatex}.  Don't use
+CD@LaTeX{} mode itself under Org mode, but use the light version
+@code{org-cdlatex-mode} that comes as part of Org mode.  Turn it on for the
+current buffer with @kbd{M-x org-cdlatex-mode @key{RET}}, or for all Org
+files with
 
 @lisp
 (add-hook 'org-mode-hook 'turn-on-org-cdlatex)
@@ -10438,7 +10441,8 @@ the second brace.  Even outside fragments, @key{TAB} will expand
 environment abbreviations at the beginning of a line.  For example, if
 you write @samp{equ} at the beginning of a line and press @key{TAB},
 this abbreviation will be expanded to an @code{equation} environment.
-To get a list of all abbreviations, type @kbd{M-x cdlatex-command-help RET}.
+To get a list of all abbreviations, type @kbd{M-x cdlatex-command-help
+@key{RET}}.
 @item
 @kindex _
 @kindex ^
@@ -10616,8 +10620,8 @@ inserted from the export dispatcher (@pxref{The export dispatcher}) using the
 @code{Insert template} command by pressing @key{#}.  To insert keywords
 individually, a good way to make sure the keyword is correct is to type
 @code{#+} and then to use @kbd{M-@key{TAB}}@footnote{Many desktops intercept
-@kbd{M-TAB} to switch windows.  Use @kbd{C-M-i} or @kbd{@key{ESC} @key{TAB}}
-instead.} for completion.
+@kbd{M-@key{TAB}} to switch windows.  Use @kbd{C-M-i} or @kbd{@key{ESC}
+@key{TAB}} instead.} for completion.
 
 The export keywords available for every back-end, and their equivalent global
 variables, include:
@@ -12847,7 +12851,7 @@ generic commands:
 @vindex org-odt-convert
 @table @kbd
 
-@item M-x org-odt-convert RET
+@item M-x org-odt-convert @key{RET}
 Convert an existing document from one format to another.  With a prefix
 argument, opens the newly produced file.
 @end table
@@ -13122,10 +13126,10 @@ To quickly verify the reliability of the @LaTeX{}-to-MathML converter, use
 the following commands:
 
 @table @kbd
-@item M-x org-odt-export-as-odf RET
+@item M-x org-odt-export-as-odf @key{RET}
 Convert a @LaTeX{} math snippet to an OpenDocument formula (@file{.odf}) file.
 
-@item M-x org-odt-export-as-odf-and-open RET
+@item M-x org-odt-export-as-odf-and-open @key{RET}
 Convert a @LaTeX{} math snippet to an OpenDocument formula (@file{.odf}) file
 and open the formula file with the system-registered application.
 @end table
@@ -14429,7 +14433,7 @@ In-place conversions are particularly handy for quick conversion of tables
 and lists in foreign buffers.  For example, turn on the minor mode @code{M-x
 orgstruct-mode} in an HTML buffer, then use the convenient Org keyboard
 commands to create a list, select it, and covert it to HTML with @code{M-x
-org-html-convert-region-to-html RET}.
+org-html-convert-region-to-html @key{RET}}.
 
 
 @node Publishing
@@ -16146,7 +16150,7 @@ Interpreted as raw Org mode.  Inserted directly into the buffer.  Aligned if
 it is a table.  Usage example: @code{:results value raw}.
 @item @code{org}
 Results enclosed in a @code{BEGIN_SRC org} block.  For comma-escape, either
-@kbd{TAB} in the block, or export the file.  Usage example: @code{:results
+@key{TAB} in the block, or export the file.  Usage example: @code{:results
 value org}.
 @item @code{html}
 Results enclosed in a @code{BEGIN_EXPORT html} block.  Usage example:
@@ -16233,7 +16237,7 @@ output file, @code{:dir} specifies the default directory during @samp{src}
 code block execution.  If it is absent, then the directory associated with
 the current buffer is used.  In other words, supplying @code{:dir path}
 temporarily has the same effect as changing the current directory with
-@kbd{M-x cd path RET}, and then not supplying @code{:dir}.  Under the
+@kbd{M-x cd path @key{RET}}, and then not supplying @code{:dir}.  Under the
 surface, @code{:dir} simply sets the value of the Emacs variable
 @code{default-directory}.
 
@@ -17247,7 +17251,7 @@ emacs -Q --batch --eval "
 @chapter Miscellaneous
 
 @menu
-* Completion::                  M-TAB guesses completions
+* Completion::                  M-@key{TAB} guesses completions
 * Easy templates::              Quick insertion of structural elements
 * Speed keys::                  Electric commands at the beginning of a headline
 * Code evaluation security::    Org mode files evaluate inline code
@@ -17457,8 +17461,8 @@ Org executes formulas in tables (@pxref{The spreadsheet}) either through the
 @cindex variables, for customization
 
 Org has more than 500 variables for customization.  They can be accessed
-through the usual @kbd{M-x org-customize RET} command.  Or through the Org
-menu, @code{Org->Customization->Browse Org Group}.  Org also has per-file
+through the usual @kbd{M-x org-customize @key{RET}} command.  Or through the
+Org menu, @code{Org->Customization->Browse Org Group}.  Org also has per-file
 settings for some variables (@pxref{In-buffer settings}).
 
 @node In-buffer settings
@@ -17912,7 +17916,8 @@ one of the following lines:
 @end example
 
 To switch between single and double stars layouts, use @kbd{M-x
-org-convert-to-odd-levels RET} and @kbd{M-x org-convert-to-oddeven-levels}.
+org-convert-to-odd-levels @key{RET}} and @kbd{M-x
+org-convert-to-oddeven-levels @key{RET}}.
 @end enumerate
 
 @node TTY keys
@@ -18058,9 +18063,9 @@ bindings in Org files, and in the agenda buffer (but not during date
 selection).
 
 @example
-S-UP      @result{}  M-p             S-DOWN     @result{}  M-n
-S-LEFT    @result{}  M--             S-RIGHT    @result{}  M-+
-C-S-LEFT  @result{}  M-S--           C-S-RIGHT  @result{}  M-S-+
+S-@key{UP}      @result{}  M-p             S-@key{DOWN}     @result{}  M-n
+S-@key{LEFT}    @result{}  M--             S-@key{RIGHT}    @result{}  M-+
+C-S-@key{LEFT}  @result{}  M-S--           C-S-@key{RIGHT}  @result{}  M-S-+
 @end example
 
 @vindex org-disputed-keys
@@ -18465,7 +18470,7 @@ Put the table after an @samp{END} statement.  For example @samp{\bye} in
 @TeX{} and @samp{\end@{document@}} in @LaTeX{}.
 @item
 Comment and uncomment each line of the table during edits.  The @kbd{M-x
-orgtbl-toggle-comment RET} command makes toggling easy.
+orgtbl-toggle-comment @key{RET}} command makes toggling easy.
 @end itemize
 
 @node A @LaTeX{} example
@@ -18478,8 +18483,8 @@ provided by @file{comment.sty}.  To activate it, put
 radio table skeleton@footnote{By default this works only for @LaTeX{}, HTML,
 and Texinfo.  Configure the variable @code{orgtbl-radio-table-templates} to
 install templates for other export formats.}  with the command @kbd{M-x
-orgtbl-insert-radio-table RET}, which prompts for a table name.  For example,
-if @samp{salesfigures} is the name, the template inserts:
+orgtbl-insert-radio-table @key{RET}}, which prompts for a table name.  For
+example, if @samp{salesfigures} is the name, the template inserts:
 
 @cindex @code{#+ORGTBL}, @samp{SEND}
 @example

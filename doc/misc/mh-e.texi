@@ -3844,9 +3844,9 @@ buffers that you would rather remove, you can use both
 
 You can use dired to manipulate the folders themselves. For example, I
 renamed my @samp{+out} folder to the more common @samp{+outbox} by
-running dired on my mail directory (@kbd{M-x dired RET ~/Mail RET}),
-moving my cursor to @samp{out} and using the command @kbd{R}
-(@code{dired-do-rename}).
+running dired on my mail directory (@kbd{M-x dired @key{RET} ~/Mail
+@key{RET}}), moving my cursor to @samp{out} and using the command
+@kbd{R} (@code{dired-do-rename}).
 
 @node Sending Mail, Editing Drafts, Folders, Top
 @chapter Sending Mail

@@ -397,8 +397,8 @@ Mark current item as immortal.  Immortal items are kept forever.
 @table @kbd
 @cindex Get News
 @item v
-@itemx RET
-@itemx <mouse-1>
+@itemx @key{RET}
+@itemx mouse-1
 @findex newsticker-treeview-browse-url
 Open the link to the full article (as contained in the current
 headline) in your web browser @code{newsticker-treeview-browse-url}).

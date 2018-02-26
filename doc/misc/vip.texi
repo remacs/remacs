@@ -553,7 +553,7 @@ details.
 In Vi, @kbd{C-g} is used to get information about the file associated to
 the current buffer.  Here, @kbd{g} will do that, and @kbd{C-g} is
 used to abort a command (this is for compatibility with emacs mode.)
-@item SPC
+@item @key{SPC}
 @itemx @key{RET}
 @kindex 040 SPC @r{(}@code{vip-scroll}@r{)}
 @kindex 015 RET @r{(}@code{vip-scroll-back}@r{)}
@@ -1258,7 +1258,7 @@ Search forward incrementally.  See GNU Emacs Manual for details
 Search backward incrementally (@code{isearch-backward}).
 @cindex vanilla (replacement)
 @cindex regular expression (replacement)
-@item R @var{string} RET @var{newstring}
+@item R @var{string} @key{RET} @var{newstring}
 @kindex 122 R @r{(}@code{vip-replace-string}@r{)}
 There are two modes of replacement, @dfn{vanilla} and @dfn{regular expression}.
 If the mode is @i{vanilla} you will get a prompt @samp{Replace string:},
@@ -1269,7 +1269,7 @@ vanilla, this command replaces every occurrence of @var{string} with
 @var{newstring}.  If the mode is regular expression, @var{string} is
 treated as a regular expression and every string matching the regular
 expression is replaced with @var{newstring} (@code{vip-replace-string}).
-@item Q @var{string} RET @var{newstring}
+@item Q @var{string} @key{RET} @var{newstring}
 @kindex 121 Q @r{(}@code{vip-query-replace}@r{)}
 Same as @kbd{R} except that you will be asked form confirmation before each
 replacement
@@ -1569,7 +1569,7 @@ keymap.  See GNU Emacs Manual for details.
 @item C-@@
 @kindex 000 C-@@ @r{(}@code{set-mark-command}@r{)}
 Set mark and push previous mark on mark ring (@code{set-mark-command}).
-@item TAB
+@item @key{TAB}
 @kindex 011 TAB @r{(}@code{indent-for-tab-command}@r{)}
 Indent line for current major mode (@code{indent-for-tab-command}).
 @item C-j

@@ -35348,13 +35348,13 @@ followed by  @kbd{=}, @kbd{&}, @kbd{#}, @kbd{\}, @kbd{/}, @kbd{+} or
 @kbd{-} as well as @kbd{*} to start Calc, and so in many cases the last
 character of the prefix can simply be typed twice.
 
-Calc is controlled by many variables, most of which can be reset
-from within Calc.  Some variables are less involved with actual
-calculation and can be set outside of Calc using Emacs's
-customization facilities.  These variables are listed below.
-Typing @kbd{M-x customize-variable RET @var{variable-name} RET}
-will bring up a buffer in which the variable's value can be redefined.
-Typing @kbd{M-x customize-group RET calc RET} will bring up a buffer which
+Calc is controlled by many variables, most of which can be reset from
+within Calc.  Some variables are less involved with actual calculation
+and can be set outside of Calc using Emacs's customization facilities.
+These variables are listed below.  Typing @kbd{M-x customize-variable
+@key{RET} @var{variable-name} @key{RET}} will bring up a buffer in
+which the variable's value can be redefined.  Typing @kbd{M-x
+customize-group @key{RET} calc @key{RET}} will bring up a buffer which
 contains all of Calc's customizable variables.  (These variables can
 also be reset by putting the appropriate lines in your .emacs file;
 @xref{Init File, ,Init File, emacs, The GNU Emacs Manual}.)
