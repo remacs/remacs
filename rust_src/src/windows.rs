@@ -571,7 +571,7 @@ pub fn set_window_parameter(
 /// scrolling window for the currently active minibuffer window.
 ///
 /// Due to the way display_mode_lines manipulates with the contents of
-/// selected_window, this macro needs three arguments: SELW which is
+/// selected_window, this function needs three arguments: SELW which is
 /// compared against the current value of selected_window, MBW which is
 /// compared against minibuf_window (if SELW doesn't match), and SCRW
 /// which is compared against minibuf_selected_window (if MBW matches).
