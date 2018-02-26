@@ -453,6 +453,10 @@ ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) -lremacs $(otherobj)
 all: remacs$(EXEEXT) $(OTHER_FILES)
 .PHONY: all
 
+# Must be first, before dep inclusion!
+all: emacs$(EXEEXT) $(OTHER_FILES)
+.PHONY: all
+
 AUTO_DEPEND = @AUTO_DEPEND@
 DEPDIR = deps
 ifeq ($(AUTO_DEPEND),yes)
