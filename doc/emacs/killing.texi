@@ -111,7 +111,7 @@ active (@pxref{Using Region}).
 
 @kindex M-\
 @findex delete-horizontal-space
-@kindex M-@key{SPC}
+@kindex M-SPC
 @findex just-one-space
 @findex cycle-spacing
   The other delete commands are those that delete only whitespace

@@ -104,7 +104,7 @@ argument, you can cancel that argument with @kbd{C-g} and remain in the
 recursive edit.
 
 @findex keyboard-escape-quit
-@kindex @key{ESC} @key{ESC} @key{ESC}
+@kindex ESC ESC ESC
   The sequence @kbd{@key{ESC} @key{ESC} @key{ESC}}
 (@code{keyboard-escape-quit}) can either quit or abort.  (We defined
 it this way because @key{ESC} means ``get out'' in many PC programs.)

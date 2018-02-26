@@ -70,7 +70,7 @@ Jump to the position and buffer saved in register @var{r}
 (@code{jump-to-register}).
 @end table
 
-@kindex C-x r @key{SPC}
+@kindex C-x r SPC
 @findex point-to-register
   Typing @kbd{C-x r @key{SPC}} (@code{point-to-register}), followed by
 a character @kbd{@var{r}}, saves both the position of point and the

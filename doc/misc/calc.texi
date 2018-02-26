@@ -9710,7 +9710,7 @@ The @kbd{C-x * x} command also turns the Calculator off, no matter which
 user interface (standard, Keypad, or Embedded) is currently active.
 It also cancels @code{calc-edit} mode if used from there.
 
-@kindex d @key{SPC}
+@kindex d SPC
 @pindex calc-refresh
 @cindex Refreshing a garbled display
 @cindex Garbled displays, refreshing
@@ -10268,7 +10268,7 @@ information is cleared whenever you give any command that adds new undo
 information, i.e., if you undo, then enter a number on the stack or make
 any other change, then it will be too late to redo.
 
-@kindex M-@key{RET}
+@kindex M-RET
 @pindex calc-last-args
 @cindex Last-arguments feature
 @cindex Arguments, restoring
@@ -11732,8 +11732,8 @@ type, such as numbers, vectors, formulas, and incomplete objects.)
 @section Stack Manipulation Commands
 
 @noindent
-@kindex @key{RET}
-@kindex @key{SPC}
+@kindex RET
+@kindex SPC
 @pindex calc-enter
 @cindex Duplicating stack entries
 To duplicate the top object on the stack, press @key{RET} or @key{SPC}
@@ -11749,7 +11749,7 @@ For example, with @samp{10 20 30} on the stack,
 @kbd{C-u - 2 @key{RET}} creates @samp{10 20 30 20}, and
 @kbd{C-u 0 @key{RET}} creates @samp{10 20 30 10 20 30}.
 
-@kindex @key{LFD}
+@kindex LFD
 @pindex calc-over
 The @key{LFD} (@code{calc-over}) command (on a key marked Line-Feed if you
 have it, else on @kbd{C-j}) is like @code{calc-enter}
@@ -11759,7 +11759,7 @@ Thus with @samp{10 20 30} on the stack, @key{LFD} and @kbd{C-u 2 @key{LFD}}
 are both equivalent to @kbd{C-u - 2 @key{RET}}, producing
 @samp{10 20 30 20}.
 
-@kindex @key{DEL}
+@kindex DEL
 @kindex C-d
 @pindex calc-pop
 @cindex Removing stack entries
@@ -11777,7 +11777,7 @@ For example, with @samp{10 20 30} on the stack,
 @kbd{C-u - 2 @key{DEL}} leaves @samp{10 30}, and
 @kbd{C-u 0 @key{DEL}} leaves an empty stack.
 
-@kindex M-@key{DEL}
+@kindex M-DEL
 @pindex calc-pop-above
 The @kbd{M-@key{DEL}} (@code{calc-pop-above}) command is to @key{DEL} what
 @key{LFD} is to @key{RET}:  It interprets the sign of the numeric
@@ -11798,7 +11798,7 @@ specified element of the stack regardless of the cursor  position.
 Similarly, @key{DEL} will remove the corresponding elements from the
 stack.
 
-@kindex @key{TAB}
+@kindex TAB
 @pindex calc-roll-down
 To exchange the top two elements of the stack, press @key{TAB}
 (@code{calc-roll-down}).  Given a positive numeric prefix argument, the
@@ -11812,7 +11812,7 @@ For example, with @samp{10 20 30 40 50} on the stack,
 @kbd{C-u - 2 @key{TAB}} creates @samp{40 50 10 20 30}, and
 @kbd{C-u 0 @key{TAB}} creates @samp{50 40 30 20 10}.
 
-@kindex M-@key{TAB}
+@kindex M-TAB
 @pindex calc-roll-up
 The command @kbd{M-@key{TAB}} (@code{calc-roll-up}) is analogous to @key{TAB}
 except that it rotates upward instead of downward.  Also, the default
@@ -13075,7 +13075,7 @@ refresh the stack to leave the stack display alone.  The word ``Dirty''
 will appear in the mode line when Calc thinks the stack display may not
 reflect the latest mode settings.
 
-@kindex d @key{RET}
+@kindex d RET
 @pindex calc-refresh-top
 The @kbd{d @key{RET}} (@code{calc-refresh-top}) command reformats the
 top stack entry according to all the current modes.  Positive prefix
@@ -21942,7 +21942,7 @@ If you select an element of a vector and press @key{DEL}, that
 element is deleted from the vector.  If you delete one side of
 an equation or inequality, only the opposite side remains.
 
-@kindex j @key{DEL}
+@kindex j DEL
 @pindex calc-del-selection
 The @kbd{j @key{DEL}} (@code{calc-del-selection}) command is like
 @key{DEL} but with the auto-selecting behavior of @kbd{j '} and
@@ -21950,7 +21950,7 @@ The @kbd{j @key{DEL}} (@code{calc-del-selection}) command is like
 indicated by the cursor, or, in the absence of a selection, it
 deletes the sub-formula indicated by the cursor position.
 
-@kindex j @key{RET}
+@kindex j RET
 @pindex calc-grab-selection
 (There is also an auto-selecting @kbd{j @key{RET}} (@code{calc-copy-selection})
 command.)

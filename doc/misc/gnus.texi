@@ -1991,7 +1991,7 @@ Go to the next group that has unread articles
 
 @item p
 @itemx @key{DEL}
-@kindex @key{DEL} @r{(Group)}
+@kindex DEL @r{(Group)}
 @kindex p @r{(Group)}
 @findex gnus-group-prev-unread-group
 Go to the previous group that has unread articles
@@ -2063,7 +2063,7 @@ Otherwise, the point is set to the group just exited.  The default is
 @table @kbd
 
 @item @key{SPC}
-@kindex @key{SPC} @r{(Group)}
+@kindex SPC @r{(Group)}
 @findex gnus-group-read-group
 Select the current group, switch to the summary buffer and display the
 first unread article (@code{gnus-group-read-group}).  If there are no
@@ -2083,7 +2083,7 @@ When you are in the group (in the Summary buffer), you can type
 ones.
 
 @item @key{RET}
-@kindex @key{RET} @r{(Group)}
+@kindex RET @r{(Group)}
 @findex gnus-group-select-group
 Select the current group and switch to the summary buffer
 (@code{gnus-group-select-group}).  Takes the same arguments as
@@ -2092,7 +2092,7 @@ does not display the first unread article automatically upon group
 entry.
 
 @item M-@key{RET}
-@kindex M-@key{RET} @r{(Group)}
+@kindex M-RET @r{(Group)}
 @findex gnus-group-quick-select-group
 This does the same as the command above, but tries to do it with the
 minimum amount of fuzz (@code{gnus-group-quick-select-group}).  No
@@ -2104,14 +2104,14 @@ which is useful if you want to toggle threading before generating the
 summary buffer (@pxref{Summary Generation Commands}).
 
 @item M-@key{SPC}
-@kindex M-@key{SPC} @r{(Group)}
+@kindex M-SPC @r{(Group)}
 @findex gnus-group-visible-select-group
 This is yet one more command that does the same as the @kbd{@key{RET}}
 command, but this one does it without expunging and hiding dormants
 (@code{gnus-group-visible-select-group}).
 
 @item C-M-@key{RET}
-@kindex C-M-@key{RET} @r{(Group)}
+@kindex C-M-RET @r{(Group)}
 @findex gnus-group-select-group-ephemerally
 Finally, this command selects the current group ephemerally without
 doing any processing of its contents
@@ -2659,7 +2659,7 @@ Make a group based on an @acronym{RSS} feed
 @xref{RSS}.
 
 @item G @key{DEL}
-@kindex G @key{DEL} @r{(Group)}
+@kindex G DEL @r{(Group)}
 @findex gnus-group-delete-group
 This function will delete the current group
 (@code{gnus-group-delete-group}).  If given a prefix, this function will
@@ -3617,13 +3617,13 @@ Go to the next group (@code{gnus-group-next-group}).
 Go to the previous group (@code{gnus-group-prev-group}).
 
 @item @key{SPC}
-@kindex @key{SPC} @r{(Browse)}
+@kindex SPC @r{(Browse)}
 @findex gnus-browse-read-group
 Enter the current group and display the first article
 (@code{gnus-browse-read-group}).
 
 @item @key{RET}
-@kindex @key{RET} @r{(Browse)}
+@kindex RET @r{(Browse)}
 @findex gnus-browse-select-group
 Enter the current group (@code{gnus-browse-select-group}).
 
@@ -3656,7 +3656,7 @@ Describe browse mode briefly (well, there's not much to describe, is
 there) (@code{gnus-browse-describe-briefly}).
 
 @item @key{DEL}
-@kindex @key{DEL} @r{(Browse)}
+@kindex DEL @r{(Browse)}
 @findex gnus-browse-delete-group
 This function will delete the current group
 (@code{gnus-browse-delete-group}).  If given a prefix, this function
@@ -3802,15 +3802,15 @@ Prompt for a new topic name and create it
 
 @item T @key{TAB}
 @itemx @key{TAB}
-@kindex T @key{TAB} @r{(Topic)}
-@kindex @key{TAB} @r{(Topic)}
+@kindex T TAB @r{(Topic)}
+@kindex TAB @r{(Topic)}
 @findex gnus-topic-indent
 ``Indent'' the current topic so that it becomes a sub-topic of the
 previous topic (@code{gnus-topic-indent}).  If given a prefix,
 ``un-indent'' the topic instead.
 
 @item M-@key{TAB}
-@kindex M-@key{TAB} @r{(Topic)}
+@kindex M-TAB @r{(Topic)}
 @findex gnus-topic-unindent
 ``Un-indent'' the current topic so that it becomes a sub-topic of the
 parent of its current parent (@code{gnus-topic-unindent}).
@@ -3855,7 +3855,7 @@ key.
 @table @kbd
 
 @item @key{RET}
-@kindex @key{RET} @r{(Topic)}
+@kindex RET @r{(Topic)}
 @findex gnus-topic-select-group
 @itemx @key{SPC}
 Either select a group or fold a topic (@code{gnus-topic-select-group}).
@@ -3962,7 +3962,7 @@ expiry process (if any)
 Rename a topic (@code{gnus-topic-rename}).
 
 @item T @key{DEL}
-@kindex T @key{DEL} @r{(Topic)}
+@kindex T DEL @r{(Topic)}
 @findex gnus-topic-delete
 Delete an empty topic (@code{gnus-topic-delete}).
 
@@ -5301,7 +5301,7 @@ If you want to fetch new articles or redisplay the group, see
 
 @table @kbd
 @item @key{SPC}
-@kindex @key{SPC} @r{(Summary)}
+@kindex SPC @r{(Summary)}
 @findex gnus-summary-next-page
 Select the current article, or, if that one's read already, the next
 unread article (@code{gnus-summary-next-page}).
@@ -5443,7 +5443,7 @@ instead.  It will leave marks like @code{gnus-low-score-mark},
 @table @kbd
 
 @item @key{SPC}
-@kindex @key{SPC} @r{(Summary)}
+@kindex SPC @r{(Summary)}
 @findex gnus-summary-next-page
 Pressing @kbd{@key{SPC}} will scroll the current article forward one page,
 or, if you have come to the end of the current article, will choose the
@@ -5459,18 +5459,18 @@ what is considered uninteresting with
 pages, no matter how boring, using @kbd{C-M-v}.
 
 @item @key{DEL}
-@kindex @key{DEL} @r{(Summary)}
+@kindex DEL @r{(Summary)}
 @findex gnus-summary-prev-page
 Scroll the current article back one page (@code{gnus-summary-prev-page}).
 
 @item @key{RET}
-@kindex @key{RET} @r{(Summary)}
+@kindex RET @r{(Summary)}
 @findex gnus-summary-scroll-up
 Scroll the current article one line forward
 (@code{gnus-summary-scroll-up}).
 
 @item M-@key{RET}
-@kindex M-@key{RET} @r{(Summary)}
+@kindex M-RET @r{(Summary)}
 @findex gnus-summary-scroll-down
 Scroll the current article one line backward
 (@code{gnus-summary-scroll-down}).
@@ -7282,7 +7282,7 @@ understand the numeric prefix.
 @itemx C-M-f
 @kindex C-M-n @r{(Summary)}
 @itemx M-@key{DOWN}
-@kindex M-@key{DOWN} @r{(Summary)}
+@kindex M-DOWN @r{(Summary)}
 @findex gnus-summary-next-thread
 Go to the next thread (@code{gnus-summary-next-thread}).
 
@@ -7291,7 +7291,7 @@ Go to the next thread (@code{gnus-summary-next-thread}).
 @itemx C-M-b
 @kindex C-M-p @r{(Summary)}
 @itemx M-@key{UP}
-@kindex M-@key{UP} @r{(Summary)}
+@kindex M-UP @r{(Summary)}
 @findex gnus-summary-prev-thread
 Go to the previous thread (@code{gnus-summary-prev-thread}).
 
@@ -10366,7 +10366,7 @@ thread or article and pick it.  (The line number is normally displayed
 at the beginning of the summary pick lines.)
 
 @item @key{SPC}
-@kindex @key{SPC} @r{(Pick)}
+@kindex SPC @r{(Pick)}
 @findex gnus-pick-next-page
 Scroll the summary buffer up one page (@code{gnus-pick-next-page}).  If
 at the end of the buffer, start reading the picked articles.
@@ -10382,7 +10382,7 @@ just the article.  You can give this key a numerical prefix to unpick
 the thread or article at that line.
 
 @item @key{RET}
-@kindex @key{RET} @r{(Pick)}
+@kindex RET @r{(Pick)}
 @findex gnus-pick-start-reading
 @vindex gnus-pick-display-summary
 Start reading the picked articles (@code{gnus-pick-start-reading}).  If
@@ -10624,7 +10624,7 @@ articles eligible for expiry in the current group will
 disappear forever into that big @file{/dev/null} in the sky.
 
 @item B @key{DEL}
-@kindex B @key{DEL} @r{(Summary)}
+@kindex B DEL @r{(Summary)}
 @cindex deleting mail
 @findex gnus-summary-delete-article
 @c @icon{gnus-summary-mail-delete}
@@ -11623,7 +11623,7 @@ The following commands are available when you have placed point over a
 @table @kbd
 @findex gnus-article-press-button
 @item @key{RET} (Article)
-@kindex @key{RET} @r{(Article)}
+@kindex RET @r{(Article)}
 @itemx @key{BUTTON-2} (Article)
 Toggle displaying of the @acronym{MIME} object
 (@code{gnus-article-press-button}).  If built-in viewers can not display
@@ -11633,7 +11633,7 @@ object is displayed inline.
 
 @findex gnus-mime-view-part
 @item M-@key{RET} (Article)
-@kindex M-@key{RET} @r{(Article)}
+@kindex M-RET @r{(Article)}
 @itemx v (Article)
 Prompt for a method, and then view the @acronym{MIME} object using this
 method (@code{gnus-mime-view-part}).
@@ -12133,13 +12133,13 @@ A few additional keystrokes are available:
 @table @kbd
 
 @item @key{SPC}
-@kindex @key{SPC} @r{(Article)}
+@kindex SPC @r{(Article)}
 @findex gnus-article-next-page
 Scroll forwards one page (@code{gnus-article-next-page}).
 This is exactly the same as @kbd{h @key{SPC} h}.
 
 @item @key{DEL}
-@kindex @key{DEL} @r{(Article)}
+@kindex DEL @r{(Article)}
 @findex gnus-article-prev-page
 Scroll backwards one page (@code{gnus-article-prev-page}).
 This is exactly the same as @kbd{h @key{DEL} h}.
@@ -12170,13 +12170,13 @@ Give a very brief description of the available keystrokes
 (@code{gnus-article-describe-briefly}).
 
 @item @key{TAB}
-@kindex @key{TAB} @r{(Article)}
+@kindex TAB @r{(Article)}
 @findex gnus-article-next-button
 Go to the next button, if any (@code{gnus-article-next-button}).  This
 only makes sense if you have buttonizing turned on.
 
 @item M-@key{TAB}
-@kindex M-@key{TAB} @r{(Article)}
+@kindex M-TAB @r{(Article)}
 @findex gnus-article-prev-button
 Go to the previous button, if any (@code{gnus-article-prev-button}).
 
@@ -13233,7 +13233,7 @@ Edit a server (@code{gnus-server-edit-server}).
 Show the definition of a server (@code{gnus-server-show-server}).
 
 @item @key{SPC}
-@kindex @key{SPC} @r{(Server)}
+@kindex SPC @r{(Server)}
 @findex gnus-server-read-server
 Browse the current server (@code{gnus-server-read-server}).
 

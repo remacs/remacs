@@ -266,7 +266,7 @@ Completion}.
 @node Completion Example
 @subsection Completion Example
 
-@kindex @key{TAB} @r{(completion example)}
+@kindex TAB @r{(completion example)}
   A simple example may help here.  @kbd{M-x} uses the minibuffer to
 read the name of a command, so completion works by matching the
 minibuffer text against the names of existing Emacs commands.  Suppose
@@ -318,7 +318,7 @@ first (@code{minibuffer-complete-and-exit}).  @xref{Completion Exit}.
 Display a list of completions (@code{minibuffer-completion-help}).
 @end table
 
-@kindex @key{TAB} @r{(completion)}
+@kindex TAB @r{(completion)}
 @findex minibuffer-complete
   @key{TAB} (@code{minibuffer-complete}) is the most fundamental
 completion command.  It searches for all possible completions that
@@ -326,7 +326,7 @@ match the existing minibuffer text, and attempts to complete as much
 as it can.  @xref{Completion Styles}, for how completion alternatives
 are chosen.
 
-@kindex @key{SPC} @r{(completion)}
+@kindex SPC @r{(completion)}
 @findex minibuffer-complete-word
   @key{SPC} (@code{minibuffer-complete-word}) completes like
 @key{TAB}, but only up to the next hyphen or space.  If you have
@@ -379,7 +379,7 @@ completion alternative (@code{previous-completion}).
 @node Completion Exit
 @subsection Completion Exit
 
-@kindex @key{RET} @r{(completion in minibuffer)}
+@kindex RET @r{(completion in minibuffer)}
 @findex minibuffer-complete-and-exit
   When a command reads an argument using the minibuffer with
 completion, it also controls what happens when you type @key{RET}
@@ -655,8 +655,8 @@ directory.
 
 @findex previous-line-or-history-element
 @findex next-line-or-history-element
-@kindex @key{UP} @r{(minibuffer history)}
-@kindex @key{DOWN} @r{(minibuffer history)}
+@kindex UP @r{(minibuffer history)}
+@kindex DOWN @r{(minibuffer history)}
   The arrow keys @kbd{@key{UP}} and @kbd{@key{DOWN}} work like
 @kbd{M-p} and @kbd{M-n}, but if the current history item is longer
 than a single line, they allow you to move to the previous or next
@@ -727,7 +727,7 @@ Display the entire command history, showing all the commands
 @kbd{C-x @key{ESC} @key{ESC}} can repeat, most recent first.
 @end table
 
-@kindex C-x @key{ESC} @key{ESC}
+@kindex C-x ESC ESC
 @findex repeat-complex-command
   @kbd{C-x @key{ESC} @key{ESC}} re-executes a recent command that used
 the minibuffer.  With no argument, it repeats the last such command.

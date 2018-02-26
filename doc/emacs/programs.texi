@@ -100,7 +100,7 @@ language that you might want to edit.  If it doesn't have a mode for
 your favorite language, the mode might be implemented in a package not
 distributed with Emacs (@pxref{Packages}); or you can contribute one.
 
-@kindex @key{DEL} @r{(programming modes)}
+@kindex DEL @r{(programming modes)}
 @findex backward-delete-char-untabify
   In most programming languages, indentation should vary from line to
 line to illustrate the structure of the program.  Therefore, in most
@@ -381,7 +381,7 @@ Insert a newline, then adjust indentation of following line
 (@code{newline}).
 @end table
 
-@kindex @key{TAB} @r{(programming modes)}
+@kindex TAB @r{(programming modes)}
 @findex indent-line-function
   The basic indentation command is @kbd{@key{TAB}}
 (@code{indent-for-tab-command}), which was documented in
@@ -446,7 +446,7 @@ indentation of the line where the grouping starts).  The function that
 etc.  To correct the overall indentation as well, type @kbd{@key{TAB}}
 first.
 
-@kindex C-u @key{TAB}
+@kindex C-u TAB
   If you like the relative indentation within a grouping but not the
 indentation of its first line, move point to that first line and type
 @kbd{C-u @key{TAB}}.  In Lisp, C, and some other major modes,
@@ -718,7 +718,7 @@ argument moves the previous balanced expression backwards across those
 before it.  An argument of zero, rather than doing nothing, transposes
 the balanced expressions ending at or after point and the mark.
 
-@kindex C-M-@key{SPC}
+@kindex C-M-SPC
   To operate on balanced expressions with a command which acts on the
 region, type @kbd{C-M-@key{SPC}} (@code{mark-sexp}).  This sets the
 mark where @kbd{C-M-f} would move to.  While the mark is active, each
@@ -1380,7 +1380,7 @@ nor comments).  The default value is @code{code}.
   Completion is normally done in the minibuffer (@pxref{Completion}),
 but you can also complete symbol names in ordinary Emacs buffers.
 
-@kindex M-@key{TAB}
+@kindex M-TAB
 @kindex C-M-i
   In programming language modes, type @kbd{C-M-i} or @kbd{M-@key{TAB}}
 to complete the partial symbol before point.  On graphical displays,
@@ -1486,7 +1486,7 @@ Prompt for the name of a function defined in any file Emacs has
 parsed, and move point there (@code{semantic-complete-jump}).
 
 @item C-c , @key{SPC}
-@kindex C-c , @key{SPC}
+@kindex C-c , SPC
 Display a list of possible completions for the symbol at point
 (@code{semantic-complete-analyze-inline}).  This also activates a set
 of special key bindings for choosing a completion: @kbd{@key{RET}}
@@ -1736,8 +1736,8 @@ preprocessor commands.
 @item C-c C-@key{DEL}
 @itemx C-c @key{DEL}
 @findex c-hungry-delete-backwards
-@kindex C-c C-@key{DEL} @r{(C Mode)}
-@kindex C-c @key{DEL} @r{(C Mode)}
+@kindex C-c C-DEL @r{(C Mode)}
+@kindex C-c DEL @r{(C Mode)}
 Delete the entire block of whitespace preceding point (@code{c-hungry-delete-backwards}).
 
 @item C-c C-d
@@ -1745,8 +1745,8 @@ Delete the entire block of whitespace preceding point (@code{c-hungry-delete-bac
 @itemx C-c @key{Delete}
 @findex c-hungry-delete-forward
 @kindex C-c C-d @r{(C Mode)}
-@kindex C-c C-@key{Delete} @r{(C Mode)}
-@kindex C-c @key{Delete} @r{(C Mode)}
+@kindex C-c C-Delete @r{(C Mode)}
+@kindex C-c Delete @r{(C Mode)}
 Delete the entire block of whitespace after point (@code{c-hungry-delete-forward}).
 @end table
 

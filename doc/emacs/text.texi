@@ -137,7 +137,7 @@ kill only the next word but not the punctuation before it, simply do
 @kbd{M-@key{DEL}}.)  @kbd{M-d} takes arguments just like @kbd{M-f}.
 
 @findex backward-kill-word
-@kindex M-@key{DEL}
+@kindex M-DEL
   @kbd{M-@key{DEL}} (@code{backward-kill-word}) kills the word before
 point.  It kills everything from point back to where @kbd{M-b} would
 move to.  For instance, if point is after the space in @w{@samp{FOO,
@@ -214,7 +214,7 @@ of the sentence.  With a positive numeric argument @var{n}, it kills
 the next @var{n} sentences; with a negative argument @minus{}@var{n},
 it kills back to the beginning of the @var{n}th preceding sentence.
 
-@kindex C-x @key{DEL}
+@kindex C-x DEL
 @findex backward-kill-sentence
   The @kbd{C-x @key{DEL}} (@code{backward-kill-sentence}) kills back
 to the beginning of a sentence.
@@ -878,7 +878,7 @@ paragraphs.  As a result, paragraphs can be indented, and adaptive
 filling determines what indentation to use when filling a paragraph.
 @xref{Adaptive Fill}.
 
-@kindex @key{TAB} @r{(Text mode)}
+@kindex TAB @r{(Text mode)}
   In Text mode, the @key{TAB} (@code{indent-for-tab-command}) command
 usually inserts whitespace up to the next tab stop, instead of
 indenting the current line.  @xref{Indentation}, for details.
@@ -905,7 +905,7 @@ paragraph-indent-minor-mode} to enable an equivalent minor mode for
 situations where you shouldn't change the major mode---in mail
 composition, for instance.
 
-@kindex M-@key{TAB} @r{(Text mode)}
+@kindex M-TAB @r{(Text mode)}
   Text mode binds @kbd{M-@key{TAB}} to @code{ispell-complete-word}.
 This command performs completion of the partial word in the buffer
 before point, using the spelling dictionary as the space of possible
@@ -1352,7 +1352,7 @@ starts with one or more @samp{*} characters.  @xref{Outline Format}.
 In addition, any line that begins with the @samp{#} character is
 treated as a comment.
 
-@kindex @key{TAB} @r{(Org Mode)}
+@kindex TAB @r{(Org Mode)}
 @findex org-cycle
   Org mode provides commands for easily viewing and manipulating the
 outline structure.  The simplest of these commands is @key{TAB}
@@ -1363,17 +1363,17 @@ of its direct children, if any, and (iii) showing the entire subtree.
 If invoked in a body line, the global binding for @key{TAB} is
 executed.
 
-@kindex S-@key{TAB} @r{(Org Mode)}
+@kindex S-TAB @r{(Org Mode)}
 @findex org-shifttab
   Typing @kbd{S-@key{TAB}} (@code{org-shifttab}) anywhere in an Org mode
 buffer cycles the visibility of the entire outline structure, between
 (i) showing only top-level heading lines, (ii) showing all heading
 lines but no body lines, and (iii) showing everything.
 
-@kindex M-@key{UP} @r{(Org Mode)}
-@kindex M-@key{DOWN} @r{(Org Mode)}
-@kindex M-@key{LEFT} @r{(Org Mode)}
-@kindex M-@key{RIGHT} @r{(Org Mode)}
+@kindex M-UP @r{(Org Mode)}
+@kindex M-DOWN @r{(Org Mode)}
+@kindex M-LEFT @r{(Org Mode)}
+@kindex M-RIGHT @r{(Org Mode)}
 @findex org-metaup
 @findex org-metadown
 @findex org-metaleft
@@ -1852,7 +1852,7 @@ in a local variable list in each of the subfiles.  @xref{File
 Variables}.
 
 @findex tex-bibtex-file
-@kindex C-c @key{TAB} @r{(@TeX{} mode)}
+@kindex C-c TAB @r{(@TeX{} mode)}
 @vindex tex-bibtex-command
   For @LaTeX{} files, you can use Bib@TeX{} to process the auxiliary
 file for the current buffer's file.  Bib@TeX{} looks up bibliographic
@@ -1995,7 +1995,7 @@ Run a shell command (which you must specify) to validate the current
 buffer as SGML (@code{sgml-validate}).
 
 @item C-c @key{TAB}
-@kindex C-c @key{TAB} @r{(SGML mode)}
+@kindex C-c TAB @r{(SGML mode)}
 @findex sgml-tags-invisible
 Toggle the visibility of existing tags in the buffer.  This can be
 used as a cheap preview (@code{sgml-tags-invisible}).
@@ -2308,7 +2308,7 @@ These margins also affect fill commands such as @kbd{M-q}
 for specifying indentation:
 
 @table @code
-@kindex C-x @key{TAB} @r{(Enriched mode)}
+@kindex C-x TAB @r{(Enriched mode)}
 @findex increase-left-margin
 @item Indent More
 Indent the region by 4 columns (@code{increase-left-margin}).  In
@@ -2848,7 +2848,7 @@ buffer.  There are three ways to enter two-column mode:
 
 @table @asis
 @item @kbd{@key{F2} 2} or @kbd{C-x 6 2}
-@kindex @key{F2} 2
+@kindex F2 2
 @kindex C-x 6 2
 @findex 2C-two-columns
 Enter two-column mode with the current buffer on the left, and on the
@@ -2861,7 +2861,7 @@ This command is appropriate when the current buffer is empty or contains
 just one column and you want to add another column.
 
 @item @kbd{@key{F2} s} or @kbd{C-x 6 s}
-@kindex @key{F2} s
+@kindex F2 s
 @kindex C-x 6 s
 @findex 2C-split
 Split the current buffer, which contains two-column text, into two
@@ -2876,7 +2876,7 @@ two-column text, and you wish to separate the columns temporarily.
 
 @item @kbd{@key{F2} b @var{buffer} @key{RET}}
 @itemx @kbd{C-x 6 b @var{buffer} @key{RET}}
-@kindex @key{F2} b
+@kindex F2 b
 @kindex C-x 6 b
 @findex 2C-associate-buffer
 Enter two-column mode using the current buffer as the left-hand buffer,
@@ -2900,15 +2900,15 @@ way to write a line that spans both columns while in two-column
 mode: write it in the left-hand buffer, and put an empty line in the
 right-hand buffer.)
 
-@kindex @key{F2} @key{RET}
-@kindex C-x 6 @key{RET}
+@kindex F2 RET
+@kindex C-x 6 RET
 @findex 2C-newline
   The command @kbd{C-x 6 @key{RET}} or @kbd{@key{F2} @key{RET}}
 (@code{2C-newline}) inserts a newline in each of the two buffers at
 corresponding positions.  This is the easiest way to add a new line to
 the two-column text while editing it in split buffers.
 
-@kindex @key{F2} 1
+@kindex F2 1
 @kindex C-x 6 1
 @findex 2C-merge
   When you have edited both buffers as you wish, merge them with
@@ -2916,7 +2916,7 @@ the two-column text while editing it in split buffers.
 text from the right-hand buffer as a second column in the other buffer.
 To go back to two-column editing, use @kbd{@key{F2} s}.
 
-@kindex @key{F2} d
+@kindex F2 d
 @kindex C-x 6 d
 @findex 2C-dissociate
   Use @kbd{@key{F2} d} or @kbd{C-x 6 d} to dissociate the two buffers,

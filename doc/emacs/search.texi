@@ -397,7 +397,7 @@ or @code{query-replace-regexp} (depending on search mode) with the
 current search string used as the string to replace.  A negative
 prefix argument means to replace backward.  @xref{Query Replace}.
 
-@kindex M-@key{TAB} @r{(Incremental search)}
+@kindex M-TAB @r{(Incremental search)}
   Typing @kbd{M-@key{TAB}} in incremental search invokes
 @code{isearch-complete}, which attempts to complete the search string
 using the search ring (the previous search strings you used) as a list
@@ -1186,8 +1186,8 @@ differences usually don't matter; etc.  This is known as
 tailor them to your needs.
 
 @cindex lax space matching in search
-@kindex M-s @key{SPC} @r{(Incremental search)}
-@kindex @key{SPC} @r{(Incremental search)}
+@kindex M-s SPC @r{(Incremental search)}
+@kindex SPC @r{(Incremental search)}
 @findex isearch-toggle-lax-whitespace
 @vindex search-whitespace-regexp
   By default, search commands perform @dfn{lax space matching}:
@@ -1570,10 +1570,10 @@ read-only text.  The default is not to ignore them.
 or regexp are:
 
 @ignore @c Not worth it.
-@kindex @key{SPC} @r{(query-replace)}
-@kindex @key{DEL} @r{(query-replace)}
+@kindex SPC @r{(query-replace)}
+@kindex DEL @r{(query-replace)}
 @kindex , @r{(query-replace)}
-@kindex @key{RET} @r{(query-replace)}
+@kindex RET @r{(query-replace)}
 @kindex . @r{(query-replace)}
 @kindex ! @r{(query-replace)}
 @kindex ^ @r{(query-replace)}
@@ -1770,7 +1770,7 @@ Note that matches for the regexp you type are extended to include
 complete lines, and a match that starts before the previous match ends
 is not considered a match.
 
-@kindex @key{RET} @r{(Occur mode)}
+@kindex RET @r{(Occur mode)}
 @kindex o @r{(Occur mode)}
 @kindex C-o @r{(Occur mode)}
 In the @file{*Occur*} buffer, you can click on each entry, or move

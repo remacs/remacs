@@ -47,8 +47,8 @@ about Emacs's special handling of text files under MS-DOS (and Windows).
 @node MS-DOS Keyboard
 @subsection Keyboard Usage on MS-DOS
 
-@kindex @key{DEL} @r{(MS-DOS)}
-@kindex @key{BS} @r{(MS-DOS)}
+@kindex DEL @r{(MS-DOS)}
+@kindex BS @r{(MS-DOS)}
   The key that is called @key{DEL} in Emacs (because that's how it is
 designated on most workstations) is known as @key{BS} (backspace) on a
 PC@.  That is why the PC-specific terminal initialization remaps the
@@ -56,7 +56,7 @@ PC@.  That is why the PC-specific terminal initialization remaps the
 as @kbd{C-d} for the same reasons.
 
 @kindex C-g @r{(MS-DOS)}
-@kindex C-@key{Break} @r{(MS-DOS)}
+@kindex C-Break @r{(MS-DOS)}
 @cindex quitting on MS-DOS
   Emacs built for MS-DOS recognizes @kbd{C-@key{Break}} as a quit
 character, just like @kbd{C-g}.  This is because Emacs cannot detect

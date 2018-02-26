@@ -579,7 +579,7 @@ modifier with the trailing dash but with no key indicates that all
 Windows defined hotkeys for that modifier are to be overridden in the
 favor of Emacs.
 
-@kindex M-@key{TAB}@r{, (MS-Windows)}
+@kindex M-TAB@r{, (MS-Windows)}
 @cindex @kbd{M-@key{TAB}} vs @kbd{@key{Alt}-@key{TAB}} (MS-Windows)
 @cindex @kbd{@key{Alt}-@key{TAB}} vs @kbd{M-@key{TAB}} (MS-Windows)
   For example, @code{(w32-register-hot-key [M-tab])} lets you use
@@ -693,7 +693,7 @@ its normal effect: for example, @kbd{@key{Lwindow}} opens the
 @code{Start} menu, etc.
 
 @vindex w32-recognize-altgr
-@kindex @key{AltGr} @r{(MS-Windows)}
+@kindex AltGr @r{(MS-Windows)}
 @cindex @key{AltGr} key (MS-Windows)
   The variable @code{w32-recognize-altgr} controls whether the
 @key{AltGr} key (if it exists on your keyboard), or its equivalent,

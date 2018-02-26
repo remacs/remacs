@@ -671,7 +671,7 @@ These commands indent code:
 
 @table @asis
 @item @kbd{@key{TAB}} (@code{c-indent-command})
-@kindex @key{TAB}
+@kindex TAB
 @findex c-indent-command
 @findex indent-command @r{(c-)}
 This command indents the current line.  That is all you need to know
@@ -1518,7 +1518,7 @@ deletion.
 
 @table @asis
 @item @kbd{@key{DEL}} (@code{c-electric-backspace})
-@kindex @key{DEL}
+@kindex DEL
 @findex c-electric-backspace
 @findex electric-backspace @r{(c-)}
 This command is run by default when you hit the @kbd{@key{DEL}} key.  When
@@ -1567,10 +1567,10 @@ rather than using the minor mode toggling.
 
 @table @asis
 @item @kbd{C-c C-@key{DEL}}, or @kbd{C-c @key{DEL}} (@code{c-hungry-delete-backwards})@footnote{This command was formerly known as @code{c-hungry-backspace}.}
-@kindex C-c C-@key{Backspace}
-@kindex C-c @key{Backspace}
-@kindex C-c C-@key{DEL}
-@kindex C-c @key{DEL}
+@kindex C-c C-Backspace
+@kindex C-c Backspace
+@kindex C-c C-DEL
+@kindex C-c DEL
 @findex c-hungry-delete-backwards
 @findex hungry-delete-backwards @r{(c-)}
 Delete any amount of whitespace in the backwards direction (regardless
@@ -1581,8 +1581,8 @@ a character terminal.
 
 @item @kbd{C-c C-d}, @kbd{C-c C-@key{DELETE}}, or @kbd{C-c @key{DELETE}} (@code{c-hungry-delete-forward})
 @kindex C-c C-d
-@kindex C-c C-@key{Delete}
-@kindex C-c @key{Delete}
+@kindex C-c C-Delete
+@kindex C-c Delete
 @findex c-hungry-delete-forward
 @findex hungry-delete-forward @r{(c-)}
 Delete any amount of whitespace in the forward direction (regardless
@@ -1592,8 +1592,8 @@ same reason as for @key{DEL} above.
 @end table
 @end table
 
-@kindex @key{Delete}
-@kindex @key{Backspace}
+@kindex Delete
+@kindex Backspace
 
 When we talk about @kbd{@key{DEL}}, and @kbd{@key{Delete}} above, we
 actually do so without connecting them to the physical keys commonly
@@ -7248,7 +7248,7 @@ early on:
 Set the variable @code{c-basic-offset}.  @xref{Getting Started}.
 
 @item
-@kindex @key{RET}
+@kindex RET
 @kindex C-j
 @emph{Why does/doesn't the @kbd{@key{RET}} key indent the new line?}
 

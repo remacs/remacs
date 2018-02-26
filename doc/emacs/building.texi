@@ -768,7 +768,7 @@ be bizarre.  See the GDB manual entry regarding @code{jump} for
 details.
 
 @item @key{TAB}
-@kindex @key{TAB} @r{(GUD)}
+@kindex TAB @r{(GUD)}
 @findex gud-gdb-complete-command
 With GDB, complete a symbol name (@code{gud-gdb-complete-command}).
 This key is available only in the GUD interaction buffer.
@@ -998,7 +998,7 @@ to the @dfn{current breakpoint} (the breakpoint which point is on):
 
 @table @kbd
 @item @key{SPC}
-@kindex @key{SPC} @r{(GDB Breakpoints buffer)}
+@kindex SPC @r{(GDB Breakpoints buffer)}
 @findex gdb-toggle-breakpoint
 Enable/disable current breakpoint (@code{gdb-toggle-breakpoint}).  On
 a graphical display, this changes the color of the dot in the fringe
@@ -1011,7 +1011,7 @@ is enabled, and gray when it is disabled.
 Delete the current breakpoint (@code{gdb-delete-breakpoint}).
 
 @item @key{RET}
-@kindex @key{RET} @r{(GDB Breakpoints buffer)}
+@kindex RET @r{(GDB Breakpoints buffer)}
 @findex gdb-goto-breakpoint
 Visit the source line for the current breakpoint
 (@code{gdb-goto-breakpoint}).
@@ -1204,7 +1204,7 @@ immediate children exceeds the value of the variable
   To delete a complex watch expression, move point to the root
 expression in the speedbar and type @kbd{D} (@code{gdb-var-delete}).
 
-@kindex @key{RET} @r{(GDB speedbar)}
+@kindex RET @r{(GDB speedbar)}
 @findex gdb-edit-value
   To edit a variable with a simple data type, or a simple element of a
 complex data type, move point there in the speedbar and type @key{RET}
@@ -1490,7 +1490,7 @@ Evaluate all the Emacs Lisp expressions in the buffer.
 @ifinfo
 @c This uses 'colon' instead of a literal ':' because Info cannot
 @c cope with a ':' in a menu.
-@kindex M-@key{colon}
+@kindex M-colon
 @end ifinfo
 @ifnotinfo
 @kindex M-:

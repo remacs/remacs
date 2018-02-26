@@ -271,7 +271,7 @@ example again.
 @end group
 @end example
 
-@kindex @key{TAB}
+@kindex TAB
 Let's say point is on line 3 and we hit the @key{TAB} key to re-indent
 the line.  Remember that the syntactic component list for that
 line is:
@@ -822,11 +822,11 @@ symbol currently recognized}
 @cindex   Frequently Asked Questions
 
 @kindex C-x h
-@kindex @key{ESC} C-\
-@kindex @key{ESC} C-q
-@kindex @key{ESC} C-u
-@kindex @key{RET}
-@kindex @key{LFD}
+@kindex ESC C-\
+@kindex ESC C-q
+@kindex ESC C-u
+@kindex RET
+@kindex LFD
 @findex newline-and-indent
 @quotation
 

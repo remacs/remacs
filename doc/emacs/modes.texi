@@ -33,8 +33,8 @@ one another, and of the selected major mode.
 @section Major Modes
 @cindex major modes
 @cindex mode, major
-@kindex @key{TAB} @r{(and major modes)}
-@kindex @key{DEL} @r{(and major modes)}
+@kindex TAB @r{(and major modes)}
+@kindex DEL @r{(and major modes)}
 @kindex C-j @r{(and major modes)}
 
   Every buffer possesses a major mode, which determines the editing
@@ -236,7 +236,7 @@ called Outline mode.  @xref{Outline Mode}.
 @cindex Overwrite mode
 @cindex mode, Overwrite
 @findex overwrite-mode
-@kindex @key{INSERT}
+@kindex INSERT
 @item
 Overwrite mode causes ordinary printing characters to replace existing
 text instead of shoving it to the right.  For example, if point is in

@@ -111,8 +111,8 @@ it, Emacs asks for the file name to use, and the buffer's major mode
 is re-established taking that file name into account (@pxref{Choosing
 Modes}).
 
-@kindex C-x @key{LEFT}
-@kindex C-x @key{RIGHT}
+@kindex C-x LEFT
+@kindex C-x RIGHT
 @findex next-buffer
 @findex previous-buffer
   For conveniently switching between a few buffers, use the commands
@@ -419,13 +419,13 @@ removing the flags.
 
 @item @key{DEL}
 @findex Buffer-menu-backup-unmark
-@kindex @key{DEL} @r{(Buffer Menu)}
+@kindex DEL @r{(Buffer Menu)}
 Move to the previous line and remove all flags on that line
 (@code{Buffer-menu-backup-unmark}).
 
 @item M-@key{DEL}
 @findex Buffer-menu-unmark-all-buffers
-@kindex M-@key{DEL} @r{(Buffer Menu)}
+@kindex M-DEL @r{(Buffer Menu)}
 Remove a particular flag from all lines
 (@code{Buffer-menu-unmark-all-buffers}).  This asks for a single
 character, and unmarks buffers marked with that character; typing
@@ -479,7 +479,7 @@ visible buffer is displayed in its place.
 @itemx f
 @findex Buffer-menu-this-window
 @kindex f @r{(Buffer Menu)}
-@kindex @key{RET} @r{(Buffer Menu)}
+@kindex RET @r{(Buffer Menu)}
 Select this line's buffer, replacing the @file{*Buffer List*} buffer
 in its window (@code{Buffer-menu-this-window}).
 

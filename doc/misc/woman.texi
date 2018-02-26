@@ -625,14 +625,14 @@ the @code{man} key bindings.
 
 @table @kbd
 @item @key{SPC}
-@kindex @key{SPC}
+@kindex SPC
 @findex scroll-up
 Scroll the man page up the window (@code{scroll-up}).
 
 @item @key{DEL}
 @itemx @kbd{S-@key{SPC}}
-@kindex @key{DEL}
-@kindex S-@key{SPC}
+@kindex DEL
+@kindex S-SPC
 @findex scroll-down
 Scroll the man page down the window (@code{scroll-down}).
 
@@ -690,7 +690,7 @@ word must be mouse-highlighted unless @code{woman-mouse-2} is used with
 the Meta key.
 
 @item @key{RET}
-@kindex @key{RET}
+@kindex RET
 @findex man-follow
 Get the man page for the topic under (or nearest to) point
 (@code{man-follow}).

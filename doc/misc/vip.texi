@@ -289,7 +289,7 @@ its content while you are in insert mode.
 
 @table @kbd
 @item @key{ESC}
-@kindex 033 @key{ESC} @r{(}@code{vip-change-mode-to-vi}@r{) (insert mode)}
+@kindex 033 ESC @r{(}@code{vip-change-mode-to-vi}@r{) (insert mode)}
 This key will take you back to vi mode.
 @item C-h
 @kindex 010 C-h @r{(}@code{vip-delete-backward-char}@r{) (insert mode)}
@@ -373,7 +373,7 @@ the buffer as in Vi.  You can change this by rebinding the variable
 @subsection z Command
 
 @kindex 1723 z H @r{(}@code{vip-line-to-top}@r{)}
-@kindex 1721 z @key{RET} @r{(}@code{vip-line-to-top}@r{)}
+@kindex 1721 z RET @r{(}@code{vip-line-to-top}@r{)}
 @kindex 1723 z M @r{(}@code{vip-line-to-middle}@r{)}
 @kindex 1722 z . @r{(}@code{vip-line-to-middle}@r{)}
 @kindex 1723 z L @r{(}@code{vip-line-to-bottom}@r{)}
@@ -471,7 +471,7 @@ Forward incremental search.
 @itemx @key{ESC}
 @kindex 003 C-c @r{(}@code{vip-ctl-c}@r{)}
 @kindex 0300 C-x @r{(}@code{vip-ctl-x}@r{)}
-@kindex 033 @key{ESC} @r{(}@code{vip-ESC}@r{)}
+@kindex 033 ESC @r{(}@code{vip-ESC}@r{)}
 These keys will exit from vi mode and return to emacs mode temporarily.  If
 you hit one of these keys, Emacs will be in emacs mode and will believe
 that you hit that key in emacs mode. For example, if you hit @kbd{C-x}
@@ -555,8 +555,8 @@ the current buffer.  Here, @kbd{g} will do that, and @kbd{C-g} is
 used to abort a command (this is for compatibility with emacs mode.)
 @item SPC
 @itemx @key{RET}
-@kindex 040 @key{SPC} @r{(}@code{vip-scroll}@r{)}
-@kindex 015 @key{RET} @r{(}@code{vip-scroll-back}@r{)}
+@kindex 040 SPC @r{(}@code{vip-scroll}@r{)}
+@kindex 015 RET @r{(}@code{vip-scroll-back}@r{)}
 Now these keys will scroll up and down the text of current window.
 Convenient for viewing the text.
 @item s
@@ -756,7 +756,7 @@ accessed from vi mode as easily as from emacs mode.
 @itemx @key{ESC}
 @kindex 003 C-c @r{(}@code{vip-ctl-c}@r{)}
 @kindex 0300 C-x @r{(}@code{vip-ctl-x}@r{)}
-@kindex 033 @key{ESC} @r{(}@code{vip-ESC}@r{)}
+@kindex 033 ESC @r{(}@code{vip-ESC}@r{)}
 Typing one of these keys have the same effect as typing it in emacs mode.
 Appropriate command will be executed according as the keys you type after
 it.  You will be in vi mode again after the execution of the command.
@@ -940,13 +940,13 @@ buffer.
 @table @kbd
 @item @key{SPC}
 @itemx C-f
-@kindex 040 @key{SPC} @r{(}@code{vip-scroll}@r{)}
+@kindex 040 SPC @r{(}@code{vip-scroll}@r{)}
 @kindex 006 C-f @r{(}@code{vip-scroll-back}@r{)}
 Scroll text of current window upward almost full screen.  You can go
 @i{forward} in the buffer by this command (@code{vip-scroll}).
 @item @key{RET}
 @itemx C-b
-@kindex 015 @key{RET} @r{(}@code{vip-scroll-back}@r{)}
+@kindex 015 RET @r{(}@code{vip-scroll-back}@r{)}
 @kindex 002 C-b @r{(}@code{vip-scroll-back}@r{)}
 Scroll text of current window downward almost full screen.  You can go
 @i{backward} in the buffer by this command (@code{vip-scroll-back}).
@@ -975,7 +975,7 @@ The following commands reposition point in the window.
 @item z H
 @itemx z @key{RET}
 @kindex 1723 z H @r{(}@code{vip-line-to-top}@r{)}
-@kindex 1721 z @key{RET} @r{(}@code{vip-line-to-top}@r{)}
+@kindex 1721 z RET @r{(}@code{vip-line-to-top}@r{)}
 Put point on the top (@i{home}) line in the window.  So the current line
 becomes the top line in the window.  Given a count @var{n}, point will be
 placed in the @var{n}-th line from top (@code{vip-line-to-top}).
@@ -1368,7 +1368,7 @@ Delete to the end of a line (@code{vip-kill-line}).
 Delete a character after point.  Given @var{n}, delete @var{n} characters
 (@code{vip-delete-char}).
 @item @key{DEL}
-@kindex 177 @key{DEL} @r{(}@code{vip-delete-backward-char}@r{)}
+@kindex 177 DEL @r{(}@code{vip-delete-backward-char}@r{)}
 Delete a character before point.  Given @var{n}, delete @var{n} characters
 (@code{vip-delete-backward-char}).
 @end table
@@ -1570,7 +1570,7 @@ keymap.  See GNU Emacs Manual for details.
 @kindex 000 C-@@ @r{(}@code{set-mark-command}@r{)}
 Set mark and push previous mark on mark ring (@code{set-mark-command}).
 @item TAB
-@kindex 011 @key{TAB} @r{(}@code{indent-for-tab-command}@r{)}
+@kindex 011 TAB @r{(}@code{indent-for-tab-command}@r{)}
 Indent line for current major mode (@code{indent-for-tab-command}).
 @item C-j
 @kindex 012 C-j @r{(}@code{electric-newline-and-maybe-indent}@r{)}
@@ -1656,7 +1656,7 @@ differently from emacs mode.
 
 @table @kbd
 @item @key{ESC}
-@kindex 033 @key{ESC} @r{(}@code{vip-change-mode-to-vi}@r{) (insert mode)}
+@kindex 033 ESC @r{(}@code{vip-change-mode-to-vi}@r{) (insert mode)}
 This key will take you back to vi mode (@code{vip-change-mode-to-vi}).
 @item C-h
 @kindex 010 C-h @r{(}@code{delete-backward-char}@r{) (insert mode)}

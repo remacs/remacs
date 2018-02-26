@@ -191,7 +191,7 @@ C-b} (@code{picture-motion-reverse}) moves in the opposite direction.
 @node Tabs in Picture
 @subsection Picture Mode Tabs
 
-@kindex M-@key{TAB} @r{(Picture mode)}
+@kindex M-TAB @r{(Picture mode)}
 @findex picture-tab-search
 @vindex picture-tab-chars
   Two kinds of tab-like action are provided in Picture mode.  Use
@@ -214,7 +214,7 @@ current tab stop settings; it is the Picture mode equivalent of
 @code{tab-to-tab-stop}.  Normally it just moves point, but with a numeric
 argument it clears the text that it moves over.
 
-@kindex C-c @key{TAB} @r{(Picture mode)}
+@kindex C-c TAB @r{(Picture mode)}
 @findex picture-set-tab-stops
   The context-based and tab-stop-based forms of tabbing are brought
 together by the command @kbd{C-c @key{TAB}} (@code{picture-set-tab-stops}).

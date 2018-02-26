@@ -260,8 +260,8 @@ unexpected result.  In the example above, there are two failures, both
 due to failed @code{should} forms.  @xref{Understanding Explanations},
 for more details.
 
-@kindex @key{TAB}@r{, in ert results buffer}
-@kindex S-@key{TAB}@r{, in ert results buffer}
+@kindex TAB@r{, in ert results buffer}
+@kindex S-TAB@r{, in ert results buffer}
 In the ERT results buffer, @kbd{@key{TAB}} and @kbd{S-@key{TAB}} cycle between
 buttons.  Each name of a function or macro in this buffer is a button;
 moving point to it and typing @kbd{@key{RET}} jumps to its definition.

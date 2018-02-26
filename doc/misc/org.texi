@@ -1730,10 +1730,10 @@ one.
 @end table
 
 @table @kbd
-@kindex M-S-@key{RET}
+@kindex M-S-RET
 @item M-S-@key{RET}
 Insert a new item with a checkbox (@pxref{Checkboxes}).
-@kindex S-@key{DOWN}
+@kindex S-DOWN
 @item S-up
 @itemx S-down
 @cindex shift-selection-mode
@@ -1745,21 +1745,21 @@ cycle around items that way, you may customize
 @code{org-support-shift-select} is off.  If not, you can still use paragraph
 jumping commands like @kbd{C-@key{UP}} and @kbd{C-@key{DOWN}} to quite
 similar effect.
-@kindex M-@key{UP}
-@kindex M-@key{DOWN}
+@kindex M-UP
+@kindex M-DOWN
 @item M-up
 @itemx M-down
 Move the item including subitems up/down@footnote{See
 @code{org-list-use-circular-motion} for a cyclic behavior.} (swap with
 previous/next item of same indentation).  If the list is ordered, renumbering
 is automatic.
-@kindex M-@key{LEFT}
-@kindex M-@key{RIGHT}
+@kindex M-LEFT
+@kindex M-RIGHT
 @item M-left
 @itemx M-right
 Decrease/increase the indentation of an item, leaving children alone.
-@kindex M-S-@key{LEFT}
-@kindex M-S-@key{RIGHT}
+@kindex M-S-LEFT
+@kindex M-S-RIGHT
 @item M-S-@key{LEFT}
 @itemx M-S-@key{RIGHT}
 Decrease/increase the indentation of the item, including subitems.
@@ -1799,8 +1799,8 @@ its location).  @xref{Structure editing}, for a detailed explanation.
 Turn the whole plain list into a subtree of the current heading.  Checkboxes
 (@pxref{Checkboxes}) will become TODO (resp. DONE) keywords when unchecked
 (resp. checked).
-@kindex S-@key{LEFT}
-@kindex S-@key{RIGHT}
+@kindex S-LEFT
+@kindex S-RIGHT
 @item S-@key{LEFT}/@key{RIGHT}
 @vindex org-support-shift-select
 This command also cycles bullet styles when the cursor in on the bullet or
@@ -3014,10 +3014,10 @@ formula, @key{TAB} re-indents just like in Emacs Lisp mode.
 Complete Lisp symbols, just like in Emacs Lisp mode.@footnote{Many desktops
 intercept @kbd{M-@key{TAB}} to switch windows.  Use @kbd{C-M-i} or
 @kbd{@key{ESC} @key{TAB}} instead for completion (@pxref{Completion}).}
-@kindex S-@key{UP}
-@kindex S-@key{DOWN}
-@kindex S-@key{LEFT}
-@kindex S-@key{RIGHT}
+@kindex S-UP
+@kindex S-DOWN
+@kindex S-LEFT
+@kindex S-RIGHT
 @findex org-table-fedit-ref-up
 @findex org-table-fedit-ref-down
 @findex org-table-fedit-ref-left
@@ -4043,8 +4043,8 @@ completion; otherwise force cycling through TODO states with no prompt.  When
 @code{org-use-fast-todo-selection} is set to @code{prefix}, use the fast
 selection interface.
 
-@kindex S-@key{RIGHT}
-@kindex S-@key{LEFT}
+@kindex S-RIGHT
+@kindex S-LEFT
 @item S-@key{RIGHT} @ @r{/} @ S-@key{LEFT}
 @vindex org-treat-S-cursor-todo-selection-as-state-change
 Select the following/preceding TODO state, similar to cycling.  Useful
@@ -4192,8 +4192,8 @@ select the correct sequence.  Besides the obvious ways like typing a
 keyword or using completion, you may also apply the following commands:
 
 @table @kbd
-@kindex C-S-@key{RIGHT}
-@kindex C-S-@key{LEFT}
+@kindex C-S-RIGHT
+@kindex C-S-LEFT
 @kindex C-u C-u C-c C-t
 @item C-u C-u C-c C-t
 @itemx C-S-@key{RIGHT}
@@ -4203,8 +4203,8 @@ These keys jump from one TODO subset to the next.  In the above example,
 @code{DONE} to @code{REPORT}, and any of the words in the second row to
 @code{CANCELED}.  Note that the @kbd{C-S-} key binding conflict with
 @code{shift-selection-mode} (@pxref{Conflicts}).
-@kindex S-@key{RIGHT}
-@kindex S-@key{LEFT}
+@kindex S-RIGHT
+@kindex S-LEFT
 @item S-@key{RIGHT}
 @itemx S-@key{LEFT}
 @kbd{S-@key{LEFT}} and @kbd{S-@key{RIGHT}} and walk through @emph{all}
@@ -4271,7 +4271,7 @@ A setup for using several sets in parallel would be:
 @end example
 
 @cindex completion, of option keywords
-@kindex M-@key{TAB}
+@kindex M-TAB
 @noindent To make sure you are using the correct keyword, type
 @samp{#+} into the buffer and then use @kbd{M-@key{TAB}} completion.
 
@@ -4933,7 +4933,7 @@ can really speed up agenda generation.
 @cindex setting tags
 @cindex tags, setting
 
-@kindex M-@key{TAB}
+@kindex M-TAB
 Tags can simply be typed into the buffer at the end of a headline.
 After a colon, @kbd{M-@key{TAB}} offers completion on tags.  There is
 also a special command for inserting tags:
@@ -5064,17 +5064,17 @@ will turn off any other tags from that group.
 In this interface, you can also use the following special keys:
 
 @table @kbd
-@kindex @key{TAB}
+@kindex TAB
 @item @key{TAB}
 Enter a tag in the minibuffer, even if the tag is not in the predefined
 list.  You will be able to complete on all tags present in the buffer.
 You can also add several tags: just separate them with a comma.
 
-@kindex @key{SPC}
+@kindex SPC
 @item @key{SPC}
 Clear all tags for this line.
 
-@kindex @key{RET}
+@kindex RET
 @item @key{RET}
 Accept the modified set.
 
@@ -5727,8 +5727,8 @@ Exit column view.
 @tsubheading{Editing values}
 @item @key{LEFT} @key{RIGHT} @key{UP} @key{DOWN}
 Move through the column view from field to field.
-@kindex S-@key{LEFT}
-@kindex S-@key{RIGHT}
+@kindex S-LEFT
+@kindex S-RIGHT
 @item  S-@key{LEFT}/@key{RIGHT}
 Switch to the next/previous allowed value of the field.  For this, you
 have to have specified allowed values for a property.
@@ -6138,15 +6138,15 @@ from the minibuffer:
 @kindex M-v
 @kindex C-v
 @kindex mouse-1
-@kindex S-@key{RIGHT}
-@kindex S-@key{LEFT}
-@kindex S-@key{DOWN}
-@kindex S-@key{UP}
-@kindex M-S-@key{RIGHT}
-@kindex M-S-@key{LEFT}
-@kindex @key{RET}
-@kindex M-S-@key{DOWN}
-@kindex M-S-@key{UP}
+@kindex S-RIGHT
+@kindex S-LEFT
+@kindex S-DOWN
+@kindex S-UP
+@kindex M-S-RIGHT
+@kindex M-S-LEFT
+@kindex RET
+@kindex M-S-DOWN
+@kindex M-S-UP
 
 @example
 @key{RET}              @r{Choose date at cursor in calendar.}
@@ -10427,7 +10427,7 @@ details see the documentation of CD@LaTeX{} mode):
 @item
 Environment templates can be inserted with @kbd{C-c @{}.
 @item
-@kindex @key{TAB}
+@kindex TAB
 The @key{TAB} key will do template expansion if the cursor is inside a
 @LaTeX{} fragment@footnote{Org mode has a method to test if the cursor is
 inside such a fragment, see the documentation of the function
@@ -17127,9 +17127,9 @@ Active key bindings in code blocks:
 @item @kbd{C-c C-c} @tab @code{org-babel-execute-src-block}
 @kindex C-c C-o
 @item @kbd{C-c C-o} @tab @code{org-babel-open-src-block-result}
-@kindex M-@key{UP}
+@kindex M-UP
 @item @kbd{M-@key{UP}}    @tab @code{org-babel-load-in-session}
-@kindex M-@key{DOWN}
+@kindex M-DOWN
 @item @kbd{M-@key{DOWN}}  @tab @code{org-babel-switch-to-session}
 @end multitable
 
@@ -17286,7 +17286,7 @@ is involved.  Such mode-specific hot keys have become an integral part of
 Emacs and Org provides several shortcuts.
 
 @table @kbd
-@kindex M-@key{TAB}
+@kindex M-TAB
 @item M-@key{TAB}
 Complete word at point
 @itemize @bullet

@@ -130,7 +130,7 @@ various @dfn{input methods}, typically one for each script or
 language, which make it easier to type characters in the script.
 @xref{Input Methods}.
 
-@kindex C-x @key{RET}
+@kindex C-x RET
   The prefix key @kbd{C-x @key{RET}} is used for commands that pertain
 to multibyte characters, coding systems, and input methods.
 
@@ -577,7 +577,7 @@ Display a list of all the supported input methods.
 
 @findex set-input-method
 @vindex current-input-method
-@kindex C-x @key{RET} C-\
+@kindex C-x RET C-\
   To choose an input method for the current buffer, use @kbd{C-x
 @key{RET} C-\} (@code{set-input-method}).  This command reads the
 input method name from the minibuffer; the name normally starts with the
@@ -1021,7 +1021,7 @@ Convert a region that was decoded using coding system @var{wrong},
 decoding it using coding system @var{right} instead.
 @end table
 
-@kindex C-x @key{RET} f
+@kindex C-x RET f
 @findex set-buffer-file-coding-system
   The command @kbd{C-x @key{RET} f}
 (@code{set-buffer-file-coding-system}) sets the file coding system for
@@ -1043,7 +1043,7 @@ current buffer.  For example, @kbd{C-x @key{RET} f dos @key{RET}} will
 cause Emacs to save the current buffer's text with DOS-style
 carriage-return linefeed line endings.
 
-@kindex C-x @key{RET} c
+@kindex C-x RET c
 @findex universal-coding-system-argument
   Another way to specify the coding system for a file is when you visit
 the file.  First use the command @kbd{C-x @key{RET} c}
@@ -1077,7 +1077,7 @@ then save it in a file.  Selecting a language environment typically sets
 this variable to a good choice of default coding system for that language
 environment.
 
-@kindex C-x @key{RET} r
+@kindex C-x RET r
 @findex revert-buffer-with-coding-system
   If you visit a file with a wrong coding system, you can correct this
 with @kbd{C-x @key{RET} r} (@code{revert-buffer-with-coding-system}).
@@ -1113,8 +1113,8 @@ subprocess input and output in the current buffer
 (@code{set-buffer-process-coding-system}).
 @end table
 
-@kindex C-x @key{RET} x
-@kindex C-x @key{RET} X
+@kindex C-x RET x
+@kindex C-x RET X
 @findex set-selection-coding-system
 @findex set-next-selection-coding-system
   The command @kbd{C-x @key{RET} x} (@code{set-selection-coding-system})
@@ -1139,7 +1139,7 @@ list of some of these symbols, Emacs tries only the request types in
 the list, in order, until one of them succeeds, or until the list is
 exhausted.
 
-@kindex C-x @key{RET} p
+@kindex C-x RET p
 @findex set-buffer-process-coding-system
   The command @kbd{C-x @key{RET} p} (@code{set-buffer-process-coding-system})
 specifies the coding system for input and output to a subprocess.  This
@@ -1181,7 +1181,7 @@ names (@code{set-file-name-coding-system}).
 @end table
 
 @findex set-file-name-coding-system
-@kindex C-x @key{RET} F
+@kindex C-x RET F
 @cindex file names with non-@acronym{ASCII} characters
   The command @kbd{C-x @key{RET} F} (@code{set-file-name-coding-system})
 specifies a coding system to use for encoding file @emph{names}.  It
@@ -1247,7 +1247,7 @@ Use coding system @var{coding} for keyboard input
 (@code{set-keyboard-coding-system}).
 @end table
 
-@kindex C-x @key{RET} t
+@kindex C-x RET t
 @findex set-terminal-coding-system
   The command @kbd{C-x @key{RET} t} (@code{set-terminal-coding-system})
 specifies the coding system for terminal output.  If you specify a
@@ -1264,7 +1264,7 @@ Emacs knows which characters the terminal can actually handle.
 Emacs can deduce the proper coding system from your terminal type or
 your locale specification (@pxref{Language Environments}).
 
-@kindex C-x @key{RET} k
+@kindex C-x RET k
 @findex set-keyboard-coding-system
 @vindex keyboard-coding-system
   The command @kbd{C-x @key{RET} k} (@code{set-keyboard-coding-system}),
@@ -1843,8 +1843,8 @@ character positions may look discontinuous if the region spans
 reordered text.  This is normal and similar to the behavior of other
 programs that support bidirectional text.
 
-@kindex @key{RIGHT}@r{, and bidirectional text}
-@kindex @key{LEFT}@r{, and bidirectional text}
+@kindex RIGHT@r{, and bidirectional text}
+@kindex LEFT@r{, and bidirectional text}
 @findex right-char@r{, and bidirectional text}
 @findex left-char@r{, and bidirectional text}
   Cursor motion commands bound to arrow keys, such as @key{LEFT} and

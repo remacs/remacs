@@ -64,8 +64,8 @@ Run the last keyboard macro on each line that begins in the region
 (@code{apply-macro-to-region-lines}).
 @end table
 
-@kindex @key{F3}
-@kindex @key{F4}
+@kindex F3
+@kindex F4
 @findex kmacro-start-macro-or-insert-counter
 @findex kmacro-end-or-call-macro
 @findex kmacro-end-and-call-macro
@@ -481,7 +481,7 @@ Edit the last 300 keystrokes as a keyboard macro
 
 @findex kmacro-edit-macro
 @kindex C-x C-k C-e
-@kindex C-x C-k @key{RET}
+@kindex C-x C-k RET
   You can edit the last keyboard macro by typing @kbd{C-x C-k C-e} or
 @kbd{C-x C-k @key{RET}} (@code{kmacro-edit-macro}).  This formats the
 macro definition in a buffer and enters a specialized major mode for
@@ -505,7 +505,7 @@ keyboard input that you would use to invoke the macro---@kbd{C-x e} or
 @section Stepwise Editing a Keyboard Macro
 
 @findex kmacro-step-edit-macro
-@kindex C-x C-k @key{SPC}
+@kindex C-x C-k SPC
   You can interactively replay and edit the last keyboard
 macro, one command at a time, by typing @kbd{C-x C-k @key{SPC}}
 (@code{kmacro-step-edit-macro}).  Unless you quit the macro using

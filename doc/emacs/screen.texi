@@ -304,7 +304,7 @@ the full command name and documentation for a menu item, type
 @kbd{C-h k}, and then select the menu bar with the mouse in the usual
 way (@pxref{Key Help}).
 
-@kindex @key{F10}
+@kindex F10
 @findex menu-bar-open
 @cindex menu bar access using keyboard
   Instead of using the mouse, you can also invoke the first menu bar

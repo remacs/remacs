@@ -1966,7 +1966,7 @@ then specifying @file{/tmp/foo*bar} will visit only
 @cindex file name caching
 @cindex cache of file names
 @pindex find
-@kindex C-@key{TAB}
+@kindex C-TAB
 @findex file-cache-minibuffer-complete
   You can use the @dfn{file name cache} to make it easy to locate a
 file by name, without having to remember exactly where it is located.
