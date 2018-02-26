@@ -739,6 +739,8 @@ See the documentation of `create-fontset-from-fontset-spec' for the format.")
 ;;;; macOS 10.7+.
 
 (defvar ns-version-string)
+(defvar mouse-wheel-scroll-amount)
+(defvar mouse-wheel-progressive-speed)
 
 ;; FIXME: This doesn't look right.  Is there a better way to do this
 ;; that keeps customize happy?
