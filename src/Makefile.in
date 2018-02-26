@@ -447,6 +447,10 @@ otherobj= $(TERMCAP_OBJ) $(PRE_ALLOC_OBJ) $(GMALLOC_OBJ) $(RALLOC_OBJ) \
 FIRSTFILE_OBJ=@FIRSTFILE_OBJ@
 ALLOBJS = $(FIRSTFILE_OBJ) $(VMLIMIT_OBJ) $(obj) -lremacs $(otherobj)
 
+# Must be first, before dep inclusion!
+all: remacs$(EXEEXT) $(OTHER_FILES)
+.PHONY: all
+
 AUTO_DEPEND = @AUTO_DEPEND@
 DEPDIR = deps
 ifeq ($(AUTO_DEPEND),yes)
@@ -456,10 +460,6 @@ else
   DEPFLAGS =
   include $(srcdir)/deps.mk
 endif
-
-all: remacs$(EXEEXT) $(OTHER_FILES)
-
-.PHONY: all
 
 ## This is the list of all Lisp files that might be loaded into the
 ## dumped Emacs.  Some of them are not loaded on all platforms, but
