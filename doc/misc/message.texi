@@ -1378,7 +1378,7 @@ Delete all text in the body of the message that is outside the region
 (@code{message-delete-not-region}).
 
 @item M-@key{RET}
-@kindex M-@key{RET}
+@kindex M-RET
 @findex message-newline-and-reformat
 Insert four newlines, and then reformat if inside quoted text.
 
@@ -1407,7 +1407,7 @@ Rename the buffer (@code{message-rename-buffer}).  If given a prefix,
 prompt for a new buffer name.
 
 @item @key{TAB}
-@kindex @key{TAB}
+@kindex TAB
 @findex message-tab
 @vindex message-tab-body-function
 If @code{message-tab-body-function} is non-@code{nil}, execute the

@@ -123,8 +123,8 @@ or moving point there and typing @kbd{@key{RET}}.  For example, the group
 names like @samp{[Editing]} are links; activating one of these links
 brings up the customization buffer for that group.
 
-@kindex @key{TAB} @r{(customization buffer)}
-@kindex @key{S-TAB} @r{(customization buffer)}
+@kindex TAB @r{(customization buffer)}
+@kindex S-TAB @r{(customization buffer)}
 @findex widget-forward
 @findex widget-backward
   In the customization buffer, you can type @kbd{@key{TAB}}
@@ -243,7 +243,7 @@ You don't have to worry about specifying a value that is not valid;
 the @samp{Set for Current Session} operation checks for validity and
 will not install an unacceptable value.
 
-@kindex M-@key{TAB} @r{(customization buffer)}
+@kindex M-TAB @r{(customization buffer)}
 @kindex C-M-i @r{(customization buffer)}
 @findex widget-complete
   While editing certain kinds of values, such as file names, directory

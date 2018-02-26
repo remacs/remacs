@@ -241,15 +241,15 @@ commands:
 @table @kbd
 @item M-@key{UP}
 @itemx M-@key{DOWN}
-@kindex M-@key{UP}
-@kindex M-@key{DOWN}
+@kindex M-UP
+@kindex M-DOWN
 @findex newsticker-group-shift-feed-up
 @findex newsticker-group-shift-feed-down
 Shift the currently selected feed up and down within its group.
 @item M-S-@key{UP}
 @itemx M-S-@key{DOWN}
-@kindex M-S-@key{UP}
-@kindex M-S-@key{DOWN}
+@kindex M-S-UP
+@kindex M-S-DOWN
 @findex newsticker-group-shift-group-up
 @findex newsticker-group-shift-group-down
 Shift the currently selected group up and down within its parent group.

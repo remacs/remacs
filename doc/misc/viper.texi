@@ -369,7 +369,7 @@ toggles Viperization of Emacs on and off.
 @section States in Viper
 
 @kindex C-z
-@kindex @key{ESC}
+@kindex ESC
 @kindex i
 @cindex Emacs state
 @cindex Vi state
@@ -2671,8 +2671,8 @@ purpose of mouse search and mouse insert.  By default, this is set to
 @end table
 @kindex S-mouse-1
 @kindex S-mouse-2
-@kindex @key{META} @key{SHIFT} button1up
-@kindex @key{META} @key{SHIFT} button2up
+@kindex META SHIFT button1up
+@kindex META SHIFT button2up
 @vindex viper-multiclick-timeout
 @findex viper-mouse-click-insert-word
 @findex viper-mouse-click-search-word
@@ -3423,14 +3423,14 @@ in your Viper customization file.
 @kindex f<char>
 @kindex |
 @kindex 0
-@kindex @key{CR}
+@kindex CR
 @kindex +
 @kindex -
 @kindex ^
 @kindex $
 @kindex C-p
-@kindex @key{LF}
-@kindex @key{SPC}
+@kindex LF
+@kindex SPC
 @kindex C-n
 @kindex C-h
 @kindex h
@@ -4447,8 +4447,8 @@ already bound to something else.
 @end table
 @kindex S-mouse-1
 @kindex S-mouse-2
-@kindex @key{META} button1up
-@kindex @key{META} button2up
+@kindex META button1up
+@kindex META button2up
 
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License

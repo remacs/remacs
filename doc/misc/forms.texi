@@ -226,9 +226,9 @@ Jump to the last record (@code{forms-last-record}).  This command also
 recalculates the number of records in the data file.
 
 @findex forms-next-field
-@kindex @key{TAB}
+@kindex TAB
 @item @key{TAB}
-@kindex C-c @key{TAB}
+@kindex C-c TAB
 @itemx C-c @key{TAB}
 Jump to the next field in the current record (@code{forms-next-field}).
 With a numeric argument @var{n}, jump forward @var{n} fields.  If this command
@@ -263,14 +263,14 @@ prompted for confirmation before the record is deleted unless a numeric
 argument has been provided.
 
 @findex forms-search-forward
-@kindex C-c C-s @var{regexp} @key{RET}
+@kindex C-c C-s @var{regexp} RET
 @item C-c C-s @var{regexp} @key{RET}
 Search forward for @var{regexp} in all records following this one
 (@code{forms-search-forward}).  If found, this record is shown.
 If you give an empty argument, the previous regexp is used again.
 
 @findex forms-search-backward
-@kindex C-c C-r @var{regexp} @key{RET}
+@kindex C-c C-r @var{regexp} RET
 @item C-c C-r @var{regexp} @key{RET}
 Search backward for @var{regexp} in all records following this one
 (@code{forms-search-backward}).  If found, this record is shown.
@@ -334,23 +334,23 @@ The following function key definitions are set up in Forms mode
 (whether read-only or not):
 
 @table @kbd
-@kindex @key{NEXT}
+@kindex NEXT
 @item @key{NEXT}
 forms-next-record
 
-@kindex @key{PRIOR}
+@kindex PRIOR
 @item @key{PRIOR}
 forms-prev-record
 
-@kindex @key{BEGIN}
+@kindex BEGIN
 @item @key{BEGIN}
 forms-first-record
 
-@kindex @key{END}
+@kindex END
 @item @key{END}
 forms-last-record
 
-@kindex S-@key{TAB}
+@kindex S-TAB
 @findex forms-prev-field
 @item S-@key{TAB}
 forms-prev-field

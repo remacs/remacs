@@ -124,7 +124,7 @@ bindings to manage Sieve scripts remotely. @xref{Managing Sieve}.
 @table @kbd
 
 @item C-c RET
-@kindex C-c @key{RET}
+@kindex C-c RET
 @findex sieve-manage
 @cindex manage remote sieve script
 Open a connection to a remote server using the Managesieve protocol.
@@ -190,7 +190,7 @@ Remove currently highlighted script.
 @item RET
 @item mouse-2
 @item f
-@kindex @key{RET}
+@kindex RET
 @kindex mouse-2
 @kindex f
 @findex sieve-edit-script

@@ -154,7 +154,7 @@ deego: fsbot rules!
 
 @cindex nick completion
 @cindex completion of nicks
-@kindex @key{TAB}
+@kindex TAB
 Since this is so common, you can use @key{TAB} to do nick completion.
 
 @node Getting started with rcirc
@@ -215,7 +215,7 @@ When you have answered these questions, @code{rcirc} will create a server
 buffer, which will be named something like @file{*irc.freenode.net*},
 and a channel buffer for each of the channels you wanted to join.
 
-@kindex @key{RET}
+@kindex RET
 @cindex talking
 @cindex communicating
 To talk in a channel, just type what you want to say in a channel
@@ -378,7 +378,7 @@ network.  A new buffer will be created for this conversation.  It works
 like a channel with only two members.  (Also @code{/query fsbot}.)
 
 @item C-c @key{RET}
-@kindex C-c @key{RET}
+@kindex C-c RET
 @cindex /msg
 @cindex single message
 @cindex message sending
@@ -617,7 +617,7 @@ daunting task.  This chapters tells you how @code{rcirc} can help.
 @cindex modeline
 
 @comment This section copied to the Getting started with rcirc section
-@kindex C-c C-@key{SPC}
+@kindex C-c C-SPC
 @vindex rcirc-track-minor-mode
 @cindex switching channels
 @cindex tracking activity
@@ -663,7 +663,7 @@ Low priority channels have the modeline indicator ``LowPri''.
 @kbd{C-c C-@key{SPC}} will not switch to low priority channels unless
 you use the @kbd{C-u} prefix.
 
-@kindex C-c @key{TAB}
+@kindex C-c TAB
 @cindex ignored channels
 If you prefer a channel to never show up in the modeline, then you
 have to ignore it.  Use @kbd{C-c @key{TAB}} to ignore the current

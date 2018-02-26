@@ -543,12 +543,12 @@ The command @kbd{rb} undoes this.
 @item p
 @itemx @key{DEL}
 @kindex p
-@kindex @key{DEL}
+@kindex DEL
 Makes the previous difference region current.
 @item n
 @itemx @key{SPC}
 @kindex n
-@kindex @key{SPC}
+@kindex SPC
 Makes the next difference region current.
 
 @item j

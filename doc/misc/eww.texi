@@ -98,7 +98,7 @@ web page hit @kbd{g} (@code{eww-reload}).  Pressing @kbd{w}
 (@code{eww-copy-page-url}) will copy the current URL to the kill ring.
 
 @findex eww-open-in-new-buffer
-@kindex M-@key{RET}
+@kindex M-RET
   The @kbd{M-@key{RET}} command (@code{eww-open-in-new-buffer}) opens the
 URL at point in a new EWW buffer, akin to opening a link in a new
 ``tab'' in other browsers.

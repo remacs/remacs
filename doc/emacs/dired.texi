@@ -136,7 +136,7 @@ buffers.  The keys @kbd{C-n} and @kbd{C-p} are redefined to put the
 cursor at the beginning of the file name on the line, rather than at
 the beginning of the line.
 
-@kindex @key{SPC} @r{(Dired)}
+@kindex SPC @r{(Dired)}
   For extra convenience, @key{SPC} and @kbd{n} in Dired are equivalent
 to @kbd{C-n}.  @kbd{p} is equivalent to @kbd{C-p}.  (Moving by lines
 is so common in Dired that it deserves to be easy to type.)  @key{DEL}
@@ -204,7 +204,7 @@ region for deletion; in this case, the command does not move point,
 and ignores any prefix argument.
 
 @kindex u @r{(Dired deletion)}
-@kindex @key{DEL} @r{(Dired)}
+@kindex DEL @r{(Dired)}
   The reason for flagging files for deletion, rather than deleting
 files immediately, is to reduce the danger of deleting a file
 accidentally.  Until you direct Dired to delete the flagged files, you
@@ -348,7 +348,7 @@ and supplying that file name (@code{dired-find-file}).  @xref{Visiting}.
 
 @item @key{RET}
 @itemx e
-@kindex @key{RET} @r{(Dired)}
+@kindex RET @r{(Dired)}
 @kindex e @r{(Dired)}
 Equivalent to @kbd{f}.
 
@@ -464,7 +464,7 @@ unmark the previous @minus{}@var{n} files).
 
 @item @key{DEL}
 @itemx * @key{DEL}
-@kindex * @key{DEL} @r{(Dired)}
+@kindex * DEL @r{(Dired)}
 @findex dired-unmark-backward
 @cindex unmarking files (in Dired)
 Move point to previous line and remove any mark on that line
@@ -485,7 +485,7 @@ Remove all marks from all the files in this Dired buffer
 @item * ? @var{markchar}
 @itemx M-@key{DEL}
 @kindex * ? @r{(Dired)}
-@kindex M-@key{DEL} @r{(Dired)}
+@kindex M-DEL @r{(Dired)}
 @findex dired-unmark-all-files
 Remove all marks that use the character @var{markchar}
 (@code{dired-unmark-all-files}).  If invoked with @kbd{M-@key{DEL}},

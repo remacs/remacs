@@ -40,7 +40,7 @@ adds the character to the buffer at point.  Insertion moves point
 forward, so that point remains just after the inserted text.
 @xref{Point}.
 
-@kindex @key{RET}
+@kindex RET
 @kindex C-j
 @cindex newline
 @c @findex electric-indent-just-newline
@@ -182,7 +182,7 @@ keyboard commands that move point in more sophisticated ways.
 Move forward one character (@code{forward-char}).
 
 @item @key{RIGHT}
-@kindex @key{RIGHT}
+@kindex RIGHT
 @findex right-char
 This command (@code{right-char}) behaves like @kbd{C-f}, except when
 point is in a right-to-left paragraph (@pxref{Bidirectional Editing}).
@@ -193,7 +193,7 @@ point is in a right-to-left paragraph (@pxref{Bidirectional Editing}).
 Move backward one character (@code{backward-char}).
 
 @item @key{LEFT}
-@kindex @key{LEFT}
+@kindex LEFT
 @findex left-char
 This command (@code{left-char}) behaves like @kbd{C-b}, except if the
 current paragraph is right-to-left (@pxref{Bidirectional Editing}).
@@ -201,7 +201,7 @@ current paragraph is right-to-left (@pxref{Bidirectional Editing}).
 @item C-n
 @itemx @key{DOWN}
 @kindex C-n
-@kindex @key{DOWN}
+@kindex DOWN
 @findex next-line
 Move down one screen line (@code{next-line}).  This command attempts
 to keep the horizontal position unchanged, so if you start in the
@@ -210,7 +210,7 @@ middle of one line, you move to the middle of the next.
 @item C-p
 @itemx @key{UP}
 @kindex C-p
-@kindex @key{UP}
+@kindex UP
 @findex previous-line
 Move up one screen line (@code{previous-line}).  This command
 preserves position within the line, like @kbd{C-n}.
@@ -218,14 +218,14 @@ preserves position within the line, like @kbd{C-n}.
 @item C-a
 @itemx @key{Home}
 @kindex C-a
-@kindex @key{HOME}
+@kindex HOME
 @findex move-beginning-of-line
 Move to the beginning of the line (@code{move-beginning-of-line}).
 
 @item C-e
 @itemx @key{End}
 @kindex C-e
-@kindex @key{END}
+@kindex END
 @findex move-end-of-line
 Move to the end of the line (@code{move-end-of-line}).
 
@@ -234,8 +234,8 @@ Move forward one word (@code{forward-word}).  @xref{Words}.
 
 @item C-@key{RIGHT}
 @itemx M-@key{RIGHT}
-@kindex C-@key{RIGHT}
-@kindex M-@key{RIGHT}
+@kindex C-RIGHT
+@kindex M-RIGHT
 @findex right-word
 This command (@code{right-word}) behaves like @kbd{M-f}, except it
 moves @emph{backward} by one word if the current paragraph is
@@ -246,8 +246,8 @@ Move backward one word (@code{backward-word}).  @xref{Words}.
 
 @item C-@key{LEFT}
 @itemx M-@key{LEFT}
-@kindex C-@key{LEFT}
-@kindex M-@key{LEFT}
+@kindex C-LEFT
+@kindex M-LEFT
 @findex left-word
 This command (@code{left-word}) behaves like @kbd{M-b}, except it
 moves @emph{forward} by one word if the current paragraph is
@@ -277,7 +277,7 @@ On graphical displays, @kbd{C-@key{HOME}} does the same.
 
 @item M->
 @kindex M->
-@kindex C-@key{END}
+@kindex C-END
 @findex end-of-buffer
 Move to the end of the buffer (@code{end-of-buffer}).  On graphical
 displays, @kbd{C-@key{END}} does the same.
@@ -314,7 +314,7 @@ also specify @var{n} by giving @kbd{M-g M-g} a numeric prefix argument.
 a plain prefix argument.
 
 @item M-g @key{TAB}
-@kindex M-g @key{TAB}
+@kindex M-g TAB
 @findex move-to-column
 Read a number @var{n} and move to column @var{n} in the current line.
 Column 0 is the leftmost column.  If called with a prefix argument,

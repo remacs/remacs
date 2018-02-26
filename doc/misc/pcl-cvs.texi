@@ -677,7 +677,7 @@ put in @samp{cvs-status-mode}.
 @cindex Movement Commands
 @findex cvs-mode-next-line
 @findex cvs-mode-previous-line
-@kindex @key{SPC}@r{--Move down one file}
+@kindex SPC@r{--Move down one file}
 @kindex n@r{--Move down one file}
 @kindex p@r{--Move up one file}
 
@@ -705,8 +705,8 @@ This key moves one file backward, towards the beginning of the buffer
 @kindex m@r{--marking a file}
 @kindex M@r{--marking all files}
 @kindex u@r{--unmark a file}
-@kindex @key{ESC} @key{DEL}@r{--unmark all files}
-@kindex @key{DEL}@r{--unmark previous file}
+@kindex ESC DEL@r{--unmark all files}
+@kindex DEL@r{--unmark previous file}
 @kindex %@r{--mark files matching regexp}
 @kindex S@r{--mark files in a particular state}
 @kindex T@r{--toggle marks}

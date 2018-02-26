@@ -79,10 +79,10 @@ Scroll backward (@code{scroll-down-command}).
 
 @kindex C-v
 @kindex M-v
-@kindex @key{next}
-@kindex @key{prior}
-@kindex @key{PageDown}
-@kindex @key{PageUp}
+@kindex next
+@kindex prior
+@kindex PageDown
+@kindex PageUp
 @findex scroll-up-command
 @findex scroll-down-command
   @kbd{C-v} (@code{scroll-up-command}) scrolls forward by nearly the
@@ -447,8 +447,8 @@ it.  @xref{Disabling}.
 @cindex mode, View
 
 @kindex s @r{(View mode)}
-@kindex @key{SPC} @r{(View mode)}
-@kindex @key{DEL} @r{(View mode)}
+@kindex SPC @r{(View mode)}
+@kindex DEL @r{(View mode)}
   View mode is a minor mode that lets you scan a buffer by sequential
 screenfuls.  It provides commands for scrolling through the buffer
 conveniently but not for changing it.  Apart from the usual Emacs

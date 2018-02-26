@@ -79,7 +79,7 @@ Set the mark at point if the mark is inactive, then move point.
 @xref{Shift Selection}.
 @end table
 
-@kindex C-@key{SPC}
+@kindex C-SPC
 @kindex C-@@
 @findex set-mark-command
   The most common way to set the mark is with @kbd{C-@key{SPC}}
@@ -309,7 +309,7 @@ Move point to where the mark was, and restore the mark from the ring
 of former marks.
 @end table
 
-@kindex C-@key{SPC} C-@key{SPC}
+@kindex C-SPC C-SPC
   The command @kbd{C-@key{SPC} C-@key{SPC}} is handy when you want to
 use the mark to remember a position to which you may wish to return.
 It pushes the current point onto the mark ring, without activating the
@@ -320,7 +320,7 @@ and the second @kbd{C-@key{SPC}} deactivates it.  (When Transient Mark
 mode is off, @kbd{C-@key{SPC} C-@key{SPC}} instead activates Transient
 Mark mode temporarily; @pxref{Disabled Transient Mark}.)
 
-@kindex C-u C-@key{SPC}
+@kindex C-u C-SPC
   To return to a marked position, use @code{set-mark-command} with a
 prefix argument: @kbd{C-u C-@key{SPC}}.  This moves point to where the
 mark was, and deactivates the mark if it was active.  Each subsequent
@@ -365,7 +365,7 @@ of buffers that you have been in, and, for each buffer, a place where
 you set the mark.  The length of the global mark ring is controlled by
 @code{global-mark-ring-max}, and is 16 by default.
 
-@kindex C-x C-@key{SPC}
+@kindex C-x C-SPC
 @findex pop-global-mark
   The command @kbd{C-x C-@key{SPC}} (@code{pop-global-mark}) jumps to
 the buffer and position of the latest entry in the global ring.  It also
@@ -447,7 +447,7 @@ using @kbd{C-@key{SPC} C-@key{SPC}} or @kbd{C-u C-x C-x}.
 
 @table @kbd
 @item C-@key{SPC} C-@key{SPC}
-@kindex C-@key{SPC} C-@key{SPC}@r{, disabling Transient Mark}
+@kindex C-SPC C-SPC@r{, disabling Transient Mark}
 Set the mark at point (like plain @kbd{C-@key{SPC}}) and enable
 Transient Mark mode just once, until the mark is deactivated.  (This
 is not really a separate command; you are using the @kbd{C-@key{SPC}}
