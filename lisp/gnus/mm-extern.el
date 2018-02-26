@@ -86,7 +86,7 @@
   (let (mm-extern-anonymous)
     (mm-extern-anon-ftp handle)))
 
-(declare-function message-goto-body "message" ())
+(declare-function message-goto-body "message" (&optional interactive))
 
 (defun mm-extern-mail-server (handle)
   (require 'message)
