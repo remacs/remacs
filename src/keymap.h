@@ -33,9 +33,15 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #define KEYMAPP(m) (!NILP (get_keymap (m, false, false)))
 extern Lisp_Object current_global_map;
+extern void set_where_is_cache(Lisp_Object);
+extern Lisp_Object get_where_is_cache();
+extern void set_where_is_cache_keymaps(Lisp_Object);
+extern Lisp_Object get_where_is_cache_keymaps();
 extern char *push_key_description (EMACS_INT, char *);
 extern Lisp_Object access_keymap (Lisp_Object, Lisp_Object, bool, bool, bool);
 extern Lisp_Object get_keymap (Lisp_Object, bool, bool);
+extern bool keymap_memberp(Lisp_Object, Lisp_Object);
+extern Lisp_Object keymap_parent (Lisp_Object, bool);
 extern void describe_map_tree (Lisp_Object, bool, Lisp_Object, Lisp_Object,
 			       const char *, bool, bool, bool, bool);
 extern ptrdiff_t current_minor_maps (Lisp_Object **, Lisp_Object **);

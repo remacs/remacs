@@ -56,7 +56,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "window.h"
 
 /* Actually allocate storage for these variables.  */
-
 Lisp_Object current_global_map;	/* Current global keymap.  */
 
 Lisp_Object global_map;		/* Default global key bindings.  */
@@ -80,11 +79,6 @@ static Lisp_Object exclude_keys;
 
 /* Pre-allocated 2-element vector for Fcommand_remapping to use.  */
 static Lisp_Object command_remapping_vector;
-
-/* Hash table used to cache a reverse-map to speed up calls to where-is.  */
-static Lisp_Object where_is_cache;
-/* Which keymaps are reverse-stored in the cache.  */
-static Lisp_Object where_is_cache_keymaps;
 
 static Lisp_Object store_in_keymap (Lisp_Object, Lisp_Object, Lisp_Object);
 
@@ -188,86 +182,6 @@ get_keymap (Lisp_Object object, bool error_if_not_keymap, bool autoload)
   if (error_if_not_keymap)
     wrong_type_argument (Qkeymapp, object);
   return Qnil;
-}
-
-/* Return the parent map of KEYMAP, or nil if it has none.
-   We assume that KEYMAP is a valid keymap.  */
-
-static Lisp_Object
-keymap_parent (Lisp_Object keymap, bool autoload)
-{
-  Lisp_Object list;
-
-  keymap = get_keymap (keymap, 1, autoload);
-
-  /* Skip past the initial element `keymap'.  */
-  list = XCDR (keymap);
-  for (; CONSP (list); list = XCDR (list))
-    {
-      /* See if there is another `keymap'.  */
-      if (KEYMAPP (list))
-	return list;
-    }
-
-  return get_keymap (list, 0, autoload);
-}
-
-DEFUN ("keymap-parent", Fkeymap_parent, Skeymap_parent, 1, 1, 0,
-       doc: /* Return the parent keymap of KEYMAP.
-If KEYMAP has no parent, return nil.  */)
-  (Lisp_Object keymap)
-{
-  return keymap_parent (keymap, 1);
-}
-
-/* Check whether MAP is one of MAPS parents.  */
-static bool
-keymap_memberp (Lisp_Object map, Lisp_Object maps)
-{
-  if (NILP (map)) return 0;
-  while (KEYMAPP (maps) && !EQ (map, maps))
-    maps = keymap_parent (maps, 0);
-  return (EQ (map, maps));
-}
-
-/* Set the parent keymap of MAP to PARENT.  */
-
-DEFUN ("set-keymap-parent", Fset_keymap_parent, Sset_keymap_parent, 2, 2, 0,
-       doc: /* Modify KEYMAP to set its parent map to PARENT.
-Return PARENT.  PARENT should be nil or another keymap.  */)
-  (Lisp_Object keymap, Lisp_Object parent)
-{
-  Lisp_Object list, prev;
-
-  /* Flush any reverse-map cache.  */
-  where_is_cache = Qnil; where_is_cache_keymaps = Qt;
-
-  keymap = get_keymap (keymap, 1, 1);
-
-  if (!NILP (parent))
-    {
-      parent = get_keymap (parent, 1, 0);
-
-      /* Check for cycles.  */
-      if (keymap_memberp (keymap, parent))
-	error ("Cyclic keymap inheritance");
-    }
-
-  /* Skip past the initial element `keymap'.  */
-  prev = keymap;
-  while (1)
-    {
-      list = XCDR (prev);
-      /* If there is a parent keymap here, replace it.
-	 If we came to the end, add the parent in PREV.  */
-      if (!CONSP (list) || KEYMAPP (list))
-	{
-	  CHECK_IMPURE (prev, XCONS (prev));
-	  XSETCDR (prev, parent);
-	  return parent;
-	}
-      prev = list;
-    }
 }
 
 
@@ -663,8 +577,8 @@ static Lisp_Object
 store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
 {
   /* Flush any reverse-map cache.  */
-  where_is_cache = Qnil;
-  where_is_cache_keymaps = Qt;
+  set_where_is_cache(Qnil);
+  set_where_is_cache_keymaps(Qt);
 
   if (EQ (idx, Qkeymap))
     error ("`keymap' is reserved for embedded parent maps");
@@ -2177,23 +2091,23 @@ where_is_internal (Lisp_Object definition, Lisp_Object keymaps,
   if (nomenus && !noindirect)
     {
       /* Check heuristic-consistency of the cache.  */
-      if (NILP (Fequal (keymaps, where_is_cache_keymaps)))
-	where_is_cache = Qnil;
+      if (NILP (Fequal (keymaps, get_where_is_cache_keymaps())))
+	set_where_is_cache(Qnil);
 
-      if (NILP (where_is_cache))
+      if (NILP (get_where_is_cache()))
 	{
 	  /* We need to create the cache.  */
-	  where_is_cache = Fmake_hash_table (0, NULL);
-	  where_is_cache_keymaps = Qt;
+	  set_where_is_cache(Fmake_hash_table (0, NULL));
+	  set_where_is_cache_keymaps(Qt);
 	}
       else
 	/* We can reuse the cache.  */
-	return Fgethash (definition, where_is_cache, Qnil);
+	return Fgethash (definition, get_where_is_cache(), Qnil);
     }
   else
     /* Kill the cache so that where_is_internal_1 doesn't think
        we're filling it up.  */
-    where_is_cache = Qnil;
+    set_where_is_cache(Qnil);
 
   found = keymaps;
   while (CONSP (found))
@@ -2247,10 +2161,10 @@ where_is_internal (Lisp_Object definition, Lisp_Object keymaps,
     { /* Remember for which keymaps this cache was built.
 	 We do it here (late) because we want to keep where_is_cache_keymaps
 	 set to t while the cache isn't fully filled.  */
-      where_is_cache_keymaps = keymaps;
+      set_where_is_cache_keymaps(keymaps);
       /* During cache-filling, data.sequences is not filled by
 	 where_is_internal_1.  */
-      return Fgethash (definition, where_is_cache, Qnil);
+      return Fgethash (definition, get_where_is_cache(), Qnil);
     }
   else
     return data.sequences;
@@ -2465,7 +2379,7 @@ where_is_internal_1 (Lisp_Object key, Lisp_Object binding, Lisp_Object args, voi
   /* End this iteration if this element does not match
      the target.  */
 
-  if (!(!NILP (where_is_cache)	/* everything "matches" during cache-fill.  */
+  if (!(!NILP (get_where_is_cache())	/* everything "matches" during cache-fill.  */
 	|| EQ (binding, definition)
 	|| (CONSP (definition) && !NILP (Fequal (binding, definition)))))
     /* Doesn't match.  */
@@ -2484,10 +2398,10 @@ where_is_internal_1 (Lisp_Object key, Lisp_Object binding, Lisp_Object args, voi
       sequence = append_key (this, key);
     }
 
-  if (!NILP (where_is_cache))
+  if (!NILP (get_where_is_cache()))
     {
-      Lisp_Object sequences = Fgethash (binding, where_is_cache, Qnil);
-      Fputhash (binding, Fcons (sequence, sequences), where_is_cache);
+      Lisp_Object sequences = Fgethash (binding, get_where_is_cache(), Qnil);
+      Fputhash (binding, Fcons (sequence, sequences), get_where_is_cache());
     }
   else
     d->sequences = Fcons (sequence, d->sequences);
@@ -3477,13 +3391,6 @@ be preferred.  */);
   command_remapping_vector = Fmake_vector (make_number (2), Qremap);
   staticpro (&command_remapping_vector);
 
-  where_is_cache_keymaps = Qt;
-  where_is_cache = Qnil;
-  staticpro (&where_is_cache);
-  staticpro (&where_is_cache_keymaps);
-
-  defsubr (&Skeymap_parent);
-  defsubr (&Sset_keymap_parent);
   defsubr (&Smap_keymap_internal);
   defsubr (&Smap_keymap);
   defsubr (&Scopy_keymap);

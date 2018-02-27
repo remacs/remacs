@@ -1,9 +1,10 @@
 //! Keymap support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, CHAR_META};
+use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, Lisp_Object,
+                 CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
-use remacs_sys::{Qkeymap, Qnil};
+use remacs_sys::{Qkeymap, Qnil, Qt};
 use remacs_sys::{access_keymap, get_keymap, maybe_quit};
 
 use data::aref;
@@ -14,6 +15,40 @@ use threads::ThreadState;
 #[inline]
 pub fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
+}
+
+/// Hash table used to cache a reverse-map to speed up calls to where-is.
+declare_GC_protected_static!(where_is_cache, Qnil);
+
+/// Allows the C code to get the value of `where_is_cache`
+#[no_mangle]
+pub extern "C" fn get_where_is_cache() -> Lisp_Object {
+    unsafe { where_is_cache }
+}
+
+/// Allows the C code to set the value of `where_is_cache`
+#[no_mangle]
+pub extern "C" fn set_where_is_cache(val: Lisp_Object) {
+    unsafe {
+        where_is_cache = val;
+    }
+}
+
+/// Which keymaps are reverse-stored in the cache.
+declare_GC_protected_static!(where_is_cache_keymaps, Qt);
+
+/// Allows the C code to get the value of `where_is_cache_keymaps`
+#[no_mangle]
+pub extern "C" fn get_where_is_cache_keymaps() -> Lisp_Object {
+    unsafe { where_is_cache_keymaps }
+}
+
+/// Allows the C code to set the value of `where_is_cache_keymaps`
+#[no_mangle]
+pub extern "C" fn set_where_is_cache_keymaps(val: Lisp_Object) {
+    unsafe {
+        where_is_cache_keymaps = val;
+    }
 }
 
 /// Construct and return a new keymap, of the form (keymap CHARTABLE . ALIST).
@@ -48,6 +83,86 @@ pub fn make_keymap(string: LispObject) -> LispObject {
 pub fn keymapp(object: LispObject) -> bool {
     let map = unsafe { LispObject::from_raw(get_keymap(object.to_raw(), false, false)) };
     map.is_not_nil()
+}
+
+/// Return the parent map of KEYMAP, or nil if it has none.
+/// We assume that KEYMAP is a valid keymap.
+#[no_mangle]
+pub extern "C" fn keymap_parent(keymap: Lisp_Object, autoload: bool) -> Lisp_Object {
+    let map = unsafe { LispObject::from_raw(get_keymap(keymap, true, autoload)) };
+    let mut current = LispObject::constant_nil();
+    for elt in map.iter_tails_safe() {
+        current = elt.cdr();
+        if keymapp(current) {
+            return current.to_raw();
+        }
+    }
+    unsafe { get_keymap(current.to_raw(), false, autoload) }
+}
+
+/// Return the parent keymap of KEYMAP.
+/// If KEYMAP has no parent, return nil.
+#[lisp_fn(name = "keymap-parent", c_name = "keymap_parent")]
+pub fn keymap_parent_lisp(keymap: LispObject) -> LispObject {
+    LispObject::from_raw(keymap_parent(keymap.to_raw(), true))
+}
+
+/// Check whether MAP is one of MAPS parents.
+#[no_mangle]
+pub extern "C" fn keymap_memberp(map: Lisp_Object, maps: Lisp_Object) -> bool {
+    let map = LispObject::from_raw(map);
+    let mut maps = LispObject::from_raw(maps);
+    if map.is_nil() {
+        return false;
+    }
+    while keymapp(maps) && map.ne(maps) {
+        maps = LispObject::from_raw(keymap_parent(maps.to_raw(), false));
+    }
+    map.eq(maps)
+}
+
+/// Modify KEYMAP to set its parent map to PARENT.
+/// Return PARENT.  PARENT should be nil or another keymap.
+#[lisp_fn]
+pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
+    // Flush any reverse-map cache
+    unsafe {
+        where_is_cache = Qnil;
+        where_is_cache_keymaps = Qt;
+    }
+
+    let mut parent = parent;
+    let keymap = unsafe { LispObject::from_raw(get_keymap(keymap.to_raw(), true, true)) };
+    if parent.is_not_nil() {
+        parent = unsafe { LispObject::from_raw(get_keymap(parent.to_raw(), true, false)) };
+
+        // Check for cycles
+        if keymap_memberp(keymap.to_raw(), parent.to_raw()) {
+            error!("Cyclic keymap inheritance");
+        }
+    }
+
+    // Skip past the initial element 'keymap'.
+    let mut prev = keymap.as_cons_or_error();
+    let mut list;
+
+    loop {
+        list = prev.cdr();
+
+        // If there is a parent keymap here, replace it.
+        // If we came to the end, add the parent in PREV.
+        match list.as_cons() {
+            None => break,
+            Some(cons) => if keymapp(list) {
+                break;
+            } else {
+                prev = cons;
+            },
+        }
+    }
+    prev.check_impure();
+    prev.set_cdr(parent);
+    parent
 }
 
 /// Return the prompt-string of a keymap MAP.
