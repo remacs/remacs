@@ -3046,6 +3046,9 @@ extract_data_from_object (Lisp_Object spec,
 #endif
     }
 
+  if (!STRINGP (object))
+    signal_error ("Invalid object argument",
+		  NILP (object) ? build_string ("nil") : object);
   return SSDATA (object);
 }
 
