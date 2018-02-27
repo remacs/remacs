@@ -477,6 +477,9 @@ wset_horizontal_scroll_bar_type (struct window *w, Lisp_Object val)
   w->horizontal_scroll_bar_type = val;
 }
 
+void
+wset_mode_line_height(struct window *w, int height);
+
 INLINE void
 wset_prev_buffers (struct window *w, Lisp_Object val)
 {
@@ -489,6 +492,10 @@ wset_next_buffers (struct window *w, Lisp_Object val)
   w->next_buffers = val;
 }
 
+struct glyph_matrix*
+wget_current_matrix(const struct window *w);
+int
+wget_mode_line_height(const struct window *w);
 Lisp_Object
 wget_parent(struct window *w);
 int

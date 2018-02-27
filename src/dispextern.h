@@ -1404,44 +1404,13 @@ struct glyph_string
       ? MATRIX_HEADER_LINE_ROW (MATRIX)->height	\
       : 0)
 
-/* Return the desired face id for the mode line of a window, depending
-   on whether the window is selected or not, or if the window is the
-   scrolling window for the currently active minibuffer window.
+extern enum face_id
+CURRENT_MODE_LINE_FACE_ID_3(struct window *, struct window *, struct window *);
+extern enum face_id
+CURRENT_MODE_LINE_FACE_ID(struct window *);
 
-   Due to the way display_mode_lines manipulates with the contents of
-   selected_window, this macro needs three arguments: SELW which is
-   compared against the current value of selected_window, MBW which is
-   compared against minibuf_window (if SELW doesn't match), and SCRW
-   which is compared against minibuf_selected_window (if MBW matches).  */
-
-#define CURRENT_MODE_LINE_FACE_ID_3(SELW, MBW, SCRW)		\
-     ((!mode_line_in_non_selected_windows			\
-       || (SELW) == XWINDOW (selected_window)			\
-       || (minibuf_level > 0					\
-           && !NILP (minibuf_selected_window)			\
-           && (MBW) == XWINDOW (minibuf_window)			\
-           && (SCRW) == XWINDOW (minibuf_selected_window)))	\
-      ? MODE_LINE_FACE_ID					\
-      : MODE_LINE_INACTIVE_FACE_ID)
-
-
-/* Return the desired face id for the mode line of window W.  */
-
-#define CURRENT_MODE_LINE_FACE_ID(W)		\
-	(CURRENT_MODE_LINE_FACE_ID_3((W), XWINDOW (selected_window), (W)))
-
-/* Return the current height of the mode line of window W.  If not known
-   from W->mode_line_height, look at W's current glyph matrix, or return
-   a default based on the height of the font of the face `mode-line'.  */
-
-#define CURRENT_MODE_LINE_HEIGHT(W)					\
-  (W->mode_line_height >= 0						\
-   ? W->mode_line_height						\
-   : (W->mode_line_height						\
-      = (MATRIX_MODE_LINE_HEIGHT (W->current_matrix)			\
-	 ? MATRIX_MODE_LINE_HEIGHT (W->current_matrix)			\
-	 : estimate_mode_line_height					\
-	     (XFRAME (W->frame), CURRENT_MODE_LINE_FACE_ID (W)))))
+extern int
+CURRENT_MODE_LINE_HEIGHT(struct window *);
 
 /* Return the current height of the header line of window W.  If not known
    from W->header_line_height, look at W's current glyph matrix, or return

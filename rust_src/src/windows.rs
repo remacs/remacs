@@ -1,14 +1,21 @@
 //! Functions operating on windows.
 
+use std::ptr;
+
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Type, Lisp_Window};
-use remacs_sys::{is_minibuffer, minibuf_level, minibuf_selected_window as current_minibuf_window,
-                 selected_window as current_window, wget_parent, wget_pixel_height,
-                 wget_pseudo_window_p, wget_window_parameters, window_menu_bar_p,
-                 window_parameter, window_tool_bar_p, wset_window_parameters, Fcons};
+use remacs_sys::{face_id, glyph_matrix, EmacsInt, Lisp_Type, Lisp_Window};
+use remacs_sys::{MODE_LINE_FACE_ID, MODE_LINE_INACTIVE_FACE_ID};
 use remacs_sys::{Qceiling, Qfloor, Qheader_line_format, Qmode_line_format, Qnone};
+use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
+                 minibuf_selected_window as current_minibuf_window,
+                 selected_window as current_window, wget_current_matrix, wget_mode_line_height,
+                 wget_parent, wget_pixel_height, wget_pseudo_window_p, wget_window_parameters,
+                 window_menu_bar_p, window_parameter, window_tool_bar_p, wset_mode_line_height,
+                 wset_window_parameters};
+use remacs_sys::Fcons;
+use remacs_sys::globals;
 
 use editfns::point;
 use frames::{frame_live_or_selected, window_frame_live_or_selected};
@@ -51,6 +58,33 @@ impl LispWindowRef {
     #[inline]
     pub fn contents(self) -> LispObject {
         LispObject::from_raw(self.contents)
+    }
+
+    /// Return the current height of the mode line of window W. If not known
+    /// from W->mode_line_height, look at W's current glyph matrix, or return
+    /// a default based on the height of the font of the face `mode-line'.
+    pub fn current_mode_line_height(&mut self) -> i32 {
+        let mode_line_height = unsafe { wget_mode_line_height(self.as_ptr()) };
+        let matrix = LispGlyphMatrixRef::new(unsafe { wget_current_matrix(self.as_ptr()) });
+        let matrix_mode_line_height = matrix.mode_line_height();
+
+        if mode_line_height >= 0 {
+            mode_line_height
+        } else if matrix_mode_line_height != 0 {
+            unsafe { wset_mode_line_height(self.as_mut(), matrix_mode_line_height) };
+            matrix_mode_line_height
+        } else {
+            let frame = self.frame().as_frame_or_error();
+            let window = selected_window().as_window_or_error();
+            let mode_line_height = unsafe {
+                estimate_mode_line_height(
+                    frame.as_ptr(),
+                    CURRENT_MODE_LINE_FACE_ID_3(*self, window, *self),
+                )
+            };
+            unsafe { wset_mode_line_height(self.as_mut(), mode_line_height) };
+            mode_line_height
+        }
     }
 
     #[inline]
@@ -203,6 +237,18 @@ impl LispWindowRef {
             && (window_header_line_format.is_not_nil()
                 || LispObject::from_raw(self.contents().as_buffer_or_error().header_line_format)
                     .is_not_nil()) && self.pixel_height() > height
+    }
+}
+
+pub type LispGlyphMatrixRef = ExternalPtr<glyph_matrix>;
+
+impl LispGlyphMatrixRef {
+    pub fn mode_line_height(self) -> i32 {
+        if self.is_null() || self.rows.is_null() {
+            0
+        } else {
+            unsafe { (*self.rows.offset((self.nrows - 1) as isize)).height }
+        }
     }
 }
 
@@ -518,6 +564,62 @@ pub fn set_window_parameter(
         setcdr(old_alist_elt.as_cons_or_error(), value);
     }
     value
+}
+
+/// Return the desired face id for the mode line of a window, depending
+/// on whether the window is selected or not, or if the window is the
+/// scrolling window for the currently active minibuffer window.
+///
+/// Due to the way display_mode_lines manipulates with the contents of
+/// selected_window, this function needs three arguments: SELW which is
+/// compared against the current value of selected_window, MBW which is
+/// compared against minibuf_window (if SELW doesn't match), and SCRW
+/// which is compared against minibuf_selected_window (if MBW matches).
+#[no_mangle]
+pub extern "C" fn CURRENT_MODE_LINE_FACE_ID_3(
+    selw: LispWindowRef,
+    mbw: LispWindowRef,
+    scrw: LispWindowRef,
+) -> i32 {
+    let current = if let Some(w) = selected_window().as_window() {
+        w
+    } else {
+        LispWindowRef::new(ptr::null_mut())
+    };
+
+    unsafe {
+        if !globals.f_mode_line_in_non_selected_windows {
+            if selw == current {
+                return MODE_LINE_FACE_ID;
+            } else if minibuf_level > 0 {
+                let minibuf = LispObject::from_raw(current_minibuf_window);
+                if let Some(minibuf_window) = minibuf.as_window() {
+                    if mbw == minibuf_window && scrw == minibuf_window {
+                        return MODE_LINE_FACE_ID;
+                    }
+                }
+            }
+        }
+    }
+
+    MODE_LINE_INACTIVE_FACE_ID
+}
+
+/// Return the desired face id for the mode line of window W.
+#[no_mangle]
+pub extern "C" fn CURRENT_MODE_LINE_FACE_ID(window: LispWindowRef) -> face_id {
+    let current = if let Some(w) = selected_window().as_window() {
+        w
+    } else {
+        LispWindowRef::new(ptr::null_mut())
+    };
+
+    CURRENT_MODE_LINE_FACE_ID_3(window, current, window)
+}
+
+#[no_mangle]
+pub extern "C" fn CURRENT_MODE_LINE_HEIGHT(mut window: LispWindowRef) -> i32 {
+    window.current_mode_line_height()
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
