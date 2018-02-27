@@ -431,7 +431,7 @@ mail with multiple parts is preferred to sending a Unicode one.")
      (#x94 . #x201D) (#x95 . #x2022) (#x96 . #x2013) (#x97 . #x2014)
      (#x98 . #x02DC) (#x99 . #x2122) (#x9A . #x0161) (#x9B . #x203A)
      (#x9C . #x0153) (#x9E . #x017E) (#x9F . #x0178)))
-  "*Alist of extra numeric entities and characters other than ISO 10646.
+  "Alist of extra numeric entities and characters other than ISO 10646.
 This table is used for decoding extra numeric entities to characters,
 like \"&#128;\" to the euro sign, mainly in html messages."
   :type '(alist :key-type character :value-type character)
