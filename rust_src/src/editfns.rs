@@ -8,13 +8,14 @@ use std;
 use remacs_macros::lisp_fn;
 use remacs_sys::{Fadd_text_properties, Fcons, Fcopy_sequence, Fget_pos_property};
 use remacs_sys::{Qfield, Qinteger_or_marker_p, Qmark_inactive, Qnil};
-use remacs_sys::{buf_charpos_to_bytepos, buffer_overflow, find_before_next_newline, find_field,
-                 find_newline, globals, insert, insert_and_inherit, make_string_from_bytes,
-                 maybe_quit, scan_newline_from_point, set_point, set_point_both};
+use remacs_sys::{buf_bytepos_to_charpos, buf_charpos_to_bytepos, buffer_overflow,
+                 find_before_next_newline, find_field, find_newline, globals, insert,
+                 insert_and_inherit, make_string_from_bytes, maybe_quit, scan_newline_from_point,
+                 set_point, set_point_both};
 use remacs_sys::EmacsInt;
 
 use buffers::{get_buffer, BUF_BYTES_MAX};
-use character::dec_pos;
+use character::{char_head_p, dec_pos};
 use lisp::{LispNumber, LispObject};
 use lisp::defsubr;
 use marker::{marker_position_lisp, set_point_from_marker};
@@ -706,6 +707,28 @@ pub fn constrain_to_field(
     }
 
     new_pos
+}
+
+/// Return the character position for byte position BYTEPOS.
+/// If BYTEPOS is out of range, the value is nil.
+#[lisp_fn]
+pub fn byte_to_position(bytepos: EmacsInt) -> Option<EmacsInt> {
+    let mut cur_buf = ThreadState::current_buffer();
+    let mut pos_byte = bytepos as isize;
+    if pos_byte < cur_buf.beg_byte() || pos_byte > cur_buf.z_byte() {
+        return None;
+    }
+    if cur_buf.z() != cur_buf.z_byte() {
+        // There are multibyte characters in the buffer.
+        // The argument of BYTE_TO_CHAR must be a byte position at
+        // a character boundary, so search for the start of the current
+        // character.
+        while !char_head_p(cur_buf.fetch_byte(pos_byte)) {
+            pos_byte -= 1;
+        }
+    }
+
+    unsafe { Some(buf_bytepos_to_charpos(cur_buf.as_mut(), pos_byte) as EmacsInt) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/editfns_exports.rs"));
