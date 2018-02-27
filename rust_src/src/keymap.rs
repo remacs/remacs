@@ -4,12 +4,14 @@ use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, Lisp_Object,
                  CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
-use remacs_sys::{Qkeymap, Qnil, Qt};
+use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
 use remacs_sys::{access_keymap, get_keymap, maybe_quit};
 
-use data::aref;
+use data::{aref, indirect_function};
+use eval::autoload_do_load;
 use keyboard::lucid_event_type_list_p;
 use lisp::{defsubr, LispObject};
+use lists::nth;
 use threads::ThreadState;
 
 #[inline]
@@ -49,6 +51,87 @@ pub extern "C" fn set_where_is_cache_keymaps(val: Lisp_Object) {
     unsafe {
         where_is_cache_keymaps = val;
     }
+}
+
+/// Check that OBJECT is a keymap (after dereferencing through any
+/// symbols).  If it is, return it.
+///
+/// If AUTOLOAD and if OBJECT is a symbol whose function value
+/// is an autoload form, do the autoload and try again.
+/// If AUTOLOAD, callers must assume GC is possible.
+///
+/// ERROR_IF_NOT_KEYMAP controls how we respond if OBJECT isn't a keymap.
+/// If ERROR_IF_NOT_KEYMAP, signal an error; otherwise,
+/// just return Qnil.
+///
+/// Note that most of the time, we don't want to pursue autoloads.
+/// Functions like Faccessible_keymaps which scan entire keymap trees
+/// shouldn't load every autoloaded keymap.  I'm not sure about this,
+/// but it seems to me that only read_key_sequence, Flookup_key, and
+/// Fdefine_key should cause keymaps to be autoloaded.
+///
+/// This function can GC when AUTOLOAD is true, because it calls
+/// Fautoload_do_load which can GC.
+#[no_mangle]
+pub extern "C" fn get_keymap_2(
+    object: Lisp_Object,
+    error_if_not_keymap: bool,
+    autoload: bool,
+) -> Lisp_Object {
+    let object = LispObject::from_raw(object);
+    'end: loop {
+        'autoload_retry: loop {
+            if object.is_nil() {
+                break 'end;
+            }
+
+            if object.is_cons()
+                && object
+                    .as_cons()
+                    .unwrap()
+                    .car()
+                    .eq(LispObject::from_raw(Qkeymap))
+            {
+                return object.to_raw();
+            }
+
+            let tem = indirect_function(object);
+            if tem.is_cons() {
+                if tem.as_cons()
+                    .unwrap()
+                    .car()
+                    .eq(LispObject::from_raw(Qkeymap))
+                {
+                    return tem.to_raw();
+                }
+
+                // Should we do an autoload?  Autoload forms for keymaps have
+                // Qkeymap as their fifth element.
+                if (autoload || !error_if_not_keymap)
+                    && tem.as_cons()
+                        .unwrap()
+                        .car()
+                        .eq(LispObject::from_raw(Qautoload))
+                    && object.is_symbol()
+                {
+                    let tail = nth(4, tem);
+                    if tail.eq(LispObject::from_raw(Qkeymap)) {
+                        if autoload {
+                            autoload_do_load(tem, object, LispObject::constant_nil());
+                            break 'autoload_retry;
+                        } else {
+                            return object.to_raw();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if error_if_not_keymap {
+        wrong_type!(Qkeymapp, object);
+    }
+    Qnil
 }
 
 /// Construct and return a new keymap, of the form (keymap CHARTABLE . ALIST).
