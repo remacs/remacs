@@ -9,9 +9,9 @@ use threads::ThreadState;
 
 /// True iff byte starts a character in a multibyte form.
 ///
-/// Same as the `CHAR_HEAD_P` macro.
+/// Same as the `CHAR_READ_P` macro.
 #[inline]
-pub fn char_head_p(byte: c_uchar) -> bool {
+pub fn char_read_p(byte: c_uchar) -> bool {
     (byte & 0xC0) != 0x80
 }
 
@@ -30,7 +30,7 @@ pub unsafe fn dec_pos(pos_byte: ptrdiff_t) -> ptrdiff_t {
     }
     let mut chp = buffer_ref.beg_addr().offset(offset);
 
-    while !char_head_p(*chp) {
+    while !char_read_p(*chp) {
         chp = chp.offset(-1);
         new_pos -= 1;
     }
