@@ -184,6 +184,13 @@ impl<'a> ModuleParser<'a> {
                 }
             } else if line.starts_with("include!(concat!(env!(\"OUT_DIR\"),") {
                 has_include = true;
+            } else if line.starts_with("/*") && !line.ends_with("*/") {
+                while let Some(next) = reader.next() {
+                    let line = next?;
+                    if line.ends_with("*/") {
+                        break;
+                    }
+                }
             }
         }
 
