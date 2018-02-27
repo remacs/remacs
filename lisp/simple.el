@@ -170,11 +170,11 @@ rejected, and the function returns nil."
 	   (and extra-test-inclusive
 		(funcall extra-test-inclusive))))))
 
-(defcustom next-error-find-buffer-function nil
+(defcustom next-error-find-buffer-function #'ignore
   "Function called to find a `next-error' capable buffer."
   :type '(choice (const :tag "Single next-error capable buffer on selected frame"
                         next-error-buffer-on-selected-frame)
-                 (const :tag "No default" nil)
+                 (const :tag "No default" ignore)
                  (function :tag "Other function"))
   :group 'next-error
   :version "27.1")
@@ -212,10 +212,9 @@ that would normally be considered usable.  If it returns nil,
 that buffer is rejected."
   (or
    ;; 1. If a customizable function returns a buffer, use it.
-   (when next-error-find-buffer-function
-     (funcall next-error-find-buffer-function avoid-current
-                                              extra-test-inclusive
-                                              extra-test-exclusive))
+   (funcall next-error-find-buffer-function avoid-current
+                                            extra-test-inclusive
+                                            extra-test-exclusive)
    ;; 2. If next-error-last-buffer is an acceptable buffer, use that.
    (if (and next-error-last-buffer
             (next-error-buffer-p next-error-last-buffer avoid-current
