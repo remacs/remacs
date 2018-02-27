@@ -1552,7 +1552,7 @@ Special value `always' suppresses confirmation."
 (defcustom dired-create-destination-dirs nil
   "Whether Dired should create destination dirs when copying/removing files.
 If nil, don't create them.
-If `always', create them without ask.
+If `always', create them without asking.
 If `ask', ask for user confirmation."
   :type '(choice (const :tag "Never create non-existent dirs" nil)
 		 (const :tag "Always create non-existent dirs" always)
