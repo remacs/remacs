@@ -160,15 +160,15 @@ Width of the frame's external border, in pixels.  This has no effect
 if Emacs is compiled with GTK+ support.
 @end ifnottex
 
-@item @code{cursorColor} (class @code{Foreground})
-Text cursor color.  If this resource is specified when Emacs starts
-up, Emacs sets its value as the background color of the @code{cursor}
-face (@pxref{Faces}).
-
 @item @code{cursorBlink} (class @code{CursorBlink})
 If the value of this resource is @samp{off} or @samp{false} or
 @samp{0} at startup, Emacs disables Blink Cursor mode (@pxref{Cursor
 Display}).
+
+@item @code{cursorColor} (class @code{Foreground})
+Text cursor color.  If this resource is specified when Emacs starts
+up, Emacs sets its value as the background color of the @code{cursor}
+face (@pxref{Faces}).
 
 @item @code{font} (class @code{Font})
 Font name for the @code{default} face (@pxref{Fonts}).  You can also
@@ -184,6 +184,13 @@ in which case Emacs tries using all available font backends.
 @item @code{foreground} (class @code{Foreground})
 Default foreground color for text.
 
+@item @code{fullscreen} (class @code{Fullscreen})
+The desired fullscreen size.  The value can be one of @code{fullboth},
+@code{maximized}, @code{fullwidth} or @code{fullheight}, which
+correspond to the command-line options @samp{-fs}, @samp{-mm},
+@samp{-fw}, and @samp{-fh} (@pxref{Window Size X}).  Note that this
+applies to the initial frame only.
+
 @item @code{geometry} (class @code{Geometry})
 Window size and position.  The value should be a size and position
 specification, of the same form as in the @samp{-g} or
@@ -193,18 +200,15 @@ The size applies to all frames in the Emacs session, but the position
 applies only to the initial Emacs frame (or, in the case of a resource
 for a specific frame name, only that frame).
 
-
 Be careful not to specify this resource as @samp{emacs*geometry}, as
 that may affect individual menus as well as the main Emacs frame.
 
-@item @code{fullscreen} (class @code{Fullscreen})
-The desired fullscreen size.  The value can be one of @code{fullboth},
-@code{maximized}, @code{fullwidth} or @code{fullheight}, which
-correspond to the command-line options @samp{-fs}, @samp{-mm},
-@samp{-fw}, and @samp{-fh} (@pxref{Window Size X}).  Note that this
-applies to the initial frame only.
-
 @ifnottex
+@item @code{horizontalScrollBars} (class @code{ScrollBars})
+If the value of this resource is @samp{off} or @samp{false} or
+@samp{0}, Emacs disables Horizontal Scroll Bar mode at startup
+(@pxref{Scroll Bars}).
+
 @item @code{iconName} (class @code{Title})
 Name to display in the icon.
 
@@ -318,8 +322,8 @@ This is only relevant if your Emacs is built with XIM support.  It
 might be useful to turn off XIM on slow X client/server links.
 
 @item @code{verticalScrollBars} (class @code{ScrollBars})
-Give frames scroll bars if @samp{on}; don't have scroll bars if
-@samp{off}.
+Give frames scroll bars on the left if @samp{left}, on the right if
+@samp{right}; don't have scroll bars if @samp{off}.
 
 @ifnottex
 @item @code{visualClass} (class @code{VisualClass})
@@ -346,13 +350,13 @@ resources.  @xref{Face Customization}.
 @cindex Lucid Widget X Resources
 
   If Emacs is compiled with the X toolkit support using Lucid widgets,
-you can use X resources to customize the appearance of the menu bar,
-pop-up menus, and dialog boxes.  The resources for the menu bar fall
-in the @samp{pane.menubar} class (following, as always, either the
-name of the Emacs executable or @samp{Emacs} for all Emacs
-invocations).  The resources for the pop-up menu are in the
-@samp{menu*} class.  The resources for dialog boxes are in the
-@samp{dialog*} class.
+you can use X resources to customize the appearance of the menu bar
+(@pxref{Menu Bar}), pop-up menus, and dialog boxes (@pxref{Dialog
+Boxes}).  The resources for the menu bar fall in the
+@samp{pane.menubar} class (following, as always, either the name of
+the Emacs executable or @samp{Emacs} for all Emacs invocations).  The
+resources for the pop-up menu are in the @samp{menu*} class.  The
+resources for dialog boxes are in the @samp{dialog*} class.
 
   For example, to display menu bar entries with the @samp{Courier-12}
 font (@pxref{Fonts}), write this:
@@ -374,12 +378,12 @@ Here is a list of resources for menu bars, pop-up menus, and dialogs:
 Font for menu item text.
 @item fontSet
 Fontset for menu item text.
-@item foreground
-Foreground color.
 @item background
 Background color.
 @item buttonForeground
 Foreground color for a selected item.
+@item foreground
+Foreground color.
 @ifnottex
 @item horizontalSpacing
 Horizontal spacing in pixels between items.  Default is 3.
@@ -403,14 +407,15 @@ Margin of the menu bar, in characters.  Default is 1.
 
   If Emacs is compiled with the X toolkit support using Motif or
 LessTif widgets, you can use X resources to customize the appearance
-of the menu bar, pop-up menus, and dialog boxes.  However, the
-resources are organized differently from Lucid widgets.
+of the menu bar (@pxref{Menu Bar}), pop-up menus, and dialog boxes
+(@pxref{Dialog Boxes}).  However, the resources are organized
+differently from Lucid widgets.
 
   The resource names for the menu bar are in the @samp{pane.menubar}
 class, and they must be specified in this form:
 
 @smallexample
-Emacs.pane.menubar.@var{subwidget}.@var{resource}:  @var{value}
+Emacs.pane.menubar.@var{subwidget}.@var{resource}: @var{value}
 @end smallexample
 
 @noindent
@@ -427,7 +432,7 @@ For example, to specify the font @samp{8x16} for all menu bar items,
 including submenus, write this:
 
 @smallexample
-Emacs.pane.menubar.*.fontList:  8x16
+Emacs.pane.menubar.*.fontList: 8x16
 @end smallexample
 
   Each item in a submenu also has its own name for X resources; for
@@ -471,7 +476,7 @@ itself, you must first specify the resource for all of them, then
 override the value for submenus alone.  Here is an example:
 
 @smallexample
-Emacs.pane.menubar.*.fontList:  8x16
+Emacs.pane.menubar.*.fontList: 9x18
 Emacs.pane.menubar.popup_*.fontList: 8x16
 @end smallexample
 
@@ -556,7 +561,7 @@ system, see
 @appendixsubsec GTK Resource Basics
 
   In a GTK+ 2 resource file (usually @file{~/.emacs.d/gtkrc}), the
-simplest kinds of resource settings simply assign a value to a
+simplest kind of a resource setting simply assigns a value to a
 variable.  For example, putting the following line in the resource
 file changes the font on all GTK+ widgets to @samp{courier-12}:
 
@@ -770,20 +775,24 @@ possible states are:
 @table @code
 @item NORMAL
 This is the default state for widgets.
+
 @item ACTIVE
 This is the state for a widget that is ready to do something.  It is
 also for the trough of a scroll bar, i.e., @code{bg[ACTIVE] = "red"}
 sets the scroll bar trough to red.  Buttons that have been armed
 (pressed but not released yet) are in this state.
+
 @item PRELIGHT
 This is the state for a widget that can be manipulated, when the mouse
 pointer is over it---for example when the mouse is over the thumb in
 the scroll bar or over a menu item.  When the mouse is over a button
 that is not pressed, the button is in this state.
+
 @item SELECTED
 This is the state for data that has been selected by the user.  It can
 be selected text or items selected in a list.  This state is not used
 in Emacs.
+
 @item INSENSITIVE
 This is the state for widgets that are visible, but they cannot be
 manipulated in the usual way---for example, buttons that can't be
@@ -805,14 +814,14 @@ dialog.
 
 @item bg_pixmap[@var{state}] = "@var{pixmap}"
 This specifies an image background (instead of a background color).
-@var{pixmap} should be the image file name.  GTK can use a number of
+@var{pixmap} should be the image file name.  GTK+ can use a number of
 image file formats, including XPM, XBM, GIF, JPEG and PNG@.  If you
 want a widget to use the same image as its parent, use
 @samp{<parent>}.  If you don't want any image, use @samp{<none>}.
 @samp{<none>} is the way to cancel a background image inherited from a
 parent style.
 
-You can't specify the file by its absolute file name.  GTK looks for
+You can't specify the file by its absolute file name.  GTK+ looks for
 the pixmap file in directories specified in @code{pixmap_path}.
 @code{pixmap_path} is a colon-separated list of directories within
 double quotes, specified at the top level in a @file{gtkrc} file
