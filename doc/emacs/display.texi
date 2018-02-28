@@ -656,8 +656,8 @@ This face is used to highlight lazy matches for Isearch and Query
 Replace (matches other than the current one).
 @item region
 This face is used for displaying an active region (@pxref{Mark}).
-When Emacs is built with GTK support, its colors are taken from the
-current GTK theme.
+When Emacs is built with GTK+ support, its colors are taken from the
+current GTK+ theme.
 @item secondary-selection
 This face is used for displaying a secondary X selection (@pxref{Secondary
 Selection}).
@@ -741,7 +741,7 @@ The @code{:background} attribute of this face specifies the color of
 the text cursor.  @xref{Cursor Display}.
 @item tooltip
 This face is used for tooltip text.  By default, if Emacs is built
-with GTK support, tooltips are drawn via GTK and this face has no
+with GTK+ support, tooltips are drawn via GTK+ and this face has no
 effect.  @xref{Tooltips}.
 @item mouse
 This face determines the color of the mouse pointer.

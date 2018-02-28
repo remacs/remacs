@@ -281,7 +281,7 @@ files.  Firstly, when Emacs is built with a suitable GUI toolkit,
 commands invoked with the mouse (by clicking on the menu bar or tool
 bar) use the toolkit's standard file selection dialog instead of
 prompting for the file name in the minibuffer.  On GNU/Linux and Unix
-platforms, Emacs does this when built with GTK, LessTif, and Motif
+platforms, Emacs does this when built with GTK+, LessTif, and Motif
 toolkits; on MS-Windows and Mac, the GUI version does that by default.
 For information on how to customize this, see @ref{Dialog Boxes}.
 

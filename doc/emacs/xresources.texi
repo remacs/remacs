@@ -12,10 +12,10 @@ resources, as is usual for programs that use X.
 graphical widgets, such as the menu-bar, scroll-bar, and dialog boxes,
 is determined by
 @ifnottex
-GTK resources, which we will also describe.
+GTK+ resources, which we will also describe.
 @end ifnottex
 @iftex
-GTK resources.
+GTK+ resources.
 @end iftex
 When Emacs is built without GTK+ support, the appearance of these
 widgets is determined by additional X resources.
@@ -28,7 +28,7 @@ system registry (@pxref{MS-Windows Registry}).
 * Table of Resources::  Table of specific X resources that affect Emacs.
 * Lucid Resources::     X resources for Lucid menus.
 * Motif Resources::     X resources for Motif and LessTif menus.
-* GTK resources::       Resources for GTK widgets.
+* GTK resources::       Resources for GTK+ widgets.
 @end menu
 
 @node Resources
@@ -515,7 +515,7 @@ The color for the border shadow, on the top and the left.
 @node GTK resources
 @appendixsec GTK resources
 @cindex GTK+ resources
-@cindex resource files for GTK
+@cindex resource files for GTK+
 @cindex @file{~/.gtkrc-2.0} file
 @cindex @file{~/.emacs.d/gtkrc} file
 
@@ -530,7 +530,7 @@ resources are specified in either the file @file{~/.emacs.d/gtkrc}
 (for Emacs-specific GTK+ resources), or @file{~/.gtkrc-2.0} (for
 general GTK+ resources).  We recommend using @file{~/.emacs.d/gtkrc},
 since GTK+ seems to ignore @file{~/.gtkrc-2.0} when running GConf with
-GNOME@.  Note, however, that some GTK themes may override
+GNOME@.  Note, however, that some GTK+ themes may override
 customizations in @file{~/.emacs.d/gtkrc}; there is nothing we can do
 about this.  GTK+ resources do not affect aspects of Emacs unrelated
 to GTK+ widgets, such as fonts and colors in the main Emacs window;
@@ -553,8 +553,8 @@ system, see
 @menu
 * GTK Resource Basics::   Basic usage of GTK+ resources.
 * GTK Widget Names::      How GTK+ widgets are named.
-* GTK Names in Emacs::    GTK widgets used by Emacs.
-* GTK styles::            What can be customized in a GTK widget.
+* GTK Names in Emacs::    GTK+ widgets used by Emacs.
+* GTK styles::            What can be customized in a GTK+ widget.
 @end menu
 
 @node GTK Resource Basics
@@ -617,7 +617,7 @@ widget "*verticalScrollBar*" style "scroll"
 
 @node GTK Widget Names
 @appendixsubsec GTK widget names
-@cindex GTK widget names
+@cindex GTK+ widget names
 
   A GTK+ widget is specified by a @dfn{widget name} and a @dfn{widget
 class}.  The widget name refers to a specific widget
@@ -662,8 +662,8 @@ widget "*" style "my_style"
 
 @node GTK Names in Emacs
 @appendixsubsec GTK Widget Names in Emacs
-@cindex GTK widget names in Emacs
-@cindex GTK widget classes
+@cindex GTK+ widget names in Emacs
+@cindex GTK+ widget classes
 
   The GTK+ widgets used by an Emacs frame are listed below:
 
@@ -726,7 +726,7 @@ widget_class "*Menu*" style "my_menu_style"
 
 @node GTK styles
 @appendixsubsec GTK styles
-@cindex GTK styles
+@cindex GTK+ styles
 
   Here is an example of two GTK+ style declarations:
 
