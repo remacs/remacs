@@ -1121,6 +1121,10 @@ when a symbol's value is changed.  This is used to implement the new
 debugger command 'debug-on-variable-change'.
 
 +++
+** New variable 'print-escape-control-characters' causes 'prin1' and
+'print' to output control characters as backslash sequences.
+
++++
 ** Time conversion functions that accept a time zone rule argument now
 allow it to be OFFSET or a list (OFFSET ABBR), where the integer
 OFFSET is a count of seconds east of Universal Time, and the string
