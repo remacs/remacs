@@ -1001,9 +1001,9 @@ when the entire buffer is visible.
 
 @cindex @code{scroll-bar} face
   The visual appearance of the scroll bars is controlled by the
-@code{scroll-bar} face.  (Some toolkits, such as GTK and MS-Windows,
+@code{scroll-bar} face.  (Some toolkits, such as GTK+ and MS-Windows,
 ignore this face; the scroll-bar appearance there can only be
-customized system-wide, for GTK @pxref{GTK resources}).
+customized system-wide, for GTK+ @pxref{GTK resources}).
 
 @cindex vertical border
   On graphical frames, vertical scroll bars implicitly serve to separate
