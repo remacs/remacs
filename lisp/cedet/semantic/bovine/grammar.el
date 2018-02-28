@@ -511,7 +511,7 @@ Menu items are appended to the common grammar menu.")
 ;;; Commentary:
 ;;
 ;; This file was generated from "
-		(if (string-match "\\(OFFadmin/grammars/.*\\.by\\)\\'" infile)
+		(if (string-match "\\(admin/grammars/.*\\.by\\)\\'" infile)
 		    (match-string 1 infile)
 		  (concat "admin/grammars/"
 			  (if (string-equal lang "scm") "scheme" lang) ".by"))
