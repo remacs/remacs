@@ -1,12 +1,16 @@
 //! symbols support
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{find_symbol_value, get_symbol_declared_special, make_lisp_symbol,
-                 set_symbol_declared_special, symbol_is_alias, symbol_is_constant,
-                 symbol_is_interned, Fset};
 use remacs_sys::{Qcyclic_variable_indirection, Qsetting_constant, Qunbound, Qvoid_variable};
+use remacs_sys::{symbol_redirect, SYMBOL_FORWARDED, SYMBOL_LOCALIZED, SYMBOL_PLAINVAL,
+                 SYMBOL_VARALIAS};
+use remacs_sys::{find_symbol_value, get_symbol_declared_special, get_symbol_redirect,
+                 make_lisp_symbol, set_symbol_declared_special, swap_in_symval_forwarding,
+                 symbol_is_alias, symbol_is_constant, symbol_is_interned};
+use remacs_sys::Fset;
 use remacs_sys::Lisp_Symbol;
 
+use buffers::LispBufferLocalValueRef;
 use data::indirect_function;
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
@@ -96,6 +100,18 @@ impl LispSymbolRef {
         }
     }
 
+    pub fn get_redirect(self) -> symbol_redirect {
+        unsafe { get_symbol_redirect(self.as_ptr()) }
+    }
+
+    pub fn get_value(self) -> LispObject {
+        LispObject::from_raw(unsafe { self.val.value })
+    }
+
+    pub fn get_blv(self) -> LispBufferLocalValueRef {
+        LispBufferLocalValueRef::new(unsafe { self.val.blv })
+    }
+
     pub fn iter(self) -> LispSymbolIter {
         LispSymbolIter { current: self }
     }
@@ -136,6 +152,41 @@ pub fn symbolp(object: LispObject) -> bool {
 #[lisp_fn]
 pub fn symbol_name(symbol: LispSymbolRef) -> LispObject {
     symbol.symbol_name()
+}
+
+/// Return t if SYMBOL's value is not void.
+/// Note that if `lexical-binding' is in effect, this refers to the
+/// global value outside of any lexical scope.
+#[lisp_fn]
+pub fn boundp(mut symbol: LispSymbolRef) -> bool {
+    while symbol.get_redirect() == SYMBOL_VARALIAS {
+        symbol = symbol.get_indirect_variable();
+    }
+
+    let valcontents = match symbol.get_redirect() {
+        SYMBOL_PLAINVAL => symbol.get_value(),
+        SYMBOL_LOCALIZED => {
+            let mut blv = symbol.get_blv();
+            if blv.get_fwd().is_null() {
+                unsafe {
+                    swap_in_symval_forwarding(symbol.as_mut(), blv.as_mut());
+                }
+                blv.get_value()
+            } else {
+                // In set_internal, we un-forward vars when their value is
+                // set to Qunbound.
+                return true;
+            }
+        }
+        SYMBOL_FORWARDED => {
+            // In set_internal, we un-forward vars when their value is
+            // set to Qunbound.
+            return true;
+        }
+        _ => unreachable!(),
+    };
+
+    !valcontents.eq_raw(Qunbound)
 }
 
 /* It has been previously suggested to make this function an alias for

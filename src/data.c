@@ -36,9 +36,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "remacs-lib.h"
 
-static void swap_in_symval_forwarding (struct Lisp_Symbol *,
-				       struct Lisp_Buffer_Local_Value *);
-
 static bool
 BOOLFWDP (union Lisp_Fwd *a)
 {
@@ -96,12 +93,6 @@ set_blv_found (struct Lisp_Buffer_Local_Value *blv, int found)
 {
   eassert (found == !EQ (blv->defcell, blv->valcell));
   blv->found = found;
-}
-
-static Lisp_Object
-blv_value (struct Lisp_Buffer_Local_Value *blv)
-{
-  return XCDR (blv->valcell);
 }
 
 static void
@@ -196,46 +187,6 @@ DEFUN ("module-function-p", Fmodule_function_p, Smodule_function_p, 1, 1, NULL,
 
 
 /* Extract and set components of symbols.  */
-
-DEFUN ("boundp", Fboundp, Sboundp, 1, 1, 0,
-       doc: /* Return t if SYMBOL's value is not void.
-Note that if `lexical-binding' is in effect, this refers to the
-global value outside of any lexical scope.  */)
-  (register Lisp_Object symbol)
-{
-  Lisp_Object valcontents;
-  struct Lisp_Symbol *sym;
-  CHECK_SYMBOL (symbol);
-  sym = XSYMBOL (symbol);
-
- start:
-  switch (sym->redirect)
-    {
-    case SYMBOL_PLAINVAL: valcontents = SYMBOL_VAL (sym); break;
-    case SYMBOL_VARALIAS: sym = indirect_variable (sym); goto start;
-    case SYMBOL_LOCALIZED:
-      {
-	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
-	if (blv->fwd)
-	  /* In set_internal, we un-forward vars when their value is
-	     set to Qunbound.  */
-    	  return Qt;
-	else
-	  {
-	    swap_in_symval_forwarding (sym, blv);
-	    valcontents = blv_value (blv);
-	  }
-	break;
-      }
-    case SYMBOL_FORWARDED:
-      /* In set_internal, we un-forward vars when their value is
-	 set to Qunbound.  */
-      return Qt;
-    default: emacs_abort ();
-    }
-
-  return (EQ (valcontents, Qunbound) ? Qnil : Qt);
-}
 
 DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
        doc: /* Set SYMBOL's function definition to DEFINITION, and return DEFINITION.  */)
@@ -566,7 +517,7 @@ swap_in_global_binding (struct Lisp_Symbol *symbol)
    Return the value forwarded one step past the buffer-local stage.
    This could be another forwarding pointer.  */
 
-static void
+void
 swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_Value *blv)
 {
   register Lisp_Object tem1;
@@ -596,7 +547,7 @@ swap_in_symval_forwarding (struct Lisp_Symbol *symbol, struct Lisp_Buffer_Local_
       /* Load the new binding.  */
       set_blv_valcell (blv, tem1);
       if (blv->fwd)
-	store_symval_forwarding (blv->fwd, blv_value (blv), NULL);
+	store_symval_forwarding (blv->fwd, get_blv_value (blv), NULL);
     }
 }
 
@@ -623,7 +574,7 @@ find_symbol_value (Lisp_Object symbol)
       {
 	struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (sym);
 	swap_in_symval_forwarding (sym, blv);
-	return blv->fwd ? do_symval_forwarding (blv->fwd) : blv_value (blv);
+	return blv->fwd ? do_symval_forwarding (blv->fwd) : get_blv_value (blv);
       }
       /* FALLTHROUGH */
     case SYMBOL_FORWARDED:
@@ -2429,7 +2380,6 @@ syms_of_data (void)
 
   defsubr (&Sinteractive_form);
   defsubr (&Smodule_function_p);
-  defsubr (&Sboundp);
   defsubr (&Sfset);
   defsubr (&Sset);
   defsubr (&Sdefault_boundp);

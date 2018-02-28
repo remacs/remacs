@@ -249,12 +249,18 @@ pub struct Lisp_String {
     pub data: *mut c_char,
 }
 
+pub type symbol_redirect = u32;
+pub const SYMBOL_PLAINVAL: symbol_redirect = 4;
+pub const SYMBOL_VARALIAS: symbol_redirect = 1;
+pub const SYMBOL_LOCALIZED: symbol_redirect = 2;
+pub const SYMBOL_FORWARDED: symbol_redirect = 3;
+
 #[repr(C)]
 pub union SymbolUnion {
-    value: Lisp_Object,
+    pub value: Lisp_Object,
     pub alias: *mut Lisp_Symbol,
-    blv: *mut c_void, // @TODO implement Lisp_Buffer_Local_Value
-    fwd: *mut c_void, // @TODO implement Lisp_Fwd
+    pub blv: *mut Lisp_Buffer_Local_Value,
+    pub fwd: *mut Lisp_Fwd,
 }
 
 /// This struct has 4 bytes of padding, representing the bitfield that
@@ -272,6 +278,7 @@ pub struct Lisp_Symbol {
 
 extern "C" {
     pub fn get_symbol_declared_special(sym: *const Lisp_Symbol) -> bool;
+    pub fn get_symbol_redirect(sym: *const Lisp_Symbol) -> symbol_redirect;
 
     pub fn set_symbol_declared_special(sym: *mut Lisp_Symbol, value: bool);
 }
@@ -352,6 +359,16 @@ pub enum Lisp_Misc_Type {
 pub struct Lisp_Misc_Any {
     _padding: BitfieldPadding,
 }
+
+/// These are the types of forwarding objects used in the value slot
+/// of symbols for special built-in variables whose value is stored in
+/// C variables.
+pub type Lisp_Fwd_Type = u32;
+pub const Lisp_Fwd_Int: Lisp_Fwd_Type = 0; // Fwd to a C `int' variable.
+pub const Lisp_Fwd_Bool: Lisp_Fwd_Type = 1; // Fwd to a C boolean var.
+pub const Lisp_Fwd_Obj: Lisp_Fwd_Type = 2; // Fwd to a C Lisp_Object variable.
+pub const Lisp_Fwd_Buffer_Obj: Lisp_Fwd_Type = 3; // Fwd to a Lisp_Object field of buffers.
+pub const Lisp_Fwd_Kboard_Obj: Lisp_Fwd_Type = 4; // Fwd to a Lisp_Object field of kboards.
 
 // TODO: write a docstring based on the docs in lisp.h.
 #[repr(C)]
@@ -732,6 +749,119 @@ pub struct Lisp_Buffer {
 extern "C" {
     pub fn bget_overlays_before(b: *const Lisp_Buffer) -> *mut c_void;
     pub fn bget_overlays_after(b: *const Lisp_Buffer) -> *mut c_void;
+}
+
+/// struct Lisp_Buffer_Local_Value is used in a symbol value cell when
+/// the symbol has buffer-local bindings.  (Exception:
+/// some buffer-local variables are built-in, with their values stored
+/// in the buffer structure itself.  They are handled differently,
+/// using struct Lisp_Buffer_Objfwd.)
+///
+/// The `realvalue' slot holds the variable's current value, or a
+/// forwarding pointer to where that value is kept.  This value is the
+/// one that corresponds to the loaded binding.  To read or set the
+/// variable, you must first make sure the right binding is loaded;
+/// then you can access the value in (or through) `realvalue'.
+///
+/// `buffer' and `frame' are the buffer and frame for which the loaded
+/// binding was found.  If those have changed, to make sure the right
+/// binding is loaded it is necessary to find which binding goes with
+/// the current buffer and selected frame, then load it.  To load it,
+/// first unload the previous binding, then copy the value of the new
+/// binding into `realvalue' (or through it).  Also update
+/// LOADED-BINDING to point to the newly loaded binding.
+///
+/// `local_if_set' indicates that merely setting the variable creates a
+/// local binding for the current buffer.  Otherwise the latter, setting
+/// the variable does not do that; only make-local-variable does that.
+#[repr(C)]
+pub struct Lisp_Buffer_Local_Value {
+    /// True means that merely setting the variable creates a local
+    /// binding for the current buffer.
+    pub local_if_set: bool,
+    /// True means that the binding now loaded was found.
+    /// Presumably equivalent to (defcell!=valcell).
+    pub found: bool,
+    /// If non-NULL, a forwarding to the C var where it should also be set.
+    pub fwd: *mut Lisp_Fwd, // Should never be (Buffer|Kboard)_Objfwd.
+    /// The buffer or frame for which the loaded binding was found.
+    pub where_: Lisp_Object,
+    /// A cons cell that holds the default value.  It has the form
+    /// (SYMBOL . DEFAULT-VALUE).
+    pub defcell: Lisp_Object,
+    /// The cons cell from `where's parameter alist.
+    /// It always has the form (SYMBOL . VALUE)
+    /// Note that if `forward' is non-nil, VALUE may be out of date.
+    /// Also if the currently loaded binding is the default binding, then
+    /// this is `eq'ual to defcell.
+    valcell: Lisp_Object,
+}
+
+extern "C" {
+    pub fn get_blv_fwd(blv: *const Lisp_Buffer_Local_Value) -> *const Lisp_Fwd;
+    pub fn get_blv_value(blv: *const Lisp_Buffer_Local_Value) -> Lisp_Object;
+}
+
+#[repr(C)]
+pub union Lisp_Fwd {
+    pub u_intfwd: Lisp_Intfwd,
+    pub u_boolfwd: Lisp_Boolfwd,
+    pub u_objfwd: Lisp_Objfwd,
+    pub u_buffer_objfwd: Lisp_Buffer_Objfwd,
+    pub u_kboard_objfwd: Lisp_Kboard_Objfwd,
+}
+
+/// Forwarding pointer to an int variable.
+/// This is allowed only in the value cell of a symbol,
+/// and it means that the symbol's value really lives in the
+/// specified int variable.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Intfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Int
+    pub intvar: *mut EmacsInt,
+}
+
+/// Boolean forwarding pointer to an int variable.
+/// This is like Lisp_Intfwd except that the ostensible
+/// "value" of the symbol is t if the bool variable is true,
+/// nil if it is false.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Boolfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Bool
+    pub boolvar: *mut bool,
+}
+
+/// Forwarding pointer to a Lisp_Object variable.
+/// This is allowed only in the value cell of a symbol,
+/// and it means that the symbol's value really lives in the
+/// specified variable.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Objfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Obj
+    pub objvar: *mut Lisp_Object,
+}
+
+/// Like Lisp_Objfwd except that value lives in a slot in the
+/// current buffer.  Value is byte index of slot within buffer.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Buffer_Objfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Buffer_Obj
+    pub offset: i32,
+    // One of Qnil, Qintegerp, Qsymbolp, Qstringp, Qfloatp or Qnumberp.
+    pub predicate: Lisp_Object,
+}
+
+/// Like Lisp_Objfwd except that value lives in a slot in the
+/// current kboard.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Lisp_Kboard_Objfwd {
+    pub ty: Lisp_Fwd_Type, // = Lisp_Fwd_Kboard_Obj
+    pub offset: i32,
 }
 
 /// Represents text contents of an Emacs buffer. For documentation see
@@ -1554,13 +1684,15 @@ extern "C" {
     pub fn unchain_marker(marker: *mut Lisp_Marker);
     pub fn del_range(from: ptrdiff_t, to: ptrdiff_t);
     pub fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: ptrdiff_t) -> ptrdiff_t;
+    pub fn swap_in_symval_forwarding(sym: *mut Lisp_Symbol, blv: *mut Lisp_Buffer_Local_Value);
+
 }
 
 /// Contains C definitions from the font.h header.
 pub mod font {
     use libc::c_int;
 
-    /// Represents the indices of font properties in the contents of a font
+    /// Represents // TODO: he indices of font properties in the contents of a font
     /// vector.
     ///
     /// # C Porting Notes
