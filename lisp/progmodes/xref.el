@@ -692,6 +692,10 @@ references displayed in the current *xref* buffer."
     (dotimes (_ n)
       (setq xref (xref--search-property 'xref-item backward)))
     (cond (xref
+           ;; Save the current position (when the buffer is visible,
+           ;; it gets reset to that window's point from time to time).
+           (let ((win (get-buffer-window (current-buffer))))
+             (and win (set-window-point win (point))))
            (xref--show-location (xref-item-location xref) t))
           (t
            (error "No %s xref" (if backward "previous" "next"))))))
