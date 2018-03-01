@@ -79,43 +79,34 @@ pub extern "C" fn get_keymap(
     autoload: bool,
 ) -> Lisp_Object {
     let object = LispObject::from_raw(object);
-    let mut autoload_retry;
-    loop {
+
+    let mut autoload_retry = true;
+    while autoload_retry {
         autoload_retry = false;
+
         if object.is_nil() {
             break;
         }
 
-        if object.is_cons()
-            && object
-                .as_cons()
-                .unwrap()
-                .car()
-                .eq(LispObject::from_raw(Qkeymap))
-        {
-            return object.to_raw();
+        if let Some(cons) = object.as_cons() {
+            if cons.car().eq_raw(Qkeymap) {
+                return object.to_raw();
+            }
         }
 
         let tem = indirect_function(object);
-        if tem.is_cons() {
-            if tem.as_cons()
-                .unwrap()
-                .car()
-                .eq(LispObject::from_raw(Qkeymap))
-            {
+        if let Some(cons) = tem.as_cons() {
+            if cons.car().eq_raw(Qkeymap) {
                 return tem.to_raw();
             }
 
             // Should we do an autoload?  Autoload forms for keymaps have
             // Qkeymap as their fifth element.
-            if (autoload || !error_if_not_keymap)
-                && tem.as_cons()
-                    .unwrap()
-                    .car()
-                    .eq(LispObject::from_raw(Qautoload)) && object.is_symbol()
+            if (autoload || !error_if_not_keymap) && cons.car().eq_raw(Qautoload)
+                && object.is_symbol()
             {
                 let tail = nth(4, tem);
-                if tail.eq(LispObject::from_raw(Qkeymap)) {
+                if tail.eq_raw(Qkeymap) {
                     if autoload {
                         autoload_do_load(tem, object, LispObject::constant_nil());
                         autoload_retry = true;
@@ -124,10 +115,6 @@ pub extern "C" fn get_keymap(
                     }
                 }
             }
-        }
-
-        if !autoload_retry {
-            break;
         }
     }
 
