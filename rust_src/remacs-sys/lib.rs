@@ -1459,11 +1459,6 @@ extern "C" {
         noinherit: bool,
         autoload: bool,
     ) -> Lisp_Object;
-    pub fn get_keymap(
-        object: Lisp_Object,
-        error_if_not_keymap: bool,
-        autoload: bool,
-    ) -> Lisp_Object;
     pub fn message_with_string(m: *const c_char, string: Lisp_Object, log: bool);
     pub fn maybe_quit();
     pub fn make_lispy_position(

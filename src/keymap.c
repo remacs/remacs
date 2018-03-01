@@ -120,71 +120,6 @@ initial_define_lispy_key (Lisp_Object keymap, const char *keyname, const char *d
   store_in_keymap (keymap, intern_c_string (keyname), intern_c_string (defname));
 }
 
-/* Check that OBJECT is a keymap (after dereferencing through any
-   symbols).  If it is, return it.
-
-   If AUTOLOAD and if OBJECT is a symbol whose function value
-   is an autoload form, do the autoload and try again.
-   If AUTOLOAD, callers must assume GC is possible.
-
-   ERROR_IF_NOT_KEYMAP controls how we respond if OBJECT isn't a keymap.
-   If ERROR_IF_NOT_KEYMAP, signal an error; otherwise,
-   just return Qnil.
-
-   Note that most of the time, we don't want to pursue autoloads.
-   Functions like Faccessible_keymaps which scan entire keymap trees
-   shouldn't load every autoloaded keymap.  I'm not sure about this,
-   but it seems to me that only read_key_sequence, Flookup_key, and
-   Fdefine_key should cause keymaps to be autoloaded.
-
-   This function can GC when AUTOLOAD is true, because it calls
-   Fautoload_do_load which can GC.  */
-
-Lisp_Object
-get_keymap (Lisp_Object object, bool error_if_not_keymap, bool autoload)
-{
-  Lisp_Object tem;
-
- autoload_retry:
-  if (NILP (object))
-    goto end;
-  if (CONSP (object) && EQ (XCAR (object), Qkeymap))
-    return object;
-
-  tem = indirect_function (object);
-  if (CONSP (tem))
-    {
-      if (EQ (XCAR (tem), Qkeymap))
-	return tem;
-
-      /* Should we do an autoload?  Autoload forms for keymaps have
-	 Qkeymap as their fifth element.  */
-      if ((autoload || !error_if_not_keymap) && EQ (XCAR (tem), Qautoload)
-	  && SYMBOLP (object))
-	{
-	  Lisp_Object tail;
-
-	  tail = Fnth (make_number (4), tem);
-	  if (EQ (tail, Qkeymap))
-	    {
-	      if (autoload)
-		{
-		  Fautoload_do_load (tem, object, Qnil);
-		  goto autoload_retry;
-		}
-	      else
-	      	return object;
-	    }
-	}
-    }
-
- end:
-  if (error_if_not_keymap)
-    wrong_type_argument (Qkeymapp, object);
-  return Qnil;
-}
-
-
 /* Look up IDX in MAP.  IDX may be any sort of event.
    Note that this does only one level of lookup; IDX must be a single
    event, not a sequence.
