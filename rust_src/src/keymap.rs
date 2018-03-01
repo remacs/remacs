@@ -79,53 +79,55 @@ pub extern "C" fn get_keymap(
     autoload: bool,
 ) -> Lisp_Object {
     let object = LispObject::from_raw(object);
-    'end: loop {
-        'autoload_retry: loop {
-            if object.is_nil() {
-                break 'end;
-            }
+    let mut autoload_retry;
+    loop {
+        autoload_retry = false;
+        if object.is_nil() {
+            break;
+        }
 
-            if object.is_cons()
-                && object
-                    .as_cons()
-                    .unwrap()
-                    .car()
-                    .eq(LispObject::from_raw(Qkeymap))
+        if object.is_cons()
+            && object
+                .as_cons()
+                .unwrap()
+                .car()
+                .eq(LispObject::from_raw(Qkeymap))
+        {
+            return object.to_raw();
+        }
+
+        let tem = indirect_function(object);
+        if tem.is_cons() {
+            if tem.as_cons()
+                .unwrap()
+                .car()
+                .eq(LispObject::from_raw(Qkeymap))
             {
-                return object.to_raw();
+                return tem.to_raw();
             }
 
-            let tem = indirect_function(object);
-            if tem.is_cons() {
-                if tem.as_cons()
+            // Should we do an autoload?  Autoload forms for keymaps have
+            // Qkeymap as their fifth element.
+            if (autoload || !error_if_not_keymap)
+                && tem.as_cons()
                     .unwrap()
                     .car()
-                    .eq(LispObject::from_raw(Qkeymap))
-                {
-                    return tem.to_raw();
-                }
-
-                // Should we do an autoload?  Autoload forms for keymaps have
-                // Qkeymap as their fifth element.
-                if (autoload || !error_if_not_keymap)
-                    && tem.as_cons()
-                        .unwrap()
-                        .car()
-                        .eq(LispObject::from_raw(Qautoload))
-                    && object.is_symbol()
-                {
-                    let tail = nth(4, tem);
-                    if tail.eq(LispObject::from_raw(Qkeymap)) {
-                        if autoload {
-                            autoload_do_load(tem, object, LispObject::constant_nil());
-                            break 'autoload_retry;
-                        } else {
-                            return object.to_raw();
-                        }
+                    .eq(LispObject::from_raw(Qautoload)) && object.is_symbol()
+            {
+                let tail = nth(4, tem);
+                if tail.eq(LispObject::from_raw(Qkeymap)) {
+                    if autoload {
+                        autoload_do_load(tem, object, LispObject::constant_nil());
+                        autoload_retry = true;
+                    } else {
+                        return object.to_raw();
                     }
                 }
             }
-            break 'end;
+        }
+
+        if !autoload_retry {
+            break;
         }
     }
 
