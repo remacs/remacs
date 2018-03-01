@@ -2923,8 +2923,6 @@ extract_data_from_object (Lisp_Object spec,
 
       record_unwind_current_buffer ();
 
-      CHECK_BUFFER (object);
-
       struct buffer *bp = XBUFFER (object);
       set_buffer_internal (bp);
 
