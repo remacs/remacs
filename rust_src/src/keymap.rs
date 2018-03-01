@@ -125,6 +125,7 @@ pub extern "C" fn get_keymap_2(
                     }
                 }
             }
+            break 'end;
         }
     }
 
@@ -132,6 +133,24 @@ pub extern "C" fn get_keymap_2(
         wrong_type!(Qkeymapp, object);
     }
     Qnil
+}
+
+#[lisp_fn]
+pub fn get_keymap_2_lisp(
+    object: LispObject,
+    error_if_not_keymap: bool,
+    autoload: bool,
+) -> LispObject {
+    LispObject::from_raw(get_keymap_2(object.to_raw(), error_if_not_keymap, autoload))
+}
+
+#[lisp_fn]
+pub fn get_keymap_lisp(
+    object: LispObject,
+    error_if_not_keymap: bool,
+    autoload: bool,
+) -> LispObject {
+    LispObject::from_raw(unsafe { get_keymap(object.to_raw(), error_if_not_keymap, autoload) })
 }
 
 /// Construct and return a new keymap, of the form (keymap CHARTABLE . ALIST).
