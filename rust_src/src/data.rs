@@ -11,8 +11,9 @@ use remacs_sys::{Qargs_out_of_range, Qarrayp, Qautoload, Qbool_vector, Qbuffer, 
                  Qmarker, Qmodule_function, Qmutex, Qnil, Qnone, Qoverlay, Qprocess, Qstring,
                  Qsubr, Qsymbol, Qt, Qterminal, Qthread, Quser_ptr, Qvector, Qwindow,
                  Qwindow_configuration};
-use remacs_sys::{get_keymap, globals};
+use remacs_sys::globals;
 
+use keymap::get_keymap;
 use lisp::{LispObject, LispSubrRef};
 use lisp::{defsubr, is_autoload};
 use lists::{get, put};

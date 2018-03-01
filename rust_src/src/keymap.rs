@@ -5,7 +5,7 @@ use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, L
                  CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
-use remacs_sys::{access_keymap, get_keymap, maybe_quit};
+use remacs_sys::{access_keymap, maybe_quit};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
@@ -60,20 +60,20 @@ pub extern "C" fn set_where_is_cache_keymaps(val: Lisp_Object) {
 /// is an autoload form, do the autoload and try again.
 /// If AUTOLOAD, callers must assume GC is possible.
 ///
-/// ERROR_IF_NOT_KEYMAP controls how we respond if OBJECT isn't a keymap.
-/// If ERROR_IF_NOT_KEYMAP, signal an error; otherwise,
+/// `ERROR_IF_NOT_KEYMAP` controls how we respond if OBJECT isn't a keymap.
+/// If `ERROR_IF_NOT_KEYMAP`, signal an error; otherwise,
 /// just return Qnil.
 ///
 /// Note that most of the time, we don't want to pursue autoloads.
-/// Functions like Faccessible_keymaps which scan entire keymap trees
+/// Functions like `Faccessible_keymaps` which scan entire keymap trees
 /// shouldn't load every autoloaded keymap.  I'm not sure about this,
-/// but it seems to me that only read_key_sequence, Flookup_key, and
-/// Fdefine_key should cause keymaps to be autoloaded.
+/// but it seems to me that only `read_key_sequence`, `Flookup_key`, and
+/// `Fdefine_key` should cause keymaps to be autoloaded.
 ///
 /// This function can GC when AUTOLOAD is true, because it calls
-/// Fautoload_do_load which can GC.
+/// `Fautoload_do_load` which can GC.
 #[no_mangle]
-pub extern "C" fn get_keymap_2(
+pub extern "C" fn get_keymap(
     object: Lisp_Object,
     error_if_not_keymap: bool,
     autoload: bool,
@@ -135,24 +135,6 @@ pub extern "C" fn get_keymap_2(
     Qnil
 }
 
-#[lisp_fn]
-pub fn get_keymap_2_lisp(
-    object: LispObject,
-    error_if_not_keymap: bool,
-    autoload: bool,
-) -> LispObject {
-    LispObject::from_raw(get_keymap_2(object.to_raw(), error_if_not_keymap, autoload))
-}
-
-#[lisp_fn]
-pub fn get_keymap_lisp(
-    object: LispObject,
-    error_if_not_keymap: bool,
-    autoload: bool,
-) -> LispObject {
-    LispObject::from_raw(unsafe { get_keymap(object.to_raw(), error_if_not_keymap, autoload) })
-}
-
 /// Construct and return a new keymap, of the form (keymap CHARTABLE . ALIST).
 /// CHARTABLE is a char-table that holds the bindings for all characters
 /// without modifiers.  All entries in it are initially nil, meaning
@@ -183,7 +165,7 @@ pub fn make_keymap(string: LispObject) -> LispObject {
 /// is also allowed as an element.
 #[lisp_fn]
 pub fn keymapp(object: LispObject) -> bool {
-    let map = unsafe { LispObject::from_raw(get_keymap(object.to_raw(), false, false)) };
+    let map = LispObject::from_raw(get_keymap(object.to_raw(), false, false));
     map.is_not_nil()
 }
 
@@ -191,7 +173,7 @@ pub fn keymapp(object: LispObject) -> bool {
 /// We assume that KEYMAP is a valid keymap.
 #[no_mangle]
 pub extern "C" fn keymap_parent(keymap: Lisp_Object, autoload: bool) -> Lisp_Object {
-    let map = unsafe { LispObject::from_raw(get_keymap(keymap, true, autoload)) };
+    let map = LispObject::from_raw(get_keymap(keymap, true, autoload));
     let mut current = LispObject::constant_nil();
     for elt in map.iter_tails_safe() {
         current = elt.cdr();
@@ -199,7 +181,7 @@ pub extern "C" fn keymap_parent(keymap: Lisp_Object, autoload: bool) -> Lisp_Obj
             return current.to_raw();
         }
     }
-    unsafe { get_keymap(current.to_raw(), false, autoload) }
+    get_keymap(current.to_raw(), false, autoload)
 }
 
 /// Return the parent keymap of KEYMAP.
@@ -234,9 +216,9 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
     }
 
     let mut parent = parent;
-    let keymap = unsafe { LispObject::from_raw(get_keymap(keymap.to_raw(), true, true)) };
+    let keymap = LispObject::from_raw(get_keymap(keymap.to_raw(), true, true));
     if parent.is_not_nil() {
-        parent = unsafe { LispObject::from_raw(get_keymap(parent.to_raw(), true, false)) };
+        parent = LispObject::from_raw(get_keymap(parent.to_raw(), true, false));
 
         // Check for cycles
         if keymap_memberp(keymap.to_raw(), parent.to_raw()) {
@@ -272,7 +254,7 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
 /// when reading a key-sequence to be looked-up in this keymap.
 #[lisp_fn]
 pub fn keymap_prompt(map: LispObject) -> LispObject {
-    let map = unsafe { LispObject::from_raw(get_keymap(map.to_raw(), false, false)) };
+    let map = LispObject::from_raw(get_keymap(map.to_raw(), false, false));
     for elt in map.iter_cars_safe() {
         let mut tem = elt;
         if tem.is_string() {
@@ -314,10 +296,8 @@ pub fn current_local_map() -> LispObject {
 #[lisp_fn]
 pub fn use_local_map(mut keymap: LispObject) -> () {
     if !keymap.is_nil() {
-        keymap = unsafe {
-            let map = get_keymap(keymap.to_raw(), true, true);
-            LispObject::from_raw(map)
-        }
+        let map = get_keymap(keymap.to_raw(), true, true);
+        keymap = LispObject::from_raw(map);
     }
 
     ThreadState::current_buffer().keymap = keymap.to_raw();
@@ -350,9 +330,7 @@ pub fn current_global_map() -> LispObject {
 /// Select KEYMAP as the global keymap.
 #[lisp_fn]
 pub fn use_global_map(keymap: LispObject) -> () {
-    unsafe {
-        _current_global_map = get_keymap(keymap.to_raw(), true, true);
-    }
+    unsafe { _current_global_map = get_keymap(keymap.to_raw(), true, true) };
 }
 
 // Value is number if KEY is too long; nil if valid but has no definition.
@@ -376,7 +354,7 @@ pub fn use_global_map(keymap: LispObject) -> () {
 #[lisp_fn(min = "2")]
 pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObject) -> LispObject {
     let ok = accept_default.is_not_nil();
-    let mut keymap = unsafe { get_keymap(keymap.to_raw(), true, true) };
+    let mut keymap = get_keymap(keymap.to_raw(), true, true);
     let length = key.as_vector_or_string_length() as EmacsInt;
     if length == 0 {
         return LispObject::from_raw(keymap);
@@ -412,7 +390,7 @@ pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObjec
             return LispObject::from_raw(cmd);
         }
 
-        keymap = unsafe { get_keymap(cmd, false, true) };
+        keymap = get_keymap(cmd, false, true);
         if !LispObject::from_raw(keymap).is_cons() {
             return LispObject::from_natnum(idx);
         }

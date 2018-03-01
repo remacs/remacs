@@ -1,27 +1,27 @@
 (require 'ert)
 
-(ert-deftest keymap-tests--get-keymap-2 ()
-  (let ((sample-keymap '(keymap
-                         (3 keymap
-                            ;; C-c C-z
-                            (26 . emacs-version)))))
+;; (ert-deftest keymap-tests--get-keymap-2 ()
+;;   (let ((sample-keymap '(keymap
+;;                          (3 keymap
+;;                             ;; C-c C-z
+;;                             (26 . emacs-version)))))
 
-    ;; If object is nil
-    (should-not (get-keymap-2-lisp nil nil nil))
+;;     ;; If object is nil
+;;     (should-not (get-keymap-2-lisp nil nil nil))
 
-    ;; If object is not keymap
-    (should-error (get-keymap-2-lisp nil t nil))
+;;     ;; If object is not keymap
+;;     (should-error (get-keymap-2-lisp nil t nil))
 
-    ;; If object is keymap
-    (should (equal (get-keymap-2-lisp sample-keymap t nil) sample-keymap))
+;;     ;; If object is keymap
+;;     (should (equal (get-keymap-2-lisp sample-keymap t nil) sample-keymap))
     
-    ;; If object is an autoload form
-    (should-not (get-keymap-2-lisp (symbol-function 'run-prolog) nil t))
+;;     ;; If object is an autoload form
+;;     (should-not (get-keymap-2-lisp (symbol-function 'run-prolog) nil t))
 
-    ;; If object is an autoload but autoload parameter is nil
-    (should-error (get-keymap-2-lisp(nth 4 '(autoload 1 2 3 keymap 5)) t nil))
-    (should-not (get-keymap-2-lisp(nth 4 '(autoload 1 2 3 keymap 5)) nil nil))
-    ))
+;;     ;; If object is an autoload but autoload parameter is nil
+;;     (should-error (get-keymap-2-lisp(nth 4 '(autoload 1 2 3 keymap 5)) t nil))
+;;     (should-not (get-keymap-2-lisp(nth 4 '(autoload 1 2 3 keymap 5)) nil nil))
+;;     ))
 
 (ert-deftest keymap-tests--set-keymap-parent ()
   (let ((sample-keymap '(keymap
