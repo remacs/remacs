@@ -207,13 +207,13 @@ buffers are scrolled.  The variable
 @code{mouse-wheel-progressive-speed} determines whether the scroll
 speed is linked to how fast you move the wheel.
 
-@vindex mwheel-tilt-scroll-p
-@vindex mwheel-flip-direction
+@vindex mouse-wheel-tilt-scroll
+@vindex mouse-wheel-flip-direction
 Emacs can also support horizontal scrolling if your mouse's wheel can
 be tilted.  This feature is off by default; the variable
-@code{mwheel-tilt-scroll-p} turns it on.  If you'd like to reverse the
-direction of horizontal scrolling, customize the variable
-@code{mwheel-flip-direction} to a non-@code{nil} value.
+@code{mouse-wheel-tilt-scroll} turns it on.  If you'd like to reverse
+the direction of horizontal scrolling, customize the variable
+@code{mouse-wheel-flip-direction} to a non-@code{nil} value.
 
 
 @node Word and Line Mouse

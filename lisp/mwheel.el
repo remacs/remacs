@@ -255,13 +255,13 @@ non-Windows systems."
                    ;; Make sure we do indeed scroll to the end of the buffer.
                    (end-of-buffer (while t (funcall mwheel-scroll-up-function)))))
                 ((eq button mouse-wheel-left-event) ; for tilt scroll
-                 (when mwheel-tilt-scroll-p
-                   (funcall (if mwheel-flip-direction
+                 (when mouse-wheel-tilt-scroll
+                   (funcall (if mouse-wheel-flip-direction
                                 mwheel-scroll-right-function
                               mwheel-scroll-left-function) amt)))
                 ((eq button mouse-wheel-right-event) ; for tilt scroll
-                 (when mwheel-tilt-scroll-p
-                   (funcall (if mwheel-flip-direction
+                 (when mouse-wheel-tilt-scroll
+                   (funcall (if mouse-wheel-flip-direction
                                 mwheel-scroll-left-function
                               mwheel-scroll-right-function) amt)))
 		(t (error "Bad binding in mwheel-scroll"))))
@@ -324,13 +324,13 @@ the mode if ARG is omitted or nil."
 
 ;;; For tilt-scroll
 ;;;
-(defcustom mwheel-tilt-scroll-p nil
+(defcustom mouse-wheel-tilt-scroll nil
   "Enable scroll using tilting mouse wheel."
   :group 'mouse
   :type 'boolean
   :version "26.1")
 
-(defcustom mwheel-flip-direction nil
+(defcustom mouse-wheel-flip-direction nil
   "Swap direction of 'wheel-right and 'wheel-left."
   :group 'mouse
   :type 'boolean
