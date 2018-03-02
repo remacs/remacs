@@ -148,6 +148,20 @@ This can be slightly disconcerting, but some people prefer it."
   :group 'mouse
   :type 'boolean)
 
+;;; For tilt-scroll
+;;;
+(defcustom mouse-wheel-tilt-scroll nil
+  "Enable scroll using tilting mouse wheel."
+  :group 'mouse
+  :type 'boolean
+  :version "26.1")
+
+(defcustom mouse-wheel-flip-direction nil
+  "Swap direction of 'wheel-right and 'wheel-left."
+  :group 'mouse
+  :type 'boolean
+  :version "26.1")
+
 (eval-and-compile
   (if (fboundp 'event-button)
       (fset 'mwheel-event-button 'event-button)
@@ -190,6 +204,18 @@ This can be slightly disconcerting, but some people prefer it."
 
 (defvar mwheel-scroll-right-function 'scroll-right
   "Function that does the job of scrolling right.")
+
+(defvar mouse-wheel-left-event
+  (if (or (featurep 'w32-win) (featurep 'ns-win))
+      'wheel-left
+    (intern "mouse-6"))
+  "Event used for scrolling left.")
+
+(defvar mouse-wheel-right-event
+  (if (or (featurep 'w32-win) (featurep 'ns-win))
+      'wheel-right
+    (intern "mouse-7"))
+  "Event used for scrolling right.")
 
 (defun mwheel-scroll (event)
   "Scroll up or down according to the EVENT.
@@ -326,33 +352,6 @@ the mode if ARG is omitted or nil."
 (defun mwheel-install (&optional uninstall)
   "Enable mouse wheel support."
   (mouse-wheel-mode (if uninstall -1 1)))
-
-
-;;; For tilt-scroll
-;;;
-(defcustom mouse-wheel-tilt-scroll nil
-  "Enable scroll using tilting mouse wheel."
-  :group 'mouse
-  :type 'boolean
-  :version "26.1")
-
-(defcustom mouse-wheel-flip-direction nil
-  "Swap direction of 'wheel-right and 'wheel-left."
-  :group 'mouse
-  :type 'boolean
-  :version "26.1")
-
-(defvar mouse-wheel-left-event
-  (if (or (featurep 'w32-win) (featurep 'ns-win))
-      'wheel-left
-    (intern "mouse-6"))
-  "Event used for scrolling left.")
-
-(defvar mouse-wheel-right-event
-  (if (or (featurep 'w32-win) (featurep 'ns-win))
-      'wheel-right
-    (intern "mouse-7"))
-  "Event used for scrolling right.")
 
 (provide 'mwheel)
 
