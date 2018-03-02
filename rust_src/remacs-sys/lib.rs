@@ -1210,7 +1210,19 @@ pub struct Lisp_Frame {
     /// This is the frame title specified explicitly, if any.
     /// Usually it is nil.
     pub title: Lisp_Object,
-
+    
+    // This struct is incomplete.
+    // It is difficult, if not impossible, to import the rest of this struct.
+    // 1. #IFDEF logic means the proper number of fields is hard to determine.
+    // 2. Bitfields are compiler dependent. How much padding, where?
+    //    The current count is roughly 50 bits.
+    //
+    // Because of this, access functions are written in src/frame.c and
+    // exported here for use in Rust. This means that instead of
+    // frame.foo the proper method is fget_foo(frame).
+    /// This frame's parent frame, if it has one.
+     parent_frame: Lisp_Object, 
+    
     ///  The frame which should receive keystrokes that occur in this
     /// frame, or nil if they should go to the frame itself.  This is
     /// usually nil, but if the frame is minibufferless, we can use this
@@ -1222,29 +1234,29 @@ pub struct Lisp_Frame {
     /// to shift from one frame to the other, any redirections to the
     /// original frame are shifted to the newly selected frame; if
     /// focus_frame is nil, Fselect_frame will leave it alone.
-    pub focus_frame: Lisp_Object,
+    focus_frame: Lisp_Object,
 
     /// This frame's root window.  Every frame has one.
     /// If the frame has only a minibuffer window, this is it.
     /// Otherwise, if the frame has a minibuffer window, this is its sibling.
-    pub root_window: Lisp_Object,
+    root_window: Lisp_Object,
 
     /// This frame's selected window.
     /// Each frame has its own window hierarchy
     /// and one of the windows in it is selected within the frame.
     /// The selected window of the selected frame is Emacs's selected window.
-    pub selected_window: Lisp_Object,
+    selected_window: Lisp_Object,
 
     /// This frame's minibuffer window.
     /// Most frames have their own minibuffer windows,
     /// but only the selected frame's minibuffer window
     /// can actually appear to exist.
-    pub minibuffer_window: Lisp_Object,
+    minibuffer_window: Lisp_Object,
 
     /// Parameter alist of this frame.
     /// These are the parameters specified when creating the frame
     /// or modified with modify-frame-parameters.
-    pub param_alist: Lisp_Object,
+    param_alist: Lisp_Object,
 
     /// List of scroll bars on this frame.
     /// Actually, we don't specify exactly what is stored here at all; the
@@ -1253,48 +1265,41 @@ pub struct Lisp_Frame {
     /// instead of in the `device' structure so that the garbage
     /// collector doesn't need to look inside the window-system-dependent
     /// structure.
-    pub scroll_bars: Lisp_Object,
-    pub condemned_scroll_bars: Lisp_Object,
+    scroll_bars: Lisp_Object,
+    condemned_scroll_bars: Lisp_Object,
 
     /// Vector describing the items to display in the menu bar.
     /// Each item has four elements in this vector.
     /// They are KEY, STRING, SUBMAP, and HPOS.
     /// (HPOS is not used in when the X toolkit is in use.)
     /// There are four additional elements of nil at the end, to terminate.
-    pub menu_bar_items: Lisp_Object,
+    menu_bar_items: Lisp_Object,
 
     /// Alist of elements (FACE-NAME . FACE-VECTOR-DATA).
-    pub face_alist: Lisp_Object,
+    face_alist: Lisp_Object,
 
     /// A vector that records the entire structure of this frame's menu bar.
     /// For the format of the data, see extensive comments in xmenu.c.
     /// Only the X toolkit version uses this.
-    pub menu_bar_vector: Lisp_Object,
+    menu_bar_vector: Lisp_Object,
 
     /// Predicate for selecting buffers for other-buffer.
-    pub buffer_predicate: Lisp_Object,
+    buffer_predicate: Lisp_Object,
 
     /// List of buffers viewed in this frame, for other-buffer.
-    pub buffer_list: Lisp_Object,
+    buffer_list: Lisp_Object,
 
     /// List of buffers that were viewed, then buried in this frame.  The
     /// most recently buried buffer is first.  For last-buffer.
-    pub buried_buffer_list: Lisp_Object,
-    // This struct is incomplete.
-    // It is difficult, if not impossible, to import the rest of this struct.
-    // 1. #IFDEF logic means the proper number of fields is hard to determine.
-    // 2. Bitfields are compiler dependent. How much padding, where?
-    //    The current count is roughly 50 bits.
-    //
-    // Because of this, access functions are written in src/frame.c and
-    // exported here for use in Rust. This means that instead of
-    // frame.foo the proper method is fget_foo(frame).
+    buried_buffer_list: Lisp_Object,
 }
 
 extern "C" {
     pub fn fget_buffer_list(frame: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_buried_buffer_list(frame: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_internal_border_width(frame: *const Lisp_Frame) -> c_int;
+    pub fn fget_selected_window (frame: *const Lisp_Frame) ->Lisp_Object;
+    pub fn fset_selected_window (frame: *mut Lisp_Frame, window: Lisp_Object);
 }
 
 #[repr(C)]
@@ -1697,7 +1702,11 @@ extern "C" {
     pub fn del_range(from: ptrdiff_t, to: ptrdiff_t);
     pub fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: ptrdiff_t) -> ptrdiff_t;
     pub fn swap_in_symval_forwarding(sym: *mut Lisp_Symbol, blv: *mut Lisp_Buffer_Local_Value);
-
+        pub fn window_list_1(
+        window: Lisp_Object,
+        minibuf: Lisp_Object,
+        all_frames: Lisp_Object,
+    ) -> Lisp_Object;
 }
 
 /// Contains C definitions from the font.h header.
