@@ -13,12 +13,12 @@ use remacs_sys::{estimate_mode_line_height, is_minibuffer, minibuf_level,
                  selected_window as current_window, wget_current_matrix, wget_mode_line_height,
                  wget_parent, wget_pixel_height, wget_pseudo_window_p, wget_window_parameters,
                  window_menu_bar_p, window_parameter, window_tool_bar_p, wset_mode_line_height,
-                 wset_window_parameters};
+                 wset_window_parameters, window_list_1};
 use remacs_sys::Fcons;
 use remacs_sys::globals;
 
 use editfns::point;
-use frames::{frame_live_or_selected, window_frame_live_or_selected};
+use frames::{frame_live_or_selected, selected_frame, window_frame_live_or_selected, LispFrameRef};
 use lisp::{ExternalPtr, LispObject};
 use lisp::defsubr;
 use lists::{assq, setcdr};
@@ -620,6 +620,97 @@ pub extern "C" fn CURRENT_MODE_LINE_FACE_ID(window: LispWindowRef) -> face_id {
 #[no_mangle]
 pub extern "C" fn CURRENT_MODE_LINE_HEIGHT(mut window: LispWindowRef) -> i32 {
     window.current_mode_line_height()
+}
+
+/// Return a list of windows on FRAME, starting with WINDOW.
+/// FRAME nil or omitted means use the selected frame.
+/// WINDOW nil or omitted means use the window selected within FRAME.
+/// MINIBUF t means include the minibuffer window, even if it isn't active.
+/// MINIBUF nil or omitted means include the minibuffer window only
+/// if it's active.
+/// MINIBUF neither nil nor t means never include the minibuffer window.
+#[lisp_fn(min = "0")]
+pub fn window_list(
+    frame: Option<LispFrameRef>,
+    minibuf: LispObject,
+    window: Option<LispWindowRef>,
+) -> LispObject {
+    let w_obj = match window {
+        Some(w) => w.as_lisp_obj(),
+        None => {
+            if let Some(f) = frame {
+                f.selected_window()
+            } else {
+                selected_window()
+            }
+        }
+    };
+
+    let f_obj = match frame {
+        None => selected_frame(),
+        Some(f) => f.as_lisp_obj(),
+    };
+
+    let w_ref = w_obj
+        .as_window()
+        .unwrap_or_else(|| panic!("Invalid window reference."));
+
+    if !f_obj.eq(w_ref.frame()) {
+        error!("Window is on a different frame");
+    }
+
+    unsafe {
+        LispObject::from_raw(window_list_1(
+            w_obj.to_raw(),
+            minibuf.to_raw(),
+            f_obj.to_raw(),
+        ))
+    }
+}
+
+/// Return a list of all live windows.
+/// WINDOW specifies the first window to list and defaults to the selected
+/// window.
+///
+/// Optional argument MINIBUF nil or omitted means consider the minibuffer
+/// window only if the minibuffer is active.  MINIBUF t means consider the
+/// minibuffer window even if the minibuffer is not active.  Any other value
+/// means do not consider the minibuffer window even if the minibuffer is
+/// active.
+///
+/// Optional argument ALL-FRAMES nil or omitted means consider all windows
+/// on WINDOW's frame, plus the minibuffer window if specified by the
+/// MINIBUF argument.  If the minibuffer counts, consider all windows on all
+/// frames that share that minibuffer too.  The following non-nil values of
+/// ALL-FRAMES have special meanings:
+///
+/// - t means consider all windows on all existing frames.
+///
+/// - `visible' means consider all windows on all visible frames.
+///
+/// - 0 (the number zero) means consider all windows on all visible and
+///   iconified frames.
+///
+/// - A frame means consider all windows on that frame only.
+///
+/// Anything else means consider all windows on WINDOW's frame and no
+/// others.
+///
+/// If WINDOW is not on the list of windows returned, some other window will
+/// be listed first but no error is signaled.
+#[lisp_fn(min = "0", name = "window-list-1")]
+pub fn window_list_one(
+    window: LispObject,
+    minibuf: LispObject,
+    all_frames: LispObject,
+) -> LispObject {
+    unsafe {
+        LispObject::from_raw(window_list_1(
+            window.to_raw(),
+            minibuf.to_raw(),
+            all_frames.to_raw(),
+        ))
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));

@@ -2448,7 +2448,7 @@ reverse order.  */)
 /* Return a list of windows in cyclic ordering.  Arguments are like
    for `next-window'.  */
 
-static Lisp_Object
+Lisp_Object
 window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames)
 {
   Lisp_Object tail, list, rest;
@@ -2473,65 +2473,6 @@ window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames)
   return list;
 }
 
-
-DEFUN ("window-list", Fwindow_list, Swindow_list, 0, 3, 0,
-       doc: /* Return a list of windows on FRAME, starting with WINDOW.
-FRAME nil or omitted means use the selected frame.
-WINDOW nil or omitted means use the window selected within FRAME.
-MINIBUF t means include the minibuffer window, even if it isn't active.
-MINIBUF nil or omitted means include the minibuffer window only
-if it's active.
-MINIBUF neither nil nor t means never include the minibuffer window.  */)
-  (Lisp_Object frame, Lisp_Object minibuf, Lisp_Object window)
-{
-  if (NILP (window))
-    window = FRAMEP (frame) ? XFRAME (frame)->selected_window : selected_window;
-  CHECK_WINDOW (window);
-  if (NILP (frame))
-    frame = selected_frame;
-
-  if (!EQ (frame, XWINDOW (window)->frame))
-    error ("Window is on a different frame");
-
-  return window_list_1 (window, minibuf, frame);
-}
-
-
-DEFUN ("window-list-1", Fwindow_list_1, Swindow_list_1, 0, 3, 0,
-       doc: /* Return a list of all live windows.
-WINDOW specifies the first window to list and defaults to the selected
-window.
-
-Optional argument MINIBUF nil or omitted means consider the minibuffer
-window only if the minibuffer is active.  MINIBUF t means consider the
-minibuffer window even if the minibuffer is not active.  Any other value
-means do not consider the minibuffer window even if the minibuffer is
-active.
-
-Optional argument ALL-FRAMES nil or omitted means consider all windows
-on WINDOW's frame, plus the minibuffer window if specified by the
-MINIBUF argument.  If the minibuffer counts, consider all windows on all
-frames that share that minibuffer too.  The following non-nil values of
-ALL-FRAMES have special meanings:
-
-- t means consider all windows on all existing frames.
-
-- `visible' means consider all windows on all visible frames.
-
-- 0 (the number zero) means consider all windows on all visible and
-  iconified frames.
-
-- A frame means consider all windows on that frame only.
-
-Anything else means consider all windows on WINDOW's frame and no
-others.
-
-If WINDOW is not on the list of windows returned, some other window will
-be listed first but no error is signaled.  */)
-  (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames)
-{
-  return window_list_1 (window, minibuf, all_frames);
-}
 
 /* Look at all windows, performing an operation specified by TYPE
    with argument OBJ.
@@ -7470,8 +7411,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_vscroll);
   defsubr (&Sset_window_vscroll);
   defsubr (&Scompare_window_configurations);
-  defsubr (&Swindow_list);
-  defsubr (&Swindow_list_1);
   defsubr (&Swindow_prev_buffers);
   defsubr (&Sset_window_prev_buffers);
   defsubr (&Swindow_next_buffers);

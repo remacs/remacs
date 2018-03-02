@@ -899,6 +899,17 @@ impl From<LispWindowRef> for LispObject {
     }
 }
 
+impl From<LispObject> for Option<LispWindowRef> {
+    #[inline]
+    fn from(o: LispObject) -> Self {
+        if o.is_window() {
+            Some(o.as_window_or_error())
+        } else {
+            None
+        }
+    }
+}
+
 impl From<LispObject> for LispFrameRef {
     fn from(o: LispObject) -> Self {
         o.as_frame_or_error()

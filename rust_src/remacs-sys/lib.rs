@@ -1210,7 +1210,7 @@ pub struct Lisp_Frame {
     /// This is the frame title specified explicitly, if any.
     /// Usually it is nil.
     pub title: Lisp_Object,
-    
+
     // This struct is incomplete.
     // It is difficult, if not impossible, to import the rest of this struct.
     // 1. #IFDEF logic means the proper number of fields is hard to determine.
@@ -1221,8 +1221,8 @@ pub struct Lisp_Frame {
     // exported here for use in Rust. This means that instead of
     // frame.foo the proper method is fget_foo(frame).
     /// This frame's parent frame, if it has one.
-     parent_frame: Lisp_Object, 
-    
+    parent_frame: Lisp_Object,
+
     ///  The frame which should receive keystrokes that occur in this
     /// frame, or nil if they should go to the frame itself.  This is
     /// usually nil, but if the frame is minibufferless, we can use this
@@ -1298,8 +1298,8 @@ extern "C" {
     pub fn fget_buffer_list(frame: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_buried_buffer_list(frame: *const Lisp_Frame) -> Lisp_Object;
     pub fn fget_internal_border_width(frame: *const Lisp_Frame) -> c_int;
-    pub fn fget_selected_window (frame: *const Lisp_Frame) ->Lisp_Object;
-    pub fn fset_selected_window (frame: *mut Lisp_Frame, window: Lisp_Object);
+    pub fn fget_selected_window(frame: *const Lisp_Frame) -> Lisp_Object;
+    pub fn fset_selected_window(frame: *mut Lisp_Frame, window: Lisp_Object);
 }
 
 #[repr(C)]
@@ -1702,7 +1702,7 @@ extern "C" {
     pub fn del_range(from: ptrdiff_t, to: ptrdiff_t);
     pub fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: ptrdiff_t) -> ptrdiff_t;
     pub fn swap_in_symval_forwarding(sym: *mut Lisp_Symbol, blv: *mut Lisp_Buffer_Local_Value);
-        pub fn window_list_1(
+    pub fn window_list_1(
         window: Lisp_Object,
         minibuf: Lisp_Object,
         all_frames: Lisp_Object,
@@ -1755,9 +1755,9 @@ pub mod font {
 
 #[cfg(test)]
 macro_rules! offset_of {
-    ($ty:ty, $field:ident) => {
+    ($ty: ty, $field: ident) => {
         unsafe { &(*(0 as *const $ty)).$field as *const _ as usize }
-    }
+    };
 }
 
 #[cfg(windows)]
