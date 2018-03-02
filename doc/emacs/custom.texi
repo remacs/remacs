@@ -1417,6 +1417,8 @@ commands, and @dfn{keymaps}, which record key bindings.  It also
 explains how to customize key bindings, which is done by editing your
 init file (@pxref{Init Rebinding}).
 
+@cindex reserved key bindings
+@cindex keys, reserved
   Since most modes define their own key bindings, activating a mode
 might override your custom key bindings.  A small number of keys are
 reserved for user-defined bindings, and should not be used by modes,

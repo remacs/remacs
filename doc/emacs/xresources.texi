@@ -138,9 +138,10 @@ specifications.
 @node Table of Resources
 @appendixsec Table of X Resources for Emacs
 
-  This table lists the X resource names that Emacs recognizes,
-excluding those that control the appearance of graphical widgets like
-the menu bar:
+  The table below lists the X resource names that Emacs recognizes.
+Note that some of the resources have no effect in Emacs compiled with
+various X toolkits (GTK+, Lucid, etc.)---we indicate below when this
+is the case.
 
 @table @asis
 @item @code{background} (class @code{Background})

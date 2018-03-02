@@ -1842,7 +1842,8 @@ Optional arg HOW-TO determines how to treat the target.
       rfn-list  - list of the relative names for the marked files.
       fn-list   - list of the absolute names for the marked files.
       target    - the name of the target itself.
-      The rest of into-dir are optional arguments.
+    The rest of elements of the list returned by HOW-TO are optional
+    arguments for the function that is the first element of the list.
    For any other return value, TARGET is treated as a directory."
   (or op1 (setq op1 operation))
   (let* ((fn-list (dired-get-marked-files nil arg nil nil t))
