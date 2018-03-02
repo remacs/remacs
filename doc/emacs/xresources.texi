@@ -119,19 +119,19 @@ named @samp{Emacs}.  If you write @samp{Emacs} instead of
 regardless of frame titles and regardless of the name of the
 executable file.
 
-@item -xrm @var{resource-values}
+@item -xrm @var{resource-value}
 @opindex --xrm
-@itemx --xrm=@var{resource-values}
+@itemx --xrm=@var{resource-value}
 @cindex resource values, command-line argument
 This option specifies X resource values for the present Emacs job.
 
-@var{resource-values} should have the same format that you would use
-inside a file of X resources.  To include multiple resource
-specifications in @var{resource-values}, put a newline between them,
-just as you would in a file.  You can also use @samp{#include
-"@var{filename}"} to include a file full of resource specifications.
-Resource values specified with @samp{-xrm} take precedence over all
-other resource specifications.
+@var{resource-value} should have the same format that you would use
+inside a file of X resources.  Several @samp{-xrm} options are
+possible to include multiple resource specifications.  You can also
+use @samp{#include "@var{filename}"} as @var{resource-value} to
+include a file full of resource specifications.  Resource values
+specified with @samp{-xrm} take precedence over all other resource
+specifications.
 @end table
 @end ifnottex
 
@@ -323,7 +323,7 @@ might be useful to turn off XIM on slow X client/server links.
 
 @item @code{verticalScrollBars} (class @code{ScrollBars})
 Give frames scroll bars on the left if @samp{left}, on the right if
-@samp{right}; don't have scroll bars if @samp{off}.
+@samp{right}; don't have scroll bars if @samp{off} (@pxref{Scroll Bars}).
 
 @ifnottex
 @item @code{visualClass} (class @code{VisualClass})
@@ -513,7 +513,7 @@ The color for the border shadow, on the top and the left.
 @end ifnottex
 
 @node GTK resources
-@appendixsec GTK resources
+@appendixsec GTK+ resources
 @cindex GTK+ resources
 @cindex resource files for GTK+
 @cindex @file{~/.gtkrc-2.0} file
@@ -558,7 +558,7 @@ system, see
 @end menu
 
 @node GTK Resource Basics
-@appendixsubsec GTK Resource Basics
+@appendixsubsec GTK+ Resource Basics
 
   In a GTK+ 2 resource file (usually @file{~/.emacs.d/gtkrc}), the
 simplest kind of a resource setting simply assigns a value to a
@@ -616,7 +616,7 @@ widget "*verticalScrollBar*" style "scroll"
 @end smallexample
 
 @node GTK Widget Names
-@appendixsubsec GTK widget names
+@appendixsubsec GTK+ widget names
 @cindex GTK+ widget names
 
   A GTK+ widget is specified by a @dfn{widget name} and a @dfn{widget
@@ -661,7 +661,7 @@ widget "*" style "my_style"
 @end smallexample
 
 @node GTK Names in Emacs
-@appendixsubsec GTK Widget Names in Emacs
+@appendixsubsec GTK+ Widget Names in Emacs
 @cindex GTK+ widget names in Emacs
 @cindex GTK+ widget classes
 
@@ -725,7 +725,7 @@ widget_class "*Menu*" style "my_menu_style"
 @end smallexample
 
 @node GTK styles
-@appendixsubsec GTK styles
+@appendixsubsec GTK+ styles
 @cindex GTK+ styles
 
   Here is an example of two GTK+ style declarations:
