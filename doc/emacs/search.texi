@@ -437,7 +437,7 @@ of the keymap @code{isearch-mode-map} (@pxref{Keymaps}).
 
 This subsection describes how to control whether typing a command not
 specifically meaningful in searches exits the search before executing
-the command.  It also describes two categories of commands which you
+the command.  It also describes three categories of commands which you
 can type without exiting the current incremental search, even though
 they are not themselves part of incremental search.
 
@@ -507,6 +507,18 @@ change point, the buffer contents, the match data, the current buffer,
 or the selected window and frame.  The command must not itself attempt
 an incremental search.  This feature is disabled if
 @code{isearch-allow-scroll} is @code{nil} (which it is by default).
+
+@item Motion Commands
+@cindex motion commands, during incremental search
+When @code{search-exit-option} is customized to @code{shift-move},
+you can extend the search string by holding down the shift key while
+typing cursor motion commands.  It will yank text that ends at the new
+position after moving point in the current buffer.
+
+When @code{search-exit-option} is @code{move}, you can extend the
+search string without using the shift key for cursor motion commands,
+but it applies only for certain motion command that have the
+@code{isearch-move} property on their symbols.
 @end table
 
 @node Isearch Minibuffer
