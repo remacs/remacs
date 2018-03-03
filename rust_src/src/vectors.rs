@@ -190,17 +190,19 @@ macro_rules! impl_vectorlike_ref {
             pub fn as_slice(&self) -> &[LispObject] {
                 unsafe {
                     slice::from_raw_parts(
-                        mem::transmute::<_, *const LispObject>(&self.contents),
+                        &self.contents as *const [::remacs_sys::Lisp_Object; 1]
+                            as *const LispObject,
                         self.len(),
                     )
                 }
             }
 
             #[inline]
-            pub fn as_mut_slice(&self) -> &mut [LispObject] {
+            pub fn as_mut_slice(&mut self) -> &mut [LispObject] {
                 unsafe {
                     slice::from_raw_parts_mut(
-                        mem::transmute::<_, *mut LispObject>(&self.contents),
+                        &mut self.contents as *mut [::remacs_sys::Lisp_Object; 1]
+                            as *mut LispObject,
                         self.len(),
                     )
                 }
@@ -215,7 +217,8 @@ macro_rules! impl_vectorlike_ref {
             #[inline]
             pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
                 ptr::read(
-                    mem::transmute::<_, *const LispObject>(&self.contents).offset(idx),
+                    (&self.contents as *const [::remacs_sys::Lisp_Object; 1]
+                     as *const LispObject).offset(idx),
                 )
             }
 
@@ -224,7 +227,7 @@ macro_rules! impl_vectorlike_ref {
                 assert!(idx < self.len());
                 unsafe { self.set_unchecked(idx as ptrdiff_t, item) };
             }
-
+          
             pub fn set_checked(&mut self, idx: isize, item: LispObject) {
                 if idx < 0 || idx >= self.len() as isize {
                     args_out_of_range!(self.as_lisp_obj(), LispObject::from(idx));
@@ -234,14 +237,15 @@ macro_rules! impl_vectorlike_ref {
             }
 
             #[inline]
-            pub unsafe fn set_unchecked(&self, idx: ptrdiff_t, item: LispObject) {
+            pub unsafe fn set_unchecked(&mut self, idx: ptrdiff_t, item: LispObject) {
                 ptr::write(
-                    mem::transmute::<_, *mut LispObject>(&self.contents).offset(idx),
+                    (&mut self.contents as *mut [::remacs_sys::Lisp_Object; 1]
+                     as *mut LispObject).offset(idx),
                     item,
-                );
+                )
             }
 
-            pub fn iter<'a>(&'a self) -> $itertype<'a> {
+            pub fn iter(&self) -> $itertype {
                 $itertype::new(self)
             }
         }
@@ -308,12 +312,12 @@ impl LispBoolVecRef {
 
     #[inline]
     pub unsafe fn as_byte_ptr(&self) -> *const u8 {
-        mem::transmute::<_, *const u8>(&self.data)
+        &self.data as *const [usize; 1] as *const u8
     }
 
     #[inline]
-    pub unsafe fn as_mut_byte_ptr(&self) -> *mut u8 {
-        mem::transmute::<_, *mut u8>(&self.data)
+    pub unsafe fn as_mut_byte_ptr(&mut self) -> *mut u8 {
+        &mut self.data as *mut [usize; 1] as *mut u8
     }
 
     #[inline]
@@ -359,7 +363,7 @@ impl LispBoolVecRef {
         }
     }
 
-    pub fn iter<'a>(&'a self) -> LispBoolVecIterator<'a> {
+    pub fn iter(&self) -> LispBoolVecIterator {
         LispBoolVecIterator {
             bvec: self,
             limb: 0,
@@ -455,7 +459,7 @@ pub fn elt(sequence: LispObject, n: EmacsInt) -> LispObject {
 pub fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
     if seq.is_cons() {
         sort_list(seq, predicate)
-    } else if let Some(vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {
+    } else if let Some(mut vec) = seq.as_vectorlike().and_then(|v| v.as_vector()) {
         vec.as_mut_slice().sort_by(|&a, &b| {
             // XXX: since the `sort' predicate is a two-outcome comparison
             // Less/!Less, and slice::sort_by() uses Greater/!Greater
