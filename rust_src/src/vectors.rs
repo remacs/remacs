@@ -178,7 +178,8 @@ macro_rules! impl_vectorlike_ref {
             pub fn as_slice(&self) -> &[LispObject] {
                 unsafe {
                     slice::from_raw_parts(
-                        &self.contents as *const [::remacs_sys::Lisp_Object; 1] as *const LispObject,
+                        &self.contents as *const [::remacs_sys::Lisp_Object; 1]
+                            as *const LispObject,
                         self.len(),
                     )
                 }
@@ -188,7 +189,8 @@ macro_rules! impl_vectorlike_ref {
             pub fn as_mut_slice(&mut self) -> &mut [LispObject] {
                 unsafe {
                     slice::from_raw_parts_mut(
-                        &self.contents as *const [::remacs_sys::Lisp_Object; 1] as *mut LispObject,
+                        &mut self.contents as *mut [::remacs_sys::Lisp_Object; 1]
+                            as *mut LispObject,
                         self.len(),
                     )
                 }
@@ -197,14 +199,16 @@ macro_rules! impl_vectorlike_ref {
             #[inline]
             pub unsafe fn get_unchecked(&self, idx: ptrdiff_t) -> LispObject {
                 ptr::read(
-                    (&self.contents as *const [::remacs_sys::Lisp_Object; 1] as *const LispObject).offset(idx),
+                    (&self.contents as *const [::remacs_sys::Lisp_Object; 1]
+                     as *const LispObject).offset(idx),
                 )
             }
 
             #[inline]
-            pub unsafe fn set_unchecked(&self, idx: ptrdiff_t, item: LispObject) {
+            pub unsafe fn set_unchecked(&mut self, idx: ptrdiff_t, item: LispObject) {
                 ptr::write(
-                    (&self.contents as *const [::remacs_sys::Lisp_Object; 1] as *mut LispObject).offset(idx),
+                    (&mut self.contents as *mut [::remacs_sys::Lisp_Object; 1]
+                     as *mut LispObject).offset(idx),
                     item,
                 )
             }
