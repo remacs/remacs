@@ -3,7 +3,7 @@
 use libc::c_int;
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{aset_multibyte_string, get_keymap, globals, CHAR_TABLE_SET, CHECK_IMPURE};
+use remacs_sys::{aset_multibyte_string, globals, CHAR_TABLE_SET, CHECK_IMPURE};
 use remacs_sys::{EmacsInt, Lisp_Misc_Type, Lisp_Type, PseudovecType};
 use remacs_sys::{Fcons, Ffset, Fpurecopy};
 use remacs_sys::{Lisp_Subr_Lang_C, Lisp_Subr_Lang_Rust};
@@ -194,7 +194,7 @@ pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject 
         if let Some(mut v) = vl.as_vector() {
             unsafe { CHECK_IMPURE(array.to_raw(), array.get_untaggedptr()) };
             v.set_checked(idx as isize, newelt);
-        } else if let Some(bv) = vl.as_bool_vector() {
+        } else if let Some(mut bv) = vl.as_bool_vector() {
             bv.set_checked(idx as isize, newelt.is_not_nil());
         } else if let Some(_tbl) = vl.as_char_table() {
             verify_lisp_type!(idx, Qcharacterp);

@@ -227,7 +227,7 @@ macro_rules! impl_vectorlike_ref {
                 assert!(idx < self.len());
                 unsafe { self.set_unchecked(idx as ptrdiff_t, item) };
             }
-          
+
             pub fn set_checked(&mut self, idx: isize, item: LispObject) {
                 if idx < 0 || idx >= self.len() as isize {
                     args_out_of_range!(self.as_lisp_obj(), LispObject::from(idx));
@@ -341,12 +341,12 @@ impl LispBoolVecRef {
         LispObject::from_bool(self.get_bit(idx))
     }
 
-    pub fn set(&self, idx: usize, b: bool) {
+    pub fn set(&mut self, idx: usize, b: bool) {
         assert!(idx < self.len());
         unsafe { self.set_unchecked(idx, b) }
     }
 
-    pub fn set_checked(&self, idx: isize, b: bool) {
+    pub fn set_checked(&mut self, idx: isize, b: bool) {
         if idx < 0 || idx >= self.len() as isize {
             args_out_of_range!(self.as_lisp_obj(), LispObject::from(idx));
         }
@@ -354,7 +354,7 @@ impl LispBoolVecRef {
         unsafe { self.set_unchecked(idx as usize, b) }
     }
 
-    pub unsafe fn set_unchecked(&self, idx: usize, b: bool) {
+    pub unsafe fn set_unchecked(&mut self, idx: usize, b: bool) {
         let limbp = self.as_mut_byte_ptr().offset(idx as isize / 8);
         if b {
             *limbp |= 1 << (idx % 8)
