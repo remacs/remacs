@@ -1185,6 +1185,8 @@ file name to `*.gz', and sets `grep-highlight-matches' to `always'."
 	   (grep-find-template nil)
 	   (grep-find-command nil)
 	   (grep-host-defaults-alist nil)
+           ;; `zgrep' doesn't support the `--null' option.
+	   (grep-use-null-filename-separator nil)
 	   ;; Use for `grep-read-files'
 	   (grep-files-aliases '(("all" . "* .*")
 				 ("gz"  . "*.gz"))))
