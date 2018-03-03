@@ -1518,8 +1518,8 @@ normally called automatically when you visit a @TeX{}-like file.
 this, Emacs chooses the mode specified by the variable
 @code{tex-default-mode}; its default value is @code{latex-mode}.  If
 Emacs does not guess right, you can select the correct variant of
-@TeX{} mode using the command @kbd{M-x plain-tex-mode}, @kbd{M-x
-latex-mode}, @kbd{M-x slitex-mode}, or @kbd{doctex-mode}.
+@TeX{} mode using the commands @code{plain-tex-mode},
+@code{latex-mode}, @code{slitex-mode}, or @code{doctex-mode}.
 
   The following sections document the features of @TeX{} mode and its
 variants.  There are several other @TeX{}-related Emacs packages,
@@ -1997,7 +1997,8 @@ characters themselves (@code{sgml-name-8bit-mode}).
 @kindex C-c C-v @r{(SGML mode)}
 @findex sgml-validate
 Run a shell command (which you must specify) to validate the current
-buffer as SGML (@code{sgml-validate}).
+buffer as SGML (@code{sgml-validate}).  (In HTML mode this key
+sequence runs a different command.)
 
 @item C-c @key{TAB}
 @kindex C-c TAB @r{(SGML mode)}
