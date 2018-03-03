@@ -5974,6 +5974,9 @@ Using prefixes instead of postfixes helps you explore aliases during
 completion. If you forget the name of an old dive buddy, you can enter
 @samp{div} and then @key{SPC} to get a listing of all your dive buddies.
 
+@findex mh-alias-add-address-under-point
+@findex mh-alias-grab-from-field
+
 An alias for the sender of the current message is added automatically
 by clicking on the @samp{Grab From alias} tool bar button or by running
 the @kbd{M-x mh-alias-grab-from-field} command. Aliases for other
@@ -6265,6 +6268,7 @@ containing the value for the field is given.
 @cindex folder navigation
 @cindex speedbar
 @findex mh-visit-folder
+@findex speedbar
 @kindex F v
 @kindex mouse-2
 
@@ -7984,6 +7988,7 @@ system.
 @cindex MH-E version
 @cindex @file{*MH-E Info*}
 @cindex version
+@findex mh-version
 
 One command worth noting is @kbd{M-x mh-version}. You can compare the
 version this command prints to the latest release (@pxref{Getting
@@ -8698,6 +8703,7 @@ I also point out some additional sources of information.
 
 @cindex bugs
 @cindex SourceForge
+@findex mh-version
 
 Bug reports should be filed at
 @uref{https://sourceforge.net/p/mh-e/bugs/, SourceForge}. You need to
@@ -8773,6 +8779,7 @@ instead.
 @cindex news
 @cindex @samp{MH-E-NEWS}
 @cindex @samp{README}
+@findex mh-version
 
 After you download and extract the MH-E tarball, read the
 @file{README} file and @file{MH-E-NEWS}. These correspond to the
