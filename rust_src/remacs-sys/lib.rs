@@ -1548,7 +1548,7 @@ extern "C" {
 
     pub fn unchain_marker(marker: *mut Lisp_Marker);
     pub fn del_range(from: ptrdiff_t, to: ptrdiff_t);
-    pub fn buf_bytepos_to_charpos(b: *mut Lisp_Buffer, bytepos: ptrdiff_t) -> ptrdiff_t;
+
 }
 
 /// Contains C definitions from the font.h header.

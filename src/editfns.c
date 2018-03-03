@@ -745,6 +745,26 @@ is in effect, in which case it is less.  */)
   return build_marker (current_buffer, ZV, ZV_BYTE);
 }
 
+DEFUN ("byte-to-position", Fbyte_to_position, Sbyte_to_position, 1, 1, 0,
+       doc: /* Return the character position for byte position BYTEPOS.
+If BYTEPOS is out of range, the value is nil.  */)
+  (Lisp_Object bytepos)
+{
+  ptrdiff_t pos_byte;
+
+  CHECK_NUMBER (bytepos);
+  pos_byte = XINT (bytepos);
+  if (pos_byte < BEG_BYTE || pos_byte > Z_BYTE)
+    return Qnil;
+  if (Z != Z_BYTE)
+    /* There are multibyte characters in the buffer.
+       The argument of BYTE_TO_CHAR must be a byte position at
+       a character boundary, so search for the start of the current
+       character.  */
+    while (!CHAR_HEAD_P (FETCH_BYTE (pos_byte)))
+      pos_byte--;
+  return make_number (BYTE_TO_CHAR (pos_byte));
+}
 
 DEFUN ("char-before", Fchar_before, Schar_before, 0, 1, 0,
        doc: /* Return character in current buffer preceding position POS.
@@ -4563,6 +4583,7 @@ functions if all the text being accessed has this property.  */);
 
   defsubr (&Spoint_min_marker);
   defsubr (&Spoint_max_marker);
+  defsubr (&Sbyte_to_position);
 
   defsubr (&Schar_before);
   defsubr (&Sinsert);
