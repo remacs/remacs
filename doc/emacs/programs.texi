@@ -77,7 +77,6 @@ mode for the C programming language is @code{c-mode}.
 @cindex VHDL mode
 @cindex M4 mode
 @cindex Shell-script mode
-@cindex Scheme mode
 @cindex OPascal mode
 @cindex PostScript mode
 @cindex Conf mode
