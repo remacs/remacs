@@ -234,10 +234,11 @@ must be set in `ldap-host-parameters-alist'."
 If `cache-key' and `password-cache' is non-nil then cache the
 password under `cache-key'."
   (let ((passphrase
-	 (password-read-and-add
+	 (password-read
 	  "Passphrase for secret key (RET for no passphrase): " cache-key)))
     (if (string= passphrase "")
 	nil
+      (and passphrase cache-key (password-cache-add cache-key passphrase))
       passphrase)))
 
 ;; OpenSSL wrappers.
