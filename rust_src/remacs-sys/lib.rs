@@ -1692,7 +1692,7 @@ extern "C" {
 pub mod font {
     use libc::c_int;
 
-    /// Represents // TODO: he indices of font properties in the contents of a font
+    /// Represents the indices of font properties in the contents of a font
     /// vector.
     ///
     /// # C Porting Notes
