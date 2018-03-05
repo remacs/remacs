@@ -259,6 +259,13 @@ To restore the old behavior, use
     (add-hook 'eshell-expand-input-functions
               #'eshell-expand-history-references)
 
+*** The function 'shell-uniquify-list' has been renamed from
+'eshell-uniqify-list'.
+
+** Pcomplete
+*** The function 'pcomplete-uniquify-list' has been renamed from
+'pcomplete-uniqify-list'.
+
 ** Tramp
 
 +++

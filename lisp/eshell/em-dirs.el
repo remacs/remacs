@@ -282,7 +282,7 @@ Thus, this does not include the current directory.")
 (defvar pcomplete-stub)
 (defvar pcomplete-last-completion-raw)
 (declare-function pcomplete-actual-arg "pcomplete")
-(declare-function pcomplete-uniqify-list "pcomplete")
+(declare-function pcomplete-uniquify-list "pcomplete")
 
 (defun eshell-complete-user-reference ()
   "If there is a user reference, complete it."
@@ -293,7 +293,7 @@ Thus, this does not include the current directory.")
       (throw 'pcomplete-completions
 	     (progn
 	       (eshell-read-user-names)
-	       (pcomplete-uniqify-list
+	       (pcomplete-uniquify-list
 		(mapcar
 		 (function
 		  (lambda (user)
