@@ -142,6 +142,16 @@ This can be controlled by the new `ecomplete-sort-predicate' variable.
 *** The 'ecompleterc' file is now placed in ~/.emacs.d/ecompleterc by default
 Of course it will still find it if you have it in ~/.ecompleterc
 
+** Gnus
+*** The function 'gnus-score-find-favorite-words' has been renamed
+from 'gnus-score-find-favourite-words'.
+
+** Htmlfontify
+*** The functions 'hfy-color', 'hfy-color-vals' and
+'hfy-fallback-color-values' and the variables 'hfy-fallback-color-map'
+and 'hfy-rgb-txt-color-map' have been renamed from names that used
+'colour' instead of 'color'.
+
 ** Smtpmail
 Authentication mechanisms can be added via external packages, by
 defining new cl-defmethod of smtpmail-try-auth-method.
