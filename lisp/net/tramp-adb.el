@@ -464,7 +464,7 @@ pass to the OPERATION."
     (cond
      ;; Support Android derived systems where "ls" command is provided
      ;; by GNU Coreutils. Force "ls" to print one column and set
-     ;; time-style to imitate other "ls" flavours.
+     ;; time-style to imitate other "ls" flavors.
      ((tramp-adb-send-command-and-check
        vec "ls --time-style=long-iso /dev/null")
       "ls -1 --time-style=long-iso")
