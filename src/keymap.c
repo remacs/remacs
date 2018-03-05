@@ -373,7 +373,7 @@ map_keymap_internal (Lisp_Object map,
   return tail;
 }
 
-static void
+void
 map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
 {
   call2 (fun, key, val);

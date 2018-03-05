@@ -1231,6 +1231,9 @@ pub struct lisp_time {
     pub ps: c_int,
 }
 
+type map_keymap_function_t =
+    unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object, *const c_void);
+
 extern "C" {
     pub static initialized: bool;
     pub static mut current_global_map: Lisp_Object;
@@ -1452,6 +1455,19 @@ extern "C" {
     );
     pub fn STRING_BYTES(s: *const Lisp_String) -> ptrdiff_t;
     pub fn Fevent_convert_list(event_desc: Lisp_Object) -> Lisp_Object;
+    pub fn map_keymap(
+        map: Lisp_Object,
+        fun: map_keymap_function_t,
+        args: Lisp_Object,
+        data: *const c_void,
+        autoload: bool,
+    );
+    pub fn map_keymap_call(
+        key: Lisp_Object,
+        val: Lisp_Object,
+        fun: Lisp_Object,
+        void: *const c_void,
+    );
     pub fn access_keymap(
         map: Lisp_Object,
         idx: Lisp_Object,
