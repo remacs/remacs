@@ -262,7 +262,7 @@ pub fn keymap_prompt(map: LispObject) -> LispObject {
     LispObject::constant_nil()
 }
 
-/// Same as map_keymap_internal, but traverses parent keymaps as well.
+/// Same as `map_keymap_internal`, but traverses parent keymaps as well.
 /// AUTOLOAD indicates that autoloaded keymaps should be loaded.
 #[no_mangle]
 pub extern "C" fn map_keymap(
@@ -274,10 +274,10 @@ pub extern "C" fn map_keymap(
 ) {
     let mut map = LispObject::from_raw(get_keymap(map, true, autoload));
     while map.is_cons() {
-        if let Some(elt) = map.as_cons() {
-            if keymapp(elt.car()) {
-                map_keymap(elt.car().to_raw(), fun, args, data, autoload);
-                map = elt.cdr();
+        if let Some(cons) = map.as_cons() {
+            if keymapp(cons.car()) {
+                map_keymap(cons.car().to_raw(), fun, args, data, autoload);
+                map = cons.cdr();
             } else {
                 map = LispObject::from_raw(unsafe {
                     map_keymap_internal(map.to_raw(), fun, args, data)
