@@ -1455,13 +1455,6 @@ extern "C" {
     );
     pub fn STRING_BYTES(s: *const Lisp_String) -> ptrdiff_t;
     pub fn Fevent_convert_list(event_desc: Lisp_Object) -> Lisp_Object;
-    pub fn map_keymap(
-        map: Lisp_Object,
-        fun: map_keymap_function_t,
-        args: Lisp_Object,
-        data: *const c_void,
-        autoload: bool,
-    );
     pub fn map_keymap_internal(
         map: Lisp_Object,
         fun: map_keymap_function_t,

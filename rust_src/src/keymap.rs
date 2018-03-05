@@ -5,8 +5,8 @@ use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, L
                  CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
-use remacs_sys::{access_keymap, map_keymap, map_keymap_call, map_keymap_function_t,
-                 map_keymap_internal, maybe_quit};
+use remacs_sys::{access_keymap, map_keymap_call, map_keymap_function_t, map_keymap_internal,
+                 maybe_quit};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
@@ -264,7 +264,8 @@ pub fn keymap_prompt(map: LispObject) -> LispObject {
 
 /// Same as map_keymap_internal, but traverses parent keymaps as well.
 /// AUTOLOAD indicates that autoloaded keymaps should be loaded.
-pub extern "C" fn map_keymap_2(
+#[no_mangle]
+pub extern "C" fn map_keymap(
     map: Lisp_Object,
     fun: map_keymap_function_t,
     args: Lisp_Object,
@@ -275,7 +276,7 @@ pub extern "C" fn map_keymap_2(
     while map.is_cons() {
         if let Some(elt) = map.as_cons() {
             if keymapp(elt.car()) {
-                unsafe { map_keymap(elt.car().to_raw(), fun, args, data, autoload) };
+                map_keymap(elt.car().to_raw(), fun, args, data, autoload);
                 map = elt.cdr();
             } else {
                 map = LispObject::from_raw(unsafe {
@@ -298,20 +299,18 @@ pub extern "C" fn map_keymap_2(
 /// This works recursively: if the parent has itself a parent, then the
 /// grandparent's bindings are also included and so on.
 /// usage: (map-keymap FUNCTION KEYMAP)
-#[lisp_fn(name = "map-keymap-2", min = "2")]
-pub fn map_keymap_2_lisp(function: LispObject, keymap: LispObject, sort_first: bool) -> LispObject {
+#[lisp_fn(name = "map-keymap", min = "2")]
+pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: bool) -> LispObject {
     if sort_first {
         return call!(intern("map-keymap-sorted"), function, keymap);
     }
-    unsafe {
-        map_keymap_2(
-            keymap.to_raw(),
-            map_keymap_call,
-            function.to_raw(),
-            ptr::null_mut(),
-            true,
-        )
-    };
+    map_keymap(
+        keymap.to_raw(),
+        map_keymap_call,
+        function.to_raw(),
+        ptr::null_mut(),
+        true,
+    );
     LispObject::constant_nil()
 }
 
