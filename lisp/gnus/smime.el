@@ -238,6 +238,7 @@ password under `cache-key'."
 	  "Passphrase for secret key (RET for no passphrase): " cache-key)))
     (if (string= passphrase "")
 	nil
+      ;; FIXME test passphrase works before caching it.
       (and passphrase cache-key (password-cache-add cache-key passphrase))
       passphrase)))
 

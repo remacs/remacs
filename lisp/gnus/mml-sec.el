@@ -647,6 +647,7 @@ The passphrase is read and cached."
       (when passphrase
 	(let ((password-cache-expiry (mml-secure-cache-expiry-interval
 				      (epg-context-protocol context))))
+	  ;; FIXME test passphrase works before caching it.
 	  (password-cache-add password-cache-key-id passphrase))
 	(mml-secure-add-secret-key-id password-cache-key-id)
 	(copy-sequence passphrase)))))
