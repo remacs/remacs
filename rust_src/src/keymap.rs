@@ -5,11 +5,13 @@ use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, L
                  CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
-use remacs_sys::{access_keymap, map_keymap, map_keymap_call, maybe_quit};
+use remacs_sys::{access_keymap, map_keymap, map_keymap_call, map_keymap_function_t,
+                 map_keymap_internal, maybe_quit};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
 use keyboard::lucid_event_type_list_p;
+use libc::c_void;
 use lisp::{defsubr, LispObject};
 use lists::nth;
 use obarray::intern;
@@ -260,17 +262,33 @@ pub fn keymap_prompt(map: LispObject) -> LispObject {
     LispObject::constant_nil()
 }
 
-// type map_keymap_function_t =
-//     unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object, *const c_void);
+/// Same as map_keymap_internal, but traverses parent keymaps as well.
+/// AUTOLOAD indicates that autoloaded keymaps should be loaded.
+pub extern "C" fn map_keymap_2(
+    map: Lisp_Object,
+    fun: map_keymap_function_t,
+    args: Lisp_Object,
+    data: *const c_void,
+    autoload: bool,
+) {
+    let mut map = LispObject::from_raw(get_keymap(map, true, autoload));
+    while map.is_cons() {
+        if let Some(elt) = map.as_cons() {
+            if keymapp(elt.car()) {
+                unsafe { map_keymap(elt.car().to_raw(), fun, args, data, autoload) };
+                map = elt.cdr();
+            } else {
+                map = LispObject::from_raw(unsafe {
+                    map_keymap_internal(map.to_raw(), fun, args, data)
+                });
+            }
+        }
 
-// /// Same as map_keymap_internal, but traverses parent keymaps as well.
-// /// AUTOLOAD indicates that autoloaded keymaps should be loaded.
-// pub extern "C" fn map_keymap_2(
-//     map: Lisp_Object,
-//     fun: map_keymap_function_t,
-//     args: Lisp_Object,
-// ) -> () {
-// }
+        if !map.is_cons() {
+            map = LispObject::from_raw(get_keymap(map.to_raw(), false, autoload));
+        }
+    }
+}
 
 /// Call FUNCTION once for each event binding in KEYMAP.
 /// FUNCTION is called with two arguments: the event that is bound, and
@@ -286,7 +304,7 @@ pub fn map_keymap_2_lisp(function: LispObject, keymap: LispObject, sort_first: b
         return call!(intern("map-keymap-sorted"), function, keymap);
     }
     unsafe {
-        map_keymap(
+        map_keymap_2(
             keymap.to_raw(),
             map_keymap_call,
             function.to_raw(),

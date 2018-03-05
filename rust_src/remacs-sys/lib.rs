@@ -1231,7 +1231,7 @@ pub struct lisp_time {
     pub ps: c_int,
 }
 
-type map_keymap_function_t =
+pub type map_keymap_function_t =
     unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object, *const c_void);
 
 extern "C" {
@@ -1462,6 +1462,12 @@ extern "C" {
         data: *const c_void,
         autoload: bool,
     );
+    pub fn map_keymap_internal(
+        map: Lisp_Object,
+        fun: map_keymap_function_t,
+        args: Lisp_Object,
+        data: *const c_void,
+    ) -> Lisp_Object;
     pub fn map_keymap_call(
         key: Lisp_Object,
         val: Lisp_Object,

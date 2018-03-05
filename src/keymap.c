@@ -335,7 +335,7 @@ map_keymap_char_table_item (Lisp_Object args, Lisp_Object key, Lisp_Object val)
 
 /* Call FUN for every binding in MAP and stop at (and return) the parent.
    FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).  */
-static Lisp_Object
+Lisp_Object
 map_keymap_internal (Lisp_Object map,
 		     map_keymap_function_t fun,
 		     Lisp_Object args,
