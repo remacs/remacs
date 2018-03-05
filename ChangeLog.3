@@ -4805,7 +4805,7 @@
 
 2017-10-11  Alan Third  <alan@idiocy.org>
 
-	Make frame-list-z-order on NS match Windows behaviour (bug#28788)
+	Make frame-list-z-order on NS match Windows behavior (bug#28788)
 
 	* src/nsfns.m (Fns_frame_list_z_order): If terminal isn't a frame,
 	ignore it rather than returning nil.
@@ -5932,7 +5932,7 @@
 
 	Flymake uses some new fringe bitmaps
 
-	Also fix behaviour whereby flymake wouldn't react to a change in the
+	Also fix behavior whereby flymake wouldn't react to a change in the
 	variable.
 
 	* lisp/progmodes/flymake-ui.el (flymake-error-bitmap)
@@ -6180,7 +6180,7 @@
 	REPORT-FN's calling convention stipulates that a backend calls it with
 	a list of diagnostics as argument, or, alternatively, with a symbol
 	denoting an exceptional situation, usually some panic resulting from a
-	misconfigured backend.  In keeping with legacy behaviour,
+	misconfigured backend.  In keeping with legacy behavior,
 	flymake.el's response to a panic is to disable the issuing backend.
 
 	The flymake--diag object representing a diagnostic now also keeps
@@ -7918,7 +7918,7 @@
 
 2017-09-15  Michael Albinus  <michael.albinus@gmx.de>
 
-	Improve Tramp behaviour according to bug#27986
+	Improve Tramp behavior according to bug#27986
 
 	* lisp/net/tramp-adb.el (tramp-adb-handle-copy-file):
 	* lisp/net/tramp-sh.el (tramp-sh-handle-copy-directory):
@@ -8120,7 +8120,7 @@
 
 	Add clarification to if-let* docstring
 
-	Also make its behaviour consistent with and-let* in that empty bindings
+	Also make its behavior consistent with and-let* in that empty bindings
 	results in success, not failure.
 	* lisp/emacs-lisp/subr-x.el: Edit docstring, change else to then.
 
@@ -22797,7 +22797,7 @@
 	(Type Descriptors): new section.
 	* doc/lispref/elisp.texi: reference it.
 	* doc/lispref/records.texi (Records): reference it.  Document
-	behaviour when type slot is a record.
+	behavior when type slot is a record.
 
 	* admin/alloc-colors.c (Fmake_record, Frecord): mention type desciptors.
 
@@ -23348,7 +23348,7 @@
 
 	Now dired-mark-extension prepends '.' to extension when not present.
 	Add command dired-mark-suffix to preserve the previous
-	behaviour (Bug#25942).
+	behavior (Bug#25942).
 	* lisp/dired-x.el (dired-mark-suffix): New command;
 	mark files ending in a given suffix.
 	(dired--mark-suffix-interactive-spec): New defun.
@@ -45072,7 +45072,7 @@
 	Sync from gnulib
 
 	This incorporates a spelling fix, plus:
-	2016-05-09 Fix undefined behaviour in gettext.h
+	2016-05-09 Fix undefined behavior in gettext.h
 	* lib/gettext.h, lib/mktime.c:
 	Copy from gnulib.
 
@@ -54900,7 +54900,7 @@
 	make check unconditional, check-maybe top-level.
 
 	 * Makefile.in: Add check-maybe target.
-	 * test/Makefile.in: Restore unconditional behaviour to make check.
+	 * test/Makefile.in: Restore unconditional behavior to make check.
 
 2015-12-01  Phillip Lord  <phillip.lord@russet.org.uk>
 
