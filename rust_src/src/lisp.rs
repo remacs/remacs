@@ -19,11 +19,11 @@ use remacs_sys::{font, EmacsDouble, EmacsInt, EmacsUint, EqualKind, Fcons, Pseud
                  USE_LSB_TAG, VALBITS, VALMASK};
 use remacs_sys::{Lisp_Cons, Lisp_Float, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Object, Lisp_Subr,
                  Lisp_Symbol, Lisp_Type};
-use remacs_sys::{Qarrayp, Qautoload, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qfloatp,
-                 Qframe_live_p, Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp,
-                 Qmarkerp, Qnil, Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp,
-                 Qstringp, Qsubrp, Qsymbolp, Qt, Qthreadp, Qunbound, Qvectorp, Qwholenump,
-                 Qwindow_live_p, Qwindow_valid_p, Qwindowp, Qwrong_number_of_arguments};
+use remacs_sys::{Qarrayp, Qautoload, Qbufferp, Qchar_table_p, Qcharacterp, Qconsp, Qerror,
+                 Qfloatp, Qframe_live_p, Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp,
+                 Qlistp, Qmarkerp, Qnil, Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp,
+                 Qprocessp, Qstringp, Qsubrp, Qsymbolp, Qt, Qthreadp, Qunbound, Qvectorp,
+                 Qwholenump, Qwindow_live_p, Qwindow_valid_p, Qwindowp, Qwrong_number_of_arguments};
 use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, make_float,
                  misc_get_ty};
 
@@ -45,7 +45,8 @@ use windows::LispWindowRef;
 // TODO: tweak Makefile to rebuild C files if this changes.
 
 pub enum LispError {
-    WrongNumberOfArguments(LispSymbolRef, EmacsInt)
+    WrongNumberOfArguments(LispSymbolRef, EmacsInt),
+    GenericError(LispObject),
 }
 
 pub trait Signal {
@@ -55,7 +56,12 @@ pub trait Signal {
 impl Signal for LispError {
     fn signal(self) -> ! {
         match self {
-            LispError::WrongNumberOfArguments(sym, length) => xsignal!(Qwrong_number_of_arguments, sym.as_lisp_obj(), LispObject::from_fixnum(length)),
+            LispError::WrongNumberOfArguments(sym, length) => xsignal!(
+                Qwrong_number_of_arguments,
+                sym.as_lisp_obj(),
+                LispObject::from_fixnum(length)
+            ),
+            LispError::GenericError(args) => xsignal!(Qerror, args),
         }
     }
 }

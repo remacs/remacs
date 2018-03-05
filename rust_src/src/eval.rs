@@ -3,17 +3,16 @@
 use remacs_macros::{lisp_fn, lisp_fn_result};
 use remacs_sys::{EmacsInt, Lisp_Object, PseudovecType};
 use remacs_sys::{Fapply, Fcons, Ffset, Ffuncall, Fload, Fpurecopy, Fset, Fset_default};
-use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinteractive,
-                 Qinteractive_form, Qinternal_interpreter_environment, Qlambda, Qmacro, Qnil,
-                 Qrisky_local_variable, Qsetq, Qt, Qvariable_documentation,
-                 Qwrong_number_of_arguments};
-use remacs_sys::{build_string, eval_sub, globals, maybe_quit, record_unwind_protect,
+use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qfunction, Qinteractive, Qinteractive_form,
+                 Qinternal_interpreter_environment, Qlambda, Qmacro, Qnil, Qrisky_local_variable,
+                 Qsetq, Qt, Qvariable_documentation};
+use remacs_sys::{eval_sub, globals, maybe_quit, record_unwind_protect,
                  record_unwind_save_match_data, specbind, unbind_to};
 use remacs_sys::COMPILED_INTERACTIVE;
 use remacs_sys::Vautoload_queue;
 
 use data::{defalias, indirect_function, indirect_function_lisp};
-use lisp::{LispCons, LispObject, LispError};
+use lisp::{LispCons, LispError, LispObject};
 use lisp::{defsubr, is_autoload};
 use lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr};
 use multibyte::LispStringRef;
@@ -21,7 +20,6 @@ use obarray::loadhist_attach;
 use objects::equal;
 use symbols::{fboundp, symbol_function, LispSymbolRef};
 use threads::c_specpdl_index;
-use vectors::length;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *   NOTE!!! Every function that can call EVAL must protect its args   *
@@ -165,7 +163,10 @@ pub fn setq(args: LispObject) -> Result<LispObject, LispError> {
     let mut it = args.iter_cars().enumerate();
     while let Some((nargs, sym)) = it.next() {
         let (_, arg) = it.next().ok_or_else(|| {
-            LispError::WrongNumberOfArguments(LispObject::from_raw(Qsetq).into(), (nargs+1) as EmacsInt)
+            LispError::WrongNumberOfArguments(
+                LispObject::from_raw(Qsetq).into(),
+                (nargs + 1) as EmacsInt,
+            )
         })?;
 
         val = LispObject::from_raw(unsafe { eval_sub(arg.to_raw()) });
@@ -199,60 +200,59 @@ def_lisp_sym!(Qsetq, "setq");
 /// In byte compilation, `function' causes its argument to be compiled.
 /// `quote' cannot do that.
 /// usage: (function ARG)
-#[lisp_fn(min = "1", unevalled = "true")]
-pub fn function(args: LispObject) -> LispObject {
+#[lisp_fn_result(min = "1", unevalled = "true")]
+pub fn function(args: LispObject) -> Result<LispObject, LispError> {
     let cell = args.as_cons_or_error();
     let (quoted, tail) = cell.as_tuple();
 
     if tail.is_not_nil() {
-        xsignal!(
-            Qwrong_number_of_arguments,
-            LispObject::from_raw(Qfunction),
-            length(args)
-        );
-    }
+        Err(LispError::WrongNumberOfArguments(
+            LispObject::from_raw(Qfunction).into(),
+            args.iter_tails().count() as EmacsInt,
+        ))
+    } else {
+        if unsafe { globals.f_Vinternal_interpreter_environment != Qnil } {
+            if let Some(cell) = quoted.as_cons() {
+                let (first, mut cdr) = cell.as_tuple();
+                if first.eq_raw(Qlambda) {
+                    // This is a lambda expression within a lexical environment;
+                    // return an interpreted closure instead of a simple lambda.
 
-    if unsafe { globals.f_Vinternal_interpreter_environment != Qnil } {
-        if let Some(cell) = quoted.as_cons() {
-            let (first, mut cdr) = cell.as_tuple();
-            if first.eq_raw(Qlambda) {
-                // This is a lambda expression within a lexical environment;
-                // return an interpreted closure instead of a simple lambda.
+                    let tmp = cdr.as_cons()
+                        .and_then(|c| c.cdr().as_cons())
+                        .and_then(|c| c.car().as_cons());
+                    if let Some(cell) = tmp {
+                        let (typ, tail) = cell.as_tuple();
+                        if typ.eq_raw(QCdocumentation) {
+                            // Handle the special (:documentation <form>) to build the docstring
+                            // dynamically.
 
-                let tmp = cdr.as_cons()
-                    .and_then(|c| c.cdr().as_cons())
-                    .and_then(|c| c.car().as_cons());
-                if let Some(cell) = tmp {
-                    let (typ, tail) = cell.as_tuple();
-                    if typ.eq_raw(QCdocumentation) {
-                        // Handle the special (:documentation <form>) to build the docstring
-                        // dynamically.
-
-                        let docstring =
-                            LispObject::from_raw(unsafe { eval_sub(car(tail).to_raw()) });
-                        docstring.as_string_or_error();
-                        let (a, b) = cdr.as_cons().unwrap().as_tuple();
-                        cdr = LispObject::from_raw(unsafe {
-                            Fcons(
-                                a.to_raw(),
-                                Fcons(docstring.to_raw(), b.as_cons().unwrap().cdr().to_raw()),
-                            )
-                        });
+                            let docstring =
+                                LispObject::from_raw(unsafe { eval_sub(car(tail).to_raw()) });
+                            docstring.as_string_or_error();
+                            let (a, b) = cdr.as_cons().unwrap().as_tuple();
+                            cdr = LispObject::from_raw(unsafe {
+                                Fcons(
+                                    a.to_raw(),
+                                    Fcons(docstring.to_raw(), b.as_cons().unwrap().cdr().to_raw()),
+                                )
+                            });
+                        }
                     }
-                }
 
-                return LispObject::from_raw(unsafe {
-                    Fcons(
-                        Qclosure,
-                        Fcons(globals.f_Vinternal_interpreter_environment, cdr.to_raw()),
-                    )
-                });
+                    return Ok(LispObject::from_raw(unsafe {
+                        Fcons(
+                            Qclosure,
+                            Fcons(globals.f_Vinternal_interpreter_environment, cdr.to_raw()),
+                        )
+                    }));
+                }
             }
         }
-    }
 
-    // Simply quote the argument.
-    quoted
+        // Simply quote the argument.
+        Ok(quoted)
+    }
 }
 def_lisp_sym!(Qfunction, "function");
 
@@ -336,9 +336,9 @@ pub fn defconst(args: LispObject) -> LispSymbolRef {
 // ((a 1)) -> (a, 1)
 // ((a)) -> (a, nil)
 // ((a (* 5 (+ 2 1)))) -> (a, 15)
-fn let_binding_value(obj: LispObject) -> (LispObject, Lisp_Object) {
+fn let_binding_value(obj: LispObject) -> Result<(LispObject, Lisp_Object), LispError> {
     if obj.is_symbol() {
-        (obj, Qnil)
+        Ok((obj, Qnil))
     } else {
         let (front, tail) = obj.as_cons_or_error().as_tuple();
         let (to_eval, tail) = if tail.is_nil() {
@@ -348,9 +348,12 @@ fn let_binding_value(obj: LispObject) -> (LispObject, Lisp_Object) {
         };
 
         if tail.is_nil() {
-            (front, unsafe { eval_sub(to_eval.to_raw()) })
+            Ok((front, unsafe { eval_sub(to_eval.to_raw()) }))
         } else {
-            signal_error("`let' bindings can have only one value-form", obj);
+            Err(make_error(
+                "`let' bindings can have only one value-form",
+                obj,
+            ))
         }
     }
 }
@@ -361,8 +364,8 @@ fn let_binding_value(obj: LispObject) -> (LispObject, Lisp_Object) {
 /// or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
 /// Each VALUEFORM can refer to the symbols already bound by this VARLIST.
 /// usage: (let* VARLIST BODY...)
-#[lisp_fn(name = "let*", min = "1", unevalled = "true")]
-pub fn letX(args: LispCons) -> LispObject {
+#[lisp_fn_result(name = "let*", min = "1", unevalled = "true")]
+pub fn letX(args: LispCons) -> Result<LispObject, LispError> {
     let count = c_specpdl_index();
     let (varlist, body) = args.as_tuple();
 
@@ -371,7 +374,7 @@ pub fn letX(args: LispCons) -> LispObject {
     for var in varlist.iter_cars() {
         unsafe { maybe_quit() };
 
-        let (var, val) = let_binding_value(var);
+        let (var, val) = let_binding_value(var)?;
 
         let mut needs_bind = true;
 
@@ -418,7 +421,7 @@ pub fn letX(args: LispCons) -> LispObject {
 
     // The symbols are bound. Now evaluate the body
     let val = Fprogn(body.to_raw());
-    LispObject::from_raw(unsafe { unbind_to(count, val) })
+    Ok(LispObject::from_raw(unsafe { unbind_to(count, val) }))
 }
 
 /// Bind variables according to VARLIST then eval BODY.
@@ -427,15 +430,15 @@ pub fn letX(args: LispCons) -> LispObject {
 /// or a list (SYMBOL VALUEFORM) (which binds SYMBOL to the value of VALUEFORM).
 /// All the VALUEFORMs are evalled before any symbols are bound.
 /// usage: (let VARLIST BODY...)
-#[lisp_fn(name = "let", c_name = "let", min = "1", unevalled = "true")]
-pub fn lisp_let(args: LispCons) -> LispObject {
+#[lisp_fn_result(name = "let", c_name = "let", min = "1", unevalled = "true")]
+pub fn lisp_let(args: LispCons) -> Result<LispObject, LispError> {
     let count = c_specpdl_index();
     let (varlist, body) = args.as_tuple();
 
     let mut lexenv = unsafe { globals.f_Vinternal_interpreter_environment };
 
     for var in varlist.iter_cars() {
-        let (var, val) = let_binding_value(var);
+        let (var, val) = let_binding_value(var)?;
 
         let mut dyn_bind = true;
 
@@ -474,7 +477,7 @@ pub fn lisp_let(args: LispCons) -> LispObject {
 
     // The symbols are bound. Now evaluate the body
     let val = Fprogn(body.to_raw());
-    LispObject::from_raw(unsafe { unbind_to(count, val) })
+    Ok(LispObject::from_raw(unsafe { unbind_to(count, val) }))
 }
 
 /// If TEST yields non-nil, eval BODY... and repeat.
@@ -572,19 +575,16 @@ pub extern "C" fn apply1(mut func: Lisp_Object, arg: Lisp_Object) -> Lisp_Object
     }
 }
 
-/// Signal `error' with message MSG, and additional arg ARG.
+/// Make a generic `error' with message MSG, and additional arg ARG.
 /// If ARG is not a genuine list, make it a one-element list.
-fn signal_error(msg: &str, arg: LispObject) -> ! {
+fn make_error(msg: &str, arg: LispObject) -> LispError {
     let it = arg.iter_tails_safe();
     let arg = match it.last() {
         None => list!(arg),
         Some(_) => arg,
     };
 
-    xsignal!(
-        Qerror,
-        LispObject::from_raw(Fcons(build_string(msg.as_ptr() as *const i8), arg.to_raw()))
-    );
+    LispError::GenericError(LispObject::cons(LispObject::from(msg), arg))
 }
 
 /// Non-nil if FUNCTION makes provisions for interactive calling.
