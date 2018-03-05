@@ -566,6 +566,26 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
     form
 }
 
+/// Evaluate FORM and return its value.
+/// If LEXICAL is t, evaluate using lexical scoping.
+/// LEXICAL can also be an actual lexical environment, in the form of an
+/// alist mapping symbols to their value.
+#[lisp_fn(min = "1")]
+pub fn eval(form: LispObject, lexical: LispObject) -> LispObject {
+    let count = c_specpdl_index();
+    let value = if lexical.is_cons() || lexical.is_nil() {
+        lexical
+    } else {
+        list!(LispObject::constant_t())
+    };
+
+    unsafe {
+        specbind(Qinternal_interpreter_environment, value.to_raw());
+    }
+
+    LispObject::from_raw(unsafe { unbind_to(count, eval_sub(form.to_raw())) })
+}
+
 /// Apply fn to arg.
 #[no_mangle]
 pub extern "C" fn apply1(mut func: Lisp_Object, arg: Lisp_Object) -> Lisp_Object {

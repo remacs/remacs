@@ -1343,19 +1343,6 @@ error (const char *m, ...)
   verror (m, ap);
 }
 
-DEFUN ("eval", Feval, Seval, 1, 2, 0,
-       doc: /* Evaluate FORM and return its value.
-If LEXICAL is t, evaluate using lexical scoping.
-LEXICAL can also be an actual lexical environment, in the form of an
-alist mapping symbols to their value.  */)
-  (Lisp_Object form, Lisp_Object lexical)
-{
-  ptrdiff_t count = SPECPDL_INDEX ();
-  specbind (Qinternal_interpreter_environment,
-	    CONSP (lexical) || NILP (lexical) ? lexical : list1 (Qt));
-  return unbind_to (count, eval_sub (form));
-}
-
 /* Grow the specpdl stack by one entry.
    The caller should have already initialized the entry.
    Signal an error on stack overflow.
@@ -3320,7 +3307,6 @@ alist of active lexical bindings.  */);
   defsubr (&Sunwind_protect);
   defsubr (&Scondition_case);
   defsubr (&Ssignal);
-  defsubr (&Seval);
   defsubr (&Sapply);
   defsubr (&Sfuncall);
   defsubr (&Sfunc_arity);
