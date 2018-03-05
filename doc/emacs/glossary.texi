@@ -103,13 +103,14 @@ supports both of these forms, as well as any mixture of them---this
 is ``bidirectional text''.  @xref{Bidirectional Editing}.
 
 @item Bind
+@anchor{Glossary---Bind}
 To bind a key sequence means to give it a binding (q.v.).
 @xref{Rebinding}.
 
 @anchor{Glossary---Binding}
 @item Binding
 A key sequence gets its meaning in Emacs by having a binding, which is a
-command (q.v.), a Lisp function that is run when you type that
+command (q.v.)---a Lisp function that is run when you type that
 sequence.  @xref{Commands,Binding}.  Customization often involves
 rebinding a character to a different command function.  The bindings of
 all key sequences are recorded in the keymaps (q.v.).  @xref{Keymaps}.
@@ -141,8 +142,8 @@ are visiting (q.v.@:) some file.  @xref{Buffers}.
 
 @item Buffer Selection History
 Emacs keeps a buffer selection history that records how recently each
-Emacs buffer has been selected.  This is used for choosing a buffer to
-select.  @xref{Buffers}.
+Emacs buffer has been selected.  This is used for choosing which
+buffer to select.  @xref{Buffers}.
 
 @item Bug
 A bug is an incorrect or unreasonable behavior of a program, or
@@ -220,9 +221,9 @@ the clipboard is used @emph{instead} of the primary selection.
 @xref{Clipboard}.
 
 @item Coding System
-A coding system is an encoding for representing text characters in a
-file or in a stream of information.  Emacs has the ability to convert
-text to or from a variety of coding systems when reading or writing it.
+A coding system is a way to encode text characters in a file or in a
+stream of information.  Emacs has the ability to convert text to or
+from a variety of coding systems when reading or writing it.
 @xref{Coding Systems}.
 
 @item Command
@@ -263,12 +264,12 @@ executes faster.
 
 @item Complete Key
 A complete key is a key sequence that fully specifies one action to be
-performed by Emacs.  For example, @kbd{X} and @kbd{C-f} and @kbd{C-x m}
-are complete keys.  Complete keys derive their meanings from being bound
-(q.v.@:) to commands (q.v.).  Thus, @kbd{X} is conventionally bound to
-a command to insert @samp{X} in the buffer; @kbd{C-x m} is
-conventionally bound to a command to begin composing a mail message.
-@xref{Keys}.
+performed by Emacs.  For example, @kbd{X} and @kbd{C-f} and @kbd{C-x
+m} are complete keys.  Complete keys derive their meanings from being
+bound (@pxref{Glossary---Bind}) to commands (q.v.).  Thus, @kbd{X} is
+conventionally bound to a command to insert @samp{X} in the buffer;
+@kbd{C-x m} is conventionally bound to a command to begin composing a
+mail message.  @xref{Keys}.
 
 @item Completion
 Completion is what Emacs does when it automatically expands an
@@ -281,11 +282,11 @@ file names.  Completion usually occurs when @key{TAB}, @key{SPC} or
 @anchor{Glossary---Continuation Line}
 @item Continuation Line
 When a line of text is longer than the width of the window, it
-normally (but see @ref{Glossary---Truncation}) takes up more than one
-screen line when displayed.  We say that the text line is continued, and all
-screen lines used for it after the first are called continuation
-lines.  @xref{Continuation Lines}.  A related Emacs feature is
-filling (q.v.).
+normally takes up more than one screen line when displayed (but see
+@ref{Glossary---Truncation}).  We say that the text line is continued,
+and all screen lines used for it after the first are called
+continuation lines.  @xref{Continuation Lines}.  A related Emacs
+feature is filling (q.v.).
 
 @item Control Character
 A control character is a character that you type by holding down the
@@ -418,7 +419,7 @@ Variables}.
 On GNU and other Unix-like systems, directory names are strings that
 end in @samp{/}.  For example, @file{/no-such-dir/} is a directory
 name whereas @file{/tmp} is not, even though @file{/tmp} names a file
-that happens to be a directory.  On MS-DOS the relationship is more
+that happens to be a directory.  On MS-Windows the relationship is more
 complicated.  @xref{Directory Names,,, elisp, the Emacs Lisp Reference
 Manual}.
 

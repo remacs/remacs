@@ -10641,7 +10641,7 @@ a timestamp or a link."
 		   (save-excursion
 		     ;; Do not validate action when point is on the
 		     ;; spaces right after the footnote label, in
-		     ;; order to be on par with behaviour on links.
+		     ;; order to be on par with behavior on links.
 		     (skip-chars-forward " \t")
 		     (let ((begin
 			    (org-element-property :contents-begin context)))
@@ -10794,7 +10794,7 @@ there is one, return it."
        (cons link end)))))
 
 ;; TODO: These functions are deprecated since `org-open-at-point'
-;; hard-codes behaviour for "file+emacs" and "file+sys" types.
+;; hard-codes behavior for "file+emacs" and "file+sys" types.
 (defun org-open-file-with-system (path)
   "Open file at PATH using the system way of opening it."
   (org-open-file path 'system))

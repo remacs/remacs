@@ -3563,7 +3563,7 @@ Why is @file{~/.sh_history} file on the remote host growing?
 @vindex tramp-histfile-override
 Due to the remote shell saving tilde expansions triggered by
 @value{tramp}, the history file is probably growing rapidly.
-@value{tramp} can suppress this behaviour with the user option
+@value{tramp} can suppress this behavior with the user option
 @option{tramp-histfile-override}.  When set to @code{t}, environment
 variable @env{HISTFILE} is unset, and environment variables
 @env{HISTFILESIZE} @env{HISTSIZE} are set to 0.

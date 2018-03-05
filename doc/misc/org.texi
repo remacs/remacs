@@ -10235,7 +10235,7 @@ for display purposes only.
 @cindex dash, special symbol
 @cindex ellipsis, special symbol
 In addition to regular entities defined above, Org exports in a special
-way@footnote{This behaviour can be disabled with @code{-} export setting
+way@footnote{This behavior can be disabled with @code{-} export setting
 (@pxref{Export settings}).} the following commonly used character
 combinations: @samp{\-} is treated as a shy hyphen, @samp{--} and @samp{---}
 are converted into dashes, and @samp{...} becomes a compact set of dots.
