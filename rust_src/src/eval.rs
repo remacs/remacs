@@ -1,6 +1,6 @@
 //! Generic Lisp eval functions
 
-use remacs_macros::lisp_fn;
+use remacs_macros::{lisp_fn, lisp_fn_result};
 use remacs_sys::{EmacsInt, Lisp_Object, PseudovecType};
 use remacs_sys::{Fapply, Fcons, Ffset, Ffuncall, Fload, Fpurecopy, Fset, Fset_default};
 use remacs_sys::{QCdocumentation, Qautoload, Qclosure, Qerror, Qfunction, Qinteractive,
@@ -13,7 +13,7 @@ use remacs_sys::COMPILED_INTERACTIVE;
 use remacs_sys::Vautoload_queue;
 
 use data::{defalias, indirect_function, indirect_function_lisp};
-use lisp::{LispCons, LispObject};
+use lisp::{LispCons, LispObject, LispError};
 use lisp::{defsubr, is_autoload};
 use lists::{assq, car, cdr, get, memq, nth, put, Fcar, Fcdr};
 use multibyte::LispStringRef;
@@ -158,19 +158,15 @@ pub fn prog2(args: LispObject) -> LispObject {
 /// each VAL can use the new value of variables set earlier in the `setq'.
 /// The return value of the `setq' form is the value of the last VAL.
 /// usage: (setq [SYM VAL]...)
-#[lisp_fn(min = "0", unevalled = "true")]
-pub fn setq(args: LispObject) -> LispObject {
+#[lisp_fn_result(min = "0", unevalled = "true")]
+pub fn setq(args: LispObject) -> Result<LispObject, LispError> {
     let mut val = args;
 
     let mut it = args.iter_cars().enumerate();
     while let Some((nargs, sym)) = it.next() {
-        let (_, arg) = it.next().unwrap_or_else(|| {
-            xsignal!(
-                Qwrong_number_of_arguments,
-                LispObject::from_raw(Qsetq),
-                LispObject::from(nargs + 1)
-            );
-        });
+        let (_, arg) = it.next().ok_or_else(|| {
+            LispError::WrongNumberOfArguments(LispObject::from_raw(Qsetq).into(), (nargs+1) as EmacsInt)
+        })?;
 
         val = LispObject::from_raw(unsafe { eval_sub(arg.to_raw()) });
 
@@ -195,7 +191,7 @@ pub fn setq(args: LispObject) -> LispObject {
         }
     }
 
-    val
+    Ok(val)
 }
 def_lisp_sym!(Qsetq, "setq");
 

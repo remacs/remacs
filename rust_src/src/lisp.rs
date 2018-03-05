@@ -23,7 +23,7 @@ use remacs_sys::{Qarrayp, Qautoload, Qbufferp, Qchar_table_p, Qcharacterp, Qcons
                  Qframe_live_p, Qframep, Qhash_table_p, Qinteger_or_marker_p, Qintegerp, Qlistp,
                  Qmarkerp, Qnil, Qnumber_or_marker_p, Qnumberp, Qoverlayp, Qplistp, Qprocessp,
                  Qstringp, Qsubrp, Qsymbolp, Qt, Qthreadp, Qunbound, Qvectorp, Qwholenump,
-                 Qwindow_live_p, Qwindow_valid_p, Qwindowp};
+                 Qwindow_live_p, Qwindow_valid_p, Qwindowp, Qwrong_number_of_arguments};
 use remacs_sys::{build_string, empty_unibyte_string, internal_equal, lispsym, make_float,
                  misc_get_ty};
 
@@ -43,6 +43,22 @@ use vectors::{LispBoolVecRef, LispVectorRef, LispVectorlikeRef};
 use windows::LispWindowRef;
 
 // TODO: tweak Makefile to rebuild C files if this changes.
+
+pub enum LispError {
+    WrongNumberOfArguments(LispSymbolRef, EmacsInt)
+}
+
+pub trait Signal {
+    fn signal(self) -> !;
+}
+
+impl Signal for LispError {
+    fn signal(self) -> ! {
+        match self {
+            LispError::WrongNumberOfArguments(sym, length) => xsignal!(Qwrong_number_of_arguments, sym.as_lisp_obj(), LispObject::from_fixnum(length)),
+        }
+    }
+}
 
 /// Emacs values are represented as tagged pointers. A few bits are
 /// used to represent the type, and the remaining bits are either used
@@ -105,6 +121,16 @@ impl LispObject {
         self.0
     }
 }
+
+//impl<T, E> From<Result<T, E>> for LispObject
+//where LispObject: From<T>, {
+//    fn from(r: Result<T, E>) -> Self {
+//        match r {
+//            Err(e) => xsignal!(...),
+//            Ok(v) => LispObject::from(v),
+//        }
+//    }
+//}
 
 impl<T> From<Option<T>> for LispObject
 where
