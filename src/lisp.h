@@ -3385,6 +3385,9 @@ extern void set_default_internal (Lisp_Object, Lisp_Object,
 extern void syms_of_data (void);
 extern void swap_in_global_binding (struct Lisp_Symbol *);
 
+extern void
+aset_multibyte_string(register Lisp_Object array, EMACS_INT idxval, int c);
+
 /* Defined in cmds.c */
 extern void syms_of_cmds (void);
 extern void keys_of_cmds (void);
