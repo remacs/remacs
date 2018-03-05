@@ -1830,10 +1830,11 @@ fontified.  This is a simple convenience wrapper around
    (noninteractive
     (message "hfy batch mode (%s:%S)"
              (or (buffer-file-name) (buffer-name)) major-mode)
-    (if (fboundp 'font-lock-ensure)
+    (if (fboundp 'font-lock-ensure)     ; Emacs >= 25.1
         (font-lock-ensure)
       (when font-lock-defaults
-        (font-lock-fontify-buffer))))
+        ; Silence "interactive use only" warning on Emacs >= 25.1.
+        (with-no-warnings (font-lock-fontify-buffer)))))
    ((fboundp #'jit-lock-fontify-now)
     (message "hfy jit-lock mode (%S %S)" window-system major-mode)
     (jit-lock-fontify-now))
