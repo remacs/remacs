@@ -4,12 +4,12 @@ use libc::{self, c_int, c_uchar, c_void, ptrdiff_t};
 use std::{self, mem, ptr};
 
 use remacs_macros::lisp_fn;
-use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Object, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
-                 MOST_POSITIVE_FIXNUM};
+use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Fwd, Lisp_Object,
+                 Lisp_Overlay, Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
 use remacs_sys::{Fcons, Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qinhibit_read_only, Qnil};
 use remacs_sys::{bget_overlays_after, bget_overlays_before, fget_buffer_list,
-                 fget_buried_buffer_list, globals, set_buffer_internal};
+                 fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals, set_buffer_internal};
 
 use editfns::point;
 use lisp::{ExternalPtr, LispObject};
@@ -287,6 +287,18 @@ impl LispObject {
         } else {
             self.as_buffer_or_error()
         }
+    }
+}
+
+pub type LispBufferLocalValueRef = ExternalPtr<Lisp_Buffer_Local_Value>;
+
+impl LispBufferLocalValueRef {
+    pub fn get_fwd(self) -> *const Lisp_Fwd {
+        unsafe { get_blv_fwd(self.as_ptr()) }
+    }
+
+    pub fn get_value(self) -> LispObject {
+        LispObject::from_raw(unsafe { get_blv_value(self.as_ptr()) })
     }
 }
 
