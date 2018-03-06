@@ -1,5 +1,9 @@
 //! Keymap support
 
+use std::ptr;
+
+use libc::c_void;
+
 use remacs_macros::lisp_fn;
 use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, Lisp_Object,
                  CHAR_META};
@@ -11,11 +15,9 @@ use remacs_sys::{access_keymap, map_keymap_call, map_keymap_function_t, map_keym
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
 use keyboard::lucid_event_type_list_p;
-use libc::c_void;
 use lisp::{defsubr, LispObject};
 use lists::nth;
 use obarray::intern;
-use std::ptr;
 use threads::ThreadState;
 
 #[inline]
@@ -275,9 +277,10 @@ pub extern "C" fn map_keymap(
     let mut map = LispObject::from_raw(get_keymap(map, true, autoload));
     while map.is_cons() {
         if let Some(cons) = map.as_cons() {
-            if keymapp(cons.car()) {
-                map_keymap(cons.car().to_raw(), fun, args, data, autoload);
-                map = cons.cdr();
+            let (car, cdr) = cons.as_tuple();
+            if keymapp(car) {
+                map_keymap(car.to_raw(), fun, args, data, autoload);
+                map = cdr;
             } else {
                 map = LispObject::from_raw(unsafe {
                     map_keymap_internal(map.to_raw(), fun, args, data)
