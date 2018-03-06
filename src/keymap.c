@@ -335,7 +335,7 @@ map_keymap_char_table_item (Lisp_Object args, Lisp_Object key, Lisp_Object val)
 
 /* Call FUN for every binding in MAP and stop at (and return) the parent.
    FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).  */
-static Lisp_Object
+Lisp_Object
 map_keymap_internal (Lisp_Object map,
 		     map_keymap_function_t fun,
 		     Lisp_Object args,
@@ -373,31 +373,10 @@ map_keymap_internal (Lisp_Object map,
   return tail;
 }
 
-static void
+void
 map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
 {
   call2 (fun, key, val);
-}
-
-/* Same as map_keymap_internal, but traverses parent keymaps as well.
-   AUTOLOAD indicates that autoloaded keymaps should be loaded.  */
-void
-map_keymap (Lisp_Object map, map_keymap_function_t fun, Lisp_Object args,
-	    void *data, bool autoload)
-{
-  map = get_keymap (map, 1, autoload);
-  while (CONSP (map))
-    {
-      if (KEYMAPP (XCAR (map)))
-	{
-	  map_keymap (XCAR (map), fun, args, data, autoload);
-	  map = XCDR (map);
-	}
-      else
-	map = map_keymap_internal (map, fun, args, data);
-      if (!CONSP (map))
-	map = get_keymap (map, 0, autoload);
-    }
 }
 
 /* Same as map_keymap, but does it right, properly eliminating duplicate
@@ -422,24 +401,6 @@ If KEYMAP has a parent, this function returns it without processing it.  */)
   keymap = get_keymap (keymap, 1, 1);
   keymap = map_keymap_internal (keymap, map_keymap_call, function, NULL);
   return keymap;
-}
-
-DEFUN ("map-keymap", Fmap_keymap, Smap_keymap, 2, 3, 0,
-       doc: /* Call FUNCTION once for each event binding in KEYMAP.
-FUNCTION is called with two arguments: the event that is bound, and
-the definition it is bound to.  The event may be a character range.
-
-If KEYMAP has a parent, the parent's bindings are included as well.
-This works recursively: if the parent has itself a parent, then the
-grandparent's bindings are also included and so on.
-usage: (map-keymap FUNCTION KEYMAP)  */)
-  (Lisp_Object function, Lisp_Object keymap, Lisp_Object sort_first)
-{
-  if (! NILP (sort_first))
-    return call2 (intern ("map-keymap-sorted"), function, keymap);
-
-  map_keymap (keymap, map_keymap_call, function, NULL, 1);
-  return Qnil;
 }
 
 /* Given OBJECT which was found in a slot in a keymap,
@@ -3327,7 +3288,6 @@ be preferred.  */);
   staticpro (&command_remapping_vector);
 
   defsubr (&Smap_keymap_internal);
-  defsubr (&Smap_keymap);
   defsubr (&Scopy_keymap);
   defsubr (&Scommand_remapping);
   defsubr (&Skey_binding);
