@@ -45,7 +45,7 @@ use windows::LispWindowRef;
 // TODO: tweak Makefile to rebuild C files if this changes.
 
 pub enum LispError {
-    WrongNumberOfArguments(LispSymbolRef, EmacsInt),
+    WrongNumberOfArguments(Lisp_Object, EmacsInt),
     GenericError(LispObject),
 }
 
@@ -58,7 +58,7 @@ impl Signal for LispError {
         match self {
             LispError::WrongNumberOfArguments(sym, length) => xsignal!(
                 Qwrong_number_of_arguments,
-                sym.as_lisp_obj(),
+                LispObject::from_raw(sym),
                 LispObject::from_fixnum(length)
             ),
             LispError::GenericError(args) => xsignal!(Qerror, args),

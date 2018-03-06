@@ -162,12 +162,8 @@ pub fn setq(args: LispObject) -> Result<LispObject, LispError> {
 
     let mut it = args.iter_cars().enumerate();
     while let Some((nargs, sym)) = it.next() {
-        let (_, arg) = it.next().ok_or_else(|| {
-            LispError::WrongNumberOfArguments(
-                LispObject::from_raw(Qsetq).into(),
-                (nargs + 1) as EmacsInt,
-            )
-        })?;
+        let (_, arg) = it.next()
+            .ok_or_else(|| LispError::WrongNumberOfArguments(Qsetq, (nargs + 1) as EmacsInt))?;
 
         val = LispObject::from_raw(unsafe { eval_sub(arg.to_raw()) });
 
@@ -207,7 +203,7 @@ pub fn function(args: LispObject) -> Result<LispObject, LispError> {
 
     if tail.is_not_nil() {
         Err(LispError::WrongNumberOfArguments(
-            LispObject::from_raw(Qfunction).into(),
+            Qfunction,
             args.iter_tails().count() as EmacsInt,
         ))
     } else {
