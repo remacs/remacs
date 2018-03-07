@@ -1,6 +1,6 @@
 ;;; eieio-testsinvoke.el -- eieio tests for method invocation
 
-;; Copyright (C) 2005, 2008, 2010, 2013-2017 Free Software Foundation,
+;; Copyright (C) 2005, 2008, 2010, 2013-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
@@ -192,8 +192,7 @@
 (ert-deftest eieio-test-method-order-list-6 ()
   ;; FIXME repeated intermittent failures on hydra (bug#24503)
   ;; ((:STATIC C) (:STATIC C-base1) (:STATIC C-base2)) != ((:STATIC C))")
-  (skip-unless (not (getenv "EMACS_HYDRA_CI")))
-  (skip-unless (equal invocation-name "emacs"))
+  :tags '(:unstable)
   (let ((eieio-test-method-order-list nil)
 	(ans '(
 	       (:STATIC C)

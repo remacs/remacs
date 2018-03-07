@@ -1,6 +1,6 @@
 ;;; pcase.el --- ML-style pattern-matching macro for Elisp -*- lexical-binding: t -*-
 
-;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords:
@@ -226,7 +226,7 @@ I.e. accepts the usual &optional and &rest keywords, but every
 formal argument can be any pattern accepted by `pcase' (a mere
 variable name being but a special case of it)."
   (declare (doc-string 2) (indent defun)
-           (debug ((&rest pcase-PAT) body)))
+           (debug (&define (&rest pcase-PAT) lambda-doc def-body)))
   (let* ((bindings ())
          (parsed-body (macroexp-parse-body body))
          (args (mapcar (lambda (pat)

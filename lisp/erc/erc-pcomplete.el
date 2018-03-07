@@ -1,6 +1,6 @@
 ;;; erc-pcomplete.el --- Provides programmable completion for ERC
 
-;; Copyright (C) 2002-2004, 2006-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2004, 2006-2018 Free Software Foundation, Inc.
 
 ;; Author: Sacha Chua <sacha@free.net.ph>
 ;; Maintainer: emacs-devel@gnu.org
@@ -60,7 +60,7 @@ the most recent speakers are listed first."
   :group 'erc-pcomplete
   :type 'boolean)
 
-;;;###autoload (autoload 'erc-completion-mode "erc-pcomplete" nil t)
+;;;###autoload(autoload 'erc-completion-mode "erc-pcomplete" nil t)
 (define-erc-module pcomplete Completion
   "In ERC Completion mode, the TAB key does completion whenever possible."
   ((add-hook 'erc-mode-hook 'pcomplete-erc-setup)
@@ -284,5 +284,6 @@ up to where point is right now."
 ;;; erc-pcomplete.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: nil
 ;; End:

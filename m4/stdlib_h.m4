@@ -1,5 +1,5 @@
-# stdlib_h.m4 serial 44
-dnl Copyright (C) 2007-2017 Free Software Foundation, Inc.
+# stdlib_h.m4 serial 45
+dnl Copyright (C) 2007-2018 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -14,6 +14,9 @@ AC_DEFUN([gl_STDLIB_H],
   dnl guaranteed by C89.
   gl_WARN_ON_USE_PREPARE([[#include <stdlib.h>
 #if HAVE_SYS_LOADAVG_H
+/* OpenIndiana has a bug: <sys/time.h> must be included before
+   <sys/loadavg.h>.  */
+# include <sys/time.h>
 # include <sys/loadavg.h>
 #endif
 #if HAVE_RANDOM_H

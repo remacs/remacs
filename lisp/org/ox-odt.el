@@ -1,6 +1,6 @@
 ;;; ox-odt.el --- OpenDocument Text Exporter for Org Mode -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 ;; Author: Jambunathan K <kjambunathan at gmail dot com>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -600,8 +600,7 @@ allow document of a given class (irrespective of its source
 format) to be converted to any of the export formats associated
 with that class.
 
-See default setting of this variable for an typical
-configuration."
+See default setting of this variable for a typical configuration."
   :group 'org-export-odt
   :version "24.1"
   :type
@@ -721,16 +720,17 @@ nil            Ignore math snippets.
                imagemagick to convert pdf files to png files.
 `mathjax'      Do MathJax preprocessing and arrange for MathJax.js to
                be loaded.
-t              Synonym for `mathjax'."
+
+Any other symbol is a synonym for `mathjax'."
   :group 'org-export-odt
   :version "24.4"
   :package-version '(Org . "8.0")
   :type '(choice
 	  (const :tag "Do not process math in any way" nil)
+	  (const :tag "Leave math verbatim" verbatim)
 	  (const :tag "Use dvipng to make images" dvipng)
 	  (const :tag "Use imagemagick to make images" imagemagick)
-	  (const :tag "Use MathJax to display math" mathjax)
-	  (const :tag "Leave math verbatim" verbatim)))
+	  (other :tag "Use MathJax to display math" mathjax)))
 
 
 ;;;; Links
@@ -1159,12 +1159,8 @@ table of contents as a string, or nil."
   ;; Likewise, links, footnote references and regular targets are also
   ;; suppressed.
   (let* ((headlines (org-export-collect-headlines info depth scope))
-	 (backend (org-export-create-backend
-		   :parent (org-export-backend-name (plist-get info :back-end))
-		   :transcoders '((footnote-reference . ignore)
-				  (link . (lambda (object c i) c))
-				  (radio-target . (lambda (object c i) c))
-				  (target . ignore)))))
+	 (backend (org-export-toc-entry-backend
+		      (org-export-backend-name (plist-get info :back-end)))))
     (when headlines
       (org-odt--format-toc
        (and (not scope) (org-export-translate "Table of Contents" :utf-8 info))
@@ -1941,7 +1937,7 @@ holding contextual information."
 
 (defun org-odt-format-inlinetask-default-function
   (todo todo-type priority name tags contents)
-  "Default format function for a inlinetasks.
+  "Default format function for inlinetasks.
 See `org-odt-format-inlinetask-function' for details."
   (format "\n<text:p text:style-name=\"%s\">%s</text:p>"
 	  "Text_20_body"
@@ -2195,6 +2191,10 @@ SHORT-CAPTION are strings."
     (copy-file path (concat org-odt-zip-dir target-file) 'overwrite)
     (org-odt-create-manifest-file-entry media-type target-file)
     target-file))
+
+;; For --without-x builds.
+(declare-function clear-image-cache "image.c" (&optional filter))
+(declare-function image-size "image.c" (spec &optional pixels frame))
 
 (defun org-odt--image-size
   (file info &optional user-width user-height scale dpi embed-as)
@@ -3890,7 +3890,7 @@ contextual information."
 ;; themselves and the list can be arbitrarily deep.
 ;;
 ;; Inspired by following thread:
-;; https://lists.gnu.org/archive/html/emacs-orgmode/2011-03/msg01101.html
+;; https://lists.gnu.org/r/emacs-orgmode/2011-03/msg01101.html
 
 ;; Translate lists to tables
 

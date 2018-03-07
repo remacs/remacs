@@ -1,6 +1,6 @@
 ;;; mouse-tests.el --- unit tests for mouse.el       -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2018 Free Software Foundation, Inc.
 
 ;; Author: Philipp Stephani <phst@google.com>
 
@@ -26,26 +26,23 @@
 ;;; Code:
 
 (ert-deftest bug23288-use-return-value ()
-  "If ‘mouse-on-link-p’ returns a string, its first character is
-used."
-  (cl-letf ((last-input-event '(down-mouse-1 nil 1))
-            (unread-command-events '((mouse-1 nil 1)))
+  "If `mouse-on-link-p' returns a string, its first character is used."
+  (cl-letf ((unread-command-events '((down-mouse-1 nil 1) (mouse-1 nil 1)))
             (mouse-1-click-follows-link t)
             (mouse-1-click-in-non-selected-windows t)
             ((symbol-function 'mouse-on-link-p) (lambda (_pos) "abc")))
-    (should-not (mouse--down-1-maybe-follows-link))
-    (should (equal unread-command-events '(?a)))))
+    (should (eq 'down-mouse-1 (car-safe (aref (read-key-sequence "") 0))))
+    (should (eq ?a (aref (read-key-sequence "") 0)))))
 
 (ert-deftest bug23288-translate-to-mouse-2 ()
-  "If ‘mouse-on-link-p’ doesn’t return a string or vector,
-translate ‘mouse-1’ events into ‘mouse-2’ events."
-  (cl-letf ((last-input-event '(down-mouse-1 nil 1))
-            (unread-command-events '((mouse-1 nil 1)))
+  "If `mouse-on-link-p' doesn't return a string or vector,
+translate `mouse-1' events into `mouse-2' events."
+  (cl-letf ((unread-command-events '((down-mouse-1 nil 1) (mouse-1 nil 1)))
             (mouse-1-click-follows-link t)
             (mouse-1-click-in-non-selected-windows t)
             ((symbol-function 'mouse-on-link-p) (lambda (_pos) t)))
-    (should-not (mouse--down-1-maybe-follows-link))
-    (should (equal unread-command-events '((mouse-2 nil 1))))))
+    (should (eq 'down-mouse-1 (car-safe (aref (read-key-sequence "") 0))))
+    (should (eq 'mouse-2 (car-safe (aref (read-key-sequence "") 0))))))
 
 (ert-deftest bug26816-mouse-frame-movement ()
   "Mouse moves relative to frame."

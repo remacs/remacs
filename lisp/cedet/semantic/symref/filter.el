@@ -1,6 +1,6 @@
 ;;; semantic/symref/filter.el --- Filter symbol reference hits for accuracy.
 
-;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -103,7 +103,7 @@ tag that contains point, and return that."
       (when (called-interactively-p 'interactive)
 	(message "Found %d occurrences of %s in %.2f seconds"
 		 Lcount (semantic-tag-name target)
-		 (semantic-elapsed-time start (current-time))))
+		 (semantic-elapsed-time start nil)))
       Lcount)))
 
 (defun semantic-symref-rename-local-variable ()

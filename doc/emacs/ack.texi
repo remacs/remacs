@@ -1,6 +1,6 @@
 @c -*- coding: utf-8 -*-
 @c This is part of the Emacs manual.
-@c Copyright (C) 1994-1997, 1999-2017 Free Software Foundation, Inc.
+@c Copyright (C) 1994-1997, 1999-2018 Free Software Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @c
 @node Acknowledgments
@@ -209,8 +209,8 @@ for Korean Hanja.
 
 @item
 Andrew Choi and Yamamoto Mitsuharu wrote the Carbon support, used
-prior to Emacs 23 for Mac OS@.  Yamamoto Mitsuharu continued to
-contribute to Mac OS support in the newer Nextstep port; and also
+prior to Emacs 23 for macOS@.  Yamamoto Mitsuharu continued to
+contribute to macOS support in the newer Nextstep port; and also
 improved support for multi-monitor displays.
 
 @item

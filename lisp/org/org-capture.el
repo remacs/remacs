@@ -1,6 +1,6 @@
 ;;; org-capture.el --- Fast note taking in Org       -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -78,6 +78,12 @@
 
 (defvar org-capture-is-refiling nil
   "Non-nil when capture process is refiling an entry.")
+
+(defvar org-capture--prompt-history-table (make-hash-table :test #'equal)
+  "Hash table for all history lists per prompt.")
+
+(defvar org-capture--prompt-history nil
+  "History list for prompt placeholders.")
 
 (defgroup org-capture nil
   "Options concerning capturing new entries."
@@ -921,18 +927,24 @@ Store them in the capture property list."
 	   (_ (error "Cannot find target ID \"%s\"" id))))
 	(`(file+headline ,path ,headline)
 	 (set-buffer (org-capture-target-buffer path))
+	 ;; Org expects the target file to be in Org mode, otherwise
+	 ;; it throws an error.  However, the default notes files
+	 ;; should work out of the box.  In this case, we switch it to
+	 ;; Org mode.
 	 (unless (derived-mode-p 'org-mode)
-	   (error "Target buffer \"%s\" for file+headline not in Org mode"
-		  (current-buffer)))
+	   (org-display-warning
+	    (format "Capture requirement: switching buffer %S to Org mode"
+		    (current-buffer)))
+	   (org-mode))
 	 (org-capture-put-target-region-and-position)
 	 (widen)
 	 (goto-char (point-min))
 	 (if (re-search-forward (format org-complex-heading-regexp-format
 					(regexp-quote headline))
 				nil t)
-	     (goto-char (line-beginning-position))
+	     (beginning-of-line)
 	   (goto-char (point-max))
-	   (or (bolp) (insert "\n"))
+	   (unless (bolp) (insert "\n"))
 	   (insert "* " headline "\n")
 	   (beginning-of-line 0)))
 	(`(file+olp ,path . ,outline-path)
@@ -1311,8 +1323,8 @@ Of course, if exact position has been required, just put it there."
 
 (defun org-capture-mark-kill-region (beg end)
   "Mark the region that will have to be killed when aborting capture."
-  (let ((m1 (move-marker (make-marker) beg))
-	(m2 (move-marker (make-marker) end)))
+  (let ((m1 (copy-marker beg))
+	(m2 (copy-marker end t)))
     (org-capture-put :begin-marker m1)
     (org-capture-put :end-marker m2)))
 
@@ -1792,19 +1804,25 @@ The template may still contain \"%?\" for cursor positioning."
 		     (let* ((upcase? (equal (upcase key) key))
 			    (org-end-time-was-given nil)
 			    (time (org-read-date upcase? t nil prompt)))
-		       (let ((org-time-was-given upcase?))
-			 (org-insert-time-stamp
-			  time org-time-was-given
-			  (member key '("u" "U"))
-			  nil nil (list org-end-time-was-given)))))
+		       (org-insert-time-stamp
+			time (or org-time-was-given upcase?)
+			(member key '("u" "U"))
+			nil nil (list org-end-time-was-given))))
 		    (`nil
+		     ;; Load history list for current prompt.
+		     (setq org-capture--prompt-history
+			   (gethash prompt org-capture--prompt-history-table))
 		     (push (org-completing-read
 			    (concat (or prompt "Enter string")
 				    (and default (format " [%s]" default))
 				    ": ")
-			    completions nil nil nil nil default)
+			    completions
+			    nil nil nil 'org-capture--prompt-history default)
 			   strings)
-		     (insert (car strings)))
+		     (insert (car strings))
+		     ;; Save updated history list for current prompt.
+		     (puthash prompt org-capture--prompt-history
+			      org-capture--prompt-history-table))
 		    (_
 		     (error "Unknown template placeholder: \"%%^%s\""
 			    key))))))))

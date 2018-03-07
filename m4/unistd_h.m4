@@ -1,5 +1,5 @@
-# unistd_h.m4 serial 70
-dnl Copyright (C) 2006-2017 Free Software Foundation, Inc.
+# unistd_h.m4 serial 71
+dnl Copyright (C) 2006-2018 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -159,6 +159,7 @@ AC_DEFUN([gl_UNISTD_H_DEFAULTS],
   REPLACE_CLOSE=0;        AC_SUBST([REPLACE_CLOSE])
   REPLACE_DUP=0;          AC_SUBST([REPLACE_DUP])
   REPLACE_DUP2=0;         AC_SUBST([REPLACE_DUP2])
+  REPLACE_FACCESSAT=0;    AC_SUBST([REPLACE_FACCESSAT])
   REPLACE_FCHOWNAT=0;     AC_SUBST([REPLACE_FCHOWNAT])
   REPLACE_FTRUNCATE=0;    AC_SUBST([REPLACE_FTRUNCATE])
   REPLACE_GETCWD=0;       AC_SUBST([REPLACE_GETCWD])

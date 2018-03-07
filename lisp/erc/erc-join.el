@@ -1,6 +1,6 @@
 ;;; erc-join.el --- autojoin channels on connect and reconnects
 
-;; Copyright (C) 2002-2004, 2006-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2004, 2006-2018 Free Software Foundation, Inc.
 
 ;; Author: Alex Schroeder <alex@gnu.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -39,7 +39,7 @@
   "Enable autojoining."
   :group 'erc)
 
-;;;###autoload (autoload 'erc-autojoin-mode "erc-join" nil t)
+;;;###autoload(autoload 'erc-autojoin-mode "erc-join" nil t)
 (define-erc-module autojoin nil
   "Makes ERC autojoin on connects and reconnects."
   ((add-hook 'erc-after-connect 'erc-autojoin-channels)
@@ -215,6 +215,7 @@ This function is run from `erc-nickserv-identified-hook'."
 ;;; erc-join.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

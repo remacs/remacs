@@ -1,6 +1,6 @@
 ;;; dired-tests.el --- Test suite. -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -385,9 +385,9 @@
   (dired-test-with-temp-dirs
    'just-empty-dirs
    (let (asked)
-     (advice-add 'dired--yes-no-all-quit-help
+     (advice-add 'read-answer
                  :override
-                 (lambda (_) (setq asked t) "")
+                 (lambda (_q _a) (setq asked t) "")
                  '((name . dired-test-bug27940-advice)))
      (dired default-directory)
      (dired-toggle-marks)
@@ -396,44 +396,44 @@
          (progn
            (should-not asked)
            (should-not (dired-get-marked-files))) ; All dirs deleted.
-       (advice-remove 'dired--yes-no-all-quit-help 'dired-test-bug27940-advice))))
+       (advice-remove 'read-answer 'dired-test-bug27940-advice))))
   ;; Answer yes
   (dired-test-with-temp-dirs
    nil
-   (advice-add 'dired--yes-no-all-quit-help :override (lambda (_) "yes")
+   (advice-add 'read-answer :override (lambda (_q _a) "yes")
                '((name . dired-test-bug27940-advice)))
    (dired default-directory)
    (dired-toggle-marks)
    (dired-do-delete nil)
    (unwind-protect
        (should-not (dired-get-marked-files)) ; All dirs deleted.
-     (advice-remove 'dired--yes-no-all-quit-help 'dired-test-bug27940-advice)))
+     (advice-remove 'read-answer 'dired-test-bug27940-advice)))
   ;; Answer no
   (dired-test-with-temp-dirs
    nil
-   (advice-add 'dired--yes-no-all-quit-help :override (lambda (_) "no")
+   (advice-add 'read-answer :override (lambda (_q _a) "no")
                '((name . dired-test-bug27940-advice)))
    (dired default-directory)
    (dired-toggle-marks)
    (dired-do-delete nil)
    (unwind-protect
        (should (= 5 (length (dired-get-marked-files)))) ; Just the empty dirs deleted.
-     (advice-remove 'dired--yes-no-all-quit-help 'dired-test-bug27940-advice)))
+     (advice-remove 'read-answer 'dired-test-bug27940-advice)))
   ;; Answer all
   (dired-test-with-temp-dirs
    nil
-   (advice-add 'dired--yes-no-all-quit-help :override (lambda (_) "all")
+   (advice-add 'read-answer :override (lambda (_q _a) "all")
                '((name . dired-test-bug27940-advice)))
    (dired default-directory)
    (dired-toggle-marks)
    (dired-do-delete nil)
    (unwind-protect
        (should-not (dired-get-marked-files)) ; All dirs deleted.
-     (advice-remove 'dired--yes-no-all-quit-help 'dired-test-bug27940-advice)))
+     (advice-remove 'read-answer 'dired-test-bug27940-advice)))
   ;; Answer quit
   (dired-test-with-temp-dirs
    nil
-   (advice-add 'dired--yes-no-all-quit-help :override (lambda (_) "quit")
+   (advice-add 'read-answer :override (lambda (_q _a) "quit")
                '((name . dired-test-bug27940-advice)))
    (dired default-directory)
    (dired-toggle-marks)
@@ -441,7 +441,7 @@
      (dired-do-delete nil))
    (unwind-protect
        (should (= 6 (length (dired-get-marked-files)))) ; All empty dirs but zeta-empty-dir deleted.
-     (advice-remove 'dired--yes-no-all-quit-help 'dired-test-bug27940-advice))))
+     (advice-remove 'read-answer 'dired-test-bug27940-advice))))
 
 
 (provide 'dired-tests)

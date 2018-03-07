@@ -1,6 +1,6 @@
 ;;; semantic/decorate/include.el --- Decoration modes for include statements
 
-;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -467,7 +467,7 @@ its contents.
 	(error "Could not location include %s"
 	       (semantic-tag-name tag)))
        ((get-file-buffer file)
-	(switch-to-buffer (get-file-buffer file)))
+        (pop-to-buffer-same-window (get-file-buffer file)))
        ((stringp file)
 	(find-file file))
        ))))

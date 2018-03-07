@@ -1,6 +1,6 @@
 @c -*- coding: utf-8 -*-
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2017 Free Software
+@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
 @c Foundation, Inc.
 
 @c See file emacs.texi for copying conditions.
@@ -108,9 +108,9 @@ point unchanged, so that the text and point move up or down together.
   By default, these commands signal an error (by beeping or flashing
 the screen) if no more scrolling is possible, because the window has
 reached the beginning or end of the buffer.  If you change the
-variable @code{scroll-error-top-bottom} to @code{t}, the command moves
-point to the farthest possible position.  If point is already there,
-the command signals an error.
+variable @code{scroll-error-top-bottom} to @code{t}, these commands
+move point to the farthest possible position.  If point is already
+there, the commands signal an error.
 
 @vindex scroll-preserve-screen-position
 @cindex @code{scroll-command} property
@@ -270,7 +270,7 @@ parts of the window height from the bottom window edge.  Thus, larger
 view.  The default value, @code{nil}, is equivalent to 0.5.
 
   Likewise, @code{scroll-down-aggressively} is used when point goes
-above the bottom window edge (i.e., scrolling backward).  The value
+above the top window edge (i.e., scrolling backward).  The value
 specifies how far point should be from the top margin of the window
 after scrolling.  Thus, as with @code{scroll-up-aggressively}, a
 larger value is more aggressive.
@@ -330,8 +330,8 @@ scrolling away from that edge.
 scroll the window when point gets too close to the edge.  Zero, the
 default value, means to center point horizontally within the window.
 A positive integer value specifies the number of columns to scroll by.
-A floating-point number specifies the fraction of the window's width
-to scroll by.
+A floating-point number (whose value should be between 0 and 1)
+specifies the fraction of the window's width to scroll by.
 
   You can also perform explicit horizontal scrolling with the
 following commands:
@@ -526,7 +526,7 @@ frames as if they have a dark background, whereas a value of
 background.
 
 @cindex background color
-@cindex default face
+@cindex @code{default face}
   You can customize a face to alter its attributes, and save those
 customizations for future Emacs sessions.  @xref{Face Customization},
 for details.
@@ -535,7 +535,7 @@ for details.
 of its attributes are specified.  Its background color is also used as
 the frame's background color.  @xref{Colors}.
 
-@cindex cursor face
+@cindex @code{cursor} face
   Another special face is the @code{cursor} face.  On graphical
 displays, the background color of this face is used to draw the text
 cursor.  None of the other attributes of this face have any effect;
@@ -627,10 +627,10 @@ but you should not make it a variable-width font.
 @item fixed-pitch-serif
 This face is like @code{fixed-pitch}, except the font has serifs and
 looks more like traditional typewriting.
-@cindex variable-pitch face
+@cindex @code{variable-pitch} face
 @item variable-pitch
 This face forces use of a variable-width font.
-@cindex shadow face
+@cindex @code{shadow} face
 @item shadow
 This face is used for making the text less noticeable than the surrounding
 ordinary text.  Usually this can be achieved by using shades of gray in
@@ -656,8 +656,8 @@ This face is used to highlight lazy matches for Isearch and Query
 Replace (matches other than the current one).
 @item region
 This face is used for displaying an active region (@pxref{Mark}).
-When Emacs is built with GTK support, its colors are taken from the
-current GTK theme.
+When Emacs is built with GTK+ support, its colors are taken from the
+current GTK+ theme.
 @item secondary-selection
 This face is used for displaying a secondary X selection (@pxref{Secondary
 Selection}).
@@ -685,40 +685,40 @@ frame:
 
 @table @code
 @item mode-line
-@cindex mode-line face
+@cindex @code{mode-line} face
 @cindex faces for mode lines
 This face is used for the mode line of the currently selected window,
 and for menu bars when toolkit menus are not used.  By default, it's
 drawn with shadows for a raised effect on graphical displays, and
 drawn as the inverse of the default face on non-windowed terminals.
 @item mode-line-inactive
-@cindex mode-line-inactive face
+@cindex @code{mode-line-inactive} face
 Like @code{mode-line}, but used for mode lines of the windows other
 than the selected one (if @code{mode-line-in-non-selected-windows} is
 non-@code{nil}).  This face inherits from @code{mode-line}, so changes
 in that face affect mode lines in all windows.
 @item mode-line-highlight
-@cindex mode-line-highlight face
+@cindex @code{mode-line-highlight} face
 Like @code{highlight}, but used for mouse-sensitive portions of text
 on mode lines.  Such portions of text typically pop up tooltips
 (@pxref{Tooltips}) when the mouse pointer hovers above them.
 @item mode-line-buffer-id
-@cindex mode-line-buffer-id face
+@cindex @code{mode-line-buffer-id} face
 This face is used for buffer identification parts in the mode line.
 @item header-line
-@cindex header-line face
+@cindex @code{header-line} face
 Similar to @code{mode-line} for a window's header line, which appears
 at the top of a window just as the mode line appears at the bottom.
 Most windows do not have a header line---only some special modes, such
 Info mode, create one.
 @item header-line-highlight
-@cindex header-line-highlight face
+@cindex @code{header-line-highlight} face
 Similar to @code{highlight} and @code{mode-line-highlight}, but used
 for mouse-sensitive portions of text on header lines.  This is a
 separate face because the @code{header-line} face might be customized
 in a way that does not interact well with @code{highlight}.
 @item vertical-border
-@cindex vertical-border face
+@cindex @code{vertical-border} face
 This face is used for the vertical divider between windows on text
 terminals.
 @item minibuffer-prompt
@@ -741,7 +741,7 @@ The @code{:background} attribute of this face specifies the color of
 the text cursor.  @xref{Cursor Display}.
 @item tooltip
 This face is used for tooltip text.  By default, if Emacs is built
-with GTK support, tooltips are drawn via GTK and this face has no
+with GTK+ support, tooltips are drawn via GTK+ and this face has no
 effect.  @xref{Tooltips}.
 @item mouse
 This face determines the color of the mouse pointer.
@@ -957,7 +957,7 @@ mode for all buffers, use @kbd{M-x global-hi-lock-mode} or place
 
   Hi Lock mode works like Font Lock mode (@pxref{Font Lock}), except
 that you specify explicitly the regular expressions to highlight.  You
-control them with the commands described below.  (The key bindings
+can control them with the following commands.  (The key bindings
 below that begin with @kbd{C-x w} are deprecated in favor of the
 global @kbd{M-s h} bindings, and will be removed in some future Emacs
 version.)
@@ -991,16 +991,15 @@ expressions to highlight in different ways.
 @kindex M-s h u
 @kindex C-x w r
 @findex unhighlight-regexp
-Unhighlight @var{regexp} (@code{unhighlight-regexp}).
-
-If you invoke this from the menu, you select the expression to
-unhighlight from a list.  If you invoke this from the keyboard, you
-use the minibuffer.  It will show the most recently added regular
-expression; use @kbd{M-n} to show the next older expression and
-@kbd{M-p} to select the next newer expression.  (You can also type the
-expression by hand, with completion.)  When the expression you want to
-unhighlight appears in the minibuffer, press @kbd{@key{RET}} to exit
-the minibuffer and unhighlight it.
+Unhighlight @var{regexp} (@code{unhighlight-regexp}).  If you invoke
+this from the menu, you select the expression to unhighlight from a
+list.  If you invoke this from the keyboard, you use the minibuffer.
+It will show the most recently added regular expression; use @kbd{M-n}
+to show the next older expression and @kbd{M-p} to select the next
+newer expression.  (You can also type the expression by hand, with
+completion.)  When the expression you want to unhighlight appears in
+the minibuffer, press @kbd{@key{RET}} to exit the minibuffer and
+unhighlight it.
 
 @item M-s h l @var{regexp} @key{RET} @var{face} @key{RET}
 @itemx C-x w l @var{regexp} @key{RET} @var{face} @key{RET}
@@ -1087,11 +1086,11 @@ mode's symbol is a member of the list @code{hi-lock-exclude-modes}.
   On graphical displays, each Emacs window normally has narrow
 @dfn{fringes} on the left and right edges.  The fringes are used to
 display symbols that provide information about the text in the window.
-You can type @kbd{M-x fringe-mode} to disable the fringes, or modify
-their width.  This command affects fringes in all frames; to modify
-fringes on the selected frame only, use @kbd{M-x set-fringe-style}.
-You can make your changes to the fringes permanent by customizing the
-variable @code{fringe-mode}.
+You can type @kbd{M-x fringe-mode} to toggle display of the fringes or
+to modify their width.  This command affects fringes in all frames; to
+modify fringes on the selected frame only, use @kbd{M-x
+set-fringe-style}.  You can make your changes to the fringes permanent
+by customizing the variable @code{fringe-mode}.
 
   The most common use of the fringes is to indicate a continuation
 line (@pxref{Continuation Lines}).  When one line of text is split
@@ -1178,7 +1177,7 @@ empty lines at the end of a buffer, without realizing it.  In most
 cases, this @dfn{trailing whitespace} has no effect, but sometimes it
 can be a nuisance.
 
-@cindex trailing-whitespace face
+@cindex @code{trailing-whitespace} face
   You can make trailing whitespace at the end of a line visible by
 setting the buffer-local variable @code{show-trailing-whitespace} to
 @code{t}.  Then Emacs displays trailing whitespace, using the face
@@ -1393,13 +1392,13 @@ the option @code{display-time-mode}.  The information added to the mode
 line looks like this:
 
 @example
-@var{hh}:@var{mm}pm @var{l.ll}
+@var{hh}:@var{mm}PM @var{l.ll}
 @end example
 
 @noindent
 @vindex display-time-24hr-format
 Here @var{hh} and @var{mm} are the hour and minute, followed always by
-@samp{am} or @samp{pm}.  @var{l.ll} is the average number, collected
+@samp{AM} or @samp{PM}.  @var{l.ll} is the average number, collected
 for the last few minutes, of processes in the whole system that were
 either running or ready to run (i.e., were waiting for an available
 processor).  (Some fields may be missing if your operating system
@@ -1509,8 +1508,8 @@ as octal escape sequences instead of caret escape sequences.
 @cindex non-breaking space
 @cindex non-breaking hyphen
 @cindex soft hyphen
-@cindex escape-glyph face
-@cindex nobreak-space face
+@cindex @code{escape-glyph} face
+@cindex @code{nobreak-space} face
   Some non-@acronym{ASCII} characters have the same appearance as an
 @acronym{ASCII} space or hyphen (minus) character.  Such characters
 can cause problems if they are entered into a buffer without your
@@ -1532,7 +1531,7 @@ elisp, The Emacs Lisp Reference Manual}.
 
 @cindex glyphless characters
 @cindex characters with no font glyphs
-@cindex glyphless-char face
+@cindex @code{glyphless-char} face
   On graphical displays, some characters may have no glyphs in any of
 the fonts available to Emacs.  These @dfn{glyphless characters} are
 normally displayed as boxes containing the hexadecimal character code.
@@ -1545,9 +1544,9 @@ characters more prominent on display.  @xref{Glyphless Chars,,
 Glyphless Character Display, elisp, The Emacs Lisp Reference Manual},
 for details.
 
-@cindex curly quotes
-@cindex curved quotes
-@cindex homoglyph face
+@cindex curly quotes, and terminal capabilities
+@cindex curved quotes, and terminal capabilities
+@cindex @code{homoglyph} face
 
 Emacs tries to determine if the curved quotes @samp{‘} and @samp{’}
 can be displayed on the current display.  By default, if this seems to
@@ -1576,7 +1575,6 @@ cursor, and switches to it when you start or resume Emacs.  If the
 variable @code{visible-cursor} is @code{nil} when Emacs starts or
 resumes, it uses the normal cursor.
 
-@cindex cursor face
 @vindex cursor-type
   On a graphical display, many more properties of the text cursor can
 be altered.  To customize its color, change the @code{:background}
@@ -1645,7 +1643,7 @@ global-hl-line-mode} enables or disables the same mode globally.
 @section Line Truncation
 
 @cindex truncation
-@cindex line truncation, and fringes
+@cindex line truncation
   As an alternative to continuation (@pxref{Continuation Lines}),
 Emacs can display long lines by @dfn{truncation}.  This means that all
 the characters that do not fit in the width of the screen or window do
@@ -1763,11 +1761,16 @@ Any other non-@code{nil} value is treated as @code{t}.
 @findex display-line-numbers-mode
 @findex global-display-line-numbers-mode
 @vindex display-line-numbers-type
-A convenient way of turning on display of line numbers is @w{@kbd{M-x
-display-line-numbers-mode @key{RET}}}.  This mode has a globalized
+The command @kbd{M-x display-line-numbers-mode} provides a
+convenient way to turn on display of line numbers.  This mode has a globalized
 variant, @code{global-display-line-numbers-mode}.  The user option
 @code{display-line-numbers-type} controls which sub-mode of
 line-number display, described above, will these modes activate.
+
+@noindent
+Note that line numbers are not displayed in the minibuffer and in the
+tooltips, even if you turn on @code{display-line-numbers-mode}
+globally.
 
 @vindex display-line-numbers-current-absolute
 When Emacs displays relative line numbers, you can control the number
@@ -1798,7 +1801,7 @@ may wish to customize the variables
 @code{display-line-numbers-width} to a large enough value, to avoid
 occasional miscalculations of space reserved for the line numbers.
 
-@cindex line-number face
+@cindex @code{line-number} face
 The line numbers are displayed in a special face @code{line-number}.
 The current line number is displayed in a different face,
 @code{line-number-current-line}, so you can make the current line's
@@ -1845,8 +1848,11 @@ it may improve the legibility of underlined text for certain fonts.
 area.)  The variable @code{x-underline-at-descent-line} determines how
 to draw underlined text.  The default is @code{nil}, which means to
 draw it at the baseline level of the font; if you change it to
-@code{nil}, Emacs draws the underline at the same height as the font's
-descent line.
+@code{t}, Emacs draws the underline at the same height as the font's
+descent line.  (If non-default line spacing was specified for the
+underlined text, see @ref{Line Height,,, elisp, The Emacs Lisp
+Reference Manual}, Emacs draws the underline below the additional
+spacing.)
 
 @vindex overline-margin
   The variable @code{overline-margin} specifies the vertical position

@@ -1,9 +1,9 @@
 ;;; printing.el --- printing utilities
 
-;; Copyright (C) 2000-2001, 2003-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2001, 2003-2018 Free Software Foundation, Inc.
 
-;; Author: Vinicius Jose Latorre <viniciusjl@ig.com.br>
-;; Maintainer: Vinicius Jose Latorre <viniciusjl@ig.com.br>
+;; Author: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
+;; Maintainer: Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Keywords: wp, print, PostScript
 ;; Version: 6.9.3
 ;; X-URL: http://www.emacswiki.org/cgi-bin/wiki/ViniciusJoseLatorre
@@ -12,7 +12,7 @@
   "printing.el, v 6.9.3 <2007/12/09 vinicius>
 
 Please send all bug fixes and enhancements to
-	bug-gnu-emacs@gnu.org and Vinicius Jose Latorre <viniciusjl@ig.com.br>
+	bug-gnu-emacs@gnu.org and Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ")
 
 ;; This file is part of GNU Emacs.

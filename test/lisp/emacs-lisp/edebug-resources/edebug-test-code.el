@@ -1,6 +1,6 @@
 ;;; edebug-test-code.el --- Sample code for the Edebug test suite
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2018 Free Software Foundation, Inc.
 
 ;; Author: Gemini Lasswell
 
@@ -125,6 +125,10 @@
 (defun edebug-test-code-current-buffer ()
   !start!(with-current-buffer (get-buffer-create "*edebug-test-code-buffer*")
     !body!(format "current-buffer: %s" (current-buffer))))
+
+(defun edebug-test-code-use-destructuring-bind ()
+  (let ((two 2) (three 3))
+    (cl-destructuring-bind (x . y) (cons two three) (+ x!x! y!y!))))
 
 (provide 'edebug-test-code)
 ;;; edebug-test-code.el ends here

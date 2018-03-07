@@ -1,6 +1,6 @@
 ;;; pcvs-defs.el --- variable definitions for PCL-CVS
 
-;; Copyright (C) 1991-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1991-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Keywords: pcl-cvs
@@ -269,7 +269,7 @@ This variable is buffer local and only used in the *cvs* buffer.")
   "Regexp matching the possible names of locks in the CVS repository.")
 
 (defconst cvs-cursor-column 22
-  "Column to position cursor in in `cvs-mode'.")
+  "Column to position cursor in, in `cvs-mode'.")
 
 ;;;;
 ;;;; Global internal variables

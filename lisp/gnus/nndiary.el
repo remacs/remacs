@@ -1,6 +1,6 @@
 ;;; nndiary.el --- A diary back end for Gnus
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author:        Didier Verna <didier@xemacs.org>
 ;; Maintainer:    Didier Verna <didier@xemacs.org>
@@ -1532,7 +1532,7 @@ all.  This may very well take some time.")
 	  ;; past. A permanent schedule never expires.
 	  (and sched
 	       (setq sched (nndiary-last-occurrence sched))
-	       (time-less-p sched (current-time))))
+	       (time-less-p sched nil)))
       ;; else
       (nnheader-report 'nndiary "Could not read file %s" file)
       nil)

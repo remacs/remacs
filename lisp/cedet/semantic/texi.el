@@ -1,6 +1,6 @@
 ;;; semantic/texi.el --- Semantic details for Texinfo files
 
-;; Copyright (C) 2001-2005, 2007-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2005, 2007-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -364,6 +364,8 @@ Optional argument POINT is where to look for the environment."
 ;;
 (eval-when-compile
   (require 'semantic/analyze))
+
+(declare-function semantic-analyze-context "semantic/analyze")
 
 (define-mode-local-override semantic-analyze-current-context
   texinfo-mode (point)

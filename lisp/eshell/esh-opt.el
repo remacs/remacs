@@ -1,6 +1,6 @@
 ;;; esh-opt.el --- command options processing  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -111,6 +111,7 @@ interned variable `args' (created using a `let' form)."
                                ;; `options' is of the form (quote OPTS).
                                (cadr options))))
           (args processed-args))
+     ;; Unused lexical variable warning if body does not use `args'.
      ,@body-forms))
 
 ;;; Internal Functions:

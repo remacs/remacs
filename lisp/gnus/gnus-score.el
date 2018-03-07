@@ -1,6 +1,6 @@
 ;;; gnus-score.el --- scoring code for Gnus
 
-;; Copyright (C) 1995-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2018 Free Software Foundation, Inc.
 
 ;; Author: Per Abrahamsen <amanda@iesd.auc.dk>
 ;;	Lars Magne Ingebrigtsen <larsi@gnus.org>
@@ -514,7 +514,7 @@ of the last successful match.")
   "f" gnus-score-edit-file
   "F" gnus-score-flush-cache
   "t" gnus-score-find-trace
-  "w" gnus-score-find-favourite-words)
+  "w" gnus-score-find-favorite-words)
 
 ;; Summary score file commands
 
@@ -921,7 +921,7 @@ EXTRA is the possible non-standard header."
   (interactive (list (gnus-completing-read "Header"
                                            (mapcar
                                             'car
-                                            (gnus-remove-if-not
+                                            (seq-filter
                                              (lambda (x) (fboundp (nth 2 x)))
                                              gnus-header-index))
                                            t)
@@ -1078,11 +1078,11 @@ EXTRA is the possible non-standard header."
   "Return the score of the current article.
   With prefix ARG, return the total score of the current (sub)thread."
   (interactive "P")
-  (gnus-message 1 "%s" (if arg
-			   (gnus-thread-total-score
-			    (gnus-id-to-thread
-			     (mail-header-id (gnus-summary-article-header))))
-			   (gnus-summary-article-score))))
+  (message "%s" (if arg
+		    (gnus-thread-total-score
+		     (gnus-id-to-thread
+		      (mail-header-id (gnus-summary-article-header))))
+		  (gnus-summary-article-score))))
 
 (defun gnus-score-change-score-file (file)
   "Change current score alist."
@@ -1238,7 +1238,7 @@ If FORMAT, also format the current score file."
 		 (or (not decay)
 		     (gnus-decay-scores alist decay)))
 	(gnus-score-set 'touched '(t) alist)
-	(gnus-score-set 'decay (list (time-to-days (current-time))) alist))
+	(gnus-score-set 'decay (list (time-to-days nil)) alist))
       ;; We do not respect eval and files atoms from global score
       ;; files.
       (when (and files (not global))
@@ -2318,7 +2318,7 @@ score in `gnus-newsgroup-scored' by SCORE."
     (when (or (not (listp gnus-newsgroup-adaptive))
 	      (memq 'line gnus-newsgroup-adaptive))
       (save-excursion
-	(let* ((malist (gnus-copy-sequence gnus-adaptive-score-alist))
+	(let* ((malist (copy-tree gnus-adaptive-score-alist))
 	       (alist malist)
 	       (date (current-time-string))
 	       (data gnus-newsgroup-data)
@@ -2517,7 +2517,7 @@ the score file and its full name, including the directory.")
     (set-buffer gnus-summary-buffer)
     (setq gnus-newsgroup-scored old-scored)))
 
-(defun gnus-score-find-favourite-words ()
+(defun gnus-score-find-favorite-words ()
   "List words used in scoring."
   (interactive)
   (let ((alists (gnus-score-load-files (gnus-all-score-files)))
@@ -2553,6 +2553,9 @@ the score file and its full name, including the directory.")
 	(pop rules))
       (goto-char (point-min))
       (gnus-configure-windows 'score-words))))
+(define-obsolete-function-alias
+  'gnus-score-find-favourite-words
+  'gnus-score-find-favorite-words "27.1")
 
 (defun gnus-summary-rescore ()
   "Redo the entire scoring process in the current summary."
@@ -3062,7 +3065,7 @@ If ADAPT, return the home adaptive file instead."
 
 (defun gnus-decay-scores (alist day)
   "Decay non-permanent scores in ALIST."
-  (let ((times (- (time-to-days (current-time)) day))
+  (let ((times (- (time-to-days nil) day))
 	kill entry updated score n)
     (unless (zerop times)		;Done decays today already?
       (while (setq entry (pop alist))

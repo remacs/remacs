@@ -1,6 +1,6 @@
 ;;; mule-cmds.el --- commands for multilingual environment  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1997-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2018 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 ;;   2005, 2006, 2007, 2008, 2009, 2010, 2011
 ;;   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -136,8 +136,7 @@
                  (expand-file-name "HELLO" data-directory))
         :help "Demonstrate various character sets"))
     (bindings--define-key map [set-various-coding-system]
-      `(menu-item "Set Coding Systems" ,set-coding-system-map
-		  :enable (default-value 'enable-multibyte-characters)))
+      `(menu-item "Set Coding Systems" ,set-coding-system-map))
 
     (bindings--define-key map [separator-input-method] menu-bar-separator)
     (bindings--define-key map [describe-input-method]
@@ -355,8 +354,7 @@ This also sets the following values:
   (if (eq system-type 'darwin)
       ;; The file-name coding system on Darwin systems is always utf-8.
       (setq default-file-name-coding-system 'utf-8-unix)
-    (if (and (default-value 'enable-multibyte-characters)
-	     (or (not coding-system)
+    (if (and (or (not coding-system)
 		 (coding-system-get coding-system 'ascii-compatible-p)))
 	(setq default-file-name-coding-system
 	      (coding-system-change-eol-conversion coding-system 'unix))))
@@ -1158,10 +1156,7 @@ see `language-info-alist'."
 	    ((eq key 'nonascii-translation)
 	     (set-language-environment-nonascii-translation lang-env))
 	    ((eq key 'charset)
-	     (set-language-environment-charset lang-env))
-	    ((and (not (default-value 'enable-multibyte-characters))
-		  (or (eq key 'unibyte-syntax) (eq key 'unibyte-display)))
-	     (set-language-environment-unibyte lang-env)))))
+	     (set-language-environment-charset lang-env)))))
 
 (defun set-language-info-internal (lang-env key info)
   "Internal use only.
@@ -1800,6 +1795,9 @@ The default status is as follows:
   (setq default-sendmail-coding-system 'iso-latin-1)
   ;; On Darwin systems, this should be utf-8-unix, but when this file is loaded
   ;; that is not yet defined, so we set it in set-locale-environment instead.
+  ;; [Actually, it seems to work fine to use utf-8-unix here, and not just
+  ;; on Darwin.  The previous comment seems to be outdated?
+  ;; See patch at https://debbugs.gnu.org/15803 ]
   (setq default-file-name-coding-system 'iso-latin-1-unix)
   ;; Preserve eol-type from existing default-process-coding-systems.
   ;; On non-unix-like systems in particular, these may have been set
@@ -1897,9 +1895,6 @@ the new language environment, it runs `set-language-environment-hook'."
   (set-language-environment-input-method language-name)
   (set-language-environment-nonascii-translation language-name)
   (set-language-environment-charset language-name)
-  ;; Unibyte setups if necessary.
-  (unless (default-value 'enable-multibyte-characters)
-    (set-language-environment-unibyte language-name))
 
   (let ((func (get-language-info language-name 'setup-function)))
     (if (functionp func)
@@ -1978,28 +1973,22 @@ See `set-language-info-alist' for use in programs."
 (defun standard-display-european-internal ()
   ;; Actually set up direct output of non-ASCII characters.
   (standard-display-8bit (if (eq window-system 'pc) 128 160) 255)
-  ;; Unibyte Emacs on MS-DOS wants to display all 8-bit characters with
-  ;; the native font, and codes 160 and 146 stand for something very
-  ;; different there.
-  (or (and (eq window-system 'pc) (not (default-value
-					 'enable-multibyte-characters)))
-      (progn
-	;; Most X fonts used to do the wrong thing for latin-1 code 160.
-	(unless (and (eq window-system 'x)
-		     ;; XFree86 4 has fixed the fonts.
-		     (string= "The XFree86 Project, Inc" (x-server-vendor))
-		     (> (aref (number-to-string (nth 2 (x-server-version))) 0)
-			?3))
-	  ;; Make non-line-break space display as a plain space.
-	  (aset standard-display-table (unibyte-char-to-multibyte 160) [32]))
-	;; Most Windows programs send out apostrophes as \222.  Most X fonts
-	;; don't contain a character at that position.  Map it to the ASCII
-	;; apostrophe.  [This is actually RIGHT SINGLE QUOTATION MARK,
-	;; U+2019, normally from the windows-1252 character set.  XFree 4
-	;; fonts probably have the appropriate glyph at this position,
-	;; so they could use standard-display-8bit.  It's better to use a
-	;; proper windows-1252 coding system.  --fx]
-	(aset standard-display-table (unibyte-char-to-multibyte 146) [39]))))
+  ;; Most X fonts used to do the wrong thing for latin-1 code 160.
+  (unless (and (eq window-system 'x)
+	       ;; XFree86 4 has fixed the fonts.
+	       (string= "The XFree86 Project, Inc" (x-server-vendor))
+	       (> (aref (number-to-string (nth 2 (x-server-version))) 0)
+		  ?3))
+    ;; Make non-line-break space display as a plain space.
+    (aset standard-display-table (unibyte-char-to-multibyte 160) [32]))
+  ;; Most Windows programs send out apostrophes as \222.  Most X fonts
+  ;; don't contain a character at that position.  Map it to the ASCII
+  ;; apostrophe.  [This is actually RIGHT SINGLE QUOTATION MARK,
+  ;; U+2019, normally from the windows-1252 character set.  XFree 4
+  ;; fonts probably have the appropriate glyph at this position,
+  ;; so they could use standard-display-8bit.  It's better to use a
+  ;; proper windows-1252 coding system.  --fx]
+  (aset standard-display-table (unibyte-char-to-multibyte 146) [39]))
 
 (defun set-language-environment-coding-systems (language-name)
   "Do various coding system setups for language environment LANGUAGE-NAME."
@@ -2665,12 +2654,8 @@ See also `locale-charset-language-names', `locale-language-names',
 	  (unless frame
 	    (set-language-environment language-name))
 
-	  ;; If the default enable-multibyte-characters is nil,
-	  ;; we are using single-byte characters,
-	  ;; so the display table and terminal coding system are irrelevant.
-	  (when (default-value 'enable-multibyte-characters)
-	    (set-display-table-and-terminal-coding-system
-	     language-name coding-system frame))
+	  (set-display-table-and-terminal-coding-system
+	   language-name coding-system frame)
 
 	  ;; Set the `keyboard-coding-system' if appropriate (tty
 	  ;; only).  At least X and MS Windows can generate

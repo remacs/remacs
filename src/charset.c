@@ -1,6 +1,6 @@
 /* Basic character set support.
 
-Copyright (C) 2001-2017 Free Software Foundation, Inc.
+Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
 Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
   2005, 2006, 2007, 2008, 2009, 2010, 2011
@@ -2332,7 +2332,7 @@ init_charset_once (void)
    Don't make the value so small that the table is reallocated during
    bootstrapping, as glibc malloc calls larger than just under 64 KiB
    during an initial bootstrap wreak havoc after dumping; see the
-   M_MMAP_THRESHOLD value in alloc.c, plus there is a extra overhead
+   M_MMAP_THRESHOLD value in alloc.c, plus there is an extra overhead
    internal to glibc malloc and perhaps to Emacs malloc debugging.  */
 static struct charset charset_table_init[180];
 

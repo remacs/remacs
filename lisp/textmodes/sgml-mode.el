@@ -1,6 +1,6 @@
 ;;; sgml-mode.el --- SGML- and HTML-editing modes -*- lexical-binding:t -*-
 
-;; Copyright (C) 1992, 1995-1996, 1998, 2001-2017 Free Software
+;; Copyright (C) 1992, 1995-1996, 1998, 2001-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Author: James Clark <jjc@jclark.com>
@@ -2231,6 +2231,9 @@ When set, this should be a cons cell where the CAR is the
 buffer's tick counter (as produced by `buffer-modified-tick'),
 and the CDR is the list of class names found in the buffer.")
 (make-variable-buffer-local 'html--buffer-ids-cache)
+
+(declare-function libxml-parse-html-region "xml.c"
+                  (start end &optional base-url discard-comments))
 
 (defun html-current-buffer-classes ()
   "Return a list of class names used in the current buffer.

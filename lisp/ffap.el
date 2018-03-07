@@ -1,6 +1,6 @@
 ;;; ffap.el --- find file (or url) at point
 
-;; Copyright (C) 1995-1997, 2000-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1995-1997, 2000-2018 Free Software Foundation, Inc.
 
 ;; Author: Michelangelo Grigni <mic@mathcs.emory.edu>
 ;; Maintainer: emacs-devel@gnu.org
@@ -786,7 +786,7 @@ This uses `ffap-file-exists-string', which may try adding suffixes from
     ("\\`~/" . ffap-lcd)		; |~/misc/ffap.el.Z|
     ;; This used to have a blank, but ffap-string-at-point doesn't
     ;; handle blanks.
-    ;; https://lists.gnu.org/archive/html/emacs-devel/2008-01/msg01058.html
+    ;; https://lists.gnu.org/r/emacs-devel/2008-01/msg01058.html
     ("\\`[Rr][Ff][Cc][-#]?\\([0-9]+\\)"	; no $
      . ffap-rfc)			; "100% RFC2100 compliant"
     (dired-mode . ffap-dired)		; maybe in a subdirectory
@@ -1081,7 +1081,7 @@ If a given RFC isn't in these then `ffap-rfc-path' is offered."
     ;; * strip trailing "@" and ":"
     ;; * no commas (good for latex)
     (file "--:\\\\${}+<>@-Z_[:alpha:]~*?" "<@" "@>;.,!:")
-    ;; An url, or maybe a email/news message-id:
+    ;; An url, or maybe an email/news message-id:
     (url "--:=&?$+@-Z_[:alpha:]~#,%;*()!'" "^[0-9a-zA-Z]" ":;.,!?")
     ;; Find a string that does *not* contain a colon:
     (nocolon "--9$+<>@-Z_[:alpha:]~" "<@" "@>;.,!?")

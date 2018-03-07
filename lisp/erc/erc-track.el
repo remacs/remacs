@@ -1,6 +1,6 @@
 ;;; erc-track.el --- Track modified channel buffers  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
 ;; Author: Mario Lang <mlang@delysid.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -542,7 +542,7 @@ keybindings will not do anything useful."
 
 ;;; Module
 
-;;;###autoload (autoload 'erc-track-mode "erc-track" nil t)
+;;;###autoload(autoload 'erc-track-mode "erc-track" nil t)
 (define-erc-module track nil
   "This mode tracks ERC channel buffers with activity."
   ;; Enable:
@@ -974,6 +974,7 @@ switch back to the last non-ERC buffer visited.  Next is defined by
 ;;; erc-track.el ends here
 ;;
 ;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
 ;; indent-tabs-mode: t
 ;; tab-width: 8
 ;; End:

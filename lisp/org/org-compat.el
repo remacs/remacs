@@ -1,6 +1,6 @@
 ;;; org-compat.el --- Compatibility Code for Older Emacsen -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -32,12 +32,12 @@
 (require 'cl-lib)
 (require 'org-macs)
 
-(declare-function org-at-table.el-p "org" (&optional table-type))
+(declare-function org-at-table.el-p "org" ())
 (declare-function org-element-at-point "org-element" ())
 (declare-function org-element-type "org-element" (element))
 (declare-function org-end-of-subtree "org" (&optional invisible-ok to-heading))
 (declare-function org-link-set-parameters "org" (type &rest rest))
-(declare-function org-table-end (&optional table-type))
+(declare-function org-table-end "org-table" (&optional table-type))
 (declare-function outline-next-heading "outline" ())
 (declare-function table--at-cell-p "table" (position &optional object at-column))
 

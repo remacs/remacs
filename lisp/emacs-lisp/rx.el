@@ -1,6 +1,6 @@
 ;;; rx.el --- sexp notation for regular expressions
 
-;; Copyright (C) 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: Gerd Moellmann <gerd@gnu.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -57,7 +57,6 @@
 ;; (rx (and line-start (0+ (in "a-z"))))
 ;;
 ;; "\n[^ \t]"
-;; (rx (and "\n" (not blank))), or
 ;; (rx (and "\n" (not (any " \t"))))
 ;;
 ;; "\\*\\*\\* EOOH \\*\\*\\*\n"
@@ -74,9 +73,9 @@
 ;; "^content-transfer-encoding:\\(\n?[\t ]\\)*quoted-printable\\(\n?[\t ]\\)*"
 ;; (rx (and line-start
 ;;          "content-transfer-encoding:"
-;;          (+ (? ?\n)) blank
+;;          (+ (? ?\n)) (any " \t")
 ;;	    "quoted-printable"
-;;	    (+ (? ?\n)) blank))
+;;	    (+ (? ?\n)) (any " \t"))
 ;;
 ;; (concat "^\\(?:" something-else "\\)")
 ;; (rx (and line-start (eval something-else))), statically or
@@ -962,7 +961,11 @@ CHAR
      matches 0 through 9, a through f and A through F.
 
 `blank'
-     matches space and tab only.
+     matches horizontal whitespace, as defined by Annex C of the
+     Unicode Technical Standard #18.  In particular, it matches
+     spaces, tabs, and other characters whose Unicode
+     `general-category' property indicates they are spacing
+     separators.
 
 `graphic', `graph'
      matches graphic characters--everything except whitespace, ASCII

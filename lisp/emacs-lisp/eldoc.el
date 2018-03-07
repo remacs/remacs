@@ -1,6 +1,6 @@
 ;;; eldoc.el --- Show function arglist or variable docstring in echo area  -*- lexical-binding:t; -*-
 
-;; Copyright (C) 1996-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
 ;; Author: Noah Friedman <friedman@splode.com>
 ;; Maintainer: friedman@splode.com
@@ -264,12 +264,13 @@ Otherwise work like `message'."
 	     (or (window-in-direction 'above (minibuffer-window))
 		 (minibuffer-selected-window)
 		 (get-largest-window)))
+    (when mode-line-format
 	  (unless (and (listp mode-line-format)
 		       (assq 'eldoc-mode-line-string mode-line-format))
 	    (setq mode-line-format
 		  (list "" '(eldoc-mode-line-string
 			     (" " eldoc-mode-line-string " "))
-			mode-line-format)))
+			mode-line-format))))
           (setq eldoc-mode-line-string
                 (when (stringp format-string)
                   (apply #'format-message format-string args)))

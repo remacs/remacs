@@ -1,6 +1,6 @@
 ;;; ede/files.el --- Associate projects with files and directories.
 
-;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -25,7 +25,7 @@
 ;;
 ;; Basic Model:
 ;;
-;; A directory belongs to a project if a ede-project-autoload structure
+;; A directory belongs to a project if an ede-project-autoload structure
 ;; matches your directory.
 ;;
 ;; A toplevel project is one where there is no active project above

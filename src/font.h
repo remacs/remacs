@@ -1,5 +1,5 @@
 /* font.h -- Interface definition for font handling.
-   Copyright (C) 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 2006-2018 Free Software Foundation, Inc.
    Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H13PRO009
@@ -240,7 +240,7 @@ enum font_property_index
 
 struct font_spec
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
   Lisp_Object props[FONT_SPEC_MAX];
 };
 
@@ -248,7 +248,7 @@ struct font_spec
 
 struct font_entity
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
   Lisp_Object props[FONT_ENTITY_MAX];
 };
 
@@ -261,7 +261,7 @@ struct font_entity
 
 struct font
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* All Lisp_Object components must come first.
      That ensures they are all aligned normally.  */

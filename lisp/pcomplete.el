@@ -1,6 +1,6 @@
 ;;; pcomplete.el --- programmable completion -*- lexical-binding: t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 ;; Keywords: processes abbrev
@@ -772,7 +772,7 @@ this is `comint-dynamic-complete-functions'."
 		(setq c (cdr c)))
 	      (setq pcomplete-stub (substring common-stub 0 len)
 		    pcomplete-autolist t)
-	      (when (and begin (not pcomplete-show-list))
+	      (when (and begin (> len 0) (not pcomplete-show-list))
 		(delete-region begin (point))
 		(pcomplete-insert-entry "" pcomplete-stub))
 	      (throw 'pcomplete-completions completions))
@@ -950,7 +950,7 @@ Arguments NO-GANGING and ARGS-FOLLOW are currently ignored."
 		(function
 		 (lambda (opt)
 		   (concat "-" opt)))
-		(pcomplete-uniqify-list choices))))
+		(pcomplete-uniquify-list choices))))
     (let ((arg (pcomplete-arg)))
       (when (and (> (length arg) 1)
 		 (stringp arg)
@@ -1269,7 +1269,7 @@ If specific documentation can't be given, be generic."
 
 ;; general utilities
 
-(defun pcomplete-uniqify-list (l)
+(defun pcomplete-uniquify-list (l)
   "Sort and remove multiples in L."
   (setq l (sort l 'string-lessp))
   (let ((m l))
@@ -1280,6 +1280,9 @@ If specific documentation can't be given, be generic."
 	(setcdr m (cddr m)))
       (setq m (cdr m))))
   l)
+(define-obsolete-function-alias
+  'pcomplete-uniqify-list
+  'pcomplete-uniquify-list "27.1")
 
 (defun pcomplete-process-result (cmd &rest args)
   "Call CMD using `call-process' and return the simplest result."

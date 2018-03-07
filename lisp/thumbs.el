@@ -1,6 +1,6 @@
 ;;; thumbs.el --- Thumbnails previewer for images files
 
-;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
 ;; Author: Jean-Philippe Theberge <jphiltheberge@videotron.ca>
 ;; Maintainer: emacs-devel@gnu.org
@@ -48,7 +48,7 @@
 ;; That should be a directory containing image files.
 ;; from dired, C-t m enter in thumbs-mode with all marked files
 ;;             C-t a enter in thumbs-mode with all files in current-directory
-;; In thumbs-mode, pressing <return> on a image will bring you in image view
+;; In thumbs-mode, pressing <return> on an image will bring you in image view
 ;; mode for that image.  C-h m will give you a list of available keybinding.
 
 ;;; History:

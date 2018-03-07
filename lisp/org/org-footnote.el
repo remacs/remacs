@@ -1,6 +1,6 @@
 ;;; org-footnote.el --- Footnote support in Org      -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
 ;;
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -45,7 +45,7 @@
 (declare-function org-element-property "org-element" (property element))
 (declare-function org-element-type "org-element" (element))
 (declare-function org-end-of-subtree "org"  (&optional invisible-ok to-heading))
-(declare-function org-fill-paragraph "org" (&optional justify))
+(declare-function org-fill-paragraph "org" (&optional justify region))
 (declare-function org-in-block-p "org" (names))
 (declare-function org-in-regexp "org" (re &optional nlines visually))
 (declare-function org-in-verbatim-emphasis "org" ())

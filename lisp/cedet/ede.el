@@ -1,6 +1,6 @@
 ;;; ede.el --- Emacs Development Environment gloss
 
-;; Copyright (C) 1998-2005, 2007-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2005, 2007-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: project, make
@@ -998,7 +998,7 @@ Argument PROMPT is the prompt to use when querying the user for a target."
   (project-add-file this file))
 
 (cl-defmethod project-add-file ((ot ede-target) _file)
-  "Add the current buffer into project project target OT.
+  "Add the current buffer into project target OT.
 Argument FILE is the file to add."
   (error "add-file not supported by %s" (eieio-object-name ot)))
 
@@ -1095,6 +1095,7 @@ Flush the dead projects from the project cache."
     ))
 
 (defvar ede--disable-inode)             ;Defined in ede/files.el.
+(declare-function ede--project-inode "ede/files" (proj))
 
 (defun ede-global-list-sanity-check ()
   "Perform a sanity check to make sure there are no duplicate projects."

@@ -1,6 +1,6 @@
 ;;; em-tramp.el --- Eshell features that require TRAMP  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: Aidan Gauland <aidalgol@no8wireless.co.nz>
 
@@ -26,12 +26,15 @@
 ;;; Code:
 
 (require 'esh-util)
+(require 'esh-cmd)
 
 (eval-when-compile
   (require 'esh-mode)
   (require 'eshell)
   (require 'tramp))
 
+;; There are no items in this custom group, but eshell modules (ab)use
+;; custom groups.
 ;;;###autoload
 (progn
  (defgroup eshell-tramp nil
@@ -106,6 +109,7 @@ Uses the system sudo through TRAMP's sudo method."
        :show-usage
        :usage "[(-u | --user) USER] COMMAND
 Execute a COMMAND as the superuser or another USER.")
+     args                 ; suppress "unused lexical variable" warning
      (throw 'eshell-external
 	    (let ((user (or user "root"))
 		  (host (or (file-remote-p default-directory 'host)

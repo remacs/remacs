@@ -1,5 +1,5 @@
 /* Asynchronous timers.
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -415,7 +415,7 @@ timerfd_callback (int fd, void *arg)
   else if (nbytes < 0)
     /* For some not yet known reason, we may get weird event and no
        data on timer descriptor.  This can break Gnus at least, see:
-       https://lists.gnu.org/archive/html/emacs-devel/2014-07/msg00503.html.  */
+       https://lists.gnu.org/r/emacs-devel/2014-07/msg00503.html.  */
     eassert (errno == EAGAIN);
   else
     /* I don't know what else can happen with this descriptor.  */

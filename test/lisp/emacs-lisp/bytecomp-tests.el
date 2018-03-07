@@ -1,6 +1,6 @@
 ;;; bytecomp-tests.el
 
-;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
 ;; Author: Shigeru Fukaya <shigeru.fukaya@gmail.com>
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
@@ -534,23 +534,17 @@ literals (Bug#20852)."
 
 (ert-deftest bytecomp-tests--old-style-backquotes ()
   "Check that byte compiling warns about old-style backquotes."
-  (should (boundp 'lread--old-style-backquotes))
   (bytecomp-tests--with-temp-file source
     (write-region "(` (a b))" nil source)
     (bytecomp-tests--with-temp-file destination
       (let* ((byte-compile-dest-file-function (lambda (_) destination))
-            (byte-compile-error-on-warn t)
-            (byte-compile-debug t)
-            (err (should-error (byte-compile-file source))))
-        (should (equal (cdr err)
-                       (list "!! The file uses old-style backquotes !!
-This functionality has been obsolete for more than 10 years already
-and will be removed soon.  See (elisp)Backquote in the manual.")))))))
+             (byte-compile-debug t)
+             (err (should-error (byte-compile-file source))))
+        (should (equal (cdr err) '("Old-style backquotes detected!")))))))
 
 
 (ert-deftest bytecomp-tests-function-put ()
   "Check `function-put' operates during compilation."
-  (should (boundp 'lread--old-style-backquotes))
   (bytecomp-tests--with-temp-file source
     (dolist (form '((function-put 'bytecomp-tests--foo 'foo 1)
                     (function-put 'bytecomp-tests--foo 'bar 2)
@@ -563,6 +557,17 @@ and will be removed soon.  See (elisp)Backquote in the manual.")))))))
     (write-region (point-min) (point-max) source nil 'silent)
     (byte-compile-file source t)
     (should (equal bytecomp-tests--foobar (cons 1 2)))))
+
+(ert-deftest bytecomp-tests--test-no-warnings-with-advice ()
+  (defun f ())
+  (define-advice f (:around (oldfun &rest args) test)
+    (apply oldfun args))
+  (with-current-buffer (get-buffer-create "*Compile-Log*")
+    (let ((inhibit-read-only t)) (erase-buffer)))
+  (test-byte-comp-compile-and-load t '(defun f ()))
+  (with-current-buffer (get-buffer-create "*Compile-Log*")
+    (goto-char (point-min))
+    (should-not (search-forward "Warning" nil t))))
 
 ;; Local Variables:
 ;; no-byte-compile: t

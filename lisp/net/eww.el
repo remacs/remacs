@@ -1,6 +1,6 @@
 ;;; eww.el --- Emacs Web Wowser  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2013-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: html
@@ -261,9 +261,10 @@ word(s) will be searched for via `eww-search-prefix'."
   ;; IDNA characters.  If not, transform to punycode to indicate that
   ;; there may be funny business going on.
   (let ((parsed (url-generic-parse-url url)))
-    (unless (puny-highly-restrictive-domain-p (url-host parsed))
-      (setf (url-host parsed) (puny-encode-domain (url-host parsed)))
-      (setq url (url-recreate-url parsed))))
+    (when (url-host parsed)
+      (unless (puny-highly-restrictive-domain-p (url-host parsed))
+        (setf (url-host parsed) (puny-encode-domain (url-host parsed)))
+        (setq url (url-recreate-url parsed)))))
   (plist-put eww-data :url url)
   (plist-put eww-data :title "")
   (eww-update-header-line-format)
@@ -1531,7 +1532,8 @@ Differences in #targets are ignored."
                   eww-download-directory)))
       (goto-char (point-min))
       (re-search-forward "\r?\n\r?\n")
-      (write-region (point) (point-max) file)
+      (let ((coding-system-for-write 'no-conversion))
+        (write-region (point) (point-max) file))
       (message "Saved %s" file))))
 
 (defun eww-decode-url-file-name (string)

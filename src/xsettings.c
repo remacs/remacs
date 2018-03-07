@@ -1,6 +1,6 @@
 /* Functions for handling font and other changes dynamically.
 
-Copyright (C) 2009-2017 Free Software Foundation, Inc.
+Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -53,7 +53,7 @@ static char *current_font;
 static struct x_display_info *first_dpyinfo;
 static Lisp_Object current_tool_bar_style;
 
-/* Store an config changed event in to the event queue.  */
+/* Store a config changed event in to the event queue.  */
 
 static void
 store_config_changed_event (Lisp_Object arg, Lisp_Object display_name)
@@ -675,8 +675,8 @@ apply_xft_settings (struct x_display_info *dpyinfo,
 	 of unrelated settings that override users' font customizations,
 	 among others.  Compare:
 
-	 https://lists.gnu.org/archive/html/emacs-devel/2016-05/msg00557.html
-	 https://lists.gnu.org/archive/html/bug-gnu-emacs/2016-12/msg00820.html
+	 https://lists.gnu.org/r/emacs-devel/2016-05/msg00557.html
+	 https://lists.gnu.org/r/bug-gnu-emacs/2016-12/msg00820.html
 
 	 As soon as the dynamic-settings code has been tested and
 	 verified, this Emacs 25.2 workaround should be removed.  */

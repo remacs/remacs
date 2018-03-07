@@ -1,6 +1,6 @@
 /* Support for embedding graphical components in a buffer.
 
-Copyright (C) 2011-2017 Free Software Foundation, Inc.
+Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -33,7 +33,7 @@ struct window;
 
 struct xwidget
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
 
   /* Auxiliary data.  */
   Lisp_Object plist;
@@ -62,7 +62,7 @@ struct xwidget
 
 struct xwidget_view
 {
-  struct vectorlike_header header;
+  union vectorlike_header header;
   Lisp_Object model;
   Lisp_Object w;
 

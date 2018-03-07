@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 2010-2017 Free Software Foundation, Inc.
+# Copyright (C) 2010-2018 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -31,6 +31,7 @@
 SHELL = @SHELL@
 
 srcdir = @srcdir@
+abs_top_srcdir=@abs_top_srcdir@
 VPATH = $(srcdir)
 
 FIND_DELETE = @FIND_DELETE@
@@ -95,6 +96,7 @@ TEST_LOCALE = C
 
 # Whether to run tests from .el files in preference to .elc, we do
 # this by default since it gives nicer stacktraces.
+# If you just want a pass/fail, setting this to no is much faster.
 TEST_LOAD_EL ?= yes
 
 # Maximum length of lines in ert backtraces; nil for no limit.
@@ -119,14 +121,15 @@ emacs = EMACSLOADPATH= LC_ALL=$(TEST_LOCALE) \
  EMACS_TEST_DIRECTORY=$(abspath $(srcdir)) \
  $(GDB) "$(EMACS)" $(MODULES_EMACSOPT) $(EMACSOPT)
 
-test_module_dir := $(srcdir)/data/emacs-module
+test_module_dir := data/emacs-module
 
 .PHONY: all check
 
 all: check
 
-SELECTOR_DEFAULT = (quote (not (tag :expensive-test)))
-SELECTOR_EXPENSIVE = nil
+SELECTOR_DEFAULT = (quote (not (or (tag :expensive-test) (tag :unstable))))
+SELECTOR_EXPENSIVE = (quote (not (tag :unstable)))
+SELECTOR_ALL = nil
 ifdef SELECTOR
 SELECTOR_ACTUAL=$(SELECTOR)
 else ifndef MAKECMDGOALS
@@ -146,8 +149,13 @@ endif
 	$(AM_V_ELC)$(emacs) -f batch-byte-compile $<
 
 ## Save logs, and show logs for failed tests.
-WRITE_LOG = $(if $(and ${EMACS_HYDRA_CI}, $(findstring tramp, $@)), |& tee $@, > $@ 2>&1) \
-		|| { STAT=$$?; cat $@; exit $$STAT; }
+WRITE_LOG = > $@ 2>&1 || { STAT=$$?; cat $@; exit $$STAT; }
+ifdef EMACS_HYDRA_CI
+## On Hydra, always show logs for certain problematic tests.
+lisp/emacs-lisp/eieio-tests/eieio-tests.log \
+lisp/net/tramp-tests.log \
+: WRITE_LOG = 2>&1 | tee $@
+endif
 
 ifeq ($(TEST_LOAD_EL), yes)
 testloadfile = $*.el
@@ -167,11 +175,18 @@ else
 maybe_exclude_module_tests := -name emacs-module-tests.el -prune -o
 endif
 
+## To speed up parallel builds, put these slow test files (which can
+## take longer than all the rest combined) at the start of the list.
+SLOW_TESTS = ${srcdir}/lisp/net/tramp-tests.el
+
 ELFILES := $(sort $(shell find ${srcdir} -path "${srcdir}/manual" -prune -o \
 		-path "${srcdir}/data" -prune -o \
 		-name "*resources" -prune -o \
 		${maybe_exclude_module_tests} \
 		-name "*.el" ! -name ".*" -print))
+
+$(foreach slow,${SLOW_TESTS},$(eval ELFILES:= ${slow} $(filter-out ${slow},${ELFILES})))
+
 ## .log files may be in a different directory for out of source builds
 LOGFILES := $(patsubst %.el,%.log, \
 		$(patsubst $(srcdir)/%,%,$(ELFILES)))
@@ -220,12 +235,13 @@ else
 FPIC_CFLAGS = -fPIC
 endif
 
-MODULE_CFLAGS = -I$(srcdir)/../src $(FPIC_CFLAGS) $(PROFILING_CFLAGS) \
+MODULE_CFLAGS = -I../src $(FPIC_CFLAGS) $(PROFILING_CFLAGS) \
   $(WARN_CFLAGS) $(WERROR_CFLAGS) $(CFLAGS)
 
 test_module = $(test_module_dir)/mod-test${SO}
 src/emacs-module-tests.log: $(test_module)
 $(test_module): $(test_module:${SO}=.c) $(srcdir)/../src/emacs-module.h
+	$(AM_V_at)${MKDIR_P} $(dir $@)
 	$(AM_V_CCLD)$(CC) -shared $(CPPFLAGS) $(MODULE_CFLAGS) $(LDFLAGS) \
 	  -o $@ $<
 endif
@@ -245,6 +261,11 @@ check: mostlyclean check-no-automated-subdir
 .PHONY: check-expensive
 check-expensive: mostlyclean check-no-automated-subdir
 	@${MAKE} check-doit SELECTOR="${SELECTOR_EXPENSIVE}"
+
+## Run all tests, regardless of tag.
+.PHONY: check-all
+check-all: mostlyclean check-no-automated-subdir
+	@${MAKE} check-doit SELECTOR="${SELECTOR_ALL}"
 
 ## Re-run all tests which are outdated. A test is outdated if its
 ## logfile is out-of-date with either the test file, or the source

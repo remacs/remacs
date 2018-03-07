@@ -1,6 +1,6 @@
 ;;; nxml-mode.el --- a new XML mode  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2003-2004, 2007-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2004, 2007-2018 Free Software Foundation, Inc.
 
 ;; Author: James Clark
 ;; Keywords: wp, hypermedia, languages, XML
@@ -493,7 +493,7 @@ Many aspects this mode can be customized using
   ;; FIXME: Use the fact that we're parsing the document already
   ;; rather than using regex-based filtering.
   (setq-local tildify-foreach-region-function
-              (apply-partially #'tildify-foreach-ignore-environments
+              (apply-partially 'tildify-foreach-ignore-environments
                                '(("<! *--" . "-- *>") ("<" . ">"))))
   (setq-local mode-line-process '((nxml-degraded "/degraded")))
   ;; We'll determine the fill prefix ourselves

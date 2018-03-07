@@ -1,6 +1,6 @@
 ;;; elec-pair.el --- Automatic parenthesis pairing  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2013-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2018 Free Software Foundation, Inc.
 
 ;; Author: João Távora <joaotavora@gmail.com>
 
@@ -24,6 +24,7 @@
 ;;; Code:
 
 (require 'electric)
+(eval-when-compile (require 'cl-lib))
 
 ;;; Electric pairing.
 
@@ -222,6 +223,22 @@ inside a comment or string."
 	(electric-pair-mode nil))
     (self-insert-command 1)))
 
+(cl-defmacro electric-pair--with-uncached-syntax ((table &optional start) &rest body)
+  "Like `with-syntax-table', but flush the syntax-ppss cache afterwards.
+Use this instead of (with-syntax-table TABLE BODY) when BODY
+contains code which may update the syntax-ppss cache.  This
+includes calling `parse-partial-sexp' and any sexp-based movement
+functions when `parse-sexp-lookup-properties' is non-nil.  The
+cache is flushed from position START, defaulting to point."
+  (declare (debug ((form &optional form) body)) (indent 1))
+  (let ((start-var (make-symbol "start")))
+    `(let ((syntax-propertize-function nil)
+           (,start-var ,(or start '(point))))
+       (unwind-protect
+           (with-syntax-table ,table
+             ,@body)
+         (syntax-ppss-flush-cache ,start-var)))))
+
 (defun electric-pair--syntax-ppss (&optional pos where)
   "Like `syntax-ppss', but sometimes fallback to `parse-partial-sexp'.
 
@@ -240,7 +257,8 @@ when to fallback to `parse-partial-sexp'."
                               (skip-syntax-forward " >!")
                               (point)))))
     (if s-or-c-start
-        (with-syntax-table electric-pair-text-syntax-table
+        (electric-pair--with-uncached-syntax (electric-pair-text-syntax-table
+                                              s-or-c-start)
           (parse-partial-sexp s-or-c-start pos))
       ;; HACK! cc-mode apparently has some `syntax-ppss' bugs
       (if (memq major-mode '(c-mode c++ mode))
@@ -293,7 +311,8 @@ If point is not enclosed by any lists, return ((t) . (t))."
                         (cond ((< direction 0)
                                (condition-case nil
                                    (eq (char-after pos)
-                                       (with-syntax-table table
+                                       (electric-pair--with-uncached-syntax
+                                           (table)
                                          (matching-paren
                                           (char-before
                                            (scan-sexps (point) 1)))))
@@ -323,7 +342,7 @@ If point is not enclosed by any lists, return ((t) . (t))."
     (save-excursion
       (while (not outermost)
         (condition-case err
-            (with-syntax-table table
+            (electric-pair--with-uncached-syntax (table)
               (scan-sexps (point) (if (> direction 0)
                                       (point-max)
                                     (- (point-max))))
@@ -561,8 +580,11 @@ the mode if ARG is omitted or nil.
 
 Electric Pair mode is a global minor mode.  When enabled, typing
 an open parenthesis automatically inserts the corresponding
-closing parenthesis.  (Likewise for brackets, etc.). To toggle
-the mode in a single buffer, use `electric-pair-local-mode'."
+closing parenthesis, and vice versa.  (Likewise for brackets, etc.).
+If the region is active, the parentheses (brackets, etc.) are
+inserted around the region instead.
+
+To toggle the mode in a single buffer, use `electric-pair-local-mode'."
   :global t :group 'electricity
   (if electric-pair-mode
       (progn

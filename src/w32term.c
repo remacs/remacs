@@ -1,6 +1,6 @@
 /* Implementation of GUI terminal on the Microsoft Windows API.
 
-Copyright (C) 1989, 1993-2017 Free Software Foundation, Inc.
+Copyright (C) 1989, 1993-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -417,7 +417,7 @@ w32_draw_rectangle (HDC hdc, XGCValues *gc, int x, int y,
      is 1 pixel wider and higher than its arguments WIDTH and HEIGHT.
      This allows us to keep the code that calls this function similar
      to the corresponding code in xterm.c.  For the details, see
-     https://lists.gnu.org/archives/html/emacs-devel/2014-10/msg00546.html.  */
+     https://lists.gnu.org/r/emacs-devel/2014-10/msg00546.html.  */
   Rectangle (hdc, x, y, x + width + 1, y + height + 1);
 
   SelectObject (hdc, oldhb);
@@ -660,21 +660,25 @@ w32_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
 			      ? face_last->foreground
 			      : FRAME_FOREGROUND_PIXEL (f));
 
-  if (y1 - y0 > x1 - x0 && x1 - x0 > 2)
-    /* Vertical.  */
+  if ((y1 - y0 > x1 - x0) && (x1 - x0 >= 3))
+    /* A vertical divider, at least three pixels wide: Draw first and
+       last pixels differently.  */
     {
       w32_fill_area_abs (f, hdc, color_first, x0, y0, x0 + 1, y1);
       w32_fill_area_abs (f, hdc, color, x0 + 1, y0, x1 - 1, y1);
       w32_fill_area_abs (f, hdc, color_last, x1 - 1, y0, x1, y1);
     }
-  else if (x1 - x0 > y1 - y0 && y1 - y0 > 3)
-    /* Horizontal.  */
+  else if ((x1 - x0 > y1 - y0) && (y1 - y0 >= 3))
+    /* A horizontal divider, at least three pixels high: Draw first and
+       last pixels differently.  */
     {
       w32_fill_area_abs (f, hdc, color_first, x0, y0, x1, y0 + 1);
       w32_fill_area_abs (f, hdc, color, x0, y0 + 1, x1, y1 - 1);
       w32_fill_area_abs (f, hdc, color_last, x0, y1 - 1, x1, y1);
     }
   else
+    /* In any other case do not draw the first and last pixels
+       differently.  */
     w32_fill_area_abs (f, hdc, color, x0, y0, x1, y1);
 
   release_frame_dc (f, hdc);
@@ -5565,7 +5569,7 @@ w32_read_socket (struct terminal *terminal,
 	struct frame *f = XFRAME (frame);
 	/* The tooltip has been drawn already.  Avoid the
 	   SET_FRAME_GARBAGED below.  */
-	if (EQ (frame, tip_frame))
+	if (FRAME_TOOLTIP_P (f))
 	  continue;
 
 	/* Check "visible" frames and mark each as obscured or not.
@@ -6042,7 +6046,7 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
       /* Don't change the size of a tip frame; there's no point in
 	 doing it because it's done in Fx_show_tip, and it leads to
 	 problems because the tip frame has no widget.  */
-      if (NILP (tip_frame) || XFRAME (tip_frame) != f)
+      if (!FRAME_TOOLTIP_P (f))
 	adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
 			   FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 3,
 			   false, Qfont);
@@ -6918,10 +6922,15 @@ w32_initialize_display_info (Lisp_Object display_name)
   memset (dpyinfo, 0, sizeof (*dpyinfo));
 
   dpyinfo->name_list_element = Fcons (display_name, Qnil);
-  dpyinfo->w32_id_name = xmalloc (SCHARS (Vinvocation_name)
-				  + SCHARS (Vsystem_name) + 2);
-  sprintf (dpyinfo->w32_id_name, "%s@%s",
-	   SDATA (Vinvocation_name), SDATA (Vsystem_name));
+  if (STRINGP (Vsystem_name))
+    {
+      dpyinfo->w32_id_name = xmalloc (SCHARS (Vinvocation_name)
+                                      + SCHARS (Vsystem_name) + 2);
+      sprintf (dpyinfo->w32_id_name, "%s@%s",
+               SDATA (Vinvocation_name), SDATA (Vsystem_name));
+    }
+  else
+    dpyinfo->w32_id_name = xlispstrdup (Vinvocation_name);
 
   /* Default Console mode values - overridden when running in GUI mode
      with values obtained from system metrics.  */
@@ -7320,14 +7329,7 @@ syms_of_w32term (void)
   DEFSYM (Qrenamed_to, "renamed-to");
 
   DEFVAR_LISP ("x-wait-for-event-timeout", Vx_wait_for_event_timeout,
-    doc: /* How long to wait for X events.
-
-Emacs will wait up to this many seconds to receive X events after
-making changes which affect the state of the graphical interface.
-Under some window managers this can take an indefinite amount of time,
-so it is important to limit the wait.
-
-If set to a non-float value, there will be no wait at all.  */);
+    doc: /* SKIP: real doc in xterm.c.  */);
   Vx_wait_for_event_timeout = make_float (0.1);
 
   DEFVAR_INT ("w32-num-mouse-buttons",
@@ -7381,28 +7383,16 @@ the cursor have no effect.  */);
      from cus-start.el and other places, like "M-x set-variable".  */
   DEFVAR_BOOL ("x-use-underline-position-properties",
 	       x_use_underline_position_properties,
-     doc: /* Non-nil means make use of UNDERLINE_POSITION font properties.
-A value of nil means ignore them.  If you encounter fonts with bogus
-UNDERLINE_POSITION font properties, for example 7x13 on XFree prior
-to 4.1, set this to nil.  You can also use `underline-minimum-offset'
-to override the font's UNDERLINE_POSITION for small font display
-sizes.  */);
+     doc: /* SKIP: real doc in xterm.c.  */);
   x_use_underline_position_properties = 0;
 
   DEFVAR_BOOL ("x-underline-at-descent-line",
 	       x_underline_at_descent_line,
-     doc: /* Non-nil means to draw the underline at the same place as the descent line.
-A value of nil means to draw the underline according to the value of the
-variable `x-use-underline-position-properties', which is usually at the
-baseline level.  The default value is nil.  */);
+     doc: /* SKIP: real doc in xterm.c.  */);
   x_underline_at_descent_line = 0;
 
   DEFVAR_LISP ("x-toolkit-scroll-bars", Vx_toolkit_scroll_bars,
-	       doc: /* Which toolkit scroll bars Emacs uses, if any.
-A value of nil means Emacs doesn't use toolkit scroll bars.
-With the X Window system, the value is a symbol describing the
-X toolkit.  Possible values are: gtk, motif, xaw, or xaw3d.
-With MS Windows or Nextstep, the value is t.  */);
+	       doc: /* SKIP: real doc in xterm.c.  */);
   Vx_toolkit_scroll_bars = Qt;
 
   DEFVAR_BOOL ("w32-unicode-filenames",

@@ -1,6 +1,6 @@
 ;;; semantic/edit.el --- Edit Management for Semantic
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 
@@ -221,7 +221,7 @@ Argument START, END, and LENGTH specify the bounds of the change."
   )
 
 (defun semantic-edits-change-in-one-tag-p (change hits)
-  "Return non-nil of the overlay CHANGE exists solely in one leaf tag.
+  "Return non-nil if the overlay CHANGE exists solely in one leaf tag.
 HITS is the list of tags that CHANGE is in.  It can have more than
 one tag in it if the leaf tag is within a parent tag."
   (and (< (semantic-tag-start (car hits))

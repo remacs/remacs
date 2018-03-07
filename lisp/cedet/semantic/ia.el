@@ -1,6 +1,6 @@
 ;;; semantic/ia.el --- Interactive Analysis functions
 
-;;; Copyright (C) 2000-2017 Free Software Foundation, Inc.
+;;; Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: syntax
@@ -252,7 +252,7 @@ Completion options are calculated with `semantic-analyze-possible-completions'."
 ;;;###autoload
 (defun semantic-ia-show-variants (point)
   "Display a list of all variants for the symbol under POINT."
-  (interactive "P")
+  (interactive "d")
   (let* ((ctxt (semantic-analyze-current-context point))
 	 (comp nil))
 

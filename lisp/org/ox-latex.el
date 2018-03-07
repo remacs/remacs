@@ -1,6 +1,6 @@
 ;;; ox-latex.el --- LaTeX Back-End for Org Export Engine -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Goaziou <n.goaziou at gmail dot com>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -2125,7 +2125,7 @@ holding contextual information."
 
 (defun org-latex-format-inlinetask-default-function
     (todo _todo-type priority title tags contents _info)
-  "Default format function for a inlinetasks.
+  "Default format function for inlinetasks.
 See `org-latex-format-inlinetask-function' for details."
   (let ((full-title
 	 (concat (when todo (format "\\textbf{\\textsf{\\textsc{%s}}} " todo))
@@ -2180,19 +2180,16 @@ contextual information."
 			 (nth (1- level) '("i" "ii" "iii" "iv"))
 			 (1- count)))))
 	 (checkbox (cl-case (org-element-property :checkbox item)
-		     (on "$\\boxtimes$ ")
-		     (off "$\\square$ ")
-		     (trans "$\\boxminus$ ")))
+		     (on "$\\boxtimes$")
+		     (off "$\\square$")
+		     (trans "$\\boxminus$")))
 	 (tag (let ((tag (org-element-property :tag item)))
-		;; Check-boxes must belong to the tag.
-		(and tag (format "[{%s}] "
-				 (concat checkbox
-					 (org-export-data tag info)))))))
+		(and tag (org-export-data tag info)))))
     (concat counter
 	    "\\item"
 	    (cond
-	     (tag)
-	     (checkbox (concat " " checkbox))
+	     ((and checkbox tag) (format "[{%s %s}] " checkbox tag))
+	     ((or checkbox tag) (format "[{%s}] " (or checkbox tag)))
 	     ;; Without a tag or a check-box, if CONTENTS starts with
 	     ;; an opening square bracket, add "\relax" to "\item",
 	     ;; unless the brackets comes from an initial export

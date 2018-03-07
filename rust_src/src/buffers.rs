@@ -302,9 +302,9 @@ impl LispBufferLocalValueRef {
     }
 }
 
-/// Return a list of all existing live buffers.
-/// If the optional arg FRAME is a frame, we return the buffer list in the
-/// proper order for that frame: the buffers show in FRAME come first,
+/// Return a list of all live buffers.
+/// If the optional arg FRAME is a frame, return the buffer list in the
+/// proper order for that frame: the buffers shown in FRAME come first,
 /// followed by the rest of the buffers.
 #[lisp_fn(min = "0")]
 pub fn buffer_list(frame: LispObject) -> LispObject {

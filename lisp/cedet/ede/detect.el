@@ -1,6 +1,6 @@
 ;;; ede/detect.el --- EDE project detection and file associations
 
-;; Copyright (C) 2014-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -195,11 +195,10 @@ Return a cons cell:
   "Run a quick test for autodetecting on BUFFER."
   (interactive)
   (let ((start (current-time))
-	(ans (ede-detect-directory-for-project default-directory))
-	(end (current-time)))
+	(ans (ede-detect-directory-for-project default-directory)))
     (if ans
 	(message "Project found in %d sec @ %s of type %s"
-		 (float-time (time-subtract end start))
+		 (float-time (time-subtract nil start))
 		 (car ans)
 		 (eieio-object-name-string (cdr ans)))
       (message "No Project found.") )))

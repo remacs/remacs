@@ -1,6 +1,6 @@
 ;;; subr-x-tests.el --- Testing the extended lisp routines
 
-;; Copyright (C) 2014-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
 ;; Author: Fabián E. Gallina <fgallina@gnu.org>
 ;; Keywords:
@@ -403,7 +403,7 @@
    (should-error (eval '(and-let* (nil (x 1))) lexical-binding)
                  :type 'setting-constant)
    (should (equal nil (and-let* ((nil) (x 1)))))
-   (should-error (eval (and-let* (2 (x 1))) lexical-binding)
+   (should-error (eval '(and-let* (2 (x 1))) lexical-binding)
                  :type 'wrong-type-argument)
    (should (equal 1 (and-let* ((2) (x 1)))))
    (should (equal 2 (and-let* ((x 1) (2)))))

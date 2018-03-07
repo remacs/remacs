@@ -1,6 +1,6 @@
 ;;; tests/eshell-tests.el --- Eshell test suite
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@gnu.org>
 
@@ -247,6 +247,6 @@ chars"
    (goto-char eshell-last-input-start)
    (string= (eshell-get-old-input) "echo alpha")))
 
-(provide 'esh-test)
+(provide 'eshell-tests)
 
 ;;; tests/eshell-tests.el ends here

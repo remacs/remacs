@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2017 Free Software
+@c Copyright (C) 1990-1995, 1998-1999, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Modes
@@ -312,6 +312,11 @@ The major mode command should set the variable @code{mode-name} to the
 ``pretty'' name of the mode, usually a string (but see @ref{Mode Line
 Data}, for other possible forms).  The name of the mode appears
 in the mode line.
+
+@item
+Calling the major mode command twice in direct succession should not
+fail and should do the same thing as calling the command only once.
+In other words, the major mode command should be idempotent.
 
 @item
 @cindex functions in modes
@@ -1412,6 +1417,10 @@ a minor mode in a mode hook is a little uglier:
 @noindent
 However, this is not very commonly done.
 
+  Enabling or disabling a minor mode twice in direct succession should
+not fail and should do the same thing as enabling or disabling it only
+once.  In other words, the minor mode command should be idempotent.
+
 @item
 Add an element to @code{minor-mode-alist} for each minor mode
 (@pxref{Definition of minor-mode-alist}), if you want to indicate the
@@ -1490,10 +1499,11 @@ alist @code{minor-mode-map-alist}.  @xref{Definition of minor-mode-map-alist}.
   One use of minor mode keymaps is to modify the behavior of certain
 self-inserting characters so that they do something else as well as
 self-insert.  (Another way to customize @code{self-insert-command} is
-through @code{post-self-insert-hook}.  Apart from this, the facilities
-for customizing @code{self-insert-command} are limited to special cases,
-designed for abbrevs and Auto Fill mode.  Do not try substituting your
-own definition of @code{self-insert-command} for the standard one.  The
+through @code{post-self-insert-hook}, see @ref{Commands for
+Insertion}.  Apart from this, the facilities for customizing
+@code{self-insert-command} are limited to special cases, designed for
+abbrevs and Auto Fill mode.  Do not try substituting your own
+definition of @code{self-insert-command} for the standard one.  The
 editor command loop handles this function specially.)
 
 Minor modes may bind commands to key sequences consisting of @kbd{C-c}
@@ -3535,10 +3545,11 @@ provided grammar is precise enough, @code{transpose-sexps} can correctly
 transpose the two arguments of a @code{+} operator, taking into account
 the precedence rules of the language.
 
-Calling @code{smie-setup} is also sufficient to make TAB indentation work in
-the expected way, extends @code{blink-matching-paren} to apply to
-elements like @code{begin...end}, and provides some commands that you
-can bind in the major mode keymap.
+Calling @code{smie-setup} is also sufficient to make @key{TAB}
+indentation work in the expected way, extends
+@code{blink-matching-paren} to apply to elements like
+@code{begin...end}, and provides some commands that you can bind in
+the major mode keymap.
 
 @deffn Command smie-close-block
 This command closes the most recently opened (and not yet closed) block.

@@ -1,6 +1,6 @@
 ;;; gnus-cache.el --- cache interface for Gnus
 
-;; Copyright (C) 1995-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1995-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -443,7 +443,7 @@ A group name is decoded according to
 decoded again according to `nnmail-pathname-coding-system',
 `file-name-coding-system', or `default-file-name-coding-system'.
 
-It is used when asking for a original group name from a cache
+It is used when asking for an original group name from a cache
 directory name, in which non-ASCII characters might have been unified
 into the ones of a certain charset particularly if the `utf-8' coding
 system for example was used.")
@@ -735,7 +735,7 @@ If LOW, update the lower bound instead."
       ;; `gnus-cache-unified-group-names' needless.
       (gnus-sethash (or (cdr (assoc group gnus-cache-unified-group-names))
 			group)
-		    (cons (car nums) (gnus-last-element nums))
+		    (cons (car nums) (car (last nums)))
 		    gnus-cache-active-hashtb))
     ;; Go through all the other files.
     (dolist (file alphs)

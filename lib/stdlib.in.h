@@ -1,6 +1,6 @@
 /* A GNU-like <stdlib.h>.
 
-   Copyright (C) 1995, 2001-2004, 2006-2017 Free Software Foundation, Inc.
+   Copyright (C) 1995, 2001-2004, 2006-2018 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -47,6 +47,9 @@
 
 /* Solaris declares getloadavg() in <sys/loadavg.h>.  */
 #if (@GNULIB_GETLOADAVG@ || defined GNULIB_POSIXCHECK) && @HAVE_SYS_LOADAVG_H@
+/* OpenIndiana has a bug: <sys/time.h> must be included before
+   <sys/loadavg.h>.  */
+# include <sys/time.h>
 # include <sys/loadavg.h>
 #endif
 

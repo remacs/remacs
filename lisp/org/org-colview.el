@@ -1,6 +1,6 @@
 ;;; org-colview.el --- Column View in Org            -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -464,7 +464,8 @@ for the duration of the command.")
       (kill-local-variable 'org-previous-header-line-format)
       (remove-hook 'post-command-hook 'org-columns-hscroll-title 'local))
     (set-marker org-columns-begin-marker nil)
-    (set-marker org-columns-top-level-marker nil)
+    (when (markerp org-columns-top-level-marker)
+      (set-marker org-columns-top-level-marker nil))
     (org-with-silent-modifications
      (mapc #'delete-overlay org-columns-overlays)
      (setq org-columns-overlays nil)
@@ -1069,7 +1070,7 @@ as a canonical duration, i.e., using units defined in
   (cond
    ((string-match-p org-ts-regexp s)
     (/ (- org-columns--time
-	  (float-time (apply #'encode-time (org-parse-time-string s nil t))))
+	  (float-time (apply #'encode-time (org-parse-time-string s))))
        60))
    ((org-duration-p s) (org-duration-to-minutes s t)) ;skip user units
    (t (user-error "Invalid age: %S" s))))

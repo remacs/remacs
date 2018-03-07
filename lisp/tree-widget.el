@@ -1,6 +1,6 @@
 ;;; tree-widget.el --- Tree widget
 
-;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
 ;; Maintainer: David Ponce <david@dponce.com>
@@ -504,7 +504,7 @@ Handle mouse button 1 click on buttons.")
 
 (define-widget 'tree-widget-end-guide 'item
   "End of a vertical guide line."
-  :tag       " `"
+  :tag       " \\=`"
   ;;:tag-glyph (tree-widget-find-image "end-guide")
   :format    "%t"
   )

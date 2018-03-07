@@ -1,6 +1,6 @@
 ;;; css-mode.el --- Major mode to edit CSS files  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2006-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 ;; Maintainer: Simen Heggestøyl <simenheg@gmail.com>
@@ -32,12 +32,13 @@
 
 ;;; Code:
 
-(require 'eww)
 (require 'cl-lib)
 (require 'color)
+(require 'eww)
 (require 'seq)
 (require 'sgml-mode)
 (require 'smie)
+(require 'thingatpt)
 (eval-when-compile (require 'subr-x))
 
 (defgroup css nil
@@ -498,6 +499,7 @@ further value candidates, since that list would be infinite.")
     ("red" . "#ff0000")
     ("purple" . "#800080")
     ("fuchsia" . "#ff00ff")
+    ("magenta" . "#ff00ff")
     ("green" . "#008000")
     ("lime" . "#00ff00")
     ("olive" . "#808000")
@@ -506,6 +508,7 @@ further value candidates, since that list would be infinite.")
     ("blue" . "#0000ff")
     ("teal" . "#008080")
     ("aqua" . "#00ffff")
+    ("cyan" . "#00ffff")
     ("orange" . "#ffa500")
     ("aliceblue" . "#f0f8ff")
     ("antiquewhite" . "#faebd7")
@@ -806,6 +809,7 @@ cannot be completed sensibly: `custom-ident',
 (defvar css-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [remap info-lookup-symbol] 'css-lookup-symbol)
+    (define-key map "\C-c\C-f" 'css-cycle-color-format)
     map)
   "Keymap used in `css-mode'.")
 
@@ -896,7 +900,7 @@ cannot be completed sensibly: `custom-ident',
                      ;; No face.
                      nil)))
     ;; Variables.
-    (,(concat "--" css-ident-re) (0 font-lock-variable-name-face))
+    (,(concat (rx symbol-start) "--" css-ident-re) (0 font-lock-variable-name-face))
     ;; Properties.  Again, we don't limit ourselves to css-property-ids.
     (,(concat "\\(?:[{;]\\|^\\)[ \t]*\\("
               "\\(?:\\(" css-proprietary-nmstart-re "\\)\\|"
@@ -936,11 +940,13 @@ cannot be completed sensibly: `custom-ident',
   "Skip blanks and comments."
   (while (forward-comment 1)))
 
-(cl-defun css--rgb-color ()
+(cl-defun css--rgb-color (&optional include-alpha)
   "Parse a CSS rgb() or rgba() color.
 Point should be just after the open paren.
 Returns a hex RGB color, or nil if the color could not be recognized.
-This recognizes CSS-color-4 extensions."
+This recognizes CSS-color-4 extensions.
+When INCLUDE-ALPHA is non-nil, the alpha component is included in
+the returned hex string."
   (let ((result '())
 	(iter 0))
     (while (< iter 4)
@@ -950,11 +956,11 @@ This recognizes CSS-color-4 extensions."
       (let* ((is-percent (match-beginning 1))
 	     (str (match-string (if is-percent 1 2)))
 	     (number (string-to-number str)))
-	(when is-percent
-	  (setq number (* 255 (/ number 100.0))))
-        ;; Don't push the alpha.
-        (when (< iter 3)
-          (push (min (max 0 (truncate number)) 255) result))
+	(if is-percent
+	    (setq number (* 255 (/ number 100.0)))
+          (when (and include-alpha (= iter 3))
+            (setq number (* number 255))))
+        (push (min (max 0 (round number)) 255) result)
 	(goto-char (match-end 0))
 	(css--color-skip-blanks)
 	(cl-incf iter)
@@ -966,7 +972,11 @@ This recognizes CSS-color-4 extensions."
 	(css--color-skip-blanks)))
     (when (looking-at ")")
       (forward-char)
-      (apply #'format "#%02x%02x%02x" (nreverse result)))))
+      (apply #'format
+             (if (and include-alpha (= (length result) 4))
+                 "#%02x%02x%02x%02x"
+               "#%02x%02x%02x")
+             (nreverse result)))))
 
 (cl-defun css--hsl-color ()
   "Parse a CSS hsl() or hsla() color.
@@ -1037,9 +1047,15 @@ This recognizes CSS-color-4 extensions."
 STR is the incoming CSS hex color.
 This function simply drops any transparency."
   ;; Either #RGB or #RRGGBB, drop the "A" or "AA".
-  (if (> (length str) 4)
-      (substring str 0 7)
-    (substring str 0 4)))
+  (substring str 0 (if (> (length str) 5) 7 4)))
+
+(defun css--hex-alpha (hex)
+  "Return the alpha component of CSS color HEX.
+HEX can either be in the #RGBA or #RRGGBBAA format.  Return nil
+if the color doesn't have an alpha component."
+  (cl-case (length hex)
+    (5 (string (elt hex 4)))
+    (9 (substring hex 7 9))))
 
 (defun css--named-color (start-point str)
   "Check whether STR, seen at point, is CSS named color.
@@ -1149,7 +1165,7 @@ This function is intended to be good enough to help SMIE during
 tokenization, but should not be regarded as a reliable function
 for determining whether point is within a selector."
   (save-excursion
-    (re-search-forward "[{};)]" nil t)
+    (re-search-forward "[{};]" nil t)
     (eq (char-before) ?\{)))
 
 (defun css--colon-inside-funcall ()
@@ -1201,7 +1217,8 @@ for determining whether point is within a selector."
   (pcase (cons kind token)
     (`(:elem . basic) css-indent-offset)
     (`(:elem . arg) 0)
-    (`(:list-intro . ,(or `";" `"")) t) ;"" stands for BOB (bug#15467).
+    ;; "" stands for BOB (bug#15467).
+    (`(:list-intro . ,(or `";" `"" `":-property")) t)
     (`(:before . "{")
      (when (or (smie-rule-hanging-p) (smie-rule-bolp))
        (smie-backward-sexp ";")
@@ -1375,12 +1392,129 @@ tags, classes and IDs."
               :exit-function
               ,(lambda (string status)
                  (and (eq status 'finished)
+                      (eolp)
                       prop-table
                       (test-completion string prop-table)
                       (not (and sel-table
                                 (test-completion string sel-table)))
                       (progn (insert ": ;")
                              (forward-char -1))))))))))
+
+(defun css--color-to-4-dpc (hex)
+  "Convert the CSS color HEX to four digits per component.
+CSS colors use one or two digits per component for RGB hex
+values.  Convert the given color to four digits per component.
+
+Note that this function handles CSS colors specifically, and
+should not be mixed with those in color.el."
+  (let ((six-digits (= (length hex) 7)))
+    (apply
+     #'concat
+     `("#"
+       ,@(seq-mapcat
+          (apply-partially #'make-list (if six-digits 2 4))
+          (seq-partition (seq-drop hex 1) (if six-digits 2 1)))))))
+
+(defun css--format-hex (hex)
+  "Format a CSS hex color by shortening it if possible."
+  (let ((parts (seq-partition (seq-drop hex 1) 2)))
+    (if (and (>= (length hex) 6)
+             (seq-every-p (lambda (p) (eq (elt p 0) (elt p 1))) parts))
+        (apply #'string
+               (cons ?# (mapcar (lambda (p) (elt p 0)) parts)))
+      hex)))
+
+(defun css--named-color-to-hex ()
+  "Convert named CSS color at point to hex format.
+Return non-nil if a conversion was made.
+
+Note that this function handles CSS colors specifically, and
+should not be mixed with those in color.el."
+  (save-excursion
+    (unless (or (looking-at css--colors-regexp)
+                (eq (char-before) ?#))
+      (backward-word))
+    (when (member (word-at-point) (mapcar #'car css--color-map))
+      (looking-at css--colors-regexp)
+      (let ((color (css--compute-color (point) (match-string 0))))
+        (replace-match (css--format-hex color)))
+      t)))
+
+(defun css--format-rgba-alpha (alpha)
+  "Return ALPHA component formatted for use in rgba()."
+  (let ((a (string-to-number (format "%.2f" alpha))))
+    (if (or (= a 0)
+            (= a 1))
+        (format "%d" a)
+      (string-remove-suffix "0" (number-to-string a)))))
+
+(defun css--hex-to-rgb ()
+  "Convert CSS hex color at point to RGB format.
+Return non-nil if a conversion was made.
+
+Note that this function handles CSS colors specifically, and
+should not be mixed with those in color.el."
+  (save-excursion
+    (unless (or (eq (char-after) ?#)
+                (eq (char-before) ?\())
+      (backward-sexp))
+    (when-let* ((hex (when (looking-at css--colors-regexp)
+                       (and (eq (elt (match-string 0) 0) ?#)
+                            (match-string 0))))
+                (rgb (css--hex-color hex)))
+      (seq-let (r g b)
+          (mapcar (lambda (x) (round (* x 255)))
+                  (color-name-to-rgb (css--color-to-4-dpc rgb)))
+        (replace-match
+         (if-let* ((alpha (css--hex-alpha hex))
+                   (a (css--format-rgba-alpha
+                       (/ (string-to-number alpha 16)
+                          (float (- (expt 16 (length alpha)) 1))))))
+             (format "rgba(%d, %d, %d, %s)" r g b a)
+           (format "rgb(%d, %d, %d)" r g b))
+         t))
+      t)))
+
+(defun css--rgb-to-named-color-or-hex ()
+  "Convert CSS RGB color at point to a named color or hex format.
+Convert to a named color if the color at point has a name, else
+convert to hex format.  Return non-nil if a conversion was made.
+
+Note that this function handles CSS colors specifically, and
+should not be mixed with those in color.el."
+  (save-excursion
+    (when-let* ((open-paren-pos (nth 1 (syntax-ppss))))
+      (when (save-excursion
+              (goto-char open-paren-pos)
+              (looking-back "rgba?" (- (point) 4)))
+        (goto-char (nth 1 (syntax-ppss)))))
+    (when (eq (char-before) ?\))
+      (backward-sexp))
+    (skip-chars-backward "rgba")
+    (when (looking-at css--colors-regexp)
+      (let* ((start (match-end 0))
+             (color (save-excursion
+                      (goto-char start)
+                      (css--rgb-color t))))
+        (when color
+          (kill-sexp)
+          (kill-sexp)
+          (let ((named-color (seq-find (lambda (x) (equal (cdr x) color))
+                                       css--color-map)))
+            (insert (if named-color
+                        (car named-color)
+                      (css--format-hex color))))
+          t)))))
+
+(defun css-cycle-color-format ()
+  "Cycle the color at point between different CSS color formats.
+Supported formats are by name (if possible), hexadecimal, and
+rgb()/rgba()."
+  (interactive)
+  (or (css--named-color-to-hex)
+      (css--hex-to-rgb)
+      (css--rgb-to-named-color-or-hex)
+      (message "It doesn't look like a color at point")))
 
 ;;;###autoload
 (define-derived-mode css-mode prog-mode "CSS"

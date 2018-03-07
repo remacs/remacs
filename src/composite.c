@@ -1,5 +1,5 @@
 /* Composite sequence support.
-   Copyright (C) 2001-2017 Free Software Foundation, Inc.
+   Copyright (C) 2001-2018 Free Software Foundation, Inc.
    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
      Registration Number H14PRO021
@@ -684,6 +684,20 @@ composition_gstring_from_id (ptrdiff_t id)
   struct Lisp_Hash_Table *h = XHASH_TABLE (gstring_hash_table);
 
   return HASH_VALUE (h, id);
+}
+
+DEFUN ("clear-composition-cache", Fclear_composition_cache,
+       Sclear_composition_cache, 0, 0, 0,
+       doc: /* Internal use only.
+Clear composition cache.  */)
+  (void)
+{
+  Lisp_Object args[] = {QCtest, Qequal, QCsize, make_number (311)};
+  gstring_hash_table = CALLMANY (Fmake_hash_table, args);
+  /* Fixme: We call Fclear_face_cache to force complete re-building of
+     display glyphs.  But, it may be better to call this function from
+     Fclear_face_cache instead.  */
+  return Fclear_face_cache (Qt);
 }
 
 bool
@@ -1982,4 +1996,5 @@ See also the documentation of `auto-composition-mode'.  */);
   defsubr (&Scompose_string_internal);
   defsubr (&Sfind_composition_internal);
   defsubr (&Scomposition_get_gstring);
+  defsubr (&Sclear_composition_cache);
 }

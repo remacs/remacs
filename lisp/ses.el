@@ -1,6 +1,6 @@
 ;;; ses.el -- Simple Emacs Spreadsheet  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2002-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2018 Free Software Foundation, Inc.
 
 ;; Author: Jonathan Yavner <jyavner@member.fsf.org>
 ;; Maintainer: Vincent Belaïche  <vincentb1@users.sourceforge.net>
@@ -1254,8 +1254,7 @@ preceding cell has spilled over."
 	 ((< len width)
 	  ;; Fill field to length with spaces.
 	  (setq len  (make-string (- width len) ?\s)
-		text (if (or (stringp value)
-			     (eq ses-call-printer-return t))
+		text (if (eq ses-call-printer-return t)
 			 (concat text len)
 		       (concat len text))))
 	 ((> len width)
@@ -2496,7 +2495,7 @@ to are recalculated first."
          prefix-length)
     (when (and prefix (null (string= prefix "")))
       (setq prefix-length (length prefix))
-      (maphash (lambda (key val)
+      (maphash (lambda (key _val)
                  (let ((key-name (symbol-name key)))
                    (when (and (>= (length key-name) prefix-length)
                               (string= prefix (substring key-name 0 prefix-length)))
@@ -2649,7 +2648,7 @@ cells."
          prefix-length)
     (when prefix
       (setq prefix-length (length prefix))
-      (maphash (lambda (key val)
+      (maphash (lambda (key _val)
                  (let ((key-name (symbol-name key)))
                    (when (and (>= (length key-name) prefix-length)
                               (string= prefix (substring key-name 0 prefix-length)))
@@ -3052,7 +3051,7 @@ We'll assume copying front-sticky properties doesn't make sense, either.
 
 This advice also includes some SES-specific code because otherwise it's too
 hard to override how mouse-1 works."
-  (when (> beg end)
+  (when (and beg end (> beg end))
     (let ((temp beg))
       (setq beg end
 	    end temp)))

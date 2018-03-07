@@ -1,6 +1,6 @@
 ;;; semantic/mru-bookmark.el --- Automatic bookmark tracking
 
-;; Copyright (C) 2007-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <eric@siege-engine.com>
 
@@ -113,7 +113,7 @@ Uses `semantic-go-to-tag' and highlighting."
 	  (forward-char o))
       (error nil))
     ;; make it visible
-    (switch-to-buffer (current-buffer))
+    (pop-to-buffer-same-window (current-buffer))
     (semantic-momentary-highlight-tag tag)
     ))
 

@@ -1,6 +1,6 @@
 /* Generic frame functions.
 
-Copyright (C) 1993-1995, 1997, 1999-2017 Free Software Foundation, Inc.
+Copyright (C) 1993-1995, 1997, 1999-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -35,6 +35,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 /* These help us bind and responding to switch-frame events.  */
 #include "keyboard.h"
+#include "ptr-bounds.h"
 #include "frame.h"
 #include "blockinput.h"
 #include "termchar.h"
@@ -255,7 +256,7 @@ Lisp_Object Vframe_list;
 /* Placeholder used by temacs -nw before window.el is loaded.  */
 DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
        Sframe_windows_min_size, 4, 4, 0,
-       doc: /* */
+       doc: /* SKIP: real doc in window.el.  */
        attributes: const)
      (Lisp_Object frame, Lisp_Object horizontal,
       Lisp_Object ignore, Lisp_Object pixelwise)
@@ -280,7 +281,9 @@ DEFUN ("frame-windows-min-size", Fframe_windows_min_size,
  * of `window-min-height' (`window-min-width' if HORIZONTAL is non-nil).
  * With IGNORE non-nil the values of these variables are ignored.
  *
- * In either case, never return a value less than 1.
+ * In either case, never return a value less than 1.  For TTY frames,
+ * additionally limit the minimum frame height to a value large enough
+ * to support the menu bar, the mode line, and the echo area.
  */
 static int
 frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
@@ -288,6 +291,7 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
 {
   struct frame *f = XFRAME (frame);
   Lisp_Object par_size;
+  int retval;
 
   if ((!NILP (horizontal)
        && NUMBERP (par_size = get_frame_param (f, Qmin_width)))
@@ -300,15 +304,27 @@ frame_windows_min_size (Lisp_Object frame, Lisp_Object horizontal,
       if (min_size < 1)
 	min_size = 1;
 
-      return (NILP (pixelwise)
-	      ? min_size
-	      : min_size * (NILP (horizontal)
-			    ? FRAME_LINE_HEIGHT (f)
-			    : FRAME_COLUMN_WIDTH (f)));
+      retval = (NILP (pixelwise)
+		? min_size
+		: min_size * (NILP (horizontal)
+			      ? FRAME_LINE_HEIGHT (f)
+			      : FRAME_COLUMN_WIDTH (f)));
     }
   else
-    return XINT (call4 (Qframe_windows_min_size, frame, horizontal,
-		      ignore, pixelwise));
+    retval = XINT (call4 (Qframe_windows_min_size, frame, horizontal,
+			  ignore, pixelwise));
+  /* Don't allow too small height of text-mode frames, or else cm.c
+     might abort in cmcheckmagic.  */
+  if ((FRAME_TERMCAP_P (f) && NILP (horizontal)))
+    {
+      int min_height = (FRAME_MENU_BAR_LINES (f)
+			+ FRAME_WANTS_MODELINE_P (f)
+			+ 2);	/* one text line and one echo-area line */
+      if (retval < min_height)
+	retval = min_height;
+    }
+
+  return retval;
 }
 
 
@@ -756,6 +772,7 @@ make_frame (bool mini_p)
   f->no_focus_on_map = false;
   f->no_accept_focus = false;
   f->z_group = z_group_none;
+  f->tooltip = false;
 #if ! defined (USE_GTK) && ! defined (HAVE_NS)
   f->last_tool_bar_item = -1;
 #endif
@@ -1360,16 +1377,21 @@ to that frame.  */)
 
 DEFUN ("frame-list", Fframe_list, Sframe_list,
        0, 0, 0,
-       doc: /* Return a list of all live frames.  */)
+       doc: /* Return a list of all live frames.
+The return value does not include any tooltip frame.  */)
   (void)
 {
-  Lisp_Object frames;
-  frames = Fcopy_sequence (Vframe_list);
 #ifdef HAVE_WINDOW_SYSTEM
-  if (FRAMEP (tip_frame))
-    frames = Fdelq (tip_frame, frames);
-#endif
-  return frames;
+  Lisp_Object list = Qnil, tail, frame;
+
+  FOR_EACH_FRAME (tail, frame)
+    if (!FRAME_TOOLTIP_P (XFRAME (frame)))
+      list = Fcons (frame, list);
+  /* Reverse list for consistency with the !HAVE_WINDOW_SYSTEM case.  */
+  return Fnreverse (list);
+#else /* !HAVE_WINDOW_SYSTEM */
+  return Fcopy_sequence (Vframe_list);
+#endif /* HAVE_WINDOW_SYSTEM */
 }
 
 DEFUN ("frame-parent", Fframe_parent, Sframe_parent,
@@ -1497,6 +1519,8 @@ next_frame (Lisp_Object frame, Lisp_Object minibuf)
   Lisp_Object f, tail;
   int passed = 0;
 
+  eassume (CONSP (Vframe_list));
+
   while (passed < 2)
     FOR_EACH_FRAME (tail, f)
       {
@@ -1518,6 +1542,8 @@ static Lisp_Object
 prev_frame (Lisp_Object frame, Lisp_Object minibuf)
 {
   Lisp_Object f, tail, prev = Qnil;
+
+  eassume (CONSP (Vframe_list));
 
   FOR_EACH_FRAME (tail, f)
     {
@@ -1596,7 +1622,8 @@ DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
  * other_frames:
  *
  * Return true if there exists at least one visible or iconified frame
- * but F.  Return false otherwise.
+ * but F.  Tooltip frames do not qualify as candidates.  Return false
+ * if no such frame exists.
  *
  * INVISIBLE true means we are called from make_frame_invisible where
  * such a frame must be visible or iconified.  INVISIBLE nil means we
@@ -1610,7 +1637,6 @@ static bool
 other_frames (struct frame *f, bool invisible, bool force)
 {
   Lisp_Object frames, frame, frame1;
-  struct frame *f1;
   Lisp_Object minibuffer_window = FRAME_MINIBUF_WINDOW (f);
 
   XSETFRAME (frame, f);
@@ -1620,7 +1646,8 @@ other_frames (struct frame *f, bool invisible, bool force)
 
   FOR_EACH_FRAME (frames, frame1)
     {
-      f1 = XFRAME (frame1);
+      struct frame *f1 = XFRAME (frame1);
+
       if (f != f1)
 	{
 	  /* Verify that we can still talk to the frame's X window, and
@@ -1629,7 +1656,7 @@ other_frames (struct frame *f, bool invisible, bool force)
 	  if (FRAME_WINDOW_P (f1))
 	    x_sync (f1);
 #endif
-	  if (NILP (Fframe_parameter (frame1, Qtooltip))
+	  if (!FRAME_TOOLTIP_P (f1)
 	      /* Tooltips and child frames count neither for
 		 invisibility nor for deletions.  */
 	      && !FRAME_PARENT_FRAME (f1)
@@ -1762,7 +1789,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 	}
     }
 
-  is_tooltip_frame = !NILP (Fframe_parameter (frame, Qtooltip));
+  is_tooltip_frame = FRAME_TOOLTIP_P (f);
 
   /* Run `delete-frame-functions' unless FORCE is `noelisp' or
      frame is a tooltip.  FORCE is set to `noelisp' when handling
@@ -1804,29 +1831,39 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
   if (f == sf)
     {
       Lisp_Object tail;
+      eassume (CONSP (Vframe_list));
 
       /* Look for another visible frame on the same terminal.
 	 Do not call next_frame here because it may loop forever.
 	 See https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15025.  */
       FOR_EACH_FRAME (tail, frame1)
-	if (!EQ (frame, frame1)
-	    && (FRAME_TERMINAL (XFRAME (frame))
-		== FRAME_TERMINAL (XFRAME (frame1)))
-	    && FRAME_VISIBLE_P (XFRAME (frame1)))
-         break;
+	{
+	  struct frame *f1 = XFRAME (frame1);
+
+	  if (!EQ (frame, frame1)
+	      && !FRAME_TOOLTIP_P (f1)
+	      && FRAME_TERMINAL (f) == FRAME_TERMINAL (f1)
+	      && FRAME_VISIBLE_P (f1))
+	    break;
+	}
 
       /* If there is none, find *some* other frame.  */
       if (NILP (frame1) || EQ (frame1, frame))
 	{
 	  FOR_EACH_FRAME (tail, frame1)
 	    {
-	      if (! EQ (frame, frame1) && FRAME_LIVE_P (XFRAME (frame1)))
+	      struct frame *f1 = XFRAME (frame1);
+
+	      if (!EQ (frame, frame1)
+		  && FRAME_LIVE_P (f1)
+		  && !FRAME_TOOLTIP_P (f1))
 		{
 		  /* Do not change a text terminal's top-frame.  */
 		  struct frame *f1 = XFRAME (frame1);
 		  if (FRAME_TERMCAP_P (f1))
 		    {
 		      Lisp_Object top_frame = FRAME_TTY (f1)->top_frame;
+
 		      if (!EQ (top_frame, frame))
 			frame1 = top_frame;
 		    }
@@ -1923,7 +1960,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
     /* FIXME: Deleting the terminal crashes emacs because of a GTK
        bug.
-       https://lists.gnu.org/archive/html/emacs-devel/2011-10/msg00363.html */
+       https://lists.gnu.org/r/emacs-devel/2011-10/msg00363.html */
 
     /* Since a similar behavior was observed on the Lucid and Motif
        builds (see Bug#5802, Bug#21509, Bug#23499, Bug#27816), we now
@@ -2421,7 +2458,7 @@ for how to proceed.  */)
 {
   struct frame *f = decode_live_frame (frame);
 #ifdef HAVE_WINDOW_SYSTEM
- Lisp_Object parent = f->parent_frame;
+  Lisp_Object parent = f->parent_frame;
 
   if (!NILP (parent))
     {
@@ -2441,7 +2478,7 @@ for how to proceed.  */)
 	  return Qnil;
 	}
     }
-#endif /* HAVE_WINDOW_SYSTEM */
+#endif	/* HAVE_WINDOW_SYSTEM */
 
   /* Don't allow minibuf_window to remain on an iconified frame.  */
   check_minibuf_window (frame, EQ (minibuf_window, selected_window));
@@ -4640,6 +4677,8 @@ xrdb_get_resource (XrmDatabase rdb, Lisp_Object attribute, Lisp_Object class, Li
   USE_SAFE_ALLOCA;
   char *name_key = SAFE_ALLOCA (name_keysize + class_keysize);
   char *class_key = name_key + name_keysize;
+  name_key = ptr_bounds_clip (name_key, name_keysize);
+  class_key = ptr_bounds_clip (class_key, class_keysize);
 
   /* Start with emacs.FRAMENAME for the name (the specific one)
      and with `Emacs' for the class key (the general one).  */
@@ -4718,6 +4757,8 @@ x_get_resource_string (const char *attribute, const char *class)
   ptrdiff_t class_keysize = sizeof (EMACS_CLASS) - 1 + strlen (class) + 2;
   char *name_key = SAFE_ALLOCA (name_keysize + class_keysize);
   char *class_key = name_key + name_keysize;
+  name_key = ptr_bounds_clip (name_key, name_keysize);
+  class_key = ptr_bounds_clip (class_key, class_keysize);
 
   esprintf (name_key, "%s.%s", SSDATA (Vinvocation_name), attribute);
   sprintf (class_key, "%s.%s", EMACS_CLASS, class);
@@ -5768,16 +5809,11 @@ or call the function `tool-bar-mode'.  */);
 #endif
 
   DEFVAR_KBOARD ("default-minibuffer-frame", Vdefault_minibuffer_frame,
-		 doc: /* Minibufferless frames use this frame's minibuffer.
-Emacs cannot create minibufferless frames unless this is set to an
-appropriate surrogate.
-
-Emacs consults this variable only when creating minibufferless
-frames; once the frame is created, it sticks with its assigned
-minibuffer, no matter what this variable is set to.  This means that
-this variable doesn't necessarily say anything meaningful about the
-current set of frames, or where the minibuffer is currently being
-displayed.
+		 doc: /* Minibuffer-less frames by default use this frame's minibuffer.
+Emacs consults this variable only when creating a minibuffer-less frame
+and no explicit minibuffer window has been specified for that frame via
+the `minibuffer' frame parameter.  Once such a frame has been created,
+setting this variable does not change that frame's previous association.
 
 This variable is local to the current terminal and cannot be buffer-local.  */);
 

@@ -1,6 +1,6 @@
 ;;; org-table.el --- The Table Editor for Org        -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
 
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -644,17 +644,30 @@ nil      When nil, the command tries to be smart and figure out the
       (org-table-align))))
 
 ;;;###autoload
-(defun org-table-import (file arg)
+(defun org-table-import (file separator)
   "Import FILE as a table.
-The file is assumed to be tab-separated.  Such files can be produced by most
-spreadsheet and database applications.  If no tabs (at least one per line)
-are found, lines will be split on whitespace into fields."
+
+The command tries to be smart and figure out the separator in the
+following way:
+
+  - when each line contains a TAB, assume TAB-separated material
+  - when each line contains a comma, assume CSV material
+  - else, assume one or more SPACE characters as separator.
+
+When non-nil, SEPARATOR specifies the field separator in the
+lines.  It can have the following values:
+
+(4)     Use the comma as a field separator
+(16)    Use a TAB as field separator
+(64)    Prompt for a regular expression as field separator
+integer When a number, use that many spaces, or a TAB, as field separator
+regexp  When a regular expression, use it to match the separator."
   (interactive "f\nP")
-  (or (bolp) (newline))
+  (unless (bolp) (insert "\n"))
   (let ((beg (point))
 	(pm (point-max)))
     (insert-file-contents file)
-    (org-table-convert-region beg (+ (point) (- (point-max) pm)) arg)))
+    (org-table-convert-region beg (+ (point) (- (point-max) pm)) separator)))
 
 
 ;;;###autoload
@@ -1087,22 +1100,18 @@ Before doing so, re-align the table if necessary."
   (interactive)
   (org-table-maybe-eval-formula)
   (org-table-maybe-recalculate-line)
-  (if (or (looking-at "[ \t]*$")
-	  (save-excursion (skip-chars-backward " \t") (bolp)))
-      (newline)
-    (if (and org-table-automatic-realign
-	     org-table-may-need-update)
-	(org-table-align))
-    (let ((col (org-table-current-column)))
-      (beginning-of-line 2)
-      (if (or (not (org-at-table-p))
+  (if (and org-table-automatic-realign
+	   org-table-may-need-update)
+      (org-table-align))
+  (let ((col (org-table-current-column)))
+    (beginning-of-line 2)
+    (when (or (not (org-at-table-p))
 	      (org-at-table-hline-p))
-	  (progn
-	    (beginning-of-line 0)
-	    (org-table-insert-row 'below)))
-      (org-table-goto-column col)
-      (skip-chars-backward "^|\n\r")
-      (if (looking-at " ") (forward-char 1)))))
+      (beginning-of-line 0)
+      (org-table-insert-row 'below))
+    (org-table-goto-column col)
+    (skip-chars-backward "^|\n\r")
+    (when (looking-at " ") (forward-char))))
 
 ;;;###autoload
 (defun org-table-copy-down (n)
@@ -1170,7 +1179,7 @@ to a number.  In the case of a timestamp, increment by days."
 			      (- (org-time-string-to-absolute txt)
 				 (org-time-string-to-absolute txt-up)))
 			     ((string-match org-ts-regexp3 txt) 1)
-			     ((string-match "\\([-+]\\)?[0-9]+\\(?:\.[0-9]+\\)?" txt-up)
+			     ((string-match "\\([-+]\\)?\\(?:[0-9]+\\)?\\(?:\.[0-9]+\\)?" txt-up)
 			      (- (string-to-number txt)
 				 (string-to-number (match-string 0 txt-up))))
 			     (t 1)))
@@ -1646,12 +1655,14 @@ In particular, this does handle wide and invisible characters."
   (if (not (org-at-table-p))
       (user-error "Not at a table"))
   (let ((col (current-column))
-	(dline (org-table-current-dline)))
+	(dline (and (not (org-match-line org-table-hline-regexp))
+		    (org-table-current-dline))))
     (kill-region (point-at-bol) (min (1+ (point-at-eol)) (point-max)))
     (if (not (org-at-table-p)) (beginning-of-line 0))
     (org-move-to-column col)
-    (when (or (not org-table-fix-formulas-confirm)
-	      (funcall org-table-fix-formulas-confirm "Fix formulas? "))
+    (when (and dline
+	       (or (not org-table-fix-formulas-confirm)
+		   (funcall org-table-fix-formulas-confirm "Fix formulas? ")))
       (org-table-fix-formulas "@" (list (cons (number-to-string dline) "INVALID"))
 			      dline -1 dline))))
 
@@ -3240,7 +3251,7 @@ existing formula for column %s"
 	 (goto-char beg)
 	 ;; Mark named fields untouchable.  Also check if several
 	 ;; field/range formulas try to set the same field.
-	 (remove-text-properties beg end '(org-untouchable t))
+	 (remove-text-properties beg end '(:org-untouchable t))
 	 (let ((current-line (count-lines org-table-current-begin-pos
 					  (line-beginning-position)))
 	       seen-fields)
@@ -4313,14 +4324,14 @@ FACE, when non-nil, for the highlight."
 
 ;;;###autoload
 (define-minor-mode orgtbl-mode
-  "The `org-mode' table editor as a minor mode for use in other modes."
+  "The Org mode table editor as a minor mode for use in other modes."
   :lighter " OrgTbl" :keymap orgtbl-mode-map
   (org-load-modules-maybe)
   (cond
    ((derived-mode-p 'org-mode)
-    ;; Exit without error, in case some hook functions calls this
-    ;; by accident in org-mode.
-    (message "Orgtbl-mode is not useful in org-mode, command ignored"))
+    ;; Exit without error, in case some hook functions calls this by
+    ;; accident in Org mode.
+    (message "Orgtbl mode is not useful in Org mode, command ignored"))
    (orgtbl-mode
     (and (orgtbl-setup) (defun orgtbl-setup () nil)) ;; FIXME: Yuck!?!
     ;; Make sure we are first in minor-mode-map-alist

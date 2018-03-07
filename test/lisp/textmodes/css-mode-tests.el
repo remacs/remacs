@@ -1,6 +1,6 @@
 ;;; css-mode-tests.el --- Test suite for CSS mode  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2018 Free Software Foundation, Inc.
 
 ;; Author: Simen Heggestøyl <simenheg@gmail.com>
 ;; Keywords: internal
@@ -58,7 +58,7 @@
 
   ;; Check that the `color' property doesn't cause infinite recursion
   ;; because it refers to the value class of the same name.
-  (should (= (length (css--property-values "color")) 152)))
+  (should (= (length (css--property-values "color")) 154)))
 
 (ert-deftest css-test-property-value-cache ()
   "Test that `css--property-value-cache' is in use."
@@ -244,6 +244,86 @@
       (should (member "body" completions))
       (should-not (member "article" completions)))))
 
+(ert-deftest css-test-color-to-4-dpc ()
+  (should (equal (css--color-to-4-dpc "#ffffff")
+                 (css--color-to-4-dpc "#fff")))
+  (should (equal (css--color-to-4-dpc "#aabbcc")
+                 (css--color-to-4-dpc "#abc")))
+  (should (equal (css--color-to-4-dpc "#fab")
+                 "#ffffaaaabbbb"))
+  (should (equal (css--color-to-4-dpc "#fafbfc")
+                 "#fafafbfbfcfc")))
+
+(ert-deftest css-test-format-hex ()
+  (should (equal (css--format-hex "#fff") "#fff"))
+  (should (equal (css--format-hex "#ffffff") "#fff"))
+  (should (equal (css--format-hex "#aabbcc") "#abc"))
+  (should (equal (css--format-hex "#12ff34") "#12ff34"))
+  (should (equal (css--format-hex "#aabbccdd") "#abcd"))
+  (should (equal (css--format-hex "#aabbccde") "#aabbccde"))
+  (should (equal (css--format-hex "#abcdef") "#abcdef")))
+
+(ert-deftest css-test-named-color-to-hex ()
+  (dolist (item '(("black" "#000")
+                  ("white" "#fff")
+                  ("salmon" "#fa8072")))
+    (with-temp-buffer
+      (css-mode)
+      (insert (nth 0 item))
+      (css--named-color-to-hex)
+      (should (equal (buffer-string) (nth 1 item))))))
+
+(ert-deftest css-test-format-rgba-alpha ()
+  (should (equal (css--format-rgba-alpha 0) "0"))
+  (should (equal (css--format-rgba-alpha 0.0) "0"))
+  (should (equal (css--format-rgba-alpha 0.00001) "0"))
+  (should (equal (css--format-rgba-alpha 1) "1"))
+  (should (equal (css--format-rgba-alpha 1.0) "1"))
+  (should (equal (css--format-rgba-alpha 1.00001) "1"))
+  (should (equal (css--format-rgba-alpha 0.10000) "0.1"))
+  (should (equal (css--format-rgba-alpha 0.100001) "0.1"))
+  (should (equal (css--format-rgba-alpha 0.2524334) "0.25")))
+
+(ert-deftest css-test-hex-to-rgb ()
+  (dolist (item '(("#000" "rgb(0, 0, 0)")
+                  ("#000000" "rgb(0, 0, 0)")
+                  ("#fff" "rgb(255, 255, 255)")
+                  ("#ffffff" "rgb(255, 255, 255)")
+                  ("#ffffff80" "rgba(255, 255, 255, 0.5)")
+                  ("#fff0" "rgba(255, 255, 255, 0)")
+                  ("#fff8" "rgba(255, 255, 255, 0.53)")
+                  ("#ffff" "rgba(255, 255, 255, 1)")))
+    (with-temp-buffer
+      (css-mode)
+      (insert (nth 0 item))
+      (css--hex-to-rgb)
+      (should (equal (buffer-string) (nth 1 item))))))
+
+(ert-deftest css-test-rgb-to-named-color-or-hex ()
+  (dolist (item '(("rgb(0, 0, 0)" "black")
+                  ("rgb(255, 255, 255)" "white")
+                  ("rgb(255, 255, 240)" "ivory")
+                  ("rgb(18, 52, 86)" "#123456")
+                  ("rgba(18, 52, 86, 0.5)" "#12345680")
+                  ("rgba(18, 52, 86, 50%)" "#12345680")
+                  ("rgba(50%, 50%, 50%, 50%)" "#80808080")))
+    (with-temp-buffer
+      (css-mode)
+      (insert (nth 0 item))
+      (css--rgb-to-named-color-or-hex)
+      (should (equal (buffer-string) (nth 1 item))))))
+
+(ert-deftest css-test-cycle-color-format ()
+  (with-temp-buffer
+    (css-mode)
+    (insert "black")
+    (css-cycle-color-format)
+    (should (equal (buffer-string) "#000"))
+    (css-cycle-color-format)
+    (should (equal (buffer-string) "rgb(0, 0, 0)"))
+    (css-cycle-color-format)
+    (should (equal (buffer-string) "black"))))
+
 (ert-deftest css-mdn-symbol-guessing ()
   (dolist (item '(("@med" "ia" "@media")
                   ("@keyframes " "{" "@keyframes")
@@ -263,11 +343,11 @@
 (ert-deftest css-test-rgb-parser ()
   (with-temp-buffer
     (css-mode)
-    (dolist (input '("255, 0, 127"
-                     "255, /* comment */ 0, 127"
-                     "255 0 127"
-                     "255, 0, 127, 0.75"
-                     "255 0 127 / 0.75"
+    (dolist (input '("255, 0, 128"
+                     "255, /* comment */ 0, 128"
+                     "255 0 128"
+                     "255, 0, 128, 0.75"
+                     "255 0 128 / 0.75"
                      "100%, 0%, 50%"
                      "100%, 0%, 50%, 0.115"
                      "100% 0% 50%"
@@ -275,7 +355,7 @@
       (erase-buffer)
       (save-excursion
         (insert input ")"))
-      (should (equal (css--rgb-color) "#ff007f")))))
+      (should (equal (css--rgb-color) "#ff0080")))))
 
 (ert-deftest css-test-hsl-parser ()
   (with-temp-buffer
@@ -294,6 +374,18 @@
       (save-excursion
         (insert input ")"))
       (should (equal (css--hsl-color) "#ff0000")))))
+
+(ert-deftest css-test-hex-color ()
+  (should (equal (css--hex-color "#abc") "#abc"))
+  (should (equal (css--hex-color "#abcd") "#abc"))
+  (should (equal (css--hex-color "#aabbcc") "#aabbcc"))
+  (should (equal (css--hex-color "#aabbccdd") "#aabbcc")))
+
+(ert-deftest css-test-hex-alpha ()
+  (should (equal (css--hex-alpha "#abcd") "d"))
+  (should-not (css--hex-alpha "#abc"))
+  (should (equal (css--hex-alpha "#aabbccdd") "dd"))
+  (should-not (css--hex-alpha "#aabbcc")))
 
 (ert-deftest css-test-named-color ()
   (dolist (text '("@mixin black" "@include black"))

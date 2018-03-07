@@ -1,6 +1,6 @@
 @c -*- mode: texinfo; coding: utf-8 -*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-2017 Free Software Foundation, Inc.
+@c Copyright (C) 1990-1995, 1998-2018 Free Software Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Display
 @chapter Emacs Display
@@ -50,7 +50,7 @@ screen is corrupted.
 
 @defun redraw-frame &optional frame
 This function clears and redisplays frame @var{frame}.  If @var{frame}
-is omitted or nil, it redraws the selected frame.
+is omitted or @code{nil}, it redraws the selected frame.
 @end defun
 
   Even more powerful is @code{redraw-display}:
@@ -581,7 +581,7 @@ truncated to fit it.
   The variable @code{max-mini-window-height}, which specifies the
 maximum height for resizing minibuffer windows, also applies to the
 echo area (which is really a special use of the minibuffer window;
-@pxref{Minibuffer Misc}).
+@pxref{Minibuffer Windows}).
 
 @node Warnings
 @section Reporting Warnings
@@ -807,7 +807,7 @@ mechanism can change the variable @code{delayed-warnings-hook}:
 
 @defvar delayed-warnings-hook
 This is a normal hook which is run by the Emacs command loop, after
-@code{post-command-hook}, in order to to process and display delayed
+@code{post-command-hook}, in order to process and display delayed
 warnings.
 
 Its default value is a list of two functions:
@@ -929,13 +929,18 @@ major mode should use the mode's own name as an element of
 
 @defun invisible-p pos-or-prop
 If @var{pos-or-prop} is a marker or number, this function returns a
-non-@code{nil} value if the text at that position is invisible.
+non-@code{nil} value if the text at that position is currently
+invisible.
 
 If @var{pos-or-prop} is any other kind of Lisp object, that is taken
 to mean a possible value of the @code{invisible} text or overlay
 property.  In that case, this function returns a non-@code{nil} value
 if that value would cause text to become invisible, based on the
 current value of @code{buffer-invisibility-spec}.
+
+The return value of this function is @code{t} if the text would be
+completely hidden on display, or a non-@code{nil}, non-@code{t} value
+if the text would be replaced by an ellipsis.
 @end defun
 
 @vindex line-move-ignore-invisible
@@ -1975,7 +1980,7 @@ height of both, if present, in the return value.
 whole and does not care about the size of individual lines.  The
 following function does.
 
-@defun window-lines-pixel-dimensions &optional window first last body inverse
+@defun window-lines-pixel-dimensions &optional window first last body inverse left
 This function calculates the pixel dimensions of each line displayed in
 the specified @var{window}.  It does so by walking @var{window}'s
 current glyph matrix---a matrix storing the glyph (@pxref{Glyphs}) of
@@ -1989,7 +1994,7 @@ defaults to the selected one.
 If the optional argument @var{first} is an integer, it denotes the index
 (starting with 0) of the first line of @var{window}'s glyph matrix to be
 returned.  Note that if @var{window} has a header line, the line with
-index 0 is that header line.  If @var{first} is nil, the first line to
+index 0 is that header line.  If @var{first} is @code{nil}, the first line to
 be considered is determined by the value of the optional argument
 @var{body}: If @var{body} is non-@code{nil}, this means to start with
 the first line of @var{window}'s body, skipping any header line, if
@@ -1998,7 +2003,7 @@ present.  Otherwise, this function will start with the first line of
 
 If the optional argument @var{last} is an integer, it denotes the index
 of the last line of @var{window}'s glyph matrix that shall be returned.
-If @var{last} is nil, the last line to be considered is determined by
+If @var{last} is @code{nil}, the last line to be considered is determined by
 the value of @var{body}: If @var{body} is non-@code{nil}, this means to
 use the last line of @var{window}'s body, omitting @var{window}'s mode
 line, if present.  Otherwise, this means to use the last line of
@@ -2050,13 +2055,17 @@ calculations.
 
 @defun line-number-display-width &optional pixelwise
 This function returns the width used for displaying the line numbers
-in the selected window.  Optional argument @var{pixelwise}, if
-non-@code{nil}, means return the value in pixels; otherwise the value
-is returned in column units of the font defined for the
-@code{line-number} face.  If line numbers are not displayed in the
-selected window, the value is zero.  Use @code{with-selected-window}
-(@pxref{Selecting Windows}) if you need this information about another
-window.
+in the selected window.  If the optional argument @var{pixelwise} is
+the symbol @code{columns}, the return value is a float number of the
+frame's canonical columns; if @var{pixelwise} is @code{t} or any other
+non-@code{nil} value, the value is an integer and is measured in
+pixels.  If @var{pixelwise} is omitted or @code{nil}, the value is the
+integer number of columns of the font defined for the
+@code{line-number} face, and doesn't include the 2 columns used to pad
+the numbers on display.  If line numbers are not displayed in the
+selected window, the value is zero regardless of the value of
+@var{pixelwise}.  Use @code{with-selected-window} (@pxref{Selecting
+Windows}) if you need this information about another window.
 @end defun
 
 
@@ -2237,10 +2246,10 @@ attribute is ignored.
 
 @table @code
 @item :family
-Font family or fontset (a string).  @xref{Fonts,,, emacs, The GNU
+Font family name (a string).  @xref{Fonts,,, emacs, The GNU
 Emacs Manual}, for more information about font families.  The function
 @code{font-family-list} (see below) returns a list of available family
-names.  @xref{Fontsets}, for information about fontsets.
+names.
 
 @item :foundry
 The name of the @dfn{font foundry} for the font family specified by
@@ -2400,9 +2409,10 @@ Normally you do not need to set the stipple attribute, because it is
 used automatically to handle certain shades of gray.
 
 @item :font
-The font used to display the face.  Its value should be a font object.
-@xref{Low-Level Font}, for information about font objects, font specs,
-and font entities.
+The font used to display the face.  Its value should be a font object
+or a fontset.  @xref{Low-Level Font}, for information about font
+objects, font specs, and font entities.  @xref{Fontsets}, for
+information about fontsets.
 
 When specifying this attribute using @code{set-face-attribute}
 (@pxref{Attribute Functions}), you may also supply a font spec, a font
@@ -2765,15 +2775,15 @@ This sets the @code{:slant} attribute of @var{face} to @var{normal} if
 @var{italic-p} is @code{nil}, and to @var{italic} otherwise.
 @end defun
 
-@defun set-face-underline face underline &optional frame
+@deffn Command set-face-underline face underline &optional frame
 This sets the @code{:underline} attribute of @var{face} to
 @var{underline}.
-@end defun
+@end deffn
 
-@defun set-face-inverse-video face inverse-video-p &optional frame
+@deffn Command set-face-inverse-video face inverse-video-p &optional frame
 This sets the @code{:inverse-video} attribute of @var{face} to
 @var{inverse-video-p}.
-@end defun
+@end deffn
 
 @deffn Command invert-face face &optional frame
 This swaps the foreground and background colors of face @var{face}.
@@ -2881,6 +2891,16 @@ If the text lies within the mode line of the selected window, Emacs
 applies the @code{mode-line} face.  For the mode line of a
 non-selected window, Emacs applies the @code{mode-line-inactive} face.
 For a header line, Emacs applies the @code{header-line} face.
+
+@item
+If the text comes from an overlay string via @code{before-string} or
+@code{after-string} properties (@pxref{Overlay Properties}), or from a
+display string (@pxref{Other Display Specs}), and the string doesn't
+contain a @code{face} or @code{mouse-face} property, but the buffer
+text affected by the overlay/display property does define a face,
+Emacs applies the face attributes of the ``underlying'' buffer text.
+Note that this is so even if the overlay or display string is
+displayed in the display margins (@pxref{Display Margins}).
 
 @item
 If any given attribute has not been specified during the preceding
@@ -3272,7 +3292,7 @@ nominal heights and widths would suggest.
 @defun x-list-fonts name &optional reference-face frame maximum width
 This function returns a list of available font names that match
 @var{name}.  @var{name} should be a string containing a font name in
-either the Fontconfig, GTK, or XLFD format (@pxref{Fonts,,, emacs, The
+either the Fontconfig, GTK+, or XLFD format (@pxref{Fonts,,, emacs, The
 GNU Emacs Manual}).  Within an XLFD string, wildcard characters may be
 used: the @samp{*} character matches any substring, and the @samp{?}
 character matches any single character.  Case is ignored when matching
@@ -3530,7 +3550,7 @@ specifications are as follows:
 
 @table @code
 @item :name
-The font name (a string), in either XLFD, Fontconfig, or GTK format.
+The font name (a string), in either XLFD, Fontconfig, or GTK+ format.
 @xref{Fonts,,, emacs, The GNU Emacs Manual}.
 
 @item :family
@@ -4635,7 +4655,7 @@ as an absolute number of pixels.
 
 @smallexample
 @group
-  @var{expr} ::= @var{num} | (@var{num}) | @var{unit} | @var{elem} | @var{pos} | @var{image} | @var{form}
+  @var{expr} ::= @var{num} | (@var{num}) | @var{unit} | @var{elem} | @var{pos} | @var{image} | @var{xwidget} | @var{form}
   @var{num}  ::= @var{integer} | @var{float} | @var{symbol}
   @var{unit} ::= in | mm | cm | width | height
 @end group
@@ -4651,22 +4671,34 @@ as an absolute number of pixels.
   The form @var{num} specifies a fraction of the default frame font
 height or width.  The form @code{(@var{num})} specifies an absolute
 number of pixels.  If @var{num} is a symbol, @var{symbol}, its
-buffer-local variable binding is used.
+buffer-local variable binding is used; that binding can be either a
+number or a cons cell of the forms shown above (including yet another
+cons cell whose @code{car} is a symbol that has a buffer-local
+binding).
 
   The @code{in}, @code{mm}, and @code{cm} units specify the number of
 pixels per inch, millimeter, and centimeter, respectively.  The
 @code{width} and @code{height} units correspond to the default width
-and height of the current face.  An image specification @code{image}
-corresponds to the width or height of the image.
+and height of the current face.  An image specification of the form
+@w{@code{(image . @var{props})}} (@pxref{Image Descriptors})
+corresponds to the width or height of the specified image.  Similarly,
+an xwidget specification of the form @w{@code{(xwidget . @var{props})}}
+stands for the width or height of the specified xwidget.
+@xref{Xwidgets}.
 
   The elements @code{left-fringe}, @code{right-fringe},
 @code{left-margin}, @code{right-margin}, @code{scroll-bar}, and
-@code{text} specify to the width of the corresponding area of the
-window.
+@code{text} specify the width of the corresponding area of the window.
+When the window displays line numbers (@pxref{Size of Displayed
+Text}), the width of the @code{text} area is decreased by the screen
+space taken by the line-number display.
 
   The @code{left}, @code{center}, and @code{right} positions can be
 used with @code{:align-to} to specify a position relative to the left
-edge, center, or right edge of the text area.
+edge, center, or right edge of the text area.  When the window
+displays line numbers, the @code{left} and the @code{center} positions
+are offset to account for the screen space taken by the line-number
+display.
 
   Any of the above window elements (except @code{text}) can also be
 used with @code{:align-to} to specify that the position is relative to
@@ -4682,13 +4714,15 @@ the left-margin, use
 
   If no specific base offset is set for alignment, it is always relative
 to the left edge of the text area.  For example, @samp{:align-to 0} in a
-header-line aligns with the first text column in the text area.
+header-line aligns with the first text column in the text area.  When
+the window displays line numbers, the text is considered to start where
+the space used for line-number display ends.
 
   A value of the form @code{(@var{num} . @var{expr})} stands for the
 product of the values of @var{num} and @var{expr}.  For example,
 @code{(2 . in)} specifies a width of 2 inches, while @code{(0.5 .
 @var{image})} specifies half the width (or height) of the specified
-image.
+@var{image} (which should be given by its image spec).
 
   The form @code{(+ @var{expr} ...)} adds up the value of the
 expressions.  The form @code{(- @var{expr} ...)} negates or subtracts
@@ -4834,6 +4868,13 @@ or an image descriptor.
 certain buffer text, without altering or preventing the display of
 that text, put a @code{before-string} property on the text and put the
 margin display specification on the contents of the before-string.
+
+  Note that if the string to be displayed in the margin doesn't
+specify a face, its face is determined using the same rules and
+priorities as it is for strings displayed in the text area
+(@pxref{Displaying Faces}).  If this results in undesirable
+``leaking'' of faces into the margin, make sure the string has an
+explicit face specified for it.
 
   Before the display margins can display anything, you must give
 them a nonzero width.  The usual way to do that is to set these
@@ -5502,7 +5543,8 @@ inserts an image with a circle:
 @lisp
 (let ((svg (svg-create 400 400 :stroke-width 10)))
   (svg-gradient svg "gradient1" 'linear '((0 . "red") (100 . "blue")))
-  (svg-circle svg 200 200 100 :gradient "gradient1" :stroke-color "green")
+  (svg-circle svg 200 200 100 :gradient "gradient1"
+                  :stroke-color "green")
   (insert-image (svg-image svg)))
 @end lisp
 
@@ -5951,7 +5993,7 @@ debugging.
 @cindex embedded widgets
 @cindex webkit browser widget
 
-  Emacs is able to display native widgets, such as GTK WebKit widgets,
+  Emacs is able to display native widgets, such as GTK+ WebKit widgets,
 in Emacs buffers when it was built with the necessary support
 libraries and is running on a graphical terminal.  To test whether
 Emacs supports display of embedded widgets, check that the
@@ -6924,14 +6966,16 @@ means to use the default for that slot, as stated below.
 @table @asis
 @item 0
 The glyph for the end of a truncated screen line (the default for this
-is @samp{$}).  @xref{Glyphs}.  On graphical terminals, Emacs uses
-arrows in the fringes to indicate truncation, so the display table has
-no effect.
+is @samp{$}).  @xref{Glyphs}.  On graphical terminals, Emacs by
+default uses arrows in the fringes to indicate truncation, so the
+display table has no effect, unless you disable the fringes
+(@pxref{Fringes,, Window Fringes, emacs, the Gnu Emacs Manual}).
 
 @item 1
 The glyph for the end of a continued line (the default is @samp{\}).
-On graphical terminals, Emacs uses curved arrows in the fringes to
-indicate continuation, so the display table has no effect.
+On graphical terminals, Emacs by default uses curved arrows in the
+fringes to indicate continuation, so the display table has no effect,
+unless you disable the fringes.
 
 @item 2
 The glyph for indicating a character displayed as an octal character
@@ -6946,9 +6990,12 @@ default is @samp{...}).  @xref{Selective Display}.
 
 @item 5
 The glyph used to draw the border between side-by-side windows (the
-default is @samp{|}).  @xref{Splitting Windows}.  This takes effect only
-when there are no scroll bars; if scroll bars are supported and in use,
-a scroll bar separates the two windows.
+default is @samp{|}).  @xref{Splitting Windows}.  This currently has
+effect only on text terminals; on graphical terminals, if vertical
+scroll bars are supported and in use, a scroll bar separates the two
+windows, and if there are no vertical scroll bars and no dividers
+(@pxref{Window Dividers}), Emacs uses a thin line to indicate the
+border.
 @end table
 
   For example, here is how to construct a display table that mimics
@@ -7318,7 +7365,7 @@ have their own frame parameters (@pxref{Frame Parameters}).  Unlike
 other frames, the default parameters for tooltip frames are stored in a
 special variable.
 
-@defvar tooltip-frame-parameters
+@defopt tooltip-frame-parameters
 This customizable option holds the default frame parameters used for
 displaying tooltips.  Any font and color parameters are ignored, and the
 corresponding attributes of the @code{tooltip} face are used instead.
@@ -7328,7 +7375,7 @@ absolute frame-relative coordinates where the tooltip should be shown.
 variables described in @ref{Tooltips,,, emacs, The GNU Emacs Manual}.)
 Note that the @code{left} and @code{top} parameters, if present,
 override the values of mouse-relative offsets.
-@end defvar
+@end defopt
 
 @vindex tooltip@r{ face}
 The @code{tooltip} face determines the appearance of text shown in
@@ -7468,7 +7515,7 @@ and are continued or truncated at the left margin.
 @cindex paragraph-separate, and bidirectional display
   Where exactly paragraphs start and end, for the purpose of the Emacs
 @acronym{UBA} implementation, is determined by the following two
-buffer-local variables (note that that @code{paragraph-start} and
+buffer-local variables (note that @code{paragraph-start} and
 @code{paragraph-separate} have no influence on this).  By default both
 of these variables are @code{nil}, and paragraphs are bounded by empty
 lines, i.e., lines that consist entirely of zero or more whitespace
@@ -7503,7 +7550,7 @@ for its paragraphs.  For example, buffers containing program source
 code should force all paragraphs to be displayed left-to-right.  You
 can use following variable to do this:
 
-@defvar bidi-paragraph-direction
+@defopt bidi-paragraph-direction
 If the value of this buffer-local variable is the symbol
 @code{right-to-left} or @code{left-to-right}, all paragraphs in the
 buffer are assumed to have that specified direction.  Any other value
@@ -7514,7 +7561,7 @@ the base direction of each paragraph from its contents.
 Modes for program source code should set this to @code{left-to-right}.
 Prog mode does this by default, so modes derived from Prog mode do not
 need to set this explicitly (@pxref{Basic Major Modes}).
-@end defvar
+@end defopt
 
 @defun current-bidi-paragraph-direction &optional buffer
 This function returns the paragraph direction at point in the named

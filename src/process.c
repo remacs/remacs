@@ -1,6 +1,6 @@
 /* Asynchronous subprocess control for GNU Emacs.
 
-Copyright (C) 1985-1988, 1993-1996, 1998-1999, 2001-2017 Free Software
+Copyright (C) 1985-1988, 1993-1996, 1998-1999, 2001-2018 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -32,10 +32,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 
+#ifdef subprocesses
+
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#endif	/* subprocesses */
 
 #ifdef HAVE_SETRLIMIT
 # include <sys/resource.h>
@@ -45,6 +49,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    which should be restored in child processes.  */
 static struct rlimit nofile_limit;
 #endif
+
+#ifdef subprocesses
 
 /* Are local (unix) sockets supported?  */
 #if defined (HAVE_SYS_UN_H)
@@ -94,6 +100,8 @@ static struct rlimit nofile_limit;
 #include <flexmember.h>
 #include <sig2str.h>
 #include <verify.h>
+
+#endif     /* subprocesses */
 
 #include "systime.h"
 #include "systty.h"
@@ -150,6 +158,20 @@ static bool kbd_is_on_hold;
 /* Nonzero means don't run process sentinels.  This is used
    when exiting.  */
 bool inhibit_sentinels;
+
+union u_sockaddr
+{
+  struct sockaddr sa;
+  struct sockaddr_in in;
+#ifdef AF_INET6
+  struct sockaddr_in6 in6;
+#endif
+#ifdef HAVE_LOCAL_SOCKETS
+  struct sockaddr_un un;
+#endif
+};
+
+#ifdef subprocesses
 
 #ifndef SOCK_CLOEXEC
 # define SOCK_CLOEXEC 0
@@ -1112,10 +1134,7 @@ passed to the filter.
 The filter gets two arguments: the process and the string of output.
 The string argument is normally a multibyte string, except:
 - if the process's input coding system is no-conversion or raw-text,
-  it is a unibyte string (the non-converted input), or else
-- if `default-enable-multibyte-characters' is nil, it is a unibyte
-  string (the result of converting the decoded input multibyte
-  string to unibyte with `string-make-unibyte').  */)
+  it is a unibyte string (the non-converted input).  */)
   (Lisp_Object process, Lisp_Object filter)
 {
   CHECK_PROCESS (process);
@@ -1260,7 +1279,7 @@ optional KEY arg.  If KEY is nil, value is a cons cell of the form
 connection; it is t for a pipe connection.  If KEY is t, the complete
 contact information for the connection is returned, else the specific
 value for the keyword KEY is returned.  See `make-network-process',
-`make-serial-process', or `make pipe-process' for the list of keywords.
+`make-serial-process', or `make-pipe-process' for the list of keywords.
 If PROCESS is a non-blocking network process that hasn't been fully
 set up yet, this function will block until socket setup has completed.  */)
   (Lisp_Object process, Lisp_Object key)
@@ -1410,9 +1429,8 @@ to make it unique.
 
 :buffer BUFFER -- BUFFER is the buffer (or buffer-name) to associate
 with the process.  Process output goes at end of that buffer, unless
-you specify an output stream or filter function to handle the output.
-BUFFER may be also nil, meaning that this process is not associated
-with any buffer.
+you specify a filter function to handle the output.  BUFFER may be
+also nil, meaning that this process is not associated with any buffer.
 
 :command COMMAND -- COMMAND is a list starting with the program file
 name, followed by strings to give to the program as arguments.
@@ -1478,6 +1496,8 @@ usage: (make-process &rest ARGS)  */)
   if (!NILP (program))
     CHECK_STRING (program);
 
+  bool query_on_exit = NILP (Fplist_get (contact, QCnoquery));
+
   stderrproc = Qnil;
   xstderr = Fplist_get (contact, QCstderr);
   if (PROCESSP (xstderr))
@@ -1493,7 +1513,9 @@ usage: (make-process &rest ARGS)  */)
 			  QCname,
 			  concat2 (name, build_string (" stderr")),
 			  QCbuffer,
-			  Fget_buffer_create (xstderr));
+			  Fget_buffer_create (xstderr),
+			  QCnoquery,
+			  query_on_exit ? Qnil : Qt);
     }
 
   proc = make_process (name);
@@ -1507,7 +1529,7 @@ usage: (make-process &rest ARGS)  */)
   pset_filter (XPROCESS (proc), Fplist_get (contact, QCfilter));
   pset_command (XPROCESS (proc), Fcopy_sequence (command));
 
-  if (tem = Fplist_get (contact, QCnoquery), !NILP (tem))
+  if (!query_on_exit)
     XPROCESS (proc)->kill_without_query = 1;
   if (tem = Fplist_get (contact, QCstop), !NILP (tem))
     pset_command (XPROCESS (proc), Qt);
@@ -2098,8 +2120,8 @@ arguments are defined:
 
 :buffer BUFFER -- BUFFER is the buffer (or buffer-name) to associate
 with the process.  Process output goes at the end of that buffer,
-unless you specify an output stream or filter function to handle the
-output.  If BUFFER is not given, the value of NAME is used.
+unless you specify a filter function to handle the output.  If BUFFER
+is not given, the value of NAME is used.
 
 :coding CODING -- If CODING is a symbol, it specifies the coding
 system used for both reading and writing for this process.  If CODING
@@ -2813,8 +2835,8 @@ the value of PORT is used.
 
 :buffer BUFFER -- BUFFER is the buffer (or buffer-name) to associate
 with the process.  Process output goes at the end of that buffer,
-unless you specify an output stream or filter function to handle the
-output.  If BUFFER is not given, the value of NAME is used.
+unless you specify a filter function to handle the output.  If BUFFER
+is not given, the value of NAME is used.
 
 :coding CODING -- If CODING is a symbol, it specifies the coding
 system used for both reading and writing for this process.  If CODING
@@ -3476,9 +3498,8 @@ to make it unique.
 
 :buffer BUFFER -- BUFFER is the buffer (or buffer-name) to associate
 with the process.  Process output goes at end of that buffer, unless
-you specify an output stream or filter function to handle the output.
-BUFFER may be also nil, meaning that this process is not associated
-with any buffer.
+you specify a filter function to handle the output.  BUFFER may be
+also nil, meaning that this process is not associated with any buffer.
 
 :host HOST -- HOST is name of the host to connect to, or its IP
 address.  The symbol `local' specifies the local host.  If specified
@@ -3514,7 +3535,7 @@ setting of the remote datagram address.  When specified for a client
 process, the FAMILY, HOST, and SERVICE args are ignored.
 
 The format of ADDRESS depends on the address family:
-- An IPv4 address is represented as an vector of integers [A B C D P]
+- An IPv4 address is represented as a vector of integers [A B C D P]
 corresponding to numeric IP address A.B.C.D and port number P.
 - A local address is represented as a string with the address in the
 local address space.
@@ -3549,8 +3570,7 @@ The stopped state is cleared by `continue-process' and set by
 
 :filter-multibyte BOOL -- If BOOL is non-nil, strings given to the
 process filter are multibyte, otherwise they are unibyte.
-If this keyword is not specified, the strings are multibyte if
-the default value of `enable-multibyte-characters' is non-nil.
+If this keyword is not specified, the strings are multibyte.
 
 :sentinel SENTINEL -- Install SENTINEL as the process sentinel.
 
@@ -3626,8 +3646,7 @@ usage: (make-network-process &rest ARGS)  */)
   Lisp_Object proc;
   Lisp_Object contact;
   struct Lisp_Process *p;
-  const char *portstring;
-  ptrdiff_t portstringlen ATTRIBUTE_UNUSED;
+  const char *portstring UNINIT;
   char portbuf[INT_BUFSIZE_BOUND (EMACS_INT)];
 #ifdef HAVE_LOCAL_SOCKETS
   struct sockaddr_un address_un;
@@ -3774,6 +3793,8 @@ usage: (make-network-process &rest ARGS)  */)
 
   if (!NILP (host))
     {
+      ptrdiff_t portstringlen ATTRIBUTE_UNUSED;
+
       /* SERVICE can either be a string or int.
 	 Convert to a C string for later use by getaddrinfo.  */
       if (EQ (service, Qt))
@@ -3792,37 +3813,38 @@ usage: (make-network-process &rest ARGS)  */)
 	  portstring = SSDATA (service);
 	  portstringlen = SBYTES (service);
 	}
-    }
 
 #ifdef HAVE_GETADDRINFO_A
-  if (!NILP (host) && !NILP (Fplist_get (contact, QCnowait)))
-    {
-      ptrdiff_t hostlen = SBYTES (host);
-      struct req
-      {
-	struct gaicb gaicb;
-	struct addrinfo hints;
-	char str[FLEXIBLE_ARRAY_MEMBER];
-      } *req = xmalloc (FLEXSIZEOF (struct req, str,
-				    hostlen + 1 + portstringlen + 1));
-      dns_request = &req->gaicb;
-      dns_request->ar_name = req->str;
-      dns_request->ar_service = req->str + hostlen + 1;
-      dns_request->ar_request = &req->hints;
-      dns_request->ar_result = NULL;
-      memset (&req->hints, 0, sizeof req->hints);
-      req->hints.ai_family = family;
-      req->hints.ai_socktype = socktype;
-      strcpy (req->str, SSDATA (host));
-      strcpy (req->str + hostlen + 1, portstring);
+      if (!NILP (Fplist_get (contact, QCnowait)))
+	{
+	  ptrdiff_t hostlen = SBYTES (host);
+	  struct req
+	  {
+	    struct gaicb gaicb;
+	    struct addrinfo hints;
+	    char str[FLEXIBLE_ARRAY_MEMBER];
+	  } *req = xmalloc (FLEXSIZEOF (struct req, str,
+					hostlen + 1 + portstringlen + 1));
+	  dns_request = &req->gaicb;
+	  dns_request->ar_name = req->str;
+	  dns_request->ar_service = req->str + hostlen + 1;
+	  dns_request->ar_request = &req->hints;
+	  dns_request->ar_result = NULL;
+	  memset (&req->hints, 0, sizeof req->hints);
+	  req->hints.ai_family = family;
+	  req->hints.ai_socktype = socktype;
+	  strcpy (req->str, SSDATA (host));
+	  strcpy (req->str + hostlen + 1, portstring);
 
-      int ret = getaddrinfo_a (GAI_NOWAIT, &dns_request, 1, NULL);
-      if (ret)
-	error ("%s/%s getaddrinfo_a error %d", SSDATA (host), portstring, ret);
+	  int ret = getaddrinfo_a (GAI_NOWAIT, &dns_request, 1, NULL);
+	  if (ret)
+	    error ("%s/%s getaddrinfo_a error %d",
+		   SSDATA (host), portstring, ret);
 
-      goto open_socket;
-    }
+	  goto open_socket;
+	}
 #endif /* HAVE_GETADDRINFO_A */
+    }
 
   /* If we have a host, use getaddrinfo to resolve both host and service.
      Otherwise, use getservbyname to lookup the service.  */
@@ -4465,16 +4487,7 @@ server_accept_connection (Lisp_Object server, int channel)
   struct Lisp_Process *ps = XPROCESS (server);
   struct Lisp_Process *p;
   int s;
-  union u_sockaddr {
-    struct sockaddr sa;
-    struct sockaddr_in in;
-#ifdef AF_INET6
-    struct sockaddr_in6 in6;
-#endif
-#ifdef HAVE_LOCAL_SOCKETS
-    struct sockaddr_un un;
-#endif
-  } saddr;
+  union u_sockaddr saddr;
   socklen_t len = sizeof saddr;
   ptrdiff_t count;
 
@@ -4795,6 +4808,7 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
   struct timespec got_output_end_time = invalid_timespec ();
   enum { MINIMUM = -1, TIMEOUT, INFINITY } wait;
   int got_some_output = -1;
+  uintmax_t prev_wait_proc_nbytes_read = wait_proc ? wait_proc->nbytes_read : 0;
 #if defined HAVE_GETADDRINFO_A || defined HAVE_GNUTLS
   bool retry_for_async;
 #endif
@@ -5249,6 +5263,8 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       if (nfds == 0)
 	{
           /* Exit the main loop if we've passed the requested timeout,
+             or have read some bytes from our wait_proc (either directly
+             in this call or indirectly through timers / process filters),
              or aren't skipping processes and got some output and
              haven't lowered our timeout due to timers or SIGIO and
              have waited a long amount of time due to repeated
@@ -5256,7 +5272,9 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 	  struct timespec huge_timespec
 	    = make_timespec (TYPE_MAXIMUM (time_t), 2 * TIMESPEC_RESOLUTION);
 	  struct timespec cmp_time = huge_timespec;
-	  if (wait < TIMEOUT)
+	  if (wait < TIMEOUT
+              || (wait_proc
+                  && wait_proc->nbytes_read != prev_wait_proc_nbytes_read))
 	    break;
 	  if (wait == TIMEOUT)
 	    cmp_time = end_time;
@@ -5417,16 +5435,6 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
 		}
 	      else if (nread == -1 && would_block (errno))
 		;
-#ifdef WINDOWSNT
-	      /* FIXME: Is this special case still needed?  */
-	      /* Note that we cannot distinguish between no input
-		 available now and a closed pipe.
-		 With luck, a closed pipe will be accompanied by
-		 subprocess termination and SIGCHLD.  */
-	      else if (nread == 0 && !NETCONN_P (proc) && !SERIALCONN_P (proc)
-		       && !PIPECONN_P (proc))
-		;
-#endif
 #ifdef HAVE_PTYS
 	      /* On some OSs with ptys, when the process on one end of
 		 a pty exits, the other end gets an error reading with
@@ -5571,6 +5579,15 @@ wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
       maybe_quit ();
     }
 
+  /* Timers and/or process filters that we have run could have themselves called
+     `accept-process-output' (and by that indirectly this function), thus
+     possibly reading some (or all) output of wait_proc without us noticing it.
+     This could potentially lead to an endless wait (dealt with earlier in the
+     function) and/or a wrong return value (dealt with here).  */
+  if (wait_proc && wait_proc->nbytes_read != prev_wait_proc_nbytes_read)
+    got_some_output = min (INT_MAX, (wait_proc->nbytes_read
+                                     - prev_wait_proc_nbytes_read));
+
   return got_some_output;
 }
 
@@ -5688,6 +5705,9 @@ read_process_output (Lisp_Object proc, int channel)
 	return nbytes;
       coding->mode |= CODING_MODE_LAST_BLOCK;
     }
+
+  /* Ignore carryover, it's been added by a previous iteration already.  */
+  p->nbytes_read += nbytes;
 
   /* Now set NBYTES how many bytes we must decode.  */
   nbytes += carryover;
@@ -7229,6 +7249,232 @@ keyboard_bit_set (fd_set *mask)
 }
 # endif
 
+#else  /* not subprocesses */
+
+/* This is referenced in thread.c:run_thread (which is never actually
+   called, since threads are not enabled for this configuration.  */
+void
+update_processes_for_thread_death (Lisp_Object dying_thread)
+{
+}
+
+/* Defined in msdos.c.  */
+extern int sys_select (int, fd_set *, fd_set *, fd_set *,
+		       struct timespec *, void *);
+
+/* Implementation of wait_reading_process_output, assuming that there
+   are no subprocesses.  Used only by the MS-DOS build.
+
+   Wait for timeout to elapse and/or keyboard input to be available.
+
+   TIME_LIMIT is:
+     timeout in seconds
+     If negative, gobble data immediately available but don't wait for any.
+
+   NSECS is:
+     an additional duration to wait, measured in nanoseconds
+     If TIME_LIMIT is zero, then:
+       If NSECS == 0, there is no limit.
+       If NSECS > 0, the timeout consists of NSECS only.
+       If NSECS < 0, gobble data immediately, as if TIME_LIMIT were negative.
+
+   READ_KBD is:
+     0 to ignore keyboard input, or
+     1 to return when input is available, or
+     -1 means caller will actually read the input, so don't throw to
+       the quit handler.
+
+   see full version for other parameters. We know that wait_proc will
+     always be NULL, since `subprocesses' isn't defined.
+
+   DO_DISPLAY means redisplay should be done to show subprocess
+   output that arrives.
+
+   Return -1 signifying we got no output and did not try.  */
+
+int
+wait_reading_process_output (intmax_t time_limit, int nsecs, int read_kbd,
+			     bool do_display,
+			     Lisp_Object wait_for_cell,
+			     struct Lisp_Process *wait_proc, int just_wait_proc)
+{
+  register int nfds;
+  struct timespec end_time, timeout;
+  enum { MINIMUM = -1, TIMEOUT, INFINITY } wait;
+
+  if (TYPE_MAXIMUM (time_t) < time_limit)
+    time_limit = TYPE_MAXIMUM (time_t);
+
+  if (time_limit < 0 || nsecs < 0)
+    wait = MINIMUM;
+  else if (time_limit > 0 || nsecs > 0)
+    {
+      wait = TIMEOUT;
+      end_time = timespec_add (current_timespec (),
+                               make_timespec (time_limit, nsecs));
+    }
+  else
+    wait = INFINITY;
+
+  /* Turn off periodic alarms (in case they are in use)
+     and then turn off any other atimers,
+     because the select emulator uses alarms.  */
+  stop_polling ();
+  turn_on_atimers (0);
+
+  while (1)
+    {
+      bool timeout_reduced_for_timers = false;
+      fd_set waitchannels;
+      int xerrno;
+
+      /* If calling from keyboard input, do not quit
+	 since we want to return C-g as an input character.
+	 Otherwise, do pending quit if requested.  */
+      if (read_kbd >= 0)
+	maybe_quit ();
+
+      /* Exit now if the cell we're waiting for became non-nil.  */
+      if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
+	break;
+
+      /* Compute time from now till when time limit is up.  */
+      /* Exit if already run out.  */
+      if (wait == TIMEOUT)
+	{
+	  struct timespec now = current_timespec ();
+	  if (timespec_cmp (end_time, now) <= 0)
+	    break;
+	  timeout = timespec_sub (end_time, now);
+	}
+      else
+	timeout = make_timespec (wait < TIMEOUT ? 0 : 100000, 0);
+
+      /* If our caller will not immediately handle keyboard events,
+	 run timer events directly.
+	 (Callers that will immediately read keyboard events
+	 call timer_delay on their own.)  */
+      if (NILP (wait_for_cell))
+	{
+	  struct timespec timer_delay;
+
+	  do
+	    {
+	      unsigned old_timers_run = timers_run;
+	      timer_delay = timer_check ();
+	      if (timers_run != old_timers_run && do_display)
+		/* We must retry, since a timer may have requeued itself
+		   and that could alter the time delay.  */
+		redisplay_preserve_echo_area (14);
+	      else
+		break;
+	    }
+	  while (!detect_input_pending ());
+
+	  /* If there is unread keyboard input, also return.  */
+	  if (read_kbd != 0
+	      && requeued_events_pending_p ())
+	    break;
+
+	  if (timespec_valid_p (timer_delay))
+	    {
+	      if (timespec_cmp (timer_delay, timeout) < 0)
+		{
+		  timeout = timer_delay;
+		  timeout_reduced_for_timers = true;
+		}
+	    }
+	}
+
+      /* Cause C-g and alarm signals to take immediate action,
+	 and cause input available signals to zero out timeout.  */
+      if (read_kbd < 0)
+	set_waiting_for_input (&timeout);
+
+      /* If a frame has been newly mapped and needs updating,
+	 reprocess its display stuff.  */
+      if (frame_garbaged && do_display)
+	{
+	  clear_waiting_for_input ();
+	  redisplay_preserve_echo_area (15);
+	  if (read_kbd < 0)
+	    set_waiting_for_input (&timeout);
+	}
+
+      /* Wait till there is something to do.  */
+      FD_ZERO (&waitchannels);
+      if (read_kbd && detect_input_pending ())
+	nfds = 0;
+      else
+	{
+	  if (read_kbd || !NILP (wait_for_cell))
+	    FD_SET (0, &waitchannels);
+	  nfds = pselect (1, &waitchannels, NULL, NULL, &timeout, NULL);
+	}
+
+      xerrno = errno;
+
+      /* Make C-g and alarm signals set flags again.  */
+      clear_waiting_for_input ();
+
+      /*  If we woke up due to SIGWINCH, actually change size now.  */
+      do_pending_window_change (0);
+
+      if (wait < INFINITY && nfds == 0 && ! timeout_reduced_for_timers)
+	/* We waited the full specified time, so return now.  */
+	break;
+
+      if (nfds == -1)
+	{
+	  /* If the system call was interrupted, then go around the
+	     loop again.  */
+	  if (xerrno == EINTR)
+	    FD_ZERO (&waitchannels);
+	  else
+	    report_file_errno ("Failed select", Qnil, xerrno);
+	}
+
+      /* Check for keyboard input.  */
+
+      if (read_kbd
+	  && detect_input_pending_run_timers (do_display))
+	{
+	  swallow_events (do_display);
+	  if (detect_input_pending_run_timers (do_display))
+	    break;
+	}
+
+      /* If there is unread keyboard input, also return.  */
+      if (read_kbd
+	  && requeued_events_pending_p ())
+	break;
+
+      /* If wait_for_cell. check for keyboard input
+	 but don't run any timers.
+	 ??? (It seems wrong to me to check for keyboard
+	 input at all when wait_for_cell, but the code
+	 has been this way since July 1994.
+	 Try changing this after version 19.31.)  */
+      if (! NILP (wait_for_cell)
+	  && detect_input_pending ())
+	{
+	  swallow_events (do_display);
+	  if (detect_input_pending ())
+	    break;
+	}
+
+      /* Exit now if the cell we're waiting for became non-nil.  */
+      if (! NILP (wait_for_cell) && ! NILP (XCAR (wait_for_cell)))
+	break;
+    }
+
+  start_polling ();
+
+  return -1;
+}
+
+#endif	/* not subprocesses */
+
 /* The following functions are needed even if async subprocesses are
    not supported.  Some of them are no-op stubs in that case.  */
 
@@ -7522,6 +7768,18 @@ init_process_emacs (int sockfd)
 #endif
 
   external_sock_fd = sockfd;
+  Lisp_Object sockname = Qnil;
+# if HAVE_GETSOCKNAME
+  if (0 <= sockfd)
+    {
+      union u_sockaddr sa;
+      socklen_t salen = sizeof sa;
+      if (getsockname (sockfd, &sa.sa, &salen) == 0)
+	sockname = conv_sockaddr_to_lisp (&sa.sa, salen);
+    }
+# endif
+  Vinternal__daemon_sockname = sockname;
+
   max_desc = -1;
   memset (fd_callback_info, 0, sizeof (fd_callback_info));
 
@@ -7607,7 +7865,6 @@ syms_of_process (void)
   DEFSYM (Qreal, "real");
   DEFSYM (Qnetwork, "network");
   DEFSYM (Qserial, "serial");
-  DEFSYM (Qpipe, "pipe");
   DEFSYM (QCbuffer, ":buffer");
   DEFSYM (QChost, ":host");
   DEFSYM (QCservice, ":service");
@@ -7706,6 +7963,10 @@ The arguments of the functions are the same as for `interrupt-process'.
 These functions are called in the order of the list, until one of them
 returns non-`nil'.  */);
   Vinterrupt_process_functions = list1 (Qinternal_default_interrupt_process);
+
+  DEFVAR_LISP ("internal--daemon-sockname", Vinternal__daemon_sockname,
+	       doc: /* Name of external socket passed to Emacs, or nil if none.  */);
+  Vinternal__daemon_sockname = Qnil;
 
   DEFSYM (Qinternal_default_interrupt_process,
 	  "internal-default-interrupt-process");

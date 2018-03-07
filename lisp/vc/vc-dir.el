@@ -1,6 +1,6 @@
 ;;; vc-dir.el --- Directory status display under VC  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2007-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
 ;; Author:   Dan Nicolaescu <dann@ics.uci.edu>
 ;; Keywords: vc tools
@@ -554,11 +554,15 @@ If a prefix argument is given, move by that many lines."
 
 (defun vc-dir-mark-unmark (mark-unmark-function)
   (if (use-region-p)
-      (let (;; (firstl (line-number-at-pos (region-beginning)))
+      (let ((processed-line nil)
 	    (lastl (line-number-at-pos (region-end))))
 	(save-excursion
 	  (goto-char (region-beginning))
-	  (while (<= (line-number-at-pos) lastl)
+	  (while (and (<= (line-number-at-pos) lastl)
+                      ;; We make sure to not get stuck processing the
+                      ;; same line in an infinite loop.
+		      (not (eq processed-line (line-number-at-pos))))
+	    (setq processed-line (line-number-at-pos))
 	    (condition-case nil
 		(funcall mark-unmark-function)
 	      ;; `vc-dir-mark-file' signals an error if we try marking

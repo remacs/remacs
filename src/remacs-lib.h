@@ -11,5 +11,7 @@ int rust_make_temp(char *template, int flags);
 
 int rust_count_trailing_zero_bits(size_t val);
 int rust_count_one_bits(size_t val);
+int rust_count_one_bits_l(unsigned long val);
+int rust_count_one_bits_ll(unsigned long long val);
 
 #endif

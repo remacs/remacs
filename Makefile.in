@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1992-2017 Free Software Foundation, Inc.
+# Copyright (C) 1992-2018 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -58,9 +58,11 @@
 # make docs
 #      Make Emacs documentation files from their sources; requires makeinfo.
 #
-# make check  or  make check-expensive
-#      Run Emacs test suite.  check-expensive runs also tests which
-#      take more time to perform.
+# make check (or check-expensive or check-all)
+#      Run the Emacs test suite.
+#      check-expensive includes additional tests that can be slow.
+#      check-all runs all tests, including ones that can be slow, or
+#        fail unpredictably
 
 SHELL = @SHELL@
 
@@ -521,7 +523,7 @@ install-nt:
 ## For them, it is empty.
 INSTALL_ARCH_INDEP_EXTRA = @INSTALL_ARCH_INDEP_EXTRA@
 
-## https://lists.gnu.org/archive/html/emacs-devel/2007-10/msg01672.html
+## https://lists.gnu.org/r/emacs-devel/2007-10/msg01672.html
 ## Needs to be the user running install, so configure can't set it.
 set_installuser=for installuser in $${LOGNAME} $${USERNAME} $${USER} \
 	  `id -un 2> /dev/null`; do \
@@ -560,11 +562,11 @@ set_installuser=for installuser in $${LOGNAME} $${USERNAME} $${USER} \
 
 ## Note that we use tar instead of plain old cp -R/-r because the latter
 ## is apparently not portable (even in 2012!).
-## https://lists.gnu.org/archive/html/emacs-devel/2012-05/msg00278.html
+## https://lists.gnu.org/r/emacs-devel/2012-05/msg00278.html
 ## I have no idea which platforms Emacs supports where cp -R does not
 ## work correctly, and therefore no idea when tar can be replaced.
 ## See also these comments from 2004 about cp -r working fine:
-## https://lists.gnu.org/archive/html/autoconf-patches/2004-11/msg00005.html
+## https://lists.gnu.org/r/autoconf-patches/2004-11/msg00005.html
 install-arch-indep: lisp install-info install-man ${INSTALL_ARCH_INDEP_EXTRA}
 	-set ${COPYDESTS} ; \
 	unset CDPATH; \
@@ -950,7 +952,8 @@ have-tests:
 	 exit 1; \
 	fi
 
-check check-maybe check-expensive: have-tests all
+.PHONY: check check-maybe check-expensive check-all
+check check-maybe check-expensive check-all: have-tests all
 	$(MAKE) -C test $@
 	$(CARGO_TEST) --manifest-path ${cargo_manifest}
 
@@ -968,7 +971,7 @@ $(DOCS):
 	$(MAKE) -C doc/$(subst -, ,$@)
 
 .PHONY: $(DOCS) docs pdf ps
-.PHONY: info dvi dist check check-maybe check-expensive html info-real info-dir check-info
+.PHONY: info dvi dist html info-real info-dir check-info
 
 ## TODO add etc/refcards.
 docs: $(DOCS)
@@ -1128,7 +1131,7 @@ ChangeLog:
 	  ./$(emacslog) -o $(CHANGELOG) -n $(CHANGELOG_HISTORY_INDEX_MAX)
 
 # Check that we are in a good state for changing history.
-PREFERRED_BRANCH = master
+PREFERRED_BRANCH = emacs-26
 preferred-branch-is-current:
 	git branch | grep -q '^\* $(PREFERRED_BRANCH)$$'
 unchanged-history-files:
@@ -1178,3 +1181,13 @@ rustfmt:
 	(cd rust_src/remacs-util && cargo fmt -- --write-mode overwrite)
 	(cd rust_src/remacs-macros && cargo fmt -- --write-mode overwrite lib.rs)
 	(cd rust_src/alloc_unexecmacosx && cargo fmt -- --write-mode overwrite)
+
+.PHONY: gitmerge
+
+GITMERGE_EMACS = ./src/emacs${EXEEXT}
+GITMERGE_NMIN = 10
+
+gitmerge:
+	${GITMERGE_EMACS} -batch --no-site-file --no-site-lisp \
+	  -l ${srcdir}/admin/gitmerge.el \
+	  --eval '(setq gitmerge-minimum-missing ${GITMERGE_NMIN})' -f gitmerge

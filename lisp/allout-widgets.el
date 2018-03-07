@@ -1,6 +1,6 @@
 ;; allout-widgets.el --- Visually highlight allout outline structure.
 
-;; Copyright (C) 2005-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2018 Free Software Foundation, Inc.
 
 ;; Author: Ken Manheimer <ken dot manheimer at gmail...>
 ;; Maintainer: Ken Manheimer <ken dot manheimer at gmail...>
@@ -768,8 +768,7 @@ Optional RECURSING is for internal use, to limit recursion."
 
             (if allout-widgets-time-decoration-activity
                 (setq allout-widgets-last-decoration-timing
-                      (list (allout-elapsed-time-seconds (current-time)
-                                                         start-time)
+                      (list (allout-elapsed-time-seconds nil start-time)
                             allout-widgets-changes-record)))
 
             (setq allout-widgets-changes-record nil)

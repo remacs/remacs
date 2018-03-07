@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1993, 1998-1999, 2001-2017 Free Software
+@c Copyright (C) 1990-1993, 1998-1999, 2001-2018 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node GNU Emacs Internals
@@ -248,7 +248,7 @@ of 8k bytes, and small vectors are packed into blocks of 4k bytes).
 @cindex storage of vector-like Lisp objects
   Beyond the basic vector, a lot of objects like window, buffer, and
 frame are managed as if they were vectors.  The corresponding C data
-structures include the @code{struct vectorlike_header} field whose
+structures include the @code{union vectorlike_header} field whose
 @code{size} member contains the subtype enumerated by @code{enum pvec_type}
 and an information about how many @code{Lisp_Object} fields this structure
 contains and what the size of the rest data is.  This information is
@@ -758,6 +758,13 @@ names in the documentation string from the ones used in the C code.
 @samp{usage:} is required if the function has an unlimited number of
 arguments.
 
+Some primitives have multiple definitions, one per platform (e.g.,
+@code{x-create-frame}).  In such cases, rather than writing the
+same documentation string in each definition, only one definition has
+the actual documentation.  The others have placeholders beginning with
+@samp{SKIP}, which are ignored by the function that parses the
+@file{DOC} file.
+
 All the usual rules for documentation strings in Lisp code
 (@pxref{Documentation Tips}) apply to C code documentation strings
 too.
@@ -1085,7 +1092,7 @@ Some of the fields of @code{struct buffer} are:
 
 @table @code
 @item header
-A header of type @code{struct vectorlike_header} is common to all
+A header of type @code{union vectorlike_header} is common to all
 vectorlike objects.
 
 @item own_text

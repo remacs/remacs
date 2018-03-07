@@ -1,6 +1,6 @@
 ;;; url-misc.el --- Misc Uniform Resource Locator retrieval code
 
-;; Copyright (C) 1996-1999, 2002, 2004-2017 Free Software Foundation,
+;; Copyright (C) 1996-1999, 2002, 2004-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Keywords: comm, data, processes
@@ -99,6 +99,7 @@
 		(eq ?\; (aref mediatype 0)))
 	  (setq mediatype (concat "text/plain" mediatype))))
       (set-buffer (generate-new-buffer " *url-data*"))
+      (require 'mm-util)
       (mm-disable-multibyte)
       (insert (format "Content-Length: %d\n" (length data))
 	      "Content-Type: " mediatype "\n"

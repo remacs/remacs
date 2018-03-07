@@ -1,6 +1,6 @@
 ;;; ox-ascii.el --- ASCII Back-End for Org Export Engine -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2012-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Goaziou <n.goaziou at gmail dot com>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -177,7 +177,8 @@ Inner margin is applied between each headline."
 
 (defcustom org-ascii-quote-margin 6
   "Width of margin used for quoting text, in characters.
-This margin is applied on both sides of the text."
+This margin is applied on both sides of the text.  It is also
+applied on the left side of contents in descriptive lists."
   :group 'org-export-ascii
   :version "24.4"
   :package-version '(Org . "8.0")
@@ -551,79 +552,69 @@ INFO is a plist used as a communication channel."
     (`inlinetask (plist-get info :ascii-inlinetask-width))
     (`headline
      (- (plist-get info :ascii-text-width)
-	(let ((low-level-rank (org-export-low-level-p element info)))
-	  (if low-level-rank (* low-level-rank 2)
-	    (plist-get info :ascii-global-margin)))))
+        (let ((low-level-rank (org-export-low-level-p element info)))
+          (if low-level-rank (* low-level-rank 2)
+            (plist-get info :ascii-global-margin)))))
     ;; Elements with a relative width: store maximum text width in
     ;; TOTAL-WIDTH.
     (_
      (let* ((genealogy (org-element-lineage element nil t))
-	    ;; Total width is determined by the presence, or not, of an
-	    ;; inline task among ELEMENT parents.
-	    (total-width
-	     (if (cl-some (lambda (parent)
-			    (eq (org-element-type parent) 'inlinetask))
-			  genealogy)
-		 (plist-get info :ascii-inlinetask-width)
-	       ;; No inlinetask: Remove global margin from text width.
-	       (- (plist-get info :ascii-text-width)
-		  (plist-get info :ascii-global-margin)
-		  (let ((parent (org-export-get-parent-headline element)))
-		    ;; Inner margin doesn't apply to text before first
-		    ;; headline.
-		    (if (not parent) 0
-		      (let ((low-level-rank
-			     (org-export-low-level-p parent info)))
-			;; Inner margin doesn't apply to contents of
-			;; low level headlines, since they've got their
-			;; own indentation mechanism.
-			(if low-level-rank (* low-level-rank 2)
-			  (plist-get info :ascii-inner-margin)))))))))
+            ;; Total width is determined by the presence, or not, of an
+            ;; inline task among ELEMENT parents.
+            (total-width
+             (if (cl-some (lambda (parent)
+                            (eq (org-element-type parent) 'inlinetask))
+                          genealogy)
+                 (plist-get info :ascii-inlinetask-width)
+               ;; No inlinetask: Remove global margin from text width.
+               (- (plist-get info :ascii-text-width)
+                  (plist-get info :ascii-global-margin)
+                  (let ((parent (org-export-get-parent-headline element)))
+                    ;; Inner margin doesn't apply to text before first
+                    ;; headline.
+                    (if (not parent) 0
+                      (let ((low-level-rank
+                             (org-export-low-level-p parent info)))
+                        ;; Inner margin doesn't apply to contents of
+                        ;; low level headlines, since they've got their
+                        ;; own indentation mechanism.
+                        (if low-level-rank (* low-level-rank 2)
+                          (plist-get info :ascii-inner-margin)))))))))
        (- total-width
-	  ;; Each `quote-block' and `verse-block' above narrows text
-	  ;; width by twice the standard margin size.
-	  (+ (* (cl-count-if (lambda (parent)
-			       (memq (org-element-type parent)
-				     '(quote-block verse-block)))
-			     genealogy)
-		2
-		(plist-get info :ascii-quote-margin))
-	     ;; Apply list margin once per "top-level" plain-list
-	     ;; containing current line
-	     (* (cl-count-if
-		 (lambda (e)
-		   (and (eq (org-element-type e) 'plain-list)
-			(not (eq (org-element-type (org-export-get-parent e))
-				 'item))))
-		 genealogy)
-		(plist-get info :ascii-list-margin))
-	     ;; Text width within a plain-list is restricted by
-	     ;; indentation of current item.  If that's the case,
-	     ;; compute it with the help of `:structure' property from
-	     ;; parent item, if any.
-	     (let ((item
-		    (if (eq (org-element-type element) 'item) element
-		      (cl-find-if (lambda (parent)
-				    (eq (org-element-type parent) 'item))
-				  genealogy))))
-	       (if (not item) 0
-		 ;; Compute indentation offset of the current item,
-		 ;; that is the sum of the difference between its
-		 ;; indentation and the indentation of the top item in
-		 ;; the list and current item bullet's length.  Also
-		 ;; remove checkbox length, and tag length (for
-		 ;; description lists) or bullet length.
-		 (let ((struct (org-element-property :structure item))
-		       (beg-item (org-element-property :begin item)))
-		   (+ (- (org-list-get-ind beg-item struct)
-			 (org-list-get-ind
-			  (org-list-get-top-point struct) struct))
-		      (string-width (or (org-ascii--checkbox item info)
-					""))
-		      (string-width
-		       (let ((tag (org-element-property :tag item)))
-			 (if tag (org-export-data tag info)
-			   (org-element-property :bullet item))))))))))))))
+          ;; Each `quote-block' and `verse-block' above narrows text
+          ;; width by twice the standard margin size.
+          (+ (* (cl-count-if (lambda (parent)
+                               (memq (org-element-type parent)
+                                     '(quote-block verse-block)))
+                             genealogy)
+                2
+                (plist-get info :ascii-quote-margin))
+             ;; Apply list margin once per "top-level" plain-list
+             ;; containing current line
+             (* (cl-count-if
+                 (lambda (e)
+                   (and (eq (org-element-type e) 'plain-list)
+                        (not (eq (org-element-type (org-export-get-parent e))
+                                 'item))))
+                 genealogy)
+                (plist-get info :ascii-list-margin))
+             ;; Compute indentation offset due to current list.  It is
+	     ;; `org-ascii-quote-margin' per descriptive item in the
+	     ;; genealogy, bullet's length otherwise.
+             (let ((indentation 0))
+               (dolist (e genealogy)
+                 (cond
+                  ((not (eq 'item (org-element-type e))))
+                  ((eq (org-element-property :type (org-export-get-parent e))
+                       'descriptive)
+                   (cl-incf indentation org-ascii-quote-margin))
+                  (t
+                   (cl-incf indentation
+                            (+ (string-width
+                                (or (org-ascii--checkbox e info) ""))
+                               (string-width
+                                (org-element-property :bullet e)))))))
+               indentation)))))))
 
 (defun org-ascii--current-justification (element)
   "Return expected justification for ELEMENT's contents.
@@ -1458,40 +1449,54 @@ contextual information."
 	 (bullet
 	  ;; First parent of ITEM is always the plain-list.  Get
 	  ;; `:type' property from it.
-	  (org-list-bullet-string
-	   (pcase list-type
-	     (`descriptive
-	      (concat checkbox
-		      (org-export-data (org-element-property :tag item) info)
-		      ": "))
-	     (`ordered
-	      ;; Return correct number for ITEM, paying attention to
-	      ;; counters.
-	      (let* ((struct (org-element-property :structure item))
-		     (bul (org-element-property :bullet item))
-		     (num (number-to-string
-			   (car (last (org-list-get-item-number
-				       (org-element-property :begin item)
-				       struct
-				       (org-list-prevs-alist struct)
-				       (org-list-parents-alist struct)))))))
-		(replace-regexp-in-string "[0-9]+" num bul)))
-	     (_ (let ((bul (org-element-property :bullet item)))
-		  ;; Change bullets into more visible form if UTF-8 is active.
-		  (if (not utf8p) bul
+	  (pcase list-type
+	    (`descriptive
+	     (concat checkbox
+		     (org-export-data (org-element-property :tag item)
+				      info)))
+	    (`ordered
+	     ;; Return correct number for ITEM, paying attention to
+	     ;; counters.
+	     (let* ((struct (org-element-property :structure item))
+		    (bul (org-list-bullet-string
+			  (org-element-property :bullet item)))
+		    (num (number-to-string
+			  (car (last (org-list-get-item-number
+				      (org-element-property :begin item)
+				      struct
+				      (org-list-prevs-alist struct)
+				      (org-list-parents-alist struct)))))))
+	       (replace-regexp-in-string "[0-9]+" num bul)))
+	    (_ (let ((bul (org-list-bullet-string
+			   (org-element-property :bullet item))))
+		 ;; Change bullets into more visible form if UTF-8 is active.
+		 (if (not utf8p) bul
+		   (replace-regexp-in-string
+		    "-" "•"
 		    (replace-regexp-in-string
-		     "-" "•"
-		     (replace-regexp-in-string
-		      "+" "⁃"
-		      (replace-regexp-in-string "*" "‣" bul))))))))))
+		     "+" "⁃"
+		     (replace-regexp-in-string "*" "‣" bul))))))))
+	 (indentation (if (eq list-type 'descriptive) org-ascii-quote-margin
+			(string-width bullet))))
     (concat
      bullet
-     (unless (eq list-type 'descriptive) checkbox)
+     checkbox
      ;; Contents: Pay attention to indentation.  Note: check-boxes are
      ;; already taken care of at the paragraph level so they don't
      ;; interfere with indentation.
-     (let ((contents (org-ascii--indent-string contents (string-width bullet))))
-       (if (eq (org-element-type (car (org-element-contents item))) 'paragraph)
+     (let ((contents (org-ascii--indent-string contents indentation)))
+       ;; Determine if contents should follow the bullet or start
+       ;; a new line.  Do the former when the first contributing
+       ;; element to contents is a paragraph.  In descriptive lists
+       ;; however, contents always start a new line.
+       (if (and (not (eq list-type 'descriptive))
+		(org-string-nw-p contents)
+		(eq 'paragraph
+		    (org-element-type
+		     (cl-some (lambda (e)
+				(and (org-string-nw-p (org-export-data e info))
+				     e))
+			      (org-element-contents item)))))
 	   (org-trim contents)
 	 (concat "\n" contents))))))
 

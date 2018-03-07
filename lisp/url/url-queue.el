@@ -1,6 +1,6 @@
 ;;; url-queue.el --- Fetching web pages in parallel   -*- lexical-binding: t -*-
 
-;; Copyright (C) 2011-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: comm
@@ -177,7 +177,7 @@ The variable `url-queue-timeout' sets a timeout."
   (with-current-buffer
       (if (and (bufferp (url-queue-buffer job))
 	       (buffer-live-p (url-queue-buffer job)))
-	  ;; Use the (partially filled) process buffer it it exists.
+	  ;; Use the (partially filled) process buffer if it exists.
 	  (url-queue-buffer job)
 	;; If not, just create a new buffer, which will probably be
 	;; killed again by the caller.

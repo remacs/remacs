@@ -1,13 +1,13 @@
 ;;; ps-samp.el --- ps-print sample setup code
 
-;; Copyright (C) 2007-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
 ;; Author: Jim Thompson (was <thompson@wg2.waii.com>)
 ;;	Jacques Duthen (was <duthen@cegelec-red.fr>)
-;;	Vinicius Jose Latorre <viniciusjl@ig.com.br>
+;;	Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;;	Kenichi Handa <handa@m17n.org> (multi-byte characters)
 ;; Maintainer: Kenichi Handa <handa@m17n.org> (multi-byte characters)
-;;	Vinicius Jose Latorre <viniciusjl@ig.com.br>
+;;	Vinicius Jose Latorre <viniciusjl.gnu@gmail.com>
 ;; Keywords: wp, print, PostScript
 ;; X-URL: http://www.emacswiki.org/cgi-bin/wiki/ViniciusJoseLatorre
 ;; Package: ps-print

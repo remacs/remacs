@@ -1,6 +1,6 @@
 /* Minibuffer input and completion.
 
-Copyright (C) 1985-1986, 1993-2017 Free Software Foundation, Inc.
+Copyright (C) 1985-1986, 1993-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -279,19 +279,6 @@ If the current buffer is not a minibuffer, return its entire contents.  */)
 {
   ptrdiff_t prompt_end = XINT (Fminibuffer_prompt_end ());
   return make_buffer_string (prompt_end, ZV, 0);
-}
-
-DEFUN ("minibuffer-completion-contents", Fminibuffer_completion_contents,
-       Sminibuffer_completion_contents, 0, 0, 0,
-       doc: /* Return the user input in a minibuffer before point as a string.
-That is what completion commands operate on.
-If the current buffer is not a minibuffer, return its entire contents.  */)
-  (void)
-{
-  ptrdiff_t prompt_end = XINT (Fminibuffer_prompt_end ());
-  if (PT < prompt_end)
-    error ("Cannot do completion in the prompt");
-  return make_buffer_string (prompt_end, PT, 1);
 }
 
 
@@ -1236,8 +1223,8 @@ is used to further constrain the set of candidates.  */)
 		error ("Bad data in guts of obarray");
 	      elt = bucket;
 	      eltstring = elt;
-	      if (XSYMBOL (bucket)->next)
-		XSETSYMBOL (bucket, XSYMBOL (bucket)->next);
+	      if (XSYMBOL (bucket)->u.s.next)
+		XSETSYMBOL (bucket, XSYMBOL (bucket)->u.s.next);
 	      else
 		XSETFASTINT (bucket, 0);
 	    }
@@ -1489,8 +1476,8 @@ with a space are ignored unless STRING itself starts with a space.  */)
 		error ("Bad data in guts of obarray");
 	      elt = bucket;
 	      eltstring = elt;
-	      if (XSYMBOL (bucket)->next)
-		XSETSYMBOL (bucket, XSYMBOL (bucket)->next);
+	      if (XSYMBOL (bucket)->u.s.next)
+		XSETSYMBOL (bucket, XSYMBOL (bucket)->u.s.next);
 	      else
 		XSETFASTINT (bucket, 0);
 	    }
@@ -1710,9 +1697,9 @@ the values STRING, PREDICATE and `lambda'.  */)
 			tem = tail;
 			break;
 		      }
-		    if (XSYMBOL (tail)->next == 0)
+		    if (XSYMBOL (tail)->u.s.next == 0)
 		      break;
-		    XSETSYMBOL (tail, XSYMBOL (tail)->next);
+		    XSETSYMBOL (tail, XSYMBOL (tail)->u.s.next);
 		  }
 	    }
 	}
@@ -1978,7 +1965,7 @@ controls the behavior, rather than this variable.  */);
   DEFVAR_BOOL ("enable-recursive-minibuffers", enable_recursive_minibuffers,
 	       doc: /* Non-nil means to allow minibuffer commands while in the minibuffer.
 This variable makes a difference whenever the minibuffer window is active.
-Also see `minibuffer-depth-indicator-mode', which may be handy if this
+Also see `minibuffer-depth-indicate-mode', which may be handy if this
 variable is non-nil. */);
   enable_recursive_minibuffers = 0;
 
@@ -2080,7 +2067,6 @@ characters.  This variable should never be set globally.  */);
   defsubr (&Sminibuffer_prompt_end);
   defsubr (&Sminibuffer_contents);
   defsubr (&Sminibuffer_contents_no_properties);
-  defsubr (&Sminibuffer_completion_contents);
 
   defsubr (&Stry_completion);
   defsubr (&Sall_completions);

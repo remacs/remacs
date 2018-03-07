@@ -1,6 +1,6 @@
 ;;; org-attach.el --- Manage file attachments to Org tasks -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@newartisans.com>
 ;; Keywords: org data task
@@ -507,7 +507,7 @@ This can be used after files have been added externally."
   (let ((attach-dir (org-attach-dir)))
     (when attach-dir
       (let ((files (org-attach-file-list attach-dir)))
-	(and files (org-attach-tag))
+	(org-attach-tag (not files))
 	(when org-attach-file-list-property
 	  (dolist (file files)
 	    (unless (string-match "^\\.\\.?\\'" file)

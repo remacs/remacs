@@ -1,6 +1,6 @@
 ;;; iswitchb.el --- switch between buffers using substrings
 
-;; Copyright (C) 1996-1997, 2000-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1997, 2000-2018 Free Software Foundation, Inc.
 
 ;; Author: Stephen Eglen <stephen@gnu.org>
 ;; Maintainer: Stephen Eglen <stephen@gnu.org>
@@ -1247,7 +1247,7 @@ Modified from `icomplete-completions'."
 
     (if (and iswitchb-use-faces comps)
 	(progn
-	  (setq first (car comps))
+	  (setq first (copy-sequence (car comps)))
 	  (setq first (format "%s" first))
 	  (put-text-property 0 (length first) 'face
 			     (if (= (length comps) 1)

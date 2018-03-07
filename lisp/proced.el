@@ -1,6 +1,6 @@
 ;;; proced.el --- operate on system processes like dired
 
-;; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
 
 ;; Author: Roland Winkler <winkler@gnu.org>
 ;; Keywords: Processes, Unix
@@ -604,7 +604,8 @@ Important: the match ends just after the marker.")
   "Return header line for Proced buffer."
   (list (propertize " "
                     'display
-                    (list 'space :align-to (+ 2 (line-number-display-width))))
+                    (list 'space :align-to
+                          (line-number-display-width 'columns)))
         (if (<= (window-hscroll) (length proced-header-line))
             (replace-regexp-in-string ;; preserve text properties
              "\\(%\\)" "\\1\\1"
@@ -1803,7 +1804,7 @@ supported but discouraged.  It will be removed in a future version of Emacs."
 
   (let (failures)
     ;; Why not always use `signal-process'?  See
-    ;; https://lists.gnu.org/archive/html/emacs-devel/2008-03/msg02955.html
+    ;; https://lists.gnu.org/r/emacs-devel/2008-03/msg02955.html
     (if (functionp proced-signal-function)
         ;; use built-in `signal-process'
         (let ((signal (if (stringp signal)

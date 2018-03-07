@@ -1,6 +1,6 @@
 ;;; dired.el --- directory-browsing commands -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985-1986, 1992-1997, 2000-2017 Free Software
+;; Copyright (C) 1985-1986, 1992-1997, 2000-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>
@@ -198,8 +198,10 @@ The target is used in the prompt for file copy, rename etc."
 
 ; These variables were deleted and the replacements are on files.el.
 ; We leave aliases behind for back-compatibility.
-(defvaralias 'dired-free-space-program 'directory-free-space-program)
-(defvaralias 'dired-free-space-args 'directory-free-space-args)
+(define-obsolete-variable-alias 'dired-free-space-program
+  'directory-free-space-program "27.1")
+(define-obsolete-variable-alias 'dired-free-space-args
+  'directory-free-space-args "27.1")
 
 ;;; Hook variables
 
@@ -643,7 +645,7 @@ marked file, return (t FILENAME) instead of (FILENAME)."
      ;; save-excursion loses, again
      (dired-move-to-filename)))
 
-(defun dired-get-marked-files (&optional localp arg filter distinguish-one-marked)
+(defun dired-get-marked-files (&optional localp arg filter distinguish-one-marked error)
   "Return the marked files' names as list of strings.
 The list is in the same order as the buffer, that is, the car is the
   first marked file.
@@ -660,7 +662,10 @@ Optional third argument FILTER, if non-nil, is a function to select
 
 If DISTINGUISH-ONE-MARKED is non-nil, then if we find just one marked file,
 return (t FILENAME) instead of (FILENAME).
-Don't use that together with FILTER."
+Don't use that together with FILTER.
+
+If ERROR is non-nil, signal an error when the list of found files is empty.
+ERROR can be a string with the error message."
   (let ((all-of-them
 	 (save-excursion
 	   (delq nil (dired-map-over-marks
@@ -670,13 +675,17 @@ Don't use that together with FILTER."
     (when (equal all-of-them '(t))
       (setq all-of-them nil))
     (if (not filter)
-	(if (and distinguish-one-marked (eq (car all-of-them) t))
-	    all-of-them
-	  (nreverse all-of-them))
+	(setq result
+              (if (and distinguish-one-marked (eq (car all-of-them) t))
+	          all-of-them
+	        (nreverse all-of-them)))
       (dolist (file all-of-them)
 	(if (funcall filter file)
-	    (push file result)))
-      result)))
+	    (push file result))))
+    (when (and (null result) error)
+      (user-error (if (stringp error) error "No files specified")))
+    result))
+
 
 ;; The dired command
 
@@ -1046,7 +1055,7 @@ wildcards, erases the buffer, and builds the subdir-alist anew
   ;; default-directory and dired-actual-switches must be buffer-local
   ;; and initialized by now.
   (let (dirname
-	;; This makes readin much much faster.
+	;; This makes read-in much faster.
 	;; In particular, it prevents the font lock hook from running
 	;; until the directory is all read in.
 	(inhibit-modification-hooks t))
@@ -2226,7 +2235,8 @@ directory in another window."
     (find-file (dired-get-file-for-visit))))
 
 (defun dired-find-alternate-file ()
-  "In Dired, visit this file or directory instead of the Dired buffer."
+  "In Dired, visit file or directory on current line via `find-alternate-file'.
+This kills the Dired buffer, then visits the current line's file or directory."
   (interactive)
   (set-buffer-modified-p nil)
   (find-alternate-file (dired-get-file-for-visit)))
@@ -2342,12 +2352,7 @@ Otherwise, an error occurs in these cases."
 		  (setq start (match-end 0))))))
 
           ;; Hence we don't need to worry about converting `\\' back to `\'.
-          (setq file (read (concat "\"" file "\"")))
-	  ;; The above `read' will return a unibyte string if FILE
-	  ;; contains eight-bit-control/graphic characters.
-	  (if (and enable-multibyte-characters
-		   (not (multibyte-string-p file)))
-	      (setq file (string-to-multibyte file)))))
+          (setq file (read (concat "\"" file "\"")))))
     (and file (files--name-absolute-system-p file)
 	 (setq already-absolute t))
     (cond
@@ -2994,37 +2999,6 @@ Any other value means to ask for each directory."
 ;; Match anything but `.' and `..'.
 (defvar dired-re-no-dot "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")
 
-(defconst dired-delete-help
-  "Type:
-`yes' to delete recursively the current directory,
-`no' to skip to next,
-`all' to delete all remaining directories with no more questions,
-`quit' to exit,
-`help' to show this help message.")
-
-(defun dired--yes-no-all-quit-help (prompt &optional help-msg)
-  "Ask a question with valid answers: yes, no, all, quit, help.
-PROMPT must end with '? ', for instance, 'Delete it? '.
-If optional arg HELP-MSG is non-nil, then is a message to show when
-the user answers 'help'.  Otherwise, default to `dired-delete-help'."
-  (let ((valid-answers (list "yes" "no" "all" "quit"))
-        (answer "")
-        (input-fn (lambda ()
-                    (read-string
-	             (format "%s [yes, no, all, quit, help] " prompt)))))
-    (setq answer (funcall input-fn))
-    (when (string= answer "help")
-      (with-help-window "*Help*"
-        (with-current-buffer "*Help*"
-          (insert (or help-msg dired-delete-help)))))
-    (while (not (member answer valid-answers))
-      (unless (string= answer "help")
-        (beep)
-        (message "Please answer `yes' or `no' or `all' or `quit'")
-        (sleep-for 2))
-      (setq answer (funcall input-fn)))
-    answer))
-
 ;; Delete file, possibly delete a directory and all its files.
 ;; This function is useful outside of dired.  One could change its name
 ;; to e.g. recursive-delete-file and put it somewhere else.
@@ -3054,11 +3028,17 @@ TRASH non-nil means to trash the file instead of deleting, provided
 				    "trash"
 				  "delete")
 				(dired-make-relative file))))
-                   (pcase (dired--yes-no-all-quit-help prompt) ; Prompt user.
+                   (pcase (read-answer
+                           prompt
+                           '(("yes"  ?y "delete recursively the current directory")
+                             ("no"   ?n "skip to next")
+                             ("all"  ?! "delete all remaining directories with no more questions")
+                             ("quit" ?q "exit")))
                      ('"all" (setq recursive 'always dired-recursive-deletes recursive))
                      ('"yes" (if (eq recursive 'top) (setq recursive 'always)))
                      ('"no" (setq recursive nil))
-                     ('"quit" (keyboard-quit)))))
+                     ('"quit" (keyboard-quit))
+                     (_ (keyboard-quit))))) ; catch all unknown answers
              (setq recursive nil)) ; Empty dir or recursive is nil.
            (delete-directory file recursive trash))))
 
@@ -3116,7 +3096,7 @@ non-empty directories is allowed."
 	 (dired-recursive-deletes dired-recursive-deletes)
 	 (trashing (and trash delete-by-moving-to-trash)))
     ;; canonicalize file list for pop up
-    (setq files (nreverse (mapcar #'dired-make-relative files)))
+    (setq files (mapcar #'dired-make-relative files))
     (if (dired-mark-pop-up
 	 " *Deletions*" 'delete files dired-deletion-confirmer
 	 (format "%s %s "
@@ -3143,7 +3123,7 @@ non-empty directories is allowed."
 		       #'dired-delete-entry fn))
                   (quit (throw '--delete-cancel (message "OK, canceled")))
 		  (error ;; catch errors from failed deletions
-		   (dired-log "%s\n" err)
+		   (dired-log "%s: %s\n" (car err) (error-message-string err))
 		   (setq failures (cons (car (car l)) failures)))))
 	      (setq l (cdr l)))
 	    (if (not failures)
@@ -3362,9 +3342,14 @@ argument or confirmation)."
   (save-excursion (not (dired-move-to-filename))))
 
 (defun dired-next-marked-file (arg &optional wrap opoint)
-  "Move to the next marked file.
-If WRAP is non-nil, wrap around to the beginning of the buffer if
-we reach the end."
+  "Move to the ARGth next marked file.
+ARG is the numeric prefix argument and defaults to 1.
+If WRAP is non-nil, which happens interactively, wrap around
+to the beginning of the buffer and search from there, if no
+marked file is found after this line.
+Optional argument OPOINT specifies the buffer position to
+return to if no ARGth marked file is found; it defaults to
+the position where this command was invoked."
   (interactive "p\np")
   (or opoint (setq opoint (point)));; return to where interactively started
   (if (if (> arg 0)
@@ -3381,9 +3366,11 @@ we reach the end."
       (dired-next-marked-file arg nil opoint))))
 
 (defun dired-prev-marked-file (arg &optional wrap)
-  "Move to the previous marked file.
-If WRAP is non-nil, wrap around to the end of the buffer if we
-reach the beginning of the buffer."
+  "Move to the ARGth previous marked file.
+ARG is the numeric prefix argument and defaults to 1.
+If WRAP is non-nil, which happens interactively, wrap around
+to the end of the buffer and search backwards from there, if
+no ARGth marked file is found before this line."
   (interactive "p\np")
   (dired-next-marked-file (- arg) wrap))
 

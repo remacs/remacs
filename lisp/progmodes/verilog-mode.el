@@ -1,6 +1,6 @@
 ;;; verilog-mode.el --- major mode for editing verilog source in Emacs
 
-;; Copyright (C) 1996-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2018 Free Software Foundation, Inc.
 
 ;; Author: Michael McNamara <mac@verilog.com>
 ;;    Wilson Snyder <wsnyder@wsnyder.org>
@@ -284,7 +284,7 @@ STRING should be given if the last search was by `string-match' on STRING."
 ;; This function is lifted directly from emacs's subr.el
 ;; so that it can be used by xemacs.
 ;; The idea for this was borrowed from org-mode via this link:
-;; https://lists.gnu.org/archive/html/emacs-orgmode/2009-12/msg00032.html
+;; https://lists.gnu.org/r/emacs-orgmode/2009-12/msg00032.html
 (eval-and-compile
   (cond
    ((fboundp 'looking-back)
@@ -764,14 +764,14 @@ mode is experimental."
   :version "24.1"  ; rev670
   :group 'verilog-mode-actions
   :type 'boolean)
-(put 'verilog-auto-declare-nettype 'safe-local-variable `stringp)
+(put 'verilog-auto-declare-nettype 'safe-local-variable 'stringp)
 
 (defcustom verilog-auto-wire-comment t
   "Non-nil indicates to insert to/from comments with `verilog-auto-wire' etc."
   :version "25.1"
   :group 'verilog-mode-actions
   :type 'boolean)
-(put 'verilog-auto-wire-comment 'safe-local-variable `verilog-booleanp)
+(put 'verilog-auto-wire-comment 'safe-local-variable 'verilog-booleanp)
 
 (defcustom verilog-auto-wire-type nil
   "Non-nil specifies the data type to use with `verilog-auto-wire' etc.
@@ -781,8 +781,8 @@ this is generally only appropriate when making a non-SystemVerilog wrapper
 containing SystemVerilog cells."
   :version "24.1"  ; rev673
   :group 'verilog-mode-actions
-  :type 'string)
-(put 'verilog-auto-wire-type 'safe-local-variable `stringp)
+  :type '(choice (const nil) string))
+(put 'verilog-auto-wire-type 'safe-local-variable 'stringp)
 
 (defcustom verilog-auto-endcomments t
   "Non-nil means insert a comment /* ... */ after `end's.
@@ -3958,8 +3958,8 @@ Key bindings specific to `verilog-mode-map' are:
   (when (boundp 'hs-special-modes-alist)
     (unless (assq 'verilog-mode hs-special-modes-alist)
       (setq hs-special-modes-alist
-	    (cons '(verilog-mode-mode  "\\<begin\\>" "\\<end\\>" nil
-				       verilog-forward-sexp-function)
+            (cons '(verilog-mode "\\<begin\\>" "\\<end\\>" nil
+                                 verilog-forward-sexp-function)
 		  hs-special-modes-alist))))
 
   (add-hook 'completion-at-point-functions

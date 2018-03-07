@@ -1,6 +1,6 @@
 ;;; ob-lob.el --- Functions Supporting the Library of Babel -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2009-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
 
 ;; Authors: Eric Schulte
 ;;	 Dan Davison
@@ -53,11 +53,15 @@ should not be inherited from a source block.")
       (let* ((info (org-babel-get-src-block-info 'light))
 	     (source-name (nth 4 info)))
 	(when source-name
-	  (setq source-name (intern source-name)
-		org-babel-library-of-babel
-		(cons (cons source-name info)
-		      (assq-delete-all source-name org-babel-library-of-babel))
-		lob-ingest-count (1+ lob-ingest-count)))))
+	  (setf (nth 1 info)
+		(if (org-babel-noweb-p (nth 2 info) :eval)
+		    (org-babel-expand-noweb-references info)
+		  (nth 1 info)))
+	  (let ((source (intern source-name)))
+	    (setq org-babel-library-of-babel
+		  (cons (cons source info)
+			(assq-delete-all source org-babel-library-of-babel))))
+	  (cl-incf lob-ingest-count))))
     (message "%d src block%s added to Library of Babel"
 	     lob-ingest-count (if (> lob-ingest-count 1) "s" ""))
     lob-ingest-count))

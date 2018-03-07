@@ -1,6 +1,6 @@
 ;;; gdb-mi.el --- User Interface for running GDB  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2007-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2018 Free Software Foundation, Inc.
 
 ;; Author: Nick Roberts <nickrob@gnu.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -400,14 +400,22 @@ valid signal handlers.")
           (const   :tag "Unlimited" nil))
   :version "22.1")
 
-(defcustom gdb-non-stop-setting t
-  "When in non-stop mode, stopped threads can be examined while
+(defcustom gdb-non-stop-setting (not (eq system-type 'windows-nt))
+  "If non-nil, GDB sessions are expected to support the non-stop mode.
+When in the non-stop mode, stopped threads can be examined while
 other threads continue to execute.
+
+If this is non-nil, GDB will be sent the \"set non-stop 1\" command,
+and if that results in an error, the non-stop setting will be
+turned off automatically.
+
+On MS-Windows, this is off by default, because MS-Windows targets
+don't support the non-stop mode.
 
 GDB session needs to be restarted for this setting to take effect."
   :type 'boolean
   :group 'gdb-non-stop
-  :version "23.2")
+  :version "26.1")
 
 ;; TODO Some commands can't be called with --all (give a notice about
 ;; it in setting doc)
@@ -784,7 +792,7 @@ detailed description of this mode.
   (gud-def gud-tbreak "tbreak %f:%l" "\C-t"
 	   "Set temporary breakpoint at current line.")
   (gud-def gud-jump
-	   (progn (gud-call "tbreak %f:%l") (gud-call "jump %f:%l"))
+	   (progn (gud-call "tbreak %f:%l" arg) (gud-call "jump %f:%l"))
 	   "\C-j" "Set execution address to current line.")
 
   (gud-def gud-up     "up %p"     "<" "Up N stack frames (numeric arg).")
@@ -2188,7 +2196,10 @@ a GDB/MI reply message."
 
 (defun gdbmi-bnf-console-stream-output (c-string)
   "Handler for the console-stream-output GDB/MI output grammar rule."
-  (gdb-console c-string))
+  (gdb-console c-string)
+  ;; We've written to the GUD console, so we should print the prompt
+  ;; after the next result-class or async-class.
+  (setq gdb-first-done-or-error t))
 
 (defun gdbmi-bnf-target-stream-output (_c-string)
   "Handler for the target-stream-output GDB/MI output grammar rule."
@@ -2374,7 +2385,7 @@ file names include non-ASCII characters."
 ;; sequences are not split between chunks of output of the GDB process
 ;; due to buffering, and arrive together.  Finally, if some string
 ;; included literal \nnn strings (as opposed to non-ASCII characters
-;; converted by by GDB/MI to octal escapes), this decoding will mangle
+;; converted by GDB/MI to octal escapes), this decoding will mangle
 ;; those strings.  When/if GDB acquires the ability to not
 ;; escape-protect non-ASCII characters in its MI output, this kludge
 ;; should be removed.
@@ -2706,10 +2717,10 @@ If `default-directory' is remote, full file names are adapted accordingly."
               (insert "]"))))))
     (goto-char (point-min))
     (insert "{")
-    (let ((re (concat "\\([[:alnum:]-_]+\\)=\\({\\|\\[\\|\"\"\\|"
-                      gdb--string-regexp "\\)")))
+    (let ((re (concat "\\([[:alnum:]-_]+\\)=")))
       (while (re-search-forward re nil t)
-        (replace-match "\"\\1\":\\2" nil nil)))
+        (replace-match "\"\\1\":" nil nil)
+        (if (eq (char-after) ?\") (forward-sexp) (forward-char))))
     (goto-char (point-max))
     (insert "}")))
 

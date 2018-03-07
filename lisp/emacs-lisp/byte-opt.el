@@ -1,6 +1,6 @@
 ;;; byte-opt.el --- the optimization passes of the emacs-lisp byte compiler -*- lexical-binding: t -*-
 
-;; Copyright (C) 1991, 1994, 2000-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1991, 1994, 2000-2018 Free Software Foundation, Inc.
 
 ;; Author: Jamie Zawinski <jwz@lucid.com>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
@@ -1281,7 +1281,10 @@
 ;; errors to compile time.
 
 (let ((pure-fns
-       '(concat symbol-name regexp-opt regexp-quote string-to-syntax)))
+       '(concat symbol-name regexp-opt regexp-quote string-to-syntax
+         string-to-char
+         ash lsh logb lognot logior logxor
+         ceiling floor)))
   (while pure-fns
     (put (car pure-fns) 'pure t)
     (setq pure-fns (cdr pure-fns)))
@@ -1399,7 +1402,7 @@
 	     (setq offset (- offset #x80)))
             ((eq bytedecomp-op 'byte-switch)
              (cl-assert (hash-table-p last-constant) nil
-                        "byte-switch used without preceeding hash table")
+                        "byte-switch used without preceding hash table")
              ;; We cannot use the original hash table referenced in the op,
              ;; so we create a copy of it, and replace the addresses with
              ;; TAGs.

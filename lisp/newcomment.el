@@ -1,6 +1,6 @@
 ;;; newcomment.el --- (un)comment regions of buffers -*- lexical-binding: t -*-
 
-;; Copyright (C) 1999-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
 
 ;; Author: code extracted from Emacs-20's simple.el
 ;; Maintainer: Stefan Monnier <monnier@iro.umontreal.ca>
@@ -68,6 +68,9 @@
 ;;   one used on the preceding line(s).
 
 ;;; Code:
+
+(eval-when-compile
+  (require 'subr-x))
 
 ;;;###autoload
 (defalias 'indent-for-comment 'comment-indent)
@@ -524,7 +527,7 @@ Ensure that `comment-normalize-vars' has been called before you use this."
   ;; comment-search-backward is only used to find the comment-column (in
   ;; comment-set-column) and to find the comment-start string (via
   ;; comment-beginning) in indent-new-comment-line, it should be harmless.
-  (if (not (re-search-backward comment-start-skip limit t))
+  (if (not (re-search-backward comment-start-skip limit 'move))
       (unless noerror (error "No comment"))
     (beginning-of-line)
     (let* ((end (match-end 0))
@@ -1141,6 +1144,9 @@ the region rather than at left margin."
 
 	  ;; make the leading and trailing lines if requested
 	  (when lines
+            ;; Trim trailing whitespace from cs if there's some.
+            (setq cs (string-trim-right cs))
+
 	    (let ((csce
 		   (comment-make-extra-lines
 		    cs ce ccs cce min-indent max-indent block)))
@@ -1211,7 +1217,7 @@ changed with `comment-style'."
 	   (progn (goto-char end) (end-of-line) (skip-syntax-backward " ")
 		  (<= (point) end))
 	   (or block (not (string= "" comment-end)))
-	   (or block (progn (goto-char beg) (search-forward "\n" end t)))))
+           (or block (progn (goto-char beg) (re-search-forward "$" end t)))))
 
     ;; don't add end-markers just because the user asked for `block'
     (unless (or lines (string= "" comment-end)) (setq block nil))

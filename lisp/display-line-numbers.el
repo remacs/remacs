@@ -1,6 +1,6 @@
 ;;; display-line-numbers.el --- interface for display-line-numbers -*- lexical-binding: t -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2017-2018 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: convenience
@@ -36,6 +36,7 @@
 
 (defgroup display-line-numbers nil
   "Display line numbers in the buffer."
+  :group 'convenience
   :group 'display)
 
 (defcustom display-line-numbers-type t

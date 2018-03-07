@@ -1,6 +1,6 @@
 /* X Communication module for terminals which understand the X protocol.
 
-Copyright (C) 1989, 1993-2017 Free Software Foundation, Inc.
+Copyright (C) 1989, 1993-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -231,7 +231,7 @@ static void x_sync_with_move (struct frame *, int, int, bool);
 static int handle_one_xevent (struct x_display_info *,
 			      const XEvent *, int *,
 			      struct input_event *);
-#if ! (defined USE_X_TOOLKIT || defined USE_MOTIF)
+#if ! (defined USE_X_TOOLKIT || defined USE_MOTIF) && defined USE_GTK
 static int x_dispatch_event (XEvent *, Display *);
 #endif
 static void x_wm_set_window_state (struct frame *, int);
@@ -996,8 +996,7 @@ static void
 x_update_begin (struct frame *f)
 {
 #ifdef USE_CAIRO
-  if (! NILP (tip_frame) && XFRAME (tip_frame) == f
-      && ! FRAME_VISIBLE_P (f))
+  if (FRAME_TOOLTIP_P (f) && !FRAME_VISIBLE_P (f))
     return;
 
   if (! FRAME_CR_SURFACE (f))
@@ -1100,8 +1099,9 @@ x_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
 			      : FRAME_FOREGROUND_PIXEL (f));
   Display *display = FRAME_X_DISPLAY (f);
 
-  if (y1 - y0 > x1 - x0 && x1 - x0 > 2)
-    /* Vertical.  */
+  if ((y1 - y0 > x1 - x0) && (x1 - x0 >= 3))
+    /* A vertical divider, at least three pixels wide: Draw first and
+       last pixels differently.  */
     {
       XSetForeground (display, f->output_data.x->normal_gc, color_first);
       x_fill_rectangle (f, f->output_data.x->normal_gc,
@@ -1113,8 +1113,9 @@ x_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
       x_fill_rectangle (f, f->output_data.x->normal_gc,
 			x1 - 1, y0, 1, y1 - y0);
     }
-  else if (x1 - x0 > y1 - y0 && y1 - y0 > 3)
-    /* Horizontal.  */
+  else if ((x1 - x0 > y1 - y0) && (y1 - y0 >= 3))
+    /* A horizontal divider, at least three pixels high: Draw first and
+       last pixels differently.  */
     {
       XSetForeground (display, f->output_data.x->normal_gc, color_first);
       x_fill_rectangle (f, f->output_data.x->normal_gc,
@@ -1128,6 +1129,8 @@ x_draw_window_divider (struct window *w, int x0, int x1, int y0, int y1)
     }
   else
     {
+    /* In any other case do not draw the first and last pixels
+       differently.  */
       XSetForeground (display, f->output_data.x->normal_gc, color);
       x_fill_rectangle (f, f->output_data.x->normal_gc,
 			x0, y0, x1 - x0, y1 - y0);
@@ -3509,13 +3512,13 @@ x_draw_underwave (struct glyph_string *s)
 
   x_get_scale_factor (s->display, &scale_x, &scale_y);
 
-  int wave_height = 3 * scale_y, wave_length = 2 * scale_x, thickness = scale_y;
+  int wave_height = 3 * scale_y, wave_length = 2 * scale_x;
 
 #ifdef USE_CAIRO
   x_draw_horizontal_wave (s->f, s->gc, s->x, s->ybase - wave_height + 3,
 			  s->width, wave_height, wave_length);
 #else  /* not USE_CAIRO */
-  int dx, dy, x0, y0, width, x1, y1, x2, y2, xmax;
+  int dx, dy, x0, y0, width, x1, y1, x2, y2, xmax, thickness = scale_y;;
   bool odd;
   XRectangle wave_clip, string_clip, final_clip;
 
@@ -3870,7 +3873,7 @@ static void
 x_shift_glyphs_for_insert (struct frame *f, int x, int y, int width, int height, int shift_by)
 {
 /* Never called on a GUI frame, see
-   https://lists.gnu.org/archive/html/emacs-devel/2015-05/msg00456.html
+   https://lists.gnu.org/r/emacs-devel/2015-05/msg00456.html
 */
   XCopyArea (FRAME_X_DISPLAY (f), FRAME_X_DRAWABLE (f), FRAME_X_DRAWABLE (f),
 	     f->output_data.x->normal_gc,
@@ -8083,7 +8086,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       /* Redo the mouse-highlight after the tooltip has gone.  */
       if (event->xunmap.window == tip_window)
         {
-          tip_window = 0;
+          tip_window = None;
           x_redo_mouse_highlight (dpyinfo);
         }
 
@@ -8725,7 +8728,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 
 #ifdef USE_X_TOOLKIT
           /* Tip frames are pure X window, set size for them.  */
-          if (! NILP (tip_frame) && XFRAME (tip_frame) == f)
+          if (FRAME_TOOLTIP_P (f))
             {
               if (FRAME_PIXEL_HEIGHT (f) != configureEvent.xconfigure.height
                   || FRAME_PIXEL_WIDTH (f) != configureEvent.xconfigure.width)
@@ -9043,6 +9046,8 @@ handle_one_xevent (struct x_display_info *dpyinfo,
   return count;
 }
 
+#if defined USE_X_TOOLKIT || defined USE_MOTIF || defined USE_GTK
+
 /* Handles the XEvent EVENT on display DISPLAY.
    This is used for event loops outside the normal event handling,
    i.e. looping while a popup menu or a dialog is posted.
@@ -9061,6 +9066,7 @@ x_dispatch_event (XEvent *event, Display *display)
 
   return finish;
 }
+#endif
 
 /* Read events coming from the X server.
    Return as soon as there are no more events to be read.
@@ -9960,7 +9966,7 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
       /* Don't change the size of a tip frame; there's no point in
 	 doing it because it's done in Fx_show_tip, and it leads to
 	 problems because the tip frame has no widget.  */
-      if (NILP (tip_frame) || XFRAME (tip_frame) != f)
+      if (!FRAME_TOOLTIP_P (f))
 	{
 	  adjust_frame_size (f, FRAME_COLS (f) * FRAME_COLUMN_WIDTH (f),
 			     FRAME_LINES (f) * FRAME_LINE_HEIGHT (f), 3,
@@ -10295,6 +10301,9 @@ void
 x_set_offset (struct frame *f, register int xoff, register int yoff, int change_gravity)
 {
   int modified_top, modified_left;
+#ifdef USE_GTK
+  int scale = xg_get_scale (f);
+#endif
 
   if (change_gravity > 0)
     {
@@ -10317,11 +10326,12 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
   if (x_gtk_use_window_move)
     {
       /* When a position change was requested and the outer GTK widget
-	 has been realized already, leave it to gtk_window_move to DTRT
-	 and return.  Used for Bug#25851 and Bug#25943.  */
+	 has been realized already, leave it to gtk_window_move to
+	 DTRT and return.  Used for Bug#25851 and Bug#25943.  Convert
+	 from X pixels to GTK scaled pixels.  */
       if (change_gravity != 0 && FRAME_GTK_OUTER_WIDGET (f))
 	gtk_window_move (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
-			 f->left_pos, f->top_pos);
+			 f->left_pos / scale, f->top_pos / scale);
       unblock_input ();
       return;
     }
@@ -10340,8 +10350,9 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
     }
 
 #ifdef USE_GTK
+  /* Make sure we adjust for possible scaling.  */
   gtk_window_move (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
-		   modified_left, modified_top);
+		   modified_left / scale, modified_top / scale);
 #else
   XMoveWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
 	       modified_left, modified_top);
@@ -11189,7 +11200,7 @@ x_set_window_size (struct frame *f, bool change_gravity,
   /* The following breaks our calculations.  If it's really needed,
      think of something else.  */
 #if false
-  if (NILP (tip_frame) || XFRAME (tip_frame) != f)
+  if (!FRAME_TOOLTIP_P (f))
     {
       int text_width, text_height;
 
@@ -11504,6 +11515,22 @@ x_make_frame_visible (struct frame *f)
 
     /* Try to wait for a MapNotify event (that is what tells us when a
        frame becomes visible).  */
+
+#ifdef CYGWIN
+    /* On Cygwin, which uses input polling, we need to force input to
+       be read.  See
+       https://lists.gnu.org/r/emacs-devel/2013-12/msg00351.html
+       and https://debbugs.gnu.org/cgi/bugreport.cgi?bug=24091#131.
+       Fake an alarm signal to let the handler know that there's
+       something to be read.
+
+       It could be confusing if a real alarm arrives while processing
+       the fake one.  Turn it off and let the handler reset it.  */
+    int old_poll_suppress_count = poll_suppress_count;
+    poll_suppress_count = 1;
+    poll_for_input_1 ();
+    poll_suppress_count = old_poll_suppress_count;
+#endif
     x_wait_for_event (f, MapNotify);
   }
 }
@@ -12114,6 +12141,8 @@ same_x_server (const char *name1, const char *name2)
 {
   bool seen_colon = false;
   Lisp_Object sysname = Fsystem_name ();
+  if (! STRINGP (sysname))
+    sysname = empty_unibyte_string;
   const char *system_name = SSDATA (sysname);
   ptrdiff_t system_name_length = SBYTES (sysname);
   ptrdiff_t length_until_period = 0;
@@ -12488,7 +12517,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
       {
 	terminal->kboard = allocate_kboard (Qx);
 
-	if (!EQ (XSYMBOL (Qvendor_specific_keysyms)->function, Qunbound))
+	if (!EQ (XSYMBOL (Qvendor_specific_keysyms)->u.s.function, Qunbound))
 	  {
 	    char *vendor = ServerVendor (dpy);
 
@@ -12524,7 +12553,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   dpyinfo->xcb_connection = xcb_conn;
 #endif
 
-  /* https://lists.gnu.org/archive/html/emacs-devel/2015-11/msg00194.html  */
+  /* https://lists.gnu.org/r/emacs-devel/2015-11/msg00194.html  */
   dpyinfo->smallest_font_height = 1;
   dpyinfo->smallest_char_width = 1;
 
@@ -12536,15 +12565,19 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
 #endif
 
   Lisp_Object system_name = Fsystem_name ();
-  ptrdiff_t nbytes;
-  if (INT_ADD_WRAPV (SBYTES (Vinvocation_name), SBYTES (system_name) + 2,
-		     &nbytes))
+
+  ptrdiff_t nbytes = SBYTES (Vinvocation_name) + 1;
+  if (STRINGP (system_name)
+      && INT_ADD_WRAPV (nbytes, SBYTES (system_name) + 1, &nbytes))
     memory_full (SIZE_MAX);
   dpyinfo->x_id = ++x_display_id;
   dpyinfo->x_id_name = xmalloc (nbytes);
   char *nametail = lispstpcpy (dpyinfo->x_id_name, Vinvocation_name);
-  *nametail++ = '@';
-  lispstpcpy (nametail, system_name);
+  if (STRINGP (system_name))
+    {
+      *nametail++ = '@';
+      lispstpcpy (nametail, system_name);
+    }
 
   /* Figure out which modifier bits mean what.  */
   x_find_modifier_meanings (dpyinfo);
@@ -13209,15 +13242,16 @@ syms_of_xterm (void)
 	       x_use_underline_position_properties,
      doc: /* Non-nil means make use of UNDERLINE_POSITION font properties.
 A value of nil means ignore them.  If you encounter fonts with bogus
-UNDERLINE_POSITION font properties, for example 7x13 on XFree prior
-to 4.1, set this to nil.  You can also use `underline-minimum-offset'
-to override the font's UNDERLINE_POSITION for small font display
-sizes.  */);
+UNDERLINE_POSITION font properties, set this to nil.  You can also use
+`underline-minimum-offset' to override the font's UNDERLINE_POSITION for
+small font display sizes.  */);
   x_use_underline_position_properties = true;
 
   DEFVAR_BOOL ("x-underline-at-descent-line",
 	       x_underline_at_descent_line,
      doc: /* Non-nil means to draw the underline at the same place as the descent line.
+(If `line-spacing' is in effect, that moves the underline lower by
+that many pixels.)
 A value of nil means to draw the underline according to the value of the
 variable `x-use-underline-position-properties', which is usually at the
 baseline level.  The default value is nil.  */);

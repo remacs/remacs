@@ -1,6 +1,6 @@
 ;;; electric.el --- window maker and Command loop for `electric' modes
 
-;; Copyright (C) 1985-1986, 1995, 2001-2017 Free Software Foundation,
+;; Copyright (C) 1985-1986, 1995, 2001-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Author: K. Shane Hartman
@@ -227,7 +227,7 @@ Python does not lend itself to fully automatic indentation.")
     haskell-indentation-indent-line haskell-indent-cycle haskell-simple-indent
     yaml-indent-line)
   "List of indent functions that can't reindent.
-If `line-indent-function' is one of those, then `electric-indent-mode' will
+If `indent-line-function' is one of those, then `electric-indent-mode' will
 not try to reindent lines.  It is normally better to make the major
 mode set `electric-indent-inhibit', but this can be used as a workaround.")
 
@@ -451,6 +451,14 @@ whitespace, opening parenthesis, or quote and leaves \\=` alone."
   :version "26.1"
   :type 'boolean :safe #'booleanp :group 'electricity)
 
+(defcustom electric-quote-replace-double nil
+  "Non-nil means to replace \" with an electric double quote.
+Emacs replaces \" with an opening double quote after a line
+break, whitespace, opening parenthesis, or quote, and with a
+closing double quote otherwise."
+  :version "26.1"
+  :type 'boolean :safe #'booleanp :group 'electricity)
+
 (defvar electric-quote-inhibit-functions ()
   "List of functions that should inhibit electric quoting.
 When the variable `electric-quote-mode' is non-nil, Emacs will
@@ -461,13 +469,17 @@ substitution is inhibited.  The functions are called after the
 after the inserted character.  The functions in this hook should
 not move point or change the current buffer.")
 
+(defvar electric-pair-text-pairs)
+
 (defun electric-quote-post-self-insert-function ()
   "Function that `electric-quote-mode' adds to `post-self-insert-hook'.
 This requotes when a quoting key is typed."
   (when (and electric-quote-mode
              (or (eq last-command-event ?\')
                  (and (not electric-quote-context-sensitive)
-                      (eq last-command-event ?\`)))
+                      (eq last-command-event ?\`))
+                 (and electric-quote-replace-double
+                      (eq last-command-event ?\")))
              (not (run-hook-with-args-until-success
                    'electric-quote-inhibit-functions))
              (if (derived-mode-p 'text-mode)
@@ -488,9 +500,12 @@ This requotes when a quoting key is typed."
        (save-excursion
          (let ((backtick ?\`))
            (if (or (eq last-command-event ?\`)
-                   (and electric-quote-context-sensitive
+                   (and (or electric-quote-context-sensitive
+                            (and electric-quote-replace-double
+                                 (eq last-command-event ?\")))
                         (save-excursion
                           (backward-char)
+                          (skip-syntax-backward "\\")
                           (or (bobp) (bolp)
                               (memq (char-before) (list q< q<<))
                               (memq (char-syntax (char-before))
@@ -506,13 +521,19 @@ This requotes when a quoting key is typed."
                       (setq last-command-event q<<))
                      ((search-backward (string backtick) (1- (point)) t)
                       (replace-match (string q<))
-                      (setq last-command-event q<)))
+                      (setq last-command-event q<))
+                     ((search-backward "\"" (1- (point)) t)
+                      (replace-match (string q<<))
+                      (setq last-command-event q<<)))
              (cond ((search-backward (string q> ?') (- (point) 2) t)
                     (replace-match (string q>>))
                     (setq last-command-event q>>))
                    ((search-backward "'" (1- (point)) t)
                     (replace-match (string q>))
-                    (setq last-command-event q>))))))))))
+                    (setq last-command-event q>))
+                   ((search-backward "\"" (1- (point)) t)
+                    (replace-match (string q>>))
+                    (setq last-command-event q>>))))))))))
 
 (put 'electric-quote-post-self-insert-function 'priority 10)
 

@@ -1,6 +1,6 @@
 /* Interface definitions for termcap entries.
 
-Copyright (C) 2011-2017 Free Software Foundation, Inc.
+Copyright (C) 2011-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -37,7 +37,8 @@ extern char *BC;
 extern char *UP;
 
 #ifdef TERMINFO
-char *tigetstr(const char *);
+int tigetflag (const char *);
+char *tigetstr (const char *);
 #endif
 
 #endif /* EMACS_TPARAM_H */

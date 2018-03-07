@@ -1,6 +1,6 @@
 ;;; man.el --- browse UNIX manual pages -*- lexical-binding: t -*-
 
-;; Copyright (C) 1993-1994, 1996-1997, 2001-2017 Free Software
+;; Copyright (C) 1993-1994, 1996-1997, 2001-2018 Free Software
 ;; Foundation, Inc.
 
 ;; Author: Barry A. Warsaw <bwarsaw@cen.com>
@@ -267,6 +267,16 @@ Used in `bookmark-set' to get the default bookmark name."
   "Program used by `man' to process awk scripts."
   :type 'string
   :group 'man)
+
+;; This is for people who have UTF-8 encoded man pages in non-UTF-8
+;; locales, or who use Cygwin 'man' command from a native MS-Windows
+;; build of Emacs.
+(defcustom Man-coding-system nil
+  "Coding-system to decode output from the commands run by `man'.
+If this is nil, `man' will use `locale-coding-system'."
+  :type 'coding-system
+  :group 'man
+  :version "26.1")
 
 (defcustom Man-mode-hook nil
   "Hook run when Man mode is enabled."
@@ -1003,7 +1013,10 @@ names or descriptions.  The pattern argument is usually an
 	(coding-system-for-write 'raw-text-unix)
 	;; We must decode the output by a coding system that the
 	;; system's locale suggests in multibyte mode.
-	(coding-system-for-read locale-coding-system)
+	(coding-system-for-read
+         (or coding-system-for-read  ; allow overriding with "C-x RET c"
+             Man-coding-system
+             locale-coding-system))
 	;; Avoid possible error by using a directory that always exists.
 	(default-directory
 	  (if (and (file-directory-p default-directory)
@@ -1513,16 +1526,17 @@ The following key bindings are currently in effect in the buffer:
   (set (make-local-variable 'bookmark-make-record-function)
        'Man-bookmark-make-record))
 
-(defsubst Man-build-section-alist ()
+(defun Man-build-section-list ()
   "Build the list of manpage sections."
-  (setq Man--sections nil)
+  (setq Man--sections ())
   (goto-char (point-min))
   (let ((case-fold-search nil))
-    (while (re-search-forward Man-heading-regexp (point-max) t)
+    (while (re-search-forward Man-heading-regexp nil t)
       (let ((section (match-string 1)))
         (unless (member section Man--sections)
           (push section Man--sections)))
-      (forward-line 1))))
+      (forward-line)))
+  (setq Man--sections (nreverse Man--sections)))
 
 (defsubst Man-build-references-alist ()
   "Build the list of references (in the SEE ALSO section)."
@@ -1802,7 +1816,7 @@ Specify which REFERENCE to use; default is based on word at point."
       (widen)
       (goto-char page-start)
       (narrow-to-region page-start page-end)
-      (Man-build-section-alist)
+      (Man-build-section-list)
       (Man-build-references-alist)
       (goto-char (point-min)))))
 

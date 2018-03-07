@@ -1,6 +1,6 @@
 ;;; generator-tests.el --- Testing generators -*- lexical-binding: t -*-
 
-;; Copyright (C) 2015-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
 
 ;; Author: Daniel Colascione <dancol@dancol.org>
 ;; Keywords:
@@ -282,3 +282,23 @@ identical output.
 (ert-deftest cps-test-declarations-preserved ()
   (should (equal (documentation 'generator-with-docstring) "Documentation!"))
   (should (equal (get 'generator-with-docstring 'lisp-indent-function) 5)))
+
+(ert-deftest cps-iter-lambda-with-dynamic-binding ()
+  "`iter-lambda' with dynamic binding produces correct result (bug#25965)."
+  (should (= 1
+             (iter-next
+              (funcall (iter-lambda ()
+                         (let* ((fill-column 10) ;;any special variable will do
+                                (i 0)
+                                (j (setq i (1+ i))))
+                           (iter-yield i))))))))
+
+(ert-deftest iter-lambda-variable-shadowing ()
+  "`iter-lambda' forms which have local variable shadowing (Bug#26073)."
+  (should (equal (iter-next
+                  (funcall (iter-lambda ()
+                             (let ((it 1))
+                               (iter-yield (funcall
+                                            (lambda (it) (- it))
+                                            (1+ it)))))))
+                 -2)))

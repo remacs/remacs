@@ -1,6 +1,6 @@
 ;;; semantic/db-find.el --- Searching through semantic databases.
 
-;; Copyright (C) 2000-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: tags
@@ -930,7 +930,7 @@ but should be good enough for debugging assertions."
 	    (length result))))
 
 (defun semanticdb-find-result-with-nil-p (resultp)
-  "Non-nil of RESULTP is in the form of a semanticdb search result.
+  "Non-nil if RESULTP is in the form of a semanticdb search result.
 The value nil is valid where a TABLE usually is, but only if the TAG
 results include overlays.
 This query only really tests the first entry in the list that is RESULTP,

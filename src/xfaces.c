@@ -1,6 +1,6 @@
 /* xfaces.c -- "Face" primitives.
 
-Copyright (C) 1993-1994, 1998-2017 Free Software Foundation, Inc.
+Copyright (C) 1993-1994, 1998-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -4475,6 +4475,7 @@ lookup_basic_face (struct frame *f, int face_id)
     case MOUSE_FACE_ID:			name = Qmouse;			break;
     case MENU_FACE_ID:			name = Qmenu;			break;
     case WINDOW_DIVIDER_FACE_ID:	name = Qwindow_divider;		break;
+    case VERTICAL_BORDER_FACE_ID: 	name = Qvertical_border; 	break;
     case WINDOW_DIVIDER_FIRST_PIXEL_FACE_ID:	name = Qwindow_divider_first_pixel;	break;
     case WINDOW_DIVIDER_LAST_PIXEL_FACE_ID:	name = Qwindow_divider_last_pixel;	break;
     case INTERNAL_BORDER_FACE_ID:	name = Qinternal_border; 	break;
@@ -6482,7 +6483,12 @@ other font of the appropriate family and registry is available.  */);
 	       doc: /* List of ignored fonts.
 Each element is a regular expression that matches names of fonts to
 ignore.  */);
+#ifdef HAVE_OTF_KANNADA_BUG
+  /* https://debbugs.gnu.org/30193  */
+  Vface_ignored_fonts = list1 (build_string ("Noto Serif Kannada"));
+#else
   Vface_ignored_fonts = Qnil;
+#endif
 
   DEFVAR_LISP ("face-remapping-alist", Vface_remapping_alist,
 	       doc: /* Alist of face remappings.

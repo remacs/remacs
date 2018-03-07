@@ -1,6 +1,6 @@
 ;;; ls-lisp.el --- emulate insert-directory completely in Emacs Lisp  -*- lexical-binding: t -*-
 
-;; Copyright (C) 1992, 1994, 2000-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1992, 1994, 2000-2018 Free Software Foundation, Inc.
 
 ;; Author: Sebastian Kremer <sk@thp.uni-koeln.de>
 ;; Modified by: Francis J. Wright <F.J.Wright@maths.qmw.ac.uk>
@@ -567,6 +567,8 @@ Responds to the window width as ls should but may not!"
       (setq list (cdr list)))
     result))
 
+(defvar w32-collate-ignore-punctuation) ; Declare for non-w32 builds.
+
 (defsubst ls-lisp-string-lessp (s1 s2)
   "Return t if string S1 should sort before string S2.
 Case is significant if `ls-lisp-ignore-case' is nil.
@@ -711,23 +713,26 @@ SWITCHES is a list of characters.  Default sorting is alphabetic."
 (defun ls-lisp-classify-file (filename fattr)
   "Append a character to FILENAME indicating the file type.
 
+This function puts the `dired-filename' property on FILENAME, but
+not on the character indicator it appends.
 FATTR is the file attributes returned by `file-attributes' for the file.
 The file type indicators are `/' for directories, `@' for symbolic
 links, `|' for FIFOs, `=' for sockets, `*' for regular files that
 are executable, and nothing for other types of files."
   (let* ((type (car fattr))
 	 (modestr (nth 8 fattr))
-	 (typestr (substring modestr 0 1)))
+	 (typestr (substring modestr 0 1))
+         (file-name (propertize filename 'dired-filename t)))
     (cond
      (type
-      (concat filename (if (eq type t) "/" "@")))
+      (concat file-name (if (eq type t) "/" "@")))
      ((string-match "x" modestr)
-      (concat filename "*"))
+      (concat file-name "*"))
      ((string= "p" typestr)
-      (concat filename "|"))
+      (concat file-name "|"))
      ((string= "s" typestr)
-      (concat filename "="))
-     (t filename))))
+      (concat file-name "="))
+     (t file-name))))
 
 (defun ls-lisp-classify (filedata)
   "Append a character to file name in FILEDATA indicating the file type.
@@ -740,7 +745,6 @@ links, `|' for FIFOs, `=' for sockets, `*' for regular files that
 are executable, and nothing for other types of files."
   (let ((file-name (car filedata))
         (fattr (cdr filedata)))
-    (setq file-name (propertize file-name 'dired-filename t))
     (cons (ls-lisp-classify-file file-name fattr) fattr)))
 
 (defun ls-lisp-extension (filename)
@@ -839,7 +843,7 @@ SWITCHES and TIME-INDEX give the full switch list and time data."
 	    " "
 	    (ls-lisp-format-time file-attr time-index)
 	    " "
-	    (if (not (memq ?F switches)) ; ls-lisp-classify already did that
+	    (if (not (memq ?F switches)) ; ls-lisp-classify-file already did that
 		(propertize file-name 'dired-filename t)
 	      file-name)
 	    (if (stringp file-type)	; is a symbolic link
@@ -861,7 +865,7 @@ Use the same method as ls to decide whether to show time-of-day or year,
 depending on distance between file date and the current time.
 All ls time options, namely c, t and u, are handled."
   (let* ((time (nth (or time-index 5) file-attr)) ; default is last modtime
-	 (diff (- (float-time time) (float-time)))
+	 (diff (time-subtract time nil))
 	 ;; Consider a time to be recent if it is within the past six
 	 ;; months.  A Gregorian year has 365.2425 * 24 * 60 * 60 ==
 	 ;; 31556952 seconds on the average, and half of that is 15778476.
@@ -878,7 +882,8 @@ All ls time options, namely c, t and u, are handled."
 	  (if (member locale '("C" "POSIX"))
 	      (setq locale nil))
 	  (format-time-string
-	   (if (and (<= past-cutoff diff) (<= diff 0))
+	   (if (and (not (time-less-p diff past-cutoff))
+		    (not (time-less-p 0 diff)))
 	       (if (and locale (not ls-lisp-use-localized-time-format))
 		   "%m-%d %H:%M"
 		 (nth 0 ls-lisp-format-time-list))

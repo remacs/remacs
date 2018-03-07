@@ -1,5 +1,5 @@
 /* Threading code.
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -101,14 +101,20 @@ acquire_global_lock (struct thread_state *self)
   post_acquire_global_lock (self);
 }
 
-/* This is called from keyboard.c when it detects that SIGINT
-   interrupted thread_select before the current thread could acquire
-   the lock.  We must acquire the lock to prevent a thread from
-   running without holding the global lock, and to avoid repeated
-   calls to sys_mutex_unlock, which invokes undefined behavior.  */
+/* This is called from keyboard.c when it detects that SIGINT was
+   delivered to the main thread and interrupted thread_select before
+   the main thread could acquire the lock.  We must acquire the lock
+   to prevent a thread from running without holding the global lock,
+   and to avoid repeated calls to sys_mutex_unlock, which invokes
+   undefined behavior.  */
 void
 maybe_reacquire_global_lock (void)
 {
+  /* SIGINT handler is always run on the main thread, see
+     deliver_process_signal, so reflect that in our thread-tracking
+     variables.  */
+  current_thread = &main_thread;
+
   if (current_thread->not_holding_lock)
     {
       struct thread_state *self = current_thread;
@@ -567,8 +573,15 @@ really_call_select (void *arg)
 			   sa->timeout, sa->sigmask);
 
   block_interrupt_signal (&oldset);
-  acquire_global_lock (self);
-  self->not_holding_lock = 0;
+  /* If we were interrupted by C-g while inside sa->func above, the
+     signal handler could have called maybe_reacquire_global_lock, in
+     which case we are already holding the lock and shouldn't try
+     taking it again, or else we will hang forever.  */
+  if (self->not_holding_lock)
+    {
+      acquire_global_lock (self);
+      self->not_holding_lock = 0;
+    }
   restore_signal_mask (&oldset);
 }
 
@@ -800,7 +813,11 @@ If NAME is given, it must be a string; it names the new thread.  */)
     {
       /* Restore the previous situation.  */
       all_threads = all_threads->next_thread;
+#ifdef THREADS_ENABLED
       error ("Could not start a new thread");
+#else
+      error ("Concurrency is not supported in this configuration");
+#endif
     }
 
   /* FIXME: race here where new thread might not be filled in?  */
@@ -978,6 +995,14 @@ bool
 main_thread_p (void *ptr)
 {
   return ptr == &main_thread;
+}
+
+bool
+in_current_thread (void)
+{
+  if (current_thread == NULL)
+    return false;
+  return sys_thread_equal (sys_thread_self (), current_thread->thread_id);
 }
 
 void

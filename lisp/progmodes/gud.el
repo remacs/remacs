@@ -1,6 +1,6 @@
 ;;; gud.el --- Grand Unified Debugger mode for running GDB and other debuggers  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1992-1996, 1998, 2000-2017 Free Software Foundation,
+;; Copyright (C) 1992-1996, 1998, 2000-2018 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
@@ -378,6 +378,7 @@ we're in the GUD buffer)."
        (if (not gud-running)
 	 ,(if (stringp cmd)
 	      `(gud-call ,cmd arg)
+	    ;; Unused lexical warning if cmd does not use "arg".
 	    cmd))))
      ,(if key `(local-set-key ,(concat "\C-c" key) ',func))
      ,(if key `(global-set-key (vconcat gud-key-prefix ,key) ',func))))
@@ -771,7 +772,7 @@ the buffer in which this command was invoked."
   (gud-def gud-cont   "cont"     "\C-r" "Continue with display.")
   (gud-def gud-finish "finish"   "\C-f" "Finish executing current function.")
   (gud-def gud-jump
-	   (progn (gud-call "tbreak %f:%l") (gud-call "jump %f:%l"))
+	   (progn (gud-call "tbreak %f:%l" arg) (gud-call "jump %f:%l"))
 	   "\C-j" "Set execution address to current line.")
 
   (gud-def gud-up     "up %p"     "<" "Up N stack frames (numeric arg).")
@@ -1605,7 +1606,7 @@ and source-file directory for your debugger."
 ;; Last group is for return value, e.g. "> test.py(2)foo()->None"
 ;; Either file or function name may be omitted: "> <string>(0)?()"
 (defvar gud-pdb-marker-regexp
-  "^> \\([-a-zA-Z0-9_/.:\\]*\\|<string>\\)(\\([0-9]+\\))\\([a-zA-Z0-9_]*\\|\\?\\|<module>\\)()\\(->[^\n\r]*\\)?[\n\r]")
+  "^> \\([-a-zA-Z0-9_/.:@ \\]*\\|<string>\\)(\\([0-9]+\\))\\([a-zA-Z0-9_]*\\|\\?\\|<module>\\)()\\(->[^\n\r]*\\)?[\n\r]")
 
 (defvar gud-pdb-marker-regexp-file-group 1)
 (defvar gud-pdb-marker-regexp-line-group 2)
@@ -1830,7 +1831,7 @@ and source-file directory for your debugger."
 ;;
 ;; Type M-n to step over the current line and M-s to step into it.  That,
 ;; along with the JDB 'help' command should get you started.  The 'quit'
-;; JDB command will get out out of the debugger.  There is some truly
+;; JDB command will get out of the debugger.  There is some truly
 ;; pathetic JDB documentation available at:
 ;;
 ;;     http://java.sun.com/products/jdk/1.1/debugging/

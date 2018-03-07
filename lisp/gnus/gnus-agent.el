@@ -1,6 +1,6 @@
 ;;; gnus-agent.el --- unplugged support for Gnus
 
-;; Copyright (C) 1997-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1997-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; This file is part of GNU Emacs.
@@ -451,7 +451,7 @@ manipulated as follows:
 (defvar gnus-agent-mode-status '(gnus-agent-mode " Plugged"))
 
 (defun gnus-agent-mode ()
-  "Minor mode for providing a agent support in Gnus buffers."
+  "Minor mode for providing agent support in Gnus buffers."
   (let* ((buffer (progn (string-match "^gnus-\\(.*\\)-mode$"
 				      (symbol-name major-mode))
 			(match-string 1 (symbol-name major-mode))))
@@ -1108,7 +1108,7 @@ downloadable."
                 gnus-newsgroup-cached)
         (setq articles (gnus-sorted-ndifference
 			(gnus-sorted-ndifference
-			 (gnus-copy-sequence articles)
+			 (copy-tree articles)
 			 gnus-newsgroup-downloadable)
 			gnus-newsgroup-cached)))
 
@@ -1123,7 +1123,7 @@ downloadable."
   (when gnus-newsgroup-processable
     (setq gnus-newsgroup-downloadable
           (let* ((dl gnus-newsgroup-downloadable)
-		 (processable (sort (gnus-copy-sequence gnus-newsgroup-processable) '<))
+		 (processable (sort (copy-tree gnus-newsgroup-processable) '<))
                  (gnus-newsgroup-downloadable processable))
 	    (gnus-agent-summary-fetch-group)
 
@@ -1513,7 +1513,7 @@ downloaded into the agent."
         (let* ((fetched-articles (list nil))
                (tail-fetched-articles fetched-articles)
                (dir (gnus-agent-group-pathname group))
-               (date (time-to-days (current-time)))
+               (date (time-to-days nil))
                (case-fold-search t)
                pos crosses
 	       (file-name-coding-system nnmail-pathname-coding-system))
@@ -2833,7 +2833,7 @@ The following commands are available:
   "Copy the current category."
   (interactive (list (gnus-category-name) (intern (read-string "New name: "))))
   (let ((info (assq category gnus-category-alist)))
-    (push (let ((newcat (gnus-copy-sequence info)))
+    (push (let ((newcat (copy-tree info)))
             (setf (gnus-agent-cat-name newcat) to)
             (setf (gnus-agent-cat-groups newcat) nil)
             newcat)
@@ -3089,7 +3089,7 @@ FORCE is equivalent to setting the expiration predicates to true."
 	      (nov-entries-deleted 0)
 	      (info (gnus-get-info group))
 	      (alist gnus-agent-article-alist)
-	      (day (- (time-to-days (current-time))
+	      (day (- (time-to-days nil)
 		      (gnus-agent-find-parameter group 'agent-days-until-old)))
 	      (specials (if (and alist
 				 (not force))
@@ -3824,7 +3824,7 @@ has been fetched."
       ;; be expired later.
       (gnus-agent-load-alist group)
       (gnus-agent-save-alist group (list article)
-			     (time-to-days (current-time))))))
+			     (time-to-days nil)))))
 
 (defun gnus-agent-regenerate-group (group &optional reread)
   "Regenerate GROUP.

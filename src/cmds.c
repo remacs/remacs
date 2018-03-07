@@ -1,6 +1,6 @@
 /* Simple built-in editing commands.
 
-Copyright (C) 1985, 1993-1998, 2001-2017 Free Software Foundation, Inc.
+Copyright (C) 1985, 1993-1998, 2001-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -192,11 +192,11 @@ internal_self_insert (int c, EMACS_INT n)
 	 and the hook has a non-nil `no-self-insert' property,
 	 return right away--don't really self-insert.  */
       if (SYMBOLP (sym) && ! NILP (sym)
-	  && ! NILP (XSYMBOL (sym)->function)
-	  && SYMBOLP (XSYMBOL (sym)->function))
+	  && ! NILP (XSYMBOL (sym)->u.s.function)
+	  && SYMBOLP (XSYMBOL (sym)->u.s.function))
 	{
 	  Lisp_Object prop;
-	  prop = Fget (XSYMBOL (sym)->function, intern ("no-self-insert"));
+	  prop = Fget (XSYMBOL (sym)->u.s.function, intern ("no-self-insert"));
 	  if (! NILP (prop))
 	    return 1;
 	}
@@ -210,12 +210,13 @@ internal_self_insert (int c, EMACS_INT n)
       int mc = ((NILP (BVAR (current_buffer, enable_multibyte_characters))
 		 && SINGLE_BYTE_CHAR_P (c))
 		? UNIBYTE_TO_CHAR (c) : c);
-      Lisp_Object string = Fmake_string (make_number (n), make_number (mc));
+      Lisp_Object string = Fmake_string (make_number (n), make_number (mc),
+					 Qnil);
 
       if (spaces_to_insert)
 	{
 	  tem = Fmake_string (make_number (spaces_to_insert),
-			      make_number (' '));
+			      make_number (' '), Qnil);
 	  string = concat2 (string, tem);
 	}
 

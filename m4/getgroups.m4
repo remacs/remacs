@@ -1,9 +1,9 @@
-# serial 19
+# serial 20
 
 dnl From Jim Meyering.
 dnl A wrapper around AC_FUNC_GETGROUPS.
 
-# Copyright (C) 1996-1997, 1999-2004, 2008-2017 Free Software Foundation, Inc.
+# Copyright (C) 1996-1997, 1999-2004, 2008-2018 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -40,10 +40,10 @@ AC_DEFUN([AC_FUNC_GETGROUPS],
          [ac_cv_func_getgroups_works=yes],
          [ac_cv_func_getgroups_works=no],
          [case "$host_os" in # ((
-                    # Guess yes on glibc systems.
-            *-gnu*) ac_cv_func_getgroups_works="guessing yes" ;;
-                    # If we don't know, assume the worst.
-            *)      ac_cv_func_getgroups_works="guessing no" ;;
+                           # Guess yes on glibc systems.
+            *-gnu* | gnu*) ac_cv_func_getgroups_works="guessing yes" ;;
+                           # If we don't know, assume the worst.
+            *)             ac_cv_func_getgroups_works="guessing no" ;;
           esac
          ])
       ])
@@ -93,10 +93,10 @@ AC_DEFUN([gl_FUNC_GETGROUPS],
           [gl_cv_func_getgroups_works=yes],
           [gl_cv_func_getgroups_works=no],
           [case "$host_os" in
-                     # Guess yes on glibc systems.
-             *-gnu*) gl_cv_func_getgroups_works="guessing yes" ;;
-                     # If we don't know, assume the worst.
-             *)      gl_cv_func_getgroups_works="guessing no" ;;
+                            # Guess yes on glibc systems.
+             *-gnu* | gnu*) gl_cv_func_getgroups_works="guessing yes" ;;
+                            # If we don't know, assume the worst.
+             *)             gl_cv_func_getgroups_works="guessing no" ;;
            esac
           ])])
       case "$gl_cv_func_getgroups_works" in

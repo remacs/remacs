@@ -1,6 +1,6 @@
 ;;; url-file.el --- File retrieval code
 
-;; Copyright (C) 1996-1999, 2004-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1999, 2004-2018 Free Software Foundation, Inc.
 
 ;; Keywords: comm, data, processes
 
@@ -188,6 +188,7 @@ to them."
 	(url-find-file-dired filename)
       (with-current-buffer
 	  (setq buffer (generate-new-buffer " *url-file*"))
+        (require 'mm-util)
 	(mm-disable-multibyte)
 	(setq url-current-object url)
 	(insert "Content-type: " (or content-type "application/octet-stream") "\n")

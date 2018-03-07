@@ -1,6 +1,6 @@
 ;;; cc-langs.el --- language specific settings for CC Mode -*- coding: utf-8 -*-
 
-;; Copyright (C) 1985, 1987, 1992-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992-2018 Free Software Foundation, Inc.
 
 ;; Authors:    2002- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -518,13 +518,13 @@ parameters \(point-min) and \(point-max).")
   (c objc) '(c-depropertize-new-text
 	     c-parse-quotes-after-change
 	     c-extend-font-lock-region-for-macros
-	     c-neutralize-syntax-in-and-mark-CPP
+	     c-neutralize-syntax-in-CPP
 	     c-change-expand-fl-region)
   c++ '(c-depropertize-new-text
 	c-parse-quotes-after-change
 	c-extend-font-lock-region-for-macros
 	c-after-change-re-mark-raw-strings
-	c-neutralize-syntax-in-and-mark-CPP
+	c-neutralize-syntax-in-CPP
 	c-restore-<>-properties
 	c-change-expand-fl-region)
   java '(c-depropertize-new-text
@@ -616,6 +616,12 @@ EOL terminated statements."
   t nil
   c++ t)
 (c-lang-defvar c-has-quoted-numbers (c-lang-const c-has-quoted-numbers))
+
+(c-lang-defconst c-has-compound-literals
+  "Whether literal initializers {...} are used other than in initializations."
+  t nil
+  (c c++) t)
+(c-lang-defvar c-has-compound-literals (c-lang-const c-has-compound-literals))
 
 (c-lang-defconst c-modified-constant
   "Regexp that matches a “modified” constant literal such as \"L\\='a\\='\",
@@ -951,6 +957,11 @@ expression, or nil if there aren't any in the language."
   t    (if (c-lang-const c-opt-cpp-prefix)
 	   '("defined"))
   pike '("defined" "efun" "constant"))
+
+(c-lang-defconst c-cpp-expr-functions-key
+  ;; Matches a function in a cpp expression.
+  t (c-make-keywords-re t (c-lang-const c-cpp-expr-functions)))
+(c-lang-defvar c-cpp-expr-functions-key (c-lang-const c-cpp-expr-functions-key))
 
 (c-lang-defconst c-assignment-operators
   "List of all assignment operators."
@@ -1920,15 +1931,31 @@ on one of the `*-decl-kwds' lists."
   t (c-make-keywords-re t (c-lang-const c-type-prefix-kwds)))
 (c-lang-defvar c-type-prefix-key (c-lang-const c-type-prefix-key))
 
-(c-lang-defconst c-type-modifier-kwds
-  "Type modifier keywords.  These can occur almost anywhere in types
-but they don't build a type of themselves.  Unlike the keywords on
-`c-primitive-type-kwds', they are fontified with the keyword face and
-not the type face."
+(c-lang-defconst c-type-modifier-prefix-kwds
+  "Type modifier keywords which can appear in front of a type.  These can
+also occur almost anywhere in types but they don't build a type of
+themselves.  Unlike the keywords on `c-primitive-type-kwds', they are
+fontified with the keyword face and not the type face."
   t    nil
   c    '("const" "restrict" "volatile")
-  c++  '("const" "noexcept" "volatile" "throw")
+  c++  '("const" "noexcept" "volatile")
   objc '("const" "volatile"))
+
+(c-lang-defconst c-opt-type-modifier-prefix-key
+  ;; Adorned regexp matching `c-type-modifier-prefix-kwds', or nil in
+  ;; languages without such keywords.
+  t (and (c-lang-const c-type-modifier-prefix-kwds)
+	 (c-make-keywords-re t (c-lang-const c-type-modifier-prefix-kwds))))
+(c-lang-defvar c-opt-type-modifier-prefix-key
+	       (c-lang-const c-opt-type-modifier-prefix-key))
+
+(c-lang-defconst c-type-modifier-kwds
+  "Type modifier keywords.  These can occur almost anywhere in types except
+at the start, but they don't build a type of themselves.  Unlike the keywords
+on `c-primitive-type-kwds', they are fontified with the keyword face and not
+the type face."
+  t (c-lang-const c-type-modifier-prefix-kwds)
+  c++ (append (c-lang-const c-type-modifier-prefix-kwds) '("throw")))
 
 (c-lang-defconst c-opt-type-modifier-key
   ;; Adorned regexp matching `c-type-modifier-kwds', or nil in
@@ -2079,6 +2106,18 @@ will be handled."
    (c-lang-const c-other-block-decl-kwds))
   "Alist associating keywords in c-other-decl-block-decl-kwds with
 their matching \"in\" syntactic symbols.")
+
+(c-lang-defconst c-defun-type-name-decl-kwds
+  "Keywords introducing a named block, where the name is a \"defun\"
+    name."
+  t (append (c-lang-const c-class-decl-kwds)
+	    (c-lang-const c-brace-list-decl-kwds)))
+
+(c-lang-defconst c-defun-type-name-decl-key
+  ;; Regexp matching a keyword in `c-defun-name-decl-kwds'.
+  t (c-make-keywords-re t (c-lang-const c-defun-type-name-decl-kwds)))
+(c-lang-defvar c-defun-type-name-decl-key
+  (c-lang-const c-defun-type-name-decl-key))
 
 (c-lang-defconst c-typedef-decl-kwds
   "Keywords introducing declarations where the identifier(s) being
@@ -2349,6 +2388,16 @@ declarations."
 construct it's part of continues."
   t    nil
   (c c++ objc) '("extern"))
+
+(c-lang-defconst c-make-top-level-kwds
+  "Keywords which make declarations they introduce be handled as top-level."
+  t    nil
+  (c c++ objc) '("extern"))
+
+(c-lang-defconst c-make-top-level-key
+  ;; A regexp which matches any `c-make-top-level-kwds' keyword.
+  t (c-make-keywords-re t (c-lang-const c-make-top-level-kwds)))
+(c-lang-defvar c-make-top-level-key (c-lang-const c-make-top-level-key))
 
 (c-lang-defconst c-type-list-kwds
   "Keywords that may be followed by a comma separated list of type

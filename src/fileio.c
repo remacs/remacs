@@ -1,6 +1,6 @@
 /* File IO for GNU Emacs.
 
-Copyright (C) 1985-1988, 1993-2017 Free Software Foundation, Inc.
+Copyright (C) 1985-1988, 1993-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -89,6 +89,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <acl.h>
 #include <allocator.h>
 #include <careadlinkat.h>
+#include <fsusage.h>
 #include <stat-time.h>
 #include <tempname.h>
 
@@ -117,7 +118,7 @@ static mode_t auto_save_mode_bits;
 static bool auto_save_error_occurred;
 
 /* If VALID_TIMESTAMP_FILE_SYSTEM, then TIMESTAMP_FILE_SYSTEM is the device
-   number of a file system where time stamps were observed to to work.  */
+   number of a file system where time stamps were observed to work.  */
 static bool valid_timestamp_file_system;
 static dev_t timestamp_file_system;
 
@@ -130,9 +131,8 @@ static bool a_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 static bool e_write (int, Lisp_Object, ptrdiff_t, ptrdiff_t,
 		     struct coding_system *);
 
-
-
-/* Return true if FILENAME exists.  */
+
+/* Return true if FILENAME exists, otherwise return false and set errno.  */
 
 static bool
 check_existing (const char *filename)
@@ -1814,7 +1814,8 @@ DEFUN ("copy-file", Fcopy_file, Scopy_file, 2, 6,
        "fCopy file: \nGCopy %s to file: \np\nP",
        doc: /* Copy FILE to NEWNAME.  Both args must be strings.
 If NEWNAME is a directory name, copy FILE to a like-named file under
-NEWNAME.
+NEWNAME.  For NEWNAME to be recognized as a directory name, it should
+end in a slash.
 
 This function always sets the file modes of the output file to match
 the input file.
@@ -2227,7 +2228,8 @@ DEFUN ("rename-file", Frename_file, Srename_file, 2, 3,
        doc: /* Rename FILE as NEWNAME.  Both args must be strings.
 If file has names other than FILE, it continues to have those names.
 If NEWNAME is a directory name, rename FILE to a like-named file under
-NEWNAME.
+NEWNAME.  For NEWNAME to be recognized as a directory name, it should
+end in a slash.
 
 Signal a `file-already-exists' error if a file NEWNAME already exists
 unless optional third argument OK-IF-ALREADY-EXISTS is non-nil.
@@ -2236,7 +2238,7 @@ This is what happens in interactive use with M-x.  */)
   (Lisp_Object file, Lisp_Object newname, Lisp_Object ok_if_already_exists)
 {
   Lisp_Object handler;
-  Lisp_Object encoded_file, encoded_newname, symlink_target;
+  Lisp_Object encoded_file, encoded_newname;
 
   file = Fexpand_file_name (file, Qnil);
 
@@ -2272,7 +2274,7 @@ This is what happens in interactive use with M-x.  */)
   bool plain_rename = (case_only_rename
 		       || (!NILP (ok_if_already_exists)
 			   && !INTEGERP (ok_if_already_exists)));
-  int rename_errno;
+  int rename_errno UNINIT;
   if (!plain_rename)
     {
       if (renameat_noreplace (AT_FDCWD, SSDATA (encoded_file),
@@ -2310,12 +2312,22 @@ This is what happens in interactive use with M-x.  */)
   if (rename_errno != EXDEV)
     report_file_errno ("Renaming", list2 (file, newname), rename_errno);
 
+  struct stat file_st;
   bool dirp = !NILP (Fdirectory_name_p (file));
+  if (!dirp)
+    {
+      if (lstat (SSDATA (encoded_file), &file_st) != 0)
+	report_file_error ("Renaming", list2 (file, newname));
+      dirp = S_ISDIR (file_st.st_mode) != 0;
+    }
   if (dirp)
     call4 (Qcopy_directory, file, newname, Qt, Qnil);
   else
     {
-      symlink_target = Ffile_symlink_p (file);
+      Lisp_Object symlink_target
+	= (S_ISLNK (file_st.st_mode)
+	   ? emacs_readlinkat (AT_FDCWD, SSDATA (encoded_file))
+	   : Qnil);
       if (!NILP (symlink_target))
 	Fmake_symbolic_link (symlink_target, newname, ok_if_already_exists);
       else
@@ -2557,7 +2569,7 @@ DEFUN ("file-writable-p", Ffile_writable_p, Sfile_writable_p, 1, 1, 0,
   /* The read-only attribute of the parent directory doesn't affect
      whether a file or directory can be created within it.  Some day we
      should check ACLs though, which do affect this.  */
-  return file_directory_p (SSDATA (dir)) ? Qt : Qnil;
+  return file_directory_p (dir) ? Qt : Qnil;
 #else
   return check_writable (SSDATA (dir), W_OK | X_OK) ? Qt : Qnil;
 #endif
@@ -2653,19 +2665,47 @@ See `file-symlink-p' to distinguish symlinks.  */)
 
   absname = ENCODE_FILE (absname);
 
-  return file_directory_p (SSDATA (absname)) ? Qt : Qnil;
+  return file_directory_p (absname) ? Qt : Qnil;
 }
 
-/* Return true if FILE is a directory or a symlink to a directory.  */
+/* Return true if FILE is a directory or a symlink to a directory.
+   Otherwise return false and set errno.  */
 bool
-file_directory_p (char const *file)
+file_directory_p (Lisp_Object file)
 {
-#ifdef WINDOWSNT
+#ifdef DOS_NT
   /* This is cheaper than 'stat'.  */
-  return faccessat (AT_FDCWD, file, D_OK, AT_EACCESS) == 0;
+  return faccessat (AT_FDCWD, SSDATA (file), D_OK, AT_EACCESS) == 0;
 #else
+# ifdef O_PATH
+  /* Use O_PATH if available, as it avoids races and EOVERFLOW issues.  */
+  int fd = openat (AT_FDCWD, SSDATA (file), O_PATH | O_CLOEXEC | O_DIRECTORY);
+  if (0 <= fd)
+    {
+      emacs_close (fd);
+      return true;
+    }
+  if (errno != EINVAL)
+    return false;
+  /* O_PATH is defined but evidently this Linux kernel predates 2.6.39.
+     Fall back on generic POSIX code.  */
+# endif
+  /* Use file_accessible_directory, as it avoids stat EOVERFLOW
+     problems and could be cheaper.  However, if it fails because FILE
+     is inaccessible, fall back on stat; if the latter fails with
+     EOVERFLOW then FILE must have been a directory unless a race
+     condition occurred (a problem hard to work around portably).  */
+  if (file_accessible_directory_p (file))
+    return true;
+  if (errno != EACCES)
+    return false;
   struct stat st;
-  return stat (file, &st) == 0 && S_ISDIR (st.st_mode);
+  if (stat (SSDATA (file), &st) != 0)
+    return errno == EOVERFLOW;
+  if (S_ISDIR (st.st_mode))
+    return true;
+  errno = ENOTDIR;
+  return false;
 #endif
 }
 
@@ -2725,7 +2765,9 @@ file_accessible_directory_p (Lisp_Object file)
      hitting the disk.  */
   return (SBYTES (file) == 0
 	  || w32_accessible_directory_p (SSDATA (file), SBYTES (file)));
-# endif	 /* WINDOWSNT */
+# else	/* MSDOS */
+  return file_directory_p (file);
+# endif	 /* MSDOS */
 #else	 /* !DOS_NT */
   /* On POSIXish platforms, use just one system call; this avoids a
      race and is typically faster.  */
@@ -2745,12 +2787,15 @@ file_accessible_directory_p (Lisp_Object file)
     dir = data;
   else
     {
-      /* Just check for trailing '/' when deciding whether to append '/'.
-	 That's simpler than testing the two special cases "/" and "//",
-	 and it's a safe optimization here.  */
-      char *buf = SAFE_ALLOCA (len + 3);
+      /* Just check for trailing '/' when deciding whether append '/'
+	 before appending '.'.  That's simpler than testing the two
+	 special cases "/" and "//", and it's a safe optimization
+	 here.  After appending '.', append another '/' to work around
+	 a macOS bug (Bug#30350).  */
+      static char const appended[] = "/./";
+      char *buf = SAFE_ALLOCA (len + sizeof appended);
       memcpy (buf, data, len);
-      strcpy (buf + len, &"/."[data[len - 1] == '/']);
+      strcpy (buf + len, &appended[data[len - 1] == '/']);
       dir = buf;
     }
 
@@ -3017,7 +3062,8 @@ support.  */)
       acl = acl_from_text (SSDATA (acl_string));
       if (acl == NULL)
 	{
-	  report_file_error ("Converting ACL", absname);
+	  if (acl_errno_valid (errno))
+	    report_file_error ("Converting ACL", absname);
 	  return Qnil;
 	}
 
@@ -3094,7 +3140,15 @@ symbolic notation, like the `chmod' command from GNU Coreutils.  */)
 DEFUN ("set-default-file-modes", Fset_default_file_modes, Sset_default_file_modes, 1, 1, 0,
        doc: /* Set the file permission bits for newly created files.
 The argument MODE should be an integer; only the low 9 bits are used.
-This setting is inherited by subprocesses.  */)
+On Posix hosts, this setting is inherited by subprocesses.
+
+This function works by setting the Emacs's file mode creation mask.
+Each bit that is set in the mask means that the corresponding bit
+in the permissions of newly created files will be disabled.
+
+Note that when `write-region' creates a file, it resets the
+execute bit, even if the mask set by this function allows that bit
+by having the corresponding bit in the mask reset.  */)
   (Lisp_Object mode)
 {
   mode_t oldrealmask, oldumask, newumask;
@@ -3148,6 +3202,11 @@ Use the current time if TIMESTAMP is nil.  TIMESTAMP is in the format of
   {
     if (set_file_times (-1, SSDATA (encoded_absname), t, t) != 0)
       {
+#ifdef MSDOS
+        /* Setting times on a directory always fails.  */
+        if (file_directory_p (encoded_absname))
+          return Qnil;
+#endif
         report_file_error ("Setting file times", absname);
       }
   }
@@ -5746,8 +5805,53 @@ effect except for flushing STREAM's data.  */)
 
   return (set_binary_mode (fileno (fp), binmode) == O_BINARY) ? Qt : Qnil;
 }
+
+#ifndef DOS_NT
 
+/* Yield a Lisp float as close as possible to BLOCKSIZE * BLOCKS, with
+   the result negated if NEGATE.  */
+static Lisp_Object
+blocks_to_bytes (uintmax_t blocksize, uintmax_t blocks, bool negate)
+{
+  /* On typical platforms the following code is accurate to 53 bits,
+     which is close enough.  BLOCKSIZE is invariably a power of 2, so
+     converting it to double does not lose information.  */
+  double bs = blocksize;
+  return make_float (negate ? -bs * -blocks : bs * blocks);
+}
 
+DEFUN ("file-system-info", Ffile_system_info, Sfile_system_info, 1, 1, 0,
+       doc: /* Return storage information about the file system FILENAME is on.
+Value is a list of numbers (TOTAL FREE AVAIL), where TOTAL is the total
+storage of the file system, FREE is the free storage, and AVAIL is the
+storage available to a non-superuser.  All 3 numbers are in bytes.
+If the underlying system call fails, value is nil.  */)
+  (Lisp_Object filename)
+{
+  Lisp_Object encoded = ENCODE_FILE (Fexpand_file_name (filename, Qnil));
+
+  /* If the file name has special constructs in it,
+     call the corresponding file handler.  */
+  Lisp_Object handler = Ffind_file_name_handler (encoded, Qfile_system_info);
+  if (!NILP (handler))
+    {
+      Lisp_Object result = call2 (handler, Qfile_system_info, encoded);
+      if (CONSP (result) || NILP (result))
+	return result;
+      error ("Invalid handler in `file-name-handler-alist'");
+    }
+
+  struct fs_usage u;
+  if (get_fs_usage (SSDATA (encoded), NULL, &u) != 0)
+    return Qnil;
+  return list3 (blocks_to_bytes (u.fsu_blocksize, u.fsu_blocks, false),
+		blocks_to_bytes (u.fsu_blocksize, u.fsu_bfree, false),
+		blocks_to_bytes (u.fsu_blocksize, u.fsu_bavail,
+				 u.fsu_bavail_top_bit_set));
+}
+
+#endif /* !DOS_NT */
+
 void
 init_fileio (void)
 {
@@ -5818,6 +5922,7 @@ syms_of_fileio (void)
   DEFSYM (Qwrite_region, "write-region");
   DEFSYM (Qverify_visited_file_modtime, "verify-visited-file-modtime");
   DEFSYM (Qset_visited_file_modtime, "set-visited-file-modtime");
+  DEFSYM (Qfile_system_info, "file-system-info");
 
   /* The symbol bound to coding-system-for-read when
      insert-file-contents is called for recovering a file.  This is not
@@ -6097,6 +6202,10 @@ This includes interactive calls to `delete-file' and
   defsubr (&Snext_read_file_uses_dialog_p);
 
   defsubr (&Sset_binary_mode);
+
+#ifndef DOS_NT
+  defsubr (&Sfile_system_info);
+#endif
 
 #ifdef HAVE_SYNC
   defsubr (&Sunix_sync);

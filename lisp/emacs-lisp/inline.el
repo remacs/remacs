@@ -1,6 +1,6 @@
 ;;; inline.el --- Define functions by their inliner  -*- lexical-binding:t; -*-
 
-;; Copyright (C) 2014-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
 ;; Author: Stefan Monnier <monnier@iro.umontreal.ca>
 
@@ -59,7 +59,7 @@
 ;;         and then M-: (macroexpand-all '(my-test1 y)) RET)
 ;; There is still one downside shared with the defmacro and cl-defsubst
 ;; approach: when the function is inlined, the scoping rules (dynamic or
-;; lexical) will be inherited from the the call site.
+;; lexical) will be inherited from the call site.
 
 ;; Of course, since define-inline defines a compiler macro, you can also do
 ;; call-site optimizations, just like you can with `defmacro', but not with
@@ -124,6 +124,10 @@ After VARS is handled, BODY is evaluated in the new environment."
 
 ;;;###autoload
 (defmacro define-inline (name args &rest body)
+  "Define an inline function NAME with arguments ARGS and body in BODY.
+
+This is like `defmacro', but has several advantages.
+See Info node `(elisp)Defining Functions' for more details."
   ;; FIXME: How can this work with CL arglists?
   (declare (indent defun) (debug defun) (doc-string 3))
   (let ((doc (if (stringp (car-safe body)) (list (pop body))))

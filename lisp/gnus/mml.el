@@ -1,6 +1,6 @@
 ;;; mml.el --- A package for parsing and validating MML documents
 
-;; Copyright (C) 1998-2017 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; This file is part of GNU Emacs.
@@ -548,6 +548,9 @@ be \"related\" or \"alternate\"."
 						   ">")))))))
 	cont))))
 
+(autoload 'image-property "image")
+
+;; FIXME presumably (built-in) ImageMagick could replace exiftool?
 (defun mml--possibly-alter-image (file-name image)
   (if (or (null image)
 	  (not (consp image))

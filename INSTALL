@@ -1,5 +1,5 @@
 GNU Emacs Installation Guide
-Copyright (C) 1992, 1994, 1996-1997, 2000-2017 Free Software Foundation,
+Copyright (C) 1992, 1994, 1996-1997, 2000-2018 Free Software Foundation,
 Inc.
 See the end of the file for license conditions.
 
@@ -278,8 +278,10 @@ a POP3 server by default.  Versions of the POP protocol older than
 POP3 are not supported.  While POP3 support is typically enabled,
 whether Emacs actually uses POP3 is controlled by individual users;
 see the Rmail chapter of the Emacs manual.  Unless --with-mailutils is
-in effect, it is a good idea to configure --without-pop so that users
-are less likely to inadvertently read email via insecure channels.
+in effect, it is a good idea to configure without POP3 support so that
+users are less likely to inadvertently read email via insecure
+channels.  On native MS-Windows, --with-pop is the default; on other
+platforms, --without-pop is the default.
 
 For image support you may have to download, build, and install the
 appropriate image support libraries for image types other than XBM and

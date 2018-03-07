@@ -1,6 +1,6 @@
 /* Inotify support for Emacs
 
-Copyright (C) 2012-2017 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -503,7 +503,7 @@ DEFUN ("inotify-watch-list", Finotify_watch_list, Sinotify_watch_list, 0, 0, 0,
 }
 
 DEFUN ("inotify-allocated-p", Finotify_allocated_p, Sinotify_allocated_p, 0, 0, 0,
-       doc: /* Return non-nil, if a inotify instance is allocated.  */)
+       doc: /* Return non-nil, if an inotify instance is allocated.  */)
 {
   return inotifyfd < 0 ? Qnil : Qt;
 }

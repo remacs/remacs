@@ -1,5 +1,5 @@
 # alloca.m4 serial 14
-dnl Copyright (C) 2002-2004, 2006-2007, 2009-2017 Free Software Foundation,
+dnl Copyright (C) 2002-2004, 2006-2007, 2009-2018 Free Software Foundation,
 dnl Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -44,7 +44,7 @@ AC_DEFUN([gl_FUNC_ALLOCA],
 AC_DEFUN([gl_PREREQ_ALLOCA], [:])
 
 # This works around a bug in autoconf <= 2.68.
-# See <https://lists.gnu.org/archive/html/bug-gnulib/2011-06/msg00277.html>.
+# See <https://lists.gnu.org/r/bug-gnulib/2011-06/msg00277.html>.
 
 m4_version_prereq([2.69], [] ,[
 

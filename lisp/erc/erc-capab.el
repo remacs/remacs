@@ -1,6 +1,6 @@
 ;;; erc-capab.el --- support for dancer-ircd and hyperion's CAPAB
 
-;; Copyright (C) 2006-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2018 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 
@@ -90,7 +90,7 @@ character not found in IRC nicknames to avoid confusion."
 
 ;;; Define module:
 
-;;;###autoload (autoload 'erc-capab-identify-mode "erc-capab" nil t)
+;;;###autoload(autoload 'erc-capab-identify-mode "erc-capab" nil t)
 (define-erc-module capab-identify nil
   "Handle dancer-ircd's CAPAB IDENTIFY-MSG and IDENTIFY-CTCP."
   ;; append so that `erc-server-parameters' is already set by `erc-server-005'
@@ -207,3 +207,7 @@ PARSED is an `erc-parsed' response struct."
 (provide 'erc-capab)
 
 ;;; erc-capab.el ends here
+
+;; Local Variables:
+;; generated-autoload-file: "erc-loaddefs.el"
+;; End:

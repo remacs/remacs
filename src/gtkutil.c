@@ -1,6 +1,6 @@
 /* Functions for creating and updating GTK widgets.
 
-Copyright (C) 2003-2017 Free Software Foundation, Inc.
+Copyright (C) 2003-2018 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -566,14 +566,6 @@ xg_check_special_colors (struct frame *f,
   if (! FRAME_GTK_WIDGET (f) || ! (get_bg || get_fg))
     return success_p;
 
-#if GTK_CHECK_VERSION (3, 16, 0)
-  if (get_bg)
-    /* gtk_style_context_get_background_color is deprecated in
-       GTK+ 3.16.  New versions of GTK+ don't use the concept of a
-       single background color any more, so we can't query for it.  */
-    return false;
-#endif
-
   block_input ();
   {
 #ifdef HAVE_GTK3
@@ -585,11 +577,18 @@ xg_check_special_colors (struct frame *f,
     if (get_fg)
       gtk_style_context_get_color (gsty, state, &col);
     else
-      /* FIXME: gtk_style_context_get_background_color is deprecated
-         in GTK+ 3.16.  New versions of GTK+ don’t use the concept of
-         a single background color any more, so we shouldn’t query for
-         it.  */
-      gtk_style_context_get_background_color (gsty, state, &col);
+      {
+        GdkRGBA *c;
+        /* FIXME: Retrieving the background color is deprecated in
+           GTK+ 3.16.  New versions of GTK+ don't use the concept of a
+           single background color any more, so we shouldn't query for
+           it.  */
+        gtk_style_context_get (gsty, state,
+                               GTK_STYLE_PROPERTY_BACKGROUND_COLOR, &c,
+                               NULL);
+        col = *c;
+        gdk_rgba_free (c);
+      }
 
     unsigned short
       r = col.red * 65535,
@@ -688,6 +687,7 @@ qttip_cb (GtkWidget  *widget,
       g_signal_connect (x->ttip_lbl, "hierarchy-changed",
                         G_CALLBACK (hierarchy_ch_cb), f);
     }
+
   return FALSE;
 }
 
@@ -714,7 +714,8 @@ xg_prepare_tooltip (struct frame *f,
   GtkRequisition req;
   Lisp_Object encoded_string;
 
-  if (!x->ttip_lbl) return 0;
+  if (!x->ttip_lbl)
+    return FALSE;
 
   block_input ();
   encoded_string = ENCODE_UTF_8 (string);
@@ -746,7 +747,7 @@ xg_prepare_tooltip (struct frame *f,
 
   unblock_input ();
 
-  return 1;
+  return TRUE;
 #endif /* USE_GTK_TOOLTIP */
 }
 
@@ -769,18 +770,18 @@ xg_show_tooltip (struct frame *f, int root_x, int root_y)
 #endif
 }
 
+
 /* Hide tooltip if shown.  Do nothing if not shown.
    Return true if tip was hidden, false if not (i.e. not using
    system tooltips).  */
-
 bool
 xg_hide_tooltip (struct frame *f)
 {
-  bool ret = 0;
 #ifdef USE_GTK_TOOLTIP
   if (f->output_data.x->ttip_window)
     {
       GtkWindow *win = f->output_data.x->ttip_window;
+
       block_input ();
       gtk_widget_hide (GTK_WIDGET (win));
 
@@ -793,10 +794,10 @@ xg_hide_tooltip (struct frame *f)
         }
       unblock_input ();
 
-      ret = 1;
+      return TRUE;
     }
 #endif
-  return ret;
+  return FALSE;
 }
 
 
@@ -824,6 +825,7 @@ xg_set_geometry (struct frame *f)
 {
   if (f->size_hint_flags & (USPosition | PPosition))
     {
+      int scale = xg_get_scale (f);
 #if ! GTK_CHECK_VERSION (3, 22, 0)
       if (x_gtk_use_window_move)
 	{
@@ -839,8 +841,9 @@ xg_set_geometry (struct frame *f)
 	    f->top_pos = (x_display_pixel_height (FRAME_DISPLAY_INFO (f))
 			  - FRAME_PIXEL_HEIGHT (f) + f->top_pos);
 
+	  /* GTK works in scaled pixels, so convert from X pixels.  */
 	  gtk_window_move (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
-			   f->left_pos, f->top_pos);
+			   f->left_pos / scale, f->top_pos / scale);
 
 	  /* Reset size hint flags.  */
 	  f->size_hint_flags &= ~ (XNegative | YNegative);
@@ -848,9 +851,10 @@ xg_set_geometry (struct frame *f)
 	}
       else
 	{
-	  int left = f->left_pos;
+          /* GTK works in scaled pixels, so convert from X pixels.  */
+	  int left = f->left_pos / scale;
 	  int xneg = f->size_hint_flags & XNegative;
-	  int top = f->top_pos;
+	  int top = f->top_pos / scale;
 	  int yneg = f->size_hint_flags & YNegative;
 	  char geom_str[sizeof "=x--" + 4 * INT_STRLEN_BOUND (int)];
 	  guint id;
@@ -1232,7 +1236,6 @@ xg_create_frame_widgets (struct frame *f)
   if (FRAME_EXTERNAL_TOOL_BAR (f))
     update_frame_tool_bar (f);
 
-#if ! GTK_CHECK_VERSION (3, 14, 0)
   /* We don't want this widget double buffered, because we draw on it
      with regular X drawing primitives, so from a GTK/GDK point of
      view, the widget is totally blank.  When an expose comes, this
@@ -1242,7 +1245,6 @@ xg_create_frame_widgets (struct frame *f)
      working in the future.  We need to migrate away from combining
      X and GTK+ drawing to a pure GTK+ build.  */
   gtk_widget_set_double_buffered (wfixed, FALSE);
-#endif
 
 #if ! GTK_CHECK_VERSION (3, 22, 0)
   gtk_window_set_wmclass (GTK_WINDOW (wtop),
@@ -1386,7 +1388,7 @@ x_wm_set_size_hint (struct frame *f, long int flags, bool user_position)
 
   /* Don't set size hints during initialization; that apparently leads
      to a race condition.  See the thread at
-     https://lists.gnu.org/archive/html/emacs-devel/2008-10/msg00033.html  */
+     https://lists.gnu.org/r/emacs-devel/2008-10/msg00033.html  */
   if (NILP (Vafter_init_time)
       || !FRAME_GTK_OUTER_WIDGET (f)
       || FRAME_PARENT_FRAME (f))
@@ -3902,7 +3904,7 @@ xg_update_scrollbar_pos (struct frame *f,
       top /= scale;
       left /= scale;
       height /= scale;
-      left -= (scale - 1) * ((width / scale) >> 1);
+      width /= scale;
 
       /* Clear out old position.  */
       int oldx = -1, oldy = -1, oldw, oldh;
@@ -3978,6 +3980,12 @@ xg_update_horizontal_scrollbar_pos (struct frame *f,
       GtkWidget *wfixed = f->output_data.x->edit_widget;
       GtkWidget *wparent = gtk_widget_get_parent (wscroll);
       gint msl;
+      int scale = xg_get_scale (f);
+
+      top /= scale;
+      left /= scale;
+      height /= scale;
+      width /= scale;
 
       /* Clear out old position.  */
       int oldx = -1, oldy = -1, oldw, oldh;

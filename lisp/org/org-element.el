@@ -1,6 +1,6 @@
 ;;; org-element.el --- Parser for Org Syntax         -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2012-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 ;; Author: Nicolas Goaziou <n.goaziou at gmail dot com>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -1308,23 +1308,19 @@ CONTENTS is the contents of the element."
 	(inlinetask-re (and (featurep 'org-inlinetask) "^\\*+ "))
 	items struct)
     (save-excursion
-      (catch 'exit
+      (catch :exit
 	(while t
 	  (cond
 	   ;; At limit: end all items.
 	   ((>= (point) limit)
-	    (throw 'exit
-		   (let ((end (progn (skip-chars-backward " \r\t\n")
-				     (forward-line)
-				     (point))))
-		     (dolist (item items (sort (nconc items struct)
-					       'car-less-than-car))
-		       (setcar (nthcdr 6 item) end)))))
+	    (let ((end (progn (skip-chars-backward " \r\t\n")
+			      (line-beginning-position 2))))
+	      (dolist (item items) (setcar (nthcdr 6 item) end)))
+	    (throw :exit (sort (nconc items struct) #'car-less-than-car)))
 	   ;; At list end: end all items.
 	   ((looking-at org-list-end-re)
-	    (throw 'exit (dolist (item items (sort (nconc items struct)
-						   'car-less-than-car))
-			   (setcar (nthcdr 6 item) (point)))))
+	    (dolist (item items) (setcar (nthcdr 6 item) (point)))
+	    (throw :exit (sort (nconc items struct) #'car-less-than-car)))
 	   ;; At a new item: end previous sibling.
 	   ((looking-at item-re)
 	    (let ((ind (save-excursion (skip-chars-forward " \t")
@@ -1348,7 +1344,7 @@ CONTENTS is the contents of the element."
 				   ;; Ending position, unknown so far.
 				   nil)))
 		    items))
-	    (forward-line 1))
+	    (forward-line))
 	   ;; Skip empty lines.
 	   ((looking-at "^[ \t]*$") (forward-line))
 	   ;; Skip inline tasks and blank lines along the way.
@@ -1360,17 +1356,18 @@ CONTENTS is the contents of the element."
 		  (goto-char origin)))))
 	   ;; At some text line.  Check if it ends any previous item.
 	   (t
-	    (let ((ind (save-excursion (skip-chars-forward " \t")
-				       (current-column))))
-	      (when (<= ind top-ind)
-		(skip-chars-backward " \r\t\n")
-		(forward-line))
+	    (let ((ind (save-excursion
+			 (skip-chars-forward " \t")
+			 (current-column)))
+		  (end (save-excursion
+			 (skip-chars-backward " \r\t\n")
+			 (line-beginning-position 2))))
 	      (while (<= ind (nth 1 (car items)))
 		(let ((item (pop items)))
-		  (setcar (nthcdr 6 item) (line-beginning-position))
+		  (setcar (nthcdr 6 item) end)
 		  (push item struct)
 		  (unless items
-		    (throw 'exit (sort struct #'car-less-than-car))))))
+		    (throw :exit (sort struct #'car-less-than-car))))))
 	    ;; Skip blocks (any type) and drawers contents.
 	    (cond
 	     ((and (looking-at "[ \t]*#\\+BEGIN\\(:\\|_\\S-+\\)")
@@ -4724,7 +4721,7 @@ indentation removed from its contents."
 ;; Cache is enabled by default, but can be disabled globally with
 ;; `org-element-use-cache'.  `org-element-cache-sync-idle-time',
 ;; org-element-cache-sync-duration' and `org-element-cache-sync-break'
-;; can be tweaked to control caching behaviour.
+;; can be tweaked to control caching behavior.
 ;;
 ;; Internally, parsed elements are stored in an AVL tree,
 ;; `org-element--cache'.  This tree is updated lazily: whenever
@@ -4953,6 +4950,7 @@ A and B are either integers or lists of integers, as returned by
 (defsubst org-element--cache-root ()
   "Return root value in cache.
 This function assumes `org-element--cache' is a valid AVL tree."
+  ;; FIXME: Why use internal functions of avl-tree?
   (avl-tree--node-left (avl-tree--dummyroot org-element--cache)))
 
 
@@ -4981,6 +4979,7 @@ the cache."
 		    (aref (car org-element--cache-sync-requests) 0)))
 	(node (org-element--cache-root))
 	lower upper)
+    ;; FIXME: Why use internal functions of avl-tree?
     (while node
       (let* ((element (avl-tree--node-data node))
 	     (begin (org-element-property :begin element)))

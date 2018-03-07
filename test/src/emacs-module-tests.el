@@ -1,6 +1,6 @@
 ;;; Test GNU Emacs modules.
 
-;; Copyright 2015-2017 Free Software Foundation, Inc.
+;; Copyright 2015-2018 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
 
@@ -17,7 +17,9 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
+(require 'cl-lib)
 (require 'ert)
+(require 'help-fns)
 
 (defconst mod-test-emacs
   (expand-file-name invocation-name invocation-directory)
@@ -25,11 +27,18 @@
 
 (eval-and-compile
   (defconst mod-test-file
-    (substitute-in-file-name
-     "$EMACS_TEST_DIRECTORY/data/emacs-module/mod-test")
+    (expand-file-name "../test/data/emacs-module/mod-test" invocation-directory)
     "File name of the module test file."))
 
 (require 'mod-test mod-test-file)
+
+(cl-defgeneric emacs-module-tests--generic (_))
+
+(cl-defmethod emacs-module-tests--generic ((_ module-function))
+  'module-function)
+
+(cl-defmethod emacs-module-tests--generic ((_ user-ptr))
+  'user-ptr)
 
 ;;
 ;; Basic tests.
@@ -73,7 +82,9 @@ This test needs to be changed whenever the implementation
 changes."
   (let ((func (symbol-function #'mod-test-sum)))
     (should (module-function-p func))
+    (should (functionp func))
     (should (equal (type-of func) 'module-function))
+    (should (eq (emacs-module-tests--generic func) 'module-function))
     (should (string-match-p
              (rx bos "#<module function "
                  (or "Fmod_test_sum"
@@ -149,6 +160,7 @@ changes."
          (r (mod-test-userptr-get v)))
 
     (should (eq (type-of v) 'user-ptr))
+    (should (eq (emacs-module-tests--generic v) 'user-ptr))
     (should (integerp r))
     (should (= r n))))
 
@@ -231,10 +243,9 @@ must evaluate to a regular expression string."
                                   (point) (point-max))))))))
 
 (ert-deftest module--test-assertions--load-non-live-object ()
-  "Check that -module-assertions verify that non-live objects
-aren’t accessed."
+  "Check that -module-assertions verify that non-live objects aren't accessed."
   (skip-unless (file-executable-p mod-test-emacs))
-  ;; This doesn’t yet cause undefined behavior.
+  ;; This doesn't yet cause undefined behavior.
   (should (eq (mod-test-invalid-store) 123))
   (module--test-assertion (rx "Emacs value not found in "
                               (+ digit) " values of "
@@ -251,5 +262,27 @@ during garbage collection."
   (module--test-assertion
       (rx "Module function called during garbage collection\n")
     (mod-test-invalid-finalizer)))
+
+(ert-deftest module/describe-function-1 ()
+  "Check that Bug#30163 is fixed."
+  (with-temp-buffer
+    (let ((standard-output (current-buffer)))
+      (describe-function-1 #'mod-test-sum)
+      (should (equal
+               (buffer-substring-no-properties 1 (point-max))
+               (format "a module function in `data/emacs-module/mod-test%s'.
+
+(mod-test-sum a b)
+
+Return A + B"
+                       module-file-suffix))))))
+
+(ert-deftest module/load-history ()
+  "Check that Bug#30164 is fixed."
+  (load mod-test-file)
+  (cl-destructuring-bind (file &rest entries) (car load-history)
+    (should (equal (file-name-sans-extension file) mod-test-file))
+    (should (member '(provide . mod-test) entries))
+    (should (member '(defun . mod-test-sum) entries))))
 
 ;;; emacs-module-tests.el ends here

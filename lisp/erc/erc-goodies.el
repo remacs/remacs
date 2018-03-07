@@ -1,6 +1,6 @@
 ;; erc-goodies.el --- Collection of ERC modules
 
-;; Copyright (C) 2001-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2018 Free Software Foundation, Inc.
 
 ;; Author: Jorgen Schaefer <forcer@forcix.cx>
 ;; Maintainer: emacs-devel@gnu.org
@@ -147,7 +147,19 @@ Put this function on `erc-insert-post-hook' and/or `erc-send-post-hook'."
              (>= (point) erc-insert-marker))
     (deactivate-mark)
     (goto-char (erc-beg-of-input-line))
-    (forward-line -1)))
+    (forward-line -1)
+    ;; if `switch-to-buffer-preserve-window-point' is set,
+    ;; we cannot rely on point being saved, and must commit
+    ;; it to window-prev-buffers.
+    (when switch-to-buffer-preserve-window-point
+      (dolist (frame (frame-list))
+        (walk-window-tree
+         (lambda (window)
+           (let ((prev (assq (current-buffer)
+                             (window-prev-buffers window))))
+             (when prev
+	       (setf (nth 2 prev) (point-marker)))))
+         frame nil 'nominibuf)))))
 
 ;;; Distinguish non-commands
 (defvar erc-noncommands-list '(erc-cmd-ME

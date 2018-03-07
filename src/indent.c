@@ -1,5 +1,5 @@
 /* Indentation functions.
-   Copyright (C) 1985-1988, 1993-1995, 1998, 2000-2017 Free Software
+   Copyright (C) 1985-1988, 1993-1995, 1998, 2000-2018 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -793,7 +793,7 @@ DEFUN ("indent-to", Findent_to, Sindent_to, 1, 2, "NIndent to column: ",
 Optional second argument MINIMUM says always do at least MINIMUM spaces
 even if that goes past COLUMN; by default, MINIMUM is zero.
 
-The return value is COLUMN.  */)
+The return value is the column where the insertion ends.  */)
   (Lisp_Object column, Lisp_Object minimum)
 {
   EMACS_INT mincol;
@@ -1939,21 +1939,31 @@ line_number_display_width (struct window *w, int *width, int *pixel_width)
   else
     {
       struct it it;
-      struct text_pos wstart;
+      struct text_pos startpos;
       bool saved_restriction = false;
       ptrdiff_t count = SPECPDL_INDEX ();
-      SET_TEXT_POS_FROM_MARKER (wstart, w->start);
+      SET_TEXT_POS_FROM_MARKER (startpos, w->start);
       void *itdata = bidi_shelve_cache ();
-      /* We must start from window's start point, but it could be
-	 outside the accessible region.  */
-      if (wstart.charpos < BEGV || wstart.charpos > ZV)
+      /* We want to start from window's start point, but it could be
+	 outside the accessible region, in which case we widen the
+	 buffer temporarily.  It could even be beyond the buffer's end
+	 (Org mode's display of source code snippets is known to cause
+	 that), in which case we just punt and start from point instead.  */
+      if (startpos.charpos > Z)
+	SET_TEXT_POS (startpos, PT, PT_BYTE);
+      if (startpos.charpos < BEGV || startpos.charpos > ZV)
 	{
 	  record_unwind_protect (save_restriction_restore,
 				 save_restriction_save ());
 	  Fwiden ();
 	  saved_restriction = true;
 	}
-      start_display (&it, w, wstart);
+      start_display (&it, w, startpos);
+      /* The call to move_it_by_lines below will not generate a line
+	 number if the first line shown in the window is hscrolled
+	 such that all of its display elements are out of view.  So we
+	 pretend the hscroll doesn't exist.  */
+      it.first_visible_x = 0;
       move_it_by_lines (&it, 1);
       *width = it.lnum_width;
       *pixel_width = it.lnum_pixel_width;
@@ -1966,14 +1976,26 @@ line_number_display_width (struct window *w, int *width, int *pixel_width)
 DEFUN ("line-number-display-width", Fline_number_display_width,
        Sline_number_display_width, 0, 1, 0,
        doc: /* Return the width used for displaying line numbers in the selected window.
-If optional argument PIXELWISE is non-nil, return the width in pixels,
-otherwise return the width in columns of the face used to display
-line numbers, `line-number'.  */)
+If optional argument PIXELWISE is the symbol `columns', return the width
+in units of the frame's canonical character width.  In this case, the
+value is a float.
+If optional argument PIXELWISE is t or any other non-nil value, return
+the width as an integer number of pixels.
+Otherwise return the value as an integer number of columns of the face
+used to display line numbers, `line-number'.  Note that in the latter
+case, the value doesn't include the 2 columns used for padding the
+numbers on display.  */)
   (Lisp_Object pixelwise)
 {
   int width, pixel_width;
+  struct window *w = XWINDOW (selected_window);
   line_number_display_width (XWINDOW (selected_window), &width, &pixel_width);
-  if (!NILP (pixelwise))
+  if (EQ (pixelwise, Qcolumns))
+    {
+      struct frame *f = XFRAME (w->frame);
+      return make_float ((double) pixel_width / FRAME_COLUMN_WIDTH (f));
+    }
+  else if (!NILP (pixelwise))
     return make_number (pixel_width);
   return make_number (width);
 }
@@ -2334,6 +2356,8 @@ syms_of_indent (void)
   DEFVAR_BOOL ("indent-tabs-mode", indent_tabs_mode,
 	       doc: /* Indentation can insert tabs if this is non-nil.  */);
   indent_tabs_mode = 1;
+
+  DEFSYM (Qcolumns, "columns");
 
   defsubr (&Scurrent_indentation);
   defsubr (&Sindent_to);
