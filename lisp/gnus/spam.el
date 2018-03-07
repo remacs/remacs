@@ -411,16 +411,12 @@ Only meaningful if you enable `spam-use-regex-body'."
   "Spam ifile configuration."
   :group 'spam)
 
-(make-obsolete-variable 'spam-ifile-path 'spam-ifile-program
-                        "Gnus 5.10.9 (Emacs 22.1)")
 (defcustom spam-ifile-program (executable-find "ifile")
   "Name of the ifile program."
   :type '(choice (file :tag "Location of ifile")
                  (const :tag "ifile is not installed"))
   :group 'spam-ifile)
 
-(make-obsolete-variable 'spam-ifile-database-path 'spam-ifile-database
-                        "Gnus 5.10.9 (Emacs 22.1)")
 (defcustom spam-ifile-database nil
   "File name of the ifile database."
   :type '(choice (file :tag "Location of the ifile database")
@@ -450,8 +446,6 @@ your main source of newsgroup names."
   "Spam bogofilter configuration."
   :group 'spam)
 
-(make-obsolete-variable 'spam-bogofilter-path 'spam-bogofilter-program
-                        "Gnus 5.10.9 (Emacs 22.1)")
 (defcustom spam-bogofilter-program (executable-find "bogofilter")
   "Name of the Bogofilter program."
   :type '(choice (file :tag "Location of bogofilter")
@@ -502,8 +496,6 @@ When nil, use the default location."
   "Spam bsfilter configuration."
   :group 'spam)
 
-(make-obsolete-variable 'spam-bsfilter-path 'spam-bsfilter-program
-                        "Gnus 5.10.9 (Emacs 22.1)")
 (defcustom spam-bsfilter-program (executable-find "bsfilter")
   "Name of the Bsfilter program."
   :type '(choice (file :tag "Location of bsfilter")
@@ -568,8 +560,6 @@ When nil, use the default spamoracle database."
   "Spam SpamAssassin configuration."
   :group 'spam)
 
-(make-obsolete-variable 'spam-spamassassin-path
-  'spam-spamassassin-program "Gnus 5.10.9 (Emacs 22.1)")
 (defcustom spam-assassin-program (executable-find "spamassassin")
   "Name of the spamassassin program.
 Hint: set this to \"spamc\" if you have spamd running.  See the spamc and
@@ -600,8 +590,6 @@ identification"
   :type 'string
   :group 'spam-spamassassin)
 
-(make-obsolete-variable 'spam-sa-learn-path 'spam-sa-learn-program
-                        "Gnus 5.10.9 (Emacs 22.1)")
 (defcustom spam-sa-learn-program (executable-find "sa-learn")
   "Name of the sa-learn program."
   :type '(choice (file :tag "Location of spamassassin")
