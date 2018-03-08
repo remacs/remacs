@@ -63,6 +63,51 @@
     (should-error (map-keymap test-function nil))
     (should-error (map-keymap test-function '(test)))))
 
+(ert-deftest keymap-tests--map-keymap-internal ()
+  (let* ((sample-keymap '(keymap
+                         (27 keymap
+                             (24 . lisp-send-defun)
+                             (28 . forward-line))
+                         (3 keymap
+                            (25 . run-lisp))))
+        (sample-keymap-with-parent '(keymap
+                                     (3 keymap
+                                        (25 . run-lisp))
+                                     (27 keymap
+                                         (24 . lisp-send-defun))
+                                     keymap
+                                     (127 . backward-delete-char-untabify)
+                                     (26 keymap
+                                         (17 . indent-sexp))))
+        (keys nil)
+        (values nil)
+        (test-function '(lambda (key value)
+                          (push key keys)
+                          (push value values))))
+
+    ;; Test simple keymap with children
+    (should-not (map-keymap-internal test-function sample-keymap))
+    (should (equal keys '(3 27)))
+    (should (equal values '((keymap (25 . run-lisp))
+                            (keymap (24 . lisp-send-defun) (28 . forward-line)))))
+
+    ;; Test keymap with parent keymap
+    (setq keys nil)
+    (setq values nil)
+    (should (equal (map-keymap-internal test-function sample-keymap-with-parent) '(keymap
+                                                                                   (127 . backward-delete-char-untabify)
+                                                                                   (26 keymap
+                                                                                       (17 . indent-sexp)))))
+    (should (equal keys '(27 3)))
+    (should (equal values '((keymap (24 . lisp-send-defun))
+                            (keymap (25 . run-lisp)))))
+
+    ;; Test invalid inputs
+    (should-error (map-keymap-internal nil nil))
+    (should-error (map-keymap-internal "test" nil))
+    (should-error (map-keymap-internal test-function nil))
+    (should-error (map-keymap-internal test-function '(test)))))
+
 (ert-deftest keymap-tests--set-keymap-parent ()
   (let ((sample-keymap '(keymap
                          (3 keymap
