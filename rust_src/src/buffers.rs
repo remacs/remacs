@@ -6,8 +6,9 @@ use std::{self, mem, ptr};
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Fwd, Lisp_Object,
                  Lisp_Overlay, Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
-use remacs_sys::{Fcons, Fcopy_sequence, Fget_text_property, Fnconc, Fnreverse};
-use remacs_sys::{Qbuffer_read_only, Qinhibit_read_only, Qnil};
+use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler, Fget_text_property,
+                 Fnconc, Fnreverse};
+use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil};
 use remacs_sys::{bget_overlays_after, bget_overlays_before, fget_buffer_list,
                  fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals, set_buffer_internal};
 
@@ -176,6 +177,11 @@ impl LispBufferRef {
     #[inline]
     pub fn name(self) -> LispObject {
         LispObject::from_raw(self.name)
+    }
+
+    #[inline]
+    pub fn filename(self) -> LispObject {
+        LispObject::from_raw(self.filename)
     }
 
     // Check if buffer is live
@@ -554,4 +560,41 @@ pub fn overlay_lists() -> LispObject {
         .map_or_else(LispObject::constant_nil, &list_overlays);
     unsafe { LispObject::from_raw(Fcons(Fnreverse(before.to_raw()), Fnreverse(after.to_raw()))) }
 }
+
+/// Return the buffer visiting file FILENAME (a string).
+/// The buffer's `buffer-file-name' must match exactly the expansion of FILENAME.
+/// If there is no such live buffer, return nil.
+/// See also `find-buffer-visiting'.
+#[lisp_fn]
+pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
+    verify_lisp_type!(filename, Qstringp);
+    let filename = unsafe { LispObject::from_raw(Fexpand_file_name(filename.to_raw(), Qnil)) };
+
+    // If the file name has special constructs in it,
+    // call the corresponding file handler.
+    let handler = unsafe { LispObject::from_raw(Ffind_file_name_handler(filename.to_raw(),
+                                                                        Qget_file_buffer)) };
+
+    if handler.is_nil() {
+        let handled_buf = call_raw!(handler.to_raw(), Qget_file_buffer, filename.to_raw());
+        return if handled_buf.is_buffer() {
+            handled_buf.into()
+        } else {
+            None
+        };
+    }
+
+    for buf in LispObject::from_raw(unsafe { Vbuffer_alist }).iter_alist_vals() {
+        let buf_filename = buf.as_buffer_or_error().filename();
+        if !buf_filename.is_string() {
+            continue;
+        }
+        if string_equal(buf_filename, filename) {
+            return buf.into();
+        }
+    }
+
+    None
+}
+
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));
