@@ -1363,6 +1363,7 @@ pub struct lisp_time {
 
 pub type map_keymap_function_t =
     unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object, *const c_void);
+pub type c_function = unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object);
 
 extern "C" {
     pub static initialized: bool;
@@ -1389,6 +1390,12 @@ extern "C" {
     // Use LispObject::tag_ptr instead of make_lisp_ptr
     pub fn make_lisp_ptr(ptr: *const c_void, ty: Lisp_Type) -> Lisp_Object;
     pub fn Fmake_char_table(purpose: Lisp_Object, init: Lisp_Object) -> Lisp_Object;
+    pub fn map_char_table(
+        c_function: unsafe extern "C" fn(Lisp_Object, Lisp_Object, Lisp_Object),
+        function: Lisp_Object,
+        table: Lisp_Object,
+        arg: Lisp_Object,
+    );
     pub fn CHAR_TABLE_SET(ct: Lisp_Object, idx: c_int, val: Lisp_Object);
 
     pub fn aset_multibyte_string(array: Lisp_Object, idxval: EmacsInt, c: c_int);
@@ -1593,6 +1600,14 @@ extern "C" {
         args: Lisp_Object,
         data: *const c_void,
     ) -> Lisp_Object;
+    pub fn map_keymap_item(
+        fun: map_keymap_function_t,
+        args: Lisp_Object,
+        key: Lisp_Object,
+        val: Lisp_Object,
+        data: *const c_void,
+    );
+    pub fn map_keymap_char_table_item(args: Lisp_Object, key: Lisp_Object, val: Lisp_Object);
     pub fn map_keymap_call(
         key: Lisp_Object,
         val: Lisp_Object,
@@ -1613,6 +1628,12 @@ extern "C" {
         x: Lisp_Object,
         y: Lisp_Object,
         t: Time,
+    ) -> Lisp_Object;
+
+    pub fn make_save_funcptr_ptr_obj(
+        a: *const c_void,
+        b: *const c_void,
+        c: Lisp_Object,
     ) -> Lisp_Object;
 
     pub fn Fselect_window(window: Lisp_Object, norecord: Lisp_Object) -> Lisp_Object;

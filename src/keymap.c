@@ -309,7 +309,7 @@ access_keymap (Lisp_Object map, Lisp_Object idx,
   return EQ (val, Qunbound) ? Qnil : val;
 }
 
-static void
+void
 map_keymap_item (map_keymap_function_t fun, Lisp_Object args, Lisp_Object key, Lisp_Object val, void *data)
 {
   if (EQ (val, Qt))
@@ -317,7 +317,7 @@ map_keymap_item (map_keymap_function_t fun, Lisp_Object args, Lisp_Object key, L
   (*fun) (key, val, args, data);
 }
 
-static void
+void
 map_keymap_char_table_item (Lisp_Object args, Lisp_Object key, Lisp_Object val)
 {
   if (!NILP (val))

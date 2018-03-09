@@ -9,8 +9,9 @@ use remacs_sys::{current_global_map as _current_global_map, globals, EmacsInt, L
                  CHAR_META};
 use remacs_sys::{Fcons, Fevent_convert_list, Ffset, Fmake_char_table, Fpurecopy, Fset};
 use remacs_sys::{Qautoload, Qkeymap, Qkeymapp, Qnil, Qt};
-use remacs_sys::{access_keymap, map_keymap_call, map_keymap_function_t, map_keymap_internal,
-                 maybe_quit};
+use remacs_sys::{access_keymap, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
+                 map_keymap_char_table_item, map_keymap_function_t, map_keymap_internal,
+                 map_keymap_item, maybe_quit};
 
 use data::{aref, indirect_function};
 use eval::autoload_do_load;
@@ -317,6 +318,76 @@ pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: boo
     LispObject::constant_nil()
 }
 
+/// Call FUN for every binding in MAP and stop at (and return) the parent.
+/// FUN is called with 4 arguments: FUN (KEY, BINDING, ARGS, DATA).  */
+#[no_mangle]
+pub extern "C" fn map_keymap_internal_2(
+    map: Lisp_Object,
+    fun: map_keymap_function_t,
+    args: Lisp_Object,
+    data: *const c_void,
+) -> Lisp_Object {
+    let mut tail = LispObject::constant_nil();
+    let map = LispObject::from_raw(map);
+    if let Some(cons) = map.as_cons() {
+        let (car, cdr) = cons.as_tuple();
+        if car.eq_raw(Qkeymap) {
+            tail = cdr
+        } else {
+            tail = map
+        }
+    };
+
+    loop {
+        match tail.as_cons() {
+            None => break,
+            Some(tail_cons) => {
+                if tail_cons.car().eq_raw(Qkeymap) {
+                    break;
+                } else {
+                    let binding = tail_cons.car();
+
+                    // An embedded parent.
+                    if keymapp(binding) {
+                        break;
+                    }
+
+                    if let Some(binding_cons) = binding.as_cons() {
+                        let (car, cdr) = binding_cons.as_tuple();
+                        unsafe { map_keymap_item(fun, args, car.to_raw(), cdr.to_raw(), data) };
+                    } else if let Some(binding_vec) = binding.as_vectorlike() {
+                        for c in 0..binding_vec.pseudovector_size() {
+                            let character = LispObject::from_natnum(c);
+                            unsafe {
+                                map_keymap_item(
+                                    fun,
+                                    args,
+                                    character.to_raw(),
+                                    aref(binding, c).to_raw(),
+                                    data,
+                                )
+                            };
+                        }
+                    } else if binding.is_char_table() {
+                        unsafe {
+                            map_char_table(
+                                map_keymap_char_table_item,
+                                Qnil,
+                                binding.to_raw(),
+                                make_save_funcptr_ptr_obj(fun as *const c_void, data, args),
+                            )
+                        };
+                    }
+
+                    tail = tail_cons.cdr();
+                }
+            }
+        };
+    }
+
+    tail.to_raw()
+}
+
 /// Call FUNCTION once for each event binding in KEYMAP.
 /// FUNCTION is called with two arguments: the event that is bound, and
 /// the definition it is bound to.  The event may be a character range.
@@ -324,14 +395,12 @@ pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: boo
 #[lisp_fn(name = "map-keymap-internal")]
 pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) -> LispObject {
     keymap = LispObject::from_raw(get_keymap(keymap.to_raw(), true, true));
-    LispObject::from_raw(unsafe {
-        map_keymap_internal(
-            keymap.to_raw(),
-            map_keymap_call,
-            function.to_raw(),
-            ptr::null_mut(),
-        )
-    })
+    LispObject::from_raw(map_keymap_internal_2(
+        keymap.to_raw(),
+        map_keymap_call,
+        function.to_raw(),
+        ptr::null_mut(),
+    ))
 }
 
 /// Return the binding for command KEYS in current local keymap only.
