@@ -1207,7 +1207,7 @@ impl LispObject {
     /// Iterate over all values of self.  self should be a list.
     /// Otherwise a wrong-type-argument error will be signaled.
     pub fn iter_alist_vals(self) -> AlistValIter {
-      AlistValIter::new(self)
+        AlistValIter::new(self)
     }
 }
 

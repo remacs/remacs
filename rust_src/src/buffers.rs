@@ -6,8 +6,8 @@ use std::{self, mem, ptr};
 use remacs_macros::lisp_fn;
 use remacs_sys::{EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value, Lisp_Fwd, Lisp_Object,
                  Lisp_Overlay, Lisp_Type, Vbuffer_alist, MOST_POSITIVE_FIXNUM};
-use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler, Fget_text_property,
-                 Fnconc, Fnreverse};
+use remacs_sys::{Fcons, Fcopy_sequence, Fexpand_file_name, Ffind_file_name_handler,
+                 Fget_text_property, Fnconc, Fnreverse};
 use remacs_sys::{Qbuffer_read_only, Qget_file_buffer, Qinhibit_read_only, Qnil};
 use remacs_sys::{bget_overlays_after, bget_overlays_before, fget_buffer_list,
                  fget_buried_buffer_list, get_blv_fwd, get_blv_value, globals, set_buffer_internal};
@@ -572,8 +572,9 @@ pub fn get_file_buffer(filename: LispObject) -> Option<LispBufferRef> {
 
     // If the file name has special constructs in it,
     // call the corresponding file handler.
-    let handler = unsafe { LispObject::from_raw(Ffind_file_name_handler(filename.to_raw(),
-                                                                        Qget_file_buffer)) };
+    let handler = unsafe {
+        LispObject::from_raw(Ffind_file_name_handler(filename.to_raw(), Qget_file_buffer))
+    };
 
     if handler.is_nil() {
         let handled_buf = call_raw!(handler.to_raw(), Qget_file_buffer, filename.to_raw());
