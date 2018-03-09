@@ -102,12 +102,26 @@
     (should (equal values '((keymap (24 . lisp-send-defun))
                             (keymap (25 . run-lisp)))))
 
+    ;; If one of the elements is a char-table
+    (setq keys nil)
+    (setq values nil)
+    (should-not (map-keymap-internal-2 test-function `(keymap (24 . lisp-send-defun) ,(make-char-table 'test 0))))
+    (should (equal keys '((0 . 4194303) 24)))
+    (should (equal values '(0 lisp-send-defun)))
+
+    ;; If one of the elements is a vector
+    (setq keys nil)
+    (setq values nil)
+    (should-not (map-keymap-internal-2 test-function '(keymap (24 . lisp-send-defun) [0 0 0 0 0 0])))
+    (should (equal keys '(5 4 3 2 1 0 24)))
+    (should (equal values '(0 0 0 0 0 0 lisp-send-defun)))
+
     ;; Test invalid inputs
     (should-error (map-keymap-internal nil nil))
     (should-error (map-keymap-internal "test" nil))
-    (should-error (map-keymap-internal test-function nil))
+    (should-error (map-keymap-internal  test-function nil))
     (should-error (map-keymap-internal test-function '(test)))))
-
+  
 (ert-deftest keymap-tests--set-keymap-parent ()
   (let ((sample-keymap '(keymap
                          (3 keymap

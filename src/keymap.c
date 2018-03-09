@@ -391,17 +391,17 @@ map_keymap_canonical (Lisp_Object map, map_keymap_function_t fun, Lisp_Object ar
   map_keymap_internal (map, fun, args, data);
 }
 
-/* DEFUN ("map-keymap-internal", Fmap_keymap_internal, Smap_keymap_internal, 2, 2, 0, */
-/*        doc: /\* Call FUNCTION once for each event binding in KEYMAP. */
-/* FUNCTION is called with two arguments: the event that is bound, and */
-/* the definition it is bound to.  The event may be a character range. */
-/* If KEYMAP has a parent, this function returns it without processing it.  *\/) */
-/*   (Lisp_Object function, Lisp_Object keymap) */
-/* { */
-/*   keymap = get_keymap (keymap, 1, 1); */
-/*   keymap = map_keymap_internal (keymap, map_keymap_call, function, NULL); */
-/*   return keymap; */
-/* } */
+DEFUN ("map-keymap-internal", Fmap_keymap_internal, Smap_keymap_internal, 2, 2, 0,
+       doc: /* Call FUNCTION once for each event binding in KEYMAP.
+FUNCTION is called with two arguments: the event that is bound, and
+the definition it is bound to.  The event may be a character range.
+If KEYMAP has a parent, this function returns it without processing it.  */)
+  (Lisp_Object function, Lisp_Object keymap)
+{
+  keymap = get_keymap (keymap, 1, 1);
+  keymap = map_keymap_internal (keymap, map_keymap_call, function, NULL);
+  return keymap;
+}
 
 /* Given OBJECT which was found in a slot in a keymap,
    trace indirect definitions to get the actual definition of that slot.
@@ -3288,6 +3288,7 @@ be preferred.  */);
   staticpro (&command_remapping_vector);
 
   defsubr (&Scopy_keymap);
+  defsubr (&Smap_keymap_internal);
   defsubr (&Scommand_remapping);
   defsubr (&Skey_binding);
   defsubr (&Sminor_mode_key_binding);

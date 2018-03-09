@@ -392,7 +392,7 @@ pub extern "C" fn map_keymap_internal_2(
 /// FUNCTION is called with two arguments: the event that is bound, and
 /// the definition it is bound to.  The event may be a character range.
 /// If KEYMAP has a parent, this function returns it without processing it.
-#[lisp_fn(name = "map-keymap-internal")]
+#[lisp_fn(name = "map-keymap-internal-2")]
 pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) -> LispObject {
     keymap = LispObject::from_raw(get_keymap(keymap.to_raw(), true, true));
     LispObject::from_raw(map_keymap_internal_2(
