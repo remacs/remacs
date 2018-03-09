@@ -317,6 +317,23 @@ pub fn map_keymap_lisp(function: LispObject, keymap: LispObject, sort_first: boo
     LispObject::constant_nil()
 }
 
+/// Call FUNCTION once for each event binding in KEYMAP.
+/// FUNCTION is called with two arguments: the event that is bound, and
+/// the definition it is bound to.  The event may be a character range.
+/// If KEYMAP has a parent, this function returns it without processing it.
+#[lisp_fn(name = "map-keymap-internal")]
+pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) -> LispObject {
+    keymap = LispObject::from_raw(get_keymap(keymap.to_raw(), true, true));
+    LispObject::from_raw(unsafe {
+        map_keymap_internal(
+            keymap.to_raw(),
+            map_keymap_call,
+            function.to_raw(),
+            ptr::null_mut(),
+        )
+    })
+}
+
 /// Return the binding for command KEYS in current local keymap only.
 /// KEYS is a string or vector, a sequence of keystrokes.
 /// The binding is probably a symbol with a function definition.
